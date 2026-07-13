@@ -176,9 +176,9 @@ git commit -m "chore: preserve ColorPlay governance baseline"
 **Files:**
 - Create: `package.json`, `pnpm-lock.yaml`, `index.html`
 - Create: `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`
-- Create: `vite.config.ts`, `vitest.config.ts`, `eslint.config.js`, `.prettierrc.json`
+- Create: `vite.config.ts`, `vitest.config.ts`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`
 - Create: `src/main.tsx`, `src/app/foundation-root.tsx`, `src/test/setup.ts`
-- Create: `tests/contracts/toolchain.test.sh`, `src/app/foundation-root.test.tsx`
+- Create: `tests/contracts/toolchain.test.sh`, `src/app/foundation-root.test.tsx`, `src/main.test.tsx`
 
 **Interfaces:**
 - Consumes: `GovernanceBaseline` from Task 1.
@@ -268,18 +268,26 @@ createRoot(root).render(
 );
 ```
 
-Set `tsconfig.app.json` compiler options to `strict: true`, `noUncheckedIndexedAccess: true`, `exactOptionalPropertyTypes: true`, `noImplicitOverride: true`, and `useUnknownInCatchVariables: true`. Configure Vitest with `jsdom`, `src/test/setup.ts`, and V8 coverage. Configure ESLint flat config for TypeScript type-aware rules and React hooks. Configure Vite with React and Tailwind Vite plugins.
+Set `tsconfig.app.json` compiler options to `strict: true`, `noUncheckedIndexedAccess: true`, `exactOptionalPropertyTypes: true`, `noImplicitOverride: true`, and `useUnknownInCatchVariables: true`. Configure Vitest with `jsdom`, `src/test/setup.ts`, and V8 coverage that includes every production `src/**/*.{ts,tsx}` file while excluding only test, test-support, and type-declaration files. Before adding `src/main.test.tsx`, run `pnpm test:coverage` and confirm the thresholds fail because `src/main.tsx` is uncovered; then add the minimal real bootstrap tests for the successful mount and missing-root error. Configure ESLint flat config for TypeScript type-aware rules and React hooks. Configure Vite with React and Tailwind Vite plugins.
+
+Add a narrowly scoped `.prettierignore` that lists only immutable or out-of-scope governance/spec/legacy inputs and generated `pnpm-lock.yaml`. It must not exclude Task 2 application, configuration, or test source.
 
 - [ ] **Step 4: Run all task verification**
 
-Run: `bash tests/contracts/toolchain.test.sh && pnpm typecheck && pnpm lint && pnpm test -- src/app/foundation-root.test.tsx && npm run build`
+Run:
 
-Expected: all exit 0; Vitest reports 1 passed test; Vite creates `dist/index.html`; no npm lockfile is created.
+```bash
+pnpm format:check
+pnpm test:coverage
+bash tests/contracts/toolchain.test.sh && pnpm typecheck && pnpm lint && pnpm test -- src/app/foundation-root.test.tsx && npm run build
+```
+
+Expected: all exit 0; Prettier checks every in-scope Task 2 file; coverage includes the application bootstrap and meets the configured thresholds; Vitest reports 2 passed files and 3 passed tests; Vite creates `dist/index.html`; no npm lockfile is created.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add package.json pnpm-lock.yaml index.html tsconfig*.json vite.config.ts vitest.config.ts eslint.config.js .prettierrc.json src tests/contracts/toolchain.test.sh
+git add package.json pnpm-lock.yaml index.html tsconfig*.json vite.config.ts vitest.config.ts eslint.config.js .prettierrc.json .prettierignore src src/main.test.tsx tests/contracts/toolchain.test.sh
 git commit -m "build: establish strict React Vite toolchain"
 ```
 
