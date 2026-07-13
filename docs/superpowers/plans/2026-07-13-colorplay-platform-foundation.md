@@ -443,9 +443,12 @@ git commit -m "feat: validate public Supabase configuration"
 - Create: `src/app/providers/app-providers.tsx`, `src/app/providers/query-client.ts`
 - Create: `src/app/router/create-app-router.tsx`, `src/app/router/route-page.tsx`
 - Create: `src/app/boundaries/root-error-boundary.tsx`, `src/app/boundaries/route-loading.tsx`
-- Create: `src/app/router/create-app-router.test.tsx`, `src/app/boundaries/root-error-boundary.test.tsx`
-- Create: `tests/e2e/foundation-routes.spec.ts`
-- Modify: `src/main.tsx`
+- Create: `src/app/providers/app-providers.test.tsx`
+- Create: `src/app/router/create-app-router.test.tsx`, `src/app/router/route-page.test.tsx`
+- Create: `src/app/boundaries/root-error-boundary.test.tsx`, `src/app/boundaries/route-loading.test.tsx`
+- Create: `tests/e2e/foundation-routes.spec.ts`, `tests/e2e/task-4-evidence-reporter.ts`
+- Create: `playwright.config.ts`
+- Modify: `index.html`, `src/main.tsx`, `src/main.test.tsx`, `src/test/setup.ts`, `vitest.config.ts`, `tsconfig.node.json`
 
 **Interfaces:**
 - Consumes: `getBrowserSupabaseClient(PublicEnv)` from Task 3.
@@ -456,6 +459,13 @@ git commit -m "feat: validate public Supabase configuration"
 **Evidence:** headed screenshots for `/login`, `/app`, `/unauthorized`, and unknown route; trace at `artifacts/acceptance/phase-1a-task-04/traces/app-router.zip`.
 
 - [ ] **Step 1: Write failing route and error tests**
+
+Also write focused component tests for `AppProviders`/the shared QueryClient,
+`RoutePage`, `RouteLoading`, stable error correlation IDs, and retry behavior.
+Write `tests/e2e/foundation-routes.spec.ts` before the browser harness exists; it
+must visit `/login`, `/app`, `/unauthorized`, and a missing route, reject console
+errors, unhandled page errors, failed requests, and HTTP 4xx/5xx responses, and request
+four screenshots plus the Task 4 trace.
 
 ```tsx
 import { RouterProvider } from 'react-router-dom';
@@ -489,9 +499,16 @@ describe('RootErrorBoundary', () => {
 
 - [ ] **Step 2: Verify tests fail**
 
-Run: `pnpm test -- src/app/router/create-app-router.test.tsx src/app/boundaries/root-error-boundary.test.tsx`
+Run:
 
-Expected: FAIL because router and boundary modules do not exist.
+```bash
+pnpm test -- src/app/router/create-app-router.test.tsx src/app/boundaries/root-error-boundary.test.tsx
+pnpm playwright test tests/e2e/foundation-routes.spec.ts --headed --trace on
+```
+
+Expected: unit FAIL because router and boundary modules do not exist. Before
+`playwright.config.ts` and the Chromium runtime exist, the E2E command must also
+record an honest harness RED.
 
 - [ ] **Step 3: Implement minimal route composition**
 
@@ -527,12 +544,19 @@ export function createAppRouter() {
 
 Implement `AppProviders` with one exported QueryClient and `QueryClientProvider`. Implement `RootErrorBoundary` with an internally generated `crypto.randomUUID()` correlation ID and a visible retry button calling `reset`. Update `main.tsx` to render `AppProviders` plus `RouterProvider`.
 
+Create the minimum Task 4 Playwright harness in `playwright.config.ts`: one
+Chromium project, `baseURL` `http://127.0.0.1:4173`, a Vite `webServer` launched
+through the existing `dev` script on port 4173, and task-scoped output under
+`artifacts/acceptance/phase-1a-task-04`. Exclude Playwright specs from Vitest
+discovery and install only the Chromium browser runtime through the project CLI.
+
 - [ ] **Step 4: Verify unit and headed browser behavior**
 
 Run:
 
 ```bash
 pnpm test -- src/app/router/create-app-router.test.tsx src/app/boundaries/root-error-boundary.test.tsx
+pnpm exec vitest run src/app/providers/app-providers.test.tsx src/app/router/route-page.test.tsx src/app/boundaries/route-loading.test.tsx
 pnpm playwright test tests/e2e/foundation-routes.spec.ts --headed --trace on
 ```
 
@@ -541,7 +565,7 @@ Expected: component tests pass; Chromium visits all four routes with no console 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/main.tsx src/app tests/e2e/foundation-routes.spec.ts
+git add index.html playwright.config.ts vitest.config.ts tsconfig.node.json src/main.tsx src/main.test.tsx src/test/setup.ts src/app tests/e2e docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md
 git commit -m "feat: add application providers and route boundaries"
 ```
 
@@ -654,7 +678,7 @@ git commit -m "feat: add accessible flat-design application shell"
 **Reviewer gate:** Accept only if a run manifest is deterministic, records Git/browser/viewport/commands, counts all 84 normative IDs, and refuses to label absent evidence as passed.
 
 **Files:**
-- Create: `playwright.config.ts`
+- Modify/expand: `playwright.config.ts`
 - Create: `scripts/acceptance/create-run.mjs`, `scripts/acceptance/run.sh`
 - Create: `scripts/verify/count-acceptance.mjs`
 - Create: `tests/contracts/evidence-manifest.test.ts`
@@ -705,7 +729,7 @@ export function countAcceptanceIds(markdown) {
 }
 ```
 
-`create-run.mjs` reads the 84 IDs, creates the standard directory tree, writes every ID with status `NOT VERIFIED`, and records the current SHA/dirty state without including environment values. Update both acceptance counts in `DOCUMENT_MANIFEST.json` to 84. Configure Playwright with screenshot on failure, trace on first retry plus explicit acceptance trace mode, video retention for acceptance flows, and projects for Chromium, Firefox, and WebKit.
+`create-run.mjs` reads the 84 IDs, creates the standard directory tree, writes every ID with status `NOT VERIFIED`, and records the current SHA/dirty state without including environment values. Update both acceptance counts in `DOCUMENT_MANIFEST.json` to 84. Expand the existing Task 4 Playwright configuration with screenshot on failure, trace on first retry plus explicit acceptance trace mode, video retention for acceptance flows, and projects for Chromium, Firefox, and WebKit.
 
 - [ ] **Step 4: Verify pass and artifact honesty**
 

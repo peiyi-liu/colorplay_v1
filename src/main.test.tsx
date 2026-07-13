@@ -5,6 +5,7 @@ describe('application bootstrap', () => {
   beforeEach(() => {
     vi.resetModules();
     document.body.replaceChildren();
+    window.history.replaceState({}, '', '/');
   });
 
   it('mounts ColorPlay into the application root', async () => {
