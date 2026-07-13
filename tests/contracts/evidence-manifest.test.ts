@@ -1,5 +1,6 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn, type ChildProcess } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { once } from 'node:events';
 import {
   mkdtemp,
   readFile,
@@ -20,6 +21,45 @@ import {
 import { countAcceptanceIds } from '../../scripts/verify/count-acceptance.mjs';
 
 const execFileAsync = promisify(execFile);
+
+async function waitForServer(server: ChildProcess, url: string) {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    if (server.exitCode !== null || server.signalCode !== null) {
+      throw new Error('TEST_VITE_SERVER_EXITED');
+    }
+
+    try {
+      const response = await fetch(url);
+      if (response.ok) return;
+    } catch {
+      // The server is still starting.
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  throw new Error('TEST_VITE_SERVER_UNAVAILABLE');
+}
+
+async function stopServer(server: ChildProcess) {
+  if (server.exitCode !== null || server.signalCode !== null) return;
+
+  const gracefulExit = once(server, 'exit');
+  server.kill('SIGTERM');
+  const timedOut = await Promise.race([
+    gracefulExit.then(() => false),
+    new Promise<true>((resolve) => {
+      setTimeout(() => {
+        resolve(true);
+      }, 5_000);
+    }),
+  ]);
+
+  if (timedOut) {
+    const forcedExit = once(server, 'exit');
+    if (server.kill('SIGKILL')) await forcedExit;
+  }
+}
 
 async function listFilesRecursively(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -892,6 +932,17 @@ describe('acceptance metadata', () => {
       const temporaryRoot = await mkdtemp(
         join(tmpdir(), 'colorplay-retention-'),
       );
+      const viteServer = spawn(
+        process.execPath,
+        [
+          join(process.cwd(), 'node_modules/vite/bin/vite.js'),
+          '--host',
+          '127.0.0.1',
+          '--port',
+          '4173',
+        ],
+        { cwd: process.cwd(), stdio: 'ignore' },
+      );
       const runAcceptance = async (runId: string, startedAt: string) => {
         await execFileAsync(
           'bash',
@@ -920,6 +971,7 @@ describe('acceptance metadata', () => {
       };
 
       try {
+        await waitForServer(viteServer, 'http://127.0.0.1:4173');
         await runAcceptance('retained-run-one', '2026-07-14T03:00:00.000Z');
         const firstRunFiles = await listFilesRecursively(
           join(temporaryRoot, 'retained-run-one', 'playwright'),
@@ -947,6 +999,7 @@ describe('acceptance metadata', () => {
           true,
         );
       } finally {
+        await stopServer(viteServer);
         await rm(temporaryRoot, { force: true, recursive: true });
       }
     },

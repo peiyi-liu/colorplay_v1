@@ -830,6 +830,8 @@ git commit -m "build: add real Supabase local runtime"
 - Create: `tests/contracts/delivery-config.test.ts`
 - Create: `tests/e2e/spa-deep-link.spec.ts`
 - Create: `docs/deployment/vercel.md`
+- Modify/support: `playwright.config.ts`, using an explicit `PLAYWRIGHT_BASE_URL` without starting the development server so deep-link evidence can target the built preview.
+- Modify/support: `tests/contracts/evidence-manifest.test.ts`, starting one explicit local Vite server for retention integration runs that intentionally supply an external base URL.
 
 **Interfaces:**
 - Consumes: pnpm scripts, Supabase local config, Vite build, GitHub commit.

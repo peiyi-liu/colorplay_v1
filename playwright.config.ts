@@ -6,6 +6,7 @@ const localRunId = `playwright-local-${new Date()
   .replaceAll('.', '-')}-${String(process.pid)}`;
 const taskEvidenceRoot =
   process.env.PLAYWRIGHT_EVIDENCE_ROOT ?? `artifacts/acceptance/${localRunId}`;
+const playwrightBaseUrl = process.env.PLAYWRIGHT_BASE_URL;
 const acceptanceEvidence = process.env.PLAYWRIGHT_ACCEPTANCE === 'on';
 const video =
   process.env.PLAYWRIGHT_VIDEO === 'on' || acceptanceEvidence
@@ -37,14 +38,18 @@ export default defineConfig({
     },
   ],
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:4173',
+    baseURL: playwrightBaseUrl ?? 'http://127.0.0.1:4173',
     screenshot: 'only-on-failure',
     trace,
     video,
   },
-  webServer: {
-    command: 'pnpm dev --host 127.0.0.1 --port 4173',
-    url: 'http://127.0.0.1:4173',
-    reuseExistingServer: false,
-  },
+  ...(playwrightBaseUrl
+    ? {}
+    : {
+        webServer: {
+          command: 'pnpm dev --host 127.0.0.1 --port 4173',
+          url: 'http://127.0.0.1:4173',
+          reuseExistingServer: false,
+        },
+      }),
 });
