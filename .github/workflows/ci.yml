@@ -48,13 +48,13 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Run unit coverage
+      - name: Run stack-independent unit coverage
         run: pnpm test:coverage
 
       - name: Build production application
         run: npm run build
 
-      - name: Test real local database runtime
+      - name: Test seeded local database and real-stack integration
         run: pnpm test:db
 
       - name: Install Chromium and operating-system dependencies

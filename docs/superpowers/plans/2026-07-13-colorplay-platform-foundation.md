@@ -1068,20 +1068,45 @@ git commit -m "feat: add profile schema and RLS"
 **Reviewer gate:** Accept only if local reset plus seed produces teacher, two students, and outsider accounts that can sign in through GoTrue, with no service key committed or logged.
 
 **Files:**
+- Create: `tests/contracts/test-boundaries.test.ts`
 - Create: `tests/fixtures/users.ts`
+- Create: `scripts/supabase/local-environment.ts`
 - Create: `scripts/supabase/seed-auth.ts`
 - Create: `tests/integration/auth-fixtures.test.ts`
-- Modify: `scripts/test-db.sh`, `package.json`, `pnpm-lock.yaml`
+- Create: `vitest.integration.config.ts`
+- Create: `supabase/migrations/20260714000100_grant_controlled_profile_role_admin.sql`
+- Create: `supabase/tests/002_profiles_service_role.test.sql`
+- Create: `pnpm-workspace.yaml`
+- Modify: `vitest.config.ts`, `tsconfig.node.json`, `scripts/test-db.sh`, `package.json`, `pnpm-lock.yaml`, `.github/workflows/ci.yml`, `docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md`
 
 **Interfaces:**
-- Consumes: local `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and process-only `SUPABASE_SERVICE_ROLE_KEY` obtained from `supabase status -o env`.
-- Produces: `TEST_USERS` with four local-only credential records; idempotent `seedAuthUsers(): Promise<void>`; real Auth sessions.
+- Consumes: local `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and process-only `SUPABASE_SERVICE_ROLE_KEY` read from `supabase status -o env` through a strict `API_URL` / `ANON_KEY` / `SERVICE_ROLE_KEY` allowlist without echoing, redirecting, or persisting status output.
+- Produces: `TEST_USERS` with the four approved local-only email/password records; separate `TEST_USER_ROLES` with teacher=`teacher` and the remaining fixtures=`student`; validated `LocalAdminEnvironment`; idempotent `seedAuthUsers(): Promise<void>`; real Auth sessions and own-profile RLS reads.
+- Test boundary: `pnpm test` and `pnpm test:coverage` use `vitest.config.ts` and exclude `tests/integration/**` plus `**/*.integration.test.*`; `pnpm test:integration` uses Node-only `vitest.integration.config.ts` and includes both `tests/integration/**/*.test.ts` and future `src/**/*.integration.test.{ts,tsx}`.
 
 **Specs / acceptance:** `spec/03-data-model-and-rls.md` section 9; `spec/04-security-and-privacy.md` sections 2-3; `AC-ENV-002` identity-seed checkpoint, `AC-AUTH-001`, `AC-ENV-004`.
 
 **Evidence:** sanitized account count and sign-in HTTP status report; bundle scan proving fixture passwords and service key are absent from `dist`.
 
-- [ ] **Step 1: Write the failing real-Auth integration test**
+- [ ] **Step 1: Write and prove the failing test-boundary contract**
+
+`tests/contracts/test-boundaries.test.ts` asserts the unit/coverage commands contain no one-off integration exclusion, the unit config excludes both integration patterns, the explicit integration script/config exists with Node environment and both include patterns, and `tsconfig.node.json` owns scripts, fixtures, and both Vitest configs.
+
+Run: `pnpm exec vitest run tests/contracts/test-boundaries.test.ts`
+
+Expected before the config change: two failures because the health test is special-cased in the unit scripts and the separate integration command/config do not exist.
+
+- [ ] **Step 2: Establish separate unit and real-stack Vitest ownership**
+
+Create `vitest.integration.config.ts`; generalize `vitest.config.ts` exclusions; set `test`, `test:coverage`, and `test:integration` to the exact commands in the interface; add all authored support files to `tsconfig.node.json`; and clarify the workflow step names so coverage is visibly stack-independent while `test:db` owns seeded real-stack integration.
+
+Install exactly `tsx@4.23.0`. Record only the required `esbuild: true` lifecycle-script approval in `pnpm-workspace.yaml`; do not approve package scripts broadly.
+
+Run: `pnpm exec vitest run tests/contracts/test-boundaries.test.ts`
+
+Expected: two passing tests.
+
+- [ ] **Step 3: Write the failing real-Auth integration test**
 
 ```ts
 import { createClient } from '@supabase/supabase-js';
@@ -1089,13 +1114,27 @@ import { describe, expect, it } from 'vitest';
 import { TEST_USERS } from '../fixtures/users';
 
 describe('local Auth fixtures', () => {
-  it.each(Object.values(TEST_USERS))('signs in $email through real GoTrue', async ({ email, password }) => {
-    const client = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!);
-    const { data, error } = await client.auth.signInWithPassword({ email, password });
-    expect(error).toBeNull();
-    expect(data.user?.email).toBe(email);
-    await client.auth.signOut();
-  });
+  it.each(['teacher', 'studentOne', 'studentTwo', 'outsider'] as const)(
+    'signs in fixture %s through real GoTrue and reads its own role',
+    async (label) => {
+      const { url, anonKey } = readValidatedLocalPublicEnvironment(process.env);
+      const client = createClient<Database>(url, anonKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+        global: { fetch: createStatusTrackingFetch(label) },
+      });
+      const { data, error } = await client.auth.signInWithPassword(TEST_USERS[label]);
+      expect(error === null).toBe(true);
+      expect(data.user !== null).toBe(true);
+      const { data: profile, error: profileError } = await client
+        .from('profiles')
+        .select('id, role')
+        .single();
+      expect(profileError === null).toBe(true);
+      expect(profile?.id).toBe(data.user?.id);
+      expect(profile?.role).toBe(TEST_USER_ROLES[label]);
+      await client.auth.signOut();
+    },
+  );
 });
 ```
 
@@ -1110,61 +1149,41 @@ export const TEST_USERS = {
 } as const;
 ```
 
-- [ ] **Step 2: Verify sign-in fails before seeding**
+Keep the role mapping separate so the approved `TEST_USERS` shape remains exact. Test titles and evidence use fixture labels only; evidence records count, HTTP status, and verified-role count without email, password, user ID, key, or environment value.
 
-Run: `pnpm test -- tests/integration/auth-fixtures.test.ts`
+- [ ] **Step 4: Verify four real GoTrue sign-ins fail before seeding**
 
-Expected: four failures with invalid login credentials or missing environment inputs.
+Reset the real local database, load only the validated public URL/anon values in process without printing status output, then run:
 
-- [ ] **Step 3: Implement idempotent Admin API seeding**
+`pnpm exec vitest run --config vitest.integration.config.ts tests/integration/auth-fixtures.test.ts`
 
-Install a TypeScript script runner with `pnpm add -D tsx@latest`. Then create `scripts/supabase/seed-auth.ts` exactly as follows:
+Expected: exactly four label-only failures at the sign-in assertion after real GoTrue returns invalid credentials. Missing-environment failures do not qualify.
 
-```ts
-import { createClient } from '@supabase/supabase-js';
-import { TEST_USERS } from '../../tests/fixtures/users';
+- [ ] **Step 5: Implement controlled and idempotent Admin API seeding**
 
-export async function seedAuthUsers() {
-  const url = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceRoleKey) throw new Error('LOCAL_ADMIN_ENV_MISSING');
-  const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data: listed, error: listError } = await admin.auth.admin.listUsers({ page: 1, perPage: 100 });
-  if (listError) throw listError;
-  const existing = new Set(listed.users.map((user) => user.email));
-  for (const fixture of Object.values(TEST_USERS)) {
-    if (existing.has(fixture.email)) continue;
-    const { error } = await admin.auth.admin.createUser({ email: fixture.email, password: fixture.password, email_confirm: true });
-    if (error) throw error;
-  }
-}
+`readLocalAdminEnvironment(process.env)` accepts only the exact local API URL and a non-empty key with the expected safe character set. The Admin client disables session persistence/refresh. It paginates `listUsers`, creates a missing fixture or resets an existing fixture's local password/confirmation, then updates the trigger-created `profiles.role` to `TEST_USER_ROLES[label]`. All failures throw stable codes only; never serialize the client, request options, response payload, or key.
 
-await seedAuthUsers();
-```
+Add a pgTAP RED proving `service_role` initially lacks the profile privileges required by the Admin client. Add the narrow migration granting table `SELECT` and column-only `UPDATE(role)`; keep direct profile `INSERT` and `DELETE` denied. The migration changes grants only, so the pinned generated `Database` type must remain byte-exact.
 
-Update `scripts/test-db.sh` to evaluate local status variables in-process, call the seed script, unset the service key, and then run DB/integration tests. Never redirect `supabase status -o env` to evidence.
+Update `scripts/test-db.sh` to strictly parse only the three allowed status assignments in process, validate the exact local URL and safe key characters, seed, immediately unset the service value on success or EXIT, run permanent/runtime pgTAP, and finally run `pnpm test:integration`. Never echo, redirect, log, or save `supabase status -o env`.
 
-- [ ] **Step 4: Verify real sign-in and bundle secrecy**
+- [ ] **Step 6: Verify first seed, second seed, roles, and bundle secrecy**
 
 Run:
 
 ```bash
-pnpm exec supabase db reset --local
-eval "$(pnpm exec supabase status -o env | rg '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=' | sed 's/^API_URL=/SUPABASE_URL=/;s/^ANON_KEY=/SUPABASE_ANON_KEY=/;s/^SERVICE_ROLE_KEY=/SUPABASE_SERVICE_ROLE_KEY=/')"
-export SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY
-pnpm exec tsx scripts/supabase/seed-auth.ts
-unset SUPABASE_SERVICE_ROLE_KEY
-pnpm test -- tests/integration/auth-fixtures.test.ts
+pnpm test:db
+bash tests/contracts/database-types.test.sh
 npm run build
 ! rg -n 'LocalOnly-|service_role|SUPABASE_SERVICE_ROLE_KEY' dist
 ```
 
-Expected: four real sign-ins pass; profiles are created by the trigger; bundle scan returns no matches.
+Repeat the same strict allowlist -> seed -> immediate service-value unset sequence once without resetting. Query count/role aggregates only (never identity values). Expected after each seed: exactly four matching Auth identities, four trigger-created profiles, three students, one teacher, four successful anon sign-ins, four own-profile RLS role matches, and no duplicate row. The generated-type diff and bundle scan are empty.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add tests/fixtures/users.ts scripts/supabase/seed-auth.ts tests/integration/auth-fixtures.test.ts scripts/test-db.sh package.json pnpm-lock.yaml
+git add .github/workflows/ci.yml docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md package.json pnpm-lock.yaml pnpm-workspace.yaml scripts/supabase scripts/test-db.sh supabase/migrations/20260714000100_grant_controlled_profile_role_admin.sql supabase/tests/002_profiles_service_role.test.sql tests/contracts/test-boundaries.test.ts tests/fixtures/users.ts tests/integration/auth-fixtures.test.ts tsconfig.node.json vitest.config.ts vitest.integration.config.ts
 git commit -m "test: seed real local Auth identities"
 ```
 
@@ -1213,7 +1232,7 @@ describe('AuthRepository with local Supabase', () => {
 
 - [ ] **Step 2: Verify the red state**
 
-Run: `pnpm test -- src/features/auth/api/auth-repository.integration.test.ts`
+Run: `pnpm test:integration src/features/auth/api/auth-repository.integration.test.ts`
 
 Expected: FAIL because `createAuthRepository` does not exist.
 
@@ -1239,7 +1258,7 @@ Implement `createAuthRepository(client)` with Supabase `signInWithPassword`, `si
 
 - [ ] **Step 4: Verify real integration**
 
-Run: `pnpm test -- src/features/auth/api/auth-repository.integration.test.ts && pnpm typecheck`
+Run: `pnpm test:integration src/features/auth/api/auth-repository.integration.test.ts && pnpm typecheck`
 
 Expected: both integration tests pass against local GoTrue and typecheck exits 0.
 
@@ -1443,7 +1462,7 @@ describe('ProfileRepository with RLS', () => {
 
 - [ ] **Step 2: Verify the red state**
 
-Run: `pnpm test -- src/features/profile/api/profile-repository.integration.test.ts src/features/auth/components/require-role.test.tsx`
+Run: `pnpm test:integration src/features/profile/api/profile-repository.integration.test.ts && pnpm test -- src/features/auth/components/require-role.test.tsx`
 
 Expected: FAIL because the profile repository, signed-in helper, and `RequireRole` do not exist.
 
@@ -1465,7 +1484,8 @@ Implement `getMyProfile()` using `.from('profiles').select('id, display_name, ro
 Run:
 
 ```bash
-pnpm test -- src/features/profile/api/profile-repository.integration.test.ts src/features/profile/components/profile-summary.test.tsx
+pnpm test:integration src/features/profile/api/profile-repository.integration.test.ts
+pnpm test -- src/features/profile/components/profile-summary.test.tsx
 pnpm test -- src/features/auth/components/require-role.test.tsx
 pnpm exec supabase test db
 PLAYWRIGHT_VIDEO=on pnpm playwright test tests/e2e/profile-vertical-slice.spec.ts --headed --trace on

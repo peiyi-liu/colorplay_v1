@@ -5,6 +5,7 @@ project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$project_root"
 
 evidence_directory='artifacts/acceptance/phase-1a-task-07/reports'
+auth_evidence_directory='artifacts/acceptance/phase-1b-task-10/reports'
 auth_health_report="$evidence_directory/auth-health.json"
 container_health_report="$evidence_directory/docker-container-health.txt"
 runtime_report="$evidence_directory/runtime-summary.txt"
@@ -13,12 +14,14 @@ db_test_directory='supabase/tests'
 db_test_file="$db_test_directory/.task-7-runtime-smoke.test.sql"
 
 cleanup() {
+  unset SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY
   rm -f "$db_test_file"
   rmdir "$db_test_directory" 2>/dev/null || true
 }
 trap cleanup EXIT
 
 mkdir -p "$evidence_directory"
+mkdir -p "$auth_evidence_directory"
 mkdir -p "$db_test_directory"
 rm -f \
   "$auth_health_report" \
@@ -30,6 +33,63 @@ rm -f \
 # that summary while retaining its exit code and built-in container health gate.
 pnpm exec supabase start >/dev/null 2>&1
 pnpm exec supabase db reset --local
+
+load_local_supabase_environment() {
+  local line name assignment value
+  local api_url_count=0
+  local anon_key_count=0
+  local service_role_key_count=0
+
+  SUPABASE_URL=''
+  SUPABASE_ANON_KEY=''
+  SUPABASE_SERVICE_ROLE_KEY=''
+
+  while IFS= read -r line; do
+    name="${line%%=*}"
+    assignment="${line#*=}"
+
+    case "$name" in
+      API_URL|ANON_KEY|SERVICE_ROLE_KEY)
+        [[ "$assignment" == \"*\" ]] || return 1
+        value="${assignment#\"}"
+        value="${value%\"}"
+        ;;
+      *)
+        continue
+        ;;
+    esac
+
+    case "$name" in
+      API_URL)
+        ((api_url_count += 1))
+        [[ "$api_url_count" -eq 1 ]] || return 1
+        [[ "$value" == 'http://127.0.0.1:54321' ]] || return 1
+        SUPABASE_URL="$value"
+        ;;
+      ANON_KEY)
+        ((anon_key_count += 1))
+        [[ "$anon_key_count" -eq 1 ]] || return 1
+        [[ "$value" =~ ^[A-Za-z0-9._-]+$ ]] || return 1
+        SUPABASE_ANON_KEY="$value"
+        ;;
+      SERVICE_ROLE_KEY)
+        ((service_role_key_count += 1))
+        [[ "$service_role_key_count" -eq 1 ]] || return 1
+        [[ "$value" =~ ^[A-Za-z0-9._-]+$ ]] || return 1
+        SUPABASE_SERVICE_ROLE_KEY="$value"
+        ;;
+    esac
+  done < <(pnpm exec supabase status -o env 2>/dev/null)
+
+  [[ "$api_url_count" -eq 1 ]] || return 1
+  [[ "$anon_key_count" -eq 1 ]] || return 1
+  [[ "$service_role_key_count" -eq 1 ]] || return 1
+}
+
+load_local_supabase_environment
+export SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY
+pnpm exec tsx scripts/supabase/seed-auth.ts
+unset SUPABASE_SERVICE_ROLE_KEY
 
 printf '%s\n' \
   'begin;' \
@@ -43,7 +103,7 @@ printf '%s\n' \
 
 pnpm exec supabase test db --local
 pnpm exec supabase test db --local "$db_test_file"
-pnpm exec vitest run tests/integration/supabase-health.test.ts --environment=node
+pnpm test:integration
 
 auth_http_status="$(
   curl \
@@ -87,9 +147,10 @@ done
 
 artifact_secret_pattern='(?i)(eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|sb_(secret|publishable)_[A-Za-z0-9_-]+|anon[_ -]?key|service[_ -]?role|jwt[_ -]?secret|database[_ -]?password|db[_ -]?password|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@)'
 if rg --hidden --glob '!artifact-secret-scan.txt' --pcre2 -q \
-  "$artifact_secret_pattern" "$evidence_directory"; then
+  "$artifact_secret_pattern" "$evidence_directory" "$auth_evidence_directory"; then
   printf 'findings=detected\ndetails=withheld\n' >"$secret_scan_report"
   exit 1
 fi
 
-printf 'findings=0\nscope=%s\n' "$evidence_directory" >"$secret_scan_report"
+printf 'findings=0\nscope=task-07-runtime-and-task-10-auth-evidence\n' \
+  >"$secret_scan_report"
