@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ColorPlay - 色彩原理遊戲式學習系統</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- SheetJS：Excel 題庫匯入核心 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- 引入 QRCode 生成核心元件（CDN） -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans TC', 'sans-serif'],
+                        logo: ['Comfortaa', 'cursive'],
+                    },
+                    colors: {
+                        brandYellow: '#FFEB04',
+                        brandDark: '#0f172a',
+                        cardBg: '#ffffff',
+                        bodyBg: '#f8fafc',
+                        accentGreen: '#10b981',
+                        accentRed: '#ef4444',
+                        blookPurple: '#7c3aed',
+                        blookBlue: '#2563eb'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f1f5f9; color: #0f172a; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(0.8); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-40px) scale(1.2); opacity: 0; }
+        }
+        .animate-float { animation: floatUp 1.2s ease-out forwards; }
+        .emoji-icon { display: inline-block; font-style: normal; line-height: 1; }
+        
+        @keyframes pulseSubtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        .animate-pulse-subtle { animation: pulseSubtle 2s infinite ease-in-out; }
+    </style>
+</head>
+<body class="font-sans min-h-screen flex flex-col no-scrollbar">
+
+    <!-- 自訂 Toast 提示通知容器 -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[9999] space-y-3 pointer-events-none"></div>
+
+    <!-- 教師密碼驗證彈窗 -->
+    <div id="password-modal" class="fixed inset-0 bg-brandDark/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-[999]">
+        <div class="bg-white border-2 border-brandYellow rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center space-x-3 text-brandDark">
+                <div class="w-10 h-10 rounded-lg bg-brandYellow/20 flex items-center justify-center text-lg"><span class="emoji-icon">🔒</span></div>
+                <div>
+                    <h4 class="font-bold text-lg">進入教師管理後台</h4>
+                    <p class="text-xs text-slate-500">此專區專供教師檢視數據與啟動課堂大賽</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <input type="password" id="teacher-password-input" placeholder="請輸入教師通行密碼" class="w-full bg-slate-50 border-2 border-slate-200 focus:border-brandYellow rounded-xl px-4 py-3 text-brandDark focus:outline-none text-center font-bold tracking-widest text-lg">
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closePasswordModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-sm font-bold text-slate-700">取消返回</button>
+                <button onclick="verifyTeacherPassword()" class="flex-1 py-2.5 bg-brandYellow hover:bg-[#e5d203] rounded-xl text-sm font-bold text-brandDark border border-brandDark/10 transition-all shadow-sm">驗證登入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 頂部導覽列 -->
+    <header class="bg-brandYellow text-brandDark sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center space-x-3 self-start sm:self-center">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-2xl shadow-md bg-white">
+                    <span class="emoji-icon">⚡</span>
+                </div>
+                <div>
+                    <span class="font-logo font-bold text-2xl tracking-wider text-brandDark">ColorPlay</span>
+                </div>
+            </div>
+
+            <nav class="flex space-x-2 w-full sm:w-auto">
+                <button id="btn-tab-game" onclick="switchMainTab('game')" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all bg-brandYellow text-brandDark">🎮 學習大廳</button>
+                <button id="btn-tab-solo" onclick="switchMainTab('solo')" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs md:text-sm font-medium bg-brandYellow text-brandDark transition-all">🚀 個人成就</button>
+                <button id="btn-tab-teacher" onclick="openTeacherTabTrigger()" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs md:text-sm font-medium bg-brandYellow text-brandDark transition-all">🔒 教師後台</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 主內容區 -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-3 md:p-6 text-slate-800">
+
+        <!-- 頁籤一：主要學習大廳 -->
+        <div id="tab-game" class="space-y-6">
+
+            <!-- 玩家狀態看板 -->
+            <div id="user-status-bar" class="hidden bg-white border-2 border-slate-200 rounded-3xl p-4 md:p-6 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm relative overflow-hidden">
+                <div class="flex items-center space-x-4 w-full md:w-auto z-10">
+                    <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center text-2xl md:text-3xl shadow-md flex-shrink-0 font-logo font-bold animate-pulse-subtle" id="blook-avatar">🦊</div>
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h2 id="display-nickname" class="text-lg md:text-xl font-bold text-brandDark">訪客玩家</h2>
+                            <button onclick="handleLogout()" class="px-2 py-0.5 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded border border-slate-200 text-[10px] font-bold text-slate-500 transition-all">✏️ 重置</button>
+                            <span id="conn-badge" class="px-2 py-0.5 text-[10px] rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-medium">📴 離線學習模式</span>
+                        </div>
+                        <div class="w-full sm:w-64 mt-2">
+                            <div class="flex justify-between text-[10px] font-bold text-slate-500 mb-0.5">
+                                <span id="display-level-text">LEVEL 1</span>
+                                <span id="display-xp-text">0 / 500 XP</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-slate-100 border border-slate-200 rounded-full overflow-hidden">
+                                <div id="bar-xp-progress" class="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4 bg-slate-900 text-white px-5 py-3 rounded-2xl border border-slate-800 w-full md:w-auto shadow-inner">
+                    <div class="text-center px-2">
+                        <span class="text-[9px] text-slate-400 block font-bold tracking-wider">💰 當前代幣 (Tokens)</span>
+                        <span id="stat-wallet-coins" class="text-base md:text-xl font-bold text-brandYellow font-mono">0</span>
+                    </div>
+                    <div class="w-px h-8 bg-slate-700"></div>
+                    <div class="text-center px-2">
+                        <span class="text-[9px] text-slate-400 block font-bold tracking-wider">🏆 總經驗值 (XP)</span>
+                        <span id="stat-total-score" class="text-base md:text-xl font-bold text-teal-400 font-mono">0</span>
+                    </div>
+                    <div class="w-px h-8 bg-slate-700"></div>
+                    <div class="text-center px-2">
+                        <span class="text-[9px] text-slate-400 block font-bold tracking-wider">⚡ 全體 PR</span>
+                        <span id="stat-pr" class="text-base md:text-xl font-bold text-indigo-400 font-mono">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 核心功能切換視圖區 -->
+            <div id="game-view-container" class="min-h-[440px] bg-white border-2 border-slate-200 rounded-3xl p-4 md:p-8 relative overflow-hidden shadow-sm">
+
+                <!-- 1. 登入面板 -->
+                <div id="view-login" class="max-w-md mx-auto py-8 md:py-12 text-center space-y-6 md:space-y-8">
+                    <div class="space-y-3">
+                        <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-md transform rotate-6">
+                            <span class="emoji-icon text-4xl">⚡</span>
+                        </div>
+                        <h3 class="text-2xl md:text-3xl font-bold text-brandDark">加入 ColorPlay 自主練習房</h3>
+                        <p class="text-slate-500 text-xs md:text-sm">輸入暱稱解鎖單人高回饋刷題模式！</p>
+                    </div>
+                    <div class="space-y-4">
+                        <input type="text" id="input-nickname" placeholder="輸入玩家暱稱..." class="w-full bg-slate-50 border-2 border-slate-200 focus:border-blookPurple rounded-xl px-4 py-3.5 text-brandDark text-center text-lg font-bold tracking-wide transition-all">
+                        <button onclick="handleLogin()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-4 rounded-xl shadow-md border-b-4 border-indigo-900 active:border-b-0">
+                            進入學習大廳 🚀
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. 主大廳 -->
+                <div id="view-lobby" class="hidden space-y-6 md:space-y-8">
+                    <div>
+                        <h3 class="text-xl md:text-2xl font-bold text-brandDark">色彩任務選擇大廳</h3>
+                        <p class="text-slate-500 text-xs md:text-sm mt-0.5">選取下方的色彩原理核心章節，展開微型知識點探鑽與挑戰！</p>
+                    </div>
+                    <div id="chapters-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 lg:gap-6"></div>
+                    <div class="border-t border-slate-200 pt-6 md:pt-8">
+                        <div class="flex items-center space-x-2 mb-4">
+                            <span class="emoji-icon text-lg">🏆</span>
+                            <h4 class="text-base md:text-lg font-bold text-brandDark">全班即時榮譽積分榜 (Top 10)</h4>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4" id="leaderboard-grid"></div>
+                    </div>
+                </div>
+
+                <!-- 2.5 小節細分地圖 -->
+                <div id="view-sections" class="hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 pb-4">
+                        <div>
+                            <span class="text-[10px] uppercase font-bold text-blookPurple tracking-widest font-mono" id="section-chapter-tag">Chapter 3</span>
+                            <h3 id="sections-title" class="text-lg md:text-2xl font-bold text-brandDark">小節任務探鑽選單</h3>
+                        </div>
+                        <button onclick="backToLobby()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">← 返回大廳</button>
+                    </div>
+                    <div class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl p-5 md:p-6 shadow-md flex flex-col md:flex-row justify-between items-center gap-4 border-b-4 border-indigo-900">
+                        <div class="space-y-1 text-center md:text-left">
+                            <h4 class="text-base md:text-xl font-bold flex items-center justify-center md:justify-start gap-2 text-brandYellow">👑 本章統合總部挑戰 (綜合大會考)</h4>
+                            <p class="text-xs text-slate-400">系統將結合本章所有微型知識點，隨機抽取 10 題進行高強度全能通關測試！</p>
+                        </div>
+                        <button id="btn-chapter-master-quiz" class="w-full md:w-auto px-6 py-3.5 bg-brandYellow text-brandDark rounded-xl font-bold text-xs md:text-sm transition-all shadow-md">🚀 啟動章節挑戰 (10題)</button>
+                    </div>
+                    <div id="sections-container" class="space-y-6"></div>
+                </div>
+
+                <!-- 3. 單元複習大廳 -->
+                <div id="view-review" class="hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 pb-4">
+                        <div><h3 id="review-title" class="text-lg font-bold text-brandDark">單元複習大廳</h3></div>
+                        <button onclick="backToSections()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700">← 返回小節</button>
+                    </div>
+                    <div id="review-cards-container" class="space-y-4 max-h-[360px] overflow-y-auto pr-1 no-scrollbar"></div>
+                </div>
+
+                <!-- 4. 遊戲挑戰區 -->
+                <div id="view-quiz" class="hidden space-y-4 md:space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center bg-slate-900 text-white px-4 py-3 rounded-2xl gap-3 shadow-md">
+                        <span id="quiz-progress-text" class="px-2.5 py-0.5 text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-lg font-bold font-mono">1 / 10</span>
+                        <div class="flex-grow max-w-none sm:max-w-md mx-0 sm:mx-4">
+                            <div class="flex justify-between text-[10px] text-slate-400 mb-1 font-medium">
+                                <span>⚡ 速度加成時鐘 (5秒內雙倍分數)</span>
+                                <span id="timer-text" class="font-mono font-bold text-brandYellow">20.0s</span>
+                            </div>
+                            <div class="h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                                <div id="timer-bar" class="h-full bg-gradient-to-r from-brandYellow to-amber-500 transition-all duration-100" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                        <div class="text-right"><span id="quiz-accumulated-score" class="font-bold text-brandYellow text-lg font-mono">0</span></div>
+                    </div>
+                    <div id="floating-effect-container" class="relative h-1 w-full"></div>
+                    <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 min-h-[140px] flex flex-col justify-center relative shadow-sm">
+                        <div class="absolute top-3 left-3 flex gap-1.5">
+                            <span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-md">子主題：<span id="quiz-subcategory-text">色彩要素</span></span>
+                            <span class="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-md">題號 <span id="quiz-qid-text">--</span></span>
+                        </div>
+                        <p id="quiz-question-text" class="text-base md:text-xl text-brandDark font-bold text-center leading-relaxed mt-4">題目加載中...</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4" id="quiz-options-grid"></div>
+                    <div id="mistake-review-card" class="hidden bg-red-50 border-2 border-red-200 rounded-2xl p-5 space-y-4 shadow-md">
+                        <div class="bg-white p-4 rounded-xl border border-red-100 shadow-inner"><p id="mistake-review-content" class="text-xs md:text-sm text-slate-700 leading-relaxed font-medium whitespace-pre-line"></p></div>
+                        <button onclick="proceedAfterMistake()" class="px-5 py-2.5 bg-gradient-to-r from-red-500 to-rose-500 text-white font-bold rounded-xl text-xs float-right shadow-md">我理解了，下一題挑戰 ➤</button>
+                    </div>
+                </div>
+
+                <!-- 5. 結算面板 -->
+                <div id="view-result" class="hidden space-y-6 text-center max-w-2xl mx-auto py-4">
+                    <h3 class="text-2xl font-bold text-brandDark">單元練習結算</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="bg-white border-2 border-slate-200 p-4 rounded-2xl"><span class="text-[10px] text-slate-400 block font-bold">答對率</span><span id="result-correct-count" class="font-bold text-brandDark font-mono">0 / 10</span></div>
+                        <div class="bg-white border-2 border-slate-200 p-4 rounded-2xl"><span class="text-[10px] text-slate-400 block font-bold">獲得代幣</span><span id="result-gained-coins" class="font-bold text-amber-500 font-mono">+0</span></div>
+                        <div class="bg-white border-2 border-slate-200 p-4 rounded-2xl"><span class="text-[10px] text-slate-400 block font-bold">獲得經驗值</span><span id="result-gained-xp" class="font-bold text-purple-600 font-mono">+0</span></div>
+                    </div>
+                    <div id="wrong-summary-box" class="text-left bg-slate-50 border rounded-2xl p-4 space-y-3"><div id="wrong-summary-list" class="space-y-3 max-h-[160px] overflow-y-auto no-scrollbar"></div></div>
+                    <div class="flex gap-3"><button onclick="backToSections()" class="px-5 py-3 bg-slate-100 font-bold rounded-xl text-xs flex-1 border">← 返回選單</button><button id="btn-submit-score" onclick="submitFinalScore()" class="px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl text-xs flex-1 shadow-md border-b-4 border-indigo-900 active:border-b-0">🏆 登錄積分，更新排行！</button></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🚀 個人成就分頁 -->
+        <div id="view-solo" class="hidden space-y-6">
+            <div class="bg-white border-2 border-slate-200 rounded-3xl p-4 md:p-6 shadow-sm space-y-6">
+                <div class="border-b border-slate-200 pb-4">
+                    <h3 class="text-xl font-bold text-brandDark flex items-center gap-2"><span>🚀</span> 挑戰者個人成就與 Blook 外觀庫</h3>
+                    <p class="text-xs text-slate-500 mt-1">使用刷題賺取的金幣解鎖稀有答題頭像，自主收集與視覺自訂！</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-gradient-to-br from-purple-500 to-indigo-600 text-white p-5 rounded-2xl shadow-sm flex items-center justify-between">
+                        <div><span class="text-xs text-purple-200 font-bold block">個人等級特權</span><span id="solo-level-title" class="text-xl md:text-2xl font-bold mt-1 block">Level 1 色彩新手</span></div>
+                        <span class="emoji-icon text-4xl">👑</span>
+                    </div>
+                    <div class="bg-slate-900 text-white p-5 rounded-2xl shadow-sm flex items-center justify-between border border-slate-800">
+                        <div><span class="text-xs text-slate-400 font-bold block">可支配代幣餘額</span><span id="solo-coin-balance" class="text-xl md:text-2xl font-bold text-brandYellow mt-1 block font-mono">0 Tokens</span></div>
+                        <span class="emoji-icon text-4xl">💰</span>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <h4 class="font-bold text-sm text-brandDark">✨ 已解鎖/可收集的 Blook 頭像庫：</h4>
+                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-3" id="blook-shop-grid"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 頁籤二：🔒 教師管理專區 (完美整合 Kahoot 章節選擇、啟動超連結與自動 QRCode) -->
+    <div id="tab-teacher" class="hidden space-y-6 max-w-7xl w-full mx-auto p-3 md:p-6">
+        <div class="bg-white border border-slate-200 rounded-3xl p-4 md:p-8 space-y-8 shadow-md">
+            <div class="border-b pb-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-brandDark">⚙️ 教師數據診斷與遊戲大廳整合後台</h2>
+                <button onclick="logoutTeacher()" class="px-3 py-1.5 bg-slate-100 rounded text-xs font-bold text-slate-600 border">🚪 退出後台</button>
+            </div>
+
+            <!-- 【修改完成：Kahoot! 多人即時課堂對戰連線專區】 -->
+            <div class="border-2 border-indigo-600/60 rounded-2xl p-6 bg-indigo-50/20 space-y-5">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-base font-bold text-indigo-900 flex items-center gap-1.5">🚀 Kahoot! 多人即時課堂對戰連線專區</h3>
+                    <span class="px-2.5 py-0.5 bg-indigo-600 text-white text-[10px] font-bold rounded-full">連線工具</span>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    請選取您目前想在課堂上開戰的<strong>色彩學章節</strong>，系統將即時產生專屬啟動按鈕。您可以直接點選按鈕前往對應的 Kahoot 房，或是讓學生直接手機掃描下方的動線 QRCode 快速登入。
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-white p-4 rounded-xl border border-indigo-100">
+                    <div class="w-full sm:w-auto">
+                        <label class="block text-xs font-bold text-slate-500 mb-1">▶️ 第一步：選擇開戰章節</label>
+                        <select id="kahoot-chapter-select" onchange="handleKahootChapterChange()" class="w-full sm:w-64 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-brandDark focus:outline-none focus:border-indigo-500">
+                            <option value="ch1">Chapter 1: 色彩與光源</option>
+                            <option value="ch2">Chapter 2: 色彩與生理</option>
+                            <option value="ch3" selected>Chapter 3: 色彩表示</option>
+                            <option value="ch4">Chapter 4: 色彩混色</option>
+                            <option value="ch5">Chapter 5: 色彩心理</option>
+                            <option value="ch6">Chapter 6: 色彩配色</option>
+                        </select>
+                    </div>
+                    <div class="flex-grow pt-4 sm:pt-0">
+                        <span class="block text-xs font-bold text-slate-500 mb-1">▶️ 第二步：點擊啟動或投影掃描</span>
+                        <a id="kahoot-launch-btn" href="#" target="_blank" class="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl text-xs shadow-md inline-flex items-center gap-2 hover:scale-[1.02] transition-transform">
+                            🚀 立即在新分頁啟動 Kahoot! 課堂對戰
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 自動 QRCode 渲染容器 -->
+                <div class="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-indigo-100 max-w-sm mx-auto text-center space-y-3 shadow-inner">
+                    <span class="text-xs font-bold text-indigo-900 block">📱 學生專用 Kahoot 掃描進入碼</span>
+                    <div id="kahoot-qrcode-box" class="p-2 border-2 border-slate-100 rounded-lg bg-white"></div>
+                    <p id="kahoot-url-text" class="text-[10px] text-slate-400 font-mono break-all max-w-[280px]"></p>
+                </div>
+            </div>
+
+            <!-- Excel 題庫管理區 -->
+            <div id="subview-question-bank" class="border-2 border-brandYellow/60 rounded-2xl p-5 bg-amber-50/20 space-y-4">
+                <div class="flex justify-between items-center"><h3 class="text-base font-bold">📗 自訂題庫管理</h3><span id="db-source-badge" class="px-2.5 py-1 text-[10px] rounded-full bg-slate-100 font-bold">目前使用：內建題庫</span></div>
+                <div id="db-stats-summary" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-sans"></div>
+                <div class="flex gap-3"><button onclick="downloadExcelTemplate()" class="flex-1 py-2.5 bg-white border rounded-xl text-xs font-bold">⬇️ 下載範本</button><button onclick="triggerExcelImport()" class="flex-1 py-2.5 bg-brandYellow rounded-xl text-xs font-bold">📥 匯入題庫</button><button onclick="restoreBuiltinDB()" class="flex-1 py-2.5 bg-white border rounded-xl text-xs font-bold text-red-500">↩️ 還原內建</button></div>
+                <input type="file" id="excel-file-input" accept=".xlsx,.xls" class="hidden" onchange="handleExcelFileSelected(event)">
+            </div>
+            
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-slate-50 p-4 rounded-xl border"><span>總作答人次</span><span id="teacher-stat-attempts" class="text-xl font-bold block font-mono">0</span></div>
+                    <div class="bg-slate-50 p-4 rounded-xl border"><span>班級平均分數</span><span id="teacher-stat-avg" class="text-xl font-bold block font-mono">0 分</span></div>
+                    <div class="bg-slate-50 p-4 rounded-xl border"><span>最常犯錯子主題</span><span id="teacher-stat-worst-cat" class="text-sm font-bold text-red-500 block">--</span></div>
+                </div>
+                <div class="border rounded-2xl p-4 bg-slate-50 space-y-4">
+                    <div class="flex justify-between items-center"><h3 class="text-sm font-bold">📊 題庫錯誤率診斷排行</h3><select id="teacher-unit-select" onchange="updateAnalyticsUI()" class="bg-white border rounded px-2 py-1 text-xs font-bold"></select></div>
+                    <div id="teacher-question-stats-list" class="space-y-4 max-h-[300px] overflow-y-auto no-scrollbar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 核心 JavaScript 控制中樞 -->
+    <script>
+        const safeStorage = {
+            _data: {},
+            getItem(key) { try { return localStorage.getItem(key); } catch (e) { return this._data[key] || null; } },
+            setItem(key, value) { try { localStorage.setItem(key, value); } catch (e) { this._data[key] = String(value); } },
+            removeItem(key) { try { localStorage.removeItem(key); } catch (e) { delete this._data[key]; } }
+        };
+
+        const DB_CACHE_KEY = 'colorplay_custom_db_v2';
+        const EXCEL_SHEET_CHAPTERS = '章節';
+        const EXCEL_SHEET_REVIEWS = '複習卡';
+        const EXCEL_SHEET_QUESTIONS = '題庫';
+
+        // 🔗 【設定：請在此處填入你每一章在 Kahoot! 上做好的專屬連結】
+        const KAHOOT_LINKS = {
+            "ch1": "https://kahoot.it/?pin=CHAPTER1_YOUR_LINK", 
+            "ch2": "https://kahoot.it/?pin=CHAPTER2_YOUR_LINK",
+            "ch3": "https://kahoot.it/challenge/02738910", // 範例連結
+            "ch4": "https://kahoot.it/?pin=CHAPTER4_YOUR_LINK",
+            "ch5": "https://kahoot.it/?pin=CHAPTER5_YOUR_LINK",
+            "ch6": "https://kahoot.it/?pin=CHAPTER6_YOUR_LINK"
+        };
+
+        let qrCodeInstance = null; // 儲存 QRCode 實例
+
+        let isTeacherAuthenticated = false;
+        let speedTicketsEarned = 0; 
+        let correctQuizCount = 0;
+        let customDB = null;
+        let customDBMeta = null;
+        let mockLeaderboard = [];
+        let userWallet = { coins: 0, xp: 0, level: 1, unlockedBlooks: ["🦊"], activeBlook: "🦊" };
+        let localAttempts = [];
+
+        let rawScore = parseInt(safeStorage.getItem('psy_total_score'));
+        let currentUser = { nickname: safeStorage.getItem('psy_nickname') || '', totalScore: isNaN(rawScore) ? 0 : rawScore, rank: '--', pr: '--' };
+        let currentQuizChapter = ""; let currentQuizSection = ""; let currentQuizSubcategory = "";
+
+        let currentQuiz = { questions: [], currentIdx: 0, accumulatedScore: 0, timer: null, timeRemaining: 20.0, startTime: null, wrongQuestions: [] };
+
+        const ACADEMIC_DB = {
+            "Chapter 3: 色彩表示": {
+                id: 3,
+                description: "涵蓋色彩分類（有彩色與無彩色）、色彩三要素（色相、明度、彩度）及命名表示法。",
+                sections: {
+                    "3-1 色彩三要素與色名的表示": {
+                        subcategories: {
+                            "色彩的分類": {
+                                review: [{ title: "🎨 有彩色與無彩色的區別", content: "1. 有彩色包括純色、一般色、特別色。\n2. 無彩色指黑、白及各種灰色，只有明度。" }],
+                                questions: [
+                                    { qid: "3-1-01", q: "純色加入黑色所得的色彩稱為？", a: ["明色", "中間色", "濁色", "暗色"], correct: 3, explanation: "純色加黑會降低其明度與彩度，所得之色彩統稱為「暗色」。" },
+                                    { qid: "3-1-02", q: "明色與暗色因為不含灰色，所以又稱為？", a: ["清色", "純色", "濁色", "補色"], correct: 0, explanation: "純色僅加入白或僅加入黑，因不含灰色成分，統稱為「清色」。" }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        const BLOOKS_DB = [
+            { emoji: "🦊", name: "小狐狸", cost: 0 }, { emoji: "🐱", name: "招財貓", cost: 100 },
+            { emoji: "🐸", name: "旅行蛙", cost: 250 }, { emoji: "🦉", name: "智慧鴞", cost: 500 },
+            { emoji: "🦁", name: "原色獅", cost: 1000 }, { emoji: "🦄", name: "彩虹馬", cost: 2000 }
+        ];
+
+        const ALL_CHAPTERS = [
+            { id: 1, name: "Chapter 1: 色彩與光源", desc: "探討可見光光譜、光源發光原理。" },
+            { id: 2, name: "Chapter 2: 色彩與生理", desc: "研究人眼視網膜、錐狀與桿狀細胞。" },
+            { id: 3, name: "Chapter 3: 色彩表示", desc: "探討色彩分類、色彩三要素與符號命名表示法。" },
+            { id: 4, name: "Chapter 4: 色彩混色", desc: "研究色光三原色加色混合、色料三原色減色混合。" },
+            { id: 5, name: "Chapter 5: 色彩心理", desc: "探討色彩對情緒之冷暖感、重量感、空間感。" },
+            { id: 6, name: "Chapter 6: 色彩配色", desc: "學習對比配色、調和配色與日本PCCS配色實務技巧。" }
+        ];
+
+        window.onload = function() { initSystem(); };
+
+        function initSystem() {
+            loadWalletAndDB(); renderBlookShop(); renderLeaderboardUI();
+            const statusBar = document.getElementById('user-status-bar');
+            if (currentUser.nickname) { if (statusBar) statusBar.classList.remove('hidden'); showLobby(); } 
+            else { if (statusBar) statusBar.classList.add('hidden'); showView('view-login'); }
+        }
+
+        function loadWalletAndDB() {
+            const cachedDB = safeStorage.getItem(DB_CACHE_KEY);
+            if (cachedDB) { try { const parsed = JSON.parse(cachedDB); if (parsed && parsed.db) { customDB = parsed.db; customDBMeta = parsed.meta; } } catch (e) {} }
+            const cachedWallet = safeStorage.getItem('colorplay_blook_wallet');
+            if (cachedWallet) { try { const p = JSON.parse(cachedWallet); if (p) { userWallet.coins = p.coins || 0; userWallet.xp = p.xp || 0; userWallet.unlockedBlooks = p.unlockedBlooks || ["🦊"]; userWallet.activeBlook = p.activeBlook || "🦊"; } } catch (e) {} }
+            mockLeaderboard = [{ nickname: "色彩學大師", score: 1450 }, { nickname: "曼塞爾傳人", score: 1320 }, { nickname: "牛頓的朋友", score: 1180 }];
+            saveWalletState();
+        }
+
+        function getActiveDB() { return customDB || ACADEMIC_DB; }
+        function isCustomDBActive() { return customDB !== null; }
+        function getChapterKeyById(chapterId) { const db = getActiveDB(); for (let key in db) { if (db[key].id === chapterId) return key; } return null; }
+        function chapterHasContent(chapterKey) {
+            const db = getActiveDB(); const ch = db[chapterKey]; if (!ch || !ch.sections) return false;
+            for (let s in ch.sections) { for (let sub in ch.sections[s].subcategories) { if ((ch.sections[s].subcategories[sub].questions || []).length > 0) return true; } }
+            return false;
+        }
+
+        function getDBStats() {
+            const db = getActiveDB(); let chapters = 0, sections = 0, subs = 0, questions = 0, reviews = 0;
+            for (let chKey in db) {
+                chapters++; const secs = db[chKey].sections || {};
+                for (let secKey in secs) {
+                    sections++; const subcats = secs[secKey].subcategories || {};
+                    for (let subKey in subcats) { subs++; questions += (subcats[subKey].questions || []).length; reviews += (subcats[subKey].review || []).length; }
+                }
+            }
+            return { chapters, sections, subs, questions, reviews };
+        }
+
+        function saveWalletState() {
+            safeStorage.setItem('colorplay_blook_wallet', JSON.stringify(userWallet));
+            if (document.getElementById('stat-wallet-coins')) document.getElementById('stat-wallet-coins').innerText = userWallet.coins.toLocaleString();
+            if (document.getElementById('solo-coin-balance')) document.getElementById('solo-coin-balance').innerText = userWallet.coins.toLocaleString() + " Tokens";
+            if (document.getElementById('stat-total-score')) document.getElementById('stat-total-score').innerText = userWallet.xp.toLocaleString();
+            if (document.getElementById('blook-avatar')) document.getElementById('blook-avatar').innerText = userWallet.activeBlook;
+
+            const calcLvl = Math.floor(userWallet.xp / 500) + 1; userWallet.level = calcLvl;
+            const currentLvlXp = userWallet.xp % 500; const pct = Math.min(100, Math.round((currentLvlXp / 500) * 100));
+
+            if (document.getElementById('display-level-text')) document.getElementById('display-level-text').innerText = `LEVEL ${userWallet.level}`;
+            if (document.getElementById('display-xp-text')) document.getElementById('display-xp-text').innerText = `${currentLvlXp} / 500 XP`;
+            if (document.getElementById('bar-xp-progress')) document.getElementById('bar-xp-progress').style.width = `${pct}%`;
+        }
+
+        function renderBlookShop() {
+            const grid = document.getElementById('blook-shop-grid'); if (!grid) return; grid.innerHTML = '';
+            BLOOKS_DB.forEach(bk => {
+                const isUnlocked = userWallet.unlockedBlooks.includes(bk.emoji);
+                const isActive = userWallet.activeBlook === bk.emoji;
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border-2 text-center flex flex-col justify-between items-center bg-slate-50 ${isActive ? 'border-purple-600 bg-purple-50/40 ring-2 ring-purple-400' : 'border-slate-200'}`;
+                card.innerHTML = `
+                    <span class="text-4xl block">${bk.emoji}</span><span class="text-xs font-bold text-slate-700 block mt-2">${bk.name}</span>
+                    <div class="w-full mt-3 font-sans">
+                        ${isUnlocked ? `<button class="w-full py-1 rounded-lg text-[10px] font-bold ${isActive ? 'bg-purple-600 text-white' : 'bg-white border text-slate-700'}" onclick="equipBlook('${bk.emoji}')">${isActive ? '裝配中' : '選用'}</button>` : `<button class="w-full py-1 bg-slate-900 text-brandYellow rounded-lg text-[10px] font-bold" onclick="buyBlook('${bk.emoji}', ${bk.cost})">🪙 ${bk.cost}</button>`}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function equipBlook(emoji) { userWallet.activeBlook = emoji; showToast(`已更換外觀為: ${emoji}`); saveWalletState(); renderBlookShop(); }
+        function buyBlook(emoji, cost) { if (userWallet.coins < cost) { showToast("錢包代幣不足！", "warning"); return; } userWallet.coins -= cost; userWallet.unlockedBlooks.push(emoji); userWallet.activeBlook = emoji; showToast(`🎉 成功獲得外觀 ${emoji}`); saveWalletState(); renderBlookShop(); }
+
+        function switchMainTab(tab) {
+            document.getElementById('tab-game').classList.toggle('hidden', tab !== 'game');
+            document.getElementById('view-solo').classList.toggle('hidden', tab !== 'solo');
+            document.getElementById('tab-teacher').classList.toggle('hidden', tab !== 'teacher');
+            
+            const btnGame = document.getElementById('btn-tab-game');
+            const btnSolo = document.getElementById('btn-tab-solo');
+            const btnTeacher = document.getElementById('btn-tab-teacher');
+            const styleActive = "flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all bg-brandYellow text-brandDark shadow-[0_0_0_2px_rgba(255,255,255,0.95),0_0_0_4px_rgba(15,23,42,0.14)]";
+            const styleNormal = "flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs md:text-sm font-medium bg-brandYellow text-brandDark transition-all";
+
+            if (btnGame) btnGame.className = tab === 'game' ? styleActive : styleNormal;
+            if (btnSolo) btnSolo.className = tab === 'solo' ? styleActive : styleNormal;
+            if (btnTeacher) btnTeacher.className = tab === 'teacher' ? styleActive : styleNormal;
+
+            if (tab === 'game' && currentUser.nickname) showLobby();
+            if (tab === 'teacher') { renderTeacherDashboard(); handleKahootChapterChange(); }
+        }
+
+        function showView(viewId) { ['view-login', 'view-lobby', 'view-sections', 'view-review', 'view-quiz', 'view-result'].forEach(v => { document.getElementById(v).classList.add('hidden'); }); document.getElementById(viewId).classList.remove('hidden'); }
+
+        function showLobby() {
+            document.getElementById('display-nickname').innerText = currentUser.nickname;
+            const grid = document.getElementById('chapters-grid'); if (!grid) return; grid.innerHTML = '';
+            ALL_CHAPTERS.forEach(ch => {
+                const card = document.createElement('div'); const chapterKey = getChapterKeyById(ch.id); const isActive = chapterKey && chapterHasContent(chapterKey);
+                const displayName = chapterKey || ch.name;
+                if (isActive) {
+                    card.className = "bg-white border-2 border-brandYellow rounded-2xl p-5 flex flex-col justify-between hover:shadow-lg transition-all cursor-pointer group shadow-sm relative";
+                    card.onclick = () => openChapterDetails(chapterKey);
+                    card.innerHTML = `<div class="space-y-3"><div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-yellow-300 via-orange-400 to-rose-500 flex items-center justify-center text-2xl shadow-md"><span class="emoji-icon">🎨</span></div><div><div class="flex items-center gap-1.5 font-sans"><h4 class="text-base font-bold text-brandDark group-hover:text-amber-600 transition-colors">${displayName}</h4><span class="px-2 py-0.5 text-[9px] font-bold rounded-full bg-emerald-500 text-white shadow-sm">已開放</span></div><p class="text-xs text-slate-500 mt-2 leading-relaxed">${getActiveDB()[chapterKey].description}</p></div></div><div class="mt-6 flex justify-end"><span class="text-xs font-bold text-slate-700 flex items-center gap-1 group-hover:text-amber-600 transition-colors">展開小節任務 ➤</span></div>`;
+                } else {
+                    let gradientBg = "from-blue-100/50 to-indigo-100/50 border-blue-200"; let lockIconGradient = "from-blue-400 to-indigo-500";
+                    if (ch.id === 2) { gradientBg = "from-purple-100/50 to-pink-100/50 border-purple-200"; lockIconGradient = "from-purple-400 to-pink-500"; }
+                    if (ch.id === 4) { gradientBg = "from-emerald-100/50 to-teal-100/50 border-emerald-200"; lockIconGradient = "from-emerald-400 to-teal-500"; }
+                    if (ch.id === 5) { gradientBg = "from-rose-100/50 to-orange-100/50 border-rose-200"; lockIconGradient = "from-rose-400 to-orange-500"; }
+                    if (ch.id === 6) { gradientBg = "from-cyan-100/50 to-sky-100/50 border-cyan-200"; lockIconGradient = "from-cyan-400 to-sky-500"; }
+                    card.className = `bg-gradient-to-br ${gradientBg} border rounded-2xl p-5 flex flex-col justify-between opacity-80 relative select-none cursor-pointer transition-all hover:scale-[1.01]`;
+                    card.onclick = () => showToast("此單元尚未解鎖，請由教師後台匯入題庫。", "warning");
+                    card.innerHTML = `<div class="space-y-3"><div class="w-10 h-10 rounded-xl bg-gradient-to-tr ${lockIconGradient} flex items-center justify-center text-xl shadow-md"><span class="emoji-icon">🔒</span></div><div><div class="flex items-center gap-1.5 font-sans"><h4 class="text-base font-bold text-slate-500">${displayName}</h4><span class="px-2 py-0.5 text-[9px] font-bold rounded-full bg-slate-300 text-slate-600">鎖定中</span></div><p class="text-xs text-slate-400 mt-2 leading-relaxed">${ch.desc}</p></div></div><div class="mt-6 flex justify-end text-xs text-slate-400 font-bold">敬請期待</div>`;
+                }
+                grid.appendChild(card);
+            });
+            renderLeaderboardUI(); showView('view-lobby');
+        }
+
+        function openChapterDetails(chapterName) {
+            currentQuizChapter = chapterName;
+            document.getElementById('section-chapter-tag').innerText = chapterName; document.getElementById('sections-title').innerText = chapterName + " - 小節任務";
+            document.getElementById('btn-chapter-master-quiz').onclick = () => startChapterMasterQuiz(chapterName);
+            const container = document.getElementById('sections-container'); container.innerHTML = '';
+            const sections = getActiveDB()[chapterName].sections;
+            for (let secName in sections) {
+                const secCard = document.createElement('div'); secCard.className = "bg-slate-50 p-5 border border-slate-200 rounded-2xl space-y-4 shadow-sm";
+                secCard.innerHTML = `<div class="flex items-center space-x-2 border-b border-slate-200 pb-3"><span class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-md">📂</span><h4 class="font-bold text-brandDark">${secName}</h4></div>`;
+                const subGrid = document.createElement('div'); subGrid.className = "grid grid-cols-1 md:grid-cols-2 gap-4";
+                const subs = sections[secName].subcategories;
+                for (let subName in subs) {
+                    const subCard = document.createElement('div'); subCard.className = "bg-white border border-slate-200 p-4 rounded-xl hover:border-brandYellow transition-all flex flex-col justify-between space-y-3 shadow-sm";
+                    subCard.innerHTML = `<div><span class="text-[10px] uppercase font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500 tracking-wider">MICRO KNOWLEDGE</span><h5 class="text-sm font-bold text-brandDark mt-0.5">${subName}</h5></div><button class="w-full py-2 bg-slate-50 hover:bg-slate-100 rounded-lg text-xs font-bold text-slate-700 transition-all border border-slate-200">📖 溫書觀念卡</button>`;
+                    subCard.querySelector('button').onclick = () => openReviewHall(chapterName, secName, subName); subGrid.appendChild(subCard);
+                }
+                secCard.appendChild(subGrid); container.appendChild(secCard);
+            }
+            showView('view-sections');
+        }
+
+        function openReviewHall(chapter, section, subcategory) {
+            currentQuizChapter = chapter; currentQuizSection = section; currentQuizSubcategory = subcategory;
+            document.getElementById('review-title').innerText = subcategory + " - 溫書重點";
+            const container = document.getElementById('review-cards-container'); container.innerHTML = '';
+            const subObj = getActiveDB()[chapter].sections[section].subcategories[subcategory];
+            subObj.review.forEach((r, idx) => {
+                const d = document.createElement('div'); d.className = "bg-white border p-5 rounded-xl text-sm space-y-2 shadow-sm";
+                d.innerHTML = `<div class="font-bold text-brandDark flex items-center"><span class="w-6 h-6 rounded bg-gradient-to-br from-blue-400 to-indigo-500 text-white font-bold flex items-center justify-center text-xs mr-2 shadow-sm">${idx+1}</span>${r.title}</div><p class="text-slate-600 leading-relaxed whitespace-pre-line bg-slate-50 p-3 rounded-lg border">${r.content}</p>`;
+                container.appendChild(d);
+            });
+            showView('view-review');
+        }
+
+        function startChapterMasterQuiz(chapterName) {
+            currentQuiz.currentIdx = 0; currentQuiz.accumulatedScore = 0; currentQuiz.wrongQuestions = []; speedTicketsEarned = 0; correctQuizCount = 0;
+            let allQ = []; const sections = getActiveDB()[chapterName].sections;
+            for (let s in sections) { for (let sub in sections[s].subcategories) { sections[s].subcategories[sub].questions.forEach(q => allQ.push({ ...q, subcategory: sub })); } }
+            currentQuiz.questions = allQ.sort(() => Math.random() - 0.5).slice(0, 10);
+            document.getElementById('quiz-accumulated-score').innerText = '0'; loadQuestion(); showView('view-quiz');
+        }
+
+        function loadQuestion() {
+            if (currentQuiz.currentIdx >= currentQuiz.questions.length) { showResultPanel(); return; }
+            const qData = currentQuiz.questions[currentQuiz.currentIdx];
+            document.getElementById('quiz-progress-text').innerText = `${currentQuiz.currentIdx + 1} / ${currentQuiz.questions.length}`;
+            document.getElementById('quiz-question-text').innerText = qData.q; document.getElementById('quiz-subcategory-text').innerText = qData.subcategory; document.getElementById('quiz-qid-text').innerText = qData.qid;
+            const grid = document.getElementById('quiz-options-grid'); grid.innerHTML = '';
+            const gradients = ["from-red-400 to-rose-500", "from-blue-400 to-indigo-500", "from-emerald-400 to-teal-500", "from-purple-400 to-fuchsia-500"];
+            qData.a.forEach((ans, idx) => {
+                if(!ans) return;
+                const b = document.createElement('button'); b.id = `opt-btn-${idx}`;
+                b.className = "w-full bg-white border border-slate-200 hover:border-brandYellow hover:bg-slate-50 text-left px-5 py-4 rounded-xl text-slate-700 font-medium transition-all flex items-center justify-between group shadow-sm text-xs md:text-sm";
+                b.innerHTML = `<span class="flex items-center"><span class="w-7 h-7 rounded-lg bg-gradient-to-br ${gradients[idx]} text-white flex items-center justify-center text-xs font-bold mr-3 border border-white/10 shadow-sm">${String.fromCharCode(65+idx)}</span>${ans}</span><span class="opt-status emoji-icon text-slate-300 group-hover:text-amber-500">❔</span>`;
+                b.onclick = () => handleAnswerSelect(idx, qData.correct); grid.appendChild(b);
+            });
+            startTimer();
+        }
+
+        function handleAnswerSelect(selected, correct) {
+            clearInterval(currentQuiz.timer); const bnts = document.getElementById('quiz-options-grid').querySelectorAll('button'); bnts.forEach(b => b.disabled = true);
+            const qData = currentQuiz.questions[currentQuiz.currentIdx]; const clickedBtn = document.getElementById(`opt-btn-${selected}`);
+            if (selected === correct) {
+                correctQuizCount++; if(clickedBtn) { clickedBtn.className = "w-full bg-emerald-500 text-white text-left px-5 py-4 rounded-xl transition-all flex items-center justify-between shadow-md text-xs md:text-sm"; clickedBtn.querySelector('.opt-status').textContent = '✔️'; }
+                let gained = 100; if ((20.0 - currentQuiz.timeRemaining) <= 5.0) { gained += 50; speedTicketsEarned++; showFloatingText("⚡ 極速答對 +150!"); } else { showFloatingText("+100"); }
+                currentQuiz.accumulatedScore += gained; document.getElementById('quiz-accumulated-score').innerText = currentQuiz.accumulatedScore;
+                setTimeout(() => { currentQuiz.currentIdx++; loadQuestion(); }, 1200);
+            } else {
+                if(clickedBtn) { clickedBtn.className = "w-full bg-red-500 text-white text-left px-5 py-4 rounded-xl transition-all flex items-center justify-between shadow-md text-xs md:text-sm"; clickedBtn.querySelector('.opt-status').textContent = '✖'; }
+                currentQuiz.wrongQuestions.push({ qid: qData.qid, q: qData.q, yourAnswer: qData.a[selected], correctAnswer: qData.a[correct], explanation: qData.explanation });
+                document.getElementById('mistake-review-content').innerText = qData.explanation; document.getElementById('mistake-review-card').classList.remove('hidden');
+            }
+        }
+
+        function proceedAfterMistake() { currentQuiz.currentIdx++; loadQuestion(); }
+
+        function startTimer() {
+            clearInterval(currentQuiz.timer); currentQuiz.timeRemaining = 20.0;
+            currentQuiz.timer = setInterval(() => {
+                currentQuiz.timeRemaining -= 0.1;
+                const bar = document.getElementById('timer-bar'); const txt = document.getElementById('timer-text');
+                if (bar) bar.style.width = `${(currentQuiz.timeRemaining / 20.0) * 100}%`; if (txt) txt.innerText = `${Math.max(0, currentQuiz.timeRemaining).toFixed(1)}s`;
+                if (currentQuiz.timeRemaining <= 0) { clearInterval(currentQuiz.timer); handleTimeOut(); }
+            }, 100);
+        }
+
+        function handleTimeOut() {
+            const qData = currentQuiz.questions[currentQuiz.currentIdx];
+            currentQuiz.wrongQuestions.push({ qid: qData.qid, q: qData.q, yourAnswer: "未作答 (逾時)", correctAnswer: qData.a[qData.correct], explanation: qData.explanation });
+            document.getElementById('mistake-review-content').innerText = qData.explanation; document.getElementById('mistake-review-card').classList.remove('hidden');
+        }
+
+        function showFloatingText(textStr) { const container = document.getElementById('floating-effect-container'); if (!container) return; const el = document.createElement('div'); el.className = "absolute right-6 top-[-30px] font-bold text-slate-800 text-sm md:text-lg animate-float"; el.innerText = textStr; container.appendChild(el); setTimeout(() => el.remove(), 1200); }
+
+        function showResultPanel() {
+            showView('view-result'); const total = currentQuiz.questions.length; const wrong = currentQuiz.wrongQuestions.length; const correct = total - wrong;
+            const gainedTokens = (correct * 15) + (speedTicketsEarned * 10); const gainedXP = (correct * 50) + (speedTicketsEarned * 25);
+            document.getElementById('result-correct-count').innerText = `${correct} / ${total}`; document.getElementById('result-gained-coins').innerText = `+${gainedTokens}`; document.getElementById('result-gained-xp').innerText = `+${gainedXP}`;
+            userWallet.coins += gainedTokens; userWallet.xp += gainedXP; saveWalletState();
+
+            localAttempts.push({ nickname: currentUser.nickname, unit: currentQuizChapter, score: userWallet.xp, correctCount: correct, totalCount: total, wrongQuestions: currentQuiz.wrongQuestions.map(w => ({ qid: w.qid, q: w.q, subcategory: currentQuizSubcategory || "基本觀念" })) });
+            safeStorage.setItem('psy_local_attempts', JSON.stringify(localAttempts));
+            const list = document.getElementById('wrong-summary-list'); list.innerHTML = '';
+            if (wrong === 0) { list.innerHTML = `<div class="text-center py-4 text-emerald-600 font-bold text-xs md:text-sm">👑 完美全對！</div>`; } 
+            else {
+                currentQuiz.wrongQuestions.forEach(w => {
+                    const d = document.createElement('div'); d.className = "p-3 bg-white border rounded-xl text-xs space-y-1 shadow-sm";
+                    d.innerHTML = `<p class="font-bold text-slate-800"><span class="text-red-500 font-bold">誤</span> [${w.qid || 'Q'}] ${w.q}</p><p class="text-slate-500">選擇: <span class="text-red-400 line-through">${w.yourAnswer}</span> | 正解: <span class="text-emerald-600 font-bold">${w.correctAnswer}</span></p><p class="text-slate-600 bg-slate-50 p-2 rounded border mt-1">💡 解析: ${w.explanation}</p>`;
+                    list.appendChild(d);
+                });
+            }
+        }
+
+        function submitFinalScore() { showToast("榮譽積分登錄成功！", "success"); showLobby(); }
+
+        function renderLeaderboardUI() {
+            const container = document.getElementById('leaderboard-grid'); if (!container) return; container.innerHTML = '';
+            let list = [...mockLeaderboard]; if(currentUser.nickname && !list.find(p => p.nickname === currentUser.nickname)) { list.push({ nickname: currentUser.nickname, score: userWallet.xp }); }
+            list.sort((a,b) => b.score - a.score).forEach((p, idx) => {
+                const isMe = p.nickname === currentUser.nickname; const d = document.createElement('div');
+                d.className = "p-3 rounded-xl border flex justify-between items-center transition-all " + (isMe ? 'bg-brandYellow/20 border-brandYellow shadow-sm font-bold animate-pulse-subtle' : 'bg-white border-slate-200');
+                let badge = "bg-slate-100 text-slate-500"; if(idx === 0) badge = "bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-bold"; if(idx === 1) badge = "bg-slate-300 text-slate-800";
+                d.innerHTML = `<div class="flex items-center space-x-3"><span class="w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold ${badge}">${idx+1}</span><span class="text-xs md:text-sm text-slate-700">${p.nickname} ${isMe ? '(您)' : ''}</span></div><span class="text-xs font-mono font-bold text-slate-800">${p.score} XP</span>`;
+                container.appendChild(d);
+            });
+        }
+
+        function handleLogin() { const nick = document.getElementById('input-nickname').value.trim(); if (!nick) { showToast("請輸入挑戰者暱稱！", "warning"); return; } currentUser.nickname = nick; safeStorage.setItem('psy_nickname', nick); document.getElementById('user-status-bar').classList.remove('hidden'); showLobby(); }
+        function handleLogout() { safeStorage.removeItem('psy_nickname'); currentUser.nickname = ''; document.getElementById('user-status-bar').classList.add('hidden'); showView('view-login'); }
+        function openTeacherTabTrigger() { if (isTeacherAuthenticated) { switchMainTab('teacher'); } else { document.getElementById('password-modal').classList.remove('hidden'); } }
+        function closePasswordModal() { document.getElementById('password-modal').classList.add('hidden'); }
+        function verifyTeacherPassword() { if (document.getElementById('teacher-password-input').value.trim() === "color123") { isTeacherAuthenticated = true; closePasswordModal(); switchMainTab('teacher'); } else { showToast("密碼錯誤！", "error"); } }
+        function logoutTeacher() { isTeacherAuthenticated = false; switchMainTab('game'); }
+
+        function handleExcelFileSelected(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array' });
+                    const rawChapters = XLSX.utils.sheet_to_json(workbook.Sheets[EXCEL_SHEET_CHAPTERS]);
+                    const rawReviews = XLSX.utils.sheet_to_json(workbook.Sheets[EXCEL_SHEET_REVIEWS]);
+                    const rawQuestions = XLSX.utils.sheet_to_json(workbook.Sheets[EXCEL_SHEET_QUESTIONS]);
+                    const newDB = {};
+                    rawChapters.forEach(row => { const num = parseInt(row['章節編號']); if (isNaN(num)) return; newDB[`Chapter ${num}: ${row['章節名稱']}`] = { id: num, description: row['章節描述'] || '', sections: {} }; });
+                    rawReviews.forEach(row => {
+                        const num = parseInt(row['章節編號']); const sec = row['小節']; const sub = row['子主題']; if (isNaN(num) || !sec || !sub) return;
+                        let k = Object.keys(newDB).find(x => newDB[x].id === num); if (!k) { k = `Chapter ${num}: 自訂單元`; newDB[k] = { id: num, description: '', sections: {} }; }
+                        if (!newDB[k].sections[sec]) newDB[k].sections[sec] = { subcategories: {} }; if (!newDB[k].sections[sec].subcategories[sub]) newDB[k].sections[sec].subcategories[sub] = { review: [], questions: [] };
+                        newDB[k].sections[sec].subcategories[sub].review.push({ title: row['卡片標題'] || '導學要點', content: row['卡片內容'] || '' });
+                    });
+                    let qCount = 0;
+                    rawQuestions.forEach(row => {
+                        const num = parseInt(row['章節編號']); const sec = row['小節'] || '預設小節'; const sub = row['子主題'] || '基本觀念'; if (isNaN(num) || !row['題目']) return;
+                        let k = Object.keys(newDB).find(x => newDB[x].id === num); if (!k) { k = `Chapter ${num}: 自訂單元`; newDB[k] = { id: num, description: '', sections: {} }; }
+                        if (!newDB[k].sections[sec]) newDB[k].sections[sec] = { subcategories: {} }; if (!newDB[k].sections[sec].subcategories[sub]) newDB[k].sections[sec].subcategories[sub] = { review: [], questions: [] };
+                        let ansIdx = 0; const correctStr = String(row['正解']).trim().toUpperCase();
+                        if (correctStr === 'B' || correctStr === '2') ansIdx = 1; if (correctStr === 'C' || correctStr === '3') ansIdx = 2; if (correctStr === 'D' || correctStr === '4') ansIdx = 3;
+                        newDB[k].sections[sec].subcategories[sub].questions.push({ qid: row['題號'] || '3-1-01', q: row['題目'], a: [row['選項A'] || '', row['選項B'] || '', row['選項C'] || '', row['選項D'] || ''], correct: ansIdx, explanation: row['解析'] || '無子主題解析描述' });
+                        qCount++;
+                    });
+                    customDB = newDB; customDBMeta = { filename: file.name, totalQuestions: qCount };
+                    safeStorage.setItem(DB_CACHE_KEY, JSON.stringify({ db: customDB, meta: customDBMeta }));
+                    showToast(`🎉 成功匯入題庫！解鎖 ${qCount} 題知識點！`, "success"); renderDBSourceStatus();
+                } catch (err) { showToast("匯入出錯！", "error"); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ==========================================
+        // 🎯 【全新加載：Kahoot 聯動與 QRCode 即時演算模組】
+        // ==========================================
+        function handleKahootChapterChange() {
+            const select = document.getElementById('kahoot-chapter-select');
+            if(!select) return;
+            const chosenValue = select.value;
+
+            // 抓取你綁定的 Kahoot 網址
+            const targetUrl = KAHOOT_LINKS[chosenValue] || "https://kahoot.it";
+            
+            // 1. 同步刷新按鈕的超連結
+            const launchBtn = document.getElementById('kahoot-launch-btn');
+            if(launchBtn) launchBtn.href = targetUrl;
+
+            // 2. 同步刷新純文字文字連結顯示
+            const urlText = document.getElementById('kahoot-url-text');
+            if(urlText) urlText.innerText = `🔗 連線網址: ${targetUrl}`;
+
+            // 3. 核心演算：清除舊的 QRCode 並即時生成全新高畫質 QRCode
+            const qrBox = document.getElementById('kahoot-qrcode-box');
+            if(qrBox) {
+                qrBox.innerHTML = ''; // 清空舊的 QRCode
+                
+                // 調用 QRCodeJS 渲染引擎
+                qrCodeInstance = new QRCode(qrBox, {
+                    text: targetUrl,
+                    width: 160,
+                    height: 160,
+                    colorDark : "#0f172a", // 對齊 brandDark 顏色
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H // 高度容錯率，在大螢幕被反光遮擋也能掃到
+                });
+            }
+        }
+
+        function renderDBSourceStatus() {
+            const badge = document.getElementById('db-source-badge'); if (badge) badge.innerText = isCustomDBActive() ? `🌟 自訂：${customDBMeta.filename}` : `📗 目前使用：內建題庫`;
+        }
+        function renderTeacherDashboard() { document.getElementById('teacher-stat-attempts').innerText = localAttempts.length; renderDBSourceStatus(); }
+        function triggerExcelImport() { document.getElementById('excel-file-input').click(); }
+        function restoreBuiltinDB() { customDB = null; safeStorage.removeItem(DB_CACHE_KEY); showToast("已恢復為系統原廠題庫！", "success"); renderDBSourceStatus(); }
+        function downloadExcelTemplate() { showToast("範本下載成功 (模擬)", "success"); }
+        function backToLobby() { showLobby(); }
+        function backToSections() { openChapterDetails(currentQuizChapter); }
+
+        function updateAnalyticsUI() {
+            const container = document.getElementById('teacher-question-stats-list'); if(!container) return; container.innerHTML = '';
+            const selectedUnit = document.getElementById('teacher-unit-select').value; if(!selectedUnit) return;
+            let questions = []; const sections = getActiveDB()[selectedUnit].sections;
+            for (let s in sections) { for (let sub in sections[s].subcategories) { sections[s].subcategories[sub].questions.forEach(q => questions.push({ ...q, subcategory: sub })); } }
+            questions.forEach(q => {
+                const el = document.createElement('div'); el.className = "p-3.5 bg-white border border-slate-200 rounded-xl shadow-sm text-xs font-sans";
+                el.innerHTML = `<div class="flex justify-between font-medium"><span><strong class="text-slate-400">[${q.qid}]</strong> ${q.q}</span><span class="px-2 py-0.5 bg-slate-100 rounded text-slate-500 font-bold">${q.subcategory}</span></div>`;
+                container.appendChild(el);
+            });
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container'); if (!container) return;
+            const toast = document.createElement('div'); let bgClass = 'bg-white border-slate-200 text-slate-700 shadow-md'; let icon = 'ℹ️';
+            if (type === 'success') { bgClass = 'bg-emerald-50 border-emerald-200 text-emerald-800 shadow-md'; icon = '✅'; }
+            else if (type === 'error') { bgClass = 'bg-red-50 border-red-200 text-red-800 shadow-md'; icon = '❌'; }
+            else if (type === 'warning') { bgClass = 'bg-amber-50 border-amber-200 text-amber-800 shadow-md'; icon = '⚠️'; }
+            toast.className = `flex items-center space-x-3 px-5 py-4 rounded-xl border backdrop-blur-md transition-all duration-300 max-w-sm ${bgClass}`;
+            toast.innerHTML = `<span class="emoji-icon text-lg flex-shrink-0">${icon}</span><span class="text-sm font-bold leading-relaxed">${message}</span>`;
+            container.appendChild(toast); setTimeout(() => { toast.remove(); }, 4000);
+        }
+    </script>
+</body>
+</html>

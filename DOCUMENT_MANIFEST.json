@@ -1,0 +1,106 @@
+{
+  "package_name": "ColorPlay React + Supabase Development Specification Package",
+  "package_version": "2.0.0",
+  "generated_at": "2026-07-13T21:36:44+08:00",
+  "markdown_files": 18,
+  "acceptance_criteria": 78,
+  "unique_acceptance_criteria": 78,
+  "ui_acceptance_criteria": 15,
+  "total_bytes_before_manifest": 131981,
+  "real_device_required_criteria": [
+    "AC-UI-010",
+    "AC-UI-012"
+  ],
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "size_bytes": 11002,
+      "sha256": "93a0ea02facfa41a6641faf505fb77e99ed0ee20f93147892c2448952febe46c"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 2042,
+      "sha256": "a71bc71a3b0797293adcfd0a25408e56cc6427f519048552daa58455a0053c2c"
+    },
+    {
+      "path": "acceptance/ACCEPTANCE_CRITERIA.md",
+      "size_bytes": 32044,
+      "sha256": "56a9d8e5c99287e870bead82c0158d147809da14c9b2fe796efcc6fbc25b14a2"
+    },
+    {
+      "path": "acceptance/EVIDENCE_TEMPLATE.md",
+      "size_bytes": 5994,
+      "sha256": "644f5ad4613c10d6a3abb41aef7f2bd35ddd9d9b7a8003a8d12ed74ad795d15e"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-07-13-colorplay-platform-design.md",
+      "size_bytes": 2912,
+      "sha256": "eb7ff69710e869f2a974f37b280932682edac891109d21c212a02cd714bfed36"
+    },
+    {
+      "path": "spec/00-project-charter.md",
+      "size_bytes": 5051,
+      "sha256": "1d082c275ba7a6cce3473c7f8c7b8f09ac6db1d53f9e3be6a92072a8d217d3b2"
+    },
+    {
+      "path": "spec/01-user-roles-and-flows.md",
+      "size_bytes": 5993,
+      "sha256": "7f1b0a23c6e47cf63fe370720782efd5c6b64352b1d3728ce48243f3fe190408"
+    },
+    {
+      "path": "spec/02-system-architecture.md",
+      "size_bytes": 5915,
+      "sha256": "f3424034a18a1c67376c8f68b7deb8b32aba522a6b335b6ec43c845f728e40f2"
+    },
+    {
+      "path": "spec/03-data-model-and-rls.md",
+      "size_bytes": 7254,
+      "sha256": "5bf548ab490d62a56d9fb4ba8e1abbdc74ab51970d1c820607022f4835fd48e4"
+    },
+    {
+      "path": "spec/04-security-and-privacy.md",
+      "size_bytes": 5212,
+      "sha256": "f0eb6af3733f4de0928b9bc7dd30fdda190dd8282692c31dc7f0b57c5ad4f6bd"
+    },
+    {
+      "path": "spec/05-game-mechanics.md",
+      "size_bytes": 5631,
+      "sha256": "fec77868e47214a444e284664b5976bd133e80363eb299cbf8ab35b09a77dcff"
+    },
+    {
+      "path": "spec/06-content-and-question-bank.md",
+      "size_bytes": 4530,
+      "sha256": "8a76bafee2bf184b50eb94ffcd1b2e9ddab90ec1a00a3365e633a22b34293239"
+    },
+    {
+      "path": "spec/07-ui-visual-system.md",
+      "size_bytes": 16913,
+      "sha256": "27ebb0d3af61c6482e9a03ded84d1dce7a24ee29ee12b674b6648efd67b4347a"
+    },
+    {
+      "path": "spec/08-testing-and-evidence.md",
+      "size_bytes": 11037,
+      "sha256": "43ce3bcae112ae1ea0221561901a9bab1add7804c150c8b6e58661b58bec9ba3"
+    },
+    {
+      "path": "spec/09-nonfunctional-requirements.md",
+      "size_bytes": 3595,
+      "sha256": "f5e69707492564f752caae61e734a9bcac4be880552d849ac9fac2bd4e0fd0af"
+    },
+    {
+      "path": "spec/10-migration-roadmap.md",
+      "size_bytes": 3108,
+      "sha256": "eba4acb1a7591fbd3cc94bb467953ad5f48f37199a8d30866163015b907602a3"
+    },
+    {
+      "path": "spec/11-reference-standards.md",
+      "size_bytes": 2473,
+      "sha256": "491b01ce7c40cb12f6475a088764b734761bb292be723bfea4cd9683dbe56773"
+    },
+    {
+      "path": "spec/README.md",
+      "size_bytes": 1275,
+      "sha256": "88b230282529cbc80d2bd820a0132b904350f2aa1f4c921fd8beea253621ce26"
+    }
+  ]
+}
