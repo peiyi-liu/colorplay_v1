@@ -1,0 +1,202 @@
+# 教學內容、題庫與匯入規格
+
+## 1. 內容層級
+
+```text
+Course
+└─ Chapter
+   └─ Section
+      └─ Subtopic
+         ├─ Review Card
+         └─ Question
+```
+
+第一個 course：色彩原理。
+
+初始章節：
+
+1. 色彩與光源
+2. 色彩與生理
+3. 色彩表示
+4. 色彩混色
+5. 色彩心理
+6. 色彩配色
+
+只有 `published` 且含有效內容的章節對學生顯示可學習。
+
+## 2. Review Card
+
+欄位：
+
+- title：1–80 字元。
+- body：1–5,000 字元。
+- media：0–3 個。
+- media alt text：圖片必填，1–200 字元。
+- sort order。
+- status／version。
+
+可接受格式：純文字、受限 Markdown、圖片、色票資料。MVP 不允許任意 HTML iframe。
+
+## 3. Question types
+
+### MVP 必須：`single_choice`
+
+- 2–4 個非空選項。
+- 恰一個正確選項。
+- prompt 1–1,000 字元。
+- explanation 1–2,000 字元。
+- stable code 唯一於 course，例如 `3-1-01`。
+- duration 5–120 秒，MVP UI 預設 20。
+
+### 後續：
+
+- `drag_match`
+- `color_sort`
+- `color_mixer`
+- `palette_builder`
+
+未完成對應 runner、authoring UI、資料模型與驗收前，不得只把 question_type 加入下拉選單宣稱支援。
+
+## 4. 內容狀態與版本
+
+- Draft：只有教師可見。
+- Published：學生可見，需通過 validation。
+- Archived：新 session 不再抽取，歷史仍可讀。
+
+Published question 若修改以下任一欄位，必須建立新 version：
+
+- prompt
+- options
+- correct answer
+- explanation
+- duration
+- media affecting meaning
+
+只改 typo 是否新版本由內容治理規則決定；若可能影響答案解釋，必須新版本。
+
+## 5. 發布驗證
+
+單選題發布必須全部通過：
+
+- stable code 存在且格式合法。
+- prompt 非空。
+- 2–4 個非空選項。
+- 正確選項恰一個。
+- explanation 非空。
+- subtopic、section、chapter 存在。
+- media 可存取且 alt text 完整。
+- 無重複選項（trim、大小寫正規化後）。
+- 無明顯 `<script>` 或未允許 HTML。
+
+失敗時顯示逐欄位錯誤；不得自動忽略不合法列並宣稱成功。
+
+## 6. XLSX 範本
+
+必須提供可真實下載的 `.xlsx`，至少三工作表：
+
+### `章節`
+
+- 章節編號
+- 章節名稱
+- 章節描述
+- 顯示順序
+
+### `複習卡`
+
+- 章節編號
+- 小節
+- 子主題
+- 卡片標題
+- 卡片內容
+- 圖片網址（選填）
+- 替代文字（圖片時必填）
+
+### `題庫`
+
+- 章節編號
+- 小節
+- 子主題
+- 題號
+- 題型
+- 題目
+- 選項A
+- 選項B
+- 選項C
+- 選項D
+- 正解
+- 解析
+- 作答秒數
+- 狀態
+
+範本包含說明列與至少 2 筆合法示例，但匯入時可選擇忽略示例列。
+
+## 7. 匯入流程
+
+### Upload
+
+- 檢查副檔名、MIME、magic bytes、大小。
+- 建立 `content_imports` 記錄，狀態 `uploaded`。
+
+### Validate
+
+產生：
+
+- total rows
+- valid rows
+- error rows
+- warning rows
+- 每列 sheet、row number、field、code、message
+- 預覽將建立／更新的物件
+
+### Confirm
+
+教師明確確認後才 commit。若有 error rows，預設禁止 commit；warning 可確認後繼續。
+
+### Commit
+
+- 單一 transaction。
+- 支援 dry-run。
+- commit 後保存 import report 與 created IDs。
+- 重送同一 commit request 不得重複建立。
+
+## 8. 正解解析
+
+接受：
+
+- A/B/C/D
+- 1/2/3/4
+
+解析後必須確認該選項存在且非空。任何其他值為 error，不得預設成 A。
+
+## 9. 題庫抽題
+
+- 只抽 `published`、符合版本與 scope 的題目。
+- 不抽 archived／draft。
+- 隨機化在後端執行。
+- Session 建立後 frozen。
+- 若題數不足，回傳實際題數與明確 reason；UI 顯示真實數量。
+
+## 10. 教師編輯器
+
+- 有 unsaved changes 提示。
+- 表單 validation 即時顯示，但 server validation 最終決定。
+- 正解設定需清楚，不只靠顏色。
+- 預覽 student view 不得暴露資料庫內部欄位。
+- 發布需二次確認並顯示版本影響。
+
+## 11. 媒體
+
+- 圖片格式：PNG、JPEG、WebP；MVP 不接受 SVG 上傳。
+- 單檔上限 2 MiB，最大 4096×4096。
+- 上傳後產生安全檔名與 metadata。
+- Storage policy：學生只讀被發布內容；教師只可寫自己授權範圍。
+
+## 12. 內容品質
+
+程式驗收只驗證結構與流程，不能替代教學內容審查。正式發布前教師需確認：
+
+- 題目有唯一合理答案。
+- 解析與教材一致。
+- 用語符合課程與年級。
+- 色彩圖片在可接受螢幕差異下仍具教學合理性。
+- 不使用色覺作為唯一辨識線索。
