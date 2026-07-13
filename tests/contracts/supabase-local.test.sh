@@ -7,6 +7,8 @@ cd "$project_root"
 test -f supabase/config.toml
 test -f supabase/seed.sql
 test -x scripts/test-db.sh
+test -f scripts/supabase/load-local-environment.sh
+test -f tests/contracts/local-environment-parser.test.sh
 test -f tests/integration/supabase-health.test.ts
 
 rg -q '^project_id = "colorplay"$' supabase/config.toml
@@ -21,6 +23,8 @@ rg -q '^\[auth\]$' supabase/config.toml
 rg -q '^begin;$' supabase/seed.sql
 rg -q '^commit;$' supabase/seed.sql
 ! rg -qi '^[[:space:]]*(insert|update|delete|copy)[[:space:]]' supabase/seed.sql
+
+bash tests/contracts/local-environment-parser.test.sh
 
 node <<'NODE'
 const { readFileSync } = require('node:fs');
@@ -97,6 +101,7 @@ for (const requiredText of [
   'pnpm exec supabase start >/dev/null 2>&1',
   'pnpm exec supabase db reset --local',
   'pnpm exec supabase test db --local',
+  'source "$project_root/scripts/supabase/load-local-environment.sh"',
   'pnpm test:integration',
   'artifact_secret_pattern=',
 ]) {
@@ -118,46 +123,21 @@ if (runner.split(statusCommand).length !== 2) {
 }
 requireText(
   runner,
-  `done < <(${statusCommand})`,
-  'Status output must be consumed only by in-process parsing',
+  [
+    'load_local_supabase_environment \\',
+    `  < <(${statusCommand})`,
+  ].join('\n'),
+  'Status output must feed the helper through process substitution',
 );
-requireText(
-  runner,
-  'API_URL|ANON_KEY|SERVICE_ROLE_KEY)',
-  'Status parser must strictly allowlist three assignments',
-);
-requireText(
-  runner,
-  "[[ \"$value\" == 'http://127.0.0.1:54321' ]]",
-  'Status parser must require the exact local API URL',
-);
-if ((runner.match(/\[\[ "\$value" =~ \^\[A-Za-z0-9\._-\]\+\$ \]\]/gu) ?? []).length !== 2) {
-  fail('Status parser must validate both key character sets');
-}
-for (const counter of [
-  'api_url_count',
-  'anon_key_count',
-  'service_role_key_count',
-]) {
-  requireText(
-    runner,
-    `[[ "$${counter}" -eq 1 ]]`,
-    `Status parser must require exactly one ${counter} assignment`,
-  );
+if (
+  (runner.match(/\bload_local_supabase_environment\b/gu) ?? []).length !== 1
+) {
+  fail('Database runner must call the environment helper exactly once');
 }
 if (
-  /^[\t ]*(?:echo|printf|tee|cat)\b[^\n]*(?:API_URL|ANON_KEY|SERVICE_ROLE_KEY|SUPABASE_URL|SUPABASE_ANON_KEY|SUPABASE_SERVICE_ROLE_KEY)/mu.test(
-    runner,
-  )
+  (runner.match(/load-local-environment\.sh/gu) ?? []).length !== 1
 ) {
-  fail('Database runner must not print status or Supabase values');
-}
-if (
-  /supabase status[^\n]*(?:\|[\t ]*(?:tee|cat)|artifacts|\/tmp|>{1,2}[\t ]*[^/])/u.test(
-    runner,
-  )
-) {
-  fail('Database runner must not persist status output');
+  fail('Database runner must source the environment helper exactly once');
 }
 
 const seedIndex = runner.indexOf('pnpm exec tsx scripts/supabase/seed-auth.ts');

@@ -1069,7 +1069,9 @@ git commit -m "feat: add profile schema and RLS"
 
 **Files:**
 - Create: `tests/contracts/test-boundaries.test.ts`
+- Create: `tests/contracts/local-environment-parser.test.sh`
 - Create: `tests/fixtures/users.ts`
+- Create: `scripts/supabase/load-local-environment.sh`
 - Create: `scripts/supabase/local-environment.ts`
 - Create: `scripts/supabase/seed-auth.ts`
 - Create: `tests/integration/auth-fixtures.test.ts`
@@ -1083,6 +1085,7 @@ git commit -m "feat: add profile schema and RLS"
 - Consumes: local `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and process-only `SUPABASE_SERVICE_ROLE_KEY` read from `supabase status -o env` through a strict `API_URL` / `ANON_KEY` / `SERVICE_ROLE_KEY` allowlist without echoing, redirecting, or persisting status output.
 - Produces: `TEST_USERS` with the four approved local-only email/password records; separate `TEST_USER_ROLES` with teacher=`teacher` and the remaining fixtures=`student`; validated `LocalAdminEnvironment`; idempotent `seedAuthUsers(): Promise<void>`; real Auth sessions and own-profile RLS reads.
 - Test boundary: `pnpm test` and `pnpm test:coverage` use `vitest.config.ts` and exclude `tests/integration/**` plus `**/*.integration.test.*`; `pnpm test:integration` uses Node-only `vitest.integration.config.ts` and includes both `tests/integration/**/*.test.ts` and future `src/**/*.integration.test.{ts,tsx}`.
+- Credential parser boundary: source-only `load_local_supabase_environment` accepts status lines on stdin, atomically sets three validated caller-shell variables in memory, and produces no stdout, stderr, or files. `scripts/test-db.sh` sources and calls it once through process substitution so assignments remain in the caller shell.
 
 **Specs / acceptance:** `spec/03-data-model-and-rls.md` section 9; `spec/04-security-and-privacy.md` sections 2-3; `AC-ENV-002` identity-seed checkpoint, `AC-AUTH-001`, `AC-ENV-004`.
 
@@ -1207,6 +1210,31 @@ Expected: all three commands pass against the real local stack. Stop Supabase an
 ```bash
 git add tests/contracts/supabase-local.test.sh docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md
 git commit -m "test: update Supabase boundary contract"
+```
+
+- [ ] **Step 9: Replace brittle parser-source assertions with dynamic isolation proof**
+
+Create `tests/contracts/local-environment-parser.test.sh` before extracting the runtime parser. Run it first and preserve the expected RED: exit 1 because the sourceable helper does not exist and the parser is still embedded in the database runner.
+
+Extract only `load_local_supabase_environment` into `scripts/supabase/load-local-environment.sh`. It reads stdin directly, validates into local temporary values, and commits caller variables only after exact URL, key-character, and one-of-each count checks pass. It must emit no output and create no file. The runtime sources it once and invokes it through input redirection from the single suppressed status process; pipelines, subshell assignment, `eval`, tracing, logging, and persistence remain forbidden.
+
+The parser contract runs valid, duplicate, unquoted, invalid-URL, invalid-key, and unallowlisted-only synthetic cases from fresh temporary working directories. It captures stdout/stderr outside those directories, proves both are empty, proves no file appears, checks exact valid in-memory assignment, and checks invalid cases fail without committing values. A trap removes every synthetic capture on success or failure. A small static guard rejects output commands and redirections inside the helper; dynamic behavior is authoritative.
+
+Update `tests/contracts/supabase-local.test.sh` to run this parser contract, require exactly one runtime source/call, require the single suppressed process-substitution status feed, and retain service-unset ordering, GoTrue, reset, integration, database, and secret-scan gates. Remove variable-name/count regexes that duplicate the dynamic parser test.
+
+Run the parser RED/GREEN cycle, then:
+
+```bash
+bash tests/contracts/supabase-local.test.sh
+pnpm exec vitest run tests/contracts/test-boundaries.test.ts
+pnpm test:db
+```
+
+Stop Supabase and repeat unit, coverage, static, build, and bundle scans before committing.
+
+```bash
+git add scripts/supabase/load-local-environment.sh scripts/test-db.sh tests/contracts/local-environment-parser.test.sh tests/contracts/supabase-local.test.sh docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md
+git commit -m "test: prove local credential parser silence"
 ```
 
 ### Task 11: Implement the typed Auth repository against Supabase

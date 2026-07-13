@@ -3,6 +3,7 @@ set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$project_root"
+source "$project_root/scripts/supabase/load-local-environment.sh"
 
 evidence_directory='artifacts/acceptance/phase-1a-task-07/reports'
 auth_evidence_directory='artifacts/acceptance/phase-1b-task-10/reports'
@@ -34,59 +35,8 @@ rm -f \
 pnpm exec supabase start >/dev/null 2>&1
 pnpm exec supabase db reset --local
 
-load_local_supabase_environment() {
-  local line name assignment value
-  local api_url_count=0
-  local anon_key_count=0
-  local service_role_key_count=0
-
-  SUPABASE_URL=''
-  SUPABASE_ANON_KEY=''
-  SUPABASE_SERVICE_ROLE_KEY=''
-
-  while IFS= read -r line; do
-    name="${line%%=*}"
-    assignment="${line#*=}"
-
-    case "$name" in
-      API_URL|ANON_KEY|SERVICE_ROLE_KEY)
-        [[ "$assignment" == \"*\" ]] || return 1
-        value="${assignment#\"}"
-        value="${value%\"}"
-        ;;
-      *)
-        continue
-        ;;
-    esac
-
-    case "$name" in
-      API_URL)
-        ((api_url_count += 1))
-        [[ "$api_url_count" -eq 1 ]] || return 1
-        [[ "$value" == 'http://127.0.0.1:54321' ]] || return 1
-        SUPABASE_URL="$value"
-        ;;
-      ANON_KEY)
-        ((anon_key_count += 1))
-        [[ "$anon_key_count" -eq 1 ]] || return 1
-        [[ "$value" =~ ^[A-Za-z0-9._-]+$ ]] || return 1
-        SUPABASE_ANON_KEY="$value"
-        ;;
-      SERVICE_ROLE_KEY)
-        ((service_role_key_count += 1))
-        [[ "$service_role_key_count" -eq 1 ]] || return 1
-        [[ "$value" =~ ^[A-Za-z0-9._-]+$ ]] || return 1
-        SUPABASE_SERVICE_ROLE_KEY="$value"
-        ;;
-    esac
-  done < <(pnpm exec supabase status -o env 2>/dev/null)
-
-  [[ "$api_url_count" -eq 1 ]] || return 1
-  [[ "$anon_key_count" -eq 1 ]] || return 1
-  [[ "$service_role_key_count" -eq 1 ]] || return 1
-}
-
-load_local_supabase_environment
+load_local_supabase_environment \
+  < <(pnpm exec supabase status -o env 2>/dev/null)
 export SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY
 pnpm exec tsx scripts/supabase/seed-auth.ts
 unset SUPABASE_SERVICE_ROLE_KEY
