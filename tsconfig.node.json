@@ -24,6 +24,7 @@
     "playwright.config.ts",
     "tests/contracts/**/*.ts",
     "tests/e2e/**/*.ts",
+    "tests/integration/**/*.ts",
     "vite.config.ts",
     "vitest.config.ts"
   ]

@@ -762,11 +762,11 @@ git commit -m "test: add honest acceptance evidence harness"
 - Create: `scripts/test-db.sh`
 - Create: `tests/contracts/supabase-local.test.sh`
 - Create: `tests/integration/supabase-health.test.ts`
-- Modify: `package.json`, `pnpm-lock.yaml`
+- Modify: `package.json`, `pnpm-lock.yaml`, `tsconfig.node.json`
 
 **Interfaces:**
 - Consumes: Docker, Supabase CLI, ports defined in `supabase/config.toml`.
-- Produces: `LocalSupabaseRuntime` at API `http://127.0.0.1:54321` and DB `54322`; real Auth health endpoint; `pnpm test:db` command.
+- Produces: `LocalSupabaseRuntime` at API `http://127.0.0.1:54321` and DB `54322`; real Auth health endpoint; `pnpm test:db` command; typed integration-test ownership through the Node TypeScript project.
 
 **Specs / acceptance:** `spec/02-system-architecture.md` section 6; `spec/03-data-model-and-rls.md` section 9; `spec/08-testing-and-evidence.md` section 2; `spec/11-reference-standards.md` Supabase local-development rule; `AC-ENV-002` stack/reset checkpoint.
 
