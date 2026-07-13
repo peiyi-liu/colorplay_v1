@@ -18,15 +18,38 @@ const evidenceDirectories = [
   'videos',
 ];
 const evidenceStatus = 'NOT VERIFIED';
+const allowedSupabaseEnvironments = new Set(['local', 'staging']);
+const ambiguousCredentialSegments = new Set([
+  'apikey',
+  'auth',
+  'key',
+  'oauth',
+  'privatekey',
+  'pwd',
+  'secretkey',
+  'servicekey',
+]);
+const credentialTermPattern =
+  /(?:authori[sz]ation|credential|jwt|passphrase|passwd|password|secret|token)/u;
 const emailPattern = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/iu;
 const bearerPattern = /\bBearer\s+\S+/iu;
 const jwtPattern = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/u;
-const credentialAssignmentPattern =
-  /\b(?:password|passwd|secret|service[_ -]?role|anon[_ -]?key|api[_ -]?key|access[_ -]?token|refresh[_ -]?token|authorization)\b\s*(?:=|:)\s*(?:"[^"]+"|'[^']+'|\S+)/iu;
-const credentialFlagPattern =
-  /(?:^|\s)--?(?:(?:client[-_]?)?secret|pass(?:word|wd)?|service[-_]?role|(?:anon|api)[-_]?key|(?:(?:access|refresh)[-_]?)?token|auth(?:orization)?)(?:\s+|=)(?:"[^"]+"|'[^']+'|\S+)/iu;
+const namedAssignmentPattern =
+  /(?:^|\s)([A-Za-z_][A-Za-z0-9_.-]*)\s*(?:=|:)\s*(?:"[^"]*"|'[^']*'|\S+)/giu;
+const namedCliOptionPattern =
+  /(?:^|\s)--?([A-Za-z][A-Za-z0-9_.-]*)(?:\s*(?:=|:)\s*|\s+)(?:"[^"]*"|'[^']*'|\S+)/giu;
 const environmentAssignmentPattern =
-  /(?:^|\s)[A-Z][A-Z0-9_]*\s*=\s*(?:"[^"]*"|'[^']*'|\S+)/u;
+  /(?:^|\s)(?:export\s+)?[A-Za-z_][A-Za-z0-9_]*\s*=\s*(?:"[^"]*"|'[^']*'|\S+)/iu;
+const rawSecretPatterns = [
+  /\bsb_secret_[A-Za-z0-9_-]+\b/iu,
+  /\bsk_(?:live|test)_[A-Za-z0-9_-]+\b/u,
+  /\bsk-(?:proj-)?[A-Za-z0-9_-]+\b/u,
+  /\bgh[pousr]_[A-Za-z0-9_-]+\b/u,
+  /\bgithub_pat_[A-Za-z0-9_-]+\b/u,
+  /\bxox[baprs]-[A-Za-z0-9-]+\b/u,
+];
+const versionIdentifierPattern = /^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$/u;
+const maximumVersionIdentifierLength = 128;
 const cliOptions = new Set([
   '--app-url',
   '--dirty-worktree',
@@ -59,15 +82,43 @@ function assertIsoTimestamp(value, fieldName) {
   }
 }
 
+function normalizeCredentialNameSegments(value) {
+  return value
+    .replaceAll(/([a-z0-9])([A-Z])/gu, '$1-$2')
+    .toLowerCase()
+    .split(/[^a-z0-9]+/u)
+    .filter(Boolean);
+}
+
+function isCredentialBearingName(value) {
+  const segments = normalizeCredentialNameSegments(value);
+  return segments.some(
+    (segment, index) =>
+      credentialTermPattern.test(segment) ||
+      ambiguousCredentialSegments.has(segment) ||
+      (segment === 'service' && segments[index + 1] === 'role'),
+  );
+}
+
+function containsCredentialSyntax(value) {
+  for (const match of value.matchAll(namedCliOptionPattern)) {
+    if (isCredentialBearingName(match[1])) return true;
+  }
+  for (const match of value.matchAll(namedAssignmentPattern)) {
+    if (isCredentialBearingName(match[1])) return true;
+  }
+  return false;
+}
+
 function assertNoSensitiveValue(value) {
   if (typeof value === 'string') {
     if (
       emailPattern.test(value) ||
       bearerPattern.test(value) ||
       jwtPattern.test(value) ||
-      credentialAssignmentPattern.test(value) ||
-      credentialFlagPattern.test(value) ||
-      environmentAssignmentPattern.test(value)
+      containsCredentialSyntax(value) ||
+      environmentAssignmentPattern.test(value) ||
+      rawSecretPatterns.some((pattern) => pattern.test(value))
     ) {
       throw new Error('EVIDENCE_SENSITIVE_VALUE');
     }
@@ -80,10 +131,36 @@ function assertNoSensitiveValue(value) {
   }
 
   if (value && typeof value === 'object') {
-    for (const nestedValue of Object.values(value)) {
+    for (const [key, nestedValue] of Object.entries(value)) {
+      if (isCredentialBearingName(key)) {
+        throw new Error('EVIDENCE_SENSITIVE_VALUE');
+      }
       assertNoSensitiveValue(nestedValue);
     }
   }
+}
+
+function normalizeVersionIdentifier(value, fieldName) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'string') {
+    throw new Error(`EVIDENCE_INVALID_${fieldName}`);
+  }
+  assertNoSensitiveValue(value);
+  if (
+    value.length === 0 ||
+    value.length > maximumVersionIdentifierLength ||
+    !versionIdentifierPattern.test(value)
+  ) {
+    throw new Error(`EVIDENCE_INVALID_${fieldName}`);
+  }
+  return value;
+}
+
+function normalizeSupabaseEnvironment(value) {
+  if (typeof value !== 'string' || !allowedSupabaseEnvironments.has(value)) {
+    throw new Error('EVIDENCE_INVALID_SUPABASE_ENVIRONMENT');
+  }
+  return value;
 }
 
 function normalizeAppUrl(value) {
@@ -460,9 +537,29 @@ export async function createEvidenceRun(options) {
     throw new Error('EVIDENCE_INVALID_TIME_RANGE');
   }
 
-  if (!['local', 'staging'].includes(options.supabaseEnvironment)) {
-    throw new Error('EVIDENCE_INVALID_SUPABASE_ENVIRONMENT');
-  }
+  const migrationVersion = normalizeVersionIdentifier(
+    options.migrationVersion,
+    'MIGRATION_VERSION',
+  );
+  const seedVersion = normalizeVersionIdentifier(
+    options.seedVersion,
+    'SEED_VERSION',
+  );
+  const supabaseEnvironment = normalizeSupabaseEnvironment(
+    options.supabaseEnvironment,
+  );
+  assertNoSensitiveValue({
+    app_url: options.appUrl,
+    browser: options.browser,
+    commands: options.commands,
+    known_failures: options.knownFailures,
+    migration_version: migrationVersion,
+    os: options.os,
+    real_devices: options.realDevices,
+    seed_version: seedVersion,
+    supabase_environment: supabaseEnvironment,
+    viewports: options.viewports,
+  });
 
   const capturedGitState =
     options.gitSha === undefined || options.dirtyWorktree === undefined
@@ -530,13 +627,13 @@ export async function createEvidenceRun(options) {
     finished_at: finishedAt,
     git_sha: gitSha,
     known_failures: knownFailures,
-    migration_version: options.migrationVersion ?? null,
+    migration_version: migrationVersion,
     os,
     real_devices: realDevices,
     release_decision: 'BLOCKED',
     run_id: runId,
     schema_version: 1,
-    seed_version: options.seedVersion ?? null,
+    seed_version: seedVersion,
     started_at: startedAt,
     status_counts: {
       FAIL: 0,
@@ -544,7 +641,7 @@ export async function createEvidenceRun(options) {
       'NOT VERIFIED': acceptanceIds.length,
       PASS: 0,
     },
-    supabase_environment: options.supabaseEnvironment,
+    supabase_environment: supabaseEnvironment,
     viewports,
   };
   assertNoSensitiveValue(manifest);

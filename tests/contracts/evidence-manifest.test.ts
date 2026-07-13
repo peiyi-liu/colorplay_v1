@@ -32,6 +32,16 @@ async function listFilesRecursively(directory: string): Promise<string[]> {
   return files.flat();
 }
 
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await stat(path);
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    throw error;
+  }
+}
+
 describe('acceptance metadata', () => {
   it('counts every normative acceptance ID including A11Y', async () => {
     const markdown = await readFile(
@@ -443,6 +453,251 @@ describe('acceptance metadata', () => {
       expect(validRun.manifest.app_url).toBe(
         'https://preview.invalid/app/login',
       );
+    } finally {
+      await rm(temporaryRoot, { force: true, recursive: true });
+    }
+  });
+
+  it('rejects generic credential syntax and raw secret prefixes before writing artifacts', async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'colorplay-evidence-'));
+    const startedAt = '2026-07-14T00:00:00.000Z';
+    const rawSecret = `sb_secret_${randomUUID().replaceAll('-', '')}`;
+    const baseOptions: CreateEvidenceRunOptions = {
+      appUrl: 'https://preview.invalid/app',
+      dirtyWorktree: true,
+      gitSha: '0123456789abcdef0123456789abcdef01234567',
+      outputRoot: temporaryRoot,
+      runId: 'credential-probe',
+      startedAt,
+      supabaseEnvironment: 'staging',
+    };
+    const command = (value: string) => ({
+      command: value,
+      duration_ms: 1,
+      exit_code: 0,
+      report_path: null,
+      started_at: startedAt,
+    });
+    const cases: {
+      label: string;
+      options: Partial<CreateEvidenceRunOptions>;
+      runId: string;
+    }[] = [
+      {
+        label: 'db password spaced flag',
+        options: {
+          commands: [command('pnpm test --db-password review-value')],
+        },
+        runId: 'credential-db-password-spaced',
+      },
+      {
+        label: 'jwt secret spaced flag',
+        options: { commands: [command('pnpm test --jwt-secret review-value')] },
+        runId: 'credential-jwt-secret-spaced',
+      },
+      {
+        label: 'service role key spaced flag',
+        options: {
+          commands: [command('pnpm test --service-role-key review-value')],
+        },
+        runId: 'credential-service-role-key-spaced',
+      },
+      {
+        label: 'secret key spaced flag',
+        options: { commands: [command('pnpm test --secret-key review-value')] },
+        runId: 'credential-secret-key-spaced',
+      },
+      {
+        label: 'credential equals flag',
+        options: {
+          commands: [command('pnpm test --db-password=review-value')],
+        },
+        runId: 'credential-equals-flag',
+      },
+      {
+        label: 'credential colon flag',
+        options: { commands: [command('pnpm test --jwt-secret:review-value')] },
+        runId: 'credential-colon-flag',
+      },
+      {
+        label: 'lowercase credential assignment',
+        options: { commands: [command('db_password=review-value pnpm test')] },
+        runId: 'credential-lowercase-assignment',
+      },
+      {
+        label: 'mixed case credential assignment',
+        options: {
+          commands: [command('Db_Auth_Token:review-value pnpm test')],
+        },
+        runId: 'credential-mixed-case-assignment',
+      },
+      {
+        label: 'credential term with prefixes and suffixes',
+        options: {
+          commands: [
+            command('pnpm test --preview-service-role-key-file review-value'),
+          ],
+        },
+        runId: 'credential-prefixed-suffixed-flag',
+      },
+      {
+        label: 'raw secret prefix',
+        options: { browser: { name: rawSecret, version: '1' } },
+        runId: 'credential-raw-prefix',
+      },
+      {
+        label: 'secret token as migration version',
+        options: { migrationVersion: rawSecret },
+        runId: 'credential-migration-token',
+      },
+      {
+        label: 'credential-bearing nested object key',
+        options: {
+          browser: {
+            name: 'chromium',
+            telemetryCredential: 'review-value',
+            version: '1',
+          } as unknown as NonNullable<CreateEvidenceRunOptions['browser']>,
+        },
+        runId: 'credential-nested-object-key',
+      },
+    ];
+    const unsafeOutcomes: string[] = [];
+
+    try {
+      for (const testCase of cases) {
+        let rejectedAsSensitive = false;
+        try {
+          await createEvidenceRun({
+            ...baseOptions,
+            ...testCase.options,
+            runId: testCase.runId,
+          });
+        } catch (error) {
+          rejectedAsSensitive =
+            error instanceof Error &&
+            error.message === 'EVIDENCE_SENSITIVE_VALUE';
+        }
+
+        const artifactWritten = await pathExists(
+          join(temporaryRoot, testCase.runId),
+        );
+        if (!rejectedAsSensitive || artifactWritten) {
+          unsafeOutcomes.push(
+            `${testCase.label}:${rejectedAsSensitive ? 'artifact-written' : 'accepted-or-wrong-error'}`,
+          );
+        }
+      }
+
+      expect(unsafeOutcomes).toEqual([]);
+    } finally {
+      await rm(temporaryRoot, { force: true, recursive: true });
+    }
+  });
+
+  it('validates evidence scalar schemas before writing artifacts', async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'colorplay-evidence-'));
+    const startedAt = '2026-07-14T00:00:00.000Z';
+    const baseOptions: CreateEvidenceRunOptions = {
+      appUrl: 'https://preview.invalid/app',
+      dirtyWorktree: true,
+      gitSha: '0123456789abcdef0123456789abcdef01234567',
+      outputRoot: temporaryRoot,
+      runId: 'scalar-probe',
+      startedAt,
+      supabaseEnvironment: 'staging',
+    };
+    const cases: {
+      label: string;
+      options: Partial<CreateEvidenceRunOptions>;
+      runId: string;
+    }[] = [
+      {
+        label: 'migration version object',
+        options: {
+          migrationVersion: {
+            password: 'review-value',
+          } as unknown as string,
+        },
+        runId: 'scalar-migration-object',
+      },
+      {
+        label: 'seed version object',
+        options: {
+          seedVersion: { password: 'review-value' } as unknown as string,
+        },
+        runId: 'scalar-seed-object',
+      },
+      {
+        label: 'environment object',
+        options: {
+          supabaseEnvironment: {
+            password: 'review-value',
+          } as unknown as 'local',
+        },
+        runId: 'scalar-environment-object',
+      },
+      {
+        label: 'migration version outside allowlist',
+        options: { migrationVersion: 'v1/review' },
+        runId: 'scalar-migration-format',
+      },
+      {
+        label: 'seed version outside allowlist',
+        options: { seedVersion: 'seed version 2' },
+        runId: 'scalar-seed-format',
+      },
+      {
+        label: 'environment outside allowlist',
+        options: {
+          supabaseEnvironment: 'production' as unknown as 'local',
+        },
+        runId: 'scalar-environment-value',
+      },
+    ];
+    const unsafeOutcomes: string[] = [];
+
+    try {
+      for (const testCase of cases) {
+        let rejected = false;
+        try {
+          await createEvidenceRun({
+            ...baseOptions,
+            ...testCase.options,
+            runId: testCase.runId,
+          });
+        } catch (error) {
+          rejected =
+            error instanceof Error && error.message.startsWith('EVIDENCE_');
+        }
+
+        const artifactWritten = await pathExists(
+          join(temporaryRoot, testCase.runId),
+        );
+        if (!rejected || artifactWritten) {
+          unsafeOutcomes.push(
+            `${testCase.label}:${rejected ? 'artifact-written' : 'accepted'}`,
+          );
+        }
+      }
+      expect(unsafeOutcomes).toEqual([]);
+
+      const validRun = await createEvidenceRun({
+        ...baseOptions,
+        appUrl: 'https://preview.invalid/app/login',
+        migrationVersion: '202607140001_add_profiles',
+        runId: 'valid-scalar-identifiers',
+        seedVersion: 'seed-v2.1',
+      });
+      expect(validRun.manifest).toMatchObject({
+        app_url: 'https://preview.invalid/app/login',
+        migration_version: '202607140001_add_profiles',
+        seed_version: 'seed-v2.1',
+        supabase_environment: 'staging',
+      });
+      expect(
+        await readFile(join(validRun.runDirectory, 'summary.md'), 'utf8'),
+      ).toContain('| Migration version | 202607140001_add_profiles |');
     } finally {
       await rm(temporaryRoot, { force: true, recursive: true });
     }
