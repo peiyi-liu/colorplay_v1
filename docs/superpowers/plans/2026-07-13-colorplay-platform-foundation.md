@@ -1244,7 +1244,12 @@ git commit -m "test: prove local credential parser silence"
 **Files:**
 - Create: `src/features/auth/types.ts`
 - Create: `src/features/auth/api/auth-repository.ts`
+- Create: `src/features/auth/api/auth-repository.test.ts`
 - Create: `src/features/auth/api/auth-repository.integration.test.ts`
+- Create: `scripts/verify/task-11-network-evidence.mjs`
+- Create: `scripts/verify/task-11-network-evidence.d.mts`
+- Create: `tests/contracts/task-11-network-evidence.test.ts`
+- Modify: `scripts/test-db.sh`
 
 **Interfaces:**
 - Consumes: `SupabaseClient<Database>` and Email/password credentials.

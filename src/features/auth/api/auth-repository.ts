@@ -7,6 +7,7 @@ import {
 import type { Database } from '../../../types/database';
 import {
   AuthRepositoryError,
+  type AuthErrorCode,
   type AuthRepository,
   type AuthSession,
 } from '../types';
@@ -14,19 +15,33 @@ import {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const toRepositoryError = (error: unknown): AuthRepositoryError => {
-  if (error instanceof AuthRepositoryError) return error;
+const isAuthErrorCode = (value: unknown): value is AuthErrorCode =>
+  value === 'AUTH_INVALID_CREDENTIALS' ||
+  value === 'AUTH_NETWORK' ||
+  value === 'AUTH_UNKNOWN';
 
-  if (error instanceof TypeError || isAuthRetryableFetchError(error)) {
-    return new AuthRepositoryError('AUTH_NETWORK');
+const classifyRepositoryError = (error: unknown): AuthErrorCode => {
+  try {
+    if (error instanceof AuthRepositoryError) {
+      return isAuthErrorCode(error.code) ? error.code : 'AUTH_UNKNOWN';
+    }
+
+    if (error instanceof TypeError || isAuthRetryableFetchError(error)) {
+      return 'AUTH_NETWORK';
+    }
+
+    if (isAuthError(error) && error.code === 'invalid_credentials') {
+      return 'AUTH_INVALID_CREDENTIALS';
+    }
+  } catch {
+    return 'AUTH_UNKNOWN';
   }
 
-  if (isAuthError(error) && error.code === 'invalid_credentials') {
-    return new AuthRepositoryError('AUTH_INVALID_CREDENTIALS');
-  }
-
-  return new AuthRepositoryError('AUTH_UNKNOWN');
+  return 'AUTH_UNKNOWN';
 };
+
+const toRepositoryError = (error: unknown): AuthRepositoryError =>
+  new AuthRepositoryError(classifyRepositoryError(error));
 
 const throwUnknown = (): never => {
   throw new AuthRepositoryError('AUTH_UNKNOWN');
@@ -65,7 +80,7 @@ export const createAuthRepository = (
     try {
       const result: unknown = await client.auth.signInWithPassword(input);
       const error = readResultError(result);
-      if (error) throw toRepositoryError(error);
+      if (error !== null) throw toRepositoryError(error);
 
       return toAuthSession(readResultData(result).session);
     } catch (error) {
@@ -77,7 +92,7 @@ export const createAuthRepository = (
     try {
       const result: unknown = await client.auth.signOut({ scope: 'local' });
       const error = readResultError(result);
-      if (error) throw toRepositoryError(error);
+      if (error !== null) throw toRepositoryError(error);
     } catch (error) {
       handleThrown(error);
     }
@@ -87,7 +102,7 @@ export const createAuthRepository = (
     try {
       const result: unknown = await client.auth.getSession();
       const error = readResultError(result);
-      if (error) throw toRepositoryError(error);
+      if (error !== null) throw toRepositoryError(error);
 
       const session = readResultData(result).session;
       return session === null ? null : toAuthSession(session);
@@ -100,7 +115,11 @@ export const createAuthRepository = (
     try {
       const result: unknown = client.auth.onAuthStateChange(
         (_event, session) => {
-          listener(session === null ? null : toAuthSession(session));
+          try {
+            listener(session === null ? null : toAuthSession(session));
+          } catch {
+            throwUnknown();
+          }
         },
       );
       const data = readResultData(result);

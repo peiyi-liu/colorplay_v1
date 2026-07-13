@@ -7,10 +7,13 @@ source "$project_root/scripts/supabase/load-local-environment.sh"
 
 evidence_directory='artifacts/acceptance/phase-1a-task-07/reports'
 auth_evidence_directory='artifacts/acceptance/phase-1b-task-10/reports'
+task11_network_directory='artifacts/acceptance/phase-1b-task-11/network'
 auth_health_report="$evidence_directory/auth-health.json"
 container_health_report="$evidence_directory/docker-container-health.txt"
 runtime_report="$evidence_directory/runtime-summary.txt"
 secret_scan_report="$evidence_directory/artifact-secret-scan.txt"
+task11_network_report="$task11_network_directory/auth-repository-network.json"
+task11_secret_scan_report="$task11_network_directory/secret-pii-scan.txt"
 db_test_directory='supabase/tests'
 db_test_file="$db_test_directory/.task-7-runtime-smoke.test.sql"
 
@@ -23,12 +26,15 @@ trap cleanup EXIT
 
 mkdir -p "$evidence_directory"
 mkdir -p "$auth_evidence_directory"
+mkdir -p "$task11_network_directory"
 mkdir -p "$db_test_directory"
 rm -f \
   "$auth_health_report" \
   "$container_health_report" \
   "$runtime_report" \
-  "$secret_scan_report"
+  "$secret_scan_report" \
+  "$task11_network_report" \
+  "$task11_secret_scan_report"
 
 # Supabase start emits local credentials in its normal success summary. Suppress
 # that summary while retaining its exit code and built-in container health gate.
@@ -54,6 +60,7 @@ printf '%s\n' \
 pnpm exec supabase test db --local
 pnpm exec supabase test db --local "$db_test_file"
 pnpm test:integration
+node scripts/verify/task-11-network-evidence.mjs "$task11_network_report" "$task11_secret_scan_report"
 
 auth_http_status="$(
   curl \
@@ -95,12 +102,12 @@ done
   printf 'inbucket_url=http://127.0.0.1:54324\n'
 } >"$runtime_report"
 
-artifact_secret_pattern='(?i)(eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|sb_(secret|publishable)_[A-Za-z0-9_-]+|anon[_ -]?key|service[_ -]?role|jwt[_ -]?secret|database[_ -]?password|db[_ -]?password|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@)'
+artifact_secret_pattern='(?i)([[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|Bearer[[:space:]]+[^[:space:]]+|LocalOnly-|sb_(secret|publishable)_[A-Za-z0-9_-]+|anon[_ -]?key|service[_ -]?role|(?-i:SUPABASE_[A-Z0-9_]+)|jwt[_ -]?secret|database[_ -]?password|db[_ -]?password|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@)'
 if rg --hidden --glob '!artifact-secret-scan.txt' --pcre2 -q \
-  "$artifact_secret_pattern" "$evidence_directory" "$auth_evidence_directory"; then
+  "$artifact_secret_pattern" "$evidence_directory" "$auth_evidence_directory" "$task11_network_directory"; then
   printf 'findings=detected\ndetails=withheld\n' >"$secret_scan_report"
   exit 1
 fi
 
-printf 'findings=0\nscope=task-07-runtime-and-task-10-auth-evidence\n' \
+printf 'findings=0\nscope=task-07-runtime-task-10-auth-and-task-11-network-evidence\n' \
   >"$secret_scan_report"
