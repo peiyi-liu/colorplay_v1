@@ -6,7 +6,7 @@ const typescriptFiles = ['**/*.{ts,tsx}'];
 
 export default tseslint.config(
   {
-    ignores: ['coverage', 'dist'],
+    ignores: ['coverage', 'dist', 'src/types/database.ts'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked.map((config) => ({

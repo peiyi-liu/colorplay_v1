@@ -37,10 +37,11 @@ printf '%s\n' \
   'select plan(3);' \
   "select has_schema('auth', 'Auth schema is available');" \
   "select has_schema('storage', 'Storage schema is available');" \
-  "select is((select count(*) from information_schema.tables where table_schema = 'public' and table_type = 'BASE TABLE'), 0::bigint, 'Phase 1A has no product tables');" \
+  "select is(current_database(), 'postgres', 'PostgreSQL database is available');" \
   'select * from finish();' \
   'rollback;' >"$db_test_file"
 
+pnpm exec supabase test db --local
 pnpm exec supabase test db --local "$db_test_file"
 pnpm exec vitest run tests/integration/supabase-health.test.ts --environment=node
 

@@ -1,3 +1,4 @@
 legacy/colorplay-original.html -whitespace
 legacy/colorplay-prototype.html -whitespace
 acceptance/EVIDENCE_TEMPLATE.md -whitespace
+src/types/database.ts -whitespace

@@ -925,6 +925,9 @@ git commit -m "ci: enforce foundation and Vercel delivery contracts"
 - Create: `supabase/tests/001_profiles_rls.test.sql`
 - Replace generated: `src/types/database.ts`
 - Create: `tests/contracts/database-types.test.sh`
+- Modify: `scripts/test-db.sh` (keep the Task 7 runtime smoke phase-neutral and run permanent pgTAP files)
+- Modify: `eslint.config.js`, `.prettierignore` (exclude only the exact generated DB type file from authored-source style gates)
+- Modify: `.gitattributes` (accept the pinned generator's terminal whitespace for only the generated DB type file)
 
 **Interfaces:**
 - Consumes: Supabase local runtime from Task 7; authenticated JWT `sub`.
@@ -955,7 +958,7 @@ select is((select count(*)::integer from public.profiles), 1, 'student reads onl
 select lives_ok($$update public.profiles set display_name = '學生一' where id = '10000000-0000-0000-0000-000000000001'$$, 'student updates own display name');
 select throws_ok($$update public.profiles set role = 'teacher' where id = '10000000-0000-0000-0000-000000000001'$$, '42501', null, 'student cannot update role');
 select is((select count(*)::integer from public.profiles where id = '10000000-0000-0000-0000-000000000002'), 0, 'student cannot read another profile');
-select is((with changed as (update public.profiles set display_name = '越權' where id = '10000000-0000-0000-0000-000000000002' returning 1) select count(*)::integer from changed), 0, 'student cannot update another profile');
+select results_eq($$with changed as (update public.profiles set display_name = '越權' where id = '10000000-0000-0000-0000-000000000002' returning 1) select count(*)::integer from changed$$, array[0], 'student cannot update another profile');
 select throws_ok($$delete from public.profiles where id = '10000000-0000-0000-0000-000000000002'$$, '42501', null, 'student has no delete privilege');
 select * from finish();
 rollback;
@@ -1011,7 +1014,16 @@ set search_path = pg_catalog, public
 as $$
 begin
   insert into public.profiles (id, display_name)
-  values (new.id, coalesce(nullif(split_part(new.email, '@', 1), ''), 'ColorPlay 使用者'));
+  values (
+    new.id,
+    coalesce(
+      nullif(
+        left(btrim(split_part(coalesce(new.email, ''), '@', 1)), 30),
+        ''
+      ),
+      'ColorPlay 使用者'
+    )
+  );
   return new;
 end;
 $$;
@@ -1032,16 +1044,22 @@ pnpm exec supabase db reset --local
 pnpm exec supabase gen types typescript --local > src/types/database.ts
 ```
 
+Update the Task 7 runtime smoke to assert PostgreSQL availability instead of the superseded Phase 1A zero-product-table state, and make `pnpm test:db` run both permanent pgTAP files and the ephemeral runtime smoke.
+
+Keep `src/types/database.ts` compiled by TypeScript and protected by the exact CLI diff contract, but exclude that exact generated file from ESLint and Prettier authored-source style checks. Do not ignore the surrounding directory or suppress individual rules.
+
+Configure Git whitespace handling for only `src/types/database.ts` so the pinned generator's terminal blank line remains byte-exact without making the repository whitespace gate red.
+
 - [ ] **Step 4: Verify migration, RLS, and generated types**
 
-Run: `pnpm exec supabase test db | tee artifacts/acceptance/phase-1b-task-09/db/profiles-rls.tap && bash tests/contracts/database-types.test.sh && pnpm typecheck`
+Run: `pnpm exec supabase test db | tee artifacts/acceptance/phase-1b-task-09/db/profiles-rls.tap && bash tests/contracts/database-types.test.sh && pnpm typecheck && pnpm test:db`
 
-Expected: pgTAP reports 8 successful assertions; cross-user read/update, delete, and role escalation attempts fail as specified; generated type diff is empty; typecheck exits 0.
+Expected: pgTAP reports 8 successful assertions; cross-user read/update, delete, and role escalation attempts fail as specified; generated type diff is empty; typecheck and the phase-neutral Task 7 database runtime gate exit 0.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add supabase/migrations/20260713000100_create_profiles.sql supabase/tests/001_profiles_rls.test.sql src/types/database.ts tests/contracts/database-types.test.sh
+git add .gitattributes .prettierignore docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md eslint.config.js scripts/test-db.sh supabase/migrations/20260713000100_create_profiles.sql supabase/tests/001_profiles_rls.test.sql src/types/database.ts tests/contracts/database-types.test.sh
 git commit -m "feat: add profile schema and RLS"
 ```
 

@@ -6,6 +6,7 @@ DOCUMENT_MANIFEST.json
 legacy/colorplay-original.html
 legacy/colorplay-prototype.html
 pnpm-lock.yaml
+src/types/database.ts
 spec/02-system-architecture.md
 spec/03-data-model-and-rls.md
 spec/05-game-mechanics.md
