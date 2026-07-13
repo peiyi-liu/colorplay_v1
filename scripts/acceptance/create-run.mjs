@@ -23,6 +23,8 @@ const bearerPattern = /\bBearer\s+\S+/iu;
 const jwtPattern = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/u;
 const credentialAssignmentPattern =
   /\b(?:password|passwd|secret|service[_ -]?role|anon[_ -]?key|api[_ -]?key|access[_ -]?token|refresh[_ -]?token|authorization)\b\s*(?:=|:)\s*(?:"[^"]+"|'[^']+'|\S+)/iu;
+const credentialFlagPattern =
+  /(?:^|\s)--?(?:(?:client[-_]?)?secret|pass(?:word|wd)?|service[-_]?role|(?:anon|api)[-_]?key|(?:(?:access|refresh)[-_]?)?token|auth(?:orization)?)(?:\s+|=)(?:"[^"]+"|'[^']+'|\S+)/iu;
 const environmentAssignmentPattern =
   /(?:^|\s)[A-Z][A-Z0-9_]*\s*=\s*(?:"[^"]*"|'[^']*'|\S+)/u;
 const cliOptions = new Set([
@@ -64,6 +66,7 @@ function assertNoSensitiveValue(value) {
       bearerPattern.test(value) ||
       jwtPattern.test(value) ||
       credentialAssignmentPattern.test(value) ||
+      credentialFlagPattern.test(value) ||
       environmentAssignmentPattern.test(value)
     ) {
       throw new Error('EVIDENCE_SENSITIVE_VALUE');
@@ -491,19 +494,6 @@ export async function createEvidenceRun(options) {
   const realDevices = normalizeRealDevices(options.realDevices);
   const appUrl = normalizeAppUrl(options.appUrl);
 
-  assertNoSensitiveValue({
-    browser,
-    commands,
-    gitSha,
-    knownFailures,
-    migrationVersion: options.migrationVersion ?? null,
-    os,
-    realDevices,
-    runId,
-    seedVersion: options.seedVersion ?? null,
-    viewports,
-  });
-
   const acceptanceMarkdown = await readFile(
     options.acceptancePath ??
       join(projectRoot, 'acceptance/ACCEPTANCE_CRITERIA.md'),
@@ -557,6 +547,7 @@ export async function createEvidenceRun(options) {
     supabase_environment: options.supabaseEnvironment,
     viewports,
   };
+  assertNoSensitiveValue(manifest);
 
   const outputRoot =
     options.outputRoot ?? join(projectRoot, 'artifacts/acceptance');

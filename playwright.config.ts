@@ -1,8 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const localRunId = `playwright-local-${new Date()
+  .toISOString()
+  .replaceAll(':', '-')
+  .replaceAll('.', '-')}-${String(process.pid)}`;
 const taskEvidenceRoot =
-  process.env.PLAYWRIGHT_EVIDENCE_ROOT ??
-  'artifacts/acceptance/phase-1a-task-06';
+  process.env.PLAYWRIGHT_EVIDENCE_ROOT ?? `artifacts/acceptance/${localRunId}`;
 const acceptanceEvidence = process.env.PLAYWRIGHT_ACCEPTANCE === 'on';
 const video =
   process.env.PLAYWRIGHT_VIDEO === 'on' || acceptanceEvidence

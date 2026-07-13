@@ -1,15 +1,36 @@
 import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import {
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  stat,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
 import playwrightConfig from '../../playwright.config';
-import { createEvidenceRun } from '../../scripts/acceptance/create-run.mjs';
+import {
+  createEvidenceRun,
+  type CreateEvidenceRunOptions,
+} from '../../scripts/acceptance/create-run.mjs';
 import { countAcceptanceIds } from '../../scripts/verify/count-acceptance.mjs';
 
 const execFileAsync = promisify(execFile);
+
+async function listFilesRecursively(directory: string): Promise<string[]> {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const path = join(directory, entry.name);
+      return entry.isDirectory() ? listFilesRecursively(path) : [path];
+    }),
+  );
+  return files.flat();
+}
 
 describe('acceptance metadata', () => {
   it('counts every normative acceptance ID including A11Y', async () => {
@@ -253,6 +274,180 @@ describe('acceptance metadata', () => {
     }
   });
 
+  it('rejects flag credentials and sensitive values from every free-text metadata field', async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'colorplay-evidence-'));
+    const sensitiveEmail = ['person', 'invalid.example'].join(
+      String.fromCharCode(64),
+    );
+    const startedAt = '2026-07-14T00:00:00.000Z';
+    const baseOptions: CreateEvidenceRunOptions = {
+      appUrl: 'https://preview.invalid/app',
+      dirtyWorktree: true,
+      gitSha: '0123456789abcdef0123456789abcdef01234567',
+      outputRoot: temporaryRoot,
+      runId: 'sensitive-field-contract',
+      startedAt,
+      supabaseEnvironment: 'staging',
+    };
+    type EvidenceCommand = NonNullable<
+      CreateEvidenceRunOptions['commands']
+    >[number];
+    type KnownFailure = NonNullable<
+      CreateEvidenceRunOptions['knownFailures']
+    >[number];
+    type RealDevice = NonNullable<
+      CreateEvidenceRunOptions['realDevices']
+    >[number];
+    const command = (value: string): EvidenceCommand => ({
+      command: value,
+      duration_ms: 1,
+      exit_code: 0,
+      report_path: null,
+      started_at: startedAt,
+    });
+    const knownFailure: KnownFailure = {
+      description: 'description',
+      id_or_area: 'area',
+      owner: 'owner',
+      target: 'target',
+      user_impact: 'impact',
+      workaround: 'workaround',
+    };
+    const realDevice: RealDevice = {
+      android_back_tested: false,
+      browser: 'browser',
+      css_viewport: '375x812',
+      device_model: 'device',
+      evidence_files: ['real-device/evidence.png'],
+      evidence_id: 'device-1',
+      keyboard_visible: false,
+      orientation: 'portrait',
+      os: 'os',
+    };
+    const cases: {
+      label: string;
+      options: Partial<CreateEvidenceRunOptions>;
+    }[] = [
+      {
+        label: 'password flag',
+        options: { commands: [command('pnpm test --password REDACTED')] },
+      },
+      {
+        label: 'token flag',
+        options: { commands: [command('pnpm test --access-token REDACTED')] },
+      },
+      {
+        label: 'secret flag',
+        options: { commands: [command('pnpm test --client-secret REDACTED')] },
+      },
+      {
+        label: 'app url',
+        options: {
+          appUrl: `https://preview.invalid/path/${sensitiveEmail}`,
+        },
+      },
+      {
+        label: 'browser name',
+        options: { browser: { name: sensitiveEmail, version: '1' } },
+      },
+      {
+        label: 'browser version',
+        options: { browser: { name: 'browser', version: sensitiveEmail } },
+      },
+      {
+        label: 'command report path',
+        options: {
+          commands: [
+            {
+              ...command('pnpm test'),
+              report_path: `reports/${sensitiveEmail}.txt`,
+            },
+          ],
+        },
+      },
+      {
+        label: 'migration version',
+        options: { migrationVersion: sensitiveEmail },
+      },
+      {
+        label: 'seed version',
+        options: { seedVersion: sensitiveEmail },
+      },
+      {
+        label: 'os name',
+        options: { os: { name: sensitiveEmail, version: '1' } },
+      },
+      {
+        label: 'os version',
+        options: { os: { name: 'os', version: sensitiveEmail } },
+      },
+      {
+        label: 'real device evidence path',
+        options: {
+          realDevices: [
+            {
+              ...realDevice,
+              evidence_files: [`real-device/${sensitiveEmail}.png`],
+            },
+          ],
+        },
+      },
+    ];
+    for (const field of Object.keys(knownFailure) as (keyof KnownFailure)[]) {
+      cases.push({
+        label: `known failure ${field}`,
+        options: {
+          knownFailures: [{ ...knownFailure, [field]: sensitiveEmail }],
+        },
+      });
+    }
+    for (const field of [
+      'browser',
+      'css_viewport',
+      'device_model',
+      'evidence_id',
+      'orientation',
+      'os',
+    ] as const satisfies readonly (keyof RealDevice)[]) {
+      cases.push({
+        label: `real device ${field}`,
+        options: {
+          realDevices: [{ ...realDevice, [field]: sensitiveEmail }],
+        },
+      });
+    }
+    const acceptedUnsafeCases: string[] = [];
+
+    try {
+      for (const testCase of cases) {
+        try {
+          await createEvidenceRun({ ...baseOptions, ...testCase.options });
+          acceptedUnsafeCases.push(testCase.label);
+        } catch (error) {
+          if (
+            !(error instanceof Error) ||
+            error.message !== 'EVIDENCE_SENSITIVE_VALUE'
+          ) {
+            acceptedUnsafeCases.push(`${testCase.label}:wrong-error`);
+          }
+        }
+      }
+
+      expect(acceptedUnsafeCases).toEqual([]);
+
+      const validRun = await createEvidenceRun({
+        ...baseOptions,
+        appUrl: 'https://preview.invalid/app/login',
+        runId: 'valid-public-url',
+      });
+      expect(validRun.manifest.app_url).toBe(
+        'https://preview.invalid/app/login',
+      );
+    } finally {
+      await rm(temporaryRoot, { force: true, recursive: true });
+    }
+  });
+
   it('honors explicit deterministic CLI inputs and sanitized metadata', async () => {
     const temporaryRoot = await mkdtemp(join(tmpdir(), 'colorplay-evidence-'));
     const outputRoot = join(temporaryRoot, 'artifacts');
@@ -352,6 +547,9 @@ describe('acceptance metadata', () => {
       'firefox',
       'webkit',
     ]);
+    expect(playwrightConfig.outputDir).toMatch(
+      /^artifacts\/acceptance\/playwright-local-[A-Za-z0-9._-]+\/playwright$/u,
+    );
     expect(playwrightConfig.use).toMatchObject({
       screenshot: 'only-on-failure',
       trace: 'on-first-retry',
@@ -431,4 +629,71 @@ describe('acceptance metadata', () => {
       await rm(temporaryRoot, { force: true, recursive: true });
     }
   });
+
+  it(
+    'retains the first acceptance run video and trace after a second run',
+    { timeout: 60_000 },
+    async () => {
+      const temporaryRoot = await mkdtemp(
+        join(tmpdir(), 'colorplay-retention-'),
+      );
+      const runAcceptance = async (runId: string, startedAt: string) => {
+        await execFileAsync(
+          'bash',
+          [
+            'scripts/acceptance/run.sh',
+            '--environment',
+            'local',
+            '--app-url',
+            'http://127.0.0.1:4173',
+            '--output-root',
+            temporaryRoot,
+            '--run-id',
+            runId,
+            '--started-at',
+            startedAt,
+            '--git-sha',
+            'abcdef0123456789abcdef0123456789abcdef01',
+            '--dirty-worktree',
+            'false',
+            '--',
+            'tests/e2e/foundation-routes.spec.ts',
+            '--project=chromium',
+          ],
+          { cwd: process.cwd(), maxBuffer: 2 * 1024 * 1024 },
+        );
+      };
+
+      try {
+        await runAcceptance('retained-run-one', '2026-07-14T03:00:00.000Z');
+        const firstRunFiles = await listFilesRecursively(
+          join(temporaryRoot, 'retained-run-one', 'playwright'),
+        );
+        const firstVideo = firstRunFiles.find((path) =>
+          path.endsWith('video.webm'),
+        );
+        const firstTrace = firstRunFiles.find((path) =>
+          path.endsWith('trace.zip'),
+        );
+        expect(firstVideo).toBeDefined();
+        expect(firstTrace).toBeDefined();
+
+        await runAcceptance('retained-run-two', '2026-07-14T03:05:00.000Z');
+
+        expect((await stat(firstVideo ?? '')).isFile()).toBe(true);
+        expect((await stat(firstTrace ?? '')).isFile()).toBe(true);
+        const secondRunFiles = await listFilesRecursively(
+          join(temporaryRoot, 'retained-run-two', 'playwright'),
+        );
+        expect(secondRunFiles.some((path) => path.endsWith('video.webm'))).toBe(
+          true,
+        );
+        expect(secondRunFiles.some((path) => path.endsWith('trace.zip'))).toBe(
+          true,
+        );
+      } finally {
+        await rm(temporaryRoot, { force: true, recursive: true });
+      }
+    },
+  );
 });
