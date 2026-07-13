@@ -3,8 +3,8 @@
   "package_version": "2.0.0",
   "generated_at": "2026-07-13T21:36:44+08:00",
   "markdown_files": 18,
-  "acceptance_criteria": 78,
-  "unique_acceptance_criteria": 78,
+  "acceptance_criteria": 84,
+  "unique_acceptance_criteria": 84,
   "ui_acceptance_criteria": 15,
   "total_bytes_before_manifest": 131981,
   "real_device_required_criteria": [

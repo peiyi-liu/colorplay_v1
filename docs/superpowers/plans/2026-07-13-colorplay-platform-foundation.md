@@ -685,15 +685,20 @@ git commit -m "feat: add accessible flat-design application shell"
 - Modify/expand: `playwright.config.ts`, preserving Task 5's environment-controlled video policy while adding the Task 6 acceptance harness.
 - Create: `scripts/acceptance/create-run.mjs`, `scripts/acceptance/run.sh`
 - Create: `scripts/verify/count-acceptance.mjs`
+- Create/support: `scripts/acceptance/create-run.d.mts`, `scripts/verify/count-acceptance.d.mts`, providing strict types for the JavaScript CLI modules consumed by the TypeScript contract.
 - Create: `tests/contracts/evidence-manifest.test.ts`
 - Create: `artifacts/acceptance/.gitkeep`
+- Modify/support: `tests/e2e/foundation-routes.spec.ts`, migrating Task 4 browser coverage to standard Playwright fixtures, projects, and configured `baseURL`.
+- Modify/support: `.prettierignore`, excluding the Git-ignored `.superpowers/` coordination workspace from repository formatting gates.
+- Modify/support: `tsconfig.node.json`, bringing the new TypeScript contract test under strict project-service checks.
 - Modify: `DOCUMENT_MANIFEST.json`, `package.json`
+- Modify/documentation-only: `docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md`, recording the support file above and the canonical testing-spec path.
 
 **Interfaces:**
 - Consumes: Git SHA, dirty state, browser metadata, commands, normative acceptance Markdown.
 - Produces: `EvidenceManifest` JSON with `run_id`, `git_sha`, `dirty_worktree`, `app_url`, `supabase_environment`, browser/OS, command exit codes, acceptance entries, timestamps, known failures, and real-device inventory.
 
-**Specs / acceptance:** `spec/08-testing-and-evidence.md` sections 5-14; `acceptance/EVIDENCE_TEMPLATE.md`; `AC-UI-001`, `AC-UI-002`, `AC-UI-005`, `AC-UI-007` checkpoints; `AC-DOC-001`, `AC-DOC-003`.
+**Specs / acceptance (canonical path):** `spec/08-testing-and-evidence.md` sections 5-14; `acceptance/EVIDENCE_TEMPLATE.md`; `AC-UI-001`, `AC-UI-002`, `AC-UI-005`, `AC-UI-007` checkpoints; `AC-DOC-001`, `AC-DOC-003`. Do not create a filename alias for the testing spec.
 
 **Evidence:** a dry run at `artifacts/acceptance/<run-id>/manifest.json` and `summary.md`, with 84 `NOT VERIFIED` entries before feature evidence is attached.
 
@@ -744,7 +749,7 @@ Expected: tests pass; a run directory contains 84 entries, all initially `NOT VE
 - [ ] **Step 5: Commit**
 
 ```bash
-git add playwright.config.ts scripts/acceptance scripts/verify tests/contracts/evidence-manifest.test.ts artifacts/acceptance/.gitkeep DOCUMENT_MANIFEST.json package.json pnpm-lock.yaml
+git add docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md playwright.config.ts scripts/acceptance scripts/verify tests/contracts/evidence-manifest.test.ts tests/e2e/foundation-routes.spec.ts artifacts/acceptance/.gitkeep DOCUMENT_MANIFEST.json package.json pnpm-lock.yaml
 git commit -m "test: add honest acceptance evidence harness"
 ```
 

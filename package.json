@@ -16,7 +16,9 @@
     "test:db": "bash scripts/test-db.sh",
     "test:e2e": "playwright test",
     "test:visual": "playwright test tests/visual",
-    "acceptance": "bash scripts/acceptance/run.sh"
+    "acceptance": "bash scripts/acceptance/run.sh",
+    "acceptance:create-run": "node scripts/acceptance/create-run.mjs",
+    "acceptance:count": "node scripts/verify/count-acceptance.mjs acceptance/ACCEPTANCE_CRITERIA.md"
   },
   "keywords": [],
   "author": "",

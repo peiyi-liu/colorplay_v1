@@ -1,7 +1,6 @@
 import { mkdir } from 'node:fs/promises';
-import { chromium, expect, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
-const baseUrl = 'http://127.0.0.1:4173';
 const evidenceRoot = 'artifacts/acceptance/phase-1a-task-04';
 
 const routes = [
@@ -19,15 +18,14 @@ const routes = [
   },
 ] as const;
 
-test('foundation routes render without browser health errors', async () => {
-  await mkdir(`${evidenceRoot}/screenshots`, { recursive: true });
-  await mkdir(`${evidenceRoot}/traces`, { recursive: true });
-
-  const browser = await chromium.launch({ headless: false });
-  const context = await browser.newContext({
-    viewport: { width: 1440, height: 900 },
-  });
-  const page = await context.newPage();
+test('foundation routes render without browser health errors', async ({
+  page,
+}) => {
+  const browserName =
+    page.context().browser()?.browserType().name() ?? 'unknown-browser';
+  const screenshotDirectory = `${evidenceRoot}/screenshots/${browserName}`;
+  await mkdir(screenshotDirectory, { recursive: true });
+  await page.setViewportSize({ width: 1440, height: 900 });
   const consoleErrors: string[] = [];
   const pageErrors: string[] = [];
   const failedRequests: string[] = [];
@@ -48,24 +46,19 @@ test('foundation routes render without browser health errors', async () => {
     }
   });
 
-  try {
-    for (const route of routes) {
-      await page.goto(`${baseUrl}${route.path}`);
-      await expect(
-        page.getByRole('heading', { name: route.heading }),
-      ).toBeVisible();
-      await page.screenshot({
-        path: `${evidenceRoot}/screenshots/${route.screenshot}`,
-        fullPage: true,
-      });
-    }
-
-    expect(consoleErrors).toEqual([]);
-    expect(pageErrors).toEqual([]);
-    expect(failedRequests).toEqual([]);
-    expect(httpErrors).toEqual([]);
-  } finally {
-    await context.close();
-    await browser.close();
+  for (const route of routes) {
+    await page.goto(route.path);
+    await expect(
+      page.getByRole('heading', { name: route.heading }),
+    ).toBeVisible();
+    await page.screenshot({
+      path: `${screenshotDirectory}/${route.screenshot}`,
+      fullPage: true,
+    });
   }
+
+  expect(consoleErrors).toEqual([]);
+  expect(pageErrors).toEqual([]);
+  expect(failedRequests).toEqual([]);
+  expect(httpErrors).toEqual([]);
 });
