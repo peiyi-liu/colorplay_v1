@@ -1,0 +1,223 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 0;
+  min-height: 100dvh;
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  color: inherit;
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-info);
+  outline-offset: 3px;
+}
+
+.app-shell {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-rows: auto 1fr;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 2;
+  top: -80px;
+  left: var(--space-2);
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-surface);
+  border-radius: var(--radius-control);
+  background: var(--color-brand-dark);
+  color: var(--color-surface);
+  font-weight: 700;
+  padding: var(--space-2) var(--space-4);
+  text-decoration: none;
+}
+
+.skip-link:focus-visible {
+  top: var(--space-2);
+}
+
+.app-header {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  border-bottom: 4px solid var(--color-brand-yellow);
+  background: var(--color-brand-dark);
+  padding: var(--space-3) max(var(--space-4), env(safe-area-inset-left));
+}
+
+.app-header__content {
+  display: flex;
+  width: min(100%, 1280px);
+  align-items: center;
+  justify-content: space-between;
+  margin-inline: auto;
+}
+
+.brand {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: var(--space-3);
+  border-radius: var(--radius-control);
+  color: var(--color-surface);
+  font-family: var(--font-brand);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+
+.brand__mark {
+  width: var(--space-6);
+  height: var(--space-6);
+  border: 2px solid var(--color-surface);
+  border-radius: 8px;
+  background: var(--color-brand-yellow);
+}
+
+.app-header__stage {
+  color: var(--color-surface);
+  font-size: var(--font-size-supporting);
+  font-weight: 700;
+}
+
+#main-content {
+  display: grid;
+  width: 100%;
+  place-items: center;
+  padding: var(--space-8) var(--space-4);
+}
+
+.route-panel {
+  width: min(100%, 680px);
+  border: 1px solid var(--color-border);
+  border-top: 8px solid var(--color-brand-yellow);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  padding: var(--space-8);
+}
+
+.route-panel__eyebrow {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  border-radius: 999px;
+  margin: 0 0 var(--space-4);
+  background: var(--color-brand-yellow);
+  color: var(--color-brand-dark);
+  font-size: var(--font-size-supporting);
+  font-weight: 800;
+  padding: var(--space-1) var(--space-3);
+}
+
+.route-panel h1 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: clamp(2rem, 7vw, 3rem);
+  line-height: 1.2;
+}
+
+.route-panel__message {
+  max-width: 52ch;
+  margin: var(--space-4) 0 0;
+  color: var(--color-muted);
+}
+
+.route-panel__action-row {
+  display: flex;
+  margin-top: var(--space-8);
+}
+
+.primary-action {
+  display: inline-flex;
+  min-width: 192px;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: var(--color-surface);
+  font-weight: 800;
+  padding: var(--space-3) var(--space-6);
+  text-align: center;
+  text-decoration: none;
+  transition-duration: 120ms;
+  transition-property: background-color, border-color;
+  transition-timing-function: ease-out;
+}
+
+.primary-action:hover,
+.primary-action:active {
+  border-color: var(--color-primary-strong);
+  background: var(--color-primary-strong);
+}
+
+@media (max-width: 479px) {
+  #main-content {
+    align-items: start;
+    padding-block: var(--space-6);
+  }
+
+  .app-header__stage {
+    display: none;
+  }
+
+  .route-panel {
+    border-radius: var(--radius-card);
+    padding: var(--space-6);
+  }
+
+  .route-panel__action-row,
+  .primary-action {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

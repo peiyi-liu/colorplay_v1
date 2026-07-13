@@ -576,9 +576,11 @@ git commit -m "feat: add application providers and route boundaries"
 **Files:**
 - Create: `src/styles/tokens.css`, `src/styles/globals.css`
 - Create: `src/app/shell/app-shell.tsx`, `src/app/shell/app-shell.test.tsx`
-- Modify: `src/app/router/create-app-router.tsx`, `src/main.tsx`
+- Modify: `src/app/router/create-app-router.tsx`, `src/app/router/create-app-router.test.tsx`, `src/app/router/route-page.tsx`, `src/app/router/route-page.test.tsx`, `src/main.tsx`
 - Create: `tests/e2e/app-shell.visual.spec.ts`, `tests/e2e/accessibility.spec.ts`
 - Create after reviewer-approved first render: `tests/e2e/app-shell.visual.spec.ts-snapshots/**`
+- Modify: `playwright.config.ts` to add the Task 5 `PLAYWRIGHT_VIDEO=on` recording contract; Task 6 preserves and expands this configuration.
+- Modify: `docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md` to replace unsupported Playwright video flags plan-wide.
 - Modify: `package.json`, `pnpm-lock.yaml`
 
 **Interfaces:**
@@ -633,6 +635,8 @@ Run: `pnpm add -D @axe-core/playwright@latest lighthouse@latest`
 
 `src/styles/tokens.css` defines exactly the approved color, spacing, radius, typography, and focus variables from `spec/07-ui-visual-system.md` section 2. `src/styles/globals.css` applies border-box sizing, 16px mobile body text, WCAG-safe colors, `min-height: 100dvh`, and reduced-motion rules.
 
+Extend `playwright.config.ts` so `PLAYWRIGHT_VIDEO=on` selects Playwright video mode `on`; otherwise retain video on failure. Do not use the unsupported `--video on` CLI flag. Task 6 owns the later cross-browser acceptance-harness expansion and must preserve this Task 5 recording contract.
+
 `src/app/shell/app-shell.tsx`:
 
 ```tsx
@@ -661,7 +665,7 @@ Run:
 
 ```bash
 pnpm test -- src/app/shell/app-shell.test.tsx
-pnpm playwright test tests/e2e/app-shell.visual.spec.ts tests/e2e/accessibility.spec.ts --headed --trace on --video on
+PLAYWRIGHT_VIDEO=on pnpm playwright test tests/e2e/app-shell.visual.spec.ts tests/e2e/accessibility.spec.ts --headed --trace on
 ```
 
 Expected: unit test passes; all four viewport checks pass; tagged controls are at least 44x44; visual diff ratio is at most 0.01; axe has zero critical/serious findings; screenshots show no horizontal overflow, one clear route action, visible focus, flat 2D styling, and no continuous decorative animation.
@@ -669,7 +673,7 @@ Expected: unit test passes; all four viewport checks pass; tagged controls are a
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/styles src/app/shell src/app/router/create-app-router.tsx src/main.tsx tests/e2e/app-shell.visual.spec.ts tests/e2e/accessibility.spec.ts tests/e2e/app-shell.visual.spec.ts-snapshots package.json pnpm-lock.yaml
+git add docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md playwright.config.ts src/styles src/app/shell src/app/router/create-app-router.tsx src/app/router/create-app-router.test.tsx src/app/router/route-page.tsx src/app/router/route-page.test.tsx src/main.tsx tests/e2e/app-shell.visual.spec.ts tests/e2e/accessibility.spec.ts tests/e2e/app-shell.visual.spec.ts-snapshots package.json pnpm-lock.yaml
 git commit -m "feat: add accessible flat-design application shell"
 ```
 
@@ -678,7 +682,7 @@ git commit -m "feat: add accessible flat-design application shell"
 **Reviewer gate:** Accept only if a run manifest is deterministic, records Git/browser/viewport/commands, counts all 84 normative IDs, and refuses to label absent evidence as passed.
 
 **Files:**
-- Modify/expand: `playwright.config.ts`
+- Modify/expand: `playwright.config.ts`, preserving Task 5's environment-controlled video policy while adding the Task 6 acceptance harness.
 - Create: `scripts/acceptance/create-run.mjs`, `scripts/acceptance/run.sh`
 - Create: `scripts/verify/count-acceptance.mjs`
 - Create: `tests/contracts/evidence-manifest.test.ts`
@@ -729,7 +733,7 @@ export function countAcceptanceIds(markdown) {
 }
 ```
 
-`create-run.mjs` reads the 84 IDs, creates the standard directory tree, writes every ID with status `NOT VERIFIED`, and records the current SHA/dirty state without including environment values. Update both acceptance counts in `DOCUMENT_MANIFEST.json` to 84. Expand the existing Task 4 Playwright configuration with screenshot on failure, trace on first retry plus explicit acceptance trace mode, video retention for acceptance flows, and projects for Chromium, Firefox, and WebKit.
+`create-run.mjs` reads the 84 IDs, creates the standard directory tree, writes every ID with status `NOT VERIFIED`, and records the current SHA/dirty state without including environment values. Update both acceptance counts in `DOCUMENT_MANIFEST.json` to 84. Expand the Task 5 Playwright configuration while preserving its `PLAYWRIGHT_VIDEO=on` behavior, adding screenshot on failure, trace on first retry plus explicit acceptance trace mode, video retention for acceptance flows, and projects for Chromium, Firefox, and WebKit.
 
 - [ ] **Step 4: Verify pass and artifact honesty**
 
@@ -1346,7 +1350,7 @@ Run:
 
 ```bash
 pnpm test -- src/features/auth/pages/login-page.test.tsx
-pnpm playwright test tests/e2e/login.spec.ts --headed --trace on --video on
+PLAYWRIGHT_VIDEO=on pnpm playwright test tests/e2e/login.spec.ts --headed --trace on
 ```
 
 Expected: component tests pass; invalid credentials keep the user anonymous with a Traditional Chinese error; one valid local student flow uses only Tab/Shift+Tab/Enter and navigates to `/app`; one request is sent while pending; focus remains visible; three viewport screenshots, video, and trace are written.
@@ -1435,7 +1439,7 @@ Run:
 pnpm test -- src/features/profile/api/profile-repository.integration.test.ts src/features/profile/components/profile-summary.test.tsx
 pnpm test -- src/features/auth/components/require-role.test.tsx
 pnpm exec supabase test db
-pnpm playwright test tests/e2e/profile-vertical-slice.spec.ts --headed --trace on --video on
+PLAYWRIGHT_VIDEO=on pnpm playwright test tests/e2e/profile-vertical-slice.spec.ts --headed --trace on
 ```
 
 Expected: own profile renders from PostgreSQL; cross-user SELECT and permitted-column UPDATE each affect zero rows, DELETE is rejected by grants, and role update is rejected; student UI has no teacher link and direct `/teacher` access reaches `/unauthorized`; network artifact has no other profile or secret fields.
@@ -1487,7 +1491,7 @@ test('restores session and intended route, then protects after logout', async ({
 
 - [ ] **Step 2: Verify at least one lifecycle assertion fails**
 
-Run: `pnpm playwright test tests/e2e/session-lifecycle.spec.ts tests/e2e/shared-device.spec.ts --headed --trace on --video on`
+Run: `PLAYWRIGHT_VIDEO=on pnpm playwright test tests/e2e/session-lifecycle.spec.ts tests/e2e/shared-device.spec.ts --headed --trace on`
 
 Expected: FAIL because sign-out does not yet clear user-scoped Query cache and the intended-route return is incomplete.
 
@@ -1497,7 +1501,7 @@ On successful sign-in, validate `location.state.from.pathname` as an internal pa
 
 - [ ] **Step 4: Verify headed lifecycle and shared-device isolation**
 
-Run: `pnpm playwright test tests/e2e/session-lifecycle.spec.ts tests/e2e/shared-device.spec.ts --headed --trace on --video on`
+Run: `PLAYWRIGHT_VIDEO=on pnpm playwright test tests/e2e/session-lifecycle.spec.ts tests/e2e/shared-device.spec.ts --headed --trace on`
 
 Expected: both flows pass; refresh retains the first session; logout plus Back shows login; student two login displays only `student.two`; console errors, unexpected failed requests, and 5xx are zero.
 
@@ -1577,7 +1581,7 @@ mkdir -p artifacts/acceptance/phase-1/reports
 pnpm exec lighthouse http://127.0.0.1:4173/login --quiet --only-categories=accessibility --output=json --output-path=artifacts/acceptance/phase-1/reports/lighthouse-login.json --chrome-flags='--headless=new'
 node -e "const r=require('./artifacts/acceptance/phase-1/reports/lighthouse-login.json'); if ((r.categories.accessibility.score ?? 0) < 0.95) process.exit(1)"
 pnpm test:e2e
-pnpm playwright test tests/acceptance/phase-1.spec.ts --headed --project=chromium --trace on --video on
+PLAYWRIGHT_VIDEO=on pnpm playwright test tests/acceptance/phase-1.spec.ts --headed --project=chromium --trace on
 node scripts/acceptance/create-run.mjs --environment local --app-url http://127.0.0.1:4173
 ```
 
@@ -1659,7 +1663,7 @@ test "$FEATURE_BRANCH" != 'main'
 git commit --allow-empty -m "chore: verify automatic Vercel deployment"
 git push origin "$FEATURE_BRANCH"
 # After the Preview deployment is Ready, set VERCEL_PREVIEW_URL to its HTTPS URL.
-PLAYWRIGHT_BASE_URL="$VERCEL_PREVIEW_URL" ACCEPTANCE_STUDENT_EMAIL="$STAGING_ACCEPTANCE_EMAIL" ACCEPTANCE_STUDENT_PASSWORD="$STAGING_ACCEPTANCE_PASSWORD" pnpm playwright test tests/acceptance/phase-1.spec.ts --headed --project=chromium --trace on --video on
+PLAYWRIGHT_VIDEO=on PLAYWRIGHT_BASE_URL="$VERCEL_PREVIEW_URL" ACCEPTANCE_STUDENT_EMAIL="$STAGING_ACCEPTANCE_EMAIL" ACCEPTANCE_STUDENT_PASSWORD="$STAGING_ACCEPTANCE_PASSWORD" pnpm playwright test tests/acceptance/phase-1.spec.ts --headed --project=chromium --trace on
 git fetch origin main
 git merge-base --is-ancestor origin/main HEAD
 git push origin 'HEAD:main'

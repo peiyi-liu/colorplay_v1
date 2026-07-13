@@ -4,6 +4,8 @@ import { RouterProvider } from 'react-router-dom';
 import { RouteLoading } from './app/boundaries/route-loading';
 import { AppProviders } from './app/providers/app-providers';
 import { createAppRouter } from './app/router/create-app-router';
+import './styles/tokens.css';
+import './styles/globals.css';
 
 const appRouter = createAppRouter();
 
