@@ -1077,7 +1077,7 @@ git commit -m "feat: add profile schema and RLS"
 - Create: `supabase/migrations/20260714000100_grant_controlled_profile_role_admin.sql`
 - Create: `supabase/tests/002_profiles_service_role.test.sql`
 - Create: `pnpm-workspace.yaml`
-- Modify: `vitest.config.ts`, `tsconfig.node.json`, `scripts/test-db.sh`, `package.json`, `pnpm-lock.yaml`, `.github/workflows/ci.yml`, `docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md`
+- Modify: `vitest.config.ts`, `tsconfig.node.json`, `scripts/test-db.sh`, `tests/contracts/supabase-local.test.sh`, `package.json`, `pnpm-lock.yaml`, `.github/workflows/ci.yml`, `docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md`
 
 **Interfaces:**
 - Consumes: local `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and process-only `SUPABASE_SERVICE_ROLE_KEY` read from `supabase status -o env` through a strict `API_URL` / `ANON_KEY` / `SERVICE_ROLE_KEY` allowlist without echoing, redirecting, or persisting status output.
@@ -1173,6 +1173,7 @@ Run:
 
 ```bash
 pnpm test:db
+bash tests/contracts/supabase-local.test.sh
 bash tests/contracts/database-types.test.sh
 npm run build
 ! rg -n 'LocalOnly-|service_role|SUPABASE_SERVICE_ROLE_KEY' dist
@@ -1185,6 +1186,27 @@ Repeat the same strict allowlist -> seed -> immediate service-value unset sequen
 ```bash
 git add .github/workflows/ci.yml docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md package.json pnpm-lock.yaml pnpm-workspace.yaml scripts/supabase scripts/test-db.sh supabase/migrations/20260714000100_grant_controlled_profile_role_admin.sql supabase/tests/002_profiles_service_role.test.sql tests/contracts/test-boundaries.test.ts tests/fixtures/users.ts tests/integration/auth-fixtures.test.ts tsconfig.node.json vitest.config.ts vitest.integration.config.ts
 git commit -m "test: seed real local Auth identities"
+```
+
+- [ ] **Step 8: Resolve the reviewer-found Supabase boundary-contract contradiction**
+
+Preserve the pre-fix RED by running `bash -x tests/contracts/supabase-local.test.sh`. Expected: exit 1 at the legacy assertion requiring normal unit/coverage scripts to special-case only the GoTrue health file.
+
+Update—not remove—the shell contract so it asserts the separate test architecture from Step 2, permanent database tests, explicit real-stack integration, artifact scanning, real start/reset/GoTrue health, and the strict status allowlist from Step 5. The contract must reject skip APIs, `--ignore-health-check`, `eval`, shell tracing, status/key output or persistence, non-local API URLs, invalid/duplicate key assignments, and any source ordering that retains the service credential through the integration runner.
+
+Run:
+
+```bash
+bash tests/contracts/supabase-local.test.sh
+pnpm exec vitest run tests/contracts/test-boundaries.test.ts
+pnpm test:db
+```
+
+Expected: all three commands pass against the real local stack. Stop Supabase and repeat unit, coverage, static, build, and bundle scans before committing.
+
+```bash
+git add tests/contracts/supabase-local.test.sh docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md
+git commit -m "test: update Supabase boundary contract"
 ```
 
 ### Task 11: Implement the typed Auth repository against Supabase
