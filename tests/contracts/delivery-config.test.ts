@@ -1,7 +1,8 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const workflowPath = '.github/workflows/ci.yml';
+const visualBaselineDirectory = 'tests/e2e/app-shell.visual.spec.ts-snapshots';
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -104,5 +105,19 @@ describe('delivery configuration', () => {
 
     expect(config.use?.baseURL).toBe('http://127.0.0.1:4173');
     expect(config.webServer).toBeUndefined();
+  });
+
+  it('tracks the four Chromium Linux visual baselines required by CI', async () => {
+    const baselineFiles = await readdir(visualBaselineDirectory);
+    const requiredLinuxBaselines = [
+      'login-320x812-chromium-linux.png',
+      'login-375x812-chromium-linux.png',
+      'login-768x1024-chromium-linux.png',
+      'login-1440x900-chromium-linux.png',
+    ];
+
+    for (const baseline of requiredLinuxBaselines) {
+      expect(baselineFiles).toContain(baseline);
+    }
   });
 });

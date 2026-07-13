@@ -829,6 +829,10 @@ git commit -m "build: add real Supabase local runtime"
 - Create: `vercel.json`
 - Create: `tests/contracts/delivery-config.test.ts`
 - Create: `tests/e2e/spa-deep-link.spec.ts`
+- Create/generated: `tests/e2e/app-shell.visual.spec.ts-snapshots/login-320x812-chromium-linux.png`
+- Create/generated: `tests/e2e/app-shell.visual.spec.ts-snapshots/login-375x812-chromium-linux.png`
+- Create/generated: `tests/e2e/app-shell.visual.spec.ts-snapshots/login-768x1024-chromium-linux.png`
+- Create/generated: `tests/e2e/app-shell.visual.spec.ts-snapshots/login-1440x900-chromium-linux.png`
 - Create: `docs/deployment/vercel.md`
 - Modify/support: `playwright.config.ts`, using an explicit `PLAYWRIGHT_BASE_URL` without starting the development server so deep-link evidence can target the built preview.
 - Modify/support: `tests/contracts/evidence-manifest.test.ts`, starting one explicit local Vite server for retention integration runs that intentionally supply an external base URL.
