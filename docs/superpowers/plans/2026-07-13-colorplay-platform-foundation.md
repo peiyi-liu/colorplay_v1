@@ -296,10 +296,12 @@ git commit -m "build: establish strict React Vite toolchain"
 **Reviewer gate:** Accept only if invalid/missing browser configuration fails safely and one typed client is created without exposing server credentials.
 
 **Files:**
+
 - Create: `.env.example`
 - Create: `src/lib/config/public-env.ts`, `src/lib/config/public-env.test.ts`
 - Create: `src/lib/supabase/browser-client.ts`, `src/lib/supabase/browser-client.test.ts`
 - Create: `src/types/database.ts`
+- Modify: `package.json`, `pnpm-lock.yaml`, `tsconfig.app.json` (Supabase declaration compatibility support)
 
 **Interfaces:**
 - Consumes: `import.meta.env` fields `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
@@ -317,14 +319,14 @@ import { parsePublicEnv } from './public-env';
 
 describe('parsePublicEnv', () => {
   it('accepts exactly the browser-safe Supabase inputs', () => {
-    expect(parsePublicEnv({ VITE_SUPABASE_URL: 'http://127.0.0.1:54321', VITE_SUPABASE_ANON_KEY: 'anon-test-key' })).toEqual({
+    expect(parsePublicEnv({ VITE_SUPABASE_URL: 'http://127.0.0.1:54321', VITE_SUPABASE_ANON_KEY: 'synthetic-anon-test-key-12345' })).toEqual({
       supabaseUrl: 'http://127.0.0.1:54321',
-      supabaseAnonKey: 'anon-test-key',
+      supabaseAnonKey: 'synthetic-anon-test-key-12345',
     });
   });
 
   it('rejects a missing URL with a stable configuration code', () => {
-    expect(() => parsePublicEnv({ VITE_SUPABASE_ANON_KEY: 'anon-test-key' })).toThrow('APP_CONFIG_INVALID');
+    expect(() => parsePublicEnv({ VITE_SUPABASE_ANON_KEY: 'synthetic-anon-test-key-12345' })).toThrow('APP_CONFIG_INVALID');
   });
 });
 ```
@@ -335,7 +337,7 @@ import { getBrowserSupabaseClient } from './browser-client';
 
 describe('getBrowserSupabaseClient', () => {
   it('returns the same client for repeated calls', () => {
-    const env = { supabaseUrl: 'http://127.0.0.1:54321', supabaseAnonKey: 'anon-test-key' } as const;
+    const env = { supabaseUrl: 'http://127.0.0.1:54321', supabaseAnonKey: 'synthetic-anon-test-key-12345' } as const;
     expect(getBrowserSupabaseClient(env)).toBe(getBrowserSupabaseClient(env));
   });
 });
@@ -355,7 +357,7 @@ Expected: FAIL with module resolution errors for `public-env` and `browser-clien
 import { z } from 'zod';
 
 const publicEnvSchema = z.object({
-  VITE_SUPABASE_URL: z.string().url(),
+  VITE_SUPABASE_URL: z.url(),
   VITE_SUPABASE_ANON_KEY: z.string().min(20),
 });
 
@@ -371,7 +373,7 @@ export function parsePublicEnv(input: Record<string, unknown>): PublicEnv {
 `src/types/database.ts` accurately represents the Phase 1A schema with no application tables:
 
 ```ts
-export type Database = {
+export interface Database {
   public: {
     Tables: Record<never, never>;
     Views: Record<never, never>;
@@ -379,7 +381,7 @@ export type Database = {
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
   };
-};
+}
 ```
 
 `src/lib/supabase/browser-client.ts`:
@@ -404,6 +406,8 @@ VITE_SUPABASE_URL=http://127.0.0.1:54321
 VITE_SUPABASE_ANON_KEY=local-public-anon-key-from-supabase-status
 ```
 
+The first `npm run build` after importing `@supabase/supabase-js@2.110.2` was an additional build RED. TypeScript 6.0.3 traversed Supabase Auth's declarations and rejected `PublicKeyCredentialFuture<T>.toJSON()` against TypeScript 6's newer DOM declaration. Supabase Storage and Phoenix declarations also reference `Buffer` and `NodeJS`, while the application compiler exposed only `vite/client` ambient types. The minimal compatibility fix is to pin TypeScript exactly to 5.8.3, the compiler line used by the installed Supabase package, and expose the already-installed `node` types alongside `vite/client`. Do not enable `skipLibCheck`, disable strict flags, or suppress diagnostics.
+
 - [ ] **Step 4: Verify tests, build, and bundle scan**
 
 Run:
@@ -412,14 +416,22 @@ Run:
 pnpm test -- src/lib/config/public-env.test.ts src/lib/supabase/browser-client.test.ts
 npm run build
 ! rg -n 'service_role|SUPABASE_SERVICE_ROLE_KEY|DATABASE_URL|JWT_SECRET|db_password' dist
+pnpm format:check
+pnpm typecheck
+pnpm lint
+pnpm test:coverage
+pnpm install --frozen-lockfile
+pnpm peers check
+pnpm audit --audit-level high
+bash tests/contracts/toolchain.test.sh && pnpm typecheck && pnpm lint && pnpm test -- src/app/foundation-root.test.tsx && npm run build
 ```
 
-Expected: 3 tests pass; build exits 0; forbidden-pattern search returns no matches.
+Expected: the 3 new assertions pass; all discovered tests and quality gates exit 0; coverage remains above the unchanged thresholds; the build exits 0 without ignored diagnostics; the frozen install, peer check, audit, and original Task 2 GREEN gate pass; the forbidden-pattern search returns no matches.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add .env.example src/lib src/types
+git add .env.example package.json pnpm-lock.yaml tsconfig.app.json docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md src/lib src/types
 git commit -m "feat: validate public Supabase configuration"
 ```
 
