@@ -1308,9 +1308,31 @@ Implement `createAuthRepository(client)` with Supabase `signInWithPassword`, `si
 
 - [ ] **Step 4: Verify real integration**
 
-Run: `pnpm test:integration src/features/auth/api/auth-repository.integration.test.ts && pnpm typecheck`
+Run the authoritative safe reset/seed path first:
 
-Expected: both integration tests pass against local GoTrue and typecheck exits 0.
+```bash
+pnpm test:db
+pnpm typecheck
+```
+
+For a focused diagnostic rerun while the local stack is healthy, load only the
+validated local environment in-process and immediately remove the service role
+before Vitest starts:
+
+```bash
+set -euo pipefail
+source scripts/supabase/load-local-environment.sh
+trap 'unset SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY' EXIT
+load_local_supabase_environment \
+  < <(pnpm exec supabase status -o env 2>/dev/null)
+unset SUPABASE_SERVICE_ROLE_KEY
+export SUPABASE_URL SUPABASE_ANON_KEY
+pnpm test:integration src/features/auth/api/auth-repository.integration.test.ts
+```
+
+Expected: Task 10 and Task 11 integration tests pass against local GoTrue, the
+focused Auth repository tests pass without exposing local credentials, and
+typecheck exits 0.
 
 - [ ] **Step 5: Commit**
 
