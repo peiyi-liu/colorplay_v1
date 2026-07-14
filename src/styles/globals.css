@@ -504,6 +504,18 @@ a {
   font-weight: 800;
 }
 
+.quiz-action-error {
+  margin-top: var(--space-4);
+  border: 2px solid var(--color-danger);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  padding: var(--space-4);
+}
+
+.quiz-action-error p {
+  margin-top: 0;
+}
+
 .quiz-result {
   width: min(100%, 880px);
 }

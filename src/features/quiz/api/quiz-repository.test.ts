@@ -133,6 +133,17 @@ describe('quiz repository', () => {
     });
   });
 
+  it('activates the next question through an idempotent server RPC', async () => {
+    rpc.mockResolvedValue({ data: sessionPayload, error: null });
+
+    await expect(
+      createQuizRepository(client).activateNextQuestion(sessionId),
+    ).resolves.toMatchObject({ sessionId });
+    expect(rpc).toHaveBeenCalledWith('activate_next_quiz_question', {
+      session_id: sessionId,
+    });
+  });
+
   it('finalizes with server totals and never accepts client score fields', async () => {
     rpc.mockResolvedValue({
       data: {

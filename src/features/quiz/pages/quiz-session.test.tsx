@@ -9,11 +9,12 @@ import {
 } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type {
-  QuizAnswerResult,
-  QuizQuestion,
-  QuizRepository,
-  QuizSession,
+import {
+  QuizRepositoryError,
+  type QuizAnswerResult,
+  type QuizQuestion,
+  type QuizRepository,
+  type QuizSession,
 } from '../api/quiz-repository';
 import { QuizSessionPage } from './quiz-session';
 
@@ -84,15 +85,18 @@ const incorrectResult: QuizAnswerResult = {
 };
 
 function repositoryMock() {
+  const activateNextQuestion = vi.fn<QuizRepository['activateNextQuestion']>();
   const createSession = vi.fn<QuizRepository['createSession']>();
   const finalizeSession = vi.fn<QuizRepository['finalizeSession']>();
   const getSession = vi.fn<QuizRepository['getSession']>();
   const submitAnswer = vi.fn<QuizRepository['submitAnswer']>();
   return {
     createSession,
+    activateNextQuestion,
     finalizeSession,
     getSession,
     repository: {
+      activateNextQuestion,
       createSession,
       finalizeSession,
       getSession,
@@ -147,6 +151,14 @@ describe('QuizSessionPage', () => {
       },
       {
         ...second,
+        deadlineAt: null,
+        startedAt: null,
+      },
+    ]);
+    const activated = session([
+      refreshed.questions[0] ?? first,
+      {
+        ...second,
         deadlineAt: '2099-07-14T12:01:00.000Z',
         startedAt: '2099-07-14T12:00:40.000Z',
       },
@@ -154,6 +166,7 @@ describe('QuizSessionPage', () => {
     mock.getSession.mockResolvedValueOnce(session([first, second]));
     mock.getSession.mockResolvedValueOnce(refreshed);
     mock.submitAnswer.mockResolvedValue(incorrectResult);
+    mock.activateNextQuestion.mockResolvedValue(activated);
     renderQuiz(mock.repository);
 
     expect(await screen.findByText('第 1 題')).toBeVisible();
@@ -176,9 +189,30 @@ describe('QuizSessionPage', () => {
     await userEvent.click(
       screen.getByRole('button', { name: '我理解了，下一題' }),
     );
+    expect(mock.activateNextQuestion).toHaveBeenCalledWith(sessionId);
     expect(await screen.findByText('第 2 題')).toBeVisible();
     expect(screen.queryByText('RGB 使用三色光。')).toBeNull();
     expect(screen.getByRole('button', { name: '送出答案' })).toBeDisabled();
+  });
+
+  it('restores terminal feedback after refresh without starting the next timer', async () => {
+    const mock = repositoryMock();
+    const first = question(1, {
+      answerStatus: 'incorrect',
+      correctOptionId: '33000000-0000-0000-0000-000000000001',
+      explanation: incorrectResult.explanation,
+      scoreDelta: 0,
+      selectedOptionId: '33000000-0000-0000-0000-000000000002',
+    });
+    const second = question(2, { deadlineAt: null, startedAt: null });
+    mock.getSession.mockResolvedValue(session([first, second]));
+    renderQuiz(mock.repository);
+
+    expect(
+      await screen.findByRole('heading', { name: '✕ 答錯了' }),
+    ).toBeVisible();
+    expect(screen.getByText('已作答')).toBeVisible();
+    expect(screen.getByText(incorrectResult.explanation)).toBeVisible();
   });
 
   it('submits null when the server deadline is already elapsed', async () => {
@@ -193,7 +227,18 @@ describe('QuizSessionPage', () => {
       responseMs: 20_001,
       selectedOptionId: null,
     };
-    mock.getSession.mockResolvedValue(session([expired]));
+    mock.getSession.mockResolvedValueOnce(session([expired])).mockResolvedValue(
+      session([
+        {
+          ...expired,
+          answerStatus: 'timeout',
+          correctOptionId: expired.options[0]?.id ?? null,
+          explanation: incorrectResult.explanation,
+          scoreDelta: 0,
+          selectedOptionId: null,
+        },
+      ]),
+    );
     mock.submitAnswer.mockResolvedValue(result);
     renderQuiz(mock.repository);
 
@@ -207,6 +252,44 @@ describe('QuizSessionPage', () => {
     expect(
       await screen.findByRole('heading', { name: '⌛ 作答逾時' }),
     ).toBeVisible();
+  });
+
+  it('reconciles a failed submit and retries with the original idempotency key', async () => {
+    const mock = repositoryMock();
+    const first = question(1);
+    const answered = session([
+      {
+        ...first,
+        answerStatus: 'incorrect',
+        correctOptionId: first.options[0]?.id ?? null,
+        explanation: incorrectResult.explanation,
+        scoreDelta: 0,
+        selectedOptionId: first.options[1]?.id ?? null,
+      },
+    ]);
+    mock.getSession
+      .mockResolvedValueOnce(session([first]))
+      .mockResolvedValueOnce(session([first]))
+      .mockResolvedValue(answered);
+    mock.submitAnswer
+      .mockRejectedValueOnce(new QuizRepositoryError('UNAVAILABLE'))
+      .mockResolvedValueOnce(incorrectResult);
+    renderQuiz(mock.repository);
+
+    await userEvent.click(await screen.findByRole('radio', { name: 'CMYK' }));
+    await userEvent.click(screen.getByRole('button', { name: '送出答案' }));
+    expect(
+      await screen.findByText('答題服務暫時無法使用，請稍後重試。'),
+    ).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: '重試送出' }));
+
+    expect(
+      await screen.findByRole('heading', { name: '✕ 答錯了' }),
+    ).toBeVisible();
+    expect(mock.submitAnswer).toHaveBeenCalledTimes(2);
+    expect(mock.submitAnswer.mock.calls[0]?.[2]).toBe(
+      mock.submitAnswer.mock.calls[1]?.[2],
+    );
   });
 
   it('creates a new idempotent session and replaces the temporary URL', async () => {
@@ -229,5 +312,29 @@ describe('QuizSessionPage', () => {
       expect(router.state.location.pathname).toBe(`/app/quiz/${sessionId}`);
     });
     expect(router.state.historyAction).toBe('REPLACE');
+  });
+
+  it('shows a failed session creation and retries with the original request id', async () => {
+    const mock = repositoryMock();
+    mock.createSession
+      .mockRejectedValueOnce(new QuizRepositoryError('UNAVAILABLE'))
+      .mockResolvedValueOnce(session([question(1)]));
+    mock.getSession.mockResolvedValue(session([question(1)]));
+    const router = renderQuiz(
+      mock.repository,
+      `/app/quiz/new?template=${templateId}`,
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: '無法建立挑戰' }),
+    ).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: '重新嘗試' }));
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe(`/app/quiz/${sessionId}`);
+    });
+    expect(mock.createSession).toHaveBeenCalledTimes(2);
+    expect(mock.createSession.mock.calls[0]?.[1]).toBe(
+      mock.createSession.mock.calls[1]?.[1],
+    );
   });
 });

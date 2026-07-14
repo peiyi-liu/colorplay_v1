@@ -696,6 +696,10 @@ export type Database = {
       }
     }
     Functions: {
+      activate_next_quiz_question: {
+        Args: { session_id: string }
+        Returns: Json
+      }
       build_quiz_answer_result: {
         Args: { target_answer_id: string }
         Returns: Json

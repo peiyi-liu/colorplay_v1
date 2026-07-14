@@ -41,8 +41,16 @@ test('student starts a real quiz, submits an answer, and advances', async ({
   await expect(options.first()).toBeDisabled();
   await expect(page.getByRole('button', { name: '送出答案' })).toHaveCount(0);
 
+  await page.reload();
+  await expect(
+    page.getByRole('heading', {
+      name: /(?:✓ 答對了|✕ 答錯了)/u,
+    }),
+  ).toBeVisible();
+  await page.waitForTimeout(1500);
   await page.getByRole('button', { name: '我理解了，下一題' }).click();
   await expect(page.getByLabel('挑戰進度')).toContainText('第 2 / 10 題');
+  await expect(page.getByText(/剩餘 (?:19|20) 秒/u)).toBeVisible();
   await expect(page.getByRole('button', { name: '送出答案' })).toBeDisabled();
 
   expect(consoleErrors).toEqual([]);

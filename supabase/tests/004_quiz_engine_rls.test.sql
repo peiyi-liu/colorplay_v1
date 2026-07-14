@@ -1,6 +1,6 @@
 begin;
 
-select plan(34);
+select plan(40);
 
 select has_table('public', 'quiz_sessions', 'quiz sessions exists');
 select has_table(
@@ -20,6 +20,12 @@ select has_function(
   'submit_quiz_answer',
   array['uuid', 'uuid', 'uuid'],
   'submit quiz answer RPC exists'
+);
+select has_function(
+  'public',
+  'activate_next_quiz_question',
+  array['uuid'],
+  'activate next quiz question RPC exists'
 );
 select has_function(
   'public',
@@ -46,6 +52,14 @@ select ok(
 select ok(
   not has_function_privilege(
     'anon',
+    'public.activate_next_quiz_question(uuid)',
+    'EXECUTE'
+  ),
+  'anonymous users cannot activate quiz questions'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
     'public.finalize_quiz_session(uuid)',
     'EXECUTE'
   ),
@@ -66,6 +80,14 @@ select ok(
     where p.oid = 'public.submit_quiz_answer(uuid,uuid,uuid)'::regprocedure
   ),
   'submit quiz answer has a fixed search path'
+);
+select ok(
+  (
+    select p.proconfig @> array['search_path=pg_catalog, public']
+    from pg_proc p
+    where p.oid = 'public.activate_next_quiz_question(uuid)'::regprocedure
+  ),
+  'activate next quiz question has a fixed search path'
 );
 select ok(
   (
@@ -212,6 +234,11 @@ select set_config(
   current_setting('test.quiz_payload')::jsonb #>> '{questions,2,session_question_id}',
   true
 );
+select set_config(
+  'test.second_question_id',
+  current_setting('test.quiz_payload')::jsonb #>> '{questions,1,session_question_id}',
+  true
+);
 
 select throws_ok(
   format(
@@ -283,6 +310,34 @@ select throws_ok(
   'P0001',
   'QUIZ_QUESTION_ALREADY_ANSWERED',
   'same question cannot reach a second terminal answer'
+);
+select is(
+  (
+    select started_at::text
+    from public.quiz_session_question_state
+    where session_question_id = current_setting('test.second_question_id')::uuid
+  ),
+  null,
+  'next question remains inactive while feedback is open'
+);
+select set_config(
+  'test.second_started_at',
+  public.activate_next_quiz_question(
+    current_setting('test.quiz_session_id')::uuid
+  ) #>> '{questions,1,started_at}',
+  true
+);
+select isnt(
+  current_setting('test.second_started_at'),
+  '',
+  'acknowledging feedback starts the next question'
+);
+select is(
+  public.activate_next_quiz_question(
+    current_setting('test.quiz_session_id')::uuid
+  ) #>> '{questions,1,started_at}',
+  current_setting('test.second_started_at'),
+  'activation retry preserves the original server deadline'
 );
 
 reset role;

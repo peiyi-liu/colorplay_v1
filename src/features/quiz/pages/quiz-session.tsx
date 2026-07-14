@@ -13,18 +13,62 @@ import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
 import {
   createQuizRepository,
   QuizRepositoryError,
-  type QuizAnswerResult,
+  type QuizQuestion,
   type QuizRepository,
   type QuizSession,
 } from '../api/quiz-repository';
 import { Countdown } from '../components/countdown';
-import { FeedbackCard } from '../components/feedback-card';
+import {
+  FeedbackCard,
+  type QuizFeedbackResult,
+} from '../components/feedback-card';
 import { QuestionCard } from '../components/question-card';
 
 const quizSessionQueryKey = (sessionId: string) =>
   ['quiz', 'session', sessionId] as const;
 
 const requestId = () => globalThis.crypto.randomUUID();
+
+type SubmissionAttempt = Readonly<{
+  idempotencyKey: string;
+  questionId: string;
+  selectedId: string | null;
+}>;
+
+type ActionError = Readonly<{
+  kind: 'advance' | 'finalize' | 'submit';
+  message: string;
+}>;
+
+const actionErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : '答題服務暫時無法使用，請稍後重試。';
+
+const feedbackFromQuestion = (
+  question: QuizQuestion | undefined,
+  totalScore: number,
+): QuizFeedbackResult | undefined => {
+  if (
+    !question?.answerStatus ||
+    !question.correctOptionId ||
+    !question.explanation ||
+    question.scoreDelta === null
+  ) {
+    return undefined;
+  }
+  const correctOption = question.options.find(
+    ({ id }) => id === question.correctOptionId,
+  );
+  if (!correctOption) return undefined;
+  return {
+    answerStatus: question.answerStatus,
+    correctOptionId: question.correctOptionId,
+    correctOptionText: correctOption.text,
+    explanation: question.explanation,
+    scoreDelta: question.scoreDelta,
+    selectedOptionId: question.selectedOptionId,
+    totalScore,
+  };
+};
 
 export function QuizSessionPage({
   repository: suppliedRepository,
@@ -46,10 +90,9 @@ export function QuizSessionPage({
   const [selection, setSelection] = useState<
     Readonly<{ optionId: string; questionId: string }> | undefined
   >();
-  const [feedback, setFeedback] = useState<
-    Readonly<{ questionId: string; result: QuizAnswerResult }> | undefined
-  >();
+  const [actionError, setActionError] = useState<ActionError>();
   const submissionStarted = useRef(false);
+  const submissionAttempt = useRef<SubmissionAttempt | undefined>(undefined);
   const creationStarted = useRef(false);
   const creationRequestId = useRef<string | undefined>(undefined);
 
@@ -105,19 +148,31 @@ export function QuizSessionPage({
   const finalizeMutation = useMutation({
     mutationFn: (sessionId: string) => repository.finalizeSession(sessionId),
   });
+  const activateMutation = useMutation({
+    mutationFn: (sessionId: string) =>
+      repository.activateNextQuestion(sessionId),
+  });
 
   const session = sessionQuery.data;
-  const activeQuestion = session?.questions.find(
-    (question) =>
-      question.answerStatus === null &&
-      question.startedAt !== null &&
-      question.deadlineAt !== null,
+  const firstUnansweredQuestion = session?.questions.find(
+    ({ answerStatus }) => answerStatus === null,
   );
-  const feedbackQuestion = feedback
-    ? session?.questions.find(
-        ({ sessionQuestionId }) => sessionQuestionId === feedback.questionId,
-      )
-    : undefined;
+  const activeQuestion =
+    firstUnansweredQuestion?.startedAt && firstUnansweredQuestion.deadlineAt
+      ? firstUnansweredQuestion
+      : undefined;
+  const feedbackQuestion =
+    session &&
+    ((!firstUnansweredQuestion && session.answeredCount > 0) ||
+      firstUnansweredQuestion?.startedAt === null)
+      ? session.questions
+          .filter(({ answerStatus }) => answerStatus !== null)
+          .at(-1)
+      : undefined;
+  const feedbackResult = feedbackFromQuestion(
+    feedbackQuestion,
+    session?.totalScore ?? 0,
+  );
   const displayedQuestion = feedbackQuestion ?? activeQuestion;
   const selectedOptionId =
     selection && selection.questionId === displayedQuestion?.sessionQuestionId
@@ -133,17 +188,34 @@ export function QuizSessionPage({
   const submit = async (selectedId: string | null) => {
     if (!activeQuestion || submissionStarted.current) return;
     submissionStarted.current = true;
+    const previousAttempt = submissionAttempt.current;
+    const attempt =
+      previousAttempt?.questionId === activeQuestion.sessionQuestionId &&
+      previousAttempt.selectedId === selectedId
+        ? previousAttempt
+        : {
+            idempotencyKey: requestId(),
+            questionId: activeQuestion.sessionQuestionId,
+            selectedId,
+          };
+    submissionAttempt.current = attempt;
+    setActionError(undefined);
     try {
-      const result = await submitMutation.mutateAsync({
-        idempotencyKey: requestId(),
-        questionId: activeQuestion.sessionQuestionId,
-        selectedId,
-      });
-      await sessionQuery.refetch();
-      setFeedback({
-        questionId: activeQuestion.sessionQuestionId,
-        result,
-      });
+      await submitMutation.mutateAsync(attempt);
+      const refreshed = await sessionQuery.refetch();
+      if (refreshed.isError) throw refreshed.error;
+      submissionAttempt.current = undefined;
+    } catch (error) {
+      const refreshed = await sessionQuery.refetch();
+      const reconciledQuestion = refreshed.data?.questions.find(
+        ({ sessionQuestionId }) => sessionQuestionId === attempt.questionId,
+      );
+      if (reconciledQuestion?.answerStatus) {
+        submissionAttempt.current = undefined;
+        setActionError(undefined);
+      } else {
+        setActionError({ kind: 'submit', message: actionErrorMessage(error) });
+      }
     } finally {
       submissionStarted.current = false;
     }
@@ -151,13 +223,31 @@ export function QuizSessionPage({
 
   const continueAfterFeedback = async () => {
     if (!session || !displayedQuestion) return;
+    setActionError(undefined);
     if (displayedQuestion.position === session.questionCount) {
-      await finalizeMutation.mutateAsync(session.sessionId);
-      void navigate(`/app/quiz/${session.sessionId}/result`);
+      try {
+        await finalizeMutation.mutateAsync(session.sessionId);
+        void navigate(`/app/quiz/${session.sessionId}/result`);
+      } catch (error) {
+        setActionError({
+          kind: 'finalize',
+          message: actionErrorMessage(error),
+        });
+      }
       return;
     }
-    setFeedback(undefined);
-    setSelection(undefined);
+    try {
+      const activatedSession = await activateMutation.mutateAsync(
+        session.sessionId,
+      );
+      queryClient.setQueryData(
+        quizSessionQueryKey(session.sessionId),
+        activatedSession,
+      );
+      setSelection(undefined);
+    } catch (error) {
+      setActionError({ kind: 'advance', message: actionErrorMessage(error) });
+    }
   };
 
   if (!routeSessionId || (isNewSession && !templateId)) {
@@ -172,21 +262,40 @@ export function QuizSessionPage({
     );
   }
 
+  if (isNewSession && createMutation.isError) {
+    return (
+      <section className="quiz-message-panel">
+        <h1>無法建立挑戰</h1>
+        <p role="alert">{actionErrorMessage(createMutation.error)}</p>
+        <button
+          className="primary-action"
+          data-primary-action="true"
+          onClick={() => {
+            if (!templateId || !creationRequestId.current) return;
+            createMutation.reset();
+            createMutation.mutate({
+              clientRequestId: creationRequestId.current,
+              selectedTemplateId: templateId,
+            });
+          }}
+          type="button"
+        >
+          重新嘗試
+        </button>
+      </section>
+    );
+  }
+
   if (isNewSession || sessionQuery.isPending)
     return <RouteLoading withinMain />;
 
-  const visibleError =
-    createMutation.error ??
-    sessionQuery.error ??
-    submitMutation.error ??
-    finalizeMutation.error;
-  if (visibleError || sessionQuery.isError || !session) {
+  if (sessionQuery.isError || !session) {
     return (
       <section className="quiz-message-panel">
         <h1>挑戰暫時中斷</h1>
         <p role="alert">
-          {visibleError instanceof Error
-            ? visibleError.message
+          {sessionQuery.error instanceof Error
+            ? sessionQuery.error.message
             : '目前無法載入挑戰，請稍後重試。'}
         </p>
         <button
@@ -224,19 +333,19 @@ export function QuizSessionPage({
           </p>
           <p>
             Quiz Score：
-            {String(feedback?.result.totalScore ?? session.totalScore)}
+            {String(session.totalScore)}
           </p>
           <Countdown
             deadlineAt={displayedQuestion.deadlineAt}
             onExpire={() => void submit(null)}
-            paused={feedback !== undefined}
+            paused={feedbackResult !== undefined}
           />
         </div>
       </header>
 
       <QuestionCard
         isPending={submitMutation.isPending}
-        locked={feedback !== undefined}
+        locked={feedbackResult !== undefined || actionError?.kind === 'submit'}
         onSelect={(optionId) => {
           setSelection({
             optionId,
@@ -246,16 +355,36 @@ export function QuizSessionPage({
         onSubmit={() => void submit(selectedOptionId)}
         question={displayedQuestion}
         selectedOptionId={
-          feedback ? feedback.result.selectedOptionId : selectedOptionId
+          feedbackResult ? feedbackResult.selectedOptionId : selectedOptionId
         }
       />
 
-      {feedback ? (
+      {actionError ? (
+        <div className="quiz-action-error" role="alert">
+          <p>{actionError.message}</p>
+          {actionError.kind === 'submit' ? (
+            <button
+              className="primary-action"
+              data-primary-action="true"
+              disabled={submitMutation.isPending}
+              onClick={() => {
+                const attempt = submissionAttempt.current;
+                if (attempt) void submit(attempt.selectedId);
+              }}
+              type="button"
+            >
+              重試送出
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {feedbackResult ? (
         <FeedbackCard
           isLastQuestion={displayedQuestion.position === session.questionCount}
-          isPending={finalizeMutation.isPending}
+          isPending={finalizeMutation.isPending || activateMutation.isPending}
           onContinue={() => void continueAfterFeedback()}
-          result={feedback.result}
+          result={feedbackResult}
         />
       ) : null}
     </section>

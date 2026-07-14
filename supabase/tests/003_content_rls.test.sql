@@ -1,6 +1,6 @@
 begin;
 
-select plan(10);
+select plan(11);
 
 select has_table('public', 'courses', 'courses exists');
 select has_table('public', 'chapters', 'chapters exists');
@@ -80,6 +80,12 @@ select throws_ok(
   '42501',
   null,
   'student cannot query option correctness directly'
+);
+select throws_ok(
+  $$select explanation from public.questions limit 1$$,
+  '42501',
+  null,
+  'student cannot query explanations before answering'
 );
 
 select * from finish();

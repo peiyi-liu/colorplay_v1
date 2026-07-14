@@ -159,9 +159,9 @@ begin
     'status', s.status,
     'chapter_title', s.chapter_title,
     'question_count', s.question_count,
-    'answered_count', s.answered_count,
-    'correct_count', s.correct_count,
-    'total_score', s.total_score,
+    'answered_count', count(a.id)::integer,
+    'correct_count', count(a.id) filter (where a.answer_status = 'correct'),
+    'total_score', coalesce(sum(a.score_delta), 0)::integer,
     'completed_at', s.completed_at,
     'questions', coalesce(
       jsonb_agg(
@@ -464,6 +464,20 @@ begin
   if question_record.session_status <> 'in_progress' then
     raise exception using errcode = 'P0001', message = 'QUIZ_SESSION_NOT_IN_PROGRESS';
   end if;
+
+  select a.id, a.session_question_id
+  into existing_answer
+  from public.quiz_answers a
+  where a.user_id = current_user_id
+    and a.idempotency_key = submit_quiz_answer.idempotency_key;
+
+  if existing_answer.id is not null then
+    if existing_answer.session_question_id <> submit_quiz_answer.session_question_id then
+      raise exception using errcode = 'P0001', message = 'QUIZ_IDEMPOTENCY_KEY_REUSED';
+    end if;
+    return public.build_quiz_answer_result(existing_answer.id);
+  end if;
+
   if question_record.started_at is null or question_record.deadline_at is null then
     raise exception using errcode = 'P0001', message = 'QUIZ_QUESTION_NOT_ACTIVE';
   end if;
@@ -530,14 +544,76 @@ begin
   )
   returning id into answer_id;
 
-  update public.quiz_session_questions
-  set started_at = evaluated_at,
-      deadline_at = evaluated_at + interval '20 seconds'
-  where session_id = question_record.session_id
-    and position = question_record.position + 1
-    and started_at is null;
-
   return public.build_quiz_answer_result(answer_id);
+end;
+$$;
+
+create function public.activate_next_quiz_question(session_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  session_record record;
+  question_record record;
+  activated_at timestamptz := clock_timestamp();
+begin
+  if current_user_id is null then
+    raise exception using errcode = 'P0001', message = 'AUTH_REQUIRED';
+  end if;
+  if session_id is null then
+    raise exception using errcode = 'P0001', message = 'QUIZ_INVALID_REQUEST';
+  end if;
+
+  select s.id, s.status
+  into session_record
+  from public.quiz_sessions s
+  where s.id = activate_next_quiz_question.session_id
+    and s.user_id = current_user_id
+  for update;
+
+  if session_record.id is null then
+    raise exception using errcode = 'P0001', message = 'QUIZ_SESSION_NOT_FOUND';
+  end if;
+  if session_record.status = 'completed' then
+    return public.build_quiz_session_payload(session_record.id);
+  end if;
+
+  select sq.id, sq.position, sq.started_at
+  into question_record
+  from public.quiz_session_questions sq
+  left join public.quiz_answers a on a.session_question_id = sq.id
+  where sq.session_id = session_record.id
+    and a.id is null
+  order by sq.position
+  limit 1
+  for update of sq;
+
+  if question_record.id is null then
+    return public.build_quiz_session_payload(session_record.id);
+  end if;
+
+  if question_record.started_at is null then
+    if question_record.position > 1 and not exists (
+      select 1
+      from public.quiz_session_questions previous_question
+      join public.quiz_answers previous_answer
+        on previous_answer.session_question_id = previous_question.id
+      where previous_question.session_id = session_record.id
+        and previous_question.position = question_record.position - 1
+    ) then
+      raise exception using errcode = 'P0001', message = 'QUIZ_QUESTION_NOT_READY';
+    end if;
+
+    update public.quiz_session_questions
+    set started_at = activated_at,
+        deadline_at = activated_at + interval '20 seconds'
+    where id = question_record.id;
+  end if;
+
+  return public.build_quiz_session_payload(session_record.id);
 end;
 $$;
 
@@ -629,12 +705,16 @@ revoke all on function public.create_quiz_session(uuid, uuid)
   from public, anon, authenticated;
 revoke all on function public.submit_quiz_answer(uuid, uuid, uuid)
   from public, anon, authenticated;
+revoke all on function public.activate_next_quiz_question(uuid)
+  from public, anon, authenticated;
 revoke all on function public.finalize_quiz_session(uuid)
   from public, anon, authenticated;
 
 grant execute on function public.create_quiz_session(uuid, uuid)
   to authenticated;
 grant execute on function public.submit_quiz_answer(uuid, uuid, uuid)
+  to authenticated;
+grant execute on function public.activate_next_quiz_question(uuid)
   to authenticated;
 grant execute on function public.finalize_quiz_session(uuid)
   to authenticated;

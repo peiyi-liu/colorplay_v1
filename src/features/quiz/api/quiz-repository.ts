@@ -301,6 +301,7 @@ function sessionFromStateRows(value: unknown): QuizSession {
 }
 
 export type QuizRepository = Readonly<{
+  activateNextQuestion(sessionId: string): Promise<QuizSession>;
   createSession(
     templateId: string,
     clientRequestId: string,
@@ -318,6 +319,14 @@ export function createQuizRepository(
   client: SupabaseClient<Database>,
 ): QuizRepository {
   return {
+    async activateNextQuestion(sessionId) {
+      const { data, error } = await client.rpc('activate_next_quiz_question', {
+        session_id: sessionId,
+      });
+      if (error) throw mapServerError(error.message);
+      return parseSession(data);
+    },
+
     async createSession(templateId, clientRequestId) {
       const { data, error } = await client.rpc('create_quiz_session', {
         client_request_id: clientRequestId,

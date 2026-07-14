@@ -1,5 +1,16 @@
 import type { QuizAnswerResult } from '../api/quiz-repository';
 
+export type QuizFeedbackResult = Pick<
+  QuizAnswerResult,
+  | 'answerStatus'
+  | 'correctOptionId'
+  | 'correctOptionText'
+  | 'explanation'
+  | 'scoreDelta'
+  | 'selectedOptionId'
+  | 'totalScore'
+>;
+
 const feedbackHeading = {
   correct: '✓ 答對了',
   incorrect: '✕ 答錯了',
@@ -15,7 +26,7 @@ export function FeedbackCard({
   isLastQuestion: boolean;
   isPending: boolean;
   onContinue: () => void;
-  result: QuizAnswerResult;
+  result: QuizFeedbackResult;
 }>) {
   return (
     <aside

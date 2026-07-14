@@ -201,7 +201,18 @@ grant select on public.courses to authenticated;
 grant select on public.chapters to authenticated;
 grant select on public.sections to authenticated;
 grant select on public.subtopics to authenticated;
-grant select on public.questions to authenticated;
+grant select (
+  id,
+  subtopic_id,
+  stable_code,
+  question_type,
+  prompt,
+  version,
+  status,
+  sort_order,
+  created_at,
+  updated_at
+) on public.questions to authenticated;
 grant select (id, question_id, option_key, option_text, sort_order)
   on public.question_options to authenticated;
 grant select on public.quiz_templates to authenticated;

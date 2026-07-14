@@ -86,6 +86,7 @@ const completedSession = {
 
 function repository(getSession: QuizRepository['getSession']): QuizRepository {
   return {
+    activateNextQuestion: vi.fn(),
     createSession: vi.fn(),
     finalizeSession: vi.fn(),
     getSession,
