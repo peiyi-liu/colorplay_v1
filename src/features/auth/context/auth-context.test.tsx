@@ -443,6 +443,37 @@ describe('AuthBootstrap', () => {
     );
   });
 
+  it('fails closed and resolves when a buffered null event cannot be reconciled', async () => {
+    const harness = createRepositoryHarness(
+      Promise.resolve(authenticatedSession),
+    );
+    harness.getSession
+      .mockResolvedValueOnce(authenticatedSession)
+      .mockRejectedValueOnce(new Error('recovery-provider-detail'));
+    harness.signOut.mockImplementationOnce(() => {
+      harness.emit(null);
+      return Promise.reject(new Error('sign-out-provider-detail'));
+    });
+    const view = renderBootstrap(harness.repository);
+    await screen.findByText('authenticated');
+    view.queryClient.setQueryData(['profile', 'me'], {
+      displayName: 'student.one',
+    });
+    const cancelQueries = vi.spyOn(view.queryClient, 'cancelQueries');
+    const removeQueries = vi.spyOn(view.queryClient, 'removeQueries');
+
+    screen.getByRole('button', { name: 'sign out' }).click();
+
+    expect(await screen.findByText('resolved')).toBeVisible();
+    expect(screen.getByLabelText('Auth 狀態')).toHaveTextContent('anonymous');
+    expect(screen.getByLabelText('Auth session')).toHaveTextContent('none');
+    expect(harness.getSession).toHaveBeenCalledTimes(2);
+    expect(view.queryClient.getQueryData(['profile', 'me'])).toBeUndefined();
+    expect(cancelQueries.mock.invocationCallOrder[0]).toBeLessThan(
+      removeQueries.mock.invocationCallOrder[0] ?? 0,
+    );
+  });
+
   it('reconciles a buffered null event to the confirmed session and rejects without clearing cache', async () => {
     const harness = createRepositoryHarness(
       Promise.resolve(authenticatedSession),

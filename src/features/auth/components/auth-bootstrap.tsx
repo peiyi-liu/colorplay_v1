@@ -126,7 +126,9 @@ export function AuthBootstrap({
       try {
         recoveredSession = await repository.getSession();
       } catch {
-        throw signOutError;
+        await clearUserScopedQueries(queryClient);
+        setState(anonymousState);
+        return;
       }
 
       if (recoveredSession) {

@@ -19,7 +19,7 @@ Restored Supabase sessions now retain safe intended routes, while successful log
 ## Commands and results
 
 - `pnpm lint`; `pnpm typecheck` — passed.
-- Focused Auth/shell/browser-health Vitest — 3 files / 32 tests passed; `pnpm test` — 24 files / 162 tests passed.
+- Focused Auth/shell/browser-health Vitest — 3 files / 33 tests passed; `pnpm test` — 24 files / 163 tests passed.
 - Real-local Auth/profile integration — 2 files / 7 tests passed.
 - Fresh local Supabase reset and deterministic Auth seed, then exact headless lifecycle/shared-device Playwright run — Chromium, Firefox, and WebKit passed (6/6), with screenshot/video/trace off, browser `service_role` unset, public Vite env bound to local Supabase, and no task evidence retained.
 
@@ -30,6 +30,6 @@ Restored Supabase sessions now retain safe intended routes, while successful log
 
 ## Sole review fixes
 
-- A null Auth event buffered during a rejected sign-out is reconciled with `getSession`: confirmed anonymous resolves after ordered cache cleanup, while a confirmed/recovery-unknown session preserves cache and rejects the repository error.
+- A null Auth event buffered during a rejected sign-out is reconciled with `getSession`: confirmed anonymous or failed recovery resolves after ordered fail-closed cache cleanup, while a confirmed session is reasserted with cache intact and rejects the repository error.
 - The mounted root shell resets successful sign-out flags before replacement navigation, so a same-page account B can sign out after account A.
 - Both browser specs share request-identity health tracking constrained to Chromium, exact local POST logout URL, exact abort error, one occurrence, and a matching successful response.
