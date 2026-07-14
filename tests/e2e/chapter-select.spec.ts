@@ -20,15 +20,11 @@ test('student sees six published chapters and only one playable challenge', asyn
   await page.getByRole('button', { name: '登入' }).click();
 
   await expect(page).toHaveURL(/\/app$/u);
-  await expect(
-    page.getByRole('heading', { name: '選擇章節' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: '選擇章節' })).toBeVisible();
   await expect(page.getByRole('article')).toHaveCount(6);
   await expect(page.getByRole('link', { name: '開始挑戰' })).toHaveCount(1);
   await expect(page.getByRole('button', { name: '尚無題目' })).toHaveCount(5);
-  await expect(
-    page.getByRole('link', { name: '開始挑戰' }),
-  ).toHaveAttribute(
+  await expect(page.getByRole('link', { name: '開始挑戰' })).toHaveAttribute(
     'href',
     '/app/quiz/new?template=26000000-0000-0000-0000-000000000003',
   );

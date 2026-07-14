@@ -24,7 +24,9 @@ export function FeedbackCard({
     >
       <h2 id="quiz-feedback-title">{feedbackHeading[result.answerStatus]}</h2>
       {result.scoreDelta > 0 ? (
-        <p className="feedback-card__score">本題 +{String(result.scoreDelta)} 分</p>
+        <p className="feedback-card__score">
+          本題 +{String(result.scoreDelta)} 分
+        </p>
       ) : null}
       {result.answerStatus === 'correct' ? null : (
         <p>

@@ -653,6 +653,7 @@ export type Database = {
             | Database["public"]["Enums"]["quiz_session_status"]
             | null
           started_at: string | null
+          template_id: string | null
           total_score: number | null
         }
         Relationships: [
@@ -682,6 +683,13 @@ export type Database = {
             columns: ["selected_option_id"]
             isOneToOne: false
             referencedRelation: "question_options_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_sessions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_templates"
             referencedColumns: ["id"]
           },
         ]

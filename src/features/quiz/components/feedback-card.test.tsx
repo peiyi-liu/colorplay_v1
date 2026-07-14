@@ -46,11 +46,17 @@ describe('FeedbackCard', () => {
         isLastQuestion
         isPending
         onContinue={vi.fn()}
-        result={{ ...incorrect, answerStatus: 'timeout', selectedOptionId: null }}
+        result={{
+          ...incorrect,
+          answerStatus: 'timeout',
+          selectedOptionId: null,
+        }}
       />,
     );
 
     expect(screen.getByRole('heading', { name: '⌛ 作答逾時' })).toBeVisible();
-    expect(screen.getByRole('button', { name: '結算並查看結果' })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: '結算並查看結果' }),
+    ).toBeDisabled();
   });
 });

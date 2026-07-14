@@ -48,8 +48,7 @@ export type PublishedChapter = Readonly<{
 }>;
 
 export type LearningRepositoryErrorCode =
-  | 'CHAPTERS_INVALID_RESPONSE'
-  | 'CHAPTERS_UNAVAILABLE';
+  'CHAPTERS_INVALID_RESPONSE' | 'CHAPTERS_UNAVAILABLE';
 
 const learningMessages: Record<LearningRepositoryErrorCode, string> = {
   CHAPTERS_INVALID_RESPONSE: '章節資料格式不正確，請稍後重試。',
@@ -73,8 +72,7 @@ const countQuestions = (
     (sectionTotal, section) =>
       sectionTotal +
       section.subtopics.reduce(
-        (subtopicTotal, subtopic) =>
-          subtopicTotal + subtopic.questions.length,
+        (subtopicTotal, subtopic) => subtopicTotal + subtopic.questions.length,
         0,
       ),
     0,

@@ -39,6 +39,7 @@ const sessionSchema = z.object({
   questions: z.array(questionSchema).min(1),
   session_id: uuidSchema,
   status: sessionStatusSchema,
+  template_id: uuidSchema,
   total_score: z.number().int().nonnegative(),
 });
 const answerResultSchema = z.object({
@@ -81,6 +82,7 @@ const sessionStateRowSchema = z.object({
   session_question_id: uuidSchema,
   session_status: sessionStatusSchema,
   started_at: timestampSchema.nullable(),
+  template_id: uuidSchema,
 });
 
 export type QuizOption = Readonly<{
@@ -113,6 +115,7 @@ export type QuizSession = Readonly<{
   questions: QuizQuestion[];
   sessionId: string;
   status: z.infer<typeof sessionStatusSchema>;
+  templateId: string;
   totalScore: number;
 }>;
 export type QuizAnswerResult = Readonly<{
@@ -180,7 +183,9 @@ const mapServerError = (message: string): QuizRepositoryError => {
   return new QuizRepositoryError('UNAVAILABLE');
 };
 
-const mapQuestion = (question: z.infer<typeof questionSchema>): QuizQuestion => ({
+const mapQuestion = (
+  question: z.infer<typeof questionSchema>,
+): QuizQuestion => ({
   answerStatus: question.answer_status,
   correctOptionId: question.correct_option_id,
   deadlineAt: question.deadline_at,
@@ -210,6 +215,7 @@ const mapSession = (session: z.infer<typeof sessionSchema>): QuizSession => ({
   questions: session.questions.map(mapQuestion),
   sessionId: session.session_id,
   status: session.status,
+  templateId: session.template_id,
   totalScore: session.total_score,
 });
 
@@ -272,17 +278,21 @@ function sessionFromStateRows(value: unknown): QuizSession {
       version: row.question_version,
     }),
   );
-  const answered = questions.filter(({ answerStatus }) => answerStatus !== null);
+  const answered = questions.filter(
+    ({ answerStatus }) => answerStatus !== null,
+  );
   return {
     answeredCount: answered.length,
     chapterTitle: first.chapter_title,
     completedAt: first.completed_at,
-    correctCount: answered.filter(({ answerStatus }) => answerStatus === 'correct')
-      .length,
+    correctCount: answered.filter(
+      ({ answerStatus }) => answerStatus === 'correct',
+    ).length,
     questionCount: first.question_count,
     questions,
     sessionId: first.session_id,
     status: first.session_status,
+    templateId: first.template_id,
     totalScore: answered.reduce(
       (total, question) => total + (question.scoreDelta ?? 0),
       0,
@@ -291,7 +301,10 @@ function sessionFromStateRows(value: unknown): QuizSession {
 }
 
 export type QuizRepository = Readonly<{
-  createSession(templateId: string, clientRequestId: string): Promise<QuizSession>;
+  createSession(
+    templateId: string,
+    clientRequestId: string,
+  ): Promise<QuizSession>;
   finalizeSession(sessionId: string): Promise<QuizFinalResult>;
   getSession(sessionId: string): Promise<QuizSession>;
   submitAnswer(

@@ -35,7 +35,11 @@ export function Countdown({
 
   return (
     <p className="quiz-countdown" role="timer" aria-live="off">
-      {paused ? '已作答' : seconds === 0 ? '時間到' : `剩餘 ${String(seconds)} 秒`}
+      {paused
+        ? '已作答'
+        : seconds === 0
+          ? '時間到'
+          : `剩餘 ${String(seconds)} 秒`}
     </p>
   );
 }

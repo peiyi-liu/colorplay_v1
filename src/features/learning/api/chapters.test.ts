@@ -2,10 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Database } from '../../../types/database';
-import {
-  fetchPublishedChapters,
-  LearningRepositoryError,
-} from './chapters';
+import { fetchPublishedChapters, LearningRepositoryError } from './chapters';
 
 const chapterId = '21000000-0000-0000-0000-000000000003';
 const templateId = '26000000-0000-0000-0000-000000000003';

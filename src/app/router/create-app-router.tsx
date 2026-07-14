@@ -4,6 +4,7 @@ import { RequireRole } from '../../features/auth/components/require-role';
 import { LoginPage } from '../../features/auth/pages/login-page';
 import { ChapterSelectPage } from '../../features/learning/pages/chapter-select';
 import { ProfileFoundationPage } from '../../features/profile/pages/profile-foundation-page';
+import { QuizResultPage } from '../../features/quiz/pages/quiz-result';
 import { QuizSessionPage } from '../../features/quiz/pages/quiz-session';
 import { RouteErrorBoundary } from '../boundaries/root-error-boundary';
 import { RouteLoading } from '../boundaries/route-loading';
@@ -43,6 +44,10 @@ export function createAppRouter() {
             {
               path: '/app/profile',
               element: <ProfileFoundationPage />,
+            },
+            {
+              path: '/app/quiz/:sessionId/result',
+              element: <QuizResultPage />,
             },
             {
               path: '/app/quiz/:sessionId',

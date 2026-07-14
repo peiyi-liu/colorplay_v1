@@ -113,6 +113,7 @@ with (security_barrier = true)
 as
 select
   s.id as session_id,
+  s.template_id,
   s.status as session_status,
   s.chapter_title,
   s.question_count,
@@ -154,6 +155,7 @@ declare
 begin
   select jsonb_build_object(
     'session_id', s.id,
+    'template_id', s.template_id,
     'status', s.status,
     'chapter_title', s.chapter_title,
     'question_count', s.question_count,

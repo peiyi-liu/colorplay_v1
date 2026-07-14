@@ -2,10 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Database } from '../../../types/database';
-import {
-  createQuizRepository,
-  QuizRepositoryError,
-} from './quiz-repository';
+import { createQuizRepository, QuizRepositoryError } from './quiz-repository';
 
 const sessionId = '31000000-0000-0000-0000-000000000001';
 const sessionQuestionId = '32000000-0000-0000-0000-000000000001';
@@ -42,6 +39,7 @@ const sessionPayload = {
   ],
   session_id: sessionId,
   status: 'in_progress',
+  template_id: templateId,
   total_score: 0,
 };
 
@@ -99,6 +97,7 @@ describe('quiz repository', () => {
       ],
       sessionId,
       status: 'in_progress',
+      templateId,
       totalScore: 0,
     });
     expect(rpc).toHaveBeenCalledWith('create_quiz_session', {
@@ -199,6 +198,7 @@ describe('quiz repository', () => {
           session_started_at: '2026-07-14T12:00:00.000Z',
           session_status: 'in_progress',
           started_at: '2026-07-14T12:00:00.000Z',
+          template_id: templateId,
           total_score: 0,
         },
       ],

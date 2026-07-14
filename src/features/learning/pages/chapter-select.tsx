@@ -64,7 +64,11 @@ export function ChapterSelectPage() {
                   開始挑戰
                 </Link>
               ) : (
-                <button className="chapter-card__disabled" disabled type="button">
+                <button
+                  className="chapter-card__disabled"
+                  disabled
+                  type="button"
+                >
                   尚無題目
                 </button>
               )}

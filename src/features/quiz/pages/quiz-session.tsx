@@ -1,8 +1,4 @@
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Link,
@@ -25,11 +21,8 @@ import { Countdown } from '../components/countdown';
 import { FeedbackCard } from '../components/feedback-card';
 import { QuestionCard } from '../components/question-card';
 
-const quizSessionQueryKey = (sessionId: string) => [
-  'quiz',
-  'session',
-  sessionId,
-] as const;
+const quizSessionQueryKey = (sessionId: string) =>
+  ['quiz', 'session', sessionId] as const;
 
 const requestId = () => globalThis.crypto.randomUUID();
 
@@ -127,8 +120,7 @@ export function QuizSessionPage({
     : undefined;
   const displayedQuestion = feedbackQuestion ?? activeQuestion;
   const selectedOptionId =
-    selection &&
-    selection.questionId === displayedQuestion?.sessionQuestionId
+    selection && selection.questionId === displayedQuestion?.sessionQuestionId
       ? selection.optionId
       : null;
 
@@ -180,7 +172,8 @@ export function QuizSessionPage({
     );
   }
 
-  if (isNewSession || sessionQuery.isPending) return <RouteLoading withinMain />;
+  if (isNewSession || sessionQuery.isPending)
+    return <RouteLoading withinMain />;
 
   const visibleError =
     createMutation.error ??
@@ -226,9 +219,13 @@ export function QuizSessionPage({
         </div>
         <div className="quiz-runner__status" aria-label="挑戰進度">
           <p>
-            第 {String(displayedQuestion.position)} / {String(session.questionCount)} 題
+            第 {String(displayedQuestion.position)} /{' '}
+            {String(session.questionCount)} 題
           </p>
-          <p>Quiz Score：{String(feedback?.result.totalScore ?? session.totalScore)}</p>
+          <p>
+            Quiz Score：
+            {String(feedback?.result.totalScore ?? session.totalScore)}
+          </p>
           <Countdown
             deadlineAt={displayedQuestion.deadlineAt}
             onExpire={() => void submit(null)}

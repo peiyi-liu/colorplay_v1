@@ -58,12 +58,14 @@ const session = (questions: QuizQuestion[]): QuizSession => ({
     .length,
   chapterTitle: '色彩表示',
   completedAt: null,
-  correctCount: questions.filter(({ answerStatus }) => answerStatus === 'correct')
-    .length,
+  correctCount: questions.filter(
+    ({ answerStatus }) => answerStatus === 'correct',
+  ).length,
   questionCount: questions.length,
   questions,
   sessionId,
   status: 'in_progress',
+  templateId,
   totalScore: questions.reduce(
     (total, item) => total + (item.scoreDelta ?? 0),
     0,
@@ -119,7 +121,9 @@ function renderQuiz(
   ];
   const router = createMemoryRouter(routes, { initialEntries: [initialEntry] });
   function Wrapper({ children }: Readonly<{ children: ReactNode }>) {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    return (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
   }
   render(<RouterProvider router={router} />, { wrapper: Wrapper });
   return router;
