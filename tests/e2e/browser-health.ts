@@ -36,8 +36,13 @@ export function unexpectedRequestFailures<RequestType extends TrackedRequest>(
   browserName: string,
   failures: readonly TrackedRequestFailure<RequestType>[],
   successfulLocalLogouts: ReadonlySet<RequestType>,
+  confirmedLogoutResponse?: TrackedResponse<RequestType>,
 ): string[] {
   let ignoredLogoutAbort = false;
+  const responseFallbackIsConfirmed =
+    confirmedLogoutResponse !== undefined &&
+    confirmedLogoutResponse.status() < 400 &&
+    isExactLocalLogout(confirmedLogoutResponse.request());
 
   return failures.flatMap(({ errorText, request }) => {
     const failure = `${errorText} ${request.url()}`;
@@ -46,7 +51,7 @@ export function unexpectedRequestFailures<RequestType extends TrackedRequest>(
       browserName === 'chromium' &&
       failure === chromiumLogoutAbort &&
       isExactLocalLogout(request) &&
-      successfulLocalLogouts.has(request)
+      (successfulLocalLogouts.has(request) || responseFallbackIsConfirmed)
     ) {
       ignoredLogoutAbort = true;
       return [];
@@ -54,26 +59,6 @@ export function unexpectedRequestFailures<RequestType extends TrackedRequest>(
 
     return [failure];
   });
-}
-
-export function removeConfirmedSuccessfulLocalLogoutAbort<
-  RequestType extends TrackedRequest,
->(
-  browserName: string,
-  failures: readonly string[],
-  response: TrackedResponse<RequestType>,
-): string[] {
-  const request = response.request();
-  if (
-    browserName !== 'chromium' ||
-    response.status() >= 400 ||
-    !isExactLocalLogout(request)
-  ) {
-    return [...failures];
-  }
-
-  const allowedFailureIndex = failures.indexOf(chromiumLogoutAbort);
-  return failures.filter((_, index) => index !== allowedFailureIndex);
 }
 
 export type BrowserHealth = Readonly<{
@@ -121,6 +106,7 @@ export function attachBrowserHealth(page: Page): BrowserHealthCollection {
 export function unexpectedBrowserHealth(
   health: BrowserHealthCollection,
   browserName: string,
+  confirmedLogoutResponse?: TrackedResponse<Request>,
 ): BrowserHealth {
   return {
     consoleErrors: health.consoleErrors,
@@ -128,6 +114,7 @@ export function unexpectedBrowserHealth(
       browserName,
       health.failedRequests,
       health.successfulLocalLogouts,
+      confirmedLogoutResponse,
     ),
     pageErrors: health.pageErrors,
     serverErrors: health.serverErrors,

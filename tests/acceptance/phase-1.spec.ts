@@ -4,7 +4,6 @@ import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
 import {
   attachBrowserHealth,
-  removeConfirmedSuccessfulLocalLogoutAbort,
   unexpectedBrowserHealth,
 } from '../e2e/browser-health';
 
@@ -242,15 +241,11 @@ test('@phase1-headed login/profile/refresh/logout/unauthorized/deep-link evidenc
       ),
     ).toBe(true);
 
-    const observedHealth = unexpectedBrowserHealth(health, browserName);
-    const unexpected = {
-      ...observedHealth,
-      failedRequests: removeConfirmedSuccessfulLocalLogoutAbort(
-        browserName,
-        observedHealth.failedRequests,
-        confirmedLogoutResponse,
-      ),
-    };
+    const unexpected = unexpectedBrowserHealth(
+      health,
+      browserName,
+      confirmedLogoutResponse,
+    );
     expect(unexpected).toEqual({
       consoleErrors: [],
       failedRequests: [],

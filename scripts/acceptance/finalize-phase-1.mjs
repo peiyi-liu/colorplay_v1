@@ -4,51 +4,19 @@ import { join, relative } from 'node:path';
 import process from 'node:process';
 
 import { createEvidenceRun, renderSummary } from './create-run.mjs';
+import {
+  buildAcceptanceRows,
+  derivePhaseOneDecision,
+  validatePlaywrightReport,
+} from './phase-1-policy.mjs';
 import { countAcceptanceIds } from '../verify/count-acceptance.mjs';
 
 const expectedAcceptanceCount = 84;
-const phaseOnePassIds = new Set([
-  'AC-ENV-001',
-  'AC-ENV-004',
-  'AC-AUTH-001',
-  'AC-AUTH-004',
-  'AC-SEC-007',
-  'AC-DOC-001',
-  'AC-DOC-002',
-  'AC-DOC-003',
-]);
-const externalStepIds = new Set(['AC-ENV-003', 'AC-SEC-006']);
-const checkpointIds = new Set([
-  'AC-ENV-002',
-  'AC-AUTH-002',
-  'AC-AUTH-003',
-  'AC-AUTH-005',
-  'AC-LEARN-004',
-  'AC-SEC-003',
-  'AC-UI-001',
-  'AC-UI-002',
-  'AC-UI-003',
-  'AC-UI-004',
-  'AC-UI-005',
-  'AC-UI-006',
-  'AC-UI-007',
-  'AC-UI-008',
-  'AC-UI-009',
-  'AC-UI-010',
-  'AC-UI-013',
-  'AC-UI-014',
-  'AC-UI-015',
-  'AC-A11Y-001',
-  'AC-A11Y-002',
-  'AC-A11Y-004',
-  'AC-A11Y-005',
-  'AC-PERF-001',
-  'AC-COMPAT-001',
-  'AC-REL-002',
-]);
 
 const requiredReports = [
   'reports/install.log',
+  'reports/supabase-start.log',
+  'db/db-reset.log',
   'db/db-rls.log',
   'reports/lint.log',
   'reports/format-check.log',
@@ -58,6 +26,7 @@ const requiredReports = [
   'reports/database-types.log',
   'reports/lighthouse-login.json',
   'reports/e2e.log',
+  'reports/e2e.json',
   'reports/acceptance-headed.json',
   'reports/acceptance-cross-browser.json',
   'reports/secret-scan.txt',
@@ -79,6 +48,7 @@ function parseArguments(argumentsList) {
     '--dirty-worktree',
     '--git-sha',
     '--run-id',
+    '--source-state-verified',
   ]) {
     if (!values.has(required)) throw new Error('PHASE_1_INVALID_ARGUMENTS');
   }
@@ -92,32 +62,11 @@ async function requireFile(path) {
   }
 }
 
-function countPlaywrightResults(report) {
-  let passed = 0;
-  let skipped = 0;
-  let failed = 0;
-  const visitSuite = (suite) => {
-    for (const spec of suite.specs ?? []) {
-      for (const test of spec.tests ?? []) {
-        if (test.status === 'expected') passed += 1;
-        else if (test.status === 'skipped') skipped += 1;
-        else failed += 1;
-      }
-    }
-    for (const nested of suite.suites ?? []) visitSuite(nested);
-  };
-  for (const suite of report.suites ?? []) visitSuite(suite);
-  return { failed, passed, skipped };
-}
-
 async function validateScopedPlaywrightReport(path, minimumPassed) {
   const report = JSON.parse(await readFile(path, 'utf8'));
-  const counts = countPlaywrightResults(report);
-  if (
-    counts.failed !== 0 ||
-    counts.skipped !== 0 ||
-    counts.passed < minimumPassed
-  ) {
+  try {
+    return validatePlaywrightReport(report, minimumPassed);
+  } catch {
     throw new Error(`PHASE_1_PLAYWRIGHT_SCOPE_FAILED:${path}`);
   }
 }
@@ -159,36 +108,6 @@ async function readBrowserVersion() {
   }
 }
 
-function screenshotsFor(id, screenshotPaths) {
-  const prefixes = {
-    'AC-AUTH-001': ['AC-AUTH-001__'],
-    'AC-AUTH-003': ['AC-AUTH-003__'],
-    'AC-AUTH-005': ['AC-AUTH-005__'],
-    'AC-COMPAT-001': ['AC-COMPAT-001__'],
-  }[id];
-  if (!prefixes) return [];
-  return screenshotPaths.filter((path) =>
-    prefixes.some((prefix) => path.split('/').at(-1)?.startsWith(prefix)),
-  );
-}
-
-function phaseClassification(id) {
-  if (phaseOnePassIds.has(id)) return 'Complete in the local Phase 1 gate.';
-  if (externalStepIds.has(id)) {
-    return 'NOT VERIFIED — external Steps 5–8 require authenticated GitHub, Supabase, and Vercel access.';
-  }
-  if (id === 'AC-UI-010') {
-    return 'NOT VERIFIED — automated Phase 1 viewport checkpoint only; required real-device keyboard evidence is absent.';
-  }
-  if (id === 'AC-UI-012') {
-    return 'NOT VERIFIED — Outside Phase 1 behavior and required real Android Back evidence are absent.';
-  }
-  if (checkpointIds.has(id)) {
-    return 'NOT VERIFIED — Phase 1 checkpoint evidence does not satisfy the full-MVP criterion.';
-  }
-  return 'NOT VERIFIED — Outside Phase 1; owned by a follow-on MVP plan.';
-}
-
 async function listEvidencePaths(runDirectory, directory) {
   const { readdir } = await import('node:fs/promises');
   const root = join(runDirectory, directory);
@@ -216,11 +135,15 @@ async function main() {
 
   for (const report of requiredReports)
     await requireFile(join(runDirectory, report));
-  await validateScopedPlaywrightReport(
+  const fullE2eCounts = await validateScopedPlaywrightReport(
+    join(runDirectory, 'reports/e2e.json'),
+    30,
+  );
+  const headedCounts = await validateScopedPlaywrightReport(
     join(runDirectory, 'reports/acceptance-headed.json'),
     1,
   );
-  await validateScopedPlaywrightReport(
+  const crossBrowserCounts = await validateScopedPlaywrightReport(
     join(runDirectory, 'reports/acceptance-cross-browser.json'),
     3,
   );
@@ -229,12 +152,14 @@ async function main() {
   if (browserHealthPaths.length < 6) {
     throw new Error('PHASE_1_BROWSER_HEALTH_REPORTS_MISSING');
   }
+  let browserHealthClean = true;
   for (const path of browserHealthPaths) {
     const health = JSON.parse(await readFile(join(runDirectory, path), 'utf8'));
     if (Object.values(health).some((value) => value !== 0)) {
-      throw new Error('PHASE_1_BROWSER_HEALTH_FAILED');
+      browserHealthClean = false;
     }
   }
+  if (!browserHealthClean) throw new Error('PHASE_1_BROWSER_HEALTH_FAILED');
 
   const screenshotPaths = await listEvidencePaths(runDirectory, 'screenshots');
   const tracePaths = await listEvidencePaths(runDirectory, 'traces');
@@ -257,6 +182,39 @@ async function main() {
   }
 
   const commands = await readCommands(argumentsMap.get('--commands-file'));
+  const secretScan = await readFile(
+    join(runDirectory, 'reports/secret-scan.txt'),
+    'utf8',
+  );
+  const secretsClean =
+    /^findings=0$/mu.test(secretScan) &&
+    /^scope=current-tree,git-history,dist,phase-1-artifacts,expanded-traces$/mu.test(
+      secretScan,
+    );
+  if (!secretsClean) throw new Error('PHASE_1_SECRET_SCAN_FAILED');
+
+  const [supabaseStartReport, databaseResetReport, databaseReport] =
+    await Promise.all([
+      readFile(join(runDirectory, 'reports/supabase-start.log'), 'utf8'),
+      readFile(join(runDirectory, 'db/db-reset.log'), 'utf8'),
+      readFile(join(runDirectory, 'db/db-rls.log'), 'utf8'),
+    ]);
+  const realStackArtifactsPresent =
+    /^status=started$/mu.test(supabaseStartReport) &&
+    databaseResetReport.includes('Finished supabase db reset') &&
+    databaseReport.includes('Result: PASS') &&
+    databaseReport.includes('Tests 12 passed');
+  if (!realStackArtifactsPresent) {
+    throw new Error('PHASE_1_REAL_STACK_PROOF_MISSING');
+  }
+  const databaseTypesVerified = commands.some(
+    ({ command, exit_code: exitCode }) =>
+      command === 'bash tests/contracts/database-types.test.sh' &&
+      exitCode === 0,
+  );
+
+  const sourceStateMatches =
+    argumentsMap.get('--source-state-verified') === 'true';
   const startedAt = commands[0].started_at;
   const finishedAt = new Date().toISOString();
   const knownFailures = [
@@ -313,39 +271,43 @@ async function main() {
     ],
   });
 
-  const acceptance = acceptanceIds.map((id) => {
-    const passed = phaseOnePassIds.has(id);
-    const screenshots = screenshotsFor(id, screenshotPaths);
-    return {
-      automated_test: passed
-        ? id.startsWith('AC-AUTH')
-          ? 'tests/acceptance/phase-1.spec.ts'
-          : 'scripts/acceptance/run-phase-1.sh'
-        : null,
-      db_network_proof:
-        id === 'AC-AUTH-004' || id === 'AC-DOC-002'
-          ? ['db/db-rls.log', 'reports/database-types.log']
-          : id === 'AC-AUTH-001'
-            ? browserHealthPaths
-            : id === 'AC-ENV-004' || id === 'AC-SEC-007'
-              ? ['reports/secret-scan.txt']
-              : [],
-      evidence_files: passed
-        ? [...screenshots, ...tracePaths, ...videoPaths]
-        : [],
-      id,
-      notes: phaseClassification(id),
-      screenshots,
-      status: passed ? 'PASS' : 'NOT VERIFIED',
-      traces_videos: id === 'AC-AUTH-001' ? [...tracePaths, ...videoPaths] : [],
-    };
+  const acceptance = buildAcceptanceRows({
+    acceptanceIds,
+    browserHealthPaths,
+    criterionProofs: {
+      'AC-DOC-002': realStackArtifactsPresent && databaseTypesVerified,
+      'AC-ENV-004': secretsClean,
+      'AC-SEC-007': secretsClean,
+    },
+    screenshotPaths,
+    tracePaths,
+    videoPaths,
   });
   const passCount = acceptance.filter(({ status }) => status === 'PASS').length;
+  const phaseOneDecision = derivePhaseOneDecision({
+    acceptanceBrowsersPassed:
+      headedCounts.passed >= 1 && crossBrowserCounts.passed >= 3,
+    browserHealthClean,
+    commandsPassed:
+      commands.length >= 16 &&
+      commands.every(({ exit_code: exitCode }) => exitCode === 0),
+    fullE2ePassed: fullE2eCounts.passed >= 30,
+    realStackArtifactsPresent,
+    requiredEvidencePresent:
+      screenshotPaths.length >= 24 &&
+      tracePaths.length >= 4 &&
+      videoPaths.length >= 4,
+    secretsClean,
+    sourceStateMatches,
+  });
+  if (phaseOneDecision !== 'PASS') {
+    throw new Error('PHASE_1_SCOPED_CHECK_FAILED');
+  }
   const manifest = {
     ...baseline,
     acceptance,
     branch: process.env.GIT_BRANCH_NAME ?? 'NOT CAPTURED',
-    phase_1_decision: 'PASS',
+    phase_1_decision: phaseOneDecision,
     release_decision: 'BLOCKED',
     scope: 'phase-1-foundation-auth-profile',
     status_counts: {

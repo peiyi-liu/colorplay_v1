@@ -41,6 +41,19 @@ describe('Phase 1 acceptance source contract', () => {
     expect(runner).toContain('pnpm exec supabase stop');
     expect(runner).toContain('PLAYWRIGHT_VIDEO=on');
     expect(runner).toContain('PLAYWRIGHT_ACCEPTANCE=on');
+    expect(runner).toContain('PLAYWRIGHT_JSON_OUTPUT_FILE');
+    expect(runner).toContain('reports/e2e.json');
+    expect(runner).toContain('initial_git_sha');
+    expect(runner).toContain('current_git_sha');
+    expect(runner).toContain('initial_git_status');
+    expect(runner).toContain('current_git_status');
+    expect(runner).toContain('initial_git_branch');
+    expect(runner).toContain('current_git_branch');
+    expect(runner).toContain('PHASE_1_SOURCE_STATE_CHANGED');
+    expect(
+      runner.match(/git status --porcelain=v1 --untracked-files=all/gu),
+    ).toHaveLength(2);
+    expect(runner).toMatch(/rm -rf[\s\S]*e2e-playwright[\s\S]*playwright/u);
     expect(runner).not.toMatch(
       /(?:echo|printf).*\$(?:SUPABASE_ANON_KEY|ANON_KEY)/u,
     );
@@ -65,6 +78,8 @@ describe('Phase 1 acceptance source contract', () => {
 
     expect(spec).toContain('attachBrowserHealth');
     expect(spec).toContain('unexpectedBrowserHealth');
+    expect(spec).toContain('confirmedLogoutResponse');
+    expect(spec).not.toContain('removeConfirmedSuccessfulLocalLogoutAbort');
     expect(spec).toContain('AxeBuilder');
     expect(spec).not.toContain('page.route(');
     expect(spec).not.toContain('test.skip(');
@@ -72,15 +87,29 @@ describe('Phase 1 acceptance source contract', () => {
   });
 
   it('publishes an honest Phase 1 manifest while blocking full-MVP and release claims', async () => {
-    const finalizer = await read('scripts/acceptance/finalize-phase-1.mjs');
+    const [finalizer, policy] = await Promise.all([
+      read('scripts/acceptance/finalize-phase-1.mjs'),
+      read('scripts/acceptance/phase-1-policy.mjs'),
+    ]);
 
-    expect(finalizer).toContain("phase_1_decision: 'PASS'");
+    expect(finalizer).toContain('derivePhaseOneDecision');
+    expect(finalizer).not.toContain("phase_1_decision: 'PASS'");
+    expect(finalizer).not.toContain('phaseOnePassIds');
     expect(finalizer).toContain("release_decision: 'BLOCKED'");
-    expect(finalizer).toContain("status: passed ? 'PASS' : 'NOT VERIFIED'");
-    expect(finalizer).toContain('AC-UI-010');
-    expect(finalizer).toContain('AC-UI-012');
-    expect(finalizer).toContain('Outside Phase 1');
+    expect(finalizer).toContain('reports/e2e.json');
+    expect(finalizer).toContain('validatePlaywrightReport');
+    expect(policy).toContain('AC-UI-010');
+    expect(policy).toContain('AC-UI-012');
+    expect(policy).toContain('Outside Phase 1');
     expect(finalizer).toContain('84');
+  });
+
+  it('configures full E2E JSON output while preserving a human-readable reporter', async () => {
+    const packageJson = JSON.parse(await read('package.json')) as {
+      scripts: Record<string, string>;
+    };
+
+    expect(packageJson.scripts['test:e2e']).toContain('--reporter=list,json');
   });
 
   it('exposes the phase gate without replacing the generic evidence harness', async () => {

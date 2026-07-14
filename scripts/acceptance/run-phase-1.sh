@@ -12,13 +12,14 @@ export ACCEPTANCE_STUDENT_PASSWORD='LocalOnly-Student1!'
 export SUPABASE_TELEMETRY_DISABLED='1'
 unset SUPABASE_SERVICE_ROLE_KEY
 
-git_sha="$(git rev-parse HEAD)"
-git_branch="$(git branch --show-current)"
+initial_git_sha="$(git rev-parse HEAD)"
+initial_git_branch="$(git branch --show-current)"
+initial_git_status="$(git status --porcelain=v1 --untracked-files=all)"
 dirty_worktree=false
-if test -n "$(git status --porcelain)"; then
+if test -n "$initial_git_status"; then
   dirty_worktree=true
 fi
-run_id="phase-1-$(date -u '+%Y%m%d-%H%M%S')-${git_sha:0:7}"
+run_id="phase-1-$(date -u '+%Y%m%d-%H%M%S')-${initial_git_sha:0:7}"
 run_directory="$project_root/artifacts/acceptance/$run_id"
 commands_file="$run_directory/reports/commands.tsv"
 preview_pid=''
@@ -34,6 +35,9 @@ mkdir -p \
 : >"$commands_file"
 
 cleanup() {
+  rm -rf \
+    "$run_directory/e2e-playwright" \
+    "$run_directory/playwright"
   unset \
     ACCEPTANCE_STUDENT_EMAIL \
     ACCEPTANCE_STUDENT_PASSWORD \
@@ -185,6 +189,7 @@ node -e "const r=require(process.argv[1]); if ((r.categories.accessibility.score
 
 PLAYWRIGHT_BASE_URL='http://127.0.0.1:4173' \
 PLAYWRIGHT_EVIDENCE_ROOT="$run_directory/e2e-playwright" \
+PLAYWRIGHT_JSON_OUTPUT_FILE="$run_directory/reports/e2e.json" \
   run_logged \
     'pnpm test:e2e' \
     "$run_directory/reports/e2e.log" \
@@ -264,9 +269,20 @@ done < <(find "$run_directory/traces" -type f -name '*.zip' -print)
 printf 'findings=0\nscope=current-tree,git-history,dist,phase-1-artifacts,expanded-traces\n' \
   >"$run_directory/reports/secret-scan.txt"
 
-GIT_BRANCH_NAME="$git_branch" node scripts/acceptance/finalize-phase-1.mjs \
+current_git_sha="$(git rev-parse HEAD)"
+current_git_branch="$(git branch --show-current)"
+current_git_status="$(git status --porcelain=v1 --untracked-files=all)"
+if [[ "$current_git_sha" != "$initial_git_sha" || \
+  "$current_git_branch" != "$initial_git_branch" || \
+  "$current_git_status" != "$initial_git_status" ]]; then
+  printf 'PHASE_1_SOURCE_STATE_CHANGED\n' >&2
+  exit 1
+fi
+
+GIT_BRANCH_NAME="$initial_git_branch" node scripts/acceptance/finalize-phase-1.mjs \
   --app-url 'http://127.0.0.1:4173' \
   --commands-file "$commands_file" \
   --dirty-worktree "$dirty_worktree" \
-  --git-sha "$git_sha" \
-  --run-id "$run_id"
+  --git-sha "$initial_git_sha" \
+  --run-id "$run_id" \
+  --source-state-verified true
