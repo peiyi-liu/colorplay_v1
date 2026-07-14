@@ -45,7 +45,11 @@ export function AppShell() {
                   setIsSigningOut(true);
                   setSignOutError(false);
                   void auth.signOut().then(
-                    () => navigate('/login', { replace: true }),
+                    () => {
+                      signOutPending.current = false;
+                      setIsSigningOut(false);
+                      return navigate('/login', { replace: true });
+                    },
                     () => {
                       signOutPending.current = false;
                       setIsSigningOut(false);

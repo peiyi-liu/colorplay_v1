@@ -412,17 +412,54 @@ describe('AuthBootstrap', () => {
     });
   });
 
-  it('does not accept a signed-out event until the repository confirms signOut', async () => {
+  it('reconciles a buffered null event to anonymous and resolves when recovery confirms no session', async () => {
     const harness = createRepositoryHarness(
       Promise.resolve(authenticatedSession),
     );
+    harness.getSession
+      .mockResolvedValueOnce(authenticatedSession)
+      .mockResolvedValueOnce(null);
+    harness.signOut.mockImplementationOnce(() => {
+      harness.emit(null);
+      return Promise.reject(new Error('raw-provider-detail'));
+    });
+    const view = renderBootstrap(harness.repository);
+    await screen.findByText('authenticated');
+    view.queryClient.setQueryData(['profile', 'me'], {
+      displayName: 'student.one',
+    });
+    const cancelQueries = vi.spyOn(view.queryClient, 'cancelQueries');
+    const removeQueries = vi.spyOn(view.queryClient, 'removeQueries');
+
+    screen.getByRole('button', { name: 'sign out' }).click();
+
+    expect(await screen.findByText('resolved')).toBeVisible();
+    expect(screen.getByLabelText('Auth 狀態')).toHaveTextContent('anonymous');
+    expect(screen.getByLabelText('Auth session')).toHaveTextContent('none');
+    expect(harness.getSession).toHaveBeenCalledTimes(2);
+    expect(view.queryClient.getQueryData(['profile', 'me'])).toBeUndefined();
+    expect(cancelQueries.mock.invocationCallOrder[0]).toBeLessThan(
+      removeQueries.mock.invocationCallOrder[0] ?? 0,
+    );
+  });
+
+  it('reconciles a buffered null event to the confirmed session and rejects without clearing cache', async () => {
+    const harness = createRepositoryHarness(
+      Promise.resolve(authenticatedSession),
+    );
+    harness.getSession
+      .mockResolvedValueOnce(authenticatedSession)
+      .mockResolvedValueOnce(replacementSession);
     harness.signOut.mockImplementationOnce(() => {
       harness.emit(null);
       return Promise.reject(new Error('raw-provider-detail'));
     });
 
-    renderBootstrap(harness.repository);
+    const view = renderBootstrap(harness.repository);
     await screen.findByText('authenticated');
+    view.queryClient.setQueryData(['profile', 'me'], {
+      displayName: 'student.one',
+    });
     screen.getByRole('button', { name: 'sign out' }).click();
 
     expect(await screen.findByText('rejected')).toBeVisible();
@@ -430,8 +467,12 @@ describe('AuthBootstrap', () => {
       'authenticated',
     );
     expect(screen.getByLabelText('Auth session')).toHaveTextContent(
-      authenticatedSession.email,
+      replacementSession.email,
     );
+    expect(harness.getSession).toHaveBeenCalledTimes(2);
+    expect(view.queryClient.getQueryData(['profile', 'me'])).toEqual({
+      displayName: 'student.one',
+    });
   });
 
   it('settles safely as anonymous when subscription setup rejects', async () => {

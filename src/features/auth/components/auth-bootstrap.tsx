@@ -28,6 +28,8 @@ const bootstrapLoadingMinimumMs = 100;
 const stateFromSession = (session: AuthSession | null): AuthState =>
   session ? { session, status: 'authenticated' } : anonymousState;
 
+const readFlag = (flag: Readonly<{ current: boolean }>) => flag.current;
+
 export function AuthBootstrap({
   children,
   repository,
@@ -36,6 +38,7 @@ export function AuthBootstrap({
   repository: AuthRepository;
 }>) {
   const queryClient = useQueryClient();
+  const bufferedNullDuringSignOut = useRef(false);
   const signOutPending = useRef(false);
   const [state, setState] = useState<AuthState>(loadingState);
 
@@ -71,7 +74,10 @@ export function AuthBootstrap({
     try {
       unsubscribe = repository.onAuthStateChange((session) => {
         if (!active) return;
-        if (signOutPending.current && session === null) return;
+        if (signOutPending.current && session === null) {
+          bufferedNullDuringSignOut.current = true;
+          return;
+        }
         authEventObserved = true;
         settle(stateFromSession(session));
       });
@@ -107,12 +113,31 @@ export function AuthBootstrap({
   );
 
   const signOut = useCallback(async () => {
+    bufferedNullDuringSignOut.current = false;
     signOutPending.current = true;
     try {
       await repository.signOut();
       await clearUserScopedQueries(queryClient);
       setState(anonymousState);
+    } catch (signOutError) {
+      if (!readFlag(bufferedNullDuringSignOut)) throw signOutError;
+
+      let recoveredSession: AuthSession | null;
+      try {
+        recoveredSession = await repository.getSession();
+      } catch {
+        throw signOutError;
+      }
+
+      if (recoveredSession) {
+        setState(stateFromSession(recoveredSession));
+        throw signOutError;
+      }
+
+      await clearUserScopedQueries(queryClient);
+      setState(anonymousState);
     } finally {
+      bufferedNullDuringSignOut.current = false;
       signOutPending.current = false;
     }
   }, [queryClient, repository]);

@@ -1,49 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { TEST_USERS } from '../fixtures/users';
+import { attachBrowserHealth, unexpectedBrowserHealth } from './browser-health';
 import { readLocalProfileEnvironment } from './profile-e2e-boundary';
 
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
-
-type BrowserHealth = Readonly<{
-  consoleErrors: string[];
-  failedRequests: string[];
-  pageErrors: string[];
-  serverErrors: string[];
-}>;
-
-const attachHealthCollection = (page: Page): BrowserHealth => {
-  const health: BrowserHealth = {
-    consoleErrors: [],
-    failedRequests: [],
-    pageErrors: [],
-    serverErrors: [],
-  };
-
-  page.on('console', (message) => {
-    if (message.type() === 'error') health.consoleErrors.push(message.text());
-  });
-  page.on('pageerror', (error) => health.pageErrors.push(error.message));
-  page.on('requestfailed', (request) => {
-    health.failedRequests.push(
-      `${request.failure()?.errorText ?? 'failed'} ${request.url()}`,
-    );
-  });
-  page.on('response', (response) => {
-    if (response.status() >= 500) health.serverErrors.push(response.url());
-  });
-
-  return health;
-};
-
-const unexpectedHealth = (health: BrowserHealth): BrowserHealth => ({
-  ...health,
-  failedRequests: health.failedRequests.filter(
-    (failure) =>
-      failure !==
-      'net::ERR_ABORTED http://127.0.0.1:54321/auth/v1/logout?scope=local',
-  ),
-});
 
 const signIn = async (
   page: Page,
@@ -55,10 +16,11 @@ const signIn = async (
 };
 
 test('isolates two accounts that use the same browser page in sequence', async ({
+  browserName,
   page,
 }) => {
   readLocalProfileEnvironment(process.env);
-  const health = attachHealthCollection(page);
+  const health = attachBrowserHealth(page);
 
   await page.goto('/login');
   await signIn(page, TEST_USERS.studentOne);
@@ -122,7 +84,7 @@ test('isolates two accounts that use the same browser page in sequence', async (
       ),
     ),
   ).toBe(false);
-  expect(unexpectedHealth(health)).toEqual({
+  expect(unexpectedBrowserHealth(health, browserName)).toEqual({
     consoleErrors: [],
     failedRequests: [],
     pageErrors: [],

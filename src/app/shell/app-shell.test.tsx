@@ -4,6 +4,7 @@ import {
   createMemoryRouter,
   MemoryRouter,
   RouterProvider,
+  useNavigate,
 } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from '../../features/auth/context/auth-context';
@@ -171,5 +172,82 @@ describe('AppShell', () => {
     );
     expect(screen.getByRole('button', { name: '登出' })).toBeVisible();
     expect(screen.getByRole('alert')).not.toHaveTextContent('provider detail');
+  });
+
+  it('allows account B to sign out after account A logs out through the mounted root shell', async () => {
+    let currentAuth!: ReturnType<typeof useAuth>;
+    const signOut = vi.fn(() => {
+      currentAuth = anonymous;
+      return Promise.resolve();
+    });
+    const anonymous = {
+      session: null,
+      signIn: vi.fn(),
+      signOut,
+      status: 'anonymous',
+    } as const;
+    const accountA = {
+      session: {
+        email: 'student.one@colorplay.test',
+        userId: 'student-one-id',
+      },
+      signIn: vi.fn(),
+      signOut,
+      status: 'authenticated',
+    } as const;
+    const accountB = {
+      session: {
+        email: 'student.two@colorplay.test',
+        userId: 'student-two-id',
+      },
+      signIn: vi.fn(),
+      signOut,
+      status: 'authenticated',
+    } as const;
+    currentAuth = accountA;
+    mockedUseAuth.mockImplementation(() => currentAuth);
+
+    function AccountBLogin() {
+      const navigate = useNavigate();
+      return (
+        <button
+          onClick={() => {
+            currentAuth = accountB;
+            void navigate('/app', { replace: true });
+          }}
+          type="button"
+        >
+          以 B 登入
+        </button>
+      );
+    }
+
+    const router = createMemoryRouter(
+      [
+        {
+          element: <AppShell />,
+          children: [
+            { element: <AccountBLogin />, path: '/login' },
+            { element: <h1>受保護頁面</h1>, path: '/app' },
+          ],
+        },
+      ],
+      { initialEntries: ['/app'] },
+    );
+    render(<RouterProvider router={router} />);
+
+    await userEvent.click(screen.getByRole('button', { name: '登出' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: '以 B 登入' }),
+    );
+
+    const accountBLogout = await screen.findByRole('button', { name: '登出' });
+    expect(accountBLogout).toBeEnabled();
+    await userEvent.click(accountBLogout);
+
+    expect(signOut).toHaveBeenCalledTimes(2);
+    expect(
+      await screen.findByRole('button', { name: '以 B 登入' }),
+    ).toBeVisible();
   });
 });
