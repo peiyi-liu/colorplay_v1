@@ -34,6 +34,14 @@ const authenticated: AuthContextValue = {
   status: 'authenticated',
 };
 
+const authenticatedAs = (userId: string): AuthContextValue => ({
+  ...authenticated,
+  session: {
+    email: `${userId}@colorplay.test`,
+    userId,
+  },
+});
+
 const createWrapper = (client: QueryClient) =>
   function Wrapper({ children }: Readonly<{ children: ReactNode }>) {
     return (
@@ -86,5 +94,56 @@ describe('useMyProfile', () => {
     });
 
     expect(repositoryMocks.getMyProfile).toHaveBeenCalledOnce();
+  });
+
+  it('refreshes the fixed own-profile query when the authenticated identity changes', async () => {
+    const studentOne: SafeProfile = {
+      displayName: 'student.one',
+      id: 'student-one-id',
+      role: 'student',
+      timezone: 'Asia/Taipei',
+    };
+    const studentTwo: SafeProfile = {
+      displayName: 'student.two',
+      id: 'student-two-id',
+      role: 'student',
+      timezone: 'Asia/Taipei',
+    };
+    repositoryMocks.getMyProfile
+      .mockResolvedValueOnce(studentOne)
+      .mockResolvedValueOnce(studentTwo);
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const authState = { current: authenticatedAs(studentOne.id) };
+    function IdentityWrapper({ children }: Readonly<{ children: ReactNode }>) {
+      return (
+        <QueryClientProvider client={client}>
+          <AuthContext.Provider value={authState.current}>
+            {children}
+          </AuthContext.Provider>
+        </QueryClientProvider>
+      );
+    }
+
+    const { rerender, result } = renderHook(() => useMyProfile(), {
+      wrapper: IdentityWrapper,
+    });
+    await waitFor(() => {
+      expect(result.current.data).toEqual(studentOne);
+    });
+
+    authState.current = authenticatedAs(studentTwo.id);
+    rerender();
+
+    expect(result.current.data).toBeUndefined();
+    await waitFor(() => {
+      expect(result.current.data).toEqual(studentTwo);
+    });
+    expect(repositoryMocks.getMyProfile).toHaveBeenCalledTimes(2);
+    expect(client.getQueryCache().getAll()).toHaveLength(1);
+    expect(client.getQueryCache().getAll()[0]?.queryKey).toEqual(
+      myProfileQueryKey,
+    );
   });
 });

@@ -1,6 +1,10 @@
 import { expect, test, type Page, type Response } from '@playwright/test';
 
 import { TEST_USERS } from '../fixtures/users';
+import {
+  isLocalOwnProfileResponseUrl,
+  readLocalProfileEnvironment,
+} from './profile-e2e-boundary';
 
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
 
@@ -9,24 +13,6 @@ type BrowserHealth = Readonly<{
   failedRequests: string[];
   pageErrors: string[];
 }>;
-
-const readLocalBrowserEnvironment = () => {
-  const url = process.env.SUPABASE_URL;
-  const anonKey = process.env.SUPABASE_ANON_KEY;
-  if (!url || !anonKey) throw new Error('TASK_14_LOCAL_PUBLIC_ENV_MISSING');
-  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('TASK_14_SERVICE_ROLE_MUST_BE_UNSET');
-  }
-
-  const parsedUrl = new URL(url);
-  if (
-    parsedUrl.protocol !== 'http:' ||
-    parsedUrl.hostname !== '127.0.0.1' ||
-    parsedUrl.port !== '54321'
-  ) {
-    throw new Error('TASK_14_LOCAL_PUBLIC_ENV_INVALID');
-  }
-};
 
 const attachHealthCollection = (page: Page): BrowserHealth => {
   const health: BrowserHealth = {
@@ -47,11 +33,7 @@ const attachHealthCollection = (page: Page): BrowserHealth => {
 };
 
 const isOwnProfileResponse = (response: Response) => {
-  const url = new URL(response.url());
-  return (
-    url.pathname.endsWith('/rest/v1/profiles') &&
-    url.searchParams.get('select') === 'id,display_name,role,timezone'
-  );
+  return isLocalOwnProfileResponseUrl(response.url());
 };
 
 const signInAndReadProfile = async (
@@ -93,7 +75,7 @@ const signInAndReadProfile = async (
 test('renders only the real safe profile and derives role navigation from PostgreSQL', async ({
   browser,
 }, testInfo) => {
-  readLocalBrowserEnvironment();
+  readLocalProfileEnvironment(process.env);
   const baseURL = testInfo.project.use.baseURL;
   if (typeof baseURL !== 'string') throw new Error('TASK_14_BASE_URL_MISSING');
 
