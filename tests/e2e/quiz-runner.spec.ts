@@ -20,7 +20,9 @@ test('student starts a real quiz, submits an answer, and advances', async ({
   await page.getByRole('button', { name: '登入' }).click();
 
   await expect(page).toHaveURL(/\/app$/u);
-  await page.getByRole('link', { name: '開始挑戰' }).click();
+  await page
+    .locator('a[href="/app/quiz/new?template=26000000-0000-0000-0000-000000000003"]')
+    .click();
 
   await expect(page).toHaveURL(/\/app\/quiz\/[0-9a-f-]{36}$/u);
   await expect(page.getByLabel('挑戰進度')).toContainText('第 1 / 10 題');

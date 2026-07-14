@@ -19,7 +19,8 @@
     "test:visual": "playwright test tests/e2e/app-shell.visual.spec.ts",
     "acceptance": "bash scripts/acceptance/run-phase-1.sh",
     "acceptance:create-run": "node scripts/acceptance/create-run.mjs",
-    "acceptance:count": "node scripts/verify/count-acceptance.mjs acceptance/ACCEPTANCE_CRITERIA.md"
+    "acceptance:count": "node scripts/verify/count-acceptance.mjs acceptance/ACCEPTANCE_CRITERIA.md",
+    "content:import": "node scripts/content/import-questions.mjs"
   },
   "keywords": [],
   "author": "",

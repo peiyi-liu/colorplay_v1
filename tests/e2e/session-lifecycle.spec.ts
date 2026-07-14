@@ -24,17 +24,17 @@ test('restores the session and intended route, then protects it after keyboard l
   await signIn(page);
   await expect(page).toHaveURL(/\/app\?chapter=color-theory#checkpoint$/u);
   await expect(
-    page.getByRole('heading', { name: 'student.one' }),
+    page.getByRole('heading', { name: '選擇章節' }),
   ).toBeVisible();
 
   await page.reload();
   await expect(page).toHaveURL(/\/app\?chapter=color-theory#checkpoint$/u);
   await expect(
-    page.getByRole('heading', { name: 'student.one' }),
+    page.getByRole('heading', { name: '選擇章節' }),
   ).toBeVisible();
 
   await page.getByRole('link', { name: '個人資料' }).click();
-  await expect(page).toHaveURL(/\/app$/u);
+  await expect(page).toHaveURL(/\/app\/profile$/u);
   await expect(
     page.getByRole('heading', { name: 'student.one' }),
   ).toBeVisible();

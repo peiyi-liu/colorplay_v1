@@ -2,30 +2,14 @@ import { createClient } from '@supabase/supabase-js';
 import { expect, test } from '@playwright/test';
 
 import type { Database } from '../../src/types/database';
+import { GENERATED_CORRECT_ANSWERS } from '../fixtures/question-answers.generated';
 import { TEST_USERS } from '../fixtures/users';
 
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
 
-const correctAnswers: ReadonlyMap<string, string> = new Map([
-  ['螢幕以光呈現色彩時，最常使用哪一種色彩模型？', 'RGB'],
-  ['四色印刷通常使用哪四種色料？', '青、洋紅、黃、黑'],
-  ['在 HSL 色彩模型中，H 代表什麼？', '色相'],
-  ['CIELAB 的 L* 軸主要描述哪一項色彩屬性？', '明度'],
-  ['十六進位色碼 #FF0000 表示哪一種顏色？', '紅色'],
-  ['RGB 三個色光通道都設為最大值時，畫面會呈現什麼顏色？', '白色'],
-  ['CMYK 中加入 K（黑色）版的主要原因是什麼？', '提供穩定深色與清晰細節'],
-  ['HSL 的飽和度降低到 0% 時，顏色會變成什麼狀態？', '只剩灰階'],
-  ['「色域」這個詞最適合描述什麼？', '可表示的顏色範圍'],
-  [
-    '為什麼同一組 RGB 數值可能在不同螢幕上看起來不同？',
-    '不同裝置的色彩特性不同',
-  ],
-  ['每個 RGB 通道使用 8 位元時，一個通道可表示多少個階調？', '256'],
-  [
-    '設計檔由螢幕輸出改為印刷時，為何需要進行色彩管理？',
-    '因為螢幕與印刷的色域和成色方式不同',
-  ],
-]);
+const correctAnswers = GENERATED_CORRECT_ANSWERS;
+const CHAPTER_3_CHALLENGE =
+  '/app/quiz/new?template=26000000-0000-0000-0000-000000000003';
 
 const requiredEnvironment = (name: 'SUPABASE_ANON_KEY' | 'SUPABASE_URL') => {
   const value = process.env[name];
@@ -47,7 +31,7 @@ test('student completes a mixed ten-question challenge with durable server total
   await page.getByLabel('Email').fill(TEST_USERS.studentOne.email);
   await page.getByLabel('密碼').fill(TEST_USERS.studentOne.password);
   await page.getByRole('button', { name: '登入' }).click();
-  await page.getByRole('link', { name: '開始挑戰' }).click();
+  await page.locator(`a[href="${CHAPTER_3_CHALLENGE}"]`).click();
   await expect(page).toHaveURL(/\/app\/quiz\/[0-9a-f-]{36}$/u);
 
   const sessionId = new URL(page.url()).pathname.split('/').at(-1);

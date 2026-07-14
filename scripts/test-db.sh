@@ -103,9 +103,9 @@ done
 } >"$runtime_report"
 
 scan_evidence_for_secrets() {
+  local artifact_secret_pattern='(?i)([[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|Bearer[[:space:]]+[^[:space:]]+|LocalOnly-|sb_(secret|publishable)_[A-Za-z0-9_-]+|anon[_ -]?key|service[_ -]?role|(?-i:SUPABASE_[A-Z0-9_]+)|jwt[_ -]?secret|database[_ -]?password|db[_ -]?password|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@)'
   if command -v rg >/dev/null 2>&1; then
-    local pattern='(?i)([[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|Bearer[[:space:]]+[^[:space:]]+|LocalOnly-|sb_(secret|publishable)_[A-Za-z0-9_-]+|anon[_ -]?key|service[_ -]?role|(?-i:SUPABASE_[A-Z0-9_]+)|jwt[_ -]?secret|database[_ -]?password|db[_ -]?password|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@)'
-    rg --hidden --glob '!artifact-secret-scan.txt' --pcre2 -q "$pattern" "$@"
+    rg --hidden --glob '!artifact-secret-scan.txt' --pcre2 -q "$artifact_secret_pattern" "$@"
   else
     # Fallback for hosts without ripgrep: same pattern split into the
     # case-insensitive body and the case-sensitive SUPABASE_* env-name match.

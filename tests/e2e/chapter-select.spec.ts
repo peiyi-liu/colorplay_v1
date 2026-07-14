@@ -4,7 +4,7 @@ import { TEST_USERS } from '../fixtures/users';
 
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
 
-test('student sees six published chapters and only one playable challenge', async ({
+test('student sees six published chapters with two playable challenges', async ({
   page,
 }) => {
   const consoleErrors: string[] = [];
@@ -22,9 +22,17 @@ test('student sees six published chapters and only one playable challenge', asyn
   await expect(page).toHaveURL(/\/app$/u);
   await expect(page.getByRole('heading', { name: '選擇章節' })).toBeVisible();
   await expect(page.getByRole('article')).toHaveCount(6);
-  await expect(page.getByRole('link', { name: '開始挑戰' })).toHaveCount(1);
-  await expect(page.getByRole('button', { name: '尚無題目' })).toHaveCount(5);
-  await expect(page.getByRole('link', { name: '開始挑戰' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: '開始挑戰' })).toHaveCount(2);
+  await expect(page.getByRole('button', { name: '尚無題目' })).toHaveCount(4);
+  await expect(
+    page.getByRole('link', { name: '開始挑戰' }).first(),
+  ).toHaveAttribute(
+    'href',
+    '/app/quiz/new?template=26000000-0000-0000-0000-000000000002',
+  );
+  await expect(
+    page.getByRole('link', { name: '開始挑戰' }).last(),
+  ).toHaveAttribute(
     'href',
     '/app/quiz/new?template=26000000-0000-0000-0000-000000000003',
   );

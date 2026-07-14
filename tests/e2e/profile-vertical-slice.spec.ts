@@ -26,7 +26,10 @@ const attachHealthCollection = (page: Page): BrowserHealth => {
   });
   page.on('pageerror', (error) => health.pageErrors.push(error.message));
   page.on('requestfailed', (request) => {
-    health.failedRequests.push(request.failure()?.errorText ?? 'failed');
+    const errorText = request.failure()?.errorText ?? 'failed';
+    // 頁面跳轉會取消進行中的請求；瀏覽器的取消訊號不是伺服器錯誤。
+    if (/ERR_ABORTED|NS_BINDING_ABORTED|cancelled/u.test(errorText)) return;
+    health.failedRequests.push(errorText);
   });
 
   return health;

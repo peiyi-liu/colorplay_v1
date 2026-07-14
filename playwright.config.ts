@@ -26,6 +26,9 @@ export default defineConfig({
   testDir: './tests',
   outputDir: `${taskEvidenceRoot}/playwright`,
   reporter: [['list'], ['./tests/e2e/task-4-evidence-reporter.ts']],
+  // 多個 spec 共用同一批 seed 帳號，而 Supabase 登出會撤銷該使用者的所有
+  // session；平行執行會互相打斷，因此序列化。
+  workers: 1,
   projects: [
     {
       name: 'chromium',
