@@ -132,11 +132,13 @@ export const publishedChaptersQueryKey = [
   'published-chapters',
 ] as const;
 
-export function usePublishedChapters(): UseQueryResult<
-  PublishedChapter[],
-  LearningRepositoryError
-> {
-  return useQuery({
+export type PublishedChaptersQuery = Pick<
+  UseQueryResult<PublishedChapter[], LearningRepositoryError>,
+  'data' | 'error' | 'isError' | 'isPending' | 'refetch'
+>;
+
+export function usePublishedChapters(): PublishedChaptersQuery {
+  const query = useQuery<PublishedChapter[], LearningRepositoryError>({
     queryFn: () =>
       fetchPublishedChapters(
         getBrowserSupabaseClient(parsePublicEnv(import.meta.env)),
@@ -145,4 +147,12 @@ export function usePublishedChapters(): UseQueryResult<
     retry: (failureCount, error) =>
       error.code !== 'CHAPTERS_INVALID_RESPONSE' && failureCount < 2,
   });
+
+  return {
+    data: query.data,
+    error: query.error,
+    isError: query.isError,
+    isPending: query.isPending,
+    refetch: query.refetch,
+  };
 }

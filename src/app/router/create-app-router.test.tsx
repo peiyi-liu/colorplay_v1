@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { RouterProvider } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthRepository, AuthSession } from '../../features/auth/types';
+import { usePublishedChapters } from '../../features/learning/api/chapters';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { AppProviders } from '../providers/app-providers';
 import { createAppRouter } from './create-app-router';
@@ -20,8 +21,18 @@ vi.mock('../../features/profile/hooks/use-my-profile', () => ({
     refetch: vi.fn(),
   })),
 }));
+vi.mock('../../features/learning/api/chapters', () => ({
+  usePublishedChapters: vi.fn(() => ({
+    data: [],
+    error: null,
+    isError: false,
+    isPending: false,
+    refetch: vi.fn(),
+  })),
+}));
 
 const mockedUseMyProfile = vi.mocked(useMyProfile);
+const mockedUsePublishedChapters = vi.mocked(usePublishedChapters);
 
 const createRepository = (session: AuthSession | null): AuthRepository => ({
   getSession: vi.fn(() => Promise.resolve(session)),
@@ -87,16 +98,37 @@ describe('createAppRouter', () => {
     expect(screen.queryByRole('heading', { name: '學習大廳' })).toBeNull();
   });
 
-  it('renders the safe own-profile slice at /app for an authenticated session', async () => {
+  it('renders the published chapter home at /app for an authenticated session', async () => {
+    mockedUsePublishedChapters.mockReturnValue({
+      data: [
+        {
+          description: '使用色彩模型描述顏色。',
+          id: '21000000-0000-0000-0000-000000000003',
+          isPlayable: true,
+          sortOrder: 3,
+          stableCode: 'chapter-3',
+          template: {
+            id: '26000000-0000-0000-0000-000000000003',
+            questionCount: 10,
+            title: '第三章綜合挑戰',
+          },
+          title: '色彩表示',
+        },
+      ],
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
     renderRouter('/app', {
       email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
 
     expect(
-      await screen.findByRole('heading', { name: 'student.one' }),
+      await screen.findByRole('heading', { name: '選擇章節' }),
     ).toBeVisible();
-    expect(screen.getByText('角色：學生')).toBeVisible();
+    expect(screen.getByRole('link', { name: '開始挑戰' })).toBeVisible();
     expect(document.body).not.toHaveTextContent('learner@colorplay.invalid');
   });
 

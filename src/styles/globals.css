@@ -274,6 +274,88 @@ a {
   cursor: wait;
 }
 
+.chapter-select {
+  width: min(100%, 1120px);
+}
+
+.chapter-select--message {
+  border: 1px solid var(--color-border);
+  border-top: 8px solid var(--color-brand-yellow);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  padding: var(--space-8);
+}
+
+.chapter-select--message h1,
+.chapter-select__header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3rem);
+  line-height: 1.2;
+}
+
+.chapter-select--message .primary-action {
+  margin-top: var(--space-6);
+}
+
+.chapter-select__header {
+  margin-bottom: var(--space-8);
+}
+
+.chapter-select__header > p:last-child {
+  color: var(--color-muted);
+}
+
+.chapter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-6);
+}
+
+.chapter-card {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  padding: var(--space-6);
+}
+
+.chapter-card__number {
+  margin: 0;
+  color: var(--color-primary-strong);
+  font-size: var(--font-size-supporting);
+  font-weight: 800;
+}
+
+.chapter-card h2 {
+  margin: var(--space-2) 0 0;
+  font-size: 1.5rem;
+}
+
+.chapter-card > p:not(.chapter-card__number) {
+  color: var(--color-muted);
+}
+
+.chapter-card__action {
+  align-self: end;
+  margin-top: var(--space-4);
+}
+
+.chapter-card__action .primary-action,
+.chapter-card__disabled {
+  width: 100%;
+}
+
+.chapter-card__disabled {
+  min-height: 52px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-bg);
+  color: var(--color-muted);
+  font-weight: 800;
+}
+
 @media (max-width: 479px) {
   #main-content {
     align-items: start;
@@ -298,6 +380,11 @@ a {
   .login-form__action-row,
   .primary-action {
     width: 100%;
+  }
+
+  .chapter-select--message,
+  .chapter-card {
+    padding: var(--space-5);
   }
 }
 

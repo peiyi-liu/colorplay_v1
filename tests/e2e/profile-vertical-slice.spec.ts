@@ -90,6 +90,7 @@ test('renders only the real safe profile and derives role navigation from Postgr
     studentPage,
     TEST_USERS.studentOne,
   );
+  await studentPage.goto('/app/profile');
 
   expect(studentProfile).toMatchObject({
     display_name: 'student.one',
