@@ -8,6 +8,7 @@ export default defineConfig({
     exclude: [
       'node_modules/**',
       'tests/e2e/**',
+      'tests/acceptance/**',
       'tests/visual/**',
       'tests/integration/**',
       '**/*.integration.test.*',

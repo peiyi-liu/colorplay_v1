@@ -56,6 +56,26 @@ export function unexpectedRequestFailures<RequestType extends TrackedRequest>(
   });
 }
 
+export function removeConfirmedSuccessfulLocalLogoutAbort<
+  RequestType extends TrackedRequest,
+>(
+  browserName: string,
+  failures: readonly string[],
+  response: TrackedResponse<RequestType>,
+): string[] {
+  const request = response.request();
+  if (
+    browserName !== 'chromium' ||
+    response.status() >= 400 ||
+    !isExactLocalLogout(request)
+  ) {
+    return [...failures];
+  }
+
+  const allowedFailureIndex = failures.indexOf(chromiumLogoutAbort);
+  return failures.filter((_, index) => index !== allowedFailureIndex);
+}
+
 export type BrowserHealth = Readonly<{
   consoleErrors: string[];
   failedRequests: string[];

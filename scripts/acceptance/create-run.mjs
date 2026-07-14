@@ -339,7 +339,7 @@ function replaceSummarySection(markdown, heading, nextHeading, body) {
   return `${markdown.slice(0, sectionStart)}${heading}\n\n${body}\n\n${markdown.slice(nextSectionStart)}`;
 }
 
-function renderSummary(manifest, evidenceTemplate) {
+export function renderSummary(manifest, evidenceTemplate) {
   const commandRows = manifest.commands.length
     ? manifest.commands.map(
         (command) =>
@@ -348,7 +348,7 @@ function renderSummary(manifest, evidenceTemplate) {
     : ['| — | — | — | — | — |'];
   const acceptanceRows = manifest.acceptance.map(
     (criterion) =>
-      `| ${criterion.id} | ${criterion.status} | — | — | — | — | No evidence attached |`,
+      `| ${criterion.id} | ${criterion.status} | ${criterion.automated_test ?? '—'} | ${criterion.screenshots.join('<br>') || '—'} | ${criterion.traces_videos.join('<br>') || '—'} | ${criterion.db_network_proof.join('<br>') || '—'} | ${criterion.notes} |`,
   );
   const knownFailureRows = manifest.known_failures.length
     ? manifest.known_failures.map(
@@ -369,7 +369,7 @@ function renderSummary(manifest, evidenceTemplate) {
 | Run ID | ${manifest.run_id} |
 | Git SHA | ${manifest.git_sha} |
 | Worktree clean | ${String(!manifest.dirty_worktree)} |
-| Branch | NOT CAPTURED |
+| Branch | ${manifest.branch ?? 'NOT CAPTURED'} |
 | App URL | ${manifest.app_url} |
 | Supabase environment | ${manifest.supabase_environment} |
 | Supabase project/ref | NOT CAPTURED |
@@ -386,6 +386,11 @@ function renderSummary(manifest, evidenceTemplate) {
   const commandsSection = `| Command | Exit code | Started | Duration (ms) | Report path |
 |---|---:|---|---:|---|
 ${commandRows.join('\n')}`;
+  const blockingReasons = manifest.known_failures.length
+    ? manifest.known_failures
+        .map((failure) => `- ${failure.id_or_area}: ${failure.description}`)
+        .join('\n')
+    : '- None recorded.';
   const overallSection = `| Status | Count |
 |---|---:|
 | PASS | ${String(manifest.status_counts.PASS)} |
@@ -393,11 +398,13 @@ ${commandRows.join('\n')}`;
 | NOT VERIFIED | ${String(manifest.status_counts['NOT VERIFIED'])} |
 | NOT APPLICABLE | ${String(manifest.status_counts['NOT APPLICABLE'])} |
 
+**Phase 1 gate decision:** ${manifest.phase_1_decision ?? 'NOT CAPTURED'}
+
 **Release decision:** ${manifest.release_decision}
 
 **Blocking reason(s):**
 
-- ${String(manifest.status_counts['NOT VERIFIED'])} normative acceptance criteria have no attached evidence.`;
+${blockingReasons}`;
   const matrixSection = `Every normative acceptance ID has a row. No criterion without attached evidence is marked PASS.
 
 | AC ID | Status | Automated test | Screenshot/sequence | Trace/video | DB/network proof | Notes |

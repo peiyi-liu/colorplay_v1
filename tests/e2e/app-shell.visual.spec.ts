@@ -11,11 +11,11 @@ const viewports = [
 ] as const;
 
 const routes = [
-  { action: '前往登入', path: '/' },
-  { action: '進入學習大廳', path: '/login' },
-  { action: '進入學習大廳', path: '/app' },
-  { action: '返回登入', path: '/unauthorized' },
-  { action: '返回首頁', path: '/missing-route' },
+  { action: '前往登入', path: '/', role: 'link' },
+  { action: '登入', path: '/login', role: 'button' },
+  { action: '登入', path: '/app', role: 'button' },
+  { action: '返回登入', path: '/unauthorized', role: 'link' },
+  { action: '返回首頁', path: '/missing-route', role: 'link' },
 ] as const;
 
 test.describe('flat-design application shell', () => {
@@ -43,7 +43,7 @@ test.describe('flat-design application shell', () => {
         'data-acceptance-interactive',
         'true',
       );
-      await expect(primaryTargets).toHaveRole('link');
+      await expect(primaryTargets).toHaveRole('button');
 
       const targetBoxes = await primaryTargets.evaluateAll((elements) =>
         elements.map((element) => {
@@ -112,6 +112,7 @@ test.describe('flat-design application shell', () => {
       const target = page.locator('[data-acceptance-target]');
       await expect(target).toHaveCount(1);
       await expect(target).toHaveAccessibleName(route.action);
+      await expect(target).toHaveRole(route.role);
       await expect(target).toBeVisible();
       expect(
         await target.evaluate((element) => {

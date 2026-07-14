@@ -143,6 +143,8 @@ export function LoginPage() {
         <div className="login-form__action-row">
           <button
             className="primary-action"
+            data-acceptance-interactive="true"
+            data-acceptance-target
             data-primary-action="true"
             disabled={isSubmitting}
             type="submit"

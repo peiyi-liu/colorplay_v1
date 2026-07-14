@@ -36,11 +36,11 @@ React + TypeScript + Vite、Tailwind（CSS variables tokens）、React Router、
 
 依變更規模選流程，**不得升級小任務的儀式**：
 
-| 級別 | 範例 | 必要流程 |
-|---|---|---|
-| S（小） | typo、文案、單檔 bug fix、設定調整、文件修正 | 直接改 + 跑受影響的測試。不需 brainstorm、不需 plan、不需獨立 review、不需證據目錄 |
-| M（中） | 已核准 plan 內的單一 task、新增元件/hook/migration | 依 brief 實作 + 單元/整合測試通過 + **一次** code review。不重跑 brainstorm/plan |
-| L（大） | 新 feature、跨層架構變更、新 phase | Superpowers brainstorming → design doc → plan（每個 phase 一次，不是每個 task 一次）→ worktree → 逐 task 以 M 級執行 |
+| 級別    | 範例                                               | 必要流程                                                                                                             |
+| ------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| S（小） | typo、文案、單檔 bug fix、設定調整、文件修正       | 直接改 + 跑受影響的測試。不需 brainstorm、不需 plan、不需獨立 review、不需證據目錄                                   |
+| M（中） | 已核准 plan 內的單一 task、新增元件/hook/migration | 依 brief 實作 + 單元/整合測試通過 + **一次** code review。不重跑 brainstorm/plan                                     |
+| L（大） | 新 feature、跨層架構變更、新 phase                 | Superpowers brainstorming → design doc → plan（每個 phase 一次，不是每個 task 一次）→ worktree → 逐 task 以 M 級執行 |
 
 TDD 適用於**有行為的產品程式碼**；git/檔案追蹤、設定檔、文件變更不需要 RED-GREEN 儀式，驗證方式改為執行一次對應檢查命令。
 

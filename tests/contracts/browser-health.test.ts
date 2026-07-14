@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   recordSuccessfulLocalLogout,
+  removeConfirmedSuccessfulLocalLogoutAbort,
   unexpectedRequestFailures,
   type TrackedRequestFailure,
 } from '../e2e/browser-health';
@@ -22,6 +23,46 @@ const failureFor = (
 });
 
 describe('browser health logout request identity', () => {
+  it('removes exactly one headed Chromium abort after an exact successful logout response', () => {
+    const request = createRequest();
+    const failures = [
+      `net::ERR_ABORTED ${logoutUrl}`,
+      `net::ERR_ABORTED ${logoutUrl}`,
+    ];
+
+    expect(
+      removeConfirmedSuccessfulLocalLogoutAbort('chromium', failures, {
+        request: () => request,
+        status: () => 204,
+      }),
+    ).toEqual([`net::ERR_ABORTED ${logoutUrl}`]);
+  });
+
+  it.each([
+    ['firefox', createRequest(), 204],
+    ['chromium', createRequest('GET'), 204],
+    [
+      'chromium',
+      createRequest(
+        'POST',
+        'http://127.0.0.1:54321/auth/v1/logout?scope=global',
+      ),
+      204,
+    ],
+    ['chromium', createRequest(), 400],
+  ])(
+    'does not remove abort without a confirmed exact local logout: %s %s',
+    (browserName, request, status) => {
+      const failure = `net::ERR_ABORTED ${logoutUrl}`;
+      expect(
+        removeConfirmedSuccessfulLocalLogoutAbort(browserName, [failure], {
+          request: () => request,
+          status: () => status,
+        }),
+      ).toEqual([failure]);
+    },
+  );
+
   it('ignores one exact Chromium abort only when that request received a successful response', () => {
     const request = createRequest();
     const successfulRequests = new Set<typeof request>();

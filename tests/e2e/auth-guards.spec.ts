@@ -162,7 +162,7 @@ test('proves loading, intended-route retention, and a real authenticated outlet'
   );
   await authenticatedPage.goto('/app');
   await expect(
-    authenticatedPage.getByRole('heading', { name: '學習大廳' }),
+    authenticatedPage.getByRole('heading', { name: 'student.one' }),
   ).toBeVisible();
   await expect(authenticatedPage.locator('body')).not.toContainText(
     TEST_USERS.studentOne.email,

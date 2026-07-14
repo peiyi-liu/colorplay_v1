@@ -12,6 +12,7 @@ const realAuthAvailable = Boolean(
   process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY,
 );
 const authGuardSpec = /auth-guards\.spec\.ts$/u;
+const chromiumOnlyLoginSpec = /login\.spec\.ts$/u;
 const video =
   process.env.PLAYWRIGHT_VIDEO === 'on' || acceptanceEvidence
     ? 'on'
@@ -22,7 +23,7 @@ const trace =
     : 'on-first-retry';
 
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: './tests',
   outputDir: `${taskEvidenceRoot}/playwright`,
   reporter: [['list'], ['./tests/e2e/task-4-evidence-reporter.ts']],
   projects: [
@@ -33,12 +34,20 @@ export default defineConfig({
     },
     {
       name: 'firefox',
-      testIgnore: [/\.visual\.spec\.ts$/u, authGuardSpec],
+      testIgnore: [
+        /\.visual\.spec\.ts$/u,
+        authGuardSpec,
+        chromiumOnlyLoginSpec,
+      ],
       use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
-      testIgnore: [/\.visual\.spec\.ts$/u, authGuardSpec],
+      testIgnore: [
+        /\.visual\.spec\.ts$/u,
+        authGuardSpec,
+        chromiumOnlyLoginSpec,
+      ],
       use: { ...devices['Desktop Safari'] },
     },
   ],

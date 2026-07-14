@@ -3,10 +3,6 @@ import { expect, test, type Page } from '@playwright/test';
 import { TEST_USERS } from '../fixtures/users';
 
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
-test.skip(
-  ({ browserName }) => browserName !== 'chromium',
-  'Task 13 real-local Auth checkpoint runs in Chromium.',
-);
 
 type BrowserHealth = Readonly<{
   consoleErrors: string[];
@@ -172,7 +168,9 @@ test('invalid credentials stay anonymous and keyboard-only valid login restores 
   await expect(page).toHaveURL(
     new RegExp('/app\\?chapter=color-theory#checkpoint$', 'u'),
   );
-  await expect(page.getByRole('heading', { name: '學習大廳' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'student.one' }),
+  ).toBeVisible();
   expect(passwordRequests).toBe(2);
   expect(unexpectedHealth(health)).toEqual({
     consoleErrors: [],

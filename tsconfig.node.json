@@ -23,6 +23,7 @@
   "include": [
     "playwright.config.ts",
     "scripts/**/*.ts",
+    "tests/acceptance/**/*.ts",
     "tests/contracts/**/*.ts",
     "tests/e2e/**/*.ts",
     "tests/fixtures/**/*.ts",

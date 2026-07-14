@@ -856,6 +856,7 @@ describe('acceptance metadata', () => {
       expect(project.testIgnore).toEqual([
         /\.visual\.spec\.ts$/u,
         /auth-guards\.spec\.ts$/u,
+        /login\.spec\.ts$/u,
       ]);
     }
     expect(foundationSpec).not.toContain('chromium.launch');
@@ -873,7 +874,7 @@ describe('acceptance metadata', () => {
 
     try {
       expect(packageManifest.scripts).toMatchObject({
-        acceptance: 'bash scripts/acceptance/run.sh',
+        acceptance: 'bash scripts/acceptance/run-phase-1.sh',
         'acceptance:count':
           'node scripts/verify/count-acceptance.mjs acceptance/ACCEPTANCE_CRITERIA.md',
         'acceptance:create-run': 'node scripts/acceptance/create-run.mjs',

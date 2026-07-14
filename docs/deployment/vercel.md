@@ -69,6 +69,24 @@ static frontend.
 8. Run headed deep-link checks against the deployed Preview and Production
    URLs before making a production-candidate claim.
 
+## Task 16 authentication boundary
+
+Local Steps 1–4 are implemented by `pnpm acceptance` and do not mutate any
+remote system. External Steps 5–8 remain an account-owner operation and are
+blocked until GitHub, Supabase, and Vercel authentication is available. An
+automation agent must not push a branch, log in, create or link projects,
+upload environment values, seed a remote project, update `main`, or fabricate
+deployment evidence without that explicit authenticated session.
+
+The local manifest therefore records remote environment isolation, production
+headers, automatic deployment, public CI, and deployed deep-link evidence as
+`NOT VERIFIED`. After authentication is provided, execute the reviewed Task 16
+runbook in order: feature-branch CI first, distinct staging/production Supabase
+projects second, Vercel Git/environment linkage third, then Preview and
+Production headed deep-link verification. Never write synthetic acceptance
+data to Production and never print DB passwords, status keys, service-role
+values, or access tokens into logs or evidence.
+
 Official references: [Vercel project configuration](https://vercel.com/docs/project-configuration/vercel-json),
 [Vercel Git deployments](https://vercel.com/docs/git), and
 [Vercel deployment environments](https://vercel.com/docs/deployments/overview).

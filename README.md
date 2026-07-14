@@ -43,3 +43,11 @@ colorplay/
 - 沒有實際 UI 截圖、序列證據與 DB/network proof，不得宣稱完成。
 - Flat Design、自然配對、虛擬鍵盤、Dialog、Icon 語意與狀態可視性依 `spec/07-ui-visual-system.md` 與 `AC-UI-008`～`AC-UI-015` 驗收。
 - Desktop resize 或 device emulation 不得冒充真實 OS 軟體鍵盤／Android Back 證據。
+
+## Phase 1 本機驗收
+
+`pnpm acceptance` 是 Phase 1 foundation/Auth/profile 的里程碑 gate。它會重建真實的本機 Supabase PostgreSQL/Auth/RLS、建立 production build 與 preview、執行完整測試與 DB/RLS 檢查、以 headed Chromium 擷取三種 viewport 證據，再跑 Chromium、Firefox、WebKit smoke、axe、Lighthouse 與 secrets scan。需要 Docker、可用的 headed browser display，以及 Playwright browser binaries。
+
+每次執行會建立 ignored 的 `artifacts/acceptance/<run-id>/`，包含 manifest、依 `acceptance/EVIDENCE_TEMPLATE.md` 產生的 summary、screenshots、sanitized traces、videos 與 reports。第一次未提交 source run 會誠實記錄 dirty worktree；提交後應重跑，讓 manifest 指向 clean committed SHA。
+
+這個 gate 綠燈只代表 Phase 1 scope。完整 MVP criteria、遠端 GitHub/Supabase/Vercel 步驟，以及 `AC-UI-010`／`AC-UI-012` 的真實裝置證據仍標記 `NOT VERIFIED`；summary 的 release decision 維持 `BLOCKED`，不得據此宣稱完整 MVP 或 release ready。
