@@ -401,8 +401,8 @@ $$;
 
 create function public.submit_quiz_answer(
   session_question_id uuid,
-  selected_option_id uuid,
-  idempotency_key uuid
+  idempotency_key uuid,
+  selected_option_id uuid default null
 )
 returns jsonb
 language plpgsql

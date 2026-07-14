@@ -215,7 +215,7 @@ select set_config(
 
 select throws_ok(
   format(
-    $$select public.submit_quiz_answer(%L, null, %L)$$,
+    $$select public.submit_quiz_answer(session_question_id => %L, idempotency_key => %L)$$,
     current_setting('test.future_question_id'),
     '30000000-0000-0000-0000-000000000003'
   ),
@@ -248,9 +248,9 @@ set local role authenticated;
 select set_config(
   'test.first_answer',
   public.submit_quiz_answer(
-    current_setting('test.first_question_id')::uuid,
-    current_setting('test.correct_option_id')::uuid,
-    '30000000-0000-0000-0000-000000000004'
+    session_question_id => current_setting('test.first_question_id')::uuid,
+    idempotency_key => '30000000-0000-0000-0000-000000000004',
+    selected_option_id => current_setting('test.correct_option_id')::uuid
   )::text,
   true
 );
@@ -266,16 +266,16 @@ select is(
 );
 select is(
   public.submit_quiz_answer(
-    current_setting('test.first_question_id')::uuid,
-    current_setting('test.correct_option_id')::uuid,
-    '30000000-0000-0000-0000-000000000004'
+    session_question_id => current_setting('test.first_question_id')::uuid,
+    idempotency_key => '30000000-0000-0000-0000-000000000004',
+    selected_option_id => current_setting('test.correct_option_id')::uuid
   )::text,
   current_setting('test.first_answer'),
   'same answer idempotency key returns the original result'
 );
 select throws_ok(
   format(
-    $$select public.submit_quiz_answer(%L, %L, %L)$$,
+    $$select public.submit_quiz_answer(session_question_id => %L, selected_option_id => %L, idempotency_key => %L)$$,
     current_setting('test.first_question_id'),
     current_setting('test.correct_option_id'),
     '30000000-0000-0000-0000-000000000005'
@@ -303,7 +303,10 @@ begin
         deadline_at = clock_timestamp() - interval '1 second'
     where id = pending.id;
 
-    perform public.submit_quiz_answer(pending.id, null, gen_random_uuid());
+    perform public.submit_quiz_answer(
+      session_question_id => pending.id,
+      idempotency_key => gen_random_uuid()
+    );
   end loop;
 end;
 $$;
@@ -381,7 +384,7 @@ select is(
 );
 select throws_ok(
   format(
-    $$select public.submit_quiz_answer(%L, null, %L)$$,
+    $$select public.submit_quiz_answer(session_question_id => %L, idempotency_key => %L)$$,
     current_setting('test.first_question_id'),
     '30000000-0000-0000-0000-000000000006'
   ),
