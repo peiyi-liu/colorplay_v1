@@ -1,6 +1,8 @@
 # ColorPlay Platform Foundation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use **superpowers:executing-plans**（單一 session）。不再使用 subagent-driven-development。Steps use checkbox (`- [ ]`) syntax for tracking.
+
+> **2026-07-14 改道（ADR 0001，優先於一切）：** Task 1–15 已完成，本計畫**就此收尾**。Task 16（Phase 1 重型驗收 gate、GitHub/Vercel 接線）延後至 release 前，不要執行 `pnpm acceptance`。下一步直接改跑 `docs/superpowers/plans/2026-07-14-playable-vertical-slice.md`。
 
 > **2026-07-14 修訂（優先於本計畫所有 task 內的流程步驟）：** `AGENTS.md` 已改為分級工作流程。本計畫各 task 中的「產生截圖證據目錄」「headed run」「三 viewport 截圖」「evidence manifest」等步驟一律**延後到 Task 16 的 Phase 驗收一次完成**，日常 task 只需 lint、typecheck 與受影響的 unit/integration/E2E 測試通過。每個 task 最多一輪 review；review diff 排除 lockfile、`legacy/**`、`artifacts/**`、snapshot 圖檔。Subagent 不重讀整個 spec 套件，以 task brief 為準。真實行動裝置證據（AC-UI-010/012）由人工提供，代理標記「待人工裝置驗證」即可。
 
