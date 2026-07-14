@@ -15,6 +15,13 @@ const safeErrorMessages = {
 
 const fallbackDestination = { hash: '', pathname: '/app', search: '' };
 
+const hasUnsafePathnameCharacter = (pathname: string) =>
+  pathname.includes('\\') ||
+  Array.from(pathname).some((character) => {
+    const codePoint = character.codePointAt(0);
+    return codePoint !== undefined && (codePoint <= 0x1f || codePoint === 0x7f);
+  });
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -25,7 +32,8 @@ const readDestination = (state: unknown) => {
   if (
     typeof pathname !== 'string' ||
     !pathname.startsWith('/') ||
-    pathname.startsWith('//')
+    pathname.startsWith('//') ||
+    hasUnsafePathnameCharacter(pathname)
   ) {
     return fallbackDestination;
   }
@@ -68,6 +76,7 @@ export function LoginPage() {
       <form
         className="login-form"
         data-interaction-group="login"
+        noValidate
         onSubmit={(event) => {
           void handleSubmit(async (values) => {
             if (pendingSubmission.current) return;

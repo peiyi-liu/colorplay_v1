@@ -57,6 +57,28 @@ describe('LoginPage', () => {
     );
   });
 
+  it('uses the linked Traditional Chinese schema error for a malformed non-empty Email', async () => {
+    const user = userEvent.setup();
+    const signIn = vi.fn(() => Promise.resolve());
+    render(
+      <MemoryRouter>
+        <AuthContext.Provider value={createAuthValue(signIn)}>
+          <LoginPage />
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText('Email'), 'malformed-email');
+    await user.type(screen.getByLabelText('密碼'), validCredentials.password);
+    await user.click(screen.getByRole('button', { name: '登入' }));
+
+    expect(await screen.findByText('請輸入有效的 Email')).toBeVisible();
+    expect(screen.getByLabelText('Email')).toHaveAccessibleDescription(
+      '請輸入有效的 Email',
+    );
+    expect(signIn).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['AUTH_INVALID_CREDENTIALS', 'Email 或密碼不正確'],
     ['AUTH_NETWORK', '網路連線失敗，請稍後重試'],
@@ -184,42 +206,49 @@ describe('LoginPage', () => {
     expect(router.state.historyAction).toBe('REPLACE');
   });
 
-  it('falls back to /app when the preserved pathname is not internal', async () => {
-    const user = userEvent.setup();
-    const router = createMemoryRouter(
-      [
-        { element: <LoginPage />, path: '/login' },
-        { element: <h1>學習大廳</h1>, path: '/app' },
-      ],
-      {
-        initialEntries: [
-          {
-            pathname: '/login',
-            state: {
-              from: {
-                hash: '#stolen',
-                pathname: '//malicious.example',
-                search: '?token=secret',
+  it.each([
+    ['protocol-relative', '//malicious.example'],
+    ['backslash-normalized', '/\\malicious.example'],
+    ['control-character', '/app\u0000/malicious'],
+  ])(
+    'falls back to /app when the preserved pathname is %s',
+    async (_caseName, unsafePathname) => {
+      const user = userEvent.setup();
+      const router = createMemoryRouter(
+        [
+          { element: <LoginPage />, path: '/login' },
+          { element: <h1>學習大廳</h1>, path: '/app' },
+        ],
+        {
+          initialEntries: [
+            {
+              pathname: '/login',
+              state: {
+                from: {
+                  hash: '#stolen',
+                  pathname: unsafePathname,
+                  search: '?token=secret',
+                },
               },
             },
-          },
-        ],
-      },
-    );
-    render(
-      <AuthContext.Provider value={createAuthValue()}>
-        <RouterProvider router={router} />
-      </AuthContext.Provider>,
-    );
+          ],
+        },
+      );
+      render(
+        <AuthContext.Provider value={createAuthValue()}>
+          <RouterProvider router={router} />
+        </AuthContext.Provider>,
+      );
 
-    await fillValidCredentials(user);
-    await user.click(screen.getByRole('button', { name: '登入' }));
+      await fillValidCredentials(user);
+      await user.click(screen.getByRole('button', { name: '登入' }));
 
-    expect(
-      await screen.findByRole('heading', { name: '學習大廳' }),
-    ).toBeVisible();
-    expect(router.state.location.pathname).toBe('/app');
-    expect(router.state.location.search).toBe('');
-    expect(router.state.location.hash).toBe('');
-  });
+      expect(
+        await screen.findByRole('heading', { name: '學習大廳' }),
+      ).toBeVisible();
+      expect(router.state.location.pathname).toBe('/app');
+      expect(router.state.location.search).toBe('');
+      expect(router.state.location.hash).toBe('');
+    },
+  );
 });
