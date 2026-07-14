@@ -10,12 +10,12 @@ colorplay/
 ├─ spec/
 ├─ acceptance/
 ├─ docs/superpowers/specs/
-└─ legacy/colorplay-prototype.html
+└─ legacy/colorplay-original.html
 ```
 
 ## 使用順序
 
-1. 將現有 HTML 原型另存為 `legacy/colorplay-prototype.html`。
+1. 將現有 HTML 原型保存為 `legacy/colorplay-original.html`（唯讀，不另做複本）。
 2. 將本包的 `AGENTS.md`、`spec/`、`acceptance/`、`docs/` 放入 repo。
 3. 在 Codex 開始工作前要求它先讀 `AGENTS.md`。
 4. 第一個實作工作不要直接「完成整個平台」，而是依 `spec/10-migration-roadmap.md` 分階段。

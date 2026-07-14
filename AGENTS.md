@@ -1,252 +1,84 @@
 # ColorPlay AGENTS.md
 
-> 本檔案是 Codex、Superpowers 與所有自動化開發代理進入本專案後的第一讀取入口。它不是完整產品規格，而是「專案地圖、規則索引與工作契約」。
+> 本檔案是 Codex、Superpowers 與所有自動化開發代理的第一讀取入口。它是「專案地圖與工作契約」，刻意保持精簡：規則的目的是產出正確的產品，而不是產出流程證據。
 
 ## 1. 專案摘要
 
-ColorPlay 是一個以瀏覽器執行的遊戲式教學平台，第一個正式教學領域為「技術型高中設計群－色彩原理」。平台從既有的單一 HTML 原型重新架構為 React + TypeScript + Supabase 的正式可部署系統。
+ColorPlay 是瀏覽器執行的遊戲式教學平台（第一領域：技術型高中設計群－色彩原理），從單一 HTML 原型重構為 React + TypeScript + Supabase。核心價值：學生複習答題拿 XP／代幣／排行榜；教師管理題庫與班級；研究者匯出不可竄改的學習歷程。所有正式成績、獎勵、權限由後端決定。
 
-核心價值：
+原型 `legacy/colorplay-original.html` 只作 UX 參考，唯讀，**任何情況下不得複製、內嵌或將其內容帶入 diff／review／報告**。
 
-- 學生可進行課後複習、限時答題、錯題補救、獲得 XP／代幣、解鎖頭像與查看排行榜。
-- 教師可管理章節、複習卡、題庫、班級、作答資料與學習診斷。
-- 研究者可匯出可追溯、不可由前端任意竄改的學習歷程資料。
-- 所有正式成績、獎勵、權限與排行榜結果必須由後端可信邏輯決定。
+## 2. 按需閱讀（不是全部讀完）
 
-既有原型只作為 UX 與需求參考，不得直接當作正式安全架構。建議將原始檔放置於 `legacy/colorplay-prototype.html`，且預設只讀。
+- 開始任務只需讀：`AGENTS.md` + 與任務**直接相關**的 1–2 份 `spec/*.md`。
+- `acceptance/ACCEPTANCE_CRITERIA.md` 只在規劃 phase 或執行 phase 驗收時整份讀；平時只查任務對應的 AC 編號段落。
+- **禁止**每個任務或每個 subagent 都重讀整個 spec 套件。若任務簡報（brief）已含必要規格摘錄，以簡報為準，不再回頭讀原文。
 
-## 2. 強制閱讀順序
-
-開始任何功能、修正或重構前，依序閱讀：
-
-1. `AGENTS.md`
-2. `spec/00-project-charter.md`
-3. 與任務直接相關的 `spec/*.md`
-4. `acceptance/ACCEPTANCE_CRITERIA.md`
-5. `acceptance/EVIDENCE_TEMPLATE.md`
-6. 現有實作、測試與最近提交紀錄
-
-涉及跨領域變更時，至少同時閱讀：
-
-- 架構或 API：`spec/02-system-architecture.md`
-- 資料表或權限：`spec/03-data-model-and-rls.md`
-- 登入、安全、個資：`spec/04-security-and-privacy.md`
-- 分數、XP、代幣、排行榜：`spec/05-game-mechanics.md`
-- 題庫與匯入：`spec/06-content-and-question-bank.md`
-- UI／RWD／視覺：`spec/07-ui-visual-system.md`
-- 測試與證據：`spec/08-testing-and-evidence.md`
-- 效能與可用性：`spec/09-nonfunctional-requirements.md`
+spec 對照表：架構/API → `02`；資料表/RLS → `03`；登入/安全 → `04`；分數/XP/排行榜 → `05`；題庫 → `06`；UI/RWD → `07`；測試 → `08`；效能 → `09`。
 
 ## 3. 文件優先級
 
-需求衝突時依下列順序處理：
-
-1. `acceptance/ACCEPTANCE_CRITERIA.md`：是否可驗收的最終判準
-2. `spec/*.md`：產品、架構、資料、安全、遊戲與視覺規格
-3. `AGENTS.md`：代理工作規則與專案導航
-4. 已核准的 ADR（Architecture Decision Record）
-5. 程式碼註解與既有實作
-
-不得自行選擇較容易的解釋。若規格真的矛盾，停止該範圍實作，建立 ADR 或規格修正提案，明確列出衝突、影響與推薦決策。
+衝突時：1. `acceptance/ACCEPTANCE_CRITERIA.md`（僅適用於 phase 驗收）→ 2. `spec/*.md` → 3. `AGENTS.md` → 4. 已核准 ADR → 5. 既有實作。規格真矛盾時停止該範圍實作並提出 ADR。
 
 ## 4. 固定技術方向
 
-除非有核准 ADR，不得更換以下核心技術：
+React + TypeScript + Vite、Tailwind（CSS variables tokens）、React Router、TanStack Query、RHF + Zod、Zustand（僅 client ephemeral）、Supabase（Auth/PostgreSQL/RLS/Storage/Edge Functions）、Vitest + RTL、Playwright、pnpm。無核准 ADR 不得更換；不得引入 Angular/Vue/Next.js/Firebase 或第二套資料庫。
 
-- Frontend：React + TypeScript + Vite
-- Styling：Tailwind CSS，設計 token 定義於 CSS variables
-- Routing：React Router
-- Server state：TanStack Query
-- Form：React Hook Form + Zod
-- Client-only ephemeral state：Zustand；不得用它取代伺服器真實資料
-- Backend：Supabase Auth、PostgreSQL、Row Level Security、Storage、Edge Functions／Database Functions
-- Unit／Integration：Vitest + React Testing Library
-- E2E／Visual evidence：Playwright
-- Database／RLS tests：Supabase CLI + pgTAP 或等價 SQL assertions
-- Package manager：pnpm
+## 5. 可信邊界（非談判規則）
 
-不得引入 Angular、Vue、Next.js、Firebase 或另一套資料庫來「順手解決」局部問題。
+前端一律不可信。前端只能：顯示介面、暫存未提交操作、呼叫 API、呈現後端結果、存非關鍵偏好。前端禁止：決定答案/分數/XP/代幣/購買/排名；持有 `service_role` 或任何秘密；取題時收到 `correct_answer`；直接寫錢包/排行榜/成績/審計；只靠隱藏按鈕保護教師功能。敏感狀態變更必須走 RLS/RPC/Edge Function 且以交易完成。
 
-## 5. 可信邊界：非談判規則
+## 6. 專案結構
 
-瀏覽器、React state、DOM、localStorage、IndexedDB、計時器與任何前端輸入都視為不可信。
+以 feature 切分（`src/features/{auth,learning,quiz,rewards,leaderboard,profile,teacher}`），共用放 `components/`、`lib/`、`styles/`、`types/`；DB 相關放 `supabase/{migrations,functions,seed.sql,tests}`；測試放 `tests/{e2e,visual,fixtures,acceptance}`；證據放 `artifacts/acceptance/`（不進 git）。單檔超過 500 行需說明理由或拆分。
 
-### 前端允許做的事
+## 7. 分級工作流程（取代「凡事走完整儀式」）
 
-- 顯示介面、暫存尚未提交的操作、呼叫 API、呈現後端回傳結果。
-- 保存非關鍵偏好，例如主題、動畫偏好、最近開啟頁面。
+依變更規模選流程，**不得升級小任務的儀式**：
 
-### 前端禁止做的事
+| 級別 | 範例 | 必要流程 |
+|---|---|---|
+| S（小） | typo、文案、單檔 bug fix、設定調整、文件修正 | 直接改 + 跑受影響的測試。不需 brainstorm、不需 plan、不需獨立 review、不需證據目錄 |
+| M（中） | 已核准 plan 內的單一 task、新增元件/hook/migration | 依 brief 實作 + 單元/整合測試通過 + **一次** code review。不重跑 brainstorm/plan |
+| L（大） | 新 feature、跨層架構變更、新 phase | Superpowers brainstorming → design doc → plan（每個 phase 一次，不是每個 task 一次）→ worktree → 逐 task 以 M 級執行 |
 
-- 決定正確答案、最終分數、XP、代幣、等級、購買結果或排行榜排名。
-- 持有 Supabase `service_role`、資料庫密碼或其他高權限秘密。
-- 在取得題目時收到 `correct_answer`、正確選項索引、教師私密註記。
-- 直接寫入錢包餘額、排行榜、最終成績或審計紀錄。
-- 只靠隱藏按鈕保護教師功能。
+TDD 適用於**有行為的產品程式碼**；git/檔案追蹤、設定檔、文件變更不需要 RED-GREEN 儀式，驗證方式改為執行一次對應檢查命令。
 
-所有敏感狀態變更必須經由受 RLS、RPC 或 Edge Function 保護的後端流程，並以資料庫交易完成。
+## 8. Review 與 Token 紀律
 
-## 6. 預期專案結構
+- 每個 task 最多**一輪** review（一位 reviewer，一次往返）。不設 spec-reviewer、quality-reviewer、code-reviewer 三重關卡。
+- Review diff 必須排除：`pnpm-lock.yaml`、`legacy/**`、`artifacts/**`、`coverage/**`、`dist/**`、visual snapshot 圖檔、任何產生型檔案。diff 超過 1500 行時先摘要，不整份貼入。
+- 報告精簡：變更摘要、對應 AC 編號、修改檔案、命令與結果、風險，各一節即可；**不得**重複貼上規格原文或完整 log。
+- 禁止複製大型檔案來「保存基線」——用 git 的歷史與 SHA 記錄即可。
+- 截圖與圖片證據不回讀進代理 context；以檔案路徑與 manifest 記錄即可。
 
-```text
-colorplay/
-├─ AGENTS.md
-├─ README.md
-├─ package.json
-├─ pnpm-lock.yaml
-├─ .env.example
-├─ src/
-│  ├─ app/                 # router、providers、全域錯誤邊界
-│  ├─ features/
-│  │  ├─ auth/
-│  │  ├─ learning/
-│  │  ├─ quiz/
-│  │  ├─ rewards/
-│  │  ├─ leaderboard/
-│  │  ├─ profile/
-│  │  └─ teacher/
-│  ├─ components/          # 跨 feature 的通用元件
-│  ├─ lib/                 # supabase client、query client、logger
-│  ├─ styles/              # tokens、globals
-│  └─ types/               # 產生型 DB types 與跨域型別
-├─ supabase/
-│  ├─ migrations/
-│  ├─ functions/
-│  ├─ seed.sql
-│  └─ tests/
-├─ tests/
-│  ├─ e2e/
-│  ├─ visual/
-│  ├─ fixtures/
-│  └─ acceptance/
-├─ artifacts/
-│  └─ acceptance/          # 驗收證據；CI 可清理但 release 必須封存
-├─ spec/
-├─ acceptance/
-├─ docs/
-│  ├─ adr/
-│  └─ superpowers/
-└─ legacy/
-   └─ colorplay-prototype.html
-```
+## 9. 必須提供的 npm scripts
 
-以 feature 為切分單位，不得把所有頁面、hooks、API 與型別集中在單一巨型資料夾。單檔超過 300 行時應先檢查責任是否混雜；超過 500 行需在 PR 說明理由或拆分。
+`dev / build / preview / lint / typecheck / test / test:coverage / test:db / test:e2e / test:visual / acceptance`。`pnpm acceptance` 為 **phase 驗收專用**（真實 Supabase 測試環境 + 證據流程），日常任務不執行。
 
-## 7. Superpowers 與 Codex 工作流程
+## 10. 程式與資料規範
 
-任何新功能或行為變更：
+TypeScript `strict: true`；不用未說明的 `any`/`@ts-ignore`/skip；DB 型別由 Supabase schema 產生；所有 schema 變更走 migration；public tables 全開 RLS 且預設拒絕；RLS policy 需正向與越權負向測試；UI 文案繁中、identifiers 英文；時間存 UTC 顯示 `Asia/Taipei`；金額/代幣/XP 用整數；mutation 考慮 idempotency。
 
-1. 先使用 Superpowers `brainstorming`，確認範圍、非目標與方案取捨。
-2. 將核准設計寫入 `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`。
-3. 使用 `writing-plans` 建立 `docs/superpowers/plans/YYYY-MM-DD-<topic>.md`。
-4. 以 `using-git-worktrees` 建立隔離工作區。
-5. 實作採 TDD：先失敗測試，再最小實作，再重構。
-6. 完成前執行 `verification-before-completion`。
-7. 重大功能需 `requesting-code-review`。
+## 11. UI 規則
 
-不得在沒有設計與實作計畫時直接大幅生成程式碼。純文字修正、規格修正或明確的小型 typo 可例外，但仍須執行相關驗證。
+學生端 UI 遵守 `spec/07-ui-visual-system.md`：扁平 2D、每畫面 1 個 primary action、問句與提交按鈕同一容器、軟鍵盤下 input 與 primary action 可見、Dialog 有明確關閉、不用 SOS 圖示、進度/題號持續可見、狀態不能只靠顏色。細節與 AC-UI-008～015 於 phase 驗收時比對。
 
-## 8. 必須提供的 npm scripts
+## 12. 測試與證據：分兩層
 
-專案建立後，`package.json` 至少必須提供：
+**每個 task（日常）**：lint、typecheck、受影響的 unit/integration 測試通過即可宣稱 task 完成。不產生截圖證據目錄。
 
-```text
-pnpm dev
-pnpm build
-pnpm preview
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm test:coverage
-pnpm test:db
-pnpm test:e2e
-pnpm test:visual
-pnpm acceptance
-```
+**每個 phase 驗收（里程碑，一個 phase 只做一次）**：完整測試套件 + 真實 Supabase local/staging + 三種 viewport 截圖 + 核心流程 trace + 一次 headed run + console error 為 0 + 證據 manifest 符合 `acceptance/EVIDENCE_TEMPLATE.md`。真實行動裝置證據（AC-UI-010/012）由**人類**在 phase 驗收時提供，代理不得嘗試模擬或反覆重試，只需在報告標記「待人工裝置驗證」。
 
-`pnpm acceptance` 必須執行真實 Supabase 測試環境、headed browser 證據流程與驗收 manifest 產生器；不得只把既有 unit tests 換名稱。
+Visual snapshot 基線更新視為 S 級任務：更新基線、附一行原因，不重跑整個驗收管線。
 
-## 9. 程式與資料規範
+## 13. 禁止的蒙混方式
 
-- TypeScript `strict: true`。
-- 不得使用未說明的 `any`、`@ts-ignore`、停用 ESLint 規則或跳過測試。
-- API 與資料庫型別以 Supabase schema 產生型別為基礎；不得手工複製後長期漂移。
-- 所有資料庫變更都必須有 migration；禁止只在 Dashboard 手動改 schema。
-- 所有 public schema table 必須啟用 RLS，且預設拒絕。
-- 所有 RLS policy 必須有正向與越權負向測試。
-- UI 文案使用繁體中文；程式 identifiers、資料庫欄位與檔名使用英文。
-- 日期與時間儲存為 UTC；顯示依使用者時區，預設 `Asia/Taipei`。
-- 金額／代幣／XP 使用整數，不使用浮點數。
-- 每個 mutation 必須考慮重送與 idempotency。
+假 API/mock 資料冒充正式功能完成；只測 happy path；把失敗測試改 skip 或刪 assertion；前端 bundle 放答案或秘密；未更新規格私改 XP/代幣/排行榜規則；以 headless 截圖冒充 headed 驗收（僅適用 phase 驗收層）。
 
-## 10. UI 與認知負荷強制規則
+## 14. Definition of Done
 
-所有學生端 UI 實作必須遵守 `spec/07-ui-visual-system.md`，尤其包括：
+- **Task 級**：實作在核准範圍內、有自動測試、lint/typecheck/相關測試綠、報告列出 AC 編號與風險。
+- **Phase 級**：上述全部 + 第 12 節 phase 驗收證據 + RLS 負向測試 + 無未解 Critical/High 安全問題。
 
-- 採扁平化 2D 視覺，禁止 3D、浮雕、斜角、玻璃擬態、多層陰影與無功能持續動畫成為核心操作語言。
-- 每個學生核心任務畫面只有 1 個 primary action；同一 interaction group 內同等高權重 action 最多 2 個。
-- 問句、輸入與負責提交的按鈕必須位於同一 form/card/dialog/fieldset，不得被排行、獎勵或無關內容分隔。
-- 能以選擇、掃描、邀請碼或 profile 資料完成時，不要求學生重複輸入文字。
-- 行動裝置軟體鍵盤顯示時，focused input 與 primary action 都必須可見且可操作；不得要求先關閉鍵盤。
-- Dialog 必須有明確關閉或繼續指示；Back 優先關閉最上層 Dialog，不得無提示中斷 Quiz。
-- 一般學習求助不得使用 `SOS` 或緊急救援圖示；重要 action 必須有可見文字標籤。
-- 章節、關卡、題號／總題數、Quiz 狀態與必要分數必須持續可見。
-- Focus、selected、pending、disabled、success、error 均需可感知，且正誤不能只靠顏色。
-
-驗收依 `AC-UI-008` 至 `AC-UI-015` 執行。`AC-UI-010` 與 `AC-UI-012` 要求真實行動裝置證據；desktop resize、device emulation 或 headless screenshot 不能單獨取代。
-
-缺少真實 viewport 截圖、操作 sequence、headed browser 或規定的 real-device evidence 時，不得宣稱 UI 完成。
-
-## 11. 測試與證據底線
-
-功能「通過」必須同時具備：
-
-- lint、typecheck、unit、integration、DB／RLS、E2E 均通過。
-- 驗收環境使用真實 Supabase local 或 staging，不得 mock application API。
-- 核心頁面有 375×812、768×1024、1440×900 真實運行截圖。
-- 核心流程有有序截圖、影片或 Playwright trace 證據。
-- 至少一次 Playwright headed run；headless CI 結果不能單獨作為 UI 驗收證據。
-- Console error、unhandled rejection、非預期 5xx 均為 0。
-- 證據目錄與 manifest 符合 `acceptance/EVIDENCE_TEMPLATE.md`。
-
-若缺少任何強制證據，代理只能回報「尚未驗收」，不能宣稱完成。
-
-## 12. 禁止的蒙混方式
-
-- 使用假 API、硬編碼資料或 mock leaderboard 截圖宣稱正式功能完成。
-- 只展示 happy path，不測越權、逾時、重送、空資料與錯誤狀態。
-- 以「頁面能開」取代流程驗證。
-- 只附 terminal log，不附真實畫面。
-- 以 headless screenshot 冒充使用者可見的 headed 驗收。
-- 以 desktop viewport 縮小高度冒充真實手機軟體鍵盤。
-- 只提供 Dialog 關閉後畫面，沒有開啟、操作與返回 sequence。
-- 以 SOS／警報圖示表達一般學習求助。
-- 在前端 bundle 中放入答案、教師密碼、service role 或其他秘密。
-- 將失敗測試改成 skip、降低門檻或刪除 assertion 來取得綠燈。
-- 未更新規格就私自改變 XP、代幣、計時、等級或排行榜規則。
-
-## 13. Definition of Done
-
-一項工作只有在以下皆成立時才算完成：
-
-1. 對應規格與驗收 ID 已列出。
-2. 實作沒有超出核准範圍。
-3. 新增／修改行為已有自動測試。
-4. 安全與 RLS 負向測試通過。
-5. UI 具備真實瀏覽器證據。
-6. 文件、migration、seed、型別同步更新。
-7. 所有驗證命令與結果寫入證據 manifest。
-8. 沒有未解決的 Critical／High 安全問題。
-
-## 14. 代理回報格式
-
-完成工作時，回報必須包含：
-
-- 變更摘要
-- 對應規格／驗收 ID
-- 修改檔案
-- 執行過的命令與結果
-- 證據路徑
-- 尚未完成、未驗證或存在風險的項目
-
-不得只回答「已完成」或「測試通過」。
+不得只回「已完成」，也不得把 task 級完成宣稱為 phase 級驗收通過。
