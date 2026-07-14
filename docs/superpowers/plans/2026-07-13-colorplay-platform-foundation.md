@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **2026-07-14 修訂（優先於本計畫所有 task 內的流程步驟）：** `AGENTS.md` 已改為分級工作流程。本計畫各 task 中的「產生截圖證據目錄」「headed run」「三 viewport 截圖」「evidence manifest」等步驟一律**延後到 Task 16 的 Phase 驗收一次完成**，日常 task 只需 lint、typecheck 與受影響的 unit/integration/E2E 測試通過。每個 task 最多一輪 review；review diff 排除 lockfile、`legacy/**`、`artifacts/**`、snapshot 圖檔。Subagent 不重讀整個 spec 套件，以 task brief 為準。真實行動裝置證據（AC-UI-010/012）由人工提供，代理標記「待人工裝置驗證」即可。
+
 **Goal:** Deliver a reproducible React/Vite foundation in Phase 1A and a real Supabase local Email/password plus own-profile/RLS vertical slice in Phase 1B, with evidence, CI, GitHub, and Vercel deployment contracts.
 
 **Architecture:** Build a clean feature-oriented SPA without embedding legacy runtime code. The browser remains untrusted; Supabase Auth identifies users and PostgreSQL grants/RLS authorize profile data. Phase 1A contains no product-domain migration, while Phase 1B introduces only the `profiles` slice and proves it against real local Auth/PostgreSQL.
@@ -1356,8 +1358,14 @@ git commit -m "feat: add typed Supabase Auth repository"
 - Create: `src/features/auth/components/require-auth.tsx`
 - Create: `src/features/auth/components/require-auth.test.tsx`
 - Create: `src/features/auth/components/auth-bootstrap.tsx`
-- Modify: `src/app/providers/app-providers.tsx`, `src/app/router/create-app-router.tsx`
+- Modify: `src/app/boundaries/route-loading.tsx`
+- Modify: `src/app/providers/app-providers.tsx`, `src/app/providers/app-providers.test.tsx`
+- Modify: `src/app/router/create-app-router.tsx`, `src/app/router/create-app-router.test.tsx`
+- Modify: `src/main.test.tsx`
 - Create: `tests/e2e/auth-guards.spec.ts`
+- Modify: `tests/e2e/foundation-routes.spec.ts`, `tests/e2e/spa-deep-link.spec.ts`, `tests/e2e/app-shell.visual.spec.ts`
+- Modify: `playwright.config.ts`, `tests/contracts/evidence-manifest.test.ts`
+- Modify: `docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md`
 
 **Interfaces:**
 - Consumes: `AuthRepository`, `AuthSession` from Task 11.
@@ -1365,7 +1373,7 @@ git commit -m "feat: add typed Supabase Auth repository"
 
 **Specs / acceptance:** `spec/01-user-roles-and-flows.md` sections 1, 5-6; `spec/04-security-and-privacy.md` section 4; `AC-AUTH-001`, `AC-AUTH-003`, `AC-UI-006` Auth loading state.
 
-**Evidence:** headed route sequence showing loading -> login redirect with the intended `/app` path retained; authenticated protected-outlet screenshot; trace.
+**Evidence:** Per the 2026-07-14 revision, Task 12 uses unit tests plus a headless real-local-Supabase route sequence only. Screenshots, video, and traces are deferred to the Task 16 phase acceptance run.
 
 - [ ] **Step 1: Write failing context and guard tests**
 
@@ -1402,18 +1410,23 @@ Expected: FAIL because Auth context and guards do not exist.
 
 - [ ] **Step 3: Implement minimal bootstrap and guards**
 
-`RequireAuth` returns `RouteLoading` while status is loading, redirects anonymous users with `state={{ from: location }}`, and renders `<Outlet />` when authenticated. `AuthBootstrap` subscribes once, cleans up the listener, and never stores formal profile or role state in localStorage.
+`RequireAuth` returns a nested-landmark-safe `RouteLoading` while status is loading, redirects anonymous users with `replace` and the exact pathname/search/hash in `state.from`, and renders `<Outlet />` when authenticated. `AuthBootstrap` subscribes once per mount, cleans up the listener, preserves a newer Auth event against a late initial-session result, contains safe bootstrap failures, gives the initial loading state a short visible window, updates sign-in/sign-out state only after repository success, and never stores formal profile or role state in localStorage.
 
-- [ ] **Step 4: Verify unit and headed guard sequences**
+- [ ] **Step 4: Verify unit and headless guard sequences**
 
-Run: `pnpm test -- src/features/auth/context src/features/auth/components && pnpm playwright test tests/e2e/auth-guards.spec.ts --headed --trace on`
+Run the focused unit and real-stack headless browser gates:
 
-Expected: context/guard tests pass; headed sequence shows visible loading, preserves the intended route, renders the outlet after real local sign-in, and has no console error.
+```bash
+pnpm test -- src/features/auth/context src/features/auth/components
+pnpm playwright test tests/e2e/auth-guards.spec.ts
+```
+
+Expected: context/guard tests pass; the headless browser sequence shows visible loading, preserves the intended route, renders the outlet after real local sign-in, and has no browser errors. Existing public SPA fallback tests expect anonymous `/app` to resolve to `/login` without weakening direct-response checks.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/features/auth/context src/features/auth/components src/app/providers/app-providers.tsx src/app/router/create-app-router.tsx tests/e2e/auth-guards.spec.ts
+git add src/features/auth/context src/features/auth/components src/app/boundaries/route-loading.tsx src/app/providers src/app/router src/main.test.tsx tests/e2e/auth-guards.spec.ts tests/e2e/foundation-routes.spec.ts tests/e2e/spa-deep-link.spec.ts tests/e2e/app-shell.visual.spec.ts tests/contracts/evidence-manifest.test.ts playwright.config.ts docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md .superpowers/sdd/task-12-report.md
 git commit -m "feat: add Auth bootstrap and route guards"
 ```
 

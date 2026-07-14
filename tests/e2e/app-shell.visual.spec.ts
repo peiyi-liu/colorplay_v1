@@ -13,7 +13,7 @@ const viewports = [
 const routes = [
   { action: '前往登入', path: '/' },
   { action: '進入學習大廳', path: '/login' },
-  { action: '開始探索課程', path: '/app' },
+  { action: '進入學習大廳', path: '/app' },
   { action: '返回登入', path: '/unauthorized' },
   { action: '返回首頁', path: '/missing-route' },
 ] as const;

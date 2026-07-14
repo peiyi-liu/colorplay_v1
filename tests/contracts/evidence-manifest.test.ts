@@ -853,7 +853,10 @@ describe('acceptance metadata', () => {
     for (const project of playwrightConfig.projects?.filter(
       ({ name }) => name !== 'chromium',
     ) ?? []) {
-      expect(project.testIgnore).toEqual(/\.visual\.spec\.ts$/u);
+      expect(project.testIgnore).toEqual([
+        /\.visual\.spec\.ts$/u,
+        /auth-guards\.spec\.ts$/u,
+      ]);
     }
     expect(foundationSpec).not.toContain('chromium.launch');
     expect(foundationSpec).not.toContain(
@@ -941,7 +944,15 @@ describe('acceptance metadata', () => {
           '--port',
           '4173',
         ],
-        { cwd: process.cwd(), stdio: 'ignore' },
+        {
+          cwd: process.cwd(),
+          env: {
+            ...process.env,
+            VITE_SUPABASE_ANON_KEY: 'synthetic-anon-test-key-12345',
+            VITE_SUPABASE_URL: 'http://127.0.0.1:54321',
+          },
+          stdio: 'ignore',
+        },
       );
       const runAcceptance = async (runId: string, startedAt: string) => {
         await execFileAsync(

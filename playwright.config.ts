@@ -8,6 +8,10 @@ const taskEvidenceRoot =
   process.env.PLAYWRIGHT_EVIDENCE_ROOT ?? `artifacts/acceptance/${localRunId}`;
 const playwrightBaseUrl = process.env.PLAYWRIGHT_BASE_URL;
 const acceptanceEvidence = process.env.PLAYWRIGHT_ACCEPTANCE === 'on';
+const realAuthAvailable = Boolean(
+  process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY,
+);
+const authGuardSpec = /auth-guards\.spec\.ts$/u;
 const video =
   process.env.PLAYWRIGHT_VIDEO === 'on' || acceptanceEvidence
     ? 'on'
@@ -24,16 +28,17 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      ...(realAuthAvailable ? {} : { testIgnore: authGuardSpec }),
       use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'firefox',
-      testIgnore: /\.visual\.spec\.ts$/u,
+      testIgnore: [/\.visual\.spec\.ts$/u, authGuardSpec],
       use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
-      testIgnore: /\.visual\.spec\.ts$/u,
+      testIgnore: [/\.visual\.spec\.ts$/u, authGuardSpec],
       use: { ...devices['Desktop Safari'] },
     },
   ],

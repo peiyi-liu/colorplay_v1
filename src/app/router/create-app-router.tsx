@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom';
+import { RequireAuth } from '../../features/auth/components/require-auth';
 import { RouteErrorBoundary } from '../boundaries/root-error-boundary';
 import { RouteLoading } from '../boundaries/route-loading';
 import { AppShell } from '../shell/app-shell';
@@ -36,16 +37,21 @@ export function createAppRouter() {
           ),
         },
         {
-          path: '/app',
-          element: (
-            <RoutePage
-              actionLabel="開始探索課程"
-              actionTo="/"
-              eyebrow="你的學習空間"
-              heading="學習大廳"
-              message="登入後，從這裡找到個人學習入口與最新進度。"
-            />
-          ),
+          element: <RequireAuth />,
+          children: [
+            {
+              path: '/app',
+              element: (
+                <RoutePage
+                  actionLabel="開始探索課程"
+                  actionTo="/"
+                  eyebrow="你的學習空間"
+                  heading="學習大廳"
+                  message="登入後，從這裡找到個人學習入口與最新進度。"
+                />
+              ),
+            },
+          ],
         },
         {
           path: '/unauthorized',

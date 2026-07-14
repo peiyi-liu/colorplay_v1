@@ -1,13 +1,30 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import { type ReactNode, useMemo } from 'react';
+import { createAuthRepository } from '../../features/auth/api/auth-repository';
+import { AuthBootstrap } from '../../features/auth/components/auth-bootstrap';
+import type { AuthRepository } from '../../features/auth/types';
+import { parsePublicEnv } from '../../lib/config/public-env';
+import { getBrowserSupabaseClient } from '../../lib/supabase/browser-client';
 import { queryClient } from './query-client';
 
 type AppProvidersProps = Readonly<{
+  authRepository?: AuthRepository;
   children: ReactNode;
 }>;
 
-export function AppProviders({ children }: AppProvidersProps) {
+export function AppProviders({ authRepository, children }: AppProvidersProps) {
+  const repository = useMemo(
+    () =>
+      authRepository ??
+      createAuthRepository(
+        getBrowserSupabaseClient(parsePublicEnv(import.meta.env)),
+      ),
+    [authRepository],
+  );
+
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthBootstrap repository={repository}>{children}</AuthBootstrap>
+    </QueryClientProvider>
   );
 }

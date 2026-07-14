@@ -6,13 +6,28 @@ const evidenceRoot =
   'artifacts/acceptance/phase-1a-task-08';
 
 const routes = [
-  { heading: '登入', path: '/login', slug: 'login' },
-  { heading: '學習大廳', path: '/app', slug: 'app' },
-  { heading: '沒有權限', path: '/unauthorized', slug: 'unauthorized' },
+  {
+    expectedPath: '/login',
+    heading: '登入',
+    path: '/login',
+    slug: 'login',
+  },
+  {
+    expectedPath: '/login',
+    heading: '登入',
+    path: '/app',
+    slug: 'app-anonymous-redirect',
+  },
+  {
+    expectedPath: '/unauthorized',
+    heading: '沒有權限',
+    path: '/unauthorized',
+    slug: 'unauthorized',
+  },
 ] as const;
 
 for (const route of routes) {
-  test(`${route.path} survives direct navigation and refresh`, async ({
+  test(`${route.path} receives the SPA fallback and resolves safely on refresh`, async ({
     page,
   }, testInfo) => {
     const consoleErrors: string[] = [];
@@ -46,7 +61,7 @@ for (const route of routes) {
     await expect(
       page.getByRole('heading', { name: route.heading }),
     ).toBeVisible();
-    expect(new URL(page.url()).pathname).toBe(route.path);
+    expect(new URL(page.url()).pathname).toBe(route.expectedPath);
 
     await mkdir(screenshotDirectory, { recursive: true });
     await page.screenshot({
@@ -63,7 +78,7 @@ for (const route of routes) {
     await expect(
       page.getByRole('heading', { name: route.heading }),
     ).toBeVisible();
-    expect(new URL(page.url()).pathname).toBe(route.path);
+    expect(new URL(page.url()).pathname).toBe(route.expectedPath);
     await page.screenshot({
       animations: 'disabled',
       fullPage: true,

@@ -4,14 +4,26 @@ import { expect, test } from '@playwright/test';
 const evidenceRoot = 'artifacts/acceptance/phase-1a-task-04';
 
 const routes = [
-  { path: '/login', heading: '登入', screenshot: 'login.png' },
-  { path: '/app', heading: '學習大廳', screenshot: 'app.png' },
   {
+    expectedPath: '/login',
+    path: '/login',
+    heading: '登入',
+    screenshot: 'login.png',
+  },
+  {
+    expectedPath: '/login',
+    path: '/app',
+    heading: '登入',
+    screenshot: 'app-anonymous-redirect.png',
+  },
+  {
+    expectedPath: '/unauthorized',
     path: '/unauthorized',
     heading: '沒有權限',
     screenshot: 'unauthorized.png',
   },
   {
+    expectedPath: '/missing-route',
     path: '/missing-route',
     heading: '找不到頁面',
     screenshot: 'not-found.png',
@@ -51,6 +63,7 @@ test('foundation routes render without browser health errors', async ({
     await expect(
       page.getByRole('heading', { name: route.heading }),
     ).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe(route.expectedPath);
     await page.screenshot({
       path: `${screenshotDirectory}/${route.screenshot}`,
       fullPage: true,
