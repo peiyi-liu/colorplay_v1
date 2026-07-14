@@ -2,8 +2,26 @@ import { render, screen } from '@testing-library/react';
 import { RouterProvider } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthRepository, AuthSession } from '../../features/auth/types';
+import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { AppProviders } from '../providers/app-providers';
 import { createAppRouter } from './create-app-router';
+
+vi.mock('../../features/profile/hooks/use-my-profile', () => ({
+  useMyProfile: vi.fn(() => ({
+    data: {
+      displayName: 'student.one',
+      id: 'learner-id',
+      role: 'student',
+      timezone: 'Asia/Taipei',
+    },
+    error: null,
+    isError: false,
+    isPending: false,
+    refetch: vi.fn(),
+  })),
+}));
+
+const mockedUseMyProfile = vi.mocked(useMyProfile);
 
 const createRepository = (session: AuthSession | null): AuthRepository => ({
   getSession: vi.fn(() => Promise.resolve(session)),
@@ -69,17 +87,57 @@ describe('createAppRouter', () => {
     expect(screen.queryByRole('heading', { name: '學習大廳' })).toBeNull();
   });
 
-  it('renders /app for an authenticated repository session', async () => {
+  it('renders the safe own-profile slice at /app for an authenticated session', async () => {
     renderRouter('/app', {
       email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
 
     expect(
-      await screen.findByRole('heading', { name: '學習大廳' }),
+      await screen.findByRole('heading', { name: 'student.one' }),
     ).toBeVisible();
-    expect(screen.getByRole('link', { name: '開始探索課程' })).toHaveAttribute(
-      'data-acceptance-target',
+    expect(screen.getByText('角色：學生')).toBeVisible();
+    expect(document.body).not.toHaveTextContent('learner@colorplay.invalid');
+  });
+
+  it('routes an authoritative student away from /teacher', async () => {
+    const router = renderRouter('/teacher', {
+      email: 'learner@colorplay.invalid',
+      userId: 'learner-id',
+    });
+
+    expect(
+      await screen.findByRole('heading', { name: '沒有權限' }),
+    ).toBeVisible();
+    expect(router.state.location.pathname).toBe('/unauthorized');
+    expect(screen.queryByRole('link', { name: '教師工作區' })).toBeNull();
+  });
+
+  it('renders /teacher for an authoritative teacher profile', async () => {
+    mockedUseMyProfile.mockReturnValue({
+      data: {
+        displayName: 'teacher',
+        id: 'teacher-id',
+        role: 'teacher',
+        timezone: 'Asia/Taipei',
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+
+    renderRouter('/teacher', {
+      email: 'teacher@colorplay.invalid',
+      userId: 'teacher-id',
+    });
+
+    expect(
+      await screen.findByRole('heading', { name: '教師工作區' }),
+    ).toBeVisible();
+    expect(screen.getByRole('link', { name: '教師工作區' })).toHaveAttribute(
+      'href',
+      '/teacher',
     );
   });
 });

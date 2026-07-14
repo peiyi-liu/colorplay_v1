@@ -114,6 +114,20 @@ a {
   font-weight: 700;
 }
 
+.app-header__navigation,
+.app-header__navigation nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.app-header__navigation nav a {
+  min-height: 44px;
+  align-content: center;
+  color: var(--color-surface);
+  font-weight: 700;
+}
+
 #main-content {
   display: grid;
   width: 100%;
@@ -245,6 +259,11 @@ a {
 
   .app-header__stage {
     display: none;
+  }
+
+  .app-header__navigation,
+  .app-header__navigation nav {
+    gap: var(--space-3);
   }
 
   .route-panel {

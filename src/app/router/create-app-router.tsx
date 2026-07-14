@@ -1,6 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { RequireAuth } from '../../features/auth/components/require-auth';
+import { RequireRole } from '../../features/auth/components/require-role';
 import { LoginPage } from '../../features/auth/pages/login-page';
+import { ProfileFoundationPage } from '../../features/profile/pages/profile-foundation-page';
 import { RouteErrorBoundary } from '../boundaries/root-error-boundary';
 import { RouteLoading } from '../boundaries/route-loading';
 import { AppShell } from '../shell/app-shell';
@@ -34,15 +36,24 @@ export function createAppRouter() {
           children: [
             {
               path: '/app',
-              element: (
-                <RoutePage
-                  actionLabel="開始探索課程"
-                  actionTo="/"
-                  eyebrow="你的學習空間"
-                  heading="學習大廳"
-                  message="登入後，從這裡找到個人學習入口與最新進度。"
-                />
-              ),
+              element: <ProfileFoundationPage />,
+            },
+            {
+              element: <RequireRole allowed={['teacher']} />,
+              children: [
+                {
+                  path: '/teacher',
+                  element: (
+                    <RoutePage
+                      actionLabel="返回個人資料"
+                      actionTo="/app"
+                      eyebrow="教師功能"
+                      heading="教師工作區"
+                      message="從這裡進入教師專用的課程與班級管理功能。"
+                    />
+                  ),
+                },
+              ],
             },
           ],
         },
