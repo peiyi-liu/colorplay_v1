@@ -87,9 +87,9 @@ for container_name in $container_names; do
     "$container_name"
 done | sed 's#^/##' | sort >"$container_health_report"
 
-! rg -qv $'\t(healthy|running)$' "$container_health_report"
+! grep -qvE $'\t(healthy|running)$' "$container_health_report"
 for required_service in auth db storage; do
-  rg -q "^supabase_${required_service}_colorplay" "$container_health_report"
+  grep -q "^supabase_${required_service}_colorplay" "$container_health_report"
 done
 
 {
@@ -102,9 +102,20 @@ done
   printf 'inbucket_url=http://127.0.0.1:54324\n'
 } >"$runtime_report"
 
-artifact_secret_pattern='(?i)([[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|Bearer[[:space:]]+[^[:space:]]+|LocalOnly-|sb_(secret|publishable)_[A-Za-z0-9_-]+|anon[_ -]?key|service[_ -]?role|(?-i:SUPABASE_[A-Z0-9_]+)|jwt[_ -]?secret|database[_ -]?password|db[_ -]?password|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@)'
-if rg --hidden --glob '!artifact-secret-scan.txt' --pcre2 -q \
-  "$artifact_secret_pattern" "$evidence_directory" "$auth_evidence_directory" "$task11_network_directory"; then
+scan_evidence_for_secrets() {
+  if command -v rg >/dev/null 2>&1; then
+    local pattern='(?i)([[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|Bearer[[:space:]]+[^[:space:]]+|LocalOnly-|sb_(secret|publishable)_[A-Za-z0-9_-]+|anon[_ -]?key|service[_ -]?role|(?-i:SUPABASE_[A-Z0-9_]+)|jwt[_ -]?secret|database[_ -]?password|db[_ -]?password|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@)'
+    rg --hidden --glob '!artifact-secret-scan.txt' --pcre2 -q "$pattern" "$@"
+  else
+    # Fallback for hosts without ripgrep: same pattern split into the
+    # case-insensitive body and the case-sensitive SUPABASE_* env-name match.
+    local ci_pattern='([[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|Bearer[[:space:]]+[^[:space:]]+|LocalOnly-|sb_(secret|publishable)_[A-Za-z0-9_-]+|anon[_ -]?key|service[_ -]?role|jwt[_ -]?secret|database[_ -]?password|db[_ -]?password|postgres(ql)?://[^[:space:]]+:[^@[:space:]]+@)'
+    grep -rqiE --exclude='artifact-secret-scan.txt' "$ci_pattern" "$@" ||
+      grep -rqE --exclude='artifact-secret-scan.txt' 'SUPABASE_[A-Z0-9_]+' "$@"
+  fi
+}
+
+if scan_evidence_for_secrets "$evidence_directory" "$auth_evidence_directory" "$task11_network_directory"; then
   printf 'findings=detected\ndetails=withheld\n' >"$secret_scan_report"
   exit 1
 fi
