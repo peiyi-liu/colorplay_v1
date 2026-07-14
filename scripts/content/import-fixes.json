@@ -1,9 +1,16 @@
 {
   "$comment": "題庫匯入的資料修正與補充。試算表為內容主來源；此檔僅補試算表尚缺的部分。試算表填了解析後，以試算表為準（此檔草稿自動失效）。",
   "chapterMap": {
-    "$comment": "試算表章節編號 → 平台章節 stable_code。試算表第 4 章內容為眼球與視覺生理，對應平台第 2 章「色彩與生理」。若你的課本章序不同，改這裡後重跑匯入即可。",
+    "$comment": "試算表章節編號 → 平台章節 stable_code。改這裡後重跑 pnpm content:import 即可。",
     "3": "chapter-3",
-    "4": "chapter-2"
+    "4": "chapter-4"
+  },
+  "chapterTitles": {
+    "$comment": "覆寫平台章節的標題與說明（依課本命名）。值可以是字串（只改標題）或 {title, description}。",
+    "chapter-4": {
+      "title": "色彩與視覺",
+      "description": "認識眼睛構造與視覺如何感受色彩。"
+    }
   },
   "sectionTitles": {
     "3-1": "色彩三要素與色名的表示",

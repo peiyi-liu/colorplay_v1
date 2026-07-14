@@ -1,5 +1,5 @@
 -- 由 scripts/content/import-questions.mjs 產生，請勿手動編輯。
--- 內容來源：教師題庫試算表；產生時間 2026-07-14T14:48:03.466Z
+-- 內容來源：教師題庫試算表；產生時間 2026-07-14T15:12:27.061Z
 begin;
 
 insert into public.sections (id, chapter_id, stable_code, title, description, status, sort_order)
@@ -7,7 +7,7 @@ values
   ('cd732278-0bfe-1293-19e1-338db3fe6a3c', '21000000-0000-0000-0000-000000000003', 'sheet-3-1', '3-1 色彩三要素與色名的表示', '', 'published', 1),
   ('cd9d5a87-3540-50ef-e85b-052ea5aac03c', '21000000-0000-0000-0000-000000000003', 'sheet-3-2', '3-2 色彩體系與數值符號的表示', '', 'published', 2),
   ('10df6319-6116-fc41-34a9-05c51490924d', '21000000-0000-0000-0000-000000000003', 'sheet-3-3', '3-3 數位色彩與色票的表示（暫定，待教師確認）', '', 'published', 3),
-  ('22d1ce7c-9b5a-693a-38e8-443ed8f46a17', '21000000-0000-0000-0000-000000000002', 'sheet-4-1', '4-1 眼睛的構造與視覺（暫定，待教師確認）', '', 'published', 1);
+  ('22d1ce7c-9b5a-693a-38e8-443ed8f46a17', '21000000-0000-0000-0000-000000000004', 'sheet-4-1', '4-1 眼睛的構造與視覺（暫定，待教師確認）', '', 'published', 1);
 
 insert into public.subtopics (id, section_id, stable_code, title, description, status, sort_order)
 values
@@ -249,5 +249,7 @@ values
   ('865070de-13d3-bce0-0cbc-1628b43bf842', 'D', '某些頭部受到創傷的人，會對色彩失去知覺，主要是錐狀細胞受創所致', false, 4),
   ('207190aa-e7a2-fd19-634d-e033f3f912c2', 'A', '選項一', true, 1),
   ('207190aa-e7a2-fd19-634d-e033f3f912c2', 'B', '選項二', false, 2);
+
+update public.chapters set title = '色彩與視覺', description = '認識眼睛構造與視覺如何感受色彩。' where stable_code = 'chapter-4';
 
 commit;

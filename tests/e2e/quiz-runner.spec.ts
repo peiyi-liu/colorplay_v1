@@ -1,6 +1,14 @@
 import { expect, test } from '@playwright/test';
 
+import { CONTENT_MANIFEST } from '../fixtures/content-manifest.generated';
 import { TEST_USERS } from '../fixtures/users';
+
+const fullChallengeChapter = CONTENT_MANIFEST.find(
+  (chapter) => chapter.questionCount >= 10,
+);
+if (!fullChallengeChapter) {
+  throw new Error('沒有任何章節有 10 題以上，無法執行挑戰測試');
+}
 
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
 
@@ -21,7 +29,7 @@ test('student starts a real quiz, submits an answer, and advances', async ({
 
   await expect(page).toHaveURL(/\/app$/u);
   await page
-    .locator('a[href="/app/quiz/new?template=26000000-0000-0000-0000-000000000003"]')
+    .locator(`a[href="/app/quiz/new?template=${fullChallengeChapter.templateId}"]`)
     .click();
 
   await expect(page).toHaveURL(/\/app\/quiz\/[0-9a-f-]{36}$/u);

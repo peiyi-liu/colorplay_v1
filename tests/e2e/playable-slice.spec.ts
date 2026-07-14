@@ -2,14 +2,21 @@ import { createClient } from '@supabase/supabase-js';
 import { expect, test } from '@playwright/test';
 
 import type { Database } from '../../src/types/database';
+import { CONTENT_MANIFEST } from '../fixtures/content-manifest.generated';
 import { GENERATED_CORRECT_ANSWERS } from '../fixtures/question-answers.generated';
 import { TEST_USERS } from '../fixtures/users';
 
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
 
 const correctAnswers = GENERATED_CORRECT_ANSWERS;
-const CHAPTER_3_CHALLENGE =
-  '/app/quiz/new?template=26000000-0000-0000-0000-000000000003';
+// 挑一個題數足夠出滿 10 題挑戰的章節，內容變動時自動跟上。
+const fullChallengeChapter = CONTENT_MANIFEST.find(
+  (chapter) => chapter.questionCount >= 10,
+);
+if (!fullChallengeChapter) {
+  throw new Error('沒有任何章節有 10 題以上，無法執行完整挑戰測試');
+}
+const CHALLENGE_LINK = `/app/quiz/new?template=${fullChallengeChapter.templateId}`;
 
 const requiredEnvironment = (name: 'SUPABASE_ANON_KEY' | 'SUPABASE_URL') => {
   const value = process.env[name];
@@ -31,7 +38,7 @@ test('student completes a mixed ten-question challenge with durable server total
   await page.getByLabel('Email').fill(TEST_USERS.studentOne.email);
   await page.getByLabel('密碼').fill(TEST_USERS.studentOne.password);
   await page.getByRole('button', { name: '登入' }).click();
-  await page.locator(`a[href="${CHAPTER_3_CHALLENGE}"]`).click();
+  await page.locator(`a[href="${CHALLENGE_LINK}"]`).click();
   await expect(page).toHaveURL(/\/app\/quiz\/[0-9a-f-]{36}$/u);
 
   const sessionId = new URL(page.url()).pathname.split('/').at(-1);

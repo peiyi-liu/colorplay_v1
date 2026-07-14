@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
  * 題庫匯入器：讀取教師題庫試算表（CSV），驗證後產生：
- *   1. supabase/seeds/content-questions.sql  — 章節內容種子（sections/subtopics/questions/options）
+ *   1. supabase/seeds/content-questions.sql  — 章節內容種子（sections/subtopics/questions/options、章節改名）
  *   2. tests/fixtures/question-answers.generated.ts — E2E 用「題目→正解」對照表
- *   3. docs/content/import-review.md — 給教師的審閱報告（跳過列、改號、待確認、解析草稿）
+ *   3. tests/fixtures/content-manifest.generated.ts — E2E 用章節清單（可玩章節、題數），測試據此自動適應內容變動
+ *   4. docs/content/import-review.md — 給教師的審閱報告（跳過列、改號、待確認、解析草稿）
  *
  * 用法：
  *   node scripts/content/import-questions.mjs [csv 路徑]
@@ -272,7 +273,27 @@ for (const [index, option] of DRAFT_RLS_QUESTION.options.entries()) {
     `  (${sqlText(deterministicUuid('question', DRAFT_RLS_QUESTION.code))}, ${sqlText(option.key)}, ${sqlText(option.text)}, ${option.correct ? 'true' : 'false'}, ${index + 1})`,
   );
 }
-lines.push(`${optionValues.join(',\n')};`, '', 'commit;', '');
+lines.push(`${optionValues.join(',\n')};`, '');
+
+const chapterTitleOverrides = Object.entries(fixes.chapterTitles ?? {}).filter(
+  ([key]) => key !== '$comment',
+);
+for (const [chapterCode, override] of chapterTitleOverrides) {
+  if (!CHAPTER_IDS[chapterCode]) {
+    console.error(`chapterTitles 的 ${chapterCode} 不是有效章節`);
+    process.exit(1);
+  }
+  const title = typeof override === 'string' ? override : override.title;
+  const description = typeof override === 'string' ? null : (override.description ?? null);
+  const assignments = [`title = ${sqlText(title)}`];
+  if (description !== null) assignments.push(`description = ${sqlText(description)}`);
+  lines.push(
+    `update public.chapters set ${assignments.join(', ')} where stable_code = ${sqlText(chapterCode)};`,
+  );
+}
+if (chapterTitleOverrides.length > 0) lines.push('');
+
+lines.push('commit;', '');
 
 mkdirSync(join(projectRoot, 'supabase/seeds'), { recursive: true });
 writeFileSync(join(projectRoot, 'supabase/seeds/content-questions.sql'), lines.join('\n'));
@@ -297,6 +318,33 @@ const chapterCounts = new Map();
 for (const q of questions) {
   chapterCounts.set(q.chapterCode, (chapterCounts.get(q.chapterCode) ?? 0) + 1);
 }
+
+const manifestEntries = Object.keys(CHAPTER_IDS).map((chapterCode) => {
+  const chapterNumber = Number.parseInt(chapterCode.split('-')[1], 10);
+  return {
+    chapterCode,
+    chapterNumber,
+    questionCount: chapterCounts.get(chapterCode) ?? 0,
+    templateId: `26000000-0000-0000-0000-00000000000${chapterNumber}`,
+  };
+});
+const manifestLines = [
+  '// 由 scripts/content/import-questions.mjs 產生，請勿手動編輯。',
+  '// E2E 測試依此清單推導「哪些章節可玩、各有幾題」，內容變動時測試自動適應。',
+  'export type ChapterContent = Readonly<{',
+  '  chapterCode: string;',
+  '  chapterNumber: number;',
+  '  questionCount: number;',
+  '  templateId: string;',
+  '}>;',
+  '',
+  `export const CONTENT_MANIFEST: readonly ChapterContent[] = ${JSON.stringify(manifestEntries, null, 2)};`,
+  '',
+];
+writeFileSync(
+  join(projectRoot, 'tests/fixtures/content-manifest.generated.ts'),
+  manifestLines.join('\n'),
+);
 const reviewLines = [
   '# 題庫匯入審閱報告',
   '',
