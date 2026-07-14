@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { RequireAuth } from '../../features/auth/components/require-auth';
+import { LoginPage } from '../../features/auth/pages/login-page';
 import { RouteErrorBoundary } from '../boundaries/root-error-boundary';
 import { RouteLoading } from '../boundaries/route-loading';
 import { AppShell } from '../shell/app-shell';
@@ -26,15 +27,7 @@ export function createAppRouter() {
         },
         {
           path: '/login',
-          element: (
-            <RoutePage
-              actionLabel="進入學習大廳"
-              actionTo="/app"
-              eyebrow="學生入口"
-              heading="登入"
-              message="使用個人 Email 登入，繼續你的色彩原理學習進度。"
-            />
-          ),
+          element: <LoginPage />,
         },
         {
           element: <RequireAuth />,

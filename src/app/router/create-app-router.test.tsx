@@ -26,7 +26,6 @@ const renderRouter = (path: string, session: AuthSession | null = null) => {
 describe('createAppRouter', () => {
   it.each([
     ['/', 'ColorPlay', '前往登入'],
-    ['/login', '登入', '進入學習大廳'],
     ['/unauthorized', '沒有權限', '返回登入'],
     ['/missing-route', '找不到頁面', '返回首頁'],
   ])('renders %s with one primary CTA', async (path, heading, actionLabel) => {
@@ -34,6 +33,21 @@ describe('createAppRouter', () => {
     expect(await screen.findByRole('heading', { name: heading })).toBeVisible();
     expect(screen.getByRole('link', { name: actionLabel })).toHaveAttribute(
       'data-acceptance-target',
+    );
+    expect(
+      document.querySelectorAll('[data-primary-action="true"]'),
+    ).toHaveLength(1);
+  });
+
+  it('renders the accessible login form with one primary submit action', async () => {
+    renderRouter('/login');
+
+    expect(await screen.findByRole('heading', { name: '登入' })).toBeVisible();
+    expect(screen.getByLabelText('Email')).toHaveAttribute('type', 'email');
+    expect(screen.getByLabelText('密碼')).toHaveAttribute('type', 'password');
+    expect(screen.getByRole('button', { name: '登入' })).toHaveAttribute(
+      'type',
+      'submit',
     );
     expect(
       document.querySelectorAll('[data-primary-action="true"]'),

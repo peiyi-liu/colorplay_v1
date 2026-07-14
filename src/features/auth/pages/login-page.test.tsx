@@ -1,0 +1,225 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  RouterProvider,
+} from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
+
+import { AuthContext, type AuthContextValue } from '../context/auth-context';
+import { AuthRepositoryError } from '../types';
+import { LoginPage } from './login-page';
+
+const validCredentials = {
+  email: 'learner@colorplay.invalid',
+  password: 'fixture-password',
+} as const;
+
+const createAuthValue = (
+  signIn: AuthContextValue['signIn'] = () => Promise.resolve(),
+): AuthContextValue => ({
+  session: null,
+  signIn,
+  signOut: () => Promise.resolve(),
+  status: 'anonymous',
+});
+
+const fillValidCredentials = async (
+  user: ReturnType<typeof userEvent.setup>,
+) => {
+  await user.type(screen.getByLabelText('Email'), validCredentials.email);
+  await user.type(screen.getByLabelText('密碼'), validCredentials.password);
+};
+
+describe('LoginPage', () => {
+  it('groups labeled inputs and one primary submit action', async () => {
+    render(
+      <MemoryRouter>
+        <AuthContext.Provider value={createAuthValue()}>
+          <LoginPage />
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByLabelText('Email')).toHaveAttribute('type', 'email');
+    expect(screen.getByLabelText('密碼')).toHaveAttribute('type', 'password');
+    expect(screen.getAllByRole('button', { name: '登入' })).toHaveLength(1);
+
+    await userEvent.click(screen.getByRole('button', { name: '登入' }));
+
+    expect(await screen.findByText('請輸入有效的 Email')).toBeVisible();
+    expect(screen.getByLabelText('Email')).toHaveAccessibleDescription(
+      '請輸入有效的 Email',
+    );
+    expect(screen.getByLabelText('密碼')).toHaveAccessibleDescription(
+      '密碼需為 8 至 128 個字元',
+    );
+  });
+
+  it.each([
+    ['AUTH_INVALID_CREDENTIALS', 'Email 或密碼不正確'],
+    ['AUTH_NETWORK', '網路連線失敗，請稍後重試'],
+    ['AUTH_UNKNOWN', '登入失敗，請使用追蹤代碼回報'],
+  ] as const)('maps %s to a stable safe error', async (code, message) => {
+    const user = userEvent.setup();
+    const signIn = vi.fn(() => Promise.reject(new AuthRepositoryError(code)));
+    render(
+      <MemoryRouter>
+        <AuthContext.Provider value={createAuthValue(signIn)}>
+          <LoginPage />
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    );
+
+    await fillValidCredentials(user);
+    await user.click(screen.getByRole('button', { name: '登入' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(message);
+    expect(screen.getByRole('alert')).not.toHaveTextContent(code);
+    expect(screen.getByRole('alert')).not.toHaveTextContent(
+      validCredentials.email,
+    );
+  });
+
+  it('contains unknown provider details behind the fallback error', async () => {
+    const user = userEvent.setup();
+    const signIn = vi.fn(() =>
+      Promise.reject(new Error('raw provider detail learner@example.test')),
+    );
+    render(
+      <MemoryRouter>
+        <AuthContext.Provider value={createAuthValue(signIn)}>
+          <LoginPage />
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    );
+
+    await fillValidCredentials(user);
+    await user.click(screen.getByRole('button', { name: '登入' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '登入失敗，請使用追蹤代碼回報',
+    );
+    expect(screen.getByRole('alert')).not.toHaveTextContent(
+      'raw provider detail',
+    );
+    expect(screen.getByRole('alert')).not.toHaveTextContent(
+      'learner@example.test',
+    );
+  });
+
+  it('locks a pending submission to one request', async () => {
+    let resolveSignIn!: () => void;
+    const signIn = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSignIn = resolve;
+        }),
+    );
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <AuthContext.Provider value={createAuthValue(signIn)}>
+          <LoginPage />
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    );
+
+    await fillValidCredentials(user);
+    const submit = screen.getByRole('button', { name: '登入' });
+    await user.click(submit);
+
+    expect(screen.getByRole('button', { name: '登入中…' })).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent('登入處理中，請稍候');
+    await user.click(screen.getByRole('button', { name: '登入中…' }));
+    expect(signIn).toHaveBeenCalledOnce();
+
+    resolveSignIn();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '登入' })).toBeEnabled();
+    });
+  });
+
+  it('navigates after success to the preserved internal pathname, search, and hash', async () => {
+    const user = userEvent.setup();
+    const signIn = vi.fn(() => Promise.resolve());
+    const router = createMemoryRouter(
+      [
+        { element: <LoginPage />, path: '/login' },
+        { element: <h1>學習大廳</h1>, path: '/app' },
+      ],
+      {
+        initialEntries: [
+          {
+            pathname: '/login',
+            state: {
+              from: {
+                hash: '#checkpoint',
+                pathname: '/app',
+                search: '?chapter=color-theory',
+              },
+            },
+          },
+        ],
+      },
+    );
+    render(
+      <AuthContext.Provider value={createAuthValue(signIn)}>
+        <RouterProvider router={router} />
+      </AuthContext.Provider>,
+    );
+
+    await fillValidCredentials(user);
+    await user.click(screen.getByRole('button', { name: '登入' }));
+
+    expect(
+      await screen.findByRole('heading', { name: '學習大廳' }),
+    ).toBeVisible();
+    expect(router.state.location).toMatchObject({
+      hash: '#checkpoint',
+      pathname: '/app',
+      search: '?chapter=color-theory',
+    });
+    expect(router.state.historyAction).toBe('REPLACE');
+  });
+
+  it('falls back to /app when the preserved pathname is not internal', async () => {
+    const user = userEvent.setup();
+    const router = createMemoryRouter(
+      [
+        { element: <LoginPage />, path: '/login' },
+        { element: <h1>學習大廳</h1>, path: '/app' },
+      ],
+      {
+        initialEntries: [
+          {
+            pathname: '/login',
+            state: {
+              from: {
+                hash: '#stolen',
+                pathname: '//malicious.example',
+                search: '?token=secret',
+              },
+            },
+          },
+        ],
+      },
+    );
+    render(
+      <AuthContext.Provider value={createAuthValue()}>
+        <RouterProvider router={router} />
+      </AuthContext.Provider>,
+    );
+
+    await fillValidCredentials(user);
+    await user.click(screen.getByRole('button', { name: '登入' }));
+
+    expect(
+      await screen.findByRole('heading', { name: '學習大廳' }),
+    ).toBeVisible();
+    expect(router.state.location.pathname).toBe('/app');
+    expect(router.state.location.search).toBe('');
+    expect(router.state.location.hash).toBe('');
+  });
+});
