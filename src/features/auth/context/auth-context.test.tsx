@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -111,12 +112,22 @@ function AuthProbe() {
   );
 }
 
-function renderBootstrap(repository: AuthRepository) {
-  return render(
-    <AuthBootstrap repository={repository}>
-      <AuthProbe />
-    </AuthBootstrap>,
-  );
+function renderBootstrap(
+  repository: AuthRepository,
+  queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  }),
+) {
+  return {
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <AuthBootstrap repository={repository}>
+          <AuthProbe />
+        </AuthBootstrap>
+      </QueryClientProvider>,
+    ),
+    queryClient,
+  };
 }
 
 describe('Auth context', () => {
@@ -321,8 +332,14 @@ describe('AuthBootstrap', () => {
     );
     harness.signOut.mockReturnValueOnce(deferredSignOut.promise);
 
-    renderBootstrap(harness.repository);
+    const view = renderBootstrap(harness.repository);
     await screen.findByText('authenticated');
+    view.queryClient.setQueryData(['profile', 'me'], {
+      displayName: 'student.one',
+    });
+    view.queryClient.setQueryData(['catalog', 'public'], 'retained');
+    const cancelQueries = vi.spyOn(view.queryClient, 'cancelQueries');
+    const removeQueries = vi.spyOn(view.queryClient, 'removeQueries');
 
     screen.getByRole('button', { name: 'sign out' }).click();
     expect(screen.getByLabelText('Auth 狀態')).toHaveTextContent(
@@ -336,6 +353,37 @@ describe('AuthBootstrap', () => {
 
     expect(screen.getByLabelText('Auth 狀態')).toHaveTextContent('anonymous');
     expect(screen.getByLabelText('Auth session')).toHaveTextContent('none');
+    expect(view.queryClient.getQueryData(['profile', 'me'])).toBeUndefined();
+    expect(view.queryClient.getQueryData(['catalog', 'public'])).toBe(
+      'retained',
+    );
+    expect(cancelQueries).toHaveBeenCalledOnce();
+    expect(removeQueries).toHaveBeenCalledOnce();
+    expect(cancelQueries.mock.invocationCallOrder[0]).toBeLessThan(
+      removeQueries.mock.invocationCallOrder[0] ?? 0,
+    );
+  });
+
+  it('cancels an in-flight user-scoped query so it cannot repopulate after signOut', async () => {
+    const profileRequest = createDeferred<{ displayName: string }>();
+    const harness = createRepositoryHarness(
+      Promise.resolve(authenticatedSession),
+    );
+    const view = renderBootstrap(harness.repository);
+    await screen.findByText('authenticated');
+    const pendingProfile = view.queryClient
+      .fetchQuery({
+        queryFn: () => profileRequest.promise,
+        queryKey: ['profile', 'me'],
+      })
+      .catch(() => undefined);
+
+    screen.getByRole('button', { name: 'sign out' }).click();
+    expect(await screen.findByText('resolved')).toBeVisible();
+
+    profileRequest.resolve({ displayName: 'student.one' });
+    await pendingProfile;
+    expect(view.queryClient.getQueryData(['profile', 'me'])).toBeUndefined();
   });
 
   it('preserves authenticated state when signOut rejects', async () => {
@@ -344,9 +392,37 @@ describe('AuthBootstrap', () => {
     );
     harness.signOut.mockRejectedValueOnce(new Error('raw-provider-detail'));
 
+    const view = renderBootstrap(harness.repository);
+    await screen.findByText('authenticated');
+    view.queryClient.setQueryData(['profile', 'me'], {
+      displayName: 'student.one',
+    });
+
+    screen.getByRole('button', { name: 'sign out' }).click();
+
+    expect(await screen.findByText('rejected')).toBeVisible();
+    expect(screen.getByLabelText('Auth 狀態')).toHaveTextContent(
+      'authenticated',
+    );
+    expect(screen.getByLabelText('Auth session')).toHaveTextContent(
+      authenticatedSession.email,
+    );
+    expect(view.queryClient.getQueryData(['profile', 'me'])).toEqual({
+      displayName: 'student.one',
+    });
+  });
+
+  it('does not accept a signed-out event until the repository confirms signOut', async () => {
+    const harness = createRepositoryHarness(
+      Promise.resolve(authenticatedSession),
+    );
+    harness.signOut.mockImplementationOnce(() => {
+      harness.emit(null);
+      return Promise.reject(new Error('raw-provider-detail'));
+    });
+
     renderBootstrap(harness.repository);
     await screen.findByText('authenticated');
-
     screen.getByRole('button', { name: 'sign out' }).click();
 
     expect(await screen.findByText('rejected')).toBeVisible();

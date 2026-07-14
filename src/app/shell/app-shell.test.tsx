@@ -1,5 +1,10 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import userEvent from '@testing-library/user-event';
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  RouterProvider,
+} from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
@@ -113,5 +118,58 @@ describe('AppShell', () => {
       'href',
       '/teacher',
     );
+  });
+
+  it('awaits signOut and replaces protected history with login', async () => {
+    const signOut = vi.fn(() => Promise.resolve());
+    mockedUseAuth.mockReturnValue({
+      session: {
+        email: 'student.one@colorplay.test',
+        userId: 'student-one-id',
+      },
+      signIn: vi.fn(),
+      signOut,
+      status: 'authenticated',
+    });
+    const router = createMemoryRouter(
+      [
+        { element: <AppShell />, path: '/app' },
+        { element: <h1>登入</h1>, path: '/login' },
+      ],
+      { initialEntries: ['/app'] },
+    );
+    render(<RouterProvider router={router} />);
+
+    await userEvent.click(screen.getByRole('button', { name: '登出' }));
+
+    expect(signOut).toHaveBeenCalledOnce();
+    expect(await screen.findByRole('heading', { name: '登入' })).toBeVisible();
+    expect(router.state.historyAction).toBe('REPLACE');
+  });
+
+  it('keeps the authenticated shell when signOut rejects', async () => {
+    const signOut = vi.fn(() => Promise.reject(new Error('provider detail')));
+    mockedUseAuth.mockReturnValue({
+      session: {
+        email: 'student.one@colorplay.test',
+        userId: 'student-one-id',
+      },
+      signIn: vi.fn(),
+      signOut,
+      status: 'authenticated',
+    });
+    render(
+      <MemoryRouter initialEntries={['/app']}>
+        <AppShell />
+      </MemoryRouter>,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: '登出' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '登出失敗，請稍後重試。',
+    );
+    expect(screen.getByRole('button', { name: '登出' })).toBeVisible();
+    expect(screen.getByRole('alert')).not.toHaveTextContent('provider detail');
   });
 });

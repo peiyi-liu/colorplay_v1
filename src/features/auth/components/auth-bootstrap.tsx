@@ -3,11 +3,17 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import type { AuthRepository, AuthSession, SignInInput } from '../types';
-import { AuthContext, type AuthContextValue } from '../context/auth-context';
+import {
+  AuthContext,
+  clearUserScopedQueries,
+  type AuthContextValue,
+} from '../context/auth-context';
 
 type AuthState = Readonly<
   | { status: 'loading'; session: null }
@@ -29,6 +35,8 @@ export function AuthBootstrap({
   children: ReactNode;
   repository: AuthRepository;
 }>) {
+  const queryClient = useQueryClient();
+  const signOutPending = useRef(false);
   const [state, setState] = useState<AuthState>(loadingState);
 
   useEffect(() => {
@@ -63,6 +71,7 @@ export function AuthBootstrap({
     try {
       unsubscribe = repository.onAuthStateChange((session) => {
         if (!active) return;
+        if (signOutPending.current && session === null) return;
         authEventObserved = true;
         settle(stateFromSession(session));
       });
@@ -98,9 +107,15 @@ export function AuthBootstrap({
   );
 
   const signOut = useCallback(async () => {
-    await repository.signOut();
-    setState(anonymousState);
-  }, [repository]);
+    signOutPending.current = true;
+    try {
+      await repository.signOut();
+      await clearUserScopedQueries(queryClient);
+      setState(anonymousState);
+    } finally {
+      signOutPending.current = false;
+    }
+  }, [queryClient, repository]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
