@@ -4,7 +4,9 @@
 
 **Goal:** 學生完成挑戰後獲得 XP 與 Token（含重複練習遞減）、看到等級與進度、在商店購買並裝備 Blook。排行榜與班級不在本計畫（見 classroom plan）。
 
-**前置：** 可玩垂直切片已完成；`quiz_sessions` 已有 `xp_awarded`/`tokens_awarded` 欄位（目前恆為 0）。E2E 全套已序列化（workers: 1），新測試沿用 seed 帳號即可。
+**前置：** 可玩垂直切片與真實題庫匯入已完成（第 3 章 37 題、第 4 章 8 題）。`quiz_sessions` 已有 `xp_awarded`/`tokens_awarded` 欄位，**但目前有 `check (xp_awarded = 0)`／`check (tokens_awarded = 0)` 約束刻意鎖死為 0**——Task 1 的 migration 必須先 drop 這兩個 check 再實作發獎，否則寫入會被拒。`quiz_answers.score_delta` 已存在（0/100/150）；answers 不需加 xp/token 欄位，獎勵於 finalize 時由 answers 聚合計算。E2E 全套已序列化（workers: 1），新測試沿用 seed 帳號。
+
+**執行 E2E 的方式：** `bash scripts/test-e2e-local.sh`（會自動載入本機 Supabase 環境變數並依可信邊界 unset service role）。可加 `--project=chromium` 加速單瀏覽器驗證，收尾時跑全部。
 
 **必要規格摘錄（以本節為準，不重讀 spec 全文）：**
 

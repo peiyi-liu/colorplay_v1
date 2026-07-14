@@ -4,6 +4,8 @@
 
 **前置依賴：** 先完成 `2026-07-14-game-economy.md`（排行榜以 XP ledger 為資料來源）。
 
+**執行 E2E 的方式：** `bash scripts/test-e2e-local.sh`（自動載入本機 Supabase 環境；瀏覽器測試不得持有 service role）。
+
 **Goal:** 教師建立班級並取得加入代碼；學生以代碼加入；班級排行榜顯示 Top 10＋自己名次。教師題庫 CRUD／XLSX 匯入／分析**不在本計畫**（題庫更新暫由 `pnpm content:import` 試算表管線負責）。
 
 **必要規格摘錄：**
