@@ -4,6 +4,7 @@ import { RequireRole } from '../../features/auth/components/require-role';
 import { LoginPage } from '../../features/auth/pages/login-page';
 import { ChapterSelectPage } from '../../features/learning/pages/chapter-select';
 import { ProfileFoundationPage } from '../../features/profile/pages/profile-foundation-page';
+import { QuizSessionPage } from '../../features/quiz/pages/quiz-session';
 import { RouteErrorBoundary } from '../boundaries/root-error-boundary';
 import { RouteLoading } from '../boundaries/route-loading';
 import { AppShell } from '../shell/app-shell';
@@ -42,6 +43,10 @@ export function createAppRouter() {
             {
               path: '/app/profile',
               element: <ProfileFoundationPage />,
+            },
+            {
+              path: '/app/quiz/:sessionId',
+              element: <QuizSessionPage />,
             },
             {
               element: <RequireRole allowed={['teacher']} />,
