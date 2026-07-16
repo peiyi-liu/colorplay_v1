@@ -486,7 +486,7 @@ export type AchievementRepository = Readonly<{
 
 **Task evidence:** command output only; no evidence directory.
 
-- [ ] **Step 1: Write repository unit tests before implementation**
+- [x] **Step 1: Write repository unit tests before implementation**
 
   Test that `getCatalog()`:
 
@@ -497,7 +497,7 @@ export type AchievementRepository = Readonly<{
   - rejects negative progress, progress above target, unlocked rows without timestamp, deferred `not_started` rows with fabricated positive progress, duplicate stable codes, and any item containing `rule_type`, `rule_parameters`, `source_type`, or `source_id`;
   - converts RPC failure and invalid payload to named achievement repository errors without `any`.
 
-- [ ] **Step 2: Run repository tests to prove RED**
+- [x] **Step 2: Run repository tests to prove RED**
 
   Run:
 
@@ -507,7 +507,7 @@ export type AchievementRepository = Readonly<{
 
   Expected: FAIL because the achievement types/repository do not exist.
 
-- [ ] **Step 3: Regenerate database types and implement the minimal repository**
+- [x] **Step 3: Regenerate database types and implement the minimal repository**
 
   After resetting local Supabase through Task 3, regenerate:
 
@@ -533,7 +533,7 @@ export type AchievementRepository = Readonly<{
 
   Reject unknown keys with `.strict()` at the root and item levels so hidden rule/source fields cannot silently enter the browser model.
 
-- [ ] **Step 4: Add the real local integration test**
+- [x] **Step 4: Add the real local integration test**
 
   Sign in `TEST_USERS.studentTwo`, call the real repository, assert exactly the approved nine stable codes, verify the four deferred codes are `not_started`, and query no admin/service interface. Always clean up in `finally`:
 
@@ -541,7 +541,7 @@ export type AchievementRepository = Readonly<{
   await client.auth.signOut({ scope: 'local' });
   ```
 
-- [ ] **Step 5: Reset/seed and prove repository GREEN**
+- [x] **Step 5: Reset/seed and prove repository GREEN**
 
   Run:
 
@@ -563,7 +563,7 @@ export type AchievementRepository = Readonly<{
 
   Expected: unit and real-local integration tests PASS; generated database contract, lint, and typecheck exit 0.
 
-- [ ] **Step 6: Mark Task 4 complete and commit**
+- [x] **Step 6: Mark Task 4 complete and commit**
 
   ```bash
   git add src/types/database.ts \

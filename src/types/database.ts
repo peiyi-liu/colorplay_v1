@@ -34,6 +34,153 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievement_definitions: {
+        Row: {
+          badge_key: string
+          created_at: string
+          description: string
+          display_name: string
+          id: string
+          rule_parameters: Json
+          rule_type: Database["public"]["Enums"]["achievement_rule_type"]
+          rule_version: number
+          sort_order: number
+          stable_code: string
+          status: Database["public"]["Enums"]["achievement_definition_status"]
+          visibility: Database["public"]["Enums"]["achievement_visibility"]
+        }
+        Insert: {
+          badge_key: string
+          created_at?: string
+          description: string
+          display_name: string
+          id: string
+          rule_parameters: Json
+          rule_type: Database["public"]["Enums"]["achievement_rule_type"]
+          rule_version: number
+          sort_order: number
+          stable_code: string
+          status: Database["public"]["Enums"]["achievement_definition_status"]
+          visibility: Database["public"]["Enums"]["achievement_visibility"]
+        }
+        Update: {
+          badge_key?: string
+          created_at?: string
+          description?: string
+          display_name?: string
+          id?: string
+          rule_parameters?: Json
+          rule_type?: Database["public"]["Enums"]["achievement_rule_type"]
+          rule_version?: number
+          sort_order?: number
+          stable_code?: string
+          status?: Database["public"]["Enums"]["achievement_definition_status"]
+          visibility?: Database["public"]["Enums"]["achievement_visibility"]
+        }
+        Relationships: []
+      }
+      achievement_progress: {
+        Row: {
+          achievement_definition_id: string
+          computed_at: string
+          current_value: number
+          definition_version: number
+          last_source_id: string | null
+          last_source_type:
+            | Database["public"]["Enums"]["achievement_source_type"]
+            | null
+          state: Database["public"]["Enums"]["achievement_progress_state"]
+          target_value: number
+          user_id: string
+        }
+        Insert: {
+          achievement_definition_id: string
+          computed_at?: string
+          current_value: number
+          definition_version: number
+          last_source_id?: string | null
+          last_source_type?:
+            | Database["public"]["Enums"]["achievement_source_type"]
+            | null
+          state: Database["public"]["Enums"]["achievement_progress_state"]
+          target_value: number
+          user_id: string
+        }
+        Update: {
+          achievement_definition_id?: string
+          computed_at?: string
+          current_value?: number
+          definition_version?: number
+          last_source_id?: string | null
+          last_source_type?:
+            | Database["public"]["Enums"]["achievement_source_type"]
+            | null
+          state?: Database["public"]["Enums"]["achievement_progress_state"]
+          target_value?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievement_progress_achievement_definition_id_fkey"
+            columns: ["achievement_definition_id"]
+            isOneToOne: false
+            referencedRelation: "achievement_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "achievement_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      achievement_unlocks: {
+        Row: {
+          achievement_definition_id: string
+          definition_version: number
+          id: string
+          source_id: string
+          source_type: Database["public"]["Enums"]["achievement_source_type"]
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_definition_id: string
+          definition_version: number
+          id?: string
+          source_id: string
+          source_type: Database["public"]["Enums"]["achievement_source_type"]
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_definition_id?: string
+          definition_version?: number
+          id?: string
+          source_id?: string
+          source_type?: Database["public"]["Enums"]["achievement_source_type"]
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievement_unlocks_achievement_definition_id_fkey"
+            columns: ["achievement_definition_id"]
+            isOneToOne: false
+            referencedRelation: "achievement_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "achievement_unlocks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blooks: {
         Row: {
           cost_tokens: number
@@ -897,6 +1044,13 @@ export type Database = {
       }
     }
     Functions: {
+      achievement_metric_value: {
+        Args: {
+          target_rule_type: Database["public"]["Enums"]["achievement_rule_type"]
+          target_user_id: string
+        }
+        Returns: number
+      }
       activate_next_quiz_question: {
         Args: { session_id: string }
         Returns: Json
@@ -914,7 +1068,16 @@ export type Database = {
         Returns: Json
       }
       equip_blook: { Args: { blook_id: string }; Returns: Json }
+      evaluate_achievements: {
+        Args: {
+          event_source_id: string
+          event_source_type: Database["public"]["Enums"]["achievement_source_type"]
+          target_user_id: string
+        }
+        Returns: Json
+      }
       finalize_quiz_session: { Args: { session_id: string }; Returns: Json }
+      get_my_achievement_catalog: { Args: never; Returns: Json }
       get_my_blook_inventory: { Args: never; Returns: Json }
       get_my_economy_summary: { Args: never; Returns: Json }
       purchase_blook: { Args: { blook_id: string }; Returns: Json }
@@ -930,12 +1093,41 @@ export type Database = {
         }
         Returns: Json
       }
+      validate_achievement_rule_parameters: {
+        Args: {
+          parameters: Json
+          rule_type: Database["public"]["Enums"]["achievement_rule_type"]
+          rule_version: number
+        }
+        Returns: boolean
+      }
       validate_single_choice_options: {
         Args: { target_question_id: string }
         Returns: undefined
       }
     }
     Enums: {
+      achievement_definition_status: "active" | "archived"
+      achievement_progress_state: "not_started" | "in_progress" | "unlocked"
+      achievement_rule_type:
+        | "completed_task_count"
+        | "perfect_quiz_count"
+        | "resolved_mistake_count"
+        | "mastered_chapter_count"
+        | "level_reached"
+        | "correct_streak"
+        | "live_completed_count"
+        | "initial_blook_owned_count"
+      achievement_source_type:
+        | "quiz_finalize"
+        | "xp_ledger"
+        | "blook_acquired"
+        | "catalog_backfill"
+        | "assignment_finalize"
+        | "live_finalize"
+        | "mistake_resolved"
+        | "mastery_recomputed"
+      achievement_visibility: "public" | "hidden"
       app_role: "student" | "teacher" | "admin"
       content_status: "draft" | "published" | "archived"
       economy_source_type:
@@ -1077,6 +1269,29 @@ export const Constants = {
   },
   public: {
     Enums: {
+      achievement_definition_status: ["active", "archived"],
+      achievement_progress_state: ["not_started", "in_progress", "unlocked"],
+      achievement_rule_type: [
+        "completed_task_count",
+        "perfect_quiz_count",
+        "resolved_mistake_count",
+        "mastered_chapter_count",
+        "level_reached",
+        "correct_streak",
+        "live_completed_count",
+        "initial_blook_owned_count",
+      ],
+      achievement_source_type: [
+        "quiz_finalize",
+        "xp_ledger",
+        "blook_acquired",
+        "catalog_backfill",
+        "assignment_finalize",
+        "live_finalize",
+        "mistake_resolved",
+        "mastery_recomputed",
+      ],
+      achievement_visibility: ["public", "hidden"],
       app_role: ["student", "teacher", "admin"],
       content_status: ["draft", "published", "archived"],
       economy_source_type: [
