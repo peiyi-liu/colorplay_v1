@@ -70,7 +70,7 @@ export function writeFormattedOutput(
 
 **Required evidence:** Focused Vitest RED/GREEN output, temporary generated paths, focused Prettier output, lint/typecheck result. No evidence directory.
 
-- [ ] **Step 1: Write the failing contract test**
+- [x] **Step 1: Write the failing contract test**
 
   Add a test that writes intentionally compressed TypeScript and Markdown into a temporary directory, calls `writeFormattedOutput`, verifies the exact output equals `prettier.format(..., { filepath })`, and runs:
 
@@ -89,7 +89,7 @@ export function writeFormattedOutput(
 
   Also assert that `scripts/content/import-questions.mjs` uses `writeFormattedOutput` for both generated `.ts` files and `docs/content/import-review.md`, while `supabase/seeds/content-questions.sql` still uses the existing raw writer.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
   ```bash
   pnpm exec vitest run tests/contracts/content-import-format.test.ts
@@ -97,11 +97,11 @@ export function writeFormattedOutput(
 
   Expected failure: import resolution fails for `scripts/content/write-formatted-output.mjs`.
 
-- [ ] **Step 3: Implement the formatter boundary**
+- [x] **Step 3: Implement the formatter boundary**
 
   Implement the declared helper with `prettier.format` and `prettier.resolveConfig`. Replace only the three generated TypeScript/Markdown `writeFileSync` calls with awaited `writeFormattedOutput` calls. Preserve the generated strings, output paths, SQL writer, 45-question rules, and console summary.
 
-- [ ] **Step 4: Run GREEN and task checks**
+- [x] **Step 4: Run GREEN and task checks**
 
   ```bash
   pnpm exec vitest run tests/contracts/content-import-format.test.ts
@@ -112,7 +112,7 @@ export function writeFormattedOutput(
 
   Expected success: focused test passes; all four checks exit 0. Do not invoke the network-backed default `content:import` during task verification.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
   git add scripts/content/import-questions.mjs scripts/content/write-formatted-output.mjs scripts/content/write-formatted-output.d.mts tests/contracts/content-import-format.test.ts

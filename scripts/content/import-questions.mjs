@@ -20,6 +20,8 @@ import { dirname, join } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { writeFormattedOutput } from './write-formatted-output.mjs';
+
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SHEET_URL =
   'https://docs.google.com/spreadsheets/d/1Fpdexl-CwsWw42iAW1fMUT-AqNcDCNrevGNU8gVbvlg/export?format=csv&gid=1768427356';
@@ -322,10 +324,10 @@ const fixtureLines = [
   ']);',
   '',
 ];
-writeFileSync(
-  join(projectRoot, 'tests/fixtures/question-answers.generated.ts'),
-  fixtureLines.join('\n'),
-);
+await writeFormattedOutput({
+  filePath: join(projectRoot, 'tests/fixtures/question-answers.generated.ts'),
+  source: fixtureLines.join('\n'),
+});
 
 const chapterCounts = new Map();
 for (const q of questions) {
@@ -354,10 +356,10 @@ const manifestLines = [
   `export const CONTENT_MANIFEST: readonly ChapterContent[] = ${JSON.stringify(manifestEntries, null, 2)};`,
   '',
 ];
-writeFileSync(
-  join(projectRoot, 'tests/fixtures/content-manifest.generated.ts'),
-  manifestLines.join('\n'),
-);
+await writeFormattedOutput({
+  filePath: join(projectRoot, 'tests/fixtures/content-manifest.generated.ts'),
+  source: manifestLines.join('\n'),
+});
 const reviewLines = [
   '# 題庫匯入審閱報告',
   '',
@@ -399,10 +401,10 @@ const reviewLines = [
   '',
 ];
 mkdirSync(join(projectRoot, 'docs/content'), { recursive: true });
-writeFileSync(
-  join(projectRoot, 'docs/content/import-review.md'),
-  reviewLines.join('\n'),
-);
+await writeFormattedOutput({
+  filePath: join(projectRoot, 'docs/content/import-review.md'),
+  source: reviewLines.join('\n'),
+});
 
 console.log(
   `匯入完成：${questions.length} 題 published、1 題 draft（RLS 測試用）。`,
