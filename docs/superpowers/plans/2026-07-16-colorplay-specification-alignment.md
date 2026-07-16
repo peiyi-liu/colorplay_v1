@@ -263,7 +263,7 @@
 
 **Required evidence:** Route-to-feature table diff, trust-boundary table diff, automated required-heading checks, and `git diff --check`.
 
-- [ ] **Step 1: Run the pre-change failing assertion**
+- [x] **Step 1: Run the pre-change failing assertion**
 
   ```bash
   node - <<'NODE'
@@ -278,11 +278,11 @@
 
   Expected failure: exit 1 because the approved route and Live boundaries are not yet normative.
 
-- [ ] **Step 2: Apply the minimum normative changes**
+- [x] **Step 2: Apply the minimum normative changes**
 
   Preserve existing implemented routes and mark future routes by owning phase rather than presenting them as implemented. Specify retry only for safe reads and idempotent mutations. Specify terminal behavior for `UNAUTHENTICATED`, `FORBIDDEN`, `CONFLICT`, `EXPIRED`, `RATE_LIMITED`, and `INTERNAL_ERROR`. State that Realtime is transport, PostgreSQL is the system of record, and outsiders cannot subscribe to a Live session.
 
-- [ ] **Step 3: Verify routes, guards, and trust boundaries**
+- [x] **Step 3: Verify routes, guards, and trust boundaries**
 
   ```bash
   for value in '/app/chapters' '/app/assignments' '/app/live/:sessionId' '/teacher/classes/:classroomId' '/teacher/live/:sessionId' '/teacher/integrations/kahoot'; do
@@ -297,7 +297,7 @@
 
   Expected success: all route and boundary assertions pass, no server key is assigned to a browser variable, and the diff check exits 0.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   ```bash
   git add spec/README.md spec/01-user-roles-and-flows.md spec/02-system-architecture.md spec/04-security-and-privacy.md

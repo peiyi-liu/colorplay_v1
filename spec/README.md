@@ -3,8 +3,8 @@
 | 文件 | 內容 |
 |---|---|
 | `00-project-charter.md` | 產品定位、MVP 範圍、非目標、成功指標 |
-| `01-user-roles-and-flows.md` | Student／Teacher 角色、路由、主要流程與錯誤狀態 |
-| `02-system-architecture.md` | React + Supabase 分層、API／RPC、部署與交易 |
+| `01-user-roles-and-flows.md` | Student／Teacher 角色、完整路由、Assignments／ColorPlay Live 流程與錯誤狀態 |
+| `02-system-architecture.md` | React feature boundaries、Supabase Query／RPC／Edge／Realtime、部署與交易 |
 | `03-data-model-and-rls.md` | 資料表、版本、RLS 矩陣、secure functions |
 | `04-security-and-privacy.md` | 威脅模型、反篡改、秘密、個資、輸入安全 |
 | `05-game-mechanics.md` | Quiz Score、XP、Token、Level、排行榜、商店 |
@@ -19,3 +19,11 @@
 
 - `../acceptance/ACCEPTANCE_CRITERIA.md`
 - `../acceptance/EVIDENCE_TEMPLATE.md`
+
+環境與遷移決策另見：
+
+- `../docs/adr/0002-colorplay-new-integration-and-production-environments.md`
+- `../docs/deployment/environment-matrix.md`
+- `../docs/migration/colorplay-new-feature-parity.md`
+
+各規格描述最終目標；尚未實作的 route／feature 以 `10-migration-roadmap.md` 的 owning phase 為準，不得因文件存在就宣稱功能完成。
