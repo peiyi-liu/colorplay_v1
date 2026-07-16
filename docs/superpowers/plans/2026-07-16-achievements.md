@@ -384,7 +384,7 @@ export type AchievementRepository = Readonly<{
 
 **Task evidence:** command output only; no evidence directory.
 
-- [ ] **Step 1: Write the failing event/transaction pgTAP test**
+- [x] **Step 1: Write the failing event/transaction pgTAP test**
 
   With deterministic users/session/source UUIDs owned by this test, assert:
 
@@ -401,7 +401,7 @@ export type AchievementRepository = Readonly<{
   - no trigger exists for `assignment_finalize`, `live_finalize`, `mistake_resolved`, or `mastery_recomputed`;
   - an existing profile evaluated through the migration's `catalog_backfill` source receives derived current state without reward writes.
 
-- [ ] **Step 2: Run the event test to prove RED**
+- [x] **Step 2: Run the event test to prove RED**
 
   Run:
 
@@ -411,7 +411,7 @@ export type AchievementRepository = Readonly<{
 
   Expected: FAIL because authoritative source events do not yet create progress/unlocks.
 
-- [ ] **Step 3: Add minimal source triggers**
+- [x] **Step 3: Add minimal source triggers**
 
   Create exactly these triggers:
 
@@ -435,7 +435,7 @@ export type AchievementRepository = Readonly<{
 
   Each trigger function is `security definer`, fixes `search_path`, and is revoked from `public`, `anon`, and `authenticated`. The quiz trigger passes `new.user_id/new.id`; the XP trigger passes `new.user_id/new.id`; `user_blooks` has no surrogate ID, so the Blook trigger passes `new.user_id/new.blook_id`. At the end of the migration, evaluate every existing profile once with `source_type = 'catalog_backfill'` and `source_id = profile.id`; this is a derived-state backfill and must not write reward ledgers. Do not replace `finalize_quiz_session`, `purchase_blook`, or any prior migration: database triggers preserve their existing transactional rollback and idempotency behavior.
 
-- [ ] **Step 4: Reset and prove event behavior GREEN**
+- [x] **Step 4: Reset and prove event behavior GREEN**
 
   Run:
 
@@ -453,7 +453,7 @@ export type AchievementRepository = Readonly<{
 
   Expected: all three achievement pgTAP files PASS; trigger retry, rollback, RLS, and no-reward assertions are green.
 
-- [ ] **Step 5: Mark Task 3 complete and commit**
+- [x] **Step 5: Mark Task 3 complete and commit**
 
   ```bash
   git add supabase/tests/010_achievement_events.test.sql \

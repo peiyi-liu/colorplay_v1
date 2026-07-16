@@ -223,6 +223,12 @@ values
     '', '', '', ''
   );
 
+delete from public.achievement_progress
+where user_id in (
+  '11000000-0000-0000-0000-000000000001',
+  '11000000-0000-0000-0000-000000000002'
+);
+
 insert into public.achievement_progress (
   user_id, achievement_definition_id, definition_version,
   current_value, target_value, state, last_source_type, last_source_id
