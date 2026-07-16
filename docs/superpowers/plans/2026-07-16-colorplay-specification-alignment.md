@@ -121,7 +121,7 @@
 
 **Required evidence:** Four-file diff, path/exact-column assertions, secret-name scan, and `git diff --check`. No raw database response and no environment file.
 
-- [ ] **Step 1: Run the pre-change failing assertion**
+- [x] **Step 1: Run the pre-change failing assertion**
 
   ```bash
   node - <<'NODE'
@@ -138,11 +138,11 @@
 
   Expected failure: exit 1 because all four records are absent.
 
-- [ ] **Step 2: Write the minimum complete records**
+- [x] **Step 2: Write the minimum complete records**
 
   Cover every audited student page, teacher page, cross-cutting behavior, content family, invalid remote row class, security defect, and migration decision from the approved design. Mark operational actions as `NOT EXECUTED` rather than implying remote work occurred. Record audit counts only; omit emails, UUIDs, URLs, keys, tokens, and row payloads.
 
-- [ ] **Step 3: Verify structure, completeness, and confidentiality**
+- [x] **Step 3: Verify structure, completeness, and confidentiality**
 
   ```bash
   node - <<'NODE'
@@ -162,7 +162,7 @@
 
   Expected success: all required facts and table columns exist, the sensitive-value scan returns no match, and the diff check exits 0.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   ```bash
   git add docs/adr/0002-colorplay-new-integration-and-production-environments.md docs/migration/colorplay-new-feature-parity.md docs/migration/colorplay-new-content-ledger.md docs/migration/legacy-supabase-inventory.md
