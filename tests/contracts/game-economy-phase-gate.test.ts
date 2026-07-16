@@ -32,6 +32,11 @@ const commandLabels = [
 ] as const;
 
 const temporaryDirectories: string[] = [];
+const pngEvidence = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x49,
+  0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+]);
+const webmEvidence = Buffer.from([0x1a, 0x45, 0xdf, 0xa3]);
 
 const createFixture = async () => {
   const root = await mkdtemp(join(tmpdir(), 'colorplay-game-economy-'));
@@ -81,10 +86,10 @@ const createFixture = async () => {
     ),
   );
   await Promise.all([
-    writeFile(join(root, 'screenshots/result-375x812.png'), 'image-one'),
-    writeFile(join(root, 'screenshots/result-768x1024.png'), 'image-two'),
-    writeFile(join(root, 'screenshots/result-1440x900.png'), 'image-three'),
-    writeFile(join(root, 'videos/game-economy.webm'), 'video'),
+    writeFile(join(root, 'screenshots/result-375x812.png'), pngEvidence),
+    writeFile(join(root, 'screenshots/result-768x1024.png'), pngEvidence),
+    writeFile(join(root, 'screenshots/result-1440x900.png'), pngEvidence),
+    writeFile(join(root, 'videos/game-economy.webm'), webmEvidence),
     writeFile(join(root, 'traces/game-economy.zip'), 'trace'),
   ]);
   return root;
@@ -249,6 +254,64 @@ describe('Game Economy v2 finalizer', () => {
       'GAME_ECONOMY_SENSITIVE_EVIDENCE',
     );
   });
+
+  it('accepts email-shaped bytes in a WebM payload without treating compressed data as text', async () => {
+    const root = await createFixture();
+    await writeFile(
+      join(root, 'videos/game-economy.webm'),
+      Buffer.concat([webmEvidence, Buffer.from('ab@cd.ef')]),
+    );
+
+    await expect(finalizeGameEconomy(root)).resolves.toMatchObject({
+      decision: 'PASS',
+    });
+  });
+
+  it.each([
+    ['PNG', 'screenshots/result-375x812.png'],
+    ['WebM', 'videos/game-economy.webm'],
+  ])('rejects invalid %s magic bytes', async (_kind, path) => {
+    const root = await createFixture();
+    await writeFile(join(root, path), 'not-the-required-binary-format');
+
+    await expect(finalizeGameEconomy(root)).rejects.toThrow(
+      'GAME_ECONOMY_INVALID_BINARY_EVIDENCE',
+    );
+  });
+
+  it('rejects sensitive text in WebM container metadata', async () => {
+    const root = await createFixture();
+    const email = Buffer.from('learner@example.invalid');
+    await writeFile(
+      join(root, 'videos/game-economy.webm'),
+      Buffer.concat([
+        webmEvidence,
+        Buffer.from([0x7b, 0xa9, 0x80 | email.length]),
+        email,
+      ]),
+    );
+
+    await expect(finalizeGameEconomy(root)).rejects.toThrow(
+      'GAME_ECONOMY_SENSITIVE_EVIDENCE',
+    );
+  });
+
+  it.each(['json', 'log'])(
+    'continues rejecting sensitive text in %s evidence',
+    async (extension) => {
+      const root = await createFixture();
+      await writeFile(
+        join(root, `reports/leak.${extension}`),
+        extension === 'json'
+          ? JSON.stringify({ email: 'learner@example.invalid' })
+          : 'account=learner@example.invalid\n',
+      );
+
+      await expect(finalizeGameEconomy(root)).rejects.toThrow(
+        'GAME_ECONOMY_SENSITIVE_EVIDENCE',
+      );
+    },
+  );
 
   it('rejects non-local, dirty, or malformed source metadata', async () => {
     const baseline = await createFixture();
