@@ -596,7 +596,7 @@ export type AchievementRepository = Readonly<{
 
 **Task evidence:** command output only; no evidence directory.
 
-- [ ] **Step 1: Write failing hook tests**
+- [x] **Step 1: Write failing hook tests**
 
   Cover successful fetch, loading, named repository error, one fetch for two consumers under the same QueryClient, and refetch after:
 
@@ -604,7 +604,7 @@ export type AchievementRepository = Readonly<{
   queryClient.invalidateQueries({ queryKey: achievementQueryKey });
   ```
 
-- [ ] **Step 2: Run hook tests to prove RED**
+- [x] **Step 2: Run hook tests to prove RED**
 
   Run:
 
@@ -614,11 +614,11 @@ export type AchievementRepository = Readonly<{
 
   Expected: FAIL because the hook/query key does not exist.
 
-- [ ] **Step 3: Implement the minimal hook**
+- [x] **Step 3: Implement the minimal hook**
 
   Use `useQuery({ queryKey: achievementQueryKey, queryFn: repository.getCatalog })`; use the production Supabase-backed repository by default and allow explicit repository injection only as a TypeScript parameter for unit tests. Do not use Zustand/localStorage for achievement state.
 
-- [ ] **Step 4: Prove hook GREEN**
+- [x] **Step 4: Prove hook GREEN**
 
   Run:
 
@@ -633,7 +633,7 @@ export type AchievementRepository = Readonly<{
 
   Expected: focused hook tests, lint, typecheck, and formatting PASS.
 
-- [ ] **Step 5: Mark Task 5 complete and commit**
+- [x] **Step 5: Mark Task 5 complete and commit**
 
   ```bash
   git add src/features/achievements/hooks/use-achievements.ts \
