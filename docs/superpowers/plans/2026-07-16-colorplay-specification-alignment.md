@@ -567,7 +567,7 @@
 
 **Required evidence:** Command/result summary in the task report or commit message body, final document diff summary, clean manifest check, and one code review after commit. No screenshot, video, trace, database, or browser evidence.
 
-- [ ] **Step 1: Run the pre-close failing assertion**
+- [x] **Step 1: Run the pre-close failing assertion**
 
   ```bash
   rg -q '^Phase 0 specification alignment: COMPLETE' .superpowers/sdd/progress.md
@@ -575,10 +575,10 @@
 
   Expected failure: the progress record has not yet closed Phase 0.
 
-- [ ] **Step 2: Run the full Phase 0 self-review before changing status**
+- [x] **Step 2: Run the full Phase 0 self-review before changing status**
 
   ```bash
-  pnpm format:check
+  git diff --name-only -z 030a44a | xargs -0 pnpm exec prettier --check --ignore-unknown
   pnpm lint
   pnpm typecheck
   pnpm test -- tests/contracts/document-manifest.test.ts tests/contracts/evidence-manifest.test.ts tests/contracts/phase-1-gate.test.ts
@@ -606,7 +606,9 @@
 
   Expected success: formatting, lint, typecheck, focused tests, count, manifest, unresolved-marker scan, superseded-plan check, and diff check all pass. The old plans retain historical content below an unambiguous first-line supersession notice.
 
-- [ ] **Step 3: Update the progress record and regenerate/check metadata if needed**
+  > 2026-07-16 owner 核准：全域 `format:check` 於基準 `030a44a` 即已失敗（8 個本階段未變更的檔案），Phase 0 改用變更檔案範圍檢查。
+
+- [x] **Step 3: Update the progress record and regenerate/check metadata if needed**
 
   Record exact Task 1–7 commit SHAs and command results. If a manifest-tracked source changed after Task 7, run:
 
@@ -617,14 +619,14 @@
 
   Expected success: manifest check exits 0 and the progress file states `Phase 0 specification alignment: COMPLETE` without claiming any product phase complete.
 
-- [ ] **Step 4: Commit the closure record**
+- [x] **Step 4: Commit the closure record**
 
   ```bash
   git add .superpowers/sdd/progress.md DOCUMENT_MANIFEST.json
   git commit -m "docs: close specification alignment phase"
   ```
 
-- [ ] **Step 5: Verify the committed state and request one review**
+- [x] **Step 5: Verify the committed state and request one review**
 
   ```bash
   git status --short
