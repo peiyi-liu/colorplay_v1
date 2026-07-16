@@ -7,7 +7,7 @@ and SPA fallback. Vercel must run `npm run build`, publish `dist`, and rewrite
 
 ## Git-based deployment flow
 
-After the repository is connected to Vercel in Task 16, GitHub and Vercel run
+After the repository is connected to Vercel in the Phase 8 release gate, GitHub and Vercel run
 their automatic flows independently:
 
 - GitHub Actions exposes the required `foundation-ci` check for pushes and
@@ -17,9 +17,9 @@ their automatic flows independently:
 - `main` is the documented Vercel Production Branch. A merge or push to
   `main` creates a Production deployment.
 
-Task 8 does not connect GitHub, create or link a Vercel project, configure
+Phase 0 does not connect GitHub, create or link a Vercel project, configure
 branch protection, upload environment values, or deploy. The account owner
-performs those manual dashboard/CLI steps in Task 16, then verifies the
+performs those manual dashboard/CLI steps in the reviewed Phase 8 runbook, then verifies the
 GitHub check, commit SHA, automatic deployments, production security headers,
 and deployed deep-link refreshes.
 
@@ -28,11 +28,11 @@ and deployed deep-link refreshes.
 The three application environments must never share Supabase projects or
 configuration values:
 
-| Application environment | Frontend target                          | Supabase target             | Data policy                       |
-| ----------------------- | ---------------------------------------- | --------------------------- | --------------------------------- |
-| Local                   | Vite development server or built preview | Supabase CLI local stack    | Deterministic synthetic test data |
-| Staging                 | Vercel Preview deployment                | Separate staging project    | Synthetic acceptance data only    |
-| Production              | Vercel Production deployment from `main` | Separate production project | No automated mutation tests       |
+| Application environment | Frontend target                          | Supabase target               | Data policy                                       |
+| ----------------------- | ---------------------------------------- | ----------------------------- | ------------------------------------------------- |
+| Local                   | Vite development server or built preview | Supabase CLI local stack      | Deterministic synthetic test data                 |
+| Staging                 | Vercel Preview deployment                | Rebuilt legacy hosted project | Synthetic acceptance data only                    |
+| Production              | Vercel Production deployment from `main` | New clean project             | Approved formal data; no automated mutation tests |
 
 Vercel's Preview scope supplies staging configuration to pull requests and
 non-production branches. Its Production scope supplies the distinct
@@ -56,7 +56,12 @@ secret, access token, SMTP password, or any other server credential in a
 Supabase or another server-only secret store and must not be exposed to this
 static frontend.
 
-## Manual setup checklist for Task 16
+Database deployment is a separate protected gate: feature CI proves migrations
+locally, Staging receives the reviewed release candidate, and Production
+requires explicit approval plus pre/post migration checks. A Vercel frontend
+deployment must never push database migrations blindly.
+
+## Manual setup checklist for Phase 8
 
 1. Connect the public GitHub repository to a Vercel project.
 2. Confirm the project root and Vite framework detection.
@@ -69,10 +74,10 @@ static frontend.
 8. Run headed deep-link checks against the deployed Preview and Production
    URLs before making a production-candidate claim.
 
-## Task 16 authentication boundary
+## Phase 8 authentication boundary
 
 Local Steps 1–4 are implemented by `pnpm acceptance` and do not mutate any
-remote system. External Steps 5–8 remain an account-owner operation and are
+remote system. Hosted setup remains an account-owner operation and is
 blocked until GitHub, Supabase, and Vercel authentication is available. An
 automation agent must not push a branch, log in, create or link projects,
 upload environment values, seed a remote project, update `main`, or fabricate
@@ -80,8 +85,8 @@ deployment evidence without that explicit authenticated session.
 
 The local manifest therefore records remote environment isolation, production
 headers, automatic deployment, public CI, and deployed deep-link evidence as
-`NOT VERIFIED`. After authentication is provided, execute the reviewed Task 16
-runbook in order: feature-branch CI first, distinct staging/production Supabase
+`NOT VERIFIED`. After authentication is provided, execute the reviewed Phase 8
+runbook in order: feature-branch CI first, rebuilt Staging and new clean Production Supabase
 projects second, Vercel Git/environment linkage third, then Preview and
 Production headed deep-link verification. Never write synthetic acceptance
 data to Production and never print DB passwords, status keys, service-role

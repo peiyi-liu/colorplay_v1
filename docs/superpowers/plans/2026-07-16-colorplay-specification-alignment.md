@@ -197,7 +197,7 @@
 
 **Required evidence:** Environment matrix diff, exact configuration-name assertions, explicit `NOT EXECUTED` production actions, and secret-boundary scan. No remote dashboard evidence.
 
-- [ ] **Step 1: Run the pre-change failing assertion**
+- [x] **Step 1: Run the pre-change failing assertion**
 
   ```bash
   test -f docs/deployment/environment-matrix.md && test -f docs/deployment/production-readiness.md
@@ -205,11 +205,11 @@
 
   Expected failure: exit 1 because both documents are absent.
 
-- [ ] **Step 2: Write the minimum environment and release contracts**
+- [x] **Step 2: Write the minimum environment and release contracts**
 
   Define the two browser-safe variables by name only. State that Production starts from migration zero, receives approved content only, contains no seed users, uses exact Auth redirect URLs and custom SMTP, and cannot be targeted by automated mutation tests. State that hosted project creation, environment-value upload, custom domain selection, and contact assignment remain explicit account-owner actions with state `NOT EXECUTED`.
 
-- [ ] **Step 3: Verify all environment boundaries**
+- [x] **Step 3: Verify all environment boundaries**
 
   ```bash
   for value in Local Staging Production Preview main VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY "RPO 24" "RTO 8"; do
@@ -224,7 +224,7 @@
 
   Expected success: every required environment/control string exists, no forbidden browser-secret variable exists, and the diff check exits 0.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   ```bash
   git add docs/deployment/environment-matrix.md docs/deployment/production-readiness.md docs/deployment/vercel.md
