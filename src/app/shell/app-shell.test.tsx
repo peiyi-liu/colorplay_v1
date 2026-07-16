@@ -109,6 +109,10 @@ describe('AppShell', () => {
     );
 
     expect(screen.queryByRole('link', { name: '教師工作區' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Blook 商店' })).toHaveAttribute(
+      'href',
+      '/app/shop',
+    );
   });
 
   it('shows the authenticated student server economy summary', () => {

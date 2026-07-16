@@ -30,6 +30,43 @@ vi.mock('../../features/learning/api/chapters', () => ({
     refetch: vi.fn(),
   })),
 }));
+vi.mock('../../features/rewards/hooks/use-economy-summary', () => ({
+  useEconomySummary: vi.fn(() => ({
+    data: {
+      currentLevelXp: 0,
+      level: 1,
+      tokenBalance: 0,
+      totalXp: 0,
+      walletReconciled: true,
+      xpPerLevel: 500,
+    },
+    isError: false,
+    isPending: false,
+  })),
+}));
+vi.mock('../../features/inventory/hooks/use-blook-inventory', () => ({
+  useBlookInventory: vi.fn(() => ({
+    data: {
+      activeBlookId: '50000000-0000-0000-0000-000000000001',
+      items: [
+        {
+          costTokens: 0,
+          emoji: '🦊',
+          equipped: true,
+          id: '50000000-0000-0000-0000-000000000001',
+          name: '小狐狸',
+          owned: true,
+          stableCode: 'little_fox',
+        },
+      ],
+      tokenBalance: 0,
+    },
+    isError: false,
+    isPending: false,
+  })),
+  useEquipBlook: vi.fn(() => ({ isPending: false, mutateAsync: vi.fn() })),
+  usePurchaseBlook: vi.fn(() => ({ isPending: false, mutateAsync: vi.fn() })),
+}));
 
 const mockedUseMyProfile = vi.mocked(useMyProfile);
 const mockedUsePublishedChapters = vi.mocked(usePublishedChapters);
@@ -96,6 +133,31 @@ describe('createAppRouter', () => {
       },
     });
     expect(screen.queryByRole('heading', { name: '學習大廳' })).toBeNull();
+  });
+
+  it('redirects an anonymous shop deep-link to login', async () => {
+    const router = renderRouter('/app/shop?from=profile');
+
+    expect(await screen.findByRole('heading', { name: '登入' })).toBeVisible();
+    expect(router.state.location.pathname).toBe('/login');
+    expect(router.state.location.state).toEqual({
+      from: {
+        hash: '',
+        pathname: '/app/shop',
+        search: '?from=profile',
+      },
+    });
+  });
+
+  it('renders the Blook shop deep-link for an authenticated student', async () => {
+    renderRouter('/app/shop', {
+      email: 'learner@colorplay.invalid',
+      userId: 'learner-id',
+    });
+
+    expect(
+      await screen.findByRole('heading', { name: 'Blook 商店' }),
+    ).toBeVisible();
   });
 
   it('renders the published chapter home at /app for an authenticated session', async () => {

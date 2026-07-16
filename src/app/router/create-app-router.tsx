@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { RequireAuth } from '../../features/auth/components/require-auth';
 import { RequireRole } from '../../features/auth/components/require-role';
 import { LoginPage } from '../../features/auth/pages/login-page';
+import { ShopPage } from '../../features/inventory/pages/shop-page';
 import { ChapterSelectPage } from '../../features/learning/pages/chapter-select';
 import { ProfileFoundationPage } from '../../features/profile/pages/profile-foundation-page';
 import { QuizResultPage } from '../../features/quiz/pages/quiz-result';
@@ -44,6 +45,10 @@ export function createAppRouter() {
             {
               path: '/app/profile',
               element: <ProfileFoundationPage />,
+            },
+            {
+              path: '/app/shop',
+              element: <ShopPage />,
             },
             {
               path: '/app/quiz/:sessionId/result',

@@ -815,11 +815,11 @@ export function EconomySummaryView(
 
 **Required evidence:** RTL RED/GREEN for loading/error/all four card states/dialog/shortfall/pending/success/failure, router/auth/deep-link/nav tests, lint/typecheck. Browser artifacts wait for the phase gate.
 
-- [ ] **Step 1: Write failing page/router/shell tests**
+- [x] **Step 1: Write failing page/router/shell tests**
 
   Supply a fake repository only at the component boundary; do not mock browser network in E2E. Assert six names/emojis/costs, exactly one equipped state, owned `選用`, affordable confirmation, insufficient `還差 750 Token`, authoritative returned snapshot after mutations, mutation error recovery, and accessible dialog closure. Router tests assert authenticated `/app/shop` and unauthenticated redirect to `/login`; shell tests assert `Blook 商店` navigation.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
   ```bash
   pnpm exec vitest run src/features/inventory/pages/shop-page.test.tsx src/app/router/create-app-router.test.tsx src/app/shell/app-shell.test.tsx
@@ -827,11 +827,11 @@ export function EconomySummaryView(
 
   Expected failure: shop page/route/navigation do not exist.
 
-- [ ] **Step 3: Implement the shop vertical slice**
+- [x] **Step 3: Implement the shop vertical slice**
 
   Build `ShopPage` with the Task 6 query/mutations, a native accessible dialog or the repository's established dialog pattern, authoritative cache replacement, and responsive grid styles. Add the authenticated route and nav link. Do not add randomized items, loot boxes, client prices, local balances, rankings, achievements, or teacher controls.
 
-- [ ] **Step 4: Run GREEN and task checks**
+- [x] **Step 4: Run GREEN and task checks**
 
   ```bash
   pnpm exec vitest run src/features/inventory/pages/shop-page.test.tsx src/app/router/create-app-router.test.tsx src/app/shell/app-shell.test.tsx
@@ -841,7 +841,7 @@ export function EconomySummaryView(
 
   Expected success: focused tests, lint, and typecheck pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
   git add src/features/inventory/pages/shop-page.tsx src/features/inventory/pages/shop-page.test.tsx src/app/router/create-app-router.tsx src/app/router/create-app-router.test.tsx src/app/shell/app-shell.tsx src/app/shell/app-shell.test.tsx src/styles/globals.css
