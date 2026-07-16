@@ -251,6 +251,7 @@ public.reconcile_wallet_cache(target_user_id uuid) returns integer
 
 **Files:**
 
+- Modify: `supabase/tests/004_quiz_engine_rls.test.sql`
 - Create: `supabase/migrations/20260716000200_finalize_quiz_rewards.sql`
 - Create: `supabase/tests/006_quiz_rewards.test.sql`
 
@@ -286,7 +287,7 @@ alter table public.quiz_sessions
 
 **Required evidence:** pgTAP RED/GREEN for fast/slow/wrong/timeout provisional amounts, incomplete denial, first/third/fourth daily outcomes, different-template isolation, retry equality, concurrent-safe unique sources, cache reconciliation, cross-user denial, and absence of client totals in RPC signatures. No evidence directory.
 
-- [ ] **Step 1: Write the failing pgTAP test**
+- [x] **Step 1: Write the failing pgTAP test**
 
   Build deterministic sessions from published seed questions. Assert:
 
@@ -306,7 +307,7 @@ alter table public.quiz_sessions
 
   Verify a second finalize result equals the first JSON economy fields and ledger counts remain one per non-zero source. Verify an incomplete session raises `QUIZ_SESSION_INCOMPLETE`, another user receives `QUIZ_SESSION_NOT_FOUND`, and no function accepts XP, Token, attempt number, browser timestamp, or reward rate parameters.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
   ```bash
   pnpm exec supabase db reset --local
@@ -315,11 +316,11 @@ alter table public.quiz_sessions
 
   Expected failure: provisional columns/rule fields are absent and finalized rewards remain zero.
 
-- [ ] **Step 3: Implement the transactional reward path**
+- [x] **Step 3: Implement the transactional reward path**
 
   Add the columns/checks, replace the two trusted quiz functions without expanding their argument lists, extend the safe state view, and preserve all existing score/answer/deadline behavior. Lock before counting daily completions. Use unique-source `ON CONFLICT DO NOTHING` only as a defensive backstop; the stored completed-session branch is the normal retry path.
 
-- [ ] **Step 4: Run GREEN and task checks**
+- [x] **Step 4: Run GREEN and task checks**
 
   ```bash
   pnpm exec supabase db reset --local
@@ -332,10 +333,10 @@ alter table public.quiz_sessions
 
   Expected success: all three focused pgTAP files pass; existing quiz behavior remains green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
-  git add supabase/migrations/20260716000200_finalize_quiz_rewards.sql supabase/tests/006_quiz_rewards.test.sql
+  git add supabase/tests/004_quiz_engine_rls.test.sql supabase/migrations/20260716000200_finalize_quiz_rewards.sql supabase/tests/006_quiz_rewards.test.sql
   git commit -m "feat: award quiz economy rewards on finalize"
   ```
 

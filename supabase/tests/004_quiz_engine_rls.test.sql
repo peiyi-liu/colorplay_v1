@@ -404,8 +404,8 @@ select results_eq(
     $$,
     current_setting('test.quiz_session_id')
   ),
-  $$values (0, 0)$$,
-  'playable slice awards no XP or tokens'
+  $$values (75, 25)$$,
+  'first completed session awards authoritative XP and tokens'
 );
 select throws_ok(
   format(
