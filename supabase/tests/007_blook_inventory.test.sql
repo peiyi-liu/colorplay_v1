@@ -142,9 +142,28 @@ select is(
   0,
   'every profile has an owned active default after trigger or backfill'
 );
-select is((select count(*)::integer from public.wallets), 2, 'profile trigger still creates wallets');
 select is(
-  (select count(*)::integer from public.user_blooks where source = 'default'),
+  (
+    select count(*)::integer
+    from public.wallets
+    where user_id in (
+      '10000000-0000-0000-0000-000000000021',
+      '10000000-0000-0000-0000-000000000022'
+    )
+  ),
+  2,
+  'profile trigger still creates wallets'
+);
+select is(
+  (
+    select count(*)::integer
+    from public.user_blooks
+    where source = 'default'
+      and user_id in (
+        '10000000-0000-0000-0000-000000000021',
+        '10000000-0000-0000-0000-000000000022'
+      )
+  ),
   2,
   'profile trigger gives one default Blook to each student'
 );

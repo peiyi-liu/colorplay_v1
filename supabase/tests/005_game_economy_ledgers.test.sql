@@ -81,7 +81,14 @@ values
   );
 
 select is(
-  (select count(*)::integer from public.wallets),
+  (
+    select count(*)::integer
+    from public.wallets
+    where user_id in (
+      '10000000-0000-0000-0000-000000000011',
+      '10000000-0000-0000-0000-000000000012'
+    )
+  ),
   2,
   'profile trigger creates one wallet per user'
 );
