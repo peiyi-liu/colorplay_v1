@@ -2,6 +2,29 @@ import { useRef, useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
+import { EconomySummaryView } from '../../features/rewards/components/economy-summary';
+import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
+
+function AuthenticatedEconomySummary() {
+  const economy = useEconomySummary();
+
+  if (economy.isPending) {
+    return (
+      <p className="economy-summary__message" role="status">
+        經濟資料載入中…
+      </p>
+    );
+  }
+  if (economy.isError) {
+    return (
+      <p className="economy-summary__message" role="alert">
+        經濟資料暫時無法顯示。
+      </p>
+    );
+  }
+
+  return <EconomySummaryView summary={economy.data} />;
+}
 
 export function AppShell() {
   const auth = useAuth();
@@ -36,6 +59,7 @@ export function AppShell() {
                 ) : null}
               </nav>
             ) : null}
+            {isAuthenticatedProfile ? <AuthenticatedEconomySummary /> : null}
             {auth.status === 'authenticated' ? (
               <button
                 className="app-header__logout"

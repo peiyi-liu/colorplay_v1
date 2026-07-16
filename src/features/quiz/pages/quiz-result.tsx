@@ -75,7 +75,18 @@ export function QuizResultPage({
             答對 {String(session.correctCount)} /{' '}
             {String(session.questionCount)} 題
           </p>
+          <p>+{String(session.xpAwarded)} XP</p>
+          <p>+{String(session.tokensAwarded)} Token</p>
         </div>
+        <p className="quiz-result__rules">
+          獎勵規則：{session.gameRulesVersion}（
+          {String(session.rewardRatePercent)}%）
+        </p>
+        {session.rewardRatePercent === 20 ? (
+          <p className="quiz-result__decay">
+            今日同一挑戰已完成 3 次，本次 XP 為 20%，Token 為 0。
+          </p>
+        ) : null}
       </header>
 
       <div className="quiz-result__review" aria-label="逐題回顧">

@@ -16,6 +16,7 @@ const sessionPayload = {
   chapter_title: '色彩表示',
   completed_at: null,
   correct_count: 0,
+  game_rules_version: '2026-07-mvp-1',
   question_count: 1,
   questions: [
     {
@@ -40,7 +41,10 @@ const sessionPayload = {
   session_id: sessionId,
   status: 'in_progress',
   template_id: templateId,
+  tokens_awarded: 0,
   total_score: 0,
+  reward_rate_percent: 100,
+  xp_awarded: 0,
 };
 
 describe('quiz repository', () => {
@@ -69,6 +73,7 @@ describe('quiz repository', () => {
       chapterTitle: '色彩表示',
       completedAt: null,
       correctCount: 0,
+      gameRulesVersion: '2026-07-mvp-1',
       questionCount: 1,
       questions: [
         {
@@ -98,7 +103,10 @@ describe('quiz repository', () => {
       sessionId,
       status: 'in_progress',
       templateId,
+      tokensAwarded: 0,
       totalScore: 0,
+      rewardRatePercent: 100,
+      xpAwarded: 0,
     });
     expect(rpc).toHaveBeenCalledWith('create_quiz_session', {
       client_request_id: requestId,
@@ -151,11 +159,13 @@ describe('quiz repository', () => {
         completed_at: '2026-07-14T12:05:00.000Z',
         correct_count: 7,
         question_count: 10,
+        game_rules_version: '2026-07-mvp-1',
+        reward_rate_percent: 100,
         session_id: sessionId,
         status: 'completed',
-        tokens_awarded: 0,
+        tokens_awarded: 250,
         total_score: 950,
-        xp_awarded: 0,
+        xp_awarded: 750,
       },
       error: null,
     });
@@ -165,10 +175,12 @@ describe('quiz repository', () => {
     ).resolves.toMatchObject({
       answeredCount: 10,
       correctCount: 7,
+      gameRulesVersion: '2026-07-mvp-1',
+      rewardRatePercent: 100,
       status: 'completed',
-      tokensAwarded: 0,
+      tokensAwarded: 250,
       totalScore: 950,
-      xpAwarded: 0,
+      xpAwarded: 750,
     });
     expect(rpc).toHaveBeenCalledWith('finalize_quiz_session', {
       session_id: sessionId,
@@ -187,6 +199,7 @@ describe('quiz repository', () => {
           correct_option_id: null,
           deadline_at: '2026-07-14T12:00:20.000Z',
           explanation: null,
+          game_rules_version: '2026-07-mvp-1',
           options: [
             { id: optionId, key: 'A', sort_order: 1, text: 'RGB' },
             {
@@ -202,6 +215,7 @@ describe('quiz repository', () => {
           question_stable_code: '3-1-01',
           question_version: 1,
           response_ms: null,
+          reward_rate_percent: 100,
           score_delta: null,
           selected_option_id: null,
           session_id: sessionId,
@@ -210,7 +224,9 @@ describe('quiz repository', () => {
           session_status: 'in_progress',
           started_at: '2026-07-14T12:00:00.000Z',
           template_id: templateId,
+          tokens_awarded: 0,
           total_score: 0,
+          xp_awarded: 0,
         },
       ],
       error: null,
@@ -222,6 +238,12 @@ describe('quiz repository', () => {
       correctOptionId: null,
       explanation: null,
       sessionQuestionId,
+    });
+    expect(result).toMatchObject({
+      gameRulesVersion: '2026-07-mvp-1',
+      rewardRatePercent: 100,
+      tokensAwarded: 0,
+      xpAwarded: 0,
     });
     expect(from).toHaveBeenCalledWith('quiz_session_question_state');
     expect(eq).toHaveBeenCalledWith('session_id', sessionId);
@@ -252,6 +274,16 @@ describe('quiz repository', () => {
         optionId,
         requestId,
       ),
+    ).rejects.toEqual(new QuizRepositoryError('INVALID_RESPONSE'));
+  });
+
+  it('rejects a session response that omits trusted economy rule fields', async () => {
+    const malformed: Partial<typeof sessionPayload> = { ...sessionPayload };
+    delete malformed.game_rules_version;
+    rpc.mockResolvedValue({ data: malformed, error: null });
+
+    await expect(
+      createQuizRepository(client).createSession(templateId, requestId),
     ).rejects.toEqual(new QuizRepositoryError('INVALID_RESPONSE'));
   });
 });

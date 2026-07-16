@@ -62,15 +62,19 @@ const session = (questions: QuizQuestion[]): QuizSession => ({
   correctCount: questions.filter(
     ({ answerStatus }) => answerStatus === 'correct',
   ).length,
+  gameRulesVersion: '2026-07-mvp-1',
   questionCount: questions.length,
   questions,
   sessionId,
   status: 'in_progress',
   templateId,
+  tokensAwarded: 0,
   totalScore: questions.reduce(
     (total, item) => total + (item.scoreDelta ?? 0),
     0,
   ),
+  rewardRatePercent: 100,
+  xpAwarded: 0,
 });
 
 const incorrectResult: QuizAnswerResult = {

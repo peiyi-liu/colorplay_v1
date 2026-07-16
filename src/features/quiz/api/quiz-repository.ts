@@ -30,17 +30,23 @@ const questionSchema = z.object({
   started_at: timestampSchema.nullable(),
   version: z.number().int().positive(),
 });
-const sessionSchema = z.object({
+const rewardRateSchema = z.union([z.literal(20), z.literal(100)]);
+const gameRulesVersionSchema = z.literal('2026-07-mvp-1');
+const sessionSchema = z.strictObject({
   answered_count: z.number().int().nonnegative(),
   chapter_title: z.string().min(1),
   completed_at: timestampSchema.nullable(),
   correct_count: z.number().int().nonnegative(),
+  game_rules_version: gameRulesVersionSchema,
   question_count: z.number().int().positive(),
   questions: z.array(questionSchema).min(1),
+  reward_rate_percent: rewardRateSchema,
   session_id: uuidSchema,
   status: sessionStatusSchema,
   template_id: uuidSchema,
+  tokens_awarded: z.number().int().nonnegative(),
   total_score: z.number().int().nonnegative(),
+  xp_awarded: z.number().int().nonnegative(),
 });
 const answerResultSchema = z.object({
   answer_status: answerStatusSchema,
@@ -52,37 +58,48 @@ const answerResultSchema = z.object({
   selected_option_id: uuidSchema.nullable(),
   total_score: z.number().int().nonnegative(),
 });
-const finalResultSchema = z.object({
+const finalResultSchema = z.strictObject({
   answered_count: z.number().int().nonnegative(),
   completed_at: timestampSchema,
   correct_count: z.number().int().nonnegative(),
+  game_rules_version: gameRulesVersionSchema,
   question_count: z.number().int().positive(),
+  reward_rate_percent: rewardRateSchema,
   session_id: uuidSchema,
   status: z.literal('completed'),
-  tokens_awarded: z.literal(0),
+  tokens_awarded: z.number().int().nonnegative(),
   total_score: z.number().int().nonnegative(),
-  xp_awarded: z.literal(0),
+  xp_awarded: z.number().int().nonnegative(),
 });
-const sessionStateRowSchema = z.object({
+const sessionStateRowSchema = z.strictObject({
   answer_status: answerStatusSchema.nullable(),
+  answered_count: z.number().int().nonnegative(),
   chapter_title: z.string().min(1),
   completed_at: timestampSchema.nullable(),
+  correct_count: z.number().int().nonnegative(),
   correct_option_id: uuidSchema.nullable(),
   deadline_at: timestampSchema.nullable(),
   explanation: z.string().nullable(),
+  game_rules_version: gameRulesVersionSchema,
   options: z.array(optionSchema).min(2).max(4),
   position: z.number().int().positive(),
   prompt: z.string().min(1),
   question_count: z.number().int().positive(),
   question_stable_code: z.string().min(1),
   question_version: z.number().int().positive(),
+  response_ms: z.number().int().nonnegative().nullable(),
+  reward_rate_percent: rewardRateSchema,
   score_delta: z.number().int().nonnegative().nullable(),
   selected_option_id: uuidSchema.nullable(),
   session_id: uuidSchema,
   session_question_id: uuidSchema,
+  session_started_at: timestampSchema,
   session_status: sessionStatusSchema,
   started_at: timestampSchema.nullable(),
   template_id: uuidSchema,
+  tokens_awarded: z.number().int().nonnegative(),
+  total_score: z.number().int().nonnegative(),
+  xp_awarded: z.number().int().nonnegative(),
 });
 
 export type QuizOption = Readonly<{
@@ -111,12 +128,16 @@ export type QuizSession = Readonly<{
   chapterTitle: string;
   completedAt: string | null;
   correctCount: number;
+  gameRulesVersion: z.infer<typeof gameRulesVersionSchema>;
   questionCount: number;
   questions: QuizQuestion[];
   sessionId: string;
   status: z.infer<typeof sessionStatusSchema>;
   templateId: string;
+  tokensAwarded: number;
   totalScore: number;
+  rewardRatePercent: z.infer<typeof rewardRateSchema>;
+  xpAwarded: number;
 }>;
 export type QuizAnswerResult = Readonly<{
   answerStatus: z.infer<typeof answerStatusSchema>;
@@ -132,12 +153,14 @@ export type QuizFinalResult = Readonly<{
   answeredCount: number;
   completedAt: string;
   correctCount: number;
+  gameRulesVersion: z.infer<typeof gameRulesVersionSchema>;
   questionCount: number;
+  rewardRatePercent: z.infer<typeof rewardRateSchema>;
   sessionId: string;
   status: 'completed';
-  tokensAwarded: 0;
+  tokensAwarded: number;
   totalScore: number;
-  xpAwarded: 0;
+  xpAwarded: number;
 }>;
 
 export type QuizRepositoryErrorCode =
@@ -211,12 +234,16 @@ const mapSession = (session: z.infer<typeof sessionSchema>): QuizSession => ({
   chapterTitle: session.chapter_title,
   completedAt: session.completed_at,
   correctCount: session.correct_count,
+  gameRulesVersion: session.game_rules_version,
   questionCount: session.question_count,
   questions: session.questions.map(mapQuestion),
   sessionId: session.session_id,
   status: session.status,
   templateId: session.template_id,
+  tokensAwarded: session.tokens_awarded,
   totalScore: session.total_score,
+  rewardRatePercent: session.reward_rate_percent,
+  xpAwarded: session.xp_awarded,
 });
 
 function parseSession(value: unknown): QuizSession {
@@ -247,7 +274,9 @@ function parseFinal(value: unknown): QuizFinalResult {
     answeredCount: parsed.data.answered_count,
     completedAt: parsed.data.completed_at,
     correctCount: parsed.data.correct_count,
+    gameRulesVersion: parsed.data.game_rules_version,
     questionCount: parsed.data.question_count,
+    rewardRatePercent: parsed.data.reward_rate_percent,
     sessionId: parsed.data.session_id,
     status: parsed.data.status,
     tokensAwarded: parsed.data.tokens_awarded,
@@ -278,25 +307,21 @@ function sessionFromStateRows(value: unknown): QuizSession {
       version: row.question_version,
     }),
   );
-  const answered = questions.filter(
-    ({ answerStatus }) => answerStatus !== null,
-  );
   return {
-    answeredCount: answered.length,
+    answeredCount: first.answered_count,
     chapterTitle: first.chapter_title,
     completedAt: first.completed_at,
-    correctCount: answered.filter(
-      ({ answerStatus }) => answerStatus === 'correct',
-    ).length,
+    correctCount: first.correct_count,
+    gameRulesVersion: first.game_rules_version,
     questionCount: first.question_count,
     questions,
     sessionId: first.session_id,
     status: first.session_status,
     templateId: first.template_id,
-    totalScore: answered.reduce(
-      (total, question) => total + (question.scoreDelta ?? 0),
-      0,
-    ),
+    tokensAwarded: first.tokens_awarded,
+    totalScore: first.total_score,
+    rewardRatePercent: first.reward_rate_percent,
+    xpAwarded: first.xp_awarded,
   };
 }
 

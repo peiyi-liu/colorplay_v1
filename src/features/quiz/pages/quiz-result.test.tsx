@@ -19,6 +19,7 @@ const completedSession = {
   chapterTitle: '色彩表示',
   completedAt: '2026-07-14T12:05:00.000Z',
   correctCount: 1,
+  gameRulesVersion: '2026-07-mvp-1',
   questionCount: 2,
   questions: [
     {
@@ -81,7 +82,10 @@ const completedSession = {
   sessionId,
   status: 'completed',
   templateId,
+  tokensAwarded: 250,
   totalScore: 150,
+  rewardRatePercent: 100,
+  xpAwarded: 750,
 } satisfies QuizSession;
 
 function repository(getSession: QuizRepository['getSession']): QuizRepository {
@@ -123,7 +127,10 @@ describe('QuizResultPage', () => {
       await screen.findByRole('heading', { name: '挑戰完成' }),
     ).toBeVisible();
     expect(screen.getByText('總分 150')).toBeVisible();
+    expect(screen.getByText('+750 XP')).toBeVisible();
+    expect(screen.getByText('+250 Token')).toBeVisible();
     expect(screen.getByText('答對 1 / 2 題')).toBeVisible();
+    expect(screen.queryByText(/積分/u)).toBeNull();
     expect(screen.getByRole('heading', { name: '✓ 答對' })).toBeVisible();
     expect(screen.getByRole('heading', { name: '✕ 答錯' })).toBeVisible();
     expect(screen.getAllByText('我的答案')).toHaveLength(2);
@@ -138,6 +145,40 @@ describe('QuizResultPage', () => {
       'href',
       '/app',
     );
+  });
+
+  it('explains the authoritative daily decay without inventing Token rewards', async () => {
+    renderResult(
+      repository(
+        vi.fn().mockResolvedValue({
+          ...completedSession,
+          rewardRatePercent: 20,
+          tokensAwarded: 0,
+          xpAwarded: 10,
+        }),
+      ),
+    );
+
+    expect(await screen.findByText('+10 XP')).toBeVisible();
+    expect(screen.getByText('+0 Token')).toBeVisible();
+    expect(
+      screen.getByText('今日同一挑戰已完成 3 次，本次 XP 為 20%，Token 為 0。'),
+    ).toBeVisible();
+  });
+
+  it('shows explicit zero rewards from the server for an incorrect run', async () => {
+    renderResult(
+      repository(
+        vi.fn().mockResolvedValue({
+          ...completedSession,
+          tokensAwarded: 0,
+          xpAwarded: 0,
+        }),
+      ),
+    );
+
+    expect(await screen.findByText('+0 XP')).toBeVisible();
+    expect(screen.getByText('+0 Token')).toBeVisible();
   });
 
   it('shows a safe error instead of another student session', async () => {

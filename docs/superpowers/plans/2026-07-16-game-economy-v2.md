@@ -695,6 +695,7 @@ export const inventoryQueryKey = ['inventory', 'blooks'] as const;
 - Modify: `src/features/quiz/api/quiz-repository.test.ts`
 - Modify: `src/features/quiz/pages/quiz-result.tsx`
 - Modify: `src/features/quiz/pages/quiz-result.test.tsx`
+- Modify: `src/features/quiz/pages/quiz-session.test.tsx`
 - Create: `src/features/rewards/components/economy-summary.tsx`
 - Create: `src/features/rewards/components/economy-summary.test.tsx`
 - Modify: `src/app/shell/app-shell.tsx`
@@ -733,7 +734,7 @@ export function EconomySummaryView(
 
 **Required evidence:** RTL RED/GREEN for full/decayed/zero reward, Level 1/2/999, loading/error/auth states, terminology, and no client formulas; repository tests; lint/typecheck. Browser artifacts wait for the phase gate.
 
-- [ ] **Step 1: Write failing repository/component/page/shell tests**
+- [x] **Step 1: Write failing repository/component/page/shell tests**
 
   Extend safe session fixtures with economy/rule fields and prove malformed/missing fields fail closed. Add RTL assertions:
 
@@ -749,7 +750,7 @@ export function EconomySummaryView(
 
   Add the rate-20 explanatory copy assertion and confirm Quiz Score is still labeled `總分`, never generic `積分`. Shell tests prove no economy query/render for logged-out users.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
   ```bash
   pnpm exec vitest run src/features/quiz/api/quiz-repository.test.ts src/features/quiz/pages/quiz-result.test.tsx src/features/rewards/components/economy-summary.test.tsx src/app/shell/app-shell.test.tsx
@@ -757,11 +758,11 @@ export function EconomySummaryView(
 
   Expected failure: safe session parser lacks economy fields and economy summary component/copy are absent.
 
-- [ ] **Step 3: Implement minimal presentation**
+- [x] **Step 3: Implement minimal presentation**
 
   Extend strict schemas/mappers, render server fields in the result, create the summary component, integrate it into authenticated AppShell, and add responsive styles using existing tokens. Keep one primary result action and preserve existing error/loading boundaries.
 
-- [ ] **Step 4: Run GREEN and task checks**
+- [x] **Step 4: Run GREEN and task checks**
 
   ```bash
   pnpm exec vitest run src/features/quiz/api/quiz-repository.test.ts src/features/quiz/pages/quiz-result.test.tsx src/features/rewards/components/economy-summary.test.tsx src/app/shell/app-shell.test.tsx
@@ -771,10 +772,10 @@ export function EconomySummaryView(
 
   Expected success: focused tests, lint, and typecheck pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
-  git add src/features/quiz/api/quiz-repository.ts src/features/quiz/api/quiz-repository.test.ts src/features/quiz/pages/quiz-result.tsx src/features/quiz/pages/quiz-result.test.tsx src/features/rewards/components/economy-summary.tsx src/features/rewards/components/economy-summary.test.tsx src/app/shell/app-shell.tsx src/app/shell/app-shell.test.tsx src/styles/globals.css
+  git add src/features/quiz/api/quiz-repository.ts src/features/quiz/api/quiz-repository.test.ts src/features/quiz/pages/quiz-result.tsx src/features/quiz/pages/quiz-result.test.tsx src/features/quiz/pages/quiz-session.test.tsx src/features/rewards/components/economy-summary.tsx src/features/rewards/components/economy-summary.test.tsx src/app/shell/app-shell.tsx src/app/shell/app-shell.test.tsx src/styles/globals.css
   git commit -m "feat: show authoritative quiz economy rewards"
   ```
 

@@ -9,6 +9,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
+import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
 import { AppShell } from './app-shell';
 
 vi.mock('../../features/auth/context/auth-context', () => ({
@@ -17,12 +18,22 @@ vi.mock('../../features/auth/context/auth-context', () => ({
 vi.mock('../../features/profile/hooks/use-my-profile', () => ({
   useMyProfile: vi.fn(),
 }));
+vi.mock('../../features/rewards/hooks/use-economy-summary', () => ({
+  useEconomySummary: vi.fn(),
+}));
 
 const mockedUseAuth = vi.mocked(useAuth);
 const mockedUseMyProfile = vi.mocked(useMyProfile);
+const mockedUseEconomySummary = vi.mocked(useEconomySummary);
+
+const economyResult = (
+  value: Partial<ReturnType<typeof useEconomySummary>>,
+): ReturnType<typeof useEconomySummary> =>
+  value as ReturnType<typeof useEconomySummary>;
 
 describe('AppShell', () => {
   beforeEach(() => {
+    mockedUseEconomySummary.mockReset();
     mockedUseAuth.mockReturnValue({
       session: {
         email: 'student.one@colorplay.test',
@@ -44,6 +55,20 @@ describe('AppShell', () => {
       isPending: false,
       refetch: vi.fn(),
     });
+    mockedUseEconomySummary.mockReturnValue(
+      economyResult({
+        data: {
+          currentLevelXp: 250,
+          level: 2,
+          tokenBalance: 250,
+          totalXp: 750,
+          walletReconciled: true,
+          xpPerLevel: 500,
+        },
+        isError: false,
+        isPending: false,
+      }),
+    );
   });
 
   it('provides a skip link, banner, and main outlet region', () => {
@@ -84,6 +109,71 @@ describe('AppShell', () => {
     );
 
     expect(screen.queryByRole('link', { name: '教師工作區' })).toBeNull();
+  });
+
+  it('shows the authenticated student server economy summary', () => {
+    render(
+      <MemoryRouter>
+        <AppShell />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Level 2')).toBeVisible();
+    expect(screen.getByText('250 / 500 XP')).toBeVisible();
+    expect(screen.getByText('250 Token')).toBeVisible();
+    expect(mockedUseEconomySummary).toHaveBeenCalledOnce();
+  });
+
+  it('does not query or fabricate economy data while logged out', () => {
+    mockedUseAuth.mockReturnValue({
+      session: null,
+      signIn: vi.fn(),
+      signOut: vi.fn(),
+      status: 'anonymous',
+    });
+    mockedUseMyProfile.mockReturnValue({
+      data: undefined,
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <AppShell />
+      </MemoryRouter>,
+    );
+
+    expect(mockedUseEconomySummary).not.toHaveBeenCalled();
+    expect(screen.queryByText(/Level/u)).toBeNull();
+    expect(screen.queryByText(/Token/u)).toBeNull();
+  });
+
+  it('uses non-blocking loading text and never fabricates a zero balance on failure', () => {
+    mockedUseEconomySummary.mockReturnValue(
+      economyResult({ data: undefined, isError: false, isPending: true }),
+    );
+    const { rerender } = render(
+      <MemoryRouter>
+        <AppShell />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('status')).toHaveTextContent('經濟資料載入中…');
+
+    mockedUseEconomySummary.mockReturnValue(
+      economyResult({ data: undefined, isError: true, isPending: false }),
+    );
+    rerender(
+      <MemoryRouter>
+        <AppShell />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      '經濟資料暫時無法顯示。',
+    );
+    expect(screen.queryByText('0 Token')).toBeNull();
   });
 
   it('shows teacher navigation only for an authoritative teacher profile', () => {
