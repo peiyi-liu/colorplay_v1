@@ -1,99 +1,97 @@
-# 從單檔原型遷移至 React + Supabase 路線圖
+# ColorPlay secure migration roadmap
 
-## 1. 原則
+## 1. Authority and migration method
 
-- 保留原型的 UX 參考價值，不逐行翻譯舊 JavaScript。
-- 先建立可信資料與身份，再搬遊戲功能。
-- 每個階段都產生可執行、可測試的 vertical slice。
-- 不在同一 PR 同時重做所有頁面、schema、Auth 與遊戲規則。
+- Canonical baseline 是 verified `colorplay` React/Vite/Supabase implementation；completed foundation、playable quiz slice、45-question pipeline 保留。
+- `legacy/colorplay-original.html` 與 `colorplay-new` 只作 UX/product/content reference，不逐行翻譯、不 wholesale merge。
+- 每個未實作 capability 以 schema/RLS/RPC/UI/test vertical slice 交付；前一 phase 的 reserved boundary 不代表功能完成。
+- Completed plan/migration 不重寫。2026-07-14 未執行 Economy/Classroom plans 標記 superseded，由 versioned plans 取代。
+- 每個 phase 各自走 brainstorming → approved design → implementation plan → worktree execution → one review；沒有核准 plan 不進下一 phase。
 
-## 2. Phase 0：基線與規格鎖定
+## Phase 0: Specification and migration alignment
 
-交付：
+交付：Production/Staging ADR、feature parity、content ledger、legacy inventory、environment/Production controls、normative spec、122 acceptance IDs、document manifest、old-plan supersession。
 
-- 將舊 HTML 放入 `legacy/`。
-- 保存核心畫面 reference screenshots。
-- 建立本文件集、ADR template、acceptance harness skeleton。
-- 明確標示舊原型中：真功能、模擬功能、已知 bug。
+禁止：product code、migration、remote mutation、deployment、Task 16、`pnpm acceptance`。
 
-退出條件：文件審查通過，無未決核心架構問題。
+Exit：route/feature ownership、schema/RLS/RPC trust boundary、phase ownership、environment authority、migration disposition、acceptance traceability 完整且 self-review/review 通過。
 
-## 3. Phase 1：專案骨架與 CI
+## Phase 1: Game Economy v2
 
-- Vite React TypeScript。
-- Tailwind tokens。
-- Router、QueryClient、ErrorBoundary。
-- Vitest、RTL、Playwright、Supabase CLI。
-- package scripts 與 CI。
+- Immutable XP/Token ledgers、finalize reward、daily decay、Level、reconciliation。
+- Six Blooks、default ownership、atomic purchase/equip、result/header/shop UI。
+- Source types/unique constraints 預留 Achievement、Assignment、Live trusted events。
 
-退出條件：空殼 app 在三 viewport 有截圖；lint/typecheck/test/build 通過。
+Exit：`AC-GAME-001`–`AC-GAME-007`、`AC-SEC-001`–`002` positive/negative DB、integration、UI/E2E 與 phase review 通過。
 
-## 4. Phase 2：Supabase schema、Auth、RLS
+第一份 versioned plan：`docs/superpowers/plans/2026-07-16-game-economy-v2.md`。
 
-- profiles、classrooms、memberships。
-- Auth flow 與 role bootstrap。
-- RLS positive／negative tests。
-- seed identities。
+## Phase 2: Achievements
 
-退出條件：Student／Teacher／Outsider 權限矩陣測試 100% 通過。
+- Nine-definition badge-only catalog、validated enum rules、server progress、transactional idempotent unlock。
+- Quiz/economy event integration 與 achievements/progress UI。
+- Hidden rule/privacy/client-tamper negative tests。
 
-## 5. Phase 3：內容閱讀 vertical slice
+Exit：`AC-ACH-001`–`AC-ACH-005` 與 ledger/non-reward assertions 通過。
 
-- course/chapter/section/subtopic/review_cards。
-- Teacher 建立 draft、publish。
-- Student 只讀 published。
-- RWD 與 accessibility。
+Plan：`docs/superpowers/plans/2026-07-16-achievements.md`。
 
-退出條件：真實 DB 內容在 student UI 顯示，draft 不可見。
+## Phase 3: Classroom and Leaderboard v2
 
-## 6. Phase 4：Quiz 核心
+- Classrooms、multi-membership、hashed/rotatable join codes、teacher ownership。
+- Classroom XP Top 10 + self rank、privacy-safe projection、teacher privacy setting boundary。
+- Assignment/Live/analytics dimensions 預留但不實作。
 
-- questions/options/versioning。
-- create session、public payload、submit answer、timeout、finalize。
-- refresh recovery、idempotency。
-- result／wrong answer UI。
+Exit：`AC-AUTH-006`–`007`、`AC-GAME-008`–`009`，Teacher A/Teacher B/member/outsider RLS 與 exact ledger ranking 通過。
 
-退出條件：E2E-001 至 E2E-005 及安全 payload 檢查通過。
+Plan：`docs/superpowers/plans/2026-07-16-classroom-leaderboard-v2.md`。
 
-## 7. Phase 5：Rewards、Level、Shop、Leaderboard
+## Phase 4: Assignments and ColorPlay Live Core
 
-- XP／Token ledgers。
-- finalize reward policy。
-- Blook purchase/equip。
-- classroom leaderboard。
+- Assignment owner/target/availability/deadline/attempt/completion lifecycle。
+- ColorPlay Live Core：authenticated create/join/lobby/start/question/answer/feedback/finalize/cancel。
+- Private Realtime、PostgreSQL state machine、server deadline、state version、reconnect、duplicate-host protection、atomic rank/reward/assignment integration。
 
-退出條件：ledger reconciliation 0 差異；重送不重複發獎。
+Exit：`AC-ASN-001`–`006`、`AC-LIVE-001`–`011`；一 host、兩 students、一 outsider real browser contexts，加上 concurrent/idempotency/rollback/RLS tests 通過。
 
-## 8. Phase 6：Teacher content/import/analytics
+## Phase 5: Learning Experience
 
-- 題庫 CRUD。
-- XLSX template、validation、preview、transaction commit。
-- analytics views。
-- export。
+- Dashboard、chapter detail、review cards/media、explicit completion。
+- Three hints、mistake items、remediation、current-version coverage/accuracy/mastery。
+- Student progress/achievement progress/profile composition UI。
 
-退出條件：合法／不合法匯入、跨班越權、export count tests 通過。
+Exit：`AC-LEARN-001`–`004`、`AC-PROG-001`–`006`；公式/version/recovery/no original-score rewrite 通過。
 
-## 9. Phase 7：完整 UI、效能、安全硬化
+## Phase 6: Teacher Content, Import, and Analytics
 
-- 完成所有核心頁面與狀態。
-- visual baselines。
-- CSP、rate limiting、monitoring。
-- bundle／Lighthouse／axe。
+- Teacher workspace、versioned taxonomy/review/question/media CRUD/publish。
+- XLSX template、upload、validation、preview、transaction commit/import report。
+- Canonical classroom/question/subtopic/assignment/Live analytics 與 optional `external_activities` Kahoot URL management。
 
-退出條件：完整 acceptance suite 與 headed evidence run 通過。
+Exit：`AC-TCH-001`–`009`、import rollback/XSS/cross-teacher denial、metric numerator/denominator 與 45-question preservation通過。
 
-## 10. Phase 8：Staging pilot
+## Phase 7: ColorPlay Live Advanced
 
-- 使用合成資料與少量測試使用者。
-- 記錄 usability、錯誤率、效能。
-- 不在未經同意情況使用正式學生個資。
+- Pause/resume、real-time distributions、reusable/scheduled activities、reports。
+- Team mode、streak visuals、reduced motion、approved capacity/latency profile。
+- 保持 first-party、不複製 Kahoot branding/assets、不依賴 official API。
 
-退出條件：阻塞性問題修正，研究／校務程序核准後才能 production。
+Exit：`AC-LIVE-012` 加上 updated Live regression/security/performance evidence 通過。
 
-## 11. 不應採用的遷移方式
+## Phase 8: Research and Production release
 
-- 將 784 行舊 HTML 原封不動塞進單一 React component。
-- 先做完整漂亮 UI，再補 RLS。
-- 把 localStorage 資料同步到 Supabase 就稱為安全。
-- 讓前端繼續決定正解與 reward，再只把結果 POST 後端。
-- 在 Dashboard 手動建表而不建立 migrations。
+- Pseudonymous research export、authorization、retention/deletion、complete audit。
+- New clean Production provisioning、approved content、exact Auth URLs、custom SMTP、monitoring/alerts、backups、restore drill。
+- Foundation Task 16、現有完整 `pnpm acceptance`、GitHub/Vercel linkage、Production smoke、human real-device evidence。
+
+Exit：`AC-TCH-010`、`AC-ENV-001`–`008`、`AC-MIG-001`–`005` 與全部 remaining Blocking IDs 有 explicit evidence；no Production seed user、no browser secret、no unresolved Critical/High、RPO 24 hours/RTO 8 hours restore drill 通過。
+
+## Prohibited migration shortcuts
+
+- 直接移植 Next.js App Router、mock Auth/store、legacy SQL/RLS 或 service-role fallback。
+- Browser 決定 answer/score/XP/Token/purchase/rank/role/progress/achievement/assignment/Live state。
+- 把 formal state 放 `localStorage`，或把 hard-coded leaderboard/progress/PIN 當 seed。
+- 先做完整漂亮 UI，再補 RLS/RPC/schema tests。
+- Dashboard 手動修 Production schema 而沒有 migration。
+- 將 Staging/legacy Auth users、invalid remote rows、synthetic acceptance data 帶入 Production。
+- 以 external Kahoot result 當 ColorPlay 正式 score，或複製其 branding/assets。

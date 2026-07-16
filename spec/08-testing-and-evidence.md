@@ -83,6 +83,9 @@
 - E2E-015：鍵盤-only 完成 Login、Quiz 與 Dialog 關閉，focus order 與 focus return 正確。
 - E2E-016：Quiz 選項依序呈現 default → selected → pending/locked → correct/incorrect，且 pending 期間無重複提交。
 - E2E-017：相同類型 Dialog 的文案、主要 action、close control 與位置一致。
+- E2E-018：Assignment availability／deadline／attempt limit 由後端決定，完成引用 finalized session，跨班級拒絕。
+- E2E-019：ColorPlay Live 一 host、兩 students、一 outsider 完成 create/join/lobby/question/answer/finalize；outsider channel 被拒、重送不重複。
+- E2E-020：Review completion、current-version mastery、remediation resolution 與 achievement progress 對應 authoritative DB read model。
 
 ## 5. Headed evidence run
 
@@ -314,3 +317,25 @@ artifacts/acceptance/<YYYYMMDD-HHmmss>-<short-sha>/
 - 高對比／放大文字下的 primary action 可見性。
 
 結果納入 `summary.md`，列出發現與是否阻塞 release。
+
+## 15. Task、phase 與 release gate
+
+### Task gate
+
+- 文件/設定：執行結構、格式、confidentiality 與受影響 contract checks。
+- Behavioral code：TDD + lint + typecheck + affected unit/integration/DB/E2E。
+- Task 不建立 screenshot/video/trace evidence directory，不執行 `pnpm acceptance`。
+
+### Phase gate
+
+- 每個 phase 的核准 plan 定義 scoped real-stack/browser gate，只驗該 phase 新增能力與相關 regression。
+- 至少包含 positive/negative RLS、transaction/idempotency、必要 browser contexts、console/network health、sanitized manifest 與一次 code review。
+- Live phase 使用一 host、兩 students、一 outsider，涵蓋 concurrent answer、duplicate key、refresh/reconnect、state conflict、deadline edge、unauthorized channel、rollback 與當期核准 capacity profile。
+- Staging 只用 synthetic data；Production 禁止 automated mutation acceptance。
+
+### Phase 8 release gate
+
+- ADR 0001 延後的 Foundation Task 16 與現有完整 `pnpm acceptance` 只在 Phase 8 核准 runbook 執行。
+- 完整 gate 包含 Local reset、全部 unit/integration/DB/RLS、三 browser、三 viewports、headed core flow、a11y/performance/secrets、GitHub/Vercel/hosted environment、backup/restore 與 evidence manifest。
+- `AC-UI-010`／`AC-UI-012` 真實裝置證據由人類提供；缺少即 `NOT VERIFIED`。
+- Normative acceptance metadata 在 Phase 0 後為 122 unique IDs；沒有 explicit proof 的項目保持 `NOT VERIFIED`，不能因 architecture 文件存在而 Pass。

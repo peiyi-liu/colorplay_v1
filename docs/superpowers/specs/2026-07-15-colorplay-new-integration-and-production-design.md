@@ -4,14 +4,14 @@
 
 - Design date: 2026-07-15
 - Written-spec review date: 2026-07-16
-- Design status: approved in five sections; awaiting written-spec approval
+- Design status: written specification approved on 2026-07-16; Phase 0 plan approved for execution
 - Canonical repository: `peiyi-liu/colorplay`
 - Canonical implementation baseline: `feat/playable-vertical-slice` at `394c58f`
 - Frontend: React + TypeScript + Vite on Vercel
 - Backend: Supabase Auth, PostgreSQL, RLS, Storage, Realtime, RPC, and Edge Functions
 - Migration strategy: preserve the verified `colorplay` foundation, revise the unexecuted plans, then integrate `colorplay-new` capabilities as independently verifiable vertical slices
 
-This design authorizes documentation alignment only after written-spec approval. It does not authorize product code, database migrations, hosted Supabase mutation, Production provisioning, or deployment.
+This design authorizes the approved Phase 0 documentation-alignment plan. It does not authorize product code, database migrations, hosted Supabase mutation, Production provisioning, deployment, or a later phase without its own approved plan.
 
 ## 2. Decisions and source precedence
 
@@ -139,22 +139,22 @@ artifacts/acceptance/  # ignored
 
 ### 4.1 Feature ownership
 
-| Feature | Owns | Must not own |
-|---|---|---|
-| `auth` | session, sign-in/out, route guards | teacher-role assignment |
-| `profile` | display name, public avatar, equipment summary | reward mutation |
-| `learning` | curriculum, chapters, review cards | scoring |
-| `quiz` | practice sessions, submission, result | public correct answers |
-| `remediation` | mistake state and corrective practice | rewriting original answers |
-| `progress` | server-derived progress read models | client-written percentages |
-| `rewards` | XP/Token ledgers and levels | client rewards |
-| `achievements` | catalog, progress, unlocks | UI-triggered unlocks |
-| `inventory` | Blooks, purchase, equip | direct wallet updates |
-| `classrooms` | classroom, membership, join code | content editing |
-| `assignments` | assignment lifecycle and session references | duplicate scores |
-| `leaderboard` | privacy-safe ranking projection | client scores |
-| `live` | live activities, lobby, host state, realtime recovery | WebSocket as system of record |
-| `teacher` | teacher workspace composition | bypassing feature repositories or RLS |
+| Feature        | Owns                                                  | Must not own                          |
+| -------------- | ----------------------------------------------------- | ------------------------------------- |
+| `auth`         | session, sign-in/out, route guards                    | teacher-role assignment               |
+| `profile`      | display name, public avatar, equipment summary        | reward mutation                       |
+| `learning`     | curriculum, chapters, review cards                    | scoring                               |
+| `quiz`         | practice sessions, submission, result                 | public correct answers                |
+| `remediation`  | mistake state and corrective practice                 | rewriting original answers            |
+| `progress`     | server-derived progress read models                   | client-written percentages            |
+| `rewards`      | XP/Token ledgers and levels                           | client rewards                        |
+| `achievements` | catalog, progress, unlocks                            | UI-triggered unlocks                  |
+| `inventory`    | Blooks, purchase, equip                               | direct wallet updates                 |
+| `classrooms`   | classroom, membership, join code                      | content editing                       |
+| `assignments`  | assignment lifecycle and session references           | duplicate scores                      |
+| `leaderboard`  | privacy-safe ranking projection                       | client scores                         |
+| `live`         | live activities, lobby, host state, realtime recovery | WebSocket as system of record         |
+| `teacher`      | teacher workspace composition                         | bypassing feature repositories or RLS |
 
 TanStack Query owns server state. Zustand may own ephemeral quiz/live UI state only. Formal data may not be stored in `localStorage`. Domain types do not directly expose database rows, and generated database types remain in `src/types/database.ts`.
 
@@ -355,17 +355,17 @@ Multiple attempts are permitted only in remediation. Remediation preserves the o
 
 The first catalog is:
 
-| Stable code | Display name | Server condition |
-|---|---|---|
-| `first_task_complete` | 初出茅廬 | first completed quiz or assignment |
-| `first_perfect_quiz` | 百發百中 | first completed quiz at 100% accuracy |
-| `mistakes_resolved_10` | 不屈不撓 | ten distinct resolved mistake items |
-| `chapter_mastered_1` | 章節精熟 | first mastered chapter |
-| `all_chapters_mastered` | 色彩大師 | all six chapters mastered |
-| `level_10` | 登峰造極 | authoritative level at least 10 |
-| `correct_streak_20` | 連擊之王 | twenty consecutive qualifying correct answers |
-| `live_complete_5` | 課堂挑戰者 | five completed Live sessions |
-| `blooks_owned_6` | 收藏家 | six initial Blooks owned |
+| Stable code             | Display name | Server condition                              |
+| ----------------------- | ------------ | --------------------------------------------- |
+| `first_task_complete`   | 初出茅廬     | first completed quiz or assignment            |
+| `first_perfect_quiz`    | 百發百中     | first completed quiz at 100% accuracy         |
+| `mistakes_resolved_10`  | 不屈不撓     | ten distinct resolved mistake items           |
+| `chapter_mastered_1`    | 章節精熟     | first mastered chapter                        |
+| `all_chapters_mastered` | 色彩大師     | all six chapters mastered                     |
+| `level_10`              | 登峰造極     | authoritative level at least 10               |
+| `correct_streak_20`     | 連擊之王     | twenty consecutive qualifying correct answers |
+| `live_complete_5`       | 課堂挑戰者   | five completed Live sessions                  |
+| `blooks_owned_6`        | 收藏家       | six initial Blooks owned                      |
 
 Unlocks never revoke. Correct streak includes formal quiz, assignment, and Live answers; incorrect/timeout resets it; remediation does not count. The unsupported legacy `case_expert` candidate is rejected because no approved case-mission subsystem exists.
 
@@ -404,11 +404,11 @@ Every route defines loading, empty, recoverable error, permission, offline/recon
 
 ### 13.1 Environment mapping
 
-| Context | Frontend | Supabase | Data |
-|---|---|---|---|
-| Local | Vite dev/preview | Supabase CLI | deterministic seed only |
-| Preview/Staging | Vercel Preview | rebuilt legacy hosted project | synthetic/test only |
-| Production | Vercel Production | new clean project | approved formal data only |
+| Context         | Frontend          | Supabase                      | Data                      |
+| --------------- | ----------------- | ----------------------------- | ------------------------- |
+| Local           | Vite dev/preview  | Supabase CLI                  | deterministic seed only   |
+| Preview/Staging | Vercel Preview    | rebuilt legacy hosted project | synthetic/test only       |
+| Production      | Vercel Production | new clean project             | approved formal data only |
 
 Vercel Preview receives Staging `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Production receives distinct Production values. Service-role, database password, JWT secret, and SMTP credentials never use `VITE_` and never enter the browser bundle.
 

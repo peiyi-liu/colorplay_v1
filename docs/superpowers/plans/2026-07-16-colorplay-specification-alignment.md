@@ -411,7 +411,7 @@
 
 **Required evidence:** Governance/roadmap diff, supersession assertion, phase-order assertion, and `git diff --check`. No phase acceptance run.
 
-- [ ] **Step 1: Run the pre-change failing assertion**
+- [x] **Step 1: Run the pre-change failing assertion**
 
   ```bash
   node - <<'NODE'
@@ -427,11 +427,11 @@
 
   Expected failure: exit 1 because the old plans still appear executable and the revised roadmap is not normative.
 
-- [ ] **Step 2: Apply the minimum governance and roadmap changes**
+- [x] **Step 2: Apply the minimum governance and roadmap changes**
 
   Retain completed foundation/playable plan history. Name the future plans exactly as `2026-07-16-game-economy-v2.md`, `2026-07-16-achievements.md`, and `2026-07-16-classroom-leaderboard-v2.md`; do not create them in this task. State that each future phase requires its own approved design/plan before implementation. Do not claim Phase 0 is complete until Task 8 passes.
 
-- [ ] **Step 3: Verify policy consistency**
+- [x] **Step 3: Verify policy consistency**
 
   ```bash
   rg -q '^> \*\*SUPERSEDED' docs/superpowers/plans/2026-07-14-game-economy.md
@@ -444,7 +444,7 @@
 
   Expected success: both old plans are visibly superseded, all nine phases are present, Task 16/full acceptance deferral is explicit, and the diff check exits 0.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   ```bash
   git add AGENTS.md README.md spec/08-testing-and-evidence.md spec/10-migration-roadmap.md docs/superpowers/plans/2026-07-14-game-economy.md docs/superpowers/plans/2026-07-14-classroom-leaderboard.md docs/superpowers/specs/2026-07-15-colorplay-new-integration-and-production-design.md

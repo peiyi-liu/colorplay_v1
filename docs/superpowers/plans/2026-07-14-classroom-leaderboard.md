@@ -1,3 +1,5 @@
+> **SUPERSEDED — Do not execute.** Replaced by `docs/superpowers/plans/2026-07-16-classroom-leaderboard-v2.md` after Phase 0 alignment; this file remains historical evidence.
+
 # ColorPlay Classroom & Leaderboard Implementation Plan（Phase 5 後半＋Phase 6 最小教師功能）
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use **superpowers:executing-plans**（單一 session 連續執行）。禁止 subagent-driven-development。驗證依 `AGENTS.md` 第 12 節 task 級標準（headless），不產生截圖證據。每 task 一 commit；全計畫結束一次 code review。

@@ -1,53 +1,73 @@
-# ColorPlay React + Supabase 開發規範包 v2
+# ColorPlay
 
-這個資料夾可直接複製到新專案根目錄，作為 VS Code Codex 與 Superpowers 的專案上下文。v2 新增 Flat Design、認知負荷、虛擬鍵盤、Dialog／Back、Icon 隱喻與狀態可視性的完整規格及量化驗收。
+ColorPlay 是技術型高中設計群「色彩原理」遊戲式教學平台。Frontend 使用 React + TypeScript + Vite；Supabase 提供 Auth、PostgreSQL、RLS、Storage、Realtime、RPC 與 Edge Functions；Vercel 負責靜態 SPA 部署。瀏覽器不可信，正式答案、分數、XP、Token、進度、購買、排名與角色權限都由後端決定。
 
-## 建議放置方式
+## Current verified baseline
+
+- App shell、Supabase Auth、profile/RLS 與 playable quiz/result vertical slice。
+- 45 題 teacher spreadsheet pipeline：第三章 37 題、第四章 8 題。
+- Server-authoritative answer submission、timeout、idempotency 與 finalized result。
+- React/Vite delivery contract、Supabase CLI local stack、Vitest/RTL/Playwright/pgTAP 基礎。
+
+Economy、Achievements、Classroom/Leaderboard、Assignments、ColorPlay Live、完整 learning progress、teacher tools、research export 與 Production release 仍依 `spec/10-migration-roadmap.md` 分 phase 實作；文件規格不等於功能完成。
+
+## Start here
+
+1. 讀 `AGENTS.md`，再讀任務直接相關的 1–2 份 spec。
+2. 安裝 Node/pnpm/Docker 後執行 `pnpm install --frozen-lockfile`。
+3. 一般檢查：`pnpm lint && pnpm typecheck && pnpm test`。
+4. Local Supabase/DB gate：`pnpm test:db`；browser 流程使用 `bash scripts/test-e2e-local.sh`。
+5. 每個新 phase 先完成 Superpowers brainstorming、核准 design、writing-plans，再於 worktree 執行。
+
+`pnpm acceptance` 與 Foundation Task 16 依 ADR 0001 延後到 Phase 8 release gate。日常 task 不執行、不建立 screenshot evidence directory。
+
+## Repository map
 
 ```text
-colorplay/
-├─ AGENTS.md
-├─ spec/
-├─ acceptance/
-├─ docs/superpowers/specs/
-└─ legacy/colorplay-original.html
+src/                  React app and feature boundaries
+supabase/             migrations, functions, seeds, DB/RLS tests
+scripts/              acceptance, content, Supabase and verification tools
+tests/                contracts, integration, E2E, fixtures and visual tests
+spec/                 normative product/architecture/testing specifications
+acceptance/           measurable release criteria and evidence template
+docs/adr/              approved architecture decisions
+docs/deployment/       environment, Vercel and Production controls
+docs/migration/        colorplay-new parity/content/database audit records
+docs/superpowers/      approved designs and implementation plans
+legacy/                immutable original HTML UX reference
 ```
 
-## 使用順序
+## Environment contract
 
-1. 將現有 HTML 原型保存為 `legacy/colorplay-original.html`（唯讀，不另做複本）。
-2. 將本包的 `AGENTS.md`、`spec/`、`acceptance/`、`docs/` 放入 repo。
-3. 在 Codex 開始工作前要求它先讀 `AGENTS.md`。
-4. 第一個實作工作不要直接「完成整個平台」，而是依 `spec/10-migration-roadmap.md` 分階段。
-5. 每個階段先用 Superpowers brainstorming，核准設計後建立 implementation plan。
-6. 每個 PR 列出對應 acceptance IDs。
-7. release 前執行真實 Supabase + headed Playwright acceptance。
-8. UI release candidate 額外提供真實手機軟體鍵盤與 Android Back 操作證據。
+| Context    | Frontend                      | Supabase                      | Data                      |
+| ---------- | ----------------------------- | ----------------------------- | ------------------------- |
+| Local      | Vite dev/built preview        | Supabase CLI                  | Deterministic synthetic   |
+| Staging    | Vercel Preview                | Rebuilt legacy hosted project | Synthetic acceptance only |
+| Production | Vercel Production from `main` | New clean project             | Approved formal data only |
 
-## 仍需由專案負責人決定的項目
+Browser configuration allowlist：
 
-這些不是遺漏，而是會影響研究與部署的決策：
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
 
-- Supabase Auth 採 Email/password 或 magic link。
-- React 靜態網站部署平台。
-- 正式資料保存期限與研究倫理規定。
-- 教師是否能關閉／匿名化排行榜。
-- Production Supabase 方案與備份等級。
+`service_role`、database password、JWT/SMTP/backup/monitoring secrets 不得使用 `VITE_`、不得進 repo/browser/log/evidence。完整契約見 `docs/deployment/environment-matrix.md`、`docs/deployment/production-readiness.md` 與 ADR 0002。
 
-決定後請建立 ADR，並同步修改相關 spec 與 acceptance。
+## Deployment decisions
 
-## 重要提醒
+- GitHub repository：`peiyi-liu/colorplay`。
+- Vercel Production Branch：`main`。
+- Build Command：`npm run build`；Output Directory：`dist`。
+- `vercel.json` 提供 SPA fallback，deep-link refresh 不得 404。
+- Preview 使用 Staging public values；Production 使用 distinct Production public values。
+- Production database migration 是獨立 protected gate，不由 frontend deployment 盲推。
 
-- Supabase publishable／anon key 可以在瀏覽器出現；安全依賴 RLS。`service_role` 絕不可放前端。
-- 驗收不得使用 mock application API。
-- 沒有實際 UI 截圖、序列證據與 DB/network proof，不得宣稱完成。
-- Flat Design、自然配對、虛擬鍵盤、Dialog、Icon 語意與狀態可視性依 `spec/07-ui-visual-system.md` 與 `AC-UI-008`～`AC-UI-015` 驗收。
-- Desktop resize 或 device emulation 不得冒充真實 OS 軟體鍵盤／Android Back 證據。
+## Manual release inputs
 
-## Phase 1 本機驗收
+Phase 8 前仍需由 project owner 指派 primary/backup operations contacts、選定 formal domain/Sender、核准 retention/research policy、確認 Supabase plan 能達 RPO 24 hours/RTO 8 hours，並授權 destructive Staging reset。這些是明確人工 release inputs，不由 agent 猜測或代填。
 
-`pnpm acceptance` 是 Phase 1 foundation/Auth/profile 的里程碑 gate。它會重建真實的本機 Supabase PostgreSQL/Auth/RLS、建立 production build 與 preview、執行完整測試與 DB/RLS 檢查、以 headed Chromium 擷取三種 viewport 證據，再跑 Chromium、Firefox、WebKit smoke、axe、Lighthouse 與 secrets scan。需要 Docker、可用的 headed browser display，以及 Playwright browser binaries。
+## Non-negotiable boundaries
 
-每次執行會建立 ignored 的 `artifacts/acceptance/<run-id>/`，包含 manifest、依 `acceptance/EVIDENCE_TEMPLATE.md` 產生的 summary、screenshots、sanitized traces、videos 與 reports。第一次未提交 source run 會誠實記錄 dirty worktree；提交後應重跑，讓 manifest 指向 clean committed SHA。
-
-這個 gate 綠燈只代表 Phase 1 scope。完整 MVP criteria、遠端 GitHub/Supabase/Vercel 步驟，以及 `AC-UI-010`／`AC-UI-012` 的真實裝置證據仍標記 `NOT VERIFIED`；summary 的 release decision 維持 `BLOCKED`，不得據此宣稱完整 MVP 或 release ready。
+- `legacy/colorplay-original.html` 唯讀；不得複製或改寫。
+- `colorplay-new` 只作 product/content/UI reference；不移植 Next.js/mock/client-authoritative code 或 legacy SQL/RLS。
+- Acceptance 不使用 mock application API；Production 不跑 automated mutation tests。
+- UI phase/release evidence 需 real browser；`AC-UI-010`／`AC-UI-012` 的 OS keyboard/Android Back 由人類實機提供。

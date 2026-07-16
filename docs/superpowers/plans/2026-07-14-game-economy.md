@@ -1,3 +1,5 @@
+> **SUPERSEDED — Do not execute.** Replaced by `docs/superpowers/plans/2026-07-16-game-economy-v2.md` after Phase 0 alignment; this file remains historical evidence.
+
 # ColorPlay Game Economy Implementation Plan（Phase 5 前半：XP／Token／等級／商店）
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use **superpowers:executing-plans**（單一 session 連續執行）。禁止 subagent-driven-development。驗證依 `AGENTS.md` 第 12 節 task 級標準（lint/typecheck/受影響測試，headless），不產生截圖證據。每 task 一 commit；全計畫結束做一次 code review。
