@@ -271,7 +271,7 @@ export type AchievementRepository = Readonly<{
 
 **Task evidence:** command output only; no evidence directory.
 
-- [ ] **Step 1: Write the failing engine pgTAP test**
+- [x] **Step 1: Write the failing engine pgTAP test**
 
   Build deterministic fixtures under users `12000000-0000-0000-0000-000000000001/2` and assert:
 
@@ -287,7 +287,7 @@ export type AchievementRepository = Readonly<{
   - a test-only hidden definition is absent while locked and appears only after its server-created unlock;
   - anonymous and authenticated roles cannot execute `evaluate_achievements`, while authenticated own-user execution of `get_my_achievement_catalog()` succeeds.
 
-- [ ] **Step 2: Run the engine test to prove RED**
+- [x] **Step 2: Run the engine test to prove RED**
 
   Run:
 
@@ -297,7 +297,7 @@ export type AchievementRepository = Readonly<{
 
   Expected: FAIL because `public.achievement_metric_value`, `public.evaluate_achievements`, and `public.get_my_achievement_catalog` do not exist.
 
-- [ ] **Step 3: Implement authoritative metric derivation**
+- [x] **Step 3: Implement authoritative metric derivation**
 
   Add `achievement_metric_value` as a `security definer` function with `set search_path = pg_catalog, public`. It must branch only on the enum and run these authoritative queries:
 
@@ -324,7 +324,7 @@ export type AchievementRepository = Readonly<{
 
   For `correct_streak`, join `quiz_answers` to completed `quiz_sessions`, order by `answered_at, answer id`, split groups at every non-correct answer, and return the maximum correct group length. Return `null` for `resolved_mistake_count`, `mastered_chapter_count`, and `live_completed_count` in this phase.
 
-- [ ] **Step 4: Implement idempotent evaluation and the safe RPC**
+- [x] **Step 4: Implement idempotent evaluation and the safe RPC**
 
   `evaluate_achievements` must:
 
@@ -338,7 +338,7 @@ export type AchievementRepository = Readonly<{
 
   `get_my_achievement_catalog()` must require `auth.uid()`, left join the caller's progress/unlocks to active public definitions, default missing progress to `not_started`, return `null` progress/target for a hidden definition, omit locked hidden definitions, and never project rule/source fields. Revoke evaluator and metric execution from `public`, `anon`, and `authenticated`; grant only the safe RPC to `authenticated`.
 
-- [ ] **Step 5: Reset and prove the engine GREEN**
+- [x] **Step 5: Reset and prove the engine GREEN**
 
   Run:
 
@@ -355,7 +355,7 @@ export type AchievementRepository = Readonly<{
 
   Expected: both pgTAP files PASS; duplicate evaluation and per-user ledger invariants remain green.
 
-- [ ] **Step 6: Mark Task 2 complete and commit**
+- [x] **Step 6: Mark Task 2 complete and commit**
 
   ```bash
   git add supabase/tests/009_achievement_engine.test.sql \
