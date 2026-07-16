@@ -891,7 +891,7 @@ export type AchievementRepository = Readonly<{
 
 These steps execute only after all seven task commits exist and the worktree is clean.
 
-- [ ] **Review Step 1: Verify the review range and request one complete-range review**
+- [x] **Review Step 1: Verify the review range and request one complete-range review**
 
   ```bash
   test "$(git rev-parse c81d870)" = \
@@ -903,7 +903,7 @@ These steps execute only after all seven task commits exist and the worktree is 
 
   Use `superpowers:requesting-code-review` once for `c81d870..HEAD`. The reviewer checks only Phase 2 files and excludes generated `src/types/database.ts`, artifacts, dist, coverage, and lockfile noise. Review priorities are authoritative derivation, transaction rollback, RLS/execute grants, hidden-rule privacy, no reward writes, deferred truthfulness, integration cleanup, scoped pgTAP counts, and evidence-policy regression.
 
-- [ ] **Review Step 2: Resolve review findings**
+- [x] **Review Step 2: Resolve review findings**
 
   Fix every Critical or Important finding with focused RED → GREEN where behavior changes. Commit each coherent review-fix wave without rewriting task commits. Minor findings that do not affect the five AC IDs may be recorded in the final progress entry with owner-visible risk.
 

@@ -100,6 +100,27 @@ describe('AchievementRepository', () => {
     });
   });
 
+  it('accepts the UTC offset format emitted by PostgreSQL timestamptz', async () => {
+    const postgresPayload = {
+      ...validPayload,
+      items: [
+        {
+          ...validPayload.items[0],
+          unlocked_at: '2026-07-16T12:34:56.123456+00:00',
+        },
+      ],
+      total_count: 1,
+      unlocked_count: 1,
+    };
+    const { client } = createHarness({ data: postgresPayload, error: null });
+
+    await expect(
+      createAchievementRepository(client).getCatalog(),
+    ).resolves.toMatchObject({
+      items: [{ unlockedAt: '2026-07-16T12:34:56.123456+00:00' }],
+    });
+  });
+
   it.each([
     { ...validPayload, items: [] },
     { ...validPayload, total_count: 4 },
@@ -155,6 +176,17 @@ describe('AchievementRepository', () => {
     {
       ...validPayload,
       items: [{ ...validPayload.items[0], source_id: 'private-source' }],
+      total_count: 1,
+      unlocked_count: 1,
+    },
+    {
+      ...validPayload,
+      items: [
+        {
+          ...validPayload.items[0],
+          unlocked_at: '2026-07-16T20:34:56.123456+08:00',
+        },
+      ],
       total_count: 1,
       unlocked_count: 1,
     },

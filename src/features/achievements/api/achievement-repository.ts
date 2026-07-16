@@ -13,6 +13,9 @@ export { AchievementRepositoryError } from '../types';
 
 const nonNegativeInteger = z.number().int().nonnegative();
 const positiveInteger = z.number().int().positive();
+const utcTimestamp = z.iso
+  .datetime({ offset: true })
+  .refine((value) => value.endsWith('Z') || value.endsWith('+00:00'));
 
 const achievementItemSchema = z.strictObject({
   badge_key: z.string().min(1),
@@ -22,7 +25,7 @@ const achievementItemSchema = z.strictObject({
   stable_code: z.string().regex(/^[a-z][a-z0-9_]*$/u),
   state: z.enum(['not_started', 'in_progress', 'unlocked']),
   target: positiveInteger.nullable(),
-  unlocked_at: z.iso.datetime().nullable(),
+  unlocked_at: utcTimestamp.nullable(),
 });
 
 const achievementCatalogSchema = z

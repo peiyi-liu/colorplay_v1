@@ -112,6 +112,9 @@ describe('Achievements phase gate source', () => {
     expect(packageJson.scripts['phase:achievements']).toBe(
       'bash scripts/acceptance/run-achievements.sh',
     );
+    expect(packageJson.scripts['test:e2e']).toContain(
+      'Achievements phase gate',
+    );
 
     const orderedSteps = [
       'pnpm format:check',
@@ -229,6 +232,27 @@ describe('Achievements finalizer', () => {
       'ACHIEVEMENTS_SENSITIVE_EVIDENCE',
     );
   });
+
+  it.each([
+    [
+      'screenshot',
+      'screenshots/badges-375x812.png',
+      'screenshots/badges-375x812.txt',
+    ],
+    ['video', 'videos/achievements.webm', 'videos/achievements.txt'],
+    ['trace', 'traces/achievements.zip', 'traces/achievements.txt'],
+  ])(
+    'rejects a wrong-extension file masquerading as %s evidence',
+    async (_kind, validPath, invalidPath) => {
+      const root = await createFixture();
+      await unlink(join(root, validPath));
+      await writeFile(join(root, invalidPath), 'non-empty but wrong type');
+
+      await expect(finalizeAchievements(root)).rejects.toThrow(
+        'ACHIEVEMENTS_REQUIRED_EVIDENCE_MISSING',
+      );
+    },
+  );
 
   it('rejects dirty, non-local, or malformed source metadata', async () => {
     const baseline = await createFixture();

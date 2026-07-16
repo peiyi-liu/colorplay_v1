@@ -234,6 +234,7 @@ const assertRelativePathSafe = (root, path) => {
 export async function assertEvidenceSafe({ evidencePaths, root, tracePaths }) {
   const traceSet = new Set(tracePaths);
   for (const path of evidencePaths) {
+    const relativePath = assertRelativePathSafe(root, path);
     const source = await readFile(path);
     let sensitive;
     if (traceSet.has(path)) {
@@ -246,9 +247,7 @@ export async function assertEvidenceSafe({ evidencePaths, root, tracePaths }) {
       sensitive = containsSensitiveValue(source);
     }
     if (sensitive) throw new Error('EVIDENCE_SENSITIVE');
-    if (
-      containsSensitiveValue(Buffer.from(assertRelativePathSafe(root, path)))
-    ) {
+    if (containsSensitiveValue(Buffer.from(relativePath))) {
       throw new Error('EVIDENCE_SENSITIVE');
     }
   }

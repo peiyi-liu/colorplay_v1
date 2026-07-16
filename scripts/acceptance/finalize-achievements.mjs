@@ -161,6 +161,9 @@ export async function finalizeAchievements(runDirectory) {
     screenshots.length !== 3 ||
     videos.length !== 1 ||
     traces.length !== 1 ||
+    !screenshots.every((path) => path.endsWith('.png')) ||
+    !videos.every((path) => path.endsWith('.webm')) ||
+    !traces.every((path) => path.endsWith('.zip')) ||
     !requiredScreenshotNames.every((name) =>
       screenshots.some((path) => path.includes(name)),
     )
