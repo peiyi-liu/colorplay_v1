@@ -14,15 +14,27 @@ export const AuthContext = createContext<AuthContextValue | undefined>(
   undefined,
 );
 
-const isUserScopedQuery = (query: Query) =>
-  query.queryKey[0] === 'profile' && query.queryKey[1] === 'me';
+const isUserScopedQuery = (query: Query) => {
+  const [scope, resource] = query.queryKey;
+  return (
+    (scope === 'profile' && resource === 'me') ||
+    scope === 'economy' ||
+    scope === 'inventory' ||
+    scope === 'quiz'
+  );
+};
 
 export async function clearUserScopedQueries(
   queryClient: QueryClient,
 ): Promise<void> {
   const filters = { predicate: isUserScopedQuery } as const;
-  await queryClient.cancelQueries(filters);
-  queryClient.removeQueries(filters);
+  try {
+    await queryClient.cancelQueries(filters);
+  } catch {
+    // Cache removal is the security boundary even if cancellation reports an error.
+  } finally {
+    queryClient.removeQueries(filters);
+  }
 }
 
 export function useAuth(): AuthContextValue {

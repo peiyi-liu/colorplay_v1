@@ -114,12 +114,14 @@ describe('ShopPage', () => {
     });
 
     await user.click(purchase);
-    expect(
-      screen.getByRole('dialog', { name: '購買「旅行蛙」？' }),
-    ).toBeVisible();
+    const dialog = screen.getByRole('dialog', { name: '購買「旅行蛙」？' });
+    expect(dialog).toBeVisible();
+    expect(dialog).toHaveAttribute('aria-modal', 'true');
+    expect(screen.getByRole('button', { name: '取消' })).toHaveFocus();
     expect(screen.getByText('將扣除 250 Token。')).toBeVisible();
     await user.click(screen.getByRole('button', { name: '取消' }));
     expect(screen.queryByRole('dialog')).toBeNull();
+    expect(purchase).toHaveFocus();
 
     await user.click(purchase);
     await user.keyboard('{Escape}');

@@ -337,6 +337,13 @@ describe('AuthBootstrap', () => {
     view.queryClient.setQueryData(['profile', 'me'], {
       displayName: 'student.one',
     });
+    view.queryClient.setQueryData(['economy', 'summary'], {
+      tokenBalance: 250,
+    });
+    view.queryClient.setQueryData(['inventory', 'blooks'], { items: [] });
+    view.queryClient.setQueryData(['quiz', 'session', 'session-id'], {
+      totalScore: 1_000,
+    });
     view.queryClient.setQueryData(['catalog', 'public'], 'retained');
     const cancelQueries = vi.spyOn(view.queryClient, 'cancelQueries');
     const removeQueries = vi.spyOn(view.queryClient, 'removeQueries');
@@ -354,6 +361,15 @@ describe('AuthBootstrap', () => {
     expect(screen.getByLabelText('Auth 狀態')).toHaveTextContent('anonymous');
     expect(screen.getByLabelText('Auth session')).toHaveTextContent('none');
     expect(view.queryClient.getQueryData(['profile', 'me'])).toBeUndefined();
+    expect(
+      view.queryClient.getQueryData(['economy', 'summary']),
+    ).toBeUndefined();
+    expect(
+      view.queryClient.getQueryData(['inventory', 'blooks']),
+    ).toBeUndefined();
+    expect(
+      view.queryClient.getQueryData(['quiz', 'session', 'session-id']),
+    ).toBeUndefined();
     expect(view.queryClient.getQueryData(['catalog', 'public'])).toBe(
       'retained',
     );
@@ -384,6 +400,46 @@ describe('AuthBootstrap', () => {
     profileRequest.resolve({ displayName: 'student.one' });
     await pendingProfile;
     expect(view.queryClient.getQueryData(['profile', 'me'])).toBeUndefined();
+  });
+
+  it('clears user-scoped data when the provider reports an external signOut', async () => {
+    const harness = createRepositoryHarness(
+      Promise.resolve(authenticatedSession),
+    );
+    const view = renderBootstrap(harness.repository);
+    await screen.findByText('authenticated');
+    view.queryClient.setQueryData(['economy', 'summary'], {
+      tokenBalance: 250,
+    });
+
+    act(() => {
+      harness.emit(null);
+    });
+
+    expect(await screen.findByText('anonymous')).toBeVisible();
+    expect(
+      view.queryClient.getQueryData(['economy', 'summary']),
+    ).toBeUndefined();
+  });
+
+  it('clears user-scoped data before exposing a different provider account', async () => {
+    const harness = createRepositoryHarness(
+      Promise.resolve(authenticatedSession),
+    );
+    const view = renderBootstrap(harness.repository);
+    await screen.findByText(authenticatedSession.email);
+    view.queryClient.setQueryData(['inventory', 'blooks'], {
+      items: ['private-item'],
+    });
+
+    act(() => {
+      harness.emit(replacementSession);
+    });
+
+    expect(await screen.findByText(replacementSession.email)).toBeVisible();
+    expect(
+      view.queryClient.getQueryData(['inventory', 'blooks']),
+    ).toBeUndefined();
   });
 
   it('preserves authenticated state when signOut rejects', async () => {

@@ -134,7 +134,7 @@ function renderQuiz(
     );
   }
   render(<RouterProvider router={router} />, { wrapper: Wrapper });
-  return router;
+  return { client, router };
 }
 
 describe('QuizSessionPage', () => {
@@ -300,7 +300,7 @@ describe('QuizSessionPage', () => {
     const mock = repositoryMock();
     mock.createSession.mockResolvedValue(session([question(1)]));
     mock.getSession.mockResolvedValue(session([question(1)]));
-    const router = renderQuiz(
+    const { router } = renderQuiz(
       mock.repository,
       `/app/quiz/new?template=${templateId}`,
     );
@@ -324,7 +324,7 @@ describe('QuizSessionPage', () => {
       .mockRejectedValueOnce(new QuizRepositoryError('UNAVAILABLE'))
       .mockResolvedValueOnce(session([question(1)]));
     mock.getSession.mockResolvedValue(session([question(1)]));
-    const router = renderQuiz(
+    const { router } = renderQuiz(
       mock.repository,
       `/app/quiz/new?template=${templateId}`,
     );
@@ -339,6 +339,49 @@ describe('QuizSessionPage', () => {
     expect(mock.createSession).toHaveBeenCalledTimes(2);
     expect(mock.createSession.mock.calls[0]?.[1]).toBe(
       mock.createSession.mock.calls[1]?.[1],
+    );
+  });
+
+  it('refreshes the user economy before showing a finalized result', async () => {
+    const mock = repositoryMock();
+    const lastQuestion = question(1, {
+      answerStatus: 'correct',
+      correctOptionId: '33000000-0000-0000-0000-000000000001',
+      explanation: 'RGB 使用三色光。',
+      scoreDelta: 1_000,
+      selectedOptionId: '33000000-0000-0000-0000-000000000001',
+    });
+    mock.getSession.mockResolvedValue(session([lastQuestion]));
+    mock.finalizeSession.mockResolvedValue({
+      answeredCount: 1,
+      completedAt: '2099-07-14T12:01:00.000Z',
+      correctCount: 1,
+      gameRulesVersion: '2026-07-mvp-1',
+      questionCount: 1,
+      rewardRatePercent: 100,
+      sessionId,
+      status: 'completed',
+      tokensAwarded: 250,
+      totalScore: 1_000,
+      xpAwarded: 750,
+    });
+    const { client, router } = renderQuiz(mock.repository);
+    const invalidateQueries = vi.spyOn(client, 'invalidateQueries');
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: '結算並查看結果' }),
+    );
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe(
+        `/app/quiz/${sessionId}/result`,
+      );
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['economy', 'summary'],
+    });
+    expect(mock.finalizeSession.mock.invocationCallOrder[0]).toBeLessThan(
+      invalidateQueries.mock.invocationCallOrder[0] ?? 0,
     );
   });
 });

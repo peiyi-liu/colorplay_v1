@@ -69,7 +69,6 @@ test('Game Economy v2 phase gate', async ({ browserName, page }, testInfo) => {
   );
   await expect(page.getByText('+750 XP')).toBeVisible();
   await expect(page.getByText('+250 Token')).toBeVisible();
-  await page.reload();
   await expect(page.getByText('Level 2')).toBeVisible();
   await expect(page.getByText('250 / 500 XP')).toBeVisible();
   await expect(page.getByText('250 Token')).toBeVisible();

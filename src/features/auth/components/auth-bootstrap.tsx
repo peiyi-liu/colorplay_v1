@@ -40,7 +40,12 @@ export function AuthBootstrap({
   const queryClient = useQueryClient();
   const bufferedNullDuringSignOut = useRef(false);
   const signOutPending = useRef(false);
+  const currentUserId = useRef<string | null>(null);
   const [state, setState] = useState<AuthState>(loadingState);
+  const commitState = useCallback((nextState: AuthState) => {
+    currentUserId.current = nextState.session?.userId ?? null;
+    setState(nextState);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -52,14 +57,15 @@ export function AuthBootstrap({
     const settle = (nextState: AuthState) => {
       if (!active) return;
       if (loadingWindowElapsed) {
-        setState(nextState);
+        commitState(nextState);
       } else {
+        currentUserId.current = nextState.session?.userId ?? null;
         pendingState = nextState;
       }
     };
     const loadingTimer = setTimeout(() => {
       loadingWindowElapsed = true;
-      if (pendingState) setState(pendingState);
+      if (pendingState) commitState(pendingState);
     }, bootstrapLoadingMinimumMs);
     const cleanup = () => {
       active = false;
@@ -72,6 +78,7 @@ export function AuthBootstrap({
     };
 
     try {
+      let authEventVersion = 0;
       unsubscribe = repository.onAuthStateChange((session) => {
         if (!active) return;
         if (signOutPending.current && session === null) {
@@ -79,6 +86,18 @@ export function AuthBootstrap({
           return;
         }
         authEventObserved = true;
+        const eventVersion = ++authEventVersion;
+        const previousUserId = currentUserId.current;
+        const userChanged =
+          previousUserId !== null && session?.userId !== previousUserId;
+        if (session === null || userChanged) {
+          void clearUserScopedQueries(queryClient).then(() => {
+            if (active && eventVersion === authEventVersion) {
+              settle(stateFromSession(session));
+            }
+          });
+          return;
+        }
         settle(stateFromSession(session));
       });
     } catch {
@@ -102,14 +121,20 @@ export function AuthBootstrap({
     }
 
     return cleanup;
-  }, [repository]);
+  }, [commitState, queryClient, repository]);
 
   const signIn = useCallback(
     async (input: SignInInput) => {
       const session = await repository.signIn(input);
-      setState(stateFromSession(session));
+      if (
+        currentUserId.current !== null &&
+        currentUserId.current !== session.userId
+      ) {
+        await clearUserScopedQueries(queryClient);
+      }
+      commitState(stateFromSession(session));
     },
-    [repository],
+    [commitState, queryClient, repository],
   );
 
   const signOut = useCallback(async () => {
@@ -118,7 +143,7 @@ export function AuthBootstrap({
     try {
       await repository.signOut();
       await clearUserScopedQueries(queryClient);
-      setState(anonymousState);
+      commitState(anonymousState);
     } catch (signOutError) {
       if (!readFlag(bufferedNullDuringSignOut)) throw signOutError;
 
@@ -127,7 +152,7 @@ export function AuthBootstrap({
         recoveredSession = await repository.getSession();
       } catch {
         await clearUserScopedQueries(queryClient);
-        setState(anonymousState);
+        commitState(anonymousState);
         return;
       }
 
@@ -137,12 +162,12 @@ export function AuthBootstrap({
       }
 
       await clearUserScopedQueries(queryClient);
-      setState(anonymousState);
+      commitState(anonymousState);
     } finally {
       bufferedNullDuringSignOut.current = false;
       signOutPending.current = false;
     }
-  }, [queryClient, repository]);
+  }, [commitState, queryClient, repository]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

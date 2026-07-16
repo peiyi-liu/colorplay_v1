@@ -10,6 +10,7 @@ import {
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { parsePublicEnv } from '../../../lib/config/public-env';
 import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
+import { economyQueryKey } from '../../rewards/hooks/use-economy-summary';
 import {
   createQuizRepository,
   QuizRepositoryError,
@@ -227,6 +228,7 @@ export function QuizSessionPage({
     if (displayedQuestion.position === session.questionCount) {
       try {
         await finalizeMutation.mutateAsync(session.sessionId);
+        await queryClient.invalidateQueries({ queryKey: economyQueryKey });
         void navigate(`/app/quiz/${session.sessionId}/result`);
       } catch (error) {
         setActionError({

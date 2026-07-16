@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import {
@@ -39,6 +39,30 @@ export function ShopPage({
     useState<BlookInventoryItem>();
   const [announcement, setAnnouncement] = useState<string>();
   const [actionError, setActionError] = useState<string>();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const purchaseTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!selectedPurchase) return;
+    const dialog = dialogRef.current;
+    const purchaseTrigger = purchaseTriggerRef.current;
+    if (!dialog) return;
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute('open', '');
+    }
+    cancelButtonRef.current?.focus();
+    return () => {
+      if (dialog.open && typeof dialog.close === 'function') {
+        dialog.close();
+      } else {
+        dialog.removeAttribute('open');
+      }
+      purchaseTrigger?.focus();
+    };
+  }, [selectedPurchase]);
 
   useEffect(() => {
     if (!selectedPurchase || purchase.isPending) return;
@@ -138,9 +162,10 @@ export function ShopPage({
                   aria-label={`購買 ${item.name}，${String(item.costTokens)} Token`}
                   className="primary-action"
                   disabled={equip.isPending || purchase.isPending}
-                  onClick={() => {
+                  onClick={(event) => {
                     setActionError(undefined);
                     setAnnouncement(undefined);
+                    purchaseTriggerRef.current = event.currentTarget;
                     setSelectedPurchase(item);
                   }}
                   type="button"
@@ -165,6 +190,7 @@ export function ShopPage({
       {selectedPurchase ? (
         <dialog
           aria-labelledby="purchase-dialog-title"
+          aria-modal="true"
           className="purchase-dialog"
           onCancel={(event) => {
             event.preventDefault();
@@ -176,7 +202,7 @@ export function ShopPage({
               setSelectedPurchase(undefined);
             }
           }}
-          open
+          ref={dialogRef}
         >
           <h2 id="purchase-dialog-title">購買「{selectedPurchase.name}」？</h2>
           <p>將扣除 {String(selectedPurchase.costTokens)} Token。</p>
@@ -187,6 +213,7 @@ export function ShopPage({
               onClick={() => {
                 setSelectedPurchase(undefined);
               }}
+              ref={cancelButtonRef}
               type="button"
             >
               取消
