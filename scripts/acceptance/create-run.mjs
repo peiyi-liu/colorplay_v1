@@ -5,7 +5,10 @@ import { isAbsolute, join, relative, resolve } from 'node:path';
 import process from 'node:process';
 import { pathToFileURL, URL } from 'node:url';
 import { promisify } from 'node:util';
-import { countAcceptanceIds } from '../verify/count-acceptance.mjs';
+import {
+  countAcceptanceIds,
+  EXPECTED_ACCEPTANCE_COUNT,
+} from '../verify/count-acceptance.mjs';
 
 const execFileAsync = promisify(execFile);
 const evidenceDirectories = [
@@ -609,7 +612,7 @@ export async function createEvidenceRun(options) {
     'utf8',
   );
   const acceptanceIds = countAcceptanceIds(acceptanceMarkdown);
-  if (acceptanceIds.length !== 84) {
+  if (acceptanceIds.length !== EXPECTED_ACCEPTANCE_COUNT) {
     throw new Error(
       `EVIDENCE_ACCEPTANCE_COUNT_MISMATCH:${String(acceptanceIds.length)}`,
     );

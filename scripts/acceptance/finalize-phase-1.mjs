@@ -9,9 +9,10 @@ import {
   derivePhaseOneDecision,
   validatePlaywrightReport,
 } from './phase-1-policy.mjs';
-import { countAcceptanceIds } from '../verify/count-acceptance.mjs';
-
-const expectedAcceptanceCount = 84;
+import {
+  countAcceptanceIds,
+  EXPECTED_ACCEPTANCE_COUNT,
+} from '../verify/count-acceptance.mjs';
 
 const requiredReports = [
   'reports/install.log',
@@ -177,7 +178,7 @@ async function main() {
     'utf8',
   );
   const acceptanceIds = countAcceptanceIds(acceptanceMarkdown);
-  if (acceptanceIds.length !== expectedAcceptanceCount) {
+  if (acceptanceIds.length !== EXPECTED_ACCEPTANCE_COUNT) {
     throw new Error('PHASE_1_ACCEPTANCE_COUNT_MISMATCH');
   }
 
@@ -313,7 +314,7 @@ async function main() {
     status_counts: {
       FAIL: 0,
       'NOT APPLICABLE': 0,
-      'NOT VERIFIED': expectedAcceptanceCount - passCount,
+      'NOT VERIFIED': EXPECTED_ACCEPTANCE_COUNT - passCount,
       PASS: passCount,
     },
   };

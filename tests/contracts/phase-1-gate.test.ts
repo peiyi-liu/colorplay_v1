@@ -101,7 +101,8 @@ describe('Phase 1 acceptance source contract', () => {
     expect(policy).toContain('AC-UI-010');
     expect(policy).toContain('AC-UI-012');
     expect(policy).toContain('Outside Phase 1');
-    expect(finalizer).toContain('84');
+    expect(finalizer).toContain('EXPECTED_ACCEPTANCE_COUNT');
+    expect(finalizer).not.toMatch(/\b84\b/u);
   });
 
   it('configures full E2E JSON output while preserving a human-readable reporter', async () => {
@@ -134,9 +135,10 @@ describe('Phase 1 acceptance source contract', () => {
     ]);
 
     expect(readme).toContain('pnpm acceptance');
-    expect(readme).toContain('Phase 1');
-    expect(readme).toContain('NOT VERIFIED');
-    expect(deployment).toContain('Steps 5–8');
+    expect(readme).toContain('Phase 8');
+    expect(readme).toContain('Foundation Task 16');
+    expect(deployment).toContain('Phase 8');
+    expect(deployment).toContain('NOT VERIFIED');
     expect(deployment).toContain('authentication');
     expect(deployment).toContain('must not');
   });

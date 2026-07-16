@@ -18,9 +18,27 @@ import {
   createEvidenceRun,
   type CreateEvidenceRunOptions,
 } from '../../scripts/acceptance/create-run.mjs';
-import { countAcceptanceIds } from '../../scripts/verify/count-acceptance.mjs';
+import {
+  countAcceptanceIds,
+  EXPECTED_ACCEPTANCE_COUNT,
+} from '../../scripts/verify/count-acceptance.mjs';
 
 const execFileAsync = promisify(execFile);
+
+const acceptanceIdRange = (prefix: string, start: number, end: number) =>
+  Array.from(
+    { length: end - start + 1 },
+    (_, index) => `AC-${prefix}-${String(start + index).padStart(3, '0')}`,
+  );
+
+const phaseZeroAcceptanceIds = [
+  ...acceptanceIdRange('ACH', 1, 5),
+  ...acceptanceIdRange('PROG', 1, 6),
+  ...acceptanceIdRange('ASN', 1, 6),
+  ...acceptanceIdRange('LIVE', 1, 12),
+  ...acceptanceIdRange('ENV', 5, 8),
+  ...acceptanceIdRange('MIG', 1, 5),
+];
 
 async function waitForServer(server: ChildProcess, url: string) {
   for (let attempt = 0; attempt < 50; attempt += 1) {
@@ -89,7 +107,13 @@ describe('acceptance metadata', () => {
       'utf8',
     );
 
-    expect(countAcceptanceIds(markdown)).toHaveLength(84);
+    const acceptanceIds = countAcceptanceIds(markdown);
+    expect(EXPECTED_ACCEPTANCE_COUNT).toBe(122);
+    expect(phaseZeroAcceptanceIds).toHaveLength(38);
+    expect(acceptanceIds).toHaveLength(EXPECTED_ACCEPTANCE_COUNT);
+    expect(acceptanceIds).toEqual(
+      expect.arrayContaining(phaseZeroAcceptanceIds),
+    );
   });
 
   it('keeps the package manifest count synchronized', async () => {
@@ -101,8 +125,8 @@ describe('acceptance metadata', () => {
     };
 
     expect(manifest).toMatchObject({
-      acceptance_criteria: 84,
-      unique_acceptance_criteria: 84,
+      acceptance_criteria: EXPECTED_ACCEPTANCE_COUNT,
+      unique_acceptance_criteria: EXPECTED_ACCEPTANCE_COUNT,
     });
   });
 
@@ -218,7 +242,7 @@ describe('acceptance metadata', () => {
         status_counts: {
           FAIL: 0,
           'NOT APPLICABLE': 0,
-          'NOT VERIFIED': 84,
+          'NOT VERIFIED': EXPECTED_ACCEPTANCE_COUNT,
           PASS: 0,
         },
         supabase_environment: options.supabaseEnvironment,
@@ -227,7 +251,7 @@ describe('acceptance metadata', () => {
       expect(manifest.acceptance.map(({ id }) => id)).toEqual(
         countAcceptanceIds(markdown),
       );
-      expect(manifest.acceptance).toHaveLength(84);
+      expect(manifest.acceptance).toHaveLength(EXPECTED_ACCEPTANCE_COUNT);
       expect(
         manifest.acceptance.every(
           ({ evidence_files, status }) =>
@@ -889,7 +913,7 @@ describe('acceptance metadata', () => {
         { cwd: process.cwd() },
       );
       expect(countResult.stderr).toBe('');
-      expect(countResult.stdout).toBe('84\n');
+      expect(countResult.stdout).toBe(`${String(EXPECTED_ACCEPTANCE_COUNT)}\n`);
 
       const runId = 'task-6-shell-deterministic';
       const runResult = await execFileAsync(
@@ -922,7 +946,7 @@ describe('acceptance metadata', () => {
         ),
       ).toMatchObject({
         release_decision: 'BLOCKED',
-        status_counts: { 'NOT VERIFIED': 84, PASS: 0 },
+        status_counts: { 'NOT VERIFIED': EXPECTED_ACCEPTANCE_COUNT, PASS: 0 },
       });
     } finally {
       await rm(temporaryRoot, { force: true, recursive: true });

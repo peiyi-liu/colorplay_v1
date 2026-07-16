@@ -1,12 +1,12 @@
 {
   "package_name": "ColorPlay React + Supabase Development Specification Package",
   "package_version": "2.0.0",
-  "generated_at": "2026-07-13T21:36:44+08:00",
-  "markdown_files": 18,
-  "acceptance_criteria": 84,
-  "unique_acceptance_criteria": 84,
+  "generated_at": "2026-07-16T07:05:45.396Z",
+  "markdown_files": 28,
+  "acceptance_criteria": 122,
+  "unique_acceptance_criteria": 122,
   "ui_acceptance_criteria": 15,
-  "total_bytes_before_manifest": 131981,
+  "total_bytes_before_manifest": 300831,
   "real_device_required_criteria": [
     "AC-UI-010",
     "AC-UI-012"
@@ -14,93 +14,143 @@
   "files": [
     {
       "path": "AGENTS.md",
-      "size_bytes": 11002,
-      "sha256": "93a0ea02facfa41a6641faf505fb77e99ed0ee20f93147892c2448952febe46c"
+      "sha256": "667ec635a38e780f7fc80a2a5f71a29a045a0de69e2215ff6d849dabc52d63bc",
+      "size_bytes": 8039
     },
     {
       "path": "README.md",
-      "size_bytes": 2042,
-      "sha256": "a71bc71a3b0797293adcfd0a25408e56cc6427f519048552daa58455a0053c2c"
+      "sha256": "97438a970953726a78c43620bb0e1bcf128f561411647c3b00debd5858a139a9",
+      "size_bytes": 4497
     },
     {
       "path": "acceptance/ACCEPTANCE_CRITERIA.md",
-      "size_bytes": 32044,
-      "sha256": "56a9d8e5c99287e870bead82c0158d147809da14c9b2fe796efcc6fbc25b14a2"
+      "sha256": "08d04adac396967561b20a07218914c3197aba9aeb86fe2156079e1e8f948051",
+      "size_bytes": 47507
     },
     {
       "path": "acceptance/EVIDENCE_TEMPLATE.md",
-      "size_bytes": 5994,
-      "sha256": "644f5ad4613c10d6a3abb41aef7f2bd35ddd9d9b7a8003a8d12ed74ad795d15e"
+      "sha256": "644f5ad4613c10d6a3abb41aef7f2bd35ddd9d9b7a8003a8d12ed74ad795d15e",
+      "size_bytes": 5994
+    },
+    {
+      "path": "docs/adr/0001-playable-path-reprioritization.md",
+      "sha256": "730da561d45a4839f457a4a4aa1446ad2e7c7a41b5c413247be7f038b808ba75",
+      "size_bytes": 2430
+    },
+    {
+      "path": "docs/adr/0002-colorplay-new-integration-and-production-environments.md",
+      "sha256": "5366a3db2d4d4114ca9b4ad1f046dbfbb9cdeb4b6b102de209381934895bbd6e",
+      "size_bytes": 3979
+    },
+    {
+      "path": "docs/deployment/environment-matrix.md",
+      "sha256": "91d60c2eff09925e15139232420bdefe6f8c5d4f165da5da43e9c76df2d92446",
+      "size_bytes": 5547
+    },
+    {
+      "path": "docs/deployment/production-readiness.md",
+      "sha256": "bcabdfecd48bcded1ba280ca84a88e14d7280e273d7fca38df7b4be2b2d3c9c2",
+      "size_bytes": 8633
+    },
+    {
+      "path": "docs/deployment/vercel.md",
+      "sha256": "b28d6ace2d09ec84a5555b516e00e707f58b54784f4a7e3d20fe60358f767db6",
+      "size_bytes": 5295
+    },
+    {
+      "path": "docs/migration/colorplay-new-content-ledger.md",
+      "sha256": "b18174f74f28baab6378af048a4244d8a1055cfe991d91668879db73484144cd",
+      "size_bytes": 6848
+    },
+    {
+      "path": "docs/migration/colorplay-new-feature-parity.md",
+      "sha256": "994a301d11a743a4a965610e323ca9aef6384c15c5b6fe0fba5b83f39094cc92",
+      "size_bytes": 11200
+    },
+    {
+      "path": "docs/migration/legacy-supabase-inventory.md",
+      "sha256": "1f926be5be6fce5459aff0dc09adcdfeacd54e674c73e173871ed2e02cadc229",
+      "size_bytes": 4169
     },
     {
       "path": "docs/superpowers/specs/2026-07-13-colorplay-platform-design.md",
-      "size_bytes": 2912,
-      "sha256": "eb7ff69710e869f2a974f37b280932682edac891109d21c212a02cd714bfed36"
+      "sha256": "eb7ff69710e869f2a974f37b280932682edac891109d21c212a02cd714bfed36",
+      "size_bytes": 2912
+    },
+    {
+      "path": "docs/superpowers/specs/2026-07-13-colorplay-platform-foundation-design.md",
+      "sha256": "41a6ef4a5a080fb5fc7af098d02c090519cf732aac842f333ca913a0da6ead7c",
+      "size_bytes": 38703
+    },
+    {
+      "path": "docs/superpowers/specs/2026-07-15-colorplay-new-integration-and-production-design.md",
+      "sha256": "d268a13e5b2afac68c968f041c6f33c53e8d1e04291dd269ce594585c02126da",
+      "size_bytes": 30251
     },
     {
       "path": "spec/00-project-charter.md",
-      "size_bytes": 5051,
-      "sha256": "1d082c275ba7a6cce3473c7f8c7b8f09ac6db1d53f9e3be6a92072a8d217d3b2"
+      "sha256": "1d082c275ba7a6cce3473c7f8c7b8f09ac6db1d53f9e3be6a92072a8d217d3b2",
+      "size_bytes": 5051
     },
     {
       "path": "spec/01-user-roles-and-flows.md",
-      "size_bytes": 5993,
-      "sha256": "7f1b0a23c6e47cf63fe370720782efd5c6b64352b1d3728ce48243f3fe190408"
+      "sha256": "b3582542a63af0b721511bf6f114b74fabb621ed3b12aadb87c65ab3194163d3",
+      "size_bytes": 14679
     },
     {
       "path": "spec/02-system-architecture.md",
-      "size_bytes": 5915,
-      "sha256": "f3424034a18a1c67376c8f68b7deb8b32aba522a6b335b6ec43c845f728e40f2"
+      "sha256": "7d037f7feacbec4e4d44a563111bb0e58a063c7e2a48bcf4c26318ba7860e2ab",
+      "size_bytes": 11420
     },
     {
       "path": "spec/03-data-model-and-rls.md",
-      "size_bytes": 7254,
-      "sha256": "5bf548ab490d62a56d9fb4ba8e1abbdc74ab51970d1c820607022f4835fd48e4"
+      "sha256": "56f98b967955a4fbc4de908c2661075b946c6e2e49ca54bf4efbd103528ef48a",
+      "size_bytes": 14019
     },
     {
       "path": "spec/04-security-and-privacy.md",
-      "size_bytes": 5212,
-      "sha256": "f0eb6af3733f4de0928b9bc7dd30fdda190dd8282692c31dc7f0b57c5ad4f6bd"
+      "sha256": "b527c29c83e3dbd2ac1bda88be8c0c7671a7fd8dc66a35611b324b3fa6575c51",
+      "size_bytes": 8140
     },
     {
       "path": "spec/05-game-mechanics.md",
-      "size_bytes": 5631,
-      "sha256": "fec77868e47214a444e284664b5976bd133e80363eb299cbf8ab35b09a77dcff"
+      "sha256": "f7d206dc0e21cc27e78bc203952dabe36d7117bc47f61ad3ae96567885af4614",
+      "size_bytes": 10798
     },
     {
       "path": "spec/06-content-and-question-bank.md",
-      "size_bytes": 4530,
-      "sha256": "8a76bafee2bf184b50eb94ffcd1b2e9ddab90ec1a00a3365e633a22b34293239"
+      "sha256": "8ea35138058158af14661b337711035363eef15e4c2c25602534346c3664b8a3",
+      "size_bytes": 7114
     },
     {
       "path": "spec/07-ui-visual-system.md",
-      "size_bytes": 16913,
-      "sha256": "27ebb0d3af61c6482e9a03ded84d1dce7a24ee29ee12b674b6648efd67b4347a"
+      "sha256": "27ebb0d3af61c6482e9a03ded84d1dce7a24ee29ee12b674b6648efd67b4347a",
+      "size_bytes": 16913
     },
     {
       "path": "spec/08-testing-and-evidence.md",
-      "size_bytes": 11037,
-      "sha256": "43ce3bcae112ae1ea0221561901a9bab1add7804c150c8b6e58661b58bec9ba3"
+      "sha256": "b2a5c6854d3fe6bb549e5690ae964a132c860f058e79dc275361d09c3e222fbe",
+      "size_bytes": 13024
     },
     {
       "path": "spec/09-nonfunctional-requirements.md",
-      "size_bytes": 3595,
-      "sha256": "f5e69707492564f752caae61e734a9bcac4be880552d849ac9fac2bd4e0fd0af"
+      "sha256": "f5e69707492564f752caae61e734a9bcac4be880552d849ac9fac2bd4e0fd0af",
+      "size_bytes": 3595
     },
     {
       "path": "spec/10-migration-roadmap.md",
-      "size_bytes": 3108,
-      "sha256": "eba4acb1a7591fbd3cc94bb467953ad5f48f37199a8d30866163015b907602a3"
+      "sha256": "c3f4b1bcb5c966a1d4aa943692b96433a98d15662ac1e0b2030b134b1253114f",
+      "size_bytes": 5892
     },
     {
       "path": "spec/11-reference-standards.md",
-      "size_bytes": 2473,
-      "sha256": "491b01ce7c40cb12f6475a088764b734761bb292be723bfea4cd9683dbe56773"
+      "sha256": "491b01ce7c40cb12f6475a088764b734761bb292be723bfea4cd9683dbe56773",
+      "size_bytes": 2473
     },
     {
       "path": "spec/README.md",
-      "size_bytes": 1275,
-      "sha256": "88b230282529cbc80d2bd820a0132b904350f2aa1f4c921fd8beea253621ce26"
+      "sha256": "cbc2e969a25aeb2fdb92bfcaf71c7523559fcb0a44efc17ce71ba2f3240c8ead",
+      "size_bytes": 1709
     }
   ]
 }

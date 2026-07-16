@@ -488,7 +488,7 @@
 
 **Required evidence:** Before/after ID set comparison proving the original 84 are unchanged, focused contract tests, exact count output `122`, generated manifest diff, and `git diff --check`. No acceptance artifact run.
 
-- [ ] **Step 1: Change the tests first and verify failure**
+- [x] **Step 1: Change the tests first and verify failure**
 
   Update focused expectations from 84 to `EXPECTED_ACCEPTANCE_COUNT`, assert the constant is 122, and assert all 38 exact new IDs are present. Update the phase-gate contract to reject a finalizer that embeds the superseded count.
 
@@ -500,11 +500,11 @@
 
   Expected failure: acceptance metadata still has 84 IDs and the scripts do not export/use the new centralized count.
 
-- [ ] **Step 2: Add all criteria in the established acceptance format**
+- [x] **Step 2: Add all criteria in the established acceptance format**
 
   Each criterion must state Blocking status, precondition, action, observable expected result, and exact evidence class. `AC-LIVE-012` uses the already approved initial staging profile rather than inventing a scale claim: one host, two active students, one outsider, at least 30 answer/finalize samples, answer p95 at or below 800 ms, finalize p95 at or below 1,000 ms, zero lost/duplicate authoritative answers, and zero outsider channel access. Phase 7 may tighten capacity through a separately approved specification change. Environment and migration criteria distinguish documented design from actually executed hosted proof.
 
-- [ ] **Step 3: Centralize count enforcement and regenerate the manifest**
+- [x] **Step 3: Centralize count enforcement and regenerate the manifest**
 
   Export `EXPECTED_ACCEPTANCE_COUNT = 122` from the counter module and declaration. Import it in both acceptance scripts. Keep duplicate-ID rejection. Run the Task 1 generator only after all normative acceptance edits are complete.
 
@@ -514,7 +514,7 @@
 
   Expected success: `DOCUMENT_MANIFEST.json` is regenerated from the discovered source files and reports 122 acceptance criteria without manual count edits.
 
-- [ ] **Step 4: Verify success and old-ID preservation**
+- [x] **Step 4: Verify success and old-ID preservation**
 
   ```bash
   test "$(pnpm --silent acceptance:count)" = "122"
@@ -533,7 +533,7 @@
 
   Expected success: count is 122, all focused tests pass, the manifest is current, all original IDs still exist, and the diff check exits 0. Run this check before Task 7 is committed, as ordered above.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
   git add acceptance/ACCEPTANCE_CRITERIA.md scripts/verify/count-acceptance.mjs scripts/verify/count-acceptance.d.mts scripts/acceptance/create-run.mjs scripts/acceptance/finalize-phase-1.mjs tests/contracts/evidence-manifest.test.ts tests/contracts/phase-1-gate.test.ts DOCUMENT_MANIFEST.json

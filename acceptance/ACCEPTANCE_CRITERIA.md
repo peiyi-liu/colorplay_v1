@@ -1108,6 +1108,390 @@ Cold start 可另列，但不能刪除；若 cold start 影響學生流程需改
 
 ---
 
+# L. Achievements、Progress、Assignments、Live、Environment 與 Migration
+
+## AC-ACH-001：Achievement unlock 為後端權威 — Blocking
+
+**前置**：使用者尚未解鎖一項可由測試事件達成的 achievement。
+
+**操作**：完成 authoritative domain event，並另以 browser/SQL 嘗試直接寫 progress/unlock。
+
+**預期**：trusted transaction 建立唯一 unlock；直接 mutation 被 RLS/GRANT 拒絕，browser payload 不能指定成功結果。
+
+**證據**：D、N、L。
+
+## AC-ACH-002：Achievement unlock 冪等 — Blocking
+
+**前置**：同一 user、definition、trusted source 可被重送。
+
+**操作**：concurrently/repeatedly 送出相同 source/idempotency key 至少 10 次。
+
+**預期**：unlock row = 1、progress 不重複增加、badge 不重複；各次回傳同一 authoritative outcome。
+
+**證據**：D、N、L。
+
+## AC-ACH-003：Achievement progress 真實 — Blocking
+
+**前置**：建立已知 quiz、mistake、chapter、level、Live、Blook facts。
+
+**操作**：讀取九項 initial achievement progress，並與 fact tables/ledger 重算。
+
+**預期**：current/target/unlock 狀態逐項相等；空資料不產生假進度，client 修改不改 DB。
+
+**證據**：D、L、S。
+
+## AC-ACH-004：Hidden achievement rule 隱私 — Blocking
+
+**前置**：至少一項未解鎖 definition 設為 hidden。
+
+**操作**：檢查 student Query/RPC/network payload、bundle 與 source map。
+
+**預期**：不含 hidden threshold、server rule parameters 或可推導內部條件的欄位；教師/系統授權讀取仍受 policy 保護。
+
+**證據**：N、L。
+
+## AC-ACH-005：Client achievement tampering 被拒絕 — Blocking
+
+**前置**：Student 登入且未達成指定 achievement。
+
+**操作**：修改 local state/storage、提交偽造 count/unlocked flag、直接呼叫 table/RPC。
+
+**預期**：正式 progress/unlock 不變；越權回 safe permission/validation error，無 audit/ledger 副作用。
+
+**證據**：D、N、L。
+
+## AC-PROG-001：Review completion 以 current published version 計算 — Blocking
+
+**前置**：subtopic 有已知數量 current published cards，且含 `requires_recompletion` true/false 的新版本案例。
+
+**操作**：依序完成 cards、發布新版本並查 progress。
+
+**預期**：completion = completed current required versions／current published versions；explicit completion 才增加；無 cards 顯示 `—`。
+
+**證據**：D、S、L。
+
+## AC-PROG-002：Coverage 公式正確 — Blocking
+
+**前置**：current published question versions 與 completed/unfinished/old-version/Live answers 數量已知。
+
+**操作**：讀 subtopic/chapter coverage 並由 DB facts 重算。
+
+**預期**：coverage = answered current versions／current published versions；unfinished、old-version、Live 不進 numerator。
+
+**證據**：D、L、S。
+
+## AC-PROG-003：Accuracy／Mastery／Status 正確 — Blocking
+
+**前置**：建立可得到 mastery 0、1–59、60–79、80–100 的 deterministic facts。
+
+**操作**：查 server progress projection 並改 client percentage 重載。
+
+**預期**：accuracy = latest correct／answered；mastery = coverage × accuracy／100；status 分別為 `not_started/learning/developing/mastered`，client 無法改寫。
+
+**證據**：D、L、S。
+
+## AC-PROG-004：Content version 變更不竄改歷史 — Blocking
+
+**前置**：學生已有 old-version completed session，教師發布 current question/review version。
+
+**操作**：讀歷史 result 與 current progress denominator。
+
+**預期**：歷史 result/answer 不變；current progress 只按 current published versions，且保存 `2026-07-progress-1` 與 version set。
+
+**證據**：D、L。
+
+## AC-PROG-005：Remediation 不改原始成績 — Blocking
+
+**前置**：存在 open mistake 與原始 incorrect finalized answer。
+
+**操作**：完成 remediation、重送 finalize、之後再產生 current-version error。
+
+**預期**：原 answer/Quiz Score 不變；Token +0、XP 使用 20% practice rule；mistake 可 resolved/reopened；mastery 只由 qualifying finalized attempt 更新。
+
+**證據**：D、N、L、S。
+
+## AC-PROG-006：Teacher progress analytics 班級授權 — Blocking
+
+**前置**：Teacher A/B 各有 classroom，Student 只屬於 A。
+
+**操作**：A 查 own progress analytics；B 與 outsider 以 A 的 classroom/student ID 查詢。
+
+**預期**：A 的 metric 與 DB facts 一致；B/outsider 得 0 rows 或 permission denied，response 不洩漏存在性。
+
+**證據**：D、N、L。
+
+## AC-ASN-001：Assignment ownership — Blocking
+
+**前置**：Teacher A/B 各有 classroom。
+
+**操作**：A 建立 own assignment；B/Student 嘗試對 A classroom 建立或修改。
+
+**預期**：只有 A 成功；B/Student 被拒且無 partial row/audit success。
+
+**證據**：D、N、L。
+
+## AC-ASN-002：Assignment lifecycle 狀態合法 — Blocking
+
+**前置**：assignment 狀態涵蓋 draft/published/paused/archived。
+
+**操作**：執行合法與非法 transition，包括 archived 回 published。
+
+**預期**：只接受規格允許 transition；非法 transition 回 `CONFLICT/VALIDATION`，status/version 不變。
+
+**證據**：D、N、L。
+
+## AC-ASN-003：Attempt limit 並行防重 — Blocking
+
+**前置**：assignment attempt limit 已設定且學生接近上限。
+
+**操作**：concurrently start 超過剩餘次數的 attempts，並重送同一 idempotency key。
+
+**預期**：成功 attempt 不超過 limit；同 key 回同 attempt；無跳號造成額外正式次數。
+
+**證據**：D、N、L。
+
+## AC-ASN-004：Assignment completion 後端推導 — Blocking
+
+**前置**：assignment attempt 引用 in-progress/finalized quiz 或 Live session。
+
+**操作**：偽造 client completion/score，之後完成 authoritative session。
+
+**預期**：in-progress 不完成；偽造值被忽略/拒絕；finalize transaction 才依 passing rule 完成一次。
+
+**證據**：D、N、L、S。
+
+## AC-ASN-005：Deadline 與時區 — Blocking
+
+**前置**：availability/deadline 跨 `Asia/Taipei` 日期邊界，server UTC 已知。
+
+**操作**：deadline 前後提交，並修改 browser clock/timezone。
+
+**預期**：server UTC 決定可開始/提交；UI 顯示正確 Taipei 時間；client clock 不延長期限。
+
+**證據**：D、N、S、L。
+
+## AC-ASN-006：Assignment cross-class denial — Blocking
+
+**前置**：Student A/B 屬於不同 classroom。
+
+**操作**：A 以 B assignment/attempt/session ID 讀取、開始、提交或查結果。
+
+**預期**：全部拒絕或 0 rows；不洩漏 title、deadline、score、member 或 existence。
+
+**證據**：D、N、L。
+
+## AC-LIVE-001：Authenticated create／join — Blocking
+
+**前置**：Teacher 有 active classroom、Student 是 member、outsider/non-member 存在。
+
+**操作**：Teacher create Live；member 用有效 code join；anonymous/non-member/錯碼 join。
+
+**預期**：host/member 成功且唯一；code 只存 hash；anonymous/non-member/錯碼拒絕且不洩漏 session/classroom。
+
+**證據**：D、N、Q/T。
+
+## AC-LIVE-002：Private Realtime channel — Blocking
+
+**前置**：Live lobby 有 host、active participant、outsider。
+
+**操作**：三者 subscribe/send `live-session:<sessionId>`，Student 嘗試 host event。
+
+**預期**：host/participant 只有核准能力；outsider 無 subscribe/send；Student host transition 被 RLS 拒絕。
+
+**證據**：D、N、T。
+
+## AC-LIVE-003：Host transition 與 state version — Blocking
+
+**前置**：session 在每個可轉移 state，current `state_version` 已知。
+
+**操作**：host 執行合法 transition；Student/other teacher/舊 version 執行相同 command。
+
+**預期**：合法 command version +1；非 host 拒絕；stale version 回 conflict 且 state 不變。
+
+**證據**：D、N、L、Q/T。
+
+## AC-LIVE-004：Question payload 不含正解 — Blocking
+
+**前置**：Live question open，host/participants 已連線。
+
+**操作**：檢查 Query/RPC/Realtime/browser bundle/source map 至 feedback close 前。
+
+**預期**：Student payload 不含 correct option/index、explanation、individual answers 或可推導正解的欄位。
+
+**證據**：N、L、T。
+
+## AC-LIVE-005：Server deadline 防竄改 — Blocking
+
+**前置**：Live question 有 server open/deadline time。
+
+**操作**：deadline 前後提交，修改 browser clock/timer/elapsed，暫停 client 後補送。
+
+**預期**：server receipt/deadline 決定 correct/timeout；client time 不影響 response time、score 或 reward。
+
+**證據**：D、N、L。
+
+## AC-LIVE-006：Live answer idempotency — Blocking
+
+**前置**：participant/question 尚未作答。
+
+**操作**：相同 key 重送 10 次並並行送不同 key/option。
+
+**預期**：authoritative answer = 1；相同 key 回原結果；競爭 request 不覆寫；score/reward source 不重複。
+
+**證據**：D、N、L。
+
+## AC-LIVE-007：Refresh／Reconnect 恢復 — Blocking
+
+**前置**：host/participant 分別處於 lobby、question open、feedback。
+
+**操作**：refresh、斷 WebSocket、重連、漏過一個 broadcast。
+
+**預期**：client 呼叫 authoritative state，以 `state_version` 恢復同 session/deadline/answer status；不重 join/answer/reward。
+
+**證據**：Q/V、T、N、D。
+
+## AC-LIVE-008：Duplicate host tabs 不重複推進 — Blocking
+
+**前置**：同 host 開兩分頁且持有同 current version。
+
+**操作**：兩分頁 concurrently advance/open/close/finalize。
+
+**預期**：每個 version 只有一個 transition；另一 request conflict/reconcile；position、question、broadcast 不重複。
+
+**證據**：D、N、T、L。
+
+## AC-LIVE-009：Finalize 原子性 — Blocking
+
+**前置**：可完成 session 且可注入 reward/assignment/audit step failure。
+
+**操作**：先使 transaction 中途失敗，再移除 fault 重試同 idempotency key。
+
+**預期**：失敗時 session/rank/ledger/achievement/assignment/progress/audit 無 partial commit；成功重試全部一次完成。
+
+**證據**：D、L、N。
+
+## AC-LIVE-010：Live ranking 真實與隱私 — Blocking
+
+**前置**：deterministic answers/ties 與非 member 存在。
+
+**操作**：finalize 後比較 rank/score 與 answers；檢查 participant/outsider payload。
+
+**預期**：rank/tie-breaker 可由 DB 重現；只顯示安全 display name/Blook/score/rank；無 Email、學號、raw answers；outsider 拒絕。
+
+**證據**：D、N、S、L。
+
+## AC-LIVE-011：Assignment／Economy integration 防重 — Blocking
+
+**前置**：Live 關聯 assignment/reward rule，participant 可 finalize/replay。
+
+**操作**：完成並重送 finalize，查 assignment attempt、XP/Token ledgers、achievement、progress。
+
+**預期**：assignment/reward/unlock 各一次且 ledger reconcile = 0；Live 不進 mastery denominator/numerator。
+
+**證據**：D、L、N。
+
+## AC-LIVE-012：Initial Live capacity／latency — Blocking
+
+**前置**：seeded Staging profile 為一 host、兩 active students、一 outsider，至少 30 answer/finalize samples，cold start 分開記錄。
+
+**操作**：執行 concurrent answer、phase transition、outsider channel attempt 與 finalize timing。
+
+**預期**：answer p95 ≤ 800 ms、finalize p95 ≤ 1,000 ms；authoritative answers 無遺失/重複；outsider access = 0；error/5xx 符合全域 gate。
+
+**證據**：L、N、D、M。
+
+## AC-ENV-005：Vercel scope 對應 — Blocking
+
+**前置**：GitHub、Vercel、Staging、Production 已按 release runbook 建立。
+
+**操作**：從 Preview 與 `main` Production deployment 讀 sanitized target fingerprint、Git SHA、build/output/deep-link result。
+
+**預期**：Preview 只指向 rebuilt Staging；Production 只指向 new clean Production；兩 public values distinct；build `npm run build`、output `dist`、SPA refresh 無 404。
+
+**證據**：M、N、L、S。
+
+## AC-ENV-006：Production data hygiene — Blocking
+
+**前置**：Production migrations/content import 完成但未開放使用。
+
+**操作**：以 sanitized admin queries 檢查 migration range、Auth/data counts、anonymous access。
+
+**預期**：migration 從 zero；seed/Staging/legacy users = 0；invalid legacy rows = 0；只有 approved content；anonymous product rows = 0。
+
+**證據**：D、L、M。
+
+## AC-ENV-007：Secret lifecycle 與 rotation — Blocking
+
+**前置**：Local/Staging/Production secret owners 與 rotation runbook 已配置。
+
+**操作**：輪替一組 Staging credential，重新部署並執行 old/new credential negative/positive checks；掃描 source/bundle/log/artifact。
+
+**預期**：old credential 失效、new target 正常；環境不共用；browser 只有兩 public variable names；raw value findings = 0。
+
+**證據**：L、N、M、sanitized rotation record。
+
+## AC-ENV-008：Backup／Restore — Blocking
+
+**前置**：daily provider、weekly encrypted logical、Storage backup 與 isolated restore target 已配置。
+
+**操作**：執行 quarterly restore drill，核對 DB rows/ledger/content/Auth exclusions/Storage hashes 與時間。
+
+**預期**：RPO ≤ 24 hours、RTO ≤ 8 hours；reconciliation differences = 0；active Production 未被覆寫；primary/backup owners 簽核。
+
+**證據**：L、D、M、sanitized restore report。
+
+## AC-MIG-001：Legacy inventory 完整且無敏感值 — Blocking
+
+**前置**：Staging reset 前的 read-only audit 完成。
+
+**操作**：review `legacy-supabase-inventory.md` 與 audit record。
+
+**預期**：resource/count/security/content comparison 完整；不含 Email、UUID、URL、key/token/row payload；hosted mutation 明標 `NOT EXECUTED` 或有後續 evidence。
+
+**證據**：L、M、reviewer check。
+
+## AC-MIG-002：Invalid legacy rows/policies 不遷移 — Blocking
+
+**前置**：legacy invalid row classes 與 anonymous disclosures 已列入 inventory。
+
+**操作**：reset/rebuild Staging 後檢查 malformed serial IDs/sections、invalid questions、anonymous profile/`is_correct` access。
+
+**預期**：invalid rows = 0；anonymous reads = 0；legacy SQL/policy objects 未出現在 tracked migration schema。
+
+**證據**：D、L、N。
+
+## AC-MIG-003：Verified 45-question baseline 保留 — Blocking
+
+**前置**：repository content pipeline 與 rebuilt target 可查。
+
+**操作**：重跑 importer/validation 並依 chapter/stable code/hash 比對。
+
+**預期**：總題數 45、第三章 37、第四章 8；每題 2–4 options 且 exactly one correct；無 demo/remote-only invalid row。
+
+**證據**：D、L、M。
+
+## AC-MIG-004：Feature/content parity disposition 完整 — Blocking
+
+**前置**：`colorplay-new` audit scope 已凍結。
+
+**操作**：驗證 parity matrix/content ledger 每列必填 disposition、target、owning phase、acceptance IDs、reason/validation/rights。
+
+**預期**：缺欄/未分類 rows = 0；hard-coded/mock/invalid items 明確 Reject；候選內容不被標已發布。
+
+**證據**：L、M、reviewer check。
+
+## AC-MIG-005：不複製不安全 legacy code — Blocking
+
+**前置**：Phase 0 後每個 integration commit range 可 review。
+
+**操作**：diff/search Next.js router、mock Auth/store、browser role/scoring/reward、formal localStorage、service fallback、legacy SQL/RLS、fixed rankings/PIN、third-party QR。
+
+**預期**：transfer findings = 0；每個保留 capability 由 approved React/Supabase boundary 與 tests 重建。
+
+**證據**：L、M、code review report。
+
+---
+
 # 6. 最終驗收命令契約
 
 `pnpm acceptance` 至少需協調：
