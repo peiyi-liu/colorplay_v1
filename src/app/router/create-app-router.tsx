@@ -51,6 +51,11 @@ export function createAppRouter() {
               element: <ShopPage />,
             },
             {
+              path: '/app/achievements',
+              lazy: () =>
+                import('../../features/achievements/pages/achievements-route'),
+            },
+            {
               path: '/app/quiz/:sessionId/result',
               element: <QuizResultPage />,
             },

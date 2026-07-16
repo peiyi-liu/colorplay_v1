@@ -113,6 +113,11 @@ describe('AppShell', () => {
       'href',
       '/app/shop',
     );
+    expect(screen.getAllByRole('link', { name: '成就徽章' })).toHaveLength(1);
+    expect(screen.getByRole('link', { name: '成就徽章' })).toHaveAttribute(
+      'href',
+      '/app/achievements',
+    );
   });
 
   it('shows the authenticated student server economy summary', () => {

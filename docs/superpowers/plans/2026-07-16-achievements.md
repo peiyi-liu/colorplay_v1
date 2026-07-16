@@ -669,7 +669,7 @@ export type AchievementRepository = Readonly<{
 
 **Task evidence:** component/route test output only; UI screenshots/video/trace are deferred to the single phase gate.
 
-- [ ] **Step 1: Write failing card/page/route/shell tests**
+- [x] **Step 1: Write failing card/page/route/shell tests**
 
   Assert:
 
@@ -682,7 +682,7 @@ export type AchievementRepository = Readonly<{
   - card states are conveyed by text/icon in addition to color;
   - frontend source contains none of `rule_type`, `rule_parameters`, `evaluate_achievements`, or hard-coded numeric unlock checks.
 
-- [ ] **Step 2: Run UI tests to prove RED**
+- [x] **Step 2: Run UI tests to prove RED**
 
   Run:
 
@@ -696,7 +696,7 @@ export type AchievementRepository = Readonly<{
 
   Expected: FAIL because the page, card, route, and navigation link do not exist.
 
-- [ ] **Step 3: Implement the smallest truthful UI**
+- [x] **Step 3: Implement the smallest truthful UI**
 
   `AchievementCard` renders only the server projection. `AchievementsPage` calls `useAchievements`, renders the server count and items, and retries with the query's `refetch`. `achievements-route.tsx` exports React Router's lazy `Component`; `/app/achievements` dynamically imports that route module using existing loading/error conventions. Add the AppShell link and style the grid/cards with Tailwind utility classes plus existing CSS-variable tokens; do not add a second styling system or a feature stylesheet.
 
@@ -710,7 +710,7 @@ export type AchievementRepository = Readonly<{
 
   The layout uses a one-column mobile grid, two columns at tablet width, and three columns at desktop width. It uses existing CSS variables/tokens, has one page-level primary action at most, and never derives progress from quiz/economy client state.
 
-- [ ] **Step 4: Prove UI GREEN without browser evidence**
+- [x] **Step 4: Prove UI GREEN without browser evidence**
 
   Run:
 
@@ -732,7 +732,7 @@ export type AchievementRepository = Readonly<{
 
   Expected: focused component/route/shell tests, lint, typecheck, and formatting PASS. No Playwright command runs in this task.
 
-- [ ] **Step 5: Mark Task 6 complete and commit**
+- [x] **Step 5: Mark Task 6 complete and commit**
 
   ```bash
   git add src/features/achievements \

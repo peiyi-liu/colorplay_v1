@@ -54,6 +54,7 @@ export function AppShell() {
               <nav aria-label="主要導覽">
                 <Link to="/app">章節挑戰</Link>
                 <Link to="/app/shop">Blook 商店</Link>
+                <Link to="/app/achievements">成就徽章</Link>
                 <Link to="/app/profile">個人資料</Link>
                 {profile.data?.role === 'teacher' ? (
                   <Link to="/teacher">教師工作區</Link>

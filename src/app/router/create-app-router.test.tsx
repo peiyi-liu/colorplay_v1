@@ -67,6 +67,29 @@ vi.mock('../../features/inventory/hooks/use-blook-inventory', () => ({
   useEquipBlook: vi.fn(() => ({ isPending: false, mutateAsync: vi.fn() })),
   usePurchaseBlook: vi.fn(() => ({ isPending: false, mutateAsync: vi.fn() })),
 }));
+vi.mock('../../features/achievements/hooks/use-achievements', () => ({
+  useAchievements: vi.fn(() => ({
+    data: {
+      items: [
+        {
+          badgeKey: 'first_task_complete',
+          description: '完成第一次正式挑戰',
+          displayName: '初出茅廬',
+          progress: 0,
+          stableCode: 'first_task_complete',
+          state: 'not_started',
+          target: 1,
+          unlockedAt: null,
+        },
+      ],
+      totalCount: 1,
+      unlockedCount: 0,
+    },
+    isError: false,
+    isPending: false,
+    refetch: vi.fn(),
+  })),
+}));
 
 const mockedUseMyProfile = vi.mocked(useMyProfile);
 const mockedUsePublishedChapters = vi.mocked(usePublishedChapters);
@@ -157,6 +180,17 @@ describe('createAppRouter', () => {
 
     expect(
       await screen.findByRole('heading', { name: 'Blook 商店' }),
+    ).toBeVisible();
+  });
+
+  it('renders the lazy achievement route only for an authenticated student', async () => {
+    renderRouter('/app/achievements', {
+      email: 'learner@colorplay.invalid',
+      userId: 'learner-id',
+    });
+
+    expect(
+      await screen.findByRole('heading', { name: '成就徽章' }),
     ).toBeVisible();
   });
 
