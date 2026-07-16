@@ -860,6 +860,7 @@ export function EconomySummaryView(
 - Create: `scripts/acceptance/run-game-economy-v2.sh`
 - Create: `scripts/acceptance/finalize-game-economy-v2.mjs`
 - Create: `scripts/acceptance/finalize-game-economy-v2.d.mts`
+- Modify: `scripts/acceptance/sanitize-playwright-artifacts.mjs`
 - Create: `tests/contracts/game-economy-phase-gate.test.ts`
 - Modify: `package.json`
 
@@ -915,11 +916,11 @@ export function EconomySummaryView(
 
 **Required evidence:** Contract-test RED/GREEN during the task. The headed screenshots/video/trace/manifest are created only by the single post-Task-9 Phase 1 gate.
 
-- [ ] **Step 1: Write the failing gate contract test**
+- [x] **Step 1: Write the failing gate contract test**
 
   Assert package entry point, runner order/scope, dirty-tree refusal, forbidden `service_role` export, exact acceptance IDs, finalizer fail-closed behavior for each missing artifact/browser-health/secret condition, and deterministic sanitized manifest output. Assert the E2E source contains the three exact viewport dimensions, no `page.route(`, no `test.skip(`, no hard-coded balance mutation, and the phase-gate title.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
   ```bash
   pnpm exec vitest run tests/contracts/game-economy-phase-gate.test.ts
@@ -927,7 +928,7 @@ export function EconomySummaryView(
 
   Expected failure: runner, finalizer, E2E spec, and package entry point are missing.
 
-- [ ] **Step 3: Implement the gate tooling and real-browser scenario**
+- [x] **Step 3: Implement the gate tooling and real-browser scenario**
 
   The runner command order is exact:
 
@@ -953,7 +954,7 @@ export function EconomySummaryView(
 
   `pnpm test:db` owns the full pgTAP/integration gate; integration tests may create economy state, so the runner performs one silent local reset and idempotent auth seed immediately afterward to give E2E a clean state. Loading local values must suppress `supabase status -o env` output. `SUPABASE_SERVICE_ROLE_KEY` exists only for the Node auth seed and is unset before the browser wrapper starts. E2E imports existing test users/generated answers, attaches browser-health counters, and writes screenshots through `testInfo.outputPath`.
 
-- [ ] **Step 4: Run GREEN and task checks without running the phase gate**
+- [x] **Step 4: Run GREEN and task checks without running the phase gate**
 
   ```bash
   pnpm exec vitest run tests/contracts/game-economy-phase-gate.test.ts
@@ -965,10 +966,10 @@ export function EconomySummaryView(
 
   Expected success: focused contract test, shell syntax, formatting, lint, and typecheck pass. No headed browser or phase evidence directory exists yet.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
-  git add tests/e2e/game-economy.spec.ts scripts/acceptance/run-game-economy-v2.sh scripts/acceptance/finalize-game-economy-v2.mjs scripts/acceptance/finalize-game-economy-v2.d.mts tests/contracts/game-economy-phase-gate.test.ts package.json
+  git add tests/e2e/game-economy.spec.ts scripts/acceptance/run-game-economy-v2.sh scripts/acceptance/finalize-game-economy-v2.mjs scripts/acceptance/finalize-game-economy-v2.d.mts scripts/acceptance/sanitize-playwright-artifacts.mjs tests/contracts/game-economy-phase-gate.test.ts package.json
   git commit -m "test: add game economy phase gate"
   ```
 

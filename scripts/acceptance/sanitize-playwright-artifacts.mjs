@@ -19,6 +19,7 @@ const redactions = [
   [/(?:Bearer\s+)[A-Za-z0-9._~-]+/gu, 'Bearer [REDACTED]'],
   [/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/gu, '[REDACTED_JWT]'],
   [/LocalOnly-[A-Za-z0-9!_-]+/gu, '[REDACTED_LOCAL_FIXTURE]'],
+  [/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu, '[REDACTED_EMAIL]'],
 ];
 
 async function listFiles(directory) {
