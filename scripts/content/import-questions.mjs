@@ -46,7 +46,9 @@ const fixes = JSON.parse(
 );
 
 function deterministicUuid(kind, key) {
-  const hex = createHash('md5').update(`colorplay:${kind}:${key}`).digest('hex');
+  const hex = createHash('md5')
+    .update(`colorplay:${kind}:${key}`)
+    .digest('hex');
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
 }
 
@@ -91,7 +93,9 @@ async function loadCsv() {
   if (!arg || arg === '--url') {
     const response = await globalThis.fetch(SHEET_URL, { redirect: 'follow' });
     if (!response.ok) {
-      throw new Error(`無法下載試算表（HTTP ${response.status}）；請確認共用設定為公開`);
+      throw new Error(
+        `無法下載試算表（HTTP ${response.status}）；請確認共用設定為公開`,
+      );
     }
     return await response.text();
   }
@@ -164,7 +168,9 @@ for (const raw of rows) {
     if (explanation) usedDraftExplanations.push(code);
   }
   if (!explanation || explanation.length > 2000) {
-    problems.push(`題號 ${code}：缺少解析（試算表與草稿檔皆無）或解析超過 2000 字`);
+    problems.push(
+      `題號 ${code}：缺少解析（試算表與草稿檔皆無）或解析超過 2000 字`,
+    );
     continue;
   }
 
@@ -201,7 +207,9 @@ for (const q of questions) {
   if (!sections.has(q.sectionKey)) {
     const title = fixes.sectionTitles[q.sectionKey];
     if (!title) {
-      console.error(`小節 ${q.sectionKey} 缺少標題，請補 import-fixes.json 的 sectionTitles`);
+      console.error(
+        `小節 ${q.sectionKey} 缺少標題，請補 import-fixes.json 的 sectionTitles`,
+      );
       process.exit(1);
     }
     sections.set(q.sectionKey, {
@@ -284,9 +292,11 @@ for (const [chapterCode, override] of chapterTitleOverrides) {
     process.exit(1);
   }
   const title = typeof override === 'string' ? override : override.title;
-  const description = typeof override === 'string' ? null : (override.description ?? null);
+  const description =
+    typeof override === 'string' ? null : (override.description ?? null);
   const assignments = [`title = ${sqlText(title)}`];
-  if (description !== null) assignments.push(`description = ${sqlText(description)}`);
+  if (description !== null)
+    assignments.push(`description = ${sqlText(description)}`);
   lines.push(
     `update public.chapters set ${assignments.join(', ')} where stable_code = ${sqlText(chapterCode)};`,
   );
@@ -296,7 +306,10 @@ if (chapterTitleOverrides.length > 0) lines.push('');
 lines.push('commit;', '');
 
 mkdirSync(join(projectRoot, 'supabase/seeds'), { recursive: true });
-writeFileSync(join(projectRoot, 'supabase/seeds/content-questions.sql'), lines.join('\n'));
+writeFileSync(
+  join(projectRoot, 'supabase/seeds/content-questions.sql'),
+  lines.join('\n'),
+);
 
 const fixtureLines = [
   '// 由 scripts/content/import-questions.mjs 產生，請勿手動編輯。',
@@ -360,14 +373,19 @@ const reviewLines = [
   ...skipped.map((s) => `- ${s.code}：${s.reason}`),
   '',
   '### 自動改號',
-  ...renamed.map((r) => `- ${r.from} 第二次出現 → 已改為 ${r.to}（請同步修正試算表）`),
+  ...renamed.map(
+    (r) => `- ${r.from} 第二次出現 → 已改為 ${r.to}（請同步修正試算表）`,
+  ),
   '',
   '### 標準答案待確認',
-  ...Object.entries(fixes.reviewFlags).map(([code, note]) => `- ${code}：${note}`),
+  ...Object.entries(fixes.reviewFlags).map(
+    ([code, note]) => `- ${code}：${note}`,
+  ),
   '',
   '### 章節對應',
   ...Object.entries(fixes.chapterMap).map(
-    ([sheetChapter, chapterCode]) => `- 試算表第 ${sheetChapter} 章 → 平台 ${chapterCode}`,
+    ([sheetChapter, chapterCode]) =>
+      `- 試算表第 ${sheetChapter} 章 → 平台 ${chapterCode}`,
   ),
   '',
   `## AI 起草的解析（共 ${usedDraftExplanations.length} 題，請審閱後填回試算表）`,
@@ -381,11 +399,22 @@ const reviewLines = [
   '',
 ];
 mkdirSync(join(projectRoot, 'docs/content'), { recursive: true });
-writeFileSync(join(projectRoot, 'docs/content/import-review.md'), reviewLines.join('\n'));
-
-console.log(`匯入完成：${questions.length} 題 published、1 題 draft（RLS 測試用）。`);
-console.log(
-  [...chapterCounts.entries()].map(([chapterName, count]) => `${chapterName}: ${count} 題`).join('\n'),
+writeFileSync(
+  join(projectRoot, 'docs/content/import-review.md'),
+  reviewLines.join('\n'),
 );
-console.log(`跳過 ${skipped.length} 列、改號 ${renamed.length} 筆、解析草稿 ${usedDraftExplanations.length} 題。`);
-console.log('輸出：supabase/seeds/content-questions.sql、tests/fixtures/question-answers.generated.ts、docs/content/import-review.md');
+
+console.log(
+  `匯入完成：${questions.length} 題 published、1 題 draft（RLS 測試用）。`,
+);
+console.log(
+  [...chapterCounts.entries()]
+    .map(([chapterName, count]) => `${chapterName}: ${count} 題`)
+    .join('\n'),
+);
+console.log(
+  `跳過 ${skipped.length} 列、改號 ${renamed.length} 筆、解析草稿 ${usedDraftExplanations.length} 題。`,
+);
+console.log(
+  '輸出：supabase/seeds/content-questions.sql、tests/fixtures/question-answers.generated.ts、docs/content/import-review.md',
+);

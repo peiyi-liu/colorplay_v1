@@ -29,7 +29,9 @@ test('student starts a real quiz, submits an answer, and advances', async ({
 
   await expect(page).toHaveURL(/\/app$/u);
   await page
-    .locator(`a[href="/app/quiz/new?template=${fullChallengeChapter.templateId}"]`)
+    .locator(
+      `a[href="/app/quiz/new?template=${fullChallengeChapter.templateId}"]`,
+    )
     .click();
 
   await expect(page).toHaveURL(/\/app\/quiz\/[0-9a-f-]{36}$/u);

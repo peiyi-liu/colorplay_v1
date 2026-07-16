@@ -168,9 +168,7 @@ test('invalid credentials stay anonymous and keyboard-only valid login restores 
   await expect(page).toHaveURL(
     new RegExp('/app\\?chapter=color-theory#checkpoint$', 'u'),
   );
-  await expect(
-    page.getByRole('heading', { name: '選擇章節' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: '選擇章節' })).toBeVisible();
   expect(passwordRequests).toBe(2);
   expect(unexpectedHealth(health)).toEqual({
     consoleErrors: [],

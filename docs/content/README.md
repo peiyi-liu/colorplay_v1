@@ -41,12 +41,12 @@ pnpm test:db          # 重建本機資料庫（會套用新內容）
 
 ## 每次匯入自動產生的檔案
 
-| 檔案 | 用途 |
-|---|---|
-| `supabase/seeds/content-questions.sql` | 資料庫種子（勿手改） |
-| `tests/fixtures/question-answers.generated.ts` | E2E 測試的題目↔正解對照 |
+| 檔案                                           | 用途                                                       |
+| ---------------------------------------------- | ---------------------------------------------------------- |
+| `supabase/seeds/content-questions.sql`         | 資料庫種子（勿手改）                                       |
+| `tests/fixtures/question-answers.generated.ts` | E2E 測試的題目↔正解對照                                    |
 | `tests/fixtures/content-manifest.generated.ts` | E2E 測試的章節清單——**測試會自動適應內容變動**，不用改測試 |
-| `docs/content/import-review.md` | 審閱報告：跳過的列、改號、待確認答案、AI 解析草稿 |
+| `docs/content/import-review.md`                | 審閱報告：跳過的列、改號、待確認答案、AI 解析草稿          |
 
 ## 匯入後建議
 
