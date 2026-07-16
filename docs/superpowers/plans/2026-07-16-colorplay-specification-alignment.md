@@ -53,7 +53,7 @@
 
 **Required evidence:** Focused Vitest output, the generated path list asserted by tests, and `git diff --check`. No evidence directory.
 
-- [ ] **Step 1: Write the failing contract test**
+- [x] **Step 1: Write the failing contract test**
 
   Test exact source inclusion/exclusion, sorted output, SHA-256 generation, byte totals, unique acceptance counting, `--check` stale-manifest rejection, and absence of environment values.
 
@@ -67,11 +67,11 @@
 
   Expected failure: Vitest cannot import `scripts/verify/generate-document-manifest.mjs`.
 
-- [ ] **Step 2: Implement the minimum generator and type declaration**
+- [x] **Step 2: Implement the minimum generator and type declaration**
 
   Use only Node built-ins. `--write` sets an ISO-8601 `generated_at`; tests pass an explicit timestamp. `--check` exits non-zero with `DOCUMENT_MANIFEST_STALE` when any path, count, size, or hash differs. Reject duplicate acceptance headings with `DOCUMENT_ACCEPTANCE_ID_DUPLICATE`. Preserve `real_device_required_criteria` as `AC-UI-010` and `AC-UI-012`.
 
-- [ ] **Step 3: Add package scripts and verify success**
+- [x] **Step 3: Add package scripts and verify success**
 
   Run:
 
@@ -84,7 +84,7 @@
 
   Expected success: focused tests pass, lint/typecheck exit 0, and no whitespace error is reported. Do not run `pnpm document:manifest` yet because later tasks intentionally change the source set.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   ```bash
   git add package.json scripts/verify/generate-document-manifest.mjs scripts/verify/generate-document-manifest.d.mts tests/contracts/document-manifest.test.ts

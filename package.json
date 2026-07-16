@@ -20,6 +20,8 @@
     "acceptance": "bash scripts/acceptance/run-phase-1.sh",
     "acceptance:create-run": "node scripts/acceptance/create-run.mjs",
     "acceptance:count": "node scripts/verify/count-acceptance.mjs acceptance/ACCEPTANCE_CRITERIA.md",
+    "document:manifest": "node scripts/verify/generate-document-manifest.mjs --write",
+    "document:manifest:check": "node scripts/verify/generate-document-manifest.mjs --check",
     "content:import": "node scripts/content/import-questions.mjs"
   },
   "keywords": [],
