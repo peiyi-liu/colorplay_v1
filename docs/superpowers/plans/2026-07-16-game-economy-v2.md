@@ -196,7 +196,7 @@ public.reconcile_wallet_cache(target_user_id uuid) returns integer
 
 **Required evidence:** pgTAP RED/GREEN output proving own/cross-user/anonymous/immutability/function-grant behavior, enum reservation, cache mismatch detection, reconciliation, indexes, and fixed search paths. No evidence directory.
 
-- [ ] **Step 1: Write the failing pgTAP/RLS test**
+- [x] **Step 1: Write the failing pgTAP/RLS test**
 
   The test must plan exact assertions for:
 
@@ -211,7 +211,7 @@ public.reconcile_wallet_cache(target_user_id uuid) returns integer
 
   Add two auth users. Prove Student A can read only A rows, Student B rows are absent, anonymous reads return no product rows or permission denial, authenticated direct inserts fail with SQLSTATE `42501`, ledger update/delete raise `ECONOMY_LEDGER_IMMUTABLE`, and authenticated callers lack execute privilege on reconciliation. As `postgres`, create a deliberate cache mismatch, call reconciliation, and assert exact equality with `sum(wallet_transactions.amount)`. Assert all five enum labels exactly.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
   ```bash
   pnpm exec supabase start >/dev/null 2>&1
@@ -221,11 +221,11 @@ public.reconcile_wallet_cache(target_user_id uuid) returns integer
 
   Expected failure: pgTAP reports missing `economy_source_type`, ledger tables, and functions.
 
-- [ ] **Step 3: Implement the migration minimally**
+- [x] **Step 3: Implement the migration minimally**
 
   Create the exact types/tables/constraints/indexes/RLS/grants/triggers/functions above. Use `security definer set search_path = pg_catalog, public`; verify `auth.uid()` in the summary function; revoke reconciliation from `public`, `anon`, and `authenticated`, then grant it only to `service_role`. Preserve the existing profile trigger display-name behavior while adding wallet creation.
 
-- [ ] **Step 4: Run GREEN and task checks**
+- [x] **Step 4: Run GREEN and task checks**
 
   ```bash
   pnpm exec supabase db reset --local
@@ -236,7 +236,7 @@ public.reconcile_wallet_cache(target_user_id uuid) returns integer
 
   Expected success: the focused pgTAP file passes all planned assertions; lint/typecheck exit 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
   git add supabase/migrations/20260716000100_game_economy_ledgers.sql supabase/tests/005_game_economy_ledgers.test.sql
