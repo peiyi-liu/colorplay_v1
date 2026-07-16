@@ -142,10 +142,18 @@ describe('Game Economy v2 phase gate source', () => {
   });
 
   it('defines a real headed flow with exact viewports and no browser API mocks', async () => {
-    const spec = await readFile('tests/e2e/game-economy.spec.ts', 'utf8');
+    const [spec, playwrightConfig] = await Promise.all([
+      readFile('tests/e2e/game-economy.spec.ts', 'utf8'),
+      readFile('playwright.config.ts', 'utf8'),
+    ]);
 
     expect(spec).toContain('Game Economy v2 phase gate');
     expect(spec).toContain('GAME_ECONOMY_PRECHECK');
+    expect(playwrightConfig).toContain('GAME_ECONOMY_PRECHECK');
+    expect(playwrightConfig).toContain('test-results/game-economy-precheck');
+    expect(playwrightConfig).toContain(
+      "reporter: precheckMode ? [['list']] : evidenceReporters",
+    );
     for (const viewport of [
       'width: 375, height: 812',
       'width: 768, height: 1024',
