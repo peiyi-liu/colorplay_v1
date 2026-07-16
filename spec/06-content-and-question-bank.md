@@ -34,6 +34,7 @@ Course
 - media alt text：圖片必填，1–200 字元。
 - sort order。
 - status／version。
+- `requires_recompletion`：語意變更需學生重新完成時為 true。
 
 可接受格式：純文字、受限 Markdown、圖片、色票資料。MVP 不允許任意 HTML iframe。
 
@@ -73,6 +74,8 @@ Published question 若修改以下任一欄位，必須建立新 version：
 - media affecting meaning
 
 只改 typo 是否新版本由內容治理規則決定；若可能影響答案解釋，必須新版本。
+
+所有 published review card、question 與影響語意的 media 都建立 `content_versions` frozen payload/hash，並以 `content_publication_events` 記錄 publish/archive actor、時間、版本與 request ID。歷史 quiz、hint、remediation、assignment、Live session 保存引用版本；不得用 current row 改寫歷史。
 
 ## 5. 發布驗證
 
@@ -175,6 +178,7 @@ Published question 若修改以下任一欄位，必須建立新 version：
 - 隨機化在後端執行。
 - Session 建立後 frozen。
 - 若題數不足，回傳實際題數與明確 reason；UI 顯示真實數量。
+- Practice／assignment／remediation 只抽 current published versions；Live session 建立時另凍結自己的 question/version/options/deadline projection。
 
 ## 10. 教師編輯器
 
@@ -200,3 +204,28 @@ Published question 若修改以下任一欄位，必須建立新 version：
 - 用語符合課程與年級。
 - 色彩圖片在可接受螢幕差異下仍具教學合理性。
 - 不使用色覺作為唯一辨識線索。
+
+## 13. Verified content baseline and legacy boundary
+
+- Approved pipeline 有 45 題：第三章 37 題、第四章 8 題。
+- Legacy hosted 46 題沒有 unique valid content：44 prompts matching，2 remote-only rows invalid；不得覆蓋 verified baseline。
+- `colorplay-new` 六章描述、review card、Blook、avatar、badge 只作 candidate reference；必須先確認作者／媒體權利、教學正確、accessibility，再由正常 validation/version/import 發布。
+- 不複製 hard-coded leaderboard、progress、achievement、Kahoot PIN、mock state 或 legacy SQL/policy 當內容。
+- Production 只收 approved content ledger rows，不收 Staging/legacy Auth users 或 learning history。
+
+## 14. Hint content
+
+- 每題可定義最多 three hints，依 level 1–3 由淺入深；缺少某 level 時 API 回明確 unavailable，不補造內容。
+- Hint 是 versioned published content，需教師權限與發布驗證；不得包含 correct option ID/index 或直接等價答案。
+- `request_question_hint` 只回目前允許 level，並記錄 user/session question/content version/server time。
+- 第一版 hint 不扣正式 score/reward；內容作者不可在 hint payload 加 client-calculated penalty。
+
+## 15. External activities
+
+- `external_activities` 可保存 teacher-owned Kahoot URL、optional classroom/chapter、availability/status。
+- URL 需 HTTPS、安全 parse/allow policy，不透過第三方 QR service 洩漏 activity URL。
+- 不宣稱 official API integration，不匯入 external answers/reports，不把 fixed PIN 或外部成績當 ColorPlay 正式資料。
+
+## 16. Progress version input
+
+Progress 規則只讀 current published review/question versions；old-version、draft、archived 不進 current denominator。新 review version 的 `requires_recompletion` 決定是否重做；新 question version 只用新版本 latest qualifying answer。計算保存 content version set 與 `2026-07-progress-1`，可重現且不可由 browser 寫百分比。

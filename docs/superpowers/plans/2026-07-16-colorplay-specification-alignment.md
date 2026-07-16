@@ -334,7 +334,7 @@
 
 **Required evidence:** Schema ownership/RLS matrix diff, formula assertions, function-name assertions, and `git diff --check`.
 
-- [ ] **Step 1: Run the pre-change failing assertion**
+- [x] **Step 1: Run the pre-change failing assertion**
 
   ```bash
   node - <<'NODE'
@@ -348,13 +348,13 @@
 
   Expected failure: exit 1 because the approved schemas and formulas are absent from the normative specifications.
 
-- [ ] **Step 2: Apply the minimum normative changes**
+- [x] **Step 2: Apply the minimum normative changes**
 
   Include table purpose, critical keys/unique constraints, write authority, read scope, retention/history behavior, and required secure functions. Do not provide executable migration SQL. Keep existing XP/Token/Level values unless the approved design explicitly changes them. Preserve the verified 45-question import as the only approved question baseline.
 
   The nine stable achievement definitions are exact: `first_task_complete` (first completed quiz or assignment), `first_perfect_quiz` (first completed quiz at 100% accuracy), `mistakes_resolved_10` (ten distinct resolved mistakes), `chapter_mastered_1` (first mastered chapter), `all_chapters_mastered` (all six chapters), `level_10` (authoritative level at least 10), `correct_streak_20` (twenty qualifying correct answers), `live_complete_5` (five completed Live sessions), and `blooks_owned_6` (all six initial Blooks). `case_expert` is explicitly rejected because no case-mission subsystem is approved.
 
-- [ ] **Step 3: Verify formulas, tables, and secure commands**
+- [x] **Step 3: Verify formulas, tables, and secure commands**
 
   ```bash
   for value in review_cards content_versions hint_events mistake_items remediation_attempts achievement_definitions achievement_unlocks assignment_attempts external_activities live_answers; do
@@ -371,7 +371,7 @@
 
   Expected success: all required schema, formula, and function terms exist and the diff check exits 0.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   ```bash
   git add spec/03-data-model-and-rls.md spec/05-game-mechanics.md spec/06-content-and-question-bank.md

@@ -164,3 +164,90 @@ MVP 採「練習可重複、獎勵有限」：
 ## 13. 規則版本
 
 每個 quiz session 保存 `game_rules_version`，例如 `2026-07-mvp-1`。結果頁與 export 可追溯該版本，避免日後調整規則後無法重現舊資料。
+
+Assignment、remediation、Live 同樣保存適用 rules/content version；歷史結果不得用目前規則重算。
+
+## 14. Learning progress
+
+Progress 是多個獨立量測，不得把不相干數字拼成假百分比。第一版規則為 `2026-07-progress-1`。
+
+### Review completion
+
+```text
+review_completion = completed current published review-card versions
+                    / current published review-card versions * 100
+```
+
+- Completion 需學生明確操作並由 secure command 記錄。
+- 新 card version 只有在 `requires_recompletion = true` 時要求重做。
+- 無 published card 時顯示 `—`，不是 0%。
+
+### Coverage、accuracy、mastery
+
+每個 current published question version 只取學生 latest qualifying answer。Qualifying 來源是 completed practice、assignment、remediation；abandoned、expired、unfinished、old-version、Live 不計。
+
+```text
+coverage = answered current versions / current published versions * 100
+accuracy = latest correct versions / answered current versions * 100
+mastery = coverage * accuracy / 100
+```
+
+- `not_started`：沒有 qualifying answer。
+- `learning`：mastery 1–59。
+- `developing`：mastery 60–79。
+- `mastered`：mastery 80–100。
+- Chapter 聚合以全部 current published question versions 計算，不平均 subtopic percentages。
+- Chapter completion 需要 review completion 100%、mastery ≥ 80、且沒有 blocking required assignment。
+- Live answer 不改 mastery，避免即時競賽速度／題組污染正式學習進度。
+
+## 15. Hints、mistakes 與 remediation
+
+- Formal quiz/assignment 每題仍只有一筆正式 answer。
+- 作答前最多 request three hints；server 依序記錄 `hint_events`，hint 不得洩漏正解。
+- 第一版 hint 不扣 Quiz Score、XP 或 Token；規則變更需新 rules version。
+- Multiple attempts 只存在 remediation，不回寫原始 answer、Quiz Score 或結果頁。
+- Remediation 不發 Token；XP 使用現有 practice 20% 規則，不消耗每日前三次 full reward 額度。
+- Qualifying finalized remediation 可更新 mastery，並將 mistake item `open -> resolved`；後續 current-version 錯誤可 `resolved -> reopened`。
+
+## 16. Achievements
+
+初始 catalog 只授 badge，不授 XP／Token；unlock append-only 且不撤銷。
+
+| Stable code | Display name | Server condition |
+| --- | --- | --- |
+| `first_task_complete` | 初出茅廬 | first completed quiz or assignment |
+| `first_perfect_quiz` | 百發百中 | first completed quiz at 100% accuracy |
+| `mistakes_resolved_10` | 不屈不撓 | ten distinct resolved mistake items |
+| `chapter_mastered_1` | 章節精熟 | first mastered chapter |
+| `all_chapters_mastered` | 色彩大師 | all six chapters mastered |
+| `level_10` | 登峰造極 | authoritative level at least 10 |
+| `correct_streak_20` | 連擊之王 | twenty consecutive qualifying correct answers |
+| `live_complete_5` | 課堂挑戰者 | five completed Live sessions |
+| `blooks_owned_6` | 收藏家 | six initial Blooks owned |
+
+- Rule 使用 validated enum type + versioned parameters，不執行 arbitrary SQL/JavaScript。
+- Progress/unlock 只由 trusted quiz、economy、assignment、Live、progress event 評估；browser 不可要求 unlock。
+- 同 user/definition/source 重送回原結果，不產生第二個 unlock。
+- 未解鎖 hidden rule 不向 student payload 洩漏內部 threshold/condition；可公開項目由 definition visibility 決定。
+- Correct streak 包含 formal quiz、assignment、Live correct；incorrect/timeout reset；remediation 不計。
+- `case_expert` 不支援，因為沒有核准的 case-mission subsystem。
+
+## 17. Assignments and ColorPlay Live
+
+### Assignments
+
+- Owning teacher 設定 availability、UTC deadline、attempt limit、passing/reward rule；session 建立後凍結適用版本。
+- Student 必須是 active target/member；跨班級 request 被拒絕。
+- Attempt 引用 finalized quiz 或 Live session，不複製 client score。
+- Completion、pass、reward 由 trusted finalize transaction 推導；重送不得重複完成／發獎。
+
+### ColorPlay Live
+
+- State machine 是 `draft -> lobby -> question_open -> question_feedback -> ... -> completed`，各 active state 可由 server policy轉 `cancelled`。
+- 只有 owning host 可 start/open/close/advance/finalize/cancel，並以 `state_version` 防雙分頁重複推進。
+- Authenticated active member 才能 join/answer；server deadline、hidden answer、response time、score/rank/reward 全由後端決定。
+- 同 participant/question 只有一筆 authoritative answer；idempotency key 重送回原結果。
+- `finalize_live_session` 原子計 score/rank/reward/achievement/assignment/progress/audit；rollback 不留部分結果。
+- Rank 只顯示 privacy-safe display name、Blook、score/rank；不顯示 Email、學號或 raw answers。
+- Live Core 使用同一 XP/Token ledger source contract；Live 不計入 mastery。Phase 7 另以核准規格擴充 team mode、pause/resume 與 capacity。
+- Optional Kahoot URL 是 external compatibility，不使用 official API，不把 external result 當 ColorPlay Score／XP／Token。
