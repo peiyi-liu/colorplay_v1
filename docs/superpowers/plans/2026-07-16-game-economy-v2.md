@@ -404,7 +404,7 @@ public.equip_blook(blook_id uuid) returns jsonb
 
 **Required evidence:** pgTAP RED/GREEN for exact six rows, default ownership, backfill, own/cross-user/anonymous policies, insufficient shortfall, successful debit, duplicate retry, concurrent source uniqueness, equip owned/unowned, fixed search paths, and grants. No evidence directory.
 
-- [ ] **Step 1: Write the failing pgTAP/RLS test**
+- [x] **Step 1: Write the failing pgTAP/RLS test**
 
   Assert the catalog as one ordered JSON aggregate, not six loose counts:
 
@@ -427,7 +427,7 @@ public.equip_blook(blook_id uuid) returns jsonb
 
   Create Student A/B. Assert defaults, fund A with a trusted ledger/cache fixture, buy/equip lucky cat, retry purchase, and prove exact balance/ledger/ownership counts. Assert B and anonymous cannot observe A. Assert unowned equip and insufficient purchase return stable errors.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
   ```bash
   pnpm exec supabase db reset --local
@@ -436,11 +436,11 @@ public.equip_blook(blook_id uuid) returns jsonb
 
   Expected failure: Blook tables/functions/profile column are missing.
 
-- [ ] **Step 3: Implement catalog, ownership, RLS, and RPCs**
+- [x] **Step 3: Implement catalog, ownership, RLS, and RPCs**
 
   Create exact schema/catalog/functions/grants above. Replace `handle_new_auth_user()` while preserving profile/wallet behavior. Backfill existing profiles in deterministic `id` order. Keep purchase and equip responses privacy-safe and omit email, raw ledger rows, and other users.
 
-- [ ] **Step 4: Run GREEN and task checks**
+- [x] **Step 4: Run GREEN and task checks**
 
   ```bash
   pnpm exec supabase db reset --local
@@ -453,7 +453,7 @@ public.equip_blook(blook_id uuid) returns jsonb
 
   Expected success: all economy pgTAP files pass and prior ledger/reward behavior remains green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
   git add supabase/migrations/20260716000300_blook_inventory.sql supabase/tests/007_blook_inventory.test.sql
