@@ -23,7 +23,8 @@
     "document:manifest": "node scripts/verify/generate-document-manifest.mjs --write",
     "document:manifest:check": "node scripts/verify/generate-document-manifest.mjs --check",
     "content:import": "node scripts/content/import-questions.mjs",
-    "phase:game-economy": "bash scripts/acceptance/run-game-economy-v2.sh"
+    "phase:game-economy": "bash scripts/acceptance/run-game-economy-v2.sh",
+    "phase:achievements": "bash scripts/acceptance/run-achievements.sh"
   },
   "keywords": [],
   "author": "",

@@ -772,7 +772,7 @@ export type AchievementRepository = Readonly<{
 
 **Task evidence:** contract output and Playwright `--list` only. The evidence directory is created only by the final phase gate after review.
 
-- [ ] **Step 1: Write failing shared-policy and phase-gate contracts**
+- [x] **Step 1: Write failing shared-policy and phase-gate contracts**
 
   Move no implementation first. Tests must require:
 
@@ -787,7 +787,7 @@ export type AchievementRepository = Readonly<{
   - missing/corrupt/sensitive evidence fails closed and PASS manifest paths are relative/sanitized/deterministic;
   - the E2E source has no `page.route`, browser API mock, service role, direct achievement table mutation, or skipped test.
 
-- [ ] **Step 2: Run contracts to prove RED**
+- [x] **Step 2: Run contracts to prove RED**
 
   Run:
 
@@ -800,7 +800,7 @@ export type AchievementRepository = Readonly<{
 
   Expected: new shared-policy/Achievements contracts FAIL because their files and package entry point do not exist; the existing Game Economy contract remains green.
 
-- [ ] **Step 3: Extract the Phase 1 content-aware evidence policy**
+- [x] **Step 3: Extract the Phase 1 content-aware evidence policy**
 
   Export:
 
@@ -820,7 +820,7 @@ export type AchievementRepository = Readonly<{
 
   Move, without weakening, PNG/WebM magic validation, PNG textual chunks, WebM container text elements, text-sensitive patterns, trace textual-entry detection, and relative-path scanning from the Game Economy finalizer. Update that finalizer to import the shared functions. Its public manifest and error codes remain unchanged.
 
-- [ ] **Step 4: Implement the Achievements runner/finalizer and headed flow**
+- [x] **Step 4: Implement the Achievements runner/finalizer and headed flow**
 
   Add package script:
 
@@ -841,7 +841,7 @@ export type AchievementRepository = Readonly<{
 
   The finalizer emits `artifacts/acceptance/achievements-<clean-full-sha>/manifest.json` with `decision: PASS` and exactly the five owner-supplied achievement AC IDs.
 
-- [ ] **Step 5: Prove gate tooling GREEN without executing the gate**
+- [x] **Step 5: Prove gate tooling GREEN without executing the gate**
 
   Run:
 
@@ -869,7 +869,7 @@ export type AchievementRepository = Readonly<{
 
   Expected: all three contract files PASS, Playwright lists exactly one Achievements phase-gate test without running it, and lint/typecheck/formatting pass. No `artifacts/acceptance/achievements-*` directory exists.
 
-- [ ] **Step 6: Mark Task 7 complete and commit**
+- [x] **Step 6: Mark Task 7 complete and commit**
 
   ```bash
   git add scripts/acceptance/evidence-policy.mjs \

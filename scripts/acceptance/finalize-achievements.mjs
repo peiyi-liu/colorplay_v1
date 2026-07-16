@@ -9,15 +9,11 @@ import {
 } from './evidence-policy.mjs';
 
 export const ACCEPTANCE_IDS = Object.freeze([
-  'AC-GAME-001',
-  'AC-GAME-002',
-  'AC-GAME-003',
-  'AC-GAME-004',
-  'AC-GAME-005',
-  'AC-GAME-006',
-  'AC-GAME-007',
-  'AC-SEC-001',
-  'AC-SEC-002',
+  'AC-ACH-001',
+  'AC-ACH-002',
+  'AC-ACH-003',
+  'AC-ACH-004',
+  'AC-ACH-005',
 ]);
 
 const COMMAND_LABELS = Object.freeze([
@@ -29,7 +25,7 @@ const COMMAND_LABELS = Object.freeze([
   'pnpm test:db',
   'pnpm exec supabase db reset --local',
   'pnpm exec tsx scripts/supabase/seed-auth.ts',
-  "bash scripts/test-e2e-local.sh --project=chromium --headed --grep='Game Economy v2 phase gate'",
+  "bash scripts/test-e2e-local.sh --project=chromium --headed --grep='Achievements phase gate'",
 ]);
 
 const isPlainObject = (value) =>
@@ -51,7 +47,7 @@ const listFiles = async (directory) => {
 const relativeEvidencePath = (root, path) => {
   const output = relative(root, path).split(sep).join('/');
   if (!output || output.startsWith('../') || output.includes('/../')) {
-    throw new Error('GAME_ECONOMY_INVALID_EVIDENCE_PATH');
+    throw new Error('ACHIEVEMENTS_INVALID_EVIDENCE_PATH');
   }
   return output;
 };
@@ -59,15 +55,15 @@ const relativeEvidencePath = (root, path) => {
 const translateEvidenceError = (error) => {
   if (!(error instanceof Error)) return error;
   const messages = {
-    EVIDENCE_INVALID_BINARY: 'GAME_ECONOMY_INVALID_BINARY_EVIDENCE',
-    EVIDENCE_INVALID_PATH: 'GAME_ECONOMY_INVALID_EVIDENCE_PATH',
-    EVIDENCE_REQUIRED_MISSING: 'GAME_ECONOMY_REQUIRED_EVIDENCE_MISSING',
-    EVIDENCE_SENSITIVE: 'GAME_ECONOMY_SENSITIVE_EVIDENCE',
+    EVIDENCE_INVALID_BINARY: 'ACHIEVEMENTS_INVALID_BINARY_EVIDENCE',
+    EVIDENCE_INVALID_PATH: 'ACHIEVEMENTS_INVALID_EVIDENCE_PATH',
+    EVIDENCE_REQUIRED_MISSING: 'ACHIEVEMENTS_REQUIRED_EVIDENCE_MISSING',
+    EVIDENCE_SENSITIVE: 'ACHIEVEMENTS_SENSITIVE_EVIDENCE',
   };
   return new Error(messages[error.message] ?? error.message);
 };
 
-const requireGameEconomyEvidence = async (paths) => {
+const requireAchievementsEvidence = async (paths) => {
   try {
     await requireNonEmptyEvidence(paths);
   } catch (error) {
@@ -75,7 +71,7 @@ const requireGameEconomyEvidence = async (paths) => {
   }
 };
 
-const assertGameEconomyEvidenceSafe = async (input) => {
+const assertAchievementsEvidenceSafe = async (input) => {
   try {
     await assertEvidenceSafe(input);
   } catch (error) {
@@ -84,13 +80,12 @@ const assertGameEconomyEvidenceSafe = async (input) => {
 };
 
 const parseCommands = async (root) => {
-  const commandsPath = join(root, 'reports/commands.tsv');
-  const rows = (await readFile(commandsPath, 'utf8'))
+  const rows = (await readFile(join(root, 'reports/commands.tsv'), 'utf8'))
     .trim()
     .split('\n')
     .filter(Boolean);
   if (rows.length !== COMMAND_LABELS.length) {
-    throw new Error('GAME_ECONOMY_REQUIRED_EVIDENCE_MISSING');
+    throw new Error('ACHIEVEMENTS_REQUIRED_EVIDENCE_MISSING');
   }
 
   const commands = [];
@@ -108,13 +103,13 @@ const parseCommands = async (root) => {
       exitCode !== 0 ||
       !report?.startsWith('reports/')
     ) {
-      throw new Error('GAME_ECONOMY_COMMAND_REPORT_INVALID');
+      throw new Error('ACHIEVEMENTS_COMMAND_REPORT_INVALID');
     }
     const reportPath = resolve(root, report);
     if (dirname(reportPath) !== resolve(root, 'reports')) {
-      throw new Error('GAME_ECONOMY_COMMAND_REPORT_INVALID');
+      throw new Error('ACHIEVEMENTS_COMMAND_REPORT_INVALID');
     }
-    await requireGameEconomyEvidence([reportPath]);
+    await requireAchievementsEvidence([reportPath]);
     commands.push({
       duration_ms: durationMs,
       exit_code: 0,
@@ -129,13 +124,13 @@ const parseCommands = async (root) => {
 const assertSourceState = (run) => {
   if (
     !isPlainObject(run) ||
-    run.phase !== 'game-economy-v2' ||
+    run.phase !== 'achievements' ||
     !/^[0-9a-f]{40}$/u.test(run.git_sha ?? '') ||
     run.dirty_worktree !== false ||
     run.supabase_environment !== 'local' ||
     JSON.stringify(run.acceptance_ids) !== JSON.stringify(ACCEPTANCE_IDS)
   ) {
-    throw new Error('GAME_ECONOMY_INVALID_SOURCE_STATE');
+    throw new Error('ACHIEVEMENTS_INVALID_SOURCE_STATE');
   }
 };
 
@@ -147,15 +142,14 @@ const assertBrowserHealth = (health) => {
     health.failed_requests !== 0 ||
     health.server_errors !== 0
   ) {
-    throw new Error('GAME_ECONOMY_BROWSER_HEALTH_FAILED');
+    throw new Error('ACHIEVEMENTS_BROWSER_HEALTH_FAILED');
   }
 };
 
-export async function finalizeGameEconomy(runDirectory) {
+export async function finalizeAchievements(runDirectory) {
   const root = resolve(runDirectory);
   const run = await readJson(join(root, 'run.json'));
   assertSourceState(run);
-
   const commands = await parseCommands(root);
   const [screenshots, videos, traces, reports] = await Promise.all(
     ['screenshots', 'videos', 'traces', 'reports'].map((directory) =>
@@ -164,16 +158,16 @@ export async function finalizeGameEconomy(runDirectory) {
   );
   const requiredScreenshotNames = ['375x812', '768x1024', '1440x900'];
   if (
-    screenshots.length < 3 ||
-    videos.length < 1 ||
-    traces.length < 1 ||
+    screenshots.length !== 3 ||
+    videos.length !== 1 ||
+    traces.length !== 1 ||
     !requiredScreenshotNames.every((name) =>
       screenshots.some((path) => path.includes(name)),
     )
   ) {
-    throw new Error('GAME_ECONOMY_REQUIRED_EVIDENCE_MISSING');
+    throw new Error('ACHIEVEMENTS_REQUIRED_EVIDENCE_MISSING');
   }
-  await requireGameEconomyEvidence([
+  await requireAchievementsEvidence([
     ...screenshots,
     ...videos,
     ...traces,
@@ -192,7 +186,7 @@ export async function finalizeGameEconomy(runDirectory) {
     ...traces,
     ...reports.filter((path) => !path.endsWith('/manifest.json')),
   ];
-  await assertGameEconomyEvidenceSafe({
+  await assertAchievementsEvidenceSafe({
     evidencePaths,
     root,
     tracePaths: traces,
@@ -217,7 +211,7 @@ export async function finalizeGameEconomy(runDirectory) {
     decision: 'PASS',
     dirty_worktree: false,
     git_sha: run.git_sha,
-    phase: 'game-economy-v2',
+    phase: 'achievements',
     schema_version: 1,
     supabase_environment: 'local',
   };
@@ -234,14 +228,14 @@ const invokedPath = process.argv[1]
 if (invokedPath === import.meta.url) {
   const runDirectory = process.argv[2];
   if (!runDirectory) {
-    process.stderr.write('GAME_ECONOMY_FINALIZER_ARGUMENT_REQUIRED\n');
+    process.stderr.write('ACHIEVEMENTS_FINALIZER_ARGUMENT_REQUIRED\n');
     process.exitCode = 1;
   } else {
     try {
-      await finalizeGameEconomy(runDirectory);
+      await finalizeAchievements(runDirectory);
     } catch (error) {
       process.stderr.write(
-        `${error instanceof Error ? error.message : 'GAME_ECONOMY_FINALIZER_FAILED'}\n`,
+        `${error instanceof Error ? error.message : 'ACHIEVEMENTS_FINALIZER_FAILED'}\n`,
       );
       process.exitCode = 1;
     }
