@@ -145,6 +145,7 @@ describe('Game Economy v2 phase gate source', () => {
     const spec = await readFile('tests/e2e/game-economy.spec.ts', 'utf8');
 
     expect(spec).toContain('Game Economy v2 phase gate');
+    expect(spec).toContain('GAME_ECONOMY_PRECHECK');
     for (const viewport of [
       'width: 375, height: 812',
       'width: 768, height: 1024',

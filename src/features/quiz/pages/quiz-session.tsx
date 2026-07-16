@@ -162,13 +162,14 @@ export function QuizSessionPage({
     firstUnansweredQuestion?.startedAt && firstUnansweredQuestion.deadlineAt
       ? firstUnansweredQuestion
       : undefined;
+  const lastAnsweredQuestion = session?.questions
+    .filter(({ answerStatus }) => answerStatus !== null)
+    .at(-1);
   const feedbackQuestion =
     session &&
-    ((!firstUnansweredQuestion && session.answeredCount > 0) ||
+    ((!firstUnansweredQuestion && lastAnsweredQuestion) ||
       firstUnansweredQuestion?.startedAt === null)
-      ? session.questions
-          .filter(({ answerStatus }) => answerStatus !== null)
-          .at(-1)
+      ? lastAnsweredQuestion
       : undefined;
   const feedbackResult = feedbackFromQuestion(
     feedbackQuestion,

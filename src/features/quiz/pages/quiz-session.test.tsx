@@ -219,6 +219,31 @@ describe('QuizSessionPage', () => {
     expect(screen.getByText(incorrectResult.explanation)).toBeVisible();
   });
 
+  it('shows final feedback from authoritative answered rows before stored aggregates finalize', async () => {
+    const mock = repositoryMock();
+    const answered = question(1, {
+      answerStatus: 'correct',
+      correctOptionId: '33000000-0000-0000-0000-000000000001',
+      explanation: 'RGB 使用三色光。',
+      scoreDelta: 150,
+      selectedOptionId: '33000000-0000-0000-0000-000000000001',
+    });
+    mock.getSession.mockResolvedValue({
+      ...session([answered]),
+      answeredCount: 0,
+      correctCount: 0,
+      totalScore: 0,
+    });
+    renderQuiz(mock.repository);
+
+    expect(
+      await screen.findByRole('heading', { name: '✓ 答對了' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: '結算並查看結果' }),
+    ).toBeEnabled();
+  });
+
   it('submits null when the server deadline is already elapsed', async () => {
     const mock = repositoryMock();
     const expired = question(1, {

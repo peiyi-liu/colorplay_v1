@@ -1,6 +1,6 @@
 begin;
 
-select plan(40);
+select plan(44);
 
 select has_table('public', 'quiz_sessions', 'quiz sessions exists');
 select has_table(
@@ -291,6 +291,48 @@ select is(
   150,
   'answer within five seconds receives base and speed score'
 );
+select results_eq(
+  format(
+    $$
+      select distinct answered_count, correct_count, total_score
+      from public.quiz_session_question_state
+      where session_id = %L
+    $$,
+    current_setting('test.quiz_session_id')
+  ),
+  $$values (1, 1, 150)$$,
+  'in-progress state derives live aggregates from authoritative answers'
+);
+select is(
+  (
+    select count(*)::integer
+    from public.quiz_session_question_state
+    where session_id = current_setting('test.quiz_session_id')::uuid
+      and answer_status is null
+      and correct_option_id is not null
+  ),
+  0,
+  'in-progress state never exposes correctness for unanswered questions'
+);
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-0000-0000-000000000005',
+  true
+);
+select is(
+  (
+    select count(*)::integer
+    from public.quiz_session_question_state
+    where session_id = current_setting('test.quiz_session_id')::uuid
+  ),
+  0,
+  'another student cannot read in-progress aggregate state'
+);
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-0000-0000-000000000004',
+  true
+);
 select is(
   public.submit_quiz_answer(
     session_question_id => current_setting('test.first_question_id')::uuid,
@@ -394,6 +436,44 @@ select is(
   ),
   150,
   'stored total score is aggregated from authoritative answers'
+);
+select results_eq(
+  format(
+    $$
+      select
+        s.answered_count,
+        s.correct_count,
+        s.total_score,
+        state.answered_count,
+        state.correct_count,
+        state.total_score,
+        aggregate_values.answered_count,
+        aggregate_values.correct_count,
+        aggregate_values.total_score
+      from public.quiz_sessions s
+      join (
+        select distinct
+          session_id, answered_count, correct_count, total_score
+        from public.quiz_session_question_state
+        where session_id = %L
+      ) state on state.session_id = s.id
+      cross join lateral (
+        select
+          count(*)::integer as answered_count,
+          count(*) filter (
+            where answer_status = 'correct'
+          )::integer as correct_count,
+          coalesce(sum(score_delta), 0)::integer as total_score
+        from public.quiz_answers
+        where session_id = s.id
+      ) aggregate_values
+      where s.id = %L
+    $$,
+    current_setting('test.quiz_session_id'),
+    current_setting('test.quiz_session_id')
+  ),
+  $$values (10, 1, 150, 10, 1, 150, 10, 1, 150)$$,
+  'completed state uses stored aggregates equal to authoritative answers'
 );
 select results_eq(
   format(

@@ -28,11 +28,18 @@ const requiredEnvironment = (name: 'SUPABASE_ANON_KEY' | 'SUPABASE_URL') => {
 };
 
 test('Game Economy v2 phase gate', async ({ browserName, page }, testInfo) => {
-  if (process.env.PLAYWRIGHT_ACCEPTANCE !== 'on') {
+  const acceptanceMode = process.env.PLAYWRIGHT_ACCEPTANCE === 'on';
+  const precheckMode = process.env.GAME_ECONOMY_PRECHECK === 'on';
+  if (!acceptanceMode && !precheckMode) {
     throw new Error('GAME_ECONOMY_ACCEPTANCE_MODE_REQUIRED');
   }
   const evidenceRoot = process.env.PLAYWRIGHT_EVIDENCE_ROOT;
-  if (!evidenceRoot) throw new Error('GAME_ECONOMY_EVIDENCE_ROOT_MISSING');
+  if (acceptanceMode && !evidenceRoot) {
+    throw new Error('GAME_ECONOMY_EVIDENCE_ROOT_MISSING');
+  }
+  if (precheckMode && evidenceRoot) {
+    throw new Error('GAME_ECONOMY_PRECHECK_EVIDENCE_FORBIDDEN');
+  }
   const health = attachBrowserHealth(page);
 
   await page.goto('/login');
@@ -73,13 +80,17 @@ test('Game Economy v2 phase gate', async ({ browserName, page }, testInfo) => {
   await expect(page.getByText('250 / 500 XP')).toBeVisible();
   await expect(page.getByText('250 Token')).toBeVisible();
 
-  for (const viewport of viewports) {
-    await page.setViewportSize(viewport);
-    await expect(page.getByRole('heading', { name: '挑戰完成' })).toBeVisible();
-    await page.screenshot({
-      fullPage: true,
-      path: testInfo.outputPath(`game-economy-result-${viewport.label}.png`),
-    });
+  if (acceptanceMode) {
+    for (const viewport of viewports) {
+      await page.setViewportSize(viewport);
+      await expect(
+        page.getByRole('heading', { name: '挑戰完成' }),
+      ).toBeVisible();
+      await page.screenshot({
+        fullPage: true,
+        path: testInfo.outputPath(`game-economy-result-${viewport.label}.png`),
+      });
+    }
   }
 
   await page.getByRole('link', { name: 'Blook 商店' }).click();
@@ -143,14 +154,16 @@ test('Game Economy v2 phase gate', async ({ browserName, page }, testInfo) => {
     pageErrors: [],
     serverErrors: [],
   });
-  await mkdir(join(evidenceRoot, 'reports'), { recursive: true });
-  await writeFile(
-    join(evidenceRoot, 'reports/browser-health.json'),
-    `${JSON.stringify({
-      console_errors: browserHealth.consoleErrors.length,
-      failed_requests: browserHealth.failedRequests.length,
-      page_errors: browserHealth.pageErrors.length,
-      server_errors: browserHealth.serverErrors.length,
-    })}\n`,
-  );
+  if (acceptanceMode && evidenceRoot) {
+    await mkdir(join(evidenceRoot, 'reports'), { recursive: true });
+    await writeFile(
+      join(evidenceRoot, 'reports/browser-health.json'),
+      `${JSON.stringify({
+        console_errors: browserHealth.consoleErrors.length,
+        failed_requests: browserHealth.failedRequests.length,
+        page_errors: browserHealth.pageErrors.length,
+        server_errors: browserHealth.serverErrors.length,
+      })}\n`,
+    );
+  }
 });
