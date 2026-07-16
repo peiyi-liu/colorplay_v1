@@ -136,7 +136,7 @@ export type AchievementRepository = Readonly<{
 
 **Task evidence:** command output only; no evidence directory.
 
-- [ ] **Step 1: Write the failing catalog/RLS pgTAP test**
+- [x] **Step 1: Write the failing catalog/RLS pgTAP test**
 
   Add assertions that:
 
@@ -152,7 +152,7 @@ export type AchievementRepository = Readonly<{
 
   Use deterministic users `11000000-0000-0000-0000-000000000001/2` and only count rows whose IDs belong to those fixtures or the nine catalog UUIDs.
 
-- [ ] **Step 2: Run the new pgTAP test to prove RED**
+- [x] **Step 2: Run the new pgTAP test to prove RED**
 
   Run:
 
@@ -162,7 +162,7 @@ export type AchievementRepository = Readonly<{
 
   Expected: FAIL because `public.achievement_definitions` and the achievement enums do not exist. A connection/configuration error is not an acceptable RED result.
 
-- [ ] **Step 3: Add the minimal additive catalog migration**
+- [x] **Step 3: Add the minimal additive catalog migration**
 
   Implement the locked enums and tables with these keys and constraints:
 
@@ -229,7 +229,7 @@ export type AchievementRepository = Readonly<{
 
   All nine use `visibility = 'public'`, `status = 'active'`, `rule_version = 1`, and badge-only display metadata. Enable RLS, grant authenticated users only `select` on progress/unlocks, add own-row select policies, and give authenticated users no direct definitions grant. Add an immutable trigger to reject unlock update/delete.
 
-- [ ] **Step 4: Reset local Supabase and prove GREEN**
+- [x] **Step 4: Reset local Supabase and prove GREEN**
 
   Run:
 
@@ -242,7 +242,7 @@ export type AchievementRepository = Readonly<{
 
   Expected: reset applies `20260716000500`; the scoped pgTAP file reports PASS; formatting and diff checks exit 0.
 
-- [ ] **Step 5: Mark Task 1 complete and commit**
+- [x] **Step 5: Mark Task 1 complete and commit**
 
   ```bash
   git add supabase/tests/008_achievement_catalog.test.sql \
