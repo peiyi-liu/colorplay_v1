@@ -104,13 +104,13 @@ test('Game Economy v2 phase gate', async ({ browserName, page }, testInfo) => {
   await expect(page.getByText('150 Token 可用')).toBeVisible();
   await page.getByRole('button', { name: '選用 招財貓' }).click();
   await expect(page.getByRole('status')).toContainText('已裝備招財貓。');
-  await expect(page.getByText('已裝備')).toHaveCount(1);
+  await expect(page.getByText('已裝備', { exact: true })).toHaveCount(1);
 
   await page.reload();
-  await expect(page.getByText('已裝備')).toHaveCount(1);
+  await expect(page.getByText('已裝備', { exact: true })).toHaveCount(1);
   await page.goto('/app/shop');
   await expect(page.getByText('150 Token 可用')).toBeVisible();
-  await expect(page.getByText('已裝備')).toHaveCount(1);
+  await expect(page.getByText('已裝備', { exact: true })).toHaveCount(1);
 
   const client = createClient<Database>(
     requiredEnvironment('SUPABASE_URL'),
