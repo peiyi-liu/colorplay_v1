@@ -632,7 +632,7 @@ export const inventoryQueryKey = ['inventory', 'blooks'] as const;
 
 **Required evidence:** repository/hook unit tests, real-local integration for own snapshot/purchase retry/equip/shortfall, lint/typecheck. No evidence directory.
 
-- [ ] **Step 1: Write failing unit and integration tests**
+- [x] **Step 1: Write failing unit and integration tests**
 
   Unit tests assert exact RPC args and reject duplicate IDs, more/fewer than six items, multiple equipped items, an active ID not owned, wrong costs/order, negative balance, string numerics, and raw user/email fields. Assert error mapping from stable PostgreSQL messages and `shortfall` parsing.
 
@@ -645,7 +645,7 @@ export const inventoryQueryKey = ['inventory', 'blooks'] as const;
 
   Integration uses Student One and Student Two to prove snapshots are isolated. Student One completes a real quiz through `QuizRepository` using the generated answer fixture, then purchases lucky cat twice without a second debit, equips it, and receives an exact shortfall for an unaffordable item. No integration setup writes wallets or ledgers directly.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
   ```bash
   pnpm exec vitest run src/features/inventory/api/inventory-repository.test.ts src/features/inventory/hooks/use-blook-inventory.test.tsx
@@ -653,11 +653,11 @@ export const inventoryQueryKey = ['inventory', 'blooks'] as const;
 
   Expected failure: inventory modules do not exist.
 
-- [ ] **Step 3: Implement schemas, repository, and hooks**
+- [x] **Step 3: Implement schemas, repository, and hooks**
 
   Define a strict six-item Zod payload, stable code/cost tuple assertions, UUID validation, exact RPC calls, error mapping, query/mutation hooks, and authoritative cache replacement. Do not add localStorage, mock catalog, client price arithmetic, or client ownership changes.
 
-- [ ] **Step 4: Run GREEN and task checks**
+- [x] **Step 4: Run GREEN and task checks**
 
   ```bash
   pnpm exec vitest run src/features/inventory/api/inventory-repository.test.ts src/features/inventory/hooks/use-blook-inventory.test.tsx
@@ -676,7 +676,7 @@ export const inventoryQueryKey = ['inventory', 'blooks'] as const;
 
   Expected success: focused unit/integration, lint, and typecheck all exit 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
   git add src/features/inventory/types.ts src/features/inventory/api/inventory-repository.ts src/features/inventory/api/inventory-repository.test.ts src/features/inventory/api/inventory-repository.integration.test.ts src/features/inventory/hooks/use-blook-inventory.ts src/features/inventory/hooks/use-blook-inventory.test.tsx
