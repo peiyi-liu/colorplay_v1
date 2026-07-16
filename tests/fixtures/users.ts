@@ -1,4 +1,12 @@
 export const TEST_USERS = {
+  authLifecycleOne: {
+    email: 'auth.lifecycle.one@colorplay.test',
+    password: 'LocalOnly-AuthLifecycle1!',
+  },
+  authLifecycleTwo: {
+    email: 'auth.lifecycle.two@colorplay.test',
+    password: 'LocalOnly-AuthLifecycle2!',
+  },
   teacher: {
     email: 'teacher@colorplay.test',
     password: 'LocalOnly-Teacher1!',
@@ -20,6 +28,8 @@ export const TEST_USERS = {
 export type TestUserLabel = keyof typeof TEST_USERS;
 
 export const TEST_USER_ROLES = {
+  authLifecycleOne: 'student',
+  authLifecycleTwo: 'student',
   teacher: 'teacher',
   studentOne: 'student',
   studentTwo: 'student',

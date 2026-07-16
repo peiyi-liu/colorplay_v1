@@ -8,7 +8,9 @@ describe('EconomyRepository with local Supabase', () => {
   const clients: Awaited<ReturnType<typeof signedInClient>>[] = [];
 
   afterAll(async () => {
-    await Promise.all(clients.map((client) => client.auth.signOut()));
+    await Promise.all(
+      clients.map((client) => client.auth.signOut({ scope: 'local' })),
+    );
   });
 
   it('returns only each signed-in student own authoritative summary', async () => {

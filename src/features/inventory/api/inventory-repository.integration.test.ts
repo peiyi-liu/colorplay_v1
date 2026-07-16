@@ -15,7 +15,9 @@ describe('InventoryRepository with local Supabase', () => {
   const clients: Awaited<ReturnType<typeof signedInClient>>[] = [];
 
   afterAll(async () => {
-    await Promise.all(clients.map((client) => client.auth.signOut()));
+    await Promise.all(
+      clients.map((client) => client.auth.signOut({ scope: 'local' })),
+    );
   });
 
   it('keeps inventories private and supports real reward, retry, equip, and shortfall flow', async () => {

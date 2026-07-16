@@ -134,11 +134,13 @@ afterAll(async () => {
 
 describe('AuthRepository with local Supabase', () => {
   it('returns minimal sessions and removes the local session on sign-out', async () => {
-    const repository = createAuthRepository(createLocalClient('studentOne'));
+    const repository = createAuthRepository(
+      createLocalClient('authLifecycleOne'),
+    );
 
-    const signedIn = await repository.signIn(TEST_USERS.studentOne);
+    const signedIn = await repository.signIn(TEST_USERS.authLifecycleOne);
 
-    expect(signedIn.email).toBe(TEST_USERS.studentOne.email);
+    expect(signedIn.email).toBe(TEST_USERS.authLifecycleOne.email);
     expect(typeof signedIn.userId).toBe('string');
     expect(Object.keys(signedIn).sort()).toEqual(['email', 'userId']);
     await expect(repository.getSession()).resolves.toEqual(signedIn);
@@ -149,10 +151,12 @@ describe('AuthRepository with local Supabase', () => {
   });
 
   it('maps a real rejected password attempt to the stable credentials code', async () => {
-    const repository = createAuthRepository(createLocalClient('studentTwo'));
+    const repository = createAuthRepository(
+      createLocalClient('authLifecycleTwo'),
+    );
 
     const rejection = repository.signIn({
-      email: TEST_USERS.studentTwo.email,
+      email: TEST_USERS.authLifecycleTwo.email,
       password: 'wrong-value',
     });
 
@@ -181,7 +185,9 @@ describe('AuthRepository with local Supabase', () => {
   });
 
   it('maps real sign-in and sign-out events and returns a working unsubscribe', async () => {
-    const repository = createAuthRepository(createLocalClient('outsider'));
+    const repository = createAuthRepository(
+      createLocalClient('authLifecycleOne'),
+    );
     const observedSessions: (Readonly<{
       userId: string;
       email: string;
@@ -190,7 +196,7 @@ describe('AuthRepository with local Supabase', () => {
       observedSessions.push(session);
     });
 
-    const signedIn = await repository.signIn(TEST_USERS.outsider);
+    const signedIn = await repository.signIn(TEST_USERS.authLifecycleOne);
     await waitFor(() => {
       expect(observedSessions).toContainEqual(signedIn);
     });
@@ -202,7 +208,7 @@ describe('AuthRepository with local Supabase', () => {
 
     const countBeforeUnsubscribe = observedSessions.length;
     unsubscribe();
-    await repository.signIn(TEST_USERS.outsider);
+    await repository.signIn(TEST_USERS.authLifecycleOne);
     await repository.signOut();
     await new Promise((resolve) => setTimeout(resolve, 20));
 

@@ -36,43 +36,43 @@ const successfulResponseKeys = [
 const createValidReport = (): MutableNetworkReport => ({
   entries: [
     {
-      fixtureLabel: 'studentOne',
+      fixtureLabel: 'authLifecycleOne',
       httpStatus: 200,
       operation: 'signIn',
       responseKeys: [...successfulResponseKeys],
     },
     {
-      fixtureLabel: 'studentOne',
+      fixtureLabel: 'authLifecycleOne',
       httpStatus: 204,
       operation: 'signOut',
       responseKeys: [],
     },
     {
-      fixtureLabel: 'studentTwo',
+      fixtureLabel: 'authLifecycleTwo',
       httpStatus: 400,
       operation: 'signIn',
       responseKeys: ['code', 'message'],
     },
     {
-      fixtureLabel: 'outsider',
+      fixtureLabel: 'authLifecycleOne',
       httpStatus: 200,
       operation: 'signIn',
       responseKeys: [...successfulResponseKeys],
     },
     {
-      fixtureLabel: 'outsider',
+      fixtureLabel: 'authLifecycleOne',
       httpStatus: 204,
       operation: 'signOut',
       responseKeys: [],
     },
     {
-      fixtureLabel: 'outsider',
+      fixtureLabel: 'authLifecycleOne',
       httpStatus: 200,
       operation: 'signIn',
       responseKeys: [...successfulResponseKeys],
     },
     {
-      fixtureLabel: 'outsider',
+      fixtureLabel: 'authLifecycleOne',
       httpStatus: 204,
       operation: 'signOut',
       responseKeys: [],

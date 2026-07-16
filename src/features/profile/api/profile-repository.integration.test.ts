@@ -16,7 +16,9 @@ describe('ProfileRepository with RLS', () => {
   };
 
   afterAll(async () => {
-    await Promise.all(clients.map((client) => client.auth.signOut()));
+    await Promise.all(
+      clients.map((client) => client.auth.signOut({ scope: 'local' })),
+    );
   });
 
   it('returns only the safe signed-in profile projection', async () => {

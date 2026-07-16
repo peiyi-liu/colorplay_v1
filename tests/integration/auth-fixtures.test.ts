@@ -11,6 +11,8 @@ import {
 } from '../fixtures/users';
 
 const fixtureLabels = [
+  'authLifecycleOne',
+  'authLifecycleTwo',
   'teacher',
   'studentOne',
   'studentTwo',
@@ -105,7 +107,9 @@ describe('local Auth fixtures', () => {
 
       verifiedRoles.add(label);
 
-      const { error: signOutError } = await client.auth.signOut();
+      const { error: signOutError } = await client.auth.signOut({
+        scope: 'local',
+      });
       expect(signOutError === null).toBe(true);
     },
   );
