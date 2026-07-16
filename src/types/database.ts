@@ -34,6 +34,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      blooks: {
+        Row: {
+          cost_tokens: number
+          created_at: string
+          emoji: string
+          id: string
+          name: string
+          sort_order: number
+          stable_code: string
+          status: string
+        }
+        Insert: {
+          cost_tokens: number
+          created_at?: string
+          emoji: string
+          id: string
+          name: string
+          sort_order: number
+          stable_code: string
+          status: string
+        }
+        Update: {
+          cost_tokens?: number
+          created_at?: string
+          emoji?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          stable_code?: string
+          status?: string
+        }
+        Relationships: []
+      }
       chapters: {
         Row: {
           course_id: string
@@ -113,6 +146,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_blook_id: string
           created_at: string
           display_name: string
           id: string
@@ -121,6 +155,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active_blook_id: string
           created_at?: string
           display_name: string
           id: string
@@ -129,6 +164,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active_blook_id?: string
           created_at?: string
           display_name?: string
           id?: string
@@ -136,7 +172,15 @@ export type Database = {
           timezone?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_active_blook_id_fkey"
+            columns: ["active_blook_id"]
+            isOneToOne: false
+            referencedRelation: "blooks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       question_options: {
         Row: {
@@ -230,6 +274,8 @@ export type Database = {
           correct_option_id: string
           id: string
           idempotency_key: string
+          provisional_tokens: number
+          provisional_xp: number
           response_ms: number
           score_delta: number
           selected_option_id: string | null
@@ -243,6 +289,8 @@ export type Database = {
           correct_option_id: string
           id?: string
           idempotency_key: string
+          provisional_tokens?: number
+          provisional_xp?: number
           response_ms: number
           score_delta: number
           selected_option_id?: string | null
@@ -256,6 +304,8 @@ export type Database = {
           correct_option_id?: string
           id?: string
           idempotency_key?: string
+          provisional_tokens?: number
+          provisional_xp?: number
           response_ms?: number
           score_delta?: number
           selected_option_id?: string | null
@@ -410,8 +460,10 @@ export type Database = {
           client_request_id: string
           completed_at: string | null
           correct_count: number
+          game_rules_version: string
           id: string
           question_count: number
+          reward_rate_percent: number
           started_at: string
           status: Database["public"]["Enums"]["quiz_session_status"]
           template_id: string
@@ -426,8 +478,10 @@ export type Database = {
           client_request_id: string
           completed_at?: string | null
           correct_count?: number
+          game_rules_version?: string
           id?: string
           question_count: number
+          reward_rate_percent?: number
           started_at?: string
           status?: Database["public"]["Enums"]["quiz_session_status"]
           template_id: string
@@ -442,8 +496,10 @@ export type Database = {
           client_request_id?: string
           completed_at?: string | null
           correct_count?: number
+          game_rules_version?: string
           id?: string
           question_count?: number
+          reward_rate_percent?: number
           started_at?: string
           status?: Database["public"]["Enums"]["quiz_session_status"]
           template_id?: string
@@ -591,6 +647,147 @@ export type Database = {
           },
         ]
       }
+      user_blooks: {
+        Row: {
+          acquired_at: string
+          blook_id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          blook_id: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          acquired_at?: string
+          blook_id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_blooks_blook_id_fkey"
+            columns: ["blook_id"]
+            isOneToOne: false
+            referencedRelation: "blooks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_blooks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          reason: string
+          source_id: string
+          source_type: Database["public"]["Enums"]["economy_source_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          reason: string
+          source_id: string
+          source_type: Database["public"]["Enums"]["economy_source_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          reason?: string
+          source_id?: string
+          source_type?: Database["public"]["Enums"]["economy_source_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          created_at: string
+          token_balance: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          token_balance?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          token_balance?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xp_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          reason: string
+          source_id: string
+          source_type: Database["public"]["Enums"]["economy_source_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          reason: string
+          source_id: string
+          source_type: Database["public"]["Enums"]["economy_source_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          reason?: string
+          source_id?: string
+          source_type?: Database["public"]["Enums"]["economy_source_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xp_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       question_options_public: {
@@ -637,6 +834,7 @@ export type Database = {
           correct_option_id: string | null
           deadline_at: string | null
           explanation: string | null
+          game_rules_version: string | null
           options: Json | null
           position: number | null
           prompt: string | null
@@ -644,6 +842,7 @@ export type Database = {
           question_stable_code: string | null
           question_version: number | null
           response_ms: number | null
+          reward_rate_percent: number | null
           score_delta: number | null
           selected_option_id: string | null
           session_id: string | null
@@ -654,7 +853,9 @@ export type Database = {
             | null
           started_at: string | null
           template_id: string | null
+          tokens_awarded: number | null
           total_score: number | null
+          xp_awarded: number | null
         }
         Relationships: [
           {
@@ -712,7 +913,15 @@ export type Database = {
         Args: { client_request_id: string; template_id: string }
         Returns: Json
       }
+      equip_blook: { Args: { blook_id: string }; Returns: Json }
       finalize_quiz_session: { Args: { session_id: string }; Returns: Json }
+      get_my_blook_inventory: { Args: never; Returns: Json }
+      get_my_economy_summary: { Args: never; Returns: Json }
+      purchase_blook: { Args: { blook_id: string }; Returns: Json }
+      reconcile_wallet_cache: {
+        Args: { target_user_id: string }
+        Returns: number
+      }
       submit_quiz_answer: {
         Args: {
           idempotency_key: string
@@ -729,6 +938,12 @@ export type Database = {
     Enums: {
       app_role: "student" | "teacher" | "admin"
       content_status: "draft" | "published" | "archived"
+      economy_source_type:
+        | "quiz_finalize"
+        | "blook_purchase"
+        | "achievement"
+        | "assignment"
+        | "live"
       question_type: "single_choice"
       quiz_answer_status: "correct" | "incorrect" | "timeout"
       quiz_session_status: "in_progress" | "completed"
@@ -864,6 +1079,13 @@ export const Constants = {
     Enums: {
       app_role: ["student", "teacher", "admin"],
       content_status: ["draft", "published", "archived"],
+      economy_source_type: [
+        "quiz_finalize",
+        "blook_purchase",
+        "achievement",
+        "assignment",
+        "live",
+      ],
       question_type: ["single_choice"],
       quiz_answer_status: ["correct", "incorrect", "timeout"],
       quiz_session_status: ["in_progress", "completed"],

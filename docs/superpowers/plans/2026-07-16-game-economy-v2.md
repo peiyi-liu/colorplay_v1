@@ -514,7 +514,7 @@ export function useEconomySummary(
 
 **Required evidence:** database type drift RED/GREEN, repository/hook unit tests, focused real-local repository integration, lint/typecheck. No evidence directory.
 
-- [ ] **Step 1: Write failing repository and hook tests**
+- [x] **Step 1: Write failing repository and hook tests**
 
   Test exact RPC invocation and mapping:
 
@@ -532,7 +532,7 @@ export function useEconomySummary(
 
   Reject string numerics, negative values, inconsistent current-level XP, `wallet_reconciled: false`, unknown keys that indicate a raw-row leak, and Supabase errors. Hook tests assert the exact query key and retry policy. Integration signs in Student One with the anon client and confirms only that student's zero/earned summary is returned.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
   ```bash
   pnpm exec vitest run src/features/rewards/api/economy-repository.test.ts src/features/rewards/hooks/use-economy-summary.test.tsx
@@ -541,7 +541,7 @@ export function useEconomySummary(
 
   Expected failure: reward modules are missing and generated database types do not include economy schema/RPCs.
 
-- [ ] **Step 3: Generate types and implement the repository/hook**
+- [x] **Step 3: Generate types and implement the repository/hook**
 
   ```bash
   pnpm exec supabase gen types typescript --local > src/types/database.ts
@@ -549,7 +549,7 @@ export function useEconomySummary(
 
   Implement the exact interfaces and validation above. The hook creates the browser repository only when none is supplied, uses `economyQueryKey`, and never derives level or balance locally.
 
-- [ ] **Step 4: Run GREEN and task checks**
+- [x] **Step 4: Run GREEN and task checks**
 
   ```bash
   bash tests/contracts/database-types.test.sh
@@ -569,7 +569,7 @@ export function useEconomySummary(
 
   Expected success: type drift, focused unit/integration, lint, and typecheck all exit 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```bash
   git add src/types/database.ts src/features/rewards/types.ts src/features/rewards/api/economy-repository.ts src/features/rewards/api/economy-repository.test.ts src/features/rewards/api/economy-repository.integration.test.ts src/features/rewards/hooks/use-economy-summary.ts src/features/rewards/hooks/use-economy-summary.test.tsx
