@@ -71,6 +71,22 @@ export function createAppRouter() {
                 import('../../features/achievements/pages/achievements-route'),
             },
             {
+              path: '/app/assignments',
+              lazy: async () => {
+                const module =
+                  await import('../../features/assignments/pages/student-assignments-page');
+                return { Component: module.StudentAssignmentsPage };
+              },
+            },
+            {
+              path: '/app/assignments/:assignmentId',
+              lazy: async () => {
+                const module =
+                  await import('../../features/assignments/pages/student-assignment-detail-page');
+                return { Component: module.StudentAssignmentDetailPage };
+              },
+            },
+            {
               path: '/app/quiz/:sessionId/result',
               element: <QuizResultPage />,
             },

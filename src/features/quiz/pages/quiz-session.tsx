@@ -228,9 +228,15 @@ export function QuizSessionPage({
     setActionError(undefined);
     if (displayedQuestion.position === session.questionCount) {
       try {
-        await finalizeMutation.mutateAsync(session.sessionId);
+        const finalResult = await finalizeMutation.mutateAsync(
+          session.sessionId,
+        );
         await queryClient.invalidateQueries({ queryKey: economyQueryKey });
-        void navigate(`/app/quiz/${session.sessionId}/result`);
+        void navigate(`/app/quiz/${session.sessionId}/result`, {
+          state: finalResult.assignmentAttempt
+            ? { assignmentAttempt: finalResult.assignmentAttempt }
+            : null,
+        });
       } catch (error) {
         setActionError({
           kind: 'finalize',

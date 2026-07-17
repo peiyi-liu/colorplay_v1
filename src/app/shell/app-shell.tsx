@@ -53,6 +53,7 @@ export function AppShell() {
             {isAuthenticatedProfile ? (
               <nav aria-label="主要導覽">
                 <Link to="/app">章節挑戰</Link>
+                <Link to="/app/assignments">我的作業</Link>
                 <Link to="/app/leaderboard">班級排行榜</Link>
                 <Link to="/app/shop">Blook 商店</Link>
                 <Link to="/app/achievements">成就徽章</Link>

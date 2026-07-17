@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { parsePublicEnv } from '../../../lib/config/public-env';
@@ -8,9 +8,19 @@ import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
 import {
   createQuizRepository,
   QuizRepositoryError,
+  type QuizAssignmentAttempt,
   type QuizQuestion,
   type QuizRepository,
 } from '../api/quiz-repository';
+
+const assignmentBanner = (attempt: QuizAssignmentAttempt) => {
+  if (attempt.status === 'completed' && attempt.passed === true)
+    return '作業已完成並通過。';
+  if (attempt.status === 'completed') return '作業已完成，未達及格分數。';
+  if (attempt.status === 'expired')
+    return '已超過作業截止時間，本次不計入作業。';
+  return null;
+};
 
 const answerText = (question: QuizQuestion, optionId: string | null) => {
   if (optionId === null) return '未作答（逾時）';
@@ -24,6 +34,14 @@ export function QuizResultPage({
   repository: suppliedRepository,
 }: Readonly<{ repository?: QuizRepository }>) {
   const { sessionId } = useParams();
+  const location = useLocation();
+  const assignmentAttempt =
+    location.state &&
+    typeof location.state === 'object' &&
+    'assignmentAttempt' in location.state
+      ? (location.state as { assignmentAttempt: QuizAssignmentAttempt })
+          .assignmentAttempt
+      : null;
   const repository = useMemo(
     () =>
       suppliedRepository ??
@@ -78,6 +96,12 @@ export function QuizResultPage({
           <p>+{String(session.xpAwarded)} XP</p>
           <p>+{String(session.tokensAwarded)} Token</p>
         </div>
+        {assignmentAttempt && assignmentBanner(assignmentAttempt) ? (
+          <div role="status">
+            <p>{assignmentBanner(assignmentAttempt)}</p>
+            <Link to="/app/assignments">返回我的作業</Link>
+          </div>
+        ) : null}
         <p className="quiz-result__rules">
           獎勵規則：{session.gameRulesVersion}（
           {String(session.rewardRatePercent)}%）

@@ -58,8 +58,17 @@ const answerResultSchema = z.object({
   selected_option_id: uuidSchema.nullable(),
   total_score: z.number().int().nonnegative(),
 });
+const assignmentAttemptSchema = z.strictObject({
+  assignment_id: uuidSchema,
+  attempt_id: uuidSchema,
+  attempt_number: z.number().int().positive(),
+  completed_at: timestampSchema.nullable(),
+  passed: z.boolean().nullable(),
+  status: z.enum(['in_progress', 'completed', 'expired', 'abandoned']),
+});
 const finalResultSchema = z.strictObject({
   answered_count: z.number().int().nonnegative(),
+  assignment_attempt: assignmentAttemptSchema.optional(),
   completed_at: timestampSchema,
   correct_count: z.number().int().nonnegative(),
   game_rules_version: gameRulesVersionSchema,
@@ -149,8 +158,18 @@ export type QuizAnswerResult = Readonly<{
   selectedOptionId: string | null;
   totalScore: number;
 }>;
+export type QuizAssignmentAttempt = Readonly<{
+  assignmentId: string;
+  attemptId: string;
+  attemptNumber: number;
+  completedAt: string | null;
+  passed: boolean | null;
+  status: 'in_progress' | 'completed' | 'expired' | 'abandoned';
+}>;
+
 export type QuizFinalResult = Readonly<{
   answeredCount: number;
+  assignmentAttempt?: QuizAssignmentAttempt;
   completedAt: string;
   correctCount: number;
   gameRulesVersion: z.infer<typeof gameRulesVersionSchema>;
@@ -271,6 +290,18 @@ function parseFinal(value: unknown): QuizFinalResult {
   const parsed = finalResultSchema.safeParse(value);
   if (!parsed.success) throw new QuizRepositoryError('INVALID_RESPONSE');
   return {
+    ...(parsed.data.assignment_attempt
+      ? {
+          assignmentAttempt: {
+            assignmentId: parsed.data.assignment_attempt.assignment_id,
+            attemptId: parsed.data.assignment_attempt.attempt_id,
+            attemptNumber: parsed.data.assignment_attempt.attempt_number,
+            completedAt: parsed.data.assignment_attempt.completed_at,
+            passed: parsed.data.assignment_attempt.passed,
+            status: parsed.data.assignment_attempt.status,
+          },
+        }
+      : {}),
     answeredCount: parsed.data.answered_count,
     completedAt: parsed.data.completed_at,
     correctCount: parsed.data.correct_count,
