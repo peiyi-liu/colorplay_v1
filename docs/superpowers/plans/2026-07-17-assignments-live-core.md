@@ -198,7 +198,7 @@ Join codes reuse the Phase 3 pattern: `extensions.gen_random_bytes(8)` → 16 up
 
 **Files:** Create `supabase/migrations/20260717000700_live_setup_commands.sql`, `supabase/tests/017_live_setup.test.sql`; modify this plan.
 
-- [ ] **Step 1:** Failing pgTAP: create/rotate/join/state/start positive + host-only, non-member join denial, wrong/rotated code generic error, ten join replays → one participant, stale/duplicate start CAS conflict, frozen questions match the template's published versions, participant state payload has no correct option, host payload has counts but no raw member answers. **Step 2:** RED. **Step 3:** implement (code hashing per Phase 3 pattern with `extensions.` qualification). **Step 4:** GREEN (016+017 + classroom files regression) + lint + typecheck. **Step 5:** Commit `feat: add live session setup commands`.
+- [x] **Step 1:** Failing pgTAP: create/rotate/join/state/start positive + host-only, non-member join denial, wrong/rotated code generic error, ten join replays → one participant, stale/duplicate start CAS conflict, frozen questions match the template's published versions, participant state payload has no correct option, host payload has counts but no raw member answers. **Step 2:** RED. **Step 3:** implement (code hashing per Phase 3 pattern with `extensions.` qualification). **Step 4:** GREEN (016+017 + classroom files regression) + lint + typecheck. **Step 5:** Commit `feat: add live session setup commands`.
 
 ### Task 9: Live play commands — open, answer, close, advance, finalize, cancel
 
@@ -206,8 +206,8 @@ Join codes reuse the Phase 3 pattern: `extensions.gen_random_bytes(8)` → 16 up
 
 **Files:** Create `supabase/migrations/20260717000800_live_play_commands.sql`, `supabase/tests/018_live_play.test.sql`; modify this plan.
 
-- [ ] **Step 1:** Failing pgTAP: full state-machine walk (legal + every illegal transition), non-host command denial, answer before open/after deadline rejection, hidden-answer comparison, fast/slow/wrong/timeout scoring per `2026-07-live-1`, same-key ten replays → one answer + original result, concurrent different-key/option requests do not overwrite, close writes timeouts + per-option counts + reveals correct id only in feedback payload, rank tie-break reproducibility (score desc, last correct time asc, user id asc), finalize once → one XP + one Token row per participant and unique-source replay safety, linked assignment attempt completes exactly once, wallet reconciliation zero, no `review_progress`/mastery effect, fault injection via a temporary test-owned trigger on `wallets` proves full rollback, retry after trigger removal completes once, cancel from each active state.
-- [ ] **Step 2:** RED. **Step 3:** implement with row locks (session, participant, question), version CAS, `on conflict do nothing` backstops, and audit-safe metadata. **Step 4:** GREEN (016–018 + 005/006 economy regression + 009/010 achievements regression) + lint + typecheck. **Step 5:** Commit `feat: add live play and atomic finalize`.
+- [x] **Step 1:** Failing pgTAP: full state-machine walk (legal + every illegal transition), non-host command denial, answer before open/after deadline rejection, hidden-answer comparison, fast/slow/wrong/timeout scoring per `2026-07-live-1`, same-key ten replays → one answer + original result, concurrent different-key/option requests do not overwrite, close writes timeouts + per-option counts + reveals correct id only in feedback payload, rank tie-break reproducibility (score desc, last correct time asc, user id asc), finalize once → one XP + one Token row per participant and unique-source replay safety, linked assignment attempt completes exactly once, wallet reconciliation zero, no `review_progress`/mastery effect, fault injection via a temporary test-owned trigger on `wallets` proves full rollback, retry after trigger removal completes once, cancel from each active state.
+- [x] **Step 2:** RED. **Step 3:** implement with row locks (session, participant, question), version CAS, `on conflict do nothing` backstops, and audit-safe metadata. **Step 4:** GREEN (016–018 + 005/006 economy regression + 009/010 achievements regression) + lint + typecheck. **Step 5:** Commit `feat: add live play and atomic finalize`.
 
 ### Task 10: Private Realtime authorization and committed-state broadcasts
 
@@ -215,7 +215,7 @@ Join codes reuse the Phase 3 pattern: `extensions.gen_random_bytes(8)` → 16 up
 
 **Files:** Create `supabase/migrations/20260717000900_live_realtime.sql`, `supabase/tests/019_live_realtime.test.sql`; modify this plan.
 
-- [ ] **Step 1:** Failing pgTAP: policy existence/scope on `realtime.messages` for the topic pattern, participant/host/outsider matrix, and assertions that each transition command emitted exactly one message row whose payload JSON contains `state_version`/`state`/counts and never `correct_option_id`, Email, or answers before close. **Step 2:** RED. **Step 3:** implement policies + `realtime.send` calls inside Task 8/9 functions (replace additively in this migration). **Step 4:** GREEN (016–019) + lint + typecheck. **Step 5:** Commit `feat: authorize private live realtime`.
+- [x] **Step 1:** Failing pgTAP: policy existence/scope on `realtime.messages` for the topic pattern, participant/host/outsider matrix, and assertions that each transition command emitted exactly one message row whose payload JSON contains `state_version`/`state`/counts and never `correct_option_id`, Email, or answers before close. **Step 2:** RED. **Step 3:** implement policies + `realtime.send` calls inside Task 8/9 functions (replace additively in this migration). **Step 4:** GREEN (016–019) + lint + typecheck. **Step 5:** Commit `feat: authorize private live realtime`.
 
 ### Task 11: Live repositories, realtime hook, and reconnect reconciliation
 
@@ -232,8 +232,8 @@ Join codes reuse the Phase 3 pattern: `extensions.gen_random_bytes(8)` → 16 up
 
 **Files:** Create host pages `src/features/live/pages/teacher-live-page.tsx`, `teacher-live-session-page.tsx`, student pages `live-join-page.tsx`, `live-session-page.tsx` (+ tests each); modify router (+ test), app-shell nav (`Live 課堂`) (+ test), styles; modify this plan.
 
-- [ ] **Step 1:** Failing RTL/router tests: role guards, lobby join-code one-time display for host, participant lobby presence counts, question phase with `<progress>` countdown fed by server deadline, one primary answer action then locked state, feedback distribution + correct reveal only in feedback, podium top 3 + own rank, cancelled/completed terminal states, refresh restore via injected repository state, deep links, reduced client logic (no `Date.now()` scoring, no local rank sort).
-- [ ] **Step 2:** RED. **Step 3:** implement minimal components (lazy routes in both trees). **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add live host and player experience`.
+- [x] **Step 1:** Failing RTL/router tests: role guards, lobby join-code one-time display for host, participant lobby presence counts, question phase with `<progress>` countdown fed by server deadline, one primary answer action then locked state, feedback distribution + correct reveal only in feedback, podium top 3 + own rank, cancelled/completed terminal states, refresh restore via injected repository state, deep links, reduced client logic (no `Date.now()` scoring, no local rank sort).
+- [x] **Step 2:** RED. **Step 3:** implement minimal components (lazy routes in both trees). **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add live host and player experience`.
 
 ### Task 13: Phase 4 gate — runner, finalizer, and multi-context acceptance flow
 
@@ -251,11 +251,11 @@ Join codes reuse the Phase 3 pattern: `extensions.gen_random_bytes(8)` → 16 up
 
 ## Complete-range review, disposable precheck, and single Phase 4 gate
 
-- [ ] **Review Step 1:** Verify `git rev-parse dc77049` matches the full baseline SHA, clean worktree, then run one complete-range review of `dc77049..HEAD` (exclude generated types/lockfile/artifacts). Priorities: state-machine/CAS correctness, hidden-answer exposure, finalize atomicity and idempotent ledgers, assignment derivation, Realtime policy scope, deadline/timezone authority, fixture isolation, declared-4xx exactness.
-- [ ] **Review Step 2:** Fix Critical/Important findings with focused RED→GREEN commits; rerun only affected checks.
-- [ ] **Gate Step 1:** One disposable acceptance-mode headless precheck (mktemp evidence root outside `artifacts/acceptance`, trap cleanup, no finalizer). If it fails, stop and report; a second precheck needs owner authorization unless the failure is a plan-required negative path missing its precise declaration.
-- [ ] **Gate Step 2:** Record clean `GATE_SHA`, run `pnpm phase:assignments-live` exactly once. On failure: stop, report root cause, no rerun without owner instruction.
-- [ ] **Gate Step 3:** After PASS, close Phase 4 in `.superpowers/sdd/progress.md` (plan/task/review SHAs, gate SHA, manifest path, 18 ACs, gate-history root causes, reservations: Phase 7 advanced Live scope, remediation purpose reserved, `AC-LIVE-012` staging revalidation at Phase 8, main-chunk warning) and commit `docs: close assignments and live core phase`. Stop; do not begin Phase 5.
+- [x] **Review Step 1:** Verify `git rev-parse dc77049` matches the full baseline SHA, clean worktree, then run one complete-range review of `dc77049..HEAD` (exclude generated types/lockfile/artifacts). Priorities: state-machine/CAS correctness, hidden-answer exposure, finalize atomicity and idempotent ledgers, assignment derivation, Realtime policy scope, deadline/timezone authority, fixture isolation, declared-4xx exactness.
+- [x] **Review Step 2:** Fix Critical/Important findings with focused RED→GREEN commits; rerun only affected checks.
+- [x] **Gate Step 1:** One disposable acceptance-mode headless precheck (mktemp evidence root outside `artifacts/acceptance`, trap cleanup, no finalizer). If it fails, stop and report; a second precheck needs owner authorization unless the failure is a plan-required negative path missing its precise declaration.
+- [x] **Gate Step 2:** Record clean `GATE_SHA`, run `pnpm phase:assignments-live` exactly once. On failure: stop, report root cause, no rerun without owner instruction.
+- [x] **Gate Step 3:** After PASS, close Phase 4 in `.superpowers/sdd/progress.md` (plan/task/review SHAs, gate SHA, manifest path, 18 ACs, gate-history root causes, reservations: Phase 7 advanced Live scope, remediation purpose reserved, `AC-LIVE-012` staging revalidation at Phase 8, main-chunk warning) and commit `docs: close assignments and live core phase`. Stop; do not begin Phase 5.
 
 ## Plan self-review checklist
 
