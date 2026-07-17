@@ -298,9 +298,16 @@ test('Assignments and Live Core phase gate', async ({
             duplicateHealth,
             assignmentsLiveExpectedFailureDeclarations.duplicateHostAdvance,
           );
+          // Forced clicks skip the animation-frame stability wait, which a
+          // headed background tab never satisfies (throttled tabs stop
+          // painting), so both dispatches beat the winner's broadcast.
           await Promise.all([
-            hostPage.getByRole('button', { name: '下一題' }).click(),
-            duplicateHostPage.getByRole('button', { name: '下一題' }).click(),
+            hostPage
+              .getByRole('button', { name: '下一題' })
+              .click({ force: true }),
+            duplicateHostPage
+              .getByRole('button', { name: '下一題' })
+              .click({ force: true }),
           ]);
           const conflictAlert = '另一個主持分頁已推進狀態，畫面已同步為最新。';
           await expect(async () => {
