@@ -148,11 +148,11 @@ Join codes reuse the Phase 3 pattern: `extensions.gen_random_bytes(8)` → 16 up
 
 **Files:** Create `supabase/migrations/20260717000500_assignment_commands.sql`, `supabase/tests/015_assignment_commands.test.sql`; modify this plan.
 
-- [ ] **Step 1:** Failing pgTAP: owner-only create/status transitions (legal matrix + `archived→published` CONFLICT), non-owner/student denial, target validation, before-availability and after-deadline rejection (server UTC), concurrent starts beyond the remaining limit (advisory/row lock; successful attempts never exceed limit), ten same-request-id replays return one attempt, cross-class attempt/read denial without metadata leakage, completion only after real finalize with `passed` derived from `passing_rule`, replayed finalize returns stored result without a second completion, and reward ledgers unchanged by assignment completion itself.
-- [ ] **Step 2:** RED.
-- [ ] **Step 3:** Implement commands and replace `finalize_quiz_session` additively (new migration; preserves every existing behavior and appends the assignment-derivation step; argument list unchanged).
-- [ ] **Step 4:** GREEN: pgTAP 014+015 plus 004/005/006/008/009/010 regression, lint, typecheck.
-- [ ] **Step 5:** Commit `feat: add trusted assignment lifecycle`.
+- [x] **Step 1:** Failing pgTAP: owner-only create/status transitions (legal matrix + `archived→published` CONFLICT), non-owner/student denial, target validation, before-availability and after-deadline rejection (server UTC), concurrent starts beyond the remaining limit (advisory/row lock; successful attempts never exceed limit), ten same-request-id replays return one attempt, cross-class attempt/read denial without metadata leakage, completion only after real finalize with `passed` derived from `passing_rule`, replayed finalize returns stored result without a second completion, and reward ledgers unchanged by assignment completion itself.
+- [x] **Step 2:** RED.
+- [x] **Step 3:** Implement commands and replace `finalize_quiz_session` additively (new migration; preserves every existing behavior and appends the assignment-derivation step; argument list unchanged).
+- [x] **Step 4:** GREEN: pgTAP 014+015 plus 004/005/006/008/009/010 regression, lint, typecheck.
+- [x] **Step 5:** Commit `feat: add trusted assignment lifecycle`.
 
 ### Task 4: Assignment repositories, hooks, fixtures, and generated types
 
