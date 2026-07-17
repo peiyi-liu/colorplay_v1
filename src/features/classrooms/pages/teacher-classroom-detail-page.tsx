@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { ClassroomCodeReceiptView } from '../components/classroom-code-receipt';
@@ -72,6 +72,12 @@ export function TeacherClassroomDetailPage({
         <h1 id="teacher-classroom-detail-title">班級成員</h1>
         <p>成員資料由安全投影提供，不包含 Email 或使用者識別碼。</p>
       </header>
+      <Link
+        className="secondary-action"
+        to={`/teacher/classes/${classroomId}/assignments`}
+      >
+        作業管理
+      </Link>
       <button
         className="secondary-action"
         disabled={rotate.isPending}

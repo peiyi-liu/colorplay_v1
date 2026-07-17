@@ -373,6 +373,32 @@ describe('createAppRouter', () => {
     expect(router.state.location.pathname).toBe('/unauthorized');
   });
 
+  it('keeps a student out of the teacher assignments route', async () => {
+    mockedUseMyProfile.mockReturnValue({
+      data: {
+        displayName: 'student.one',
+        id: 'learner-id',
+        role: 'student',
+        timezone: 'Asia/Taipei',
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+    const router = renderRouter(
+      '/teacher/classes/14100000-0000-0000-0000-000000000001/assignments',
+      {
+        email: 'learner@colorplay.invalid',
+        userId: 'learner-id',
+      },
+    );
+    expect(
+      await screen.findByRole('heading', { name: '沒有權限' }),
+    ).toBeVisible();
+    expect(router.state.location.pathname).toBe('/unauthorized');
+  });
+
   it('lazy-loads the classes route for an authoritative teacher', async () => {
     mockedUseMyProfile.mockReturnValue({
       data: {

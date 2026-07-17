@@ -109,6 +109,14 @@ export function createAppRouter() {
                     return { Component: module.TeacherClassroomDetailPage };
                   },
                 },
+                {
+                  path: '/teacher/classes/:classroomId/assignments',
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/assignments/pages/teacher-assignments-page');
+                    return { Component: module.TeacherAssignmentsPage };
+                  },
+                },
               ],
             },
           ],

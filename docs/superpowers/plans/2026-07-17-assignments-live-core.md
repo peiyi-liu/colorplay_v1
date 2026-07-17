@@ -172,8 +172,8 @@ Join codes reuse the Phase 3 pattern: `extensions.gen_random_bytes(8)` → 16 up
 
 **Files:** Create `src/features/assignments/pages/teacher-assignments-page.tsx` (+ test); modify router/create-app-router (+ test), teacher classroom detail page link, this plan.
 
-- [ ] **Step 1:** Failing RTL/router tests: role guard, list/empty/loading/error/retry, RHF+Zod create form (title 1–120, optional availability/deadline with Taipei rendering of a known UTC fixture, attempt limit ≥1, passing threshold), one primary action per view, status transitions with confirmation, Teacher B denial via repository error, no Email/raw IDs in DOM.
-- [ ] **Step 2:** RED. **Step 3:** implement minimal page + route (lazy, inside `/teacher` tree). **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add teacher assignment management`.
+- [x] **Step 1:** Failing RTL/router tests: role guard, list/empty/loading/error/retry, RHF+Zod create form (title 1–120, optional availability/deadline with Taipei rendering of a known UTC fixture, attempt limit ≥1, passing threshold), one primary action per view, status transitions with confirmation, Teacher B denial via repository error, no Email/raw IDs in DOM.
+- [x] **Step 2:** RED. **Step 3:** implement minimal page + route (lazy, inside `/teacher` tree). **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add teacher assignment management`.
 
 ### Task 6: Student assignment experience
 
