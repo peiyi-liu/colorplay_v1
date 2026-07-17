@@ -268,7 +268,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 ### Task 2: Trusted create, rotate, join, and safe classroom projections
 
-- [ ] **Task 2 delivery marker**
+- [x] **Task 2 delivery marker**
 
 **Reviewer gate:** Accept only if plaintext codes are server-generated and returned once, only owners rotate codes, old codes stop working, valid join replay ten times creates one row, inactive membership reactivates without changing original `joined_at`, and no RPC returns a hash or Email.
 
@@ -284,7 +284,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 **AC:** `AC-AUTH-005`, `AC-AUTH-006`, `AC-AUTH-007`.
 
-- [ ] **Step 1: Write failing command and idempotency pgTAP tests**
+- [x] **Step 1: Write failing command and idempotency pgTAP tests**
 
 Use only test-owned UUIDs. Test Teacher A create success, Student create denial, Teacher B rotate denial, rotation version increment, old-code rejection, invalid format rejection without classroom disclosure, archived classroom rejection, outsider safe reads, and ten identical calls using one request UUID.
 
@@ -304,7 +304,7 @@ select is(
 
 Assert `joined_at` is unchanged across active replay and inactive reactivation, while `activated_at` advances only on reactivation. Inspect returned columns and routine grants so hash, Email, raw role metadata, and arbitrary profile fields cannot appear.
 
-- [ ] **Step 2: Run the command test to prove RED**
+- [x] **Step 2: Run the command test to prove RED**
 
 ```bash
 pnpm exec supabase db reset --local
@@ -313,7 +313,7 @@ pnpm exec supabase test db supabase/tests/012_classroom_commands.test.sql
 
 Expected: FAIL with missing `create_classroom`, `rotate_classroom_join_code`, and `join_classroom` routines.
 
-- [ ] **Step 3: Implement code normalization, hashing, commands, and projections**
+- [x] **Step 3: Implement code normalization, hashing, commands, and projections**
 
 Generate 16 uppercase hexadecimal characters from `extensions.gen_random_bytes(8)`, display them as four groups separated by hyphens, normalize by removing hyphens, and store only `extensions.digest(normalized_code, 'sha256')`. On Supabase, pgcrypto lives in the `extensions` schema, which the fixed `search_path = pg_catalog, public` excludes — always call both functions fully qualified and add an idempotent `create extension if not exists pgcrypto with schema extensions;` at the top of the migration; do not widen any function's search_path. Add a unique index on `classrooms(join_code_hash)` and retry generation on that index. Compare digests inside the trusted join function and return a generic invalid-code error for malformed, unknown, rotated, or archived codes.
 
@@ -326,7 +326,7 @@ end if;
 
 Lock the classroom row during rotation and join. `create_classroom` inserts the owner as one active `teacher` membership in the same transaction. Use the membership primary key for student join race safety. Active replay returns the existing row without changing `joined_at`; an inactive student row becomes active and retains its original `joined_at`. Read RPCs project only their declared columns, and owned student member lists exclude the owner's teacher membership.
 
-- [ ] **Step 4: Run scoped GREEN checks**
+- [x] **Step 4: Run scoped GREEN checks**
 
 ```bash
 pnpm exec supabase db reset --local
@@ -338,7 +338,7 @@ pnpm typecheck
 
 Expected: both scoped database files pass; lint and typecheck exit 0.
 
-- [ ] **Step 5: Mark Task 2 complete and commit**
+- [x] **Step 5: Mark Task 2 complete and commit**
 
 ```bash
 git add supabase/migrations/20260717000200_classroom_commands.sql \
