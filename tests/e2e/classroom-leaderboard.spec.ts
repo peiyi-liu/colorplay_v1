@@ -189,6 +189,12 @@ test('Classroom and Leaderboard v2 phase gate', async ({
   await teacherBPage.goto(`/teacher/classes/${classroomId}`);
   await expect(teacherBPage.getByRole('alert')).toContainText('沒有管理權限');
 
+  // Negative-path windows must close as soon as their denial is asserted:
+  // in headed mode, later window focus/visibility churn makes TanStack Query
+  // refetch their errored queries, emitting denials beyond the declared count.
+  // Their health recordings stay available for the final assertions.
+  await Promise.all([outsiderContext.close(), teacherBContext.close()]);
+
   await completeQuiz(studentAPage);
   await completeQuiz(studentBPage);
 
@@ -300,10 +306,5 @@ test('Classroom and Leaderboard v2 phase gate', async ({
     })}\n`,
   );
 
-  await Promise.all([
-    teacherContext.close(),
-    studentBContext.close(),
-    outsiderContext.close(),
-    teacherBContext.close(),
-  ]);
+  await Promise.all([teacherContext.close(), studentBContext.close()]);
 });
