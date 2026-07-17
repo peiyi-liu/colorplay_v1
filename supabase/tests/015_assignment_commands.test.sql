@@ -193,8 +193,8 @@ select throws_ok(
     null, null, null, 1
   )$$,
   'P0001',
-  'ASSIGNMENT_LIVE_ACTIVITY_UNAVAILABLE',
-  'live-activity assignments wait for the Live phase tasks'
+  'ASSIGNMENT_LIVE_ACTIVITY_NOT_FOUND',
+  'a live assignment requires an owned active live activity'
 );
 
 select set_config(
