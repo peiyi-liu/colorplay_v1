@@ -2,6 +2,8 @@ import { createBrowserRouter } from 'react-router-dom';
 import { RequireAuth } from '../../features/auth/components/require-auth';
 import { RequireRole } from '../../features/auth/components/require-role';
 import { LoginPage } from '../../features/auth/pages/login-page';
+import { JoinClassroomRoute } from '../../features/classrooms/pages/join-classroom-route';
+import { StudentClassroomsPage } from '../../features/classrooms/pages/student-classrooms-page';
 import { ShopPage } from '../../features/inventory/pages/shop-page';
 import { ChapterSelectPage } from '../../features/learning/pages/chapter-select';
 import { ProfileFoundationPage } from '../../features/profile/pages/profile-foundation-page';
@@ -39,8 +41,16 @@ export function createAppRouter() {
           element: <RequireAuth />,
           children: [
             {
+              path: '/join/:joinCode',
+              element: <JoinClassroomRoute />,
+            },
+            {
               path: '/app',
               element: <ChapterSelectPage />,
+            },
+            {
+              path: '/app/leaderboard',
+              element: <StudentClassroomsPage />,
             },
             {
               path: '/app/profile',

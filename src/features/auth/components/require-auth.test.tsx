@@ -52,7 +52,10 @@ const renderGuard = (auth: AuthContextValue, initialEntry: string) => {
           { element: <LoginStateProbe />, path: '/login' },
           {
             element: <RequireAuth />,
-            children: [{ element: <h1>學習大廳</h1>, path: '/app' }],
+            children: [
+              { element: <h1>學習大廳</h1>, path: '/app' },
+              { element: <h1>加入班級確認</h1>, path: '/join/:joinCode' },
+            ],
           },
         ],
       },
@@ -112,5 +115,16 @@ describe('RequireAuth', () => {
       await screen.findByRole('heading', { name: '學習大廳' }),
     ).toBeVisible();
     expect(screen.queryByRole('status', { name: '頁面載入中' })).toBeNull();
+  });
+
+  it('preserves a join-code deep link for login without joining', async () => {
+    const router = renderGuard(
+      createAuthValue({ session: null, status: 'anonymous' }),
+      '/join/ABCD-1234-EF56-7890',
+    );
+    expect(await screen.findByRole('heading', { name: '登入' })).toBeVisible();
+    expect(router.state.location.state).toEqual({
+      from: { hash: '', pathname: '/join/ABCD-1234-EF56-7890', search: '' },
+    });
   });
 });

@@ -113,6 +113,10 @@ describe('AppShell', () => {
       'href',
       '/app/shop',
     );
+    expect(screen.getByRole('link', { name: '班級排行榜' })).toHaveAttribute(
+      'href',
+      '/app/leaderboard',
+    );
     expect(screen.getAllByRole('link', { name: '成就徽章' })).toHaveLength(1);
     expect(screen.getByRole('link', { name: '成就徽章' })).toHaveAttribute(
       'href',

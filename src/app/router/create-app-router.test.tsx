@@ -90,6 +90,20 @@ vi.mock('../../features/achievements/hooks/use-achievements', () => ({
     refetch: vi.fn(),
   })),
 }));
+vi.mock('../../features/classrooms/hooks/use-classrooms', () => ({
+  useJoinClassroom: vi.fn(() => ({
+    error: null,
+    isPending: false,
+    mutateAsync: vi.fn(),
+  })),
+  useMyClassrooms: vi.fn(() => ({
+    data: [],
+    error: null,
+    isError: false,
+    isPending: false,
+    refetch: vi.fn(),
+  })),
+}));
 
 const mockedUseMyProfile = vi.mocked(useMyProfile);
 const mockedUsePublishedChapters = vi.mocked(usePublishedChapters);
@@ -170,6 +184,24 @@ describe('createAppRouter', () => {
         search: '?from=profile',
       },
     });
+  });
+
+  it('preserves an anonymous join intent and requires visible confirmation after auth', async () => {
+    const router = renderRouter('/join/ABCD-1234-EF56-7890');
+    expect(await screen.findByRole('heading', { name: '登入' })).toBeVisible();
+    expect(router.state.location.state).toEqual({
+      from: { hash: '', pathname: '/join/ABCD-1234-EF56-7890', search: '' },
+    });
+  });
+
+  it('renders the student classroom list route', async () => {
+    renderRouter('/app/leaderboard', {
+      email: 'learner@colorplay.invalid',
+      userId: 'learner-id',
+    });
+    expect(
+      await screen.findByRole('heading', { name: '我的班級' }),
+    ).toBeVisible();
   });
 
   it('renders the Blook shop deep-link for an authenticated student', async () => {

@@ -717,7 +717,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 ### Task 7: Student classroom list, manual join, and preserved join intent
 
-- [ ] **Task 7 delivery marker**
+- [x] **Task 7 delivery marker**
 
 **Reviewer gate:** Accept only if `/join/:joinCode` survives authentication without auto-joining, manual and URL join use one form interaction group, success removes the code from browser URL/history, pending prevents duplicate clicks, and errors/loading/empty states remain in context.
 
@@ -745,7 +745,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 **AC:** `AC-AUTH-007`; scoped support for `AC-UI-006`, `AC-UI-009`, `AC-UI-015`.
 
-- [ ] **Step 1: Write failing RTL/router tests**
+- [x] **Step 1: Write failing RTL/router tests**
 
 Cover unauthenticated deep-link redirect and post-login return, rejection of external/protocol-relative `returnTo`, visible confirmation rather than automatic mutation, join code field and primary submit in one `data-interaction-group`, single request while pending, understandable invalid/expired-code error, empty memberships, retryable query error, and success replace-navigation to the joined classroom leaderboard.
 
@@ -755,7 +755,7 @@ expect(screen.getByRole('button', { name: '加入班級' })).toBeDisabled();
 expect(joinClassroom).toHaveBeenCalledTimes(1);
 ```
 
-- [ ] **Step 2: Run tests to prove RED**
+- [x] **Step 2: Run tests to prove RED**
 
 ```bash
 pnpm exec vitest run \
@@ -770,7 +770,7 @@ pnpm exec vitest run \
 
 Expected: new component/page tests fail because files/routes do not exist; existing auth/router tests expose missing return-intent behavior.
 
-- [ ] **Step 3: Implement the minimal student join experience**
+- [x] **Step 3: Implement the minimal student join experience**
 
 Use React Hook Form/Zod for code shape and server errors for authority. `RequireAuth` records only a same-origin path beginning with one `/`; login consumes and clears it. The join-intent page requires explicit confirmation, passes one stable request UUID to the mutation, and navigates with `{ replace: true }` after success.
 
@@ -785,7 +785,7 @@ const safeReturnTo =
 
 Show classroom cards with a leaderboard link. Keep the one-time URL code out of localStorage, sessionStorage, Query keys, logs, analytics, and error text.
 
-- [ ] **Step 4: Run focused GREEN checks**
+- [x] **Step 4: Run focused GREEN checks**
 
 ```bash
 pnpm exec vitest run \
@@ -802,7 +802,7 @@ pnpm typecheck
 
 Expected: focused RTL/router tests pass; lint/typecheck exit 0.
 
-- [ ] **Step 5: Mark Task 7 complete and commit**
+- [x] **Step 5: Mark Task 7 complete and commit**
 
 ```bash
 git add src/features/classrooms src/features/auth/components/require-auth.tsx \

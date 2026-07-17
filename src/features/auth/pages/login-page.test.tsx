@@ -251,4 +251,41 @@ describe('LoginPage', () => {
       expect(router.state.location.hash).toBe('');
     },
   );
+
+  it('returns to an internal join intent and clears login history state', async () => {
+    const user = userEvent.setup();
+    const router = createMemoryRouter(
+      [
+        { element: <LoginPage />, path: '/login' },
+        { element: <h1>加入班級確認</h1>, path: '/join/:joinCode' },
+      ],
+      {
+        initialEntries: [
+          {
+            pathname: '/login',
+            state: {
+              from: {
+                hash: '',
+                pathname: '/join/ABCD-1234-EF56-7890',
+                search: '',
+              },
+            },
+          },
+        ],
+      },
+    );
+    render(
+      <AuthContext.Provider value={createAuthValue()}>
+        <RouterProvider router={router} />
+      </AuthContext.Provider>,
+    );
+    await fillValidCredentials(user);
+    await user.click(screen.getByRole('button', { name: '登入' }));
+    expect(
+      await screen.findByRole('heading', { name: '加入班級確認' }),
+    ).toBeVisible();
+    expect(router.state.location.pathname).toBe('/join/ABCD-1234-EF56-7890');
+    expect(router.state.location.state).toBeNull();
+    expect(router.state.historyAction).toBe('REPLACE');
+  });
 });
