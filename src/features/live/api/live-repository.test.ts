@@ -56,6 +56,23 @@ describe('live repository', () => {
     );
   });
 
+  it('rejects any pre-feedback reveal field, not only the correct option', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: {
+        ...lobbyState,
+        state: 'question_open',
+        current_position: 1,
+        explanation: '這段解析會洩漏答案。',
+      },
+      error: null,
+    });
+    const repository = createLiveRepository(clientWith(rpc));
+
+    await expect(repository.getState(lobbyState.session_id)).rejects.toEqual(
+      new LiveRepositoryError('INVALID_RESPONSE'),
+    );
+  });
+
   it('parses feedback distributions and reveal fields', async () => {
     const rpc = vi.fn().mockResolvedValue({
       data: {

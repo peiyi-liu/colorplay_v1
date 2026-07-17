@@ -42,9 +42,11 @@ const stubChannel = () => {
 describe('useLiveSession', () => {
   it('subscribes to the private topic and reconciles on every broadcast', async () => {
     const { channel, handlers } = stubChannel();
+    const channelSpy = vi.fn(() => channel);
+    const removeChannelSpy = vi.fn();
     const client = {
-      channel: vi.fn(() => channel),
-      removeChannel: vi.fn(),
+      channel: channelSpy,
+      removeChannel: removeChannelSpy,
     } as unknown as SupabaseClient<Database>;
     const getState = vi.fn().mockResolvedValue(lobbyState);
     const repository = { getState } as unknown as LiveRepository;
@@ -63,7 +65,7 @@ describe('useLiveSession', () => {
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
-    expect(client.channel).toHaveBeenCalledWith(`live-session:${SESSION_ID}`, {
+    expect(channelSpy).toHaveBeenCalledWith(`live-session:${SESSION_ID}`, {
       config: { broadcast: { self: true }, private: true },
     });
     expect(queryClient.getQueryData(liveKeys.session(SESSION_ID))).toEqual(
@@ -77,6 +79,6 @@ describe('useLiveSession', () => {
     });
 
     unmount();
-    expect(client.removeChannel).toHaveBeenCalledWith(channel);
+    expect(removeChannelSpy).toHaveBeenCalledWith(channel);
   });
 });

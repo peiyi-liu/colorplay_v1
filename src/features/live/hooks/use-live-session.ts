@@ -1,4 +1,7 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  REALTIME_SUBSCRIBE_STATES,
+  type SupabaseClient,
+} from '@supabase/supabase-js';
 import {
   useQuery,
   useQueryClient,
@@ -51,14 +54,33 @@ export function useLiveSession(
       .channel(`live-session:${sessionId}`, {
         config: { broadcast: { self: true }, private: true },
       })
-      .on('broadcast', { event: 'live_state' }, () => {
-        // Realtime is transport only: every message, whether it is the next
-        // version or a gap after a missed broadcast, triggers one fetch of
-        // the authoritative server state keyed by state_version.
+      .on('broadcast', { event: 'live_state' }, (message) => {
+        // Realtime is transport only. Messages below the cached version are
+        // echoes we already reconciled; an equal-version message carrying an
+        // answered count is live progress within the same state and patches
+        // the cache directly; anything newer (or unparseable) triggers one
+        // authoritative fetch.
+        const payload = message.payload as {
+          answered_count?: unknown;
+          state_version?: unknown;
+        };
+        const cached = queryClient.getQueryData<LiveSessionState>(key);
+        if (typeof payload.state_version === 'number' && cached) {
+          if (payload.state_version < cached.stateVersion) return;
+          if (payload.state_version === cached.stateVersion) {
+            if (typeof payload.answered_count === 'number') {
+              queryClient.setQueryData<LiveSessionState>(key, {
+                ...cached,
+                answeredCount: payload.answered_count,
+              });
+            }
+            return;
+          }
+        }
         reconcile();
       })
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') reconcile();
+        if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) reconcile();
       });
 
     return () => {

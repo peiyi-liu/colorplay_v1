@@ -55,7 +55,7 @@ export function TeacherLiveSessionPage({
   const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   if (session.isPending) return <RouteLoading withinMain />;
-  if (session.isError || !session.data) {
+  if (session.isError) {
     return (
       <section className="route-panel">
         <h1>Live 主持台</h1>

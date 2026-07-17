@@ -181,7 +181,7 @@ export function TeacherLivePage({
         </div>
       ) : null}
 
-      {(activities.data ?? []).length === 0 ? (
+      {activities.data.length === 0 ? (
         <p>目前沒有 Live 活動。</p>
       ) : (
         <table>
@@ -195,7 +195,7 @@ export function TeacherLivePage({
             </tr>
           </thead>
           <tbody>
-            {(activities.data ?? []).map((activity) => (
+            {activities.data.map((activity) => (
               <tr key={activity.activityId}>
                 <th scope="row">{activity.title}</th>
                 <td>{activity.questionTimeLimitSeconds} 秒</td>

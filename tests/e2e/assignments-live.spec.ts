@@ -134,9 +134,11 @@ test('Assignments and Live Core phase gate', async ({
   trackRpcDurations(studentBPage, 'submit_live_answer', answerDurations);
   trackRpcDurations(hostPage, 'finalize_live_session', finalizeDurations);
 
-  await signIn(hostPage, TEST_USERS.teacher);
-  await signIn(studentAPage, TEST_USERS.studentOne);
-  await signIn(studentBPage, TEST_USERS.studentTwo);
+  await Promise.all([
+    signIn(hostPage, TEST_USERS.teacher),
+    signIn(studentAPage, TEST_USERS.studentOne),
+    signIn(studentBPage, TEST_USERS.studentTwo),
+  ]);
 
   // --- Assignments: teacher creates and publishes for the fixture class ---
   await hostPage.goto('/teacher/classes');
@@ -235,16 +237,20 @@ test('Assignments and Live Core phase gate', async ({
         ).toBeVisible();
       }
 
+      await answerCorrectly(studentAPage);
       if (sessionIndex === 1 && round === 3) {
-        // Refresh mid-question: the participant reconciles to the same
-        // authoritative question without re-joining or re-answering.
+        // Refresh mid-question after answering: the participant reconciles
+        // to the same authoritative question and the recorded answer without
+        // re-joining or double-submitting (and without pressuring the 5s
+        // speed-bonus window).
         await studentAPage.reload();
         await expect(
           studentAPage.getByText(`第 ${String(round)} / 10 題`),
         ).toBeVisible();
+        await expect(
+          studentAPage.getByText('已收到你的答案，等待其他同學…'),
+        ).toBeVisible();
       }
-
-      await answerCorrectly(studentAPage);
       if (sessionIndex === 1 && round === 8) {
         await studentBPage.setViewportSize({ width: 768, height: 1024 });
         await studentBPage.screenshot({
@@ -256,6 +262,7 @@ test('Assignments and Live Core phase gate', async ({
       await answerWrong(studentBPage);
 
       await expect(hostPage.getByText('已作答 2 / 2')).toBeVisible();
+      verifiedAnswerPairs += 2;
       await hostPage.getByRole('button', { name: '收題並公布答案' }).click();
       await expect(
         studentAPage.getByRole('heading', { name: /✓ 答對了/u }),
@@ -327,18 +334,25 @@ test('Assignments and Live Core phase gate', async ({
   };
 
   const duplicateHostHealths: ReturnType<typeof attachBrowserHealth>[] = [];
+  let verifiedAnswerPairs = 0;
   await runLiveSession(1);
   await runLiveSession(2);
 
   expect(answerDurations.length).toBeGreaterThanOrEqual(30);
+  // Integrity fields are derived from in-run observations, not asserted:
+  // every round's host console confirmed 2/2 authoritative answers, the
+  // unique (participant, question) constraint precludes duplicates, and the
+  // outsider probe is counted through its declared-failure observation.
+  const outsiderObservations = expectedBrowserFailures(outsiderHealth);
   const latencyReport = {
     answer_p95_ms: percentile(answerDurations, 0.95),
     answer_samples: answerDurations.length,
     finalize_p95_ms: percentile(finalizeDurations, 0.95),
     finalize_samples: finalizeDurations.length,
-    lost_or_duplicate_answers: 0,
-    outsider_access: 0,
+    lost_or_duplicate_answers: 40 - verifiedAnswerPairs,
+    outsider_access: outsiderObservations[0]?.observed_count === 1 ? 0 : 1,
   };
+  expect(verifiedAnswerPairs).toBe(40);
   expect(latencyReport.answer_p95_ms).toBeLessThanOrEqual(800);
   expect(latencyReport.finalize_p95_ms).toBeLessThanOrEqual(1000);
 

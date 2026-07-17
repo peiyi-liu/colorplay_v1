@@ -1,6 +1,6 @@
 begin;
 
-select plan(32);
+select plan(33);
 
 select has_function('public', 'create_live_activity', 'create live activity exists');
 select has_function('public', 'create_live_session', 'create live session exists');
@@ -316,6 +316,32 @@ select ok(
 select ok(
   position('@colorplay.test' in current_setting('test.participant_state')) = 0,
   'the participant projection never carries an email'
+);
+
+select set_config(
+  'request.jwt.claim.sub',
+  '17000000-0000-0000-0000-000000000001',
+  true
+);
+select set_config(
+  'test.q1_opened',
+  public.open_live_question(
+    current_setting('test.session_id')::uuid, 2
+  )::text,
+  true
+);
+select set_config(
+  'request.jwt.claim.sub',
+  '17000000-0000-0000-0000-000000000003',
+  true
+);
+select is(
+  public.join_live_session(
+    current_setting('test.rotated')::jsonb ->> 'join_code',
+    '17300000-0000-0000-0000-000000000009'
+  ) ->> 'state',
+  'question_open',
+  'an active participant re-admits after the lobby closes'
 );
 
 select set_config(

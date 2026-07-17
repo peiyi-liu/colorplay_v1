@@ -1,6 +1,6 @@
 begin;
 
-select plan(39);
+select plan(41);
 
 select has_table('public', 'live_activities', 'live activities exists');
 select has_table('public', 'live_sessions', 'live sessions exists');
@@ -328,6 +328,11 @@ select is(
   1,
   'the host reads participants of own sessions'
 );
+select is(
+  (select count(id)::integer from public.live_session_questions),
+  1,
+  'the host reads the frozen questions of own sessions'
+);
 
 select set_config(
   'request.jwt.claim.sub',
@@ -352,6 +357,11 @@ select is(
   (select count(id)::integer from public.live_answers),
   1,
   'a participant reads only own answers'
+);
+select is(
+  (select count(id)::integer from public.live_session_questions),
+  0,
+  'a participant cannot pre-read unopened questions'
 );
 select is(
   (select count(id)::integer from public.live_activities),

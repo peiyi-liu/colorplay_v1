@@ -39,7 +39,7 @@ const COMMAND_LABELS = Object.freeze([
   'pnpm exec supabase db reset --local',
   'bash scripts/supabase/wait-for-postgrest.sh',
   'pnpm exec tsx scripts/supabase/seed-auth.ts',
-  "bash scripts/test-e2e-local.sh --project=chromium --headed --grep='Classroom and Leaderboard v2 phase gate'",
+  "bash scripts/test-e2e-local.sh --project=chromium --headed --grep='Assignments and Live Core phase gate'",
 ]);
 
 const EXPECTED_BROWSER_FAILURES = Object.freeze([

@@ -62,8 +62,13 @@ const taipeiTime = (iso: string | null) =>
       })
     : '未設定';
 
+// The form promises Taipei semantics, so the wall time the teacher types is
+// interpreted as Asia/Taipei (fixed UTC+8, Taiwan has no DST) regardless of
+// the browser's own timezone.
 const localInputToIso = (value: string) =>
-  value.trim().length === 0 ? null : new Date(value).toISOString();
+  value.trim().length === 0
+    ? null
+    : new Date(`${value}:00+08:00`).toISOString();
 
 const mutationErrorMessage = (error: unknown) => {
   if (error instanceof AssignmentRepositoryError) {
@@ -219,13 +224,13 @@ export function TeacherAssignmentsPage({
           aria-invalid={errors.title ? true : undefined}
         />
         {errors.title ? <p role="alert">{errors.title.message}</p> : null}
-        <label htmlFor="assignment-available-from">開放時間（可留空）</label>
+        <label htmlFor="assignment-available-from">開放時間（台北時間，可留空）</label>
         <input
           id="assignment-available-from"
           type="datetime-local"
           {...register('availableFrom')}
         />
-        <label htmlFor="assignment-deadline">截止時間（可留空）</label>
+        <label htmlFor="assignment-deadline">截止時間（台北時間，可留空）</label>
         <input
           id="assignment-deadline"
           type="datetime-local"

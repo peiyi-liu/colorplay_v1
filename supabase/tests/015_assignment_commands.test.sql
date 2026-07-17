@@ -1,6 +1,6 @@
 begin;
 
-select plan(35);
+select plan(36);
 
 select has_function('public', 'create_assignment', 'create assignment exists');
 select has_function(
@@ -462,6 +462,26 @@ select is(
   ) #>> '{assignment_attempt,status}',
   'completed',
   'replayed finalize returns the stored completion'
+);
+
+select set_config(
+  'test.foreign_session',
+  public.create_quiz_session(
+    '26000000-0000-0000-0000-000000000004',
+    '15300000-0000-0000-0000-000000000042'
+  )::text,
+  true
+);
+select throws_ok(
+  format(
+    $$select public.start_assignment_attempt(
+      %L, '15300000-0000-0000-0000-000000000042'
+    )$$,
+    current_setting('test.main_id')
+  ),
+  'P0001',
+  'ASSIGNMENT_INVALID_REQUEST',
+  'a reused practice request id cannot hijack an assignment attempt'
 );
 
 select set_config(

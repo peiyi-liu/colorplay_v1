@@ -141,8 +141,11 @@ const stateSchema = z
     (state) =>
       state.state === 'question_feedback' || state.state === 'completed'
         ? true
-        : state.correct_option_id === undefined,
-    { message: 'CORRECT_OPTION_LEAK' },
+        : state.correct_option_id === undefined &&
+          state.explanation === undefined &&
+          state.option_counts === undefined &&
+          !(state.my_answer && 'answer_status' in state.my_answer),
+    { message: 'PRE_FEEDBACK_REVEAL_LEAK' },
   );
 
 const errorCodeByMessage: readonly (readonly [
@@ -314,10 +317,15 @@ export function createLiveRepository(
     },
 
     async createSession(input) {
-      const { data, error } = await client.rpc('create_live_session', {
+      const sessionArgs = {
+        p_assignment_id: input.assignmentId,
         p_classroom_id: input.classroomId,
         p_live_activity_id: input.activityId,
-      });
+      };
+      const { data, error } = await client.rpc(
+        'create_live_session',
+        sessionArgs as Database['public']['Functions']['create_live_session']['Args'],
+      );
       if (error) throw toRepositoryError(error.message);
       const parsed = parseWith(sessionReceiptSchema, data);
       return {

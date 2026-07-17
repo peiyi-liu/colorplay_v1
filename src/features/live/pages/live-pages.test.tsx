@@ -67,23 +67,24 @@ const openState: LiveSessionState = {
   myAnswer: { answered: false },
 };
 
-const repositoryWith = (overrides: Partial<LiveRepository>): LiveRepository =>
-  ({
-    advance: vi.fn(),
-    cancel: vi.fn(),
-    closeQuestion: vi.fn(),
-    createActivity: vi.fn(),
-    createSession: vi.fn(),
-    finalize: vi.fn(),
-    getState: vi.fn().mockResolvedValue(baseState),
-    join: vi.fn(),
-    listMyActivities: vi.fn().mockResolvedValue([]),
-    openQuestion: vi.fn(),
-    rotateJoinCode: vi.fn(),
-    startSession: vi.fn(),
-    submitAnswer: vi.fn().mockResolvedValue(undefined),
-    ...overrides,
-  }) as LiveRepository;
+const repositoryWith = (
+  overrides: Partial<LiveRepository>,
+): LiveRepository => ({
+  advance: vi.fn(),
+  cancel: vi.fn(),
+  closeQuestion: vi.fn(),
+  createActivity: vi.fn(),
+  createSession: vi.fn(),
+  finalize: vi.fn(),
+  getState: vi.fn().mockResolvedValue(baseState),
+  join: vi.fn(),
+  listMyActivities: vi.fn().mockResolvedValue([]),
+  openQuestion: vi.fn(),
+  rotateJoinCode: vi.fn(),
+  startSession: vi.fn(),
+  submitAnswer: vi.fn().mockResolvedValue(undefined),
+  ...overrides,
+});
 
 const renderWith = (element: ReactNode) => {
   const client = new QueryClient({
@@ -128,10 +129,13 @@ describe('LiveJoinPage', () => {
     await user.click(screen.getByRole('button', { name: '加入課堂' }));
 
     expect(await screen.findByText('已進入課堂頁')).toBeVisible();
-    expect(join).toHaveBeenCalledWith({
-      joinCode: 'AB12-CD34-EF56-AB78',
-      requestId: expect.stringMatching(/[0-9a-f-]{36}/u),
-    });
+    expect(join).toHaveBeenCalledTimes(1);
+    const joinArgs = join.mock.calls[0]?.[0] as {
+      joinCode: string;
+      requestId: string;
+    };
+    expect(joinArgs.joinCode).toBe('AB12-CD34-EF56-AB78');
+    expect(joinArgs.requestId).toMatch(/^[0-9a-f-]{36}$/u);
   });
 
   it('shows a safe error for an invalid code', async () => {
@@ -184,12 +188,20 @@ describe('LiveSessionPage (participant)', () => {
     );
 
     await waitFor(() => {
-      expect(submitAnswer).toHaveBeenCalledWith({
-        idempotencyKey: expect.stringMatching(/[0-9a-f-]{36}/u),
-        selectedOptionId: '18700000-0000-0000-0000-000000000001',
-        sessionQuestionId: '18500000-0000-0000-0000-000000000001',
-      });
+      expect(submitAnswer).toHaveBeenCalledTimes(1);
     });
+    const submitArgs = submitAnswer.mock.calls[0]?.[0] as {
+      idempotencyKey: string;
+      selectedOptionId: string;
+      sessionQuestionId: string;
+    };
+    expect(submitArgs.selectedOptionId).toBe(
+      '18700000-0000-0000-0000-000000000001',
+    );
+    expect(submitArgs.sessionQuestionId).toBe(
+      '18500000-0000-0000-0000-000000000001',
+    );
+    expect(submitArgs.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/u);
     expect(
       await screen.findByText('已收到你的答案，等待其他同學…'),
     ).toBeVisible();

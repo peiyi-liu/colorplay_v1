@@ -27,22 +27,27 @@ function Countdown({
   deadlineAt,
   serverTime,
 }: Readonly<{ deadlineAt: string | null; serverTime: string }>) {
-  const fetchedAtRef = useRef(Date.now());
-  const [now, setNow] = useState(() => Date.now());
+  const [clock, setClock] = useState<Readonly<{
+    anchor: string;
+    fetchedAt: number;
+    now: number;
+  }> | null>(null);
   useEffect(() => {
     const timer = setInterval(() => {
-      setNow(Date.now());
-    }, 500);
+      setClock((previous) =>
+        previous?.anchor === serverTime
+          ? { ...previous, now: Date.now() }
+          : { anchor: serverTime, fetchedAt: Date.now(), now: Date.now() },
+      );
+    }, 250);
     return () => {
       clearInterval(timer);
     };
-  }, []);
-  const remaining = remainingSeconds(
-    deadlineAt,
-    serverTime,
-    now,
-    fetchedAtRef.current,
-  );
+  }, [serverTime]);
+  const remaining =
+    clock?.anchor === serverTime
+      ? remainingSeconds(deadlineAt, serverTime, clock.now, clock.fetchedAt)
+      : null;
   if (remaining === null) return null;
   return (
     <p aria-live="polite">
@@ -66,13 +71,13 @@ function QuestionPhase({
   const question = state.question;
   if (!question) return null;
   const answered = state.myAnswer?.answered === true;
-  const idempotencyKey = (() => {
-    const existing = keysRef.current.get(question.questionId);
+  const idempotencyKeyFor = (questionId: string): string => {
+    const existing = keysRef.current.get(questionId);
     if (existing) return existing;
     const fresh = crypto.randomUUID();
-    keysRef.current.set(question.questionId, fresh);
+    keysRef.current.set(questionId, fresh);
     return fresh;
-  })();
+  };
 
   return (
     <div>
@@ -96,7 +101,7 @@ function QuestionPhase({
                 setSubmitError(undefined);
                 submit.mutate(
                   {
-                    idempotencyKey,
+                    idempotencyKey: idempotencyKeyFor(question.questionId),
                     selectedOptionId: option.id,
                     sessionQuestionId: question.questionId,
                   },
@@ -129,7 +134,7 @@ function FeedbackPhase({ state }: Readonly<{ state: LiveSessionState }>) {
       <h2>
         {feedback
           ? feedback.answerStatus === 'correct'
-            ? `✓ 答對了！+${feedback.scoreDelta} 分`
+            ? `✓ 答對了！+${String(feedback.scoreDelta)} 分`
             : feedback.answerStatus === 'timeout'
               ? '未作答（逾時）'
               : '✗ 答錯了'
@@ -173,7 +178,7 @@ export function LiveSessionPage({
   });
 
   if (session.isPending) return <RouteLoading withinMain />;
-  if (session.isError || !session.data) {
+  if (session.isError) {
     return (
       <section className="route-panel">
         <h1>課堂挑戰</h1>

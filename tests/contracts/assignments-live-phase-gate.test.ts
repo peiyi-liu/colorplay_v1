@@ -86,6 +86,10 @@ describe('assignments and live phase gate contract', () => {
     expect(finalizer).toContain('join_live_session');
     expect(finalizer).toContain('advance_live_session');
     expect(finalizer).toContain('evidence-policy.mjs');
+    expect(finalizer).toContain(
+      "--grep='Assignments and Live Core phase gate'",
+    );
+    expect(finalizer).not.toContain('Classroom and Leaderboard');
   });
 
   it('keeps the acceptance spec honest about waits and privacy', async () => {
