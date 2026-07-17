@@ -15,7 +15,7 @@
     "test:coverage": "vitest run --coverage",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:db": "bash scripts/test-db.sh",
-    "test:e2e": "playwright test tests/e2e --grep-invert 'flat-design application shell|Game Economy v2 phase gate|Achievements phase gate|Classroom and Leaderboard v2 phase gate' --reporter=list,json",
+    "test:e2e": "playwright test tests/e2e --grep-invert 'flat-design application shell|Game Economy v2 phase gate|Achievements phase gate|Classroom and Leaderboard v2 phase gate|Assignments and Live Core phase gate' --reporter=list,json",
     "test:visual": "playwright test tests/e2e/app-shell.visual.spec.ts",
     "acceptance": "bash scripts/acceptance/run-phase-1.sh",
     "acceptance:create-run": "node scripts/acceptance/create-run.mjs",
@@ -25,7 +25,8 @@
     "content:import": "node scripts/content/import-questions.mjs",
     "phase:game-economy": "bash scripts/acceptance/run-game-economy-v2.sh",
     "phase:achievements": "bash scripts/acceptance/run-achievements.sh",
-    "phase:classroom-leaderboard": "bash scripts/acceptance/run-classroom-leaderboard.sh"
+    "phase:classroom-leaderboard": "bash scripts/acceptance/run-classroom-leaderboard.sh",
+    "phase:assignments-live": "bash scripts/acceptance/run-assignments-live.sh"
   },
   "keywords": [],
   "author": "",
