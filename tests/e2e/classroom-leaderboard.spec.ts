@@ -59,6 +59,7 @@ const completeQuiz = async (page: Page) => {
 };
 
 test('Classroom and Leaderboard v2 phase gate', async ({
+  baseURL,
   browser,
   browserName,
   page: studentAPage,
@@ -70,11 +71,14 @@ test('Classroom and Leaderboard v2 phase gate', async ({
   if (!evidenceRoot) {
     throw new Error('CLASSROOM_LEADERBOARD_EVIDENCE_ROOT_MISSING');
   }
+  if (!baseURL) {
+    throw new Error('CLASSROOM_LEADERBOARD_BASE_URL_MISSING');
+  }
 
-  const teacherContext = await browser.newContext();
-  const studentBContext = await browser.newContext();
-  const outsiderContext = await browser.newContext();
-  const teacherBContext = await browser.newContext();
+  const teacherContext = await browser.newContext({ baseURL });
+  const studentBContext = await browser.newContext({ baseURL });
+  const outsiderContext = await browser.newContext({ baseURL });
+  const teacherBContext = await browser.newContext({ baseURL });
   const teacherPage = await teacherContext.newPage();
   const studentBPage = await studentBContext.newPage();
   const outsiderPage = await outsiderContext.newPage();
@@ -136,6 +140,8 @@ test('Classroom and Leaderboard v2 phase gate', async ({
   await expect(studentAPage).toHaveURL(
     new RegExp(`/app/leaderboard/${classroomId}$`, 'u'),
   );
+  await teacherPage.reload();
+  await expect(teacherPage.getByRole('row')).toHaveCount(2);
 
   await signIn(studentBPage, TEST_USERS.studentTwo);
   await studentBPage.goto(`/join/${newCode}`);

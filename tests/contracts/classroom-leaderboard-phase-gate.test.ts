@@ -171,6 +171,12 @@ describe('Classroom and Leaderboard phase gate source', () => {
     expect(source).toContain('TEST_USERS.teacherTwo');
     expect(source).toContain('TEST_USERS.outsider');
     expect(source).toContain("scope: 'local'");
+    expect(source.match(/browser\.newContext\(\{ baseURL \}\)/gu)).toHaveLength(
+      4,
+    );
+    expect(source).toContain(
+      "await expect(teacherPage.getByRole('row')).toHaveCount(2);",
+    );
     for (const viewport of [
       'width: 375, height: 812',
       'width: 768, height: 1024',

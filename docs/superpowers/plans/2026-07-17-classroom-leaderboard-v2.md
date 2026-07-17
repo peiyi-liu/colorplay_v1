@@ -1122,7 +1122,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 These steps execute only after the plan commit and all ten task commits exist and the worktree is clean.
 
-- [ ] **Review Step 1: Verify range and request one complete-range review**
+- [x] **Review Step 1: Verify range and request one complete-range review**
 
 ```bash
 test "$(git rev-parse 65d8b70)" = \
@@ -1134,7 +1134,7 @@ git log --oneline --reverse 65d8b70..HEAD
 
 Use `superpowers:requesting-code-review` once for `65d8b70..HEAD`. Exclude `src/types/database.ts`, lockfile, artifacts, dist, coverage, visual images, and other generated noise. Review priorities are hash/plaintext handling, role/ownership checks, active membership and replay behavior, cross-tenant RLS, exact ledger window/rank, safe JSON keys, join-intent leakage, local-only sign-out, and fail-closed evidence reuse.
 
-- [ ] **Review Step 2: Resolve review findings**
+- [x] **Review Step 2: Resolve review findings**
 
 Fix every Critical or Important finding with focused RED → GREEN when behavior changes. Commit coherent review fixes without rewriting task commits. Rerun only affected lint/typecheck/tests. Do not execute E2E or the phase gate during review fixes.
 
