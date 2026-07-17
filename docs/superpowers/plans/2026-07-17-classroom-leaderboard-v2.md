@@ -352,7 +352,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 ### Task 3: Authoritative Top 10 plus self leaderboard RPC
 
-- [ ] **Task 3 delivery marker**
+- [x] **Task 3 delivery marker**
 
 **Reviewer gate:** Accept only if the query ranks all active members from XP ledger rows earned after their `joined_at`, applies the exact three-part ordering, returns at most ten top entries plus self, permits only active members and the owning teacher, and has no Email/user UUID/full-roster leak.
 
@@ -370,7 +370,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 **AC:** `AC-AUTH-006`, `AC-GAME-008`, `AC-GAME-009`.
 
-- [ ] **Step 1: Write failing ranking/privacy pgTAP tests**
+- [x] **Step 1: Write failing ranking/privacy pgTAP tests**
 
 Create 12 test-owned active student members plus the owner's active teacher membership, XP transactions before and after each student's `joined_at`, equal-XP students reaching totals at different times, and equal-XP/equal-time rows resolved by internal UUID. Assert exact ranks, Top 10 length, rank-12 self entry, owner view with `self_entry = null`, owner exclusion from ranking, and response-key allowlists.
 
@@ -390,7 +390,7 @@ select is(
 
 Assert outsider, inactive member, Teacher B, and anonymous access fails or returns no product data. Convert the JSON to text and assert it contains none of the test Emails, student numbers, raw member UUID strings, answer fields, or transaction rows. Count only transactions with test-owned source UUIDs.
 
-- [ ] **Step 2: Run the leaderboard test to prove RED**
+- [x] **Step 2: Run the leaderboard test to prove RED**
 
 ```bash
 pnpm exec supabase db reset --local
@@ -399,7 +399,7 @@ pnpm exec supabase test db supabase/tests/013_classroom_leaderboard.test.sql
 
 Expected: FAIL because `get_classroom_leaderboard` does not exist.
 
-- [ ] **Step 3: Implement the ranked ledger aggregation**
+- [x] **Step 3: Implement the ranked ledger aggregation**
 
 Build one SQL/security-definer function. Lock no browser-supplied score, ignore client clocks, and aggregate only persisted ledger amounts:
 
@@ -417,7 +417,7 @@ row_number() over (
 
 Build JSON only after ranks exist, with `top_entries` limited to rank 1–10 and a separately selected caller entry. Set `generated_at` from database time. Do not expose the ranked CTE or grant direct access to a leaderboard view.
 
-- [ ] **Step 4: Run scoped GREEN checks**
+- [x] **Step 4: Run scoped GREEN checks**
 
 ```bash
 pnpm exec supabase db reset --local
@@ -428,7 +428,7 @@ pnpm typecheck
 
 Expected: leaderboard pgTAP passes all ranking and negative privacy assertions; lint/typecheck exit 0.
 
-- [ ] **Step 5: Mark Task 3 complete and commit**
+- [x] **Step 5: Mark Task 3 complete and commit**
 
 ```bash
 git add supabase/migrations/20260717000300_classroom_leaderboard.sql \
