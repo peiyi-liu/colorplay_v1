@@ -903,7 +903,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 ### Task 9: Student and owner-safe leaderboard page
 
-- [ ] **Task 9 delivery marker**
+- [x] **Task 9 delivery marker**
 
 **Reviewer gate:** Accept only if UI renders server order without recalculation, Top 10 and out-of-list self are distinguishable, no Email/raw identifier appears in DOM or serialized query data, nonmembers see a safe denial, and loading/empty/error/retry states are explicit.
 
@@ -926,11 +926,11 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 **AC:** `AC-AUTH-006`, `AC-GAME-008`, `AC-GAME-009`; scoped support for `AC-UI-006`, `AC-UI-007`, `AC-UI-015`.
 
-- [ ] **Step 1: Write failing leaderboard component/page tests**
+- [x] **Step 1: Write failing leaderboard component/page tests**
 
 Use an intentionally non-alphabetic server order and assert DOM order is unchanged. Cover ranks 1–10, self rank 12, self already in Top 10 without duplicate card, owner response with null self, Blook fallback, zero XP, retry, unauthorized, and a recursive assertion that rendered/query fixture keys contain none of `email`, `student_number`, `user_id`, or answer fields.
 
-- [ ] **Step 2: Run tests to prove RED**
+- [x] **Step 2: Run tests to prove RED**
 
 ```bash
 pnpm exec vitest run \
@@ -941,7 +941,7 @@ pnpm exec vitest run \
 
 Expected: FAIL because leaderboard UI and route do not exist.
 
-- [ ] **Step 3: Implement the minimal leaderboard UI**
+- [x] **Step 3: Implement the minimal leaderboard UI**
 
 Render `topEntries` as received. Use rank text plus a visible self label rather than color alone. Show the separate self card only when `selfEntry.rank > 10`. Resolve `activeBlookId` against the existing published Blook catalog and render its established name/visual; use the existing default Blook presentation when null or unavailable. Do not display internal IDs, another user's ownership state, or add client-side score/sort code.
 
@@ -955,7 +955,7 @@ Render `topEntries` as received. Use rank text plus a visible self label rather 
 
 Keep the classroom name/location visible. Error responses do not reveal whether an inaccessible classroom exists.
 
-- [ ] **Step 4: Run focused GREEN checks**
+- [x] **Step 4: Run focused GREEN checks**
 
 ```bash
 pnpm exec vitest run \
@@ -968,7 +968,7 @@ pnpm typecheck
 
 Expected: leaderboard RTL/router tests pass; lint/typecheck exit 0.
 
-- [ ] **Step 5: Mark Task 9 complete and commit**
+- [x] **Step 5: Mark Task 9 complete and commit**
 
 ```bash
 git add src/features/leaderboard src/app/router/create-app-router.tsx \

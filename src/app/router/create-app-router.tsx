@@ -53,6 +53,11 @@ export function createAppRouter() {
               element: <StudentClassroomsPage />,
             },
             {
+              path: '/app/leaderboard/:classroomId',
+              lazy: () =>
+                import('../../features/leaderboard/pages/classroom-leaderboard-route'),
+            },
+            {
               path: '/app/profile',
               element: <ProfileFoundationPage />,
             },

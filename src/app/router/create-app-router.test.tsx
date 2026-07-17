@@ -90,6 +90,21 @@ vi.mock('../../features/achievements/hooks/use-achievements', () => ({
     refetch: vi.fn(),
   })),
 }));
+vi.mock('../../features/leaderboard/hooks/use-classroom-leaderboard', () => ({
+  useClassroomLeaderboard: vi.fn(() => ({
+    data: {
+      classroomId: 'ca000000-0000-4000-8000-000000000001',
+      classroomName: '色彩一班',
+      generatedAt: '2026-07-17T02:00:00.000Z',
+      selfEntry: null,
+      topEntries: [],
+    },
+    error: null,
+    isError: false,
+    isPending: false,
+    refetch: vi.fn(),
+  })),
+}));
 vi.mock('../../features/classrooms/hooks/use-classrooms', () => ({
   useCreateClassroom: vi.fn(() => ({
     error: null,
@@ -225,6 +240,16 @@ describe('createAppRouter', () => {
     });
     expect(
       await screen.findByRole('heading', { name: '我的班級' }),
+    ).toBeVisible();
+  });
+
+  it('renders the classroom-scoped leaderboard route', async () => {
+    renderRouter('/app/leaderboard/ca000000-0000-4000-8000-000000000001', {
+      email: 'learner@colorplay.invalid',
+      userId: 'learner-id',
+    });
+    expect(
+      await screen.findByRole('heading', { name: '色彩一班排行榜' }),
     ).toBeVisible();
   });
 
