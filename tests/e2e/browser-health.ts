@@ -114,7 +114,7 @@ export function declareExpectedBrowserFailure(
     declaration.count < 1 ||
     !Number.isSafeInteger(declaration.status) ||
     declaration.status < 400 ||
-    declaration.status > 599 ||
+    declaration.status > 499 ||
     declaration.urlPattern.global ||
     declaration.urlPattern.sticky
   ) {

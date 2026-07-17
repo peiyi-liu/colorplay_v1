@@ -272,4 +272,16 @@ describe('browser health declared failures', () => {
       unexpectedRequestFailures('chromium', [failureFor(request)], new Set()),
     ).toEqual([`net::ERR_ABORTED ${joinUrl}`]);
   });
+
+  it('rejects declarations outside the 4xx range', () => {
+    const harness = createPageHarness();
+    const health = attachBrowserHealth(harness.page);
+    expect(() => {
+      declareExpectedBrowserFailure(health, {
+        count: 1,
+        status: 500,
+        urlPattern: /\/rest\/v1\/rpc\/server_failure$/u,
+      });
+    }).toThrow('BROWSER_HEALTH_EXPECTED_FAILURE_INVALID');
+  });
 });

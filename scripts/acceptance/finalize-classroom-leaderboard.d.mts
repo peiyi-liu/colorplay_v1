@@ -25,7 +25,7 @@ export type ClassroomLeaderboardManifest = Readonly<{
     expected_failures: readonly Readonly<{
       expected_count: 1;
       observed_count: 1;
-      status: 400;
+      status: 400 | 403;
       url_pattern: string;
     }>[];
     page_errors: 0;

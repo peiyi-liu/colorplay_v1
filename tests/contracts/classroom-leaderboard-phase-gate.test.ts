@@ -14,6 +14,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { finalizeClassroomLeaderboard } from '../../scripts/acceptance/finalize-classroom-leaderboard.mjs';
+import { classroomLeaderboardExpectedFailureDeclarations } from '../e2e/classroom-leaderboard-expected-failures';
 
 const acceptanceIds = [
   'AC-AUTH-005',
@@ -45,6 +46,19 @@ const expectedFailures = [
     observed_count: 1,
     status: 400,
     url_pattern: /\/rest\/v1\/rpc\/join_classroom(?:\?.*)?$/u.source,
+  },
+  {
+    expected_count: 1,
+    observed_count: 1,
+    status: 403,
+    url_pattern: /\/rest\/v1\/rpc\/get_classroom_leaderboard(?:\?.*)?$/u.source,
+  },
+  {
+    expected_count: 1,
+    observed_count: 1,
+    status: 403,
+    url_pattern: /\/rest\/v1\/rpc\/list_owned_classroom_members(?:\?.*)?$/u
+      .source,
   },
 ] as const;
 
@@ -175,11 +189,48 @@ describe('Classroom and Leaderboard phase gate source', () => {
     expect(source).toContain("process.env.PLAYWRIGHT_ACCEPTANCE !== 'on'");
     expect(source).toContain('CLASSROOM_LEADERBOARD_ACCEPTANCE_MODE_REQUIRED');
     expect(source).toContain('attachBrowserHealth');
-    expect(source.match(/declareExpectedBrowserFailure\(/gu)).toHaveLength(1);
-    expect(source).toContain('urlPattern: joinClassroomRpcPattern');
-    expect(source).toContain('status: 400');
-    expect(source).toContain('count: 1');
-    expect(source).toContain('expectedBrowserFailures(studentAHealth)');
+    expect(
+      Object.fromEntries(
+        Object.entries(classroomLeaderboardExpectedFailureDeclarations).map(
+          ([name, declaration]) => [
+            name,
+            {
+              count: declaration.count,
+              status: declaration.status,
+              url_pattern: declaration.urlPattern.source,
+            },
+          ],
+        ),
+      ),
+    ).toEqual({
+      oldJoinCode: {
+        count: 1,
+        status: 400,
+        url_pattern: expectedFailures[0].url_pattern,
+      },
+      outsiderLeaderboard: {
+        count: 1,
+        status: 403,
+        url_pattern: expectedFailures[1].url_pattern,
+      },
+      teacherBMembers: {
+        count: 1,
+        status: 403,
+        url_pattern: expectedFailures[2].url_pattern,
+      },
+    });
+    expect(source).toContain(
+      'classroomLeaderboardExpectedFailureDeclarations.oldJoinCode',
+    );
+    expect(source).toContain(
+      'classroomLeaderboardExpectedFailureDeclarations.outsiderLeaderboard',
+    );
+    expect(source).toContain(
+      'classroomLeaderboardExpectedFailureDeclarations.teacherBMembers',
+    );
+    expect(source).toContain('加入碼無效或已失效');
+    expect(source).toContain('無法顯示排行榜');
+    expect(source).toContain('沒有管理權限');
     expect(source).toContain('unexpectedBrowserHealth');
     expect(source).toContain('GENERATED_CORRECT_ANSWERS');
     expect(source).toContain('TEST_USERS.teacherTwo');

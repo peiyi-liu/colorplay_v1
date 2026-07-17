@@ -16,6 +16,7 @@ import {
   expectedBrowserFailures,
   unexpectedBrowserHealth,
 } from './browser-health';
+import { classroomLeaderboardExpectedFailureDeclarations } from './classroom-leaderboard-expected-failures';
 
 const challenge = CONTENT_MANIFEST.find(
   ({ questionCount }) => questionCount >= 10,
@@ -26,7 +27,6 @@ const classroomIdPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const teacherClassroomUrlPattern =
   /\/teacher\/classes\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
-const joinClassroomRpcPattern = /\/rest\/v1\/rpc\/join_classroom(?:\?.*)?$/u;
 
 const requiredEnvironment = (name: 'SUPABASE_ANON_KEY' | 'SUPABASE_URL') => {
   const value = process.env[name];
@@ -99,12 +99,14 @@ test('Classroom and Leaderboard v2 phase gate', async ({
   const outsiderPage = await outsiderContext.newPage();
   const teacherBPage = await teacherBContext.newPage();
   const studentAHealth = attachBrowserHealth(studentAPage);
+  const outsiderHealth = attachBrowserHealth(outsiderPage);
+  const teacherBHealth = attachBrowserHealth(teacherBPage);
   const trackedPages = [
     { health: studentAHealth, page: studentAPage },
     { health: attachBrowserHealth(teacherPage), page: teacherPage },
     { health: attachBrowserHealth(studentBPage), page: studentBPage },
-    { health: attachBrowserHealth(outsiderPage), page: outsiderPage },
-    { health: attachBrowserHealth(teacherBPage), page: teacherBPage },
+    { health: outsiderHealth, page: outsiderPage },
+    { health: teacherBHealth, page: teacherBPage },
   ];
 
   await signIn(studentAPage, TEST_USERS.studentOne);
@@ -142,9 +144,7 @@ test('Classroom and Leaderboard v2 phase gate', async ({
 
   await studentAPage.goto(`/join/${oldCode}`);
   declareExpectedBrowserFailure(studentAHealth, {
-    count: 1,
-    status: 400,
-    urlPattern: joinClassroomRpcPattern,
+    ...classroomLeaderboardExpectedFailureDeclarations.oldJoinCode,
   });
   await studentAPage.getByRole('button', { name: '加入班級' }).click();
   await expect(studentAPage.getByRole('alert')).toContainText(
@@ -173,10 +173,18 @@ test('Classroom and Leaderboard v2 phase gate', async ({
     new RegExp(`/app/leaderboard/${classroomId}$`, 'u'),
   );
 
+  declareExpectedBrowserFailure(
+    outsiderHealth,
+    classroomLeaderboardExpectedFailureDeclarations.outsiderLeaderboard,
+  );
   await signIn(outsiderPage, TEST_USERS.outsider);
   await outsiderPage.goto(`/app/leaderboard/${classroomId}`);
   await expect(outsiderPage.getByRole('alert')).toContainText('無法顯示排行榜');
 
+  declareExpectedBrowserFailure(
+    teacherBHealth,
+    classroomLeaderboardExpectedFailureDeclarations.teacherBMembers,
+  );
   await signIn(teacherBPage, TEST_USERS.teacherTwo);
   await teacherBPage.goto(`/teacher/classes/${classroomId}`);
   await expect(teacherBPage.getByRole('alert')).toContainText('沒有管理權限');
@@ -256,18 +264,19 @@ test('Classroom and Leaderboard v2 phase gate', async ({
   const healthResults = trackedPages.map(({ health }) =>
     unexpectedBrowserHealth(health, browserName),
   );
-  const declaredFailures = expectedBrowserFailures(studentAHealth);
-  expect(declaredFailures).toEqual([
-    {
-      expected_count: 1,
-      observed_count: 1,
-      status: 400,
-      url_pattern: joinClassroomRpcPattern.source,
-    },
-  ]);
-  for (const { health } of trackedPages.slice(1)) {
-    expect(expectedBrowserFailures(health)).toEqual([]);
-  }
+  const declaredFailures = trackedPages.flatMap(({ health }) =>
+    expectedBrowserFailures(health),
+  );
+  expect(declaredFailures).toEqual(
+    Object.values(classroomLeaderboardExpectedFailureDeclarations).map(
+      ({ count, status, urlPattern }) => ({
+        expected_count: count,
+        observed_count: count,
+        status,
+        url_pattern: urlPattern.source,
+      }),
+    ),
+  );
   for (const health of healthResults) {
     expect(health).toEqual({
       consoleErrors: [],

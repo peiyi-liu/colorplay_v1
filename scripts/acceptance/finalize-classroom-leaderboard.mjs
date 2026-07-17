@@ -35,6 +35,19 @@ const EXPECTED_BROWSER_FAILURES = Object.freeze([
     status: 400,
     url_pattern: /\/rest\/v1\/rpc\/join_classroom(?:\?.*)?$/u.source,
   }),
+  Object.freeze({
+    expected_count: 1,
+    observed_count: 1,
+    status: 403,
+    url_pattern: /\/rest\/v1\/rpc\/get_classroom_leaderboard(?:\?.*)?$/u.source,
+  }),
+  Object.freeze({
+    expected_count: 1,
+    observed_count: 1,
+    status: 403,
+    url_pattern: /\/rest\/v1\/rpc\/list_owned_classroom_members(?:\?.*)?$/u
+      .source,
+  }),
 ]);
 
 const isPlainObject = (value) =>
