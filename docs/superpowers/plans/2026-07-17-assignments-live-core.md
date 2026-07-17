@@ -160,11 +160,11 @@ Join codes reuse the Phase 3 pattern: `extensions.gen_random_bytes(8)` → 16 up
 
 **Files:** Modify `tests/fixtures/users.ts`, `scripts/supabase/seed-auth.ts`, `src/types/database.ts` (generated), `tests/contracts/database-types.test.sh`; create `src/features/assignments/types.ts`, `src/features/assignments/api/assignment-repository.ts` (+ unit + integration tests), `src/features/assignments/hooks/use-assignments.ts` (+ tests); modify this plan.
 
-- [ ] **Step 1:** Add fixtures `assignmentTeacher` (teacher), `assignmentStudentOne/Two` (students) to `TEST_USERS`/roles/seed labels. Failing unit/hook tests: exact RPC names/args, camelCase mapping, Taipei display fields left to UI (repository returns UTC ISO), strict rejection of `email`/hash/raw rows; failing integration: dedicated teacher creates a uniquely named classroom + assignment via RPC, students join, list/start/limit/deadline/cross-class assertions, `scope:'local'` cleanup.
-- [ ] **Step 2:** RED (unit + `bash tests/contracts/database-types.test.sh`).
-- [ ] **Step 3:** Regenerate types (`supabase gen types … > src/types/database.ts`, Prettier); implement repository/hooks; query keys `assignmentKeys.mine/classroom(classroomId)`; mutations never auto-retry into duplicate attempts (retry reuses the same request id).
-- [ ] **Step 4:** GREEN: reset → probe → seed → unit + focused integration ×2 consecutively, type contract, lint, typecheck.
-- [ ] **Step 5:** Commit `feat: add assignment data interfaces`.
+- [x] **Step 1:** Add fixtures `assignmentTeacher` (teacher), `assignmentStudentOne/Two` (students) to `TEST_USERS`/roles/seed labels. Failing unit/hook tests: exact RPC names/args, camelCase mapping, Taipei display fields left to UI (repository returns UTC ISO), strict rejection of `email`/hash/raw rows; failing integration: dedicated teacher creates a uniquely named classroom + assignment via RPC, students join, list/start/limit/deadline/cross-class assertions, `scope:'local'` cleanup.
+- [x] **Step 2:** RED (unit + `bash tests/contracts/database-types.test.sh`).
+- [x] **Step 3:** Regenerate types (`supabase gen types … > src/types/database.ts`, Prettier); implement repository/hooks; query keys `assignmentKeys.mine/classroom(classroomId)`; mutations never auto-retry into duplicate attempts (retry reuses the same request id).
+- [x] **Step 4:** GREEN: reset → probe → seed → unit + focused integration ×2 consecutively, type contract, lint, typecheck.
+- [x] **Step 5:** Commit `feat: add assignment data interfaces`.
 
 ### Task 5: Teacher assignment management UI
 

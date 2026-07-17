@@ -181,6 +181,183 @@ export type Database = {
           },
         ]
       }
+      assignment_attempts: {
+        Row: {
+          assignment_id: string
+          attempt_number: number
+          completed_at: string | null
+          id: string
+          live_session_id: string | null
+          passed: boolean | null
+          quiz_session_id: string | null
+          started_at: string
+          status: Database["public"]["Enums"]["assignment_attempt_status"]
+          user_id: string
+        }
+        Insert: {
+          assignment_id: string
+          attempt_number: number
+          completed_at?: string | null
+          id?: string
+          live_session_id?: string | null
+          passed?: boolean | null
+          quiz_session_id?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["assignment_attempt_status"]
+          user_id: string
+        }
+        Update: {
+          assignment_id?: string
+          attempt_number?: number
+          completed_at?: string | null
+          id?: string
+          live_session_id?: string | null
+          passed?: boolean | null
+          quiz_session_id?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["assignment_attempt_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignment_attempts_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignment_attempts_quiz_session_id_fkey"
+            columns: ["quiz_session_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_session_question_state"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "assignment_attempts_quiz_session_id_fkey"
+            columns: ["quiz_session_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignment_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assignment_targets: {
+        Row: {
+          assignment_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          assignment_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          assignment_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignment_targets_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignment_targets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assignments: {
+        Row: {
+          activity_type: Database["public"]["Enums"]["assignment_activity_type"]
+          attempt_limit: number | null
+          available_from: string | null
+          classroom_id: string
+          created_at: string
+          deadline_at: string | null
+          id: string
+          live_activity_id: string | null
+          owner_teacher_id: string
+          passing_rule: Json
+          quiz_template_id: string | null
+          rules_version: string
+          status: Database["public"]["Enums"]["assignment_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          activity_type: Database["public"]["Enums"]["assignment_activity_type"]
+          attempt_limit?: number | null
+          available_from?: string | null
+          classroom_id: string
+          created_at?: string
+          deadline_at?: string | null
+          id?: string
+          live_activity_id?: string | null
+          owner_teacher_id: string
+          passing_rule: Json
+          quiz_template_id?: string | null
+          rules_version?: string
+          status?: Database["public"]["Enums"]["assignment_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          activity_type?: Database["public"]["Enums"]["assignment_activity_type"]
+          attempt_limit?: number | null
+          available_from?: string | null
+          classroom_id?: string
+          created_at?: string
+          deadline_at?: string | null
+          id?: string
+          live_activity_id?: string | null
+          owner_teacher_id?: string
+          passing_rule?: Json
+          quiz_template_id?: string | null
+          rules_version?: string
+          status?: Database["public"]["Enums"]["assignment_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignments_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignments_owner_teacher_id_fkey"
+            columns: ["owner_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignments_quiz_template_id_fkey"
+            columns: ["quiz_template_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blooks: {
         Row: {
           cost_tokens: number
@@ -701,12 +878,14 @@ export type Database = {
       quiz_sessions: {
         Row: {
           answered_count: number
+          assignment_attempt_id: string | null
           chapter_title: string
           client_request_id: string
           completed_at: string | null
           correct_count: number
           game_rules_version: string
           id: string
+          purpose: Database["public"]["Enums"]["quiz_session_purpose"]
           question_count: number
           reward_rate_percent: number
           started_at: string
@@ -719,12 +898,14 @@ export type Database = {
         }
         Insert: {
           answered_count?: number
+          assignment_attempt_id?: string | null
           chapter_title: string
           client_request_id: string
           completed_at?: string | null
           correct_count?: number
           game_rules_version?: string
           id?: string
+          purpose?: Database["public"]["Enums"]["quiz_session_purpose"]
           question_count: number
           reward_rate_percent?: number
           started_at?: string
@@ -737,12 +918,14 @@ export type Database = {
         }
         Update: {
           answered_count?: number
+          assignment_attempt_id?: string | null
           chapter_title?: string
           client_request_id?: string
           completed_at?: string | null
           correct_count?: number
           game_rules_version?: string
           id?: string
+          purpose?: Database["public"]["Enums"]["quiz_session_purpose"]
           question_count?: number
           reward_rate_percent?: number
           started_at?: string
@@ -754,6 +937,13 @@ export type Database = {
           xp_awarded?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "quiz_sessions_assignment_attempt_id_fkey"
+            columns: ["assignment_attempt_id"]
+            isOneToOne: false
+            referencedRelation: "assignment_attempts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quiz_sessions_template_id_fkey"
             columns: ["template_id"]
@@ -1153,12 +1343,29 @@ export type Database = {
         Args: { session_id: string }
         Returns: Json
       }
+      build_assignment_attempt_payload: {
+        Args: { target_attempt_id: string }
+        Returns: Json
+      }
       build_quiz_answer_result: {
         Args: { target_answer_id: string }
         Returns: Json
       }
       build_quiz_session_payload: {
         Args: { target_session_id: string }
+        Returns: Json
+      }
+      create_assignment: {
+        Args: {
+          p_activity_reference: string
+          p_activity_type: Database["public"]["Enums"]["assignment_activity_type"]
+          p_attempt_limit: number
+          p_available_from: string
+          p_classroom_id: string
+          p_deadline_at: string
+          p_passing_threshold: number
+          p_title: string
+        }
         Returns: Json
       }
       create_classroom: {
@@ -1199,6 +1406,14 @@ export type Database = {
         Args: { p_classroom_id: string; p_user_id: string }
         Returns: boolean
       }
+      is_assignment_owner: {
+        Args: { p_assignment_id: string }
+        Returns: boolean
+      }
+      is_assignment_target: {
+        Args: { p_assignment_id: string }
+        Returns: boolean
+      }
       join_classroom: {
         Args: { p_join_code: string; p_request_id: string }
         Returns: {
@@ -1206,6 +1421,40 @@ export type Database = {
           classroom_name: string
           joined_at: string
           membership_status: Database["public"]["Enums"]["classroom_member_status"]
+        }[]
+      }
+      list_classroom_assignments: {
+        Args: { p_classroom_id: string }
+        Returns: {
+          activity_type: Database["public"]["Enums"]["assignment_activity_type"]
+          assignment_id: string
+          attempt_limit: number
+          available_from: string
+          completed_count: number
+          created_at: string
+          deadline_at: string
+          passing_threshold: number
+          status: Database["public"]["Enums"]["assignment_status"]
+          target_count: number
+          title: string
+          updated_at: string
+        }[]
+      }
+      list_my_assignments: {
+        Args: never
+        Returns: {
+          assignment_id: string
+          attempt_limit: number
+          attempts_used: number
+          available_from: string
+          classroom_id: string
+          classroom_name: string
+          deadline_at: string
+          latest_attempt_status: Database["public"]["Enums"]["assignment_attempt_status"]
+          latest_passed: boolean
+          passing_threshold: number
+          status: Database["public"]["Enums"]["assignment_status"]
+          title: string
         }[]
       }
       list_my_classrooms: {
@@ -1250,11 +1499,23 @@ export type Database = {
           join_code_version: number
         }[]
       }
+      start_assignment_attempt: {
+        Args: { p_assignment_id: string; p_request_id: string }
+        Returns: Json
+      }
       submit_quiz_answer: {
         Args: {
           idempotency_key: string
           selected_option_id?: string
           session_question_id: string
+        }
+        Returns: Json
+      }
+      update_assignment_status: {
+        Args: {
+          p_assignment_id: string
+          p_expected_updated_at: string
+          p_status: Database["public"]["Enums"]["assignment_status"]
         }
         Returns: Json
       }
@@ -1294,6 +1555,13 @@ export type Database = {
         | "mastery_recomputed"
       achievement_visibility: "public" | "hidden"
       app_role: "student" | "teacher" | "admin"
+      assignment_activity_type: "quiz_template" | "live_activity"
+      assignment_attempt_status:
+        | "in_progress"
+        | "completed"
+        | "expired"
+        | "abandoned"
+      assignment_status: "draft" | "published" | "paused" | "archived"
       classroom_member_role: "student" | "teacher"
       classroom_member_status: "active" | "inactive"
       classroom_status: "active" | "archived"
@@ -1306,6 +1574,7 @@ export type Database = {
         | "live"
       question_type: "single_choice"
       quiz_answer_status: "correct" | "incorrect" | "timeout"
+      quiz_session_purpose: "practice" | "assignment" | "remediation"
       quiz_session_status: "in_progress" | "completed"
     }
     CompositeTypes: {
@@ -1461,6 +1730,14 @@ export const Constants = {
       ],
       achievement_visibility: ["public", "hidden"],
       app_role: ["student", "teacher", "admin"],
+      assignment_activity_type: ["quiz_template", "live_activity"],
+      assignment_attempt_status: [
+        "in_progress",
+        "completed",
+        "expired",
+        "abandoned",
+      ],
+      assignment_status: ["draft", "published", "paused", "archived"],
       classroom_member_role: ["student", "teacher"],
       classroom_member_status: ["active", "inactive"],
       classroom_status: ["active", "archived"],
@@ -1474,6 +1751,7 @@ export const Constants = {
       ],
       question_type: ["single_choice"],
       quiz_answer_status: ["correct", "incorrect", "timeout"],
+      quiz_session_purpose: ["practice", "assignment", "remediation"],
       quiz_session_status: ["in_progress", "completed"],
     },
   },
