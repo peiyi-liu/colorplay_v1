@@ -177,6 +177,12 @@ describe('Classroom and Leaderboard phase gate source', () => {
     expect(source).toContain(
       "await expect(teacherPage.getByRole('row')).toHaveCount(2);",
     );
+    expect(source).toContain('const classroomIdPattern =');
+    expect(source).toContain('const teacherClassroomUrlPattern =');
+    expect(source).toContain(
+      'await teacherPage.waitForURL(teacherClassroomUrlPattern);',
+    );
+    expect(source).toContain('!classroomIdPattern.test(classroomId)');
     for (const viewport of [
       'width: 375, height: 812',
       'width: 768, height: 1024',

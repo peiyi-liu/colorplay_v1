@@ -17,6 +17,11 @@ const challenge = CONTENT_MANIFEST.find(
 );
 if (!challenge) throw new Error('CLASSROOM_LEADERBOARD_CHALLENGE_MISSING');
 
+const classroomIdPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const teacherClassroomUrlPattern =
+  /\/teacher\/classes\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+
 const requiredEnvironment = (name: 'SUPABASE_ANON_KEY' | 'SUPABASE_URL') => {
   const value = process.env[name];
   if (!value) throw new Error(`CLASSROOM_LEADERBOARD_${name}_MISSING`);
@@ -109,9 +114,11 @@ test('Classroom and Leaderboard v2 phase gate', async ({
   await expect(createReceipt).toBeVisible();
   const oldCode = (await createReceipt.locator('strong').innerText()).trim();
   await teacherPage.getByRole('link', { name: '管理班級' }).click();
+  await teacherPage.waitForURL(teacherClassroomUrlPattern);
   const classroomId = new URL(teacherPage.url()).pathname.split('/').at(-1);
-  if (!classroomId)
+  if (!classroomId || !classroomIdPattern.test(classroomId)) {
     throw new Error('CLASSROOM_LEADERBOARD_CLASSROOM_ID_MISSING');
+  }
   await teacherPage.getByRole('button', { name: '輪替加入碼' }).click();
   await expect(teacherPage.getByRole('dialog')).toContainText(
     '舊加入碼會立即失效',
