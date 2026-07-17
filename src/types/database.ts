@@ -227,6 +227,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "assignment_attempts_live_session_fk"
+            columns: ["live_session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "assignment_attempts_quiz_session_id_fkey"
             columns: ["quiz_session_id"]
             isOneToOne: false
@@ -340,6 +347,13 @@ export type Database = {
             columns: ["classroom_id"]
             isOneToOne: false
             referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignments_live_activity_fk"
+            columns: ["live_activity_id"]
+            isOneToOne: false
+            referencedRelation: "live_activities"
             referencedColumns: ["id"]
           },
           {
@@ -565,6 +579,298 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      live_activities: {
+        Row: {
+          created_at: string
+          id: string
+          owner_teacher_id: string
+          question_time_limit_seconds: number
+          quiz_template_id: string
+          rules_version: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_teacher_id: string
+          question_time_limit_seconds?: number
+          quiz_template_id: string
+          rules_version?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_teacher_id?: string
+          question_time_limit_seconds?: number
+          quiz_template_id?: string
+          rules_version?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_activities_owner_teacher_id_fkey"
+            columns: ["owner_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_activities_quiz_template_id_fkey"
+            columns: ["quiz_template_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_answers: {
+        Row: {
+          answer_status: Database["public"]["Enums"]["quiz_answer_status"]
+          id: string
+          idempotency_key: string
+          participant_id: string
+          response_ms: number | null
+          score_delta: number
+          selected_option_id: string | null
+          session_question_id: string
+          submitted_at: string
+        }
+        Insert: {
+          answer_status: Database["public"]["Enums"]["quiz_answer_status"]
+          id?: string
+          idempotency_key: string
+          participant_id: string
+          response_ms?: number | null
+          score_delta?: number
+          selected_option_id?: string | null
+          session_question_id: string
+          submitted_at?: string
+        }
+        Update: {
+          answer_status?: Database["public"]["Enums"]["quiz_answer_status"]
+          id?: string
+          idempotency_key?: string
+          participant_id?: string
+          response_ms?: number | null
+          score_delta?: number
+          selected_option_id?: string | null
+          session_question_id?: string
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_answers_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "live_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_answers_session_question_id_fkey"
+            columns: ["session_question_id"]
+            isOneToOne: false
+            referencedRelation: "live_session_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_participants: {
+        Row: {
+          final_rank: number | null
+          id: string
+          joined_at: string
+          left_at: string | null
+          score: number
+          session_id: string
+          status: Database["public"]["Enums"]["live_participant_status"]
+          user_id: string
+        }
+        Insert: {
+          final_rank?: number | null
+          id?: string
+          joined_at?: string
+          left_at?: string | null
+          score?: number
+          session_id: string
+          status?: Database["public"]["Enums"]["live_participant_status"]
+          user_id: string
+        }
+        Update: {
+          final_rank?: number | null
+          id?: string
+          joined_at?: string
+          left_at?: string | null
+          score?: number
+          session_id?: string
+          status?: Database["public"]["Enums"]["live_participant_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_session_questions: {
+        Row: {
+          closed_at: string | null
+          correct_option_id: string
+          deadline_at: string | null
+          explanation: string | null
+          id: string
+          opened_at: string | null
+          position: number
+          prompt: string
+          public_options: Json
+          question_stable_code: string
+          question_version: number
+          session_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          correct_option_id: string
+          deadline_at?: string | null
+          explanation?: string | null
+          id?: string
+          opened_at?: string | null
+          position: number
+          prompt: string
+          public_options: Json
+          question_stable_code: string
+          question_version: number
+          session_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          correct_option_id?: string
+          deadline_at?: string | null
+          explanation?: string | null
+          id?: string
+          opened_at?: string | null
+          position?: number
+          prompt?: string
+          public_options?: Json
+          question_stable_code?: string
+          question_version?: number
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_session_questions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_sessions: {
+        Row: {
+          assignment_id: string | null
+          cancelled_at: string | null
+          classroom_id: string
+          completed_at: string | null
+          created_at: string
+          current_position: number
+          host_teacher_id: string
+          id: string
+          join_code_hash: string
+          join_code_version: number
+          live_activity_id: string
+          opened_at: string | null
+          question_count: number
+          rules_version: string
+          state: Database["public"]["Enums"]["live_session_state"]
+          state_version: number
+          updated_at: string
+        }
+        Insert: {
+          assignment_id?: string | null
+          cancelled_at?: string | null
+          classroom_id: string
+          completed_at?: string | null
+          created_at?: string
+          current_position?: number
+          host_teacher_id: string
+          id?: string
+          join_code_hash: string
+          join_code_version?: number
+          live_activity_id: string
+          opened_at?: string | null
+          question_count?: number
+          rules_version?: string
+          state?: Database["public"]["Enums"]["live_session_state"]
+          state_version?: number
+          updated_at?: string
+        }
+        Update: {
+          assignment_id?: string | null
+          cancelled_at?: string | null
+          classroom_id?: string
+          completed_at?: string | null
+          created_at?: string
+          current_position?: number
+          host_teacher_id?: string
+          id?: string
+          join_code_hash?: string
+          join_code_version?: number
+          live_activity_id?: string
+          opened_at?: string | null
+          question_count?: number
+          rules_version?: string
+          state?: Database["public"]["Enums"]["live_session_state"]
+          state_version?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_sessions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_sessions_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_sessions_host_teacher_id_fkey"
+            columns: ["host_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_sessions_live_activity_id_fkey"
+            columns: ["live_activity_id"]
+            isOneToOne: false
+            referencedRelation: "live_activities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -1343,6 +1649,10 @@ export type Database = {
         Args: { session_id: string }
         Returns: Json
       }
+      advance_live_session: {
+        Args: { p_expected_version: number; p_session_id: string }
+        Returns: Json
+      }
       build_assignment_attempt_payload: {
         Args: { target_attempt_id: string }
         Returns: Json
@@ -1353,6 +1663,14 @@ export type Database = {
       }
       build_quiz_session_payload: {
         Args: { target_session_id: string }
+        Returns: Json
+      }
+      cancel_live_session: {
+        Args: { p_expected_version: number; p_session_id: string }
+        Returns: Json
+      }
+      close_live_question: {
+        Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
       }
       create_assignment: {
@@ -1377,6 +1695,22 @@ export type Database = {
           join_code_version: number
         }[]
       }
+      create_live_activity: {
+        Args: {
+          p_question_time_limit_seconds?: number
+          p_quiz_template_id: string
+          p_title: string
+        }
+        Returns: Json
+      }
+      create_live_session: {
+        Args: {
+          p_assignment_id?: string
+          p_classroom_id: string
+          p_live_activity_id: string
+        }
+        Returns: Json
+      }
       create_quiz_session: {
         Args: { client_request_id: string; template_id: string }
         Returns: Json
@@ -1394,16 +1728,26 @@ export type Database = {
         }
         Returns: Json
       }
+      finalize_live_session: {
+        Args: { p_expected_version: number; p_session_id: string }
+        Returns: Json
+      }
       finalize_quiz_session: { Args: { session_id: string }; Returns: Json }
+      generate_live_join_code: { Args: never; Returns: Record<string, unknown> }
       get_classroom_leaderboard: {
         Args: { p_classroom_id: string }
         Returns: Json
       }
+      get_live_session_state: { Args: { p_session_id: string }; Returns: Json }
       get_my_achievement_catalog: { Args: never; Returns: Json }
       get_my_blook_inventory: { Args: never; Returns: Json }
       get_my_economy_summary: { Args: never; Returns: Json }
       is_active_classroom_member: {
         Args: { p_classroom_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_active_live_participant: {
+        Args: { p_session_id: string }
         Returns: boolean
       }
       is_assignment_owner: {
@@ -1414,6 +1758,7 @@ export type Database = {
         Args: { p_assignment_id: string }
         Returns: boolean
       }
+      is_live_session_host: { Args: { p_session_id: string }; Returns: boolean }
       join_classroom: {
         Args: { p_join_code: string; p_request_id: string }
         Returns: {
@@ -1422,6 +1767,10 @@ export type Database = {
           joined_at: string
           membership_status: Database["public"]["Enums"]["classroom_member_status"]
         }[]
+      }
+      join_live_session: {
+        Args: { p_join_code: string; p_request_id: string }
+        Returns: Json
       }
       list_classroom_assignments: {
         Args: { p_classroom_id: string }
@@ -1486,6 +1835,31 @@ export type Database = {
           member_count: number
         }[]
       }
+      live_broadcast: {
+        Args: { p_payload: Json; p_session_id: string }
+        Returns: undefined
+      }
+      live_completed_payload: {
+        Args: {
+          target_session: Database["public"]["Tables"]["live_sessions"]["Row"]
+        }
+        Returns: Json
+      }
+      live_open_next_question: {
+        Args: { p_next_position: number; p_session_id: string }
+        Returns: Json
+      }
+      live_question_payload: {
+        Args: {
+          target_question: Database["public"]["Tables"]["live_session_questions"]["Row"]
+        }
+        Returns: Json
+      }
+      live_topic_session_id: { Args: { p_topic: string }; Returns: string }
+      open_live_question: {
+        Args: { p_expected_version: number; p_session_id: string }
+        Returns: Json
+      }
       purchase_blook: { Args: { blook_id: string }; Returns: Json }
       reconcile_wallet_cache: {
         Args: { target_user_id: string }
@@ -1499,8 +1873,21 @@ export type Database = {
           join_code_version: number
         }[]
       }
+      rotate_live_join_code: { Args: { p_session_id: string }; Returns: Json }
       start_assignment_attempt: {
         Args: { p_assignment_id: string; p_request_id: string }
+        Returns: Json
+      }
+      start_live_session: {
+        Args: { p_expected_version: number; p_session_id: string }
+        Returns: Json
+      }
+      submit_live_answer: {
+        Args: {
+          p_idempotency_key: string
+          p_selected_option_id: string
+          p_session_question_id: string
+        }
         Returns: Json
       }
       submit_quiz_answer: {
@@ -1572,6 +1959,14 @@ export type Database = {
         | "achievement"
         | "assignment"
         | "live"
+      live_participant_status: "active" | "left" | "removed"
+      live_session_state:
+        | "draft"
+        | "lobby"
+        | "question_open"
+        | "question_feedback"
+        | "completed"
+        | "cancelled"
       question_type: "single_choice"
       quiz_answer_status: "correct" | "incorrect" | "timeout"
       quiz_session_purpose: "practice" | "assignment" | "remediation"
@@ -1748,6 +2143,15 @@ export const Constants = {
         "achievement",
         "assignment",
         "live",
+      ],
+      live_participant_status: ["active", "left", "removed"],
+      live_session_state: [
+        "draft",
+        "lobby",
+        "question_open",
+        "question_feedback",
+        "completed",
+        "cancelled",
       ],
       question_type: ["single_choice"],
       quiz_answer_status: ["correct", "incorrect", "timeout"],

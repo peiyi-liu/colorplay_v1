@@ -35,6 +35,18 @@ export const TEST_USERS = {
     email: 'assignment.student.two@colorplay.test',
     password: 'LocalOnly-AssignmentStudent2!',
   },
+  liveHostTeacher: {
+    email: 'live.host.teacher@colorplay.test',
+    password: 'LocalOnly-LiveHost1!',
+  },
+  liveStudentOne: {
+    email: 'live.student.one@colorplay.test',
+    password: 'LocalOnly-LiveStudent1!',
+  },
+  liveStudentTwo: {
+    email: 'live.student.two@colorplay.test',
+    password: 'LocalOnly-LiveStudent2!',
+  },
   economyStudentOne: {
     email: 'economy.student.one@colorplay.test',
     password: 'LocalOnly-EconomyStudent1!',
@@ -77,6 +89,9 @@ export const TEST_USER_ROLES = {
   assignmentTeacher: 'teacher',
   assignmentStudentOne: 'student',
   assignmentStudentTwo: 'student',
+  liveHostTeacher: 'teacher',
+  liveStudentOne: 'student',
+  liveStudentTwo: 'student',
   economyStudentOne: 'student',
   economyStudentTwo: 'student',
   inventoryStudentOne: 'student',

@@ -37,3 +37,21 @@ grep -q 'update_assignment_status' src/types/database.ts
 grep -q 'list_my_assignments' src/types/database.ts
 grep -q 'list_classroom_assignments' src/types/database.ts
 grep -q 'start_assignment_attempt' src/types/database.ts
+
+grep -q 'live_activities' src/types/database.ts
+grep -q 'live_sessions' src/types/database.ts
+grep -q 'live_participants' src/types/database.ts
+grep -q 'live_session_questions' src/types/database.ts
+grep -q 'live_answers' src/types/database.ts
+grep -q 'live_session_state' src/types/database.ts
+grep -q 'create_live_activity' src/types/database.ts
+grep -q 'create_live_session' src/types/database.ts
+grep -q 'join_live_session' src/types/database.ts
+grep -q 'get_live_session_state' src/types/database.ts
+grep -q 'start_live_session' src/types/database.ts
+grep -q 'open_live_question' src/types/database.ts
+grep -q 'submit_live_answer' src/types/database.ts
+grep -q 'close_live_question' src/types/database.ts
+grep -q 'advance_live_session' src/types/database.ts
+grep -q 'finalize_live_session' src/types/database.ts
+grep -q 'cancel_live_session' src/types/database.ts

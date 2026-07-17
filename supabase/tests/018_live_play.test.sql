@@ -1,6 +1,6 @@
 begin;
 
-select plan(43);
+select plan(44);
 
 select has_function('public', 'open_live_question', 'open live question exists');
 select has_function('public', 'submit_live_answer', 'submit live answer exists');
@@ -287,6 +287,11 @@ select is(
 select ok(
   position('correct_option_id' in current_setting('test.q1_open')) = 0,
   'the open payload hides the correct option'
+);
+select ok(
+  current_setting('test.q1_open')::jsonb #>> '{question,question_id}'
+    is not null,
+  'the open payload identifies the frozen question'
 );
 select throws_ok(
   $$select public.open_live_question(

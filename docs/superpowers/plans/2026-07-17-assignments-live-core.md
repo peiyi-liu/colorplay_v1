@@ -223,8 +223,8 @@ Join codes reuse the Phase 3 pattern: `extensions.gen_random_bytes(8)` → 16 up
 
 **Files:** Create `src/features/live/types.ts`, `src/features/live/api/live-repository.ts` (+ unit + integration tests), `src/features/live/hooks/use-live-session.ts` (+ tests); modify `tests/fixtures/users.ts` + `scripts/supabase/seed-auth.ts` (add `liveHostTeacher`, `liveStudentOne/Two`), `src/types/database.ts` (generated), `tests/contracts/database-types.test.sh`; modify this plan.
 
-- [ ] **Step 1:** Failing unit/hook tests (exact RPC args, strict payload rejection incl. `correct_option_id` leak, version-gap reconciliation triggering a state fetch, no localStorage) and failing integration (host creates activity+session for a fresh classroom, students join with replay, start/open/answer/close/advance/finalize through repositories, score/rank match `2026-07-live-1`, `scope:'local'` cleanup).
-- [ ] **Step 2:** RED. **Step 3:** regenerate types; implement. **Step 4:** GREEN: reset→probe→seed → unit + integration ×2 consecutively, type contract, lint, typecheck. **Step 5:** Commit `feat: add live data interfaces`.
+- [x] **Step 1:** Failing unit/hook tests (exact RPC args, strict payload rejection incl. `correct_option_id` leak, version-gap reconciliation triggering a state fetch, no localStorage) and failing integration (host creates activity+session for a fresh classroom, students join with replay, start/open/answer/close/advance/finalize through repositories, score/rank match `2026-07-live-1`, `scope:'local'` cleanup).
+- [x] **Step 2:** RED. **Step 3:** regenerate types; implement. **Step 4:** GREEN: reset→probe→seed → unit + integration ×2 consecutively, type contract, lint, typecheck. **Step 5:** Commit `feat: add live data interfaces`.
 
 ### Task 12: Host console and student Live experience
 
