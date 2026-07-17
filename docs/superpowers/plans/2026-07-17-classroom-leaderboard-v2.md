@@ -1138,7 +1138,7 @@ Use `superpowers:requesting-code-review` once for `65d8b70..HEAD`. Exclude `src/
 
 Fix every Critical or Important finding with focused RED → GREEN when behavior changes. Commit coherent review fixes without rewriting task commits. Rerun only affected lint/typecheck/tests. Do not execute E2E or the phase gate during review fixes.
 
-- [ ] **Gate Step 1: Run one disposable acceptance-mode headless precheck**
+- [x] **Gate Step 1: Run one disposable acceptance-mode headless precheck**
 
 Reset/seed, then run the new E2E once without `--headed`. Evidence must be outside `artifacts/acceptance`, must not use the formal run naming pattern, and must be deleted by a trap whether the command passes or fails.
 
@@ -1167,7 +1167,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 Expected: one Chromium test passes headlessly; no finalizer runs; temporary evidence is deleted; worktree remains clean. If it fails, diagnose and obtain owner authorization before another precheck or formal gate.
 
-- [ ] **Gate Step 2: Record the clean gate SHA and execute the formal gate once**
+- [x] **Gate Step 2: Record the clean gate SHA and execute the formal gate once**
 
 ```bash
 test -z "$(git status --porcelain=v1 --untracked-files=all)"
@@ -1178,7 +1178,7 @@ pnpm phase:classroom-leaderboard
 
 Expected: format, lint, typecheck, unit, build, all database/RLS tests, integration, Auth seed, and headed Chromium flow pass. Finalizer prints one manifest path under `artifacts/acceptance/classroom-leaderboard-<GATE_SHA>/manifest.json` with `decision: PASS` and exactly the five exit AC IDs. If it fails, stop and report the failing stage/root cause; do not rerun without owner instruction.
 
-- [ ] **Gate Step 3: Close Phase 3 only after PASS**
+- [x] **Gate Step 3: Close Phase 3 only after PASS**
 
 Update `.superpowers/sdd/progress.md` with plan/task/review-fix SHAs, reviewed and gate SHAs, manifest path, command totals, five exit ACs, known warnings, and these reservations:
 

@@ -127,3 +127,53 @@ The four catalog-only dependencies remain truthful `not_started` entries until t
 Forward note: `completed_task_count` and `correct_streak` currently derive from all completed quiz sessions. When later phases add assignment/remediation session purposes and Live answers, those derivations must be revisited with a `rule_version` bump so remediation attempts never count.
 
 Status: STOP after Phase 2 closure; do not begin Classroom/Leaderboard, Assignments, Live, remediation, mastery, or any other phase without a new project-owner instruction.
+
+## Phase 3 Classroom and Leaderboard v2
+
+Phase 3 Classroom and Leaderboard v2: COMPLETE
+
+Plan: `docs/superpowers/plans/2026-07-17-classroom-leaderboard-v2.md`
+Plan commit: `039a012`
+Task 1: complete (`0964058`; isolated classroom tables, column privacy, tenant RLS)
+Task 2: complete (`3bcd35c`; trusted create/rotate/join commands and safe projections)
+Task 3: complete (`e16f9c1`; authoritative Top 10 plus self leaderboard RPC)
+Task 4: complete (`83c1371`; deterministic classroom fixtures and generated types)
+Task 5: complete (`afeee04`; classroom repository and query/mutation hooks)
+Task 6: complete (`577554f`; privacy-safe leaderboard repository and hook)
+Task 7: complete (`3d42f9f`; student join routes with preserved join intent)
+Task 8: complete (`5d822e6`; teacher classroom management under `/teacher/classes`)
+Task 9: complete (`cf8a25b`; classroom leaderboard page at `/app/leaderboard/:classroomId`)
+Task 10: complete (`4881f69`; Phase 3 runner, finalizer, and acceptance E2E)
+
+Complete-range review covered `65d8b70..4881f69`. Two Important findings were corrected in `cb90250`: manual Playwright contexts received an explicit `baseURL`, and the teacher view verifies a single membership row after repeated joins.
+
+Gate history (each failure produced one focused, owner-authorized fix; no assertion was weakened):
+
+- Precheck 1 failed: URL parsed before teacher navigation completed; `ebe21d9` waits for the `/teacher/classes/<UUID>` route.
+- Precheck 2 failed: browser health treated the intentional stale-join-code 400 and navigation-cancelled background queries as defects; `24549ca` adds declared expected browser failures (enumerated 4xx only, each must be observed exactly) and settles queries before navigation.
+- Precheck 3 failed: the owner's one-declaration constraint conflicted with required outsider/Teacher B denials; `4763cc9` enumerates all three denial declarations (`join_classroom` 400, `get_classroom_leaderboard` 403, `list_owned_classroom_members` 403).
+- Formal gate 1 failed at Auth seed: PostgREST schema cache raced the post-reset seed (HTTP 503, ~9 s reconnect); `5ccc8ff` adds the shared bounded readiness probe `scripts/supabase/wait-for-postgrest.sh`, and every future runner must order reset → probe → seed.
+- Formal gate 2 failed in the integration suite: economy and inventory integration tests shared `studentOne`, so a parallel real quiz plus Blook purchase (750 XP / 150 Token) raced the economy test's exact zero assertions; `ceb0f23` gives both files dedicated seed accounts (`economyStudentOne/Two`, `inventoryStudentOne/Two`), verified by two consecutive reset+seed+integration runs (23/23 both).
+- Formal gate 3 failed headed-only: 6.2 s after the outsider's declared leaderboard 403, a window visibility change made TanStack Query refetch the errored query and emit a second undeclared 403 (trace network events confirm both came from the outsider page); `a5edd25` closes negative-path browser contexts immediately after their denial assertions while keeping their health recordings for the final strict checks.
+- Formal gate 4 passed on 2026-07-17 at clean SHA `a5edd25e55db8300729385a16b911ebe0444c179`: Prettier, lint, typecheck, 63 Vitest files/427 tests, production build, 14 database files/398 pgTAP assertions plus runtime smoke 3/3, 11 integration files/23 tests, PostgREST readiness probe, Auth seed, and the headed Chromium classroom flow (teacher, two students, outsider, Teacher B) all passed with zero unexpected browser-health events and all three declared denials observed exactly once.
+
+Manifest: `artifacts/acceptance/classroom-leaderboard-a5edd25e55db8300729385a16b911ebe0444c179/manifest.json` (`decision: PASS`; `AC-AUTH-005`–`AC-AUTH-007`, `AC-GAME-008`, `AC-GAME-009`).
+
+Conventions added in this phase (binding on later phases):
+
+- Runners order reset → `scripts/supabase/wait-for-postgrest.sh` → seed; never seed against an unprobed PostgREST.
+- Any integration test that mutates or asserts exact economy state uses dedicated seed accounts; shared `studentOne/studentTwo` stay reserved for state-tolerant flows.
+- Browser negative paths declare each expected 4xx (URL pattern, status, count); declarations must be observed exactly, 5xx is never declarable, and no status-level or global filter exists.
+- Negative-path browser contexts close immediately after their denial assertions; idle errored windows refetch on headed visibility changes and emit undeclared denials.
+
+Reservations recorded per the plan:
+
+- Assignments and Live reference `classrooms.id` and call the active-membership predicate in their own phases.
+- Leaderboard privacy modes require an additive trusted setting/projection and are not inferred from the browser.
+- Analytics receives a separately authorized aggregate interface and never broadens the leaderboard response.
+- If a later trusted leave lifecycle creates inactive earning intervals, leaderboard membership-window derivation must be versioned and expanded before such intervals are enabled.
+- `AC-PERF-003` staging 30-sample p95, full `AC-UI-001/002`, real-device, and production evidence remain unverified until Phase 8.
+
+The known ~668 kB main-chunk warning remains non-blocking and assigned to later route-level code splitting. Executor note: after Codex quota exhaustion, the owner instructed Claude Code to complete the phase tail (formal gates 2–4, their fixes, and this closure) under the same plan and constraints.
+
+Status: STOP after Phase 3 closure; do not begin Assignments, Live, remediation, mastery, teacher analytics, privacy controls, or any other phase without a new project-owner instruction.
