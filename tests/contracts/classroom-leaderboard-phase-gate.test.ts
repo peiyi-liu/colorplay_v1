@@ -39,6 +39,14 @@ const pngEvidence = Buffer.from([
   0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
 ]);
 const webmEvidence = Buffer.from([0x1a, 0x45, 0xdf, 0xa3]);
+const expectedFailures = [
+  {
+    expected_count: 1,
+    observed_count: 1,
+    status: 400,
+    url_pattern: /\/rest\/v1\/rpc\/join_classroom(?:\?.*)?$/u.source,
+  },
+] as const;
 
 const createFixture = async () => {
   const root = await mkdtemp(
@@ -64,6 +72,7 @@ const createFixture = async () => {
     join(root, 'reports/browser-health.json'),
     `${JSON.stringify({
       console_errors: 0,
+      expected_failures: expectedFailures,
       failed_requests: 0,
       page_errors: 0,
       server_errors: 0,
@@ -166,6 +175,11 @@ describe('Classroom and Leaderboard phase gate source', () => {
     expect(source).toContain("process.env.PLAYWRIGHT_ACCEPTANCE !== 'on'");
     expect(source).toContain('CLASSROOM_LEADERBOARD_ACCEPTANCE_MODE_REQUIRED');
     expect(source).toContain('attachBrowserHealth');
+    expect(source.match(/declareExpectedBrowserFailure\(/gu)).toHaveLength(1);
+    expect(source).toContain('urlPattern: joinClassroomRpcPattern');
+    expect(source).toContain('status: 400');
+    expect(source).toContain('count: 1');
+    expect(source).toContain('expectedBrowserFailures(studentAHealth)');
     expect(source).toContain('unexpectedBrowserHealth');
     expect(source).toContain('GENERATED_CORRECT_ANSWERS');
     expect(source).toContain('TEST_USERS.teacherTwo');
@@ -194,6 +208,8 @@ describe('Classroom and Leaderboard phase gate source', () => {
     expect(source).not.toContain('test.skip(');
     expect(source).not.toContain('SUPABASE_SERVICE_ROLE_KEY');
     expect(source).not.toContain('service_role');
+    expect(source).not.toContain('ERR_ABORTED');
+    expect(source).not.toContain('ignoreExpectedBrowserFailure');
   });
 });
 
@@ -209,7 +225,13 @@ describe('Classroom and Leaderboard finalizer', () => {
     );
     expect(first).toMatchObject({
       acceptance_ids: acceptanceIds,
-      browser_health: { console_errors: 0, failed_requests: 0, page_errors: 0 },
+      browser_health: {
+        console_errors: 0,
+        expected_failures: expectedFailures,
+        failed_requests: 0,
+        page_errors: 0,
+        server_errors: 0,
+      },
       decision: 'PASS',
       dirty_worktree: false,
       git_sha: 'c'.repeat(40),
@@ -248,6 +270,7 @@ describe('Classroom and Leaderboard finalizer', () => {
       join(root, 'reports/browser-health.json'),
       `${JSON.stringify({
         console_errors: 0,
+        expected_failures: expectedFailures,
         failed_requests: 0,
         page_errors: 0,
         server_errors: 0,
@@ -257,6 +280,27 @@ describe('Classroom and Leaderboard finalizer', () => {
     await expect(finalizeClassroomLeaderboard(root)).rejects.toThrow(
       'CLASSROOM_LEADERBOARD_BROWSER_HEALTH_FAILED',
     );
+  });
+
+  it('fails closed when the declared join rejection is missing or over-observed', async () => {
+    for (const observedCount of [0, 2]) {
+      const root = await createFixture();
+      await writeFile(
+        join(root, 'reports/browser-health.json'),
+        `${JSON.stringify({
+          console_errors: 0,
+          expected_failures: [
+            { ...expectedFailures[0], observed_count: observedCount },
+          ],
+          failed_requests: 0,
+          page_errors: 0,
+          server_errors: 0,
+        })}\n`,
+      );
+      await expect(finalizeClassroomLeaderboard(root)).rejects.toThrow(
+        'CLASSROOM_LEADERBOARD_BROWSER_HEALTH_FAILED',
+      );
+    }
   });
 
   it('rejects sensitive text but accepts email-shaped compressed WebM bytes', async () => {

@@ -68,25 +68,89 @@ export type BrowserHealth = Readonly<{
   serverErrors: string[];
 }>;
 
-type BrowserHealthCollection = Readonly<{
-  consoleErrors: string[];
+export type ExpectedBrowserFailureDeclaration = Readonly<{
+  count: number;
+  status: number;
+  urlPattern: RegExp;
+}>;
+
+export type ExpectedBrowserFailureReport = Readonly<{
+  expected_count: number;
+  observed_count: number;
+  status: number;
+  url_pattern: string;
+}>;
+
+type ExpectedBrowserFailureState = Readonly<{
+  declaration: ExpectedBrowserFailureDeclaration;
+  observedUrls: string[];
+}>;
+
+type TrackedConsoleError = Readonly<{
+  text: string;
+  url: string;
+}>;
+
+export type BrowserHealthCollection = Readonly<{
+  consoleErrors: TrackedConsoleError[];
+  expectedFailures: ExpectedBrowserFailureState[];
   failedRequests: TrackedRequestFailure<Request>[];
   pageErrors: string[];
-  serverErrors: string[];
+  responseErrors: string[];
   successfulLocalLogouts: Set<Request>;
 }>;
+
+const matchesUrl = (pattern: RegExp, url: string) => {
+  pattern.lastIndex = 0;
+  return pattern.test(url);
+};
+
+export function declareExpectedBrowserFailure(
+  health: BrowserHealthCollection,
+  declaration: ExpectedBrowserFailureDeclaration,
+): void {
+  if (
+    !Number.isSafeInteger(declaration.count) ||
+    declaration.count < 1 ||
+    !Number.isSafeInteger(declaration.status) ||
+    declaration.status < 400 ||
+    declaration.status > 599 ||
+    declaration.urlPattern.global ||
+    declaration.urlPattern.sticky
+  ) {
+    throw new Error('BROWSER_HEALTH_EXPECTED_FAILURE_INVALID');
+  }
+  health.expectedFailures.push({ declaration, observedUrls: [] });
+}
+
+export function expectedBrowserFailures(
+  health: BrowserHealthCollection,
+): ExpectedBrowserFailureReport[] {
+  return health.expectedFailures.map(({ declaration, observedUrls }) => ({
+    expected_count: declaration.count,
+    observed_count: observedUrls.length,
+    status: declaration.status,
+    url_pattern: declaration.urlPattern.source,
+  }));
+}
 
 export function attachBrowserHealth(page: Page): BrowserHealthCollection {
   const health: BrowserHealthCollection = {
     consoleErrors: [],
+    expectedFailures: [],
     failedRequests: [],
     pageErrors: [],
-    serverErrors: [],
+    responseErrors: [],
     successfulLocalLogouts: new Set(),
   };
 
   page.on('console', (message) => {
-    if (message.type() === 'error') health.consoleErrors.push(message.text());
+    if (message.type() === 'error') {
+      health.consoleErrors.push({
+        text: message.text(),
+        url: message.location().url,
+      });
+    }
   });
   page.on('pageerror', (error) => health.pageErrors.push(error.message));
   page.on('requestfailed', (request) => {
@@ -96,8 +160,21 @@ export function attachBrowserHealth(page: Page): BrowserHealthCollection {
     });
   });
   page.on('response', (response) => {
-    if (response.status() >= 500) health.serverErrors.push(response.url());
     recordSuccessfulLocalLogout(health.successfulLocalLogouts, response);
+    if (response.status() < 400) return;
+    const expected = health.expectedFailures.find(
+      ({ declaration, observedUrls }) =>
+        declaration.status === response.status() &&
+        observedUrls.length < declaration.count &&
+        matchesUrl(declaration.urlPattern, response.url()),
+    );
+    if (expected) {
+      expected.observedUrls.push(response.url());
+      return;
+    }
+    health.responseErrors.push(
+      `${String(response.status())} ${response.url()}`,
+    );
   });
 
   return health;
@@ -108,8 +185,22 @@ export function unexpectedBrowserHealth(
   browserName: string,
   confirmedLogoutResponse?: TrackedResponse<Request>,
 ): BrowserHealth {
+  const expectedConsoleCounts = health.expectedFailures.map(
+    ({ observedUrls }) => observedUrls.length,
+  );
+  const consoleErrors = health.consoleErrors.flatMap((error) => {
+    const expectedIndex = health.expectedFailures.findIndex(
+      ({ declaration }, index) =>
+        (expectedConsoleCounts[index] ?? 0) > 0 &&
+        matchesUrl(declaration.urlPattern, error.url),
+    );
+    if (expectedIndex < 0) return [error.text];
+    expectedConsoleCounts[expectedIndex] =
+      (expectedConsoleCounts[expectedIndex] ?? 0) - 1;
+    return [];
+  });
   return {
-    consoleErrors: health.consoleErrors,
+    consoleErrors,
     failedRequests: unexpectedRequestFailures(
       browserName,
       health.failedRequests,
@@ -117,6 +208,6 @@ export function unexpectedBrowserHealth(
       confirmedLogoutResponse,
     ),
     pageErrors: health.pageErrors,
-    serverErrors: health.serverErrors,
+    serverErrors: health.responseErrors,
   };
 }

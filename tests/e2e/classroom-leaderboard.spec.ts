@@ -10,7 +10,12 @@ import type { Database } from '../../src/types/database';
 import { CONTENT_MANIFEST } from '../fixtures/content-manifest.generated';
 import { GENERATED_CORRECT_ANSWERS } from '../fixtures/question-answers.generated';
 import { TEST_USERS } from '../fixtures/users';
-import { attachBrowserHealth, unexpectedBrowserHealth } from './browser-health';
+import {
+  attachBrowserHealth,
+  declareExpectedBrowserFailure,
+  expectedBrowserFailures,
+  unexpectedBrowserHealth,
+} from './browser-health';
 
 const challenge = CONTENT_MANIFEST.find(
   ({ questionCount }) => questionCount >= 10,
@@ -21,6 +26,7 @@ const classroomIdPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const teacherClassroomUrlPattern =
   /\/teacher\/classes\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const joinClassroomRpcPattern = /\/rest\/v1\/rpc\/join_classroom(?:\?.*)?$/u;
 
 const requiredEnvironment = (name: 'SUPABASE_ANON_KEY' | 'SUPABASE_URL') => {
   const value = process.env[name];
@@ -37,6 +43,10 @@ const signIn = async (
   await page.getByLabel('密碼').fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u);
+  await expect(
+    page.getByRole('navigation', { name: '主要導覽' }),
+  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: '選擇章節' })).toBeVisible();
 };
 
 const completeQuiz = async (page: Page) => {
@@ -88,8 +98,9 @@ test('Classroom and Leaderboard v2 phase gate', async ({
   const studentBPage = await studentBContext.newPage();
   const outsiderPage = await outsiderContext.newPage();
   const teacherBPage = await teacherBContext.newPage();
+  const studentAHealth = attachBrowserHealth(studentAPage);
   const trackedPages = [
-    { health: attachBrowserHealth(studentAPage), page: studentAPage },
+    { health: studentAHealth, page: studentAPage },
     { health: attachBrowserHealth(teacherPage), page: teacherPage },
     { health: attachBrowserHealth(studentBPage), page: studentBPage },
     { health: attachBrowserHealth(outsiderPage), page: outsiderPage },
@@ -130,6 +141,11 @@ test('Classroom and Leaderboard v2 phase gate', async ({
   expect(newCode).not.toBe(oldCode);
 
   await studentAPage.goto(`/join/${oldCode}`);
+  declareExpectedBrowserFailure(studentAHealth, {
+    count: 1,
+    status: 400,
+    urlPattern: joinClassroomRpcPattern,
+  });
   await studentAPage.getByRole('button', { name: '加入班級' }).click();
   await expect(studentAPage.getByRole('alert')).toContainText(
     '加入碼無效或已失效',
@@ -240,6 +256,18 @@ test('Classroom and Leaderboard v2 phase gate', async ({
   const healthResults = trackedPages.map(({ health }) =>
     unexpectedBrowserHealth(health, browserName),
   );
+  const declaredFailures = expectedBrowserFailures(studentAHealth);
+  expect(declaredFailures).toEqual([
+    {
+      expected_count: 1,
+      observed_count: 1,
+      status: 400,
+      url_pattern: joinClassroomRpcPattern.source,
+    },
+  ]);
+  for (const { health } of trackedPages.slice(1)) {
+    expect(expectedBrowserFailures(health)).toEqual([]);
+  }
   for (const health of healthResults) {
     expect(health).toEqual({
       consoleErrors: [],
@@ -254,6 +282,7 @@ test('Classroom and Leaderboard v2 phase gate', async ({
     `${JSON.stringify({
       console_errors: healthResults.flatMap((health) => health.consoleErrors)
         .length,
+      expected_failures: declaredFailures,
       failed_requests: healthResults.flatMap((health) => health.failedRequests)
         .length,
       page_errors: healthResults.flatMap((health) => health.pageErrors).length,

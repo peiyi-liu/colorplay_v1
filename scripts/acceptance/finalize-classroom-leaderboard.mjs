@@ -28,6 +28,15 @@ const COMMAND_LABELS = Object.freeze([
   "bash scripts/test-e2e-local.sh --project=chromium --headed --grep='Classroom and Leaderboard v2 phase gate'",
 ]);
 
+const EXPECTED_BROWSER_FAILURES = Object.freeze([
+  Object.freeze({
+    expected_count: 1,
+    observed_count: 1,
+    status: 400,
+    url_pattern: /\/rest\/v1\/rpc\/join_classroom(?:\?.*)?$/u.source,
+  }),
+]);
+
 const isPlainObject = (value) =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 const readJson = async (path) => JSON.parse(await readFile(path, 'utf8'));
@@ -135,7 +144,9 @@ const assertBrowserHealth = (health) => {
     health.console_errors !== 0 ||
     health.page_errors !== 0 ||
     health.failed_requests !== 0 ||
-    health.server_errors !== 0
+    health.server_errors !== 0 ||
+    JSON.stringify(health.expected_failures) !==
+      JSON.stringify(EXPECTED_BROWSER_FAILURES)
   ) {
     throw new Error('CLASSROOM_LEADERBOARD_BROWSER_HEALTH_FAILED');
   }
@@ -196,8 +207,10 @@ export async function finalizeClassroomLeaderboard(runDirectory) {
     },
     browser_health: {
       console_errors: 0,
+      expected_failures: [...EXPECTED_BROWSER_FAILURES],
       failed_requests: 0,
       page_errors: 0,
+      server_errors: 0,
     },
     commands,
     decision: 'PASS',

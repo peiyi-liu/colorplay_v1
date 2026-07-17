@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import type { Page } from '@playwright/test';
 
 import {
+  attachBrowserHealth,
+  declareExpectedBrowserFailure,
+  expectedBrowserFailures,
   recordSuccessfulLocalLogout,
+  unexpectedBrowserHealth,
   unexpectedRequestFailures,
   type TrackedRequestFailure,
 } from '../e2e/browser-health';
@@ -170,5 +175,101 @@ describe('browser health logout request identity', () => {
     });
 
     expect(successfulRequests).toEqual(new Set([successfulRequest]));
+  });
+});
+
+describe('browser health declared failures', () => {
+  const createPageHarness = () => {
+    const handlers = new Map<string, ((event: unknown) => void)[]>();
+    const page = {
+      on: (event: string, handler: (payload: unknown) => void) => {
+        handlers.set(event, [...(handlers.get(event) ?? []), handler]);
+      },
+    };
+    return {
+      emit: (event: string, payload: unknown) => {
+        for (const handler of handlers.get(event) ?? []) handler(payload);
+      },
+      page: page as unknown as Page,
+    };
+  };
+  const joinUrl = 'http://127.0.0.1:54321/rest/v1/rpc/join_classroom?columns=x';
+  const joinPattern = /\/rest\/v1\/rpc\/join_classroom(?:\?.*)?$/u;
+  const response = (status: number, url = joinUrl) => ({
+    request: () => createRequest('POST', url),
+    status: () => status,
+    url: () => url,
+  });
+  const consoleError = (url = joinUrl) => ({
+    location: () => ({ url }),
+    text: () =>
+      'Failed to load resource: the server responded with a status of 400 (Bad Request)',
+    type: () => 'error',
+  });
+
+  it('consumes exactly one observed declared response and its matching console error', () => {
+    const harness = createPageHarness();
+    const health = attachBrowserHealth(harness.page);
+    declareExpectedBrowserFailure(health, {
+      count: 1,
+      status: 400,
+      urlPattern: joinPattern,
+    });
+
+    harness.emit('response', response(400));
+    harness.emit('console', consoleError());
+
+    expect(expectedBrowserFailures(health)).toEqual([
+      {
+        expected_count: 1,
+        observed_count: 1,
+        status: 400,
+        url_pattern: joinPattern.source,
+      },
+    ]);
+    expect(unexpectedBrowserHealth(health, 'chromium')).toEqual({
+      consoleErrors: [],
+      failedRequests: [],
+      pageErrors: [],
+      serverErrors: [],
+    });
+  });
+
+  it('reports a missing declaration observation and keeps extra or unrelated 400 responses', () => {
+    const missingHarness = createPageHarness();
+    const missingHealth = attachBrowserHealth(missingHarness.page);
+    declareExpectedBrowserFailure(missingHealth, {
+      count: 1,
+      status: 400,
+      urlPattern: joinPattern,
+    });
+    expect(expectedBrowserFailures(missingHealth)[0]?.observed_count).toBe(0);
+
+    const extraHarness = createPageHarness();
+    const extraHealth = attachBrowserHealth(extraHarness.page);
+    declareExpectedBrowserFailure(extraHealth, {
+      count: 1,
+      status: 400,
+      urlPattern: joinPattern,
+    });
+    extraHarness.emit('response', response(400));
+    extraHarness.emit('response', response(400));
+    extraHarness.emit(
+      'response',
+      response(400, 'http://127.0.0.1:54321/rest/v1/rpc/other'),
+    );
+    expect(
+      unexpectedBrowserHealth(extraHealth, 'chromium').serverErrors,
+    ).toEqual([
+      `400 ${joinUrl}`,
+      '400 http://127.0.0.1:54321/rest/v1/rpc/other',
+    ]);
+  });
+
+  it('never excludes ERR_ABORTED through an expected response declaration', () => {
+    const request = createRequest('POST', joinUrl);
+    expect(
+      unexpectedRequestFailures('chromium', [failureFor(request)], new Set()),
+    ).toEqual([`net::ERR_ABORTED ${joinUrl}`]);
   });
 });
