@@ -224,13 +224,17 @@ export function TeacherAssignmentsPage({
           aria-invalid={errors.title ? true : undefined}
         />
         {errors.title ? <p role="alert">{errors.title.message}</p> : null}
-        <label htmlFor="assignment-available-from">開放時間（台北時間，可留空）</label>
+        <label htmlFor="assignment-available-from">
+          開放時間（台北時間，可留空）
+        </label>
         <input
           id="assignment-available-from"
           type="datetime-local"
           {...register('availableFrom')}
         />
-        <label htmlFor="assignment-deadline">截止時間（台北時間，可留空）</label>
+        <label htmlFor="assignment-deadline">
+          截止時間（台北時間，可留空）
+        </label>
         <input
           id="assignment-deadline"
           type="datetime-local"
