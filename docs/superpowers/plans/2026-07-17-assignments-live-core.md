@@ -42,7 +42,7 @@ create type public.live_participant_status as enum ('active','left','removed');
 
 - `assignments(id, classroom_id, owner_teacher_id, title 1..120, activity_type, quiz_template_id?, live_activity_id?, available_from timestamptz?, deadline_at timestamptz?, attempt_limit int? >0, passing_rule jsonb, status, rules_version, created_at, updated_at)`; exactly one activity reference matches `activity_type`.
 - `assignment_targets(assignment_id, user_id, created_at)` primary key `(assignment_id, user_id)`; targets snapshot active student members at publish and may be extended by the owner.
-- `assignment_attempts(id, assignment_id, user_id, attempt_number, quiz_session_id?, live_session_id?, status, passed boolean?, started_at, completed_at?)`; unique `(assignment_id, user_id, attempt_number)`; unique partial index on the session references; exactly one session reference.
+- `assignment_attempts(id, assignment_id, user_id, attempt_number, quiz_session_id?, live_session_id?, status, passed boolean?, started_at, completed_at?)`; unique `(assignment_id, user_id, attempt_number)`; unique partial index on the session references; at most one session reference at the schema level, and trusted commands always set exactly one.
 - `alter table public.quiz_sessions add column purpose public.quiz_session_purpose not null default 'practice', add column assignment_attempt_id uuid` (additive; FK to attempts, null for practice).
 - `live_activities(id, owner_teacher_id, title 1..120, quiz_template_id, question_time_limit_seconds int default 20 check between 5 and 120, status ('active','archived'), rules_version, created_at, updated_at)`.
 - `live_sessions(id, live_activity_id, host_teacher_id, classroom_id, assignment_id?, state, join_code_hash bytea, join_code_version int, current_position int, state_version int not null default 1, question_count int, opened_at?, completed_at?, cancelled_at?, rules_version, created_at, updated_at)`.
@@ -136,11 +136,11 @@ Join codes reuse the Phase 3 pattern: `extensions.gen_random_bytes(8)` → 16 up
 
 **Files:** Create `supabase/migrations/20260717000400_assignments.sql`, `supabase/tests/014_assignments_rls.test.sql`; modify this plan.
 
-- [ ] **Step 1:** Failing pgTAP: tables/enums/columns/constraints/indexes (`assignments(classroom_id, status, deadline_at)`), owner read/write scope, targeted-student read scope, Teacher B/non-target/anonymous zero rows, direct insert/update/delete denial (42501), one-activity-reference check, unique attempt number. Deterministic test UUID prefix `14…`.
-- [ ] **Step 2:** RED via `supabase db reset --local` + focused `supabase test db`.
-- [ ] **Step 3:** Implement the migration exactly as locked; RLS default-deny; column grants exclude nothing sensitive but writes stay revoked.
-- [ ] **Step 4:** GREEN: focused pgTAP (014 plus existing 004–006 quiz files stay green), lint, typecheck.
-- [ ] **Step 5:** Commit `feat: add assignment data boundary`.
+- [x] **Step 1:** Failing pgTAP: tables/enums/columns/constraints/indexes (`assignments(classroom_id, status, deadline_at)`), owner read/write scope, targeted-student read scope, Teacher B/non-target/anonymous zero rows, direct insert/update/delete denial (42501), one-activity-reference check, unique attempt number. Deterministic test UUID prefix `14…`.
+- [x] **Step 2:** RED via `supabase db reset --local` + focused `supabase test db`.
+- [x] **Step 3:** Implement the migration exactly as locked; RLS default-deny; column grants exclude nothing sensitive but writes stay revoked.
+- [x] **Step 4:** GREEN: focused pgTAP (014 plus existing 004–006 quiz files stay green), lint, typecheck.
+- [x] **Step 5:** Commit `feat: add assignment data boundary`.
 
 ### Task 3: Trusted assignment commands and finalize derivation
 
