@@ -527,7 +527,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 ### Task 5: Classroom repository and query/mutation hooks
 
-- [ ] **Task 5 delivery marker**
+- [x] **Task 5 delivery marker**
 
 **Reviewer gate:** Accept only if strict parsers reject extra/privacy-sensitive fields, error mapping is actionable without leaking code existence, join uses one generated request UUID, create/rotate cannot auto-retry into duplicate side effects, Query invalidation is scoped, and real-local integration covers owner/member/cross-tenant behavior.
 
@@ -549,7 +549,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 **AC:** `AC-AUTH-005`, `AC-AUTH-006`, `AC-AUTH-007`.
 
-- [ ] **Step 1: Write failing repository and hook tests**
+- [x] **Step 1: Write failing repository and hook tests**
 
 Unit-test exact snake-case to camel-case mapping, trimmed classroom name validation, join-code receipt shape, generic invalid-code errors, strict rejection of `email`, `join_code_hash`, raw profile objects, and malformed timestamps. Hook tests assert pending lock, error-in-context, success invalidation, and stable query keys.
 
@@ -564,7 +564,7 @@ export const classroomKeys = {
 
 The integration test signs in dedicated teacher/student identities, creates and joins a uniquely named classroom, calls all projections, verifies Teacher B/outsider denial, replays one request UUID ten times, and always uses local-only sign-out cleanup.
 
-- [ ] **Step 2: Run focused tests to prove RED**
+- [x] **Step 2: Run focused tests to prove RED**
 
 ```bash
 pnpm exec vitest run src/features/classrooms/api/classroom-repository.test.ts \
@@ -579,7 +579,7 @@ pnpm exec vitest run --config vitest.integration.config.ts \
 
 Expected: FAIL because repository, types, and hooks do not exist.
 
-- [ ] **Step 3: Implement the minimal repository and hooks**
+- [x] **Step 3: Implement the minimal repository and hooks**
 
 Use Zod strict objects for every RPC response. Normalize UI input but let the server decide validity. Generate join `requestId` with `crypto.randomUUID()` at mutation invocation and retain it for TanStack Query's retry of that join. Set create/rotate mutation retry to false because their one-time plaintext receipt cannot be recovered safely from an automatic replay. Never put `joinCode` in a query key or cache.
 
@@ -599,7 +599,7 @@ export type ClassroomRepository = Readonly<{
 
 Retry read queries under existing Query defaults. Join retries reuse the same input/request ID. Create/rotate do not auto-retry and instruct the teacher to inspect the owned-class list or rotate again after an ambiguous network failure. All terminal errors remain in the initiating form.
 
-- [ ] **Step 4: Reset/seed and prove GREEN**
+- [x] **Step 4: Reset/seed and prove GREEN**
 
 ```bash
 pnpm exec supabase db reset --local
@@ -619,7 +619,7 @@ pnpm typecheck
 
 Expected: unit/hook/real-local integration tests pass; lint/typecheck exit 0.
 
-- [ ] **Step 5: Mark Task 5 complete and commit**
+- [x] **Step 5: Mark Task 5 complete and commit**
 
 ```bash
 git add src/features/classrooms \
