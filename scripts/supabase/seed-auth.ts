@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import {
   createClient,
   type SupabaseClient,
@@ -8,6 +10,7 @@ import type { Database } from '../../src/types/database';
 import {
   TEST_USER_ROLES,
   TEST_USERS,
+  CLASSROOM_FIXTURES,
   type TestUserLabel,
 } from '../../tests/fixtures/users';
 import { readLocalAdminEnvironment } from './local-environment';
@@ -16,6 +19,9 @@ const fixtureLabels = [
   'authLifecycleOne',
   'authLifecycleTwo',
   'teacher',
+  'teacherTwo',
+  'classroomRepositoryTeacher',
+  'classroomRepositoryStudent',
   'studentOne',
   'studentTwo',
   'outsider',
@@ -99,6 +105,147 @@ const reconcileProfileRole = async (
   }
 };
 
+const signedInFixtureClient = async (
+  url: string,
+  serviceRoleKey: string,
+  label: TestUserLabel,
+) => {
+  const client = createClient<Database>(url, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { error } = await client.auth.signInWithPassword(TEST_USERS[label]);
+  failIfError(error, 'CLASSROOM_FIXTURE_SIGN_IN_FAILED');
+  return client;
+};
+
+const ensureOwnedClassroom = async (
+  owner: SupabaseClient<Database>,
+  name: string,
+) => {
+  const { data: existing, error: listError } = await owner.rpc(
+    'list_owned_classrooms',
+  );
+  failIfError(listError, 'CLASSROOM_FIXTURE_LIST_FAILED');
+  const match = existing?.find(
+    (classroom) => classroom.classroom_name === name,
+  );
+  if (match) return { classroomId: match.classroom_id, joinCode: null };
+
+  const { data: created, error: createError } = await owner.rpc(
+    'create_classroom',
+    { p_name: name },
+  );
+  failIfError(createError, 'CLASSROOM_FIXTURE_CREATE_FAILED');
+  const receipt = created?.[0];
+  if (!receipt) throw new Error('CLASSROOM_FIXTURE_CREATE_FAILED');
+  return {
+    classroomId: receipt.classroom_id,
+    joinCode: receipt.join_code,
+  };
+};
+
+const ensureStudentMemberships = async (
+  owner: SupabaseClient<Database>,
+  classroomId: string,
+  initialJoinCode: string | null,
+  students: readonly SupabaseClient<Database>[],
+) => {
+  let joinCode = initialJoinCode;
+
+  for (const student of students) {
+    const { data: memberships, error: listError } =
+      await student.rpc('list_my_classrooms');
+    failIfError(listError, 'CLASSROOM_MEMBERSHIP_FIXTURE_LIST_FAILED');
+    if (
+      memberships?.some((membership) => membership.classroom_id === classroomId)
+    ) {
+      continue;
+    }
+
+    if (!joinCode) {
+      const { data: rotated, error: rotateError } = await owner.rpc(
+        'rotate_classroom_join_code',
+        { p_classroom_id: classroomId },
+      );
+      failIfError(rotateError, 'CLASSROOM_FIXTURE_ROTATE_FAILED');
+      joinCode = rotated?.[0]?.join_code ?? null;
+    }
+    if (!joinCode) throw new Error('CLASSROOM_FIXTURE_JOIN_CODE_MISSING');
+
+    const { error: joinError } = await student.rpc('join_classroom', {
+      p_join_code: joinCode,
+      p_request_id: randomUUID(),
+    });
+    failIfError(joinError, 'CLASSROOM_MEMBERSHIP_FIXTURE_JOIN_FAILED');
+  }
+};
+
+const reconcileClassroomFixtures = async (
+  url: string,
+  serviceRoleKey: string,
+) => {
+  const teacherOne = await signedInFixtureClient(
+    url,
+    serviceRoleKey,
+    'teacher',
+  );
+  const teacherTwo = await signedInFixtureClient(
+    url,
+    serviceRoleKey,
+    'teacherTwo',
+  );
+  const studentOne = await signedInFixtureClient(
+    url,
+    serviceRoleKey,
+    'studentOne',
+  );
+  const studentTwo = await signedInFixtureClient(
+    url,
+    serviceRoleKey,
+    'studentTwo',
+  );
+  const repositoryStudent = await signedInFixtureClient(
+    url,
+    serviceRoleKey,
+    'classroomRepositoryStudent',
+  );
+  const clients = [
+    teacherOne,
+    teacherTwo,
+    studentOne,
+    studentTwo,
+    repositoryStudent,
+  ];
+
+  try {
+    const first = await ensureOwnedClassroom(
+      teacherOne,
+      CLASSROOM_FIXTURES.teacherOneClassroom.name,
+    );
+    await ensureStudentMemberships(
+      teacherOne,
+      first.classroomId,
+      first.joinCode,
+      [studentOne, studentTwo],
+    );
+
+    const second = await ensureOwnedClassroom(
+      teacherTwo,
+      CLASSROOM_FIXTURES.teacherTwoClassroom.name,
+    );
+    await ensureStudentMemberships(
+      teacherTwo,
+      second.classroomId,
+      second.joinCode,
+      [repositoryStudent],
+    );
+  } finally {
+    await Promise.all(
+      clients.map((client) => client.auth.signOut({ scope: 'local' })),
+    );
+  }
+};
+
 export const seedAuthUsers = async (): Promise<void> => {
   const { serviceRoleKey, url } = readLocalAdminEnvironment(process.env);
   const admin = createClient<Database>(url, serviceRoleKey, {
@@ -110,11 +257,12 @@ export const seedAuthUsers = async (): Promise<void> => {
       user.email ? ([[user.email, user]] as const) : [],
     ),
   );
-
   for (const label of fixtureLabels) {
     const user = await reconcileAuthUser(admin, existingUsersByEmail, label);
     await reconcileProfileRole(admin, user, label);
   }
+
+  await reconcileClassroomFixtures(url, serviceRoleKey);
 };
 
 await seedAuthUsers();

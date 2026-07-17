@@ -442,7 +442,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 ### Task 4: Deterministic local fixtures and generated database types
 
-- [ ] **Task 4 delivery marker**
+- [x] **Task 4 delivery marker**
 
 **Reviewer gate:** Accept only if reset plus Auth seed creates two owner-separated classrooms, at least two active student memberships and one outsider, stores no plaintext fixture code, keeps production credentials absent, and generated TypeScript exactly matches local schema.
 
@@ -461,7 +461,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 **AC:** `AC-AUTH-006`, `AC-AUTH-007`.
 
-- [ ] **Step 1: Write failing fixture and type contracts**
+- [x] **Step 1: Write failing fixture and type contracts**
 
 Extend the database type contract to require the three Phase 3 migrations' tables, enums, and RPC signatures. Add a real-local integration test that queries only fixture-owned UUIDs and asserts two distinct owners, expected active memberships, outsider absence, and no readable `join_code_hash`. Clean authenticated clients in `finally`:
 
@@ -469,7 +469,7 @@ Extend the database type contract to require the three Phase 3 migrations' table
 await client.auth.signOut({ scope: 'local' });
 ```
 
-- [ ] **Step 2: Run contracts to prove RED**
+- [x] **Step 2: Run contracts to prove RED**
 
 ```bash
 bash tests/contracts/database-types.test.sh
@@ -484,7 +484,7 @@ pnpm exec vitest run --config vitest.integration.config.ts tests/integration/cla
 
 Expected: database-type contract FAILS because generated types lack Phase 3; seed integration FAILS because the dedicated identities/fixtures do not exist.
 
-- [ ] **Step 3: Add minimal fixtures and regenerate types**
+- [x] **Step 3: Add minimal fixtures and regenerate types**
 
 Add dedicated test identities with `role: 'teacher'` or `role: 'student'` and non-production example Emails. After Auth/profile reconciliation, seed classrooms through trusted calls or equivalent server-side fixture setup that computes hashes and never stores plaintext in source or table rows. Make rerunning the seed converge on the same fixture IDs/relationships.
 
@@ -495,7 +495,7 @@ pnpm exec prettier --write src/types/database.ts
 
 This is a mechanical generated-file rewrite; do not hand-edit generated declarations.
 
-- [ ] **Step 4: Reset, seed, and prove GREEN**
+- [x] **Step 4: Reset, seed, and prove GREEN**
 
 ```bash
 pnpm exec supabase db reset --local
@@ -512,7 +512,7 @@ pnpm typecheck
 
 Expected: type contract and scoped real-local fixture integration pass; lint/typecheck exit 0.
 
-- [ ] **Step 5: Mark Task 4 complete and commit**
+- [x] **Step 5: Mark Task 4 complete and commit**
 
 ```bash
 git add tests/fixtures/users.ts scripts/supabase/seed-auth.ts \

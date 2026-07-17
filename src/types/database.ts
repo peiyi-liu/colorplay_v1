@@ -258,6 +258,104 @@ export type Database = {
           },
         ]
       }
+      classroom_members: {
+        Row: {
+          activated_at: string
+          classroom_id: string
+          created_at: string
+          deactivated_at: string | null
+          joined_at: string
+          last_join_request_id: string
+          member_role: Database["public"]["Enums"]["classroom_member_role"]
+          status: Database["public"]["Enums"]["classroom_member_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activated_at?: string
+          classroom_id: string
+          created_at?: string
+          deactivated_at?: string | null
+          joined_at?: string
+          last_join_request_id: string
+          member_role: Database["public"]["Enums"]["classroom_member_role"]
+          status?: Database["public"]["Enums"]["classroom_member_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activated_at?: string
+          classroom_id?: string
+          created_at?: string
+          deactivated_at?: string | null
+          joined_at?: string
+          last_join_request_id?: string
+          member_role?: Database["public"]["Enums"]["classroom_member_role"]
+          status?: Database["public"]["Enums"]["classroom_member_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classroom_members_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classroom_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classrooms: {
+        Row: {
+          created_at: string
+          id: string
+          join_code_hash: string
+          join_code_rotated_at: string
+          join_code_version: number
+          name: string
+          owner_teacher_id: string
+          status: Database["public"]["Enums"]["classroom_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          join_code_hash: string
+          join_code_rotated_at?: string
+          join_code_version?: number
+          name: string
+          owner_teacher_id: string
+          status?: Database["public"]["Enums"]["classroom_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          join_code_hash?: string
+          join_code_rotated_at?: string
+          join_code_version?: number
+          name?: string
+          owner_teacher_id?: string
+          status?: Database["public"]["Enums"]["classroom_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classrooms_owner_teacher_id_fkey"
+            columns: ["owner_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           created_at: string
@@ -1063,9 +1161,22 @@ export type Database = {
         Args: { target_session_id: string }
         Returns: Json
       }
+      create_classroom: {
+        Args: { p_name: string }
+        Returns: {
+          classroom_id: string
+          classroom_name: string
+          join_code: string
+          join_code_version: number
+        }[]
+      }
       create_quiz_session: {
         Args: { client_request_id: string; template_id: string }
         Returns: Json
+      }
+      current_user_owns_classroom: {
+        Args: { p_classroom_id: string }
+        Returns: boolean
       }
       equip_blook: { Args: { blook_id: string }; Returns: Json }
       evaluate_achievements: {
@@ -1077,13 +1188,67 @@ export type Database = {
         Returns: Json
       }
       finalize_quiz_session: { Args: { session_id: string }; Returns: Json }
+      get_classroom_leaderboard: {
+        Args: { p_classroom_id: string }
+        Returns: Json
+      }
       get_my_achievement_catalog: { Args: never; Returns: Json }
       get_my_blook_inventory: { Args: never; Returns: Json }
       get_my_economy_summary: { Args: never; Returns: Json }
+      is_active_classroom_member: {
+        Args: { p_classroom_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      join_classroom: {
+        Args: { p_join_code: string; p_request_id: string }
+        Returns: {
+          classroom_id: string
+          classroom_name: string
+          joined_at: string
+          membership_status: Database["public"]["Enums"]["classroom_member_status"]
+        }[]
+      }
+      list_my_classrooms: {
+        Args: never
+        Returns: {
+          classroom_id: string
+          classroom_name: string
+          joined_at: string
+          membership_status: Database["public"]["Enums"]["classroom_member_status"]
+        }[]
+      }
+      list_owned_classroom_members: {
+        Args: { p_classroom_id: string }
+        Returns: {
+          active_blook_id: string
+          display_name: string
+          joined_at: string
+          membership_status: Database["public"]["Enums"]["classroom_member_status"]
+        }[]
+      }
+      list_owned_classrooms: {
+        Args: never
+        Returns: {
+          classroom_id: string
+          classroom_name: string
+          classroom_status: Database["public"]["Enums"]["classroom_status"]
+          created_at: string
+          join_code_version: number
+          member_count: number
+        }[]
+      }
       purchase_blook: { Args: { blook_id: string }; Returns: Json }
       reconcile_wallet_cache: {
         Args: { target_user_id: string }
         Returns: number
+      }
+      rotate_classroom_join_code: {
+        Args: { p_classroom_id: string }
+        Returns: {
+          classroom_id: string
+          join_code: string
+          join_code_version: number
+        }[]
       }
       submit_quiz_answer: {
         Args: {
@@ -1129,6 +1294,9 @@ export type Database = {
         | "mastery_recomputed"
       achievement_visibility: "public" | "hidden"
       app_role: "student" | "teacher" | "admin"
+      classroom_member_role: "student" | "teacher"
+      classroom_member_status: "active" | "inactive"
+      classroom_status: "active" | "archived"
       content_status: "draft" | "published" | "archived"
       economy_source_type:
         | "quiz_finalize"
@@ -1293,6 +1461,9 @@ export const Constants = {
       ],
       achievement_visibility: ["public", "hidden"],
       app_role: ["student", "teacher", "admin"],
+      classroom_member_role: ["student", "teacher"],
+      classroom_member_status: ["active", "inactive"],
+      classroom_status: ["active", "archived"],
       content_status: ["draft", "published", "archived"],
       economy_source_type: [
         "quiz_finalize",
