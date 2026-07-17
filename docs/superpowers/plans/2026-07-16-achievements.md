@@ -909,7 +909,7 @@ These steps execute only after all seven task commits exist and the worktree is 
 
   Re-run only lint, typecheck, and tests affected by review fixes. Do not execute E2E or `pnpm phase:achievements` here.
 
-- [ ] **Gate Step 1: Record the reviewed clean SHA**
+- [x] **Gate Step 1: Record the reviewed clean SHA**
 
   ```bash
   test -z "$(git status --porcelain=v1 --untracked-files=all)"
@@ -917,7 +917,7 @@ These steps execute only after all seven task commits exist and the worktree is 
   printf '%s\n' "$REVIEWED_SHA"
   ```
 
-- [ ] **Gate Step 2: Execute the Phase 2 gate exactly once**
+- [x] **Gate Step 2: Execute the Phase 2 gate exactly once**
 
   ```bash
   pnpm phase:achievements
@@ -927,7 +927,7 @@ These steps execute only after all seven task commits exist and the worktree is 
 
   If the command fails, stop and report the failing step/root cause. Do not rerun without a new owner instruction.
 
-- [ ] **Gate Step 3: Close Phase 2 only after PASS**
+- [x] **Gate Step 3: Close Phase 2 only after PASS**
 
   Update `.superpowers/sdd/progress.md` with:
 

@@ -94,3 +94,36 @@ Phase gate PASS on 2026-07-16 at clean SHA `abd2e7aab022b74879ffe868656c137030df
 Manifest: `artifacts/acceptance/game-economy-v2-abd2e7aab022b74879ffe868656c137030df20d0/manifest.json` (`decision: PASS`; `AC-GAME-001`–`AC-GAME-007`, `AC-SEC-001`, and `AC-SEC-002`).
 
 Status: STOP after Phase 1 closure; do not begin Phase 2 without a new project-owner instruction.
+
+## Phase 2 Achievements
+
+Phase 2 Achievements: COMPLETE
+
+Plan: `docs/superpowers/plans/2026-07-16-achievements.md`
+Plan commit: `bf7b0df`
+Task 1: complete (`acfaa64`; versioned achievement catalog, nine badge-only definitions, RLS, and four truthful catalog-only entries)
+Task 2: complete (`c59d2bb`; trusted server-side achievement progress derivation)
+Task 3: complete (`ffc8499`; transactional, replay-safe unlocks from quiz finalize and economy events)
+Task 4: complete (`201db00`; privacy-safe achievement catalog repository and real-local integration)
+Task 5: complete (`8000e8f`; TanStack Query achievement catalog boundary)
+Task 6: complete (`bfd6b88`; student badge route and responsive UI)
+Task 7: complete (`0b64055`; shared evidence policy and Achievements phase gate)
+
+Complete-range review covered `c81d870..0b64055`. Important findings were corrected in `f72a670`: PostgreSQL UTC `+00:00` timestamps are accepted without accepting non-UTC offsets; evidence paths are containment-checked before reads; required binary evidence enforces its expected extension; and the generic E2E command excludes the acceptance-only Achievements gate. The reviewed clean SHA was `f72a67004f0597eb7d90fcb4f2c1c85fd3f14bf0`.
+
+The first formal gate reached the headed Achievements flow but exposed an E2E synchronization race: the test could read the previous prompt immediately after clicking `我理解了，下一題`. Owner-approved S-level commit `f53b67c` waits for `第 N / 10 題` before reading each prompt. Its focused verification passed 49 contract assertions and one headless acceptance-mode Chromium run using disposable evidence outside `artifacts/acceptance/`; the failed `achievements-f72a6700*` evidence was deleted.
+
+The second formal gate passed on 2026-07-17 at clean SHA `f53b67c11a7d444d4f12b97f85eeed6d87c31373`: Prettier, lint, typecheck, 49 Vitest files/345 tests, production build, 11 database files/300 pgTAP assertions, the isolated runtime smoke 3/3, 8 integration files/19 tests, Auth seed, and the headed Chromium Achievements flow all passed. The known 667.90 kB main-chunk warning remains non-blocking and is assigned to later route-level code splitting.
+
+Manifest: `artifacts/acceptance/achievements-f53b67c11a7d444d4f12b97f85eeed6d87c31373/manifest.json` (`decision: PASS`; `AC-ACH-001`–`AC-ACH-005`).
+
+The four catalog-only dependencies remain truthful `not_started` entries until their owning phases exist:
+
+- `mistakes_resolved_10` depends on the future remediation and mistake-resolution phase.
+- `chapter_mastered_1` depends on the future mastery phase.
+- `all_chapters_mastered` depends on the future mastery phase.
+- `live_complete_5` depends on the future Live phase.
+
+Forward note: `completed_task_count` and `correct_streak` currently derive from all completed quiz sessions. When later phases add assignment/remediation session purposes and Live answers, those derivations must be revisited with a `rule_version` bump so remediation attempts never count.
+
+Status: STOP after Phase 2 closure; do not begin Classroom/Leaderboard, Assignments, Live, remediation, mastery, or any other phase without a new project-owner instruction.
