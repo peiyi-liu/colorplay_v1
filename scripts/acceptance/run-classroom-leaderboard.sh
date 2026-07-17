@@ -99,6 +99,10 @@ load_local_supabase_environment \
   < <(pnpm exec supabase status -o env 2>/dev/null)
 export SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY
 run_logged \
+  'bash scripts/supabase/wait-for-postgrest.sh' \
+  "$phase_root/reports/e2e-postgrest-readiness.log" \
+  bash scripts/supabase/wait-for-postgrest.sh
+run_logged \
   'pnpm exec tsx scripts/supabase/seed-auth.ts' \
   "$phase_root/reports/e2e-auth-seed.log" \
   pnpm exec tsx scripts/supabase/seed-auth.ts

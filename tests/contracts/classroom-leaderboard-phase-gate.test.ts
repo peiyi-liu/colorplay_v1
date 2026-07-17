@@ -31,6 +31,7 @@ const commandLabels = [
   'pnpm build',
   'pnpm test:db',
   'pnpm exec supabase db reset --local',
+  'bash scripts/supabase/wait-for-postgrest.sh',
   'pnpm exec tsx scripts/supabase/seed-auth.ts',
   "bash scripts/test-e2e-local.sh --project=chromium --headed --grep='Classroom and Leaderboard v2 phase gate'",
 ] as const;
@@ -134,11 +135,16 @@ afterEach(async () => {
 
 describe('Classroom and Leaderboard phase gate source', () => {
   it('exposes the exact package entry and ordered clean local runner', async () => {
-    const [packageSource, runner, finalizer] = await Promise.all([
-      readFile('package.json', 'utf8'),
-      readFile('scripts/acceptance/run-classroom-leaderboard.sh', 'utf8'),
-      readFile('scripts/acceptance/finalize-classroom-leaderboard.mjs', 'utf8'),
-    ]);
+    const [packageSource, runner, finalizer, readinessProbe] =
+      await Promise.all([
+        readFile('package.json', 'utf8'),
+        readFile('scripts/acceptance/run-classroom-leaderboard.sh', 'utf8'),
+        readFile(
+          'scripts/acceptance/finalize-classroom-leaderboard.mjs',
+          'utf8',
+        ),
+        readFile('scripts/supabase/wait-for-postgrest.sh', 'utf8'),
+      ]);
     const packageJson = JSON.parse(packageSource) as {
       scripts: Record<string, string>;
     };
@@ -156,6 +162,7 @@ describe('Classroom and Leaderboard phase gate source', () => {
       'pnpm build',
       'pnpm test:db',
       'pnpm exec supabase db reset --local',
+      'bash scripts/supabase/wait-for-postgrest.sh',
       'pnpm exec tsx scripts/supabase/seed-auth.ts',
       'unset SUPABASE_SERVICE_ROLE_KEY',
       "bash scripts/test-e2e-local.sh --project=chromium --headed --grep='Classroom and Leaderboard v2 phase gate'",
@@ -178,6 +185,10 @@ describe('Classroom and Leaderboard phase gate source', () => {
     expect(finalizer).toContain("from './evidence-policy.mjs'");
     expect(finalizer).toContain('assertEvidenceSafe');
     expect(finalizer).toContain('requireNonEmptyEvidence');
+    expect(readinessProbe).toContain('POSTGREST_READINESS_TIMEOUT');
+    expect(readinessProbe).toContain('/rest/v1/profiles?select=id&limit=1');
+    expect(readinessProbe).toContain('PGRST002');
+    expect(readinessProbe).toContain('POSTGREST_READINESS_TIMEOUT_SECONDS');
   });
 
   it('defines one acceptance-only real flow with required actors and viewports', async () => {
