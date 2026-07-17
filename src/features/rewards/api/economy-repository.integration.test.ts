@@ -14,12 +14,17 @@ describe('EconomyRepository with local Supabase', () => {
   });
 
   it('returns only each signed-in student own authoritative summary', async () => {
-    const studentOne = await signedInClient(TEST_USERS.studentOne);
-    const studentTwo = await signedInClient(TEST_USERS.studentTwo);
-    clients.push(studentOne, studentTwo);
+    const economyStudentOne = await signedInClient(
+      TEST_USERS.economyStudentOne,
+    );
+    const economyStudentTwo = await signedInClient(
+      TEST_USERS.economyStudentTwo,
+    );
+    clients.push(economyStudentOne, economyStudentTwo);
 
-    const first = await createEconomyRepository(studentOne).getSummary();
-    const second = await createEconomyRepository(studentTwo).getSummary();
+    const first = await createEconomyRepository(economyStudentOne).getSummary();
+    const second =
+      await createEconomyRepository(economyStudentTwo).getSummary();
 
     expect(first).toEqual({
       currentLevelXp: 0,

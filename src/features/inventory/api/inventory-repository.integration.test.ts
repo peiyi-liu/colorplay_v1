@@ -21,18 +21,22 @@ describe('InventoryRepository with local Supabase', () => {
   });
 
   it('keeps inventories private and supports real reward, retry, equip, and shortfall flow', async () => {
-    const studentOne = await signedInClient(TEST_USERS.studentOne);
-    const studentTwo = await signedInClient(TEST_USERS.studentTwo);
-    clients.push(studentOne, studentTwo);
-    const firstInventory = createInventoryRepository(studentOne);
-    const secondInventory = createInventoryRepository(studentTwo);
+    const inventoryStudentOne = await signedInClient(
+      TEST_USERS.inventoryStudentOne,
+    );
+    const inventoryStudentTwo = await signedInClient(
+      TEST_USERS.inventoryStudentTwo,
+    );
+    clients.push(inventoryStudentOne, inventoryStudentTwo);
+    const firstInventory = createInventoryRepository(inventoryStudentOne);
+    const secondInventory = createInventoryRepository(inventoryStudentTwo);
 
     const initialOne = await firstInventory.getInventory();
     const initialTwo = await secondInventory.getInventory();
     expect(initialOne).toEqual(initialTwo);
     expect(initialOne.items.filter((item) => item.owned)).toHaveLength(1);
 
-    const quiz = createQuizRepository(studentOne);
+    const quiz = createQuizRepository(inventoryStudentOne);
     let session = await quiz.createSession(
       '26000000-0000-0000-0000-000000000003',
       randomUUID(),
@@ -55,7 +59,7 @@ describe('InventoryRepository with local Supabase', () => {
         session = await quiz.activateNextQuestion(session.sessionId);
       }
     }
-    const finalized = await studentOne.rpc('finalize_quiz_session', {
+    const finalized = await inventoryStudentOne.rpc('finalize_quiz_session', {
       session_id: session.sessionId,
     });
     expect(finalized.error).toBeNull();

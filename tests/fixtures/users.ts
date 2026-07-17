@@ -23,6 +23,22 @@ export const TEST_USERS = {
     email: 'classroom.repository.student@colorplay.test',
     password: 'LocalOnly-ClassroomRepositoryStudent1!',
   },
+  economyStudentOne: {
+    email: 'economy.student.one@colorplay.test',
+    password: 'LocalOnly-EconomyStudent1!',
+  },
+  economyStudentTwo: {
+    email: 'economy.student.two@colorplay.test',
+    password: 'LocalOnly-EconomyStudent2!',
+  },
+  inventoryStudentOne: {
+    email: 'inventory.student.one@colorplay.test',
+    password: 'LocalOnly-InventoryStudent1!',
+  },
+  inventoryStudentTwo: {
+    email: 'inventory.student.two@colorplay.test',
+    password: 'LocalOnly-InventoryStudent2!',
+  },
   studentOne: {
     email: 'student.one@colorplay.test',
     password: 'LocalOnly-Student1!',
@@ -46,6 +62,10 @@ export const TEST_USER_ROLES = {
   teacherTwo: 'teacher',
   classroomRepositoryTeacher: 'teacher',
   classroomRepositoryStudent: 'student',
+  economyStudentOne: 'student',
+  economyStudentTwo: 'student',
+  inventoryStudentOne: 'student',
+  inventoryStudentTwo: 'student',
   studentOne: 'student',
   studentTwo: 'student',
   outsider: 'student',
