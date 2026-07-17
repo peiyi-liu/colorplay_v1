@@ -632,7 +632,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 ### Task 6: Privacy-safe leaderboard repository and hook
 
-- [ ] **Task 6 delivery marker**
+- [x] **Task 6 delivery marker**
 
 **Reviewer gate:** Accept only if runtime validation permits exactly the locked safe fields, rejects Email/raw UUID/extra keys, preserves rank/XP integers and UTC time, and real-local integration proves member/owner success plus outsider/Teacher B denial.
 
@@ -654,11 +654,11 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 **AC:** `AC-AUTH-006`, `AC-GAME-008`, `AC-GAME-009`.
 
-- [ ] **Step 1: Write failing parser/repository/hook tests**
+- [x] **Step 1: Write failing parser/repository/hook tests**
 
 Test exact mapping, Top 10 maximum, rank 1-based positive integer, nonnegative safe-integer XP, UTC `generated_at`, nullable Blook/self, and strict rejection of `email`, `student_number`, `user_id`, `answers`, or an eleventh top entry. Hook tests assert class-scoped keys, disabled query for invalid UUID, loading/error/retry, and no previous classroom data retained when the ID changes.
 
-- [ ] **Step 2: Run tests to prove RED**
+- [x] **Step 2: Run tests to prove RED**
 
 ```bash
 pnpm exec vitest run src/features/leaderboard/api/leaderboard-repository.test.ts \
@@ -673,7 +673,7 @@ pnpm exec vitest run --config vitest.integration.config.ts \
 
 Expected: FAIL because leaderboard feature modules do not exist.
 
-- [ ] **Step 3: Implement strict parsing, repository, and hook**
+- [x] **Step 3: Implement strict parsing, repository, and hook**
 
 ```ts
 export const leaderboardKeys = {
@@ -684,7 +684,7 @@ export const leaderboardKeys = {
 
 Call only `get_classroom_leaderboard`. Convert snake case once in the repository, preserve server rank/order, and never sort or calculate XP in TypeScript. Return `LeaderboardRepositoryError` with safe codes for unauthorized, unavailable, and invalid-response states.
 
-- [ ] **Step 4: Reset/seed and prove GREEN**
+- [x] **Step 4: Reset/seed and prove GREEN**
 
 ```bash
 pnpm exec supabase db reset --local
@@ -704,7 +704,7 @@ pnpm typecheck
 
 Expected: repository/hook/integration tests pass with no raw identifier in returned objects; lint/typecheck exit 0.
 
-- [ ] **Step 5: Mark Task 6 complete and commit**
+- [x] **Step 5: Mark Task 6 complete and commit**
 
 ```bash
 git add src/features/leaderboard \
