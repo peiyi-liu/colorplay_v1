@@ -240,6 +240,8 @@ mastery = coverage * accuracy / 100
 - Student 必須是 active target/member；跨班級 request 被拒絕。
 - Attempt 引用 finalized quiz 或 Live session，不複製 client score。
 - Completion、pass、reward 由 trusted finalize transaction 推導；重送不得重複完成／發獎。
+- Assignment completion 本身不另發 XP／Token ledger row：被引用 session 依自身規則發放的獎勵即為 assignment 獎勵。Quiz template 類 assignment 的 session 以 `purpose = 'assignment'` 執行，沿用既有 quiz 獎勵規則（含每日同 template 衰減）。
+- Passing rule 第一版為 `score_at_least`（整數門檻），由 finalize transaction 對 authoritative total score 判定。
 
 ### ColorPlay Live
 
@@ -250,4 +252,6 @@ mastery = coverage * accuracy / 100
 - `finalize_live_session` 原子計 score/rank/reward/achievement/assignment/progress/audit；rollback 不留部分結果。
 - Rank 只顯示 privacy-safe display name、Blook、score/rank；不顯示 Email、學號或 raw answers。
 - Live Core 使用同一 XP/Token ledger source contract；Live 不計入 mastery。Phase 7 另以核准規格擴充 team mode、pause/resume 與 capacity。
+- Live 獎勵規則版本 `2026-07-live-1`：每題答對且 server response ≤ 5,000 ms 得 XP 75／Token 25，逾 5,000 ms 答對得 XP 50／Token 15，答錯或逾時 0／0。獎勵只由 `finalize_live_session` 寫入：每位 participant 一筆 XP row 與一筆 Token row，`source_type = 'live'`、`source_id = live_session_id`。
+- Live session 不消耗每日 practice 前三次 full-reward 額度，也不進入 mastery 的分母或分子。
 - Optional Kahoot URL 是 external compatibility，不使用 official API，不把 external result 當 ColorPlay Score／XP／Token。

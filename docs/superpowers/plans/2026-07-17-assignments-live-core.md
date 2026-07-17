@@ -125,10 +125,10 @@ Join codes reuse the Phase 3 pattern: `extensions.gen_random_bytes(8)` → 16 up
 
 **Files:** Modify `spec/05-game-mechanics.md`, `DOCUMENT_MANIFEST.json` (generated), this plan.
 
-- [ ] **Step 1:** Failing assertion: `rg -q '2026-07-live-1' spec/05-game-mechanics.md` exits 1.
-- [ ] **Step 2:** Write the reward values and exclusions into §17 exactly as locked above; run `pnpm document:manifest && pnpm document:manifest:check`.
-- [ ] **Step 3:** Verify `rg -q '2026-07-live-1' spec/05-game-mechanics.md`, Prettier on changed files, `git diff --check`.
-- [ ] **Step 4:** Commit `docs: pin live and assignment reward rules`.
+- [x] **Step 1:** Failing assertion: `rg -q '2026-07-live-1' spec/05-game-mechanics.md` exits 1.
+- [x] **Step 2:** Write the reward values and exclusions into §17 exactly as locked above; run `pnpm document:manifest && pnpm document:manifest:check`.
+- [x] **Step 3:** Verify `rg -q '2026-07-live-1' spec/05-game-mechanics.md`, Prettier on changed files, `git diff --check`.
+- [x] **Step 4:** Commit `docs: pin live and assignment reward rules`.
 
 ### Task 2: Assignment schema, quiz-session purpose, and tenant RLS
 

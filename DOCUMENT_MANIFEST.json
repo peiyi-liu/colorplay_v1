@@ -1,12 +1,12 @@
 {
   "package_name": "ColorPlay React + Supabase Development Specification Package",
   "package_version": "2.0.0",
-  "generated_at": "2026-07-16T07:05:45.396Z",
+  "generated_at": "2026-07-17T07:00:48.521Z",
   "markdown_files": 28,
   "acceptance_criteria": 122,
   "unique_acceptance_criteria": 122,
   "ui_acceptance_criteria": 15,
-  "total_bytes_before_manifest": 300831,
+  "total_bytes_before_manifest": 301699,
   "real_device_required_criteria": [
     "AC-UI-010",
     "AC-UI-012"
@@ -114,8 +114,8 @@
     },
     {
       "path": "spec/05-game-mechanics.md",
-      "sha256": "f7d206dc0e21cc27e78bc203952dabe36d7117bc47f61ad3ae96567885af4614",
-      "size_bytes": 10798
+      "sha256": "9406b7878db821a13d35ca1a0bb74e8ef6cd41992458ed5322772983c61adf7b",
+      "size_bytes": 11666
     },
     {
       "path": "spec/06-content-and-question-bank.md",
