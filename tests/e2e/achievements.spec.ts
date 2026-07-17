@@ -62,6 +62,9 @@ test('Achievements phase gate', async ({ browserName, page }, testInfo) => {
     .locator(`a[href="/app/quiz/new?template=${challenge.templateId}"]`)
     .click();
   for (let position = 1; position <= 10; position += 1) {
+    await expect(page.getByLabel('挑戰進度')).toContainText(
+      `第 ${String(position)} / 10 題`,
+    );
     const prompt = await page.locator('.question-card legend').innerText();
     const answer = GENERATED_CORRECT_ANSWERS.get(prompt);
     if (!answer) throw new Error('ACHIEVEMENTS_ANSWER_MISSING');
