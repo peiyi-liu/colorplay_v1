@@ -172,7 +172,7 @@ These paths follow the normative `spec/01-user-roles-and-flows.md` route contrac
 
 ### Task 1: Classroom tables, column privacy, and tenant RLS
 
-- [ ] **Task 1 delivery marker**
+- [x] **Task 1 delivery marker**
 
 **Reviewer gate:** Accept only if the two approved tables exist with constraints/indexes, hash columns cannot be selected by students, direct browser mutations are denied, owner/member reads work, and Teacher A/Teacher B/outsider/anonymous negative cases pass.
 
@@ -189,7 +189,7 @@ These paths follow the normative `spec/01-user-roles-and-flows.md` route contrac
 
 **AC:** `AC-AUTH-005`, `AC-AUTH-006`.
 
-- [ ] **Step 1: Write the failing pgTAP/RLS test**
+- [x] **Step 1: Write the failing pgTAP/RLS test**
 
 Create test-owned Teacher A, Teacher B, Student A, Student B, and outsider UUIDs. Assert table/enums/constraints/indexes; positive owner and active-member reads; zero rows or denial for Teacher B, outsider, and anonymous; denial for authenticated direct insert/update/delete; denial when selecting `join_code_hash`; and no policy named or defined with an unconditional `true` predicate. Scope every count with the five UUIDs.
 
@@ -209,7 +209,7 @@ select is(
 );
 ```
 
-- [ ] **Step 2: Run the database test to prove RED**
+- [x] **Step 2: Run the database test to prove RED**
 
 ```bash
 pnpm exec supabase db reset --local
@@ -218,7 +218,7 @@ pnpm exec supabase test db supabase/tests/011_classrooms_rls.test.sql
 
 Expected: FAIL because `public.classrooms` and `public.classroom_members` do not exist.
 
-- [ ] **Step 3: Implement the minimal schema and RLS boundary**
+- [x] **Step 3: Implement the minimal schema and RLS boundary**
 
 Create the enums/tables exactly as locked. Validate trimmed names at 1–80 characters, `join_code_version > 0`, `deactivated_at is null` for active members, owner role through trusted profile lookup, and immutable `owner_teacher_id`, `join_code_hash`, `joined_at`, and primary-key columns outside trusted functions. Grant authenticated users only safe classroom columns; never grant `join_code_hash`.
 
@@ -241,7 +241,7 @@ grant select (
 
 `is_active_classroom_member` is `stable`, derives no browser claim, and is usable by later assignment/Live policies without exposing membership rows.
 
-- [ ] **Step 4: Run scoped GREEN checks**
+- [x] **Step 4: Run scoped GREEN checks**
 
 ```bash
 pnpm exec supabase db reset --local
@@ -252,7 +252,7 @@ pnpm typecheck
 
 Expected: scoped pgTAP passes; lint and typecheck exit 0.
 
-- [ ] **Step 5: Mark Task 1 complete and commit**
+- [x] **Step 5: Mark Task 1 complete and commit**
 
 Change Task 1 and Steps 1–5 to `[x]`, then run:
 
