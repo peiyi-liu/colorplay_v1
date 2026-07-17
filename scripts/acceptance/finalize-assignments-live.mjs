@@ -188,12 +188,14 @@ export async function finalizeAssignmentsLive(runDirectory) {
   ];
   if (
     screenshots.length !== 3 ||
-    videos.length !== 1 ||
+    // The host context records two pages: the driving console and the
+    // duplicate tab that races it into the version conflict.
+    videos.length !== 2 ||
     traces.length !== 1 ||
     !requiredScreenshots.every((name) =>
       screenshots.some((path) => path.endsWith(`/${name}`)),
     ) ||
-    !videos[0]?.endsWith('.webm') ||
+    !videos.every((path) => path.endsWith('.webm')) ||
     !traces[0]?.endsWith('.zip')
   ) {
     throw new Error('ASSIGNMENTS_LIVE_REQUIRED_EVIDENCE_MISSING');
