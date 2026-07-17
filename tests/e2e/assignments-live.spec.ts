@@ -34,6 +34,9 @@ const signIn = async (
   await expect(
     page.getByRole('navigation', { name: '主要導覽' }),
   ).toBeVisible();
+  // Wait for the chapter query to settle before the caller navigates away,
+  // so browser health never records a navigation-aborted manifest fetch.
+  await expect(page.getByRole('heading', { name: '選擇章節' })).toBeVisible();
 };
 
 const completeAssignmentQuiz = async (page: Page) => {
@@ -143,7 +146,9 @@ test('Assignments and Live Core phase gate', async ({
   // --- Assignments: teacher creates and publishes for the fixture class ---
   await hostPage.goto('/teacher/classes');
   await hostPage
-    .getByRole('link', { name: CLASSROOM_FIXTURES.teacherOneClassroom.name })
+    .getByRole('listitem')
+    .filter({ hasText: CLASSROOM_FIXTURES.teacherOneClassroom.name })
+    .getByRole('link', { name: '管理班級' })
     .click();
   await hostPage.getByRole('link', { name: '作業管理' }).click();
   await expect(
@@ -203,6 +208,10 @@ test('Assignments and Live Core phase gate', async ({
     const sessionMatch = sessionUrlPattern.exec(hostPage.url());
     const sessionId = sessionMatch?.[1];
     if (!sessionId) throw new Error('ASSIGNMENTS_LIVE_SESSION_ID_MISSING');
+    await hostPage.getByRole('button', { name: '開啟等待室' }).click();
+    await expect(
+      hostPage.getByText('等待室開啟中，學生輸入課堂代碼即可加入。'),
+    ).toBeVisible();
 
     for (const studentPage of [studentAPage, studentBPage]) {
       await studentPage.goto('/app/live/join');
@@ -270,26 +279,37 @@ test('Assignments and Live Core phase gate', async ({
 
       if (round < 10) {
         if (sessionIndex === 1 && round === 6) {
-          // A duplicate host tab holding a stale version cannot advance twice.
+          // Two host consoles dispatch the same advance at the same version.
+          // The server's compare-and-set admits exactly one; the losing tab
+          // (either one — commit order decides) surfaces the conflict alert
+          // and reconciles to the round the winner opened. Sequential clicks
+          // would race the broadcast reconcile, so both dispatch together.
           const duplicateHostPage = await hostPage.context().newPage();
           const duplicateHealth = attachBrowserHealth(duplicateHostPage);
           await duplicateHostPage.goto(`/teacher/live/${sessionId}`);
           await expect(
             duplicateHostPage.getByRole('button', { name: '下一題' }),
           ).toBeVisible();
-          await hostPage.getByRole('button', { name: '下一題' }).click();
+          declareExpectedBrowserFailure(
+            hostHealth,
+            assignmentsLiveExpectedFailureDeclarations.duplicateHostAdvance,
+          );
           declareExpectedBrowserFailure(
             duplicateHealth,
             assignmentsLiveExpectedFailureDeclarations.duplicateHostAdvance,
           );
-          await duplicateHostPage
-            .getByRole('button', { name: '下一題' })
-            .click();
-          await expect(
-            duplicateHostPage.getByText(
-              '另一個主持分頁已推進狀態，畫面已同步為最新。',
-            ),
-          ).toBeVisible();
+          await Promise.all([
+            hostPage.getByRole('button', { name: '下一題' }).click(),
+            duplicateHostPage.getByRole('button', { name: '下一題' }).click(),
+          ]);
+          const conflictAlert = '另一個主持分頁已推進狀態，畫面已同步為最新。';
+          await expect(async () => {
+            const [hostConflict, duplicateConflict] = await Promise.all([
+              hostPage.getByText(conflictAlert).isVisible(),
+              duplicateHostPage.getByText(conflictAlert).isVisible(),
+            ]);
+            expect(hostConflict !== duplicateConflict).toBe(true);
+          }).toPass({ timeout: 10_000 });
           duplicateHostHealths.push(duplicateHealth);
           await duplicateHostPage.close();
         } else {
@@ -366,20 +386,35 @@ test('Assignments and Live Core phase gate', async ({
   const healthResults = trackedHealths.map((health) =>
     unexpectedBrowserHealth(health, 'chromium'),
   );
-  const declaredFailures = trackedHealths.flatMap((health) =>
+  const joinPattern =
+    assignmentsLiveExpectedFailureDeclarations.outsiderJoin.urlPattern.source;
+  const advancePattern =
+    assignmentsLiveExpectedFailureDeclarations.duplicateHostAdvance.urlPattern
+      .source;
+  const allDeclared = trackedHealths.flatMap((health) =>
     expectedBrowserFailures(health),
   );
-  expect(declaredFailures).toEqual(
-    [
-      assignmentsLiveExpectedFailureDeclarations.outsiderJoin,
-      assignmentsLiveExpectedFailureDeclarations.duplicateHostAdvance,
-    ].map(({ count, status, urlPattern }) => ({
-      expected_count: count,
-      observed_count: count,
-      status,
-      url_pattern: urlPattern.source,
-    })),
+  const joinReports = allDeclared.filter(
+    (report) => report.url_pattern === joinPattern,
   );
+  const advanceReports = allDeclared.filter(
+    (report) => report.url_pattern === advancePattern,
+  );
+  expect(allDeclared.length).toBe(joinReports.length + advanceReports.length);
+  expect(joinReports.map((report) => report.observed_count)).toEqual([1]);
+  // Exactly one of the two racing host tabs recorded the conflict 400.
+  expect(
+    advanceReports.reduce((sum, report) => sum + report.observed_count, 0),
+  ).toBe(1);
+  const declaredFailures = [
+    ...joinReports,
+    {
+      expected_count: 1,
+      observed_count: 1,
+      status: 400,
+      url_pattern: advancePattern,
+    },
+  ];
   for (const health of healthResults) {
     expect(health).toEqual({
       consoleErrors: [],

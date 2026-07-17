@@ -1,6 +1,6 @@
 begin;
 
-select plan(17);
+select plan(18);
 
 select ok(
   exists (
@@ -170,8 +170,19 @@ select is(
     from realtime.messages
     where topic = current_setting('test.topic')
   ),
-  2,
-  'start and open each broadcast exactly one committed message'
+  3,
+  'start, join, and open each broadcast exactly one committed message'
+);
+select is(
+  (
+    select count(*)::integer
+    from realtime.messages
+    where topic = current_setting('test.topic')
+      and payload ->> 'state' = 'lobby'
+      and (payload ->> 'participant_count')::integer = 1
+  ),
+  1,
+  'joining broadcasts the active participant count at the lobby version'
 );
 select is(
   (
@@ -209,7 +220,7 @@ select is(
     from realtime.messages
     where topic = current_setting('test.topic')
   ),
-  3,
+  4,
   'closing broadcasts the feedback transition'
 );
 select is(

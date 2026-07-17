@@ -81,4 +81,43 @@ describe('useLiveSession', () => {
     unmount();
     expect(removeChannelSpy).toHaveBeenCalledWith(channel);
   });
+
+  it('patches same-version progress counts without refetching', async () => {
+    const { channel, handlers } = stubChannel();
+    const client = {
+      channel: vi.fn(() => channel),
+      removeChannel: vi.fn(),
+    } as unknown as SupabaseClient<Database>;
+    const getState = vi.fn().mockResolvedValue(lobbyState);
+    const repository = { getState } as unknown as LiveRepository;
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const wrapper = ({ children }: Readonly<{ children: ReactNode }>) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result, unmount } = renderHook(
+      () => useLiveSession(SESSION_ID, { client, repository }),
+      { wrapper },
+    );
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    const callsBeforePatch = getState.mock.calls.length;
+    handlers[0]?.({
+      payload: { participant_count: 2, state: 'lobby', state_version: 2 },
+    });
+    handlers[0]?.({
+      payload: { answered_count: 1, state: 'lobby', state_version: 2 },
+    });
+
+    expect(
+      queryClient.getQueryData<LiveSessionState>(liveKeys.session(SESSION_ID)),
+    ).toMatchObject({ answeredCount: 1, participantCount: 2 });
+    expect(getState.mock.calls.length).toBe(callsBeforePatch);
+
+    unmount();
+  });
 });

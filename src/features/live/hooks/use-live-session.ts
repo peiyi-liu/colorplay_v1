@@ -56,22 +56,35 @@ export function useLiveSession(
       })
       .on('broadcast', { event: 'live_state' }, (message) => {
         // Realtime is transport only. Messages below the cached version are
-        // echoes we already reconciled; an equal-version message carrying an
-        // answered count is live progress within the same state and patches
-        // the cache directly; anything newer (or unparseable) triggers one
-        // authoritative fetch.
+        // echoes we already reconciled; an equal-version message carries live
+        // progress within the same state (answered or participant counts) and
+        // patches the cache directly; anything newer (or unparseable)
+        // triggers one authoritative fetch.
         const payload = message.payload as {
           answered_count?: unknown;
+          participant_count?: unknown;
           state_version?: unknown;
         };
         const cached = queryClient.getQueryData<LiveSessionState>(key);
         if (typeof payload.state_version === 'number' && cached) {
           if (payload.state_version < cached.stateVersion) return;
           if (payload.state_version === cached.stateVersion) {
-            if (typeof payload.answered_count === 'number') {
+            const answeredPatch =
+              typeof payload.answered_count === 'number'
+                ? { answeredCount: payload.answered_count }
+                : {};
+            const participantPatch =
+              typeof payload.participant_count === 'number'
+                ? { participantCount: payload.participant_count }
+                : {};
+            if (
+              Object.keys(answeredPatch).length > 0 ||
+              Object.keys(participantPatch).length > 0
+            ) {
               queryClient.setQueryData<LiveSessionState>(key, {
                 ...cached,
-                answeredCount: payload.answered_count,
+                ...answeredPatch,
+                ...participantPatch,
               });
             }
             return;

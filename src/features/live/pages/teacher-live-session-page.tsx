@@ -151,6 +151,12 @@ export function TeacherLiveSessionPage({
           className="primary-action"
           data-primary-action="true"
           disabled={transition.isPending}
+          // A broadcast can swap the pending action between the moment the
+          // host aims and the moment the click lands. Keying by transition
+          // replaces the node instead of retargeting it in place, so a stale
+          // click dies on the detached button rather than firing the new
+          // action with a fresh version.
+          key={action.transition}
           onClick={() => {
             runTransition(action.transition);
           }}
