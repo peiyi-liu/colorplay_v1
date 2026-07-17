@@ -176,4 +176,58 @@ Reservations recorded per the plan:
 
 The known ~668 kB main-chunk warning remains non-blocking and assigned to later route-level code splitting. Executor note: after Codex quota exhaustion, the owner instructed Claude Code to complete the phase tail (formal gates 2–4, their fixes, and this closure) under the same plan and constraints.
 
-Status: STOP after Phase 3 closure; do not begin Assignments, Live, remediation, mastery, teacher analytics, privacy controls, or any other phase without a new project-owner instruction.
+Status: Phase 3 closed; the owner then authorized Claude Code to continue planning and executing the remaining phases ("可以繼續往下規劃，完成這個專案"), with per-phase closure reports.
+
+## Phase 4 Assignments and ColorPlay Live Core
+
+Phase 4 Assignments and ColorPlay Live Core: COMPLETE
+
+Plan: `docs/superpowers/plans/2026-07-17-assignments-live-core.md`
+Plan commit: `77242d1` (baseline `dc77049`)
+Task 1: complete (`98ab11b`; pinned assignment reward rules and Live scoring `2026-07-live-1`)
+Task 2: complete (`2e0ca1d`; assignment tables, targets, attempts, quiz-session purpose column)
+Task 3: complete (`5aefeda`; trusted assignment lifecycle commands and finalize derivation)
+Task 4: complete (`ca9dfa7`; assignment repository, hooks, and generated types)
+Task 5: complete (`48b84f5`; teacher assignment management under the classroom detail)
+Task 6: complete (`066c7dc`; student assignment list, detail, attempt flow, result banner)
+Task 7: complete (`3f938aa`; live tables, enums, RLS, hidden-answer column privacy)
+Task 8: complete (`4276c47`; live activity/session setup commands and question freezing)
+Task 9: complete (`250f719`, expectation aligned in `fa9b02a`; live play commands and atomic finalize)
+Task 10: complete (`00998fd`; private realtime topic, RLS on `realtime.messages`, in-transaction broadcasts)
+Task 11: complete (`900b680`; live repository with pre-feedback reveal-leak rejection, session/commands hooks)
+Task 12: complete (`30fcfc2`; join page, player session page, host console)
+Task 13: complete (`4ecf41f`; Phase 4 runner, finalizer, contract pins, acceptance E2E)
+
+Complete-range review covered `dc77049..4ecf41f` (three parallel finder angles plus direct verification; 24 candidates, 10 confirmed). All ten were corrected in `cdfb0e0`, including three gate-blocking defects (host answered-count never updated — submits now broadcast the count at the same state version and the session hook patches equal-version progress; the finalizer still carried the Phase 3 grep label; the round-3 reload pressured the 5 s speed-bonus window) and two security findings (participants could pre-read all frozen questions from the lobby — migration `20260717001100` gates participant selects on `opened_at`; a reused `client_request_id` could bind a foreign practice session to an assignment — migration `20260717001200` adds the fresh-session guard). Recorded, not fixed: replace-forward migration duplication (established pattern), a fourth finalizer copy (refactor deferred), per-participant finalize loops, declared-failure array-order coupling, completed-replay `participant_count` drift, and submit broadcasts being outside `019`'s counted window.
+
+Gate history (each failure produced one focused fix; no assertion was weakened):
+
+- Precheck 1 (the spec's first complete run) hung 480 s: the spec clicked a classroom link by the classroom's name, but the classes page names that link 管理班級; fixed in `8014d62`.
+- Precheck 2 failed at student join: the spec skipped the host's 開啟等待室 step, so joins were correctly rejected with `LIVE_JOIN_INVALID_CODE` while the session was still `draft`; the spec now opens the lobby (`8014d62`).
+- Precheck 3 failed at the host lobby count: joining never broadcast, so lobby views held a stale participant count until the first transition — a real product gap. Migration `20260717001300` broadcasts the active participant count at the unchanged `state_version`, the session hook patches equal-version progress counts in place, and `019` now counts the join broadcast (18 assertions) (`8014d62`).
+- Precheck 4 failed the final health check: the post-login navigation aborted the in-flight chapter manifest fetch; sign-in now settles the chapter query before navigating away (`8014d62`).
+- Precheck 5 exposed the worst defect: when the duplicate-tab probe clicked a stale 下一題, a landing broadcast had morphed the button in place, so the click fired the swapped 收題並公布答案 with a fresh version and closed round 7 with zero answers. The host action button is now keyed by transition (a stale click dies on the detached node), and the spec races both host tabs' advances concurrently — the compare-and-set admits exactly one, and the conflict alert must appear on exactly one tab, whichever loses (`8014d62`). Precheck 6 then passed headless.
+- Formal gate 1 failed at `format:check`: one file drifted during the review wave; formatted in `1886804`.
+- Formal gate 2 passed the headed E2E but failed evidence collection: the finalizer required exactly one video while the host context records two pages (console plus duplicate tab); `91e5c51` expects both.
+- Formal gate 3 failed headed-only: background tabs stop painting, so the duplicate tab's click never satisfied the animation-frame stability wait and dispatched only after the winner's broadcast had detached the keyed button; both racing clicks now dispatch with `force: true`, validated by a headed disposable precheck before re-running the gate (`f16902b`).
+- Formal gate 4 passed on 2026-07-18 at clean SHA `f16902b63b02a4bc29ae2e50584ea9d666a878ce`: Prettier, lint, typecheck, 71 Vitest files/470 tests, production build, 20 database files/610 pgTAP assertions plus runtime smoke 3/3, 13 integration files/25 tests, PostgREST readiness probe, Auth seed, and the headed Chromium flow (teacher assignment lifecycle, student assignment completion through the real quiz runner with reward banner, two 10-round live matches with two students, mid-question reload reconciliation, outsider denial, and the dual-host-tab version-conflict race) all passed. Live latency over 40 answer samples: answer p95 6 ms (≤ 800), finalize p95 11 ms (≤ 1000), zero lost or duplicate answers, zero outsider access; browser health recorded zero unexpected events with both declared 400s (`join_live_session`, `advance_live_session`) observed exactly once.
+
+Manifest: `artifacts/acceptance/assignments-live-f16902b63b02a4bc29ae2e50584ea9d666a878ce/manifest.json` (`decision: PASS`; `AC-ASN-001`–`AC-ASN-006`, `AC-LIVE-001`–`AC-LIVE-012`).
+
+Conventions added in this phase (binding on later phases):
+
+- In-state live progress (answered counts, participant counts) broadcasts at the unchanged `state_version`; clients patch equal-version payloads in place and refetch only on newer versions.
+- Trusted commands that admit or progress participants must broadcast anything a live view renders; a view with no broadcast source is a defect, not a polling candidate.
+- Action buttons whose meaning changes with server state are keyed by that meaning so stale clicks die instead of retargeting.
+- Concurrent-conflict E2E scenarios dispatch racing commands together (forced clicks, background-tab throttling in mind) and assert the outcome invariant (exactly one winner, conflict surfaced on the loser) rather than scripting who loses.
+
+Reservations recorded per the plan:
+
+- Phase 7 advanced Live scope (team modes, power-ups, media questions, pacing analytics) stays deferred.
+- The `remediation` quiz-session purpose value is reserved and unused until the remediation phase.
+- `AC-LIVE-012` latency figures are local-loop evidence; staging revalidation with real network latency is owed at Phase 8.
+- The ~668 kB main-chunk warning remains non-blocking and assigned to later route-level code splitting.
+- Live joins during `question_open`/`question_feedback` only re-admit existing participants; first-time admission after the lobby closes is a product decision deferred to Phase 7.
+- Concurrent same-version join broadcasts can momentarily deliver a lower participant count; any transition heals it, and lobby-only exposure keeps the risk cosmetic.
+
+Status: Phase 4 closed. Next per the roadmap: Phase 5 (復習卡/學習內容; needs 複習卡內容 from the owner), then staging setup (owner supplies Supabase access token, legacy-project reset authorization, GitHub repo, Vercel).
