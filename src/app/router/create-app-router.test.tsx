@@ -91,6 +91,11 @@ vi.mock('../../features/achievements/hooks/use-achievements', () => ({
   })),
 }));
 vi.mock('../../features/classrooms/hooks/use-classrooms', () => ({
+  useCreateClassroom: vi.fn(() => ({
+    error: null,
+    isPending: false,
+    mutateAsync: vi.fn(),
+  })),
   useJoinClassroom: vi.fn(() => ({
     error: null,
     isPending: false,
@@ -102,6 +107,25 @@ vi.mock('../../features/classrooms/hooks/use-classrooms', () => ({
     isError: false,
     isPending: false,
     refetch: vi.fn(),
+  })),
+  useOwnedClassroomMembers: vi.fn(() => ({
+    data: [],
+    error: null,
+    isError: false,
+    isPending: false,
+    refetch: vi.fn(),
+  })),
+  useOwnedClassrooms: vi.fn(() => ({
+    data: [],
+    error: null,
+    isError: false,
+    isPending: false,
+    refetch: vi.fn(),
+  })),
+  useRotateClassroomJoinCode: vi.fn(() => ({
+    error: null,
+    isPending: false,
+    mutateAsync: vi.fn(),
   })),
 }));
 
@@ -299,5 +323,50 @@ describe('createAppRouter', () => {
       'href',
       '/teacher',
     );
+  });
+
+  it('keeps a student out of the teacher classes route', async () => {
+    mockedUseMyProfile.mockReturnValue({
+      data: {
+        displayName: 'student.one',
+        id: 'learner-id',
+        role: 'student',
+        timezone: 'Asia/Taipei',
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+    const router = renderRouter('/teacher/classes', {
+      email: 'learner@colorplay.invalid',
+      userId: 'learner-id',
+    });
+    expect(
+      await screen.findByRole('heading', { name: '沒有權限' }),
+    ).toBeVisible();
+    expect(router.state.location.pathname).toBe('/unauthorized');
+  });
+
+  it('lazy-loads the classes route for an authoritative teacher', async () => {
+    mockedUseMyProfile.mockReturnValue({
+      data: {
+        displayName: 'teacher',
+        id: 'teacher-id',
+        role: 'teacher',
+        timezone: 'Asia/Taipei',
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+    renderRouter('/teacher/classes', {
+      email: 'teacher@colorplay.invalid',
+      userId: 'teacher-id',
+    });
+    expect(
+      await screen.findByRole('heading', { name: '班級管理' }),
+    ).toBeVisible();
   });
 });

@@ -222,6 +222,10 @@ describe('AppShell', () => {
       'href',
       '/teacher',
     );
+    expect(screen.getByRole('link', { name: '班級管理' })).toHaveAttribute(
+      'href',
+      '/teacher/classes',
+    );
   });
 
   it('awaits signOut and replaces protected history with login', async () => {

@@ -88,6 +88,22 @@ export function createAppRouter() {
                     />
                   ),
                 },
+                {
+                  path: '/teacher/classes',
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/classrooms/pages/teacher-classrooms-page');
+                    return { Component: module.TeacherClassroomsPage };
+                  },
+                },
+                {
+                  path: '/teacher/classes/:classroomId',
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/classrooms/pages/teacher-classroom-detail-page');
+                    return { Component: module.TeacherClassroomDetailPage };
+                  },
+                },
               ],
             },
           ],

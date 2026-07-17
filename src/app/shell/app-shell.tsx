@@ -58,7 +58,10 @@ export function AppShell() {
                 <Link to="/app/achievements">成就徽章</Link>
                 <Link to="/app/profile">個人資料</Link>
                 {profile.data?.role === 'teacher' ? (
-                  <Link to="/teacher">教師工作區</Link>
+                  <>
+                    <Link to="/teacher">教師工作區</Link>
+                    <Link to="/teacher/classes">班級管理</Link>
+                  </>
                 ) : null}
               </nav>
             ) : null}

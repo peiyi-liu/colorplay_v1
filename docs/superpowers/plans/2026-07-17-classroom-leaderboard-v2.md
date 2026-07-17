@@ -819,7 +819,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 ### Task 8: Teacher-owned classroom management UI and routes
 
-- [ ] **Task 8 delivery marker**
+- [x] **Task 8 delivery marker**
 
 **Reviewer gate:** Accept only if teacher routes have `RequireRole` protection, create/rotate use server receipts, plaintext code is shown once and discarded, member projection contains no Email, and student/Teacher B cannot obtain data by direct route or repository call.
 
@@ -844,11 +844,11 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 **AC:** `AC-AUTH-005`, `AC-AUTH-006`; scoped support for `AC-UI-006`, `AC-UI-015`.
 
-- [ ] **Step 1: Write failing teacher UI/router tests**
+- [x] **Step 1: Write failing teacher UI/router tests**
 
 Cover student unauthorized route, teacher empty/loading/error/retry, 1–80 character create form, one primary submit, create pending lock, receipt visibility, dismissal clears plaintext, reload has no code, rotate confirmation, and owner-safe member rows containing display name/Blook/status/join date but no Email or user UUID.
 
-- [ ] **Step 2: Run tests to prove RED**
+- [x] **Step 2: Run tests to prove RED**
 
 ```bash
 pnpm exec vitest run \
@@ -861,7 +861,7 @@ pnpm exec vitest run \
 
 Expected: FAIL because teacher classroom pages/routes and code receipt do not exist.
 
-- [ ] **Step 3: Implement the minimal teacher management UI**
+- [x] **Step 3: Implement the minimal teacher management UI**
 
 Wrap both routes in the existing authenticated teacher guard. Keep `ClassroomCodeReceipt` in local component state only:
 
@@ -873,7 +873,7 @@ const [codeReceipt, setCodeReceipt] = useState<ClassroomCodeReceipt | null>(
 
 Dismissal sets `null`; no cache write or persistence is allowed. Display explicit copy guidance and rotation consequences. Class creation and code rotation are distinct confirmation interactions. Query errors render retry; mutation errors remain adjacent to their initiating control.
 
-- [ ] **Step 4: Run focused GREEN checks**
+- [x] **Step 4: Run focused GREEN checks**
 
 ```bash
 pnpm exec vitest run \
@@ -888,7 +888,7 @@ pnpm typecheck
 
 Expected: teacher UI/router tests pass; lint/typecheck exit 0.
 
-- [ ] **Step 5: Mark Task 8 complete and commit**
+- [x] **Step 5: Mark Task 8 complete and commit**
 
 ```bash
 git add src/features/classrooms src/app/router/create-app-router.tsx \
