@@ -1,0 +1,248 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+
+import { RouteLoading } from '../../../app/boundaries/route-loading';
+import type { Database } from '../../../types/database';
+import { useSubmitLiveAnswer } from '../hooks/use-live-commands';
+import { useLiveSession } from '../hooks/use-live-session';
+import type { LiveRepository, LiveSessionState } from '../types';
+
+export const remainingSeconds = (
+  deadlineAt: string | null,
+  serverTime: string,
+  now: number,
+  fetchedAt: number,
+): number | null => {
+  if (!deadlineAt) return null;
+  const serverOffset = new Date(serverTime).getTime() - fetchedAt;
+  const serverNow = now + serverOffset;
+  return Math.max(
+    0,
+    Math.ceil((new Date(deadlineAt).getTime() - serverNow) / 1000),
+  );
+};
+
+function Countdown({
+  deadlineAt,
+  serverTime,
+}: Readonly<{ deadlineAt: string | null; serverTime: string }>) {
+  const fetchedAtRef = useRef(Date.now());
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(Date.now());
+    }, 500);
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+  const remaining = remainingSeconds(
+    deadlineAt,
+    serverTime,
+    now,
+    fetchedAtRef.current,
+  );
+  if (remaining === null) return null;
+  return (
+    <p aria-live="polite">
+      剩餘 <strong>{remaining}</strong> 秒（以伺服器時間為準）
+    </p>
+  );
+}
+
+function QuestionPhase({
+  sessionId,
+  state,
+  repository,
+}: Readonly<{
+  sessionId: string;
+  state: LiveSessionState;
+  repository?: LiveRepository;
+}>) {
+  const submit = useSubmitLiveAnswer(sessionId, repository);
+  const keysRef = useRef(new Map<string, string>());
+  const [submitError, setSubmitError] = useState<string>();
+  const question = state.question;
+  if (!question) return null;
+  const answered = state.myAnswer?.answered === true;
+  const idempotencyKey = (() => {
+    const existing = keysRef.current.get(question.questionId);
+    if (existing) return existing;
+    const fresh = crypto.randomUUID();
+    keysRef.current.set(question.questionId, fresh);
+    return fresh;
+  })();
+
+  return (
+    <div>
+      <p>
+        第 {question.position} / {state.questionCount} 題
+      </p>
+      <Countdown
+        deadlineAt={question.deadlineAt}
+        serverTime={state.serverTime}
+      />
+      <fieldset
+        className="question-card"
+        disabled={answered || submit.isPending}
+      >
+        <legend>{question.prompt}</legend>
+        <div role="group" aria-label="答案選項">
+          {question.publicOptions.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => {
+                setSubmitError(undefined);
+                submit.mutate(
+                  {
+                    idempotencyKey,
+                    selectedOptionId: option.id,
+                    sessionQuestionId: question.questionId,
+                  },
+                  {
+                    onError: () => {
+                      setSubmitError('作答未送出，請再試一次。');
+                    },
+                  },
+                );
+              }}
+              type="button"
+            >
+              {option.key}. {option.text}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+      {answered ? <p role="status">已收到你的答案，等待其他同學…</p> : null}
+      {submitError ? <p role="alert">{submitError}</p> : null}
+    </div>
+  );
+}
+
+function FeedbackPhase({ state }: Readonly<{ state: LiveSessionState }>) {
+  const question = state.question;
+  if (!question) return null;
+  const feedback = state.myFeedback;
+  return (
+    <div>
+      <h2>
+        {feedback
+          ? feedback.answerStatus === 'correct'
+            ? `✓ 答對了！+${feedback.scoreDelta} 分`
+            : feedback.answerStatus === 'timeout'
+              ? '未作答（逾時）'
+              : '✗ 答錯了'
+          : '本題結束'}
+      </h2>
+      <p>{question.prompt}</p>
+      <ul>
+        {question.publicOptions.map((option) => {
+          const count =
+            state.optionCounts?.find((entry) => entry.optionId === option.id)
+              ?.count ?? 0;
+          const isCorrect = state.correctOptionId === option.id;
+          return (
+            <li key={option.id}>
+              {isCorrect ? '✓ ' : ''}
+              {option.key}. {option.text}（{count} 人）
+            </li>
+          );
+        })}
+      </ul>
+      {state.explanation ? <p>{state.explanation}</p> : null}
+      <p role="status">等待主持人進入下一題…</p>
+    </div>
+  );
+}
+
+export function LiveSessionPage({
+  sessionId: suppliedSessionId,
+  repository,
+  client,
+}: Readonly<{
+  sessionId?: string;
+  repository?: LiveRepository;
+  client?: SupabaseClient<Database>;
+}>) {
+  const params = useParams();
+  const sessionId = suppliedSessionId ?? params.sessionId ?? '';
+  const session = useLiveSession(sessionId, {
+    ...(client ? { client } : {}),
+    ...(repository ? { repository } : {}),
+  });
+
+  if (session.isPending) return <RouteLoading withinMain />;
+  if (session.isError || !session.data) {
+    return (
+      <section className="route-panel">
+        <h1>課堂挑戰</h1>
+        <p role="alert">找不到這場課堂挑戰，或你不是參與者。</p>
+        <Link className="primary-action" to="/app/live/join">
+          重新輸入代碼
+        </Link>
+      </section>
+    );
+  }
+
+  const state = session.data;
+
+  return (
+    <section aria-labelledby="live-session-title" className="w-full max-w-2xl">
+      <header>
+        <p className="route-panel__eyebrow">ColorPlay Live</p>
+        <h1 id="live-session-title">課堂挑戰</h1>
+      </header>
+
+      {state.state === 'lobby' ? (
+        <div role="status">
+          <h2>等待主持人開始…</h2>
+          <p>目前 {state.participantCount} 位同學在等待室。</p>
+        </div>
+      ) : null}
+
+      {state.state === 'question_open' ? (
+        <QuestionPhase
+          sessionId={sessionId}
+          state={state}
+          {...(repository ? { repository } : {})}
+        />
+      ) : null}
+
+      {state.state === 'question_feedback' ? (
+        <FeedbackPhase state={state} />
+      ) : null}
+
+      {state.state === 'completed' ? (
+        <div>
+          <h2>挑戰結束！</h2>
+          {state.myResult ? (
+            <p role="status">
+              你的成績：{state.myResult.score} 分，第{' '}
+              {state.myResult.rank ?? '—'} 名
+            </p>
+          ) : null}
+          <ol aria-label="前三名">
+            {(state.podium ?? []).map((entry) => (
+              <li key={entry.rank}>
+                第 {entry.rank} 名 {entry.displayName}（{entry.score} 分）
+              </li>
+            ))}
+          </ol>
+          <Link className="primary-action" to="/app">
+            回章節
+          </Link>
+        </div>
+      ) : null}
+
+      {state.state === 'cancelled' ? (
+        <div role="status">
+          <h2>這場挑戰已被取消。</h2>
+          <Link className="primary-action" to="/app">
+            回章節
+          </Link>
+        </div>
+      ) : null}
+    </section>
+  );
+}

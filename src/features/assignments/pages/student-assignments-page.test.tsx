@@ -39,7 +39,7 @@ const repositoryWith = (
   ...overrides,
 });
 
-const renderWith = (repository: AssignmentRepository, element: ReactNode) => {
+const renderWith = (_repository: AssignmentRepository, element: ReactNode) => {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });

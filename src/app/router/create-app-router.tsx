@@ -87,6 +87,22 @@ export function createAppRouter() {
               },
             },
             {
+              path: '/app/live/join',
+              lazy: async () => {
+                const module =
+                  await import('../../features/live/pages/live-join-page');
+                return { Component: module.LiveJoinPage };
+              },
+            },
+            {
+              path: '/app/live/:sessionId',
+              lazy: async () => {
+                const module =
+                  await import('../../features/live/pages/live-session-page');
+                return { Component: module.LiveSessionPage };
+              },
+            },
+            {
               path: '/app/quiz/:sessionId/result',
               element: <QuizResultPage />,
             },
@@ -123,6 +139,22 @@ export function createAppRouter() {
                     const module =
                       await import('../../features/classrooms/pages/teacher-classroom-detail-page');
                     return { Component: module.TeacherClassroomDetailPage };
+                  },
+                },
+                {
+                  path: '/teacher/live',
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/live/pages/teacher-live-page');
+                    return { Component: module.TeacherLivePage };
+                  },
+                },
+                {
+                  path: '/teacher/live/:sessionId',
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/live/pages/teacher-live-session-page');
+                    return { Component: module.TeacherLiveSessionPage };
                   },
                 },
                 {
