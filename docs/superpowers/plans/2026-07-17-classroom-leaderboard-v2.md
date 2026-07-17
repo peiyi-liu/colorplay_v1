@@ -982,7 +982,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 ### Task 10: Phase 3 runner, finalizer, and real-browser acceptance flow
 
-- [ ] **Task 10 delivery marker**
+- [x] **Task 10 delivery marker**
 
 **Reviewer gate:** Accept only if the phase contract fails closed, reuses `evidence-policy.mjs`, preserves existing Game Economy/Achievements contract assertions, drives teacher/two-student/outsider UI with real local Supabase, uses the established per-question wait, and produces a deterministic PASS manifest for exactly the five exit ACs.
 
@@ -1007,7 +1007,7 @@ test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
 **AC:** `AC-AUTH-005`, `AC-AUTH-006`, `AC-AUTH-007`, `AC-GAME-008`, `AC-GAME-009`.
 
-- [ ] **Step 1: Write failing phase/finalizer contracts**
+- [x] **Step 1: Write failing phase/finalizer contracts**
 
 Require package script equality, generic `test:e2e` exclusion of the acceptance-only title, exact ordered runner commands, clean/local SHA metadata, exactly the five AC IDs, reports, browser-health JSON, three viewports for join/leaderboard/teacher management, one WebM, and one trace ZIP. Reuse `assertEvidenceSafe`/`requireNonEmptyEvidence` by import. Preserve and rerun all existing content-type, traversal, wrong-extension, dirty-tree, wrong-environment, missing-file, nonzero-command, and sensitive text/trace assertions.
 
@@ -1021,7 +1021,7 @@ expect(manifest.acceptance_ids).toEqual([
 ]);
 ```
 
-- [ ] **Step 2: Run contracts to prove RED**
+- [x] **Step 2: Run contracts to prove RED**
 
 ```bash
 pnpm exec vitest run \
@@ -1033,7 +1033,7 @@ pnpm exec vitest run \
 
 Expected: existing three contract files pass; new Phase 3 contract FAILS because runner/finalizer/package entry do not exist.
 
-- [ ] **Step 3: Implement runner and finalizer by extraction reuse**
+- [x] **Step 3: Implement runner and finalizer by extraction reuse**
 
 Add:
 
@@ -1045,7 +1045,7 @@ The runner verifies a clean SHA, creates `artifacts/acceptance/classroom-leaderb
 
 Extend the generic `test:e2e` grep-invert expression with `Classroom and Leaderboard v2 phase gate` so ordinary E2E never enters an acceptance-only fail-fast test.
 
-- [ ] **Step 4: Write the acceptance-only E2E flow**
+- [x] **Step 4: Write the acceptance-only E2E flow**
 
 Fail fast unless `PLAYWRIGHT_ACCEPTANCE=on` and `PLAYWRIGHT_EVIDENCE_ROOT` exists. Use separate browser contexts for Teacher A, Student A, Student B, and outsider. Drive:
 
@@ -1082,7 +1082,7 @@ Before the test ends, use a separate Node-side authenticated Teacher A Supabase 
 
 Do not call a service/admin endpoint from browser code and do not duplicate existing E2E helper architecture.
 
-- [ ] **Step 5: Run task-level contract GREEN checks only**
+- [x] **Step 5: Run task-level contract GREEN checks only**
 
 ```bash
 pnpm exec vitest run \
@@ -1090,7 +1090,7 @@ pnpm exec vitest run \
   tests/contracts/game-economy-phase-gate.test.ts \
   tests/contracts/achievements-phase-gate.test.ts \
   tests/contracts/classroom-leaderboard-phase-gate.test.ts
-pnpm exec prettier --check \
+pnpm exec prettier --check --ignore-unknown \
   tests/e2e/classroom-leaderboard.spec.ts \
   tests/contracts/classroom-leaderboard-phase-gate.test.ts \
   scripts/acceptance/run-classroom-leaderboard.sh \
@@ -1103,7 +1103,7 @@ pnpm typecheck
 
 Expected: all shared and phase contracts pass without weakening an existing assertion; Prettier/lint/typecheck exit 0. Do not run Playwright here.
 
-- [ ] **Step 6: Mark Task 10 complete and commit**
+- [x] **Step 6: Mark Task 10 complete and commit**
 
 ```bash
 git add tests/e2e/classroom-leaderboard.spec.ts \
