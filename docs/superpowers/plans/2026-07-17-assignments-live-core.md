@@ -181,8 +181,8 @@ Join codes reuse the Phase 3 pattern: `extensions.gen_random_bytes(8)` → 16 up
 
 **Files:** Create `src/features/assignments/pages/student-assignments-page.tsx`, `src/features/assignments/pages/student-assignment-detail-page.tsx` (+ tests); modify router (+ test), app-shell nav (`我的作業`) (+ test), quiz result page (+ test) to show assignment completion/pass when the session has an attempt; modify this plan.
 
-- [ ] **Step 1:** Failing RTL/router tests incl. deep link, deadline shown in Taipei, attempts-left math from server fields only, start disabled when expired/exhausted, result page `已完成/通過` states from server payload, no client-side deadline computation from `Date.now()` beyond display.
-- [ ] **Step 2:** RED. **Step 3:** implement minimal pages/routes reusing quiz runner + result. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add student assignment flow`.
+- [x] **Step 1:** Failing RTL/router tests incl. deep link, deadline shown in Taipei, attempts-left math from server fields only, start disabled when expired/exhausted, result page `已完成/通過` states from server payload, no client-side deadline computation from `Date.now()` beyond display.
+- [x] **Step 2:** RED. **Step 3:** implement minimal pages/routes reusing quiz runner + result. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add student assignment flow`.
 
 ### Task 7: Live schema and tenant RLS
 
@@ -190,7 +190,7 @@ Join codes reuse the Phase 3 pattern: `extensions.gen_random_bytes(8)` → 16 up
 
 **Files:** Create `supabase/migrations/20260717000600_live_schema.sql`, `supabase/tests/016_live_rls.test.sql`; modify this plan.
 
-- [ ] **Step 1:** Failing scoped pgTAP for tables/enums/uniques/indexes/grants/policies incl. hidden-column grant denial (42501 selecting `correct_option_id` as authenticated) and cross-tenant zero rows. **Step 2:** RED. **Step 3:** implement. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add live session data boundary`.
+- [x] **Step 1:** Failing scoped pgTAP for tables/enums/uniques/indexes/grants/policies incl. hidden-column grant denial (42501 selecting `correct_option_id` as authenticated) and cross-tenant zero rows. **Step 2:** RED. **Step 3:** implement. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add live session data boundary`.
 
 ### Task 8: Live setup commands — activity, session, join, state, start
 
