@@ -547,6 +547,147 @@ export type Database = {
           },
         ]
       }
+      content_imports: {
+        Row: {
+          created_at: string
+          created_ids: Json
+          dry_run: boolean
+          error_rows: number
+          filename: string
+          id: string
+          request_id: string
+          row_errors: Json
+          status: Database["public"]["Enums"]["content_import_status"]
+          teacher_id: string
+          total_rows: number
+          valid_rows: number
+          warning_rows: number
+        }
+        Insert: {
+          created_at?: string
+          created_ids?: Json
+          dry_run?: boolean
+          error_rows: number
+          filename: string
+          id?: string
+          request_id: string
+          row_errors?: Json
+          status: Database["public"]["Enums"]["content_import_status"]
+          teacher_id: string
+          total_rows: number
+          valid_rows: number
+          warning_rows?: number
+        }
+        Update: {
+          created_at?: string
+          created_ids?: Json
+          dry_run?: boolean
+          error_rows?: number
+          filename?: string
+          id?: string
+          request_id?: string
+          row_errors?: Json
+          status?: Database["public"]["Enums"]["content_import_status"]
+          teacher_id?: string
+          total_rows?: number
+          valid_rows?: number
+          warning_rows?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_imports_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_publication_events: {
+        Row: {
+          actor_id: string
+          content_id: string
+          content_type: Database["public"]["Enums"]["versioned_content_type"]
+          created_at: string
+          event_type: Database["public"]["Enums"]["publication_event_type"]
+          id: string
+          request_id: string
+          version: number
+        }
+        Insert: {
+          actor_id: string
+          content_id: string
+          content_type: Database["public"]["Enums"]["versioned_content_type"]
+          created_at?: string
+          event_type: Database["public"]["Enums"]["publication_event_type"]
+          id?: string
+          request_id: string
+          version: number
+        }
+        Update: {
+          actor_id?: string
+          content_id?: string
+          content_type?: Database["public"]["Enums"]["versioned_content_type"]
+          created_at?: string
+          event_type?: Database["public"]["Enums"]["publication_event_type"]
+          id?: string
+          request_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_publication_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_versions: {
+        Row: {
+          content_id: string
+          content_type: Database["public"]["Enums"]["versioned_content_type"]
+          created_at: string
+          created_by: string
+          frozen_payload: Json
+          id: string
+          payload_hash: string
+          status: Database["public"]["Enums"]["content_status"]
+          version: number
+        }
+        Insert: {
+          content_id: string
+          content_type: Database["public"]["Enums"]["versioned_content_type"]
+          created_at?: string
+          created_by: string
+          frozen_payload: Json
+          id?: string
+          payload_hash: string
+          status: Database["public"]["Enums"]["content_status"]
+          version: number
+        }
+        Update: {
+          content_id?: string
+          content_type?: Database["public"]["Enums"]["versioned_content_type"]
+          created_at?: string
+          created_by?: string
+          frozen_payload?: Json
+          id?: string
+          payload_hash?: string
+          status?: Database["public"]["Enums"]["content_status"]
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           created_at: string
@@ -579,6 +720,64 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      external_activities: {
+        Row: {
+          chapter_id: string | null
+          classroom_id: string | null
+          created_at: string
+          id: string
+          owner_teacher_id: string
+          status: Database["public"]["Enums"]["external_activity_status"]
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          chapter_id?: string | null
+          classroom_id?: string | null
+          created_at?: string
+          id?: string
+          owner_teacher_id: string
+          status?: Database["public"]["Enums"]["external_activity_status"]
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          chapter_id?: string | null
+          classroom_id?: string | null
+          created_at?: string
+          id?: string
+          owner_teacher_id?: string
+          status?: Database["public"]["Enums"]["external_activity_status"]
+          title?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_activities_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_activities_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_activities_owner_teacher_id_fkey"
+            columns: ["owner_teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hint_events: {
         Row: {
@@ -1994,6 +2193,27 @@ export type Database = {
         Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
       }
+      apply_question_payload: {
+        Args: { p_payload: Json; p_question_id: string }
+        Returns: string
+      }
+      apply_review_card_payload: {
+        Args: { p_card_id: string; p_payload: Json; p_target_version: number }
+        Returns: string
+      }
+      archive_question: {
+        Args: { p_question_id: string; p_request_id: string }
+        Returns: Json
+      }
+      archive_review_card: {
+        Args: { p_card_id: string; p_request_id: string }
+        Returns: Json
+      }
+      assert_content_teacher: { Args: never; Returns: string }
+      assert_safe_content_text: {
+        Args: { p_value: string }
+        Returns: undefined
+      }
       build_assignment_attempt_payload: {
         Args: { target_attempt_id: string }
         Returns: Json
@@ -2012,6 +2232,15 @@ export type Database = {
       }
       close_live_question: {
         Args: { p_expected_version: number; p_session_id: string }
+        Returns: Json
+      }
+      commit_content_import: {
+        Args: {
+          p_dry_run?: boolean
+          p_filename: string
+          p_request_id: string
+          p_rows: Json
+        }
         Returns: Json
       }
       complete_review_card: {
@@ -2063,6 +2292,10 @@ export type Database = {
       current_user_owns_classroom: {
         Args: { p_classroom_id: string }
         Returns: boolean
+      }
+      ensure_import_subtopic: {
+        Args: { p_chapter: string; p_section_label: string }
+        Returns: string
       }
       equip_blook: { Args: { blook_id: string }; Returns: Json }
       evaluate_achievements: {
@@ -2240,13 +2473,40 @@ export type Database = {
         Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
       }
+      publish_question: {
+        Args: { p_payload?: Json; p_question_id: string; p_request_id?: string }
+        Returns: Json
+      }
+      publish_review_card: {
+        Args: { p_card_id: string; p_payload?: Json; p_request_id?: string }
+        Returns: Json
+      }
       purchase_blook: { Args: { blook_id: string }; Returns: Json }
+      question_semantic_payload: {
+        Args: { p_question_id: string }
+        Returns: Json
+      }
       reconcile_wallet_cache: {
         Args: { target_user_id: string }
         Returns: number
       }
+      record_content_version: {
+        Args: {
+          p_actor: string
+          p_content_id: string
+          p_payload: Json
+          p_status: Database["public"]["Enums"]["content_status"]
+          p_type: Database["public"]["Enums"]["versioned_content_type"]
+          p_version: number
+        }
+        Returns: undefined
+      }
       request_question_hint: {
         Args: { p_hint_level: number; p_session_question_id: string }
+        Returns: Json
+      }
+      review_card_semantic_payload: {
+        Args: { p_card_id: string }
         Returns: Json
       }
       rotate_classroom_join_code: {
@@ -2286,12 +2546,115 @@ export type Database = {
         }
         Returns: Json
       }
+      teacher_answer_facts: {
+        Args: {
+          p_chapter_id: string
+          p_classroom_id: string
+          p_from: string
+          p_subtopic_id: string
+          p_to: string
+        }
+        Returns: {
+          answered_at: string
+          chapter_id: string
+          is_correct: boolean
+          prompt: string
+          question_id: string
+          session_id: string
+          stable_code: string
+          subtopic_id: string
+          user_id: string
+        }[]
+      }
+      teacher_assignment_summary: {
+        Args: { p_classroom_id: string; p_from?: string; p_to?: string }
+        Returns: {
+          assignment_id: string
+          attempts: number
+          completed: number
+          passed: number
+          status: string
+          targets: number
+          title: string
+        }[]
+      }
+      teacher_classroom_summary: {
+        Args: {
+          p_chapter_id?: string
+          p_classroom_id: string
+          p_from?: string
+          p_subtopic_id?: string
+          p_to?: string
+        }
+        Returns: {
+          attempts: number
+          average_accuracy: number
+          unique_students: number
+          worst_subtopic_code: string
+          worst_subtopic_title: string
+        }[]
+      }
+      teacher_live_session_report: {
+        Args: { p_classroom_id: string; p_from?: string; p_to?: string }
+        Returns: {
+          activity_title: string
+          answers: number
+          completed_at: string
+          correct_rate: number
+          participants: number
+          session_id: string
+          state: string
+        }[]
+      }
+      teacher_question_analysis: {
+        Args: {
+          p_chapter_id?: string
+          p_classroom_id: string
+          p_from?: string
+          p_subtopic_id?: string
+          p_to?: string
+        }
+        Returns: {
+          attempts: number
+          correct_rate: number
+          prompt: string
+          stable_code: string
+        }[]
+      }
+      teacher_subtopic_mastery: {
+        Args: {
+          p_chapter_id?: string
+          p_classroom_id: string
+          p_from?: string
+          p_subtopic_id?: string
+          p_to?: string
+        }
+        Returns: {
+          accuracy: number
+          answers: number
+          students: number
+          subtopic_code: string
+          subtopic_title: string
+        }[]
+      }
       update_assignment_status: {
         Args: {
           p_assignment_id: string
           p_expected_updated_at: string
           p_status: Database["public"]["Enums"]["assignment_status"]
         }
+        Returns: Json
+      }
+      upsert_external_activity: {
+        Args: { p_payload: Json; p_request_id: string }
+        Returns: Json
+      }
+      upsert_question_draft: {
+        Args: { p_payload: Json; p_request_id: string }
+        Returns: Json
+      }
+      upsert_review_card_draft: {
+        Args: { p_payload: Json; p_request_id: string }
         Returns: Json
       }
       validate_achievement_rule_parameters: {
@@ -2302,6 +2665,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      validate_import_question_row: { Args: { p_row: Json }; Returns: Json }
+      validate_import_review_card_row: { Args: { p_row: Json }; Returns: Json }
       validate_single_choice_options: {
         Args: { target_question_id: string }
         Returns: undefined
@@ -2340,6 +2705,7 @@ export type Database = {
       classroom_member_role: "student" | "teacher"
       classroom_member_status: "active" | "inactive"
       classroom_status: "active" | "archived"
+      content_import_status: "committed" | "failed"
       content_status: "draft" | "published" | "archived"
       economy_source_type:
         | "quiz_finalize"
@@ -2347,6 +2713,7 @@ export type Database = {
         | "achievement"
         | "assignment"
         | "live"
+      external_activity_status: "available" | "archived"
       live_participant_status: "active" | "left" | "removed"
       live_session_state:
         | "draft"
@@ -2356,11 +2723,13 @@ export type Database = {
         | "completed"
         | "cancelled"
       mistake_status: "open" | "resolved" | "reopened"
+      publication_event_type: "publish" | "archive"
       question_type: "single_choice"
       quiz_answer_status: "correct" | "incorrect" | "timeout"
       quiz_session_purpose: "practice" | "assignment" | "remediation"
       quiz_session_status: "in_progress" | "completed"
       remediation_result: "resolved" | "unresolved"
+      versioned_content_type: "question" | "review_card"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2526,6 +2895,7 @@ export const Constants = {
       classroom_member_role: ["student", "teacher"],
       classroom_member_status: ["active", "inactive"],
       classroom_status: ["active", "archived"],
+      content_import_status: ["committed", "failed"],
       content_status: ["draft", "published", "archived"],
       economy_source_type: [
         "quiz_finalize",
@@ -2534,6 +2904,7 @@ export const Constants = {
         "assignment",
         "live",
       ],
+      external_activity_status: ["available", "archived"],
       live_participant_status: ["active", "left", "removed"],
       live_session_state: [
         "draft",
@@ -2544,11 +2915,13 @@ export const Constants = {
         "cancelled",
       ],
       mistake_status: ["open", "resolved", "reopened"],
+      publication_event_type: ["publish", "archive"],
       question_type: ["single_choice"],
       quiz_answer_status: ["correct", "incorrect", "timeout"],
       quiz_session_purpose: ["practice", "assignment", "remediation"],
       quiz_session_status: ["in_progress", "completed"],
       remediation_result: ["resolved", "unresolved"],
+      versioned_content_type: ["question", "review_card"],
     },
   },
 } as const
