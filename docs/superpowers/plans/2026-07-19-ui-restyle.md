@@ -69,10 +69,10 @@
 
 **Steps:**
 
-- [ ] **Step 1:** 失敗測試（tokens.css 尚無）→ RED。
-- [ ] **Step 2:** `pnpm add @fontsource/noto-sans-tc lucide-react`；建 tokens.css 並接線。
-- [ ] **Step 3:** `pnpm test src/styles` GREEN + lint + typecheck；`pnpm build` exit 0。
-- [ ] **Step 4:** Commit `feat: add ggame design tokens and self-hosted font`。
+- [x] **Step 1:** 失敗測試（tokens.css 尚無）→ RED。
+- [x] **Step 2:** `pnpm add @fontsource/noto-sans-tc lucide-react`；建 tokens.css 並接線。
+- [x] **Step 3:** `pnpm test src/styles` GREEN + lint + typecheck；`pnpm build` exit 0。
+- [x] **Step 4:** Commit `feat: add ggame design tokens and self-hosted font`。
 
 ### Task 3: 元件庫（基礎組）
 

@@ -4,6 +4,12 @@ import { RouterProvider } from 'react-router-dom';
 import { RouteLoading } from './app/boundaries/route-loading';
 import { AppProviders } from './app/providers/app-providers';
 import { createAppRouter } from './app/router/create-app-router';
+// 自架 Noto Sans TC（spec/07：禁 Google Fonts CDN）
+import '@fontsource/noto-sans-tc/300.css';
+import '@fontsource/noto-sans-tc/400.css';
+import '@fontsource/noto-sans-tc/500.css';
+import '@fontsource/noto-sans-tc/700.css';
+import '@fontsource/noto-sans-tc/900.css';
 import './styles/tokens.css';
 import './styles/globals.css';
 

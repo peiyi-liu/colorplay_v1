@@ -290,10 +290,10 @@ a {
   min-height: 52px;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--color-primary);
+  border: 2px solid var(--button-primary-bg);
   border-radius: var(--radius-control);
-  background: var(--color-primary);
-  color: var(--color-surface);
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
   font-weight: 800;
   padding: var(--space-3) var(--space-6);
   text-align: center;
@@ -949,4 +949,21 @@ a {
 [data-reduced-motion='true'] * {
   animation-duration: 0.001s !important;
   transition-duration: 0.001s !important;
+}
+
+/* GGAME 卡片進場動效（reduced-motion 由上方全域規則抑制） */
+.animate-fade-in {
+  animation: ggame-fade-in 0.3s ease-out forwards;
+}
+
+@keyframes ggame-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
