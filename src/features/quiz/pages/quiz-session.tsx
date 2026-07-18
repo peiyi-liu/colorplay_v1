@@ -24,6 +24,8 @@ import {
   type QuizFeedbackResult,
 } from '../components/feedback-card';
 import { QuestionCard } from '../components/question-card';
+import { HintPanel } from '../components/hint-panel';
+import type { LearningRepository } from '../../learning/api/learning-repository';
 
 const quizSessionQueryKey = (sessionId: string) =>
   ['quiz', 'session', sessionId] as const;
@@ -72,8 +74,12 @@ const feedbackFromQuestion = (
 };
 
 export function QuizSessionPage({
+  learningRepository,
   repository: suppliedRepository,
-}: Readonly<{ repository?: QuizRepository }>) {
+}: Readonly<{
+  learningRepository?: LearningRepository;
+  repository?: QuizRepository;
+}>) {
   const { sessionId: routeSessionId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -352,6 +358,13 @@ export function QuizSessionPage({
         </div>
       </header>
 
+      {session.gameRulesVersion === '2026-07-progress-1' ? (
+        <p role="status">
+          補救練習模式：答對可解決錯題並回復精熟；不發 Token，XP 以 20%
+          計，原始成績不變。
+        </p>
+      ) : null}
+
       <QuestionCard
         isPending={submitMutation.isPending}
         locked={feedbackResult !== undefined || actionError?.kind === 'submit'}
@@ -366,6 +379,13 @@ export function QuizSessionPage({
         selectedOptionId={
           feedbackResult ? feedbackResult.selectedOptionId : selectedOptionId
         }
+      />
+
+      <HintPanel
+        key={displayedQuestion.sessionQuestionId}
+        locked={feedbackResult !== undefined}
+        sessionQuestionId={displayedQuestion.sessionQuestionId}
+        {...(learningRepository ? { repository: learningRepository } : {})}
       />
 
       {actionError ? (

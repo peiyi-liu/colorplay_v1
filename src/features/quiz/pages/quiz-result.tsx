@@ -106,7 +106,15 @@ export function QuizResultPage({
           獎勵規則：{session.gameRulesVersion}（
           {String(session.rewardRatePercent)}%）
         </p>
-        {session.rewardRatePercent === 20 ? (
+        {session.gameRulesVersion === '2026-07-progress-1' ? (
+          <div role="status">
+            <p>
+              補救練習完成：原始成績不變，Token +0，XP 以 20%
+              計；答對的錯題已解決。
+            </p>
+            <Link to="/app/mistakes">返回我的錯題</Link>
+          </div>
+        ) : session.rewardRatePercent === 20 ? (
           <p className="quiz-result__decay">
             今日同一挑戰已完成 3 次，本次 XP 為 20%，Token 為 0。
           </p>

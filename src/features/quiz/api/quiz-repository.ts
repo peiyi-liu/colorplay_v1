@@ -31,7 +31,7 @@ const questionSchema = z.object({
   version: z.number().int().positive(),
 });
 const rewardRateSchema = z.union([z.literal(20), z.literal(100)]);
-const gameRulesVersionSchema = z.literal('2026-07-mvp-1');
+const gameRulesVersionSchema = z.enum(['2026-07-mvp-1', '2026-07-progress-1']);
 const sessionSchema = z.strictObject({
   answered_count: z.number().int().nonnegative(),
   chapter_title: z.string().min(1),

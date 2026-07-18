@@ -16,6 +16,7 @@ import {
   type LearningProgressRow,
   type LearningRepository,
   type MistakeView,
+  type QuestionHintView,
   type ReviewCompletionRow,
 } from '../api/learning-repository';
 
@@ -132,6 +133,20 @@ export function useStartRemediation(
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: learningKeys.mistakes });
     },
+    retry: false,
+  });
+}
+
+export function useRequestHint(
+  repository?: LearningRepository,
+): UseMutationResult<
+  QuestionHintView,
+  LearningError,
+  { hintLevel: number; sessionQuestionId: string }
+> {
+  const resolved = resolveRepository(repository);
+  return useMutation({
+    mutationFn: (input) => resolved.requestHint(input),
     retry: false,
   });
 }
