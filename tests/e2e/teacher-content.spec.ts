@@ -426,13 +426,13 @@ test('Teacher Content phase gate', async ({
   await expect(studentPage).toHaveURL(/\/unauthorized$/u);
 
   // --- Dashboard and analytics: numbers equal the DB-derived facts ---
-  const attempts = questionTotal;
-  const accuracy = ((attempts - 1) * 100) / attempts;
+  // One completed challenge by one student: 7 of the 8 answers correct.
+  const accuracy = ((questionTotal - 1) * 100) / questionTotal;
   const accuracyText = `${accuracy.toFixed(1)}%`;
   await teacherPage.goto('/teacher');
   await expect(teacherPage.getByLabel('選擇班級')).toBeVisible();
   const summaryValues = teacherPage.locator('.teacher-summary-cards dd');
-  await expect(summaryValues.nth(0)).toHaveText(String(attempts));
+  await expect(summaryValues.nth(0)).toHaveText('1');
   await expect(summaryValues.nth(1)).toHaveText('1');
   await expect(summaryValues.nth(2)).toHaveText(accuracyText);
   await expect(

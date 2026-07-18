@@ -21,7 +21,7 @@ function SummaryCards({
     <>
       <dl className="teacher-summary-cards">
         <div>
-          <dt>作答次數</dt>
+          <dt>完成挑戰次數</dt>
           <dd>{summary ? String(summary.attempts) : EM_DASH}</dd>
         </div>
         <div>
