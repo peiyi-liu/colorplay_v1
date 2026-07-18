@@ -1,12 +1,12 @@
 {
   "package_name": "ColorPlay React + Supabase Development Specification Package",
   "package_version": "2.0.0",
-  "generated_at": "2026-07-17T07:00:48.521Z",
-  "markdown_files": 28,
+  "generated_at": "2026-07-18T15:57:24.602Z",
+  "markdown_files": 29,
   "acceptance_criteria": 122,
   "unique_acceptance_criteria": 122,
   "ui_acceptance_criteria": 15,
-  "total_bytes_before_manifest": 301699,
+  "total_bytes_before_manifest": 316955,
   "real_device_required_criteria": [
     "AC-UI-010",
     "AC-UI-012"
@@ -88,6 +88,11 @@
       "size_bytes": 30251
     },
     {
+      "path": "docs/superpowers/specs/2026-07-18-ui-restyle-design.md",
+      "sha256": "f50f47624f432313b48fb3158fc260e9bdedd99d11274d684e302037fd9e043f",
+      "size_bytes": 10464
+    },
+    {
       "path": "spec/00-project-charter.md",
       "sha256": "1d082c275ba7a6cce3473c7f8c7b8f09ac6db1d53f9e3be6a92072a8d217d3b2",
       "size_bytes": 5051
@@ -114,13 +119,13 @@
     },
     {
       "path": "spec/05-game-mechanics.md",
-      "sha256": "9406b7878db821a13d35ca1a0bb74e8ef6cd41992458ed5322772983c61adf7b",
-      "size_bytes": 11666
+      "sha256": "5bb0570b808dbbb47a812fe139b0a787c22c0c485fb264d925237bb90281bb8c",
+      "size_bytes": 14759
     },
     {
       "path": "spec/06-content-and-question-bank.md",
-      "sha256": "8ea35138058158af14661b337711035363eef15e4c2c25602534346c3664b8a3",
-      "size_bytes": 7114
+      "sha256": "6d52a6023645539438534854879d3ded5741661ee29095e58ce323bf520d9dbc",
+      "size_bytes": 8813
     },
     {
       "path": "spec/07-ui-visual-system.md",
