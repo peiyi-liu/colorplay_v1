@@ -35,8 +35,8 @@
 
 ### Task 4 — Review completion command and progress storage (M)
 
-- [ ] **Step 1:** Failing pgTAP `021_review_progress`: `complete_review_card(p_review_card_id, p_request_id)` — auth required, published-only, explicit completion row (user, card, version, `2026-07-progress-1`), idempotent replay per (user, card, version), unpublished/foreign card → generic `REVIEW_CARD_NOT_FOUND`; version bump with `requires_recompletion=true` requires a new completion while `false` keeps completion; completion projection returns per-subtopic completed/current counts with null (—) when no cards.
-- [ ] **Step 2:** RED. **Step 3:** migration `20260718000200_review_progress.sql`. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add trusted review completion`.
+- [x] **Step 1:** Failing pgTAP `021_review_progress`: `complete_review_card(p_review_card_id, p_request_id)` — auth required, published-only, explicit completion row (user, card, version, `2026-07-progress-1`), idempotent replay per (user, card, version), unpublished/foreign card → generic `REVIEW_CARD_NOT_FOUND`; version bump with `requires_recompletion=true` requires a new completion while `false` keeps completion; completion projection returns per-subtopic completed/current counts with null (—) when no cards.
+- [x] **Step 2:** RED. **Step 3:** migration `20260718000200_review_progress.sql`. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add trusted review completion`.
 
 ### Task 5 — Question hints (M)
 
