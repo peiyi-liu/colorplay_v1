@@ -132,29 +132,17 @@ describe('teacher content repository', () => {
     }
   });
 
-  it('lists questions with options and explanation for the workspace', async () => {
-    const order = vi.fn().mockResolvedValue({
+  it('lists questions through the teacher-only rpc', async () => {
+    const rpc = vi.fn().mockResolvedValue({
       data: [
         {
           explanation: '因為互補色相對。',
-          id: '31500000-0000-0000-0000-000000000001',
-          prompt: '色相環上與紅色相對的顏色是？',
-          question_options: [
-            {
-              id: '31500000-0000-0000-0000-000000000011',
-              is_correct: false,
-              option_key: 'B',
-              option_text: '橙色',
-              sort_order: 2,
-            },
-            {
-              id: '31500000-0000-0000-0000-000000000010',
-              is_correct: true,
-              option_key: 'A',
-              option_text: '綠色',
-              sort_order: 1,
-            },
+          options: [
+            { is_correct: true, key: 'A', text: '綠色' },
+            { is_correct: false, key: 'B', text: '橙色' },
           ],
+          prompt: '色相環上與紅色相對的顏色是？',
+          question_id: '31500000-0000-0000-0000-000000000001',
           stable_code: '3-1-01',
           status: 'draft',
           subtopic_id: '23000000-0000-0000-0000-000000000001',
@@ -163,14 +151,11 @@ describe('teacher content repository', () => {
       ],
       error: null,
     });
-    const select = vi.fn(() => ({ order }));
-    const from = vi.fn(() => ({ select }));
-    const repository = createTeacherContentRepository({
-      from,
-    } as unknown as SupabaseClient<Database>);
+    const repository = createTeacherContentRepository(rpcClient(rpc));
 
     const questions = await repository.listQuestions();
 
+    expect(rpc).toHaveBeenCalledWith('teacher_list_questions');
     expect(questions[0]).toMatchObject({
       explanation: '因為互補色相對。',
       options: [

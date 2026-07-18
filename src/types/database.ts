@@ -2594,6 +2594,19 @@ export type Database = {
           worst_subtopic_title: string
         }[]
       }
+      teacher_list_questions: {
+        Args: never
+        Returns: {
+          explanation: string
+          options: Json
+          prompt: string
+          question_id: string
+          stable_code: string
+          status: Database["public"]["Enums"]["content_status"]
+          subtopic_id: string
+          version: number
+        }[]
+      }
       teacher_live_session_report: {
         Args: { p_classroom_id: string; p_from?: string; p_to?: string }
         Returns: {

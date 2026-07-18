@@ -1,6 +1,6 @@
 begin;
 
-select plan(7);
+select plan(9);
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -96,6 +96,20 @@ select is(
   'teachers read the media of a draft review card'
 );
 
+-- The questions table hides explanation/is_correct from api roles by
+-- column grants, so the workspace listing goes through a teacher-only RPC.
+select is(
+  (
+    select count(*)::integer
+    from public.teacher_list_questions() listing,
+      jsonb_array_elements(listing.options) as entry(value)
+    where listing.stable_code = '9-9-99'
+      and (entry.value ->> 'is_correct')::boolean
+  ),
+  1,
+  'teachers read draft options with the correct flag through the rpc'
+);
+
 -- PostgREST commits as the api role, so the deferred option triggers fire
 -- as `authenticated`; force them here to prove that path stays executable.
 select lives_ok(
@@ -151,6 +165,12 @@ select is(
   ),
   0,
   'students still cannot see draft review card media'
+);
+select throws_ok(
+  'select * from public.teacher_list_questions()',
+  'P0001',
+  'CONTENT_TEACHER_ONLY',
+  'students cannot read the teacher question listing'
 );
 
 reset role;

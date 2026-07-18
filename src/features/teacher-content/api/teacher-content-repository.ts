@@ -72,17 +72,15 @@ const parseWith = <Output>(
 
 const questionRowSchema = z.object({
   explanation: z.string(),
-  id: uuidString,
-  prompt: z.string(),
-  question_options: z.array(
+  options: z.array(
     z.object({
-      id: uuidString,
       is_correct: z.boolean(),
-      option_key: z.string(),
-      option_text: z.string(),
-      sort_order: z.number().int(),
+      key: z.string(),
+      text: z.string(),
     }),
   ),
+  prompt: z.string(),
+  question_id: uuidString,
   stable_code: z.string(),
   status: z.enum(['draft', 'published', 'archived']),
   subtopic_id: uuidString,
@@ -535,26 +533,17 @@ export function createTeacherContentRepository(
     },
 
     async listQuestions() {
-      const { data, error } = await client
-        .from('questions')
-        .select(
-          'id, stable_code, prompt, explanation, status, version, ' +
-            'subtopic_id, ' +
-            'question_options (id, option_key, option_text, is_correct, sort_order)',
-        )
-        .order('stable_code');
+      const { data, error } = await client.rpc('teacher_list_questions');
       if (error) throw toError(error.message);
       return parseWith(z.array(questionRowSchema), data).map((row) => ({
         explanation: row.explanation,
-        options: [...row.question_options]
-          .sort((left, right) => left.sort_order - right.sort_order)
-          .map((option) => ({
-            isCorrect: option.is_correct,
-            key: option.option_key,
-            text: option.option_text,
-          })),
+        options: row.options.map((option) => ({
+          isCorrect: option.is_correct,
+          key: option.key,
+          text: option.text,
+        })),
         prompt: row.prompt,
-        questionId: row.id,
+        questionId: row.question_id,
         stableCode: row.stable_code,
         status: row.status,
         subtopicId: row.subtopic_id,
