@@ -89,11 +89,15 @@ run_logged 'pnpm lint' "$phase_root/reports/lint.log" pnpm lint
 run_logged 'pnpm typecheck' "$phase_root/reports/typecheck.log" pnpm typecheck
 run_logged 'pnpm test' "$phase_root/reports/unit.log" pnpm test
 run_logged 'pnpm build' "$phase_root/reports/build.log" pnpm build
-run_logged 'pnpm test:db' "$phase_root/reports/database-integration.log" pnpm test:db
+# Reset before the db tests: earlier browser runs commit real content
+# imports, and the pgTAP suite asserts against the seeded curriculum. The
+# rollback-only pgTAP run plus the idempotent auth seed keep this single
+# reset valid for the browser gate too.
 run_logged \
   'pnpm exec supabase db reset --local' \
   "$phase_root/reports/e2e-database-reset.log" \
   pnpm exec supabase db reset --local
+run_logged 'pnpm test:db' "$phase_root/reports/database-integration.log" pnpm test:db
 
 source scripts/supabase/load-local-environment.sh
 load_local_supabase_environment \

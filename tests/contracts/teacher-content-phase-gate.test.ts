@@ -42,14 +42,16 @@ describe('teacher content phase gate contract', () => {
     expect(runner).toContain('unset SUPABASE_SERVICE_ROLE_KEY');
     expect(runner).toContain("--grep='Teacher Content phase gate'");
     expect(runner).toContain('finalize-teacher-content.mjs');
+    // The reset precedes the db tests: browser runs commit real content
+    // imports, and pgTAP asserts against the seeded curriculum.
     const order = [
       'pnpm format:check',
       'pnpm lint',
       'pnpm typecheck',
       'pnpm test',
       'pnpm build',
-      'pnpm test:db',
       'supabase db reset --local',
+      'pnpm test:db',
       'wait-for-postgrest.sh',
       'seed-auth.ts',
       '--headed',
