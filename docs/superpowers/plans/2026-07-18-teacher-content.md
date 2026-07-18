@@ -28,8 +28,8 @@
 
 ### Task 3 — Teacher content commands (L)
 
-- [ ] **Step 1:** Failing pgTAP `027_teacher_content`: `upsert_question_draft`, `publish_question`, `archive_question`, `upsert_review_card_draft`, `publish_review_card`, `archive_review_card` — teacher-role only (students denied with generic errors), drafts invisible to students (existing RLS regression), publish bumps version + snapshots into `content_versions` + appends an event, editing the correct option of a published question creates a new version while an in-flight session still finalizes and displays against its frozen version (drive a session across the bump), archive hides from students without touching history, script/handler payloads rejected with `CONTENT_UNSAFE_TEXT`.
-- [ ] **Step 2:** RED. **Step 3:** migration `20260719000200_teacher_content_commands.sql`. **Step 4:** GREEN + 003/014/020–025 regression + lint + typecheck. **Step 5:** Commit `feat: add teacher content commands`.
+- [x] **Step 1:** Failing pgTAP `027_teacher_content`: `upsert_question_draft`, `publish_question`, `archive_question`, `upsert_review_card_draft`, `publish_review_card`, `archive_review_card` — teacher-role only (students denied with generic errors), drafts invisible to students (existing RLS regression), publish bumps version + snapshots into `content_versions` + appends an event, editing the correct option of a published question creates a new version while an in-flight session still finalizes and displays against its frozen version (drive a session across the bump), archive hides from students without touching history, script/handler payloads rejected with `CONTENT_UNSAFE_TEXT`.
+- [x] **Step 2:** RED. **Step 3:** migration `20260719000200_teacher_content_commands.sql`. **Step 4:** GREEN + 003/014/020–025 regression + lint + typecheck. **Step 5:** Commit `feat: add teacher content commands`.
 
 ### Task 4 — Shared validation rules and XLSX codec (M)
 
