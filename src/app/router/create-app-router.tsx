@@ -5,7 +5,7 @@ import { LoginPage } from '../../features/auth/pages/login-page';
 import { JoinClassroomRoute } from '../../features/classrooms/pages/join-classroom-route';
 import { StudentClassroomsPage } from '../../features/classrooms/pages/student-classrooms-page';
 import { ShopPage } from '../../features/inventory/pages/shop-page';
-import { ChapterSelectPage } from '../../features/learning/pages/chapter-select';
+import { LobbyPage } from '../../features/learning/pages/lobby-page';
 import { ProfileFoundationPage } from '../../features/profile/pages/profile-foundation-page';
 import { QuizResultPage } from '../../features/quiz/pages/quiz-result';
 import { QuizSessionPage } from '../../features/quiz/pages/quiz-session';
@@ -46,7 +46,7 @@ export function createAppRouter() {
             },
             {
               path: '/app',
-              element: <ChapterSelectPage />,
+              element: <LobbyPage />,
             },
             {
               path: '/app/chapters/:chapterId',

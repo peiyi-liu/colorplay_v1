@@ -139,11 +139,13 @@
 
 **內容:** 頭貼卡（裝備 Blook + `--amber-avatar` 框）、數據列（XP/排名/PR；未入班隱藏排名與 PR）、6 章節網格（已發佈黃框/未發佈灰鎖）、入口卡片列（錯題中心真實計數、每日目標、作業、成就、排行榜、複習卡）、Live 廣播 banner（Realtime 既有訂閱）。
 
+**執行備註：** 排行榜 payload 無班級總人數（selfEntry+topEntries 而已），學生端無法誠實計算 PR 百分位；`toPercentile` util 已實作＋測試，UI 僅顯示 XP／全體排名／代幣，PR 格留待後端補人數欄位再啟用（gate 報告列為保留項）。`chapter-select` 頁由 `lobby-page` 取代。
+
 **Steps:**
 
-- [ ] **Step 1:** 失敗 RTL（含未入班隱藏、鎖卡不可點）→ RED。
-- [ ] **Step 2:** 實作 → GREEN + lint + typecheck。
-- [ ] **Step 3:** Commit `feat: restyle lobby as ggame hub`。
+- [x] **Step 1:** 失敗 RTL（含未入班隱藏、鎖卡不可點）→ RED。
+- [x] **Step 2:** 實作 → GREEN + lint + typecheck。
+- [x] **Step 3:** Commit `feat: restyle lobby as ggame hub`。
 
 ### Task 7: 任務實戰（精熟地圖流）
 
