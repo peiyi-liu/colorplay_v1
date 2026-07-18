@@ -252,7 +252,19 @@ mastery = coverage * accuracy / 100
 - 同 participant/question 只有一筆 authoritative answer；idempotency key 重送回原結果。
 - `finalize_live_session` 原子計 score/rank/reward/achievement/assignment/progress/audit；rollback 不留部分結果。
 - Rank 只顯示 privacy-safe display name、Blook、score/rank；不顯示 Email、學號或 raw answers。
-- Live Core 使用同一 XP/Token ledger source contract；Live 不計入 mastery。Phase 7 另以核准規格擴充 team mode、pause/resume 與 capacity。
+- Live Core 使用同一 XP/Token ledger source contract；Live 不計入 mastery。Phase 7 擴充規則見下節「ColorPlay Live Advanced（2026-07-live-2 擴充）」。
 - Live 獎勵規則版本 `2026-07-live-1`：每題答對且 server response ≤ 5,000 ms 得 XP 75／Token 25，逾 5,000 ms 答對得 XP 50／Token 15，答錯或逾時 0／0。獎勵只由 `finalize_live_session` 寫入：每位 participant 一筆 XP row 與一筆 Token row，`source_type = 'live'`、`source_id = live_session_id`。
 - Live session 不消耗每日 practice 前三次 full-reward 額度，也不進入 mastery 的分母或分子。
 - Optional Kahoot URL 是 external compatibility，不使用 official API，不把 external result 當 ColorPlay Score／XP／Token。
+
+### ColorPlay Live Advanced（2026-07-live-2 擴充）
+
+- **State machine 擴充**：`question_open -> paused -> question_open`。`pause_live_session` 只有 owning host 可呼叫、只允許在 `question_open`；server 記錄剩餘時間（毫秒）並凍結 deadline。`resume_live_session` 以 `now() + 剩餘時間` 重算 `deadline_at` 後回到 `question_open`。兩個轉換各 bump `state_version` 一次並 broadcast；stale `state_version` 的重複 pause/resume 回 conflict。`paused` 期間 `submit_live_answer` 一律拒絕（`LIVE_QUESTION_NOT_OPEN` 族系錯誤），refresh/reconnect 由 `get_live_session_state` 還原 paused 畫面。
+- **Team mode**：session 建立時決定 `mode`（`individual` 預設／`team`）與 `team_count`（2–4）。Server 於 join 時以「人數最少的隊伍優先、平手取編號最小」指派 `team_number`；client 不能選隊。Team total = 該隊 active participants 的 authoritative score 總和，只出現在 feedback／completed payload 與報表。個人 score/rank/XP/Token 規則與 Live Core 完全相同；team 不產生額外 ledger row。
+- **Real-time distribution**：`question_open` 期間僅 host 可讀每選項作答數（host-only trusted read，隨 answered-count broadcast 更新）；學生仍到 `question_feedback` 才看到分佈與正解。
+- **Reusable／scheduled activities**：activity 可重複開 session。`live_activities.scheduled_for`（nullable UTC）由 host-only 指令設定／清除；教師 Live 頁依時間列出即將進行的活動。排程不會自動開場——一律由 host 手動開始。
+- **Session 報表**：`teacher_live_session_detail` 僅 host 可讀：每題 position／prompt／作答數／答對數／正確率／平均反應毫秒，加上最終排名（只含 privacy-safe display name、score、rank、team）。禁止 Email／學號／raw answers。
+- **Streak**：`live_participants.current_streak` 由 server 維護——本場連續答對次數；答錯或逾時歸零。answer receipt 回傳 streak 供 UI 顯示；streak 不影響分數或獎勵。
+- **Reduced motion**：慶祝／連擊動畫必須同時尊重 OS `prefers-reduced-motion` 與 server-backed profile 設定 `profiles.reduced_motion`（trusted profile 更新路徑；不得使用 localStorage）。啟用時以根屬性 `data-reduced-motion` 關閉動畫，功能與資訊不減損。
+- **Capacity／latency（AC-LIVE-012 profile）**：1 host＋2 active students＋1 outsider；至少 30 個 answer sample 與 2 個 finalize sample，cold start 分開記錄。門檻：answer p95 ≤ 800 ms、finalize p95 ≤ 1,000 ms、authoritative answers 無遺失／重複、outsider access = 0。證據為 measured `latency-profile.json`，由 gate finalizer 強制。
+- 一切 first-party：不複製 Kahoot branding/assets、不依賴 official API。
