@@ -24,6 +24,7 @@ const stateNameSchema = z.enum([
   'lobby',
   'question_open',
   'question_feedback',
+  'paused',
   'completed',
   'cancelled',
 ]);
@@ -54,6 +55,8 @@ const sessionReceiptSchema = z.strictObject({
     .string()
     .regex(/^[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/u),
   join_code_version: positiveInteger,
+  mode: z.enum(['individual', 'team']),
+  team_count: z.number().int().min(2).max(4).nullable(),
 });
 
 const rotateSchema = z.strictObject({

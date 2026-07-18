@@ -3,6 +3,7 @@ export type LiveSessionStateName =
   | 'lobby'
   | 'question_open'
   | 'question_feedback'
+  | 'paused'
   | 'completed'
   | 'cancelled';
 

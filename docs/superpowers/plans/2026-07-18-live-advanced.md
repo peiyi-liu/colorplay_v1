@@ -19,13 +19,13 @@
 
 ### Task 1 — Pin the approved Live Advanced rules (S)
 
-- [ ] **Step 1:** Extend spec/05 §Live with the pinned rules above (states incl. `paused`, team assignment/scoring, streak reset semantics, distribution visibility windows, scheduling semantics, report privacy, latency budgets and sample profile). No other spec change.
-- [ ] **Step 2:** Commit `docs: pin live advanced rules`.
+- [x] **Step 1:** Extend spec/05 §Live with the pinned rules above (states incl. `paused`, team assignment/scoring, streak reset semantics, distribution visibility windows, scheduling semantics, report privacy, latency budgets and sample profile). No other spec change.
+- [x] **Step 2:** Commit `docs: pin live advanced rules`.
 
 ### Task 2 — Pause/resume (M)
 
-- [ ] **Step 1:** Failing pgTAP `032_live_pause`: host-only pause from `question_open` (students and teacher B denied; wrong-state pause denied), remaining time frozen (deadline math asserted around the pause window), answers rejected while `paused`, resume restores a future deadline and `question_open`, both transitions bump `state_version` once and broadcast, duplicate pause/resume via stale state → conflict error, refresh recovery payload carries the paused state.
-- [ ] **Step 2:** RED. **Step 3:** migration `20260720000100_live_pause.sql`. **Step 4:** GREEN + 016–019 regression + lint + typecheck. **Step 5:** Commit `feat: add live pause and resume`.
+- [x] **Step 1:** Failing pgTAP `032_live_pause`: host-only pause from `question_open` (students and teacher B denied; wrong-state pause denied), remaining time frozen (deadline math asserted around the pause window), answers rejected while `paused`, resume restores a future deadline and `question_open`, both transitions bump `state_version` once and broadcast, duplicate pause/resume via stale state → conflict error, refresh recovery payload carries the paused state.
+- [x] **Step 2:** RED. **Step 3:** migration `20260720000100_live_pause.sql`. **Step 4:** GREEN + 016–019 regression + lint + typecheck. **Step 5:** Commit `feat: add live pause and resume`.
 
 ### Task 3 — Team mode (M)
 
