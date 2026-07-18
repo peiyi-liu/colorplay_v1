@@ -92,7 +92,13 @@ test('Live Advanced phase gate', async ({
     page: Page,
     participant: string,
     answerCorrect: boolean,
+    position: number,
   ) => {
+    // Broadcasts race the refetch: wait for the NEW round to land so a stale
+    // click never re-answers the previous question.
+    await expect(
+      page.getByText(`第 ${String(position)} / ${String(QUESTION_COUNT)} 題`),
+    ).toBeVisible();
     const prompt = await page.locator('.question-card legend').innerText();
     const correctText = GENERATED_CORRECT_ANSWERS.get(prompt);
     if (!correctText) throw new Error('LIVE_ADVANCED_ANSWER_MISSING');
@@ -190,7 +196,7 @@ test('Live Advanced phase gate', async ({
   await teacherPage.getByRole('button', { name: '開始第一題' }).click();
 
   // --- Round 1: pause mid-question, refresh both roles, resume ---
-  await answerCurrent(studentAPage, 'A', true);
+  await answerCurrent(studentAPage, 'A', true, 1);
   await teacherPage.getByRole('button', { name: '暫停' }).click();
   await expect(teacherPage.getByText('已暫停')).toBeVisible();
   await expect(studentAPage.getByText('暫停中')).toBeVisible();
@@ -200,7 +206,7 @@ test('Live Advanced phase gate', async ({
   await expect(studentBPage.getByText('暫停中')).toBeVisible();
   await teacherPage.getByRole('button', { name: '繼續作答' }).click();
   await expect(studentBPage.locator('.question-card legend')).toBeVisible();
-  await answerCurrent(studentBPage, 'B', true);
+  await answerCurrent(studentBPage, 'B', true, 1);
 
   await expect(
     teacherPage.getByText('即時作答分布（僅主持人可見）'),
@@ -213,11 +219,11 @@ test('Live Advanced phase gate', async ({
   // --- Rounds 2..10: A stays correct (streak), B misses round 2 ---
   for (let position = 2; position <= QUESTION_COUNT; position += 1) {
     await expect(studentAPage.locator('.question-card legend')).toBeVisible();
-    await answerCurrent(studentAPage, 'A', true);
+    await answerCurrent(studentAPage, 'A', true, position);
     if (position === 2) {
       await expect(studentAPage.getByText('🔥 連擊 x2！')).toBeVisible();
     }
-    await answerCurrent(studentBPage, 'B', position !== 2);
+    await answerCurrent(studentBPage, 'B', position !== 2, position);
     await hostCloseAndMaybeAdvance(position);
     if (position === 2) {
       await expect(
@@ -300,8 +306,8 @@ test('Live Advanced phase gate', async ({
 
   for (let position = 1; position <= QUESTION_COUNT; position += 1) {
     await expect(studentAPage.locator('.question-card legend')).toBeVisible();
-    await answerCurrent(studentAPage, 'A2', true);
-    await answerCurrent(studentBPage, 'B2', true);
+    await answerCurrent(studentAPage, 'A2', true, position);
+    await answerCurrent(studentBPage, 'B2', true, position);
     await hostCloseAndMaybeAdvance(position);
   }
   finalizeStarted = Date.now();
