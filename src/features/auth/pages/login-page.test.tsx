@@ -206,6 +206,33 @@ describe('LoginPage', () => {
     expect(router.state.historyAction).toBe('REPLACE');
   });
 
+  it('routes a teacher-portal login to the teacher workspace', async () => {
+    const user = userEvent.setup();
+    const signIn = vi.fn(() => Promise.resolve());
+    const router = createMemoryRouter(
+      [
+        { element: <LoginPage />, path: '/login' },
+        { element: <h1>教師工作區</h1>, path: '/teacher' },
+      ],
+      { initialEntries: ['/login'] },
+    );
+    render(
+      <AuthContext.Provider value={createAuthValue(signIn)}>
+        <RouterProvider router={router} />
+      </AuthContext.Provider>,
+    );
+
+    await user.click(screen.getByRole('radio', { name: '教師' }));
+    expect(screen.getByText('教師入口')).toBeVisible();
+    await fillValidCredentials(user);
+    await user.click(screen.getByRole('button', { name: '登入' }));
+
+    expect(
+      await screen.findByRole('heading', { name: '教師工作區' }),
+    ).toBeVisible();
+    expect(router.state.location.pathname).toBe('/teacher');
+  });
+
   it.each([
     ['protocol-relative', '//malicious.example'],
     ['backslash-normalized', '/\\malicious.example'],

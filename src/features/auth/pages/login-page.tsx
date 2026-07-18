@@ -14,6 +14,7 @@ const safeErrorMessages = {
 } as const satisfies Readonly<Record<AuthErrorCode, string>>;
 
 const fallbackDestination = { hash: '', pathname: '/app', search: '' };
+const teacherDestination = { hash: '', pathname: '/teacher', search: '' };
 
 const hasUnsafePathnameCharacter = (pathname: string) =>
   pathname.includes('\\') ||
@@ -25,8 +26,11 @@ const hasUnsafePathnameCharacter = (pathname: string) =>
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const readDestination = (state: unknown) => {
-  if (!isRecord(state) || !isRecord(state.from)) return fallbackDestination;
+const readDestination = (
+  state: unknown,
+  portalFallback: typeof fallbackDestination,
+) => {
+  if (!isRecord(state) || !isRecord(state.from)) return portalFallback;
 
   const { hash, pathname, search } = state.from;
   if (
@@ -56,6 +60,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const pendingSubmission = useRef(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [portal, setPortal] = useState<'student' | 'teacher'>('student');
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -67,11 +72,41 @@ export function LoginPage() {
 
   return (
     <section className="route-panel">
-      <p className="route-panel__eyebrow">學生入口</p>
+      <p className="route-panel__eyebrow">
+        {portal === 'teacher' ? '教師入口' : '學生入口'}
+      </p>
       <h1>登入</h1>
       <p className="route-panel__message">
-        使用個人 Email 登入，繼續你的色彩原理學習進度。
+        {portal === 'teacher'
+          ? '使用教師 Email 登入，進入教師工作區管理班級與課程。'
+          : '使用個人 Email 登入，繼續你的色彩原理學習進度。'}
       </p>
+
+      <fieldset className="login-form__portal">
+        <legend>登入身分</legend>
+        <label>
+          <input
+            checked={portal === 'student'}
+            name="login-portal"
+            onChange={() => {
+              setPortal('student');
+            }}
+            type="radio"
+          />
+          學生
+        </label>
+        <label>
+          <input
+            checked={portal === 'teacher'}
+            name="login-portal"
+            onChange={() => {
+              setPortal('teacher');
+            }}
+            type="radio"
+          />
+          教師
+        </label>
+      </fieldset>
 
       <form
         className="login-form"
@@ -84,9 +119,15 @@ export function LoginPage() {
             setSubmitError(null);
             try {
               await auth.signIn(values);
-              await navigate(readDestination(location.state), {
-                replace: true,
-              });
+              await navigate(
+                readDestination(
+                  location.state,
+                  portal === 'teacher'
+                    ? teacherDestination
+                    : fallbackDestination,
+                ),
+                { replace: true },
+              );
             } catch (error) {
               setSubmitError(messageForError(error));
             } finally {

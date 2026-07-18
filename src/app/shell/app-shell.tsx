@@ -45,7 +45,11 @@ export function AppShell() {
       </a>
       <header className="app-header">
         <div className="app-header__content">
-          <Link className="brand" to="/" aria-label="ColorPlay 首頁">
+          <Link
+            className="brand"
+            to={isAuthenticatedProfile ? '/app' : '/'}
+            aria-label="ColorPlay 首頁"
+          >
             <span className="brand__mark" aria-hidden="true" />
             <span>ColorPlay</span>
           </Link>

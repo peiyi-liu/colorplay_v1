@@ -93,9 +93,10 @@ describe('AppShell', () => {
       </MemoryRouter>,
     );
 
+    // 登入後點擊品牌 logo 回到章節挑戰主畫面。
     expect(
       screen.getByRole('link', { name: 'ColorPlay 首頁' }),
-    ).toHaveAttribute('href', '/');
+    ).toHaveAttribute('href', '/app');
     expect(document.querySelectorAll('[data-acceptance-target]')).toHaveLength(
       0,
     );
