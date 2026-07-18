@@ -352,6 +352,11 @@ test('Teacher Content phase gate', async ({
   await studentPage.goto(`/join/${joinCode}`);
   await studentPage.getByRole('button', { name: '加入班級' }).click();
   await expect(studentPage).toHaveURL(/\/app\/leaderboard\//u);
+  // Let the leaderboard and inventory queries settle before navigating away,
+  // so browser health never records aborted requests.
+  await expect(
+    studentPage.getByRole('heading', { name: `${CLASSROOM_NAME}排行榜` }),
+  ).toBeVisible();
 
   await studentPage.goto('/app');
   await expect(
