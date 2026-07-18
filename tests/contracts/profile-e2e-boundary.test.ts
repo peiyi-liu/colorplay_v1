@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { OWN_PROFILE_SELECT } from '../../src/features/profile/api/own-profile-select';
 import {
   isLocalOwnProfileResponseUrl,
   readLocalProfileEnvironment,
@@ -38,7 +39,7 @@ describe('profile E2E public boundary', () => {
   );
 
   it('accepts profile payload responses only from the exact local Supabase origin', () => {
-    const query = '?select=id%2Cdisplay_name%2Crole%2Ctimezone';
+    const query = `?select=${encodeURIComponent(OWN_PROFILE_SELECT)}`;
 
     expect(
       isLocalOwnProfileResponseUrl(

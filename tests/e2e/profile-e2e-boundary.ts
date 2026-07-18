@@ -1,5 +1,7 @@
+import { OWN_PROFILE_SELECT } from '../../src/features/profile/api/own-profile-select';
+
 const localSupabaseOrigin = 'http://127.0.0.1:54321';
-const ownProfileSelect = 'id,display_name,role,timezone';
+const ownProfileSelect = OWN_PROFILE_SELECT;
 
 type PublicEnvironment = Readonly<Record<string, string | undefined>>;
 

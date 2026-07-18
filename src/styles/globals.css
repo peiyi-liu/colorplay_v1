@@ -514,6 +514,9 @@ a {
   border: 2px solid currentcolor;
   border-radius: 50%;
   font-weight: 800;
+  /* 純裝飾（aria-hidden）：不得攔截指向 radio 的點擊。
+     firefox 命中測試會因此吃掉選項點擊（e2e 亦復現）。 */
+  pointer-events: none;
 }
 
 .question-card__action {

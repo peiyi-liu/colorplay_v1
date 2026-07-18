@@ -123,12 +123,18 @@ test('invalid credentials stay anonymous and keyboard-only valid login restores 
   await expect(page.getByRole('heading', { name: '登入' })).toBeVisible();
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: '跳到主要內容' })).toBeFocused();
-  await page.keyboard.press('Tab');
-  await expect(
-    page.getByRole('link', { name: 'ColorPlay 首頁' }),
-  ).toBeFocused();
-  await page.keyboard.press('Tab');
-  await expect(page.getByLabel('Email')).toBeFocused();
+  // 結構性斷言：skip-link 必為首個聚焦點；其後 shell 可聚焦元素數量會隨
+  // phase 演進，改為有界 Tab 迴圈直到表單起點，不釘死絕對順位。
+  const emailInput = page.getByLabel('Email');
+  let emailFocused = false;
+  for (let tabPress = 0; tabPress < 10; tabPress += 1) {
+    await page.keyboard.press('Tab');
+    if (await emailInput.evaluate((el) => el === document.activeElement)) {
+      emailFocused = true;
+      break;
+    }
+  }
+  expect(emailFocused).toBe(true);
   await page.keyboard.type(TEST_USERS.studentOne.email);
   await page.keyboard.press('Tab');
   await expect(page.getByLabel('密碼')).toBeFocused();

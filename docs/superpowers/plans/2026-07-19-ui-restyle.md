@@ -37,11 +37,11 @@
 
 **Steps:**
 
-- [ ] **Step 1:** 建常數模組並改 repository/matcher/contract test；先跑 contract test 確認新斷言在未同步時會 FAIL（暫時把 matcher 改回舊字串驗證 RED，再還原）。
-- [ ] **Step 2:** `pnpm test`（unit+contract 全綠）。
-- [ ] **Step 3:** 修 login.spec 與 firefox flake 等待點。
-- [ ] **Step 4:** `bash scripts/test-e2e-local.sh` 完整電池，Expected: **0 failed**（貼計數輸出）。
-- [ ] **Step 5:** Commit `fix: repair cross-phase e2e drift and flakes`。
+- [x] **Step 1:** 建常數模組並改 repository/matcher/contract test；先跑 contract test 確認新斷言在未同步時會 FAIL（暫時把 matcher 改回舊字串驗證 RED，再還原）。
+- [x] **Step 2:** `pnpm test`（unit+contract 全綠）。
+- [x] **Step 3:** 修 login.spec 與 firefox flake 等待點。（診斷追加：e2e 改對 production build 跑（webServer build+preview）；修產品 bug `.question-option__key` 攔截點擊（pointer-events:none）；quiz 兩 spec 改以點擊可見選項列＋斷言 checked，斷言 payload 鍵由 `OWN_PROFILE_SELECT` 導出）
+- [x] **Step 4:** `bash scripts/test-e2e-local.sh` 完整電池，Expected: **0 failed**——實測連續兩次 **47 passed / 0 failed**（59.5s）。
+- [x] **Step 5:** Commit `fix: repair cross-phase e2e drift and flakes`。
 
 ### Task 1: Pin rules 與參考快照
 

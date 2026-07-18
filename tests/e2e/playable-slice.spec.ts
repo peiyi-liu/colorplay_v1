@@ -6,6 +6,9 @@ import { CONTENT_MANIFEST } from '../fixtures/content-manifest.generated';
 import { GENERATED_CORRECT_ANSWERS } from '../fixtures/question-answers.generated';
 import { TEST_USERS } from '../fixtures/users';
 
+// 十題完整旅程在併行負載下的 firefox 會超過預設 30s；給明確上限而非受載測速。
+test.describe.configure({ timeout: 120_000 });
+
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
 
 const correctAnswers = GENERATED_CORRECT_ANSWERS;
@@ -54,15 +57,23 @@ test('student completes a mixed ten-question challenge with durable server total
       throw new Error(`missing answer for prompt: ${prompt}`);
     }
 
+    // firefox 的命中測試會把 input 中心點判給外層 label，check() 會無限重試；
+    // 改以使用者實際點擊的可見選項列操作，並斷言 radio 的結果狀態。
     if (position <= 5) {
-      await page.getByRole('radio', { name: correctAnswer }).check();
+      const correctOption = page
+        .locator('.question-option')
+        .filter({ has: page.getByRole('radio', { name: correctAnswer }) });
+      await correctOption.click();
+      await expect(
+        page.getByRole('radio', { name: correctAnswer }),
+      ).toBeChecked();
     } else {
-      await page
+      const wrongOption = page
         .locator('.question-option')
         .filter({ hasNotText: correctAnswer })
-        .first()
-        .getByRole('radio')
-        .check();
+        .first();
+      await wrongOption.click();
+      await expect(wrongOption.getByRole('radio')).toBeChecked();
     }
     await page.getByRole('button', { name: '送出答案' }).click();
 

@@ -1,5 +1,6 @@
 import { expect, test, type Page, type Response } from '@playwright/test';
 
+import { OWN_PROFILE_SELECT } from '../../src/features/profile/api/own-profile-select';
 import { TEST_USERS } from '../fixtures/users';
 import {
   isLocalOwnProfileResponseUrl,
@@ -61,12 +62,10 @@ const signInAndReadProfile = async (
   expect(typeof profilePayload.id).toBe('string');
   expect(profilePayload.role).toMatch(/^(student|teacher|admin)$/u);
   expect(profilePayload.timezone).toBe('Asia/Taipei');
-  expect(Object.keys(profilePayload).sort()).toEqual([
-    'display_name',
-    'id',
-    'role',
-    'timezone',
-  ]);
+  // 鍵清單由 OWN_PROFILE_SELECT 導出：select 欄位變更時本斷言自動同步。
+  expect(Object.keys(profilePayload).sort()).toEqual(
+    [...OWN_PROFILE_SELECT.split(',')].sort(),
+  );
   return profilePayload as Readonly<{
     display_name: string;
     id: string;

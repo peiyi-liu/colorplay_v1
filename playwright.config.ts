@@ -73,9 +73,13 @@ export default defineConfig({
     ? {}
     : {
         webServer: {
-          command: 'pnpm dev --host 127.0.0.1 --port 4173',
+          // 對 production build 跑 E2E：dev server 的隨選編譯延遲會吃掉
+          // 20 秒答題預算（firefox 冷載入尤甚），造成計時型 flake。
+          command:
+            'pnpm build && pnpm preview --host 127.0.0.1 --port 4173 --strictPort',
           url: 'http://127.0.0.1:4173',
           reuseExistingServer: false,
+          timeout: 180_000,
         },
       }),
 });

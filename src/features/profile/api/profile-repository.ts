@@ -6,6 +6,7 @@ import {
   type ProfileRepository,
   type SafeProfile,
 } from '../types';
+import { OWN_PROFILE_SELECT } from './own-profile-select';
 
 const authorizationErrorCodes = new Set(['42501', 'PGRST116']);
 
@@ -16,7 +17,7 @@ export function createProfileRepository(
     async getMyProfile(): Promise<SafeProfile> {
       const { data, error } = await client
         .from('profiles')
-        .select('id, display_name, role, timezone, reduced_motion')
+        .select(OWN_PROFILE_SELECT)
         .single();
 
       if (error) {
