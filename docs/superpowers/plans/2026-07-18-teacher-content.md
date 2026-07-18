@@ -38,8 +38,8 @@
 
 ### Task 5 — Trusted import commands (L)
 
-- [ ] **Step 1:** Failing pgTAP `028_content_import`: `import_reports` table (teacher, filename, counts, status staged/committed/failed, per-row errors jsonb, timestamps; RLS own-teacher read) and `commit_content_import(p_rows jsonb, p_request_id, p_filename)` — teacher-only, idempotent by request id, re-validates every row server-side (invalid correct answer such as `X`/blank/points-at-empty-option → per-row error and **no row committed**, never defaulting to A), valid rows upsert chapters/sections/subtopics/questions/options/review cards by stable code with version bumps through the Task 3 machinery, the whole commit is one transaction (fault-injection trigger proves zero partial rows and a `failed` report), the 45 baseline stable codes survive any import, and student visibility only changes at publish.
-- [ ] **Step 2:** RED. **Step 3:** migration `20260719000300_content_import.sql`. **Step 4:** GREEN + full `pnpm test:db` + lint + typecheck. **Step 5:** Commit `feat: add transactional content import`.
+- [x] **Step 1:** Failing pgTAP `028_content_import`: `import_reports` table (teacher, filename, counts, status staged/committed/failed, per-row errors jsonb, timestamps; RLS own-teacher read) and `commit_content_import(p_rows jsonb, p_request_id, p_filename)` — teacher-only, idempotent by request id, re-validates every row server-side (invalid correct answer such as `X`/blank/points-at-empty-option → per-row error and **no row committed**, never defaulting to A), valid rows upsert chapters/sections/subtopics/questions/options/review cards by stable code with version bumps through the Task 3 machinery, the whole commit is one transaction (fault-injection trigger proves zero partial rows and a `failed` report), the 45 baseline stable codes survive any import, and student visibility only changes at publish.
+- [x] **Step 2:** RED. **Step 3:** migration `20260719000300_content_import.sql`. **Step 4:** GREEN + full `pnpm test:db` + lint + typecheck. **Step 5:** Commit `feat: add transactional content import`.
 
 ### Task 6 — Analytics projections (L)
 

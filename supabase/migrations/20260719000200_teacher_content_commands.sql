@@ -518,9 +518,10 @@ begin
     )
     select
       target_id, p_target_version,
-      btrim(entry ->> 'asset_path'), btrim(entry ->> 'alt_text'),
-      ordinality::integer
-    from jsonb_array_elements(media) with ordinality entry;
+      btrim(entry.value ->> 'asset_path'), btrim(entry.value ->> 'alt_text'),
+      entry.ordinality::integer
+    from jsonb_array_elements(media)
+      with ordinality as entry(value, ordinality);
   end if;
 
   return target_id;
