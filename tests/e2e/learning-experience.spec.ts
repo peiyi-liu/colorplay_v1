@@ -299,7 +299,10 @@ test('Learning Experience phase gate', async ({
   await studentPage.getByRole('button', { name: '加入班級' }).click();
   await expect(studentPage).toHaveURL(/\/app\/leaderboard\//u);
 
-  await teacherPage.getByRole('link', { name: '學習進度' }).click();
+  await teacherPage
+    .getByLabel('班級成員')
+    .getByRole('link', { name: '學習進度' })
+    .click();
   await expect(
     teacherPage.getByRole('heading', { name: '班級學習進度' }),
   ).toBeVisible();
