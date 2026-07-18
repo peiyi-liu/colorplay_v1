@@ -68,14 +68,14 @@
 
 ### Task 11 — Import wizard UI (M)
 
-- [ ] **Step 1:** Failing RTL: `/teacher/import` — real template download (SheetJS blob), file upload, validation preview table (total/valid/error/warning + per-row sheet/row/field/code/message), commit button disabled while any error exists, commit success report, failed-commit state; XSS sample renders as inert text everywhere.
-- [ ] **Step 2:** RED. **Step 3:** implement. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add xlsx import wizard`.
+- [x] **Step 1:** Failing RTL: `/teacher/import` — real template download (SheetJS blob), file upload, validation preview table (total/valid/error/warning + per-row sheet/row/field/code/message), commit button disabled while any error exists, commit success report, failed-commit state; XSS sample renders as inert text everywhere.
+- [x] **Step 2:** RED. **Step 3:** implement. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add xlsx import wizard`.
 
 ### Task 12 — Phase gate tooling (M)
 
-- [ ] **Step 1:** Contract tests pin package script `phase:teacher-content` → runner order → finalizer (9 ACs, screenshot names `teacher-dashboard-*`, `import-preview-*`, `content-workspace-*`, an `.xlsx` file artifact validated by re-reading its sheet names in-test, declared enumerated 4xx for the invalid-import negative path); `test:e2e` grep-invert gains 'Teacher Content phase gate'.
-- [ ] **Step 2:** RED. **Step 3:** implement runner/finalizer/spec: single spec `Teacher Content phase gate` — teacher downloads the template (artifact saved + re-parsed), edits it in-memory into a valid + an invalid workbook via the shared codec, uploads invalid (per-row errors incl. correct-answer `X`; commit blocked), uploads valid (preview → commit → success), publishes a new question version after a student session froze the old one (history intact), student sees only published content and `window.__xss` stays undefined after a script-bearing draft attempt, dashboard/analytics numbers asserted equal to DB-derived expectations with filters and an empty-state `—`, teacher B/outsider denied, three-viewport screenshots, refresh recovery.
-- [ ] **Step 4:** GREEN (contract + unit). **Step 5:** Commit `test: add teacher content phase gate`.
+- [x] **Step 1:** Contract tests pin package script `phase:teacher-content` → runner order → finalizer (9 ACs, screenshot names `teacher-dashboard-*`, `import-preview-*`, `content-workspace-*`, an `.xlsx` file artifact validated by re-reading its sheet names in-test, declared enumerated 4xx for the invalid-import negative path); `test:e2e` grep-invert gains 'Teacher Content phase gate'. _(Declared 4xx: a draft upsert colliding with a published stable code → 400 on `upsert_question_draft`; dedicated `contentTeacher`/`contentStudent` seed accounts added.)_
+- [x] **Step 2:** RED. **Step 3:** implement runner/finalizer/spec: single spec `Teacher Content phase gate` — teacher downloads the template (artifact saved + re-parsed), edits it in-memory into a valid + an invalid workbook via the shared codec, uploads invalid (per-row errors incl. correct-answer `X`; commit blocked), uploads valid (preview → commit → success), publishes a new question version after a student session froze the old one (history intact), student sees only published content and `window.__xss` stays undefined after a script-bearing draft attempt, dashboard/analytics numbers asserted equal to DB-derived expectations with filters and an empty-state `—`, teacher B/outsider denied, three-viewport screenshots, refresh recovery.
+- [x] **Step 4:** GREEN (contract + unit). **Step 5:** Commit `test: add teacher content phase gate`.
 
 ### Review and gate
 

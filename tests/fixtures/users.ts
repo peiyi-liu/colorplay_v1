@@ -80,11 +80,11 @@ export const TEST_USERS = {
     password: 'LocalOnly-Student2!',
   },
   contentTeacher: {
-    email: 'content.teacher@colorplay.test',
+    email: 'content.gate.teacher@colorplay.test',
     password: 'LocalOnly-ContentTeacher1!',
   },
   contentStudent: {
-    email: 'content.student@colorplay.test',
+    email: 'content.gate.student@colorplay.test',
     password: 'LocalOnly-ContentStudent1!',
   },
   outsider: {

@@ -1,6 +1,6 @@
 begin;
 
-select plan(5);
+select plan(7);
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -94,6 +94,33 @@ select is(
   ),
   1,
   'teachers read the media of a draft review card'
+);
+
+-- PostgREST commits as the api role, so the deferred option triggers fire
+-- as `authenticated`; force them here to prove that path stays executable.
+select lives_ok(
+  $$select public.upsert_question_draft(
+    jsonb_build_object(
+      'stable_code', '9-9-98',
+      'subtopic_id', (
+        select id from public.subtopics
+        where stable_code = 'sheet-3-1-all'
+        limit 1
+      ),
+      'prompt', '觸發器權限測試題',
+      'explanation', '測試解析',
+      'options', jsonb_build_array(
+        jsonb_build_object('key', 'A', 'text', '甲', 'is_correct', true),
+        jsonb_build_object('key', 'B', 'text', '乙', 'is_correct', false)
+      )
+    ),
+    '31900000-0000-0000-0000-000000000010'
+  )$$,
+  'a teacher saves a draft through the trusted command'
+);
+select lives_ok(
+  'set constraints all immediate',
+  'deferred option triggers fire under the api role'
 );
 
 select set_config(

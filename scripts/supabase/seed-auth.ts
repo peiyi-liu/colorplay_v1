@@ -36,6 +36,8 @@ const fixtureLabels = [
   'inventoryStudentTwo',
   'studentOne',
   'studentTwo',
+  'contentTeacher',
+  'contentStudent',
   'outsider',
 ] as const satisfies readonly TestUserLabel[];
 const usersPerPage = 100;
