@@ -310,7 +310,9 @@ test('Teacher Content phase gate', async ({
     .getByLabel('子題')
     .selectOption({ label: '3-9 匯入測試小節' });
   await teacherPage.getByLabel('題號').fill('3-9-90');
-  await teacherPage.getByLabel('題目').fill('<script>window.__xss=1</script>');
+  await teacherPage
+    .getByLabel('題目', { exact: true })
+    .fill('<script>window.__xss=1</script>');
   await teacherPage.getByLabel('選項 A').fill('甲');
   await teacherPage.getByLabel('選項 B').fill('乙');
   await teacherPage.getByLabel('正解 A').check();
@@ -327,7 +329,9 @@ test('Teacher Content phase gate', async ({
     teacherHealth,
     teacherContentExpectedFailureDeclarations.draftCodeAlreadyPublished,
   );
-  await teacherPage.getByLabel('題目').fill('嘗試覆寫已發布的題號');
+  await teacherPage
+    .getByLabel('題目', { exact: true })
+    .fill('嘗試覆寫已發布的題號');
   await teacherPage.getByLabel('題號').fill(IMPORTED_QUESTION_CODE);
   await teacherPage.getByRole('button', { name: '儲存草稿' }).click();
   await expect(
@@ -383,7 +387,7 @@ test('Teacher Content phase gate', async ({
   await teacherPage.goto('/teacher/content');
   const editedRow = teacherPage.locator('tr').filter({ hasText: wrongPrompt });
   await editedRow.getByRole('button', { name: '編輯' }).click();
-  const promptField = teacherPage.getByLabel('題目');
+  const promptField = teacherPage.getByLabel('題目', { exact: true });
   await expect(promptField).toHaveValue(wrongPrompt);
   await promptField.fill(`（第二版）${wrongPrompt}`);
   await teacherPage.getByRole('button', { name: '發布新版本' }).click();
