@@ -34,6 +34,7 @@ describe('ProfileRepository with RLS', () => {
     expect(Object.keys(profile).sort()).toEqual([
       'displayName',
       'id',
+      'reducedMotion',
       'role',
       'timezone',
     ]);

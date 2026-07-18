@@ -1,4 +1,6 @@
 import {
+  useMutation,
+  type UseMutationResult,
   useQuery,
   useQueryClient,
   type UseQueryResult,
@@ -9,7 +11,11 @@ import { useAuth } from '../../auth/context/auth-context';
 import { parsePublicEnv } from '../../../lib/config/public-env';
 import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
 import { createProfileRepository } from '../api/profile-repository';
-import { ProfileRepositoryError, type SafeProfile } from '../types';
+import {
+  type ProfileRepository,
+  ProfileRepositoryError,
+  type SafeProfile,
+} from '../types';
 
 export const myProfileQueryKey = ['profile', 'me'] as const;
 
@@ -59,4 +65,22 @@ export function useMyProfile(): MyProfileQuery {
       (auth.status === 'authenticated' && query.data !== undefined && !data),
     refetch: query.refetch,
   };
+}
+
+export function useSetReducedMotion(
+  repository?: ProfileRepository,
+): UseMutationResult<void, ProfileRepositoryError, boolean> {
+  const resolved =
+    repository ??
+    createProfileRepository(
+      getBrowserSupabaseClient(parsePublicEnv(import.meta.env)),
+    );
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (enabled) => resolved.setReducedMotion(enabled),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: myProfileQueryKey });
+    },
+    retry: false,
+  });
 }

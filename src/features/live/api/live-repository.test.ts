@@ -18,6 +18,8 @@ const lobbyState = {
   rules_version: '2026-07-live-1',
   server_time: '2026-07-17T15:00:00+00:00',
   is_host: false,
+  mode: 'individual',
+  team_count: null,
 } as const;
 
 describe('live repository', () => {

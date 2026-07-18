@@ -152,6 +152,8 @@ const stateSchema = z
     rules_version: z.string().min(1),
     server_time: utcTimestamp,
     is_host: z.boolean(),
+    mode: z.enum(['individual', 'team']),
+    team_count: z.number().int().min(2).max(4).nullable(),
     paused_remaining_ms: nonNegativeInteger.optional(),
     question: questionSchema.optional(),
     answered_count: nonNegativeInteger.optional(),
@@ -261,6 +263,8 @@ const mapState = (raw: z.infer<typeof stateSchema>): LiveSessionState => ({
   rulesVersion: raw.rules_version,
   serverTime: raw.server_time,
   isHost: raw.is_host,
+  mode: raw.mode,
+  teamCount: raw.team_count,
   ...(raw.question
     ? {
         question: {

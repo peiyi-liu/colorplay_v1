@@ -10,8 +10,13 @@ import {
   useCreateLiveActivity,
   useCreateLiveSession,
   useLiveActivities,
+  useScheduleLiveActivity,
 } from '../hooks/use-live-commands';
-import type { LiveRepository, LiveSessionReceipt } from '../types';
+import type {
+  LiveRepository,
+  LiveSessionMode,
+  LiveSessionReceipt,
+} from '../types';
 
 const QUIZ_TEMPLATE_ID = '26000000-0000-0000-0000-000000000003';
 
@@ -39,9 +44,14 @@ export function TeacherLivePage({
   const classrooms = useOwnedClassrooms();
   const createActivity = useCreateLiveActivity(repository);
   const createSession = useCreateLiveSession(repository);
+  const scheduleActivity = useScheduleLiveActivity(repository);
   const [receipt, setReceipt] = useState<LiveSessionReceipt | null>(null);
   const [actionError, setActionError] = useState<string>();
   const [selectedClassroomId, setSelectedClassroomId] = useState('');
+  const [sessionMode, setSessionMode] = useState<LiveSessionMode>('individual');
+  const [teamCount, setTeamCount] = useState('2');
+  const [scheduleAt, setScheduleAt] = useState('');
+  const [schedulingId, setSchedulingId] = useState('');
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -83,12 +93,44 @@ export function TeacherLivePage({
         activityId,
         assignmentId: null,
         classroomId: selectedClassroomId,
+        ...(sessionMode === 'team'
+          ? { mode: sessionMode, teamCount: Number.parseInt(teamCount, 10) }
+          : {}),
       });
       setReceipt(created);
     } catch {
       setActionError('目前無法建立課堂場次，請稍後重試。');
     }
   };
+
+  const scheduleFor = (activityId: string) => {
+    setActionError(undefined);
+    if (!scheduleAt) {
+      setActionError('請先選擇排程時間。');
+      return;
+    }
+    setSchedulingId(activityId);
+    scheduleActivity.mutate(
+      {
+        activityId,
+        scheduledFor: new Date(scheduleAt).toISOString(),
+      },
+      {
+        onError: () => {
+          setActionError('目前無法設定排程，請稍後重試。');
+        },
+        onSettled: () => {
+          setSchedulingId('');
+        },
+      },
+    );
+  };
+
+  const upcoming = activities.data
+    .filter((activity) => activity.scheduledFor !== null)
+    .sort((left, right) =>
+      (left.scheduledFor ?? '').localeCompare(right.scheduledFor ?? ''),
+    );
 
   return (
     <section aria-labelledby="teacher-live-title" className="w-full max-w-4xl">
@@ -162,7 +204,53 @@ export function TeacherLivePage({
             </option>
           ))}
         </select>
+        <label htmlFor="live-session-mode">對戰模式</label>
+        <select
+          id="live-session-mode"
+          onChange={(event) => {
+            setSessionMode(event.target.value as LiveSessionMode);
+          }}
+          value={sessionMode}
+        >
+          <option value="individual">個人</option>
+          <option value="team">團隊</option>
+        </select>
+        {sessionMode === 'team' ? (
+          <>
+            <label htmlFor="live-session-team-count">隊伍數</label>
+            <select
+              id="live-session-team-count"
+              onChange={(event) => {
+                setTeamCount(event.target.value);
+              }}
+              value={teamCount}
+            >
+              <option value="2">2 隊</option>
+              <option value="3">3 隊</option>
+              <option value="4">4 隊</option>
+            </select>
+          </>
+        ) : null}
       </div>
+
+      {upcoming.length > 0 ? (
+        <section aria-label="即將進行">
+          <h2>即將進行</h2>
+          <ul>
+            {upcoming.map((activity) => (
+              <li key={activity.activityId}>
+                {activity.title}：
+                {new Intl.DateTimeFormat('zh-TW', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                  timeZone: 'Asia/Taipei',
+                }).format(new Date(activity.scheduledFor ?? ''))}
+                （排程不會自動開場）
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {actionError ? <p role="alert">{actionError}</p> : null}
       {receipt ? (
@@ -207,6 +295,26 @@ export function TeacherLivePage({
                     type="button"
                   >
                     開新場次
+                  </button>
+                  <input
+                    aria-label={`排程時間（${activity.title}）`}
+                    onChange={(event) => {
+                      setScheduleAt(event.target.value);
+                    }}
+                    type="datetime-local"
+                    value={scheduleAt}
+                  />
+                  <button
+                    disabled={
+                      scheduleActivity.isPending &&
+                      schedulingId === activity.activityId
+                    }
+                    onClick={() => {
+                      scheduleFor(activity.activityId);
+                    }}
+                    type="button"
+                  >
+                    設定排程
                   </button>
                 </td>
               </tr>

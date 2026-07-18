@@ -101,6 +101,8 @@ export type LiveSessionState = Readonly<{
   rulesVersion: string;
   serverTime: string;
   isHost: boolean;
+  mode: LiveSessionMode;
+  teamCount: number | null;
   question?: LiveQuestionView;
   answeredCount?: number;
   myAnswer?: Readonly<{ answered: boolean }>;

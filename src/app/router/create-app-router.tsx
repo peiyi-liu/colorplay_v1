@@ -202,6 +202,14 @@ export function createAppRouter() {
                   },
                 },
                 {
+                  path: '/teacher/live/:sessionId/report',
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/live/pages/teacher-live-report-page');
+                    return { Component: module.TeacherLiveReportPage };
+                  },
+                },
+                {
                   path: '/teacher/classes/:classroomId/progress',
                   lazy: async () => {
                     const module =

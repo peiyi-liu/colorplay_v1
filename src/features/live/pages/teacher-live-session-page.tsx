@@ -5,11 +5,13 @@ import { Link, useParams } from 'react-router-dom';
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import type { Database } from '../../../types/database';
 import {
+  useLiveDistribution,
   useLiveTransition,
   type LiveTransitionName,
 } from '../hooks/use-live-commands';
 import { useLiveSession } from '../hooks/use-live-session';
 import type { LiveRepository, LiveSessionState } from '../types';
+import { LiveTeamScoreboard } from '../components/live-team-scoreboard';
 
 const transitionErrorMessage = (code: string) =>
   code === 'STATE_CONFLICT'
@@ -27,6 +29,8 @@ const hostAction = (
     return { label: '開始第一題', transition: 'openQuestion' };
   if (state.state === 'question_open')
     return { label: '收題並公布答案', transition: 'closeQuestion' };
+  if (state.state === 'paused')
+    return { label: '繼續作答', transition: 'resumeSession' };
   if (state.state === 'question_feedback') {
     return state.currentPosition < state.questionCount
       ? { label: '下一題', transition: 'advance' }
@@ -34,6 +38,46 @@ const hostAction = (
   }
   return null;
 };
+
+function HostDistribution({
+  sessionId,
+  state,
+  repository,
+}: Readonly<{
+  sessionId: string;
+  state: LiveSessionState;
+  repository?: LiveRepository;
+}>) {
+  const distribution = useLiveDistribution(
+    sessionId,
+    {
+      answeredCount: state.answeredCount ?? 0,
+      enabled: state.state === 'question_open',
+    },
+    repository,
+  );
+  const question = state.question;
+  if (!question || distribution.isPending || distribution.isError) return null;
+
+  return (
+    <div aria-label="即時作答分布">
+      <h3>即時作答分布（僅主持人可見）</h3>
+      <ul>
+        {question.publicOptions.map((option) => {
+          const count =
+            distribution.data.options.find(
+              (entry) => entry.optionId === option.id,
+            )?.count ?? 0;
+          return (
+            <li key={option.id}>
+              {option.key}. {option.text}（{count} 人）
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
 
 export function TeacherLiveSessionPage({
   sessionId: suppliedSessionId,
@@ -103,6 +147,22 @@ export function TeacherLiveSessionPage({
           <p aria-live="polite">
             已作答 {state.answeredCount ?? 0} / {state.participantCount}
           </p>
+          <HostDistribution
+            sessionId={sessionId}
+            state={state}
+            {...(repository ? { repository } : {})}
+          />
+        </div>
+      ) : null}
+
+      {state.state === 'paused' ? (
+        <div role="status">
+          <h2>已暫停</h2>
+          <p>
+            剩餘 {Math.ceil((state.pausedRemainingMs ?? 0) / 1000)}{' '}
+            秒已凍結，按「繼續作答」恢復倒數。
+          </p>
+          {state.question ? <p>{state.question.prompt}</p> : null}
         </div>
       ) : null}
 
@@ -126,6 +186,14 @@ export function TeacherLiveSessionPage({
         </div>
       ) : null}
 
+      {state.state === 'question_feedback' || state.state === 'completed' ? (
+        <LiveTeamScoreboard
+          sessionId={sessionId}
+          state={state}
+          {...(repository ? { repository } : {})}
+        />
+      ) : null}
+
       {state.state === 'completed' ? (
         <div>
           <h2>最終排名</h2>
@@ -136,6 +204,7 @@ export function TeacherLiveSessionPage({
               </li>
             ))}
           </ol>
+          <Link to={`/teacher/live/${sessionId}/report`}>查看場次報表</Link>
           <Link className="primary-action" to="/teacher/live">
             回 Live 活動
           </Link>
@@ -163,6 +232,18 @@ export function TeacherLiveSessionPage({
           type="button"
         >
           {transition.isPending ? '處理中…' : action.label}
+        </button>
+      ) : null}
+
+      {state.state === 'question_open' ? (
+        <button
+          disabled={transition.isPending}
+          onClick={() => {
+            runTransition('pauseSession');
+          }}
+          type="button"
+        >
+          暫停
         </button>
       ) : null}
 

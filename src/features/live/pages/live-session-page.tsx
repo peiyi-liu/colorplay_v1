@@ -6,6 +6,7 @@ import { RouteLoading } from '../../../app/boundaries/route-loading';
 import type { Database } from '../../../types/database';
 import { useSubmitLiveAnswer } from '../hooks/use-live-commands';
 import { useLiveSession } from '../hooks/use-live-session';
+import { LiveTeamScoreboard } from '../components/live-team-scoreboard';
 import type { LiveRepository, LiveSessionState } from '../types';
 
 export const remainingSeconds = (
@@ -68,6 +69,7 @@ function QuestionPhase({
   const submit = useSubmitLiveAnswer(sessionId, repository);
   const keysRef = useRef(new Map<string, string>());
   const [submitError, setSubmitError] = useState<string>();
+  const [streak, setStreak] = useState(0);
   const question = state.question;
   if (!question) return null;
   const answered = state.myAnswer?.answered === true;
@@ -109,6 +111,9 @@ function QuestionPhase({
                     onError: () => {
                       setSubmitError('作答未送出，請再試一次。');
                     },
+                    onSuccess: (receipt) => {
+                      setStreak(receipt.streak);
+                    },
                   },
                 );
               }}
@@ -120,6 +125,11 @@ function QuestionPhase({
         </div>
       </fieldset>
       {answered ? <p role="status">已收到你的答案，等待其他同學…</p> : null}
+      {streak >= 2 ? (
+        <p className="live-streak-badge" role="status">
+          🔥 連擊 x{streak}！
+        </p>
+      ) : null}
       {submitError ? <p role="alert">{submitError}</p> : null}
     </div>
   );
@@ -214,8 +224,28 @@ export function LiveSessionPage({
         />
       ) : null}
 
+      {state.state === 'paused' ? (
+        <div role="status">
+          <h2>暫停中</h2>
+          <p>
+            主持人已暫停，剩餘{' '}
+            {Math.ceil((state.pausedRemainingMs ?? 0) / 1000)}{' '}
+            秒已凍結，恢復後繼續倒數。
+          </p>
+          {state.question ? <p>{state.question.prompt}</p> : null}
+        </div>
+      ) : null}
+
       {state.state === 'question_feedback' ? (
         <FeedbackPhase state={state} />
+      ) : null}
+
+      {state.state === 'question_feedback' || state.state === 'completed' ? (
+        <LiveTeamScoreboard
+          sessionId={sessionId}
+          state={state}
+          {...(repository ? { repository } : {})}
+        />
       ) : null}
 
       {state.state === 'completed' ? (

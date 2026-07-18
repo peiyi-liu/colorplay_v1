@@ -915,3 +915,35 @@ a {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Live streak celebration; disabled under reduced motion (either the OS
+   preference or the server-backed profile toggle on the root element). */
+.live-streak-badge {
+  animation: live-streak-pop 0.6s ease-out;
+}
+
+@keyframes live-streak-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-streak-badge {
+    animation: none;
+  }
+}
+
+[data-reduced-motion='true'] .live-streak-badge {
+  animation: none;
+}
+
+[data-reduced-motion='true'] * {
+  animation-duration: 0.001s !important;
+  transition-duration: 0.001s !important;
+}

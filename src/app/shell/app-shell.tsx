@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
@@ -37,6 +37,17 @@ export function AppShell() {
     auth.status === 'authenticated' &&
     auth.session !== null &&
     profile.data?.id === auth.session.userId;
+  const reducedMotion = profile.data?.reducedMotion === true;
+
+  // The server-backed preference lands on the root element so CSS can turn
+  // every celebration animation off; prefers-reduced-motion works in parallel.
+  useEffect(() => {
+    if (reducedMotion) {
+      document.documentElement.dataset.reducedMotion = 'true';
+    } else {
+      delete document.documentElement.dataset.reducedMotion;
+    }
+  }, [reducedMotion]);
 
   return (
     <div className="app-shell">
