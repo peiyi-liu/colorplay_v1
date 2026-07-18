@@ -1,5 +1,5 @@
 -- 由 scripts/content/import-review-cards.mjs 產生，請勿手動編輯。
--- 內容來源：教師試算表「各單元複習大廳」；產生時間 2026-07-18T01:24:14.212Z
+-- 內容來源：教師試算表「各單元複習大廳」；產生時間 2026-07-18T02:00:15.504Z
 begin;
 
 insert into public.sections (id, chapter_id, stable_code, title, description, status, sort_order)

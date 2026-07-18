@@ -71,7 +71,7 @@ describe('content import formatting boundary', () => {
       'utf8',
     );
 
-    expect(importer.match(/await writeFormattedOutput\(/gu)).toHaveLength(3);
+    expect(importer.match(/await writeFormattedOutput\(/gu)).toHaveLength(4);
     expect(importer.match(/writeFileSync\(/gu)).toHaveLength(2);
     expect(importer).toMatch(
       /writeFileSync\(\s*join\(projectRoot, 'supabase\/seeds\/content-questions\.sql'\)/u,

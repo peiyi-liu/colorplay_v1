@@ -18,6 +18,8 @@ import { readLocalAdminEnvironment } from './local-environment';
 const fixtureLabels = [
   'authLifecycleOne',
   'authLifecycleTwo',
+  'learningTeacher',
+  'learningStudent',
   'teacher',
   'teacherTwo',
   'classroomRepositoryTeacher',

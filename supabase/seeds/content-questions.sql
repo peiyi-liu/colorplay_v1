@@ -1,5 +1,5 @@
 -- 由 scripts/content/import-questions.mjs 產生，請勿手動編輯。
--- 內容來源：教師題庫試算表；產生時間 2026-07-18T01:24:13.132Z
+-- 內容來源：教師題庫試算表；產生時間 2026-07-18T02:00:14.252Z
 begin;
 
 insert into public.sections (id, chapter_id, stable_code, title, description, status, sort_order)

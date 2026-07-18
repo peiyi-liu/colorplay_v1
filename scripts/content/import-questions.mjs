@@ -378,6 +378,25 @@ await writeFormattedOutput({
   filePath: join(projectRoot, 'tests/fixtures/content-manifest.generated.ts'),
   source: manifestLines.join('\n'),
 });
+
+const hintFixtureLines = [
+  '// 由 scripts/content/import-questions.mjs 產生，請勿手動編輯。',
+  '// E2E 測試用：有分層提示的題目「題目文字 → 各層提示內容」對照表。',
+  'export const GENERATED_QUESTION_HINTS: ReadonlyMap<',
+  '  string,',
+  '  readonly string[]',
+  '> = new Map([',
+  ...hintDraftEntries.map(([code, hintLevels]) => {
+    const question = questions.find((q) => q.code === code);
+    return `  [${JSON.stringify(question.prompt)}, ${JSON.stringify(hintLevels)}],`;
+  }),
+  ']);',
+  '',
+];
+await writeFormattedOutput({
+  filePath: join(projectRoot, 'tests/fixtures/question-hints.generated.ts'),
+  source: hintFixtureLines.join('\n'),
+});
 const reviewLines = [
   '# 題庫匯入審閱報告',
   '',
