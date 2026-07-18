@@ -55,8 +55,8 @@
 
 ### Task 8 — Progress projections (L)
 
-- [ ] **Step 1:** Failing pgTAP `025_learning_progress`: `get_learning_progress(p_chapter_id default null)` returns per-subtopic and per-chapter rows {review_completed, review_total (null when none), coverage, accuracy, mastery, status, rules_version `2026-07-progress-1`} where only the latest qualifying answer per current published question version counts (completed practice/assignment/remediation only; unfinished, expired, old-version, and Live answers excluded — build each exclusion case), statuses map 0/1–59/60–79/80–100, chapter aggregates over all current versions (not subtopic averaging); `get_classroom_progress(p_classroom_id)` owner-teacher-only per-student chapter mastery summary, non-owner/outsider → 0 rows, no existence leak.
-- [ ] **Step 2:** RED. **Step 3:** migration `20260718000600_learning_progress.sql`. **Step 4:** GREEN + full `pnpm test:db` + lint + typecheck. **Step 5:** Commit `feat: add authoritative learning progress`.
+- [x] **Step 1:** Failing pgTAP `025_learning_progress`: `get_learning_progress(p_chapter_id default null)` returns per-subtopic and per-chapter rows {review_completed, review_total (null when none), coverage, accuracy, mastery, status, rules_version `2026-07-progress-1`} where only the latest qualifying answer per current published question version counts (completed practice/assignment/remediation only; unfinished, expired, old-version, and Live answers excluded — build each exclusion case), statuses map 0/1–59/60–79/80–100, chapter aggregates over all current versions (not subtopic averaging); `get_classroom_progress(p_classroom_id)` owner-teacher-only per-student chapter mastery summary, non-owner/outsider → 0 rows, no existence leak.
+- [x] **Step 2:** RED. **Step 3:** migration `20260718000600_learning_progress.sql`. **Step 4:** GREEN + full `pnpm test:db` + lint + typecheck. **Step 5:** Commit `feat: add authoritative learning progress`.
 
 ### Task 9 — Learning frontend data layer and chapter detail (M)
 
