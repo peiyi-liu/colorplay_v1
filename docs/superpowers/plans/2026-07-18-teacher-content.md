@@ -18,8 +18,8 @@
 
 ### Task 1 — Pin import/versioning rules (S)
 
-- [ ] **Step 1:** In spec/06 pin: import upsert-by-stable-code semantics (identical row → no-op, changed row → new version), the server-side script/handler rejection rule, and the import report shape (total/valid/errors/warnings + per-row sheet/row/field/code/message). No other spec change.
-- [ ] **Step 2:** Commit `docs: pin teacher import and versioning rules`.
+- [x] **Step 1:** In spec/06 pin: import upsert-by-stable-code semantics (identical row → no-op, changed row → new version), the server-side script/handler rejection rule, and the import report shape (total/valid/errors/warnings + per-row sheet/row/field/code/message). No other spec change.
+- [x] **Step 2:** Commit `docs: pin teacher import and versioning rules`.
 
 ### Task 2 — Versioning and publication schema (M)
 

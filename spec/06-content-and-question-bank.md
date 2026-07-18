@@ -89,7 +89,9 @@ Published question 若修改以下任一欄位，必須建立新 version：
 - subtopic、section、chapter 存在。
 - media 可存取且 alt text 完整。
 - 無重複選項（trim、大小寫正規化後）。
-- 無明顯 `<script>` 或未允許 HTML。
+- 無明顯 `<script>` 或未允許 HTML；含 `<script` 或行內事件屬性（`on*=`）的文字欄位
+  由信任指令在伺服器端以 `CONTENT_UNSAFE_TEXT` 拒絕，前端僅以純文字轉譯、
+  全站禁止 `dangerouslySetInnerHTML`。
 
 失敗時顯示逐欄位錯誤；不得自動忽略不合法列並宣稱成功。
 
@@ -161,6 +163,14 @@ Published question 若修改以下任一欄位，必須建立新 version：
 - 支援 dry-run。
 - commit 後保存 import report 與 created IDs。
 - 重送同一 commit request 不得重複建立。
+
+### 寫入語義（upsert by stable code）
+
+- 每列以 stable code 對既有內容比對：內容完全相同 → no-op；語意欄位變更且目標已
+  published → 依 §4 建立新 version；目標為 draft → 就地更新草稿；不存在 → 新增。
+- 匯入永不刪除內容；下架僅能經由明確的 archive 指令。已驗證的 45 題 baseline
+  stable codes 不得因任何匯入而消失（`AC-MIG-003`）。
+- 伺服器端對每列重跑與 §5 相同的驗證；client 的驗證結果僅供預覽，不被信任。
 
 ## 8. 正解解析
 
