@@ -208,6 +208,9 @@ Published question 若修改以下任一欄位，必須建立新 version：
 ## 13. Verified content baseline and legacy boundary
 
 - Approved pipeline 有 45 題：第三章 37 題、第四章 8 題。
+- 教師持續在同一份公開試算表擴充內容；重新匯入必須保留既有 45 題 baseline 的 stable codes（新內容只能新增或依 `import-fixes.json` 明示修正），不得覆蓋 verified baseline。
+- 複習卡來源分頁為「各單元複習大廳」（gid 0），欄位：`章節編號`、`小節`、`子主題`、`卡片標題`、`卡片內容`（多行）。匯入器 `scripts/content/import-review-cards.mjs` 產出 `supabase/seeds/content-review-cards.sql`、`tests/fixtures/review-manifest.generated.ts` 與 `docs/content/review-import-report.md`；UUID 決定性（stable key 派生），初版 version 1、status published。
+- Hint content 在試算表尚無欄位前，由 `scripts/content/import-fixes.json` 以 level 1–3 草稿補充（AI 草稿，匯入報告標示「待教師審閱」，與解析草稿同一政策）；hint 不得等價揭露正解。試算表未來新增提示欄位後以試算表為準。
 - Legacy hosted 46 題沒有 unique valid content：44 prompts matching，2 remote-only rows invalid；不得覆蓋 verified baseline。
 - `colorplay-new` 六章描述、review card、Blook、avatar、badge 只作 candidate reference；必須先確認作者／媒體權利、教學正確、accessibility，再由正常 validation/version/import 發布。
 - 不複製 hard-coded leaderboard、progress、achievement、Kahoot PIN、mock state 或 legacy SQL/policy 當內容。

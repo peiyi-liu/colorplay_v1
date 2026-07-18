@@ -18,8 +18,8 @@
 
 ### Task 1 — Pin learning rules in the normative spec (S)
 
-- [ ] **Step 1:** In spec/05 pin remediation reward values (XP 15/10, Token 0, rules `2026-07-progress-1`, no quota/mastery side rules beyond design §9.3) and hint no-penalty rule; in spec/06 pin the review-card sheet tab format (columns, gid), the import-fixes hint-draft policy, and importer outputs. No other spec change.
-- [ ] **Step 2:** Commit `docs: pin learning experience rules`.
+- [x] **Step 1:** In spec/05 pin remediation reward values (XP 15/10, Token 0, rules `2026-07-progress-1`, no quota/mastery side rules beyond design §9.3) and hint no-penalty rule; in spec/06 pin the review-card sheet tab format (columns, gid), the import-fixes hint-draft policy, and importer outputs. No other spec change.
+- [x] **Step 2:** Commit `docs: pin learning experience rules`.
 
 ### Task 2 — Content import v2: review cards, refreshed questions, hint drafts (M)
 

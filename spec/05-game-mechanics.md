@@ -206,7 +206,8 @@ mastery = coverage * accuracy / 100
 - 作答前最多 request three hints；server 依序記錄 `hint_events`，hint 不得洩漏正解。
 - 第一版 hint 不扣 Quiz Score、XP 或 Token；規則變更需新 rules version。
 - Multiple attempts 只存在 remediation，不回寫原始 answer、Quiz Score 或結果頁。
-- Remediation 不發 Token；XP 使用現有 practice 20% 規則，不消耗每日前三次 full reward 額度。
+- Remediation 不發 Token；XP 使用現有 practice 20% 規則——答對且 ≤5000ms 得 15 XP、答對逾時得 10 XP（即正式 75／50 的 20%），答錯 0。此值屬於 `2026-07-progress-1`，變更需新 rules version。
+- Remediation 不消耗每日前三次 full reward 額度，也不受該額度影響（永遠固定 20% 值）。
 - Qualifying finalized remediation 可更新 mastery，並將 mistake item `open -> resolved`；後續 current-version 錯誤可 `resolved -> reopened`。
 
 ## 16. Achievements
