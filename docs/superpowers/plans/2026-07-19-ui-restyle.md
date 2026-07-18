@@ -91,9 +91,9 @@
 
 **Steps:**
 
-- [ ] **Step 1:** 每元件先寫失敗 RTL 測試（渲染、tone/variant class、aria）→ RED。
-- [ ] **Step 2:** 實作（僅 token 變數，無裸 hex）→ GREEN + lint + typecheck。
-- [ ] **Step 3:** Commit `feat: add ui component library base set`。
+- [x] **Step 1:** 每元件先寫失敗 RTL 測試（渲染、tone/variant class、aria）→ RED。
+- [x] **Step 2:** 實作（僅 token 變數，無裸 hex）→ GREEN + lint + typecheck。
+- [x] **Step 3:** Commit `feat: add ui component library base set`。
 
 ### Task 4: 元件庫（互動組）
 

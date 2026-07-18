@@ -12,6 +12,7 @@ import '@fontsource/noto-sans-tc/700.css';
 import '@fontsource/noto-sans-tc/900.css';
 import './styles/tokens.css';
 import './styles/globals.css';
+import './components/ui/ui.css';
 
 const appRouter = createAppRouter();
 
