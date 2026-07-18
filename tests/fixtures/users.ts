@@ -79,6 +79,14 @@ export const TEST_USERS = {
     email: 'student.two@colorplay.test',
     password: 'LocalOnly-Student2!',
   },
+  contentTeacher: {
+    email: 'content.teacher@colorplay.test',
+    password: 'LocalOnly-ContentTeacher1!',
+  },
+  contentStudent: {
+    email: 'content.student@colorplay.test',
+    password: 'LocalOnly-ContentStudent1!',
+  },
   outsider: {
     email: 'outsider@colorplay.test',
     password: 'LocalOnly-Outsider1!',
@@ -108,6 +116,8 @@ export const TEST_USER_ROLES = {
   inventoryStudentTwo: 'student',
   studentOne: 'student',
   studentTwo: 'student',
+  contentTeacher: 'teacher',
+  contentStudent: 'student',
   outsider: 'student',
 } as const satisfies Readonly<Record<TestUserLabel, 'student' | 'teacher'>>;
 
