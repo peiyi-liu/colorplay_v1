@@ -39,7 +39,7 @@ if (!REVIEW_MEDIA_CARD) {
   throw new Error('LEARNING_EXPERIENCE_MEDIA_CARD_MISSING');
 }
 const mediaCard = REVIEW_MEDIA_CARD;
-const REVIEW_CHAPTER_TITLE = '色彩體系與應用';
+const REVIEW_CHAPTER_TITLE = '色彩表示';
 
 const classroomIdPattern =
   /\/teacher\/classes\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/iu;
