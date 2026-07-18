@@ -65,13 +65,13 @@
 
 ### Task 10 — Hints, mistakes, and remediation UI (M)
 
-- [ ] **Step 1:** Failing Vitest/RTL: quiz runner hint control (sequential reveal up to 3, unavailable state, no reveal of correct option, uses server content only); mistakes page `/app/mistakes` (open/resolved lists, empty state, 再挑戰 per subtopic entry); remediation runner banner (0 Token, 20% XP messaging) reusing the quiz session runner; result view for remediation shows no formal-score rewrite.
-- [ ] **Step 2:** RED. **Step 3:** implement. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add hint and remediation experience`.
+- [x] **Step 1:** Failing Vitest/RTL: quiz runner hint control (sequential reveal up to 3, unavailable state, no reveal of correct option, uses server content only); mistakes page `/app/mistakes` (open/resolved lists, empty state, 再挑戰 per subtopic entry); remediation runner banner (0 Token, 20% XP messaging) reusing the quiz session runner; result view for remediation shows no formal-score rewrite.
+- [x] **Step 2:** RED. **Step 3:** implement. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add hint and remediation experience`.
 
 ### Task 11 — Progress dashboard (S)
 
-- [ ] **Step 1:** Failing Vitest/RTL: `/app/progress` dashboard — per-chapter review completion, mastery, status chips (— for null), links to chapter detail, mistakes, and the existing achievements progress page; nav entry 學習進度.
-- [ ] **Step 2:** RED. **Step 3:** implement. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add learning progress dashboard`.
+- [x] **Step 1:** Failing Vitest/RTL: `/app/progress` dashboard — per-chapter review completion, mastery, status chips (— for null), links to chapter detail, mistakes, and the existing achievements progress page; nav entry 學習進度.
+- [x] **Step 2:** RED. **Step 3:** implement. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add learning progress dashboard`.
 
 ### Task 12 — Phase gate tooling (M)
 

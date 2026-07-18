@@ -53,6 +53,7 @@ export function AppShell() {
             {isAuthenticatedProfile ? (
               <nav aria-label="主要導覽">
                 <Link to="/app">章節挑戰</Link>
+                <Link to="/app/progress">學習進度</Link>
                 <Link to="/app/assignments">我的作業</Link>
                 <Link to="/app/live/join">Live 課堂</Link>
                 <Link to="/app/leaderboard">班級排行榜</Link>

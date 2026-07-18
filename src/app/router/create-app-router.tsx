@@ -57,6 +57,22 @@ export function createAppRouter() {
               },
             },
             {
+              path: '/app/mistakes',
+              lazy: async () => {
+                const module =
+                  await import('../../features/learning/pages/mistakes-page');
+                return { Component: module.MistakesPage };
+              },
+            },
+            {
+              path: '/app/progress',
+              lazy: async () => {
+                const module =
+                  await import('../../features/learning/pages/progress-dashboard-page');
+                return { Component: module.ProgressDashboardPage };
+              },
+            },
+            {
               path: '/app/leaderboard',
               element: <StudentClassroomsPage />,
             },
@@ -163,6 +179,16 @@ export function createAppRouter() {
                     const module =
                       await import('../../features/live/pages/teacher-live-session-page');
                     return { Component: module.TeacherLiveSessionPage };
+                  },
+                },
+                {
+                  path: '/teacher/classes/:classroomId/progress',
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/learning/pages/teacher-classroom-progress-page');
+                    return {
+                      Component: module.TeacherClassroomProgressPage,
+                    };
                   },
                 },
                 {

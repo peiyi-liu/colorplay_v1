@@ -78,6 +78,12 @@ export function TeacherClassroomDetailPage({
       >
         作業管理
       </Link>
+      <Link
+        className="secondary-action"
+        to={`/teacher/classes/${classroomId}/progress`}
+      >
+        學習進度
+      </Link>
       <button
         className="secondary-action"
         disabled={rotate.isPending}
