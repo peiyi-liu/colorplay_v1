@@ -72,6 +72,12 @@ export function ChapterSelectPage() {
                   尚無題目
                 </button>
               )}
+              <Link
+                aria-label={`${chapter.title} 複習與進度`}
+                to={`/app/chapters/${chapter.id}`}
+              >
+                複習與進度
+              </Link>
             </div>
           </article>
         ))}

@@ -49,6 +49,14 @@ export function createAppRouter() {
               element: <ChapterSelectPage />,
             },
             {
+              path: '/app/chapters/:chapterId',
+              lazy: async () => {
+                const module =
+                  await import('../../features/learning/pages/chapter-detail-page');
+                return { Component: module.ChapterDetailPage };
+              },
+            },
+            {
               path: '/app/leaderboard',
               element: <StudentClassroomsPage />,
             },

@@ -580,6 +580,58 @@ export type Database = {
         }
         Relationships: []
       }
+      hint_events: {
+        Row: {
+          created_at: string
+          hint_level: number
+          id: string
+          question_version: number
+          served_content: string
+          session_question_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hint_level: number
+          id?: string
+          question_version: number
+          served_content: string
+          session_question_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hint_level?: number
+          id?: string
+          question_version?: number
+          served_content?: string
+          session_question_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hint_events_session_question_id_fkey"
+            columns: ["session_question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_session_question_state"
+            referencedColumns: ["session_question_id"]
+          },
+          {
+            foreignKeyName: "hint_events_session_question_id_fkey"
+            columns: ["session_question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_session_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hint_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_activities: {
         Row: {
           created_at: string
@@ -872,6 +924,61 @@ export type Database = {
           },
         ]
       }
+      mistake_items: {
+        Row: {
+          first_wrong_at: string
+          id: string
+          last_event_at: string
+          origin_answer_id: string
+          question_id: string
+          question_version: number
+          status: Database["public"]["Enums"]["mistake_status"]
+          user_id: string
+        }
+        Insert: {
+          first_wrong_at?: string
+          id?: string
+          last_event_at?: string
+          origin_answer_id: string
+          question_id: string
+          question_version: number
+          status?: Database["public"]["Enums"]["mistake_status"]
+          user_id: string
+        }
+        Update: {
+          first_wrong_at?: string
+          id?: string
+          last_event_at?: string
+          origin_answer_id?: string
+          question_id?: string
+          question_version?: number
+          status?: Database["public"]["Enums"]["mistake_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mistake_items_origin_answer_id_fkey"
+            columns: ["origin_answer_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_answers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mistake_items_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mistake_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active_blook_id: string
@@ -906,6 +1013,41 @@ export type Database = {
             columns: ["active_blook_id"]
             isOneToOne: false
             referencedRelation: "blooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      question_hints: {
+        Row: {
+          content: string
+          created_at: string
+          hint_level: number
+          id: string
+          question_id: string
+          question_version: number
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          hint_level: number
+          id?: string
+          question_id: string
+          question_version: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          hint_level?: number
+          id?: string
+          question_id?: string
+          question_version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_hints_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
             referencedColumns: ["id"]
           },
         ]
@@ -1300,6 +1442,205 @@ export type Database = {
           },
         ]
       }
+      remediation_attempts: {
+        Row: {
+          answer_id: string
+          created_at: string
+          id: string
+          mistake_item_id: string
+          result: Database["public"]["Enums"]["remediation_result"]
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          answer_id: string
+          created_at?: string
+          id?: string
+          mistake_item_id: string
+          result: Database["public"]["Enums"]["remediation_result"]
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          answer_id?: string
+          created_at?: string
+          id?: string
+          mistake_item_id?: string
+          result?: Database["public"]["Enums"]["remediation_result"]
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remediation_attempts_answer_id_fkey"
+            columns: ["answer_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_answers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remediation_attempts_mistake_item_id_fkey"
+            columns: ["mistake_item_id"]
+            isOneToOne: false
+            referencedRelation: "mistake_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remediation_attempts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_session_question_state"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "remediation_attempts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remediation_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_card_media: {
+        Row: {
+          alt_text: string
+          asset_path: string
+          card_version: number
+          id: string
+          review_card_id: string
+          sort_order: number
+        }
+        Insert: {
+          alt_text: string
+          asset_path: string
+          card_version: number
+          id?: string
+          review_card_id: string
+          sort_order: number
+        }
+        Update: {
+          alt_text?: string
+          asset_path?: string
+          card_version?: number
+          id?: string
+          review_card_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_card_media_review_card_id_fkey"
+            columns: ["review_card_id"]
+            isOneToOne: false
+            referencedRelation: "review_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_cards: {
+        Row: {
+          content: string
+          created_at: string
+          group_label: string
+          id: string
+          requires_recompletion: boolean
+          sort_order: number
+          stable_code: string
+          status: Database["public"]["Enums"]["content_status"]
+          subtopic_id: string
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          group_label?: string
+          id?: string
+          requires_recompletion?: boolean
+          sort_order?: number
+          stable_code: string
+          status?: Database["public"]["Enums"]["content_status"]
+          subtopic_id: string
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          group_label?: string
+          id?: string
+          requires_recompletion?: boolean
+          sort_order?: number
+          stable_code?: string
+          status?: Database["public"]["Enums"]["content_status"]
+          subtopic_id?: string
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_cards_subtopic_id_fkey"
+            columns: ["subtopic_id"]
+            isOneToOne: false
+            referencedRelation: "subtopics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_progress: {
+        Row: {
+          card_version: number
+          completed_at: string
+          id: string
+          request_id: string
+          review_card_id: string
+          rules_version: string
+          user_id: string
+        }
+        Insert: {
+          card_version: number
+          completed_at?: string
+          id?: string
+          request_id: string
+          review_card_id: string
+          rules_version?: string
+          user_id: string
+        }
+        Update: {
+          card_version?: number
+          completed_at?: string
+          id?: string
+          request_id?: string
+          review_card_id?: string
+          rules_version?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_progress_review_card_id_fkey"
+            columns: ["review_card_id"]
+            isOneToOne: false
+            referencedRelation: "review_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sections: {
         Row: {
           chapter_id: string
@@ -1673,6 +2014,10 @@ export type Database = {
         Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
       }
+      complete_review_card: {
+        Args: { p_request_id: string; p_review_card_id: string }
+        Returns: Json
+      }
       create_assignment: {
         Args: {
           p_activity_reference: string
@@ -1738,10 +2083,45 @@ export type Database = {
         Args: { p_classroom_id: string }
         Returns: Json
       }
+      get_classroom_progress: {
+        Args: { p_classroom_id: string }
+        Returns: {
+          chapter_id: string
+          display_name: string
+          mastery: number
+          rules_version: string
+          status: string
+          user_id: string
+        }[]
+      }
+      get_learning_progress: {
+        Args: { p_chapter_id?: string }
+        Returns: {
+          accuracy: number
+          chapter_id: string
+          coverage: number
+          mastery: number
+          review_completed: number
+          review_total: number
+          rules_version: string
+          scope: string
+          status: string
+          subtopic_id: string
+        }[]
+      }
       get_live_session_state: { Args: { p_session_id: string }; Returns: Json }
       get_my_achievement_catalog: { Args: never; Returns: Json }
       get_my_blook_inventory: { Args: never; Returns: Json }
       get_my_economy_summary: { Args: never; Returns: Json }
+      get_review_completion: {
+        Args: { p_chapter_id?: string }
+        Returns: {
+          chapter_id: string
+          completed_count: number
+          subtopic_id: string
+          total_count: number
+        }[]
+      }
       is_active_classroom_member: {
         Args: { p_classroom_id: string; p_user_id: string }
         Returns: boolean
@@ -1865,6 +2245,10 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: number
       }
+      request_question_hint: {
+        Args: { p_hint_level: number; p_session_question_id: string }
+        Returns: Json
+      }
       rotate_classroom_join_code: {
         Args: { p_classroom_id: string }
         Returns: {
@@ -1880,6 +2264,10 @@ export type Database = {
       }
       start_live_session: {
         Args: { p_expected_version: number; p_session_id: string }
+        Returns: Json
+      }
+      start_remediation_session: {
+        Args: { p_request_id: string; p_subtopic_id: string }
         Returns: Json
       }
       submit_live_answer: {
@@ -1967,10 +2355,12 @@ export type Database = {
         | "question_feedback"
         | "completed"
         | "cancelled"
+      mistake_status: "open" | "resolved" | "reopened"
       question_type: "single_choice"
       quiz_answer_status: "correct" | "incorrect" | "timeout"
       quiz_session_purpose: "practice" | "assignment" | "remediation"
       quiz_session_status: "in_progress" | "completed"
+      remediation_result: "resolved" | "unresolved"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2153,10 +2543,12 @@ export const Constants = {
         "completed",
         "cancelled",
       ],
+      mistake_status: ["open", "resolved", "reopened"],
       question_type: ["single_choice"],
       quiz_answer_status: ["correct", "incorrect", "timeout"],
       quiz_session_purpose: ["practice", "assignment", "remediation"],
       quiz_session_status: ["in_progress", "completed"],
+      remediation_result: ["resolved", "unresolved"],
     },
   },
 } as const

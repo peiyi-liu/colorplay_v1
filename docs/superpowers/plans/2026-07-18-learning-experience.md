@@ -60,8 +60,8 @@
 
 ### Task 9 — Learning frontend data layer and chapter detail (M)
 
-- [ ] **Step 1:** Failing Vitest/RTL: learning repository (review cards list, complete card, hints, mistakes, remediation start, progress) with strict zod parsing and stable error codes; chapter detail route `/app/chapters/:chapterId` showing sections→subtopics with published review cards, per-subtopic progress chips, quiz entry; review reader with 完成複習 action, media alt + `onerror` fallback, loading/empty/error states; refresh recovery.
-- [ ] **Step 2:** RED. **Step 3:** implement (lazy routes, chapter-select links to detail). **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add chapter detail and review experience`.
+- [x] **Step 1:** Failing Vitest/RTL: learning repository (review cards list, complete card, hints, mistakes, remediation start, progress) with strict zod parsing and stable error codes; chapter detail route `/app/chapters/:chapterId` showing sections→subtopics with published review cards, per-subtopic progress chips, quiz entry; review reader with 完成複習 action, media alt + `onerror` fallback, loading/empty/error states; refresh recovery.
+- [x] **Step 2:** RED. **Step 3:** implement (lazy routes, chapter-select links to detail). **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add chapter detail and review experience`.
 
 ### Task 10 — Hints, mistakes, and remediation UI (M)
 

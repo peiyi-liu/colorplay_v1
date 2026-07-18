@@ -55,3 +55,19 @@ grep -q 'close_live_question' src/types/database.ts
 grep -q 'advance_live_session' src/types/database.ts
 grep -q 'finalize_live_session' src/types/database.ts
 grep -q 'cancel_live_session' src/types/database.ts
+
+grep -q 'review_cards' src/types/database.ts
+grep -q 'review_card_media' src/types/database.ts
+grep -q 'review_progress' src/types/database.ts
+grep -q 'question_hints' src/types/database.ts
+grep -q 'hint_events' src/types/database.ts
+grep -q 'mistake_items' src/types/database.ts
+grep -q 'mistake_status' src/types/database.ts
+grep -q 'remediation_attempts' src/types/database.ts
+grep -q 'remediation_result' src/types/database.ts
+grep -q 'complete_review_card' src/types/database.ts
+grep -q 'get_review_completion' src/types/database.ts
+grep -q 'request_question_hint' src/types/database.ts
+grep -q 'start_remediation_session' src/types/database.ts
+grep -q 'get_learning_progress' src/types/database.ts
+grep -q 'get_classroom_progress' src/types/database.ts
