@@ -231,6 +231,73 @@ describe('AppShell', () => {
     );
   });
 
+  it('renders the ggame numbered primary rail for students', () => {
+    render(
+      <MemoryRouter>
+        <AppShell />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: '課後學習大廳' })).toHaveAttribute(
+      'href',
+      '/app',
+    );
+    expect(screen.getByRole('link', { name: '課後任務實戰' })).toHaveAttribute(
+      'href',
+      '/app/progress',
+    );
+    expect(screen.getByRole('link', { name: '進入大廳' })).toHaveAttribute(
+      'href',
+      '/app',
+    );
+    expect(screen.queryByRole('link', { name: '教師後台' })).toBeNull();
+  });
+
+  it('gives teachers the indigo rail with full workspace links', () => {
+    mockedUseAuth.mockReturnValue({
+      session: {
+        email: 'teacher@colorplay.test',
+        userId: 'teacher-id',
+      },
+      signIn: vi.fn(),
+      signOut: vi.fn(),
+      status: 'authenticated',
+    });
+    mockedUseMyProfile.mockReturnValue({
+      data: {
+        displayName: 'teacher',
+        id: 'teacher-id',
+        role: 'teacher',
+        timezone: 'Asia/Taipei',
+        reducedMotion: false,
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <AppShell />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: '題庫管理' })).toHaveAttribute(
+      'href',
+      '/teacher/content',
+    );
+    expect(screen.getByRole('link', { name: 'Live 主持' })).toHaveAttribute(
+      'href',
+      '/teacher/live',
+    );
+    expect(screen.getByRole('link', { name: '教師後台' })).toHaveAttribute(
+      'href',
+      '/teacher',
+    );
+    expect(screen.getByText('教師管理權限已授權')).toBeInTheDocument();
+  });
+
   it('awaits signOut and replaces protected history with login', async () => {
     const signOut = vi.fn(() => Promise.resolve());
     mockedUseAuth.mockReturnValue({

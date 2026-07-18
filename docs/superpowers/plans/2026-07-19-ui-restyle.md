@@ -124,10 +124,10 @@
 
 **Steps:**
 
-- [ ] **Step 1:** 更新失敗測試 → RED。
-- [ ] **Step 2:** 實作 → GREEN + lint + typecheck。
-- [ ] **Step 3:** `bash scripts/test-e2e-local.sh tests/e2e/login.spec.ts`（驗證 Task 0 的結構性斷言仍成立）。
-- [ ] **Step 4:** Commit `feat: restyle app shell with ggame navigation`。
+- [x] **Step 1:** 更新失敗測試 → RED。
+- [x] **Step 2:** 實作 → GREEN + lint + typecheck。
+- [x] **Step 3:** `bash scripts/test-e2e-local.sh tests/e2e/login.spec.ts`（驗證 Task 0 的結構性斷言仍成立）。
+- [x] **Step 4:** Commit `feat: restyle app shell with ggame navigation`。
 
 ### Task 6: 大廳
 
