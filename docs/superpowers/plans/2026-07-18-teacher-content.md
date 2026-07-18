@@ -48,8 +48,8 @@
 
 ### Task 7 — External activities (S)
 
-- [ ] **Step 1:** Failing pgTAP `030_external_activities`: teacher-owned `external_activities` (Kahoot URL, optional classroom/chapter, availability/status; https-only URL check; owner CRUD via commands; students read only available rows of their classrooms).
-- [ ] **Step 2:** RED. **Step 3:** migration `20260719000500_external_activities.sql`. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add external activity links`.
+- [x] **Step 1:** Failing pgTAP `030_external_activities`: teacher-owned `external_activities` (Kahoot URL, optional classroom/chapter, availability/status; https-only URL check; owner CRUD via commands; students read only available rows of their classrooms).
+- [x] **Step 2:** RED. **Step 3:** migration `20260719000500_external_activities.sql`. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add external activity links`.
 
 ### Task 8 — Teacher data layer (M)
 
