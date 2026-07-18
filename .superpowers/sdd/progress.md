@@ -278,3 +278,49 @@ Reservations recorded per the plan:
 - The owner keeps updating the sheet; re-imports are re-runnable and must preserve the verified 45-question baseline stable codes.
 
 Status: Phase 5 closed. Next: staging setup with the owner (Supabase access token, legacy-project reset authorization, GitHub repo, Vercel), then Phase 6 Teacher Content, Import, and Analytics.
+
+## Phase 6: Teacher Content, Import, and Analytics (2026-07-18)
+
+Plan: `docs/superpowers/plans/2026-07-18-teacher-content.md` (`16c40da`, baseline `53698ab`). Scope pinned in spec/06 (`7f8ea86`): upsert-by-stable-code import semantics (identical→no-op, changed published→new version, draft→in-place, missing→create, never delete), server-side script/handler rejection, and the import report shape.
+
+Task 1: complete (`7f8ea86`; import/versioning rules pinned in spec/06)
+Task 2: complete (`b6f0617`; `content_versions` frozen snapshots + append-only `content_publication_events`, teacher-read-only RLS)
+Task 3: complete (`8c146ee`; six teacher commands — draft upsert/publish/archive for questions and review cards; publish bumps the version, snapshots the payload, appends an event; an in-flight student session provably stays on its frozen version while v2 publishes)
+Task 4: complete (`fc75ae5`; shared validation-rules module + SheetJS XLSX codec with the three spec worksheets; `2e85954` re-ran both importers through the shared rules with byte-identical output)
+Task 5: complete (`ac3765b`; `commit_content_import` — teacher-only, request-idempotent, server re-validates every row, all-or-nothing with fault-injection proof that a mid-commit failure writes zero content yet persists the failed report; imported questions land as drafts; the 45-question baseline survives any import)
+Task 6: complete (`550ae1a`; five analytics projections over `teacher_answer_facts` with classroom/date/chapter/subtopic filters, Asia/Taipei midnight boundaries asserted on both sides, null-not-zero empty denominators, every number recomputed independently in pgTAP)
+Task 7: complete (`d6c9981`; https-only external activity links, owner-managed, members read available rows only)
+Task 8: complete (`553d5d4`; teacher-content repository with strict zod and stable error codes; database types regenerated)
+Task 9: complete (`ef1992c`; `/teacher` real dashboard with classroom picker, summary cards, worst-subtopic callout, em-dash empty states; `/teacher/analytics` with the four filters driving all five projections; nav entry 教學分析)
+Task 10: complete (`a88ab00`; content workspace with status/version badges, question and review-card editors mirroring the shared rules client-side, publish/archive confirm dialogs with version feedback; `da475dc` teacher SELECT on draft options/media with students still published-only)
+Task 11: complete (`3d46fea`, `1e213e2`; import wizard — real template download, client parse preview with per-row errors, commit blocked while any error exists, success and failed-commit reports rendered as inert text)
+Task 12: complete (`5f3df2a`; runner/finalizer/contract pins and the single `Teacher Content phase gate` spec; dedicated `contentTeacher`/`contentStudent` fixtures)
+
+Review: focused complete-range pass of `53698ab..HEAD` per the tiered flow — zero `dangerouslySetInnerHTML` anywhere, every new command behind `assert_content_teacher` with revoke/grant pairs and pinned `search_path`, import atomicity and baseline preservation carried by pgTAP 028, timezone math by 029. No Critical findings from the read; the prechecks then caught two real defects the rollback-only pgTAP suite could not see:
+
+- The single-choice option triggers are `INITIALLY DEFERRED`, so they fire at COMMIT under the api role, and the internal validator was revoked from `authenticated` — every teacher content write through PostgREST failed 403 while pgTAP stayed green (transactions roll back, deferred triggers never fire). Fixed by making the two trigger functions `security definer` (`fbbfbbf`); 031 now forces `set constraints all immediate` under the api role so the gap stays covered.
+- Column grants hide `questions.explanation` and `question_options.is_correct` from api roles (students must never read answers), which also blanked the teacher workspace. The listing moved to a teacher-only `teacher_list_questions()` RPC; students calling it get `CONTENT_TEACHER_ONLY` (`1a629d5`).
+
+Gate history:
+
+- Prechecks 1–8 (headless, evidence in scratchpad): missing seed accounts for the new fixtures; the two defects above; first-publish feedback wrongly reading 內容未變更 (the receipt's `changed` compares semantic payloads only — the UI now treats a draft's first publish as a publication); the summary metric relabelled 完成挑戰次數 (the SQL counts distinct completed sessions; the 3×1-answer pgTAP scenario could not distinguish the two semantics); a leaderboard settle-before-navigate wait (aborted-request health); and exact label matching (`題目` is a substring of the editor form's aria-label). Precheck 9 passed headless in 14.8 s.
+- Formal gate run 1 FAILED: `pnpm test:db` ran against content committed by the earlier browser run (the imported question changed chapter 3's template pool, so 022 collided on seeded hints). The runner now resets the database before the db battery — one reset serves both since pgTAP rolls back and the auth seed is idempotent; the order is re-pinned in the contract with this rationale (`a8d09f7`).
+- Formal gate run 2 PASS on 2026-07-18 at clean SHA `a8d09f71c9641e91c9c183d47a5754e69fef2d27`: Prettier, lint, typecheck, 87 Vitest files/553 tests, production build, reset, 32 pgTAP files/803 assertions + runtime smoke + 13 integration files/25 tests, PostgREST probe, auth seed, and the headed Chromium flow (23.4 s). The flow: the teacher downloads the real template (saved as evidence and re-read in-test to the three spec sheets), uploads an invalid workbook (正解 X and a script prompt blocked per-row, commit disabled, `window.__xss` undefined), uploads a valid one (preview → commit → server report), the imported question and review card land as drafts invisible to the student until publish, a script-bearing draft attempt is blocked in the browser and a published-code collision is the run's only declared 400, the student answers chapter 4 with one deliberate mistake while the teacher publishes v2 of that very question mid-session (the frozen session finishes on v1), the dashboard reads 1 challenge/1 student/87.5% with a real worst-subtopic callout and survives refresh, question analysis pins the wrong answer at 0.0% under the frozen prompt, a 2020 date range collapses every projection to 此範圍尚無資料/—, teacher B sees neither the classroom nor its numbers, the student bounces off `/teacher/content` to `/unauthorized`, and three-viewport screenshots plus the `.xlsx` artifact finalize the evidence.
+
+Manifest: `artifacts/acceptance/teacher-content-a8d09f71c9641e91c9c183d47a5754e69fef2d27/manifest.json` (`decision: PASS`; `AC-TCH-001`–`AC-TCH-009`, `AC-MIG-003`).
+
+Conventions added in this phase (binding on later phases):
+
+- Deferred constraint triggers execute under the api role at COMMIT: their functions must be `security definer` (or granted), and pgTAP must exercise them with `set constraints all immediate` under `set local role authenticated`.
+- Tables with column-level grants cannot back teacher UIs through direct selects; teacher-privileged reads go through teacher-only RPCs.
+- Phase gate runners reset the database before `pnpm test:db` whenever the browser flow commits content.
+
+Reservations recorded per the plan:
+
+- Review media stays URL-only (`asset_path` accepts https URLs); Storage upload is future work.
+- Content deletion stays out of scope — archive is the only removal, and history/versions are never deleted.
+- `content_imports` uses two statuses (`committed`/`failed`); no `uploaded` stage exists because parsing is client-side and only the commit RPC touches the server.
+- The whole-UI restyle waits for the owner's reference HTML file; current pages stay on the existing shell styles.
+- The import wizard allows re-submitting an already committed workbook; a fresh request id makes it a harmless idempotent no-op by stable code.
+
+Status: Phase 6 closed. Next: Phase 7 (Live advanced) and Phase 8 (production release); staging redeployed with the teacher backend for owner testing.

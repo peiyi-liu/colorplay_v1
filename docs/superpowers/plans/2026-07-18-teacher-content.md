@@ -79,11 +79,11 @@
 
 ### Review and gate
 
-- [ ] **Review Step 1:** Complete-range review of `53698ab..HEAD` (exclude generated/lockfile/artifacts). Priorities: import transaction atomicity, version-freezing correctness across the publish boundary, XSS surfaces, teacher-role authorization on every new command, analytics formula exactness and timezone handling, baseline preservation.
-- [ ] **Review Step 2:** Fix Critical/Important findings with focused commits.
-- [ ] **Gate Step 1:** Disposable headless prechecks (evidence in scratchpad, retained on failure); iterate fix→precheck until green.
-- [ ] **Gate Step 2:** Clean `GATE_SHA`, run `pnpm phase:teacher-content` once per fix iteration.
-- [ ] **Gate Step 3:** After PASS close Phase 6 in `.superpowers/sdd/progress.md`, redeploy staging (bootstrap + push), and commit `docs: close teacher content phase`. Reservations to record: media upload to Storage (URL-only this phase), content deletion (archive only), the pending UI restyle against the owner's reference HTML.
+- [x] **Review Step 1:** Complete-range review of `53698ab..HEAD` (exclude generated/lockfile/artifacts). Priorities: import transaction atomicity, version-freezing correctness across the publish boundary, XSS surfaces, teacher-role authorization on every new command, analytics formula exactness and timezone handling, baseline preservation. _(Focused pass per the tiered AGENTS.md flow: zero `dangerouslySetInnerHTML`, every new command behind `assert_content_teacher` + revokes; two minor observations — re-commit after success is an idempotent no-op, media deletion deferred with archive.)_
+- [x] **Review Step 2:** Fix Critical/Important findings with focused commits. _(None Critical from the read; the prechecks then surfaced and fixed: deferred option triggers firing as the api role (`security definer`, pgTAP `set constraints all immediate` coverage), column grants hiding explanation/is_correct from the workspace (`teacher_list_questions()` RPC), first-publish feedback, summary metric label, leaderboard settle, exact label match.)_
+- [x] **Gate Step 1:** Disposable headless prechecks (evidence in scratchpad, retained on failure); iterate fix→precheck until green. _(9 iterations; final headless PASS 14.8s.)_
+- [x] **Gate Step 2:** Clean `GATE_SHA`, run `pnpm phase:teacher-content` once per fix iteration. _(First formal run FAILED: `test:db` ran on content left by the browser run — the runner now resets before the db battery, order re-pinned in the contract with rationale. Second run PASS at `a8d09f7`.)_
+- [x] **Gate Step 3:** After PASS close Phase 6 in `.superpowers/sdd/progress.md`, redeploy staging (bootstrap + push), and commit `docs: close teacher content phase`. Reservations to record: media upload to Storage (URL-only this phase), content deletion (archive only), the pending UI restyle against the owner's reference HTML.
 
 ## Plan self-review checklist
 
