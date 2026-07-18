@@ -453,9 +453,11 @@ test('Teacher Content phase gate', async ({
   const questionAnalysis = teacherPage.getByRole('region', {
     name: '題目分析',
   });
+  // Answer facts keep the frozen prompt the student actually saw, so the
+  // wrong answer reports under the original wording even after the v2 bump.
   const editedAnalysisRow = questionAnalysis
     .locator('tr')
-    .filter({ hasText: `（第二版）${wrongPrompt}` });
+    .filter({ hasText: wrongPrompt });
   await expect(editedAnalysisRow).toContainText('0.0%');
   await expect(
     teacherPage.getByRole('region', { name: '子題精熟' }),
