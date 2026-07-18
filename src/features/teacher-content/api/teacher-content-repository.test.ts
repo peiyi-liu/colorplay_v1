@@ -106,7 +106,7 @@ describe('teacher content repository', () => {
           questions: [
             expect.objectContaining({ answer: 'B', code: '8-2-01', row: 2 }),
           ],
-        }),
+        }) as unknown,
       }),
     );
     expect(report.status).toBe('committed');
@@ -130,6 +130,58 @@ describe('teacher content repository', () => {
         ),
       ).rejects.toMatchObject({ code });
     }
+  });
+
+  it('lists published subtopics as filter options', async () => {
+    const order = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: '23000000-0000-0000-0000-000000000001',
+          stable_code: 'sheet-3-1-all',
+          title: '3-1 色彩三要素與色名的表示',
+        },
+      ],
+      error: null,
+    });
+    const select = vi.fn(() => ({ order }));
+    const from = vi.fn(() => ({ select }));
+    const repository = createTeacherContentRepository({
+      from,
+    } as unknown as SupabaseClient<Database>);
+
+    await expect(repository.listSubtopics()).resolves.toEqual([
+      {
+        stableCode: 'sheet-3-1-all',
+        subtopicId: '23000000-0000-0000-0000-000000000001',
+        title: '3-1 色彩三要素與色名的表示',
+      },
+    ]);
+    expect(from).toHaveBeenCalledWith('subtopics');
+  });
+
+  it('passes the date range to assignment and live projections', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: [], error: null });
+    const repository = createTeacherContentRepository(rpcClient(rpc));
+
+    await repository.getAssignmentSummary(
+      '29100000-0000-0000-0000-000000000001',
+      { from: '2026-07-18', to: '2026-07-19' },
+    );
+    await repository.getLiveReport('29100000-0000-0000-0000-000000000001', {
+      from: '2026-07-18',
+      to: '2026-07-19',
+    });
+
+    expect(rpc).toHaveBeenNthCalledWith(
+      1,
+      'teacher_assignment_summary',
+      expect.objectContaining({ p_from: '2026-07-18', p_to: '2026-07-19' }),
+    );
+    expect(rpc).toHaveBeenNthCalledWith(
+      2,
+      'teacher_live_session_report',
+      expect.objectContaining({ p_from: '2026-07-18', p_to: '2026-07-19' }),
+    );
   });
 
   it('rejects malformed analytics payloads', async () => {

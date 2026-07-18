@@ -201,6 +201,26 @@ export type AnalyticsFilters = Readonly<{
   to?: string | null;
 }>;
 
+export type DateRangeFilters = Readonly<{
+  from?: string | null;
+  to?: string | null;
+}>;
+
+export type SubtopicOption = Readonly<{
+  stableCode: string;
+  subtopicId: string;
+  title: string;
+}>;
+
+export type QuestionAnalysisRow = z.infer<
+  typeof questionAnalysisSchema
+>[number];
+export type SubtopicMasteryRow = z.infer<typeof subtopicMasterySchema>[number];
+export type AssignmentSummaryRow = z.infer<
+  typeof assignmentSummarySchema
+>[number];
+export type LiveReportRow = z.infer<typeof liveReportSchema>[number];
+
 export type ClassroomSummary = Readonly<{
   attempts: number;
   averageAccuracy: number | null;
@@ -220,12 +240,22 @@ const toQuestionPayload = (payload: QuestionDraftPayload) => ({
   subtopic_id: payload.subtopicId,
 });
 
+const dateArgs = (filters: DateRangeFilters) => ({
+  ...(filters.from ? { p_from: filters.from } : {}),
+  ...(filters.to ? { p_to: filters.to } : {}),
+});
+
 const analyticsArgs = (classroomId: string, filters: AnalyticsFilters) => ({
   p_classroom_id: classroomId,
   ...(filters.chapterId ? { p_chapter_id: filters.chapterId } : {}),
-  ...(filters.from ? { p_from: filters.from } : {}),
   ...(filters.subtopicId ? { p_subtopic_id: filters.subtopicId } : {}),
-  ...(filters.to ? { p_to: filters.to } : {}),
+  ...dateArgs(filters),
+});
+
+const subtopicOptionSchema = z.object({
+  id: uuidString,
+  stable_code: z.string(),
+  title: z.string(),
 });
 
 export type TeacherContentRepository = Readonly<{
@@ -241,22 +271,27 @@ export type TeacherContentRepository = Readonly<{
   ): Promise<ImportCommitReport>;
   getAssignmentSummary(
     classroomId: string,
-  ): Promise<z.infer<typeof assignmentSummarySchema>>;
+    filters: DateRangeFilters,
+  ): Promise<readonly AssignmentSummaryRow[]>;
   getClassroomSummary(
     classroomId: string,
     filters: AnalyticsFilters,
   ): Promise<ClassroomSummary | null>;
-  getLiveReport(classroomId: string): Promise<z.infer<typeof liveReportSchema>>;
+  getLiveReport(
+    classroomId: string,
+    filters: DateRangeFilters,
+  ): Promise<readonly LiveReportRow[]>;
   getQuestionAnalysis(
     classroomId: string,
     filters: AnalyticsFilters,
-  ): Promise<z.infer<typeof questionAnalysisSchema>>;
+  ): Promise<readonly QuestionAnalysisRow[]>;
   getSubtopicMastery(
     classroomId: string,
     filters: AnalyticsFilters,
-  ): Promise<z.infer<typeof subtopicMasterySchema>>;
+  ): Promise<readonly SubtopicMasteryRow[]>;
   listCards(): Promise<readonly TeacherCardRow[]>;
   listQuestions(): Promise<readonly TeacherQuestionRow[]>;
+  listSubtopics(): Promise<readonly SubtopicOption[]>;
   publishQuestion(
     input: Readonly<{
       payload: QuestionDraftPayload | null;
@@ -320,9 +355,10 @@ export function createTeacherContentRepository(
       return parseWith(importReportSchema, data);
     },
 
-    async getAssignmentSummary(classroomId) {
+    async getAssignmentSummary(classroomId, filters) {
       const { data, error } = await client.rpc('teacher_assignment_summary', {
         p_classroom_id: classroomId,
+        ...dateArgs(filters),
       });
       if (error) throw toError(error.message);
       return parseWith(assignmentSummarySchema, data);
@@ -344,9 +380,10 @@ export function createTeacherContentRepository(
       };
     },
 
-    async getLiveReport(classroomId) {
+    async getLiveReport(classroomId, filters) {
       const { data, error } = await client.rpc('teacher_live_session_report', {
         p_classroom_id: classroomId,
+        ...dateArgs(filters),
       });
       if (error) throw toError(error.message);
       return parseWith(liveReportSchema, data);
@@ -396,6 +433,19 @@ export function createTeacherContentRepository(
         status: row.status,
         subtopicId: row.subtopic_id,
         version: row.version,
+      }));
+    },
+
+    async listSubtopics() {
+      const { data, error } = await client
+        .from('subtopics')
+        .select('id, stable_code, title')
+        .order('stable_code');
+      if (error) throw toError(error.message);
+      return parseWith(z.array(subtopicOptionSchema), data).map((row) => ({
+        stableCode: row.stable_code,
+        subtopicId: row.id,
+        title: row.title,
       }));
     },
 

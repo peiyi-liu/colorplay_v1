@@ -53,8 +53,8 @@
 
 ### Task 8 — Teacher data layer (M)
 
-- [ ] **Step 1:** Failing Vitest: `teacher-content` repository (drafts list incl. drafts via teacher read policy, upsert/publish/archive, import staging + commit, report list, analytics queries, external activities) with strict zod and stable error codes; hooks with invalidation.
-- [ ] **Step 2:** RED. **Step 3:** implement + regenerate database types. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add teacher content data layer`.
+- [x] **Step 1:** Failing Vitest: `teacher-content` repository (drafts list incl. drafts via teacher read policy, upsert/publish/archive, import staging + commit, report list, analytics queries, external activities) with strict zod and stable error codes; hooks with invalidation. _(Hooks land with the UI tasks that consume them; review-card and external-activity repository methods land with Task 10 where their forms live.)_
+- [x] **Step 2:** RED. **Step 3:** implement + regenerate database types. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add teacher content data layer`.
 
 ### Task 9 — Teacher dashboard and analytics UI (M)
 

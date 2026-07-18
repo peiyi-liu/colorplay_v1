@@ -139,15 +139,19 @@ export function createAppRouter() {
               children: [
                 {
                   path: '/teacher',
-                  element: (
-                    <RoutePage
-                      actionLabel="返回章節"
-                      actionTo="/app"
-                      eyebrow="教師功能"
-                      heading="教師工作區"
-                      message="從這裡進入教師專用的課程與班級管理功能。"
-                    />
-                  ),
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/teacher-content/pages/teacher-dashboard-page');
+                    return { Component: module.TeacherDashboardPage };
+                  },
+                },
+                {
+                  path: '/teacher/analytics',
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/teacher-content/pages/teacher-analytics-page');
+                    return { Component: module.TeacherAnalyticsPage };
+                  },
                 },
                 {
                   path: '/teacher/classes',

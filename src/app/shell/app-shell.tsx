@@ -67,6 +67,7 @@ export function AppShell() {
                 {profile.data?.role === 'teacher' ? (
                   <>
                     <Link to="/teacher">教師工作區</Link>
+                    <Link to="/teacher/analytics">教學分析</Link>
                     <Link to="/teacher/classes">班級管理</Link>
                   </>
                 ) : null}
