@@ -45,12 +45,14 @@ type PendingAction =
       cardId: string;
       label: string;
       payload: ReviewCardDraftPayload | null;
+      sourceStatus: 'draft' | 'published' | 'archived';
     }>
   | Readonly<{
       type: 'publish-question';
       questionId: string;
       label: string;
       payload: QuestionDraftPayload | null;
+      sourceStatus: 'draft' | 'published' | 'archived';
     }>;
 
 const emptyQuestionForm = (): QuestionFormValues => ({
@@ -134,10 +136,13 @@ export function TeacherContentWorkspacePage({
     setActionError(error.message);
     setPending(null);
   };
+  // The receipt's `changed` compares semantic payloads only; a first publish
+  // of a draft is still a real publication even when nothing changed.
   const publishFeedback = (
     receipt: Readonly<{ changed: boolean; version: number }>,
+    sourceStatus: 'draft' | 'published' | 'archived',
   ) =>
-    receipt.changed
+    receipt.changed || sourceStatus !== 'published'
       ? `已發布第 ${String(receipt.version)} 版。`
       : `內容未變更，維持第 ${String(receipt.version)} 版。`;
 
@@ -153,7 +158,7 @@ export function TeacherContentWorkspacePage({
         {
           onError: fail,
           onSuccess: (receipt) => {
-            succeed(publishFeedback(receipt));
+            succeed(publishFeedback(receipt, action.sourceStatus));
           },
         },
       );
@@ -165,7 +170,7 @@ export function TeacherContentWorkspacePage({
         {
           onError: fail,
           onSuccess: (receipt) => {
-            succeed(publishFeedback(receipt));
+            succeed(publishFeedback(receipt, action.sourceStatus));
           },
         },
       );
@@ -201,6 +206,7 @@ export function TeacherContentWorkspacePage({
         label: editing.stableCode,
         payload,
         questionId: editing.questionId,
+        sourceStatus: editing.status,
         type: 'publish-question',
       });
       return;
@@ -223,6 +229,7 @@ export function TeacherContentWorkspacePage({
         cardId: editing.cardId,
         label: editing.title,
         payload,
+        sourceStatus: editing.status,
         type: 'publish-card',
       });
       return;
@@ -306,6 +313,7 @@ export function TeacherContentWorkspacePage({
                                 label: question.stableCode,
                                 payload: null,
                                 questionId: question.questionId,
+                                sourceStatus: question.status,
                                 type: 'publish-question',
                               });
                             }}
@@ -410,6 +418,7 @@ export function TeacherContentWorkspacePage({
                                 cardId: card.cardId,
                                 label: card.title,
                                 payload: null,
+                                sourceStatus: card.status,
                                 type: 'publish-card',
                               });
                             }}

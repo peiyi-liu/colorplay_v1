@@ -221,6 +221,24 @@ describe('TeacherContentWorkspacePage', () => {
     expect(await screen.findByText('已發布第 4 版。')).toBeInTheDocument();
   });
 
+  it('reports a first publish as published even without semantic changes', async () => {
+    const repository = repositoryOf({
+      publishQuestion: vi
+        .fn()
+        .mockResolvedValue({ changed: false, version: 1 }),
+    });
+    renderPage(repository);
+
+    const draftRow = await rowOf('9-9-99');
+    await userEvent.click(draftRow.getByRole('button', { name: '發布' }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.click(
+      within(dialog).getByRole('button', { name: '確認發布' }),
+    );
+
+    expect(await screen.findByText('已發布第 1 版。')).toBeInTheDocument();
+  });
+
   it('archives a question after confirmation', async () => {
     const repository = repositoryOf();
     renderPage(repository);
