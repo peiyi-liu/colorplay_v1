@@ -24,3 +24,6 @@ pnpm-debug.log*
 yarn-debug.log*
 .vercel
 .env*
+
+# 設計 hook 快取（工具產生）
+.impeccable/
