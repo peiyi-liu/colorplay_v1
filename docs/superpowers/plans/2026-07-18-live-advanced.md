@@ -29,23 +29,23 @@
 
 ### Task 3 — Team mode (M)
 
-- [ ] **Step 1:** Failing pgTAP `033_live_teams`: mode/team-count validation (2–4, individual default), deterministic round-robin assignment on join, team totals in feedback and completed payloads equal to summed member scores (recomputed independently), individual ledger rows unchanged versus an individual-mode control, final payload team ranking, teams invisible to outsiders.
-- [ ] **Step 2:** RED. **Step 3:** migration `20260720000200_live_teams.sql`. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add live team mode`.
+- [x] **Step 1:** Failing pgTAP `033_live_teams`: mode/team-count validation (2–4, individual default), deterministic round-robin assignment on join, team totals in feedback and completed payloads equal to summed member scores (recomputed independently), individual ledger rows unchanged versus an individual-mode control, final payload team ranking, teams invisible to outsiders.
+- [x] **Step 2:** RED. **Step 3:** migration `20260720000200_live_teams.sql`. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add live team mode`.
 
 ### Task 4 — Distribution, detail report, scheduling, streaks (M)
 
-- [ ] **Step 1:** Failing pgTAP `034_live_insights`: host-only during-open distribution (per-option counts match inserted answers; students/teacher B denied), `teacher_live_session_detail` host-only with per-question aggregates equal to independent recomputation and no email anywhere in the payload, `schedule_live_activity` host-only set/clear with ordering contract, `current_streak` maintained across correct/wrong/timeout sequences and returned in the answer receipt, `profiles.reduced_motion` updatable only by the owner through the trusted path.
-- [ ] **Step 2:** RED. **Step 3:** migration `20260720000300_live_insights.sql`. **Step 4:** GREEN + full `pnpm test:db` + lint + typecheck. **Step 5:** Commit `feat: add live insights and scheduling`.
+- [x] **Step 1:** Failing pgTAP `034_live_insights`: host-only during-open distribution (per-option counts match inserted answers; students/teacher B denied), `teacher_live_session_detail` host-only with per-question aggregates equal to independent recomputation and no email anywhere in the payload, `schedule_live_activity` host-only set/clear with ordering contract, `current_streak` maintained across correct/wrong/timeout sequences and returned in the answer receipt, `profiles.reduced_motion` updatable only by the owner through the trusted path.
+- [x] **Step 2:** RED. **Step 3:** migration `20260720000300_live_insights.sql`. **Step 4:** GREEN + full `pnpm test:db` + lint + typecheck. **Step 5:** Commit `feat: add live insights and scheduling`.
 
 ### Task 5 — Data layer (M)
 
-- [ ] **Step 1:** Failing Vitest: live repository gains pause/resume/distribution/detail/schedule and the streak-bearing answer receipt; profile repository gains the reduced-motion toggle; strict zod, stable error codes; hooks with invalidation and broadcast-driven refresh for the host distribution.
-- [ ] **Step 2:** RED. **Step 3:** implement + regenerate database types. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add live advanced data layer`.
+- [x] **Step 1:** Failing Vitest: live repository gains pause/resume/distribution/detail/schedule and the streak-bearing answer receipt; profile repository gains the reduced-motion toggle; strict zod, stable error codes; hooks with invalidation and broadcast-driven refresh for the host distribution.
+- [x] **Step 2:** RED. **Step 3:** implement + regenerate database types. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add live advanced data layer`.
 
 ### Task 6 — UI (L)
 
-- [ ] **Step 1:** Failing RTL: host console pause/resume with paused banner and live per-option distribution panel; team scoreboard on host and student feedback/final views; student streak badge with celebration gated by reduced motion (media query + profile toggle on the profile page, `data-reduced-motion` root attribute); teacher Live page scheduling form + upcoming list; session report page (per-question table + ranking) linked from the finalized console and analytics.
-- [ ] **Step 2:** RED. **Step 3:** implement (lazy route for the report page). **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add live advanced ui`.
+- [x] **Step 1:** Failing RTL: host console pause/resume with paused banner and live per-option distribution panel; team scoreboard on host and student feedback/final views; student streak badge with celebration gated by reduced motion (media query + profile toggle on the profile page, `data-reduced-motion` root attribute); teacher Live page scheduling form + upcoming list; session report page (per-question table + ranking) linked from the finalized console and analytics.
+- [x] **Step 2:** RED. **Step 3:** implement (lazy route for the report page). **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add live advanced ui`.
 
 ### Task 7 — Phase gate tooling (M)
 
