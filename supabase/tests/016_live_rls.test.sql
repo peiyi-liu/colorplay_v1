@@ -15,7 +15,7 @@ select has_type(
 );
 select is(
   enum_range(null::public.live_session_state)::text,
-  '{draft,lobby,question_open,question_feedback,completed,cancelled}',
+  '{draft,lobby,question_open,question_feedback,completed,cancelled,paused}',
   'live session states match the contract'
 );
 select is(
