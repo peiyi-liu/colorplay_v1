@@ -58,8 +58,8 @@
 
 ### Task 9 — Teacher dashboard and analytics UI (M)
 
-- [ ] **Step 1:** Failing RTL: `/teacher` becomes a real dashboard (summary cards from `teacher_classroom_summary`, worst-subtopic callout, em-dash empty states) and `/teacher/analytics` with classroom/date/chapter/subtopic filters driving the five projections; loading/empty/error states.
-- [ ] **Step 2:** RED. **Step 3:** implement (lazy routes; nav link 教學分析). **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add teacher dashboard and analytics`.
+- [x] **Step 1:** Failing RTL: `/teacher` becomes a real dashboard (summary cards from `teacher_classroom_summary`, worst-subtopic callout, em-dash empty states) and `/teacher/analytics` with classroom/date/chapter/subtopic filters driving the five projections; loading/empty/error states.
+- [x] **Step 2:** RED. **Step 3:** implement (lazy routes; nav link 教學分析). **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add teacher dashboard and analytics`.
 
 ### Task 10 — Content workspace UI (L)
 
