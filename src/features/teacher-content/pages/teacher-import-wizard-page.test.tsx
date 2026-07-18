@@ -127,7 +127,9 @@ afterEach(() => {
 
 describe('TeacherImportWizardPage', () => {
   it('downloads the real xlsx template', async () => {
-    const createObjectURL = vi.fn(() => 'blob:template');
+    const createObjectURL = vi.fn<(blob: Blob) => string>(
+      () => 'blob:template',
+    );
     const revokeObjectURL = vi.fn();
     vi.stubGlobal('URL', {
       ...URL,
@@ -139,9 +141,9 @@ describe('TeacherImportWizardPage', () => {
     await userEvent.click(screen.getByRole('button', { name: '下載範本' }));
 
     expect(createObjectURL).toHaveBeenCalledTimes(1);
-    const blob = createObjectURL.mock.calls[0]?.[0] as Blob;
+    const blob = createObjectURL.mock.calls[0]?.[0];
     expect(blob).toBeInstanceOf(Blob);
-    expect(blob.size).toBeGreaterThan(0);
+    expect(blob?.size).toBeGreaterThan(0);
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:template');
   });
 
