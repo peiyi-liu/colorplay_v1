@@ -50,8 +50,8 @@
 
 ### Task 7 — Remediation sessions (L)
 
-- [ ] **Step 1:** Failing pgTAP `024_remediation`: `start_remediation_session(p_subtopic_id, p_client_request_id)` builds a `remediation` quiz session from the caller's open/reopened current-version mistakes in that subtopic (cap 10, deterministic order), idempotent via client_request_id, no open mistakes → `REMEDIATION_NOTHING_OPEN`; replace-forward `finalize_quiz_session` on remediation: XP 15/10 per correct fast/slow, Token 0, one XP row (`quiz_finalize`, session id), no daily-quota consumption, correct answers resolve linked mistakes via `remediation_attempts` (mistake, session, answer, transition), wrong answers leave items open; original sessions/answers/scores bit-identical after remediation (assert before/after); later formal current-version wrong reopens a resolved item.
-- [ ] **Step 2:** RED. **Step 3:** migration `20260718000500_remediation.sql`. **Step 4:** GREEN + 005/006/014/015 regression + lint + typecheck. **Step 5:** Commit `feat: add remediation flow`.
+- [x] **Step 1:** Failing pgTAP `024_remediation`: `start_remediation_session(p_subtopic_id, p_client_request_id)` builds a `remediation` quiz session from the caller's open/reopened current-version mistakes in that subtopic (cap 10, deterministic order), idempotent via client_request_id, no open mistakes → `REMEDIATION_NOTHING_OPEN`; replace-forward `finalize_quiz_session` on remediation: XP 15/10 per correct fast/slow, Token 0, one XP row (`quiz_finalize`, session id), no daily-quota consumption, correct answers resolve linked mistakes via `remediation_attempts` (mistake, session, answer, transition), wrong answers leave items open; original sessions/answers/scores bit-identical after remediation (assert before/after); later formal current-version wrong reopens a resolved item.
+- [x] **Step 2:** RED. **Step 3:** migration `20260718000500_remediation.sql`. **Step 4:** GREEN + 005/006/014/015 regression + lint + typecheck. **Step 5:** Commit `feat: add remediation flow`.
 
 ### Task 8 — Progress projections (L)
 
