@@ -40,8 +40,8 @@
 
 ### Task 5 — Question hints (M)
 
-- [ ] **Step 1:** Failing pgTAP `022_question_hints`: `question_hints` unique (question, version, level 1–3), hidden from direct student select; `request_question_hint(p_session_question_id, p_hint_level)` — own in-progress session question only, strictly sequential levels, replay of a granted level returns the same content without a new event, missing level → `HINT_UNAVAILABLE`, `hint_events` unique (user, session_question, level) with frozen content version; hint never contains the correct option flag; no score/reward effect (finalize regression).
-- [ ] **Step 2:** RED. **Step 3:** migration `20260718000300_question_hints.sql` (+ seed hints emitted by Task 2). **Step 4:** GREEN + 005/006 economy regression + lint + typecheck. **Step 5:** Commit `feat: add tiered question hints`.
+- [x] **Step 1:** Failing pgTAP `022_question_hints`: `question_hints` unique (question, version, level 1–3), hidden from direct student select; `request_question_hint(p_session_question_id, p_hint_level)` — own in-progress session question only, strictly sequential levels, replay of a granted level returns the same content without a new event, missing level → `HINT_UNAVAILABLE`, `hint_events` unique (user, session_question, level) with frozen content version; hint never contains the correct option flag; no score/reward effect (finalize regression).
+- [x] **Step 2:** RED. **Step 3:** migration `20260718000300_question_hints.sql` (+ seed hints emitted by Task 2). **Step 4:** GREEN + 005/006 economy regression + lint + typecheck. **Step 5:** Commit `feat: add tiered question hints`.
 
 ### Task 6 — Mistake items from formal finalize (M)
 
