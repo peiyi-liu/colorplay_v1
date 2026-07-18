@@ -22,7 +22,7 @@
     "acceptance:count": "node scripts/verify/count-acceptance.mjs acceptance/ACCEPTANCE_CRITERIA.md",
     "document:manifest": "node scripts/verify/generate-document-manifest.mjs --write",
     "document:manifest:check": "node scripts/verify/generate-document-manifest.mjs --check",
-    "content:import": "node scripts/content/import-questions.mjs",
+    "content:import": "node scripts/content/import-questions.mjs && node scripts/content/import-review-cards.mjs",
     "phase:game-economy": "bash scripts/acceptance/run-game-economy-v2.sh",
     "phase:achievements": "bash scripts/acceptance/run-achievements.sh",
     "phase:classroom-leaderboard": "bash scripts/acceptance/run-classroom-leaderboard.sh",

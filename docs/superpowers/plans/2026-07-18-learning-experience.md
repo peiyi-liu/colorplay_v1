@@ -23,10 +23,10 @@
 
 ### Task 2 — Content import v2: review cards, refreshed questions, hint drafts (M)
 
-- [ ] **Step 1:** Failing unit tests for the review-card importer module (CSV parse of the new tab, deterministic UUIDs, version 1 published output, multi-line content preserved, report generation) and for hint-draft emission from import-fixes.
-- [ ] **Step 2:** RED. **Step 3:** implement `scripts/content/import-review-cards.mjs` (outputs `supabase/seeds/content-review-cards.sql`, `tests/fixtures/review-manifest.generated.ts`, `docs/content/review-import-report.md`) plus hint drafts for ≥3 chapter-3 questions in `import-fixes.json` emitted into the question seed; wire `pnpm content:import` to run both importers; re-run against the live sheet and commit regenerated seeds/fixtures/reports.
-- [ ] **Step 4:** GREEN + lint + typecheck; existing E2E fixtures regenerate (manifest adapts).
-- [ ] **Step 5:** Commit `feat: import review cards and refreshed question bank`.
+- [x] **Step 1:** Failing unit tests for the review-card importer module (CSV parse of the new tab, deterministic UUIDs, version 1 published output, multi-line content preserved, report generation) and for hint-draft emission from import-fixes.
+- [x] **Step 2:** RED. **Step 3:** implement `scripts/content/import-review-cards.mjs` (outputs `supabase/seeds/content-review-cards.sql`, `tests/fixtures/review-manifest.generated.ts`, `docs/content/review-import-report.md`) plus hint drafts for ≥3 chapter-3 questions in `import-fixes.json` emitted into the question seed; wire `pnpm content:import` to run both importers; re-run against the live sheet and commit regenerated seeds/fixtures/reports.
+- [x] **Step 4:** GREEN + lint + typecheck; existing E2E fixtures regenerate (manifest adapts).
+- [x] **Step 5:** Commit `feat: import review cards and refreshed question bank`.
 
 ### Task 3 — Review card schema and RLS (M)
 

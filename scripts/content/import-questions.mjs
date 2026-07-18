@@ -14,12 +14,12 @@
  * 改號、跳過、章節對應）。試算表填了解析後以試算表為準。
  */
 import console from 'node:console';
-import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { deterministicUuid, parseCsv, sqlText } from './import-shared.mjs';
 import { writeFormattedOutput } from './write-formatted-output.mjs';
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -46,49 +46,6 @@ const DRAFT_RLS_QUESTION = {
 const fixes = JSON.parse(
   readFileSync(join(projectRoot, 'scripts/content/import-fixes.json'), 'utf8'),
 );
-
-function deterministicUuid(kind, key) {
-  const hex = createHash('md5')
-    .update(`colorplay:${kind}:${key}`)
-    .digest('hex');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
-}
-
-function parseCsv(text) {
-  const rows = [];
-  let row = [];
-  let field = '';
-  let quoted = false;
-  for (let i = 0; i < text.length; i += 1) {
-    const ch = text[i];
-    if (quoted) {
-      if (ch === '"') {
-        if (text[i + 1] === '"') {
-          field += '"';
-          i += 1;
-        } else quoted = false;
-      } else field += ch;
-    } else if (ch === '"') quoted = true;
-    else if (ch === ',') {
-      row.push(field);
-      field = '';
-    } else if (ch === '\n') {
-      row.push(field);
-      rows.push(row);
-      row = [];
-      field = '';
-    } else if (ch !== '\r') field += ch;
-  }
-  if (field !== '' || row.length > 0) {
-    row.push(field);
-    rows.push(row);
-  }
-  return rows;
-}
-
-function sqlText(value) {
-  return `'${value.replaceAll("'", "''")}'`;
-}
 
 async function loadCsv() {
   const arg = process.argv[2];
@@ -313,6 +270,67 @@ writeFileSync(
   lines.join('\n'),
 );
 
+// 分層提示草稿：試算表尚無提示欄位前，由 import-fixes.json 補充（level 1–3
+// 依序、不得等價揭露正解），另存種子檔（載入順序在題目之後）。
+const hintDraftEntries = Object.entries(fixes.hintDrafts ?? {}).filter(
+  ([key]) => key !== '$comment',
+);
+const hintValues = [];
+for (const [code, hintLevels] of hintDraftEntries) {
+  const question = questions.find((q) => q.code === code);
+  if (!question) {
+    console.error(`hintDrafts 的題號 ${code} 不在本次匯入的題目中`);
+    process.exit(1);
+  }
+  if (
+    !Array.isArray(hintLevels) ||
+    hintLevels.length < 1 ||
+    hintLevels.length > 3 ||
+    hintLevels.some(
+      (content) =>
+        typeof content !== 'string' ||
+        content.trim() === '' ||
+        content.length > 1000,
+    )
+  ) {
+    console.error(
+      `hintDrafts 的題號 ${code} 需為 1–3 條非空提示（各 ≤1000 字）`,
+    );
+    process.exit(1);
+  }
+  const correctText = question.options.find(
+    ([key]) => key === question.answer,
+  )[1];
+  if (hintLevels.some((content) => content.includes(correctText))) {
+    console.error(`hintDrafts 的題號 ${code} 提示不得直接包含正解文字`);
+    process.exit(1);
+  }
+  hintLevels.forEach((content, index) => {
+    hintValues.push(
+      `  (${sqlText(deterministicUuid('question', code))}, 1, ${index + 1}, ${sqlText(content)})`,
+    );
+  });
+}
+const hintLines = [
+  '-- 由 scripts/content/import-questions.mjs 產生，請勿手動編輯。',
+  `-- 提示為 AI 草稿（import-fixes.json hintDrafts），待教師審閱；產生時間 ${new Date().toISOString()}`,
+  'begin;',
+  '',
+];
+if (hintValues.length > 0) {
+  hintLines.push(
+    'insert into public.question_hints (question_id, question_version, hint_level, content)',
+    'values',
+    `${hintValues.join(',\n')};`,
+    '',
+  );
+}
+hintLines.push('commit;', '');
+writeFileSync(
+  join(projectRoot, 'supabase/seeds/content-question-hints.sql'),
+  hintLines.join('\n'),
+);
+
 const fixtureLines = [
   '// 由 scripts/content/import-questions.mjs 產生，請勿手動編輯。',
   '// E2E 測試用：published 題目的「題目文字 → 正解選項文字」對照表。',
@@ -398,6 +416,16 @@ const reviewLines = [
   ...questions
     .filter((q) => usedDraftExplanations.includes(q.code))
     .map((q) => `- **${q.code}**（答案 ${q.answer}）：${q.explanation}`),
+  '',
+  `## AI 起草的分層提示（共 ${hintDraftEntries.length} 題，請審閱）`,
+  '',
+  '提示依 level 1–3 由淺入深，作答前由學生逐層請求；不得等價揭露正解。',
+  '確認或修改後請告知，未來試算表新增提示欄位時以試算表為準。',
+  '',
+  ...hintDraftEntries.flatMap(([code, hintLevels]) => [
+    `- **${code}**：`,
+    ...hintLevels.map((content, index) => `  ${index + 1}. ${content}`),
+  ]),
   '',
 ];
 mkdirSync(join(projectRoot, 'docs/content'), { recursive: true });

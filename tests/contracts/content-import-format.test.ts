@@ -72,9 +72,24 @@ describe('content import formatting boundary', () => {
     );
 
     expect(importer.match(/await writeFormattedOutput\(/gu)).toHaveLength(3);
-    expect(importer.match(/writeFileSync\(/gu)).toHaveLength(1);
+    expect(importer.match(/writeFileSync\(/gu)).toHaveLength(2);
     expect(importer).toMatch(
       /writeFileSync\(\s*join\(projectRoot, 'supabase\/seeds\/content-questions\.sql'\)/u,
+    );
+    expect(importer).toMatch(
+      /writeFileSync\(\s*join\(projectRoot, 'supabase\/seeds\/content-question-hints\.sql'\)/u,
+    );
+
+    const reviewImporter = await readFile(
+      'scripts/content/import-review-cards.mjs',
+      'utf8',
+    );
+    expect(reviewImporter.match(/await writeFormattedOutput\(/gu)).toHaveLength(
+      2,
+    );
+    expect(reviewImporter.match(/writeFileSync\(/gu)).toHaveLength(1);
+    expect(reviewImporter).toMatch(
+      /writeFileSync\(\s*join\(projectRoot, 'supabase\/seeds\/content-review-cards\.sql'\)/u,
     );
   });
 });
