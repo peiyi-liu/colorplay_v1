@@ -45,8 +45,8 @@
 
 ### Task 6 — Mistake items from formal finalize (M)
 
-- [ ] **Step 1:** Failing pgTAP `023_mistake_items`: `mistake_items` unique current identity (user, question), status `open/resolved/reopened`; replace-forward `finalize_quiz_session` records wrong/timeout answers from `practice`/`assignment` sessions (new → open, resolved → reopened, open stays open with `last_event_at` bump); Live and remediation-internal wrongs do not create items; finalize replay creates no duplicates; students read own items only.
-- [ ] **Step 2:** RED. **Step 3:** migration `20260718000400_mistake_items.sql`. **Step 4:** GREEN + 015 assignment + 018 live regression + lint + typecheck. **Step 5:** Commit `feat: record mistakes at finalize`.
+- [x] **Step 1:** Failing pgTAP `023_mistake_items`: `mistake_items` unique current identity (user, question), status `open/resolved/reopened`; replace-forward `finalize_quiz_session` records wrong/timeout answers from `practice`/`assignment` sessions (new → open, resolved → reopened, open stays open with `last_event_at` bump); Live and remediation-internal wrongs do not create items; finalize replay creates no duplicates; students read own items only.
+- [x] **Step 2:** RED. **Step 3:** migration `20260718000400_mistake_items.sql`. **Step 4:** GREEN + 015 assignment + 018 live regression + lint + typecheck. **Step 5:** Commit `feat: record mistakes at finalize`.
 
 ### Task 7 — Remediation sessions (L)
 
