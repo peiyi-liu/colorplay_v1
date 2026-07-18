@@ -61,6 +61,7 @@ describe('ProfileFoundationPage', () => {
         id: 'student-one-id',
         role: 'student',
         timezone: 'Asia/Taipei',
+        reducedMotion: false,
       },
       error: null,
       isError: false,

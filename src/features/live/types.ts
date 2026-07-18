@@ -14,7 +14,10 @@ export type LiveActivity = Readonly<{
   questionTimeLimitSeconds: number;
   status: 'active' | 'archived';
   rulesVersion: string;
+  scheduledFor: string | null;
 }>;
+
+export type LiveSessionMode = 'individual' | 'team';
 
 export type LiveSessionReceipt = Readonly<{
   sessionId: string;
@@ -22,6 +25,39 @@ export type LiveSessionReceipt = Readonly<{
   stateVersion: number;
   joinCode: string;
   joinCodeVersion: number;
+  mode: LiveSessionMode;
+  teamCount: number | null;
+}>;
+
+export type LiveDistribution = Readonly<{
+  answeredCount: number;
+  options: readonly Readonly<{ optionId: string | null; count: number }>[];
+}>;
+
+export type LiveTeamTotal = Readonly<{
+  teamNumber: number;
+  score: number;
+  memberCount: number;
+}>;
+
+export type LiveSessionDetail = Readonly<{
+  sessionId: string;
+  mode: LiveSessionMode;
+  completedAt: string | null;
+  questions: readonly Readonly<{
+    position: number;
+    prompt: string;
+    answered: number;
+    correct: number;
+    correctRate: number | null;
+    averageResponseMs: number | null;
+  }>[];
+  ranking: readonly Readonly<{
+    rank: number;
+    displayName: string;
+    score: number;
+    teamNumber: number | null;
+  }>[];
 }>;
 
 export type LiveJoinResult = Readonly<{
@@ -78,6 +114,7 @@ export type LiveSessionState = Readonly<{
   optionCounts?: readonly LiveOptionCount[];
   podium?: readonly LivePodiumEntry[];
   myResult?: Readonly<{ score: number; rank: number | null }>;
+  pausedRemainingMs?: number;
 }>;
 
 export type LiveRepositoryErrorCode =
@@ -113,6 +150,8 @@ export type LiveRepository = Readonly<{
     activityId: string;
     classroomId: string;
     assignmentId: string | null;
+    mode?: LiveSessionMode;
+    teamCount?: number | null;
   }): Promise<LiveSessionReceipt>;
   rotateJoinCode(sessionId: string): Promise<{
     joinCode: string;
@@ -130,5 +169,14 @@ export type LiveRepository = Readonly<{
     sessionQuestionId: string;
     selectedOptionId: string;
     idempotencyKey: string;
-  }): Promise<void>;
+  }): Promise<Readonly<{ streak: number }>>;
+  pauseSession(sessionId: string, expectedVersion: number): Promise<void>;
+  resumeSession(sessionId: string, expectedVersion: number): Promise<void>;
+  getDistribution(sessionId: string): Promise<LiveDistribution>;
+  getTeamTotals(sessionId: string): Promise<readonly LiveTeamTotal[]>;
+  getSessionDetail(sessionId: string): Promise<LiveSessionDetail>;
+  scheduleActivity(
+    activityId: string,
+    scheduledFor: string | null,
+  ): Promise<void>;
 }>;

@@ -12,6 +12,7 @@ describe('ProfileSummary', () => {
           id: 'student-one-id',
           role: 'student',
           timezone: 'Asia/Taipei',
+          reducedMotion: false,
         }}
       />,
     );

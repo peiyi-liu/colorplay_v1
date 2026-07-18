@@ -121,7 +121,7 @@ export function useSubmitLiveAnswer(
   sessionId: string,
   repository?: LiveRepository,
 ): UseMutationResult<
-  void,
+  Readonly<{ streak: number }>,
   LiveRepositoryError,
   {
     sessionQuestionId: string;

@@ -5,6 +5,7 @@ export type SafeProfile = Readonly<{
   displayName: string;
   role: Database['public']['Enums']['app_role'];
   timezone: string;
+  reducedMotion: boolean;
 }>;
 
 export type ProfileRepositoryErrorCode =
@@ -19,4 +20,5 @@ export class ProfileRepositoryError extends Error {
 
 export interface ProfileRepository {
   getMyProfile(): Promise<SafeProfile>;
+  setReducedMotion(enabled: boolean): Promise<void>;
 }

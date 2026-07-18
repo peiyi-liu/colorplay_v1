@@ -36,6 +36,7 @@ const activitySchema = z.strictObject({
   question_time_limit_seconds: positiveInteger,
   status: z.enum(['active', 'archived']),
   rules_version: z.string().min(1),
+  scheduled_for: utcTimestamp.nullable().optional(),
 });
 
 const activityRowSchema = z.strictObject({
@@ -45,6 +46,55 @@ const activityRowSchema = z.strictObject({
   question_time_limit_seconds: positiveInteger,
   status: z.enum(['active', 'archived']),
   rules_version: z.string().min(1),
+  scheduled_for: utcTimestamp.nullable(),
+});
+
+const answerReceiptSchema = z.strictObject({
+  recorded: z.literal(true),
+  session_question_id: uuidString,
+  streak: z.number().int().nonnegative(),
+});
+
+const distributionSchema = z.strictObject({
+  answered_count: z.number().int().nonnegative(),
+  options: z.array(
+    z.strictObject({
+      option_id: uuidString.nullable(),
+      count: z.number().int().positive(),
+    }),
+  ),
+});
+
+const teamTotalsSchema = z.array(
+  z.strictObject({
+    team_number: z.number().int().positive(),
+    score: z.number().int().nonnegative(),
+    member_count: z.number().int().positive(),
+  }),
+);
+
+const sessionDetailSchema = z.strictObject({
+  session_id: uuidString,
+  mode: z.enum(['individual', 'team']),
+  completed_at: utcTimestamp.nullable(),
+  questions: z.array(
+    z.strictObject({
+      position: positiveInteger,
+      prompt: z.string().min(1),
+      answered: z.number().int().nonnegative(),
+      correct: z.number().int().nonnegative(),
+      correct_rate: z.number().nullable(),
+      average_response_ms: z.number().int().nullable(),
+    }),
+  ),
+  ranking: z.array(
+    z.strictObject({
+      rank: positiveInteger,
+      display_name: z.string().min(1),
+      score: z.number().int().nonnegative(),
+      team_number: z.number().int().positive().nullable(),
+    }),
+  ),
 });
 
 const sessionReceiptSchema = z.strictObject({
@@ -102,6 +152,7 @@ const stateSchema = z
     rules_version: z.string().min(1),
     server_time: utcTimestamp,
     is_host: z.boolean(),
+    paused_remaining_ms: nonNegativeInteger.optional(),
     question: questionSchema.optional(),
     answered_count: nonNegativeInteger.optional(),
     my_answer: z
@@ -197,6 +248,7 @@ const mapActivity = (row: z.infer<typeof activitySchema>): LiveActivity => ({
   questionTimeLimitSeconds: row.question_time_limit_seconds,
   status: row.status,
   rulesVersion: row.rules_version,
+  scheduledFor: row.scheduled_for ?? null,
 });
 
 const mapState = (raw: z.infer<typeof stateSchema>): LiveSessionState => ({
@@ -265,6 +317,9 @@ const mapState = (raw: z.infer<typeof stateSchema>): LiveSessionState => ({
   ...(raw.my_result
     ? { myResult: { score: raw.my_result.score, rank: raw.my_result.rank } }
     : {}),
+  ...(raw.paused_remaining_ms === undefined
+    ? {}
+    : { pausedRemainingMs: raw.paused_remaining_ms }),
 });
 
 export function createLiveRepository(
@@ -277,6 +332,8 @@ export function createLiveRepository(
       | 'close_live_question'
       | 'finalize_live_session'
       | 'open_live_question'
+      | 'pause_live_session'
+      | 'resume_live_session'
       | 'start_live_session',
     sessionId: string,
     expectedVersion: number,
@@ -303,7 +360,7 @@ export function createLiveRepository(
       const { data, error } = await client
         .from('live_activities')
         .select(
-          'id, title, quiz_template_id, question_time_limit_seconds, status, rules_version',
+          'id, title, quiz_template_id, question_time_limit_seconds, status, rules_version, scheduled_for',
         )
         .order('created_at', { ascending: false });
       if (error) throw toRepositoryError(error.message);
@@ -313,6 +370,7 @@ export function createLiveRepository(
           question_time_limit_seconds: row.question_time_limit_seconds,
           quiz_template_id: row.quiz_template_id,
           rules_version: row.rules_version,
+          scheduled_for: row.scheduled_for,
           status: row.status,
           title: row.title,
         }),
@@ -324,6 +382,8 @@ export function createLiveRepository(
         p_assignment_id: input.assignmentId,
         p_classroom_id: input.classroomId,
         p_live_activity_id: input.activityId,
+        ...(input.mode ? { p_mode: input.mode } : {}),
+        ...(input.teamCount ? { p_team_count: input.teamCount } : {}),
       };
       const { data, error } = await client.rpc(
         'create_live_session',
@@ -337,6 +397,8 @@ export function createLiveRepository(
         stateVersion: parsed.state_version,
         joinCode: parsed.join_code,
         joinCodeVersion: parsed.join_code_version,
+        mode: parsed.mode,
+        teamCount: parsed.team_count,
       };
     },
 
@@ -388,11 +450,84 @@ export function createLiveRepository(
       transition('cancel_live_session', sessionId, expectedVersion),
 
     async submitAnswer(input) {
-      const { error } = await client.rpc('submit_live_answer', {
+      const { data, error } = await client.rpc('submit_live_answer', {
         p_idempotency_key: input.idempotencyKey,
         p_selected_option_id: input.selectedOptionId,
         p_session_question_id: input.sessionQuestionId,
       });
+      if (error) throw toRepositoryError(error.message);
+      const parsed = parseWith(answerReceiptSchema, data);
+      return { streak: parsed.streak };
+    },
+
+    pauseSession: (sessionId, expectedVersion) =>
+      transition('pause_live_session', sessionId, expectedVersion),
+    resumeSession: (sessionId, expectedVersion) =>
+      transition('resume_live_session', sessionId, expectedVersion),
+
+    async getDistribution(sessionId) {
+      const { data, error } = await client.rpc('live_question_distribution', {
+        p_session_id: sessionId,
+      });
+      if (error) throw toRepositoryError(error.message);
+      const parsed = parseWith(distributionSchema, data);
+      return {
+        answeredCount: parsed.answered_count,
+        options: parsed.options.map((entry) => ({
+          count: entry.count,
+          optionId: entry.option_id,
+        })),
+      };
+    },
+
+    async getTeamTotals(sessionId) {
+      const { data, error } = await client.rpc('live_team_totals', {
+        p_session_id: sessionId,
+      });
+      if (error) throw toRepositoryError(error.message);
+      return parseWith(teamTotalsSchema, data).map((entry) => ({
+        memberCount: entry.member_count,
+        score: entry.score,
+        teamNumber: entry.team_number,
+      }));
+    },
+
+    async getSessionDetail(sessionId) {
+      const { data, error } = await client.rpc('teacher_live_session_detail', {
+        p_session_id: sessionId,
+      });
+      if (error) throw toRepositoryError(error.message);
+      const parsed = parseWith(sessionDetailSchema, data);
+      return {
+        sessionId: parsed.session_id,
+        mode: parsed.mode,
+        completedAt: parsed.completed_at,
+        questions: parsed.questions.map((entry) => ({
+          answered: entry.answered,
+          averageResponseMs: entry.average_response_ms,
+          correct: entry.correct,
+          correctRate: entry.correct_rate,
+          position: entry.position,
+          prompt: entry.prompt,
+        })),
+        ranking: parsed.ranking.map((entry) => ({
+          displayName: entry.display_name,
+          rank: entry.rank,
+          score: entry.score,
+          teamNumber: entry.team_number,
+        })),
+      };
+    },
+
+    async scheduleActivity(activityId, scheduledFor) {
+      const scheduleArgs = {
+        p_activity_id: activityId,
+        p_scheduled_for: scheduledFor,
+      };
+      const { error } = await client.rpc(
+        'schedule_live_activity',
+        scheduleArgs as unknown as Database['public']['Functions']['schedule_live_activity']['Args'],
+      );
       if (error) throw toRepositoryError(error.message);
     },
   };

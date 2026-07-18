@@ -839,6 +839,7 @@ export type Database = {
           question_time_limit_seconds: number
           quiz_template_id: string
           rules_version: string
+          scheduled_for: string | null
           status: string
           title: string
           updated_at: string
@@ -850,6 +851,7 @@ export type Database = {
           question_time_limit_seconds?: number
           quiz_template_id: string
           rules_version?: string
+          scheduled_for?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -861,6 +863,7 @@ export type Database = {
           question_time_limit_seconds?: number
           quiz_template_id?: string
           rules_version?: string
+          scheduled_for?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -935,6 +938,7 @@ export type Database = {
       }
       live_participants: {
         Row: {
+          current_streak: number
           final_rank: number | null
           id: string
           joined_at: string
@@ -942,9 +946,11 @@ export type Database = {
           score: number
           session_id: string
           status: Database["public"]["Enums"]["live_participant_status"]
+          team_number: number | null
           user_id: string
         }
         Insert: {
+          current_streak?: number
           final_rank?: number | null
           id?: string
           joined_at?: string
@@ -952,9 +958,11 @@ export type Database = {
           score?: number
           session_id: string
           status?: Database["public"]["Enums"]["live_participant_status"]
+          team_number?: number | null
           user_id: string
         }
         Update: {
+          current_streak?: number
           final_rank?: number | null
           id?: string
           joined_at?: string
@@ -962,6 +970,7 @@ export type Database = {
           score?: number
           session_id?: string
           status?: Database["public"]["Enums"]["live_participant_status"]
+          team_number?: number | null
           user_id?: string
         }
         Relationships: [
@@ -1047,11 +1056,14 @@ export type Database = {
           join_code_hash: string
           join_code_version: number
           live_activity_id: string
+          mode: string
           opened_at: string | null
+          paused_remaining_ms: number | null
           question_count: number
           rules_version: string
           state: Database["public"]["Enums"]["live_session_state"]
           state_version: number
+          team_count: number | null
           updated_at: string
         }
         Insert: {
@@ -1066,11 +1078,14 @@ export type Database = {
           join_code_hash: string
           join_code_version?: number
           live_activity_id: string
+          mode?: string
           opened_at?: string | null
+          paused_remaining_ms?: number | null
           question_count?: number
           rules_version?: string
           state?: Database["public"]["Enums"]["live_session_state"]
           state_version?: number
+          team_count?: number | null
           updated_at?: string
         }
         Update: {
@@ -1085,11 +1100,14 @@ export type Database = {
           join_code_hash?: string
           join_code_version?: number
           live_activity_id?: string
+          mode?: string
           opened_at?: string | null
+          paused_remaining_ms?: number | null
           question_count?: number
           rules_version?: string
           state?: Database["public"]["Enums"]["live_session_state"]
           state_version?: number
+          team_count?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1184,6 +1202,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          reduced_motion: boolean
           role: Database["public"]["Enums"]["app_role"]
           timezone: string
           updated_at: string
@@ -1193,6 +1212,7 @@ export type Database = {
           created_at?: string
           display_name: string
           id: string
+          reduced_motion?: boolean
           role?: Database["public"]["Enums"]["app_role"]
           timezone?: string
           updated_at?: string
@@ -1202,6 +1222,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          reduced_motion?: boolean
           role?: Database["public"]["Enums"]["app_role"]
           timezone?: string
           updated_at?: string
@@ -2282,6 +2303,8 @@ export type Database = {
           p_assignment_id?: string
           p_classroom_id: string
           p_live_activity_id: string
+          p_mode?: string
+          p_team_count?: number
         }
         Returns: Json
       }
@@ -2462,14 +2485,23 @@ export type Database = {
         Args: { p_next_position: number; p_session_id: string }
         Returns: Json
       }
+      live_question_distribution: {
+        Args: { p_session_id: string }
+        Returns: Json
+      }
       live_question_payload: {
         Args: {
           target_question: Database["public"]["Tables"]["live_session_questions"]["Row"]
         }
         Returns: Json
       }
+      live_team_totals: { Args: { p_session_id: string }; Returns: Json }
       live_topic_session_id: { Args: { p_topic: string }; Returns: string }
       open_live_question: {
+        Args: { p_expected_version: number; p_session_id: string }
+        Returns: Json
+      }
+      pause_live_session: {
         Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
       }
@@ -2505,6 +2537,10 @@ export type Database = {
         Args: { p_hint_level: number; p_session_question_id: string }
         Returns: Json
       }
+      resume_live_session: {
+        Args: { p_expected_version: number; p_session_id: string }
+        Returns: Json
+      }
       review_card_semantic_payload: {
         Args: { p_card_id: string }
         Returns: Json
@@ -2518,6 +2554,10 @@ export type Database = {
         }[]
       }
       rotate_live_join_code: { Args: { p_session_id: string }; Returns: Json }
+      schedule_live_activity: {
+        Args: { p_activity_id: string; p_scheduled_for: string }
+        Returns: Json
+      }
       start_assignment_attempt: {
         Args: { p_assignment_id: string; p_request_id: string }
         Returns: Json
@@ -2606,6 +2646,10 @@ export type Database = {
           subtopic_id: string
           version: number
         }[]
+      }
+      teacher_live_session_detail: {
+        Args: { p_session_id: string }
+        Returns: Json
       }
       teacher_live_session_report: {
         Args: { p_classroom_id: string; p_from?: string; p_to?: string }
@@ -2735,6 +2779,7 @@ export type Database = {
         | "question_feedback"
         | "completed"
         | "cancelled"
+        | "paused"
       mistake_status: "open" | "resolved" | "reopened"
       publication_event_type: "publish" | "archive"
       question_type: "single_choice"
@@ -2926,6 +2971,7 @@ export const Constants = {
         "question_feedback",
         "completed",
         "cancelled",
+        "paused",
       ],
       mistake_status: ["open", "resolved", "reopened"],
       publication_event_type: ["publish", "archive"],
