@@ -230,4 +230,51 @@ Reservations recorded per the plan:
 - Live joins during `question_open`/`question_feedback` only re-admit existing participants; first-time admission after the lobby closes is a product decision deferred to Phase 7.
 - Concurrent same-version join broadcasts can momentarily deliver a lower participant count; any transition heals it, and lobby-only exposure keeps the risk cosmetic.
 
-Status: Phase 4 closed. Next per the roadmap: Phase 5 (復習卡/學習內容; needs 複習卡內容 from the owner), then staging setup (owner supplies Supabase access token, legacy-project reset authorization, GitHub repo, Vercel).
+Status: Phase 4 closed.
+
+## Phase 5 Learning Experience
+
+Phase 5 Learning Experience: COMPLETE
+
+Plan: `docs/superpowers/plans/2026-07-18-learning-experience.md`
+Plan commit: `8f1f791` (baseline `69ac50f`)
+Content source: the owner's Google Sheet gained a 複習大廳 tab (2026-07-18 instruction: keep importing from it as it grows).
+Task 1: complete (`8954f01`; pinned remediation values 15/10/0 under 2026-07-progress-1 and the review-sheet import format)
+Task 3: complete (`039af5e`; review card and media schema, published-chain RLS)
+Task 4: complete (`b60d415`; trusted explicit completion, recompletion semantics, completion projection)
+Task 5: complete (`c90847a`; tiered hints, sequential trusted serving, hidden content, event freezing)
+Task 2: complete (`238a588`; review-card importer with merged-cell carry-forward, hint drafts via import-fixes, explicit seed ordering)
+Task 6: complete (`e2d3cb3`; mistake items from formal finalize with open/resolved/reopened lifecycle)
+Task 7: complete (`a8b71bd`; remediation sessions frozen from open mistakes, 20% XP, zero Tokens, no quota interaction, originals untouched)
+Task 8: complete (`68cf50e`; authoritative coverage/accuracy/mastery projections and the owner-scoped classroom summary)
+Task 9: complete (`3c6049a`; learning repository/hooks, chapter detail, review reader with media fallback)
+Task 10: complete (`0067a4b`; runner hint panel, mistakes page, remediation banners, rules-version widening)
+Task 11: complete (`8b2e144`; progress dashboard, nav entry, teacher classroom progress page)
+Task 12: complete (`3a31a21`; runner, finalizer, contract pins, acceptance spec, dedicated learning fixtures, chapter-4 hint drafts)
+
+Execution order note: Tasks 3/4/5 ran before Task 2 because `sql_paths` loads every seed at reset — generated seeds may not precede their schema. Seed loading is now an explicit ordered list, a convention binding on later phases.
+
+Complete-range review of `69ac50f..HEAD` was conducted directly (no finder agents): priorities were formula exactness against design §9 (verified by exact-value pgTAP in 025), version freezing (022/025 old-version exclusion cases), original-score immutability (024 bit-identical assertion), hint leak surface (no student SELECT on `question_hints`, payload key allowlist), RLS on all five new tables, remediation reward integrity (ledger, wallet, quota isolation in 024), and import determinism (identical-UUID re-import test). No blocking findings; the automated scan confirmed every security-definer function pins `search_path` and all six new commands carry revoke/grant pairs.
+
+Gate history:
+
+- Precheck 1 hung 480 s at the first navigation: the spec used the quiz template title 色彩體系與應用 as the chapter title; the chapter is actually named 色彩表示 (`9dcecf0`).
+- Precheck 2 failed on a strict-mode violation: the new nav entry 學習進度 collided with the classroom detail's 學習進度 link; the teacher click is now scoped to the 班級成員 region (`fc29b6e`). Precheck 3 passed headless.
+- Formal gate passed first run on 2026-07-18 at clean SHA `fc29b6e3d9bddd1183b1c7e2966aa3e1e26d2146`: Prettier, lint, typecheck, 79 Vitest files/503 tests, production build (route-level lazy splitting brought the main chunk from ~668 kB to ~386 kB, retiring the long-standing warning), 25 database files/730 pgTAP assertions plus runtime smoke, 13 integration files/25 tests, PostgREST readiness probe, Auth seed, and the headed Chromium flow all passed. The flow: a dedicated student completes all three review cards (media visible with alt text, draft probe card absent, refresh restores state), plays the deterministic 8-question chapter-4 quiz with tiered hints (levels served in order, the two-level question's third request is the run's only declared 400, hints provably cost nothing: 6 fast correct answers still earn 450 XP/150 Token), collects exactly two deliberate mistakes, resolves both through remediation (+30 XP, Token unchanged, originals untouched), sees server-computed 100%/已精熟 on the dashboard next to a 尚未開始 chapter with em-dash denominators, and joins a freshly created classroom whose owner reads the exact mastery row while another teacher reads zero rows and no email appears anywhere.
+
+Manifest: `artifacts/acceptance/learning-experience-fc29b6e3d9bddd1183b1c7e2966aa3e1e26d2146/manifest.json` (`decision: PASS`; `AC-LEARN-001`–`AC-LEARN-004`, `AC-PROG-001`–`AC-PROG-006`).
+
+Conventions added in this phase (binding on later phases):
+
+- `supabase/config.toml` seed loading is an explicit ordered list; never rely on glob order, and land schema before any seed that references it.
+- Deterministic E2E content targets use a chapter whose question count is at or below the template ceiling so every question always appears; hint/mistake fixtures generate prompt-keyed maps for the spec.
+- Hint drafts (like explanation drafts) live in `import-fixes.json` as AI drafts flagged for teacher review; the sheet wins once it grows matching columns.
+
+Reservations recorded per the plan:
+
+- Storage-backed review media and teacher upload arrive with Phase 6; the single seeded media row uses a bundled static asset flagged 平台示意圖 in the import report.
+- The full teacher analytics suite (question/subtopic/assignment/live views) is Phase 6; this phase shipped exactly the classroom mastery summary proving AC-PROG-006.
+- Hint drafts for six questions (3-1-01/06/09, 4-1-02/04/05) and 45 explanation drafts remain pending teacher review; the review-import report lists three incomplete sheet rows (3-2 cards missing titles) for the teacher to finish.
+- The owner keeps updating the sheet; re-imports are re-runnable and must preserve the verified 45-question baseline stable codes.
+
+Status: Phase 5 closed. Next: staging setup with the owner (Supabase access token, legacy-project reset authorization, GitHub repo, Vercel), then Phase 6 Teacher Content, Import, and Analytics.

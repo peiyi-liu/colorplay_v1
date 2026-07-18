@@ -81,11 +81,11 @@
 
 ### Review and gate
 
-- [ ] **Review Step 1:** Complete-range review of `69ac50f..HEAD` (exclude generated seeds/fixtures/lockfile/artifacts). Priorities: formula exactness vs design §9, version-freezing correctness, original-score immutability, hint leak surface, RLS on new tables, remediation reward integrity, import determinism.
-- [ ] **Review Step 2:** Fix Critical/Important findings with focused commits; rerun affected checks.
-- [ ] **Gate Step 1:** One disposable headless precheck (evidence root in scratchpad, retained on failure). Iterate fix→precheck until green; every fix lands as a focused commit.
-- [ ] **Gate Step 2:** Clean `GATE_SHA`, run `pnpm phase:learning-experience` once; on failure stop, diagnose, fix, rerun once per fix.
-- [ ] **Gate Step 3:** After PASS close Phase 5 in `.superpowers/sdd/progress.md` (SHAs, manifest, 10 ACs, gate history, conventions, reservations: Storage-backed media at Phase 6, full teacher analytics at Phase 6, hint drafts pending teacher review, sheet re-import cadence owner-driven) and commit `docs: close learning experience phase`. Then STOP for staging setup with the owner.
+- [x] **Review Step 1:** Complete-range review of `69ac50f..HEAD` (exclude generated seeds/fixtures/lockfile/artifacts). Priorities: formula exactness vs design §9, version-freezing correctness, original-score immutability, hint leak surface, RLS on new tables, remediation reward integrity, import determinism.
+- [x] **Review Step 2:** Fix Critical/Important findings with focused commits; rerun affected checks.
+- [x] **Gate Step 1:** One disposable headless precheck (evidence root in scratchpad, retained on failure). Iterate fix→precheck until green; every fix lands as a focused commit.
+- [x] **Gate Step 2:** Clean `GATE_SHA`, run `pnpm phase:learning-experience` once; on failure stop, diagnose, fix, rerun once per fix.
+- [x] **Gate Step 3:** After PASS close Phase 5 in `.superpowers/sdd/progress.md` (SHAs, manifest, 10 ACs, gate history, conventions, reservations: Storage-backed media at Phase 6, full teacher analytics at Phase 6, hint drafts pending teacher review, sheet re-import cadence owner-driven) and commit `docs: close learning experience phase`. Then STOP for staging setup with the owner.
 
 ## Plan self-review checklist
 
