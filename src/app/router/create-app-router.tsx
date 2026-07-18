@@ -146,6 +146,14 @@ export function createAppRouter() {
                   },
                 },
                 {
+                  path: '/teacher/content',
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/teacher-content/pages/teacher-content-workspace-page');
+                    return { Component: module.TeacherContentWorkspacePage };
+                  },
+                },
+                {
                   path: '/teacher/analytics',
                   lazy: async () => {
                     const module =

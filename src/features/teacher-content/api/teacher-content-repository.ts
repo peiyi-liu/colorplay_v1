@@ -71,8 +71,18 @@ const parseWith = <Output>(
 };
 
 const questionRowSchema = z.object({
+  explanation: z.string(),
   id: uuidString,
   prompt: z.string(),
+  question_options: z.array(
+    z.object({
+      id: uuidString,
+      is_correct: z.boolean(),
+      option_key: z.string(),
+      option_text: z.string(),
+      sort_order: z.number().int(),
+    }),
+  ),
   stable_code: z.string(),
   status: z.enum(['draft', 'published', 'archived']),
   subtopic_id: uuidString,
@@ -80,12 +90,30 @@ const questionRowSchema = z.object({
 });
 
 const cardRowSchema = z.object({
+  content: z.string(),
+  group_label: z.string(),
   id: uuidString,
+  requires_recompletion: z.boolean(),
+  review_card_media: z.array(
+    z.object({
+      alt_text: z.string(),
+      asset_path: z.string(),
+      card_version: z.number().int(),
+    }),
+  ),
+  stable_code: z.string(),
   status: z.enum(['draft', 'published', 'archived']),
   subtopic_id: uuidString,
   title: z.string(),
   version: z.number().int().positive(),
 });
+
+const publishReceiptSchema = z
+  .object({
+    changed: z.boolean(),
+    version: z.number().int().positive(),
+  })
+  .loose();
 
 const importReportSchema = z
   .object({
@@ -163,7 +191,15 @@ const liveReportSchema = z.array(
   }),
 );
 
+export type TeacherQuestionOption = Readonly<{
+  isCorrect: boolean;
+  key: string;
+  text: string;
+}>;
+
 export type TeacherQuestionRow = Readonly<{
+  explanation: string;
+  options: readonly TeacherQuestionOption[];
   prompt: string;
   questionId: string;
   stableCode: string;
@@ -172,11 +208,26 @@ export type TeacherQuestionRow = Readonly<{
   version: number;
 }>;
 
+export type CardMediaEntry = Readonly<{
+  altText: string;
+  assetPath: string;
+}>;
+
 export type TeacherCardRow = Readonly<{
   cardId: string;
+  content: string;
+  groupLabel: string;
+  media: readonly CardMediaEntry[];
+  requiresRecompletion: boolean;
+  stableCode: string;
   status: 'draft' | 'published' | 'archived';
   subtopicId: string;
   title: string;
+  version: number;
+}>;
+
+export type PublishReceipt = Readonly<{
+  changed: boolean;
   version: number;
 }>;
 
@@ -190,6 +241,16 @@ export type QuestionDraftPayload = Readonly<{
   prompt: string;
   stableCode: string;
   subtopicId: string;
+}>;
+
+export type ReviewCardDraftPayload = Readonly<{
+  content: string;
+  groupLabel: string;
+  media: readonly CardMediaEntry[] | null;
+  requiresRecompletion: boolean;
+  stableCode: string;
+  subtopicId: string;
+  title: string;
 }>;
 
 export type ImportCommitReport = z.infer<typeof importReportSchema>;
@@ -228,6 +289,23 @@ export type ClassroomSummary = Readonly<{
   worstSubtopicTitle: string | null;
 }>;
 
+const toCardPayload = (payload: ReviewCardDraftPayload) => ({
+  content: payload.content,
+  group_label: payload.groupLabel,
+  ...(payload.media
+    ? {
+        media: payload.media.map((entry) => ({
+          alt_text: entry.altText,
+          asset_path: entry.assetPath,
+        })),
+      }
+    : {}),
+  requires_recompletion: payload.requiresRecompletion,
+  stable_code: payload.stableCode,
+  subtopic_id: payload.subtopicId,
+  title: payload.title,
+});
+
 const toQuestionPayload = (payload: QuestionDraftPayload) => ({
   explanation: payload.explanation,
   options: payload.options.map((option) => ({
@@ -260,6 +338,7 @@ const subtopicOptionSchema = z.object({
 
 export type TeacherContentRepository = Readonly<{
   archiveQuestion(questionId: string, requestId: string): Promise<void>;
+  archiveReviewCard(cardId: string, requestId: string): Promise<void>;
   commitImport(
     input: Readonly<{
       dryRun: boolean;
@@ -298,10 +377,23 @@ export type TeacherContentRepository = Readonly<{
       questionId: string;
       requestId: string;
     }>,
-  ): Promise<void>;
+  ): Promise<PublishReceipt>;
+  publishReviewCard(
+    input: Readonly<{
+      cardId: string;
+      payload: ReviewCardDraftPayload | null;
+      requestId: string;
+    }>,
+  ): Promise<PublishReceipt>;
   upsertQuestionDraft(
     input: Readonly<{
       payload: QuestionDraftPayload;
+      requestId: string;
+    }>,
+  ): Promise<void>;
+  upsertReviewCardDraft(
+    input: Readonly<{
+      payload: ReviewCardDraftPayload;
       requestId: string;
     }>,
   ): Promise<void>;
@@ -314,6 +406,14 @@ export function createTeacherContentRepository(
     async archiveQuestion(questionId, requestId) {
       const { error } = await client.rpc('archive_question', {
         p_question_id: questionId,
+        p_request_id: requestId,
+      });
+      if (error) throw toError(error.message);
+    },
+
+    async archiveReviewCard(cardId, requestId) {
+      const { error } = await client.rpc('archive_review_card', {
+        p_card_id: cardId,
         p_request_id: requestId,
       });
       if (error) throw toError(error.message);
@@ -408,11 +508,25 @@ export function createTeacherContentRepository(
     async listCards() {
       const { data, error } = await client
         .from('review_cards')
-        .select('id, title, status, version, subtopic_id')
+        .select(
+          'id, stable_code, group_label, title, content, status, version, ' +
+            'requires_recompletion, subtopic_id, ' +
+            'review_card_media (asset_path, alt_text, card_version)',
+        )
         .order('title');
       if (error) throw toError(error.message);
       return parseWith(z.array(cardRowSchema), data).map((row) => ({
         cardId: row.id,
+        content: row.content,
+        groupLabel: row.group_label,
+        media: row.review_card_media
+          .filter((entry) => entry.card_version === row.version)
+          .map((entry) => ({
+            altText: entry.alt_text,
+            assetPath: entry.asset_path,
+          })),
+        requiresRecompletion: row.requires_recompletion,
+        stableCode: row.stable_code,
         status: row.status,
         subtopicId: row.subtopic_id,
         title: row.title,
@@ -423,10 +537,22 @@ export function createTeacherContentRepository(
     async listQuestions() {
       const { data, error } = await client
         .from('questions')
-        .select('id, stable_code, prompt, status, version, subtopic_id')
+        .select(
+          'id, stable_code, prompt, explanation, status, version, ' +
+            'subtopic_id, ' +
+            'question_options (id, option_key, option_text, is_correct, sort_order)',
+        )
         .order('stable_code');
       if (error) throw toError(error.message);
       return parseWith(z.array(questionRowSchema), data).map((row) => ({
+        explanation: row.explanation,
+        options: [...row.question_options]
+          .sort((left, right) => left.sort_order - right.sort_order)
+          .map((option) => ({
+            isCorrect: option.is_correct,
+            key: option.option_key,
+            text: option.option_text,
+          })),
         prompt: row.prompt,
         questionId: row.id,
         stableCode: row.stable_code,
@@ -450,7 +576,7 @@ export function createTeacherContentRepository(
     },
 
     async publishQuestion(input) {
-      const { error } = await client.rpc('publish_question', {
+      const { data, error } = await client.rpc('publish_question', {
         p_question_id: input.questionId,
         p_request_id: input.requestId,
         ...(input.payload
@@ -458,11 +584,32 @@ export function createTeacherContentRepository(
           : {}),
       });
       if (error) throw toError(error.message);
+      const receipt = parseWith(publishReceiptSchema, data);
+      return { changed: receipt.changed, version: receipt.version };
+    },
+
+    async publishReviewCard(input) {
+      const { data, error } = await client.rpc('publish_review_card', {
+        p_card_id: input.cardId,
+        p_request_id: input.requestId,
+        ...(input.payload ? { p_payload: toCardPayload(input.payload) } : {}),
+      });
+      if (error) throw toError(error.message);
+      const receipt = parseWith(publishReceiptSchema, data);
+      return { changed: receipt.changed, version: receipt.version };
     },
 
     async upsertQuestionDraft(input) {
       const { error } = await client.rpc('upsert_question_draft', {
         p_payload: toQuestionPayload(input.payload),
+        p_request_id: input.requestId,
+      });
+      if (error) throw toError(error.message);
+    },
+
+    async upsertReviewCardDraft(input) {
+      const { error } = await client.rpc('upsert_review_card_draft', {
+        p_payload: toCardPayload(input.payload),
         p_request_id: input.requestId,
       });
       if (error) throw toError(error.message);

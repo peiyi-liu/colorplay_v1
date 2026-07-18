@@ -16,8 +16,10 @@ import {
   type DateRangeFilters,
   type ImportCommitReport,
   type LiveReportRow,
+  type PublishReceipt,
   type QuestionAnalysisRow,
   type QuestionDraftPayload,
+  type ReviewCardDraftPayload,
   type SubtopicMasteryRow,
   type SubtopicOption,
   type TeacherCardRow,
@@ -189,7 +191,7 @@ export function useUpsertQuestionDraft(
 export function usePublishQuestion(
   repository?: TeacherContentRepository,
 ): UseMutationResult<
-  void,
+  PublishReceipt,
   TeacherContentError,
   Readonly<{
     payload: QuestionDraftPayload | null;
@@ -204,6 +206,71 @@ export function usePublishQuestion(
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: teacherContentKeys.questions,
+      });
+    },
+    retry: false,
+  });
+}
+
+export function useUpsertReviewCardDraft(
+  repository?: TeacherContentRepository,
+): UseMutationResult<
+  void,
+  TeacherContentError,
+  Readonly<{ payload: ReviewCardDraftPayload; requestId: string }>
+> {
+  const resolved = resolveRepository(repository);
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input) => resolved.upsertReviewCardDraft(input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: teacherContentKeys.cards,
+      });
+    },
+    retry: false,
+  });
+}
+
+export function usePublishReviewCard(
+  repository?: TeacherContentRepository,
+): UseMutationResult<
+  PublishReceipt,
+  TeacherContentError,
+  Readonly<{
+    cardId: string;
+    payload: ReviewCardDraftPayload | null;
+    requestId: string;
+  }>
+> {
+  const resolved = resolveRepository(repository);
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input) => resolved.publishReviewCard(input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: teacherContentKeys.cards,
+      });
+    },
+    retry: false,
+  });
+}
+
+export function useArchiveReviewCard(
+  repository?: TeacherContentRepository,
+): UseMutationResult<
+  void,
+  TeacherContentError,
+  Readonly<{ cardId: string; requestId: string }>
+> {
+  const resolved = resolveRepository(repository);
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input) =>
+      resolved.archiveReviewCard(input.cardId, input.requestId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: teacherContentKeys.cards,
       });
     },
     retry: false,
