@@ -1,6 +1,6 @@
 begin;
 
-select plan(15);
+select plan(16);
 
 select has_function('public', 'live_team_totals', 'team totals read exists');
 
@@ -293,6 +293,19 @@ select is(
   ],
   array[1, 2, 1],
   'joins are assigned round-robin to the smallest team'
+);
+
+-- Clients learn the mode from the state payload (never from guesses).
+select is(
+  public.get_live_session_state(current_setting('test.session_id')::uuid)
+    ->> 'mode'
+    || '/'
+    || (
+      public.get_live_session_state(current_setting('test.session_id')::uuid)
+        ->> 'team_count'
+    ),
+  'team/2',
+  'the session state carries the mode and team count'
 );
 
 -- Totals are hidden until feedback.
