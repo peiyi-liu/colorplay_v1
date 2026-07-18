@@ -30,8 +30,8 @@
 
 ### Task 3 — Review card schema and RLS (M)
 
-- [ ] **Step 1:** Failing pgTAP `020_review_cards` (prefix `20…`): tables `review_cards` (subtopic FK, title, content, version, status, `requires_recompletion`, sort_order) + `review_card_media` (card FK, version, asset path, alt, sort_order); students select published only; draft/archived invisible and ID probes return 0 rows; no student mutation grants; anon denied.
-- [ ] **Step 2:** RED. **Step 3:** migration `20260718000100_review_cards.sql`. **Step 4:** GREEN + regression (taxonomy files) + lint + typecheck. **Step 5:** Commit `feat: add review card schema`.
+- [x] **Step 1:** Failing pgTAP `020_review_cards` (prefix `20…`): tables `review_cards` (subtopic FK, title, content, version, status, `requires_recompletion`, sort_order) + `review_card_media` (card FK, version, asset path, alt, sort_order); students select published only; draft/archived invisible and ID probes return 0 rows; no student mutation grants; anon denied.
+- [x] **Step 2:** RED. **Step 3:** migration `20260718000100_review_cards.sql`. **Step 4:** GREEN + regression (taxonomy files) + lint + typecheck. **Step 5:** Commit `feat: add review card schema`.
 
 ### Task 4 — Review completion command and progress storage (M)
 
