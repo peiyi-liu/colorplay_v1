@@ -314,12 +314,14 @@ test('Live Advanced phase gate', async ({
 
   // --- Reduced motion: server-backed toggle flips the root attribute ---
   await studentAPage.goto('/app/profile');
-  await studentAPage.getByLabel('減少動態效果').check();
+  // The checkbox is controlled by the server-backed profile, so its DOM
+  // state only flips after the round trip — assert on the root attribute.
+  await studentAPage.getByLabel('減少動態效果').click();
   await expect(studentAPage.locator('html')).toHaveAttribute(
     'data-reduced-motion',
     'true',
   );
-  await studentAPage.getByLabel('減少動態效果').uncheck();
+  await studentAPage.getByLabel('減少動態效果').click();
   await expect(studentAPage.locator('html')).not.toHaveAttribute(
     'data-reduced-motion',
     'true',
