@@ -129,6 +129,7 @@ const seedAuth = spawnSync(
       ...process.env,
       SUPABASE_URL: `https://${ref}.supabase.co`,
       SUPABASE_SERVICE_ROLE_KEY: serviceKey,
+      SEED_REMOTE_CONFIRM: ref,
     },
     stdio: 'inherit',
   },
