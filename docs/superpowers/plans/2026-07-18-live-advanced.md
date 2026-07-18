@@ -55,11 +55,11 @@
 
 ### Review and gate
 
-- [ ] **Review Step 1:** Complete-range review of `f3762f0..HEAD`. Priorities: pause-window deadline math and answer rejection, team assignment determinism and total integrity, streak reset correctness, host-only surfaces (distribution/detail/schedule), state-version discipline on the new transitions, latency measurement honesty (no mocked clocks), reduced-motion accessibility.
-- [ ] **Review Step 2:** Fix Critical/Important findings with focused commits.
-- [ ] **Gate Step 1:** Disposable headless prechecks (evidence in scratchpad, retained on failure); iterate fix→precheck until green.
-- [ ] **Gate Step 2:** Clean `GATE_SHA`, run `pnpm phase:live-advanced` once per fix iteration.
-- [ ] **Gate Step 3:** After PASS close Phase 7 in `.superpowers/sdd/progress.md`, redeploy staging (bootstrap + push), and commit `docs: close live advanced phase`. Reservations to record: scheduled sessions never auto-start; capacity beyond the seeded 1+2+1 profile (larger classes) stays a Phase 8 staging validation; the UI restyle still waits for the owner's reference HTML.
+- [x] **Review Step 1:** Complete-range review of `f3762f0..HEAD`. Priorities: pause-window deadline math and answer rejection, team assignment determinism and total integrity, streak reset correctness, host-only surfaces (distribution/detail/schedule), state-version discipline on the new transitions, latency measurement honesty (no mocked clocks), reduced-motion accessibility.
+- [x] **Review Step 2:** Fix Critical/Important findings with focused commits.
+- [x] **Gate Step 1:** Disposable headless prechecks (evidence in scratchpad, retained on failure); iterate fix→precheck until green.
+- [x] **Gate Step 2:** Clean `GATE_SHA`, run `pnpm phase:live-advanced` once per fix iteration.
+- [x] **Gate Step 3:** After PASS close Phase 7 in `.superpowers/sdd/progress.md`, redeploy staging (bootstrap + push), and commit `docs: close live advanced phase`. Reservations to record: scheduled sessions never auto-start; capacity beyond the seeded 1+2+1 profile (larger classes) stays a Phase 8 staging validation; the UI restyle still waits for the owner's reference HTML.
 
 ## Plan self-review checklist
 

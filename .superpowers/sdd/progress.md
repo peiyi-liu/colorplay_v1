@@ -324,3 +324,42 @@ Reservations recorded per the plan:
 - The import wizard allows re-submitting an already committed workbook; a fresh request id makes it a harmless idempotent no-op by stable code.
 
 Status: Phase 6 closed. Next: Phase 7 (Live advanced) and Phase 8 (production release); staging redeployed with the teacher backend for owner testing.
+
+## Phase 7: ColorPlay Live Advanced (2026-07-18)
+
+Plan: `docs/superpowers/plans/2026-07-18-live-advanced.md` (`d0cdee0`, baseline `f3762f0`). Approved rules pinned in spec/05 §ColorPlay Live Advanced（2026-07-live-2）(`6950934`).
+
+Task 1: complete (`6950934`; paused state machine, team assignment/scoring, streak reset, distribution windows, scheduling, report privacy, latency budgets pinned)
+Task 2: complete (`bb5d40c`; host-only pause/resume from `question_open`, frozen remaining window, resumed deadlines exclude the paused gap, answers rejected while paused, state-version discipline, paused refresh recovery; 016 enum contract extended)
+Task 3: complete (`0d74e62`; session `mode`/`team_count`, deterministic smallest-team join assignment, `live_team_totals` hidden until feedback, individual ledger proven identical — 750 XP for ten fast correct answers)
+Task 4: complete (`4d8bad2`; host-only during-open distribution, post-finalize `teacher_live_session_detail` with per-question aggregates and email-free ranking, `schedule_live_activity`, server-owned `current_streak` maintained by an immediate owner-run trigger on every answer row incl. close-time timeout fills, `profiles.reduced_motion` own-row only)
+Task 5: complete (`85d48fa`; live repository pause/resume/distribution/totals/detail/schedule, streak-bearing answer receipts, team-mode session creation, paused-state mapping; profile reduced-motion read/write; types regenerated)
+Task 6: complete (`504ebe9`; host pause button + paused banner + live distribution panel, shared team scoreboard on host and student feedback/final views, streak celebration badge, reduced-motion via `prefers-reduced-motion` + server-backed root attribute, scheduling form with an upcoming list, lazy session report page; `5b8f4d6` state payload carries mode/team_count so clients never guess)
+Task 7: complete (`faf2c3d`; runner/finalizer/contract with the reset-before-db-battery order and a finalizer-enforced `latency-profile.json`)
+
+Review: focused pass over `f3762f0..HEAD` per the tiered flow. The replace-hazard the review priorities named was real and caught by precheck: the streak rewrite of `submit_live_answer` was based on the pre-hardening body and silently dropped the answered-count broadcast the host console depends on (`75d9f93` history: fixed in `fbbfbbf`-style follow-up `修` commit; 032 now asserts the broadcast survives any future replacement). Remaining precheck fixes were spec-level: the real join-denial message, row-scoped activity actions, controlled-checkbox click semantics, and a wait-for-new-round guard so a stale click never re-answers the previous question (headed-only race).
+
+Gate history:
+
+- Prechecks 1–4 headless (evidence in scratchpad): join message mismatch; integration-test activity rows forcing strict-mode scoping; controlled reduced-motion checkbox; then PASS in 16.4 s (precheck 5).
+- Formal run 1 FAILED at `pnpm test`: a legacy answer mock resolving `undefined` became an unhandled rejection once receipts carry streaks (`b1823c7`).
+- Formal run 2 FAILED at round 10: the broadcast/refetch race answered a stale question — fixed with the wait-for-new-round guard (`75d9f93`).
+- Formal run 3 PASS on 2026-07-18 at clean SHA `75d9f931a572eb082160875e2af2631ea158355f`: Prettier, lint, typecheck, 89 Vitest files/576 tests, production build, reset, 35 pgTAP files/864 assertions + smoke + 13 integration files/25 tests, PostgREST probe, auth seed, headed Chromium flow (19.4 s). The flow: the host schedules the activity (listed as 即將進行, never auto-starting), runs a two-team session with both dedicated students (server-assigned teams), pauses mid-question with both roles surviving reloads on the frozen state, resumes into a restored countdown, watches the host-only live distribution, the outsider join is the run's only declared 400 with zero participant rows, student A's streak badge fires at 連擊 x2, team totals appear only from feedback onward, finalize yields the team scoreboard + report page whose per-question numbers (100.0%/50.0%) and answered-total equal the 20 authoritative submissions, a second individual session completes the sample budget, and the reduced-motion toggle flips the root attribute on and off.
+
+AC-LIVE-012 measured profile (finalizer-enforced): 36 warm answer samples (plus 4 cold-start samples recorded separately), answer p95 63 ms / max 85 ms against the 800 ms budget; finalize p95 77 ms against 1000 ms across 2 sessions; 40 submissions with 0 lost, 0 duplicated, 0 outsider participant rows.
+
+Manifest: `artifacts/acceptance/live-advanced-75d9f931a572eb082160875e2af2631ea158355f/manifest.json` (`decision: PASS`; `AC-LIVE-012`).
+
+Conventions added in this phase (binding on later phases):
+
+- Replacing a trusted command must start from its LATEST definition; every behavior a later migration added (broadcasts especially) needs a pgTAP assertion that survives replacement.
+- Realtime-driven multi-page specs wait for the new round/position marker before acting; legend visibility alone is not a settle signal.
+- Controlled checkboxes in specs are driven by `click()` with an effect assertion, never `check()`.
+
+Reservations recorded per the plan:
+
+- Scheduled activities never auto-start; the host must open the lobby manually.
+- Capacity beyond the seeded 1 host + 2 students + 1 outsider profile (larger classes) stays a Phase 8 staging validation item.
+- The whole-UI restyle still waits for the owner's reference HTML.
+
+Status: Phase 7 closed. Next: Phase 8 (Research and Production release); staging redeployed with Live Advanced for owner testing.
