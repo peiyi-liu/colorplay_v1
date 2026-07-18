@@ -111,9 +111,9 @@
 
 **Steps:**
 
-- [ ] **Step 1:** 失敗 RTL（含鍵盤操作與 aria 斷言）→ RED。
-- [ ] **Step 2:** 實作 → GREEN + lint + typecheck。
-- [ ] **Step 3:** Commit `feat: add ui component library interactive set`。
+- [x] **Step 1:** 失敗 RTL（含鍵盤操作與 aria 斷言）→ RED。
+- [x] **Step 2:** 實作 → GREEN + lint + typecheck。
+- [x] **Step 3:** Commit `feat: add ui component library interactive set`。
 
 ### Task 5: App shell 與導覽 IA
 
