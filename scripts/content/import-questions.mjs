@@ -20,6 +20,11 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { deterministicUuid, parseCsv, sqlText } from './import-shared.mjs';
+import {
+  isValidQuestionCode,
+  resolveCorrectAnswer,
+  TEXT_LIMITS,
+} from './validation-rules.mjs';
 import { writeFormattedOutput } from './write-formatted-output.mjs';
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -93,7 +98,7 @@ for (const raw of rows) {
   }
   seenCodes.add(code);
 
-  if (!/^[0-9]+-[0-9]+-[0-9]{2}$/u.test(code)) {
+  if (!isValidQuestionCode(code)) {
     problems.push(`題號 ${code} 格式不符（需為 n-n-nn）`);
     continue;
   }
@@ -102,7 +107,7 @@ for (const raw of rows) {
     problems.push(`題號 ${code}：章節編號「${chapter0}」沒有對應的平台章節`);
     continue;
   }
-  if (!prompt || prompt.length > 1000) {
+  if (!prompt || prompt.length > TEXT_LIMITS.prompt) {
     problems.push(`題號 ${code}：題目空白或超過 1000 字`);
     continue;
   }
@@ -112,21 +117,28 @@ for (const raw of rows) {
     ['C', c],
     ['D', d],
   ].filter(([, text]) => text !== '');
-  if (options.length < 2 || options.some(([, text]) => text.length > 500)) {
+  if (
+    options.length < 2 ||
+    options.some(([, text]) => text.length > TEXT_LIMITS.optionText)
+  ) {
     problems.push(`題號 ${code}：選項不足 2 個或超過 500 字`);
     continue;
   }
-  const answer = answer0.toUpperCase();
-  if (!options.some(([key]) => key === answer)) {
+  const resolved = resolveCorrectAnswer(
+    answer0,
+    options.map(([key, text]) => ({ key, text })),
+  );
+  if (resolved.error) {
     problems.push(`題號 ${code}：正確答案「${answer0}」不在選項中`);
     continue;
   }
+  const answer = resolved.key;
   let explanation = explanation0;
   if (!explanation) {
     explanation = fixes.draftExplanations[code] ?? '';
     if (explanation) usedDraftExplanations.push(code);
   }
-  if (!explanation || explanation.length > 2000) {
+  if (!explanation || explanation.length > TEXT_LIMITS.explanation) {
     problems.push(
       `題號 ${code}：缺少解析（試算表與草稿檔皆無）或解析超過 2000 字`,
     );

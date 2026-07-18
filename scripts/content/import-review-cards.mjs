@@ -24,6 +24,7 @@ import {
   sqlText,
   stableHash,
 } from './import-shared.mjs';
+import { TEXT_LIMITS } from './validation-rules.mjs';
 import { writeFormattedOutput } from './write-formatted-output.mjs';
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -112,7 +113,7 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
     }
     const sectionKey = sectionKeyMatch[1];
 
-    if (content.length > 8000) {
+    if (content.length > TEXT_LIMITS.reviewCardContent) {
       problems.push(`第 ${rowNumber} 列（${title}）：卡片內容超過 8000 字`);
       return;
     }
