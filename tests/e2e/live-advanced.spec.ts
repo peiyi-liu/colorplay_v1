@@ -148,10 +148,13 @@ test('Live Advanced phase gate', async ({
   await teacherPage.goto('/teacher/live');
   await teacherPage.getByLabel('活動標題').fill('Live 進階對戰');
   await teacherPage.getByRole('button', { name: '建立活動' }).click();
-  const scheduleInput = teacherPage.getByLabel('排程時間（Live 進階對戰）');
+  const activityRow = teacherPage
+    .locator('tr')
+    .filter({ hasText: 'Live 進階對戰' });
+  const scheduleInput = activityRow.getByLabel('排程時間（Live 進階對戰）');
   await expect(scheduleInput).toBeVisible();
   await scheduleInput.fill('2026-07-25T12:00');
-  await teacherPage.getByRole('button', { name: '設定排程' }).click();
+  await activityRow.getByRole('button', { name: '設定排程' }).click();
   await expect(teacherPage.getByText('即將進行')).toBeVisible();
   await expect(teacherPage.getByText(/排程不會自動開場/u)).toBeVisible();
 
@@ -160,7 +163,7 @@ test('Live Advanced phase gate', async ({
     .selectOption({ label: CLASSROOM_NAME });
   await teacherPage.getByLabel('對戰模式').selectOption({ label: '團隊' });
   await teacherPage.getByLabel('隊伍數').selectOption({ label: '2 隊' });
-  await teacherPage.getByRole('button', { name: '開新場次' }).click();
+  await activityRow.getByRole('button', { name: '開新場次' }).click();
   const codePanel = teacherPage.getByLabel('課堂代碼');
   await expect(codePanel).toBeVisible();
   const joinCode = (await codePanel.innerText()).trim();
@@ -279,7 +282,11 @@ test('Live Advanced phase gate', async ({
   await teacherPage
     .getByLabel('開場班級')
     .selectOption({ label: CLASSROOM_NAME });
-  await teacherPage.getByRole('button', { name: '開新場次' }).click();
+  await teacherPage
+    .locator('tr')
+    .filter({ hasText: 'Live 進階對戰' })
+    .getByRole('button', { name: '開新場次' })
+    .click();
   const secondCodePanel = teacherPage.getByLabel('課堂代碼');
   await expect(secondCodePanel).toBeVisible();
   const secondJoinCode = (await secondCodePanel.innerText()).trim();
