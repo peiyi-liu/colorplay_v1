@@ -52,9 +52,9 @@
 
 **Steps:**
 
-- [ ] **Step 1:** `cp ../../example-html/GGAME.html legacy/ggame-ui-reference-2026-07-18.html`（路徑依實際 repo 相對位置調整）；確認 `.gitattributes` 對 `legacy/**` 的既有處理適用。
-- [ ] **Step 2:** 更新 spec/07；`pnpm document:manifest`；`pnpm document:manifest:check` PASS。
-- [ ] **Step 3:** Commit `docs: pin ggame ui tokens and snapshot reference`。
+- [x] **Step 1:** `cp ../../example-html/GGAME.html legacy/ggame-ui-reference-2026-07-18.html`（路徑依實際 repo 相對位置調整）；確認 `.gitattributes` 對 `legacy/**` 的既有處理適用。
+- [x] **Step 2:** 更新 spec/07；`pnpm document:manifest`；`pnpm document:manifest:check` PASS。
+- [x] **Step 3:** Commit `docs: pin ggame ui tokens and snapshot reference`。
 
 ### Task 2: Token 基座與字體/圖示
 

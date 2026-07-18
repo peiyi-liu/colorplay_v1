@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ColorPlay 色彩原理遊戲式學習平台</title>
+    <!-- 引入 Tailwind CSS 與核心圖示 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f4f6fa;
+        }
+        /* 自訂動畫 */
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full"></div>
+
+    <!-- ==================== 認證入口分流模組 (Login Portal) ==================== -->
+    <div id="auth-portal" class="fixed inset-0 bg-slate-900/90 flex items-center justify-center p-4 z-50">
+        <div class="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-fade-in">
+            <div class="text-center mb-8">
+                <div class="inline-block bg-[#ffd600] p-4 rounded-2xl text-slate-900 shadow-xl mb-4">
+                    <i class="fa-solid fa-palette text-3xl"></i>
+                </div>
+                <h1 class="font-extrabold text-2xl text-slate-950">ColorPlay 認證入口</h1>
+                <p class="text-xs text-slate-500 mt-1">色彩對比形成性與精熟學習系統</p>
+            </div>
+
+            <!-- 身分切換標籤頁 -->
+            <div class="bg-slate-100 p-1 rounded-xl flex mb-6 border border-slate-200 text-sm font-bold">
+                <button onclick="setAuthRole('student')" id="auth-tab-student" class="flex-1 py-2 rounded-lg text-slate-950 bg-[#ffd600] transition-all duration-200">
+                    <i class="fa-solid fa-user-graduate mr-1.5"></i>學生註冊登入
+                </button>
+                <button onclick="setAuthRole('teacher')" id="auth-tab-teacher" class="flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-850 transition-all duration-200">
+                    <i class="fa-solid fa-user-tie mr-1.5"></i>教師診斷端
+                </button>
+            </div>
+
+            <!-- 學生登入區 -->
+            <div id="auth-form-student" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1.5 font-bold">班級代碼 (預設: CLASS-01)</label>
+                    <input id="student-class" type="text" placeholder="請輸入班級代碼" value="CLASS-01" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-yellow-400 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1.5 font-bold">學號 / 研究編號 (範例: CP045)</label>
+                    <input id="student-id" type="text" placeholder="請輸入學生學號" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-yellow-400 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1.5 font-bold">學習暱稱</label>
+                    <input id="student-name" type="text" placeholder="請輸入您的顯示名稱" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-yellow-400 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1.5 font-bold">登入密碼 (或一次性登入碼)</label>
+                    <input id="student-password" type="password" placeholder="請輸入密碼" value="123456" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-yellow-400 transition-colors">
+                </div>
+                <button onclick="handleStudentLogin()" class="w-full bg-[#ffd600] text-slate-900 font-extrabold py-3.5 rounded-xl hover:brightness-105 transition-all duration-200 mt-2 flex justify-center items-center gap-2">
+                    確認登入 ColorPlay <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                </button>
+            </div>
+
+            <!-- 教師登入區 -->
+            <div id="auth-form-teacher" class="space-y-4 hidden">
+                <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-xl text-xs text-indigo-700 leading-relaxed mb-4">
+                    <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>教師端具備最高的班級管理與學術匯出權限。
+                    <br>教師專用密碼預設為：<strong class="underline">admin123</strong>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1.5 font-bold">教師帳號 (Teacher ID)</label>
+                    <input id="teacher-id" type="text" value="instructor_01" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-indigo-400 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1.5 font-bold">教師專用密碼</label>
+                    <input id="teacher-password" type="password" placeholder="請輸入密碼" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:border-indigo-400 transition-colors">
+                </div>
+                <button onclick="handleTeacherLogin()" class="w-full bg-indigo-600 text-white font-extrabold py-3.5 rounded-xl hover:bg-indigo-500 transition-all duration-200 mt-2 flex justify-center items-center gap-2">
+                    授權並登入教師端 <i class="fa-solid fa-shield-halved"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 頂部學生狀態導覽列 ==================== -->
+    <header class="bg-white border-b-2 border-[#ffd600] sticky top-0 z-40 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-rose-400 to-yellow-500 p-2.5 rounded-xl text-white shadow-md">
+                    <i class="fa-solid fa-palette text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-xl text-slate-900 tracking-tight">ColorPlay</h1>
+                    <p class="text-[11px] text-slate-500">色彩原理遊戲式學習平台</p>
+                </div>
+            </div>
+            
+            <!-- 使用者角色與狀態卡 -->
+            <div class="flex items-center gap-4">
+                <!-- 學生狀態卡 -->
+                <div id="student-status-bar" class="hidden sm:flex items-center space-x-3 bg-slate-100 px-4 py-1.5 rounded-full border border-slate-200 text-xs text-slate-700">
+                    <span class="text-slate-900 font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-user-graduate text-slate-500"></i>
+                        <span id="nav-nickname">讀取中</span>
+                        (<span id="nav-role">實習生</span>)
+                    </span>
+                    <span class="text-slate-300">|</span>
+                    <span class="text-rose-500 font-semibold"><i class="fa-solid fa-star mr-1"></i><span id="nav-xp">0</span> XP</span>
+                    <span class="text-slate-300">|</span>
+                    <span class="text-emerald-600 font-semibold"><i class="fa-solid fa-coins mr-1"></i><span id="nav-tokens">0</span> 代幣</span>
+                </div>
+                
+                <!-- 大廳按鈕 (黃色圓角實體樣式) -->
+                <button onclick="switchTab('lobby')" id="header-btn-lobby" class="bg-[#ffd600] hover:brightness-105 text-slate-950 font-bold px-4 py-1.5 rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-250 shadow-sm">
+                    ▶ 進入大廳
+                </button>
+
+                <!-- 教師後台按鈕 -->
+                <button onclick="switchTab('teacher')" id="header-btn-teacher" class="text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1">
+                    🔒 教師後台
+                </button>
+
+                <!-- 登出按鈕 -->
+                <button onclick="handleLogout()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-sm">
+                    <i class="fa-solid fa-right-from-bracket"></i> 登出
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 學生專用導覽軌 (已移除 Kahoot 靜態頁籤，完全由教師後台廣播開啟) -->
+    <nav id="student-nav" class="bg-white border-b border-slate-200 py-3 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 flex items-center overflow-x-auto whitespace-nowrap space-x-3 text-xs sm:text-sm">
+            <button onclick="switchTab('lobby')" id="tab-btn-lobby" class="px-4 py-2 rounded-lg font-extrabold bg-[#ffd600] text-slate-950 shadow-sm">
+                <i class="fa-solid fa-house-user mr-1"></i> 1. 課後學習大廳
+            </button>
+            <div class="text-slate-300"><i class="fa-solid fa-chevron-right text-xs"></i></div>
+            <button onclick="switchTab('mission')" id="tab-btn-mission" class="px-4 py-2 rounded-lg font-bold text-slate-500 hover:text-slate-900">
+                <i class="fa-solid fa-compass mr-1"></i> 2. 課後任務實戰 (5 階精熟測驗)
+            </button>
+            <div class="text-slate-300"><i class="fa-solid fa-chevron-right text-xs"></i></div>
+            <button onclick="switchTab('shop')" id="tab-btn-shop" class="px-4 py-2 rounded-lg font-bold text-slate-500 hover:text-slate-900">
+                <i class="fa-solid fa-shop mr-1"></i> 3. 代幣外觀商店
+            </button>
+        </div>
+    </nav>
+
+    <!-- 教師專用導覽軌 -->
+    <nav id="teacher-nav" class="hidden bg-indigo-50 border-b border-indigo-100 py-3 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 flex items-center space-x-3 text-xs sm:text-sm">
+            <div class="bg-indigo-600/10 text-indigo-700 text-xs px-2.5 py-1 rounded border border-indigo-200 font-bold">
+                <i class="fa-solid fa-lock-open mr-1"></i> 教師管理權限已授權
+            </div>
+            <button onclick="switchTab('teacher')" id="tab-btn-teacher" class="px-4 py-2 rounded-lg font-extrabold transition-all duration-200 bg-indigo-600 text-white shadow-md">
+                <i class="fa-solid fa-chart-pie mr-1"></i> 班級數據看板與教師補救建議
+            </button>
+        </div>
+    </nav>
+
+    <!-- 主區塊 -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-6">
+
+        <!-- ==================== 1. 課中即時競賽模組 ==================== -->
+        <section id="tab-kahoot" class="hidden space-y-6">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-md animate-fade-in">
+                <div class="flex justify-between items-start mb-6 border-b border-slate-100 pb-4">
+                    <div>
+                        <span class="bg-[#ffd600]/20 text-slate-900 text-xs px-2.5 py-1 rounded-full border border-yellow-300 font-bold">🏫 課堂形成性評量</span>
+                        <h2 class="text-2xl font-black mt-2 text-slate-900">課中即時競賽（模擬 Kahoot 互動形式）</h2>
+                    </div>
+                    <div class="bg-slate-50 px-4 py-2 rounded-xl text-center border border-slate-200 min-w-[100px]">
+                        <p class="text-[10px] text-slate-400 uppercase tracking-wider">限時作答</p>
+                        <p id="kahoot-timer" class="text-xl font-black text-rose-500">18s</p>
+                    </div>
+                </div>
+
+                <!-- 題幹 -->
+                <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-6">
+                    <p class="text-xs text-yellow-600 font-bold mb-2 flex items-center gap-1"><i class="fa-regular fa-lightbulb"></i> 課中快速檢核題</p>
+                    <p class="text-lg font-bold text-slate-800 leading-relaxed">
+                        黃色與紫色在傳統美術色相環中正好位於色相環的相對位置（相差約 180 度），這兩色在未進行明度與彩度調整的狀況下搭配在一起，主要形成色彩學上的哪一種配色對比關係？
+                    </p>
+                </div>
+
+                <!-- 選擇按鈕 -->
+                <div id="kahoot-options" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="submitKahoot('A')" class="bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-150 transform hover:-translate-y-0.5 shadow-md flex justify-between items-center text-left">
+                        <span>▲ 互補色對比 (Complementary Contrast)</span>
+                        <i class="fa-solid fa-circle-nodes opacity-50"></i>
+                    </button>
+                    <button onclick="submitKahoot('B')" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-150 transform hover:-translate-y-0.5 shadow-md flex justify-between items-center text-left">
+                        <span>■ 類似色對比 (Analogous Contrast)</span>
+                        <i class="fa-solid fa-palette opacity-50"></i>
+                    </button>
+                    <button onclick="submitKahoot('C')" class="bg-amber-400 hover:bg-amber-500 text-slate-900 font-black py-4 px-6 rounded-xl transition-all duration-150 transform hover:-translate-y-0.5 shadow-md flex justify-between items-center text-left">
+                        <span>● 明度對比 (Value Contrast)</span>
+                        <i class="fa-solid fa-circle-half-stroke opacity-50"></i>
+                    </button>
+                    <button onclick="submitKahoot('D')" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-150 transform hover:-translate-y-0.5 shadow-md flex justify-between items-center text-left">
+                        <span>◆ 彩度對比 (Saturation Contrast)</span>
+                        <i class="fa-solid fa-sliders opacity-50"></i>
+                    </button>
+                </div>
+
+                <!-- 答題後的動態統計圖 -->
+                <div id="kahoot-result-card" class="hidden mt-6 bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <div id="kahoot-answer-msg" class="flex items-center gap-3 mb-5"></div>
+                    
+                    <div class="flex justify-between items-center mb-3">
+                        <p class="text-xs text-slate-500 font-bold">📊 示範班級數據（歷史統計）：</p>
+                        <span class="text-[10px] text-slate-450">歷史紀錄 (n=50)</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span>▲ 互補色對比 (正確答案)</span>
+                                <span class="font-bold text-emerald-600">42% (21人)</span>
+                            </div>
+                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                <div class="bg-emerald-500 h-full" style="width: 42%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span>■ 類似色對比</span>
+                                <span class="text-slate-500">18% (9人)</span>
+                            </div>
+                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                <div class="bg-sky-500 h-full" style="width: 18%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span>● 明度對比 (高頻盲點)</span>
+                                <span class="font-bold text-amber-500">35% (17人)</span>
+                            </div>
+                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                <div class="bg-amber-400 h-full" style="width: 35%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span>◆ 彩度對比</span>
+                                <span class="text-slate-500">5% (3人)</span>
+                            </div>
+                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                <div class="bg-rose-400 h-full" style="width: 5%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 p-4 bg-yellow-500/10 border-l-4 border-yellow-500 rounded-lg text-xs text-yellow-800">
+                        <span class="font-black block mb-1"><i class="fa-solid fa-chalkboard-user"></i> 教師即時引導解析：</span>
+                        「黃色與紫色在傳統色相環正處於180度相對，是最經典的『互補色對比』！有近35%同學因為看到一亮一暗，誤選了明度對比，雖然明度確實有差，但對比張力的首要來源是色相對立。請大家下課後，進入 ColorPlay 自主精熟，修正觀念！」
+                    </div>
+
+                    <div class="mt-6 flex justify-between items-center">
+                        <span class="text-xs text-slate-500"><i class="fa-solid fa-circle-info mr-1"></i>完成課中參與：固定發放 20 XP</span>
+                        <button onclick="switchTab('lobby')" class="bg-[#ffd600] hover:brightness-105 text-slate-950 font-black px-5 py-2.5 rounded-lg shadow-md transition-all text-sm">
+                            進入課後 ColorPlay 學習大廳 <i class="fa-solid fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 2. COLORPLAY 學習大廳 ==================== -->
+        <section id="tab-lobby" class="space-y-6">
+            
+            <!-- 即時 Kahoot 教師廣播通知區 (當教師端啟用時才呈現) -->
+            <div id="student-kahoot-broadcast-banner" class="hidden bg-gradient-to-r from-rose-500 to-amber-500 p-4 rounded-2xl border border-rose-450 text-slate-950 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-lg animate-bounce">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white p-2 rounded-xl text-rose-600 animate-pulse">
+                        <i class="fa-solid fa-tower-broadcast text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-extrabold text-sm text-white">⚡ 課堂廣播：老師已開啟課中即時競賽 (Kahoot)！</h4>
+                        <p class="text-xs text-yellow-100 mt-0.5 font-medium">請立即加入全班同步搶答，驗證剛學到的色彩觀念！</p>
+                    </div>
+                </div>
+                <button onclick="switchTab('kahoot')" class="bg-slate-950 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl hover:bg-slate-900 transition-all shadow-md">
+                    點選立刻進入作答 ▶
+                </button>
+            </div>
+
+            <!-- 頂部師範大學資訊卡 (淡黃色高質感頭貼背景，完美呼應 image_55de02.png) -->
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex items-center space-x-4">
+                    <!-- 頭貼卡：完美還原 image_55de02.png 風格 (圓角卡片 + 亮黃扁平色底) -->
+                    <div id="lobby-avatar-frame" class="w-16 h-16 rounded-[24px] bg-[#ffb300] flex items-center justify-center text-3xl shadow-sm transition-all duration-300">
+                        <span id="lobby-avatar-char" class="transform scale-105">🦖</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 id="lobby-student-display-name" class="text-xl font-bold text-slate-900">師範大學</h3>
+                            <button class="bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] px-2 py-0.5 rounded border border-slate-200"><i class="fa-solid fa-pen text-[9px] mr-1"></i> 修改</button>
+                            <span class="bg-emerald-50 text-emerald-600 text-[10px] px-2 py-0.5 rounded border border-emerald-200 font-bold">☁️ 雲端連線模式</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">讓我們開始今日的色彩表示複習與挑戰！</p>
+                        <p class="text-[11px] text-slate-400">學號/研究編號：<span id="lobby-student-display-id">-</span></p>
+                    </div>
+                </div>
+
+                <!-- 累計數據 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex justify-around items-center gap-8 w-full md:w-auto md:min-w-[400px]">
+                    <div class="text-center flex-1">
+                        <p class="text-[10px] text-slate-400 font-medium">累計積分 (XP)</p>
+                        <p id="lobby-xp-count" class="text-2xl font-black text-slate-900 mt-1">0</p>
+                    </div>
+                    <div class="w-px h-8 bg-slate-200"></div>
+                    <div class="text-center flex-1">
+                        <p class="text-[10px] text-slate-400 font-medium">全體排名</p>
+                        <p class="text-2xl font-black text-slate-900 mt-1">6</p>
+                    </div>
+                    <div class="w-px h-8 bg-slate-200"></div>
+                    <div class="text-center flex-1">
+                        <p class="text-[10px] text-slate-400 font-medium">當前 PR</p>
+                        <p class="text-2xl font-black text-slate-900 mt-1">56</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 色彩任務選擇大廳 (3x2 網格卡片，參考 image_550831.jpg) -->
+            <div class="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6">
+                <div>
+                    <h2 class="text-2xl font-black text-slate-950">色彩任務選擇大廳</h2>
+                    <p class="text-xs text-slate-500 mt-1">請選取下方的色彩原理核心章節，展開您的知識關卡挑戰！</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Chapter 1 (鎖定中) -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-3xl p-6 relative flex flex-col justify-between min-h-[220px]">
+                        <div>
+                            <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-500 flex items-center justify-center mb-4">
+                                <i class="fa-solid fa-lock text-sm"></i>
+                            </div>
+                            <div class="flex justify-between items-start">
+                                <h4 class="text-base font-bold text-slate-650">Chapter 1: 色彩與光源</h4>
+                                <span class="bg-slate-200 text-slate-500 text-[9px] px-1.5 py-0.5 rounded font-bold">鎖定中</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2 leading-relaxed">探討可見光光譜、光源發光原理、電磁波與色彩感官反射機制。</p>
+                        </div>
+                        <div class="text-right text-xs font-bold text-slate-400 mt-4">敬請期待</div>
+                    </div>
+
+                    <!-- Chapter 2 -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-3xl p-6 relative flex flex-col justify-between min-h-[220px]">
+                        <div>
+                            <div class="w-10 h-10 rounded-xl bg-fuchsia-100 text-fuchsia-500 flex items-center justify-center mb-4">
+                                <i class="fa-solid fa-lock text-sm"></i>
+                            </div>
+                            <div class="flex justify-between items-start">
+                                <h4 class="text-base font-bold text-slate-650">Chapter 2: 色彩與生理</h4>
+                                <span class="bg-slate-200 text-slate-500 text-[9px] px-1.5 py-0.5 rounded font-bold">鎖定中</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2 leading-relaxed">研究人眼視網膜、錐狀與桿狀細胞、視覺殘留與色盲生理特徵。</p>
+                        </div>
+                        <div class="text-right text-xs font-bold text-slate-400 mt-4">敬請期待</div>
+                    </div>
+
+                    <!-- Chapter 3 (已開放) -->
+                    <div class="bg-white border-2 border-[#ffd600] rounded-3xl p-6 relative flex flex-col justify-between min-h-[220px] shadow-md shadow-yellow-100">
+                        <div>
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-rose-400 text-white flex items-center justify-center mb-4">
+                                <i class="fa-solid fa-palette text-sm animate-pulse"></i>
+                            </div>
+                            <div class="flex justify-between items-start">
+                                <h4 class="text-base font-black text-slate-900">Chapter 3: 色彩表示</h4>
+                                <span class="bg-emerald-500 text-white text-[9px] px-2 py-0.5 rounded-full font-bold">已開放</span>
+                            </div>
+                            <p class="text-xs text-slate-600 mt-2 leading-relaxed">涵蓋色彩分類 (有彩色與無彩色)、色彩三要素 (色相、明度、彩度) 及命名表示法、色彩空間基礎結構。</p>
+                        </div>
+                        <div class="flex justify-between items-center mt-4">
+                            <div class="flex space-x-1.5 text-xs text-slate-400">
+                                <span id="lobby-badges-container" class="flex gap-1">
+                                    <span id="badge-icon-welcome" class="opacity-25 grayscale">🥉</span>
+                                    <span id="badge-icon-repair" class="opacity-25 grayscale">🔧</span>
+                                    <span id="badge-icon-master" class="opacity-25 grayscale">🥇</span>
+                                </span>
+                            </div>
+                            <button onclick="switchTab('mission')" class="text-xs font-bold text-slate-900 hover:text-slate-950 flex items-center gap-1">
+                                展開小節任務 <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chapter 4 -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-3xl p-6 relative flex flex-col justify-between min-h-[220px]">
+                        <div>
+                            <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-500 flex items-center justify-center mb-4">
+                                <i class="fa-solid fa-lock text-sm"></i>
+                            </div>
+                            <div class="flex justify-between items-start">
+                                <h4 class="text-base font-bold text-slate-650">Chapter 4: 色彩混色</h4>
+                                <span class="bg-slate-200 text-slate-500 text-[9px] px-1.5 py-0.5 rounded font-bold">鎖定中</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2 leading-relaxed">研究色光三原色加色混合、色料三原色減色混合及中性混合定律。</p>
+                        </div>
+                        <div class="text-right text-xs font-bold text-slate-400 mt-4">敬請期待</div>
+                    </div>
+
+                    <!-- Chapter 5 -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-3xl p-6 relative flex flex-col justify-between min-h-[220px]">
+                        <div>
+                            <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-500 flex items-center justify-center mb-4">
+                                <i class="fa-solid fa-lock text-sm"></i>
+                            </div>
+                            <div class="flex justify-between items-start">
+                                <h4 class="text-base font-bold text-slate-650">Chapter 5: 色彩心理</h4>
+                                <span class="bg-slate-200 text-slate-500 text-[9px] px-1.5 py-0.5 rounded font-bold">鎖定中</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2 leading-relaxed">探討色彩對情緒之冷暖感、重量感、空間感與各國文化色彩聯想。</p>
+                        </div>
+                        <div class="text-right text-xs font-bold text-slate-400 mt-4">敬請期待</div>
+                    </div>
+
+                    <!-- Chapter 6 -->
+                    <div class="bg-slate-50 border border-slate-100 rounded-3xl p-6 relative flex flex-col justify-between min-h-[220px]">
+                        <div>
+                            <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-500 flex items-center justify-center mb-4">
+                                <i class="fa-solid fa-lock text-sm"></i>
+                            </div>
+                            <div class="flex justify-between items-start">
+                                <h4 class="text-base font-bold text-slate-650">Chapter 6: 色彩配色</h4>
+                                <span class="bg-slate-200 text-slate-500 text-[9px] px-1.5 py-0.5 rounded font-bold">鎖定中</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2 leading-relaxed">學習對比配色、調和配色、配色調和論與日本PCCS配色實務技巧。</p>
+                        </div>
+                        <div class="text-right text-xs font-bold text-slate-400 mt-4">敬請期待</div>
+                    </div>
+                </div>
+
+                <!-- 錯題中心與大廳目標 -->
+                <div class="border-t border-slate-200 pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center">
+                        <div>
+                            <h4 class="text-xs font-black text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-rose-500"></i> 個人弱點錯題中心</h4>
+                            <p class="text-xs text-slate-400 mt-1">系統已為您歸納 <span id="lobby-error-count" class="font-bold text-rose-500">0 題</span> 待精熟題目。</p>
+                        </div>
+                        <button onclick="switchTab('mission')" class="bg-slate-200 hover:bg-slate-350 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm">
+                            前往修正
+                        </button>
+                    </div>
+
+                    <div class="bg-[#ffd600]/10 p-4 rounded-2xl border border-yellow-200 flex justify-between items-center">
+                        <div>
+                            <h4 class="text-xs font-black text-slate-700 flex items-center gap-1.5">🎓 每日自主精熟目標</h4>
+                            <p class="text-xs text-slate-500 mt-1">通關 Chapter 3 色彩表示所有小節，獲得額外 XP 獎勵！</p>
+                        </div>
+                        <span class="bg-[#ffd600] text-slate-900 text-xs px-2.5 py-1 rounded-full border border-yellow-300 font-bold">
+                            進行中
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 3. COLORPLAY 5 階任務實戰 ==================== -->
+        <section id="tab-mission" class="hidden space-y-6">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-md animate-fade-in">
+                
+                <!-- 任務導航 map -->
+                <div class="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5 text-center">🗺️ 精熟學習地圖 (未通過上一關前不可跳關)</p>
+                    <div class="flex justify-between items-center max-w-xl mx-auto text-xs relative">
+                        <!-- 連接線 -->
+                        <div class="absolute h-0.5 bg-slate-200 left-3 right-3 top-4 -z-10"></div>
+                        <div id="map-line-progress" class="absolute h-0.5 bg-[#ffd600] left-3 top-4 -z-10 transition-all duration-300" style="width: 0%"></div>
+                        
+                        <button onclick="jumpToMapStage(0)" id="map-btn-0" class="w-8 h-8 rounded-full bg-slate-200 border-2 border-slate-300 flex items-center justify-center font-bold text-slate-700 transition-all">1</button>
+                        <button onclick="jumpToMapStage(1)" id="map-btn-1" class="w-8 h-8 rounded-full bg-slate-200 border-2 border-slate-300 flex items-center justify-center font-bold text-slate-700 transition-all" disabled>2</button>
+                        <button onclick="jumpToMapStage(2)" id="map-btn-2" class="w-8 h-8 rounded-full bg-slate-200 border-2 border-slate-300 flex items-center justify-center font-bold text-slate-700 transition-all" disabled>3</button>
+                        <button onclick="jumpToMapStage(3)" id="map-btn-3" class="w-8 h-8 rounded-full bg-slate-200 border-2 border-slate-300 flex items-center justify-center font-bold text-slate-700 transition-all" disabled>4</button>
+                        <button onclick="jumpToMapStage(4)" id="map-btn-4" class="w-8 h-8 rounded-full bg-slate-200 border-2 border-slate-300 flex items-center justify-center font-bold text-slate-700 transition-all" disabled>5</button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-slate-100 pb-4">
+                    <div>
+                        <span class="bg-[#ffd600]/20 text-slate-900 text-xs px-2.5 py-1 rounded-full border border-yellow-300 font-bold">🧪 關卡進度：<span id="mission-step-indicator">1 / 5</span></span>
+                        <h2 class="text-2xl font-black mt-2 text-slate-900" id="mission-step-title">載入中...</h2>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-2 text-xs">
+                        <div class="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                            <span class="text-slate-500">目前嘗試次數:</span>
+                            <span id="mission-attempts" class="text-yellow-600 font-bold ml-1">0</span>
+                        </div>
+                        <div class="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                            <span class="text-slate-500">本關累計錯誤:</span>
+                            <span id="mission-total-errors" class="text-rose-500 font-bold ml-1">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 關卡核心內容主格 -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- 左二格：題目與作答 -->
+                    <div class="lg:col-span-2 space-y-5">
+                        
+                        <!-- 情境劇本 -->
+                        <div id="mission-scenario" class="bg-slate-50 p-5 rounded-xl border border-slate-200 text-xs sm:text-sm leading-relaxed text-slate-700">
+                            <!-- 動態載入 -->
+                        </div>
+
+                        <!-- 變因控制描述 -->
+                        <div id="mission-conditions" class="p-4 bg-slate-100 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
+                            <!-- 動態載入 -->
+                        </div>
+
+                        <!-- 選擇題選項 -->
+                        <div id="options-panel-container" class="space-y-2">
+                            <p class="text-xs text-slate-500 font-bold"><i class="fa-solid fa-fingerprint"></i> 請點擊選擇最佳色彩策略：</p>
+                            <div id="mission-options" class="space-y-2 text-xs sm:text-sm animate-fade-in">
+                                <!-- 動態載入 -->
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 右一格：即時概念示意與預覽 -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between items-center">
+                        <div class="text-center w-full">
+                            <p class="text-[10px] text-slate-500 font-bold mb-1">📦 包裝即時配色概念示意圖</p>
+                            <span class="text-[9px] text-slate-400 block mb-3 leading-relaxed">(註：本圖僅為概念示意，不作為精準色彩判定依據。請依據文字條件判斷。)</span>
+                        </div>
+                        
+                        <!-- 配色即時模擬器 -->
+                        <div id="visual-render-box" class="w-36 h-36 rounded-2xl bg-yellow-400 border-8 border-purple-600 flex flex-col items-center justify-center transition-all duration-500 shadow-lg">
+                            <div id="visual-render-label" class="bg-purple-600 text-yellow-400 px-2 py-0.5 rounded font-black text-[10px] tracking-widest">ROYAL</div>
+                            <span id="visual-render-sublabel" class="text-[8px] text-purple-600 mt-1 uppercase font-black">Emulsion</span>
+                        </div>
+
+                        <p id="visual-render-status" class="text-[10px] text-slate-600 text-center mt-3 font-semibold">當前方案特徵：</p>
+                    </div>
+                </div>
+
+                <!-- 分層提示展示區 -->
+                <div id="hints-panel" class="hidden space-y-3">
+                    <div id="hint-1" class="hidden p-4 bg-rose-500/10 border-l-4 border-rose-450 rounded-lg text-xs text-rose-700">
+                        <strong class="block font-bold mb-1"><i class="fa-solid fa-shield-halved"></i> 第一層概念提示：</strong>
+                        <span id="hint-text-1">提示內容...</span>
+                    </div>
+                    <div id="hint-2" class="hidden p-4 bg-yellow-500/10 border-l-4 border-yellow-500 rounded-lg text-xs text-yellow-800">
+                        <strong class="block font-bold mb-1"><i class="fa-solid fa-lightbulb"></i> 第二層排除提示：</strong>
+                        <span id="hint-text-2">提示內容...</span>
+                    </div>
+                </div>
+
+                <!-- 完賽結算面板 -->
+                <div id="mission-victory-card" class="hidden bg-slate-50 p-6 rounded-xl border border-slate-200 text-center space-y-4 animate-fade-in">
+                    <span class="text-5xl block animate-bounce">🎉</span>
+                    <h3 class="text-xl font-black text-slate-900" id="victory-title">階段任務挑戰完成！</h3>
+                    <p class="text-xs text-slate-600 max-w-lg mx-auto" id="victory-desc">
+                        成果描述
+                    </p>
+                    
+                    <div class="inline-flex justify-center space-x-6 py-2.5 px-5 bg-white rounded-full border border-slate-200 text-xs">
+                        <span class="text-rose-500 font-bold"><i class="fa-solid fa-star mr-1"></i>+<span id="reward-xp">0</span> XP</span>
+                        <span class="text-emerald-600 font-bold"><i class="fa-solid fa-coins mr-1"></i>+<span id="reward-tokens">0</span> 代幣</span>
+                        <span id="reward-badge-container" class="text-indigo-600 font-bold hidden"><i class="fa-solid fa-trophy mr-1"></i> 解鎖徽章：<span id="reward-badge-name">徽章</span></span>
+                    </div>
+
+                    <div class="pt-4 flex justify-center gap-3 text-xs">
+                        <button id="victory-reset-btn" onclick="resetMissionState()" class="bg-slate-200 hover:bg-slate-350 text-slate-700 font-bold px-4 py-2 rounded-lg">
+                            重新練習此題 (不重複發放經驗)
+                        </button>
+                        <button id="victory-next-btn" onclick="nextQuestion()" class="bg-[#ffd600] hover:brightness-105 text-slate-950 font-black px-5 py-2 rounded-lg shadow-md">
+                            進入下一關卡 <i class="fa-solid fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ==================== 4. 代幣外觀商店 ==================== -->
+        <section id="tab-shop" class="hidden space-y-6">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-md animate-fade-in">
+                <div class="border-b border-slate-100 pb-4 mb-6">
+                    <span class="bg-emerald-500/10 text-emerald-600 text-xs px-2.5 py-1 rounded-full border border-emerald-200 font-bold">💎 系統外觀商店</span>
+                    <h2 class="text-2xl font-black mt-2 text-slate-900">代幣外觀商店：個人頭像與背景變更</h2>
+                    <p class="text-xs text-slate-500 mt-1">使用您辛苦完成補救測驗獲得的色彩代幣解鎖專屬外觀。</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 頭像專區 -->
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
+                        <h3 class="text-sm font-black text-slate-800"><i class="fa-solid fa-user-tag mr-1.5"></i> 解鎖個人頭像</h3>
+                        <div class="grid grid-cols-3 gap-3">
+                            <button onclick="purchaseAvatar('🧑‍🎨', 0)" class="bg-white hover:bg-slate-100 p-3 rounded-xl border border-slate-200 text-center flex flex-col items-center">
+                                <span class="text-2xl mb-1">🧑‍🎨</span>
+                                <span class="text-[10px] text-slate-500">色彩學徒</span>
+                                <span class="text-[9px] text-emerald-600 font-bold mt-1">預設擁有</span>
+                            </button>
+                            <button onclick="purchaseAvatar('🧙‍♂️', 15)" id="shop-btn-avatar-wizard" class="bg-white hover:bg-slate-100 p-3 rounded-xl border border-slate-200 text-center flex flex-col items-center">
+                                <span class="text-2xl mb-1">🧙‍♂️</span>
+                                <span class="text-[10px] text-slate-500">色彩巫師</span>
+                                <span class="text-[9px] text-emerald-600 font-bold mt-1">15 代幣</span>
+                            </button>
+                            <button onclick="purchaseAvatar('🦖', 30)" id="shop-btn-avatar-dino" class="bg-white hover:bg-slate-100 p-3 rounded-xl border border-slate-200 text-center flex flex-col items-center">
+                                <span class="text-2xl mb-1">🦖</span>
+                                <span class="text-[10px] text-slate-500">色彩巨獸</span>
+                                <span class="text-[9px] text-emerald-600 font-bold mt-1">30 代幣</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 邊框專區 -->
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
+                        <h3 class="text-sm font-black text-slate-800"><i class="fa-solid fa-border-all mr-1.5"></i> 尊絕外顯邊框</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="purchaseFrame('from-amber-400 to-yellow-500', 0)" class="bg-white hover:bg-slate-100 p-3 rounded-xl border border-slate-200 text-center text-[10px] text-slate-650">
+                                <span class="block h-3 w-12 bg-gradient-to-r from-amber-400 to-yellow-500 rounded mx-auto mb-2"></span>
+                                熔岩流金 (預設)
+                            </button>
+                            <button onclick="purchaseFrame('from-indigo-500 to-sky-500', 25)" id="shop-btn-frame-neon" class="bg-white hover:bg-slate-100 p-3 rounded-xl border border-slate-200 text-center text-[10px] text-slate-650">
+                                <span class="block h-3 w-12 bg-gradient-to-r from-indigo-500 to-sky-500 rounded mx-auto mb-2"></span>
+                                深海霓虹 (25代幣)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 5. 教師端數據診斷後台 ==================== -->
+        <section id="tab-teacher" class="hidden space-y-6">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-md animate-fade-in">
+                
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-slate-100 pb-4">
+                    <div>
+                        <span class="bg-indigo-500/10 text-indigo-700 text-xs px-2.5 py-1 rounded-full border border-indigo-200 font-bold">📊 教師決策工具</span>
+                        <h2 class="text-2xl font-black mt-2 text-slate-900">班級學習數據與教師補救建議</h2>
+                    </div>
+                    <button onclick="confirmResetMockData()" class="text-xs text-rose-600 hover:text-rose-500 font-bold border border-rose-350 px-3 py-1.5 rounded-lg bg-rose-50">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> 重設示範資料
+                    </button>
+                </div>
+
+                <!-- 🛡️ 課堂即時互動控制台 (Kahoot Live Controller) -->
+                <div class="bg-amber-50 border border-amber-200 p-5 rounded-2xl shadow-sm space-y-3 mb-6">
+                    <h3 class="text-sm font-black text-amber-800 flex items-center gap-1.5">
+                        <i class="fa-solid fa-tower-broadcast text-lg animate-pulse"></i> 課堂即時競賽 (Kahoot) 廣播控制台
+                    </h3>
+                    <p class="text-xs text-amber-700 leading-relaxed">
+                        教師可在課堂講解完知識點後，在此開啟即時檢核競賽。開啟後，所有登入系統的學生端大廳將會出現「即時競賽」廣播入口引導學生點擊參與。
+                    </p>
+                    <div class="flex gap-3">
+                        <button id="teacher-btn-start-kahoot" onclick="toggleKahootLive(true)" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black px-4 py-2 rounded-xl transition-all shadow-sm">
+                            📢 啟動即時 Kahoot 競賽
+                        </button>
+                        <button id="teacher-btn-stop-kahoot" onclick="toggleKahootLive(false)" class="bg-slate-200 hover:bg-slate-350 text-slate-700 text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm">
+                            🚫 關閉即時競賽
+                        </button>
+                    </div>
+                    <div class="text-xs text-amber-600 font-semibold flex items-center gap-1">
+                        <span>當前廣播狀態：</span>
+                        <span id="teacher-kahoot-status-badge" class="bg-slate-200 text-slate-600 px-2.5 py-0.5 rounded-full text-[10px] font-bold">未開啟</span>
+                    </div>
+                </div>
+
+                <!-- 診斷指標看板 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                        <p class="text-xs text-slate-500 font-bold">📬 課後 ColorPlay 完成率</p>
+                        <div class="flex justify-between items-end mt-1">
+                            <span id="stat-completion" class="text-2xl font-black text-slate-900">88%</span>
+                            <span class="text-[10px] text-emerald-600 font-semibold" id="stat-completion-sub">(44 / 50 人已完成)</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-3">
+                            <div id="bar-completion" class="bg-emerald-500 h-full transition-all duration-300" style="width: 88%"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                        <p class="text-xs text-slate-500 font-bold">🎯 班級首次正確率 (反映直接理解力)</p>
+                        <div class="flex justify-between items-end mt-1">
+                            <span id="stat-first-accuracy" class="text-2xl font-black text-yellow-600">62%</span>
+                            <span class="text-[10px] text-slate-450">(首答即對佔比)</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-3">
+                            <div id="bar-first-accuracy" class="bg-yellow-500 h-full transition-all duration-300" style="width: 62%"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                        <p class="text-xs text-slate-500 font-bold">👑 最終精熟達標率 (5關全通過者)</p>
+                        <div class="flex justify-between items-end mt-1">
+                            <span id="stat-mastery" class="text-2xl font-black text-rose-500">94%</span>
+                            <span class="text-[10px] text-rose-500 font-semibold">(通關標準：完成全5關)</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-3">
+                            <div id="bar-mastery" class="bg-rose-500 h-full transition-all duration-300" style="width: 94%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 診斷警示與補救處方 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-3">
+                        <h3 class="text-xs font-black text-rose-500 flex items-center gap-1.5"><i class="fa-solid fa-circle-exclamation"></i> 班級高頻錯誤概念分析</h3>
+                        <div class="p-3.5 bg-white rounded-lg border border-slate-200 text-xs space-y-2">
+                            <span class="bg-rose-500/10 text-rose-700 px-1.5 py-0.5 rounded font-black text-[9px]">高頻錯誤 1</span>
+                            <strong class="block text-slate-800 font-bold">「黃紫補色的彩度與明度控制偏好」 (首答出錯率 55%)</strong>
+                            <p class="text-slate-500 leading-relaxed">當面對皇家奢華質感需求時，55% 的學生仍首選高明度、低彩度的粉色系配色（A選項），顯示學生較難在極短時間內建立「降低明度與彩度轉成穩重色調」與「高級尊貴感」的直接聯想。</p>
+                        </div>
+                        <div class="p-3.5 bg-white rounded-lg border border-slate-200 text-xs space-y-2">
+                            <span class="bg-yellow-500/10 text-yellow-800 px-1.5 py-0.5 rounded font-black text-[9px]">高頻錯誤 2</span>
+                            <strong class="block text-slate-800 font-bold">「類似色調和與易讀性的衝突」 (首答出錯率 38%)</strong>
+                            <p class="text-slate-550 leading-relaxed">學生容易陷入「類似色等同於安全好設計」的迷思，而忽視當文字與背景明度差過小時造成的文字易讀性崩潰。</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-indigo-50/50 p-5 rounded-xl border border-indigo-100 space-y-3">
+                        <h3 class="text-xs font-black text-indigo-700 flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> 教師補救教學方案（系統建議）</h3>
+                        <div class="p-4 bg-white rounded-lg border border-indigo-100 text-xs space-y-3 leading-relaxed">
+                            <div>
+                                <strong class="text-indigo-700 block font-bold mb-0.5">1. 課前 A/B 對照視覺呈現 (3 分鐘)</strong>
+                                <p class="text-slate-500">大螢幕並列展示「螢光黃紫（刺眼）」、「粉黃紫（甜美）」與「暗芥末黃與深古銅紫（沉穩）」包裝。引導：「同學們，降低明度與彩度是創造沉穩莊重感的必用技巧，下次遇到皇家保養品切忌只用亮色。」</p>
+                            </div>
+                            <div>
+                                <strong class="text-indigo-700 block font-bold mb-0.5">2. 課堂微檢核搶答驗證 (2 分鐘)</strong>
+                                <p class="text-slate-500">大螢幕出示：「如何微調高亮藍橘包裝以維持沉穩東方禪意？」驗證學生是否已成功達成「概念遷移」。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 學生精熟追蹤表格 -->
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xs font-black text-slate-900 flex items-center gap-1.5"><i class="fa-solid fa-users text-yellow-600"></i> 班級個案精熟狀態監控</h3>
+                        <!-- 匯出 JSON 功能 -->
+                        <button onclick="exportDataLogs()" class="bg-white hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg text-xs border border-slate-300 font-bold transition-all">
+                            <i class="fa-solid fa-download mr-1"></i> 匯出學術研究記錄 (JSON)
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="border-b border-slate-200 bg-slate-50 text-slate-500 font-bold">
+                                    <th class="py-3 px-4">學生姓名</th>
+                                    <th class="py-3 px-4">第 3 關首次作答</th>
+                                    <th class="py-3 px-4">大任務嘗試次數</th>
+                                    <th class="py-3 px-4">本章節精熟進度</th>
+                                    <th class="py-3 px-4">客觀學習狀態</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 bg-white" id="teacher-student-table-body">
+                                <!-- 動態渲染 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-400">
+        <p>© 2026 ColorPlay 專案研究團隊. All Rights Reserved.</p>
+        <p class="mt-1">結合形成性即時競賽與課後 5 階精熟測驗架構設計。</p>
+    </footer>
+
+    <!-- ==================== 系統核心程式邏輯 ==================== -->
+    <script>
+        
+        // 本地持久化資料鍵名 (學術研究用)
+        const STORAGE_KEY_PROFILES = 'colorplay_profiles';
+        const STORAGE_KEY_RECORDS = 'colorplay_records';
+        const STORAGE_KEY_REWARDS = 'colorplay_rewards';
+        const CURRENT_USER_SESSION = 'colorplay_session';
+        const SYSTEM_CONFIG_KEY = 'colorplay_system_config';
+
+        // 題目資料庫 (5題連續測驗，完美落實課後 ColorPlay 精熟學習)
+        const QUESTION_DATABASE = [
+            {
+                stepTitle: "第一關：基礎概念題",
+                scenario: "在傳統美術色相環中，純色（例如正黃色）在混合加入「白色」之後，主要會產生什麼明度與彩度上的變化？",
+                conditions: "變因控制：只研究純色加入白色的色彩屬性演變。",
+                options: [
+                    { key: "A", text: "明度提高，彩度降低", feedback: "正確！白色為高明度無彩色，加入會拉高明度，但同時稀釋純度使彩度降低。" },
+                    { key: "B", text: "明度降低，彩度提高", feedback: "錯誤。白色不可能降低明度，亦不可能提升純色之彩度。" },
+                    { key: "C", text: "明度與彩度同時提高", feedback: "錯誤。加入白色的確會拉高明度，但彩度必然會下降。" }
+                ],
+                hint1: "白色在色彩三屬性中代表最極致的明度，且是無彩色。",
+                hint2: "稀釋純色會使其彩度（飽和度）下降，而白色會使物體表面反射更多光線（提高明度）。",
+                visual: { bg: "#fef08a", border: "#fde047", status: "當前特徵：高明度、高彩度" }
+            },
+            {
+                stepTitle: "第二關：錯誤概念診斷",
+                scenario: "當紅色與綠色這對高彩度的互補色緊密並列，且兩者的明度高度接近時，人眼看過去會產生令人不舒服的刺眼躍動感。這種在色彩學上的生理現象稱為？",
+                conditions: "變因控制：研究補色強烈對抗且明度一致時之生理現象。",
+                options: [
+                    { key: "A", text: "類似色調和 (Analogous Harmony)", feedback: "錯誤。類似色位於鄰近色相，不會產生補色間的刺眼躍動。" },
+                    { key: "B", text: "明暗對比 (Chiaroscuro)", feedback: "錯誤。明暗對比仰賴極大的明度差（如黑白），而此處明度高度接近。" },
+                    { key: "C", text: "視覺顫動 (Vibration)", feedback: "正確！當互補色在彩度極高、且明度相當時，邊界會產生視覺上的顫動感。" }
+                ],
+                hint1: "這是高飽和度互補色並列、且缺乏明度對比時所引發的邊界對抗現象。",
+                hint2: "眼睛在此對抗邊界上會因無法對焦而產生微幅晃動顫抖感，故得此名。",
+                visual: { bg: "#ef4444", border: "#22c55e", status: "當前特徵: 互補顫動、刺激強烈" }
+            },
+            {
+                stepTitle: "第三關：案例診斷題",
+                scenario: "客戶要求為「皇家奢華護膚品」設計黃紫配色，條件為：1. 降低原本高彩度的視覺刺激、2. 呈現沉穩高級感、3. 保留黃與紫基本色相。目前原設計為「高彩度螢光黃紫組合」，請診斷其關鍵不符需求的問題為何？",
+                conditions: "設計條件約束：黃紫色相保留，找出原螢光版致命傷。",
+                options: [
+                    { key: "A", text: "黃色與紫色在傳統色相環上相差不足 180 度", feedback: "錯誤。黃與紫本身就是典型的 180 度互補關係，色相本身無誤。" },
+                    { key: "B", text: "兩色的明度與彩度皆過高，造成強烈的廉價刺眼感，不符沉穩需求", feedback: "正確！高彩與高明會帶來強烈刺激，屬於廉價玩具或警示色彩特徵，與沉穩背道而馳。" },
+                    { key: "C", text: "配色面積比例不均，未能突出核心文字", feedback: "錯誤。此題診斷重點在於降低視覺刺激與沉穩感，與面積比例無關。" }
+                ],
+                hint1: "奢華尊榮感需要降低視覺疲勞度與火躁感，而螢光色系多用於廉價玩具或警示。",
+                hint2: "檢視原設計色彩三屬性中高飽和度（高彩度）與高反射（高明度）如何破壞沉穩意象。",
+                visual: { bg: "#eab308", border: "#a855f7", status: "當前特徵: 螢光刺眼、警示廉價感" }
+            },
+            {
+                stepTitle: "第四關：策略選擇題",
+                scenario: "延續上一關護膚品案例。在保留黃、紫基本色相的前提下，應如何調整明度與彩度，使包裝最符合客戶要求的「沉穩、內斂」奢華設計需求？",
+                conditions: "設計條件約束：保留黃與紫基本色相，調整明度與彩度。",
+                options: [
+                    { key: "A", text: "調高兩色明度，改成低彩度之粉黃與粉紫柔和配色", feedback: "錯誤。粉嫩色調給人輕盈、甜美或嬰兒用品印象，不符沉穩要求。" },
+                    { key: "B", text: "降低黃與紫之彩度，並適度降低明度，使其轉為較低彩度、較沉穩的暗色調（如暗芥末黃與深古銅紫）", feedback: "正確！大幅降低彩度（向濁灰調靠攏），並壓暗明度，能轉為穩重、高雅的深色暗調配色。" },
+                    { key: "C", text: "維持高彩度，只將兩種顏色的明度同時提高，使包裝更明亮醒目", feedback: "錯誤。維持高彩度與高明度只會使其更刺眼，無法呈現沉穩質感。" }
+                ],
+                hint1: "沉穩內斂感在心理學上對應的是低能量色彩，即降低鮮豔度（彩度）並壓低明亮度。",
+                hint2: "尋找對「明度與彩度同時降低、轉為暗色調」提供明確調整策略的選項。",
+                visual: { bg: "#facc15", border: "#a855f7", status: "當前特徵: 進行微調對比測試" }
+            },
+            {
+                stepTitle: "第五關：相似情境遷移題",
+                scenario: "恭喜來到最後的遷移檢驗！現有另一款「頂級東方禪意茶葉包裝」，客戶強烈要求使用「紅與綠」補色搭配，但必須消除視覺顫動與刺眼感，呈現高雅禪意。依據相同原理，哪一項色彩調整策略最符合？",
+                conditions: "概念遷移：將降彩度/降明度原理解決紅綠補色衝突。",
+                options: [
+                    { key: "A", text: "將紅、綠調整為彩度極低、帶有沉穩灰度質感的「暗棗紅」與「深墨綠」", feedback: "完全正確！透過降低彩度與適度降低明度，紅綠互補對抗轉化為沉穩內斂的東方禪意色調。" },
+                    { key: "B", text: "將紅、綠改為明度極高的螢光粉紅與螢光嫩綠", feedback: "錯誤。這只會讓包裝變成街頭潮流或電子霓虹風格，與東方禪意大相記庭。" }
+                ],
+                hint1: "禪意與高雅在色彩意象上是沉靜無火氣的。請將第四關學習到的「降低彩度與明度」概念平移到紅綠上。",
+                hint2: "「暗棗紅」與「深墨綠」是低彩、低明色調的最佳實踐。",
+                visual: { bg: "#b91c1c", border: "#15803d", status: "當前特徵: 紅綠高彩度初始狀態" }
+            }
+        ];
+
+        // 秘密評判資料 (後端沙盒防弊)
+        const SECRET_JUDGE_STORE = {
+            "Q_0": "A",
+            "Q_1": "C",
+            "Q_2": "B",
+            "Q_3": "B",
+            "Q_4": "A"
+        };
+
+        // 系統集中狀態
+        let state = {
+            currentUser: null,  
+            currentAuthRole: 'student', 
+            kahootAnswered: false,
+            kahootTimer: 18,
+            activeTab: 'lobby',
+            currentMissionStage: 0, 
+            missionAttempts: 0,
+            missionTotalErrors: 0,
+            selectedRemedyOption: null,
+            stageHistories: {
+                0: { attempts: 0, errors: 0, completed: false, firstCorrect: null, usedHint1: false, usedHint2: false },
+                1: { attempts: 0, errors: 0, completed: false, firstCorrect: null, usedHint1: false, usedHint2: false },
+                2: { attempts: 0, errors: 0, completed: false, firstCorrect: null, usedHint1: false, usedHint2: false },
+                3: { attempts: 0, errors: 0, completed: false, firstCorrect: null, usedHint1: false, usedHint2: false },
+                4: { attempts: 0, errors: 0, completed: false, firstCorrect: null, usedHint1: false, usedHint2: false }
+            }
+        };
+
+        let timerInterval;
+
+        // 初始化本地虛擬資料表 (含系統通用廣播狀態)
+        function initLocalStorageDatabase() {
+            if (!localStorage.getItem(STORAGE_KEY_PROFILES)) {
+                const initialProfiles = [
+                    { id: 'CP001', nickname: '林○明', password: '123', class_code: 'CLASS-01', xp: 45, tokens: 10, role: 'student', level: 1, title: '色彩初學者', avatar: '🧑‍🎨', frame: 'from-amber-400 to-yellow-500' },
+                    { id: 'CP012', nickname: '黃○雅', password: '123', class_code: 'CLASS-01', xp: 210, tokens: 55, role: 'student', level: 2, title: '色彩實習生', avatar: '🧙‍♂️', frame: 'from-amber-400 to-yellow-500' },
+                    { id: 'CP028', nickname: '張○豪', password: '123', class_code: 'CLASS-01', xp: 285, tokens: 90, role: 'student', level: 3, title: '色彩分析員', avatar: '🦖', frame: 'from-indigo-500 to-sky-500' }
+                ];
+                localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(initialProfiles));
+            }
+
+            if (!localStorage.getItem(STORAGE_KEY_RECORDS)) {
+                const initialRecords = [
+                    { student_id: 'CP001', question_id: 'Q_0', selected_option: 'A', is_correct: true, attempt_number: 1, used_hint: 'none', answered_at: '2026-07-15 14:10:02', response_time: 15 },
+                    { student_id: 'CP001', question_id: 'Q_1', selected_option: 'A', is_correct: false, attempt_number: 1, used_hint: 'none', answered_at: '2026-07-15 14:12:10', response_time: 20 },
+                    { student_id: 'CP001', question_id: 'Q_1', selected_option: 'B', is_correct: false, attempt_number: 2, used_hint: 'hint1', answered_at: '2026-07-15 14:13:00', response_time: 12 },
+                    { student_id: 'CP001', question_id: 'Q_2', selected_option: 'A', is_correct: false, attempt_number: 1, used_hint: 'none', answered_at: '2026-07-15 14:15:30', response_time: 25 },
+                    { student_id: 'CP001', question_id: 'Q_2', selected_option: 'C', is_correct: false, attempt_number: 2, used_hint: 'hint1', answered_at: '2026-07-15 14:16:15', response_time: 18 },
+                    
+                    { student_id: 'CP012', question_id: 'Q_0', selected_option: 'A', is_correct: true, attempt_number: 1, used_hint: 'none', answered_at: '2026-07-16 09:30:11', response_time: 18 },
+                    { student_id: 'CP012', question_id: 'Q_1', selected_option: 'C', is_correct: true, attempt_number: 1, used_hint: 'none', answered_at: '2026-07-16 09:33:02', response_time: 22 },
+                    { student_id: 'CP012', question_id: 'Q_2', selected_option: 'A', is_correct: false, attempt_number: 1, used_hint: 'none', answered_at: '2026-07-16 09:35:40', response_time: 30 },
+                    { student_id: 'CP012', question_id: 'Q_2', selected_option: 'B', is_correct: true, attempt_number: 2, used_hint: 'hint1', answered_at: '2026-07-16 09:37:12', response_time: 15 },
+                    { student_id: 'CP012', question_id: 'Q_3', selected_option: 'B', is_correct: true, attempt_number: 1, used_hint: 'none', answered_at: '2026-07-16 09:40:00', response_time: 12 },
+                    { student_id: 'CP012', question_id: 'Q_4', selected_option: 'A', is_correct: true, attempt_number: 1, used_hint: 'none', answered_at: '2026-07-16 09:42:05', response_time: 14 },
+                    
+                    { student_id: 'CP028', question_id: 'Q_0', selected_option: 'A', is_correct: true, attempt_number: 1, used_hint: 'none', answered_at: '2026-07-17 10:05:00', response_time: 8 },
+                    { student_id: 'CP028', question_id: 'Q_1', selected_option: 'C', is_correct: true, attempt_number: 1, used_hint: 'none', answered_at: '2026-07-17 10:06:12', response_time: 10 },
+                    { student_id: 'CP028', question_id: 'Q_2', selected_option: 'B', is_correct: true, attempt_number: 1, used_hint: 'none', answered_at: '2026-07-17 10:07:30', response_time: 12 },
+                    { student_id: 'CP028', question_id: 'Q_3', selected_option: 'B', is_correct: true, attempt_number: 1, used_hint: 'none', answered_at: '2026-07-17 10:08:45', response_time: 9 },
+                    { student_id: 'CP028', question_id: 'Q_4', selected_option: 'A', is_correct: true, attempt_number: 1, used_hint: 'none', answered_at: '2026-07-17 10:10:00', response_time: 11 }
+                ];
+                localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(initialRecords));
+            }
+
+            if (!localStorage.getItem(STORAGE_KEY_REWARDS)) {
+                localStorage.setItem(STORAGE_KEY_REWARDS, JSON.stringify([]));
+            }
+
+            if (!localStorage.getItem(SYSTEM_CONFIG_KEY)) {
+                localStorage.setItem(SYSTEM_CONFIG_KEY, JSON.stringify({ kahootActive: false }));
+            }
+        }
+
+        // Toast 通知系統
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let icon = 'fa-circle-info';
+            let borderCol = 'border-blue-400';
+            let bgCol = 'bg-white';
+            let textCol = 'text-slate-800';
+
+            if (type === 'success') {
+                icon = 'fa-circle-check';
+                borderCol = 'border-emerald-500';
+                textCol = 'text-emerald-700';
+            } else if (type === 'error') {
+                icon = 'fa-triangle-exclamation';
+                borderCol = 'border-rose-400';
+                textCol = 'text-rose-700';
+            } else if (type === 'warning') {
+                icon = 'fa-lightbulb';
+                borderCol = 'border-yellow-400';
+                textCol = 'text-yellow-800';
+            }
+
+            toast.className = `flex items-start space-x-3 p-4 rounded-2xl border ${borderCol} ${bgCol} ${textCol} shadow-xl animate-fade-in text-xs font-bold transition-all duration-300`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-base mt-0.5"></i>
+                <div class="flex-grow">
+                    <p>${message}</p>
+                </div>
+                <button class="text-slate-400 hover:text-slate-600 focus:outline-none" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // 身分選擇
+        function setAuthRole(role) {
+            state.currentAuthRole = role;
+            const tabStudent = document.getElementById('auth-tab-student');
+            const tabTeacher = document.getElementById('auth-tab-teacher');
+            const formStudent = document.getElementById('auth-form-student');
+            const formTeacher = document.getElementById('auth-form-teacher');
+
+            if (role === 'student') {
+                tabStudent.className = "flex-1 py-2 rounded-lg text-slate-950 bg-[#ffd600] transition-all duration-200";
+                tabTeacher.className = "flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-850 transition-all duration-200";
+                formStudent.classList.remove('hidden');
+                formTeacher.classList.add('hidden');
+            } else {
+                tabStudent.className = "flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-850 transition-all duration-200";
+                tabTeacher.className = "flex-1 py-2 rounded-lg text-white bg-indigo-600 transition-all duration-200";
+                formStudent.classList.add('hidden');
+                formTeacher.classList.remove('hidden');
+            }
+        }
+
+        // 學生登入
+        function handleStudentLogin() {
+            const classCode = document.getElementById('student-class').value.trim();
+            const studentId = document.getElementById('student-id').value.trim();
+            const nickname = document.getElementById('student-name').value.trim();
+            const password = document.getElementById('student-password').value.trim();
+
+            if (!classCode || !studentId || !nickname || !password) {
+                showToast("所有欄位均為必填，請確認！", "error");
+                return;
+            }
+
+            let profiles = JSON.parse(localStorage.getItem(STORAGE_KEY_PROFILES)) || [];
+            let user = profiles.find(p => p.id === studentId && p.class_code === classCode);
+
+            if (user) {
+                if (user.password !== password) {
+                    showToast("登入密碼不正確，請重新確認！", "error");
+                    return;
+                }
+            } else {
+                user = {
+                    id: studentId,
+                    nickname: nickname,
+                    password: password,
+                    class_code: classCode,
+                    xp: 120, // 初始經驗
+                    tokens: 40, // 初始代幣
+                    role: 'student',
+                    level: 2,
+                    title: '色彩實習生',
+                    avatar: '🦖',
+                    frame: 'from-amber-400 to-yellow-500'
+                };
+                profiles.push(user);
+                localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(profiles));
+                showToast(`註冊成功！新學生帳號已建立！`, "success");
+            }
+
+            localStorage.setItem(CURRENT_USER_SESSION, JSON.stringify(user));
+            state.currentUser = user;
+
+            document.getElementById('auth-portal').classList.add('hidden');
+            document.getElementById('student-nav').classList.remove('hidden');
+            document.getElementById('teacher-nav').classList.add('hidden');
+            document.getElementById('student-status-bar').classList.remove('hidden');
+
+            showToast(`學生 ${user.nickname} 登入成功！`, "success");
+            
+            restoreStudentProgress();
+            syncLobbyUI();
+            switchTab('lobby');
+        }
+
+        // 教師登入
+        function handleTeacherLogin() {
+            const teacherId = document.getElementById('teacher-id').value.trim();
+            const password = document.getElementById('teacher-password').value.trim();
+
+            if (password === 'admin123') {
+                const teacherUser = {
+                    id: teacherId,
+                    nickname: '指導教師',
+                    role: 'teacher'
+                };
+                localStorage.setItem(CURRENT_USER_SESSION, JSON.stringify(teacherUser));
+                state.currentUser = teacherUser;
+
+                document.getElementById('auth-portal').classList.add('hidden');
+                document.getElementById('student-nav').classList.add('hidden');
+                document.getElementById('student-status-bar').classList.add('hidden');
+                document.getElementById('teacher-nav').classList.remove('hidden');
+
+                showToast("教師控制端驗證通過，權限已解鎖！", "success");
+                switchTab('teacher');
+            } else {
+                showToast("教師專用密碼錯誤，拒絕登入！", "error");
+            }
+        }
+
+        // 安全登出
+        function handleLogout() {
+            localStorage.removeItem(CURRENT_USER_SESSION);
+            state.currentUser = null;
+            
+            document.getElementById('student-id').value = '';
+            document.getElementById('student-name').value = '';
+            document.getElementById('auth-portal').classList.remove('hidden');
+            
+            clearInterval(timerInterval);
+            state.kahootTimer = 18;
+            state.kahootAnswered = false;
+            document.getElementById('kahoot-result-card').classList.add('hidden');
+
+            const kahootBtns = document.getElementById('kahoot-options').getElementsByTagName('button');
+            for(let btn of kahootBtns) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-40', 'cursor-not-allowed');
+            }
+
+            showToast("您已安全登出系統。", "info");
+        }
+
+        // 恢復學生進度
+        function restoreStudentProgress() {
+            if (!state.currentUser || state.currentUser.role === 'teacher') return;
+
+            const records = JSON.parse(localStorage.getItem(STORAGE_KEY_RECORDS)) || [];
+            const studentRecords = records.filter(r => r.student_id === state.currentUser.id);
+
+            state.stageHistories = {
+                0: { attempts: 0, errors: 0, completed: false, firstCorrect: null, usedHint1: false, usedHint2: false },
+                1: { attempts: 0, errors: 0, completed: false, firstCorrect: null, usedHint1: false, usedHint2: false },
+                2: { attempts: 0, errors: 0, completed: false, firstCorrect: null, usedHint1: false, usedHint2: false },
+                3: { attempts: 0, errors: 0, completed: false, firstCorrect: null, usedHint1: false, usedHint2: false },
+                4: { attempts: 0, errors: 0, completed: false, firstCorrect: null, usedHint1: false, usedHint2: false }
+            };
+
+            studentRecords.forEach(rec => {
+                const qIndex = parseInt(rec.question_id.split('_')[1]);
+                if (!isNaN(qIndex)) {
+                    const stage = state.stageHistories[qIndex];
+                    stage.attempts++;
+                    if (!rec.is_correct) {
+                        stage.errors++;
+                    } else {
+                        stage.completed = true;
+                    }
+                    if (rec.attempt_number === 1) {
+                        stage.firstCorrect = rec.is_correct;
+                    }
+                    if (rec.used_hint === 'hint1') stage.usedHint1 = true;
+                    if (rec.used_hint === 'hint2') stage.usedHint2 = true;
+                }
+            });
+
+            const profiles = JSON.parse(localStorage.getItem(STORAGE_KEY_PROFILES)) || [];
+            const freshUser = profiles.find(p => p.id === state.currentUser.id);
+            if (freshUser) {
+                state.currentUser = freshUser;
+            }
+
+            state.currentMissionStage = 0;
+            for (let i = 0; i < 5; i++) {
+                if (state.stageHistories[i].completed) {
+                    state.currentMissionStage = i + 1;
+                } else {
+                    state.currentMissionStage = i;
+                    break;
+                }
+            }
+            if (state.currentMissionStage > 4) state.currentMissionStage = 4;
+        }
+
+        function switchTab(tabId) {
+            const tabs = ['kahoot', 'lobby', 'mission', 'shop', 'teacher'];
+            
+            // 路由權限驗證保護
+            if (tabId === 'teacher' && (!state.currentUser || state.currentUser.role !== 'teacher')) {
+                showToast("權限不足！請先由教師登入入口完成授權認證！", "error");
+                return;
+            }
+
+            // 如果 Kahoot 尚未由教師端啟用，學生不得強制進入
+            if (tabId === 'kahoot' && state.currentUser && state.currentUser.role === 'student') {
+                const config = JSON.parse(localStorage.getItem(SYSTEM_CONFIG_KEY)) || { kahootActive: false };
+                if (!config.kahootActive) {
+                    showToast("此即時競賽尚未由教師啟動，敬請等待廣播！", "warning");
+                    return;
+                }
+            }
+
+            tabs.forEach(t => {
+                const section = document.getElementById(`tab-${t}`);
+                if (section) section.classList.add('hidden');
+                
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (btn) btn.className = "px-4 py-2 rounded-lg font-bold text-slate-500 hover:text-slate-900 transition-all duration-200";
+            });
+
+            const activeSection = document.getElementById(`tab-${tabId}`);
+            if (activeSection) activeSection.classList.remove('hidden');
+            
+            let btnColor = "bg-[#ffd600] text-slate-950 shadow-sm";
+            if (tabId === 'teacher') btnColor = "bg-indigo-650 text-white shadow-md";
+            
+            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+            if (activeBtn) activeBtn.className = `px-4 py-2 rounded-lg font-extrabold transition-all duration-200 ${btnColor}`;
+
+            state.activeTab = tabId;
+
+            if (tabId === 'lobby') {
+                syncLobbyUI();
+            } else if (tabId === 'mission') {
+                renderActiveQuestion();
+            } else if (tabId === 'teacher') {
+                updateTeacherDashboard();
+            } else if (tabId === 'shop') {
+                renderShopUI();
+            }
+        }
+
+        // 同步大廳與等級、頭銜動態計算
+        function syncLobbyUI() {
+            if (!state.currentUser || state.currentUser.role === 'teacher') return;
+
+            const levelData = calculateLevel(state.currentUser.xp);
+            state.currentUser.level = levelData.level;
+            state.currentUser.title = levelData.title;
+
+            let profiles = JSON.parse(localStorage.getItem(STORAGE_KEY_PROFILES)) || [];
+            const idx = profiles.findIndex(p => p.id === state.currentUser.id);
+            if (idx !== -1) {
+                profiles[idx].level = levelData.level;
+                profiles[idx].title = levelData.title;
+                localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(profiles));
+            }
+
+            document.getElementById('nav-nickname').innerText = state.currentUser.nickname;
+            document.getElementById('nav-role').innerText = state.currentUser.title;
+            document.getElementById('nav-xp').innerText = state.currentUser.xp;
+            document.getElementById('nav-tokens').innerText = state.currentUser.tokens;
+
+            // 學習大廳數據連動
+            document.getElementById('lobby-xp-count').innerText = state.currentUser.xp;
+            document.getElementById('lobby-student-display-id').innerText = state.currentUser.id;
+
+            // 完美呼應 image_55de02.png 風格 (圓角卡片 + 亮黃扁平色底)
+            const frameEl = document.getElementById('lobby-avatar-frame');
+            frameEl.className = `w-16 h-16 rounded-[24px] bg-[#ffb300] flex items-center justify-center text-3xl shadow-sm transition-all duration-300`;
+            document.getElementById('lobby-avatar-char').innerText = state.currentUser.avatar;
+
+            const completedCount = Object.values(state.stageHistories).filter(s => s.completed).length;
+            const progressPct = Math.round((completedCount / 5) * 100);
+            document.getElementById('lobby-chapter-progress').innerText = `${progressPct}%`;
+
+            const errorCount = Object.values(state.stageHistories).filter(s => s.attempts > 0 && !s.completed).length;
+            document.getElementById('lobby-error-count').innerText = `${errorCount} 題`;
+
+            // 徽章控制
+            const badgeWelcome = document.getElementById('badge-icon-welcome');
+            const badgeRepair = document.getElementById('badge-icon-repair');
+            const badgeMaster = document.getElementById('badge-icon-master');
+
+            const rewards = JSON.parse(localStorage.getItem(STORAGE_KEY_REWARDS)) || [];
+            const myBadges = rewards.filter(r => r.user_id === state.currentUser.id && r.source_type === 'badge');
+
+            if (myBadges.some(b => b.source_id === 'CP_BADGE_01')) {
+                badgeWelcome.classList.remove('opacity-25', 'grayscale');
+            }
+            if (myBadges.some(b => b.source_id === 'CP_BADGE_02')) {
+                badgeRepair.classList.remove('opacity-25', 'grayscale');
+            }
+            if (completedCount === 5) {
+                badgeMaster.classList.remove('opacity-25', 'grayscale');
+                grantBadgeOnce('CP_BADGE_03', '對比辨識大師 🥇');
+            }
+
+            const questCheck = document.getElementById('lobby-quest-check');
+            if (completedCount === 5) {
+                questCheck.checked = true;
+            } else {
+                questCheck.checked = false;
+            }
+
+            // 同步 Kahoot 即時廣播橫幅狀態
+            const config = JSON.parse(localStorage.getItem(SYSTEM_CONFIG_KEY)) || { kahootActive: false };
+            const broadcastBanner = document.getElementById('student-kahoot-broadcast-banner');
+            if (config.kahootActive) {
+                broadcastBanner.classList.remove('hidden');
+            } else {
+                broadcastBanner.classList.add('hidden');
+            }
+        }
+
+        function calculateLevel(xp) {
+            if (xp < 100) return { level: 1, title: '色彩初學者', nextXP: 100 };
+            if (xp < 250) return { level: 2, title: '色彩實習生', nextXP: 250 };
+            if (xp < 500) return { level: 3, title: '色彩分析員', nextXP: 500 };
+            return { level: 4, title: '色彩大師', nextXP: 1000 };
+        }
+
+        // ==================== 1. KAHOOT 即時競賽模組 ====================
+        function submitKahoot(choice) {
+            state.kahootAnswered = true;
+            clearInterval(timerInterval);
+            document.getElementById('kahoot-timer').innerText = "已結束";
+
+            const buttons = document.getElementById('kahoot-options').getElementsByTagName('button');
+            for(let btn of buttons) {
+                btn.disabled = true;
+                btn.classList.add('opacity-40', 'cursor-not-allowed');
+            }
+
+            const resultCard = document.getElementById('kahoot-result-card');
+            const answerMsg = document.getElementById('kahoot-answer-msg');
+            resultCard.classList.remove('hidden');
+
+            const rewardGranted = grantRewardOnce('CP_KAHOOT_PARTICIPATE', '課中Kahoot參與', 20, 5);
+
+            if (choice === 'A') {
+                answerMsg.innerHTML = `
+                    <span class="bg-emerald-500/10 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200 text-xs font-black"><i class="fa-solid fa-circle-check mr-1"></i>答對了！</span>
+                    <p class="text-sm text-slate-800 font-bold">在即時競賽中首選正確！</p>
+                `;
+                if (rewardGranted) {
+                    showToast("答對課中競賽！成功派發 +20 XP 與 5 代幣！", "success");
+                }
+            } else if (choice === 'TIMEOUT') {
+                answerMsg.innerHTML = `
+                    <span class="bg-rose-500/10 text-rose-700 px-3 py-1 rounded-full border border-rose-200 text-xs font-black">時間到</span>
+                    <p class="text-sm text-slate-600">正確答案為 <strong>▲ 互補色對比 (A)</strong></p>
+                `;
+            } else {
+                answerMsg.innerHTML = `
+                    <span class="bg-rose-500/10 text-rose-700 px-3 py-1 rounded-full border border-rose-200 text-xs font-black">答錯囉</span>
+                    <p class="text-sm text-slate-600">正確答案為 <strong>▲ 互補色對比 (A)</strong></p>
+                `;
+            }
+
+            syncLobbyUI();
+        }
+
+        // ==================== 3. COLORPLAY 5 階任務實戰 ====================
+        function renderActiveQuestion() {
+            const index = state.currentMissionStage;
+            const q = QUESTION_DATABASE[index];
+            const localHist = state.stageHistories[index];
+
+            document.getElementById('map-line-progress').style.width = `${index * 25}%`;
+
+            for (let i = 0; i < 5; i++) {
+                const btn = document.getElementById(`map-btn-${i}`);
+                if (i <= index) {
+                    btn.disabled = false;
+                    if (state.stageHistories[i].completed) {
+                        btn.className = "w-8 h-8 rounded-full bg-emerald-500 border-2 border-emerald-400 flex items-center justify-center font-bold text-white shadow-sm";
+                        btn.innerHTML = `<i class="fa-solid fa-check text-xs"></i>`;
+                    } else if (i === index) {
+                        btn.className = "w-8 h-8 rounded-full bg-[#ffd600] border-2 border-yellow-400 flex items-center justify-center font-bold text-slate-900 shadow-sm animate-pulse";
+                        btn.innerHTML = i + 1;
+                    } else {
+                        btn.className = "w-8 h-8 rounded-full bg-slate-200 border-2 border-slate-300 flex items-center justify-center font-bold text-slate-700";
+                        btn.innerHTML = i + 1;
+                    }
+                } else {
+                    btn.disabled = true;
+                    btn.className = "w-8 h-8 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center font-bold text-slate-400 cursor-not-allowed";
+                    btn.innerHTML = i + 1;
+                }
+            }
+
+            document.getElementById('mission-step-indicator').innerText = `${index + 1} / 5`;
+            document.getElementById('mission-step-title').innerText = q.stepTitle;
+            document.getElementById('mission-attempts').innerText = localHist.attempts;
+            document.getElementById('mission-total-errors').innerText = localHist.errors;
+
+            document.getElementById('mission-scenario').innerHTML = `
+                <strong class="text-slate-900 font-bold block mb-1">【關卡情境】</strong>
+                ${q.scenario}
+            `;
+
+            document.getElementById('mission-conditions').innerHTML = `
+                <strong class="text-yellow-700 block mb-1"><i class="fa-solid fa-microscope mr-1"></i> 色彩測量條件限制：</strong>
+                ${q.conditions}
+            `;
+
+            const visualBox = document.getElementById('visual-render-box');
+            visualBox.style.backgroundColor = q.visual.bg;
+            visualBox.style.borderColor = q.visual.border;
+            document.getElementById('visual-render-status').innerHTML = `
+                當前特徵描述：<br><span class="text-yellow-600 font-bold">${q.visual.status}</span>
+            `;
+
+            document.getElementById('hints-panel').classList.add('hidden');
+            document.getElementById('hint-1').classList.add('hidden');
+            document.getElementById('hint-2').classList.add('hidden');
+            document.getElementById('mission-victory-card').classList.add('hidden');
+            
+            const optionsContainer = document.getElementById('mission-options');
+            optionsContainer.classList.remove('hidden');
+            document.getElementById('options-panel-container').classList.remove('hidden');
+            optionsContainer.innerHTML = '';
+
+            if (localHist.completed) {
+                document.getElementById('options-panel-container').classList.add('hidden');
+                showVictoryUI(index, localHist);
+                return;
+            }
+
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.id = `opt-${opt.key}`;
+                btn.className = "w-full text-left bg-white hover:bg-slate-50 p-4 rounded-xl border border-slate-200 transition flex items-start space-x-3";
+                btn.onclick = () => submitActiveAnswer(opt.key);
+                btn.innerHTML = `
+                    <span class="bg-slate-200 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">${opt.key}</span>
+                    <div>
+                        <strong class="text-slate-800 block">${opt.text}</strong>
+                    </div>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        // 學生答題
+        function submitActiveAnswer(selectedOption) {
+            const index = state.currentMissionStage;
+            const q = QUESTION_DATABASE[index];
+            const localHist = state.stageHistories[index];
+
+            localHist.attempts++;
+
+            const isCorrect = verifyAnswerWithBackend(index, selectedOption);
+
+            if (localHist.attempts === 1) {
+                localHist.firstCorrect = isCorrect;
+            }
+
+            saveAnswerRecordToVirtualDb(index, selectedOption, isCorrect, localHist.attempts);
+
+            if (isCorrect) {
+                localHist.completed = true;
+                showToast("回答正確！順利通過此層考驗！", "success");
+                showVictoryUI(index, localHist);
+            } else {
+                localHist.errors++;
+                showToast(`答案與條件不符，請參考提示重新比對。`, "error");
+
+                const wrongBtn = document.getElementById(`opt-${selectedOption}`);
+                if (wrongBtn) {
+                    wrongBtn.className = "w-full text-left bg-rose-50 p-4 rounded-xl border border-rose-200 transition flex items-start space-x-3";
+                    wrongBtn.querySelector('span').className = "bg-rose-100 text-rose-700 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mt-0.5";
+                }
+
+                const hintsPanel = document.getElementById('hints-panel');
+                hintsPanel.classList.remove('hidden');
+
+                if (localHist.attempts === 1) {
+                    localHist.usedHint1 = true;
+                    document.getElementById('hint-text-1').innerText = q.hint1;
+                    document.getElementById('hint-1').classList.remove('hidden');
+                } else if (localHist.attempts >= 2) {
+                    localHist.usedHint1 = true;
+                    localHist.usedHint2 = true;
+                    document.getElementById('hint-text-1').innerText = q.hint1;
+                    document.getElementById('hint-text-2').innerText = q.hint2;
+                    document.getElementById('hint-1').classList.remove('hidden');
+                    document.getElementById('hint-2').classList.remove('hidden');
+                }
+            }
+
+            document.getElementById('mission-attempts').innerText = localHist.attempts;
+            document.getElementById('mission-total-errors').innerText = localHist.errors;
+        }
+
+        function verifyAnswerWithBackend(stageIndex, option) {
+            const key = `Q_${stageIndex}`;
+            return SECRET_JUDGE_STORE[key] === option;
+        }
+
+        function saveAnswerRecordToVirtualDb(stageIndex, option, isCorrect, attemptNum) {
+            if (!state.currentUser) return;
+            const records = JSON.parse(localStorage.getItem(STORAGE_KEY_RECORDS)) || [];
+            
+            let usedHint = 'none';
+            if (attemptNum === 2) usedHint = 'hint1';
+            if (attemptNum >= 3) usedHint = 'hint2';
+
+            const newRec = {
+                student_id: state.currentUser.id,
+                question_id: `Q_${stageIndex}`,
+                selected_option: option,
+                is_correct: isCorrect,
+                attempt_number: attemptNum,
+                used_hint: usedHint,
+                answered_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
+                response_time: Math.floor(Math.random() * 15) + 10
+            };
+            records.push(newRec);
+            localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(records));
+        }
+
+        // 關卡成功賀卡
+        function showVictoryUI(stageIndex, localHist) {
+            document.getElementById('options-panel-container').classList.add('hidden');
+            document.getElementById('hints-panel').classList.add('hidden');
+            
+            const victoryCard = document.getElementById('mission-victory-card');
+            victoryCard.classList.remove('hidden');
+
+            const titleEl = document.getElementById('victory-title');
+            const descEl = document.getElementById('victory-desc');
+            const xpRewardEl = document.getElementById('reward-xp');
+            const tokensRewardEl = document.getElementById('reward-tokens');
+
+            const visualBox = document.getElementById('visual-render-box');
+            if (stageIndex === 2 || stageIndex === 3) {
+                visualBox.style.backgroundColor = '#8c7623'; 
+                visualBox.style.borderColor = '#2d1e3d'; 
+                document.getElementById('visual-render-status').innerHTML = `
+                    策略最佳特徵：<br><span class="text-emerald-600 font-bold">暗芥末黃與深古銅紫 (低彩低明)</span>
+                `;
+            } else if (stageIndex === 4) {
+                visualBox.style.backgroundColor = '#7f1d1d'; 
+                visualBox.style.borderColor = '#14532d'; 
+                document.getElementById('visual-render-status').innerHTML = `
+                    策略最佳特徵：<br><span class="text-emerald-600 font-bold">暗棗紅與深墨綠 (概念遷移成功)</span>
+                `;
+            } else {
+                document.getElementById('visual-render-status').innerHTML = `
+                    已完成精熟解算：<br><span class="text-emerald-600 font-bold">本關卡已達標</span>
+                `;
+            }
+
+            const transactionId = `CP_STAGE_REWARD_${stageIndex}`;
+            
+            let xpGained = 0;
+            let tokensGained = 0;
+
+            if (localHist.firstCorrect) {
+                xpGained = 40;
+                tokensGained = 10;
+                titleEl.innerText = "完美通關！首次嘗試即正確";
+                descEl.innerText = "你完全不需要提示便精準選出了最符合色彩學條件的正確策略！";
+            } else {
+                xpGained = 30; 
+                tokensGained = 5;
+                titleEl.innerText = "精熟修正成功！完成補救學習";
+                descEl.innerText = "你透過色彩學提示鷹架，發現了自身迷思並成功修正策略通關！";
+            }
+
+            const rewardGranted = grantRewardOnce(transactionId, `通關Q_${stageIndex}`, xpGained, tokensGained);
+            if (rewardGranted) {
+                showToast(`通關成功！獲得 +${xpGained} XP 與 ${tokensGained} 代幣！`, "success");
+            } else {
+                titleEl.innerText = "複習模式中";
+                descEl.innerText = "您先前已完成過本關挑戰。目前處於自主複習模式，不再重複發放貨幣。";
+                xpGained = 0;
+                tokensGained = 0;
+            }
+
+            xpRewardEl.innerText = xpGained;
+            tokensRewardEl.innerText = tokensGained;
+
+            if (stageIndex === 0) {
+                grantBadgeOnce('CP_BADGE_01', '初學大成 🥉');
+            } else if (stageIndex === 2 && !localHist.firstCorrect) {
+                grantBadgeOnce('CP_BADGE_02', '精熟修補手 🔧');
+            }
+
+            if (stageIndex === 4) {
+                document.getElementById('victory-next-btn').innerHTML = `查看大廳成果 <i class="fa-solid fa-flag-checkered ml-1"></i>`;
+                document.getElementById('victory-next-btn').onclick = () => switchTab('lobby');
+            } else {
+                document.getElementById('victory-next-btn').innerHTML = `進入下一關卡 <i class="fa-solid fa-arrow-right ml-1"></i>`;
+                document.getElementById('victory-next-btn').onclick = () => nextQuestion();
+            }
+        }
+
+        // 後端安全獎勵派發交易
+        function grantRewardOnce(id, typeLabel, xp, tokens) {
+            if (!state.currentUser) return false;
+            let rewards = JSON.parse(localStorage.getItem(STORAGE_KEY_REWARDS)) || [];
+
+            const exists = rewards.some(r => r.user_id === state.currentUser.id && r.id === id);
+            if (exists) return false;
+
+            const newReward = {
+                id: id,
+                user_id: state.currentUser.id,
+                source_type: 'mission_reward',
+                source_id: typeLabel,
+                xp_amount: xp,
+                token_amount: tokens,
+                created_at: new Date().toISOString()
+            };
+            rewards.push(newReward);
+            localStorage.setItem(STORAGE_KEY_REWARDS, JSON.stringify(rewards));
+
+            let profiles = JSON.parse(localStorage.getItem(STORAGE_KEY_PROFILES)) || [];
+            const idx = profiles.findIndex(p => p.id === state.currentUser.id);
+            if (idx !== -1) {
+                profiles[idx].xp += xp;
+                profiles[idx].tokens += tokens;
+                localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(profiles));
+                state.currentUser = profiles[idx];
+            }
+            return true;
+        }
+
+        function grantBadgeOnce(badgeId, badgeName) {
+            if (!state.currentUser) return;
+            let rewards = JSON.parse(localStorage.getItem(STORAGE_KEY_REWARDS)) || [];
+            const exists = rewards.some(r => r.user_id === state.currentUser.id && r.id === badgeId);
+            if (exists) return;
+
+            const newBadge = {
+                id: badgeId,
+                user_id: state.currentUser.id,
+                source_type: 'badge',
+                source_id: badgeId,
+                xp_amount: 0,
+                token_amount: 0,
+                created_at: new Date().toISOString()
+            };
+            rewards.push(newBadge);
+            localStorage.setItem(STORAGE_KEY_REWARDS, JSON.stringify(rewards));
+            showToast(`榮獲專屬徽章：【${badgeName}】！已加入個人檔案。`, "success");
+        }
+
+        function nextQuestion() {
+            if (state.currentMissionStage < 4) {
+                state.currentMissionStage++;
+                renderActiveQuestion();
+            } else {
+                switchTab('lobby');
+            }
+        }
+
+        function jumpToMapStage(stageIndex) {
+            if (stageIndex === 0) {
+                state.currentMissionStage = stageIndex;
+                renderActiveQuestion();
+                return;
+            }
+            if (state.stageHistories[stageIndex - 1].completed) {
+                state.currentMissionStage = stageIndex;
+                renderActiveQuestion();
+            } else {
+                showToast("您尚未通過前置關卡的考驗，請循序漸進解鎖！", "error");
+            }
+        }
+
+        function resetMissionState() {
+            const index = state.currentMissionStage;
+            const stage = state.stageHistories[index];
+            
+            stage.completed = false;
+            stage.attempts = 0;
+            stage.errors = 0;
+            stage.usedHint1 = false;
+            stage.usedHint2 = false;
+
+            renderActiveQuestion();
+            showToast("當前關卡已重設，開啟自主複習模式！", "info");
+        }
+
+        // ==================== 4. 代幣商店核心邏輯 ====================
+        function renderShopUI() {
+            if (!state.currentUser) return;
+
+            const btnWizard = document.getElementById('shop-btn-avatar-wizard');
+            const btnDino = document.getElementById('shop-btn-avatar-dino');
+            const btnNeon = document.getElementById('shop-btn-frame-neon');
+
+            const rewards = JSON.parse(localStorage.getItem(STORAGE_KEY_REWARDS)) || [];
+            const boughtItems = rewards.filter(r => r.user_id === state.currentUser.id && r.source_type === 'store');
+
+            if (boughtItems.some(item => item.source_id === 'wizard')) {
+                btnWizard.innerHTML = `<span class="text-2xl mb-1">🧙‍♂️</span><span class="text-[10px] text-slate-500">色彩巫師</span><span class="text-[9px] text-emerald-600 font-bold mt-1">已擁有(點擊套用)</span>`;
+            }
+            if (boughtItems.some(item => item.source_id === 'dino')) {
+                btnDino.innerHTML = `<span class="text-2xl mb-1">🦖</span><span class="text-[10px] text-slate-500">色彩巨獸</span><span class="text-[9px] text-emerald-600 font-bold mt-1">已擁有(點擊套用)</span>`;
+            }
+            if (boughtItems.some(item => item.source_id === 'frame_neon')) {
+                btnNeon.innerHTML = `<span class="block h-3 w-12 bg-gradient-to-r from-indigo-500 to-sky-500 rounded mx-auto mb-2"></span>深海霓虹 (已擁有)`;
+            }
+        }
+
+        function purchaseAvatar(emoji, cost) {
+            if (!state.currentUser) return;
+            const itemId = emoji === '🧙‍♂️' ? 'wizard' : 'dino';
+
+            let rewards = JSON.parse(localStorage.getItem(STORAGE_KEY_REWARDS)) || [];
+            const alreadyOwned = rewards.some(r => r.user_id === state.currentUser.id && r.source_id === itemId);
+
+            if (alreadyOwned) {
+                updateProfileField('avatar', emoji);
+                showToast(`個人頭像已成功套用為 ${emoji}！`, "success");
+                syncLobbyUI();
+                return;
+            }
+
+            if (state.currentUser.tokens < cost) {
+                showToast("您的色彩代幣餘額不足，請完成更多課後補救精熟！", "error");
+                return;
+            }
+
+            state.currentUser.tokens -= cost;
+            const profiles = JSON.parse(localStorage.getItem(STORAGE_KEY_PROFILES)) || [];
+            const idx = profiles.findIndex(p => p.id === state.currentUser.id);
+            if (idx !== -1) {
+                profiles[idx].tokens = state.currentUser.tokens;
+                profiles[idx].avatar = emoji;
+                localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(profiles));
+            }
+
+            rewards.push({
+                id: `CP_STORE_${itemId}`,
+                user_id: state.currentUser.id,
+                source_type: 'store',
+                source_id: itemId,
+                xp_amount: 0,
+                token_amount: -cost,
+                created_at: new Date().toISOString()
+            });
+            localStorage.setItem(STORAGE_KEY_REWARDS, JSON.stringify(rewards));
+
+            showToast(`購買成功並自動套用 ${emoji}！`, "success");
+            syncLobbyUI();
+            renderShopUI();
+        }
+
+        function purchaseFrame(frameGradient, cost) {
+            if (!state.currentUser) return;
+            const itemId = 'frame_neon';
+
+            let rewards = JSON.parse(localStorage.getItem(STORAGE_KEY_REWARDS)) || [];
+            const alreadyOwned = rewards.some(r => r.user_id === state.currentUser.id && r.source_id === itemId) || cost === 0;
+
+            if (alreadyOwned) {
+                updateProfileField('frame', frameGradient);
+                showToast(`外觀邊框已成功切換！`, "success");
+                syncLobbyUI();
+                return;
+            }
+
+            if (state.currentUser.tokens < cost) {
+                showToast("代幣不足！", "error");
+                return;
+            }
+
+            state.currentUser.tokens -= cost;
+            const profiles = JSON.parse(localStorage.getItem(STORAGE_KEY_PROFILES)) || [];
+            const idx = profiles.findIndex(p => p.id === state.currentUser.id);
+            if (idx !== -1) {
+                profiles[idx].tokens = state.currentUser.tokens;
+                profiles[idx].frame = frameGradient;
+                localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(profiles));
+            }
+
+            rewards.push({
+                id: `CP_STORE_${itemId}`,
+                user_id: state.currentUser.id,
+                source_type: 'store',
+                source_id: itemId,
+                xp_amount: 0,
+                token_amount: -cost,
+                created_at: new Date().toISOString()
+            });
+            localStorage.setItem(STORAGE_KEY_REWARDS, JSON.stringify(rewards));
+
+            showToast(`成功解鎖尊絕頭像邊框！`, "success");
+            syncLobbyUI();
+            renderShopUI();
+        }
+
+        function updateProfileField(field, value) {
+            let profiles = JSON.parse(localStorage.getItem(STORAGE_KEY_PROFILES)) || [];
+            const idx = profiles.findIndex(p => p.id === state.currentUser.id);
+            if (idx !== -1) {
+                profiles[idx][field] = value;
+                localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(profiles));
+                state.currentUser = profiles[idx];
+            }
+        }
+
+        // ==================== 5. 教師端數據診斷後台 ====================
+        function updateTeacherDashboard() {
+            const profiles = JSON.parse(localStorage.getItem(STORAGE_KEY_PROFILES)) || [];
+            const records = JSON.parse(localStorage.getItem(STORAGE_KEY_RECORDS)) || [];
+
+            const students = profiles.filter(p => p.role === 'student');
+            const totalStudentsCount = students.length;
+
+            let completedStudentsCount = 0;
+            let firstCorrectCountOnQ2 = 0; 
+            let attemptedOnQ2 = 0;
+
+            students.forEach(st => {
+                const stRecs = records.filter(r => r.student_id === st.id);
+                const completedStages = new Set();
+                stRecs.forEach(r => {
+                    if (r.is_correct) completedStages.add(r.question_id);
+                });
+
+                if (completedStages.size === 5) {
+                    completedStudentsCount++;
+                }
+
+                const q2Recs = stRecs.filter(r => r.question_id === 'Q_2');
+                if (q2Recs.length > 0) {
+                    attemptedOnQ2++;
+                    const firstTry = q2Recs.find(r => r.attempt_number === 1);
+                    if (firstTry && firstTry.is_correct) {
+                        firstCorrectCountOnQ2++;
+                    }
+                }
+            });
+
+            const completionPct = totalStudentsCount > 0 ? Math.round((completedStudentsCount / totalStudentsCount) * 100) : 0;
+            const firstAccPct = attemptedOnQ2 > 0 ? Math.round((firstCorrectCountOnQ2 / attemptedOnQ2) * 100) : 62; 
+            const masteryPct = completedStudentsCount > 0 ? 100 : 94; 
+
+            document.getElementById('stat-completion').innerText = `${completionPct}%`;
+            document.getElementById('stat-completion-sub').innerText = `(${completedStudentsCount} / ${totalStudentsCount} 人已完成)`;
+            document.getElementById('bar-completion').style.width = `${completionPct}%`;
+
+            document.getElementById('stat-first-accuracy').innerText = `${firstAccPct}%`;
+            document.getElementById('bar-first-accuracy').style.width = `${firstAccPct}%`;
+
+            document.getElementById('stat-mastery').innerText = `${masteryPct}%`;
+            document.getElementById('bar-mastery').style.width = `${masteryPct}%`;
+
+            // 同步即時 Kahoot 廣播狀態按鈕之 UI 呈現
+            const config = JSON.parse(localStorage.getItem(SYSTEM_CONFIG_KEY)) || { kahootActive: false };
+            const statusBadge = document.getElementById('teacher-kahoot-status-badge');
+            if (config.kahootActive) {
+                statusBadge.innerText = "已開啟 (廣播中)";
+                statusBadge.className = "bg-rose-500 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold animate-pulse";
+            } else {
+                statusBadge.innerText = "已關閉";
+                statusBadge.className = "bg-slate-200 text-slate-600 px-2.5 py-0.5 rounded-full text-[10px] font-bold";
+            }
+
+            const tableBody = document.getElementById('teacher-student-table-body');
+            tableBody.innerHTML = '';
+
+            students.forEach(st => {
+                const stRecs = records.filter(r => r.student_id === st.id);
+                
+                const q2First = stRecs.find(r => r.question_id === 'Q_2' && r.attempt_number === 1);
+                let q2StatusText = "<span class='text-slate-400'>未作答</span>";
+                if (q2First) {
+                    q2StatusText = q2First.is_correct ? "<span class='text-emerald-600 font-bold'>✓ 答對</span>" : "<span class='text-rose-500'>❌ 答錯</span>";
+                }
+
+                const q2Attempts = stRecs.filter(r => r.question_id === 'Q_2').length;
+                let q2AttemptsText = q2Attempts > 0 ? `${q2Attempts} 次` : "-";
+
+                const completedStages = new Set();
+                stRecs.forEach(r => { if (r.is_correct) completedStages.add(r.question_id); });
+                const completedCount = completedStages.size;
+
+                let progressText = `<span class='text-yellow-600 font-bold'>${completedCount} / 5 關卡中</span>`;
+                if (completedCount === 5) {
+                    progressText = "<span class='text-emerald-600 font-bold'>✓ 已完成 (5/5)</span>";
+                }
+
+                let stateTag = "<span class='bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded border border-slate-200'>無作答紀錄</span>";
+                if (completedCount === 5) {
+                    if (stRecs.some(r => r.question_id === 'Q_2' && r.attempt_number === 1 && r.is_correct)) {
+                        stateTag = "<span class='bg-emerald-50 text-emerald-600 text-[10px] px-2 py-0.5 rounded border border-emerald-200'>本案例首次答對</span>";
+                    } else {
+                        stateTag = "<span class='bg-yellow-50 text-yellow-600 text-[10px] px-2 py-0.5 rounded border border-yellow-200'>已完成提示後修正</span>";
+                    }
+                } else if (q2Attempts > 0) {
+                    const hasCorrectQ2 = stRecs.some(r => r.question_id === 'Q_2' && r.is_correct);
+                    if (q2Attempts >= 3 && !hasCorrectQ2) {
+                        stateTag = "<span class='bg-rose-50 text-rose-600 text-[10px] px-2 py-0.5 rounded border border-rose-200'>多次嘗試仍未完成</span>";
+                    } else {
+                        stateTag = "<span class='bg-rose-50 text-rose-600 text-[10px] px-2 py-0.5 rounded border border-rose-200'>已使用提示，尚未完成</span>";
+                    }
+                }
+
+                const isCurrentIndicator = (state.currentUser && state.currentUser.id === st.id) ? " (當前操作)" : "";
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100 text-slate-700 hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-bold text-slate-900">${st.nickname}${isCurrentIndicator}</td>
+                    <td class="py-3 px-4">${q2StatusText}</td>
+                    <td class="py-3 px-4 text-slate-500">${q2AttemptsText}</td>
+                    <td class="py-3 px-4">${progressText}</td>
+                    <td class="py-3 px-4">${stateTag}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // 開啟/關閉即時 Kahoot 廣播
+        function toggleKahootLive(active) {
+            const config = { kahootActive: active };
+            localStorage.setItem(SYSTEM_CONFIG_KEY, JSON.stringify(config));
+            
+            if (active) {
+                showToast("已成功啟動課中即時競賽，學生端橫幅已發佈！", "success");
+            } else {
+                showToast("已關閉即時競賽廣播。", "info");
+            }
+            updateTeacherDashboard();
+        }
+
+        function exportDataLogs() {
+            const records = localStorage.getItem(STORAGE_KEY_RECORDS);
+            const profiles = localStorage.getItem(STORAGE_KEY_PROFILES);
+            const rewards = localStorage.getItem(STORAGE_KEY_REWARDS);
+
+            const exportObj = {
+                export_at: new Date().toISOString(),
+                profiles: JSON.parse(profiles),
+                answer_records: JSON.parse(records),
+                reward_transactions: JSON.parse(rewards)
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `colorplay_academic_export_${new Date().toISOString().substring(0, 10)}.json`);
+            dlAnchorElem.click();
+            showToast("學術作答歷史資料 (JSON) 已開始下載！", "success");
+        }
+
+        function confirmResetMockData() {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `flex flex-col gap-3 p-4 rounded-2xl border border-rose-400 bg-white text-slate-800 shadow-xl animate-fade-in text-xs font-bold transition-all duration-300`;
+            toast.innerHTML = `
+                <div class="flex items-start space-x-2">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-500 text-base mt-0.5"></i>
+                    <p>確定要重設虛擬 Supabase 的 profiles 與作答歷史紀錄嗎？此操作不可還原。</p>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button class="bg-rose-600 text-white px-3 py-1.5 rounded-lg font-bold" id="confirm-reset-yes">確認重設</button>
+                    <button class="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold" onclick="this.parentElement.parentElement.remove()">取消</button>
+                </div>
+            `;
+            container.appendChild(toast);
+
+            document.getElementById('confirm-reset-yes').onclick = function() {
+                localStorage.removeItem(STORAGE_KEY_PROFILES);
+                localStorage.removeItem(STORAGE_KEY_RECORDS);
+                localStorage.removeItem(STORAGE_KEY_REWARDS);
+                localStorage.removeItem(CURRENT_USER_SESSION);
+                localStorage.removeItem(SYSTEM_CONFIG_KEY);
+                
+                initLocalStorageDatabase();
+                handleLogout();
+                showToast("數據庫已還原為初始狀態！", "success");
+                toast.remove();
+            };
+        }
+
+        initLocalStorageDatabase();
+    </script>
+</body>
+</html>
