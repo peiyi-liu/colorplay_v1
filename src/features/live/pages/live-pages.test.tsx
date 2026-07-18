@@ -191,7 +191,7 @@ describe('LiveSessionPage (participant)', () => {
   });
 
   it('submits one answer and locks the options', async () => {
-    const submitAnswer = vi.fn().mockResolvedValue(undefined);
+    const submitAnswer = vi.fn().mockResolvedValue({ streak: 1 });
     const getState = vi
       .fn()
       .mockResolvedValueOnce(openState)
