@@ -23,8 +23,8 @@
 
 ### Task 2 — Versioning and publication schema (M)
 
-- [ ] **Step 1:** Failing pgTAP `026_content_versions`: `content_versions` (content type/id, version, frozen payload jsonb, hash, status, creator, timestamps; unique (content_type, content_id, version)) and `content_publication_events` (append-only publish/archive history with actor and request id); RLS teacher-read only; no direct mutation grants; anon denied.
-- [ ] **Step 2:** RED. **Step 3:** migration `20260719000100_content_versions.sql`. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add content version history`.
+- [x] **Step 1:** Failing pgTAP `026_content_versions`: `content_versions` (content type/id, version, frozen payload jsonb, hash, status, creator, timestamps; unique (content_type, content_id, version)) and `content_publication_events` (append-only publish/archive history with actor and request id); RLS teacher-read only; no direct mutation grants; anon denied.
+- [x] **Step 2:** RED. **Step 3:** migration `20260719000100_content_versions.sql`. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add content version history`.
 
 ### Task 3 — Teacher content commands (L)
 
