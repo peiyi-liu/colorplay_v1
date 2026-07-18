@@ -63,8 +63,8 @@
 
 ### Task 10 — Content workspace UI (L)
 
-- [ ] **Step 1:** Failing RTL: `/teacher/content` — question and review-card lists with draft/published/version badges, draft editor forms (question with 2–4 options + single correct; review card with optional media URL + alt), publish/archive with confirm dialogs and version feedback, per-field validation mirroring the shared rules.
-- [ ] **Step 2:** RED. **Step 3:** implement. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add teacher content workspace`.
+- [x] **Step 1:** Failing RTL: `/teacher/content` — question and review-card lists with draft/published/version badges, draft editor forms (question with 2–4 options + single correct; review card with optional media URL + alt), publish/archive with confirm dialogs and version feedback, per-field validation mirroring the shared rules. _(Included pgTAP 031 + migration 20260719000600: teacher SELECT on draft question options and review card media, students stay published-only.)_
+- [x] **Step 2:** RED. **Step 3:** implement. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add teacher content workspace`.
 
 ### Task 11 — Import wizard UI (M)
 
