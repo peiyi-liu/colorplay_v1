@@ -180,7 +180,7 @@ test('Live Advanced phase gate', async ({
   await outsiderPage.getByLabel('課堂代碼').fill(joinCode);
   await outsiderPage.getByRole('button', { name: '加入課堂' }).click();
   await expect(
-    outsiderPage.getByText('課堂代碼無效或這場挑戰不開放加入。'),
+    outsiderPage.getByText('代碼無效或課堂尚未開放，請向老師確認。'),
   ).toBeVisible();
   await outsiderContext.close();
 
