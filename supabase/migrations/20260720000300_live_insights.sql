@@ -138,6 +138,19 @@ begin
       question_record.id, participant_record.id, null, computed_status,
       computed_response, computed_delta, p_idempotency_key
     );
+    perform public.live_broadcast(
+      session_record.id,
+      jsonb_build_object(
+        'session_id', session_record.id,
+        'state', session_record.state,
+        'state_version', session_record.state_version,
+        'answered_count', (
+          select count(*)
+          from public.live_answers answer
+          where answer.session_question_id = question_record.id
+        )
+      )
+    );
     return result_payload || jsonb_build_object('streak', 0);
   end if;
 
@@ -186,6 +199,20 @@ begin
     set score = score + computed_delta
     where id = participant_record.id;
   end if;
+
+  perform public.live_broadcast(
+    session_record.id,
+    jsonb_build_object(
+      'session_id', session_record.id,
+      'state', session_record.state,
+      'state_version', session_record.state_version,
+      'answered_count', (
+        select count(*)
+        from public.live_answers answer
+        where answer.session_question_id = question_record.id
+      )
+    )
+  );
 
   return result_payload || jsonb_build_object(
     'streak', (

@@ -1,6 +1,6 @@
 begin;
 
-select plan(17);
+select plan(18);
 
 select has_function('public', 'pause_live_session', 'pause command exists');
 select has_function('public', 'resume_live_session', 'resume command exists');
@@ -317,6 +317,21 @@ select lives_ok(
   'answers are accepted after resume'
 );
 
+-- The streak-bearing submit must keep broadcasting the answered count
+-- (the hardening behavior a later replacement must never drop again).
+reset role;
+select is(
+  (
+    select count(*)::integer
+    from realtime.messages
+    where topic = 'live-session:' || current_setting('test.session_id')
+      and (payload ->> 'answered_count')::integer = 1
+  ),
+  1,
+  'submitting an answer still broadcasts the answered count'
+);
+
+set local role authenticated;
 select pg_temp.as_user('32000000-0000-0000-0000-000000000001');
 select throws_ok(
   format(
