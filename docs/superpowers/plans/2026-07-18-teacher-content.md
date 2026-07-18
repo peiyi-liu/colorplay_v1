@@ -43,8 +43,8 @@
 
 ### Task 6 — Analytics projections (L)
 
-- [ ] **Step 1:** Failing pgTAP `029_teacher_analytics`: `teacher_classroom_summary` (attempts, unique students, average accuracy, worst subtopic), `teacher_question_analysis`, `teacher_subtopic_mastery`, `teacher_assignment_summary`, `teacher_live_session_report` — all owner-classroom-scoped (other teachers/outsiders read zero rows), filterable by classroom/date range/chapter/subtopic, date boundaries interpreted in `Asia/Taipei` and queried in UTC (assert a boundary case both sides of midnight), empty denominators return null (— in UI) never a misleading zero, and every metric equals an independent inline SQL recomputation over deterministic seeded facts.
-- [ ] **Step 2:** RED. **Step 3:** migration `20260719000400_teacher_analytics.sql`. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add authoritative teacher analytics`.
+- [x] **Step 1:** Failing pgTAP `029_teacher_analytics`: `teacher_classroom_summary` (attempts, unique students, average accuracy, worst subtopic), `teacher_question_analysis`, `teacher_subtopic_mastery`, `teacher_assignment_summary`, `teacher_live_session_report` — all owner-classroom-scoped (other teachers/outsiders read zero rows), filterable by classroom/date range/chapter/subtopic, date boundaries interpreted in `Asia/Taipei` and queried in UTC (assert a boundary case both sides of midnight), empty denominators return null (— in UI) never a misleading zero, and every metric equals an independent inline SQL recomputation over deterministic seeded facts.
+- [x] **Step 2:** RED. **Step 3:** migration `20260719000400_teacher_analytics.sql`. **Step 4:** GREEN + lint + typecheck. **Step 5:** Commit `feat: add authoritative teacher analytics`.
 
 ### Task 7 — External activities (S)
 
