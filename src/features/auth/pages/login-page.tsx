@@ -72,6 +72,15 @@ export function LoginPage() {
 
   return (
     <section className="route-panel">
+      <div className="auth-portal-brand">
+        <span aria-hidden="true" className="auth-portal-brand__mark">
+          🎨
+        </span>
+        <p className="auth-portal-brand__title">ColorPlay 認證入口</p>
+        <p className="auth-portal-brand__subtitle">
+          色彩對比形成性與精熟學習系統
+        </p>
+      </div>
       <p className="route-panel__eyebrow">
         {portal === 'teacher' ? '教師入口' : '學生入口'}
       </p>

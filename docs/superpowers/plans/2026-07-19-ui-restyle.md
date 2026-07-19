@@ -215,11 +215,13 @@
 - Modify: `src/features/{achievements,assignments,leaderboard,profile,auth,quiz}` 各頁（共用元件重組版面；登入頁 GGAME 分流視覺、欄位仍 Email/密碼；quiz 限時挑戰入口保留並套皮）
 - Test: 各頁 `.test.tsx` 更新
 
+**執行備註：** `route-panel` 卡片化（去 8px 頂邊條 → GGAME 細邊大圓角）一次重刷剩餘頁面；登入頁加 GGAME 認證入口品牌區（Email/密碼欄位與登入行為不變）。品牌區在矮視窗（≤640px 高，軟鍵盤情境）折疊以守住 primary action 可見性（login.spec 372×500 佈局斷言驗證）。
+
 **Steps:**
 
-- [ ] **Step 1:** 逐頁更新失敗 RTL → RED → 實作 → GREEN(可分多個 commit，訊息 `feat: restyle <area> pages`）。
-- [ ] **Step 2:** `pnpm test` 全綠 + lint + typecheck。
-- [ ] **Step 3:** Commit（最後一頁）`feat: restyle remaining pages`。
+- [x] **Step 1:** 逐頁更新失敗 RTL → RED → 實作 → GREEN(可分多個 commit，訊息 `feat: restyle <area> pages`）。
+- [x] **Step 2:** `pnpm test` 全綠 + lint + typecheck。
+- [x] **Step 3:** Commit（最後一頁）`feat: restyle remaining pages`。
 
 ### Task 12: Gate 工具 + visual 基線重建 + phase gate
 

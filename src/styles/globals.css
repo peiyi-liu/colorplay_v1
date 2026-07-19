@@ -219,10 +219,10 @@ a {
 
 .route-panel {
   width: min(100%, 680px);
-  border: 1px solid var(--color-border);
-  border-top: 8px solid var(--color-brand-yellow);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--slate-900) 6%, transparent);
   padding: var(--space-8);
 }
 
@@ -338,10 +338,9 @@ a {
 }
 
 .chapter-select--message {
-  border: 1px solid var(--color-border);
-  border-top: 8px solid var(--color-brand-yellow);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
   padding: var(--space-8);
 }
 
@@ -1559,4 +1558,47 @@ a {
   margin: 0;
   color: var(--color-muted);
   font-size: var(--font-size-metadata);
+}
+
+/* ── GGAME 認證入口品牌區（Task 11） ──────────────────── */
+
+.auth-portal-brand {
+  display: grid;
+  justify-items: center;
+  margin-bottom: var(--space-6);
+  text-align: center;
+}
+
+.auth-portal-brand__mark {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-control);
+  margin-bottom: var(--space-3);
+  background: var(--yellow-brand);
+  font-size: 1.8rem;
+  place-items: center;
+}
+
+.auth-portal-brand__title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.auth-portal-brand__subtitle {
+  margin: var(--space-1) 0 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+}
+
+/* 矮視窗（軟鍵盤情境）：裝飾性品牌區讓位給表單與 primary action 可見性。 */
+@media (max-height: 640px) {
+  .auth-portal-brand {
+    display: none;
+  }
+
+  .route-panel {
+    padding: var(--space-6);
+  }
 }

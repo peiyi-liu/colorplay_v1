@@ -316,3 +316,15 @@ describe('LoginPage', () => {
     expect(router.state.historyAction).toBe('REPLACE');
   });
 });
+
+it('shows the ggame auth portal branding', () => {
+  render(
+    <MemoryRouter>
+      <AuthContext.Provider value={createAuthValue()}>
+        <LoginPage />
+      </AuthContext.Provider>
+    </MemoryRouter>,
+  );
+  expect(screen.getByText('ColorPlay 認證入口')).toBeInTheDocument();
+  expect(screen.getByText('色彩對比形成性與精熟學習系統')).toBeInTheDocument();
+});
