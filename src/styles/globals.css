@@ -1498,3 +1498,65 @@ a {
   background: color-mix(in srgb, var(--color-alert) 8%, var(--surface-card));
   padding: var(--space-6);
 }
+
+/* ── GGAME 教師看板（Task 10） ────────────────────────── */
+
+.teacher-summary-cards {
+  display: grid;
+  margin: 0;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.teacher-summary-cards > div {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--slate-50);
+  padding: var(--space-4);
+}
+
+.teacher-summary-cards dt {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.teacher-summary-cards dd {
+  display: grid;
+  margin: var(--space-1) 0 0;
+  font-size: 1.4rem;
+  font-weight: 900;
+  gap: var(--space-2);
+}
+
+.teacher-error-cards {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.teacher-error-card {
+  display: grid;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  font-size: var(--font-size-supporting);
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.teacher-error-card__badge {
+  justify-self: start;
+  border-radius: var(--space-1);
+  background: color-mix(in srgb, var(--color-xp) 10%, transparent);
+  color: var(--rose-700);
+  font-size: var(--font-size-metadata);
+  font-weight: 900;
+  padding: 2px var(--space-2);
+}
+
+.teacher-error-card p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+}

@@ -204,9 +204,9 @@
 
 **Steps:**
 
-- [ ] **Step 1:** 更新失敗 RTL（含高頻錯誤卡由 mock analytics 資料規則式產生）→ RED。
-- [ ] **Step 2:** 實作 → GREEN + lint + typecheck。
-- [ ] **Step 3:** Commit `feat: restyle teacher dashboard and content tools`。
+- [x] **Step 1:** 更新失敗 RTL（含高頻錯誤卡由 mock analytics 資料規則式產生）→ RED。
+- [x] **Step 2:** 實作 → GREEN + lint + typecheck。
+- [x] **Step 3:** Commit `feat: restyle teacher dashboard and content tools`。
 
 ### Task 11: 其餘畫面 + 登入換皮
 

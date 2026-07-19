@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
 
+import { ProgressBar } from '../../../components/ui/progress-bar';
 import { useOwnedClassrooms } from '../../classrooms/hooks/use-classrooms';
 import type { ClassroomRepository } from '../../classrooms/types';
 import { usePublishedChapters } from '../../learning/api/chapters';
@@ -234,6 +235,13 @@ export function TeacherAnalyticsPage({
                   <dt>平均正確率</dt>
                   <dd>
                     {formatPercent(summary.data?.averageAccuracy ?? null)}
+                    {typeof summary.data?.averageAccuracy === 'number' ? (
+                      <ProgressBar
+                        label="平均正確率"
+                        tone="warning"
+                        value={summary.data.averageAccuracy * 100}
+                      />
+                    ) : null}
                   </dd>
                 </div>
                 <div>
@@ -247,10 +255,44 @@ export function TeacherAnalyticsPage({
           <ProjectionSection
             isEmpty={(rows) => rows.length === 0}
             query={questionAnalysis}
+            title="班級高頻錯誤概念"
+          >
+            {(rows) => {
+              // 規則式：以正確率最低（有作答）之題目為高頻錯誤，取前兩名。
+              const worst = rows
+                .filter((row) => row.attempts > 0 && row.correct_rate !== null)
+                .sort((a, b) => (a.correct_rate ?? 0) - (b.correct_rate ?? 0))
+                .slice(0, 2);
+              if (worst.length === 0) return <p>此範圍尚無資料。</p>;
+              return (
+                <div className="teacher-error-cards">
+                  {worst.map((row, index) => (
+                    <article
+                      className="teacher-error-card"
+                      key={row.stable_code}
+                    >
+                      <span className="teacher-error-card__badge">
+                        高頻錯誤 {index + 1}
+                      </span>
+                      <strong>{row.prompt}</strong>
+                      <p>
+                        正確率 {formatPercent(row.correct_rate)}（作答{' '}
+                        {row.attempts} 次）——建議課堂補充此概念的對照示例。
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              );
+            }}
+          </ProjectionSection>
+
+          <ProjectionSection
+            isEmpty={(rows) => rows.length === 0}
+            query={questionAnalysis}
             title="題目分析"
           >
             {(rows) => (
-              <table>
+              <table className="ui-table">
                 <thead>
                   <tr>
                     <th scope="col">題號</th>
@@ -279,7 +321,7 @@ export function TeacherAnalyticsPage({
             title="子題精熟"
           >
             {(rows) => (
-              <table>
+              <table className="ui-table">
                 <thead>
                   <tr>
                     <th scope="col">子題代碼</th>
@@ -310,7 +352,7 @@ export function TeacherAnalyticsPage({
             title="作業總覽"
           >
             {(rows) => (
-              <table>
+              <table className="ui-table">
                 <thead>
                   <tr>
                     <th scope="col">作業</th>
@@ -345,7 +387,7 @@ export function TeacherAnalyticsPage({
             title="Live 報表"
           >
             {(rows) => (
-              <table>
+              <table className="ui-table">
                 <thead>
                   <tr>
                     <th scope="col">活動</th>

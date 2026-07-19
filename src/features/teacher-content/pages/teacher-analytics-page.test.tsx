@@ -136,8 +136,8 @@ describe('TeacherAnalyticsPage', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('色相環上與紅色相對的顏色是？'),
-      ).toBeInTheDocument();
+        screen.getAllByText('色相環上與紅色相對的顏色是？').length,
+      ).toBeGreaterThan(0);
     });
     expect(screen.getByText('66.7%')).toBeInTheDocument();
     expect(screen.getByText('80.0%')).toBeInTheDocument();
@@ -207,7 +207,7 @@ describe('TeacherAnalyticsPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText('此範圍尚無資料。').length).toBe(4);
+      expect(screen.getAllByText('此範圍尚無資料。').length).toBe(5);
     });
     expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2);
   });
@@ -225,4 +225,18 @@ describe('TeacherAnalyticsPage', () => {
       );
     });
   });
+});
+
+it('derives rule-based high-frequency error cards from question analysis', async () => {
+  renderPage(teacherRepositoryOf());
+
+  await waitFor(() => {
+    expect(
+      screen.getByRole('heading', { name: '班級高頻錯誤概念' }),
+    ).toBeInTheDocument();
+  });
+  // 規則式：取正確率最低的題目為高頻錯誤 1。
+  expect(await screen.findByText('高頻錯誤 1')).toBeInTheDocument();
+  const region = screen.getByRole('region', { name: '班級高頻錯誤概念' });
+  expect(region.textContent).toContain('色相環上與紅色相對的顏色是？');
 });
