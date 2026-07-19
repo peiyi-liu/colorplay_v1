@@ -156,3 +156,25 @@ describe('TeacherDashboardPage', () => {
     });
   });
 });
+
+it('surfaces the ggame live broadcast console entry', async () => {
+  renderPage(
+    teacherRepositoryOf({
+      attempts: 1,
+      averageAccuracy: 50,
+      uniqueStudents: 1,
+      worstSubtopicTitle: null,
+    }),
+    classroomRepositoryOf(ownedClassrooms),
+  );
+  expect(
+    await screen.findByRole('heading', {
+      name: /課堂即時競賽（Live）廣播控制台/u,
+    }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /前往主持/u })).toHaveAttribute(
+    'href',
+    '/teacher/live',
+  );
+  expect(screen.getByText('📊 教師決策工具')).toBeInTheDocument();
+});

@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { Chip } from '../../../components/ui/chip';
+import { ProgressBar } from '../../../components/ui/progress-bar';
+
 import { useOwnedClassrooms } from '../../classrooms/hooks/use-classrooms';
 import type { ClassroomRepository } from '../../classrooms/types';
 import type {
@@ -30,7 +33,16 @@ function SummaryCards({
         </div>
         <div>
           <dt>平均正確率</dt>
-          <dd>{formatPercent(summary?.averageAccuracy ?? null)}</dd>
+          <dd>
+            {formatPercent(summary?.averageAccuracy ?? null)}
+            {typeof summary?.averageAccuracy === 'number' ? (
+              <ProgressBar
+                label="平均正確率"
+                tone="warning"
+                value={summary.averageAccuracy}
+              />
+            ) : null}
+          </dd>
         </div>
       </dl>
       <p className="teacher-summary-callout">
@@ -60,16 +72,43 @@ export function TeacherDashboardPage({
       className="w-full max-w-4xl"
     >
       <header>
-        <p className="route-panel__eyebrow">教師功能</p>
+        <Chip tone="teacher">📊 教師決策工具</Chip>
         <h1 id="teacher-dashboard-title">教師工作區</h1>
         <p>掌握班級表現，管理課程內容、題庫與教學活動。</p>
       </header>
+
+      <div className="teacher-live-console">
+        <div>
+          <h2 className="teacher-live-console__title">
+            <span aria-hidden="true">📢 </span>
+            課堂即時競賽（Live）廣播控制台
+          </h2>
+          <p className="teacher-live-console__description">
+            課堂講解完知識點後，開啟即時競賽；所有登入的學生會收到加入
+            引導，作答與計分全程由伺服器裁定。
+          </p>
+        </div>
+        <Link className="teacher-live-console__action" to="/teacher/live">
+          前往主持 ▶
+        </Link>
+      </div>
+
       <nav aria-label="教師功能捷徑" className="teacher-shortcuts">
-        <Link to="/teacher/analytics">教學分析</Link>
-        <Link to="/teacher/content">內容工作區</Link>
-        <Link to="/teacher/import">匯入內容</Link>
-        <Link to="/teacher/classes">班級管理</Link>
-        <Link to="/teacher/live">Live 課堂主持</Link>
+        <Link to="/teacher/analytics">
+          <span aria-hidden="true">📈 </span>教學分析
+        </Link>
+        <Link to="/teacher/content">
+          <span aria-hidden="true">🗂️ </span>內容工作區
+        </Link>
+        <Link to="/teacher/import">
+          <span aria-hidden="true">📥 </span>匯入內容
+        </Link>
+        <Link to="/teacher/classes">
+          <span aria-hidden="true">👥 </span>班級管理
+        </Link>
+        <Link to="/teacher/live">
+          <span aria-hidden="true">⚡ </span>Live 課堂主持
+        </Link>
       </nav>
       {classrooms.isPending ? (
         <p role="status">班級資料載入中…</p>
