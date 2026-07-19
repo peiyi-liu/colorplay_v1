@@ -73,7 +73,7 @@ export function LoginPage() {
   });
 
   return (
-    <section className="route-panel">
+    <section className="route-panel auth-portal" data-portal={portal}>
       <div className="auth-portal-brand">
         <span aria-hidden="true" className="auth-portal-brand__mark">
           🎨
@@ -94,8 +94,8 @@ export function LoginPage() {
       </p>
 
       <fieldset className="login-form__portal">
-        <legend>登入身分</legend>
-        <label>
+        <legend className="visually-hidden">登入身分</legend>
+        <label data-active={portal === 'student'}>
           <input
             checked={portal === 'student'}
             name="login-portal"
@@ -104,9 +104,9 @@ export function LoginPage() {
             }}
             type="radio"
           />
-          學生
+          <span aria-hidden="true">🎓 </span>學生註冊登入
         </label>
-        <label>
+        <label data-active={portal === 'teacher'}>
           <input
             checked={portal === 'teacher'}
             name="login-portal"
@@ -115,9 +115,16 @@ export function LoginPage() {
             }}
             type="radio"
           />
-          教師
+          <span aria-hidden="true">🧑‍🏫 </span>教師診斷端
         </label>
       </fieldset>
+
+      {portal === 'teacher' ? (
+        <div className="auth-portal__teacher-note">
+          <span aria-hidden="true">⚠️ </span>
+          教師端具備班級管理與學術匯出權限，請使用教師帳號登入。
+        </div>
+      ) : null}
 
       <form
         className="login-form"

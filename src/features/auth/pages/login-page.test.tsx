@@ -237,7 +237,7 @@ describe('LoginPage', () => {
       </AuthContext.Provider>,
     );
 
-    await user.click(screen.getByRole('radio', { name: '教師' }));
+    await user.click(screen.getByRole('radio', { name: '教師診斷端' }));
     expect(screen.getByText('教師入口')).toBeVisible();
     await fillValidCredentials(user);
     await user.click(screen.getByRole('button', { name: '登入' }));
@@ -348,4 +348,24 @@ it('shows the ggame auth portal branding', () => {
   );
   expect(screen.getByText('ColorPlay 認證入口')).toBeInTheDocument();
   expect(screen.getByText('色彩對比形成性與精熟學習系統')).toBeInTheDocument();
+});
+
+it('switches the ggame portal tone and teacher note with the tabs', async () => {
+  render(
+    <MemoryRouter>
+      <AuthContext.Provider value={createAuthValue()}>
+        <ToastProvider>
+          <LoginPage />
+        </ToastProvider>
+      </AuthContext.Provider>
+    </MemoryRouter>,
+  );
+  const portalSection = document.querySelector('.auth-portal');
+  expect(portalSection).not.toBeNull();
+  expect(portalSection).toHaveAttribute('data-portal', 'student');
+  expect(screen.queryByText(/教師端具備班級管理/u)).toBeNull();
+
+  await userEvent.click(screen.getByRole('radio', { name: '教師診斷端' }));
+  expect(portalSection).toHaveAttribute('data-portal', 'teacher');
+  expect(screen.getByText(/教師端具備班級管理/u)).toBeInTheDocument();
 });

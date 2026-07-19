@@ -1602,3 +1602,80 @@ a {
     padding: var(--space-6);
   }
 }
+
+/* ── GGAME 認證入口（Task 11b） ───────────────────────── */
+
+/* 登入路由：主區暗色遮罩，白卡浮出（比照 GGAME auth-portal 模態） */
+.app-shell:has(.auth-portal) #main-content {
+  background: radial-gradient(
+    circle at 50% 30%,
+    color-mix(in srgb, var(--slate-900) 88%, transparent),
+    var(--slate-950)
+  );
+}
+
+.auth-portal {
+  width: min(100%, 448px);
+}
+
+.login-form__portal {
+  display: flex;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  margin: var(--space-4) 0 0;
+  background: var(--slate-100);
+  gap: var(--space-1);
+  padding: var(--space-1);
+}
+
+.login-form__portal label {
+  display: inline-flex;
+  min-height: 40px;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--space-2);
+  color: var(--slate-600);
+  cursor: pointer;
+  font-size: var(--font-size-supporting);
+  font-weight: 800;
+  gap: var(--space-1);
+}
+
+.login-form__portal label[data-active='true'] {
+  background: var(--yellow-brand);
+  color: var(--slate-950);
+}
+
+.auth-portal[data-portal='teacher']
+  .login-form__portal
+  label[data-active='true'] {
+  background: var(--color-teacher);
+  color: var(--white);
+}
+
+.login-form__portal input[type='radio'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+}
+
+.auth-portal__teacher-note {
+  border: 1px solid var(--indigo-100);
+  border-radius: var(--radius-control);
+  margin-top: var(--space-4);
+  background: var(--indigo-50);
+  color: var(--color-teacher);
+  font-size: var(--font-size-metadata);
+  line-height: 1.6;
+  padding: var(--space-4);
+}
+
+.auth-portal[data-portal='teacher'] .primary-action {
+  border-color: var(--color-teacher);
+  background: var(--color-teacher);
+  color: var(--white);
+}
