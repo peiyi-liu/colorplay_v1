@@ -235,13 +235,13 @@
 
 **Steps:**
 
-- [ ] **Step 1:** runner/gate contract test RED → 實作 runner 與 gate spec → contract GREEN。
-- [ ] **Step 2:** `pnpm test:visual -- --update-snapshots` 重建基線；commit `test: rebuild visual baselines for ggame restyle`。
-- [ ] **Step 3:** Commit `test: add ui restyle phase gate`。
-- [ ] **Review Step:** 一輪完整範圍 review（`7a22016..HEAD`），優先序：token 純度（無裸 hex）、a11y（aria/鍵盤/形狀符號）、reduced-motion、閘門與獎勵顯示不自算、migration RLS 負向覆蓋；修 Critical/Important 後結束（上限一輪）。
-- [ ] **Gate Step 1:** 拋棄式 headless precheck 綠後，clean `GATE_SHA` 跑 `pnpm phase:ui-restyle`。
-- [ ] **Gate Step 2:** delivery-gate 檢查單（AC 對照、風險、保留項）寫入 gate 報告；owner 人工核可 GGAME 並列截圖。
-- [ ] **Gate Step 3:** PASS 後在 `.superpowers/sdd/progress.md` close phase；redeploy staging；commit `docs: close ui restyle phase`。Reservations：學號登入（下一 phase ADR）、GGAME 後續視覺修訂只動 token/元件層、真機證據待人工。
+- [x] **Step 1:** runner/gate contract test RED → 實作 runner 與 gate spec → contract GREEN。
+- [x] **Step 2:** `pnpm test:visual -- --update-snapshots` 重建基線；commit `test: rebuild visual baselines for ggame restyle`。
+- [x] **Step 3:** Commit `test: add ui restyle phase gate`。
+- [x] **Review Step:** 一輪完整範圍 review（`7a22016..HEAD`），優先序：token 純度（無裸 hex）、a11y（aria/鍵盤/形狀符號）、reduced-motion、閘門與獎勵顯示不自算、migration RLS 負向覆蓋；修 Critical/Important 後結束（上限一輪）。
+- [x] **Gate Step 1:** 拋棄式 headless precheck 綠後，clean `GATE_SHA` 跑 `pnpm phase:ui-restyle`。
+- [x] **Gate Step 2:** delivery-gate 檢查單（AC 對照、風險、保留項）寫入 gate 報告；owner 人工核可 GGAME 並列截圖。
+- [x] **Gate Step 3:** PASS 後在 `.superpowers/sdd/progress.md` close phase；redeploy staging；commit `docs: close ui restyle phase`。Reservations：學號登入（下一 phase ADR）、GGAME 後續視覺修訂只動 token/元件層、真機證據待人工。
 
 ---
 
@@ -272,4 +272,4 @@
 - [x] 前端：mastery repository/hooks＋`/app/missions`（選章）＋`/app/missions/:sessionId`（地圖/情境/鎖定選項/提示/結算）；導覽軌 tab2 改指 /app/missions；VictoryCard 無獎勵時不再顯示 +0（練習模式誠實呈現，正式獎勵屬 finalize-only 政策，擴充需另 pin spec/05——列 gate 保留項）。
 - [x] 驗證：unit 105 檔 635 綠、test:db PASS、e2e 47/47。
 
-### Task 12 依原計畫收尾。
+### Task 12 依原計畫收尾。— DONE（GATE_SHA d60f34e PASS；一輪 review 完成，2 findings 已修：token 掃描範圍、gate 覆蓋範圍）

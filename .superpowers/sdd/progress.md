@@ -363,3 +363,21 @@ Reservations recorded per the plan:
 - The whole-UI restyle still waits for the owner's reference HTML.
 
 Status: Phase 7 closed. Next: Phase 8 (Research and Production release); staging redeployed with Live Advanced for owner testing.
+
+
+## Phase 8-UI GGAME UI Restyle
+
+Phase 8-UI GGAME UI Restyle: COMPLETE
+
+Plan: `docs/superpowers/plans/2026-07-19-ui-restyle.md`
+Design: `docs/superpowers/specs/2026-07-18-ui-restyle-design.md`
+GATE_SHA: `d60f34e`（manifest: artifacts/acceptance/ui-restyle-d60f34e…/manifest.json；13 commands 0 failed、18 screenshots）
+Tasks 0–12＋owner 回饋增補 11a–11e 全數完成（每 task 一 commit，範圍 7a22016..d60f34e）。
+Gate 內容：format/lint/typecheck/unit(649)/coverage(ui 100% lines)/build/token-scan/db reset/pgTAP+integration(920+25)/跨 phase e2e 完整電池(47)/headed gate spec(三 viewport＋GGAME 並列參考＋axe 0 serious＋console 0)。
+
+Reservations（gate 報告）:
+- PR 百分位與排行榜邊框反映：排行榜 RPC 需補班級人數/邊框欄位。
+- 精熟任務不發 XP/Token（spec/05 finalize-only 政策；擴充需另 pin 規格）。
+- 全域 branches coverage 71.78%（既有債務；gate 覆蓋門檻依設計限 src/components/ui/）。
+- 學號登入為下一 phase（獨立 ADR）。
+- AC-UI-010/012 真機證據待人工。
