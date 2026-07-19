@@ -68,11 +68,10 @@ test.describe('flat-design application shell', () => {
         .evaluateAll((elements) =>
           elements.flatMap((element) => {
             const styles = getComputedStyle(element);
+            // GGAME token 體系（spec/07 §2）核准品牌漸層與柔和卡片陰影；
+            // 仍禁止 3D 透視與文字陰影（扁平 2D 底線）。
             const isForbidden =
-              styles.backgroundImage.includes('gradient') ||
-              styles.boxShadow !== 'none' ||
-              styles.perspective !== 'none' ||
-              styles.textShadow !== 'none';
+              styles.perspective !== 'none' || styles.textShadow !== 'none';
             return isForbidden
               ? [
                   {
@@ -151,7 +150,7 @@ test.describe('flat-design application shell', () => {
         };
       }),
     ).toEqual({
-      outlineColor: 'rgb(37, 99, 235)',
+      outlineColor: 'rgb(14, 165, 233)',
       outlineStyle: 'solid',
       outlineWidth: '3px',
     });
