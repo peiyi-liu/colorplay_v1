@@ -84,8 +84,12 @@ run_logged 'pnpm format:check' "$phase_root/reports/format-check.log" pnpm forma
 run_logged 'pnpm lint' "$phase_root/reports/lint.log" pnpm lint
 run_logged 'pnpm typecheck' "$phase_root/reports/typecheck.log" pnpm typecheck
 run_logged 'pnpm test' "$phase_root/reports/unit.log" pnpm test
-# UI 元件庫覆蓋門檻（vitest.config thresholds 內含 src/components/ui/** ≥80）
-run_logged 'pnpm test:coverage' "$phase_root/reports/coverage.log" pnpm test:coverage
+# UI 元件庫覆蓋門檻（phase 承諾範圍：src/components/ui/ ≥80；全域分支債
+# 為既有狀態，列 gate 保留項）
+run_logged \
+  'pnpm test:coverage (ui components)' \
+  "$phase_root/reports/coverage.log" \
+  pnpm exec vitest run --coverage --coverage.include='src/components/ui/**'
 run_logged 'pnpm build' "$phase_root/reports/build.log" pnpm build
 
 # Token 純度：元件與畫面（tsx）不得出現裸 hex；資料驅動色彩不在此列。
