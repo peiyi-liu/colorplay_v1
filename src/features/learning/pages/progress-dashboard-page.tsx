@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
 
+import { Chip } from '../../../components/ui/chip';
+import { ProgressBar } from '../../../components/ui/progress-bar';
+
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { usePublishedChapters } from '../api/chapters';
 import type { LearningRepository } from '../api/learning-repository';
@@ -54,7 +57,7 @@ export function ProgressDashboardPage({
       {chapterRows.length === 0 ? (
         <p>目前沒有已發布的章節。</p>
       ) : (
-        <table>
+        <table className="ui-table">
           <caption>各章節學習進度</caption>
           <thead>
             <tr>
@@ -82,8 +85,29 @@ export function ProgressDashboardPage({
                   <td>{reviewText(row.reviewCompleted, row.reviewTotal)}</td>
                   <td>{percentText(row.coverage)}</td>
                   <td>{percentText(row.accuracy)}</td>
-                  <td>{percentText(row.mastery)}</td>
-                  <td>{statusLabels[row.status]}</td>
+                  <td>
+                    {percentText(row.mastery)}
+                    {typeof row.mastery === 'number' ? (
+                      <ProgressBar
+                        label={`${chapter.title}精熟度`}
+                        tone="primary"
+                        value={row.mastery}
+                      />
+                    ) : null}
+                  </td>
+                  <td>
+                    <Chip
+                      tone={
+                        row.status === 'mastered'
+                          ? 'success'
+                          : row.status === 'not_started'
+                            ? 'neutral'
+                            : 'primary'
+                      }
+                    >
+                      {statusLabels[row.status]}
+                    </Chip>
+                  </td>
                 </tr>
               );
             })}

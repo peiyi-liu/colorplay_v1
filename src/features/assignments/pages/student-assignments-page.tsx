@@ -59,18 +59,31 @@ export function StudentAssignmentsPage({
       {assignments.data.length === 0 ? (
         <p>目前沒有作業。</p>
       ) : (
-        <ul>
+        <ul className="assignment-cards">
           {assignments.data.map((assignment) => (
-            <li key={assignment.assignmentId}>
-              <Link to={`/app/assignments/${assignment.assignmentId}`}>
-                {assignment.title}
-              </Link>
-              <p>{assignment.classroomName}</p>
-              <p>
-                {assignment.status === 'paused' ? '已暫停' : '進行中'}・截止：
+            <li className="assignment-card" key={assignment.assignmentId}>
+              <div className="assignment-card__head">
+                <Link
+                  className="assignment-card__title"
+                  to={`/app/assignments/${assignment.assignmentId}`}
+                >
+                  <span aria-hidden="true">📬 </span>
+                  {assignment.title}
+                </Link>
+                <span
+                  className={`assignment-card__status assignment-card__status--${assignment.status}`}
+                >
+                  {assignment.status === 'paused' ? '已暫停' : '進行中'}
+                </span>
+              </div>
+              <p className="assignment-card__meta">
+                {assignment.classroomName}
+              </p>
+              <p className="assignment-card__meta">
+                截止：
                 {taipeiDeadline(assignment.deadlineAt)}
               </p>
-              <p>
+              <p className="assignment-card__meta">
                 次數 {attemptSummary(assignment)}・{latestOutcome(assignment)}
               </p>
             </li>

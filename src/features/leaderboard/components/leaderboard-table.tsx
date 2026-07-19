@@ -43,7 +43,10 @@ export function LeaderboardTable({
       {leaderboard.topEntries.length === 0 ? (
         <p>目前還沒有可排行的學生。</p>
       ) : (
-        <table aria-label={`${leaderboard.classroomName} Top 10`}>
+        <table
+          className="ui-table leaderboard-table"
+          aria-label={`${leaderboard.classroomName} Top 10`}
+        >
           <thead>
             <tr>
               <th scope="col">名次</th>

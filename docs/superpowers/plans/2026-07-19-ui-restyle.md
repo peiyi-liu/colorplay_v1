@@ -262,9 +262,9 @@
 
 - [x] `/teacher` 工作區：教師決策工具 chip＋amber「課堂即時競賽（Live）廣播控制台」入口卡（→ /teacher/live）＋emoji 捷徑卡格＋平均正確率 ProgressBar。教學分析頁已於 Task 10 完成指標卡/高頻錯誤/表格；題庫管理與班級管理沿用 ui-table/token 卡片。unit 633 綠、e2e 47/47。
 
-### Task 11d: 學生六頁深度優化（進度/作業/Live/排行榜/成就/個人資料）
+### Task 11d: 學生六頁深度優化 — DONE
 
-- [ ] 逐頁 GGAME 語彙重排。
+- [x] 學習進度：ui-table＋精熟度 ProgressBar＋狀態 Chip；我的作業：GGAME 入口卡片網格（狀態膠囊/截止/次數）；班級排行榜：ui-table＋前三名金銀銅底色（純樣式）；成就/Live 加入/個人資料沿用 Task 11 卡片殼（已達 GGAME 語彙）。unit 633 綠、e2e 47/47。
 
 ### Task 11e: 課後任務實戰 5 階精熟（含 mastery migration + pgTAP）
 
