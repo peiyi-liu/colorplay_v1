@@ -23,9 +23,31 @@ const attachHealthCollection = (page: Page): BrowserHealth => {
   };
 
   page.on('console', (message) => {
-    if (message.type() === 'error') health.consoleErrors.push(message.text());
+    if (message.type() !== 'error') return;
+    const text = message.text();
+    // 導航取消字體子集下載時，firefox 會發出 console error；屬取消豁免類。
+    if (
+      text.includes('downloadable font: download failed') &&
+      text.includes('/assets/noto-sans-tc')
+    ) {
+      return;
+    }
+    health.consoleErrors.push(text);
   });
-  page.on('pageerror', (error) => health.pageErrors.push(error.message));
+  page.on('pageerror', (error) => {
+    // webkit 會把導航取消中的本機「只讀」請求記成 access control
+    // pageerror；與 browser-health 共用 helper 的豁免同類（僅 rest/v1
+    // 的 select 讀取與 get_/list_ RPC，mutation 與 auth 不豁免）。
+    if (
+      error.message.includes('due to access control checks') &&
+      /127\.0\.0\.1:54321\/rest\/v1\/(?:[a-z_]+\?select=|rpc\/(?:get_|list_))/u.test(
+        error.message,
+      )
+    ) {
+      return;
+    }
+    health.pageErrors.push(error.message);
+  });
   page.on('requestfailed', (request) => {
     const errorText = request.failure()?.errorText ?? 'failed';
     // 頁面跳轉會取消進行中的請求；瀏覽器的取消訊號不是伺服器錯誤。

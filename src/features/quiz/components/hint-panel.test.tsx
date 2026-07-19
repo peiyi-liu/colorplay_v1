@@ -95,3 +95,20 @@ describe('HintPanel', () => {
     expect(container).toBeEmptyDOMElement();
   });
 });
+
+it('renders unlocked hints inside ggame tier callouts', async () => {
+  const repository = {
+    requestHint: vi.fn().mockResolvedValue({
+      content: '白色是無彩色。',
+      hintLevel: 1,
+      questionVersion: 1,
+    }),
+  } as unknown as LearningRepository;
+  renderPanel(repository);
+  fireEvent.click(screen.getByRole('button', { name: /索取提示（第 1 層）/u }));
+  await waitFor(() => {
+    expect(
+      screen.getByText(/白色是無彩色。/u).closest('.ui-hint--tier1'),
+    ).not.toBeNull();
+  });
+});

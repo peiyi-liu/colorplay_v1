@@ -44,7 +44,16 @@ const attachHealthCollection = (page: Page): BrowserHealth => {
   };
 
   page.on('console', (message) => {
-    if (message.type() === 'error') health.consoleErrors.push(message.text());
+    if (message.type() !== 'error') return;
+    const text = message.text();
+    // 導航取消字體子集下載時，firefox 會發出 console error；屬取消豁免類。
+    if (
+      text.includes('downloadable font: download failed') &&
+      text.includes('/assets/noto-sans-tc')
+    ) {
+      return;
+    }
+    health.consoleErrors.push(text);
   });
   page.on('pageerror', (error) => health.pageErrors.push(error.message));
   page.on('requestfailed', (request) => {
@@ -174,7 +183,9 @@ test('invalid credentials stay anonymous and keyboard-only valid login restores 
   await expect(page).toHaveURL(
     new RegExp('/app\\?chapter=color-theory#checkpoint$', 'u'),
   );
-  await expect(page.getByRole('heading', { name: '選擇章節' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
+  ).toBeVisible();
   expect(passwordRequests).toBe(2);
   expect(unexpectedHealth(health)).toEqual({
     consoleErrors: [],

@@ -48,11 +48,28 @@ const attachHealthCollection = (page: Page): BrowserHealth => {
   };
 
   page.on('console', (message) => {
-    if (message.type() === 'error') health.consoleErrors.push(message.text());
+    if (message.type() !== 'error') return;
+    const text = message.text();
+    // 導航取消字體子集下載時，firefox 會發出 console error；屬取消豁免類。
+    if (
+      text.includes('downloadable font: download failed') &&
+      text.includes('/assets/noto-sans-tc')
+    ) {
+      return;
+    }
+    health.consoleErrors.push(text);
   });
   page.on('pageerror', (error) => health.pageErrors.push(error.message));
   page.on('requestfailed', (request) => {
-    health.failedRequests.push(request.failure()?.errorText ?? 'failed');
+    const errorText = request.failure()?.errorText ?? 'failed';
+    // 導航會取消進行中的靜態資產請求（字體子集尤甚）；取消不是伺服器錯誤。
+    if (
+      /ERR_ABORTED|NS_BINDING_ABORTED|cancelled/u.test(errorText) &&
+      new URL(request.url()).pathname.startsWith('/assets/')
+    ) {
+      return;
+    }
+    health.failedRequests.push(errorText);
   });
   page.on('response', (response) => {
     if (response.status() >= 400) health.httpErrors.push('http-error');
@@ -162,7 +179,7 @@ test('proves loading, intended-route retention, and a real authenticated outlet'
   );
   await authenticatedPage.goto('/app');
   await expect(
-    authenticatedPage.getByRole('heading', { name: '選擇章節' }),
+    authenticatedPage.getByRole('heading', { name: '色彩任務選擇大廳' }),
   ).toBeVisible();
   await expect(authenticatedPage.locator('body')).not.toContainText(
     TEST_USERS.studentOne.email,

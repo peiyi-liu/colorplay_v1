@@ -8,6 +8,7 @@ import {
 } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { MapStepper } from '../../../components/ui/map-stepper';
 import { parsePublicEnv } from '../../../lib/config/public-env';
 import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
 import { economyQueryKey } from '../../rewards/hooks/use-economy-summary';
@@ -336,6 +337,17 @@ export function QuizSessionPage({
 
   return (
     <section className="quiz-runner" aria-labelledby="quiz-runner-title">
+      <div className="quiz-map-panel">
+        <p className="quiz-map-panel__caption">
+          🗺️ 精熟學習地圖（未通過上一關前不可跳關）
+        </p>
+        <MapStepper
+          currentIndex={displayedQuestion.position - 1}
+          onJump={() => undefined}
+          total={session.questionCount}
+          unlockedCount={displayedQuestion.position}
+        />
+      </div>
       <header className="quiz-runner__header">
         <div>
           <p className="route-panel__eyebrow">限時挑戰</p>

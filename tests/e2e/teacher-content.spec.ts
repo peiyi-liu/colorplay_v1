@@ -88,7 +88,7 @@ const signInStudent = async (
   await page.getByLabel('密碼').fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u);
-  await expect(page.getByRole('heading', { name: '選擇章節' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '色彩任務選擇大廳' })).toBeVisible();
 };
 
 const signInTeacher = async (
@@ -360,7 +360,7 @@ test('Teacher Content phase gate', async ({
 
   await studentPage.goto('/app');
   await expect(
-    studentPage.getByRole('heading', { name: '選擇章節' }),
+    studentPage.getByRole('heading', { name: '色彩任務選擇大廳' }),
   ).toBeVisible();
   await studentPage
     .locator('article.chapter-card')

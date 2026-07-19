@@ -25,12 +25,18 @@ test('student sees all published chapters and every playable challenge', async (
   await page.getByRole('button', { name: '登入' }).click();
 
   await expect(page).toHaveURL(/\/app$/u);
-  await expect(page.getByRole('heading', { name: '選擇章節' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
+  ).toBeVisible();
   await expect(page.getByRole('article')).toHaveCount(CONTENT_MANIFEST.length);
   await expect(page.getByRole('link', { name: '開始挑戰' })).toHaveCount(
     playableChapters.length,
   );
-  await expect(page.getByRole('button', { name: '尚無題目' })).toHaveCount(
+  // GGAME 大廳：未開放章節以「鎖定中」chip 與「敬請期待」呈現，無挑戰入口。
+  await expect(page.getByText('鎖定中')).toHaveCount(
+    CONTENT_MANIFEST.length - playableChapters.length,
+  );
+  await expect(page.getByText('敬請期待')).toHaveCount(
     CONTENT_MANIFEST.length - playableChapters.length,
   );
   for (const chapter of playableChapters) {

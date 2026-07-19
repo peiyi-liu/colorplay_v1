@@ -46,7 +46,7 @@ const signIn = async (
   await expect(
     page.getByRole('navigation', { name: '主要導覽' }),
   ).toBeVisible();
-  await expect(page.getByRole('heading', { name: '選擇章節' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '色彩任務選擇大廳' })).toBeVisible();
 };
 
 const completeQuiz = async (page: Page) => {

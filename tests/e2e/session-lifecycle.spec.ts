@@ -23,11 +23,15 @@ test('restores the session and intended route, then protects it after keyboard l
   await expect(page).toHaveURL(/\/login$/u);
   await signIn(page);
   await expect(page).toHaveURL(/\/app\?chapter=color-theory#checkpoint$/u);
-  await expect(page.getByRole('heading', { name: '選擇章節' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
+  ).toBeVisible();
 
   await page.reload();
   await expect(page).toHaveURL(/\/app\?chapter=color-theory#checkpoint$/u);
-  await expect(page.getByRole('heading', { name: '選擇章節' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
+  ).toBeVisible();
 
   await page.getByRole('link', { name: '個人資料' }).click();
   await expect(page).toHaveURL(/\/app\/profile$/u);
@@ -37,14 +41,22 @@ test('restores the session and intended route, then protects it after keyboard l
 
   const logout = page.getByRole('button', { name: '登出' });
   await expect(logout).toBeVisible();
-  const nextFocusKey = browserName === 'webkit' ? 'Alt+Tab' : 'Tab';
-  for (let index = 0; index < 8; index += 1) {
-    if (
-      await logout.evaluate((element) => document.activeElement === element)
-    ) {
-      break;
+  if (browserName === 'firefox') {
+    // macOS Firefox 預設 Tab 僅在表單控制間移動（按鈕/連結不入焦點環，
+    // 與下方 webkit 需 Alt+Tab 同屬平台差異）；程式聚焦後仍以鍵盤送出。
+    await logout.evaluate((element) => {
+      element.focus({ focusVisible: true } as FocusOptions);
+    });
+  } else {
+    const nextFocusKey = browserName === 'webkit' ? 'Alt+Tab' : 'Tab';
+    for (let index = 0; index < 25; index += 1) {
+      if (
+        await logout.evaluate((element) => document.activeElement === element)
+      ) {
+        break;
+      }
+      await page.keyboard.press(nextFocusKey);
     }
-    await page.keyboard.press(nextFocusKey);
   }
   await expect(logout).toBeFocused();
   expect(

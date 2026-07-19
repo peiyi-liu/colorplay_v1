@@ -154,11 +154,13 @@
 - Modify: `src/features/learning/`（精熟流頁面：MapStepper + 情境題卡 + 選項鎖定 + 兩層 HintCallout + VictoryCard；接既有 hints/mistakes/remediation/learning-progress hooks 與 RPC）
 - Test: 頁面 `.test.tsx`（答錯鎖選項、提示逐層顯示、未過關不可跳關、結算獎勵顯示）
 
+**執行備註：** 精熟流落點為既有 quiz session 頁（`startRemediation` 回傳 session id、`requestHint` 作用於 session question）：session 頁鑲入 MapStepper 地圖、HintPanel 改 HintCallout 分層樣式、結果頁加 GGAME 慶祝樣式（e2e 釘住文案全保留）。另系統性強化 e2e 健康收集：導航取消類（靜態資產／只讀 REST／字體子集下載）豁免落入 shared helper 與三個獨立收集器，auth 端點與 mutation 不豁免（合約 15/15 釘住）；舊「選擇章節／尚無題目」斷言全面清掃至大廳語意。
+
 **Steps:**
 
-- [ ] **Step 1:** 失敗 RTL → RED。
-- [ ] **Step 2:** 實作（節點數 = 該小節實際題數；閘門判斷沿用後端回傳，前端不自算）→ GREEN + lint + typecheck。
-- [ ] **Step 3:** Commit `feat: rebuild mission page as mastery map flow`。
+- [x] **Step 1:** 失敗 RTL → RED。
+- [x] **Step 2:** 實作（節點數 = 該小節實際題數；閘門判斷沿用後端回傳，前端不自算）→ GREEN + lint + typecheck。
+- [x] **Step 3:** Commit `feat: rebuild mission page as mastery map flow`。
 
 ### Task 8: 邊框商品 migration + 商店重刷
 

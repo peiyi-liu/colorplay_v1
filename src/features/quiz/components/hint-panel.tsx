@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { HintCallout } from '../../../components/ui/hint-callout';
 import type {
   LearningRepository,
   QuestionHintView,
@@ -33,9 +34,9 @@ export function HintPanel({
   return (
     <section aria-label="提示" className="quiz-hints">
       {hints.map((hint) => (
-        <p key={hint.hintLevel}>
+        <HintCallout key={hint.hintLevel} tier={hint.hintLevel === 1 ? 1 : 2}>
           提示 {hint.hintLevel}：{hint.content}
-        </p>
+        </HintCallout>
       ))}
       {canRequest ? (
         <button

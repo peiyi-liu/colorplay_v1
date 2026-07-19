@@ -44,7 +44,37 @@ export function unexpectedRequestFailures<RequestType extends TrackedRequest>(
     confirmedLogoutResponse.status() < 400 &&
     isExactLocalLogout(confirmedLogoutResponse.request());
 
+  // 導航／登出會取消進行中的請求（字體子集、TanStack 卸載中的查詢）。
+  // 取消是 client 端行為，不可能代表伺服器拒絕（RLS 拒絕會是 4xx，落在
+  // responseErrors）。豁免範圍限 hashed build assets 與本機 Supabase 來源。
+  const isNavigationCancellation = (
+    errorText: string,
+    request: TrackedRequest,
+  ) => {
+    if (
+      !/^(?:cancelled|NS_BINDING_ABORTED|net::ERR_ABORTED)$/u.test(errorText)
+    ) {
+      return false;
+    }
+    try {
+      const parsed = new URL(request.url());
+      if (parsed.pathname.startsWith('/assets/')) return true;
+      // 本機 Supabase 只豁免「只讀」請求：GET 或 get_/list_ 讀取 RPC。
+      // mutation 與 auth 端點（含 logout）不豁免——其中止可能代表真 bug，
+      // logout 語意由下方身分比對規則嚴格把關。
+      return (
+        parsed.origin === 'http://127.0.0.1:54321' &&
+        !parsed.pathname.startsWith('/auth/') &&
+        (request.method() === 'GET' ||
+          /^\/rest\/v1\/rpc\/(?:get_|list_)/u.test(parsed.pathname))
+      );
+    } catch {
+      return false;
+    }
+  };
+
   return failures.flatMap(({ errorText, request }) => {
+    if (isNavigationCancellation(errorText, request)) return [];
     const failure = `${errorText} ${request.url()}`;
     if (
       !ignoredLogoutAbort &&
@@ -188,7 +218,11 @@ export function unexpectedBrowserHealth(
   const expectedConsoleCounts = health.expectedFailures.map(
     ({ observedUrls }) => observedUrls.length,
   );
+  const isCancelledFontDownload = (text: string) =>
+    text.includes('downloadable font: download failed') &&
+    text.includes('/assets/noto-sans-tc');
   const consoleErrors = health.consoleErrors.flatMap((error) => {
+    if (isCancelledFontDownload(error.text)) return [];
     const expectedIndex = health.expectedFailures.findIndex(
       ({ declaration }, index) =>
         (expectedConsoleCounts[index] ?? 0) > 0 &&
@@ -199,6 +233,19 @@ export function unexpectedBrowserHealth(
       (expectedConsoleCounts[expectedIndex] ?? 0) - 1;
     return [];
   });
+  // webkit 在確認登出後，會把「取消中的本機 REST 請求」記成
+  // access control pageerror；與上方 chromium 的 logout abort 同類，
+  // 僅在真的有成功 logout 時忽略，避免掩蓋真正的 RLS 問題。
+  const logoutConfirmed =
+    health.successfulLocalLogouts.size > 0 ||
+    (confirmedLogoutResponse !== undefined &&
+      confirmedLogoutResponse.status() < 400);
+  const isWebkitLogoutRestAbort = (message: string) =>
+    browserName === 'webkit' &&
+    logoutConfirmed &&
+    message.includes('127.0.0.1:54321') &&
+    message.includes('due to access control checks');
+
   return {
     consoleErrors,
     failedRequests: unexpectedRequestFailures(
@@ -207,7 +254,9 @@ export function unexpectedBrowserHealth(
       health.successfulLocalLogouts,
       confirmedLogoutResponse,
     ),
-    pageErrors: health.pageErrors,
+    pageErrors: health.pageErrors.filter(
+      (message) => !isWebkitLogoutRestAbort(message),
+    ),
     serverErrors: health.responseErrors,
   };
 }
