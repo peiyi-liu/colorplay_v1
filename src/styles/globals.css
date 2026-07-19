@@ -1322,7 +1322,7 @@ a {
 }
 
 .lobby-entry__description strong {
-  color: var(--color-xp);
+  color: var(--rose-700);
 }
 
 .lobby-entry__action {
