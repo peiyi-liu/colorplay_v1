@@ -66,7 +66,14 @@ vi.mock('../../features/inventory/hooks/use-blook-inventory', () => ({
     isPending: false,
   })),
   useEquipBlook: vi.fn(() => ({ isPending: false, mutateAsync: vi.fn() })),
+  useEquipFrame: vi.fn(() => ({ isPending: false, mutateAsync: vi.fn() })),
+  useFrameInventory: vi.fn(() => ({
+    data: undefined,
+    isError: false,
+    isPending: true,
+  })),
   usePurchaseBlook: vi.fn(() => ({ isPending: false, mutateAsync: vi.fn() })),
+  usePurchaseFrame: vi.fn(() => ({ isPending: false, mutateAsync: vi.fn() })),
 }));
 vi.mock('../../features/achievements/hooks/use-achievements', () => ({
   useAchievements: vi.fn(() => ({

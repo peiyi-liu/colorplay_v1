@@ -172,13 +172,15 @@
 - Modify: 商店頁（頭像區 = 6 Blook 卡片；邊框區 = 漸層樣本卡；擁有/價格/已裝備狀態）
 - Modify: 大廳頭貼框與排行榜列（裝備邊框反映）
 
+**執行備註：** migration 落為 `avatar_frames`＋`user_frames`＋`profiles.active_frame_id`＋三 RPC（鏡射 blook 信任邊界）；`economy_source_type` 加 `frame_purchase`（005 合約同步）。pgTAP 035 共 31 斷言（35 檔 892 測試全綠）。裝備反映：大廳頭貼框已接；排行榜列的邊框反映需排行榜 RPC 增欄位，列入 gate 保留項（同 PR 百分位）。
+
 **Steps:**
 
-- [ ] **Step 1:** 失敗 pgTAP `035` → RED。
-- [ ] **Step 2:** migration → `pnpm test:db` GREEN（34+1 檔全綠）。
-- [ ] **Step 3:** 失敗 Vitest（repository/hooks）→ RED → 實作 + `supabase gen types` → GREEN。
-- [ ] **Step 4:** 商店/大廳 UI RTL → RED → 實作 → GREEN + lint + typecheck。
-- [ ] **Step 5:** Commit `feat: add avatar frames and restyle shop`。
+- [x] **Step 1:** 失敗 pgTAP `035` → RED。
+- [x] **Step 2:** migration → `pnpm test:db` GREEN（34+1 檔全綠）。
+- [x] **Step 3:** 失敗 Vitest（repository/hooks）→ RED → 實作 + `supabase gen types` → GREEN。
+- [x] **Step 4:** 商店/大廳 UI RTL → RED → 實作 → GREEN + lint + typecheck。
+- [x] **Step 5:** Commit `feat: add avatar frames and restyle shop`。
 
 ### Task 9: Live 重刷
 

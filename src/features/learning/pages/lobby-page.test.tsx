@@ -4,7 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useMyProfile } from '../../profile/hooks/use-my-profile';
 import { useEconomySummary } from '../../rewards/hooks/use-economy-summary';
-import { useBlookInventory } from '../../inventory/hooks/use-blook-inventory';
+import {
+  useBlookInventory,
+  useFrameInventory,
+} from '../../inventory/hooks/use-blook-inventory';
 import { useMyClassrooms } from '../../classrooms/hooks/use-classrooms';
 import { useClassroomLeaderboard } from '../../leaderboard/hooks/use-classroom-leaderboard';
 import { usePublishedChapters, type PublishedChapter } from '../api/chapters';
@@ -31,7 +34,11 @@ vi.mock('../../inventory/hooks/use-blook-inventory', async (importOriginal) => {
     await importOriginal<
       typeof import('../../inventory/hooks/use-blook-inventory')
     >();
-  return { ...original, useBlookInventory: vi.fn() };
+  return {
+    ...original,
+    useBlookInventory: vi.fn(),
+    useFrameInventory: vi.fn(),
+  };
 });
 vi.mock('../../classrooms/hooks/use-classrooms', async (importOriginal) => {
   const original =
@@ -56,6 +63,7 @@ const mockedMistakes = vi.mocked(useMistakes);
 const mockedProfile = vi.mocked(useMyProfile);
 const mockedEconomy = vi.mocked(useEconomySummary);
 const mockedInventory = vi.mocked(useBlookInventory);
+const mockedFrames = vi.mocked(useFrameInventory);
 const mockedClassrooms = vi.mocked(useMyClassrooms);
 const mockedLeaderboard = vi.mocked(useClassroomLeaderboard);
 
@@ -128,6 +136,9 @@ describe('LobbyPage', () => {
         isError: false,
         isPending: false,
       }),
+    );
+    mockedFrames.mockReturnValue(
+      asResult({ data: undefined, isError: false, isPending: false }),
     );
     mockedInventory.mockReturnValue(
       asResult({

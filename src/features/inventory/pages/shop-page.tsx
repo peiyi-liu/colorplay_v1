@@ -4,10 +4,14 @@ import { RouteLoading } from '../../../app/boundaries/route-loading';
 import {
   useBlookInventory,
   useEquipBlook,
+  useEquipFrame,
+  useFrameInventory,
   usePurchaseBlook,
+  usePurchaseFrame,
 } from '../hooks/use-blook-inventory';
 import {
   type BlookInventoryItem,
+  type FrameInventoryItem,
   type InventoryRepository,
   InventoryRepositoryError,
 } from '../types';
@@ -28,6 +32,76 @@ const mutationErrorMessage = (error: unknown): string => {
   }
   return 'Blook 操作失敗，請稍後重試。';
 };
+
+function FrameShopSection({
+  repository,
+}: Readonly<{ repository?: InventoryRepository }>) {
+  const frames = useFrameInventory(repository);
+  const purchase = usePurchaseFrame(repository);
+  const equip = useEquipFrame(repository);
+  const [message, setMessage] = useState<string>();
+  const [error, setError] = useState<string>();
+
+  if (frames.isPending || frames.isError) return null;
+
+  const run = async (item: FrameInventoryItem) => {
+    setMessage(undefined);
+    setError(undefined);
+    try {
+      if (!item.owned) {
+        await purchase.mutateAsync(item.id);
+        setMessage(`已購買${item.name}。`);
+        return;
+      }
+      await equip.mutateAsync(item.id);
+      setMessage(`已裝備${item.name}。`);
+    } catch (mutationError) {
+      setError(mutationErrorMessage(mutationError));
+    }
+  };
+
+  return (
+    <section aria-labelledby="frame-shop-title" className="frame-shop">
+      <h2 id="frame-shop-title">尊絕外顯邊框</h2>
+      <p className="frame-shop__hint">裝備後將顯示在大廳頭貼外框。</p>
+      {message ? <p role="status">{message}</p> : null}
+      {error ? <p role="alert">{error}</p> : null}
+      <div className="frame-shop__grid">
+        {frames.data.items.map((item) => (
+          <article className="frame-card" key={item.id}>
+            <span
+              aria-hidden="true"
+              className="frame-card__swatch"
+              style={{
+                background: `linear-gradient(to right, ${item.gradientStart}, ${item.gradientEnd})`,
+              }}
+            />
+            <h3>{item.name}</h3>
+            <p>
+              {item.costTokens === 0
+                ? '預設擁有'
+                : `${String(item.costTokens)} Token`}
+            </p>
+            {item.equipped ? (
+              <strong className="frame-card__state">已裝備</strong>
+            ) : (
+              <button
+                className="secondary-action"
+                disabled={purchase.isPending || equip.isPending}
+                onClick={() => void run(item)}
+                type="button"
+              >
+                {item.owned
+                  ? `裝備 ${item.name}`
+                  : `購買 ${item.name}（${String(item.costTokens)} Token）`}
+              </button>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export function ShopPage({
   repository,
@@ -186,6 +260,8 @@ export function ShopPage({
           );
         })}
       </div>
+
+      <FrameShopSection {...(repository ? { repository } : {})} />
 
       {selectedPurchase ? (
         <dialog

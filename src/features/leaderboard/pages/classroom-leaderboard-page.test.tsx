@@ -22,6 +22,9 @@ const board: ClassroomLeaderboard = {
 };
 const inventoryRepository: InventoryRepository = {
   equipBlook: vi.fn(),
+  equipFrame: vi.fn(),
+  getFrameInventory: vi.fn(() => new Promise<never>(() => undefined)),
+  purchaseFrame: vi.fn(),
   getInventory: vi.fn().mockResolvedValue({
     activeBlookId: '50000000-0000-0000-0000-000000000001',
     items: [],

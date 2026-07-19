@@ -1383,3 +1383,61 @@ a {
   display: block;
   font-size: 3rem;
 }
+
+/* ── GGAME 商店邊框區（Task 8） ───────────────────────── */
+
+.frame-shop {
+  margin-top: var(--space-8);
+}
+
+.frame-shop h2 {
+  margin: 0 0 var(--space-1);
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.frame-shop__hint {
+  margin: 0 0 var(--space-4);
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+}
+
+.frame-shop__grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.frame-card {
+  display: grid;
+  justify-items: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  gap: var(--space-2);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.frame-card h3 {
+  margin: 0;
+  font-size: var(--font-size-supporting);
+  font-weight: 800;
+}
+
+.frame-card p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+}
+
+.frame-card__swatch {
+  width: 64px;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.frame-card__state {
+  color: var(--color-token);
+  font-size: var(--font-size-metadata);
+}

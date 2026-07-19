@@ -25,7 +25,8 @@ select results_eq(
     'blook_purchase',
     'achievement',
     'assignment',
-    'live'
+    'live',
+    'frame_purchase'
   ],
   'source enum reserves only the approved Phase 1 and future labels'
 );

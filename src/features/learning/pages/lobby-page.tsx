@@ -6,7 +6,10 @@ import { Chip } from '../../../components/ui/chip';
 import { SectionHeader } from '../../../components/ui/section-header';
 import { StatTile } from '../../../components/ui/stat-tile';
 import { useMyClassrooms } from '../../classrooms/hooks/use-classrooms';
-import { useBlookInventory } from '../../inventory/hooks/use-blook-inventory';
+import {
+  useBlookInventory,
+  useFrameInventory,
+} from '../../inventory/hooks/use-blook-inventory';
 import { useClassroomLeaderboard } from '../../leaderboard/hooks/use-classroom-leaderboard';
 import { useMyProfile } from '../../profile/hooks/use-my-profile';
 import { useEconomySummary } from '../../rewards/hooks/use-economy-summary';
@@ -21,7 +24,9 @@ function ProfileCard() {
   const firstClassroomId = classrooms.data?.[0]?.classroomId ?? '';
   const leaderboard = useClassroomLeaderboard(firstClassroomId);
 
+  const frames = useFrameInventory();
   const equipped = inventory.data?.items.find((item) => item.equipped);
+  const equippedFrame = frames.data?.items.find((item) => item.equipped);
   // 未加入班級時不呈現名次（也不採用任何殘留的排行榜快取）。
   const selfRank = firstClassroomId
     ? leaderboard.data?.selfEntry?.rank
@@ -30,7 +35,17 @@ function ProfileCard() {
   return (
     <Card className="lobby__profile">
       <div className="lobby__identity">
-        <span className="lobby__avatar" aria-hidden="true">
+        <span
+          className="lobby__avatar"
+          aria-hidden="true"
+          style={
+            equippedFrame
+              ? {
+                  background: `linear-gradient(to top right, ${equippedFrame.gradientStart}, ${equippedFrame.gradientEnd})`,
+                }
+              : undefined
+          }
+        >
           {equipped?.emoji ?? '🧑‍🎨'}
         </span>
         <div>

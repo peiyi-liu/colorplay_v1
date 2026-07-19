@@ -28,6 +28,9 @@ const createRepository = (): InventoryRepository => ({
   equipBlook: vi.fn().mockResolvedValue(returnedSnapshot),
   getInventory: vi.fn().mockResolvedValue(returnedSnapshot),
   purchaseBlook: vi.fn().mockResolvedValue(returnedSnapshot),
+  equipFrame: vi.fn(),
+  getFrameInventory: vi.fn(() => new Promise<never>(() => undefined)),
+  purchaseFrame: vi.fn(),
 });
 
 describe('Blook inventory mutations', () => {

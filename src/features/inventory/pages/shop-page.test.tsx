@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -56,6 +56,9 @@ const repository = (
   equipBlook: vi.fn().mockResolvedValue(inventory()),
   getInventory: vi.fn().mockResolvedValue(inventory()),
   purchaseBlook: vi.fn().mockResolvedValue(inventory()),
+  equipFrame: vi.fn(),
+  getFrameInventory: vi.fn(() => new Promise<never>(() => undefined)),
+  purchaseFrame: vi.fn(),
   ...overrides,
 });
 
@@ -232,4 +235,49 @@ describe('ShopPage', () => {
     expect(screen.getByRole('button', { name: '重試' })).toBeEnabled();
     expect(screen.queryByText('0 Token 可用')).toBeNull();
   });
+});
+
+it('renders the frame shop section with the server catalog', async () => {
+  renderShop(
+    repository({
+      getFrameInventory: vi.fn().mockResolvedValue({
+        activeFrameId: '60000000-0000-0000-0000-000000000001',
+        items: [
+          {
+            costTokens: 0,
+            equipped: true,
+            gradientEnd: '#eab308',
+            gradientStart: '#f59e0b',
+            id: '60000000-0000-0000-0000-000000000001',
+            name: '熔岩流金',
+            owned: true,
+            stableCode: 'lava_gold',
+          },
+          {
+            costTokens: 25,
+            equipped: false,
+            gradientEnd: '#0ea5e9',
+            gradientStart: '#6366f1',
+            id: '60000000-0000-0000-0000-000000000002',
+            name: '深海霓虹',
+            owned: false,
+            stableCode: 'deep_neon',
+          },
+        ],
+        tokenBalance: 75,
+      }),
+    }),
+  );
+  expect(
+    await screen.findByRole('heading', { name: '尊絕外顯邊框' }),
+  ).toBeVisible();
+  expect(screen.getByText('熔岩流金')).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: '購買 深海霓虹（25 Token）' }),
+  ).toBeInTheDocument();
+  expect(
+    within(screen.getByRole('region', { name: '尊絕外顯邊框' })).getByText(
+      '已裝備',
+    ),
+  ).toBeInTheDocument();
 });

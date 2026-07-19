@@ -372,6 +372,42 @@ export type Database = {
           },
         ]
       }
+      avatar_frames: {
+        Row: {
+          cost_tokens: number
+          created_at: string
+          gradient_end: string
+          gradient_start: string
+          id: string
+          name: string
+          sort_order: number
+          stable_code: string
+          status: string
+        }
+        Insert: {
+          cost_tokens: number
+          created_at?: string
+          gradient_end: string
+          gradient_start: string
+          id: string
+          name: string
+          sort_order: number
+          stable_code: string
+          status: string
+        }
+        Update: {
+          cost_tokens?: number
+          created_at?: string
+          gradient_end?: string
+          gradient_start?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          stable_code?: string
+          status?: string
+        }
+        Relationships: []
+      }
       blooks: {
         Row: {
           cost_tokens: number
@@ -1199,6 +1235,7 @@ export type Database = {
       profiles: {
         Row: {
           active_blook_id: string
+          active_frame_id: string
           created_at: string
           display_name: string
           id: string
@@ -1209,6 +1246,7 @@ export type Database = {
         }
         Insert: {
           active_blook_id: string
+          active_frame_id: string
           created_at?: string
           display_name: string
           id: string
@@ -1219,6 +1257,7 @@ export type Database = {
         }
         Update: {
           active_blook_id?: string
+          active_frame_id?: string
           created_at?: string
           display_name?: string
           id?: string
@@ -1233,6 +1272,13 @@ export type Database = {
             columns: ["active_blook_id"]
             isOneToOne: false
             referencedRelation: "blooks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_active_frame_id_fkey"
+            columns: ["active_frame_id"]
+            isOneToOne: false
+            referencedRelation: "avatar_frames"
             referencedColumns: ["id"]
           },
         ]
@@ -1985,6 +2031,42 @@ export type Database = {
           },
         ]
       }
+      user_frames: {
+        Row: {
+          acquired_at: string
+          frame_id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          frame_id: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          acquired_at?: string
+          frame_id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_frames_frame_id_fkey"
+            columns: ["frame_id"]
+            isOneToOne: false
+            referencedRelation: "avatar_frames"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_frames_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wallet_transactions: {
         Row: {
           amount: number
@@ -2321,6 +2403,7 @@ export type Database = {
         Returns: string
       }
       equip_blook: { Args: { blook_id: string }; Returns: Json }
+      equip_frame: { Args: { frame_id: string }; Returns: Json }
       evaluate_achievements: {
         Args: {
           event_source_id: string
@@ -2369,6 +2452,7 @@ export type Database = {
       get_my_achievement_catalog: { Args: never; Returns: Json }
       get_my_blook_inventory: { Args: never; Returns: Json }
       get_my_economy_summary: { Args: never; Returns: Json }
+      get_my_frame_inventory: { Args: never; Returns: Json }
       get_review_completion: {
         Args: { p_chapter_id?: string }
         Returns: {
@@ -2514,6 +2598,7 @@ export type Database = {
         Returns: Json
       }
       purchase_blook: { Args: { blook_id: string }; Returns: Json }
+      purchase_frame: { Args: { frame_id: string }; Returns: Json }
       question_semantic_payload: {
         Args: { p_question_id: string }
         Returns: Json
@@ -2770,6 +2855,7 @@ export type Database = {
         | "achievement"
         | "assignment"
         | "live"
+        | "frame_purchase"
       external_activity_status: "available" | "archived"
       live_participant_status: "active" | "left" | "removed"
       live_session_state:
@@ -2961,6 +3047,7 @@ export const Constants = {
         "achievement",
         "assignment",
         "live",
+        "frame_purchase",
       ],
       external_activity_status: ["available", "archived"],
       live_participant_status: ["active", "left", "removed"],

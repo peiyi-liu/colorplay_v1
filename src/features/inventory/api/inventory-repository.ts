@@ -5,6 +5,8 @@ import type { Database } from '../../../types/database';
 import {
   type BlookInventory,
   type BlookInventoryItem,
+  type FrameInventory,
+  type FrameInventoryItem,
   type InventoryRepository,
   InventoryRepositoryError,
 } from '../types';
@@ -95,9 +97,85 @@ const parseInventory = (payload: unknown): BlookInventory => {
   };
 };
 
+const frameItemSchema = z.strictObject({
+  cost_tokens: z.number().int().nonnegative(),
+  equipped: z.boolean(),
+  gradient_end: z.string().regex(/^#[0-9a-f]{6}$/u),
+  gradient_start: z.string().regex(/^#[0-9a-f]{6}$/u),
+  id: uuidSchema,
+  name: z.string().min(1),
+  owned: z.boolean(),
+  stable_code: z.string().min(1),
+});
+
+const frameInventorySchema = z
+  .strictObject({
+    active_frame_id: uuidSchema,
+    items: z.array(frameItemSchema).min(1),
+    token_balance: z.number().int().nonnegative(),
+  })
+  .superRefine((value, context) => {
+    const equipped = value.items.filter((item) => item.equipped);
+    const active = value.items.find(
+      (item) => item.id === value.active_frame_id,
+    );
+    if (
+      equipped.length !== 1 ||
+      !active?.owned ||
+      !active.equipped ||
+      value.items.some((item) => item.equipped && !item.owned)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'INCONSISTENT_FRAME_SNAPSHOT',
+      });
+    }
+  });
+
+const mapFrameItem = (
+  item: z.infer<typeof frameItemSchema>,
+): FrameInventoryItem => ({
+  costTokens: item.cost_tokens,
+  equipped: item.equipped,
+  gradientEnd: item.gradient_end,
+  gradientStart: item.gradient_start,
+  id: item.id,
+  name: item.name,
+  owned: item.owned,
+  stableCode: item.stable_code,
+});
+
+const parseFrameInventory = (payload: unknown): FrameInventory => {
+  const parsed = frameInventorySchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new InventoryRepositoryError('INVALID_RESPONSE');
+  }
+  return {
+    activeFrameId: parsed.data.active_frame_id,
+    items: parsed.data.items.map(mapFrameItem),
+    tokenBalance: parsed.data.token_balance,
+  };
+};
+
 const mapServerError = (message: string): InventoryRepositoryError => {
   if (message.includes('AUTH_REQUIRED')) {
     return new InventoryRepositoryError('AUTH_REQUIRED');
+  }
+  if (message.includes('FRAME_NOT_OWNED')) {
+    return new InventoryRepositoryError('NOT_OWNED');
+  }
+  if (message.includes('FRAME_NOT_FOUND')) {
+    return new InventoryRepositoryError('NOT_FOUND');
+  }
+  {
+    const frameShortfall = /^FRAME_INSUFFICIENT_TOKENS:(\d+)$/u.exec(message);
+    if (frameShortfall) {
+      const shortfall = Number(frameShortfall[1]);
+      if (Number.isSafeInteger(shortfall) && shortfall > 0) {
+        return new InventoryRepositoryError('INSUFFICIENT_TOKENS', shortfall);
+      }
+      return new InventoryRepositoryError('INVALID_RESPONSE');
+    }
   }
   if (message.includes('BLOOK_ALREADY_OWNED')) {
     return new InventoryRepositoryError('ALREADY_OWNED');
@@ -145,6 +223,17 @@ export function createInventoryRepository(
     return parseInventory(data);
   };
 
+  const frameCommand = async (
+    name: 'equip_frame' | 'purchase_frame',
+    frameId: string,
+  ): Promise<FrameInventory> => {
+    const { data, error } = await client.rpc(name, {
+      frame_id: validateCommandId(frameId),
+    });
+    if (error) throw mapServerError(error.message);
+    return parseFrameInventory(data);
+  };
+
   return {
     async equipBlook(blookId) {
       return command('equip_blook', blookId);
@@ -156,6 +245,17 @@ export function createInventoryRepository(
     },
     async purchaseBlook(blookId) {
       return command('purchase_blook', blookId);
+    },
+    async equipFrame(frameId) {
+      return frameCommand('equip_frame', frameId);
+    },
+    async getFrameInventory() {
+      const { data, error } = await client.rpc('get_my_frame_inventory');
+      if (error) throw mapServerError(error.message);
+      return parseFrameInventory(data);
+    },
+    async purchaseFrame(frameId) {
+      return frameCommand('purchase_frame', frameId);
     },
   };
 }
