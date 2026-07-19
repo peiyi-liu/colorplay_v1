@@ -27,19 +27,21 @@ export function VictoryCard({
       {description ? (
         <p className="ui-victory__description">{description}</p>
       ) : null}
-      <div className="ui-victory__rewards">
-        <span className="ui-victory__reward ui-victory__reward--xp">
-          +{xp} XP
-        </span>
-        <span className="ui-victory__reward ui-victory__reward--token">
-          +{tokens} 代幣
-        </span>
-        {badgeName ? (
-          <span className="ui-victory__reward ui-victory__reward--badge">
-            🏆 解鎖徽章：{badgeName}
+      {xp > 0 || tokens > 0 || badgeName ? (
+        <div className="ui-victory__rewards">
+          <span className="ui-victory__reward ui-victory__reward--xp">
+            +{xp} XP
           </span>
-        ) : null}
-      </div>
+          <span className="ui-victory__reward ui-victory__reward--token">
+            +{tokens} 代幣
+          </span>
+          {badgeName ? (
+            <span className="ui-victory__reward ui-victory__reward--badge">
+              🏆 解鎖徽章：{badgeName}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       <div className="ui-victory__actions">
         <button type="button" className="ui-victory__retry" onClick={onRetry}>
           重新練習此題（不重複發放經驗）

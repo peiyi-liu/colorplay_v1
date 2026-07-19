@@ -6,6 +6,10 @@ import { JoinClassroomRoute } from '../../features/classrooms/pages/join-classro
 import { StudentClassroomsPage } from '../../features/classrooms/pages/student-classrooms-page';
 import { ShopPage } from '../../features/inventory/pages/shop-page';
 import { LobbyPage } from '../../features/learning/pages/lobby-page';
+import {
+  MissionPage,
+  MissionSelectPage,
+} from '../../features/learning/pages/mission-page';
 import { ProfileFoundationPage } from '../../features/profile/pages/profile-foundation-page';
 import { QuizResultPage } from '../../features/quiz/pages/quiz-result';
 import { QuizSessionPage } from '../../features/quiz/pages/quiz-session';
@@ -47,6 +51,14 @@ export function createAppRouter() {
             {
               path: '/app',
               element: <LobbyPage />,
+            },
+            {
+              path: '/app/missions',
+              element: <MissionSelectPage />,
+            },
+            {
+              path: '/app/missions/:sessionId',
+              element: <MissionPage />,
             },
             {
               path: '/app/chapters/:chapterId',

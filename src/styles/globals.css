@@ -1820,3 +1820,140 @@ a {
 .leaderboard-table tbody tr:nth-child(3) td {
   background: color-mix(in srgb, var(--amber-500) 12%, var(--surface-card));
 }
+
+/* ── GGAME 課後任務實戰（Task 11e） ───────────────────── */
+
+.mission-select,
+.mission {
+  width: min(100%, 900px);
+}
+
+.mission-select__list {
+  display: grid;
+  padding: 0;
+  margin: 0;
+  gap: var(--space-4);
+  list-style: none;
+}
+
+.mission-select__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--slate-50);
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.mission-select__item h2 {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 800;
+}
+
+.mission-select__item p {
+  margin: var(--space-1) 0 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+}
+
+.mission__scenario {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--slate-50);
+  margin-bottom: var(--space-4);
+  padding: var(--space-5);
+}
+
+.mission__scenario-label {
+  margin: 0 0 var(--space-2);
+  color: var(--amber-700);
+  font-size: var(--font-size-metadata);
+  font-weight: 800;
+}
+
+.mission__prompt {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.mission__instruction {
+  margin: 0 0 var(--space-2);
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.mission__options {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.mission-option {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  cursor: pointer;
+  font-size: var(--font-size-supporting);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+}
+
+.mission-option:hover:enabled {
+  border-color: var(--yellow-brand);
+}
+
+.mission-option[data-locked='true'] {
+  background: var(--slate-100);
+  color: var(--slate-500);
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.mission-option__key {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 2px solid currentcolor;
+  border-radius: 50%;
+  font-weight: 800;
+  place-items: center;
+  pointer-events: none;
+}
+
+.mission__hints {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.mission__hint-button {
+  justify-self: start;
+  border: none;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--yellow-brand) 20%, transparent);
+  color: var(--amber-700);
+  cursor: pointer;
+  font-size: var(--font-size-metadata);
+  font-weight: 800;
+  padding: var(--space-2) var(--space-4);
+}
+
+.mission__meta {
+  margin: var(--space-4) 0 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+}
+
+.mission__footer {
+  margin-top: var(--space-6);
+}

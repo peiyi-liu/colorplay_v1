@@ -1177,6 +1177,158 @@ export type Database = {
           },
         ]
       }
+      mastery_attempts: {
+        Row: {
+          attempt_number: number
+          created_at: string
+          id: string
+          is_correct: boolean
+          question_id: string
+          selected_option_id: string
+          session_id: string
+        }
+        Insert: {
+          attempt_number: number
+          created_at?: string
+          id?: string
+          is_correct: boolean
+          question_id: string
+          selected_option_id: string
+          session_id: string
+        }
+        Update: {
+          attempt_number?: number
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          question_id?: string
+          selected_option_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mastery_attempts_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mastery_attempts_selected_option_id_fkey"
+            columns: ["selected_option_id"]
+            isOneToOne: false
+            referencedRelation: "question_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mastery_attempts_selected_option_id_fkey"
+            columns: ["selected_option_id"]
+            isOneToOne: false
+            referencedRelation: "question_options_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mastery_attempts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "mastery_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mastery_hint_events: {
+        Row: {
+          created_at: string
+          hint_level: number
+          id: string
+          question_id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          hint_level: number
+          id?: string
+          question_id: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          hint_level?: number
+          id?: string
+          question_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mastery_hint_events_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mastery_hint_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "mastery_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mastery_sessions: {
+        Row: {
+          chapter_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          position: number
+          question_ids: string[]
+          question_versions: number[]
+          rules_version: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          chapter_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          position?: number
+          question_ids: string[]
+          question_versions: number[]
+          rules_version?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          position?: number
+          question_ids?: string[]
+          question_versions?: number[]
+          rules_version?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mastery_sessions_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mastery_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mistake_items: {
         Row: {
           first_wrong_at: string
@@ -2449,6 +2601,11 @@ export type Database = {
         }[]
       }
       get_live_session_state: { Args: { p_session_id: string }; Returns: Json }
+      get_mastery_hint: {
+        Args: { p_hint_level: number; p_session_id: string }
+        Returns: Json
+      }
+      get_mastery_state: { Args: { p_session_id: string }; Returns: Json }
       get_my_achievement_catalog: { Args: never; Returns: Json }
       get_my_blook_inventory: { Args: never; Returns: Json }
       get_my_economy_summary: { Args: never; Returns: Json }
@@ -2651,6 +2808,7 @@ export type Database = {
         Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
       }
+      start_mastery_session: { Args: { p_chapter_id: string }; Returns: string }
       start_remediation_session: {
         Args: { p_request_id: string; p_subtopic_id: string }
         Returns: Json
@@ -2661,6 +2819,10 @@ export type Database = {
           p_selected_option_id: string
           p_session_question_id: string
         }
+        Returns: Json
+      }
+      submit_mastery_attempt: {
+        Args: { p_option_id: string; p_session_id: string }
         Returns: Json
       }
       submit_quiz_answer: {

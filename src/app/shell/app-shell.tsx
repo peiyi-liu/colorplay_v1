@@ -128,7 +128,7 @@ export function AppShell() {
             <span className="student-rail__chevron" aria-hidden="true">
               ›
             </span>
-            <Link className="student-rail__tab" to="/app/progress">
+            <Link className="student-rail__tab" to="/app/missions">
               <span aria-hidden="true">2. </span>課後任務實戰
             </Link>
             <span className="student-rail__chevron" aria-hidden="true">

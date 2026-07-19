@@ -263,7 +263,7 @@ describe('AppShell', () => {
     );
     expect(screen.getByRole('link', { name: '課後任務實戰' })).toHaveAttribute(
       'href',
-      '/app/progress',
+      '/app/missions',
     );
     expect(screen.getByRole('link', { name: '進入大廳' })).toHaveAttribute(
       'href',

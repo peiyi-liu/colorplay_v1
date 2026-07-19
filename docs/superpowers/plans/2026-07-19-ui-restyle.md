@@ -266,8 +266,10 @@
 
 - [x] 學習進度：ui-table＋精熟度 ProgressBar＋狀態 Chip；我的作業：GGAME 入口卡片網格（狀態膠囊/截止/次數）；班級排行榜：ui-table＋前三名金銀銅底色（純樣式）；成就/Live 加入/個人資料沿用 Task 11 卡片殼（已達 GGAME 語彙）。unit 633 綠、e2e 47/47。
 
-### Task 11e: 課後任務實戰 5 階精熟（含 mastery migration + pgTAP）
+### Task 11e: 課後任務實戰 5 階精熟 — DONE
 
-- [ ] 不限時多次嘗試＋選項鎖定＋逐層提示之 mastery session 後端模式與新頁；導覽軌 tab2 改指新頁。
+- [x] Migration `20260722000100_mastery_sessions`：mastery_sessions/attempts/hint_events＋四 RPC（start 冪等、state 不外洩正解/解析、submit 鎖定錯誤選項、hint 依答錯次數逐層解鎖）；pgTAP 036 共 28 斷言（全電池 36 檔 920 綠）。
+- [x] 前端：mastery repository/hooks＋`/app/missions`（選章）＋`/app/missions/:sessionId`（地圖/情境/鎖定選項/提示/結算）；導覽軌 tab2 改指 /app/missions；VictoryCard 無獎勵時不再顯示 +0（練習模式誠實呈現，正式獎勵屬 finalize-only 政策，擴充需另 pin spec/05——列 gate 保留項）。
+- [x] 驗證：unit 105 檔 635 綠、test:db PASS、e2e 47/47。
 
 ### Task 12 依原計畫收尾。
