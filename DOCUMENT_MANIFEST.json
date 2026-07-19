@@ -1,12 +1,12 @@
 {
   "package_name": "ColorPlay React + Supabase Development Specification Package",
   "package_version": "2.0.0",
-  "generated_at": "2026-07-18T16:58:51.220Z",
-  "markdown_files": 29,
+  "generated_at": "2026-07-19T04:38:36.724Z",
+  "markdown_files": 30,
   "acceptance_criteria": 122,
   "unique_acceptance_criteria": 122,
   "ui_acceptance_criteria": 15,
-  "total_bytes_before_manifest": 318518,
+  "total_bytes_before_manifest": 321533,
   "real_device_required_criteria": [
     "AC-UI-010",
     "AC-UI-012"
@@ -41,6 +41,11 @@
       "path": "docs/adr/0002-colorplay-new-integration-and-production-environments.md",
       "sha256": "5366a3db2d4d4114ca9b4ad1f046dbfbb9cdeb4b6b102de209381934895bbd6e",
       "size_bytes": 3979
+    },
+    {
+      "path": "docs/adr/0003-student-id-login.md",
+      "sha256": "8c98449c3bb56cc068a711abe5fae357d01eec7a38ace5d86b05b751492fae8c",
+      "size_bytes": 3015
     },
     {
       "path": "docs/deployment/environment-matrix.md",
