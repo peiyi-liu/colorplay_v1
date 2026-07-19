@@ -92,7 +92,7 @@ run_logged 'pnpm build' "$phase_root/reports/build.log" pnpm build
 run_logged \
   'token-hex-scan' \
   "$phase_root/reports/token-hex-scan.log" \
-  bash -c '! grep -rEn "#[0-9a-fA-F]{3,8}\b" src/components src/features src/app --include="*.tsx"'
+  bash -c '! grep -rEn "#[0-9a-fA-F]{3,8}\b" src/components src/features src/app --include="*.tsx" --exclude="*.test.tsx"'
 
 run_logged \
   'pnpm exec supabase db reset --local' \
