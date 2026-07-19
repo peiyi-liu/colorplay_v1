@@ -1441,3 +1441,60 @@ a {
   color: var(--color-token);
   font-size: var(--font-size-metadata);
 }
+
+/* ── GGAME Live 皮層（Task 9） ────────────────────────── */
+
+.live-options {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.live-distribution {
+  display: grid;
+  padding: 0;
+  margin: var(--space-4) 0;
+  gap: var(--space-3);
+  list-style: none;
+}
+
+.live-distribution__track {
+  display: block;
+  overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  margin-top: var(--space-1);
+  background: var(--slate-200);
+}
+
+.live-distribution__fill {
+  display: block;
+  height: 100%;
+  background: var(--sky-500);
+  transition: width 0.3s ease-out;
+}
+
+.live-distribution__fill--correct {
+  background: var(--color-token);
+}
+
+.live-explanation {
+  border-left: 4px solid var(--color-alert);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--color-alert) 10%, transparent);
+  color: var(--amber-700);
+  font-size: var(--font-size-supporting);
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+}
+
+.live-explanation p {
+  margin: var(--space-1) 0 0;
+}
+
+.live-console {
+  border: 1px solid color-mix(in srgb, var(--color-alert) 35%, transparent);
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--color-alert) 8%, var(--surface-card));
+  padding: var(--space-6);
+}

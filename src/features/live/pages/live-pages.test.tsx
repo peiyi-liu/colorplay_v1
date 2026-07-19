@@ -190,6 +190,26 @@ describe('LiveSessionPage (participant)', () => {
     expect(screen.getByText('目前 3 位同學在等待室。')).toBeVisible();
   });
 
+  it('renders ggame four-color option buttons in order', async () => {
+    const repository = repositoryWith({
+      getState: vi.fn().mockResolvedValue(openState),
+    });
+    renderWith(
+      <LiveSessionPage
+        client={stubClient()}
+        repository={repository}
+        sessionId={SESSION_ID}
+      />,
+    );
+    const first = await screen.findByRole('button', {
+      name: /A\. 色相、明度、彩度/u,
+    });
+    expect(first.className).toContain('ui-option--rose');
+    expect(
+      screen.getByRole('button', { name: /B\. 紅、綠、藍/u }).className,
+    ).toContain('ui-option--sky');
+  });
+
   it('submits one answer and locks the options', async () => {
     const submitAnswer = vi.fn().mockResolvedValue({ streak: 1 });
     const getState = vi

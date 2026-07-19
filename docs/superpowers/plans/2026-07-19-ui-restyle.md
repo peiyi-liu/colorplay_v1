@@ -191,9 +191,9 @@
 
 **Steps:**
 
-- [ ] **Step 1:** 更新失敗 RTL → RED。
-- [ ] **Step 2:** 實作（功能/RPC 零變更）→ GREEN + lint + typecheck。
-- [ ] **Step 3:** Commit `feat: restyle live with ggame kahoot skin`。
+- [x] **Step 1:** 更新失敗 RTL → RED。
+- [x] **Step 2:** 實作（功能/RPC 零變更）→ GREEN + lint + typecheck。
+- [x] **Step 3:** Commit `feat: restyle live with ggame kahoot skin`。
 
 ### Task 10: 教師看板與內容管理重刷
 

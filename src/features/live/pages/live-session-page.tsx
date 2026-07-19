@@ -3,6 +3,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
+import {
+  OptionButton,
+  type OptionShape,
+  type OptionVariant,
+} from '../../../components/ui/option-button';
 import type { Database } from '../../../types/database';
 import { useSubmitLiveAnswer } from '../hooks/use-live-commands';
 import { useLiveSession } from '../hooks/use-live-session';
@@ -73,6 +78,19 @@ function QuestionPhase({
   const question = state.question;
   if (!question) return null;
   const answered = state.myAnswer?.answered === true;
+  const OPTION_VARIANTS: readonly OptionVariant[] = [
+    'rose',
+    'sky',
+    'amber',
+    'emerald',
+  ];
+  const OPTION_SHAPES: readonly OptionShape[] = [
+    'triangle',
+    'square',
+    'circle',
+    'diamond',
+  ];
+
   const idempotencyKeyFor = (questionId: string): string => {
     const existing = keysRef.current.get(questionId);
     if (existing) return existing;
@@ -95,10 +113,12 @@ function QuestionPhase({
         disabled={answered || submit.isPending}
       >
         <legend>{question.prompt}</legend>
-        <div role="group" aria-label="答案選項">
-          {question.publicOptions.map((option) => (
-            <button
+        <div className="live-options" role="group" aria-label="答案選項">
+          {question.publicOptions.map((option, index) => (
+            <OptionButton
               key={option.id}
+              variant={OPTION_VARIANTS[index % 4] ?? 'rose'}
+              shape={OPTION_SHAPES[index % 4] ?? 'triangle'}
               onClick={() => {
                 setSubmitError(undefined);
                 submit.mutate(
@@ -117,10 +137,9 @@ function QuestionPhase({
                   },
                 );
               }}
-              type="button"
             >
               {option.key}. {option.text}
-            </button>
+            </OptionButton>
           ))}
         </div>
       </fieldset>
@@ -151,21 +170,40 @@ function FeedbackPhase({ state }: Readonly<{ state: LiveSessionState }>) {
           : '本題結束'}
       </h2>
       <p>{question.prompt}</p>
-      <ul>
+      <ul className="live-distribution">
         {question.publicOptions.map((option) => {
           const count =
             state.optionCounts?.find((entry) => entry.optionId === option.id)
               ?.count ?? 0;
+          const total = (state.optionCounts ?? []).reduce(
+            (sum, entry) => sum + entry.count,
+            0,
+          );
           const isCorrect = state.correctOptionId === option.id;
           return (
             <li key={option.id}>
-              {isCorrect ? '✓ ' : ''}
-              {option.key}. {option.text}（{count} 人）
+              <span>
+                {isCorrect ? '✓ ' : ''}
+                {option.key}. {option.text}（{count} 人）
+              </span>
+              <span aria-hidden="true" className="live-distribution__track">
+                <span
+                  className={`live-distribution__fill${isCorrect ? ' live-distribution__fill--correct' : ''}`}
+                  style={{
+                    width: `${String(total > 0 ? Math.round((count / total) * 100) : 0)}%`,
+                  }}
+                />
+              </span>
             </li>
           );
         })}
       </ul>
-      {state.explanation ? <p>{state.explanation}</p> : null}
+      {state.explanation ? (
+        <div className="live-explanation">
+          <strong>👨‍🏫 教師引導解析：</strong>
+          <p>{state.explanation}</p>
+        </div>
+      ) : null}
       <p role="status">等待主持人進入下一題…</p>
     </div>
   );

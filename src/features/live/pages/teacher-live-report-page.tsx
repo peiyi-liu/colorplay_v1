@@ -40,7 +40,7 @@ export function TeacherLiveReportPage({
         </p>
       </header>
 
-      <table aria-label="逐題分析">
+      <table className="ui-table" aria-label="逐題分析">
         <thead>
           <tr>
             <th scope="col">題號</th>
