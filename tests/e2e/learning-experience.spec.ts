@@ -58,7 +58,9 @@ const signIn = async (
   ).toBeVisible();
   // Wait for the chapter query to settle before the caller navigates away,
   // so browser health never records a navigation-aborted manifest fetch.
-  await expect(page.getByRole('heading', { name: '色彩任務選擇大廳' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
+  ).toBeVisible();
 };
 
 test('Learning Experience phase gate', async ({

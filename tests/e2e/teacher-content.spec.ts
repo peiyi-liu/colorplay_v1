@@ -88,7 +88,9 @@ const signInStudent = async (
   await page.getByLabel('密碼').fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u);
-  await expect(page.getByRole('heading', { name: '色彩任務選擇大廳' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
+  ).toBeVisible();
 };
 
 const signInTeacher = async (

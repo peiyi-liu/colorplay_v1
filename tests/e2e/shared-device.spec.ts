@@ -24,7 +24,9 @@ test('isolates two accounts that use the same browser page in sequence', async (
 
   await page.goto('/login');
   await signIn(page, TEST_USERS.studentOne);
-  await expect(page.getByRole('heading', { name: '色彩任務選擇大廳' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
+  ).toBeVisible();
   await page.getByRole('link', { name: '個人資料' }).click();
   await expect(
     page.getByRole('heading', { name: 'student.one' }),
