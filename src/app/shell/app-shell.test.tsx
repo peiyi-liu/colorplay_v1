@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
+import { ToastProvider } from '../../components/ui/toast';
 import { AppShell } from './app-shell';
 
 vi.mock('../../features/auth/context/auth-context', () => ({
@@ -75,7 +76,9 @@ describe('AppShell', () => {
   it('provides a skip link, banner, and main outlet region', () => {
     render(
       <MemoryRouter>
-        <AppShell />
+        <ToastProvider>
+          <AppShell />
+        </ToastProvider>
       </MemoryRouter>,
     );
 
@@ -90,7 +93,9 @@ describe('AppShell', () => {
   it('uses a labelled home link without treating navigation as a route CTA', () => {
     render(
       <MemoryRouter>
-        <AppShell />
+        <ToastProvider>
+          <AppShell />
+        </ToastProvider>
       </MemoryRouter>,
     );
 
@@ -106,7 +111,9 @@ describe('AppShell', () => {
   it('does not show teacher navigation to an authoritative student profile', () => {
     render(
       <MemoryRouter>
-        <AppShell />
+        <ToastProvider>
+          <AppShell />
+        </ToastProvider>
       </MemoryRouter>,
     );
 
@@ -129,7 +136,9 @@ describe('AppShell', () => {
   it('shows the authenticated student server economy summary', () => {
     render(
       <MemoryRouter>
-        <AppShell />
+        <ToastProvider>
+          <AppShell />
+        </ToastProvider>
       </MemoryRouter>,
     );
 
@@ -156,7 +165,9 @@ describe('AppShell', () => {
 
     render(
       <MemoryRouter>
-        <AppShell />
+        <ToastProvider>
+          <AppShell />
+        </ToastProvider>
       </MemoryRouter>,
     );
 
@@ -171,7 +182,9 @@ describe('AppShell', () => {
     );
     const { rerender } = render(
       <MemoryRouter>
-        <AppShell />
+        <ToastProvider>
+          <AppShell />
+        </ToastProvider>
       </MemoryRouter>,
     );
     expect(screen.getByRole('status')).toHaveTextContent('經濟資料載入中…');
@@ -181,7 +194,9 @@ describe('AppShell', () => {
     );
     rerender(
       <MemoryRouter>
-        <AppShell />
+        <ToastProvider>
+          <AppShell />
+        </ToastProvider>
       </MemoryRouter>,
     );
 
@@ -217,7 +232,9 @@ describe('AppShell', () => {
 
     render(
       <MemoryRouter>
-        <AppShell />
+        <ToastProvider>
+          <AppShell />
+        </ToastProvider>
       </MemoryRouter>,
     );
 
@@ -234,7 +251,9 @@ describe('AppShell', () => {
   it('renders the ggame numbered primary rail for students', () => {
     render(
       <MemoryRouter>
-        <AppShell />
+        <ToastProvider>
+          <AppShell />
+        </ToastProvider>
       </MemoryRouter>,
     );
 
@@ -279,7 +298,9 @@ describe('AppShell', () => {
 
     render(
       <MemoryRouter>
-        <AppShell />
+        <ToastProvider>
+          <AppShell />
+        </ToastProvider>
       </MemoryRouter>,
     );
 
@@ -316,7 +337,11 @@ describe('AppShell', () => {
       ],
       { initialEntries: ['/app'] },
     );
-    render(<RouterProvider router={router} />);
+    render(
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>,
+    );
 
     await userEvent.click(screen.getByRole('button', { name: '登出' }));
 
@@ -338,7 +363,9 @@ describe('AppShell', () => {
     });
     render(
       <MemoryRouter initialEntries={['/app']}>
-        <AppShell />
+        <ToastProvider>
+          <AppShell />
+        </ToastProvider>
       </MemoryRouter>,
     );
 
@@ -411,7 +438,11 @@ describe('AppShell', () => {
       ],
       { initialEntries: ['/app'] },
     );
-    render(<RouterProvider router={router} />);
+    render(
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>,
+    );
 
     await userEvent.click(screen.getByRole('button', { name: '登出' }));
     await userEvent.click(

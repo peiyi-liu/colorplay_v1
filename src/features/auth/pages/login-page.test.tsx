@@ -9,6 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AuthContext, type AuthContextValue } from '../context/auth-context';
 import { AuthRepositoryError } from '../types';
+import { ToastProvider } from '../../../components/ui/toast';
 import { LoginPage } from './login-page';
 
 const validCredentials = {
@@ -37,7 +38,9 @@ describe('LoginPage', () => {
     render(
       <MemoryRouter>
         <AuthContext.Provider value={createAuthValue()}>
-          <LoginPage />
+          <ToastProvider>
+            <LoginPage />
+          </ToastProvider>
         </AuthContext.Provider>
       </MemoryRouter>,
     );
@@ -63,7 +66,9 @@ describe('LoginPage', () => {
     render(
       <MemoryRouter>
         <AuthContext.Provider value={createAuthValue(signIn)}>
-          <LoginPage />
+          <ToastProvider>
+            <LoginPage />
+          </ToastProvider>
         </AuthContext.Provider>
       </MemoryRouter>,
     );
@@ -89,7 +94,9 @@ describe('LoginPage', () => {
     render(
       <MemoryRouter>
         <AuthContext.Provider value={createAuthValue(signIn)}>
-          <LoginPage />
+          <ToastProvider>
+            <LoginPage />
+          </ToastProvider>
         </AuthContext.Provider>
       </MemoryRouter>,
     );
@@ -112,7 +119,9 @@ describe('LoginPage', () => {
     render(
       <MemoryRouter>
         <AuthContext.Provider value={createAuthValue(signIn)}>
-          <LoginPage />
+          <ToastProvider>
+            <LoginPage />
+          </ToastProvider>
         </AuthContext.Provider>
       </MemoryRouter>,
     );
@@ -143,7 +152,9 @@ describe('LoginPage', () => {
     render(
       <MemoryRouter>
         <AuthContext.Provider value={createAuthValue(signIn)}>
-          <LoginPage />
+          <ToastProvider>
+            <LoginPage />
+          </ToastProvider>
         </AuthContext.Provider>
       </MemoryRouter>,
     );
@@ -188,7 +199,9 @@ describe('LoginPage', () => {
     );
     render(
       <AuthContext.Provider value={createAuthValue(signIn)}>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </AuthContext.Provider>,
     );
 
@@ -218,7 +231,9 @@ describe('LoginPage', () => {
     );
     render(
       <AuthContext.Provider value={createAuthValue(signIn)}>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </AuthContext.Provider>,
     );
 
@@ -263,7 +278,9 @@ describe('LoginPage', () => {
       );
       render(
         <AuthContext.Provider value={createAuthValue()}>
-          <RouterProvider router={router} />
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
         </AuthContext.Provider>,
       );
 
@@ -303,7 +320,9 @@ describe('LoginPage', () => {
     );
     render(
       <AuthContext.Provider value={createAuthValue()}>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </AuthContext.Provider>,
     );
     await fillValidCredentials(user);
@@ -321,7 +340,9 @@ it('shows the ggame auth portal branding', () => {
   render(
     <MemoryRouter>
       <AuthContext.Provider value={createAuthValue()}>
-        <LoginPage />
+        <ToastProvider>
+          <LoginPage />
+        </ToastProvider>
       </AuthContext.Provider>
     </MemoryRouter>,
   );

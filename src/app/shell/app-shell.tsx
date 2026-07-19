@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { useToast } from '../../components/ui/toast';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { EconomySummaryView } from '../../features/rewards/components/economy-summary';
@@ -30,6 +31,7 @@ export function AppShell() {
   const auth = useAuth();
   const navigate = useNavigate();
   const profile = useMyProfile();
+  const toast = useToast();
   const signOutPending = useRef(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState(false);
@@ -95,6 +97,7 @@ export function AppShell() {
                     () => {
                       signOutPending.current = false;
                       setIsSigningOut(false);
+                      toast({ message: '已安全登出。', tone: 'info' });
                       return navigate('/login', { replace: true });
                     },
                     () => {

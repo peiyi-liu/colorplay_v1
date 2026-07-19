@@ -242,3 +242,32 @@
 - [ ] **Gate Step 1:** 拋棄式 headless precheck 綠後，clean `GATE_SHA` 跑 `pnpm phase:ui-restyle`。
 - [ ] **Gate Step 2:** delivery-gate 檢查單（AC 對照、風險、保留項）寫入 gate 報告；owner 人工核可 GGAME 並列截圖。
 - [ ] **Gate Step 3:** PASS 後在 `.superpowers/sdd/progress.md` close phase；redeploy staging；commit `docs: close ui restyle phase`。Reservations：學號登入（下一 phase ADR）、GGAME 後續視覺修訂只動 token/元件層、真機證據待人工。
+
+---
+
+## Owner 回饋增補（2026-07-19 預覽後核准，依序執行）
+
+### Task 11a: 快速修正批 — DONE
+
+- [x] #2 登入預設 `/app` 大廳（既有 fallbackDestination 已滿足，e2e 釘住）。
+- [x] #1 sessionStorage session（關分頁即登出、reload 可復原）；auth-guards 儲存衛生斷言升級為「localStorage 全空＋sessionStorage 僅 token key」。
+- [x] #6 全域 Toast 系統（右上角、success/error/info、auto-dismiss、error 用 alert 播報）；接線：商店購買/裝備（改為唯一回饋通道）、登入成功、登出。
+- [x] 驗證：unit 104 檔 631 綠、e2e 47/47。
+
+### Task 11b: 認證入口 GGAME 化（欄位仍 Email/密碼）
+
+- [ ] 全螢幕深色遮罩＋置中白卡＋學生（黃）/教師（靛）雙頁籤視覺。
+
+### Task 11c: 教師區重排（工作區/教學分析/題庫管理/Live 主持/班級管理）
+
+- [ ] `/teacher` 依 GGAME 教師端版型重組（廣播控制台入口卡、指標卡、雙欄診斷、學生表）。
+
+### Task 11d: 學生六頁深度優化（進度/作業/Live/排行榜/成就/個人資料）
+
+- [ ] 逐頁 GGAME 語彙重排。
+
+### Task 11e: 課後任務實戰 5 階精熟（含 mastery migration + pgTAP）
+
+- [ ] 不限時多次嘗試＋選項鎖定＋逐層提示之 mastery session 後端模式與新頁；導覽軌 tab2 改指新頁。
+
+### Task 12 依原計畫收尾。

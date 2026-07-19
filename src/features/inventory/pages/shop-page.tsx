@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { useToast } from '../../../components/ui/toast';
 import {
   useBlookInventory,
   useEquipBlook,
@@ -36,27 +37,23 @@ const mutationErrorMessage = (error: unknown): string => {
 function FrameShopSection({
   repository,
 }: Readonly<{ repository?: InventoryRepository }>) {
+  const toast = useToast();
   const frames = useFrameInventory(repository);
   const purchase = usePurchaseFrame(repository);
   const equip = useEquipFrame(repository);
-  const [message, setMessage] = useState<string>();
-  const [error, setError] = useState<string>();
-
   if (frames.isPending || frames.isError) return null;
 
   const run = async (item: FrameInventoryItem) => {
-    setMessage(undefined);
-    setError(undefined);
     try {
       if (!item.owned) {
         await purchase.mutateAsync(item.id);
-        setMessage(`已購買${item.name}。`);
+        toast({ message: `已購買${item.name}。`, tone: 'success' });
         return;
       }
       await equip.mutateAsync(item.id);
-      setMessage(`已裝備${item.name}。`);
+      toast({ message: `已裝備${item.name}。`, tone: 'success' });
     } catch (mutationError) {
-      setError(mutationErrorMessage(mutationError));
+      toast({ message: mutationErrorMessage(mutationError), tone: 'error' });
     }
   };
 
@@ -64,8 +61,6 @@ function FrameShopSection({
     <section aria-labelledby="frame-shop-title" className="frame-shop">
       <h2 id="frame-shop-title">尊絕外顯邊框</h2>
       <p className="frame-shop__hint">裝備後將顯示在大廳頭貼外框。</p>
-      {message ? <p role="status">{message}</p> : null}
-      {error ? <p role="alert">{error}</p> : null}
       <div className="frame-shop__grid">
         {frames.data.items.map((item) => (
           <article className="frame-card" key={item.id}>
@@ -106,13 +101,12 @@ function FrameShopSection({
 export function ShopPage({
   repository,
 }: Readonly<{ repository?: InventoryRepository }>) {
+  const toast = useToast();
   const inventory = useBlookInventory(repository);
   const purchase = usePurchaseBlook(repository);
   const equip = useEquipBlook(repository);
   const [selectedPurchase, setSelectedPurchase] =
     useState<BlookInventoryItem>();
-  const [announcement, setAnnouncement] = useState<string>();
-  const [actionError, setActionError] = useState<string>();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const purchaseTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -170,28 +164,24 @@ export function ShopPage({
   }
 
   const runEquip = async (item: BlookInventoryItem) => {
-    setActionError(undefined);
-    setAnnouncement(undefined);
     try {
       await equip.mutateAsync(item.id);
-      setAnnouncement(`已裝備${item.name}。`);
+      toast({ message: `已裝備${item.name}。`, tone: 'success' });
     } catch (error) {
-      setActionError(mutationErrorMessage(error));
+      toast({ message: mutationErrorMessage(error), tone: 'error' });
     }
   };
 
   const confirmPurchase = async () => {
     if (!selectedPurchase) return;
     const item = selectedPurchase;
-    setActionError(undefined);
-    setAnnouncement(undefined);
     try {
       await purchase.mutateAsync(item.id);
       setSelectedPurchase(undefined);
-      setAnnouncement(`已購買${item.name}。`);
+      toast({ message: `已購買${item.name}。`, tone: 'success' });
     } catch (error) {
       setSelectedPurchase(undefined);
-      setActionError(mutationErrorMessage(error));
+      toast({ message: mutationErrorMessage(error), tone: 'error' });
     }
   };
 
@@ -205,9 +195,6 @@ export function ShopPage({
         </div>
         <strong>{String(inventory.data.tokenBalance)} Token 可用</strong>
       </header>
-
-      {announcement ? <p role="status">{announcement}</p> : null}
-      {actionError ? <p role="alert">{actionError}</p> : null}
 
       <div className="blook-grid">
         {inventory.data.items.map((item) => {
@@ -237,8 +224,6 @@ export function ShopPage({
                   className="primary-action"
                   disabled={equip.isPending || purchase.isPending}
                   onClick={(event) => {
-                    setActionError(undefined);
-                    setAnnouncement(undefined);
                     purchaseTriggerRef.current = event.currentTarget;
                     setSelectedPurchase(item);
                   }}

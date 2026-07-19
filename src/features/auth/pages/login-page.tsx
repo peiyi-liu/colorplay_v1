@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { useToast } from '../../../components/ui/toast';
 import { useAuth } from '../context/auth-context';
 import { signInSchema, type SignInValues } from '../schemas/sign-in-schema';
 import { AuthRepositoryError, type AuthErrorCode } from '../types';
@@ -58,6 +59,7 @@ export function LoginPage() {
   const auth = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const toast = useToast();
   const pendingSubmission = useRef(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [portal, setPortal] = useState<'student' | 'teacher'>('student');
@@ -128,6 +130,10 @@ export function LoginPage() {
             setSubmitError(null);
             try {
               await auth.signIn(values);
+              toast({
+                message: '登入成功，歡迎回到 ColorPlay！',
+                tone: 'success',
+              });
               await navigate(
                 readDestination(
                   location.state,

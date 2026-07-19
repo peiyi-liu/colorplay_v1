@@ -1,3 +1,4 @@
+import { ToastProvider } from '../../components/ui/toast';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { type ReactNode, useMemo } from 'react';
 import { createAuthRepository } from '../../features/auth/api/auth-repository';
@@ -24,7 +25,9 @@ export function AppProviders({ authRepository, children }: AppProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthBootstrap repository={repository}>{children}</AuthBootstrap>
+      <ToastProvider>
+        <AuthBootstrap repository={repository}>{children}</AuthBootstrap>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

@@ -10,6 +10,7 @@ import {
   type InventoryRepository,
   InventoryRepositoryError,
 } from '../types';
+import { ToastProvider } from '../../../components/ui/toast';
 import { ShopPage } from './shop-page';
 
 const items = [
@@ -72,7 +73,9 @@ const renderShop = (shopRepository: InventoryRepository) => {
   function Wrapper({ children }: Readonly<{ children: ReactNode }>) {
     return (
       <MemoryRouter>
-        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+        <QueryClientProvider client={client}>
+          <ToastProvider>{children}</ToastProvider>
+        </QueryClientProvider>
       </MemoryRouter>
     );
   }

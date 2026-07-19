@@ -171,9 +171,10 @@ test('proves loading, intended-route retention, and a real authenticated outlet'
   const authenticatedPage = await authenticatedContext.newPage();
   const authenticatedHealth = attachHealthCollection(authenticatedPage);
   await authenticatedPage.goto('/login');
+  // 政策：session 僅存 sessionStorage（關閉分頁即登出，reload 仍可復原）。
   await authenticatedPage.evaluate(
     ({ key, session }) => {
-      localStorage.setItem(key, JSON.stringify(session));
+      sessionStorage.setItem(key, JSON.stringify(session));
     },
     { key: storageKey, session: authenticatedSession },
   );
@@ -186,11 +187,15 @@ test('proves loading, intended-route retention, and a real authenticated outlet'
   );
   expect(
     await authenticatedPage.evaluate(
-      (allowedKey) =>
-        Object.keys(localStorage).filter((key) => key !== allowedKey),
+      (allowedKey) => ({
+        localKeys: Object.keys(localStorage),
+        sessionExtras: Object.keys(sessionStorage).filter(
+          (key) => key !== allowedKey,
+        ),
+      }),
       storageKey,
     ),
-  ).toEqual([]);
+  ).toEqual({ localKeys: [], sessionExtras: [] });
   expect(observedErrorCount(authenticatedHealth)).toBe(0);
   await authenticatedPage.close();
   await authenticatedContext.close();
