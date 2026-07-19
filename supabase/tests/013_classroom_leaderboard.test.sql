@@ -256,7 +256,8 @@ select ok(
   (
     select bool_and(
       (entry - array[
-        'active_blook_id', 'display_name', 'is_self', 'rank', 'total_xp'
+        'active_blook_id', 'display_name', 'frame_gradient_end',
+        'frame_gradient_start', 'is_self', 'rank', 'total_xp'
       ]) = '{}'::jsonb
     )
     from jsonb_array_elements(

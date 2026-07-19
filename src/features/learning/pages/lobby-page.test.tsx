@@ -144,6 +144,8 @@ describe('LobbyPage', () => {
       asResult({
         data: {
           activeBlookId: 'b1',
+          frameGradientEnd: null,
+          frameGradientStart: null,
           tokenBalance: 40,
           items: [
             {
@@ -181,8 +183,11 @@ describe('LobbyPage', () => {
           classroomId: '31000000-0000-0000-0000-000000000001',
           classroomName: '設計一甲',
           generatedAt: '2026-07-19T00:00:00Z',
+          memberCount: 12,
           selfEntry: {
             activeBlookId: 'b1',
+            frameGradientEnd: null,
+            frameGradientStart: null,
             displayName: '學生一號',
             isSelf: true,
             rank: 6,

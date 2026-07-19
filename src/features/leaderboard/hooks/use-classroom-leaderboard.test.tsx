@@ -19,6 +19,7 @@ const board = (classroomId: string): ClassroomLeaderboard => ({
   classroomId,
   classroomName: `Class ${classroomId.at(-1) ?? ''}`,
   generatedAt: '2026-07-17T02:00:00.000Z',
+  memberCount: 12,
   selfEntry: null,
   topEntries: [],
 });

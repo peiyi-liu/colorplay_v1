@@ -11,6 +11,7 @@ import {
   useFrameInventory,
 } from '../../inventory/hooks/use-blook-inventory';
 import { useClassroomLeaderboard } from '../../leaderboard/hooks/use-classroom-leaderboard';
+import { toPercentile } from '../../leaderboard/lib/percentile';
 import { useMyProfile } from '../../profile/hooks/use-my-profile';
 import { useEconomySummary } from '../../rewards/hooks/use-economy-summary';
 import { usePublishedChapters } from '../api/chapters';
@@ -31,6 +32,13 @@ function ProfileCard() {
   const selfRank = firstClassroomId
     ? leaderboard.data?.selfEntry?.rank
     : undefined;
+  const memberCount = firstClassroomId
+    ? (leaderboard.data?.memberCount ?? 0)
+    : 0;
+  const percentile =
+    selfRank !== undefined && memberCount > 0
+      ? toPercentile(selfRank, memberCount)
+      : undefined;
 
   return (
     <Card className="lobby__profile">
@@ -65,6 +73,9 @@ function ProfileCard() {
         <StatTile label="累計積分 (XP)" value={economy.data?.totalXp ?? '—'} />
         {selfRank !== undefined ? (
           <StatTile label="全體排名" value={selfRank} />
+        ) : null}
+        {percentile !== undefined ? (
+          <StatTile label="當前 PR" value={percentile} />
         ) : null}
         <StatTile
           label="持有代幣"

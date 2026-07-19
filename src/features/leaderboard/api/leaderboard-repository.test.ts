@@ -12,8 +12,11 @@ const validPayload = {
   classroom_id: classroomId,
   classroom_name: '色彩一班',
   generated_at: '2026-07-17T02:00:00.123456+00:00',
+  member_count: 12,
   self_entry: {
     active_blook_id: null,
+    frame_gradient_end: null,
+    frame_gradient_start: null,
     display_name: '學生乙',
     is_self: true,
     rank: 12,
@@ -22,6 +25,8 @@ const validPayload = {
   top_entries: [
     {
       active_blook_id: '50000000-0000-0000-0000-000000000001',
+      frame_gradient_end: null,
+      frame_gradient_start: null,
       display_name: '學生甲',
       is_self: false,
       rank: 1,
@@ -60,8 +65,11 @@ describe('LeaderboardRepository', () => {
       classroomId,
       classroomName: '色彩一班',
       generatedAt: '2026-07-17T02:00:00.123456+00:00',
+      memberCount: 12,
       selfEntry: {
         activeBlookId: null,
+        frameGradientEnd: null,
+        frameGradientStart: null,
         displayName: '學生乙',
         isSelf: true,
         rank: 12,
@@ -70,6 +78,8 @@ describe('LeaderboardRepository', () => {
       topEntries: [
         {
           activeBlookId: '50000000-0000-0000-0000-000000000001',
+          frameGradientEnd: null,
+          frameGradientStart: null,
           displayName: '學生甲',
           isSelf: false,
           rank: 1,
@@ -77,6 +87,8 @@ describe('LeaderboardRepository', () => {
         },
         {
           activeBlookId: '50000000-0000-0000-0000-000000000001',
+          frameGradientEnd: null,
+          frameGradientStart: null,
           displayName: '學生丙',
           isSelf: false,
           rank: 2,

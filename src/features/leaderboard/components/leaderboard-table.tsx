@@ -13,6 +13,30 @@ const safeBlook = (
   return `${presentation.emoji} ${presentation.name}`;
 };
 
+function FramedBlook({
+  blooks,
+  entry,
+}: Readonly<{
+  blooks: readonly BlookInventoryItem[];
+  entry: LeaderboardEntry;
+}>) {
+  const label = safeBlook(entry.activeBlookId, blooks);
+  if (!entry.frameGradientStart || !entry.frameGradientEnd) {
+    return <span>{label}</span>;
+  }
+  return (
+    <span
+      className="leaderboard-framed-blook"
+      data-framed="true"
+      style={{
+        borderImage: `linear-gradient(to right, ${entry.frameGradientStart}, ${entry.frameGradientEnd}) 1`,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
 function SelfRankCard({
   blooks,
   entry,
@@ -25,7 +49,7 @@ function SelfRankCard({
       <strong>第 {String(entry.rank)} 名</strong>
       <span>{entry.displayName}</span>
       <span>這是你</span>
-      <span>{safeBlook(entry.activeBlookId, blooks)}</span>
+      <FramedBlook blooks={blooks} entry={entry} />
       <span>{String(entry.totalXp)} XP</span>
     </aside>
   );
@@ -68,7 +92,9 @@ export function LeaderboardTable({
                     </>
                   ) : null}
                 </td>
-                <td>{safeBlook(entry.activeBlookId, blooks)}</td>
+                <td>
+                  <FramedBlook blooks={blooks} entry={entry} />
+                </td>
                 <td>{String(entry.totalXp)} XP</td>
               </tr>
             ))}

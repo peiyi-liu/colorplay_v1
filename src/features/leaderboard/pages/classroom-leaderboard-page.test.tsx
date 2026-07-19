@@ -17,6 +17,7 @@ const board: ClassroomLeaderboard = {
   classroomId,
   classroomName: '色彩一班',
   generatedAt: '2026-07-17T02:00:00.000Z',
+  memberCount: 12,
   selfEntry: null,
   topEntries: [],
 };
@@ -27,6 +28,8 @@ const inventoryRepository: InventoryRepository = {
   purchaseFrame: vi.fn(),
   getInventory: vi.fn().mockResolvedValue({
     activeBlookId: '50000000-0000-0000-0000-000000000001',
+    frameGradientEnd: null,
+    frameGradientStart: null,
     items: [],
     tokenBalance: 0,
   }),

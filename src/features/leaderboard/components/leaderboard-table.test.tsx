@@ -29,8 +29,11 @@ const board: ClassroomLeaderboard = {
   classroomId: 'ca000000-0000-4000-8000-000000000001',
   classroomName: '色彩一班',
   generatedAt: '2026-07-17T02:00:00.000Z',
+  memberCount: 12,
   selfEntry: {
     activeBlookId: null,
+    frameGradientEnd: null,
+    frameGradientStart: null,
     displayName: '本人',
     isSelf: true,
     rank: 12,
@@ -39,6 +42,8 @@ const board: ClassroomLeaderboard = {
   topEntries: [
     {
       activeBlookId: blooks[1]?.id ?? null,
+      frameGradientEnd: null,
+      frameGradientStart: null,
       displayName: '子安',
       isSelf: false,
       rank: 1,
@@ -46,6 +51,8 @@ const board: ClassroomLeaderboard = {
     },
     {
       activeBlookId: '59999999-0000-0000-0000-000000000099',
+      frameGradientEnd: null,
+      frameGradientStart: null,
       displayName: '阿美',
       isSelf: false,
       rank: 2,

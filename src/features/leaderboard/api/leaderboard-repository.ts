@@ -18,9 +18,15 @@ const safePositiveInteger = z.number().int().positive();
 const utcTimestamp = z.iso
   .datetime({ offset: true })
   .refine((value) => value.endsWith('Z') || value.endsWith('+00:00'));
+const frameHex = z
+  .string()
+  .regex(/^#[0-9a-f]{6}$/u)
+  .nullable();
 const entrySchema = z.strictObject({
   active_blook_id: databaseUuid.nullable(),
   display_name: z.string().min(1),
+  frame_gradient_end: frameHex,
+  frame_gradient_start: frameHex,
   is_self: z.boolean(),
   rank: safePositiveInteger,
   total_xp: safeNonNegativeInteger,
@@ -30,6 +36,7 @@ const payloadSchema = z
     classroom_id: databaseUuid,
     classroom_name: z.string().min(1).max(80),
     generated_at: utcTimestamp,
+    member_count: safeNonNegativeInteger,
     self_entry: entrySchema.nullable(),
     top_entries: z.array(entrySchema).max(10),
   })
@@ -62,6 +69,8 @@ const payloadSchema = z
 const mapEntry = (entry: z.infer<typeof entrySchema>): LeaderboardEntry => ({
   activeBlookId: entry.active_blook_id,
   displayName: entry.display_name,
+  frameGradientEnd: entry.frame_gradient_end,
+  frameGradientStart: entry.frame_gradient_start,
   isSelf: entry.is_self,
   rank: entry.rank,
   totalXp: entry.total_xp,
@@ -97,6 +106,7 @@ export function createLeaderboardRepository(
         classroomId: parsed.data.classroom_id,
         classroomName: parsed.data.classroom_name,
         generatedAt: parsed.data.generated_at,
+        memberCount: parsed.data.member_count,
         selfEntry: parsed.data.self_entry
           ? mapEntry(parsed.data.self_entry)
           : null,

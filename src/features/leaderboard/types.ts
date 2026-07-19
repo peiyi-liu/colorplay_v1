@@ -1,6 +1,8 @@
 export type LeaderboardEntry = Readonly<{
   activeBlookId: string | null;
   displayName: string;
+  frameGradientEnd: string | null;
+  frameGradientStart: string | null;
   isSelf: boolean;
   rank: number;
   totalXp: number;
@@ -10,6 +12,7 @@ export type ClassroomLeaderboard = Readonly<{
   classroomId: string;
   classroomName: string;
   generatedAt: string;
+  memberCount: number;
   selfEntry: LeaderboardEntry | null;
   topEntries: readonly LeaderboardEntry[];
 }>;
