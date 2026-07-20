@@ -45,6 +45,12 @@ pnpm dlx vercel deploy --prod --token "$VERCEL_TOKEN"
 
 ## 4. Phase 9-AUTH（帳號制認證）增量部署（2026-07-20）
 
+> **狀態：已於 2026-07-20 執行完成**（migrations ×4、functions ×3、remote seed、
+> Site URL／redirect 白名單／OTP 長度 6 已由 Management API 設定；Vercel 部署 READY）。
+> **例外**：免費方案＋內建寄信「不可自訂郵件模板」——註冊頁 6 碼驗證碼信在 staging
+> 會寄成預設登入連結，Email 認證流程需待接上自訂 SMTP（接上後把下方模板設定補上）。
+> 忘記密碼／重設為連結型信件，staging 可用（內建寄信每小時 2–4 封）。
+
 前置：本地已全綠（unit 652、pgTAP 38 檔、e2e 48 passed）。staging 目前落後
 4 個 migration（avatar_frames／mastery_sessions／leaderboard_frames／account_identity）
 與 3 個 Edge Functions。依序執行：
