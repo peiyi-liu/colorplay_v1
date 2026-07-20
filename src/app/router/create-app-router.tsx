@@ -1,7 +1,10 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { RequireAuth } from '../../features/auth/components/require-auth';
 import { RequireRole } from '../../features/auth/components/require-role';
+import { ForgotPasswordPage } from '../../features/auth/pages/forgot-password-page';
 import { LoginPage } from '../../features/auth/pages/login-page';
+import { RegisterPage } from '../../features/auth/pages/register-page';
+import { ResetPasswordPage } from '../../features/auth/pages/reset-password-page';
 import { JoinClassroomRoute } from '../../features/classrooms/pages/join-classroom-route';
 import { StudentClassroomsPage } from '../../features/classrooms/pages/student-classrooms-page';
 import { ShopPage } from '../../features/inventory/pages/shop-page';
@@ -40,6 +43,18 @@ export function createAppRouter() {
         {
           path: '/login',
           element: <LoginPage />,
+        },
+        {
+          path: '/register',
+          element: <RegisterPage />,
+        },
+        {
+          path: '/forgot-password',
+          element: <ForgotPasswordPage />,
+        },
+        {
+          path: '/reset-password',
+          element: <ResetPasswordPage />,
         },
         {
           element: <RequireAuth />,

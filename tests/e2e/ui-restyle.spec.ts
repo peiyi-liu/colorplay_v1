@@ -38,7 +38,7 @@ const signIn = async (
   user: Readonly<{ email: string; password: string }>,
 ) => {
   await page.goto('/login');
-  await page.getByLabel('Email').fill(user.email);
+  await page.getByLabel('帳號').fill(user.email);
   await page.getByLabel('密碼').fill(user.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/(app|teacher)/u);

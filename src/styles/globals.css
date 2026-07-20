@@ -1965,3 +1965,52 @@ a {
   border-radius: var(--space-2);
   padding: 1px var(--space-1);
 }
+
+/* 帳號制認證（Phase 9-AUTH）：登入頁連結列、註冊頁行內驗證列與欄位說明。 */
+.login-form__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-2);
+}
+
+.login-form__link {
+  color: var(--slate-700);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.login-form__field-hint {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.login-form__inline-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.login-form__inline-row > input {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.login-form__secondary-action {
+  min-height: 44px;
+  border: 2px solid var(--slate-700);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--slate-700);
+  font-weight: 700;
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+}
+
+.login-form__secondary-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

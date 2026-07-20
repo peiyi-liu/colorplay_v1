@@ -3,6 +3,13 @@ export type SignInInput = Readonly<{
   password: string;
 }>;
 
+export type AccountSignInInput = Readonly<{
+  account: string;
+  classCode?: string;
+  password: string;
+  portal: 'student' | 'teacher';
+}>;
+
 export type AuthSession = Readonly<{
   userId: string;
   email: string;
@@ -22,6 +29,7 @@ export type AuthStateListener = (session: AuthSession | null) => void;
 
 export interface AuthRepository {
   signIn(input: SignInInput): Promise<AuthSession>;
+  signInWithAccount(input: AccountSignInInput): Promise<AuthSession>;
   signOut(): Promise<void>;
   getSession(): Promise<AuthSession | null>;
   onAuthStateChange(listener: AuthStateListener): () => void;

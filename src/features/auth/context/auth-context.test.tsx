@@ -46,6 +46,9 @@ const createRepositoryHarness = (
     getSession,
     onAuthStateChange,
     signIn,
+    signInWithAccount: vi.fn((): Promise<AuthSession> =>
+      Promise.resolve(authenticatedSession),
+    ),
     signOut,
   };
 
@@ -139,6 +142,7 @@ describe('Auth context', () => {
     const value: AuthContextValue = {
       session: null,
       signIn: () => Promise.resolve(),
+      signInWithAccount: () => Promise.resolve(),
       signOut: () => Promise.resolve(),
       status: 'anonymous',
     };
@@ -150,7 +154,7 @@ describe('Auth context', () => {
     );
 
     expect(screen.getByLabelText('Auth keys')).toHaveTextContent(
-      'session,signIn,signOut,status',
+      'session,signIn,signInWithAccount,signOut,status',
     );
   });
 });
@@ -570,6 +574,7 @@ describe('AuthBootstrap', () => {
         throw new Error('raw-provider-detail');
       }),
       signIn: vi.fn(),
+      signInWithAccount: vi.fn(),
       signOut: vi.fn(),
     };
 

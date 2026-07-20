@@ -1,12 +1,13 @@
 import type { Query, QueryClient } from '@tanstack/react-query';
 import { createContext, useContext } from 'react';
 
-import type { AuthSession, SignInInput } from '../types';
+import type { AccountSignInInput, AuthSession, SignInInput } from '../types';
 
 export type AuthContextValue = Readonly<{
   status: 'loading' | 'anonymous' | 'authenticated';
   session: AuthSession | null;
   signIn(input: SignInInput): Promise<void>;
+  signInWithAccount(input: AccountSignInInput): Promise<void>;
   signOut(): Promise<void>;
 }>;
 

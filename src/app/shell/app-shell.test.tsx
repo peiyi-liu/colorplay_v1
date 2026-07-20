@@ -41,6 +41,7 @@ describe('AppShell', () => {
         userId: 'student-one-id',
       },
       signIn: vi.fn(),
+      signInWithAccount: vi.fn(),
       signOut: vi.fn(),
       status: 'authenticated',
     });
@@ -152,6 +153,7 @@ describe('AppShell', () => {
     mockedUseAuth.mockReturnValue({
       session: null,
       signIn: vi.fn(),
+      signInWithAccount: vi.fn(),
       signOut: vi.fn(),
       status: 'anonymous',
     });
@@ -213,6 +215,7 @@ describe('AppShell', () => {
         userId: 'teacher-id',
       },
       signIn: vi.fn(),
+      signInWithAccount: vi.fn(),
       signOut: vi.fn(),
       status: 'authenticated',
     });
@@ -279,6 +282,7 @@ describe('AppShell', () => {
         userId: 'teacher-id',
       },
       signIn: vi.fn(),
+      signInWithAccount: vi.fn(),
       signOut: vi.fn(),
       status: 'authenticated',
     });
@@ -327,6 +331,7 @@ describe('AppShell', () => {
         userId: 'student-one-id',
       },
       signIn: vi.fn(),
+      signInWithAccount: vi.fn(),
       signOut,
       status: 'authenticated',
     });
@@ -358,6 +363,7 @@ describe('AppShell', () => {
         userId: 'student-one-id',
       },
       signIn: vi.fn(),
+      signInWithAccount: vi.fn(),
       signOut,
       status: 'authenticated',
     });
@@ -387,6 +393,7 @@ describe('AppShell', () => {
     const anonymous = {
       session: null,
       signIn: vi.fn(),
+      signInWithAccount: vi.fn(),
       signOut,
       status: 'anonymous',
     } as const;
@@ -396,6 +403,7 @@ describe('AppShell', () => {
         userId: 'student-one-id',
       },
       signIn: vi.fn(),
+      signInWithAccount: vi.fn(),
       signOut,
       status: 'authenticated',
     } as const;
@@ -405,6 +413,7 @@ describe('AppShell', () => {
         userId: 'student-two-id',
       },
       signIn: vi.fn(),
+      signInWithAccount: vi.fn(),
       signOut,
       status: 'authenticated',
     } as const;

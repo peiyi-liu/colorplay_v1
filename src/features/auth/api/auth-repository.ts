@@ -73,6 +73,37 @@ const handleThrown = (error: unknown): never => {
   throw toRepositoryError(error);
 };
 
+// Edge Function auth-login 的失敗分類：HTTP 錯誤＝憑證問題（後端一律 401 泛用
+// 回應），fetch 層失敗＝網路。
+const classifyFunctionError = (error: unknown): AuthRepositoryError => {
+  const name =
+    typeof error === 'object' && error !== null && 'name' in error
+      ? error.name
+      : undefined;
+  return new AuthRepositoryError(
+    name === 'FunctionsFetchError'
+      ? 'AUTH_NETWORK'
+      : 'AUTH_INVALID_CREDENTIALS',
+  );
+};
+
+const readSessionTokens = (
+  data: unknown,
+): Readonly<{ access_token: string; refresh_token: string }> => {
+  if (!isRecord(data) || !isRecord(data.session)) return throwUnknown();
+  const { access_token: accessToken, refresh_token: refreshToken } =
+    data.session;
+  if (
+    typeof accessToken !== 'string' ||
+    accessToken.length === 0 ||
+    typeof refreshToken !== 'string' ||
+    refreshToken.length === 0
+  ) {
+    return throwUnknown();
+  }
+  return { access_token: accessToken, refresh_token: refreshToken };
+};
+
 export const createAuthRepository = (
   client: SupabaseClient<Database>,
 ): AuthRepository => ({
@@ -81,6 +112,30 @@ export const createAuthRepository = (
       const result: unknown = await client.auth.signInWithPassword(input);
       const error = readResultError(result);
       if (error !== null) throw toRepositoryError(error);
+
+      return toAuthSession(readResultData(result).session);
+    } catch (error) {
+      return handleThrown(error);
+    }
+  },
+
+  async signInWithAccount(input) {
+    try {
+      const response = (await client.functions.invoke('auth-login', {
+        body: {
+          account: input.account,
+          classCode: input.classCode,
+          password: input.password,
+          portal: input.portal,
+        },
+      })) as Readonly<{ data: unknown; error: unknown }>;
+      if (response.error) throw classifyFunctionError(response.error);
+
+      const result: unknown = await client.auth.setSession(
+        readSessionTokens(response.data),
+      );
+      const sessionError = readResultError(result);
+      if (sessionError !== null) throw toRepositoryError(sessionError);
 
       return toAuthSession(readResultData(result).session);
     } catch (error) {

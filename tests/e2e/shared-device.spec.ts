@@ -10,7 +10,7 @@ const signIn = async (
   page: Page,
   credentials: (typeof TEST_USERS)['studentOne' | 'studentTwo'],
 ) => {
-  await page.getByLabel('Email').fill(credentials.email);
+  await page.getByLabel('帳號').fill(credentials.email);
   await page.getByLabel('密碼').fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
 };

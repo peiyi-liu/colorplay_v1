@@ -159,6 +159,7 @@ const createRepository = (session: AuthSession | null): AuthRepository => ({
   getSession: vi.fn(() => Promise.resolve(session)),
   onAuthStateChange: vi.fn(() => vi.fn()),
   signIn: vi.fn(),
+  signInWithAccount: vi.fn(),
   signOut: vi.fn(),
 });
 
@@ -193,7 +194,7 @@ describe('createAppRouter', () => {
     renderRouter('/login');
 
     expect(await screen.findByRole('heading', { name: '登入' })).toBeVisible();
-    expect(screen.getByLabelText('Email')).toHaveAttribute('type', 'email');
+    expect(screen.getByLabelText('帳號')).toHaveAttribute('type', 'text');
     expect(screen.getByLabelText('密碼')).toHaveAttribute('type', 'password');
     expect(screen.getByRole('button', { name: '登入' })).toHaveAttribute(
       'type',

@@ -160,7 +160,12 @@ site_url = "http://127.0.0.1:4173"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["http://127.0.0.1:4173/**"]
+additional_redirect_urls = [
+  "http://127.0.0.1:4173/**",
+  "http://localhost:4173/**",
+  "http://127.0.0.1:5173/**",
+  "http://localhost:5173/**",
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -196,7 +201,8 @@ password_requirements = ""
 
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
-email_sent = 2
+# 本地開發信件全部進 Mailpit（不真正寄出），放寬以支援註冊 OTP 的 E2E。
+email_sent = 100
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
 sms_sent = 30
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
@@ -247,6 +253,16 @@ otp_expiry = 3600
 # [auth.email.template.invite]
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
+
+# 註冊 Email 認證：信件顯示 6 碼驗證碼（{{ .Token }}），供表單內 verifyOtp。
+# Hosted 環境需在 Dashboard 將 Magic Link 與 Confirm signup 模板同步為此內容。
+[auth.email.template.magic_link]
+subject = "ColorPlay 電子郵件驗證碼"
+content_path = "./supabase/templates/email-otp.html"
+
+[auth.email.template.confirmation]
+subject = "ColorPlay 電子郵件驗證碼"
+content_path = "./supabase/templates/email-otp.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
@@ -372,7 +388,7 @@ authorization_url_path = "/oauth/consent"
 allow_dynamic_registration = false
 
 [edge_runtime]
-enabled = false
+enabled = true
 # Supported request policies: `oneshot`, `per_worker`.
 # `per_worker` (default) — enables hot reload during local development.
 # `oneshot` — fallback mode if hot reload causes issues (e.g. in large repos or with symlinks).
@@ -384,6 +400,17 @@ deno_version = 2
 
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
+
+# 認證前端點：函式內自行驗證（auth-login 密碼授與、student-register getUser、
+# auth-recover 恆泛用回應），不依賴 gateway JWT 驗證。
+[functions.auth-login]
+verify_jwt = false
+
+[functions.student-register]
+verify_jwt = false
+
+[functions.auth-recover]
+verify_jwt = false
 
 [analytics]
 enabled = false

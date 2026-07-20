@@ -65,12 +65,13 @@ describe('LeaderboardRepository with local Supabase', () => {
       'classroomId',
       'classroomName',
       'generatedAt',
+      'memberCount',
       'selfEntry',
       'topEntries',
     ]);
     expect(ownerBoard.topEntries).toHaveLength(2);
     expect(
-      ownerBoard.topEntries.every((entry) => Object.keys(entry).length === 5),
+      ownerBoard.topEntries.every((entry) => Object.keys(entry).length === 7),
     ).toBe(true);
     await expect(
       createLeaderboardRepository(teacherBClient).getClassroomLeaderboard(

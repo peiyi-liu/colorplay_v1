@@ -38,7 +38,7 @@ test('student completes a mixed ten-question challenge with durable server total
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
   await page.goto('/login');
-  await page.getByLabel('Email').fill(TEST_USERS.studentOne.email);
+  await page.getByLabel('帳號').fill(TEST_USERS.studentOne.email);
   await page.getByLabel('密碼').fill(TEST_USERS.studentOne.password);
   await page.getByRole('button', { name: '登入' }).click();
   await page.locator(`a[href="${CHALLENGE_LINK}"]`).click();
@@ -127,7 +127,7 @@ test('student completes a mixed ten-question challenge with durable server total
 
   await page.getByRole('button', { name: '登出' }).click();
   await expect(page).toHaveURL(/\/login$/u);
-  await page.getByLabel('Email').fill(TEST_USERS.studentTwo.email);
+  await page.getByLabel('帳號').fill(TEST_USERS.studentTwo.email);
   await page.getByLabel('密碼').fill(TEST_USERS.studentTwo.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(

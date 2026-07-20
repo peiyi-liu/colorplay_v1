@@ -21,7 +21,7 @@ const signInStudent = async (
   credentials: Readonly<{ email: string; password: string }>,
 ) => {
   await page.goto('/login');
-  await page.getByLabel('Email').fill(credentials.email);
+  await page.getByLabel('帳號').fill(credentials.email);
   await page.getByLabel('密碼').fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u);
@@ -36,7 +36,7 @@ const signInTeacher = async (
 ) => {
   await page.goto('/login');
   await page.getByRole('radio', { name: '教師' }).check();
-  await page.getByLabel('Email').fill(credentials.email);
+  await page.getByLabel('帳號').fill(credentials.email);
   await page.getByLabel('密碼').fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/teacher$/u);

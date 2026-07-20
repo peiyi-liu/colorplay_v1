@@ -129,3 +129,15 @@ export const CLASSROOM_FIXTURES = {
     name: 'Fixture Classroom Two',
   },
 } as const;
+
+// 帳號制認證（ADR 0003）：部分 fixture 使用者具備登入帳號（學號），
+// 供帳號登入路徑的 E2E 與 staging 展示使用；其餘沿用 Email 橋接。
+export const TEST_USER_ACCOUNTS = {
+  studentOne: { account: 'student01', fullName: '學生 一號' },
+  studentTwo: { account: 'student02', fullName: '學生 二號' },
+  teacher: { account: 'teacher01', fullName: '教師 一號' },
+} as const satisfies Partial<
+  Readonly<
+    Record<TestUserLabel, Readonly<{ account: string; fullName: string }>>
+  >
+>;

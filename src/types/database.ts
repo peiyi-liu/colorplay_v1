@@ -1390,7 +1390,9 @@ export type Database = {
           active_frame_id: string
           created_at: string
           display_name: string
+          full_name: string | null
           id: string
+          login_account: string | null
           reduced_motion: boolean
           role: Database["public"]["Enums"]["app_role"]
           timezone: string
@@ -1401,7 +1403,9 @@ export type Database = {
           active_frame_id: string
           created_at?: string
           display_name: string
+          full_name?: string | null
           id: string
+          login_account?: string | null
           reduced_motion?: boolean
           role?: Database["public"]["Enums"]["app_role"]
           timezone?: string
@@ -1412,7 +1416,9 @@ export type Database = {
           active_frame_id?: string
           created_at?: string
           display_name?: string
+          full_name?: string | null
           id?: string
+          login_account?: string | null
           reduced_motion?: boolean
           role?: Database["public"]["Enums"]["app_role"]
           timezone?: string

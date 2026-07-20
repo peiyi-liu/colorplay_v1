@@ -13,95 +13,137 @@ import { ToastProvider } from '../../../components/ui/toast';
 import { LoginPage } from './login-page';
 
 const validCredentials = {
+  account: 'cp045001',
   email: 'learner@colorplay.invalid',
   password: 'fixture-password',
 } as const;
 
 const createAuthValue = (
   signIn: AuthContextValue['signIn'] = () => Promise.resolve(),
+  signInWithAccount: AuthContextValue['signInWithAccount'] = () =>
+    Promise.resolve(),
 ): AuthContextValue => ({
   session: null,
   signIn,
+  signInWithAccount,
   signOut: () => Promise.resolve(),
   status: 'anonymous',
 });
 
-const fillValidCredentials = async (
+const fillEmailBridgeCredentials = async (
   user: ReturnType<typeof userEvent.setup>,
 ) => {
-  await user.type(screen.getByLabelText('Email'), validCredentials.email);
+  await user.type(screen.getByLabelText('帳號'), validCredentials.email);
   await user.type(screen.getByLabelText('密碼'), validCredentials.password);
 };
 
+const renderLoginPage = (value: AuthContextValue) =>
+  render(
+    <MemoryRouter>
+      <AuthContext.Provider value={value}>
+        <ToastProvider>
+          <LoginPage />
+        </ToastProvider>
+      </AuthContext.Provider>
+    </MemoryRouter>,
+  );
+
 describe('LoginPage', () => {
   it('groups labeled inputs and one primary submit action', async () => {
-    render(
-      <MemoryRouter>
-        <AuthContext.Provider value={createAuthValue()}>
-          <ToastProvider>
-            <LoginPage />
-          </ToastProvider>
-        </AuthContext.Provider>
-      </MemoryRouter>,
-    );
+    renderLoginPage(createAuthValue());
 
-    expect(screen.getByLabelText('Email')).toHaveAttribute('type', 'email');
+    expect(screen.getByLabelText('帳號')).toHaveAttribute('type', 'text');
     expect(screen.getByLabelText('密碼')).toHaveAttribute('type', 'password');
     expect(screen.getAllByRole('button', { name: '登入' })).toHaveLength(1);
 
     await userEvent.click(screen.getByRole('button', { name: '登入' }));
 
-    expect(await screen.findByText('請輸入有效的 Email')).toBeVisible();
-    expect(screen.getByLabelText('Email')).toHaveAccessibleDescription(
-      '請輸入有效的 Email',
+    expect(await screen.findByText('請輸入帳號')).toBeVisible();
+    expect(screen.getByLabelText('帳號')).toHaveAccessibleDescription(
+      '請輸入帳號',
     );
     expect(screen.getByLabelText('密碼')).toHaveAccessibleDescription(
-      '密碼需為 8 至 128 個字元',
+      '請輸入密碼',
     );
   });
 
-  it('uses the linked Traditional Chinese schema error for a malformed non-empty Email', async () => {
+  it('sends a student account through the account sign-in path', async () => {
     const user = userEvent.setup();
     const signIn = vi.fn(() => Promise.resolve());
-    render(
-      <MemoryRouter>
-        <AuthContext.Provider value={createAuthValue(signIn)}>
-          <ToastProvider>
-            <LoginPage />
-          </ToastProvider>
-        </AuthContext.Provider>
-      </MemoryRouter>,
-    );
+    const signInWithAccount = vi.fn(() => Promise.resolve());
+    renderLoginPage(createAuthValue(signIn, signInWithAccount));
 
-    await user.type(screen.getByLabelText('Email'), 'malformed-email');
+    await user.type(screen.getByLabelText('帳號'), validCredentials.account);
     await user.type(screen.getByLabelText('密碼'), validCredentials.password);
     await user.click(screen.getByRole('button', { name: '登入' }));
 
-    expect(await screen.findByText('請輸入有效的 Email')).toBeVisible();
-    expect(screen.getByLabelText('Email')).toHaveAccessibleDescription(
-      '請輸入有效的 Email',
-    );
+    await waitFor(() => {
+      expect(signInWithAccount).toHaveBeenCalledWith({
+        account: validCredentials.account,
+        password: validCredentials.password,
+        portal: 'student',
+      });
+    });
     expect(signIn).not.toHaveBeenCalled();
   });
 
+  it('keeps the email bridge for identifiers that contain @', async () => {
+    const user = userEvent.setup();
+    const signIn = vi.fn(() => Promise.resolve());
+    const signInWithAccount = vi.fn(() => Promise.resolve());
+    renderLoginPage(createAuthValue(signIn, signInWithAccount));
+
+    await fillEmailBridgeCredentials(user);
+    await user.click(screen.getByRole('button', { name: '登入' }));
+
+    await waitFor(() => {
+      expect(signIn).toHaveBeenCalledWith({
+        email: validCredentials.email,
+        password: validCredentials.password,
+      });
+    });
+    expect(signInWithAccount).not.toHaveBeenCalled();
+  });
+
+  it('requires the class code for teacher account logins', async () => {
+    const user = userEvent.setup();
+    const signInWithAccount = vi.fn(() => Promise.resolve());
+    renderLoginPage(createAuthValue(undefined, signInWithAccount));
+
+    await user.click(screen.getByRole('radio', { name: '教師診斷端' }));
+    await user.type(screen.getByLabelText('帳號'), 'teacher01');
+    await user.type(screen.getByLabelText('密碼'), validCredentials.password);
+    await user.click(screen.getByRole('button', { name: '登入' }));
+
+    expect(await screen.findByText('請輸入班級序號')).toBeVisible();
+    expect(signInWithAccount).not.toHaveBeenCalled();
+
+    await user.type(
+      screen.getByLabelText('管的班級（班級序號）'),
+      'ABCD-1234-EF56-7890',
+    );
+    await user.click(screen.getByRole('button', { name: '登入' }));
+
+    await waitFor(() => {
+      expect(signInWithAccount).toHaveBeenCalledWith({
+        account: 'teacher01',
+        classCode: 'ABCD-1234-EF56-7890',
+        password: validCredentials.password,
+        portal: 'teacher',
+      });
+    });
+  });
+
   it.each([
-    ['AUTH_INVALID_CREDENTIALS', 'Email 或密碼不正確'],
+    ['AUTH_INVALID_CREDENTIALS', '帳號或密碼不正確'],
     ['AUTH_NETWORK', '網路連線失敗，請稍後重試'],
     ['AUTH_UNKNOWN', '登入失敗，請使用追蹤代碼回報'],
   ] as const)('maps %s to a stable safe error', async (code, message) => {
     const user = userEvent.setup();
     const signIn = vi.fn(() => Promise.reject(new AuthRepositoryError(code)));
-    render(
-      <MemoryRouter>
-        <AuthContext.Provider value={createAuthValue(signIn)}>
-          <ToastProvider>
-            <LoginPage />
-          </ToastProvider>
-        </AuthContext.Provider>
-      </MemoryRouter>,
-    );
+    renderLoginPage(createAuthValue(signIn));
 
-    await fillValidCredentials(user);
+    await fillEmailBridgeCredentials(user);
     await user.click(screen.getByRole('button', { name: '登入' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message);
@@ -116,17 +158,9 @@ describe('LoginPage', () => {
     const signIn = vi.fn(() =>
       Promise.reject(new Error('raw provider detail learner@example.test')),
     );
-    render(
-      <MemoryRouter>
-        <AuthContext.Provider value={createAuthValue(signIn)}>
-          <ToastProvider>
-            <LoginPage />
-          </ToastProvider>
-        </AuthContext.Provider>
-      </MemoryRouter>,
-    );
+    renderLoginPage(createAuthValue(signIn));
 
-    await fillValidCredentials(user);
+    await fillEmailBridgeCredentials(user);
     await user.click(screen.getByRole('button', { name: '登入' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -149,17 +183,9 @@ describe('LoginPage', () => {
         }),
     );
     const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <AuthContext.Provider value={createAuthValue(signIn)}>
-          <ToastProvider>
-            <LoginPage />
-          </ToastProvider>
-        </AuthContext.Provider>
-      </MemoryRouter>,
-    );
+    renderLoginPage(createAuthValue(signIn));
 
-    await fillValidCredentials(user);
+    await fillEmailBridgeCredentials(user);
     const submit = screen.getByRole('button', { name: '登入' });
     await user.click(submit);
 
@@ -205,7 +231,7 @@ describe('LoginPage', () => {
       </AuthContext.Provider>,
     );
 
-    await fillValidCredentials(user);
+    await fillEmailBridgeCredentials(user);
     await user.click(screen.getByRole('button', { name: '登入' }));
 
     expect(
@@ -239,7 +265,7 @@ describe('LoginPage', () => {
 
     await user.click(screen.getByRole('radio', { name: '教師診斷端' }));
     expect(screen.getByText('教師入口')).toBeVisible();
-    await fillValidCredentials(user);
+    await fillEmailBridgeCredentials(user);
     await user.click(screen.getByRole('button', { name: '登入' }));
 
     expect(
@@ -284,7 +310,7 @@ describe('LoginPage', () => {
         </AuthContext.Provider>,
       );
 
-      await fillValidCredentials(user);
+      await fillEmailBridgeCredentials(user);
       await user.click(screen.getByRole('button', { name: '登入' }));
 
       expect(
@@ -325,7 +351,7 @@ describe('LoginPage', () => {
         </ToastProvider>
       </AuthContext.Provider>,
     );
-    await fillValidCredentials(user);
+    await fillEmailBridgeCredentials(user);
     await user.click(screen.getByRole('button', { name: '登入' }));
     expect(
       await screen.findByRole('heading', { name: '加入班級確認' }),
@@ -337,29 +363,13 @@ describe('LoginPage', () => {
 });
 
 it('shows the ggame auth portal branding', () => {
-  render(
-    <MemoryRouter>
-      <AuthContext.Provider value={createAuthValue()}>
-        <ToastProvider>
-          <LoginPage />
-        </ToastProvider>
-      </AuthContext.Provider>
-    </MemoryRouter>,
-  );
+  renderLoginPage(createAuthValue());
   expect(screen.getByText('ColorPlay 認證入口')).toBeInTheDocument();
   expect(screen.getByText('色彩對比形成性與精熟學習系統')).toBeInTheDocument();
 });
 
 it('switches the ggame portal tone and teacher note with the tabs', async () => {
-  render(
-    <MemoryRouter>
-      <AuthContext.Provider value={createAuthValue()}>
-        <ToastProvider>
-          <LoginPage />
-        </ToastProvider>
-      </AuthContext.Provider>
-    </MemoryRouter>,
-  );
+  renderLoginPage(createAuthValue());
   const portalSection = document.querySelector('.auth-portal');
   expect(portalSection).not.toBeNull();
   expect(portalSection).toHaveAttribute('data-portal', 'student');
@@ -368,4 +378,20 @@ it('switches the ggame portal tone and teacher note with the tabs', async () => 
   await userEvent.click(screen.getByRole('radio', { name: '教師診斷端' }));
   expect(portalSection).toHaveAttribute('data-portal', 'teacher');
   expect(screen.getByText(/教師端具備班級管理/u)).toBeInTheDocument();
+});
+
+it('offers register and forgot-password entries on the student portal only', async () => {
+  renderLoginPage(createAuthValue());
+  expect(screen.getByRole('link', { name: '註冊帳號' })).toHaveAttribute(
+    'href',
+    '/register',
+  );
+  expect(screen.getByRole('link', { name: '忘記密碼' })).toHaveAttribute(
+    'href',
+    '/forgot-password',
+  );
+
+  await userEvent.click(screen.getByRole('radio', { name: '教師診斷端' }));
+  expect(screen.queryByRole('link', { name: '註冊帳號' })).toBeNull();
+  expect(screen.getByRole('link', { name: '忘記密碼' })).toBeVisible();
 });

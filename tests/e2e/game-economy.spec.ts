@@ -43,7 +43,7 @@ test('Game Economy v2 phase gate', async ({ browserName, page }, testInfo) => {
   const health = attachBrowserHealth(page);
 
   await page.goto('/login');
-  await page.getByLabel('Email').fill(TEST_USERS.studentOne.email);
+  await page.getByLabel('帳號').fill(TEST_USERS.studentOne.email);
   await page.getByLabel('密碼').fill(TEST_USERS.studentOne.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u);

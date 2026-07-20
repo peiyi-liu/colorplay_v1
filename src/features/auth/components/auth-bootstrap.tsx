@@ -8,7 +8,12 @@ import {
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import type { AuthRepository, AuthSession, SignInInput } from '../types';
+import type {
+  AccountSignInInput,
+  AuthRepository,
+  AuthSession,
+  SignInInput,
+} from '../types';
 import {
   AuthContext,
   clearUserScopedQueries,
@@ -137,6 +142,20 @@ export function AuthBootstrap({
     [commitState, queryClient, repository],
   );
 
+  const signInWithAccount = useCallback(
+    async (input: AccountSignInInput) => {
+      const session = await repository.signInWithAccount(input);
+      if (
+        currentUserId.current !== null &&
+        currentUserId.current !== session.userId
+      ) {
+        await clearUserScopedQueries(queryClient);
+      }
+      commitState(stateFromSession(session));
+    },
+    [commitState, queryClient, repository],
+  );
+
   const signOut = useCallback(async () => {
     bufferedNullDuringSignOut.current = false;
     signOutPending.current = true;
@@ -173,10 +192,11 @@ export function AuthBootstrap({
     () => ({
       session: state.session,
       signIn,
+      signInWithAccount,
       signOut,
       status: state.status,
     }),
-    [signIn, signOut, state],
+    [signIn, signInWithAccount, signOut, state],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

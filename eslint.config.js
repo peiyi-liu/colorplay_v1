@@ -6,7 +6,14 @@ const typescriptFiles = ['**/*.{ts,tsx}'];
 
 export default tseslint.config(
   {
-    ignores: ['coverage', 'dist', 'src/types/database.ts'],
+    // supabase/functions 為 Deno 執行環境（npm: 匯入、Deno global），
+    // 與生成的 database.ts 同理，不屬於 Node/tsc project service。
+    ignores: [
+      'coverage',
+      'dist',
+      'src/types/database.ts',
+      'supabase/functions',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked.map((config) => ({

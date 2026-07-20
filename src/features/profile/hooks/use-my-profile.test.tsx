@@ -30,6 +30,7 @@ const authenticated: AuthContextValue = {
     userId: 'student-one-id',
   },
   signIn: vi.fn(),
+  signInWithAccount: vi.fn(),
   signOut: vi.fn(),
   status: 'authenticated',
 };

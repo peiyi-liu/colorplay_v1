@@ -7,7 +7,7 @@ import { readLocalProfileEnvironment } from './profile-e2e-boundary';
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
 
 const signIn = async (page: Page) => {
-  await page.getByLabel('Email').fill(TEST_USERS.studentOne.email);
+  await page.getByLabel('帳號').fill(TEST_USERS.studentOne.email);
   await page.getByLabel('密碼').fill(TEST_USERS.studentOne.password);
   await page.getByRole('button', { name: '登入' }).click();
 };

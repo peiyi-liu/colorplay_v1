@@ -1,18 +1,30 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { useToast } from '../../../components/ui/toast';
 import { useAuth } from '../context/auth-context';
-import { signInSchema, type SignInValues } from '../schemas/sign-in-schema';
+import {
+  accountSignInSchema,
+  type AccountSignInValues,
+} from '../schemas/account-auth-schemas';
 import { AuthRepositoryError, type AuthErrorCode } from '../types';
 
 const safeErrorMessages = {
-  AUTH_INVALID_CREDENTIALS: 'Email 或密碼不正確',
-  AUTH_NETWORK: '網路連線失敗，請稍後重試',
-  AUTH_UNKNOWN: '登入失敗，請使用追蹤代碼回報',
-} as const satisfies Readonly<Record<AuthErrorCode, string>>;
+  student: {
+    AUTH_INVALID_CREDENTIALS: '帳號或密碼不正確',
+    AUTH_NETWORK: '網路連線失敗，請稍後重試',
+    AUTH_UNKNOWN: '登入失敗，請使用追蹤代碼回報',
+  },
+  teacher: {
+    AUTH_INVALID_CREDENTIALS: '帳號、密碼或班級序號不正確',
+    AUTH_NETWORK: '網路連線失敗，請稍後重試',
+    AUTH_UNKNOWN: '登入失敗，請使用追蹤代碼回報',
+  },
+} as const satisfies Readonly<
+  Record<'student' | 'teacher', Readonly<Record<AuthErrorCode, string>>>
+>;
 
 const fallbackDestination = { hash: '', pathname: '/app', search: '' };
 const teacherDestination = { hash: '', pathname: '/teacher', search: '' };
@@ -50,10 +62,12 @@ const readDestination = (
   };
 };
 
-const messageForError = (error: unknown) =>
-  error instanceof AuthRepositoryError
-    ? safeErrorMessages[error.code]
-    : safeErrorMessages.AUTH_UNKNOWN;
+const messageForError = (error: unknown, portal: 'student' | 'teacher') => {
+  const messages = safeErrorMessages[portal];
+  return error instanceof AuthRepositoryError
+    ? messages[error.code]
+    : messages.AUTH_UNKNOWN;
+};
 
 export function LoginPage() {
   const auth = useAuth();
@@ -67,9 +81,10 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
     handleSubmit,
     register,
-  } = useForm<SignInValues>({
-    defaultValues: { email: '', password: '' },
-    resolver: zodResolver(signInSchema),
+    setError,
+  } = useForm<AccountSignInValues>({
+    defaultValues: { account: '', classCode: '', password: '' },
+    resolver: zodResolver(accountSignInSchema),
   });
 
   return (
@@ -89,8 +104,8 @@ export function LoginPage() {
       <h1>登入</h1>
       <p className="route-panel__message">
         {portal === 'teacher'
-          ? '使用教師 Email 登入，進入教師工作區管理班級與課程。'
-          : '使用個人 Email 登入，繼續你的色彩原理學習進度。'}
+          ? '使用教師帳號與班級序號登入，進入教師工作區管理班級與課程。'
+          : '使用帳號（學號）登入，繼續你的色彩原理學習進度。'}
       </p>
 
       <fieldset className="login-form__portal">
@@ -122,7 +137,7 @@ export function LoginPage() {
       {portal === 'teacher' ? (
         <div className="auth-portal__teacher-note">
           <span aria-hidden="true">⚠️ </span>
-          教師端具備班級管理與學術匯出權限，請使用教師帳號登入。
+          教師端具備班級管理與學術匯出權限；教師帳號由開發後台建立。
         </div>
       ) : null}
 
@@ -133,10 +148,31 @@ export function LoginPage() {
         onSubmit={(event) => {
           void handleSubmit(async (values) => {
             if (pendingSubmission.current) return;
+
+            const identifier = values.account.trim();
+            const usesEmailBridge = identifier.includes('@');
+            const classCode = values.classCode?.trim() ?? '';
+            if (portal === 'teacher' && !usesEmailBridge && !classCode) {
+              setError('classCode', { message: '請輸入班級序號' });
+              return;
+            }
+
             pendingSubmission.current = true;
             setSubmitError(null);
             try {
-              await auth.signIn(values);
+              if (usesEmailBridge) {
+                await auth.signIn({
+                  email: identifier,
+                  password: values.password,
+                });
+              } else {
+                await auth.signInWithAccount({
+                  account: identifier,
+                  password: values.password,
+                  portal,
+                  ...(classCode ? { classCode } : {}),
+                });
+              }
               toast({
                 message: '登入成功，歡迎回到 ColorPlay！',
                 tone: 'success',
@@ -151,7 +187,7 @@ export function LoginPage() {
                 { replace: true },
               );
             } catch (error) {
-              setSubmitError(messageForError(error));
+              setSubmitError(messageForError(error, portal));
             } finally {
               pendingSubmission.current = false;
             }
@@ -159,19 +195,20 @@ export function LoginPage() {
         }}
       >
         <div className="login-form__field">
-          <label htmlFor="login-email">Email</label>
+          <label htmlFor="login-account">帳號</label>
           <input
-            {...register('email')}
-            aria-describedby={errors.email ? 'login-email-error' : undefined}
-            aria-invalid={errors.email ? 'true' : 'false'}
-            autoComplete="email"
-            id="login-email"
-            inputMode="email"
-            type="email"
+            {...register('account')}
+            aria-describedby={
+              errors.account ? 'login-account-error' : undefined
+            }
+            aria-invalid={errors.account ? 'true' : 'false'}
+            autoComplete="username"
+            id="login-account"
+            type="text"
           />
-          {errors.email ? (
-            <p className="login-form__field-error" id="login-email-error">
-              {errors.email.message}
+          {errors.account ? (
+            <p className="login-form__field-error" id="login-account-error">
+              {errors.account.message}
             </p>
           ) : null}
         </div>
@@ -195,6 +232,30 @@ export function LoginPage() {
           ) : null}
         </div>
 
+        {portal === 'teacher' ? (
+          <div className="login-form__field">
+            <label htmlFor="login-class-code">管的班級（班級序號）</label>
+            <input
+              {...register('classCode')}
+              aria-describedby={
+                errors.classCode ? 'login-class-code-error' : undefined
+              }
+              aria-invalid={errors.classCode ? 'true' : 'false'}
+              autoComplete="off"
+              id="login-class-code"
+              type="text"
+            />
+            {errors.classCode ? (
+              <p
+                className="login-form__field-error"
+                id="login-class-code-error"
+              >
+                {errors.classCode.message}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         {submitError ? (
           <p className="login-form__submit-error" role="alert">
             {submitError}
@@ -214,6 +275,16 @@ export function LoginPage() {
           >
             {isSubmitting ? '登入中…' : '登入'}
           </button>
+        </div>
+        <div className="login-form__links">
+          {portal === 'student' ? (
+            <Link className="login-form__link" to="/register">
+              註冊帳號
+            </Link>
+          ) : null}
+          <Link className="login-form__link" to="/forgot-password">
+            忘記密碼
+          </Link>
         </div>
       </form>
     </section>

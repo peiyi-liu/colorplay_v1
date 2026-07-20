@@ -13,6 +13,7 @@ const createAnonymousRepository = () => {
     getSession,
     onAuthStateChange,
     signIn: vi.fn(),
+    signInWithAccount: vi.fn(),
     signOut: vi.fn(),
   };
 

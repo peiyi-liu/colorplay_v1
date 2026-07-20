@@ -8,6 +8,7 @@ import {
 
 import type { Database } from '../../src/types/database';
 import {
+  TEST_USER_ACCOUNTS,
   TEST_USER_ROLES,
   TEST_USERS,
   CLASSROOM_FIXTURES,
@@ -106,9 +107,21 @@ const reconcileProfileRole = async (
   label: TestUserLabel,
 ) => {
   const expectedRole = TEST_USER_ROLES[label];
+  const accountFixture =
+    label in TEST_USER_ACCOUNTS
+      ? TEST_USER_ACCOUNTS[label as keyof typeof TEST_USER_ACCOUNTS]
+      : undefined;
   const { data, error } = await admin
     .from('profiles')
-    .update({ role: expectedRole })
+    .update({
+      role: expectedRole,
+      ...(accountFixture
+        ? {
+            full_name: accountFixture.fullName,
+            login_account: accountFixture.account,
+          }
+        : {}),
+    })
     .eq('id', user.id)
     .select('id, role')
     .single();

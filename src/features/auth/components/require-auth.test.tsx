@@ -15,6 +15,7 @@ const createAuthValue = (
 ): AuthContextValue => ({
   ...value,
   signIn: () => Promise.resolve(),
+  signInWithAccount: () => Promise.resolve(),
   signOut: () => Promise.resolve(),
 });
 

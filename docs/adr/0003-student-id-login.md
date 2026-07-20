@@ -1,36 +1,63 @@
-# ADR 0003: 班級代碼＋學號登入（GGAME 認證語意）
+# ADR 0003: 帳號制登入（學號帳號＋已驗證 Email）
 
-- Status: **Proposed（待 project owner 核准後才得實作）**
-- Proposal date: 2026-07-19
-- 相關：GGAME 認證入口（owner 於 UI Restyle phase 核准視覺、延後語意）、spec/04（安全與隱私）、ADR 0002（環境策略）
+- Status: **Accepted（owner 2026-07-20 以帳號規則文字規格裁定，取代原提案）**
+- Proposal date: 2026-07-19；Accepted: 2026-07-20
+- 相關：spec/04（安全與隱私）、ADR 0002（環境策略）、
+  `docs/superpowers/plans/2026-07-20-account-auth.md`（實作計畫）
 
 ## Context
 
-GGAME 參考稿的登入語意為「班級代碼＋學號/研究編號＋暱稱＋密碼」；現行實作為 Supabase Email/密碼。owner 已核准將欄位語意改為學號制，但此變更觸及信任邊界（身分即研究識別）、RLS 與帳號生命週期，依 AGENTS.md 需以 ADR 定案。
+原提案（v1）走「合成 Email＋首登即註冊＋教師代重設密碼」。owner 於 2026-07-20
+直接裁定帳號規則：學生走**註冊頁**、註冊時**必須驗證真實 E-mail**（表單內顯示綠色
+「已認證」）、忘記密碼由**學生自助**（帳號＋Email 寄重設連結）、教師帳號由開發後台
+建立、教師登入需帶「管的班級（班級序號）」。此裁定使合成 Email 方案失效（自助重設
+需要可收信的信箱），故改採「真實 Email 為 Auth 身分」。
 
-## Decision（提案）
+## Decision（定案）
 
-1. **身分映射**：學號登入以「合成 Email」實作——`{學號小寫}@student.colorplay.internal`（保留 Supabase Auth 全部安全機制：bcrypt、session、rate limit）。學號格式 `^[A-Za-z]{2}\d{3,6}$`（如 CP045），前端正規化後組合；`@colorplay.internal` 網域永不收發郵件。
-2. **註冊語意**：首次登入即註冊（GGAME「學生註冊登入」）——需班級代碼有效；Edge Function `student_sign_up` 以 service role 驗證班級代碼（沿用既有雜湊驗證）、建立 auth user（合成 Email）、寫入 `profiles.student_code`（unique）並自動入班。之後同學號＋密碼直接登入。
-3. **暱稱**：僅作 `display_name`，可後改；不參與身分。
-4. **教師端**：維持正式 Email/密碼（教師具管理權限，須可稽核聯絡）。登入頁「教師診斷端」頁籤不變。
-5. **密碼政策**：最少 8 碼；忘記密碼由教師端「重設學生密碼」指令處理（Edge Function，教師僅能重設自己班級的學生；產生一次性密碼，首登強制改密）——學生無 Email 可收重設信。
-6. **研究識別**：`student_code` 即研究編號；匯出管線改以 `student_code` 之雜湊做匿名鍵（取代 Email 衍生）。
-7. **RLS**：不變（身分仍是 auth.uid()）；新增 `profiles.student_code` 欄之讀取限本人＋班級教師。
+1. **身分模型**：Supabase Auth user 的 email＝學生真實 Email（註冊時以 6 碼 OTP 驗證）。
+   帳號（學號）存於 `profiles.login_account`（唯一、正規化小寫、`^[a-z0-9]{3,20}$`），
+   另存 `profiles.full_name`（名字）；`display_name`＝暱稱。
+2. **註冊**（僅學生）：`/register` 表單內先 OTP 驗證 Email（`signInWithOtp`
+   shouldCreateUser → `verifyOtp` 成功即持有 session 並顯示綠色「已認證」），
+   送出後由 Edge Function `student-register` 完成：暱稱審核（不雅字＋禁 emoji）、
+   班級序號驗證（沿用 `join_classroom` 之 sha256 雜湊比對）、帳號唯一性、
+   密碼政策（6–12 碼含大小寫）、設定密碼、寫入 profile、自動入班。
+3. **登入**：帳號＋密碼（教師另填班級序號）→ Edge Function `auth-login` 以 service
+   role 查 `login_account`→email，代理密碼授與後回傳 session；教師需通過
+   「該班級序號屬於其 active classroom」檢核。錯誤一律泛用訊息（防帳號列舉）。
+   _測試橋接_：帳號欄含 `@` 視為 Email 直接 `signInWithPassword`（seed 帳號／e2e 用；
+   Email 模式教師免填班級序號）。
+4. **忘記／重設密碼**：`/forgot-password`（帳號＋Email）→ Edge Function `auth-recover`
+   驗證配對後 `resetPasswordForEmail`（redirect 至來源 Origin 白名單之
+   `/reset-password`），回應恆為泛用成功；`/reset-password` 設新密碼後登出並跳回登入頁。
+5. **教師帳號**：由開發後台建立（`scripts/admin/create-teacher.mjs`，service role），
+   不開放自助註冊。
+6. **生命週期簡化**（owner 裁定）：不處理停用帳號、教師離職／離班資料歸屬。
+7. **研究識別**：`login_account`（學號）為研究編號來源；匯出管線改以其雜湊為匿名鍵
+   （於研究匯出 phase 實作）。
+8. **RLS**：身分仍為 `auth.uid()`，既有 policy 不變；`login_account`/`full_name`
+   由 trigger 禁止 authenticated 角色自行修改（僅 service role／管理通道可寫）。
 
-## 待 owner 拍板的決策點
+### 原 v1 四個待決點的歸宿
 
-- [ ] 學號格式與是否區分大小寫（提案：不區分，儲存小寫）。
-- [ ] 首登即註冊 vs 教師預先開帳（提案：首登即註冊，需班級代碼）。
-- [ ] 教師重設密碼流程是否需留存稽核事件（提案：需要，寫 audit 表）。
-- [ ] 既有 Email 測試帳號的遷移／並存策略（提案：Staging 重置時一併淘汰）。
+- 學號格式／大小寫 → 定為 `^[a-z0-9]{3,20}$`、儲存小寫（未再限制前綴格式）。
+- 首登即註冊 vs 教師預開帳 → **註冊頁**（owner 裁定），需班級序號＋Email 驗證。
+- 教師重設密碼稽核 → 改為學生自助 Email 重設，教師代重設通道取消，稽核表不需要。
+- 舊 Email 測試帳號 → 保留並經「@ 橋接」繼續可登入；staging 重置時自然汰換。
 
 ## Consequences
 
-- 需要 1 個 migration（profiles.student_code＋audit）＋2 個 Edge Functions（sign-up／reset）＋登入頁欄位切換＋E2E 全面改寫登入 fixtures。
-- 合成 Email 網域必須加入 Supabase Auth 的允許清單並停用確認信。
-- 風險：學號猜測攻擊——以班級代碼作第一道門檻＋Auth rate limit；密碼重設走教師人工通道。
+- 1 個 migration（profiles 兩欄＋保護 trigger）、3 個 Edge Functions、4 個前端頁面
+  （login 改版＋register／forgot／reset）、e2e 登入欄位全面掃更。
+- Hosted Supabase 需一次性 dashboard 設定：OTP 郵件模板含 `{{ .Token }}`、
+  site URL／redirect 白名單含 staging 網域；內建 SMTP 有每小時數封的限制，
+  正式 SMTP 仍為 owner 待提供項。
+- Edge Function 代理密碼授與弱化 GoTrue per-IP rate limit 鑑別度；production 前
+  需補 captcha 或函式內節流（列入 Phase 8 production 檢核）。
 
-## Acceptance traceability（實作 phase 時展開）
+## Acceptance traceability
 
-AC-AUTH-*（更新）、AC-SEC-002/003、新增 AC-AUTH-STUDENT-01…（註冊/登入/重設/越權矩陣）。
+AC-AUTH-*（更新為帳號制）、AC-SEC-002/003 不變；新增註冊／忘記／重設／越權
+（他人帳號＋錯 Email、不雅暱稱、錯班級序號）情境於 `auth-account.spec.ts` 與
+pgTAP 038 覆蓋。
