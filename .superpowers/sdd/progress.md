@@ -381,3 +381,18 @@ Reservations（gate 報告）:
 - 全域 branches coverage 71.78%（既有債務；gate 覆蓋門檻依設計限 src/components/ui/）。
 - 學號登入為下一 phase（獨立 ADR）。
 - AC-UI-010/012 真機證據待人工。
+
+## Phase 9-AUTH：帳號制認證（2026-07-20）
+
+- Owner 以帳號規則文字規格裁定 ADR 0003（Accepted）：真實 Email OTP 認證＋
+  註冊頁、帳號（學號）登入走 auth-login Edge Function、教師帳號開發後台建立、
+  自助忘記／重設密碼。
+- 交付：migration `20260723000100_account_identity`（profiles.full_name/
+  login_account＋欄位級 service_role 授權）、Edge Functions auth-login／
+  student-register／auth-recover、/register /forgot-password /reset-password
+  三頁與 login 改版、create-teacher.mjs、pgTAP 038、auth-account e2e 旅程。
+- 驗證（本機）：lint／format／typecheck 綠；unit 106 檔 652 綠；pgTAP 38 檔
+  all ok＋integration 25 綠；e2e 完整 battery 48 passed／2 skipped（auth 旅程
+  僅 chromium）。commit 9b29000 已推 origin。
+- 待人工授權的部署步驟見 docs/staging-runbook.md §4（git push 至 colorplay_v1、
+  supabase db push／functions deploy、seed 補值、Dashboard Auth 設定）。

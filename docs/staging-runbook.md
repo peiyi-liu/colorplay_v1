@@ -42,3 +42,47 @@ pnpm dlx vercel deploy --prod --token "$VERCEL_TOKEN"
 - Staging 測試帳號密碼為 LocalOnly-* 系列，僅供內部驗證；Production（Phase 8）
   將是全新專案、不帶任何種子使用者。
 - token 用完建議到各平台輪替（已在對話中出現過）。
+
+## 4. Phase 9-AUTH（帳號制認證）增量部署（2026-07-20）
+
+前置：本地已全綠（unit 652、pgTAP 38 檔、e2e 48 passed）。staging 目前落後
+4 個 migration（avatar_frames／mastery_sessions／leaderboard_frames／account_identity）
+與 3 個 Edge Functions。依序執行：
+
+```bash
+# 1) 前端：push 到 Vercel 連結的部署鏡像（colorplay_v1@main 自動建置上線）
+git push https://github.com/peiyi-liu/colorplay_v1.git HEAD:main
+
+# 2) 資料庫增量（不重置、保留既有資料）
+export SUPABASE_ACCESS_TOKEN=sbp_（你的 token）
+supabase link --project-ref onkxnkzeixpezetkmocf
+supabase db push
+
+# 3) Edge Functions（config.toml 已宣告 verify_jwt=false，函式內自行驗證）
+supabase functions deploy auth-login student-register auth-recover --no-verify-jwt
+
+# 4) 測試帳號補值（teacher01/student01/student02 + 班級 fixtures；冪等）
+SUPABASE_URL=https://onkxnkzeixpezetkmocf.supabase.co \
+SUPABASE_ANON_KEY=（staging anon key） \
+SUPABASE_SERVICE_ROLE_KEY=（staging service key） \
+SEED_REMOTE_CONFIRM=onkxnkzeixpezetkmocf \
+pnpm exec tsx scripts/supabase/seed-auth.ts
+```
+
+### Dashboard 一次性設定（無 API 可代做，需人工）
+
+1. Auth → URL Configuration：
+   - Site URL：`https://colorplay-staging.vercel.app`
+   - Redirect URLs 加入：`https://colorplay-staging.vercel.app/**`
+2. Auth → Email Templates：`Magic Link` 與 `Confirm signup` 兩個模板
+   - 主旨：`ColorPlay 電子郵件驗證碼`
+   - 內容：貼上 `supabase/templates/email-otp.html`（重點：必須含 `{{ .Token }}`
+     才能在註冊表單內輸入 6 碼驗證碼）
+3. 注意：未接自訂 SMTP 前，內建寄信每小時僅 2–4 封（註冊 OTP／重設信共用額度）。
+
+### 驗收
+
+- `/register`：Email 認證（綠色「已認證」）→ 完成註冊直達課後學習大廳。
+- `/login` 學生：帳號（學號）＋密碼；教師：帳號＋密碼＋班級序號。
+  既有 `*.@colorplay.test` 測試帳號仍可直接輸入 Email 登入（測試橋接）。
+- `/forgot-password` → 信中連結 → `/reset-password` → 跳回登入頁。
