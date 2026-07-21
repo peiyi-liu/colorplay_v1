@@ -79,5 +79,5 @@
   /* ── Component：元件層 ─────────────────────────────────── */
   --button-primary-bg: var(--color-primary);
   --button-primary-text: var(--color-primary-contrast);
-  --avatar-frame-bg: var(--amber-avatar);
+  --avatar-frame-bg: color-mix(in srgb, var(--amber-avatar) 30%, white);
 }

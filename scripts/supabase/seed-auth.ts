@@ -111,25 +111,30 @@ const reconcileProfileRole = async (
     label in TEST_USER_ACCOUNTS
       ? TEST_USER_ACCOUNTS[label as keyof typeof TEST_USER_ACCOUNTS]
       : undefined;
-  const { data, error } = await admin
-    .from('profiles')
-    .update({
-      role: expectedRole,
-      ...(accountFixture
-        ? {
-            full_name: accountFixture.fullName,
-            login_account: accountFixture.account,
-          }
-        : {}),
-    })
-    .eq('id', user.id)
-    .select('id, role')
-    .single();
-
-  failIfError(error, 'AUTH_FIXTURE_ROLE_RECONCILE_FAILED');
-  if (data?.id !== user.id || data.role !== expectedRole) {
-    throw new Error('AUTH_FIXTURE_ROLE_RECONCILE_FAILED');
+  // db reset 後 PostgREST schema cache 需要片刻重載；新欄位在快取重建前
+  // 會回 PGRST204／權限錯誤，這裡以短暫重試消除競態。
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const { data, error } = await admin
+      .from('profiles')
+      .update({
+        role: expectedRole,
+        ...(accountFixture
+          ? {
+              full_name: accountFixture.fullName,
+              login_account: accountFixture.account,
+            }
+          : {}),
+      })
+      .eq('id', user.id)
+      .select('id, role')
+      .single();
+    if (!error && data.id === user.id && data.role === expectedRole) return;
+    lastError = error;
+    await new Promise((resolve) => setTimeout(resolve, 500));
   }
+  failIfError(lastError, 'AUTH_FIXTURE_ROLE_RECONCILE_FAILED');
+  throw new Error('AUTH_FIXTURE_ROLE_RECONCILE_FAILED');
 };
 
 const signedInFixtureClient = async (

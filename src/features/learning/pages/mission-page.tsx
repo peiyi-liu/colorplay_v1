@@ -95,13 +95,18 @@ export function MissionPage({
   sessionId: suppliedSessionId,
 }: Readonly<{ repository?: MasteryRepository; sessionId?: string }>) {
   const params = useParams();
+  const navigate = useNavigate();
   const sessionId = suppliedSessionId ?? params.sessionId ?? '';
   const state = useMasteryState(sessionId, repository);
   const submit = useSubmitMasteryAttempt(sessionId, repository);
   const hint = useMasteryHint(sessionId, repository);
+  const restart = useStartMastery(repository);
   const [hints, setHints] = useState<readonly RevealedHint[]>([]);
   const [feedback, setFeedback] = useState<string>();
-  const [explanation, setExplanation] = useState<string>();
+  // 答對後先停在回饋卡（與課後學習大廳的答題節奏一致），按「下一關」才前進。
+  const [resolved, setResolved] = useState<
+    Readonly<{ explanation: string; isLast: boolean }> | undefined
+  >();
   const lastQuestionId = useRef<string | undefined>(undefined);
 
   const questionId = state.data?.question?.questionId;
@@ -110,7 +115,6 @@ export function MissionPage({
       lastQuestionId.current = questionId;
       setHints([]);
       setFeedback(undefined);
-      setExplanation(undefined);
     }
   }, [questionId]);
 
@@ -162,11 +166,47 @@ export function MissionPage({
           課後任務實戰：{mastery.chapterTitle}
         </h1>
 
-        {mastery.status === 'completed' || !mastery.question ? (
+        {resolved ? (
+          <aside
+            aria-labelledby="mission-feedback-title"
+            className="feedback-card feedback-card--correct"
+          >
+            <h2 id="mission-feedback-title">✓ 答對了</h2>
+            {resolved.explanation ? (
+              <div className="live-explanation">
+                <strong>👨‍🏫 教師引導解析：</strong>
+                <p>{resolved.explanation}</p>
+              </div>
+            ) : null}
+            <button
+              className="primary-action"
+              data-primary-action="true"
+              onClick={() => {
+                setResolved(undefined);
+              }}
+              type="button"
+            >
+              {resolved.isLast ? '查看結算 →' : '下一關 →'}
+            </button>
+          </aside>
+        ) : mastery.status === 'completed' || !mastery.question ? (
           <VictoryCard
             description="本章 5 階精熟已全部通過！精熟紀錄已由伺服器保存；正式獎勵以限時挑戰與 Live 為準。"
             onRetry={() => {
-              void state.refetch();
+              restart.mutate(mastery.chapterId, {
+                onError: () => {
+                  setFeedback('無法重新開始練習，請稍後重試。');
+                },
+                onSuccess: (newSessionId) => {
+                  if (newSessionId === sessionId) {
+                    void state.refetch();
+                    return;
+                  }
+                  void navigate(`/app/missions/${newSessionId}`, {
+                    replace: true,
+                  });
+                },
+              });
             }}
             title="階段任務挑戰完成！"
             tokens={0}
@@ -199,8 +239,10 @@ export function MissionPage({
                       },
                       onSuccess: (result) => {
                         if (result.isCorrect) {
-                          setFeedback('✓ 答對了！');
-                          setExplanation(result.explanation);
+                          setResolved({
+                            explanation: result.explanation,
+                            isLast: mastery.position === mastery.questionCount,
+                          });
                           return;
                         }
                         setFeedback(
@@ -221,12 +263,6 @@ export function MissionPage({
             </div>
 
             {feedback ? <p role="status">{feedback}</p> : null}
-            {explanation ? (
-              <div className="live-explanation">
-                <strong>👨‍🏫 教師引導解析：</strong>
-                <p>{explanation}</p>
-              </div>
-            ) : null}
 
             <div className="mission__hints">
               {hints.map((revealed) => (

@@ -67,41 +67,57 @@ function CardMedia({
   );
 }
 
+// 複習卡改為 GAME(1) 的圖卡摺疊式（accordion）；預設展開，可收合瀏覽。
 function ReviewCardItem({
   card,
   completed,
+  index,
   onComplete,
   pending,
 }: Readonly<{
   card: ReviewCardView;
   completed: boolean;
+  index: number;
   onComplete: () => void;
   pending: boolean;
 }>) {
   return (
-    <article aria-label={card.title} className="review-card">
-      <header>
-        {card.groupLabel ? (
-          <p className="route-panel__eyebrow">{card.groupLabel}</p>
+    <details className="review-accordion" open>
+      <summary className="review-accordion__summary">
+        <span
+          aria-hidden="true"
+          className={`review-accordion__badge review-accordion__badge--${String(index % 4)}`}
+        >
+          {index + 1}
+        </span>
+        <span className="review-accordion__title">
+          {card.groupLabel ? `${card.groupLabel}・` : ''}
+          {card.title}
+        </span>
+        {completed ? (
+          <span aria-hidden="true" className="review-accordion__done">
+            ✓
+          </span>
         ) : null}
-        <h4>{card.title}</h4>
-      </header>
-      <p style={{ whiteSpace: 'pre-wrap' }}>{card.content}</p>
-      {card.media.map((media) => (
-        <CardMedia
-          altText={media.altText}
-          assetPath={media.assetPath}
-          key={media.assetPath}
-        />
-      ))}
-      {completed ? (
-        <p role="status">已完成複習</p>
-      ) : (
-        <button disabled={pending} onClick={onComplete} type="button">
-          完成複習
-        </button>
-      )}
-    </article>
+      </summary>
+      <article aria-label={card.title} className="review-card">
+        <p style={{ whiteSpace: 'pre-wrap' }}>{card.content}</p>
+        {card.media.map((media) => (
+          <CardMedia
+            altText={media.altText}
+            assetPath={media.assetPath}
+            key={media.assetPath}
+          />
+        ))}
+        {completed ? (
+          <p role="status">已完成複習</p>
+        ) : (
+          <button disabled={pending} onClick={onComplete} type="button">
+            完成複習
+          </button>
+        )}
+      </article>
+    </details>
   );
 }
 
@@ -225,10 +241,11 @@ export function ChapterDetailPage({
                   ・精熟 {percentText(row?.mastery ?? null)}・
                   {statusLabels[row?.status ?? 'not_started']}
                 </p>
-                {subtopic.cards.map((card) => (
+                {subtopic.cards.map((card, index) => (
                   <ReviewCardItem
                     card={card}
                     completed={isCardCompleted(card, completionRows)}
+                    index={index}
                     key={card.cardId}
                     onComplete={() => {
                       setCompleteError(undefined);

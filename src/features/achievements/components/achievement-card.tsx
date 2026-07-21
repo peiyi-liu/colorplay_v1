@@ -11,53 +11,77 @@ const unlockDateFormatter = new Intl.DateTimeFormat('zh-TW', {
   timeZone: 'Asia/Taipei',
 });
 
+// 依成就代碼給徽章表情（colorplay-new 成就頁的視覺語彙）；未知代碼用 🏅。
+const badgeEmoji = (stableCode: string): string => {
+  if (stableCode.includes('perfect')) return '🎯';
+  if (stableCode.includes('first_task')) return '🌱';
+  if (stableCode.includes('mistake')) return '🔥';
+  if (stableCode.includes('master')) return '👑';
+  if (stableCode.includes('level')) return '🚀';
+  if (stableCode.includes('streak')) return '⚡';
+  if (stableCode.includes('blook')) return '🦊';
+  return '🏅';
+};
+
 export function AchievementCard({
   item,
 }: Readonly<{ item: AchievementCatalogItem }>) {
   const presentation = statePresentation[item.state];
+  const unlocked = item.state === 'unlocked';
 
   return (
     <li className="list-none">
-      <article className="flex h-full flex-col gap-3 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm">
+      <article
+        className={`achievement-card${
+          unlocked ? ' achievement-card--unlocked' : ' achievement-card--locked'
+        }`}
+      >
         <div
           aria-hidden="true"
-          className="grid size-12 place-items-center rounded-full bg-[var(--color-brand-yellow)] text-2xl"
+          className={`achievement-card__tile${
+            unlocked
+              ? ' achievement-card__tile--unlocked'
+              : ' achievement-card__tile--locked'
+          }`}
         >
-          🏅
+          {badgeEmoji(item.stableCode)}
         </div>
-        <div>
-          <h2 className="m-0 text-xl font-extrabold text-[var(--color-text)]">
-            {item.displayName}
-          </h2>
-          <p className="mt-2 text-[var(--color-muted)]">{item.description}</p>
-        </div>
-        <p
-          className="mt-auto font-extrabold"
-          data-achievement-state={item.state}
-        >
-          <span aria-hidden="true">{presentation.icon} </span>
-          {presentation.label}
-        </p>
-        {item.state === 'in_progress' &&
-        item.progress !== null &&
-        item.target !== null ? (
-          <div className="grid gap-2">
-            <progress
-              aria-label={`${item.displayName}進度`}
-              className="w-full accent-[var(--color-primary)]"
-              max={item.target}
-              value={item.progress}
-            />
-            <span className="text-sm font-bold">
-              {String(item.progress)} / {String(item.target)}
-            </span>
+        <div className="achievement-card__body">
+          <div className="achievement-card__title-row">
+            <h2 className="achievement-card__name">{item.displayName}</h2>
+            {unlocked ? (
+              <span className="achievement-card__chip">已獲得</span>
+            ) : null}
           </div>
-        ) : null}
-        {item.state === 'unlocked' && item.unlockedAt ? (
-          <p className="m-0 text-sm text-[var(--color-muted)]">
-            解鎖日期：{unlockDateFormatter.format(new Date(item.unlockedAt))}
+          <p className="achievement-card__description">{item.description}</p>
+          <p
+            className="achievement-card__state"
+            data-achievement-state={item.state}
+          >
+            <span aria-hidden="true">{presentation.icon} </span>
+            {presentation.label}
           </p>
-        ) : null}
+          {item.state === 'in_progress' &&
+          item.progress !== null &&
+          item.target !== null ? (
+            <div className="achievement-card__progress">
+              <progress
+                aria-label={`${item.displayName}進度`}
+                className="w-full accent-[var(--color-primary)]"
+                max={item.target}
+                value={item.progress}
+              />
+              <span className="achievement-card__progress-text">
+                {String(item.progress)} / {String(item.target)}
+              </span>
+            </div>
+          ) : null}
+          {unlocked && item.unlockedAt ? (
+            <p className="achievement-card__date">
+              解鎖於 {unlockDateFormatter.format(new Date(item.unlockedAt))}
+            </p>
+          ) : null}
+        </div>
       </article>
     </li>
   );

@@ -24,6 +24,14 @@ const expectedCatalog = [
   ['wise_owl', '智慧鴞', '🦉', 500],
   ['primary_lion', '原色獅', '🦁', 1000],
   ['rainbow_horse', '彩虹馬', '🦄', 2000],
+  ['panda_painter', '熊貓畫師', '🐼', 150],
+  ['koala_toner', '無尾熊調色師', '🐨', 300],
+  ['tiger_orange', '猛虎橙', '🐯', 400],
+  ['octo_mixer', '八爪配色師', '🐙', 600],
+  ['robo_blue', '機械藍調', '🤖', 800],
+  ['pixel_sprite', '像素精靈', '👾', 1200],
+  ['indigo_dragon', '東方靛龍', '🐲', 1500],
+  ['peacock_teal', '孔雀藍綠', '🦚', 2500],
 ] as const;
 
 const itemSchema = z.strictObject({
@@ -39,7 +47,7 @@ const itemSchema = z.strictObject({
 const inventorySchema = z
   .strictObject({
     active_blook_id: uuidSchema,
-    items: z.array(itemSchema).length(6),
+    items: z.array(itemSchema).length(expectedCatalog.length),
     token_balance: z.number().int().nonnegative(),
   })
   .superRefine((value, context) => {

@@ -42,6 +42,8 @@ describe('GGAME design tokens', () => {
 
   it('declares component-layer tokens on top of semantic ones', () => {
     expect(tokensCss).toContain('--button-primary-bg: var(--color-primary)');
-    expect(tokensCss).toContain('--avatar-frame-bg: var(--amber-avatar)');
+    expect(tokensCss).toContain(
+      '--avatar-frame-bg: color-mix(in srgb, var(--amber-avatar) 30%, white)',
+    );
   });
 });

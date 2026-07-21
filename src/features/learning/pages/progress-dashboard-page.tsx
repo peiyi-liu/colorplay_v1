@@ -38,16 +38,16 @@ export function ProgressDashboardPage({
   }
 
   const chapterRows = progress.data.filter((row) => row.scope === 'chapter');
+  const chapterNumerals = ['一', '二', '三', '四', '五', '六', '七', '八'];
 
   return (
-    <section aria-labelledby="progress-title" className="w-full max-w-4xl">
+    <section
+      aria-labelledby="progress-title"
+      className="progress-dashboard w-full"
+    >
       <header>
         <p className="route-panel__eyebrow">學習進度</p>
         <h1 id="progress-title">我的學習進度</h1>
-        <p>
-          進度由伺服器依 2026-07-progress-1
-          規則計算：只有目前發布版本的最新正式作答會被計入。
-        </p>
         <nav aria-label="進度行動">
           <Link to="/app/mistakes">我的錯題</Link>
           <Link to="/app/achievements">成就進度</Link>
@@ -79,7 +79,10 @@ export function ProgressDashboardPage({
                 <tr key={row.chapterId}>
                   <th scope="row">
                     <Link to={`/app/chapters/${row.chapterId}`}>
-                      {chapter.title}
+                      第
+                      {chapterNumerals[chapter.sortOrder - 1] ??
+                        String(chapter.sortOrder)}
+                      章：{chapter.title}
                     </Link>
                   </th>
                   <td>{reviewText(row.reviewCompleted, row.reviewTotal)}</td>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import type {
@@ -80,11 +80,16 @@ export function MistakesPage({
             <h2>
               {group.subtopicTitle}（{group.mistakes.length} 題待補救）
             </h2>
-            <ul>
+            <ul className="mistake-list">
               {group.mistakes.map((mistake) => (
-                <li key={mistake.mistakeId}>
-                  {mistake.prompt}
-                  {mistake.status === 'reopened' ? '（再次答錯）' : ''}
+                <li className="mistake-list__item" key={mistake.mistakeId}>
+                  <p className="mistake-list__prompt">
+                    {mistake.prompt}
+                    {mistake.status === 'reopened' ? '（再次答錯）' : ''}
+                  </p>
+                  <p className="mistake-list__answer">
+                    正確答案：{mistake.correctOptionText}
+                  </p>
                 </li>
               ))}
             </ul>
@@ -127,8 +132,6 @@ export function MistakesPage({
           </ul>
         </section>
       ) : null}
-
-      <Link to="/app/progress">查看學習進度</Link>
     </section>
   );
 }

@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/ui/toast';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { EconomySummaryView } from '../../features/rewards/components/economy-summary';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
+
+// 側欄 active 樣式跟隨目前路由（owner 2026-07-21 #9）。
+const studentTabClassName = ({ isActive }: { isActive: boolean }) =>
+  `student-rail__tab${isActive ? ' student-rail__tab--active' : ''}`;
+const studentLinkClassName = ({ isActive }: { isActive: boolean }) =>
+  `student-rail__link${isActive ? ' student-rail__link--active' : ''}`;
 
 function AuthenticatedEconomySummary() {
   const economy = useEconomySummary();
@@ -119,43 +125,37 @@ export function AppShell() {
       {isAuthenticatedProfile ? (
         <nav className="student-rail" aria-label="主要導覽">
           <div className="student-rail__content">
-            <Link
-              className="student-rail__tab student-rail__tab--lobby"
-              to="/app"
-            >
+            <NavLink className={studentTabClassName} end to="/app">
               <span aria-hidden="true">1. </span>課後學習大廳
-            </Link>
+            </NavLink>
             <span className="student-rail__chevron" aria-hidden="true">
               ›
             </span>
-            <Link className="student-rail__tab" to="/app/missions">
+            <NavLink className={studentTabClassName} to="/app/missions">
               <span aria-hidden="true">2. </span>課後任務實戰
-            </Link>
+            </NavLink>
             <span className="student-rail__chevron" aria-hidden="true">
               ›
             </span>
-            <Link className="student-rail__tab" to="/app/shop">
+            <NavLink className={studentTabClassName} to="/app/shop">
               <span aria-hidden="true">3. </span>Blook 商店
-            </Link>
+            </NavLink>
             <span className="student-rail__spacer" aria-hidden="true" />
-            <Link className="student-rail__link" to="/app/progress">
+            <NavLink className={studentLinkClassName} to="/app/progress">
               學習進度
-            </Link>
-            <Link className="student-rail__link" to="/app/assignments">
+            </NavLink>
+            <NavLink className={studentLinkClassName} to="/app/assignments">
               我的作業
-            </Link>
-            <Link className="student-rail__link" to="/app/live/join">
+            </NavLink>
+            <NavLink className={studentLinkClassName} to="/app/live/join">
               Live 課堂
-            </Link>
-            <Link className="student-rail__link" to="/app/leaderboard">
+            </NavLink>
+            <NavLink className={studentLinkClassName} to="/app/leaderboard">
               班級排行榜
-            </Link>
-            <Link className="student-rail__link" to="/app/achievements">
+            </NavLink>
+            <NavLink className={studentLinkClassName} to="/app/achievements">
               成就徽章
-            </Link>
-            <Link className="student-rail__link" to="/app/profile">
-              個人資料
-            </Link>
+            </NavLink>
           </div>
         </nav>
       ) : null}

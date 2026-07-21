@@ -2698,6 +2698,7 @@ export type Database = {
           membership_status: Database["public"]["Enums"]["classroom_member_status"]
         }[]
       }
+      list_my_mistakes: { Args: never; Returns: Json }
       list_owned_classroom_members: {
         Args: { p_classroom_id: string }
         Returns: {

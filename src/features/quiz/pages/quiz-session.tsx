@@ -25,8 +25,6 @@ import {
   type QuizFeedbackResult,
 } from '../components/feedback-card';
 import { QuestionCard } from '../components/question-card';
-import { HintPanel } from '../components/hint-panel';
-import type { LearningRepository } from '../../learning/api/learning-repository';
 
 const quizSessionQueryKey = (sessionId: string) =>
   ['quiz', 'session', sessionId] as const;
@@ -75,10 +73,8 @@ const feedbackFromQuestion = (
 };
 
 export function QuizSessionPage({
-  learningRepository,
   repository: suppliedRepository,
 }: Readonly<{
-  learningRepository?: LearningRepository;
   repository?: QuizRepository;
 }>) {
   const { sessionId: routeSessionId } = useParams();
@@ -391,13 +387,6 @@ export function QuizSessionPage({
         selectedOptionId={
           feedbackResult ? feedbackResult.selectedOptionId : selectedOptionId
         }
-      />
-
-      <HintPanel
-        key={displayedQuestion.sessionQuestionId}
-        locked={feedbackResult !== undefined}
-        sessionQuestionId={displayedQuestion.sessionQuestionId}
-        {...(learningRepository ? { repository: learningRepository } : {})}
       />
 
       {actionError ? (

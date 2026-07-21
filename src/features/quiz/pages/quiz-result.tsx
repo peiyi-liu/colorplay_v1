@@ -105,10 +105,6 @@ export function QuizResultPage({
             <Link to="/app/assignments">返回我的作業</Link>
           </div>
         ) : null}
-        <p className="quiz-result__rules">
-          獎勵規則：{session.gameRulesVersion}（
-          {String(session.rewardRatePercent)}%）
-        </p>
         {session.gameRulesVersion === '2026-07-progress-1' ? (
           <div role="status">
             <p>
@@ -135,7 +131,13 @@ export function QuizResultPage({
             >
               <header>
                 <p>第 {String(question.position)} 題</p>
-                <h2>{correct ? '✓ 答對' : timeout ? '⌛ 逾時' : '✕ 答錯'}</h2>
+                <h2
+                  className={`result-question__status--${
+                    correct ? 'correct' : timeout ? 'timeout' : 'incorrect'
+                  }`}
+                >
+                  {correct ? '✓ 答對' : timeout ? '⌛ 逾時' : '✕ 答錯'}
+                </h2>
               </header>
               <h3>{question.prompt}</h3>
               <dl>

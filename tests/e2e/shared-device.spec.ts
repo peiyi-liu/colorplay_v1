@@ -65,7 +65,8 @@ test('isolates two accounts that use the same browser page in sequence', async (
   });
 
   await signIn(page, TEST_USERS.studentTwo);
-  await page.getByRole('link', { name: '個人資料' }).click();
+  // 登出前停在 /app/profile，登入會回到原頁（個人資料入口現只在大廳）。
+  await expect(page).toHaveURL(/\/app\/profile$/u);
   await expect(
     page.getByRole('heading', { name: 'student.two' }),
   ).toBeVisible();

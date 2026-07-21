@@ -92,17 +92,17 @@ describe('ProgressDashboardPage', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('link', { name: '色彩體系與應用' }),
+        screen.getByRole('link', { name: /色彩體系與應用/u }),
       ).toBeInTheDocument();
     });
     const startedRow = screen
-      .getByRole('link', { name: '色彩體系與應用' })
+      .getByRole('link', { name: /色彩體系與應用/u })
       .closest('tr');
     expect(startedRow).toHaveTextContent('1 / 3');
     expect(startedRow).toHaveTextContent('59.5%');
     expect(startedRow).toHaveTextContent('學習中');
     const untouchedRow = screen
-      .getByRole('link', { name: '色彩與視覺' })
+      .getByRole('link', { name: /色彩與視覺/u })
       .closest('tr');
     expect(untouchedRow).toHaveTextContent('—');
     expect(untouchedRow).toHaveTextContent('尚未開始');

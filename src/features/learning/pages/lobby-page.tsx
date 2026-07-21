@@ -61,7 +61,11 @@ function ProfileCard() {
             <h1 className="lobby__name">
               {profile.data?.displayName ?? '色彩學徒'}
             </h1>
-            <Link className="lobby__edit" to="/app/profile">
+            <Link
+              aria-label="個人資料"
+              className="lobby__edit"
+              to="/app/profile"
+            >
               ✏️ 修改
             </Link>
             <Chip tone="success">☁️ 雲端連線模式</Chip>

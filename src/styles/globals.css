@@ -502,8 +502,8 @@ a {
 }
 
 .question-option[data-selected='true'] {
-  border-color: var(--color-primary);
-  background: #f3e8ff;
+  border-color: var(--color-primary-strong);
+  background: color-mix(in srgb, var(--yellow-brand) 30%, white);
 }
 
 .question-option:has(input:disabled) {
@@ -551,9 +551,24 @@ a {
   border-left-color: var(--color-success);
 }
 
-.feedback-card--incorrect,
-.feedback-card--timeout {
+.feedback-card--incorrect {
   border-left-color: var(--color-danger);
+}
+
+.feedback-card--timeout {
+  border-left-color: var(--indigo-600);
+}
+
+.feedback-card--correct h2 {
+  color: var(--color-success);
+}
+
+.feedback-card--incorrect h2 {
+  color: var(--color-danger);
+}
+
+.feedback-card--timeout h2 {
+  color: var(--indigo-600);
 }
 
 .feedback-card h2 {
@@ -1050,7 +1065,7 @@ a {
   color: var(--slate-900);
 }
 
-.student-rail__tab--lobby {
+.student-rail__tab--active {
   background: var(--button-primary-bg);
   color: var(--button-primary-text);
   font-weight: 900;
@@ -1071,6 +1086,12 @@ a {
   font-weight: 700;
   padding: var(--space-2);
   text-decoration: none;
+}
+
+.student-rail__link--active {
+  border-radius: var(--radius-control);
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
 }
 
 .student-rail__link:hover {
@@ -1233,7 +1254,7 @@ a {
 }
 
 .lobby-chapter--open .lobby-chapter__icon {
-  background: linear-gradient(to top right, var(--amber-500), var(--rose-500));
+  background: color-mix(in srgb, var(--yellow-brand) 30%, white);
 }
 
 .lobby-chapter__title-row {
@@ -1575,7 +1596,7 @@ a {
   height: 56px;
   border-radius: var(--radius-control);
   margin-bottom: var(--space-3);
-  background: var(--yellow-brand);
+  background: color-mix(in srgb, var(--yellow-brand) 35%, white);
   font-size: 1.8rem;
   place-items: center;
 }
@@ -1609,8 +1630,8 @@ a {
 .app-shell:has(.auth-portal) #main-content {
   background: radial-gradient(
     circle at 50% 30%,
-    color-mix(in srgb, var(--slate-900) 88%, transparent),
-    var(--slate-950)
+    color-mix(in srgb, var(--yellow-brand) 34%, white),
+    color-mix(in srgb, var(--yellow-brand) 78%, var(--amber-avatar))
   );
 }
 
@@ -2013,4 +2034,246 @@ a {
 .login-form__secondary-action:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* 2026-07-21 owner 調整批次 */
+/* #7 挑戰完成標題暖黃；#8 逐題回顧狀態色 */
+.quiz-result__summary h1 {
+  color: var(--amber-700);
+}
+
+.result-question__status--correct {
+  color: var(--color-success);
+}
+
+.result-question__status--incorrect {
+  color: var(--color-danger);
+}
+
+.result-question__status--timeout {
+  color: var(--indigo-600);
+}
+
+/* #17 班級加入碼與加入班級按鈕的間距 */
+[data-interaction-group='join-classroom'] .login-form__field {
+  margin-bottom: var(--space-5);
+}
+
+/* #13 我的錯題：題目＋正確答案 */
+.mistake-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mistake-list__item {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  padding: var(--space-3) var(--space-4);
+}
+
+.mistake-list__prompt {
+  margin: 0 0 var(--space-1);
+  font-weight: 700;
+}
+
+.mistake-list__answer {
+  margin: 0;
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+/* #15 學習進度：放大版面 */
+.progress-dashboard {
+  max-width: 72rem;
+}
+
+.progress-dashboard .ui-table {
+  font-size: 1.05rem;
+}
+
+.progress-dashboard .ui-table th,
+.progress-dashboard .ui-table td {
+  padding: var(--space-4);
+}
+
+/* #18 成就徽章：colorplay-new 卡片式版面 */
+.achievement-card {
+  display: flex;
+  height: 100%;
+  align-items: flex-start;
+  gap: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  padding: var(--space-5);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+  transition:
+    filter 150ms,
+    opacity 150ms;
+}
+
+.achievement-card--unlocked {
+  border-color: var(--color-brand-yellow);
+  background: linear-gradient(
+    135deg,
+    var(--color-surface),
+    color-mix(in srgb, var(--yellow-brand) 12%, white)
+  );
+}
+
+.achievement-card--locked {
+  opacity: 0.78;
+  filter: grayscale(1);
+}
+
+.achievement-card--locked:hover {
+  opacity: 1;
+  filter: grayscale(0);
+}
+
+.achievement-card__tile {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  font-size: 1.9rem;
+  place-items: center;
+}
+
+.achievement-card__tile--unlocked {
+  border: 2px solid var(--color-brand-yellow);
+  background: var(--color-surface);
+}
+
+.achievement-card__tile--locked {
+  border: 1px solid var(--color-border);
+  background: var(--slate-100);
+}
+
+.achievement-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.achievement-card__title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.achievement-card__name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.achievement-card__chip {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--yellow-brand) 35%, white);
+  color: var(--amber-700);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px var(--space-2);
+  white-space: nowrap;
+}
+
+.achievement-card__description {
+  margin: var(--space-1) 0 var(--space-2);
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.achievement-card__state {
+  margin: 0;
+  font-weight: 800;
+}
+
+.achievement-card__progress {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.achievement-card__progress-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.achievement-card__date {
+  margin: var(--space-2) 0 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+/* #20 複習卡：GAME(1) 圖卡摺疊式（預設展開） */
+.review-accordion {
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  margin: var(--space-3) 0;
+  background: var(--color-surface);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 6%);
+}
+
+.review-accordion__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  padding: var(--space-3) var(--space-4);
+  font-weight: 800;
+}
+
+.review-accordion__summary:hover {
+  background: var(--slate-100);
+}
+
+.review-accordion__badge {
+  display: inline-grid;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: var(--color-primary-contrast);
+  font-size: 0.85rem;
+  place-items: center;
+}
+
+.review-accordion__badge--0 {
+  background: linear-gradient(135deg, var(--amber-500), var(--yellow-brand));
+}
+
+.review-accordion__badge--1 {
+  background: linear-gradient(135deg, var(--sky-500), var(--indigo-600));
+  color: white;
+}
+
+.review-accordion__badge--2 {
+  background: linear-gradient(135deg, var(--rose-500), var(--amber-500));
+  color: white;
+}
+
+.review-accordion__badge--3 {
+  background: linear-gradient(135deg, var(--emerald-600), var(--sky-500));
+  color: white;
+}
+
+.review-accordion__title {
+  flex: 1;
+}
+
+.review-accordion__done {
+  color: var(--color-success);
+  font-weight: 900;
+}
+
+.review-accordion > .review-card {
+  border-top: 1px solid var(--border-subtle);
+  margin: 0;
+  padding: var(--space-4);
 }

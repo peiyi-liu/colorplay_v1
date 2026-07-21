@@ -46,8 +46,10 @@ function FrameShopSection({
   const run = async (item: FrameInventoryItem) => {
     try {
       if (!item.owned) {
+        // 購買即裝備（owner 2026-07-21 #12）：買到的邊框立即反映在大廳頭貼。
         await purchase.mutateAsync(item.id);
-        toast({ message: `已購買${item.name}。`, tone: 'success' });
+        await equip.mutateAsync(item.id);
+        toast({ message: `已購買並裝備${item.name}。`, tone: 'success' });
         return;
       }
       await equip.mutateAsync(item.id);

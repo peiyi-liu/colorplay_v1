@@ -205,7 +205,7 @@ describe('LobbyPage', () => {
     renderPage();
     expect(screen.getByText('🦖')).toBeInTheDocument();
     expect(screen.getByText('學生一號')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /修改/u })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '個人資料' })).toHaveAttribute(
       'href',
       '/app/profile',
     );

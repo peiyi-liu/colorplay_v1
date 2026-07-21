@@ -116,17 +116,14 @@ const progressRowsSchema = z.array(
 
 const mistakeRowsSchema = z.array(
   z.object({
-    id: uuidString,
+    correct_option_text: z.string().min(1),
     last_event_at: z.string().min(1),
-    questions: z.object({
-      prompt: z.string().min(1),
-      stable_code: z.string().min(1),
-      subtopics: z.object({
-        id: uuidString,
-        title: z.string().min(1),
-      }),
-    }),
+    mistake_id: uuidString,
+    prompt: z.string().min(1),
+    stable_code: z.string().min(1),
     status: z.enum(['open', 'resolved', 'reopened']),
+    subtopic_id: uuidString,
+    subtopic_title: z.string().min(1),
   }),
 );
 
@@ -195,6 +192,7 @@ export type LearningProgressRow = Readonly<{
 }>;
 
 export type MistakeView = Readonly<{
+  correctOptionText: string;
   lastEventAt: string;
   mistakeId: string;
   prompt: string;
@@ -340,21 +338,17 @@ export function createLearningRepository(
     },
 
     async listMistakes() {
-      const { data, error } = await client
-        .from('mistake_items')
-        .select(
-          'id, status, last_event_at, questions(prompt, stable_code, subtopics(id, title))',
-        )
-        .order('last_event_at', { ascending: false });
+      const { data, error } = await client.rpc('list_my_mistakes');
       if (error) throw toLearningError(error.message);
       return parseWith(mistakeRowsSchema, data).map((row) => ({
+        correctOptionText: row.correct_option_text,
         lastEventAt: row.last_event_at,
-        mistakeId: row.id,
-        prompt: row.questions.prompt,
-        stableCode: row.questions.stable_code,
+        mistakeId: row.mistake_id,
+        prompt: row.prompt,
+        stableCode: row.stable_code,
         status: row.status,
-        subtopicId: row.questions.subtopics.id,
-        subtopicTitle: row.questions.subtopics.title,
+        subtopicId: row.subtopic_id,
+        subtopicTitle: row.subtopic_title,
       }));
     },
 

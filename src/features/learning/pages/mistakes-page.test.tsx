@@ -9,6 +9,7 @@ import { groupOpenMistakes, MistakesPage } from './mistakes-page';
 
 const mistakes = [
   {
+    correctOptionText: '暗色',
     lastEventAt: '2026-07-18T01:00:00+00:00',
     mistakeId: '26200000-0000-0000-0000-000000000001',
     prompt: '純色加入黑色所得的色彩稱為？',
@@ -18,6 +19,7 @@ const mistakes = [
     subtopicTitle: '3-1 色彩三要素與色名的表示',
   },
   {
+    correctOptionText: '清色',
     lastEventAt: '2026-07-18T01:01:00+00:00',
     mistakeId: '26200000-0000-0000-0000-000000000002',
     prompt: '明色和暗色因為不含灰色，所以又稱為？',

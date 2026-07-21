@@ -42,9 +42,17 @@ select is(
     ["travel_frog","旅行蛙","🐸",250],
     ["wise_owl","智慧鴞","🦉",500],
     ["primary_lion","原色獅","🦁",1000],
-    ["rainbow_horse","彩虹馬","🦄",2000]
+    ["rainbow_horse","彩虹馬","🦄",2000],
+    ["panda_painter","熊貓畫師","🐼",150],
+    ["koala_toner","無尾熊調色師","🐨",300],
+    ["tiger_orange","猛虎橙","🐯",400],
+    ["octo_mixer","八爪配色師","🐙",600],
+    ["robo_blue","機械藍調","🤖",800],
+    ["pixel_sprite","像素精靈","👾",1200],
+    ["indigo_dragon","東方靛龍","🐲",1500],
+    ["peacock_teal","孔雀藍綠","🦚",2500]
   ]'::jsonb,
-  'catalog contains the exact ordered six-Blook contract'
+  'catalog contains the exact ordered fourteen-Blook contract'
 );
 select is(
   (select relrowsecurity from pg_class where oid = 'public.blooks'::regclass),
@@ -195,7 +203,7 @@ where user_id = '10000000-0000-0000-0000-000000000021';
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000021', true);
 
-select is((select count(*)::integer from public.blooks), 6, 'student reads the published catalog');
+select is((select count(*)::integer from public.blooks), 14, 'student reads the published catalog');
 select is((select count(*)::integer from public.user_blooks), 1, 'student reads only own initial ownership');
 select is(
   (

@@ -89,7 +89,7 @@ describe('learning experience phase gate contract', () => {
     expect(spec).toContain('chapter-detail-375x812.png');
     expect(spec).toContain('review-card-768x1024.png');
     expect(spec).toContain('progress-dashboard-1440x900.png');
-    expect(spec).toContain('declareExpectedBrowserFailure');
+    // 提示 UI 於 2026-07-21 依 owner #4 移除，宣告式失敗不再需要。
     expect(spec).toContain('await teacherBContext.close();');
     expect(spec).not.toContain('page.route(');
     expect(spec).not.toContain('test.skip(');

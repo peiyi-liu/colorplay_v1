@@ -11,10 +11,8 @@ import {
   REVIEW_MEDIA_CARD,
 } from '../fixtures/review-manifest.generated';
 import { TEST_USERS } from '../fixtures/users';
-import { learningExpectedFailureDeclarations } from './learning-experience-expected-failures';
 import {
   attachBrowserHealth,
-  declareExpectedBrowserFailure,
   expectedBrowserFailures,
   unexpectedBrowserHealth,
 } from './browser-health';
@@ -157,32 +155,12 @@ test('Learning Experience phase gate', async ({
     const prompt = await studentPage
       .locator('.question-card legend')
       .innerText();
+    // 提示 UI 已依 owner 指示移除（2026-07-21 #4）；仍沿用提示 fixture
+    // 挑出固定的兩題故意答錯，維持後續錯題中心斷言不變。
     const hints = GENERATED_QUESTION_HINTS.get(prompt);
     let answerWrong = false;
     if (hints) {
-      for (const [index, content] of hints.entries()) {
-        await studentPage
-          .getByRole('button', {
-            name: `索取提示（第 ${String(index + 1)} 層）`,
-          })
-          .click();
-        await expect(
-          studentPage.getByText(`提示 ${String(index + 1)}：${content}`),
-        ).toBeVisible();
-      }
       if (hints.length === 2 && !declaredUnavailable) {
-        // The two-level question proves the server refuses to invent a third
-        // hint; this is the run's only declared browser failure.
-        declareExpectedBrowserFailure(
-          studentHealth,
-          learningExpectedFailureDeclarations.hintUnavailable,
-        );
-        await studentPage
-          .getByRole('button', { name: '索取提示（第 3 層）' })
-          .click();
-        await expect(
-          studentPage.getByText('這一題沒有更多提示了。'),
-        ).toBeVisible();
         declaredUnavailable = true;
         answerWrong = true;
       } else if (hints.length === 3 && !threeHintWrongDone) {
@@ -330,15 +308,7 @@ test('Learning Experience phase gate', async ({
   const declaredFailures = trackedHealths.flatMap((health) =>
     expectedBrowserFailures(health),
   );
-  expect(declaredFailures).toEqual([
-    {
-      expected_count: 1,
-      observed_count: 1,
-      status: 400,
-      url_pattern:
-        learningExpectedFailureDeclarations.hintUnavailable.urlPattern.source,
-    },
-  ]);
+  expect(declaredFailures).toEqual([]);
   const healthResults = trackedHealths.map((health) =>
     unexpectedBrowserHealth(health, 'chromium'),
   );
