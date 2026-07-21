@@ -151,7 +151,7 @@ describe('LiveJoinPage', () => {
     renderWith(<LiveJoinPage repository={repository} />);
     const user = userEvent.setup();
 
-    await user.type(screen.getByLabelText('課堂代碼'), 'ab12-cd34-ef56-ab78');
+    await user.type(screen.getByLabelText('課堂代碼'), '123456');
     await user.click(screen.getByRole('button', { name: '加入課堂' }));
 
     expect(await screen.findByText('已進入課堂頁')).toBeVisible();
@@ -160,7 +160,7 @@ describe('LiveJoinPage', () => {
       joinCode: string;
       requestId: string;
     };
-    expect(joinArgs.joinCode).toBe('AB12-CD34-EF56-AB78');
+    expect(joinArgs.joinCode).toBe('123456');
     expect(joinArgs.requestId).toMatch(/^[0-9a-f-]{36}$/u);
   });
 
@@ -168,10 +168,10 @@ describe('LiveJoinPage', () => {
     renderWith(<LiveJoinPage repository={repositoryWith({})} />);
     const user = userEvent.setup();
 
-    await user.type(screen.getByLabelText('課堂代碼'), 'not-a-code');
+    await user.type(screen.getByLabelText('課堂代碼'), 'nope12');
     await user.click(screen.getByRole('button', { name: '加入課堂' }));
 
-    expect(await screen.findByText('請輸入四組課堂代碼')).toBeVisible();
+    expect(await screen.findByText('請輸入六位數字課堂代碼')).toBeVisible();
   });
 });
 
@@ -512,7 +512,7 @@ describe('TeacherLivePage (advanced)', () => {
       sessionId: SESSION_ID,
       state: 'draft',
       stateVersion: 1,
-      joinCode: 'AAAA-BBBB-CCCC-DDDD',
+      joinCode: '654321',
       joinCodeVersion: 1,
       mode: 'team',
       teamCount: 3,

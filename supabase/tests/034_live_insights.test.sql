@@ -155,12 +155,16 @@ as $$
 declare
   session_record public.live_sessions;
 begin
+  -- Since 2026-07-live-3 the last answer closes the question on its own;
+  -- the host only closes manually when someone has not answered yet.
   select * into session_record
   from public.live_sessions where id = target_session;
-  perform pg_temp.as_user(host_user);
-  perform public.close_live_question(
-    target_session, session_record.state_version
-  );
+  if session_record.state = 'question_open' then
+    perform pg_temp.as_user(host_user);
+    perform public.close_live_question(
+      target_session, session_record.state_version
+    );
+  end if;
 end;
 $$;
 
@@ -359,18 +363,6 @@ select is(
   1,
   'a correct answer starts the streak'
 );
-select is(
-  (
-    pg_temp.answer_as(
-      current_setting('test.session_id')::uuid,
-      '34000000-0000-0000-0000-000000000003',
-      false
-    ) ->> 'streak'
-  )::integer,
-  0,
-  'a wrong answer keeps the streak at zero'
-);
-
 select pg_temp.as_user('34000000-0000-0000-0000-000000000001');
 select is(
   public.live_question_distribution(current_setting('test.session_id')::uuid),
@@ -396,6 +388,19 @@ select throws_ok(
   'P0001',
   'LIVE_SESSION_NOT_FOUND',
   'another teacher cannot read the distribution'
+);
+
+-- B answers last, which auto-closes the question since 2026-07-live-3.
+select is(
+  (
+    pg_temp.answer_as(
+      current_setting('test.session_id')::uuid,
+      '34000000-0000-0000-0000-000000000003',
+      false
+    ) ->> 'streak'
+  )::integer,
+  0,
+  'a wrong answer keeps the streak at zero'
 );
 
 select pg_temp.host_close(

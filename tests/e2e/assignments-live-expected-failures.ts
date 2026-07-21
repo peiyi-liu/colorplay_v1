@@ -6,11 +6,6 @@ export const assignmentsLiveExpectedFailureDeclarations = {
     status: 400,
     urlPattern: /\/rest\/v1\/rpc\/advance_live_session(?:\?.*)?$/u,
   },
-  outsiderJoin: {
-    count: 1,
-    status: 400,
-    urlPattern: /\/rest\/v1\/rpc\/join_live_session(?:\?.*)?$/u,
-  },
 } as const satisfies Readonly<
   Record<string, ExpectedBrowserFailureDeclaration>
 >;

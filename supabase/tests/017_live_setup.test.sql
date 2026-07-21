@@ -125,8 +125,8 @@ select is(
 );
 select matches(
   current_setting('test.session')::jsonb ->> 'join_code',
-  '^[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$',
-  'the one-time join code uses four hex groups'
+  '^[0-9]{6}$',
+  'the one-time join code is six numeric digits'
 );
 select is(
   (current_setting('test.session')::jsonb ->> 'state_version')::integer,
@@ -249,12 +249,10 @@ select throws_ok(
   'LIVE_TEACHER_ROLE_REQUIRED',
   'students cannot create live activities'
 );
-select throws_ok(
-  format(
-    $$select public.join_live_session(%L, '17300000-0000-0000-0000-000000000001')$$,
-    'ZZZZ-ZZZZ-ZZZZ-ZZZZ'
-  ),
-  'P0001',
+select is(
+  public.join_live_session(
+    'ZZZZ-ZZZZ-ZZZZ-ZZZZ', '17300000-0000-0000-0000-000000000001'
+  ) ->> 'error',
   'LIVE_JOIN_INVALID_CODE',
   'an unknown code joins nothing'
 );
@@ -349,14 +347,11 @@ select set_config(
   '17000000-0000-0000-0000-000000000004',
   true
 );
-select throws_ok(
-  format(
-    $$select public.join_live_session(
-      %L, '17300000-0000-0000-0000-000000000004'
-    )$$,
-    current_setting('test.rotated')::jsonb ->> 'join_code'
-  ),
-  'P0001',
+select is(
+  public.join_live_session(
+    current_setting('test.rotated')::jsonb ->> 'join_code',
+    '17300000-0000-0000-0000-000000000004'
+  ) ->> 'error',
   'LIVE_JOIN_INVALID_CODE',
   'a non-member cannot join even with a valid code'
 );

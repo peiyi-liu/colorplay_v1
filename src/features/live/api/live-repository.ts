@@ -101,9 +101,7 @@ const sessionReceiptSchema = z.strictObject({
   session_id: uuidString,
   state: stateNameSchema,
   state_version: positiveInteger,
-  join_code: z
-    .string()
-    .regex(/^[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/u),
+  join_code: z.string().regex(/^[0-9]{6}$/u),
   join_code_version: positiveInteger,
   mode: z.enum(['individual', 'team']),
   team_count: z.number().int().min(2).max(4).nullable(),
@@ -111,9 +109,7 @@ const sessionReceiptSchema = z.strictObject({
 
 const rotateSchema = z.strictObject({
   session_id: uuidString,
-  join_code: z
-    .string()
-    .regex(/^[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/u),
+  join_code: z.string().regex(/^[0-9]{6}$/u),
   join_code_version: positiveInteger,
 });
 
@@ -121,6 +117,10 @@ const joinSchema = z.strictObject({
   session_id: uuidString,
   state: stateNameSchema,
   state_version: positiveInteger,
+});
+
+const joinErrorSchema = z.strictObject({
+  error: z.string().min(1),
 });
 
 const questionSchema = z.strictObject({
@@ -216,6 +216,7 @@ const errorCodeByMessage: readonly (readonly [
   ['LIVE_STATE_CONFLICT', 'STATE_CONFLICT'],
   ['LIVE_STATE_INVALID_TRANSITION', 'INVALID_TRANSITION'],
   ['LIVE_JOIN_INVALID_CODE', 'JOIN_INVALID_CODE'],
+  ['LIVE_JOIN_RATE_LIMITED', 'JOIN_RATE_LIMITED'],
   ['LIVE_ANSWER_CLOSED', 'ANSWER_CLOSED'],
   ['LIVE_ANSWER_ALREADY_SUBMITTED', 'ANSWER_ALREADY_SUBMITTED'],
   ['LIVE_INVALID_OPTION', 'VALIDATION'],
@@ -424,6 +425,12 @@ export function createLiveRepository(
         p_request_id: input.requestId,
       });
       if (error) throw toRepositoryError(error.message);
+      // Failed lookups arrive as committed payload errors so the server-side
+      // throttle can count them (2026-07-live-3).
+      const payloadError = joinErrorSchema.safeParse(data);
+      if (payloadError.success) {
+        throw toRepositoryError(payloadError.data.error);
+      }
       const parsed = parseWith(joinSchema, data);
       return {
         sessionId: parsed.session_id,

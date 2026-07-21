@@ -325,6 +325,7 @@ select is(
     select count(*)::integer
     from realtime.messages
     where topic = 'live-session:' || current_setting('test.session_id')
+      and payload ->> 'state' = 'question_open'
       and (payload ->> 'answered_count')::integer = 1
   ),
   1,

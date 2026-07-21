@@ -7,11 +7,9 @@ import { GENERATED_CORRECT_ANSWERS } from '../fixtures/question-answers.generate
 import { TEST_USERS } from '../fixtures/users';
 import {
   attachBrowserHealth,
-  declareExpectedBrowserFailure,
   expectedBrowserFailures,
   unexpectedBrowserHealth,
 } from './browser-health';
-import { liveAdvancedExpectedFailureDeclarations } from './live-advanced-expected-failures';
 
 const CLASSROOM_NAME = '進階Live班級';
 const QUESTION_COUNT = 10;
@@ -35,7 +33,9 @@ const signInTeacher = async (
   credentials: Readonly<{ email: string; password: string }>,
 ) => {
   await page.goto('/login');
-  await page.getByRole('radio', { name: '教師' }).check();
+  // The native radio is visually clipped (styled tab), so check() would wait
+  // for visibility forever — click the label instead.
+  await page.getByText('教師診斷端').click();
   await page.getByLabel('帳號').fill(credentials.email);
   await page.getByLabel('密碼').fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
@@ -90,6 +90,24 @@ test('Live Advanced phase gate', async ({
   let submittedAnswers = 0;
   const answeredFirst = new Set<string>();
 
+  // AC-LIVE-012 budgets the answer RPC round-trip; the receipt render (which
+  // since 2026-07-live-3 can include the auto-close feedback reconcile) is
+  // flow control, not latency. Request timings are collected per page and
+  // consumed one per submission.
+  const answerTimings = new Map<Page, number[]>();
+  const trackAnswerTiming = (page: Page) => {
+    answerTimings.set(page, []);
+    page.on('requestfinished', (request) => {
+      if (!request.url().includes('/rest/v1/rpc/submit_live_answer')) return;
+      const timing = request.timing();
+      if (timing.responseEnd >= 0) {
+        answerTimings.get(page)?.push(timing.responseEnd);
+      }
+    });
+  };
+  trackAnswerTiming(studentAPage);
+  trackAnswerTiming(studentBPage);
+
   const answerCurrent = async (
     page: Page,
     participant: string,
@@ -110,16 +128,29 @@ test('Live Advanced phase gate', async ({
       : options.filter({ hasNotText: correctText }).first();
     const cold = !answeredFirst.has(participant);
     answeredFirst.add(participant);
-    const startedAt = Date.now();
     await target.click();
-    await expect(page.getByText('已收到你的答案，等待其他同學…')).toBeVisible();
-    answerSamples.push({ cold, ms: Date.now() - startedAt });
+    // 2026-07-live-3: the final answer auto-closes the question, so the
+    // receipt is either the waiting status or the immediate feedback card.
+    await expect(
+      page
+        .getByText('已收到你的答案，等待其他同學…')
+        .or(page.getByRole('heading', { name: /答對了|答錯了/u }))
+        .first(),
+    ).toBeVisible();
+    await expect
+      .poll(() => answerTimings.get(page)?.length ?? 0)
+      .toBeGreaterThan(0);
+    const rpcMs = answerTimings.get(page)?.shift();
+    if (rpcMs === undefined) {
+      throw new Error('LIVE_ADVANCED_ANSWER_TIMING_MISSING');
+    }
+    answerSamples.push({ cold, ms: rpcMs });
     submittedAnswers += 1;
   };
 
   const hostCloseAndMaybeAdvance = async (position: number) => {
-    await expect(teacherPage.getByText('已作答 2 / 2')).toBeVisible();
-    await teacherPage.getByRole('button', { name: '收題並公布答案' }).click();
+    // 2026-07-live-3: every round ends with both students answered, so the
+    // server closes the question on its own and the host only advances.
     if (position < QUESTION_COUNT) {
       await teacherPage.getByRole('button', { name: '下一題' }).click();
     }
@@ -181,12 +212,10 @@ test('Live Advanced phase gate', async ({
   await joinLive(studentAPage, joinCode);
   await joinLive(studentBPage, joinCode);
 
-  // Outsider denial is the run's only declared 4xx; no participant row exists.
+  // Outsider denial arrives as a committed 200 payload error since
+  // 2026-07-live-3 (throttle counting), so it is verified by the visible
+  // message instead of a declared 4xx; no participant row exists.
   await signInStudent(outsiderPage, TEST_USERS.outsider);
-  declareExpectedBrowserFailure(
-    outsiderHealth,
-    liveAdvancedExpectedFailureDeclarations.outsiderJoinDenied,
-  );
   await outsiderPage.goto('/app/live/join');
   await outsiderPage.getByLabel('課堂代碼').fill(joinCode);
   await outsiderPage.getByRole('button', { name: '加入課堂' }).click();
@@ -208,11 +237,12 @@ test('Live Advanced phase gate', async ({
   await expect(studentBPage.getByText('暫停中')).toBeVisible();
   await teacherPage.getByRole('button', { name: '繼續作答' }).click();
   await expect(studentBPage.locator('.question-card legend')).toBeVisible();
-  await answerCurrent(studentBPage, 'B', true, 1);
-
+  // The during-open distribution must be checked before the last answer
+  // auto-closes the round.
   await expect(
     teacherPage.getByText('即時作答分布（僅主持人可見）'),
   ).toBeVisible();
+  await answerCurrent(studentBPage, 'B', true, 1);
   await hostCloseAndMaybeAdvance(1);
   await expect(
     teacherPage.getByRole('region', { name: '隊伍計分板' }),
@@ -373,16 +403,7 @@ test('Live Advanced phase gate', async ({
   const declaredFailures = trackedHealths.flatMap((health) =>
     expectedBrowserFailures(health),
   );
-  expect(declaredFailures).toEqual([
-    {
-      expected_count: 1,
-      observed_count: 1,
-      status: 400,
-      url_pattern:
-        liveAdvancedExpectedFailureDeclarations.outsiderJoinDenied.urlPattern
-          .source,
-    },
-  ]);
+  expect(declaredFailures).toEqual([]);
   const healthResults = trackedHealths.map((health) =>
     unexpectedBrowserHealth(health, 'chromium'),
   );

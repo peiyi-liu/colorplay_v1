@@ -56,7 +56,7 @@
 
 ### B2. 分階段實作
 
-#### 10A 計分與節奏核心（M；純後端為主）
+#### 10A 計分與節奏核心（M；純後端為主）——**已完成（2026-07-22；migration `20260724000100_live_scoring_v2`、pgTAP 040 44 項、spec/05 pin `2026-07-live-3`）**
 
 - **速度計分（滿分 150）**：`submit_live_answer` 改為 `score = round(150 − 75 × (response_ms / time_limit_ms))`——0ms＝150、用滿時間答對＝75、答錯/逾時＝0；伺服器權威計算不變。
 - **全員作答自動關題**：answered_count == 有效參與人數 → 伺服器自動執行關題轉換＋broadcast（`state_version` 正常遞增；與主持手動關題競態需冪等）。

@@ -145,6 +145,26 @@ describe('live repository', () => {
     }
   });
 
+  it('maps committed join payload errors onto stable codes', async () => {
+    const cases: readonly (readonly [string, string])[] = [
+      ['LIVE_JOIN_INVALID_CODE', 'JOIN_INVALID_CODE'],
+      ['LIVE_JOIN_RATE_LIMITED', 'JOIN_RATE_LIMITED'],
+    ];
+    for (const [message, code] of cases) {
+      const rpc = vi.fn().mockResolvedValue({
+        data: { error: message },
+        error: null,
+      });
+      const repository = createLiveRepository(clientWith(rpc));
+      await expect(
+        repository.join({
+          joinCode: '123456',
+          requestId: '18600000-0000-0000-0000-000000000009',
+        }),
+      ).rejects.toMatchObject({ code });
+    }
+  });
+
   it('submits answers with the exact trusted arguments', async () => {
     const rpc = vi.fn().mockResolvedValue({
       data: {
@@ -234,7 +254,7 @@ describe('live repository', () => {
         session_id: '18400000-0000-0000-0000-000000000001',
         state: 'draft',
         state_version: 1,
-        join_code: 'AAAA-BBBB-CCCC-DDDD',
+        join_code: '654321',
         join_code_version: 1,
         mode: 'team',
         team_count: 3,

@@ -101,7 +101,11 @@ const answerWrong = async (page: Page) => {
     .filter({ hasNotText: answer })
     .first()
     .click();
-  await expect(page.getByText('已收到你的答案，等待其他同學…')).toBeVisible();
+  // B always answers last, and since 2026-07-live-3 the final answer closes
+  // the question automatically: the receipt is the immediate feedback card.
+  await expect(
+    page.getByRole('heading', { name: /✗ 答錯了/u }),
+  ).toBeVisible();
 };
 
 test('Assignments and Live Core phase gate', async ({
@@ -224,17 +228,17 @@ test('Assignments and Live Core phase gate', async ({
     await expect(hostPage.getByText('2 位參與者・第 0 / 10 題')).toBeVisible();
 
     if (sessionIndex === 1) {
+      // Outsider denial arrives as a committed 200 payload error since
+      // 2026-07-live-3 (throttle counting), so it is verified by the
+      // visible message instead of a declared 4xx.
       await signIn(outsiderPage, TEST_USERS.outsider);
-      declareExpectedBrowserFailure(
-        outsiderHealth,
-        assignmentsLiveExpectedFailureDeclarations.outsiderJoin,
-      );
       await outsiderPage.goto('/app/live/join');
       await outsiderPage.getByLabel('課堂代碼').fill(codeText);
       await outsiderPage.getByRole('button', { name: '加入課堂' }).click();
       await expect(
         outsiderPage.getByText('代碼無效或課堂尚未開放，請向老師確認。'),
       ).toBeVisible();
+      outsiderDeniedCount += 1;
       // Idle denied windows refetch on headed visibility changes; close now.
       await outsiderContext.close();
     }
@@ -272,12 +276,12 @@ test('Assignments and Live Core phase gate', async ({
       }
       await answerWrong(studentBPage);
 
-      await expect(hostPage.getByText('已作答 2 / 2')).toBeVisible();
-      verifiedAnswerPairs += 2;
-      await hostPage.getByRole('button', { name: '收題並公布答案' }).click();
+      // 2026-07-live-3: the second answer auto-closed the round — both
+      // students land on their authoritative feedback without a host close.
       await expect(
         studentAPage.getByRole('heading', { name: /✓ 答對了/u }),
       ).toBeVisible();
+      verifiedAnswerPairs += 2;
 
       if (round < 10) {
         if (sessionIndex === 1 && round === 6) {
@@ -286,8 +290,28 @@ test('Assignments and Live Core phase gate', async ({
           // (either one — commit order decides) surfaces the conflict alert
           // and reconciles to the round the winner opened. Sequential clicks
           // would race the broadcast reconcile, so both dispatch together.
+          // Auth lives in sessionStorage (close-tab logout policy), which a
+          // fresh tab starts without; copy it over like a real duplicated
+          // tab would inherit it.
+          const sessionSnapshot = await hostPage.evaluate(() =>
+            JSON.stringify(
+              Object.fromEntries(
+                Object.keys(window.sessionStorage).map((key) => [
+                  key,
+                  window.sessionStorage.getItem(key) ?? '',
+                ]),
+              ),
+            ),
+          );
           const duplicateHostPage = await hostPage.context().newPage();
           const duplicateHealth = attachBrowserHealth(duplicateHostPage);
+          await duplicateHostPage.addInitScript((snapshot: string) => {
+            for (const [key, value] of Object.entries(
+              JSON.parse(snapshot) as Record<string, string>,
+            )) {
+              window.sessionStorage.setItem(key, value);
+            }
+          }, sessionSnapshot);
           await duplicateHostPage.goto(`/teacher/live/${sessionId}`);
           await expect(
             duplicateHostPage.getByRole('button', { name: '下一題' }),
@@ -332,9 +356,15 @@ test('Assignments and Live Core phase gate', async ({
     await expect(
       hostPage.getByRole('heading', { name: '最終排名' }),
     ).toBeVisible();
-    await expect(
-      studentAPage.getByText(/你的成績：1500 分，第 1 名/u),
-    ).toBeVisible();
+    // Speed scoring (2026-07-live-3): each correct answer lands in [75, 150]
+    // depending on response time, so the winner's total is a range.
+    const winnerResult = studentAPage.getByText(/你的成績：\d+ 分，第 1 名/u);
+    await expect(winnerResult).toBeVisible();
+    const winnerScore = Number(
+      /你的成績：(\d+) 分/u.exec(await winnerResult.innerText())?.[1],
+    );
+    expect(winnerScore).toBeGreaterThanOrEqual(750);
+    expect(winnerScore).toBeLessThanOrEqual(1500);
     await expect(
       studentBPage.getByText(/你的成績：0 分，第 2 名/u),
     ).toBeVisible();
@@ -364,22 +394,22 @@ test('Assignments and Live Core phase gate', async ({
 
   const duplicateHostHealths: ReturnType<typeof attachBrowserHealth>[] = [];
   let verifiedAnswerPairs = 0;
+  let outsiderDeniedCount = 0;
   await runLiveSession(1);
   await runLiveSession(2);
 
   expect(answerDurations.length).toBeGreaterThanOrEqual(30);
   // Integrity fields are derived from in-run observations, not asserted:
-  // every round's host console confirmed 2/2 authoritative answers, the
+  // every round both students reached their authoritative feedback, the
   // unique (participant, question) constraint precludes duplicates, and the
-  // outsider probe is counted through its declared-failure observation.
-  const outsiderObservations = expectedBrowserFailures(outsiderHealth);
+  // outsider probe is counted through its visible payload-error denial.
   const latencyReport = {
     answer_p95_ms: percentile(answerDurations, 0.95),
     answer_samples: answerDurations.length,
     finalize_p95_ms: percentile(finalizeDurations, 0.95),
     finalize_samples: finalizeDurations.length,
     lost_or_duplicate_answers: 40 - verifiedAnswerPairs,
-    outsider_access: outsiderObservations[0]?.observed_count === 1 ? 0 : 1,
+    outsider_access: outsiderDeniedCount === 1 ? 0 : 1,
   };
   expect(verifiedAnswerPairs).toBe(40);
   expect(latencyReport.answer_p95_ms).toBeLessThanOrEqual(800);
@@ -395,28 +425,22 @@ test('Assignments and Live Core phase gate', async ({
   const healthResults = trackedHealths.map((health) =>
     unexpectedBrowserHealth(health, 'chromium'),
   );
-  const joinPattern =
-    assignmentsLiveExpectedFailureDeclarations.outsiderJoin.urlPattern.source;
   const advancePattern =
     assignmentsLiveExpectedFailureDeclarations.duplicateHostAdvance.urlPattern
       .source;
   const allDeclared = trackedHealths.flatMap((health) =>
     expectedBrowserFailures(health),
   );
-  const joinReports = allDeclared.filter(
-    (report) => report.url_pattern === joinPattern,
-  );
   const advanceReports = allDeclared.filter(
     (report) => report.url_pattern === advancePattern,
   );
-  expect(allDeclared.length).toBe(joinReports.length + advanceReports.length);
-  expect(joinReports.map((report) => report.observed_count)).toEqual([1]);
+  expect(allDeclared.length).toBe(advanceReports.length);
+  expect(outsiderDeniedCount).toBe(1);
   // Exactly one of the two racing host tabs recorded the conflict 400.
   expect(
     advanceReports.reduce((sum, report) => sum + report.observed_count, 0),
   ).toBe(1);
   const declaredFailures = [
-    ...joinReports,
     {
       expected_count: 1,
       observed_count: 1,

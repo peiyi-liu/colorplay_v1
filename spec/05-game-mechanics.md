@@ -268,3 +268,12 @@ mastery = coverage * accuracy / 100
 - **Reduced motion**：慶祝／連擊動畫必須同時尊重 OS `prefers-reduced-motion` 與 server-backed profile 設定 `profiles.reduced_motion`（trusted profile 更新路徑；不得使用 localStorage）。啟用時以根屬性 `data-reduced-motion` 關閉動畫，功能與資訊不減損。
 - **Capacity／latency（AC-LIVE-012 profile）**：1 host＋2 active students＋1 outsider；至少 30 個 answer sample 與 2 個 finalize sample，cold start 分開記錄。門檻：answer p95 ≤ 800 ms、finalize p95 ≤ 1,000 ms、authoritative answers 無遺失／重複、outsider access = 0。證據為 measured `latency-profile.json`，由 gate finalizer 強制。
 - 一切 first-party：不複製 Kahoot branding/assets、不依賴 official API。
+
+### ColorPlay Live Kahoot 節奏（2026-07-live-3 擴充；Milestone 10A）
+
+- **速度計分**：答對分數 `score = round(150 − 75 × (response_ms / time_limit_ms))`，並 clamp 在 [75, 150]——0 ms＝150、用滿時間答對＝75；答錯／逾時＝0。`time_limit_ms` 取該題凍結的 `deadline_at − opened_at`（pause/resume 重建後仍等於完整時限，暫停時間永不計入）。伺服器權威計算不變；XP／Token 獎勵規則維持 `2026-07-live-1` 條文（≤ 5,000 ms 門檻）不動。
+- **Rules version 判定**：`live_sessions.rules_version` 於建立時定版（新 session 預設 `2026-07-live-3`）；`submit_live_answer` 依 session 的 rules_version 分流計分，既有／歷史 session 維持 `2026-07-live-1` 的 150／100 兩檔，不得以新規則重算。
+- **全員作答自動關題**：`question_open` 期間，當所有 active participants 對當前題都有 authoritative answer（含 timeout row）時，伺服器自動執行與 `close_live_question` 相同的關題轉換（timeout 補列為空集合、`state_version` 遞增一次、broadcast feedback payload 一次）。`submit_live_answer` 改為對 session row 取 `for update` 鎖使提交序列化，保證恰有一個提交觀察到完整作答集合。主持端手動關題與自動關題競態必須冪等：主持以「慢一版」的 `state_version` 對已進入 `question_feedback` 的題目關題時，回傳同一份 feedback receipt 且不再 broadcast；更舊版本仍回 `LIVE_STATE_CONFLICT`。
+- **六碼數字加入碼**：`generate_live_join_code` 產生 `000000`–`999999`（強亂數、前導零保留）。唯一性只涵蓋活躍場次（partial unique index，`state not in ('completed','cancelled')`——含 `paused`）；`completed`／`cancelled` 釋出碼空間，建立與 rotate 皆有碰撞重試。
+- **Join 節流與錯誤契約**：因碼空間僅 10⁶，`join_live_session` 對「查無／格式錯／非成員」一律回傳 committed payload 錯誤 `{"error":"LIVE_JOIN_INVALID_CODE"}`（不 raise——raise 會把節流計數一併 rollback），並以 `live_join_throttle`（host-only RLS、無 client 權限）按 user 記錄失敗：60 秒固定視窗內滿 10 次失敗後回 `{"error":"LIVE_JOIN_RATE_LIMITED"}`。成功 join 的 payload 與既有契約完全相同；`AUTH_REQUIRED`／`LIVE_INVALID_REQUEST` 仍為 raise。
+- **Host 分布讀取放寬**：`live_question_distribution` 允許 host 於 `question_open`／`paused`／`question_feedback` 讀取（分布在 feedback 對全員公開，無新增揭露）——host 端「answered-count broadcast 觸發 refetch」與自動關題競態時不再產生 400。學生於任何狀態呼叫仍回 `LIVE_SESSION_NOT_FOUND`。

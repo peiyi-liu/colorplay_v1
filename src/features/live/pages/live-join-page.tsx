@@ -11,17 +11,21 @@ const joinSchema = z.strictObject({
   joinCode: z
     .string()
     .trim()
-    .regex(
-      /^[0-9A-Fa-f]{4}-?[0-9A-Fa-f]{4}-?[0-9A-Fa-f]{4}-?[0-9A-Fa-f]{4}$/u,
-      '請輸入四組課堂代碼',
-    ),
+    .regex(/^[0-9]{6}$/u, '請輸入六位數字課堂代碼'),
 });
 type JoinValues = z.infer<typeof joinSchema>;
 
-const joinErrorMessage = (error: unknown) =>
-  error instanceof LiveRepositoryError && error.code === 'JOIN_INVALID_CODE'
-    ? '代碼無效或課堂尚未開放，請向老師確認。'
-    : '目前無法加入課堂，請稍後重試。';
+const joinErrorMessage = (error: unknown) => {
+  if (error instanceof LiveRepositoryError) {
+    if (error.code === 'JOIN_INVALID_CODE') {
+      return '代碼無效或課堂尚未開放，請向老師確認。';
+    }
+    if (error.code === 'JOIN_RATE_LIMITED') {
+      return '嘗試次數過多，請稍候一分鐘再試。';
+    }
+  }
+  return '目前無法加入課堂，請稍後重試。';
+};
 
 export function LiveJoinPage({
   repository,
@@ -53,7 +57,7 @@ export function LiveJoinPage({
             setJoinError(undefined);
             try {
               const joined = await join.mutateAsync({
-                joinCode: values.joinCode.toUpperCase(),
+                joinCode: values.joinCode.trim(),
                 requestId: requestIdRef.current,
               });
               void navigate(`/app/live/${joined.sessionId}`, {
@@ -69,8 +73,9 @@ export function LiveJoinPage({
         <input
           autoComplete="off"
           id="live-join-code"
-          inputMode="text"
-          placeholder="XXXX-XXXX-XXXX-XXXX"
+          inputMode="numeric"
+          maxLength={6}
+          placeholder="000000"
           type="text"
           {...register('joinCode')}
           aria-invalid={errors.joinCode ? true : undefined}

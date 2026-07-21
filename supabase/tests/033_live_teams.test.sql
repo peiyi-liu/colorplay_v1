@@ -161,12 +161,16 @@ begin
     question_record.id, question_record.correct_option_id, gen_random_uuid()
   );
 
+  -- Since 2026-07-live-3 the last answer closes the question on its own;
+  -- the host only closes manually when someone has not answered yet.
   select * into session_record
   from public.live_sessions where id = target_session;
-  perform pg_temp.as_user(host_user);
-  perform public.close_live_question(
-    target_session, session_record.state_version
-  );
+  if session_record.state = 'question_open' then
+    perform pg_temp.as_user(host_user);
+    perform public.close_live_question(
+      target_session, session_record.state_version
+    );
+  end if;
 end;
 $$;
 
