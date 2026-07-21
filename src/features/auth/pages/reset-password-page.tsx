@@ -128,14 +128,15 @@ export function ResetPasswordPage() {
               <label htmlFor="reset-password">新密碼</label>
               <input
                 {...register('password')}
-                aria-describedby={
-                  errors.password ? 'reset-password-error' : undefined
-                }
+                aria-describedby="reset-password-hint reset-password-error"
                 aria-invalid={errors.password ? 'true' : 'false'}
                 autoComplete="new-password"
                 id="reset-password"
                 type="password"
               />
+              <p className="login-form__field-hint" id="reset-password-hint">
+                需要填寫與之前不一樣的密碼。
+              </p>
               {errors.password ? (
                 <p
                   className="login-form__field-error"

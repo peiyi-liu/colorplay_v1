@@ -312,14 +312,15 @@ export function RegisterPage() {
           <label htmlFor="register-password">密碼</label>
           <input
             {...register('password')}
-            aria-describedby={
-              errors.password ? 'register-password-error' : undefined
-            }
+            aria-describedby="register-password-hint register-password-error"
             aria-invalid={errors.password ? 'true' : 'false'}
             autoComplete="new-password"
             id="register-password"
             type="password"
           />
+          <p className="login-form__field-hint" id="register-password-hint">
+            密碼長度 6～12 碼，需要包含英文大小寫。
+          </p>
           {errors.password ? (
             <p className="login-form__field-error" id="register-password-error">
               {errors.password.message}
@@ -331,16 +332,18 @@ export function RegisterPage() {
           <label htmlFor="register-password-confirm">密碼確認</label>
           <input
             {...register('passwordConfirm')}
-            aria-describedby={
-              errors.passwordConfirm
-                ? 'register-password-confirm-error'
-                : undefined
-            }
+            aria-describedby="register-password-confirm-hint register-password-confirm-error"
             aria-invalid={errors.passwordConfirm ? 'true' : 'false'}
             autoComplete="new-password"
             id="register-password-confirm"
             type="password"
           />
+          <p
+            className="login-form__field-hint"
+            id="register-password-confirm-hint"
+          >
+            再填一次密碼。
+          </p>
           {errors.passwordConfirm ? (
             <p
               className="login-form__field-error"
