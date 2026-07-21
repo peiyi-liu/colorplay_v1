@@ -396,3 +396,18 @@ Reservations（gate 報告）:
   僅 chromium）。commit 9b29000 已推 origin。
 - 待人工授權的部署步驟見 docs/staging-runbook.md §4（git push 至 colorplay_v1、
   supabase db push／functions deploy、seed 補值、Dashboard Auth 設定）。
+
+## Owner UI 調整批次（2026-07-21，20 項）
+
+- 全部落地：登入背景暖黃、icon 淡色底、選項淡黃、移除答題提示、答對/答錯/逾時
+  色碼、挑戰完成暖黃＋移除獎勵規則文案、側欄 active 跟隨路由、精熟任務答對回饋卡
+  ＋重新練習開新 session、購買邊框即裝備、錯題含正確答案（list_my_mistakes RPC＋
+  pgTAP 039）、進度表放大＋章節編號、成就徽章 colorplay-new 卡片版、複習卡 GAME(1)
+  摺疊式、商店擴充 14 blooks／6 frames、移除個人資料側欄入口、加入碼行距。
+- 驗證：lint/format/typecheck 綠；unit 648；test:db exit 0（pgTAP 40 檔＋整合 25）；
+  e2e battery 48 passed/2 skipped（shared-device 語意隨個人資料入口遷移更新）；
+  visual 基線更新（owner 核准之配色變更）。
+- Staging：migrations 至 20260723000300、Vercel c591ef0 部署。
+- 回報項：題庫來自教師題庫試算表（import-questions.mjs，45 題發布＋1 題 draft
+  fixture）；「洪非比此紅O-O」不存在於題庫，待 owner 提供截圖；大廳與任務實戰共用
+  章節題庫（會重複，設計如此）；我的作業（教師指派）≠任務實戰（自主精熟），建議保留。
