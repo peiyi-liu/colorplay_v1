@@ -2277,3 +2277,100 @@ a {
   margin: 0;
   padding: var(--space-4);
 }
+
+/* 成就頁（colorplay-new 原樣）：返回鍵＋標題列 */
+.achievements-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.achievements-header__back {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--slate-500);
+  place-items: center;
+  text-decoration: none;
+}
+
+.achievements-header__back:hover {
+  background: var(--slate-100);
+}
+
+.achievements-header__title {
+  margin: 0;
+  color: var(--color-brand-dark);
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.achievements-header__subtitle {
+  margin: var(--space-1) 0 0;
+  color: var(--slate-500);
+  font-size: 0.9rem;
+}
+
+.achievement-card__progress-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-1);
+  color: var(--slate-500);
+  font-size: 0.75rem;
+}
+
+.achievement-card__progress-value {
+  font-weight: 800;
+}
+
+.achievement-card__bar {
+  overflow: hidden;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--slate-200);
+}
+
+.achievement-card__bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--slate-500);
+}
+
+/* 全站頁面一致性：素面頁改用與大廳一致的卡片容器 */
+.page-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  padding: var(--space-6);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 8%);
+}
+
+/* 手機一致性：表格橫向捲動、卡片內距收斂 */
+.ui-table-wrap {
+  overflow-x: auto;
+}
+
+@media (max-width: 680px) {
+  .page-card {
+    padding: var(--space-4);
+  }
+
+  .progress-dashboard .ui-table th,
+  .progress-dashboard .ui-table td {
+    padding: var(--space-2);
+  }
+
+  .achievements-header__title {
+    font-size: 1.15rem;
+  }
+
+  .mission-select__item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

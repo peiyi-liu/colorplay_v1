@@ -32,7 +32,7 @@ describe('AchievementCard', () => {
 
     expect(screen.getByRole('heading', { name: '初出茅廬' })).toBeVisible();
     expect(screen.getByText('完成第一次正式挑戰')).toBeVisible();
-    expect(screen.getByText(/已解鎖/u)).toBeVisible();
+    expect(screen.getByText('已獲得')).toBeVisible();
     expect(screen.getByText(/2026年7月16日/u)).toBeVisible();
   });
 
@@ -50,10 +50,16 @@ describe('AchievementCard', () => {
       />,
     );
 
-    expect(screen.getByText(/進行中/u)).toBeVisible();
+    expect(screen.getByText('進度')).toBeVisible();
     expect(screen.getByText('3 / 10')).toBeVisible();
-    expect(screen.getByRole('progressbar')).toHaveAttribute('value', '3');
-    expect(screen.getByRole('progressbar')).toHaveAttribute('max', '10');
+    expect(screen.getByRole('progressbar')).toHaveAttribute(
+      'aria-valuenow',
+      '3',
+    );
+    expect(screen.getByRole('progressbar')).toHaveAttribute(
+      'aria-valuemax',
+      '10',
+    );
   });
 
   it('shows truthful deferred state without fabricated progress or action', () => {
@@ -70,7 +76,7 @@ describe('AchievementCard', () => {
       />,
     );
 
-    expect(screen.getByText(/未開始/u)).toBeVisible();
+    expect(screen.getByText('—')).toBeVisible();
     expect(screen.queryByRole('progressbar')).toBeNull();
     expect(screen.queryByText(/%/u)).toBeNull();
     expect(screen.queryByRole('button')).toBeNull();

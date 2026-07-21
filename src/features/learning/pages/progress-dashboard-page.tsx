@@ -43,7 +43,7 @@ export function ProgressDashboardPage({
   return (
     <section
       aria-labelledby="progress-title"
-      className="progress-dashboard w-full"
+      className="page-card progress-dashboard w-full"
     >
       <header>
         <p className="route-panel__eyebrow">學習進度</p>
@@ -57,65 +57,67 @@ export function ProgressDashboardPage({
       {chapterRows.length === 0 ? (
         <p>目前沒有已發布的章節。</p>
       ) : (
-        <table className="ui-table">
-          <caption>各章節學習進度</caption>
-          <thead>
-            <tr>
-              <th scope="col">章節</th>
-              <th scope="col">複習完成</th>
-              <th scope="col">涵蓋率</th>
-              <th scope="col">正確率</th>
-              <th scope="col">精熟度</th>
-              <th scope="col">狀態</th>
-            </tr>
-          </thead>
-          <tbody>
-            {chapterRows.map((row) => {
-              const chapter = chapters.data?.find(
-                (entry) => entry.id === row.chapterId,
-              );
-              if (!chapter) return null;
-              return (
-                <tr key={row.chapterId}>
-                  <th scope="row">
-                    <Link to={`/app/chapters/${row.chapterId}`}>
-                      第
-                      {chapterNumerals[chapter.sortOrder - 1] ??
-                        String(chapter.sortOrder)}
-                      章：{chapter.title}
-                    </Link>
-                  </th>
-                  <td>{reviewText(row.reviewCompleted, row.reviewTotal)}</td>
-                  <td>{percentText(row.coverage)}</td>
-                  <td>{percentText(row.accuracy)}</td>
-                  <td>
-                    {percentText(row.mastery)}
-                    {typeof row.mastery === 'number' ? (
-                      <ProgressBar
-                        label={`${chapter.title}精熟度`}
-                        tone="primary"
-                        value={row.mastery}
-                      />
-                    ) : null}
-                  </td>
-                  <td>
-                    <Chip
-                      tone={
-                        row.status === 'mastered'
-                          ? 'success'
-                          : row.status === 'not_started'
-                            ? 'neutral'
-                            : 'primary'
-                      }
-                    >
-                      {statusLabels[row.status]}
-                    </Chip>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="ui-table-wrap">
+          <table className="ui-table">
+            <caption>各章節學習進度</caption>
+            <thead>
+              <tr>
+                <th scope="col">章節</th>
+                <th scope="col">複習完成</th>
+                <th scope="col">涵蓋率</th>
+                <th scope="col">正確率</th>
+                <th scope="col">精熟度</th>
+                <th scope="col">狀態</th>
+              </tr>
+            </thead>
+            <tbody>
+              {chapterRows.map((row) => {
+                const chapter = chapters.data?.find(
+                  (entry) => entry.id === row.chapterId,
+                );
+                if (!chapter) return null;
+                return (
+                  <tr key={row.chapterId}>
+                    <th scope="row">
+                      <Link to={`/app/chapters/${row.chapterId}`}>
+                        第
+                        {chapterNumerals[chapter.sortOrder - 1] ??
+                          String(chapter.sortOrder)}
+                        章：{chapter.title}
+                      </Link>
+                    </th>
+                    <td>{reviewText(row.reviewCompleted, row.reviewTotal)}</td>
+                    <td>{percentText(row.coverage)}</td>
+                    <td>{percentText(row.accuracy)}</td>
+                    <td>
+                      {percentText(row.mastery)}
+                      {typeof row.mastery === 'number' ? (
+                        <ProgressBar
+                          label={`${chapter.title}精熟度`}
+                          tone="primary"
+                          value={row.mastery}
+                        />
+                      ) : null}
+                    </td>
+                    <td>
+                      <Chip
+                        tone={
+                          row.status === 'mastered'
+                            ? 'success'
+                            : row.status === 'not_started'
+                              ? 'neutral'
+                              : 'primary'
+                        }
+                      >
+                        {statusLabels[row.status]}
+                      </Chip>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

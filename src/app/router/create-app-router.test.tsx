@@ -280,7 +280,7 @@ describe('createAppRouter', () => {
     });
 
     expect(
-      await screen.findByRole('heading', { name: '成就徽章' }),
+      await screen.findByRole('heading', { name: /個人成就與徽章/u }),
     ).toBeVisible();
   });
 

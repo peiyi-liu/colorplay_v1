@@ -1,4 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
+
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
@@ -54,7 +56,9 @@ const renderPage = (repository: AchievementRepository) => {
   });
   function Wrapper({ children }: Readonly<{ children: ReactNode }>) {
     return (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      <MemoryRouter>
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      </MemoryRouter>
     );
   }
   render(<AchievementsPage repository={repository} />, { wrapper: Wrapper });
@@ -65,9 +69,9 @@ describe('AchievementsPage', () => {
     renderPage({ getCatalog: vi.fn().mockResolvedValue(catalog) });
 
     expect(
-      await screen.findByRole('heading', { name: '成就徽章' }),
+      await screen.findByRole('heading', { name: /個人成就與徽章/u }),
     ).toBeVisible();
-    expect(screen.getByText('已解鎖 1 / 9')).toBeVisible();
+    expect(screen.getByText('收集徽章，證明你的色彩實力')).toBeVisible();
     const grid = screen.getByRole('list', { name: '成就徽章列表' });
     const headings = within(grid).getAllByRole('heading', { level: 2 });
     expect(headings.map((heading) => heading.textContent)).toEqual([
@@ -103,7 +107,7 @@ describe('AchievementsPage', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: '重試' }));
     expect(
-      await screen.findByRole('heading', { name: '成就徽章' }),
+      await screen.findByRole('heading', { name: /個人成就與徽章/u }),
     ).toBeVisible();
     expect(getCatalog).toHaveBeenCalledTimes(2);
   });

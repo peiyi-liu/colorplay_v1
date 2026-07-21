@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { AchievementCard } from '../components/achievement-card';
 import { useAchievements } from '../hooks/use-achievements';
@@ -16,7 +18,7 @@ export function AchievementsPage({
         className="w-full max-w-3xl rounded-[var(--radius-panel)] border border-[var(--color-border)] bg-[var(--color-surface)] p-8"
         role="alert"
       >
-        <h1>成就徽章</h1>
+        <h1>個人成就與徽章</h1>
         <p>無法載入成就徽章，請稍後重試。</p>
         <button
           className="primary-action"
@@ -33,19 +35,22 @@ export function AchievementsPage({
 
   return (
     <section aria-labelledby="achievements-title" className="w-full max-w-6xl">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <header className="achievements-header">
+        <Link
+          aria-label="回課後學習大廳"
+          className="achievements-header__back"
+          to="/app"
+        >
+          <span aria-hidden="true">←</span>
+        </Link>
         <div>
-          <p className="route-panel__eyebrow">學習里程碑</p>
-          <h1 className="m-0 text-4xl font-extrabold" id="achievements-title">
-            成就徽章
+          <h1 className="achievements-header__title" id="achievements-title">
+            <span aria-hidden="true">🏆 </span>個人成就與徽章
           </h1>
-          <p className="mt-3 text-[var(--color-muted)]">
-            所有進度都由伺服器依正式學習紀錄計算。
+          <p className="achievements-header__subtitle">
+            收集徽章，證明你的色彩實力
           </p>
         </div>
-        <strong className="rounded-full bg-[var(--color-brand-yellow)] px-4 py-2 text-[var(--color-brand-dark)]">
-          已解鎖 {String(catalog.unlockedCount)} / {String(catalog.totalCount)}
-        </strong>
       </header>
       <ul
         aria-label="成就徽章列表"

@@ -31,7 +31,7 @@ export function StudentClassroomsPage({
   return (
     <section
       aria-labelledby="student-classrooms-title"
-      className="w-full max-w-5xl"
+      className="page-card w-full max-w-5xl"
     >
       <header>
         <p className="route-panel__eyebrow">班級學習</p>

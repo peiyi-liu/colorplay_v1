@@ -47,7 +47,9 @@ test('Achievements phase gate', async ({ browserName, page }, testInfo) => {
   await expect(page).toHaveURL(/\/app$/u);
 
   await page.goto('/app/achievements');
-  await expect(page.getByRole('heading', { name: '成就徽章' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /個人成就與徽章/u }),
+  ).toBeVisible();
   await expect(page.getByRole('listitem')).toHaveCount(9);
   for (const badge of deferredBadges) {
     await expect(
@@ -84,10 +86,10 @@ test('Achievements phase gate', async ({ browserName, page }, testInfo) => {
       page
         .getByRole('heading', { name: badge })
         .locator('xpath=ancestor::article'),
-    ).toContainText('已解鎖');
+    ).toContainText('已獲得');
   }
   await page.reload();
-  await expect(page.getByText('已解鎖 2 / 9')).toBeVisible();
+  await expect(page.getByText('已獲得')).toHaveCount(2);
 
   const anonymousClient = createClient<Database>(
     requiredEnvironment('SUPABASE_URL'),
@@ -112,7 +114,9 @@ test('Achievements phase gate', async ({ browserName, page }, testInfo) => {
 
   for (const viewport of viewports) {
     await page.setViewportSize(viewport);
-    await expect(page.getByRole('heading', { name: '成就徽章' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /個人成就與徽章/u }),
+    ).toBeVisible();
     await page.screenshot({
       fullPage: true,
       path: testInfo.outputPath(`achievement-badges-${viewport.label}.png`),
