@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -113,6 +113,13 @@ const repositoryWith = (
   getTeamTotals: vi.fn().mockResolvedValue([]),
   join: vi.fn(),
   listMyActivities: vi.fn().mockResolvedValue([]),
+  listSectionOptions: vi.fn().mockResolvedValue([
+    {
+      sectionId: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+      title: '3-1 色彩三要素與色名的表示',
+      quizTemplateId: '26000000-0000-0000-0000-000000000003',
+    },
+  ]),
   openQuestion: vi.fn(),
   pauseSession: vi.fn(),
   resumeSession: vi.fn(),
@@ -133,6 +140,10 @@ const renderWith = (element: ReactNode) => {
         <Routes>
           <Route element={element} path="/current" />
           <Route element={<p>已進入課堂頁</p>} path="/app/live/:sessionId" />
+          <Route
+            element={<p>已進入主持台</p>}
+            path="/teacher/live/:sessionId"
+          />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -394,10 +405,16 @@ describe('LiveSessionPage (participant)', () => {
       />,
     );
 
-    expect(await screen.findByText('✓ 答對了！+150 分')).toBeVisible();
-    expect(await screen.findByText('累積 150 分')).toBeVisible();
-    expect(screen.getByText('差 30 分就能超越第 1 名，加油！')).toBeVisible();
-    // 雙螢幕模式的裝置端不重複投影幕上的選項分布。
+    // 雙螢幕模式的題間結果佔滿全屏：綠底、白勾、加分與名次，且不顯示
+    // ColorPlay Live／課堂挑戰標題。
+    expect(await screen.findByText('答對了！')).toBeVisible();
+    expect(screen.getByRole('status').className).toContain(
+      'live-result-screen--correct',
+    );
+    expect(screen.getByText('本題 +150 分')).toBeVisible();
+    expect(await screen.findByText('目前第 2 名')).toBeVisible();
+    expect(screen.queryByText('課堂挑戰')).toBeNull();
+    expect(screen.queryByText('ColorPlay Live')).toBeNull();
     expect(screen.queryByText(/（\d+ 人）/u)).toBeNull();
   });
 });
@@ -630,65 +647,86 @@ describe('TeacherLivePage (advanced)', () => {
     questionDisplay: 'screen_only' as const,
   };
 
-  it('creates a team session with the chosen team count', async () => {
+  it('creates a section activity and launches straight into the presenter', async () => {
+    const createActivity = vi.fn().mockResolvedValue({
+      ...activity,
+      sectionId: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+      title: '3-1 色彩三要素與色名的表示',
+    });
     const createSession = vi.fn().mockResolvedValue({
       sessionId: SESSION_ID,
       state: 'draft',
       stateVersion: 1,
       joinCode: '654321',
       joinCodeVersion: 1,
-      mode: 'team',
-      teamCount: 3,
+      mode: 'individual',
+      teamCount: null,
     });
+    const startSession = vi.fn().mockResolvedValue(undefined);
     const repository = repositoryWith({
+      createActivity,
       createSession,
-      listMyActivities: vi.fn().mockResolvedValue([activity]),
+      startSession,
     });
     renderWith(<TeacherLivePage repository={repository} />);
     const user = userEvent.setup();
 
     await user.selectOptions(
-      await screen.findByLabelText('開場班級'),
-      '七年級 A 班',
+      await screen.findByLabelText('選擇單元'),
+      '3-1 色彩三要素與色名的表示',
     );
-    await user.selectOptions(screen.getByLabelText('對戰模式'), '團隊');
-    await user.selectOptions(screen.getByLabelText('隊伍數'), '3 隊');
-    await user.click(screen.getByRole('button', { name: '開新場次' }));
+    await user.click(screen.getByRole('button', { name: '建立活動' }));
 
-    await waitFor(() => {
-      expect(createSession).toHaveBeenCalledWith(
-        expect.objectContaining({ mode: 'team', teamCount: 3 }),
-      );
-    });
+    expect(await screen.findByText('已進入主持台')).toBeVisible();
+    expect(createActivity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sectionId: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+        title: '3-1 色彩三要素與色名的表示',
+        quizTemplateId: '26000000-0000-0000-0000-000000000003',
+      }),
+    );
+    expect(createSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        classroomId: '18100000-0000-0000-0000-000000000001',
+      }),
+    );
+    expect(startSession).toHaveBeenCalledWith(SESSION_ID, 1);
   });
 
-  it('schedules an activity and lists upcoming ones', async () => {
-    const scheduleActivity = vi.fn().mockResolvedValue(undefined);
+  it('launches a new session for an existing activity', async () => {
+    const createSession = vi.fn().mockResolvedValue({
+      sessionId: SESSION_ID,
+      state: 'draft',
+      stateVersion: 1,
+      joinCode: '654321',
+      joinCodeVersion: 1,
+      mode: 'individual',
+      teamCount: null,
+    });
+    const startSession = vi.fn().mockResolvedValue(undefined);
     const repository = repositoryWith({
-      listMyActivities: vi.fn().mockResolvedValue([
-        {
-          ...activity,
-          scheduledFor: '2026-07-25T04:00:00+00:00',
-        },
-      ]),
-      scheduleActivity,
+      createSession,
+      listMyActivities: vi.fn().mockResolvedValue([activity]),
+      startSession,
     });
     renderWith(<TeacherLivePage repository={repository} />);
     const user = userEvent.setup();
 
-    expect(await screen.findByText(/即將進行/u)).toBeVisible();
-    expect(screen.getByText(/排程不會自動開場/u)).toBeVisible();
+    await user.click(
+      await screen.findByRole('button', { name: '開新場次' }),
+    );
 
-    fireEvent.change(screen.getByLabelText(`排程時間（${activity.title}）`), {
-      target: { value: '2026-07-26T12:00' },
-    });
-    await user.click(screen.getByRole('button', { name: '設定排程' }));
+    expect(await screen.findByText('已進入主持台')).toBeVisible();
+    expect(startSession).toHaveBeenCalledWith(SESSION_ID, 1);
+  });
 
-    await waitFor(() => {
-      expect(scheduleActivity).toHaveBeenCalledWith(
-        activity.activityId,
-        new Date('2026-07-26T12:00').toISOString(),
-      );
-    });
+  it('offers no removed controls (mode, classroom, schedule, display)', async () => {
+    renderWith(<TeacherLivePage repository={repositoryWith({})} />);
+
+    expect(await screen.findByLabelText('選擇單元')).toBeVisible();
+    expect(screen.queryByLabelText('對戰模式')).toBeNull();
+    expect(screen.queryByLabelText('開場班級')).toBeNull();
+    expect(screen.queryByLabelText('題目顯示位置')).toBeNull();
+    expect(screen.queryByText(/即將進行/u)).toBeNull();
   });
 });

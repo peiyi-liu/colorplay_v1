@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -33,6 +33,10 @@ const messageForRegisterError = (error: unknown) =>
 
 type EmailVerification = 'idle' | 'sending' | 'sent' | 'verifying' | 'verified';
 
+// Supabase Auth 對同一信箱的驗證信有 60 秒重送冷卻（伺服器端強制），
+// 前端倒數對齊同一個數字，倒數中按鈕反白。
+const RESEND_COOLDOWN_SECONDS = 60;
+
 export function RegisterPage() {
   const navigate = useNavigate();
   const toast = useToast();
@@ -43,6 +47,17 @@ export function RegisterPage() {
     null,
   );
   const [otpCode, setOtpCode] = useState('');
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+
+  useEffect(() => {
+    if (cooldownRemaining <= 0) return undefined;
+    const timer = setTimeout(() => {
+      setCooldownRemaining((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [cooldownRemaining]);
   const {
     formState: { errors, isSubmitting },
     getValues,
@@ -72,6 +87,7 @@ export function RegisterPage() {
     try {
       await sendRegistrationOtp(getValues('email').trim());
       setVerification('sent');
+      setCooldownRemaining(RESEND_COOLDOWN_SECONDS);
     } catch {
       setVerification('idle');
       setVerificationError('驗證碼寄送失敗，請稍後重試');
@@ -230,7 +246,7 @@ export function RegisterPage() {
             ) : (
               <button
                 className="login-form__secondary-action"
-                disabled={verification === 'sending'}
+                disabled={verification === 'sending' || cooldownRemaining > 0}
                 onClick={() => {
                   void sendOtp();
                 }}
@@ -238,9 +254,11 @@ export function RegisterPage() {
               >
                 {verification === 'sending'
                   ? '寄送中…'
-                  : verification === 'idle'
-                    ? '傳送驗證碼'
-                    : '重新傳送'}
+                  : cooldownRemaining > 0
+                    ? `重新傳送（${String(cooldownRemaining)} 秒）`
+                    : verification === 'idle'
+                      ? '傳送驗證碼'
+                      : '重新傳送'}
               </button>
             )}
           </div>
@@ -277,8 +295,11 @@ export function RegisterPage() {
                 {verification === 'verifying' ? '驗證中…' : '確認驗證'}
               </button>
             </div>
-            <p className="login-form__field-hint">
+            <p aria-live="polite" className="login-form__field-hint">
               驗證碼已寄至你的信箱，1 小時內有效。
+              {cooldownRemaining > 0
+                ? `沒收到的話，${String(cooldownRemaining)} 秒後可以再寄一次。`
+                : ''}
             </p>
           </div>
         ) : null}

@@ -40,7 +40,16 @@ const activitySchema = z.strictObject({
   rules_version: z.string().min(1),
   scheduled_for: utcTimestamp.nullable().optional(),
   question_display: questionDisplaySchema,
+  section_id: uuidString.nullable().optional(),
 });
+
+const sectionOptionsSchema = z.array(
+  z.strictObject({
+    section_id: uuidString,
+    title: z.string().min(1),
+    quiz_template_id: uuidString,
+  }),
+);
 
 const activityRowSchema = z.strictObject({
   id: uuidString,
@@ -51,6 +60,7 @@ const activityRowSchema = z.strictObject({
   rules_version: z.string().min(1),
   scheduled_for: utcTimestamp.nullable(),
   question_display: questionDisplaySchema,
+  section_id: uuidString.nullable(),
 });
 
 const answerReceiptSchema = z.strictObject({
@@ -314,6 +324,7 @@ const mapActivity = (row: z.infer<typeof activitySchema>): LiveActivity => ({
   rulesVersion: row.rules_version,
   scheduledFor: row.scheduled_for ?? null,
   questionDisplay: row.question_display,
+  sectionId: row.section_id ?? null,
 });
 
 const mapState = (raw: z.infer<typeof stateSchema>): LiveSessionState => ({
@@ -434,6 +445,7 @@ export function createLiveRepository(
         ...(input.questionDisplay
           ? { p_question_display: input.questionDisplay }
           : {}),
+        ...(input.sectionId ? { p_section_id: input.sectionId } : {}),
       });
       if (error) throw toRepositoryError(error.message);
       return mapActivity(parseWith(activitySchema, data));
@@ -443,7 +455,7 @@ export function createLiveRepository(
       const { data, error } = await client
         .from('live_activities')
         .select(
-          'id, title, quiz_template_id, question_time_limit_seconds, status, rules_version, scheduled_for, question_display',
+          'id, title, quiz_template_id, question_time_limit_seconds, status, rules_version, scheduled_for, question_display, section_id',
         )
         .order('created_at', { ascending: false });
       if (error) throw toRepositoryError(error.message);
@@ -451,6 +463,7 @@ export function createLiveRepository(
         mapActivity({
           activity_id: row.id,
           question_display: row.question_display,
+          section_id: row.section_id,
           question_time_limit_seconds: row.question_time_limit_seconds,
           quiz_template_id: row.quiz_template_id,
           rules_version: row.rules_version,
@@ -459,6 +472,16 @@ export function createLiveRepository(
           title: row.title,
         }),
       );
+    },
+
+    async listSectionOptions() {
+      const { data, error } = await client.rpc('list_live_section_options');
+      if (error) throw toRepositoryError(error.message);
+      return parseWith(sectionOptionsSchema, data).map((row) => ({
+        sectionId: row.section_id,
+        title: row.title,
+        quizTemplateId: row.quiz_template_id,
+      }));
     },
 
     async createSession(input) {

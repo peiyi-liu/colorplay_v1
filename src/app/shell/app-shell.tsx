@@ -80,16 +80,6 @@ export function AppShell() {
           </Link>
           <div className="app-header__navigation">
             {isAuthenticatedProfile ? <AuthenticatedEconomySummary /> : null}
-            {isAuthenticatedProfile ? (
-              <Link className="app-header__lobby" to="/app">
-                <span aria-hidden="true">▶ </span>進入大廳
-              </Link>
-            ) : null}
-            {isTeacher ? (
-              <Link className="app-header__teacher" to="/teacher">
-                <span aria-hidden="true">🔒 </span>教師後台
-              </Link>
-            ) : null}
             {auth.status === 'authenticated' ? (
               <button
                 className="app-header__logout"
@@ -118,7 +108,6 @@ export function AppShell() {
                 {isSigningOut ? '登出中…' : '登出'}
               </button>
             ) : null}
-            <span className="app-header__stage">色彩原理學習平台</span>
           </div>
         </div>
       </header>
@@ -126,26 +115,17 @@ export function AppShell() {
         <nav className="student-rail" aria-label="主要導覽">
           <div className="student-rail__content">
             <NavLink className={studentTabClassName} end to="/app">
-              <span aria-hidden="true">1. </span>課後學習大廳
+              學習大廳
             </NavLink>
-            <span className="student-rail__chevron" aria-hidden="true">
-              ›
-            </span>
             <NavLink className={studentTabClassName} to="/app/missions">
-              <span aria-hidden="true">2. </span>課後任務實戰
+              課後任務實戰
             </NavLink>
-            <span className="student-rail__chevron" aria-hidden="true">
-              ›
-            </span>
             <NavLink className={studentTabClassName} to="/app/shop">
-              <span aria-hidden="true">3. </span>Blook 商店
+              裝備商店
             </NavLink>
             <span className="student-rail__spacer" aria-hidden="true" />
             <NavLink className={studentLinkClassName} to="/app/progress">
               學習進度
-            </NavLink>
-            <NavLink className={studentLinkClassName} to="/app/assignments">
-              我的作業
             </NavLink>
             <NavLink className={studentLinkClassName} to="/app/live/join">
               Live 課堂

@@ -8,8 +8,7 @@ export const reteachQuestions = (
 ): LiveSessionDetail['questions'] =>
   questions.filter(
     (question) =>
-      question.correctRate !== null &&
-      question.correctRate < RETEACH_THRESHOLD,
+      question.correctRate !== null && question.correctRate < RETEACH_THRESHOLD,
   );
 
 const STATUS_LABELS = {
@@ -45,9 +44,7 @@ export const buildMatrixCsv = (detail: LiveSessionDetail): string => {
     '學生',
     '名次',
     '總分',
-    ...detail.questions.map(
-      (question) => `第${String(question.position)}題`,
-    ),
+    ...detail.questions.map((question) => `第${String(question.position)}題`),
   ];
   const rows = detail.participants.map((participant) => {
     const byPosition = new Map(

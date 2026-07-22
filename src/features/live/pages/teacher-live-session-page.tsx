@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import type { Database } from '../../../types/database';
@@ -98,7 +98,11 @@ export function TeacherLiveSessionPage({
   const transition = useLiveTransition(sessionId, repository);
   const [transitionError, setTransitionError] = useState<string>();
   const [confirmingCancel, setConfirmingCancel] = useState(false);
-  const [presenting, setPresenting] = useState(false);
+  const [searchParams] = useSearchParams();
+  // 一鍵開場後直接落在投影模式（等待室已由開場流程開啟）。
+  const [presenting, setPresenting] = useState(
+    searchParams.get('presenter') === '1',
+  );
 
   if (session.isPending) return <RouteLoading withinMain />;
   if (session.isError) {

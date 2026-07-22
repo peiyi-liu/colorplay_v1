@@ -103,7 +103,7 @@ export function LobbyPage() {
     return (
       <section className="lobby lobby--message">
         <Card padding="lg">
-          <Chip tone="primary">課後學習大廳</Chip>
+          <Chip tone="primary">學習大廳</Chip>
           <h1>章節載入失敗</h1>
           <p role="alert">
             {chapters.error?.message ?? '目前無法載入章節，請稍後重試。'}
@@ -127,7 +127,7 @@ export function LobbyPage() {
   return (
     <section className="lobby" aria-labelledby="lobby-title">
       <h2 className="visually-hidden" id="lobby-title">
-        課後學習大廳
+        學習大廳
       </h2>
       <ProfileCard />
       <Card padding="lg" className="lobby__chapters animate-fade-in">

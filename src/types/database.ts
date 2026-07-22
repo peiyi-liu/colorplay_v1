@@ -877,6 +877,7 @@ export type Database = {
           quiz_template_id: string
           rules_version: string
           scheduled_for: string | null
+          section_id: string | null
           status: string
           title: string
           updated_at: string
@@ -890,6 +891,7 @@ export type Database = {
           quiz_template_id: string
           rules_version?: string
           scheduled_for?: string | null
+          section_id?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -903,6 +905,7 @@ export type Database = {
           quiz_template_id?: string
           rules_version?: string
           scheduled_for?: string | null
+          section_id?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -920,6 +923,13 @@ export type Database = {
             columns: ["quiz_template_id"]
             isOneToOne: false
             referencedRelation: "quiz_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_activities_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
             referencedColumns: ["id"]
           },
         ]
@@ -2577,6 +2587,7 @@ export type Database = {
           p_question_display?: string
           p_question_time_limit_seconds?: number
           p_quiz_template_id: string
+          p_section_id?: string
           p_title: string
         }
         Returns: Json
@@ -2715,6 +2726,7 @@ export type Database = {
           updated_at: string
         }[]
       }
+      list_live_section_options: { Args: never; Returns: Json }
       list_my_assignments: {
         Args: never
         Returns: {

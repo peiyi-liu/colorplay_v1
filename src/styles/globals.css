@@ -1591,6 +1591,108 @@ a {
   background: var(--emerald-500, #10b981);
 }
 
+/* 雙螢幕作答格：無文字，形狀符號置中放大。 */
+.live-options--screen-only .ui-option {
+  font-size: 3rem;
+}
+
+/* 題間全屏結果：綠底勾／紅底叉，白字，蓋掉整個畫面。 */
+.live-result-screen {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: #fff;
+  text-align: center;
+}
+
+.live-result-screen--correct {
+  background: var(--emerald-600, #059669);
+}
+
+.live-result-screen--wrong {
+  background: var(--rose-600, #e11d48);
+}
+
+.live-result-screen__icon {
+  font-size: clamp(6rem, 30vw, 10rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.live-result-screen__status {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.live-result-screen__delta {
+  font-size: 1.25rem;
+}
+
+.live-result-screen__rank {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* 投影 feedback：作答分布長條圖。 */
+.live-presenter__chart {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.live-presenter__chart-row {
+  display: grid;
+  align-items: center;
+  gap: var(--space-2);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) auto;
+}
+
+.live-presenter__chart-label--correct {
+  font-weight: 700;
+}
+
+.live-presenter__chart-track {
+  display: block;
+  overflow: hidden;
+  height: 2rem;
+  border-radius: 999px;
+  background: var(--slate-200);
+}
+
+.live-presenter__chart-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease-out;
+}
+
+.live-presenter__chart-fill--rose {
+  background: var(--rose-500, #f43f5e);
+}
+
+.live-presenter__chart-fill--sky {
+  background: var(--sky-500, #0ea5e9);
+}
+
+.live-presenter__chart-fill--amber {
+  background: var(--amber-500, #f59e0b);
+}
+
+.live-presenter__chart-fill--emerald {
+  background: var(--emerald-500, #10b981);
+}
+
+.live-presenter__chart-count {
+  min-width: 3.5rem;
+  font-weight: 700;
+  text-align: right;
+}
+
 /* ── 10E 報表：作答矩陣與建議重教 ─────────────────────── */
 
 .live-matrix-scroll {

@@ -110,9 +110,7 @@ describe('TeacherLiveReportPage', () => {
     } as unknown as LiveRepository;
     renderPage(repository);
 
-    expect(
-      await screen.findByText('建議重教（正確率低於 35%）'),
-    ).toBeVisible();
+    expect(await screen.findByText('建議重教（正確率低於 35%）')).toBeVisible();
     expect(screen.getByText(/第 2 題：互補色是？（0\.0%）/u)).toBeVisible();
     expect(screen.queryByText(/第 1 題：色彩三要素是？/u)).toBeNull();
   });

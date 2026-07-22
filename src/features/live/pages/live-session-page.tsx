@@ -5,7 +5,6 @@ import { Link, useParams } from 'react-router-dom';
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import {
   OptionButton,
-  SHAPE_SYMBOLS,
   type OptionShape,
   type OptionVariant,
 } from '../../../components/ui/option-button';
@@ -18,8 +17,6 @@ import { useLiveSession } from '../hooks/use-live-session';
 import { LiveTeamScoreboard } from '../components/live-team-scoreboard';
 import {
   encouragementFor,
-  OPTION_COLOR_NAMES,
-  OPTION_SHAPE_NAMES,
   optionAccessibleName,
 } from '../lib/standing-feedback';
 import type { LiveRepository, LiveSessionState } from '../types';
@@ -157,14 +154,11 @@ function QuestionPhase({
               }}
             >
               {screenOnly ? (
-                <>
-                  <span aria-hidden="true" className="live-option-key">
-                    {option.key}
-                  </span>
-                  <span className="sr-only">
-                    {optionAccessibleName(index, option.key)}
-                  </span>
-                </>
+                // 純形狀置中：格子上只有 OptionButton 的形狀符號，文字僅供
+                // 螢幕閱讀器。
+                <span className="sr-only">
+                  {optionAccessibleName(index, option.key)}
+                </span>
               ) : (
                 `${option.key}. ${option.text ?? ''}`
               )}
@@ -216,29 +210,52 @@ function PersonalStanding({
   );
 }
 
-function CorrectAnswerChip({ state }: Readonly<{ state: LiveSessionState }>) {
-  const options = state.question?.publicOptions ?? [];
-  const index = options.findIndex(
-    (option) => option.id === state.correctOptionId,
+/** 雙螢幕模式的題間結果：全屏綠/紅底、白色勾叉、本題加分與目前排名。 */
+function FullscreenResult({
+  sessionId,
+  state,
+  repository,
+}: Readonly<{
+  sessionId: string;
+  state: LiveSessionState;
+  repository?: LiveRepository;
+}>) {
+  const standing = useLiveMyStanding(
+    sessionId,
+    {
+      enabled: state.state === 'question_feedback' && !state.isHost,
+      stateVersion: state.stateVersion,
+    },
+    repository,
   );
-  if (index < 0) return null;
-  const option = options[index];
-  if (!option) return null;
+  const feedback = state.myFeedback;
+  const correct = feedback?.answerStatus === 'correct';
   return (
-    <p className="live-correct-chip">
-      正確答案：
-      <span
-        aria-hidden="true"
-        className={`live-correct-chip__swatch live-correct-chip__swatch--${OPTION_VARIANTS[index % 4] ?? 'rose'}`}
-      >
-        {SHAPE_SYMBOLS[OPTION_SHAPES[index % 4] ?? 'triangle']}
+    <div
+      className={`live-result-screen live-result-screen--${
+        correct ? 'correct' : 'wrong'
+      }`}
+      role="status"
+    >
+      <span aria-hidden="true" className="live-result-screen__icon">
+        {correct ? '✓' : '✕'}
       </span>
-      <strong>{option.key}</strong>
-      <span className="sr-only">
-        {OPTION_COLOR_NAMES[index % 4]}
-        {OPTION_SHAPE_NAMES[index % 4]}
-      </span>
-    </p>
+      <p className="live-result-screen__status">
+        {correct
+          ? '答對了！'
+          : feedback?.answerStatus === 'timeout'
+            ? '未作答'
+            : '答錯了'}
+      </p>
+      <p className="live-result-screen__delta">
+        本題 +{feedback?.scoreDelta ?? 0} 分
+      </p>
+      {standing.data ? (
+        <p className="live-result-screen__rank">
+          目前第 {standing.data.rank} 名
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -254,7 +271,6 @@ function FeedbackPhase({
   const question = state.question;
   if (!question) return null;
   const feedback = state.myFeedback;
-  const screenOnly = state.questionDisplay === 'screen_only';
   const headline = (
     <h2>
       {feedback
@@ -266,21 +282,6 @@ function FeedbackPhase({
         : '本題結束'}
     </h2>
   );
-  if (screenOnly) {
-    // 雙螢幕模式：題目與分布留在投影幕，裝置只給個人結果與名次回饋。
-    return (
-      <div>
-        {headline}
-        <CorrectAnswerChip state={state} />
-        <PersonalStanding
-          sessionId={sessionId}
-          state={state}
-          {...(repository ? { repository } : {})}
-        />
-        <p role="status">等待主持人進入下一題…</p>
-      </div>
-    );
-  }
   return (
     <div>
       {headline}
@@ -359,6 +360,22 @@ export function LiveSessionPage({
   }
 
   const state = session.data;
+
+  // 雙螢幕模式的題間結果佔滿整個畫面：不顯示 ColorPlay Live／課堂挑戰標題。
+  if (
+    state.state === 'question_feedback' &&
+    state.questionDisplay === 'screen_only' &&
+    !state.isHost &&
+    !state.waitingForNext
+  ) {
+    return (
+      <FullscreenResult
+        sessionId={sessionId}
+        state={state}
+        {...(repository ? { repository } : {})}
+      />
+    );
+  }
 
   return (
     <section

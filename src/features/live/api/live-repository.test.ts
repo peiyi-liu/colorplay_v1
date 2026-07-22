@@ -495,9 +495,7 @@ describe('live repository', () => {
             rank: 1,
             score: 300,
             team_number: null,
-            answers: [
-              { position: 1, status: 'correct', response_ms: 900 },
-            ],
+            answers: [{ position: 1, status: 'correct', response_ms: 900 }],
           },
         ],
         questions: [

@@ -173,9 +173,9 @@ describe('LivePresenter', () => {
     });
     renderPresenter(feedbackState, { audio, repository });
 
-    expect(screen.getByLabelText('正解與分布')).toHaveTextContent(
-      '✓ A. 色相（1 人）',
-    );
+    const chart = screen.getByLabelText('作答分布長條圖');
+    expect(chart).toHaveTextContent('✓ A. 色相');
+    expect(chart).toHaveTextContent('1 人');
     expect(await screen.findByText(/第 1 名 小艾（150 分）/u)).toBeVisible();
     expect(audio.playReveal).toHaveBeenCalled();
   });

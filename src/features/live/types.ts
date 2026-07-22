@@ -18,6 +18,13 @@ export type LiveActivity = Readonly<{
   rulesVersion: string;
   scheduledFor: string | null;
   questionDisplay: LiveQuestionDisplay;
+  sectionId: string | null;
+}>;
+
+export type LiveSectionOption = Readonly<{
+  sectionId: string;
+  title: string;
+  quizTemplateId: string;
 }>;
 
 export type LiveSessionMode = 'individual' | 'team';
@@ -192,7 +199,9 @@ export type LiveRepository = Readonly<{
     quizTemplateId: string;
     questionTimeLimitSeconds: number;
     questionDisplay?: LiveQuestionDisplay;
+    sectionId?: string;
   }): Promise<LiveActivity>;
+  listSectionOptions(): Promise<readonly LiveSectionOption[]>;
   listMyActivities(): Promise<readonly LiveActivity[]>;
   createSession(input: {
     activityId: string;

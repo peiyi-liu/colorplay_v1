@@ -320,28 +320,54 @@ export function LivePresenter({
       {question && phase === 'question_feedback' ? (
         <div className="live-presenter__feedback">
           <h2>{question.prompt}</h2>
-          <ul aria-label="正解與分布" className="live-presenter__options">
+          <div aria-label="作答分布長條圖" className="live-presenter__chart">
             {question.publicOptions.map((option, index) => {
               const style = OPTION_STYLE[index % 4] ?? OPTION_STYLE[0];
               const count =
                 state.optionCounts?.find(
                   (entry) => entry.optionId === option.id,
                 )?.count ?? 0;
+              const maxCount = Math.max(
+                1,
+                ...question.publicOptions.map(
+                  (candidate) =>
+                    state.optionCounts?.find(
+                      (entry) => entry.optionId === candidate.id,
+                    )?.count ?? 0,
+                ),
+              );
               const isCorrect = state.correctOptionId === option.id;
               return (
-                <li
-                  className={`live-presenter__option live-presenter__option--${style.variant}${
-                    isCorrect ? ' live-presenter__option--correct' : ''
-                  }`}
-                  key={option.id}
-                >
-                  <span aria-hidden="true">{style.shape}</span>{' '}
-                  {isCorrect ? '✓ ' : ''}
-                  {option.key}. {option.text}（{count} 人）
-                </li>
+                <div className="live-presenter__chart-row" key={option.id}>
+                  <span
+                    className={`live-presenter__chart-label${
+                      isCorrect ? ' live-presenter__chart-label--correct' : ''
+                    }`}
+                  >
+                    <span aria-hidden="true">{style.shape}</span>{' '}
+                    {isCorrect ? '✓ ' : ''}
+                    {option.key}. {option.text}
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="live-presenter__chart-track"
+                  >
+                    <span
+                      className={`live-presenter__chart-fill live-presenter__chart-fill--${style.variant}${
+                        isCorrect ? ' live-presenter__chart-fill--correct' : ''
+                      }`}
+                      style={{
+                        width: `${String(Math.round((count / maxCount) * 100))}%`,
+                      }}
+                    />
+                  </span>
+                  <span className="live-presenter__chart-count">
+                    {count} 人
+                  </span>
+                </div>
               );
             })}
-          </ul>
+          </div>
           <StandingsBoard
             sessionId={sessionId}
             state={state}

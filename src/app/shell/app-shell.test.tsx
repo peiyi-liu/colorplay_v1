@@ -119,7 +119,7 @@ describe('AppShell', () => {
     );
 
     expect(screen.queryByRole('link', { name: '教師工作區' })).toBeNull();
-    expect(screen.getByRole('link', { name: 'Blook 商店' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '裝備商店' })).toHaveAttribute(
       'href',
       '/app/shop',
     );
@@ -251,7 +251,7 @@ describe('AppShell', () => {
     );
   });
 
-  it('renders the ggame numbered primary rail for students', () => {
+  it('renders the simplified primary rail for students', () => {
     render(
       <MemoryRouter>
         <ToastProvider>
@@ -260,7 +260,7 @@ describe('AppShell', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('link', { name: '課後學習大廳' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '學習大廳' })).toHaveAttribute(
       'href',
       '/app',
     );
@@ -268,11 +268,15 @@ describe('AppShell', () => {
       'href',
       '/app/missions',
     );
-    expect(screen.getByRole('link', { name: '進入大廳' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '裝備商店' })).toHaveAttribute(
       'href',
-      '/app',
+      '/app/shop',
     );
+    // 頂列僅保留等級摘要與登出；作業入口已移除。
+    expect(screen.queryByRole('link', { name: '進入大廳' })).toBeNull();
+    expect(screen.queryByRole('link', { name: '我的作業' })).toBeNull();
     expect(screen.queryByRole('link', { name: '教師後台' })).toBeNull();
+    expect(screen.queryByText('色彩原理學習平台')).toBeNull();
   });
 
   it('gives teachers the indigo rail with full workspace links', () => {
@@ -316,7 +320,7 @@ describe('AppShell', () => {
       'href',
       '/teacher/live',
     );
-    expect(screen.getByRole('link', { name: '教師後台' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '教師工作區' })).toHaveAttribute(
       'href',
       '/teacher',
     );

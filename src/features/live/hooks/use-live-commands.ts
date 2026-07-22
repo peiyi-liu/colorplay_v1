@@ -18,6 +18,7 @@ import {
   type LiveQuestionDisplay,
   type LiveRepository,
   LiveRepositoryError,
+  type LiveSectionOption,
   type LiveSessionDetail,
   type LiveSessionMode,
   type LiveSessionReceipt,
@@ -57,6 +58,7 @@ export function useCreateLiveActivity(
     quizTemplateId: string;
     questionTimeLimitSeconds: number;
     questionDisplay?: LiveQuestionDisplay;
+    sectionId?: string;
   }
 > {
   const resolved = resolveRepository(repository);
@@ -136,6 +138,41 @@ export function useLiveStandings(
     queryFn: () => resolved.getStandings(sessionId),
     queryKey: ['live', 'standings', sessionId, input.stateVersion] as const,
     retry: false,
+  });
+}
+
+/** 一鍵開場：建立場次並立刻開啟等待室，回傳投影要用的六碼。 */
+export function useLaunchLiveSession(
+  repository?: LiveRepository,
+): UseMutationResult<
+  Readonly<{ sessionId: string; joinCode: string }>,
+  LiveRepositoryError,
+  { activityId: string; classroomId: string }
+> {
+  const resolved = resolveRepository(repository);
+  return useMutation({
+    mutationFn: async ({ activityId, classroomId }) => {
+      const receipt = await resolved.createSession({
+        activityId,
+        assignmentId: null,
+        classroomId,
+      });
+      await resolved.startSession(receipt.sessionId, receipt.stateVersion);
+      return { joinCode: receipt.joinCode, sessionId: receipt.sessionId };
+    },
+    retry: false,
+  });
+}
+
+export function useLiveSectionOptions(
+  repository?: LiveRepository,
+): UseQueryResult<readonly LiveSectionOption[], LiveRepositoryError> {
+  const resolved = resolveRepository(repository);
+  return useQuery({
+    queryFn: () => resolved.listSectionOptions(),
+    queryKey: ['live', 'section-options'] as const,
+    retry: (failureCount, error) =>
+      error.code === 'UNAVAILABLE' && failureCount < 2,
   });
 }
 

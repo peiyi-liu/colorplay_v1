@@ -312,7 +312,7 @@ describe('createAppRouter', () => {
     });
 
     expect(
-      await screen.findByRole('heading', { name: '課後學習大廳' }),
+      await screen.findByRole('heading', { name: '學習大廳' }),
     ).toBeVisible();
     expect(screen.getByRole('link', { name: '開始挑戰' })).toBeVisible();
     expect(document.body).not.toHaveTextContent('learner@colorplay.invalid');
