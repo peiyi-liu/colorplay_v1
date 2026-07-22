@@ -14,13 +14,13 @@
 
 ## Global Rules
 
-> 2026-07-22 owner 拍板:專業 Flat 色塊風、對象高中職設計群、調色盤整組重設計(黃色降為配角)、Blook 改自製 SVG(20 隻角色+20 個外框)。以下取代產生器預設值,為全站權威。
+> 2026-07-22 owner 拍板:專業 Flat 色塊風、對象高中職設計群、Blook 改自製 SVG(20 隻角色+20 個外框)。2026-07-23 owner 修訂:主色調回暖黃(#FFD600/#FFB300)。以下為全站權威。
 
 ### 設計概念:「會做設計的人做的色彩教學工具」
 
 - 暖紙張底色 + 墨色文字 + 六章節色相系統。UI 本身示範色彩學:色彩承擔層次,不靠陰影。
 - 無投影(flat):層次以色塊、1px/2px 邊框、字級對比表達。
-- 主要 CTA 用墨色(editorial 風格);鈷藍為互動色(連結/focus/active);章節各配一個色相。
+- 主要 CTA 用暖黃(墨字);鈷藍保留給 focus ring 與連結;章節各配一個色相。
 - 禁用 emoji 圖示,一律 outline SVG(stroke 1.8);Blook 用自製幾何扁平 SVG 角色。
 
 ### Color Palette
@@ -36,7 +36,8 @@
 | Accent 鈷藍(互動/focus) | `#3056D8` | `--color-accent` |
 | XP 珊瑚紅 | `#D64533` | `--color-xp` |
 | Token 松石綠 | `#128A5E` | `--color-token` |
-| 品牌黃(僅 logo/高光點綴) | `#FFD600` | `--yellow-brand` |
+| 品牌黃(主色/CTA/active) | `#FFD600` | `--yellow-brand` |
+| 品牌琥珀(hover/強調) | `#FFB300` | `--amber-avatar` |
 
 **六章節色相(卡片色帶/圖表/徽章):**
 Ch1 光源 `#E5960A`、Ch2 生理 `#2F9E63`、Ch3 表示 `#3056D8`、Ch4 視覺 `#7B48CE`、Ch5 心理 `#D2418E`、Ch6 配色 `#0E98A5`,各附 `-soft` 淡色底(`--hue-ch*-soft`)。
