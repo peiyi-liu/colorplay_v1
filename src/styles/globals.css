@@ -1591,6 +1591,24 @@ a {
   background: var(--emerald-500, #10b981);
 }
 
+/* ── 10E 報表：作答矩陣與建議重教 ─────────────────────── */
+
+.live-matrix-scroll {
+  overflow-x: auto;
+  margin-bottom: var(--space-3);
+}
+
+.live-matrix-scroll .ui-table {
+  min-width: max-content;
+}
+
+.live-reteach {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg, 16px);
+  margin: var(--space-4) 0;
+  background: var(--amber-100, #fef3c7);
+}
+
 .live-explanation {
   border-left: 4px solid var(--color-alert);
   border-radius: var(--radius-control);

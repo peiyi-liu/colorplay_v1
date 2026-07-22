@@ -81,7 +81,7 @@
 - **手機直式最佳化**：大按鈕拇指區、safe-area、防雙擊縮放。
 - 測試：RTL＋e2e（screen_only payload 不含題文——伺服器端斷言、遲到加入下一題進場、重連恢復）。
 
-#### 10E 報表與學習閉環（M；ColorPlay 差異化）
+#### 10E 報表與學習閉環（M；ColorPlay 差異化）——**已完成（2026-07-22；migration `20260724000400_live_report_loop`、pgTAP 043、spec/05 §Live 10E）**
 
 - **作答矩陣**：`teacher_live_session_detail` 擴充個人×題目矩陣（對/錯/逾時/用時）。
 - **難題標記**：正確率 < 35% 標記「建議重教」；報表頁置頂。

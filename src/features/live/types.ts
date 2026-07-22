@@ -56,10 +56,18 @@ export type LiveTeamTotal = Readonly<{
   memberCount: number;
 }>;
 
+export type LiveMatrixAnswer = Readonly<{
+  position: number;
+  status: 'correct' | 'incorrect' | 'timeout';
+  responseMs: number | null;
+}>;
+
 export type LiveSessionDetail = Readonly<{
   sessionId: string;
   mode: LiveSessionMode;
   completedAt: string | null;
+  classroomId: string;
+  activity: Readonly<{ title: string; quizTemplateId: string }>;
   questions: readonly Readonly<{
     position: number;
     prompt: string;
@@ -67,6 +75,13 @@ export type LiveSessionDetail = Readonly<{
     correct: number;
     correctRate: number | null;
     averageResponseMs: number | null;
+  }>[];
+  participants: readonly Readonly<{
+    displayName: string;
+    rank: number | null;
+    score: number;
+    teamNumber: number | null;
+    answers: readonly LiveMatrixAnswer[];
   }>[];
   ranking: readonly Readonly<{
     rank: number;

@@ -201,7 +201,9 @@ export function TeacherLivePage({
           id="live-activity-question-display"
           {...register('questionDisplay')}
         >
-          <option value="screen_only">投影幕（雙螢幕，學生端只有作答鈕）</option>
+          <option value="screen_only">
+            投影幕（雙螢幕，學生端只有作答鈕）
+          </option>
           <option value="device">學生裝置（遠端/自習）</option>
         </select>
         <button

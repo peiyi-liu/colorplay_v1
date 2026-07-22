@@ -124,7 +124,9 @@ function QuestionPhase({
         className="question-card"
         disabled={answered || submit.isPending}
       >
-        <legend>{screenOnly ? '題目在投影幕上，選出你的答案！' : question.prompt}</legend>
+        <legend>
+          {screenOnly ? '題目在投影幕上，選出你的答案！' : question.prompt}
+        </legend>
         <div
           className={`live-options${screenOnly ? ' live-options--screen-only' : ''}`}
           role="group"

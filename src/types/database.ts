@@ -1366,7 +1366,8 @@ export type Database = {
           first_wrong_at: string
           id: string
           last_event_at: string
-          origin_answer_id: string
+          origin_answer_id: string | null
+          origin_live_answer_id: string | null
           question_id: string
           question_version: number
           status: Database["public"]["Enums"]["mistake_status"]
@@ -1376,7 +1377,8 @@ export type Database = {
           first_wrong_at?: string
           id?: string
           last_event_at?: string
-          origin_answer_id: string
+          origin_answer_id?: string | null
+          origin_live_answer_id?: string | null
           question_id: string
           question_version: number
           status?: Database["public"]["Enums"]["mistake_status"]
@@ -1386,7 +1388,8 @@ export type Database = {
           first_wrong_at?: string
           id?: string
           last_event_at?: string
-          origin_answer_id?: string
+          origin_answer_id?: string | null
+          origin_live_answer_id?: string | null
           question_id?: string
           question_version?: number
           status?: Database["public"]["Enums"]["mistake_status"]
@@ -1398,6 +1401,13 @@ export type Database = {
             columns: ["origin_answer_id"]
             isOneToOne: false
             referencedRelation: "quiz_answers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mistake_items_origin_live_answer_id_fkey"
+            columns: ["origin_live_answer_id"]
+            isOneToOne: false
+            referencedRelation: "live_answers"
             referencedColumns: ["id"]
           },
           {

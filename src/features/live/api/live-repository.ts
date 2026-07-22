@@ -81,6 +81,26 @@ const sessionDetailSchema = z.strictObject({
   session_id: uuidString,
   mode: z.enum(['individual', 'team']),
   completed_at: utcTimestamp.nullable(),
+  classroom_id: uuidString,
+  activity: z.strictObject({
+    title: z.string().min(1),
+    quiz_template_id: uuidString,
+  }),
+  participants: z.array(
+    z.strictObject({
+      display_name: z.string().min(1),
+      rank: positiveInteger.nullable(),
+      score: nonNegativeInteger,
+      team_number: z.number().int().positive().nullable(),
+      answers: z.array(
+        z.strictObject({
+          position: positiveInteger,
+          status: z.enum(['correct', 'incorrect', 'timeout']),
+          response_ms: z.number().int().nullable(),
+        }),
+      ),
+    }),
+  ),
   questions: z.array(
     z.strictObject({
       position: positiveInteger,
@@ -603,6 +623,22 @@ export function createLiveRepository(
         sessionId: parsed.session_id,
         mode: parsed.mode,
         completedAt: parsed.completed_at,
+        classroomId: parsed.classroom_id,
+        activity: {
+          title: parsed.activity.title,
+          quizTemplateId: parsed.activity.quiz_template_id,
+        },
+        participants: parsed.participants.map((participant) => ({
+          displayName: participant.display_name,
+          rank: participant.rank,
+          score: participant.score,
+          teamNumber: participant.team_number,
+          answers: participant.answers.map((entry) => ({
+            position: entry.position,
+            status: entry.status,
+            responseMs: entry.response_ms,
+          })),
+        })),
         questions: parsed.questions.map((entry) => ({
           answered: entry.answered,
           averageResponseMs: entry.average_response_ms,

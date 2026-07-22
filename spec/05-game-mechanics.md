@@ -283,3 +283,10 @@ mastery = coverage * accuracy / 100
 - **雙螢幕模式（活動層級開關）**：`live_activities.question_display`（`screen_only` 預設／`device`）於建立活動時定版。`screen_only` 時，學生的 state payload 與共用 channel 的 `question_open`／resume broadcast 由**伺服器端**過濾——question 無 `prompt`、選項只含 `id`／`key`／`sort_order`（無 `text`）、feedback 的 `explanation` 為 null；host 讀取永遠是完整 payload（投影用）。`device` 模式維持題目在學生裝置的原行為。計分、獎勵與 rules_version 皆不受此開關影響。
 - **遲到可加入**：lobby 關閉後，首次加入者於 `question_open`／`question_feedback` 仍可 join（班級成員限定、節流不變）。`live_participants.eligible_from_position` 錨定「下一題進場」（用題號而非時間戳，pause/resume 重寫 `opened_at` 不影響）；遲到者對已開題不得作答（`LIVE_ANSWER_CLOSED`）、不列入全員作答自動關題的母集、關題不補 timeout row；state payload 以 `waiting_for_next: true` 呈現等候畫面，不含任何題目資料。重連（既有 participant）行為不變。
 - **題間個人回饋**：`live_my_standing`（participant-only、僅 `question_feedback`）回傳本人 rank／score／participant_count 與「與前一名分差」（`ahead_rank`／`points_behind`；tie-break 與 standings/finalize 一致）。只有數字——任何其他學生的名稱不進學生裝置。鼓勵文案由 client 生成。
+
+### ColorPlay Live 報表與學習閉環（Milestone 10E）
+
+- **作答矩陣**：`teacher_live_session_detail` v2（host-only、completed-only 不變）新增 `classroom_id`、`activity`（title／quiz_template_id）與 `participants` 矩陣——每位 active participant 的 display_name／rank／score／team_number 與逐題 `answers`（position／status／response_ms）；缺列＝該題無作答資格（遲到）。
+- **難題標記與 CSV**：正確率 < 35% 的題目由前端標記「建議重教」並置頂；個人×題目 CSV 由前端自 detail payload 產出（UTF-8 BOM），不新增後端。
+- **錯題閉環**：`live_sessions` 進入 `completed` 的轉換觸發 `live_sessions_record_mistakes`——所有非 correct 的 live answer 依 `question_stable_code` 映射回題庫寫入 `mistake_items`（新欄位 `origin_live_answer_id`；`origin_answer_id` 改為 nullable，check 保證兩者擇一）。同一 (user, question) 唯一：重複命中冪等更新、`resolved` 重開為 `reopened`，語意與 quiz 路徑一致。觸發器掛在狀態機轉換上，任何完成場次的指令都在同一交易內落錯題本。
+- **課後複習任務**：報表頁「一鍵生成」以既有 `create_assignment`（quiz type、同一 quiz_template）建立**草稿**任務，教師到任務頁發佈；不新增後端指令。

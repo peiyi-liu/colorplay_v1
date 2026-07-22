@@ -484,6 +484,22 @@ describe('live repository', () => {
         session_id: lobbyState.session_id,
         mode: 'individual',
         completed_at: '2026-07-20T05:00:00+00:00',
+        classroom_id: '18100000-0000-0000-0000-000000000001',
+        activity: {
+          title: '色彩快問快答',
+          quiz_template_id: '26000000-0000-0000-0000-000000000003',
+        },
+        participants: [
+          {
+            display_name: '學生一',
+            rank: 1,
+            score: 300,
+            team_number: null,
+            answers: [
+              { position: 1, status: 'correct', response_ms: 900 },
+            ],
+          },
+        ],
         questions: [
           {
             position: 1,
@@ -508,6 +524,15 @@ describe('live repository', () => {
       position: 1,
       answered: 2,
       correctRate: 50.0,
+    });
+    expect(detail.classroomId).toBe('18100000-0000-0000-0000-000000000001');
+    expect(detail.activity.quizTemplateId).toBe(
+      '26000000-0000-0000-0000-000000000003',
+    );
+    expect(detail.participants[0]?.answers[0]).toEqual({
+      position: 1,
+      status: 'correct',
+      responseMs: 900,
     });
     expect(detail.ranking[0]).toMatchObject({
       rank: 1,

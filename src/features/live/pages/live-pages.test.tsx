@@ -396,9 +396,7 @@ describe('LiveSessionPage (participant)', () => {
 
     expect(await screen.findByText('✓ 答對了！+150 分')).toBeVisible();
     expect(await screen.findByText('累積 150 分')).toBeVisible();
-    expect(
-      screen.getByText('差 30 分就能超越第 1 名，加油！'),
-    ).toBeVisible();
+    expect(screen.getByText('差 30 分就能超越第 1 名，加油！')).toBeVisible();
     // 雙螢幕模式的裝置端不重複投影幕上的選項分布。
     expect(screen.queryByText(/（\d+ 人）/u)).toBeNull();
   });

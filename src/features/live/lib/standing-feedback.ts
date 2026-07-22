@@ -2,12 +2,7 @@ import type { LiveMyStanding } from '../types';
 
 /** 色塊＋形狀雙編碼的中文名稱，順序對齊作答鈕的 variant/shape 順序。 */
 export const OPTION_COLOR_NAMES = ['紅色', '藍色', '黃色', '綠色'] as const;
-export const OPTION_SHAPE_NAMES = [
-  '三角形',
-  '正方形',
-  '圓形',
-  '菱形',
-] as const;
+export const OPTION_SHAPE_NAMES = ['三角形', '正方形', '圓形', '菱形'] as const;
 
 export const optionAccessibleName = (index: number, key: string): string => {
   const color = OPTION_COLOR_NAMES[index % 4] ?? '';
