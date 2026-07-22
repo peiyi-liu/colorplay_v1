@@ -123,6 +123,17 @@ const joinErrorSchema = z.strictObject({
   error: z.string().min(1),
 });
 
+const standingsSchema = z.strictObject({
+  participant_count: nonNegativeInteger,
+  standings: z.array(
+    z.strictObject({
+      rank: positiveInteger,
+      display_name: z.string().min(1),
+      score: nonNegativeInteger,
+    }),
+  ),
+});
+
 const questionSchema = z.strictObject({
   question_id: uuidString,
   position: positiveInteger,
@@ -154,6 +165,9 @@ const stateSchema = z
     is_host: z.boolean(),
     mode: z.enum(['individual', 'team']),
     team_count: z.number().int().min(2).max(4).nullable(),
+    participants: z
+      .array(z.strictObject({ display_name: z.string().min(1) }))
+      .optional(),
     paused_remaining_ms: nonNegativeInteger.optional(),
     question: questionSchema.optional(),
     answered_count: nonNegativeInteger.optional(),
@@ -266,6 +280,13 @@ const mapState = (raw: z.infer<typeof stateSchema>): LiveSessionState => ({
   isHost: raw.is_host,
   mode: raw.mode,
   teamCount: raw.team_count,
+  ...(raw.participants
+    ? {
+        participants: raw.participants.map((entry) => ({
+          displayName: entry.display_name,
+        })),
+      }
+    : {}),
   ...(raw.question
     ? {
         question: {
@@ -501,6 +522,22 @@ export function createLiveRepository(
         score: entry.score,
         teamNumber: entry.team_number,
       }));
+    },
+
+    async getStandings(sessionId) {
+      const { data, error } = await client.rpc('live_session_standings', {
+        p_session_id: sessionId,
+      });
+      if (error) throw toRepositoryError(error.message);
+      const parsed = parseWith(standingsSchema, data);
+      return {
+        participantCount: parsed.participant_count,
+        standings: parsed.standings.map((entry) => ({
+          rank: entry.rank,
+          displayName: entry.display_name,
+          score: entry.score,
+        })),
+      };
     },
 
     async getSessionDetail(sessionId) {

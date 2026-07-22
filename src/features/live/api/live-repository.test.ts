@@ -165,6 +165,35 @@ describe('live repository', () => {
     }
   });
 
+  it('maps the host standings payload', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: {
+        participant_count: 3,
+        standings: [
+          { display_name: 'A同學', rank: 1, score: 300 },
+          { display_name: 'B同學', rank: 2, score: 150 },
+        ],
+      },
+      error: null,
+    });
+    const repository = createLiveRepository(clientWith(rpc));
+
+    const standings = await repository.getStandings(
+      '18400000-0000-0000-0000-000000000001',
+    );
+
+    expect(rpc).toHaveBeenCalledWith('live_session_standings', {
+      p_session_id: '18400000-0000-0000-0000-000000000001',
+    });
+    expect(standings).toEqual({
+      participantCount: 3,
+      standings: [
+        { displayName: 'A同學', rank: 1, score: 300 },
+        { displayName: 'B同學', rank: 2, score: 150 },
+      ],
+    });
+  });
+
   it('submits answers with the exact trusted arguments', async () => {
     const rpc = vi.fn().mockResolvedValue({
       data: {

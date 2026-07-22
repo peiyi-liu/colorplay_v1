@@ -224,6 +224,27 @@ test('Live Advanced phase gate', async ({
   ).toBeVisible();
   await outsiderContext.close();
 
+  // --- 10B presenter: six-digit code writ large plus the nickname wall ---
+  await teacherPage.getByRole('button', { name: '投影模式' }).click();
+  const presenter = teacherPage.getByRole('dialog', { name: '投影模式' });
+  await expect(presenter.getByLabel('課堂代碼')).toHaveText(joinCode);
+  await expect(presenter.locator('.live-presenter__wall-chip')).toHaveCount(2);
+  for (const viewport of [
+    { height: 720, width: 1280 },
+    { height: 768, width: 1024 },
+    { height: 812, width: 375 },
+  ]) {
+    await teacherPage.setViewportSize(viewport);
+    await teacherPage.screenshot({
+      fullPage: true,
+      path: testInfo.outputPath(
+        `presenter-lobby-${String(viewport.width)}x${String(viewport.height)}.png`,
+      ),
+    });
+  }
+  await teacherPage.setViewportSize({ height: 720, width: 1280 });
+  await presenter.getByRole('button', { name: '離開投影' }).click();
+
   await teacherPage.getByRole('button', { name: '開始第一題' }).click();
 
   // --- Round 1: pause mid-question, refresh both roles, resume ---

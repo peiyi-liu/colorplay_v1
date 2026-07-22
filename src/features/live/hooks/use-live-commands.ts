@@ -12,6 +12,7 @@ import { createLiveRepository } from '../api/live-repository';
 import {
   type LiveActivity,
   type LiveDistribution,
+  type LiveStandings,
   type LiveJoinResult,
   type LiveRepository,
   LiveRepositoryError,
@@ -113,6 +114,20 @@ export function useLiveDistribution(
     // refreshes the host distribution exactly when a new answer lands.
     queryFn: () => resolved.getDistribution(sessionId),
     queryKey: ['live', 'distribution', sessionId, input.answeredCount] as const,
+    retry: false,
+  });
+}
+
+export function useLiveStandings(
+  sessionId: string,
+  input: Readonly<{ enabled: boolean; stateVersion: number }>,
+  repository?: LiveRepository,
+): UseQueryResult<LiveStandings, LiveRepositoryError> {
+  const resolved = resolveRepository(repository);
+  return useQuery({
+    enabled: input.enabled && sessionId.length > 0,
+    queryFn: () => resolved.getStandings(sessionId),
+    queryKey: ['live', 'standings', sessionId, input.stateVersion] as const,
     retry: false,
   });
 }

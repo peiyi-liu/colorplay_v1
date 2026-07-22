@@ -103,9 +103,7 @@ const answerWrong = async (page: Page) => {
     .click();
   // B always answers last, and since 2026-07-live-3 the final answer closes
   // the question automatically: the receipt is the immediate feedback card.
-  await expect(
-    page.getByRole('heading', { name: /✗ 答錯了/u }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: /✗ 答錯了/u })).toBeVisible();
 };
 
 test('Assignments and Live Core phase gate', async ({

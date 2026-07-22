@@ -62,6 +62,7 @@ export function useLiveSession(
         // triggers one authoritative fetch.
         const payload = message.payload as {
           answered_count?: unknown;
+          joined_display_name?: unknown;
           participant_count?: unknown;
           state_version?: unknown;
         };
@@ -69,6 +70,12 @@ export function useLiveSession(
         if (typeof payload.state_version === 'number' && cached) {
           if (payload.state_version < cached.stateVersion) return;
           if (payload.state_version === cached.stateVersion) {
+            if (typeof payload.joined_display_name === 'string') {
+              // A join changes the lobby roster, so take the authoritative
+              // fetch instead of a count-only patch.
+              reconcile();
+              return;
+            }
             const answeredPatch =
               typeof payload.answered_count === 'number'
                 ? { answeredCount: payload.answered_count }

@@ -83,7 +83,11 @@ describe('live advanced phase gate contract', () => {
     expect(spec).toContain('live-host-1440x900.png');
     expect(spec).toContain('live-team-768x1024.png');
     expect(spec).toContain('live-report-375x812.png');
-    expect(spec).toContain('declareExpectedBrowserFailure');
+    // Since 2026-07-live-3 the outsider denial is a committed 200 payload
+    // error, so the spec asserts the visible message and the empty
+    // declared-failure set instead of a 4xx declaration.
+    expect(spec).toContain('expect(declaredFailures).toEqual([])');
+    expect(spec).toContain('代碼無效或課堂尚未開放');
     expect(spec).toContain('data-reduced-motion');
     expect(spec).toContain('await outsiderContext.close();');
     expect(spec).not.toContain('page.route(');

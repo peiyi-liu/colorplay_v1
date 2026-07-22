@@ -11,6 +11,7 @@ import {
 } from '../hooks/use-live-commands';
 import { useLiveSession } from '../hooks/use-live-session';
 import type { LiveRepository, LiveSessionState } from '../types';
+import { LivePresenter } from '../components/live-presenter';
 import { LiveTeamScoreboard } from '../components/live-team-scoreboard';
 
 const transitionErrorMessage = (code: string) =>
@@ -97,6 +98,7 @@ export function TeacherLiveSessionPage({
   const transition = useLiveTransition(sessionId, repository);
   const [transitionError, setTransitionError] = useState<string>();
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [presenting, setPresenting] = useState(false);
 
   if (session.isPending) return <RouteLoading withinMain />;
   if (session.isError) {
@@ -138,7 +140,36 @@ export function TeacherLiveSessionPage({
           {state.participantCount} 位參與者・第 {state.currentPosition} /{' '}
           {state.questionCount} 題
         </p>
+        {state.state !== 'cancelled' ? (
+          <button
+            onClick={() => {
+              setPresenting(true);
+            }}
+            type="button"
+          >
+            投影模式
+          </button>
+        ) : null}
       </header>
+
+      {presenting ? (
+        <LivePresenter
+          actionLabel={action ? action.label : null}
+          onAction={() => {
+            if (action) runTransition(action.transition);
+          }}
+          onExit={() => {
+            setPresenting(false);
+          }}
+          onPause={() => {
+            runTransition('pauseSession');
+          }}
+          sessionId={sessionId}
+          state={state}
+          transitionPending={transition.isPending}
+          {...(repository ? { repository } : {})}
+        />
+      ) : null}
 
       {state.state === 'lobby' ? (
         <p role="status">等待室開啟中，學生輸入課堂代碼即可加入。</p>

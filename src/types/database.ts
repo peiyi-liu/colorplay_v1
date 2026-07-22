@@ -972,6 +972,32 @@ export type Database = {
           },
         ]
       }
+      live_join_throttle: {
+        Row: {
+          failure_count: number
+          user_id: string
+          window_started_at: string
+        }
+        Insert: {
+          failure_count?: number
+          user_id: string
+          window_started_at?: string
+        }
+        Update: {
+          failure_count?: number
+          user_id?: string
+          window_started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_join_throttle_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_participants: {
         Row: {
           current_streak: number
@@ -2723,8 +2749,19 @@ export type Database = {
         Args: { p_payload: Json; p_session_id: string }
         Returns: undefined
       }
+      live_close_open_question: {
+        Args: { p_session_id: string }
+        Returns: Json
+      }
       live_completed_payload: {
         Args: {
+          target_session: Database["public"]["Tables"]["live_sessions"]["Row"]
+        }
+        Returns: Json
+      }
+      live_feedback_snapshot: {
+        Args: {
+          target_question: Database["public"]["Tables"]["live_session_questions"]["Row"]
           target_session: Database["public"]["Tables"]["live_sessions"]["Row"]
         }
         Returns: Json
@@ -2743,6 +2780,7 @@ export type Database = {
         }
         Returns: Json
       }
+      live_session_standings: { Args: { p_session_id: string }; Returns: Json }
       live_team_totals: { Args: { p_session_id: string }; Returns: Json }
       live_topic_session_id: { Args: { p_topic: string }; Returns: string }
       open_live_question: {

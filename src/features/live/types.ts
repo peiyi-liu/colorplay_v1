@@ -34,6 +34,19 @@ export type LiveDistribution = Readonly<{
   options: readonly Readonly<{ optionId: string | null; count: number }>[];
 }>;
 
+export type LiveParticipantName = Readonly<{ displayName: string }>;
+
+export type LiveStandingEntry = Readonly<{
+  rank: number;
+  displayName: string;
+  score: number;
+}>;
+
+export type LiveStandings = Readonly<{
+  participantCount: number;
+  standings: readonly LiveStandingEntry[];
+}>;
+
 export type LiveTeamTotal = Readonly<{
   teamNumber: number;
   score: number;
@@ -103,6 +116,7 @@ export type LiveSessionState = Readonly<{
   isHost: boolean;
   mode: LiveSessionMode;
   teamCount: number | null;
+  participants?: readonly LiveParticipantName[];
   question?: LiveQuestionView;
   answeredCount?: number;
   myAnswer?: Readonly<{ answered: boolean }>;
@@ -177,6 +191,7 @@ export type LiveRepository = Readonly<{
   resumeSession(sessionId: string, expectedVersion: number): Promise<void>;
   getDistribution(sessionId: string): Promise<LiveDistribution>;
   getTeamTotals(sessionId: string): Promise<readonly LiveTeamTotal[]>;
+  getStandings(sessionId: string): Promise<LiveStandings>;
   getSessionDetail(sessionId: string): Promise<LiveSessionDetail>;
   scheduleActivity(
     activityId: string,

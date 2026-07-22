@@ -98,6 +98,9 @@ const repositoryWith = (
   finalize: vi.fn(),
   getDistribution: vi.fn().mockResolvedValue({ answeredCount: 0, options: [] }),
   getSessionDetail: vi.fn(),
+  getStandings: vi
+    .fn()
+    .mockResolvedValue({ participantCount: 0, standings: [] }),
   getState: vi.fn().mockResolvedValue(baseState),
   getTeamTotals: vi.fn().mockResolvedValue([]),
   join: vi.fn(),

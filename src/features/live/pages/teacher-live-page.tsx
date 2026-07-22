@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { useOwnedClassrooms } from '../../classrooms/hooks/use-classrooms';
+import { presenterJoinCodeKey } from '../components/live-presenter';
 import {
   useCreateLiveActivity,
   useCreateLiveSession,
@@ -98,6 +99,16 @@ export function TeacherLivePage({
           : {}),
       });
       setReceipt(created);
+      try {
+        // The server only stores the code hash; keep the plain code for the
+        // presenter's big-screen display within this tab.
+        window.sessionStorage.setItem(
+          presenterJoinCodeKey(created.sessionId),
+          created.joinCode,
+        );
+      } catch {
+        // Non-critical: the presenter falls back to a regenerate hint.
+      }
     } catch {
       setActionError('目前無法建立課堂場次，請稍後重試。');
     }
