@@ -5,14 +5,37 @@ import { Link, useParams } from 'react-router-dom';
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import {
   OptionButton,
+  SHAPE_SYMBOLS,
   type OptionShape,
   type OptionVariant,
 } from '../../../components/ui/option-button';
 import type { Database } from '../../../types/database';
-import { useSubmitLiveAnswer } from '../hooks/use-live-commands';
+import {
+  useLiveMyStanding,
+  useSubmitLiveAnswer,
+} from '../hooks/use-live-commands';
 import { useLiveSession } from '../hooks/use-live-session';
 import { LiveTeamScoreboard } from '../components/live-team-scoreboard';
+import {
+  encouragementFor,
+  OPTION_COLOR_NAMES,
+  OPTION_SHAPE_NAMES,
+  optionAccessibleName,
+} from '../lib/standing-feedback';
 import type { LiveRepository, LiveSessionState } from '../types';
+
+const OPTION_VARIANTS: readonly OptionVariant[] = [
+  'rose',
+  'sky',
+  'amber',
+  'emerald',
+];
+const OPTION_SHAPES: readonly OptionShape[] = [
+  'triangle',
+  'square',
+  'circle',
+  'diamond',
+];
 
 export const remainingSeconds = (
   deadlineAt: string | null,
@@ -78,18 +101,7 @@ function QuestionPhase({
   const question = state.question;
   if (!question) return null;
   const answered = state.myAnswer?.answered === true;
-  const OPTION_VARIANTS: readonly OptionVariant[] = [
-    'rose',
-    'sky',
-    'amber',
-    'emerald',
-  ];
-  const OPTION_SHAPES: readonly OptionShape[] = [
-    'triangle',
-    'square',
-    'circle',
-    'diamond',
-  ];
+  const screenOnly = state.questionDisplay === 'screen_only';
 
   const idempotencyKeyFor = (questionId: string): string => {
     const existing = keysRef.current.get(questionId);
@@ -112,8 +124,12 @@ function QuestionPhase({
         className="question-card"
         disabled={answered || submit.isPending}
       >
-        <legend>{question.prompt}</legend>
-        <div className="live-options" role="group" aria-label="答案選項">
+        <legend>{screenOnly ? '題目在投影幕上，選出你的答案！' : question.prompt}</legend>
+        <div
+          className={`live-options${screenOnly ? ' live-options--screen-only' : ''}`}
+          role="group"
+          aria-label="答案選項"
+        >
           {question.publicOptions.map((option, index) => (
             <OptionButton
               key={option.id}
@@ -138,7 +154,18 @@ function QuestionPhase({
                 );
               }}
             >
-              {option.key}. {option.text}
+              {screenOnly ? (
+                <>
+                  <span aria-hidden="true" className="live-option-key">
+                    {option.key}
+                  </span>
+                  <span className="sr-only">
+                    {optionAccessibleName(index, option.key)}
+                  </span>
+                </>
+              ) : (
+                `${option.key}. ${option.text ?? ''}`
+              )}
             </OptionButton>
           ))}
         </div>
@@ -154,21 +181,107 @@ function QuestionPhase({
   );
 }
 
-function FeedbackPhase({ state }: Readonly<{ state: LiveSessionState }>) {
+function PersonalStanding({
+  sessionId,
+  state,
+  repository,
+}: Readonly<{
+  sessionId: string;
+  state: LiveSessionState;
+  repository?: LiveRepository;
+}>) {
+  const standing = useLiveMyStanding(
+    sessionId,
+    {
+      enabled: state.state === 'question_feedback' && !state.isHost,
+      stateVersion: state.stateVersion,
+    },
+    repository,
+  );
+  if (!standing.data) return null;
+  const mine = standing.data;
+  return (
+    <div className="live-standing-card" role="status">
+      <p className="live-standing-card__rank">
+        目前第 <strong>{mine.rank}</strong> 名
+        <span className="live-standing-card__total">
+          ／共 {mine.participantCount} 人
+        </span>
+      </p>
+      <p className="live-standing-card__score">累積 {mine.score} 分</p>
+      <p className="live-standing-card__cheer">{encouragementFor(mine)}</p>
+    </div>
+  );
+}
+
+function CorrectAnswerChip({ state }: Readonly<{ state: LiveSessionState }>) {
+  const options = state.question?.publicOptions ?? [];
+  const index = options.findIndex(
+    (option) => option.id === state.correctOptionId,
+  );
+  if (index < 0) return null;
+  const option = options[index];
+  if (!option) return null;
+  return (
+    <p className="live-correct-chip">
+      正確答案：
+      <span
+        aria-hidden="true"
+        className={`live-correct-chip__swatch live-correct-chip__swatch--${OPTION_VARIANTS[index % 4] ?? 'rose'}`}
+      >
+        {SHAPE_SYMBOLS[OPTION_SHAPES[index % 4] ?? 'triangle']}
+      </span>
+      <strong>{option.key}</strong>
+      <span className="sr-only">
+        {OPTION_COLOR_NAMES[index % 4]}
+        {OPTION_SHAPE_NAMES[index % 4]}
+      </span>
+    </p>
+  );
+}
+
+function FeedbackPhase({
+  sessionId,
+  state,
+  repository,
+}: Readonly<{
+  sessionId: string;
+  state: LiveSessionState;
+  repository?: LiveRepository;
+}>) {
   const question = state.question;
   if (!question) return null;
   const feedback = state.myFeedback;
+  const screenOnly = state.questionDisplay === 'screen_only';
+  const headline = (
+    <h2>
+      {feedback
+        ? feedback.answerStatus === 'correct'
+          ? `✓ 答對了！+${String(feedback.scoreDelta)} 分`
+          : feedback.answerStatus === 'timeout'
+            ? '未作答（逾時）'
+            : '✗ 答錯了'
+        : '本題結束'}
+    </h2>
+  );
+  if (screenOnly) {
+    // 雙螢幕模式：題目與分布留在投影幕，裝置只給個人結果與名次回饋。
+    return (
+      <div>
+        {headline}
+        <CorrectAnswerChip state={state} />
+        <PersonalStanding
+          sessionId={sessionId}
+          state={state}
+          {...(repository ? { repository } : {})}
+        />
+        <p role="status">等待主持人進入下一題…</p>
+      </div>
+    );
+  }
   return (
     <div>
-      <h2>
-        {feedback
-          ? feedback.answerStatus === 'correct'
-            ? `✓ 答對了！+${String(feedback.scoreDelta)} 分`
-            : feedback.answerStatus === 'timeout'
-              ? '未作答（逾時）'
-              : '✗ 答錯了'
-          : '本題結束'}
-      </h2>
+      {headline}
       <p>{question.prompt}</p>
       <ul className="live-distribution">
         {question.publicOptions.map((option) => {
@@ -204,6 +317,11 @@ function FeedbackPhase({ state }: Readonly<{ state: LiveSessionState }>) {
           <p>{state.explanation}</p>
         </div>
       ) : null}
+      <PersonalStanding
+        sessionId={sessionId}
+        state={state}
+        {...(repository ? { repository } : {})}
+      />
       <p role="status">等待主持人進入下一題…</p>
     </div>
   );
@@ -241,7 +359,10 @@ export function LiveSessionPage({
   const state = session.data;
 
   return (
-    <section aria-labelledby="live-session-title" className="w-full max-w-2xl">
+    <section
+      aria-labelledby="live-session-title"
+      className="live-session-shell w-full max-w-2xl"
+    >
       <header>
         <p className="route-panel__eyebrow">ColorPlay Live</p>
         <h1 id="live-session-title">課堂挑戰</h1>
@@ -254,7 +375,14 @@ export function LiveSessionPage({
         </div>
       ) : null}
 
-      {state.state === 'question_open' ? (
+      {state.waitingForNext ? (
+        <div className="live-waiting" role="status">
+          <h2>已加入這場挑戰！</h2>
+          <p>這一題已經開始，下一題開始時你就會自動進場。</p>
+        </div>
+      ) : null}
+
+      {state.state === 'question_open' && !state.waitingForNext ? (
         <QuestionPhase
           sessionId={sessionId}
           state={state}
@@ -262,7 +390,7 @@ export function LiveSessionPage({
         />
       ) : null}
 
-      {state.state === 'paused' ? (
+      {state.state === 'paused' && !state.waitingForNext ? (
         <div role="status">
           <h2>暫停中</h2>
           <p>
@@ -270,12 +398,16 @@ export function LiveSessionPage({
             {Math.ceil((state.pausedRemainingMs ?? 0) / 1000)}{' '}
             秒已凍結，恢復後繼續倒數。
           </p>
-          {state.question ? <p>{state.question.prompt}</p> : null}
+          {state.question?.prompt ? <p>{state.question.prompt}</p> : null}
         </div>
       ) : null}
 
-      {state.state === 'question_feedback' ? (
-        <FeedbackPhase state={state} />
+      {state.state === 'question_feedback' && !state.waitingForNext ? (
+        <FeedbackPhase
+          sessionId={sessionId}
+          state={state}
+          {...(repository ? { repository } : {})}
+        />
       ) : null}
 
       {state.state === 'question_feedback' || state.state === 'completed' ? (

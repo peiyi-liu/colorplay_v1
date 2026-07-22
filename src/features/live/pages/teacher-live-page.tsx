@@ -35,6 +35,7 @@ const createSchema = z.strictObject({
     .trim()
     .min(1, '活動標題為 1 至 120 個字元')
     .max(120, '活動標題為 1 至 120 個字元'),
+  questionDisplay: z.enum(['screen_only', 'device']),
 });
 type CreateValues = z.infer<typeof createSchema>;
 
@@ -59,7 +60,11 @@ export function TeacherLivePage({
     register,
     reset,
   } = useForm<CreateValues>({
-    defaultValues: { timeLimit: '20', title: '' },
+    defaultValues: {
+      questionDisplay: 'screen_only',
+      timeLimit: '20',
+      title: '',
+    },
     resolver: zodResolver(createSchema),
   });
 
@@ -159,6 +164,7 @@ export function TeacherLivePage({
             setActionError(undefined);
             try {
               await createActivity.mutateAsync({
+                questionDisplay: values.questionDisplay,
                 questionTimeLimitSeconds: Number.parseInt(values.timeLimit, 10),
                 quizTemplateId: QUIZ_TEMPLATE_ID,
                 title: values.title,
@@ -190,6 +196,14 @@ export function TeacherLivePage({
         {errors.timeLimit ? (
           <p role="alert">{errors.timeLimit.message}</p>
         ) : null}
+        <label htmlFor="live-activity-question-display">題目顯示位置</label>
+        <select
+          id="live-activity-question-display"
+          {...register('questionDisplay')}
+        >
+          <option value="screen_only">投影幕（雙螢幕，學生端只有作答鈕）</option>
+          <option value="device">學生裝置（遠端/自習）</option>
+        </select>
         <button
           className="primary-action"
           disabled={isSubmitting || createActivity.isPending}
@@ -289,6 +303,7 @@ export function TeacherLivePage({
             <tr>
               <th scope="col">標題</th>
               <th scope="col">每題秒數</th>
+              <th scope="col">題目顯示</th>
               <th scope="col">狀態</th>
               <th scope="col">操作</th>
             </tr>
@@ -298,6 +313,11 @@ export function TeacherLivePage({
               <tr key={activity.activityId}>
                 <th scope="row">{activity.title}</th>
                 <td>{activity.questionTimeLimitSeconds} 秒</td>
+                <td>
+                  {activity.questionDisplay === 'screen_only'
+                    ? '投影幕'
+                    : '學生裝置'}
+                </td>
                 <td>{activity.status === 'active' ? '可使用' : '已封存'}</td>
                 <td>
                   <button

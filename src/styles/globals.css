@@ -1498,6 +1498,99 @@ a {
   background: var(--color-token);
 }
 
+/* ── 10D 學生端：雙螢幕大作答鈕與題間回饋 ─────────────── */
+
+/* 手機直式：safe-area 內縮，按鈕禁止雙擊縮放。 */
+.live-session-shell {
+  padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+}
+
+.live-session-shell .ui-option {
+  touch-action: manipulation;
+}
+
+/* screen_only：無題文，2×2 拇指區大色塊＋形狀。 */
+.live-options--screen-only {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.live-options--screen-only .ui-option {
+  min-height: clamp(6rem, 22vh, 11rem);
+  justify-content: center;
+  font-size: 1.75rem;
+}
+
+.live-option-key {
+  font-size: 1.25em;
+  font-weight: 700;
+}
+
+.live-waiting {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg, 16px);
+  background: var(--slate-100);
+  text-align: center;
+}
+
+.live-standing-card {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg, 16px);
+  margin: var(--space-4) 0;
+  background: var(--slate-100);
+  text-align: center;
+}
+
+.live-standing-card__rank {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.live-standing-card__total {
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.live-standing-card__cheer {
+  color: var(--color-token);
+  font-weight: 600;
+}
+
+.live-correct-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  font-size: 1.25rem;
+}
+
+.live-correct-chip__swatch {
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md, 10px);
+  color: #fff;
+}
+
+.live-correct-chip__swatch--rose {
+  background: var(--rose-500, #f43f5e);
+}
+
+.live-correct-chip__swatch--sky {
+  background: var(--sky-500, #0ea5e9);
+}
+
+.live-correct-chip__swatch--amber {
+  background: var(--amber-500, #f59e0b);
+}
+
+.live-correct-chip__swatch--emerald {
+  background: var(--emerald-500, #10b981);
+}
+
 .live-explanation {
   border-left: 4px solid var(--color-alert);
   border-radius: var(--radius-control);

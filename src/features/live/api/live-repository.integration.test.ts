@@ -40,10 +40,13 @@ describe('LiveRepository with local Supabase', () => {
       });
     }
 
+    // Device mode keeps prompts on the student payload; this flow answers by
+    // matching the generated prompt text (screen_only is covered by pgTAP 042).
     const activity = await host.createActivity({
       title: `Live 對戰 ${classroomName.slice(-8)}`,
       quizTemplateId: QUIZ_TEMPLATE_ID,
       questionTimeLimitSeconds: 20,
+      questionDisplay: 'device',
     });
     const session = await host.createSession({
       activityId: activity.activityId,
@@ -91,7 +94,7 @@ describe('LiveRepository with local Supabase', () => {
       expect(playerView.state).toBe('question_open');
       expect(playerView.correctOptionId).toBeUndefined();
       const question = playerView.question;
-      if (!question) throw new Error('LIVE_TEST_QUESTION_MISSING');
+      if (!question?.prompt) throw new Error('LIVE_TEST_QUESTION_MISSING');
       const correctText = GENERATED_CORRECT_ANSWERS.get(question.prompt);
       const correctOption = question.publicOptions.find(
         (option) => option.text === correctText,

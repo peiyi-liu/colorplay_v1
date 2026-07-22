@@ -19,6 +19,8 @@ const utcTimestamp = z.iso.datetime({ offset: true });
 const nonNegativeInteger = z.number().int().nonnegative();
 const positiveInteger = z.number().int().positive();
 
+const questionDisplaySchema = z.enum(['screen_only', 'device']);
+
 const stateNameSchema = z.enum([
   'draft',
   'lobby',
@@ -37,6 +39,7 @@ const activitySchema = z.strictObject({
   status: z.enum(['active', 'archived']),
   rules_version: z.string().min(1),
   scheduled_for: utcTimestamp.nullable().optional(),
+  question_display: questionDisplaySchema,
 });
 
 const activityRowSchema = z.strictObject({
@@ -47,6 +50,7 @@ const activityRowSchema = z.strictObject({
   status: z.enum(['active', 'archived']),
   rules_version: z.string().min(1),
   scheduled_for: utcTimestamp.nullable(),
+  question_display: questionDisplaySchema,
 });
 
 const answerReceiptSchema = z.strictObject({
@@ -134,22 +138,32 @@ const standingsSchema = z.strictObject({
   ),
 });
 
+// prompt and option text are absent for students in screen_only sessions;
+// the server strips them before the payload leaves the database.
 const questionSchema = z.strictObject({
   question_id: uuidString,
   position: positiveInteger,
-  prompt: z.string().min(1),
+  prompt: z.string().min(1).optional(),
   public_options: z
     .array(
       z.strictObject({
         id: uuidString,
         key: z.string().min(1),
-        text: z.string().min(1),
+        text: z.string().min(1).optional(),
         sort_order: positiveInteger,
       }),
     )
     .min(2),
   opened_at: utcTimestamp.nullable(),
   deadline_at: utcTimestamp.nullable(),
+});
+
+const myStandingSchema = z.strictObject({
+  rank: positiveInteger,
+  score: nonNegativeInteger,
+  participant_count: positiveInteger,
+  ahead_rank: positiveInteger.nullable(),
+  points_behind: nonNegativeInteger.nullable(),
 });
 
 const stateSchema = z
@@ -161,10 +175,12 @@ const stateSchema = z
     question_count: nonNegativeInteger,
     participant_count: nonNegativeInteger,
     rules_version: z.string().min(1),
+    question_display: questionDisplaySchema,
     server_time: utcTimestamp,
     is_host: z.boolean(),
     mode: z.enum(['individual', 'team']),
     team_count: z.number().int().min(2).max(4).nullable(),
+    waiting_for_next: z.literal(true).optional(),
     participants: z
       .array(z.strictObject({ display_name: z.string().min(1) }))
       .optional(),
@@ -216,6 +232,17 @@ const stateSchema = z
           state.option_counts === undefined &&
           !(state.my_answer && 'answer_status' in state.my_answer),
     { message: 'PRE_FEEDBACK_REVEAL_LEAK' },
+  )
+  .refine(
+    (state) =>
+      state.question_display === 'device' ||
+      state.is_host ||
+      state.question === undefined ||
+      (state.question.prompt === undefined &&
+        state.question.public_options.every(
+          (option) => option.text === undefined,
+        )),
+    { message: 'SCREEN_ONLY_TEXT_LEAK' },
   );
 
 const errorCodeByMessage: readonly (readonly [
@@ -266,6 +293,7 @@ const mapActivity = (row: z.infer<typeof activitySchema>): LiveActivity => ({
   status: row.status,
   rulesVersion: row.rules_version,
   scheduledFor: row.scheduled_for ?? null,
+  questionDisplay: row.question_display,
 });
 
 const mapState = (raw: z.infer<typeof stateSchema>): LiveSessionState => ({
@@ -276,10 +304,14 @@ const mapState = (raw: z.infer<typeof stateSchema>): LiveSessionState => ({
   questionCount: raw.question_count,
   participantCount: raw.participant_count,
   rulesVersion: raw.rules_version,
+  questionDisplay: raw.question_display,
   serverTime: raw.server_time,
   isHost: raw.is_host,
   mode: raw.mode,
   teamCount: raw.team_count,
+  ...(raw.waiting_for_next === undefined
+    ? {}
+    : { waitingForNext: raw.waiting_for_next }),
   ...(raw.participants
     ? {
         participants: raw.participants.map((entry) => ({
@@ -292,11 +324,13 @@ const mapState = (raw: z.infer<typeof stateSchema>): LiveSessionState => ({
         question: {
           questionId: raw.question.question_id,
           position: raw.question.position,
-          prompt: raw.question.prompt,
+          ...(raw.question.prompt === undefined
+            ? {}
+            : { prompt: raw.question.prompt }),
           publicOptions: raw.question.public_options.map((option) => ({
             id: option.id,
             key: option.key,
-            text: option.text,
+            ...(option.text === undefined ? {} : { text: option.text }),
             sortOrder: option.sort_order,
           })),
           openedAt: raw.question.opened_at,
@@ -377,6 +411,9 @@ export function createLiveRepository(
         p_question_time_limit_seconds: input.questionTimeLimitSeconds,
         p_quiz_template_id: input.quizTemplateId,
         p_title: input.title,
+        ...(input.questionDisplay
+          ? { p_question_display: input.questionDisplay }
+          : {}),
       });
       if (error) throw toRepositoryError(error.message);
       return mapActivity(parseWith(activitySchema, data));
@@ -386,13 +423,14 @@ export function createLiveRepository(
       const { data, error } = await client
         .from('live_activities')
         .select(
-          'id, title, quiz_template_id, question_time_limit_seconds, status, rules_version, scheduled_for',
+          'id, title, quiz_template_id, question_time_limit_seconds, status, rules_version, scheduled_for, question_display',
         )
         .order('created_at', { ascending: false });
       if (error) throw toRepositoryError(error.message);
       return parseWith(z.array(activityRowSchema), data).map((row) =>
         mapActivity({
           activity_id: row.id,
+          question_display: row.question_display,
           question_time_limit_seconds: row.question_time_limit_seconds,
           quiz_template_id: row.quiz_template_id,
           rules_version: row.rules_version,
@@ -537,6 +575,21 @@ export function createLiveRepository(
           displayName: entry.display_name,
           score: entry.score,
         })),
+      };
+    },
+
+    async getMyStanding(sessionId) {
+      const { data, error } = await client.rpc('live_my_standing', {
+        p_session_id: sessionId,
+      });
+      if (error) throw toRepositoryError(error.message);
+      const parsed = parseWith(myStandingSchema, data);
+      return {
+        rank: parsed.rank,
+        score: parsed.score,
+        participantCount: parsed.participant_count,
+        aheadRank: parsed.ahead_rank,
+        pointsBehind: parsed.points_behind,
       };
     },
 

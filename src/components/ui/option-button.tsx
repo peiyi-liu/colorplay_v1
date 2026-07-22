@@ -4,7 +4,7 @@ export type OptionVariant = 'rose' | 'sky' | 'amber' | 'emerald';
 export type OptionShape = 'triangle' | 'square' | 'circle' | 'diamond';
 export type OptionState = 'idle' | 'locked' | 'correct' | 'wrong';
 
-const SHAPE_SYMBOLS: Record<OptionShape, string> = {
+export const SHAPE_SYMBOLS: Record<OptionShape, string> = {
   triangle: '▲',
   square: '■',
   circle: '●',

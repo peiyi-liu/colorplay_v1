@@ -51,6 +51,7 @@ const baseState: LiveSessionState = {
   questionCount: 10,
   participantCount: 3,
   rulesVersion: '2026-07-live-1',
+  questionDisplay: 'device',
   serverTime: new Date().toISOString(),
   isHost: false,
   mode: 'individual',
@@ -97,6 +98,13 @@ const repositoryWith = (
   createSession: vi.fn(),
   finalize: vi.fn(),
   getDistribution: vi.fn().mockResolvedValue({ answeredCount: 0, options: [] }),
+  getMyStanding: vi.fn().mockResolvedValue({
+    rank: 1,
+    score: 0,
+    participantCount: 1,
+    aheadRank: null,
+    pointsBehind: null,
+  }),
   getSessionDetail: vi.fn(),
   getStandings: vi
     .fn()
@@ -280,6 +288,119 @@ describe('LiveSessionPage (participant)', () => {
     expect(await screen.findByText('挑戰結束！')).toBeVisible();
     expect(screen.getByText('你的成績：600 分，第 2 名')).toBeVisible();
     expect(screen.getByText('第 1 名 student.one（1500 分）')).toBeVisible();
+  });
+
+  const screenOnlyQuestion = {
+    questionId: '18500000-0000-0000-0000-000000000001',
+    position: 1,
+    publicOptions: [
+      { id: '18700000-0000-0000-0000-000000000001', key: 'A', sortOrder: 1 },
+      { id: '18700000-0000-0000-0000-000000000002', key: 'B', sortOrder: 2 },
+      { id: '18700000-0000-0000-0000-000000000003', key: 'C', sortOrder: 3 },
+      { id: '18700000-0000-0000-0000-000000000004', key: 'D', sortOrder: 4 },
+    ],
+    openedAt: new Date().toISOString(),
+    deadlineAt: new Date(Date.now() + 15000).toISOString(),
+  };
+
+  it('shows text-free color-shape buttons in screen_only mode', async () => {
+    const repository = repositoryWith({
+      getState: vi.fn().mockResolvedValue({
+        ...baseState,
+        state: 'question_open',
+        stateVersion: 3,
+        currentPosition: 1,
+        questionDisplay: 'screen_only',
+        question: screenOnlyQuestion,
+        answeredCount: 0,
+        myAnswer: { answered: false },
+      }),
+    });
+    renderWith(
+      <LiveSessionPage
+        client={stubClient()}
+        repository={repository}
+        sessionId={SESSION_ID}
+      />,
+    );
+
+    expect(
+      await screen.findByText('題目在投影幕上，選出你的答案！'),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: /選項 A：紅色三角形/u }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: /選項 D：綠色菱形/u }),
+    ).toBeVisible();
+    expect(screen.queryByText('色彩三要素是？')).toBeNull();
+  });
+
+  it('parks a late joiner on the waiting screen', async () => {
+    const repository = repositoryWith({
+      getState: vi.fn().mockResolvedValue({
+        ...baseState,
+        state: 'question_open',
+        stateVersion: 3,
+        currentPosition: 1,
+        questionDisplay: 'screen_only',
+        waitingForNext: true,
+      }),
+    });
+    renderWith(
+      <LiveSessionPage
+        client={stubClient()}
+        repository={repository}
+        sessionId={SESSION_ID}
+      />,
+    );
+
+    expect(await screen.findByText('已加入這場挑戰！')).toBeVisible();
+    expect(screen.queryByRole('group', { name: '答案選項' })).toBeNull();
+  });
+
+  it('shows the personal standing with encouragement between questions', async () => {
+    const repository = repositoryWith({
+      getMyStanding: vi.fn().mockResolvedValue({
+        rank: 2,
+        score: 150,
+        participantCount: 5,
+        aheadRank: 1,
+        pointsBehind: 30,
+      }),
+      getState: vi.fn().mockResolvedValue({
+        ...baseState,
+        state: 'question_feedback',
+        stateVersion: 4,
+        currentPosition: 1,
+        questionDisplay: 'screen_only',
+        question: screenOnlyQuestion,
+        answeredCount: 3,
+        correctOptionId: '18700000-0000-0000-0000-000000000001',
+        explanation: null,
+        optionCounts: [],
+        myFeedback: {
+          answerStatus: 'correct',
+          selectedOptionId: '18700000-0000-0000-0000-000000000001',
+          scoreDelta: 150,
+        },
+      }),
+    });
+    renderWith(
+      <LiveSessionPage
+        client={stubClient()}
+        repository={repository}
+        sessionId={SESSION_ID}
+      />,
+    );
+
+    expect(await screen.findByText('✓ 答對了！+150 分')).toBeVisible();
+    expect(await screen.findByText('累積 150 分')).toBeVisible();
+    expect(
+      screen.getByText('差 30 分就能超越第 1 名，加油！'),
+    ).toBeVisible();
+    // 雙螢幕模式的裝置端不重複投影幕上的選項分布。
+    expect(screen.queryByText(/（\d+ 人）/u)).toBeNull();
   });
 });
 
@@ -508,6 +629,7 @@ describe('TeacherLivePage (advanced)', () => {
     status: 'active' as const,
     rulesVersion: '2026-07-live-1',
     scheduledFor: null,
+    questionDisplay: 'screen_only' as const,
   };
 
   it('creates a team session with the chosen team count', async () => {

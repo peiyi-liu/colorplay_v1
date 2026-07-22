@@ -18,6 +18,7 @@ const lobbyState: LiveSessionState = {
   questionCount: 10,
   participantCount: 1,
   rulesVersion: '2026-07-live-1',
+  questionDisplay: 'device',
   serverTime: '2026-07-17T15:00:00+00:00',
   isHost: false,
   mode: 'individual',

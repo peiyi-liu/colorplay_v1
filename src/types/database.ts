@@ -872,6 +872,7 @@ export type Database = {
           created_at: string
           id: string
           owner_teacher_id: string
+          question_display: string
           question_time_limit_seconds: number
           quiz_template_id: string
           rules_version: string
@@ -884,6 +885,7 @@ export type Database = {
           created_at?: string
           id?: string
           owner_teacher_id: string
+          question_display?: string
           question_time_limit_seconds?: number
           quiz_template_id: string
           rules_version?: string
@@ -896,6 +898,7 @@ export type Database = {
           created_at?: string
           id?: string
           owner_teacher_id?: string
+          question_display?: string
           question_time_limit_seconds?: number
           quiz_template_id?: string
           rules_version?: string
@@ -1001,6 +1004,7 @@ export type Database = {
       live_participants: {
         Row: {
           current_streak: number
+          eligible_from_position: number
           final_rank: number | null
           id: string
           joined_at: string
@@ -1013,6 +1017,7 @@ export type Database = {
         }
         Insert: {
           current_streak?: number
+          eligible_from_position?: number
           final_rank?: number | null
           id?: string
           joined_at?: string
@@ -1025,6 +1030,7 @@ export type Database = {
         }
         Update: {
           current_streak?: number
+          eligible_from_position?: number
           final_rank?: number | null
           id?: string
           joined_at?: string
@@ -2558,6 +2564,7 @@ export type Database = {
       }
       create_live_activity: {
         Args: {
+          p_question_display?: string
           p_question_time_limit_seconds?: number
           p_quiz_template_id: string
           p_title: string
@@ -2766,6 +2773,7 @@ export type Database = {
         }
         Returns: Json
       }
+      live_my_standing: { Args: { p_session_id: string }; Returns: Json }
       live_open_next_question: {
         Args: { p_next_position: number; p_session_id: string }
         Returns: Json
@@ -2779,6 +2787,18 @@ export type Database = {
           target_question: Database["public"]["Tables"]["live_session_questions"]["Row"]
         }
         Returns: Json
+      }
+      live_question_student_payload: {
+        Args: {
+          target_question: Database["public"]["Tables"]["live_session_questions"]["Row"]
+        }
+        Returns: Json
+      }
+      live_session_question_display: {
+        Args: {
+          target_session: Database["public"]["Tables"]["live_sessions"]["Row"]
+        }
+        Returns: string
       }
       live_session_standings: { Args: { p_session_id: string }; Returns: Json }
       live_team_totals: { Args: { p_session_id: string }; Returns: Json }

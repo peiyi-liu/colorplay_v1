@@ -7,6 +7,8 @@ export type LiveSessionStateName =
   | 'completed'
   | 'cancelled';
 
+export type LiveQuestionDisplay = 'screen_only' | 'device';
+
 export type LiveActivity = Readonly<{
   activityId: string;
   title: string;
@@ -15,6 +17,7 @@ export type LiveActivity = Readonly<{
   status: 'active' | 'archived';
   rulesVersion: string;
   scheduledFor: string | null;
+  questionDisplay: LiveQuestionDisplay;
 }>;
 
 export type LiveSessionMode = 'individual' | 'team';
@@ -79,14 +82,24 @@ export type LiveJoinResult = Readonly<{
   stateVersion: number;
 }>;
 
+export type LiveMyStanding = Readonly<{
+  rank: number;
+  score: number;
+  participantCount: number;
+  aheadRank: number | null;
+  pointsBehind: number | null;
+}>;
+
+// In screen_only sessions the server strips the prompt and option text for
+// students; only the projector (host) payload carries them.
 export type LiveQuestionView = Readonly<{
   questionId: string;
   position: number;
-  prompt: string;
+  prompt?: string;
   publicOptions: readonly Readonly<{
     id: string;
     key: string;
-    text: string;
+    text?: string;
     sortOrder: number;
   }>[];
   openedAt: string | null;
@@ -112,10 +125,12 @@ export type LiveSessionState = Readonly<{
   questionCount: number;
   participantCount: number;
   rulesVersion: string;
+  questionDisplay: LiveQuestionDisplay;
   serverTime: string;
   isHost: boolean;
   mode: LiveSessionMode;
   teamCount: number | null;
+  waitingForNext?: boolean;
   participants?: readonly LiveParticipantName[];
   question?: LiveQuestionView;
   answeredCount?: number;
@@ -161,6 +176,7 @@ export type LiveRepository = Readonly<{
     title: string;
     quizTemplateId: string;
     questionTimeLimitSeconds: number;
+    questionDisplay?: LiveQuestionDisplay;
   }): Promise<LiveActivity>;
   listMyActivities(): Promise<readonly LiveActivity[]>;
   createSession(input: {
@@ -192,6 +208,7 @@ export type LiveRepository = Readonly<{
   getDistribution(sessionId: string): Promise<LiveDistribution>;
   getTeamTotals(sessionId: string): Promise<readonly LiveTeamTotal[]>;
   getStandings(sessionId: string): Promise<LiveStandings>;
+  getMyStanding(sessionId: string): Promise<LiveMyStanding>;
   getSessionDetail(sessionId: string): Promise<LiveSessionDetail>;
   scheduleActivity(
     activityId: string,

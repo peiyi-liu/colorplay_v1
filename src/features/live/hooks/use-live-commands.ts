@@ -14,6 +14,8 @@ import {
   type LiveDistribution,
   type LiveStandings,
   type LiveJoinResult,
+  type LiveMyStanding,
+  type LiveQuestionDisplay,
   type LiveRepository,
   LiveRepositoryError,
   type LiveSessionDetail,
@@ -50,7 +52,12 @@ export function useCreateLiveActivity(
 ): UseMutationResult<
   LiveActivity,
   LiveRepositoryError,
-  { title: string; quizTemplateId: string; questionTimeLimitSeconds: number }
+  {
+    title: string;
+    quizTemplateId: string;
+    questionTimeLimitSeconds: number;
+    questionDisplay?: LiveQuestionDisplay;
+  }
 > {
   const resolved = resolveRepository(repository);
   const queryClient = useQueryClient();
@@ -128,6 +135,20 @@ export function useLiveStandings(
     enabled: input.enabled && sessionId.length > 0,
     queryFn: () => resolved.getStandings(sessionId),
     queryKey: ['live', 'standings', sessionId, input.stateVersion] as const,
+    retry: false,
+  });
+}
+
+export function useLiveMyStanding(
+  sessionId: string,
+  input: Readonly<{ enabled: boolean; stateVersion: number }>,
+  repository?: LiveRepository,
+): UseQueryResult<LiveMyStanding, LiveRepositoryError> {
+  const resolved = resolveRepository(repository);
+  return useQuery({
+    enabled: input.enabled && sessionId.length > 0,
+    queryFn: () => resolved.getMyStanding(sessionId),
+    queryKey: ['live', 'my-standing', sessionId, input.stateVersion] as const,
     retry: false,
   });
 }

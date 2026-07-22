@@ -277,3 +277,9 @@ mastery = coverage * accuracy / 100
 - **六碼數字加入碼**：`generate_live_join_code` 產生 `000000`–`999999`（強亂數、前導零保留）。唯一性只涵蓋活躍場次（partial unique index，`state not in ('completed','cancelled')`——含 `paused`）；`completed`／`cancelled` 釋出碼空間，建立與 rotate 皆有碰撞重試。
 - **Join 節流與錯誤契約**：因碼空間僅 10⁶，`join_live_session` 對「查無／格式錯／非成員」一律回傳 committed payload 錯誤 `{"error":"LIVE_JOIN_INVALID_CODE"}`（不 raise——raise 會把節流計數一併 rollback），並以 `live_join_throttle`（host-only RLS、無 client 權限）按 user 記錄失敗：60 秒固定視窗內滿 10 次失敗後回 `{"error":"LIVE_JOIN_RATE_LIMITED"}`。成功 join 的 payload 與既有契約完全相同；`AUTH_REQUIRED`／`LIVE_INVALID_REQUEST` 仍為 raise。
 - **Host 分布讀取放寬**：`live_question_distribution` 允許 host 於 `question_open`／`paused`／`question_feedback` 讀取（分布在 feedback 對全員公開，無新增揭露）——host 端「answered-count broadcast 觸發 refetch」與自動關題競態時不再產生 400。學生於任何狀態呼叫仍回 `LIVE_SESSION_NOT_FOUND`。
+
+### ColorPlay Live 學生端體驗（Milestone 10D；rules_version 不變）
+
+- **雙螢幕模式（活動層級開關）**：`live_activities.question_display`（`screen_only` 預設／`device`）於建立活動時定版。`screen_only` 時，學生的 state payload 與共用 channel 的 `question_open`／resume broadcast 由**伺服器端**過濾——question 無 `prompt`、選項只含 `id`／`key`／`sort_order`（無 `text`）、feedback 的 `explanation` 為 null；host 讀取永遠是完整 payload（投影用）。`device` 模式維持題目在學生裝置的原行為。計分、獎勵與 rules_version 皆不受此開關影響。
+- **遲到可加入**：lobby 關閉後，首次加入者於 `question_open`／`question_feedback` 仍可 join（班級成員限定、節流不變）。`live_participants.eligible_from_position` 錨定「下一題進場」（用題號而非時間戳，pause/resume 重寫 `opened_at` 不影響）；遲到者對已開題不得作答（`LIVE_ANSWER_CLOSED`）、不列入全員作答自動關題的母集、關題不補 timeout row；state payload 以 `waiting_for_next: true` 呈現等候畫面，不含任何題目資料。重連（既有 participant）行為不變。
+- **題間個人回饋**：`live_my_standing`（participant-only、僅 `question_feedback`）回傳本人 rank／score／participant_count 與「與前一名分差」（`ahead_rank`／`points_behind`；tie-break 與 standings/finalize 一致）。只有數字——任何其他學生的名稱不進學生裝置。鼓勵文案由 client 生成。

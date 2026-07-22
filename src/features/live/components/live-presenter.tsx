@@ -132,10 +132,7 @@ function StandingsBoard({
   }> | null>(null);
   if (entries && board?.version !== state.stateVersion) {
     const previousRanks = new Map(
-      (board?.rows ?? []).map((row) => [
-        row.entry.displayName,
-        row.entry.rank,
-      ]),
+      (board?.rows ?? []).map((row) => [row.entry.displayName, row.entry.rank]),
     );
     setBoard({
       rows: entries.map((entry) => {

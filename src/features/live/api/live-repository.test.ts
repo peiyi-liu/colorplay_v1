@@ -16,6 +16,7 @@ const lobbyState = {
   question_count: 10,
   participant_count: 2,
   rules_version: '2026-07-live-1',
+  question_display: 'device',
   server_time: '2026-07-17T15:00:00+00:00',
   is_host: false,
   mode: 'individual',
@@ -124,6 +125,129 @@ describe('live repository', () => {
       { optionId: '18700000-0000-0000-0000-000000000001', count: 1 },
       { optionId: null, count: 1 },
     ]);
+  });
+
+  it('rejects a screen_only student payload that still carries text', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: {
+        ...lobbyState,
+        question_display: 'screen_only',
+        state: 'question_open',
+        current_position: 1,
+        question: {
+          question_id: '18500000-0000-0000-0000-000000000001',
+          position: 1,
+          prompt: '這段題文不該出現在學生裝置。',
+          public_options: [
+            {
+              id: '18700000-0000-0000-0000-000000000001',
+              key: 'A',
+              sort_order: 1,
+            },
+            {
+              id: '18700000-0000-0000-0000-000000000002',
+              key: 'B',
+              sort_order: 2,
+            },
+          ],
+          opened_at: '2026-07-17T15:00:01+00:00',
+          deadline_at: '2026-07-17T15:00:21+00:00',
+        },
+        answered_count: 0,
+        my_answer: { answered: false },
+      },
+      error: null,
+    });
+    const repository = createLiveRepository(clientWith(rpc));
+
+    await expect(repository.getState(lobbyState.session_id)).rejects.toEqual(
+      new LiveRepositoryError('INVALID_RESPONSE'),
+    );
+  });
+
+  it('maps the filtered screen_only question and the waiting flag', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: {
+        ...lobbyState,
+        question_display: 'screen_only',
+        state: 'question_open',
+        current_position: 1,
+        question: {
+          question_id: '18500000-0000-0000-0000-000000000001',
+          position: 1,
+          public_options: [
+            {
+              id: '18700000-0000-0000-0000-000000000001',
+              key: 'A',
+              sort_order: 1,
+            },
+            {
+              id: '18700000-0000-0000-0000-000000000002',
+              key: 'B',
+              sort_order: 2,
+            },
+          ],
+          opened_at: '2026-07-17T15:00:01+00:00',
+          deadline_at: '2026-07-17T15:00:21+00:00',
+        },
+        answered_count: 0,
+        my_answer: { answered: false },
+      },
+      error: null,
+    });
+    const repository = createLiveRepository(clientWith(rpc));
+
+    const state = await repository.getState(lobbyState.session_id);
+
+    expect(state.questionDisplay).toBe('screen_only');
+    expect(state.question?.prompt).toBeUndefined();
+    expect(state.question?.publicOptions[0]).toMatchObject({ key: 'A' });
+    expect(state.question?.publicOptions[0]?.text).toBeUndefined();
+
+    const waitingRpc = vi.fn().mockResolvedValue({
+      data: {
+        ...lobbyState,
+        question_display: 'screen_only',
+        state: 'question_open',
+        current_position: 1,
+        waiting_for_next: true,
+      },
+      error: null,
+    });
+    const waitingState = await createLiveRepository(
+      clientWith(waitingRpc),
+    ).getState(lobbyState.session_id);
+    expect(waitingState.waitingForNext).toBe(true);
+    expect(waitingState.question).toBeUndefined();
+  });
+
+  it('reads the participant personal standing', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: {
+        rank: 2,
+        score: 150,
+        participant_count: 5,
+        ahead_rank: 1,
+        points_behind: 30,
+      },
+      error: null,
+    });
+    const repository = createLiveRepository(clientWith(rpc));
+
+    const standing = await repository.getMyStanding(
+      '18400000-0000-0000-0000-000000000001',
+    );
+
+    expect(rpc).toHaveBeenCalledWith('live_my_standing', {
+      p_session_id: '18400000-0000-0000-0000-000000000001',
+    });
+    expect(standing).toEqual({
+      rank: 2,
+      score: 150,
+      participantCount: 5,
+      aheadRank: 1,
+      pointsBehind: 30,
+    });
   });
 
   it('maps trusted live errors onto stable codes', async () => {
