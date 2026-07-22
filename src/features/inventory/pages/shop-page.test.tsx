@@ -88,13 +88,16 @@ describe('ShopPage', () => {
     renderShop(repository());
 
     expect(
-      await screen.findByRole('heading', { name: 'Blook 商店' }),
+      await screen.findByRole('heading', { name: '裝備商店' }),
     ).toBeVisible();
-    items.forEach(([, , name, emoji, cost]) => {
+    items.forEach(([, , name, , cost]) => {
       expect(screen.getByRole('heading', { name })).toBeVisible();
-      expect(screen.getByText(emoji)).toBeVisible();
       expect(screen.getByText(`${String(cost)} Token`)).toBeVisible();
     });
+    // 每張卡片以自製 SVG 角色呈現(不再用 emoji 文字)。
+    expect(document.querySelectorAll('.blook-card__art svg')).toHaveLength(
+      items.length,
+    );
     expect(screen.getAllByText('已裝備')).toHaveLength(1);
     expect(screen.getByRole('button', { name: '選用 招財貓' })).toBeEnabled();
     expect(
@@ -233,7 +236,7 @@ describe('ShopPage', () => {
       }),
     );
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      '無法載入 Blook 商店，請稍後重試。',
+      '無法載入裝備商店，請稍後重試。',
     );
     expect(screen.getByRole('button', { name: '重試' })).toBeEnabled();
     expect(screen.queryByText('0 Token 可用')).toBeNull();

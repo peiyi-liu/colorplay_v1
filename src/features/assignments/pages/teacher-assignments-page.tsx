@@ -174,10 +174,7 @@ export function TeacherAssignmentsPage({
   };
 
   return (
-    <section
-      aria-labelledby="teacher-assignments-title"
-      className="w-full max-w-5xl"
-    >
+    <section aria-labelledby="teacher-assignments-title" className="page-wide">
       <header>
         <p className="route-panel__eyebrow">教師作業管理</p>
         <h1 id="teacher-assignments-title">班級作業</h1>

@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import { Icon } from './icons';
+
 export type OptionVariant = 'rose' | 'sky' | 'amber' | 'emerald';
 export type OptionShape = 'triangle' | 'square' | 'circle' | 'diamond';
 export type OptionState = 'idle' | 'locked' | 'correct' | 'wrong';
@@ -39,7 +41,11 @@ export function OptionButton({
     >
       <span aria-hidden="true">{SHAPE_SYMBOLS[shape]}</span>
       <span className="ui-option__label">{children}</span>
-      {isLocked ? <span aria-hidden="true">🔒</span> : null}
+      {isLocked ? (
+        <span aria-hidden="true">
+          <Icon name="lock" size={16} />
+        </span>
+      ) : null}
       {state === 'correct' ? <span aria-hidden="true">✓</span> : null}
       {state === 'wrong' ? <span aria-hidden="true">✕</span> : null}
     </button>

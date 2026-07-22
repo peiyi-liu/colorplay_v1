@@ -43,7 +43,7 @@ export function MissionSelectPage({
     <section aria-labelledby="mission-select-title" className="mission-select">
       <Card padding="lg">
         <SectionHeader
-          chip={<Chip tone="primary">🧪 5 階精熟測驗</Chip>}
+          chip={<Chip tone="primary">5 階精熟測驗</Chip>}
           title="課後任務實戰"
           description="不限時、可多次嘗試；答錯會鎖定該選項並逐層解鎖提示。完成全部關卡即精熟本章。"
         />
@@ -141,7 +141,7 @@ export function MissionPage({
       <Card padding="lg" className="animate-fade-in">
         <div className="quiz-map-panel">
           <p className="quiz-map-panel__caption">
-            🗺️ 精熟學習地圖（未通過上一關前不可跳關）
+            精熟學習地圖(未通過上一關前不可跳關)
           </p>
           <MapStepper
             currentIndex={mastery.position - 1}
@@ -154,7 +154,7 @@ export function MissionPage({
         <SectionHeader
           chip={
             <Chip tone="primary">
-              🧪 關卡進度：{mastery.position} / {mastery.questionCount}
+              關卡進度:{mastery.position} / {mastery.questionCount}
             </Chip>
           }
           title={mastery.chapterTitle}
@@ -174,7 +174,7 @@ export function MissionPage({
             <h2 id="mission-feedback-title">✓ 答對了</h2>
             {resolved.explanation ? (
               <div className="live-explanation">
-                <strong>👨‍🏫 教師引導解析：</strong>
+                <strong>教師引導解析:</strong>
                 <p>{resolved.explanation}</p>
               </div>
             ) : null}
@@ -216,13 +216,13 @@ export function MissionPage({
           <>
             <div className="mission__scenario">
               <p className="mission__scenario-label">
-                <span aria-hidden="true">🧭 </span>情境任務
+                <span aria-hidden="true"></span>情境任務
               </p>
               <p className="mission__prompt">{mastery.question.prompt}</p>
             </div>
 
             <p className="mission__instruction">
-              <span aria-hidden="true">🖐️ </span>
+              <span aria-hidden="true"></span>
               請點擊選擇最佳色彩策略（答錯會鎖定該選項）：
             </p>
             <div className="mission__options">
@@ -257,7 +257,7 @@ export function MissionPage({
                     {option.key}
                   </span>
                   <span>{option.text}</span>
-                  {option.locked ? <span aria-hidden="true">🔒</span> : null}
+                  {option.locked ? <span aria-hidden="true">●</span> : null}
                 </button>
               ))}
             </div>
@@ -290,7 +290,7 @@ export function MissionPage({
                   }}
                   type="button"
                 >
-                  💡 索取第 {hints.length + 1} 層提示
+                  索取第 {hints.length + 1} 層提示
                 </button>
               ) : null}
             </div>

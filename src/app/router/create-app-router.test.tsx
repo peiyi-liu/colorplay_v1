@@ -269,7 +269,7 @@ describe('createAppRouter', () => {
     });
 
     expect(
-      await screen.findByRole('heading', { name: 'Blook 商店' }),
+      await screen.findByRole('heading', { name: '裝備商店' }),
     ).toBeVisible();
   });
 

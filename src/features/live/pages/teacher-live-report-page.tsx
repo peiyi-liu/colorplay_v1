@@ -105,7 +105,7 @@ export function TeacherLiveReportPage({
   const reteach = reteachQuestions(report.questions);
 
   return (
-    <section aria-labelledby="live-report-title" className="w-full max-w-4xl">
+    <section aria-labelledby="live-report-title" className="page-mid">
       <header>
         <p className="route-panel__eyebrow">ColorPlay Live</p>
         <h1 id="live-report-title">場次報表</h1>

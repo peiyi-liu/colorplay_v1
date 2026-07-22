@@ -1,3 +1,5 @@
+import { Icon } from './icons';
+
 type VictoryCardProps = Readonly<{
   title: string;
   description?: string;
@@ -21,7 +23,7 @@ export function VictoryCard({
   return (
     <div className="ui-victory">
       <span className="ui-victory__emoji" aria-hidden="true">
-        🎉
+        <Icon name="trophy" size={40} />
       </span>
       <h3 className="ui-victory__title">{title}</h3>
       {description ? (
@@ -37,7 +39,7 @@ export function VictoryCard({
           </span>
           {badgeName ? (
             <span className="ui-victory__reward ui-victory__reward--badge">
-              🏆 解鎖徽章：{badgeName}
+              <Icon name="medal" size={14} /> 解鎖徽章：{badgeName}
             </span>
           ) : null}
         </div>

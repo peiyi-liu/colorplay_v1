@@ -1,3 +1,4 @@
+import { Icon } from './icons';
 import {
   createContext,
   useCallback,
@@ -47,11 +48,13 @@ export function ToastProvider({ children }: Readonly<{ children: ReactNode }>) {
             role={entry.tone === 'error' ? 'alert' : 'status'}
           >
             <span aria-hidden="true">
-              {entry.tone === 'success'
-                ? '✅'
-                : entry.tone === 'error'
-                  ? '⚠️'
-                  : 'ℹ️'}
+              {entry.tone === 'success' ? (
+                <Icon name="check" size={15} />
+              ) : entry.tone === 'error' ? (
+                <Icon name="alert" size={15} />
+              ) : (
+                <Icon name="info" size={15} />
+              )}
             </span>
             <span>{entry.message}</span>
           </div>

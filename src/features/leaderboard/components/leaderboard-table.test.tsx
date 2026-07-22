@@ -70,8 +70,8 @@ describe('LeaderboardTable', () => {
     expect(
       rows.map((row) => within(row).getAllByRole('cell')[1]?.textContent),
     ).toEqual(['子安', '阿美']);
-    expect(screen.getByText('🐳 藍鯨')).toBeVisible();
-    expect(screen.getAllByText('🦊 小狐狸')).toHaveLength(2);
+    expect(screen.getByText('藍鯨')).toBeVisible();
+    expect(screen.getAllByText('小狐狸')).toHaveLength(2);
     expect(screen.getAllByText('0 XP')).toHaveLength(2);
     expect(document.body).not.toHaveTextContent('59999999-');
   });

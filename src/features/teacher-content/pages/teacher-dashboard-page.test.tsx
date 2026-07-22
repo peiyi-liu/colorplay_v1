@@ -176,5 +176,5 @@ it('surfaces the ggame live broadcast console entry', async () => {
     'href',
     '/teacher/live',
   );
-  expect(screen.getByText('📊 教師決策工具')).toBeInTheDocument();
+  expect(screen.getByText('教師決策工具')).toBeInTheDocument();
 });

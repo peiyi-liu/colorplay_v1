@@ -44,7 +44,7 @@ export function LiveJoinPage({
   });
 
   return (
-    <section aria-labelledby="live-join-title" className="w-full max-w-xl">
+    <section aria-labelledby="live-join-title" className="live-join">
       <header>
         <p className="route-panel__eyebrow">ColorPlay Live</p>
         <h1 id="live-join-title">加入課堂挑戰</h1>

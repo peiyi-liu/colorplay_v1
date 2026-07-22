@@ -85,9 +85,7 @@ export function QuizResultPage({
   return (
     <section className="quiz-result" aria-labelledby="quiz-result-title">
       <header className="quiz-result__summary">
-        <span className="quiz-result__emoji" aria-hidden="true">
-          🎉
-        </span>
+        <span className="quiz-result__emoji" aria-hidden="true"></span>
         <p className="route-panel__eyebrow">{session.chapterTitle}</p>
         <h1 id="quiz-result-title">挑戰完成</h1>
         <div className="quiz-result__totals" aria-label="挑戰結果摘要">

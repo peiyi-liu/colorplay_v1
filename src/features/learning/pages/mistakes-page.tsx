@@ -62,10 +62,7 @@ export function MistakesPage({
   );
 
   return (
-    <section
-      aria-labelledby="mistakes-title"
-      className="page-card w-full max-w-3xl"
-    >
+    <section aria-labelledby="mistakes-title" className="page-card page-narrow">
       <header>
         <p className="route-panel__eyebrow">補救學習</p>
         <h1 id="mistakes-title">我的錯題</h1>

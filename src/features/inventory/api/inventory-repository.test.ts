@@ -22,6 +22,12 @@ const ids = [
   '50000000-0000-0000-0000-000000000012',
   '50000000-0000-0000-0000-000000000013',
   '50000000-0000-0000-0000-000000000014',
+  '50000000-0000-0000-0000-000000000015',
+  '50000000-0000-0000-0000-000000000016',
+  '50000000-0000-0000-0000-000000000017',
+  '50000000-0000-0000-0000-000000000018',
+  '50000000-0000-0000-0000-000000000019',
+  '50000000-0000-0000-0000-000000000020',
 ] as const;
 
 const catalog = [
@@ -39,6 +45,12 @@ const catalog = [
   [ids[11], 'pixel_sprite', '像素精靈', '👾', 1200],
   [ids[12], 'indigo_dragon', '東方靛龍', '🐲', 1500],
   [ids[13], 'peacock_teal', '孔雀藍綠', '🦚', 2500],
+  [ids[14], 'contrast_bee', '對比蜂', '🐝', 350],
+  [ids[15], 'cmyk_toucan', '印刷大嘴鳥', '🦜', 700],
+  [ids[16], 'neon_axolotl', '螢光蠑螈', '🌸', 900],
+  [ids[17], 'chameleon_master', '變色龍大師', '🦎', 1800],
+  [ids[18], 'gradient_whale', '漸層鯨', '🐋', 2200],
+  [ids[19], 'grayscale_wolf', '灰階野狼', '🐺', 3000],
 ] as const;
 
 const validPayload = {
@@ -102,7 +114,7 @@ describe('InventoryRepository', () => {
     expect(rpc).toHaveBeenNthCalledWith(3, 'equip_blook', {
       blook_id: ids[1],
     });
-    expect(initial.items).toHaveLength(14);
+    expect(initial.items).toHaveLength(20);
     expect(afterPurchase.tokenBalance).toBe(150);
     expect(afterEquip.activeBlookId).toBe(ids[1]);
     expect(Object.keys(afterEquip).sort()).toEqual([

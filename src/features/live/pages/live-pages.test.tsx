@@ -598,7 +598,7 @@ describe('TeacherLiveSessionPage (host console)', () => {
       await screen.findByRole('button', { name: 'A. 色相、明度、彩度' }),
     );
 
-    expect(await screen.findByText('🔥 連擊 x2！')).toBeVisible();
+    expect(await screen.findByText(/連擊 x2!/u)).toBeVisible();
   });
 
   it('shows the team scoreboard at feedback in team mode', async () => {
@@ -712,9 +712,7 @@ describe('TeacherLivePage (advanced)', () => {
     renderWith(<TeacherLivePage repository={repository} />);
     const user = userEvent.setup();
 
-    await user.click(
-      await screen.findByRole('button', { name: '開新場次' }),
-    );
+    await user.click(await screen.findByRole('button', { name: '開新場次' }));
 
     expect(await screen.findByText('已進入主持台')).toBeVisible();
     expect(startSession).toHaveBeenCalledWith(SESSION_ID, 1);

@@ -10,10 +10,7 @@ export function JoinClassroomRoute({
   const navigate = useNavigate();
 
   return (
-    <section
-      aria-labelledby="join-classroom-title"
-      className="w-full max-w-3xl"
-    >
+    <section aria-labelledby="join-classroom-title" className="page-narrow">
       <p className="route-panel__eyebrow">班級邀請</p>
       <h1 id="join-classroom-title">確認加入班級</h1>
       <p>請確認老師提供的加入碼，再手動送出。開啟連結不會自動加入。</p>

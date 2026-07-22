@@ -46,7 +46,7 @@ export function ClassroomLeaderboardPage({
   return (
     <section
       aria-labelledby="classroom-leaderboard-title"
-      className="w-full max-w-5xl"
+      className="page-wide"
     >
       <header>
         <p className="route-panel__eyebrow">班級 XP</p>

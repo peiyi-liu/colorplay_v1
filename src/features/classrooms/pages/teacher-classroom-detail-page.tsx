@@ -65,7 +65,7 @@ export function TeacherClassroomDetailPage({
   return (
     <section
       aria-labelledby="teacher-classroom-detail-title"
-      className="w-full max-w-5xl"
+      className="page-wide"
     >
       <header>
         <p className="route-panel__eyebrow">教師班級管理</p>

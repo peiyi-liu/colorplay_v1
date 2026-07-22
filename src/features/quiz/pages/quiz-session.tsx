@@ -335,7 +335,7 @@ export function QuizSessionPage({
     <section className="quiz-runner" aria-labelledby="quiz-runner-title">
       <div className="quiz-map-panel">
         <p className="quiz-map-panel__caption">
-          🗺️ 精熟學習地圖（未通過上一關前不可跳關）
+          精熟學習地圖(未通過上一關前不可跳關)
         </p>
         <MapStepper
           currentIndex={displayedQuestion.position - 1}

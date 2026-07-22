@@ -80,7 +80,7 @@ export function TeacherImportWizardPage({
   };
 
   return (
-    <section aria-labelledby="import-wizard-title" className="w-full max-w-5xl">
+    <section aria-labelledby="import-wizard-title" className="page-wide">
       <header>
         <p className="route-panel__eyebrow">教師功能</p>
         <h1 id="import-wizard-title">匯入內容</h1>

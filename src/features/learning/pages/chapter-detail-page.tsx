@@ -195,7 +195,7 @@ export function ChapterDetailPage({
   return (
     <section
       aria-labelledby="chapter-detail-title"
-      className="page-card w-full max-w-3xl"
+      className="page-card page-narrow"
     >
       <header>
         <p className="route-panel__eyebrow">章節複習</p>

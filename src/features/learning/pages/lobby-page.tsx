@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { BlookArt } from '../../../components/ui/blook-art';
 import { Card } from '../../../components/ui/card';
+import { Icon, type IconName } from '../../../components/ui/icons';
 import { Chip } from '../../../components/ui/chip';
 import { SectionHeader } from '../../../components/ui/section-header';
 import { StatTile } from '../../../components/ui/stat-tile';
@@ -54,7 +56,11 @@ function ProfileCard() {
               : undefined
           }
         >
-          {equipped?.emoji ?? '🧑‍🎨'}
+          <BlookArt
+            emoji={equipped?.emoji}
+            size={46}
+            stableCode={equipped?.stableCode ?? 'little_fox'}
+          />
         </span>
         <div>
           <div className="lobby__identity-row">
@@ -66,9 +72,8 @@ function ProfileCard() {
               className="lobby__edit"
               to="/app/profile"
             >
-              ✏️ 修改
+              <Icon name="pencil" size={13} /> 修改
             </Link>
-            <Chip tone="success">☁️ 雲端連線模式</Chip>
           </div>
           <p className="lobby__welcome">讓我們開始今日的色彩複習與挑戰！</p>
         </div>
@@ -91,7 +96,14 @@ function ProfileCard() {
   );
 }
 
-const CHAPTER_ICONS = ['💡', '👁️', '🎨', '🧪', '🧠', '🌈'];
+const CHAPTER_ICONS: readonly IconName[] = [
+  'bolt',
+  'target',
+  'palette',
+  'eye',
+  'sparkles',
+  'grid',
+];
 
 export function LobbyPage() {
   const chapters = usePublishedChapters();
@@ -142,12 +154,25 @@ export function LobbyPage() {
             {chapterList.map((chapter, index) => (
               <article
                 className={`lobby-chapter${chapter.isPlayable ? ' lobby-chapter--open' : ''}`}
+                data-hue={String((index % 6) + 1)}
                 key={chapter.id}
               >
-                <div>
-                  <span className="lobby-chapter__icon" aria-hidden="true">
-                    {chapter.isPlayable ? (CHAPTER_ICONS[index] ?? '🎨') : '🔒'}
+                <div className="lobby-chapter__band" aria-hidden="true">
+                  <span className="lobby-chapter__num">
+                    {String(chapter.sortOrder).padStart(2, '0')}
                   </span>
+                  <span className="lobby-chapter__icon">
+                    <Icon
+                      name={
+                        chapter.isPlayable
+                          ? (CHAPTER_ICONS[index] ?? 'palette')
+                          : 'lock'
+                      }
+                      size={22}
+                    />
+                  </span>
+                </div>
+                <div>
                   <div className="lobby-chapter__title-row">
                     <h3>
                       Chapter {chapter.sortOrder}: {chapter.title}
@@ -192,7 +217,9 @@ export function LobbyPage() {
         <div className="lobby__entries">
           <div className="lobby-entry lobby-entry--mistakes">
             <div>
-              <h3 className="lobby-entry__title">⚠️ 個人弱點錯題中心</h3>
+              <h3 className="lobby-entry__title">
+                <Icon name="alert" size={16} /> 個人弱點錯題中心
+              </h3>
               <p className="lobby-entry__description">
                 系統已為您歸納 <strong>{mistakeCount} 題</strong> 待精熟題目。
               </p>
@@ -203,7 +230,9 @@ export function LobbyPage() {
           </div>
           <div className="lobby-entry lobby-entry--goal">
             <div>
-              <h3 className="lobby-entry__title">🎓 每日自主精熟目標</h3>
+              <h3 className="lobby-entry__title">
+                <Icon name="grad-cap" size={16} /> 每日自主精熟目標
+              </h3>
               <p className="lobby-entry__description">
                 通關已開放章節的所有小節，累積 XP 獎勵！
               </p>
@@ -215,16 +244,16 @@ export function LobbyPage() {
         </div>
         <nav aria-label="更多功能" className="lobby__links">
           <Link className="lobby-link" to="/app/assignments">
-            📬 我的作業
+            <Icon name="inbox" size={16} /> 我的作業
           </Link>
           <Link className="lobby-link" to="/app/achievements">
-            🏅 成就徽章
+            <Icon name="medal" size={16} /> 成就徽章
           </Link>
           <Link className="lobby-link" to="/app/leaderboard">
-            📈 班級排行榜
+            <Icon name="chart-line" size={16} /> 班級排行榜
           </Link>
           <Link className="lobby-link" to="/app/live/join">
-            ⚡ Live 課堂
+            <Icon name="bolt" size={16} /> Live 課堂
           </Link>
         </nav>
       </Card>

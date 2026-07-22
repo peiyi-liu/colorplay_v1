@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Icon } from '../../components/ui/icons';
 import { useToast } from '../../components/ui/toast';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
@@ -71,7 +72,23 @@ export function AppShell() {
             aria-label="ColorPlay 首頁"
           >
             <span className="brand__mark" aria-hidden="true">
-              🎨
+              <svg fill="none" height="26" viewBox="0 0 32 32" width="26">
+                <circle cx="11" cy="12" fill="var(--hue-ch1)" r="7" />
+                <circle
+                  cx="21"
+                  cy="12"
+                  fill="var(--hue-ch5)"
+                  fillOpacity="0.92"
+                  r="7"
+                />
+                <circle
+                  cx="16"
+                  cy="20"
+                  fill="var(--hue-ch3)"
+                  fillOpacity="0.92"
+                  r="7"
+                />
+              </svg>
             </span>
             <span className="brand__text">
               <span className="brand__title">ColorPlay</span>
@@ -143,7 +160,7 @@ export function AppShell() {
         <nav className="teacher-rail" aria-label="教師導覽">
           <div className="teacher-rail__content">
             <span className="teacher-rail__chip">
-              <span aria-hidden="true">🔓 </span>教師管理權限已授權
+              <Icon name="lock-open" size={13} /> 教師管理權限已授權
             </span>
             <Link className="teacher-rail__link" to="/teacher">
               教師工作區

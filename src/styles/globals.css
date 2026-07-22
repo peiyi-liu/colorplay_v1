@@ -23,6 +23,17 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 800;
+  letter-spacing: 0.005em;
+}
+
+/* Syne 的 0/o 字形相近:僅用於品牌與章節編號等裝飾性文字,
+   資料數值(XP/Token/分數/加入碼)維持 Noto 以保可讀性。 */
+
 button,
 input,
 select,
@@ -71,7 +82,7 @@ a {
 
 .app-header {
   display: flex;
-  min-height: 72px;
+  min-height: 64px;
   align-items: center;
   border-bottom: 2px solid var(--yellow-brand);
   background: var(--surface-card);
@@ -100,11 +111,8 @@ a {
 
 .brand__mark {
   display: grid;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-control);
-  background: linear-gradient(to top right, var(--rose-500), var(--amber-500));
-  font-size: 1.25rem;
+  width: 36px;
+  height: 36px;
   place-items: center;
 }
 
@@ -114,8 +122,10 @@ a {
 }
 
 .brand__title {
-  font-size: 1.25rem;
-  font-weight: 900;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
 .brand__subtitle {
@@ -153,11 +163,11 @@ a {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--ink-200);
   border-radius: 999px;
-  background: var(--slate-100);
-  color: var(--slate-700);
-  padding: var(--space-1) var(--space-3);
+  background: var(--surface-card);
+  color: var(--ink-700);
+  padding: var(--space-1) var(--space-4);
 }
 
 .economy-summary__level {
@@ -171,7 +181,7 @@ a {
 .economy-summary__level progress {
   width: 100%;
   height: 6px;
-  accent-color: var(--color-brand-yellow);
+  accent-color: var(--color-accent);
 }
 
 .economy-summary__tokens {
@@ -188,14 +198,22 @@ a {
 
 .app-header__logout {
   min-width: 44px;
-  min-height: 44px;
-  border: none;
-  border-radius: var(--radius-control);
-  background: var(--slate-200);
-  color: var(--slate-700);
+  min-height: 40px;
+  border: 1.5px solid var(--ink-300);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-700);
   cursor: pointer;
   font-weight: 700;
-  padding-inline: var(--space-3);
+  padding-inline: var(--space-4);
+  transition:
+    border-color 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.app-header__logout:hover:enabled {
+  border-color: var(--ink-900);
+  color: var(--ink-900);
 }
 
 .app-header__logout:disabled {
@@ -222,7 +240,6 @@ a {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
   background: var(--surface-card);
-  box-shadow: 0 12px 32px color-mix(in srgb, var(--slate-900) 6%, transparent);
   padding: var(--space-8);
 }
 
@@ -232,10 +249,12 @@ a {
   align-items: center;
   border-radius: 999px;
   margin: 0 0 var(--space-4);
-  background: var(--color-brand-yellow);
-  color: var(--color-brand-dark);
-  font-size: var(--font-size-supporting);
-  font-weight: 800;
+  border: 1px solid var(--amber-avatar);
+  background: color-mix(in srgb, var(--yellow-brand) 22%, white);
+  color: var(--ink-900);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+  letter-spacing: 0.08em;
   padding: var(--space-1) var(--space-3);
 }
 
@@ -717,11 +736,31 @@ a {
 
 .shop-message-panel,
 .blook-shop__header {
-  border: 2px solid var(--color-border);
-  border-top: 8px solid var(--color-brand-yellow);
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--ink-900);
   border-radius: var(--radius-panel);
   background: var(--color-surface);
   padding: var(--space-8);
+}
+
+.shop-message-panel::before,
+.blook-shop__header::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 6px;
+  background: linear-gradient(
+    to right,
+    var(--hue-ch1) 0 16.6%,
+    var(--hue-ch2) 0 33.3%,
+    var(--hue-ch3) 0 50%,
+    var(--hue-ch4) 0 66.6%,
+    var(--hue-ch5) 0 83.3%,
+    var(--hue-ch6) 0 100%
+  );
+  content: '';
 }
 
 .shop-message-panel .primary-action {
@@ -737,7 +776,8 @@ a {
 
 .blook-shop__header h1 {
   margin: 0;
-  font-size: clamp(2rem, 6vw, 3rem);
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
 }
 
 .blook-shop__header > strong {
@@ -766,8 +806,17 @@ a {
   text-align: center;
 }
 
-.blook-card__emoji {
-  font-size: 3rem;
+.blook-card__art {
+  display: grid;
+  height: 96px;
+  border-radius: var(--radius-control);
+  margin-bottom: var(--space-2);
+  background: var(--ink-50);
+  place-items: center;
+}
+
+.blook-card__art svg {
+  display: block;
 }
 
 .blook-card h2 {
@@ -1053,22 +1102,27 @@ a {
 }
 
 .student-rail__tab {
-  border-radius: var(--radius-control);
-  color: var(--slate-500);
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  color: var(--ink-500);
   font-size: var(--font-size-supporting);
   font-weight: 700;
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-1);
+  margin-inline: var(--space-3);
   text-decoration: none;
+  transition:
+    color 150ms ease-out,
+    border-color 150ms ease-out;
 }
 
 .student-rail__tab:hover {
-  color: var(--slate-900);
+  color: var(--ink-900);
 }
 
 .student-rail__tab--active {
-  background: var(--button-primary-bg);
-  color: var(--button-primary-text);
-  font-weight: 900;
+  border-bottom-color: var(--yellow-brand);
+  color: var(--ink-950);
+  font-weight: 800;
 }
 
 .student-rail__chevron {
@@ -1089,9 +1143,8 @@ a {
 }
 
 .student-rail__link--active {
-  border-radius: var(--radius-control);
-  background: var(--button-primary-bg);
-  color: var(--button-primary-text);
+  border-bottom: 3px solid var(--yellow-brand);
+  color: var(--ink-950);
 }
 
 .student-rail__link:hover {
@@ -1225,36 +1278,81 @@ a {
 }
 
 .lobby-chapter {
+  --chapter-hue: var(--ink-400);
+  --chapter-hue-soft: var(--ink-100);
   display: flex;
+  overflow: hidden;
   min-height: 220px;
   flex-direction: column;
   justify-content: space-between;
-  border: 1px solid var(--slate-100);
+  border: 1px solid var(--ink-200);
   border-radius: var(--radius-card);
-  background: var(--slate-50);
-  padding: var(--space-6);
+  background: var(--surface-card);
+  padding: 0 0 var(--space-5);
+}
+
+.lobby-chapter[data-hue='1'] {
+  --chapter-hue: var(--hue-ch1);
+  --chapter-hue-soft: var(--hue-ch1-soft);
+}
+.lobby-chapter[data-hue='2'] {
+  --chapter-hue: var(--hue-ch2);
+  --chapter-hue-soft: var(--hue-ch2-soft);
+}
+.lobby-chapter[data-hue='3'] {
+  --chapter-hue: var(--hue-ch3);
+  --chapter-hue-soft: var(--hue-ch3-soft);
+}
+.lobby-chapter[data-hue='4'] {
+  --chapter-hue: var(--hue-ch4);
+  --chapter-hue-soft: var(--hue-ch4-soft);
+}
+.lobby-chapter[data-hue='5'] {
+  --chapter-hue: var(--hue-ch5);
+  --chapter-hue-soft: var(--hue-ch5-soft);
+}
+.lobby-chapter[data-hue='6'] {
+  --chapter-hue: var(--hue-ch6);
+  --chapter-hue-soft: var(--hue-ch6-soft);
+}
+
+.lobby-chapter > div:not(.lobby-chapter__band),
+.lobby-chapter__actions {
+  padding-inline: var(--space-5);
 }
 
 .lobby-chapter--open {
-  border: 2px solid var(--yellow-brand);
-  background: var(--surface-card);
-  box-shadow: 0 4px 12px
-    color-mix(in srgb, var(--yellow-brand) 25%, transparent);
+  border: 2px solid var(--amber-avatar);
+}
+
+.lobby-chapter__band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  background: var(--chapter-hue-soft);
+  border-bottom: 3px solid var(--chapter-hue);
+  color: var(--chapter-hue);
+  padding: var(--space-3) var(--space-5);
+}
+
+.lobby-chapter:not(.lobby-chapter--open) .lobby-chapter__band {
+  background: var(--ink-100);
+  border-bottom-color: var(--ink-300);
+  color: var(--ink-500);
+}
+
+.lobby-chapter__num {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 .lobby-chapter__icon {
   display: grid;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-control);
-  margin-bottom: var(--space-4);
-  background: var(--slate-100);
-  font-size: 1.1rem;
   place-items: center;
-}
-
-.lobby-chapter--open .lobby-chapter__icon {
-  background: color-mix(in srgb, var(--yellow-brand) 30%, white);
 }
 
 .lobby-chapter__title-row {
@@ -1805,19 +1903,15 @@ a {
 
 .auth-portal-brand__mark {
   display: grid;
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-control);
-  margin-bottom: var(--space-3);
-  background: color-mix(in srgb, var(--yellow-brand) 35%, white);
-  font-size: 1.8rem;
+  margin-bottom: var(--space-2);
   place-items: center;
 }
 
 .auth-portal-brand__title {
   margin: 0;
+  font-family: var(--font-display);
   font-size: 1.35rem;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .auth-portal-brand__subtitle {
@@ -1839,17 +1933,33 @@ a {
 
 /* ── GGAME 認證入口（Task 11b） ───────────────────────── */
 
-/* 登入路由：主區暗色遮罩，白卡浮出（比照 GGAME auth-portal 模態） */
+/* 登入路由:紙張底 + 頂部六色相細條,白卡以 2px 墨框浮出(flat)。 */
 .app-shell:has(.auth-portal) #main-content {
-  background: radial-gradient(
-    circle at 50% 30%,
-    color-mix(in srgb, var(--yellow-brand) 34%, white),
-    color-mix(in srgb, var(--yellow-brand) 78%, var(--amber-avatar))
+  position: relative;
+  background: var(--paper);
+}
+
+.app-shell:has(.auth-portal) #main-content::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 6px;
+  background: linear-gradient(
+    to right,
+    var(--hue-ch1) 0 16.6%,
+    var(--hue-ch2) 0 33.3%,
+    var(--hue-ch3) 0 50%,
+    var(--hue-ch4) 0 66.6%,
+    var(--hue-ch5) 0 83.3%,
+    var(--hue-ch6) 0 100%
   );
+  content: '';
 }
 
 .auth-portal {
   width: min(100%, 448px);
+  border: 2px solid var(--ink-900);
 }
 
 .login-form__portal {
@@ -1877,8 +1987,8 @@ a {
 }
 
 .login-form__portal label[data-active='true'] {
-  background: var(--yellow-brand);
-  color: var(--slate-950);
+  background: var(--ink-900);
+  color: var(--white);
 }
 
 .auth-portal[data-portal='teacher']
@@ -2314,6 +2424,16 @@ a {
 }
 
 /* #18 成就徽章：colorplay-new 卡片式版面 */
+/* 成就徽章 icon 色彩:tile 吃 inline color,底色由 currentColor 混白 */
+.achievement-card__tile--unlocked {
+  background: color-mix(in srgb, currentColor 14%, white) !important;
+}
+
+.achievement-card__tile--locked {
+  background: color-mix(in srgb, currentColor 10%, white) !important;
+  opacity: 0.72;
+}
+
 .achievement-card {
   display: flex;
   height: 100%;
@@ -2899,4 +3019,190 @@ a {
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+/* 成就徽章列表:自家 grid(原 markup 借用了未載入的 Tailwind 類名) */
+.achievements {
+  width: min(100%, 1120px);
+}
+
+.achievements-grid {
+  display: grid;
+  margin: 0;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  list-style: none;
+  padding: 0;
+}
+
+.achievements-grid li {
+  list-style: none;
+}
+
+/* 教師端篩選表單:統一標籤+控件的整齊格線(2026-07-23 排版統一批) */
+.teacher-analytics-filters {
+  display: grid;
+  gap: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin-block: var(--space-5);
+  padding: var(--space-5);
+}
+
+.teacher-analytics-filters > div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.teacher-analytics-filters label {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.teacher-analytics-filters select,
+.teacher-analytics-filters input {
+  min-height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  padding: var(--space-2) var(--space-3);
+}
+
+/* 教師工作區班級選擇列同樣整理 */
+main label[for='dashboard-classroom'] {
+  margin-right: var(--space-2);
+  font-weight: 700;
+}
+
+select#dashboard-classroom {
+  min-height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  padding: var(--space-1) var(--space-3);
+}
+
+/* Live 課堂加入頁:白卡容器+大號代碼輸入(2026-07-23 排版統一批) */
+.live-join {
+  width: min(100%, 560px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-card);
+  padding: var(--space-8);
+}
+
+.live-join form {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.live-join label {
+  color: var(--color-muted);
+  font-size: var(--font-size-supporting);
+  font-weight: 700;
+}
+
+.live-join input {
+  min-height: 56px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  padding: var(--space-2) var(--space-4);
+  text-align: center;
+}
+
+.live-join input:focus-visible {
+  border-color: var(--color-accent);
+}
+
+.live-join .primary-action {
+  width: 100%;
+}
+
+/* 題庫/複習卡工作區:白卡容器+表格與按鈕統一(2026-07-23 排版統一批) */
+.teacher-workspace {
+  width: min(100%, 1120px);
+}
+
+.teacher-workspace > section {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  margin-block: var(--space-5);
+  padding: var(--space-6);
+}
+
+.teacher-workspace table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-supporting);
+  margin-top: var(--space-3);
+  text-align: left;
+}
+
+.teacher-workspace th {
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--ink-50);
+  color: var(--color-muted);
+  font-weight: 700;
+  padding: var(--space-2) var(--space-3);
+}
+
+.teacher-workspace td {
+  border-bottom: 1px solid var(--ink-100);
+  padding: var(--space-2) var(--space-3);
+}
+
+.teacher-workspace button:not(.primary-action):not(.secondary-action) {
+  min-height: 34px;
+  border: 1.5px solid var(--ink-300);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--ink-700);
+  cursor: pointer;
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+  margin-inline-end: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  transition:
+    border-color 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.teacher-workspace
+  button:not(.primary-action):not(.secondary-action):hover:enabled {
+  border-color: var(--ink-900);
+  color: var(--ink-900);
+}
+
+/* 頁面寬度語意類:取代殘留的 Tailwind 寬度類名(2026-07-23 排版統一批) */
+.page-wide {
+  width: min(100%, 1120px);
+}
+
+.page-mid {
+  width: min(100%, 960px);
+}
+
+.page-narrow {
+  width: min(100%, 760px);
+}
+
+.page-slim {
+  width: min(100%, 560px);
+}
+
+/* page-card:與大廳一致的白卡容器(原本已有者沿用,無害重申) */
+.page-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-card);
+  padding: var(--space-8);
 }

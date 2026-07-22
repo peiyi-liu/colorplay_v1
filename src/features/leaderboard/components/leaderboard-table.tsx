@@ -1,7 +1,12 @@
+import { BlookArt } from '../../../components/ui/blook-art';
 import type { BlookInventoryItem } from '../../inventory/types';
 import type { ClassroomLeaderboard, LeaderboardEntry } from '../types';
 
-const defaultBlook = { emoji: '🦊', name: '小狐狸' } as const;
+const defaultBlook = {
+  emoji: '🦊',
+  name: '小狐狸',
+  stableCode: 'little_fox',
+} as const;
 
 const safeBlook = (
   activeBlookId: string | null,
@@ -9,8 +14,7 @@ const safeBlook = (
 ) => {
   const selected = blooks.find((item) => item.id === activeBlookId);
   const fallback = blooks.find((item) => item.stableCode === 'little_fox');
-  const presentation = selected ?? fallback ?? defaultBlook;
-  return `${presentation.emoji} ${presentation.name}`;
+  return selected ?? fallback ?? defaultBlook;
 };
 
 function FramedBlook({
@@ -20,13 +24,19 @@ function FramedBlook({
   blooks: readonly BlookInventoryItem[];
   entry: LeaderboardEntry;
 }>) {
-  const label = safeBlook(entry.activeBlookId, blooks);
+  const blook = safeBlook(entry.activeBlookId, blooks);
+  const label = (
+    <>
+      <BlookArt emoji={blook.emoji} size={22} stableCode={blook.stableCode} />
+      {blook.name}
+    </>
+  );
   if (!entry.frameGradientStart || !entry.frameGradientEnd) {
-    return <span>{label}</span>;
+    return <span className="leaderboard-blook">{label}</span>;
   }
   return (
     <span
-      className="leaderboard-framed-blook"
+      className="leaderboard-framed-blook leaderboard-blook"
       data-framed="true"
       style={{
         borderImage: `linear-gradient(to right, ${entry.frameGradientStart}, ${entry.frameGradientEnd}) 1`,

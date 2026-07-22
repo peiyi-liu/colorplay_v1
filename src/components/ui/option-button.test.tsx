@@ -42,6 +42,6 @@ describe('OptionButton', () => {
     );
     const button = screen.getByRole('button', { name: /明度對比/u });
     expect(button).toBeDisabled();
-    expect(button.textContent).toContain('🔒');
+    expect(button.querySelector('svg')).not.toBeNull();
   });
 });

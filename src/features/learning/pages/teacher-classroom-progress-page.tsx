@@ -14,10 +14,7 @@ export function TeacherClassroomProgressPage({
   const classroomId = suppliedClassroomId ?? params.classroomId ?? '';
 
   return (
-    <section
-      aria-labelledby="classroom-progress-title"
-      className="w-full max-w-4xl"
-    >
+    <section aria-labelledby="classroom-progress-title" className="page-mid">
       <header>
         <p className="route-panel__eyebrow">教師班級管理</p>
         <h1 id="classroom-progress-title">班級學習進度</h1>

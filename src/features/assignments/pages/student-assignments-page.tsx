@@ -67,7 +67,7 @@ export function StudentAssignmentsPage({
                   className="assignment-card__title"
                   to={`/app/assignments/${assignment.assignmentId}`}
                 >
-                  <span aria-hidden="true">📬 </span>
+                  <span aria-hidden="true"></span>
                   {assignment.title}
                 </Link>
                 <span

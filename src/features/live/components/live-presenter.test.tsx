@@ -185,7 +185,7 @@ describe('LivePresenter', () => {
     renderPresenter(completedState, { audio });
 
     const podium = screen.getByLabelText('頒獎台');
-    expect(podium).toHaveTextContent('🥇');
+    expect(podium.querySelector('svg')).not.toBeNull();
     expect(podium).toHaveTextContent('小艾');
     expect(podium).toHaveTextContent('640 分');
     expect(audio.playFanfare).toHaveBeenCalled();
@@ -196,9 +196,9 @@ describe('LivePresenter', () => {
     renderPresenter(lobbyState, { audio });
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole('button', { name: '🔊 音效開啟' }));
+    await user.click(screen.getByRole('button', { name: '音效開啟' }));
 
-    expect(screen.getByRole('button', { name: '🔇 已靜音' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '已靜音' })).toBeVisible();
     expect(window.localStorage.getItem('live-presenter-muted')).toBe('1');
     expect(audio.setMuted).toHaveBeenLastCalledWith(true);
   });

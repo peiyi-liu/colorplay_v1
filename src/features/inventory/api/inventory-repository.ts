@@ -32,6 +32,12 @@ const expectedCatalog = [
   ['pixel_sprite', '像素精靈', '👾', 1200],
   ['indigo_dragon', '東方靛龍', '🐲', 1500],
   ['peacock_teal', '孔雀藍綠', '🦚', 2500],
+  ['contrast_bee', '對比蜂', '🐝', 350],
+  ['cmyk_toucan', '印刷大嘴鳥', '🦜', 700],
+  ['neon_axolotl', '螢光蠑螈', '🌸', 900],
+  ['chameleon_master', '變色龍大師', '🦎', 1800],
+  ['gradient_whale', '漸層鯨', '🐋', 2200],
+  ['grayscale_wolf', '灰階野狼', '🐺', 3000],
 ] as const;
 
 const itemSchema = z.strictObject({

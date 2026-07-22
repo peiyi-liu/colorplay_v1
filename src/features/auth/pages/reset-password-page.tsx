@@ -66,7 +66,23 @@ export function ResetPasswordPage() {
     <section className="route-panel auth-portal" data-portal="student">
       <div className="auth-portal-brand">
         <span aria-hidden="true" className="auth-portal-brand__mark">
-          🎨
+          <svg fill="none" height="40" viewBox="0 0 32 32" width="40">
+            <circle cx="11" cy="12" fill="var(--hue-ch1)" r="7" />
+            <circle
+              cx="21"
+              cy="12"
+              fill="var(--hue-ch5)"
+              fillOpacity="0.92"
+              r="7"
+            />
+            <circle
+              cx="16"
+              cy="20"
+              fill="var(--hue-ch3)"
+              fillOpacity="0.92"
+              r="7"
+            />
+          </svg>
         </span>
         <p className="auth-portal-brand__title">ColorPlay 認證入口</p>
         <p className="auth-portal-brand__subtitle">

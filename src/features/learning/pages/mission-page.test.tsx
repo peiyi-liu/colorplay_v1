@@ -89,7 +89,7 @@ describe('MissionPage', () => {
     expect(lockedOption).toBeDisabled();
     expect(screen.getByRole('button', { name: '黃色' })).toBeEnabled();
     expect(
-      screen.getByRole('button', { name: '💡 索取第 1 層提示' }),
+      screen.getByRole('button', { name: '索取第 1 層提示' }),
     ).toBeInTheDocument();
     expect(screen.getByText(/已完成 1 \/ 5 關/u)).toBeInTheDocument();
   });

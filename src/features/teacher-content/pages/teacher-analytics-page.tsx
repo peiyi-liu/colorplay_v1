@@ -111,10 +111,7 @@ export function TeacherAnalyticsPage({
   const liveReport = useTeacherLiveReport(classroomId, dateFilters, repository);
 
   return (
-    <section
-      aria-labelledby="teacher-analytics-title"
-      className="w-full max-w-5xl"
-    >
+    <section aria-labelledby="teacher-analytics-title" className="page-wide">
       <header>
         <p className="route-panel__eyebrow">教師功能</p>
         <h1 id="teacher-analytics-title">教學分析</h1>

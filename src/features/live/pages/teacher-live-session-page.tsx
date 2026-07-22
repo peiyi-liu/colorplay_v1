@@ -135,7 +135,7 @@ export function TeacherLiveSessionPage({
   return (
     <section
       aria-labelledby="host-console-title"
-      className="live-console w-full max-w-3xl"
+      className="live-console page-narrow"
     >
       <header>
         <p className="route-panel__eyebrow">ColorPlay Live 主持台</p>

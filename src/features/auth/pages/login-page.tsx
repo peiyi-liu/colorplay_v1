@@ -1,3 +1,4 @@
+import { Icon } from '../../../components/ui/icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -91,7 +92,23 @@ export function LoginPage() {
     <section className="route-panel auth-portal" data-portal={portal}>
       <div className="auth-portal-brand">
         <span aria-hidden="true" className="auth-portal-brand__mark">
-          🎨
+          <svg fill="none" height="40" viewBox="0 0 32 32" width="40">
+            <circle cx="11" cy="12" fill="var(--hue-ch1)" r="7" />
+            <circle
+              cx="21"
+              cy="12"
+              fill="var(--hue-ch5)"
+              fillOpacity="0.92"
+              r="7"
+            />
+            <circle
+              cx="16"
+              cy="20"
+              fill="var(--hue-ch3)"
+              fillOpacity="0.92"
+              r="7"
+            />
+          </svg>
         </span>
         <p className="auth-portal-brand__title">ColorPlay 認證入口</p>
         <p className="auth-portal-brand__subtitle">
@@ -119,7 +136,7 @@ export function LoginPage() {
             }}
             type="radio"
           />
-          <span aria-hidden="true">🎓 </span>學生註冊登入
+          <Icon name="grad-cap" size={15} /> 學生註冊登入
         </label>
         <label data-active={portal === 'teacher'}>
           <input
@@ -130,13 +147,13 @@ export function LoginPage() {
             }}
             type="radio"
           />
-          <span aria-hidden="true">🧑‍🏫 </span>教師診斷端
+          <Icon name="briefcase" size={15} /> 教師診斷端
         </label>
       </fieldset>
 
       {portal === 'teacher' ? (
         <div className="auth-portal__teacher-note">
-          <span aria-hidden="true">⚠️ </span>
+          <Icon name="alert" size={14} />{' '}
           教師端具備班級管理與學術匯出權限；教師帳號由開發後台建立。
         </div>
       ) : null}

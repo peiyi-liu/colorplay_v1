@@ -67,12 +67,9 @@ export function TeacherDashboardPage({
   const summary = useTeacherClassroomSummary(classroomId, {}, repository);
 
   return (
-    <section
-      aria-labelledby="teacher-dashboard-title"
-      className="w-full max-w-4xl"
-    >
+    <section aria-labelledby="teacher-dashboard-title" className="page-mid">
       <header>
-        <Chip tone="teacher">📊 教師決策工具</Chip>
+        <Chip tone="teacher">教師決策工具</Chip>
         <h1 id="teacher-dashboard-title">教師工作區</h1>
         <p>掌握班級表現，管理課程內容、題庫與教學活動。</p>
       </header>
@@ -80,7 +77,7 @@ export function TeacherDashboardPage({
       <div className="teacher-live-console">
         <div>
           <h2 className="teacher-live-console__title">
-            <span aria-hidden="true">📢 </span>
+            <span aria-hidden="true"></span>
             課堂即時競賽（Live）廣播控制台
           </h2>
           <p className="teacher-live-console__description">
@@ -95,19 +92,19 @@ export function TeacherDashboardPage({
 
       <nav aria-label="教師功能捷徑" className="teacher-shortcuts">
         <Link to="/teacher/analytics">
-          <span aria-hidden="true">📈 </span>教學分析
+          <span aria-hidden="true"></span>教學分析
         </Link>
         <Link to="/teacher/content">
-          <span aria-hidden="true">🗂️ </span>內容工作區
+          <span aria-hidden="true"></span>內容工作區
         </Link>
         <Link to="/teacher/import">
-          <span aria-hidden="true">📥 </span>匯入內容
+          <span aria-hidden="true"></span>匯入內容
         </Link>
         <Link to="/teacher/classes">
-          <span aria-hidden="true">👥 </span>班級管理
+          <span aria-hidden="true"></span>班級管理
         </Link>
         <Link to="/teacher/live">
-          <span aria-hidden="true">⚡ </span>Live 課堂主持
+          <span aria-hidden="true"></span>Live 課堂主持
         </Link>
       </nav>
       {classrooms.isPending ? (

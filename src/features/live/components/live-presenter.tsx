@@ -1,3 +1,4 @@
+import { Icon } from '../../../components/ui/icons';
 import { useEffect, useRef, useState } from 'react';
 
 import { useLiveStandings } from '../hooks/use-live-commands';
@@ -249,7 +250,7 @@ export function LivePresenter({
             }}
             type="button"
           >
-            {muted ? '🔇 已靜音' : '🔊 音效開啟'}
+            {muted ? '已靜音' : '音效開啟'}
           </button>
           <button onClick={onExit} type="button">
             離開投影
@@ -386,7 +387,11 @@ export function LivePresenter({
                 key={entry.rank}
               >
                 <span className="live-presenter__podium-rank">
-                  {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'}
+                  {entry.rank === 1 ? (
+                    <Icon name="crown" size={28} />
+                  ) : (
+                    <Icon name="medal" size={24} />
+                  )}
                 </span>
                 <span>{entry.displayName}</span>
                 <span>{entry.score} 分</span>

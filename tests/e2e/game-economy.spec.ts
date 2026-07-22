@@ -93,7 +93,7 @@ test('Game Economy v2 phase gate', async ({ browserName, page }, testInfo) => {
     }
   }
 
-  await page.getByRole('link', { name: 'Blook 商店' }).click();
+  await page.getByRole('link', { name: '裝備商店' }).click();
   await expect(page).toHaveURL(/\/app\/shop$/u);
   await page.getByRole('button', { name: '購買 招財貓，100 Token' }).click();
   await expect(
@@ -144,7 +144,7 @@ test('Game Economy v2 phase gate', async ({ browserName, page }, testInfo) => {
   await page.goto(`/app/quiz/${sessionId}/result`);
   await expect(page.getByText('+750 XP')).toBeVisible();
   await expect(page.getByText('+250 Token')).toBeVisible();
-  await page.getByRole('link', { name: 'Blook 商店' }).click();
+  await page.getByRole('link', { name: '裝備商店' }).click();
   await expect(page.getByText('150 Token 可用')).toBeVisible();
 
   const browserHealth = unexpectedBrowserHealth(health, browserName);

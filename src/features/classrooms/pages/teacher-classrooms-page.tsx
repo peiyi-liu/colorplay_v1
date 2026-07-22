@@ -67,10 +67,7 @@ export function TeacherClassroomsPage({
 
   const isPending = isSubmitting || create.isPending;
   return (
-    <section
-      aria-labelledby="teacher-classrooms-title"
-      className="w-full max-w-5xl"
-    >
+    <section aria-labelledby="teacher-classrooms-title" className="page-wide">
       <header>
         <p className="route-panel__eyebrow">教師工作區</p>
         <h1 id="teacher-classrooms-title">班級管理</h1>

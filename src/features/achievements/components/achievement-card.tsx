@@ -1,3 +1,4 @@
+import { Icon, type IconName } from '../../../components/ui/icons';
 import type { AchievementCatalogItem } from '../types';
 
 const unlockDateFormatter = new Intl.DateTimeFormat('zh-TW', {
@@ -5,16 +6,28 @@ const unlockDateFormatter = new Intl.DateTimeFormat('zh-TW', {
   timeZone: 'Asia/Taipei',
 });
 
-// 依成就代碼給徽章表情（colorplay-new 成就頁的視覺語彙）；未知代碼用 🏅。
-const badgeEmoji = (stableCode: string): string => {
-  if (stableCode.includes('perfect')) return '🎯';
-  if (stableCode.includes('first_task')) return '🌱';
-  if (stableCode.includes('mistake')) return '🔥';
-  if (stableCode.includes('master')) return '👑';
-  if (stableCode.includes('level')) return '🚀';
-  if (stableCode.includes('streak')) return '⚡';
-  if (stableCode.includes('blook')) return '🦊';
-  return '🏅';
+// 依成就代碼給徽章色彩(icon+淡色底,鎖定時由 CSS 轉灰)。
+const badgeColor = (stableCode: string): string => {
+  if (stableCode.includes('perfect')) return 'var(--coral-600)';
+  if (stableCode.includes('first_task')) return 'var(--hue-ch2)';
+  if (stableCode.includes('mistake')) return 'var(--hue-ch1)';
+  if (stableCode.includes('master')) return 'var(--amber-600)';
+  if (stableCode.includes('level')) return 'var(--hue-ch4)';
+  if (stableCode.includes('streak')) return 'var(--hue-ch6)';
+  if (stableCode.includes('blook')) return 'var(--hue-ch3)';
+  return 'var(--hue-ch5)';
+};
+
+// 依成就代碼給徽章圖示(SVG icon 名稱);未知代碼用 medal。
+const badgeIcon = (stableCode: string): IconName => {
+  if (stableCode.includes('perfect')) return 'target';
+  if (stableCode.includes('first_task')) return 'sprout';
+  if (stableCode.includes('mistake')) return 'flame';
+  if (stableCode.includes('master')) return 'crown';
+  if (stableCode.includes('level')) return 'star';
+  if (stableCode.includes('streak')) return 'bolt';
+  if (stableCode.includes('blook')) return 'palette';
+  return 'medal';
 };
 
 export function AchievementCard({
@@ -42,8 +55,9 @@ export function AchievementCard({
               ? ' achievement-card__tile--unlocked'
               : ' achievement-card__tile--locked'
           }`}
+          style={{ color: badgeColor(item.stableCode) }}
         >
-          {badgeEmoji(item.stableCode)}
+          <Icon name={badgeIcon(item.stableCode)} size={26} />
         </div>
         <div className="achievement-card__body">
           <div className="achievement-card__title-row">

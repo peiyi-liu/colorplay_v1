@@ -95,7 +95,7 @@ export function TeacherLivePage({
   };
 
   return (
-    <section aria-labelledby="teacher-live-title" className="w-full max-w-4xl">
+    <section aria-labelledby="teacher-live-title" className="page-mid">
       <header>
         <p className="route-panel__eyebrow">ColorPlay Live</p>
         <h1 id="teacher-live-title">Live 課堂主持</h1>

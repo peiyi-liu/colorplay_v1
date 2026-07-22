@@ -1,3 +1,4 @@
+import { Icon } from '../../../components/ui/icons';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -169,7 +170,7 @@ function QuestionPhase({
       {answered ? <p role="status">已收到你的答案，等待其他同學…</p> : null}
       {streak >= 2 ? (
         <p className="live-streak-badge" role="status">
-          🔥 連擊 x{streak}！
+          <Icon name="flame" size={16} /> 連擊 x{streak}!
         </p>
       ) : null}
       {submitError ? <p role="alert">{submitError}</p> : null}
@@ -316,7 +317,7 @@ function FeedbackPhase({
       </ul>
       {state.explanation ? (
         <div className="live-explanation">
-          <strong>👨‍🏫 教師引導解析：</strong>
+          <strong>教師引導解析:</strong>
           <p>{state.explanation}</p>
         </div>
       ) : null}

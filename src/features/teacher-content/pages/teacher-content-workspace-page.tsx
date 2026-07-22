@@ -248,7 +248,7 @@ export function TeacherContentWorkspacePage({
   return (
     <section
       aria-labelledby="content-workspace-title"
-      className="w-full max-w-5xl"
+      className="teacher-workspace"
     >
       <header>
         <p className="route-panel__eyebrow">教師功能</p>

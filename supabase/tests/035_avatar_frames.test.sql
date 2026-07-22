@@ -24,8 +24,8 @@ select is(
     )
     from public.avatar_frames
   ),
-  '[["lava_gold","熔岩流金",0],["deep_neon","深海霓虹",25],["cherry_blossom","櫻花粉彩",40],["forest_guard","森林守衛",60],["royal_violet","皇家紫金",90],["midnight_sky","午夜星空",120]]'::jsonb,
-  'catalog contains the exact ordered six-frame contract'
+  '[["lava_gold","熔岩流金",0],["deep_neon","深海霓虹",25],["cherry_blossom","櫻花粉彩",40],["forest_guard","森林守衛",60],["royal_violet","皇家紫金",90],["midnight_sky","午夜星空",120],["sunrise_amber","日出琥珀",150],["cobalt_wave","鈷藍波浪",180],["jade_mist","松石綠霧",210],["magenta_pop","洋紅波普",240],["teal_orbit","藍綠軌道",270],["violet_haze","紫羅蘭霞",300],["ember_glow","餘燼光暈",340],["lime_soda","萊姆蘇打",380],["coral_reef","珊瑚礁光",420],["deep_ocean","深海墨藍",460],["aurora_sky","極光天幕",520],["paper_ink","紙墨對比",580],["spectrum_run","光譜跑道",650],["golden_hour","黃金時刻",720]]'::jsonb,
+  'catalog contains the exact ordered twenty-frame contract'
 );
 select is(
   (select relrowsecurity from pg_class where oid = 'public.avatar_frames'::regclass),
@@ -111,7 +111,7 @@ select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000031
 
 select is(
   jsonb_array_length((public.get_my_frame_inventory())->'items'),
-  6,
+  20,
   'inventory lists the published frame catalog'
 );
 select is(
