@@ -164,3 +164,138 @@ MVP 採「練習可重複、獎勵有限」：
 ## 13. 規則版本
 
 每個 quiz session 保存 `game_rules_version`，例如 `2026-07-mvp-1`。結果頁與 export 可追溯該版本，避免日後調整規則後無法重現舊資料。
+
+Assignment、remediation、Live 同樣保存適用 rules/content version；歷史結果不得用目前規則重算。
+
+## 14. Learning progress
+
+Progress 是多個獨立量測，不得把不相干數字拼成假百分比。第一版規則為 `2026-07-progress-1`。
+
+### Review completion
+
+```text
+review_completion = completed current published review-card versions
+                    / current published review-card versions * 100
+```
+
+- Completion 需學生明確操作並由 secure command 記錄。
+- 新 card version 只有在 `requires_recompletion = true` 時要求重做。
+- 無 published card 時顯示 `—`，不是 0%。
+
+### Coverage、accuracy、mastery
+
+每個 current published question version 只取學生 latest qualifying answer。Qualifying 來源是 completed practice、assignment、remediation；abandoned、expired、unfinished、old-version、Live 不計。
+
+```text
+coverage = answered current versions / current published versions * 100
+accuracy = latest correct versions / answered current versions * 100
+mastery = coverage * accuracy / 100
+```
+
+- `not_started`：沒有 qualifying answer。
+- `learning`：mastery 1–59。
+- `developing`：mastery 60–79。
+- `mastered`：mastery 80–100。
+- Chapter 聚合以全部 current published question versions 計算，不平均 subtopic percentages。
+- Chapter completion 需要 review completion 100%、mastery ≥ 80、且沒有 blocking required assignment。
+- Live answer 不改 mastery，避免即時競賽速度／題組污染正式學習進度。
+
+## 15. Hints、mistakes 與 remediation
+
+- Formal quiz/assignment 每題仍只有一筆正式 answer。
+- 作答前最多 request three hints；server 依序記錄 `hint_events`，hint 不得洩漏正解。
+- 第一版 hint 不扣 Quiz Score、XP 或 Token；規則變更需新 rules version。
+- Multiple attempts 只存在 remediation，不回寫原始 answer、Quiz Score 或結果頁。
+- Remediation 不發 Token；XP 使用現有 practice 20% 規則——答對且 ≤5000ms 得 15 XP、答對逾時得 10 XP（即正式 75／50 的 20%），答錯 0。此值屬於 `2026-07-progress-1`，變更需新 rules version。
+- Remediation 不消耗每日前三次 full reward 額度，也不受該額度影響（永遠固定 20% 值）。
+- Qualifying finalized remediation 可更新 mastery，並將 mistake item `open -> resolved`；後續 current-version 錯誤可 `resolved -> reopened`。
+
+## 16. Achievements
+
+初始 catalog 只授 badge，不授 XP／Token；unlock append-only 且不撤銷。
+
+| Stable code | Display name | Server condition |
+| --- | --- | --- |
+| `first_task_complete` | 初出茅廬 | first completed quiz or assignment |
+| `first_perfect_quiz` | 百發百中 | first completed quiz at 100% accuracy |
+| `mistakes_resolved_10` | 不屈不撓 | ten distinct resolved mistake items |
+| `chapter_mastered_1` | 章節精熟 | first mastered chapter |
+| `all_chapters_mastered` | 色彩大師 | all six chapters mastered |
+| `level_10` | 登峰造極 | authoritative level at least 10 |
+| `correct_streak_20` | 連擊之王 | twenty consecutive qualifying correct answers |
+| `live_complete_5` | 課堂挑戰者 | five completed Live sessions |
+| `blooks_owned_6` | 收藏家 | six initial Blooks owned |
+
+- Rule 使用 validated enum type + versioned parameters，不執行 arbitrary SQL/JavaScript。
+- Progress/unlock 只由 trusted quiz、economy、assignment、Live、progress event 評估；browser 不可要求 unlock。
+- 同 user/definition/source 重送回原結果，不產生第二個 unlock。
+- 未解鎖 hidden rule 不向 student payload 洩漏內部 threshold/condition；可公開項目由 definition visibility 決定。
+- Correct streak 包含 formal quiz、assignment、Live correct；incorrect/timeout reset；remediation 不計。
+- `case_expert` 不支援，因為沒有核准的 case-mission subsystem。
+
+## 17. Assignments and ColorPlay Live
+
+### Assignments
+
+- Owning teacher 設定 availability、UTC deadline、attempt limit、passing/reward rule；session 建立後凍結適用版本。
+- Student 必須是 active target/member；跨班級 request 被拒絕。
+- Attempt 引用 finalized quiz 或 Live session，不複製 client score。
+- Completion、pass、reward 由 trusted finalize transaction 推導；重送不得重複完成／發獎。
+- Assignment completion 本身不另發 XP／Token ledger row：被引用 session 依自身規則發放的獎勵即為 assignment 獎勵。Quiz template 類 assignment 的 session 以 `purpose = 'assignment'` 執行，沿用既有 quiz 獎勵規則（含每日同 template 衰減）。
+- Passing rule 第一版為 `score_at_least`（整數門檻），由 finalize transaction 對 authoritative total score 判定。
+
+### ColorPlay Live
+
+- State machine 是 `draft -> lobby -> question_open -> question_feedback -> ... -> completed`，各 active state 可由 server policy轉 `cancelled`。
+- 只有 owning host 可 start/open/close/advance/finalize/cancel，並以 `state_version` 防雙分頁重複推進。
+- Authenticated active member 才能 join/answer；server deadline、hidden answer、response time、score/rank/reward 全由後端決定。
+- 同 participant/question 只有一筆 authoritative answer；idempotency key 重送回原結果。
+- `finalize_live_session` 原子計 score/rank/reward/achievement/assignment/progress/audit；rollback 不留部分結果。
+- Rank 只顯示 privacy-safe display name、Blook、score/rank；不顯示 Email、學號或 raw answers。
+- Live Core 使用同一 XP/Token ledger source contract；Live 不計入 mastery。Phase 7 擴充規則見下節「ColorPlay Live Advanced（2026-07-live-2 擴充）」。
+- Live 獎勵規則版本 `2026-07-live-1`：每題答對且 server response ≤ 5,000 ms 得 XP 75／Token 25，逾 5,000 ms 答對得 XP 50／Token 15，答錯或逾時 0／0。獎勵只由 `finalize_live_session` 寫入：每位 participant 一筆 XP row 與一筆 Token row，`source_type = 'live'`、`source_id = live_session_id`。
+- Live session 不消耗每日 practice 前三次 full-reward 額度，也不進入 mastery 的分母或分子。
+- Optional Kahoot URL 是 external compatibility，不使用 official API，不把 external result 當 ColorPlay Score／XP／Token。
+
+### ColorPlay Live Advanced（2026-07-live-2 擴充）
+
+- **State machine 擴充**：`question_open -> paused -> question_open`。`pause_live_session` 只有 owning host 可呼叫、只允許在 `question_open`；server 記錄剩餘時間（毫秒）並凍結 deadline。`resume_live_session` 以 `now() + 剩餘時間` 重算 `deadline_at` 後回到 `question_open`。兩個轉換各 bump `state_version` 一次並 broadcast；stale `state_version` 的重複 pause/resume 回 conflict。`paused` 期間 `submit_live_answer` 一律拒絕（`LIVE_QUESTION_NOT_OPEN` 族系錯誤），refresh/reconnect 由 `get_live_session_state` 還原 paused 畫面。
+- **Team mode**：session 建立時決定 `mode`（`individual` 預設／`team`）與 `team_count`（2–4）。Server 於 join 時以「人數最少的隊伍優先、平手取編號最小」指派 `team_number`；client 不能選隊。Team total = 該隊 active participants 的 authoritative score 總和，只出現在 feedback／completed payload 與報表。個人 score/rank/XP/Token 規則與 Live Core 完全相同；team 不產生額外 ledger row。
+- **Real-time distribution**：`question_open` 期間僅 host 可讀每選項作答數（host-only trusted read，隨 answered-count broadcast 更新）；學生仍到 `question_feedback` 才看到分佈與正解。
+- **Reusable／scheduled activities**：activity 可重複開 session。`live_activities.scheduled_for`（nullable UTC）由 host-only 指令設定／清除；教師 Live 頁依時間列出即將進行的活動。排程不會自動開場——一律由 host 手動開始。
+- **Session 報表**：`teacher_live_session_detail` 僅 host 可讀：每題 position／prompt／作答數／答對數／正確率／平均反應毫秒，加上最終排名（只含 privacy-safe display name、score、rank、team）。禁止 Email／學號／raw answers。
+- **Streak**：`live_participants.current_streak` 由 server 維護——本場連續答對次數；答錯或逾時歸零。answer receipt 回傳 streak 供 UI 顯示；streak 不影響分數或獎勵。
+- **Reduced motion**：慶祝／連擊動畫必須同時尊重 OS `prefers-reduced-motion` 與 server-backed profile 設定 `profiles.reduced_motion`（trusted profile 更新路徑；不得使用 localStorage）。啟用時以根屬性 `data-reduced-motion` 關閉動畫，功能與資訊不減損。
+- **Capacity／latency（AC-LIVE-012 profile）**：1 host＋2 active students＋1 outsider；至少 30 個 answer sample 與 2 個 finalize sample，cold start 分開記錄。門檻：answer p95 ≤ 800 ms、finalize p95 ≤ 1,000 ms、authoritative answers 無遺失／重複、outsider access = 0。證據為 measured `latency-profile.json`，由 gate finalizer 強制。
+- 一切 first-party：不複製 Kahoot branding/assets、不依賴 official API。
+
+### ColorPlay Live Kahoot 節奏（2026-07-live-3 擴充；Milestone 10A）
+
+- **速度計分**：答對分數 `score = round(150 − 75 × (response_ms / time_limit_ms))`，並 clamp 在 [75, 150]——0 ms＝150、用滿時間答對＝75；答錯／逾時＝0。`time_limit_ms` 取該題凍結的 `deadline_at − opened_at`（pause/resume 重建後仍等於完整時限，暫停時間永不計入）。伺服器權威計算不變；XP／Token 獎勵規則維持 `2026-07-live-1` 條文（≤ 5,000 ms 門檻）不動。
+- **Rules version 判定**：`live_sessions.rules_version` 於建立時定版（新 session 預設 `2026-07-live-3`）；`submit_live_answer` 依 session 的 rules_version 分流計分，既有／歷史 session 維持 `2026-07-live-1` 的 150／100 兩檔，不得以新規則重算。
+- **全員作答自動關題**：`question_open` 期間，當所有 active participants 對當前題都有 authoritative answer（含 timeout row）時，伺服器自動執行與 `close_live_question` 相同的關題轉換（timeout 補列為空集合、`state_version` 遞增一次、broadcast feedback payload 一次）。`submit_live_answer` 改為對 session row 取 `for update` 鎖使提交序列化，保證恰有一個提交觀察到完整作答集合。主持端手動關題與自動關題競態必須冪等：主持以「慢一版」的 `state_version` 對已進入 `question_feedback` 的題目關題時，回傳同一份 feedback receipt 且不再 broadcast；更舊版本仍回 `LIVE_STATE_CONFLICT`。
+- **六碼數字加入碼**：`generate_live_join_code` 產生 `000000`–`999999`（強亂數、前導零保留）。唯一性只涵蓋活躍場次（partial unique index，`state not in ('completed','cancelled')`——含 `paused`）；`completed`／`cancelled` 釋出碼空間，建立與 rotate 皆有碰撞重試。
+- **Join 節流與錯誤契約**：因碼空間僅 10⁶，`join_live_session` 對「查無／格式錯／非成員」一律回傳 committed payload 錯誤 `{"error":"LIVE_JOIN_INVALID_CODE"}`（不 raise——raise 會把節流計數一併 rollback），並以 `live_join_throttle`（host-only RLS、無 client 權限）按 user 記錄失敗：60 秒固定視窗內滿 10 次失敗後回 `{"error":"LIVE_JOIN_RATE_LIMITED"}`。成功 join 的 payload 與既有契約完全相同；`AUTH_REQUIRED`／`LIVE_INVALID_REQUEST` 仍為 raise。
+- **Host 分布讀取放寬**：`live_question_distribution` 允許 host 於 `question_open`／`paused`／`question_feedback` 讀取（分布在 feedback 對全員公開，無新增揭露）——host 端「answered-count broadcast 觸發 refetch」與自動關題競態時不再產生 400。學生於任何狀態呼叫仍回 `LIVE_SESSION_NOT_FOUND`。
+
+### ColorPlay Live 學生端體驗（Milestone 10D；rules_version 不變）
+
+- **雙螢幕模式（活動層級開關）**：`live_activities.question_display`（`screen_only` 預設／`device`）於建立活動時定版。`screen_only` 時，學生的 state payload 與共用 channel 的 `question_open`／resume broadcast 由**伺服器端**過濾——question 無 `prompt`、選項只含 `id`／`key`／`sort_order`（無 `text`）、feedback 的 `explanation` 為 null；host 讀取永遠是完整 payload（投影用）。`device` 模式維持題目在學生裝置的原行為。計分、獎勵與 rules_version 皆不受此開關影響。
+- **遲到可加入**：lobby 關閉後，首次加入者於 `question_open`／`question_feedback` 仍可 join（班級成員限定、節流不變）。`live_participants.eligible_from_position` 錨定「下一題進場」（用題號而非時間戳，pause/resume 重寫 `opened_at` 不影響）；遲到者對已開題不得作答（`LIVE_ANSWER_CLOSED`）、不列入全員作答自動關題的母集、關題不補 timeout row；state payload 以 `waiting_for_next: true` 呈現等候畫面，不含任何題目資料。重連（既有 participant）行為不變。
+- **題間個人回饋**：`live_my_standing`（participant-only、僅 `question_feedback`）回傳本人 rank／score／participant_count 與「與前一名分差」（`ahead_rank`／`points_behind`；tie-break 與 standings/finalize 一致）。只有數字——任何其他學生的名稱不進學生裝置。鼓勵文案由 client 生成。
+
+### ColorPlay Live 報表與學習閉環（Milestone 10E）
+
+- **作答矩陣**：`teacher_live_session_detail` v2（host-only、completed-only 不變）新增 `classroom_id`、`activity`（title／quiz_template_id）與 `participants` 矩陣——每位 active participant 的 display_name／rank／score／team_number 與逐題 `answers`（position／status／response_ms）；缺列＝該題無作答資格（遲到）。
+- **難題標記與 CSV**：正確率 < 35% 的題目由前端標記「建議重教」並置頂；個人×題目 CSV 由前端自 detail payload 產出（UTF-8 BOM），不新增後端。
+- **錯題閉環**：`live_sessions` 進入 `completed` 的轉換觸發 `live_sessions_record_mistakes`——所有非 correct 的 live answer 依 `question_stable_code` 映射回題庫寫入 `mistake_items`（新欄位 `origin_live_answer_id`；`origin_answer_id` 改為 nullable，check 保證兩者擇一）。同一 (user, question) 唯一：重複命中冪等更新、`resolved` 重開為 `reopened`，語意與 quiz 路徑一致。觸發器掛在狀態機轉換上，任何完成場次的指令都在同一交易內落錯題本。
+- **課後複習任務**：報表頁「一鍵生成」以既有 `create_assignment`（quiz type、同一 quiz_template）建立**草稿**任務，教師到任務頁發佈；不新增後端指令。
+
+### ColorPlay Live 課堂流程精簡（2026-07-22 owner 現場裁定）
+
+- **小節活動**：`live_activities.section_id`（nullable FK sections）；`create_live_activity` v3 可帶 `p_section_id`（驗證屬同一章且 published）；`start_live_session` v3 凍題母集改為該小節（未帶則整章，向後相容）。`list_live_section_options`（teacher-only）供「選擇單元」下拉：published section × 該章 published template × 有 published 題目。活動標題由 client 直接採用小節標題（如「3-1 色彩三要素與色名的表示」）。
+- **建立流程精簡**：建立表單只剩「選擇單元」＋「每題秒數」；對戰模式（team）、排程、開場班級選單、題目顯示位置選單自 UI 移除（後端能力保留）。場次自動掛教師第一個 active 班級；`question_display` 一律 `screen_only`。
+- **一鍵開場**：「建立活動」＝建立活動→建立場次→`start_live_session`（開等待室）→直接進入主持台投影模式（`?presenter=1`）。
+- **學生端**：作答格只顯示形狀符號置中（無字母/文字，sr-only 保留色形名稱）；題間結果為全屏綠底白勾（答錯/逾時紅底白叉）＋「本題 +N 分」＋「目前第 N 名」，全白字且不顯示頁面標題。
+- **投影 feedback**：選項人數改為長條圖（按最高票正規化，正解加粗＋✓）。
+- **註冊 OTP**：重送驗證碼前端 60 秒倒數（對齊 Supabase Auth 伺服器端同信箱 60 秒冷卻），倒數中按鈕 disabled。

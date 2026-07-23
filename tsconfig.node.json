@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2023",
+    "lib": ["ESNext", "DOM"],
+    "module": "ESNext",
+    "types": ["node"],
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "useUnknownInCatchVariables": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": [
+    "playwright.config.ts",
+    "scripts/**/*.ts",
+    "tests/acceptance/**/*.ts",
+    "tests/contracts/**/*.ts",
+    "tests/e2e/**/*.ts",
+    "tests/fixtures/**/*.ts",
+    "tests/helpers/**/*.ts",
+    "tests/integration/**/*.ts",
+    "vite.config.ts",
+    "vitest.integration.config.ts",
+    "vitest.config.ts"
+  ]
+}

@@ -20,6 +20,8 @@
 - Git pre-commit／CI 執行 secret scanning。
 - `.env.example` 不得包含真值。
 - Production secret 透過部署平台與 Supabase secrets 管理並可輪替。
+- Local、Staging、Production credential 不共用；Preview 只取得 Staging 公開值，Production 只取得 distinct Production 公開值。
+- Secret rotation 記錄 owner、UTC time、affected services、deploy SHA 與 verification，紀錄不包含 raw value。
 
 ## 3. 身分驗證
 
@@ -35,6 +37,9 @@
 - 前端 route guard 只改善 UX，不是安全機制。
 - 每個 database query、RPC、Edge Function 都驗證使用者與資源關係。
 - RLS default-deny。
+- Anonymous role 不可讀任何 product table；公開行銷頁不需要 product data。
+- Student 只讀 own profile/session/answer/wallet/achievement/assignment/progress 與 active Live projection；不可讀其他 raw answer 或寫 ledger/rank/role/host state。
+- Teacher 只管理 own classroom/content scope；Teacher A 不可讀 Teacher B classroom、analytics、assignment、Live 或 export。
 - Service role 只可用於必要的 system job，且 handler 仍驗證 caller；不可因使用 service role 就省略 authorization。
 
 ## 5. 答案與計分保護
@@ -45,6 +50,7 @@
 - Client 傳入的 `elapsedMs`, `score`, `xp`, `tokens`, `isCorrect` 全部忽略或拒絕。
 - 每題只允許一筆正式 answer；重送回傳原結果，不再發獎。
 - Server time 為準；使用者修改本機時間不影響速度獎勵或逾時判定。
+- Live deadline、state transition、score、rank、reward 與 completion 同樣 server-authoritative；client `state_version` 只能做 optimistic concurrency check，不能強制覆寫。
 
 ## 6. 輸入驗證與 XSS
 
@@ -74,6 +80,7 @@
 - `create_quiz_session`：每 user 每分鐘最多 10 次。
 - `purchase_blook`：每 user 每分鐘最多 10 次。
 - Export：每 teacher 每 10 分鐘最多 5 次。
+- Live join/host/answer command 依 IP + identity + session 限流；unique answer/state version constraint 是最後防線。
 
 超限回傳穩定錯誤碼與 retry-after，不得造成資料部分寫入。
 
@@ -97,8 +104,17 @@ Production 必須：
 - 適當 Referrer-Policy。
 - 禁止將敏感資料放 URL query。
 - 第三方 CDN 依賴盡量 bundle／self-host；若使用，需鎖版本與 SRI 或正式風險評估。
+- Optional external Kahoot compatibility 只接受 teacher-owned validated URL；不使用 official API、Kahoot branding、固定 PIN 或第三方 QR service 傳送 activity URL。
 
-## 11. 稽核與事件
+## 11. Realtime security
+
+- Private topic 格式固定為 `live-session:<sessionId>`。
+- `realtime.messages` RLS 驗 host ownership 或 active classroom participant membership；outsider 無 subscribe/send 權限。
+- Student 不可發 host phase transition；Presence 不得包含 Email、學號、答案或 token。
+- Broadcast 不是正式狀態來源。PostgreSQL transaction 先 commit，client 再以 `state_version` 讀取/reconcile。
+- WebSocket 斷線不改 deadline 或 authority；client 暫停送出並顯示 reconnecting，禁止離線先算結果／發獎。
+
+## 12. 稽核與事件
 
 必須 audit：
 
@@ -107,11 +123,16 @@ Production 必須：
 - import commit。
 - research export。
 - wallet adjustment（若有 admin 修正）。
+- assignment publish/archive 與 attempt-limit override。
+- Live create/join-code rotate/host transition/finalize/cancel。
+- achievement unlock、Blook purchase/equip 與 ledger reconciliation failure。
 - security policy denial 的彙總事件。
 
 Audit log append-only；一般 teacher 不可修改或刪除。
 
-## 12. 安全驗收必測攻擊
+每筆 event 記錄 UTC timestamp、actor、action、target type/ID、request/correlation ID、result、rules/content version、safe metadata。禁止記錄完整 Email、answer payload、JWT/access token、credential、SQL/stack trace 或 raw research row。
+
+## 13. 安全驗收必測攻擊
 
 - 修改 localStorage XP／Token，重新整理後正式資料不變。
 - 直接呼叫 wallet insert/update，被拒絕。
@@ -121,3 +142,11 @@ Audit log append-only；一般 teacher 不可修改或刪除。
 - 從 public question response、JS bundle、source map 搜尋正解欄位，找不到。
 - 前端環境與 bundle 搜尋 `service_role`／DB password，找不到。
 - 惡意 `<script>` 題目顯示為文字或被拒絕，不執行。
+- Anonymous 讀 profile／`is_correct` 被拒絕。
+- Outsider subscribe `live-session:<sessionId>` 被拒絕；Student broadcast host transition 被拒絕。
+- 重放同一 Live answer／host `state_version` 不產生第二筆 answer 或第二次 transition。
+- 修改 client deadline、score、rank、achievement progress、assignment completion 被忽略或拒絕。
+
+## 14. Safe error boundary
+
+Browser 只收到 stable code、安全 message、request ID、retryable。不得回 SQL、stack、hidden answer、其他 user/classroom ID、secret 或可推測帳號存在性的額外資訊。Auth/permission/validation/not-found 不自動 retry；idempotent uncertain mutation 以原 key 查狀態後才重送。

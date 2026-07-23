@@ -1,0 +1,125 @@
+/* ColorPlay Flat 三層 design tokens(2026-07-22 視覺改版;design-system/colorplay/MASTER.md 權威)。
+   唯一色彩／圓角定義點:元件與畫面一律引用 var(--…),不得出現裸 hex。
+   概念:暖紙張底 + 墨色文字 + 六章節色相;flat 無投影,層次靠色塊與邊框。 */
+:root {
+  /* ── Primitive:墨色階與紙張 ─────────────────────────── */
+  --ink-950: #14161f;
+  --ink-900: #1d212e;
+  --ink-700: #3c4254;
+  --ink-500: #646b7e;
+  --ink-400: #8a90a2;
+  --ink-300: #c2c7d3;
+  --ink-200: #e2e5ec;
+  --ink-100: #eef0f4;
+  --ink-50: #f6f7fa;
+  --paper: #f6f4ee;
+  --white: #ffffff;
+
+  /* ── Primitive:六章節色相環(Ch1–Ch6)──────────────── */
+  --hue-ch1: #e5960a; /* 光源 amber */
+  --hue-ch1-soft: #fbefd8;
+  --hue-ch2: #2f9e63; /* 生理 green */
+  --hue-ch2-soft: #def2e6;
+  --hue-ch3: #3056d8; /* 表示 cobalt */
+  --hue-ch3-soft: #e0e7fb;
+  --hue-ch4: #7b48ce; /* 視覺 violet */
+  --hue-ch4-soft: #ede4f9;
+  --hue-ch5: #d2418e; /* 心理 magenta */
+  --hue-ch5-soft: #f9e2ef;
+  --hue-ch6: #0e98a5; /* 配色 teal */
+  --hue-ch6-soft: #dcf1f3;
+
+  /* ── Primitive:功能色與品牌點綴 ─────────────────────── */
+  --coral-600: #d64533;
+  --coral-700: #b23425;
+  --jade-600: #128a5e;
+  --jade-700: #0e6f4c;
+  --cobalt-600: #3056d8;
+  --cobalt-700: #2542ad;
+  --amber-600: #b26e05;
+  --yellow-brand: #ffd600; /* 品牌黃:主色 */
+  --amber-avatar: #ffb300; /* 品牌黃 hover/強調 */
+
+  /* ── 相容別名:舊 GGAME primitive 重新導向新色盤 ──────
+     (globals.css 逐段翻新中;未翻新的引用先吃到新色) */
+  --surface-page: var(--paper);
+  --slate-50: var(--ink-50);
+  --slate-100: var(--ink-100);
+  --slate-200: var(--ink-200);
+  --slate-300: var(--ink-300);
+  --slate-500: var(--ink-500);
+  --slate-600: var(--ink-700);
+  --slate-700: var(--ink-700);
+  --slate-900: var(--ink-900);
+  --slate-950: var(--ink-950);
+  --rose-500: var(--coral-600);
+  --rose-700: var(--coral-700);
+  --sky-500: var(--cobalt-600);
+  --amber-500: var(--hue-ch1);
+  --amber-700: var(--amber-600);
+  --emerald-600: var(--jade-600);
+  --emerald-700: var(--jade-700);
+  --indigo-50: var(--hue-ch3-soft);
+  --indigo-100: var(--hue-ch3-soft);
+  --indigo-600: var(--cobalt-600);
+
+  /* ── 字體 ─────────────────────────────────────────────── */
+  --font-ui:
+    'Noto Sans TC', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  --font-display: 'Syne', 'Noto Sans TC', system-ui, sans-serif;
+  --font-brand: var(--font-display);
+  --font-size-body: 1rem;
+  --font-size-supporting: 0.875rem;
+  --font-size-metadata: 0.75rem;
+  --line-height-body: 1.625;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Flat 造型:圓角收斂、以邊框與色塊分層 */
+  --radius-control: 10px;
+  --radius-card: 16px;
+  --radius-panel: 20px;
+
+  --focus-ring-width: 3px;
+
+  /* ── Semantic:用途別名 ──────────────────────────────── */
+  --color-primary: var(--yellow-brand); /* 主要 CTA:暖黃(owner 2026-07-23) */
+  --color-primary-strong: var(--amber-avatar);
+  --color-primary-contrast: var(--ink-950);
+  --color-accent: var(--cobalt-600); /* 互動:連結/focus/active */
+  --color-accent-strong: var(--cobalt-700);
+  --color-teacher: var(--hue-ch4);
+  --color-xp: var(--coral-600);
+  --color-token: var(--jade-600);
+  --color-alert: var(--amber-600);
+  --surface-card: var(--white);
+  --border-subtle: var(--ink-200);
+  --border-strong: var(--ink-900);
+
+  --color-brand-dark: var(--ink-900);
+  --color-brand-yellow: var(--yellow-brand);
+  --color-info: var(--cobalt-600);
+  --color-success: var(--jade-700);
+  --color-danger: var(--coral-700);
+  --color-warning: var(--amber-600);
+  --color-bg: var(--surface-page);
+  --color-surface: var(--surface-card);
+  --color-border: var(--ink-300);
+  --color-text: var(--ink-900);
+  --color-muted: var(--ink-500);
+
+  /* ── Component:元件層 ───────────────────────────────── */
+  --button-primary-bg: var(--color-primary);
+  --button-primary-text: var(--color-primary-contrast);
+  --avatar-frame-bg: color-mix(in srgb, var(--amber-avatar) 30%, white);
+}

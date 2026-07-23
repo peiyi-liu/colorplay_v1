@@ -2,29 +2,47 @@
 
 ## 1. 路由總覽
 
-建議正式路由：
+正式目標路由與交付階段：
 
-```text
-/login
-/join
-/app
-/app/chapters/:chapterId
-/app/chapters/:chapterId/topics/:topicId/review
-/app/quiz/:sessionId
-/app/quiz/:sessionId/result
-/app/profile
-/app/shop
-/app/leaderboard
-/teacher
-/teacher/classes/:classroomId
-/teacher/content
-/teacher/content/imports/:importId
-/teacher/analytics/:classroomId
-/teacher/exports
-/unauthorized
-```
+| Route                                             | Audience/guard                                         | Owner                 | Owning phase                          |
+| ------------------------------------------------- | ------------------------------------------------------ | --------------------- | ------------------------------------- |
+| `/`                                               | Public                                                 | App shell             | Existing foundation                   |
+| `/login`                                          | Public; authenticated users redirect by role           | `auth`                | Existing foundation                   |
+| `/join/:joinCode?`                                | Public intent only; content remains hidden before Auth | `classrooms`          | Phase 3                               |
+| `/unauthorized`                                   | Public-safe error                                      | App shell             | Existing foundation                   |
+| `*`                                               | Public-safe not-found                                  | App shell             | Existing foundation                   |
+| `/app`                                            | Authenticated Student/Teacher                          | Student dashboard     | Phase 5; currently chapter selector   |
+| `/app/chapters`                                   | Authenticated Student/Teacher                          | `learning`            | Phase 5 migration of current selector |
+| `/app/chapters/:chapterId`                        | Authenticated Student/Teacher                          | `learning`            | Phase 5                               |
+| `/app/chapters/:chapterId/topics/:topicId/review` | Authenticated Student/Teacher                          | `learning`            | Phase 5                               |
+| `/app/quiz/:sessionId`                            | Session owner                                          | `quiz`                | Existing playable slice               |
+| `/app/quiz/:sessionId/result`                     | Session owner; finalized result                        | `quiz`                | Existing playable slice               |
+| `/app/assignments`                                | Authenticated Student                                  | `assignments`         | Phase 4                               |
+| `/app/assignments/:assignmentId`                  | Assigned active member                                 | `assignments`         | Phase 4                               |
+| `/app/mistakes`                                   | Authenticated Student                                  | `remediation`         | Phase 5                               |
+| `/app/progress`                                   | Authenticated Student                                  | `progress`            | Phase 5                               |
+| `/app/achievements`                               | Authenticated Student                                  | `achievements`        | Phase 2/5                             |
+| `/app/shop`                                       | Authenticated Student                                  | `inventory`           | Phase 1                               |
+| `/app/leaderboard`                                | Authorized classroom member                            | `leaderboard`         | Phase 3                               |
+| `/app/profile`                                    | Own profile                                            | `profile`             | Existing foundation/Phase 5           |
+| `/app/live/join`                                  | Authenticated Student                                  | `live`                | Phase 4                               |
+| `/app/live/:sessionId`                            | Active participant                                     | `live`                | Phase 4/7                             |
+| `/teacher`                                        | Teacher role                                           | Teacher workspace     | Phase 6                               |
+| `/teacher/classes`                                | Teacher role                                           | `classrooms`          | Phase 3                               |
+| `/teacher/classes/:classroomId`                   | Owning teacher                                         | `classrooms`          | Phase 3                               |
+| `/teacher/classes/:classroomId/assignments`       | Owning teacher                                         | `assignments`         | Phase 4                               |
+| `/teacher/live`                                   | Teacher role                                           | `live`                | Phase 4                               |
+| `/teacher/live/:sessionId`                        | Host/owning teacher                                    | `live`                | Phase 4/7                             |
+| `/teacher/content`                                | Authorized teacher                                     | `teacher` content     | Phase 6                               |
+| `/teacher/content/imports/new`                    | Authorized teacher                                     | `teacher` import      | Phase 6                               |
+| `/teacher/content/imports/:importId`              | Import owner                                           | `teacher` import      | Phase 6                               |
+| `/teacher/analytics/:classroomId`                 | Owning teacher                                         | `teacher` analytics   | Phase 6                               |
+| `/teacher/exports`                                | Authorized teacher/research scope                      | `teacher` export      | Phase 8                               |
+| `/teacher/integrations/kahoot`                    | Owning teacher                                         | `external_activities` | Phase 6                               |
 
 所有 `/app/*` 需 authenticated student 或 teacher；`/teacher/*` 需 teacher membership／ownership 檢查。只隱藏導覽按鈕不算權限控制。
+
+每個 route 同時需要 React guard 與 RLS／RPC／Edge Function authorization。未交付 route 不得先放假資料頁面冒充完成。Teacher heavy routes 採 route-level lazy loading，不進 student initial bundle。
 
 ## 2. 身分與班級流程
 
@@ -116,6 +134,24 @@
 - 只顯示允許公開的暱稱、Blook、分數與排名。
 - 不顯示 Email、學號或其他個資。
 
+### STU-Flow-08：Assignments
+
+1. 學生只看到自己 active membership 的有效 assignment。
+2. 後端以 UTC 判定 availability/deadline/attempt limit，UI 以 `Asia/Taipei` 顯示。
+3. 開始 assignment 建立或引用 authoritative quiz/Live session。
+4. 完成狀態、分數與通過規則由後端 finalized session 推導，不由前端寫入。
+5. Refresh 回到同一可恢復 session；過期或超過次數時顯示 terminal state。
+
+### STU-Flow-09：ColorPlay Live
+
+1. 已登入學生從 `/join/:joinCode?` 保留加入意圖，登入後才驗證 hashed join code 與 classroom membership。
+2. Lobby 顯示安全暱稱/Blook 與連線狀態，不顯示 Email 或答案。
+3. Question open 後依 server deadline 作答；學生不可觸發 host transition。
+4. 斷線時停止送出、重連 private channel、呼叫 authoritative state API，依 `state_version` 對齊。
+5. Completed 後讀取 server-authoritative result/rank/reward；不得以 Realtime 訊息直接發獎。
+
+Anonymous Live participation、固定 PIN、Kahoot branding 或官方 API 依賴不在範圍內。
+
 ## 4. 教師核心流程
 
 ### TCH-Flow-01：教師 Dashboard
@@ -152,16 +188,22 @@
 
 ### TCH-Flow-04：分析
 
-篩選至少包含：班級、日期範圍、章節、子主題。
+篩選包含：班級、日期範圍、章節、section／subtopic、題目、activity mode。
 
 指標：
 
-- attempts。
-- unique students。
-- accuracy。
-- average response time。
-- timeout rate。
-- question error rate。
+- completed session attempts。
+- distinct active students。
+- first formal answer accuracy。
+- current mastery。
+- mean non-timeout server response time。
+- timeout terminal answers／expected answers。
+- answered-with-hint／answered questions。
+- resolved／entered remediation items。
+- completed assigned students／active assigned members。
+- Live participants／active classroom members。
+- option selections／submitted answers。
+- incorrect plus timeout／terminal answers。
 
 所有指標需有明確分母；無資料時顯示 `—`，不得顯示誤導性的 0%。
 
@@ -172,6 +214,13 @@
 - 預設使用 pseudonymous user ID，不包含 Email。
 - 若需識別資料，必須有額外權限與明確 UI 警告。
 
+### TCH-Flow-06：Assignments 與 Live host
+
+- Teacher 只能建立、發布、暫停或封存自己 classroom 的 assignment。
+- Live host 只能操作自己建立且仍授權的 session；狀態版本衝突時必須重新讀取，不可覆寫。
+- Live host refresh/斷線後從 authoritative state 恢復；另一分頁不可對同一 `state_version` 推進兩次。
+- Optional Kahoot compatibility 只保存教師擁有的外部 URL、關聯 scope、availability/status；不保存假 PIN、不匯入外部成績。
+
 ## 5. 路由與恢復規則
 
 - Browser refresh 後應恢復合法 route 與 session。
@@ -179,6 +228,8 @@
 - Student 存取 teacher route：導向 `/unauthorized`，且後端請求必須被拒絕。
 - 已 finalize quiz 不得回到可作答狀態。
 - 進行中 quiz 重新整理後需恢復同一 session 與目前未答題狀態，不得重抽、重發獎。
+- Join intent 登入後才解析；驗證失敗不得洩漏 classroom 名稱或成員。
+- Live reconnect 必須依 `state_version` 取得同一 session 的最新 server state。
 
 ## 6. 錯誤與離線體驗
 
@@ -187,3 +238,7 @@
 - 網路中斷提交答案：保留畫面並允許安全重試；不得先在前端發正式獎勵。
 - Session 過期：提示重新登入，保留可恢復的非敏感 route context。
 - 全域 error boundary 顯示可恢復畫面與追蹤 ID，不顯示 stack trace。
+- 每個 route 明確呈現 loading、empty、recoverable error、permission、offline/reconnecting、pending、success；不得空白。
+- 可安全讀取的 Query 最多自動重試兩次；Auth、permission、validation、not-found 不重試。
+- Mutation timeout 只有在保留原 idempotency key 並先查 command status 後才能重試。
+- UI 只呈現後端 committed 結果，不預測 Quiz／Live 正誤、正式分數、XP、Token 或 rank。

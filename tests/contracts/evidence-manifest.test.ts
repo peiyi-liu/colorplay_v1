@@ -1,0 +1,1043 @@
+import { execFile, spawn, type ChildProcess } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { once } from 'node:events';
+import {
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  stat,
+  writeFile,
+} from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
+import { describe, expect, it } from 'vitest';
+import playwrightConfig from '../../playwright.config';
+import {
+  createEvidenceRun,
+  type CreateEvidenceRunOptions,
+} from '../../scripts/acceptance/create-run.mjs';
+import {
+  countAcceptanceIds,
+  EXPECTED_ACCEPTANCE_COUNT,
+} from '../../scripts/verify/count-acceptance.mjs';
+
+const execFileAsync = promisify(execFile);
+
+const acceptanceIdRange = (prefix: string, start: number, end: number) =>
+  Array.from(
+    { length: end - start + 1 },
+    (_, index) => `AC-${prefix}-${String(start + index).padStart(3, '0')}`,
+  );
+
+const phaseZeroAcceptanceIds = [
+  ...acceptanceIdRange('ACH', 1, 5),
+  ...acceptanceIdRange('PROG', 1, 6),
+  ...acceptanceIdRange('ASN', 1, 6),
+  ...acceptanceIdRange('LIVE', 1, 12),
+  ...acceptanceIdRange('ENV', 5, 8),
+  ...acceptanceIdRange('MIG', 1, 5),
+];
+
+async function waitForServer(server: ChildProcess, url: string) {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    if (server.exitCode !== null || server.signalCode !== null) {
+      throw new Error('TEST_VITE_SERVER_EXITED');
+    }
+
+    try {
+      const response = await fetch(url);
+      if (response.ok) return;
+    } catch {
+      // The server is still starting.
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  throw new Error('TEST_VITE_SERVER_UNAVAILABLE');
+}
+
+async function stopServer(server: ChildProcess) {
+  if (server.exitCode !== null || server.signalCode !== null) return;
+
+  const gracefulExit = once(server, 'exit');
+  server.kill('SIGTERM');
+  const timedOut = await Promise.race([
+    gracefulExit.then(() => false),
+    new Promise<true>((resolve) => {
+      setTimeout(() => {
+        resolve(true);
+      }, 5_000);
+    }),
+  ]);
+
+  if (timedOut) {
+    const forcedExit = once(server, 'exit');
+    if (server.kill('SIGKILL')) await forcedExit;
+  }
+}
+
+async function listFilesRecursively(directory: string): Promise<string[]> {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const path = join(directory, entry.name);
+      return entry.isDirectory() ? listFilesRecursively(path) : [path];
+    }),
+  );
+  return files.flat();
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await stat(path);
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    throw error;
+  }
+}
+
+describe('acceptance metadata', () => {
+  it('counts every normative acceptance ID including A11Y', async () => {
+    const markdown = await readFile(
+      'acceptance/ACCEPTANCE_CRITERIA.md',
+      'utf8',
+    );
+
+    const acceptanceIds = countAcceptanceIds(markdown);
+    expect(EXPECTED_ACCEPTANCE_COUNT).toBe(122);
+    expect(phaseZeroAcceptanceIds).toHaveLength(38);
+    expect(acceptanceIds).toHaveLength(EXPECTED_ACCEPTANCE_COUNT);
+    expect(acceptanceIds).toEqual(
+      expect.arrayContaining(phaseZeroAcceptanceIds),
+    );
+  });
+
+  it('keeps the package manifest count synchronized', async () => {
+    const manifest = JSON.parse(
+      await readFile('DOCUMENT_MANIFEST.json', 'utf8'),
+    ) as {
+      acceptance_criteria: number;
+      unique_acceptance_criteria: number;
+    };
+
+    expect(manifest).toMatchObject({
+      acceptance_criteria: EXPECTED_ACCEPTANCE_COUNT,
+      unique_acceptance_criteria: EXPECTED_ACCEPTANCE_COUNT,
+    });
+  });
+
+  it('creates deterministic blocked runs with no fabricated evidence', async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'colorplay-evidence-'));
+    const firstOutput = join(temporaryRoot, 'first');
+    const secondOutput = join(temporaryRoot, 'second');
+    const secretFromEnvironment = randomUUID();
+    const previousSecret = process.env.COLORPLAY_ACCEPTANCE_TEST_SECRET;
+    process.env.COLORPLAY_ACCEPTANCE_TEST_SECRET = secretFromEnvironment;
+
+    const options = {
+      appUrl: 'http://127.0.0.1:4173',
+      browser: { name: 'chromium', version: '123.0.0' },
+      commands: [
+        {
+          command: 'pnpm test',
+          duration_ms: 1250,
+          exit_code: 0,
+          report_path: 'reports/unit.txt',
+          started_at: '2026-07-14T00:00:00.000Z',
+        },
+      ],
+      dirtyWorktree: false,
+      finishedAt: '2026-07-14T00:05:00.000Z',
+      gitSha: '0123456789abcdef0123456789abcdef01234567',
+      os: { name: 'darwin', version: '25.5.0' },
+      runId: 'task-6-deterministic',
+      startedAt: '2026-07-14T00:00:00.000Z',
+      supabaseEnvironment: 'local',
+      viewports: [
+        { height: 812, width: 375 },
+        { height: 1024, width: 768 },
+        { height: 900, width: 1440 },
+      ],
+    } as const;
+
+    try {
+      await createEvidenceRun({ ...options, outputRoot: firstOutput });
+      await createEvidenceRun({ ...options, outputRoot: secondOutput });
+
+      const firstManifestText = await readFile(
+        join(firstOutput, options.runId, 'manifest.json'),
+        'utf8',
+      );
+      const secondManifestText = await readFile(
+        join(secondOutput, options.runId, 'manifest.json'),
+        'utf8',
+      );
+      const firstSummary = await readFile(
+        join(firstOutput, options.runId, 'summary.md'),
+        'utf8',
+      );
+      const secondSummary = await readFile(
+        join(secondOutput, options.runId, 'summary.md'),
+        'utf8',
+      );
+      const manifest = JSON.parse(firstManifestText) as {
+        acceptance: {
+          evidence_files: string[];
+          id: string;
+          status: string;
+        }[];
+        app_url: string;
+        browser: { name: string; version: string };
+        commands: { command: string; exit_code: number }[];
+        dirty_worktree: boolean;
+        finished_at: string;
+        git_sha: string;
+        known_failures: unknown[];
+        os: { name: string; version: string };
+        real_devices: unknown[];
+        release_decision: string;
+        run_id: string;
+        started_at: string;
+        status_counts: Record<string, number>;
+        supabase_environment: string;
+        viewports: { height: number; width: number }[];
+      };
+      const markdown = await readFile(
+        'acceptance/ACCEPTANCE_CRITERIA.md',
+        'utf8',
+      );
+
+      expect(secondManifestText).toBe(firstManifestText);
+      expect(secondSummary).toBe(firstSummary);
+      for (const requiredSection of [
+        '## 5. Required Screenshot Inventory',
+        '## 6. Data Integrity Proof',
+        '## 7. Security Proof',
+        '## 8. Browser Health',
+        '## 9. Accessibility and Performance',
+        '## 10. Manual Exploratory Checklist',
+        '## 11. Real Device Inventory',
+        '## 12. Known Failures / Not Verified',
+        '## 13. Reviewer Sign-off',
+      ]) {
+        expect(firstSummary).toContain(requiredSection);
+      }
+      expect(manifest).toMatchObject({
+        app_url: options.appUrl,
+        browser: options.browser,
+        commands: options.commands,
+        dirty_worktree: false,
+        finished_at: options.finishedAt,
+        git_sha: options.gitSha,
+        known_failures: [],
+        os: options.os,
+        real_devices: [],
+        release_decision: 'BLOCKED',
+        run_id: options.runId,
+        started_at: options.startedAt,
+        status_counts: {
+          FAIL: 0,
+          'NOT APPLICABLE': 0,
+          'NOT VERIFIED': EXPECTED_ACCEPTANCE_COUNT,
+          PASS: 0,
+        },
+        supabase_environment: options.supabaseEnvironment,
+        viewports: options.viewports,
+      });
+      expect(manifest.acceptance.map(({ id }) => id)).toEqual(
+        countAcceptanceIds(markdown),
+      );
+      expect(manifest.acceptance).toHaveLength(EXPECTED_ACCEPTANCE_COUNT);
+      expect(
+        manifest.acceptance.every(
+          ({ evidence_files, status }) =>
+            status === 'NOT VERIFIED' && evidence_files.length === 0,
+        ),
+      ).toBe(true);
+      expect(`${firstManifestText}\n${firstSummary}`).not.toContain(
+        secretFromEnvironment,
+      );
+
+      for (const directory of [
+        'db',
+        'network',
+        'real-device',
+        'reports',
+        'screenshots',
+        'traces',
+        'videos',
+      ]) {
+        expect(
+          (
+            await stat(join(firstOutput, options.runId, directory))
+          ).isDirectory(),
+        ).toBe(true);
+      }
+    } finally {
+      if (previousSecret === undefined) {
+        delete process.env.COLORPLAY_ACCEPTANCE_TEST_SECRET;
+      } else {
+        process.env.COLORPLAY_ACCEPTANCE_TEST_SECRET = previousSecret;
+      }
+      await rm(temporaryRoot, { force: true, recursive: true });
+    }
+  });
+
+  it('rejects credentials and email addresses from recorded metadata', async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'colorplay-evidence-'));
+    const emailAddress = ['student', 'example.invalid'].join(
+      String.fromCharCode(64),
+    );
+
+    try {
+      await expect(
+        createEvidenceRun({
+          appUrl: 'http://127.0.0.1:4173',
+          commands: [
+            {
+              command: `contact ${emailAddress}; authorization: REDACTED`,
+              duration_ms: 1,
+              exit_code: 0,
+              report_path: null,
+              started_at: '2026-07-14T00:00:00.000Z',
+            },
+          ],
+          dirtyWorktree: true,
+          gitSha: '0123456789abcdef0123456789abcdef01234567',
+          outputRoot: temporaryRoot,
+          runId: 'unsafe-run',
+          startedAt: '2026-07-14T00:00:00.000Z',
+          supabaseEnvironment: 'local',
+        }),
+      ).rejects.toThrow('EVIDENCE_SENSITIVE_VALUE');
+    } finally {
+      await rm(temporaryRoot, { force: true, recursive: true });
+    }
+  });
+
+  it('rejects environment-variable values from recorded commands', async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'colorplay-evidence-'));
+
+    try {
+      await expect(
+        createEvidenceRun({
+          appUrl: 'http://127.0.0.1:4173',
+          commands: [
+            {
+              command: `PUBLIC_SETTING=${randomUUID()} pnpm test`,
+              duration_ms: 1,
+              exit_code: 0,
+              report_path: null,
+              started_at: '2026-07-14T00:00:00.000Z',
+            },
+          ],
+          dirtyWorktree: true,
+          gitSha: '0123456789abcdef0123456789abcdef01234567',
+          outputRoot: temporaryRoot,
+          runId: 'unsafe-environment-run',
+          startedAt: '2026-07-14T00:00:00.000Z',
+          supabaseEnvironment: 'local',
+        }),
+      ).rejects.toThrow('EVIDENCE_SENSITIVE_VALUE');
+    } finally {
+      await rm(temporaryRoot, { force: true, recursive: true });
+    }
+  });
+
+  it('rejects flag credentials and sensitive values from every free-text metadata field', async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'colorplay-evidence-'));
+    const sensitiveEmail = ['person', 'invalid.example'].join(
+      String.fromCharCode(64),
+    );
+    const startedAt = '2026-07-14T00:00:00.000Z';
+    const baseOptions: CreateEvidenceRunOptions = {
+      appUrl: 'https://preview.invalid/app',
+      dirtyWorktree: true,
+      gitSha: '0123456789abcdef0123456789abcdef01234567',
+      outputRoot: temporaryRoot,
+      runId: 'sensitive-field-contract',
+      startedAt,
+      supabaseEnvironment: 'staging',
+    };
+    type EvidenceCommand = NonNullable<
+      CreateEvidenceRunOptions['commands']
+    >[number];
+    type KnownFailure = NonNullable<
+      CreateEvidenceRunOptions['knownFailures']
+    >[number];
+    type RealDevice = NonNullable<
+      CreateEvidenceRunOptions['realDevices']
+    >[number];
+    const command = (value: string): EvidenceCommand => ({
+      command: value,
+      duration_ms: 1,
+      exit_code: 0,
+      report_path: null,
+      started_at: startedAt,
+    });
+    const knownFailure: KnownFailure = {
+      description: 'description',
+      id_or_area: 'area',
+      owner: 'owner',
+      target: 'target',
+      user_impact: 'impact',
+      workaround: 'workaround',
+    };
+    const realDevice: RealDevice = {
+      android_back_tested: false,
+      browser: 'browser',
+      css_viewport: '375x812',
+      device_model: 'device',
+      evidence_files: ['real-device/evidence.png'],
+      evidence_id: 'device-1',
+      keyboard_visible: false,
+      orientation: 'portrait',
+      os: 'os',
+    };
+    const cases: {
+      label: string;
+      options: Partial<CreateEvidenceRunOptions>;
+    }[] = [
+      {
+        label: 'password flag',
+        options: { commands: [command('pnpm test --password REDACTED')] },
+      },
+      {
+        label: 'token flag',
+        options: { commands: [command('pnpm test --access-token REDACTED')] },
+      },
+      {
+        label: 'secret flag',
+        options: { commands: [command('pnpm test --client-secret REDACTED')] },
+      },
+      {
+        label: 'app url',
+        options: {
+          appUrl: `https://preview.invalid/path/${sensitiveEmail}`,
+        },
+      },
+      {
+        label: 'browser name',
+        options: { browser: { name: sensitiveEmail, version: '1' } },
+      },
+      {
+        label: 'browser version',
+        options: { browser: { name: 'browser', version: sensitiveEmail } },
+      },
+      {
+        label: 'command report path',
+        options: {
+          commands: [
+            {
+              ...command('pnpm test'),
+              report_path: `reports/${sensitiveEmail}.txt`,
+            },
+          ],
+        },
+      },
+      {
+        label: 'migration version',
+        options: { migrationVersion: sensitiveEmail },
+      },
+      {
+        label: 'seed version',
+        options: { seedVersion: sensitiveEmail },
+      },
+      {
+        label: 'os name',
+        options: { os: { name: sensitiveEmail, version: '1' } },
+      },
+      {
+        label: 'os version',
+        options: { os: { name: 'os', version: sensitiveEmail } },
+      },
+      {
+        label: 'real device evidence path',
+        options: {
+          realDevices: [
+            {
+              ...realDevice,
+              evidence_files: [`real-device/${sensitiveEmail}.png`],
+            },
+          ],
+        },
+      },
+    ];
+    for (const field of Object.keys(knownFailure) as (keyof KnownFailure)[]) {
+      cases.push({
+        label: `known failure ${field}`,
+        options: {
+          knownFailures: [{ ...knownFailure, [field]: sensitiveEmail }],
+        },
+      });
+    }
+    for (const field of [
+      'browser',
+      'css_viewport',
+      'device_model',
+      'evidence_id',
+      'orientation',
+      'os',
+    ] as const satisfies readonly (keyof RealDevice)[]) {
+      cases.push({
+        label: `real device ${field}`,
+        options: {
+          realDevices: [{ ...realDevice, [field]: sensitiveEmail }],
+        },
+      });
+    }
+    const acceptedUnsafeCases: string[] = [];
+
+    try {
+      for (const testCase of cases) {
+        try {
+          await createEvidenceRun({ ...baseOptions, ...testCase.options });
+          acceptedUnsafeCases.push(testCase.label);
+        } catch (error) {
+          if (
+            !(error instanceof Error) ||
+            error.message !== 'EVIDENCE_SENSITIVE_VALUE'
+          ) {
+            acceptedUnsafeCases.push(`${testCase.label}:wrong-error`);
+          }
+        }
+      }
+
+      expect(acceptedUnsafeCases).toEqual([]);
+
+      const validRun = await createEvidenceRun({
+        ...baseOptions,
+        appUrl: 'https://preview.invalid/app/login',
+        runId: 'valid-public-url',
+      });
+      expect(validRun.manifest.app_url).toBe(
+        'https://preview.invalid/app/login',
+      );
+    } finally {
+      await rm(temporaryRoot, { force: true, recursive: true });
+    }
+  });
+
+  it('rejects generic credential syntax and raw secret prefixes before writing artifacts', async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'colorplay-evidence-'));
+    const startedAt = '2026-07-14T00:00:00.000Z';
+    const rawSecret = `sb_secret_${randomUUID().replaceAll('-', '')}`;
+    const baseOptions: CreateEvidenceRunOptions = {
+      appUrl: 'https://preview.invalid/app',
+      dirtyWorktree: true,
+      gitSha: '0123456789abcdef0123456789abcdef01234567',
+      outputRoot: temporaryRoot,
+      runId: 'credential-probe',
+      startedAt,
+      supabaseEnvironment: 'staging',
+    };
+    const command = (value: string) => ({
+      command: value,
+      duration_ms: 1,
+      exit_code: 0,
+      report_path: null,
+      started_at: startedAt,
+    });
+    const cases: {
+      label: string;
+      options: Partial<CreateEvidenceRunOptions>;
+      runId: string;
+    }[] = [
+      {
+        label: 'db password spaced flag',
+        options: {
+          commands: [command('pnpm test --db-password review-value')],
+        },
+        runId: 'credential-db-password-spaced',
+      },
+      {
+        label: 'jwt secret spaced flag',
+        options: { commands: [command('pnpm test --jwt-secret review-value')] },
+        runId: 'credential-jwt-secret-spaced',
+      },
+      {
+        label: 'service role key spaced flag',
+        options: {
+          commands: [command('pnpm test --service-role-key review-value')],
+        },
+        runId: 'credential-service-role-key-spaced',
+      },
+      {
+        label: 'secret key spaced flag',
+        options: { commands: [command('pnpm test --secret-key review-value')] },
+        runId: 'credential-secret-key-spaced',
+      },
+      {
+        label: 'credential equals flag',
+        options: {
+          commands: [command('pnpm test --db-password=review-value')],
+        },
+        runId: 'credential-equals-flag',
+      },
+      {
+        label: 'credential colon flag',
+        options: { commands: [command('pnpm test --jwt-secret:review-value')] },
+        runId: 'credential-colon-flag',
+      },
+      {
+        label: 'lowercase credential assignment',
+        options: { commands: [command('db_password=review-value pnpm test')] },
+        runId: 'credential-lowercase-assignment',
+      },
+      {
+        label: 'mixed case credential assignment',
+        options: {
+          commands: [command('Db_Auth_Token:review-value pnpm test')],
+        },
+        runId: 'credential-mixed-case-assignment',
+      },
+      {
+        label: 'credential term with prefixes and suffixes',
+        options: {
+          commands: [
+            command('pnpm test --preview-service-role-key-file review-value'),
+          ],
+        },
+        runId: 'credential-prefixed-suffixed-flag',
+      },
+      {
+        label: 'raw secret prefix',
+        options: { browser: { name: rawSecret, version: '1' } },
+        runId: 'credential-raw-prefix',
+      },
+      {
+        label: 'secret token as migration version',
+        options: { migrationVersion: rawSecret },
+        runId: 'credential-migration-token',
+      },
+      {
+        label: 'credential-bearing nested object key',
+        options: {
+          browser: {
+            name: 'chromium',
+            telemetryCredential: 'review-value',
+            version: '1',
+          } as unknown as NonNullable<CreateEvidenceRunOptions['browser']>,
+        },
+        runId: 'credential-nested-object-key',
+      },
+    ];
+    const unsafeOutcomes: string[] = [];
+
+    try {
+      for (const testCase of cases) {
+        let rejectedAsSensitive = false;
+        try {
+          await createEvidenceRun({
+            ...baseOptions,
+            ...testCase.options,
+            runId: testCase.runId,
+          });
+        } catch (error) {
+          rejectedAsSensitive =
+            error instanceof Error &&
+            error.message === 'EVIDENCE_SENSITIVE_VALUE';
+        }
+
+        const artifactWritten = await pathExists(
+          join(temporaryRoot, testCase.runId),
+        );
+        if (!rejectedAsSensitive || artifactWritten) {
+          unsafeOutcomes.push(
+            `${testCase.label}:${rejectedAsSensitive ? 'artifact-written' : 'accepted-or-wrong-error'}`,
+          );
+        }
+      }
+
+      expect(unsafeOutcomes).toEqual([]);
+    } finally {
+      await rm(temporaryRoot, { force: true, recursive: true });
+    }
+  });
+
+  it('validates evidence scalar schemas before writing artifacts', async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'colorplay-evidence-'));
+    const startedAt = '2026-07-14T00:00:00.000Z';
+    const baseOptions: CreateEvidenceRunOptions = {
+      appUrl: 'https://preview.invalid/app',
+      dirtyWorktree: true,
+      gitSha: '0123456789abcdef0123456789abcdef01234567',
+      outputRoot: temporaryRoot,
+      runId: 'scalar-probe',
+      startedAt,
+      supabaseEnvironment: 'staging',
+    };
+    const cases: {
+      label: string;
+      options: Partial<CreateEvidenceRunOptions>;
+      runId: string;
+    }[] = [
+      {
+        label: 'migration version object',
+        options: {
+          migrationVersion: {
+            password: 'review-value',
+          } as unknown as string,
+        },
+        runId: 'scalar-migration-object',
+      },
+      {
+        label: 'seed version object',
+        options: {
+          seedVersion: { password: 'review-value' } as unknown as string,
+        },
+        runId: 'scalar-seed-object',
+      },
+      {
+        label: 'environment object',
+        options: {
+          supabaseEnvironment: {
+            password: 'review-value',
+          } as unknown as 'local',
+        },
+        runId: 'scalar-environment-object',
+      },
+      {
+        label: 'migration version outside allowlist',
+        options: { migrationVersion: 'v1/review' },
+        runId: 'scalar-migration-format',
+      },
+      {
+        label: 'seed version outside allowlist',
+        options: { seedVersion: 'seed version 2' },
+        runId: 'scalar-seed-format',
+      },
+      {
+        label: 'environment outside allowlist',
+        options: {
+          supabaseEnvironment: 'production' as unknown as 'local',
+        },
+        runId: 'scalar-environment-value',
+      },
+    ];
+    const unsafeOutcomes: string[] = [];
+
+    try {
+      for (const testCase of cases) {
+        let rejected = false;
+        try {
+          await createEvidenceRun({
+            ...baseOptions,
+            ...testCase.options,
+            runId: testCase.runId,
+          });
+        } catch (error) {
+          rejected =
+            error instanceof Error && error.message.startsWith('EVIDENCE_');
+        }
+
+        const artifactWritten = await pathExists(
+          join(temporaryRoot, testCase.runId),
+        );
+        if (!rejected || artifactWritten) {
+          unsafeOutcomes.push(
+            `${testCase.label}:${rejected ? 'artifact-written' : 'accepted'}`,
+          );
+        }
+      }
+      expect(unsafeOutcomes).toEqual([]);
+
+      const validRun = await createEvidenceRun({
+        ...baseOptions,
+        appUrl: 'https://preview.invalid/app/login',
+        migrationVersion: '202607140001_add_profiles',
+        runId: 'valid-scalar-identifiers',
+        seedVersion: 'seed-v2.1',
+      });
+      expect(validRun.manifest).toMatchObject({
+        app_url: 'https://preview.invalid/app/login',
+        migration_version: '202607140001_add_profiles',
+        seed_version: 'seed-v2.1',
+        supabase_environment: 'staging',
+      });
+      expect(
+        await readFile(join(validRun.runDirectory, 'summary.md'), 'utf8'),
+      ).toContain('| Migration version | 202607140001_add_profiles |');
+    } finally {
+      await rm(temporaryRoot, { force: true, recursive: true });
+    }
+  });
+
+  it('honors explicit deterministic CLI inputs and sanitized metadata', async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'colorplay-evidence-'));
+    const outputRoot = join(temporaryRoot, 'artifacts');
+    const metadataPath = join(temporaryRoot, 'metadata.json');
+    const runId = 'task-6-cli-deterministic';
+    const gitSha = 'abcdef0123456789abcdef0123456789abcdef01';
+    const startedAt = '2026-07-14T01:00:00.000Z';
+    const finishedAt = '2026-07-14T01:03:00.000Z';
+    const args = [
+      'scripts/acceptance/create-run.mjs',
+      '--environment',
+      'local',
+      '--app-url',
+      'http://127.0.0.1:4173',
+      '--output-root',
+      outputRoot,
+      '--run-id',
+      runId,
+      '--started-at',
+      startedAt,
+      '--finished-at',
+      finishedAt,
+      '--git-sha',
+      gitSha,
+      '--dirty-worktree',
+      'false',
+      '--metadata-file',
+      metadataPath,
+    ];
+
+    await writeFile(
+      metadataPath,
+      `${JSON.stringify({
+        browser: { name: 'webkit', version: '18.5' },
+        commands: [
+          {
+            command: 'pnpm typecheck',
+            duration_ms: 800,
+            exit_code: 0,
+            report_path: 'reports/typecheck.txt',
+            started_at: startedAt,
+          },
+        ],
+        known_failures: [],
+        migration_version: null,
+        os: { name: 'darwin', version: '25.5.0' },
+        real_devices: [],
+        seed_version: null,
+        viewports: [{ height: 900, width: 1440 }],
+      })}\n`,
+      'utf8',
+    );
+
+    try {
+      const firstRun = await execFileAsync(process.execPath, args, {
+        cwd: process.cwd(),
+      });
+      const firstManifest = await readFile(
+        join(outputRoot, runId, 'manifest.json'),
+        'utf8',
+      );
+      const secondRun = await execFileAsync(process.execPath, args, {
+        cwd: process.cwd(),
+      });
+      const secondManifest = await readFile(
+        join(outputRoot, runId, 'manifest.json'),
+        'utf8',
+      );
+
+      expect(firstRun.stderr).toBe('');
+      expect(secondRun.stderr).toBe('');
+      expect(firstRun.stdout.trim()).toBe(join(outputRoot, runId));
+      expect(secondRun.stdout).toBe(firstRun.stdout);
+      expect(secondManifest).toBe(firstManifest);
+      expect(JSON.parse(firstManifest)).toMatchObject({
+        browser: { name: 'webkit', version: '18.5' },
+        dirty_worktree: false,
+        finished_at: finishedAt,
+        git_sha: gitSha,
+        run_id: runId,
+        started_at: startedAt,
+        viewports: [{ height: 900, width: 1440 }],
+      });
+    } finally {
+      await rm(temporaryRoot, { force: true, recursive: true });
+    }
+  });
+
+  it('uses standard Playwright projects and fixtures for browser evidence', async () => {
+    const foundationSpec = await readFile(
+      'tests/e2e/foundation-routes.spec.ts',
+      'utf8',
+    );
+
+    expect(playwrightConfig.projects?.map(({ name }) => name)).toEqual([
+      'chromium',
+      'firefox',
+      'webkit',
+    ]);
+    expect(playwrightConfig.outputDir).toMatch(
+      /^artifacts\/acceptance\/playwright-local-[A-Za-z0-9._-]+\/playwright$/u,
+    );
+    expect(playwrightConfig.use).toMatchObject({
+      screenshot: 'only-on-failure',
+      trace: 'on-first-retry',
+      video: 'retain-on-failure',
+    });
+    for (const project of playwrightConfig.projects?.filter(
+      ({ name }) => name !== 'chromium',
+    ) ?? []) {
+      expect(project.testIgnore).toEqual([
+        /\.visual\.spec\.ts$/u,
+        /auth-guards\.spec\.ts$/u,
+        /login\.spec\.ts$/u,
+      ]);
+    }
+    expect(foundationSpec).not.toContain('chromium.launch');
+    expect(foundationSpec).not.toContain(
+      "const baseUrl = 'http://127.0.0.1:4173'",
+    );
+    expect(foundationSpec).toMatch(/async\s*\(\{\s*page,?\s*\}\)\s*=>/u);
+  });
+
+  it('exposes honest package and shell entry points for evidence runs', async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'colorplay-evidence-'));
+    const packageManifest = JSON.parse(
+      await readFile('package.json', 'utf8'),
+    ) as { scripts: Record<string, string> };
+
+    try {
+      expect(packageManifest.scripts).toMatchObject({
+        acceptance: 'bash scripts/acceptance/run-phase-1.sh',
+        'acceptance:count':
+          'node scripts/verify/count-acceptance.mjs acceptance/ACCEPTANCE_CRITERIA.md',
+        'acceptance:create-run': 'node scripts/acceptance/create-run.mjs',
+      });
+
+      const countResult = await execFileAsync(
+        process.execPath,
+        [
+          'scripts/verify/count-acceptance.mjs',
+          'acceptance/ACCEPTANCE_CRITERIA.md',
+        ],
+        { cwd: process.cwd() },
+      );
+      expect(countResult.stderr).toBe('');
+      expect(countResult.stdout).toBe(`${String(EXPECTED_ACCEPTANCE_COUNT)}\n`);
+
+      const runId = 'task-6-shell-deterministic';
+      const runResult = await execFileAsync(
+        'bash',
+        [
+          'scripts/acceptance/run.sh',
+          '--environment',
+          'local',
+          '--app-url',
+          'http://127.0.0.1:4173',
+          '--output-root',
+          temporaryRoot,
+          '--run-id',
+          runId,
+          '--started-at',
+          '2026-07-14T02:00:00.000Z',
+          '--git-sha',
+          'abcdef0123456789abcdef0123456789abcdef01',
+          '--dirty-worktree',
+          'false',
+        ],
+        { cwd: process.cwd() },
+      );
+
+      expect(runResult.stderr).toBe('');
+      expect(runResult.stdout.trim()).toBe(join(temporaryRoot, runId));
+      expect(
+        JSON.parse(
+          await readFile(join(temporaryRoot, runId, 'manifest.json'), 'utf8'),
+        ),
+      ).toMatchObject({
+        release_decision: 'BLOCKED',
+        status_counts: { 'NOT VERIFIED': EXPECTED_ACCEPTANCE_COUNT, PASS: 0 },
+      });
+    } finally {
+      await rm(temporaryRoot, { force: true, recursive: true });
+    }
+  });
+
+  it(
+    'retains the first acceptance run video and trace after a second run',
+    { timeout: 60_000 },
+    async () => {
+      const temporaryRoot = await mkdtemp(
+        join(tmpdir(), 'colorplay-retention-'),
+      );
+      const viteServer = spawn(
+        process.execPath,
+        [
+          join(process.cwd(), 'node_modules/vite/bin/vite.js'),
+          '--host',
+          '127.0.0.1',
+          '--port',
+          '4173',
+        ],
+        {
+          cwd: process.cwd(),
+          env: {
+            ...process.env,
+            VITE_SUPABASE_ANON_KEY: 'synthetic-anon-test-key-12345',
+            VITE_SUPABASE_URL: 'http://127.0.0.1:54321',
+          },
+          stdio: 'ignore',
+        },
+      );
+      const runAcceptance = async (runId: string, startedAt: string) => {
+        await execFileAsync(
+          'bash',
+          [
+            'scripts/acceptance/run.sh',
+            '--environment',
+            'local',
+            '--app-url',
+            'http://127.0.0.1:4173',
+            '--output-root',
+            temporaryRoot,
+            '--run-id',
+            runId,
+            '--started-at',
+            startedAt,
+            '--git-sha',
+            'abcdef0123456789abcdef0123456789abcdef01',
+            '--dirty-worktree',
+            'false',
+            '--',
+            'tests/e2e/foundation-routes.spec.ts',
+            '--project=chromium',
+          ],
+          { cwd: process.cwd(), maxBuffer: 2 * 1024 * 1024 },
+        );
+      };
+
+      try {
+        await waitForServer(viteServer, 'http://127.0.0.1:4173');
+        await runAcceptance('retained-run-one', '2026-07-14T03:00:00.000Z');
+        const firstRunFiles = await listFilesRecursively(
+          join(temporaryRoot, 'retained-run-one', 'playwright'),
+        );
+        const firstVideo = firstRunFiles.find((path) =>
+          path.endsWith('video.webm'),
+        );
+        const firstTrace = firstRunFiles.find((path) =>
+          path.endsWith('trace.zip'),
+        );
+        expect(firstVideo).toBeDefined();
+        expect(firstTrace).toBeDefined();
+
+        await runAcceptance('retained-run-two', '2026-07-14T03:05:00.000Z');
+
+        expect((await stat(firstVideo ?? '')).isFile()).toBe(true);
+        expect((await stat(firstTrace ?? '')).isFile()).toBe(true);
+        const secondRunFiles = await listFilesRecursively(
+          join(temporaryRoot, 'retained-run-two', 'playwright'),
+        );
+        expect(secondRunFiles.some((path) => path.endsWith('video.webm'))).toBe(
+          true,
+        );
+        expect(secondRunFiles.some((path) => path.endsWith('trace.zip'))).toBe(
+          true,
+        );
+      } finally {
+        await stopServer(viteServer);
+        await rm(temporaryRoot, { force: true, recursive: true });
+      }
+    },
+  );
+});

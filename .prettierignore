@@ -1,0 +1,15 @@
+.superpowers/
+acceptance/EVIDENCE_TEMPLATE.md
+docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md
+docs/superpowers/specs/2026-07-13-colorplay-platform-foundation-design.md
+DOCUMENT_MANIFEST.json
+legacy/colorplay-original.html
+legacy/colorplay-prototype.html
+pnpm-lock.yaml
+src/types/database.ts
+spec/02-system-architecture.md
+spec/03-data-model-and-rls.md
+spec/05-game-mechanics.md
+spec/07-ui-visual-system.md
+spec/11-reference-standards.md
+spec/README.md

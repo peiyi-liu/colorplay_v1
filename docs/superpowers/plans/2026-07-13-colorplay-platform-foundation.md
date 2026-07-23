@@ -1,6 +1,10 @@
 # ColorPlay Platform Foundation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use **superpowers:executing-plans**（單一 session）。不再使用 subagent-driven-development。Steps use checkbox (`- [ ]`) syntax for tracking.
+
+> **2026-07-14 改道（ADR 0001，優先於一切）：** Task 1–15 已完成，本計畫**就此收尾**。Task 16（Phase 1 重型驗收 gate、GitHub/Vercel 接線）延後至 release 前，不要執行 `pnpm acceptance`。下一步直接改跑 `docs/superpowers/plans/2026-07-14-playable-vertical-slice.md`。
+
+> **2026-07-14 修訂（優先於本計畫所有 task 內的流程步驟）：** `AGENTS.md` 已改為分級工作流程。本計畫各 task 中的「產生截圖證據目錄」「headed run」「三 viewport 截圖」「evidence manifest」等步驟一律**延後到 Task 16 的 Phase 驗收一次完成**，日常 task 只需 lint、typecheck 與受影響的 unit/integration/E2E 測試通過。每個 task 最多一輪 review；review diff 排除 lockfile、`legacy/**`、`artifacts/**`、snapshot 圖檔。Subagent 不重讀整個 spec 套件，以 task brief 為準。真實行動裝置證據（AC-UI-010/012）由人工提供，代理標記「待人工裝置驗證」即可。
 
 **Goal:** Deliver a reproducible React/Vite foundation in Phase 1A and a real Supabase local Email/password plus own-profile/RLS vertical slice in Phase 1B, with evidence, CI, GitHub, and Vercel deployment contracts.
 
@@ -176,9 +180,9 @@ git commit -m "chore: preserve ColorPlay governance baseline"
 **Files:**
 - Create: `package.json`, `pnpm-lock.yaml`, `index.html`
 - Create: `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`
-- Create: `vite.config.ts`, `vitest.config.ts`, `eslint.config.js`, `.prettierrc.json`
+- Create: `vite.config.ts`, `vitest.config.ts`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`
 - Create: `src/main.tsx`, `src/app/foundation-root.tsx`, `src/test/setup.ts`
-- Create: `tests/contracts/toolchain.test.sh`, `src/app/foundation-root.test.tsx`
+- Create: `tests/contracts/toolchain.test.sh`, `src/app/foundation-root.test.tsx`, `src/main.test.tsx`
 
 **Interfaces:**
 - Consumes: `GovernanceBaseline` from Task 1.
@@ -268,18 +272,26 @@ createRoot(root).render(
 );
 ```
 
-Set `tsconfig.app.json` compiler options to `strict: true`, `noUncheckedIndexedAccess: true`, `exactOptionalPropertyTypes: true`, `noImplicitOverride: true`, and `useUnknownInCatchVariables: true`. Configure Vitest with `jsdom`, `src/test/setup.ts`, and V8 coverage. Configure ESLint flat config for TypeScript type-aware rules and React hooks. Configure Vite with React and Tailwind Vite plugins.
+Set `tsconfig.app.json` compiler options to `strict: true`, `noUncheckedIndexedAccess: true`, `exactOptionalPropertyTypes: true`, `noImplicitOverride: true`, and `useUnknownInCatchVariables: true`. Configure Vitest with `jsdom`, `src/test/setup.ts`, and V8 coverage that includes every production `src/**/*.{ts,tsx}` file while excluding only test, test-support, and type-declaration files. Before adding `src/main.test.tsx`, run `pnpm test:coverage` and confirm the thresholds fail because `src/main.tsx` is uncovered; then add the minimal real bootstrap tests for the successful mount and missing-root error. Configure ESLint flat config for TypeScript type-aware rules and React hooks. Configure Vite with React and Tailwind Vite plugins.
+
+Add a narrowly scoped `.prettierignore` that lists only immutable or out-of-scope governance/spec/legacy inputs and generated `pnpm-lock.yaml`. It must not exclude Task 2 application, configuration, or test source.
 
 - [ ] **Step 4: Run all task verification**
 
-Run: `bash tests/contracts/toolchain.test.sh && pnpm typecheck && pnpm lint && pnpm test -- src/app/foundation-root.test.tsx && npm run build`
+Run:
 
-Expected: all exit 0; Vitest reports 1 passed test; Vite creates `dist/index.html`; no npm lockfile is created.
+```bash
+pnpm format:check
+pnpm test:coverage
+bash tests/contracts/toolchain.test.sh && pnpm typecheck && pnpm lint && pnpm test -- src/app/foundation-root.test.tsx && npm run build
+```
+
+Expected: all exit 0; Prettier checks every in-scope Task 2 file; coverage includes the application bootstrap and meets the configured thresholds; Vitest reports 2 passed files and 3 passed tests; Vite creates `dist/index.html`; no npm lockfile is created.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add package.json pnpm-lock.yaml index.html tsconfig*.json vite.config.ts vitest.config.ts eslint.config.js .prettierrc.json src tests/contracts/toolchain.test.sh
+git add package.json pnpm-lock.yaml index.html tsconfig*.json vite.config.ts vitest.config.ts eslint.config.js .prettierrc.json .prettierignore src src/main.test.tsx tests/contracts/toolchain.test.sh
 git commit -m "build: establish strict React Vite toolchain"
 ```
 
@@ -288,10 +300,12 @@ git commit -m "build: establish strict React Vite toolchain"
 **Reviewer gate:** Accept only if invalid/missing browser configuration fails safely and one typed client is created without exposing server credentials.
 
 **Files:**
+
 - Create: `.env.example`
 - Create: `src/lib/config/public-env.ts`, `src/lib/config/public-env.test.ts`
 - Create: `src/lib/supabase/browser-client.ts`, `src/lib/supabase/browser-client.test.ts`
 - Create: `src/types/database.ts`
+- Modify: `package.json`, `pnpm-lock.yaml`, `tsconfig.app.json` (Supabase declaration compatibility support)
 
 **Interfaces:**
 - Consumes: `import.meta.env` fields `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
@@ -309,14 +323,14 @@ import { parsePublicEnv } from './public-env';
 
 describe('parsePublicEnv', () => {
   it('accepts exactly the browser-safe Supabase inputs', () => {
-    expect(parsePublicEnv({ VITE_SUPABASE_URL: 'http://127.0.0.1:54321', VITE_SUPABASE_ANON_KEY: 'anon-test-key' })).toEqual({
+    expect(parsePublicEnv({ VITE_SUPABASE_URL: 'http://127.0.0.1:54321', VITE_SUPABASE_ANON_KEY: 'synthetic-anon-test-key-12345' })).toEqual({
       supabaseUrl: 'http://127.0.0.1:54321',
-      supabaseAnonKey: 'anon-test-key',
+      supabaseAnonKey: 'synthetic-anon-test-key-12345',
     });
   });
 
   it('rejects a missing URL with a stable configuration code', () => {
-    expect(() => parsePublicEnv({ VITE_SUPABASE_ANON_KEY: 'anon-test-key' })).toThrow('APP_CONFIG_INVALID');
+    expect(() => parsePublicEnv({ VITE_SUPABASE_ANON_KEY: 'synthetic-anon-test-key-12345' })).toThrow('APP_CONFIG_INVALID');
   });
 });
 ```
@@ -327,7 +341,7 @@ import { getBrowserSupabaseClient } from './browser-client';
 
 describe('getBrowserSupabaseClient', () => {
   it('returns the same client for repeated calls', () => {
-    const env = { supabaseUrl: 'http://127.0.0.1:54321', supabaseAnonKey: 'anon-test-key' } as const;
+    const env = { supabaseUrl: 'http://127.0.0.1:54321', supabaseAnonKey: 'synthetic-anon-test-key-12345' } as const;
     expect(getBrowserSupabaseClient(env)).toBe(getBrowserSupabaseClient(env));
   });
 });
@@ -347,7 +361,7 @@ Expected: FAIL with module resolution errors for `public-env` and `browser-clien
 import { z } from 'zod';
 
 const publicEnvSchema = z.object({
-  VITE_SUPABASE_URL: z.string().url(),
+  VITE_SUPABASE_URL: z.url(),
   VITE_SUPABASE_ANON_KEY: z.string().min(20),
 });
 
@@ -363,7 +377,7 @@ export function parsePublicEnv(input: Record<string, unknown>): PublicEnv {
 `src/types/database.ts` accurately represents the Phase 1A schema with no application tables:
 
 ```ts
-export type Database = {
+export interface Database {
   public: {
     Tables: Record<never, never>;
     Views: Record<never, never>;
@@ -371,7 +385,7 @@ export type Database = {
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
   };
-};
+}
 ```
 
 `src/lib/supabase/browser-client.ts`:
@@ -396,6 +410,8 @@ VITE_SUPABASE_URL=http://127.0.0.1:54321
 VITE_SUPABASE_ANON_KEY=local-public-anon-key-from-supabase-status
 ```
 
+The first `npm run build` after importing `@supabase/supabase-js@2.110.2` was an additional build RED. TypeScript 6.0.3 traversed Supabase Auth's declarations and rejected `PublicKeyCredentialFuture<T>.toJSON()` against TypeScript 6's newer DOM declaration. Supabase Storage and Phoenix declarations also reference `Buffer` and `NodeJS`, while the application compiler exposed only `vite/client` ambient types. The minimal compatibility fix is to pin TypeScript exactly to 5.8.3, the compiler line used by the installed Supabase package, and expose the already-installed `node` types alongside `vite/client`. Do not enable `skipLibCheck`, disable strict flags, or suppress diagnostics.
+
 - [ ] **Step 4: Verify tests, build, and bundle scan**
 
 Run:
@@ -404,14 +420,22 @@ Run:
 pnpm test -- src/lib/config/public-env.test.ts src/lib/supabase/browser-client.test.ts
 npm run build
 ! rg -n 'service_role|SUPABASE_SERVICE_ROLE_KEY|DATABASE_URL|JWT_SECRET|db_password' dist
+pnpm format:check
+pnpm typecheck
+pnpm lint
+pnpm test:coverage
+pnpm install --frozen-lockfile
+pnpm peers check
+pnpm audit --audit-level high
+bash tests/contracts/toolchain.test.sh && pnpm typecheck && pnpm lint && pnpm test -- src/app/foundation-root.test.tsx && npm run build
 ```
 
-Expected: 3 tests pass; build exits 0; forbidden-pattern search returns no matches.
+Expected: the 3 new assertions pass; all discovered tests and quality gates exit 0; coverage remains above the unchanged thresholds; the build exits 0 without ignored diagnostics; the frozen install, peer check, audit, and original Task 2 GREEN gate pass; the forbidden-pattern search returns no matches.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add .env.example src/lib src/types
+git add .env.example package.json pnpm-lock.yaml tsconfig.app.json docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md src/lib src/types
 git commit -m "feat: validate public Supabase configuration"
 ```
 
@@ -423,9 +447,12 @@ git commit -m "feat: validate public Supabase configuration"
 - Create: `src/app/providers/app-providers.tsx`, `src/app/providers/query-client.ts`
 - Create: `src/app/router/create-app-router.tsx`, `src/app/router/route-page.tsx`
 - Create: `src/app/boundaries/root-error-boundary.tsx`, `src/app/boundaries/route-loading.tsx`
-- Create: `src/app/router/create-app-router.test.tsx`, `src/app/boundaries/root-error-boundary.test.tsx`
-- Create: `tests/e2e/foundation-routes.spec.ts`
-- Modify: `src/main.tsx`
+- Create: `src/app/providers/app-providers.test.tsx`
+- Create: `src/app/router/create-app-router.test.tsx`, `src/app/router/route-page.test.tsx`
+- Create: `src/app/boundaries/root-error-boundary.test.tsx`, `src/app/boundaries/route-loading.test.tsx`
+- Create: `tests/e2e/foundation-routes.spec.ts`, `tests/e2e/task-4-evidence-reporter.ts`
+- Create: `playwright.config.ts`
+- Modify: `index.html`, `src/main.tsx`, `src/main.test.tsx`, `src/test/setup.ts`, `vitest.config.ts`, `tsconfig.node.json`
 
 **Interfaces:**
 - Consumes: `getBrowserSupabaseClient(PublicEnv)` from Task 3.
@@ -436,6 +463,13 @@ git commit -m "feat: validate public Supabase configuration"
 **Evidence:** headed screenshots for `/login`, `/app`, `/unauthorized`, and unknown route; trace at `artifacts/acceptance/phase-1a-task-04/traces/app-router.zip`.
 
 - [ ] **Step 1: Write failing route and error tests**
+
+Also write focused component tests for `AppProviders`/the shared QueryClient,
+`RoutePage`, `RouteLoading`, stable error correlation IDs, and retry behavior.
+Write `tests/e2e/foundation-routes.spec.ts` before the browser harness exists; it
+must visit `/login`, `/app`, `/unauthorized`, and a missing route, reject console
+errors, unhandled page errors, failed requests, and HTTP 4xx/5xx responses, and request
+four screenshots plus the Task 4 trace.
 
 ```tsx
 import { RouterProvider } from 'react-router-dom';
@@ -469,9 +503,16 @@ describe('RootErrorBoundary', () => {
 
 - [ ] **Step 2: Verify tests fail**
 
-Run: `pnpm test -- src/app/router/create-app-router.test.tsx src/app/boundaries/root-error-boundary.test.tsx`
+Run:
 
-Expected: FAIL because router and boundary modules do not exist.
+```bash
+pnpm test -- src/app/router/create-app-router.test.tsx src/app/boundaries/root-error-boundary.test.tsx
+pnpm playwright test tests/e2e/foundation-routes.spec.ts --headed --trace on
+```
+
+Expected: unit FAIL because router and boundary modules do not exist. Before
+`playwright.config.ts` and the Chromium runtime exist, the E2E command must also
+record an honest harness RED.
 
 - [ ] **Step 3: Implement minimal route composition**
 
@@ -507,12 +548,19 @@ export function createAppRouter() {
 
 Implement `AppProviders` with one exported QueryClient and `QueryClientProvider`. Implement `RootErrorBoundary` with an internally generated `crypto.randomUUID()` correlation ID and a visible retry button calling `reset`. Update `main.tsx` to render `AppProviders` plus `RouterProvider`.
 
+Create the minimum Task 4 Playwright harness in `playwright.config.ts`: one
+Chromium project, `baseURL` `http://127.0.0.1:4173`, a Vite `webServer` launched
+through the existing `dev` script on port 4173, and task-scoped output under
+`artifacts/acceptance/phase-1a-task-04`. Exclude Playwright specs from Vitest
+discovery and install only the Chromium browser runtime through the project CLI.
+
 - [ ] **Step 4: Verify unit and headed browser behavior**
 
 Run:
 
 ```bash
 pnpm test -- src/app/router/create-app-router.test.tsx src/app/boundaries/root-error-boundary.test.tsx
+pnpm exec vitest run src/app/providers/app-providers.test.tsx src/app/router/route-page.test.tsx src/app/boundaries/route-loading.test.tsx
 pnpm playwright test tests/e2e/foundation-routes.spec.ts --headed --trace on
 ```
 
@@ -521,7 +569,7 @@ Expected: component tests pass; Chromium visits all four routes with no console 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/main.tsx src/app tests/e2e/foundation-routes.spec.ts
+git add index.html playwright.config.ts vitest.config.ts tsconfig.node.json src/main.tsx src/main.test.tsx src/test/setup.ts src/app tests/e2e docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md
 git commit -m "feat: add application providers and route boundaries"
 ```
 
@@ -532,9 +580,11 @@ git commit -m "feat: add application providers and route boundaries"
 **Files:**
 - Create: `src/styles/tokens.css`, `src/styles/globals.css`
 - Create: `src/app/shell/app-shell.tsx`, `src/app/shell/app-shell.test.tsx`
-- Modify: `src/app/router/create-app-router.tsx`, `src/main.tsx`
+- Modify: `src/app/router/create-app-router.tsx`, `src/app/router/create-app-router.test.tsx`, `src/app/router/route-page.tsx`, `src/app/router/route-page.test.tsx`, `src/main.tsx`
 - Create: `tests/e2e/app-shell.visual.spec.ts`, `tests/e2e/accessibility.spec.ts`
 - Create after reviewer-approved first render: `tests/e2e/app-shell.visual.spec.ts-snapshots/**`
+- Modify: `playwright.config.ts` to add the Task 5 `PLAYWRIGHT_VIDEO=on` recording contract; Task 6 preserves and expands this configuration.
+- Modify: `docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md` to replace unsupported Playwright video flags plan-wide.
 - Modify: `package.json`, `pnpm-lock.yaml`
 
 **Interfaces:**
@@ -589,6 +639,8 @@ Run: `pnpm add -D @axe-core/playwright@latest lighthouse@latest`
 
 `src/styles/tokens.css` defines exactly the approved color, spacing, radius, typography, and focus variables from `spec/07-ui-visual-system.md` section 2. `src/styles/globals.css` applies border-box sizing, 16px mobile body text, WCAG-safe colors, `min-height: 100dvh`, and reduced-motion rules.
 
+Extend `playwright.config.ts` so `PLAYWRIGHT_VIDEO=on` selects Playwright video mode `on`; otherwise retain video on failure. Do not use the unsupported `--video on` CLI flag. Task 6 owns the later cross-browser acceptance-harness expansion and must preserve this Task 5 recording contract.
+
 `src/app/shell/app-shell.tsx`:
 
 ```tsx
@@ -617,7 +669,7 @@ Run:
 
 ```bash
 pnpm test -- src/app/shell/app-shell.test.tsx
-pnpm playwright test tests/e2e/app-shell.visual.spec.ts tests/e2e/accessibility.spec.ts --headed --trace on --video on
+PLAYWRIGHT_VIDEO=on pnpm playwright test tests/e2e/app-shell.visual.spec.ts tests/e2e/accessibility.spec.ts --headed --trace on
 ```
 
 Expected: unit test passes; all four viewport checks pass; tagged controls are at least 44x44; visual diff ratio is at most 0.01; axe has zero critical/serious findings; screenshots show no horizontal overflow, one clear route action, visible focus, flat 2D styling, and no continuous decorative animation.
@@ -625,7 +677,7 @@ Expected: unit test passes; all four viewport checks pass; tagged controls are a
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/styles src/app/shell src/app/router/create-app-router.tsx src/main.tsx tests/e2e/app-shell.visual.spec.ts tests/e2e/accessibility.spec.ts tests/e2e/app-shell.visual.spec.ts-snapshots package.json pnpm-lock.yaml
+git add docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md playwright.config.ts src/styles src/app/shell src/app/router/create-app-router.tsx src/app/router/create-app-router.test.tsx src/app/router/route-page.tsx src/app/router/route-page.test.tsx src/main.tsx tests/e2e/app-shell.visual.spec.ts tests/e2e/accessibility.spec.ts tests/e2e/app-shell.visual.spec.ts-snapshots package.json pnpm-lock.yaml
 git commit -m "feat: add accessible flat-design application shell"
 ```
 
@@ -634,18 +686,23 @@ git commit -m "feat: add accessible flat-design application shell"
 **Reviewer gate:** Accept only if a run manifest is deterministic, records Git/browser/viewport/commands, counts all 84 normative IDs, and refuses to label absent evidence as passed.
 
 **Files:**
-- Create: `playwright.config.ts`
+- Modify/expand: `playwright.config.ts`, preserving Task 5's environment-controlled video policy while adding the Task 6 acceptance harness.
 - Create: `scripts/acceptance/create-run.mjs`, `scripts/acceptance/run.sh`
 - Create: `scripts/verify/count-acceptance.mjs`
+- Create/support: `scripts/acceptance/create-run.d.mts`, `scripts/verify/count-acceptance.d.mts`, providing strict types for the JavaScript CLI modules consumed by the TypeScript contract.
 - Create: `tests/contracts/evidence-manifest.test.ts`
 - Create: `artifacts/acceptance/.gitkeep`
+- Modify/support: `tests/e2e/foundation-routes.spec.ts`, migrating Task 4 browser coverage to standard Playwright fixtures, projects, and configured `baseURL`.
+- Modify/support: `.prettierignore`, excluding the Git-ignored `.superpowers/` coordination workspace from repository formatting gates.
+- Modify/support: `tsconfig.node.json`, bringing the new TypeScript contract test under strict project-service checks.
 - Modify: `DOCUMENT_MANIFEST.json`, `package.json`
+- Modify/documentation-only: `docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md`, recording the support file above and the canonical testing-spec path.
 
 **Interfaces:**
 - Consumes: Git SHA, dirty state, browser metadata, commands, normative acceptance Markdown.
 - Produces: `EvidenceManifest` JSON with `run_id`, `git_sha`, `dirty_worktree`, `app_url`, `supabase_environment`, browser/OS, command exit codes, acceptance entries, timestamps, known failures, and real-device inventory.
 
-**Specs / acceptance:** `spec/08-testing-and-evidence.md` sections 5-14; `acceptance/EVIDENCE_TEMPLATE.md`; `AC-UI-001`, `AC-UI-002`, `AC-UI-005`, `AC-UI-007` checkpoints; `AC-DOC-001`, `AC-DOC-003`.
+**Specs / acceptance (canonical path):** `spec/08-testing-and-evidence.md` sections 5-14; `acceptance/EVIDENCE_TEMPLATE.md`; `AC-UI-001`, `AC-UI-002`, `AC-UI-005`, `AC-UI-007` checkpoints; `AC-DOC-001`, `AC-DOC-003`. Do not create a filename alias for the testing spec.
 
 **Evidence:** a dry run at `artifacts/acceptance/<run-id>/manifest.json` and `summary.md`, with 84 `NOT VERIFIED` entries before feature evidence is attached.
 
@@ -685,7 +742,7 @@ export function countAcceptanceIds(markdown) {
 }
 ```
 
-`create-run.mjs` reads the 84 IDs, creates the standard directory tree, writes every ID with status `NOT VERIFIED`, and records the current SHA/dirty state without including environment values. Update both acceptance counts in `DOCUMENT_MANIFEST.json` to 84. Configure Playwright with screenshot on failure, trace on first retry plus explicit acceptance trace mode, video retention for acceptance flows, and projects for Chromium, Firefox, and WebKit.
+`create-run.mjs` reads the 84 IDs, creates the standard directory tree, writes every ID with status `NOT VERIFIED`, and records the current SHA/dirty state without including environment values. Update both acceptance counts in `DOCUMENT_MANIFEST.json` to 84. Expand the Task 5 Playwright configuration while preserving its `PLAYWRIGHT_VIDEO=on` behavior, adding screenshot on failure, trace on first retry plus explicit acceptance trace mode, video retention for acceptance flows, and projects for Chromium, Firefox, and WebKit.
 
 - [ ] **Step 4: Verify pass and artifact honesty**
 
@@ -696,7 +753,7 @@ Expected: tests pass; a run directory contains 84 entries, all initially `NOT VE
 - [ ] **Step 5: Commit**
 
 ```bash
-git add playwright.config.ts scripts/acceptance scripts/verify tests/contracts/evidence-manifest.test.ts artifacts/acceptance/.gitkeep DOCUMENT_MANIFEST.json package.json pnpm-lock.yaml
+git add docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md playwright.config.ts scripts/acceptance scripts/verify tests/contracts/evidence-manifest.test.ts tests/e2e/foundation-routes.spec.ts artifacts/acceptance/.gitkeep DOCUMENT_MANIFEST.json package.json pnpm-lock.yaml
 git commit -m "test: add honest acceptance evidence harness"
 ```
 
@@ -709,11 +766,11 @@ git commit -m "test: add honest acceptance evidence harness"
 - Create: `scripts/test-db.sh`
 - Create: `tests/contracts/supabase-local.test.sh`
 - Create: `tests/integration/supabase-health.test.ts`
-- Modify: `package.json`, `pnpm-lock.yaml`
+- Modify: `package.json`, `pnpm-lock.yaml`, `tsconfig.node.json`
 
 **Interfaces:**
 - Consumes: Docker, Supabase CLI, ports defined in `supabase/config.toml`.
-- Produces: `LocalSupabaseRuntime` at API `http://127.0.0.1:54321` and DB `54322`; real Auth health endpoint; `pnpm test:db` command.
+- Produces: `LocalSupabaseRuntime` at API `http://127.0.0.1:54321` and DB `54322`; real Auth health endpoint; `pnpm test:db` command; typed integration-test ownership through the Node TypeScript project.
 
 **Specs / acceptance:** `spec/02-system-architecture.md` section 6; `spec/03-data-model-and-rls.md` section 9; `spec/08-testing-and-evidence.md` section 2; `spec/11-reference-standards.md` Supabase local-development rule; `AC-ENV-002` stack/reset checkpoint.
 
@@ -776,7 +833,13 @@ git commit -m "build: add real Supabase local runtime"
 - Create: `vercel.json`
 - Create: `tests/contracts/delivery-config.test.ts`
 - Create: `tests/e2e/spa-deep-link.spec.ts`
+- Create/generated: `tests/e2e/app-shell.visual.spec.ts-snapshots/login-320x812-chromium-linux.png`
+- Create/generated: `tests/e2e/app-shell.visual.spec.ts-snapshots/login-375x812-chromium-linux.png`
+- Create/generated: `tests/e2e/app-shell.visual.spec.ts-snapshots/login-768x1024-chromium-linux.png`
+- Create/generated: `tests/e2e/app-shell.visual.spec.ts-snapshots/login-1440x900-chromium-linux.png`
 - Create: `docs/deployment/vercel.md`
+- Modify/support: `playwright.config.ts`, using an explicit `PLAYWRIGHT_BASE_URL` without starting the development server so deep-link evidence can target the built preview.
+- Modify/support: `tests/contracts/evidence-manifest.test.ts`, starting one explicit local Vite server for retention integration runs that intentionally supply an external base URL.
 
 **Interfaces:**
 - Consumes: pnpm scripts, Supabase local config, Vite build, GitHub commit.
@@ -866,6 +929,9 @@ git commit -m "ci: enforce foundation and Vercel delivery contracts"
 - Create: `supabase/tests/001_profiles_rls.test.sql`
 - Replace generated: `src/types/database.ts`
 - Create: `tests/contracts/database-types.test.sh`
+- Modify: `scripts/test-db.sh` (keep the Task 7 runtime smoke phase-neutral and run permanent pgTAP files)
+- Modify: `eslint.config.js`, `.prettierignore` (exclude only the exact generated DB type file from authored-source style gates)
+- Modify: `.gitattributes` (accept the pinned generator's terminal whitespace for only the generated DB type file)
 
 **Interfaces:**
 - Consumes: Supabase local runtime from Task 7; authenticated JWT `sub`.
@@ -896,7 +962,7 @@ select is((select count(*)::integer from public.profiles), 1, 'student reads onl
 select lives_ok($$update public.profiles set display_name = '學生一' where id = '10000000-0000-0000-0000-000000000001'$$, 'student updates own display name');
 select throws_ok($$update public.profiles set role = 'teacher' where id = '10000000-0000-0000-0000-000000000001'$$, '42501', null, 'student cannot update role');
 select is((select count(*)::integer from public.profiles where id = '10000000-0000-0000-0000-000000000002'), 0, 'student cannot read another profile');
-select is((with changed as (update public.profiles set display_name = '越權' where id = '10000000-0000-0000-0000-000000000002' returning 1) select count(*)::integer from changed), 0, 'student cannot update another profile');
+select results_eq($$with changed as (update public.profiles set display_name = '越權' where id = '10000000-0000-0000-0000-000000000002' returning 1) select count(*)::integer from changed$$, array[0], 'student cannot update another profile');
 select throws_ok($$delete from public.profiles where id = '10000000-0000-0000-0000-000000000002'$$, '42501', null, 'student has no delete privilege');
 select * from finish();
 rollback;
@@ -952,7 +1018,16 @@ set search_path = pg_catalog, public
 as $$
 begin
   insert into public.profiles (id, display_name)
-  values (new.id, coalesce(nullif(split_part(new.email, '@', 1), ''), 'ColorPlay 使用者'));
+  values (
+    new.id,
+    coalesce(
+      nullif(
+        left(btrim(split_part(coalesce(new.email, ''), '@', 1)), 30),
+        ''
+      ),
+      'ColorPlay 使用者'
+    )
+  );
   return new;
 end;
 $$;
@@ -973,16 +1048,22 @@ pnpm exec supabase db reset --local
 pnpm exec supabase gen types typescript --local > src/types/database.ts
 ```
 
+Update the Task 7 runtime smoke to assert PostgreSQL availability instead of the superseded Phase 1A zero-product-table state, and make `pnpm test:db` run both permanent pgTAP files and the ephemeral runtime smoke.
+
+Keep `src/types/database.ts` compiled by TypeScript and protected by the exact CLI diff contract, but exclude that exact generated file from ESLint and Prettier authored-source style checks. Do not ignore the surrounding directory or suppress individual rules.
+
+Configure Git whitespace handling for only `src/types/database.ts` so the pinned generator's terminal blank line remains byte-exact without making the repository whitespace gate red.
+
 - [ ] **Step 4: Verify migration, RLS, and generated types**
 
-Run: `pnpm exec supabase test db | tee artifacts/acceptance/phase-1b-task-09/db/profiles-rls.tap && bash tests/contracts/database-types.test.sh && pnpm typecheck`
+Run: `pnpm exec supabase test db | tee artifacts/acceptance/phase-1b-task-09/db/profiles-rls.tap && bash tests/contracts/database-types.test.sh && pnpm typecheck && pnpm test:db`
 
-Expected: pgTAP reports 8 successful assertions; cross-user read/update, delete, and role escalation attempts fail as specified; generated type diff is empty; typecheck exits 0.
+Expected: pgTAP reports 8 successful assertions; cross-user read/update, delete, and role escalation attempts fail as specified; generated type diff is empty; typecheck and the phase-neutral Task 7 database runtime gate exit 0.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add supabase/migrations/20260713000100_create_profiles.sql supabase/tests/001_profiles_rls.test.sql src/types/database.ts tests/contracts/database-types.test.sh
+git add .gitattributes .prettierignore docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md eslint.config.js scripts/test-db.sh supabase/migrations/20260713000100_create_profiles.sql supabase/tests/001_profiles_rls.test.sql src/types/database.ts tests/contracts/database-types.test.sh
 git commit -m "feat: add profile schema and RLS"
 ```
 
@@ -991,20 +1072,48 @@ git commit -m "feat: add profile schema and RLS"
 **Reviewer gate:** Accept only if local reset plus seed produces teacher, two students, and outsider accounts that can sign in through GoTrue, with no service key committed or logged.
 
 **Files:**
+- Create: `tests/contracts/test-boundaries.test.ts`
+- Create: `tests/contracts/local-environment-parser.test.sh`
 - Create: `tests/fixtures/users.ts`
+- Create: `scripts/supabase/load-local-environment.sh`
+- Create: `scripts/supabase/local-environment.ts`
 - Create: `scripts/supabase/seed-auth.ts`
 - Create: `tests/integration/auth-fixtures.test.ts`
-- Modify: `scripts/test-db.sh`, `package.json`, `pnpm-lock.yaml`
+- Create: `vitest.integration.config.ts`
+- Create: `supabase/migrations/20260714000100_grant_controlled_profile_role_admin.sql`
+- Create: `supabase/tests/002_profiles_service_role.test.sql`
+- Create: `pnpm-workspace.yaml`
+- Modify: `vitest.config.ts`, `tsconfig.node.json`, `scripts/test-db.sh`, `tests/contracts/supabase-local.test.sh`, `package.json`, `pnpm-lock.yaml`, `.github/workflows/ci.yml`, `docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md`
 
 **Interfaces:**
-- Consumes: local `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and process-only `SUPABASE_SERVICE_ROLE_KEY` obtained from `supabase status -o env`.
-- Produces: `TEST_USERS` with four local-only credential records; idempotent `seedAuthUsers(): Promise<void>`; real Auth sessions.
+- Consumes: local `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and process-only `SUPABASE_SERVICE_ROLE_KEY` read from `supabase status -o env` through a strict `API_URL` / `ANON_KEY` / `SERVICE_ROLE_KEY` allowlist without echoing, redirecting, or persisting status output.
+- Produces: `TEST_USERS` with the four approved local-only email/password records; separate `TEST_USER_ROLES` with teacher=`teacher` and the remaining fixtures=`student`; validated `LocalAdminEnvironment`; idempotent `seedAuthUsers(): Promise<void>`; real Auth sessions and own-profile RLS reads.
+- Test boundary: `pnpm test` and `pnpm test:coverage` use `vitest.config.ts` and exclude `tests/integration/**` plus `**/*.integration.test.*`; `pnpm test:integration` uses Node-only `vitest.integration.config.ts` and includes both `tests/integration/**/*.test.ts` and future `src/**/*.integration.test.{ts,tsx}`.
+- Credential parser boundary: source-only `load_local_supabase_environment` accepts status lines on stdin, atomically sets three validated caller-shell variables in memory, and produces no stdout, stderr, or files. `scripts/test-db.sh` sources and calls it once through process substitution so assignments remain in the caller shell.
 
 **Specs / acceptance:** `spec/03-data-model-and-rls.md` section 9; `spec/04-security-and-privacy.md` sections 2-3; `AC-ENV-002` identity-seed checkpoint, `AC-AUTH-001`, `AC-ENV-004`.
 
 **Evidence:** sanitized account count and sign-in HTTP status report; bundle scan proving fixture passwords and service key are absent from `dist`.
 
-- [ ] **Step 1: Write the failing real-Auth integration test**
+- [ ] **Step 1: Write and prove the failing test-boundary contract**
+
+`tests/contracts/test-boundaries.test.ts` asserts the unit/coverage commands contain no one-off integration exclusion, the unit config excludes both integration patterns, the explicit integration script/config exists with Node environment and both include patterns, and `tsconfig.node.json` owns scripts, fixtures, and both Vitest configs.
+
+Run: `pnpm exec vitest run tests/contracts/test-boundaries.test.ts`
+
+Expected before the config change: two failures because the health test is special-cased in the unit scripts and the separate integration command/config do not exist.
+
+- [ ] **Step 2: Establish separate unit and real-stack Vitest ownership**
+
+Create `vitest.integration.config.ts`; generalize `vitest.config.ts` exclusions; set `test`, `test:coverage`, and `test:integration` to the exact commands in the interface; add all authored support files to `tsconfig.node.json`; and clarify the workflow step names so coverage is visibly stack-independent while `test:db` owns seeded real-stack integration.
+
+Install exactly `tsx@4.23.0`. Record only the required `esbuild: true` lifecycle-script approval in `pnpm-workspace.yaml`; do not approve package scripts broadly.
+
+Run: `pnpm exec vitest run tests/contracts/test-boundaries.test.ts`
+
+Expected: two passing tests.
+
+- [ ] **Step 3: Write the failing real-Auth integration test**
 
 ```ts
 import { createClient } from '@supabase/supabase-js';
@@ -1012,13 +1121,27 @@ import { describe, expect, it } from 'vitest';
 import { TEST_USERS } from '../fixtures/users';
 
 describe('local Auth fixtures', () => {
-  it.each(Object.values(TEST_USERS))('signs in $email through real GoTrue', async ({ email, password }) => {
-    const client = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!);
-    const { data, error } = await client.auth.signInWithPassword({ email, password });
-    expect(error).toBeNull();
-    expect(data.user?.email).toBe(email);
-    await client.auth.signOut();
-  });
+  it.each(['teacher', 'studentOne', 'studentTwo', 'outsider'] as const)(
+    'signs in fixture %s through real GoTrue and reads its own role',
+    async (label) => {
+      const { url, anonKey } = readValidatedLocalPublicEnvironment(process.env);
+      const client = createClient<Database>(url, anonKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+        global: { fetch: createStatusTrackingFetch(label) },
+      });
+      const { data, error } = await client.auth.signInWithPassword(TEST_USERS[label]);
+      expect(error === null).toBe(true);
+      expect(data.user !== null).toBe(true);
+      const { data: profile, error: profileError } = await client
+        .from('profiles')
+        .select('id, role')
+        .single();
+      expect(profileError === null).toBe(true);
+      expect(profile?.id).toBe(data.user?.id);
+      expect(profile?.role).toBe(TEST_USER_ROLES[label]);
+      await client.auth.signOut();
+    },
+  );
 });
 ```
 
@@ -1033,62 +1156,89 @@ export const TEST_USERS = {
 } as const;
 ```
 
-- [ ] **Step 2: Verify sign-in fails before seeding**
+Keep the role mapping separate so the approved `TEST_USERS` shape remains exact. Test titles and evidence use fixture labels only; evidence records count, HTTP status, and verified-role count without email, password, user ID, key, or environment value.
 
-Run: `pnpm test -- tests/integration/auth-fixtures.test.ts`
+- [ ] **Step 4: Verify four real GoTrue sign-ins fail before seeding**
 
-Expected: four failures with invalid login credentials or missing environment inputs.
+Reset the real local database, load only the validated public URL/anon values in process without printing status output, then run:
 
-- [ ] **Step 3: Implement idempotent Admin API seeding**
+`pnpm exec vitest run --config vitest.integration.config.ts tests/integration/auth-fixtures.test.ts`
 
-Install a TypeScript script runner with `pnpm add -D tsx@latest`. Then create `scripts/supabase/seed-auth.ts` exactly as follows:
+Expected: exactly four label-only failures at the sign-in assertion after real GoTrue returns invalid credentials. Missing-environment failures do not qualify.
 
-```ts
-import { createClient } from '@supabase/supabase-js';
-import { TEST_USERS } from '../../tests/fixtures/users';
+- [ ] **Step 5: Implement controlled and idempotent Admin API seeding**
 
-export async function seedAuthUsers() {
-  const url = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceRoleKey) throw new Error('LOCAL_ADMIN_ENV_MISSING');
-  const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data: listed, error: listError } = await admin.auth.admin.listUsers({ page: 1, perPage: 100 });
-  if (listError) throw listError;
-  const existing = new Set(listed.users.map((user) => user.email));
-  for (const fixture of Object.values(TEST_USERS)) {
-    if (existing.has(fixture.email)) continue;
-    const { error } = await admin.auth.admin.createUser({ email: fixture.email, password: fixture.password, email_confirm: true });
-    if (error) throw error;
-  }
-}
+`readLocalAdminEnvironment(process.env)` accepts only the exact local API URL and a non-empty key with the expected safe character set. The Admin client disables session persistence/refresh. It paginates `listUsers`, creates a missing fixture or resets an existing fixture's local password/confirmation, then updates the trigger-created `profiles.role` to `TEST_USER_ROLES[label]`. All failures throw stable codes only; never serialize the client, request options, response payload, or key.
 
-await seedAuthUsers();
-```
+Add a pgTAP RED proving `service_role` initially lacks the profile privileges required by the Admin client. Add the narrow migration granting table `SELECT` and column-only `UPDATE(role)`; keep direct profile `INSERT` and `DELETE` denied. The migration changes grants only, so the pinned generated `Database` type must remain byte-exact.
 
-Update `scripts/test-db.sh` to evaluate local status variables in-process, call the seed script, unset the service key, and then run DB/integration tests. Never redirect `supabase status -o env` to evidence.
+Update `scripts/test-db.sh` to strictly parse only the three allowed status assignments in process, validate the exact local URL and safe key characters, seed, immediately unset the service value on success or EXIT, run permanent/runtime pgTAP, and finally run `pnpm test:integration`. Never echo, redirect, log, or save `supabase status -o env`.
 
-- [ ] **Step 4: Verify real sign-in and bundle secrecy**
+- [ ] **Step 6: Verify first seed, second seed, roles, and bundle secrecy**
 
 Run:
 
 ```bash
-pnpm exec supabase db reset --local
-eval "$(pnpm exec supabase status -o env | rg '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=' | sed 's/^API_URL=/SUPABASE_URL=/;s/^ANON_KEY=/SUPABASE_ANON_KEY=/;s/^SERVICE_ROLE_KEY=/SUPABASE_SERVICE_ROLE_KEY=/')"
-export SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY
-pnpm exec tsx scripts/supabase/seed-auth.ts
-unset SUPABASE_SERVICE_ROLE_KEY
-pnpm test -- tests/integration/auth-fixtures.test.ts
+pnpm test:db
+bash tests/contracts/supabase-local.test.sh
+bash tests/contracts/database-types.test.sh
 npm run build
 ! rg -n 'LocalOnly-|service_role|SUPABASE_SERVICE_ROLE_KEY' dist
 ```
 
-Expected: four real sign-ins pass; profiles are created by the trigger; bundle scan returns no matches.
+Repeat the same strict allowlist -> seed -> immediate service-value unset sequence once without resetting. Query count/role aggregates only (never identity values). Expected after each seed: exactly four matching Auth identities, four trigger-created profiles, three students, one teacher, four successful anon sign-ins, four own-profile RLS role matches, and no duplicate row. The generated-type diff and bundle scan are empty.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add tests/fixtures/users.ts scripts/supabase/seed-auth.ts tests/integration/auth-fixtures.test.ts scripts/test-db.sh package.json pnpm-lock.yaml
+git add .github/workflows/ci.yml docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md package.json pnpm-lock.yaml pnpm-workspace.yaml scripts/supabase scripts/test-db.sh supabase/migrations/20260714000100_grant_controlled_profile_role_admin.sql supabase/tests/002_profiles_service_role.test.sql tests/contracts/test-boundaries.test.ts tests/fixtures/users.ts tests/integration/auth-fixtures.test.ts tsconfig.node.json vitest.config.ts vitest.integration.config.ts
 git commit -m "test: seed real local Auth identities"
+```
+
+- [ ] **Step 8: Resolve the reviewer-found Supabase boundary-contract contradiction**
+
+Preserve the pre-fix RED by running `bash -x tests/contracts/supabase-local.test.sh`. Expected: exit 1 at the legacy assertion requiring normal unit/coverage scripts to special-case only the GoTrue health file.
+
+Update—not remove—the shell contract so it asserts the separate test architecture from Step 2, permanent database tests, explicit real-stack integration, artifact scanning, real start/reset/GoTrue health, and the strict status allowlist from Step 5. The contract must reject skip APIs, `--ignore-health-check`, `eval`, shell tracing, status/key output or persistence, non-local API URLs, invalid/duplicate key assignments, and any source ordering that retains the service credential through the integration runner.
+
+Run:
+
+```bash
+bash tests/contracts/supabase-local.test.sh
+pnpm exec vitest run tests/contracts/test-boundaries.test.ts
+pnpm test:db
+```
+
+Expected: all three commands pass against the real local stack. Stop Supabase and repeat unit, coverage, static, build, and bundle scans before committing.
+
+```bash
+git add tests/contracts/supabase-local.test.sh docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md
+git commit -m "test: update Supabase boundary contract"
+```
+
+- [ ] **Step 9: Replace brittle parser-source assertions with dynamic isolation proof**
+
+Create `tests/contracts/local-environment-parser.test.sh` before extracting the runtime parser. Run it first and preserve the expected RED: exit 1 because the sourceable helper does not exist and the parser is still embedded in the database runner.
+
+Extract only `load_local_supabase_environment` into `scripts/supabase/load-local-environment.sh`. It reads stdin directly, validates into local temporary values, and commits caller variables only after exact URL, key-character, and one-of-each count checks pass. It must emit no output and create no file. The runtime sources it once and invokes it through input redirection from the single suppressed status process; pipelines, subshell assignment, `eval`, tracing, logging, and persistence remain forbidden.
+
+The parser contract runs valid, duplicate, unquoted, invalid-URL, invalid-key, and unallowlisted-only synthetic cases from fresh temporary working directories. It captures stdout/stderr outside those directories, proves both are empty, proves no file appears, checks exact valid in-memory assignment, and checks invalid cases fail without committing values. A trap removes every synthetic capture on success or failure. A small static guard rejects output commands and redirections inside the helper; dynamic behavior is authoritative.
+
+Update `tests/contracts/supabase-local.test.sh` to run this parser contract, require exactly one runtime source/call, require the single suppressed process-substitution status feed, and retain service-unset ordering, GoTrue, reset, integration, database, and secret-scan gates. Remove variable-name/count regexes that duplicate the dynamic parser test.
+
+Run the parser RED/GREEN cycle, then:
+
+```bash
+bash tests/contracts/supabase-local.test.sh
+pnpm exec vitest run tests/contracts/test-boundaries.test.ts
+pnpm test:db
+```
+
+Stop Supabase and repeat unit, coverage, static, build, and bundle scans before committing.
+
+```bash
+git add scripts/supabase/load-local-environment.sh scripts/test-db.sh tests/contracts/local-environment-parser.test.sh tests/contracts/supabase-local.test.sh docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md
+git commit -m "test: prove local credential parser silence"
 ```
 
 ### Task 11: Implement the typed Auth repository against Supabase
@@ -1098,7 +1248,12 @@ git commit -m "test: seed real local Auth identities"
 **Files:**
 - Create: `src/features/auth/types.ts`
 - Create: `src/features/auth/api/auth-repository.ts`
+- Create: `src/features/auth/api/auth-repository.test.ts`
 - Create: `src/features/auth/api/auth-repository.integration.test.ts`
+- Create: `scripts/verify/task-11-network-evidence.mjs`
+- Create: `scripts/verify/task-11-network-evidence.d.mts`
+- Create: `tests/contracts/task-11-network-evidence.test.ts`
+- Modify: `scripts/test-db.sh`
 
 **Interfaces:**
 - Consumes: `SupabaseClient<Database>` and Email/password credentials.
@@ -1136,7 +1291,7 @@ describe('AuthRepository with local Supabase', () => {
 
 - [ ] **Step 2: Verify the red state**
 
-Run: `pnpm test -- src/features/auth/api/auth-repository.integration.test.ts`
+Run: `pnpm test:integration src/features/auth/api/auth-repository.integration.test.ts`
 
 Expected: FAIL because `createAuthRepository` does not exist.
 
@@ -1162,9 +1317,31 @@ Implement `createAuthRepository(client)` with Supabase `signInWithPassword`, `si
 
 - [ ] **Step 4: Verify real integration**
 
-Run: `pnpm test -- src/features/auth/api/auth-repository.integration.test.ts && pnpm typecheck`
+Run the authoritative safe reset/seed path first:
 
-Expected: both integration tests pass against local GoTrue and typecheck exits 0.
+```bash
+pnpm test:db
+pnpm typecheck
+```
+
+For a focused diagnostic rerun while the local stack is healthy, load only the
+validated local environment in-process and immediately remove the service role
+before Vitest starts:
+
+```bash
+set -euo pipefail
+source scripts/supabase/load-local-environment.sh
+trap 'unset SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY' EXIT
+load_local_supabase_environment \
+  < <(pnpm exec supabase status -o env 2>/dev/null)
+unset SUPABASE_SERVICE_ROLE_KEY
+export SUPABASE_URL SUPABASE_ANON_KEY
+pnpm test:integration src/features/auth/api/auth-repository.integration.test.ts
+```
+
+Expected: Task 10 and Task 11 integration tests pass against local GoTrue, the
+focused Auth repository tests pass without exposing local credentials, and
+typecheck exits 0.
 
 - [ ] **Step 5: Commit**
 
@@ -1183,8 +1360,14 @@ git commit -m "feat: add typed Supabase Auth repository"
 - Create: `src/features/auth/components/require-auth.tsx`
 - Create: `src/features/auth/components/require-auth.test.tsx`
 - Create: `src/features/auth/components/auth-bootstrap.tsx`
-- Modify: `src/app/providers/app-providers.tsx`, `src/app/router/create-app-router.tsx`
+- Modify: `src/app/boundaries/route-loading.tsx`
+- Modify: `src/app/providers/app-providers.tsx`, `src/app/providers/app-providers.test.tsx`
+- Modify: `src/app/router/create-app-router.tsx`, `src/app/router/create-app-router.test.tsx`
+- Modify: `src/main.test.tsx`
 - Create: `tests/e2e/auth-guards.spec.ts`
+- Modify: `tests/e2e/foundation-routes.spec.ts`, `tests/e2e/spa-deep-link.spec.ts`, `tests/e2e/app-shell.visual.spec.ts`
+- Modify: `playwright.config.ts`, `tests/contracts/evidence-manifest.test.ts`
+- Modify: `docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md`
 
 **Interfaces:**
 - Consumes: `AuthRepository`, `AuthSession` from Task 11.
@@ -1192,7 +1375,7 @@ git commit -m "feat: add typed Supabase Auth repository"
 
 **Specs / acceptance:** `spec/01-user-roles-and-flows.md` sections 1, 5-6; `spec/04-security-and-privacy.md` section 4; `AC-AUTH-001`, `AC-AUTH-003`, `AC-UI-006` Auth loading state.
 
-**Evidence:** headed route sequence showing loading -> login redirect with the intended `/app` path retained; authenticated protected-outlet screenshot; trace.
+**Evidence:** Per the 2026-07-14 revision, Task 12 uses unit tests plus a headless real-local-Supabase route sequence only. Screenshots, video, and traces are deferred to the Task 16 phase acceptance run.
 
 - [ ] **Step 1: Write failing context and guard tests**
 
@@ -1229,18 +1412,23 @@ Expected: FAIL because Auth context and guards do not exist.
 
 - [ ] **Step 3: Implement minimal bootstrap and guards**
 
-`RequireAuth` returns `RouteLoading` while status is loading, redirects anonymous users with `state={{ from: location }}`, and renders `<Outlet />` when authenticated. `AuthBootstrap` subscribes once, cleans up the listener, and never stores formal profile or role state in localStorage.
+`RequireAuth` returns a nested-landmark-safe `RouteLoading` while status is loading, redirects anonymous users with `replace` and the exact pathname/search/hash in `state.from`, and renders `<Outlet />` when authenticated. `AuthBootstrap` subscribes once per mount, cleans up the listener, preserves a newer Auth event against a late initial-session result, contains safe bootstrap failures, gives the initial loading state a short visible window, updates sign-in/sign-out state only after repository success, and never stores formal profile or role state in localStorage.
 
-- [ ] **Step 4: Verify unit and headed guard sequences**
+- [ ] **Step 4: Verify unit and headless guard sequences**
 
-Run: `pnpm test -- src/features/auth/context src/features/auth/components && pnpm playwright test tests/e2e/auth-guards.spec.ts --headed --trace on`
+Run the focused unit and real-stack headless browser gates:
 
-Expected: context/guard tests pass; headed sequence shows visible loading, preserves the intended route, renders the outlet after real local sign-in, and has no console error.
+```bash
+pnpm test -- src/features/auth/context src/features/auth/components
+pnpm playwright test tests/e2e/auth-guards.spec.ts
+```
+
+Expected: context/guard tests pass; the headless browser sequence shows visible loading, preserves the intended route, renders the outlet after real local sign-in, and has no browser errors. Existing public SPA fallback tests expect anonymous `/app` to resolve to `/login` without weakening direct-response checks.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/features/auth/context src/features/auth/components src/app/providers/app-providers.tsx src/app/router/create-app-router.tsx tests/e2e/auth-guards.spec.ts
+git add src/features/auth/context src/features/auth/components src/app/boundaries/route-loading.tsx src/app/providers src/app/router src/main.test.tsx tests/e2e/auth-guards.spec.ts tests/e2e/foundation-routes.spec.ts tests/e2e/spa-deep-link.spec.ts tests/e2e/app-shell.visual.spec.ts tests/contracts/evidence-manifest.test.ts playwright.config.ts docs/superpowers/plans/2026-07-13-colorplay-platform-foundation.md .superpowers/sdd/task-12-report.md
 git commit -m "feat: add Auth bootstrap and route guards"
 ```
 
@@ -1302,7 +1490,7 @@ Run:
 
 ```bash
 pnpm test -- src/features/auth/pages/login-page.test.tsx
-pnpm playwright test tests/e2e/login.spec.ts --headed --trace on --video on
+PLAYWRIGHT_VIDEO=on pnpm playwright test tests/e2e/login.spec.ts --headed --trace on
 ```
 
 Expected: component tests pass; invalid credentials keep the user anonymous with a Traditional Chinese error; one valid local student flow uses only Tab/Shift+Tab/Enter and navigates to `/app`; one request is sent while pending; focus remains visible; three viewport screenshots, video, and trace are written.
@@ -1366,7 +1554,7 @@ describe('ProfileRepository with RLS', () => {
 
 - [ ] **Step 2: Verify the red state**
 
-Run: `pnpm test -- src/features/profile/api/profile-repository.integration.test.ts src/features/auth/components/require-role.test.tsx`
+Run: `pnpm test:integration src/features/profile/api/profile-repository.integration.test.ts && pnpm test -- src/features/auth/components/require-role.test.tsx`
 
 Expected: FAIL because the profile repository, signed-in helper, and `RequireRole` do not exist.
 
@@ -1388,10 +1576,11 @@ Implement `getMyProfile()` using `.from('profiles').select('id, display_name, ro
 Run:
 
 ```bash
-pnpm test -- src/features/profile/api/profile-repository.integration.test.ts src/features/profile/components/profile-summary.test.tsx
+pnpm test:integration src/features/profile/api/profile-repository.integration.test.ts
+pnpm test -- src/features/profile/components/profile-summary.test.tsx
 pnpm test -- src/features/auth/components/require-role.test.tsx
 pnpm exec supabase test db
-pnpm playwright test tests/e2e/profile-vertical-slice.spec.ts --headed --trace on --video on
+PLAYWRIGHT_VIDEO=on pnpm playwright test tests/e2e/profile-vertical-slice.spec.ts --headed --trace on
 ```
 
 Expected: own profile renders from PostgreSQL; cross-user SELECT and permitted-column UPDATE each affect zero rows, DELETE is rejected by grants, and role update is rejected; student UI has no teacher link and direct `/teacher` access reaches `/unauthorized`; network artifact has no other profile or secret fields.
@@ -1443,7 +1632,7 @@ test('restores session and intended route, then protects after logout', async ({
 
 - [ ] **Step 2: Verify at least one lifecycle assertion fails**
 
-Run: `pnpm playwright test tests/e2e/session-lifecycle.spec.ts tests/e2e/shared-device.spec.ts --headed --trace on --video on`
+Run: `PLAYWRIGHT_VIDEO=on pnpm playwright test tests/e2e/session-lifecycle.spec.ts tests/e2e/shared-device.spec.ts --headed --trace on`
 
 Expected: FAIL because sign-out does not yet clear user-scoped Query cache and the intended-route return is incomplete.
 
@@ -1453,7 +1642,7 @@ On successful sign-in, validate `location.state.from.pathname` as an internal pa
 
 - [ ] **Step 4: Verify headed lifecycle and shared-device isolation**
 
-Run: `pnpm playwright test tests/e2e/session-lifecycle.spec.ts tests/e2e/shared-device.spec.ts --headed --trace on --video on`
+Run: `PLAYWRIGHT_VIDEO=on pnpm playwright test tests/e2e/session-lifecycle.spec.ts tests/e2e/shared-device.spec.ts --headed --trace on`
 
 Expected: both flows pass; refresh retains the first session; logout plus Back shows login; student two login displays only `student.two`; console errors, unexpected failed requests, and 5xx are zero.
 
@@ -1533,7 +1722,7 @@ mkdir -p artifacts/acceptance/phase-1/reports
 pnpm exec lighthouse http://127.0.0.1:4173/login --quiet --only-categories=accessibility --output=json --output-path=artifacts/acceptance/phase-1/reports/lighthouse-login.json --chrome-flags='--headless=new'
 node -e "const r=require('./artifacts/acceptance/phase-1/reports/lighthouse-login.json'); if ((r.categories.accessibility.score ?? 0) < 0.95) process.exit(1)"
 pnpm test:e2e
-pnpm playwright test tests/acceptance/phase-1.spec.ts --headed --project=chromium --trace on --video on
+PLAYWRIGHT_VIDEO=on pnpm playwright test tests/acceptance/phase-1.spec.ts --headed --project=chromium --trace on
 node scripts/acceptance/create-run.mjs --environment local --app-url http://127.0.0.1:4173
 ```
 
@@ -1615,7 +1804,7 @@ test "$FEATURE_BRANCH" != 'main'
 git commit --allow-empty -m "chore: verify automatic Vercel deployment"
 git push origin "$FEATURE_BRANCH"
 # After the Preview deployment is Ready, set VERCEL_PREVIEW_URL to its HTTPS URL.
-PLAYWRIGHT_BASE_URL="$VERCEL_PREVIEW_URL" ACCEPTANCE_STUDENT_EMAIL="$STAGING_ACCEPTANCE_EMAIL" ACCEPTANCE_STUDENT_PASSWORD="$STAGING_ACCEPTANCE_PASSWORD" pnpm playwright test tests/acceptance/phase-1.spec.ts --headed --project=chromium --trace on --video on
+PLAYWRIGHT_VIDEO=on PLAYWRIGHT_BASE_URL="$VERCEL_PREVIEW_URL" ACCEPTANCE_STUDENT_EMAIL="$STAGING_ACCEPTANCE_EMAIL" ACCEPTANCE_STUDENT_PASSWORD="$STAGING_ACCEPTANCE_PASSWORD" pnpm playwright test tests/acceptance/phase-1.spec.ts --headed --project=chromium --trace on
 git fetch origin main
 git merge-base --is-ancestor origin/main HEAD
 git push origin 'HEAD:main'

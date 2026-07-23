@@ -1,0 +1,126 @@
+name: Foundation CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  foundation-ci:
+    name: foundation-ci
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CI: 'true'
+      VITE_SUPABASE_URL: https://synthetic-colorplay-ci.invalid
+      VITE_SUPABASE_ANON_KEY: synthetic-browser-public-anon-key
+      PLAYWRIGHT_EVIDENCE_ROOT: artifacts/acceptance/phase-1a-task-08
+      PLAYWRIGHT_TRACE: 'on'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up pnpm from packageManager
+        uses: pnpm/action-setup@v6
+
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Run stack-independent unit coverage
+        run: pnpm test:coverage
+
+      - name: Build production application
+        run: npm run build
+
+      - name: Test seeded local database and real-stack integration
+        run: pnpm test:db
+
+      - name: Install Chromium and operating-system dependencies
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run Chromium end-to-end tests against the built preview
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
+        shell: bash
+        run: |
+          mkdir -p artifacts/acceptance/phase-1a-task-08/reports
+          pnpm preview --host 127.0.0.1 --port 4173 \
+            > artifacts/acceptance/phase-1a-task-08/reports/vite-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid"' EXIT
+
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4173/ >/dev/null
+          pnpm test:e2e --project=chromium
+
+      - name: Scan source, bundle, and evidence for credentials
+        id: secret-scan
+        shell: bash
+        run: |
+          report_directory=artifacts/acceptance/phase-1a-task-08/reports
+          report_path="$report_directory/ci-secret-scan.txt"
+          mkdir -p "$report_directory"
+
+          credential_value_pattern='(?i)(eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|sb_secret_[A-Za-z0-9_-]{16,}|(?:postgres(?:ql)?|mysql)://[^[:space:]]+:[^@[:space:]]+@|-----BEGIN [A-Z ]*PRIVATE KEY-----)'
+          if rg --hidden --pcre2 -q \
+            --glob '!.git/**' \
+            --glob '!node_modules/**' \
+            --glob '!ci-secret-scan.txt' \
+            "$credential_value_pattern" .; then
+            printf 'findings=detected\ndetails=withheld\n' > "$report_path"
+            exit 1
+          fi
+
+          while IFS= read -r archive; do
+            if unzip -p "$archive" | rg --pcre2 -q "$credential_value_pattern"; then
+              printf 'findings=detected\ndetails=withheld\n' > "$report_path"
+              exit 1
+            fi
+          done < <(find artifacts/acceptance -type f -name '*.zip' -print)
+
+          if rg -q '^\s+VITE_[A-Z0-9_]*(SERVICE|ROLE|DATABASE|PASSWORD|JWT|SECRET)[A-Z0-9_]*:' \
+            .github/workflows/ci.yml; then
+            printf 'findings=detected\ndetails=withheld\n' > "$report_path"
+            exit 1
+          fi
+
+          printf 'findings=0\nscope=current-tree,dist,coverage,acceptance-artifacts,expanded-traces\n' \
+            > "$report_path"
+
+      - name: Upload scanned foundation evidence
+        uses: actions/upload-artifact@v5
+        if: ${{ success() && steps.secret-scan.outcome == 'success' }}
+        with:
+          name: foundation-ci-evidence
+          path: |
+            artifacts/acceptance/
+            coverage/
+          if-no-files-found: error
+          retention-days: 14
