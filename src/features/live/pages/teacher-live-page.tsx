@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
+import { Icon } from '../../../components/ui/icons';
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { useOwnedClassrooms } from '../../classrooms/hooks/use-classrooms';
 import { presenterJoinCodeKey } from '../components/live-presenter';
@@ -95,11 +96,16 @@ export function TeacherLivePage({
   };
 
   return (
-    <section aria-labelledby="teacher-live-title" className="page-mid">
-      <header>
-        <p className="route-panel__eyebrow">ColorPlay Live</p>
+    <section
+      aria-labelledby="teacher-live-title"
+      className="page-mid live-launch"
+    >
+      <header className="live-launch__hero">
+        <span aria-hidden="true" className="live-launch__bolt">
+          <Icon name="bolt" size={44} />
+        </span>
         <h1 id="teacher-live-title">Live 課堂主持</h1>
-        <p>選擇單元建立活動，開場後把六碼投影給學生輸入。</p>
+        <p>選擇單元、設定節奏,一鍵開場 — 六碼投影給全班輸入。</p>
       </header>
 
       <form
@@ -129,34 +135,42 @@ export function TeacherLivePage({
           })(event);
         }}
       >
-        <h2>建立新活動</h2>
-        <label htmlFor="live-activity-section">選擇單元</label>
-        <select
-          id="live-activity-section"
-          {...register('sectionId')}
-          aria-invalid={errors.sectionId ? true : undefined}
-        >
-          <option value="">請選擇小節</option>
-          {sections.data.map((section) => (
-            <option key={section.sectionId} value={section.sectionId}>
-              {section.title}
-            </option>
-          ))}
-        </select>
-        {errors.sectionId ? (
-          <p role="alert">{errors.sectionId.message}</p>
-        ) : null}
-        <label htmlFor="live-activity-time-limit">每題秒數</label>
-        <input
-          id="live-activity-time-limit"
-          inputMode="numeric"
-          type="text"
-          {...register('timeLimit')}
-          aria-invalid={errors.timeLimit ? true : undefined}
-        />
-        {errors.timeLimit ? (
-          <p role="alert">{errors.timeLimit.message}</p>
-        ) : null}
+        <h2 className="visually-hidden">建立新活動</h2>
+        <div className="live-launch__field">
+          <label htmlFor="live-activity-section">1・選擇對戰單元</label>
+          <select
+            id="live-activity-section"
+            {...register('sectionId')}
+            aria-invalid={errors.sectionId ? true : undefined}
+          >
+            <option value="">請選擇小節</option>
+            {sections.data.map((section) => (
+              <option key={section.sectionId} value={section.sectionId}>
+                {section.title}
+              </option>
+            ))}
+          </select>
+          {errors.sectionId ? (
+            <p role="alert">{errors.sectionId.message}</p>
+          ) : null}
+        </div>
+        <div className="live-launch__field live-launch__field--time">
+          <label htmlFor="live-activity-time-limit">2・每題秒數</label>
+          <select
+            id="live-activity-time-limit"
+            {...register('timeLimit')}
+            aria-invalid={errors.timeLimit ? true : undefined}
+          >
+            {['5', '10', '15', '20', '30', '45', '60'].map((seconds) => (
+              <option key={seconds} value={seconds}>
+                {seconds} 秒
+              </option>
+            ))}
+          </select>
+          {errors.timeLimit ? (
+            <p role="alert">{errors.timeLimit.message}</p>
+          ) : null}
+        </div>
         <button
           className="primary-action"
           disabled={
@@ -166,7 +180,7 @@ export function TeacherLivePage({
         >
           {createActivity.isPending || launchSession.isPending
             ? '開場中…'
-            : '建立活動'}
+            : '建立活動並開場'}
         </button>
       </form>
 
