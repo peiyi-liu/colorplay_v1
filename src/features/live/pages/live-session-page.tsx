@@ -381,7 +381,7 @@ export function LiveSessionPage({
   return (
     <section
       aria-labelledby="live-session-title"
-      className="live-session-shell w-full max-w-2xl"
+      className="live-session-shell page-mid"
     >
       <header>
         <p className="route-panel__eyebrow">ColorPlay Live</p>

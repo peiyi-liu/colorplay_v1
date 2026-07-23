@@ -171,45 +171,6 @@ export function TeacherLivePage({
       </form>
 
       {actionError ? <p role="alert">{actionError}</p> : null}
-
-      {activities.data.length === 0 ? (
-        <p>還沒有活動，選擇單元建立第一場吧。</p>
-      ) : (
-        <table>
-          <caption>我的 Live 活動</caption>
-          <thead>
-            <tr>
-              <th scope="col">標題</th>
-              <th scope="col">每題秒數</th>
-              <th scope="col">狀態</th>
-              <th scope="col">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {activities.data.map((activity) => (
-              <tr key={activity.activityId}>
-                <th scope="row">{activity.title}</th>
-                <td>{activity.questionTimeLimitSeconds} 秒</td>
-                <td>{activity.status === 'active' ? '可使用' : '已封存'}</td>
-                <td>
-                  <button
-                    disabled={launchSession.isPending}
-                    onClick={() => {
-                      setActionError(undefined);
-                      launchFor(activity.activityId).catch(() => {
-                        setActionError('目前無法開場，請稍後重試。');
-                      });
-                    }}
-                    type="button"
-                  >
-                    開新場次
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
     </section>
   );
 }

@@ -693,29 +693,15 @@ describe('TeacherLivePage (advanced)', () => {
     expect(startSession).toHaveBeenCalledWith(SESSION_ID, 1);
   });
 
-  it('launches a new session for an existing activity', async () => {
-    const createSession = vi.fn().mockResolvedValue({
-      sessionId: SESSION_ID,
-      state: 'draft',
-      stateVersion: 1,
-      joinCode: '654321',
-      joinCodeVersion: 1,
-      mode: 'individual',
-      teamCount: null,
-    });
-    const startSession = vi.fn().mockResolvedValue(undefined);
+  it('hides the activity history table — the page only creates new activities (owner 2026-07-23)', async () => {
     const repository = repositoryWith({
-      createSession,
       listMyActivities: vi.fn().mockResolvedValue([activity]),
-      startSession,
     });
     renderWith(<TeacherLivePage repository={repository} />);
-    const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: '開新場次' }));
-
-    expect(await screen.findByText('已進入主持台')).toBeVisible();
-    expect(startSession).toHaveBeenCalledWith(SESSION_ID, 1);
+    expect(await screen.findByText('建立新活動')).toBeVisible();
+    expect(screen.queryByText('我的 Live 活動')).toBeNull();
+    expect(screen.queryByRole('button', { name: '開新場次' })).toBeNull();
   });
 
   it('offers no removed controls (mode, classroom, schedule, display)', async () => {

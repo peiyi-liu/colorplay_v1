@@ -110,7 +110,7 @@ describe('LoginPage', () => {
     const signInWithAccount = vi.fn(() => Promise.resolve());
     renderLoginPage(createAuthValue(undefined, signInWithAccount));
 
-    await user.click(screen.getByRole('radio', { name: '教師診斷端' }));
+    await user.click(screen.getByRole('radio', { name: '教師端登入' }));
     await user.type(screen.getByLabelText('帳號'), 'teacher01');
     await user.type(screen.getByLabelText('密碼'), validCredentials.password);
     await user.click(screen.getByRole('button', { name: '登入' }));
@@ -263,8 +263,7 @@ describe('LoginPage', () => {
       </AuthContext.Provider>,
     );
 
-    await user.click(screen.getByRole('radio', { name: '教師診斷端' }));
-    expect(screen.getByText('教師入口')).toBeVisible();
+    await user.click(screen.getByRole('radio', { name: '教師端登入' }));
     await fillEmailBridgeCredentials(user);
     await user.click(screen.getByRole('button', { name: '登入' }));
 
@@ -364,8 +363,8 @@ describe('LoginPage', () => {
 
 it('shows the ggame auth portal branding', () => {
   renderLoginPage(createAuthValue());
-  expect(screen.getByText('ColorPlay 認證入口')).toBeInTheDocument();
-  expect(screen.getByText('色彩對比形成性與精熟學習系統')).toBeInTheDocument();
+  expect(screen.getByText('ColorPlay')).toBeInTheDocument();
+  expect(screen.getByText('色彩原理遊戲式學習平台')).toBeInTheDocument();
 });
 
 it('switches the ggame portal tone and teacher note with the tabs', async () => {
@@ -375,7 +374,7 @@ it('switches the ggame portal tone and teacher note with the tabs', async () => 
   expect(portalSection).toHaveAttribute('data-portal', 'student');
   expect(screen.queryByText(/教師端具備班級管理/u)).toBeNull();
 
-  await userEvent.click(screen.getByRole('radio', { name: '教師診斷端' }));
+  await userEvent.click(screen.getByRole('radio', { name: '教師端登入' }));
   expect(portalSection).toHaveAttribute('data-portal', 'teacher');
   expect(screen.getByText(/教師端具備班級管理/u)).toBeInTheDocument();
 });
@@ -391,7 +390,7 @@ it('offers register and forgot-password entries on the student portal only', asy
     '/forgot-password',
   );
 
-  await userEvent.click(screen.getByRole('radio', { name: '教師診斷端' }));
+  await userEvent.click(screen.getByRole('radio', { name: '教師端登入' }));
   expect(screen.queryByRole('link', { name: '註冊帳號' })).toBeNull();
   expect(screen.getByRole('link', { name: '忘記密碼' })).toBeVisible();
 });

@@ -1750,8 +1750,46 @@ a {
   grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) auto;
 }
 
+.live-presenter__chart-row--correct {
+  transform: scale(1.06);
+  transform-origin: left center;
+}
+
 .live-presenter__chart-label--correct {
-  font-weight: 700;
+  color: var(--jade-700);
+  font-size: 1.5em;
+  font-weight: 900;
+}
+
+.live-presenter__chart-label--correct::before {
+  content: '✓ ';
+}
+
+.live-presenter__chart-row:not(.live-presenter__chart-row--correct)
+  .live-presenter__chart-fill {
+  opacity: 0.35;
+}
+
+.live-presenter__chart-row--correct .live-presenter__chart-track {
+  height: 2.6rem;
+  outline: 3px solid var(--jade-600);
+  outline-offset: 2px;
+}
+
+.live-presenter__chart-row--correct .live-presenter__chart-fill {
+  background: var(--jade-600) !important;
+}
+
+.live-presenter__chart-row--correct .live-presenter__chart-count {
+  color: var(--jade-700);
+  font-size: 1.35em;
+  font-weight: 900;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-presenter__chart-row--correct {
+    transform: none;
+  }
 }
 
 .live-presenter__chart-track {
@@ -3205,4 +3243,37 @@ select#dashboard-classroom {
   border-radius: var(--radius-panel);
   background: var(--surface-card);
   padding: var(--space-8);
+}
+
+/* 登入頁:主按鈕與連結列置中(owner 2026-07-23) */
+.login-form__action-row {
+  display: flex;
+  justify-content: center;
+}
+
+.login-form__action-row .primary-action {
+  width: 100%;
+}
+
+.login-form__links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.login-form__divider {
+  color: var(--ink-300);
+}
+
+/* 投影列取消挑戰鈕:暗紅描邊,避免誤觸感 */
+.live-presenter__cancel {
+  border-color: var(--coral-600) !important;
+  color: var(--coral-600) !important;
+}
+
+/* 學生 Live 場次:沉浸模式,隱藏導覽列(owner 2026-07-23) */
+.app-shell:has(.live-session-shell) .student-rail,
+.app-shell:has(.live-session-shell) .teacher-rail {
+  display: none;
 }

@@ -110,19 +110,14 @@ export function LoginPage() {
             />
           </svg>
         </span>
-        <p className="auth-portal-brand__title">ColorPlay 認證入口</p>
-        <p className="auth-portal-brand__subtitle">
-          色彩對比形成性與精熟學習系統
-        </p>
+        <p className="auth-portal-brand__title">ColorPlay</p>
+        <p className="auth-portal-brand__subtitle">色彩原理遊戲式學習平台</p>
       </div>
-      <p className="route-panel__eyebrow">
-        {portal === 'teacher' ? '教師入口' : '學生入口'}
-      </p>
       <h1>登入</h1>
       <p className="route-panel__message">
         {portal === 'teacher'
           ? '使用教師帳號與班級序號登入，進入教師工作區管理班級與課程。'
-          : '使用帳號（學號）登入，繼續你的色彩原理學習進度。'}
+          : '使用帳號登入，繼續你的色彩原理學習進度。'}
       </p>
 
       <fieldset className="login-form__portal">
@@ -136,7 +131,7 @@ export function LoginPage() {
             }}
             type="radio"
           />
-          <Icon name="grad-cap" size={15} /> 學生註冊登入
+          <Icon name="grad-cap" size={15} /> 學生帳號登入
         </label>
         <label data-active={portal === 'teacher'}>
           <input
@@ -147,7 +142,7 @@ export function LoginPage() {
             }}
             type="radio"
           />
-          <Icon name="briefcase" size={15} /> 教師診斷端
+          <Icon name="briefcase" size={15} /> 教師端登入
         </label>
       </fieldset>
 
@@ -295,9 +290,14 @@ export function LoginPage() {
         </div>
         <div className="login-form__links">
           {portal === 'student' ? (
-            <Link className="login-form__link" to="/register">
-              註冊帳號
-            </Link>
+            <>
+              <Link className="login-form__link" to="/register">
+                註冊帳號
+              </Link>
+              <span aria-hidden="true" className="login-form__divider">
+                ｜
+              </span>
+            </>
           ) : null}
           <Link className="login-form__link" to="/forgot-password">
             忘記密碼

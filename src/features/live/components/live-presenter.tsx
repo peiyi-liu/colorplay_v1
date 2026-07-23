@@ -176,6 +176,7 @@ export function LivePresenter({
   actionLabel,
   onAction,
   onPause,
+  onCancel,
   onExit,
   transitionPending,
   repository,
@@ -186,11 +187,13 @@ export function LivePresenter({
   actionLabel: string | null;
   onAction: () => void;
   onPause: () => void;
+  onCancel?: (() => void) | null;
   onExit: () => void;
   transitionPending: boolean;
   repository?: LiveRepository;
   audio?: PresenterAudio;
 }>) {
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [muted, setMuted] = useState(readStoredMute);
   const [engine] = useState<PresenterAudio>(
     () => audio ?? createPresenterAudio(),
@@ -252,9 +255,47 @@ export function LivePresenter({
           >
             {muted ? '已靜音' : '音效開啟'}
           </button>
-          <button onClick={onExit} type="button">
-            離開投影
-          </button>
+          {onCancel &&
+          state.state !== 'completed' &&
+          state.state !== 'cancelled' ? (
+            confirmingCancel ? (
+              <>
+                <button
+                  onClick={() => {
+                    setConfirmingCancel(false);
+                  }}
+                  type="button"
+                >
+                  返回
+                </button>
+                <button
+                  className="live-presenter__cancel"
+                  onClick={() => {
+                    setConfirmingCancel(false);
+                    onCancel();
+                  }}
+                  type="button"
+                >
+                  確認取消挑戰
+                </button>
+              </>
+            ) : (
+              <button
+                className="live-presenter__cancel"
+                onClick={() => {
+                  setConfirmingCancel(true);
+                }}
+                type="button"
+              >
+                取消挑戰
+              </button>
+            )
+          ) : null}
+          {state.state === 'completed' || state.state === 'cancelled' ? (
+            <button onClick={onExit} type="button">
+              離開投影
+            </button>
+          ) : null}
         </div>
       </header>
 
@@ -339,7 +380,10 @@ export function LivePresenter({
               );
               const isCorrect = state.correctOptionId === option.id;
               return (
-                <div className="live-presenter__chart-row" key={option.id}>
+                <div
+                  className={`live-presenter__chart-row${isCorrect ? ' live-presenter__chart-row--correct' : ''}`}
+                  key={option.id}
+                >
                   <span
                     className={`live-presenter__chart-label${
                       isCorrect ? ' live-presenter__chart-label--correct' : ''

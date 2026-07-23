@@ -162,6 +162,13 @@ export function TeacherLiveSessionPage({
           onAction={() => {
             if (action) runTransition(action.transition);
           }}
+          onCancel={
+            action && state.state !== 'completed'
+              ? () => {
+                  runTransition('cancel');
+                }
+              : null
+          }
           onExit={() => {
             setPresenting(false);
           }}
