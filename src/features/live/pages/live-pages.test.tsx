@@ -672,10 +672,10 @@ describe('TeacherLivePage (advanced)', () => {
     const user = userEvent.setup();
 
     await user.selectOptions(
-      await screen.findByLabelText('選擇單元'),
+      await screen.findByLabelText('1・選擇對戰單元'),
       '3-1 色彩三要素與色名的表示',
     );
-    await user.click(screen.getByRole('button', { name: '建立活動' }));
+    await user.click(screen.getByRole('button', { name: '建立活動並開場' }));
 
     expect(await screen.findByText('已進入主持台')).toBeVisible();
     expect(createActivity).toHaveBeenCalledWith(
@@ -707,7 +707,7 @@ describe('TeacherLivePage (advanced)', () => {
   it('offers no removed controls (mode, classroom, schedule, display)', async () => {
     renderWith(<TeacherLivePage repository={repositoryWith({})} />);
 
-    expect(await screen.findByLabelText('選擇單元')).toBeVisible();
+    expect(await screen.findByLabelText('1・選擇對戰單元')).toBeVisible();
     expect(screen.queryByLabelText('對戰模式')).toBeNull();
     expect(screen.queryByLabelText('開場班級')).toBeNull();
     expect(screen.queryByLabelText('題目顯示位置')).toBeNull();
