@@ -25,9 +25,19 @@
  * 能用可剝離語法（型別註記／type-only import／Readonly<{}>），不能用
  * enum、namespace 等需要真的轉譯的 TS 特性——目前四個 helper 檔都符合。
  *
- * Live 主持／投影類設定（tHost、tPresenter 系列、tReport）需要教師＋學生雙
- * 瀏覽器同步一整場 Live 流程，成本遠高於其餘畫面；依 Task 0 指示先標記
- * `skipped: 'setup-pending'`，留待 Task 12 執行時再補。
+ * Live 主持／投影類設定（tHost、tPresenter、tPresenterChart、
+ * tPresenterPodium、tReport，Task 12 補上）：教師＋學生雙瀏覽器同步一整場
+ * Live 流程，成本遠高於其餘畫面，Task 0 先標記 `skipped: 'setup-pending'`
+ * 留到這裡才實作。共用 launchLiveSessionForHostAudit 開一場新場次＋讓
+ * liveStudentOne 用真實加入流程進場，再依畫面需要的階段往下推：
+ * live-hosting（tHost／tPresenter）開第一題但不收題；live-close-question
+ * （tPresenterChart）讓唯一參與者作答觸發伺服器自動收題，看長條圖／Top 5；
+ * live-final（tPresenterPodium／tReport）反覆「作答→按主持台當前主要
+ * 動作」直到主要動作文案變成「結算成績」再按下，落地最終頒獎台／報表。
+ * 全程用同一組 liveHostTeacher／liveStudentOne 帳號（理由見下方 Live 學生
+ * 四態 fixture 註解），且不驗證答案對錯——單一參與者不論選哪個選項都會
+ * 觸發自動收題，稽核截圖只需要「有結果可看」，不需要像
+ * live-smoke.spec.ts 那樣反查正解。
  *
  * liveQuestion／liveFull（Task 11 補上）：教師分頁走 tests/e2e/live-smoke.spec.ts
  * 同款「選單元→建立活動並開場」流程開一場 screen_only 場次，配「Live 設計
@@ -59,6 +69,7 @@ import { chromium } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import process from 'node:process';
 import { setTimeout } from 'node:timers/promises';
+import { URL } from 'node:url';
 
 import { SCREENS, WIDTHS } from './screen-routes.mjs';
 import { TEST_USERS } from '../../tests/fixtures/users.ts';
@@ -67,6 +78,7 @@ import {
   signInTeacher,
   switchToTeacherTab,
 } from '../../tests/e2e/helpers/auth.ts';
+import { launchLiveSessionFromTeacherHome } from '../../tests/e2e/helpers/live.ts';
 import {
   answerQuizQuestionByFirstOption,
   finishQuizByAnsweringFirstOption,
@@ -92,12 +104,9 @@ const onlyWidth = readArg('--width');
 const base = process.env.AUDIT_BASE_URL ?? 'http://localhost:5199';
 const outputRoot = 'artifacts/design-audit';
 
-const LIVE_SETUP_SKIP_REASONS = new Set([
-  'live-after-answer',
-  'live-hosting',
-  'live-close-question',
-  'live-final',
-]);
+// liveFeedback（device 模式）依然無法從目前教師 UI 產生，維持 skip（見檔
+// 頭大註解）；tHost 系列五個畫面的 setup 名稱由這裡移除即代表已實作。
+const LIVE_SETUP_SKIP_REASONS = new Set(['live-after-answer']);
 
 // liveQuestion／liveFull 專用帳號（見上方大註解）：不與其餘畫面共用的
 // studentOne，避免 teacher-live-page.tsx 的一鍵開場誤掛到 studentOne 沒加入
@@ -107,19 +116,28 @@ const LIVE_SESSION_SETUPS = new Set([
   'live-fullscreen-result',
 ]);
 
+// tHost 系列（教師視角）專用帳號，理由同上——一鍵開場誤掛班級的風險同樣
+// 存在於教師本人，所以主持稽核也不能借用其餘 30 幾個畫面共用的 teacher。
+const LIVE_HOST_SETUPS = new Set([
+  'live-hosting',
+  'live-close-question',
+  'live-final',
+]);
+
 // ---------------------------------------------------------------------------
 // 登入：角色（'student' | 'teacher' | 'anon'）→ 對應 seed 帳號，機制委派給
-// tests/e2e/helpers/auth.ts。studentCredentials 預設 studentOne（其餘 30 幾
-// 個畫面共用的帳號），Live 場次 setup 覆寫為專用的 liveStudentOne。
+// tests/e2e/helpers/auth.ts。credentialOverride 預設對應角色的共用帳號
+// （studentOne／teacher，其餘 30 幾個畫面共用），Live 場次／主持 setup 覆寫
+// 為各自的專用帳號（liveStudentOne／liveHostTeacher）。
 // ---------------------------------------------------------------------------
 
-async function loginAs(page, auth, studentCredentials = TEST_USERS.studentOne) {
+async function loginAs(page, auth, credentialOverride) {
   if (auth === 'anon') return;
   if (auth === 'teacher') {
-    await signInTeacher(page, TEST_USERS.teacher);
+    await signInTeacher(page, credentialOverride ?? TEST_USERS.teacher);
     return;
   }
-  await signInStudent(page, studentCredentials);
+  await signInStudent(page, credentialOverride ?? TEST_USERS.studentOne);
 }
 
 // ---------------------------------------------------------------------------
@@ -246,23 +264,12 @@ async function ensureLiveAuditClassroomWithStudent(teacherPage, browser) {
   }
 }
 
-// Live 場次主持流程：走跟 tests/e2e/live-smoke.spec.ts 一樣的「選單元→建立
-// 活動並開場」，一鍵開場直接進投影模式並帶出六碼課堂代碼。每次呼叫都會建
-// 一個新場次（活動/場次本身不像班級可冪等重用——一個場次只能走一次題目
-// 進度），累積的活動列表跟其餘 quiz/mission setup 一樣屬既有可接受的本機
-// side effect。
-async function launchLiveSessionFromTeacherHome(teacherPage) {
-  await teacherPage.goto(`${base}/teacher/live`);
-  const sectionSelect = teacherPage.getByLabel('1・選擇對戰單元');
-  await sectionSelect.waitFor();
-  await sectionSelect.selectOption({ index: 1 });
-  await teacherPage.getByRole('button', { name: '建立活動並開場' }).click();
-  const presenter = teacherPage.getByLabel('投影模式');
-  const codePanel = presenter.getByLabel('課堂代碼');
-  await codePanel.waitFor();
-  const joinCode = (await codePanel.innerText()).trim();
-  return { presenter, joinCode };
-}
+// Live 場次主持流程（選單元→建立活動並開場，一鍵開場直接進投影模式並帶出
+// 六碼課堂代碼）已抽成 tests/e2e/helpers/live.ts 的
+// launchLiveSessionFromTeacherHome，與 tests/e2e/live-smoke.spec.ts 共用同
+// 一份選擇器序列（Task 12）。每次呼叫都會建一個新場次（活動/場次本身不像
+// 班級可冪等重用——一個場次只能走一次題目進度），累積的活動列表跟其餘
+// quiz/mission setup 一樣屬既有可接受的本機 side effect。
 
 // liveQuestion／liveFull 共用的前半段：確保 fixture 班級／學生成員→開一個
 // screen_only 場次→學生（studentPage，已由 loginAs 登入 liveStudentOne）用
@@ -284,6 +291,84 @@ async function openLiveQuestionForStudent(studentPage, browser) {
   await studentPage.locator('.question-card legend').waitFor();
 
   return { teacherContext };
+}
+
+// tHost 系列（教師視角，Task 12）共用的前半段：呼叫端已由 loginAs 用
+// liveHostTeacher 登入並落在教師工作區。這裡確保 fixture 班級／學生成員→
+// 開一場新場次（一鍵開場直接進投影模式）→ 另開一個學生分頁用真實加入流程
+// 進場。回傳 sessionId（供各畫面解析動態路由）與 presenter／studentPage，
+// 呼叫端決定要把場次再往前推到哪個階段。
+async function launchLiveSessionForHostAudit(teacherPage, browser) {
+  await ensureLiveAuditClassroomWithStudent(teacherPage, browser);
+  const { presenter, joinCode } =
+    await launchLiveSessionFromTeacherHome(teacherPage);
+  const sessionId = new URL(teacherPage.url()).pathname.split('/').pop();
+  if (!sessionId) throw new Error('DESIGN_AUDIT_LIVE_SESSION_ID_MISSING');
+
+  const studentContext = await browser.newContext({ baseURL: base });
+  const studentPage = await studentContext.newPage();
+  await signInStudent(studentPage, TEST_USERS.liveStudentOne);
+  await studentPage.goto(`${base}/app/live/join`);
+  await studentPage.getByLabel('課堂代碼').fill(joinCode);
+  await studentPage.getByRole('button', { name: '加入課堂' }).click();
+  await studentPage.waitForURL(/\/app\/live\/[0-9a-f-]{36}$/u);
+
+  return { presenter, sessionId, studentContext, studentPage };
+}
+
+// tHost／tPresenter：開第一題但先不收題——學生已看到題目、尚未作答，對應
+// DC 1428/1470「已作答 n/m」與即時作答分布的進行中狀態。
+async function ensureLiveQuestionOpenForHost(teacherPage, browser) {
+  const { presenter, sessionId, studentContext, studentPage } =
+    await launchLiveSessionForHostAudit(teacherPage, browser);
+  await presenter.getByRole('button', { name: '開始第一題' }).click();
+  await studentPage.locator('.question-card legend').waitFor();
+  await studentContext.close();
+  return { sessionId };
+}
+
+// tPresenterChart：收題並公布答案後的長條圖／Top 5 畫面。唯一參與者作答
+// 即觸發伺服器自動收題（同 live-smoke.spec.ts 既有行為），不需要主持人
+// 再按一次「收題並公布答案」。
+async function ensureLiveQuestionClosedForHost(teacherPage, browser) {
+  const { presenter, sessionId, studentContext, studentPage } =
+    await launchLiveSessionForHostAudit(teacherPage, browser);
+  await presenter.getByRole('button', { name: '開始第一題' }).click();
+  await studentPage.locator('.question-card legend').waitFor();
+  await studentPage.locator('.question-card button').first().click();
+  await presenter.locator('.live-presenter__chart').waitFor();
+  await studentContext.close();
+  return { sessionId };
+}
+
+// tPresenterPodium／tReport：走完整場直到結算成績。用主持台當前主要動作
+// 的文案（下一題／結算成績）判斷該不該推進到下一題，不寫死題數；上限 30
+// 輪純屬防呆（真實題庫遠小於此，跳出代表主持流程卡住而非正常結束）。
+async function ensureLiveSessionCompletedForHost(teacherPage, browser) {
+  const { presenter, sessionId, studentContext, studentPage } =
+    await launchLiveSessionForHostAudit(teacherPage, browser);
+  const primaryAction = presenter.locator('.primary-action');
+
+  await presenter.getByRole('button', { name: '開始第一題' }).click();
+  for (let round = 0; round < 30; round += 1) {
+    await studentPage.locator('.question-card legend').waitFor();
+    await studentPage.locator('.question-card button').first().click();
+    // 等長條圖出現代表伺服器已自動收題、主持台已切到本題結果——這時
+    // primaryAction 的文案才是這一輪真正該按的動作，不會讀到收題前殘留
+    // 的「收題並公布答案」。
+    await presenter.locator('.live-presenter__chart').waitFor();
+    const label = (await primaryAction.innerText()).trim();
+    await primaryAction.click();
+    if (label === '結算成績') break;
+  }
+  await presenter.getByRole('heading', { name: '最終頒獎台' }).waitFor();
+  // 頒獎台每階是獨立 CSS 動畫（globals.css .live-presenter__podium-step，
+  // rank 1 delay 2.4s + 0.5s 動畫時長）：只等到標題出現就截圖，最高分那階
+  // 還在 opacity:0 的延遲期，畫面會是空的。等滿最長延遲＋動畫時長，讓所有
+  // 階都進到 reveal 後的終態再截圖。
+  await setTimeout(3000);
+  await studentContext.close();
+  return { sessionId };
 }
 
 // ---------------------------------------------------------------------------
@@ -361,6 +446,39 @@ async function runSetup(page, browser, screen) {
       await page.locator('.live-result-screen').waitFor();
       await teacherContext.close();
       return {};
+    }
+    case 'live-hosting': {
+      const { sessionId } = await ensureLiveQuestionOpenForHost(
+        page,
+        browser,
+      );
+      // tHost 是非投影的主持台（無 ?presenter=1），tPresenter 是同一場次
+      // 的投影模式——用 screen.id 分流回傳的路由，不用 screen.route 的
+      // :sessionId placeholder（那是給 resolveRoute 的靜態畫面用的）。
+      return {
+        route:
+          screen.id === 'tPresenter'
+            ? `/teacher/live/${sessionId}?presenter=1`
+            : `/teacher/live/${sessionId}`,
+      };
+    }
+    case 'live-close-question': {
+      const { sessionId } = await ensureLiveQuestionClosedForHost(
+        page,
+        browser,
+      );
+      return { route: `/teacher/live/${sessionId}?presenter=1` };
+    }
+    case 'live-final': {
+      const { sessionId } = await ensureLiveSessionCompletedForHost(
+        page,
+        browser,
+      );
+      // tPresenterPodium：teacherPage 已停在投影模式的最終頒獎台，不用再
+      // goto（避免重整把投影狀態打回原形）。tReport 才需要再導到報表頁。
+      return screen.id === 'tReport'
+        ? { route: `/teacher/live/${sessionId}/report` }
+        : {};
     }
     case 'throttle-first-paint': {
       await page.route('**/rest/v1/**', async (route) => {
@@ -460,7 +578,9 @@ if (only && !SCREENS.some((screen) => screen.id === only)) {
           screen.auth,
           LIVE_SESSION_SETUPS.has(screen.setup)
             ? TEST_USERS.liveStudentOne
-            : undefined,
+            : LIVE_HOST_SETUPS.has(screen.setup)
+              ? TEST_USERS.liveHostTeacher
+              : undefined,
         );
         const setup = await runSetup(page, browser, screen);
 

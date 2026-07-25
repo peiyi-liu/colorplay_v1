@@ -1874,7 +1874,10 @@ a {
 .live-console {
   border: 1px solid color-mix(in srgb, var(--color-alert) 35%, transparent);
   border-radius: var(--radius-card);
-  background: color-mix(in srgb, var(--color-alert) 8%, var(--surface-card));
+  /* 主持台底色改用逐字 hex token --surface-host（#fdf8ee，DC tHost
+     1424）：先前的 color-mix 8% 近似值算出 #f9f3eb，肉眼可辨的色差同
+     leaderboard 金/銅列曾修過的問題，這裡直接對齊 DC 定案色。 */
+  background: var(--surface-host);
   padding: var(--space-6);
 }
 

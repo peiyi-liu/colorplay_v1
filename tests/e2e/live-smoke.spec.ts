@@ -8,6 +8,7 @@ import {
   type Credentials,
 } from './helpers/auth';
 import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
+import { launchLiveSessionFromTeacherHome } from './helpers/live';
 
 // 輕量 Live 冒煙：單一學生走完 等待室 → 十題（含一次暫停/續行）→ 頒獎台。
 // 完整驗收（團隊模式、延遲預算、截圖、報表數字）仍在
@@ -90,19 +91,11 @@ test('Live smoke: 單人場次從等待室走到頒獎台', async ({
   await expect(studentPage).toHaveURL(/\/app\/leaderboard\//u);
 
   // --- 開新場次（主持發射台：選單元→一鍵開場，直入投影模式）---
-  await teacherPage.goto('/teacher/live');
-  const sectionSelect = teacherPage.getByLabel('1・選擇對戰單元');
-  await expect(sectionSelect).toBeVisible();
-  // index 0 是「請選擇小節」placeholder；任一已發佈小節皆為十題，
-  // 正解由 GENERATED_CORRECT_ANSWERS 依題目 prompt 反查，與選哪節無關。
-  await sectionSelect.selectOption({ index: 1 });
-  await teacherPage.getByRole('button', { name: '建立活動並開場' }).click();
-  const presenter = teacherPage.getByLabel('投影模式');
-  // 開場即 startSession（draft→lobby）並導向 ?presenter=1。投影鎖定：
-  // 進行中不可離開投影，之後的主持動作都走投影 footer 的操作列。
-  const codePanel = presenter.getByLabel('課堂代碼');
-  await expect(codePanel).toBeVisible();
-  const joinCode = (await codePanel.innerText()).trim();
+  // 選擇器序列與 scripts/design-audit 的截圖 runner 共用，抽成
+  // tests/e2e/helpers/live.ts（見該檔開頭的重用說明）；任一已發佈小節皆為
+  // 十題，正解由 GENERATED_CORRECT_ANSWERS 依題目 prompt 反查，與選哪節無關。
+  const { presenter, joinCode } =
+    await launchLiveSessionFromTeacherHome(teacherPage);
 
   await studentPage.goto('/app/live/join');
   await studentPage.getByLabel('課堂代碼').fill(joinCode);
