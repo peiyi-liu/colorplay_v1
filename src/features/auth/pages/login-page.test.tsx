@@ -377,6 +377,24 @@ it('switches the ggame portal tone and teacher note with the tabs', async () => 
   await userEvent.click(screen.getByRole('radio', { name: '教師端登入' }));
   expect(portalSection).toHaveAttribute('data-portal', 'teacher');
   expect(screen.getByText(/教師端具備班級管理/u)).toBeInTheDocument();
+  expect(screen.getByText(/教師帳號由開發後台建立。/u)).toBeInTheDocument();
+});
+
+it('gives the teacher-portal submit button the purple teacher variant class', async () => {
+  renderLoginPage(createAuthValue());
+  const submit = screen.getByRole('button', { name: '登入' });
+  expect(submit).toHaveClass('primary-action');
+  expect(submit).not.toHaveClass('login-form__submit--teacher');
+
+  await userEvent.click(screen.getByRole('radio', { name: '教師端登入' }));
+  expect(screen.getByRole('button', { name: '登入' })).toHaveClass(
+    'login-form__submit--teacher',
+  );
+
+  await userEvent.click(screen.getByRole('radio', { name: '學生帳號登入' }));
+  expect(screen.getByRole('button', { name: '登入' })).not.toHaveClass(
+    'login-form__submit--teacher',
+  );
 });
 
 it('offers register and forgot-password entries on the student portal only', async () => {

@@ -2076,10 +2076,16 @@ a {
   padding: var(--space-4);
 }
 
-.auth-portal[data-portal='teacher'] .primary-action {
+.login-form__submit--teacher {
   border-color: var(--color-teacher);
   background: var(--color-teacher);
   color: var(--white);
+}
+
+.login-form__submit--teacher:hover,
+.login-form__submit--teacher:active {
+  border-color: var(--color-teacher);
+  background: var(--color-teacher);
 }
 
 /* ── GGAME 教師工作區 tDash（Task 3 重構；DC 1314–1389） ── */
