@@ -57,7 +57,16 @@ const attachHealthCollection = (page: Page): BrowserHealth => {
   });
   page.on('pageerror', (error) => health.pageErrors.push(error.message));
   page.on('requestfailed', (request) => {
-    health.failedRequests.push(request.failure()?.errorText ?? 'failed');
+    const errorText = request.failure()?.errorText ?? 'failed';
+    // 導航會取消進行中的資產請求（外部字體尤甚）；取消不是伺服器錯誤。
+    if (
+      /ERR_ABORTED|NS_BINDING_ABORTED|cancelled/u.test(errorText) &&
+      (request.resourceType() === 'font' ||
+        new URL(request.url()).pathname.startsWith('/assets/'))
+    ) {
+      return;
+    }
+    health.failedRequests.push(`${errorText} ${request.url()}`);
   });
   page.on('response', (response) => {
     if (response.status() >= 400) {

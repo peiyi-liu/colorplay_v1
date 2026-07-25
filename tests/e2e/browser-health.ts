@@ -2,6 +2,7 @@ import type { Page, Request } from '@playwright/test';
 
 export type TrackedRequest = Readonly<{
   method(): string;
+  resourceType(): string;
   url(): string;
 }>;
 
@@ -56,6 +57,8 @@ export function unexpectedRequestFailures<RequestType extends TrackedRequest>(
     ) {
       return false;
     }
+    // 字體（含 UI v2 引入的外部字體服務）：下載被導航取消不是應用錯誤。
+    if (request.resourceType() === 'font') return true;
     try {
       const parsed = new URL(request.url());
       if (parsed.pathname.startsWith('/assets/')) return true;

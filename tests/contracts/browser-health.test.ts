@@ -15,6 +15,7 @@ const logoutUrl = 'http://127.0.0.1:54321/auth/v1/logout?scope=local';
 
 const createRequest = (method = 'POST', url = logoutUrl) => ({
   method: () => method,
+  resourceType: () => 'fetch',
   url: () => url,
 });
 
