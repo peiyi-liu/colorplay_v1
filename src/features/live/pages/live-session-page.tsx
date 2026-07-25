@@ -20,7 +20,8 @@ import {
   encouragementFor,
   optionAccessibleName,
 } from '../lib/standing-feedback';
-import { remainingSeconds, tick } from '../lib/live-clock';
+import { remainingSeconds } from '../lib/live-clock';
+import { participantView } from '../lib/live-phase-view';
 import type { LiveRepository, LiveSessionState } from '../types';
 
 const OPTION_VARIANTS: readonly OptionVariant[] = [
@@ -347,14 +348,10 @@ export function LiveSessionPage({
   }
 
   const state = session.data;
+  const view = participantView(state);
 
   // 雙螢幕模式的題間結果佔滿整個畫面：不顯示 ColorPlay Live／課堂挑戰標題。
-  if (
-    state.state === 'question_feedback' &&
-    state.questionDisplay === 'screen_only' &&
-    !state.isHost &&
-    !state.waitingForNext
-  ) {
+  if (view.kind === 'screen-only-result') {
     return (
       <FullscreenResult
         sessionId={sessionId}
@@ -374,86 +371,110 @@ export function LiveSessionPage({
         <h1 id="live-session-title">課堂挑戰</h1>
       </header>
 
-      {state.state === 'lobby' ? (
-        <div role="status">
-          <h2>等待主持人開始…</h2>
-          <p>目前 {state.participantCount} 位同學在等待室。</p>
-        </div>
-      ) : null}
-
-      {state.waitingForNext ? (
-        <div className="live-waiting" role="status">
-          <h2>已加入這場挑戰！</h2>
-          <p>這一題已經開始，下一題開始時你就會自動進場。</p>
-        </div>
-      ) : null}
-
-      {state.state === 'question_open' && !state.waitingForNext ? (
-        <QuestionPhase
-          sessionId={sessionId}
-          state={state}
-          {...(repository ? { repository } : {})}
-        />
-      ) : null}
-
-      {state.state === 'paused' && !state.waitingForNext ? (
-        <div role="status">
-          <h2>暫停中</h2>
-          <p>
-            主持人已暫停，剩餘{' '}
-            {tick(state, 0, 0).secondsLeft}{' '}
-            秒已凍結，恢復後繼續倒數。
-          </p>
-          {state.question?.prompt ? <p>{state.question.prompt}</p> : null}
-        </div>
-      ) : null}
-
-      {state.state === 'question_feedback' && !state.waitingForNext ? (
-        <FeedbackPhase
-          sessionId={sessionId}
-          state={state}
-          {...(repository ? { repository } : {})}
-        />
-      ) : null}
-
-      {state.state === 'question_feedback' || state.state === 'completed' ? (
-        <LiveTeamScoreboard
-          sessionId={sessionId}
-          state={state}
-          {...(repository ? { repository } : {})}
-        />
-      ) : null}
-
-      {state.state === 'completed' ? (
-        <div>
-          <h2>挑戰結束！</h2>
-          {state.myResult ? (
-            <p role="status">
-              你的成績：{state.myResult.score} 分，第{' '}
-              {state.myResult.rank ?? '—'} 名
-            </p>
-          ) : null}
-          <ol aria-label="前三名">
-            {(state.podium ?? []).map((entry) => (
-              <li key={entry.rank}>
-                第 {entry.rank} 名 {entry.displayName}（{entry.score} 分）
-              </li>
-            ))}
-          </ol>
-          <Link className="primary-action" to="/app">
-            回章節
-          </Link>
-        </div>
-      ) : null}
-
-      {state.state === 'cancelled' ? (
-        <div role="status">
-          <h2>這場挑戰已被取消。</h2>
-          <Link className="primary-action" to="/app">
-            回章節
-          </Link>
-        </div>
-      ) : null}
+      {(() => {
+        switch (view.kind) {
+          case 'lobby':
+            return (
+              <div role="status">
+                <h2>等待主持人開始…</h2>
+                <p>目前 {view.participantCount} 位同學在等待室。</p>
+              </div>
+            );
+          case 'waiting-for-next':
+            return (
+              <>
+                <div className="live-waiting" role="status">
+                  <h2>已加入這場挑戰！</h2>
+                  <p>這一題已經開始，下一題開始時你就會自動進場。</p>
+                </div>
+                {view.showScoreboard ? (
+                  <LiveTeamScoreboard
+                    sessionId={sessionId}
+                    state={state}
+                    {...(repository ? { repository } : {})}
+                  />
+                ) : null}
+              </>
+            );
+          case 'question':
+            return (
+              <QuestionPhase
+                sessionId={sessionId}
+                state={state}
+                {...(repository ? { repository } : {})}
+              />
+            );
+          case 'paused':
+            return (
+              <div role="status">
+                <h2>暫停中</h2>
+                <p>
+                  主持人已暫停，剩餘 {view.frozenSeconds}{' '}
+                  秒已凍結，恢復後繼續倒數。
+                </p>
+                {view.prompt ? <p>{view.prompt}</p> : null}
+              </div>
+            );
+          case 'reveal':
+            return (
+              <>
+                <FeedbackPhase
+                  sessionId={sessionId}
+                  state={state}
+                  {...(repository ? { repository } : {})}
+                />
+                <LiveTeamScoreboard
+                  sessionId={sessionId}
+                  state={state}
+                  {...(repository ? { repository } : {})}
+                />
+              </>
+            );
+          case 'completed':
+            return (
+              <>
+                <LiveTeamScoreboard
+                  sessionId={sessionId}
+                  state={state}
+                  {...(repository ? { repository } : {})}
+                />
+                <div>
+                  <h2>挑戰結束！</h2>
+                  {view.myResult ? (
+                    <p role="status">
+                      你的成績：{view.myResult.score} 分，第{' '}
+                      {view.myResult.rank ?? '—'} 名
+                    </p>
+                  ) : null}
+                  <ol aria-label="前三名">
+                    {view.podium.map((entry) => (
+                      <li key={entry.rank}>
+                        第 {entry.rank} 名 {entry.displayName}（{entry.score}{' '}
+                        分）
+                      </li>
+                    ))}
+                  </ol>
+                  <Link className="primary-action" to="/app">
+                    回章節
+                  </Link>
+                </div>
+              </>
+            );
+          case 'cancelled':
+            return (
+              <div role="status">
+                <h2>這場挑戰已被取消。</h2>
+                <Link className="primary-action" to="/app">
+                  回章節
+                </Link>
+              </div>
+            );
+          default: {
+            const exhausted: never = view;
+            return exhausted;
+          }
+        }
+      })()}
     </section>
   );
 }

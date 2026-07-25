@@ -61,13 +61,13 @@ Participant union 變體：`lobby` · `waiting-for-next`（Late Join）· `quest
 
 **Steps:**
 
-- [ ] **Step 1:** 先產出對照表：逐條列出**所有 render `<LiveSessionPage>` 的 case**——`live-pages.test.tsx:200-421`（`LiveSessionPage (participant)` describe）**加上誤置於 host describe 內的三個 participant case：`:561`（paused overlay）、`:582`（streak 徽章）、`:604`（team scoreboard）**——標注「轉譯為 view test」或「留在頁面層」。分類依據是 case 實際 render 的元件，不是 describe 標題。留在頁面層的合法理由只有四類：React reconciler 交互（如 `teacher-live-session-page.tsx:268-273` 的 `key={action.transition}`）、跨 render 的計時行為（`Countdown` 重錨定）、`aria-live` / `role="status"` 播報、元素實際被覆蓋或缺席。其餘一律轉譯。
-- [ ] **Step 2:** 依對照表撰寫 view tests（RED）——由既有 case 的斷言逐條翻譯，不得新增設計意圖來源的斷言。
-- [ ] **Step 3:** 實作 `participantView` 至全綠。
-- [ ] **Step 4:** `live-session-page.tsx` 改由 switch 渲染；exhaustive check 必須為編譯期保證。
-- [ ] **Step 5:** 刪除對照表標記為已取代的 page cases。
-- [ ] **Step 6:** `pnpm test` + lint + typecheck。
-- [ ] **Step 7:** Commit `refactor: add participant phase view`，commit message 內含 case → view test 對照。
+- [x] **Step 1:** 先產出對照表：逐條列出**所有 render `<LiveSessionPage>` 的 case**——`live-pages.test.tsx:200-421`（`LiveSessionPage (participant)` describe）**加上誤置於 host describe 內的三個 participant case：`:561`（paused overlay）、`:582`（streak 徽章）、`:604`（team scoreboard）**——標注「轉譯為 view test」或「留在頁面層」。分類依據是 case 實際 render 的元件，不是 describe 標題。留在頁面層的合法理由只有四類：React reconciler 交互（如 `teacher-live-session-page.tsx:268-273` 的 `key={action.transition}`）、跨 render 的計時行為（`Countdown` 重錨定）、`aria-live` / `role="status"` 播報、元素實際被覆蓋或缺席。其餘一律轉譯。
+- [x] **Step 2:** 依對照表撰寫 view tests（RED）——由既有 case 的斷言逐條翻譯，不得新增設計意圖來源的斷言。
+- [x] **Step 3:** 實作 `participantView` 至全綠。
+- [x] **Step 4:** `live-session-page.tsx` 改由 switch 渲染；exhaustive check 必須為編譯期保證。
+- [x] **Step 5:** 刪除對照表標記為已取代的 page cases。
+- [x] **Step 6:** `pnpm test` + lint + typecheck。
+- [x] **Step 7:** Commit `refactor: add participant phase view`，commit message 內含 case → view test 對照。
 
 ### Task 3: `actionCopy` + `hostConsoleView`
 

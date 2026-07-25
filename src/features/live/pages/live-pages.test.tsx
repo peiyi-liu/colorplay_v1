@@ -186,40 +186,6 @@ describe('LiveJoinPage', () => {
 });
 
 describe('LiveSessionPage (participant)', () => {
-  it('renders the lobby with the authoritative participant count', async () => {
-    const repository = repositoryWith({});
-    renderWith(
-      <LiveSessionPage
-        client={stubClient()}
-        repository={repository}
-        sessionId={SESSION_ID}
-      />,
-    );
-
-    expect(await screen.findByText('等待主持人開始…')).toBeVisible();
-    expect(screen.getByText('目前 3 位同學在等待室。')).toBeVisible();
-  });
-
-  it('renders ggame four-color option buttons in order', async () => {
-    const repository = repositoryWith({
-      getState: vi.fn().mockResolvedValue(openState),
-    });
-    renderWith(
-      <LiveSessionPage
-        client={stubClient()}
-        repository={repository}
-        sessionId={SESSION_ID}
-      />,
-    );
-    const first = await screen.findByRole('button', {
-      name: /A\. 色相、明度、彩度/u,
-    });
-    expect(first.className).toContain('ui-option--rose');
-    expect(
-      screen.getByRole('button', { name: /B\. 紅、綠、藍/u }).className,
-    ).toContain('ui-option--sky');
-  });
-
   it('submits one answer and locks the options', async () => {
     const submitAnswer = vi.fn().mockResolvedValue({ streak: 1 });
     const getState = vi
@@ -263,32 +229,6 @@ describe('LiveSessionPage (participant)', () => {
     ).toBeVisible();
   });
 
-  it('shows the personal result and podium after completion', async () => {
-    const repository = repositoryWith({
-      getState: vi.fn().mockResolvedValue({
-        ...baseState,
-        state: 'completed',
-        stateVersion: 25,
-        podium: [
-          { rank: 1, displayName: 'student.one', score: 1500 },
-          { rank: 2, displayName: 'student.two', score: 600 },
-        ],
-        myResult: { score: 600, rank: 2 },
-      }),
-    });
-    renderWith(
-      <LiveSessionPage
-        client={stubClient()}
-        repository={repository}
-        sessionId={SESSION_ID}
-      />,
-    );
-
-    expect(await screen.findByText('挑戰結束！')).toBeVisible();
-    expect(screen.getByText('你的成績：600 分，第 2 名')).toBeVisible();
-    expect(screen.getByText('第 1 名 student.one（1500 分）')).toBeVisible();
-  });
-
   const screenOnlyQuestion = {
     questionId: '18500000-0000-0000-0000-000000000001',
     position: 1,
@@ -301,62 +241,6 @@ describe('LiveSessionPage (participant)', () => {
     openedAt: new Date().toISOString(),
     deadlineAt: new Date(Date.now() + 15000).toISOString(),
   };
-
-  it('shows text-free color-shape buttons in screen_only mode', async () => {
-    const repository = repositoryWith({
-      getState: vi.fn().mockResolvedValue({
-        ...baseState,
-        state: 'question_open',
-        stateVersion: 3,
-        currentPosition: 1,
-        questionDisplay: 'screen_only',
-        question: screenOnlyQuestion,
-        answeredCount: 0,
-        myAnswer: { answered: false },
-      }),
-    });
-    renderWith(
-      <LiveSessionPage
-        client={stubClient()}
-        repository={repository}
-        sessionId={SESSION_ID}
-      />,
-    );
-
-    expect(
-      await screen.findByText('題目在投影幕上，選出你的答案！'),
-    ).toBeVisible();
-    expect(
-      screen.getByRole('button', { name: /選項 A：紅色三角形/u }),
-    ).toBeVisible();
-    expect(
-      screen.getByRole('button', { name: /選項 D：綠色菱形/u }),
-    ).toBeVisible();
-    expect(screen.queryByText('色彩三要素是？')).toBeNull();
-  });
-
-  it('parks a late joiner on the waiting screen', async () => {
-    const repository = repositoryWith({
-      getState: vi.fn().mockResolvedValue({
-        ...baseState,
-        state: 'question_open',
-        stateVersion: 3,
-        currentPosition: 1,
-        questionDisplay: 'screen_only',
-        waitingForNext: true,
-      }),
-    });
-    renderWith(
-      <LiveSessionPage
-        client={stubClient()}
-        repository={repository}
-        sessionId={SESSION_ID}
-      />,
-    );
-
-    expect(await screen.findByText('已加入這場挑戰！')).toBeVisible();
-    expect(screen.queryByRole('group', { name: '答案選項' })).toBeNull();
-  });
 
   it('shows the personal standing with encouragement between questions', async () => {
     const repository = repositoryWith({
@@ -544,27 +428,6 @@ describe('TeacherLiveSessionPage (host console)', () => {
       await screen.findByText('A. 色相、明度、彩度（2 人）'),
     ).toBeVisible();
     expect(getDistribution).toHaveBeenCalledWith(SESSION_ID);
-  });
-
-  it('shows the paused overlay to participants', async () => {
-    const repository = repositoryWith({
-      getState: vi.fn().mockResolvedValue({
-        ...openState,
-        state: 'paused',
-        pausedRemainingMs: 8000,
-        myAnswer: { answered: false },
-      }),
-    });
-    renderWith(
-      <LiveSessionPage
-        client={stubClient()}
-        repository={repository}
-        sessionId={SESSION_ID}
-      />,
-    );
-
-    expect(await screen.findByText('暫停中')).toBeVisible();
-    expect(screen.getByText(/剩餘 8 秒已凍結/u)).toBeVisible();
   });
 
   it('celebrates a server-reported streak after answering', async () => {
