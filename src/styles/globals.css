@@ -2712,7 +2712,7 @@ a {
   background: linear-gradient(
     135deg,
     var(--color-surface),
-    color-mix(in srgb, var(--yellow-brand) 12%, white)
+    var(--amber-tint-card)
   );
 }
 
@@ -2766,7 +2766,7 @@ a {
 
 .achievement-card__chip {
   border-radius: 999px;
-  background: color-mix(in srgb, var(--yellow-brand) 35%, white);
+  background: var(--amber-highlight-soft);
   color: var(--amber-700);
   font-size: 0.72rem;
   font-weight: 800;

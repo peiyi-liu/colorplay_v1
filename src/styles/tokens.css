@@ -40,6 +40,7 @@
   --yellow-brand: #ffd600; /* 品牌黃:主色 */
   --amber-avatar: #ffb300; /* 品牌黃 hover/強調 */
   --amber-highlight-soft: #fff0b3; /* 選取態黃底(DC quiz 選項 403/445) */
+  --amber-tint-card: #fff8d6; /* 成就已獲得卡漸層底(DC achievements 878) */
 
   /* ── 相容別名:舊 GGAME primitive 重新導向新色盤 ──────
      (globals.css 逐段翻新中;未翻新的引用先吃到新色) */
