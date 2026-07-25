@@ -133,9 +133,9 @@ Participant union 變體：`lobby` · `waiting-for-next`（Late Join）· `quest
 
 **Steps:**
 
-- [ ] **Step 1:** 在 `option-button.tsx` 新增 `OPTION_ORDER`，兩處改 import；確認合併前後 index → (variant, shape) 對照完全不變。
-- [ ] **Step 2:** `pnpm test` + lint + typecheck。
-- [ ] **Step 3:** Commit `refactor: single source for live option shape and colour`。
+- [x] **Step 1:** 在 `option-button.tsx` 新增 `OPTION_ORDER`，兩處改 import；確認合併前後 index → (variant, shape) 對照完全不變。
+- [x] **Step 2:** `pnpm test` + lint + typecheck。
+- [x] **Step 3:** Commit `refactor: single source for live option shape and colour`。
 
 ---
 

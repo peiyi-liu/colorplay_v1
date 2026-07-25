@@ -6,6 +6,19 @@ export type OptionVariant = 'rose' | 'sky' | 'amber' | 'emerald';
 export type OptionShape = 'triangle' | 'square' | 'circle' | 'diamond';
 export type OptionState = 'idle' | 'locked' | 'correct' | 'wrong';
 
+// GGAME 四選項的固定順序：index → 色與形狀的唯一來源。投影幕與學生
+// 裝置都由此導出——順序若在任一側獨立改動，課堂上會出現「投影與手機
+// 形狀不同」。glyph 由 SHAPE_SYMBOLS 導出。
+export const OPTION_ORDER = [
+  { shape: 'triangle', variant: 'rose' },
+  { shape: 'square', variant: 'sky' },
+  { shape: 'circle', variant: 'amber' },
+  { shape: 'diamond', variant: 'emerald' },
+] as const satisfies readonly Readonly<{
+  variant: OptionVariant;
+  shape: OptionShape;
+}>[];
+
 export const SHAPE_SYMBOLS: Record<OptionShape, string> = {
   triangle: '▲',
   square: '■',

@@ -5,9 +5,8 @@ import { Link, useParams } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import {
+  OPTION_ORDER,
   OptionButton,
-  type OptionShape,
-  type OptionVariant,
 } from '../../../components/ui/option-button';
 import type { Database } from '../../../types/database';
 import {
@@ -23,19 +22,6 @@ import {
 import { remainingSeconds } from '../lib/live-clock';
 import { participantView } from '../lib/live-phase-view';
 import type { LiveRepository, LiveSessionState } from '../types';
-
-const OPTION_VARIANTS: readonly OptionVariant[] = [
-  'rose',
-  'sky',
-  'amber',
-  'emerald',
-];
-const OPTION_SHAPES: readonly OptionShape[] = [
-  'triangle',
-  'square',
-  'circle',
-  'diamond',
-];
 
 function Countdown({
   deadlineAt,
@@ -120,8 +106,8 @@ function QuestionPhase({
           {question.publicOptions.map((option, index) => (
             <OptionButton
               key={option.id}
-              variant={OPTION_VARIANTS[index % 4] ?? 'rose'}
-              shape={OPTION_SHAPES[index % 4] ?? 'triangle'}
+              variant={(OPTION_ORDER[index % 4] ?? OPTION_ORDER[0]).variant}
+              shape={(OPTION_ORDER[index % 4] ?? OPTION_ORDER[0]).shape}
               onClick={() => {
                 setSubmitError(undefined);
                 submit.mutate(

@@ -1,4 +1,8 @@
 import { Icon } from '../../../components/ui/icons';
+import {
+  OPTION_ORDER,
+  SHAPE_SYMBOLS,
+} from '../../../components/ui/option-button';
 import { useEffect, useRef, useState } from 'react';
 
 import { useLiveStandings } from '../hooks/use-live-commands';
@@ -17,13 +21,6 @@ import type {
   LiveSessionState,
   LiveStandingEntry,
 } from '../types';
-
-const OPTION_STYLE = [
-  { shape: '▲', variant: 'rose' },
-  { shape: '■', variant: 'sky' },
-  { shape: '●', variant: 'amber' },
-  { shape: '◆', variant: 'emerald' },
-] as const;
 
 const MUTE_STORAGE_KEY = 'live-presenter-muted';
 
@@ -351,7 +348,11 @@ export function LivePresenter({
           </p>
           <ul aria-label="答案選項" className="live-presenter__options">
             {question.publicOptions.map((option, index) => {
-              const style = OPTION_STYLE[index % 4] ?? OPTION_STYLE[0];
+              const order = OPTION_ORDER[index % 4] ?? OPTION_ORDER[0];
+              const style = {
+                shape: SHAPE_SYMBOLS[order.shape],
+                variant: order.variant,
+              };
               return (
                 <li
                   className={`live-presenter__option live-presenter__option--${style.variant}`}
@@ -371,7 +372,11 @@ export function LivePresenter({
           <h2>{question.prompt}</h2>
           <div aria-label="作答分布長條圖" className="live-presenter__chart">
             {question.publicOptions.map((option, index) => {
-              const style = OPTION_STYLE[index % 4] ?? OPTION_STYLE[0];
+              const order = OPTION_ORDER[index % 4] ?? OPTION_ORDER[0];
+              const style = {
+                shape: SHAPE_SYMBOLS[order.shape],
+                variant: order.variant,
+              };
               const count =
                 state.optionCounts?.find(
                   (entry) => entry.optionId === option.id,
