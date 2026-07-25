@@ -741,6 +741,11 @@ a {
   font-weight: 800;
   padding: var(--space-3) var(--space-5);
   text-decoration: none;
+  transition: border-color 150ms ease-out;
+}
+
+.secondary-action:hover {
+  border-color: var(--ink-900);
 }
 
 .blook-shop,
@@ -1943,6 +1948,372 @@ a {
   font-size: var(--font-size-metadata);
 }
 
+/* ── GGAME 教師班級管理群（Task 13；DC tClasses 1873–1941／
+   tClassDetail 2072–2179／tStudentProgress 2181–2278） ──────────── */
+
+/* 三個班級管理系頁面共用的黃底線 header：直接沿用 Task 3 的
+   .teacher-dashboard-header／__intro（flex space-between + 2px 黃底線 +
+   clamp(1.75rem,5vw,2.5rem) 標題），不重造一份等價 CSS。 */
+.classroom-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.classroom-header-stats {
+  display: flex;
+  margin: 0;
+  gap: var(--space-5);
+}
+
+.classroom-header-stats > div {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+}
+
+.classroom-header-stats dt {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.classroom-header-stats dd {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+/* 建立班級表單卡：黃左框 6px（DC 1893） */
+.classroom-create-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  border: 1px solid var(--border-subtle);
+  border-left: 6px solid var(--yellow-brand);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+}
+
+.classroom-create-form__field {
+  display: grid;
+  flex: 1 1 260px;
+  gap: 6px;
+}
+
+.classroom-create-form__field label {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.classroom-create-form__field input {
+  width: 100%;
+  min-height: 48px;
+  border: 2px solid var(--ink-300);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  font-weight: 600;
+  padding: var(--space-2) var(--space-3);
+}
+
+.classroom-create-form__field input[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.classroom-create-form__hint {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+}
+
+.classroom-create-form__error {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+/* 班級卡列表（DC 1902–1939） */
+.classroom-list {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.classroom-card {
+  display: grid;
+  height: 100%;
+  align-content: start;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+}
+
+.classroom-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--ink-100);
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+}
+
+.classroom-card__head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.classroom-card__meta {
+  display: grid;
+  margin: 0;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: var(--space-4) var(--space-5);
+}
+
+.classroom-card__meta dt {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.classroom-card__meta dd {
+  margin: 2px 0 0;
+  font-weight: 800;
+}
+
+.classroom-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.classroom-card__manage {
+  display: inline-flex;
+  flex: 1 1 auto;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--ink-900);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--ink-900);
+  font-weight: 800;
+  padding: var(--space-2) var(--space-4);
+  text-decoration: none;
+  transition:
+    background 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.classroom-card__manage:hover {
+  background: var(--ink-900);
+  color: var(--white);
+}
+
+.classroom-card__analytics {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--ink-300);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--ink-700);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: var(--space-2) 14px;
+  text-decoration: none;
+  transition:
+    border-color 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.classroom-card__analytics:hover {
+  border-color: var(--ink-900);
+  color: var(--ink-900);
+}
+
+/* 一次性加入碼卡（DC 2087–2108）：黑卡頭＋黃鎖圓徽＋版本膠囊＋虛線框碼＋
+   複製鍵。tClasses（建立後）／tClassDetail（輪替後）共用同一顆元件。 */
+.join-code-card {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+}
+
+.join-code-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--ink-900);
+  color: var(--white);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+}
+
+.join-code-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.join-code-card__badge {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--yellow-brand);
+  color: var(--ink-950);
+  place-items: center;
+}
+
+.join-code-card__version {
+  border: 1px solid color-mix(in srgb, var(--white) 28%, transparent);
+  border-radius: 999px;
+  color: var(--ink-300);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px var(--space-3);
+}
+
+.join-code-card__body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.join-code-card__code-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  border: 1.5px dashed var(--ink-300);
+  border-radius: var(--radius-control);
+  background: var(--ink-50);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.join-code-card__code {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.join-code-card__copy {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid var(--ink-300);
+  border-radius: 8px;
+  background: var(--surface-card);
+  color: var(--ink-700);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  transition:
+    border-color 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.join-code-card__copy:hover {
+  border-color: var(--ink-900);
+  color: var(--ink-900);
+}
+
+.join-code-card__hint {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+
+.join-code-card__dismiss {
+  justify-self: start;
+}
+
+/* 班級成員／學生進度頁共用的區塊小標（h2 + 靠右膠囊，1px 淡底線） */
+.classroom-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--ink-100);
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+}
+
+.classroom-section-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+/* 成員表狀態欄：純文字＋小圓點（無邊框，區別於上面的膠囊 chip） */
+.status-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-inline--inactive {
+  color: var(--color-muted);
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-dot--active {
+  color: var(--jade-600);
+}
+
+.status-dot--inactive {
+  color: var(--ink-300);
+}
+
+/* tStudentProgress 四張統計卡：白底＋黃左框，最後一張(待補救錯題)紅左框
+   ＋紅字（DC 2192–2208）。tAnalytics 的「班級總覽」四卡沿用無 accent 的
+   .teacher-summary-cards 原樣（灰底、無左框），兩處視覺不同故用修飾類區分。 */
+.teacher-summary-cards--accent > div {
+  border-left: 4px solid var(--yellow-brand);
+  background: var(--surface-card);
+}
+
+.teacher-summary-cards--accent > .teacher-summary-cards__stat--alert {
+  border-left-color: var(--color-xp);
+}
+
+.teacher-summary-cards--accent > .teacher-summary-cards__stat--alert dd {
+  color: var(--rose-700);
+}
+
 /* ── GGAME 認證入口品牌區（Task 11） ──────────────────── */
 
 .auth-portal-brand {
@@ -2701,6 +3072,15 @@ a {
   margin: 0;
   color: var(--color-success);
   font-weight: 700;
+}
+
+/* 教師端「待補救錯題」卡的第二行是子題／答錯次數的中性說明文字，不是
+   正確答案（DC tStudentProgress 2269：灰字），故另立修飾類，不與上面
+   學生端「我的錯題」卡的綠色答案行共用。 */
+.mistake-list__meta {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
 }
 
 /* #13 我的錯題：已解決群（DC mistakes 1095-1103：灰左框灰卡） */

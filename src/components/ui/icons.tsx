@@ -17,6 +17,12 @@ const paths: Record<string, ReactElement> = {
       <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" />
     </>
   ),
+  copy: (
+    <>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M15 6.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h.5" />
+    </>
+  ),
   'lock-open': (
     <>
       <rect x="5" y="10.5" width="14" height="9.5" rx="2.5" />

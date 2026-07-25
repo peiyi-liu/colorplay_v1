@@ -616,6 +616,16 @@ if (only && !SCREENS.some((screen) => screen.id === only)) {
             .catch(() => undefined);
         }
 
+        // Playwright 的虛擬滑鼠位置會跨 page.goto() 保留：登入表單「登入」鍵
+        // 的點擊座標，剛好可能疊到目的頁某個互動元素上，讓截圖偶發帶出該
+        // 元素的 :hover 樣式（Task 13 稽核 tClasses「管理班級」鍵撞見過，
+        // CSS／DOM 本身經 getComputedStyle 直接驗證皆正確，純屬殘留滑鼠座標
+        // 造成的截圖假象）。截圖前挪到畫面外角落，避免任何殘留 hover 態；
+        // 部分 hover 樣式帶 150ms transition，:hover 一解除仍要多等一小段
+        // 讓過場動畫跑完，不然截圖會停在「剛解除 hover」那一幀的中間色。
+        await page.mouse.move(0, 0);
+        await setTimeout(200);
+
         const dir = `${outputRoot}/${screen.id}`;
         mkdirSync(dir, { recursive: true });
         const path = `${dir}/${width.name}.png`;

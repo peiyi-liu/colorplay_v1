@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { z } from 'zod';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { Chip } from '../../../components/ui/chip';
 import { ClassroomCodeReceiptView } from '../components/classroom-code-receipt';
 import {
   useCreateClassroom,
@@ -66,15 +67,31 @@ export function TeacherClassroomsPage({
   }
 
   const isPending = isSubmitting || create.isPending;
+  const totalMembers = classrooms.data.reduce(
+    (sum, classroom) => sum + classroom.memberCount,
+    0,
+  );
   return (
     <section aria-labelledby="teacher-classrooms-title" className="page-wide">
-      <header>
-        <p className="route-panel__eyebrow">教師工作區</p>
-        <h1 id="teacher-classrooms-title">班級管理</h1>
-        <p>建立班級後，加入碼只會在伺服器回應時顯示一次。</p>
+      <header className="teacher-dashboard-header">
+        <div className="teacher-dashboard-header__intro">
+          <p className="route-panel__eyebrow">教師工作區</p>
+          <h1 id="teacher-classrooms-title">班級管理</h1>
+          <p>建立班級後，加入碼只會在伺服器回應時顯示一次。</p>
+        </div>
+        <dl className="classroom-header-stats">
+          <div>
+            <dt>班級數</dt>
+            <dd>{String(classrooms.data.length)}</dd>
+          </div>
+          <div>
+            <dt>有效學生</dt>
+            <dd>{String(totalMembers)}</dd>
+          </div>
+        </dl>
       </header>
       <form
-        className="route-panel"
+        className="classroom-create-form"
         data-interaction-group="create-classroom"
         noValidate
         onSubmit={(event) => {
@@ -95,18 +112,16 @@ export function TeacherClassroomsPage({
           })(event);
         }}
       >
-        <label htmlFor="classroom-name">班級名稱</label>
-        <input
-          {...register('name')}
-          aria-describedby={errors.name ? 'classroom-name-error' : undefined}
-          aria-invalid={errors.name ? 'true' : 'false'}
-          id="classroom-name"
-          type="text"
-        />
-        {errors.name ? (
-          <p id="classroom-name-error">{errors.name.message}</p>
-        ) : null}
-        {submitError ? <p role="alert">{submitError}</p> : null}
+        <div className="classroom-create-form__field">
+          <label htmlFor="classroom-name">班級名稱</label>
+          <input
+            {...register('name')}
+            aria-describedby={errors.name ? 'classroom-name-error' : undefined}
+            aria-invalid={errors.name ? 'true' : 'false'}
+            id="classroom-name"
+            type="text"
+          />
+        </div>
         <button
           className="primary-action"
           data-primary-action="true"
@@ -115,6 +130,17 @@ export function TeacherClassroomsPage({
         >
           {isPending ? '建立中…' : '建立班級'}
         </button>
+        {errors.name ? (
+          <p className="classroom-create-form__error" id="classroom-name-error">
+            {errors.name.message}
+          </p>
+        ) : null}
+        {submitError ? (
+          <p className="classroom-create-form__error" role="alert">
+            {submitError}
+          </p>
+        ) : null}
+        <p className="classroom-create-form__hint">名稱為 1 至 80 個字元。</p>
       </form>
       {receipt ? (
         <ClassroomCodeReceiptView
@@ -127,15 +153,48 @@ export function TeacherClassroomsPage({
       {classrooms.data.length === 0 ? (
         <p>尚未建立班級。</p>
       ) : (
-        <ul aria-label="教師班級列表">
+        <ul aria-label="教師班級列表" className="classroom-list">
           {classrooms.data.map((classroom) => (
             <li key={classroom.classroomId}>
-              <article>
-                <h2>{classroom.classroomName}</h2>
-                <p>{String(classroom.memberCount)} 位有效學生</p>
-                <Link to={`/teacher/classes/${classroom.classroomId}`}>
-                  管理班級
-                </Link>
+              <article className="classroom-card">
+                <div className="classroom-card__head">
+                  <h2>{classroom.classroomName}</h2>
+                  <Chip tone="success">
+                    <span
+                      aria-hidden="true"
+                      className="status-dot status-dot--active"
+                    />
+                    {String(classroom.memberCount)} 位有效學生
+                  </Chip>
+                </div>
+                <dl className="classroom-card__meta">
+                  <div>
+                    <dt>加入碼版本</dt>
+                    <dd>{`v${String(classroom.joinCodeVersion)}`}</dd>
+                  </div>
+                  <div>
+                    <dt>建立日期</dt>
+                    <dd>
+                      {new Date(classroom.createdAt).toLocaleDateString(
+                        'zh-TW',
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+                <div className="classroom-card__actions">
+                  <Link
+                    className="classroom-card__manage"
+                    to={`/teacher/classes/${classroom.classroomId}`}
+                  >
+                    管理班級
+                  </Link>
+                  <Link
+                    className="classroom-card__analytics"
+                    to="/teacher/analytics"
+                  >
+                    教學分析
+                  </Link>
+                </div>
               </article>
             </li>
           ))}
