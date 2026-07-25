@@ -2822,6 +2822,7 @@ a {
   align-items: center;
   gap: var(--space-3);
   cursor: pointer;
+  border-left: 4px solid var(--yellow-brand);
   padding: var(--space-3) var(--space-4);
   font-weight: 800;
 }
@@ -2854,11 +2855,6 @@ a {
   color: white;
 }
 
-.review-accordion__badge--3 {
-  background: linear-gradient(135deg, var(--emerald-600), var(--sky-500));
-  color: white;
-}
-
 .review-accordion__title {
   flex: 1;
 }
@@ -2872,6 +2868,251 @@ a {
   border-top: 1px solid var(--border-subtle);
   margin: 0;
   padding: var(--space-4);
+}
+
+/* 複習卡內：完成狀態文字／未完成的「完成複習」墨框按鈕(DC 602/629–631) */
+.review-card__status {
+  color: var(--color-success);
+  font-weight: 700;
+  text-align: right;
+}
+
+.review-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+}
+
+.review-card__complete-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--border-strong);
+  cursor: pointer;
+  font-size: var(--font-size-supporting);
+  font-weight: 700;
+  padding: var(--space-2) 18px;
+}
+
+/* 章節複習頁標頭：白卡尺寸、標題列、狀態 pill／圓環進度(DC 535–567) */
+.page-card.page-card--spacious {
+  width: min(100%, 1040px);
+  padding: var(--space-10);
+}
+
+.chapter-detail__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.chapter-detail__title {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3rem);
+  line-height: 1.2;
+}
+
+.chapter-detail__progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-6);
+  margin-top: var(--space-3);
+}
+
+.chapter-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  font-size: var(--font-size-supporting);
+  font-weight: 800;
+  padding: 4px 14px;
+}
+
+.chapter-status-pill--success {
+  border: 1px solid var(--color-token);
+  background: color-mix(in srgb, var(--color-token) 10%, transparent);
+  color: var(--emerald-700);
+}
+
+.chapter-status-pill--primary {
+  border: 1px solid var(--amber-avatar);
+  background: color-mix(in srgb, var(--yellow-brand) 20%, transparent);
+  color: var(--ink-900);
+}
+
+.chapter-status-pill--neutral {
+  border: 1px solid var(--border-subtle);
+  background: var(--slate-100);
+  color: var(--color-muted);
+}
+
+.chapter-status-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.chapter-status-dot--success {
+  background: var(--color-token);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-token) 22%, transparent);
+}
+
+.chapter-status-dot--primary {
+  background: var(--yellow-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow-brand) 22%, transparent);
+}
+
+.chapter-status-dot--neutral {
+  background: var(--ink-300);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink-300) 22%, transparent);
+}
+
+.chapter-detail__review-progress {
+  display: grid;
+  flex: 1 1 200px;
+  min-width: 160px;
+  gap: 6px;
+}
+
+.chapter-detail__review-progress-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.chapter-detail__review-progress-label {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.chapter-detail__review-progress-value {
+  color: var(--color-text);
+  font-size: var(--font-size-supporting);
+  font-weight: 800;
+}
+
+.chapter-detail__mastery {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mastery-ring {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+}
+
+.mastery-ring svg {
+  transform: rotate(-90deg);
+}
+
+.mastery-ring__track {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 6;
+}
+
+.mastery-ring__fill {
+  fill: none;
+  stroke: var(--color-token);
+  stroke-linecap: round;
+  stroke-width: 6;
+}
+
+.chapter-detail__mastery-text {
+  display: grid;
+  line-height: 1.2;
+}
+
+.chapter-detail__mastery-label {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.chapter-detail__mastery-value {
+  color: var(--color-text);
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+/* 章節複習頁小節區：黃左框＋「小節」pill＋進度行(DC 571–590) */
+.chapter-detail__subtopic {
+  border-left: 3px solid var(--yellow-brand);
+  margin-top: var(--space-6);
+  padding-left: var(--space-4);
+}
+
+.chapter-detail__subtopic-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--ink-700);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.chapter-detail__subtopic-tag {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--amber-avatar);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--yellow-brand) 22%, white);
+  color: var(--ink-900);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 2px var(--space-2);
+}
+
+.chapter-detail__subtopic-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 6px 0 var(--space-4);
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.chapter-detail__subtopic-studied {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.chapter-detail__subtopic-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hue-ch3);
+}
+
+.chapter-detail__subtopic-divider {
+  color: var(--ink-300);
+}
+
+.chapter-detail__subtopic-review {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 /* 成就頁（colorplay-new 原樣）：返回鍵＋標題列 */

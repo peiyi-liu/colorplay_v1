@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -159,11 +165,24 @@ describe('ChapterDetailPage', () => {
       ).toBeInTheDocument();
     });
     expect(
-      screen.getByRole('heading', { name: '3-1 色彩三要素與色名的表示' }),
+      screen.getByRole('heading', {
+        name: '小節 3-1 色彩三要素與色名的表示',
+      }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText('章節進度')).toHaveTextContent(
-      '複習完成 1 / 3・精熟 59.5%・學習中',
-    );
+
+    // 章節進度：綠「學習中」pill＋複習完成 x/y＋44px 精熟圓環(DC 534–567)。
+    const chapterProgress = screen.getByLabelText('章節進度');
+    expect(chapterProgress).toHaveTextContent('學習中');
+    expect(chapterProgress).toHaveTextContent('複習完成 1 / 3');
+    expect(chapterProgress).toHaveTextContent('精熟程度');
+    expect(chapterProgress).toHaveTextContent('59.5%');
+    const masteryRing = within(chapterProgress).getByRole('progressbar', {
+      name: '精熟程度',
+    });
+    expect(masteryRing).toHaveAttribute('aria-valuenow', '59.5');
+    expect(masteryRing).toHaveAttribute('aria-valuemin', '0');
+    expect(masteryRing).toHaveAttribute('aria-valuemax', '100');
+
     expect(
       screen.getByRole('img', { name: '十二色相環示意圖' }),
     ).toBeInTheDocument();
@@ -171,6 +190,11 @@ describe('ChapterDetailPage', () => {
     expect(
       screen.getByRole('button', { name: '完成複習' }),
     ).toBeInTheDocument();
+
+    // 序號方塊漸層三種循環(DC 594/608/623):兩張卡分屬循環的第 0/1 式樣。
+    const badges = document.querySelectorAll('.review-accordion__badge');
+    expect(badges[0]).toHaveClass('review-accordion__badge--0');
+    expect(badges[1]).toHaveClass('review-accordion__badge--1');
   });
 
   it('completes a card through the trusted command', async () => {
