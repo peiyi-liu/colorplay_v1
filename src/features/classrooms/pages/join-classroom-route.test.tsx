@@ -17,6 +17,7 @@ it('requires confirmation then replace-navigates without the code in the URL', a
   const repository: ClassroomRepository = {
     createClassroom: vi.fn(),
     getOwnedMembers: vi.fn(),
+  getStudentProgress: vi.fn(),
     joinClassroom,
     listMine: vi.fn(),
     listOwned: vi.fn(),

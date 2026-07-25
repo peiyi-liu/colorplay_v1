@@ -17,8 +17,47 @@ export type OwnedClassroom = Readonly<{
 export type ClassroomMember = Readonly<{
   activeBlookId: string | null;
   displayName: string;
+  fullName: string | null;
   joinedAt: string;
+  loginAccount: string | null;
+  memberRef: string;
   membershipStatus: 'active' | 'inactive';
+}>;
+
+export type StudentChapterProgress = Readonly<{
+  accuracy: number | null;
+  chapterId: string;
+  chapterTitle: string;
+  coverage: number | null;
+  mastery: number | null;
+  reviewCompleted: number;
+  reviewTotal: number | null;
+  status: 'developing' | 'learning' | 'mastered' | 'not_started';
+}>;
+
+export type StudentOpenMistake = Readonly<{
+  prompt: string;
+  subtopicCode: string;
+  subtopicTitle: string;
+  wrongCount: number;
+}>;
+
+export type StudentProgressSnapshot = Readonly<{
+  chapters: readonly StudentChapterProgress[];
+  identity: Readonly<{
+    displayName: string;
+    fullName: string | null;
+    joinedAt: string;
+    loginAccount: string | null;
+    membershipStatus: 'active' | 'inactive';
+  }>;
+  mistakes: readonly StudentOpenMistake[];
+  stats: Readonly<{
+    avgAccuracy: number | null;
+    classRank: number | null;
+    classXp: number;
+    openMistakeCount: number;
+  }>;
 }>;
 
 export type ClassroomCodeReceipt = Readonly<{
@@ -38,6 +77,10 @@ export type JoinedClassroom = Readonly<{
 export type ClassroomRepository = Readonly<{
   createClassroom(input: { name: string }): Promise<ClassroomCodeReceipt>;
   getOwnedMembers(classroomId: string): Promise<readonly ClassroomMember[]>;
+  getStudentProgress(
+    classroomId: string,
+    memberRef: string,
+  ): Promise<StudentProgressSnapshot>;
   joinClassroom(input: {
     joinCode: string;
     requestId: string;

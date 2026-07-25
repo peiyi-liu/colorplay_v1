@@ -17,6 +17,7 @@ const createRepository = (
 ): ClassroomRepository => ({
   createClassroom: vi.fn(),
   getOwnedMembers: vi.fn(),
+  getStudentProgress: vi.fn(),
   joinClassroom: vi.fn(),
   listMine: vi.fn(),
   listOwned: vi.fn().mockResolvedValue([]),

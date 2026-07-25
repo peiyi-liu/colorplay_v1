@@ -2759,7 +2759,10 @@ export type Database = {
         Returns: {
           active_blook_id: string
           display_name: string
+          full_name: string | null
           joined_at: string
+          login_account: string | null
+          member_ref: string
           membership_status: Database["public"]["Enums"]["classroom_member_status"]
         }[]
       }
@@ -3011,6 +3014,10 @@ export type Database = {
           prompt: string
           stable_code: string
         }[]
+      }
+      teacher_student_progress: {
+        Args: { p_classroom_id: string; p_member_ref: string }
+        Returns: Json
       }
       teacher_subtopic_mastery: {
         Args: {

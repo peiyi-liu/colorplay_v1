@@ -18,6 +18,7 @@ const repository = (
 ): ClassroomRepository => ({
   createClassroom: vi.fn(),
   getOwnedMembers: vi.fn(),
+  getStudentProgress: vi.fn(),
   joinClassroom,
   listMine: vi.fn(),
   listOwned: vi.fn(),

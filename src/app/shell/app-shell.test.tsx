@@ -312,13 +312,18 @@ describe('AppShell', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('link', { name: '題庫管理' })).toHaveAttribute(
-      'href',
-      '/teacher/content',
-    );
+    expect(screen.queryByRole('link', { name: '題庫管理' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Live 主持' })).toHaveAttribute(
       'href',
       '/teacher/live',
+    );
+    expect(screen.getByRole('link', { name: '班級管理' })).toHaveAttribute(
+      'href',
+      '/teacher/classes',
+    );
+    expect(screen.getByRole('link', { name: '教學分析' })).toHaveAttribute(
+      'href',
+      '/teacher/analytics',
     );
     expect(screen.getByRole('link', { name: '教師工作區' })).toHaveAttribute(
       'href',

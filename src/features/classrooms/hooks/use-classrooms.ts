@@ -18,6 +18,7 @@ import {
   type JoinedClassroom,
   type OwnedClassroom,
   type StudentClassroom,
+  type StudentProgressSnapshot,
 } from '../types';
 
 export const classroomKeys = {
@@ -25,6 +26,8 @@ export const classroomKeys = {
   owned: ['classrooms', 'owned'] as const,
   ownedMembers: (classroomId: string) =>
     ['classrooms', 'owned', classroomId, 'members'] as const,
+  studentProgress: (classroomId: string, memberRef: string) =>
+    ['classrooms', 'owned', classroomId, 'members', memberRef] as const,
 };
 
 const resolveRepository = (repository?: ClassroomRepository) =>
@@ -66,6 +69,20 @@ export function useOwnedClassroomMembers(
     enabled: classroomId.length > 0,
     queryFn: () => resolved.getOwnedMembers(classroomId),
     queryKey: classroomKeys.ownedMembers(classroomId),
+    retry: retryRead,
+  });
+}
+
+export function useStudentProgress(
+  classroomId: string,
+  memberRef: string,
+  repository?: ClassroomRepository,
+): UseQueryResult<StudentProgressSnapshot, ClassroomRepositoryError> {
+  const resolved = resolveRepository(repository);
+  return useQuery({
+    enabled: classroomId.length > 0 && memberRef.length > 0,
+    queryFn: () => resolved.getStudentProgress(classroomId, memberRef),
+    queryKey: classroomKeys.studentProgress(classroomId, memberRef),
     retry: retryRead,
   });
 }

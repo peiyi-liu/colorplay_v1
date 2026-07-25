@@ -5,12 +5,7 @@ import { RouteLoading } from '../../../app/boundaries/route-loading';
 import type { AssignmentRepository } from '../../assignments/types';
 import { useCreateAssignment } from '../../assignments/hooks/use-assignments';
 import { useLiveSessionDetail } from '../hooks/use-live-commands';
-import {
-  buildMatrixCsv,
-  matrixCellLabel,
-  RETEACH_THRESHOLD,
-  reteachQuestions,
-} from '../lib/report-export';
+import { buildMatrixCsv, matrixCellLabel } from '../lib/report-export';
 import type { LiveRepository, LiveSessionDetail } from '../types';
 
 const EM_DASH = '—';
@@ -102,7 +97,6 @@ export function TeacherLiveReportPage({
   }
 
   const report = detail.data;
-  const reteach = reteachQuestions(report.questions);
 
   return (
     <section aria-labelledby="live-report-title" className="page-mid">
@@ -114,23 +108,6 @@ export function TeacherLiveReportPage({
           從權威作答紀錄計算。
         </p>
       </header>
-
-      {reteach.length > 0 ? (
-        <section aria-label="建議重教" className="live-reteach">
-          <h2>建議重教（正確率低於 {RETEACH_THRESHOLD}%）</h2>
-          <ul>
-            {reteach.map((question) => (
-              <li key={question.position}>
-                第 {question.position} 題：{question.prompt}（
-                {question.correctRate === null
-                  ? EM_DASH
-                  : `${question.correctRate.toFixed(1)}%`}
-                ）
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
 
       <table className="ui-table" aria-label="逐題分析">
         <thead>
