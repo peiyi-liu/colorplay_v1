@@ -54,7 +54,20 @@ jobs:
         run: pnpm typecheck
 
       - name: Run stack-independent unit coverage
-        run: pnpm test:coverage
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm test:coverage 2>&1 | tee coverage-run.log
+
+      # coverage 失敗時把尾段輸出轉成 annotations——logs API 需認證，
+      # annotations 可匿名讀取，供診斷「無測試失敗的 exit 1」。
+      - name: Surface coverage failure detail
+        if: failure()
+        shell: bash
+        run: |
+          tail -n 40 coverage-run.log | while IFS= read -r line; do
+            printf '::error::COV %s\n' "$line"
+          done
 
       - name: Build production application
         run: npm run build
