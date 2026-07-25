@@ -105,6 +105,7 @@
   --color-alert: var(--amber-600);
   --surface-host: #fdf8ee; /* 紙張/主機色 */
   --surface-card: var(--white);
+  --surface-shortcut-hover: #fffdf2; /* 教師捷徑卡 hover 底(DC 1379/1382) */
   --border-subtle: var(--ink-200);
   --border-strong: var(--ink-900);
 
