@@ -101,11 +101,11 @@ test('invalid credentials stay anonymous and keyboard-only valid login restores 
   await page.setViewportSize({ height: 500, width: 375 });
   await page.goto(intendedUrl);
   await expect(page).toHaveURL(/\/login$/u);
-  await expect(page.getByLabel('帳號')).toBeVisible();
+  await expect(page.getByRole('textbox', { name: '帳號' })).toBeVisible();
   await expect(page.getByLabel('密碼')).toBeVisible();
   await expect(page.locator('[data-primary-action="true"]')).toHaveCount(1);
 
-  const emailControl = page.getByLabel('帳號');
+  const emailControl = page.getByRole('textbox', { name: '帳號' });
   const passwordControl = page.getByLabel('密碼');
   await expect(emailControl).toHaveAttribute('aria-invalid', 'false');
   expect((await emailControl.boundingBox())?.height).toBeGreaterThanOrEqual(44);
@@ -134,7 +134,7 @@ test('invalid credentials stay anonymous and keyboard-only valid login restores 
   await expect(page.getByRole('link', { name: '跳到主要內容' })).toBeFocused();
   // 結構性斷言：skip-link 必為首個聚焦點；其後 shell 可聚焦元素數量會隨
   // phase 演進，改為有界 Tab 迴圈直到表單起點，不釘死絕對順位。
-  const emailInput = page.getByLabel('帳號');
+  const emailInput = page.getByRole('textbox', { name: '帳號' });
   let emailFocused = false;
   for (let tabPress = 0; tabPress < 10; tabPress += 1) {
     await page.keyboard.press('Tab');

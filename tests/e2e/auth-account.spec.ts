@@ -106,7 +106,7 @@ test('student registers with OTP, signs in by account, and resets the password',
   // 登出後以帳號（學號）登入。
   await page.getByRole('button', { name: '登出' }).click();
   await expect(page).toHaveURL(/\/login$/u, { timeout: 15_000 });
-  await page.getByLabel('帳號').fill(account);
+  await page.getByRole('textbox', { name: '帳號' }).fill(account);
   await page.getByLabel('密碼').fill(password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u, { timeout: 20_000 });
@@ -115,7 +115,7 @@ test('student registers with OTP, signs in by account, and resets the password',
   await page.getByRole('button', { name: '登出' }).click();
   await expect(page).toHaveURL(/\/login$/u, { timeout: 15_000 });
   await page.goto('/forgot-password');
-  await page.getByLabel('帳號').fill(account);
+  await page.getByRole('textbox', { name: '帳號' }).fill(account);
   await page.getByLabel('E-mail').fill(email);
   await page.getByRole('button', { name: '寄送重設連結' }).click();
   await expect(page.getByText(/重設密碼連結已寄出/u)).toBeVisible();
@@ -145,7 +145,7 @@ test('student registers with OTP, signs in by account, and resets the password',
     'AUTH_INVALID_CREDENTIALS',
   );
 
-  await page.getByLabel('帳號').fill(account);
+  await page.getByRole('textbox', { name: '帳號' }).fill(account);
   await page.getByLabel('密碼').fill(newPassword);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u, { timeout: 20_000 });

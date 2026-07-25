@@ -19,7 +19,7 @@ const signInStudent = async (
   credentials: Readonly<{ email: string; password: string }>,
 ) => {
   await page.goto('/login');
-  await page.getByLabel('帳號').fill(credentials.email);
+  await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
   await page.getByLabel('密碼').fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u);
@@ -35,8 +35,8 @@ const signInTeacher = async (
   await page.goto('/login');
   // The native radio is visually clipped (styled tab), so check() would wait
   // for visibility forever — click the label instead.
-  await page.getByText('教師診斷端').click();
-  await page.getByLabel('帳號').fill(credentials.email);
+  await page.getByText('教師端登入').click();
+  await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
   await page.getByLabel('密碼').fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/teacher$/u);

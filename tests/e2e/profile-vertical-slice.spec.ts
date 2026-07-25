@@ -67,7 +67,7 @@ const signInAndReadProfile = async (
   credentials: (typeof TEST_USERS)[keyof typeof TEST_USERS],
 ) => {
   await page.goto('/login');
-  await page.getByLabel('帳號').fill(credentials.email);
+  await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
   await page.getByLabel('密碼').fill(credentials.password);
 
   const responsePromise = page.waitForResponse(isOwnProfileResponse);
