@@ -167,13 +167,15 @@ export async function finalizeLearningExperience(runDirectory) {
       listFiles(join(root, directory)),
     ),
   );
+  // 學習進度頁依 owner 2026-07-26 批示改教師專屬（學生端 `/app/progress`
+  // 路由與頁面已移除，Task 10），證據項隨之移除：spec 不再產生
+  // progress-dashboard-1440x900.png，此處不再要求它存在。
   const requiredScreenshots = [
     'chapter-detail-375x812.png',
     'review-card-768x1024.png',
-    'progress-dashboard-1440x900.png',
   ];
   if (
-    screenshots.length !== 3 ||
+    screenshots.length !== 2 ||
     videos.length !== 1 ||
     traces.length !== 1 ||
     !requiredScreenshots.every((name) =>

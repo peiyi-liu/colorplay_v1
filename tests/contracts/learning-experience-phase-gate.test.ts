@@ -70,7 +70,8 @@ describe('learning experience phase gate contract', () => {
     );
     expect(finalizer).toContain("'chapter-detail-375x812.png'");
     expect(finalizer).toContain("'review-card-768x1024.png'");
-    expect(finalizer).toContain("'progress-dashboard-1440x900.png'");
+    // 學習進度頁依 owner 2026-07-26 批示改教師專屬，證據項隨之移除：
+    // progress-dashboard-1440x900.png 不再是必要證據，斷言同步移除。
     expect(finalizer).toContain('request_question_hint');
     expect(finalizer).toContain('evidence-policy.mjs');
     expect(finalizer).toContain("--grep='Learning Experience phase gate'");
