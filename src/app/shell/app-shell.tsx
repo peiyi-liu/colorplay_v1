@@ -165,17 +165,14 @@ export function AppShell() {
             <Link className="teacher-rail__link" to="/teacher">
               教師工作區
             </Link>
-            <Link className="teacher-rail__link" to="/teacher/analytics">
-              教學分析
-            </Link>
-            <Link className="teacher-rail__link" to="/teacher/content">
-              題庫管理
-            </Link>
             <Link className="teacher-rail__link" to="/teacher/live">
               Live 主持
             </Link>
             <Link className="teacher-rail__link" to="/teacher/classes">
               班級管理
+            </Link>
+            <Link className="teacher-rail__link" to="/teacher/analytics">
+              教學分析
             </Link>
           </div>
         </nav>

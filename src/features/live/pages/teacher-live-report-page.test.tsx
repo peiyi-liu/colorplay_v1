@@ -104,15 +104,14 @@ describe('TeacherLiveReportPage', () => {
     expect(repository.getSessionDetail).toHaveBeenCalledWith(SESSION_ID);
   });
 
-  it('pins the below-35% questions as reteach suggestions', async () => {
+  it('does not surface a reteach call-out section (owner decision)', async () => {
     const repository = {
       getSessionDetail: vi.fn().mockResolvedValue(detailFixture),
     } as unknown as LiveRepository;
     renderPage(repository);
 
-    expect(await screen.findByText('建議重教（正確率低於 35%）')).toBeVisible();
-    expect(screen.getByText(/第 2 題：互補色是？（0\.0%）/u)).toBeVisible();
-    expect(screen.queryByText(/第 1 題：色彩三要素是？/u)).toBeNull();
+    expect(await screen.findByText('色彩三要素是？')).toBeVisible();
+    expect(screen.queryByText(/建議重教/u)).toBeNull();
   });
 
   it('renders the answer matrix with per-question cells', async () => {

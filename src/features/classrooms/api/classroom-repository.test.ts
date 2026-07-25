@@ -50,7 +50,10 @@ describe('ClassroomRepository', () => {
           {
             active_blook_id: null,
             display_name: '學生一',
+            full_name: '陳品妍',
             joined_at: '2026-07-17T01:00:00.000Z',
+            login_account: 's1130201',
+            member_ref: 'cb000000-0000-4000-8000-000000000001',
             membership_status: 'active',
           },
         ],
@@ -82,10 +85,101 @@ describe('ClassroomRepository', () => {
       {
         activeBlookId: null,
         displayName: '學生一',
+        fullName: '陳品妍',
         joinedAt: '2026-07-17T01:00:00.000Z',
+        loginAccount: 's1130201',
+        memberRef: 'cb000000-0000-4000-8000-000000000001',
         membershipStatus: 'active',
       },
     ]);
+  });
+
+  it('maps the student progress snapshot from the teacher rpc', async () => {
+    const { repository, rpc } = createHarness([
+      {
+        data: {
+          chapters: [
+            {
+              accuracy: 88,
+              chapter_id: 'cc000000-0000-4000-8000-000000000001',
+              chapter_title: '第三章：色彩表示',
+              coverage: 92,
+              mastery: 86,
+              review_completed: 3,
+              review_total: 3,
+              status: 'mastered',
+            },
+          ],
+          identity: {
+            display_name: '光譜獵人',
+            full_name: '陳品妍',
+            joined_at: '2026-07-18T01:00:00+00:00',
+            login_account: 's1130201',
+            membership_status: 'active',
+          },
+          mistakes: [
+            {
+              prompt: '關於色立體的敘述，下列何者不正確?',
+              subtopic_code: '3-2',
+              subtopic_title: '色彩體系與數值符號的表示',
+              wrong_count: 2,
+            },
+          ],
+          stats: {
+            avg_accuracy: 86,
+            class_rank: 1,
+            class_xp: 2140,
+            open_mistake_count: 2,
+          },
+        },
+        error: null,
+      },
+    ]);
+
+    await expect(
+      repository.getStudentProgress(
+        'ca000000-0000-4000-8000-000000000001',
+        'cb000000-0000-4000-8000-000000000001',
+      ),
+    ).resolves.toEqual({
+      chapters: [
+        {
+          accuracy: 88,
+          chapterId: 'cc000000-0000-4000-8000-000000000001',
+          chapterTitle: '第三章：色彩表示',
+          coverage: 92,
+          mastery: 86,
+          reviewCompleted: 3,
+          reviewTotal: 3,
+          status: 'mastered',
+        },
+      ],
+      identity: {
+        displayName: '光譜獵人',
+        fullName: '陳品妍',
+        joinedAt: '2026-07-18T01:00:00+00:00',
+        loginAccount: 's1130201',
+        membershipStatus: 'active',
+      },
+      mistakes: [
+        {
+          prompt: '關於色立體的敘述，下列何者不正確?',
+          subtopicCode: '3-2',
+          subtopicTitle: '色彩體系與數值符號的表示',
+          wrongCount: 2,
+        },
+      ],
+      stats: {
+        avgAccuracy: 86,
+        classRank: 1,
+        classXp: 2140,
+        openMistakeCount: 2,
+      },
+    });
+    expect(rpc).toHaveBeenCalledWith('teacher_student_progress', {
+      p_classroom_id: 'ca000000-0000-4000-8000-000000000001',
+      p_member_ref: 'cb000000-0000-4000-8000-000000000001',
+    });
   });
 
   it('trims a valid classroom name and maps its one-time code receipt', async () => {

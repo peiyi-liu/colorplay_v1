@@ -10,6 +10,9 @@ export const optionAccessibleName = (index: number, key: string): string => {
   return `選項 ${key}：${color}${shape}`;
 };
 
+/** 單題最高得分（速度計分 150 → 75，見 live_scoring_v2）。 */
+export const MAX_QUESTION_POINTS = 150;
+
 /** 題間個人回饋的鼓勵語（owner 裁定文案方向：名次、分差、鼓勵）。 */
 export const encouragementFor = (standing: LiveMyStanding): string => {
   if (standing.rank === 1) {
@@ -20,6 +23,9 @@ export const encouragementFor = (standing: LiveMyStanding): string => {
   }
   if (standing.pointsBehind === 0) {
     return `和第 ${String(standing.aheadRank)} 名同分，下一題就能反超！`;
+  }
+  if (standing.pointsBehind <= MAX_QUESTION_POINTS) {
+    return `再追一題就能進前 ${String(standing.aheadRank)}！`;
   }
   return `差 ${String(standing.pointsBehind)} 分就能超越第 ${String(
     standing.aheadRank,

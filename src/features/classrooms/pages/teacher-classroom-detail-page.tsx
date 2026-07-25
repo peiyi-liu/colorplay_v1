@@ -110,21 +110,34 @@ export function TeacherClassroomDetailPage({
           <caption>班級學生</caption>
           <thead>
             <tr>
-              <th scope="col">顯示名稱</th>
+              <th scope="col">名字</th>
+              <th scope="col">學號</th>
+              <th scope="col">暱稱</th>
               <th scope="col">Blook</th>
               <th scope="col">狀態</th>
               <th scope="col">加入日期</th>
+              <th scope="col">學習狀況</th>
             </tr>
           </thead>
           <tbody>
             {members.data.map((member) => (
-              <tr key={`${member.displayName}-${member.joinedAt}`}>
-                <th scope="row">{member.displayName}</th>
+              <tr key={member.memberRef}>
+                <th scope="row">{member.fullName ?? '—'}</th>
+                <td>{member.loginAccount ?? '—'}</td>
+                <td>{member.displayName}</td>
                 <td>{member.activeBlookId ? '已裝備 Blook' : '尚未裝備'}</td>
                 <td>
                   {member.membershipStatus === 'active' ? '有效成員' : '已停用'}
                 </td>
                 <td>{new Date(member.joinedAt).toLocaleDateString('zh-TW')}</td>
+                <td>
+                  <Link
+                    className="secondary-action"
+                    to={`/teacher/classes/${classroomId}/members/${member.memberRef}`}
+                  >
+                    查看細節 ›
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>

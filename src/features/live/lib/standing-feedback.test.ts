@@ -20,7 +20,7 @@ describe('standing feedback copy', () => {
     ).toBe('你是目前的全場第一，守住寶座！');
   });
 
-  it('names the gap to the next rank', () => {
+  it('promises a one-question comeback when the gap is catchable', () => {
     expect(
       encouragementFor({
         rank: 3,
@@ -29,7 +29,19 @@ describe('standing feedback copy', () => {
         aheadRank: 2,
         pointsBehind: 120,
       }),
-    ).toBe('差 120 分就能超越第 2 名，加油！');
+    ).toBe('再追一題就能進前 2！');
+  });
+
+  it('names the gap to the next rank when it takes more than one question', () => {
+    expect(
+      encouragementFor({
+        rank: 3,
+        score: 150,
+        participantCount: 5,
+        aheadRank: 2,
+        pointsBehind: 220,
+      }),
+    ).toBe('差 220 分就能超越第 2 名，加油！');
   });
 
   it('handles an exact tie with the rank ahead', () => {

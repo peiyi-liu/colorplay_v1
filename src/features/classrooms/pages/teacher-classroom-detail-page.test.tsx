@@ -17,10 +17,14 @@ const repository = (
     {
       activeBlookId: '50000000-0000-0000-0000-000000000001',
       displayName: '學生一',
+      fullName: '陳品妍',
       joinedAt: '2026-07-17T01:00:00.000Z',
+      loginAccount: 's1130201',
+      memberRef: 'cb000000-0000-4000-8000-000000000001',
       membershipStatus: 'active',
     },
   ]),
+  getStudentProgress: vi.fn(),
   joinClassroom: vi.fn(),
   listMine: vi.fn(),
   listOwned: vi.fn(),
@@ -56,8 +60,16 @@ describe('TeacherClassroomDetailPage', () => {
   it('renders owner-safe member rows without Email or UUID', async () => {
     renderPage(repository());
     expect(await screen.findByText('學生一')).toBeVisible();
+    expect(screen.getByText('陳品妍')).toBeVisible();
+    expect(screen.getByText('s1130201')).toBeVisible();
     expect(screen.getByText('已裝備 Blook')).toBeVisible();
     expect(screen.getByText('有效成員')).toBeVisible();
+    expect(
+      screen.getByRole('link', { name: '查看細節 ›' }),
+    ).toHaveAttribute(
+      'href',
+      `/teacher/classes/${classroomId}/members/cb000000-0000-4000-8000-000000000001`,
+    );
     expect(document.body).not.toHaveTextContent('@');
     expect(document.body).not.toHaveTextContent(
       '50000000-0000-0000-0000-000000000001',

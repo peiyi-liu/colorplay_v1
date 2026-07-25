@@ -237,6 +237,14 @@ export function createAppRouter() {
                   },
                 },
                 {
+                  path: '/teacher/classes/:classroomId/members/:memberRef',
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/classrooms/pages/teacher-student-progress-page');
+                    return { Component: module.TeacherStudentProgressPage };
+                  },
+                },
+                {
                   path: '/teacher/classes/:classroomId/progress',
                   lazy: async () => {
                     const module =

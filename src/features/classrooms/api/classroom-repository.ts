@@ -10,6 +10,7 @@ import {
   type JoinedClassroom,
   type OwnedClassroom,
   type StudentClassroom,
+  type StudentProgressSnapshot,
 } from '../types';
 
 export { ClassroomRepositoryError } from '../types';
@@ -42,8 +43,46 @@ const ownedClassroomSchema = z.strictObject({
 const classroomMemberSchema = z.strictObject({
   active_blook_id: databaseUuid.nullable(),
   display_name: z.string().min(1),
+  full_name: z.string().min(1).nullable(),
   joined_at: utcTimestamp,
+  login_account: z.string().min(1).nullable(),
+  member_ref: databaseUuid,
   membership_status: z.enum(['active', 'inactive']),
+});
+const studentProgressSchema = z.strictObject({
+  chapters: z.array(
+    z.strictObject({
+      accuracy: z.number().nullable(),
+      chapter_id: databaseUuid,
+      chapter_title: z.string().min(1),
+      coverage: z.number().nullable(),
+      mastery: z.number().nullable(),
+      review_completed: z.number().int().nonnegative(),
+      review_total: z.number().int().positive().nullable(),
+      status: z.enum(['developing', 'learning', 'mastered', 'not_started']),
+    }),
+  ),
+  identity: z.strictObject({
+    display_name: z.string().min(1),
+    full_name: z.string().min(1).nullable(),
+    joined_at: utcTimestamp,
+    login_account: z.string().min(1).nullable(),
+    membership_status: z.enum(['active', 'inactive']),
+  }),
+  mistakes: z.array(
+    z.strictObject({
+      prompt: z.string().min(1),
+      subtopic_code: z.string().min(1),
+      subtopic_title: z.string().min(1),
+      wrong_count: z.number().int().nonnegative(),
+    }),
+  ),
+  stats: z.strictObject({
+    avg_accuracy: z.number().nullable(),
+    class_rank: z.number().int().positive().nullable(),
+    class_xp: z.number().int().nonnegative(),
+    open_mistake_count: z.number().int().nonnegative(),
+  }),
 });
 const createdClassroomSchema = z.strictObject({
   classroom_id: classroomId,
@@ -96,6 +135,7 @@ const mapRpcError = (
   if (
     error.message.includes('CLASSROOM_NOT_AVAILABLE') ||
     error.message.includes('CLASSROOM_MEMBERSHIP_CONFLICT') ||
+    error.message.includes('MEMBER_NOT_AVAILABLE') ||
     error.message.includes('TEACHER_REQUIRED') ||
     error.message.includes('STUDENT_REQUIRED')
   ) {
@@ -129,8 +169,44 @@ const mapMember = (
 ): ClassroomMember => ({
   activeBlookId: row.active_blook_id,
   displayName: row.display_name,
+  fullName: row.full_name,
   joinedAt: row.joined_at,
+  loginAccount: row.login_account,
+  memberRef: row.member_ref,
   membershipStatus: row.membership_status,
+});
+const mapStudentProgress = (
+  payload: z.infer<typeof studentProgressSchema>,
+): StudentProgressSnapshot => ({
+  chapters: payload.chapters.map((chapter) => ({
+    accuracy: chapter.accuracy,
+    chapterId: chapter.chapter_id,
+    chapterTitle: chapter.chapter_title,
+    coverage: chapter.coverage,
+    mastery: chapter.mastery,
+    reviewCompleted: chapter.review_completed,
+    reviewTotal: chapter.review_total,
+    status: chapter.status,
+  })),
+  identity: {
+    displayName: payload.identity.display_name,
+    fullName: payload.identity.full_name,
+    joinedAt: payload.identity.joined_at,
+    loginAccount: payload.identity.login_account,
+    membershipStatus: payload.identity.membership_status,
+  },
+  mistakes: payload.mistakes.map((mistake) => ({
+    prompt: mistake.prompt,
+    subtopicCode: mistake.subtopic_code,
+    subtopicTitle: mistake.subtopic_title,
+    wrongCount: mistake.wrong_count,
+  })),
+  stats: {
+    avgAccuracy: payload.stats.avg_accuracy,
+    classRank: payload.stats.class_rank,
+    classXp: payload.stats.class_xp,
+    openMistakeCount: payload.stats.open_mistake_count,
+  },
 });
 const mapJoined = (
   row: z.infer<typeof joinedClassroomSchema>,
@@ -170,6 +246,20 @@ export function createClassroomRepository(
       });
       if (error) throw mapRpcError(error, 'read');
       return parseArray(classroomMemberSchema, data).map(mapMember);
+    },
+    async getStudentProgress(requestedClassroomId, requestedMemberRef) {
+      const parsedId = classroomId.safeParse(requestedClassroomId);
+      const parsedRef = databaseUuid.safeParse(requestedMemberRef);
+      if (!parsedId.success || !parsedRef.success)
+        throw new ClassroomRepositoryError('INVALID_INPUT');
+      const { data, error } = await client.rpc('teacher_student_progress', {
+        p_classroom_id: parsedId.data,
+        p_member_ref: parsedRef.data,
+      });
+      if (error) throw mapRpcError(error, 'read');
+      const parsed = studentProgressSchema.safeParse(data);
+      if (!parsed.success) throw invalidResponse();
+      return mapStudentProgress(parsed.data);
     },
     async joinClassroom(input) {
       const { data, error } = await client.rpc('join_classroom', {
