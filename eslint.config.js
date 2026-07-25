@@ -13,6 +13,11 @@ export default tseslint.config(
       'dist',
       'src/types/database.ts',
       'supabase/functions',
+      // Tool-managed scratch dirs outside the TS project service.
+      '.remember',
+      '.agents',
+      // Claude Design handoff bundle（原型，非產品程式碼）。
+      'live',
     ],
   },
   eslint.configs.recommended,
