@@ -62,14 +62,16 @@ const attachHealthCollection = (page: Page): BrowserHealth => {
   page.on('pageerror', (error) => health.pageErrors.push(error.message));
   page.on('requestfailed', (request) => {
     const errorText = request.failure()?.errorText ?? 'failed';
-    // 導航會取消進行中的靜態資產請求（字體子集尤甚）；取消不是伺服器錯誤。
+    // 導航會取消進行中的靜態資產請求（字體尤甚，含外部字體服務）；
+    // 取消不是伺服器錯誤。
     if (
       /ERR_ABORTED|NS_BINDING_ABORTED|cancelled/u.test(errorText) &&
-      new URL(request.url()).pathname.startsWith('/assets/')
+      (request.resourceType() === 'font' ||
+        new URL(request.url()).pathname.startsWith('/assets/'))
     ) {
       return;
     }
-    health.failedRequests.push(errorText);
+    health.failedRequests.push(`${errorText} ${request.url()}`);
   });
   page.on('response', (response) => {
     if (response.status() >= 400) health.httpErrors.push('http-error');
@@ -78,11 +80,20 @@ const attachHealthCollection = (page: Page): BrowserHealth => {
   return health;
 };
 
-const observedErrorCount = (health: BrowserHealth) =>
-  health.consoleErrors.length +
-  health.failedRequests.length +
-  health.httpErrors.length +
-  health.pageErrors.length;
+// 以完整明細斷言取代計數：失敗訊息直接列出觀測到的錯誤內容。
+const observedErrors = (health: BrowserHealth) => ({
+  consoleErrors: health.consoleErrors,
+  failedRequests: health.failedRequests,
+  httpErrors: health.httpErrors,
+  pageErrors: health.pageErrors,
+});
+
+const NO_OBSERVED_ERRORS = {
+  consoleErrors: [],
+  failedRequests: [],
+  httpErrors: [],
+  pageErrors: [],
+} as const;
 
 const readRetainedRoute = (page: Page) =>
   page.evaluate(() => {
@@ -150,7 +161,7 @@ test('proves loading, intended-route retention, and a real authenticated outlet'
     ),
   ).toBe(true);
   expect(await readRetainedRoute(anonymousPage)).toEqual(intendedRoute);
-  expect(observedErrorCount(anonymousHealth)).toBe(0);
+  expect(observedErrors(anonymousHealth)).toEqual(NO_OBSERVED_ERRORS);
   await anonymousPage.close();
   await anonymousContext.close();
 
@@ -196,7 +207,7 @@ test('proves loading, intended-route retention, and a real authenticated outlet'
       storageKey,
     ),
   ).toEqual({ localKeys: [], sessionExtras: [] });
-  expect(observedErrorCount(authenticatedHealth)).toBe(0);
+  expect(observedErrors(authenticatedHealth)).toEqual(NO_OBSERVED_ERRORS);
   await authenticatedPage.close();
   await authenticatedContext.close();
 });

@@ -26,8 +26,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
+      # pnpm/action-setup 的 self-installer 自本 repo 首次 run 起穩定失敗
+      # （annotation: "self-installer exits with code 1"，29/29 紅）；改用
+      # npm 依 packageManager pin 安裝——版本仍唯一來自 package.json。
       - name: Set up pnpm from packageManager
-        uses: pnpm/action-setup@v6
+        run: npm install --global "$(node --print "require('./package.json').packageManager")"
 
       - name: Set up pinned Node.js
         uses: actions/setup-node@v6
@@ -65,6 +68,16 @@ jobs:
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
         shell: bash
         run: |
+          # e2e 走真實本機 stack（test:db 已啟動並播種）：以真實環境重建
+          # bundle——synthetic URL 的 bundle 無法完成登入等真實旅程；
+          # Live smoke 也需要 SUPABASE_URL 才不會被 skip。
+          source scripts/supabase/load-local-environment.sh
+          load_local_supabase_environment \
+            < <(pnpm exec supabase status -o env 2>/dev/null)
+          export SUPABASE_URL SUPABASE_ANON_KEY
+          export VITE_SUPABASE_URL="$SUPABASE_URL"
+          export VITE_SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+          pnpm build
           mkdir -p artifacts/acceptance/phase-1a-task-08/reports
           pnpm preview --host 127.0.0.1 --port 4173 \
             > artifacts/acceptance/phase-1a-task-08/reports/vite-preview.log 2>&1 &
@@ -79,6 +92,11 @@ jobs:
           done
           curl --fail --silent http://127.0.0.1:4173/ >/dev/null
           pnpm test:e2e --project=chromium
+
+      # e2e 用真實本機環境重建過 dist；掃描前還原 synthetic 版本，
+      # 維持「bundle 內不得出現任何憑證樣態」的掃描語意。
+      - name: Rebuild bundle with synthetic env for credential scan
+        run: npm run build
 
       - name: Scan source, bundle, and evidence for credentials
         id: secret-scan

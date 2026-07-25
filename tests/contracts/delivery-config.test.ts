@@ -51,15 +51,13 @@ describe('delivery configuration', () => {
     const packageJson = JSON.parse(packageJsonText) as {
       packageManager?: string;
     };
-    const pnpmSetupBlock =
-      /uses: pnpm\/action-setup@v\d+[\s\S]*?(?=\n {6}- name:)/u.exec(
-        workflow,
-      )?.[0];
-
     expect(packageJson.packageManager).toMatch(/^pnpm@\d+\.\d+\.\d+$/u);
     expect(workflow).toMatch(/node-version: '\d+\.\d+\.\d+'/u);
-    expect(pnpmSetupBlock).toBeDefined();
-    expect(pnpmSetupBlock).not.toMatch(/^\s+version:/mu);
+    // pnpm 一律依 packageManager pin 安裝；workflow 不得另行硬編版本。
+    expect(workflow).toContain(
+      `npm install --global "$(node --print "require('./package.json').packageManager")"`,
+    );
+    expect(workflow).not.toMatch(/pnpm@\d/u);
   });
 
   it('provides only synthetic browser-safe public configuration', async () => {
