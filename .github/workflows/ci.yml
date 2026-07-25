@@ -80,7 +80,18 @@ jobs:
         run: npm run build
 
       - name: Test seeded local database and real-stack integration
-        run: pnpm test:db
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm test:db 2>&1 | tee testdb-run.log
+
+      - name: Surface test:db failure detail
+        if: failure()
+        shell: bash
+        run: |
+          tail -n 10 testdb-run.log | while IFS= read -r line; do
+            printf '::error::DB %s\n' "$line"
+          done
 
       - name: Run Chromium end-to-end tests against the built preview
         env:
