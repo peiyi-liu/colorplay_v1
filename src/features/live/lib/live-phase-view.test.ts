@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import type { LiveSessionState } from '../types';
-import { hostConsoleView, participantView } from './live-phase-view';
+import {
+  hostConsoleView,
+  participantView,
+  projectorView,
+} from './live-phase-view';
 
 // 每個 case 由 live-pages.test.tsx 的頁面測試逐條轉譯而來；
 // 對照表見 docs/superpowers/plans/2026-07-25-live-phase-view-test-map.md。
@@ -309,5 +313,49 @@ describe('hostConsoleView', () => {
     expect(
       hostConsoleView({ ...host, state: 'cancelled', stateVersion: 9 }),
     ).toEqual({ hostActions: [], kind: 'cancelled' });
+  });
+});
+
+describe('projectorView', () => {
+  const host: LiveSessionState = { ...baseState, isHost: true };
+
+  // Ambient Loop 是 Phase 的屬性：重連進入 lobby 時由 view 宣告即恢復。
+  it('declares the lobby ambient loop as a property of the phase', () => {
+    expect(projectorView({ ...host, state: 'lobby' })).toEqual({
+      ambientLoop: 'lobby',
+      kind: 'lobby',
+    });
+  });
+
+  it('maps every session state onto its projector phase without a loop', () => {
+    expect(projectorView({ ...host, state: 'draft' })).toEqual({
+      ambientLoop: null,
+      kind: 'draft',
+    });
+    expect(
+      projectorView({
+        ...host,
+        question: openQuestion,
+        state: 'question_open',
+        stateVersion: 3,
+      }),
+    ).toEqual({ ambientLoop: null, kind: 'question' });
+    expect(
+      projectorView({
+        ...host,
+        pausedRemainingMs: 8_000,
+        state: 'paused',
+        stateVersion: 4,
+      }),
+    ).toEqual({ ambientLoop: null, kind: 'paused' });
+    expect(
+      projectorView({ ...host, state: 'question_feedback', stateVersion: 5 }),
+    ).toEqual({ ambientLoop: null, kind: 'reveal' });
+    expect(
+      projectorView({ ...host, state: 'completed', stateVersion: 25 }),
+    ).toEqual({ ambientLoop: null, kind: 'podium' });
+    expect(
+      projectorView({ ...host, state: 'cancelled', stateVersion: 9 }),
+    ).toEqual({ ambientLoop: null, kind: 'cancelled' });
   });
 });

@@ -101,12 +101,12 @@ Participant union 變體：`lobby` · `waiting-for-next`（Late Join）· `quest
 
 **Steps:**
 
-- [ ] **Step 1:** 對照表擴充至 `live-presenter.test.tsx` 全部 6 個 case。
-- [ ] **Step 2:** 撰寫 `projectorView` 與 `cueFor` 測試（RED），明確涵蓋「重連進入 lobby 時 Ambient Loop 恢復」與「重連進入 podium 時 Cue 不發」。
-- [ ] **Step 3:** 實作至全綠。
-- [ ] **Step 4:** footer 改為由 `precedence` 決定版位——render 端不得認得 transition name。
-- [ ] **Step 5:** `pnpm test` + lint + typecheck。
-- [ ] **Step 6:** Commit `refactor: add projector phase view and split ambient loop from cues`。
+- [x] **Step 1:** 對照表擴充至 `live-presenter.test.tsx` 全部 6 個 case。
+- [x] **Step 2:** 撰寫 `projectorView` 與 `cueFor` 測試（RED），明確涵蓋「重連進入 lobby 時 Ambient Loop 恢復」與「重連進入 podium 時 Cue 不發」。
+- [x] **Step 3:** 實作至全綠。
+- [x] **Step 4:** footer 改為由 `precedence` 決定版位——render 端不得認得 transition name。
+- [x] **Step 5:** `pnpm test` + lint + typecheck。
+- [x] **Step 6:** Commit `refactor: add projector phase view and split ambient loop from cues`。
 
 ### Task 5: SQL guard 對照 fixture 測試
 

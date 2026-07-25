@@ -6,7 +6,12 @@ import {
   createPresenterAudio,
   type PresenterAudio,
 } from '../lib/presenter-audio';
+import {
+  cueFor,
+  type ProjectorPhaseKind,
+} from '../lib/live-audio-cue';
 import { tick, type LiveClockTick } from '../lib/live-clock';
+import { projectorView } from '../lib/live-phase-view';
 import type {
   LiveRepository,
   LiveSessionState,
@@ -163,12 +168,17 @@ function StandingsBoard({
   );
 }
 
+export type ProjectorFooterAction = Readonly<{
+  id: string;
+  label: string;
+  precedence: 'primary' | 'secondary';
+  run: () => void;
+}>;
+
 export function LivePresenter({
   sessionId,
   state,
-  actionLabel,
-  onAction,
-  onPause,
+  footerActions,
   onCancel,
   onExit,
   transitionPending,
@@ -177,9 +187,7 @@ export function LivePresenter({
 }: Readonly<{
   sessionId: string;
   state: LiveSessionState;
-  actionLabel: string | null;
-  onAction: () => void;
-  onPause: () => void;
+  footerActions: readonly ProjectorFooterAction[];
   onCancel?: (() => void) | null;
   onExit: () => void;
   transitionPending: boolean;
@@ -201,18 +209,24 @@ export function LivePresenter({
     }
   }, [engine, muted]);
 
-  const phase = state.state;
+  const view = projectorView(state);
+  const phase = view.kind;
+  // Cue 只在真實轉場發聲（重連 previous 為 null → 靜默）；
+  // Ambient Loop 是 Phase 屬性，進入 lobby（含重連）即恢復。
+  const previousPhaseRef = useRef<ProjectorPhaseKind | null>(null);
   useEffect(() => {
-    if (phase === 'lobby') {
+    const cue = cueFor(previousPhaseRef.current, phase);
+    previousPhaseRef.current = phase;
+    if (cue === 'reveal') engine.playReveal();
+    if (cue === 'fanfare') engine.playFanfare();
+    if (view.ambientLoop === 'lobby') {
       engine.startLobbyLoop();
       return () => {
         engine.stopLobbyLoop();
       };
     }
-    if (phase === 'question_feedback') engine.playReveal();
-    if (phase === 'completed') engine.playFanfare();
     return undefined;
-  }, [engine, phase]);
+  }, [engine, phase, view.ambientLoop]);
   // Closing the projector releases the AudioContext — re-entering builds a
   // fresh engine, and browsers cap the number of live contexts.
   useEffect(
@@ -249,8 +263,8 @@ export function LivePresenter({
             {muted ? '已靜音' : '音效開啟'}
           </button>
           {onCancel &&
-          state.state !== 'completed' &&
-          state.state !== 'cancelled' ? (
+          phase !== 'podium' &&
+          phase !== 'cancelled' ? (
             confirmingCancel ? (
               <>
                 <button
@@ -284,7 +298,7 @@ export function LivePresenter({
               </button>
             )
           ) : null}
-          {state.state === 'completed' || state.state === 'cancelled' ? (
+          {phase === 'podium' || phase === 'cancelled' ? (
             <button onClick={onExit} type="button">
               離開投影
             </button>
@@ -314,7 +328,7 @@ export function LivePresenter({
         </div>
       ) : null}
 
-      {question && (phase === 'question_open' || phase === 'paused') ? (
+      {question && (phase === 'question' || phase === 'paused') ? (
         <div className="live-presenter__question">
           <h2>{question.prompt}</h2>
           {phase === 'paused' ? (
@@ -352,7 +366,7 @@ export function LivePresenter({
         </div>
       ) : null}
 
-      {question && phase === 'question_feedback' ? (
+      {question && phase === 'reveal' ? (
         <div className="live-presenter__feedback">
           <h2>{question.prompt}</h2>
           <div aria-label="作答分布長條圖" className="live-presenter__chart">
@@ -414,7 +428,7 @@ export function LivePresenter({
         </div>
       ) : null}
 
-      {phase === 'completed' ? (
+      {phase === 'podium' ? (
         <div className="live-presenter__podium-stage">
           <h2>最終頒獎台</h2>
           <ol aria-label="頒獎台" className="live-presenter__podium">
@@ -439,22 +453,31 @@ export function LivePresenter({
       ) : null}
 
       <footer className="live-presenter__controls">
-        {phase === 'question_open' ? (
-          <button disabled={transitionPending} onClick={onPause} type="button">
-            暫停
-          </button>
-        ) : null}
-        {actionLabel ? (
-          <button
-            className="primary-action"
-            disabled={transitionPending}
-            key={actionLabel}
-            onClick={onAction}
-            type="button"
-          >
-            {transitionPending ? '處理中…' : actionLabel}
-          </button>
-        ) : null}
+        {footerActions
+          .filter((entry) => entry.precedence === 'secondary')
+          .map((entry) => (
+            <button
+              disabled={transitionPending}
+              key={entry.id}
+              onClick={entry.run}
+              type="button"
+            >
+              {entry.label}
+            </button>
+          ))}
+        {footerActions
+          .filter((entry) => entry.precedence === 'primary')
+          .map((entry) => (
+            <button
+              className="primary-action"
+              disabled={transitionPending}
+              key={entry.id}
+              onClick={entry.run}
+              type="button"
+            >
+              {transitionPending ? '處理中…' : entry.label}
+            </button>
+          ))}
       </footer>
     </div>
   );

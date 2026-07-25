@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LiveRepository, LiveSessionState } from '../types';
+import { actionCopy } from '../lib/live-action-copy';
+import { hostConsoleView } from '../lib/live-phase-view';
 import type { PresenterAudio } from '../lib/presenter-audio';
 import { LivePresenter, presenterJoinCodeKey } from './live-presenter';
 
@@ -90,34 +92,45 @@ const completedState: LiveSessionState = {
 const repositoryWith = (overrides: Partial<LiveRepository>): LiveRepository =>
   overrides as LiveRepository;
 
+// 與主持台頁面同法組裝投影 footer：hostConsoleView 去掉 cancel（cancel
+// 在 header）＋ projector 文案。
+const footerActionsFor = (state: LiveSessionState) =>
+  hostConsoleView(state)
+    .hostActions.filter((entry) => entry.transition !== 'cancel')
+    .map((entry) => ({
+      id: entry.transition,
+      label: actionCopy(entry.transition, 'projector').label,
+      precedence: entry.precedence,
+      run: vi.fn(),
+    }));
+
 const renderPresenter = (
   state: LiveSessionState,
   options?: Readonly<{
     audio?: PresenterAudio;
     repository?: LiveRepository;
-    onAction?: () => void;
-    onPause?: () => void;
     onExit?: () => void;
   }>,
 ) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return render(
+  const audio = options?.audio ?? stubAudio();
+  const ui = (nextState: LiveSessionState) => (
     <QueryClientProvider client={queryClient}>
       <LivePresenter
-        actionLabel={state.state === 'question_feedback' ? '下一題' : null}
-        audio={options?.audio ?? stubAudio()}
-        onAction={options?.onAction ?? vi.fn()}
+        audio={audio}
+        footerActions={footerActionsFor(nextState)}
         onExit={options?.onExit ?? vi.fn()}
-        onPause={options?.onPause ?? vi.fn()}
         sessionId={SESSION_ID}
-        state={state}
+        state={nextState}
         transitionPending={false}
         {...(options?.repository ? { repository: options.repository } : {})}
       />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+  const utils = render(ui(state));
+  return { ...utils, rerenderWith: (next: LiveSessionState) => { utils.rerender(ui(next)); } };
 };
 
 describe('LivePresenter', () => {
@@ -177,7 +190,8 @@ describe('LivePresenter', () => {
     expect(chart).toHaveTextContent('✓ A. 色相');
     expect(chart).toHaveTextContent('1 人');
     expect(await screen.findByText(/第 1 名 小艾（150 分）/u)).toBeVisible();
-    expect(audio.playReveal).toHaveBeenCalled();
+    // 重連（初次掛載）進入 reveal：Cue 不發（一次性音效屬於轉場）。
+    expect(audio.playReveal).not.toHaveBeenCalled();
   });
 
   it('stages the podium reveal on completion', () => {
@@ -188,7 +202,21 @@ describe('LivePresenter', () => {
     expect(podium.querySelector('svg')).not.toBeNull();
     expect(podium).toHaveTextContent('小艾');
     expect(podium).toHaveTextContent('640 分');
-    expect(audio.playFanfare).toHaveBeenCalled();
+    // 重連進入 podium：closing fanfare 不發。
+    expect(audio.playFanfare).not.toHaveBeenCalled();
+  });
+
+  it('fires reveal and fanfare cues only on live phase transitions', () => {
+    const audio = stubAudio();
+    const utils = renderPresenter(openState, { audio });
+    expect(audio.playReveal).not.toHaveBeenCalled();
+
+    utils.rerenderWith(feedbackState);
+    expect(audio.playReveal).toHaveBeenCalledTimes(1);
+
+    utils.rerenderWith(completedState);
+    expect(audio.playFanfare).toHaveBeenCalledTimes(1);
+    expect(audio.playReveal).toHaveBeenCalledTimes(1);
   });
 
   it('persists the independent mute preference', async () => {

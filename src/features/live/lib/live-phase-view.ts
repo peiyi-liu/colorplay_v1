@@ -176,3 +176,33 @@ export const hostConsoleView = (
       return { hostActions: [], kind: 'cancelled' };
   }
 };
+
+// Ambient Loop 是 Phase 的屬性（CONTEXT.md）：重新進入或重連到該 Phase
+// 就恢復播放；一次性 Cue 則屬於轉場，由 live-audio-cue 判定。
+export type ProjectorPhaseView =
+  | Readonly<{ kind: 'draft'; ambientLoop: null }>
+  | Readonly<{ kind: 'lobby'; ambientLoop: 'lobby' }>
+  | Readonly<{ kind: 'question'; ambientLoop: null }>
+  | Readonly<{ kind: 'paused'; ambientLoop: null }>
+  | Readonly<{ kind: 'reveal'; ambientLoop: null }>
+  | Readonly<{ kind: 'podium'; ambientLoop: null }>
+  | Readonly<{ kind: 'cancelled'; ambientLoop: null }>;
+
+export const projectorView = (state: LiveSessionState): ProjectorPhaseView => {
+  switch (state.state) {
+    case 'draft':
+      return { ambientLoop: null, kind: 'draft' };
+    case 'lobby':
+      return { ambientLoop: 'lobby', kind: 'lobby' };
+    case 'question_open':
+      return { ambientLoop: null, kind: 'question' };
+    case 'paused':
+      return { ambientLoop: null, kind: 'paused' };
+    case 'question_feedback':
+      return { ambientLoop: null, kind: 'reveal' };
+    case 'completed':
+      return { ambientLoop: null, kind: 'podium' };
+    case 'cancelled':
+      return { ambientLoop: null, kind: 'cancelled' };
+  }
+};

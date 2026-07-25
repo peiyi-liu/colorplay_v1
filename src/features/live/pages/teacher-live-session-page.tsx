@@ -139,14 +139,16 @@ export function TeacherLiveSessionPage({
 
       {presenting ? (
         <LivePresenter
-          actionLabel={
-            primaryAction
-              ? actionCopy(primaryAction.transition, 'projector').label
-              : null
-          }
-          onAction={() => {
-            if (primaryAction) runTransition(primaryAction.transition);
-          }}
+          footerActions={view.hostActions
+            .filter((entry) => entry.transition !== 'cancel')
+            .map((entry) => ({
+              id: entry.transition,
+              label: actionCopy(entry.transition, 'projector').label,
+              precedence: entry.precedence,
+              run: () => {
+                runTransition(entry.transition);
+              },
+            }))}
           onCancel={
             secondaryActions.some((entry) => entry.transition === 'cancel')
               ? () => {
@@ -156,9 +158,6 @@ export function TeacherLiveSessionPage({
           }
           onExit={() => {
             setPresenting(false);
-          }}
-          onPause={() => {
-            runTransition('pauseSession');
           }}
           sessionId={sessionId}
           state={state}
