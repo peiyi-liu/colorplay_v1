@@ -97,6 +97,12 @@ export function AppShell() {
           </Link>
           <div className="app-header__navigation">
             {isAuthenticatedProfile ? <AuthenticatedEconomySummary /> : null}
+            {isTeacher ? (
+              <span className="app-header__teacher-badge">
+                <Icon name="lock-open" size={14} />
+                {profile.data?.displayName}・教師端
+              </span>
+            ) : null}
             {auth.status === 'authenticated' ? (
               <button
                 className="app-header__logout"
@@ -141,8 +147,8 @@ export function AppShell() {
               裝備商店
             </NavLink>
             <span className="student-rail__spacer" aria-hidden="true" />
-            <NavLink className={studentLinkClassName} to="/app/progress">
-              學習進度
+            <NavLink className={studentLinkClassName} to="/app/mistakes">
+              我的錯題
             </NavLink>
             <NavLink className={studentLinkClassName} to="/app/live/join">
               Live 課堂
