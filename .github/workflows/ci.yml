@@ -65,7 +65,9 @@ jobs:
         if: failure()
         shell: bash
         run: |
-          tail -n 40 coverage-run.log | while IFS= read -r line; do
+          # GitHub 每步僅保留前 10 條 annotations——只吐總結與錯誤行。
+          grep -E "ERROR|does not meet|Error|All files|Test Files|Tests  " \
+            coverage-run.log | tail -n 10 | while IFS= read -r line; do
             printf '::error::COV %s\n' "$line"
           done
 
