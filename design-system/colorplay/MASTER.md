@@ -25,19 +25,19 @@
 
 ### Color Palette
 
-| Role | Hex | CSS Variable |
-|------|-----|--------------|
-| Ink 950(標題) | `#14161F` | `--ink-950` |
-| Ink 900(主文字/主按鈕) | `#1D212E` | `--ink-900` |
-| Ink 500(次要文字) | `#646B7E` | `--ink-500` |
-| Ink 200(邊框) | `#E2E5EC` | `--ink-200` |
-| Paper(頁面底) | `#F6F4EE` | `--paper` |
-| Surface(卡片) | `#FFFFFF` | `--surface-card` |
+| Role                    | Hex       | CSS Variable     |
+| ----------------------- | --------- | ---------------- |
+| Ink 950(標題)           | `#14161F` | `--ink-950`      |
+| Ink 900(主文字/主按鈕)  | `#1D212E` | `--ink-900`      |
+| Ink 500(次要文字)       | `#646B7E` | `--ink-500`      |
+| Ink 200(邊框)           | `#E2E5EC` | `--ink-200`      |
+| Paper(頁面底)           | `#F6F4EE` | `--paper`        |
+| Surface(卡片)           | `#FFFFFF` | `--surface-card` |
 | Accent 鈷藍(互動/focus) | `#3056D8` | `--color-accent` |
-| XP 珊瑚紅 | `#D64533` | `--color-xp` |
-| Token 松石綠 | `#128A5E` | `--color-token` |
+| XP 珊瑚紅               | `#D64533` | `--color-xp`     |
+| Token 松石綠            | `#128A5E` | `--color-token`  |
 | 品牌黃(主色/CTA/active) | `#FFD600` | `--yellow-brand` |
-| 品牌琥珀(hover/強調) | `#FFB300` | `--amber-avatar` |
+| 品牌琥珀(hover/強調)    | `#FFB300` | `--amber-avatar` |
 
 **六章節色相(卡片色帶/圖表/徽章):**
 Ch1 光源 `#E5960A`、Ch2 生理 `#2F9E63`、Ch3 表示 `#3056D8`、Ch4 視覺 `#7B48CE`、Ch5 心理 `#D2418E`、Ch6 配色 `#0E98A5`,各附 `-soft` 淡色底(`--hue-ch*-soft`)。
@@ -47,30 +47,32 @@ Ch1 光源 `#E5960A`、Ch2 生理 `#2F9E63`、Ch3 表示 `#3056D8`、Ch4 視覺 
 - **Display(數字/拉丁/章節編號):** Syne(500/700/800)— 設計學校氣質、非 AI 慣用字體
 - **Body(中文):** Noto Sans TC(400/500/700/900;900 僅限大標)
 - **Google Fonts:**
+
 ```css
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
 ```
+
 - 數字類資訊(XP、Token、題號、倒數、加入碼)一律 `--font-display`,大字級呈現。
 
 ### Spacing Variables
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--space-xs` | `4px` / `0.25rem` | Tight gaps |
-| `--space-sm` | `8px` / `0.5rem` | Icon gaps, inline spacing |
-| `--space-md` | `16px` / `1rem` | Standard padding |
-| `--space-lg` | `24px` / `1.5rem` | Section padding |
-| `--space-xl` | `32px` / `2rem` | Large gaps |
-| `--space-2xl` | `48px` / `3rem` | Section margins |
-| `--space-3xl` | `64px` / `4rem` | Hero padding |
+| Token         | Value             | Usage                     |
+| ------------- | ----------------- | ------------------------- |
+| `--space-xs`  | `4px` / `0.25rem` | Tight gaps                |
+| `--space-sm`  | `8px` / `0.5rem`  | Icon gaps, inline spacing |
+| `--space-md`  | `16px` / `1rem`   | Standard padding          |
+| `--space-lg`  | `24px` / `1.5rem` | Section padding           |
+| `--space-xl`  | `32px` / `2rem`   | Large gaps                |
+| `--space-2xl` | `48px` / `3rem`   | Section margins           |
+| `--space-3xl` | `64px` / `4rem`   | Hero padding              |
 
 ### Shadow Depths
 
-| Level | Value | Usage |
-|-------|-------|-------|
-| `--shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | Subtle lift |
-| `--shadow-md` | `0 4px 6px rgba(0,0,0,0.1)` | Cards, buttons |
-| `--shadow-lg` | `0 10px 15px rgba(0,0,0,0.1)` | Modals, dropdowns |
+| Level         | Value                          | Usage                       |
+| ------------- | ------------------------------ | --------------------------- |
+| `--shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)`   | Subtle lift                 |
+| `--shadow-md` | `0 4px 6px rgba(0,0,0,0.1)`    | Cards, buttons              |
+| `--shadow-lg` | `0 10px 15px rgba(0,0,0,0.1)`  | Modals, dropdowns           |
 | `--shadow-xl` | `0 20px 25px rgba(0,0,0,0.15)` | Hero images, featured cards |
 
 ---
@@ -82,7 +84,7 @@ Ch1 光源 `#E5960A`、Ch2 生理 `#2F9E63`、Ch3 表示 `#3056D8`、Ch4 視覺 
 ```css
 /* Primary Button */
 .btn-primary {
-  background: #F59E0B;
+  background: #f59e0b;
   color: white;
   padding: 12px 24px;
   border-radius: 8px;
@@ -99,8 +101,8 @@ Ch1 光源 `#E5960A`、Ch2 生理 `#2F9E63`、Ch3 表示 `#3056D8`、Ch4 視覺 
 /* Secondary Button */
 .btn-secondary {
   background: transparent;
-  color: #2563EB;
-  border: 2px solid #2563EB;
+  color: #2563eb;
+  border: 2px solid #2563eb;
   padding: 12px 24px;
   border-radius: 8px;
   font-weight: 600;
@@ -113,7 +115,7 @@ Ch1 光源 `#E5960A`、Ch2 生理 `#2F9E63`、Ch3 表示 `#3056D8`、Ch4 視覺 
 
 ```css
 .card {
-  background: #EFF6FF;
+  background: #eff6ff;
   border-radius: 12px;
   padding: 24px;
   box-shadow: var(--shadow-md);
@@ -132,16 +134,16 @@ Ch1 光源 `#E5960A`、Ch2 生理 `#2F9E63`、Ch3 表示 `#3056D8`、Ch4 視覺 
 ```css
 .input {
   padding: 12px 16px;
-  border: 1px solid #E2E8F0;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 16px;
   transition: border-color 200ms ease;
 }
 
 .input:focus {
-  border-color: #2563EB;
+  border-color: #2563eb;
   outline: none;
-  box-shadow: 0 0 0 3px #2563EB20;
+  box-shadow: 0 0 0 3px #2563eb20;
 }
 ```
 
