@@ -105,6 +105,24 @@ async function openFirstChapter(page) {
 }
 
 // ---------------------------------------------------------------------------
+// 班級排行榜（動態 :classroomId，無獨立 setup 名稱——由「我的班級」列表頁的
+// 「查看排行榜」連結點入取得，同 openFirstChapter 手法）。Task 10 修正：
+// screen-routes.mjs 先前把 `classrooms`/`leaderboard` 兩個畫面 id 的路由對
+// 調寫錯（`classrooms` 誤指到 `/app/profile`——個人設定頁，`leaderboard` 缺
+// 動態 classroomId、實際落在班級列表頁），本函式與上面的路由修正一併補上。
+// ---------------------------------------------------------------------------
+
+async function openFirstClassroomLeaderboard(page) {
+  await page.goto(`${base}/app/leaderboard`);
+  await page.waitForLoadState('networkidle');
+  await page
+    .getByRole('link', { name: /查看.*排行榜/u })
+    .first()
+    .click();
+  await page.waitForURL(/\/app\/leaderboard\/.+/u);
+}
+
+// ---------------------------------------------------------------------------
 // 教師班級稽核 fixture（動態 :classroomId / :memberRef，無獨立 setup 名稱）。
 // 冪等：重跑只在第一次建立班級／成員，後續重用同一筆資料。組成用的每個
 // 選擇器互動都來自 tests/e2e/helpers/classrooms.ts；這裡只是 runner 專屬的
@@ -225,6 +243,11 @@ async function runSetup(page, browser, screen) {
 
   if (screen.id === 'chapter') {
     await openFirstChapter(page);
+    return {};
+  }
+
+  if (screen.id === 'leaderboard') {
+    await openFirstClassroomLeaderboard(page);
     return {};
   }
 

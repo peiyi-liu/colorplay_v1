@@ -1443,11 +1443,6 @@ a {
   padding: var(--space-4);
 }
 
-.lobby-entry--goal {
-  border-color: color-mix(in srgb, var(--yellow-brand) 40%, transparent);
-  background: color-mix(in srgb, var(--yellow-brand) 10%, transparent);
-}
-
 .lobby-entry__title {
   margin: 0;
   font-size: var(--font-size-metadata);
@@ -2407,20 +2402,21 @@ a {
   font-size: var(--font-size-metadata);
 }
 
-/* 排行榜：前三名徽章底色（純樣式，資料仍由伺服器排序） */
-.leaderboard-table tbody tr:nth-child(1) th,
-.leaderboard-table tbody tr:nth-child(1) td {
-  background: color-mix(in srgb, var(--yellow-brand) 14%, var(--surface-card));
+/* 排行榜：前三名列底色（DC leaderboard 1022-1035 逐字 hex；純樣式，資料仍由
+   伺服器排序——class 由 leaderboard-table.tsx 依 entry.rank 指派，Task 10） */
+.leaderboard-table__row--gold th,
+.leaderboard-table__row--gold td {
+  background: var(--rank-gold-row);
 }
 
-.leaderboard-table tbody tr:nth-child(2) th,
-.leaderboard-table tbody tr:nth-child(2) td {
-  background: color-mix(in srgb, var(--slate-300) 22%, var(--surface-card));
+.leaderboard-table__row--silver th,
+.leaderboard-table__row--silver td {
+  background: var(--rank-silver-row);
 }
 
-.leaderboard-table tbody tr:nth-child(3) th,
-.leaderboard-table tbody tr:nth-child(3) td {
-  background: color-mix(in srgb, var(--amber-500) 12%, var(--surface-card));
+.leaderboard-table__row--bronze th,
+.leaderboard-table__row--bronze td {
+  background: var(--rank-bronze-row);
 }
 
 /* ── GGAME 課後任務實戰（Task 11e） ───────────────────── */
@@ -2640,7 +2636,43 @@ a {
   margin-bottom: var(--space-5);
 }
 
-/* #13 我的錯題：題目＋正確答案 */
+/* #13 我的錯題：子題群（DC mistakes 1059-1094：黃左框＋紅「n 題待補救」pill） */
+.mistake-group {
+  border-left: 3px solid var(--yellow-brand);
+  margin-top: var(--space-6);
+  padding-left: var(--space-4);
+}
+
+.mistake-group + .mistake-group {
+  margin-top: var(--space-8);
+}
+
+.mistake-group__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.mistake-group__badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--coral-600);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--coral-600) 10%, transparent);
+  color: var(--coral-700);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 10px;
+}
+
+.mistake-group__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .mistake-list {
   display: grid;
   gap: var(--space-3);
@@ -2651,8 +2683,9 @@ a {
 
 .mistake-list__item {
   border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--yellow-brand);
   border-radius: var(--radius-control);
-  background: var(--color-surface);
+  background: var(--mistake-card-bg);
   padding: var(--space-3) var(--space-4);
 }
 
@@ -2667,18 +2700,44 @@ a {
   font-weight: 700;
 }
 
-/* #15 學習進度：放大版面 */
-.progress-dashboard {
-  max-width: 72rem;
+/* #13 我的錯題：已解決群（DC mistakes 1095-1103：灰左框灰卡） */
+.mistake-resolved {
+  border-left: 3px solid var(--border-subtle);
+  margin-top: var(--space-8);
+  padding-left: var(--space-4);
 }
 
-.progress-dashboard .ui-table {
-  font-size: 1.05rem;
+.mistake-resolved__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--ink-700);
+  font-size: 1rem;
 }
 
-.progress-dashboard .ui-table th,
-.progress-dashboard .ui-table td {
-  padding: var(--space-4);
+.mistake-resolved__dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--jade-600);
+}
+
+.mistake-resolved__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mistake-resolved__list li {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--ink-50);
+  color: var(--ink-500);
+  padding: 10px 14px;
 }
 
 /* #18 成就徽章：colorplay-new 卡片式版面 */
@@ -3190,11 +3249,6 @@ a {
 @media (max-width: 680px) {
   .page-card {
     padding: var(--space-4);
-  }
-
-  .progress-dashboard .ui-table th,
-  .progress-dashboard .ui-table td {
-    padding: var(--space-2);
   }
 
   .achievements-header__title {

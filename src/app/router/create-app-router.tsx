@@ -92,14 +92,6 @@ export function createAppRouter() {
               },
             },
             {
-              path: '/app/progress',
-              lazy: async () => {
-                const module =
-                  await import('../../features/learning/pages/progress-dashboard-page');
-                return { Component: module.ProgressDashboardPage };
-              },
-            },
-            {
               path: '/app/leaderboard',
               element: <StudentClassroomsPage />,
             },

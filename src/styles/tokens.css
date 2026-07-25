@@ -41,6 +41,10 @@
   --amber-avatar: #ffb300; /* 品牌黃 hover/強調 */
   --amber-highlight-soft: #fff0b3; /* 選取態黃底(DC quiz 選項 403/445) */
   --amber-tint-card: #fff8d6; /* 成就已獲得卡漸層底(DC achievements 878) */
+  --mistake-card-bg: #fffdf2; /* 錯題卡黃底(DC mistakes 1066) */
+  --rank-gold-row: #fffcea; /* 排行榜第 1 名列底(DC leaderboard 1022) */
+  --rank-silver-row: #f3f2f4; /* 排行榜第 2 名列底(DC leaderboard 1027) */
+  --rank-bronze-row: #fdf6e8; /* 排行榜第 3 名列底(DC leaderboard 1032) */
 
   /* ── 相容別名:舊 GGAME primitive 重新導向新色盤 ──────
      (globals.css 逐段翻新中;未翻新的引用先吃到新色) */

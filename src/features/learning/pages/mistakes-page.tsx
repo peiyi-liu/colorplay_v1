@@ -76,9 +76,16 @@ export function MistakesPage({
         <p role="status">目前沒有待補救的錯題，繼續保持！</p>
       ) : (
         openGroups.map((group) => (
-          <section aria-label={group.subtopicTitle} key={group.subtopicId}>
-            <h2>
-              {group.subtopicTitle}（{group.mistakes.length} 題待補救）
+          <section
+            aria-label={group.subtopicTitle}
+            className="mistake-group"
+            key={group.subtopicId}
+          >
+            <h2 className="mistake-group__title">
+              {group.subtopicTitle}{' '}
+              <span className="mistake-group__badge">
+                {group.mistakes.length} 題待補救
+              </span>
             </h2>
             <ul className="mistake-list">
               {group.mistakes.map((mistake) => (
@@ -93,39 +100,44 @@ export function MistakesPage({
                 </li>
               ))}
             </ul>
-            <button
-              className="primary-action"
-              disabled={start.isPending}
-              onClick={() => {
-                setStartError(undefined);
-                start.mutate(
-                  {
-                    requestId: crypto.randomUUID(),
-                    subtopicId: group.subtopicId,
-                  },
-                  {
-                    onError: (error) => {
-                      setStartError(error.message);
+            <div className="mistake-group__actions">
+              <button
+                className="primary-action"
+                disabled={start.isPending}
+                onClick={() => {
+                  setStartError(undefined);
+                  start.mutate(
+                    {
+                      requestId: crypto.randomUUID(),
+                      subtopicId: group.subtopicId,
                     },
-                    onSuccess: (sessionId) => {
-                      void navigate(`/app/quiz/${sessionId}`);
+                    {
+                      onError: (error) => {
+                        setStartError(error.message);
+                      },
+                      onSuccess: (sessionId) => {
+                        void navigate(`/app/quiz/${sessionId}`);
+                      },
                     },
-                  },
-                );
-              }}
-              type="button"
-            >
-              再挑戰（補救練習）
-            </button>
+                  );
+                }}
+                type="button"
+              >
+                再挑戰（補救練習）
+              </button>
+            </div>
           </section>
         ))
       )}
       {startError ? <p role="alert">{startError}</p> : null}
 
       {resolved.length > 0 ? (
-        <section aria-label="已解決的錯題">
-          <h2>已解決</h2>
-          <ul>
+        <section aria-label="已解決的錯題" className="mistake-resolved">
+          <h2 className="mistake-resolved__title">
+            <span aria-hidden="true" className="mistake-resolved__dot" />
+            已解決
+          </h2>
+          <ul className="mistake-resolved__list">
             {resolved.map((mistake) => (
               <li key={mistake.mistakeId}>{mistake.prompt}（已解決）</li>
             ))}

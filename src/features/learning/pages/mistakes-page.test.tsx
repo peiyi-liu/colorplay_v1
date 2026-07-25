@@ -61,10 +61,12 @@ describe('MistakesPage', () => {
     await waitFor(() => {
       expect(
         screen.getByRole('heading', {
-          name: '3-1 色彩三要素與色名的表示（1 題待補救）',
+          name: '3-1 色彩三要素與色名的表示 1 題待補救',
         }),
       ).toBeInTheDocument();
     });
+    // DC 1063:「n 題待補救」是獨立紅色 pill，非嵌在標題文字內的括號註記。
+    expect(screen.getByText('1 題待補救')).toHaveClass('mistake-group__badge');
     expect(screen.getByRole('heading', { name: '已解決' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '再挑戰（補救練習）' }));

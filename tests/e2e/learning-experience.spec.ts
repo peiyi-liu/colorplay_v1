@@ -232,31 +232,13 @@ test('Learning Experience phase gate', async ({
     '目前沒有待補救的錯題',
   );
 
-  // --- Dashboard: server-computed formulas, dash placeholders, recovery ---
-  await studentPage.goto('/app/progress');
-  await expect(
-    studentPage.getByRole('heading', { name: '我的學習進度' }),
-  ).toBeVisible();
-  const quizChapterRow = studentPage.getByRole('row', {
-    name: new RegExp(QUIZ_CHAPTER_TITLE, 'u'),
-  });
-  await expect(quizChapterRow).toContainText('100%');
-  await expect(quizChapterRow).toContainText('已精熟');
-  const reviewChapterRow = studentPage.getByRole('row', {
-    name: new RegExp(REVIEW_CHAPTER_TITLE, 'u'),
-  });
-  await expect(reviewChapterRow).toContainText(
-    `${String(reviewSubtopic.cardCount)} / ${String(reviewSubtopic.cardCount)}`,
-  );
-  await expect(reviewChapterRow).toContainText('尚未開始');
-  await studentPage.reload();
-  await expect(quizChapterRow).toContainText('已精熟');
-  await studentPage.setViewportSize({ width: 1440, height: 900 });
-  await studentPage.screenshot({
-    fullPage: true,
-    path: testInfo.outputPath('progress-dashboard-1440x900.png'),
-  });
-  await studentPage.setViewportSize({ width: 1280, height: 720 });
+  // 學習進度 dashboard 依 owner 批示（2026-07-26 #2）已改為教師專屬，學生端
+  // `/app/progress` 路由與頁面已移除（Task 10）；原本在此驗證的伺服器端公式
+  // （章節 100%/已精熟、尚未開始章節破折號佔位、reload 後精熟度持久化）改由
+  // 下方「Teacher analytics」區塊的 `teacherRow` 斷言從教師視角覆蓋 100%/
+  // 已精熟案例。尚未開始章節（reviewChapterRow 的破折號佔位）與 reload
+  // 持久化目前沒有教師視角的等效斷言——若日後需要，屬於
+  // teacher-classroom-progress-page 自己的測試範圍，不在本任務內補齊。
 
   // --- Teacher analytics: owner reads exact mastery, others read nothing ---
   await signIn(teacherPage, TEST_USERS.learningTeacher);

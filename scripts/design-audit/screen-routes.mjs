@@ -40,8 +40,12 @@ export const SCREENS = [
   },
   { id: 'shop', route: '/app/shop', auth: 'student' },
   { id: 'achievements', route: '/app/achievements', auth: 'student' },
-  { id: 'classrooms', route: '/app/profile', auth: 'student' },
-  { id: 'leaderboard', route: '/app/leaderboard', auth: 'student' },
+  { id: 'classrooms', route: '/app/leaderboard', auth: 'student' },
+  {
+    id: 'leaderboard',
+    route: '/app/leaderboard/:classroomId',
+    auth: 'student',
+  },
   { id: 'mistakes', route: '/app/mistakes', auth: 'student' },
   // progress 畫面依 owner 批示改為教師專屬，學生端不收錄（見批示紀錄 #2）
   { id: 'liveJoin', route: '/app/live/join', auth: 'student' },

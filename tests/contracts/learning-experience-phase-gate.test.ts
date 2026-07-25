@@ -88,7 +88,9 @@ describe('learning experience phase gate contract', () => {
     expect(spec).toContain('await studentPage.reload();');
     expect(spec).toContain('chapter-detail-375x812.png');
     expect(spec).toContain('review-card-768x1024.png');
-    expect(spec).toContain('progress-dashboard-1440x900.png');
+    // 學生端學習進度頁依 owner 批示（2026-07-26 #2）已移除（Task 10），
+    // spec 不再產生 progress-dashboard-1440x900.png；AC-PROG-001~005 的
+    // 'S'（screenshot）證據面尚未改指向教師視角等效畫面，留待後續任務決議。
     // 提示 UI 於 2026-07-21 依 owner #4 移除，宣告式失敗不再需要。
     expect(spec).toContain('await teacherBContext.close();');
     expect(spec).not.toContain('page.route(');
