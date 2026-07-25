@@ -139,7 +139,7 @@ test('Learning Experience phase gate', async ({
     studentPage.getByRole('heading', { name: '色彩任務選擇大廳' }),
   ).toBeVisible();
   await studentPage
-    .locator('article.chapter-card')
+    .locator('article.lobby-chapter')
     .filter({ hasText: QUIZ_CHAPTER_TITLE })
     .getByRole('link', { name: '開始挑戰' })
     .click();
