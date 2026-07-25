@@ -54,7 +54,7 @@ Browser configuration allowlist：
 
 ## Deployment decisions
 
-- GitHub repository：`peiyi-liu/colorplay`。
+- GitHub repository：`peiyi-liu/colorplay_v1`。
 - Vercel Production Branch：`main`。
 - Build Command：`npm run build`；Output Directory：`dist`。
 - `vercel.json` 提供 SPA fallback，deep-link refresh 不得 404。
