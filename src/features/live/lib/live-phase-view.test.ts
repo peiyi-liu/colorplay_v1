@@ -286,12 +286,10 @@ describe('hostConsoleView', () => {
       state: 'paused',
       stateVersion: 4,
     });
+    // cancel 不在列：SQL guard 不允許自 paused 取消（guard-matrix fixture）。
     expect(view).toEqual({
       frozenSeconds: 13,
-      hostActions: [
-        { precedence: 'primary', transition: 'resumeSession' },
-        { precedence: 'secondary', transition: 'cancel' },
-      ],
+      hostActions: [{ precedence: 'primary', transition: 'resumeSession' }],
       kind: 'paused',
     });
   });

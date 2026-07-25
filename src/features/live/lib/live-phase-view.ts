@@ -153,9 +153,12 @@ export const hostConsoleView = (
         kind: 'question',
       };
     case 'paused':
+      // SQL 的 cancel guard 不含 paused（live_play_commands.sql:663-665）：
+      // 暫停中不提供取消——先繼續作答才能取消。舊頁面在此提供取消鈕是
+      // 投影漂移（按下必吃 INVALID_TRANSITION），由 guard-matrix 測試抓出。
       return {
         frozenSeconds: tick(state, 0, 0).secondsLeft ?? 0,
-        hostActions: [primary('resumeSession'), secondary('cancel')],
+        hostActions: [primary('resumeSession')],
         kind: 'paused',
       };
     case 'question_feedback':

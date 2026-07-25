@@ -116,10 +116,10 @@ Participant union 變體：`lobby` · `waiting-for-next`（Late Join）· `quest
 
 **Steps:**
 
-- [ ] **Step 1:** 從 `supabase/migrations/20260717000800_live_play_commands.sql:106-148` 與 `20260720000100_live_pause.sql:124` 抄出 guard 矩陣為 fixture（來源狀態 → 合法 transition）。
-- [ ] **Step 2:** 表格測試：`hostConsoleView` 對每個狀態提供的 transition 必須是 fixture 允許集合的子集。
-- [ ] **Step 3:** 反向驗證——暫時改壞一條投影規則，確認測試 FAIL，再還原。
-- [ ] **Step 4:** Commit `test: pin live host actions against SQL guard matrix`。
+- [x] **Step 1:** 從 `supabase/migrations/20260717000800_live_play_commands.sql:106-148` 與 `20260720000100_live_pause.sql:124` 抄出 guard 矩陣為 fixture（來源狀態 → 合法 transition）。
+- [x] **Step 2:** 表格測試：`hostConsoleView` 對每個狀態提供的 transition 必須是 fixture 允許集合的子集。
+- [x] **Step 3:** 反向驗證——暫時改壞一條投影規則，確認測試 FAIL，再還原。
+- [x] **Step 4:** Commit `test: pin live host actions against SQL guard matrix`。
 
 ### Task 6: 共用選項順序常數（drift risk）
 
