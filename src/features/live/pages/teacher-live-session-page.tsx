@@ -12,6 +12,7 @@ import {
 import { useLiveSession } from '../hooks/use-live-session';
 import type { LiveRepository, LiveSessionState } from '../types';
 import { LivePresenter } from '../components/live-presenter';
+import { tick } from '../lib/live-clock';
 import { LiveTeamScoreboard } from '../components/live-team-scoreboard';
 
 const transitionErrorMessage = (code: string) =>
@@ -204,7 +205,7 @@ export function TeacherLiveSessionPage({
         <div role="status">
           <h2>已暫停</h2>
           <p>
-            剩餘 {Math.ceil((state.pausedRemainingMs ?? 0) / 1000)}{' '}
+            剩餘 {tick(state, 0, 0).secondsLeft}{' '}
             秒已凍結，按「繼續作答」恢復倒數。
           </p>
           {state.question ? <p>{state.question.prompt}</p> : null}

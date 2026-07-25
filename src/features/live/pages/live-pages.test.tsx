@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Database } from '../../../types/database';
 import type { LiveRepository, LiveSessionState } from '../types';
 import { LiveJoinPage } from './live-join-page';
-import { LiveSessionPage, remainingSeconds } from './live-session-page';
+import { LiveSessionPage } from './live-session-page';
 import { TeacherLivePage } from './teacher-live-page';
 import { TeacherLiveSessionPage } from './teacher-live-session-page';
 
@@ -149,18 +149,6 @@ const renderWith = (element: ReactNode) => {
     </QueryClientProvider>,
   );
 };
-
-describe('remainingSeconds', () => {
-  it('derives the countdown from server time, never the client clock alone', () => {
-    const fetchedAt = 1_000_000;
-    const serverTime = new Date(fetchedAt + 60_000).toISOString();
-    const deadline = new Date(fetchedAt + 75_000).toISOString();
-    expect(
-      remainingSeconds(deadline, serverTime, fetchedAt + 5_000, fetchedAt),
-    ).toBe(10);
-    expect(remainingSeconds(null, serverTime, fetchedAt, fetchedAt)).toBeNull();
-  });
-});
 
 describe('LiveJoinPage', () => {
   it('joins with one request id and enters the session route', async () => {

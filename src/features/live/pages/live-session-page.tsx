@@ -20,6 +20,7 @@ import {
   encouragementFor,
   optionAccessibleName,
 } from '../lib/standing-feedback';
+import { remainingSeconds, tick } from '../lib/live-clock';
 import type { LiveRepository, LiveSessionState } from '../types';
 
 const OPTION_VARIANTS: readonly OptionVariant[] = [
@@ -34,21 +35,6 @@ const OPTION_SHAPES: readonly OptionShape[] = [
   'circle',
   'diamond',
 ];
-
-export const remainingSeconds = (
-  deadlineAt: string | null,
-  serverTime: string,
-  now: number,
-  fetchedAt: number,
-): number | null => {
-  if (!deadlineAt) return null;
-  const serverOffset = new Date(serverTime).getTime() - fetchedAt;
-  const serverNow = now + serverOffset;
-  return Math.max(
-    0,
-    Math.ceil((new Date(deadlineAt).getTime() - serverNow) / 1000),
-  );
-};
 
 function Countdown({
   deadlineAt,
@@ -415,7 +401,7 @@ export function LiveSessionPage({
           <h2>暫停中</h2>
           <p>
             主持人已暫停，剩餘{' '}
-            {Math.ceil((state.pausedRemainingMs ?? 0) / 1000)}{' '}
+            {tick(state, 0, 0).secondsLeft}{' '}
             秒已凍結，恢復後繼續倒數。
           </p>
           {state.question?.prompt ? <p>{state.question.prompt}</p> : null}

@@ -6,7 +6,7 @@ import {
   createPresenterAudio,
   type PresenterAudio,
 } from '../lib/presenter-audio';
-import { remainingSeconds } from '../pages/live-session-page';
+import { tick, type LiveClockTick } from '../lib/live-clock';
 import type {
   LiveRepository,
   LiveSessionState,
@@ -50,7 +50,7 @@ function CountdownRing({
   deadlineAt: string | null;
   openedAt: string | null;
   serverTime: string;
-  onSecond: (secondsLeft: number) => void;
+  onSecond: (tickResult: LiveClockTick) => void;
 }>) {
   const [clock, setClock] = useState(() => ({
     fetchedAt: Date.now(),
@@ -65,27 +65,20 @@ function CountdownRing({
     };
   }, []);
 
-  const seconds = remainingSeconds(
-    deadlineAt,
-    serverTime,
+  const tickResult = tick(
+    { question: { deadlineAt, openedAt }, serverTime, state: 'question_open' },
     clock.now,
     clock.fetchedAt,
   );
+  const seconds = tickResult.secondsLeft;
   const lastSecondRef = useRef<number | null>(null);
   useEffect(() => {
     if (seconds === null || seconds === lastSecondRef.current) return;
     lastSecondRef.current = seconds;
-    onSecond(seconds);
-  }, [seconds, onSecond]);
+    onSecond(tickResult);
+  }, [seconds, onSecond, tickResult]);
   if (seconds === null) return null;
 
-  const totalMs =
-    deadlineAt && openedAt
-      ? Math.max(1, Date.parse(deadlineAt) - Date.parse(openedAt))
-      : null;
-  const fraction = totalMs
-    ? Math.min(1, Math.max(0, (seconds * 1000) / totalMs))
-    : 0;
   const circumference = 2 * Math.PI * 54;
 
   return (
@@ -98,7 +91,7 @@ function CountdownRing({
           cy="60"
           r="54"
           strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - fraction)}
+          strokeDashoffset={circumference * (1 - tickResult.fraction)}
         />
       </svg>
       <span className="live-presenter__ring-number">{seconds}</span>
@@ -326,14 +319,14 @@ export function LivePresenter({
           <h2>{question.prompt}</h2>
           {phase === 'paused' ? (
             <p className="live-presenter__paused" role="status">
-              已暫停（剩餘 {Math.ceil((state.pausedRemainingMs ?? 0) / 1000)}{' '}
+              已暫停（剩餘 {tick(state, 0, 0).secondsLeft}{' '}
               秒已凍結）
             </p>
           ) : (
             <CountdownRing
               deadlineAt={question.deadlineAt}
-              onSecond={(secondsLeft) => {
-                if (secondsLeft > 0 && secondsLeft <= 5) engine.tick();
+              onSecond={(clockTick) => {
+                if (clockTick.isFinalCountdown) engine.tick();
               }}
               openedAt={question.openedAt}
               serverTime={state.serverTime}
