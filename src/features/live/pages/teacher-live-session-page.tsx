@@ -12,34 +12,9 @@ import {
 import { useLiveSession } from '../hooks/use-live-session';
 import type { LiveRepository, LiveSessionState } from '../types';
 import { LivePresenter } from '../components/live-presenter';
-import { tick } from '../lib/live-clock';
+import { actionCopy, transitionErrorCopy } from '../lib/live-action-copy';
+import { hostConsoleView } from '../lib/live-phase-view';
 import { LiveTeamScoreboard } from '../components/live-team-scoreboard';
-
-const transitionErrorMessage = (code: string) =>
-  code === 'STATE_CONFLICT'
-    ? '另一個主持分頁已推進狀態，畫面已同步為最新。'
-    : code === 'INVALID_TRANSITION'
-      ? '目前狀態不允許這個操作。'
-      : '操作暫時無法完成，請稍後重試。';
-
-const hostAction = (
-  state: LiveSessionState,
-): { label: string; transition: LiveTransitionName } | null => {
-  if (state.state === 'draft')
-    return { label: '開啟等待室', transition: 'startSession' };
-  if (state.state === 'lobby')
-    return { label: '開始第一題', transition: 'openQuestion' };
-  if (state.state === 'question_open')
-    return { label: '收題並公布答案', transition: 'closeQuestion' };
-  if (state.state === 'paused')
-    return { label: '繼續作答', transition: 'resumeSession' };
-  if (state.state === 'question_feedback') {
-    return state.currentPosition < state.questionCount
-      ? { label: '下一題', transition: 'advance' }
-      : { label: '結算成績', transition: 'finalize' };
-  }
-  return null;
-};
 
 function HostDistribution({
   sessionId,
@@ -119,7 +94,12 @@ export function TeacherLiveSessionPage({
   }
 
   const state = session.data;
-  const action = hostAction(state);
+  const view = hostConsoleView(state);
+  const primaryAction =
+    view.hostActions.find((entry) => entry.precedence === 'primary') ?? null;
+  const secondaryActions = view.hostActions.filter(
+    (entry) => entry.precedence === 'secondary',
+  );
 
   const runTransition = (name: LiveTransitionName) => {
     setTransitionError(undefined);
@@ -127,7 +107,7 @@ export function TeacherLiveSessionPage({
       { expectedVersion: state.stateVersion, transition: name },
       {
         onError: (error) => {
-          setTransitionError(transitionErrorMessage(error.code));
+          setTransitionError(transitionErrorCopy(error.code));
         },
       },
     );
@@ -159,12 +139,16 @@ export function TeacherLiveSessionPage({
 
       {presenting ? (
         <LivePresenter
-          actionLabel={action ? action.label : null}
+          actionLabel={
+            primaryAction
+              ? actionCopy(primaryAction.transition, 'projector').label
+              : null
+          }
           onAction={() => {
-            if (action) runTransition(action.transition);
+            if (primaryAction) runTransition(primaryAction.transition);
           }}
           onCancel={
-            action && state.state !== 'completed'
+            secondaryActions.some((entry) => entry.transition === 'cancel')
               ? () => {
                   runTransition('cancel');
                 }
@@ -201,11 +185,11 @@ export function TeacherLiveSessionPage({
         </div>
       ) : null}
 
-      {state.state === 'paused' ? (
+      {view.kind === 'paused' ? (
         <div role="status">
           <h2>已暫停</h2>
           <p>
-            剩餘 {tick(state, 0, 0).secondsLeft}{' '}
+            剩餘 {view.frozenSeconds}{' '}
             秒已凍結，按「繼續作答」恢復倒數。
           </p>
           {state.question ? <p>{state.question.prompt}</p> : null}
@@ -261,7 +245,7 @@ export function TeacherLiveSessionPage({
         <p role="status">這場挑戰已取消。</p>
       ) : null}
 
-      {action ? (
+      {primaryAction ? (
         <button
           className="primary-action"
           data-primary-action="true"
@@ -271,39 +255,43 @@ export function TeacherLiveSessionPage({
           // replaces the node instead of retargeting it in place, so a stale
           // click dies on the detached button rather than firing the new
           // action with a fresh version.
-          key={action.transition}
+          key={primaryAction.transition}
           onClick={() => {
-            runTransition(action.transition);
+            runTransition(primaryAction.transition);
           }}
           type="button"
         >
-          {transition.isPending ? '處理中…' : action.label}
+          {transition.isPending
+            ? '處理中…'
+            : actionCopy(primaryAction.transition, 'hostConsole').label}
         </button>
       ) : null}
 
-      {state.state === 'question_open' ? (
-        <button
-          disabled={transition.isPending}
-          onClick={() => {
-            runTransition('pauseSession');
-          }}
-          type="button"
-        >
-          暫停
-        </button>
-      ) : null}
-
-      {action && state.state !== 'completed' && state.state !== 'cancelled' ? (
-        <button
-          disabled={transition.isPending}
-          onClick={() => {
-            setConfirmingCancel(true);
-          }}
-          type="button"
-        >
-          取消挑戰
-        </button>
-      ) : null}
+      {secondaryActions.map((secondaryAction) =>
+        secondaryAction.transition === 'cancel' ? (
+          <button
+            disabled={transition.isPending}
+            key={secondaryAction.transition}
+            onClick={() => {
+              setConfirmingCancel(true);
+            }}
+            type="button"
+          >
+            {actionCopy('cancel', 'hostConsole').label}
+          </button>
+        ) : (
+          <button
+            disabled={transition.isPending}
+            key={secondaryAction.transition}
+            onClick={() => {
+              runTransition(secondaryAction.transition);
+            }}
+            type="button"
+          >
+            {actionCopy(secondaryAction.transition, 'hostConsole').label}
+          </button>
+        ),
+      )}
       {transitionError ? <p role="alert">{transitionError}</p> : null}
 
       {confirmingCancel ? (

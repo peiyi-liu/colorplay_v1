@@ -3,6 +3,7 @@
 // union。Postgres 仍是狀態機唯一 authority——這裡只讀 payload、不決定
 // 任何轉換。第二份投影規則副本是缺陷，不是風格選擇。
 
+import type { LiveTransitionName } from '../hooks/use-live-commands';
 import type { LivePodiumEntry, LiveSessionState } from '../types';
 import { tick } from './live-clock';
 
@@ -95,5 +96,83 @@ export const participantView = (
         kind: 'paused',
         prompt: state.question?.prompt ?? null,
       };
+  }
+};
+
+export type HostAction = Readonly<{
+  transition: LiveTransitionName;
+  // 階段內主次（版位）；與 actionCopy 的 emphasis（樣式）是兩個概念。
+  precedence: 'primary' | 'secondary';
+}>;
+
+export type HostConsolePhaseView =
+  | Readonly<{ kind: 'draft'; hostActions: readonly HostAction[] }>
+  | Readonly<{ kind: 'lobby'; hostActions: readonly HostAction[] }>
+  | Readonly<{ kind: 'question'; hostActions: readonly HostAction[] }>
+  | Readonly<{
+      kind: 'paused';
+      frozenSeconds: number;
+      hostActions: readonly HostAction[];
+    }>
+  | Readonly<{ kind: 'reveal'; hostActions: readonly HostAction[] }>
+  | Readonly<{ kind: 'completed'; hostActions: readonly HostAction[] }>
+  | Readonly<{ kind: 'cancelled'; hostActions: readonly HostAction[] }>;
+
+const primary = (transition: LiveTransitionName): HostAction => ({
+  precedence: 'primary',
+  transition,
+});
+const secondary = (transition: LiveTransitionName): HostAction => ({
+  precedence: 'secondary',
+  transition,
+});
+
+// Host 可執行的 transition 由 Postgres guard 決定（ADR 0004）；這裡只投影
+// 「此刻該提供哪些按鈕」。secondaries 順序固定：pauseSession 先於 cancel。
+export const hostConsoleView = (
+  state: LiveSessionState,
+): HostConsolePhaseView => {
+  switch (state.state) {
+    case 'draft':
+      return {
+        hostActions: [primary('startSession'), secondary('cancel')],
+        kind: 'draft',
+      };
+    case 'lobby':
+      return {
+        hostActions: [primary('openQuestion'), secondary('cancel')],
+        kind: 'lobby',
+      };
+    case 'question_open':
+      return {
+        hostActions: [
+          primary('closeQuestion'),
+          secondary('pauseSession'),
+          secondary('cancel'),
+        ],
+        kind: 'question',
+      };
+    case 'paused':
+      return {
+        frozenSeconds: tick(state, 0, 0).secondsLeft ?? 0,
+        hostActions: [primary('resumeSession'), secondary('cancel')],
+        kind: 'paused',
+      };
+    case 'question_feedback':
+      return {
+        hostActions: [
+          primary(
+            state.currentPosition < state.questionCount
+              ? 'advance'
+              : 'finalize',
+          ),
+          secondary('cancel'),
+        ],
+        kind: 'reveal',
+      };
+    case 'completed':
+      return { hostActions: [], kind: 'completed' };
+    case 'cancelled':
+      return { hostActions: [], kind: 'cancelled' };
   }
 };

@@ -82,12 +82,12 @@ Participant union 變體：`lobby` · `waiting-for-next`（Late Join）· `quest
 
 **Steps:**
 
-- [ ] **Step 1:** 對照表擴充至 `live-pages.test.tsx:422-637` 中**實際 render `<TeacherLiveSessionPage>` 的 case**。注意：`:561`、`:582`、`:604` 雖在 host describe 內，render 的是 `<LiveSessionPage>`，屬 Task 2 的 participant 對照表——不得轉譯成 hostConsoleView 測試，也不得在本 task 刪除。
-- [ ] **Step 2:** 由對照表撰寫 `hostConsoleView` 的 view tests（RED），含最後一題 `advance` / `finalize` 分岔與 cancel 可見性。
-- [ ] **Step 3:** 實作 `hostConsoleView` 與 `actionCopy` 至全綠。
-- [ ] **Step 4:** 主持台改由清單渲染；`key={action.transition}` 的 reconciler 保護必須保留（該行為留在頁面層測試）。
-- [ ] **Step 5:** 刪除已取代的 page cases；`pnpm test` + lint + typecheck。
-- [ ] **Step 6:** Commit `refactor: add host console phase view and action copy`。
+- [x] **Step 1:** 對照表擴充至 `live-pages.test.tsx:422-637` 中**實際 render `<TeacherLiveSessionPage>` 的 case**。注意：`:561`、`:582`、`:604` 雖在 host describe 內，render 的是 `<LiveSessionPage>`，屬 Task 2 的 participant 對照表——不得轉譯成 hostConsoleView 測試，也不得在本 task 刪除。
+- [x] **Step 2:** 由對照表撰寫 `hostConsoleView` 的 view tests（RED），含最後一題 `advance` / `finalize` 分岔與 cancel 可見性。
+- [x] **Step 3:** 實作 `hostConsoleView` 與 `actionCopy` 至全綠。
+- [x] **Step 4:** 主持台改由清單渲染；`key={action.transition}` 的 reconciler 保護必須保留（該行為留在頁面層測試）。
+- [x] **Step 5:** 刪除已取代的 page cases；`pnpm test` + lint + typecheck。
+- [x] **Step 6:** Commit `refactor: add host console phase view and action copy`。
 
 ### Task 4: `projectorView` + 音效分流
 

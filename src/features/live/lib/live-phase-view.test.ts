@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { LiveSessionState } from '../types';
-import { participantView } from './live-phase-view';
+import { hostConsoleView, participantView } from './live-phase-view';
 
 // 每個 case 由 live-pages.test.tsx 的頁面測試逐條轉譯而來；
 // 對照表見 docs/superpowers/plans/2026-07-25-live-phase-view-test-map.md。
@@ -212,5 +212,102 @@ describe('participantView', () => {
     expect(
       participantView({ ...baseState, state: 'cancelled', stateVersion: 9 }),
     ).toEqual({ kind: 'cancelled' });
+  });
+});
+
+describe('hostConsoleView', () => {
+  const host: LiveSessionState = { ...baseState, isHost: true };
+
+  // ← H1（drives each transition）的投影部分：lobby 主鍵開始第一題
+  it('drives the lobby with open-question as primary and cancel behind it', () => {
+    expect(hostConsoleView({ ...host, state: 'lobby' })).toEqual({
+      hostActions: [
+        { precedence: 'primary', transition: 'openQuestion' },
+        { precedence: 'secondary', transition: 'cancel' },
+      ],
+      kind: 'lobby',
+    });
+  });
+
+  // ← H2（offers finalize on the last feedback）的分岔部分
+  it('forks the last feedback into finalize instead of advance', () => {
+    const feedback: LiveSessionState = {
+      ...host,
+      currentPosition: 4,
+      question: openQuestion,
+      questionCount: 8,
+      state: 'question_feedback',
+      stateVersion: 4,
+    };
+    const midway = hostConsoleView(feedback);
+    if (midway.kind !== 'reveal') throw new Error(`unexpected ${midway.kind}`);
+    expect(midway.hostActions[0]).toEqual({
+      precedence: 'primary',
+      transition: 'advance',
+    });
+
+    const last = hostConsoleView({ ...feedback, currentPosition: 8 });
+    if (last.kind !== 'reveal') throw new Error(`unexpected ${last.kind}`);
+    expect(last.hostActions[0]).toEqual({
+      precedence: 'primary',
+      transition: 'finalize',
+    });
+  });
+
+  // ← H3（pauses an open question）的投影部分：secondaries 順序固定
+  it('offers pause and cancel in fixed order during an open question', () => {
+    const view = hostConsoleView({
+      ...host,
+      currentPosition: 1,
+      question: openQuestion,
+      state: 'question_open',
+      stateVersion: 3,
+    });
+    expect(view).toEqual({
+      hostActions: [
+        { precedence: 'primary', transition: 'closeQuestion' },
+        { precedence: 'secondary', transition: 'pauseSession' },
+        { precedence: 'secondary', transition: 'cancel' },
+      ],
+      kind: 'question',
+    });
+  });
+
+  // ← H4（shows the frozen remainder and resume action while paused）
+  it('freezes the paused remainder and resumes as primary', () => {
+    const view = hostConsoleView({
+      ...host,
+      pausedRemainingMs: 12_500,
+      question: openQuestion,
+      state: 'paused',
+      stateVersion: 4,
+    });
+    expect(view).toEqual({
+      frozenSeconds: 13,
+      hostActions: [
+        { precedence: 'primary', transition: 'resumeSession' },
+        { precedence: 'secondary', transition: 'cancel' },
+      ],
+      kind: 'paused',
+    });
+  });
+
+  it('opens the waiting room from draft', () => {
+    expect(hostConsoleView({ ...host, state: 'draft' })).toEqual({
+      hostActions: [
+        { precedence: 'primary', transition: 'startSession' },
+        { precedence: 'secondary', transition: 'cancel' },
+      ],
+      kind: 'draft',
+    });
+  });
+
+  it('retires all actions at terminal states', () => {
+    expect(
+      hostConsoleView({ ...host, state: 'completed', stateVersion: 25 }),
+    ).toEqual({ hostActions: [], kind: 'completed' });
+    expect(
+      hostConsoleView({ ...host, state: 'cancelled', stateVersion: 9 }),
+    ).toEqual({ hostActions: [], kind: 'cancelled' });
   });
 });

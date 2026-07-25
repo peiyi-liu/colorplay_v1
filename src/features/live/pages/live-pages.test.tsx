@@ -356,55 +356,6 @@ describe('TeacherLiveSessionPage (host console)', () => {
     ).toBeVisible();
   });
 
-  it('pauses an open question and resumes from the paused state', async () => {
-    const pauseSession = vi.fn().mockResolvedValue(undefined);
-    const repository = repositoryWith({
-      getState: vi.fn().mockResolvedValue({ ...openState, isHost: true }),
-      pauseSession,
-    });
-    renderWith(
-      <TeacherLiveSessionPage
-        client={stubClient()}
-        repository={repository}
-        sessionId={SESSION_ID}
-      />,
-    );
-    const user = userEvent.setup();
-
-    await user.click(await screen.findByRole('button', { name: '暫停' }));
-    await waitFor(() => {
-      expect(pauseSession).toHaveBeenCalledWith(SESSION_ID, 3);
-    });
-  });
-
-  it('shows the frozen remainder and resume action while paused', async () => {
-    const resumeSession = vi.fn().mockResolvedValue(undefined);
-    const repository = repositoryWith({
-      getState: vi.fn().mockResolvedValue({
-        ...openState,
-        isHost: true,
-        state: 'paused',
-        stateVersion: 4,
-        pausedRemainingMs: 12500,
-      }),
-      resumeSession,
-    });
-    renderWith(
-      <TeacherLiveSessionPage
-        client={stubClient()}
-        repository={repository}
-        sessionId={SESSION_ID}
-      />,
-    );
-    const user = userEvent.setup();
-
-    expect(await screen.findByText(/剩餘 13 秒已凍結/u)).toBeVisible();
-    await user.click(screen.getByRole('button', { name: '繼續作答' }));
-    await waitFor(() => {
-      expect(resumeSession).toHaveBeenCalledWith(SESSION_ID, 4);
-    });
-  });
-
   it('shows the host-only live distribution during an open question', async () => {
     const getDistribution = vi.fn().mockResolvedValue({
       answeredCount: 2,
