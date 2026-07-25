@@ -98,10 +98,12 @@
   --color-primary-contrast: var(--ink-950);
   --color-accent: var(--cobalt-600); /* 互動:連結/focus/active */
   --color-accent-strong: var(--cobalt-700);
-  --color-teacher: var(--hue-ch4);
+  --color-teacher: #7b48ce; /* 教師紫識別(DC ch4) */
+  --color-teacher-soft: #e0e7fb; /* 教師紫淡底 */
   --color-xp: var(--coral-600);
   --color-token: var(--jade-600);
   --color-alert: var(--amber-600);
+  --surface-host: #fdf8ee; /* 紙張/主機色 */
   --surface-card: var(--white);
   --border-subtle: var(--ink-200);
   --border-strong: var(--ink-900);

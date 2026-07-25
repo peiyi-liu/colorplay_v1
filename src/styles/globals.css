@@ -1191,6 +1191,12 @@ a {
   background: color-mix(in srgb, var(--color-teacher) 12%, transparent);
 }
 
+.ui-chip--teacher {
+  border: 1px solid var(--color-teacher);
+  background: color-mix(in srgb, var(--color-teacher) 10%, transparent);
+  color: var(--color-teacher);
+}
+
 /* ── GGAME 大廳（Task 6） ─────────────────────────────── */
 
 .visually-hidden {
