@@ -53,6 +53,11 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      # 必須先於 unit coverage：evidence-manifest 的 retention contract 會
+      # 起 vite dev 並以 chromium 實跑 playwright 產生證據。
+      - name: Install Chromium and operating-system dependencies
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Run stack-independent unit coverage
         shell: bash
         run: |
@@ -76,9 +81,6 @@ jobs:
 
       - name: Test seeded local database and real-stack integration
         run: pnpm test:db
-
-      - name: Install Chromium and operating-system dependencies
-        run: pnpm exec playwright install --with-deps chromium
 
       - name: Run Chromium end-to-end tests against the built preview
         env:
