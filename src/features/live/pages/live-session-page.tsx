@@ -130,7 +130,7 @@ function QuestionPhase({
               {screenOnly ? (
                 // 純形狀置中：格子上只有 OptionButton 的形狀符號，文字僅供
                 // 螢幕閱讀器。
-                <span className="sr-only">
+                <span className="visually-hidden">
                   {optionAccessibleName(index, option.key)}
                 </span>
               ) : (

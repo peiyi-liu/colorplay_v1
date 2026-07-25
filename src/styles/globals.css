@@ -1723,7 +1723,7 @@ a {
 }
 
 .live-result-screen--wrong {
-  background: var(--rose-600, #e11d48);
+  background: var(--rose-600);
 }
 
 .live-result-screen__icon {
