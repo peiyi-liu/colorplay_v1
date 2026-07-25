@@ -20,7 +20,9 @@ const assignment: StudentAssignment = {
   title: '第三章回家作業',
   status: 'published',
   availableFrom: null,
-  deadlineAt: '2026-07-24T16:00:00+00:00',
+  // 遠未來截止（台北 2099-07-01 00:00）：fixture 若用近期日期，過期當天
+  // canStart 的 deadline guard 會先於 attempt-limit 觸發，測試變時間炸彈。
+  deadlineAt: '2099-06-30T16:00:00+00:00',
   attemptLimit: 2,
   passingThreshold: 600,
   attemptsUsed: 1,
@@ -65,7 +67,7 @@ describe('StudentAssignmentsPage', () => {
     expect(
       await screen.findByRole('link', { name: '第三章回家作業' }),
     ).toHaveAttribute('href', `/app/assignments/${assignment.assignmentId}`);
-    expect(screen.getByText(/2026年7月25日/u)).toBeVisible();
+    expect(screen.getByText(/2099年7月1日/u)).toBeVisible();
     expect(screen.getByText(/次數 1 \/ 2・已通過/u)).toBeVisible();
   });
 

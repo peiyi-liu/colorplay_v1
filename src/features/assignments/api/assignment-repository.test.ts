@@ -15,7 +15,8 @@ const studentRow = {
   title: '第三章回家作業',
   status: 'published',
   available_from: '2026-07-17T00:00:00+00:00',
-  deadline_at: '2026-07-24T16:00:00+00:00',
+  // 遠未來截止（台北 2099-07-01 00:00），避免 fixture 過期成為時間炸彈。
+  deadline_at: '2099-06-30T16:00:00+00:00',
   attempt_limit: 2,
   passing_threshold: 600,
   attempts_used: 1,
