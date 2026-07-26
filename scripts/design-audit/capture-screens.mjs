@@ -62,6 +62,13 @@
  * RTL 單元測試（見 'renders the non-fullscreen feedback...'）覆蓋這個狀態的
  * DC 檢查項，runner 維持 skip 並在報告說明。
  */
+// 這支 .mjs 不在 eslint.config.js 的 typescriptFiles 範圍內，只吃到
+// eslint.configs.recommended（no-undef 預設開啟，沒有像 .ts 那樣被
+// typescript-eslint 關掉）。下面 page.evaluate(() => {...}) 傳入的 callback
+// 實際是序列化到瀏覽器內執行（Playwright 機制），document/getComputedStyle
+// 在那個執行環境裡是合法全域，只是這支檔案本身用 Node 語法解析看不出來——
+// 用標準 ESLint 全域宣告註解讓 lint 認得這兩個識別字，不用整支關掉 no-undef。
+/* global document, getComputedStyle */
 // pnpm 的嚴格 node_modules 連結下，`playwright` 只是 @playwright/test 的間接
 // 依賴，不會提升到頂層可 import；@playwright/test 本身重新匯出同一組
 // browser launcher，因此改從這裡取得 chromium，避免另外新增一個直接依賴。
@@ -203,7 +210,10 @@ async function ensureAuditClassroomWithMember(teacherPage, browser) {
   if (!memberRef) {
     const { joinCode } = await rotateClassroomJoinCode(teacherPage);
 
-    const studentContext = await browser.newContext({ baseURL: base });
+    const studentContext = await browser.newContext({
+      baseURL: base,
+      reducedMotion: 'reduce',
+    });
     const studentPage = await studentContext.newPage();
     await loginAs(studentPage, 'student');
     await joinClassroomByCode(studentPage, joinCode);
@@ -238,7 +248,10 @@ async function ensureLiveAuditClassroomWithStudent(teacherPage, browser) {
   );
   let joinCode = null;
   if (!classroomId) {
-    const receipt = await createClassroom(teacherPage, LIVE_AUDIT_CLASSROOM_NAME);
+    const receipt = await createClassroom(
+      teacherPage,
+      LIVE_AUDIT_CLASSROOM_NAME,
+    );
     joinCode = receipt.joinCode;
     classroomId = await findClassroomIdByName(
       teacherPage,
@@ -256,7 +269,10 @@ async function ensureLiveAuditClassroomWithStudent(teacherPage, browser) {
   }
 
   if (joinCode) {
-    const studentContext = await browser.newContext({ baseURL: base });
+    const studentContext = await browser.newContext({
+      baseURL: base,
+      reducedMotion: 'reduce',
+    });
     const studentPage = await studentContext.newPage();
     await signInStudent(studentPage, TEST_USERS.liveStudentOne);
     await joinClassroomByCode(studentPage, joinCode);
@@ -276,11 +292,15 @@ async function ensureLiveAuditClassroomWithStudent(teacherPage, browser) {
 // 真實加入流程進場→主持人開第一題。回傳 presenter locator 供呼叫端決定要不
 // 要再往下推（liveFull 需要再多按一次答案鈕）。
 async function openLiveQuestionForStudent(studentPage, browser) {
-  const teacherContext = await browser.newContext({ baseURL: base });
+  const teacherContext = await browser.newContext({
+    baseURL: base,
+    reducedMotion: 'reduce',
+  });
   const teacherPage = await teacherContext.newPage();
   await signInTeacher(teacherPage, TEST_USERS.liveHostTeacher);
   await ensureLiveAuditClassroomWithStudent(teacherPage, browser);
-  const { presenter, joinCode } = await launchLiveSessionFromTeacherHome(teacherPage);
+  const { presenter, joinCode } =
+    await launchLiveSessionFromTeacherHome(teacherPage);
 
   await studentPage.goto(`${base}/app/live/join`);
   await studentPage.getByLabel('課堂代碼').fill(joinCode);
@@ -305,7 +325,10 @@ async function launchLiveSessionForHostAudit(teacherPage, browser) {
   const sessionId = new URL(teacherPage.url()).pathname.split('/').pop();
   if (!sessionId) throw new Error('DESIGN_AUDIT_LIVE_SESSION_ID_MISSING');
 
-  const studentContext = await browser.newContext({ baseURL: base });
+  const studentContext = await browser.newContext({
+    baseURL: base,
+    reducedMotion: 'reduce',
+  });
   const studentPage = await studentContext.newPage();
   await signInStudent(studentPage, TEST_USERS.liveStudentOne);
   await studentPage.goto(`${base}/app/live/join`);
@@ -448,10 +471,7 @@ async function runSetup(page, browser, screen) {
       return {};
     }
     case 'live-hosting': {
-      const { sessionId } = await ensureLiveQuestionOpenForHost(
-        page,
-        browser,
-      );
+      const { sessionId } = await ensureLiveQuestionOpenForHost(page, browser);
       // tHost 是非投影的主持台（無 ?presenter=1），tPresenter 是同一場次
       // 的投影模式——用 screen.id 分流回傳的路由，不用 screen.route 的
       // :sessionId placeholder（那是給 resolveRoute 的靜態畫面用的）。
@@ -521,6 +541,112 @@ async function runSetup(page, browser, screen) {
   return null;
 }
 
+// ---------------------------------------------------------------------------
+// Task 14 393 GATE 檢查：manifest 393 條目附上機器可查的 RWD 量測（不用再靠
+// 肉眼盯 34 張截圖找水平捲動／小於 44px 觸控目標）。
+//   - overflow：document.documentElement.scrollWidth 是否超出 clientWidth——
+//     跟 tests/e2e/app-shell.visual.spec.ts 既有的
+//     `scrollWidth <= clientWidth + 1` 判定同一套邏輯。「表格容器
+//     overflow-x:auto 除外」這條允許不需要另外找表格特例：容器自己
+//     overflow:auto 會把子內容的溢位攔在自己框內、不會外溢到
+//     documentElement，這條全域檢查本來就只抓真正外溢到整頁的情況（跟本次
+//     .student-rail__content 修正前後的實測結果一致）。
+//   - smallTargets：可互動元素（連結／按鈕／表單控制項／role=button 等）
+//     中，寬或高小於 44px 的（排除 display:none／未渲染的 0×0 元素）。
+//   - smallFonts：字級低於 tokens.css 定義的最小字級 --font-size-metadata
+//     （12px）的可見文字節點。
+// ---------------------------------------------------------------------------
+
+async function auditMobileRwd(page) {
+  return page.evaluate(() => {
+    const doc = document.documentElement;
+    const vw = doc.clientWidth;
+    const hasOverflow = doc.scrollWidth > vw + 1;
+    // 只在真的有溢位時才找元凶，避免每個畫面都白白掃一次 DOM——找的是
+    // rect.right 超出 viewport 的最外層元素（跳過同樣超出的子孫，不然清單
+    // 會被巢狀結構洗版），方便直接定位是哪個 class 撐出去的，不用另外寫
+    // scratch 腳本重查一次。
+    const overflowingElements = [];
+    if (hasOverflow) {
+      const reported = new Set();
+      for (const el of document.querySelectorAll('body *')) {
+        const rect = el.getBoundingClientRect();
+        if (rect.right <= vw + 1) continue;
+        let ancestor = el.parentElement;
+        let alreadyReported = false;
+        while (ancestor) {
+          if (reported.has(ancestor)) {
+            alreadyReported = true;
+            break;
+          }
+          ancestor = ancestor.parentElement;
+        }
+        if (alreadyReported) continue;
+        reported.add(el);
+        overflowingElements.push({
+          tag: el.tagName.toLowerCase(),
+          cls: el.className?.toString?.().slice(0, 60) ?? '',
+          left: Math.round(rect.left),
+          right: Math.round(rect.right),
+          width: Math.round(rect.width),
+        });
+        if (overflowingElements.length >= 10) break;
+      }
+    }
+    const overflow = {
+      scrollWidth: doc.scrollWidth,
+      clientWidth: vw,
+      hasOverflow,
+      overflowingElements,
+    };
+
+    const INTERACTIVE_SELECTOR =
+      'a[href], button, input:not([type="hidden"]), select, textarea, [role="button"], [role="link"], [role="tab"], [role="menuitem"], summary';
+    const smallTargets = [];
+    for (const el of document.querySelectorAll(INTERACTIVE_SELECTOR)) {
+      const style = getComputedStyle(el);
+      if (style.display === 'none' || style.visibility === 'hidden') continue;
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) continue;
+      if (rect.width < 44 || rect.height < 44) {
+        smallTargets.push({
+          tag: el.tagName.toLowerCase(),
+          text: (el.textContent ?? el.getAttribute('aria-label') ?? '')
+            .trim()
+            .slice(0, 24),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        });
+      }
+    }
+
+    const smallFonts = [];
+    for (const el of document.querySelectorAll('body *')) {
+      const hasOwnText = Array.from(el.childNodes).some(
+        (node) => node.nodeType === 3 && node.textContent?.trim(),
+      );
+      if (!hasOwnText) continue;
+      const style = getComputedStyle(el);
+      if (style.display === 'none' || style.visibility === 'hidden') continue;
+      const size = Number.parseFloat(style.fontSize);
+      if (size < 12) {
+        smallFonts.push({
+          tag: el.tagName.toLowerCase(),
+          cls: el.className?.toString?.().slice(0, 40) ?? '',
+          fontSize: size,
+          text: (el.textContent ?? '').trim().slice(0, 24),
+        });
+      }
+    }
+
+    return {
+      overflow,
+      smallTargets: smallTargets.slice(0, 30),
+      smallFonts: smallFonts.slice(0, 30),
+    };
+  });
+}
+
 function resolveRoute(screen) {
   if (screen.route.includes(':')) {
     throw new Error(
@@ -559,9 +685,22 @@ if (only && !SCREENS.some((screen) => screen.id === only)) {
         // baseURL 一定要設：共用的 tests/e2e/helpers/*.ts 用相對路徑
         // page.goto('/login') 之類的呼叫（比照 Playwright test 的
         // use.baseURL 慣例），沒有 baseURL 這裡會直接噴 invalid URL。
+        // reducedMotion: 'reduce' 對應 globals.css:1007-1020 既有的
+        // `@media (prefers-reduced-motion: reduce)` 全域規則（把每個
+        // animation-duration/transition-duration 壓到 0.01ms）——這是
+        // Task 14 修的第二個 runner 偽影：`.animate-fade-in`（globals.css:
+        // 1055-1057，0.3s opacity/translateY 進場動效）在 networkidle 後立刻
+        // 截圖，動畫還沒跑完就被拍到「全白/半透明」中間幀（Task 7 報告記錄）。
+        // 用 Playwright 內建的 reduced-motion 模擬讓全站動畫在這個 context
+        // 裡形同瞬間完成，一次修好全 corpus，不必逐頁面加 setTimeout 賭時機；
+        // 這條全域規則不會動到只認 `[data-reduced-motion='true']` 這個
+        // App 內部設定檔開關（而非 media query）的少數規則（例如
+        // `.live-presenter__ring svg{display:none}`），所以不影響任何畫面
+        // 本身該顯示的內容。
         const context = await browser.newContext({
           baseURL: base,
           viewport: width.viewport,
+          reducedMotion: 'reduce',
         });
         const page = await context.newPage();
         const consoleErrors = [];
@@ -629,13 +768,44 @@ if (only && !SCREENS.some((screen) => screen.id === only)) {
         const dir = `${outputRoot}/${screen.id}`;
         mkdirSync(dir, { recursive: true });
         const path = `${dir}/${width.name}.png`;
-        await page.screenshot({ path, fullPage: true });
+        // `fullPage: true` 單獨使用時，Playwright 是對「整份可捲動內容」
+        // 截圖，寬度跟高度都會跟著 document.documentElement.scrollWidth/
+        // scrollHeight走——如果頁面本身有水平溢位（例如 Task 0 記錄的
+        // `.student-rail__content` 393 寬溢位到 482px），393.png 檔案的
+        // 實際物理寬度就不是 393，而是溢位後的寬度（Task 11 報告記錄過
+        // 463px 的實例）。這樣一來稽核檔案本身就沒辦法拿來單純檢查
+        // 「393 寬有沒有水平捲動」，因為連檔案尺寸都已經被溢位污染。
+        // 用 clip 明確釘住 { width: 393（或 1280）, height: 真實內容高度 }
+        // ——同時保留 fullPage:true 讓 CDP 截到的來源畫布涵蓋整份可捲動
+        // 高度（只有 clip 沒有 fullPage 的話，clip 的可視範圍會被截斷在
+        // 目前 viewport 高度內，量過＝852，量不到更下面的內容）。結果：
+        // PNG 檔案寬度永遠等於 viewport CSS px，溢位的內容不會撐開檔案
+        // 尺寸，而是被裁掉——溢位本身仍然是真實 bug，需要另外用
+        // scrollWidth 檢查揪出來修，不能靠看截圖檔案尺寸判斷。
+        const fullHeight = await page.evaluate(
+          () => document.documentElement.scrollHeight,
+        );
+        await page.screenshot({
+          path,
+          fullPage: true,
+          clip: {
+            x: 0,
+            y: 0,
+            width: width.viewport.width,
+            height: fullHeight,
+          },
+        });
+        // 393 GATE（Task 14）：附上機器可查的 RWD 量測，manifest 本身就是
+        // 差異結案清單的資料來源，不必逐張截圖肉眼抓水平捲動／小觸控目標。
+        const rwd393 =
+          width.name === '393' ? await auditMobileRwd(page) : undefined;
         manifest.push({
           screen: screen.id,
           route: screen.route,
           width: width.name,
           path,
           consoleErrors,
+          ...(rwd393 ? { rwd393 } : {}),
         });
 
         await context.close();
