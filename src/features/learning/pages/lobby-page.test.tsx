@@ -260,6 +260,14 @@ describe('LobbyPage', () => {
     );
   });
 
+  it('does not link to the removed student progress page (owner batch #2: teacher-only)', () => {
+    renderPage();
+    expect(screen.queryByRole('link', { name: /查看進度/u })).toBeNull();
+    expect(
+      screen.queryByRole('link', { name: /每日自主精熟目標/u }),
+    ).toBeNull();
+  });
+
   it('keeps the recoverable error state', () => {
     const refetch = vi.fn();
     mockedChapters.mockReturnValue(

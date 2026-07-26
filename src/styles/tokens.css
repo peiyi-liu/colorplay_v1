@@ -32,6 +32,7 @@
   /* ── Primitive:功能色與品牌點綴 ─────────────────────── */
   --coral-600: #d64533;
   --coral-700: #b23425;
+  --rose-600: #e11d48; /* Live 全屏答錯結果底色，與 coral-600 是刻意不同的紅（DC 1256） */
   --jade-600: #128a5e;
   --jade-700: #0e6f4c;
   --cobalt-600: #3056d8;
@@ -39,6 +40,12 @@
   --amber-600: #b26e05;
   --yellow-brand: #ffd600; /* 品牌黃:主色 */
   --amber-avatar: #ffb300; /* 品牌黃 hover/強調 */
+  --amber-highlight-soft: #fff0b3; /* 選取態黃底(DC quiz 選項 403/445) */
+  --amber-tint-card: #fff8d6; /* 成就已獲得卡漸層底(DC achievements 878) */
+  --mistake-card-bg: #fffdf2; /* 錯題卡黃底(DC mistakes 1066) */
+  --rank-gold-row: #fffcea; /* 排行榜第 1 名列底(DC leaderboard 1022) */
+  --rank-silver-row: #f3f2f4; /* 排行榜第 2 名列底(DC leaderboard 1027) */
+  --rank-bronze-row: #fdf6e8; /* 排行榜第 3 名列底(DC leaderboard 1032) */
 
   /* ── 相容別名:舊 GGAME primitive 重新導向新色盤 ──────
      (globals.css 逐段翻新中;未翻新的引用先吃到新色) */
@@ -98,11 +105,14 @@
   --color-primary-contrast: var(--ink-950);
   --color-accent: var(--cobalt-600); /* 互動:連結/focus/active */
   --color-accent-strong: var(--cobalt-700);
-  --color-teacher: var(--hue-ch4);
+  --color-teacher: #7b48ce; /* 教師紫識別(DC ch4) */
+  --color-teacher-soft: #e0e7fb; /* 教師紫淡底 */
   --color-xp: var(--coral-600);
   --color-token: var(--jade-600);
   --color-alert: var(--amber-600);
+  --surface-host: #fdf8ee; /* 紙張/主機色 */
   --surface-card: var(--white);
+  --surface-shortcut-hover: #fffdf2; /* 教師捷徑卡 hover 底(DC 1379/1382) */
   --border-subtle: var(--ink-200);
   --border-strong: var(--ink-900);
 

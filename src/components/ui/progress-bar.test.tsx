@@ -19,4 +19,11 @@ describe('ProgressBar', () => {
       '100',
     );
   });
+
+  it('renders the compact size modifier class when requested', () => {
+    render(<ProgressBar value={50} tone="primary" label="迷你條" size="sm" />);
+    expect(screen.getByRole('progressbar', { name: '迷你條' })).toHaveClass(
+      'ui-progress--sm',
+    );
+  });
 });

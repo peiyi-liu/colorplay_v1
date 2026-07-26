@@ -179,6 +179,9 @@ describe('createAppRouter', () => {
     ['/', 'ColorPlay', '前往登入'],
     ['/unauthorized', '沒有權限', '返回登入'],
     ['/missing-route', '找不到頁面', '返回首頁'],
+    // 學習進度依 owner 批示（2026-07-26 #2）改為教師專屬；學生端
+    // `/app/progress` 路由已移除，應落在全站 404（教師端兩個進度頁不受影響）。
+    ['/app/progress', '找不到頁面', '返回首頁'],
   ])('renders %s with one primary CTA', async (path, heading, actionLabel) => {
     renderRouter(path);
     expect(await screen.findByRole('heading', { name: heading })).toBeVisible();

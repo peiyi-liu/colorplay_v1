@@ -198,7 +198,7 @@ a {
 
 .app-header__logout {
   min-width: 44px;
-  min-height: 40px;
+  min-height: 44px;
   border: 1.5px solid var(--ink-300);
   border-radius: 999px;
   background: transparent;
@@ -221,6 +221,20 @@ a {
   opacity: 0.7;
 }
 
+.app-header__teacher-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--color-teacher);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-teacher) 10%, transparent);
+  color: var(--color-teacher);
+  font-size: var(--font-size-metadata);
+  font-weight: 800;
+  padding: var(--space-1) 14px;
+  white-space: nowrap;
+}
+
 .app-shell__auth-error {
   margin: var(--space-3) auto 0;
   color: var(--color-danger);
@@ -229,6 +243,15 @@ a {
 
 #main-content {
   display: grid;
+  /* grid-template-columns 原本沒設，implicit 單欄軌預設用 auto 軌寬——
+     子元素（例如 .live-join、教師班級/成員頁那些內含表格/長文字的內容）
+     即使自己寫 width:min(100%,Npx)，「100%」在算 auto 軌寬時會被當成
+     indeterminate，退回用子元素內容本身的 intrinsic 寬度去撐開這個軌，可能
+     撐得比 #main-content 本身的內容框還寬，讓子元素往外溢出（Task 14 393
+     稽核抓到 liveJoin／tAnalytics／tClassDetail／tStudentProgress／tReport
+     都是這個成因）。minmax(0, 1fr) 讓這個軌明確等於可用寬度，子元素的
+     width:100% 才會確實對齊 #main-content 的內容框，不再被自己的內容撐寬。 */
+  grid-template-columns: minmax(0, 1fr);
   width: 100%;
   flex: 1;
   place-items: center;
@@ -522,7 +545,7 @@ a {
 
 .question-option[data-selected='true'] {
   border-color: var(--color-primary-strong);
-  background: color-mix(in srgb, var(--yellow-brand) 30%, white);
+  background: var(--amber-highlight-soft);
 }
 
 .question-option:has(input:disabled) {
@@ -591,7 +614,7 @@ a {
 }
 
 .feedback-card h2 {
-  margin-top: 0;
+  margin: 0;
 }
 
 .feedback-card__score {
@@ -688,7 +711,7 @@ a {
 
 .result-question dl {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
   gap: var(--space-3);
   margin: var(--space-5) 0 0;
 }
@@ -727,6 +750,11 @@ a {
   font-weight: 800;
   padding: var(--space-3) var(--space-5);
   text-decoration: none;
+  transition: border-color 150ms ease-out;
+}
+
+.secondary-action:hover {
+  border-color: var(--ink-900);
 }
 
 .blook-shop,
@@ -888,14 +916,60 @@ a {
     display: none;
   }
 
+  /* 393 寬度既有溢出（Task 14 稽核發現）：.app-header__content 本身不換行，
+     brand 佔掉大半寬度後，.app-header__navigation 只剩不到 170px 可用，遠小於
+     economy-summary 的最小內容寬（level 區塊 min-width:132px＋tokens＋間距，
+     實測約 250px+），即使 economy-summary 本身設了 flex-basis:100%，「100%」
+     算的是這個過窄可用空間的 100%，還是會被內容撐爆，最終讓
+     document.documentElement.scrollWidth 撐到 482px（實測值）。讓
+     .app-header__content 在窄螢幕改為可換行，nav 整列換到 brand 下方獨立一
+     行，拿到完整可用寬度（393 - 左右 padding，約 345px），economy-summary＋
+     登出鍵才有足夠空間並排，不必再各自撐開版面。 */
+  .app-header__content {
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+  }
+
   .app-header__navigation,
   .app-header__navigation nav {
     gap: var(--space-3);
   }
 
+  .app-header__navigation {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .economy-summary {
     flex-basis: 100%;
     margin-left: auto;
+  }
+
+  /* Task 14 稽核明確點名的既有 RWD 缺陷：.student-rail__content 原本
+     overflow:auto hidden + white-space:nowrap，393 寬度只放得下「學習大廳」
+     跟半個「課後任務實戰」，其餘 5 個導覽項目（裝備商店／我的錯題／Live
+     課堂／班級排行榜／成就徽章）要靠不易察覺的水平滑動才看得到——這是主要
+     導覽，不是可以套用「表格容器 overflow-x:auto 除外」豁免的資料表格。改
+     讓這一列在窄螢幕換行，全部項目都在不用捲動的情況下可見／可點；
+     spacer 原本用 flex:1 把 tab 跟 link 兩組推開兩側，換行後沒有單一列可以
+     撐開，直接隱藏即可（tab／link 视覺分组改用 row-gap 呈現）。 */
+  .student-rail__content {
+    flex-wrap: wrap;
+    row-gap: var(--space-1);
+    white-space: normal;
+  }
+
+  .student-rail__spacer {
+    display: none;
+  }
+
+  /* 教師端 .teacher-rail__content 是同一份 rail 樣式（overflow:auto hidden＋
+     white-space:nowrap）套用在教師導覽（教師工作區／Live 主持／班級管理／
+     教學分析），393 寬度一樣會被擠出可視範圍外，套用同一套換行修正。 */
+  .teacher-rail__content {
+    flex-wrap: wrap;
+    row-gap: var(--space-1);
+    white-space: normal;
   }
 
   .route-panel {
@@ -1102,6 +1176,9 @@ a {
 }
 
 .student-rail__tab {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   border-bottom: 3px solid transparent;
   border-radius: 0;
   color: var(--ink-500);
@@ -1135,6 +1212,9 @@ a {
 }
 
 .student-rail__link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   color: var(--slate-500);
   font-size: var(--font-size-metadata);
   font-weight: 700;
@@ -1179,6 +1259,9 @@ a {
 }
 
 .teacher-rail__link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   border-radius: var(--radius-control);
   color: var(--color-teacher);
   font-size: var(--font-size-supporting);
@@ -1189,6 +1272,12 @@ a {
 
 .teacher-rail__link:hover {
   background: color-mix(in srgb, var(--color-teacher) 12%, transparent);
+}
+
+.ui-chip--teacher {
+  border: 1px solid var(--color-teacher);
+  background: color-mix(in srgb, var(--color-teacher) 10%, transparent);
+  color: var(--color-teacher);
 }
 
 /* ── GGAME 大廳（Task 6） ─────────────────────────────── */
@@ -1246,6 +1335,9 @@ a {
 }
 
 .lobby__edit {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   border: 1px solid var(--border-subtle);
   border-radius: var(--space-1);
   background: var(--slate-100);
@@ -1389,6 +1481,9 @@ a {
 }
 
 .lobby-chapter__review {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   color: var(--color-text);
   font-size: var(--font-size-metadata);
   font-weight: 700;
@@ -1423,11 +1518,6 @@ a {
   padding: var(--space-4);
 }
 
-.lobby-entry--goal {
-  border-color: color-mix(in srgb, var(--yellow-brand) 40%, transparent);
-  background: color-mix(in srgb, var(--yellow-brand) 10%, transparent);
-}
-
 .lobby-entry__title {
   margin: 0;
   font-size: var(--font-size-metadata);
@@ -1445,7 +1535,10 @@ a {
 }
 
 .lobby-entry__action {
+  display: inline-flex;
+  min-height: 44px;
   flex-shrink: 0;
+  align-items: center;
   border-radius: var(--radius-control);
   background: var(--slate-200);
   color: var(--slate-700);
@@ -1463,6 +1556,9 @@ a {
 }
 
 .lobby-link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   border: 1px solid var(--border-subtle);
   border-radius: 999px;
   background: var(--surface-card);
@@ -1497,11 +1593,6 @@ a {
   text-transform: uppercase;
 }
 
-.quiz-result__emoji {
-  display: block;
-  font-size: 3rem;
-}
-
 /* ── GGAME 商店邊框區（Task 8） ───────────────────────── */
 
 .frame-shop {
@@ -1523,7 +1614,11 @@ a {
 .frame-shop__grid {
   display: grid;
   gap: var(--space-4);
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  /* min(100%, 200px) 防溢出（ledger backlog：Task 14 393 稽核一併補上）：
+     跟本檔其他 auto-fit/auto-fill 網格（例如 .lobby__chapter-grid、
+     .shop-grid）同款寫法一致，避免容器窄於 200px 時單一軌固定下限撐出
+     水平捲動。 */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
 }
 
 .frame-card {
@@ -1713,7 +1808,7 @@ a {
 }
 
 .live-result-screen--wrong {
-  background: var(--rose-600, #e11d48);
+  background: var(--rose-600);
 }
 
 .live-result-screen__icon {
@@ -1840,6 +1935,26 @@ a {
   min-width: max-content;
 }
 
+/* 場次報表「匯出 CSV」／「一鍵生成課後複習任務」：DC 1621/1626 指定
+   min-height:34px，但這兩顆按鈕在 JSX 裡本來沒有任何 class（純靠瀏覽器
+   對 <button> 的預設外觀渲染出近似的白底灰框圓角，並非真的引用 tokens），
+   Task 14 393 稽核量到實際觸控高度只有 32px。改用明確 token 樣式對齊 DC
+   的顏色／字級／內距，min-height 提高到 44px（觸控目標下限，同本次其他
+   幾處 DC 34px/40px secondary 按鍵一致的處理方式）。 */
+.live-report__action {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--ink-700);
+  cursor: pointer;
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+  padding: var(--space-2) var(--space-3);
+}
+
 .live-reteach {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-lg, 16px);
@@ -1864,7 +1979,10 @@ a {
 .live-console {
   border: 1px solid color-mix(in srgb, var(--color-alert) 35%, transparent);
   border-radius: var(--radius-card);
-  background: color-mix(in srgb, var(--color-alert) 8%, var(--surface-card));
+  /* 主持台底色改用逐字 hex token --surface-host（#fdf8ee，DC tHost
+     1424）：先前的 color-mix 8% 近似值算出 #f9f3eb，肉眼可辨的色差同
+     leaderboard 金/銅列曾修過的問題，這裡直接對齊 DC 定案色。 */
+  background: var(--surface-host);
   padding: var(--space-6);
 }
 
@@ -1928,6 +2046,372 @@ a {
   margin: 0;
   color: var(--color-muted);
   font-size: var(--font-size-metadata);
+}
+
+/* ── GGAME 教師班級管理群（Task 13；DC tClasses 1873–1941／
+   tClassDetail 2072–2179／tStudentProgress 2181–2278） ──────────── */
+
+/* 三個班級管理系頁面共用的黃底線 header：直接沿用 Task 3 的
+   .teacher-dashboard-header／__intro（flex space-between + 2px 黃底線 +
+   clamp(1.75rem,5vw,2.5rem) 標題），不重造一份等價 CSS。 */
+.classroom-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.classroom-header-stats {
+  display: flex;
+  margin: 0;
+  gap: var(--space-5);
+}
+
+.classroom-header-stats > div {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+}
+
+.classroom-header-stats dt {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.classroom-header-stats dd {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+/* 建立班級表單卡：黃左框 6px（DC 1893） */
+.classroom-create-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  border: 1px solid var(--border-subtle);
+  border-left: 6px solid var(--yellow-brand);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+}
+
+.classroom-create-form__field {
+  display: grid;
+  flex: 1 1 260px;
+  gap: 6px;
+}
+
+.classroom-create-form__field label {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.classroom-create-form__field input {
+  width: 100%;
+  min-height: 48px;
+  border: 2px solid var(--ink-300);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  font-weight: 600;
+  padding: var(--space-2) var(--space-3);
+}
+
+.classroom-create-form__field input[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.classroom-create-form__hint {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+}
+
+.classroom-create-form__error {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+/* 班級卡列表（DC 1902–1939） */
+.classroom-list {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.classroom-card {
+  display: grid;
+  height: 100%;
+  align-content: start;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+}
+
+.classroom-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--ink-100);
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+}
+
+.classroom-card__head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.classroom-card__meta {
+  display: grid;
+  margin: 0;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: var(--space-4) var(--space-5);
+}
+
+.classroom-card__meta dt {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.classroom-card__meta dd {
+  margin: 2px 0 0;
+  font-weight: 800;
+}
+
+.classroom-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.classroom-card__manage {
+  display: inline-flex;
+  flex: 1 1 auto;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--ink-900);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--ink-900);
+  font-weight: 800;
+  padding: var(--space-2) var(--space-4);
+  text-decoration: none;
+  transition:
+    background 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.classroom-card__manage:hover {
+  background: var(--ink-900);
+  color: var(--white);
+}
+
+.classroom-card__analytics {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--ink-300);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--ink-700);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: var(--space-2) 14px;
+  text-decoration: none;
+  transition:
+    border-color 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.classroom-card__analytics:hover {
+  border-color: var(--ink-900);
+  color: var(--ink-900);
+}
+
+/* 一次性加入碼卡（DC 2087–2108）：黑卡頭＋黃鎖圓徽＋版本膠囊＋虛線框碼＋
+   複製鍵。tClasses（建立後）／tClassDetail（輪替後）共用同一顆元件。 */
+.join-code-card {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+}
+
+.join-code-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--ink-900);
+  color: var(--white);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+}
+
+.join-code-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.join-code-card__badge {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--yellow-brand);
+  color: var(--ink-950);
+  place-items: center;
+}
+
+.join-code-card__version {
+  border: 1px solid color-mix(in srgb, var(--white) 28%, transparent);
+  border-radius: 999px;
+  color: var(--ink-300);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px var(--space-3);
+}
+
+.join-code-card__body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.join-code-card__code-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  border: 1.5px dashed var(--ink-300);
+  border-radius: var(--radius-control);
+  background: var(--ink-50);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.join-code-card__code {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.join-code-card__copy {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid var(--ink-300);
+  border-radius: 8px;
+  background: var(--surface-card);
+  color: var(--ink-700);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  transition:
+    border-color 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.join-code-card__copy:hover {
+  border-color: var(--ink-900);
+  color: var(--ink-900);
+}
+
+.join-code-card__hint {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+
+.join-code-card__dismiss {
+  justify-self: start;
+}
+
+/* 班級成員／學生進度頁共用的區塊小標（h2 + 靠右膠囊，1px 淡底線） */
+.classroom-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--ink-100);
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+}
+
+.classroom-section-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+/* 成員表狀態欄：純文字＋小圓點（無邊框，區別於上面的膠囊 chip） */
+.status-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-inline--inactive {
+  color: var(--color-muted);
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-dot--active {
+  color: var(--jade-600);
+}
+
+.status-dot--inactive {
+  color: var(--ink-300);
+}
+
+/* tStudentProgress 四張統計卡：白底＋黃左框，最後一張(待補救錯題)紅左框
+   ＋紅字（DC 2192–2208）。tAnalytics 的「班級總覽」四卡沿用無 accent 的
+   .teacher-summary-cards 原樣（灰底、無左框），兩處視覺不同故用修飾類區分。 */
+.teacher-summary-cards--accent > div {
+  border-left: 4px solid var(--yellow-brand);
+  background: var(--surface-card);
+}
+
+.teacher-summary-cards--accent > .teacher-summary-cards__stat--alert {
+  border-left-color: var(--color-xp);
+}
+
+.teacher-summary-cards--accent > .teacher-summary-cards__stat--alert dd {
+  color: var(--rose-700);
 }
 
 /* ── GGAME 認證入口品牌區（Task 11） ──────────────────── */
@@ -2056,77 +2540,282 @@ a {
   padding: var(--space-4);
 }
 
-.auth-portal[data-portal='teacher'] .primary-action {
+.login-form__submit--teacher {
   border-color: var(--color-teacher);
   background: var(--color-teacher);
   color: var(--white);
 }
 
-/* ── GGAME 教師工作區（Task 11c） ─────────────────────── */
+.login-form__submit--teacher:hover,
+.login-form__submit--teacher:active {
+  border-color: var(--color-teacher);
+  background: var(--color-teacher);
+}
+
+/* ── GGAME 教師工作區 tDash（Task 3 重構；DC 1314–1389） ── */
+
+.teacher-dashboard-page {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.teacher-dashboard-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--yellow-brand);
+  gap: var(--space-4) var(--space-6);
+  padding-bottom: var(--space-5);
+}
+
+.teacher-dashboard-header__intro h1 {
+  margin: var(--space-2) 0 0;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  line-height: 1.2;
+}
+
+.teacher-dashboard-header__intro p {
+  margin: var(--space-1) 0 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-supporting);
+}
+
+.teacher-dashboard-header__classroom {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.teacher-dashboard-header__classroom label {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.teacher-dashboard-header__classroom select {
+  min-width: 200px;
+  min-height: 44px;
+  border: 2px solid var(--ink-300);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  font-weight: 700;
+  padding: var(--space-2) var(--space-3);
+}
 
 .teacher-live-console {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid color-mix(in srgb, var(--color-alert) 35%, transparent);
-  border-radius: var(--radius-card);
-  margin: var(--space-6) 0;
-  background: color-mix(in srgb, var(--color-alert) 8%, var(--surface-card));
+  overflow: hidden;
+  border: 2px solid var(--ink-900);
+  border-radius: var(--radius-panel);
+  background: var(--ink-900);
+  color: var(--white);
+  gap: var(--space-5);
+  padding: var(--space-6) 28px;
+}
+
+.teacher-live-console__content {
+  display: flex;
+  flex: 1 1 320px;
+  align-items: flex-start;
   gap: var(--space-4);
-  padding: var(--space-5);
+}
+
+.teacher-live-console__badge {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--yellow-brand);
+  color: var(--ink-950);
+  place-items: center;
 }
 
 .teacher-live-console__title {
   margin: 0;
-  color: var(--amber-700);
-  font-size: var(--font-size-body);
-  font-weight: 900;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
 }
 
 .teacher-live-console__description {
   max-width: 60ch;
   margin: var(--space-2) 0 0;
-  color: var(--amber-700);
-  font-size: var(--font-size-metadata);
+  color: var(--ink-300);
+  font-size: 0.8rem;
   line-height: 1.6;
 }
 
 .teacher-live-console__action {
+  display: inline-flex;
   flex-shrink: 0;
-  border-radius: var(--radius-control);
-  background: var(--color-alert);
-  color: var(--slate-950);
-  font-size: var(--font-size-supporting);
-  font-weight: 900;
-  padding: var(--space-2) var(--space-4);
-  text-decoration: none;
-}
-
-.teacher-shortcuts {
-  display: grid;
-  margin: var(--space-4) 0 var(--space-6);
-  gap: var(--space-3);
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-}
-
-.teacher-shortcuts a {
-  display: flex;
-  min-height: 56px;
   align-items: center;
   justify-content: center;
+  min-height: 52px;
+  border: 2px solid var(--yellow-brand);
+  border-radius: var(--radius-control);
+  background: var(--yellow-brand);
+  color: var(--ink-950);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 900;
+  padding: var(--space-3) var(--space-6);
+  text-decoration: none;
+  transition:
+    border-color 150ms ease-out,
+    background 150ms ease-out;
+}
+
+.teacher-live-console__action:hover {
+  border-color: var(--amber-avatar);
+  background: var(--amber-avatar);
+}
+
+.teacher-dashboard-grid {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}
+
+.teacher-summary-card {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
   background: var(--surface-card);
-  font-size: var(--font-size-supporting);
-  font-weight: 800;
-  gap: var(--space-1);
-  text-decoration: none;
+  padding: var(--space-6);
 }
 
-.teacher-shortcuts a:hover {
-  border-color: var(--color-teacher);
-  color: var(--color-teacher);
+.teacher-summary-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--ink-100);
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-3);
+}
+
+.teacher-summary-card__header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.teacher-summary-card__header span {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.teacher-summary-card__stats {
+  display: grid;
+  margin: 0;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.teacher-summary-card__stat {
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--yellow-brand);
+  border-radius: 12px;
+  background: var(--ink-50);
+  padding: 14px;
+}
+
+.teacher-summary-card__stat--wide {
+  grid-column: 1 / -1;
+}
+
+.teacher-summary-card__stat dt {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.teacher-summary-card__stat dd {
+  display: grid;
+  margin: var(--space-1) 0 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+  gap: var(--space-2);
+}
+
+.teacher-summary-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  border-left: 4px solid var(--coral-600);
+  border-radius: var(--radius-control);
+  margin-top: var(--space-4);
+  background: color-mix(in srgb, var(--coral-600) 8%, transparent);
+  padding: var(--space-3) 14px;
+}
+
+.teacher-summary-warning svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--coral-700);
+}
+
+.teacher-summary-warning p {
+  margin: 0;
+  color: var(--coral-700);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.teacher-shortcut-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  padding: var(--space-6);
+}
+
+.teacher-shortcut-card__header {
+  border-bottom: 1px solid var(--ink-100);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-3);
+}
+
+.teacher-shortcut-card__header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.teacher-shortcut-card__list {
+  display: grid;
+  gap: 10px;
+}
+
+.teacher-shortcut-card__list a {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--yellow-brand);
+  border-radius: 12px;
+  background: var(--surface-card);
+  font-size: 0.9rem;
+  font-weight: 800;
+  padding: var(--space-3) var(--space-4);
+  text-decoration: none;
+  transition:
+    border-color 150ms ease-out,
+    background 150ms ease-out;
+}
+
+.teacher-shortcut-card__list a:hover {
+  border-color: var(--amber-avatar);
+  background: var(--surface-shortcut-hover);
+}
+
+.teacher-shortcut-card__list a span {
+  color: var(--ink-400);
 }
 
 /* ── GGAME 學生頁深度優化（Task 11d） ─────────────────── */
@@ -2187,20 +2876,21 @@ a {
   font-size: var(--font-size-metadata);
 }
 
-/* 排行榜：前三名徽章底色（純樣式，資料仍由伺服器排序） */
-.leaderboard-table tbody tr:nth-child(1) th,
-.leaderboard-table tbody tr:nth-child(1) td {
-  background: color-mix(in srgb, var(--yellow-brand) 14%, var(--surface-card));
+/* 排行榜：前三名列底色（DC leaderboard 1022-1035 逐字 hex；純樣式，資料仍由
+   伺服器排序——class 由 leaderboard-table.tsx 依 entry.rank 指派，Task 10） */
+.leaderboard-table__row--gold th,
+.leaderboard-table__row--gold td {
+  background: var(--rank-gold-row);
 }
 
-.leaderboard-table tbody tr:nth-child(2) th,
-.leaderboard-table tbody tr:nth-child(2) td {
-  background: color-mix(in srgb, var(--slate-300) 22%, var(--surface-card));
+.leaderboard-table__row--silver th,
+.leaderboard-table__row--silver td {
+  background: var(--rank-silver-row);
 }
 
-.leaderboard-table tbody tr:nth-child(3) th,
-.leaderboard-table tbody tr:nth-child(3) td {
-  background: color-mix(in srgb, var(--amber-500) 12%, var(--surface-card));
+.leaderboard-table__row--bronze th,
+.leaderboard-table__row--bronze td {
+  background: var(--rank-bronze-row);
 }
 
 /* ── GGAME 課後任務實戰（Task 11e） ───────────────────── */
@@ -2319,6 +3009,9 @@ a {
 }
 
 .mission__hint-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   justify-self: start;
   border: none;
   border-radius: var(--radius-control);
@@ -2420,7 +3113,43 @@ a {
   margin-bottom: var(--space-5);
 }
 
-/* #13 我的錯題：題目＋正確答案 */
+/* #13 我的錯題：子題群（DC mistakes 1059-1094：黃左框＋紅「n 題待補救」pill） */
+.mistake-group {
+  border-left: 3px solid var(--yellow-brand);
+  margin-top: var(--space-6);
+  padding-left: var(--space-4);
+}
+
+.mistake-group + .mistake-group {
+  margin-top: var(--space-8);
+}
+
+.mistake-group__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.mistake-group__badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--coral-600);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--coral-600) 10%, transparent);
+  color: var(--coral-700);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 10px;
+}
+
+.mistake-group__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .mistake-list {
   display: grid;
   gap: var(--space-3);
@@ -2431,8 +3160,9 @@ a {
 
 .mistake-list__item {
   border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--yellow-brand);
   border-radius: var(--radius-control);
-  background: var(--color-surface);
+  background: var(--mistake-card-bg);
   padding: var(--space-3) var(--space-4);
 }
 
@@ -2447,18 +3177,53 @@ a {
   font-weight: 700;
 }
 
-/* #15 學習進度：放大版面 */
-.progress-dashboard {
-  max-width: 72rem;
+/* 教師端「待補救錯題」卡的第二行是子題／答錯次數的中性說明文字，不是
+   正確答案（DC tStudentProgress 2269：灰字），故另立修飾類，不與上面
+   學生端「我的錯題」卡的綠色答案行共用。 */
+.mistake-list__meta {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
 }
 
-.progress-dashboard .ui-table {
-  font-size: 1.05rem;
+/* #13 我的錯題：已解決群（DC mistakes 1095-1103：灰左框灰卡） */
+.mistake-resolved {
+  border-left: 3px solid var(--border-subtle);
+  margin-top: var(--space-8);
+  padding-left: var(--space-4);
 }
 
-.progress-dashboard .ui-table th,
-.progress-dashboard .ui-table td {
-  padding: var(--space-4);
+.mistake-resolved__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--ink-700);
+  font-size: 1rem;
+}
+
+.mistake-resolved__dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--jade-600);
+}
+
+.mistake-resolved__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mistake-resolved__list li {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--ink-50);
+  color: var(--ink-500);
+  padding: 10px 14px;
 }
 
 /* #18 成就徽章：colorplay-new 卡片式版面 */
@@ -2492,7 +3257,7 @@ a {
   background: linear-gradient(
     135deg,
     var(--color-surface),
-    color-mix(in srgb, var(--yellow-brand) 12%, white)
+    var(--amber-tint-card)
   );
 }
 
@@ -2546,7 +3311,7 @@ a {
 
 .achievement-card__chip {
   border-radius: 999px;
-  background: color-mix(in srgb, var(--yellow-brand) 35%, white);
+  background: var(--amber-highlight-soft);
   color: var(--amber-700);
   font-size: 0.72rem;
   font-weight: 800;
@@ -2597,6 +3362,7 @@ a {
   align-items: center;
   gap: var(--space-3);
   cursor: pointer;
+  border-left: 4px solid var(--yellow-brand);
   padding: var(--space-3) var(--space-4);
   font-weight: 800;
 }
@@ -2629,11 +3395,6 @@ a {
   color: white;
 }
 
-.review-accordion__badge--3 {
-  background: linear-gradient(135deg, var(--emerald-600), var(--sky-500));
-  color: white;
-}
-
 .review-accordion__title {
   flex: 1;
 }
@@ -2649,6 +3410,251 @@ a {
   padding: var(--space-4);
 }
 
+/* 複習卡內：完成狀態文字／未完成的「完成複習」墨框按鈕(DC 602/629–631) */
+.review-card__status {
+  color: var(--color-success);
+  font-weight: 700;
+  text-align: right;
+}
+
+.review-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+}
+
+.review-card__complete-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--border-strong);
+  cursor: pointer;
+  font-size: var(--font-size-supporting);
+  font-weight: 700;
+  padding: var(--space-2) 18px;
+}
+
+/* 章節複習頁標頭：白卡尺寸、標題列、狀態 pill／圓環進度(DC 535–567) */
+.page-card.page-card--spacious {
+  width: min(100%, 1040px);
+  padding: var(--space-10);
+}
+
+.chapter-detail__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.chapter-detail__title {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3rem);
+  line-height: 1.2;
+}
+
+.chapter-detail__progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-6);
+  margin-top: var(--space-3);
+}
+
+.chapter-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  font-size: var(--font-size-supporting);
+  font-weight: 800;
+  padding: 4px 14px;
+}
+
+.chapter-status-pill--success {
+  border: 1px solid var(--color-token);
+  background: color-mix(in srgb, var(--color-token) 10%, transparent);
+  color: var(--emerald-700);
+}
+
+.chapter-status-pill--primary {
+  border: 1px solid var(--amber-avatar);
+  background: color-mix(in srgb, var(--yellow-brand) 20%, transparent);
+  color: var(--ink-900);
+}
+
+.chapter-status-pill--neutral {
+  border: 1px solid var(--border-subtle);
+  background: var(--slate-100);
+  color: var(--color-muted);
+}
+
+.chapter-status-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.chapter-status-dot--success {
+  background: var(--color-token);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-token) 22%, transparent);
+}
+
+.chapter-status-dot--primary {
+  background: var(--yellow-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow-brand) 22%, transparent);
+}
+
+.chapter-status-dot--neutral {
+  background: var(--ink-300);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink-300) 22%, transparent);
+}
+
+.chapter-detail__review-progress {
+  display: grid;
+  flex: 1 1 200px;
+  min-width: 160px;
+  gap: 6px;
+}
+
+.chapter-detail__review-progress-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.chapter-detail__review-progress-label {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.chapter-detail__review-progress-value {
+  color: var(--color-text);
+  font-size: var(--font-size-supporting);
+  font-weight: 800;
+}
+
+.chapter-detail__mastery {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mastery-ring {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+}
+
+.mastery-ring svg {
+  transform: rotate(-90deg);
+}
+
+.mastery-ring__track {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 6;
+}
+
+.mastery-ring__fill {
+  fill: none;
+  stroke: var(--color-token);
+  stroke-linecap: round;
+  stroke-width: 6;
+}
+
+.chapter-detail__mastery-text {
+  display: grid;
+  line-height: 1.2;
+}
+
+.chapter-detail__mastery-label {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.chapter-detail__mastery-value {
+  color: var(--color-text);
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+/* 章節複習頁小節區：黃左框＋「小節」pill＋進度行(DC 571–590) */
+.chapter-detail__subtopic {
+  border-left: 3px solid var(--yellow-brand);
+  margin-top: var(--space-6);
+  padding-left: var(--space-4);
+}
+
+.chapter-detail__subtopic-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--ink-700);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.chapter-detail__subtopic-tag {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--amber-avatar);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--yellow-brand) 22%, white);
+  color: var(--ink-900);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 2px var(--space-2);
+}
+
+.chapter-detail__subtopic-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 6px 0 var(--space-4);
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.chapter-detail__subtopic-studied {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.chapter-detail__subtopic-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hue-ch3);
+}
+
+.chapter-detail__subtopic-divider {
+  color: var(--ink-300);
+}
+
+.chapter-detail__subtopic-review {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 /* 成就頁（colorplay-new 原樣）：返回鍵＋標題列 */
 .achievements-header {
   display: flex;
@@ -2659,8 +3665,8 @@ a {
 
 .achievements-header__back {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -2729,11 +3735,6 @@ a {
 @media (max-width: 680px) {
   .page-card {
     padding: var(--space-4);
-  }
-
-  .progress-dashboard .ui-table th,
-  .progress-dashboard .ui-table td {
-    padding: var(--space-2);
   }
 
   .achievements-header__title {
@@ -3068,7 +4069,9 @@ a {
   display: grid;
   margin: 0;
   gap: var(--space-4);
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  /* DC 876 逐字寫的是 minmax(min(100%,280px),1fr)——原實作漏了 min(100%,…)
+     防溢出這層（ledger backlog，Task 14 393 稽核補上），非新增規格。 */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   list-style: none;
   padding: 0;
 }
@@ -3091,6 +4094,7 @@ a {
 
 .teacher-analytics-filters > div {
   display: grid;
+  min-width: 0;
   gap: var(--space-1);
 }
 
@@ -3102,6 +4106,7 @@ a {
 
 .teacher-analytics-filters select,
 .teacher-analytics-filters input {
+  min-width: 0;
   min-height: 40px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
@@ -3115,12 +4120,17 @@ main label[for='dashboard-classroom'] {
   font-weight: 700;
 }
 
+/* 這條 ID 選擇器規則的 specificity 蓋過上面 .teacher-dashboard-header__classroom
+   select（min-height:44px），實際生效卻是這裡的 40px——393 稽核（Task 14）
+   量到觸控高度只有 40px 才發現這條殘留規則跟前面較新、較完整的 class 規則
+   打架。改成跟前面一致的 44px／2px 邊框／space-2 內距，不留兩份互相覆蓋的
+   定義。 */
 select#dashboard-classroom {
-  min-height: 40px;
-  border: 1px solid var(--color-border);
+  min-height: 44px;
+  border: 2px solid var(--ink-300);
   border-radius: var(--radius-control);
   background: var(--surface-card);
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-3);
 }
 
 /* Live 課堂加入頁:白卡容器+大號代碼輸入(2026-07-23 排版統一批) */

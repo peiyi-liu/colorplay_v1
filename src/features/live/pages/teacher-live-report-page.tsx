@@ -36,6 +36,7 @@ function ReviewAssignmentButton({
   return (
     <div>
       <button
+        className="live-report__action"
         disabled={createAssignment.isPending || createAssignment.isSuccess}
         onClick={() => {
           setMessage(undefined);
@@ -109,38 +110,44 @@ export function TeacherLiveReportPage({
         </p>
       </header>
 
-      <table className="ui-table" aria-label="逐題分析">
-        <thead>
-          <tr>
-            <th scope="col">題號</th>
-            <th scope="col">題目</th>
-            <th scope="col">作答數</th>
-            <th scope="col">答對數</th>
-            <th scope="col">正確率</th>
-            <th scope="col">平均反應</th>
-          </tr>
-        </thead>
-        <tbody>
-          {report.questions.map((question) => (
-            <tr key={question.position}>
-              <td>{question.position}</td>
-              <td>{question.prompt}</td>
-              <td>{question.answered}</td>
-              <td>{question.correct}</td>
-              <td>
-                {question.correctRate === null
-                  ? EM_DASH
-                  : `${question.correctRate.toFixed(1)}%`}
-              </td>
-              <td>
-                {question.averageResponseMs === null
-                  ? EM_DASH
-                  : `${String(question.averageResponseMs)} ms`}
-              </td>
+      {/* 393 寬度稽核發現：6 欄無包裹容器時 document.documentElement.
+          scrollWidth 撐到 398px（Task 14）。比照下方作答矩陣既有的
+          .live-matrix-scroll／teacher-classroom-detail-page.tsx 的
+          .ui-table-scroll 慣例，讓表格在自己框內橫向捲動。 */}
+      <div className="ui-table-scroll">
+        <table className="ui-table" aria-label="逐題分析">
+          <thead>
+            <tr>
+              <th scope="col">題號</th>
+              <th scope="col">題目</th>
+              <th scope="col">作答數</th>
+              <th scope="col">答對數</th>
+              <th scope="col">正確率</th>
+              <th scope="col">平均反應</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {report.questions.map((question) => (
+              <tr key={question.position}>
+                <td>{question.position}</td>
+                <td>{question.prompt}</td>
+                <td>{question.answered}</td>
+                <td>{question.correct}</td>
+                <td>
+                  {question.correctRate === null
+                    ? EM_DASH
+                    : `${question.correctRate.toFixed(1)}%`}
+                </td>
+                <td>
+                  {question.averageResponseMs === null
+                    ? EM_DASH
+                    : `${String(question.averageResponseMs)} ms`}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <section aria-label="作答矩陣">
         <h2>作答矩陣</h2>
@@ -183,6 +190,7 @@ export function TeacherLiveReportPage({
           </table>
         </div>
         <button
+          className="live-report__action"
           onClick={() => {
             downloadCsv(
               `live-report-${report.sessionId.slice(0, 8)}.csv`,

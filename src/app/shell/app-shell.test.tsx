@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   createMemoryRouter,
@@ -119,6 +119,7 @@ describe('AppShell', () => {
     );
 
     expect(screen.queryByRole('link', { name: '教師工作區' })).toBeNull();
+    expect(screen.queryByText(/教師端/u)).toBeNull();
     expect(screen.getByRole('link', { name: '裝備商店' })).toHaveAttribute(
       'href',
       '/app/shop',
@@ -249,6 +250,10 @@ describe('AppShell', () => {
       'href',
       '/teacher/classes',
     );
+    // header 右側教師徽章:姓名用 profile 的 displayName,不寫死「劉老師」。
+    expect(
+      within(screen.getByRole('banner')).getByText('teacher・教師端'),
+    ).toBeVisible();
   });
 
   it('renders the simplified primary rail for students', () => {
@@ -277,6 +282,26 @@ describe('AppShell', () => {
     expect(screen.queryByRole('link', { name: '我的作業' })).toBeNull();
     expect(screen.queryByRole('link', { name: '教師後台' })).toBeNull();
     expect(screen.queryByText('色彩原理學習平台')).toBeNull();
+
+    // 學生導覽兩群組順序（批示 #2:不含「學習進度」；改為「我的錯題」）。
+    const nav = screen.getByRole('navigation', { name: '主要導覽' });
+    const linkNames = within(nav)
+      .getAllByRole('link')
+      .map((link) => link.textContent);
+    expect(linkNames).toEqual([
+      '學習大廳',
+      '課後任務實戰',
+      '裝備商店',
+      '我的錯題',
+      'Live 課堂',
+      '班級排行榜',
+      '成就徽章',
+    ]);
+    expect(screen.queryByRole('link', { name: '學習進度' })).toBeNull();
+    expect(screen.getByRole('link', { name: '我的錯題' })).toHaveAttribute(
+      'href',
+      '/app/mistakes',
+    );
   });
 
   it('gives teachers the indigo rail with full workspace links', () => {

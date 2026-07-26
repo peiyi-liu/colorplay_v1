@@ -81,6 +81,43 @@ describe('TeacherClassroomsPage', () => {
     expect(await screen.findByText('ABCD-1234-EF56-7890')).toBeVisible();
   });
 
+  it('shows the aggregate header stats and per-card membership pill/meta', async () => {
+    renderPage(
+      createRepository({
+        listOwned: vi.fn().mockResolvedValue([
+          {
+            classroomId: 'ca000000-0000-4000-8000-000000000001',
+            classroomName: '設計群 甲班',
+            classroomStatus: 'active',
+            createdAt: '2026-07-18T00:00:00.000Z',
+            joinCodeVersion: 3,
+            memberCount: 25,
+          },
+          {
+            classroomId: 'ca000000-0000-4000-8000-000000000002',
+            classroomName: '設計群 乙班',
+            classroomStatus: 'active',
+            createdAt: '2026-07-20T00:00:00.000Z',
+            joinCodeVersion: 1,
+            memberCount: 23,
+          },
+        ]),
+      }),
+    );
+    await screen.findByRole('heading', { name: '班級管理' });
+    expect(screen.getByText('班級數').nextElementSibling).toHaveTextContent(
+      '2',
+    );
+    expect(screen.getByText('有效學生').nextElementSibling).toHaveTextContent(
+      '48',
+    );
+    expect(screen.getByText('25 位有效學生')).toBeVisible();
+    expect(screen.getByText('v3')).toBeVisible();
+    expect(
+      screen.getByRole('heading', { name: '設計群 甲班' }),
+    ).toBeVisible();
+  });
+
   it('keeps create errors adjacent and discards the receipt on dismiss/remount', async () => {
     const repository = createRepository({
       createClassroom: vi

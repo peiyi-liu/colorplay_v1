@@ -2,6 +2,13 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { GENERATED_CORRECT_ANSWERS } from '../fixtures/question-answers.generated';
 import { TEST_USERS } from '../fixtures/users';
+import {
+  signInStudent as authSignInStudent,
+  signInTeacher as authSignInTeacher,
+  type Credentials,
+} from './helpers/auth';
+import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
+import { launchLiveSessionFromTeacherHome } from './helpers/live';
 
 // 輕量 Live 冒煙：單一學生走完 等待室 → 十題（含一次暫停/續行）→ 頒獎台。
 // 完整驗收（團隊模式、延遲預算、截圖、報表數字）仍在
@@ -10,30 +17,16 @@ import { TEST_USERS } from '../fixtures/users';
 const CLASSROOM_NAME = 'Live冒煙班級';
 const QUESTION_COUNT = 10;
 
-const signInTeacher = async (
-  page: Page,
-  credentials: Readonly<{ email: string; password: string }>,
-) => {
-  await page.goto('/login');
-  // The native radio is visually clipped (styled tab), so check() would wait
-  // for visibility forever — click the label instead.
-  await page.getByText('教師端登入').click();
-  await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
-  await page.getByLabel('密碼').fill(credentials.password);
-  await page.getByRole('button', { name: '登入' }).click();
-  await expect(page).toHaveURL(/\/teacher$/u);
+// 登入的機制（表單填寫、送出、等 URL）與 scripts/design-audit 的截圖 runner
+// 共用 tests/e2e/helpers/auth.ts；這裡只保留本檔案特有的「登入後畫面已就緒」
+// 斷言。
+const signInTeacher = async (page: Page, credentials: Credentials) => {
+  await authSignInTeacher(page, credentials);
   await expect(page.getByRole('heading', { name: '教師工作區' })).toBeVisible();
 };
 
-const signInStudent = async (
-  page: Page,
-  credentials: Readonly<{ email: string; password: string }>,
-) => {
-  await page.goto('/login');
-  await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
-  await page.getByLabel('密碼').fill(credentials.password);
-  await page.getByRole('button', { name: '登入' }).click();
-  await expect(page).toHaveURL(/\/app$/u);
+const signInStudent = async (page: Page, credentials: Credentials) => {
+  await authSignInStudent(page, credentials);
   await expect(
     page.getByRole('heading', { name: '色彩任務選擇大廳' }),
   ).toBeVisible();
@@ -88,33 +81,21 @@ test('Live smoke: 單人場次從等待室走到頒獎台', async ({
   // --- 班級與成員 ---
   await signInTeacher(teacherPage, TEST_USERS.liveHostTeacher);
   await teacherPage.goto('/teacher/classes');
-  await teacherPage
-    .getByRole('textbox', { name: '班級名稱' })
-    .fill(CLASSROOM_NAME);
-  await teacherPage.getByRole('button', { name: '建立班級' }).click();
-  const receipt = teacherPage.getByLabel('一次性班級加入碼');
-  await expect(receipt).toBeVisible();
-  const classroomCode = (await receipt.locator('strong').innerText()).trim();
+  const { joinCode: classroomCode } = await createClassroom(
+    teacherPage,
+    CLASSROOM_NAME,
+  );
 
   await signInStudent(studentPage, TEST_USERS.liveStudentOne);
-  await studentPage.goto(`/join/${classroomCode}`);
-  await studentPage.getByRole('button', { name: '加入班級' }).click();
+  await joinClassroomByCode(studentPage, classroomCode);
   await expect(studentPage).toHaveURL(/\/app\/leaderboard\//u);
 
   // --- 開新場次（主持發射台：選單元→一鍵開場，直入投影模式）---
-  await teacherPage.goto('/teacher/live');
-  const sectionSelect = teacherPage.getByLabel('1・選擇對戰單元');
-  await expect(sectionSelect).toBeVisible();
-  // index 0 是「請選擇小節」placeholder；任一已發佈小節皆為十題，
-  // 正解由 GENERATED_CORRECT_ANSWERS 依題目 prompt 反查，與選哪節無關。
-  await sectionSelect.selectOption({ index: 1 });
-  await teacherPage.getByRole('button', { name: '建立活動並開場' }).click();
-  const presenter = teacherPage.getByLabel('投影模式');
-  // 開場即 startSession（draft→lobby）並導向 ?presenter=1。投影鎖定：
-  // 進行中不可離開投影，之後的主持動作都走投影 footer 的操作列。
-  const codePanel = presenter.getByLabel('課堂代碼');
-  await expect(codePanel).toBeVisible();
-  const joinCode = (await codePanel.innerText()).trim();
+  // 選擇器序列與 scripts/design-audit 的截圖 runner 共用，抽成
+  // tests/e2e/helpers/live.ts（見該檔開頭的重用說明）；任一已發佈小節皆為
+  // 十題，正解由 GENERATED_CORRECT_ANSWERS 依題目 prompt 反查，與選哪節無關。
+  const { presenter, joinCode } =
+    await launchLiveSessionFromTeacherHome(teacherPage);
 
   await studentPage.goto('/app/live/join');
   await studentPage.getByLabel('課堂代碼').fill(joinCode);

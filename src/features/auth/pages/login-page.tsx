@@ -278,7 +278,11 @@ export function LoginPage() {
         </p>
         <div className="login-form__action-row">
           <button
-            className="primary-action"
+            className={
+              portal === 'teacher'
+                ? 'primary-action login-form__submit--teacher'
+                : 'primary-action'
+            }
             data-acceptance-interactive="true"
             data-acceptance-target
             data-primary-action="true"

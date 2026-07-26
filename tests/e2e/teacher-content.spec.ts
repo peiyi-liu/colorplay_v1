@@ -367,7 +367,7 @@ test('Teacher Content phase gate', async ({
     studentPage.getByRole('heading', { name: '色彩任務選擇大廳' }),
   ).toBeVisible();
   await studentPage
-    .locator('article.chapter-card')
+    .locator('article.lobby-chapter')
     .filter({ hasText: QUIZ_CHAPTER_TITLE })
     .getByRole('link', { name: '開始挑戰' })
     .click();
@@ -440,17 +440,17 @@ test('Teacher Content phase gate', async ({
   const accuracyText = `${accuracy.toFixed(1)}%`;
   await teacherPage.goto('/teacher');
   await expect(teacherPage.getByLabel('選擇班級')).toBeVisible();
-  const summaryValues = teacherPage.locator('.teacher-summary-cards dd');
+  const summaryValues = teacherPage.locator('.teacher-summary-card__stats dd');
   await expect(summaryValues.nth(0)).toHaveText('1');
   await expect(summaryValues.nth(1)).toHaveText('1');
   await expect(summaryValues.nth(2)).toHaveText(accuracyText);
   await expect(
-    teacherPage.locator('.teacher-summary-callout'),
+    teacherPage.locator('.teacher-summary-warning'),
   ).not.toContainText('—');
   await teacherPage.reload();
-  await expect(teacherPage.locator('.teacher-summary-cards')).toContainText(
-    accuracyText,
-  );
+  await expect(
+    teacherPage.locator('.teacher-summary-card__stats'),
+  ).toContainText(accuracyText);
   await teacherPage.setViewportSize({ width: 1440, height: 900 });
   await teacherPage.screenshot({
     fullPage: true,
@@ -484,9 +484,9 @@ test('Teacher Content phase gate', async ({
   await expect(teacherBPage.getByLabel('選擇班級')).not.toContainText(
     CLASSROOM_NAME,
   );
-  await expect(teacherBPage.locator('.teacher-summary-cards')).toContainText(
-    '—',
-  );
+  await expect(
+    teacherBPage.locator('.teacher-summary-card__stats'),
+  ).toContainText('—');
   await teacherBContext.close();
   await teacherContext.close();
 

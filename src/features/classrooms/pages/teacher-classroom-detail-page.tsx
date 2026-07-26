@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { Chip } from '../../../components/ui/chip';
 import { ClassroomCodeReceiptView } from '../components/classroom-code-receipt';
 import {
   useOwnedClassroomMembers,
@@ -62,38 +63,46 @@ export function TeacherClassroomDetailPage({
     }
   };
 
+  const activeMemberCount = members.data.filter(
+    (member) => member.membershipStatus === 'active',
+  ).length;
+
   return (
     <section
       aria-labelledby="teacher-classroom-detail-title"
       className="page-wide"
     >
-      <header>
-        <p className="route-panel__eyebrow">教師班級管理</p>
-        <h1 id="teacher-classroom-detail-title">班級成員</h1>
-        <p>成員資料由安全投影提供，不包含 Email 或使用者識別碼。</p>
+      <header className="teacher-dashboard-header">
+        <div className="teacher-dashboard-header__intro">
+          <p className="route-panel__eyebrow">教師班級管理</p>
+          <h1 id="teacher-classroom-detail-title">班級成員</h1>
+          <p>成員資料由安全投影提供，不包含 Email 或使用者識別碼。</p>
+        </div>
+        <div className="classroom-header-actions">
+          <Link
+            className="secondary-action"
+            to={`/teacher/classes/${classroomId}/assignments`}
+          >
+            作業管理
+          </Link>
+          <Link
+            className="secondary-action"
+            to={`/teacher/classes/${classroomId}/progress`}
+          >
+            學習進度
+          </Link>
+          <button
+            className="secondary-action"
+            disabled={rotate.isPending}
+            onClick={() => {
+              setConfirmingRotation(true);
+            }}
+            type="button"
+          >
+            輪替加入碼
+          </button>
+        </div>
       </header>
-      <Link
-        className="secondary-action"
-        to={`/teacher/classes/${classroomId}/assignments`}
-      >
-        作業管理
-      </Link>
-      <Link
-        className="secondary-action"
-        to={`/teacher/classes/${classroomId}/progress`}
-      >
-        學習進度
-      </Link>
-      <button
-        className="secondary-action"
-        disabled={rotate.isPending}
-        onClick={() => {
-          setConfirmingRotation(true);
-        }}
-        type="button"
-      >
-        輪替加入碼
-      </button>
       {rotationError ? <p role="alert">{rotationError}</p> : null}
       {receipt ? (
         <ClassroomCodeReceiptView
@@ -103,46 +112,70 @@ export function TeacherClassroomDetailPage({
           receipt={receipt}
         />
       ) : null}
-      {members.data.length === 0 ? (
-        <p>目前沒有學生。</p>
-      ) : (
-        <table>
-          <caption>班級學生</caption>
-          <thead>
-            <tr>
-              <th scope="col">名字</th>
-              <th scope="col">學號</th>
-              <th scope="col">暱稱</th>
-              <th scope="col">Blook</th>
-              <th scope="col">狀態</th>
-              <th scope="col">加入日期</th>
-              <th scope="col">學習狀況</th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.data.map((member) => (
-              <tr key={member.memberRef}>
-                <th scope="row">{member.fullName ?? '—'}</th>
-                <td>{member.loginAccount ?? '—'}</td>
-                <td>{member.displayName}</td>
-                <td>{member.activeBlookId ? '已裝備 Blook' : '尚未裝備'}</td>
-                <td>
-                  {member.membershipStatus === 'active' ? '有效成員' : '已停用'}
-                </td>
-                <td>{new Date(member.joinedAt).toLocaleDateString('zh-TW')}</td>
-                <td>
-                  <Link
-                    className="secondary-action"
-                    to={`/teacher/classes/${classroomId}/members/${member.memberRef}`}
-                  >
-                    查看細節 ›
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <section aria-label="班級學生" className="ui-card ui-card--md">
+        <header className="classroom-section-header">
+          <h2>班級學生</h2>
+          <Chip tone="success">
+            {String(activeMemberCount)} 位有效成員
+          </Chip>
+        </header>
+        {members.data.length === 0 ? (
+          <p>目前沒有學生。</p>
+        ) : (
+          <div className="ui-table-scroll">
+            <table className="ui-table">
+              <caption className="visually-hidden">班級學生</caption>
+              <thead>
+                <tr>
+                  <th scope="col">名字</th>
+                  <th scope="col">學號</th>
+                  <th scope="col">暱稱</th>
+                  <th scope="col">Blook</th>
+                  <th scope="col">狀態</th>
+                  <th scope="col">加入日期</th>
+                  <th scope="col">學習狀況</th>
+                </tr>
+              </thead>
+              <tbody>
+                {members.data.map((member) => (
+                  <tr key={member.memberRef}>
+                    <th scope="row">{member.fullName ?? '—'}</th>
+                    <td>{member.loginAccount ?? '—'}</td>
+                    <td>{member.displayName}</td>
+                    <td>
+                      {member.activeBlookId ? '已裝備 Blook' : '尚未裝備'}
+                    </td>
+                    <td>
+                      <span
+                        className={`status-inline${member.membershipStatus === 'inactive' ? ' status-inline--inactive' : ''}`}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={`status-dot ${member.membershipStatus === 'active' ? 'status-dot--active' : 'status-dot--inactive'}`}
+                        />
+                        {member.membershipStatus === 'active'
+                          ? '有效成員'
+                          : '已停用'}
+                      </span>
+                    </td>
+                    <td>
+                      {new Date(member.joinedAt).toLocaleDateString('zh-TW')}
+                    </td>
+                    <td>
+                      <Link
+                        className="secondary-action"
+                        to={`/teacher/classes/${classroomId}/members/${member.memberRef}`}
+                      >
+                        查看細節 ›
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
       {confirmingRotation ? (
         <div
           aria-labelledby="rotate-code-title"

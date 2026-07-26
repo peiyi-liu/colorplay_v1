@@ -124,7 +124,7 @@ describe('QuizResultPage', () => {
     renderResult(repository(vi.fn().mockResolvedValue(completedSession)));
 
     expect(
-      await screen.findByRole('heading', { name: '挑戰完成' }),
+      await screen.findByRole('heading', { name: '挑戰完成 🎉' }),
     ).toBeVisible();
     expect(screen.getByText('總分 150')).toBeVisible();
     expect(screen.getByText('+750 XP')).toBeVisible();

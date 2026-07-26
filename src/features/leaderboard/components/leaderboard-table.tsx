@@ -65,6 +65,15 @@ function SelfRankCard({
   );
 }
 
+// 排行榜前三名列底色（DC leaderboard 1022-1035:金/銀/銅）；用明確 class 取代
+// nth-child 假設(row 順序改變或插入自我列時仍準確對到 rank)。
+const rankTierClass = (rank: number): string | undefined => {
+  if (rank === 1) return 'leaderboard-table__row--gold';
+  if (rank === 2) return 'leaderboard-table__row--silver';
+  if (rank === 3) return 'leaderboard-table__row--bronze';
+  return undefined;
+};
+
 export function LeaderboardTable({
   blooks,
   leaderboard,
@@ -91,7 +100,10 @@ export function LeaderboardTable({
           </thead>
           <tbody>
             {leaderboard.topEntries.map((entry) => (
-              <tr key={`${String(entry.rank)}-${entry.displayName}`}>
+              <tr
+                className={rankTierClass(entry.rank)}
+                key={`${String(entry.rank)}-${entry.displayName}`}
+              >
                 <td>第 {String(entry.rank)} 名</td>
                 <td>
                   {entry.displayName}

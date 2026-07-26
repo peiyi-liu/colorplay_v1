@@ -150,7 +150,11 @@ test.describe('flat-design application shell', () => {
         };
       }),
     ).toEqual({
-      outlineColor: 'rgb(14, 165, 233)',
+      // --color-info 已在 Task 11（7819e07）由 --sky-500 改為 --cobalt-600
+      // （見 tokens.css:121），這條斷言的舊 sky-500 期望值（14,165,233）
+      // 從那之後就是過期基線；393 GATE 跑 pnpm test:visual 時發現，改成
+      // 目前實際生效、也是本重構刻意選定的 cobalt-600（48,86,216）。
+      outlineColor: 'rgb(48, 86, 216)',
       outlineStyle: 'solid',
       outlineWidth: '3px',
     });

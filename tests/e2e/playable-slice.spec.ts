@@ -2,9 +2,14 @@ import { createClient } from '@supabase/supabase-js';
 import { expect, test } from '@playwright/test';
 
 import type { Database } from '../../src/types/database';
-import { CONTENT_MANIFEST } from '../fixtures/content-manifest.generated';
 import { GENERATED_CORRECT_ANSWERS } from '../fixtures/question-answers.generated';
 import { TEST_USERS } from '../fixtures/users';
+import { signInStudent } from './helpers/auth';
+import {
+  fullChallengeChapter,
+  startQuizFromLobby,
+  submitSelectedQuizOption,
+} from './helpers/quiz';
 
 // 十題完整旅程在併行負載下的 firefox 會超過預設 30s；給明確上限而非受載測速。
 test.describe.configure({ timeout: 120_000 });
@@ -12,14 +17,6 @@ test.describe.configure({ timeout: 120_000 });
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
 
 const correctAnswers = GENERATED_CORRECT_ANSWERS;
-// 挑一個題數足夠出滿 10 題挑戰的章節，內容變動時自動跟上。
-const fullChallengeChapter = CONTENT_MANIFEST.find(
-  (chapter) => chapter.questionCount >= 10,
-);
-if (!fullChallengeChapter) {
-  throw new Error('沒有任何章節有 10 題以上，無法執行完整挑戰測試');
-}
-const CHALLENGE_LINK = `/app/quiz/new?template=${fullChallengeChapter.templateId}`;
 
 const requiredEnvironment = (name: 'SUPABASE_ANON_KEY' | 'SUPABASE_URL') => {
   const value = process.env[name];
@@ -37,13 +34,10 @@ test('student completes a mixed ten-question challenge with durable server total
   });
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
-  await page.goto('/login');
-  await page
-    .getByRole('textbox', { name: '帳號' })
-    .fill(TEST_USERS.studentOne.email);
-  await page.getByLabel('密碼').fill(TEST_USERS.studentOne.password);
-  await page.getByRole('button', { name: '登入' }).click();
-  await page.locator(`a[href="${CHALLENGE_LINK}"]`).click();
+  await signInStudent(page, TEST_USERS.studentOne);
+  await startQuizFromLobby(page, {
+    templateId: fullChallengeChapter.templateId,
+  });
   await expect(page).toHaveURL(/\/app\/quiz\/[0-9a-f-]{36}$/u);
 
   const sessionId = new URL(page.url()).pathname.split('/').at(-1);
@@ -77,7 +71,7 @@ test('student completes a mixed ten-question challenge with durable server total
       await wrongOption.click();
       await expect(wrongOption.getByRole('radio')).toBeChecked();
     }
-    await page.getByRole('button', { name: '送出答案' }).click();
+    await submitSelectedQuizOption(page);
 
     await expect(
       page.getByRole('heading', {
@@ -129,6 +123,13 @@ test('student completes a mixed ten-question challenge with durable server total
 
   await page.getByRole('button', { name: '登出' }).click();
   await expect(page).toHaveURL(/\/login$/u);
+  // 不用 helpers/auth 的 signInStudent：那個 helper 內建等待登入後落地在
+  // /app。這裡的登出是在 /app/quiz/{sessionId}/result 這一頁按的，
+  // RequireAuth 偵測到 auth.status 變成 anonymous 後，會帶著
+  // state.from.pathname=目前網址導去 /login；重新登入時 login-page 會用這個
+  // state.from 導回同一個 /result 網址（不是 /app）——這正是本測試要驗證的
+  // 「用別人身分造訪這個網址會被擋下」，所以手動填表單、自己等真正會發生的
+  // 下一個網址。
   await page
     .getByRole('textbox', { name: '帳號' })
     .fill(TEST_USERS.studentTwo.email);

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -87,14 +87,41 @@ describe('TeacherDashboardPage', () => {
       'href',
       '/teacher/analytics',
     );
-    expect(screen.getByRole('link', { name: '內容工作區' })).toHaveAttribute(
-      'href',
-      '/teacher/content',
-    );
-    expect(screen.getByRole('link', { name: '匯入內容' })).toHaveAttribute(
-      'href',
-      '/teacher/import',
-    );
+  });
+
+  it('limits teacher shortcuts to analytics and classroom management', async () => {
+    const repository = teacherRepositoryOf({
+      attempts: 1,
+      averageAccuracy: 50,
+      uniqueStudents: 1,
+      worstSubtopicTitle: null,
+    });
+    renderPage(repository, classroomRepositoryOf(ownedClassrooms));
+
+    const nav = await screen.findByRole('navigation', {
+      name: '教師功能捷徑',
+    });
+    const links = within(nav).getAllByRole('link');
+    expect(links).toHaveLength(2);
+    expect(links[0]).toHaveAttribute('href', '/teacher/analytics');
+    expect(links[1]).toHaveAttribute('href', '/teacher/classes');
+  });
+
+  it('places the classroom selector inside the page header', async () => {
+    const repository = teacherRepositoryOf({
+      attempts: 1,
+      averageAccuracy: 50,
+      uniqueStudents: 1,
+      worstSubtopicTitle: null,
+    });
+    renderPage(repository, classroomRepositoryOf(ownedClassrooms));
+
+    await screen.findByLabelText('選擇班級');
+    const header = document.querySelector('.teacher-dashboard-header');
+    expect(header).not.toBeNull();
+    expect(
+      within(header as HTMLElement).getByLabelText('選擇班級'),
+    ).toBeInTheDocument();
   });
 
   it('refetches the summary when the teacher switches classrooms', async () => {
@@ -177,4 +204,7 @@ it('surfaces the ggame live broadcast console entry', async () => {
     '/teacher/live',
   );
   expect(screen.getByText('教師決策工具')).toBeInTheDocument();
+  expect(
+    document.querySelectorAll('.teacher-live-console__badge svg'),
+  ).toHaveLength(1);
 });

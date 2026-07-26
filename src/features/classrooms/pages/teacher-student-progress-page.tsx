@@ -64,25 +64,29 @@ export function TeacherStudentProgressPage({
       aria-labelledby="teacher-student-progress-title"
       className="page-wide"
     >
-      <header>
-        <p className="route-panel__eyebrow">教師班級管理</p>
-        <h1 id="teacher-student-progress-title">{studentName} 的學習進度</h1>
-        <p>
-          {identity.loginAccount ? `學號 ${identity.loginAccount}・` : ''}
-          暱稱 {identity.displayName}
-          ・數字由伺服器依權威作答紀錄計算。
-        </p>
-        {identity.membershipStatus === 'inactive' ? (
-          <p role="status">此成員已停用，資料為停用前的紀錄。</p>
-        ) : null}
-        <Link
-          className="secondary-action"
-          to={`/teacher/classes/${classroomId}`}
-        >
-          ← 回班級成員
-        </Link>
+      <header className="teacher-dashboard-header">
+        <div className="teacher-dashboard-header__intro">
+          <p className="route-panel__eyebrow">教師班級管理</p>
+          <h1 id="teacher-student-progress-title">{studentName} 的學習進度</h1>
+          <p>
+            {identity.loginAccount ? `學號 ${identity.loginAccount}・` : ''}
+            暱稱 {identity.displayName}
+            ・數字由伺服器依權威作答紀錄計算。
+          </p>
+          {identity.membershipStatus === 'inactive' ? (
+            <p role="status">此成員已停用，資料為停用前的紀錄。</p>
+          ) : null}
+        </div>
+        <div className="classroom-header-actions">
+          <Link
+            className="secondary-action"
+            to={`/teacher/classes/${classroomId}`}
+          >
+            ← 回班級成員
+          </Link>
+        </div>
       </header>
-      <dl className="teacher-summary-cards">
+      <dl className="teacher-summary-cards teacher-summary-cards--accent">
         <div>
           <dt>累計 XP</dt>
           <dd>{stats.classXp.toLocaleString('zh-TW')}</dd>
@@ -97,70 +101,92 @@ export function TeacherStudentProgressPage({
           <dt>平均正確率</dt>
           <dd>{formatPercent(stats.avgAccuracy)}</dd>
         </div>
-        <div>
+        <div className="teacher-summary-cards__stat--alert">
           <dt>待補救錯題</dt>
           <dd>{String(stats.openMistakeCount)}</dd>
         </div>
       </dl>
-      <section aria-labelledby="student-chapter-progress-title">
-        <h2 id="student-chapter-progress-title">各章節學習進度</h2>
+      <section
+        aria-labelledby="student-chapter-progress-title"
+        className="ui-card ui-card--md"
+      >
+        <header className="classroom-section-header">
+          <h2 id="student-chapter-progress-title">各章節學習進度</h2>
+        </header>
         {chapters.length === 0 ? (
           <p>目前沒有已發布的章節。</p>
         ) : (
-          <table className="ui-table">
-            <caption>各章節學習進度</caption>
-            <thead>
-              <tr>
-                <th scope="col">章節</th>
-                <th scope="col">複習完成</th>
-                <th scope="col">涵蓋率</th>
-                <th scope="col">正確率</th>
-                <th scope="col">精熟度</th>
-                <th scope="col">狀態</th>
-              </tr>
-            </thead>
-            <tbody>
-              {chapters.map((chapter) => (
-                <tr key={chapter.chapterId}>
-                  <th scope="row">{chapter.chapterTitle}</th>
-                  <td>
-                    {chapter.reviewTotal === null
-                      ? EM_DASH
-                      : `${String(chapter.reviewCompleted)} / ${String(chapter.reviewTotal)}`}
-                  </td>
-                  <td>{formatPercent(chapter.coverage)}</td>
-                  <td>{formatPercent(chapter.accuracy)}</td>
-                  <td>
-                    {formatPercent(chapter.mastery)}
-                    {chapter.mastery === null ? null : (
-                      <ProgressBar
-                        label={`${chapter.chapterTitle} 精熟度`}
-                        tone="warning"
-                        value={chapter.mastery}
-                      />
-                    )}
-                  </td>
-                  <td>
-                    <Chip tone={chapterStatusTone(chapter.status)}>
-                      {chapterStatusLabel(chapter.status)}
-                    </Chip>
-                  </td>
+          // 6 欄資料表在 393 寬度放不下（Task 14 393 稽核發現：缺這層包裹
+          // 導致 document.documentElement.scrollWidth 撐到 419px），比照
+          // teacher-classroom-detail-page.tsx 既有 .ui-table-scroll 用法，
+          // 讓表格在自己的容器內橫向捲動，不再撐寬整頁。
+          <div className="ui-table-scroll">
+            <table className="ui-table">
+              <caption className="visually-hidden">各章節學習進度</caption>
+              <thead>
+                <tr>
+                  <th scope="col">章節</th>
+                  <th scope="col">複習完成</th>
+                  <th scope="col">涵蓋率</th>
+                  <th scope="col">正確率</th>
+                  <th scope="col">精熟度</th>
+                  <th scope="col">狀態</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {chapters.map((chapter) => (
+                  <tr key={chapter.chapterId}>
+                    <th scope="row">{chapter.chapterTitle}</th>
+                    <td>
+                      {chapter.reviewTotal === null
+                        ? EM_DASH
+                        : `${String(chapter.reviewCompleted)} / ${String(chapter.reviewTotal)}`}
+                    </td>
+                    <td>{formatPercent(chapter.coverage)}</td>
+                    <td>{formatPercent(chapter.accuracy)}</td>
+                    <td>
+                      {formatPercent(chapter.mastery)}
+                      {chapter.mastery === null ? null : (
+                        <ProgressBar
+                          label={`${chapter.chapterTitle} 精熟度`}
+                          tone="warning"
+                          value={chapter.mastery}
+                        />
+                      )}
+                    </td>
+                    <td>
+                      <Chip tone={chapterStatusTone(chapter.status)}>
+                        {chapterStatusLabel(chapter.status)}
+                      </Chip>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
-      <section aria-labelledby="student-open-mistakes-title">
-        <h2 id="student-open-mistakes-title">待補救錯題</h2>
+      <section
+        aria-labelledby="student-open-mistakes-title"
+        className="ui-card ui-card--md"
+      >
+        <header className="classroom-section-header">
+          <h2 id="student-open-mistakes-title">待補救錯題</h2>
+          {mistakes.length > 0 ? (
+            <Chip tone="danger">{mistakes.length} 題</Chip>
+          ) : null}
+        </header>
         {mistakes.length === 0 ? (
           <p>目前沒有待補救錯題。</p>
         ) : (
-          <ul className="student-mistake-list">
+          <ul className="mistake-list">
             {mistakes.map((mistake) => (
-              <li key={`${mistake.subtopicCode}-${mistake.prompt}`}>
-                <p>{mistake.prompt}</p>
-                <p>
+              <li
+                className="mistake-list__item"
+                key={`${mistake.subtopicCode}-${mistake.prompt}`}
+              >
+                <p className="mistake-list__prompt">{mistake.prompt}</p>
+                <p className="mistake-list__meta">
                   子題 {mistake.subtopicCode} {mistake.subtopicTitle}・答錯{' '}
                   {mistake.wrongCount} 次
                 </p>

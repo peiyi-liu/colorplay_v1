@@ -228,19 +228,6 @@ export function LobbyPage() {
               前往修正
             </Link>
           </div>
-          <div className="lobby-entry lobby-entry--goal">
-            <div>
-              <h3 className="lobby-entry__title">
-                <Icon name="grad-cap" size={16} /> 每日自主精熟目標
-              </h3>
-              <p className="lobby-entry__description">
-                通關已開放章節的所有小節，累積 XP 獎勵！
-              </p>
-            </div>
-            <Link className="lobby-entry__action" to="/app/progress">
-              查看進度
-            </Link>
-          </div>
         </div>
         <nav aria-label="更多功能" className="lobby__links">
           <Link className="lobby-link" to="/app/assignments">
