@@ -116,48 +116,54 @@ export function TeacherStudentProgressPage({
         {chapters.length === 0 ? (
           <p>目前沒有已發布的章節。</p>
         ) : (
-          <table className="ui-table">
-            <caption className="visually-hidden">各章節學習進度</caption>
-            <thead>
-              <tr>
-                <th scope="col">章節</th>
-                <th scope="col">複習完成</th>
-                <th scope="col">涵蓋率</th>
-                <th scope="col">正確率</th>
-                <th scope="col">精熟度</th>
-                <th scope="col">狀態</th>
-              </tr>
-            </thead>
-            <tbody>
-              {chapters.map((chapter) => (
-                <tr key={chapter.chapterId}>
-                  <th scope="row">{chapter.chapterTitle}</th>
-                  <td>
-                    {chapter.reviewTotal === null
-                      ? EM_DASH
-                      : `${String(chapter.reviewCompleted)} / ${String(chapter.reviewTotal)}`}
-                  </td>
-                  <td>{formatPercent(chapter.coverage)}</td>
-                  <td>{formatPercent(chapter.accuracy)}</td>
-                  <td>
-                    {formatPercent(chapter.mastery)}
-                    {chapter.mastery === null ? null : (
-                      <ProgressBar
-                        label={`${chapter.chapterTitle} 精熟度`}
-                        tone="warning"
-                        value={chapter.mastery}
-                      />
-                    )}
-                  </td>
-                  <td>
-                    <Chip tone={chapterStatusTone(chapter.status)}>
-                      {chapterStatusLabel(chapter.status)}
-                    </Chip>
-                  </td>
+          // 6 欄資料表在 393 寬度放不下（Task 14 393 稽核發現：缺這層包裹
+          // 導致 document.documentElement.scrollWidth 撐到 419px），比照
+          // teacher-classroom-detail-page.tsx 既有 .ui-table-scroll 用法，
+          // 讓表格在自己的容器內橫向捲動，不再撐寬整頁。
+          <div className="ui-table-scroll">
+            <table className="ui-table">
+              <caption className="visually-hidden">各章節學習進度</caption>
+              <thead>
+                <tr>
+                  <th scope="col">章節</th>
+                  <th scope="col">複習完成</th>
+                  <th scope="col">涵蓋率</th>
+                  <th scope="col">正確率</th>
+                  <th scope="col">精熟度</th>
+                  <th scope="col">狀態</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {chapters.map((chapter) => (
+                  <tr key={chapter.chapterId}>
+                    <th scope="row">{chapter.chapterTitle}</th>
+                    <td>
+                      {chapter.reviewTotal === null
+                        ? EM_DASH
+                        : `${String(chapter.reviewCompleted)} / ${String(chapter.reviewTotal)}`}
+                    </td>
+                    <td>{formatPercent(chapter.coverage)}</td>
+                    <td>{formatPercent(chapter.accuracy)}</td>
+                    <td>
+                      {formatPercent(chapter.mastery)}
+                      {chapter.mastery === null ? null : (
+                        <ProgressBar
+                          label={`${chapter.chapterTitle} 精熟度`}
+                          tone="warning"
+                          value={chapter.mastery}
+                        />
+                      )}
+                    </td>
+                    <td>
+                      <Chip tone={chapterStatusTone(chapter.status)}>
+                        {chapterStatusLabel(chapter.status)}
+                      </Chip>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
       <section

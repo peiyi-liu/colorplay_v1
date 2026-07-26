@@ -198,7 +198,7 @@ a {
 
 .app-header__logout {
   min-width: 44px;
-  min-height: 40px;
+  min-height: 44px;
   border: 1.5px solid var(--ink-300);
   border-radius: 999px;
   background: transparent;
@@ -243,6 +243,15 @@ a {
 
 #main-content {
   display: grid;
+  /* grid-template-columns 原本沒設，implicit 單欄軌預設用 auto 軌寬——
+     子元素（例如 .live-join、教師班級/成員頁那些內含表格/長文字的內容）
+     即使自己寫 width:min(100%,Npx)，「100%」在算 auto 軌寬時會被當成
+     indeterminate，退回用子元素內容本身的 intrinsic 寬度去撐開這個軌，可能
+     撐得比 #main-content 本身的內容框還寬，讓子元素往外溢出（Task 14 393
+     稽核抓到 liveJoin／tAnalytics／tClassDetail／tStudentProgress／tReport
+     都是這個成因）。minmax(0, 1fr) 讓這個軌明確等於可用寬度，子元素的
+     width:100% 才會確實對齊 #main-content 的內容框，不再被自己的內容撐寬。 */
+  grid-template-columns: minmax(0, 1fr);
   width: 100%;
   flex: 1;
   place-items: center;
@@ -907,14 +916,60 @@ a {
     display: none;
   }
 
+  /* 393 寬度既有溢出（Task 14 稽核發現）：.app-header__content 本身不換行，
+     brand 佔掉大半寬度後，.app-header__navigation 只剩不到 170px 可用，遠小於
+     economy-summary 的最小內容寬（level 區塊 min-width:132px＋tokens＋間距，
+     實測約 250px+），即使 economy-summary 本身設了 flex-basis:100%，「100%」
+     算的是這個過窄可用空間的 100%，還是會被內容撐爆，最終讓
+     document.documentElement.scrollWidth 撐到 482px（實測值）。讓
+     .app-header__content 在窄螢幕改為可換行，nav 整列換到 brand 下方獨立一
+     行，拿到完整可用寬度（393 - 左右 padding，約 345px），economy-summary＋
+     登出鍵才有足夠空間並排，不必再各自撐開版面。 */
+  .app-header__content {
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+  }
+
   .app-header__navigation,
   .app-header__navigation nav {
     gap: var(--space-3);
   }
 
+  .app-header__navigation {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .economy-summary {
     flex-basis: 100%;
     margin-left: auto;
+  }
+
+  /* Task 14 稽核明確點名的既有 RWD 缺陷：.student-rail__content 原本
+     overflow:auto hidden + white-space:nowrap，393 寬度只放得下「學習大廳」
+     跟半個「課後任務實戰」，其餘 5 個導覽項目（裝備商店／我的錯題／Live
+     課堂／班級排行榜／成就徽章）要靠不易察覺的水平滑動才看得到——這是主要
+     導覽，不是可以套用「表格容器 overflow-x:auto 除外」豁免的資料表格。改
+     讓這一列在窄螢幕換行，全部項目都在不用捲動的情況下可見／可點；
+     spacer 原本用 flex:1 把 tab 跟 link 兩組推開兩側，換行後沒有單一列可以
+     撐開，直接隱藏即可（tab／link 视覺分组改用 row-gap 呈現）。 */
+  .student-rail__content {
+    flex-wrap: wrap;
+    row-gap: var(--space-1);
+    white-space: normal;
+  }
+
+  .student-rail__spacer {
+    display: none;
+  }
+
+  /* 教師端 .teacher-rail__content 是同一份 rail 樣式（overflow:auto hidden＋
+     white-space:nowrap）套用在教師導覽（教師工作區／Live 主持／班級管理／
+     教學分析），393 寬度一樣會被擠出可視範圍外，套用同一套換行修正。 */
+  .teacher-rail__content {
+    flex-wrap: wrap;
+    row-gap: var(--space-1);
+    white-space: normal;
   }
 
   .route-panel {
@@ -1121,6 +1176,9 @@ a {
 }
 
 .student-rail__tab {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   border-bottom: 3px solid transparent;
   border-radius: 0;
   color: var(--ink-500);
@@ -1154,6 +1212,9 @@ a {
 }
 
 .student-rail__link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   color: var(--slate-500);
   font-size: var(--font-size-metadata);
   font-weight: 700;
@@ -1198,6 +1259,9 @@ a {
 }
 
 .teacher-rail__link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   border-radius: var(--radius-control);
   color: var(--color-teacher);
   font-size: var(--font-size-supporting);
@@ -1271,6 +1335,9 @@ a {
 }
 
 .lobby__edit {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   border: 1px solid var(--border-subtle);
   border-radius: var(--space-1);
   background: var(--slate-100);
@@ -1414,6 +1481,9 @@ a {
 }
 
 .lobby-chapter__review {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   color: var(--color-text);
   font-size: var(--font-size-metadata);
   font-weight: 700;
@@ -1465,7 +1535,10 @@ a {
 }
 
 .lobby-entry__action {
+  display: inline-flex;
+  min-height: 44px;
   flex-shrink: 0;
+  align-items: center;
   border-radius: var(--radius-control);
   background: var(--slate-200);
   color: var(--slate-700);
@@ -1483,6 +1556,9 @@ a {
 }
 
 .lobby-link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   border: 1px solid var(--border-subtle);
   border-radius: 999px;
   background: var(--surface-card);
@@ -1538,7 +1614,11 @@ a {
 .frame-shop__grid {
   display: grid;
   gap: var(--space-4);
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  /* min(100%, 200px) 防溢出（ledger backlog：Task 14 393 稽核一併補上）：
+     跟本檔其他 auto-fit/auto-fill 網格（例如 .lobby__chapter-grid、
+     .shop-grid）同款寫法一致，避免容器窄於 200px 時單一軌固定下限撐出
+     水平捲動。 */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
 }
 
 .frame-card {
@@ -1853,6 +1933,26 @@ a {
 
 .live-matrix-scroll .ui-table {
   min-width: max-content;
+}
+
+/* 場次報表「匯出 CSV」／「一鍵生成課後複習任務」：DC 1621/1626 指定
+   min-height:34px，但這兩顆按鈕在 JSX 裡本來沒有任何 class（純靠瀏覽器
+   對 <button> 的預設外觀渲染出近似的白底灰框圓角，並非真的引用 tokens），
+   Task 14 393 稽核量到實際觸控高度只有 32px。改用明確 token 樣式對齊 DC
+   的顏色／字級／內距，min-height 提高到 44px（觸控目標下限，同本次其他
+   幾處 DC 34px/40px secondary 按鍵一致的處理方式）。 */
+.live-report__action {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--ink-700);
+  cursor: pointer;
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+  padding: var(--space-2) var(--space-3);
 }
 
 .live-reteach {
@@ -2909,6 +3009,9 @@ a {
 }
 
 .mission__hint-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   justify-self: start;
   border: none;
   border-radius: var(--radius-control);
@@ -3322,7 +3425,7 @@ a {
 
 .review-card__complete-button {
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   border: 1.5px solid var(--border-strong);
@@ -3562,8 +3665,8 @@ a {
 
 .achievements-header__back {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -3966,7 +4069,9 @@ a {
   display: grid;
   margin: 0;
   gap: var(--space-4);
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  /* DC 876 逐字寫的是 minmax(min(100%,280px),1fr)——原實作漏了 min(100%,…)
+     防溢出這層（ledger backlog，Task 14 393 稽核補上），非新增規格。 */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   list-style: none;
   padding: 0;
 }
@@ -3989,6 +4094,7 @@ a {
 
 .teacher-analytics-filters > div {
   display: grid;
+  min-width: 0;
   gap: var(--space-1);
 }
 
@@ -4000,6 +4106,7 @@ a {
 
 .teacher-analytics-filters select,
 .teacher-analytics-filters input {
+  min-width: 0;
   min-height: 40px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
@@ -4013,12 +4120,17 @@ main label[for='dashboard-classroom'] {
   font-weight: 700;
 }
 
+/* 這條 ID 選擇器規則的 specificity 蓋過上面 .teacher-dashboard-header__classroom
+   select（min-height:44px），實際生效卻是這裡的 40px——393 稽核（Task 14）
+   量到觸控高度只有 40px 才發現這條殘留規則跟前面較新、較完整的 class 規則
+   打架。改成跟前面一致的 44px／2px 邊框／space-2 內距，不留兩份互相覆蓋的
+   定義。 */
 select#dashboard-classroom {
-  min-height: 40px;
-  border: 1px solid var(--color-border);
+  min-height: 44px;
+  border: 2px solid var(--ink-300);
   border-radius: var(--radius-control);
   background: var(--surface-card);
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-3);
 }
 
 /* Live 課堂加入頁:白卡容器+大號代碼輸入(2026-07-23 排版統一批) */
