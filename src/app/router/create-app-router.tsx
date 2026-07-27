@@ -6,7 +6,6 @@ import { LoginPage } from '../../features/auth/pages/login-page';
 import { RegisterPage } from '../../features/auth/pages/register-page';
 import { ResetPasswordPage } from '../../features/auth/pages/reset-password-page';
 import { JoinClassroomRoute } from '../../features/classrooms/pages/join-classroom-route';
-import { StudentClassroomsPage } from '../../features/classrooms/pages/student-classrooms-page';
 import { ShopPage } from '../../features/inventory/pages/shop-page';
 import { LobbyPage } from '../../features/learning/pages/lobby-page';
 import {
@@ -93,7 +92,9 @@ export function createAppRouter() {
             },
             {
               path: '/app/leaderboard',
-              element: <StudentClassroomsPage />,
+              // UAT 0727 R2 #1：導覽點擊直達自己班級的排行榜。
+              lazy: () =>
+                import('../../features/leaderboard/pages/student-leaderboard-route'),
             },
             {
               path: '/app/leaderboard/:classroomId',

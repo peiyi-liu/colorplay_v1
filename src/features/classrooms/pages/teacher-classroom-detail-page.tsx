@@ -70,7 +70,7 @@ export function TeacherClassroomDetailPage({
   return (
     <section
       aria-labelledby="teacher-classroom-detail-title"
-      className="page-wide"
+      className="page-wide page-stack"
     >
       <header className="teacher-dashboard-header">
         <div className="teacher-dashboard-header__intro">
@@ -115,9 +115,7 @@ export function TeacherClassroomDetailPage({
       <section aria-label="班級學生" className="ui-card ui-card--md">
         <header className="classroom-section-header">
           <h2>班級學生</h2>
-          <Chip tone="success">
-            {String(activeMemberCount)} 位有效成員
-          </Chip>
+          <Chip tone="success">{String(activeMemberCount)} 位有效成員</Chip>
         </header>
         {members.data.length === 0 ? (
           <p>目前沒有學生。</p>

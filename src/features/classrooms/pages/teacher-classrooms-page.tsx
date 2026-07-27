@@ -72,7 +72,10 @@ export function TeacherClassroomsPage({
     0,
   );
   return (
-    <section aria-labelledby="teacher-classrooms-title" className="page-wide">
+    <section
+      aria-labelledby="teacher-classrooms-title"
+      className="page-wide page-stack"
+    >
       <header className="teacher-dashboard-header">
         <div className="teacher-dashboard-header__intro">
           <p className="route-panel__eyebrow">教師工作區</p>

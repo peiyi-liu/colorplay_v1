@@ -4269,6 +4269,13 @@ select#dashboard-classroom {
   width: min(100%, 1120px);
 }
 
+/* 頁面級垂直節奏（DC 1874/2073：section 為 grid gap 24）。缺這個 gap 時
+   區塊只剩各自 margin，實站看起來擠成一團（UAT 0727 R2 #2）。 */
+.page-stack {
+  display: grid;
+  gap: var(--space-6);
+}
+
 .page-mid {
   width: min(100%, 960px);
 }

@@ -93,7 +93,8 @@ export function LeaderboardTable({
           <thead>
             <tr>
               <th scope="col">名次</th>
-              <th scope="col">學生</th>
+              {/* UAT 0727 R2 #1：只顯示暱稱，避免學號/姓名助長比較心態。 */}
+              <th scope="col">暱稱</th>
               <th scope="col">Blook</th>
               <th scope="col">XP</th>
             </tr>
