@@ -62,7 +62,7 @@ export function TeacherStudentProgressPage({
   return (
     <section
       aria-labelledby="teacher-student-progress-title"
-      className="page-wide"
+      className="page-wide page-stack"
     >
       <header className="teacher-dashboard-header">
         <div className="teacher-dashboard-header__intro">

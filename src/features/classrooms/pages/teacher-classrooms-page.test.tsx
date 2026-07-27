@@ -78,7 +78,11 @@ describe('TeacherClassroomsPage', () => {
       joinCode: 'ABCD-1234-EF56-7890',
       joinCodeVersion: 1,
     });
-    expect(await screen.findByText('ABCD-1234-EF56-7890')).toBeVisible();
+    // 固定碼常駐於班級卡（owner 2026-07-27）：建立成功後鎖釋放、表單重置，
+    // 不再彈一次性 receipt。
+    expect(
+      await screen.findByRole('button', { name: '建立班級' }),
+    ).toBeEnabled();
   });
 
   it('shows the aggregate header stats and per-card membership pill/meta', async () => {
@@ -90,6 +94,7 @@ describe('TeacherClassroomsPage', () => {
             classroomName: '設計群 甲班',
             classroomStatus: 'active',
             createdAt: '2026-07-18T00:00:00.000Z',
+            joinCode: 'ABCD-1234-EF56-7890',
             joinCodeVersion: 3,
             memberCount: 25,
           },
@@ -98,6 +103,7 @@ describe('TeacherClassroomsPage', () => {
             classroomName: '設計群 乙班',
             classroomStatus: 'active',
             createdAt: '2026-07-20T00:00:00.000Z',
+            joinCode: 'ABCD-1234-EF56-7890',
             joinCodeVersion: 1,
             memberCount: 23,
           },
@@ -112,13 +118,14 @@ describe('TeacherClassroomsPage', () => {
       '48',
     );
     expect(screen.getByText('25 位有效學生')).toBeVisible();
-    expect(screen.getByText('v3')).toBeVisible();
+    expect(screen.getAllByText('ABCD-1234-EF56-7890')[0]).toBeVisible();
     expect(
-      screen.getByRole('heading', { name: '設計群 甲班' }),
+      screen.getByRole('button', { name: '複製 設計群 甲班 的班級序號' }),
     ).toBeVisible();
+    expect(screen.getByRole('heading', { name: '設計群 甲班' })).toBeVisible();
   });
 
-  it('keeps create errors adjacent and discards the receipt on dismiss/remount', async () => {
+  it('keeps create errors adjacent and recovers on retry', async () => {
     const repository = createRepository({
       createClassroom: vi
         .fn()
@@ -130,7 +137,7 @@ describe('TeacherClassroomsPage', () => {
           joinCodeVersion: 1,
         }),
     });
-    const view = renderPage(repository);
+    renderPage(repository);
     await screen.findByRole('heading', { name: '班級管理' });
     await userEvent.type(
       screen.getByRole('textbox', { name: '班級名稱' }),
@@ -140,16 +147,11 @@ describe('TeacherClassroomsPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       '請先檢查班級列表',
     );
+    // 重試成功後錯誤清除、鎖釋放（固定碼由班級卡常駐顯示，無 receipt）。
     await userEvent.click(screen.getByRole('button', { name: '建立班級' }));
-    expect(await screen.findByText('ABCD-1234-EF56-7890')).toBeVisible();
-    await userEvent.click(
-      screen.getByRole('button', { name: '我已保存，關閉' }),
-    );
-    expect(screen.queryByText('ABCD-1234-EF56-7890')).toBeNull();
-    view.unmount();
-    renderPage(repository);
     await waitFor(() => {
-      expect(screen.queryByText('ABCD-1234-EF56-7890')).toBeNull();
+      expect(screen.queryByRole('alert')).toBeNull();
     });
+    expect(screen.getByRole('button', { name: '建立班級' })).toBeEnabled();
   });
 });

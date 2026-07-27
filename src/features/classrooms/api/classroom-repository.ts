@@ -37,6 +37,10 @@ const ownedClassroomSchema = z.strictObject({
   classroom_name: classroomName,
   classroom_status: z.enum(['active', 'archived']),
   created_at: utcTimestamp,
+  join_code: z
+    .string()
+    .regex(/^[0-9A-F]{4}(?:-[0-9A-F]{4}){3}$/u)
+    .nullable(),
   join_code_version: positiveInteger,
   member_count: nonNegativeInteger,
 });
@@ -161,6 +165,7 @@ const mapOwnedClassroom = (
   classroomName: row.classroom_name,
   classroomStatus: row.classroom_status,
   createdAt: row.created_at,
+  joinCode: row.join_code,
   joinCodeVersion: row.join_code_version,
   memberCount: row.member_count,
 });

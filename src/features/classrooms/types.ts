@@ -10,6 +10,8 @@ export type OwnedClassroom = Readonly<{
   classroomName: string;
   classroomStatus: 'active' | 'archived';
   createdAt: string;
+  /** 固定班級加入碼（owner 2026-07-27 裁定常駐可見；舊測試資料可能為 null）。 */
+  joinCode: string | null;
   joinCodeVersion: number;
   memberCount: number;
 }>;

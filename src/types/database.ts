@@ -2773,6 +2773,7 @@ export type Database = {
           classroom_name: string
           classroom_status: Database["public"]["Enums"]["classroom_status"]
           created_at: string
+          join_code: string | null
           join_code_version: number
           member_count: number
         }[]

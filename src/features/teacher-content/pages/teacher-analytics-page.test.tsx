@@ -43,6 +43,7 @@ const ownedClassrooms: readonly OwnedClassroom[] = [
     classroomName: '七年級 A 班',
     classroomStatus: 'active',
     createdAt: '2026-07-01T00:00:00+00:00',
+    joinCode: null,
     joinCodeVersion: 1,
     memberCount: 4,
   },

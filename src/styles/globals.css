@@ -2422,6 +2422,51 @@ a {
   white-space: nowrap;
 }
 
+/* 固定班級序號列（owner 2026-07-27：常駐可見＋一鍵複製班名＋碼）。虛線框
+   沿用 DC 2099 的一次性碼視覺語彙。 */
+.classroom-card__code {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1.5px dashed var(--ink-300);
+  border-radius: var(--radius-control);
+  background: var(--ink-50);
+  gap: var(--space-3);
+  margin: var(--space-4) var(--space-5) 0;
+  padding: var(--space-3) var(--space-4);
+}
+
+.classroom-card__code-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+.classroom-card__copy {
+  display: inline-flex;
+  min-height: 32px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-1);
+  border: 1.5px solid var(--ink-300);
+  border-radius: 8px;
+  background: var(--surface-card);
+  color: var(--ink-700);
+  cursor: pointer;
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+  padding: 5px var(--space-3);
+  transition:
+    border-color 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.classroom-card__copy:hover {
+  border-color: var(--ink-900);
+  color: var(--ink-900);
+}
+
 .status-dot--active {
   color: var(--jade-600);
 }

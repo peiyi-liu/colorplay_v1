@@ -6,16 +6,51 @@ import { z } from 'zod';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { Chip } from '../../../components/ui/chip';
-import { ClassroomCodeReceiptView } from '../components/classroom-code-receipt';
 import {
   useCreateClassroom,
   useOwnedClassrooms,
 } from '../hooks/use-classrooms';
 import {
-  type ClassroomCodeReceipt,
   type ClassroomRepository,
   ClassroomRepositoryError,
 } from '../types';
+
+/** 複製「哪一班＋加入碼」的貼文格式（owner 2026-07-27：方便貼上傳給學生）。 */
+const joinCodeClipboardText = (name: string, code: string) =>
+  `「${name}」班級序號：${code}`;
+
+function ClassroomJoinCode({
+  classroomName,
+  joinCode,
+}: Readonly<{ classroomName: string; joinCode: string | null }>) {
+  const [copied, setCopied] = useState(false);
+  if (!joinCode) return null;
+  return (
+    <div className="classroom-card__code">
+      <span className="classroom-card__code-value">{joinCode}</span>
+      <button
+        aria-label={`複製 ${classroomName} 的班級序號`}
+        className="classroom-card__copy"
+        onClick={() => {
+          try {
+            void navigator.clipboard
+              .writeText(joinCodeClipboardText(classroomName, joinCode))
+              .catch(() => undefined);
+          } catch {
+            /* clipboard 不可用時靜默；碼仍在畫面上可手動複製 */
+          }
+          setCopied(true);
+          window.setTimeout(() => {
+            setCopied(false);
+          }, 2000);
+        }}
+        type="button"
+      >
+        {copied ? '已複製' : '複製'}
+      </button>
+    </div>
+  );
+}
 
 const createSchema = z.strictObject({
   name: z
@@ -37,7 +72,6 @@ export function TeacherClassroomsPage({
   const classrooms = useOwnedClassrooms(repository);
   const create = useCreateClassroom(repository);
   const pending = useRef(false);
-  const [receipt, setReceipt] = useState<ClassroomCodeReceipt | null>(null);
   const [submitError, setSubmitError] = useState<string>();
   const {
     formState: { errors, isSubmitting },
@@ -80,7 +114,7 @@ export function TeacherClassroomsPage({
         <div className="teacher-dashboard-header__intro">
           <p className="route-panel__eyebrow">教師工作區</p>
           <h1 id="teacher-classrooms-title">班級管理</h1>
-          <p>建立班級後，加入碼只會在伺服器回應時顯示一次。</p>
+          <p>每班有固定的班級序號，點「複製」即可連同班名貼給學生註冊。</p>
         </div>
         <dl className="classroom-header-stats">
           <div>
@@ -101,11 +135,10 @@ export function TeacherClassroomsPage({
           void handleSubmit(async (values) => {
             if (pending.current) return;
             pending.current = true;
-            setReceipt(null);
             setSubmitError(undefined);
             try {
-              const nextReceipt = await create.mutateAsync(values);
-              setReceipt(nextReceipt);
+              // 建立成功後 owned 清單自動重抓，固定加入碼直接顯示在班級卡上。
+              await create.mutateAsync(values);
               reset();
             } catch (error) {
               setSubmitError(createErrorMessage(error));
@@ -145,14 +178,6 @@ export function TeacherClassroomsPage({
         ) : null}
         <p className="classroom-create-form__hint">名稱為 1 至 80 個字元。</p>
       </form>
-      {receipt ? (
-        <ClassroomCodeReceiptView
-          onDismiss={() => {
-            setReceipt(null);
-          }}
-          receipt={receipt}
-        />
-      ) : null}
       {classrooms.data.length === 0 ? (
         <p>尚未建立班級。</p>
       ) : (
@@ -170,11 +195,11 @@ export function TeacherClassroomsPage({
                     {String(classroom.memberCount)} 位有效學生
                   </Chip>
                 </div>
+                <ClassroomJoinCode
+                  classroomName={classroom.classroomName}
+                  joinCode={classroom.joinCode}
+                />
                 <dl className="classroom-card__meta">
-                  <div>
-                    <dt>加入碼版本</dt>
-                    <dd>{`v${String(classroom.joinCodeVersion)}`}</dd>
-                  </div>
                   <div>
                     <dt>建立日期</dt>
                     <dd>
