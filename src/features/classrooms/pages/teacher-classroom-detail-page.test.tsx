@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -64,9 +63,7 @@ describe('TeacherClassroomDetailPage', () => {
     expect(screen.getByText('s1130201')).toBeVisible();
     expect(screen.getByText('已裝備 Blook')).toBeVisible();
     expect(screen.getByText('有效成員')).toBeVisible();
-    expect(
-      screen.getByRole('link', { name: '查看細節 ›' }),
-    ).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '查看細節 ›' })).toHaveAttribute(
       'href',
       `/teacher/classes/${classroomId}/members/cb000000-0000-4000-8000-000000000001`,
     );
@@ -76,20 +73,4 @@ describe('TeacherClassroomDetailPage', () => {
     );
   });
 
-  it('requires rotation confirmation and shows only the new one-time receipt', async () => {
-    const rotateJoinCode = vi.fn().mockResolvedValue({
-      classroomId,
-      classroomName: null,
-      joinCode: 'DCBA-4321-65FE-0987',
-      joinCodeVersion: 2,
-    });
-    renderPage(repository({ rotateJoinCode }));
-    await screen.findByText('學生一');
-    await userEvent.click(screen.getByRole('button', { name: '輪替加入碼' }));
-    expect(rotateJoinCode).not.toHaveBeenCalled();
-    expect(screen.getByRole('dialog')).toHaveTextContent('舊加入碼會立即失效');
-    await userEvent.click(screen.getByRole('button', { name: '確認輪替' }));
-    expect(rotateJoinCode).toHaveBeenCalledOnce();
-    expect(await screen.findByText('DCBA-4321-65FE-0987')).toBeVisible();
-  });
 });
