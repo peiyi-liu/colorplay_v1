@@ -64,40 +64,58 @@ function FrameShopSection({
     <section aria-labelledby="frame-shop-title" className="frame-shop">
       <h2 id="frame-shop-title">尊絕外顯邊框</h2>
       <p className="frame-shop__hint">裝備後將顯示在大廳頭貼外框。</p>
-      <div className="frame-shop__grid">
+      <div className="blook-grid">
         {[...frames.data.items]
           .sort((a, b) => a.costTokens - b.costTokens)
-          .map((item) => (
-            <article className="frame-card" key={item.id}>
-              <span
-                aria-hidden="true"
-                className="frame-card__swatch"
-                style={{
-                  background: `linear-gradient(to right, ${item.gradientStart}, ${item.gradientEnd})`,
-                }}
-              />
-              <h3>{item.name}</h3>
-              <p>
-                {item.costTokens === 0
-                  ? '預設擁有'
-                  : `${String(item.costTokens)} Token`}
-              </p>
-              {item.equipped ? (
-                <strong className="frame-card__state">已裝備</strong>
-              ) : (
-                <button
-                  className="secondary-action"
-                  disabled={purchase.isPending || equip.isPending}
-                  onClick={() => void run(item)}
-                  type="button"
-                >
-                  {item.owned
-                    ? `裝備 ${item.name}`
-                    : `購買 ${item.name}（${String(item.costTokens)} Token）`}
-                </button>
-              )}
-            </article>
-          ))}
+          .map((item) => {
+            const shortfall = item.costTokens - frames.data.tokenBalance;
+            return (
+              <article className="blook-card" key={item.id}>
+                <span className="blook-card__art" aria-hidden="true">
+                  <span
+                    className="frame-card__ring"
+                    style={{
+                      background: `linear-gradient(135deg, ${item.gradientStart}, ${item.gradientEnd})`,
+                    }}
+                  />
+                </span>
+                <h3 className="blook-card__frame-name">{item.name}</h3>
+                <p>{String(item.costTokens)} Token</p>
+                {item.equipped ? (
+                  <strong className="blook-card__state">已裝備</strong>
+                ) : item.owned ? (
+                  <button
+                    aria-label={`選用 ${item.name}`}
+                    className="secondary-action"
+                    disabled={purchase.isPending || equip.isPending}
+                    onClick={() => void run(item)}
+                    type="button"
+                  >
+                    選用
+                  </button>
+                ) : shortfall <= 0 ? (
+                  <button
+                    aria-label={`購買 ${item.name}，${String(item.costTokens)} Token`}
+                    className="primary-action"
+                    disabled={purchase.isPending || equip.isPending}
+                    onClick={() => void run(item)}
+                    type="button"
+                  >
+                    購買 {String(item.costTokens)} Token
+                  </button>
+                ) : (
+                  <button
+                    aria-label={`還差 ${String(shortfall)} Token，無法購買 ${item.name}`}
+                    className="blook-card__disabled"
+                    disabled
+                    type="button"
+                  >
+                    還差 {String(shortfall)} Token
+                  </button>
+                )}
+              </article>
+            );
+          })}
       </div>
     </section>
   );
@@ -196,7 +214,6 @@ export function ShopPage({
         <div>
           <p className="route-panel__eyebrow">你的角色收藏</p>
           <h1 id="blook-shop-title">裝備商店</h1>
-          <p>購買與裝備都會由伺服器確認，重新整理後仍會保留。</p>
         </div>
         <strong>{String(inventory.data.tokenBalance)} Token 可用</strong>
       </header>

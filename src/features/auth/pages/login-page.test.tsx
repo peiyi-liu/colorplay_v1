@@ -119,7 +119,7 @@ describe('LoginPage', () => {
     expect(signInWithAccount).not.toHaveBeenCalled();
 
     await user.type(
-      screen.getByLabelText('管的班級（班級序號）'),
+      screen.getByLabelText('班級序號'),
       'ABCD-1234-EF56-7890',
     );
     await user.click(screen.getByRole('button', { name: '登入' }));
@@ -200,7 +200,8 @@ describe('LoginPage', () => {
     });
   });
 
-  it('navigates after success to the preserved internal pathname, search, and hash', async () => {
+  // UAT 0727 #5：登入後不再回跳登入前頁面——學生一律 /app、教師一律 /teacher。
+  it('ignores preserved history state and always lands students on /app', async () => {
     const user = userEvent.setup();
     const signIn = vi.fn(() => Promise.resolve());
     const router = createMemoryRouter(
@@ -238,9 +239,9 @@ describe('LoginPage', () => {
       await screen.findByRole('heading', { name: '學習大廳' }),
     ).toBeVisible();
     expect(router.state.location).toMatchObject({
-      hash: '#checkpoint',
+      hash: '',
       pathname: '/app',
-      search: '?chapter=color-theory',
+      search: '',
     });
     expect(router.state.historyAction).toBe('REPLACE');
   });
@@ -321,12 +322,14 @@ describe('LoginPage', () => {
     },
   );
 
-  it('returns to an internal join intent and clears login history state', async () => {
+  // UAT 0727 #5：即使帶著 /join 深連結意圖，登入後仍固定進學習大廳
+  // （加入碼可在「我的班級」重新輸入）。
+  it('lands on /app even when a join intent was preserved in history state', async () => {
     const user = userEvent.setup();
     const router = createMemoryRouter(
       [
         { element: <LoginPage />, path: '/login' },
-        { element: <h1>加入班級確認</h1>, path: '/join/:joinCode' },
+        { element: <h1>學習大廳</h1>, path: '/app' },
       ],
       {
         initialEntries: [
@@ -353,9 +356,9 @@ describe('LoginPage', () => {
     await fillEmailBridgeCredentials(user);
     await user.click(screen.getByRole('button', { name: '登入' }));
     expect(
-      await screen.findByRole('heading', { name: '加入班級確認' }),
+      await screen.findByRole('heading', { name: '學習大廳' }),
     ).toBeVisible();
-    expect(router.state.location.pathname).toBe('/join/ABCD-1234-EF56-7890');
+    expect(router.state.location.pathname).toBe('/app');
     expect(router.state.location.state).toBeNull();
     expect(router.state.historyAction).toBe('REPLACE');
   });
@@ -372,11 +375,10 @@ it('switches the ggame portal tone and teacher note with the tabs', async () => 
   const portalSection = document.querySelector('.auth-portal');
   expect(portalSection).not.toBeNull();
   expect(portalSection).toHaveAttribute('data-portal', 'student');
-  expect(screen.queryByText(/教師端具備班級管理/u)).toBeNull();
+  expect(screen.queryByText(/教師帳號由開發後台建立。/u)).toBeNull();
 
   await userEvent.click(screen.getByRole('radio', { name: '教師端登入' }));
   expect(portalSection).toHaveAttribute('data-portal', 'teacher');
-  expect(screen.getByText(/教師端具備班級管理/u)).toBeInTheDocument();
   expect(screen.getByText(/教師帳號由開發後台建立。/u)).toBeInTheDocument();
 });
 

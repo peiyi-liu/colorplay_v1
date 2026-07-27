@@ -2,7 +2,7 @@ import { Icon } from '../../../components/ui/icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { useToast } from '../../../components/ui/toast';
 import { useAuth } from '../context/auth-context';
@@ -30,39 +30,6 @@ const safeErrorMessages = {
 const fallbackDestination = { hash: '', pathname: '/app', search: '' };
 const teacherDestination = { hash: '', pathname: '/teacher', search: '' };
 
-const hasUnsafePathnameCharacter = (pathname: string) =>
-  pathname.includes('\\') ||
-  Array.from(pathname).some((character) => {
-    const codePoint = character.codePointAt(0);
-    return codePoint !== undefined && (codePoint <= 0x1f || codePoint === 0x7f);
-  });
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const readDestination = (
-  state: unknown,
-  portalFallback: typeof fallbackDestination,
-) => {
-  if (!isRecord(state) || !isRecord(state.from)) return portalFallback;
-
-  const { hash, pathname, search } = state.from;
-  if (
-    typeof pathname !== 'string' ||
-    !pathname.startsWith('/') ||
-    pathname.startsWith('//') ||
-    hasUnsafePathnameCharacter(pathname)
-  ) {
-    return fallbackDestination;
-  }
-
-  return {
-    hash: typeof hash === 'string' && hash.startsWith('#') ? hash : '',
-    pathname,
-    search: typeof search === 'string' && search.startsWith('?') ? search : '',
-  };
-};
-
 const messageForError = (error: unknown, portal: 'student' | 'teacher') => {
   const messages = safeErrorMessages[portal];
   return error instanceof AuthRepositoryError
@@ -72,7 +39,6 @@ const messageForError = (error: unknown, portal: 'student' | 'teacher') => {
 
 export function LoginPage() {
   const auth = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
   const toast = useToast();
   const pendingSubmission = useRef(false);
@@ -149,7 +115,7 @@ export function LoginPage() {
       {portal === 'teacher' ? (
         <div className="auth-portal__teacher-note">
           <Icon name="alert" size={14} />{' '}
-          教師端具備班級管理與學術匯出權限；教師帳號由開發後台建立。
+          教師帳號由開發後台建立。
         </div>
       ) : null}
 
@@ -189,13 +155,10 @@ export function LoginPage() {
                 message: '登入成功，歡迎回到 ColorPlay！',
                 tone: 'success',
               });
+              // 固定導向（UAT 0727 #5）：學生一律進學習大廳、教師一律進
+              // 教師工作區，不再回跳登入前頁面。
               await navigate(
-                readDestination(
-                  location.state,
-                  portal === 'teacher'
-                    ? teacherDestination
-                    : fallbackDestination,
-                ),
+                portal === 'teacher' ? teacherDestination : fallbackDestination,
                 { replace: true },
               );
             } catch (error) {
@@ -246,7 +209,7 @@ export function LoginPage() {
 
         {portal === 'teacher' ? (
           <div className="login-form__field">
-            <label htmlFor="login-class-code">管的班級（班級序號）</label>
+            <label htmlFor="login-class-code">班級序號</label>
             <input
               {...register('classCode')}
               aria-describedby={

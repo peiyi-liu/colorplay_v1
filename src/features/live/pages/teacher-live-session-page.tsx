@@ -1,6 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import type { Database } from '../../../types/database';
@@ -66,6 +71,7 @@ export function TeacherLiveSessionPage({
   client?: SupabaseClient<Database>;
 }>) {
   const params = useParams();
+  const navigate = useNavigate();
   const sessionId = suppliedSessionId ?? params.sessionId ?? '';
   const session = useLiveSession(sessionId, {
     ...(client ? { client } : {}),
@@ -113,6 +119,23 @@ export function TeacherLiveSessionPage({
     );
   };
 
+  // 取消挑戰確認後：離開投影並回 Live 主持頁（UAT 0727 #7）。
+  const runCancel = () => {
+    setTransitionError(undefined);
+    transition.mutate(
+      { expectedVersion: state.stateVersion, transition: 'cancel' },
+      {
+        onError: (error) => {
+          setTransitionError(transitionErrorCopy(error.code));
+        },
+        onSuccess: () => {
+          setPresenting(false);
+          void navigate('/teacher/live');
+        },
+      },
+    );
+  };
+
   return (
     <section
       aria-labelledby="host-console-title"
@@ -139,20 +162,35 @@ export function TeacherLiveSessionPage({
 
       {presenting ? (
         <LivePresenter
-          footerActions={view.hostActions
-            .filter((entry) => entry.transition !== 'cancel')
-            .map((entry) => ({
-              id: entry.transition,
-              label: actionCopy(entry.transition, 'projector').label,
-              precedence: entry.precedence,
-              run: () => {
-                runTransition(entry.transition);
-              },
-            }))}
+          footerActions={[
+            ...view.hostActions
+              .filter((entry) => entry.transition !== 'cancel')
+              .map((entry) => ({
+                id: entry.transition,
+                label: actionCopy(entry.transition, 'projector').label,
+                precedence: entry.precedence,
+                run: () => {
+                  runTransition(entry.transition);
+                },
+              })),
+            // 頒獎台「結算成績」→ 場次報表（DC 1562；UAT 0727 #7）。
+            ...(state.state === 'completed'
+              ? [
+                  {
+                    id: 'settle-results',
+                    label: '結算成績',
+                    precedence: 'primary' as const,
+                    run: () => {
+                      void navigate(`/teacher/live/${sessionId}/report`);
+                    },
+                  },
+                ]
+              : []),
+          ]}
           onCancel={
             secondaryActions.some((entry) => entry.transition === 'cancel')
               ? () => {
-                  runTransition('cancel');
+                  runCancel();
                 }
               : null
           }
@@ -315,7 +353,7 @@ export function TeacherLiveSessionPage({
             disabled={transition.isPending}
             onClick={() => {
               setConfirmingCancel(false);
-              runTransition('cancel');
+              runCancel();
             }}
             type="button"
           >

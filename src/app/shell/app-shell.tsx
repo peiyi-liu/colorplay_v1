@@ -6,6 +6,7 @@ import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { EconomySummaryView } from '../../features/rewards/components/economy-summary';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
+import { useIdleLogout } from './use-idle-logout';
 
 // 側欄 active 樣式跟隨目前路由（owner 2026-07-21 #9）。
 const studentTabClassName = ({ isActive }: { isActive: boolean }) =>
@@ -48,6 +49,17 @@ export function AppShell() {
     profile.data?.id === auth.session.userId;
   const isTeacher = isAuthenticatedProfile && profile.data?.role === 'teacher';
   const reducedMotion = profile.data?.reducedMotion === true;
+
+  // 閒置 30 分鐘強制登出（UAT 0727 #5）：走與登出鍵相同的安全流程。
+  useIdleLogout(auth.status === 'authenticated', () => {
+    if (signOutPending.current) return;
+    signOutPending.current = true;
+    void auth.signOut().finally(() => {
+      signOutPending.current = false;
+      toast({ message: '閒置超過 30 分鐘，已自動登出。', tone: 'info' });
+      void navigate('/login', { replace: true });
+    });
+  });
 
   // The server-backed preference lands on the root element so CSS can turn
   // every celebration animation off; prefers-reduced-motion works in parallel.
@@ -134,7 +146,7 @@ export function AppShell() {
           </div>
         </div>
       </header>
-      {isAuthenticatedProfile ? (
+      {isAuthenticatedProfile && !isTeacher ? (
         <nav className="student-rail" aria-label="主要導覽">
           <div className="student-rail__content">
             <NavLink className={studentTabClassName} end to="/app">
@@ -165,9 +177,6 @@ export function AppShell() {
       {isTeacher ? (
         <nav className="teacher-rail" aria-label="教師導覽">
           <div className="teacher-rail__content">
-            <span className="teacher-rail__chip">
-              <Icon name="lock-open" size={13} /> 教師管理權限已授權
-            </span>
             <Link className="teacher-rail__link" to="/teacher">
               教師工作區
             </Link>
