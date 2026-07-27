@@ -40,10 +40,12 @@ export const SCREENS = [
   },
   { id: 'shop', route: '/app/shop', auth: 'student' },
   { id: 'achievements', route: '/app/achievements', auth: 'student' },
+  // UAT 0727 R2 #1：學生端已無班級清單頁（註冊即入班、導覽直達排行榜），
+  // DC classrooms 畫面不再於產品路由上——capture-screens 對此 id 記 skip。
   { id: 'classrooms', route: '/app/leaderboard', auth: 'student' },
   {
     id: 'leaderboard',
-    route: '/app/leaderboard/:classroomId',
+    route: '/app/leaderboard',
     auth: 'student',
   },
   { id: 'mistakes', route: '/app/mistakes', auth: 'student' },

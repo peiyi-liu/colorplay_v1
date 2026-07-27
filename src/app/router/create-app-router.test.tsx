@@ -245,13 +245,14 @@ describe('createAppRouter', () => {
     });
   });
 
-  it('renders the student classroom list route', async () => {
+  // UAT 0727 R2 #1：導覽點擊直達自己班級的排行榜，不再經班級清單。
+  it('renders the direct classroom leaderboard route', async () => {
     renderRouter('/app/leaderboard', {
       email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
     expect(
-      await screen.findByRole('heading', { name: '我的班級' }),
+      await screen.findByRole('heading', { name: '班級排行榜' }),
     ).toBeVisible();
   });
 
