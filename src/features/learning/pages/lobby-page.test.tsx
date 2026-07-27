@@ -201,14 +201,13 @@ describe('LobbyPage', () => {
     );
   });
 
-  it('shows the profile card with the equipped blook and edit link', () => {
+  it('shows the profile card without the edit link or token tile', () => {
     renderPage();
     expect(screen.getByText('🦖')).toBeInTheDocument();
     expect(screen.getByText('學生一號')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '個人資料' })).toHaveAttribute(
-      'href',
-      '/app/profile',
-    );
+    // UAT 0727 #2：暱稱旁不再有「修改」；統計不顯示持有代幣。
+    expect(screen.queryByRole('link', { name: '個人資料' })).toBeNull();
+    expect(screen.queryByText('持有代幣')).toBeNull();
     expect(screen.getByText('750')).toBeInTheDocument();
     expect(screen.getByText('6')).toBeInTheDocument();
   });
@@ -235,29 +234,14 @@ describe('LobbyPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows the mistake center count and hub entry cards', () => {
+  it('keeps the lobby to the chapter hall only (no hub entry cards)', () => {
     renderPage();
-    expect(screen.getByText(/2 題/u)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /前往修正/u })).toHaveAttribute(
-      'href',
-      '/app/mistakes',
-    );
-    expect(screen.getByRole('link', { name: /我的作業/u })).toHaveAttribute(
-      'href',
-      '/app/assignments',
-    );
-    expect(screen.getByRole('link', { name: /成就徽章/u })).toHaveAttribute(
-      'href',
-      '/app/achievements',
-    );
-    expect(screen.getByRole('link', { name: /班級排行榜/u })).toHaveAttribute(
-      'href',
-      '/app/leaderboard',
-    );
-    expect(screen.getByRole('link', { name: /Live 課堂/u })).toHaveAttribute(
-      'href',
-      '/app/live/join',
-    );
+    // UAT 0727 #2：分隔線以下的入口卡全部移除，功能改由導覽列進入。
+    expect(screen.queryByRole('link', { name: /前往修正/u })).toBeNull();
+    expect(screen.queryByRole('link', { name: /我的作業/u })).toBeNull();
+    expect(screen.queryByRole('link', { name: /成就徽章/u })).toBeNull();
+    expect(screen.queryByRole('link', { name: /班級排行榜/u })).toBeNull();
+    expect(screen.queryByRole('link', { name: /Live 課堂/u })).toBeNull();
   });
 
   it('does not link to the removed student progress page (owner batch #2: teacher-only)', () => {

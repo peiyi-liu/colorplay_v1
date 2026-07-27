@@ -354,7 +354,10 @@ describe('AppShell', () => {
       'href',
       '/teacher',
     );
-    expect(screen.getByText('教師管理權限已授權')).toBeInTheDocument();
+    // UAT 0727 #6：教師不顯示授權 chip，也不顯示學生導覽列。
+    expect(screen.queryByText('教師管理權限已授權')).toBeNull();
+    expect(screen.queryByRole('link', { name: '學習大廳' })).toBeNull();
+    expect(screen.queryByRole('link', { name: '裝備商店' })).toBeNull();
   });
 
   it('awaits signOut and replaces protected history with login', async () => {

@@ -1611,6 +1611,32 @@ a {
   font-size: var(--font-size-metadata);
 }
 
+/* 外框商品比照 Blook 卡呈現（UAT 0727 #4）：藝術區內以漸層圓環模擬
+   大廳頭貼外框的實際效果。 */
+.frame-card__ring {
+  display: block;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  padding: 7px;
+  background-clip: border-box;
+}
+
+.frame-card__ring::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--color-surface);
+}
+
+.blook-card__frame-name {
+  margin: var(--space-2) 0 0;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
 .frame-shop__grid {
   display: grid;
   gap: var(--space-4);
@@ -2390,6 +2416,12 @@ a {
   background: currentColor;
 }
 
+/* 班級卡頭的成員數 pill 不換行（DC 1907 單行小 pill；UAT 0727 #8）。 */
+.classroom-card__head .ui-chip {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .status-dot--active {
   color: var(--jade-600);
 }
@@ -2878,18 +2910,20 @@ a {
 
 /* 排行榜：前三名列底色（DC leaderboard 1022-1035 逐字 hex；純樣式，資料仍由
    伺服器排序——class 由 leaderboard-table.tsx 依 entry.rank 指派，Task 10） */
-.leaderboard-table__row--gold th,
-.leaderboard-table__row--gold td {
+/* 前綴 .ui-table 提高 specificity 到 (0,2,1)：與 ui.css 的 `.ui-table td`
+   同為 (0,1,1) 時由載入順序決定，ui.css 較晚載入會蓋掉列色（UAT 0727 #3）。 */
+.ui-table .leaderboard-table__row--gold th,
+.ui-table .leaderboard-table__row--gold td {
   background: var(--rank-gold-row);
 }
 
-.leaderboard-table__row--silver th,
-.leaderboard-table__row--silver td {
+.ui-table .leaderboard-table__row--silver th,
+.ui-table .leaderboard-table__row--silver td {
   background: var(--rank-silver-row);
 }
 
-.leaderboard-table__row--bronze th,
-.leaderboard-table__row--bronze td {
+.ui-table .leaderboard-table__row--bronze th,
+.ui-table .leaderboard-table__row--bronze td {
   background: var(--rank-bronze-row);
 }
 
@@ -3052,7 +3086,7 @@ a {
 .login-form__link {
   color: var(--slate-700);
   font-weight: 700;
-  text-decoration: underline;
+  text-decoration: none;
   text-underline-offset: 3px;
 }
 

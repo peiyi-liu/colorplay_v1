@@ -17,7 +17,6 @@ import { toPercentile } from '../../leaderboard/lib/percentile';
 import { useMyProfile } from '../../profile/hooks/use-my-profile';
 import { useEconomySummary } from '../../rewards/hooks/use-economy-summary';
 import { usePublishedChapters } from '../api/chapters';
-import { useMistakes } from '../hooks/use-learning';
 
 function ProfileCard() {
   const profile = useMyProfile();
@@ -67,13 +66,6 @@ function ProfileCard() {
             <h1 className="lobby__name">
               {profile.data?.displayName ?? '色彩學徒'}
             </h1>
-            <Link
-              aria-label="個人資料"
-              className="lobby__edit"
-              to="/app/profile"
-            >
-              <Icon name="pencil" size={13} /> 修改
-            </Link>
           </div>
           <p className="lobby__welcome">讓我們開始今日的色彩複習與挑戰！</p>
         </div>
@@ -86,11 +78,6 @@ function ProfileCard() {
         {percentile !== undefined ? (
           <StatTile label="當前 PR" value={percentile} />
         ) : null}
-        <StatTile
-          label="持有代幣"
-          value={economy.data?.tokenBalance ?? '—'}
-          tone="token"
-        />
       </div>
     </Card>
   );
@@ -107,7 +94,6 @@ const CHAPTER_ICONS: readonly IconName[] = [
 
 export function LobbyPage() {
   const chapters = usePublishedChapters();
-  const mistakes = useMistakes();
 
   if (chapters.isPending) return <RouteLoading withinMain />;
 
@@ -134,7 +120,6 @@ export function LobbyPage() {
   }
 
   const chapterList = chapters.data ?? [];
-  const mistakeCount = mistakes.data?.length ?? 0;
 
   return (
     <section className="lobby" aria-labelledby="lobby-title">
@@ -214,35 +199,6 @@ export function LobbyPage() {
             ))}
           </div>
         )}
-        <div className="lobby__entries">
-          <div className="lobby-entry lobby-entry--mistakes">
-            <div>
-              <h3 className="lobby-entry__title">
-                <Icon name="alert" size={16} /> 個人弱點錯題中心
-              </h3>
-              <p className="lobby-entry__description">
-                系統已為您歸納 <strong>{mistakeCount} 題</strong> 待精熟題目。
-              </p>
-            </div>
-            <Link className="lobby-entry__action" to="/app/mistakes">
-              前往修正
-            </Link>
-          </div>
-        </div>
-        <nav aria-label="更多功能" className="lobby__links">
-          <Link className="lobby-link" to="/app/assignments">
-            <Icon name="inbox" size={16} /> 我的作業
-          </Link>
-          <Link className="lobby-link" to="/app/achievements">
-            <Icon name="medal" size={16} /> 成就徽章
-          </Link>
-          <Link className="lobby-link" to="/app/leaderboard">
-            <Icon name="chart-line" size={16} /> 班級排行榜
-          </Link>
-          <Link className="lobby-link" to="/app/live/join">
-            <Icon name="bolt" size={16} /> Live 課堂
-          </Link>
-        </nav>
       </Card>
     </section>
   );

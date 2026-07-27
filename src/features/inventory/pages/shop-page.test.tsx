@@ -278,8 +278,9 @@ it('renders the frame shop section with the server catalog', async () => {
     await screen.findByRole('heading', { name: '尊絕外顯邊框' }),
   ).toBeVisible();
   expect(screen.getByText('熔岩流金')).toBeInTheDocument();
+  // UAT 0727 #4：外框商品比照 Blook 卡四態——可負擔未擁有顯示黃色購買鍵。
   expect(
-    screen.getByRole('button', { name: '購買 深海霓虹（25 Token）' }),
+    screen.getByRole('button', { name: '購買 深海霓虹，25 Token' }),
   ).toBeInTheDocument();
   expect(
     within(screen.getByRole('region', { name: '尊絕外顯邊框' })).getByText(
