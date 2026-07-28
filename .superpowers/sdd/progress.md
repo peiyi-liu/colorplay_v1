@@ -437,3 +437,4 @@ FINAL REVIEW (fable): READY——零 Critical/Important；獨立重驗 unit 736/
 SHIPPED: main merge deb601a pushed 2026-07-26; Vercel production build triggered (dpl_G4t3PxibdiDKju4wqfoWjZp7qvuK).
 UAT 0727 batch: shipped (commits f-branch→merge 741dc85). 9 項全數完成；排行榜列色根因=specificity 同級後載覆蓋；join 深連結意圖在固定導向下不再自動恢復（owner 明示「一律」，已記錄取捨）。
 UAT R2 batch: shipped (merge 0b974f3, Vercel READY). 排行榜直達僅暱稱＋page-stack 節奏；classrooms 清單頁退場。待 owner 澄清：班級加入碼「可在班級管理查看且固定不改」與現制（一次性顯示＋輪替鍵）不符。
+UAT 0728 warm-palette batch: shipped (merge 1b9afc9, Vercel dpl_8bsjicXqWuwqi3Q4cTE2JrLK4Efk READY). 六項全數完成：全站去黑（ink 暖咖啡）＋淡黃紙張＋教師紫→暖橘 #c2410c＋章節低飽和漸層；複習卡預設收合＋圖解 380px；課後實戰小節前綴（subtopicCodes/subtopicRangeLabel）；錯題已解決附答案（correctOptionText 既有欄位）；排行榜標題去班名。darwin visual 基線 7/7 重生（S 級：暖色改版）。無 migration。驗證：736 unit/typecheck/lint 綠＋6 畫面截圖抽查。
