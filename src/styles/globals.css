@@ -1305,6 +1305,51 @@ a {
   width: min(100%, 1180px);
 }
 
+/* 導覽列(spec §十一):僅淡彩兩頁生效——品牌列與主導覽改白色 96% 半透明
+   ＋1px 淡灰底線;主導覽 sticky＋blur,項目 13px 灰、當前項深色 700
+   ＋2px 黃底線(取代全站預設的 3px)。其餘頁面維持暖色導覽不受影響。 */
+.app-shell:has(.lobby) .app-header,
+.app-shell:has(.achievements) .app-header {
+  border-bottom: 1px solid var(--pastel-border-page);
+  background: rgb(255 255 255 / 96%);
+}
+
+.app-shell:has(.lobby) .student-rail,
+.app-shell:has(.achievements) .student-rail {
+  position: sticky;
+  z-index: 50;
+  top: 0;
+  border-bottom: 1px solid var(--pastel-border-page);
+  background: rgb(255 255 255 / 96%);
+  backdrop-filter: blur(10px);
+}
+
+.app-shell:has(.lobby) .student-rail__tab,
+.app-shell:has(.achievements) .student-rail__tab,
+.app-shell:has(.lobby) .student-rail__link,
+.app-shell:has(.achievements) .student-rail__link {
+  border-bottom: 2px solid transparent;
+  color: var(--pastel-ink-body);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.app-shell:has(.lobby) .student-rail__tab:hover,
+.app-shell:has(.achievements) .student-rail__tab:hover,
+.app-shell:has(.lobby) .student-rail__link:hover,
+.app-shell:has(.achievements) .student-rail__link:hover {
+  color: var(--pastel-ink-strong);
+}
+
+.app-shell:has(.lobby) .student-rail__tab--active,
+.app-shell:has(.achievements) .student-rail__tab--active,
+.app-shell:has(.lobby) .student-rail__link--active,
+.app-shell:has(.achievements) .student-rail__link--active {
+  border-bottom: 2px solid var(--pastel-cta);
+  color: var(--pastel-ink-strong);
+  font-weight: 700;
+}
+
 .lobby {
   display: grid;
   gap: var(--space-8);

@@ -51,6 +51,10 @@ describe('ColorPlay flat design tokens', () => {
     expect(tokensCss).toMatch(new RegExp(`${name}:\\s`, 'u'));
   });
 
+  it('keeps the UI font stack on Noto Sans TC then Inter (spec §三)', () => {
+    expect(tokensCss).toContain("'Noto Sans TC', 'Inter'");
+  });
+
   it('routes the primary semantic token to the warm yellow primitive', () => {
     expect(tokensCss).toContain('--color-primary: var(--yellow-brand)');
     expect(tokensCss).toContain('--color-primary-strong: var(--amber-avatar)');
