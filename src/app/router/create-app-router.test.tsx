@@ -262,7 +262,7 @@ describe('createAppRouter', () => {
       userId: 'learner-id',
     });
     expect(
-      await screen.findByRole('heading', { name: '色彩一班排行榜' }),
+      await screen.findByRole('heading', { name: '排行榜' }),
     ).toBeVisible();
   });
 
@@ -297,6 +297,7 @@ describe('createAppRouter', () => {
           isPlayable: true,
           sortOrder: 3,
           stableCode: 'chapter-3',
+          subtopicCodes: ['3-1'],
           template: {
             id: '26000000-0000-0000-0000-000000000003',
             questionCount: 10,

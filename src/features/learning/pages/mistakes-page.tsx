@@ -138,8 +138,14 @@ export function MistakesPage({
             已解決
           </h2>
           <ul className="mistake-resolved__list">
+            {/* owner 0728:已解決題附正確答案,方便學生再複習。 */}
             {resolved.map((mistake) => (
-              <li key={mistake.mistakeId}>{mistake.prompt}（已解決）</li>
+              <li key={mistake.mistakeId}>
+                {mistake.prompt}（已解決）
+                <span className="mistake-resolved__answer">
+                  正確答案：{mistake.correctOptionText}
+                </span>
+              </li>
             ))}
           </ul>
         </section>

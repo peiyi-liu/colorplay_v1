@@ -9,7 +9,7 @@ import { MapStepper } from '../../../components/ui/map-stepper';
 import { SectionHeader } from '../../../components/ui/section-header';
 import { VictoryCard } from '../../../components/ui/victory-card';
 import type { MasteryRepository } from '../api/mastery-repository';
-import { usePublishedChapters } from '../api/chapters';
+import { subtopicRangeLabel, usePublishedChapters } from '../api/chapters';
 import {
   useMasteryHint,
   useMasteryState,
@@ -55,10 +55,16 @@ export function MissionSelectPage({
           <p>目前沒有可挑戰的章節。</p>
         ) : (
           <ul className="mission-select__list">
-            {playable.map((chapter) => (
+            {playable.map((chapter) => {
+              // owner 0728:列表加小節顯示,如「3-1〜3-3 色彩表示」。
+              const rangeLabel = subtopicRangeLabel(chapter.subtopicCodes);
+              return (
               <li className="mission-select__item" key={chapter.id}>
                 <div>
-                  <h2>{chapter.title}</h2>
+                  <h2>
+                    {rangeLabel ? `${rangeLabel} ` : ''}
+                    {chapter.title}
+                  </h2>
                   <p>{chapter.description}</p>
                 </div>
                 <button
@@ -80,7 +86,8 @@ export function MissionSelectPage({
                   展開小節任務
                 </button>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </Card>

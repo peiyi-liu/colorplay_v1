@@ -19,6 +19,7 @@ const catalogSchema = z.array(
           subtopics: z.array(
             z.object({
               questions: z.array(z.object({ id: databaseUuidSchema })),
+              title: z.string().min(1),
             }),
           ),
         }),
@@ -39,6 +40,8 @@ export type PublishedChapter = Readonly<{
   isPlayable: boolean;
   sortOrder: number;
   stableCode: string;
+  /** 有題目的小節代碼（如 3-1；owner 0728：課後實戰列表要顯示小節）。 */
+  subtopicCodes: readonly string[];
   template: Readonly<{
     id: string;
     questionCount: number;
@@ -78,6 +81,35 @@ const countQuestions = (
     0,
   );
 
+// 小節標題以「3-1 」代碼開頭（題庫匯入慣例）；取有題目的小節代碼供列表顯示。
+const subtopicCodePattern = /^\d+-\d+/u;
+
+const collectSubtopicCodes = (
+  sections: z.infer<typeof catalogSchema>[number]['chapters']['sections'],
+): readonly string[] =>
+  [
+    ...new Set(
+      sections.flatMap((section) =>
+        section.subtopics
+          .filter((subtopic) => subtopic.questions.length > 0)
+          .map((subtopic) => subtopicCodePattern.exec(subtopic.title)?.[0])
+          .filter((code): code is string => code !== undefined),
+      ),
+    ),
+  ].sort((left, right) =>
+    left.localeCompare(right, 'en', { numeric: true }),
+  );
+
+/** 課後實戰列表的小節前綴：單一小節顯示「3-1」，多小節顯示「3-1〜3-3」。 */
+export const subtopicRangeLabel = (
+  codes: readonly string[],
+): string | undefined => {
+  const first = codes[0];
+  const last = codes[codes.length - 1];
+  if (first === undefined || last === undefined) return undefined;
+  return first === last ? first : `${first}〜${last}`;
+};
+
 export async function fetchPublishedChapters(
   client: SupabaseClient<Database>,
 ): Promise<PublishedChapter[]> {
@@ -96,6 +128,7 @@ export async function fetchPublishedChapters(
           sort_order,
           sections(
             subtopics(
+              title,
               questions(id)
             )
           )
@@ -119,6 +152,7 @@ export async function fetchPublishedChapters(
       isPlayable: countQuestions(chapters.sections) > 0,
       sortOrder: chapters.sort_order,
       stableCode: chapters.stable_code,
+      subtopicCodes: collectSubtopicCodes(chapters.sections),
       template: { id, questionCount, title },
       title: chapters.title,
     }))

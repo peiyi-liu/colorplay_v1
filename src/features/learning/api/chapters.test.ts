@@ -29,7 +29,16 @@ describe('fetchPublishedChapters', () => {
         chapters: {
           description: '使用色彩模型描述顏色。',
           id: chapterId,
-          sections: [{ subtopics: [{ questions: [nestedQuestion] }] }],
+          sections: [
+            {
+              subtopics: [
+                {
+                  questions: [nestedQuestion],
+                  title: '3-1 色彩三要素與色名的表示',
+                },
+              ],
+            },
+          ],
           sort_order: 3,
           stable_code: 'chapter-3',
           title: '色彩表示',
@@ -60,6 +69,7 @@ describe('fetchPublishedChapters', () => {
         isPlayable: false,
         sortOrder: 1,
         stableCode: 'chapter-1',
+        subtopicCodes: [],
         template: {
           id: '26000000-0000-0000-0000-000000000001',
           questionCount: 10,
@@ -73,6 +83,7 @@ describe('fetchPublishedChapters', () => {
         isPlayable: true,
         sortOrder: 3,
         stableCode: 'chapter-3',
+        subtopicCodes: ['3-1'],
         template: {
           id: templateId,
           questionCount: 10,
