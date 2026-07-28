@@ -120,9 +120,7 @@ describe('TeacherStudentProgressPage', () => {
     expect(screen.getByText('3 / 3')).toBeVisible();
     expect(screen.getByText('已精熟')).toBeVisible();
     expect(screen.getByText('尚未開始')).toBeVisible();
-    expect(
-      screen.getByText('關於色立體的敘述，下列何者不正確?'),
-    ).toBeVisible();
+    expect(screen.getByText('關於色立體的敘述，下列何者不正確?')).toBeVisible();
     expect(
       screen.getByText(/子題 3-2 色彩體系與數值符號的表示・答錯 2 次/u),
     ).toBeVisible();

@@ -82,3 +82,17 @@ Visual snapshot 基線更新視為 S 級任務：更新基線、附一行原因�
 - **Phase 級**：上述全部 + 第 12 節 phase 驗收證據 + RLS 負向測試 + 無未解 Critical/High 安全問題。
 
 不得只回「已完成」，也不得把 task 級完成宣稱為 phase 級驗收通過。
+
+## Agent skills
+
+### Issue tracker
+
+Issue 追蹤使用 GitHub Issues（github.com/peiyi-liu/colorplay_v1，透過 `gh` CLI）。See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+採用五個預設標籤：needs-triage、needs-info、ready-for-agent、ready-for-human、wontfix。See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context：根目錄 `CONTEXT.md` + `docs/adr/`。See `docs/agents/domain.md`.

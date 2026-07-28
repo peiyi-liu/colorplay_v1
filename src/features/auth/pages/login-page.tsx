@@ -114,8 +114,7 @@ export function LoginPage() {
 
       {portal === 'teacher' ? (
         <div className="auth-portal__teacher-note">
-          <Icon name="alert" size={14} />{' '}
-          教師帳號由開發後台建立。
+          <Icon name="alert" size={14} /> 教師帳號由開發後台建立。
         </div>
       ) : null}
 
