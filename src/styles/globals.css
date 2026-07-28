@@ -84,8 +84,8 @@ a {
   display: flex;
   min-height: 64px;
   align-items: center;
-  border-bottom: 2px solid var(--yellow-brand);
-  background: var(--surface-card);
+  border-bottom: 1px solid var(--pastel-border-page);
+  background: rgb(255 255 255 / 96%);
   padding: var(--space-3) max(var(--space-4), env(safe-area-inset-left));
 }
 
@@ -263,6 +263,7 @@ a {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
   background: var(--surface-card);
+  box-shadow: var(--pastel-shadow);
   padding: var(--space-8);
 }
 
@@ -766,9 +767,10 @@ a {
 .blook-shop__header {
   position: relative;
   overflow: hidden;
-  border: 2px solid var(--ink-900);
-  border-radius: var(--radius-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
   background: var(--color-surface);
+  box-shadow: var(--pastel-shadow);
   padding: var(--space-8);
 }
 
@@ -809,9 +811,10 @@ a {
 }
 
 .blook-shop__header > strong {
+  border: 1px solid var(--pastel-summary-border);
   border-radius: var(--radius-control);
-  background: var(--color-brand-dark);
-  color: var(--color-surface);
+  background: var(--pastel-summary-tint-2);
+  color: var(--pastel-ink-strong);
   padding: var(--space-3) var(--space-5);
   white-space: nowrap;
 }
@@ -1158,9 +1161,15 @@ a {
   color: var(--slate-900);
 }
 
+/* 主導覽(spec §十一,0728 深夜擴大全站):白色 96% 半透明 sticky＋blur,
+   項目 13px 灰、當前項深色 700＋2px 黃底線。 */
 .student-rail {
-  border-bottom: 1px solid var(--border-subtle);
-  background: var(--surface-card);
+  position: sticky;
+  z-index: 50;
+  top: 0;
+  border-bottom: 1px solid var(--pastel-border-page);
+  background: rgb(255 255 255 / 96%);
+  backdrop-filter: blur(10px);
   padding: var(--space-3) 0;
 }
 
@@ -1179,11 +1188,11 @@ a {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
-  border-bottom: 3px solid transparent;
+  border-bottom: 2px solid transparent;
   border-radius: 0;
-  color: var(--ink-500);
-  font-size: var(--font-size-supporting);
-  font-weight: 700;
+  color: var(--pastel-ink-body);
+  font-size: 13px;
+  font-weight: 500;
   padding: var(--space-2) var(--space-1);
   margin-inline: var(--space-3);
   text-decoration: none;
@@ -1193,13 +1202,13 @@ a {
 }
 
 .student-rail__tab:hover {
-  color: var(--ink-900);
+  color: var(--pastel-ink-strong);
 }
 
 .student-rail__tab--active {
-  border-bottom-color: var(--yellow-brand);
-  color: var(--ink-950);
-  font-weight: 800;
+  border-bottom-color: var(--pastel-cta);
+  color: var(--pastel-ink-strong);
+  font-weight: 700;
 }
 
 .student-rail__chevron {
@@ -1215,26 +1224,32 @@ a {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
-  color: var(--slate-500);
-  font-size: var(--font-size-metadata);
-  font-weight: 700;
+  border-bottom: 2px solid transparent;
+  color: var(--pastel-ink-body);
+  font-size: 13px;
+  font-weight: 500;
   padding: var(--space-2);
   text-decoration: none;
 }
 
 .student-rail__link--active {
-  border-bottom: 3px solid var(--yellow-brand);
-  color: var(--ink-950);
+  border-bottom-color: var(--pastel-cta);
+  color: var(--pastel-ink-strong);
+  font-weight: 700;
 }
 
 .student-rail__link:hover {
-  color: var(--slate-900);
+  color: var(--pastel-ink-strong);
 }
 
 .teacher-rail {
-  /* owner 0728:教師識別改暖橘,導覽底也跟著暖橘淡底。 */
-  border-bottom: 1px solid var(--color-teacher-soft);
-  background: var(--color-teacher-soft);
+  /* 0728 深夜:教師導覽併入淡彩白底;教師識別暖橘保留在文字與 chip。 */
+  position: sticky;
+  z-index: 50;
+  top: 0;
+  border-bottom: 1px solid var(--pastel-border-page);
+  background: rgb(255 255 255 / 96%);
+  backdrop-filter: blur(10px);
   padding: var(--space-3) 0;
 }
 
@@ -1265,8 +1280,8 @@ a {
   align-items: center;
   border-radius: var(--radius-control);
   color: var(--color-teacher);
-  font-size: var(--font-size-supporting);
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   padding: var(--space-2) var(--space-3);
   text-decoration: none;
 }
@@ -1292,62 +1307,12 @@ a {
   white-space: nowrap;
 }
 
-/* ═══ 淡彩卡片系統(owner 0728 晚間淡彩批:學習大廳＋成就頁,參考圖
-   「色彩任務選擇大廳」)。此兩頁主背景改白、欄寬 1180、淡彩大卡片;
-   以 :has() 限定範圍,其餘頁面維持暖色系不受影響。 ═══ */
-.app-shell:has(.lobby),
-.app-shell:has(.achievements) {
-  background: var(--pastel-page);
-}
-
+/* ═══ 淡彩卡片系統(owner 0728 深夜裁定:自兩頁擴大至全站——主背景
+   已由 token 層翻白,導覽列樣式併入 .app-header/.student-rail/
+   .teacher-rail 基底,不再以 :has() 限定)。 ═══ */
 .lobby,
 .achievements {
   width: min(100%, 1180px);
-}
-
-/* 導覽列(spec §十一):僅淡彩兩頁生效——品牌列與主導覽改白色 96% 半透明
-   ＋1px 淡灰底線;主導覽 sticky＋blur,項目 13px 灰、當前項深色 700
-   ＋2px 黃底線(取代全站預設的 3px)。其餘頁面維持暖色導覽不受影響。 */
-.app-shell:has(.lobby) .app-header,
-.app-shell:has(.achievements) .app-header {
-  border-bottom: 1px solid var(--pastel-border-page);
-  background: rgb(255 255 255 / 96%);
-}
-
-.app-shell:has(.lobby) .student-rail,
-.app-shell:has(.achievements) .student-rail {
-  position: sticky;
-  z-index: 50;
-  top: 0;
-  border-bottom: 1px solid var(--pastel-border-page);
-  background: rgb(255 255 255 / 96%);
-  backdrop-filter: blur(10px);
-}
-
-.app-shell:has(.lobby) .student-rail__tab,
-.app-shell:has(.achievements) .student-rail__tab,
-.app-shell:has(.lobby) .student-rail__link,
-.app-shell:has(.achievements) .student-rail__link {
-  border-bottom: 2px solid transparent;
-  color: var(--pastel-ink-body);
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.app-shell:has(.lobby) .student-rail__tab:hover,
-.app-shell:has(.achievements) .student-rail__tab:hover,
-.app-shell:has(.lobby) .student-rail__link:hover,
-.app-shell:has(.achievements) .student-rail__link:hover {
-  color: var(--pastel-ink-strong);
-}
-
-.app-shell:has(.lobby) .student-rail__tab--active,
-.app-shell:has(.achievements) .student-rail__tab--active,
-.app-shell:has(.lobby) .student-rail__link--active,
-.app-shell:has(.achievements) .student-rail__link--active {
-  border-bottom: 2px solid var(--pastel-cta);
-  color: var(--pastel-ink-strong);
-  font-weight: 700;
 }
 
 .lobby {
@@ -2503,11 +2468,11 @@ a {
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--ink-900);
+  border: 1px solid rgb(52 64 84 / 15%);
   border-radius: var(--radius-control);
-  background: var(--surface-card);
-  color: var(--ink-900);
-  font-weight: 800;
+  background: rgb(255 255 255 / 75%);
+  color: var(--pastel-ink-action);
+  font-weight: 700;
   padding: var(--space-2) var(--space-4);
   text-decoration: none;
   transition:
@@ -2916,7 +2881,7 @@ a {
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  border-bottom: 2px solid var(--yellow-brand);
+  border-bottom: 1px solid var(--pastel-border-page);
   gap: var(--space-4) var(--space-6);
   padding-bottom: var(--space-5);
 }
@@ -2960,10 +2925,15 @@ a {
   align-items: center;
   justify-content: space-between;
   overflow: hidden;
-  border: 2px solid var(--ink-900);
-  border-radius: var(--radius-panel);
-  background: var(--ink-900);
-  color: var(--white);
+  border: 1px solid var(--pastel-summary-border);
+  border-radius: var(--radius-card);
+  background: linear-gradient(
+    135deg,
+    var(--pastel-summary-tint),
+    var(--pastel-summary-tint-2)
+  );
+  box-shadow: var(--pastel-shadow);
+  color: var(--pastel-ink-strong);
   gap: var(--space-5);
   padding: var(--space-6) 28px;
 }
@@ -2996,7 +2966,7 @@ a {
 .teacher-live-console__description {
   max-width: 60ch;
   margin: var(--space-2) 0 0;
-  color: var(--ink-300);
+  color: var(--pastel-ink-body);
   font-size: 0.8rem;
   line-height: 1.6;
 }
@@ -3721,10 +3691,10 @@ a {
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid var(--border-strong);
+  border: 1px solid rgb(52 64 84 / 15%);
   border-radius: var(--radius-control);
-  background: var(--color-surface);
-  color: var(--border-strong);
+  background: rgb(255 255 255 / 75%);
+  color: var(--pastel-ink-action);
   cursor: pointer;
   font-size: var(--font-size-supporting);
   font-weight: 700;
@@ -3983,7 +3953,7 @@ a {
   border-radius: var(--radius-card);
   background: var(--color-surface);
   padding: var(--space-6);
-  box-shadow: 0 1px 3px rgb(15 23 42 / 8%);
+  box-shadow: var(--pastel-shadow);
 }
 
 /* 手機一致性：表格橫向捲動、卡片內距收斂 */
@@ -4497,11 +4467,12 @@ select#dashboard-classroom {
   width: min(100%, 560px);
 }
 
-/* page-card:與大廳一致的白卡容器(原本已有者沿用,無害重申) */
+/* page-card:與大廳一致的白卡容器(圓角統一 16px,陰影同淡彩卡) */
 .page-card {
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-card);
   background: var(--surface-card);
+  box-shadow: var(--pastel-shadow);
   padding: var(--space-8);
 }
 

@@ -11,14 +11,14 @@ const tokensCss = readFileSync(
 );
 
 describe('ColorPlay flat design tokens', () => {
-  // owner 0728 暖色裁定:墨色改暖咖啡、紙張改淡黃(全站去黑)。
+  // owner 0728 深夜裁定:淡彩系統擴大全站——墨色改冷灰階、紙張改白。
   it.each([
-    '--ink-900: #443a2e',
-    '--paper: #faf5e2',
+    '--ink-900: #253042',
+    '--paper: #ffffff',
     '--cobalt-600: #3056d8',
-    '--coral-600: #d64533',
-    '--jade-600: #128a5e',
-    '--yellow-brand: #ffd600',
+    '--coral-600: #e5484d',
+    '--jade-600: #22a06b',
+    '--yellow-brand: #f5c400',
     '--radius-card: 16px',
     '--radius-control: 10px',
   ])('pins primitive %s', (declaration) => {
