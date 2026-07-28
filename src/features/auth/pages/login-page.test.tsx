@@ -118,10 +118,7 @@ describe('LoginPage', () => {
     expect(await screen.findByText('請輸入班級序號')).toBeVisible();
     expect(signInWithAccount).not.toHaveBeenCalled();
 
-    await user.type(
-      screen.getByLabelText('班級序號'),
-      'ABCD-1234-EF56-7890',
-    );
+    await user.type(screen.getByLabelText('班級序號'), 'ABCD-1234-EF56-7890');
     await user.click(screen.getByRole('button', { name: '登入' }));
 
     await waitFor(() => {

@@ -74,7 +74,7 @@ describe('ClassroomLeaderboardPage', () => {
     expect(screen.getByRole('status', { name: '頁面載入中' })).toBeVisible();
     resolve(board);
     expect(
-      await screen.findByRole('heading', { name: '色彩一班排行榜' }),
+      await screen.findByRole('heading', { name: '排行榜' }),
     ).toBeVisible();
     expect(screen.getByText('目前還沒有可排行的學生。')).toBeVisible();
     const forbidden = /email|student_number|user_id|answer/iu;
@@ -99,7 +99,7 @@ describe('ClassroomLeaderboardPage', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: '重試' }));
     expect(
-      await screen.findByRole('heading', { name: '色彩一班排行榜' }),
+      await screen.findByRole('heading', { name: '排行榜' }),
     ).toBeVisible();
     expect(getClassroomLeaderboard).toHaveBeenCalledTimes(2);
   });

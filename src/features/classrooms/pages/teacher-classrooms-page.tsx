@@ -10,10 +10,7 @@ import {
   useCreateClassroom,
   useOwnedClassrooms,
 } from '../hooks/use-classrooms';
-import {
-  type ClassroomRepository,
-  ClassroomRepositoryError,
-} from '../types';
+import { type ClassroomRepository, ClassroomRepositoryError } from '../types';
 
 /** 複製「哪一班＋加入碼」的貼文格式（owner 2026-07-27：方便貼上傳給學生）。 */
 const joinCodeClipboardText = (name: string, code: string) =>

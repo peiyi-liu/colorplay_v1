@@ -1232,8 +1232,9 @@ a {
 }
 
 .teacher-rail {
-  border-bottom: 1px solid var(--indigo-100);
-  background: var(--indigo-50);
+  /* owner 0728:教師識別改暖橘,導覽底也跟著暖橘淡底。 */
+  border-bottom: 1px solid var(--color-teacher-soft);
+  background: var(--color-teacher-soft);
   padding: var(--space-3) 0;
 }
 
@@ -1249,7 +1250,7 @@ a {
 }
 
 .teacher-rail__chip {
-  border: 1px solid var(--indigo-100);
+  border: 1px solid var(--color-teacher-soft);
   border-radius: var(--radius-control);
   background: color-mix(in srgb, var(--color-teacher) 10%, transparent);
   color: var(--color-teacher);
@@ -1379,7 +1380,12 @@ a {
   justify-content: space-between;
   border: 1px solid var(--ink-200);
   border-radius: var(--radius-card);
-  background: var(--surface-card);
+  /* owner 0728:各章節以自身淡色系輕微漸層區分,大面積仍留白。 */
+  background: linear-gradient(
+    170deg,
+    var(--chapter-hue-soft) 0%,
+    var(--white) 55%
+  );
   padding: 0 0 var(--space-5);
 }
 
@@ -1426,6 +1432,11 @@ a {
   border-bottom: 3px solid var(--chapter-hue);
   color: var(--chapter-hue);
   padding: var(--space-3) var(--space-5);
+}
+
+/* 未解鎖章節:整卡淡灰(owner 0728),與可玩章節的淡色漸層區分。 */
+.lobby-chapter:not(.lobby-chapter--open) {
+  background: linear-gradient(170deg, var(--ink-100) 0%, var(--ink-50) 55%);
 }
 
 .lobby-chapter:not(.lobby-chapter--open) .lobby-chapter__band {
@@ -2558,7 +2569,8 @@ a {
 
 .auth-portal {
   width: min(100%, 448px);
-  border: 2px solid var(--ink-900);
+  /* owner 0728:登入卡邊框不用黑,改暖黃。 */
+  border: 2px solid var(--amber-avatar);
 }
 
 .login-form__portal {
@@ -2586,8 +2598,9 @@ a {
 }
 
 .login-form__portal label[data-active='true'] {
-  background: var(--ink-900);
-  color: var(--white);
+  /* owner 0728 去黑:學生 tab 改品牌黃底＋暖墨字。 */
+  background: var(--yellow-brand);
+  color: var(--ink-900);
 }
 
 .auth-portal[data-portal='teacher']
@@ -2607,10 +2620,10 @@ a {
 }
 
 .auth-portal__teacher-note {
-  border: 1px solid var(--indigo-100);
+  border: 1px solid var(--color-teacher-soft);
   border-radius: var(--radius-control);
   margin-top: var(--space-4);
-  background: var(--indigo-50);
+  background: var(--color-teacher-soft);
   color: var(--color-teacher);
   font-size: var(--font-size-metadata);
   line-height: 1.6;
@@ -3305,6 +3318,14 @@ a {
   padding: 10px 14px;
 }
 
+/* 已解決題附答案(owner 0728):換行、綠色標示供複習。 */
+.mistake-resolved__answer {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--jade-700);
+  font-weight: 700;
+}
+
 /* #18 成就徽章：colorplay-new 卡片式版面 */
 /* 成就徽章 icon 色彩:tile 吃 inline color,底色由 currentColor 混白 */
 .achievement-card__tile--unlocked {
@@ -3487,6 +3508,15 @@ a {
   border-top: 1px solid var(--border-subtle);
   margin: 0;
   padding: var(--space-4);
+}
+
+/* 複習圖解:縮小置中(owner 0728「圖解圖片縮小一點」),不再撐滿卡寬。 */
+.review-card__media {
+  display: block;
+  width: min(100%, 380px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  margin: var(--space-3) auto 0;
 }
 
 /* 複習卡內：完成狀態文字／未完成的「完成複習」墨框按鈕(DC 602/629–631) */

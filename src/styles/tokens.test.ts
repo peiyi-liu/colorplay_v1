@@ -11,9 +11,10 @@ const tokensCss = readFileSync(
 );
 
 describe('ColorPlay flat design tokens', () => {
+  // owner 0728 暖色裁定:墨色改暖咖啡、紙張改淡黃(全站去黑)。
   it.each([
-    '--ink-900: #1d212e',
-    '--paper: #f6f4ee',
+    '--ink-900: #443a2e',
+    '--paper: #faf5e2',
     '--cobalt-600: #3056d8',
     '--coral-600: #d64533',
     '--jade-600: #128a5e',

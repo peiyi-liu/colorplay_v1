@@ -120,7 +120,8 @@ function CardMedia({
   );
 }
 
-// 複習卡改為 GAME(1) 的圖卡摺疊式（accordion）；預設展開，可收合瀏覽。
+// 複習卡改為 GAME(1) 的圖卡摺疊式（accordion）；預設收合（owner 0728：
+// 進頁先看得到整體有哪些卡），點標題展開。
 function ReviewCardItem({
   card,
   completed,
@@ -135,7 +136,7 @@ function ReviewCardItem({
   pending: boolean;
 }>) {
   return (
-    <details className="review-accordion" open>
+    <details className="review-accordion">
       <summary className="review-accordion__summary">
         <span
           aria-hidden="true"

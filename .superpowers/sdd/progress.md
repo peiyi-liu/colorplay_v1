@@ -411,3 +411,29 @@ Reservations（gate 報告）:
 - 回報項：題庫來自教師題庫試算表（import-questions.mjs，45 題發布＋1 題 draft
   fixture）；「洪非比此紅O-O」不存在於題庫，待 owner 提供截圖；大廳與任務實戰共用
   章節題庫（會重複，設計如此）；我的作業（教師指派）≠任務實戰（自主精熟），建議保留。
+
+---
+
+# SDD Progress Ledger — 2026-07-26 full-site-design-refactor
+Plan: docs/superpowers/plans/2026-07-26-full-site-design-refactor.md
+Branch: feat/design-refactor-full-site
+Task 0: fix wave dispatched (reviewer Important×2: helper 抽取、manifest try/finally). Minor backlog for final review: (a) audit fixture classroom 殘留本機 DB side effect（capture-screens ensureAuditClassroomWithMember）。
+Task 0: complete (commits 807baa0+93c2fba, spec compliant after 1 fix wave, quality Approved). Minor backlog: (b) teacher-tab-submit-bad 殘餘 4 行選擇器重複（建議 fillLoginForm 原語）; (c) quiz-runner feedback heading 顯式斷言改隱式 wait（可讀性）。
+Task 1: complete (commit 3b0823f, quality Approved after controller adjudication——reviewer 兩 Critical 經查核解消：chip.test.tsx 既有且已覆蓋 teacher tone（6d74f77）、Co-Authored-By 尾行實查存在；implementer 報告 RED 標示不實列為報告瑕疵). 
+Task 2: complete (commit b1dc53d, spec compliant, quality Approved, review clean——教師紫徽章＋學習進度導覽移除為實際變更，其餘 3 項驗證為既有)
+Task 3: complete (commits 625f547+8ae407b, spec compliant, quality Approved after 1 fix wave; ProgressBar tone=primary 偏差裁定為正確修 bug). 法證紀錄: teacher-content.spec.ts:369 `article.chapter-card` 在 main 即斷（UI v2 99a0c9b 改名 lobby-chapter 未同步 spec），乾淨 DB 單跑證實非本分支造成——**指派 Task 5 一併同步該 locator**。implementer 修正的 4 locator 經 controller 直接比對一致。
+Task 4: complete (commit c76cb64, spec compliant——「已存在」聲稱全數查證屬實, quality Approved, review clean). Minor backlog: (d) 教師送出鍵 disabled 態變灰的行為變更無測試覆蓋（作者已揭露、reviewer 判良性）。
+Task 5: complete (commit ba8dbd2, lobby 逐項核對「既有已符合」抽查屬實, quality Approved, review clean; 額外同步 learning-experience.spec:142 同類舊 locator——scope 擴充已記錄). Minor backlog: (e) globals.css 405-441/927 孤兒 .chapter-card CSS 待清; (f) lobby 第 4 統計欄「持有代幣」為 owner 既有功能、DC 僅 3 欄——保留待 owner 裁量。
+Task 6: complete (commit e3c9fc0, spec compliant token-level 驗證, quality Approved, review clean). Minor backlog: (g) .page-card--spacious 在極窄寬不縮 padding 待抽查; (h) 小節列 0 完成仍顯示「已學習」——DC 逐字 vs 語意，待 owner; (i) 既有 .page-card 雙規則技債。**Task 10 注意：lobby-page.tsx:240 仍連 /app/progress，刪路由時一併清**。
+Task 7: complete (zero-diff——missionSelect/mission 既有實作已逐項符合 DC，implementer 以 Playwright 逐狀態截圖驗證＋controller 抽查 4 項 token 級屬實；無 commit). Backlog: (j) capture-screens.mjs 對 0.3s fade-in 動畫的時序偽影待 harness 修（Task 14 前）。
+Task 8: complete (commit 14065aa, 4 項真實差異修正驗證屬實, quality Approved; Co-Authored-By 尾行 controller 實查存在).
+Task 9: complete (commit 526774d, 2 項色彩精度修正驗證屬實, quality Approved, review clean). Minor backlog: (k) frame shop 外框區未做四態（不在 DC 逐字清單）; (l) achievements/frame-shop grid 缺 min(100%,N) 防溢出——併入 Task 14 393 pass 檢查。
+Task 10: complete (commits cd5eceb+e47af33, spec compliant, quality Approved; Important 補修=acceptance 閘門對齊批示 #2, contract 5/5 綠). 受影響 AC 編號待 owner 文件更新: AC-PROG-001/002/003/005. Minor backlog: (m) 章節 dash/reload 兩 e2e 斷言失去覆蓋; (n) leaderboard Blook 第 4 欄 vs DC 3 欄——owner 既有功能保留.
+Task 11: complete (commit 7819e07, quality Approved; 真實修正: screen_only 選項文字外露 sr-only→visually-hidden＋回歸測試; liveFeedback runner skip 理由查證成立). **Task 12 指派: launchLiveSessionFromTeacherHome 選擇器與 live-smoke.spec 重複——抽至 tests/e2e/helpers/live.ts 供兩者共用**. Backlog: (o) rose token 家族 500/700=coral 而 600 獨立值不一致; (p) 393 截圖實為 463px 寬——Task 14 必查。
+Task 12: complete (commit 2207180, quality Approved, review clean, zero findings; live.ts helper 抽取完成、runner 五個教師 Live setup 全補、tHost 底色改用 --surface-host).
+Task 13: complete (commit 11b59f8, spec compliant token-exact, quality Approved; tClasses/tClassDetail 重刻、複製鍵含容錯、e2e contract 保留驗證). Minor backlog: (q) clipboard reject 無測試; (r) 2s revert timer 無 cleanup; (s) 複製鍵缺 aria-label=複製加入碼(DC 2093); (t) 班級名稱錯誤訊息移到按鈕後——視覺鄰近性. 
+Task 14: complete (commits b297508+f256964+36742be, GATE PASS——736 unit/typecheck/lint/test:db 1063+25/visual 7-7 綠, 393 溢位 6→0, quality Approved). Minor backlog: (u) Linux visual baseline 4 張過期（darwin only 更新）——fast-follow; (v) #main-content grid 修正未 media 隔離（經查安全）; (w) tContent 整頁與 Live 控台次要鍵無 class（DC 規格從未落地）——另立任務。
+FINAL REVIEW (fable): READY——零 Critical/Important；獨立重驗 unit 736/736+typecheck+lint 綠；backlog triage 完成（9 項延後 fast-follow、其餘不修/已結案）。
+SHIPPED: main merge deb601a pushed 2026-07-26; Vercel production build triggered (dpl_G4t3PxibdiDKju4wqfoWjZp7qvuK).
+UAT 0727 batch: shipped (commits f-branch→merge 741dc85). 9 項全數完成；排行榜列色根因=specificity 同級後載覆蓋；join 深連結意圖在固定導向下不再自動恢復（owner 明示「一律」，已記錄取捨）。
+UAT R2 batch: shipped (merge 0b974f3, Vercel READY). 排行榜直達僅暱稱＋page-stack 節奏；classrooms 清單頁退場。待 owner 澄清：班級加入碼「可在班級管理查看且固定不改」與現制（一次性顯示＋輪替鍵）不符。

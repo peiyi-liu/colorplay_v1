@@ -50,9 +50,8 @@ export function ClassroomLeaderboardPage({
     >
       <header>
         <p className="route-panel__eyebrow">班級 XP</p>
-        <h1 id="classroom-leaderboard-title">
-          {leaderboard.data.classroomName}排行榜
-        </h1>
+        {/* owner 0728:標題不帶班名,學生本來就只看得到自己班。 */}
+        <h1 id="classroom-leaderboard-title">排行榜</h1>
         <p>Top 10 與你的名次都由伺服器依正式 XP 紀錄計算。</p>
       </header>
       <LeaderboardTable
