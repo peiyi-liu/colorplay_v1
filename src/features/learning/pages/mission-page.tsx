@@ -59,33 +59,33 @@ export function MissionSelectPage({
               // owner 0728:列表加小節顯示,如「3-1〜3-3 色彩表示」。
               const rangeLabel = subtopicRangeLabel(chapter.subtopicCodes);
               return (
-              <li className="mission-select__item" key={chapter.id}>
-                <div>
-                  <h2>
-                    {rangeLabel ? `${rangeLabel} ` : ''}
-                    {chapter.title}
-                  </h2>
-                  <p>{chapter.description}</p>
-                </div>
-                <button
-                  className="primary-action"
-                  disabled={start.isPending}
-                  onClick={() => {
-                    setStartError(undefined);
-                    start.mutate(chapter.id, {
-                      onError: () => {
-                        setStartError('無法開始精熟任務，請稍後重試。');
-                      },
-                      onSuccess: (sessionId) => {
-                        void navigate(`/app/missions/${sessionId}`);
-                      },
-                    });
-                  }}
-                  type="button"
-                >
-                  展開小節任務
-                </button>
-              </li>
+                <li className="mission-select__item" key={chapter.id}>
+                  <div>
+                    <h2>
+                      {rangeLabel ? `${rangeLabel} ` : ''}
+                      {chapter.title}
+                    </h2>
+                    <p>{chapter.description}</p>
+                  </div>
+                  <button
+                    className="primary-action"
+                    disabled={start.isPending}
+                    onClick={() => {
+                      setStartError(undefined);
+                      start.mutate(chapter.id, {
+                        onError: () => {
+                          setStartError('無法開始精熟任務，請稍後重試。');
+                        },
+                        onSuccess: (sessionId) => {
+                          void navigate(`/app/missions/${sessionId}`);
+                        },
+                      });
+                    }}
+                    type="button"
+                  >
+                    展開小節任務
+                  </button>
+                </li>
               );
             })}
           </ul>

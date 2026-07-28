@@ -448,3 +448,42 @@
 .ui-toast--info {
   border-left: 4px solid var(--sky-500);
 }
+
+/* ── 淡彩系統狀態標籤(owner 0728 晚間淡彩批 spec §五:11px/600/膠囊)。
+   淡底＋加深文字,五態均 ≥4.5:1;狀態同時以文字傳達,不只靠顏色。 ── */
+.status-badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+.status-badge--done {
+  background: var(--pastel-tag-done-bg);
+  color: var(--pastel-tag-done-text);
+}
+
+.status-badge--active {
+  background: var(--pastel-tag-active-bg);
+  color: var(--pastel-tag-active-text);
+}
+
+.status-badge--locked {
+  background: var(--pastel-tag-locked-bg);
+  color: var(--pastel-tag-locked-text);
+}
+
+.status-badge--review {
+  background: var(--pastel-tag-review-bg);
+  color: var(--pastel-tag-review-text);
+}
+
+.status-badge--open {
+  background: var(--pastel-tag-open-bg);
+  color: var(--pastel-tag-open-text);
+}

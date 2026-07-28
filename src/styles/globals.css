@@ -1292,221 +1292,438 @@ a {
   white-space: nowrap;
 }
 
-.lobby {
-  display: grid;
-  width: min(100%, 1120px);
-  gap: var(--space-6);
+/* ═══ 淡彩卡片系統(owner 0728 晚間淡彩批:學習大廳＋成就頁,參考圖
+   「色彩任務選擇大廳」)。此兩頁主背景改白、欄寬 1180、淡彩大卡片;
+   以 :has() 限定範圍,其餘頁面維持暖色系不受影響。 ═══ */
+.app-shell:has(.lobby),
+.app-shell:has(.achievements) {
+  background: var(--pastel-page);
 }
 
-.lobby__profile {
+.lobby,
+.achievements {
+  width: min(100%, 1180px);
+}
+
+.lobby {
+  display: grid;
+  gap: var(--space-8);
+}
+
+/* 頁緣:main 已含 16px,平板補至 24px、桌面補至 32px(spec §四)。 */
+@media (min-width: 768px) {
+  .lobby,
+  .achievements {
+    padding-inline: var(--space-2);
+  }
+}
+
+@media (min-width: 1024px) {
+  .lobby,
+  .achievements {
+    padding-inline: var(--space-4);
+  }
+}
+
+.lobby__empty {
+  margin: 0;
+  color: var(--pastel-ink-body);
+}
+
+/* 頁面標頭(spec §三:28px/700 主標題＋14px 說明;手機 24px) */
+.pastel-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.pastel-hero__title {
+  margin: 0;
+  color: var(--pastel-ink-strong);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.pastel-hero__description {
+  margin: var(--space-2) 0 0;
+  color: var(--pastel-ink-body);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+.pastel-back {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 1px solid var(--pastel-border-page);
+  border-radius: var(--radius-control);
+  background: var(--pastel-surface);
+  color: var(--pastel-ink-action);
+  place-items: center;
+  text-decoration: none;
+}
+
+.pastel-back:hover {
+  background: var(--pastel-track);
+}
+
+/* 學生資訊橫卡(spec §九:暖黃漸層橫卡＋半透明白數值格) */
+.pastel-summary {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-6);
+  border: 1px solid var(--pastel-summary-border);
+  border-radius: var(--radius-card);
+  background: linear-gradient(
+    135deg,
+    var(--pastel-summary-tint),
+    var(--pastel-summary-tint-2)
+  );
+  box-shadow: var(--pastel-shadow);
+  gap: var(--space-4);
+  padding: 18px 22px;
 }
 
-.lobby__identity {
+.pastel-summary__identity {
   display: flex;
   align-items: center;
   gap: var(--space-4);
 }
 
-.lobby__avatar {
+.pastel-summary__avatar {
   display: grid;
   width: 64px;
   height: 64px;
   border-radius: var(--radius-card);
-  background: var(--avatar-frame-bg);
+  background: var(--pastel-summary-cell);
   font-size: 2rem;
   place-items: center;
 }
 
-.lobby__identity-row {
+.pastel-summary__name-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
 }
 
-.lobby__name {
+.pastel-summary__name {
   margin: 0;
+  color: var(--pastel-ink-strong);
   font-size: 1.25rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
-.lobby__edit {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--space-1);
-  background: var(--slate-100);
-  color: var(--color-muted);
-  font-size: var(--font-size-metadata);
-  padding: 2px var(--space-2);
-  text-decoration: none;
+.pastel-summary__level {
+  border-radius: 999px;
+  background: var(--pastel-summary-cell);
+  color: var(--pastel-ink-action);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
 }
 
-.lobby__welcome {
+.pastel-summary__welcome {
   margin: var(--space-1) 0 0;
-  color: var(--color-muted);
-  font-size: var(--font-size-metadata);
+  color: var(--pastel-ink-body);
+  font-size: 0.8125rem;
 }
 
-.lobby__stats {
+.pastel-summary__stats {
   display: flex;
-  align-items: center;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-card);
-  background: var(--slate-50);
-  gap: var(--space-8);
-  padding: var(--space-4) var(--space-6);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
 }
 
-.lobby__chapter-grid {
+.pastel-summary__stat {
   display: grid;
-  gap: var(--space-6);
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  min-width: 88px;
+  border-radius: 10px;
+  background: var(--pastel-summary-cell);
+  gap: 2px;
+  padding: var(--space-2) 14px;
 }
 
-.lobby-chapter {
-  --chapter-hue: var(--ink-400);
-  --chapter-hue-soft: var(--ink-100);
+.pastel-summary__stat dt {
+  color: var(--pastel-ink-body);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.pastel-summary__stat dd {
+  margin: 0;
+  color: var(--pastel-ink-strong);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* 卡片網格:桌面三欄/平板兩欄/手機單欄(spec §五/§十二) */
+.pastel-grid {
+  display: grid;
+  margin: 0;
+  gap: var(--space-5);
+  grid-template-columns: minmax(0, 1fr);
+  list-style: none;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .pastel-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .pastel-grid {
+    gap: var(--space-6);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* 淡彩卡片基底:主題色一律走 --card-* 變數,由 data-theme 指派
+   (色值唯一定義點在 tokens.css 的 --pastel-<theme>-*)。 */
+.pastel-card {
+  --card-tint: var(--pastel-blue-tint);
+  --card-tint-2: var(--pastel-blue-tint-2);
+  --card-border: var(--pastel-blue-border);
+  --card-icon: var(--pastel-blue-icon);
+  --card-icon-2: var(--pastel-blue-icon);
+
+  position: relative;
   display: flex;
-  overflow: hidden;
-  min-height: 220px;
+  box-sizing: border-box;
+  min-height: 190px;
   flex-direction: column;
-  justify-content: space-between;
-  border: 1px solid var(--ink-200);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius-card);
-  /* owner 0728:各章節以自身淡色系輕微漸層區分,大面積仍留白。 */
+  /* 深色端只佔底部,說明文字停留在淺色區以維持 4.5:1(已驗算)。 */
   background: linear-gradient(
-    170deg,
-    var(--chapter-hue-soft) 0%,
-    var(--white) 55%
+    165deg,
+    var(--card-tint) 0%,
+    var(--card-tint) 55%,
+    var(--card-tint-2) 100%
   );
-  padding: 0 0 var(--space-5);
+  box-shadow: var(--pastel-shadow);
+  padding: var(--space-5);
+  transition:
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
 }
 
-.lobby-chapter[data-hue='1'] {
-  --chapter-hue: var(--hue-ch1);
-  --chapter-hue-soft: var(--hue-ch1-soft);
-}
-.lobby-chapter[data-hue='2'] {
-  --chapter-hue: var(--hue-ch2);
-  --chapter-hue-soft: var(--hue-ch2-soft);
-}
-.lobby-chapter[data-hue='3'] {
-  --chapter-hue: var(--hue-ch3);
-  --chapter-hue-soft: var(--hue-ch3-soft);
-}
-.lobby-chapter[data-hue='4'] {
-  --chapter-hue: var(--hue-ch4);
-  --chapter-hue-soft: var(--hue-ch4-soft);
-}
-.lobby-chapter[data-hue='5'] {
-  --chapter-hue: var(--hue-ch5);
-  --chapter-hue-soft: var(--hue-ch5-soft);
-}
-.lobby-chapter[data-hue='6'] {
-  --chapter-hue: var(--hue-ch6);
-  --chapter-hue-soft: var(--hue-ch6-soft);
+.pastel-card[data-theme='purple'] {
+  --card-tint: var(--pastel-purple-tint);
+  --card-tint-2: var(--pastel-purple-tint-2);
+  --card-border: var(--pastel-purple-border);
+  --card-icon: var(--pastel-purple-icon);
+  --card-icon-2: var(--pastel-purple-icon);
 }
 
-.lobby-chapter > div:not(.lobby-chapter__band),
-.lobby-chapter__actions {
-  padding-inline: var(--space-5);
+.pastel-card[data-theme='yellow'] {
+  --card-tint: var(--pastel-yellow-tint);
+  --card-tint-2: var(--pastel-yellow-tint-2);
+  --card-border: var(--pastel-yellow-border);
+  --card-icon: var(--pastel-yellow-icon);
+  --card-icon-2: var(--pastel-yellow-icon-2);
 }
 
-.lobby-chapter--open {
-  border: 2px solid var(--amber-avatar);
+.pastel-card[data-theme='green'] {
+  --card-tint: var(--pastel-green-tint);
+  --card-tint-2: var(--pastel-green-tint-2);
+  --card-border: var(--pastel-green-border);
+  --card-icon: var(--pastel-green-icon);
+  --card-icon-2: var(--pastel-green-icon);
 }
 
-.lobby-chapter__band {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-4);
-  background: var(--chapter-hue-soft);
-  border-bottom: 3px solid var(--chapter-hue);
-  color: var(--chapter-hue);
-  padding: var(--space-3) var(--space-5);
+.pastel-card[data-theme='coral'] {
+  --card-tint: var(--pastel-coral-tint);
+  --card-tint-2: var(--pastel-coral-tint-2);
+  --card-border: var(--pastel-coral-border);
+  --card-icon: var(--pastel-coral-icon);
+  --card-icon-2: var(--pastel-coral-icon);
 }
 
-/* 未解鎖章節:整卡淡灰(owner 0728),與可玩章節的淡色漸層區分。 */
-.lobby-chapter:not(.lobby-chapter--open) {
-  background: linear-gradient(170deg, var(--ink-100) 0%, var(--ink-50) 55%);
+.pastel-card[data-theme='cyan'] {
+  --card-tint: var(--pastel-cyan-tint);
+  --card-tint-2: var(--pastel-cyan-tint-2);
+  --card-border: var(--pastel-cyan-border);
+  --card-icon: var(--pastel-cyan-icon);
+  --card-icon-2: var(--pastel-cyan-icon);
 }
 
-.lobby-chapter:not(.lobby-chapter--open) .lobby-chapter__band {
-  background: var(--ink-100);
-  border-bottom-color: var(--ink-300);
-  color: var(--ink-500);
+@media (hover: hover) {
+  .pastel-card:hover {
+    box-shadow: var(--pastel-shadow-hover);
+    transform: translateY(-3px);
+  }
 }
 
-.lobby-chapter__num {
-  font-family: var(--font-display);
-  font-size: 1.75rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  line-height: 1;
+/* 進行中章節(spec §六):2px 黃邊框＋淡黃外圈;padding 減 1px 補邊框差。 */
+.pastel-card--current {
+  border: 2px solid var(--pastel-cta);
+  box-shadow: var(--pastel-shadow-current);
+  padding: calc(var(--space-5) - 1px);
 }
 
-.lobby-chapter__icon {
-  display: grid;
-  place-items: center;
+@media (hover: hover) {
+  .pastel-card--current:hover {
+    border-color: var(--pastel-cta-hover);
+  }
 }
 
-.lobby-chapter__title-row {
+/* 鎖定章節(spec §七):保留主題淡彩,整卡降不透明度但內容仍可讀。 */
+.pastel-card--locked {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+@media (hover: hover) {
+  .pastel-card--locked:hover {
+    box-shadow: var(--pastel-shadow);
+    transform: none;
+  }
+}
+
+.pastel-card--locked .pastel-card__icon {
+  background: var(--pastel-tag-locked-bg);
+  color: var(--pastel-tag-locked-text);
+}
+
+.pastel-card__top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
-.lobby-chapter__title-row h3 {
+.pastel-card__icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--card-icon), var(--card-icon-2));
+  color: var(--white);
+  place-items: center;
+}
+
+.pastel-card__title {
   margin: 0;
-  font-size: var(--font-size-body);
-  font-weight: 800;
+  color: var(--pastel-ink-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
-.lobby-chapter__description {
+.pastel-card__description {
   margin: var(--space-2) 0 0;
-  color: var(--color-muted);
-  font-size: var(--font-size-metadata);
+  color: var(--pastel-ink-body);
+  font-size: 0.8125rem;
+  font-weight: 400;
   line-height: 1.6;
 }
 
-.lobby-chapter__actions {
+.pastel-card__foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-top: var(--space-4);
+  margin-top: auto;
+  padding-top: var(--space-5);
 }
 
-.lobby-chapter__challenge {
-  min-width: 0;
-  min-height: 44px;
+.pastel-card__hint {
+  color: var(--pastel-ink-body);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
-.lobby-chapter__review {
+.pastel-card__more {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
-  color: var(--color-text);
-  font-size: var(--font-size-metadata);
-  font-weight: 700;
+  color: var(--pastel-ink-action);
+  font-size: 0.75rem;
+  font-weight: 600;
   text-decoration: none;
 }
 
-.lobby-chapter__soon {
-  width: 100%;
-  color: var(--slate-500);
-  font-size: var(--font-size-metadata);
+.pastel-card__more:hover {
+  color: var(--pastel-ink-strong);
+}
+
+/* 主要操作按鈕(spec §十:ColorPlay 黃、圓角 10、觸控高 44) */
+.pastel-action {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-control);
+  background: var(--pastel-cta);
+  color: var(--pastel-cta-contrast);
+  font-size: 0.8125rem;
   font-weight: 700;
-  text-align: right;
+  padding: var(--space-2) var(--space-4);
+  text-decoration: none;
+  transition:
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.pastel-action:hover {
+  background: var(--pastel-cta-hover);
+  transform: translateY(-1px);
+}
+
+.pastel-action:active {
+  transform: scale(0.99);
+}
+
+/* 鍵盤焦點(spec §十三) */
+.pastel-action:focus-visible,
+.pastel-card__more:focus-visible,
+.pastel-back:focus-visible {
+  outline: 3px solid var(--pastel-focus-ring);
+  outline-offset: 3px;
+}
+
+@media (max-width: 767px) {
+  .pastel-hero__title {
+    font-size: 1.5rem;
+  }
+
+  .pastel-summary {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pastel-summary__stats {
+    width: 100%;
+  }
+
+  .pastel-summary__stat {
+    flex: 1 1 40%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pastel-card,
+  .pastel-action {
+    transition: none;
+  }
+
+  .pastel-card:hover,
+  .pastel-action:hover,
+  .pastel-action:active {
+    transform: none;
+  }
 }
 
 .lobby__entries {
@@ -3328,123 +3545,45 @@ a {
 
 /* #18 成就徽章：colorplay-new 卡片式版面 */
 /* 成就徽章 icon 色彩:tile 吃 inline color,底色由 currentColor 混白 */
-.achievement-card__tile--unlocked {
-  background: color-mix(in srgb, currentColor 14%, white) !important;
-}
-
-.achievement-card__tile--locked {
-  background: color-mix(in srgb, currentColor 10%, white) !important;
-  opacity: 0.72;
-}
-
+/* 淡彩徽章卡(spec §八):繼承 .pastel-card 基底,尺寸收斂 150/18;
+   未解鎖改「降飽和淡彩」而非整卡灰階,文字維持可讀。 */
 .achievement-card {
-  display: flex;
-  height: 100%;
-  align-items: flex-start;
-  gap: var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
-  padding: var(--space-5);
-  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
-  transition:
-    filter 150ms,
-    opacity 150ms;
-}
-
-.achievement-card--unlocked {
-  border-color: var(--color-brand-yellow);
-  background: linear-gradient(
-    135deg,
-    var(--color-surface),
-    var(--amber-tint-card)
-  );
+  min-height: 150px;
+  padding: 18px;
 }
 
 .achievement-card--locked {
-  opacity: 0.78;
-  filter: grayscale(1);
+  border-color: color-mix(
+    in srgb,
+    var(--card-border) 45%,
+    var(--pastel-border-page)
+  );
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--card-tint) 45%, var(--pastel-surface)) 0%,
+    color-mix(in srgb, var(--card-tint-2) 45%, var(--pastel-surface)) 100%
+  );
 }
 
-.achievement-card--locked:hover {
-  opacity: 1;
-  filter: grayscale(0);
+.achievement-card--locked .pastel-card__icon {
+  background: var(--pastel-tag-locked-bg);
+  color: var(--pastel-tag-locked-text);
 }
 
-.achievement-card__tile {
-  display: grid;
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
-  border-radius: 16px;
-  font-size: 1.9rem;
-  place-items: center;
-}
-
-.achievement-card__tile--unlocked {
-  border: 2px solid var(--color-brand-yellow);
-  background: var(--color-surface);
-}
-
-.achievement-card__tile--locked {
-  border: 1px solid var(--color-border);
-  background: var(--slate-100);
-}
-
-.achievement-card__body {
-  flex: 1;
-  min-width: 0;
-}
-
-.achievement-card__title-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-2);
-}
-
-.achievement-card__name {
+.achievement-card__date {
   margin: 0;
-  font-size: 1.1rem;
-  font-weight: 800;
-}
-
-.achievement-card__chip {
-  border-radius: 999px;
-  background: var(--amber-highlight-soft);
-  color: var(--amber-700);
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 2px var(--space-2);
-  white-space: nowrap;
-}
-
-.achievement-card__description {
-  margin: var(--space-1) 0 var(--space-2);
-  color: var(--color-muted);
-  font-size: 0.9rem;
-}
-
-.achievement-card__state {
-  margin: 0;
-  font-weight: 800;
+  margin-top: auto;
+  color: var(--pastel-ink-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding-top: var(--space-4);
 }
 
 .achievement-card__progress {
   display: grid;
   gap: var(--space-1);
-  margin-top: var(--space-2);
-}
-
-.achievement-card__progress-text {
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.achievement-card__date {
-  margin: var(--space-2) 0 0;
-  color: var(--color-muted);
-  font-size: 0.8rem;
+  margin-top: auto;
+  padding-top: var(--space-4);
 }
 
 /* #20 複習卡：GAME(1) 圖卡摺疊式（預設展開） */
@@ -3765,66 +3904,32 @@ a {
 }
 
 /* 成就頁（colorplay-new 原樣）：返回鍵＋標題列 */
-.achievements-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-6);
-}
-
-.achievements-header__back {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: var(--color-surface);
-  color: var(--slate-500);
-  place-items: center;
-  text-decoration: none;
-}
-
-.achievements-header__back:hover {
-  background: var(--slate-100);
-}
-
-.achievements-header__title {
-  margin: 0;
-  color: var(--color-brand-dark);
-  font-size: 1.4rem;
-  font-weight: 800;
-}
-
-.achievements-header__subtitle {
-  margin: var(--space-1) 0 0;
-  color: var(--slate-500);
-  font-size: 0.9rem;
-}
-
+/* 徽章進度列(spec §八:6px 圓角條、右側數值、主題強調色填色) */
 .achievement-card__progress-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: var(--space-1);
-  color: var(--slate-500);
+  color: var(--pastel-ink-body);
   font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .achievement-card__progress-value {
-  font-weight: 800;
+  color: var(--pastel-ink-action);
+  font-weight: 700;
 }
 
 .achievement-card__bar {
   overflow: hidden;
   height: 6px;
   border-radius: 999px;
-  background: var(--slate-200);
+  background: var(--pastel-track);
 }
 
 .achievement-card__bar-fill {
   height: 100%;
   border-radius: 999px;
-  background: var(--slate-500);
+  background: var(--card-icon);
 }
 
 /* 全站頁面一致性：素面頁改用與大廳一致的卡片容器 */
@@ -3844,10 +3949,6 @@ a {
 @media (max-width: 680px) {
   .page-card {
     padding: var(--space-4);
-  }
-
-  .achievements-header__title {
-    font-size: 1.15rem;
   }
 
   .mission-select__item {
@@ -4170,23 +4271,11 @@ a {
 }
 
 /* 成就徽章列表:自家 grid(原 markup 借用了未載入的 Tailwind 類名) */
+/* .achievements 欄寬/頁緣與網格由淡彩系統(.pastel-grid 等)統一;
+   這裡只保留頁面的縱向區塊間距。 */
 .achievements {
-  width: min(100%, 1120px);
-}
-
-.achievements-grid {
   display: grid;
-  margin: 0;
-  gap: var(--space-4);
-  /* DC 876 逐字寫的是 minmax(min(100%,280px),1fr)——原實作漏了 min(100%,…)
-     防溢出這層（ledger backlog，Task 14 393 稽核補上），非新增規格。 */
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-  list-style: none;
-  padding: 0;
-}
-
-.achievements-grid li {
-  list-style: none;
+  gap: var(--space-6);
 }
 
 /* 教師端篩選表單:統一標籤+控件的整齊格線(2026-07-23 排版統一批) */

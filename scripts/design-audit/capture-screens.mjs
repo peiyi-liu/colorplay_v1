@@ -155,7 +155,7 @@ async function loginAs(page, auth, credentialOverride) {
 async function openFirstChapter(page) {
   await page.goto(`${base}/app`);
   await page.waitForLoadState('networkidle');
-  await page.locator('.lobby-chapter__review').first().click();
+  await page.locator('.chapter-card .pastel-card__more').first().click();
   await page.waitForURL(/\/app\/chapters\//u);
 }
 

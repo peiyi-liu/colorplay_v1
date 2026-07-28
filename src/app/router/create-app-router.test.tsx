@@ -317,9 +317,9 @@ describe('createAppRouter', () => {
     });
 
     expect(
-      await screen.findByRole('heading', { name: '學習大廳' }),
+      await screen.findByRole('heading', { name: '色彩任務選擇大廳' }),
     ).toBeVisible();
-    expect(screen.getByRole('link', { name: '開始挑戰' })).toBeVisible();
+    expect(screen.getByRole('link', { name: '繼續學習' })).toBeVisible();
     expect(document.body).not.toHaveTextContent('learner@colorplay.invalid');
   });
 

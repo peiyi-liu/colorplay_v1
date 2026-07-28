@@ -71,7 +71,9 @@ describe('AchievementsPage', () => {
     expect(
       await screen.findByRole('heading', { name: /個人成就與徽章/u }),
     ).toBeVisible();
-    expect(screen.getByText('收集徽章，證明你的色彩實力')).toBeVisible();
+    expect(
+      screen.getByText('完成學習任務、累積挑戰紀錄，解鎖你的專屬色彩成就。'),
+    ).toBeVisible();
     const grid = screen.getByRole('list', { name: '成就徽章列表' });
     const headings = within(grid).getAllByRole('heading', { level: 2 });
     expect(headings.map((heading) => heading.textContent)).toEqual([

@@ -96,9 +96,7 @@ const collectSubtopicCodes = (
           .filter((code): code is string => code !== undefined),
       ),
     ),
-  ].sort((left, right) =>
-    left.localeCompare(right, 'en', { numeric: true }),
-  );
+  ].sort((left, right) => left.localeCompare(right, 'en', { numeric: true }));
 
 /** 課後實戰列表的小節前綴：單一小節顯示「3-1」，多小節顯示「3-1〜3-3」。 */
 export const subtopicRangeLabel = (

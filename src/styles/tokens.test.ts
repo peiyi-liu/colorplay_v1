@@ -74,4 +74,43 @@ describe('ColorPlay flat design tokens', () => {
       '--avatar-frame-bg: color-mix(in srgb, var(--amber-avatar) 30%, white)',
     );
   });
+
+  // owner 0728 晚間淡彩批:大廳/成就頁專用淡彩系統(hex 依規格逐字釘住)。
+  it.each([
+    '--pastel-page: #ffffff',
+    '--pastel-ink-strong: #18212f',
+    '--pastel-ink-body: #667085',
+    '--pastel-cta: #f5c400',
+    '--pastel-cta-hover: #e4b500',
+    '--pastel-track: #e9edf3',
+    '--pastel-summary-border: #f8e7a0',
+  ])('pins pastel primitive %s', (declaration) => {
+    expect(tokensCss).toContain(declaration);
+  });
+
+  it.each(['blue', 'purple', 'yellow', 'green', 'coral', 'cyan'])(
+    'declares pastel chapter theme %s with tint/border/icon',
+    (theme) => {
+      expect(tokensCss).toMatch(new RegExp(`--pastel-${theme}-tint:\\s`, 'u'));
+      expect(tokensCss).toMatch(
+        new RegExp(`--pastel-${theme}-tint-2:\\s`, 'u'),
+      );
+      expect(tokensCss).toMatch(
+        new RegExp(`--pastel-${theme}-border:\\s`, 'u'),
+      );
+      expect(tokensCss).toMatch(new RegExp(`--pastel-${theme}-icon:\\s`, 'u'));
+    },
+  );
+
+  it.each(['done', 'active', 'locked', 'review', 'open'])(
+    'declares pastel status tag pair %s',
+    (state) => {
+      expect(tokensCss).toMatch(
+        new RegExp(`--pastel-tag-${state}-bg:\\s`, 'u'),
+      );
+      expect(tokensCss).toMatch(
+        new RegExp(`--pastel-tag-${state}-text:\\s`, 'u'),
+      );
+    },
+  );
 });

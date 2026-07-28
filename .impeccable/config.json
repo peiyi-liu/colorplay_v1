@@ -1,0 +1,41 @@
+{
+  "detector": {
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": ["src/styles/globals.css"],
+        "createdAt": "2026-07-26",
+        "reason": "DC 設計稿（claude design handoff）明文規格：黃/紅左框統計卡、警示卡與小節分區（border-left 3/4/6px）為 owner 批核的設計方向，見 docs/superpowers/plans/2026-07-26-full-site-design-refactor.md 驗收清單與 DC 1351/1366/1379/571/1893 等行"
+      },
+      {
+        "rule": "border-accent-on-rounded",
+        "value": "*",
+        "files": ["src/styles/globals.css", "src/components/ui/ui.css"],
+        "createdAt": "2026-07-26",
+        "reason": "DC 明文規格：挑戰結果卡 border-top 8px 黃條＋圓角 20（DC 476）、active tab 3px 黃底線（DC 124，該處 radius:0 屬規則誤判）等強調邊框均為 owner 批核設計"
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": ["src/styles/globals.css"],
+        "createdAt": "2026-07-26",
+        "reason": "Live 投影分布長條的收題揭示動畫（transition: width）——每題僅觸發一次、元素少，改 scaleX 會壓扁 999px 圓端；屬領域合理動效。新增動畫仍應優先 transform/opacity"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": ["src/components/ui/ui.css"],
+        "createdAt": "2026-07-28",
+        "reason": "ui-toast 左緣 4px 狀態色條為 GGAME 既有共用元件設計（toast 慣用模式）;owner 0728 晚間淡彩批裁定豁免,非本批新增樣式"
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": ["src/components/ui/ui.css"],
+        "createdAt": "2026-07-28",
+        "reason": "ui-progress__fill 與 ui-map__line--progress 的 width 填充動畫:4–8px 高小元素、低頻觸發,改 scaleX 會壓扁圓角端點;owner 0728 裁定豁免。新增動畫仍應優先 transform/opacity"
+      }
+    ]
+  }
+}

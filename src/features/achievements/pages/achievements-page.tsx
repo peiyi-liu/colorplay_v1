@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { Icon } from '../../../components/ui/icons';
+import { PageHeader } from '../../../components/ui/page-header';
 import { AchievementCard } from '../components/achievement-card';
 import { useAchievements } from '../hooks/use-achievements';
 import type { AchievementRepository } from '../types';
@@ -32,24 +34,17 @@ export function AchievementsPage({
 
   return (
     <section aria-labelledby="achievements-title" className="achievements">
-      <header className="achievements-header">
-        <Link
-          aria-label="回課後學習大廳"
-          className="achievements-header__back"
-          to="/app"
-        >
-          <span aria-hidden="true">←</span>
-        </Link>
-        <div>
-          <h1 className="achievements-header__title" id="achievements-title">
-            <span aria-hidden="true"></span>個人成就與徽章
-          </h1>
-          <p className="achievements-header__subtitle">
-            收集徽章，證明你的色彩實力
-          </p>
-        </div>
-      </header>
-      <ul aria-label="成就徽章列表" className="achievements-grid">
+      <PageHeader
+        description="完成學習任務、累積挑戰紀錄，解鎖你的專屬色彩成就。"
+        leading={
+          <Link aria-label="回課後學習大廳" className="pastel-back" to="/app">
+            <Icon name="arrow-left" size={18} />
+          </Link>
+        }
+        title="個人成就與徽章"
+        titleId="achievements-title"
+      />
+      <ul aria-label="成就徽章列表" className="pastel-grid achievements-grid">
         {catalog.items.map((item) => (
           <AchievementCard item={item} key={item.stableCode} />
         ))}

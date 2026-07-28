@@ -37,7 +37,7 @@ export async function startQuizFromLobby(
   await page.waitForLoadState('networkidle');
   const link = options?.templateId
     ? page.locator(`a[href="/app/quiz/new?template=${options.templateId}"]`)
-    : page.locator('.lobby-chapter__challenge').first();
+    : page.locator('.chapter-card .pastel-action').first();
   await link.click();
   await page.waitForURL(quizSessionUrlPattern);
 }

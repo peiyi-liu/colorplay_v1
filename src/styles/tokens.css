@@ -133,4 +133,77 @@
   --button-primary-bg: var(--color-primary);
   --button-primary-text: var(--color-primary-contrast);
   --avatar-frame-bg: color-mix(in srgb, var(--amber-avatar) 30%, white);
+
+  /* ── 淡彩卡片系統(owner 0728 晚間裁定:學習大廳＋成就頁改參考圖
+     「色彩任務選擇大廳」淡彩大卡片;範圍僅此兩頁,其餘頁面維持暖色系)。
+     文字階與六章節主題色 hex 依 owner 規格逐字釘住;狀態標籤文字為
+     達 WCAG 4.5:1 採加深版(規格原色僅 3.0:1 上下,已驗算)。 ── */
+  --pastel-page: #ffffff;
+  --pastel-surface: #fafbfc;
+  --pastel-ink-strong: #18212f; /* 頁面主標題 */
+  --pastel-ink-heading: #253042; /* 卡片標題 */
+  --pastel-ink-body: #667085; /* 內文 */
+  --pastel-ink-soft: #98a2b3; /* 次要文字 */
+  --pastel-ink-action: #344054; /* 深色操作文字 */
+  --pastel-ink-locked: #8a94a6; /* 鎖定狀態文字(僅限大字/裝飾) */
+  --pastel-cta: #f5c400; /* ColorPlay 黃(此系統內的主按鈕) */
+  --pastel-cta-hover: #e4b500;
+  --pastel-cta-contrast: #2d2600;
+  --pastel-success: #22a06b;
+  --pastel-danger: #e5484d;
+  --pastel-info: #4d7cfe;
+  --pastel-track: #e9edf3; /* 進度條底色 */
+  --pastel-border-page: #eef0f3;
+  --pastel-focus-ring: rgb(77 124 254 / 25%);
+
+  /* 六章節淡彩主題(blue/purple/yellow/green/coral/cyan) */
+  --pastel-blue-tint: #f1f7ff;
+  --pastel-blue-tint-2: #eaf3ff;
+  --pastel-blue-border: #dceaff;
+  --pastel-blue-icon: #6c8ff8;
+  --pastel-purple-tint: #fbf4ff;
+  --pastel-purple-tint-2: #f6ecff;
+  --pastel-purple-border: #eedcff;
+  --pastel-purple-icon: #d976e8;
+  --pastel-yellow-tint: #fffbea;
+  --pastel-yellow-tint-2: #fff4c7;
+  --pastel-yellow-border: #f5c400;
+  --pastel-yellow-icon: #ff6b6b;
+  --pastel-yellow-icon-2: #ff9d4d;
+  --pastel-green-tint: #effff7;
+  --pastel-green-tint-2: #e3faf1;
+  --pastel-green-border: #c9f1e1;
+  --pastel-green-icon: #48cfa5;
+  --pastel-coral-tint: #fff3ee;
+  --pastel-coral-tint-2: #ffeae2;
+  --pastel-coral-border: #ffd8cc;
+  --pastel-coral-icon: #ff8b75;
+  --pastel-cyan-tint: #effaff;
+  --pastel-cyan-tint-2: #e5f6fc;
+  --pastel-cyan-border: #cbeaf6;
+  --pastel-cyan-icon: #39b8df;
+
+  /* 狀態標籤(淡底＋加深文字,均 ≥4.5:1) */
+  --pastel-tag-done-bg: #dcf3e8;
+  --pastel-tag-done-text: #17754e;
+  --pastel-tag-active-bg: #fbf0ce;
+  --pastel-tag-active-text: #8a6116;
+  --pastel-tag-locked-bg: #eef1f4;
+  --pastel-tag-locked-text: #566171;
+  --pastel-tag-review-bg: #fce9dc;
+  --pastel-tag-review-text: #9a4b12;
+  --pastel-tag-open-bg: #e7eeff;
+  --pastel-tag-open-text: #2f56c4;
+
+  /* 頂部學生資訊卡(暖黃橫卡) */
+  --pastel-summary-tint: #fffdf4;
+  --pastel-summary-tint-2: #fff8d8;
+  --pastel-summary-border: #f8e7a0;
+  --pastel-summary-cell: rgb(255 255 255 / 75%);
+
+  /* 卡片陰影(唯一兩檔:預設/懸停;進行中另加淡黃外圈) */
+  --pastel-shadow: 0 4px 14px rgb(31 41 55 / 4%);
+  --pastel-shadow-hover: 0 10px 24px rgb(31 41 55 / 10%);
+  --pastel-shadow-current:
+    0 0 0 3px rgb(245 196 0 / 8%), 0 10px 24px rgb(31 41 55 / 8%);
 }

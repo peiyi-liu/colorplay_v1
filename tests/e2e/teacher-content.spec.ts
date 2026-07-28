@@ -367,9 +367,9 @@ test('Teacher Content phase gate', async ({
     studentPage.getByRole('heading', { name: '色彩任務選擇大廳' }),
   ).toBeVisible();
   await studentPage
-    .locator('article.lobby-chapter')
+    .locator('article.chapter-card')
     .filter({ hasText: QUIZ_CHAPTER_TITLE })
-    .getByRole('link', { name: '開始挑戰' })
+    .getByRole('link', { name: /開始任務|繼續學習/u })
     .click();
 
   const questionTotal = quizChapter.questionCount;

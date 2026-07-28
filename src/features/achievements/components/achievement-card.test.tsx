@@ -32,7 +32,7 @@ describe('AchievementCard', () => {
 
     expect(screen.getByRole('heading', { name: '初出茅廬' })).toBeVisible();
     expect(screen.getByText('完成第一次正式挑戰')).toBeVisible();
-    expect(screen.getByText('已獲得')).toBeVisible();
+    expect(screen.getByText('已解鎖')).toBeVisible();
     expect(screen.getByText(/2026年7月16日/u)).toBeVisible();
   });
 

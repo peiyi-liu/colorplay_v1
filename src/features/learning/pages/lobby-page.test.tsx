@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useAchievements } from '../../achievements/hooks/use-achievements';
 import { useMyProfile } from '../../profile/hooks/use-my-profile';
 import { useEconomySummary } from '../../rewards/hooks/use-economy-summary';
 import {
@@ -26,6 +27,13 @@ vi.mock('../hooks/use-learning', async (importOriginal) => {
 vi.mock('../../profile/hooks/use-my-profile', () => ({
   useMyProfile: vi.fn(),
 }));
+vi.mock('../../achievements/hooks/use-achievements', async (importOriginal) => {
+  const original =
+    await importOriginal<
+      typeof import('../../achievements/hooks/use-achievements')
+    >();
+  return { ...original, useAchievements: vi.fn() };
+});
 vi.mock('../../rewards/hooks/use-economy-summary', () => ({
   useEconomySummary: vi.fn(),
 }));
@@ -61,6 +69,7 @@ vi.mock(
 const mockedChapters = vi.mocked(usePublishedChapters);
 const mockedMistakes = vi.mocked(useMistakes);
 const mockedProfile = vi.mocked(useMyProfile);
+const mockedAchievements = vi.mocked(useAchievements);
 const mockedEconomy = vi.mocked(useEconomySummary);
 const mockedInventory = vi.mocked(useBlookInventory);
 const mockedFrames = vi.mocked(useFrameInventory);
@@ -141,6 +150,13 @@ describe('LobbyPage', () => {
     mockedFrames.mockReturnValue(
       asResult({ data: undefined, isError: false, isPending: false }),
     );
+    mockedAchievements.mockReturnValue(
+      asResult({
+        data: { items: [], totalCount: 8, unlockedCount: 3 },
+        isError: false,
+        isPending: false,
+      }),
+    );
     mockedInventory.mockReturnValue(
       asResult({
         data: {
@@ -202,14 +218,21 @@ describe('LobbyPage', () => {
     );
   });
 
-  it('shows the profile card without the edit link or token tile', () => {
+  it('shows the summary card with xp, token, badge count and rank', () => {
     renderPage();
     expect(screen.getByText('🦖')).toBeInTheDocument();
     expect(screen.getByText('學生一號')).toBeInTheDocument();
-    // UAT 0727 #2：暱稱旁不再有「修改」；統計不顯示持有代幣。
+    // UAT 0727 #2 的「修改」連結維持移除;owner 0728 淡彩批(spec §九)改為
+    // 顯示 XP/代幣/徽章/排名四格,取代先前「不顯示代幣」的裁定。
     expect(screen.queryByRole('link', { name: '個人資料' })).toBeNull();
-    expect(screen.queryByText('持有代幣')).toBeNull();
+    expect(screen.getByText('Lv.2')).toBeInTheDocument();
+    expect(screen.getByText('累計積分 (XP)')).toBeInTheDocument();
     expect(screen.getByText('750')).toBeInTheDocument();
+    expect(screen.getByText('代幣')).toBeInTheDocument();
+    expect(screen.getByText('40')).toBeInTheDocument();
+    expect(screen.getByText('徽章')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText('全體排名')).toBeInTheDocument();
     expect(screen.getByText('6')).toBeInTheDocument();
   });
 
@@ -221,12 +244,16 @@ describe('LobbyPage', () => {
     expect(screen.queryByText('全體排名')).toBeNull();
   });
 
-  it('renders the ggame chapter grid with locked and open cards', () => {
+  it('renders the pastel chapter grid with locked and current cards', () => {
     renderPage();
-    expect(screen.getByText('色彩任務選擇大廳')).toBeInTheDocument();
-    expect(screen.getByText('已開放')).toBeInTheDocument();
-    expect(screen.getByText('鎖定中')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '開始挑戰' })).toHaveAttribute(
+    expect(
+      screen.getByRole('heading', { level: 1, name: '色彩任務選擇大廳' }),
+    ).toBeInTheDocument();
+    // mock 只有第二章可玩→它是解鎖前緣(進行中);第一章鎖定。
+    expect(screen.getByText('進行中')).toBeInTheDocument();
+    expect(screen.getByText('尚未解鎖')).toBeInTheDocument();
+    expect(screen.getByText('完成前一章節後解鎖')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '繼續學習' })).toHaveAttribute(
       'href',
       '/app/quiz/new?template=26000000-0000-0000-0000-000000000002',
     );
