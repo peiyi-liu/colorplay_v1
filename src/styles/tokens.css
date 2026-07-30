@@ -211,4 +211,19 @@
   --pastel-shadow-hover: 0 10px 24px rgb(31 41 55 / 10%);
   --pastel-shadow-current:
     0 0 0 3px rgb(245 196 0 / 8%), 0 10px 24px rgb(31 41 55 / 8%);
+
+  /* ── JRPG 像素基線(2026-07-31 ADR 0005):P0 新增,批次①起逐頁採用;
+     既有淡彩 token 保留供未遷移頁面,勿刪 ── */
+  --pixel-night: #171c3f; /* 夜空對話窗底 */
+  --pixel-night-deep: #10142e; /* 夜景頁底(戰鬥/Live/投影) */
+  --pixel-parchment: #f6eed8; /* 羊皮紙日景頁底(村莊/地圖) */
+  --pixel-parchment-card: #fdf8ea; /* 日景卡片底 */
+  --pixel-gold: #b8862f; /* 金幣/EXP 強調 */
+  --pixel-window-frame: #f4f1e4; /* 對話窗白框 */
+  --pixel-window-ink: #f4f1e4; /* 對話窗內文字 */
+  --pixel-window-muted: #a9b0d6; /* 對話窗次要文字 */
+  --pixel-shadow: rgba(0, 0, 0, 0.25); /* 硬位移陰影色 */
+  --radius-pixel: 0px; /* 像素風零圓角 */
+  --font-pixel-latin: 'Press Start 2P', monospace;
+  --font-pixel-tc: 'Cubic 11', 'Noto Sans TC', sans-serif;
 }

@@ -118,3 +118,27 @@ describe('ColorPlay flat design tokens', () => {
     },
   );
 });
+
+describe('JRPG pixel baseline tokens (ADR 0005)', () => {
+  it.each([
+    '--pixel-night: #171c3f',
+    '--pixel-night-deep: #10142e',
+    '--pixel-parchment: #f6eed8',
+    '--pixel-parchment-card: #fdf8ea',
+    '--pixel-gold: #b8862f',
+    '--pixel-window-frame: #f4f1e4',
+    '--radius-pixel: 0px',
+  ])('pins pixel token %s', (declaration) => {
+    expect(tokensCss).toContain(declaration);
+  });
+
+  it.each([
+    '--pixel-window-ink',
+    '--pixel-window-muted',
+    '--pixel-shadow',
+    '--font-pixel-latin',
+    '--font-pixel-tc',
+  ])('declares pixel token %s', (name) => {
+    expect(tokensCss).toMatch(new RegExp(`${name}:\\s`, 'u'));
+  });
+});
