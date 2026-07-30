@@ -4735,3 +4735,33 @@ select#dashboard-classroom {
   margin-right: var(--space-3);
   padding: var(--space-2) var(--space-3);
 }
+
+/* ── JRPG 對話窗(ADR 0005;元件 src/components/ui/rpg-window.tsx) ── */
+.rpg-window {
+  background: var(--pixel-night);
+  color: var(--pixel-window-ink);
+  border: 3px solid var(--pixel-window-frame);
+  outline: 2px solid var(--pixel-night);
+  box-shadow:
+    0 0 0 5px var(--pixel-window-frame),
+    8px 8px 0 var(--pixel-shadow);
+  border-radius: var(--radius-pixel);
+  padding: 20px 24px;
+}
+
+.rpg-window__title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--pixel-window-ink);
+  letter-spacing: 0.04em;
+}
+
+.rpg-window__body {
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.rpg-window__muted {
+  color: var(--pixel-window-muted);
+}
