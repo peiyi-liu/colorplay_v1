@@ -51,3 +51,24 @@ _Avoid_: sound effect, SFX, audio event
 `presenter` survives in one place that is a contract with people outside the codebase, and must not be renamed to match this glossary: the `?presenter=1` query parameter, because teachers bookmark projector links and paste them into lesson plans.
 
 Internal identifiers use **Projector**; the URL parameter stays as-is.
+
+## JRPG Pixel Restyle（2026-07-31, ADR 0005）
+
+**RPG Window（對話窗）**:
+全站唯一的像素風容器元件：夜空底＋白雙線框。題目窗、系統訊息、NPC 對話、
+購買確認一律用它。元件名 `RpgWindow`，樣式類名 `rpg-window`。
+_Avoid_: dialog box, message box, panel（指此容器時）
+
+**Tri-Spirits（三色精靈）**:
+紅／藍／綠三位 NPC 導師，對應品牌三色寶石，負責回饋頁講解、標題畫面與
+頒獎台演出。同一基底 sprite 換色而成。
+_Avoid_: mascot, tutor, guide（指這組角色時）
+
+**Loot Reveal（寶箱結算）**:
+quiz result 頁的獎勵演出：寶箱開啟後滾動顯示本次「確定已入帳」的
+XP／G／新解鎖成就。純演出，禁止任何隨機掉落。
+_Avoid_: loot drop, gacha, reward roll
+
+**Day/Night Scene（日夜場景）**:
+村莊與世界地圖＝羊皮紙暖色日景；戰鬥、Live、投影幕＝夜空 navy。
+Live 投影墨色舞台自此為正規邏輯而非例外。
