@@ -4903,3 +4903,9 @@ select#dashboard-classroom {
   font-family: var(--font-pixel-tc);
   font-size: 22px;
 }
+
+/* 夜景標題反白(批次① Task 5 自檢:route-panel 標題沿用墨色,對比不足)。 */
+.scene-night h1,
+.scene-night h2 {
+  color: var(--pixel-window-ink);
+}
