@@ -1,4 +1,6 @@
+/* eslint-disable */
 // GENERATED from dc-runtime/src/*.ts — do not edit. Rebuild with `cd dc-runtime && bun run build`.
+// 設計稿備份 bundle(8bbac53),非產品程式碼;檔案層級停用 lint,比照 eslint.config.js 對 live/ 的排除意圖。
 "use strict";
 (() => {
   var __defProp = Object.defineProperty;
