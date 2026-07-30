@@ -72,9 +72,9 @@ describe('LeaderboardTable', () => {
       rows.map((row) => within(row).getAllByRole('cell')[1]?.textContent),
     ).toEqual(['🐳子安', '阿美']);
     // owner 0730 #6：頭像磚（大廳同款）取代 Blook 名稱欄；未知代碼安全退回。
-    expect(document.querySelectorAll('.leaderboard-blook__avatar')).toHaveLength(
-      3,
-    );
+    expect(
+      document.querySelectorAll('.leaderboard-blook__avatar'),
+    ).toHaveLength(3);
     expect(screen.getAllByText('0 XP')).toHaveLength(2);
     expect(document.body).not.toHaveTextContent('59999999-');
   });

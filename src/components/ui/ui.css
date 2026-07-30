@@ -400,15 +400,16 @@
 }
 
 .ui-table th {
-  border-bottom: 1px solid var(--border-subtle);
-  background: var(--slate-50);
+  border-bottom: 1px solid var(--pastel-summary-border);
+  background: var(--pastel-summary-tint);
   color: var(--color-muted);
   font-weight: 700;
   padding: var(--space-3) var(--space-4);
 }
 
 .ui-table td {
-  border-bottom: 1px solid var(--slate-100);
+  /* 列分隔線改用淡黃(2026-07-29 owner 指示),底色維持白卡。 */
+  border-bottom: 1px solid var(--pastel-summary-border);
   background: var(--surface-card);
   padding: var(--space-3) var(--space-4);
 }

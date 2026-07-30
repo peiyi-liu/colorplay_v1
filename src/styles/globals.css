@@ -186,6 +186,22 @@ a {
   accent-color: var(--yellow-brand);
 }
 
+/* 部分瀏覽器不吃 accent-color,明確指定進度條軌道與填充(暖黃)。 */
+.economy-summary__level progress::-webkit-progress-bar {
+  border-radius: 999px;
+  background: var(--ink-200);
+}
+
+.economy-summary__level progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: var(--yellow-brand);
+}
+
+.economy-summary__level progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: var(--yellow-brand);
+}
+
 .economy-summary__tokens {
   white-space: nowrap;
 }
@@ -1610,9 +1626,10 @@ a {
   }
 }
 
-/* 進行中章節(spec §六):2px 黃邊框＋淡黃外圈;padding 減 1px 補邊框差。 */
+/* 進行中章節(spec §六):淡黃外圈陰影;padding 減 1px 補邊框差。 */
 .pastel-card--current {
-  border: 2px solid var(--pastel-cta);
+  /* 0729 owner:與其他章節卡一致,沿用各卡的主題色邊框,只保留較強的陰影。 */
+  border: 1px solid var(--card-border);
   box-shadow: var(--pastel-shadow-current);
   padding: calc(var(--space-5) - 1px);
 }
@@ -2328,7 +2345,9 @@ a {
 
 .teacher-error-card {
   display: grid;
-  border: 1px solid var(--border-subtle);
+
+  /* 0729 owner:頁面內部的次級卡片用暖黃外框(直接坐頁面背景者維持淺灰)。 */
+  border: 1.5px solid var(--yellow-brand);
   border-radius: var(--radius-card);
   background: var(--surface-card);
   font-size: var(--font-size-supporting);
@@ -2813,7 +2832,7 @@ a {
 /* 登入路由:紙張底 + 頂部六色相細條,白卡以 2px 墨框浮出(flat)。 */
 .app-shell:has(.auth-portal) #main-content {
   position: relative;
-  background: var(--paper);
+  background: var(--surface-page);
 }
 
 .app-shell:has(.auth-portal) #main-content::before {
@@ -2821,23 +2840,23 @@ a {
   top: 0;
   right: 0;
   left: 0;
-  height: 6px;
+  height: 3px;
+
+  /* 0729 owner:登入頁頂條由六色相改為暖黃漸層。 */
   background: linear-gradient(
     to right,
-    var(--hue-ch1) 0 16.6%,
-    var(--hue-ch2) 0 33.3%,
-    var(--hue-ch3) 0 50%,
-    var(--hue-ch4) 0 66.6%,
-    var(--hue-ch5) 0 83.3%,
-    var(--hue-ch6) 0 100%
+    var(--yellow-brand),
+    var(--amber-avatar),
+    var(--yellow-brand)
   );
   content: '';
 }
 
 .auth-portal {
   width: min(100%, 448px);
-  /* owner 0728:登入卡邊框不用黑,改暖黃。 */
-  border: 2px solid var(--amber-avatar);
+
+  /* owner 0728:登入卡邊框不用黑,改暖黃;0729 粗度統一為 1.5px。 */
+  border: 1.5px solid var(--yellow-brand);
 }
 
 .login-form__portal {
@@ -3277,7 +3296,9 @@ a {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid var(--border-subtle);
+
+  /* 0729 owner:頁面內部的次級卡片用暖黃外框(直接坐頁面背景者維持淺灰)。 */
+  border: 1.5px solid var(--yellow-brand);
   border-radius: var(--radius-card);
   background: var(--slate-50);
   gap: var(--space-4);

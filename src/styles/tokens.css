@@ -52,8 +52,9 @@
 
   /* ── 相容別名:舊 GGAME primitive 重新導向新色盤 ──────
      (globals.css 逐段翻新中;未翻新的引用先吃到新色) */
-  /* owner 0730:頁底改回上一版奶黃(卡片維持 --paper 白)。 */
-  --surface-page: #faf5e2;
+  /* 全站頁面底色暖黃(2026-07-29 owner 指示,live-v2 設計稿釘值);
+     卡片仍為白底 --surface-card。 */
+  --surface-page: #fff8e1;
   --slate-50: var(--ink-50);
   --slate-100: var(--ink-100);
   --slate-200: var(--ink-200);

@@ -27,9 +27,7 @@ function FramedBlook({
   entry: LeaderboardEntry;
 }>) {
   const blook = safeBlook(entry.activeBlookId, blooks);
-  const hasFrame = Boolean(
-    entry.frameGradientStart && entry.frameGradientEnd,
-  );
+  const hasFrame = Boolean(entry.frameGradientStart && entry.frameGradientEnd);
   return (
     <span className="leaderboard-blook" data-framed={hasFrame || undefined}>
       <span
