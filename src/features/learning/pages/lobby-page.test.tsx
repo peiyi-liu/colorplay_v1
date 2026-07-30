@@ -298,4 +298,13 @@ describe('LobbyPage', () => {
       screen.getByRole('button', { name: '重新載入' }),
     ).toBeInTheDocument();
   });
+
+  it('applies the day scene and HUD wrapper to the lobby', async () => {
+    renderPage();
+    const section = await screen.findByRole('region', {
+      name: /色彩任務選擇大廳/,
+    });
+    expect(section).toHaveClass('scene-day');
+    expect(section.querySelector('.hud-bar')).not.toBeNull();
+  });
 });

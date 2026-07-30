@@ -25,7 +25,7 @@ export function LobbyPage() {
 
   if (chapters.isError) {
     return (
-      <section className="lobby lobby--message">
+      <section className="lobby lobby--message scene-day">
         <Card padding="lg">
           <Chip tone="primary">學習大廳</Chip>
           <h1>章節載入失敗</h1>
@@ -54,9 +54,11 @@ export function LobbyPage() {
   );
 
   return (
-    <section aria-labelledby="lobby-title" className="lobby">
+    <section aria-labelledby="lobby-title" className="lobby scene-day">
       {/* live-v2 設計稿:資訊卡在最上,標題與章節格包進白卡浮於暖黃頁底。 */}
-      <StudentSummaryCard />
+      <div className="hud-bar">
+        <StudentSummaryCard />
+      </div>
       <div className="lobby-panel">
         <PageHeader
           description="選擇下方的色彩原理核心章節，展開你的色彩知識與視覺挑戰。"
