@@ -1,0 +1,74 @@
+# Claude Design handoff 分析與採用優先計劃
+
+> **狀態：分析與排序，未動工。** 來源：`live/`（Claude Design handoff bundle，專案名「教師端Live主持优化方案」，2026-07-25 21:28 匯出）。本文件是採用計畫的排序依據；每個 P 級動工前仍走 AGENTS.md §7 分級流程。
+
+## 1. Bundle 分析結論
+
+- **單一 Design Component**：`live/project/ColorPlay 現有畫面.dc.html`（2,344 行），以 `startScreen` 切換 **35 個畫面**（enum 列 30，另有 5 個僅內部可達：`tLogin`、`tLoginError`、`register`、`tClassDetail`、`tStudentProgress`）。
+- **樣式零漂移**：bundle 內 `tokens.css` / `globals.css` / `ui.css` 與 repo 現行檔**逐位元相同** —— 設計完全沿用既有 design system，無新 token、無新字體。採用成本集中在版面與流程，不在視覺語言。
+- **內容取自真實 seed**（章節/小節/題目/商店價格），`support.js` 為設計工具 runtime（不採用）。
+- 約 24 個畫面是現況忠實重建（基線用途）；**設計增量集中在教師 Live 六畫面 + 5 個新畫面**。
+
+畫面行界索引（`.dc.html` 行號）：`tLive` 1391 / `tHost` 1423 / `tPresenter` 1452 / `tPresenterChart` 1485 / `tPresenterPodium` 1535 / `tReport` 1567 / `tLogin` 1265 / `tLoginError` 1943 / `register` 1996 / `tClassDetail` 2072 / `tStudentProgress` 2181。
+
+## 2. 與現行實作的差異清單
+
+### A. 流程衝突（✅ 已全數裁定，owner 2026-07-25）
+
+> **A1 裁定：保留「投影鎖定」** —— 設計的獨立主持台⇄投影切換不採用；`tHost` 畫面僅作 draft 前與完場後的版面參考（B5 範圍相應縮小）。
+> **A2 裁定：採用** —— 「取消挑戰」鈕進投影 header（全班可見），紅色樣式依設計。
+> **A3 裁定：完場不自動跳報表** —— 投影頒獎台結束 → 離開投影 → 留在主持台（最終排名）→ 按「結算成績」鈕才跳場次報表。（按鈕文案照 owner 用詞「結算成績」；因 finalize 轉換已在投影完成，此鈕實際為導覽——spec 階段照此實作，如文案疑義再回報。）
+
+| # | 設計 | 現行 | 衝突 |
+|---|---|---|---|
+| A1 | `tHost` 是獨立主持台畫面，含「投影模式」按鈕，主持動作（收題/暫停/取消）在主持台完成，可切去投影 | `c0f7baf` **投影鎖定**：開場即 `?presenter=1`，進行中無「離開投影」，主持動作走投影 footer | 主持台⇄投影「可切換」vs「鎖定」是相反的產品決策；owner 於 7/23 批過鎖定 |
+| A2 | `tPresenter` header 有紅色「**取消挑戰**」鈕（投影畫面上，全班看得到） | 取消僅在主持台，且投影進行中無此鈕 | 全班可見的取消鈕是否符合課堂管理意圖？ |
+| A3 | `tPresenterPodium` 的「離開投影」與「結算成績」都導向 `tReport`（完場直接進報表） | 結算後留在主持台顯示最終排名，報表另行前往 | 動線變更，較小 |
+
+### B. 純視覺/版面（低風險，不動狀態機）
+
+- B1 `tPresenterChart`：**正解列放大 1.06 + 綠 outline + ✓ 前綴**強調；其餘選項條淡化（opacity .35）。
+- B2 `tPresenterChart`：Top 5 名次變動「↑↓—」箭頭黃色高亮（10B 已有箭頭，樣式對齊）。
+- B3 `tPresenterPodium`：前三名獎盃/皇冠 SVG + 分段延遲揭曉動畫（`live-podium-reveal`，延遲 0/1.2s/2.4s，季軍→亞軍→冠軍順序）。
+- B4 `tLive` 開場：墨色 header 卡 + 黃圓閃電 icon；秒數選單固定 20/10/30。
+- B5 `tHost`：琥珀邊卡片、佈局精修（若 A1 裁定保留鎖定，此畫面僅在 draft/報表前後出現）。
+- B6 `tReport` 版面重排：「建議重教」置頂琥珀卡（低於 60% 門檻文案「請加油」）→ 逐題表 → 作答矩陣 → 學習閉環 → 最終排名；逐題表新增**平均反應 ms** 欄。
+
+### C. 新功能（有後端/資料面工作）
+
+- C1 **`tStudentProgress` 教師看個別學生進度**（唯一不在 github.md 對照表的畫面）：4 張統計卡（累計 XP／班級名次／平均正確率／待補救錯題）＋各章節表（複習完成、涵蓋率、正確率、精熟度條、狀態章「已精熟／學習中／未開始」）＋「← 回班級成員」動線。**需要新的教師端個人跨章節統計 payload（RPC）＋ RLS 正/負向測試**；現行 `teacher-classroom-progress-page` 是班級聚合，非個人。
+- C2 `tReport`「**一鍵生成課後複習任務**」：後端 10E 已有錯題寫入與 assignments 接口，此為報表頁入口接線＋「草稿建立後到任務頁發佈」文案流程。
+- C3 `tReport`「回 Live 活動」CTA（動線接線，小）。
+
+### D. 依賴外部憑證
+
+- D1 `tLogin` 教師登入獨立畫面 ＋ `tLoginError` 錯誤態（現行為同頁 radio 切換）。
+- D2 `register` 學生註冊 Email OTP 流程畫面化 —— **依賴 Resend SMTP 憑證**（roadmap A-1，等 owner 提供 API Key／驗證網域／寄件地址）。
+
+### E. 內容備註
+
+- E1 `tLive` 小節選單含「3-3 數位色彩與色票的表示**（暫定，待教師確認）**」—— 題庫內容待 owner 確認，非工程項。
+
+## 3. 優先順序（裁定版草案）
+
+| 優先 | 項目 | 級別 | 前置 |
+|---|---|---|---|
+| **P0** | **Live Phase View 重構先行**（既有 plan `2026-07-25-live-phase-view.md`）—— 設計的主持台/投影全部消費 phase view 輸出；先收攏再套皮，B 組全部變 render 層薄改 | L（已規劃） | CI 綠 |
+| ~~P1~~ | ✅ **已裁定（2026-07-25）**：A1 保留投影鎖定；A2 取消鈕進投影 header；A3 完場留主持台、按「結算成績」進報表 | 完成 | — |
+| **P2** | B 組視覺批（B1–B4、B6）＋ A2 取消鈕＋ A3 主持台→報表動線；套用到重構後的 render 層（B5 縮小為 draft/完場版面） | M | P0 |
+| **P3** | C2＋C3 報表接線（閉環入口＋動線） | S–M | P0 |
+| **P4** | C1 `tStudentProgress` 新功能（RPC＋RLS＋頁面） | M–L（需 plan） | 無硬前置，排 P2 後 |
+| **P5** | D 組 auth 畫面（D1 可先做；D2 等 Resend 憑證） | M | D2 等憑證 |
+| **P6** | 其餘 ~24 畫面逐一視覺比對，差異以 S 級批次收 | S 批次 | 隨時可穿插 |
+
+## 4. 明確不採用
+
+- `support.js`（設計工具 runtime）與 `.dc.html` 的 mustache/`sc-if` 結構 —— 只對齊視覺輸出，不複製原型內部結構（bundle README 亦如此要求）。
+- 原型內 hardcoded 假資料（人名、分數、25 人）—— 一律接真實 payload。
+
+## 5. 建議的下一步
+
+1. CI 全綠收尾（進行中）。
+2. P1 grill：三個 A 組問題請 owner 裁定（一次會話可完成）。
+3. P0 重構動工（plan 已備）。
+4. 裁定與重構完成後，為 P2–P4 各開 to-spec → plan。
