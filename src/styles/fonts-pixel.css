@@ -1,0 +1,10 @@
+/* Cubic 11(俐方體 11 號) — SIL OFL 1.1,來源 github.com/ACh-K/Cubic-11。
+   像素字以 11 的整數倍尺寸(22/33px)最銳利;內文渲染 ≥16px(spec/07)。
+   TODO(批次①後): 子集化壓載入量;目前整檔僅標題短文使用。 */
+@font-face {
+  font-family: 'Cubic 11';
+  src: url('../assets/fonts/cubic-11.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

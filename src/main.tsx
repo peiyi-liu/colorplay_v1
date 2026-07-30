@@ -10,6 +10,8 @@ import '@fontsource/noto-sans-tc/400.css';
 import '@fontsource/noto-sans-tc/500.css';
 import '@fontsource/noto-sans-tc/700.css';
 import '@fontsource/noto-sans-tc/900.css';
+import '@fontsource/press-start-2p/index.css';
+import './styles/fonts-pixel.css';
 import './styles/tokens.css';
 import './styles/globals.css';
 import './components/ui/ui.css';
