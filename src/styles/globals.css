@@ -4765,3 +4765,141 @@ select#dashboard-classroom {
 .rpg-window__muted {
   color: var(--pixel-window-muted);
 }
+
+/* ── 批次① JRPG 場景底座(spec §4;日夜場景見 CONTEXT.md Day/Night Scene) ── */
+
+/* 夜景:標題畫面/命名之儀/教會回復。星空以 box-shadow 點陣繪製,無圖片素材。 */
+.scene-night {
+  position: relative;
+  background: var(--pixel-night-deep);
+  color: var(--pixel-window-ink);
+  min-height: 100%;
+  padding: 48px 16px 64px;
+}
+
+.scene-night::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: 12%;
+  width: 4px;
+  height: 4px;
+  background: var(--pixel-window-frame);
+  box-shadow:
+    120px 40px 0 var(--pixel-window-frame),
+    260px 12px 0 var(--pixel-window-muted),
+    420px 64px 0 var(--pixel-window-frame),
+    560px 28px 0 var(--pixel-window-muted),
+    680px 84px 0 var(--pixel-window-frame),
+    80px 120px 0 var(--pixel-window-muted),
+    340px 140px 0 var(--pixel-window-frame),
+    520px 156px 0 var(--pixel-window-muted),
+    720px 180px 0 var(--pixel-window-frame),
+    180px 200px 0 var(--pixel-window-frame);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.scene-night > * {
+  position: relative;
+}
+
+/* 日景:村莊廣場。羊皮紙頁底;tile 村莊背景屬素材批,先以純色呈現。 */
+.scene-day {
+  background: var(--pixel-parchment);
+  padding-bottom: 48px;
+}
+
+/* 像素標題:繁中 Cubic 11 用 11 的整數倍(22px);拉丁徽標另用 Press Start 2P。 */
+.pixel-heading {
+  font-family: var(--font-pixel-tc);
+  font-size: 22px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+}
+
+/* PRESS START 閃爍(steps 硬切;reduced-motion 時恆亮)。 */
+.press-start {
+  font-family: var(--font-pixel-latin);
+  font-size: 16px;
+  letter-spacing: 0.14em;
+  text-align: center;
+  color: var(--pixel-gold);
+  margin: 16px 0 0;
+  animation: press-start-blink 1.2s steps(2, jump-none) infinite;
+}
+
+@keyframes press-start-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press-start {
+    animation: none;
+  }
+}
+
+/* 夜景中的認證對話窗:置中、限制寬度;RpgWindow 供底與框。 */
+.auth-window {
+  max-width: 440px;
+  margin: 24px auto 0;
+}
+
+.auth-window .rpg-window__body {
+  font-size: 16px;
+}
+
+/* 夜景下表單控件反白(僅外觀;不動任何表單邏輯)。 */
+.scene-night input,
+.scene-night select {
+  background: var(--paper);
+  color: var(--ink-900);
+  border-radius: var(--radius-pixel);
+  min-height: 44px;
+}
+
+.scene-night a {
+  color: var(--pixel-window-muted);
+}
+
+.scene-night :focus-visible {
+  outline: 3px solid var(--pixel-gold);
+  outline-offset: 2px;
+}
+
+/* 村莊 HUD 條:包住 StudentSummaryCard 的夜空窗橫幅(Lv/EXP/金幣)。 */
+.hud-bar {
+  background: var(--pixel-night);
+  color: var(--pixel-window-ink);
+  border: 3px solid var(--pixel-window-frame);
+  box-shadow:
+    0 0 0 5px var(--pixel-window-frame),
+    4px 4px 0 var(--pixel-shadow);
+  border-radius: var(--radius-pixel);
+  padding: 12px 16px;
+  margin-bottom: 24px;
+}
+
+/* HUD 內既有卡片元件透明化,由 HUD 條供底(不改元件本身)。 */
+.hud-bar .card,
+.hud-bar [class*='card'] {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: inherit;
+}
+
+/* 日景中的大廳白卡改為羊皮紙卡+金邊(覆蓋既有 .lobby-panel 外觀)。 */
+.scene-day .lobby-panel {
+  background: var(--pixel-parchment-card);
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  box-shadow: 4px 4px 0 var(--pixel-shadow);
+}
+
+.scene-day .lobby-panel h1 {
+  font-family: var(--font-pixel-tc);
+  font-size: 22px;
+}
