@@ -1,5 +1,9 @@
 # Design System Master File
 
+> **已被取代（2026-07-31, ADR 0005）**：本檔的淡彩／奶黃規則已由 JRPG 像素視覺基線取代
+> （spec/07-ui-visual-system.md 與 docs/superpowers/specs/2026-07-31-jrpg-pixel-restyle-design.md 為準）。
+> 本檔僅供尚未遷移頁面的維護參考。
+
 > **LOGIC:** When building a specific page, first check `design-system/pages/[page-name].md`.
 > If that file exists, its rules **override** this Master file.
 > If not, strictly follow the rules below.

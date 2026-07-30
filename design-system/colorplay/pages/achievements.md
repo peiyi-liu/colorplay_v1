@@ -1,5 +1,9 @@
 # Page Override: achievements（個人成就與徽章）
 
+> **已被取代（2026-07-31, ADR 0005）**：本檔的淡彩／奶黃規則已由 JRPG 像素視覺基線取代
+> （spec/07-ui-visual-system.md 與 docs/superpowers/specs/2026-07-31-jrpg-pixel-restyle-design.md 為準）。
+> 本檔僅供尚未遷移頁面的維護參考。
+
 > owner 0728 晚間淡彩批，與 [lobby.md](./lobby.md) 共用淡彩卡片系統；
 > 本檔只記載徽章頁的差異。色值唯一定義點 `src/styles/tokens.css`。
 

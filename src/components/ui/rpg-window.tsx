@@ -4,7 +4,7 @@ type RpgWindowProps = {
   /** 窗標題;省略時不渲染 heading */
   title?: ReactNode;
   children: ReactNode;
-} & HTMLAttributes<HTMLElement>;
+} & Omit<HTMLAttributes<HTMLElement>, 'title'>;
 
 /** JRPG 對話窗:全站唯一像素容器(spec/07 JRPG 基線、CONTEXT.md RPG Window) */
 export function RpgWindow({

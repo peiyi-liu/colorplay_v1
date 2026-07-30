@@ -23,4 +23,9 @@ describe('RpgWindow', () => {
     expect(region).not.toBeNull();
     expect(region).toHaveClass('quiz-window');
   });
+
+  it('accepts a ReactNode title', () => {
+    render(<RpgWindow title={<span>三寶石</span>}>內容</RpgWindow>);
+    expect(screen.getByRole('heading', { name: '三寶石' })).toBeInTheDocument();
+  });
 });

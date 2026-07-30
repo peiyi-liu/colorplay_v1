@@ -219,6 +219,7 @@
   --pixel-parchment: #f6eed8; /* 羊皮紙日景頁底(村莊/地圖) */
   --pixel-parchment-card: #fdf8ea; /* 日景卡片底 */
   --pixel-gold: #b8862f; /* 金幣/EXP 強調 */
+  --pixel-gold-deep: #8a651f; /* 日景羊皮紙上的金色文字(對比≥4.5:1);夜景文字用 --pixel-gold */
   --pixel-window-frame: #f4f1e4; /* 對話窗白框 */
   --pixel-window-ink: #f4f1e4; /* 對話窗內文字 */
   --pixel-window-muted: #a9b0d6; /* 對話窗次要文字 */

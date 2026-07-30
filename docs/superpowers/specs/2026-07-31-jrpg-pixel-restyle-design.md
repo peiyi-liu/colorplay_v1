@@ -1,7 +1,7 @@
 # ColorPlay × 日式 RPG 像素風全站改版 — 設計規格
 
 - 日期：2026-07-31
-- 狀態：待 owner 核准
+- 狀態：已核准（owner 2026-07-31）
 - 來源：2026-07-30 深夜 owner 多輪 brainstorming 定案（企劃參考 artifact：`claude.ai/code/artifact/3d49ea25-dbc3-498b-a637-81f2f0cfdded`）
 - 範圍：**純表現層改版**。狀態機、RPC、RLS、ledger、計分規則（`rules_version`）與路由結構一律不動。
 

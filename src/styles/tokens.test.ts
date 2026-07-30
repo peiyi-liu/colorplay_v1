@@ -126,6 +126,7 @@ describe('JRPG pixel baseline tokens (ADR 0005)', () => {
     '--pixel-parchment: #f6eed8',
     '--pixel-parchment-card: #fdf8ea',
     '--pixel-gold: #b8862f',
+    '--pixel-gold-deep: #8a651f',
     '--pixel-window-frame: #f4f1e4',
     '--radius-pixel: 0px',
   ])('pins pixel token %s', (declaration) => {

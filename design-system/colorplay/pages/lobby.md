@@ -1,5 +1,9 @@
 # Page Override: lobby（色彩任務選擇大廳）
 
+> **已被取代（2026-07-31, ADR 0005）**：本檔的淡彩／奶黃規則已由 JRPG 像素視覺基線取代
+> （spec/07-ui-visual-system.md 與 docs/superpowers/specs/2026-07-31-jrpg-pixel-restyle-design.md 為準）。
+> 本檔僅供尚未遷移頁面的維護參考。
+
 > owner 0728 晚間淡彩批。本頁與 achievements 改用「淡彩卡片系統」，
 > **覆蓋 MASTER.md 的淡黃紙張底**；其餘頁面仍依 MASTER.md 暖色系。
 > 色值唯一定義點：`src/styles/tokens.css` 的 `--pastel-*`（tokens.test 釘值）。

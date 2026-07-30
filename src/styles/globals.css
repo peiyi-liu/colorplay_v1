@@ -4744,7 +4744,7 @@ select#dashboard-classroom {
   outline: 2px solid var(--pixel-night);
   box-shadow:
     0 0 0 5px var(--pixel-window-frame),
-    8px 8px 0 var(--pixel-shadow);
+    4px 4px 0 var(--pixel-shadow);
   border-radius: var(--radius-pixel);
   padding: 20px 24px;
 }
