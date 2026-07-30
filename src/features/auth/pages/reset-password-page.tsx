@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { RpgWindow } from '../../../components/ui/rpg-window';
 import { useToast } from '../../../components/ui/toast';
 import { parsePublicEnv } from '../../../lib/config/public-env';
 import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
@@ -63,7 +64,10 @@ export function ResetPasswordPage() {
   }, []);
 
   return (
-    <section className="route-panel auth-portal" data-portal="student">
+    <section
+      className="route-panel auth-portal scene-night"
+      data-portal="student"
+    >
       <div className="auth-portal-brand">
         <span aria-hidden="true" className="auth-portal-brand__mark">
           <svg fill="none" height="40" viewBox="0 0 32 32" width="40">
@@ -90,27 +94,30 @@ export function ResetPasswordPage() {
         </p>
       </div>
       <p className="route-panel__eyebrow">帳號協助</p>
-      <h1>重設密碼</h1>
+      <h1 className="pixel-heading">重設密碼</h1>
 
-      {linkState === 'invalid' ? (
-        <div className="login-form" data-interaction-group="reset-password">
-          <p className="login-form__submit-error" role="alert">
-            重設連結無效或已過期，請重新申請。
-          </p>
-          <div className="login-form__links">
-            <Link className="login-form__link" to="/forgot-password">
-              重新申請重設密碼
-            </Link>
-            <Link className="login-form__link" to="/login">
-              返回登入
-            </Link>
+      {linkState === 'invalid' ? null : (
+        <p className="route-panel__message">
+          請設定新密碼（6 至 12 碼，需包含大小寫英文字母）。
+        </p>
+      )}
+
+      <RpgWindow className="auth-window">
+        {linkState === 'invalid' ? (
+          <div className="login-form" data-interaction-group="reset-password">
+            <p className="login-form__submit-error" role="alert">
+              重設連結無效或已過期，請重新申請。
+            </p>
+            <div className="login-form__links">
+              <Link className="login-form__link" to="/forgot-password">
+                重新申請重設密碼
+              </Link>
+              <Link className="login-form__link" to="/login">
+                返回登入
+              </Link>
+            </div>
           </div>
-        </div>
-      ) : (
-        <>
-          <p className="route-panel__message">
-            請設定新密碼（6 至 12 碼，需包含大小寫英文字母）。
-          </p>
+        ) : (
           <form
             className="login-form"
             data-interaction-group="reset-password"
@@ -212,8 +219,8 @@ export function ResetPasswordPage() {
               </button>
             </div>
           </form>
-        </>
-      )}
+        )}
+      </RpgWindow>
     </section>
   );
 }
