@@ -1,5 +1,24 @@
 # UI、視覺系統與響應式規格
 
+> **基線變更（2026-07-31, ADR 0005）**：本檔既有的淡彩／奶黃基線自即日起
+> 被「JRPG 像素視覺基線」取代，僅供尚未遷移頁面的維護參考。新開發一律
+> 依下節與 docs/superpowers/specs/2026-07-31-jrpg-pixel-restyle-design.md。
+
+## JRPG 像素視覺基線（2026-07-31 起 normative）
+
+- 調色盤：全站約 48 色；品牌三色 coral `#C73A3F`／cobalt `#3056D8`／
+  jade `#22A06B` 為最高飽和層，僅用於寶石、關鍵行動、計分。
+  基準色：夜空窗 `#171C3F`、夜景頁底 `#10142E`、羊皮紙 `#F6EED8`、
+  金幣金 `#B8862F`。日夜場景：村莊/地圖＝日景，戰鬥/Live/投影＝夜景。
+- 容器：`RpgWindow` 對話窗（夜空底＋白雙線框、零圓角、硬位移陰影
+  `box-shadow: 4px 4px 0`）為唯一像素容器；素材 `image-rendering: pixelated`。
+- 網格：8px 基準；sprite 16/32px 整數倍放大；間距為 4px 倍數。
+- 字型：繁中標題短文 Cubic 11（≥16px 渲染）；拉丁點綴 Press Start 2P；
+  長文退 Noto Sans TC；數字 `tabular-nums`。
+- 動效：`steps()` 緩動、150–300ms、只動 transform/opacity、
+  尊重 `prefers-reduced-motion`；戰鬥三拍鐵律（樂觀揮刀→伺服器判定→命中/MISS）。
+- 教師端像素濃度上限三成；已刪功能不復活；色彩僅定義於 tokens.css。
+
 ## 1. 視覺定位
 
 ColorPlay 採用手機優先的扁平化介面。視覺系統的首要目標不是增加裝飾，而是讓學生快速辨識「目前在哪裡、正在做什麼、下一步要按哪裡」。遊戲化獎勵必須支持學習任務，不得搶走主要注意力。
