@@ -86,7 +86,7 @@ export function LoginPage() {
           PRESS START
         </p>
       </div>
-      <h1>登入</h1>
+      <h1 className="pixel-heading">登入</h1>
       <p className="route-panel__message">
         {portal === 'teacher'
           ? '使用教師帳號與班級序號登入，進入教師工作區管理班級與課程。'

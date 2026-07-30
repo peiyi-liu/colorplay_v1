@@ -4771,6 +4771,7 @@ select#dashboard-classroom {
 /* 夜景:標題畫面/命名之儀/教會回復。星空以 box-shadow 點陣繪製,無圖片素材。 */
 .scene-night {
   position: relative;
+  overflow: hidden;
   background: var(--pixel-night-deep);
   color: var(--pixel-window-ink);
   min-height: 100%;
@@ -4851,13 +4852,14 @@ select#dashboard-classroom {
   font-size: 16px;
 }
 
-/* 夜景下表單控件反白(僅外觀;不動任何表單邏輯)。 */
-.scene-night input,
+/* 夜景下表單控件反白(僅外觀;不動任何表單邏輯;終審 M6+M7:排除
+   視覺隱藏的 radio/checkbox 以免被撐高,並恢復 48px 既有控制項高度)。 */
+.scene-night input:not([type='radio']):not([type='checkbox']),
 .scene-night select {
   background: var(--paper);
   color: var(--ink-900);
   border-radius: var(--radius-pixel);
-  min-height: 44px;
+  min-height: 48px;
 }
 
 .scene-night a {
@@ -4882,13 +4884,28 @@ select#dashboard-classroom {
   margin-bottom: 24px;
 }
 
-/* HUD 內既有卡片元件透明化,由 HUD 條供底(不改元件本身)。 */
-.hud-bar .card,
-.hud-bar [class*='card'] {
+/* HUD 內既有卡片元件透明化,由 HUD 條供底(不改元件本身;終審 I2:
+   舊選擇器 .hud-bar .card 打不到任何元件——StudentSummaryCard 實際
+   類名為 .pastel-summary,改對真實元件下手,讓 HUD 呈現單一深色
+   夜窗橫幅、文字反白可讀)。 */
+.hud-bar .pastel-summary,
+.hud-bar .pastel-summary__stats {
   background: transparent;
   border: none;
   box-shadow: none;
-  color: inherit;
+}
+
+.hud-bar .pastel-summary__name {
+  color: var(--pixel-window-ink);
+}
+
+.hud-bar .pastel-summary__welcome,
+.hud-bar .pastel-summary__stat dt {
+  color: var(--pixel-window-muted);
+}
+
+.hud-bar .pastel-summary__stat dd {
+  color: var(--pixel-window-ink);
 }
 
 /* 日景中的大廳白卡改為羊皮紙卡+金邊(覆蓋既有 .lobby-panel 外觀)。 */
@@ -4908,4 +4925,31 @@ select#dashboard-classroom {
 .scene-night h1,
 .scene-night h2 {
   color: var(--pixel-window-ink);
+}
+
+/* 夜景次要與錯誤文字反白(終審 C1:對比 4.5:1)。 */
+.scene-night .route-panel__message,
+.scene-night .auth-portal-brand__subtitle,
+.scene-night .login-form__field-hint,
+.scene-night .login-form__status {
+  color: var(--pixel-window-muted);
+}
+
+.scene-night .login-form__field-error,
+.scene-night .login-form__submit-error {
+  color: var(--pixel-danger);
+}
+
+/* 夜景卡片外殼歸零:去圓角、去軟影、去品牌黃框(spec §4.2 零圓角/硬位移陰影)。 */
+.scene-night.route-panel,
+.scene-night.auth-portal {
+  border: none;
+  border-radius: var(--radius-pixel);
+  box-shadow: none;
+}
+
+.scene-night .primary-action,
+.scene-night .login-form__portal,
+.scene-night .login-form__secondary-action {
+  border-radius: var(--radius-pixel);
 }
