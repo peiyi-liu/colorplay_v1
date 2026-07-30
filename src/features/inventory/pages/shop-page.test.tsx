@@ -274,16 +274,15 @@ it('renders the frame shop section with the server catalog', async () => {
       }),
     }),
   );
-  expect(
-    await screen.findByRole('heading', { name: '尊絕外顯邊框' }),
-  ).toBeVisible();
+  // live-v2 設計稿：外框移到「外框」分頁，切換後才顯示。
+  await userEvent.click(await screen.findByRole('button', { name: '外框' }));
   expect(screen.getByText('熔岩流金')).toBeInTheDocument();
   // UAT 0727 #4：外框商品比照 Blook 卡四態——可負擔未擁有顯示黃色購買鍵。
   expect(
     screen.getByRole('button', { name: '購買 深海霓虹，25 Token' }),
   ).toBeInTheDocument();
   expect(
-    within(screen.getByRole('region', { name: '尊絕外顯邊框' })).getByText(
+    within(screen.getByRole('region', { name: '外框商店' })).getByText(
       '已裝備',
     ),
   ).toBeInTheDocument();

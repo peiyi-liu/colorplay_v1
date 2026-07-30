@@ -61,8 +61,7 @@ function FrameShopSection({
   };
 
   return (
-    <section aria-labelledby="frame-shop-title" className="frame-shop">
-      <h2 id="frame-shop-title">尊絕外顯邊框</h2>
+    <section aria-label="外框商店" className="frame-shop">
       <p className="frame-shop__hint">裝備後將顯示在大廳頭貼外框。</p>
       <div className="blook-grid">
         {[...frames.data.items]
@@ -130,6 +129,8 @@ export function ShopPage({
   const equip = useEquipBlook(repository);
   const [selectedPurchase, setSelectedPurchase] =
     useState<BlookInventoryItem>();
+  // live-v2 設計稿:角色／外框分頁(僅顯示狀態,不影響購買資料流)。
+  const [shopTab, setShopTab] = useState<'blooks' | 'frames'>('blooks');
   const dialogRef = useRef<HTMLDialogElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const purchaseTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -218,63 +219,89 @@ export function ShopPage({
         <strong>{String(inventory.data.tokenBalance)} Token 可用</strong>
       </header>
 
-      <div className="blook-grid">
-        {[...inventory.data.items]
-          .sort((a, b) => a.costTokens - b.costTokens)
-          .map((item) => {
-            const shortfall = item.costTokens - inventory.data.tokenBalance;
-            return (
-              <article className="blook-card" key={item.id}>
-                <span className="blook-card__art" aria-hidden="true">
-                  <BlookArt
-                    emoji={item.emoji}
-                    size={72}
-                    stableCode={item.stableCode}
-                  />
-                </span>
-                <h2>{item.name}</h2>
-                <p>{String(item.costTokens)} Token</p>
-                {item.equipped ? (
-                  <strong className="blook-card__state">已裝備</strong>
-                ) : item.owned ? (
-                  <button
-                    aria-label={`選用 ${item.name}`}
-                    className="secondary-action"
-                    disabled={equip.isPending || purchase.isPending}
-                    onClick={() => void runEquip(item)}
-                    type="button"
-                  >
-                    選用
-                  </button>
-                ) : shortfall <= 0 ? (
-                  <button
-                    aria-label={`購買 ${item.name}，${String(item.costTokens)} Token`}
-                    className="primary-action"
-                    disabled={equip.isPending || purchase.isPending}
-                    onClick={(event) => {
-                      purchaseTriggerRef.current = event.currentTarget;
-                      setSelectedPurchase(item);
-                    }}
-                    type="button"
-                  >
-                    購買 {String(item.costTokens)} Token
-                  </button>
-                ) : (
-                  <button
-                    aria-label={`還差 ${String(shortfall)} Token，無法購買 ${item.name}`}
-                    className="blook-card__disabled"
-                    disabled
-                    type="button"
-                  >
-                    還差 {String(shortfall)} Token
-                  </button>
-                )}
-              </article>
-            );
-          })}
-      </div>
+      {/* live-v2 設計稿:商店以「角色／外框」分頁切換,不再兩區疊放。 */}
+      <nav aria-label="商店分類" className="shop-tabs">
+        <button
+          className="shop-tab"
+          data-on={shopTab === 'blooks' ? 'true' : undefined}
+          onClick={() => {
+            setShopTab('blooks');
+          }}
+          type="button"
+        >
+          角色
+        </button>
+        <button
+          className="shop-tab"
+          data-on={shopTab === 'frames' ? 'true' : undefined}
+          onClick={() => {
+            setShopTab('frames');
+          }}
+          type="button"
+        >
+          外框
+        </button>
+      </nav>
 
-      <FrameShopSection {...(repository ? { repository } : {})} />
+      {shopTab === 'blooks' ? (
+        <div className="blook-grid">
+          {[...inventory.data.items]
+            .sort((a, b) => a.costTokens - b.costTokens)
+            .map((item) => {
+              const shortfall = item.costTokens - inventory.data.tokenBalance;
+              return (
+                <article className="blook-card" key={item.id}>
+                  <span className="blook-card__art" aria-hidden="true">
+                    <BlookArt
+                      emoji={item.emoji}
+                      size={72}
+                      stableCode={item.stableCode}
+                    />
+                  </span>
+                  <h2>{item.name}</h2>
+                  <p>{String(item.costTokens)} Token</p>
+                  {item.equipped ? (
+                    <strong className="blook-card__state">已裝備</strong>
+                  ) : item.owned ? (
+                    <button
+                      aria-label={`選用 ${item.name}`}
+                      className="secondary-action"
+                      disabled={equip.isPending || purchase.isPending}
+                      onClick={() => void runEquip(item)}
+                      type="button"
+                    >
+                      選用
+                    </button>
+                  ) : shortfall <= 0 ? (
+                    <button
+                      aria-label={`購買 ${item.name}，${String(item.costTokens)} Token`}
+                      className="primary-action"
+                      disabled={equip.isPending || purchase.isPending}
+                      onClick={(event) => {
+                        purchaseTriggerRef.current = event.currentTarget;
+                        setSelectedPurchase(item);
+                      }}
+                      type="button"
+                    >
+                      購買 {String(item.costTokens)} Token
+                    </button>
+                  ) : (
+                    <button
+                      aria-label={`還差 ${String(shortfall)} Token，無法購買 ${item.name}`}
+                      className="blook-card__disabled"
+                      disabled
+                      type="button"
+                    >
+                      還差 {String(shortfall)} Token
+                    </button>
+                  )}
+                </article>
+              );
+            })}
+        </div>
+      ) : (
+        <FrameShopSection {...(repository ? { repository } : {})} />
+      )}
 
       {selectedPurchase ? (
         <dialog

@@ -149,200 +149,193 @@ export function MissionPage({
   }
 
   const mastery = state.data;
-  const completedCount = mastery.stages.filter(
-    (stage) => stage.completed,
-  ).length;
 
   return (
-    <section aria-labelledby="mission-title" className="mission">
-      <Card padding="lg" className="animate-fade-in">
-        <div className="quiz-map-panel">
-          <p className="quiz-map-panel__caption">
-            精熟學習地圖(未通過上一關前不可跳關)
-          </p>
-          <MapStepper
-            currentIndex={mastery.position - 1}
-            onJump={() => undefined}
-            total={mastery.questionCount}
-            unlockedCount={mastery.position}
-          />
-        </div>
-
-        <SectionHeader
-          chip={
-            <Chip tone="primary">
-              關卡進度:{mastery.position} / {mastery.questionCount}
-            </Chip>
-          }
-          title={mastery.chapterTitle}
-          {...(mastery.question?.subtopicTitle
-            ? { description: mastery.question.subtopicTitle }
-            : {})}
+    <section aria-labelledby="mission-title" className="quiz-runner mission">
+      <div className="quiz-map-panel">
+        <p className="quiz-map-panel__caption">
+          精熟學習地圖(未通過上一關前不可跳關)
+        </p>
+        <MapStepper
+          currentIndex={mastery.position - 1}
+          onJump={() => undefined}
+          total={mastery.questionCount}
+          unlockedCount={mastery.position}
         />
-        <h1 className="visually-hidden" id="mission-title">
-          課後任務實戰：{mastery.chapterTitle}
-        </h1>
+      </div>
 
-        {resolved ? (
-          <aside
-            aria-labelledby="mission-feedback-title"
-            className="feedback-card feedback-card--correct"
+      {/* live-v2 設計稿:任務關卡沿用限時挑戰的 quiz-runner 標頭版型。 */}
+      <header className="quiz-runner__header">
+        <div>
+          <p className="route-panel__eyebrow">課後任務實戰</p>
+          <h1 id="mission-title">
+            {mastery.question?.subtopicTitle ?? mastery.chapterTitle}
+          </h1>
+        </div>
+        <div className="quiz-runner__status" aria-label="關卡進度">
+          <p>
+            第 {mastery.position} / {mastery.questionCount} 關
+          </p>
+          {mastery.question ? (
+            <p>本關已嘗試 {mastery.question.wrongAttempts} 次</p>
+          ) : null}
+        </div>
+      </header>
+
+      {resolved ? (
+        <aside
+          aria-labelledby="mission-feedback-title"
+          className="feedback-card feedback-card--correct"
+        >
+          <h2 id="mission-feedback-title">✓ 答對了</h2>
+          {resolved.explanation ? (
+            <div className="live-explanation">
+              <strong>教師引導解析:</strong>
+              <p>{resolved.explanation}</p>
+            </div>
+          ) : null}
+          <button
+            className="primary-action"
+            data-primary-action="true"
+            onClick={() => {
+              setResolved(undefined);
+            }}
+            type="button"
           >
-            <h2 id="mission-feedback-title">✓ 答對了</h2>
-            {resolved.explanation ? (
-              <div className="live-explanation">
-                <strong>教師引導解析:</strong>
-                <p>{resolved.explanation}</p>
-              </div>
-            ) : null}
-            <button
-              className="primary-action"
-              data-primary-action="true"
-              onClick={() => {
-                setResolved(undefined);
-              }}
-              type="button"
-            >
-              {resolved.isLast ? '查看結算 →' : '下一關 →'}
-            </button>
-          </aside>
-        ) : mastery.status === 'completed' || !mastery.question ? (
-          <VictoryCard
-            description="本章 5 階精熟已全部通過！精熟紀錄已由伺服器保存；正式獎勵以限時挑戰與 Live 為準。"
-            onRetry={() => {
-              restart.mutate(mastery.chapterId, {
+            {resolved.isLast ? '查看結算 →' : '下一關 →'}
+          </button>
+        </aside>
+      ) : mastery.status === 'completed' || !mastery.question ? (
+        <VictoryCard
+          description="本章 5 階精熟已全部通過！精熟紀錄已由伺服器保存；正式獎勵以限時挑戰與 Live 為準。"
+          onRetry={() => {
+            restart.mutate(mastery.chapterId, {
+              onError: () => {
+                setFeedback('無法重新開始練習，請稍後重試。');
+              },
+              onSuccess: (newSessionId) => {
+                if (newSessionId === sessionId) {
+                  void state.refetch();
+                  return;
+                }
+                void navigate(`/app/missions/${newSessionId}`, {
+                  replace: true,
+                });
+              },
+            });
+          }}
+          title="階段任務挑戰完成！"
+          tokens={0}
+          xp={0}
+        />
+      ) : (
+        <>
+          <form
+            className="question-card"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (submit.isPending || selectedOptionId === undefined) return;
+              submit.mutate(selectedOptionId, {
                 onError: () => {
-                  setFeedback('無法重新開始練習，請稍後重試。');
+                  setFeedback('作答未送出，請再試一次。');
                 },
-                onSuccess: (newSessionId) => {
-                  if (newSessionId === sessionId) {
-                    void state.refetch();
+                onSuccess: (result) => {
+                  if (result.isCorrect) {
+                    setResolved({
+                      explanation: result.explanation,
+                      isLast: mastery.position === mastery.questionCount,
+                    });
                     return;
                   }
-                  void navigate(`/app/missions/${newSessionId}`, {
-                    replace: true,
-                  });
+                  // 答錯的選項鎖定後不可再選，清掉選取讓學生重新挑選。
+                  setSelectedOptionId(undefined);
+                  setFeedback('✕ 還不對，該選項已鎖定。可索取提示後再試。');
                 },
               });
             }}
-            title="階段任務挑戰完成！"
-            tokens={0}
-            xp={0}
-          />
-        ) : (
-          <>
-            <form
-              className="question-card"
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (submit.isPending || selectedOptionId === undefined) return;
-                submit.mutate(selectedOptionId, {
-                  onError: () => {
-                    setFeedback('作答未送出，請再試一次。');
-                  },
-                  onSuccess: (result) => {
-                    if (result.isCorrect) {
-                      setResolved({
-                        explanation: result.explanation,
-                        isLast: mastery.position === mastery.questionCount,
-                      });
-                      return;
+          >
+            <fieldset disabled={submit.isPending}>
+              <legend>{mastery.question.prompt}</legend>
+              <div className="question-options">
+                {mastery.question.options.map((option) => (
+                  <label
+                    className="question-option"
+                    data-locked={option.locked ? 'true' : undefined}
+                    data-selected={
+                      selectedOptionId === option.id ? 'true' : 'false'
                     }
-                    // 答錯的選項鎖定後不可再選，清掉選取讓學生重新挑選。
-                    setSelectedOptionId(undefined);
-                    setFeedback('✕ 還不對，該選項已鎖定。可索取提示後再試。');
-                  },
-                });
-              }}
-            >
-              <fieldset disabled={submit.isPending}>
-                <legend>{mastery.question.prompt}</legend>
-                <div className="question-options">
-                  {mastery.question.options.map((option) => (
-                    <label
-                      className="question-option"
-                      data-locked={option.locked ? 'true' : undefined}
-                      data-selected={
-                        selectedOptionId === option.id ? 'true' : 'false'
-                      }
-                      key={option.id}
-                    >
-                      <input
-                        checked={selectedOptionId === option.id}
-                        disabled={option.locked}
-                        name={`mission-${questionId ?? 'question'}`}
-                        onChange={() => {
-                          setSelectedOptionId(option.id);
-                        }}
-                        type="radio"
-                        value={option.id}
-                      />
-                      <span className="question-option__key" aria-hidden="true">
-                        {option.key}
-                      </span>
-                      <span>{option.text}</span>
-                      {option.locked ? <span aria-hidden="true">●</span> : null}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-              <div className="question-card__action">
-                <button
-                  className="primary-action"
-                  data-primary-action="true"
-                  disabled={submit.isPending || selectedOptionId === undefined}
-                  type="submit"
-                >
-                  {submit.isPending ? '送出中…' : '送出答案'}
-                </button>
+                    key={option.id}
+                  >
+                    <input
+                      checked={selectedOptionId === option.id}
+                      disabled={option.locked}
+                      name={`mission-${questionId ?? 'question'}`}
+                      onChange={() => {
+                        setSelectedOptionId(option.id);
+                      }}
+                      type="radio"
+                      value={option.id}
+                    />
+                    <span className="question-option__key" aria-hidden="true">
+                      {option.key}
+                    </span>
+                    <span>{option.text}</span>
+                    {option.locked ? <span aria-hidden="true">●</span> : null}
+                  </label>
+                ))}
               </div>
-            </form>
-
-            {feedback ? <p role="status">{feedback}</p> : null}
-
-            <div className="mission__hints">
-              {hints.map((revealed) => (
-                <HintCallout
-                  key={revealed.hintLevel}
-                  tier={revealed.hintLevel === 1 ? 1 : 2}
-                >
-                  {revealed.content}
-                </HintCallout>
-              ))}
-              {hints.length < 3 &&
-              mastery.question.wrongAttempts > hints.length ? (
-                <button
-                  className="mission__hint-button"
-                  disabled={hint.isPending}
-                  onClick={() => {
-                    hint.mutate(hints.length + 1, {
-                      onError: () => {
-                        setFeedback('提示暫時無法取得。');
-                      },
-                      onSuccess: (revealed) => {
-                        setHints((previous) => [...previous, revealed]);
-                      },
-                    });
-                  }}
-                  type="button"
-                >
-                  索取第 {hints.length + 1} 層提示
-                </button>
-              ) : null}
+            </fieldset>
+            <div className="question-card__action">
+              <button
+                className="primary-action"
+                data-primary-action="true"
+                disabled={submit.isPending || selectedOptionId === undefined}
+                type="submit"
+              >
+                {submit.isPending ? '送出中…' : '送出答案'}
+              </button>
             </div>
+          </form>
 
-            <p className="mission__meta">
-              已完成 {completedCount} / {mastery.questionCount} 關・本關已嘗試{' '}
-              {mastery.question.wrongAttempts} 次
-            </p>
-          </>
-        )}
-        <div className="mission__footer">
-          <Link className="lobby-link" to="/app/missions">
-            ← 回任務實戰
-          </Link>
-        </div>
-      </Card>
+          {feedback ? <p role="status">{feedback}</p> : null}
+
+          <div className="mission__hints">
+            {hints.map((revealed) => (
+              <HintCallout
+                key={revealed.hintLevel}
+                tier={revealed.hintLevel === 1 ? 1 : 2}
+              >
+                {revealed.content}
+              </HintCallout>
+            ))}
+            {hints.length < 3 &&
+            mastery.question.wrongAttempts > hints.length ? (
+              <button
+                className="mission__hint-button"
+                disabled={hint.isPending}
+                onClick={() => {
+                  hint.mutate(hints.length + 1, {
+                    onError: () => {
+                      setFeedback('提示暫時無法取得。');
+                    },
+                    onSuccess: (revealed) => {
+                      setHints((previous) => [...previous, revealed]);
+                    },
+                  });
+                }}
+                type="button"
+              >
+                索取第 {hints.length + 1} 層提示
+              </button>
+            ) : null}
+          </div>
+        </>
+      )}
+      <div className="mission__footer">
+        <Link className="lobby-link" to="/app/missions">
+          ← 回任務實戰
+        </Link>
+      </div>
     </section>
   );
 }

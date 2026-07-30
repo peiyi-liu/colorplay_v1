@@ -55,41 +55,50 @@ export function LobbyPage() {
 
   return (
     <section aria-labelledby="lobby-title" className="lobby">
-      <PageHeader
-        description="選擇下方的色彩原理核心章節，展開你的色彩知識與視覺挑戰。"
-        title="色彩任務選擇大廳"
-        titleId="lobby-title"
-      />
+      {/* live-v2 設計稿:資訊卡在最上,標題與章節格包進白卡浮於暖黃頁底。 */}
       <StudentSummaryCard />
-      {chapterList.length === 0 ? (
-        <p className="lobby__empty">課程內容準備中，請稍後再回來看看。</p>
-      ) : (
-        <div className="pastel-grid">
-          {chapterList.map((chapter, index) => {
-            const current = index === frontierIndex;
-            return (
-              <LearningChapterCard
-                chapterNumber={chapter.sortOrder}
-                current={current}
-                description={chapter.description}
-                icon={CHAPTER_ICONS[index % CHAPTER_ICONS.length] ?? 'palette'}
-                key={chapter.id}
-                status={
-                  chapter.isPlayable ? (current ? 'active' : 'open') : 'locked'
-                }
-                theme={pastelThemeForIndex(index)}
-                title={chapter.title}
-                {...(chapter.isPlayable
-                  ? {
-                      reviewHref: `/app/chapters/${chapter.id}`,
-                      startHref: `/app/quiz/new?template=${chapter.template.id}`,
-                    }
-                  : {})}
-              />
-            );
-          })}
-        </div>
-      )}
+      <div className="lobby-panel">
+        <PageHeader
+          description="選擇下方的色彩原理核心章節，展開你的色彩知識與視覺挑戰。"
+          title="色彩任務選擇大廳"
+          titleId="lobby-title"
+        />
+        {chapterList.length === 0 ? (
+          <p className="lobby__empty">課程內容準備中，請稍後再回來看看。</p>
+        ) : (
+          <div className="pastel-grid">
+            {chapterList.map((chapter, index) => {
+              const current = index === frontierIndex;
+              return (
+                <LearningChapterCard
+                  chapterNumber={chapter.sortOrder}
+                  current={current}
+                  description={chapter.description}
+                  icon={
+                    CHAPTER_ICONS[index % CHAPTER_ICONS.length] ?? 'palette'
+                  }
+                  key={chapter.id}
+                  status={
+                    chapter.isPlayable
+                      ? current
+                        ? 'active'
+                        : 'open'
+                      : 'locked'
+                  }
+                  theme={pastelThemeForIndex(index)}
+                  title={chapter.title}
+                  {...(chapter.isPlayable
+                    ? {
+                        reviewHref: `/app/chapters/${chapter.id}`,
+                        startHref: `/app/quiz/new?template=${chapter.template.id}`,
+                      }
+                    : {})}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

@@ -46,7 +46,7 @@ export function ClassroomLeaderboardPage({
   return (
     <section
       aria-labelledby="classroom-leaderboard-title"
-      className="page-wide"
+      className="page-wide leaderboard-panel"
     >
       <header>
         <p className="route-panel__eyebrow">班級 XP</p>

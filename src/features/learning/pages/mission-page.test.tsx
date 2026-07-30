@@ -93,7 +93,12 @@ describe('MissionPage', () => {
     expect(
       screen.getByRole('button', { name: '索取第 1 層提示' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/已完成 1 \/ 5 關/u)).toBeInTheDocument();
+    // live-v2 設計稿：quiz-runner 標頭顯示小節標題與關卡進度。
+    expect(
+      screen.getByRole('heading', { name: '3-2 數位色彩' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('第 2 / 5 關')).toBeInTheDocument();
+    expect(screen.getByText('本關已嘗試 1 次')).toBeInTheDocument();
   });
 
   it('shows the victory card without fabricated rewards when completed', () => {
