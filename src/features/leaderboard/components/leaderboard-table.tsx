@@ -17,6 +17,8 @@ const safeBlook = (
   return selected ?? fallback ?? defaultBlook;
 };
 
+/* owner 0730 #6:頭像外框改用大廳同款呈現——圓角磚底、裝備外框時
+   以漸層作為磚底色(伺服器資料)，Blook 圖示置中。 */
 function FramedBlook({
   blooks,
   entry,
@@ -25,24 +27,26 @@ function FramedBlook({
   entry: LeaderboardEntry;
 }>) {
   const blook = safeBlook(entry.activeBlookId, blooks);
-  const label = (
-    <>
-      <BlookArt emoji={blook.emoji} size={22} stableCode={blook.stableCode} />
-      {blook.name}
-    </>
+  const hasFrame = Boolean(
+    entry.frameGradientStart && entry.frameGradientEnd,
   );
-  if (!entry.frameGradientStart || !entry.frameGradientEnd) {
-    return <span className="leaderboard-blook">{label}</span>;
-  }
   return (
-    <span
-      className="leaderboard-framed-blook leaderboard-blook"
-      data-framed="true"
-      style={{
-        borderImage: `linear-gradient(to right, ${entry.frameGradientStart}, ${entry.frameGradientEnd}) 1`,
-      }}
-    >
-      {label}
+    <span className="leaderboard-blook" data-framed={hasFrame || undefined}>
+      <span
+        aria-hidden="true"
+        className="pastel-summary__avatar leaderboard-blook__avatar"
+        style={
+          hasFrame
+            ? {
+                background: `linear-gradient(to top right, ${entry.frameGradientStart ?? ''}, ${entry.frameGradientEnd ?? ''})`,
+              }
+            : undefined
+        }
+      >
+        <BlookArt emoji={blook.emoji} size={30} stableCode={blook.stableCode} />
+      </span>
+      {entry.displayName}
+      {entry.isSelf ? <strong>這是你</strong> : null}
     </span>
   );
 }
@@ -57,8 +61,6 @@ function SelfRankCard({
   return (
     <aside aria-label="我的班級名次" role="region">
       <strong>第 {String(entry.rank)} 名</strong>
-      <span>{entry.displayName}</span>
-      <span>這是你</span>
       <FramedBlook blooks={blooks} entry={entry} />
       <span>{String(entry.totalXp)} XP</span>
     </aside>
@@ -93,9 +95,9 @@ export function LeaderboardTable({
           <thead>
             <tr>
               <th scope="col">名次</th>
-              {/* UAT 0727 R2 #1：只顯示暱稱，避免學號/姓名助長比較心態。 */}
+              {/* UAT 0727 R2 #1：只顯示暱稱，避免學號/姓名助長比較心態。
+                  owner 0730 #6：頭像與暱稱同格（大廳同款呈現）。 */}
               <th scope="col">暱稱</th>
-              <th scope="col">Blook</th>
               <th scope="col">XP</th>
             </tr>
           </thead>
@@ -106,15 +108,6 @@ export function LeaderboardTable({
                 key={`${String(entry.rank)}-${entry.displayName}`}
               >
                 <td>第 {String(entry.rank)} 名</td>
-                <td>
-                  {entry.displayName}
-                  {entry.isSelf ? (
-                    <>
-                      {' '}
-                      <strong>這是你</strong>
-                    </>
-                  ) : null}
-                </td>
                 <td>
                   <FramedBlook blooks={blooks} entry={entry} />
                 </td>

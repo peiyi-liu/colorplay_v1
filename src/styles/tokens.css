@@ -52,7 +52,8 @@
 
   /* ── 相容別名:舊 GGAME primitive 重新導向新色盤 ──────
      (globals.css 逐段翻新中;未翻新的引用先吃到新色) */
-  --surface-page: var(--paper);
+  /* owner 0730:頁底改回上一版奶黃(卡片維持 --paper 白)。 */
+  --surface-page: #faf5e2;
   --slate-50: var(--ink-50);
   --slate-100: var(--ink-100);
   --slate-200: var(--ink-200);
@@ -202,6 +203,7 @@
   --pastel-summary-tint-2: #fff8d8;
   --pastel-summary-border: #f8e7a0;
   --pastel-summary-cell: rgb(255 255 255 / 75%);
+  --pastel-summary-value: #662121; /* owner 0730 設計稿:統計數值深棗紅 */
 
   /* 卡片陰影(唯一兩檔:預設/懸停;進行中另加淡黃外圈) */
   --pastel-shadow: 0 4px 14px rgb(31 41 55 / 4%);

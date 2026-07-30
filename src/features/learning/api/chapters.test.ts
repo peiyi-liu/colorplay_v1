@@ -70,6 +70,7 @@ describe('fetchPublishedChapters', () => {
         sortOrder: 1,
         stableCode: 'chapter-1',
         subtopicCodes: [],
+        subtopicTitles: [],
         template: {
           id: '26000000-0000-0000-0000-000000000001',
           questionCount: 10,
@@ -84,6 +85,7 @@ describe('fetchPublishedChapters', () => {
         sortOrder: 3,
         stableCode: 'chapter-3',
         subtopicCodes: ['3-1'],
+        subtopicTitles: ['3-1 色彩三要素與色名的表示'],
         template: {
           id: templateId,
           questionCount: 10,

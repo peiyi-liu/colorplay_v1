@@ -132,7 +132,8 @@ const renderPage = (repository: TeacherContentRepository) => {
 };
 
 describe('TeacherAnalyticsPage', () => {
-  it('renders the five projections from the trusted analytics', async () => {
+  // owner 0730 #14：作業總覽停做——分析頁剩四個投影區塊。
+  it('renders the four projections from the trusted analytics', async () => {
     renderPage(teacherRepositoryOf());
 
     await waitFor(() => {
@@ -143,7 +144,7 @@ describe('TeacherAnalyticsPage', () => {
     expect(screen.getByText('66.7%')).toBeInTheDocument();
     expect(screen.getByText('80.0%')).toBeInTheDocument();
     expect(screen.getByText('sheet-3-1-all')).toBeInTheDocument();
-    expect(screen.getByText('分析測試作業')).toBeInTheDocument();
+    expect(screen.queryByText('作業總覽')).toBeNull();
     expect(screen.getByText('分析 Live')).toBeInTheDocument();
     expect(screen.getByText('77.8%')).toBeInTheDocument();
   });
@@ -181,10 +182,6 @@ describe('TeacherAnalyticsPage', () => {
         subtopicId: '23000000-0000-0000-0000-000000000001',
       }),
     );
-    expect(repository.getAssignmentSummary).toHaveBeenCalledWith(
-      '29100000-0000-0000-0000-000000000001',
-      { from: '2026-07-18', to: '2026-07-18' },
-    );
     expect(repository.getLiveReport).toHaveBeenCalledWith(
       '29100000-0000-0000-0000-000000000001',
       { from: '2026-07-18', to: '2026-07-18' },
@@ -194,7 +191,6 @@ describe('TeacherAnalyticsPage', () => {
   it('renders em-dash empty states for an empty scope', async () => {
     renderPage(
       teacherRepositoryOf({
-        getAssignmentSummary: vi.fn().mockResolvedValue([]),
         getClassroomSummary: vi.fn().mockResolvedValue({
           attempts: 0,
           averageAccuracy: null,
@@ -208,7 +204,7 @@ describe('TeacherAnalyticsPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText('此範圍尚無資料。').length).toBe(5);
+      expect(screen.getAllByText('此範圍尚無資料。').length).toBe(4);
     });
     expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2);
   });

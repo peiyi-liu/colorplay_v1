@@ -115,18 +115,18 @@ export function RegisterPage() {
       <div className="auth-portal-brand">
         <span aria-hidden="true" className="auth-portal-brand__mark">
           <svg fill="none" height="40" viewBox="0 0 32 32" width="40">
-            <circle cx="11" cy="12" fill="var(--hue-ch1)" r="7" />
+            <circle cx="11" cy="12" fill="var(--coral-700)" r="7" />
             <circle
               cx="21"
               cy="12"
-              fill="var(--hue-ch5)"
+              fill="var(--cobalt-600)"
               fillOpacity="0.92"
               r="7"
             />
             <circle
               cx="16"
               cy="20"
-              fill="var(--hue-ch3)"
+              fill="var(--jade-600)"
               fillOpacity="0.92"
               r="7"
             />

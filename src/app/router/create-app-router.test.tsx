@@ -237,12 +237,12 @@ describe('createAppRouter', () => {
     });
   });
 
-  it('preserves an anonymous join intent and requires visible confirmation after auth', async () => {
-    const router = renderRouter('/join/ABCD-1234-EF56-7890');
-    expect(await screen.findByRole('heading', { name: '登入' })).toBeVisible();
-    expect(router.state.location.state).toEqual({
-      from: { hash: '', pathname: '/join/ABCD-1234-EF56-7890', search: '' },
-    });
+  // owner 0730 #14：加入班級頁停做，邀請連結一律落在全站 404。
+  it('sends the removed join route to the site-wide 404', async () => {
+    renderRouter('/join/ABCD-1234-EF56-7890');
+    expect(
+      await screen.findByRole('heading', { name: '找不到頁面' }),
+    ).toBeVisible();
   });
 
   // UAT 0727 R2 #1：導覽點擊直達自己班級的排行榜，不再經班級清單。
@@ -298,6 +298,7 @@ describe('createAppRouter', () => {
           sortOrder: 3,
           stableCode: 'chapter-3',
           subtopicCodes: ['3-1'],
+          subtopicTitles: ['3-1 色彩三要素與色名的表示'],
           template: {
             id: '26000000-0000-0000-0000-000000000003',
             questionCount: 10,
@@ -389,7 +390,8 @@ describe('createAppRouter', () => {
     expect(router.state.location.pathname).toBe('/unauthorized');
   });
 
-  it('keeps a student out of the teacher assignments route', async () => {
+  // owner 0730 #14：班級作業停做，原教師作業路由一律落在全站 404。
+  it('sends the removed teacher assignments route to the site-wide 404', async () => {
     mockedUseMyProfile.mockReturnValue({
       data: {
         displayName: 'student.one',
@@ -403,7 +405,7 @@ describe('createAppRouter', () => {
       isPending: false,
       refetch: vi.fn(),
     });
-    const router = renderRouter(
+    renderRouter(
       '/teacher/classes/14100000-0000-0000-0000-000000000001/assignments',
       {
         email: 'learner@colorplay.invalid',
@@ -411,9 +413,8 @@ describe('createAppRouter', () => {
       },
     );
     expect(
-      await screen.findByRole('heading', { name: '沒有權限' }),
+      await screen.findByRole('heading', { name: '找不到頁面' }),
     ).toBeVisible();
-    expect(router.state.location.pathname).toBe('/unauthorized');
   });
 
   it('lazy-loads the classes route for an authoritative teacher', async () => {

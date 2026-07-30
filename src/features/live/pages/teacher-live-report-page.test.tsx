@@ -1,10 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { AssignmentRepository } from '../../assignments/types';
 import type { LiveRepository, LiveSessionDetail } from '../types';
 import { TeacherLiveReportPage } from './teacher-live-report-page';
 
@@ -62,29 +60,14 @@ const detailFixture: LiveSessionDetail = {
   ],
 };
 
-const assignmentRepositoryWith = (
-  overrides: Partial<AssignmentRepository>,
-): AssignmentRepository =>
-  ({
-    createAssignment: vi.fn(),
-    ...overrides,
-  }) as unknown as AssignmentRepository;
-
-const renderPage = (
-  repository: LiveRepository,
-  assignmentRepository: AssignmentRepository = assignmentRepositoryWith({}),
-) => {
+const renderPage = (repository: LiveRepository) => {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <TeacherLiveReportPage
-          assignmentRepository={assignmentRepository}
-          repository={repository}
-          sessionId={SESSION_ID}
-        />
+        <TeacherLiveReportPage repository={repository} sessionId={SESSION_ID} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -131,35 +114,18 @@ describe('TeacherLiveReportPage', () => {
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);
   });
 
-  it('creates the one-click review assignment as a draft', async () => {
+  // owner 0730 #14：班級作業停做——報表不再提供一鍵生成複習任務。
+  it('does not surface the review assignment shortcut', async () => {
     const repository = {
       getSessionDetail: vi.fn().mockResolvedValue(detailFixture),
     } as unknown as LiveRepository;
-    const createAssignment = vi.fn().mockResolvedValue({
-      assignmentId: '18a00000-0000-0000-0000-000000000001',
-      status: 'draft',
-    });
-    renderPage(repository, assignmentRepositoryWith({ createAssignment }));
-    const user = userEvent.setup();
+    renderPage(repository);
 
-    await user.click(
-      await screen.findByRole('button', { name: '一鍵生成課後複習任務' }),
-    );
-
+    expect(await screen.findByText('色彩三要素是？')).toBeVisible();
     expect(
-      await screen.findByText('已建立複習任務草稿，請到任務頁確認並發佈。'),
-    ).toBeVisible();
-    expect(createAssignment).toHaveBeenCalledTimes(1);
-    const input = createAssignment.mock.calls[0]?.[0] as {
-      classroomId: string;
-      title: string;
-      quizTemplateId: string;
-      passingThreshold: number;
-    };
-    expect(input.classroomId).toBe(detailFixture.classroomId);
-    expect(input.title).toBe('色彩快問快答 複習');
-    expect(input.quizTemplateId).toBe(detailFixture.activity.quizTemplateId);
-    expect(input.passingThreshold).toBe(60);
+      screen.queryByRole('button', { name: '一鍵生成課後複習任務' }),
+    ).toBeNull();
+    expect(screen.queryByText('學習閉環')).toBeNull();
   });
 
   it('shows a safe error before the session is finalized', async () => {

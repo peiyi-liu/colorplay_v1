@@ -42,6 +42,8 @@ export type PublishedChapter = Readonly<{
   stableCode: string;
   /** 有題目的小節代碼（如 3-1；owner 0728：課後實戰列表要顯示小節）。 */
   subtopicCodes: readonly string[];
+  /** 有題目的完整小節標題（owner 0730 #5：任務實戰逐小節完整列出）。 */
+  subtopicTitles: readonly string[];
   template: Readonly<{
     id: string;
     questionCount: number;
@@ -98,15 +100,19 @@ const collectSubtopicCodes = (
     ),
   ].sort((left, right) => left.localeCompare(right, 'en', { numeric: true }));
 
-/** 課後實戰列表的小節前綴：單一小節顯示「3-1」，多小節顯示「3-1〜3-3」。 */
-export const subtopicRangeLabel = (
-  codes: readonly string[],
-): string | undefined => {
-  const first = codes[0];
-  const last = codes[codes.length - 1];
-  if (first === undefined || last === undefined) return undefined;
-  return first === last ? first : `${first}〜${last}`;
-};
+/** owner 0730 #5：課後實戰逐小節完整列出（含「3-1 」代碼前綴的完整標題）。 */
+const collectSubtopicTitles = (
+  sections: z.infer<typeof catalogSchema>[number]['chapters']['sections'],
+): readonly string[] =>
+  [
+    ...new Set(
+      sections.flatMap((section) =>
+        section.subtopics
+          .filter((subtopic) => subtopic.questions.length > 0)
+          .map((subtopic) => subtopic.title),
+      ),
+    ),
+  ].sort((left, right) => left.localeCompare(right, 'en', { numeric: true }));
 
 export async function fetchPublishedChapters(
   client: SupabaseClient<Database>,
@@ -151,6 +157,7 @@ export async function fetchPublishedChapters(
       sortOrder: chapters.sort_order,
       stableCode: chapters.stable_code,
       subtopicCodes: collectSubtopicCodes(chapters.sections),
+      subtopicTitles: collectSubtopicTitles(chapters.sections),
       template: { id, questionCount, title },
       title: chapters.title,
     }))

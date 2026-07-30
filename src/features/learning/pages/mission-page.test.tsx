@@ -85,9 +85,11 @@ describe('MissionPage', () => {
       </MemoryRouter>,
     );
     expect(screen.getByText('R255 G255 B0 呈現何種色彩?')).toBeInTheDocument();
-    const lockedOption = screen.getByRole('button', { name: '橙色' });
+    // owner 0730 #7：與大廳開始任務同款 radio＋「送出答案」；答錯選項鎖定。
+    const lockedOption = screen.getByRole('radio', { name: /橙色/u });
     expect(lockedOption).toBeDisabled();
-    expect(screen.getByRole('button', { name: '黃色' })).toBeEnabled();
+    expect(screen.getByRole('radio', { name: /黃色/u })).toBeEnabled();
+    expect(screen.getByRole('button', { name: '送出答案' })).toBeDisabled();
     expect(
       screen.getByRole('button', { name: '索取第 1 層提示' }),
     ).toBeInTheDocument();

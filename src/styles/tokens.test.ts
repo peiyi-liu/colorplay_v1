@@ -60,8 +60,8 @@ describe('ColorPlay flat design tokens', () => {
     expect(tokensCss).toContain('--color-primary-strong: var(--amber-avatar)');
   });
 
-  it('keeps the page background on the paper primitive', () => {
-    expect(tokensCss).toContain('--surface-page: var(--paper)');
+  it('keeps the page background on the cream-yellow base (owner 0730)', () => {
+    expect(tokensCss).toContain('--surface-page: #faf5e2');
     expect(tokensCss).toContain('--color-bg: var(--surface-page)');
   });
 

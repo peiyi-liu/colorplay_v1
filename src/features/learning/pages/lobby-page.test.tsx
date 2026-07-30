@@ -86,6 +86,7 @@ const chapters: PublishedChapter[] = ['色彩與光源', '色彩表示'].map(
     sortOrder: index + 1,
     stableCode: `chapter-${String(index + 1)}`,
     subtopicCodes: index === 1 ? [`${String(index + 1)}-1`] : [],
+    subtopicTitles: index === 1 ? [`${String(index + 1)}-1 ${title}`] : [],
     template: {
       id: `26000000-0000-0000-0000-${String(index + 1).padStart(12, '0')}`,
       questionCount: 10,

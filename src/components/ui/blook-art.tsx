@@ -23,10 +23,23 @@ const smile = (x: number, y: number): ReactElement => (
 );
 
 const art: Record<string, ReactElement> = {
+  /* owner 0730 #9:尖耳(角)以同色描邊＋round join 圓潤化。 */
   little_fox: (
     <>
-      <path d="M14 24 10 10l12 6Z" fill="#e5960a" />
-      <path d="M50 24l4-14-12 6Z" fill="#e5960a" />
+      <path
+        d="M14 24 10 10l12 6Z"
+        fill="#e5960a"
+        stroke="#e5960a"
+        strokeLinejoin="round"
+        strokeWidth="3.4"
+      />
+      <path
+        d="M50 24l4-14-12 6Z"
+        fill="#e5960a"
+        stroke="#e5960a"
+        strokeLinejoin="round"
+        strokeWidth="3.4"
+      />
       <rect fill="#e5960a" height="34" rx="14" width="44" x="10" y="18" />
       <path
         d="M32 52c-9 0-15-5-15-12 0-5 6-9 15-9s15 4 15 9c0 7-6 12-15 12Z"
@@ -38,8 +51,20 @@ const art: Record<string, ReactElement> = {
   ),
   lucky_cat: (
     <>
-      <path d="M15 22 12 9l11 7Z" fill="#f6f4ee" />
-      <path d="M49 22l3-13-11 7Z" fill="#f6f4ee" />
+      <path
+        d="M15 22 12 9l11 7Z"
+        fill="#f6f4ee"
+        stroke="#f6f4ee"
+        strokeLinejoin="round"
+        strokeWidth="3.4"
+      />
+      <path
+        d="M49 22l3-13-11 7Z"
+        fill="#f6f4ee"
+        stroke="#f6f4ee"
+        strokeLinejoin="round"
+        strokeWidth="3.4"
+      />
       <path
         d="M15 22 12 9l11 7Z"
         fill="none"
@@ -74,8 +99,20 @@ const art: Record<string, ReactElement> = {
   ),
   wise_owl: (
     <>
-      <path d="M14 18 10 8l10 5Z" fill="#b26e05" />
-      <path d="M50 18l4-10-10 5Z" fill="#b26e05" />
+      <path
+        d="M14 18 10 8l10 5Z"
+        fill="#b26e05"
+        stroke="#b26e05"
+        strokeLinejoin="round"
+        strokeWidth="3.4"
+      />
+      <path
+        d="M50 18l4-10-10 5Z"
+        fill="#b26e05"
+        stroke="#b26e05"
+        strokeLinejoin="round"
+        strokeWidth="3.4"
+      />
       <rect fill="#b26e05" height="36" rx="15" width="46" x="9" y="16" />
       <circle cx="23" cy="31" fill="#fbefd8" r="8.5" />
       <circle cx="41" cy="31" fill="#fbefd8" r="8.5" />
@@ -161,8 +198,20 @@ const art: Record<string, ReactElement> = {
   ),
   tiger_orange: (
     <>
-      <path d="M15 21 12 10l10 6Z" fill="#e5960a" />
-      <path d="M49 21l3-11-10 6Z" fill="#e5960a" />
+      <path
+        d="M15 21 12 10l10 6Z"
+        fill="#e5960a"
+        stroke="#e5960a"
+        strokeLinejoin="round"
+        strokeWidth="3.4"
+      />
+      <path
+        d="M49 21l3-11-10 6Z"
+        fill="#e5960a"
+        stroke="#e5960a"
+        strokeLinejoin="round"
+        strokeWidth="3.4"
+      />
       <rect fill="#e5960a" height="34" rx="14" width="44" x="10" y="17" />
       <path d="M20 17l4 8-8-1Z" fill="#14161f" />
       <path d="M44 17l-4 8 8-1Z" fill="#14161f" />
@@ -228,8 +277,20 @@ const art: Record<string, ReactElement> = {
   ),
   indigo_dragon: (
     <>
-      <path d="M18 16 12 6l10 4Z" fill="#ffd600" />
-      <path d="M46 16l6-10-10 4Z" fill="#ffd600" />
+      <path
+        d="M18 16 12 6l10 4Z"
+        fill="#ffd600"
+        stroke="#ffd600"
+        strokeLinejoin="round"
+        strokeWidth="3.4"
+      />
+      <path
+        d="M46 16l6-10-10 4Z"
+        fill="#ffd600"
+        stroke="#ffd600"
+        strokeLinejoin="round"
+        strokeWidth="3.4"
+      />
       <rect fill="#3c4254" height="36" rx="15" width="46" x="9" y="14" />
       <path d="M9 30c-4 1-6 4-5 8 3-1 5-3 5-3Z" fill="#3c4254" />
       <path d="M20 14c2-5 6-8 12-8s10 3 12 8Z" fill="#2542ad" />
@@ -353,8 +414,20 @@ const art: Record<string, ReactElement> = {
   ),
   grayscale_wolf: (
     <>
-      <path d="M14 22 9 8l12 7Z" fill="#3c4254" />
-      <path d="M50 22l5-14-12 7Z" fill="#3c4254" />
+      <path
+        d="M14 22 9 8l12 7Z"
+        fill="#3c4254"
+        stroke="#3c4254"
+        strokeLinejoin="round"
+        strokeWidth="3.4"
+      />
+      <path
+        d="M50 22l5-14-12 7Z"
+        fill="#3c4254"
+        stroke="#3c4254"
+        strokeLinejoin="round"
+        strokeWidth="3.4"
+      />
       <rect fill="#646b7e" height="34" rx="14" width="44" x="10" y="18" />
       <path
         d="M32 52c-8 0-13-4-13-10 0-4 5-7 13-7s13 3 13 7c0 6-5 10-13 10Z"

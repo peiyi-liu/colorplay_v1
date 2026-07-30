@@ -348,7 +348,7 @@ describe('AuthBootstrap', () => {
     view.queryClient.setQueryData(['quiz', 'session', 'session-id'], {
       totalScore: 1_000,
     });
-    view.queryClient.setQueryData(['catalog', 'public'], 'retained');
+    view.queryClient.setQueryData(['catalog', 'public'], 'public-data');
     const cancelQueries = vi.spyOn(view.queryClient, 'cancelQueries');
     const removeQueries = vi.spyOn(view.queryClient, 'removeQueries');
 
@@ -374,9 +374,11 @@ describe('AuthBootstrap', () => {
     expect(
       view.queryClient.getQueryData(['quiz', 'session', 'session-id']),
     ).toBeUndefined();
-    expect(view.queryClient.getQueryData(['catalog', 'public'])).toBe(
-      'retained',
-    );
+    // owner 0730 #12：換帳號改為全清（allowlist 曾漏掉多個使用者範疇，
+    // 造成新帳號看到上一位使用者的統計）；公開目錄一併重抓。
+    expect(
+      view.queryClient.getQueryData(['catalog', 'public']),
+    ).toBeUndefined();
     expect(cancelQueries).toHaveBeenCalledOnce();
     expect(removeQueries).toHaveBeenCalledOnce();
     expect(cancelQueries.mock.invocationCallOrder[0]).toBeLessThan(

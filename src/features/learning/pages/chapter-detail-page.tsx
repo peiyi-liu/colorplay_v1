@@ -266,8 +266,9 @@ export function ChapterDetailPage({
       <header>
         <p className="route-panel__eyebrow">章節複習</p>
         <div className="chapter-detail__title-row">
+          {/* owner 0730 #4:章節標題表示完整(同大廳卡片格式)。 */}
           <h1 className="chapter-detail__title" id="chapter-detail-title">
-            {chapter.title}
+            Chapter {chapter.sortOrder}：{chapter.title}
           </h1>
           {chapter.isPlayable ? (
             <Link

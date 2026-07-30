@@ -5,14 +5,12 @@ import { ForgotPasswordPage } from '../../features/auth/pages/forgot-password-pa
 import { LoginPage } from '../../features/auth/pages/login-page';
 import { RegisterPage } from '../../features/auth/pages/register-page';
 import { ResetPasswordPage } from '../../features/auth/pages/reset-password-page';
-import { JoinClassroomRoute } from '../../features/classrooms/pages/join-classroom-route';
 import { ShopPage } from '../../features/inventory/pages/shop-page';
 import { LobbyPage } from '../../features/learning/pages/lobby-page';
 import {
   MissionPage,
   MissionSelectPage,
 } from '../../features/learning/pages/mission-page';
-import { ProfileFoundationPage } from '../../features/profile/pages/profile-foundation-page';
 import { QuizResultPage } from '../../features/quiz/pages/quiz-result';
 import { QuizSessionPage } from '../../features/quiz/pages/quiz-session';
 import { RouteErrorBoundary } from '../boundaries/root-error-boundary';
@@ -59,10 +57,6 @@ export function createAppRouter() {
           element: <RequireAuth />,
           children: [
             {
-              path: '/join/:joinCode',
-              element: <JoinClassroomRoute />,
-            },
-            {
               path: '/app',
               element: <LobbyPage />,
             },
@@ -102,10 +96,6 @@ export function createAppRouter() {
                 import('../../features/leaderboard/pages/classroom-leaderboard-route'),
             },
             {
-              path: '/app/profile',
-              element: <ProfileFoundationPage />,
-            },
-            {
               path: '/app/shop',
               element: <ShopPage />,
             },
@@ -113,22 +103,6 @@ export function createAppRouter() {
               path: '/app/achievements',
               lazy: () =>
                 import('../../features/achievements/pages/achievements-route'),
-            },
-            {
-              path: '/app/assignments',
-              lazy: async () => {
-                const module =
-                  await import('../../features/assignments/pages/student-assignments-page');
-                return { Component: module.StudentAssignmentsPage };
-              },
-            },
-            {
-              path: '/app/assignments/:assignmentId',
-              lazy: async () => {
-                const module =
-                  await import('../../features/assignments/pages/student-assignment-detail-page');
-                return { Component: module.StudentAssignmentDetailPage };
-              },
             },
             {
               path: '/app/live/join',
@@ -163,22 +137,6 @@ export function createAppRouter() {
                     const module =
                       await import('../../features/teacher-content/pages/teacher-dashboard-page');
                     return { Component: module.TeacherDashboardPage };
-                  },
-                },
-                {
-                  path: '/teacher/import',
-                  lazy: async () => {
-                    const module =
-                      await import('../../features/teacher-content/pages/teacher-import-wizard-page');
-                    return { Component: module.TeacherImportWizardPage };
-                  },
-                },
-                {
-                  path: '/teacher/content',
-                  lazy: async () => {
-                    const module =
-                      await import('../../features/teacher-content/pages/teacher-content-workspace-page');
-                    return { Component: module.TeacherContentWorkspacePage };
                   },
                 },
                 {
@@ -235,24 +193,6 @@ export function createAppRouter() {
                     const module =
                       await import('../../features/classrooms/pages/teacher-student-progress-page');
                     return { Component: module.TeacherStudentProgressPage };
-                  },
-                },
-                {
-                  path: '/teacher/classes/:classroomId/progress',
-                  lazy: async () => {
-                    const module =
-                      await import('../../features/learning/pages/teacher-classroom-progress-page');
-                    return {
-                      Component: module.TeacherClassroomProgressPage,
-                    };
-                  },
-                },
-                {
-                  path: '/teacher/classes/:classroomId/assignments',
-                  lazy: async () => {
-                    const module =
-                      await import('../../features/assignments/pages/teacher-assignments-page');
-                    return { Component: module.TeacherAssignmentsPage };
                   },
                 },
               ],

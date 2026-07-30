@@ -9,7 +9,7 @@ import { MapStepper } from '../../../components/ui/map-stepper';
 import { SectionHeader } from '../../../components/ui/section-header';
 import { VictoryCard } from '../../../components/ui/victory-card';
 import type { MasteryRepository } from '../api/mastery-repository';
-import { subtopicRangeLabel, usePublishedChapters } from '../api/chapters';
+import { usePublishedChapters } from '../api/chapters';
 import {
   useMasteryHint,
   useMasteryState,
@@ -56,16 +56,23 @@ export function MissionSelectPage({
         ) : (
           <ul className="mission-select__list">
             {playable.map((chapter) => {
-              // owner 0728:列表加小節顯示,如「3-1〜3-3 色彩表示」。
-              const rangeLabel = subtopicRangeLabel(chapter.subtopicCodes);
               return (
                 <li className="mission-select__item" key={chapter.id}>
                   <div>
-                    <h2>
-                      {rangeLabel ? `${rangeLabel} ` : ''}
-                      {chapter.title}
-                    </h2>
-                    <p>{chapter.description}</p>
+                    <h2>{chapter.title}</h2>
+                    {/* owner 0730 #5:測驗小節分節、標題完整列出。 */}
+                    {chapter.subtopicTitles.length > 0 ? (
+                      <ul
+                        aria-label={`${chapter.title} 小節`}
+                        className="mission-select__subtopics"
+                      >
+                        {chapter.subtopicTitles.map((subtopicTitle) => (
+                          <li key={subtopicTitle}>{subtopicTitle}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>{chapter.description}</p>
+                    )}
                   </div>
                   <button
                     className="primary-action"
@@ -110,6 +117,8 @@ export function MissionPage({
   const restart = useStartMastery(repository);
   const [hints, setHints] = useState<readonly RevealedHint[]>([]);
   const [feedback, setFeedback] = useState<string>();
+  // owner 0730 #7:作答方式與大廳開始任務一致(radio 選定後按「送出答案」)。
+  const [selectedOptionId, setSelectedOptionId] = useState<string>();
   // 答對後先停在回饋卡（與課後學習大廳的答題節奏一致），按「下一關」才前進。
   const [resolved, setResolved] = useState<
     Readonly<{ explanation: string; isLast: boolean }> | undefined
@@ -122,6 +131,7 @@ export function MissionPage({
       lastQuestionId.current = questionId;
       setHints([]);
       setFeedback(undefined);
+      setSelectedOptionId(undefined);
     }
   }, [questionId]);
 
@@ -221,53 +231,72 @@ export function MissionPage({
           />
         ) : (
           <>
-            <div className="mission__scenario">
-              <p className="mission__scenario-label">
-                <span aria-hidden="true"></span>情境任務
-              </p>
-              <p className="mission__prompt">{mastery.question.prompt}</p>
-            </div>
-
-            <p className="mission__instruction">
-              <span aria-hidden="true"></span>
-              請點擊選擇最佳色彩策略（答錯會鎖定該選項）：
-            </p>
-            <div className="mission__options">
-              {mastery.question.options.map((option) => (
+            <form
+              className="question-card"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (submit.isPending || selectedOptionId === undefined) return;
+                submit.mutate(selectedOptionId, {
+                  onError: () => {
+                    setFeedback('作答未送出，請再試一次。');
+                  },
+                  onSuccess: (result) => {
+                    if (result.isCorrect) {
+                      setResolved({
+                        explanation: result.explanation,
+                        isLast: mastery.position === mastery.questionCount,
+                      });
+                      return;
+                    }
+                    // 答錯的選項鎖定後不可再選，清掉選取讓學生重新挑選。
+                    setSelectedOptionId(undefined);
+                    setFeedback('✕ 還不對，該選項已鎖定。可索取提示後再試。');
+                  },
+                });
+              }}
+            >
+              <fieldset disabled={submit.isPending}>
+                <legend>{mastery.question.prompt}</legend>
+                <div className="question-options">
+                  {mastery.question.options.map((option) => (
+                    <label
+                      className="question-option"
+                      data-locked={option.locked ? 'true' : undefined}
+                      data-selected={
+                        selectedOptionId === option.id ? 'true' : 'false'
+                      }
+                      key={option.id}
+                    >
+                      <input
+                        checked={selectedOptionId === option.id}
+                        disabled={option.locked}
+                        name={`mission-${questionId ?? 'question'}`}
+                        onChange={() => {
+                          setSelectedOptionId(option.id);
+                        }}
+                        type="radio"
+                        value={option.id}
+                      />
+                      <span className="question-option__key" aria-hidden="true">
+                        {option.key}
+                      </span>
+                      <span>{option.text}</span>
+                      {option.locked ? <span aria-hidden="true">●</span> : null}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <div className="question-card__action">
                 <button
-                  className="mission-option"
-                  data-locked={option.locked}
-                  disabled={option.locked || submit.isPending}
-                  key={option.id}
-                  onClick={() => {
-                    submit.mutate(option.id, {
-                      onError: () => {
-                        setFeedback('作答未送出，請再試一次。');
-                      },
-                      onSuccess: (result) => {
-                        if (result.isCorrect) {
-                          setResolved({
-                            explanation: result.explanation,
-                            isLast: mastery.position === mastery.questionCount,
-                          });
-                          return;
-                        }
-                        setFeedback(
-                          '✕ 還不對，該選項已鎖定。可索取提示後再試。',
-                        );
-                      },
-                    });
-                  }}
-                  type="button"
+                  className="primary-action"
+                  data-primary-action="true"
+                  disabled={submit.isPending || selectedOptionId === undefined}
+                  type="submit"
                 >
-                  <span className="mission-option__key" aria-hidden="true">
-                    {option.key}
-                  </span>
-                  <span>{option.text}</span>
-                  {option.locked ? <span aria-hidden="true">●</span> : null}
+                  {submit.isPending ? '送出中…' : '送出答案'}
                 </button>
-              ))}
-            </div>
+              </div>
+            </form>
 
             {feedback ? <p role="status">{feedback}</p> : null}
 

@@ -1,15 +1,11 @@
-import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
-import type { AssignmentRepository } from '../../assignments/types';
-import { useCreateAssignment } from '../../assignments/hooks/use-assignments';
 import { useLiveSessionDetail } from '../hooks/use-live-commands';
 import { buildMatrixCsv, matrixCellLabel } from '../lib/report-export';
-import type { LiveRepository, LiveSessionDetail } from '../types';
+import type { LiveRepository } from '../types';
 
 const EM_DASH = '—';
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 function downloadCsv(fileName: string, content: string) {
   const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
@@ -21,64 +17,12 @@ function downloadCsv(fileName: string, content: string) {
   URL.revokeObjectURL(url);
 }
 
-function ReviewAssignmentButton({
-  report,
-  assignmentRepository,
-}: Readonly<{
-  report: LiveSessionDetail;
-  assignmentRepository?: AssignmentRepository;
-}>) {
-  const createAssignment = useCreateAssignment(
-    report.classroomId,
-    assignmentRepository,
-  );
-  const [message, setMessage] = useState<string>();
-  return (
-    <div>
-      <button
-        className="live-report__action"
-        disabled={createAssignment.isPending || createAssignment.isSuccess}
-        onClick={() => {
-          setMessage(undefined);
-          createAssignment.mutate(
-            {
-              classroomId: report.classroomId,
-              title: `${report.activity.title} 複習`,
-              quizTemplateId: report.activity.quizTemplateId,
-              availableFrom: new Date().toISOString(),
-              deadlineAt: new Date(Date.now() + WEEK_MS).toISOString(),
-              attemptLimit: null,
-              passingThreshold: 60,
-            },
-            {
-              onError: () => {
-                setMessage('目前無法建立複習任務，請稍後重試。');
-              },
-              onSuccess: () => {
-                setMessage('已建立複習任務草稿，請到任務頁確認並發佈。');
-              },
-            },
-          );
-        }}
-        type="button"
-      >
-        {createAssignment.isPending ? '建立中…' : '一鍵生成課後複習任務'}
-      </button>
-      {message ? (
-        <p role={createAssignment.isError ? 'alert' : 'status'}>{message}</p>
-      ) : null}
-    </div>
-  );
-}
-
 export function TeacherLiveReportPage({
   sessionId: suppliedSessionId,
   repository,
-  assignmentRepository,
 }: Readonly<{
   sessionId?: string;
   repository?: LiveRepository;
-  assignmentRepository?: AssignmentRepository;
 }>) {
   const params = useParams();
   const sessionId = suppliedSessionId ?? params.sessionId ?? '';
@@ -201,18 +145,6 @@ export function TeacherLiveReportPage({
         >
           匯出 CSV
         </button>
-      </section>
-
-      <section aria-label="學習閉環">
-        <h2>學習閉環</h2>
-        <p>
-          場次結算時，答錯與逾時的題目已自動寫入每位學生的錯題本；也可以直接
-          指派課後複習任務（同一份題庫，草稿建立後到任務頁發佈）。
-        </p>
-        <ReviewAssignmentButton
-          report={report}
-          {...(assignmentRepository ? { assignmentRepository } : {})}
-        />
       </section>
 
       <section aria-label="最終排名">

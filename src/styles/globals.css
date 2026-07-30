@@ -181,7 +181,9 @@ a {
 .economy-summary__level progress {
   width: 100%;
   height: 6px;
-  accent-color: var(--color-accent);
+
+  /* owner 0730:LEVEL 進度條改暖黃。 */
+  accent-color: var(--yellow-brand);
 }
 
 .economy-summary__tokens {
@@ -585,9 +587,30 @@ a {
   margin-top: var(--space-6);
 }
 
+/* owner 0730 #4:「送出答案」改淺色(淡黃底＋深字＋品牌黃描邊)。 */
+.question-card__action .primary-action {
+  border-color: var(--yellow-brand);
+  background: var(--amber-highlight-soft);
+  color: var(--pastel-cta-contrast);
+}
+
+.question-card__action .primary-action:hover,
+.question-card__action .primary-action:focus-visible {
+  background: color-mix(
+    in srgb,
+    var(--amber-highlight-soft) 80%,
+    var(--yellow-brand)
+  );
+}
+
 .feedback-card {
   margin-top: var(--space-4);
   border-left-width: 8px;
+}
+
+/* owner 0730 #8:回饋卡行動按鈕與上方解析保持行距。 */
+.feedback-card .primary-action {
+  margin-top: var(--space-4);
 }
 
 .feedback-card--correct {
@@ -1443,33 +1466,47 @@ a {
   font-size: 0.8125rem;
 }
 
+/* owner 0730 #3:四格合併為單一漸層長條、格內文字置中。 */
 .pastel-summary__stats {
   display: flex;
+  overflow: hidden;
   flex-wrap: wrap;
-  gap: var(--space-3);
   margin: 0;
+  border: 1px solid var(--pastel-summary-border);
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    var(--pastel-summary-tint),
+    var(--pastel-summary-tint-2)
+  );
+  gap: 0;
 }
 
 .pastel-summary__stat {
   display: grid;
   min-width: 88px;
-  border-radius: 10px;
-  background: var(--pastel-summary-cell);
+  background: none;
   gap: 2px;
-  padding: var(--space-2) 14px;
+  padding: var(--space-2) 18px;
+}
+
+.pastel-summary__stat + .pastel-summary__stat {
+  border-left: 1px solid var(--pastel-summary-border);
 }
 
 .pastel-summary__stat dt {
   color: var(--pastel-ink-body);
   font-size: 11px;
   font-weight: 500;
+  text-align: center;
 }
 
 .pastel-summary__stat dd {
   margin: 0;
-  color: var(--pastel-ink-strong);
+  color: var(--pastel-summary-value);
   font-size: 1rem;
   font-weight: 700;
+  text-align: center;
 }
 
 /* 卡片網格:桌面三欄/平板兩欄/手機單欄(spec §五/§十二) */
@@ -2233,6 +2270,9 @@ a {
   color: var(--amber-700);
   font-size: var(--font-size-supporting);
   margin-top: var(--space-4);
+
+  /* owner 0730 #8:解析與「下一關」按鈕行距加大，不相連。 */
+  margin-bottom: var(--space-5);
   padding: var(--space-4);
 }
 
@@ -3256,74 +3296,26 @@ a {
   font-size: var(--font-size-metadata);
 }
 
-.mission__scenario {
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-control);
-  background: var(--slate-50);
-  margin-bottom: var(--space-4);
-  padding: var(--space-5);
-}
-
-.mission__scenario-label {
-  margin: 0 0 var(--space-2);
-  color: var(--amber-700);
-  font-size: var(--font-size-metadata);
-  font-weight: 800;
-}
-
-.mission__prompt {
-  margin: 0;
-  font-size: var(--font-size-body);
-  font-weight: 700;
-  line-height: 1.7;
-}
-
-.mission__instruction {
-  margin: 0 0 var(--space-2);
+/* owner 0730 #5:小節分節完整列出(每小節一行,含代碼前綴)。 */
+.mission-select__subtopics {
+  margin: var(--space-2) 0 0;
+  padding: 0;
   color: var(--color-muted);
-  font-size: var(--font-size-metadata);
-  font-weight: 700;
-}
-
-.mission__options {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.mission-option {
-  display: flex;
-  align-items: center;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-control);
-  background: var(--surface-card);
-  cursor: pointer;
   font-size: var(--font-size-supporting);
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  text-align: left;
+  list-style: none;
 }
 
-.mission-option:hover:enabled {
-  border-color: var(--yellow-brand);
+.mission-select__subtopics li + li {
+  margin-top: var(--space-1);
 }
 
-.mission-option[data-locked='true'] {
+/* owner 0730 #7:任務實戰改用 question-card 作答；答錯鎖定的選項
+   沿用 quiz 選項外觀並加鎖定視覺(不只靠顏色:加刪除線)。 */
+.question-option[data-locked='true'] {
   background: var(--slate-100);
   color: var(--slate-500);
   cursor: not-allowed;
   text-decoration: line-through;
-}
-
-.mission-option__key {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  border: 2px solid currentcolor;
-  border-radius: 50%;
-  font-weight: 800;
-  place-items: center;
-  pointer-events: none;
 }
 
 .mission__hints {
@@ -3357,12 +3349,23 @@ a {
   margin-top: var(--space-6);
 }
 
-/* 排行榜：裝備邊框環（漸層為伺服器資料） */
-.leaderboard-framed-blook {
-  display: inline-block;
-  border: 3px solid transparent;
-  border-radius: var(--space-2);
-  padding: 1px var(--space-1);
+/* owner 0730 #6:排行榜頭像改用大廳同款圓角磚(漸層外框為伺服器資料)。 */
+.leaderboard-blook {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.leaderboard-blook .pastel-summary__avatar {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-control);
+  font-size: 1.25rem;
+}
+
+.leaderboard-blook strong {
+  color: var(--pastel-ink-heading);
 }
 
 /* 帳號制認證（Phase 9-AUTH）：登入頁連結列、註冊頁行內驗證列與欄位說明。 */
@@ -4120,24 +4123,26 @@ a {
   inset: 0;
 }
 
+/* owner 0730 #11:投影幕模式選項圖案與字體放大(設計稿值)。 */
 .live-presenter__options {
   display: grid;
   width: min(100%, 60rem);
   padding: 0;
-  gap: var(--space-3);
+  gap: 20px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   list-style: none;
 }
 
 .live-presenter__option {
   display: flex;
+  min-height: 128px;
   align-items: center;
   border-radius: var(--radius-control);
   color: var(--white);
-  font-size: 1.4rem;
+  font-size: 2rem;
   font-weight: 700;
-  gap: var(--space-2);
-  padding: var(--space-4);
+  gap: var(--space-3);
+  padding: 28px 32px;
   text-align: left;
 }
 

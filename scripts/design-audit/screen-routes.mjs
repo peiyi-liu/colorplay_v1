@@ -78,12 +78,7 @@ export const SCREENS = [
   { id: 'unauthorized', route: '/unauthorized', auth: 'student' },
   { id: 'tDash', route: '/teacher', auth: 'teacher' },
   { id: 'tLive', route: '/teacher/live', auth: 'teacher' },
-  {
-    id: 'tHost',
-    route: '/teacher/live/:sessionId',
-    auth: 'teacher',
-    setup: 'live-hosting',
-  },
+  // owner 0730:主持台只保留投影幕模式——tHost 主控檢視移除，投影由 tPresenter 覆蓋。
   {
     id: 'tPresenter',
     route: '/teacher/live/:sessionId?presenter=1',
@@ -108,7 +103,7 @@ export const SCREENS = [
     auth: 'teacher',
     setup: 'live-final',
   },
-  { id: 'tContent', route: '/teacher/content', auth: 'teacher' },
+  // owner 0730:內容工作區/匯入內容停做，/teacher/content 路由已移除。
   { id: 'tAnalytics', route: '/teacher/analytics', auth: 'teacher' },
   { id: 'tClasses', route: '/teacher/classes', auth: 'teacher' },
   {

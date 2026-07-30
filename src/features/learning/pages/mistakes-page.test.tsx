@@ -70,6 +70,8 @@ describe('MistakesPage', () => {
     expect(screen.getByRole('heading', { name: '已解決' })).toBeInTheDocument();
     // owner 0728:已解決題附正確答案供再複習。
     expect(screen.getByText('正確答案：清色')).toBeInTheDocument();
+    // owner 0730 #1:已解決列不再於題目後加「（已解決）」字尾。
+    expect(screen.queryByText(/（已解決）/u)).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: '再挑戰（補救練習）' }));
 

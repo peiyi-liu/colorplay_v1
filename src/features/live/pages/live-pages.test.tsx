@@ -483,13 +483,9 @@ describe('TeacherLiveSessionPage (host console)', () => {
     ).toBeVisible();
   });
 
-  it('shows the host-only live distribution during an open question', async () => {
-    const getDistribution = vi.fn().mockResolvedValue({
-      answeredCount: 2,
-      options: [{ optionId: '18700000-0000-0000-0000-000000000001', count: 2 }],
-    });
+  // owner 0730 #14：主持台只保留投影幕模式——開題中直接投影並顯示已作答數。
+  it('projects the open question with the live answered count', async () => {
     const repository = repositoryWith({
-      getDistribution,
       getState: vi
         .fn()
         .mockResolvedValue({ ...openState, isHost: true, answeredCount: 2 }),
@@ -503,9 +499,9 @@ describe('TeacherLiveSessionPage (host console)', () => {
     );
 
     expect(
-      await screen.findByText('A. 色相、明度、彩度（2 人）'),
+      await screen.findByRole('dialog', { name: '投影模式' }),
     ).toBeVisible();
-    expect(getDistribution).toHaveBeenCalledWith(SESSION_ID);
+    expect(screen.getByText(/已作答 2/u)).toBeVisible();
   });
 
   it('celebrates a server-reported streak after answering', async () => {

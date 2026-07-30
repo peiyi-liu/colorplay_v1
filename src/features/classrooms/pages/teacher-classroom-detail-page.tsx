@@ -48,20 +48,6 @@ export function TeacherClassroomDetailPage({
           <h1 id="teacher-classroom-detail-title">班級成員</h1>
           <p>成員資料由安全投影提供，不包含 Email 或使用者識別碼。</p>
         </div>
-        <div className="classroom-header-actions">
-          <Link
-            className="secondary-action"
-            to={`/teacher/classes/${classroomId}/assignments`}
-          >
-            作業管理
-          </Link>
-          <Link
-            className="secondary-action"
-            to={`/teacher/classes/${classroomId}/progress`}
-          >
-            學習進度
-          </Link>
-        </div>
       </header>
       <section aria-label="班級學生" className="ui-card ui-card--md">
         <header className="classroom-section-header">

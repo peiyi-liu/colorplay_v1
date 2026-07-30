@@ -1,4 +1,4 @@
-import type { Query, QueryClient } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
 import { createContext, useContext } from 'react';
 
 import type { AccountSignInInput, AuthSession, SignInInput } from '../types';
@@ -15,26 +15,20 @@ export const AuthContext = createContext<AuthContextValue | undefined>(
   undefined,
 );
 
-const isUserScopedQuery = (query: Query) => {
-  const [scope, resource] = query.queryKey;
-  return (
-    (scope === 'profile' && resource === 'me') ||
-    scope === 'economy' ||
-    scope === 'inventory' ||
-    scope === 'quiz'
-  );
-};
-
+/* owner 0730 #12:換帳號(登出/切換使用者)一律清空整個 query cache。
+   先前的使用者範疇 allowlist 漏掉 achievements/leaderboard/classrooms/
+   learning/mastery/live/teacher-content 等 scope，導致新帳號初次登入
+   看到上一位使用者的統計(如累積 XP/徽章/名次)。公開目錄資料重抓的
+   成本可接受，全清才是安全邊界。 */
 export async function clearUserScopedQueries(
   queryClient: QueryClient,
 ): Promise<void> {
-  const filters = { predicate: isUserScopedQuery } as const;
   try {
-    await queryClient.cancelQueries(filters);
+    await queryClient.cancelQueries();
   } catch {
     // Cache removal is the security boundary even if cancellation reports an error.
   } finally {
-    queryClient.removeQueries(filters);
+    queryClient.removeQueries();
   }
 }
 

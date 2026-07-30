@@ -13,7 +13,6 @@ import type {
   TeacherContentRepository,
 } from '../api/teacher-content-repository';
 import {
-  useTeacherAssignmentSummary,
   useTeacherClassroomSummary,
   useTeacherLiveReport,
   useTeacherQuestionAnalysis,
@@ -21,13 +20,6 @@ import {
   useTeacherSubtopics,
 } from '../hooks/use-teacher-content';
 import { EM_DASH, formatPercent } from './teacher-dashboard-page';
-
-const assignmentStatusLabels: Readonly<Record<string, string>> = {
-  archived: '已封存',
-  closed: '已截止',
-  draft: '草稿',
-  published: '進行中',
-};
 
 const formatTaipeiDate = (iso: string | null): string =>
   iso === null
@@ -101,11 +93,6 @@ export function TeacherAnalyticsPage({
   const subtopicMastery = useTeacherSubtopicMastery(
     classroomId,
     filters,
-    repository,
-  );
-  const assignmentSummary = useTeacherAssignmentSummary(
-    classroomId,
-    dateFilters,
     repository,
   );
   const liveReport = useTeacherLiveReport(classroomId, dateFilters, repository);
@@ -336,41 +323,6 @@ export function TeacherAnalyticsPage({
                       <td>{row.answers}</td>
                       <td>{formatPercent(row.accuracy)}</td>
                       <td>{row.students}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </ProjectionSection>
-
-          <ProjectionSection
-            isEmpty={(rows) => rows.length === 0}
-            query={assignmentSummary}
-            title="作業總覽"
-          >
-            {(rows) => (
-              <table className="ui-table">
-                <thead>
-                  <tr>
-                    <th scope="col">作業</th>
-                    <th scope="col">狀態</th>
-                    <th scope="col">指派人數</th>
-                    <th scope="col">作答數</th>
-                    <th scope="col">完成數</th>
-                    <th scope="col">通過數</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.assignment_id}>
-                      <td>{row.title}</td>
-                      <td>
-                        {assignmentStatusLabels[row.status] ?? row.status}
-                      </td>
-                      <td>{row.targets}</td>
-                      <td>{row.attempts}</td>
-                      <td>{row.completed}</td>
-                      <td>{row.passed}</td>
                     </tr>
                   ))}
                 </tbody>

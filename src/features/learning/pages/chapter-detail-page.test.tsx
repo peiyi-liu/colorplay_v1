@@ -160,8 +160,9 @@ describe('ChapterDetailPage', () => {
     renderPage(repositoryWith());
 
     await waitFor(() => {
+      // owner 0730 #4:章節標題表示完整(Chapter n：標題)。
       expect(
-        screen.getByRole('heading', { name: '色彩體系與應用' }),
+        screen.getByRole('heading', { name: 'Chapter 3：色彩體系與應用' }),
       ).toBeInTheDocument();
     });
     expect(
