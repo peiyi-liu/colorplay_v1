@@ -359,6 +359,11 @@ describe('LoginPage', () => {
     expect(router.state.location.state).toBeNull();
     expect(router.state.historyAction).toBe('REPLACE');
   });
+
+  it('renders the PRESS START marquee on the title screen', () => {
+    renderLoginPage(createAuthValue());
+    expect(screen.getByText('PRESS START')).toBeInTheDocument();
+  });
 });
 
 it('shows the ggame auth portal branding', () => {

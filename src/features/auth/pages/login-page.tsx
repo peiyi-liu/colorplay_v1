@@ -1,4 +1,5 @@
 import { Icon } from '../../../components/ui/icons';
+import { RpgWindow } from '../../../components/ui/rpg-window';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -55,7 +56,10 @@ export function LoginPage() {
   });
 
   return (
-    <section className="route-panel auth-portal" data-portal={portal}>
+    <section
+      className="route-panel auth-portal scene-night"
+      data-portal={portal}
+    >
       <div className="auth-portal-brand">
         <span aria-hidden="true" className="auth-portal-brand__mark">
           <svg fill="none" height="40" viewBox="0 0 32 32" width="40">
@@ -78,6 +82,9 @@ export function LoginPage() {
         </span>
         <p className="auth-portal-brand__title">ColorPlay</p>
         <p className="auth-portal-brand__subtitle">色彩原理遊戲式學習平台</p>
+        <p className="press-start" aria-hidden="true">
+          PRESS START
+        </p>
       </div>
       <h1>登入</h1>
       <p className="route-panel__message">
@@ -86,190 +93,197 @@ export function LoginPage() {
           : '使用帳號登入，繼續你的色彩原理學習進度。'}
       </p>
 
-      <fieldset className="login-form__portal">
-        <legend className="visually-hidden">登入身分</legend>
-        <label data-active={portal === 'student'}>
-          <input
-            checked={portal === 'student'}
-            name="login-portal"
-            onChange={() => {
-              setPortal('student');
-            }}
-            type="radio"
-          />
-          <Icon name="grad-cap" size={15} /> 學生帳號登入
-        </label>
-        <label data-active={portal === 'teacher'}>
-          <input
-            checked={portal === 'teacher'}
-            name="login-portal"
-            onChange={() => {
-              setPortal('teacher');
-            }}
-            type="radio"
-          />
-          <Icon name="briefcase" size={15} /> 教師端登入
-        </label>
-      </fieldset>
-
-      {portal === 'teacher' ? (
-        <div className="auth-portal__teacher-note">
-          <Icon name="alert" size={14} /> 教師帳號由開發後台建立。
-        </div>
-      ) : null}
-
-      <form
-        className="login-form"
-        data-interaction-group="login"
-        noValidate
-        onSubmit={(event) => {
-          void handleSubmit(async (values) => {
-            if (pendingSubmission.current) return;
-
-            const identifier = values.account.trim();
-            const usesEmailBridge = identifier.includes('@');
-            const classCode = values.classCode?.trim() ?? '';
-            if (portal === 'teacher' && !usesEmailBridge && !classCode) {
-              setError('classCode', { message: '請輸入班級序號' });
-              return;
-            }
-
-            pendingSubmission.current = true;
-            setSubmitError(null);
-            try {
-              if (usesEmailBridge) {
-                await auth.signIn({
-                  email: identifier,
-                  password: values.password,
-                });
-              } else {
-                await auth.signInWithAccount({
-                  account: identifier,
-                  password: values.password,
-                  portal,
-                  ...(classCode ? { classCode } : {}),
-                });
-              }
-              toast({
-                message: '登入成功，歡迎回到 ColorPlay！',
-                tone: 'success',
-              });
-              // 固定導向（UAT 0727 #5）：學生一律進學習大廳、教師一律進
-              // 教師工作區，不再回跳登入前頁面。
-              await navigate(
-                portal === 'teacher' ? teacherDestination : fallbackDestination,
-                { replace: true },
-              );
-            } catch (error) {
-              setSubmitError(messageForError(error, portal));
-            } finally {
-              pendingSubmission.current = false;
-            }
-          })(event);
-        }}
-      >
-        <div className="login-form__field">
-          <label htmlFor="login-account">帳號</label>
-          <input
-            {...register('account')}
-            aria-describedby={
-              errors.account ? 'login-account-error' : undefined
-            }
-            aria-invalid={errors.account ? 'true' : 'false'}
-            autoComplete="username"
-            id="login-account"
-            type="text"
-          />
-          {errors.account ? (
-            <p className="login-form__field-error" id="login-account-error">
-              {errors.account.message}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="login-form__field">
-          <label htmlFor="login-password">密碼</label>
-          <input
-            {...register('password')}
-            aria-describedby={
-              errors.password ? 'login-password-error' : undefined
-            }
-            aria-invalid={errors.password ? 'true' : 'false'}
-            autoComplete="current-password"
-            id="login-password"
-            type="password"
-          />
-          {errors.password ? (
-            <p className="login-form__field-error" id="login-password-error">
-              {errors.password.message}
-            </p>
-          ) : null}
-        </div>
+      <RpgWindow className="auth-window">
+        <fieldset className="login-form__portal">
+          <legend className="visually-hidden">登入身分</legend>
+          <label data-active={portal === 'student'}>
+            <input
+              checked={portal === 'student'}
+              name="login-portal"
+              onChange={() => {
+                setPortal('student');
+              }}
+              type="radio"
+            />
+            <Icon name="grad-cap" size={15} /> 學生帳號登入
+          </label>
+          <label data-active={portal === 'teacher'}>
+            <input
+              checked={portal === 'teacher'}
+              name="login-portal"
+              onChange={() => {
+                setPortal('teacher');
+              }}
+              type="radio"
+            />
+            <Icon name="briefcase" size={15} /> 教師端登入
+          </label>
+        </fieldset>
 
         {portal === 'teacher' ? (
-          <div className="login-form__field">
-            <label htmlFor="login-class-code">班級序號</label>
-            <input
-              {...register('classCode')}
-              aria-describedby={
-                errors.classCode ? 'login-class-code-error' : undefined
-              }
-              aria-invalid={errors.classCode ? 'true' : 'false'}
-              autoComplete="off"
-              id="login-class-code"
-              type="text"
-            />
-            {errors.classCode ? (
-              <p
-                className="login-form__field-error"
-                id="login-class-code-error"
-              >
-                {errors.classCode.message}
-              </p>
-            ) : null}
+          <div className="auth-portal__teacher-note">
+            <Icon name="alert" size={14} /> 教師帳號由開發後台建立。
           </div>
         ) : null}
 
-        {submitError ? (
-          <p className="login-form__submit-error" role="alert">
-            {submitError}
-          </p>
-        ) : null}
-        <p aria-live="polite" className="login-form__status" role="status">
-          {isSubmitting ? '登入處理中，請稍候' : null}
-        </p>
-        <div className="login-form__action-row">
-          <button
-            className={
-              portal === 'teacher'
-                ? 'primary-action login-form__submit--teacher'
-                : 'primary-action'
-            }
-            data-acceptance-interactive="true"
-            data-acceptance-target
-            data-primary-action="true"
-            disabled={isSubmitting}
-            type="submit"
-          >
-            {isSubmitting ? '登入中…' : '登入'}
-          </button>
-        </div>
-        <div className="login-form__links">
-          {portal === 'student' ? (
-            <>
-              <Link className="login-form__link" to="/register">
-                註冊帳號
-              </Link>
-              <span aria-hidden="true" className="login-form__divider">
-                ｜
-              </span>
-            </>
+        <form
+          className="login-form"
+          data-interaction-group="login"
+          noValidate
+          onSubmit={(event) => {
+            void handleSubmit(async (values) => {
+              if (pendingSubmission.current) return;
+
+              const identifier = values.account.trim();
+              const usesEmailBridge = identifier.includes('@');
+              const classCode = values.classCode?.trim() ?? '';
+              if (portal === 'teacher' && !usesEmailBridge && !classCode) {
+                setError('classCode', { message: '請輸入班級序號' });
+                return;
+              }
+
+              pendingSubmission.current = true;
+              setSubmitError(null);
+              try {
+                if (usesEmailBridge) {
+                  await auth.signIn({
+                    email: identifier,
+                    password: values.password,
+                  });
+                } else {
+                  await auth.signInWithAccount({
+                    account: identifier,
+                    password: values.password,
+                    portal,
+                    ...(classCode ? { classCode } : {}),
+                  });
+                }
+                toast({
+                  message: '登入成功，歡迎回到 ColorPlay！',
+                  tone: 'success',
+                });
+                // 固定導向（UAT 0727 #5）：學生一律進學習大廳、教師一律進
+                // 教師工作區，不再回跳登入前頁面。
+                await navigate(
+                  portal === 'teacher'
+                    ? teacherDestination
+                    : fallbackDestination,
+                  { replace: true },
+                );
+              } catch (error) {
+                setSubmitError(messageForError(error, portal));
+              } finally {
+                pendingSubmission.current = false;
+              }
+            })(event);
+          }}
+        >
+          <div className="login-form__field">
+            <label htmlFor="login-account">帳號</label>
+            <input
+              {...register('account')}
+              aria-describedby={
+                errors.account ? 'login-account-error' : undefined
+              }
+              aria-invalid={errors.account ? 'true' : 'false'}
+              autoComplete="username"
+              id="login-account"
+              type="text"
+            />
+            {errors.account ? (
+              <p className="login-form__field-error" id="login-account-error">
+                {errors.account.message}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="login-form__field">
+            <label htmlFor="login-password">密碼</label>
+            <input
+              {...register('password')}
+              aria-describedby={
+                errors.password ? 'login-password-error' : undefined
+              }
+              aria-invalid={errors.password ? 'true' : 'false'}
+              autoComplete="current-password"
+              id="login-password"
+              type="password"
+            />
+            {errors.password ? (
+              <p
+                className="login-form__field-error"
+                id="login-password-error"
+              >
+                {errors.password.message}
+              </p>
+            ) : null}
+          </div>
+
+          {portal === 'teacher' ? (
+            <div className="login-form__field">
+              <label htmlFor="login-class-code">班級序號</label>
+              <input
+                {...register('classCode')}
+                aria-describedby={
+                  errors.classCode ? 'login-class-code-error' : undefined
+                }
+                aria-invalid={errors.classCode ? 'true' : 'false'}
+                autoComplete="off"
+                id="login-class-code"
+                type="text"
+              />
+              {errors.classCode ? (
+                <p
+                  className="login-form__field-error"
+                  id="login-class-code-error"
+                >
+                  {errors.classCode.message}
+                </p>
+              ) : null}
+            </div>
           ) : null}
-          <Link className="login-form__link" to="/forgot-password">
-            忘記密碼
-          </Link>
-        </div>
-      </form>
+
+          {submitError ? (
+            <p className="login-form__submit-error" role="alert">
+              {submitError}
+            </p>
+          ) : null}
+          <p aria-live="polite" className="login-form__status" role="status">
+            {isSubmitting ? '登入處理中，請稍候' : null}
+          </p>
+          <div className="login-form__action-row">
+            <button
+              className={
+                portal === 'teacher'
+                  ? 'primary-action login-form__submit--teacher'
+                  : 'primary-action'
+              }
+              data-acceptance-interactive="true"
+              data-acceptance-target
+              data-primary-action="true"
+              disabled={isSubmitting}
+              type="submit"
+            >
+              {isSubmitting ? '登入中…' : '登入'}
+            </button>
+          </div>
+          <div className="login-form__links">
+            {portal === 'student' ? (
+              <>
+                <Link className="login-form__link" to="/register">
+                  註冊帳號
+                </Link>
+                <span aria-hidden="true" className="login-form__divider">
+                  ｜
+                </span>
+              </>
+            ) : null}
+            <Link className="login-form__link" to="/forgot-password">
+              忘記密碼
+            </Link>
+          </div>
+        </form>
+      </RpgWindow>
     </section>
   );
 }
