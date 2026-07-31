@@ -1341,7 +1341,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
   - `crossedLevelBoundary(totalXp: number, xpAwarded: number, xpPerLevel: number): boolean`
   - `unlockedSince(items: readonly AchievementCatalogItem[], sinceIso: string): readonly AchievementCatalogItem[]`
   - `QuizResultPage` 新增 optional props `achievementRepository?: AchievementRepository; economyRepository?: EconomyRepository`（沿用既有 DI 模式；不傳＝瀏覽器 client）。
-- **已知限制（記錄於計畫，不視為缺陷）**：fanfare 僅在 `location.state.fromFinalize` 時計算（結算直達才有意義，重訪不顯示）；`unlockedSince` 理論上會納入 completedAt 之後、瀏覽 result 前由其他事件解鎖的成就——機率極低且屬正向誤差，接受。
+- **已知限制（記錄於計畫，不視為缺陷）**：fanfare 與本次新解鎖成就皆僅在 `location.state.fromFinalize` 直達時計算（結算直達才有意義，重訪不顯示）；`unlockedSince` 理論上會納入 completedAt 之後、瀏覽 result 前由其他事件解鎖的成就——機率極低且屬正向誤差，接受。
 
 - [ ] **Step 1: 寫失敗測試（純函式）**
 
