@@ -6452,10 +6452,12 @@ select#dashboard-classroom {
   color: var(--ink-900);
 }
 
-/* 終審 C1:legend 預設跨在 fieldset 邊框線上,上半截落在夜底(1.36:1)——
-   float 使其完全落在卡片內。 */
+/* 終審 C1(修正版):legend 預設跨在 fieldset 邊框線上,上半截落在夜底(1.36:1)。
+   float 會讓 .live-options(BFC)縮到浮動框旁的殘餘寬度並溢出——改為給 legend
+   自身不透明淺底,跨線處照樣是深字淺底,零版型變動。 */
 .live-guild-raid .question-card legend {
-  float: left;
+  background: var(--color-surface);
+  padding: 0 var(--space-2);
 }
 
 /* 裁定:live-team-scoreboard 為零樣式裸 section(計畫誤列為淺卡)——
