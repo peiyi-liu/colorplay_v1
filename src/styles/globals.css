@@ -5356,6 +5356,9 @@ select#dashboard-classroom {
 }
 
 .victory-scene .quiz-result__totals p {
+  background: var(--pixel-night);
+  border: 2px solid var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
   color: var(--pixel-window-ink);
   font-variant-numeric: tabular-nums;
 }
