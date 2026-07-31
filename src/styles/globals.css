@@ -5370,6 +5370,18 @@ select#dashboard-classroom {
   color: var(--color-text);
 }
 
+.victory-scene .result-question__status--correct {
+  color: var(--color-success);
+}
+
+.victory-scene .result-question__status--incorrect {
+  color: var(--color-danger);
+}
+
+.victory-scene .result-question__status--timeout {
+  color: var(--indigo-600);
+}
+
 .victory-scene .quiz-result__actions .secondary-action {
   color: var(--pixel-window-ink);
 }
