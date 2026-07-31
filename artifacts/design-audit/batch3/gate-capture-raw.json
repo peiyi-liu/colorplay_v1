@@ -1,0 +1,236 @@
+{
+  "screenshots": [
+    "missions-desktop.png",
+    "missions-375.png",
+    "chapter-detail-desktop.png",
+    "quiz-feedback-spirit.png",
+    "mission-feedback-spirit.png",
+    "chapter-detail-375.png"
+  ],
+  "contrast": [
+    {
+      "pair": "item h2 x item bg",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(246, 238, 216)",
+      "ratio": 11.480159423261107
+    },
+    {
+      "pair": "item subtopic li x item bg",
+      "color": "rgb(102, 112, 133)",
+      "background": "rgb(246, 238, 216)",
+      "ratio": 4.297227873199339
+    },
+    {
+      "pair": "SectionHeader title x world-map-panel bg",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 12.525425353494285
+    },
+    {
+      "pair": "SectionHeader description x world-map-panel bg",
+      "color": "rgb(102, 112, 133)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 4.688489503347302
+    },
+    {
+      "pair": "map-node-status--learning (live) x item bg",
+      "color": "rgb(138, 101, 31)",
+      "background": "rgb(246, 238, 216)",
+      "ratio": 4.578584990628881
+    },
+    {
+      "pair": "map-node__number in map-node--learning (live) x badge bg",
+      "color": "rgb(138, 101, 31)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 4.995464122959072
+    },
+    {
+      "pair": "map-node-status--not_started (swatch) x item bg",
+      "color": "rgb(52, 64, 84)",
+      "background": "rgb(246, 238, 216)",
+      "ratio": 9.036587407676942
+    },
+    {
+      "pair": "map-node__number in map-node--not_started (swatch) x badge bg",
+      "color": "rgb(52, 64, 84)",
+      "background": "rgb(242, 244, 247)",
+      "ratio": 9.49432046885811
+    },
+    {
+      "pair": "map-node-status--learning (swatch) x item bg",
+      "color": "rgb(138, 101, 31)",
+      "background": "rgb(246, 238, 216)",
+      "ratio": 4.578584990628881
+    },
+    {
+      "pair": "map-node__number in map-node--learning (swatch) x badge bg",
+      "color": "rgb(138, 101, 31)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 4.995464122959072
+    },
+    {
+      "pair": "map-node-status--developing (swatch) x item bg",
+      "color": "rgb(37, 66, 173)",
+      "background": "rgb(246, 238, 216)",
+      "ratio": 7.369846121593601
+    },
+    {
+      "pair": "map-node__number in map-node--developing (swatch) x badge bg",
+      "color": "rgb(37, 66, 173)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 8.040868951324882
+    },
+    {
+      "pair": "map-node-status--mastered (swatch) x item bg",
+      "color": "rgb(138, 101, 31)",
+      "background": "rgb(246, 238, 216)",
+      "ratio": 4.578584990628881
+    },
+    {
+      "pair": "map-node__number in map-node--mastered (swatch) x badge bg",
+      "color": "rgb(23, 28, 63)",
+      "background": "rgb(184, 134, 47)",
+      "ratio": 5.092291537105209
+    },
+    {
+      "pair": "eyebrow x header bg",
+      "color": "rgb(184, 134, 47)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 5.092291537105209
+    },
+    {
+      "pair": "h1 x header bg",
+      "color": "rgb(244, 241, 228)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 14.556138259826193
+    },
+    {
+      "pair": "review-progress label x header bg",
+      "color": "rgb(169, 176, 214)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 7.743915211735367
+    },
+    {
+      "pair": "review-progress value x header bg",
+      "color": "rgb(244, 241, 228)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 14.556138259826193
+    },
+    {
+      "pair": "mastery-ring__track stroke x header bg (non-text, 3:1 guideline)",
+      "color": "rgb(228, 231, 236)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 13.293777786257888
+    },
+    {
+      "pair": "chapter-status-pill--success (live) text x own bg",
+      "color": "rgb(23, 117, 78)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 5.362181269911073
+    },
+    {
+      "pair": "subtopic h2 x floor-window bg",
+      "color": "rgb(244, 241, 228)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 14.556138259826193
+    },
+    {
+      "pair": "subtopic progress row x floor-window bg",
+      "color": "rgb(244, 241, 228)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 14.556138259826193
+    },
+    {
+      "pair": "subtopic-tag text x own chip bg (self-contained)",
+      "color": "rgb(37, 48, 66)",
+      "background": "color(srgb 0.991373 0.949098 0.78)",
+      "ratio": 11.832085953808374
+    },
+    {
+      "pair": "subtopic-tag chip bg x floor-window bg (non-text boundary, 3:1 guideline)",
+      "color": "color(srgb 0.991373 0.949098 0.78)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 14.67150456610181
+    },
+    {
+      "pair": "accordion title x accordion bg",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 12.525425353494285
+    },
+    {
+      "pair": "完成複習 button text x button bg",
+      "color": "rgb(52, 64, 84)",
+      "background": "rgba(255, 255, 255, 0.75)",
+      "ratio": 10.461346070440259
+    },
+    {
+      "pair": "chapter-status-pill--primary (swatch) text x own bg",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 12.525425353494285
+    },
+    {
+      "pair": "chapter-status-pill--neutral (swatch) text x own bg",
+      "color": "rgb(52, 64, 84)",
+      "background": "rgb(242, 244, 247)",
+      "ratio": 9.49432046885811
+    },
+    {
+      "pair": "空狀態 p (這一章還沒有複習卡) x 頁底",
+      "color": "rgb(244, 241, 228)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 15.969262487571607
+    },
+    {
+      "pair": "alert p[role=alert] (synthetic) x 頁底",
+      "color": "rgb(255, 138, 141)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 7.982475813604532
+    },
+    {
+      "pair": "feedback-card__mentor-name--green (live, battle-scene) x feedback-card bg",
+      "color": "rgb(23, 117, 78)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 2.896438615976255
+    },
+    {
+      "pair": "feedback-card__mentor-name--red (swatch, battle-scene) x feedback-card bg",
+      "color": "rgb(199, 58, 63)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 3.2216831569357134
+    },
+    {
+      "pair": "feedback-card__mentor-name--blue (swatch, battle-scene) x feedback-card bg",
+      "color": "rgb(37, 66, 173)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 1.9315361299945035
+    },
+    {
+      "pair": "feedback-card__mentor-name--blue (live, mission) x feedback-card bg",
+      "color": "rgb(37, 66, 173)",
+      "background": "rgb(255, 255, 255)",
+      "ratio": 8.531817077139577
+    },
+    {
+      "pair": "feedback-card__mentor-name--red (swatch, mission) x feedback-card bg",
+      "color": "rgb(199, 58, 63)",
+      "background": "rgb(255, 255, 255)",
+      "ratio": 5.115187352772951
+    },
+    {
+      "pair": "feedback-card__mentor-name--green (swatch, mission) x feedback-card bg",
+      "color": "rgb(23, 117, 78)",
+      "background": "rgb(255, 255, 255)",
+      "ratio": 5.689577831237662
+    }
+  ],
+  "consoleErrorsMissionsChapters": {
+    "consoleErrors": [],
+    "pageErrors": []
+  },
+  "consoleClean": {
+    "consoleErrors": [],
+    "pageErrors": []
+  }
+}

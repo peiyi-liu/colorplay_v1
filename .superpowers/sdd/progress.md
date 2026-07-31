@@ -438,3 +438,41 @@ SHIPPED: main merge deb601a pushed 2026-07-26; Vercel production build triggered
 UAT 0727 batch: shipped (commits f-branch→merge 741dc85). 9 項全數完成；排行榜列色根因=specificity 同級後載覆蓋；join 深連結意圖在固定導向下不再自動恢復（owner 明示「一律」，已記錄取捨）。
 UAT R2 batch: shipped (merge 0b974f3, Vercel READY). 排行榜直達僅暱稱＋page-stack 節奏；classrooms 清單頁退場。待 owner 澄清：班級加入碼「可在班級管理查看且固定不改」與現制（一次性顯示＋輪替鍵）不符。
 UAT 0728 warm-palette batch: shipped (merge 1b9afc9, Vercel dpl_8bsjicXqWuwqi3Q4cTE2JrLK4Efk READY). 六項全數完成：全站去黑（ink 暖咖啡）＋淡黃紙張＋教師紫→暖橘 #c2410c＋章節低飽和漸層；複習卡預設收合＋圖解 380px；課後實戰小節前綴（subtopicCodes/subtopicRangeLabel）；錯題已解決附答案（correctOptionText 既有欄位）；排行榜標題去班名。darwin visual 基線 7/7 重生（S 級：暖色改版）。無 migration。驗證：736 unit/typecheck/lint 綠＋6 畫面截圖抽查。
+
+## JRPG Pixel P0 (plan: docs/superpowers/plans/2026-07-31-jrpg-pixel-p0-foundation.md, branch feature/v2-major-update)
+Task 1: complete (commit c7811b8, spec ✅, quality Approved)
+Task 2: complete (commit 88a8fe6, spec ✅, quality Approved)
+Task 3: complete (commit 981ceba, spec ✅, quality Approved)
+Task 4: complete (commit fdd4a9f, spec ✅, quality Approved; Minor: report line-number claim off, TDD evidence summarized not raw)
+Task 5: complete (commit bfca8a6, spec ✅, quality Approved; Minor: report GREEN duration line missing unit)
+Task 6: complete (commit 05fd446, spec ✅, quality Approved; Minor: font download referenced mutable main ref, binary committed so build unaffected)
+Task 7: complete (gate green after fix 79287db; lint 0 err, typecheck pass, tests 756/756, src/features+src/app diff empty; fix subagent hook-bypass attempt REFUSED, file-level eslint-disable used instead)
+Final review (opus): NOT READY -> fix wave 5d175da (F1-F5+OFL+status) -> re-review APPROVED. P0 COMPLETE at 5d175da (10 commits c5343c1..5d175da; lint/typecheck clean, tests 760 incl. new, format:check 6 pre-existing failures unrelated). Deferred to 批次①+: Cubic11 子集化, RpgWindow aria/heading-level, .rpg-window 樣式移 ui.css 議題, CONTEXT.md 章節位置, DOCUMENT_MANIFEST 重生, 6 個既有 format 失敗, design-system 頁面檔逐批遷移.
+
+## JRPG Pixel Batch-1 (plan: docs/superpowers/plans/2026-07-31-jrpg-pixel-batch1-worldset.md)
+B1 Task 1: complete (commit 7d87c18, spec ✅, quality Approved)
+B1 Task 2: complete (commit 9917f57, spec ✅, quality Approved)
+B1 Task 3: complete (commit b0bc833, spec ✅, quality Approved; reset ternary split verified behavior-identical)
+B1 Task 4: complete (commit b5ea9ff, spec ✅, quality Approved)
+B1 Task 5: complete (gate green 760/760, 8/8 screenshots; heading-contrast defect found and fixed ba1e358, visually confirmed)
+Final review (opus): NOT READY (1 Critical night-text contrast + 4 Important) -> fix wave 58c9a7a (8 fixes) -> re-review APPROVED. BATCH-1 COMPLETE at 58c9a7a (7 commits d2b4580..58c9a7a; 760+ tests green; screenshots verified incl. contrast 7.6-8.6:1). Deferred minors: day-scene column seam (#10), portal label 40px (pre-existing #9), reset ternary duplication (#11), scene-class namespacing.
+
+## JRPG Pixel Batch-2 (plan: docs/superpowers/plans/2026-07-31-jrpg-pixel-batch2-battle-loot.md, commit bc6828e)
+B2 Task 1: complete (commit 46fefed, spec ✅, quality Approved; Minor: dev-eyeball note (c) not logged in report, header-h1 color redundancy plan-mandated)
+B2 Task 2: complete (commit 14f3bab, spec ✅, quality Approved; ⚠️ Co-Authored-By trailer verified by controller; Minor: atb track px 值 plan-mandated)
+B2 Task 3: complete (commit f7ece90, spec ✅, quality Approved; Minor: comboCount 排序假設無註記、slash infinite loop plan-mandated; 774/774 全綠; note: task-3-report.md 覆蓋了舊 P0 report,P0 紀錄仍在本 ledger)
+B2 Task 4: complete (commits 21e07ba+abe063e, spec ✅, quality Approved after 1 fix wave——controller 查核 ⚠️ 發現 totals p 淺底×白字對比缺陷,fix 改夜空 chip,重審 APPROVED; Minor: count-up 與開蓋未編排 plan-mandated、useCountUp target 變更閃爍理論性)
+B2 Task 5: complete (commits 662e849+485b80f, spec ✅, quality Approved after 1 fix wave——Important(plan-mandated) 測試 repo 隔離缺口,fix 補 default stub repos,重審 APPROVED; deviation 核可: DI props 型別 ?: T | undefined 因 exactOptionalPropertyTypes; Minor: fanfare 與補救 role=status 並存 a11y 後續)
+B2 Task 6: complete (gate PASS after 2 fix waves——814ec23 回顧卡 ink 恢復＋bef923f 狀態徽章語意色恢復,根因皆為 .scene-night 容器色繼承外溢; 靜態/單元 783/783、hex 0、字串 5/5、quiz-runner e2e chromium+firefox 綠(webkit 既有 flake、全電池 18 個範圍外失敗記錄為 content seed 漂移不追修)、截圖桌機+393 PASS、對比實測全 ≥4.5:1(徽章 5.12–6.09,卡文 12.5+,chips 14.56); 證據 artifacts/design-audit/batch2/)
+Final review (opus): With fixes (3 Critical 夜景繼承對比 C1-C3 + 3 Important I1-I3) -> fix wave f2b6c0c+1d2d27e (結構性修法:三個殘留淺色面轉夜窗+scene-night .primary-action 字色+eyebrow gold-deep+成就 fromFinalize 閘門+useCountUp adjust-during-render) -> gate 複驗 PASS (對比 4.72-14.56:1, MapStepper 可辨, 6 截圖無回歸, console 0) -> re-review APPROVED (M2 偏離判正當,未用 eslint-disable)。
+BATCH-2 COMPLETE at 1d2d27e (12 commits bc6828e..1d2d27e; 783+ tests green; 證據 artifacts/design-audit/batch2/)。
+Deferred minors: M1 victory-banner text-shadow 破 app-shell 扁平不變式(e2e 只走 /login 未紅)、M3 ▶ 塞 36px 圓徽章換行、M4 寶箱幾何造型(素材批換裝)、M5 economy/achievements 查詢可加 enabled、slash infinite loop 慢網路重播、fanfare+補救雙 role=status(a11y 批)。
+E2E 現況紀錄: quiz-runner chromium+firefox 綠; webkit 既有 flake; 全電池另 18 個範圍外失敗判為平行 session content seed 漂移未追修——本批 gate 未含全綠 e2e 電池,下批勿當基線。
+Owner 0731 裁定: 批②視覺=CSS-first(A); 後續批③-⑤照現有 spec(主題化包裝,不做可行走地圖)。
+
+JRPG Pixel Batch-3 (plan: docs/superpowers/plans/2026-07-31-jrpg-pixel-batch3-map-feedback.md)
+B3 Task 1: complete (commit 1aac34f, spec ✅, quality Approved; Minor: variantOrder fallback 死碼、anagram seed 撞色理論性)
+B3 Task 2: complete (commit d1c17de, spec ✅, quality Approved; Minor: mission spiritForSeed 三次呼叫 plan-mandated、chapterTitle fallback 分支未測 plan-mandated)
+B3 Task 3: complete (commit 299040b, spec ✅, quality Approved; Minor: developing 態無測試(brief 範圍內)、degrade 測試未斷言無 alert(程式碼已核無 alert 路徑))
+B3 Task 4: complete (commit 4bd1fcf, spec ✅, quality Approved; Minor: torchStates 雙呼叫 plan-mandated、torch index key plan-mandated; ⚠️ subtopic-tag/mastery-ring 夜底可讀性交 Task 5 gate 實測)
+B3 Task 5 (Batch Gate): FAIL on contrast, all else PASS (commits under review 1aac34f..4bd1fcf, base 1d2d27e)。靜態全套綠(lint 0 err/typecheck 綠/vitest 794/794)；raw hex 0＋tokens.css 未動；載重字串 12 組全數前後一致；quiz-runner e2e chromium+firefox 綠，其餘 4 個目標 spec(chapter-select/learning-experience/playable-slice/ui-restyle)紅——以隔離 git worktree 於 base 1d2d27e 重跑同批命令證實逐字相同失敗(非本批 diff 造成;歸因平行 session 內容種子漂移＋learning-experience 需 PLAYWRIGHT_ACCEPTANCE=on 專用 acceptance 跑法＋ui-restyle 舊 locator 早於本批即已過期)；6 張截圖(桌機+375)全數符合(四態节点：2/4 於現有種子可見+其餘經 swatch 對比與 CSS 核可;hero 旗標/樓層窗雙線框/火把列/無溢出/無白底白字皆符合；375 與 quiz-feedback 截圖中出現 skip-link 浮現屬 Playwright fullPage 截圖已知瑕疵,非本批缺陷,已查證 activeElement 非 skip-link 且 CSS 未被本批觸碰)；對比實測 36 組(全部 rendered getComputedStyle,含 swatch 補測未於現有種子出現之狀態/色調)——Task 4 delegate 兩項(subtopic-tag 11.83/14.67、mastery-ring__track 13.29)皆通過；**4 組未達 4.5:1**:世界地圖小節列 4.30(邊界)、戰鬥回饋導師名銜三色於 .battle-scene 夜底分別 2.90/3.22/1.93(嚴重,根因 globals.css:5675-5699 未覆寫 feedback-card__mentor-name 於夜景,d1c17de 新增未覆蓋)——回報不修(gate 範圍),建議另立 fix wave。console 乾淨(0 error/0 pageerror)。證據 artifacts/design-audit/batch3/(含 contrast.md)。
