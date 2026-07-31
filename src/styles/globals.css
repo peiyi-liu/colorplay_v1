@@ -6460,6 +6460,18 @@ select#dashboard-classroom {
   color: var(--pixel-window-ink);
 }
 
+/* Fix Wave 1:live-explanation 本無自帶底色(僅 10% color-mix 透明疊色),
+   夜景下疊在 --pixel-night-deep 上,gate 實測 amber-700 文字對比僅 4.03:1。
+   補實色淺底(與批④魔物圖鑑卡同族)。實測 amber-700/parchment-card 仍只有
+   3.86:1,故一併改字色為 ink-900(對 parchment-card 12.53:1)——label 與
+   內文 p 皆繼承此 color,一次修正兩者。 */
+.live-guild-raid .live-explanation {
+  background: var(--pixel-parchment-card);
+  border-radius: var(--radius-pixel);
+  padding: 12px 14px;
+  color: var(--ink-900);
+}
+
 /* Late Join 營地:夜窗+營火(.camp-fire 素材批換裝介面)。 */
 .live-guild-raid .live-waiting {
   background: var(--pixel-night);
@@ -6546,18 +6558,25 @@ select#dashboard-classroom {
   position: relative;
 }
 
-/* 冠軍三寶石加冕(品牌三色=三原色寶石,spec §2)。 */
+/* 三寶石加冕(品牌三色=三原色寶石,spec §2)。
+   gate 實測:clip-path 會連同 box-shadow 副本一起裁掉——改用 ::before/::after
+   各自 clip 仍會被「父層 clip-path 一併裁掉子層(含偽元素)」坑一次(瀏覽器
+   實測驗證,elementFromPoint 命中底層 .box 而非寶石),故最終改成單一元素、
+   一條 path() 內三段獨立菱形子路徑(不裁到彼此),grad 三色對齊三段填色。 */
 .podium-gems {
-  position: relative;
   display: block;
-  width: 12px;
-  height: 12px;
+  width: 48px;
+  height: 16px;
   margin: 0 auto 6px;
-  background: var(--cobalt-600);
-  box-shadow:
-    -18px 4px 0 var(--coral-700),
-    18px 4px 0 var(--jade-600);
-  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: linear-gradient(
+    to right,
+    var(--coral-700) 0 12px,
+    var(--cobalt-600) 18px 30px,
+    var(--jade-600) 36px 48px
+  );
+  clip-path: path(
+    'M24 0 L30 6 L24 12 L18 6 Z M6 4 L12 10 L6 16 L0 10 Z M42 4 L48 10 L42 16 L36 10 Z'
+  );
 }
 
 /* 煙火:雙發交替(星點=box-shadow 陣;僅 opacity/transform)。 */
