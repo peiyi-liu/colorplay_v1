@@ -24,10 +24,10 @@ export function QuestionCard({
   };
 
   return (
-    <form className="question-card" onSubmit={handleSubmit}>
+    <form className="question-card command-window" onSubmit={handleSubmit}>
       <fieldset disabled={locked || isPending}>
         <legend>{question.prompt}</legend>
-        <div className="question-options">
+        <div className="question-options question-options--command">
           {question.options.map((option) => (
             <label
               className="question-option"

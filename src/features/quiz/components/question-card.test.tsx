@@ -74,4 +74,25 @@ describe('QuestionCard', () => {
     }
     expect(screen.queryByRole('button', { name: '送出答案' })).toBeNull();
   });
+
+  it('renders the command window grid while keeping the question-option class', () => {
+    const { container } = render(
+      <QuestionCard
+        isPending={false}
+        locked={false}
+        onSelect={vi.fn()}
+        onSubmit={vi.fn()}
+        question={question}
+        selectedOptionId={null}
+      />,
+    );
+
+    expect(
+      container.querySelector('form.question-card.command-window'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('.question-options.question-options--command'),
+    ).not.toBeNull();
+    expect(container.querySelectorAll('.question-option')).toHaveLength(2);
+  });
 });

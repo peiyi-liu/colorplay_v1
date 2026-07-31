@@ -4953,3 +4953,116 @@ select#dashboard-classroom {
 .scene-night .login-form__secondary-action {
   border-radius: var(--radius-pixel);
 }
+
+/* ── 批次② JRPG 戰鬥與結算(spec §5 quiz/result 列;三拍鐵律 §4.4;
+   CSS-first 幾何佔位,素材批換裝 §4.5) ── */
+
+.battle-scene {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.battle-scene .quiz-runner__header h1 {
+  font-family: var(--font-pixel-tc);
+  color: var(--pixel-window-ink);
+}
+
+.battle-scene .route-panel__eyebrow {
+  color: var(--pixel-gold);
+}
+
+.battle-scene .quiz-map-panel__caption {
+  color: var(--pixel-window-muted);
+}
+
+.battle-scene .quiz-runner__status p,
+.battle-scene .quiz-countdown {
+  color: var(--pixel-window-ink);
+}
+
+.battle-scene .quiz-runner__status {
+  font-variant-numeric: tabular-nums;
+}
+
+.battle-scene > p[role='status'] {
+  color: var(--pixel-window-muted);
+}
+
+.battle-scene .quiz-action-error {
+  background: transparent;
+  border: 2px solid var(--pixel-danger);
+  border-radius: var(--radius-pixel);
+}
+
+.battle-scene .quiz-action-error p {
+  color: var(--pixel-danger);
+}
+
+/* 指令窗:對話窗框線配方(同 .rpg-window,globals.css:4738) */
+.command-window {
+  background: var(--pixel-night);
+  color: var(--pixel-window-ink);
+  border: 3px solid var(--pixel-window-frame);
+  outline: 2px solid var(--pixel-night);
+  box-shadow:
+    0 0 0 5px var(--pixel-window-frame),
+    4px 4px 0 var(--pixel-shadow);
+  border-radius: var(--radius-pixel);
+}
+
+.command-window legend {
+  color: var(--pixel-window-ink);
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.question-options--command {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .question-options--command {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.command-window .question-option {
+  background: var(--pixel-night-deep);
+  border: 2px solid var(--pixel-window-muted);
+  border-radius: var(--radius-pixel);
+  color: var(--pixel-window-ink);
+  min-height: 44px;
+}
+
+.command-window .question-option__key {
+  color: var(--pixel-gold);
+  font-family: var(--font-pixel-latin);
+  font-size: 12px;
+}
+
+.command-window .question-option[data-selected='true'] {
+  border-color: var(--pixel-gold);
+  background: var(--pixel-night);
+}
+
+.command-window
+  .question-option[data-selected='true']
+  .question-option__key::before {
+  content: '▶ ';
+  color: var(--pixel-gold);
+}
+
+.command-window .question-option:has(input:focus-visible) {
+  outline: 3px solid var(--pixel-gold);
+  outline-offset: 2px;
+}
+
+.command-window .question-card__action .primary-action {
+  background: var(--pixel-gold);
+  color: var(--pixel-night-deep);
+  border-radius: var(--radius-pixel);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+  font-family: var(--font-pixel-tc);
+}

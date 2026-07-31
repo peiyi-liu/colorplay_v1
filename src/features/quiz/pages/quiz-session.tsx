@@ -332,7 +332,10 @@ export function QuizSessionPage({
   }
 
   return (
-    <section className="quiz-runner" aria-labelledby="quiz-runner-title">
+    <section
+      className="quiz-runner scene-night battle-scene"
+      aria-labelledby="quiz-runner-title"
+    >
       <div className="quiz-map-panel">
         <p className="quiz-map-panel__caption">
           精熟學習地圖(未通過上一關前不可跳關)

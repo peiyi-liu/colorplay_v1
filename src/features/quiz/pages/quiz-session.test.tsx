@@ -409,4 +409,18 @@ describe('QuizSessionPage', () => {
       invalidateQueries.mock.invocationCallOrder[0] ?? 0,
     );
   });
+
+  it('renders the battle night scene while preserving load-bearing strings', async () => {
+    const mocks = repositoryMock();
+    mocks.getSession.mockResolvedValue(session([question(1), question(2)]));
+    renderQuiz(mocks.repository);
+
+    const heading = await screen.findByRole('heading', { name: '色彩表示' });
+    const runner = heading.closest('section');
+    expect(runner).toHaveClass('quiz-runner', 'scene-night', 'battle-scene');
+    expect(
+      screen.getByText((_, el) => el?.textContent === '第 1 / 2 題'),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: '送出答案' })).toBeVisible();
+  });
 });
