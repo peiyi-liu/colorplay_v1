@@ -4696,7 +4696,7 @@ a {
   flex-direction: column;
   overflow: auto;
   padding: var(--space-6);
-  background: var(--slate-950);
+  background: var(--pixel-night-deep);
   color: var(--white);
   gap: var(--space-5);
   inset: 0;
@@ -6509,4 +6509,108 @@ select#dashboard-classroom {
 
 [data-reduced-motion='true'] .camp-fire {
   animation: none;
+}
+
+/* ── 批⑤a 投影幕(spec §5:旗幟牆/四色軍勢/Top5 英雄榜/頒獎台三寶石+煙火) ── */
+/* 旗幟牆:名條 chip 改三角旗尾(class 不改名,count 斷言沿用)。 */
+.live-presenter__wall-chip {
+  border: 2px solid var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
+  padding-bottom: 14px;
+}
+
+/* 軍勢分布:條尾階梯緣(僅 clip fill;四色與 correct 既有規則不動)。 */
+.live-presenter__chart-fill {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    calc(100% - 6px) 33%,
+    100% 66%,
+    calc(100% - 6px) 100%,
+    0 100%
+  );
+}
+
+/* Top5 英雄榜:夜窗框。 */
+.live-presenter__standings {
+  border: 3px solid var(--pixel-window-frame);
+  outline: 2px solid var(--pixel-night-deep);
+  box-shadow: 0 0 0 5px var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
+  padding: 16px 20px;
+}
+
+/* 頒獎台舞台:供煙火絕對定位。 */
+.live-presenter__podium-stage {
+  position: relative;
+}
+
+/* 冠軍三寶石加冕(品牌三色=三原色寶石,spec §2)。 */
+.podium-gems {
+  position: relative;
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin: 0 auto 6px;
+  background: var(--cobalt-600);
+  box-shadow:
+    -18px 4px 0 var(--coral-700),
+    18px 4px 0 var(--jade-600);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+/* 煙火:雙發交替(星點=box-shadow 陣;僅 opacity/transform)。 */
+.podium-fireworks {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--pixel-gold);
+  box-shadow:
+    -16px -12px 0 var(--coral-700),
+    16px -12px 0 var(--cobalt-600),
+    -12px 14px 0 var(--jade-600),
+    14px 12px 0 var(--pixel-gold),
+    0 -20px 0 var(--pixel-window-frame);
+  animation: fireworks-burst 1.2s steps(3, jump-none) infinite;
+}
+
+.podium-fireworks--left {
+  top: 96px;
+  left: 12%;
+}
+
+.podium-fireworks--right {
+  top: 72px;
+  right: 12%;
+  animation-delay: 0.6s;
+}
+
+@keyframes fireworks-burst {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .podium-fireworks {
+    animation: none;
+    opacity: 0.9;
+  }
+}
+
+[data-reduced-motion='true'] .podium-fireworks {
+  animation: none;
+  opacity: 0.9;
 }

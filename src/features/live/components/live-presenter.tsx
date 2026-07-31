@@ -435,6 +435,14 @@ export function LivePresenter({
 
       {phase === 'podium' ? (
         <div className="live-presenter__podium-stage">
+          <span
+            aria-hidden="true"
+            className="podium-fireworks podium-fireworks--left"
+          />
+          <span
+            aria-hidden="true"
+            className="podium-fireworks podium-fireworks--right"
+          />
           <h2>最終頒獎台</h2>
           <ol aria-label="頒獎台" className="live-presenter__podium">
             {(state.podium ?? []).map((entry) => (
@@ -442,6 +450,9 @@ export function LivePresenter({
                 className={`live-presenter__podium-step live-presenter__podium-step--${String(entry.rank)}`}
                 key={entry.rank}
               >
+                {entry.rank === 1 ? (
+                  <span aria-hidden="true" className="podium-gems" />
+                ) : null}
                 <span className="live-presenter__podium-rank">
                   {entry.rank === 1 ? (
                     <Icon name="crown" size={28} />

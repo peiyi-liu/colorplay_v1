@@ -206,6 +206,24 @@ describe('LivePresenter', () => {
     expect(audio.playFanfare).not.toHaveBeenCalled();
   });
 
+  it('crowns the champion with tri-gems and textless fireworks on the podium', () => {
+    const audio = stubAudio();
+    renderPresenter(completedState, { audio });
+
+    const gems = document.querySelector(
+      '.live-presenter__podium-step--1 .podium-gems',
+    );
+    expect(gems).not.toBeNull();
+    expect(gems).toHaveAttribute('aria-hidden', 'true');
+    expect(gems).toHaveTextContent('');
+    const fireworks = document.querySelectorAll('.podium-fireworks');
+    expect(fireworks).toHaveLength(2);
+    for (const spark of fireworks) {
+      expect(spark).toHaveAttribute('aria-hidden', 'true');
+      expect(spark).toHaveTextContent('');
+    }
+  });
+
   it('fires reveal and fanfare cues only on live phase transitions', () => {
     const audio = stubAudio();
     const utils = renderPresenter(openState, { audio });
