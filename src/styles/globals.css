@@ -964,12 +964,16 @@ a {
   font-weight: 800;
 }
 
+/* 購買確認=夜空對話窗(spec §4.2;配方同 .rpg-window,不掛 class 免容器色外溢)。 */
 .purchase-dialog {
   width: min(calc(100% - var(--space-6)), 480px);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
-  color: var(--color-text);
+  background: var(--pixel-night);
+  border: 3px solid var(--pixel-window-frame);
+  outline: 2px solid var(--pixel-night);
+  box-shadow:
+    0 0 0 5px var(--pixel-window-frame),
+    4px 4px 0 var(--pixel-shadow);
+  border-radius: var(--radius-pixel);
   padding: var(--space-6);
 }
 
@@ -979,6 +983,11 @@ a {
 
 .purchase-dialog h2 {
   margin-top: 0;
+  color: var(--pixel-window-ink);
+}
+
+.purchase-dialog > p {
+  color: var(--pixel-window-ink);
 }
 
 .purchase-dialog__actions {
@@ -4401,6 +4410,79 @@ a {
 
 [data-reduced-motion='true'] .floor-torch--lit {
   animation: none;
+}
+
+/* ── 批④ 村莊設施 ── */
+
+/* ── 批④ 道具店(/app/shop;spec §5:兩櫃檯 NPC+木架陳列+購買確認對話窗) ──
+   scene-day 只鋪背景;深色面(夜窗 dialog)逐條設色(批②③外溢教訓)。 */
+.scene-day.blook-shop {
+  padding: 24px 16px 48px;
+}
+
+/* 櫃檯分頁釘牌:木牌+店主頭像。 */
+.scene-day .shop-tab {
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+}
+
+.scene-day .shop-tab[data-on='true'] {
+  background: var(--pixel-gold-deep);
+  color: var(--pixel-parchment);
+}
+
+/* 店主頭像:CSS 幾何佔位(素材批換裝;.shop-keeper* 為換裝介面)。 */
+.shop-keeper {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-right: 6px;
+  vertical-align: -4px;
+  border-radius: var(--radius-pixel);
+  box-shadow: 2px 2px 0 var(--pixel-shadow);
+}
+
+.shop-keeper::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 4px;
+  width: 3px;
+  height: 3px;
+  background: var(--pixel-window-frame);
+  box-shadow: 7px 0 0 var(--pixel-window-frame);
+}
+
+.shop-keeper--blooks {
+  background: var(--coral-700);
+}
+
+.shop-keeper--frames {
+  background: var(--cobalt-600);
+}
+
+/* 木架陳列:貨架卡=羊皮紙格+底部厚木板。 */
+.scene-day .blook-card {
+  border: 2px solid var(--pixel-gold-deep);
+  border-bottom: 6px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+}
+
+.scene-day .blook-shop__header {
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 4px 4px 0 var(--pixel-shadow);
+}
+
+.scene-day .blook-shop__header h1 {
+  font-family: var(--font-pixel-tc);
+  font-size: 22px;
 }
 
 /* ── ColorPlay Live 投影模式（10B）───────────────────────────────── */

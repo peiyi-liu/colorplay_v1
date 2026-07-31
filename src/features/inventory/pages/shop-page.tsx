@@ -210,7 +210,10 @@ export function ShopPage({
   };
 
   return (
-    <section className="blook-shop" aria-labelledby="blook-shop-title">
+    <section
+      className="blook-shop scene-day"
+      aria-labelledby="blook-shop-title"
+    >
       <header className="blook-shop__header">
         <div>
           <p className="route-panel__eyebrow">你的角色收藏</p>
@@ -229,6 +232,10 @@ export function ShopPage({
           }}
           type="button"
         >
+          <span
+            aria-hidden="true"
+            className="shop-keeper shop-keeper--blooks"
+          />
           角色
         </button>
         <button
@@ -239,6 +246,10 @@ export function ShopPage({
           }}
           type="button"
         >
+          <span
+            aria-hidden="true"
+            className="shop-keeper shop-keeper--frames"
+          />
           外框
         </button>
       </nav>

@@ -241,6 +241,22 @@ describe('ShopPage', () => {
     expect(screen.getByRole('button', { name: '重試' })).toBeEnabled();
     expect(screen.queryByText('0 Token 可用')).toBeNull();
   });
+
+  it('dresses the shop as a day-scene village facility', async () => {
+    renderShop(repository());
+    expect(
+      await screen.findByRole('heading', { name: '裝備商店' }),
+    ).toBeVisible();
+
+    expect(document.querySelector('.blook-shop.scene-day')).not.toBeNull();
+    expect(document.querySelectorAll('.shop-keeper')).toHaveLength(2);
+    for (const keeper of document.querySelectorAll('.shop-keeper')) {
+      expect(keeper).toHaveAttribute('aria-hidden', 'true');
+    }
+    // 載重：分頁按鈕 accessible name 不受裝飾影響
+    expect(screen.getByRole('button', { name: '角色' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '外框' })).toBeInTheDocument();
+  });
 });
 
 it('renders the frame shop section with the server catalog', async () => {
