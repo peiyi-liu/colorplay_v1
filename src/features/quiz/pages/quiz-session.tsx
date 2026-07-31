@@ -250,9 +250,12 @@ export function QuizSessionPage({
         );
         await queryClient.invalidateQueries({ queryKey: economyQueryKey });
         void navigate(`/app/quiz/${session.sessionId}/result`, {
-          state: finalResult.assignmentAttempt
-            ? { assignmentAttempt: finalResult.assignmentAttempt }
-            : null,
+          state: {
+            fromFinalize: true,
+            ...(finalResult.assignmentAttempt
+              ? { assignmentAttempt: finalResult.assignmentAttempt }
+              : {}),
+          },
         });
       } catch (error) {
         setActionError({

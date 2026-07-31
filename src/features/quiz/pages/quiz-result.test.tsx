@@ -5,6 +5,14 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  type AchievementCatalog,
+  type AchievementRepository,
+} from '../../achievements/types';
+import {
+  type EconomyRepository,
+  type EconomySummary,
+} from '../../rewards/types';
+import {
   QuizRepositoryError,
   type QuizRepository,
   type QuizSession,
@@ -98,18 +106,38 @@ function repository(getSession: QuizRepository['getSession']): QuizRepository {
   };
 }
 
-function renderResult(mockRepository: QuizRepository) {
+function renderResult(
+  mockRepository: QuizRepository,
+  extras: Readonly<{
+    achievementRepository?: AchievementRepository;
+    economyRepository?: EconomyRepository;
+    state?: Record<string, unknown>;
+  }> = {},
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   const router = createMemoryRouter(
     [
       {
-        element: <QuizResultPage repository={mockRepository} />,
+        element: (
+          <QuizResultPage
+            achievementRepository={extras.achievementRepository}
+            economyRepository={extras.economyRepository}
+            repository={mockRepository}
+          />
+        ),
         path: '/app/quiz/:sessionId/result',
       },
     ],
-    { initialEntries: [`/app/quiz/${sessionId}/result`] },
+    {
+      initialEntries: [
+        {
+          pathname: `/app/quiz/${sessionId}/result`,
+          state: extras.state ?? null,
+        },
+      ],
+    },
   );
   function Wrapper({ children }: Readonly<{ children: ReactNode }>) {
     return (
@@ -118,6 +146,21 @@ function renderResult(mockRepository: QuizRepository) {
   }
   render(<RouterProvider router={router} />, { wrapper: Wrapper });
 }
+
+const economySummary = {
+  currentLevelXp: 250,
+  level: 2,
+  tokenBalance: 250,
+  totalXp: 750,
+  walletReconciled: true,
+  xpPerLevel: 500,
+} satisfies EconomySummary;
+
+const catalog = (items: AchievementCatalog['items']): AchievementCatalog => ({
+  items,
+  totalCount: items.length,
+  unlockedCount: items.filter(({ state }) => state === 'unlocked').length,
+});
 
 describe('QuizResultPage', () => {
   beforeEach(() => {
@@ -219,5 +262,63 @@ describe('QuizResultPage', () => {
     expect(document.querySelector('.loot-chest')).not.toBeNull();
     expect(screen.getByText('總分 150')).toBeVisible();
     expect(screen.getByText('+750 XP')).toBeVisible();
+  });
+
+  it('celebrates a level up only when arriving fresh from finalize', async () => {
+    renderResult(repository(vi.fn().mockResolvedValue(completedSession)), {
+      economyRepository: {
+        getSummary: vi.fn().mockResolvedValue(economySummary),
+      },
+      state: { fromFinalize: true },
+    });
+
+    expect(await screen.findByText(/LEVEL UP/u)).toBeVisible();
+    expect(screen.getByText(/Lv\.2/u)).toBeVisible();
+  });
+
+  it('stays silent about levels when revisiting the result page', async () => {
+    renderResult(repository(vi.fn().mockResolvedValue(completedSession)), {
+      economyRepository: {
+        getSummary: vi.fn().mockResolvedValue(economySummary),
+      },
+    });
+
+    await screen.findByRole('heading', { name: '挑戰完成 🎉' });
+    expect(screen.queryByText(/LEVEL UP/u)).toBeNull();
+  });
+
+  it('lists only achievements unlocked by this session', async () => {
+    renderResult(repository(vi.fn().mockResolvedValue(completedSession)), {
+      achievementRepository: {
+        getCatalog: vi.fn().mockResolvedValue(
+          catalog([
+            {
+              badgeKey: 'first_quiz',
+              description: '完成第一場挑戰',
+              displayName: '初出茅廬',
+              progress: 1,
+              stableCode: 'first_quiz',
+              state: 'unlocked',
+              target: 1,
+              unlockedAt: completedSession.completedAt,
+            },
+            {
+              badgeKey: 'older',
+              description: '更早解鎖',
+              displayName: '昔日榮光',
+              progress: 1,
+              stableCode: 'older',
+              state: 'unlocked',
+              target: 1,
+              unlockedAt: '2026-07-01T00:00:00.000Z',
+            },
+          ]),
+        ),
+      },
+    });
+
+    expect(await screen.findByText('本次新解鎖成就')).toBeVisible();
+    expect(screen.getByText('初出茅廬')).toBeVisible();
+    expect(screen.queryByText('昔日榮光')).toBeNull();
   });
 });
