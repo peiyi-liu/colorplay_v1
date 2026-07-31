@@ -1,0 +1,52 @@
+{
+  "pairs": [
+    {
+      "pair": "achievements pastel-hero__description (now ink-700) x resolved scene ground",
+      "color": "rgb(52, 64, 84)",
+      "resolvedBackground": "rgb(246, 238, 216)",
+      "ratio": 9.036587407676942
+    },
+    {
+      "pair": "achievement-card__date (解鎖於…) x beam-tail composited ground, f=0.682",
+      "color": "rgb(102, 112, 133)",
+      "background": "rgb(238.51297042978533, 253.92853265205724, 245.22898094186047)",
+      "declaredCardBg": "rgb(239, 255, 247)",
+      "beamAlphaAtPosition": 0.00885509838998209,
+      "ratio": 4.771541213036791
+    },
+    {
+      "pair": "frame-shop__hint (now ink-700) x resolved ground",
+      "color": "rgb(52, 64, 84)",
+      "resolvedBackground": "rgb(246, 238, 216)",
+      "ratio": 9.036587407676942
+    },
+    {
+      "pair": "blook-card__frame-name h3 x wood-shelf card bg",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 12.525425353494285
+    },
+    {
+      "pair": "取消鍵 (purchase-dialog .secondary-action, now explicit parchment-card ground) x own bg",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 12.525425353494285
+    }
+  ],
+  "screenshots": [
+    "achievements-desktop.png",
+    "shop-frames-desktop.png",
+    "shop-frames-375.png",
+    "leaderboard-375.png"
+  ],
+  "selfChipCheck": {
+    "found": true,
+    "whiteSpace": "nowrap",
+    "rect": {
+      "width": 56,
+      "height": 26.75
+    },
+    "singleLineLikely": true,
+    "scrollWidthOverflow": true
+  }
+}

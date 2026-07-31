@@ -243,3 +243,107 @@ opportunistically-fixed batch-3-latent chapter-dungeon eyebrow are now
 confirmed ≥ 4.5:1 by rendered measurement, with a clean regression
 spot-check on the unmodified light-scene eyebrow pattern. Gate is green on
 contrast as of `862cc5f`.
+
+---
+
+## Re-verify round 2 after final-review fix wave `bf70538`
+
+The final review flagged two more day-scene "muted text" pairs the original
+gate's checklist never listed (so they were never measured, not a
+regression): the achievements page's intro description and the shop's frame
+tab hint, both routed through the same shared `--pastel-ink-body`-family
+muted color and both landing at 4.297:1 on `--pixel-parchment` in this
+scene. It also flagged the `achievement-card__date` line ("解鎖於…") as the
+one text element on the unlocked card that had never been measured against
+the beam overlay, hardened the purchase-dialog cancel button's background
+(previously relying on UA `buttonface`, which is `color-scheme`-dependent
+and not asserted by any gate), added `white-space: nowrap` to the `這是你`
+self-chip (a 375px-width layout fix, not contrast), and added two
+textless-DOM assertions to the shop/mistakes unit tests. `bf70538` touches
+`src/styles/globals.css` (20 lines) + 2 test files.
+
+Method: same rendered `getComputedStyle` + `__resolveOpaqueBackground` /
+beam-compositing approach as round 1. Script: session-scratchpad
+`gate-reverify-bf70538.mjs`. Raw JSON: `gate-reverify-bf70538-raw.json` in
+this directory.
+
+| # | Pair | Color | Background | Ratio | Verdict |
+|---|---|---|---|---|---|
+| 1a | `.hall-of-medals .pastel-hero__description` (now `--ink-700`) × resolved `.scene-day.hall-of-medals` ground | `rgb(52,64,84)` | `rgb(246,238,216)` | **9.037** | **PASS** |
+| 1b | `.scene-day .frame-shop__hint` (now `--ink-700`) × resolved ground | `rgb(52,64,84)` | `rgb(246,238,216)` | **9.037** | **PASS** |
+| 1c | `.achievement-card__date` (解鎖於…, color unchanged from base) × beam-tail composited backdrop at its own measured position (f=0.682, past the beam's 70% fade-out stop — alpha only 0.0089) | `rgb(102,112,133)` | `rgb(238.51,253.93,245.23)` | **4.772** | **PASS** |
+| 1d | `.purchase-dialog .secondary-action` (取消, now explicit `--pixel-parchment-card` ground instead of UA `buttonface`) × own bg | `rgb(37,48,66)` | `rgb(253,248,234)` | **12.525** | **PASS** |
+| 2 | `.blook-card__frame-name` h3 (外框 tab, wood-shelf card) × card bg | `rgb(37,48,66)` | `rgb(253,248,234)` | **12.525** | **PASS** |
+
+All 5 pairs comfortably ≥ 4.5:1. Pair 1c is the interesting one: the
+`achievement-card__date` line sits low enough on the card (68% of the way
+down) that the beam overlay has already faded to ~0.9% alpha there — so
+even with its slate-gray (unchanged) color, it clears the threshold by a
+healthy margin purely because the beam barely reaches it. This is a real,
+rendered confirmation, not an assumption — the fraction and alpha were
+computed from the actual `getBoundingClientRect()`/gradient-stop values on
+the live page, the same technique validated for the title/description
+pairs in the original pass.
+
+**外框 (frame) tab — new evidence:** `shop-frames-desktop.png` and
+`shop-frames-375.png` captured (both new files in this directory). Visual
+verdict: 20 frame cards on wood-shelf card fronts, each with a colored
+gradient ring swatch, a legible dark `.blook-card__frame-name` title, price,
+and a purchase/equipped/disabled action — same visual language as the
+角色 tab, no overflow, no same-on-same text, hint line
+"裝備後將顯示在大廳頭貼外框。" clearly legible against the parchment
+header band. (First capture attempt raced the tab-switch — the CSS
+transition/query settle briefly outran a bare `waitForLoadState:networkidle`
+— and produced a screenshot of the still-`角色` state while the DOM had
+already switched; a build-tooling issue in the gate script, not a product
+defect. Re-captured with an explicit wait on `.frame-shop .blook-card`
+visibility + the tab's own `data-on` flip before screenshotting; the
+contrast *measurements* in the table above were unaffected since they were
+read via `page.evaluate` after the DOM had already switched, only the
+screenshot file needed redoing.)
+
+**375px leaderboard — 這是你 chip:** re-captured `leaderboard-375.png`.
+`getComputedStyle` confirms `white-space: nowrap` is now applied; the
+chip's own rendered box is 56×26.75px (wider than tall — one line, not a
+3-glyph vertical stack) and its bounding box (`left:245.75, right:301.75`)
+sits entirely inside the 375px viewport. **Chip itself does not overflow
+and is no longer stacked.** Separately, and not part of what this chip fix
+was for: `document.documentElement.scrollWidth` measures 381px against a
+375px viewport (6px, ~1.6%) on this same page — traced to the
+`.leaderboard-table` itself (the rank/XP column's cumulative
+`border-spacing`/cell padding at 375px), not to the self-chip or anything
+`bf70538` touched. Reported for completeness since "confirm nothing
+overflows" was asked; not attributed to this fix wave and not fixed here
+(gate role is to report, not patch).
+
+**Method note (final review M7) — beam overlay paints ABOVE text, not
+just behind it:** `.hall-of-medals .achievement-card:not(.achievement-card--locked)::before`
+is a *positioned* pseudo-element (`position: absolute`, no explicit
+`z-index`, but it comes after the text nodes in paint order and has its
+own stacking context via `position`), so in the real paint order it composites
+**over** the title/description/date text, not purely behind it as a
+backdrop. This gate's method (both original and round 1/round 2 re-verify)
+has consistently treated the beam as a *background* layer — composite it
+under the card's own background, then read the text color against that
+composited result — which is optimistic: it silently assumes the beam
+paints below the text z-order. If the beam actually paints above the text
+in some browser/stacking configuration, the correct measurement would need
+to composite the beam **over the text's own rendered color** as well (a
+second Porter-Duff blend, foreground-side, before computing the ratio
+against the card background), which would generally produce a **worse**
+(lower) contrast than this gate has been reporting. Future beam
+measurements on this component should do one of: (a) sample both
+`medal-beam` keyframe extremes (opacity 1 and opacity 0.55) explicitly
+rather than one arbitrary instant, and (b) composite the beam over the
+foreground text color too, not only into the background, then take the
+worse of the two ratios as the reported number. Not re-measured this round
+(out of scope for the round-2 ask), but recorded here per the final
+review's M7 finding so a future gate does not repeat the same optimistic
+assumption.
+
+**Updated Step 6 verdict (round 2): PASS.** All 5 pairs ≥ 4.5:1, frame tab
+now has real screenshot + contrast-pair coverage, self-chip confirmed
+single-line/non-overflowing, and the beam-compositing method's optimism
+(M7) is now documented rather than silently assumed. The unrelated 6px
+leaderboard-table width overflow at 375px is noted but out of scope for
+this fix wave.
