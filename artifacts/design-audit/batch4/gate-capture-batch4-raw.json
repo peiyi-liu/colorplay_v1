@@ -1,0 +1,302 @@
+{
+  "screenshots": [
+    "shop-desktop.png",
+    "shop-dialog.png",
+    "shop-375.png",
+    "mistakes-desktop.png",
+    "mistakes-375.png",
+    "leaderboard-desktop.png",
+    "leaderboard-375.png",
+    "achievements-desktop.png",
+    "achievements-375.png"
+  ],
+  "contrast": [
+    {
+      "pair": "shop-tab[data-on='true'] (釘牌反白字) x 金深底",
+      "color": "rgb(246, 238, 216)",
+      "background": "rgb(138, 101, 31)",
+      "ratio": 4.578584990628881
+    },
+    {
+      "pair": "貨架卡 h2 (item name) x 卡底",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 12.525425353494285
+    },
+    {
+      "pair": "貨架卡 p (price) x 卡底",
+      "color": "rgb(102, 112, 133)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 4.688489503347302
+    },
+    {
+      "pair": "已裝備 (blook-card__state) x 卡底",
+      "color": "rgb(23, 117, 78)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 5.362181269911073
+    },
+    {
+      "pair": "還差 disabled (blook-card__disabled) x own bg",
+      "color": "rgb(102, 112, 133)",
+      "background": "rgb(255, 248, 225)",
+      "ratio": 4.6824763519152395
+    },
+    {
+      "pair": "選用 (secondary-action, owned-not-equipped swatch) x 卡底",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(239, 239, 239)",
+      "ratio": 11.558122408233242
+    },
+    {
+      "pair": "夜窗 h2 x night bg",
+      "color": "rgb(244, 241, 228)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 14.556138259826193
+    },
+    {
+      "pair": "夜窗 p x night bg",
+      "color": "rgb(244, 241, 228)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 14.556138259826193
+    },
+    {
+      "pair": "取消鍵字 x 鍵底 (rendered, browser default button chrome)",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(239, 239, 239)",
+      "ratio": 11.558122408233242
+    },
+    {
+      "pair": "確認購買鍵字 x 鍵底",
+      "color": "rgb(45, 38, 0)",
+      "background": "rgb(245, 196, 0)",
+      "ratio": 9.200932632693453
+    },
+    {
+      "pair": "header eyebrow x parchment-card",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 12.525425353494285
+    },
+    {
+      "pair": "header h1 x parchment-card",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 12.525425353494285
+    },
+    {
+      "pair": "header intro p x parchment-card",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 12.525425353494285
+    },
+    {
+      "pair": "mistake-group__title x parchment-card",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 12.525425353494285
+    },
+    {
+      "pair": "mistake-group__badge 字 x badge 底 (alpha-composited over 卡底, NOT self-contained)",
+      "color": "rgb(199, 58, 63)",
+      "background": "rgb(250.5999945, 230.40000150000003, 218.3000055)",
+      "declaredBadgeBg": "color(srgb 0.898039 0.282353 0.301961 / 0.1)",
+      "trueBackdrop": "rgb(253, 248, 234)",
+      "ratio": 4.254336406208769
+    },
+    {
+      "pair": "mistake-list__prompt x card bg (mistake-card-bg)",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(255, 251, 234)",
+      "ratio": 12.808558251276612
+    },
+    {
+      "pair": "mistake-list__answer (正確答案) x card bg",
+      "color": "rgb(23, 117, 78)",
+      "background": "rgb(255, 251, 234)",
+      "ratio": 5.483391518548298
+    },
+    {
+      "pair": "已解決 title x card bg (swatch)",
+      "color": "rgb(52, 64, 84)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 9.859366656167177
+    },
+    {
+      "pair": "已解決 answer span x card bg (swatch)",
+      "color": "rgb(23, 117, 78)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 5.362181269911073
+    },
+    {
+      "pair": "空狀態 p[role=status] x scene-day 底 (swatch)",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(246, 238, 216)",
+      "ratio": 11.480159423261107
+    },
+    {
+      "pair": "eyebrow x 木板底 (guild-board bg)",
+      "color": "rgb(246, 238, 216)",
+      "background": "rgb(138, 101, 31)",
+      "ratio": 4.578584990628881
+    },
+    {
+      "pair": "h1 x 木板底",
+      "color": "rgb(246, 238, 216)",
+      "background": "rgb(138, 101, 31)",
+      "ratio": 4.578584990628881
+    },
+    {
+      "pair": "description p x 木板底",
+      "color": "rgb(246, 238, 216)",
+      "background": "rgb(138, 101, 31)",
+      "ratio": 4.578584990628881
+    },
+    {
+      "pair": "thead th x parchment (self-contained)",
+      "color": "rgb(52, 64, 84)",
+      "background": "rgb(246, 238, 216)",
+      "ratio": 9.036587407676942
+    },
+    {
+      "pair": "金列 (gold, live) td 字 x 紙條",
+      "color": "rgb(23, 28, 63)",
+      "background": "rgb(184, 134, 47)",
+      "ratio": 5.092291537105209
+    },
+    {
+      "pair": "「這是你」 x own bg",
+      "color": "rgb(23, 28, 63)",
+      "background": "rgb(184, 134, 47)",
+      "ratio": 5.092291537105209
+    },
+    {
+      "pair": "銀列 (silver, live) td 字 x 紙條",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(228, 231, 236)",
+      "ratio": 10.720994613003361
+    },
+    {
+      "pair": "銅列 (bronze, swatch) td 字 x 紙條",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(255, 244, 199)",
+      "ratio": 12.035197924468825
+    },
+    {
+      "pair": "一般列 (no rank tier, swatch) td 墨字 x 紙條",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 12.525425353494285
+    },
+    {
+      "pair": "SelfRankCard 文字 x 紙條 (swatch, rank>10)",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(253, 248, 234)",
+      "ratio": 12.525425353494285
+    },
+    {
+      "pair": "unlocked 卡 title x 光柱最亮處合成底 (beam-composited, f=0.389)",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(230.45484481350627, 236.20061834973168, 215.92666561627908)",
+      "declaredCardBg": "rgb(239, 255, 247)",
+      "beamAlphaAtPosition": 0.1553667262969588,
+      "ratio": 11.006668336181294
+    },
+    {
+      "pair": "unlocked 卡 description x 光柱最亮處合成底 (beam-composited, f=0.563)",
+      "color": "rgb(102, 112, 133)",
+      "background": "rgb(235.23904943000895, 246.72589103533093, 233.3237972732558)",
+      "declaredCardBg": "rgb(239, 255, 247)",
+      "beamAlphaAtPosition": 0.06838103756708408,
+      "ratio": 4.4990053219606825
+    },
+    {
+      "pair": "unlocked 卡 title x 卡底 (naive, no beam compositing — for comparison only)",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(239, 255, 247)",
+      "ratio": 12.85807990657622
+    },
+    {
+      "pair": "locked 卡 title x slate-100",
+      "color": "rgb(52, 64, 84)",
+      "background": "rgb(242, 244, 247)",
+      "ratio": 9.49432046885811
+    },
+    {
+      "pair": "locked 卡 description x slate-100",
+      "color": "rgb(52, 64, 84)",
+      "background": "rgb(242, 244, 247)",
+      "ratio": 9.49432046885811
+    },
+    {
+      "pair": "locked 卡 progress-value x slate-100",
+      "color": "rgb(52, 64, 84)",
+      "background": "rgb(242, 244, 247)",
+      "ratio": 9.49432046885811
+    },
+    {
+      "pair": "StatusBadge done (已解鎖) x own bg (self-contained)",
+      "color": "rgb(23, 117, 78)",
+      "background": "rgb(220, 243, 232)",
+      "ratio": 4.884530922506189
+    },
+    {
+      "pair": "StatusBadge locked (未解鎖) x own bg (self-contained)",
+      "color": "rgb(86, 97, 113)",
+      "background": "rgb(238, 241, 244)",
+      "ratio": 5.539411922294564
+    }
+  ],
+  "opacityProbe": {
+    "selector": ".scene-day .mission-select__list::before",
+    "opacity": 0.5,
+    "declaredColor": "rgb(138, 101, 31)",
+    "backdrop": "rgb(253, 248, 234)",
+    "effectiveColor": "rgb(195.5, 174.5, 132.5)",
+    "declaredParsed": {
+      "r": 138,
+      "g": 101,
+      "b": 31,
+      "a": 1
+    },
+    "backdropParsed": {
+      "r": 253,
+      "g": 248,
+      "b": 234,
+      "a": 1
+    },
+    "nodeRecomputed": {
+      "r": 195.5,
+      "g": 174.5,
+      "b": 132.5
+    },
+    "browserComputed": [
+      195.5,
+      174.5,
+      132.5
+    ],
+    "delta": [
+      0,
+      0,
+      0
+    ],
+    "proofPasses": true
+  },
+  "consoleHealth": {
+    "shop": {
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    "mistakes": {
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    "leaderboard": {
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    "achievements": {
+      "consoleErrors": [],
+      "pageErrors": []
+    }
+  }
+}
