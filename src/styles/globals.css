@@ -6439,21 +6439,23 @@ select#dashboard-classroom {
    繼承鏈頂端變成 --pixel-window-ink(近白 #f4f1e4),等於淺底疊淺字,gate
    實測 legend 對比掉到 1:1、standing-card 三行文字幾乎消失。這裡逐一還原
    成 base 的墨色,兩張卡維持淺底墨字不動。live-explanation 已自帶
-   `color: var(--amber-700)`,live-team-scoreboard 完全沒有背景/文字規則
-   (原本就只是疊在頁面底色上),兩者不受此問題影響,故不需要還原規則。 */
+   `color: var(--amber-700)`,不受此問題影響,不需要還原規則。
+   (live-team-scoreboard 原本一併列在此註解「不受影響」——Fix Wave 1:
+   controller 裁定這是計畫文字缺陷,它其實是零樣式裸 section,不是淺卡,
+   見下方獨立規則顯式設色。) */
 .live-guild-raid .question-card,
 .live-guild-raid .live-standing-card {
   color: var(--ink-900);
 }
 
-/* streak badge:既有火焰字色不得被上面 role=status 的 muted 規則改變。
-   base(本批 Step 3 掛上 scene-night/live-guild-raid 之後、Step 5 這些新
-   選擇器之前)下,.live-streak-badge 沒有自己的 color,直接繼承
-   .scene-night 的 --pixel-window-ink——這就是「base 字色」實值,不是草稿
-   佔位寫的 --pixel-gold。另外草稿寫的 `.live-guild-raid .live-streak-badge`
-   specificity 是 (0,2,0),比上面 `p[role='status']` 的 (0,2,1) 低,蓋
-   不掉,改成 `.live-guild-raid > div > p.live-streak-badge`(0,2,2)才贏
-   得掉、確實還原。 */
+/* 裁定:live-team-scoreboard 為零樣式裸 section(計畫誤列為淺卡)——
+   依「深色面逐條設色」原則顯式給夜景 ink,gate 實測。 */
+.live-guild-raid .live-team-scoreboard {
+  color: var(--pixel-window-ink);
+}
+
+/* streak badge:裁定=夜景下取夜景預設 ink。計畫原文「字色與 base 一致」與
+   owner 級 4.5:1 對比鐵律衝突(base=淺頁 ink-900,夜底不可讀)——鐵律優先。 */
 .live-guild-raid > div > p.live-streak-badge {
   color: var(--pixel-window-ink);
 }
