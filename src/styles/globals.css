@@ -6310,6 +6310,10 @@ select#dashboard-classroom {
    scene-night 沿用既有 base;本頁深色面文字逐條設色(外溢鐵律)。 */
 .scene-night.live-join {
   padding: 48px 16px 64px;
+
+  /* 終審 M3:舊 .live-join 卡框殘留(圓角+淺框)與像素語彙衝突。 */
+  border: 0;
+  border-radius: var(--radius-pixel);
 }
 
 .live-join > header .route-panel__eyebrow {
@@ -6448,6 +6452,12 @@ select#dashboard-classroom {
   color: var(--ink-900);
 }
 
+/* 終審 C1:legend 預設跨在 fieldset 邊框線上,上半截落在夜底(1.36:1)——
+   float 使其完全落在卡片內。 */
+.live-guild-raid .question-card legend {
+  float: left;
+}
+
 /* 裁定:live-team-scoreboard 為零樣式裸 section(計畫誤列為淺卡)——
    依「深色面逐條設色」原則顯式給夜景 ink,gate 實測。 */
 .live-guild-raid .live-team-scoreboard {
@@ -6524,8 +6534,10 @@ select#dashboard-classroom {
 }
 
 /* ── 批⑤a 投影幕(spec §5:旗幟牆/四色軍勢/Top5 英雄榜/頒獎台三寶石+煙火) ── */
-/* 旗幟牆:名條 chip 改三角旗尾(class 不改名,count 斷言沿用)。 */
-.live-presenter__wall-chip {
+/* 旗幟牆:名條 chip 改三角旗尾(class 不改名,count 斷言沿用)。
+   終審 M1:選擇器加上 .live-presenter 前綴,讓 (0,2,0) 蓋過 4776 行同特異度的
+   base 規則,不再依賴原始碼順序取勝。 */
+.live-presenter .live-presenter__wall-chip {
   border: 2px solid var(--pixel-window-frame);
   border-radius: var(--radius-pixel);
   clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
@@ -6553,7 +6565,9 @@ select#dashboard-classroom {
   padding: 16px 20px;
 }
 
-/* 頒獎台舞台:供煙火絕對定位。 */
+/* 頒獎台舞台:供煙火絕對定位——見下方 I2 補述,兩個 .podium-fireworks span
+   在 DOM 上是這個 div 的直接子節點(和 .live-presenter__podium 同層手足),
+   這裡才是它們唯一可用的 positioned 祖先,不能拿掉。 */
 .live-presenter__podium-stage {
   position: relative;
 }
@@ -6594,14 +6608,22 @@ select#dashboard-classroom {
   animation: fireworks-burst 1.2s steps(3, jump-none) infinite;
 }
 
+/* 終審 I2:原錨在 flex:1 的 stage(佔滿 1080p)→煙火飛到畫面角落(離 podium
+   實測 ~670-680px)。JSX 裡兩個 .podium-fireworks span 是 .live-presenter__
+   podium(ol)的手足,不是它的子孫——CSS containing block 只認祖先,對 ol 加
+   position:relative 對這兩個 span 是 no-op,不會變成它們的定位基準,實測
+   (Playwright getBoundingClientRect)證實距離沒有變。真正的祖先只有
+   .live-presenter__podium-stage,故保留它的 position:relative(見上方"頒獎
+   台舞台"規則,未刪),改成量測 podium(ol)相對 stage 的實際落點來校正這兩顆
+   星火的偏移量,而不是相對整個 1080p 畫面猜測。 */
 .podium-fireworks--left {
-  top: 96px;
-  left: 12%;
+  top: 359px;
+  left: 32%;
 }
 
 .podium-fireworks--right {
-  top: 72px;
-  right: 12%;
+  top: 343px;
+  right: 32%;
   animation-delay: 0.6s;
 }
 
