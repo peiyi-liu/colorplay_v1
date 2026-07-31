@@ -240,10 +240,9 @@ const renderMissionSelect = (learningRepository: LearningRepository) => {
       <MemoryRouter>{children}</MemoryRouter>
     </QueryClientProvider>
   );
-  return render(
-    <MissionSelectPage learningRepository={learningRepository} />,
-    { wrapper },
-  );
+  return render(<MissionSelectPage learningRepository={learningRepository} />, {
+    wrapper,
+  });
 };
 
 describe('MissionSelectPage world map', () => {

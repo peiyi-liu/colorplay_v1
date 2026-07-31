@@ -351,9 +351,7 @@ export function ChapterDetailPage({
                       (lit, index) => (
                         <span
                           className={
-                            lit
-                              ? 'floor-torch floor-torch--lit'
-                              : 'floor-torch'
+                            lit ? 'floor-torch floor-torch--lit' : 'floor-torch'
                           }
                           key={index}
                         />
