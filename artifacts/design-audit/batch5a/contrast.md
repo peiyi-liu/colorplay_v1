@@ -155,3 +155,86 @@ diff — batch-5a's new rules (wall-chip clip-path/border, chart-fill
 clip-path, podium-gems, podium-fireworks, camp-fire, and the ink-restoration
 rules for question-card/live-standing-card/live-team-scoreboard/streak-badge)
 all measure clean.
+
+## Re-verify (post-0e91d55)
+
+Fix wave `0e91d55` (`src/styles/globals.css` only, 28 insertions/9 deletions):
+
+1. **`.podium-gems` rebuilt as a single element** — `clip-path: path(...)`
+   carrying three independent diamond subpaths (`M24 0 L30 6...`, `M6 4
+   L12 10...`, `M42 4 L48 10...`) plus a hard-stop `linear-gradient` aligned
+   to each subpath's x-range (coral 0-12px, cobalt 18-30px, jade 36-48px).
+   Per the commit's own CSS comment, the `::before`/`::after` approach was
+   tried first and rejected: a parent's `clip-path` clips its pseudo-element
+   children too (verified in-browser via `elementFromPoint`, which hit the
+   underlying box, not a gem) — same clipping mechanism this gate's original
+   finding identified for the box-shadow approach, just rediscovered via a
+   different failed workaround before landing on the single-path fix.
+2. **`.live-guild-raid .live-explanation` grounded**: `background:
+   var(--pixel-parchment-card)` + `color: var(--ink-900)` (author's own
+   remeasurement found amber-700 on parchment-card still only 3.86:1, so the
+   text color was deepened to ink-900, not just backed with a solid
+   ground).
+
+Re-ran the full gate capture (`gate-capture-batch5a.mjs`, unmodified) end to
+end against the fixed code — same real 10-question session, same two
+students (long-name + normal), same methodology (D1/D2 premises above still
+apply unchanged; the `.podium-gems` path-based fix has no opacity/gradient
+compositing concern of its own — the gradient is opaque, hard-stop, no
+alpha).
+
+### 1. Three-gems verdict: **PASS**
+
+`presenter-podium-1080p.png` (overwritten) and a fresh 8× pixel crop
+(`podium-gems-crop-after-0e91d55.png`, contrasted with the pre-fix
+`podium-gems-crop-before-0e91d55.png`) both show **three distinct, fully-formed
+diamond gems — coral (left), cobalt (center), jade (right)** — in a row
+above rank-1's crown. No clipping, no missing gems, no overlap. Confirmed
+visually at pixel level, not inferred from CSS alone.
+
+### 2. `.live-explanation` re-measure: **PASS**
+
+| Pair | Color | Background | Ratio | Verdict |
+|---|---|---|---|---|
+| live-explanation strong × parchment-card (opaque ground, real backdrop resolved same as round 1 methodology) | `rgb(37, 48, 66)` | `rgb(253, 248, 234)` | **12.525** | **PASS** |
+| live-explanation p × parchment-card | `rgb(37, 48, 66)` | `rgb(253, 248, 234)` | **12.525** | **PASS** |
+
+Both comfortably clear 4.5:1 (12.525, same ink-900/parchment-card pairing
+already proven elsewhere in this batch's own measurements, e.g. the join
+input pair). The background is now fully opaque — no alpha compositing
+needed for this pair going forward (D1's overlay-compositing concern was
+already confirmed inapplicable to this component; that conclusion still
+holds since the fix didn't introduce a positioned overlay, only changed the
+base background/color declarations).
+
+### 3. Regression check: **no change, no new failures**
+
+| Pair | Round-1 ratio | Re-verify ratio | Verdict |
+|---|---|---|---|
+| `.live-presenter__option--rose` / `.ui-option--rose` | 3.914 | 3.914 | unchanged (pre-existing, out of scope) |
+| `.live-presenter__option--emerald` / `.ui-option--emerald` | 3.329 | 3.329 | unchanged (pre-existing, out of scope) |
+| Reveal chart label/count, correct state | 3.178 | 3.178 | unchanged (pre-existing, out of scope) |
+| `.live-standing-card__cheer` | 3.021 | 3.021 | unchanged (pre-existing, out of scope) |
+
+All four are byte-identical to round 1 — confirms the fix wave (scoped to
+`.podium-gems` and `.live-explanation` only) did not touch or perturb any of
+these unrelated pre-existing selectors.
+
+**Podium rank/name/score text spot-check:** all four podium text pairs
+(rank-1 name, rank-1 score, rank-2 name, rank-2 score) still measure
+**12.904** (white text over the 12%-white-over-night-deep composited
+own-background) — identical formula/ratio to round 1. Score values differ
+slightly (1499/1497 vs round 1's 1498/1494) only because this is a fresh
+real session with its own natural scoring variance (speed-based points),
+not a regression — the *contrast pair* (color × background) driving the
+ratio is untouched by the gems fix, as expected since `.podium-gems` and the
+rank/score `<span>` text are siblings, not nested.
+
+### Updated Step 6 verdict (re-verify): **PASS**
+
+All items this fix wave targeted now measure ≥4.5:1 (12.525 for both
+`.live-explanation` pairs) with no regression on the four pre-existing,
+out-of-scope sub-4.5 pairs or the podium text. The wall-chip clip-path
+finding (PASS, thin margin) and the four pre-existing pairs remain
+unchanged and are still reported for completeness, not attributed to
+batch-5a.

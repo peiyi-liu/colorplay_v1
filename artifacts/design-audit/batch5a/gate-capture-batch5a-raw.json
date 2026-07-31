@@ -62,17 +62,17 @@
     },
     {
       "pair": "live-explanation strong × 夜底 (synthetic, composited — 10% alpha amber tint over night-deep; self-contained pre-existing amber-700 text, first exposed to a dark backdrop by this batch)",
-      "color": "rgb(178, 110, 5)",
-      "background": "rgb(32.1999945, 29.0000115, 41.8999989)",
-      "declaredBackground": "color(srgb 0.698039 0.431373 0.0196078 / 0.1)",
-      "ratio": 4.0323993353011405
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(253, 248, 234)",
+      "declaredBackground": "rgb(253, 248, 234)",
+      "ratio": 12.525425353494285
     },
     {
       "pair": "live-explanation p × 夜底 (synthetic, composited — same as above)",
-      "color": "rgb(178, 110, 5)",
-      "background": "rgb(32.1999945, 29.0000115, 41.8999989)",
-      "declaredBackground": "color(srgb 0.698039 0.431373 0.0196078 / 0.1)",
-      "ratio": 4.0323993353011405
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(253, 248, 234)",
+      "declaredBackground": "rgb(253, 248, 234)",
+      "ratio": 12.525425353494285
     },
     {
       "pair": "live-standing-card__rank × 自身淺底 (synthetic)",
@@ -189,6 +189,30 @@
       "ratio": 3.3287650442568237
     },
     {
+      "pair": "chart label (correct=false) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "chart count (correct=false) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "chart label (correct=false) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "chart count (correct=false) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
       "pair": "chart label (correct=true) × night-deep",
       "color": "rgb(23, 117, 78)",
       "background": "rgb(16, 20, 46)",
@@ -199,30 +223,6 @@
       "color": "rgb(23, 117, 78)",
       "background": "rgb(16, 20, 46)",
       "ratio": 3.1776277273568385
-    },
-    {
-      "pair": "chart label (correct=false) × night-deep",
-      "color": "rgb(255, 255, 255)",
-      "background": "rgb(16, 20, 46)",
-      "ratio": 18.07936027349558
-    },
-    {
-      "pair": "chart count (correct=false) × night-deep",
-      "color": "rgb(255, 255, 255)",
-      "background": "rgb(16, 20, 46)",
-      "ratio": 18.07936027349558
-    },
-    {
-      "pair": "chart label (correct=false) × night-deep",
-      "color": "rgb(255, 255, 255)",
-      "background": "rgb(16, 20, 46)",
-      "ratio": 18.07936027349558
-    },
-    {
-      "pair": "chart count (correct=false) × night-deep",
-      "color": "rgb(255, 255, 255)",
-      "background": "rgb(16, 20, 46)",
-      "ratio": 18.07936027349558
     },
     {
       "pair": "chart label (correct=false) × night-deep",
@@ -261,7 +261,7 @@
       "ratio": 12.904148485493124
     },
     {
-      "pair": "podium rank 1 文字「1498 分」× own bg (12% white over night-deep, composited)",
+      "pair": "podium rank 1 文字「1499 分」× own bg (12% white over night-deep, composited)",
       "color": "rgb(255, 255, 255)",
       "background": "rgb(44.68, 48.2, 71.08)",
       "ratio": 12.904148485493124
@@ -273,7 +273,7 @@
       "ratio": 12.904148485493124
     },
     {
-      "pair": "podium rank 2 文字「1494 分」× own bg (12% white over night-deep, composited)",
+      "pair": "podium rank 2 文字「1497 分」× own bg (12% white over night-deep, composited)",
       "color": "rgb(255, 255, 255)",
       "background": "rgb(44.68, 48.2, 71.08)",
       "ratio": 12.904148485493124
@@ -322,10 +322,10 @@
         "text": "live.student.two",
         "isLongName": false,
         "rect": {
-          "w": 133.67041015625,
-          "h": 40.8916015625,
-          "x": 1228.758544921875,
-          "y": 664.05419921875
+          "w": 117.7861328125,
+          "h": 36.0322265625,
+          "x": 1236.70068359375,
+          "y": 666.48388671875
         },
         "color": "rgb(255, 255, 255)",
         "declaredBackground": "rgba(255, 255, 255, 0.14)",
