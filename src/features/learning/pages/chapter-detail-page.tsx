@@ -16,15 +16,9 @@ import {
   useLearningProgress,
   useReviewProgressRows,
 } from '../hooks/use-learning';
+import { statusLabels, type ChapterStatus } from '../lib/progress-status';
 
-type ChapterStatus = LearningProgressRow['status'];
-
-export const statusLabels: Readonly<Record<ChapterStatus, string>> = {
-  developing: '進步中',
-  learning: '學習中',
-  mastered: '已精熟',
-  not_started: '尚未開始',
-};
+export { statusLabels };
 
 // 章節狀態 pill／圓點的色調(DC 543 只示範「學習中」＝綠;其餘狀態依既有
 // tone 慣例延伸——已精熟同為綠、進步中為黃、尚未開始為灰)。

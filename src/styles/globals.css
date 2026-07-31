@@ -3376,10 +3376,10 @@ a {
   align-items: center;
   justify-content: space-between;
 
-  /* 0729 owner:頁面內部的次級卡片用暖黃外框(直接坐頁面背景者維持淺灰)。 */
-  border: 1.5px solid var(--yellow-brand);
-  border-radius: var(--radius-card);
-  background: var(--slate-50);
+  /* 批③:世界地圖大陸卡=羊皮紙+金深框(0729 暖黃框裁定由 JRPG spec §1 取代)。 */
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment);
   gap: var(--space-4);
   padding: var(--space-5);
 }
@@ -3407,6 +3407,154 @@ a {
 
 .mission-select__subtopics li + li {
   margin-top: var(--space-1);
+}
+
+/* ── 批③ 世界地圖(/app/missions;決議 1 軟鎖四態+決議 2 兩層地圖) ──
+   scene-day 只鋪羊皮紙背景(globals.css:4809),禁容器級 color(批②教訓)。 */
+.scene-day.mission-select {
+  padding: 24px 16px 48px;
+}
+
+.scene-day .world-map-panel {
+  background: var(--pixel-parchment-card);
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  box-shadow: 4px 4px 0 var(--pixel-shadow);
+}
+
+.scene-day .world-map-panel .ui-section-header__title {
+  font-family: var(--font-pixel-tc);
+  font-size: 22px;
+}
+
+/* 航路:節點間垂直虛線。 */
+.scene-day .mission-select__list {
+  position: relative;
+}
+
+.scene-day .mission-select__list::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: 24px;
+  left: 44px;
+  border-left: 3px dashed var(--pixel-gold-deep);
+  opacity: 0.5;
+}
+
+.scene-day .mission-select__item {
+  position: relative;
+}
+
+/* 大陸節點徽章(48px 方章+章節編號)。 */
+.map-node {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+}
+
+.map-node__number {
+  font-family: var(--font-pixel-latin);
+  font-size: 16px;
+  color: var(--pixel-gold-deep);
+}
+
+/* 決議 1 四態:not_started=灰霧/learning=微光/developing=全亮/mastered=金色。 */
+.map-node--not_started {
+  border-color: var(--slate-300);
+  background: var(--slate-100);
+  opacity: 0.7;
+}
+
+.map-node--not_started .map-node__number {
+  color: var(--ink-700);
+}
+
+.map-node--learning {
+  box-shadow:
+    0 0 0 3px var(--pixel-gold),
+    3px 3px 0 var(--pixel-shadow);
+}
+
+.map-node--developing {
+  border-color: var(--cobalt-600);
+}
+
+.map-node--developing .map-node__number {
+  color: var(--cobalt-700);
+}
+
+.map-node--mastered {
+  background: var(--pixel-gold);
+}
+
+.map-node--mastered .map-node__number {
+  color: var(--pixel-night);
+}
+
+/* 玩家標記:站在目前推薦節點上(決議 2 玩家 sprite;佔位=旗標,素材批換裝)。 */
+.map-node__hero {
+  position: absolute;
+  top: -16px;
+  right: -10px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--pixel-window-frame);
+  background: var(--coral-700);
+  box-shadow: 2px 2px 0 var(--pixel-shadow);
+  animation: hero-bob 0.3s steps(2, jump-none) infinite alternate;
+}
+
+@keyframes hero-bob {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-node__hero {
+    animation: none;
+  }
+}
+
+[data-reduced-motion='true'] .map-node__hero {
+  animation: none;
+}
+
+/* 狀態文案:與 .mission-select__item p(0,1,1)同場競爭,
+   一律用 (0,2,1) 壓過,不依賴檔案順序(批②specificity 教訓)。 */
+.mission-select__item p.map-node-status {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-supporting);
+  font-weight: 800;
+}
+
+.mission-select__item p.map-node-status--not_started {
+  color: var(--ink-700);
+}
+
+.mission-select__item p.map-node-status--learning {
+  color: var(--pixel-gold-deep);
+}
+
+.mission-select__item p.map-node-status--developing {
+  color: var(--cobalt-700);
+}
+
+.mission-select__item p.map-node-status--mastered {
+  color: var(--pixel-gold-deep);
 }
 
 /* owner 0730 #7:任務實戰改用 question-card 作答；答錯鎖定的選項

@@ -13,19 +13,29 @@ import {
   spiritLabels,
 } from '../../../components/ui/spirit-avatar';
 import { VictoryCard } from '../../../components/ui/victory-card';
+import type { LearningRepository } from '../api/learning-repository';
 import type { MasteryRepository } from '../api/mastery-repository';
 import { usePublishedChapters } from '../api/chapters';
+import { useLearningProgress } from '../hooks/use-learning';
 import {
   useMasteryHint,
   useMasteryState,
   useStartMastery,
   useSubmitMasteryAttempt,
 } from '../hooks/use-mastery';
+import { statusLabels, type ChapterStatus } from '../lib/progress-status';
 
 export function MissionSelectPage({
+  learningRepository,
   repository,
-}: Readonly<{ repository?: MasteryRepository }>) {
+}: Readonly<{
+  learningRepository?: LearningRepository;
+  repository?: MasteryRepository;
+}>) {
   const chapters = usePublishedChapters();
+  // 決議 1:四態直接映射 get_learning_progress 的 status(null=全章節,零後端)。
+  // 讀不到就全部退灰霧,不阻擋、不報錯(軟鎖=純視覺引導)。
+  const progress = useLearningProgress(null, learningRepository);
   const start = useStartMastery(repository);
   const navigate = useNavigate();
   const [startError, setStartError] = useState<string>();
@@ -44,9 +54,23 @@ export function MissionSelectPage({
     (chapter) => chapter.isPlayable,
   );
 
+  const chapterStatuses = new Map<string, ChapterStatus>(
+    (progress.data ?? [])
+      .filter((row) => row.scope === 'chapter')
+      .map((row) => [row.chapterId, row.status]),
+  );
+  const statusOf = (chapterId: string): ChapterStatus =>
+    chapterStatuses.get(chapterId) ?? 'not_started';
+  const heroChapterId = playable.find(
+    (chapter) => statusOf(chapter.id) !== 'mastered',
+  )?.id;
+
   return (
-    <section aria-labelledby="mission-select-title" className="mission-select">
-      <Card padding="lg">
+    <section
+      aria-labelledby="mission-select-title"
+      className="mission-select scene-day"
+    >
+      <Card className="world-map-panel" padding="lg">
         <SectionHeader
           chip={<Chip tone="primary">5 階精熟測驗</Chip>}
           title="課後任務實戰"
@@ -61,10 +85,25 @@ export function MissionSelectPage({
         ) : (
           <ul className="mission-select__list">
             {playable.map((chapter) => {
+              const status = statusOf(chapter.id);
+              const isHero = chapter.id === heroChapterId;
               return (
                 <li className="mission-select__item" key={chapter.id}>
+                  <span
+                    aria-hidden="true"
+                    className={`map-node map-node--${status}`}
+                  >
+                    <span className="map-node__number">
+                      {chapter.sortOrder}
+                    </span>
+                    {isHero ? <span className="map-node__hero" /> : null}
+                  </span>
                   <div>
                     <h2>{chapter.title}</h2>
+                    <p className={`map-node-status map-node-status--${status}`}>
+                      {statusLabels[status]}
+                      {isHero ? '・目前位置' : null}
+                    </p>
                     {/* owner 0730 #5:測驗小節分節、標題完整列出。 */}
                     {chapter.subtopicTitles.length > 0 ? (
                       <ul
