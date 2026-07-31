@@ -6329,8 +6329,10 @@ select#dashboard-classroom {
   color: var(--pixel-window-muted);
 }
 
-/* 召集令窗:夜窗配方(同 .rpg-window,globals.css:4740;不掛 class 免容器色注入表單)。 */
-.live-join__form {
+/* 召集令窗:夜窗配方(同 .rpg-window,globals.css:4740;不掛 class 免容器色注入表單)。
+   選擇器掛 .scene-night 前綴(0,2,0)蓋過既有 .live-join form(0,1,1;
+   globals.css:5081),避免舊排版批的 margin-top:20px 蓋掉這裡要的 24px。 */
+.scene-night .live-join__form {
   max-width: 440px;
   margin: 24px auto 0;
   background: var(--pixel-night);
@@ -6343,7 +6345,7 @@ select#dashboard-classroom {
   padding: 20px 24px;
 }
 
-.live-join__form label {
+.scene-night .live-join__form label {
   color: var(--pixel-window-ink);
 }
 
@@ -6370,7 +6372,7 @@ select#dashboard-classroom {
 
 /* 錯誤震動:alert 出現時單發 shake(一次性 240ms,transform only;
    一次性動畫由全域 [data-reduced-motion] 縮時承接,@media 顯式關)。 */
-.live-join__form p[role='alert'] {
+.scene-night .live-join__form p[role='alert'] {
   color: var(--pixel-danger);
   animation: rune-shake 240ms steps(4, jump-none);
 }
@@ -6386,7 +6388,7 @@ select#dashboard-classroom {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .live-join__form p[role='alert'] {
+  .scene-night .live-join__form p[role='alert'] {
     animation: none;
   }
 }
