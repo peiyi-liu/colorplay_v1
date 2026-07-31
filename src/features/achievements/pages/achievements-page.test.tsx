@@ -128,4 +128,19 @@ describe('AchievementsPage', () => {
     );
     expect(screen.queryByRole('list', { name: '成就徽章列表' })).toBeNull();
   });
+
+  it('dresses achievements as the hall of medals', async () => {
+    renderPage({ getCatalog: vi.fn().mockResolvedValue(catalog) });
+
+    expect(
+      await screen.findByRole('heading', { name: /個人成就與徽章/u }),
+    ).toBeVisible();
+    expect(
+      document.querySelector('.achievements.scene-day.hall-of-medals'),
+    ).not.toBeNull();
+    expect(document.querySelector('.achievement-card--locked')).not.toBeNull();
+    expect(
+      document.querySelector('[data-achievement-state="unlocked"]'),
+    ).not.toBeNull();
+  });
 });

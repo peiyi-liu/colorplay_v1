@@ -5449,6 +5449,79 @@ select#dashboard-classroom {
   animation: none;
 }
 
+/* ── 批④ 勳章殿堂(/app/achievements;spec §5:未解鎖=石膏剪影、解鎖=光柱) ── */
+.scene-day.hall-of-medals {
+  padding: 24px 16px 48px;
+}
+
+/* 解鎖徽章:金框+頂部光柱(靜態漸層+慢速呼吸;僅動 opacity;
+   1.2s steps(2) 比照 .press-start 先例)。 */
+.hall-of-medals .achievement-card:not(.achievement-card--locked) {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+}
+
+.hall-of-medals .achievement-card:not(.achievement-card--locked)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 56px;
+  height: 100%;
+  transform: translateX(-50%) skewX(-8deg);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--pixel-gold) 35%, transparent),
+    transparent 70%
+  );
+  pointer-events: none;
+  animation: medal-beam 1.2s steps(2, jump-none) infinite alternate;
+}
+
+@keyframes medal-beam {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hall-of-medals .achievement-card:not(.achievement-card--locked)::before {
+    animation: none;
+  }
+}
+
+[data-reduced-motion='true']
+  .hall-of-medals
+  .achievement-card:not(.achievement-card--locked)::before {
+  animation: none;
+}
+
+/* 未解鎖=石膏剪影:實色灰階(禁容器 opacity,批③ I2 教訓);
+   以 (0,3,0) 起跳覆蓋 pastel data-theme 色不依賴順序。 */
+.hall-of-medals .achievement-card.achievement-card--locked {
+  border: 2px solid var(--slate-300);
+  border-radius: var(--radius-pixel);
+  background: var(--slate-100);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+}
+
+.hall-of-medals .achievement-card--locked .pastel-card__icon {
+  background: var(--slate-200);
+  color: var(--ink-700);
+}
+
+.hall-of-medals .achievement-card--locked .pastel-card__title,
+.hall-of-medals .achievement-card--locked .pastel-card__description {
+  color: var(--ink-700);
+}
+
 /* ── 批次① JRPG 場景底座(spec §4;日夜場景見 CONTEXT.md Day/Night Scene) ── */
 
 /* 夜景:標題畫面/命名之儀/教會回復。星空以 box-shadow 點陣繪製,無圖片素材。 */
