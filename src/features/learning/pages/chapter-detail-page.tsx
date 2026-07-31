@@ -186,6 +186,17 @@ const subtopicRow = (
     (row) => row.scope === 'subtopic' && row.subtopicId === subtopicId,
   );
 
+// 火把數顯示進度(spec §5 地城樓層):最多畫 10 支,亮的支數依完成比例四捨五入。
+export const torchStates = (
+  completed: number,
+  total: number | null,
+): readonly boolean[] => {
+  if (total === null || total <= 0) return [];
+  const shown = Math.min(total, 10);
+  const lit = Math.min(shown, Math.round((completed / total) * shown));
+  return Array.from({ length: shown }, (_, index) => index < lit);
+};
+
 export function ChapterDetailPage({
   chapterId: suppliedChapterId,
   repository,
@@ -255,7 +266,7 @@ export function ChapterDetailPage({
   return (
     <section
       aria-labelledby="chapter-detail-title"
-      className="page-card page-card--spacious"
+      className="chapter-dungeon scene-dungeon"
     >
       <header>
         <p className="route-panel__eyebrow">章節複習</p>
@@ -334,6 +345,22 @@ export function ChapterDetailPage({
                   <span className="chapter-detail__subtopic-tag">小節</span>{' '}
                   {subtopic.title}
                 </h2>
+                {torchStates(reviewCompleted, reviewTotal).length > 0 ? (
+                  <span aria-hidden="true" className="floor-torches">
+                    {torchStates(reviewCompleted, reviewTotal).map(
+                      (lit, index) => (
+                        <span
+                          className={
+                            lit
+                              ? 'floor-torch floor-torch--lit'
+                              : 'floor-torch'
+                          }
+                          key={index}
+                        />
+                      ),
+                    )}
+                  </span>
+                ) : null}
                 <div
                   aria-label="小節進度"
                   className="chapter-detail__subtopic-progress"

@@ -242,6 +242,24 @@ describe('ChapterDetailPage', () => {
     expect(screen.getByRole('button', { name: '重試' })).toBeInTheDocument();
   });
 
+  it('renders dungeon floor torches matching subtopic review progress', async () => {
+    renderPage(repositoryWith());
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: 'Chapter 3：色彩體系與應用' }),
+      ).toBeInTheDocument();
+    });
+
+    // fixture 小節(f929cde5-…)於 progressRows 的 reviewTotal=3、reviewCompleted=1。
+    const torches = document.querySelectorAll('.floor-torch');
+    expect(torches).toHaveLength(3);
+    expect(document.querySelectorAll('.floor-torch--lit')).toHaveLength(1);
+    expect(
+      document.querySelector('.chapter-dungeon.scene-dungeon'),
+    ).not.toBeNull();
+  });
+
   it('derives completion with the recompletion rule', () => {
     const completions = [{ cardVersion: 1, reviewCardId: 'card-a' }] as const;
     expect(
