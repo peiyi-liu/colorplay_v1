@@ -10,6 +10,15 @@ const canAnimate = () =>
 
 const useCountUp = (target: number, durationMs: number) => {
   const [value, setValue] = useState(() => (canAnimate() ? 0 : target));
+  // reduced-motion 下不跑動畫,value 必須緊跟 target——用「渲染期間調整狀態」
+  // (React 官方 pattern，非 effect 內 setState)取代，避免 target 變更時
+  // 停留在舊值一個 render(M2:計畫原文要點是「不留陳值」，此寫法比 effect
+  // 版更早生效且不觸發 react-hooks/set-state-in-effect)。
+  const [staticTarget, setStaticTarget] = useState(target);
+  if (!canAnimate() && staticTarget !== target) {
+    setStaticTarget(target);
+    setValue(target);
+  }
 
   useEffect(() => {
     if (!canAnimate()) {

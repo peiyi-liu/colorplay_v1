@@ -338,10 +338,35 @@ describe('QuizResultPage', () => {
           ]),
         ),
       },
+      state: { fromFinalize: true },
     });
 
     expect(await screen.findByText('本次新解鎖成就')).toBeVisible();
     expect(screen.getByText('初出茅廬')).toBeVisible();
     expect(screen.queryByText('昔日榮光')).toBeNull();
+  });
+
+  it('stays silent about newly unlocked achievements when revisiting the result page', async () => {
+    renderResult(repository(vi.fn().mockResolvedValue(completedSession)), {
+      achievementRepository: {
+        getCatalog: vi.fn().mockResolvedValue(
+          catalog([
+            {
+              badgeKey: 'first_quiz',
+              description: '完成第一場挑戰',
+              displayName: '初出茅廬',
+              progress: 1,
+              stableCode: 'first_quiz',
+              state: 'unlocked',
+              target: 1,
+              unlockedAt: completedSession.completedAt,
+            },
+          ]),
+        ),
+      },
+    });
+
+    await screen.findByRole('heading', { name: '挑戰完成 🎉' });
+    expect(screen.queryByText('本次新解鎖成就')).toBeNull();
   });
 });

@@ -83,7 +83,7 @@ export function QuizResultPage({
   }
 
   const newAchievements =
-    achievementsQuery.data && session.completedAt
+    fromFinalize && achievementsQuery.data && session.completedAt
       ? unlockedSince(achievementsQuery.data.items, session.completedAt)
       : [];
   const leveledUp =

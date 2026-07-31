@@ -4954,6 +4954,12 @@ select#dashboard-classroom {
   border-radius: var(--radius-pixel);
 }
 
+/* 終審 C3:`.scene-night a { color: var(--pixel-window-muted) }` 洗掉黃底主按鈕
+   文字(主按鈕本是 <a>),補回品牌對比字色。 */
+.scene-night .primary-action {
+  color: var(--button-primary-text);
+}
+
 /* ── 批次② JRPG 戰鬥與結算(spec §5 quiz/result 列;三拍鐵律 §4.4;
    CSS-first 幾何佔位,素材批換裝 §4.5) ── */
 
@@ -4967,8 +4973,9 @@ select#dashboard-classroom {
   color: var(--pixel-window-ink);
 }
 
+/* 終審 I2:eyebrow pill 底仍是淡黃(未轉夜窗),金字須用日景版 deep token。 */
 .battle-scene .route-panel__eyebrow {
-  color: var(--pixel-gold);
+  color: var(--pixel-gold-deep);
 }
 
 .battle-scene .quiz-map-panel__caption {
@@ -4981,7 +4988,19 @@ select#dashboard-classroom {
 }
 
 .battle-scene .quiz-runner__status {
+  background: var(--pixel-night);
+  border: 2px solid var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
   font-variant-numeric: tabular-nums;
+}
+
+/* 終審 I1:戰鬥頁精熟地圖底仍是日景淺灰,轉夜窗(caption 既有
+   .battle-scene .quiz-map-panel__caption 供 muted 字,對比 7.9:1)。 */
+.battle-scene .quiz-map-panel {
+  background: var(--pixel-night);
+  border: 2px solid var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
 }
 
 .battle-scene > p[role='status'] {
@@ -5303,13 +5322,28 @@ select#dashboard-classroom {
   animation: battle-label-pop 300ms steps(4) both;
 }
 
+/* 終審 C2:結算標頭底仍是日景淺卡,轉夜窗(配方同 .quiz-result__achievements,
+   globals.css:5427)。 */
+.victory-scene .quiz-result__summary {
+  background: var(--pixel-night);
+  color: var(--pixel-window-ink);
+  border: 3px solid var(--pixel-window-frame);
+  outline: 2px solid var(--pixel-night);
+  box-shadow:
+    0 0 0 5px var(--pixel-window-frame),
+    4px 4px 0 var(--pixel-shadow);
+  border-radius: var(--radius-pixel);
+  padding: 20px 24px;
+}
+
 .victory-scene .quiz-result__summary h1,
 .victory-scene .quiz-result__summary > div[role='status'] p {
   color: var(--pixel-window-ink);
 }
 
+/* 終審 I2:同 .battle-scene .route-panel__eyebrow,淡黃 pill 底須用 deep token。 */
 .victory-scene .route-panel__eyebrow {
-  color: var(--pixel-gold);
+  color: var(--pixel-gold-deep);
 }
 
 .victory-scene .quiz-result__decay {
@@ -5356,7 +5390,7 @@ select#dashboard-classroom {
 }
 
 .victory-scene .quiz-result__totals p {
-  background: var(--pixel-night);
+  background: var(--pixel-night-deep);
   border: 2px solid var(--pixel-window-frame);
   border-radius: var(--radius-pixel);
   color: var(--pixel-window-ink);
