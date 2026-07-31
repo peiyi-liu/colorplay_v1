@@ -1,0 +1,347 @@
+{
+  "screenshots": [
+    "join-desktop.png",
+    "join-375.png",
+    "student-lobby.png",
+    "presenter-lobby-1080p.png",
+    "wall-chip-long-name-crop.png",
+    "presenter-question-1080p.png",
+    "student-question.png",
+    "student-feedback.png",
+    "presenter-reveal-1080p.png",
+    "presenter-podium-1080p.png"
+  ],
+  "contrast": [
+    {
+      "pair": "join header eyebrow × night-deep (.live-join own bg)",
+      "color": "rgb(184, 134, 47)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 5.586656211126396
+    },
+    {
+      "pair": "join header h1 × night-deep (.live-join own bg)",
+      "color": "rgb(244, 241, 228)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 15.969262487571607
+    },
+    {
+      "pair": "join header intro p × night-deep (.live-join own bg)",
+      "color": "rgb(169, 176, 214)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 8.49570212169566
+    },
+    {
+      "pair": "join label × 夜窗 (.live-join__form own bg)",
+      "color": "rgb(244, 241, 228)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 14.556138259826193
+    },
+    {
+      "pair": "join input 字 × input 底 (self-contained, .scene-night input rule)",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(255, 255, 255)",
+      "ratio": 13.290185249415316
+    },
+    {
+      "pair": "join alert(role=alert, zod 驗證訊息) × 夜窗",
+      "color": "rgb(255, 138, 141)",
+      "background": "rgb(23, 28, 63)",
+      "ratio": 7.276104434314135
+    },
+    {
+      "pair": "FeedbackPhase 題文 p (:has(+ .live-distribution)) × 夜底 (synthetic, screen_only 模式下不可達)",
+      "color": "rgb(244, 241, 228)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 15.969262487571607
+    },
+    {
+      "pair": "live-distribution li × 夜底 (synthetic)",
+      "color": "rgb(244, 241, 228)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 15.969262487571607
+    },
+    {
+      "pair": "live-explanation strong × 夜底 (synthetic, composited — 10% alpha amber tint over night-deep; self-contained pre-existing amber-700 text, first exposed to a dark backdrop by this batch)",
+      "color": "rgb(178, 110, 5)",
+      "background": "rgb(32.1999945, 29.0000115, 41.8999989)",
+      "declaredBackground": "color(srgb 0.698039 0.431373 0.0196078 / 0.1)",
+      "ratio": 4.0323993353011405
+    },
+    {
+      "pair": "live-explanation p × 夜底 (synthetic, composited — same as above)",
+      "color": "rgb(178, 110, 5)",
+      "background": "rgb(32.1999945, 29.0000115, 41.8999989)",
+      "declaredBackground": "color(srgb 0.698039 0.431373 0.0196078 / 0.1)",
+      "ratio": 4.0323993353011405
+    },
+    {
+      "pair": "live-standing-card__rank × 自身淺底 (synthetic)",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(242, 244, 247)",
+      "ratio": 12.061667494681178
+    },
+    {
+      "pair": "live-standing-card__score × 自身淺底 (synthetic)",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(242, 244, 247)",
+      "ratio": 12.061667494681178
+    },
+    {
+      "pair": "live-standing-card__cheer × 自身淺底 (synthetic)",
+      "color": "rgb(34, 160, 107)",
+      "background": "rgb(242, 244, 247)",
+      "ratio": 3.021060758615825
+    },
+    {
+      "pair": "live-team-scoreboard li × 夜底 (synthetic, team-mode 本場非 team 不可達)",
+      "color": "rgb(244, 241, 228)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 15.969262487571607
+    },
+    {
+      "pair": "wall-chip 名字「顏梓涵超級無敵彩虹閃電勇…」× own bg (14% white over night-deep, composited)",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(49.46, 52.900000000000006, 75.26)",
+      "ratio": 12.050778044332697
+    },
+    {
+      "pair": "wall-chip 名字「live.student…」× own bg (14% white over night-deep, composited)",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(49.46, 52.900000000000006, 75.26)",
+      "ratio": 12.050778044332697
+    },
+    {
+      "pair": "presenter bar p (等待室/題號) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "presenter bar button (音效開啟/已靜音) × own bg (transparent → night-deep)",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "presenter code (課堂代碼六碼) × night-deep",
+      "color": "rgb(245, 196, 0)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 11.00126193259001
+    },
+    {
+      "pair": "presenter count (N 位同學已加入) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "presenter question h2 × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "presenter options li (rose) × own bg (self-contained)",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(229, 72, 77)",
+      "ratio": 3.913738950339162
+    },
+    {
+      "pair": "presenter options li (sky) × own bg (self-contained)",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(48, 86, 216)",
+      "ratio": 6.0898431855264485
+    },
+    {
+      "pair": "presenter options li (amber) × own bg (self-contained)",
+      "color": "rgb(24, 33, 47)",
+      "background": "rgb(108, 143, 248)",
+      "ratio": 5.335229784748683
+    },
+    {
+      "pair": "presenter options li (emerald) × own bg (self-contained)",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(34, 160, 107)",
+      "ratio": 3.3287650442568237
+    },
+    {
+      "pair": "session OptionButton (rose, screen_only shape glyph) × own bg (self-contained, pre-existing ui.css)",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(229, 72, 77)",
+      "ratio": 3.913738950339162
+    },
+    {
+      "pair": "session OptionButton (sky, screen_only shape glyph) × own bg (self-contained, pre-existing ui.css)",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(48, 86, 216)",
+      "ratio": 6.0898431855264485
+    },
+    {
+      "pair": "session OptionButton (amber, screen_only shape glyph) × own bg (self-contained, pre-existing ui.css)",
+      "color": "rgb(24, 33, 47)",
+      "background": "rgb(108, 143, 248)",
+      "ratio": 5.335229784748683
+    },
+    {
+      "pair": "session OptionButton (emerald, screen_only shape glyph) × own bg (self-contained, pre-existing ui.css)",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(34, 160, 107)",
+      "ratio": 3.3287650442568237
+    },
+    {
+      "pair": "chart label (correct=true) × night-deep",
+      "color": "rgb(23, 117, 78)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 3.1776277273568385
+    },
+    {
+      "pair": "chart count (correct=true) × night-deep",
+      "color": "rgb(23, 117, 78)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 3.1776277273568385
+    },
+    {
+      "pair": "chart label (correct=false) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "chart count (correct=false) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "chart label (correct=false) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "chart count (correct=false) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "chart label (correct=false) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "chart count (correct=false) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "presenter standings li (Top5) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "presenter footer primary button (下一題/結算成績) × own bg",
+      "color": "rgb(24, 33, 47)",
+      "background": "rgb(245, 196, 0)",
+      "ratio": 9.849077125130636
+    },
+    {
+      "pair": "live-streak-badge (連擊 x2) × 夜底",
+      "color": "rgb(244, 241, 228)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 15.969262487571607
+    },
+    {
+      "pair": "podium rank 1 文字「顏梓涵超級無敵彩虹閃」× own bg (12% white over night-deep, composited)",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(44.68, 48.2, 71.08)",
+      "ratio": 12.904148485493124
+    },
+    {
+      "pair": "podium rank 1 文字「1498 分」× own bg (12% white over night-deep, composited)",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(44.68, 48.2, 71.08)",
+      "ratio": 12.904148485493124
+    },
+    {
+      "pair": "podium rank 2 文字「live.stude」× own bg (12% white over night-deep, composited)",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(44.68, 48.2, 71.08)",
+      "ratio": 12.904148485493124
+    },
+    {
+      "pair": "podium rank 2 文字「1494 分」× own bg (12% white over night-deep, composited)",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(44.68, 48.2, 71.08)",
+      "ratio": 12.904148485493124
+    }
+  ],
+  "consoleHealth": {
+    "presenterLobby": {
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    "joinAndSessionLobby": {
+      "consoleErrors": [],
+      "pageErrors": []
+    }
+  },
+  "wallChip": {
+    "longNameSeeded": "顏梓涵超級無敵彩虹閃電勇者小隊長加油打氣不放棄一起衝刺呀",
+    "forAccount": "live.student.one@colorplay.test",
+    "chipCount": 2,
+    "details": [
+      {
+        "text": "顏梓涵超級無敵彩虹閃電勇者小隊長加油打氣不放棄一起衝刺呀",
+        "isLongName": true,
+        "rect": {
+          "w": 663.203125,
+          "h": 62.40625,
+          "x": 522.390625,
+          "y": 653.296875
+        },
+        "color": "rgb(255, 255, 255)",
+        "declaredBackground": "rgba(255, 255, 255, 0.14)",
+        "effectiveBackground": "rgb(49.46, 52.900000000000006, 75.26)",
+        "lineHeight": "36.4px",
+        "fontSize": "22.4px",
+        "paddingTop": "8px",
+        "paddingBottom": "14px",
+        "borderTopWidth": "2px",
+        "borderBottomWidth": "2px",
+        "clipPath": "polygon(0px 0px, 100% 0px, 100% 70%, 50% 100%, 0px 70%)",
+        "scrollHeight": 58,
+        "clientHeight": 58,
+        "lineHeightPx": 36.4,
+        "ratio": 12.050778044332697
+      },
+      {
+        "text": "live.student.two",
+        "isLongName": false,
+        "rect": {
+          "w": 133.67041015625,
+          "h": 40.8916015625,
+          "x": 1228.758544921875,
+          "y": 664.05419921875
+        },
+        "color": "rgb(255, 255, 255)",
+        "declaredBackground": "rgba(255, 255, 255, 0.14)",
+        "effectiveBackground": "rgb(49.46, 52.900000000000006, 75.26)",
+        "lineHeight": "36.4px",
+        "fontSize": "22.4px",
+        "paddingTop": "8px",
+        "paddingBottom": "14px",
+        "borderTopWidth": "2px",
+        "borderBottomWidth": "2px",
+        "clipPath": "polygon(0px 0px, 100% 0px, 100% 70%, 50% 100%, 0px 70%)",
+        "scrollHeight": 58,
+        "clientHeight": 58,
+        "lineHeightPx": 36.4,
+        "ratio": 12.050778044332697
+      }
+    ]
+  }
+}
