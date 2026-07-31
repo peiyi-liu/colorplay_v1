@@ -662,6 +662,32 @@ a {
   font-weight: 800;
 }
 
+/* 回饋列講解精靈(決議 3:紅/藍/綠導師)。名銜用 700 深階,
+   回饋卡為淺底(--color-surface),深階字色保 4.5:1。 */
+.feedback-card__mentor {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.feedback-card__mentor-name {
+  font-size: var(--font-size-supporting);
+  font-weight: 800;
+}
+
+.feedback-card__mentor-name--red {
+  color: var(--coral-700);
+}
+
+.feedback-card__mentor-name--blue {
+  color: var(--cobalt-700);
+}
+
+.feedback-card__mentor-name--green {
+  color: var(--jade-700);
+}
+
 .quiz-action-error {
   margin-top: var(--space-4);
   border: 2px solid var(--color-danger);

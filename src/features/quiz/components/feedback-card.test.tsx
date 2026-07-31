@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { QuizAnswerResult } from '../api/quiz-repository';
-import { FeedbackCard } from './feedback-card';
+import { FeedbackCard, type QuizFeedbackResult } from './feedback-card';
 
 const incorrect: QuizAnswerResult = {
   answerStatus: 'incorrect',
@@ -14,6 +14,16 @@ const incorrect: QuizAnswerResult = {
   scoreDelta: 0,
   selectedOptionId: 'option-b',
   totalScore: 0,
+};
+
+const mentorResult: QuizFeedbackResult = {
+  answerStatus: 'correct',
+  correctOptionId: 'opt-1',
+  correctOptionText: '黃色',
+  explanation: 'RGB 中紅光與綠光等量混合會得到黃色。',
+  scoreDelta: 100,
+  selectedOptionId: 'opt-1',
+  totalScore: 100,
 };
 
 describe('FeedbackCard', () => {
@@ -58,5 +68,46 @@ describe('FeedbackCard', () => {
     expect(
       screen.getByRole('button', { name: '結算並查看結果' }),
     ).toBeDisabled();
+  });
+
+  it('renders the tri-spirit mentor row when mentorSeed is provided', () => {
+    render(
+      <FeedbackCard
+        isLastQuestion={false}
+        isPending={false}
+        mentorSeed="色彩體系與應用"
+        onContinue={() => undefined}
+        result={mentorResult}
+      />,
+    );
+    expect(screen.getByText(/^[紅藍綠]精靈導師$/u)).toBeInTheDocument();
+  });
+
+  it('keeps the explanation as the last direct-child paragraph', () => {
+    const { container } = render(
+      <FeedbackCard
+        isLastQuestion={false}
+        isPending={false}
+        mentorSeed="色彩體系與應用"
+        onContinue={() => undefined}
+        result={mentorResult}
+      />,
+    );
+    const paragraphs = container.querySelectorAll('.feedback-card > p');
+    expect(paragraphs[paragraphs.length - 1]).toHaveTextContent(
+      mentorResult.explanation,
+    );
+  });
+
+  it('renders no mentor row without mentorSeed', () => {
+    const { container } = render(
+      <FeedbackCard
+        isLastQuestion={false}
+        isPending={false}
+        onContinue={() => undefined}
+        result={mentorResult}
+      />,
+    );
+    expect(container.querySelector('.feedback-card__mentor')).toBeNull();
   });
 });

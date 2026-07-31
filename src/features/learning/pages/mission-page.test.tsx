@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -119,5 +120,42 @@ describe('MissionPage', () => {
       screen.getByRole('heading', { name: '階段任務挑戰完成！' }),
     ).toBeInTheDocument();
     expect(screen.queryByText('+0 XP')).toBeNull();
+  });
+
+  it('shows a tri-spirit mentor on the correct-answer feedback card', async () => {
+    const user = userEvent.setup();
+    // 既有 stub 只覆蓋 isPending/mutate 骨架,未涵蓋 isCorrect:true 路徑;
+    // 這裡擴充回傳以驅動 resolved 卡渲染(只改測試檔)。
+    mockedSubmit.mockReturnValue(
+      asResult({
+        isPending: false,
+        mutate: (
+          _optionId: string,
+          options: { onSuccess: (result: unknown) => void },
+        ) => {
+          options.onSuccess({
+            correctOptionId: 'o2',
+            explanation: '解析文',
+            isCorrect: true,
+            position: baseState.position,
+            status: 'in_progress',
+          });
+        },
+      }),
+    );
+    render(
+      <MemoryRouter>
+        <MissionPage sessionId="s1" />
+      </MemoryRouter>,
+    );
+
+    // 沿用檔內既有 render + 答題流程:選正確選項→送出→出現「✓ 答對了」
+    await user.click(screen.getByRole('radio', { name: /黃色/u }));
+    await user.click(screen.getByRole('button', { name: '送出答案' }));
+
+    expect(
+      await screen.findByRole('heading', { name: '✓ 答對了' }),
+    ).toBeInTheDocument();
+    expect(await screen.findByText(/^[紅藍綠]精靈導師$/u)).toBeInTheDocument();
   });
 });

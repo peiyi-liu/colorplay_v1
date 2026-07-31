@@ -1,3 +1,8 @@
+import {
+  SpiritAvatar,
+  spiritForSeed,
+  spiritLabels,
+} from '../../../components/ui/spirit-avatar';
 import type { QuizAnswerResult } from '../api/quiz-repository';
 
 export type QuizFeedbackResult = Pick<
@@ -26,14 +31,18 @@ const verdictFlair = {
 export function FeedbackCard({
   isLastQuestion,
   isPending,
+  mentorSeed,
   onContinue,
   result,
 }: Readonly<{
   isLastQuestion: boolean;
   isPending: boolean;
+  mentorSeed?: string;
   onContinue: () => void;
   result: QuizFeedbackResult;
 }>) {
+  const mentor =
+    mentorSeed === undefined ? undefined : spiritForSeed(mentorSeed);
   return (
     <aside
       className={`feedback-card feedback-card--${result.answerStatus}`}
@@ -53,6 +62,16 @@ export function FeedbackCard({
           <strong>正確答案：{result.correctOptionText}</strong>
         </p>
       )}
+      {mentor ? (
+        <div className="feedback-card__mentor">
+          <SpiritAvatar variant={mentor} />
+          <span
+            className={`feedback-card__mentor-name feedback-card__mentor-name--${mentor}`}
+          >
+            {spiritLabels[mentor]}
+          </span>
+        </div>
+      ) : null}
       <p>{result.explanation}</p>
       <button
         className="primary-action"

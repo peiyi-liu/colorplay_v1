@@ -439,6 +439,7 @@ export function QuizSessionPage({
         <FeedbackCard
           isLastQuestion={displayedQuestion.position === session.questionCount}
           isPending={finalizeMutation.isPending || activateMutation.isPending}
+          mentorSeed={session.chapterTitle}
           onContinue={() => void continueAfterFeedback()}
           result={feedbackResult}
         />

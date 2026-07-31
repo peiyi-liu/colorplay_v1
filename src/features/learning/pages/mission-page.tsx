@@ -7,6 +7,11 @@ import { Chip } from '../../../components/ui/chip';
 import { HintCallout } from '../../../components/ui/hint-callout';
 import { MapStepper } from '../../../components/ui/map-stepper';
 import { SectionHeader } from '../../../components/ui/section-header';
+import {
+  SpiritAvatar,
+  spiritForSeed,
+  spiritLabels,
+} from '../../../components/ui/spirit-avatar';
 import { VictoryCard } from '../../../components/ui/victory-card';
 import type { MasteryRepository } from '../api/mastery-repository';
 import { usePublishedChapters } from '../api/chapters';
@@ -121,7 +126,8 @@ export function MissionPage({
   const [selectedOptionId, setSelectedOptionId] = useState<string>();
   // 答對後先停在回饋卡（與課後學習大廳的答題節奏一致），按「下一關」才前進。
   const [resolved, setResolved] = useState<
-    Readonly<{ explanation: string; isLast: boolean }> | undefined
+    | Readonly<{ explanation: string; isLast: boolean; mentorSeed: string }>
+    | undefined
   >();
   const lastQuestionId = useRef<string | undefined>(undefined);
 
@@ -188,6 +194,14 @@ export function MissionPage({
           className="feedback-card feedback-card--correct"
         >
           <h2 id="mission-feedback-title">✓ 答對了</h2>
+          <div className="feedback-card__mentor">
+            <SpiritAvatar variant={spiritForSeed(resolved.mentorSeed)} />
+            <span
+              className={`feedback-card__mentor-name feedback-card__mentor-name--${spiritForSeed(resolved.mentorSeed)}`}
+            >
+              {spiritLabels[spiritForSeed(resolved.mentorSeed)]}
+            </span>
+          </div>
           {resolved.explanation ? (
             <div className="live-explanation">
               <strong>教師引導解析:</strong>
@@ -244,6 +258,8 @@ export function MissionPage({
                     setResolved({
                       explanation: result.explanation,
                       isLast: mastery.position === mastery.questionCount,
+                      mentorSeed:
+                        mastery.question?.subtopicTitle ?? mastery.chapterTitle,
                     });
                     return;
                   }
