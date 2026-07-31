@@ -350,7 +350,7 @@ export function LiveSessionPage({
   return (
     <section
       aria-labelledby="live-session-title"
-      className="live-session-shell page-mid"
+      className="live-session-shell page-mid scene-night live-guild-raid"
     >
       <header>
         <p className="route-panel__eyebrow">ColorPlay Live</p>
@@ -370,6 +370,7 @@ export function LiveSessionPage({
             return (
               <>
                 <div className="live-waiting" role="status">
+                  <span aria-hidden="true" className="camp-fire" />
                   <h2>已加入這場挑戰！</h2>
                   <p>這一題已經開始，下一題開始時你就會自動進場。</p>
                 </div>

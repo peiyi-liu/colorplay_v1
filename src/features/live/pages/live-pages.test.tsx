@@ -433,6 +433,38 @@ describe('LiveSessionPage (participant)', () => {
     expect(screen.queryByText('ColorPlay Live')).toBeNull();
     expect(screen.queryByText(/（\d+ 人）/u)).toBeNull();
   });
+
+  // 批⑤a 公會團體戰:LiveSessionState 目前沒有 waiting-for-next 的既有
+  // fixture,依 live-phase-view.ts 的 participantView() 建構一個——
+  // question_open + waitingForNext:true 落在 `{ kind: 'waiting-for-next',
+  // showScoreboard: false }` 分支,不需額外 mock getTeamTotals。
+  it('dresses the student session as a night guild raid with a camp fire while waiting', async () => {
+    const repository = repositoryWith({
+      getState: vi.fn().mockResolvedValue({
+        ...baseState,
+        state: 'question_open',
+        stateVersion: 3,
+        currentPosition: 1,
+        waitingForNext: true,
+      }),
+    });
+    renderWith(
+      <LiveSessionPage
+        client={stubClient()}
+        repository={repository}
+        sessionId={SESSION_ID}
+      />,
+    );
+
+    expect(await screen.findByText('已加入這場挑戰！')).toBeVisible();
+    expect(
+      document.querySelector('.live-session-shell.scene-night.live-guild-raid'),
+    ).not.toBeNull();
+    const fire = document.querySelector('.live-waiting .camp-fire');
+    expect(fire).not.toBeNull();
+    expect(fire).toHaveAttribute('aria-hidden', 'true');
+    expect(fire).toHaveTextContent('');
+  });
 });
 
 describe('TeacherLiveSessionPage (host console)', () => {

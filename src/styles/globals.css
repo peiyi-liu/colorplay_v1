@@ -6392,3 +6392,119 @@ select#dashboard-classroom {
     animation: none;
   }
 }
+
+/* ── 批⑤a 公會團體戰(/app/live/:id 學生端;Late Join=營地等待;
+   ATB=速度計分由投影 CountdownRing+批② quiz ATB 承載) ── */
+.live-guild-raid > header .route-panel__eyebrow {
+  border-color: var(--pixel-gold);
+  background: transparent;
+  color: var(--pixel-gold);
+}
+
+.live-guild-raid > header h1 {
+  font-family: var(--font-pixel-tc);
+  font-size: 22px;
+}
+
+/* 直接坐夜底的段落文字。淺色子卡(question-card/standing-card/explanation/
+   scoreboard)各自帶底,選擇器限定 div 直接子 p 與 role=status,避開卡內文字。
+   自查修正:草稿原本還有 `.live-guild-raid > div > div > p`——實測它會連坐
+   FeedbackPhase 裡兩層 div 深的 .live-explanation p、.live-standing-card
+   內三個 p 一起吃到,兩張卡都要維持淺底墨字不動,故拿掉這條、改用下面兩條
+   针對性還原規則。 */
+.live-guild-raid > div > p,
+.live-guild-raid p[role='status'] {
+  color: var(--pixel-window-muted);
+}
+
+.live-guild-raid > div > ol[aria-label='前三名'] li {
+  color: var(--pixel-window-ink);
+}
+
+.live-guild-raid .live-distribution li {
+  color: var(--pixel-window-ink);
+}
+
+/* FeedbackPhase 題文 p:上面 direct-child 的 muted 規則同樣會命中它(它也是
+   一個 .live-guild-raid > div > p),但這裡要的是 ink 不是 muted。不靠加
+   class(zero JSX diff),用 :has() 精準鎖定「後面緊接 .live-distribution」
+   的那一個 p——(0,2,2) 蓋過 muted 規則的 (0,1,2)。 */
+.live-guild-raid > div > p:has(+ .live-distribution) {
+  color: var(--pixel-window-ink);
+}
+
+/* 淺色子卡還原:question-card(legend 文字)與 live-standing-card 各自帶白/
+   淺底,但兩者本身都「沒有自己的 color」——原本的墨色其實是外層繼承來的
+   (base:整頁淺色,繼承 --color-text/--ink-900)。scene-night 一掛上去,
+   繼承鏈頂端變成 --pixel-window-ink(近白 #f4f1e4),等於淺底疊淺字,gate
+   實測 legend 對比掉到 1:1、standing-card 三行文字幾乎消失。這裡逐一還原
+   成 base 的墨色,兩張卡維持淺底墨字不動。live-explanation 已自帶
+   `color: var(--amber-700)`,live-team-scoreboard 完全沒有背景/文字規則
+   (原本就只是疊在頁面底色上),兩者不受此問題影響,故不需要還原規則。 */
+.live-guild-raid .question-card,
+.live-guild-raid .live-standing-card {
+  color: var(--ink-900);
+}
+
+/* streak badge:既有火焰字色不得被上面 role=status 的 muted 規則改變。
+   base(本批 Step 3 掛上 scene-night/live-guild-raid 之後、Step 5 這些新
+   選擇器之前)下,.live-streak-badge 沒有自己的 color,直接繼承
+   .scene-night 的 --pixel-window-ink——這就是「base 字色」實值,不是草稿
+   佔位寫的 --pixel-gold。另外草稿寫的 `.live-guild-raid .live-streak-badge`
+   specificity 是 (0,2,0),比上面 `p[role='status']` 的 (0,2,1) 低,蓋
+   不掉,改成 `.live-guild-raid > div > p.live-streak-badge`(0,2,2)才贏
+   得掉、確實還原。 */
+.live-guild-raid > div > p.live-streak-badge {
+  color: var(--pixel-window-ink);
+}
+
+/* Late Join 營地:夜窗+營火(.camp-fire 素材批換裝介面)。 */
+.live-guild-raid .live-waiting {
+  background: var(--pixel-night);
+  border: 3px solid var(--pixel-window-frame);
+  outline: 2px solid var(--pixel-night);
+  box-shadow:
+    0 0 0 5px var(--pixel-window-frame),
+    4px 4px 0 var(--pixel-shadow);
+  border-radius: var(--radius-pixel);
+  padding: 20px 24px;
+  text-align: center;
+}
+
+.camp-fire {
+  display: inline-block;
+  width: 20px;
+  height: 24px;
+  margin-bottom: 8px;
+  background: var(--pixel-gold);
+  clip-path: polygon(
+    50% 0,
+    78% 30%,
+    100% 62%,
+    82% 100%,
+    18% 100%,
+    0 62%,
+    22% 30%
+  );
+  animation: camp-flicker 0.3s steps(2, jump-none) infinite alternate;
+}
+
+@keyframes camp-flicker {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.72;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .camp-fire {
+    animation: none;
+  }
+}
+
+[data-reduced-motion='true'] .camp-fire {
+  animation: none;
+}
