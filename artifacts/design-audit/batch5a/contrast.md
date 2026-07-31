@@ -244,12 +244,22 @@ batch-5a.
 
 ## Final-review fix wave — C1 / I2 rendered re-verify
 
-Static harness (inlines the real `tokens.css`+`globals.css` post-fix,
-reconstructs the real DOM shape verified against
-`src/features/live/pages/live-session-page.tsx` and
-`src/features/live/components/live-presenter.tsx`; Playwright,
-`getBoundingClientRect`/`getComputedStyle`), 1920×1080. Not committed
+**Evidence grade: static harness — weaker than the live-session numbers
+elsewhere in this file.** This section's measurements come from a
+hand-assembled DOM (real `tokens.css`+`globals.css` post-fix, structure
+cross-checked against `src/features/live/pages/live-session-page.tsx` and
+`src/features/live/components/live-presenter.tsx` but not driven through an
+actual join→lobby→question→podium session), 1920×1080. Not committed
 (session-scratchpad, throwaway, same policy as `gate-capture-batch5a.mjs`).
+Treat every ratio in this subsection as corroborating, not primary,
+evidence — the round-1/round-2 tables above and the live re-capture section
+below (driven through a real two-student session, same method throughout
+this gate) are the stronger grade. Where the two grades overlap (C1's
+legend pair), the live number is recorded separately below and matches this
+static number exactly, which is reassuring but does not retroactively
+upgrade this subsection's own evidence grade for the pairs it uniquely
+covers (I2's fireworks-to-podium distances have no live counterpart
+measured — pixel/visual only, see below).
 
 ### C1 — legend straddling the card border
 
@@ -316,3 +326,98 @@ visually too (static screenshot, animations frozen at settled state):
 both bursts sit in the gap between the "最終頒獎台" heading and the podium
 row, clear of all three cards. **PASS** (re-anchored fix, not the literal
 text originally circulated — see deviation note above).
+
+## Close-out re-verify (post-8558e70, live session)
+
+Driven the same way as round-1/round-2 (real 10-question, 2-student session,
+`gate-capture-batch5a.mjs` unmodified except the click mechanism — see
+critical finding below). `student-question.png` and
+`presenter-podium-1080p.png` re-captured/overwritten at HEAD (`8558e70`).
+
+### Legend (C1) — live measurement, corroborates the static harness number
+
+`.live-guild-raid .question-card legend`, read live via `page.evaluate` on
+a real driven session (viewport 1280×800, not the static harness's 1920×1080
+— pairing is viewport-independent since it's just a color/color pair):
+
+| Pair | Color | Background | Ratio | Verdict |
+|---|---|---|---|---|
+| question-card legend (live) × fieldset bg | `rgb(37, 48, 66)` | `rgb(255, 255, 255)` | **13.290** | **PASS** |
+
+Matches the static harness's 13.290 exactly (same ink-900/white pairing this
+gate already proved elsewhere, e.g. the join input pair — not a coincidence,
+just the same token pair). `isLegendInsideFieldset` computed geometrically
+`true` (legend's rect fully within the fieldset's rect on both axes).
+**Legend verdict: PASS** — fully inside the card, legible, on both grades of
+evidence now.
+
+### Fireworks (I2) — live re-capture, visual/pixel only (no live distance re-measured)
+
+`presenter-podium-1080p.png` (1920×1080) shows both bursts sitting directly
+above their respective podium cards — left burst just above rank-2
+(`live.student.two`), right burst just above rank-1's crown — matching the
+static harness's ~25–41px claim by eye (`podium-fireworks-crop.png`, 2×
+crop). Neither burst reads as "off in a screen corner" the way the pre-fix
+version did. **Fireworks verdict: PASS.**
+
+### CRITICAL — new regression found during this re-verify, not one of the two things asked
+
+While re-driving the session to reach the podium, `answerCorrectly()`'s
+normal `.click()` on the intended answer button started failing
+Playwright's actionability check:
+
+```
+- <span aria-hidden="true">■</span> from <button ... ui-option--sky ...>
+  subtree intercepts pointer events
+```
+
+Investigated with a standalone geometry probe
+(`.live-guild-raid .question-card` in a real session, screen_only mode,
+1280×800 viewport — the same width/mode every classroom session uses by
+default): `.live-guild-raid .question-card legend { float: left; }`
+(8558e70's own C1 fix) has no explicit `width`, so it shrink-to-fits its
+content — and the screen_only legend text is the fixed string
+"題目在投影幕上，選出你的答案！", which happens to be ~872px wide at this
+font-size, almost exactly the fieldset's own content width (924px at this
+viewport). The sibling `.live-options` grid, which must lay out beside the
+float rather than under it, is left only **924 − 872 = 52px** of width —
+collapsing the entire 2×2 answer-button grid into a ~48px-wide sliver at
+the fieldset's right edge, with all four buttons visually **overlapping
+each other**:
+
+| Button | left | right |
+|---|---|---|
+| rose | 1076 | 1124 |
+| sky | 1088 | 1136 |
+| amber | 1076 | 1124 |
+| emerald | 1088 | 1136 |
+
+rose/sky overlap by 36px (same for amber/emerald) — confirmed both by
+`getBoundingClientRect()` and visually (`student-question.png`, re-captured
+from this exact real session — the answer buttons are barely visible,
+clipped at the card's right edge). **A real student cannot reliably click
+their intended answer under these conditions** — clicking anywhere in the
+overlap region hits whichever button paints on top (later DOM order wins),
+not necessarily the one visually intended.
+
+This gate's own capture script worked around the broken hit-test (dispatched
+a native DOM `.click()` directly on the intended button via
+`locator.evaluate(el => el.click())`, bypassing real-coordinate hit-testing)
+purely to keep advancing the session far enough to capture the podium
+screenshot — **this is gate tooling routing around a product bug it is
+simultaneously reporting, not evidence that the bug is benign or that real
+students can complete a session normally.**
+
+**Severity note:** the crush is a function of `fieldset width − legend's
+fixed ~872px content width`; at this viewport (1280px window, ~924px
+fieldset) there is only 52px left. Wider viewports would have more room and
+may not visibly crush (not verified at other widths — out of scope for this
+re-verify pass, flagged for whoever owns the next fix). Since `screen_only`
+is the classroom default and this legend string is the same fixed text on
+every question in that mode, this reproduces on **every question of every
+screen_only session** at common laptop/tablet widths, not an edge case.
+
+**Verdict: legend/fireworks PASS as asked; one new CRITICAL regression found
+and reported (not fixed — gate scope). Recommend this block the close-out
+until addressed**, since it is more severe (breaks answering) than either of
+the two defects this fix wave targeted.

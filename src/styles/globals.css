@@ -6615,7 +6615,12 @@ select#dashboard-classroom {
    (Playwright getBoundingClientRect)證實距離沒有變。真正的祖先只有
    .live-presenter__podium-stage,故保留它的 position:relative(見上方"頒獎
    台舞台"規則,未刪),改成量測 podium(ol)相對 stage 的實際落點來校正這兩顆
-   星火的偏移量,而不是相對整個 1080p 畫面猜測。 */
+   星火的偏移量,而不是相對整個 1080p 畫面猜測。
+   下列 top/left/right 為 1920×1080 投影幕定值,對治具(fixture)校準——三種
+   情況會使其失準,需重新量測:viewport 高度 ≠ 1080px、≤720px 時
+   `.live-presenter__podium` 轉 column 排列(見上方 @media (width <= 720px)
+   規則)、或 podium 本身寬度變動(參賽人數改變欄數/欄寬)。結構性修法(煙火
+   改為 podium 自身擁有的 pseudo-element,定位基準隨 podium 走)留給素材批。 */
 .podium-fireworks--left {
   top: 359px;
   left: 32%;

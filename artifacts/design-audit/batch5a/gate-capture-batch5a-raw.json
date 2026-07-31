@@ -189,30 +189,6 @@
       "ratio": 3.3287650442568237
     },
     {
-      "pair": "chart label (correct=false) × night-deep",
-      "color": "rgb(255, 255, 255)",
-      "background": "rgb(16, 20, 46)",
-      "ratio": 18.07936027349558
-    },
-    {
-      "pair": "chart count (correct=false) × night-deep",
-      "color": "rgb(255, 255, 255)",
-      "background": "rgb(16, 20, 46)",
-      "ratio": 18.07936027349558
-    },
-    {
-      "pair": "chart label (correct=false) × night-deep",
-      "color": "rgb(255, 255, 255)",
-      "background": "rgb(16, 20, 46)",
-      "ratio": 18.07936027349558
-    },
-    {
-      "pair": "chart count (correct=false) × night-deep",
-      "color": "rgb(255, 255, 255)",
-      "background": "rgb(16, 20, 46)",
-      "ratio": 18.07936027349558
-    },
-    {
       "pair": "chart label (correct=true) × night-deep",
       "color": "rgb(23, 117, 78)",
       "background": "rgb(16, 20, 46)",
@@ -223,6 +199,30 @@
       "color": "rgb(23, 117, 78)",
       "background": "rgb(16, 20, 46)",
       "ratio": 3.1776277273568385
+    },
+    {
+      "pair": "chart label (correct=false) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "chart count (correct=false) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "chart label (correct=false) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
+    },
+    {
+      "pair": "chart count (correct=false) × night-deep",
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(16, 20, 46)",
+      "ratio": 18.07936027349558
     },
     {
       "pair": "chart label (correct=false) × night-deep",
@@ -273,7 +273,7 @@
       "ratio": 12.904148485493124
     },
     {
-      "pair": "podium rank 2 文字「1497 分」× own bg (12% white over night-deep, composited)",
+      "pair": "podium rank 2 文字「1499 分」× own bg (12% white over night-deep, composited)",
       "color": "rgb(255, 255, 255)",
       "background": "rgb(44.68, 48.2, 71.08)",
       "ratio": 12.904148485493124
@@ -322,10 +322,10 @@
         "text": "live.student.two",
         "isLongName": false,
         "rect": {
-          "w": 117.7861328125,
-          "h": 36.0322265625,
-          "x": 1236.70068359375,
-          "y": 666.48388671875
+          "w": 125.8492431640625,
+          "h": 38.4989013671875,
+          "x": 1232.6690673828125,
+          "y": 665.2505493164062
         },
         "color": "rgb(255, 255, 255)",
         "declaredBackground": "rgba(255, 255, 255, 0.14)",
