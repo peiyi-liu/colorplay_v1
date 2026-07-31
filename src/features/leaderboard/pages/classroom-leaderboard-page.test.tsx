@@ -103,4 +103,14 @@ describe('ClassroomLeaderboardPage', () => {
     ).toBeVisible();
     expect(getClassroomLeaderboard).toHaveBeenCalledTimes(2);
   });
+
+  it('dresses the leaderboard as a guild notice board', async () => {
+    const getClassroomLeaderboard = vi.fn().mockResolvedValue(board);
+    renderPage({ getClassroomLeaderboard });
+    await screen.findByRole('heading', { name: '排行榜' });
+    expect(
+      document.querySelector('.leaderboard-panel.scene-day.guild-board'),
+    ).not.toBeNull();
+    expect(screen.getByRole('heading', { name: '排行榜' })).toBeInTheDocument();
+  });
 });

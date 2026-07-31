@@ -4565,6 +4565,101 @@ a {
   flex-wrap: wrap;
 }
 
+/* ── 批④ 公會佈告欄(/app/leaderboard;決議 5 純視覺:木板底+羊皮紙名條+金銀銅) ──
+   木板=深色面:header 文字逐條設淺色(外溢鐵律,不設容器 color)。 */
+.scene-day.guild-board {
+  background: var(--pixel-gold-deep);
+  border: 3px solid var(--pixel-window-frame);
+  outline: 2px solid var(--pixel-gold-deep);
+  box-shadow:
+    0 0 0 5px var(--pixel-window-frame),
+    4px 4px 0 var(--pixel-shadow);
+  border-radius: var(--radius-pixel);
+  padding: 24px 20px 32px;
+}
+
+.guild-board > header .route-panel__eyebrow {
+  color: var(--pixel-parchment);
+}
+
+.guild-board > header h1 {
+  font-family: var(--font-pixel-tc);
+  font-size: 22px;
+  color: var(--pixel-parchment);
+}
+
+.guild-board > header p {
+  color: var(--pixel-parchment);
+}
+
+/* 空榜文案直接坐木板。 */
+.guild-board > p {
+  color: var(--pixel-parchment);
+}
+
+/* 名條:每列=羊皮紙紙條;表頭紙條淡一階。 */
+.guild-board .ui-table.leaderboard-table {
+  background: transparent;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+.guild-board .leaderboard-table thead th {
+  background: var(--pixel-parchment);
+  color: var(--ink-700);
+}
+
+.guild-board .leaderboard-table tbody th,
+.guild-board .leaderboard-table tbody td {
+  background: var(--pixel-parchment-card);
+  border-top: 2px solid var(--pixel-gold-deep);
+  border-bottom: 2px solid var(--pixel-gold-deep);
+}
+
+/* 金銀銅名條:沿用既有 row class(JSX 不動),換紙條底+顯式字色。 */
+.guild-board .ui-table .leaderboard-table__row--gold th,
+.guild-board .ui-table .leaderboard-table__row--gold td {
+  background: var(--pixel-gold);
+  color: var(--pixel-night);
+}
+
+.guild-board .ui-table .leaderboard-table__row--silver th,
+.guild-board .ui-table .leaderboard-table__row--silver td {
+  background: var(--slate-200);
+  color: var(--ink-900);
+}
+
+.guild-board .ui-table .leaderboard-table__row--bronze th,
+.guild-board .ui-table .leaderboard-table__row--bronze td {
+  background: var(--hue-ch3-soft);
+  color: var(--ink-900);
+}
+
+/* 自己名次卡(rank>10 的 aside)=高亮紙條。 */
+.guild-board aside[aria-label='我的班級名次'] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  border: 2px solid var(--pixel-gold);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+  padding: 12px 16px;
+}
+
+/* 「這是你」章。 */
+.guild-board .leaderboard-blook strong {
+  border: 1px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-gold);
+  color: var(--pixel-night);
+  font-size: var(--font-size-supporting);
+  padding: 1px 6px;
+  margin-left: 6px;
+}
+
 /* ── ColorPlay Live 投影模式（10B）───────────────────────────────── */
 
 .live-presenter {
