@@ -16,9 +16,9 @@
     },
     {
       "pair": "item subtopic li x item bg",
-      "color": "rgb(102, 112, 133)",
+      "color": "rgb(52, 64, 84)",
       "background": "rgb(246, 238, 216)",
-      "ratio": 4.297227873199339
+      "ratio": 9.036587407676942
     },
     {
       "pair": "SectionHeader title x world-map-panel bg",
@@ -190,21 +190,21 @@
     },
     {
       "pair": "feedback-card__mentor-name--green (live, battle-scene) x feedback-card bg",
-      "color": "rgb(23, 117, 78)",
+      "color": "rgb(72, 207, 165)",
       "background": "rgb(23, 28, 63)",
-      "ratio": 2.896438615976255
+      "ratio": 8.431229135174966
     },
     {
       "pair": "feedback-card__mentor-name--red (swatch, battle-scene) x feedback-card bg",
-      "color": "rgb(199, 58, 63)",
+      "color": "rgb(255, 138, 141)",
       "background": "rgb(23, 28, 63)",
-      "ratio": 3.2216831569357134
+      "ratio": 7.276104434314135
     },
     {
       "pair": "feedback-card__mentor-name--blue (swatch, battle-scene) x feedback-card bg",
-      "color": "rgb(37, 66, 173)",
+      "color": "rgb(108, 143, 248)",
       "background": "rgb(23, 28, 63)",
-      "ratio": 1.9315361299945035
+      "ratio": 5.432020600009557
     },
     {
       "pair": "feedback-card__mentor-name--blue (live, mission) x feedback-card bg",

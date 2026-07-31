@@ -112,7 +112,7 @@ batch-2 gate found and fixed for other elements (see batch-2 gate notes,
 before this gate. The mission-page context (light background) is unaffected
 and passes with margin.
 
-## Summary
+## Summary (initial pass, pre-fix)
 
 - 36 pairs measured (12 world map + 16 dungeon + 6 mentor + 2 delegated
   already counted in dungeon's 16).
@@ -122,3 +122,61 @@ and passes with margin.
   with large margins — no action needed there.
 - Net verdict for Step 6: **FAIL** (defects reported, not patched, per gate
   scope).
+
+---
+
+## Re-verify after fix wave `4460d65` (CSS-only)
+
+Fix wave `4460d65` ("fix(quiz): night-safe tri-spirit mentor colors on
+battle feedback; deepen world-map subtopic ink", `src/styles/globals.css`
+only, +19 lines) added:
+- `.battle-scene .feedback-card__mentor-name--red` → `var(--pixel-danger)` (`#ff8a8d`)
+- `.battle-scene .feedback-card__mentor-name--blue` → `var(--hue-ch1)` (`#6c8ff8`)
+- `.battle-scene .feedback-card__mentor-name--green` → `var(--hue-ch4)` (`#48cfa5`)
+- `.scene-day .mission-select__subtopics` → `color: var(--ink-700)` (`#344054`)
+
+Re-measured with the same tooling/methodology (`.superpowers/sdd/gate-capture.mjs`,
+re-run in full against the current HEAD; screenshots re-captured and
+overwritten in this directory).
+
+| Pair | Color (before) | Color (after) | Ratio (before) | Ratio (after) | Verdict |
+|---|---|---|---|---|---|
+| item subtopic li × item bg (world map) | `rgb(102,112,133)` (`--ink-500`) | `rgb(52,64,84)` (`--ink-700`) | 4.30 | **9.04** | **PASS** |
+| mentor-name--green × battle-scene feedback-card bg (live) | `rgb(23,117,78)` (`--jade-700`) | `rgb(72,207,165)` (`--hue-ch4`) | 2.90 | **8.43** | **PASS** |
+| mentor-name--red × battle-scene feedback-card bg (swatch) | `rgb(199,58,63)` (`--coral-700`) | `rgb(255,138,141)` (`--pixel-danger`) | 3.22 | **7.28** | **PASS** |
+| mentor-name--blue × battle-scene feedback-card bg (swatch) | `rgb(37,66,173)` (`--cobalt-700`) | `rgb(108,143,248)` (`--hue-ch1`) | 1.93 | **5.43** | **PASS** |
+
+All 4 previously-failing pairs now clear 4.5:1, worst case 5.43:1 (mentor-name--blue,
+battle-scene). Note: my independently re-measured values (7.28 / 5.43 / 8.43 / 9.04)
+differ numerically from the fix-wave author's stated claim (7.54 / 5.60 / 8.49 / 8.80)
+— both agree on pass/fail outcome and are in the same ballpark; the small
+deltas are most likely rounding/measurement-context differences (e.g. exact
+sRGB resolution of the CSS custom properties), not a discrepancy that changes
+the verdict.
+
+**Regression check — mission-page (light) mentor-name, must be unaffected:**
+
+| Pair | Ratio (initial pass) | Ratio (re-verify) | Verdict |
+|---|---|---|---|
+| mentor-name--blue (live, mission) × feedback-card bg (white) | 8.53 | 8.53 | **PASS, unchanged** |
+| mentor-name--red (swatch, mission) × feedback-card bg | 5.12 | 5.12 | **PASS, unchanged** |
+| mentor-name--green (swatch, mission) × feedback-card bg | 5.69 | 5.69 | **PASS, unchanged** |
+
+Byte-identical to the initial pass — confirms the new `.battle-scene`/`.scene-day`
+scoped overrides did not leak into the mission-page (light) context.
+
+**Screenshots re-captured and overwritten** (`quiz-feedback-spirit.png`,
+`mission-feedback-spirit.png`, `missions-desktop.png`, `missions-375.png`,
+`chapter-detail-desktop.png`, `chapter-detail-375.png`): `quiz-feedback-spirit.png`
+now shows "綠精靈導師" as a clearly legible bright mint green against the
+dark battle card (previously a dim, hard-to-read olive). `missions-desktop.png`
+now shows the 3-1/3-2/3-3 subtopic list in a visibly darker slate tone,
+clearly more legible than before. Visual review confirms both fixes read
+correctly, no regressions, no new overflow/white-on-white introduced.
+
+## Summary (post-fix)
+
+- All 36 pairs now ≥4.5:1 (worst case 5.43:1). Net verdict for Step 6:
+  **PASS**.
+- Mission-page (light) mentor-name contrast confirmed unchanged/unaffected
+  by the fix's `.battle-scene`/`.scene-day` scoping.
