@@ -286,5 +286,7 @@ describe('MissionSelectPage world map', () => {
       await screen.findAllByRole('button', { name: '展開小節任務' }),
     ).not.toHaveLength(0);
     expect(document.querySelector('.map-node--not_started')).not.toBeNull();
+    // 決議 1 軟鎖:progress 讀取失敗不得升級成錯誤橫幅。
+    expect(screen.queryAllByRole('alert')).toHaveLength(0);
   });
 });
