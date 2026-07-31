@@ -5095,3 +5095,203 @@ select#dashboard-classroom {
     transition: none;
   }
 }
+
+/* 戰鬥舞台:三拍演出(揮刀=樂觀,命中/MISS/反擊=伺服器判定後) */
+.battle-stage {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  min-height: 160px;
+}
+
+.battle-stage__monster {
+  position: relative;
+  width: 96px;
+  height: 96px;
+}
+
+.battle-monster__body {
+  position: absolute;
+  inset: 0;
+  background: var(--pixel-window-muted);
+  clip-path: polygon(
+    15% 100%,
+    15% 55%,
+    25% 35%,
+    40% 22%,
+    60% 22%,
+    75% 35%,
+    85% 55%,
+    85% 100%
+  );
+}
+
+.battle-monster__eye {
+  position: absolute;
+  top: 48%;
+  width: 10px;
+  height: 14px;
+  background: var(--pixel-night-deep);
+}
+
+.battle-monster__eye--left {
+  left: 33%;
+}
+
+.battle-monster__eye--right {
+  right: 33%;
+}
+
+@keyframes battle-idle-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+.battle-stage--idle .battle-stage__monster {
+  animation: battle-idle-bob 1.2s steps(2) infinite;
+}
+
+@keyframes battle-slash {
+  from {
+    transform: translate(-56px, -56px) rotate(45deg);
+    opacity: 1;
+  }
+  to {
+    transform: translate(56px, 56px) rotate(45deg);
+    opacity: 0;
+  }
+}
+
+.battle-stage__slash {
+  position: absolute;
+  width: 8px;
+  height: 72px;
+  background: var(--pixel-window-frame);
+  animation: battle-slash 250ms steps(3) infinite;
+}
+
+@keyframes battle-hit-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  33% {
+    transform: translateX(-6px);
+  }
+  66% {
+    transform: translateX(6px);
+  }
+}
+
+.battle-stage--hit .battle-stage__monster {
+  animation: battle-hit-shake 200ms steps(2) 2;
+}
+
+.battle-stage--hit .battle-monster__body {
+  opacity: 0.6;
+}
+
+@keyframes battle-lunge {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(14px) scale(1.08);
+  }
+}
+
+.battle-stage--enemy-strike .battle-stage__monster {
+  animation: battle-lunge 300ms steps(3) 1;
+}
+
+@keyframes battle-label-pop {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.battle-stage__label {
+  position: absolute;
+  top: 8px;
+  font-family: var(--font-pixel-tc);
+  font-size: 18px;
+  color: var(--pixel-window-muted);
+  animation: battle-label-pop 200ms steps(3) both;
+}
+
+.battle-stage__label--latin {
+  font-family: var(--font-pixel-latin);
+}
+
+.battle-stage__label--strike {
+  color: var(--pixel-danger);
+}
+
+.battle-stage__combo {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-family: var(--font-pixel-latin);
+  font-size: 14px;
+  color: var(--pixel-gold);
+}
+
+/* 回饋卡=夜景對話窗(文字與按鈕不變,僅換皮+flair) */
+.battle-scene .feedback-card {
+  background: var(--pixel-night);
+  color: var(--pixel-window-ink);
+  border: 3px solid var(--pixel-window-frame);
+  outline: 2px solid var(--pixel-night);
+  box-shadow:
+    0 0 0 5px var(--pixel-window-frame),
+    4px 4px 0 var(--pixel-shadow);
+  border-radius: var(--radius-pixel);
+}
+
+.battle-scene .feedback-card h2,
+.battle-scene .feedback-card p {
+  color: var(--pixel-window-ink);
+}
+
+.battle-scene .feedback-card--correct h2 {
+  color: var(--pixel-gold);
+}
+
+.battle-scene .feedback-card--incorrect h2,
+.battle-scene .feedback-card--timeout h2 {
+  color: var(--pixel-danger);
+}
+
+.feedback-card__flair {
+  display: block;
+  font-family: var(--font-pixel-latin);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--pixel-gold);
+}
+
+.battle-scene .feedback-card__score {
+  color: var(--pixel-gold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-stage--idle .battle-stage__monster,
+  .battle-stage__slash,
+  .battle-stage--hit .battle-stage__monster,
+  .battle-stage--enemy-strike .battle-stage__monster,
+  .battle-stage__label {
+    animation: none;
+  }
+}

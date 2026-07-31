@@ -17,6 +17,12 @@ const feedbackHeading = {
   timeout: '⌛ 作答逾時',
 } as const;
 
+const verdictFlair = {
+  correct: 'HIT!',
+  incorrect: 'MISS',
+  timeout: '魔物反擊！',
+} as const;
+
 export function FeedbackCard({
   isLastQuestion,
   isPending,
@@ -33,6 +39,9 @@ export function FeedbackCard({
       className={`feedback-card feedback-card--${result.answerStatus}`}
       aria-labelledby="quiz-feedback-title"
     >
+      <span aria-hidden="true" className="feedback-card__flair">
+        {verdictFlair[result.answerStatus]}
+      </span>
       <h2 id="quiz-feedback-title">{feedbackHeading[result.answerStatus]}</h2>
       {result.scoreDelta > 0 ? (
         <p className="feedback-card__score">

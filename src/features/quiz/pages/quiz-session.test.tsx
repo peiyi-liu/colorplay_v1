@@ -423,4 +423,102 @@ describe('QuizSessionPage', () => {
     ).toBeVisible();
     expect(screen.getByRole('button', { name: '送出答案' })).toBeVisible();
   });
+
+  it('keeps the verdict hidden while the strike is in flight (three-beat rule)', async () => {
+    const mocks = repositoryMock();
+    mocks.getSession.mockResolvedValue(session([question(1)]));
+    let releaseSubmit: (value: QuizAnswerResult) => void = () => undefined;
+    mocks.submitAnswer.mockImplementation(
+      () =>
+        new Promise<QuizAnswerResult>((resolve) => {
+          releaseSubmit = resolve;
+        }),
+    );
+    renderQuiz(mocks.repository);
+
+    await userEvent.click(await screen.findByRole('radio', { name: 'CMYK' }));
+    await userEvent.click(screen.getByRole('button', { name: '送出答案' }));
+
+    await waitFor(() => {
+      expect(document.querySelector('.battle-stage--attacking')).not.toBeNull();
+    });
+    expect(
+      screen.queryByRole('heading', { name: /答對了|答錯了|作答逾時/u }),
+    ).toBeNull();
+
+    mocks.getSession.mockResolvedValue(
+      session([
+        question(1, {
+          answerStatus: 'incorrect',
+          correctOptionId: '33000000-0000-0000-0000-000000000001',
+          explanation: 'RGB 使用三色光。',
+          scoreDelta: 0,
+          selectedOptionId: '33000000-0000-0000-0000-000000000002',
+          startedAt: null,
+        }),
+      ]),
+    );
+    releaseSubmit(incorrectResult);
+
+    expect(
+      await screen.findByRole('heading', { name: '✕ 答錯了' }),
+    ).toBeVisible();
+    expect(document.querySelector('.battle-stage--miss')).not.toBeNull();
+    expect(document.querySelector('.battle-stage--attacking')).toBeNull();
+  });
+
+  it('plays the enemy strike, not a player slash, on timeout', async () => {
+    const mocks = repositoryMock();
+    mocks.getSession.mockResolvedValue(
+      session([
+        question(1, {
+          deadlineAt: '2020-01-01T00:00:10.000Z',
+          startedAt: '2020-01-01T00:00:00.000Z',
+        }),
+      ]),
+    );
+    let releaseSubmit: (value: QuizAnswerResult) => void = () => undefined;
+    mocks.submitAnswer.mockImplementation(
+      () =>
+        new Promise<QuizAnswerResult>((resolve) => {
+          releaseSubmit = resolve;
+        }),
+    );
+    renderQuiz(mocks.repository);
+
+    await waitFor(() => {
+      expect(mocks.submitAnswer).toHaveBeenCalledWith(
+        '32000000-0000-0000-0000-000000000001',
+        null,
+        expect.any(String),
+      );
+    });
+    expect(document.querySelector('.battle-stage--attacking')).toBeNull();
+
+    mocks.getSession.mockResolvedValue(
+      session([
+        question(1, {
+          answerStatus: 'timeout',
+          correctOptionId: '33000000-0000-0000-0000-000000000001',
+          deadlineAt: '2020-01-01T00:00:10.000Z',
+          explanation: 'RGB 使用三色光。',
+          scoreDelta: 0,
+          selectedOptionId: null,
+          startedAt: null,
+        }),
+      ]),
+    );
+    releaseSubmit({
+      ...incorrectResult,
+      answerStatus: 'timeout',
+      selectedOptionId: null,
+    });
+
+    expect(
+      await screen.findByRole('heading', { name: '⌛ 作答逾時' }),
+    ).toBeVisible();
+    expect(
+      document.querySelector('.battle-stage--enemy-strike'),
+    ).not.toBeNull();
+  });
 });

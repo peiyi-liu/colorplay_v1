@@ -19,12 +19,14 @@ import {
   type QuizRepository,
   type QuizSession,
 } from '../api/quiz-repository';
+import { BattleStage, type BattlePhase } from '../components/battle-stage';
 import { Countdown } from '../components/countdown';
 import {
   FeedbackCard,
   type QuizFeedbackResult,
 } from '../components/feedback-card';
 import { QuestionCard } from '../components/question-card';
+import { comboCount } from '../lib/combo';
 
 const quizSessionQueryKey = (sessionId: string) =>
   ['quiz', 'session', sessionId] as const;
@@ -95,6 +97,7 @@ export function QuizSessionPage({
     Readonly<{ optionId: string; questionId: string }> | undefined
   >();
   const [actionError, setActionError] = useState<ActionError>();
+  const [attacking, setAttacking] = useState(false);
   const submissionStarted = useRef(false);
   const submissionAttempt = useRef<SubmissionAttempt | undefined>(undefined);
   const creationStarted = useRef(false);
@@ -183,6 +186,15 @@ export function QuizSessionPage({
     selection && selection.questionId === displayedQuestion?.sessionQuestionId
       ? selection.optionId
       : null;
+  const battlePhase: BattlePhase = feedbackResult
+    ? feedbackResult.answerStatus === 'correct'
+      ? 'hit'
+      : feedbackResult.answerStatus === 'incorrect'
+        ? 'miss'
+        : 'enemyStrike'
+    : attacking
+      ? 'attacking'
+      : 'idle';
 
   useEffect(() => {
     if (session?.status === 'completed') {
@@ -205,6 +217,7 @@ export function QuizSessionPage({
           };
     submissionAttempt.current = attempt;
     setActionError(undefined);
+    if (selectedId !== null) setAttacking(true);
     try {
       await submitMutation.mutateAsync(attempt);
       const refreshed = await sessionQuery.refetch();
@@ -223,6 +236,7 @@ export function QuizSessionPage({
       }
     } finally {
       submissionStarted.current = false;
+      setAttacking(false);
     }
   };
 
@@ -369,6 +383,11 @@ export function QuizSessionPage({
           />
         </div>
       </header>
+
+      <BattleStage
+        comboCount={comboCount(session.questions)}
+        phase={battlePhase}
+      />
 
       {session.gameRulesVersion === '2026-07-progress-1' ? (
         <p role="status">
