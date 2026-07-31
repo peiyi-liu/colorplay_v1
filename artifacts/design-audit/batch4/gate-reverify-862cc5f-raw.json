@@ -1,0 +1,49 @@
+{
+  "pairs": [
+    {
+      "pair": "guild-board eyebrow (transparent pill) x true resolved backdrop",
+      "declaredOwnBg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(246, 238, 216)",
+      "resolvedBackground": "rgb(138, 101, 31)",
+      "ratio": 4.578584990628881
+    },
+    {
+      "pair": "mistake-group__badge (now solid parchment-card) x own/resolved bg",
+      "declaredOwnBg": "rgb(253, 248, 234)",
+      "ownBgIsOpaque": true,
+      "color": "rgb(199, 58, 63)",
+      "resolvedBackground": "rgb(253, 248, 234)",
+      "ratio": 4.820843062297743
+    },
+    {
+      "pair": "unlocked 卡 description (now ink-900) x 光柱最亮處合成底 (beam-composited, f=0.563)",
+      "color": "rgb(37, 48, 66)",
+      "background": "rgb(235.23904943000895, 246.72589103533093, 233.3237972732558)",
+      "declaredCardBg": "rgb(239, 255, 247)",
+      "beamAlphaAtPosition": 0.06838103756708408,
+      "ratio": 12.019213284995116
+    },
+    {
+      "pair": "chapter-dungeon eyebrow (transparent pill, gold text/border) x true resolved backdrop",
+      "declaredOwnBg": "rgba(0, 0, 0, 0)",
+      "color": "rgb(184, 134, 47)",
+      "resolvedBackground": "rgb(23, 28, 63)",
+      "ratio": 5.092291537105209
+    }
+  ],
+  "screenshots": [
+    "leaderboard-desktop.png",
+    "leaderboard-375.png",
+    "mistakes-desktop.png",
+    "mistakes-375.png",
+    "achievements-desktop.png",
+    "achievements-375.png",
+    "chapter-detail-desktop.png"
+  ],
+  "regressionSpotCheck": {
+    "pair": "mistakes-codex header eyebrow (light scene, unchanged) x own pill bg",
+    "color": "rgb(37, 48, 66)",
+    "background": "color(srgb 0.991373 0.949098 0.78)",
+    "ratio": 11.832085953808374
+  }
+}

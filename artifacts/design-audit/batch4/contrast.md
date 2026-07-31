@@ -156,7 +156,7 @@ is plausibly lower. **Reported, not patched** (gate scope) — recommend a
 fix-wave sampling both keyframe extremes explicitly, or excluding text from
 the beam's horizontal footprint.
 
-## Summary
+## Summary (original pass, pre-fix)
 
 - 36 pairs from the brief's checklist + 1 continuity probe + 1
   gate-discovered defect (eyebrow pill) = 38 total measurements.
@@ -167,5 +167,79 @@ the beam's horizontal footprint.
   batch-4-introduced, **critical**, found by this gate's manual visual
   audit rather than the script's original pairing choice).
 - Opacity-compositing continuity probe: **PASSES**, 0 delta.
-- **Step 6 verdict: FAIL** (contrast) — defects reported per gate role, not
-  fixed.
+- **Step 6 verdict (original pass): FAIL** (contrast) — defects reported per
+  gate role, not fixed.
+
+---
+
+## Re-verify after fix wave `862cc5f`
+
+Fix wave `862cc5f` (CSS-only, `src/styles/globals.css`) landed 4 changes:
+
+1. `.guild-board > header .route-panel__eyebrow` — pill `background` →
+   `transparent`, `border-color` → `var(--pixel-parchment)` (text color
+   unchanged). Pill no longer has its own opaque background; text now sits
+   directly on whatever is actually behind it.
+2. `.mistakes-codex .mistake-group__badge` — `background` → solid
+   `var(--pixel-parchment-card)` (was a 10%-alpha coral tint). Now
+   self-contained/opaque.
+3. `.hall-of-medals .achievement-card:not(.achievement-card--locked)
+   .pastel-card__description` — `color` → `var(--ink-900)` (was the default
+   slate-gray description color).
+4. `.chapter-dungeon .route-panel__eyebrow` — same transparent-pill pattern
+   as (1), `border-color`/`color` → `var(--pixel-gold)`. This is a **batch-3
+   latent instance of the same defect class**, on `/app/chapters/:id`
+   (night scene), caught and fixed opportunistically in this same wave —
+   not part of batch-4's original commits, but re-verified here since it's
+   in the fix-wave diff.
+
+Method: identical rendered-`getComputedStyle` approach, extended with a
+`__resolveOpaqueBackground` helper that walks the DOM ancestor chain from
+the (now-transparent) pill upward, Porter-Duff–compositing each ancestor's
+own `background-color` "over" the accumulated result until an opaque layer
+is reached — the same real-compositing discipline the batch-3 continuity
+probe validated, just generalized from a single-opacity blend to a full
+ancestor-chain walk. Script: session-scratchpad
+`gate-reverify-862cc5f.mjs`. Raw JSON: `gate-reverify-862cc5f-raw.json` in
+this directory.
+
+| # | Pair | Color | Resolved background | Ratio | Verdict |
+|---|---|---|---|---|---|
+| 1 | guild-board eyebrow (transparent pill) × true resolved backdrop (= 木板底, since pill bg is now `rgba(0,0,0,0)`) | `rgb(246,238,216)` | `rgb(138,101,31)` | **4.579** | **PASS** — genuinely above 4.5, not a rounding artifact (measured to 13 significant figures: `4.578584990628881`) |
+| 2 | `mistake-group__badge` (now solid parchment-card) × own opaque bg | `rgb(199,58,63)` | `rgb(253,248,234)` | **4.821** | **PASS** |
+| 3 | unlocked-card description (now `ink-900`) × beam-composited backdrop, same sample position as original (f=0.563) | `rgb(37,48,66)` | `rgb(235.24,246.73,233.32)` (unchanged from original pass — confirms only the text color changed, not the beam math) | **12.019** | **PASS** |
+| 4 | chapter-dungeon eyebrow (transparent pill, gold) × true resolved backdrop (dungeon header's dark navy) | `rgb(184,134,47)` | `rgb(23,28,63)` | **5.092** | **PASS** |
+
+All 4 pairs measured comfortably ≥ 4.5:1 via the rendered opacity/alpha-
+compositing method — none is a borderline rounding call. Pair #1 in
+particular was flagged by the coordinator as the one to watch (their own
+estimate: ~4.58): the actual rendered figure is `4.578584990628881`, i.e.
+genuinely ≥ 4.5, confirmed rather than rounded up.
+
+**Regression spot-check:** `.mistakes-codex > header .route-panel__eyebrow`
+(light day-scene page, `/app/mistakes`) — this selector was **not** touched
+by `862cc5f`. Measured: color `rgb(37,48,66)` (`--ink-900`) on background
+`color(srgb 0.991373 0.949098 0.78)` (≈ `rgb(252.8,242.0,198.9)`, the
+original pale `color-mix(yellow-brand 22%, white)` pill) → **11.83:1**,
+unchanged from the base `.route-panel__eyebrow` rule. Confirms the fix
+wave correctly scoped its transparent-pill treatment to the two dark-scene
+selectors (guild-board, chapter-dungeon) and left the light-scene default
+(pale pill + ink-900) alone. **No regression.**
+
+Screenshots re-captured (overwritten): `leaderboard-desktop.png`,
+`leaderboard-375.png`, `achievements-desktop.png`, `mistakes-desktop.png`,
+`mistakes-375.png`, `achievements-375.png`, and newly added
+`chapter-detail-desktop.png`. Eyeballed: guild-board eyebrow pill now shows
+a crisp cream-outlined "班級 XP" chip, clearly legible against the wood
+board (previously a near-invisible ghost); chapter-dungeon eyebrow shows a
+gold-outlined "章節複習" chip clearly legible against the dark navy header;
+mistake badge and achievement description read normally with no visual
+regressions elsewhere on either page.
+
+**Updated Step 6 verdict: PASS.** All 3 originally-batch-4-attributable
+defects (guild eyebrow, hall-of-medals description, and — out of an
+abundance of caution — the pre-existing mistake-badge) plus the
+opportunistically-fixed batch-3-latent chapter-dungeon eyebrow are now
+confirmed ≥ 4.5:1 by rendered measurement, with a clean regression
+spot-check on the unmodified light-scene eyebrow pattern. Gate is green on
+contrast as of `862cc5f`.
