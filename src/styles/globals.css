@@ -4298,6 +4298,9 @@ a {
 }
 
 .chapter-dungeon .route-panel__eyebrow {
+  /* 批④ gate 發現同構缺陷:金字仍坐淡黃 pill——pill 轉透明坐夜窗門楣。 */
+  border-color: var(--pixel-gold);
+  background: transparent;
   color: var(--pixel-gold);
 }
 
@@ -4520,6 +4523,12 @@ a {
   gap: 12px;
 }
 
+/* gate 實測:coral 透明 tint 底×coral-700 字 4.25:1(既有貼線,本批面上修)——
+   改實色羊皮紙卡底。 */
+.mistakes-codex .mistake-group__badge {
+  background: var(--pixel-parchment-card);
+}
+
 /* 圖鑑魔物:CSS 幾何佔位(.codex-monster* 為素材批換裝介面)。
    剪影=實色墨塊(禁 opacity 灰階,批③ I2 教訓);復仇成功=點亮上色。 */
 .codex-monster {
@@ -4579,6 +4588,9 @@ a {
 }
 
 .guild-board > header .route-panel__eyebrow {
+  /* gate 複測:淡黃 pill 底×羊皮紙字 1.03:1——pill 轉透明坐木板,框同步淺色。 */
+  border-color: var(--pixel-parchment);
+  background: transparent;
   color: var(--pixel-parchment);
 }
 
@@ -5501,6 +5513,13 @@ select#dashboard-classroom {
   .hall-of-medals
   .achievement-card:not(.achievement-card--locked)::before {
   animation: none;
+}
+
+/* gate 實測:光柱最亮處 description 4.499:1 貼線——加深至 ink-900。 */
+.hall-of-medals
+  .achievement-card:not(.achievement-card--locked)
+  .pastel-card__description {
+  color: var(--ink-900);
 }
 
 /* 未解鎖=石膏剪影:實色灰階(禁容器 opacity,批③ I2 教訓);
