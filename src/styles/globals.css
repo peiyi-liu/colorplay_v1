@@ -5066,3 +5066,32 @@ select#dashboard-classroom {
   box-shadow: 3px 3px 0 var(--pixel-shadow);
   font-family: var(--font-pixel-tc);
 }
+
+/* ATB 行動條(spec §5:行動條倒數;paused 時 tick 停止=條凍結) */
+.atb {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: end;
+}
+
+.atb__track {
+  width: 160px;
+  height: 10px;
+  background: var(--pixel-night-deep);
+  border: 2px solid var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
+  overflow: hidden;
+}
+
+.atb__fill {
+  height: 100%;
+  background: var(--pixel-gold);
+  transform-origin: left;
+  transition: transform 250ms steps(4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atb__fill {
+    transition: none;
+  }
+}

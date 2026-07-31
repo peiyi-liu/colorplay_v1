@@ -365,6 +365,7 @@ export function QuizSessionPage({
             deadlineAt={displayedQuestion.deadlineAt}
             onExpire={() => void submit(null)}
             paused={feedbackResult !== undefined}
+            startedAt={displayedQuestion.startedAt}
           />
         </div>
       </header>
