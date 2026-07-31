@@ -62,6 +62,7 @@ _Avoid_: dialog box, message box, panel（指此容器時）
 **Tri-Spirits（三色精靈）**:
 紅／藍／綠三位 NPC 導師，對應品牌三色寶石，負責回饋頁講解、標題畫面與
 頒獎台演出。同一基底 sprite 換色而成。
+元件：`src/components/ui/spirit-avatar.tsx`（`SpiritAvatar`＋`spiritForSeed` 確定性指派）。
 _Avoid_: mascot, tutor, guide（指這組角色時）
 
 **Loot Reveal（寶箱結算）**:

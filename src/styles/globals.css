@@ -4766,6 +4766,84 @@ select#dashboard-classroom {
   color: var(--pixel-window-muted);
 }
 
+/* ── 三色精靈(決議 3;CSS-first 幾何佔位,素材批換裝;元件 src/components/ui/spirit-avatar.tsx) ── */
+.spirit-avatar {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  animation: spirit-idle 0.3s steps(2, jump-none) infinite alternate;
+}
+
+.spirit-avatar__body {
+  position: absolute;
+  inset: 6px 4px 0;
+  border-radius: var(--radius-pixel);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+}
+
+/* 頭頂配件:同基底＋小配件差異(決議 3;紅=尖角/藍=方帽/綠=斜葉)。 */
+.spirit-avatar__body::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 8px;
+  width: 8px;
+  height: 6px;
+  background: inherit;
+}
+
+.spirit-avatar__eyes {
+  position: absolute;
+  top: 15px;
+  left: 10px;
+  width: 4px;
+  height: 4px;
+  background: var(--pixel-window-frame);
+  box-shadow: 8px 0 0 var(--pixel-window-frame);
+}
+
+.spirit-avatar--red .spirit-avatar__body {
+  background: var(--coral-700);
+}
+
+.spirit-avatar--blue .spirit-avatar__body {
+  background: var(--cobalt-600);
+}
+
+.spirit-avatar--green .spirit-avatar__body {
+  background: var(--jade-600);
+}
+
+.spirit-avatar--red .spirit-avatar__body::before {
+  clip-path: polygon(50% 0, 0 100%, 100% 100%);
+}
+
+.spirit-avatar--green .spirit-avatar__body::before {
+  clip-path: polygon(0 100%, 100% 0, 100% 100%);
+}
+
+@keyframes spirit-idle {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spirit-avatar {
+    animation: none;
+  }
+}
+
+[data-reduced-motion='true'] .spirit-avatar {
+  animation: none;
+}
+
 /* ── 批次① JRPG 場景底座(spec §4;日夜場景見 CONTEXT.md Day/Night Scene) ── */
 
 /* 夜景:標題畫面/命名之儀/教會回復。星空以 box-shadow 點陣繪製,無圖片素材。 */
