@@ -45,15 +45,23 @@
       "ratio": 4.995464122959072
     },
     {
+      "pair": "REGRESSION CHECK: map-node-status--learning label color still its own tone (not overridden by deepened base p rule)",
+      "color": "rgb(138, 101, 31)",
+      "background": "rgb(246, 238, 216)",
+      "ratio": 4.578584990628881
+    },
+    {
       "pair": "map-node-status--not_started (swatch) x item bg",
       "color": "rgb(52, 64, 84)",
       "background": "rgb(246, 238, 216)",
       "ratio": 9.036587407676942
     },
     {
-      "pair": "map-node__number in map-node--not_started (swatch) x badge bg",
+      "pair": "map-node__number in map-node--not_started (swatch, opacity-composited, groupOpacity=1) x badge bg",
       "color": "rgb(52, 64, 84)",
       "background": "rgb(242, 244, 247)",
+      "declaredColor": "rgb(52, 64, 84)",
+      "declaredBackground": "rgb(242, 244, 247)",
       "ratio": 9.49432046885811
     },
     {
@@ -63,9 +71,11 @@
       "ratio": 4.578584990628881
     },
     {
-      "pair": "map-node__number in map-node--learning (swatch) x badge bg",
+      "pair": "map-node__number in map-node--learning (swatch, opacity-composited, groupOpacity=1) x badge bg",
       "color": "rgb(138, 101, 31)",
       "background": "rgb(253, 248, 234)",
+      "declaredColor": "rgb(138, 101, 31)",
+      "declaredBackground": "rgb(253, 248, 234)",
       "ratio": 4.995464122959072
     },
     {
@@ -75,9 +85,11 @@
       "ratio": 7.369846121593601
     },
     {
-      "pair": "map-node__number in map-node--developing (swatch) x badge bg",
+      "pair": "map-node__number in map-node--developing (swatch, opacity-composited, groupOpacity=1) x badge bg",
       "color": "rgb(37, 66, 173)",
       "background": "rgb(253, 248, 234)",
+      "declaredColor": "rgb(37, 66, 173)",
+      "declaredBackground": "rgb(253, 248, 234)",
       "ratio": 8.040868951324882
     },
     {
@@ -87,10 +99,18 @@
       "ratio": 4.578584990628881
     },
     {
-      "pair": "map-node__number in map-node--mastered (swatch) x badge bg",
+      "pair": "map-node__number in map-node--mastered (swatch, opacity-composited, groupOpacity=1) x badge bg",
       "color": "rgb(23, 28, 63)",
       "background": "rgb(184, 134, 47)",
+      "declaredColor": "rgb(23, 28, 63)",
+      "declaredBackground": "rgb(184, 134, 47)",
       "ratio": 5.092291537105209
+    },
+    {
+      "pair": "mission-select__item p (description-fallback swatch) x item bg",
+      "color": "rgb(52, 64, 84)",
+      "background": "rgb(246, 238, 216)",
+      "ratio": 9.036587407676942
     },
     {
       "pair": "eyebrow x header bg",

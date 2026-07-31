@@ -180,3 +180,85 @@ correctly, no regressions, no new overflow/white-on-white introduced.
   **PASS**.
 - Mission-page (light) mentor-name contrast confirmed unchanged/unaffected
   by the fix's `.battle-scene`/`.scene-day` scoping.
+
+---
+
+## Round 2 re-verify after final-review fix wave `8c634d4` + `675aff3`
+
+`8c634d4` is prettier-only (no rendered-output change). `675aff3`
+("fix(learning): day-scene text contrast completions and degrade-path alert
+guard", `src/styles/globals.css` only) addressed two items the final review
+flagged in the round-1 evidence:
+
+- **I1**: `.mission-select__item p` (the description-fallback branch, used
+  when a chapter has no subtopics) was still `color: var(--color-muted)`
+  (4.30:1, same defect class as the subtopic-list fix) — deepened to
+  `var(--ink-700)`.
+- **I2**: `.map-node--not_started { opacity: 0.7; }` was flagged because
+  `getComputedStyle` alone can't see that CSS `opacity` renders the whole
+  element (badge background *and* the number text inside it) as one
+  compositing group, then alpha-blends that whole group against the true
+  backdrop — so the *rendered* pixel contrast between the number and its
+  badge was lower than the *declared* color-vs-background values alone would
+  suggest (the review's own estimate: composited down to ~4.2:1).
+  `opacity: 0.7` removed; the "grey fog" for not-yet-unlocked nodes is now
+  carried entirely by the slate border/background colors, with the number
+  text kept at full alpha.
+
+This round's tooling gained an opacity-compositing helper
+(`window.__compositeOpacity` + `window.__effectiveColor` in
+`gate-capture.mjs`) that walks the ancestor chain from the measured element
+up through the element that owns the opacity/background group, multiplies
+every `opacity` found, and alpha-blends the *declared* color/background
+toward the *true* backdrop by that combined factor before computing the
+ratio — so this round's numbers reflect the actually-rendered pixel, not
+just the declared CSS values.
+
+**1a. `.map-node--not_started .map-node__number` × badge bg (opacity-composited):**
+
+| | Value |
+|---|---|
+| Composited ancestor opacity (`.map-node--not_started` → number) | **1** (opacity rule removed by `675aff3`; confirmed via live `getComputedStyle(...).opacity` read, not assumed) |
+| Declared color / declared badge bg | `rgb(52,64,84)` / `rgb(242,244,247)` |
+| Effective (opacity-composited) color / bg | identical to declared (opacity=1, no blending applied) |
+| **Ratio** | **9.49:1** | **PASS** |
+
+Since `groupOpacity` is now exactly 1, effective == declared and this ratio
+is directly comparable to a plain `getComputedStyle` read — confirming the
+fix fully eliminates the compositing concern, not just relocates it.
+
+**1b. `.mission-select__item p` description-fallback text × item bg (swatch):**
+
+Every currently-seeded playable chapter has subtopics, so this branch never
+renders live. Swatch method: a bare synthetic `<p>` (no `map-node-status`
+class, so only the base `.mission-select__item p` rule applies — same
+selector-context clone technique as the rest of this file) inside a clone of
+the real `.mission-select__item`.
+
+| Color | Background | Ratio | Verdict |
+|---|---|---|---|
+| `rgb(52,64,84)` (`--ink-700`) | `rgb(246,238,216)` (`--pixel-parchment`) | **9.04:1** | **PASS** |
+
+**2. Regression spot-check — state-specific status-label rules still win:**
+
+`.mission-select__item p.map-node-status--learning` (studentOne's real,
+live chapter-3 status) still renders `rgb(138,101,31)` (`--pixel-gold-deep`)
+— unchanged from every prior measurement of this same live pair, confirming
+the `(0,2,1)`-specificity state rules still beat the deepened `(0,1,1)` base
+`.mission-select__item p` rule. Ratio unchanged at 4.58:1 (PASS, unchanged
+from round 1).
+
+**Full-set regression sweep:** re-ran the entire battery (38 pairs this
+round: the original 36 + the 2 new round-2 probes) — **0 pairs below
+4.5:1**.
+
+**Screenshots re-captured** (`missions-desktop.png`, `missions-375.png`,
+overwritten): node 4 ("尚未開始"/not_started) badge number is now crisp,
+full-opacity dark ink, no longer visually dimmed/hazy; cropped side-by-side
+comparison against the round-1 capture confirms the visual difference
+matches the measured opacity fix. No overflow, no white-on-white, no new
+regressions.
+
+**Updated Step 6 verdict: PASS** (unchanged from round 1's post-fix status,
+now further hardened against the opacity-compositing blind spot the final
+review caught). Gate remains fully green.
