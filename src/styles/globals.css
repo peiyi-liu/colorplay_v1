@@ -285,6 +285,9 @@ a {
   padding: var(--space-8);
 }
 
+/* 深色場景蓋此 pill 的兩種正典修法(擇一,勿混):
+   a) 保留淡黃 pill、字改深(--pixel-gold-deep)——見 .battle-scene/.victory-scene;
+   b) pill 轉透明、字/框改場景淺色——見 .guild-board/.chapter-dungeon。 */
 .route-panel__eyebrow {
   display: inline-flex;
   min-height: 32px;
@@ -988,6 +991,11 @@ a {
 
 .purchase-dialog > p {
   color: var(--pixel-window-ink);
+}
+
+/* 終審 M6:取消鍵底色原依賴 UA buttonface——夜窗上改顯式實底,消除 color-scheme 風險。 */
+.purchase-dialog .secondary-action {
+  background: var(--pixel-parchment-card);
 }
 
 .purchase-dialog__actions {
@@ -4488,6 +4496,11 @@ a {
   font-size: 22px;
 }
 
+/* 終審 I1b:外框分頁 hint muted 字於羊皮紙 4.297——同構加深。 */
+.scene-day .frame-shop__hint {
+  color: var(--ink-700);
+}
+
 /* ── 批④ 魔物圖鑑(/app/mistakes;spec §5:錯題=魔物卡,剪影→復仇點亮) ── */
 .scene-day.mistakes-codex {
   width: min(100%, 760px);
@@ -4670,6 +4683,8 @@ a {
   font-size: var(--font-size-supporting);
   padding: 1px 6px;
   margin-left: 6px;
+  /* 終審 M4:375px 窄欄防三字直排 */
+  white-space: nowrap;
 }
 
 /* ── ColorPlay Live 投影模式（10B）───────────────────────────────── */
@@ -5538,6 +5553,11 @@ select#dashboard-classroom {
 
 .hall-of-medals .achievement-card--locked .pastel-card__title,
 .hall-of-medals .achievement-card--locked .pastel-card__description {
+  color: var(--ink-700);
+}
+
+/* 終審 I1a:scene-day 羊皮紙使頁首描述 muted 字降到 4.297——批③ I1 同構,加深 ink-700。 */
+.hall-of-medals .pastel-hero__description {
   color: var(--ink-700);
 }
 

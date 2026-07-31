@@ -252,6 +252,7 @@ describe('ShopPage', () => {
     expect(document.querySelectorAll('.shop-keeper')).toHaveLength(2);
     for (const keeper of document.querySelectorAll('.shop-keeper')) {
       expect(keeper).toHaveAttribute('aria-hidden', 'true');
+      expect(keeper).toBeEmptyDOMElement();
     }
     // 載重：分頁按鈕 accessible name 不受裝飾影響
     expect(screen.getByRole('button', { name: '角色' })).toBeInTheDocument();

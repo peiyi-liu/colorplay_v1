@@ -123,6 +123,7 @@ describe('MistakesPage', () => {
     expect(document.querySelectorAll('.codex-monster--lit')).toHaveLength(1);
     for (const monster of monsters) {
       expect(monster).toHaveAttribute('aria-hidden', 'true');
+      expect(monster).toBeEmptyDOMElement();
     }
   });
 
