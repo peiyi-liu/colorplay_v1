@@ -5367,6 +5367,7 @@ select#dashboard-classroom {
   border: 2px solid var(--pixel-window-frame);
   border-radius: var(--radius-pixel);
   box-shadow: 4px 4px 0 var(--pixel-shadow);
+  color: var(--color-text);
 }
 
 .victory-scene .quiz-result__actions .secondary-action {
