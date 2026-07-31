@@ -33,7 +33,10 @@ export function AchievementsPage({
   const catalog = achievements.data;
 
   return (
-    <section aria-labelledby="achievements-title" className="achievements scene-day hall-of-medals">
+    <section
+      aria-labelledby="achievements-title"
+      className="achievements scene-day hall-of-medals"
+    >
       <PageHeader
         description="完成學習任務、累積挑戰紀錄，解鎖你的專屬色彩成就。"
         leading={
