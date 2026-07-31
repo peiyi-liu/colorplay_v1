@@ -6305,3 +6305,88 @@ select#dashboard-classroom {
     animation: none;
   }
 }
+
+/* ── 批⑤a 召集令(/app/live/join;spec §5:六格咒文石板逐格點亮、錯誤震動) ──
+   scene-night 沿用既有 base;本頁深色面文字逐條設色(外溢鐵律)。 */
+.scene-night.live-join {
+  padding: 48px 16px 64px;
+}
+
+.live-join > header .route-panel__eyebrow {
+  /* 正典修法 b(globals.css:288 上方註解):pill 轉透明坐夜底。 */
+  border-color: var(--pixel-gold);
+  background: transparent;
+  color: var(--pixel-gold);
+}
+
+.live-join > header h1 {
+  font-family: var(--font-pixel-tc);
+  font-size: 22px;
+  color: var(--pixel-window-ink);
+}
+
+.live-join > header p {
+  color: var(--pixel-window-muted);
+}
+
+/* 召集令窗:夜窗配方(同 .rpg-window,globals.css:4740;不掛 class 免容器色注入表單)。 */
+.live-join__form {
+  max-width: 440px;
+  margin: 24px auto 0;
+  background: var(--pixel-night);
+  border: 3px solid var(--pixel-window-frame);
+  outline: 2px solid var(--pixel-night);
+  box-shadow:
+    0 0 0 5px var(--pixel-window-frame),
+    4px 4px 0 var(--pixel-shadow);
+  border-radius: var(--radius-pixel);
+  padding: 20px 24px;
+}
+
+.live-join__form label {
+  color: var(--pixel-window-ink);
+}
+
+/* 六格咒文石板(.rune-slot* 素材批換裝介面);逐格點亮=實色,禁 opacity。 */
+.rune-slots {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.rune-slot {
+  width: 24px;
+  height: 30px;
+  border: 2px solid var(--pixel-window-muted);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-night-deep);
+}
+
+.rune-slot--lit {
+  border-color: var(--pixel-gold);
+  background: var(--pixel-gold);
+  box-shadow: 2px 2px 0 var(--pixel-shadow);
+}
+
+/* 錯誤震動:alert 出現時單發 shake(一次性 240ms,transform only;
+   一次性動畫由全域 [data-reduced-motion] 縮時承接,@media 顯式關)。 */
+.live-join__form p[role='alert'] {
+  color: var(--pixel-danger);
+  animation: rune-shake 240ms steps(4, jump-none);
+}
+
+@keyframes rune-shake {
+  25% {
+    transform: translateX(-4px);
+  }
+
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-join__form p[role='alert'] {
+    animation: none;
+  }
+}

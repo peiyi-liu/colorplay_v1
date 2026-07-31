@@ -38,19 +38,26 @@ export function LiveJoinPage({
     formState: { errors },
     handleSubmit,
     register,
+    watch,
   } = useForm<JoinValues>({
     defaultValues: { joinCode: '' },
     resolver: zodResolver(joinSchema),
   });
+  // watch() only drives the purely-visual rune slots below; this form
+  // re-renders on every keystroke regardless (react-hook-form's own input
+  // binding), so skipping compiler memoization here has no user-facing cost.
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const typedCode = watch('joinCode');
 
   return (
-    <section aria-labelledby="live-join-title" className="live-join">
+    <section aria-labelledby="live-join-title" className="live-join scene-night">
       <header>
         <p className="route-panel__eyebrow">ColorPlay Live</p>
         <h1 id="live-join-title">加入課堂挑戰</h1>
         <p>輸入老師公布的課堂代碼，即可進入等待室。</p>
       </header>
       <form
+        className="live-join__form"
         data-interaction-group="live-join"
         onSubmit={(event) => {
           void handleSubmit(async (values) => {
@@ -70,6 +77,18 @@ export function LiveJoinPage({
         }}
       >
         <label htmlFor="live-join-code">課堂代碼</label>
+        <span aria-hidden="true" className="rune-slots">
+          {Array.from({ length: 6 }, (_, index) => (
+            <span
+              className={
+                index < typedCode.trim().length
+                  ? 'rune-slot rune-slot--lit'
+                  : 'rune-slot'
+              }
+              key={index}
+            />
+          ))}
+        </span>
         <input
           autoComplete="off"
           id="live-join-code"

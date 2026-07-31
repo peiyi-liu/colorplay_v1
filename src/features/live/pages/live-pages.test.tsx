@@ -183,6 +183,23 @@ describe('LiveJoinPage', () => {
 
     expect(await screen.findByText('請輸入六位數字課堂代碼')).toBeVisible();
   });
+
+  it('renders the summons scroll: night scene and six rune slots lighting per typed digit', async () => {
+    renderWith(<LiveJoinPage repository={repositoryWith({})} />);
+    const user = userEvent.setup();
+
+    expect(document.querySelector('.live-join.scene-night')).not.toBeNull();
+    const slotsWrap = document.querySelector('.rune-slots');
+    expect(slotsWrap).not.toBeNull();
+    expect(slotsWrap).toHaveAttribute('aria-hidden', 'true');
+    expect(slotsWrap).toHaveTextContent('');
+    expect(document.querySelectorAll('.rune-slot')).toHaveLength(6);
+    expect(document.querySelectorAll('.rune-slot--lit')).toHaveLength(0);
+
+    await user.type(screen.getByLabelText('課堂代碼'), '123');
+
+    expect(document.querySelectorAll('.rune-slot--lit')).toHaveLength(3);
+  });
 });
 
 describe('LiveSessionPage (participant)', () => {
