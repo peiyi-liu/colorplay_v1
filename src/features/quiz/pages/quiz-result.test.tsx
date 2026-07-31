@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   QuizRepositoryError,
@@ -120,6 +120,14 @@ function renderResult(mockRepository: QuizRepository) {
 }
 
 describe('QuizResultPage', () => {
+  beforeEach(() => {
+    document.documentElement.dataset.reducedMotion = 'true';
+  });
+
+  afterEach(() => {
+    delete document.documentElement.dataset.reducedMotion;
+  });
+
   it('shows server totals, explicit outcomes, and complete answer review', async () => {
     renderResult(repository(vi.fn().mockResolvedValue(completedSession)));
 
@@ -195,5 +203,21 @@ describe('QuizResultPage', () => {
       screen.getByText('找不到這次挑戰，或你沒有檢視權限。'),
     ).toBeVisible();
     expect(screen.getByRole('link', { name: '回章節' })).toBeVisible();
+  });
+
+  it('renders the night victory scene with a decorative banner and loot chest', async () => {
+    renderResult(repository(vi.fn().mockResolvedValue(completedSession)));
+
+    expect(
+      await screen.findByRole('heading', { name: '挑戰完成 🎉' }),
+    ).toBeVisible();
+    const section = document.querySelector('section.quiz-result');
+    expect(section).toHaveClass('scene-night', 'victory-scene');
+    const banner = document.querySelector('.victory-banner');
+    expect(banner).toHaveAttribute('aria-hidden', 'true');
+    expect(banner).toHaveTextContent('VICTORY');
+    expect(document.querySelector('.loot-chest')).not.toBeNull();
+    expect(screen.getByText('總分 150')).toBeVisible();
+    expect(screen.getByText('+750 XP')).toBeVisible();
   });
 });

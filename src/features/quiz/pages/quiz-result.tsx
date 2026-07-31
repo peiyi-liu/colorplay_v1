@@ -11,6 +11,7 @@ import {
   type QuizQuestion,
   type QuizRepository,
 } from '../api/quiz-repository';
+import { LootReveal } from '../components/loot-reveal';
 
 const answerText = (question: QuizQuestion, optionId: string | null) => {
   if (optionId === null) return '未作答（逾時）';
@@ -65,19 +66,23 @@ export function QuizResultPage({
   }
 
   return (
-    <section className="quiz-result" aria-labelledby="quiz-result-title">
+    <section
+      className="quiz-result scene-night victory-scene"
+      aria-labelledby="quiz-result-title"
+    >
       <header className="quiz-result__summary">
+        <p aria-hidden="true" className="victory-banner">
+          VICTORY
+        </p>
         <p className="route-panel__eyebrow">{session.chapterTitle}</p>
         <h1 id="quiz-result-title">挑戰完成 🎉</h1>
-        <div className="quiz-result__totals" aria-label="挑戰結果摘要">
-          <p>總分 {String(session.totalScore)}</p>
-          <p>
-            答對 {String(session.correctCount)} /{' '}
-            {String(session.questionCount)} 題
-          </p>
-          <p>+{String(session.xpAwarded)} XP</p>
-          <p>+{String(session.tokensAwarded)} Token</p>
-        </div>
+        <LootReveal
+          correctCount={session.correctCount}
+          questionCount={session.questionCount}
+          tokensAwarded={session.tokensAwarded}
+          totalScore={session.totalScore}
+          xpAwarded={session.xpAwarded}
+        />
         {session.gameRulesVersion === '2026-07-progress-1' ? (
           <div role="status">
             <p>

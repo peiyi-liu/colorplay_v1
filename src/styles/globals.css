@@ -5286,7 +5286,99 @@ select#dashboard-classroom {
   color: var(--pixel-gold);
 }
 
+/* 勝利結算:夜景+VICTORY+寶箱(確定性演出) */
+.victory-scene {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.victory-banner {
+  margin: 0;
+  font-family: var(--font-pixel-latin);
+  font-size: clamp(28px, 6vw, 44px);
+  letter-spacing: 0.12em;
+  text-align: center;
+  color: var(--pixel-gold);
+  text-shadow: 4px 4px 0 var(--pixel-shadow);
+  animation: battle-label-pop 300ms steps(4) both;
+}
+
+.victory-scene .quiz-result__summary h1,
+.victory-scene .quiz-result__summary > div[role='status'] p {
+  color: var(--pixel-window-ink);
+}
+
+.victory-scene .route-panel__eyebrow {
+  color: var(--pixel-gold);
+}
+
+.victory-scene .quiz-result__decay {
+  color: var(--pixel-window-muted);
+}
+
+.victory-scene .quiz-result__summary a {
+  color: var(--pixel-gold);
+}
+
+.loot-reveal {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: center;
+}
+
+.loot-chest {
+  position: relative;
+  width: 72px;
+  height: 56px;
+}
+
+.loot-chest__base {
+  position: absolute;
+  inset: 22px 0 0;
+  background: var(--pixel-gold);
+  border: 3px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+}
+
+.loot-chest__lid {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 26px;
+  background: var(--pixel-gold);
+  border: 3px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  transform-origin: bottom left;
+  transition: transform 300ms steps(3);
+}
+
+.loot-reveal[data-open='true'] .loot-chest__lid {
+  transform: translateY(-12px) rotate(-16deg);
+}
+
+.victory-scene .quiz-result__totals p {
+  color: var(--pixel-window-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.victory-scene .result-question {
+  border: 2px solid var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
+  box-shadow: 4px 4px 0 var(--pixel-shadow);
+}
+
+.victory-scene .quiz-result__actions .secondary-action {
+  color: var(--pixel-window-ink);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .victory-banner {
+    animation: none;
+  }
+
+  .loot-chest__lid {
+    transition: none;
+  }
+
   .battle-stage--idle .battle-stage__monster,
   .battle-stage__slash,
   .battle-stage--hit .battle-stage__monster,
