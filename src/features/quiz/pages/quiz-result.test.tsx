@@ -106,6 +106,25 @@ function repository(getSession: QuizRepository['getSession']): QuizRepository {
   };
 }
 
+const defaultEconomyRepository: EconomyRepository = {
+  getSummary: vi.fn().mockResolvedValue({
+    currentLevelXp: 0,
+    level: 1,
+    tokenBalance: 0,
+    totalXp: 0,
+    walletReconciled: true,
+    xpPerLevel: 500,
+  } satisfies EconomySummary),
+};
+
+const defaultAchievementRepository: AchievementRepository = {
+  getCatalog: vi.fn().mockResolvedValue({
+    items: [],
+    totalCount: 0,
+    unlockedCount: 0,
+  }),
+};
+
 function renderResult(
   mockRepository: QuizRepository,
   extras: Readonly<{
@@ -122,8 +141,12 @@ function renderResult(
       {
         element: (
           <QuizResultPage
-            achievementRepository={extras.achievementRepository}
-            economyRepository={extras.economyRepository}
+            achievementRepository={
+              extras.achievementRepository ?? defaultAchievementRepository
+            }
+            economyRepository={
+              extras.economyRepository ?? defaultEconomyRepository
+            }
             repository={mockRepository}
           />
         ),
