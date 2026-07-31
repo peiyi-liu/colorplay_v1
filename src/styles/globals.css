@@ -688,6 +688,20 @@ a {
   color: var(--jade-700);
 }
 
+/* 夜戰回饋卡為夜窗(.battle-scene .feedback-card),700 深階名銜字不可讀
+   (gate 實測 1.93-3.22:1)——改夜底安全色階(批②外溢教訓同構修法)。 */
+.battle-scene .feedback-card__mentor-name--red {
+  color: var(--pixel-danger);
+}
+
+.battle-scene .feedback-card__mentor-name--blue {
+  color: var(--hue-ch1);
+}
+
+.battle-scene .feedback-card__mentor-name--green {
+  color: var(--hue-ch4);
+}
+
 .quiz-action-error {
   margin-top: var(--space-4);
   border: 2px solid var(--color-danger);
@@ -3413,6 +3427,11 @@ a {
    scene-day 只鋪羊皮紙背景(globals.css:4809),禁容器級 color(批②教訓)。 */
 .scene-day.mission-select {
   padding: 24px 16px 48px;
+}
+
+/* 小節列 muted 字於羊皮紙僅 4.30:1(gate 實測)——加深至 ink-700。 */
+.scene-day .mission-select__subtopics {
+  color: var(--ink-700);
 }
 
 .scene-day .world-map-panel {
