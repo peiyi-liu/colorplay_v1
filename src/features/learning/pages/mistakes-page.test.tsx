@@ -105,6 +105,27 @@ describe('MistakesPage', () => {
     });
   });
 
+  it('renders codex monsters: silhouettes for open mistakes, lit for resolved', async () => {
+    const repository = {
+      listMistakes: vi.fn().mockResolvedValue(mistakes),
+      startRemediation: vi.fn(),
+    } as unknown as LearningRepository;
+    renderPage(repository);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: '已解決' }),
+      ).toBeInTheDocument();
+    });
+    expect(document.querySelector('.mistakes-codex.scene-day')).not.toBeNull();
+    const monsters = document.querySelectorAll('.codex-monster');
+    expect(monsters).toHaveLength(2);
+    expect(document.querySelectorAll('.codex-monster--lit')).toHaveLength(1);
+    for (const monster of monsters) {
+      expect(monster).toHaveAttribute('aria-hidden', 'true');
+    }
+  });
+
   it('groups only open and reopened mistakes', () => {
     expect(groupOpenMistakes(mistakes)).toHaveLength(1);
     expect(

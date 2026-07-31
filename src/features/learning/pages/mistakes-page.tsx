@@ -62,7 +62,10 @@ export function MistakesPage({
   );
 
   return (
-    <section aria-labelledby="mistakes-title" className="page-card page-narrow">
+    <section
+      aria-labelledby="mistakes-title"
+      className="mistakes-codex scene-day"
+    >
       <header>
         <p className="route-panel__eyebrow">補救學習</p>
         <h1 id="mistakes-title">我的錯題</h1>
@@ -90,13 +93,16 @@ export function MistakesPage({
             <ul className="mistake-list">
               {group.mistakes.map((mistake) => (
                 <li className="mistake-list__item" key={mistake.mistakeId}>
-                  <p className="mistake-list__prompt">
-                    {mistake.prompt}
-                    {mistake.status === 'reopened' ? '（再次答錯）' : ''}
-                  </p>
-                  <p className="mistake-list__answer">
-                    正確答案：{mistake.correctOptionText}
-                  </p>
+                  <span aria-hidden="true" className="codex-monster" />
+                  <div className="mistake-list__body">
+                    <p className="mistake-list__prompt">
+                      {mistake.prompt}
+                      {mistake.status === 'reopened' ? '（再次答錯）' : ''}
+                    </p>
+                    <p className="mistake-list__answer">
+                      正確答案：{mistake.correctOptionText}
+                    </p>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -142,6 +148,10 @@ export function MistakesPage({
                 owner 0730 #1:題目後方不再加「（已解決）」字尾。 */}
             {resolved.map((mistake) => (
               <li key={mistake.mistakeId}>
+                <span
+                  aria-hidden="true"
+                  className="codex-monster codex-monster--lit"
+                />
                 {mistake.prompt}
                 <span className="mistake-resolved__answer">
                   正確答案：{mistake.correctOptionText}
