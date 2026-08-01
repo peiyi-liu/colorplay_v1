@@ -595,3 +595,25 @@ B5 Task 9: review clean (d3112f5+6c788c3). Fix wave: title-screen 320px overflow
 詳見 `.superpowers/sdd/task-10-report.md`。
 
 B5 Gate fix wave 1: lint 8 errors from 0a324fb resolved (src/app/shell/app-shell.test.tsx, src/app/shell/rotate-banner.test.tsx, src/test/setup.ts)
+
+## GameStage Shell Batch — GATE Round 2 (Task 10, final verdict)
+
+**Verdict: PASS.** Batch tip now `e74a681` (fix wave 1 folded in; 51363cf..6c788c3 + e74a681). Full Step 1–5 rerun after fix wave 1 landed (`docs(sdd): close game stage shell batch with gate results` commit's BLOCKED verdict is superseded by this entry).
+
+**Step 1 靜態電池（重確認）**：`pnpm lint` PASS（exit 0）、`pnpm typecheck` PASS、`pnpm exec vitest run` PASS（119 files/812 tests）、`npx prettier --check`（本批範圍）PASS。
+
+**Step 2 e2e 電池**：quiz-runner chromium+firefox 2/2 PASS。Must-pass 集 5 支中 app-shell.visual(8)/live-smoke/auth-account 3 支全綠；`playable-slice.spec.ts`／`ui-restyle.spec.ts` 2 支紅，經 commit 日期＋`git blame`＋diff 範圍三方比對，證實根因分別是 `login-page.tsx` 的「固定導向 UAT 0727 #5」邏輯（commit 9917f57e, 07-31）與品牌標題簡化（commit c0f7baf9, 07-23）——兩者皆早於本批 base(e0334fa, 08-01) 且本批對 `login-page.tsx` 零接觸，**100% pre-existing，非本批缺陷**。已知紅集 8 支全紅：6 支為 phase-gate acceptance-mode 守門（裸跑必紅，非測試邏輯問題，符合既有慣例）；shared-device 失敗簽名與 brief 原記載逐字相符（個人資料連結，0730 批移除）；**session-lifecycle 失敗簽名有漂移**——實際卡在更早的 checkpoint URL 還原斷言（同一固定導向根因），非 brief 原記載的個人資料連結，但同樣證實 100% pre-existing（該 spec 第 44 行前本批零接觸，`login-page.tsx` 亦零接觸）——已在 task-10-report.md 記錄此簽名訂正供後續 gate 更新既知紅記載。
+
+**Step 3 真跑視覺/互動電池**（拋棄式 ad-hoc Playwright 腳本，仿 B5 Task 5 先例，簽入前已刪除；證據於 `artifacts/design-audit/stage-shell/gate/`，未 commit）：1440×900 letterbox 16:9 精確(誤差0%)置中(誤差0px)、void 實測 `rgb(10,13,32)`=`#0a0d20`、雙線框驗證；學生 7＋教師 4 導覽項座標點擊全數正確落地；MENU→登出雙身分全流程 PASS；`/`→PRESS START→登入→lobby 全流程 PASS。812×375：stage 高=375 精確、HUD 全 8(學生)/5(教師)項恰 44px、scene 可卷動。375×812：banner 開/關兩態+sessionStorage persist+reload 後仍隱藏皆 PASS，×鈕 44×44，RWD 全幅，指令列 sticky 底確認。
+
+**Step 4 對比電池**：17 組 rendered 實測（含 fallback 登出鈕經 CSS 源碼比對衍生同值），**全數 ≥4.5:1**，無失敗；PRESS START 最暗閃爍幀(opacity 0.7) 7.56:1。
+
+**Step 5 雙通道 reduced-motion＋console**：本批唯一新動畫(`.title-screen__start`)兩通道(`prefers-reduced-motion`+`data-reduced-motion`)皆正確停止。**附帶發現非本批 design-debt**：登入頁既有裝飾 `.press-start`(commit 7d87c183/9917f57e, 07-31)只被 `prefers-reduced-motion` 通道涵蓋，`data-reduced-motion='true'` 通道未覆蓋——本批零接觸該 CSS 區塊，記為既有債務待未來動畫批次補上。全程 console error/warning/pageerror 0 筆。
+
+**環境前置記錄**：本機 Supabase stack 執行前為 stopped，已 `supabase start` 重啟；e2e env 透過既有 `scripts/supabase/load-local-environment.sh` 載入，比照 `scripts/test-e2e-local.sh` 慣例。
+
+**遞延事項（不變）**：教師端深度＝批⑤b（0% 未開工）；design-debt：toast anchor 需 ToastProvider 掛載點搬移（Task 8 已記）＋本輪新增「登入頁 press-start 缺 data-reduced-motion 通道」；asset-batch design-debt(6) 維持遞延（標的非外殼範圍）。
+
+詳見 `.superpowers/sdd/task-10-report.md`（Round 2 章節，含完整量測表與截圖清單）。
+
+**BATCH COMPLETE.**
