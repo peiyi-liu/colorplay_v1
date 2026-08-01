@@ -290,31 +290,6 @@ a {
   font-weight: 700;
 }
 
-.app-header__logout {
-  min-width: 44px;
-  min-height: 44px;
-  border: 1.5px solid var(--ink-300);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--ink-700);
-  cursor: pointer;
-  font-weight: 700;
-  padding-inline: var(--space-4);
-  transition:
-    border-color 150ms ease-out,
-    color 150ms ease-out;
-}
-
-.app-header__logout:hover:enabled {
-  border-color: var(--ink-900);
-  color: var(--ink-900);
-}
-
-.app-header__logout:disabled {
-  cursor: wait;
-  opacity: 0.7;
-}
-
 .app-header__teacher-badge {
   display: inline-flex;
   align-items: center;
@@ -1120,33 +1095,6 @@ a {
     margin-left: auto;
   }
 
-  /* Task 14 稽核明確點名的既有 RWD 缺陷：.student-rail__content 原本
-     overflow:auto hidden + white-space:nowrap，393 寬度只放得下「學習大廳」
-     跟半個「課後任務實戰」，其餘 5 個導覽項目（裝備商店／我的錯題／Live
-     課堂／班級排行榜／成就徽章）要靠不易察覺的水平滑動才看得到——這是主要
-     導覽，不是可以套用「表格容器 overflow-x:auto 除外」豁免的資料表格。改
-     讓這一列在窄螢幕換行，全部項目都在不用捲動的情況下可見／可點；
-     spacer 原本用 flex:1 把 tab 跟 link 兩組推開兩側，換行後沒有單一列可以
-     撐開，直接隱藏即可（tab／link 视覺分组改用 row-gap 呈現）。 */
-  .student-rail__content {
-    flex-wrap: wrap;
-    row-gap: var(--space-1);
-    white-space: normal;
-  }
-
-  .student-rail__spacer {
-    display: none;
-  }
-
-  /* 教師端 .teacher-rail__content 是同一份 rail 樣式（overflow:auto hidden＋
-     white-space:nowrap）套用在教師導覽（教師工作區／Live 主持／班級管理／
-     教學分析），393 寬度一樣會被擠出可視範圍外，套用同一套換行修正。 */
-  .teacher-rail__content {
-    flex-wrap: wrap;
-    row-gap: var(--space-1);
-    white-space: normal;
-  }
-
   .route-panel {
     border-radius: var(--radius-card);
     padding: var(--space-6);
@@ -1333,133 +1281,134 @@ a {
   color: var(--slate-900);
 }
 
-/* 主導覽(spec §十一,0728 深夜擴大全站):白色 96% 半透明 sticky＋blur,
-   項目 13px 灰、當前項深色 700＋2px 黃底線。 */
-.student-rail {
+/* ── 底部 HUD 指令列（spec §4）─────────────────────────────────── */
+.hud-command {
   position: sticky;
   z-index: 50;
-  top: 0;
-  border-bottom: 1px solid var(--pastel-border-page);
-  background: rgb(255 255 255 / 96%);
-  backdrop-filter: blur(10px);
-  padding: var(--space-3) 0;
-}
-
-.student-rail__content {
+  bottom: 0;
   display: flex;
-  overflow: auto hidden;
-  width: min(100%, 1280px);
   align-items: center;
-  gap: var(--space-3);
-  margin-inline: auto;
-  padding-inline: var(--space-4);
-  white-space: nowrap;
+  gap: var(--space-2);
+  border-top: 2px solid var(--pixel-window-frame);
+  background: var(--pixel-night);
+  padding: var(--space-1) max(var(--space-2), env(safe-area-inset-right))
+    max(var(--space-1), env(safe-area-inset-bottom))
+    max(var(--space-2), env(safe-area-inset-left));
 }
 
-.student-rail__tab {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  color: var(--pastel-ink-body);
-  font-size: 13px;
-  font-weight: 500;
-  padding: var(--space-2) var(--space-1);
-  margin-inline: var(--space-3);
-  text-decoration: none;
-  transition:
-    color 150ms ease-out,
-    border-color 150ms ease-out;
-}
-
-.student-rail__tab:hover {
-  color: var(--pastel-ink-strong);
-}
-
-.student-rail__tab--active {
-  border-bottom-color: var(--pastel-cta);
-  color: var(--pastel-ink-strong);
-  font-weight: 700;
-}
-
-.student-rail__chevron {
-  color: var(--slate-300);
-}
-
-.student-rail__spacer {
+.hud-command__nav {
+  display: flex;
+  min-width: 0;
   flex: 1;
-  min-width: var(--space-4);
-}
-
-.student-rail__link {
-  display: inline-flex;
-  min-height: 44px;
   align-items: center;
-  border-bottom: 2px solid transparent;
-  color: var(--pastel-ink-body);
-  font-size: 13px;
-  font-weight: 500;
-  padding: var(--space-2);
-  text-decoration: none;
-}
-
-.student-rail__link--active {
-  border-bottom-color: var(--pastel-cta);
-  color: var(--pastel-ink-strong);
-  font-weight: 700;
-}
-
-.student-rail__link:hover {
-  color: var(--pastel-ink-strong);
-}
-
-.teacher-rail {
-  /* 0728 深夜:教師導覽併入淡彩白底;教師識別暖橘保留在文字與 chip。 */
-  position: sticky;
-  z-index: 50;
-  top: 0;
-  border-bottom: 1px solid var(--pastel-border-page);
-  background: rgb(255 255 255 / 96%);
-  backdrop-filter: blur(10px);
-  padding: var(--space-3) 0;
-}
-
-.teacher-rail__content {
-  display: flex;
+  gap: var(--space-1);
   overflow: auto hidden;
-  width: min(100%, 1280px);
-  align-items: center;
-  gap: var(--space-3);
-  margin-inline: auto;
-  padding-inline: var(--space-4);
   white-space: nowrap;
 }
 
-.teacher-rail__chip {
-  border: 1px solid var(--color-teacher-soft);
-  border-radius: var(--radius-control);
-  background: color-mix(in srgb, var(--color-teacher) 10%, transparent);
-  color: var(--color-teacher);
-  font-size: var(--font-size-metadata);
-  font-weight: 700;
-  padding: var(--space-1) var(--space-3);
+.hud-command__spacer {
+  flex: 1;
 }
 
-.teacher-rail__link {
+.hud-command__tab,
+.hud-command__link {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
-  border-radius: var(--radius-control);
-  color: var(--color-teacher);
-  font-size: 13px;
-  font-weight: 600;
-  padding: var(--space-2) var(--space-3);
+  border: 2px solid transparent;
+  border-radius: var(--radius-pixel);
+  color: var(--pixel-parchment);
   text-decoration: none;
+  padding: 0 var(--space-3);
 }
 
-.teacher-rail__link:hover {
-  background: color-mix(in srgb, var(--color-teacher) 12%, transparent);
+.hud-command__tab {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.hud-command__link {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hud-command__tab--active,
+.hud-command__link--active {
+  border-color: var(--pixel-window-frame);
+  background: var(--pixel-parchment);
+  color: var(--pixel-night);
+}
+
+.hud-command__tab:hover,
+.hud-command__link:hover {
+  border-color: var(--pixel-window-frame);
+}
+
+.hud-menu {
+  position: relative;
+}
+
+.hud-menu__toggle {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-night-deep);
+  color: var(--pixel-parchment);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 0 var(--space-3);
+}
+
+.hud-menu__panel {
+  position: absolute;
+  z-index: 60;
+  right: 0;
+  bottom: calc(100% + var(--space-2));
+  min-width: 200px;
+  border: 3px solid var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-night-deep);
+  box-shadow: 4px 4px 0 var(--pixel-shadow);
+  color: var(--pixel-parchment);
+  padding: var(--space-3);
+}
+
+.hud-menu__user {
+  margin: 0 0 var(--space-2);
+  font-weight: 800;
+}
+
+.hud-menu__logout {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment);
+  color: var(--pixel-night);
+  font-weight: 800;
+}
+
+/* 舞台模式：指令列是舞台底列（flex 尾），sticky 還原為普通列。 */
+@media (min-width: 768px) and (orientation: landscape) {
+  .hud-command {
+    position: static;
+  }
+}
+
+/* header 內 fallback 登出鈕（profile 未載入/失敗時仍可登出，spec 4.4）：
+   借用 HUD 登出鍵樣式，但非在 .hud-menu 面板內，寬度改回內容寬。 */
+.hud-menu__logout--fallback {
+  width: auto;
+  padding-inline: var(--space-4);
 }
 
 .ui-chip--teacher {
@@ -1480,8 +1429,8 @@ a {
 }
 
 /* ═══ 淡彩卡片系統(owner 0728 深夜裁定:自兩頁擴大至全站——主背景
-   已由 token 層翻白,導覽列樣式併入 .app-header/.student-rail/
-   .teacher-rail 基底,不再以 :has() 限定)。 ═══ */
+   已由 token 層翻白;導覽列已於 GameStage Shell 批改走底部 .hud-command,
+   不再以 :has() 限定)。 ═══ */
 .lobby,
 .achievements {
   width: min(100%, 1180px);
@@ -5284,9 +5233,9 @@ select#dashboard-classroom {
   color: var(--coral-600) !important;
 }
 
-/* 學生 Live 場次:沉浸模式,隱藏導覽列(owner 2026-07-23) */
-.game-stage:has(.live-session-shell) .student-rail,
-.game-stage:has(.live-session-shell) .teacher-rail {
+/* 學生 Live 場次:沉浸模式,隱藏導覽列(owner 2026-07-23；GameStage Shell 批
+   將 student-rail/teacher-rail 併入底部 .hud-command，選擇器隨之遷移) */
+.game-stage:has(.live-session-shell) .hud-command {
   display: none;
 }
 

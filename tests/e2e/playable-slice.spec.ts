@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test';
 import type { Database } from '../../src/types/database';
 import { GENERATED_CORRECT_ANSWERS } from '../fixtures/question-answers.generated';
 import { TEST_USERS } from '../fixtures/users';
-import { signInStudent } from './helpers/auth';
+import { signInStudent, signOutViaHud } from './helpers/auth';
 import {
   fullChallengeChapter,
   startQuizFromLobby,
@@ -121,7 +121,7 @@ test('student completes a mixed ten-question challenge with durable server total
   await expect(page.getByText('總分 750')).toBeVisible();
   await expect(page.getByRole('article')).toHaveCount(10);
 
-  await page.getByRole('button', { name: '登出' }).click();
+  await signOutViaHud(page);
   await expect(page).toHaveURL(/\/login$/u);
   // 不用 helpers/auth 的 signInStudent：那個 helper 內建等待登入後落地在
   // /app。這裡的登出是在 /app/quiz/{sessionId}/result 這一頁按的，

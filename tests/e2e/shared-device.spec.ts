@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { TEST_USERS } from '../fixtures/users';
 import { attachBrowserHealth, unexpectedBrowserHealth } from './browser-health';
+import { signOutViaHud } from './helpers/auth';
 import { readLocalProfileEnvironment } from './profile-e2e-boundary';
 
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
@@ -37,7 +38,7 @@ test('isolates two accounts that use the same browser page in sequence', async (
       new URL(response.url()).pathname === '/auth/v1/logout' &&
       response.request().method() === 'POST',
   );
-  await page.getByRole('button', { name: '登出' }).click();
+  await signOutViaHud(page);
   expect((await logoutResponsePromise).status()).toBeLessThan(400);
   await expect(page).toHaveURL(/\/login$/u);
   await expect(page.locator('body')).not.toContainText('student.one');

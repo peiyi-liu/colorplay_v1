@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 
 import { TEST_USERS } from '../fixtures/users';
 import { signedInClient } from '../helpers/signed-in-client';
+import { signOutViaHud } from './helpers/auth';
 
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
 
@@ -104,7 +105,7 @@ test('student registers with OTP, signs in by account, and resets the password',
   });
 
   // 登出後以帳號（學號）登入。
-  await page.getByRole('button', { name: '登出' }).click();
+  await signOutViaHud(page);
   await expect(page).toHaveURL(/\/login$/u, { timeout: 15_000 });
   await page.getByRole('textbox', { name: '帳號' }).fill(account);
   await page.getByLabel('密碼').fill(password);
@@ -112,7 +113,7 @@ test('student registers with OTP, signs in by account, and resets the password',
   await expect(page).toHaveURL(/\/app$/u, { timeout: 20_000 });
 
   // 忘記密碼：帳號＋Email → 信中連結 → 重設 → 跳回登入頁。
-  await page.getByRole('button', { name: '登出' }).click();
+  await signOutViaHud(page);
   await expect(page).toHaveURL(/\/login$/u, { timeout: 15_000 });
   await page.goto('/forgot-password');
   await page.getByRole('textbox', { name: '帳號' }).fill(account);

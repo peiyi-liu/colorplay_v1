@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 
 import { TEST_USERS } from '../fixtures/users';
+import { signOutViaHud } from './helpers/auth';
 
 // 三 viewport：mobile / tablet / desktop（spec/08 慣例）。
 const VIEWPORTS = [
@@ -98,7 +99,7 @@ test('UI Restyle phase gate', async ({ page }) => {
     await shot(page, `shop-${viewport.label}`);
 
     // 登出，回復乾淨狀態（sessionStorage 政策下換頁籤即失效，此處顯式登出）
-    await page.getByRole('button', { name: '登出' }).click();
+    await signOutViaHud(page);
     await expect(page).toHaveURL(/\/login$/u);
   }
 
@@ -117,7 +118,7 @@ test('UI Restyle phase gate', async ({ page }) => {
     page.getByRole('heading', { name: '班級高頻錯誤概念' }),
   ).toBeVisible();
   await shot(page, 'teacher-analytics-desktop');
-  await page.getByRole('button', { name: '登出' }).click();
+  await signOutViaHud(page);
 
   // GGAME 參考稿並列截圖（唯讀快照；不進入產品流程）
   await page.setViewportSize({ height: 900, width: 1440 });

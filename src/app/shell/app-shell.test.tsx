@@ -414,6 +414,7 @@ describe('AppShell', () => {
       </ToastProvider>,
     );
 
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     await userEvent.click(screen.getByRole('button', { name: '登出' }));
 
     expect(signOut).toHaveBeenCalledOnce();
@@ -441,6 +442,7 @@ describe('AppShell', () => {
       </MemoryRouter>,
     );
 
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     await userEvent.click(screen.getByRole('button', { name: '登出' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -519,11 +521,15 @@ describe('AppShell', () => {
       </ToastProvider>,
     );
 
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     await userEvent.click(screen.getByRole('button', { name: '登出' }));
     await userEvent.click(
       await screen.findByRole('button', { name: '以 B 登入' }),
     );
 
+    // 帳號 B 的 mock profile 仍是帳號 A 的資料（id 不吻合 session.userId），
+    // 故落入 isAuthenticatedProfile=false 的 fallback 登出鈕（Step 4.4），
+    // 不經過 HUD MENU。
     const accountBLogout = await screen.findByRole('button', { name: '登出' });
     expect(accountBLogout).toBeEnabled();
     await userEvent.click(accountBLogout);

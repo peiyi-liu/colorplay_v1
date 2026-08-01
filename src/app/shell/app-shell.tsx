@@ -1,19 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { Icon } from '../../components/ui/icons';
 import { useToast } from '../../components/ui/toast';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { EconomySummaryView } from '../../features/rewards/components/economy-summary';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
+import { HudCommandBar } from './hud-command-bar';
 import { RotateBanner } from './rotate-banner';
 import { useIdleLogout } from './use-idle-logout';
-
-// 側欄 active 樣式跟隨目前路由（owner 2026-07-21 #9）。
-const studentTabClassName = ({ isActive }: { isActive: boolean }) =>
-  `student-rail__tab${isActive ? ' student-rail__tab--active' : ''}`;
-const studentLinkClassName = ({ isActive }: { isActive: boolean }) =>
-  `student-rail__link${isActive ? ' student-rail__link--active' : ''}`;
 
 function AuthenticatedEconomySummary() {
   const economy = useEconomySummary();
@@ -61,6 +56,26 @@ export function AppShell() {
       void navigate('/login', { replace: true });
     });
   });
+
+  const handleSignOut = () => {
+    if (signOutPending.current) return;
+    signOutPending.current = true;
+    setIsSigningOut(true);
+    setSignOutError(false);
+    void auth.signOut().then(
+      () => {
+        signOutPending.current = false;
+        setIsSigningOut(false);
+        toast({ message: '已安全登出。', tone: 'info' });
+        return navigate('/login', { replace: true });
+      },
+      () => {
+        signOutPending.current = false;
+        setIsSigningOut(false);
+        setSignOutError(true);
+      },
+    );
+  };
 
   // The server-backed preference lands on the root element so CSS can turn
   // every celebration animation off; prefers-reduced-motion works in parallel.
@@ -118,29 +133,11 @@ export function AppShell() {
                   {profile.data?.displayName}・教師端
                 </span>
               ) : null}
-              {auth.status === 'authenticated' ? (
+              {auth.status === 'authenticated' && !isAuthenticatedProfile ? (
                 <button
-                  className="app-header__logout"
+                  className="hud-menu__logout hud-menu__logout--fallback"
                   disabled={isSigningOut}
-                  onClick={() => {
-                    if (signOutPending.current) return;
-                    signOutPending.current = true;
-                    setIsSigningOut(true);
-                    setSignOutError(false);
-                    void auth.signOut().then(
-                      () => {
-                        signOutPending.current = false;
-                        setIsSigningOut(false);
-                        toast({ message: '已安全登出。', tone: 'info' });
-                        return navigate('/login', { replace: true });
-                      },
-                      () => {
-                        signOutPending.current = false;
-                        setIsSigningOut(false);
-                        setSignOutError(true);
-                      },
-                    );
-                  }}
+                  onClick={handleSignOut}
                   type="button"
                 >
                   {isSigningOut ? '登出中…' : '登出'}
@@ -149,52 +146,6 @@ export function AppShell() {
             </div>
           </div>
         </header>
-        {isAuthenticatedProfile && !isTeacher ? (
-          <nav className="student-rail" aria-label="主要導覽">
-            <div className="student-rail__content">
-              <NavLink className={studentTabClassName} end to="/app">
-                學習大廳
-              </NavLink>
-              <NavLink className={studentTabClassName} to="/app/missions">
-                課後任務實戰
-              </NavLink>
-              <NavLink className={studentTabClassName} to="/app/shop">
-                裝備商店
-              </NavLink>
-              <span className="student-rail__spacer" aria-hidden="true" />
-              <NavLink className={studentLinkClassName} to="/app/mistakes">
-                我的錯題
-              </NavLink>
-              <NavLink className={studentLinkClassName} to="/app/live/join">
-                Live 課堂
-              </NavLink>
-              <NavLink className={studentLinkClassName} to="/app/leaderboard">
-                班級排行榜
-              </NavLink>
-              <NavLink className={studentLinkClassName} to="/app/achievements">
-                成就徽章
-              </NavLink>
-            </div>
-          </nav>
-        ) : null}
-        {isTeacher ? (
-          <nav className="teacher-rail" aria-label="教師導覽">
-            <div className="teacher-rail__content">
-              <Link className="teacher-rail__link" to="/teacher">
-                教師工作區
-              </Link>
-              <Link className="teacher-rail__link" to="/teacher/live">
-                Live 主持
-              </Link>
-              <Link className="teacher-rail__link" to="/teacher/classes">
-                班級管理
-              </Link>
-              <Link className="teacher-rail__link" to="/teacher/analytics">
-                教學分析
-              </Link>
-            </div>
-          </nav>
-        ) : null}
         {signOutError ? (
           <p className="app-shell__auth-error" role="alert">
             登出失敗，請稍後重試。
@@ -203,6 +154,22 @@ export function AppShell() {
         <main className="game-stage__scene" id="main-content" tabIndex={-1}>
           <Outlet />
         </main>
+        {isAuthenticatedProfile && !isTeacher ? (
+          <HudCommandBar
+            displayName={profile.data?.displayName ?? ''}
+            isSigningOut={isSigningOut}
+            onSignOut={handleSignOut}
+            variant="student"
+          />
+        ) : null}
+        {isTeacher ? (
+          <HudCommandBar
+            displayName={profile.data?.displayName ?? ''}
+            isSigningOut={isSigningOut}
+            onSignOut={handleSignOut}
+            variant="teacher"
+          />
+        ) : null}
       </div>
     </div>
   );
