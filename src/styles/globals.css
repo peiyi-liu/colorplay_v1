@@ -1758,6 +1758,15 @@ a {
   }
 }
 
+/* 分頁批:大廳走「單屏」——章節格 wide 檔(≥768px 橫向,對齊
+   useStageWide 分界)固定三欄單列,與 GamePager 的 wide 容量 3 一致,
+   避免 768–1023px 之間 2 欄換行造成整頁多一段縱向卷動。 */
+@media (min-width: 768px) and (orientation: landscape) {
+  .lobby .pastel-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 /* 淡彩卡片基底:主題色一律走 --card-* 變數,由 data-theme 指派
    (色值唯一定義點在 tokens.css 的 --pastel-<theme>-*)。 */
 .pastel-card {

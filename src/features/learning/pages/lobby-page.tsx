@@ -1,6 +1,7 @@
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { Card } from '../../../components/ui/card';
 import { Chip } from '../../../components/ui/chip';
+import { GamePager, useStageWide } from '../../../components/ui/game-pager';
 import type { IconName } from '../../../components/ui/icons';
 import { PageHeader } from '../../../components/ui/page-header';
 import { pastelThemeForIndex } from '../../../components/ui/pastel-themes';
@@ -20,6 +21,7 @@ const CHAPTER_ICONS: readonly IconName[] = [
 
 export function LobbyPage() {
   const chapters = usePublishedChapters();
+  const stageWide = useStageWide();
 
   if (chapters.isPending) return <RouteLoading withinMain />;
 
@@ -52,6 +54,12 @@ export function LobbyPage() {
     (frontier, chapter, index) => (chapter.isPlayable ? index : frontier),
     -1,
   );
+  // 分頁批:icon/theme/frontier 比對皆以全域 index 計,故先把 index 綁進
+  // entries 再交給 GamePager 切片,切片後語意不變(spec 關鍵約束)。
+  const chapterEntries = chapterList.map((chapter, index) => ({
+    chapter,
+    index,
+  }));
 
   return (
     <section aria-labelledby="lobby-title" className="lobby scene-day">
@@ -68,37 +76,45 @@ export function LobbyPage() {
         {chapterList.length === 0 ? (
           <p className="lobby__empty">課程內容準備中，請稍後再回來看看。</p>
         ) : (
-          <div className="pastel-grid">
-            {chapterList.map((chapter, index) => {
-              const current = index === frontierIndex;
-              return (
-                <LearningChapterCard
-                  chapterNumber={chapter.sortOrder}
-                  current={current}
-                  description={chapter.description}
-                  icon={
-                    CHAPTER_ICONS[index % CHAPTER_ICONS.length] ?? 'palette'
-                  }
-                  key={chapter.id}
-                  status={
-                    chapter.isPlayable
-                      ? current
-                        ? 'active'
-                        : 'open'
-                      : 'locked'
-                  }
-                  theme={pastelThemeForIndex(index)}
-                  title={chapter.title}
-                  {...(chapter.isPlayable
-                    ? {
-                        reviewHref: `/app/chapters/${chapter.id}`,
-                        startHref: `/app/quiz/new?template=${chapter.template.id}`,
+          <GamePager
+            ariaLabel="章節分頁"
+            items={chapterEntries}
+            pageSize={stageWide ? 3 : 2}
+          >
+            {(pageEntries) => (
+              <div className="pastel-grid">
+                {pageEntries.map(({ chapter, index }) => {
+                  const current = index === frontierIndex;
+                  return (
+                    <LearningChapterCard
+                      chapterNumber={chapter.sortOrder}
+                      current={current}
+                      description={chapter.description}
+                      icon={
+                        CHAPTER_ICONS[index % CHAPTER_ICONS.length] ?? 'palette'
                       }
-                    : {})}
-                />
-              );
-            })}
-          </div>
+                      key={chapter.id}
+                      status={
+                        chapter.isPlayable
+                          ? current
+                            ? 'active'
+                            : 'open'
+                          : 'locked'
+                      }
+                      theme={pastelThemeForIndex(index)}
+                      title={chapter.title}
+                      {...(chapter.isPlayable
+                        ? {
+                            reviewHref: `/app/chapters/${chapter.id}`,
+                            startHref: `/app/quiz/new?template=${chapter.template.id}`,
+                          }
+                        : {})}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </GamePager>
         )}
       </div>
     </section>

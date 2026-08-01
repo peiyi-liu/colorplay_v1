@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -306,5 +307,52 @@ describe('LobbyPage', () => {
     });
     expect(section).toHaveClass('scene-day');
     expect(section.querySelector('.hud-bar')).not.toBeNull();
+  });
+
+  it('章節超過單頁容量時分頁且跨頁章節仍照全域序渲染', async () => {
+    const overflowChapters: PublishedChapter[] = [
+      '章節一',
+      '章節二',
+      '章節三',
+      '章節四',
+      '章節五',
+      '章節六',
+      '章節七',
+    ].map((title, index) => ({
+      description: `${title}的學習重點。`,
+      id: `21000000-0000-0000-0000-${String(index + 1).padStart(12, '0')}`,
+      isPlayable: index === 1,
+      sortOrder: index + 1,
+      stableCode: `chapter-${String(index + 1)}`,
+      subtopicCodes: index === 1 ? [`${String(index + 1)}-1`] : [],
+      subtopicTitles: index === 1 ? [`${String(index + 1)}-1 ${title}`] : [],
+      template: {
+        id: `26000000-0000-0000-0000-${String(index + 1).padStart(12, '0')}`,
+        questionCount: 10,
+        title: `第${String(index + 1)}章綜合挑戰`,
+      },
+      title,
+    }));
+    mockedChapters.mockReturnValue(
+      asResult({
+        data: overflowChapters,
+        error: null,
+        isError: false,
+        isPending: false,
+        refetch: vi.fn(),
+      }),
+    );
+    renderPage();
+    // 全域 matchMedia stub matches:false → narrow 容量 2 → 4 頁。
+    expect(screen.getByText('第 1 / 4 頁')).toBeVisible();
+    // 卡片標題為 h3「Chapter {n}：{title}」組合文字節點，說明段落亦含標題
+    // 字串，故鎖定 heading 角色＋子字串比對，避免同時命中卡片說明文字。
+    expect(
+      screen.queryByRole('heading', { level: 3, name: /章節三/u }),
+    ).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
+    expect(
+      screen.getByRole('heading', { level: 3, name: /章節三/u }),
+    ).toBeVisible();
   });
 });

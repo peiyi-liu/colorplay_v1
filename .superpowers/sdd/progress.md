@@ -633,3 +633,5 @@ B5 現場調整批(owner 21:59 #1 滿版): letterbox 16:9 框移除→舞台滿�
 P1 Task 1: complete (inventory 29 entries)
 P1 Task 1: review clean (47eaf58). FACT: chapter-select.spec already RED at base 238dba9 (chromium verified) — Task 3 rewrites it page-aware + current copy (asset-batch stale-spec revival precedent). Trigger pages: lobby(6>3)/shop(20>8)/achievements(9>8).
 P1 Task 2: complete (GamePager overflow-only pager, 5/5 TDD)
+P1 Task 2: review clean (010108d; reviewer typo claim adjudicated FALSE by controller grep — file and diff both correct 箭頭; trailer verified)
+P1 Task 3: complete (lobby paging + chapter-select.spec revived page-aware)
