@@ -60,6 +60,16 @@ const detailFixture: LiveSessionDetail = {
   ],
 };
 
+// 獎牌測試專用 fixture：既有 detailFixture 只有 2 名，前三名獎牌需 ≥3 名。
+const medalRankingFixture: LiveSessionDetail = {
+  ...detailFixture,
+  ranking: [
+    { rank: 1, displayName: '學生一', score: 300, teamNumber: 1 },
+    { rank: 2, displayName: '學生二', score: 150, teamNumber: 2 },
+    { rank: 3, displayName: '學生三', score: 100, teamNumber: 3 },
+  ],
+};
+
 const renderPage = (repository: LiveRepository) => {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -126,6 +136,20 @@ describe('TeacherLiveReportPage', () => {
       screen.queryByRole('button', { name: '一鍵生成課後複習任務' }),
     ).toBeNull();
     expect(screen.queryByText('學習閉環')).toBeNull();
+  });
+
+  it('最終排名前三名有裝飾獎牌且不影響文字內容', async () => {
+    const repository = {
+      getSessionDetail: vi.fn().mockResolvedValue(medalRankingFixture),
+    } as unknown as LiveRepository;
+    renderPage(repository);
+
+    expect(await screen.findByText(/學生一（300 分・第 1 隊）/u)).toBeVisible();
+    const medals = document.querySelectorAll('.live-report__medal');
+    expect(medals).toHaveLength(3);
+    for (const medal of medals) {
+      expect(medal).toHaveAttribute('aria-hidden', 'true');
+    }
   });
 
   it('shows a safe error before the session is finalized', async () => {

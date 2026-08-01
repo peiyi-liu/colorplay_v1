@@ -38,7 +38,7 @@ export function TeacherLiveSessionPage({
   if (session.isPending) return <RouteLoading withinMain />;
   if (session.isError) {
     return (
-      <section className="route-panel">
+      <section className="route-panel route-panel--overture">
         <h1>Live 主持台</h1>
         <p role="alert">找不到這場課堂挑戰，或你不是主持人。</p>
         <Link className="primary-action" to="/teacher/live">

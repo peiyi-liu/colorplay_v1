@@ -45,7 +45,7 @@ export function TeacherLiveReportPage({
 
   return (
     <section aria-labelledby="live-report-title" className="page-mid">
-      <header>
+      <header className="sage-page-header">
         <p className="route-panel__eyebrow">ColorPlay Live</p>
         <h1 id="live-report-title">場次報表</h1>
         <p>
@@ -152,6 +152,16 @@ export function TeacherLiveReportPage({
         <ol>
           {report.ranking.map((entry) => (
             <li key={entry.rank}>
+              {entry.rank <= 3 ? (
+                <span
+                  aria-hidden="true"
+                  className={`live-report__medal live-report__medal--${
+                    ['gold', 'silver', 'bronze'][entry.rank - 1] ?? 'bronze'
+                  }`}
+                >
+                  ★
+                </span>
+              ) : null}
               第 {entry.rank} 名 {entry.displayName}（{entry.score} 分
               {entry.teamNumber === null
                 ? ''

@@ -6900,3 +6900,44 @@ select#dashboard-classroom {
 .live-launch__field label {
   color: var(--pixel-gold-deep);
 }
+
+/* 主持過渡卡＝開幕（夜窗低配；只在錯誤/取消過渡出現，投影零接觸）。 */
+.route-panel--overture {
+  border: 3px solid var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-night);
+  box-shadow:
+    0 0 0 5px var(--pixel-window-frame),
+    4px 4px 0 var(--pixel-shadow);
+  color: var(--pixel-window-ink);
+}
+
+.route-panel--overture h1 {
+  color: var(--pixel-window-ink);
+  font-family: var(--font-pixel-tc);
+}
+
+/* 報表獎牌（沿排行榜金銀銅列色）。 */
+.live-report__medal {
+  display: inline-grid;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  margin-right: 6px;
+  color: var(--ink-900);
+  font-size: 12px;
+  place-items: center;
+}
+
+.live-report__medal--gold {
+  background: var(--rank-gold-row);
+}
+
+.live-report__medal--silver {
+  background: var(--rank-silver-row);
+}
+
+.live-report__medal--bronze {
+  background: var(--rank-bronze-row);
+}
