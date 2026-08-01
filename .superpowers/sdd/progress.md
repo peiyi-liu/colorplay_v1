@@ -522,3 +522,8 @@ B5a Minor(defer 素材批): legend 白底帶跨在卡片上緣形成標籤板外
 B5a Final re-review (opus): APPROVED——C1 修正版判為「更好的一類修法」(不對抗 legend 原生排版,改讓跨線安全;水平 padding+border-box 使零版型變動可證,非僅實測;非 screen_only 長題文換行時仍成立)。終審自陳 BFC 推論錯誤:CSS2.1 §9.5 的不重疊是靠「縮寬到浮動框旁」達成,只有 min-content 放不下才會掉到下方;.live-options 為 grid,tracks 可縮到 0 故無下限而縮成 50px。
 BATCH-5A COMPLETE at HEAD (13 commits 5c91298..91941cc; base 5fe46ef)。
 B5a continuity (批⑤b gate brief 必寫): (1) gate 腳本當初為繞過 float 回歸的破碎 hit-testing 改用原生 element.click(),必須改回座標點擊——否則「按鈕重疊/縮到觸控下限以下」這類回歸再次對 gate 隱形(本輪新增的 rect>=44px 幾何斷言只覆蓋一半); (2) tests/e2e/helpers/classrooms.ts 過時(等已移除的一次性加入碼 modal 與 /join/:code),Live e2e 電池自 0730 起實質未執行——批⑤b 開工前先修; (3) 四個既有 sub-4.5 已分流:screen_only 的 .ui-option--rose/--emerald 為視覺隱藏文字+形狀符號(非文字 3:1 標準,通過),投影端同色配對才是真失敗。
+
+## E2E helper 修復 (2026-08-01, commit 966ba62)
+tests/e2e/helpers/classrooms.ts 對 0727/0730 裁定過時已修:createClassroom 改讀班級卡上的固定加入碼(locator 收斂到該班 article)、joinClassroomByCode 改對應現行入班路徑、rotateClassroomJoinCode 依現況處理;callers(live-smoke.spec.ts、capture-screens.mjs)同步。**live-smoke 實測 PASS(1 passed 14.0s)**——Live e2e 電池自 0730 以來首次真的跑通。
+其他三支仍紅,經查與本 helper 無關(各自獨立既有問題,批⑤b 前可一併處理): (a) classroom-leaderboard 與 assignments-live 皆卡在教師角色導覽 aria-label 不一致(app-shell.tsx:150 vs :178);(b) assignments 功能本身已於 0730 移除但 spec 仍在;(c) live-advanced 自帶一份同樣過時的「一次性班級加入碼」選擇器(從未 import 共用 helper)。
+capture-screens.mjs 僅靜態驗證(語法+共用函式已由 live-smoke 證實),未實跑。
