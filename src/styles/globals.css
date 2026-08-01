@@ -3539,16 +3539,18 @@ a {
   color: var(--pixel-night);
 }
 
-/* 玩家標記:站在目前推薦節點上(決議 2 玩家 sprite;佔位=旗標,素材批換裝)。 */
+/* 玩家標記:站在目前推薦節點上(決議 2 玩家 sprite;素材批換裝完成:
+   8×8 hero sprite @2x,盒 18×18→16×16、錨點外移 2px 補償)。 */
 .map-node__hero {
   position: absolute;
-  top: -16px;
-  right: -10px;
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--pixel-window-frame);
-  background: var(--coral-700);
-  box-shadow: 2px 2px 0 var(--pixel-shadow);
+  top: -18px;
+  right: -12px;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: url('../assets/sprites/hero.png') center / 16px 16px no-repeat;
+  image-rendering: pixelated;
+  box-shadow: none;
   animation: hero-bob 0.3s steps(2, jump-none) infinite alternate;
 }
 
@@ -4374,7 +4376,8 @@ a {
   color: var(--pixel-danger);
 }
 
-/* 火把:亮=金/暗=muted(spec §5 火把數顯示進度;幾何佔位,素材批換裝)。 */
+/* 火把(spec §5 火把數顯示進度;素材批換裝完成:8×14 sprite @1x,
+   亮/暗同圖、態差=filter/opacity)。 */
 .floor-torches {
   display: inline-flex;
   gap: 6px;
@@ -4384,21 +4387,14 @@ a {
 .floor-torch {
   width: 8px;
   height: 14px;
-  background: var(--pixel-window-muted);
-  clip-path: polygon(
-    50% 0,
-    100% 40%,
-    75% 40%,
-    75% 100%,
-    25% 100%,
-    25% 40%,
-    0 40%
-  );
+  background: url('../assets/sprites/torch.png') center / 8px 14px no-repeat;
+  image-rendering: pixelated;
+  filter: grayscale(1);
   opacity: 0.45;
 }
 
 .floor-torch--lit {
-  background: var(--pixel-gold);
+  filter: none;
   opacity: 1;
   animation: torch-flicker 0.3s steps(2, jump-none) infinite alternate;
 }
@@ -5398,62 +5394,46 @@ select#dashboard-classroom {
   color: var(--pixel-window-muted);
 }
 
-/* ── 三色精靈(決議 3;CSS-first 幾何佔位,素材批換裝;元件 src/components/ui/spirit-avatar.tsx) ── */
+/* ── 三色精靈(決議 3;素材批換裝完成:16×16 sprite @2x,配件畫進圖
+   紅=尖角/藍=方帽/綠=斜葉;元件 src/components/ui/spirit-avatar.tsx) ── */
 .spirit-avatar {
   position: relative;
   display: inline-block;
   flex: none;
   width: 32px;
   height: 32px;
+  image-rendering: pixelated;
   animation: spirit-idle 0.3s steps(2, jump-none) infinite alternate;
 }
 
 .spirit-avatar__body {
   position: absolute;
-  inset: 6px 4px 0;
-  border-radius: var(--radius-pixel);
-  box-shadow: 3px 3px 0 var(--pixel-shadow);
+  inset: 0;
+  background: url('../assets/sprites/spirit-red.png') center / 32px 32px
+    no-repeat;
+  box-shadow: none;
 }
 
-/* 頭頂配件:同基底＋小配件差異(決議 3;紅=尖角/藍=方帽/綠=斜葉)。 */
+/* 配件與眼睛已含在 sprite 內;DOM 保留、佔位繪製退役。 */
 .spirit-avatar__body::before {
-  content: '';
-  position: absolute;
-  top: -6px;
-  left: 8px;
-  width: 8px;
-  height: 6px;
-  background: inherit;
+  content: none;
 }
 
 .spirit-avatar__eyes {
-  position: absolute;
-  top: 15px;
-  left: 10px;
-  width: 4px;
-  height: 4px;
-  background: var(--pixel-window-frame);
-  box-shadow: 8px 0 0 var(--pixel-window-frame);
+  background: none;
+  box-shadow: none;
 }
 
 .spirit-avatar--red .spirit-avatar__body {
-  background: var(--coral-700);
+  background-image: url('../assets/sprites/spirit-red.png');
 }
 
 .spirit-avatar--blue .spirit-avatar__body {
-  background: var(--cobalt-600);
+  background-image: url('../assets/sprites/spirit-blue.png');
 }
 
 .spirit-avatar--green .spirit-avatar__body {
-  background: var(--jade-600);
-}
-
-.spirit-avatar--red .spirit-avatar__body::before {
-  clip-path: polygon(50% 0, 0 100%, 100% 100%);
-}
-
-.spirit-avatar--green .spirit-avatar__body::before {
-  clip-path: polygon(0 100%, 100% 0, 100% 100%);
+  background-image: url('../assets/sprites/spirit-green.png');
 }
 
 @keyframes spirit-idle {
