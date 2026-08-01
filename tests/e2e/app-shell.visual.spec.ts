@@ -90,16 +90,13 @@ test.describe('flat-design application shell', () => {
 
       const stageBox = await page.locator('.game-stage').boundingBox();
       if (!stageBox) throw new Error('GAME_STAGE_NOT_RENDERED');
+      // 滿版舞台（owner 0801 21:59 裁定，取代原 16:9 letterbox）：
+      // 所有情境舞台皆貼齊視窗寬；橫向舞台模式另貼齊視窗高。
+      expect(Math.round(stageBox.width)).toBe(viewport.width);
       const isStageMode =
         viewport.width >= 768 && viewport.width > viewport.height;
       if (isStageMode) {
-        // letterbox 舞台：16:9（±2%）。
-        expect(
-          Math.abs(stageBox.width / stageBox.height - 16 / 9),
-        ).toBeLessThan(0.02 * (16 / 9));
-      } else {
-        // 直向/窄幅：舞台退場＝全幅。
-        expect(Math.round(stageBox.width)).toBe(viewport.width);
+        expect(Math.round(stageBox.height)).toBe(viewport.height);
       }
 
       await mkdir(`${evidenceRoot}/screenshots`, { recursive: true });

@@ -51,9 +51,10 @@ a {
   outline-offset: 3px;
 }
 
-/* ── GameStage Shell：16:9 遊戲舞台（spec 2026-08-01 §2–3）──────────
-   預設＝直向/窄幅 RWD 全幅（舞台退場）；≥768px 且橫向＝置中 letterbox。
-   內容零 transform 縮放；卷動發生在 .game-stage__scene。 */
+/* ── GameStage Shell：滿版遊戲舞台（spec 2026-08-01 §2–3；owner 0801
+   21:59 裁定：捨棄置中 16:9 letterbox 框，舞台滿版貼齊視窗——框顯突兀）──
+   預設＝直向/窄幅 RWD 全幅；≥768px 且橫向＝固定視窗滿版舞台（HUD 釘住，
+   只有 .game-stage__scene 內容卷動）。內容零 transform 縮放。 */
 .game-viewport {
   display: flex;
   min-height: 100dvh;
@@ -89,23 +90,14 @@ a {
   .game-viewport {
     position: fixed;
     inset: 0;
-    align-items: center;
-    justify-content: center;
-    flex-direction: row;
   }
 
-  /* 舞台框沿 .rpg-window 雙線框語彙（globals.css .rpg-window）。 */
+  /* 滿版舞台（owner 0801 21:59）：無框無 letterbox，貼齊整個視窗。 */
   .game-stage {
     overflow: hidden;
-    width: min(100vw, calc(100vh * 16 / 9));
-    height: min(100vh, calc(100vw * 9 / 16));
-    flex: none;
-    border: 3px solid var(--pixel-window-frame);
-    outline: 2px solid var(--pixel-night);
-    box-shadow:
-      0 0 0 5px var(--pixel-window-frame),
-      6px 6px 0 var(--pixel-shadow);
-    border-radius: var(--radius-pixel);
+    width: 100%;
+    height: 100%;
+    flex: 1;
   }
 
   .game-stage__scene {
