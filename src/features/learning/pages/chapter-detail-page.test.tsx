@@ -6,6 +6,7 @@ import {
   waitFor,
   within,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -276,5 +277,51 @@ describe('ChapterDetailPage', () => {
     ).toBe(true);
     expect(percentText(null)).toBe('—');
     expect(reviewText(0, null)).toBe('—');
+  });
+
+  it('單一 section 樓層數超過單頁容量時分頁,跨頁樓層仍可透過下一頁抵達', async () => {
+    const overflowSection = {
+      sectionId: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+      sortOrder: 1,
+      stableCode: 'sheet-3-1',
+      subtopics: [1, 2, 3, 4, 5, 6].map((n) => ({
+        cards: [],
+        sortOrder: n,
+        stableCode: `sheet-3-1-${String(n)}`,
+        subtopicId: `f929cde5-c294-46ce-5faf-c866b3cb${String(n).padStart(4, '0')}`,
+        title: `3-1-${String(n)} 樓層`,
+      })),
+      title: '3-1 色彩三要素與色名的表示',
+    };
+    renderPage(
+      repositoryWith({
+        listChapterReview: vi.fn().mockResolvedValue([overflowSection]),
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: 'Chapter 3：色彩體系與應用' }),
+      ).toBeInTheDocument();
+    });
+
+    // 全域 matchMedia stub matches:false → narrow 容量 2 → 3 頁。
+    expect(screen.getByText('第 1 / 3 頁')).toBeVisible();
+    expect(
+      screen.getByRole('heading', { name: '小節 3-1-1 樓層' }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('heading', { name: '小節 3-1-3 樓層' }),
+    ).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
+
+    expect(screen.getByText('第 2 / 3 頁')).toBeVisible();
+    expect(
+      screen.getByRole('heading', { name: '小節 3-1-3 樓層' }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('heading', { name: '小節 3-1-1 樓層' }),
+    ).toBeNull();
   });
 });

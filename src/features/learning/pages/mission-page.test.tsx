@@ -262,6 +262,7 @@ describe('MissionSelectPage world map', () => {
   });
 
   it('maps chapter progress onto four-state nodes with the hero on the first unmastered chapter', async () => {
+    const user = userEvent.setup();
     renderMissionSelect(
       learningStub([
         progressRow('21000000-0000-0000-0000-000000000001', 'mastered'),
@@ -269,8 +270,11 @@ describe('MissionSelectPage world map', () => {
       ]),
     );
     expect(await screen.findByText('已精熟')).toBeInTheDocument();
-    expect(screen.getByText('學習中・目前位置')).toBeInTheDocument();
     expect(document.querySelector('.map-node--mastered')).not.toBeNull();
+    // 分頁批:global matchMedia stub=narrow,容量1、playable=2→溢出兩頁,
+    // 章節2落頁2,需先點「下一頁」才可見。
+    await user.click(screen.getByRole('button', { name: '下一頁' }));
+    expect(screen.getByText('學習中・目前位置')).toBeInTheDocument();
     expect(
       document.querySelector('.map-node--learning .map-node__hero'),
     ).not.toBeNull();
@@ -288,5 +292,49 @@ describe('MissionSelectPage world map', () => {
     expect(document.querySelector('.map-node--not_started')).not.toBeNull();
     // 決議 1 軟鎖:progress 讀取失敗不得升級成錯誤橫幅。
     expect(screen.queryAllByRole('alert')).toHaveLength(0);
+  });
+
+  it('章節數超過單頁容量時分頁,跨頁章節仍可透過下一頁抵達', async () => {
+    const overflowChapters = [1, 2, 3, 4, 5].map((n) => ({
+      description: `章節${String(n)}說明`,
+      id: `21000000-0000-0000-0000-${String(n).padStart(12, '0')}`,
+      isPlayable: true,
+      sortOrder: n,
+      stableCode: `chapter-${String(n)}`,
+      subtopicCodes: [`${String(n)}-1`],
+      subtopicTitles: [`${String(n)}-1 小節`],
+      template: {
+        id: `26000000-0000-0000-0000-${String(n).padStart(12, '0')}`,
+        questionCount: 5,
+        title: `章節${String(n)}挑戰`,
+      },
+      title: `章節${String(n)}`,
+    }));
+    mockedChapters.mockReturnValue(
+      asResult({
+        data: overflowChapters,
+        error: null,
+        isError: false,
+        isPending: false,
+        refetch: vi.fn(),
+      }),
+    );
+    renderMissionSelect(learningStub([]));
+    // 全域 matchMedia stub matches:false → narrow 容量 1 → 5 頁。
+    expect(await screen.findByText('第 1 / 5 頁')).toBeVisible();
+    expect(
+      screen.getByRole('heading', { level: 2, name: '章節1' }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('heading', { level: 2, name: '章節2' }),
+    ).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
+    expect(screen.getByText('第 2 / 5 頁')).toBeVisible();
+    expect(
+      screen.getByRole('heading', { level: 2, name: '章節2' }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('heading', { level: 2, name: '章節1' }),
+    ).toBeNull();
   });
 });

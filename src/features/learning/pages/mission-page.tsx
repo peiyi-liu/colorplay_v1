@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { Card } from '../../../components/ui/card';
 import { Chip } from '../../../components/ui/chip';
+import { GamePager, useStageWide } from '../../../components/ui/game-pager';
 import { HintCallout } from '../../../components/ui/hint-callout';
 import { MapStepper } from '../../../components/ui/map-stepper';
 import { SectionHeader } from '../../../components/ui/section-header';
@@ -39,6 +40,7 @@ export function MissionSelectPage({
   const start = useStartMastery(repository);
   const navigate = useNavigate();
   const [startError, setStartError] = useState<string>();
+  const stageWide = useStageWide();
 
   if (chapters.isPending) return <RouteLoading withinMain />;
   if (chapters.isError) {
@@ -83,63 +85,73 @@ export function MissionSelectPage({
         {playable.length === 0 ? (
           <p>目前沒有可挑戰的章節。</p>
         ) : (
-          <ul className="mission-select__list">
-            {playable.map((chapter) => {
-              const status = statusOf(chapter.id);
-              const isHero = chapter.id === heroChapterId;
-              return (
-                <li className="mission-select__item" key={chapter.id}>
-                  <span
-                    aria-hidden="true"
-                    className={`map-node map-node--${status}`}
-                  >
-                    <span className="map-node__number">
-                      {chapter.sortOrder}
-                    </span>
-                    {isHero ? <span className="map-node__hero" /> : null}
-                  </span>
-                  <div>
-                    <h2>{chapter.title}</h2>
-                    <p className={`map-node-status map-node-status--${status}`}>
-                      {statusLabels[status]}
-                      {isHero ? '・目前位置' : null}
-                    </p>
-                    {/* owner 0730 #5:測驗小節分節、標題完整列出。 */}
-                    {chapter.subtopicTitles.length > 0 ? (
-                      <ul
-                        aria-label={`${chapter.title} 小節`}
-                        className="mission-select__subtopics"
+          <GamePager
+            ariaLabel="任務章節分頁"
+            items={playable}
+            pageSize={stageWide ? 2 : 1}
+          >
+            {(pageChapters) => (
+              <ul className="mission-select__list">
+                {pageChapters.map((chapter) => {
+                  const status = statusOf(chapter.id);
+                  const isHero = chapter.id === heroChapterId;
+                  return (
+                    <li className="mission-select__item" key={chapter.id}>
+                      <span
+                        aria-hidden="true"
+                        className={`map-node map-node--${status}`}
                       >
-                        {chapter.subtopicTitles.map((subtopicTitle) => (
-                          <li key={subtopicTitle}>{subtopicTitle}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p>{chapter.description}</p>
-                    )}
-                  </div>
-                  <button
-                    className="primary-action"
-                    disabled={start.isPending}
-                    onClick={() => {
-                      setStartError(undefined);
-                      start.mutate(chapter.id, {
-                        onError: () => {
-                          setStartError('無法開始精熟任務，請稍後重試。');
-                        },
-                        onSuccess: (sessionId) => {
-                          void navigate(`/app/missions/${sessionId}`);
-                        },
-                      });
-                    }}
-                    type="button"
-                  >
-                    展開小節任務
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+                        <span className="map-node__number">
+                          {chapter.sortOrder}
+                        </span>
+                        {isHero ? <span className="map-node__hero" /> : null}
+                      </span>
+                      <div>
+                        <h2>{chapter.title}</h2>
+                        <p
+                          className={`map-node-status map-node-status--${status}`}
+                        >
+                          {statusLabels[status]}
+                          {isHero ? '・目前位置' : null}
+                        </p>
+                        {/* owner 0730 #5:測驗小節分節、標題完整列出。 */}
+                        {chapter.subtopicTitles.length > 0 ? (
+                          <ul
+                            aria-label={`${chapter.title} 小節`}
+                            className="mission-select__subtopics"
+                          >
+                            {chapter.subtopicTitles.map((subtopicTitle) => (
+                              <li key={subtopicTitle}>{subtopicTitle}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p>{chapter.description}</p>
+                        )}
+                      </div>
+                      <button
+                        className="primary-action"
+                        disabled={start.isPending}
+                        onClick={() => {
+                          setStartError(undefined);
+                          start.mutate(chapter.id, {
+                            onError: () => {
+                              setStartError('無法開始精熟任務，請稍後重試。');
+                            },
+                            onSuccess: (sessionId) => {
+                              void navigate(`/app/missions/${sessionId}`);
+                            },
+                          });
+                        }}
+                        type="button"
+                      >
+                        展開小節任務
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </GamePager>
         )}
       </Card>
     </section>

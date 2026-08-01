@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { GamePager, useStageWide } from '../../../components/ui/game-pager';
 import { ProgressBar } from '../../../components/ui/progress-bar';
 import { usePublishedChapters } from '../api/chapters';
 import type {
@@ -212,6 +213,7 @@ export function ChapterDetailPage({
   const completions = useReviewProgressRows(repository);
   const complete = useCompleteReviewCard(chapterId, repository);
   const [completeError, setCompleteError] = useState<string>();
+  const stageWide = useStageWide();
 
   if (
     chapters.isPending ||
@@ -331,94 +333,108 @@ export function ChapterDetailPage({
 
       {review.data.map((section) => (
         <section aria-label={section.title} key={section.sectionId}>
-          {section.subtopics.map((subtopic) => {
-            const row = subtopicRow(progress.data, subtopic.subtopicId);
-            const reviewCompleted = row?.reviewCompleted ?? 0;
-            const reviewTotal = row?.reviewTotal ?? null;
-            return (
-              <section
-                aria-label={subtopic.title}
-                className="chapter-detail__subtopic"
-                key={subtopic.subtopicId}
-              >
-                <h2 className="chapter-detail__subtopic-title">
-                  <span className="chapter-detail__subtopic-tag">小節</span>{' '}
-                  {subtopic.title}
-                </h2>
-                {torchStates(reviewCompleted, reviewTotal).length > 0 ? (
-                  <span aria-hidden="true" className="floor-torches">
-                    {torchStates(reviewCompleted, reviewTotal).map(
-                      (lit, index) => (
+          <GamePager
+            ariaLabel={`${section.title} 樓層分頁`}
+            items={section.subtopics}
+            pageSize={stageWide ? 4 : 2}
+          >
+            {(pageSubtopics) => (
+              <>
+                {pageSubtopics.map((subtopic) => {
+                  const row = subtopicRow(progress.data, subtopic.subtopicId);
+                  const reviewCompleted = row?.reviewCompleted ?? 0;
+                  const reviewTotal = row?.reviewTotal ?? null;
+                  return (
+                    <section
+                      aria-label={subtopic.title}
+                      className="chapter-detail__subtopic"
+                      key={subtopic.subtopicId}
+                    >
+                      <h2 className="chapter-detail__subtopic-title">
+                        <span className="chapter-detail__subtopic-tag">
+                          小節
+                        </span>{' '}
+                        {subtopic.title}
+                      </h2>
+                      {torchStates(reviewCompleted, reviewTotal).length > 0 ? (
+                        <span aria-hidden="true" className="floor-torches">
+                          {torchStates(reviewCompleted, reviewTotal).map(
+                            (lit, index) => (
+                              <span
+                                className={
+                                  lit
+                                    ? 'floor-torch floor-torch--lit'
+                                    : 'floor-torch'
+                                }
+                                key={index}
+                              />
+                            ),
+                          )}
+                        </span>
+                      ) : null}
+                      <div
+                        aria-label="小節進度"
+                        className="chapter-detail__subtopic-progress"
+                      >
+                        <span className="chapter-detail__subtopic-studied">
+                          <span
+                            aria-hidden="true"
+                            className="chapter-detail__subtopic-dot"
+                          />
+                          已學習
+                        </span>
                         <span
-                          className={
-                            lit ? 'floor-torch floor-torch--lit' : 'floor-torch'
-                          }
-                          key={index}
+                          aria-hidden="true"
+                          className="chapter-detail__subtopic-divider"
+                        >
+                          ・
+                        </span>
+                        <span className="chapter-detail__subtopic-review">
+                          複習 {reviewText(reviewCompleted, reviewTotal)}
+                          <ProgressBar
+                            label="複習完成"
+                            size="sm"
+                            tone="primary"
+                            value={reviewPercent(reviewCompleted, reviewTotal)}
+                          />
+                        </span>
+                        <span
+                          aria-hidden="true"
+                          className="chapter-detail__subtopic-divider"
+                        >
+                          ・
+                        </span>
+                        <span>精熟 {percentText(row?.mastery ?? null)}</span>
+                      </div>
+                      {subtopic.cards.map((card, index) => (
+                        <ReviewCardItem
+                          card={card}
+                          completed={isCardCompleted(card, completionRows)}
+                          index={index}
+                          key={card.cardId}
+                          onComplete={() => {
+                            setCompleteError(undefined);
+                            complete.mutate(
+                              {
+                                requestId: crypto.randomUUID(),
+                                reviewCardId: card.cardId,
+                              },
+                              {
+                                onError: (error) => {
+                                  setCompleteError(error.message);
+                                },
+                              },
+                            );
+                          }}
+                          pending={complete.isPending}
                         />
-                      ),
-                    )}
-                  </span>
-                ) : null}
-                <div
-                  aria-label="小節進度"
-                  className="chapter-detail__subtopic-progress"
-                >
-                  <span className="chapter-detail__subtopic-studied">
-                    <span
-                      aria-hidden="true"
-                      className="chapter-detail__subtopic-dot"
-                    />
-                    已學習
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className="chapter-detail__subtopic-divider"
-                  >
-                    ・
-                  </span>
-                  <span className="chapter-detail__subtopic-review">
-                    複習 {reviewText(reviewCompleted, reviewTotal)}
-                    <ProgressBar
-                      label="複習完成"
-                      size="sm"
-                      tone="primary"
-                      value={reviewPercent(reviewCompleted, reviewTotal)}
-                    />
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className="chapter-detail__subtopic-divider"
-                  >
-                    ・
-                  </span>
-                  <span>精熟 {percentText(row?.mastery ?? null)}</span>
-                </div>
-                {subtopic.cards.map((card, index) => (
-                  <ReviewCardItem
-                    card={card}
-                    completed={isCardCompleted(card, completionRows)}
-                    index={index}
-                    key={card.cardId}
-                    onComplete={() => {
-                      setCompleteError(undefined);
-                      complete.mutate(
-                        {
-                          requestId: crypto.randomUUID(),
-                          reviewCardId: card.cardId,
-                        },
-                        {
-                          onError: (error) => {
-                            setCompleteError(error.message);
-                          },
-                        },
-                      );
-                    }}
-                    pending={complete.isPending}
-                  />
-                ))}
-              </section>
-            );
-          })}
+                      ))}
+                    </section>
+                  );
+                })}
+              </>
+            )}
+          </GamePager>
         </section>
       ))}
       {completeError ? <p role="alert">{completeError}</p> : null}
