@@ -6869,3 +6869,10 @@ select#dashboard-classroom {
   font-size: 0.95rem;
   letter-spacing: 3px;
 }
+
+/* 班級詳情：成員數 Chip＝像素徽章（金框硬影；字串/內距不動）。 */
+.classroom-section-header .ui-chip {
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  box-shadow: 2px 2px 0 var(--pixel-shadow);
+}

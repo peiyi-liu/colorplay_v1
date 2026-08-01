@@ -42,7 +42,7 @@ export function TeacherClassroomDetailPage({
       aria-labelledby="teacher-classroom-detail-title"
       className="page-wide page-stack"
     >
-      <header className="teacher-dashboard-header">
+      <header className="teacher-dashboard-header sage-page-header">
         <div className="teacher-dashboard-header__intro">
           <p className="route-panel__eyebrow">教師班級管理</p>
           <h1 id="teacher-classroom-detail-title">班級成員</h1>

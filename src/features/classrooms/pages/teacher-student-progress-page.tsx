@@ -64,7 +64,7 @@ export function TeacherStudentProgressPage({
       aria-labelledby="teacher-student-progress-title"
       className="page-wide page-stack"
     >
-      <header className="teacher-dashboard-header">
+      <header className="teacher-dashboard-header sage-page-header">
         <div className="teacher-dashboard-header__intro">
           <p className="route-panel__eyebrow">教師班級管理</p>
           <h1 id="teacher-student-progress-title">{studentName} 的學習進度</h1>
