@@ -28,7 +28,7 @@
   @1x＝盒尺寸的一半（偶數）×2 顯示；盒 <16px 者 @1x＝盒尺寸 ×1 顯示。
   **換裝不得改動既有版型盒外尺寸**；素材在盒內置中、整數倍縮放，
   非整數倍縮放禁止；盒與 @1x 階不合時以 background 天然裁切呈現。
-- **調色盤**：sprite 像素色 ⊆ `scripts/assets/pixel-palette.json`（28 色主調色盤＋透明）。
+- **調色盤**：sprite 像素色 ⊆ `scripts/assets/pixel-palette.json`（29 色主調色盤＋透明）。
   該調色盤是 `--pixel-*`/品牌 tokens 的超集：CSS 端色彩仍僅定義於 tokens.css，
   sprite 圖檔內的像素色不算 raw-hex 違規，但必須通過 `check-sprites.py` 色域檢查。
   調色盤擴充需同批修訂 JSON 並在 ADR 0006 記錄。
