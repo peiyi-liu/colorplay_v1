@@ -90,19 +90,40 @@ describe('ShopPage', () => {
     expect(
       await screen.findByRole('heading', { name: '裝備商店' }),
     ).toBeVisible();
-    items.forEach(([, , name, , cost]) => {
+    // 分頁批:全域 matchMedia stub matches:false → narrow 容量 4,
+    // items=6 → 溢出兩頁(頁1=little_fox/lucky_cat/travel_frog/wise_owl,
+    // 頁2=primary_lion/rainbow_horse)。拆頁1/頁2兩段驗證,不再單測全量。
+    const page1 = items.slice(0, 4);
+    const page2 = items.slice(4);
+    page1.forEach(([, , name, , cost]) => {
       expect(screen.getByRole('heading', { name })).toBeVisible();
       expect(screen.getByText(`${String(cost)} Token`)).toBeVisible();
     });
+    page2.forEach(([, , name]) => {
+      expect(screen.queryByRole('heading', { name })).toBeNull();
+    });
     // 每張卡片以自製 SVG 角色呈現(不再用 emoji 文字)。
     expect(document.querySelectorAll('.blook-card__art svg')).toHaveLength(
-      items.length,
+      page1.length,
     );
     expect(screen.getAllByText('已裝備')).toHaveLength(1);
     expect(screen.getByRole('button', { name: '選用 招財貓' })).toBeEnabled();
     expect(
       screen.getByRole('button', { name: '購買 旅行蛙，250 Token' }),
     ).toBeEnabled();
+
+    await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
+
+    page2.forEach(([, , name, , cost]) => {
+      expect(screen.getByRole('heading', { name })).toBeVisible();
+      expect(screen.getByText(`${String(cost)} Token`)).toBeVisible();
+    });
+    page1.forEach(([, , name]) => {
+      expect(screen.queryByRole('heading', { name })).toBeNull();
+    });
+    expect(document.querySelectorAll('.blook-card__art svg')).toHaveLength(
+      page2.length,
+    );
     expect(
       screen.getByRole('button', { name: '還差 750 Token，無法購買 原色獅' }),
     ).toBeDisabled();
@@ -257,6 +278,36 @@ describe('ShopPage', () => {
     // 載重：分頁按鈕 accessible name 不受裝飾影響
     expect(screen.getByRole('button', { name: '角色' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '外框' })).toBeInTheDocument();
+  });
+
+  it('角色超過單頁容量時分頁且跨頁角色仍可透過下一頁抵達', async () => {
+    const overflowItems = Array.from({ length: 9 }, (_, index) => ({
+      costTokens: index * 100,
+      emoji: '🎨',
+      equipped: index === 0,
+      id: `50000000-0000-0000-0000-0000000000${String(index + 10)}`,
+      name: `分頁角色${String(index + 1)}`,
+      owned: index === 0,
+      stableCode: `paged_blook_${String(index + 1)}`,
+    }));
+    renderShop(
+      repository({
+        getInventory: vi
+          .fn()
+          .mockResolvedValue(inventory({ items: overflowItems })),
+      }),
+    );
+    // 分頁批:全域 matchMedia stub matches:false → narrow 容量 4,items=9 → 3 頁。
+    expect(await screen.findByText('第 1 / 3 頁')).toBeVisible();
+    expect(screen.getByRole('heading', { name: '分頁角色1' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: '分頁角色9' })).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
+    await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
+
+    expect(screen.getByText('第 3 / 3 頁')).toBeVisible();
+    expect(screen.getByRole('heading', { name: '分頁角色9' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: '分頁角色1' })).toBeNull();
   });
 });
 

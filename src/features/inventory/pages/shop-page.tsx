@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { BlookArt } from '../../../components/ui/blook-art';
+import { GamePager, useStageWide } from '../../../components/ui/game-pager';
 import { useToast } from '../../../components/ui/toast';
 import {
   useBlookInventory,
@@ -42,6 +43,7 @@ function FrameShopSection({
   const frames = useFrameInventory(repository);
   const purchase = usePurchaseFrame(repository);
   const equip = useEquipFrame(repository);
+  const stageWide = useStageWide();
   if (frames.isPending || frames.isError) return null;
 
   const run = async (item: FrameInventoryItem) => {
@@ -63,59 +65,67 @@ function FrameShopSection({
   return (
     <section aria-label="外框商店" className="frame-shop">
       <p className="frame-shop__hint">裝備後將顯示在大廳頭貼外框。</p>
-      <div className="blook-grid">
-        {[...frames.data.items]
-          .sort((a, b) => a.costTokens - b.costTokens)
-          .map((item) => {
-            const shortfall = item.costTokens - frames.data.tokenBalance;
-            return (
-              <article className="blook-card" key={item.id}>
-                <span className="blook-card__art" aria-hidden="true">
-                  <span
-                    className="frame-card__ring"
-                    style={{
-                      background: `linear-gradient(135deg, ${item.gradientStart}, ${item.gradientEnd})`,
-                    }}
-                  />
-                </span>
-                <h3 className="blook-card__frame-name">{item.name}</h3>
-                <p>{String(item.costTokens)} Token</p>
-                {item.equipped ? (
-                  <strong className="blook-card__state">已裝備</strong>
-                ) : item.owned ? (
-                  <button
-                    aria-label={`選用 ${item.name}`}
-                    className="secondary-action"
-                    disabled={purchase.isPending || equip.isPending}
-                    onClick={() => void run(item)}
-                    type="button"
-                  >
-                    選用
-                  </button>
-                ) : shortfall <= 0 ? (
-                  <button
-                    aria-label={`購買 ${item.name}，${String(item.costTokens)} Token`}
-                    className="primary-action"
-                    disabled={purchase.isPending || equip.isPending}
-                    onClick={() => void run(item)}
-                    type="button"
-                  >
-                    購買 {String(item.costTokens)} Token
-                  </button>
-                ) : (
-                  <button
-                    aria-label={`還差 ${String(shortfall)} Token，無法購買 ${item.name}`}
-                    className="blook-card__disabled"
-                    disabled
-                    type="button"
-                  >
-                    還差 {String(shortfall)} Token
-                  </button>
-                )}
-              </article>
-            );
-          })}
-      </div>
+      <GamePager
+        ariaLabel="外框貨架分頁"
+        items={[...frames.data.items].sort(
+          (a, b) => a.costTokens - b.costTokens,
+        )}
+        pageSize={stageWide ? 8 : 4}
+      >
+        {(pageItems) => (
+          <div className="blook-grid">
+            {pageItems.map((item) => {
+              const shortfall = item.costTokens - frames.data.tokenBalance;
+              return (
+                <article className="blook-card" key={item.id}>
+                  <span className="blook-card__art" aria-hidden="true">
+                    <span
+                      className="frame-card__ring"
+                      style={{
+                        background: `linear-gradient(135deg, ${item.gradientStart}, ${item.gradientEnd})`,
+                      }}
+                    />
+                  </span>
+                  <h3 className="blook-card__frame-name">{item.name}</h3>
+                  <p>{String(item.costTokens)} Token</p>
+                  {item.equipped ? (
+                    <strong className="blook-card__state">已裝備</strong>
+                  ) : item.owned ? (
+                    <button
+                      aria-label={`選用 ${item.name}`}
+                      className="secondary-action"
+                      disabled={purchase.isPending || equip.isPending}
+                      onClick={() => void run(item)}
+                      type="button"
+                    >
+                      選用
+                    </button>
+                  ) : shortfall <= 0 ? (
+                    <button
+                      aria-label={`購買 ${item.name}，${String(item.costTokens)} Token`}
+                      className="primary-action"
+                      disabled={purchase.isPending || equip.isPending}
+                      onClick={() => void run(item)}
+                      type="button"
+                    >
+                      購買 {String(item.costTokens)} Token
+                    </button>
+                  ) : (
+                    <button
+                      aria-label={`還差 ${String(shortfall)} Token，無法購買 ${item.name}`}
+                      className="blook-card__disabled"
+                      disabled
+                      type="button"
+                    >
+                      還差 {String(shortfall)} Token
+                    </button>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </GamePager>
     </section>
   );
 }
@@ -127,6 +137,7 @@ export function ShopPage({
   const inventory = useBlookInventory(repository);
   const purchase = usePurchaseBlook(repository);
   const equip = useEquipBlook(repository);
+  const stageWide = useStageWide();
   const [selectedPurchase, setSelectedPurchase] =
     useState<BlookInventoryItem>();
   // live-v2 設計稿:角色／外框分頁(僅顯示狀態,不影響購買資料流)。
@@ -255,61 +266,69 @@ export function ShopPage({
       </nav>
 
       {shopTab === 'blooks' ? (
-        <div className="blook-grid">
-          {[...inventory.data.items]
-            .sort((a, b) => a.costTokens - b.costTokens)
-            .map((item) => {
-              const shortfall = item.costTokens - inventory.data.tokenBalance;
-              return (
-                <article className="blook-card" key={item.id}>
-                  <span className="blook-card__art" aria-hidden="true">
-                    <BlookArt
-                      emoji={item.emoji}
-                      size={72}
-                      stableCode={item.stableCode}
-                    />
-                  </span>
-                  <h2>{item.name}</h2>
-                  <p>{String(item.costTokens)} Token</p>
-                  {item.equipped ? (
-                    <strong className="blook-card__state">已裝備</strong>
-                  ) : item.owned ? (
-                    <button
-                      aria-label={`選用 ${item.name}`}
-                      className="secondary-action"
-                      disabled={equip.isPending || purchase.isPending}
-                      onClick={() => void runEquip(item)}
-                      type="button"
-                    >
-                      選用
-                    </button>
-                  ) : shortfall <= 0 ? (
-                    <button
-                      aria-label={`購買 ${item.name}，${String(item.costTokens)} Token`}
-                      className="primary-action"
-                      disabled={equip.isPending || purchase.isPending}
-                      onClick={(event) => {
-                        purchaseTriggerRef.current = event.currentTarget;
-                        setSelectedPurchase(item);
-                      }}
-                      type="button"
-                    >
-                      購買 {String(item.costTokens)} Token
-                    </button>
-                  ) : (
-                    <button
-                      aria-label={`還差 ${String(shortfall)} Token，無法購買 ${item.name}`}
-                      className="blook-card__disabled"
-                      disabled
-                      type="button"
-                    >
-                      還差 {String(shortfall)} Token
-                    </button>
-                  )}
-                </article>
-              );
-            })}
-        </div>
+        <GamePager
+          ariaLabel="角色貨架分頁"
+          items={[...inventory.data.items].sort(
+            (a, b) => a.costTokens - b.costTokens,
+          )}
+          pageSize={stageWide ? 8 : 4}
+        >
+          {(pageItems) => (
+            <div className="blook-grid">
+              {pageItems.map((item) => {
+                const shortfall = item.costTokens - inventory.data.tokenBalance;
+                return (
+                  <article className="blook-card" key={item.id}>
+                    <span className="blook-card__art" aria-hidden="true">
+                      <BlookArt
+                        emoji={item.emoji}
+                        size={72}
+                        stableCode={item.stableCode}
+                      />
+                    </span>
+                    <h2>{item.name}</h2>
+                    <p>{String(item.costTokens)} Token</p>
+                    {item.equipped ? (
+                      <strong className="blook-card__state">已裝備</strong>
+                    ) : item.owned ? (
+                      <button
+                        aria-label={`選用 ${item.name}`}
+                        className="secondary-action"
+                        disabled={equip.isPending || purchase.isPending}
+                        onClick={() => void runEquip(item)}
+                        type="button"
+                      >
+                        選用
+                      </button>
+                    ) : shortfall <= 0 ? (
+                      <button
+                        aria-label={`購買 ${item.name}，${String(item.costTokens)} Token`}
+                        className="primary-action"
+                        disabled={equip.isPending || purchase.isPending}
+                        onClick={(event) => {
+                          purchaseTriggerRef.current = event.currentTarget;
+                          setSelectedPurchase(item);
+                        }}
+                        type="button"
+                      >
+                        購買 {String(item.costTokens)} Token
+                      </button>
+                    ) : (
+                      <button
+                        aria-label={`還差 ${String(shortfall)} Token，無法購買 ${item.name}`}
+                        className="blook-card__disabled"
+                        disabled
+                        type="button"
+                      >
+                        還差 {String(shortfall)} Token
+                      </button>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </GamePager>
       ) : (
         <FrameShopSection {...(repository ? { repository } : {})} />
       )}

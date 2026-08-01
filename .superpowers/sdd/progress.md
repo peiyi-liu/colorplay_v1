@@ -637,3 +637,5 @@ P1 Task 2: review clean (010108d; reviewer typo claim adjudicated FALSE by contr
 P1 Task 3: complete (lobby paging + chapter-select.spec revived page-aware)
 P1 Task 3: review clean (c4a933e, amended from acf8ede msg-only). chapter-select.spec REVIVED green (two copy drifts fixed: 開始挑戰→開始任務/繼續學習、鎖定中/敬請期待→尚未解鎖/完成前一章節後解鎖). DESIGN-DEBT for final fix wave: GamePager ArrowLeft to page1 → disabled button drops focus to body → next ArrowRight lost (fix in game-pager.tsx: move focus to opposite arrow when current becomes disabled).
 P1 Task 4: complete (mission select + dungeon floors paging)
+P1 Task 4: review clean (9c83d2f). Real playable=2 (only ch3/ch4 have questions) — mission-select no overflow at wide; floors all single-subtopic, no chrome anywhere at current seeds. Note: "6 playable" premise was controller dispatch context, not brief.
+P1 Task 5: complete (shop racks paging both tabs)
