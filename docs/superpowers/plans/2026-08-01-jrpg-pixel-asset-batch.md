@@ -573,6 +573,8 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 - [ ] **Step 1: 生成＋後製（量產一律帶 `--ref`）**
 
+**（0801 修訂——owner 裁定手繪路線：本步驟不呼叫 Gemini。延伸 scratchpad `assetgen/` 的網格渲染腳本，以定稿 anchor（monster-2／chest-1 網格）為基底手繪產出本 task 素材，直接輸出 palette-exact @1x 至 `src/assets/sprites/`；下列命令塊僅為 Gemini 備選路線存檔。產出後仍必跑 `python3 scripts/assets/check-sprites.py`。）**
+
 ```bash
 $V $G --ref "$A/monster.png" --prompt "the same slime monster, final clean version" --out "$O/monster-final.png"
 $V $G --ref "$A/chest.png" --prompt "the same treasure chest, box body only without lid" --out "$O/chest-base-raw.png"
@@ -660,6 +662,8 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Produces: 檔名如上；`.spirit-avatar__body::before`（配件）與 `.spirit-avatar__eyes` DOM 保留、CSS 退役。
 
 - [ ] **Step 1: 生成＋後製**
+
+**（0801 修訂——手繪路線：以 spirit-1 定稿網格為基底，紅/藍/綠三色 palette swap＋配件差異（紅=尖角/藍=方帽/綠=斜葉）直接畫進網格；hero 與 torch 依 anchor 風格新繪。不呼叫 Gemini；下列命令塊僅備選存檔。產出後必跑 check-sprites。）**
 
 ```bash
 $V $G --ref "$A/spirit.png" --prompt "the same fairy spirit, coral red body, small pointed horn on head" --out "$O/spirit-red-raw.png"
@@ -789,6 +793,8 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Produces: 檔名如上。**`src/features/auth/pages/login-page.tsx` 是平行 session 修改中檔案——login 換裝只准動 CSS。**
 
 - [ ] **Step 1: 生成＋後製**
+
+**（0801 修訂——手繪路線：village-silhouette 直接採 owner 定稿的 village-2 網格輸出；tile 兩張與 keeper 兩張依 anchor 風格新繪（tile 像素色仍須 clamp 至規定三色子集）。不呼叫 Gemini；下列命令塊僅備選存檔。產出後必跑 check-sprites。）**
 
 ```bash
 $V $G --ref "$A/village.png" --prompt "the same village silhouette, wide strip, rooftops and one tower, night navy" --out "$O/village-final.png"
@@ -936,6 +942,8 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Produces: 檔名如上；煙火從「兩個 span 定值定位」改為「podium 自身 pseudo-element」（B5a close-out D4 指定的結構性修法）——span 以 CSS `display: none` 退役，TSX 不動。
 
 - [ ] **Step 1: 生成＋後製**
+
+**（0801 修訂——手繪路線：rune-slot／camp-fire／gems／firework 依 anchor 風格新繪網格直接輸出。不呼叫 Gemini；下列命令塊僅備選存檔。產出後必跑 check-sprites。）**
 
 ```bash
 $V $G --ref "$A/chest.png" --prompt "small stone rune tablet slot, dark navy stone with carved border, tall rectangle" --out "$O/rune-raw.png"

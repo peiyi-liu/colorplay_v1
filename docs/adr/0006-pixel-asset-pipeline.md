@@ -18,3 +18,11 @@
      逐件替代；(B) 保留 CSS 幾何佔位、結批止損。任一退路都不得延長批次去「硬試」。
 - 影響：素材檔進 `src/assets/sprites/`（Vite 雜湊快取）；globals.css 消費；
   TSX 零接觸。`GEMINI_API_KEY` 為 owner 私有，不入 repo。
+- 修訂（2026-08-01 Task 3 執行時）：owner 的 Gemini key 為免費層，圖像生成配額
+  0（429 RESOURCE_EXHAUSTED, limit: 0，帳務門檻非速率），owner 裁定改採退路 A
+  機器輔助版為主路線——由 Claude 直接程式化手繪 @1x 像素網格（PIL 渲染，色彩
+  由建構保證 ⊆ 調色盤，免量化）。Gemini 生成降為備選（開帳單後可切回）。
+  打樣→owner 篩選→量產節奏與 `check-sprites.py` 守門不變；`pixelize.py` 保留
+  供外源圖後製。打樣 round 1＋2 已依此路線完成，owner 四項定稿：spirit-1／
+  monster-2／chest-1／village-2（anchor 網格源碼存 session scratchpad，PNG 存
+  design-audit anchor 目錄）。
