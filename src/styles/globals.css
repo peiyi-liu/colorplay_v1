@@ -6941,3 +6941,11 @@ select#dashboard-classroom {
 .live-report__medal--bronze {
   background: var(--rank-bronze-row);
 }
+
+/* Task 10 gate 觸控修補：.classroom-card__copy 沿用 2026-07-27 舊規格
+   min-height:32px（早於本批，非 Task 1-9 引入），/teacher/classes 真跑量測
+   (1440px, boundingBox) 讀出 50×32px，低於 44px 門檻；加大到 44px，字級/
+   內距/顏色不動。 */
+.classroom-card__copy {
+  min-height: 44px;
+}

@@ -698,3 +698,36 @@ P1 BATCH COMPLETE at cb969e4: opus whole-branch review Ready-to-merge=YES after 
 ## Teacher Workspace Batch (2026-08-02)
 
 Task 1: assertion inventory + docs commit
+Task 1: complete (commit cbd4a1e, review clean; Minor: inventory 行號偏移 91-110 實際 vs 93-104 記載，結論不受影響)
+Task 2: complete (commit 319dc68, review clean; gate 待驗: .hud-menu__panel tabIndex=-1 聚焦外框視覺)
+Task 3: complete (commit b31485a, review clean; Minor: forge 註解措辭與 DOM 略有出入—Live 控制台在 grid 外; gate 待驗: 夜窗對比/1024 兩欄 rendered)
+Task 4: complete (commits 1ed5fc0+40e13a5, review clean after fix; Important 修復: 測試綁定 rank↔嚴重度)
+Task 5: complete (commit 15e2c58, review clean)
+Task 6: complete (commit ebf9128, review clean; Minor/gate 待驗: header muted p on parchment ≈4.68:1 壓線)
+Task 7: complete (commit 1b5ce07, review clean)
+Task 8: complete (commit 08820cf, review clean; info: medal ?? 'bronze' fallback 不可達防禦碼)
+Task 9: complete (commits dc802f6+196fc31, review clean after fix; sizing 結論: assignments-live M/2 tasks, live-advanced L/4-5 tasks 需 owner 先裁 team/schedule 範疇, learning-experience S/2 tasks 優先)
+
+### Task 10 收批（Gate 全電池＋真跑量測）
+
+單元：`npx vitest run` 120 files / 831 tests 全綠。
+
+e2e 子集（`tests/e2e/teacher-content.spec.ts classroom-leaderboard.spec.ts live-smoke.spec.ts app-shell.visual.spec.ts accessibility.spec.ts chapter-select.spec.ts` --project=chromium）：app-shell.visual 8/8 PASS 無快照 diff（符合 Task 1 盤點：不含教師頁快照）；accessibility 5/5 PASS；chapter-select 1/1 PASS。teacher-content.spec.ts 裸跑擲 `TEACHER_CONTENT_ACCEPTANCE_MODE_REQUIRED`（acceptance-mode 守門，預期）；`PLAYWRIGHT_ACCEPTANCE=on` 後於「匯入內容」heading 逾時——追查 `git show cbd4a1e^:src/app/router/create-app-router.tsx` 證實該路由/頁面早在本批 Task 1 之前（07-30 設計交付批）就已移除，src/ 全域找不到「匯入內容」字串，與本批 Task 1-9 無關，既知紅、不修、不在子集責任內。classroom-leaderboard.spec.ts 裸跑同構守門錯誤（預期）；補上 `SUPABASE_URL`/`SUPABASE_ANON_KEY`（本機 `supabase status`）＋`PLAYWRIGHT_EVIDENCE_ROOT` 後 1/1 PASS，證實非缺陷（沿用既有慣例，見本檔 655 行同類先例）。
+
+live-smoke.spec.ts：**FAIL**（`createClassroom` 輔助函式 240s timeout）。根因：Task 5（commit 15e2c58）為 `/teacher/classes` 班級列表加上 `GamePager` 分頁；列表固定依 `created_at` 升冪排序（既有 migration `20260717000200`），`GamePager` 永遠從第 1 頁起始且無「新建項目所在頁自動導頁」邏輯；`live.host.teacher@colorplay.test` 帳號已累積 17-18 間班級（跨批次驗證殘留，超過 1 頁），新建的「Live冒煙班級」因此落在最後一頁，helper 的 `.last()` 只在當頁渲染的 DOM 內找，逾時找不到。這既是 Task 5 引入的真實迴歸，也是真實產品缺陷：任何累積班級數 >1 頁的教師新建班級後，新班級在列表上不可見，除非手動翻頁到底。修法（排序反轉／新建後自動跳頁／toast 捷徑）屬 JS 邏輯與產品決策，超出 Task 10「量測不改樣式，唯一例外聚焦補丁」的 CSS-only 回修授權，**不擅自修**——記為 BLOCKING，建議另立 fix wave，先由 owner 裁決 UX 方向。
+
+Step 3 真跑量測（`teacher@colorplay.test` + `live.host.teacher@colorplay.test`，1440px 起手，rendered `getComputedStyle`，沿祖先鏈正確 alpha 疊色）：
+
+對比全數 ≥4.5:1——dashboard/detail header intro p（muted on parchment）4.68／4.69（Task 6 壓線項確認過關）；夜窗 title 14.56、description 7.74（Task 3 待驗項過關）；analytics `.teacher-analytics-section > h2`（賢者窗語彙，`.sage-title-bar` 本身在 src/ 零消費者、死 CSS，非本批引入，僅記錄不清理）12.53；`.teacher-error-card__severity`（coral-700，於 `teacher@colorplay.test` 資料下量得，liveHostTeacher 當前無觸發嚴重度卡片）5.12（Task 4 待驗項過關）；票券碼 `.classroom-card__code-value` 11.48；classroom detail `.sage-page-header h1` 12.53；live-launch `.live-launch__field label`（gold-deep）5.30（Task 7 待驗項過關）。
+
+觸控：`.pixel-command` 指令鈕 437.13×56、MENU 鈕 71.61×44、`GamePager` 箭頭 44×44、Live `footer.live-presenter__controls` 唯一鈕（lobby「開始第一題」）192×52 皆已達標；**`.classroom-card__copy` 複製鈕 50×32 未達 44px**——回修：globals.css 檔尾追加 `.classroom-card__copy { min-height: 44px; }`（僅此一條，字級/內距/顏色不動），重跑後 50×44 過關。
+
+`.hud-menu__panel:focus` 視覺確認（Task 2 待驗項）：programmatic focus（tabIndex=-1）下 `getComputedStyle(...).outlineStyle === 'none'`，截圖亦無外框——**不需要**預授權的 focus-outline 補丁，未套用。
+
+1024/1440 溢出：classroom-detail／classes-list／analytics／live-launch-forge 四頁兩寬度下 `document.documentElement.scrollWidth === clientWidth`（零橫向溢出）；`.ui-table` 首欄 classroom-detail 80.28/91.19px、analytics 285.2/322px；`git diff cbd4a1e..196fc31 -- src/styles/globals.css` 確認 `.ui-table` 零改動，故「與 base 相同」在本批下必然成立。
+
+Debt 移交：1) **live-smoke.spec.ts 迴歸（BLOCKING，未修，見上）**；2) sizing 報告結論（Task 9）：assignments-live M/2 tasks、live-advanced L/4-5 tasks 需 owner 先裁 team/schedule 範疇，learning-experience S/2 tasks 優先；3) toast 錨定另議；4) skip-link 卷動邊界低影響未做；5) `.sage-title-bar` 死 CSS，僅記錄不清理。
+
+Commits（Teacher Workspace Batch 全批）：cbd4a1e 319dc68 b31485a 1ed5fc0 40e13a5 15e2c58 ebf9128 1b5ce07 08820cf dc802f6 196fc31 + 本收批 commit。
+
+**BATCH GATE: CONDITIONAL** — 單元／視覺快照／可及性／對比／觸控全綠（觸控 1 項回修後過關）；e2e 發現 1 項 Task 5 迴歸（live-smoke，累積班級 >1 頁時新建班級在列表上不可見）未修、阻擋 clean merge，待 owner 裁決 fix wave 範圍後再議合併。詳見 `.superpowers/sdd/teacher-task-10-gate-report.md`。
