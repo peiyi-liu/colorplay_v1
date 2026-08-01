@@ -694,3 +694,7 @@ P1 Task 7: review clean (d5066ca). 9 achievements → 2pp wide/3pp narrow; achie
 
 **BATCH COMPLETE.**
 P1 BATCH COMPLETE at cb969e4: opus whole-branch review Ready-to-merge=YES after final fix wave (F1 deferred arrow-focus handoff, F2 WIDE_QUERY landscape alignment, F3 ledger corrections, F4 remount comment, F5 e2e sync points). Batch commits 47eaf58..cb969e4 (9). Open non-blocking: rawPage staleness edge, disabled-arrow contrast exempt-noted, mission-select narrow 1/pp UX (owner-visible), lobby summary-compression spec sub-item dropped (scroll target met by paging alone), dungeon multi-subtopic KNOWN-UNVERIFIED until SSOT import. NOT merged/pushed per owner constraint.
+
+## Teacher Workspace Batch (2026-08-02)
+
+Task 1: assertion inventory + docs commit
