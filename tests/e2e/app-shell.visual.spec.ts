@@ -7,6 +7,7 @@ const viewports = [
   { height: 812, label: '320x812', width: 320 },
   { height: 812, label: '375x812', width: 375 },
   { height: 1024, label: '768x1024', width: 768 },
+  { height: 375, label: '812x375', width: 812 },
   { height: 900, label: '1440x900', width: 1440 },
 ] as const;
 
@@ -64,7 +65,7 @@ test.describe('flat-design application shell', () => {
       ).toBe(true);
 
       const forbiddenFlatStyles = await page
-        .locator('.app-shell *')
+        .locator('.game-stage *')
         .evaluateAll((elements) =>
           elements.flatMap((element) => {
             const styles = getComputedStyle(element);
@@ -86,6 +87,20 @@ test.describe('flat-design application shell', () => {
           }),
         );
       expect(forbiddenFlatStyles).toEqual([]);
+
+      const stageBox = await page.locator('.game-stage').boundingBox();
+      if (!stageBox) throw new Error('GAME_STAGE_NOT_RENDERED');
+      const isStageMode =
+        viewport.width >= 768 && viewport.width > viewport.height;
+      if (isStageMode) {
+        // letterbox 舞台：16:9（±2%）。
+        expect(
+          Math.abs(stageBox.width / stageBox.height - 16 / 9),
+        ).toBeLessThan(0.02 * (16 / 9));
+      } else {
+        // 直向/窄幅：舞台退場＝全幅。
+        expect(Math.round(stageBox.width)).toBe(viewport.width);
+      }
 
       await mkdir(`${evidenceRoot}/screenshots`, { recursive: true });
       await page.screenshot({
