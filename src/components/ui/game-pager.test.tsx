@@ -58,6 +58,28 @@ describe('GamePager', () => {
     expect(screen.getByText('第 1 / 3 頁')).toBeVisible();
   });
 
+  it('鍵盤連續 → 到尾頁後，← 仍可換頁（焦點不因箭頭停用而掉出分頁器）', async () => {
+    renderPager(7, 3);
+    screen.getByRole('button', { name: '下一頁' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard('{ArrowRight}');
+    expect(screen.getByText('第 3 / 3 頁')).toBeVisible();
+    expect(screen.getByRole('button', { name: '下一頁' })).toBeDisabled();
+    await userEvent.keyboard('{ArrowLeft}');
+    expect(screen.getByText('第 2 / 3 頁')).toBeVisible();
+  });
+
+  it('僅 2 頁時鍵盤 → 到尾頁後 ← 仍可換頁（另一箭頭換頁當下仍是舊 render 的 disabled 態）', async () => {
+    renderPager(7, 4);
+    expect(screen.getByText('第 1 / 2 頁')).toBeVisible();
+    screen.getByRole('button', { name: '下一頁' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(screen.getByText('第 2 / 2 頁')).toBeVisible();
+    expect(screen.getByRole('button', { name: '下一頁' })).toBeDisabled();
+    await userEvent.keyboard('{ArrowLeft}');
+    expect(screen.getByText('第 1 / 2 頁')).toBeVisible();
+  });
+
   it('items 縮短時頁碼 clamp 不越界', async () => {
     const { rerender } = renderPager(7, 3);
     await userEvent.click(screen.getByRole('button', { name: '下一頁' }));

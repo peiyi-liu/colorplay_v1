@@ -61,6 +61,7 @@ test('student sees all published chapters and every playable challenge', async (
     if (!hasPager) break;
     if (await nextButton.isDisabled()) break;
     await nextButton.click();
+    await expect(page.getByText(/第 \d+ \/ \d+ 頁/u)).toBeVisible();
     guard += 1;
     if (guard > 20) throw new Error('chapter pager loop guard exceeded');
   }
@@ -92,6 +93,7 @@ test('student sees all published chapters and every playable challenge', async (
       if ((await link.count()) > 0) break;
       if (!hasPager || (await nextButton.isDisabled())) break;
       await nextButton.click();
+      await expect(page.getByText(/第 \d+ \/ \d+ 頁/u)).toBeVisible();
       guard += 1;
       if (guard > 20) throw new Error('chapter pager search guard exceeded');
     }

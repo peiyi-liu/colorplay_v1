@@ -653,7 +653,7 @@ P1 Task 7: review clean (d5066ca). 9 achievements → 2pp wide/3pp narrow; achie
 
 **Step 2 e2e 電池**：
 - Must-pass 集（chapter-select／quiz-runner chromium／live-smoke／auth-account／app-shell.visual／classroom-leaderboard，皆 `--project=chromium`）：**13/13 PASS**（app-shell.visual 8 個子測試＋其餘 5 支各 1）。`classroom-leaderboard.spec.ts` 本質是 acceptance-mode phase-gate 測試（與 game-economy/achievements 同構），裸跑會擲 `CLASSROOM_LEADERBOARD_ACCEPTANCE_MODE_REQUIRED`；改用 `PLAYWRIGHT_ACCEPTANCE=on`＋`PLAYWRIGHT_EVIDENCE_ROOT` 跑其真實斷言（沿用既有 DB 狀態、未跑完整 db-reset/seed pipeline）後 **PASS**，證實非本批缺陷。quiz-runner `--project=firefox` 另跑 **1/1 PASS**。
-- 既知紅集（assignments-live／live-advanced／session-lifecycle／shared-device／game-economy／achievements／learning-experience／ui-restyle，`--project=chromium`）：**8/8 全紅，且與 base 逐字相符**。方法：`git worktree add` 建立 base(238dba9) 乾淨副本，`tsc -b && vite build` 後以獨立 port(4174) `vite preview` 起服務、`PLAYWRIGHT_BASE_URL` 指向該服務跑同一組 8 支，`diff` 正規化後（拿掉時間戳/port/worktree 路徑雜訊）**逐字比對零差異**（僅時間 ms 與 port 號不同）。6 支（achievements/assignments-live/game-economy/learning-experience/live-advanced + classroom-leaderboard 裸跑）為 acceptance-mode 守門 throw；session-lifecycle 卡在 checkpoint URL 還原斷言（`Expected /\/app\?chapter=color-theory#checkpoint$/`，實際落在 `/app`）；shared-device 卡在等待 `個人資料` 連結逾時——兩者與既有紅寶書記載（Task 9/10 gate）簽名一致，均為 0730 批以前既有缺陷，本批對 login-page.tsx／session-lifecycle.spec.ts／shared-device.spec.ts 零接觸。learning-experience 因裸跑即在 acceptance-mode gate 擲錯（未跑到 XP 斷言），故 Task 6 記載的 DB 漂移風險本輪未觸發，留待下次 acceptance 模式全跑時比對。
+- 既知紅集（assignments-live／live-advanced／session-lifecycle／shared-device／game-economy／achievements／learning-experience／ui-restyle，`--project=chromium`）：**8/8 全紅，且與 base 逐字相符**。方法：`git worktree add` 建立 base(238dba9) 乾淨副本，`tsc -b && vite build` 後以獨立 port(4174) `vite preview` 起服務、`PLAYWRIGHT_BASE_URL` 指向該服務跑同一組 8 支，`diff` 正規化後（拿掉時間戳/port/worktree 路徑雜訊）**逐字比對零差異**（僅時間 ms 與 port 號不同）。**訂正計數**：8 支的真實拆分＝5 支 acceptance-mode 守門 throw（achievements/assignments-live/game-economy/learning-experience/live-advanced）＋session-lifecycle＋shared-device＋ui-restyle＝8（先前記載誤把 classroom-leaderboard 裸跑算進這 6 支，但 classroom-leaderboard 屬 must-pass 集、不在此 8 支已知紅集合內，雖同構守門 throw 但應獨立計）。session-lifecycle 卡在 checkpoint URL 還原斷言（`Expected /\/app\?chapter=color-theory#checkpoint$/`，實際落在 `/app`）；shared-device 卡在等待 `個人資料` 連結逾時——兩者與既有紅寶書記載（Task 9/10 gate）簽名一致，均為 0730 批以前既有缺陷，本批對 login-page.tsx／session-lifecycle.spec.ts／shared-device.spec.ts 零接觸；ui-restyle 卡在 `/login` 找不到「ColorPlay 認證入口」文案，係 07-23 (`c0f7baf9`) 品牌標題簡化早於本批 base 即已過期，與 Task 5 review 記載簽名一致。learning-experience 因裸跑即在 acceptance-mode gate 擲錯（未跑到 XP 斷言），故 Task 6 記載的 DB 漂移風險本輪未觸發，留待下次 acceptance 模式全跑時比對。
 
 **Step 3 真跑電池**（拋棄式 Playwright script，`@playwright/test` chromium launcher 直接驅動，已於 session scratchpad 完成任務後不留痕；dev server `pnpm dev` port 5173）：三情境（1440×900／812×375／375×812）× 5 頁全跑。
 - **分頁 chrome 出現條件**：全數與容量算式相符——lobby 兩寬幅皆 2pp（6 章節 vs pageSize 3/2）、mission-select 於≥768寬（含 812×375，因 useStageWide 只認寬度）因 playable=2=pageSize2 **無 chrome**、375×812 窄幅則 2pp（pageSize1）；dungeon 三情境**皆無 chrome**（目前各小節題數 ≤ pageSize，與先前任務記載一致）；shop 兩籤在寬/812×375 皆 3pp、375×812 皆 5pp；mistakes 目前真實資料為 2 個小節內分頁群組（3-2:3pp/3pp/5pp、3-3:3pp/3pp/4pp 隨寬幅）+ 已解決 2pp/2pp/2pp（資料量已隨 Task 6/7 真跑測試變動，非批次代碼問題，頁數公式本身正確）；achievements 9 項於三情境皆 2pp/2pp/3pp。
@@ -675,7 +675,7 @@ P1 Task 7: review clean (d5066ca). 9 achievements → 2pp wide/3pp narrow; achie
 | mistakes | 3299→**1835** | 3824→**2360** | 5870→**2526** |
 | achievements | 63→**115**（↑52，見下） | 983→**826** | 1505→**528** |
 
-**已知例外（誠實記錄，非缺陷）**：achievements 於 1440×900 捲動量不減反增（63→115，仍遠小於一屏高度）。推測成因：9 項於 grid 固定欄數下本就只佔約 3 列；分頁後每頁 8 項的列數與未分頁 9 項相同（皆 ceil(n/欄數)=3 列），內容區高度幾乎不變，但新增的 `.game-pager__nav`（箭頭 44px + 間距）疊加約 50px 淨高——分頁「省列數」的效益在此特定項目數/欄數組合下為零，chrome 開銷unresult 淨增。批次其餘 6/7 個頁面 × 情境組合捲動量全數顯著下降（shop 375×812 降幅最大：6663→1275，−81%），批次核心目的（消除長捲動）整體達成，此為單一邊界組合的可預期副效應，不影響其餘量測結論，記為 design-debt 觀察（非本 gate 修復範圍）。
+**已知例外（誠實記錄，非缺陷）**：achievements 於 1440×900 捲動量不減反增（63→115，仍遠小於一屏高度）。推測成因：9 項於 grid 固定欄數下本就只佔約 3 列；分頁後每頁 8 項的列數與未分頁 9 項相同（皆 ceil(n/欄數)=3 列），內容區高度幾乎不變，但新增的 `.game-pager__nav`（箭頭 44px + 間距）疊加約 50px 淨高——分頁「省列數」的效益在此特定項目數/欄數組合下為零，chrome 開銷即為淨增（無列數縮減可抵銷）。批次其餘 6/7 個頁面 × 情境組合捲動量全數顯著下降（shop 375×812 降幅最大：6663→1275，−81%），批次核心目的（消除長捲動）整體達成，此為單一邊界組合的可預期副效應，不影響其餘量測結論，記為 design-debt 觀察（非本 gate 修復範圍）。
 
 **Step 4 對比電池**：131 筆 rendered 實測（三情境 × 每頁每個 pager 的 enabled 下一頁箭頭／disabled 上一頁箭頭／status／dot-on／dot-off，含 shop 兩籤＋mistakes 多群組），**全數 ≥4.5:1**（實測範圍 11.48:1–15.53:1，最低為 shop/achievements 系列 11.48:1，最高為 lobby/mistakes 系列 15.53:1）。Disabled 箭頭（非互動）比照量測入表，數值與 enabled 相同（顏色不受 disabled 影響，僅 opacity 0.45 視覺變化，對比公式取的是文字/圖形色與背景色，opacity 未納入計算——如需嚴謹計入視覺不透明度需另外複合背景色，此處記錄結構化色彩對比而非最終像素取樣值，供後續如需精算的起點）。
 
@@ -683,11 +683,13 @@ P1 Task 7: review clean (d5066ca). 9 achievements → 2pp wide/3pp narrow; achie
 
 **環境前置記錄**：本機 Supabase stack 執行前為 stopped，已 `supabase start` 重啟。working tree 另有一組非本批、非本 session 的未 commit 變更（`.gitignore`／`package.json`／`docs/content/*`／`scripts/content/*`／`login-page.tsx`／`supabase/seeds/content-*.sql`，研判為題庫 SSOT 平行 session WIP，沿用歷次 gate 慣例，已核實與本次結果無關、未觸碰、未 stage）。診斷用兩個暫時 git worktree（base 238dba9，分別用於 known-red 比對與 scroll 基線量測）已清除，未留痕。
 
-**遞延事項**：
-1. **GamePager 邊界頁焦點流失（設計債，雙向對稱，本輪訂正範圍）**：到達末頁/首頁時，剛好變 disabled 的箭頭若持有焦點會被瀏覽器踢到 `<body>`，導致下一次反向鍵盤操作失效。修法：`disabled` 觸發時把焦點移交給另一顆箭頭（或整個 group）。留待最終修復波。
-2. achievements 1440×900 捲動量 +52px 的 chrome 開銷觀察（見上），非阻斷，留待 owner 裁量是否需要在該特定項目數下調整 pageSize 門檻。
-3. 教師端深度＝批⑤b（0% 未開工，沿用既有記錄）。
+**遞延事項（final-review fix wave 後狀態，見下方附錄）**：
+1. ~~GamePager 邊界頁焦點流失（設計債，雙向對稱）~~ — **已修復**：`goToPage` 於邊界換頁時，若原本聚焦的箭頭即將 disabled，改把焦點移交給另一顆箭頭；`game-pager.test.tsx` 新增 RED→GREEN 迴歸測試（連續 ArrowRight 到尾頁後 ArrowLeft 仍生效）。
+2. achievements 1440×900 捲動量 +52px — **CLOSED，裁定 ACCEPTED 孤立例外**：3 欄 grid 下 `ceil(9/3)=ceil(8/3)=3` 列，分頁在此項目數/欄數組合下完全無列數可省；pageSize 容量維持 8（不因此個案下修容量表）。不再列為待決。
+3. shop 兩籤切換分頁狀態 — **CLOSED，非缺陷**：`ShopPage` 對角色籤直接掛 `<GamePager>`、對外框籤掛 `<FrameShopSection>`（內部另掛一顆 `<GamePager>`）——同一 JSX 位置兩種不同 element type，切籤即整棵子樹 unmount/remount，兩顆 pager 各自重新掛載回 `rawPage=0`；`page = Math.min(rawPage, pageCount-1)` 且 `pageCount = Math.max(1, …)` 保證 `page` 恆落在 `[0, pageCount-1]`，「切籤後停在空頁」情境結構上不可能發生（unreachable by clamp）。
+4. dungeon（chapter-detail）多子主題分頁路徑 — **KNOWN-UNVERIFIED（真瀏覽器）**：目前所有已種子章節小節皆為單子主題，「同一小節內多個 GamePager」的分支只被單元測試覆蓋，從未在真瀏覽器對多子主題真實資料跑過。待 SSOT 題庫匯入管線帶入多子主題小節後補測，屬 follow-up 非本波範圍。
+5. 教師端深度＝批⑤b（0% 未開工，沿用既有記錄）。
 
-詳見 `.superpowers/sdd/paging-task-8-report.md`。
+詳見 `.superpowers/sdd/paging-task-8-report.md`（含 `## Final-review fix wave` 附錄）。
 
 **BATCH COMPLETE.**
