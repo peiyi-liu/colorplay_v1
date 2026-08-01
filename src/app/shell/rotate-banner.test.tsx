@@ -15,14 +15,13 @@ function stubMatchMedia(matches: boolean) {
       cb: (event: MediaQueryListEvent) => void,
     ) => listeners.delete(cb),
   };
-  vi.stubGlobal(
-    'matchMedia',
-    vi.fn().mockReturnValue(media as unknown as MediaQueryList),
-  );
+  vi.stubGlobal('matchMedia', vi.fn().mockReturnValue(media));
   return {
     fire: (next: boolean) => {
       media.matches = next;
-      listeners.forEach((cb) => cb({ matches: next } as MediaQueryListEvent));
+      listeners.forEach((cb) => {
+        cb({ matches: next } as MediaQueryListEvent);
+      });
     },
   };
 }

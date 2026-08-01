@@ -14,17 +14,16 @@ vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'synthetic-browser-public-anon-key');
 // for their own scenario — that override wins for the test and
 // vi.unstubAllGlobals() restores this baseline afterwards.
 if (typeof window.matchMedia !== 'function') {
-  window.matchMedia = (query: string) =>
-    ({
-      addEventListener: () => {},
-      addListener: () => {},
-      dispatchEvent: () => false,
-      matches: false,
-      media: query,
-      onchange: null,
-      removeEventListener: () => {},
-      removeListener: () => {},
-    }) as unknown as MediaQueryList;
+  window.matchMedia = (query: string) => ({
+    addEventListener: () => undefined,
+    addListener: () => undefined,
+    dispatchEvent: () => false,
+    matches: false,
+    media: query,
+    onchange: null,
+    removeEventListener: () => undefined,
+    removeListener: () => undefined,
+  });
 }
 
 afterEach(cleanup);

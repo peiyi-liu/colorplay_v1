@@ -41,7 +41,7 @@ describe('AppShell', () => {
         matches: false,
         media: '(orientation: portrait)',
         removeEventListener: vi.fn(),
-      } as unknown as MediaQueryList),
+      }),
     );
     mockedUseEconomySummary.mockReset();
     mockedUseAuth.mockReturnValue({

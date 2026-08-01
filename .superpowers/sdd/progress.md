@@ -593,3 +593,5 @@ B5 Task 9: review clean (d3112f5+6c788c3). Fix wave: title-screen 320px overflow
 **環境備註**：執行時 working tree 另有一組非本批、非本 session 的未 commit 變更（`.gitignore`／`package.json` `content:*` scripts／`docs/content/*`／`scripts/content/import-fixes.json`／`src/features/auth/pages/login-page.tsx`／`supabase/seeds/content-*.sql`，研判為題庫 SSOT 平行 session WIP），已核實與本次 lint 錯誤清單無關、未觸碰。診斷用兩個暫時 git worktree（tip/base）已清除，未留痕。
 
 詳見 `.superpowers/sdd/task-10-report.md`。
+
+B5 Gate fix wave 1: lint 8 errors from 0a324fb resolved (src/app/shell/app-shell.test.tsx, src/app/shell/rotate-banner.test.tsx, src/test/setup.ts)
