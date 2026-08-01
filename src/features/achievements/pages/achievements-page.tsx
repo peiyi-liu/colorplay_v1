@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { GamePager, useStageWide } from '../../../components/ui/game-pager';
 import { Icon } from '../../../components/ui/icons';
 import { PageHeader } from '../../../components/ui/page-header';
 import { AchievementCard } from '../components/achievement-card';
@@ -11,6 +12,7 @@ export function AchievementsPage({
   repository,
 }: Readonly<{ repository?: AchievementRepository }>) {
   const achievements = useAchievements(repository);
+  const stageWide = useStageWide();
 
   if (achievements.isPending) return <RouteLoading withinMain />;
 
@@ -47,11 +49,22 @@ export function AchievementsPage({
         title="個人成就與徽章"
         titleId="achievements-title"
       />
-      <ul aria-label="成就徽章列表" className="pastel-grid achievements-grid">
-        {catalog.items.map((item) => (
-          <AchievementCard item={item} key={item.stableCode} />
-        ))}
-      </ul>
+      <GamePager
+        ariaLabel="成就徽章分頁"
+        items={catalog.items}
+        pageSize={stageWide ? 8 : 4}
+      >
+        {(pageItems) => (
+          <ul
+            aria-label="成就徽章列表"
+            className="pastel-grid achievements-grid"
+          >
+            {pageItems.map((item) => (
+              <AchievementCard item={item} key={item.stableCode} />
+            ))}
+          </ul>
+        )}
+      </GamePager>
     </section>
   );
 }

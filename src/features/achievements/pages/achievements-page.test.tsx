@@ -65,7 +65,7 @@ const renderPage = (repository: AchievementRepository) => {
 };
 
 describe('AchievementsPage', () => {
-  it('renders the server summary and preserves catalog order', async () => {
+  it('renders the server summary and preserves catalog order across pages', async () => {
     renderPage({ getCatalog: vi.fn().mockResolvedValue(catalog) });
 
     expect(
@@ -74,19 +74,66 @@ describe('AchievementsPage', () => {
     expect(
       screen.getByText('完成學習任務、累積挑戰紀錄，解鎖你的專屬色彩成就。'),
     ).toBeVisible();
-    const grid = screen.getByRole('list', { name: '成就徽章列表' });
-    const headings = within(grid).getAllByRole('heading', { level: 2 });
-    expect(headings.map((heading) => heading.textContent)).toEqual([
-      '初出茅廬',
-      '登峰造極',
-      '未開始 0',
-      '未開始 1',
-      '未開始 2',
-      '未開始 3',
-      '未開始 4',
-      '未開始 5',
-      '未開始 6',
-    ]);
+    // 分頁批:全域 matchMedia stub matches:false → narrow 容量 4,
+    // items=9 → 3 頁(頁1=初出茅廬/登峰造極/未開始0/未開始1,
+    // 頁2=未開始2-5,頁3=未開始6)。拆三段驗證,不再單測全量。
+    expect(await screen.findByText('第 1 / 3 頁')).toBeVisible();
+    let grid = screen.getByRole('list', { name: '成就徽章列表' });
+    expect(
+      within(grid)
+        .getAllByRole('heading', { level: 2 })
+        .map((heading) => heading.textContent),
+    ).toEqual(['初出茅廬', '登峰造極', '未開始 0', '未開始 1']);
+
+    await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
+
+    expect(screen.getByText('第 2 / 3 頁')).toBeVisible();
+    grid = screen.getByRole('list', { name: '成就徽章列表' });
+    expect(
+      within(grid)
+        .getAllByRole('heading', { level: 2 })
+        .map((heading) => heading.textContent),
+    ).toEqual(['未開始 2', '未開始 3', '未開始 4', '未開始 5']);
+
+    await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
+
+    expect(screen.getByText('第 3 / 3 頁')).toBeVisible();
+    grid = screen.getByRole('list', { name: '成就徽章列表' });
+    expect(
+      within(grid)
+        .getAllByRole('heading', { level: 2 })
+        .map((heading) => heading.textContent),
+    ).toEqual(['未開始 6']);
+  });
+
+  it('paginates when the catalog exceeds a page and next reaches trailing badges', async () => {
+    const overflowCatalog: AchievementCatalog = {
+      items: Array.from({ length: 10 }, (_, index) => ({
+        badgeKey: `overflow_${String(index)}`,
+        description: `溢出成就 ${String(index)}`,
+        displayName: `溢出徽章${String(index)}`,
+        progress: null,
+        stableCode: `overflow_${String(index)}`,
+        state: 'not_started' as const,
+        target: null,
+        unlockedAt: null,
+      })),
+      totalCount: 10,
+      unlockedCount: 0,
+    };
+    renderPage({ getCatalog: vi.fn().mockResolvedValue(overflowCatalog) });
+
+    // 分頁批:全域 matchMedia stub matches:false → narrow 容量 4,items=10 → 3 頁。
+    expect(await screen.findByText('第 1 / 3 頁')).toBeVisible();
+    expect(screen.getByRole('heading', { name: '溢出徽章0' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: '溢出徽章9' })).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
+    await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
+
+    expect(screen.getByText('第 3 / 3 頁')).toBeVisible();
+    expect(screen.getByRole('heading', { name: '溢出徽章9' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: '溢出徽章0' })).toBeNull();
   });
 
   it('uses the shared loading boundary', () => {

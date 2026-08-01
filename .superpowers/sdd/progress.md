@@ -641,3 +641,5 @@ P1 Task 4: review clean (9c83d2f). Real playable=2 (only ch3/ch4 have questions)
 P1 Task 5: complete (shop racks paging both tabs)
 P1 Task 5: review clean (55553b6). Shop pages 3pp wide both tabs; ui-restyle confirmed pre-base red (login-page c0f7baf9 07-23, matches shell-gate blame) — controller premise wrong, implementer A/B verified signature unchanged.
 P1 Task 6: complete (mistake codex in-group + resolved paging)
+P1 Task 6: review clean (24d868c). WARNING for parallel sessions & gate: student.one local-DB state MUTATED during real-app measurement — mistakes baseline was 33 open/0 resolved, now ~3+11+11 open/8 resolved, plus remediation XP at 20% rate accrued. learning-experience.spec exact-XP assertions (already env-red) drift further; gate must compare signatures accordingly. Future measurement mutating grade/token state should use disposable accounts.
+P1 Task 7: complete (hall of medals paging)
