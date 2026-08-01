@@ -97,8 +97,8 @@ import {
   createClassroom,
   findClassroomIdByName,
   joinClassroomByCode,
+  readClassroomJoinCode,
   readFirstMemberRef,
-  rotateClassroomJoinCode,
 } from '../../tests/e2e/helpers/classrooms.ts';
 
 const readArg = (flag) =>
@@ -168,7 +168,7 @@ async function openFirstChapter(page) {
 
 const AUDIT_CLASSROOM_NAME = '設計稽核班級';
 
-async function ensureAuditClassroomWithMember(teacherPage, browser) {
+async function ensureAuditClassroomWithMember(teacherPage) {
   await teacherPage.goto(`${base}/teacher/classes`);
   await teacherPage.waitForLoadState('networkidle');
 
@@ -190,18 +190,19 @@ async function ensureAuditClassroomWithMember(teacherPage, browser) {
 
   let memberRef = await readFirstMemberRef(teacherPage);
   if (!memberRef) {
-    const { joinCode } = await rotateClassroomJoinCode(teacherPage);
+    // 加入碼固定顯示在班級卡上、永不過期（owner 2026-07-27 裁定），既有帳號
+    // 加入班級也沒有任何 UI 入口了（見 tests/e2e/helpers/classrooms.ts 檔頭
+    // 說明）——讀目前的碼、直接呼叫 join_classroom RPC 即可，不再需要另開
+    // 學生分頁登入走 UI。
+    await teacherPage.goto(`${base}/teacher/classes`);
+    await teacherPage.waitForLoadState('networkidle');
+    const joinCode = await readClassroomJoinCode(
+      teacherPage,
+      AUDIT_CLASSROOM_NAME,
+    );
+    await joinClassroomByCode(TEST_USERS.studentOne, joinCode);
 
-    const studentContext = await browser.newContext({
-      baseURL: base,
-      reducedMotion: 'reduce',
-    });
-    const studentPage = await studentContext.newPage();
-    await loginAs(studentPage, 'student');
-    await joinClassroomByCode(studentPage, joinCode);
-    await studentContext.close();
-
-    await teacherPage.reload();
+    await teacherPage.goto(`${base}/teacher/classes/${classroomId}`);
     await teacherPage.waitForLoadState('networkidle');
     memberRef = await readFirstMemberRef(teacherPage);
     if (!memberRef)
@@ -220,7 +221,7 @@ async function ensureAuditClassroomWithMember(teacherPage, browser) {
 
 const LIVE_AUDIT_CLASSROOM_NAME = 'Live 設計稽核班級';
 
-async function ensureLiveAuditClassroomWithStudent(teacherPage, browser) {
+async function ensureLiveAuditClassroomWithStudent(teacherPage) {
   await teacherPage.goto(`${base}/teacher/classes`);
   await teacherPage.waitForLoadState('networkidle');
 
@@ -246,19 +247,23 @@ async function ensureLiveAuditClassroomWithStudent(teacherPage, browser) {
     await teacherPage.waitForLoadState('networkidle');
     const memberRef = await readFirstMemberRef(teacherPage);
     if (!memberRef) {
-      ({ joinCode } = await rotateClassroomJoinCode(teacherPage));
+      await teacherPage.goto(`${base}/teacher/classes`);
+      await teacherPage.waitForLoadState('networkidle');
+      joinCode = await readClassroomJoinCode(
+        teacherPage,
+        LIVE_AUDIT_CLASSROOM_NAME,
+      );
     }
   }
 
   if (joinCode) {
-    const studentContext = await browser.newContext({
-      baseURL: base,
-      reducedMotion: 'reduce',
-    });
-    const studentPage = await studentContext.newPage();
-    await signInStudent(studentPage, TEST_USERS.liveStudentOne);
-    await joinClassroomByCode(studentPage, joinCode);
-    await studentContext.close();
+    // liveStudentOne 必須是「入班的那個帳號本人」——後面 tHost 系列／
+    // liveQuestion／liveFull 都固定用 liveStudentOne 登入去加入場次，
+    // join_live_session RPC 會核對登入者本人是不是這間班級的 active 學生
+    // 成員（見 tests/e2e/helpers/classrooms.ts 檔頭說明），所以不能像舊版
+    // 那樣另開一個學生分頁隨便登入誰、走 UI 加入——直接呼叫
+    // join_classroom RPC 把 liveStudentOne 加進來。
+    await joinClassroomByCode(TEST_USERS.liveStudentOne, joinCode);
   }
 }
 
@@ -280,7 +285,7 @@ async function openLiveQuestionForStudent(studentPage, browser) {
   });
   const teacherPage = await teacherContext.newPage();
   await signInTeacher(teacherPage, TEST_USERS.liveHostTeacher);
-  await ensureLiveAuditClassroomWithStudent(teacherPage, browser);
+  await ensureLiveAuditClassroomWithStudent(teacherPage);
   const { presenter, joinCode } =
     await launchLiveSessionFromTeacherHome(teacherPage);
 
@@ -301,7 +306,7 @@ async function openLiveQuestionForStudent(studentPage, browser) {
 // 進場。回傳 sessionId（供各畫面解析動態路由）與 presenter／studentPage，
 // 呼叫端決定要把場次再往前推到哪個階段。
 async function launchLiveSessionForHostAudit(teacherPage, browser) {
-  await ensureLiveAuditClassroomWithStudent(teacherPage, browser);
+  await ensureLiveAuditClassroomWithStudent(teacherPage);
   const { presenter, joinCode } =
     await launchLiveSessionFromTeacherHome(teacherPage);
   const sessionId = new URL(teacherPage.url()).pathname.split('/').pop();
@@ -510,10 +515,8 @@ async function runSetup(page, browser, screen) {
   }
 
   if (screen.id === 'tClassDetail' || screen.id === 'tStudentProgress') {
-    const { classroomId, memberRef } = await ensureAuditClassroomWithMember(
-      page,
-      browser,
-    );
+    const { classroomId, memberRef } =
+      await ensureAuditClassroomWithMember(page);
     return {
       route:
         screen.id === 'tClassDetail'

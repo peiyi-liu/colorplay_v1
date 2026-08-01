@@ -86,9 +86,14 @@ test('Live smoke: 單人場次從等待室走到頒獎台', async ({
     CLASSROOM_NAME,
   );
 
+  // 現行產品對已有帳號的 fixture 沒有任何「加入班級」UI 入口（一次性加入碼
+  // modal 與 /join/:code 都已隨 07-27/07-30 owner 裁定移除，見
+  // helpers/classrooms.ts 檔頭說明），改由 helper 直接呼叫 join_classroom
+  // RPC；signInStudent 內建的大廳斷言已足以確認登入成功，加入是否成功則由
+  // 下面「加入課堂」一步（join_live_session RPC 會檢查班級成員身分）間接
+  // 驗證，不需要重複斷言。
+  await joinClassroomByCode(TEST_USERS.liveStudentOne, classroomCode);
   await signInStudent(studentPage, TEST_USERS.liveStudentOne);
-  await joinClassroomByCode(studentPage, classroomCode);
-  await expect(studentPage).toHaveURL(/\/app\/leaderboard\//u);
 
   // --- 開新場次（主持發射台：選單元→一鍵開場，直入投影模式）---
   // 選擇器序列與 scripts/design-audit 的截圖 runner 共用，抽成
