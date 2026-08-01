@@ -17,6 +17,11 @@ import {
   unexpectedBrowserHealth,
 } from './browser-health';
 import { classroomLeaderboardExpectedFailureDeclarations } from './classroom-leaderboard-expected-failures';
+import {
+  createClassroom,
+  findClassroomIdByName,
+  joinClassroomByCode,
+} from './helpers/classrooms';
 
 const challenge = CONTENT_MANIFEST.find(
   ({ questionCount }) => questionCount >= 10,
@@ -34,7 +39,11 @@ const requiredEnvironment = (name: 'SUPABASE_ANON_KEY' | 'SUPABASE_URL') => {
   return value;
 };
 
-const signIn = async (
+// 教師／學生共用登入表單（email 橋接一律導向 /app），但 app-shell.tsx 的導覽列
+// 是依帳號角色（isTeacher）擇一渲染，不是依路徑：教師帳號登入後即使停在
+// /app 也只會看到「教師導覽」，看不到「主要導覽」——舊版共用同一支 signIn
+// 斷言「主要導覽」，對教師帳號必定逾時失敗，拆成兩支各自斷言正確的導覽列。
+const signInStudent = async (
   page: Page,
   credentials: Readonly<{ email: string; password: string }>,
 ) => {
@@ -45,6 +54,23 @@ const signIn = async (
   await expect(page).toHaveURL(/\/app$/u);
   await expect(
     page.getByRole('navigation', { name: '主要導覽' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
+  ).toBeVisible();
+};
+
+const signInTeacher = async (
+  page: Page,
+  credentials: Readonly<{ email: string; password: string }>,
+) => {
+  await page.goto('/login');
+  await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
+  await page.getByLabel('密碼').fill(credentials.password);
+  await page.getByRole('button', { name: '登入' }).click();
+  await expect(page).toHaveURL(/\/app$/u);
+  await expect(
+    page.getByRole('navigation', { name: '教師導覽' }),
   ).toBeVisible();
   await expect(
     page.getByRole('heading', { name: '色彩任務選擇大廳' }),
@@ -111,75 +137,65 @@ test('Classroom and Leaderboard v2 phase gate', async ({
     { health: teacherBHealth, page: teacherBPage },
   ];
 
-  await signIn(studentAPage, TEST_USERS.studentOne);
+  await signInStudent(studentAPage, TEST_USERS.studentOne);
   await studentAPage.goto('/teacher/classes');
   await expect(studentAPage).toHaveURL(/\/unauthorized$/u);
   await expect(
     studentAPage.getByRole('heading', { name: '沒有權限' }),
   ).toBeVisible();
 
-  await signIn(teacherPage, TEST_USERS.classroomRepositoryTeacher);
+  await signInTeacher(teacherPage, TEST_USERS.classroomRepositoryTeacher);
   await teacherPage.goto('/teacher/classes');
   const classroomName = `Phase 3 ${Date.now().toString(36)}`;
-  await teacherPage
-    .getByRole('textbox', { name: '班級名稱' })
-    .fill(classroomName);
-  await teacherPage.getByRole('button', { name: '建立班級' }).click();
-  const createReceipt = teacherPage.getByLabel('一次性班級加入碼');
-  await expect(createReceipt).toBeVisible();
-  const oldCode = (await createReceipt.locator('strong').innerText()).trim();
-  await teacherPage.getByRole('link', { name: '管理班級' }).click();
-  await teacherPage.waitForURL(teacherClassroomUrlPattern);
-  const classroomId = new URL(teacherPage.url()).pathname.split('/').at(-1);
+  const { joinCode: oldCode } = await createClassroom(
+    teacherPage,
+    classroomName,
+  );
+  const classroomId = await findClassroomIdByName(teacherPage, classroomName);
   if (!classroomId || !classroomIdPattern.test(classroomId)) {
     throw new Error('CLASSROOM_LEADERBOARD_CLASSROOM_ID_MISSING');
   }
-  await teacherPage.getByRole('button', { name: '輪替加入碼' }).click();
-  await expect(teacherPage.getByRole('dialog')).toContainText(
-    '舊加入碼會立即失效',
+  await teacherPage.goto(`/teacher/classes/${classroomId}`);
+  await expect(teacherPage).toHaveURL(teacherClassroomUrlPattern);
+
+  // 加入碼輪替＋舊碼失效驗收：教師班級頁的「輪替加入碼／確認輪替」按鈕與
+  // 一次性加入碼 modal 已隨 07-27/07-30 owner 裁定移除（見
+  // helpers/classrooms.ts 檔頭說明），輪替能力仍留在 repository 層
+  // （classroom-repository.ts 的 rotateJoinCode——本檔 268 行已有同一模式的
+  // 前例），改直接呼叫該層驗證舊碼失效、新碼可用；學生端也已無「加入班級」
+  // UI 入口，改用 helpers/classrooms.ts 的 joinClassroomByCode 直接呼叫
+  // join_classroom RPC。
+  const rotationClient = createClient<Database>(
+    requiredEnvironment('SUPABASE_URL'),
+    requiredEnvironment('SUPABASE_ANON_KEY'),
+    { auth: { autoRefreshToken: false, persistSession: false } },
   );
-  await teacherPage.getByRole('button', { name: '確認輪替' }).click();
-  const rotateReceipt = teacherPage.getByLabel('一次性班級加入碼');
-  await expect(rotateReceipt).toBeVisible();
-  const newCode = (await rotateReceipt.locator('strong').innerText()).trim();
+  const rotationSignIn = await rotationClient.auth.signInWithPassword(
+    TEST_USERS.classroomRepositoryTeacher,
+  );
+  expect(rotationSignIn.error).toBeNull();
+  const rotated =
+    await createClassroomRepository(rotationClient).rotateJoinCode(classroomId);
+  await rotationClient.auth.signOut({ scope: 'local' });
+  const newCode = rotated.joinCode;
   expect(newCode).not.toBe(oldCode);
 
-  await studentAPage.goto(`/join/${oldCode}`);
-  declareExpectedBrowserFailure(studentAHealth, {
-    ...classroomLeaderboardExpectedFailureDeclarations.oldJoinCode,
-  });
-  await studentAPage.getByRole('button', { name: '加入班級' }).click();
-  await expect(studentAPage.getByRole('alert')).toContainText(
-    '加入碼無效或已失效',
-  );
-  const joinCodeInput = studentAPage.getByRole('textbox', {
-    name: '班級加入碼',
-  });
-  await joinCodeInput.fill(newCode);
-  await studentAPage.setViewportSize({ width: 375, height: 812 });
-  await studentAPage.screenshot({
-    fullPage: true,
-    path: testInfo.outputPath('classroom-join-375x812.png'),
-  });
-  await studentAPage.getByRole('button', { name: '加入班級' }).dblclick();
-  await expect(studentAPage).toHaveURL(
-    new RegExp(`/app/leaderboard/${classroomId}$`, 'u'),
-  );
+  await expect(
+    joinClassroomByCode(TEST_USERS.studentOne, oldCode),
+  ).rejects.toThrow(/INVALID_CLASSROOM_CODE/u);
+
+  await joinClassroomByCode(TEST_USERS.studentOne, newCode);
   await teacherPage.reload();
   await expect(teacherPage.getByRole('row')).toHaveCount(2);
 
-  await signIn(studentBPage, TEST_USERS.studentTwo);
-  await studentBPage.goto(`/join/${newCode}`);
-  await studentBPage.getByRole('button', { name: '加入班級' }).click();
-  await expect(studentBPage).toHaveURL(
-    new RegExp(`/app/leaderboard/${classroomId}$`, 'u'),
-  );
+  await signInStudent(studentBPage, TEST_USERS.studentTwo);
+  await joinClassroomByCode(TEST_USERS.studentTwo, newCode);
 
   declareExpectedBrowserFailure(
     outsiderHealth,
     classroomLeaderboardExpectedFailureDeclarations.outsiderLeaderboard,
   );
-  await signIn(outsiderPage, TEST_USERS.outsider);
+  await signInStudent(outsiderPage, TEST_USERS.outsider);
   await outsiderPage.goto(`/app/leaderboard/${classroomId}`);
   await expect(outsiderPage.getByRole('alert')).toContainText('無法顯示排行榜');
 
@@ -187,7 +203,7 @@ test('Classroom and Leaderboard v2 phase gate', async ({
     teacherBHealth,
     classroomLeaderboardExpectedFailureDeclarations.teacherBMembers,
   );
-  await signIn(teacherBPage, TEST_USERS.teacherTwo);
+  await signInTeacher(teacherBPage, TEST_USERS.teacherTwo);
   await teacherBPage.goto(`/teacher/classes/${classroomId}`);
   await expect(teacherBPage.getByRole('alert')).toContainText('沒有管理權限');
 
@@ -215,8 +231,10 @@ test('Classroom and Leaderboard v2 phase gate', async ({
     );
 
   await studentAPage.goto(`/app/leaderboard/${classroomId}`);
+  // owner 0728 裁定：排行榜標題不帶班名（學生本來就只看得到自己班），見
+  // classroom-leaderboard-page.tsx 的 h1，固定文案「排行榜」。
   await expect(
-    studentAPage.getByRole('heading', { name: `${classroomName}排行榜` }),
+    studentAPage.getByRole('heading', { name: '排行榜' }),
   ).toBeVisible({ timeout: 5_000 });
   const rows = studentAPage
     .getByRole('table', { name: `${classroomName} Top 10` })

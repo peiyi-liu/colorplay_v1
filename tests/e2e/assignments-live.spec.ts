@@ -22,7 +22,11 @@ if (!challenge) throw new Error('ASSIGNMENTS_LIVE_CHALLENGE_MISSING');
 const sessionUrlPattern =
   /\/teacher\/live\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/iu;
 
-const signIn = async (
+// 教師／學生共用登入表單（email 橋接一律導向 /app），但 app-shell.tsx 的導覽列
+// 是依帳號角色（isTeacher）擇一渲染，不是依路徑：教師帳號登入後即使停在
+// /app 也只會看到「教師導覽」，看不到「主要導覽」——舊版共用同一支 signIn
+// 斷言「主要導覽」，對教師帳號必定逾時失敗，拆成兩支各自斷言正確的導覽列。
+const signInStudent = async (
   page: Page,
   credentials: Readonly<{ email: string; password: string }>,
 ) => {
@@ -41,24 +45,21 @@ const signIn = async (
   ).toBeVisible();
 };
 
-const completeAssignmentQuiz = async (page: Page) => {
-  for (let position = 1; position <= 10; position += 1) {
-    await expect(page.getByLabel('挑戰進度')).toContainText(
-      `第 ${String(position)} / 10 題`,
-    );
-    const prompt = await page.locator('.question-card legend').innerText();
-    const answer = GENERATED_CORRECT_ANSWERS.get(prompt);
-    if (!answer) throw new Error('ASSIGNMENTS_LIVE_ANSWER_MISSING');
-    await page.getByRole('radio', { name: answer }).check();
-    await page.getByRole('button', { name: '送出答案' }).click();
-    await expect(page.getByRole('heading', { name: '✓ 答對了' })).toBeVisible();
-    await page
-      .getByRole('button', {
-        name: position === 10 ? '結算並查看結果' : '我理解了，下一題',
-      })
-      .click();
-  }
-  await expect(page.getByRole('heading', { name: '挑戰完成' })).toBeVisible();
+const signInTeacher = async (
+  page: Page,
+  credentials: Readonly<{ email: string; password: string }>,
+) => {
+  await page.goto('/login');
+  await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
+  await page.getByLabel('密碼').fill(credentials.password);
+  await page.getByRole('button', { name: '登入' }).click();
+  await expect(page).toHaveURL(/\/app$/u);
+  await expect(
+    page.getByRole('navigation', { name: '教師導覽' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
+  ).toBeVisible();
 };
 
 const percentile = (samples: readonly number[], fraction: number): number => {
@@ -142,50 +143,17 @@ test('Assignments and Live Core phase gate', async ({
   trackRpcDurations(hostPage, 'finalize_live_session', finalizeDurations);
 
   await Promise.all([
-    signIn(hostPage, TEST_USERS.teacher),
-    signIn(studentAPage, TEST_USERS.studentOne),
-    signIn(studentBPage, TEST_USERS.studentTwo),
+    signInTeacher(hostPage, TEST_USERS.teacher),
+    signInStudent(studentAPage, TEST_USERS.studentOne),
+    signInStudent(studentBPage, TEST_USERS.studentTwo),
   ]);
 
-  // --- Assignments: teacher creates and publishes for the fixture class ---
-  await hostPage.goto('/teacher/classes');
-  await hostPage
-    .getByRole('listitem')
-    .filter({ hasText: CLASSROOM_FIXTURES.teacherOneClassroom.name })
-    .getByRole('link', { name: '管理班級' })
-    .click();
-  await hostPage.getByRole('link', { name: '作業管理' }).click();
-  await expect(
-    hostPage.getByRole('heading', { name: '班級作業' }),
-  ).toBeVisible();
-  await hostPage.getByLabel('作業標題').fill('期末色彩作業');
-  await hostPage.getByLabel('次數上限（可留空）').fill('2');
-  await hostPage.getByRole('button', { name: '建立作業' }).click();
-  const assignmentRow = hostPage.getByRole('row', { name: /期末色彩作業/u });
-  await expect(assignmentRow).toBeVisible();
-  await assignmentRow.getByRole('button', { name: '發佈' }).click();
-  await hostPage.getByRole('button', { name: '確認' }).click();
-  await expect(assignmentRow.getByText('進行中')).toBeVisible();
-
-  // --- Student completes the assignment through the real quiz runner ---
-  await studentAPage.goto('/app/assignments');
-  await studentAPage.getByRole('link', { name: '期末色彩作業' }).click();
-  await expect(
-    studentAPage.getByRole('heading', { name: '期末色彩作業' }),
-  ).toBeVisible();
-  await studentAPage.setViewportSize({ width: 375, height: 812 });
-  await studentAPage.screenshot({
-    fullPage: true,
-    path: testInfo.outputPath('assignment-detail-375x812.png'),
-  });
-  await studentAPage.setViewportSize({ width: 1280, height: 720 });
-  await studentAPage.getByRole('button', { name: '開始作答' }).click();
-  await completeAssignmentQuiz(studentAPage);
-  await expect(studentAPage.getByText('作業已完成並通過。')).toBeVisible();
-  await studentAPage.getByRole('link', { name: '返回我的作業' }).click();
-  await expect(studentAPage.getByText(/次數 1 \/ 2・已通過/u)).toBeVisible();
-
   // --- Live: host creates an activity and opens a session ---
+  // Assignments 功能已依 0730 設計交付批 owner 裁定移除且不復活（見
+  // colorplay-0730-design-handoff 備忘），本檔原本「教師建立/發佈作業→學生
+  // 透過作業入口完成測驗」的段落已整段刪除；以下 Live 場次覆蓋（雙主持分頁
+  // 搶答衝突、速度加成計分、學生中途重整回執）與 live-smoke／live-advanced
+  // 不重複，獨立保留。
   await hostPage.goto('/teacher/live');
   await hostPage.getByLabel('活動標題').fill('Live 期末對戰');
   await hostPage.getByRole('button', { name: '建立活動' }).click();
@@ -229,7 +197,7 @@ test('Assignments and Live Core phase gate', async ({
       // Outsider denial arrives as a committed 200 payload error since
       // 2026-07-live-3 (throttle counting), so it is verified by the
       // visible message instead of a declared 4xx.
-      await signIn(outsiderPage, TEST_USERS.outsider);
+      await signInStudent(outsiderPage, TEST_USERS.outsider);
       await outsiderPage.goto('/app/live/join');
       await outsiderPage.getByLabel('課堂代碼').fill(codeText);
       await outsiderPage.getByRole('button', { name: '加入課堂' }).click();

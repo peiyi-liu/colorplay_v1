@@ -10,6 +10,7 @@ import {
   expectedBrowserFailures,
   unexpectedBrowserHealth,
 } from './browser-health';
+import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
 
 const CLASSROOM_NAME = '進階Live班級';
 const QUESTION_COUNT = 10;
@@ -159,29 +160,21 @@ test('Live Advanced phase gate', async ({
   // --- Classroom with both dedicated live students ---
   await signInTeacher(teacherPage, TEST_USERS.liveHostTeacher);
   await teacherPage.goto('/teacher/classes');
-  await teacherPage
-    .getByRole('textbox', { name: '班級名稱' })
-    .fill(CLASSROOM_NAME);
-  await teacherPage.getByRole('button', { name: '建立班級' }).click();
-  const receipt = teacherPage.getByLabel('一次性班級加入碼');
-  await expect(receipt).toBeVisible();
-  const classroomCode = (await receipt.locator('strong').innerText()).trim();
+  const { joinCode: classroomCode } = await createClassroom(
+    teacherPage,
+    CLASSROOM_NAME,
+  );
 
+  // 現行產品對已有帳號的 fixture 沒有任何「加入班級」UI 入口（一次性加入碼
+  // modal 與 /join/:code 都已隨 07-27/07-30 owner 裁定移除，見
+  // helpers/classrooms.ts 檔頭說明），改由 helper 直接呼叫 join_classroom
+  // RPC；join 是否成功由後面「加入課堂」（join_live_session RPC 會檢查班級
+  // 成員身分）間接驗證，不需要重複斷言離開登入後導向哪個頁面。
+  await joinClassroomByCode(TEST_USERS.liveStudentOne, classroomCode);
   await signInStudent(studentAPage, TEST_USERS.liveStudentOne);
-  await studentAPage.goto(`/join/${classroomCode}`);
-  await studentAPage.getByRole('button', { name: '加入班級' }).click();
-  await expect(studentAPage).toHaveURL(/\/app\/leaderboard\//u);
-  await expect(
-    studentAPage.getByRole('heading', { name: `${CLASSROOM_NAME}排行榜` }),
-  ).toBeVisible();
 
+  await joinClassroomByCode(TEST_USERS.liveStudentTwo, classroomCode);
   await signInStudent(studentBPage, TEST_USERS.liveStudentTwo);
-  await studentBPage.goto(`/join/${classroomCode}`);
-  await studentBPage.getByRole('button', { name: '加入班級' }).click();
-  await expect(studentBPage).toHaveURL(/\/app\/leaderboard\//u);
-  await expect(
-    studentBPage.getByRole('heading', { name: `${CLASSROOM_NAME}排行榜` }),
-  ).toBeVisible();
 
   // --- Activity, schedule, and a team-mode session ---
   await teacherPage.goto('/teacher/live');
