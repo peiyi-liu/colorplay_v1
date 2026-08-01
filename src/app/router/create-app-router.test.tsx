@@ -176,7 +176,7 @@ const renderRouter = (path: string, session: AuthSession | null = null) => {
 
 describe('createAppRouter', () => {
   it.each([
-    ['/', 'ColorPlay', '前往登入'],
+    ['/', 'ColorPlay', 'PRESS START'],
     ['/unauthorized', '沒有權限', '返回登入'],
     ['/missing-route', '找不到頁面', '返回首頁'],
     // 學習進度依 owner 批示（2026-07-26 #2）改為教師專屬；學生端

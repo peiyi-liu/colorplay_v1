@@ -11,7 +11,7 @@ const viewports = [
 ] as const;
 
 const routes = [
-  { action: '前往登入', path: '/', role: 'link' },
+  { action: 'PRESS START', path: '/', role: 'link' },
   { action: '登入', path: '/login', role: 'button' },
   { action: '登入', path: '/app', role: 'button' },
   { action: '返回登入', path: '/unauthorized', role: 'link' },

@@ -344,6 +344,71 @@ a {
   margin-top: var(--space-8);
 }
 
+/* ── 遊戲標題畫面（spec §8）────────────────────────────────────── */
+.title-screen {
+  display: flex;
+  flex: 1;
+  min-height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  background: var(--pixel-night-deep);
+  color: var(--pixel-parchment);
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+}
+
+.title-screen__logo {
+  margin: 0;
+  font-family: var(--font-pixel-latin), var(--font-pixel-tc), sans-serif;
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  letter-spacing: 0.06em;
+}
+
+.title-screen__subtitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.title-screen__start {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-night);
+  box-shadow: 4px 4px 0 var(--pixel-shadow);
+  color: var(--pixel-parchment);
+  font-family: var(--font-pixel-latin), var(--font-pixel-tc), sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-5);
+  text-decoration: none;
+  animation: title-start-blink 1.6s steps(2, jump-none) infinite;
+}
+
+@keyframes title-start-blink {
+  50% {
+    opacity: 0.7; /* 最暗幀對比仍 ≥4.5:1（parchment on night-deep ≈14:1，×0.7 有餘裕；gate 實測把關） */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title-screen__start {
+    animation: none;
+  }
+}
+
+[data-reduced-motion='true'] .title-screen__start {
+  animation: none;
+}
+
 .login-form {
   display: grid;
   gap: var(--space-4);

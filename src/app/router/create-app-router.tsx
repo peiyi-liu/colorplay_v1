@@ -17,6 +17,7 @@ import { RouteErrorBoundary } from '../boundaries/root-error-boundary';
 import { RouteLoading } from '../boundaries/route-loading';
 import { AppShell } from '../shell/app-shell';
 import { RoutePage } from './route-page';
+import { TitlePage } from './title-page';
 
 export function createAppRouter() {
   return createBrowserRouter([
@@ -27,15 +28,7 @@ export function createAppRouter() {
       children: [
         {
           path: '/',
-          element: (
-            <RoutePage
-              actionLabel="前往登入"
-              actionTo="/login"
-              eyebrow="色彩原理"
-              heading="ColorPlay"
-              message="用清楚的節奏，建立你的色彩學習旅程。"
-            />
-          ),
+          element: <TitlePage />,
         },
         {
           path: '/login',
