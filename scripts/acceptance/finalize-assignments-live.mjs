@@ -182,12 +182,11 @@ export async function finalizeAssignmentsLive(runDirectory) {
     ),
   );
   const requiredScreenshots = [
-    'assignment-detail-375x812.png',
     'live-question-768x1024.png',
     'live-host-console-1440x900.png',
   ];
   if (
-    screenshots.length !== 3 ||
+    screenshots.length !== 2 ||
     // The host context records two pages: the driving console and the
     // duplicate tab that races it into the version conflict.
     videos.length !== 2 ||

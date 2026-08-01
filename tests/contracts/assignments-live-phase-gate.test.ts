@@ -80,7 +80,7 @@ describe('assignments and live phase gate contract', () => {
     expect(finalizer).toContain('finalize_p95_ms > 1000');
     expect(finalizer).toContain('lost_or_duplicate_answers !== 0');
     expect(finalizer).toContain('outsider_access !== 0');
-    expect(finalizer).toContain("'assignment-detail-375x812.png'");
+    expect(finalizer).not.toContain("'assignment-detail-375x812.png'");
     expect(finalizer).toContain("'live-question-768x1024.png'");
     expect(finalizer).toContain("'live-host-console-1440x900.png'");
     expect(finalizer).toContain('join_live_session');

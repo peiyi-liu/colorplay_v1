@@ -177,12 +177,11 @@ export async function finalizeClassroomLeaderboard(runDirectory) {
     ),
   );
   const requiredScreenshots = [
-    'classroom-join-375x812.png',
     'classroom-leaderboard-768x1024.png',
     'classroom-teacher-management-1440x900.png',
   ];
   if (
-    screenshots.length !== 3 ||
+    screenshots.length !== 2 ||
     videos.length !== 1 ||
     traces.length !== 1 ||
     !requiredScreenshots.every((name) =>

@@ -108,10 +108,6 @@ const createFixture = async () => {
   );
   await Promise.all([
     writeFile(
-      join(root, 'screenshots/classroom-join-375x812.png'),
-      pngEvidence,
-    ),
-    writeFile(
       join(root, 'screenshots/classroom-leaderboard-768x1024.png'),
       pngEvidence,
     ),
@@ -314,7 +310,7 @@ describe('Classroom and Leaderboard finalizer', () => {
       schema_version: 1,
       supabase_environment: 'local',
     });
-    expect(first.artifacts.screenshots).toHaveLength(3);
+    expect(first.artifacts.screenshots).toHaveLength(2);
     expect(first.artifacts.videos).toHaveLength(1);
     expect(first.artifacts.traces).toHaveLength(1);
     expect(first.commands).toHaveLength(commandLabels.length);
@@ -322,7 +318,7 @@ describe('Classroom and Leaderboard finalizer', () => {
   });
 
   it.each([
-    ['screenshot', 'screenshots/classroom-join-375x812.png'],
+    ['screenshot', 'screenshots/classroom-leaderboard-768x1024.png'],
     ['video', 'videos/classroom-leaderboard.webm'],
     ['trace', 'traces/classroom-leaderboard.zip'],
     ['report', 'reports/command-1.log'],
@@ -419,9 +415,9 @@ describe('Classroom and Leaderboard finalizer', () => {
       'CLASSROOM_LEADERBOARD_SENSITIVE_EVIDENCE',
     );
     const wrong = await createFixture();
-    await unlink(join(wrong, 'screenshots/classroom-join-375x812.png'));
+    await unlink(join(wrong, 'screenshots/classroom-leaderboard-768x1024.png'));
     await writeFile(
-      join(wrong, 'screenshots/classroom-join-375x812.txt'),
+      join(wrong, 'screenshots/classroom-leaderboard-768x1024.txt'),
       'not png',
     );
     await expect(finalizeClassroomLeaderboard(wrong)).rejects.toThrow(

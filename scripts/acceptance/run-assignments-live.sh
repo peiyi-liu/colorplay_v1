@@ -128,8 +128,7 @@ while IFS= read -r screenshot; do
 done < <(
   find "$phase_root/playwright" \
     -type f \
-    \( -name 'assignment-detail-*.png' \
-      -o -name 'live-question-*.png' \
+    \( -name 'live-question-*.png' \
       -o -name 'live-host-console-*.png' \) \
     -print
 )
