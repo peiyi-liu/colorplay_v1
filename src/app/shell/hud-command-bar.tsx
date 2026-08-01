@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 
 const commandTabClassName = ({ isActive }: { isActive: boolean }) =>
@@ -19,11 +19,17 @@ export function HudCommandBar({
   variant: 'student' | 'teacher';
 }>): ReactElement {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuToggleRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMenuOpen(false);
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+        // F6 final-review 修法：Escape 關閉面板後焦點回到 MENU 切換鈕，
+        // 避免鍵盤/螢幕閱讀器使用者焦點掉回 body（無法察覺面板已關閉）。
+        menuToggleRef.current?.focus();
+      }
     };
     document.addEventListener('keydown', onKeyDown);
     return () => {
@@ -82,6 +88,7 @@ export function HudCommandBar({
           onClick={() => {
             setMenuOpen((open) => !open);
           }}
+          ref={menuToggleRef}
           type="button"
         >
           MENU

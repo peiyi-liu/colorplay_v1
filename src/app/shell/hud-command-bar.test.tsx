@@ -55,10 +55,12 @@ describe('HudCommandBar', () => {
     expect(onSignOut).toHaveBeenCalledTimes(1);
   });
 
-  it('Escape 關閉 MENU 面板', async () => {
+  it('Escape 關閉 MENU 面板並將焦點送回 MENU 切換鈕', async () => {
     renderBar('student');
-    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
+    const toggle = screen.getByRole('button', { name: 'MENU' });
+    await userEvent.click(toggle);
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('button', { name: '登出' })).toBeNull();
+    expect(toggle).toHaveFocus();
   });
 });

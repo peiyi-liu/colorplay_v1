@@ -70,6 +70,14 @@ a {
   background: var(--surface-page);
 }
 
+/* F7 final-review 修正：這條規則掛在同一個 <main class="game-stage__scene"
+   id="main-content"> 元素上，#main-content（ID，特異度較高）另外設了
+   display:grid，實際算出來的 display 是 grid，不是這裡寫的 flex——
+   本規則真正生效的是 min-height:0／flex:1（讓這個元素在「父層」
+   .game-stage 的 flex-column 容器裡正確吃到剩餘高度、可以捲動），
+   display:flex/flex-direction:column 對「自己的子元素」排版不生效，勿誤讀
+   為 scene 內容走 flex-column；子元素實際排版邏輯見 #main-content 規則
+   （grid-template-columns 註解）。 */
 .game-stage__scene {
   display: flex;
   min-height: 0;
@@ -135,7 +143,12 @@ a {
 
 .skip-link {
   position: absolute;
-  z-index: 2;
+
+  /* F2 final-review 修法：原 z-index:2 被 .hud-top(40) 蓋住（flex 子項目上
+     z-index 會生效），focus 後看不到 skip-link。拉到 75——高於
+     hud-command(50)/hud-menu__panel(60)/live-result-screen(70)，低於
+     live-presenter(80)，符合疊層順序註記。 */
+  z-index: 75;
   top: -80px;
   left: var(--space-2);
   display: inline-flex;
@@ -166,13 +179,23 @@ a {
   padding: var(--space-2) var(--space-3) 0;
 }
 
-/* 左上狀態窗：夜空窗小卡（Level＋EXP 條）。 */
+/* 左上狀態窗：夜空窗小卡（Level＋EXP 條）。
+   F3 final-review 修法：base .economy-summary（下方，淡彩系統遺留）帶
+   border/border-radius:999px/background:var(--surface-card)/padding，
+   這條規則特異度雖高於 base，但只覆寫 display/flex/align-items/
+   justify-content/gap，沒覆寫的屬性（background/border/border-radius/
+   padding）會透到這條規則底下，結果是舞台頂端出現一整條白色藥丸，蓋掉
+   spec 要的「左上狀態窗＋右上資源列」分離版面。明確歸零。 */
 .hud-top .economy-summary {
   display: flex;
   flex: 1;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
 }
 
 .hud-top .economy-summary__level {
@@ -1263,14 +1286,26 @@ a {
     max(var(--space-2), env(safe-area-inset-left));
 }
 
+/* F1 final-review 修法：7 項學生導覽（含 spacer 前 3 個 tab／spacer 後 4 個
+   link）在 812×375 舞台（bar ≈666px）與 375×812 直向（bar＝375px 全幅）都
+   容不下單列 overflow:auto hidden + white-space:nowrap 的舊寫法——這正是
+   0730 批 .student-rail__content 修過、後續遷到 .hud-command__nav 時被回退
+   的那個坑（見同批 git 歷史 5c90a33 前的 .student-rail__content 換行修法）：
+   主要導覽不得套用「表格容器 overflow-x:auto 除外」豁免，7 項＋MENU 必須
+   同時可見可點，不能靠不易察覺的水平捲動。改為隨時可換行（flex-wrap:
+   wrap），寬度足夠時（例如 1440×900 的 1440px 舞台）單列項目本來就排得下，
+   瀏覽器不會主動換行，視覺不變；寬度不足時自動換成多列，全部項目仍在容器
+   內、不必捲動。 */
 .hud-command__nav {
   display: flex;
   min-width: 0;
   flex: 1;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1);
-  overflow: auto hidden;
-  white-space: nowrap;
+  row-gap: var(--space-1);
+  overflow: visible;
+  white-space: normal;
 }
 
 .hud-command__spacer {
@@ -1372,9 +1407,16 @@ a {
 }
 
 /* header 內 fallback 登出鈕（profile 未載入/失敗時仍可登出，spec 4.4）：
-   借用 HUD 登出鍵樣式，但非在 .hud-menu 面板內，寬度改回內容寬。 */
+   借用 HUD 登出鍵樣式，但非在 .hud-menu 面板內，寬度改回內容寬。
+   F4 final-review 修法：這顆鈕是 .game-stage（display:flex; flex-direction:
+   column）的直接 flex 子項目，預設 align-items:stretch 讓它撐滿整個舞台
+   寬度，載入畫面（profile 還沒下來、只有這顆鈕可見）看起來像滿版橫幅在
+   主宰畫面，而不是右上角的邊角 chrome。align-self:flex-end 讓它只佔內容
+   寬度並靠右對齊；margin 撐開與 skip-link/RotateBanner 的間距。 */
 .hud-menu__logout--fallback {
   width: auto;
+  align-self: flex-end;
+  margin: var(--space-2) var(--space-3) 0 0;
   padding-inline: var(--space-4);
 }
 

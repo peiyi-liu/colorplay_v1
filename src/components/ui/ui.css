@@ -420,9 +420,11 @@
    會退回 initial containing block，效果等同目前的 fixed，不會真的貼進舞台）。
    要讓 toast 真正錨進舞台需要把 ToastProvider 的掛載點移進 AppShell 樹內，
    屬元件結構調整，超出本任務檔案範圍（globals.css／ui.css／盤點文件）。
-   已知限制：極端非 16:9 視窗下 toast 可能落在 letterbox 區而非舞台內；
-   訊息 4 秒自動消失、非互動式操作，影響輕微，列入 design-debt 供未來批次
-   將 ToastProvider 掛載點移入 AppShell 時一併處理。 */
+   已知限制：toast 錨定 viewport 右上角（top/right），不是舞台右上角，只要
+   視窗長寬比不是 16:9 就會落在 letterbox 區而非舞台內——這不是極端案例，
+   常見桌面視窗（例如 1440×900：舞台從 y≈45px 開始，toast 卻定在 y≈20px）
+   就會出現；訊息 4 秒自動消失、非互動式操作，影響輕微，列入 design-debt
+   供未來批次將 ToastProvider 掛載點移入 AppShell 時一併處理。 */
 .ui-toast-container {
   position: fixed;
   z-index: 50;

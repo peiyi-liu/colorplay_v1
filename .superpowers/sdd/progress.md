@@ -617,3 +617,11 @@ B5 Gate fix wave 1: lint 8 errors from 0a324fb resolved (src/app/shell/app-shell
 詳見 `.superpowers/sdd/task-10-report.md`（Round 2 章節，含完整量測表與截圖清單）。
 
 **BATCH COMPLETE.**
+
+## GameStage Shell Batch — Final-review fix wave
+
+B5 Final-review fix wave: F1 nav containment, F2 skip-link z75, F3 economy pill reset, F4 fallback corner, F5 report correction, F6 escape focus return, F7 comments (deferred to 批⑤b: teacher nav tiering/active state, aria-controls dangling, skip-link absolute scroll edge, toast anchor move, hud-menu click-outside/focus-trap)
+
+**驗證**：`pnpm exec vitest run src/app/shell` PASS（4 files/24 tests）；`pnpm exec vitest run` 全量 PASS（119 files/812 tests）；`pnpm lint`／`pnpm typecheck` 皆 exit 0；`pnpm exec playwright test tests/e2e/app-shell.visual.spec.ts` 8/8 PASS、快照零變更；獨立 Playwright 真跑量測（登入 `student.one`／`teacher`）證實 812×375／375×812 下 7 項學生導覽＋MENU 全數在容器內、≥44px、1440×900 視覺不變，skip-link focus 後 `elementFromPoint` 落在自己身上，economy pill 背景實測 transparent，fallback 登出鈕非全寬且 `align-self:flex-end`，MENU Escape 焦點確實回到切換鈕；證據於 `artifacts/design-audit/stage-shell/final-fix/`（未 commit）。詳見 `.superpowers/sdd/task-10-report.md`「Final-review fix wave」章節。
+
+**FINAL-REVIEW FIX WAVE COMPLETE.**
