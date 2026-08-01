@@ -237,3 +237,27 @@ it('derives rule-based high-frequency error cards from question analysis', async
   const region = screen.getByRole('region', { name: '班級高頻錯誤概念' });
   expect(region.textContent).toContain('色相環上與紅色相對的顏色是？');
 });
+
+it('高頻錯誤概念標示嚴重度（螢幕閱讀器文字）', async () => {
+  renderPage(
+    teacherRepositoryOf({
+      getQuestionAnalysis: vi.fn().mockResolvedValue([
+        {
+          attempts: 5,
+          correct_rate: 40,
+          prompt: '色相環上與紅色相對的顏色是？',
+          stable_code: '3-1-01',
+        },
+        {
+          attempts: 4,
+          correct_rate: 55,
+          prompt: '三原色混合後可得到哪一種顏色？',
+          stable_code: '3-1-02',
+        },
+      ]),
+    }),
+  );
+
+  expect(await screen.findByText('嚴重度：高')).toBeInTheDocument();
+  expect(screen.getByText('嚴重度：中')).toBeInTheDocument();
+});

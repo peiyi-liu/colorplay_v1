@@ -6830,3 +6830,19 @@ select#dashboard-classroom {
   border-radius: var(--radius-pixel);
   background: var(--pixel-parchment-card);
 }
+
+/* 分析區塊標題列＝賢者窗語彙；表格零改動（overflow 守門既有）。 */
+.teacher-analytics-section > h2 {
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+  font-family: var(--font-pixel-tc);
+  padding: 10px 14px;
+}
+
+.teacher-error-card__severity {
+  color: var(--coral-700);
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+}

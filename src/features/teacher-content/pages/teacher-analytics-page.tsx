@@ -258,6 +258,15 @@ export function TeacherAnalyticsPage({
                       <span className="teacher-error-card__badge">
                         高頻錯誤 {index + 1}
                       </span>
+                      <span
+                        aria-hidden="true"
+                        className="teacher-error-card__severity"
+                      >
+                        {index === 0 ? '▲▲▲' : '▲▲'}
+                      </span>
+                      <span className="visually-hidden">
+                        {index === 0 ? '嚴重度：高' : '嚴重度：中'}
+                      </span>
                       <strong>{row.prompt}</strong>
                       <p>
                         正確率 {formatPercent(row.correct_rate)}（作答{' '}
