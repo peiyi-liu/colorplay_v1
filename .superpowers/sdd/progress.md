@@ -643,3 +643,51 @@ P1 Task 5: review clean (55553b6). Shop pages 3pp wide both tabs; ui-restyle con
 P1 Task 6: complete (mistake codex in-group + resolved paging)
 P1 Task 6: review clean (24d868c). WARNING for parallel sessions & gate: student.one local-DB state MUTATED during real-app measurement — mistakes baseline was 33 open/0 resolved, now ~3+11+11 open/8 resolved, plus remediation XP at 20% rate accrued. learning-experience.spec exact-XP assertions (already env-red) drift further; gate must compare signatures accordingly. Future measurement mutating grade/token state should use disposable accounts.
 P1 Task 7: complete (hall of medals paging)
+P1 Task 7: review clean (d5066ca). 9 achievements → 2pp wide/3pp narrow; achievements.spec untouched per §F.
+
+## Student Paging Batch — GATE (Task 8)
+
+**Verdict: PASS.** Commits under gate: 47eaf58..d5066ca (base 238dba9; 7 commits — inventory/plan docs, GamePager component, 5 page-wiring commits). Evidence in `artifacts/design-audit/student-paging/gate/` (untracked, not committed): `battery-results.json`, `base-scroll-results.json`, `battery-log.txt`, `known-red-tip.log`/`known-red-base.log` (+ `.norm.log` diffed copies), `classroom-leaderboard-acceptance/`.
+
+**Step 1 靜態電池**：`pnpm exec vitest run` → **823/823 PASS**（120 files）；`pnpm lint`（`eslint . --max-warnings 0`）→ **PASS, 0 errors**；`pnpm typecheck`（`tsc -b`）→ **PASS**；`npx prettier --check` 本批全部動過檔（game-pager.tsx/.test.tsx + 5 頁面 + 其 test + chapter-select.spec.ts + globals.css）→ **PASS**。
+
+**Step 2 e2e 電池**：
+- Must-pass 集（chapter-select／quiz-runner chromium／live-smoke／auth-account／app-shell.visual／classroom-leaderboard，皆 `--project=chromium`）：**13/13 PASS**（app-shell.visual 8 個子測試＋其餘 5 支各 1）。`classroom-leaderboard.spec.ts` 本質是 acceptance-mode phase-gate 測試（與 game-economy/achievements 同構），裸跑會擲 `CLASSROOM_LEADERBOARD_ACCEPTANCE_MODE_REQUIRED`；改用 `PLAYWRIGHT_ACCEPTANCE=on`＋`PLAYWRIGHT_EVIDENCE_ROOT` 跑其真實斷言（沿用既有 DB 狀態、未跑完整 db-reset/seed pipeline）後 **PASS**，證實非本批缺陷。quiz-runner `--project=firefox` 另跑 **1/1 PASS**。
+- 既知紅集（assignments-live／live-advanced／session-lifecycle／shared-device／game-economy／achievements／learning-experience／ui-restyle，`--project=chromium`）：**8/8 全紅，且與 base 逐字相符**。方法：`git worktree add` 建立 base(238dba9) 乾淨副本，`tsc -b && vite build` 後以獨立 port(4174) `vite preview` 起服務、`PLAYWRIGHT_BASE_URL` 指向該服務跑同一組 8 支，`diff` 正規化後（拿掉時間戳/port/worktree 路徑雜訊）**逐字比對零差異**（僅時間 ms 與 port 號不同）。6 支（achievements/assignments-live/game-economy/learning-experience/live-advanced + classroom-leaderboard 裸跑）為 acceptance-mode 守門 throw；session-lifecycle 卡在 checkpoint URL 還原斷言（`Expected /\/app\?chapter=color-theory#checkpoint$/`，實際落在 `/app`）；shared-device 卡在等待 `個人資料` 連結逾時——兩者與既有紅寶書記載（Task 9/10 gate）簽名一致，均為 0730 批以前既有缺陷，本批對 login-page.tsx／session-lifecycle.spec.ts／shared-device.spec.ts 零接觸。learning-experience 因裸跑即在 acceptance-mode gate 擲錯（未跑到 XP 斷言），故 Task 6 記載的 DB 漂移風險本輪未觸發，留待下次 acceptance 模式全跑時比對。
+
+**Step 3 真跑電池**（拋棄式 Playwright script，`@playwright/test` chromium launcher 直接驅動，已於 session scratchpad 完成任務後不留痕；dev server `pnpm dev` port 5173）：三情境（1440×900／812×375／375×812）× 5 頁全跑。
+- **分頁 chrome 出現條件**：全數與容量算式相符——lobby 兩寬幅皆 2pp（6 章節 vs pageSize 3/2）、mission-select 於≥768寬（含 812×375，因 useStageWide 只認寬度）因 playable=2=pageSize2 **無 chrome**、375×812 窄幅則 2pp（pageSize1）；dungeon 三情境**皆無 chrome**（目前各小節題數 ≤ pageSize，與先前任務記載一致）；shop 兩籤在寬/812×375 皆 3pp、375×812 皆 5pp；mistakes 目前真實資料為 2 個小節內分頁群組（3-2:3pp/3pp/5pp、3-3:3pp/3pp/4pp 隨寬幅）+ 已解決 2pp/2pp/2pp（資料量已隨 Task 6/7 真跑測試變動，非批次代碼問題，頁數公式本身正確）；achievements 9 項於三情境皆 2pp/2pp/3pp。
+- **座標點擊換頁**：所有頁面代表性 pager 皆座標點擊「下一頁」直到末頁、再點「上一頁」返回首頁全數成功，`第 n / N 頁` 逐步正確遞增/遞減（如 shop 375×812：1/5→2/5→3/5→4/5→5/5→...→1/5）。**方法論修正記錄**：初版腳本用預滾動座標直接點擊，在 375×812（內容常溢出視窗且需捲動）多次點空未命中；修正為「先 `scrollIntoView({behavior:'instant'})` 再讀取 post-scroll rect」兩段式，修正後三情境全數命中，佐證此為量測腳本問題非產品缺陷（唯一失手案例是 dungeon 連結搜尋迴圈，同一根因同一修法解決）。
+- **鍵盤 ←/→**：於 lobby(2p/3p)、mission-select(2p，375×812)、achievements(2p/3p) 上重跑，聚焦「下一頁」鈕後 ArrowRight→ArrowLeft。3 頁情境（多一頁緩衝）全數正確來回；**2 頁情境**（lobby 於 1440×900/812×375、mission-select 於 375×812、achievements 於 1440×900/812×375）ArrowRight 到末頁後 ArrowLeft **未生效**（狀態卡在末頁）——瀏覽器原生行為：焦點所在的「下一頁」鈕在到達末頁後變 disabled，disabled 元素無法持有焦點，焦點掉回 `<body>`，之後的 ArrowLeft 事件不再從 `.game-pager` 內部冒泡，故 handler 收不到。**此為既有紅寶書已記錄的 design-debt 的鏡像案例**（P1 Task 3 review 記載的是「頁1 按 ArrowLeft→prev 鈕 disabled→焦點掉隊→後續 ArrowRight 失效」；本輪座標實測證實同一根因對稱地適用於任一方向到達邊界頁——**訂正/擴充**該筆記錄為雙向對稱，不只 ArrowLeft 單向），修法同樣是「當前鈕變 disabled 時把焦點移到另一顆箭頭」，維持遞延至最終修復波（未在本 gate 任務修動產品碼，符合「不代為修正」約束）。
+- **`第 n / N 頁` aria-live**：即時 DOM 檢查 `.game-pager__status` 的 `aria-live` 屬性 = `"polite"`（原始碼與實測一致）。
+- **箭頭 ≥44px**：三情境 × 全部 pager，共 44 顆箭頭量測，寬高最小值皆恰為 44px（CSS `min-width/min-height:44px` 生效），**零筆低於 44px**。
+- **縱向捲動量測（批次核心目的驗證）**：見下方前後對照表。**console 全程 0 錯誤**（`console.error`/`pageerror` 監聽貫穿三情境全部頁面切換與點擊操作）。
+
+**捲動量測前後對照表**（`.game-stage__scene` scrollHeight−clientHeight，375×812 為 `document.documentElement`；base=238dba9、tip=d5066ca，皆用 student.one 真實資料，測量時間相近但非同一秒，mistakes/achievements 絕對值受 Task 6/7 真跑測試造成的 DB 資料量變動影響，趨勢仍具參考力）：
+
+| 頁面 | 1440×900 base→tip | 812×375 base→tip | 375×812 base→tip |
+|---|---|---|---|
+| lobby | 77→**0** | 795→**462** | 1313→**497** |
+| mission-select | 0→0（無 chrome，兩者皆已 2 項全顯） | 406→406（無 chrome） | 436→**188** |
+| dungeon | 213→213（無 chrome，設計如此） | 738→738（無 chrome） | 845→845（無 chrome） |
+| shop・角色 | 1286→**321** | 2491→**1189** | 6663→**1275** |
+| shop・外框 | 1284→**346** | 2469→**1201** | 6502→**1274** |
+| mistakes | 3299→**1835** | 3824→**2360** | 5870→**2526** |
+| achievements | 63→**115**（↑52，見下） | 983→**826** | 1505→**528** |
+
+**已知例外（誠實記錄，非缺陷）**：achievements 於 1440×900 捲動量不減反增（63→115，仍遠小於一屏高度）。推測成因：9 項於 grid 固定欄數下本就只佔約 3 列；分頁後每頁 8 項的列數與未分頁 9 項相同（皆 ceil(n/欄數)=3 列），內容區高度幾乎不變，但新增的 `.game-pager__nav`（箭頭 44px + 間距）疊加約 50px 淨高——分頁「省列數」的效益在此特定項目數/欄數組合下為零，chrome 開銷unresult 淨增。批次其餘 6/7 個頁面 × 情境組合捲動量全數顯著下降（shop 375×812 降幅最大：6663→1275，−81%），批次核心目的（消除長捲動）整體達成，此為單一邊界組合的可預期副效應，不影響其餘量測結論，記為 design-debt 觀察（非本 gate 修復範圍）。
+
+**Step 4 對比電池**：131 筆 rendered 實測（三情境 × 每頁每個 pager 的 enabled 下一頁箭頭／disabled 上一頁箭頭／status／dot-on／dot-off，含 shop 兩籤＋mistakes 多群組），**全數 ≥4.5:1**（實測範圍 11.48:1–15.53:1，最低為 shop/achievements 系列 11.48:1，最高為 lobby/mistakes 系列 15.53:1）。Disabled 箭頭（非互動）比照量測入表，數值與 enabled 相同（顏色不受 disabled 影響，僅 opacity 0.45 視覺變化，對比公式取的是文字/圖形色與背景色，opacity 未納入計算——如需嚴謹計入視覺不透明度需另外複合背景色，此處記錄結構化色彩對比而非最終像素取樣值，供後續如需精算的起點）。
+
+**Step 5 reduced-motion 雙通道**：`.game-pager__page` 於「頁面實際換頁後」的 `getComputedStyle().animationName` 在 1440×900／375×812 兩寬幅、兩通道（`prefers-reduced-motion:reduce` context option／`document.documentElement.dataset.reducedMotion='true'`）下皆為 **`none`**，四組全過。
+
+**環境前置記錄**：本機 Supabase stack 執行前為 stopped，已 `supabase start` 重啟。working tree 另有一組非本批、非本 session 的未 commit 變更（`.gitignore`／`package.json`／`docs/content/*`／`scripts/content/*`／`login-page.tsx`／`supabase/seeds/content-*.sql`，研判為題庫 SSOT 平行 session WIP，沿用歷次 gate 慣例，已核實與本次結果無關、未觸碰、未 stage）。診斷用兩個暫時 git worktree（base 238dba9，分別用於 known-red 比對與 scroll 基線量測）已清除，未留痕。
+
+**遞延事項**：
+1. **GamePager 邊界頁焦點流失（設計債，雙向對稱，本輪訂正範圍）**：到達末頁/首頁時，剛好變 disabled 的箭頭若持有焦點會被瀏覽器踢到 `<body>`，導致下一次反向鍵盤操作失效。修法：`disabled` 觸發時把焦點移交給另一顆箭頭（或整個 group）。留待最終修復波。
+2. achievements 1440×900 捲動量 +52px 的 chrome 開銷觀察（見上），非阻斷，留待 owner 裁量是否需要在該特定項目數下調整 pageSize 門檻。
+3. 教師端深度＝批⑤b（0% 未開工，沿用既有記錄）。
+
+詳見 `.superpowers/sdd/paging-task-8-report.md`。
+
+**BATCH COMPLETE.**
