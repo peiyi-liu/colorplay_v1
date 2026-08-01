@@ -18,6 +18,20 @@ function renderBar(variant: 'student' | 'teacher', onSignOut = vi.fn()) {
   return onSignOut;
 }
 
+function renderTeacherAt(initialPath: string, onSignOut = vi.fn()) {
+  render(
+    <MemoryRouter initialEntries={[initialPath]}>
+      <HudCommandBar
+        displayName="teacher.one"
+        isSigningOut={false}
+        onSignOut={onSignOut}
+        variant="teacher"
+      />
+    </MemoryRouter>,
+  );
+  return onSignOut;
+}
+
 describe('HudCommandBar', () => {
   it('學生指令列 7 項導覽全可見且 aria-label 不變', () => {
     renderBar('student');
@@ -62,5 +76,32 @@ describe('HudCommandBar', () => {
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('button', { name: '登出' })).toBeNull();
     expect(toggle).toHaveFocus();
+  });
+
+  it('教師導覽於目前路徑顯示 active 態', () => {
+    renderTeacherAt('/teacher/classes');
+    expect(screen.getByRole('link', { name: '班級管理' })).toHaveClass(
+      'hud-command__link--active',
+    );
+    expect(screen.getByRole('link', { name: '教學分析' })).not.toHaveClass(
+      'hud-command__link--active',
+    );
+  });
+
+  it('MENU 面板收合時仍掛在 DOM 且 hidden，aria-controls 不懸空', () => {
+    renderTeacherAt('/teacher');
+    const panel = document.getElementById('hud-menu-panel');
+    expect(panel).not.toBeNull();
+    expect(panel).toHaveAttribute('hidden');
+  });
+
+  it('點擊面板外會關閉 MENU；開啟時焦點移入面板', async () => {
+    renderTeacherAt('/teacher');
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
+    const panel = document.getElementById('hud-menu-panel');
+    expect(panel).not.toHaveAttribute('hidden');
+    expect(panel?.contains(document.activeElement)).toBe(true);
+    await userEvent.click(document.body);
+    expect(panel).toHaveAttribute('hidden');
   });
 });

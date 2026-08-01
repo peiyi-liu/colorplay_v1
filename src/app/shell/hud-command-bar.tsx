@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 const commandTabClassName = ({ isActive }: { isActive: boolean }) =>
   `hud-command__tab${isActive ? ' hud-command__tab--active' : ''}`;
@@ -20,6 +20,8 @@ export function HudCommandBar({
 }>): ReactElement {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuToggleRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuPanelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -34,6 +36,20 @@ export function HudCommandBar({
     document.addEventListener('keydown', onKeyDown);
     return () => {
       document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    menuPanelRef.current?.focus();
+    const onPointerDown = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
     };
   }, [menuOpen]);
 
@@ -66,21 +82,21 @@ export function HudCommandBar({
         </nav>
       ) : (
         <nav aria-label="教師導覽" className="hud-command__nav">
-          <Link className="hud-command__tab" to="/teacher">
+          <NavLink className={commandTabClassName} end to="/teacher">
             教師工作區
-          </Link>
-          <Link className="hud-command__tab" to="/teacher/live">
+          </NavLink>
+          <NavLink className={commandTabClassName} to="/teacher/live">
             Live 主持
-          </Link>
-          <Link className="hud-command__link" to="/teacher/classes">
+          </NavLink>
+          <NavLink className={commandLinkClassName} to="/teacher/classes">
             班級管理
-          </Link>
-          <Link className="hud-command__link" to="/teacher/analytics">
+          </NavLink>
+          <NavLink className={commandLinkClassName} to="/teacher/analytics">
             教學分析
-          </Link>
+          </NavLink>
         </nav>
       )}
-      <div className="hud-menu">
+      <div className="hud-menu" ref={menuRef}>
         <button
           aria-controls="hud-menu-panel"
           aria-expanded={menuOpen}
@@ -93,19 +109,23 @@ export function HudCommandBar({
         >
           MENU
         </button>
-        {menuOpen ? (
-          <div className="hud-menu__panel" id="hud-menu-panel">
-            <p className="hud-menu__user">{displayName}</p>
-            <button
-              className="hud-menu__logout"
-              disabled={isSigningOut}
-              onClick={onSignOut}
-              type="button"
-            >
-              {isSigningOut ? '登出中…' : '登出'}
-            </button>
-          </div>
-        ) : null}
+        <div
+          className="hud-menu__panel"
+          hidden={!menuOpen}
+          id="hud-menu-panel"
+          ref={menuPanelRef}
+          tabIndex={-1}
+        >
+          <p className="hud-menu__user">{displayName}</p>
+          <button
+            className="hud-menu__logout"
+            disabled={isSigningOut}
+            onClick={onSignOut}
+            type="button"
+          >
+            {isSigningOut ? '登出中…' : '登出'}
+          </button>
+        </div>
       </div>
     </div>
   );
