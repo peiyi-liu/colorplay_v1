@@ -631,3 +631,5 @@ B5 現場調整批(owner 21:59 #1 滿版): letterbox 16:9 框移除→舞台滿�
 ## Student Paging Batch (2026-08-01)
 
 P1 Task 1: complete (inventory 29 entries)
+P1 Task 1: review clean (47eaf58). FACT: chapter-select.spec already RED at base 238dba9 (chromium verified) — Task 3 rewrites it page-aware + current copy (asset-batch stale-spec revival precedent). Trigger pages: lobby(6>3)/shop(20>8)/achievements(9>8).
+P1 Task 2: complete (GamePager overflow-only pager, 5/5 TDD)

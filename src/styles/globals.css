@@ -133,6 +133,80 @@ a {
   line-height: 1;
 }
 
+/* ── GamePager 像素分頁器（分頁批 spec §1）：溢出才出現。────────── */
+.game-pager__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.game-pager__arrow {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--pixel-night);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 2px 2px 0 var(--pixel-shadow);
+  color: var(--pixel-night);
+  font-size: 14px;
+}
+
+.game-pager__arrow:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+.game-pager__status {
+  color: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.game-pager__dots {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.game-pager__dot {
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--pixel-night);
+  border-radius: var(--radius-pixel);
+  background: transparent;
+}
+
+.game-pager__dot--on {
+  background: var(--pixel-night);
+}
+
+/* 換頁動畫：只動 transform/opacity；雙通道瞬切。 */
+.game-pager__page {
+  animation: game-pager-page-in 160ms ease-out;
+}
+
+@keyframes game-pager-page-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-pager__page {
+    animation: none;
+  }
+}
+
+[data-reduced-motion='true'] .game-pager__page {
+  animation: none;
+}
+
 .skip-link {
   position: absolute;
 
