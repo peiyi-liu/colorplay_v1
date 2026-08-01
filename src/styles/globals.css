@@ -6325,7 +6325,8 @@ select#dashboard-classroom {
   color: var(--pixel-window-ink);
 }
 
-/* 六格咒文石板(.rune-slot* 素材批換裝介面);逐格點亮=實色,禁 opacity。 */
+/* 六格咒文石板(素材批⑤a 換裝:rune-slot.png 12×15 @×2;逐格點亮=實色,禁
+   opacity)。sprite 中央符文為鏤空透明——lit 態改鋪金底,金色從鏤空透出。 */
 .rune-slots {
   display: flex;
   gap: 8px;
@@ -6335,14 +6336,15 @@ select#dashboard-classroom {
 .rune-slot {
   width: 24px;
   height: 30px;
-  border: 2px solid var(--pixel-window-muted);
-  border-radius: var(--radius-pixel);
-  background: var(--pixel-night-deep);
+  border: none;
+  background: url('../assets/sprites/rune-slot.png') center / 24px 30px
+    no-repeat;
+  image-rendering: pixelated;
 }
 
 .rune-slot--lit {
-  border-color: var(--pixel-gold);
-  background: var(--pixel-gold);
+  background-color: var(--pixel-gold);
+  border: none;
   box-shadow: 2px 2px 0 var(--pixel-shadow);
 }
 
@@ -6474,16 +6476,9 @@ select#dashboard-classroom {
   width: 20px;
   height: 24px;
   margin-bottom: 8px;
-  background: var(--pixel-gold);
-  clip-path: polygon(
-    50% 0,
-    78% 30%,
-    100% 62%,
-    82% 100%,
-    18% 100%,
-    0 62%,
-    22% 30%
-  );
+  background: url('../assets/sprites/camp-fire.png') center / 20px 24px
+    no-repeat;
+  image-rendering: pixelated;
   animation: camp-flicker 0.3s steps(2, jump-none) infinite alternate;
 }
 
@@ -6516,6 +6511,9 @@ select#dashboard-classroom {
   border-radius: var(--radius-pixel);
   clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
   padding-bottom: 14px;
+  background-image: url('../assets/sprites/wood-tile.png');
+  background-size: 64px 64px;
+  image-rendering: pixelated;
 }
 
 /* 軍勢分布:條尾階梯緣(僅 clip fill;四色與 correct 既有規則不動)。 */
@@ -6539,70 +6537,55 @@ select#dashboard-classroom {
   padding: 16px 20px;
 }
 
-/* 頒獎台舞台:供煙火絕對定位——見下方 I2 補述,兩個 .podium-fireworks span
-   在 DOM 上是這個 div 的直接子節點(和 .live-presenter__podium 同層手足),
-   這裡才是它們唯一可用的 positioned 祖先,不能拿掉。 */
+/* 頒獎台舞台。(批⑤a D4 結構修法後,煙火改掛在 .live-presenter__podium 自身
+   的偽元素上,這個 relative 已無定位客戶,保留無害。) */
 .live-presenter__podium-stage {
   position: relative;
 }
 
-/* 三寶石加冕(品牌三色=三原色寶石,spec §2)。
-   gate 實測:clip-path 會連同 box-shadow 副本一起裁掉——改用 ::before/::after
-   各自 clip 仍會被「父層 clip-path 一併裁掉子層(含偽元素)」坑一次(瀏覽器
-   實測驗證,elementFromPoint 命中底層 .box 而非寶石),故最終改成單一元素、
-   一條 path() 內三段獨立菱形子路徑(不裁到彼此),grad 三色對齊三段填色。 */
+/* 三寶石加冕(品牌三色=三原色寶石,spec §2;素材批⑤a 換裝:gems.png 24×8
+   @×2,珊瑚/鈷藍/翡翠三顆切面菱形,取代原 gradient+clip-path:path 方案)。 */
 .podium-gems {
   display: block;
   width: 48px;
   height: 16px;
   margin: 0 auto 6px;
-  background: linear-gradient(
-    to right,
-    var(--coral-700) 0 12px,
-    var(--cobalt-600) 18px 30px,
-    var(--jade-600) 36px 48px
-  );
-  clip-path: path(
-    'M24 0 L30 6 L24 12 L18 6 Z M6 4 L12 10 L6 16 L0 10 Z M42 4 L48 10 L42 16 L36 10 Z'
-  );
+  background: url('../assets/sprites/gems.png') center / 48px 16px no-repeat;
+  image-rendering: pixelated;
 }
 
-/* 煙火:雙發交替(星點=box-shadow 陣;僅 opacity/transform)。 */
+/* 煙火結構修法(批⑤a D4):舊方案是兩個 .podium-fireworks span 錨在 flex:1
+   的 stage 上、以 1080p 定值校準,viewport/欄寬一變即失準。改為煙火由
+   .live-presenter__podium 自身的 ::before/::after 承載(firework.png 16×16
+   @×2),containing block 就是 podium,定位天然隨 podium 走;span 以
+   display:none 退役(TSX 不動)。 */
 .podium-fireworks {
+  display: none;
+}
+
+.live-presenter__podium {
+  position: relative;
+}
+
+.live-presenter__podium::before,
+.live-presenter__podium::after {
+  content: '';
   position: absolute;
-  width: 6px;
-  height: 6px;
-  background: var(--pixel-gold);
-  box-shadow:
-    -16px -12px 0 var(--coral-700),
-    16px -12px 0 var(--cobalt-600),
-    -12px 14px 0 var(--jade-600),
-    14px 12px 0 var(--pixel-gold),
-    0 -20px 0 var(--pixel-window-frame);
+  top: -40px;
+  width: 32px;
+  height: 32px;
+  background: url('../assets/sprites/firework.png') center / 32px 32px no-repeat;
+  image-rendering: pixelated;
   animation: fireworks-burst 1.2s steps(3, jump-none) infinite;
+  pointer-events: none;
 }
 
-/* 終審 I2:原錨在 flex:1 的 stage(佔滿 1080p)→煙火飛到畫面角落(離 podium
-   實測 ~670-680px)。JSX 裡兩個 .podium-fireworks span 是 .live-presenter__
-   podium(ol)的手足,不是它的子孫——CSS containing block 只認祖先,對 ol 加
-   position:relative 對這兩個 span 是 no-op,不會變成它們的定位基準,實測
-   (Playwright getBoundingClientRect)證實距離沒有變。真正的祖先只有
-   .live-presenter__podium-stage,故保留它的 position:relative(見上方"頒獎
-   台舞台"規則,未刪),改成量測 podium(ol)相對 stage 的實際落點來校正這兩顆
-   星火的偏移量,而不是相對整個 1080p 畫面猜測。
-   下列 top/left/right 為 1920×1080 投影幕定值,對治具(fixture)校準——三種
-   情況會使其失準,需重新量測:viewport 高度 ≠ 1080px、≤720px 時
-   `.live-presenter__podium` 轉 column 排列(見上方 @media (width <= 720px)
-   規則)、或 podium 本身寬度變動(參賽人數改變欄數/欄寬)。結構性修法(煙火
-   改為 podium 自身擁有的 pseudo-element,定位基準隨 podium 走)留給素材批。 */
-.podium-fireworks--left {
-  top: 359px;
-  left: 32%;
+.live-presenter__podium::before {
+  left: -44px;
 }
 
-.podium-fireworks--right {
-  top: 343px;
-  right: 32%;
+.live-presenter__podium::after {
+  right: -44px;
   animation-delay: 0.6s;
 }
 
@@ -6624,13 +6607,13 @@ select#dashboard-classroom {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .podium-fireworks {
+  .live-presenter__podium::before,
+  .live-presenter__podium::after {
     animation: none;
-    opacity: 0.9;
   }
 }
 
-[data-reduced-motion='true'] .podium-fireworks {
+[data-reduced-motion='true'] .live-presenter__podium::before,
+[data-reduced-motion='true'] .live-presenter__podium::after {
   animation: none;
-  opacity: 0.9;
 }
