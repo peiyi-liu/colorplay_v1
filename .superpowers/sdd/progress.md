@@ -568,3 +568,28 @@ B5 Task 8: complete (overlays anchored to stage; presenter/toast dispositions re
 B5 Task 8: review clean (d434e6f). Toast kept fixed w/ verified DOM-sibling rationale (design-debt: ToastProvider mount move); .teacher-analytics-section overflow guard verified wraps all 3 tables.
 B5 Task 9: complete (stage-geometry visual baseline, 812x375 point, snapshots regenerated + manually inspected, .app-shell* locator repointed). Geometry assertion (16:9±2% in stage mode / full-width in portrait) added to every viewport in the login-reference loop and PASSED at all 5 viewports (320x812, 375x812, 768x1024, 812x375, 1440x900) both pre- and post-regen — confirms Tasks 3-8's letterbox math is correct. 5 chromium-darwin snapshots regenerated (4 replaced + login-812x375 new); pixel-sampled the new 812x375 image to confirm void(rgb(10,13,32))→stage cream padding→double-line frame→card, matching globals.css exactly; no broken layout in any image. **發現既有殘紅(非本批造成)**：「every foundation route has one clearly labelled primary CTA」測試在 320×812 對 `/` 路由持續失敗——PRESS START 標題畫面的 `.title-screen__logo`（"ColorPlay"，pixel font + letter-spacing 0.06em）字型載入後量測寬度 381.6px，把 document scrollWidth 撐到 367px > clientWidth 320px（`getBoundingClientRect` 逐元素排查確認元兇，非本次改動觸發，未改動即可重現同一失敗行號位移前的版本）。懷疑是 Task 7（press-start title screen）引入；修復需動 `title-page.tsx`/`globals.css`（title-screen 字級/letter-spacing 收斂），不在 Task 9 檔案範圍（僅 spec+snapshots）內，留待下一任務或 owner 裁量。
 B5 Task 9 fix wave (coordinator-authorized cross-file, CSS-only): root cause pinned via getBoundingClientRect sweep — `.title-screen`（`.game-stage__scene` 的 flex column 子項）預設 `min-width:auto`,「ColorPlay」單詞不可斷詞逼出 335.8px 內容寬,逐層把祖先自動撐寬到 367.8px,document scrollWidth 隨之溢出 320px clientWidth,與字級無直接關聯(先前 max-width:100% 因父層寬度不定而失效)。修正三處，均只動 `globals.css`：(1) `.title-screen` 加 `min-width: 0` 阻斷該撐寬鏈,讓 flex stretch 真正生效收回 320px；(2) `.title-screen__logo` 的 `clamp(2.5rem, 6vw, 4rem)` 改 `clamp(1.5rem, 8vw, 4rem)`（比座標建議的 11vw 再收，8vw 在 320/375 寬有安全餘裕；≥768px 的 vw 值全被 4rem 上限截住,1440/812×375 觀感零改變,實測 fontSize 仍 64px、logo 620px 級距飽滿）；(3) `overflow-wrap: anywhere` 作保底(正常寬度不觸發,僅防未來極窄場景真溢出)。TSX/文字串零接觸,無動畫。驗證：一次性量測 spec(320/375/812×375/1440 四寬,`document.fonts.ready` 後讀 scrollWidth/clientWidth/logo rect)全數 scrollWidth===clientWidth；`pnpm exec playwright test tests/e2e/app-shell.visual.spec.ts` **8/8 全綠**(含先前紅的 CTA-route 測試)；因 `/login` 不使用 `.title-screen` 類別,5 張既有 chromium-darwin snapshot 全數位元組不變(免 `--update-snapshots`,重跑本身即為證據)。人工目檢 320px 與 1440px 兩張 `/` 截圖：320px logo 置中不溢出、留白正常；1440px logo 仍達 4rem 大字滿版,視覺與修復前一致。`npx prettier --check src/styles/globals.css` 通過。
+B5 Task 9: review clean (d3112f5+6c788c3). Fix wave: title-screen 320px overflow (min-width:auto propagation) fixed CSS-only; side effect accepted: 800-1066px band logo reaches 4rem cap earlier (no overflow, gate re-checks). Visual spec 8/8 green, .app-shell* locator repointed to .game-stage*, 812x375 viewport live.
+
+## GameStage Shell Batch — GATE (Task 10)
+
+**Verdict: BLOCKED (Step 1 靜態電池 FAIL, batch-attributable). Steps 2–6 not run.** Commits under gate: 51363cf..6c788c3 (base e0334fa; Tasks 1–9, 13 commits).
+
+**Step 1 靜態電池**：
+- `pnpm exec vitest run` → PASS（119 files / 812 tests all green）
+- `pnpm typecheck`（`tsc -b --pretty false`）→ PASS
+- `npx prettier --check`（shell 檔＋title-page＋tokens.css/test＋app-shell.visual.spec.ts＋e2e/helpers/auth.ts）→ PASS
+- `pnpm lint`（`eslint . --max-warnings 0`）→ **FAIL, 8 errors**：`src/app/shell/app-shell.test.tsx:39`(`no-unnecessary-type-assertion`)、`src/app/shell/rotate-banner.test.tsx:20,25`(`no-unnecessary-type-assertion`/`no-confusing-void-expression`)、`src/test/setup.ts:18-26`(1×`no-unnecessary-type-assertion` + 4×`no-empty-function`，matchMedia polyfill 整段)。
+
+**歸因（雙 clean worktree 對照法，同素材批 gate 慣例）**：`git worktree add … 6c788c3` 逐字重現同 8 error（排除 working tree 內另一 session 無關 WIP 干擾）；`git worktree add … e0334fa`（base）`pnpm lint` → **exit 0, 0 error**，三個受影響檔案（含 `src/test/setup.ts`）在 base 完全乾淨；`git blame` 逐行核對，8 行全部落在同一 commit **`0a324fb`（Task 4: portrait rotate-hint soft banner）**，在批範圍內。ESLint config 於 base..tip 間未變動，`typescript-eslint` 版本兩端一致(8.63.0)，排除規則/依賴漂移。**結論：100% 可歸因本批，非既有債務。**
+
+**Steps 2–6 未執行**：依 brief「可歸因缺陷 FAIL 則 STOP、回報 BLOCKED、不代為修正產品碼」，Step 1 已確立可歸因失敗，e2e 電池／真跑視覺互動三情境（1440×900／812×375／375×812，學生＋教師）／對比電池／雙通道 reduced-motion＋console 皆未執行，`artifacts/design-audit/stage-shell/gate/` 無新證據產出。
+
+**已知紅基準（本次未驗證，留待下輪 gate）**：assignments-live／live-advanced（session 模型重寫）、session-lifecycle／shared-device（個人資料連結/`/app/profile` 路由已移除，Task 5 已記錄非本批造成）、learning-experience／game-economy／achievements（環境/種子漂移，素材批已證）、classroom-leaderboard（教師導覽 aria-label 既有 bug）——**皆需在下一輪 gate（lint 修復後重跑）逐一重新核對失敗訊息與 base 逐字相同**，本輪未做。
+
+**建議修法**（未套用，留給修復任務）：`app-shell.test.tsx:39`/`rotate-banner.test.tsx:20` 的 mock 物件型別斷言在目前寫法下被判定多餘，需視個案改窄 mock 型別或移除中介 `unknown`；`rotate-banner.test.tsx:25` 的箭頭函式加大括號即可（ESLint 訊息已指出修法）；`setup.ts` 四個空 method 可依專案既有慣例加 eslint-disable 註解或改 `() => undefined`。4/8 error 可被 `eslint --fix` 自動修，其餘（void-expression）需手動加括號。
+
+**遞延事項（沿用批⑤a／⑤b 既有記錄，未受本輪影響）**：教師端深度＝批⑤b（0% 未開工）；design-debt：toast anchor 需 ToastProvider 掛載點搬移（Task 8 已記）；asset-batch design-debt(6) 維持遞延（標的非外殼範圍）。
+
+**環境備註**：執行時 working tree 另有一組非本批、非本 session 的未 commit 變更（`.gitignore`／`package.json` `content:*` scripts／`docs/content/*`／`scripts/content/import-fixes.json`／`src/features/auth/pages/login-page.tsx`／`supabase/seeds/content-*.sql`，研判為題庫 SSOT 平行 session WIP），已核實與本次 lint 錯誤清單無關、未觸碰。診斷用兩個暫時 git worktree（tip/base）已清除，未留痕。
+
+詳見 `.superpowers/sdd/task-10-report.md`。
