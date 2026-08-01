@@ -627,3 +627,7 @@ B5 Final-review fix wave: F1 nav containment, F2 skip-link z75, F3 economy pill 
 **FINAL-REVIEW FIX WAVE COMPLETE.**
 B5 BATCH COMPLETE at 812f967 (amended from 8cad249, message-only): opus whole-branch review Ready-to-merge=Yes after final fix wave (F1 nav containment Critical + F2-F7). Batch commits 51363cf..812f967 (16+1). Deferred to 批⑤b: teacher nav tiering/active state, aria-controls dangling, skip-link absolute scroll edge, toast anchor (ToastProvider mount move), hud-menu click-outside/focus-trap, login-page .press-start data-reduced-motion channel (forbidden file this batch). NOT merged/pushed per owner constraint (勿推 main).
 B5 現場調整批(owner 21:59 #1 滿版): letterbox 16:9 框移除→舞台滿版貼齊視窗(橫向模式保留 fixed viewport+HUD 釘住+scene 內卷動); visual spec 幾何斷言改滿版(寬恆=viewport、橫向高亦=viewport), snapshots 2 張再生(8/8 綠)。註: snapshots 一如 Task 9 係於含平行 session 未提交 login-page.tsx 的工作樹產生。owner 21:59 #2(減少上下捲動→橫向/分頁)已記 spec §1.9, 範圍待 owner 定(併批⑤b 或獨立分頁批)。
+
+## Student Paging Batch (2026-08-01)
+
+P1 Task 1: complete (inventory 29 entries)
