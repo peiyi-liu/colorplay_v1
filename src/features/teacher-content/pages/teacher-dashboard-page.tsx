@@ -115,7 +115,7 @@ export function TeacherDashboardPage({
         </div>
       </header>
 
-      <div className="teacher-live-console">
+      <div className="teacher-live-console teacher-live-console--night">
         <div className="teacher-live-console__content">
           <span aria-hidden="true" className="teacher-live-console__badge">
             <Icon name="bolt" size={26} />
@@ -135,7 +135,7 @@ export function TeacherDashboardPage({
         </Link>
       </div>
 
-      <div className="teacher-dashboard-grid">
+      <div className="teacher-dashboard-grid teacher-dashboard-grid--forge">
         <section aria-label="班級總覽" className="teacher-summary-card">
           <header className="teacher-summary-card__header">
             <h2>班級總覽</h2>
@@ -157,10 +157,10 @@ export function TeacherDashboardPage({
             <h2>功能捷徑</h2>
           </header>
           <div className="teacher-shortcut-card__list">
-            <Link to="/teacher/analytics">
+            <Link className="pixel-command" to="/teacher/analytics">
               教學分析 <span aria-hidden="true">›</span>
             </Link>
-            <Link to="/teacher/classes">
+            <Link className="pixel-command" to="/teacher/classes">
               班級管理 <span aria-hidden="true">›</span>
             </Link>
           </div>

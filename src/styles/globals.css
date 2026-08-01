@@ -6738,3 +6738,95 @@ select#dashboard-classroom {
 [data-reduced-motion='true'] .live-presenter__podium::after {
   animation: none;
 }
+
+/* ── 教師批：賢者工坊語彙（spec 2026-08-02；chrome 像素化 ≤3 處/頁） ── */
+/* 木牌配方沿商店貨架（.scene-day .blook-card）：羊皮紙格＋厚底木板＋硬影。 */
+.sage-page-header {
+  border: 2px solid var(--pixel-gold-deep);
+  border-bottom: 6px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 4px 4px 0 var(--pixel-shadow);
+  padding: 20px 22px;
+}
+
+.sage-page-header h1 {
+  font-family: var(--font-pixel-tc);
+  font-size: 22px;
+}
+
+.sage-title-bar {
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+  font-family: var(--font-pixel-tc);
+  padding: 10px 14px;
+}
+
+.pixel-command {
+  border: 2px solid var(--ink-900);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+  color: var(--ink-900);
+  font-weight: 800;
+  transition: translate 120ms ease-out;
+}
+
+.pixel-command:hover {
+  translate: 0 -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pixel-command {
+    transition: none;
+  }
+}
+
+[data-reduced-motion='true'] .pixel-command {
+  transition: none;
+}
+
+/* 工坊台（≥1024px）：Live 夜窗主位置左，總覽/捷徑置右。 */
+@media (min-width: 1024px) {
+  .teacher-dashboard-grid--forge {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+  }
+}
+
+/* Live 控制台＝夜窗小卡（配方同 .purchase-dialog）。 */
+.teacher-live-console--night {
+  border: 3px solid var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
+  outline: 2px solid var(--pixel-night);
+  background: var(--pixel-night);
+  box-shadow:
+    0 0 0 5px var(--pixel-window-frame),
+    4px 4px 0 var(--pixel-shadow);
+  color: var(--pixel-window-ink);
+}
+
+.teacher-live-console--night .teacher-live-console__title {
+  color: var(--pixel-window-ink);
+}
+
+.teacher-live-console--night .teacher-live-console__description {
+  color: var(--pixel-window-muted);
+}
+
+/* 總覽數字卡＝像素徽章：金框硬影，數字仍深字大號（資料非 chrome）。 */
+.teacher-dashboard-grid--forge .teacher-summary-card__stat {
+  border: 2px solid var(--pixel-gold-deep);
+  border-left-width: 6px;
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 2px 2px 0 var(--pixel-shadow);
+}
+
+/* 捷徑＝像素指令鈕列。 */
+.teacher-shortcut-card__list a.pixel-command {
+  border: 2px solid var(--ink-900);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+}
