@@ -6876,3 +6876,27 @@ select#dashboard-classroom {
   border-radius: var(--radius-pixel);
   box-shadow: 2px 2px 0 var(--pixel-shadow);
 }
+
+/* Live 建立＝召集令：hero 夜窗（配方同 .purchase-dialog），表單維持淺底。 */
+.live-launch {
+  border: 3px solid var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
+  outline: 2px solid var(--pixel-night-deep);
+  background: var(--pixel-night-deep);
+  box-shadow:
+    0 0 0 5px var(--pixel-window-frame),
+    4px 4px 0 var(--pixel-shadow);
+}
+
+.live-launch__hero h1 {
+  font-family: var(--font-pixel-tc);
+}
+
+.live-launch form {
+  border-radius: 0;
+}
+
+/* 欄位標籤＝石板刻字（金深字，不動欄位本體）。 */
+.live-launch__field label {
+  color: var(--pixel-gold-deep);
+}
