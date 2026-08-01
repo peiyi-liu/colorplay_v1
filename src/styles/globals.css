@@ -4427,8 +4427,9 @@ a {
   padding: 24px 16px 48px;
 }
 
-/* 櫃檯分頁釘牌:木牌+店主頭像。 */
+/* 櫃檯分頁釘牌:木牌+店主頭像(min-height 44px:32px keeper 後補足點擊目標)。 */
 .scene-day .shop-tab {
+  min-height: 44px;
   border: 2px solid var(--pixel-gold-deep);
   border-radius: var(--radius-pixel);
   background: var(--pixel-parchment-card);
@@ -4439,36 +4440,31 @@ a {
   color: var(--pixel-parchment);
 }
 
-/* 店主頭像:CSS 幾何佔位(素材批換裝;.shop-keeper* 為換裝介面)。 */
+/* 店主頭像:手繪 16×16 sprite @2x 顯示(素材批換裝完成)。 */
 .shop-keeper {
   position: relative;
   display: inline-block;
   flex: none;
-  width: 20px;
-  height: 20px;
+  width: 32px;
+  height: 32px;
   margin-right: 6px;
-  vertical-align: -4px;
-  border-radius: var(--radius-pixel);
-  box-shadow: 2px 2px 0 var(--pixel-shadow);
+  vertical-align: -8px;
+  image-rendering: pixelated;
+  box-shadow: none;
 }
 
 .shop-keeper::before {
-  content: '';
-  position: absolute;
-  top: 7px;
-  left: 4px;
-  width: 3px;
-  height: 3px;
-  background: var(--pixel-window-frame);
-  box-shadow: 7px 0 0 var(--pixel-window-frame);
+  content: none;
 }
 
 .shop-keeper--blooks {
-  background: var(--coral-700);
+  background: url('../assets/sprites/keeper-blooks.png') center / 32px 32px
+    no-repeat;
 }
 
 .shop-keeper--frames {
-  background: var(--cobalt-600);
+  background: url('../assets/sprites/keeper-frames.png') center / 32px 32px
+    no-repeat;
 }
 
 /* 木架陳列:貨架卡=羊皮紙格+底部厚木板。 */
@@ -4538,8 +4534,8 @@ a {
   background: var(--pixel-parchment-card);
 }
 
-/* 圖鑑魔物:CSS 幾何佔位(.codex-monster* 為素材批換裝介面)。
-   剪影=實色墨塊(禁 opacity 灰階,批③ I2 教訓);復仇成功=點亮上色。 */
+/* 圖鑑魔物:復用 monster-base sprite(@1x 32×32 底部對齊;盒 28×24 由
+   background 左右各裁 2px)。剪影=filter 墨化;復仇成功=點亮原色。 */
 .codex-monster {
   position: relative;
   flex: none;
@@ -4547,33 +4543,18 @@ a {
   width: 28px;
   height: 24px;
   margin-top: 2px;
-  background: var(--ink-700);
-  clip-path: polygon(
-    20% 100%,
-    0 45%,
-    18% 8%,
-    50% 0,
-    82% 8%,
-    100% 45%,
-    80% 100%,
-    62% 82%,
-    38% 82%
-  );
+  background: url('../assets/sprites/monster-base.png') center bottom / 32px
+    32px no-repeat;
+  image-rendering: pixelated;
+  filter: brightness(0) opacity(0.75);
 }
 
 .codex-monster--lit {
-  background: var(--jade-600);
+  filter: none;
 }
 
 .codex-monster--lit::before {
-  content: '';
-  position: absolute;
-  top: 9px;
-  left: 8px;
-  width: 3px;
-  height: 3px;
-  background: var(--pixel-window-frame);
-  box-shadow: 9px 0 0 var(--pixel-window-frame);
+  content: none;
 }
 
 .mistakes-codex .mistake-resolved__list > li {
@@ -4586,7 +4567,9 @@ a {
 /* ── 批④ 公會佈告欄(/app/leaderboard;決議 5 純視覺:木板底+羊皮紙名條+金銀銅) ──
    木板=深色面:header 文字逐條設淺色(外溢鐵律,不設容器 color)。 */
 .scene-day.guild-board {
-  background: var(--pixel-gold-deep);
+  background: var(--pixel-gold-deep) url('../assets/sprites/wood-tile.png') top
+    left / 64px 64px repeat;
+  image-rendering: pixelated;
   border: 3px solid var(--pixel-window-frame);
   outline: 2px solid var(--pixel-gold-deep);
   box-shadow:
@@ -5580,9 +5563,30 @@ select#dashboard-classroom {
   position: relative;
 }
 
-/* 日景:村莊廣場。羊皮紙頁底;tile 村莊背景屬素材批,先以純色呈現。 */
+/* login 村莊剪影:貼底 repeat-x(320×80 @3x),不攔截點擊。
+   isolate+z-index:-1:::after 是最後一個定位子節點,依樹序會蓋過表單
+   (實測遮住登入鈕),故降到獨立堆疊context 的背景層。 */
+.scene-night.auth-portal {
+  isolation: isolate;
+}
+
+.scene-night.auth-portal::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  z-index: -1;
+  height: 240px;
+  background: url('../assets/sprites/village-silhouette.png') center bottom /
+    960px 240px repeat-x;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+/* 日景:村莊廣場。羊皮紙底+手繪石板地 tile(64px 鋪排,低對比)。 */
 .scene-day {
-  background: var(--pixel-parchment);
+  background: var(--pixel-parchment) url('../assets/sprites/ground-tile.png')
+    top left / 64px 64px repeat;
+  image-rendering: pixelated;
   padding-bottom: 48px;
 }
 
