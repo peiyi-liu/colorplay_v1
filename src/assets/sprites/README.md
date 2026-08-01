@@ -31,3 +31,9 @@ owner 定稿圖（artifacts/design-audit/asset-batch/anchor/，不入 repo）。
   在石板上清楚可辨，且保留石板材質。
 - 旗尾織紋＝保留（`.live-presenter__wall-chip` 疊 wood-tile.png）。名條白字
   對木紋最亮色 #8a651f 實測對比 5.3:1 ≥ 4.5:1，未觸發「撤三行」降格條款。
+- 煙火 pseudo-element 邊際限制（Task 7 review 裁定必記）：43.68px（::before，
+  亞軍側）／14.42px（::after，冠軍側）零文字重疊的量測僅在「雙人頒獎台」
+  fixture（本機 seed 僅 1 host＋2 學生）下成立；不對稱根因＝冠軍卡較高
+  （多 podium-gems 塊＋大皇冠＋padding-bottom 32px vs 24px）且 flex 底對齊。
+  三名滿座的幾何從未量測——未來若動 `--space-8`／皇冠尺寸／podium-step
+  padding，或 fixtures 擴充到 3 名學生，必須重量 ::after 側邊際。
