@@ -238,26 +238,41 @@ it('derives rule-based high-frequency error cards from question analysis', async
   expect(region.textContent).toContain('色相環上與紅色相對的顏色是？');
 });
 
-it('高頻錯誤概念標示嚴重度（螢幕閱讀器文字）', async () => {
+it('高頻錯誤概念標示嚴重度（螢幕閱讀器文字，綁定排序後的特定題目）', async () => {
+  // 故意打亂輸入順序（correct_rate 較高的那筆放前面），佐證元件真的依
+  // correct_rate 升冪排序、而非單純沿用輸入順序。
   renderPage(
     teacherRepositoryOf({
       getQuestionAnalysis: vi.fn().mockResolvedValue([
-        {
-          attempts: 5,
-          correct_rate: 40,
-          prompt: '色相環上與紅色相對的顏色是？',
-          stable_code: '3-1-01',
-        },
         {
           attempts: 4,
           correct_rate: 55,
           prompt: '三原色混合後可得到哪一種顏色？',
           stable_code: '3-1-02',
         },
+        {
+          attempts: 5,
+          correct_rate: 40,
+          prompt: '色相環上與紅色相對的顏色是？',
+          stable_code: '3-1-01',
+        },
       ]),
     }),
   );
 
-  expect(await screen.findByText('嚴重度：高')).toBeInTheDocument();
-  expect(screen.getByText('嚴重度：中')).toBeInTheDocument();
+  const highSeverityLabel = await screen.findByText('嚴重度：高');
+  const highSeverityCard = highSeverityLabel.closest('.teacher-error-card');
+  expect(highSeverityCard).not.toBeNull();
+  // correct_rate 最低（40）者才是「嚴重度：高」，即使它在輸入陣列中排第二。
+  expect(highSeverityCard?.textContent).toContain(
+    '色相環上與紅色相對的顏色是？',
+  );
+
+  const midSeverityLabel = screen.getByText('嚴重度：中');
+  const midSeverityCard = midSeverityLabel.closest('.teacher-error-card');
+  expect(midSeverityCard).not.toBeNull();
+  // correct_rate 次低（55）者才是「嚴重度：中」，即使它在輸入陣列中排第一。
+  expect(midSeverityCard?.textContent).toContain(
+    '三原色混合後可得到哪一種顏色？',
+  );
 });
