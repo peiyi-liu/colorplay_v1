@@ -639,3 +639,5 @@ P1 Task 3: review clean (c4a933e, amended from acf8ede msg-only). chapter-select
 P1 Task 4: complete (mission select + dungeon floors paging)
 P1 Task 4: review clean (9c83d2f). Real playable=2 (only ch3/ch4 have questions) — mission-select no overflow at wide; floors all single-subtopic, no chrome anywhere at current seeds. Note: "6 playable" premise was controller dispatch context, not brief.
 P1 Task 5: complete (shop racks paging both tabs)
+P1 Task 5: review clean (55553b6). Shop pages 3pp wide both tabs; ui-restyle confirmed pre-base red (login-page c0f7baf9 07-23, matches shell-gate blame) — controller premise wrong, implementer A/B verified signature unchanged.
+P1 Task 6: complete (mistake codex in-group + resolved paging)

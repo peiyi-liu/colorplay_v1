@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { GamePager, useStageWide } from '../../../components/ui/game-pager';
 import type {
   LearningRepository,
   MistakeView,
@@ -38,6 +39,7 @@ export function MistakesPage({
   const start = useStartRemediation(repository);
   const navigate = useNavigate();
   const [startError, setStartError] = useState<string>();
+  const stageWide = useStageWide();
 
   if (mistakes.isPending) return <RouteLoading withinMain />;
   if (mistakes.isError) {
@@ -90,22 +92,30 @@ export function MistakesPage({
                 {group.mistakes.length} 題待補救
               </span>
             </h2>
-            <ul className="mistake-list">
-              {group.mistakes.map((mistake) => (
-                <li className="mistake-list__item" key={mistake.mistakeId}>
-                  <span aria-hidden="true" className="codex-monster" />
-                  <div className="mistake-list__body">
-                    <p className="mistake-list__prompt">
-                      {mistake.prompt}
-                      {mistake.status === 'reopened' ? '（再次答錯）' : ''}
-                    </p>
-                    <p className="mistake-list__answer">
-                      正確答案：{mistake.correctOptionText}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <GamePager
+              ariaLabel={`${group.subtopicTitle} 錯題分頁`}
+              items={group.mistakes}
+              pageSize={stageWide ? 5 : 3}
+            >
+              {(pageItems) => (
+                <ul className="mistake-list">
+                  {pageItems.map((mistake) => (
+                    <li className="mistake-list__item" key={mistake.mistakeId}>
+                      <span aria-hidden="true" className="codex-monster" />
+                      <div className="mistake-list__body">
+                        <p className="mistake-list__prompt">
+                          {mistake.prompt}
+                          {mistake.status === 'reopened' ? '（再次答錯）' : ''}
+                        </p>
+                        <p className="mistake-list__answer">
+                          正確答案：{mistake.correctOptionText}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </GamePager>
             <div className="mistake-group__actions">
               <button
                 className="primary-action"
@@ -143,22 +153,30 @@ export function MistakesPage({
             <span aria-hidden="true" className="mistake-resolved__dot" />
             已解決
           </h2>
-          <ul className="mistake-resolved__list">
-            {/* owner 0728:已解決題附正確答案,方便學生再複習。
-                owner 0730 #1:題目後方不再加「（已解決）」字尾。 */}
-            {resolved.map((mistake) => (
-              <li key={mistake.mistakeId}>
-                <span
-                  aria-hidden="true"
-                  className="codex-monster codex-monster--lit"
-                />
-                {mistake.prompt}
-                <span className="mistake-resolved__answer">
-                  正確答案：{mistake.correctOptionText}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <GamePager
+            ariaLabel="已解決錯題分頁"
+            items={resolved}
+            pageSize={stageWide ? 6 : 4}
+          >
+            {(pageItems) => (
+              <ul className="mistake-resolved__list">
+                {/* owner 0728:已解決題附正確答案,方便學生再複習。
+                    owner 0730 #1:題目後方不再加「（已解決）」字尾。 */}
+                {pageItems.map((mistake) => (
+                  <li key={mistake.mistakeId}>
+                    <span
+                      aria-hidden="true"
+                      className="codex-monster codex-monster--lit"
+                    />
+                    {mistake.prompt}
+                    <span className="mistake-resolved__answer">
+                      正確答案：{mistake.correctOptionText}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </GamePager>
         </section>
       ) : null}
     </section>

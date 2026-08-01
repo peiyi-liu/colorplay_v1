@@ -1,5 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -137,5 +144,70 @@ describe('MistakesPage', () => {
         })),
       ),
     ).toHaveLength(0);
+  });
+
+  it('組內錯題與已解決分別分頁,超出容量時可翻頁,badge 維持總數', async () => {
+    const user = userEvent.setup();
+    const openMistakes = Array.from({ length: 7 }, (_, index) => ({
+      correctOptionText: `答案${String(index + 1)}`,
+      lastEventAt: '2026-07-18T01:00:00+00:00',
+      mistakeId: `26200000-0000-0000-0000-00000000010${String(index)}`,
+      prompt: `題目${String(index + 1)}`,
+      stableCode: '3-1-01',
+      status: 'open' as const,
+      subtopicId: 'f929cde5-c294-46ce-5faf-c866b3cb9583',
+      subtopicTitle: '3-1 色彩三要素與色名的表示',
+    }));
+    const resolvedMistakes = Array.from({ length: 9 }, (_, index) => ({
+      correctOptionText: `已解決答案${String(index + 1)}`,
+      lastEventAt: '2026-07-18T01:00:00+00:00',
+      mistakeId: `26200000-0000-0000-0000-00000000020${String(index)}`,
+      prompt: `已解決題${String(index + 1)}`,
+      stableCode: '3-1-02',
+      status: 'resolved' as const,
+      subtopicId: 'f929cde5-c294-46ce-5faf-c866b3cb9584',
+      subtopicTitle: '3-1 色彩三要素與色名的表示',
+    }));
+    const repository = {
+      listMistakes: vi
+        .fn()
+        .mockResolvedValue([...openMistakes, ...resolvedMistakes]),
+      startRemediation: vi.fn(),
+    } as unknown as LearningRepository;
+    renderPage(repository);
+
+    // 全域 matchMedia stub matches:false → narrow 檔位:組內容量3(7題→3頁)、已解決容量4(9題→3頁)。
+    const groupPager = await screen.findByRole('group', {
+      name: '3-1 色彩三要素與色名的表示 錯題分頁',
+    });
+    expect(within(groupPager).getByText('第 1 / 3 頁')).toBeVisible();
+    expect(screen.getByText('題目1')).toBeInTheDocument();
+    expect(screen.queryByText('題目4')).toBeNull();
+    // badge 顯示組內總數,不受目前頁面筆數影響。
+    expect(screen.getByText('7 題待補救')).toHaveClass('mistake-group__badge');
+    expect(
+      screen.getByRole('button', { name: '再挑戰（補救練習）' }),
+    ).toBeVisible();
+
+    await user.click(
+      within(groupPager).getByRole('button', { name: '下一頁' }),
+    );
+    expect(within(groupPager).getByText('第 2 / 3 頁')).toBeVisible();
+    expect(screen.getByText('題目4')).toBeInTheDocument();
+    expect(screen.queryByText('題目1')).toBeNull();
+
+    const resolvedPager = screen.getByRole('group', {
+      name: '已解決錯題分頁',
+    });
+    expect(within(resolvedPager).getByText('第 1 / 3 頁')).toBeVisible();
+    expect(screen.getByText('已解決題1')).toBeInTheDocument();
+    expect(screen.queryByText('已解決題5')).toBeNull();
+
+    await user.click(
+      within(resolvedPager).getByRole('button', { name: '下一頁' }),
+    );
+    expect(within(resolvedPager).getByText('第 2 / 3 頁')).toBeVisible();
+    expect(screen.getByText('已解決題5')).toBeInTheDocument();
+    expect(screen.queryByText('已解決題1')).toBeNull();
   });
 });
