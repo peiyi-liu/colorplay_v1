@@ -44,10 +44,8 @@
   禁止 background-position 動畫（違反「動畫只動 transform/opacity」鐵律）。
 - **載重預算**：單檔 ≤16KB、素材總量 ≤160KB、/login 首屏新增 ≤32KB。
   CSS background 按需載入（selector 未命中不下載），勿把素材塞進首屏關鍵路徑。
-- **生產管線**：Gemini 圖像生成（打樣→owner 篩選→以定稿圖為 reference 量產）→
-  `pixelize.py` 後製（裁切/降採樣/調色盤量化/去背）→ `check-sprites.py` 守門。
-  生成不可控時的退路：(A) 手繪像素 SVG（BlookArt 前例）；(B) 保留 CSS 幾何
-  佔位結批止損。
+- **生產管線**：手繪程式化像素網格為主路線（owner 2026-08-01 裁定），管線決策與退路
+  詳見 ADR 0006（本節不重複維護）。
 
 ## 1. 視覺定位
 

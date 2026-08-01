@@ -3540,7 +3540,7 @@ a {
 }
 
 /* 玩家標記:站在目前推薦節點上(決議 2 玩家 sprite;素材批換裝完成:
-   8×8 hero sprite @2x,盒 18×18→16×16、錨點外移 2px 補償)。 */
+   8×8 hero sprite @2x,盒 14×14→16×16(border-box)、錨點外移 2px 補償)。 */
 .map-node__hero {
   position: absolute;
   top: -18px;
@@ -4535,7 +4535,10 @@ a {
 }
 
 /* 圖鑑魔物:復用 monster-base sprite(@1x 32×32 底部對齊;盒 28×24 由
-   background 左右各裁 2px)。剪影=filter 墨化;復仇成功=點亮原色。 */
+   background 左右各裁 2px)。剪影=filter 墨化;復仇成功=點亮原色。
+   態信號=brightness(0)墨化 vs filter:none 全彩(亮度/色相通道);opacity(0.75)
+   僅為 unlit 態固定裝飾性柔化,非態通道——批③ I2「禁 opacity 灰階」教訓指禁用
+   alpha 作為態信號,此處未違其意。 */
 .codex-monster {
   position: relative;
   flex: none;

@@ -4,6 +4,9 @@
 每檔記錄：生成模型／prompt／reference／pixelize 參數。style anchor＝
 owner 定稿圖（artifacts/design-audit/asset-batch/anchor/，不入 repo）。
 
+網格源碼已歸檔於 `scripts/assets/sprite-sources/`（程序性素材——村莊剪影與兩張無縫
+tile——的再生依據）。
+
 | 檔名                   | 模型                                                    | prompt 摘要                                                                      | pixelize 參數             |
 | ---------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------- |
 | monster-base.png       | 手繪網格（scratchpad assetgen/production_task4.py）     | design＝owner 定稿 monster-2（藍色圓史萊姆）網格直出                             | 無（直接 @1x 32×32）      |

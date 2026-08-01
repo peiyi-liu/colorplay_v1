@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""素材守門(spec/07):尺寸階/色域⊆調色盤/預算。gate 於 Task 8 呼叫,違規非零退出。"""
+"""素材守門(spec/07):尺寸上限(≤320)/不透明像素(α≥128)色域⊆調色盤/檔案與總量預算——
+尺寸階與整數倍顯示由 CSS 配對與 gate 人工驗證,本腳本不檢。gate 於 Task 8 呼叫,違規非零退出。"""
 import json
 import sys
 from pathlib import Path

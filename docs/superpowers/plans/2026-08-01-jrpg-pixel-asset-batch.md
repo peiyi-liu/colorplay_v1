@@ -4,7 +4,8 @@
 
 **Goal:** 把批①–⑤a 已就位的 CSS 幾何佔位換成真實像素美術：先落地素材規格（Task 1），再以 Gemini 圖像生成（owner 0801 拍板方案 C）小批打樣→owner 篩選→量產換裝，全程零行為變更。
 
-**Architecture:** 素材規格進 `spec/07`（normative）＋ADR 0006（管線決策）。素材 @1x PNG 存 `src/assets/sprites/`，由 `globals.css` 以 `url()` 消費（Vite 打包雜湊、`image-rendering: pixelated`、整數倍放大）。生成走 google-genai（`gemini-2.5-flash-image`，生成腳本＝scratchpad 拋棄式；prompt 記錄進 sprites README 保再現性）；後製（降採樣／量化／去背）與守門腳本為 repo 內 Python 工具。換裝一律只動 CSS＋新增圖檔，TSX 零接觸。
+**Architecture:** 素材規格進 `spec/07`（normative）＋ADR 0006（管線決策）。素材 @1x PNG 存 `src/assets/sprites/`，由 `globals.css` 以 `url()` 消費（Vite 打包雜湊、`image-rendering: pixelated`、整數倍放大）。生成走 google-genai（`gemini-2.5-flash-image`，生成腳本＝scratchpad 拋棄式；prompt 記錄進 sprites README 保再現性）；後製（降採樣／量化／去背）與守門腳本為 repo 內 Python 工具。換裝一律只動 CSS＋新增圖檔，TSX 零接觸。（0801 修訂：生成主路線改為 Claude
+程式化手繪像素網格，Gemini 降為備選——見 ADR 0006 修訂段與各 Task Step 1 修訂）
 
 **Tech Stack:** google-genai（Gemini image）、Python 3 + Pillow 11（後製/守門）、Vite asset pipeline、Playwright（真跑量測）。
 
@@ -739,7 +740,7 @@ python3 scripts/assets/check-sprites.py
 }
 ```
 
-（盒 18×18〔14+2border〕→16×16，absolute 不入 flow；top/right 各外移 2px 維持錨點。Step 3 量測不遮節點文字，順檢 B3 M6 精靈/魔物間距。）
+（盒 14×14→16×16（border-box），absolute 不入 flow；top/right 各外移 2px 維持錨點。Step 3 量測不遮節點文字，順檢 B3 M6 精靈/魔物間距。）
 
 ```css
 .floor-torch {
@@ -1116,7 +1117,7 @@ Expected: 0 FAIL。另計 `/login` 引用素材（village-silhouette）≤32KB�
 
 - 截圖重拍：login、村莊、世界地圖、樓層、戰鬥、結算、商店、圖鑑、佈告欄、join、學生 question/feedback、camp、presenter 四態 1080p——桌機＋375 全套存 `artifacts/design-audit/asset-batch/`。
 - 對比 rendered 實測（ancestor opacity 合成；紋理面最深/最亮雙採樣；positioned 元素必畫在 in-flow 文字上〔B4 D1 註記〕；動畫疊層取 keyframe 兩極值）：紋理上文字、剪影疊字區、sprite 鄰接文字全配對 ≥4.5:1、非文字圖形 ≥3:1 → `contrast.md`。
-- 幾何：互動鈕 rect ≥44px；全部換裝元素盒尺寸與 base 比對（keeper 20→32、hero 18→16 兩處刻意變更以 Task 5/6 量測值為準，其餘必須相等）。
+- 幾何：互動鈕 rect ≥44px；全部換裝元素盒尺寸與 base 比對（keeper 20→32、hero 14→16(border-box) 兩處刻意變更以 Task 5/6 量測值為準，其餘必須相等）。
 - reduced-motion 雙通道全景；console 0 error/0 pageerror。
 
 - [ ] **Step 6: 結批**
