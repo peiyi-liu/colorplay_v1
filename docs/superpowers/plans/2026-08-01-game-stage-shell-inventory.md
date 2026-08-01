@@ -39,7 +39,7 @@
 - `.student-rail`（`src/styles/globals.css:1263`）／`.teacher-rail`（`:1343`）sticky → **Task 5 退役**
 - `.live-result-screen`（`src/styles/globals.css:2222`）fixed → **Task 8 顯式同步**，改 absolute 錨舞台，z-index 70
 - `.live-presenter`（`src/styles/globals.css:4675`）fixed → **保留-理由**（投影＝全螢幕接管例外，ledger 慣例，見 `progress.md` A1 Design-debt 清單脈絡；不隨舞台改動）
-- **新增（原清單未列）**：`.ui-toast-container`（`src/components/ui/ui.css:418`）fixed，z-index 50，`top/right: var(--space-5)` → **Task 3 顯式同步**：與 skip-link 同理，viewport-fixed 會讓 toast 浮到 letterbox 留白區、脫離遊戲舞台視覺框；非 `.live-presenter` 那種刻意全螢幕接管例外，建議一併改錨定舞台容器（`.game-stage` 內 absolute）。e2e 電池掃描 `tests/e2e` 對 `ui-toast`／`系統通知`／toast 角色/文字**零命中**，故不需要顯式測試同步，僅 CSS 錨點需隨 Task 3 調整
+- **新增（原清單未列）**：`.ui-toast-container`（`src/components/ui/ui.css:418`）fixed，z-index 50，`top/right: var(--space-5)` → **Task 8 顯式同步**（訂正：Task 3 檔案範圍僅 `app-shell.tsx`／`globals.css` 的 `.app-shell`/`.skip-link` 塊／`app-shell.test.tsx`，不含 `ui.css`；Task 8 Step 2 明文負責「toast 與其他元件層 fixed/sticky hits」）。與 skip-link 同理，viewport-fixed 會讓 toast 浮到 letterbox 留白區、脫離遊戲舞台視覺框；非 `.live-presenter` 那種刻意全螢幕接管例外，建議一併改錨定舞台容器（`.game-stage` 內 absolute）。e2e 電池掃描 `tests/e2e` 對 `ui-toast`／`系統通知`／toast 角色/文字**零命中**，故不需要顯式測試同步，僅 CSS 錨點需隨 Task 8 調整
 
 ## E. 100dvh
 
@@ -73,7 +73,7 @@
 | `src/features/live/pages/teacher-live-report-page.tsx:61-62`、`:98-99`        | 2      | `.ui-table-scroll`（逐題分析）＋`.live-matrix-scroll`（`src/styles/globals.css:2358`，個人逐題作答）   | **已守門**              |
 | `src/features/teacher-content/pages/teacher-analytics-page.tsx:279、308、339` | 3      | 無（外層僅 `.page-wide` `width:min(100%,1120px)`，`src/styles/globals.css:5152`，**不含 `overflow`**） | **未守門 — 新發現缺口** |
 
-**新發現（原清單未列）**：`teacher-analytics-page.tsx` 三張表格（題目分析／子題精熟／Live 報表，4-5 欄含長文字 `prompt`/`subtopic_title`）皆無 `.ui-table-scroll` 或任何 `overflow-x` 容器包裹，僅套用無 overflow 控制的 `.page-wide`。在現行全站可自由橫向捲動的版面下問題不明顯；但舞台批把全站收進固定寬度 16:9 letterbox 後，若表格实際寬度超出舞台可視寬，將無任何橫向捲動出口而直接溢出舞台/被裁切。**建議列入 Task 5（或批⑤b 教師端整體優化前置）的顯式修復項**，補上 `.ui-table-scroll`（或等價 wrap），與另外三個既守門頁面一致。
+**新發現（原清單未列）**：`teacher-analytics-page.tsx` 三張表格（題目分析／子題精熟／Live 報表，4-5 欄含長文字 `prompt`/`subtopic_title`）皆無 `.ui-table-scroll` 或任何 `overflow-x` 容器包裹，僅套用無 overflow 控制的 `.page-wide`。在現行全站可自由橫向捲動的版面下問題不明顯；但舞台批把全站收進固定寬度 16:9 letterbox 後，若表格实際寬度超出舞台可視寬，將無任何橫向捲動出口而直接溢出舞台/被裁切。→ **Task 8 顯式修復**（訂正：Task 8 Step 3 明文擁有「教師寬表格 overflow 守門（盤點 G）」且實測清單已含 `/teacher/analytics`；Task 5 範圍是 HUD 底部指令列／登出 e2e，與教師表格無關），補上 `.ui-table-scroll`（或等價 wrap），與另外三個既守門頁面一致。
 
 其他觀察（非阻塞，僅記錄）：
 
