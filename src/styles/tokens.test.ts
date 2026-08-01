@@ -123,6 +123,7 @@ describe('JRPG pixel baseline tokens (ADR 0005)', () => {
   it.each([
     '--pixel-night: #171c3f',
     '--pixel-night-deep: #10142e',
+    '--stage-void: #0a0d20',
     '--pixel-parchment: #f6eed8',
     '--pixel-parchment-card: #fdf8ea',
     '--pixel-gold: #b8862f',

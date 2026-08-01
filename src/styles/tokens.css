@@ -216,6 +216,7 @@
      既有淡彩 token 保留供未遷移頁面,勿刪 ── */
   --pixel-night: #171c3f; /* 夜空對話窗底 */
   --pixel-night-deep: #10142e; /* 夜景頁底(戰鬥/Live/投影) */
+  --stage-void: #0a0d20; /* 16:9 舞台 letterbox 底，較 night-deep 深一階（GameStage spec §2） */
   --pixel-parchment: #f6eed8; /* 羊皮紙日景頁底(村莊/地圖) */
   --pixel-parchment-card: #fdf8ea; /* 日景卡片底 */
   --pixel-gold: #b8862f; /* 金幣/EXP 強調 */
