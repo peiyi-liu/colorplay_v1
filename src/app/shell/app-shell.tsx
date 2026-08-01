@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { Icon } from '../../components/ui/icons';
 import { useToast } from '../../components/ui/toast';
 import { useAuth } from '../../features/auth/context/auth-context';
@@ -94,62 +94,38 @@ export function AppShell() {
           跳到主要內容
         </a>
         <RotateBanner />
-        <header className="app-header">
-          <div className="app-header__content">
-            <Link
-              className="brand"
-              to={isAuthenticatedProfile ? '/app' : '/'}
-              aria-label="ColorPlay 首頁"
+        {isAuthenticatedProfile ? (
+          <header className="hud-top">
+            <AuthenticatedEconomySummary />
+            {isTeacher ? (
+              <span className="hud-top__identity">
+                <Icon name="lock-open" size={14} />
+                {profile.data?.displayName}・教師端
+              </span>
+            ) : null}
+            {signOutError ? (
+              <p className="app-shell__auth-error" role="alert">
+                登出失敗，請稍後重試。
+              </p>
+            ) : null}
+          </header>
+        ) : null}
+        {auth.status === 'authenticated' && !isAuthenticatedProfile ? (
+          <>
+            <button
+              className="hud-menu__logout hud-menu__logout--fallback"
+              disabled={isSigningOut}
+              onClick={handleSignOut}
+              type="button"
             >
-              <span className="brand__mark" aria-hidden="true">
-                <svg fill="none" height="26" viewBox="0 0 32 32" width="26">
-                  <circle cx="11" cy="12" fill="var(--coral-700)" r="7" />
-                  <circle
-                    cx="21"
-                    cy="12"
-                    fill="var(--cobalt-600)"
-                    fillOpacity="0.92"
-                    r="7"
-                  />
-                  <circle
-                    cx="16"
-                    cy="20"
-                    fill="var(--jade-600)"
-                    fillOpacity="0.92"
-                    r="7"
-                  />
-                </svg>
-              </span>
-              <span className="brand__text">
-                <span className="brand__title">ColorPlay</span>
-                <span className="brand__subtitle">色彩原理遊戲式學習平台</span>
-              </span>
-            </Link>
-            <div className="app-header__navigation">
-              {isAuthenticatedProfile ? <AuthenticatedEconomySummary /> : null}
-              {isTeacher ? (
-                <span className="app-header__teacher-badge">
-                  <Icon name="lock-open" size={14} />
-                  {profile.data?.displayName}・教師端
-                </span>
-              ) : null}
-              {auth.status === 'authenticated' && !isAuthenticatedProfile ? (
-                <button
-                  className="hud-menu__logout hud-menu__logout--fallback"
-                  disabled={isSigningOut}
-                  onClick={handleSignOut}
-                  type="button"
-                >
-                  {isSigningOut ? '登出中…' : '登出'}
-                </button>
-              ) : null}
-            </div>
-          </div>
-        </header>
-        {signOutError ? (
-          <p className="app-shell__auth-error" role="alert">
-            登出失敗，請稍後重試。
-          </p>
+              {isSigningOut ? '登出中…' : '登出'}
+            </button>
+            {signOutError ? (
+              <p className="app-shell__auth-error" role="alert">
+                登出失敗，請稍後重試。
+              </p>
+            ) : null}
+          </>
         ) : null}
         <main className="game-stage__scene" id="main-content" tabIndex={-1}>
           <Outlet />

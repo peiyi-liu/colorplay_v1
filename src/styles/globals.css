@@ -156,83 +156,69 @@ a {
   top: var(--space-2);
 }
 
-.app-header {
+/* ── 頂部 HUD（spec §4）：左狀態窗＋右資源列；賢者窗＝教師 identity。── */
+.hud-top {
+  z-index: 40;
   display: flex;
-  min-height: 64px;
-  align-items: center;
-  border-bottom: 1px solid var(--pastel-border-page);
-  background: rgb(255 255 255 / 96%);
-  padding: var(--space-3) max(var(--space-4), env(safe-area-inset-left));
-}
-
-.app-header__content {
-  display: flex;
-  width: min(100%, 1280px);
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-inline: auto;
-}
-
-.brand {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
   gap: var(--space-3);
-  border-radius: var(--radius-control);
-  color: var(--color-text);
-  font-family: var(--font-brand);
-  letter-spacing: 0.01em;
-  text-decoration: none;
+  padding: var(--space-2) var(--space-3) 0;
 }
 
-.brand__mark {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-}
-
-.brand__text {
-  display: grid;
-  line-height: 1.2;
-}
-
-.brand__title {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-}
-
-.brand__subtitle {
-  color: var(--color-muted);
-  font-size: 11px;
-  font-weight: 400;
-}
-
-.app-header__stage {
-  color: var(--color-muted);
-  font-size: var(--font-size-supporting);
-  font-weight: 700;
-}
-
-.app-header__navigation,
-.app-header__navigation nav {
+/* 左上狀態窗：夜空窗小卡（Level＋EXP 條）。 */
+.hud-top .economy-summary {
   display: flex;
+  flex: 1;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.hud-top .economy-summary__level {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 2px solid var(--pixel-window-frame);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-night);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+  color: var(--pixel-parchment);
+  font-size: 13px;
+  font-weight: 800;
+  padding: var(--space-1) var(--space-2);
+}
+
+.hud-top .economy-summary__level progress {
+  width: 120px;
+  height: 8px;
+  accent-color: var(--pixel-gold);
+}
+
+/* 右上資源列：Token/XP 計數，tabular-nums。金色字 on 夜空底實測 5.09:1（≥4.5:1）。 */
+.hud-top .economy-summary__tokens {
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-night);
+  color: var(--pixel-gold);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  padding: var(--space-1) var(--space-2);
+}
+
+/* 賢者窗：教師 identity 像素化。框＝教師暖橘識別，字維持 parchment(暖橘僅做框色避免對比不足)。 */
+.hud-top__identity {
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-4);
-}
-
-.app-header__navigation {
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.app-header__navigation nav a {
-  min-height: 44px;
-  align-content: center;
-  color: var(--color-surface);
-  font-weight: 700;
+  gap: var(--space-1);
+  border: 2px solid var(--color-teacher);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-night);
+  color: var(--pixel-parchment);
+  font-size: 13px;
+  font-weight: 800;
+  padding: var(--space-1) var(--space-2);
 }
 
 .economy-summary {
@@ -288,20 +274,6 @@ a {
   color: var(--color-muted);
   font-size: var(--font-size-supporting);
   font-weight: 700;
-}
-
-.app-header__teacher-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--color-teacher);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-teacher) 10%, transparent);
-  color: var(--color-teacher);
-  font-size: var(--font-size-metadata);
-  font-weight: 800;
-  padding: var(--space-1) 14px;
-  white-space: nowrap;
 }
 
 .app-shell__auth-error {
@@ -1062,39 +1034,6 @@ a {
     padding-block: var(--space-6);
   }
 
-  .app-header__stage {
-    display: none;
-  }
-
-  /* 393 寬度既有溢出（Task 14 稽核發現）：.app-header__content 本身不換行，
-     brand 佔掉大半寬度後，.app-header__navigation 只剩不到 170px 可用，遠小於
-     economy-summary 的最小內容寬（level 區塊 min-width:132px＋tokens＋間距，
-     實測約 250px+），即使 economy-summary 本身設了 flex-basis:100%，「100%」
-     算的是這個過窄可用空間的 100%，還是會被內容撐爆，最終讓
-     document.documentElement.scrollWidth 撐到 482px（實測值）。讓
-     .app-header__content 在窄螢幕改為可換行，nav 整列換到 brand 下方獨立一
-     行，拿到完整可用寬度（393 - 左右 padding，約 345px），economy-summary＋
-     登出鍵才有足夠空間並排，不必再各自撐開版面。 */
-  .app-header__content {
-    flex-wrap: wrap;
-    row-gap: var(--space-2);
-  }
-
-  .app-header__navigation,
-  .app-header__navigation nav {
-    gap: var(--space-3);
-  }
-
-  .app-header__navigation {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .economy-summary {
-    flex-basis: 100%;
-    margin-left: auto;
-  }
-
   .route-panel {
     border-radius: var(--radius-card);
     padding: var(--space-6);
@@ -1150,11 +1089,6 @@ a {
 }
 
 @media (max-width: 479px) and (max-height: 600px) {
-  .app-header {
-    min-height: 56px;
-    padding-block: var(--space-1);
-  }
-
   #main-content {
     padding-block: var(--space-2);
   }
@@ -1244,41 +1178,6 @@ a {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* ── GGAME shell 導覽（Task 5） ───────────────────────── */
-
-.app-header__lobby {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  border-radius: var(--radius-control);
-  background: var(--button-primary-bg);
-  color: var(--button-primary-text);
-  font-size: var(--font-size-supporting);
-  font-weight: 800;
-  padding: var(--space-1) var(--space-4);
-  text-decoration: none;
-}
-
-.app-header__lobby:hover {
-  filter: brightness(1.05);
-}
-
-.app-header__teacher {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  border-radius: var(--radius-control);
-  color: var(--slate-600);
-  font-size: var(--font-size-supporting);
-  font-weight: 800;
-  padding: var(--space-1) var(--space-3);
-  text-decoration: none;
-}
-
-.app-header__teacher:hover {
-  color: var(--slate-900);
 }
 
 /* ── 底部 HUD 指令列（spec §4）─────────────────────────────────── */

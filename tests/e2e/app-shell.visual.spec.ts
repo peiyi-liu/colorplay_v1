@@ -26,7 +26,7 @@ test.describe('flat-design application shell', () => {
       await page.setViewportSize(viewport);
       await page.goto('/login');
 
-      await expect(page.getByRole('banner')).toBeVisible();
+      await expect(page.locator('.game-stage')).toBeVisible();
       await expect(page.getByRole('main')).toHaveAttribute(
         'id',
         'main-content',

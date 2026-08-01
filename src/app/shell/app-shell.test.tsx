@@ -120,7 +120,7 @@ describe('AppShell', () => {
     expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
   });
 
-  it('uses a labelled home link without treating navigation as a route CTA', () => {
+  it('遊戲 HUD 不再提供頂列品牌連結（chrome 收進舞台）', () => {
     render(
       <MemoryRouter>
         <ToastProvider>
@@ -129,10 +129,7 @@ describe('AppShell', () => {
       </MemoryRouter>,
     );
 
-    // 登入後點擊品牌 logo 回到章節挑戰主畫面。
-    expect(
-      screen.getByRole('link', { name: 'ColorPlay 首頁' }),
-    ).toHaveAttribute('href', '/app');
+    expect(screen.queryByRole('link', { name: 'ColorPlay 首頁' })).toBeNull();
     expect(document.querySelectorAll('[data-acceptance-target]')).toHaveLength(
       0,
     );
@@ -206,6 +203,7 @@ describe('AppShell', () => {
     expect(mockedUseEconomySummary).not.toHaveBeenCalled();
     expect(screen.queryByText(/Level/u)).toBeNull();
     expect(screen.queryByText(/Token/u)).toBeNull();
+    expect(screen.queryByRole('banner')).toBeNull();
   });
 
   it('uses non-blocking loading text and never fabricates a zero balance on failure', () => {
