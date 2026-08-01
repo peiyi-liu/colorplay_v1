@@ -555,3 +555,5 @@ B5 Task 1: complete (commits 51363cf+7384159+bd15648, review clean after 2-fix w
 B5 Task 2: complete (--stage-void #0a0d20 pinned, TDD red-green)
 B5 Task 2: review clean (4720aba)
 B5 Task 3: complete (stage structure, visual-spec screenshots expected-red until Task 9)
+B5 Task 3: complete (ceb2d27, review clean after ledger note) — NOTE for Task 9: app-shell.visual.spec.ts:67 locator `.app-shell *`(forbidden-flat-styles check) now matches 0 elements after rename → vacuous pass; Task 9 must repoint to `.game-stage *` alongside snapshot regen. Also two .app-shell:has() selectors migrated to .game-stage:has() (login accent / live immersive nav-hiding), behavior preserved.
+B5 Task 4: complete (rotate banner, portrait-only, session dismiss)

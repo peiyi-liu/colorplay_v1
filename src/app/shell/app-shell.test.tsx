@@ -34,6 +34,15 @@ const economyResult = (
 
 describe('AppShell', () => {
   beforeEach(() => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockReturnValue({
+        addEventListener: vi.fn(),
+        matches: false,
+        media: '(orientation: portrait)',
+        removeEventListener: vi.fn(),
+      } as unknown as MediaQueryList),
+    );
     mockedUseEconomySummary.mockReset();
     mockedUseAuth.mockReturnValue({
       session: {

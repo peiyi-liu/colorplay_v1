@@ -6,6 +6,7 @@ import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { EconomySummaryView } from '../../features/rewards/components/economy-summary';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
+import { RotateBanner } from './rotate-banner';
 import { useIdleLogout } from './use-idle-logout';
 
 // 側欄 active 樣式跟隨目前路由（owner 2026-07-21 #9）。
@@ -77,6 +78,7 @@ export function AppShell() {
         <a className="skip-link" href="#main-content">
           跳到主要內容
         </a>
+        <RotateBanner />
         <header className="app-header">
           <div className="app-header__content">
             <Link
