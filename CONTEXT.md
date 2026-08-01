@@ -73,3 +73,11 @@ _Avoid_: loot drop, gacha, reward roll
 **Day/Night Scene（日夜場景）**:
 村莊與世界地圖＝羊皮紙暖色日景；戰鬥、Live、投影幕＝夜空 navy。
 Live 投影墨色舞台自此為正規邏輯而非例外。
+
+**素材（sprite）**：`src/assets/sprites/` 下的 @1x 像素 PNG，經 globals.css
+`url()` 整數倍放大消費；規格見 spec/07「素材規格」節。
+
+**@1x**：sprite 的原生像素尺寸；顯示尺寸恆為其整數倍（pixelated 放大）。
+
+**palette swap（換色）**：同基底 sprite 換色相產生家族變體的策略（spec §4.5）；
+由 pixelize.py 以調色盤映射實作，非 CSS filter。

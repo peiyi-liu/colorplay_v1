@@ -20,6 +20,35 @@
   尊重 `prefers-reduced-motion`；戰鬥三拍鐵律（樂觀揮刀→伺服器判定→命中/MISS）。
 - 教師端像素濃度上限三成；已刪功能不復活；色彩僅定義於 tokens.css。
 
+### 素材規格（2026-08-01 素材批定案）
+
+- **尺寸階**：角色/物件 sprite 以 16 或 32px 見方繪製（@1x），顯示為整數倍（×2/×3）。
+  場景 tile＝32×32 @1x，×2 重複鋪排。寬幅場景件（村莊剪影）@1x 高 80px、×3 顯示。
+  微型 UI 塊件（火把、符文石、寶石、營火等 box <48px 者）依既有版型盒繪製：
+  @1x＝盒尺寸的一半（偶數）×2 顯示；盒 <16px 者 @1x＝盒尺寸 ×1 顯示。
+  **換裝不得改動既有版型盒外尺寸**；素材在盒內置中、整數倍縮放，
+  非整數倍縮放禁止；盒與 @1x 階不合時以 background 天然裁切呈現。
+- **調色盤**：sprite 像素色 ⊆ `scripts/assets/pixel-palette.json`（28 色主調色盤＋透明）。
+  該調色盤是 `--pixel-*`/品牌 tokens 的超集：CSS 端色彩仍僅定義於 tokens.css，
+  sprite 圖檔內的像素色不算 raw-hex 違規，但必須通過 `check-sprites.py` 色域檢查。
+  調色盤擴充需同批修訂 JSON 並在 ADR 0006 記錄。
+- **命名與存放**：`src/assets/sprites/<kebab-name>.png`，全部 @1x 單檔；
+  同族換色以後綴區分（如 `spirit-red.png`）。spritesheet 暫不採用（HTTP/2＋Vite
+  雜湊下單檔快取粒度更好；素材量 >40 檔時重新評估）。每檔的生成模型、prompt、
+  後製參數記錄於 `src/assets/sprites/README.md`。
+- **CSS 消費方式**：`background: url('../assets/sprites/x.png') center / <W>px <H>px
+  no-repeat;` ＋ `image-rendering: pixelated`；`<W>×<H>`＝@1x×整數。
+  態變化（silhouette/unlit）用 `filter`/`opacity`，不換圖。
+- **動畫**：首發素材一律單幀，動態沿用既有 transform/opacity keyframes。
+  幀動畫（未來）＝雙 pseudo-element 各持一幀以 opacity steps() 交替；
+  禁止 background-position 動畫（違反「動畫只動 transform/opacity」鐵律）。
+- **載重預算**：單檔 ≤16KB、素材總量 ≤160KB、/login 首屏新增 ≤32KB。
+  CSS background 按需載入（selector 未命中不下載），勿把素材塞進首屏關鍵路徑。
+- **生產管線**：Gemini 圖像生成（打樣→owner 篩選→以定稿圖為 reference 量產）→
+  `pixelize.py` 後製（裁切/降採樣/調色盤量化/去背）→ `check-sprites.py` 守門。
+  生成不可控時的退路：(A) 手繪像素 SVG（BlookArt 前例）；(B) 保留 CSS 幾何
+  佔位結批止損。
+
 ## 1. 視覺定位
 
 ColorPlay 採用手機優先的扁平化介面。視覺系統的首要目標不是增加裝飾，而是讓學生快速辨識「目前在哪裡、正在做什麼、下一步要按哪裡」。遊戲化獎勵必須支持學習任務，不得搶走主要注意力。
