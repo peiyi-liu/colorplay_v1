@@ -1,5 +1,4 @@
 import { useEffect, useState, type ReactElement } from 'react';
-import { flushSync } from 'react-dom';
 
 const STORAGE_KEY = 'colorplay.rotate-banner-dismissed';
 const PORTRAIT_QUERY = '(orientation: portrait)';
@@ -16,11 +15,7 @@ export function RotateBanner(): ReactElement | null {
   useEffect(() => {
     const media = window.matchMedia(PORTRAIT_QUERY);
     const onChange = (event: MediaQueryListEvent) => {
-      // matchMedia 的 change 事件在 React 之外觸發；用 flushSync 讓 orientation
-      // 切換立即反映在 DOM，避免自動批次把更新延到下一個 microtask 才生效。
-      flushSync(() => {
-        setIsPortrait(event.matches);
-      });
+      setIsPortrait(event.matches);
     };
     media.addEventListener('change', onChange);
     return () => {

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RotateBanner } from './rotate-banner';
@@ -64,7 +64,9 @@ describe('RotateBanner', () => {
     const media = stubMatchMedia(false);
     render(<RotateBanner />);
     expect(screen.queryByRole('status')).toBeNull();
-    media.fire(true);
+    act(() => {
+      media.fire(true);
+    });
     expect(screen.getByRole('status')).toBeVisible();
   });
 });
