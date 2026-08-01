@@ -51,14 +51,62 @@ a {
   outline-offset: 3px;
 }
 
-.app-shell {
+/* ── GameStage Shell：16:9 遊戲舞台（spec 2026-08-01 §2–3）──────────
+   預設＝直向/窄幅 RWD 全幅（舞台退場）；≥768px 且橫向＝置中 letterbox。
+   內容零 transform 縮放；卷動發生在 .game-stage__scene。 */
+.game-viewport {
   display: flex;
   min-height: 100dvh;
   flex-direction: column;
+  background: var(--stage-void);
+}
+
+.game-stage {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  background: var(--surface-page);
+}
+
+.game-stage__scene {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) and (orientation: landscape) {
+  .game-viewport {
+    position: fixed;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+  }
+
+  /* 舞台框沿 .rpg-window 雙線框語彙（globals.css .rpg-window）。 */
+  .game-stage {
+    overflow: hidden;
+    width: min(100vw, calc(100vh * 16 / 9));
+    height: min(100vh, calc(100vw * 9 / 16));
+    flex: none;
+    border: 3px solid var(--pixel-window-frame);
+    outline: 2px solid var(--pixel-night);
+    box-shadow:
+      0 0 0 5px var(--pixel-window-frame),
+      6px 6px 0 var(--pixel-shadow);
+    border-radius: var(--radius-pixel);
+  }
+
+  .game-stage__scene {
+    overflow-y: auto;
+  }
 }
 
 .skip-link {
-  position: fixed;
+  position: absolute;
   z-index: 2;
   top: -80px;
   left: var(--space-2);
@@ -2940,12 +2988,12 @@ a {
 /* ── GGAME 認證入口（Task 11b） ───────────────────────── */
 
 /* 登入路由:紙張底 + 頂部六色相細條,白卡以 2px 墨框浮出(flat)。 */
-.app-shell:has(.auth-portal) #main-content {
+.game-stage:has(.auth-portal) #main-content {
   position: relative;
   background: var(--surface-page);
 }
 
-.app-shell:has(.auth-portal) #main-content::before {
+.game-stage:has(.auth-portal) #main-content::before {
   position: absolute;
   top: 0;
   right: 0;
@@ -5209,8 +5257,8 @@ select#dashboard-classroom {
 }
 
 /* 學生 Live 場次:沉浸模式,隱藏導覽列(owner 2026-07-23) */
-.app-shell:has(.live-session-shell) .student-rail,
-.app-shell:has(.live-session-shell) .teacher-rail {
+.game-stage:has(.live-session-shell) .student-rail,
+.game-stage:has(.live-session-shell) .teacher-rail {
   display: none;
 }
 

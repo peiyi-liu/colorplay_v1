@@ -553,3 +553,5 @@ A1 Task 3: complete (commit 34d6640 README 骨架;打樣 13/13+village round 2�
 B5 Task 1: complete (commit 51363cf, inventory 36 entries)
 B5 Task 1: complete (commits 51363cf+7384159+bd15648, review clean after 2-fix wave: toast/teacher-table dispositions re-routed to Task 8)
 B5 Task 2: complete (--stage-void #0a0d20 pinned, TDD red-green)
+B5 Task 2: review clean (4720aba)
+B5 Task 3: complete (stage structure, visual-spec screenshots expected-red until Task 9)

@@ -72,134 +72,136 @@ export function AppShell() {
   }, [reducedMotion]);
 
   return (
-    <div className="app-shell">
-      <a className="skip-link" href="#main-content">
-        跳到主要內容
-      </a>
-      <header className="app-header">
-        <div className="app-header__content">
-          <Link
-            className="brand"
-            to={isAuthenticatedProfile ? '/app' : '/'}
-            aria-label="ColorPlay 首頁"
-          >
-            <span className="brand__mark" aria-hidden="true">
-              <svg fill="none" height="26" viewBox="0 0 32 32" width="26">
-                <circle cx="11" cy="12" fill="var(--coral-700)" r="7" />
-                <circle
-                  cx="21"
-                  cy="12"
-                  fill="var(--cobalt-600)"
-                  fillOpacity="0.92"
-                  r="7"
-                />
-                <circle
-                  cx="16"
-                  cy="20"
-                  fill="var(--jade-600)"
-                  fillOpacity="0.92"
-                  r="7"
-                />
-              </svg>
-            </span>
-            <span className="brand__text">
-              <span className="brand__title">ColorPlay</span>
-              <span className="brand__subtitle">色彩原理遊戲式學習平台</span>
-            </span>
-          </Link>
-          <div className="app-header__navigation">
-            {isAuthenticatedProfile ? <AuthenticatedEconomySummary /> : null}
-            {isTeacher ? (
-              <span className="app-header__teacher-badge">
-                <Icon name="lock-open" size={14} />
-                {profile.data?.displayName}・教師端
+    <div className="game-viewport">
+      <div className="game-stage">
+        <a className="skip-link" href="#main-content">
+          跳到主要內容
+        </a>
+        <header className="app-header">
+          <div className="app-header__content">
+            <Link
+              className="brand"
+              to={isAuthenticatedProfile ? '/app' : '/'}
+              aria-label="ColorPlay 首頁"
+            >
+              <span className="brand__mark" aria-hidden="true">
+                <svg fill="none" height="26" viewBox="0 0 32 32" width="26">
+                  <circle cx="11" cy="12" fill="var(--coral-700)" r="7" />
+                  <circle
+                    cx="21"
+                    cy="12"
+                    fill="var(--cobalt-600)"
+                    fillOpacity="0.92"
+                    r="7"
+                  />
+                  <circle
+                    cx="16"
+                    cy="20"
+                    fill="var(--jade-600)"
+                    fillOpacity="0.92"
+                    r="7"
+                  />
+                </svg>
               </span>
-            ) : null}
-            {auth.status === 'authenticated' ? (
-              <button
-                className="app-header__logout"
-                disabled={isSigningOut}
-                onClick={() => {
-                  if (signOutPending.current) return;
-                  signOutPending.current = true;
-                  setIsSigningOut(true);
-                  setSignOutError(false);
-                  void auth.signOut().then(
-                    () => {
-                      signOutPending.current = false;
-                      setIsSigningOut(false);
-                      toast({ message: '已安全登出。', tone: 'info' });
-                      return navigate('/login', { replace: true });
-                    },
-                    () => {
-                      signOutPending.current = false;
-                      setIsSigningOut(false);
-                      setSignOutError(true);
-                    },
-                  );
-                }}
-                type="button"
-              >
-                {isSigningOut ? '登出中…' : '登出'}
-              </button>
-            ) : null}
+              <span className="brand__text">
+                <span className="brand__title">ColorPlay</span>
+                <span className="brand__subtitle">色彩原理遊戲式學習平台</span>
+              </span>
+            </Link>
+            <div className="app-header__navigation">
+              {isAuthenticatedProfile ? <AuthenticatedEconomySummary /> : null}
+              {isTeacher ? (
+                <span className="app-header__teacher-badge">
+                  <Icon name="lock-open" size={14} />
+                  {profile.data?.displayName}・教師端
+                </span>
+              ) : null}
+              {auth.status === 'authenticated' ? (
+                <button
+                  className="app-header__logout"
+                  disabled={isSigningOut}
+                  onClick={() => {
+                    if (signOutPending.current) return;
+                    signOutPending.current = true;
+                    setIsSigningOut(true);
+                    setSignOutError(false);
+                    void auth.signOut().then(
+                      () => {
+                        signOutPending.current = false;
+                        setIsSigningOut(false);
+                        toast({ message: '已安全登出。', tone: 'info' });
+                        return navigate('/login', { replace: true });
+                      },
+                      () => {
+                        signOutPending.current = false;
+                        setIsSigningOut(false);
+                        setSignOutError(true);
+                      },
+                    );
+                  }}
+                  type="button"
+                >
+                  {isSigningOut ? '登出中…' : '登出'}
+                </button>
+              ) : null}
+            </div>
           </div>
-        </div>
-      </header>
-      {isAuthenticatedProfile && !isTeacher ? (
-        <nav className="student-rail" aria-label="主要導覽">
-          <div className="student-rail__content">
-            <NavLink className={studentTabClassName} end to="/app">
-              學習大廳
-            </NavLink>
-            <NavLink className={studentTabClassName} to="/app/missions">
-              課後任務實戰
-            </NavLink>
-            <NavLink className={studentTabClassName} to="/app/shop">
-              裝備商店
-            </NavLink>
-            <span className="student-rail__spacer" aria-hidden="true" />
-            <NavLink className={studentLinkClassName} to="/app/mistakes">
-              我的錯題
-            </NavLink>
-            <NavLink className={studentLinkClassName} to="/app/live/join">
-              Live 課堂
-            </NavLink>
-            <NavLink className={studentLinkClassName} to="/app/leaderboard">
-              班級排行榜
-            </NavLink>
-            <NavLink className={studentLinkClassName} to="/app/achievements">
-              成就徽章
-            </NavLink>
-          </div>
-        </nav>
-      ) : null}
-      {isTeacher ? (
-        <nav className="teacher-rail" aria-label="教師導覽">
-          <div className="teacher-rail__content">
-            <Link className="teacher-rail__link" to="/teacher">
-              教師工作區
-            </Link>
-            <Link className="teacher-rail__link" to="/teacher/live">
-              Live 主持
-            </Link>
-            <Link className="teacher-rail__link" to="/teacher/classes">
-              班級管理
-            </Link>
-            <Link className="teacher-rail__link" to="/teacher/analytics">
-              教學分析
-            </Link>
-          </div>
-        </nav>
-      ) : null}
-      {signOutError ? (
-        <p className="app-shell__auth-error" role="alert">
-          登出失敗，請稍後重試。
-        </p>
-      ) : null}
-      <main id="main-content" tabIndex={-1}>
-        <Outlet />
-      </main>
+        </header>
+        {isAuthenticatedProfile && !isTeacher ? (
+          <nav className="student-rail" aria-label="主要導覽">
+            <div className="student-rail__content">
+              <NavLink className={studentTabClassName} end to="/app">
+                學習大廳
+              </NavLink>
+              <NavLink className={studentTabClassName} to="/app/missions">
+                課後任務實戰
+              </NavLink>
+              <NavLink className={studentTabClassName} to="/app/shop">
+                裝備商店
+              </NavLink>
+              <span className="student-rail__spacer" aria-hidden="true" />
+              <NavLink className={studentLinkClassName} to="/app/mistakes">
+                我的錯題
+              </NavLink>
+              <NavLink className={studentLinkClassName} to="/app/live/join">
+                Live 課堂
+              </NavLink>
+              <NavLink className={studentLinkClassName} to="/app/leaderboard">
+                班級排行榜
+              </NavLink>
+              <NavLink className={studentLinkClassName} to="/app/achievements">
+                成就徽章
+              </NavLink>
+            </div>
+          </nav>
+        ) : null}
+        {isTeacher ? (
+          <nav className="teacher-rail" aria-label="教師導覽">
+            <div className="teacher-rail__content">
+              <Link className="teacher-rail__link" to="/teacher">
+                教師工作區
+              </Link>
+              <Link className="teacher-rail__link" to="/teacher/live">
+                Live 主持
+              </Link>
+              <Link className="teacher-rail__link" to="/teacher/classes">
+                班級管理
+              </Link>
+              <Link className="teacher-rail__link" to="/teacher/analytics">
+                教學分析
+              </Link>
+            </div>
+          </nav>
+        ) : null}
+        {signOutError ? (
+          <p className="app-shell__auth-error" role="alert">
+            登出失敗，請稍後重試。
+          </p>
+        ) : null}
+        <main className="game-stage__scene" id="main-content" tabIndex={-1}>
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

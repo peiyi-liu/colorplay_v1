@@ -74,6 +74,26 @@ describe('AppShell', () => {
     );
   });
 
+  it('wraps the whole app in the 16:9 game stage shell', () => {
+    render(
+      <MemoryRouter>
+        <ToastProvider>
+          <AppShell />
+        </ToastProvider>
+      </MemoryRouter>,
+    );
+
+    const main = screen.getByRole('main');
+    expect(main).toHaveClass('game-stage__scene');
+    const stage = main.closest('.game-stage');
+    expect(stage).not.toBeNull();
+    expect(stage?.closest('.game-viewport')).not.toBeNull();
+    // skip-link 錨在舞台內(fixed 退場改 absolute)
+    expect(
+      screen.getByRole('link', { name: '跳到主要內容' }).closest('.game-stage'),
+    ).toBe(stage);
+  });
+
   it('provides a skip link, banner, and main outlet region', () => {
     render(
       <MemoryRouter>
