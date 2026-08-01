@@ -37,15 +37,16 @@
 
 - `.skip-link`（`src/styles/globals.css:61`）fixed → **Task 3 顯式同步**，改 absolute 錨舞台（連動 A 節兩支新增 e2e）
 - `.student-rail`（`src/styles/globals.css:1263`）／`.teacher-rail`（`:1343`）sticky → **Task 5 退役**
-- `.live-result-screen`（`src/styles/globals.css:2222`）fixed → **Task 8 顯式同步**，改 absolute 錨舞台，z-index 70
-- `.live-presenter`（`src/styles/globals.css:4675`）fixed → **保留-理由**（投影＝全螢幕接管例外，ledger 慣例，見 `progress.md` A1 Design-debt 清單脈絡；不隨舞台改動）
-- **新增（原清單未列）**：`.ui-toast-container`（`src/components/ui/ui.css:418`）fixed，z-index 50，`top/right: var(--space-5)` → **Task 8 顯式同步**（訂正：Task 3 檔案範圍僅 `app-shell.tsx`／`globals.css` 的 `.app-shell`/`.skip-link` 塊／`app-shell.test.tsx`，不含 `ui.css`；Task 8 Step 2 明文負責「toast 與其他元件層 fixed/sticky hits」）。與 skip-link 同理，viewport-fixed 會讓 toast 浮到 letterbox 留白區、脫離遊戲舞台視覺框；非 `.live-presenter` 那種刻意全螢幕接管例外，建議一併改錨定舞台容器（`.game-stage` 內 absolute）。e2e 電池掃描 `tests/e2e` 對 `ui-toast`／`系統通知`／toast 角色/文字**零命中**，故不需要顯式測試同步，僅 CSS 錨點需隨 Task 8 調整
+- `.live-result-screen`（`src/styles/globals.css:2222`）fixed → **已處理**（Task 8：改 `position: absolute`＋`z-index: 70`，其餘宣告原樣；元件 `live-session-page.tsx` 的 `FullscreenResult` 本就渲染於 `<Outlet/>`/`.game-stage__scene`/`.game-stage` 子樹內，`.game-stage` 為合法定位祖先。實測 1440×900：`stageRect{x:0,y:45,w:1440,h:810}` vs `resultRect{x:3,y:48,w:1434,h:804}`——差值恰為 `.game-stage` 3px 邊框，結果畫面精準貼滿舞台可視區，未觸及上下各 45px letterbox；`resultZIndex:70` > `hudZIndex:50` 確認蓋過 HUD。證據 `artifacts/design-audit/stage-shell/task8/live-result-screen-1440x900.png`）
+- `.live-presenter`（`src/styles/globals.css:4675`）fixed → **保留-理由**（Task 8 確認：投影＝全螢幕接管例外，ledger 慣例，見 `progress.md` A1 Design-debt 清單脈絡；不隨舞台改動。已在該規則塊補一行 CSS 註解記錄決策）
+- **新增（原清單未列）**：`.ui-toast-container`（`src/components/ui/ui.css:418`）fixed，z-index 50，`top/right: var(--space-5)` → **保留-理由（訂正原盤點建議）**：Task 8 覆核 DOM 掛載點發現 `ToastProvider`（`src/app/providers/app-providers.tsx`）掛在 `src/main.tsx` 的 app 根，`.ui-toast-container` 在 DOM 上是 `.game-stage` 的手足（兩者皆為 `#root` 直接子節點），不是子孫；`.game-stage` 不是它的定位祖先，`position:absolute` 無法錨定（會退回 initial containing block，效果與現行 fixed 幾乎無差異，不是真正的錨定舞台）。要做到「真正錨進舞台」需把 `ToastProvider` 的掛載點移進 `AppShell` 樹內（元件結構調整），超出 Task 8 檔案範圍（`globals.css`／`ui.css`／盤點文件）。已在 `ui.css:417` 前補上多行註解記錄此結構性限制、已知風險（極端非 16:9 視窗下可能落在 letterbox）與影響評估（4 秒自動消失、非互動，影響輕微），列入 design-debt 供未來把 `ToastProvider` 掛載點移入 `AppShell` 的批次一併處理。e2e 電池掃描 `tests/e2e` 對 `ui-toast`／`系統通知`／toast 角色/文字**零命中**，不需要顯式測試同步
 
 ## E. 100dvh
 
 - `src/styles/globals.css:17`（`body { min-height: 100dvh }`，基底）→ **保留**
 - `src/styles/globals.css:56`（`.app-shell { min-height: 100dvh }`）→ **Task 3 隨容器改名處理**
 - **盤點結果（無 feature 頁層級 hits）**：`src/features/**` 底下沒有任何 `.css` 檔案（全站樣式集中於 `globals.css`／`ui.css`），且對 `src/features --include="*.tsx"` 掃描 `100dvh|100vh` 亦零命中；額外對整個 `src` 掃描內嵌 `style={{ position: 'fixed'|'sticky' }}` 亦零命中。**本節無需補列，僅上述兩處**
+- **Task 8 複核（已處理／無動作）**：上述兩處皆非 Task 8 責任範圍——`:17` 為基底、已標「保留」；`:56` 已由 Task 3 隨 `.app-shell`→`.game-viewport`/`.game-stage` 容器改名處理（現行 `.game-viewport { min-height: 100dvh }`，`src/styles/globals.css:59`）。Task 8 重新掃描確認全站無其餘 feature 頁層級 `100dvh` hits，本節無需 Task 8 額外動作
 
 ## F. 導覽列（student-rail／teacher-rail）role 與連結文字依賴（→ Task 5 顯式同步）
 
@@ -66,14 +67,25 @@
 
 含 `<table>` 的教師端頁面（`src/features/classrooms`、`src/features/teacher-content`、`src/features/live`）：
 
-| 檔案                                                                          | 表格數 | 容器 class                                                                                             | 守門狀態                |
-| ----------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------ | ----------------------- |
-| `src/features/classrooms/pages/teacher-classroom-detail-page.tsx:60-61`       | 1      | `.ui-table-scroll`（`src/components/ui/ui.css:391`，`overflow-x:auto`）                                | **已守門**              |
-| `src/features/classrooms/pages/teacher-student-progress-page.tsx:123-124`     | 1      | `.ui-table-scroll`                                                                                     | **已守門**              |
-| `src/features/live/pages/teacher-live-report-page.tsx:61-62`、`:98-99`        | 2      | `.ui-table-scroll`（逐題分析）＋`.live-matrix-scroll`（`src/styles/globals.css:2358`，個人逐題作答）   | **已守門**              |
-| `src/features/teacher-content/pages/teacher-analytics-page.tsx:279、308、339` | 3      | 無（外層僅 `.page-wide` `width:min(100%,1120px)`，`src/styles/globals.css:5152`，**不含 `overflow`**） | **未守門 — 新發現缺口** |
+| 檔案                                                                          | 表格數 | 容器 class                                                                                                      | 守門狀態   |
+| ----------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------- | ---------- |
+| `src/features/classrooms/pages/teacher-classroom-detail-page.tsx:60-61`       | 1      | `.ui-table-scroll`（`src/components/ui/ui.css:391`，`overflow-x:auto`）                                         | **已守門** |
+| `src/features/classrooms/pages/teacher-student-progress-page.tsx:123-124`     | 1      | `.ui-table-scroll`                                                                                              | **已守門** |
+| `src/features/live/pages/teacher-live-report-page.tsx:61-62`、`:98-99`        | 2      | `.ui-table-scroll`（逐題分析）＋`.live-matrix-scroll`（`src/styles/globals.css:2358`，個人逐題作答）            | **已守門** |
+| `src/features/teacher-content/pages/teacher-analytics-page.tsx:279、308、339` | 3      | Task 8 前：無；Task 8 後：`.teacher-analytics-section`（`src/styles/globals.css:5024`，新增 `overflow-x:auto`） | **已處理** |
 
-**新發現（原清單未列）**：`teacher-analytics-page.tsx` 三張表格（題目分析／子題精熟／Live 報表，4-5 欄含長文字 `prompt`/`subtopic_title`）皆無 `.ui-table-scroll` 或任何 `overflow-x` 容器包裹，僅套用無 overflow 控制的 `.page-wide`。在現行全站可自由橫向捲動的版面下問題不明顯；但舞台批把全站收進固定寬度 16:9 letterbox 後，若表格实際寬度超出舞台可視寬，將無任何橫向捲動出口而直接溢出舞台/被裁切。→ **Task 8 顯式修復**（訂正：Task 8 Step 3 明文擁有「教師寬表格 overflow 守門（盤點 G）」且實測清單已含 `/teacher/analytics`；Task 5 範圍是 HUD 底部指令列／登出 e2e，與教師表格無關），補上 `.ui-table-scroll`（或等價 wrap），與另外三個既守門頁面一致。
+**新發現（原清單未列）**：`teacher-analytics-page.tsx` 三張表格（題目分析／子題精熟／Live 報表，4-5 欄含長文字 `prompt`/`subtopic_title`）皆無 `.ui-table-scroll` 或任何 `overflow-x` 容器包裹，僅套用無 overflow 控制的 `.page-wide`。在現行全站可自由橫向捲動的版面下問題不明顯；但舞台批把全站收進固定寬度 16:9 letterbox 後，若表格实際寬度超出舞台可視寬，將無任何橫向捲動出口而直接溢出舞台/被裁切。→ **已處理（Task 8）**：三張表格共用的父容器 `<section className="teacher-analytics-section">`（`ProjectionSection`，`teacher-analytics-page.tsx:44`）本身就是表格的直接父節點，補上 `overflow-x: auto` 即同時守門三張表，效果等同其餘三頁既有的 `.ui-table-scroll`，未動 `.tsx`／表格結構。
+
+**Task 8 真跑量測結果（教師帳號 `live.host.teacher@colorplay.test`，1024×768 與 1440×900 皆測）**：
+
+| 頁面                              | 1024×768 容器 scrollWidth/clientWidth                                                                                 | 1440×900 容器 scrollWidth/clientWidth            | 是否溢出舞台（`containerRect.right > stageRect.right`）                                                                                     |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/teacher/classes`                | 無 `<table>`（卡片列表，非表格頁）                                                                                    | 同左                                             | N/A                                                                                                                                         |
+| `/teacher/classes/:id`            | `.ui-table-scroll` 936/936（不溢出）                                                                                  | `.ui-table-scroll` 1070/1070（不溢出）           | 否                                                                                                                                          |
+| `/teacher/analytics`              | `.teacher-analytics-section` 986/986（不溢出）                                                                        | `.teacher-analytics-section` 1120/1120（不溢出） | 否                                                                                                                                          |
+| `/teacher/live/:sessionId/report` | `.ui-table-scroll` 960/960（不溢出）；`.live-matrix-scroll` 1464/960（**容器內部**依設計橫向捲動，10 題矩陣本就該捲） | 同左（960 寬視窗尺寸不影響矩陣寬度）             | 否（`.live-matrix-scroll` 容器本身 `containerRect.right` 均未超出舞台，只是容器*內部*的表格內容比容器寬，觸發設計預期的容器內捲動，非破版） |
+
+四頁在兩種舞台尺寸下，容器右緣皆未超出 `.game-stage` 右緣（`overflowsStage: false`）。截圖與量測 console 輸出見 `artifacts/design-audit/stage-shell/task8/`（`teacher-classes-*.png`／`teacher-class-detail-*.png`／`teacher-analytics-*.png`／`teacher-live-report-*.png`）。
 
 其他觀察（非阻塞，僅記錄）：
 

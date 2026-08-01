@@ -414,6 +414,15 @@
   padding: var(--space-3) var(--space-4);
 }
 
+/* Task 8（盤點 D）：保留 fixed——ToastProvider 掛載於 app 根（src/main.tsx
+   經 AppProviders），toast 容器在 DOM 上是 .game-stage 的手足（sibling），
+   不是子孫，position:absolute 無法錨定到 .game-stage（沒有可用的定位祖先，
+   會退回 initial containing block，效果等同目前的 fixed，不會真的貼進舞台）。
+   要讓 toast 真正錨進舞台需要把 ToastProvider 的掛載點移進 AppShell 樹內，
+   屬元件結構調整，超出本任務檔案範圍（globals.css／ui.css／盤點文件）。
+   已知限制：極端非 16:9 視窗下 toast 可能落在 letterbox 區而非舞台內；
+   訊息 4 秒自動消失、非互動式操作，影響輕微，列入 design-debt 供未來批次
+   將 ToastProvider 掛載點移入 AppShell 時一併處理。 */
 .ui-toast-container {
   position: fixed;
   z-index: 50;

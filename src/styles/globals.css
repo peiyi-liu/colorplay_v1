@@ -2208,8 +2208,8 @@ a {
 
 /* 題間全屏結果：綠底勾／紅底叉，白字，蓋掉整個畫面。 */
 .live-result-screen {
-  position: fixed;
-  z-index: 50;
+  position: absolute; /* was fixed：錨 .game-stage（relative），蓋舞台不蓋 letterbox */
+  z-index: 70; /* was 50：高於 hud-command(50)/hud-menu__panel(60) */
   inset: 0;
   display: flex;
   flex-direction: column;
@@ -4661,6 +4661,7 @@ a {
 /* ── ColorPlay Live 投影模式（10B）───────────────────────────────── */
 
 .live-presenter {
+  /* Task 8：保留 fixed——投影＝全螢幕接管例外（ledger「Live 投影墨色舞台例外」慣例），不隨舞台改動。 */
   position: fixed;
   z-index: 80;
   display: flex;
@@ -5019,6 +5020,14 @@ a {
   border-radius: var(--radius-control);
   background: var(--surface-card);
   padding: var(--space-2) var(--space-3);
+}
+
+/* Task 8（盤點 G 未守門缺口）：教學分析頁三張表（題目分析／子題精熟／Live
+   報表）直接掛在這個 section 下，原本沒有任何橫向捲動容器；舞台批把全站
+   收進固定寬度 16:9 letterbox 後需要守門，補上 overflow-x:auto，與其餘教師
+   頁面既有的 .ui-table-scroll 效果一致。 */
+.teacher-analytics-section {
+  overflow-x: auto;
 }
 
 /* 教師工作區班級選擇列同樣整理 */
