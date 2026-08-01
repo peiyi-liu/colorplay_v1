@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { Chip } from '../../../components/ui/chip';
+import { GamePager, useStageWide } from '../../../components/ui/game-pager';
 import {
   useCreateClassroom,
   useOwnedClassrooms,
@@ -68,6 +69,7 @@ export function TeacherClassroomsPage({
 }: Readonly<{ repository?: ClassroomRepository }>) {
   const classrooms = useOwnedClassrooms(repository);
   const create = useCreateClassroom(repository);
+  const wide = useStageWide();
   const pending = useRef(false);
   const [submitError, setSubmitError] = useState<string>();
   const {
@@ -178,52 +180,60 @@ export function TeacherClassroomsPage({
       {classrooms.data.length === 0 ? (
         <p>尚未建立班級。</p>
       ) : (
-        <ul aria-label="教師班級列表" className="classroom-list">
-          {classrooms.data.map((classroom) => (
-            <li key={classroom.classroomId}>
-              <article className="classroom-card">
-                <div className="classroom-card__head">
-                  <h2>{classroom.classroomName}</h2>
-                  <Chip tone="success">
-                    <span
-                      aria-hidden="true"
-                      className="status-dot status-dot--active"
+        <GamePager
+          ariaLabel="班級清單分頁"
+          items={classrooms.data}
+          pageSize={wide ? 6 : 3}
+        >
+          {(pageItems) => (
+            <ul aria-label="教師班級列表" className="classroom-list">
+              {pageItems.map((classroom) => (
+                <li key={classroom.classroomId}>
+                  <article className="classroom-card">
+                    <div className="classroom-card__head">
+                      <h2>{classroom.classroomName}</h2>
+                      <Chip tone="success">
+                        <span
+                          aria-hidden="true"
+                          className="status-dot status-dot--active"
+                        />
+                        {String(classroom.memberCount)} 位有效學生
+                      </Chip>
+                    </div>
+                    <ClassroomJoinCode
+                      classroomName={classroom.classroomName}
+                      joinCode={classroom.joinCode}
                     />
-                    {String(classroom.memberCount)} 位有效學生
-                  </Chip>
-                </div>
-                <ClassroomJoinCode
-                  classroomName={classroom.classroomName}
-                  joinCode={classroom.joinCode}
-                />
-                <dl className="classroom-card__meta">
-                  <div>
-                    <dt>建立日期</dt>
-                    <dd>
-                      {new Date(classroom.createdAt).toLocaleDateString(
-                        'zh-TW',
-                      )}
-                    </dd>
-                  </div>
-                </dl>
-                <div className="classroom-card__actions">
-                  <Link
-                    className="classroom-card__manage"
-                    to={`/teacher/classes/${classroom.classroomId}`}
-                  >
-                    管理班級
-                  </Link>
-                  <Link
-                    className="classroom-card__analytics"
-                    to="/teacher/analytics"
-                  >
-                    教學分析
-                  </Link>
-                </div>
-              </article>
-            </li>
-          ))}
-        </ul>
+                    <dl className="classroom-card__meta">
+                      <div>
+                        <dt>建立日期</dt>
+                        <dd>
+                          {new Date(classroom.createdAt).toLocaleDateString(
+                            'zh-TW',
+                          )}
+                        </dd>
+                      </div>
+                    </dl>
+                    <div className="classroom-card__actions">
+                      <Link
+                        className="classroom-card__manage"
+                        to={`/teacher/classes/${classroom.classroomId}`}
+                      >
+                        管理班級
+                      </Link>
+                      <Link
+                        className="classroom-card__analytics"
+                        to="/teacher/analytics"
+                      >
+                        教學分析
+                      </Link>
+                    </div>
+                  </article>
+                </li>
+              ))}
+            </ul>
+          )}
+        </GamePager>
       )}
     </section>
   );

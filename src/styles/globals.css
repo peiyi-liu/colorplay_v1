@@ -6846,3 +6846,26 @@ select#dashboard-classroom {
   font-size: 0.85rem;
   letter-spacing: 2px;
 }
+
+/* 班級管理批：班級卡＝木牌（貨架配方低配：無像素字體，字級不動）；
+   加入碼＝像素票券（六碼用像素拉丁字型——資料區像素唯一例外）。
+   覆蓋 .classroom-card 系列既有宣告（globals.css:2692 起），原節不動。 */
+.classroom-card {
+  border: 2px solid var(--pixel-gold-deep);
+  border-bottom: 6px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+}
+
+.classroom-card__code {
+  border: 2px dashed var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment);
+}
+
+.classroom-card__code-value {
+  font-family: var(--font-pixel-latin);
+  font-size: 0.95rem;
+  letter-spacing: 3px;
+}

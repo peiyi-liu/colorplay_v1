@@ -154,4 +154,51 @@ describe('TeacherClassroomsPage', () => {
     });
     expect(screen.getByRole('button', { name: '建立班級' })).toBeEnabled();
   });
+
+  // 分頁批：wide 容量 6，需模擬 useStageWide 的 matchMedia 為 matches:true
+  // （沿 rotate-banner.test.tsx stubMatchMedia 慣例；全域 setup 預設
+  // matches:false 只覆蓋 narrow 情境）。
+  function stubWideMatchMedia() {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query: string) => ({
+        addEventListener: () => undefined,
+        matches: true,
+        media: query,
+        removeEventListener: () => undefined,
+      })),
+    );
+  }
+
+  const sevenClassrooms = Array.from({ length: 7 }, (_, index) => ({
+    classroomId: `ca000000-0000-4000-8000-00000000000${index + 1}`,
+    classroomName: `分頁班 ${index + 1}`,
+    classroomStatus: 'active' as const,
+    createdAt: '2026-07-18T00:00:00.000Z',
+    joinCode: 'ABCD-1234-EF56-7890',
+    joinCodeVersion: 1,
+    memberCount: 10,
+  }));
+
+  it('超過 6 班時顯示分頁器且第一頁只有 6 張卡', async () => {
+    stubWideMatchMedia();
+    try {
+      renderPage(
+        createRepository({
+          listOwned: vi.fn().mockResolvedValue(sevenClassrooms),
+        }),
+      );
+      await screen.findByRole('heading', { name: '班級管理' });
+      expect(
+        screen.getByRole('button', { name: '下一頁' }),
+      ).toBeInTheDocument();
+      expect(
+        screen
+          .getAllByRole('heading', { level: 2 })
+          .filter((heading) => heading.closest('.classroom-card')),
+      ).toHaveLength(6);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
