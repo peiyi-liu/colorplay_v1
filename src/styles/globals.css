@@ -5928,33 +5928,21 @@ select#dashboard-classroom {
 .battle-monster__body {
   position: absolute;
   inset: 0;
-  background: var(--pixel-window-muted);
-  clip-path: polygon(
-    15% 100%,
-    15% 55%,
-    25% 35%,
-    40% 22%,
-    60% 22%,
-    75% 35%,
-    85% 55%,
-    85% 100%
-  );
+  background: url('../assets/sprites/monster-base.png') center / 96px 96px
+    no-repeat;
+  image-rendering: pixelated;
 }
 
 .battle-monster__eye {
-  position: absolute;
-  top: 48%;
-  width: 10px;
-  height: 14px;
-  background: var(--pixel-night-deep);
+  background: none;
 }
 
 .battle-monster__eye--left {
-  left: 33%;
+  background: none;
 }
 
 .battle-monster__eye--right {
-  right: 33%;
+  background: none;
 }
 
 @keyframes battle-idle-bob {
@@ -6163,19 +6151,19 @@ select#dashboard-classroom {
 
 .loot-chest__base {
   position: absolute;
-  inset: 22px 0 0;
-  background: var(--pixel-gold);
-  border: 3px solid var(--pixel-gold-deep);
-  border-radius: var(--radius-pixel);
+  inset: 23px 0 0;
+  background: url('../assets/sprites/chest-base.png') center bottom / 72px 33px
+    no-repeat;
+  image-rendering: pixelated;
 }
 
 .loot-chest__lid {
   position: absolute;
   inset: 0 0 auto;
-  height: 26px;
-  background: var(--pixel-gold);
-  border: 3px solid var(--pixel-gold-deep);
-  border-radius: var(--radius-pixel);
+  height: 27px;
+  background: url('../assets/sprites/chest-lid.png') center top / 72px 27px
+    no-repeat;
+  image-rendering: pixelated;
   transform-origin: bottom left;
   transition: transform 300ms steps(3);
 }
