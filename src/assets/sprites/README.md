@@ -4,8 +4,11 @@
 每檔記錄：生成模型／prompt／reference／pixelize 參數。style anchor＝
 owner 定稿圖（artifacts/design-audit/asset-batch/anchor/，不入 repo）。
 
-網格源碼已歸檔於 `scripts/assets/sprite-sources/`（程序性素材——村莊剪影與兩張無縫
-tile——的再生依據）。
+網格源碼已歸檔於 `scripts/assets/sprite-sources/`（含 `grids.py` 定稿 anchor 網格
+與 `render.py` 渲染器；程序性素材——村莊剪影與兩張無縫 tile——的再生依據。
+2026-08-01 已驗證 task6/7 全部 9 檔再生輸出與 commit 版 byte-identical）。
+注意：`production_task*.py` 內建絕對輸出路徑直寫 `src/assets/sprites/`（會覆蓋已
+commit 素材）；再生驗證請先改寫 `SPRITES`/`PREVIEW` 常數導向暫存目錄再 `cmp`。
 
 | 檔名                   | 模型                                                    | prompt 摘要                                                                      | pixelize 參數             |
 | ---------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------- |
