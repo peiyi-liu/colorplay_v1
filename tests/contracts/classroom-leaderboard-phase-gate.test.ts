@@ -200,6 +200,14 @@ describe('Classroom and Leaderboard phase gate source', () => {
     expect(source).toContain("process.env.PLAYWRIGHT_ACCEPTANCE !== 'on'");
     expect(source).toContain('CLASSROOM_LEADERBOARD_ACCEPTANCE_MODE_REQUIRED');
     expect(source).toContain('attachBrowserHealth');
+    // oldJoinCode was removed from classroom-leaderboard-expected-failures.ts
+    // by 4ce541f: the one-time join-code UI it guarded (join_classroom 400
+    // surfaced through a tracked browser page) was deleted per the 07-27/07-30
+    // owner ruling (see helpers/classrooms.ts and task-9-report.md); the
+    // invalidity check now runs through a Node-side supabase-js client that
+    // never touches a tracked page, so no browser-health declaration applies.
+    // Pin the declarations map to its current two-key shape instead of the
+    // deleted third key.
     expect(
       Object.fromEntries(
         Object.entries(classroomLeaderboardExpectedFailureDeclarations).map(
@@ -214,11 +222,6 @@ describe('Classroom and Leaderboard phase gate source', () => {
         ),
       ),
     ).toEqual({
-      oldJoinCode: {
-        count: 1,
-        status: 400,
-        url_pattern: expectedFailures[0].url_pattern,
-      },
       outsiderLeaderboard: {
         count: 1,
         status: 403,
@@ -230,7 +233,7 @@ describe('Classroom and Leaderboard phase gate source', () => {
         url_pattern: expectedFailures[2].url_pattern,
       },
     });
-    expect(source).toContain(
+    expect(source).not.toContain(
       'classroomLeaderboardExpectedFailureDeclarations.oldJoinCode',
     );
     expect(source).toContain(
@@ -239,7 +242,10 @@ describe('Classroom and Leaderboard phase gate source', () => {
     expect(source).toContain(
       'classroomLeaderboardExpectedFailureDeclarations.teacherBMembers',
     );
-    expect(source).toContain('加入碼無效或已失效');
+    // 加入碼無效或已失效 was the old UI alert text for the deleted join-code
+    // form; the invalidity check moved to a Node-side rejects.toThrow guard
+    // against the RPC's own error code (4ce541f, see helpers/classrooms.ts).
+    expect(source).toContain('INVALID_CLASSROOM_CODE');
     expect(source).toContain('無法顯示排行榜');
     expect(source).toContain('沒有管理權限');
     expect(source).toContain('unexpectedBrowserHealth');
@@ -255,12 +261,19 @@ describe('Classroom and Leaderboard phase gate source', () => {
     );
     expect(source).toContain('const classroomIdPattern =');
     expect(source).toContain('const teacherClassroomUrlPattern =');
+    // 4ce541f replaced the click-through '管理班級' link (which used
+    // waitForURL after navigation) with a direct goto to the classroom
+    // detail URL, asserted via toHaveURL — same destination guard, new route.
     expect(source).toContain(
-      'await teacherPage.waitForURL(teacherClassroomUrlPattern);',
+      'await expect(teacherPage).toHaveURL(teacherClassroomUrlPattern);',
     );
     expect(source).toContain('!classroomIdPattern.test(classroomId)');
+    // The 375x812 join-page screenshot was dropped by 4ce541f along with the
+    // one-time join-code UI it captured (task-9-report.md documents this as
+    // an accepted, feature-removal-driven loss of coverage); only the two
+    // surviving viewports still apply.
+    expect(source).not.toContain('width: 375, height: 812');
     for (const viewport of [
-      'width: 375, height: 812',
       'width: 768, height: 1024',
       'width: 1440, height: 900',
     ]) {

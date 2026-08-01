@@ -96,9 +96,14 @@ describe('assignments and live phase gate contract', () => {
     const spec = await readText('tests/e2e/assignments-live.spec.ts');
     expect(spec).toContain("test('Assignments and Live Core phase gate'");
     expect(spec).toContain("PLAYWRIGHT_ACCEPTANCE !== 'on'");
-    expect(spec).toContain('挑戰進度');
+    // Assignments were deleted from this spec by 4ce541f per the 0730
+    // design-handoff owner ruling (removed features must not come back; see
+    // task-9-report.md). The assignment-quiz completion flow this used to
+    // pin — completeAssignmentQuiz, the '挑戰進度' progress read, and its
+    // 375x812 detail screenshot — is gone; pin the removal instead.
+    expect(spec).not.toContain('completeAssignmentQuiz');
+    expect(spec).not.toContain('assignment-detail-375x812.png');
     expect(spec).toContain('第 ${String(round)} / 10 題');
-    expect(spec).toContain('assignment-detail-375x812.png');
     expect(spec).toContain('live-question-768x1024.png');
     expect(spec).toContain('live-host-console-1440x900.png');
     expect(spec).toContain('declareExpectedBrowserFailure');
