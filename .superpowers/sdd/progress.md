@@ -787,3 +787,6 @@ Task 3: openHudMenu helper complete (commit 379a422; panel-era nav helper, snaps
 Task 3: playable-slice relogin assertion sync complete (commit 12fa5b8; 非 HUD 回歸、歸因 4ed21f8 UAT 0727 #5，原跨帳號安全語意保留)
 Task 3: minor (deferred): tests/e2e/helpers/auth.ts 模組註解仍稱 helper 不含 expect，交 Final review 裁定
 Task 3: complete (commits 379a422..12fa5b8, review approved; focused 1/1, Chromium subset 10/10, prettier pass)
+Task 4: minor (deferred): teacher unit test 未直接斷言 economy/inventory hooks 零呼叫，Task 5 browser gate 覆蓋教師零經濟
+Task 4: minor (deferred): equipped/fallback 頭像 DOM 未分態單元覆蓋，Task 5 以兩態真實截圖驗證
+Task 4: complete (commit d049743, review approved; shell 30/30, tsc 0, eslint 0, prettier pass)
