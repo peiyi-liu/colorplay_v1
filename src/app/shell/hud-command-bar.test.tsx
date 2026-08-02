@@ -68,7 +68,10 @@ describe('HudCommandBar', () => {
   it('點擊面板導覽項後 MENU 自動關閉', async () => {
     renderStudentAt('/app');
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
-    await userEvent.click(screen.getByRole('link', { name: '裝備商店' }));
+    const panelNav = screen.getByRole('navigation', { name: '更多導覽' });
+    await userEvent.click(
+      within(panelNav).getByRole('link', { name: '裝備商店' }),
+    );
     expect(document.getElementById('hud-menu-panel')).toHaveAttribute('hidden');
   });
 
