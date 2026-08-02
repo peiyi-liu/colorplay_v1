@@ -847,3 +847,5 @@ Fresh pre-deploy gate：Vitest 120 files / 833 tests PASS；`npx tsc -b --pretty
 ## Red Spec Rewrite Batch (2026-08-02)
 
 Task 1: complete (inventory＋scope decision；fix round 1/5 三項全關閉、獨立 review approved；`live-advanced` 不合併，保留獨立 AC-LIVE-012 最小個人模式 gate，team/schedule/team scoreboard 全刪；三支 stale phase finalizer/contract 納入各自同步 task；報告 `.superpowers/sdd/redspec-task-1-report.md`)
+
+Task 2: **BLOCKED，未 commit、未進 Task 3**。Learning contract TDD RED→GREEN（5/5），accordion／Chapter 4 分頁／RPC 入班與 badge test 同步已形成未提交 diff；真實 Chromium acceptance 從 clean local DB 跑到補救完成，權威數值仍為 480/500 XP、150 Token，但 1280×720 結果頁 `返回我的錯題` 無法由 pointer/scroll 觸及。獨立量測：`main#main-content` rect y=75.19..666、clientHeight 591、scrollHeight 1125、scrollTop range 0..534；`.quiz-result` 高 1659px 且 scrollTop=0 時 y=-458.94..1200.13；連結 y=17.81..41.81，整段位於 main clip top 之上且 hit-test 命中 HUD，max scroll 只會更往上。根因是 `#main-content { display:grid; place-items:center }` 與 landscape fixed/overflow 規則組合；鍵盤 Tab/Enter 雖可盲操作導頁，但 focus ring 同樣被裁切，採用會掩蓋真實可見性／滑鼠可達性缺陷，故拒絕作為 test workaround。依「需改產品碼才對齊即停下」鐵律停止，未動 `src/**`／`supabase/**`；詳見 `.superpowers/sdd/redspec-task-2-report.md`。
