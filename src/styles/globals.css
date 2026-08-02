@@ -7004,3 +7004,11 @@ select#dashboard-classroom {
     var(--pixel-night-deep);
   image-rendering: pixelated;
 }
+
+@media (orientation: landscape) and (max-height: 480px) {
+  .hud-menu__panel {
+    max-height: calc(100vh - 72px);
+    max-height: calc(100dvh - 72px);
+    overflow-y: auto;
+  }
+}
