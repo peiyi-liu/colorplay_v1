@@ -752,3 +752,7 @@ C1 lint error 修正（teacher-classrooms-page.test.tsx sevenClassrooms fixture 
 
 ### Final approval (2026-08-02)
 Opus 終審 Ready-to-merge @ a61ce0a（54f20a4..a61ce0a，15 commits）。四 gate 全綠（eslint 0 err / vitest 834 / tsc 0 / prettier）；鐵律全數通過（LivePresenter 0 行、ui-table 0 命中、濃度全頁 ≤3、commit 隔離 15/15）。debt 7 筆已列於 Final review fix wave 節，I1（classrooms e2e helper 分頁假設）優先。紅 spec 重寫待 owner 依 2026-08-02-red-spec-sizing.md 裁定。
+
+## Live Team Removal Batch (2026-08-02)
+
+Task 1: assertion inventory + docs commit
