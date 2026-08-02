@@ -776,3 +776,7 @@ Task 5: complete (commit f2833ff, gate PASS: vitest 830/120 files, tsc 0, eslint
 
 ### Final approval (2026-08-02)
 Opus 終審 Ready-to-merge @ f2833ff（e3708c4..f2833ff，7 commits）。零必修；Minor 移交：globals.css:6542 懸空註解參照（升級記載）、live-pages.test.tsx:571 空行殘留。鐵律全過：DB/LivePresenter/live-advanced 零接觸、strict-schema 四保留鍵在位、被刪字串不超清單、commit 隔離 7/7。vitest 830/tsc 0/eslint 0 複驗一致。
+
+## HUD Menu Reorg Batch (2026-08-02)
+
+Task 1: assertion inventory + docs commit
