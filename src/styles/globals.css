@@ -6943,3 +6943,34 @@ select#dashboard-classroom {
 .classroom-card__copy {
   min-height: 44px;
 }
+
+/* ── HUD 重組批（spec 2026-08-02） ── */
+.hud-menu__nav {
+  display: grid;
+  gap: 6px;
+  margin-bottom: var(--space-3);
+}
+
+.hud-menu__nav-link {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  border: 2px solid transparent;
+  border-radius: var(--radius-pixel);
+  color: var(--pixel-window-ink);
+  font-weight: 700;
+  padding: 0 14px;
+  text-decoration: none;
+}
+
+.hud-menu__nav-link--active {
+  border-color: var(--pixel-gold);
+  color: var(--pixel-gold);
+}
+
+.hud-menu__divider {
+  display: block;
+  height: 2px;
+  background: var(--pixel-window-muted);
+  margin: var(--space-2) 0 var(--space-3);
+}

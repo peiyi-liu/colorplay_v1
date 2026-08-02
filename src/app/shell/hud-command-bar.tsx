@@ -3,10 +3,11 @@ import { NavLink } from 'react-router-dom';
 
 const commandTabClassName = ({ isActive }: { isActive: boolean }) =>
   `hud-command__tab${isActive ? ' hud-command__tab--active' : ''}`;
-const commandLinkClassName = ({ isActive }: { isActive: boolean }) =>
-  `hud-command__link${isActive ? ' hud-command__link--active' : ''}`;
+const menuLinkClassName = ({ isActive }: { isActive: boolean }) =>
+  `hud-menu__nav-link${isActive ? ' hud-menu__nav-link--active' : ''}`;
 
-// 底部 HUD 指令列（spec §4）：7 項導覽全可見；MENU 收使用者資訊＋登出。
+// 底部 HUD 指令列（HUD 重組批 spec 2026-08-02）：列上僅留主要 2 項 tab；
+// 其餘導覽收進 MENU 面板的「更多導覽」區。MENU 仍收使用者資訊＋登出。
 export function HudCommandBar({
   displayName,
   isSigningOut,
@@ -22,6 +23,10 @@ export function HudCommandBar({
   const menuToggleRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuPanelRef = useRef<HTMLDivElement>(null);
+
+  const closeMenu = () => {
+    setMenuOpen(false);
+  };
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -60,25 +65,10 @@ export function HudCommandBar({
           <NavLink className={commandTabClassName} end to="/app">
             學習大廳
           </NavLink>
-          <NavLink className={commandTabClassName} to="/app/missions">
-            課後任務實戰
-          </NavLink>
-          <NavLink className={commandTabClassName} to="/app/shop">
-            裝備商店
-          </NavLink>
-          <span aria-hidden="true" className="hud-command__spacer" />
-          <NavLink className={commandLinkClassName} to="/app/mistakes">
-            我的錯題
-          </NavLink>
-          <NavLink className={commandLinkClassName} to="/app/live/join">
+          <NavLink className={commandTabClassName} to="/app/live/join">
             Live 課堂
           </NavLink>
-          <NavLink className={commandLinkClassName} to="/app/leaderboard">
-            班級排行榜
-          </NavLink>
-          <NavLink className={commandLinkClassName} to="/app/achievements">
-            成就徽章
-          </NavLink>
+          <span aria-hidden="true" className="hud-command__spacer" />
         </nav>
       ) : (
         <nav aria-label="教師導覽" className="hud-command__nav">
@@ -88,12 +78,7 @@ export function HudCommandBar({
           <NavLink className={commandTabClassName} to="/teacher/live">
             Live 主持
           </NavLink>
-          <NavLink className={commandLinkClassName} to="/teacher/classes">
-            班級管理
-          </NavLink>
-          <NavLink className={commandLinkClassName} to="/teacher/analytics">
-            教學分析
-          </NavLink>
+          <span aria-hidden="true" className="hud-command__spacer" />
         </nav>
       )}
       <div className="hud-menu" ref={menuRef}>
@@ -116,6 +101,65 @@ export function HudCommandBar({
           ref={menuPanelRef}
           tabIndex={-1}
         >
+          <nav aria-label="更多導覽" className="hud-menu__nav">
+            {variant === 'student' ? (
+              <>
+                <NavLink
+                  className={menuLinkClassName}
+                  onClick={closeMenu}
+                  to="/app/missions"
+                >
+                  課後任務實戰
+                </NavLink>
+                <NavLink
+                  className={menuLinkClassName}
+                  onClick={closeMenu}
+                  to="/app/mistakes"
+                >
+                  我的錯題
+                </NavLink>
+                <NavLink
+                  className={menuLinkClassName}
+                  onClick={closeMenu}
+                  to="/app/leaderboard"
+                >
+                  班級排行榜
+                </NavLink>
+                <NavLink
+                  className={menuLinkClassName}
+                  onClick={closeMenu}
+                  to="/app/achievements"
+                >
+                  成就徽章
+                </NavLink>
+                <NavLink
+                  className={menuLinkClassName}
+                  onClick={closeMenu}
+                  to="/app/shop"
+                >
+                  裝備商店
+                </NavLink>
+              </>
+            ) : (
+              <>
+                <NavLink
+                  className={menuLinkClassName}
+                  onClick={closeMenu}
+                  to="/teacher/classes"
+                >
+                  班級管理
+                </NavLink>
+                <NavLink
+                  className={menuLinkClassName}
+                  onClick={closeMenu}
+                  to="/teacher/analytics"
+                >
+                  教學分析
+                </NavLink>
+              </>
+            )}
+          </nav>
+          <span aria-hidden="true" className="hud-menu__divider" />
           <p className="hud-menu__user">{displayName}</p>
           <button
             className="hud-menu__logout"
