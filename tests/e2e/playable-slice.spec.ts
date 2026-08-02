@@ -123,21 +123,15 @@ test('student completes a mixed ten-question challenge with durable server total
 
   await signOutViaHud(page);
   await expect(page).toHaveURL(/\/login$/u);
-  // 不用 helpers/auth 的 signInStudent：那個 helper 內建等待登入後落地在
-  // /app。這裡的登出是在 /app/quiz/{sessionId}/result 這一頁按的，
-  // RequireAuth 偵測到 auth.status 變成 anonymous 後，會帶著
-  // state.from.pathname=目前網址導去 /login；重新登入時 login-page 會用這個
-  // state.from 導回同一個 /result 網址（不是 /app）——這正是本測試要驗證的
-  // 「用別人身分造訪這個網址會被擋下」，所以手動填表單、自己等真正會發生的
-  // 下一個網址。
+  // 學生登入依 UAT 0727 #5 固定落在 /app。為保留原本的授權安全語意，
+  // 再以第二位學生直接造訪剛完成的 result 深連結，驗證她沒有檢視權限。
   await page
     .getByRole('textbox', { name: '帳號' })
     .fill(TEST_USERS.studentTwo.email);
   await page.getByLabel('密碼').fill(TEST_USERS.studentTwo.password);
   await page.getByRole('button', { name: '登入' }).click();
-  await expect(page).toHaveURL(
-    new RegExp(`/app/quiz/${sessionId ?? ''}/result$`, 'u'),
-  );
+  await expect(page).toHaveURL(/\/app$/u);
+  await page.goto(`/app/quiz/${sessionId ?? ''}/result`);
   await expect(
     page.getByRole('heading', { name: '無法顯示結果' }),
   ).toBeVisible();
