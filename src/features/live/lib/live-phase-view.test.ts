@@ -13,7 +13,6 @@ import {
 const baseState: LiveSessionState = {
   currentPosition: 0,
   isHost: false,
-  mode: 'individual',
   participantCount: 3,
   questionCount: 8,
   questionDisplay: 'device',
@@ -22,7 +21,6 @@ const baseState: LiveSessionState = {
   sessionId: '18300000-0000-0000-0000-000000000001',
   state: 'lobby',
   stateVersion: 1,
-  teamCount: null,
 };
 
 // 故意亂序：view 必須依 sortOrder 重排（轉譯自 P2 的「in order」）。

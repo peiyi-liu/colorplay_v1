@@ -16,7 +16,6 @@ export type LiveActivity = Readonly<{
   questionTimeLimitSeconds: number;
   status: 'active' | 'archived';
   rulesVersion: string;
-  scheduledFor: string | null;
   questionDisplay: LiveQuestionDisplay;
   sectionId: string | null;
 }>;
@@ -27,16 +26,12 @@ export type LiveSectionOption = Readonly<{
   quizTemplateId: string;
 }>;
 
-export type LiveSessionMode = 'individual' | 'team';
-
 export type LiveSessionReceipt = Readonly<{
   sessionId: string;
   state: LiveSessionStateName;
   stateVersion: number;
   joinCode: string;
   joinCodeVersion: number;
-  mode: LiveSessionMode;
-  teamCount: number | null;
 }>;
 
 export type LiveDistribution = Readonly<{
@@ -57,12 +52,6 @@ export type LiveStandings = Readonly<{
   standings: readonly LiveStandingEntry[];
 }>;
 
-export type LiveTeamTotal = Readonly<{
-  teamNumber: number;
-  score: number;
-  memberCount: number;
-}>;
-
 export type LiveMatrixAnswer = Readonly<{
   position: number;
   status: 'correct' | 'incorrect' | 'timeout';
@@ -71,7 +60,6 @@ export type LiveMatrixAnswer = Readonly<{
 
 export type LiveSessionDetail = Readonly<{
   sessionId: string;
-  mode: LiveSessionMode;
   completedAt: string | null;
   classroomId: string;
   activity: Readonly<{ title: string; quizTemplateId: string }>;
@@ -87,14 +75,12 @@ export type LiveSessionDetail = Readonly<{
     displayName: string;
     rank: number | null;
     score: number;
-    teamNumber: number | null;
     answers: readonly LiveMatrixAnswer[];
   }>[];
   ranking: readonly Readonly<{
     rank: number;
     displayName: string;
     score: number;
-    teamNumber: number | null;
   }>[];
 }>;
 
@@ -150,8 +136,6 @@ export type LiveSessionState = Readonly<{
   questionDisplay: LiveQuestionDisplay;
   serverTime: string;
   isHost: boolean;
-  mode: LiveSessionMode;
-  teamCount: number | null;
   waitingForNext?: boolean;
   participants?: readonly LiveParticipantName[];
   question?: LiveQuestionView;
@@ -207,8 +191,6 @@ export type LiveRepository = Readonly<{
     activityId: string;
     classroomId: string;
     assignmentId: string | null;
-    mode?: LiveSessionMode;
-    teamCount?: number | null;
   }): Promise<LiveSessionReceipt>;
   rotateJoinCode(sessionId: string): Promise<{
     joinCode: string;
@@ -230,12 +212,7 @@ export type LiveRepository = Readonly<{
   pauseSession(sessionId: string, expectedVersion: number): Promise<void>;
   resumeSession(sessionId: string, expectedVersion: number): Promise<void>;
   getDistribution(sessionId: string): Promise<LiveDistribution>;
-  getTeamTotals(sessionId: string): Promise<readonly LiveTeamTotal[]>;
   getStandings(sessionId: string): Promise<LiveStandings>;
   getMyStanding(sessionId: string): Promise<LiveMyStanding>;
   getSessionDetail(sessionId: string): Promise<LiveSessionDetail>;
-  scheduleActivity(
-    activityId: string,
-    scheduledFor: string | null,
-  ): Promise<void>;
 }>;

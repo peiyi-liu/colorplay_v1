@@ -9,7 +9,6 @@ import {
 
 const detail: LiveSessionDetail = {
   sessionId: '18400000-0000-0000-0000-000000000001',
-  mode: 'individual',
   completedAt: '2026-07-22T05:00:00+00:00',
   classroomId: '18100000-0000-0000-0000-000000000001',
   activity: {
@@ -39,7 +38,6 @@ const detail: LiveSessionDetail = {
       displayName: '甲同學',
       rank: 1,
       score: 300,
-      teamNumber: null,
       answers: [
         { position: 1, status: 'correct', responseMs: 900 },
         { position: 2, status: 'timeout', responseMs: null },
@@ -49,7 +47,6 @@ const detail: LiveSessionDetail = {
       displayName: '乙同學',
       rank: 2,
       score: 150,
-      teamNumber: null,
       answers: [{ position: 1, status: 'correct', responseMs: 1200 }],
     },
   ],

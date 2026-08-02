@@ -21,8 +21,6 @@ const lobbyState: LiveSessionState = {
   questionDisplay: 'device',
   serverTime: '2026-07-17T15:00:00+00:00',
   isHost: false,
-  mode: 'individual',
-  teamCount: null,
 };
 
 type BroadcastHandler = (message: { payload: unknown }) => void;

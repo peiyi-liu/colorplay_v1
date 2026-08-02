@@ -10,7 +10,6 @@ const SESSION_ID = '18400000-0000-0000-0000-000000000001';
 
 const detailFixture: LiveSessionDetail = {
   sessionId: SESSION_ID,
-  mode: 'team',
   completedAt: '2026-07-20T05:00:00+00:00',
   classroomId: '18100000-0000-0000-0000-000000000001',
   activity: {
@@ -40,7 +39,6 @@ const detailFixture: LiveSessionDetail = {
       displayName: '學生一',
       rank: 1,
       score: 300,
-      teamNumber: 1,
       answers: [
         { position: 1, status: 'correct', responseMs: 900 },
         { position: 2, status: 'incorrect', responseMs: 2400 },
@@ -50,13 +48,12 @@ const detailFixture: LiveSessionDetail = {
       displayName: '學生二',
       rank: 2,
       score: 150,
-      teamNumber: 2,
       answers: [{ position: 1, status: 'timeout', responseMs: null }],
     },
   ],
   ranking: [
-    { rank: 1, displayName: '學生一', score: 300, teamNumber: 1 },
-    { rank: 2, displayName: '學生二', score: 150, teamNumber: 2 },
+    { rank: 1, displayName: '學生一', score: 300 },
+    { rank: 2, displayName: '學生二', score: 150 },
   ],
 };
 
@@ -64,9 +61,9 @@ const detailFixture: LiveSessionDetail = {
 const medalRankingFixture: LiveSessionDetail = {
   ...detailFixture,
   ranking: [
-    { rank: 1, displayName: '學生一', score: 300, teamNumber: 1 },
-    { rank: 2, displayName: '學生二', score: 150, teamNumber: 2 },
-    { rank: 3, displayName: '學生三', score: 100, teamNumber: 3 },
+    { rank: 1, displayName: '學生一', score: 300 },
+    { rank: 2, displayName: '學生二', score: 150 },
+    { rank: 3, displayName: '學生三', score: 100 },
   ],
 };
 

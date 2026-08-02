@@ -73,7 +73,6 @@ const GUARD_MATRIX: readonly GuardRow[] = [
 const stateFor = (row: GuardRow): LiveSessionState => ({
   currentPosition: row.currentPosition,
   isHost: true,
-  mode: 'individual',
   participantCount: 3,
   questionCount: QUESTION_COUNT,
   questionDisplay: 'device',
@@ -82,7 +81,6 @@ const stateFor = (row: GuardRow): LiveSessionState => ({
   sessionId: '18300000-0000-0000-0000-000000000001',
   state: row.state,
   stateVersion: 1,
-  teamCount: null,
 });
 
 describe('hostConsoleView vs SQL guard matrix', () => {

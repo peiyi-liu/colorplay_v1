@@ -32,8 +32,6 @@ const lobbyState: LiveSessionState = {
   questionDisplay: 'screen_only',
   serverTime: new Date().toISOString(),
   isHost: true,
-  mode: 'individual',
-  teamCount: null,
   participants: [{ displayName: '小艾' }, { displayName: '小畢' }],
 };
 

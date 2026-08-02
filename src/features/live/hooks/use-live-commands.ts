@@ -20,9 +20,7 @@ import {
   LiveRepositoryError,
   type LiveSectionOption,
   type LiveSessionDetail,
-  type LiveSessionMode,
   type LiveSessionReceipt,
-  type LiveTeamTotal,
 } from '../types';
 import { liveKeys } from './use-live-session';
 
@@ -81,32 +79,11 @@ export function useCreateLiveSession(
     activityId: string;
     classroomId: string;
     assignmentId: string | null;
-    mode?: LiveSessionMode;
-    teamCount?: number | null;
   }
 > {
   const resolved = resolveRepository(repository);
   return useMutation({
     mutationFn: (input) => resolved.createSession(input),
-    retry: false,
-  });
-}
-
-export function useScheduleLiveActivity(
-  repository?: LiveRepository,
-): UseMutationResult<
-  void,
-  LiveRepositoryError,
-  { activityId: string; scheduledFor: string | null }
-> {
-  const resolved = resolveRepository(repository);
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (input) =>
-      resolved.scheduleActivity(input.activityId, input.scheduledFor),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: liveActivityKeys.mine });
-    },
     retry: false,
   });
 }
@@ -186,20 +163,6 @@ export function useLiveMyStanding(
     enabled: input.enabled && sessionId.length > 0,
     queryFn: () => resolved.getMyStanding(sessionId),
     queryKey: ['live', 'my-standing', sessionId, input.stateVersion] as const,
-    retry: false,
-  });
-}
-
-export function useLiveTeamTotals(
-  sessionId: string,
-  input: Readonly<{ enabled: boolean; stateVersion: number }>,
-  repository?: LiveRepository,
-): UseQueryResult<readonly LiveTeamTotal[], LiveRepositoryError> {
-  const resolved = resolveRepository(repository);
-  return useQuery({
-    enabled: input.enabled && sessionId.length > 0,
-    queryFn: () => resolved.getTeamTotals(sessionId),
-    queryKey: ['live', 'team-totals', sessionId, input.stateVersion] as const,
     retry: false,
   });
 }

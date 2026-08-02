@@ -54,8 +54,6 @@ const baseState: LiveSessionState = {
   questionDisplay: 'device',
   serverTime: new Date().toISOString(),
   isHost: false,
-  mode: 'individual',
-  teamCount: null,
 };
 
 const openState: LiveSessionState = {
@@ -110,7 +108,6 @@ const repositoryWith = (
     .fn()
     .mockResolvedValue({ participantCount: 0, standings: [] }),
   getState: vi.fn().mockResolvedValue(baseState),
-  getTeamTotals: vi.fn().mockResolvedValue([]),
   join: vi.fn(),
   listMyActivities: vi.fn().mockResolvedValue([]),
   listSectionOptions: vi.fn().mockResolvedValue([
@@ -124,7 +121,6 @@ const repositoryWith = (
   pauseSession: vi.fn(),
   resumeSession: vi.fn(),
   rotateJoinCode: vi.fn(),
-  scheduleActivity: vi.fn(),
   startSession: vi.fn(),
   submitAnswer: vi.fn().mockResolvedValue({ streak: 0 }),
   ...overrides,
@@ -583,7 +579,6 @@ describe('TeacherLivePage (advanced)', () => {
     questionTimeLimitSeconds: 20,
     status: 'active' as const,
     rulesVersion: '2026-07-live-1',
-    scheduledFor: null,
     questionDisplay: 'screen_only' as const,
   };
 
@@ -599,8 +594,6 @@ describe('TeacherLivePage (advanced)', () => {
       stateVersion: 1,
       joinCode: '654321',
       joinCodeVersion: 1,
-      mode: 'individual',
-      teamCount: null,
     });
     const startSession = vi.fn().mockResolvedValue(undefined);
     const repository = repositoryWith({

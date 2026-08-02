@@ -38,6 +38,7 @@ const activitySchema = z.strictObject({
   question_time_limit_seconds: positiveInteger,
   status: z.enum(['active', 'archived']),
   rules_version: z.string().min(1),
+  // 伺服器仍回傳，前端已不消費（team 移除批）；strict 契約保留鍵
   scheduled_for: utcTimestamp.nullable().optional(),
   question_display: questionDisplaySchema,
   section_id: uuidString.nullable().optional(),
@@ -58,7 +59,6 @@ const activityRowSchema = z.strictObject({
   question_time_limit_seconds: positiveInteger,
   status: z.enum(['active', 'archived']),
   rules_version: z.string().min(1),
-  scheduled_for: utcTimestamp.nullable(),
   question_display: questionDisplaySchema,
   section_id: uuidString.nullable(),
 });
@@ -79,16 +79,9 @@ const distributionSchema = z.strictObject({
   ),
 });
 
-const teamTotalsSchema = z.array(
-  z.strictObject({
-    team_number: z.number().int().positive(),
-    score: z.number().int().nonnegative(),
-    member_count: z.number().int().positive(),
-  }),
-);
-
 const sessionDetailSchema = z.strictObject({
   session_id: uuidString,
+  // 伺服器仍回傳，前端已不消費（team 移除批）；strict 契約保留鍵
   mode: z.enum(['individual', 'team']),
   completed_at: utcTimestamp.nullable(),
   classroom_id: uuidString,
@@ -139,7 +132,7 @@ const sessionReceiptSchema = z.strictObject({
   join_code_version: positiveInteger,
   mode: z.enum(['individual', 'team']),
   team_count: z.number().int().min(2).max(4).nullable(),
-});
+}); // 伺服器仍回傳，前端已不消費（team 移除批）；strict 契約保留鍵
 
 const rotateSchema = z.strictObject({
   session_id: uuidString,
@@ -208,6 +201,7 @@ const stateSchema = z
     question_display: questionDisplaySchema,
     server_time: utcTimestamp,
     is_host: z.boolean(),
+    // 伺服器仍回傳，前端已不消費（team 移除批）；strict 契約保留鍵
     mode: z.enum(['individual', 'team']),
     team_count: z.number().int().min(2).max(4).nullable(),
     waiting_for_next: z.literal(true).optional(),
@@ -322,7 +316,6 @@ const mapActivity = (row: z.infer<typeof activitySchema>): LiveActivity => ({
   questionTimeLimitSeconds: row.question_time_limit_seconds,
   status: row.status,
   rulesVersion: row.rules_version,
-  scheduledFor: row.scheduled_for ?? null,
   questionDisplay: row.question_display,
   sectionId: row.section_id ?? null,
 });
@@ -338,8 +331,6 @@ const mapState = (raw: z.infer<typeof stateSchema>): LiveSessionState => ({
   questionDisplay: raw.question_display,
   serverTime: raw.server_time,
   isHost: raw.is_host,
-  mode: raw.mode,
-  teamCount: raw.team_count,
   ...(raw.waiting_for_next === undefined
     ? {}
     : { waitingForNext: raw.waiting_for_next }),
@@ -455,7 +446,7 @@ export function createLiveRepository(
       const { data, error } = await client
         .from('live_activities')
         .select(
-          'id, title, quiz_template_id, question_time_limit_seconds, status, rules_version, scheduled_for, question_display, section_id',
+          'id, title, quiz_template_id, question_time_limit_seconds, status, rules_version, question_display, section_id',
         )
         .order('created_at', { ascending: false });
       if (error) throw toRepositoryError(error.message);
@@ -467,7 +458,6 @@ export function createLiveRepository(
           question_time_limit_seconds: row.question_time_limit_seconds,
           quiz_template_id: row.quiz_template_id,
           rules_version: row.rules_version,
-          scheduled_for: row.scheduled_for,
           status: row.status,
           title: row.title,
         }),
@@ -489,8 +479,6 @@ export function createLiveRepository(
         p_assignment_id: input.assignmentId,
         p_classroom_id: input.classroomId,
         p_live_activity_id: input.activityId,
-        ...(input.mode ? { p_mode: input.mode } : {}),
-        ...(input.teamCount ? { p_team_count: input.teamCount } : {}),
       };
       const { data, error } = await client.rpc(
         'create_live_session',
@@ -504,8 +492,6 @@ export function createLiveRepository(
         stateVersion: parsed.state_version,
         joinCode: parsed.join_code,
         joinCodeVersion: parsed.join_code_version,
-        mode: parsed.mode,
-        teamCount: parsed.team_count,
       };
     },
 
@@ -593,18 +579,6 @@ export function createLiveRepository(
       };
     },
 
-    async getTeamTotals(sessionId) {
-      const { data, error } = await client.rpc('live_team_totals', {
-        p_session_id: sessionId,
-      });
-      if (error) throw toRepositoryError(error.message);
-      return parseWith(teamTotalsSchema, data).map((entry) => ({
-        memberCount: entry.member_count,
-        score: entry.score,
-        teamNumber: entry.team_number,
-      }));
-    },
-
     async getStandings(sessionId) {
       const { data, error } = await client.rpc('live_session_standings', {
         p_session_id: sessionId,
@@ -644,7 +618,6 @@ export function createLiveRepository(
       const parsed = parseWith(sessionDetailSchema, data);
       return {
         sessionId: parsed.session_id,
-        mode: parsed.mode,
         completedAt: parsed.completed_at,
         classroomId: parsed.classroom_id,
         activity: {
@@ -655,7 +628,6 @@ export function createLiveRepository(
           displayName: participant.display_name,
           rank: participant.rank,
           score: participant.score,
-          teamNumber: participant.team_number,
           answers: participant.answers.map((entry) => ({
             position: entry.position,
             status: entry.status,
@@ -674,21 +646,8 @@ export function createLiveRepository(
           displayName: entry.display_name,
           rank: entry.rank,
           score: entry.score,
-          teamNumber: entry.team_number,
         })),
       };
-    },
-
-    async scheduleActivity(activityId, scheduledFor) {
-      const scheduleArgs = {
-        p_activity_id: activityId,
-        p_scheduled_for: scheduledFor,
-      };
-      const { error } = await client.rpc(
-        'schedule_live_activity',
-        scheduleArgs as unknown as Database['public']['Functions']['schedule_live_activity']['Args'],
-      );
-      if (error) throw toRepositoryError(error.message);
     },
   };
 }

@@ -401,36 +401,6 @@ describe('live repository', () => {
     expect(state.pausedRemainingMs).toBe(12500);
   });
 
-  it('creates a team session with the mode arguments', async () => {
-    const rpc = vi.fn().mockResolvedValue({
-      data: {
-        session_id: '18400000-0000-0000-0000-000000000001',
-        state: 'draft',
-        state_version: 1,
-        join_code: '654321',
-        join_code_version: 1,
-        mode: 'team',
-        team_count: 3,
-      },
-      error: null,
-    });
-    const repository = createLiveRepository(clientWith(rpc));
-
-    const receipt = await repository.createSession({
-      activityId: '18300000-0000-0000-0000-000000000001',
-      classroomId: '18100000-0000-0000-0000-000000000001',
-      assignmentId: null,
-      mode: 'team',
-      teamCount: 3,
-    });
-
-    expect(rpc).toHaveBeenCalledWith(
-      'create_live_session',
-      expect.objectContaining({ p_mode: 'team', p_team_count: 3 }),
-    );
-    expect(receipt).toMatchObject({ mode: 'team', teamCount: 3 });
-  });
-
   it('reads the host distribution', async () => {
     const rpc = vi.fn().mockResolvedValue({
       data: {
@@ -458,24 +428,6 @@ describe('live repository', () => {
         { optionId: '18700000-0000-0000-0000-000000000002', count: 1 },
       ],
     });
-  });
-
-  it('reads team totals', async () => {
-    const rpc = vi.fn().mockResolvedValue({
-      data: [
-        { team_number: 1, score: 300, member_count: 2 },
-        { team_number: 2, score: 150, member_count: 1 },
-      ],
-      error: null,
-    });
-    const repository = createLiveRepository(clientWith(rpc));
-
-    const totals = await repository.getTeamTotals(lobbyState.session_id);
-
-    expect(totals).toEqual([
-      { teamNumber: 1, score: 300, memberCount: 2 },
-      { teamNumber: 2, score: 150, memberCount: 1 },
-    ]);
   });
 
   it('reads the session detail report', async () => {
@@ -535,28 +487,6 @@ describe('live repository', () => {
     expect(detail.ranking[0]).toMatchObject({
       rank: 1,
       displayName: '學生一',
-      teamNumber: null,
-    });
-  });
-
-  it('schedules and clears an activity', async () => {
-    const rpc = vi.fn().mockResolvedValue({
-      data: {
-        activity_id: '18300000-0000-0000-0000-000000000001',
-        scheduled_for: '2026-07-25T04:00:00+00:00',
-      },
-      error: null,
-    });
-    const repository = createLiveRepository(clientWith(rpc));
-
-    await repository.scheduleActivity(
-      '18300000-0000-0000-0000-000000000001',
-      '2026-07-25T04:00:00+00:00',
-    );
-
-    expect(rpc).toHaveBeenCalledWith('schedule_live_activity', {
-      p_activity_id: '18300000-0000-0000-0000-000000000001',
-      p_scheduled_for: '2026-07-25T04:00:00+00:00',
     });
   });
 });
