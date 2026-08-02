@@ -780,3 +780,6 @@ Opus 終審 Ready-to-merge @ f2833ff（e3708c4..f2833ff，7 commits）。零必�
 ## HUD Menu Reorg Batch (2026-08-02)
 
 Task 1: assertion inventory + docs commit
+Task 1: complete (commit 44d822e, review clean; 關鍵: 綠 e2e 零受影響/快照零重拍/面板 night-deep gold active 5.6 需 gate 實測)
+Task 2: fix round 1/5 (1 addressed, 0 open; commit e90ed79)
+Task 2: complete (commits 44d822e..e90ed79, independent review clean; shell 28/28)
