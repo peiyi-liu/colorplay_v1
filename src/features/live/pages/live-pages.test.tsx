@@ -296,8 +296,7 @@ describe('LiveSessionPage (participant)', () => {
   // screen_only（supabase/migrations/20260724000500_live_section_activities.sql:17）。
   // FeedbackPhase（DC 1207-1246 的分布條／教師引導解析／名次卡版本）因此無法
   // 被設計稽核截圖 runner（scripts/design-audit）以真實流程觸達，只能像這裡
-  // 一樣直接注入 state 覆蓋——同檔案既有 team 模式測試（見下方
-  // TeacherLiveSessionPage 'shows the team scoreboard...'）也是同一手法。
+  // 一樣直接注入 state 覆蓋。
   it('renders the non-fullscreen feedback phase in device mode (DC 1207-1246: distribution bars, amber explanation, standing card)', async () => {
     const feedbackQuestion = {
       questionId: '18500000-0000-0000-0000-000000000001',
@@ -436,8 +435,7 @@ describe('LiveSessionPage (participant)', () => {
 
   // 批⑤a 公會團體戰:LiveSessionState 目前沒有 waiting-for-next 的既有
   // fixture,依 live-phase-view.ts 的 participantView() 建構一個——
-  // question_open + waitingForNext:true 落在 `{ kind: 'waiting-for-next',
-  // showScoreboard: false }` 分支,不需額外 mock getTeamTotals。
+  // question_open + waitingForNext:true 落在 waiting-for-next 分支。
   it('dresses the student session as a night guild raid with a camp fire while waiting', async () => {
     const repository = repositoryWith({
       getState: vi.fn().mockResolvedValue({
@@ -575,38 +573,6 @@ describe('TeacherLiveSessionPage (host console)', () => {
     expect(await screen.findByText(/連擊 x2!/u)).toBeVisible();
   });
 
-  it('shows the team scoreboard at feedback in team mode', async () => {
-    const getTeamTotals = vi.fn().mockResolvedValue([
-      { teamNumber: 1, score: 300, memberCount: 2 },
-      { teamNumber: 2, score: 150, memberCount: 1 },
-    ]);
-    const repository = repositoryWith({
-      getState: vi.fn().mockResolvedValue({
-        ...openState,
-        state: 'question_feedback',
-        mode: 'team',
-        teamCount: 2,
-        correctOptionId: '18700000-0000-0000-0000-000000000001',
-        myFeedback: {
-          answerStatus: 'correct',
-          selectedOptionId: '18700000-0000-0000-0000-000000000001',
-          scoreDelta: 150,
-        },
-      }),
-      getTeamTotals,
-    });
-    renderWith(
-      <LiveSessionPage
-        client={stubClient()}
-        repository={repository}
-        sessionId={SESSION_ID}
-      />,
-    );
-
-    expect(await screen.findByText('第 1 隊：300 分（2 人）')).toBeVisible();
-    expect(screen.getByText('第 2 隊：150 分（1 人）')).toBeVisible();
-    expect(getTeamTotals).toHaveBeenCalledWith(SESSION_ID);
-  });
 });
 
 describe('TeacherLivePage (advanced)', () => {

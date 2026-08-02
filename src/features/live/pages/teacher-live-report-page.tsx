@@ -48,10 +48,7 @@ export function TeacherLiveReportPage({
       <header className="sage-page-header">
         <p className="route-panel__eyebrow">ColorPlay Live</p>
         <h1 id="live-report-title">場次報表</h1>
-        <p>
-          {report.mode === 'team' ? '團隊模式' : '個人模式'}・逐題數字由伺服器
-          從權威作答紀錄計算。
-        </p>
+        <p>逐題數字由伺服器從權威作答紀錄計算。</p>
       </header>
 
       {/* 393 寬度稽核發現：6 欄無包裹容器時 document.documentElement.
@@ -162,11 +159,7 @@ export function TeacherLiveReportPage({
                   ★
                 </span>
               ) : null}
-              第 {entry.rank} 名 {entry.displayName}（{entry.score} 分
-              {entry.teamNumber === null
-                ? ''
-                : `・第 ${String(entry.teamNumber)} 隊`}
-              ）
+              第 {entry.rank} 名 {entry.displayName}（{entry.score} 分）
             </li>
           ))}
         </ol>

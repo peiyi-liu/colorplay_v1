@@ -93,7 +93,7 @@ describe('TeacherLiveReportPage', () => {
     expect(await screen.findByText('色彩三要素是？')).toBeVisible();
     expect(screen.getByText('50.0%')).toBeVisible();
     expect(screen.getByText('1800 ms')).toBeVisible();
-    expect(screen.getByText(/學生一（300 分・第 1 隊）/u)).toBeVisible();
+    expect(screen.getByText(/學生一（300 分）/u)).toBeVisible();
     expect(repository.getSessionDetail).toHaveBeenCalledWith(SESSION_ID);
   });
 
@@ -144,7 +144,7 @@ describe('TeacherLiveReportPage', () => {
     } as unknown as LiveRepository;
     renderPage(repository);
 
-    expect(await screen.findByText(/學生一（300 分・第 1 隊）/u)).toBeVisible();
+    expect(await screen.findByText(/學生一（300 分）/u)).toBeVisible();
     const medals = document.querySelectorAll('.live-report__medal');
     expect(medals).toHaveLength(3);
     for (const medal of medals) {

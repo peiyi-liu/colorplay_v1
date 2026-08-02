@@ -14,7 +14,6 @@ import {
   useSubmitLiveAnswer,
 } from '../hooks/use-live-commands';
 import { useLiveSession } from '../hooks/use-live-session';
-import { LiveTeamScoreboard } from '../components/live-team-scoreboard';
 import {
   encouragementFor,
   optionAccessibleName,
@@ -368,20 +367,11 @@ export function LiveSessionPage({
             );
           case 'waiting-for-next':
             return (
-              <>
-                <div className="live-waiting" role="status">
-                  <span aria-hidden="true" className="camp-fire" />
-                  <h2>已加入這場挑戰！</h2>
-                  <p>這一題已經開始，下一題開始時你就會自動進場。</p>
-                </div>
-                {view.showScoreboard ? (
-                  <LiveTeamScoreboard
-                    sessionId={sessionId}
-                    state={state}
-                    {...(repository ? { repository } : {})}
-                  />
-                ) : null}
-              </>
+              <div className="live-waiting" role="status">
+                <span aria-hidden="true" className="camp-fire" />
+                <h2>已加入這場挑戰！</h2>
+                <p>這一題已經開始，下一題開始時你就會自動進場。</p>
+              </div>
             );
           case 'question':
             return (
@@ -404,48 +394,34 @@ export function LiveSessionPage({
             );
           case 'reveal':
             return (
-              <>
-                <FeedbackPhase
-                  sessionId={sessionId}
-                  state={state}
-                  {...(repository ? { repository } : {})}
-                />
-                <LiveTeamScoreboard
-                  sessionId={sessionId}
-                  state={state}
-                  {...(repository ? { repository } : {})}
-                />
-              </>
+              <FeedbackPhase
+                sessionId={sessionId}
+                state={state}
+                {...(repository ? { repository } : {})}
+              />
             );
           case 'completed':
             return (
-              <>
-                <LiveTeamScoreboard
-                  sessionId={sessionId}
-                  state={state}
-                  {...(repository ? { repository } : {})}
-                />
-                <div>
-                  <h2>挑戰結束！</h2>
-                  {view.myResult ? (
-                    <p role="status">
-                      你的成績：{view.myResult.score} 分，第{' '}
-                      {view.myResult.rank ?? '—'} 名
-                    </p>
-                  ) : null}
-                  <ol aria-label="前三名">
-                    {view.podium.map((entry) => (
-                      <li key={entry.rank}>
-                        第 {entry.rank} 名 {entry.displayName}（{entry.score}{' '}
-                        分）
-                      </li>
-                    ))}
-                  </ol>
-                  <Link className="primary-action" to="/app">
-                    回章節
-                  </Link>
-                </div>
-              </>
+              <div>
+                <h2>挑戰結束！</h2>
+                {view.myResult ? (
+                  <p role="status">
+                    你的成績：{view.myResult.score} 分，第{' '}
+                    {view.myResult.rank ?? '—'} 名
+                  </p>
+                ) : null}
+                <ol aria-label="前三名">
+                  {view.podium.map((entry) => (
+                    <li key={entry.rank}>
+                      第 {entry.rank} 名 {entry.displayName}（{entry.score}{' '}
+                      分）
+                    </li>
+                  ))}
+                </ol>
+                <Link className="primary-action" to="/app">
+                  回章節
+                </Link>
+              </div>
             );
           case 'cancelled':
             return (

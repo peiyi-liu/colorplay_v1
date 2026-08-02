@@ -6555,12 +6555,6 @@ select#dashboard-classroom {
   padding: 0 var(--space-2);
 }
 
-/* 裁定:live-team-scoreboard 為零樣式裸 section(計畫誤列為淺卡)——
-   依「深色面逐條設色」原則顯式給夜景 ink,gate 實測。 */
-.live-guild-raid .live-team-scoreboard {
-  color: var(--pixel-window-ink);
-}
-
 /* streak badge:裁定=夜景下取夜景預設 ink。計畫原文「字色與 base 一致」與
    owner 級 4.5:1 對比鐵律衝突(base=淺頁 ink-900,夜底不可讀)——鐵律優先。 */
 .live-guild-raid > div > p.live-streak-badge {
