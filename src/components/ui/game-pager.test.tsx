@@ -102,4 +102,65 @@ describe('GamePager', () => {
     expect(screen.getByText('第 2 / 2 頁')).toBeVisible();
     expect(screen.getByText('項目4')).toBeVisible();
   });
+
+  // fix wave（owner 裁定）：GamePager 新增 optional followTail，教師建班
+  // 成功後自動跳到含新卡片的末頁，見 game-pager.tsx 的兩段註解。
+  it('followTail 時 items 增加會自動跳到末頁', () => {
+    const { rerender } = render(
+      <GamePager
+        ariaLabel="測試分頁"
+        followTail
+        items={Array.from({ length: 7 }, (_, i) => `項目${String(i + 1)}`)}
+        pageSize={3}
+      >
+        {(pageItems) => (
+          <ul aria-label="測試清單">
+            {pageItems.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        )}
+      </GamePager>,
+    );
+    expect(screen.getByText('第 1 / 3 頁')).toBeVisible();
+    rerender(
+      <GamePager
+        ariaLabel="測試分頁"
+        followTail
+        items={Array.from({ length: 8 }, (_, i) => `項目${String(i + 1)}`)}
+        pageSize={3}
+      >
+        {(pageItems) => (
+          <ul aria-label="測試清單">
+            {pageItems.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        )}
+      </GamePager>,
+    );
+    expect(screen.getByText('第 3 / 3 頁')).toBeVisible();
+    expect(screen.getByText('項目8')).toBeVisible();
+  });
+
+  it('未傳 followTail 時 items 增加不會跳頁', () => {
+    const { rerender } = renderPager(7, 3);
+    expect(screen.getByText('第 1 / 3 頁')).toBeVisible();
+    rerender(
+      <GamePager
+        ariaLabel="測試分頁"
+        items={Array.from({ length: 8 }, (_, i) => `項目${String(i + 1)}`)}
+        pageSize={3}
+      >
+        {(pageItems) => (
+          <ul aria-label="測試清單">
+            {pageItems.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        )}
+      </GamePager>,
+    );
+    expect(screen.getByText('第 1 / 3 頁')).toBeVisible();
+  });
 });

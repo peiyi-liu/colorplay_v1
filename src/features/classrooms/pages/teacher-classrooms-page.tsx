@@ -182,6 +182,7 @@ export function TeacherClassroomsPage({
       ) : (
         <GamePager
           ariaLabel="班級清單分頁"
+          followTail
           items={classrooms.data}
           pageSize={wide ? 6 : 3}
         >

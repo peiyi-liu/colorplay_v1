@@ -32,11 +32,16 @@ export function useStageWide(): boolean {
 export function GamePager<T>({
   ariaLabel,
   children,
+  followTail = false,
   items,
   pageSize,
 }: Readonly<{
   ariaLabel: string;
   children: (pageItems: readonly T[]) => ReactNode;
+  /** 選填、預設 false：items.length 變多時自動跳到含最後一項的頁
+   *（教師批 fix wave：建班成功後讓新卡片可見，owner 裁定僅此擴充）。
+   *不傳時行為與現行逐 byte 等價。 */
+  followTail?: boolean;
   items: readonly T[];
   pageSize: number;
 }>): ReactElement {
@@ -53,6 +58,7 @@ export function GamePager<T>({
   const safeSize = Math.max(1, pageSize);
   const pageCount = Math.max(1, Math.ceil(items.length / safeSize));
   const page = Math.min(rawPage, pageCount - 1);
+  const prevLengthRef = useRef(items.length);
 
   const goToPage = (newPage: number) => {
     if (newPage === 0 && document.activeElement === prevRef.current) {
@@ -74,6 +80,15 @@ export function GamePager<T>({
     }
     pendingFocusRef.current = null;
   }, [page]);
+
+  // followTail：items 變多才跳末頁；初掛 prevLengthRef 已等於當前長度不會
+  // 觸發，變少（刪除）也不跳，只有「新增」才跳（fix wave spec §1）。
+  useEffect(() => {
+    if (followTail && items.length > prevLengthRef.current) {
+      setRawPage(pageCount - 1);
+    }
+    prevLengthRef.current = items.length;
+  }, [followTail, items.length, pageCount]);
 
   if (items.length <= safeSize) {
     return <>{children(items)}</>;

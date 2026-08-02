@@ -201,4 +201,45 @@ describe('TeacherClassroomsPage', () => {
       vi.unstubAllGlobals();
     }
   });
+
+  // fix wave（owner 裁定）：GamePager 加 followTail，建班成功、owned 清單
+  // refetch 多一筆後，新班級卡片所在的末頁要自動可見（不再被埋在最後一
+  // 頁）。listOwned 用 mockResolvedValueOnce 模擬「建班前」與「建班後
+  // invalidateQueries 觸發 refetch」兩種回應，貼近真實 mutation→refetch
+  // 流程（見 use-classrooms.ts 的 useCreateClassroom onSuccess）。
+  it('7 班溢出情境下建立第 8 班後，新卡片所在的末頁自動可見', async () => {
+    stubWideMatchMedia();
+    try {
+      const eighthClassroom = {
+        classroomId: 'ca000000-0000-4000-8000-000000000008',
+        classroomName: '分頁班 8',
+        classroomStatus: 'active' as const,
+        createdAt: '2026-08-02T00:00:00.000Z',
+        joinCode: 'ABCD-1234-EF56-7891',
+        joinCodeVersion: 1,
+      };
+      const listOwned = vi
+        .fn()
+        .mockResolvedValueOnce(sevenClassrooms)
+        .mockResolvedValue([
+          ...sevenClassrooms,
+          { ...eighthClassroom, memberCount: 0 },
+        ]);
+      const createClassroom = vi.fn().mockResolvedValue(eighthClassroom);
+      renderPage(createRepository({ createClassroom, listOwned }));
+      await screen.findByRole('heading', { name: '班級管理' });
+      expect(screen.getByText('第 1 / 2 頁')).toBeVisible();
+      await userEvent.type(
+        screen.getByRole('textbox', { name: '班級名稱' }),
+        '分頁班 8',
+      );
+      await userEvent.click(screen.getByRole('button', { name: '建立班級' }));
+      expect(
+        await screen.findByRole('heading', { name: '分頁班 8' }),
+      ).toBeVisible();
+      expect(screen.getByText('第 2 / 2 頁')).toBeVisible();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
