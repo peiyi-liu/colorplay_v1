@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { BlookArt } from '../../components/ui/blook-art';
 import { Icon } from '../../components/ui/icons';
 import { useToast } from '../../components/ui/toast';
 import { useAuth } from '../../features/auth/context/auth-context';
+import { useBlookInventory } from '../../features/inventory/hooks/use-blook-inventory';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { EconomySummaryView } from '../../features/rewards/components/economy-summary';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
@@ -29,6 +31,26 @@ function AuthenticatedEconomySummary() {
   }
 
   return <EconomySummaryView summary={economy.data} />;
+}
+
+function StudentHudAvatar() {
+  const inventory = useBlookInventory();
+  const equipped = inventory.data?.items.find((item) => item.equipped) ?? null;
+
+  return (
+    <span
+      aria-hidden="true"
+      className={`hud-avatar${equipped ? '' : ' hud-avatar--hero'}`}
+    >
+      {equipped ? (
+        <BlookArt
+          emoji={equipped.emoji}
+          size={26}
+          stableCode={equipped.stableCode}
+        />
+      ) : null}
+    </span>
+  );
 }
 
 export function AppShell() {
@@ -96,13 +118,17 @@ export function AppShell() {
         <RotateBanner />
         {isAuthenticatedProfile ? (
           <header className="hud-top">
-            <AuthenticatedEconomySummary />
             {isTeacher ? (
               <span className="hud-top__identity">
                 <Icon name="lock-open" size={14} />
-                {profile.data?.displayName}・教師端
+                歡迎，{profile.data?.displayName}・教師端
               </span>
-            ) : null}
+            ) : (
+              <div className="hud-economy-group">
+                <StudentHudAvatar />
+                <AuthenticatedEconomySummary />
+              </div>
+            )}
             {signOutError ? (
               <p className="app-shell__auth-error" role="alert">
                 登出失敗，請稍後重試。

@@ -9,6 +9,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
+import { useBlookInventory } from '../../features/inventory/hooks/use-blook-inventory';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
 import { ToastProvider } from '../../components/ui/toast';
 import { AppShell } from './app-shell';
@@ -22,15 +23,60 @@ vi.mock('../../features/profile/hooks/use-my-profile', () => ({
 vi.mock('../../features/rewards/hooks/use-economy-summary', () => ({
   useEconomySummary: vi.fn(),
 }));
+vi.mock('../../features/inventory/hooks/use-blook-inventory', () => ({
+  useBlookInventory: vi.fn(),
+}));
 
 const mockedUseAuth = vi.mocked(useAuth);
 const mockedUseMyProfile = vi.mocked(useMyProfile);
+const mockedUseBlookInventory = vi.mocked(useBlookInventory);
 const mockedUseEconomySummary = vi.mocked(useEconomySummary);
 
 const economyResult = (
   value: Partial<ReturnType<typeof useEconomySummary>>,
 ): ReturnType<typeof useEconomySummary> =>
   value as ReturnType<typeof useEconomySummary>;
+
+const inventoryResult = (
+  value: Partial<ReturnType<typeof useBlookInventory>>,
+) => value as ReturnType<typeof useBlookInventory>;
+
+const renderStudentShell = () =>
+  render(
+    <MemoryRouter>
+      <ToastProvider>
+        <AppShell />
+      </ToastProvider>
+    </MemoryRouter>,
+  );
+
+const renderTeacherShell = () => {
+  mockedUseAuth.mockReturnValue({
+    session: {
+      email: 'teacher@colorplay.test',
+      userId: 'teacher-id',
+    },
+    signIn: vi.fn(),
+    signInWithAccount: vi.fn(),
+    signOut: vi.fn(),
+    status: 'authenticated',
+  });
+  mockedUseMyProfile.mockReturnValue({
+    data: {
+      displayName: 'teacher',
+      id: 'teacher-id',
+      role: 'teacher',
+      timezone: 'Asia/Taipei',
+      reducedMotion: false,
+    },
+    error: null,
+    isError: false,
+    isPending: false,
+    refetch: vi.fn(),
+  });
+
+  return renderStudentShell();
+};
 
 describe('AppShell', () => {
   beforeEach(() => {
@@ -76,6 +122,28 @@ describe('AppShell', () => {
           totalXp: 750,
           walletReconciled: true,
           xpPerLevel: 500,
+        },
+        isError: false,
+        isPending: false,
+      }),
+    );
+    mockedUseBlookInventory.mockReset();
+    mockedUseBlookInventory.mockReturnValue(
+      inventoryResult({
+        data: {
+          activeBlookId: 'little-fox-id',
+          items: [
+            {
+              costTokens: 30,
+              emoji: '🦊',
+              equipped: true,
+              id: 'little-fox-id',
+              name: '小狐狸',
+              owned: true,
+              stableCode: 'little_fox',
+            },
+          ],
+          tokenBalance: 250,
         },
         isError: false,
         isPending: false,
@@ -176,6 +244,23 @@ describe('AppShell', () => {
     expect(screen.getByText('250 / 500 XP')).toBeVisible();
     expect(screen.getByText('250 Token')).toBeVisible();
     expect(mockedUseEconomySummary).toHaveBeenCalledOnce();
+    expect(mockedUseBlookInventory).toHaveBeenCalledOnce();
+  });
+
+  it('學生頂部顯示頭像框與經濟群組', async () => {
+    renderStudentShell();
+
+    expect(await screen.findByText(/Level \d+/u)).toBeInTheDocument();
+    expect(document.querySelector('.hud-economy-group')).not.toBeNull();
+    expect(document.querySelector('.hud-avatar')).not.toBeNull();
+  });
+
+  it('教師頂部顯示歡迎識別且不渲染經濟數字', async () => {
+    renderTeacherShell();
+
+    expect(await screen.findByText(/歡迎，.+・教師端/u)).toBeInTheDocument();
+    expect(screen.queryByText(/Level \d+/u)).toBeNull();
+    expect(screen.queryByText(/\d+ Token/u)).toBeNull();
   });
 
   it('does not query or fabricate economy data while logged out', () => {
@@ -203,6 +288,7 @@ describe('AppShell', () => {
     );
 
     expect(mockedUseEconomySummary).not.toHaveBeenCalled();
+    expect(mockedUseBlookInventory).not.toHaveBeenCalled();
     expect(screen.queryByText(/Level/u)).toBeNull();
     expect(screen.queryByText(/Token/u)).toBeNull();
     expect(screen.queryByRole('banner')).toBeNull();
@@ -236,6 +322,7 @@ describe('AppShell', () => {
       '經濟資料暫時無法顯示。',
     );
     expect(screen.queryByText('0 Token')).toBeNull();
+    expect(mockedUseBlookInventory).toHaveBeenCalledTimes(2);
   });
 
   it('shows teacher navigation only for an authoritative teacher profile', async () => {
@@ -283,7 +370,7 @@ describe('AppShell', () => {
     );
     // header 右側教師徽章:姓名用 profile 的 displayName,不寫死「劉老師」。
     expect(
-      within(screen.getByRole('banner')).getByText('teacher・教師端'),
+      within(screen.getByRole('banner')).getByText('歡迎，teacher・教師端'),
     ).toBeVisible();
   });
 
