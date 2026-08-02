@@ -756,3 +756,19 @@ Opus 終審 Ready-to-merge @ a61ce0a（54f20a4..a61ce0a，15 commits）。四 ga
 ## Live Team Removal Batch (2026-08-02)
 
 Task 1: assertion inventory + docs commit
+Task 1: complete (commits 6e7f5a9+640a252, review clean after fix; Important 修復: inventory mapActivity 措辭)
+Task 2: complete (commit ae3b807, review clean; Minor 移交: globals.css:6542 歷史註解殘留 live-team-scoreboard 字樣)
+Task 3: complete (commit a7452ed, review clean)
+Task 4: complete (commits bdc6bf2+943ffed, review clean after fix; Important 修復: createSession receipt 保留鍵覆蓋測試補回)
+
+Task 5 (Gate＋ledger 收批): **PASS**（commits under review 6e7f5a9..943ffed，base 02788ce）。全套驗證：vitest 120 files/830 tests 全綠（舊基線 834−4，符合 team 測試刪減預期）；`tsc -b --pretty false` 0 錯；`eslint . --max-warnings 0` 0 錯/警告；e2e 3 支 chromium 全綠——`chapter-select.spec.ts` 1/1、`classroom-leaderboard.spec.ts`／`live-smoke.spec.ts` 補上 `SUPABASE_URL`/`SUPABASE_ANON_KEY`/`PLAYWRIGHT_ACCEPTANCE=on` 後各 1/1 PASS（裸跑時 classroom-leaderboard 擲 `CLASSROOM_LEADERBOARD_ACCEPTANCE_MODE_REQUIRED`、live-smoke 因 `SUPABASE_URL` 未設定被 skip，皆既有 phase-gate/skip 設計，非本批缺陷，見 progress.md:655 同類先例）。
+
+頒獎台真跑目檢：沿 live-smoke 流程（liveHostTeacher 建班開場＋liveStudentOne 全程作答至 10/10）另跑一支拋棄式 spec（僅存在於本次執行期間，跑畢即刪，未提交），單一參與者結算後截圖學生頒獎台（`挑戰結束！`／第 1 名／1497 分卡片）與投影頒獎台（`最終頒獎台`／冠軍卡置中／`結算成績`已消失換`離開投影`），兩張版面皆無空洞或錯位——team scoreboard 移除後單卡置中收攏正常，未留殘餘空白區塊；`console`/`pageerror` 兩側各 0 筆（腳本內建斷言，執行輸出 `PODIUM_CHECK_RESULT {"presenterConsoleErrors":[],"studentConsoleErrors":[]}`）。截圖：`$SCRATCH/podium-check/presenter-podium.png`、`$SCRATCH/podium-check/student-podium.png`（拋棄式 scratchpad，未入庫）。
+
+被刪字串清單（Task 2-4 累計）：元件 `LiveTeamScoreboard`（`live-team-scoreboard.tsx` 整檔刪除）；`live-session-page.tsx` 三處 waiting-for-next／reveal／completed 引用點；`teacher-live-report-page.tsx` team-mode header 行＋排名清單「・第 N 隊」尾綴；`live-phase-view.ts` 的 `showScoreboard` 欄位／型別；`live-repository.ts` 的 `getTeamTotals`／`scheduleActivity` 函式；`use-live-commands.ts` 的 `useLiveTeamTotals`／`useScheduleLiveActivity` hooks；`types.ts` 的 `LiveSessionMode`／`LiveTeamTotal` 型別與 `mode`/`teamCount`/`teamNumber`/`scheduledFor` 前端欄位；`listMyActivities` select 字串與 `activityRowSchema` 的 `scheduled_for` 鍵。全部經 `grep -rln` 於 `src/` 複驗 0 命中殘留。
+
+DB 能力保留無人呼叫：strict-schema 鐵律下，`sessionReceiptSchema`／`stateSchema`／`sessionDetailSchema`／`activitySchema` 四支 RPC 回應 schema 保留 `mode`/`team_count`/`team_number`/`scheduled_for` 鍵（後端仍回傳，parse 需要）；僅 `listMyActivities` 的前端可控 select 字串＋`activityRowSchema` 這一側移除 `scheduled_for`（RPC 側保留鍵×4、select 側移除×1，與 Self-Review 紀錄的策略定案一致）。後端 `public.live_team_totals(p_session_id uuid)`（`20260720000200_live_teams.sql:238`）與 `public.schedule_live_activity(uuid, timestamptz)`（`20260720000300_live_insights.sql:399`）兩支 DB function 本批未動，前端呼叫端已於 Task 4 全數移除（`getTeamTotals`/`scheduleActivity`），現為死能力；對應 pgTAP（`supabase/tests/033_live_teams.test.sql`、`034_live_insights.test.sql`）仍在跑，覆蓋未失效。
+
+Debt 移交：(1) 後端 team/schedule RPC（`live_team_totals`／`schedule_live_activity`）與其 pgTAP 屬死能力，未來 DB 清理另議，本批不動；(2) 紅 spec 重寫批（`live-advanced.spec.ts` 等 phase-gate acceptance spec）將以無 team 版本重寫，非本批範圍；(3) Task 2 移交的 `globals.css:6542` 歷史註解殘留 `live-team-scoreboard` 字樣，未清。
+
+**Live Team Removal Batch 最終裁決：PASS，Ready-to-merge。** 全批 commits：`6e7f5a9 640a252 ae3b807 a7452ed bdc6bf2 943ffed`（Task 5 為純驗證，無 src 異動，本 ledger 收批 commit 另計）。
