@@ -384,7 +384,8 @@ a {
   grid-template-columns: minmax(0, 1fr);
   width: 100%;
   flex: 1;
-  place-items: center;
+  justify-items: center;
+  align-items: safe center;
   padding: var(--space-8) var(--space-4);
 }
 

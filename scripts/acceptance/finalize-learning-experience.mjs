@@ -38,8 +38,8 @@ const EXPECTED_BROWSER_FAILURES = Object.freeze([
   Object.freeze({
     expected_count: 1,
     observed_count: 1,
-    status: 400,
-    url_pattern: /\/rest\/v1\/rpc\/request_question_hint(?:\?.*)?$/u.source,
+    status: 403,
+    url_pattern: /\/rest\/v1\/rpc\/teacher_student_progress(?:\?.*)?$/u.source,
   }),
 ]);
 

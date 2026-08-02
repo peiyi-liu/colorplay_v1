@@ -13,9 +13,11 @@ import {
 import { TEST_USERS } from '../fixtures/users';
 import {
   attachBrowserHealth,
+  declareExpectedBrowserFailure,
   expectedBrowserFailures,
   unexpectedBrowserHealth,
 } from './browser-health';
+import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
 
 // The quiz chapter must show every question in a single run so hint and
 // mistake targets are deterministic: chapter 4 has fewer questions than the
@@ -39,12 +41,24 @@ if (!REVIEW_MEDIA_CARD) {
 const mediaCard = REVIEW_MEDIA_CARD;
 const REVIEW_CHAPTER_TITLE = '色彩表示';
 
+const remediationResultViewports = [
+  { height: 720, label: 'desktop-landscape', width: 1280 },
+  { height: 375, label: 'tablet-landscape', width: 812 },
+  { height: 812, label: 'mobile-portrait', width: 375 },
+] as const;
+
 const classroomIdPattern =
   /\/teacher\/classes\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/iu;
+const teacherStudentProgressDenial = {
+  count: 1,
+  status: 403,
+  urlPattern: /\/rest\/v1\/rpc\/teacher_student_progress(?:\?.*)?$/u,
+} as const;
 
 const signIn = async (
   page: Page,
   credentials: Readonly<{ email: string; password: string }>,
+  navigationName: '主要導覽' | '教師導覽',
 ) => {
   await page.goto('/login');
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
@@ -52,7 +66,7 @@ const signIn = async (
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u);
   await expect(
-    page.getByRole('navigation', { name: '主要導覽' }),
+    page.getByRole('navigation', { name: navigationName }),
   ).toBeVisible();
   // Wait for the chapter query to settle before the caller navigates away,
   // so browser health never records a navigation-aborted manifest fetch.
@@ -86,8 +100,9 @@ test('Learning Experience phase gate', async ({
   const studentHealth = attachBrowserHealth(studentPage);
   const teacherHealth = attachBrowserHealth(teacherPage);
   const teacherBHealth = attachBrowserHealth(teacherBPage);
+  declareExpectedBrowserFailure(teacherBHealth, teacherStudentProgressDenial);
 
-  await signIn(studentPage, TEST_USERS.learningStudent);
+  await signIn(studentPage, TEST_USERS.learningStudent, '主要導覽');
   const rewards = studentPage.getByRole('region', { name: '學習獎勵' });
   await expect(rewards).toContainText('0 / 500 XP');
   await expect(rewards).toContainText('0 Token');
@@ -100,11 +115,21 @@ test('Learning Experience phase gate', async ({
     studentPage.getByRole('heading', { name: REVIEW_CHAPTER_TITLE }),
   ).toBeVisible();
   await expect(studentPage.locator('body')).not.toContainText('尚未發布的卡片');
+  await studentPage
+    .locator('summary')
+    .filter({ hasText: mediaCard.title })
+    .click();
   await expect(
     studentPage.getByRole('img', { name: mediaCard.alt }),
   ).toBeVisible();
   for (const cardTitle of reviewSubtopic.cardTitles) {
     const card = studentPage.getByRole('article', { name: cardTitle });
+    if (!(await card.isVisible())) {
+      await studentPage
+        .locator('summary')
+        .filter({ hasText: cardTitle })
+        .click();
+    }
     await expect(card).toBeVisible();
     await card.getByRole('button', { name: '完成複習' }).click();
     await expect(card.getByRole('status')).toHaveText('已完成複習');
@@ -138,6 +163,10 @@ test('Learning Experience phase gate', async ({
   await expect(
     studentPage.getByRole('heading', { name: '色彩任務選擇大廳' }),
   ).toBeVisible();
+  await studentPage
+    .getByRole('group', { name: '章節分頁' })
+    .getByRole('button', { name: '下一頁' })
+    .click();
   await studentPage
     .locator('article.chapter-card')
     .filter({ hasText: QUIZ_CHAPTER_TITLE })
@@ -202,8 +231,11 @@ test('Learning Experience phase gate', async ({
     studentPage.getByRole('heading', { name: '我的錯題' }),
   ).toBeVisible();
   await expect(
-    studentPage.getByRole('heading', { name: /（2 題待補救）/u }),
+    studentPage.getByRole('heading', { name: /2 題待補救/u }),
   ).toBeVisible();
+  await expect(studentPage.getByText('2 題待補救')).toHaveClass(
+    'mistake-group__badge',
+  );
   await studentPage.getByRole('button', { name: '再挑戰（補救練習）' }).click();
   await expect(studentPage.getByText(/補救練習模式/u)).toBeVisible();
   for (let position = 1; position <= 2; position += 1) {
@@ -227,10 +259,134 @@ test('Learning Experience phase gate', async ({
   // 20% of two fast correct answers: +30 XP; the Token balance must not move.
   await expect(rewards).toContainText('480 / 500 XP');
   await expect(rewards).toContainText('150 Token');
-  await studentPage.getByRole('link', { name: '返回我的錯題' }).click();
-  await expect(studentPage.getByRole('status')).toContainText(
-    '目前沒有待補救的錯題',
+  const returnToMistakes = studentPage.getByRole('link', {
+    name: '返回我的錯題',
+  });
+  const emptyMistakesStatus = studentPage
+    .getByRole('status')
+    .filter({ hasText: '目前沒有待補救的錯題，繼續保持！' });
+  const remediationResultBoxes = [];
+  for (const [index, viewport] of remediationResultViewports.entries()) {
+    await studentPage.setViewportSize(viewport);
+    await returnToMistakes.evaluate((element) => {
+      element.scrollIntoView({
+        behavior: 'instant',
+        block: 'center',
+        inline: 'nearest',
+      });
+    });
+    await expect(returnToMistakes).toBeVisible();
+    await returnToMistakes.focus();
+    await expect(returnToMistakes).toBeFocused();
+    await studentPage.keyboard.press('Shift+Tab');
+    await expect(returnToMistakes).not.toBeFocused();
+    await studentPage.keyboard.press('Tab');
+    await expect(returnToMistakes).toBeFocused();
+    const box = await returnToMistakes.evaluate((element, measuredViewport) => {
+      const rect = element.getBoundingClientRect();
+      const scrollport = document.querySelector('main#main-content');
+      const scrollportRect = scrollport?.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const hit = document.elementFromPoint(centerX, centerY);
+      const computed = getComputedStyle(element);
+      const outlineWidth = Number.parseFloat(computed.outlineWidth);
+      const outlineOffset = Number.parseFloat(computed.outlineOffset);
+      const focusExpansion = Math.max(
+        0,
+        (Number.isFinite(outlineWidth) ? outlineWidth : 0) +
+          (Number.isFinite(outlineOffset) ? outlineOffset : 0),
+      );
+      const describeElement = (candidate: Element) => ({
+        className: candidate.className,
+        pointerEvents: getComputedStyle(candidate).pointerEvents,
+        tagName: candidate.tagName,
+        text: candidate.textContent?.trim().slice(0, 80) ?? '',
+        zIndex: getComputedStyle(candidate).zIndex,
+      });
+      return {
+        focusVisible: element.matches(':focus-visible'),
+        hasFocusRing: computed.outlineStyle !== 'none' && outlineWidth > 0,
+        hitIsLink: hit === element || element.contains(hit),
+        focusPaint: {
+          bottom: rect.bottom + focusExpansion,
+          left: rect.left - focusExpansion,
+          right: rect.right + focusExpansion,
+          top: rect.top - focusExpansion,
+        },
+        huds: Array.from(
+          document.querySelectorAll('.hud-top, .hud-command'),
+        ).map((hud) => {
+          const hudRect = hud.getBoundingClientRect();
+          return {
+            bottom: hudRect.bottom,
+            left: hudRect.left,
+            right: hudRect.right,
+            top: hudRect.top,
+          };
+        }),
+        link: {
+          bottom: rect.bottom,
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+        },
+        pointerEvents: computed.pointerEvents,
+        documentScroll: {
+          clientHeight: document.documentElement.clientHeight,
+          scrollHeight: document.documentElement.scrollHeight,
+          scrollTop: document.documentElement.scrollTop,
+          windowY: window.scrollY,
+        },
+        scrollTop: scrollport?.scrollTop ?? null,
+        scrollport: scrollportRect
+          ? {
+              bottom: scrollportRect.bottom,
+              left: scrollportRect.left,
+              right: scrollportRect.right,
+              top: scrollportRect.top,
+            }
+          : null,
+        stack: document
+          .elementsFromPoint(centerX, centerY)
+          .map(describeElement),
+        viewport: measuredViewport,
+      };
+    }, viewport);
+    expect(box.scrollport).not.toBeNull();
+    expect(box.link.top).toBeGreaterThanOrEqual(box.scrollport?.top ?? 0);
+    expect(box.link.bottom).toBeLessThanOrEqual(box.scrollport?.bottom ?? 0);
+    expect(
+      box.huds.every(
+        (hud) =>
+          box.focusPaint.right <= hud.left ||
+          box.focusPaint.left >= hud.right ||
+          box.focusPaint.bottom <= hud.top ||
+          box.focusPaint.top >= hud.bottom,
+      ),
+      JSON.stringify(box),
+    ).toBe(true);
+    expect(box.hitIsLink, JSON.stringify(box)).toBe(true);
+    expect(box.focusVisible).toBe(true);
+    expect(box.hasFocusRing).toBe(true);
+    remediationResultBoxes.push(box);
+    await returnToMistakes.click();
+    await expect(studentPage).toHaveURL(/\/app\/mistakes$/u);
+    await expect(emptyMistakesStatus).toBeVisible();
+    if (index < remediationResultViewports.length - 1) {
+      await studentPage.goBack();
+      await expect(returnToMistakes).toBeVisible();
+      await expect(studentPage.getByRole('status')).toContainText(
+        '補救練習完成',
+      );
+    }
+  }
+  await mkdir(join(evidenceRoot, 'reports'), { recursive: true });
+  await writeFile(
+    join(evidenceRoot, 'reports/remediation-result-viewport-boxes.json'),
+    `${JSON.stringify(remediationResultBoxes, null, 2)}\n`,
   );
+  await expect(emptyMistakesStatus).toBeVisible();
 
   // 學習進度 dashboard 依 owner 批示（2026-07-26 #2）已改為教師專屬，學生端
   // `/app/progress` 路由與頁面已移除（Task 10）；原本在此驗證的伺服器端公式
@@ -241,15 +397,9 @@ test('Learning Experience phase gate', async ({
   // teacher-classroom-progress-page 自己的測試範圍，不在本任務內補齊。
 
   // --- Teacher analytics: owner reads exact mastery, others read nothing ---
-  await signIn(teacherPage, TEST_USERS.learningTeacher);
+  await signIn(teacherPage, TEST_USERS.learningTeacher, '教師導覽');
   await teacherPage.goto('/teacher/classes');
-  await teacherPage
-    .getByRole('textbox', { name: '班級名稱' })
-    .fill('學習體驗班級');
-  await teacherPage.getByRole('button', { name: '建立班級' }).click();
-  const receipt = teacherPage.getByLabel('一次性班級加入碼');
-  await expect(receipt).toBeVisible();
-  const joinCode = (await receipt.locator('strong').innerText()).trim();
+  const { joinCode } = await createClassroom(teacherPage, '學習體驗班級');
   await teacherPage.getByRole('link', { name: '管理班級' }).click();
   await teacherPage.waitForURL(classroomIdPattern);
   const classroomId = classroomIdPattern.exec(teacherPage.url())?.[1];
@@ -257,30 +407,37 @@ test('Learning Experience phase gate', async ({
     throw new Error('LEARNING_EXPERIENCE_CLASSROOM_ID_MISSING');
   }
 
-  await studentPage.goto(`/join/${joinCode}`);
-  await studentPage.getByRole('button', { name: '加入班級' }).click();
-  await expect(studentPage).toHaveURL(/\/app\/leaderboard\//u);
+  await joinClassroomByCode(TEST_USERS.learningStudent, joinCode);
+  await teacherPage.reload();
 
-  await teacherPage
-    .getByLabel('班級成員')
-    .getByRole('link', { name: '學習進度' })
-    .click();
+  const memberProgressLink = teacherPage
+    .getByRole('link', { name: '查看細節 ›' })
+    .first();
+  await expect(memberProgressLink).toBeVisible();
+  const memberProgressHref = await memberProgressLink.getAttribute('href');
+  const memberRef = memberProgressHref?.split('/').pop();
+  if (!memberRef) {
+    throw new Error('LEARNING_EXPERIENCE_CLASSROOM_MEMBER_REF_MISSING');
+  }
+  await memberProgressLink.click();
   await expect(
-    teacherPage.getByRole('heading', { name: '班級學習進度' }),
+    teacherPage.getByRole('heading', { name: 'learning.student 的學習進度' }),
   ).toBeVisible();
   const teacherRow = teacherPage.getByRole('row', {
     name: new RegExp(QUIZ_CHAPTER_TITLE, 'u'),
   });
-  await expect(teacherRow).toContainText('100%');
+  await expect(teacherRow).toContainText('100.0%');
   await expect(teacherRow).toContainText('已精熟');
   await expect(teacherPage.locator('body')).not.toContainText(
     '@colorplay.test',
   );
 
-  await signIn(teacherBPage, TEST_USERS.teacherTwo);
-  await teacherBPage.goto(`/teacher/classes/${classroomId}/progress`);
+  await signIn(teacherBPage, TEST_USERS.teacherTwo, '教師導覽');
+  await teacherBPage.goto(
+    `/teacher/classes/${classroomId}/members/${memberRef}`,
+  );
   await expect(
-    teacherBPage.getByText('目前沒有可顯示的學習進度。'),
+    teacherBPage.getByText('無法載入學生資料，或你沒有管理權限。'),
   ).toBeVisible();
   await teacherBContext.close();
   await teacherContext.close();
@@ -290,7 +447,14 @@ test('Learning Experience phase gate', async ({
   const declaredFailures = trackedHealths.flatMap((health) =>
     expectedBrowserFailures(health),
   );
-  expect(declaredFailures).toEqual([]);
+  expect(declaredFailures).toEqual([
+    {
+      expected_count: teacherStudentProgressDenial.count,
+      observed_count: teacherStudentProgressDenial.count,
+      status: teacherStudentProgressDenial.status,
+      url_pattern: teacherStudentProgressDenial.urlPattern.source,
+    },
+  ]);
   const healthResults = trackedHealths.map((health) =>
     unexpectedBrowserHealth(health, 'chromium'),
   );
