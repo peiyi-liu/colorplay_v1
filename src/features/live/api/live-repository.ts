@@ -130,9 +130,10 @@ const sessionReceiptSchema = z.strictObject({
   state_version: positiveInteger,
   join_code: z.string().regex(/^[0-9]{6}$/u),
   join_code_version: positiveInteger,
+  // 伺服器仍回傳，前端已不消費（team 移除批）；strict 契約保留鍵
   mode: z.enum(['individual', 'team']),
   team_count: z.number().int().min(2).max(4).nullable(),
-}); // 伺服器仍回傳，前端已不消費（team 移除批）；strict 契約保留鍵
+});
 
 const rotateSchema = z.strictObject({
   session_id: uuidString,

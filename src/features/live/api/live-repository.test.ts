@@ -401,6 +401,45 @@ describe('live repository', () => {
     expect(state.pausedRemainingMs).toBe(12500);
   });
 
+  it('creates a session and maps the receipt without exposing retained schema keys', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: {
+        session_id: '18400000-0000-0000-0000-000000000001',
+        state: 'draft',
+        state_version: 1,
+        join_code: '654321',
+        join_code_version: 1,
+        // strict schema 保留鍵（team 移除批）：伺服器仍回傳，斷言 domain
+        // receipt 不再映射這兩個屬性。
+        mode: 'individual',
+        team_count: null,
+      },
+      error: null,
+    });
+    const repository = createLiveRepository(clientWith(rpc));
+
+    const receipt = await repository.createSession({
+      activityId: '18300000-0000-0000-0000-000000000001',
+      classroomId: '18100000-0000-0000-0000-000000000001',
+      assignmentId: null,
+    });
+
+    expect(rpc).toHaveBeenCalledWith('create_live_session', {
+      p_assignment_id: null,
+      p_classroom_id: '18100000-0000-0000-0000-000000000001',
+      p_live_activity_id: '18300000-0000-0000-0000-000000000001',
+    });
+    expect(receipt).toEqual({
+      sessionId: '18400000-0000-0000-0000-000000000001',
+      state: 'draft',
+      stateVersion: 1,
+      joinCode: '654321',
+      joinCodeVersion: 1,
+    });
+    expect(receipt).not.toHaveProperty('mode');
+    expect(receipt).not.toHaveProperty('teamCount');
+  });
+
   it('reads the host distribution', async () => {
     const rpc = vi.fn().mockResolvedValue({
       data: {
