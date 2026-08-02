@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 // 共用登入互動：學生／教師登入表單的選擇器與流程。原本分別內嵌於
 // tests/e2e/live-smoke.spec.ts、quiz-runner.spec.ts、playable-slice.spec.ts，
@@ -39,6 +39,11 @@ export async function signInTeacher(
 export async function switchToTeacherTab(page: Page): Promise<void> {
   await page.goto('/login');
   await page.getByText('教師端登入').click();
+}
+
+export async function openHudMenu(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'MENU' }).click();
+  await expect(page.locator('#hud-menu-panel')).toBeVisible();
 }
 
 // GameStage Shell（2026-08-01）：登出鈕收進底部 HUD 的 MENU 面板。
