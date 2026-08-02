@@ -772,3 +772,7 @@ DB 能力保留無人呼叫：strict-schema 鐵律下，`sessionReceiptSchema`�
 Debt 移交：(1) 後端 team/schedule RPC（`live_team_totals`／`schedule_live_activity`）與其 pgTAP 屬死能力，未來 DB 清理另議，本批不動；(2) 紅 spec 重寫批（`live-advanced.spec.ts` 等 phase-gate acceptance spec）將以無 team 版本重寫，非本批範圍；(3) Task 2 移交的 `globals.css:6542` 歷史註解殘留 `live-team-scoreboard` 字樣，未清。
 
 **Live Team Removal Batch 最終裁決：PASS，Ready-to-merge。** 全批 commits：`6e7f5a9 640a252 ae3b807 a7452ed bdc6bf2 943ffed`（Task 5 為純驗證，無 src 異動，本 ledger 收批 commit 另計）。
+Task 5: complete (commit f2833ff, gate PASS: vitest 830/120 files, tsc 0, eslint 0, e2e 3/3, podium 截圖乾淨 console 0)
+
+### Final approval (2026-08-02)
+Opus 終審 Ready-to-merge @ f2833ff（e3708c4..f2833ff，7 commits）。零必修；Minor 移交：globals.css:6542 懸空註解參照（升級記載）、live-pages.test.tsx:571 空行殘留。鐵律全過：DB/LivePresenter/live-advanced 零接觸、strict-schema 四保留鍵在位、被刪字串不超清單、commit 隔離 7/7。vitest 830/tsc 0/eslint 0 複驗一致。
