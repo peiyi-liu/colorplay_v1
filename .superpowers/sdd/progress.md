@@ -790,3 +790,24 @@ Task 3: complete (commits 379a422..12fa5b8, review approved; focused 1/1, Chromi
 Task 4: minor (deferred): teacher unit test 未直接斷言 economy/inventory hooks 零呼叫，Task 5 browser gate 覆蓋教師零經濟
 Task 4: minor (deferred): equipped/fallback 頭像 DOM 未分態單元覆蓋，Task 5 以兩態真實截圖驗證
 Task 4: complete (commit d049743, review approved; shell 30/30, tsc 0, eslint 0, prettier pass)
+
+Task 5 (Gate＋ledger 收批): **PASS（fallback 分支為明確揭露的 network-intercept simulation，非 genuine 未裝備帳號）**。全套 fresh gate：`npx vitest run` 120 files / 833 tests 全綠；`npx tsc -b --pretty false` exit 0、零 diagnostics；`npx eslint . --max-warnings 0` exit 0、零 errors/warnings；指定六支 Chromium e2e 實際展開 13/13 PASS（`app-shell.visual` 8/8，`classroom-leaderboard`／`live-smoke`／`auth-account`／`chapter-select`／`playable-slice` 各 1/1）。本機 public Supabase env 由 `supabase status -o env` 經 `scripts/supabase/load-local-environment.sh` 載入，service-role vars 已 unset、值未輸出；沿用既有 `http://localhost:5173`，未重啟 server。e2e 證據位於 `/tmp/hudreorg-e2e.Er8DA3`。
+
+真跑量測使用 `TEST_USERS.studentOne`／`TEST_USERS.teacher`、rendered `getComputedStyle` 前景＋祖先背景 alpha 疊色；學生/教師各在 375×667、812×375 驗證列上全部互動項、MENU、開面板後全部 nav link 與登出鈕。結果：
+
+| viewport | role | scrollWidth / viewport | leftmost x | rightmost right | top identity right | min touch | min contrast | console/pageerror | inventory RPC |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 375×667 | student | 375 / 375 | 8 | 367 | 323.72 | 44px | 5.09:1 | 0 / 0 | 2 |
+| 375×667 | teacher | 375 / 375 | 8 | 367 | 191.08 | 44px | 5.59:1 | 0 / 0 | 0 |
+| 812×375 | student | 812 / 812 | 8 | 804 | 323.72 | 44px | 5.09:1 | 0 / 0 | 2 |
+| 812×375 | teacher | 812 / 812 | 8 | 804 | 191.08 | 44px | 5.59:1 | 0 / 0 | 0 |
+
+全部 bounding boxes 皆 `x >= 0` 且 `right <= viewport`，所有受測互動項高度 ≥44px；教師兩寬度 `.hud-economy-group` 0 個且 inventory RPC 0，學生兩寬度 `.hud-top__identity` 0 個。對比各類最小值/實際色：面板 default 15.97:1（`rgb(244, 241, 228)` on `rgb(16, 20, 46)`）、active gold 5.59:1（`rgb(184, 134, 47)` on `rgb(16, 20, 46)`）、教師歡迎 14.24:1、學生 Level 14.24:1、XP 14.24:1（後三者 `rgb(246, 238, 216)` on `rgb(23, 28, 63)`）、Token 5.09:1（`rgb(184, 134, 47)` on `rgb(23, 28, 63)`）；全數 ≥4.5:1。
+
+頭像兩態證據：genuine equipped=`inventoryStudentOne`，`BlookArt=true`／`hero=false`，截圖 `/tmp/hudreorg-task5.mFwxuv/avatar-equipped-inventoryStudentOne.png`。只讀掃描 `TEST_USER_ROLES` 全 16 個學生 fixture 的穩定 DOM 全為 equipped（`BlookArt=true`／`hero=false`）；這與 `profiles.active_blook_id NOT NULL`、新 profile 預設 `little_fox`、repository strict contract 恰一 equipped 相符，故**不存在 genuine 未裝備 fixture**。第二張以 `inventoryStudentTwo` 單一 disposable context 只攔截 `get_my_blook_inventory`、回 handled 200 invalid shape 模擬 inventory-error fallback，不改 DB/fixture；兩次攔截後 `hero=true`／`BlookArt=false`、console/pageerror 0/0，截圖 `/tmp/hudreorg-task5.mFwxuv/avatar-fallback-simulated-inventoryStudentTwo.png`。此圖只證明 error fallback，不宣稱 genuine unequipped。
+
+Debt/minors 移交：(1) `tests/e2e/helpers/auth.ts` 模組註解仍稱 helper 不含 `expect()`，但 `openHudMenu` 已使用 `expect`；documentation-only minor；(2) 教師 hooks 零呼叫未有直接 unit assertion，本 gate 以兩 viewport 的 DOM absence＋inventory RPC 0 補 browser 證據；(3) genuine unequipped state 在現行 schema/repository/fixtures 不可表示，若產品要支援須另案裁定 schema contract，不能靠 gate 改帳號湊證據。無 `globals.css` 回修、無產品碼異動。
+
+Commits（HUD Menu Reorg Batch 收批前完整清單）：`44d822ec5d4a04223c43e283925b7e5639ddf128 fd953b508cd33fa0444319e16a0b3b85129298a4 4c753d191ee9995ac3f5b1f2d7d4cb850ee1b365 e90ed791bd2d5c43c3300cd4e1be1ddbcfdf2d12 2460242ebe19a40d52645f76188eff7a661e6f75 379a422630ffc03a98c5405ecd6d5513b1bd57ba 12fa5b86a819b9158757e6fa7c79595916929270 838dbd03b03adefda7b128d9f33a24a60fbd722e d04974336dce88de4da419bef03c0fb24f37c40b 146fd765f92a9026f43c0abbe0970ae20fd6af86`；本 Task 5 收批 commit 另計。
+
+**HUD Menu Reorg Batch 最終裁決：PASS，Ready-to-merge；fallback 證據限制已揭露，不得解讀為 genuine 未裝備帳號。** 完整命令、輸出、量測 script path、自評見 `.superpowers/sdd/hudreorg-task-5-report.md`（報告不提交）。
