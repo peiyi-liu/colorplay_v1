@@ -102,8 +102,8 @@ describe('ShopPage', () => {
     page2.forEach(([, , name]) => {
       expect(screen.queryByRole('heading', { name })).toBeNull();
     });
-    // 每張卡片以自製 SVG 角色呈現(不再用 emoji 文字)。
-    expect(document.querySelectorAll('.blook-card__art svg')).toHaveLength(
+    // 每張卡片以 ref-image PNG 角色呈現(不再用 emoji 文字)。
+    expect(document.querySelectorAll('.blook-card__art img')).toHaveLength(
       page1.length,
     );
     expect(screen.getAllByText('已裝備')).toHaveLength(1);
@@ -121,7 +121,7 @@ describe('ShopPage', () => {
     page1.forEach(([, , name]) => {
       expect(screen.queryByRole('heading', { name })).toBeNull();
     });
-    expect(document.querySelectorAll('.blook-card__art svg')).toHaveLength(
+    expect(document.querySelectorAll('.blook-card__art img')).toHaveLength(
       page2.length,
     );
     expect(
