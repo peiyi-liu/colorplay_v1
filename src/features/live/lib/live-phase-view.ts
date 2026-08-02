@@ -16,7 +16,7 @@ export type ParticipantOption = Readonly<{
 
 export type ParticipantPhaseView =
   | Readonly<{ kind: 'lobby'; participantCount: number }>
-  | Readonly<{ kind: 'waiting-for-next'; showScoreboard: boolean }>
+  | Readonly<{ kind: 'waiting-for-next' }>
   | Readonly<{
       kind: 'question';
       screenOnly: boolean;
@@ -25,11 +25,10 @@ export type ParticipantPhaseView =
       answered: boolean;
     }>
   | Readonly<{ kind: 'paused'; frozenSeconds: number; prompt: string | null }>
-  | Readonly<{ kind: 'reveal'; showScoreboard: true }>
-  | Readonly<{ kind: 'screen-only-result'; showScoreboard: true }>
+  | Readonly<{ kind: 'reveal' }>
+  | Readonly<{ kind: 'screen-only-result' }>
   | Readonly<{
       kind: 'completed';
-      showScoreboard: true;
       myResult: Readonly<{ score: number; rank: number | null }> | null;
       podium: readonly LivePodiumEntry[];
     }>
@@ -60,7 +59,6 @@ export const participantView = (
         kind: 'completed',
         myResult: state.myResult ?? null,
         podium: state.podium ?? [],
-        showScoreboard: true,
       };
     case 'cancelled':
       return { kind: 'cancelled' };
@@ -70,15 +68,15 @@ export const participantView = (
         !state.isHost &&
         !state.waitingForNext
       ) {
-        return { kind: 'screen-only-result', showScoreboard: true };
+        return { kind: 'screen-only-result' };
       }
       if (state.waitingForNext) {
-        return { kind: 'waiting-for-next', showScoreboard: true };
+        return { kind: 'waiting-for-next' };
       }
-      return { kind: 'reveal', showScoreboard: true };
+      return { kind: 'reveal' };
     case 'question_open':
       if (state.waitingForNext) {
-        return { kind: 'waiting-for-next', showScoreboard: false };
+        return { kind: 'waiting-for-next' };
       }
       return {
         answered: state.myAnswer?.answered ?? false,
@@ -89,7 +87,7 @@ export const participantView = (
       };
     case 'paused':
       if (state.waitingForNext) {
-        return { kind: 'waiting-for-next', showScoreboard: false };
+        return { kind: 'waiting-for-next' };
       }
       return {
         frozenSeconds: tick(state, 0, 0).secondsLeft ?? 0,

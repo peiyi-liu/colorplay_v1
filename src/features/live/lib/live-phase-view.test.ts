@@ -159,36 +159,6 @@ describe('participantView', () => {
     );
   });
 
-  // ← P10 的計分板規則（feedback‖completed 才顯示）
-  it('flags the scoreboard exactly for feedback and completed phases', () => {
-    const feedback = {
-      ...baseState,
-      currentPosition: 1,
-      question: openQuestion,
-      state: 'question_feedback' as const,
-      stateVersion: 4,
-    };
-    const reveal = participantView(feedback);
-    if (reveal.kind !== 'reveal') throw new Error(`unexpected ${reveal.kind}`);
-    expect(reveal.showScoreboard).toBe(true);
-
-    const waiting = participantView({ ...feedback, waitingForNext: true });
-    if (waiting.kind !== 'waiting-for-next')
-      throw new Error(`unexpected ${waiting.kind}`);
-    expect(waiting.showScoreboard).toBe(true);
-
-    const open = participantView({
-      ...baseState,
-      question: openQuestion,
-      state: 'question_open',
-      stateVersion: 3,
-      waitingForNext: true,
-    });
-    if (open.kind !== 'waiting-for-next')
-      throw new Error(`unexpected ${open.kind}`);
-    expect(open.showScoreboard).toBe(false);
-  });
-
   // ← P4: shows the personal result and podium after completion
   it('projects the completed result with podium and scoreboard', () => {
     const view = participantView({
@@ -208,7 +178,6 @@ describe('participantView', () => {
         { displayName: 'student.one', rank: 1, score: 1500 },
         { displayName: 'student.two', rank: 2, score: 600 },
       ],
-      showScoreboard: true,
     });
   });
 
