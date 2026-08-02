@@ -835,3 +835,11 @@ Whole-branch review range `44d822e..3739031`。最終 reviewer 先發現 812×37
 Deferred non-blocking debt：(1) `tests/e2e/helpers/auth.ts` 模組註解仍稱 helper 不含 `expect()`；(2) teacher hooks 零呼叫欠直接 unit assertion，但 source 分支與兩 viewport inventory RPC 0 已佐證；(3) equipped/fallback 欠分態 unit coverage，現有 genuine equipped＋simulated error fallback browser 證據足夠本批。三項均經 final reviewer 判定 Minor，不阻擋。
 
 **Final review verdict：PASS，Ready-to-merge。** 本工作未 push、未 merge、未 deploy；`feature/v2-major-update` 保持原樣交 owner 決定整合。
+
+## v2 Deploy (2026-08-02)
+
+Deployment: **PASS**。依 owner 授權以 ref push 完成純 fast-forward 發佈，未切分支、未 stash、未納入工作區平行變更：建立並推送還原點 tag `v2-jrpg-20260802` → `ce35f86c1b7696a461b8bd35d2bf005bb3bf7763`；`feature/v2-major-update:main` 推送結果 `05d875d..ce35f86`；遠端備份分支 `feature/v2-major-update` 推送結果 `8bbac53..ce35f86`。
+
+Vercel production deployment `dpl_6dRdrFoMt5fXgQWvT7wxPYb6vYCq`（`colorplay-staging-jqeg1h1kt-anglea927927-7027s-projects.vercel.app`）狀態 **READY**，commit `ce35f86`、target `production`，READY 時間 `2026-08-02T09:08:06.854Z`；aliases 包含 `colorplayapp.com` 與 `www.colorplayapp.com`。
+
+Fresh pre-deploy gate：Vitest 120 files / 833 tests PASS；`npx tsc -b --pretty false` exit 0；`npx eslint . --max-warnings 0` exit 0。正式站唯讀 smoke：`curl -L https://colorplayapp.com` HTTP 200；Chromium 1440×900 確認標題畫面 `PRESS START` 可見、`/login` 登入標題與密碼欄位正常渲染，兩頁 console error 0、pageerror 0。截圖：`/tmp/v2-deploy-press-start.png`、`/tmp/v2-deploy-login.png`。全程未登入測試帳號、未提交表單、未建立或修改正式站資料。
