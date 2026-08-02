@@ -843,3 +843,7 @@ Deployment: **PASS**。依 owner 授權以 ref push 完成純 fast-forward 發�
 Vercel production deployment `dpl_6dRdrFoMt5fXgQWvT7wxPYb6vYCq`（`colorplay-staging-jqeg1h1kt-anglea927927-7027s-projects.vercel.app`）狀態 **READY**，commit `ce35f86`、target `production`，READY 時間 `2026-08-02T09:08:06.854Z`；aliases 包含 `colorplayapp.com` 與 `www.colorplayapp.com`。
 
 Fresh pre-deploy gate：Vitest 120 files / 833 tests PASS；`npx tsc -b --pretty false` exit 0；`npx eslint . --max-warnings 0` exit 0。正式站唯讀 smoke：`curl -L https://colorplayapp.com` HTTP 200；Chromium 1440×900 確認標題畫面 `PRESS START` 可見、`/login` 登入標題與密碼欄位正常渲染，兩頁 console error 0、pageerror 0。截圖：`/tmp/v2-deploy-press-start.png`、`/tmp/v2-deploy-login.png`。全程未登入測試帳號、未提交表單、未建立或修改正式站資料。
+
+## Red Spec Rewrite Batch (2026-08-02)
+
+Task 1: complete (inventory＋scope decision；fix round 1/5 三項全關閉、獨立 review approved；`live-advanced` 不合併，保留獨立 AC-LIVE-012 最小個人模式 gate，team/schedule/team scoreboard 全刪；三支 stale phase finalizer/contract 納入各自同步 task；報告 `.superpowers/sdd/redspec-task-1-report.md`)
