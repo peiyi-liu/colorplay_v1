@@ -135,7 +135,7 @@ describe('AppShell', () => {
     );
   });
 
-  it('does not show teacher navigation to an authoritative student profile', () => {
+  it('does not show teacher navigation to an authoritative student profile', async () => {
     render(
       <MemoryRouter>
         <ToastProvider>
@@ -146,6 +146,8 @@ describe('AppShell', () => {
 
     expect(screen.queryByRole('link', { name: '教師工作區' })).toBeNull();
     expect(screen.queryByText(/教師端/u)).toBeNull();
+    // HUD 重組批：裝備商店/班級排行榜/成就徽章已移入 MENU 面板，需先開 MENU。
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     expect(screen.getByRole('link', { name: '裝備商店' })).toHaveAttribute(
       'href',
       '/app/shop',
@@ -236,7 +238,7 @@ describe('AppShell', () => {
     expect(screen.queryByText('0 Token')).toBeNull();
   });
 
-  it('shows teacher navigation only for an authoritative teacher profile', () => {
+  it('shows teacher navigation only for an authoritative teacher profile', async () => {
     mockedUseAuth.mockReturnValue({
       session: {
         email: 'teacher@colorplay.test',
@@ -273,6 +275,8 @@ describe('AppShell', () => {
       'href',
       '/teacher',
     );
+    // HUD 重組批：班級管理已移入 MENU 面板，需先開 MENU。
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     expect(screen.getByRole('link', { name: '班級管理' })).toHaveAttribute(
       'href',
       '/teacher/classes',
@@ -283,7 +287,7 @@ describe('AppShell', () => {
     ).toBeVisible();
   });
 
-  it('renders the simplified primary rail for students', () => {
+  it('renders the simplified primary rail for students', async () => {
     render(
       <MemoryRouter>
         <ToastProvider>
@@ -296,6 +300,24 @@ describe('AppShell', () => {
       'href',
       '/app',
     );
+    // 頂列僅保留等級摘要與登出；作業入口已移除。
+    expect(screen.queryByRole('link', { name: '進入大廳' })).toBeNull();
+    expect(screen.queryByRole('link', { name: '我的作業' })).toBeNull();
+    expect(screen.queryByRole('link', { name: '教師後台' })).toBeNull();
+    expect(screen.queryByText('色彩原理學習平台')).toBeNull();
+
+    // 學生列上導覽收斂為 2 項（HUD 重組批 spec 2026-08-02）；完整 7 項標籤
+    // 覆蓋交給 hud-command-bar.test.tsx 的面板迴圈測試承接，此處不重複維護
+    // 同一份標籤清單。
+    const nav = screen.getByRole('navigation', { name: '主要導覽' });
+    const linkNames = within(nav)
+      .getAllByRole('link')
+      .map((link) => link.textContent);
+    expect(linkNames).toEqual(['學習大廳', 'Live 課堂']);
+    expect(screen.queryByRole('link', { name: '學習進度' })).toBeNull();
+
+    // 課後任務實戰/裝備商店/我的錯題已移入 MENU 面板，需先開 MENU。
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     expect(screen.getByRole('link', { name: '課後任務實戰' })).toHaveAttribute(
       'href',
       '/app/missions',
@@ -304,34 +326,13 @@ describe('AppShell', () => {
       'href',
       '/app/shop',
     );
-    // 頂列僅保留等級摘要與登出；作業入口已移除。
-    expect(screen.queryByRole('link', { name: '進入大廳' })).toBeNull();
-    expect(screen.queryByRole('link', { name: '我的作業' })).toBeNull();
-    expect(screen.queryByRole('link', { name: '教師後台' })).toBeNull();
-    expect(screen.queryByText('色彩原理學習平台')).toBeNull();
-
-    // 學生導覽兩群組順序（批示 #2:不含「學習進度」；改為「我的錯題」）。
-    const nav = screen.getByRole('navigation', { name: '主要導覽' });
-    const linkNames = within(nav)
-      .getAllByRole('link')
-      .map((link) => link.textContent);
-    expect(linkNames).toEqual([
-      '學習大廳',
-      '課後任務實戰',
-      '裝備商店',
-      '我的錯題',
-      'Live 課堂',
-      '班級排行榜',
-      '成就徽章',
-    ]);
-    expect(screen.queryByRole('link', { name: '學習進度' })).toBeNull();
     expect(screen.getByRole('link', { name: '我的錯題' })).toHaveAttribute(
       'href',
       '/app/mistakes',
     );
   });
 
-  it('gives teachers the indigo rail with full workspace links', () => {
+  it('gives teachers the indigo rail with full workspace links', async () => {
     mockedUseAuth.mockReturnValue({
       session: {
         email: 'teacher@colorplay.test',
@@ -369,14 +370,6 @@ describe('AppShell', () => {
       'href',
       '/teacher/live',
     );
-    expect(screen.getByRole('link', { name: '班級管理' })).toHaveAttribute(
-      'href',
-      '/teacher/classes',
-    );
-    expect(screen.getByRole('link', { name: '教學分析' })).toHaveAttribute(
-      'href',
-      '/teacher/analytics',
-    );
     expect(screen.getByRole('link', { name: '教師工作區' })).toHaveAttribute(
       'href',
       '/teacher',
@@ -385,6 +378,17 @@ describe('AppShell', () => {
     expect(screen.queryByText('教師管理權限已授權')).toBeNull();
     expect(screen.queryByRole('link', { name: '學習大廳' })).toBeNull();
     expect(screen.queryByRole('link', { name: '裝備商店' })).toBeNull();
+
+    // 班級管理/教學分析已移入 MENU 面板，需先開 MENU。
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
+    expect(screen.getByRole('link', { name: '班級管理' })).toHaveAttribute(
+      'href',
+      '/teacher/classes',
+    );
+    expect(screen.getByRole('link', { name: '教學分析' })).toHaveAttribute(
+      'href',
+      '/teacher/analytics',
+    );
   });
 
   it('awaits signOut and replaces protected history with login', async () => {
