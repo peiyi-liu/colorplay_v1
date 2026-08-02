@@ -817,3 +817,21 @@ Task 5: fix round 1/5 (logout right-edge addressed, 1 Important closed, 0 open)�
 Corrected focused measurement fresh rerun（同一 live 5173、public local Supabase env，service-role unset、值未輸出）：375×667 student/teacher 均 `outOfBoundsBoxes=[]`、identity=false、leftmost 8、rightmost 367、min touch 44px、min contrast 5.09/5.59、console/pageerror 0/0；812×375 student/teacher 均 `outOfBoundsBoxes=[]`、identity=false、leftmost 8、rightmost 804、min touch 44px、min contrast 5.09/5.59、console/pageerror 0/0。logout 個別座標於 375 寬為 x=182/right=352、812 寬為 x=619/right=789，皆完整落在 viewport；`scrollWidth` 仍分別為 375/812。fallback 與全套 gate 不受 aggregation 修正影響，未重跑；產品碼/CSS 零異動。完整 fix-round command/output 見未提交 `.superpowers/sdd/hudreorg-task-5-report.md`。
 
 Task 5: complete (commits c6239dc..ac34e3a, scoped re-review clean; full gate PASS, corrected four-cell containment PASS)
+
+### Final review (2026-08-02)
+
+Whole-branch review range `44d822e..3739031`。最終 reviewer 先發現 812×375 學生 MENU 垂直不可達（panel `-59..319`、首項 `-44..0`）；唯一 final fix wave `3739031 fix(shell): keep hud menu reachable in short landscape` 加入 short-landscape viewport-aware max-height＋內部捲動，scoped re-review 判定 **ADDRESSED**、無新 Critical/Important。修後 812×375 學生 panel `16..319`，首項 `31..75`、末項 `scrollIntoViewIfNeeded()` 後 `260..304`；四格 horizontal/vertical/unreachable lists 全空。
+
+| 鐵律 | 終審結果 |
+| --- | --- |
+| 行為與檔案邊界 | PASS：route/API/RPC/scoring、LivePresenter 零 diff；inventory/economy 僅既有 hook 唯讀消費。 |
+| 載重字串 | PASS：11 個導覽標籤在 production 各恰 1 次且路徑/分配正確；`MENU`/`登出`/displayName 與列上 `主要導覽`/`教師導覽` 不漂移；新增 payload 僅 `歡迎，` 與單一 `aria-label="更多導覽"`（另一 grep 命中為 source comment）。 |
+| MENU 機制 | PASS：hidden、aria-controls、click-outside、focus-in、Escape 回 toggle 零改；7 個 panel NavLink 均 `onClick={closeMenu}`。 |
+| 測試授權 | PASS：shell assertion 同步均在 inventory；`playable-slice:138` 依 owner 授權與 `4ed21f8` UAT 0727 #5 同步，跨帳號拒絕語意保留；八支 known-red blob 零變。 |
+| Commit 隔離 | PASS：`44d822e..3739031` 共 13 commits，13/13 有指定 Co-Author trailer；逐 commit stat 無 `.gitignore`、docs/content、package、login-page、seed、artifacts、live、contracts 等禁止檔。 |
+| Fresh gates | PASS：Vitest 120 files/833 tests；tsc 0；eslint 0；指定六支 Chromium 13/13；snapshots 零 diff；四格 scrollWidth=viewport、rightmost 367/804、min touch 44px、min contrast 5.09:1、console/pageerror 0。 |
+| Avatar 證據 | PASS with disclosed limitation：genuine equipped BlookArt 圖成立；schema `active_blook_id NOT NULL`＋strict exactly-one-equipped 使 genuine unequipped fixture 不可表示，第二張僅為 disposable network-intercept inventory-error hero fallback，未冒充 genuine、未改資料。 |
+
+Deferred non-blocking debt：(1) `tests/e2e/helpers/auth.ts` 模組註解仍稱 helper 不含 `expect()`；(2) teacher hooks 零呼叫欠直接 unit assertion，但 source 分支與兩 viewport inventory RPC 0 已佐證；(3) equipped/fallback 欠分態 unit coverage，現有 genuine equipped＋simulated error fallback browser 證據足夠本批。三項均經 final reviewer 判定 Minor，不阻擋。
+
+**Final review verdict：PASS，Ready-to-merge。** 本工作未 push、未 merge、未 deploy；`feature/v2-major-update` 保持原樣交 owner 決定整合。
