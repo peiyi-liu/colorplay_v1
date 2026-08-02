@@ -783,3 +783,7 @@ Task 1: assertion inventory + docs commit
 Task 1: complete (commit 44d822e, review clean; 關鍵: 綠 e2e 零受影響/快照零重拍/面板 night-deep gold active 5.6 需 gate 實測)
 Task 2: fix round 1/5 (1 addressed, 0 open; commit e90ed79)
 Task 2: complete (commits 44d822e..e90ed79, independent review clean; shell 28/28)
+Task 3: openHudMenu helper complete (commit 379a422; panel-era nav helper, snapshots zero diff)
+Task 3: playable-slice relogin assertion sync complete (commit 12fa5b8; 非 HUD 回歸、歸因 4ed21f8 UAT 0727 #5，原跨帳號安全語意保留)
+Task 3: minor (deferred): tests/e2e/helpers/auth.ts 模組註解仍稱 helper 不含 expect，交 Final review 裁定
+Task 3: complete (commits 379a422..12fa5b8, review approved; focused 1/1, Chromium subset 10/10, prettier pass)
