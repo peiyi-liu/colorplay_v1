@@ -1109,8 +1109,9 @@ a {
   place-items: center;
 }
 
-.blook-card__art svg {
+.blook-art {
   display: block;
+  object-fit: contain;
 }
 
 .blook-card h2 {
