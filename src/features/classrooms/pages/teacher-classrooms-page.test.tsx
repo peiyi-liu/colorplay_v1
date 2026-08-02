@@ -171,8 +171,8 @@ describe('TeacherClassroomsPage', () => {
   }
 
   const sevenClassrooms = Array.from({ length: 7 }, (_, index) => ({
-    classroomId: `ca000000-0000-4000-8000-00000000000${index + 1}`,
-    classroomName: `分頁班 ${index + 1}`,
+    classroomId: `ca000000-0000-4000-8000-00000000000${String(index + 1)}`,
+    classroomName: `分頁班 ${String(index + 1)}`,
     classroomStatus: 'active' as const,
     createdAt: '2026-07-18T00:00:00.000Z',
     joinCode: 'ABCD-1234-EF56-7890',

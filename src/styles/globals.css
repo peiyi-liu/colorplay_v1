@@ -6788,7 +6788,7 @@ select#dashboard-classroom {
   transition: none;
 }
 
-/* 工坊台（≥1024px）：Live 夜窗主位置左，總覽/捷徑置右。 */
+/* 工坊台（≥1024px）：Live 夜窗全寬置頂，其下總覽/捷徑兩欄。 */
 @media (min-width: 1024px) {
   .teacher-dashboard-grid--forge {
     grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);

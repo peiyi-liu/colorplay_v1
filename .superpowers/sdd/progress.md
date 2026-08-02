@@ -734,4 +734,18 @@ Commits（Teacher Workspace Batch 全批）：cbd4a1e 319dc68 b31485a 1ed5fc0 40
 
 ### Fix Wave 1（live-smoke 迴歸修復，2026-08-02）
 
-Owner 裁定：`GamePager` 增加 optional 受控跳頁機制 `followTail?: boolean`（預設 false，向後相容擴充，學生端五頁零接觸）——items.length 增加時自動跳到含最後一項的頁；`TeacherClassroomsPage` 掛上此 prop，建班成功→owned 清單 invalidate→refetch 多一筆→自動跳末頁，新班級卡片立即可見。TDD：`game-pager.test.tsx` 新增 2 條（followTail 增項跳末頁／未傳 followTail 增項不跳頁），`teacher-classrooms-page.test.tsx` 新增 1 條（7 班溢出→提交表單建第 8 班，mutation stub 驅動 owned 清單 refetch→新卡片可見、頁碼「第 2 / 2 頁」），皆先紅後綠（暫時 `git stash` 掉實作檔取得紅色輸出、`stash pop` 復原取得綠色輸出，未動測試檔）。commit f477e4a（4 檔，118 insertions，`npx prettier --check` 過；eslint 對本次改動零新增錯誤，teacher-classrooms-page.test.tsx 既有 2 筆 `restrict-template-expressions`（sevenClassrooms fixture 第 174-175 行）為改動前既存债務，非本波引入）。`npx vitest run src/components/ui/game-pager.test.tsx src/features/classrooms/pages/teacher-classrooms-page.test.tsx` 15/15 PASS；`npx vitest run src/features/classrooms` 35/35 PASS（無回歸）。`npx playwright test tests/e2e/live-smoke.spec.ts --project=chromium`（本機 Supabase stack 已起、補 `SUPABASE_URL`/`SUPABASE_ANON_KEY` 沿既有慣例）**1/1 PASS**（5.0s），live-smoke 迴歸關閉，Teacher Workspace Batch 由 CONDITIONAL 轉為可合併狀態（webServer 內建 `tsc -b && vite build` 亦綠，型別/建置無新增問題）。詳見 `.superpowers/sdd/teacher-fixwave-1-report.md`。
+Owner 裁定：`GamePager` 增加 optional 受控跳頁機制 `followTail?: boolean`（預設 false，向後相容擴充，學生端五頁零接觸）——items.length 增加時自動跳到含最後一項的頁；`TeacherClassroomsPage` 掛上此 prop，建班成功→owned 清單 invalidate→refetch 多一筆→自動跳末頁，新班級卡片立即可見。TDD：`game-pager.test.tsx` 新增 2 條（followTail 增項跳末頁／未傳 followTail 增項不跳頁），`teacher-classrooms-page.test.tsx` 新增 1 條（7 班溢出→提交表單建第 8 班，mutation stub 驅動 owned 清單 refetch→新卡片可見、頁碼「第 2 / 2 頁」），皆先紅後綠（暫時 `git stash` 掉實作檔取得紅色輸出、`stash pop` 復原取得綠色輸出，未動測試檔）。commit f477e4a（4 檔，118 insertions，`npx prettier --check` 過；eslint 對本次改動零新增錯誤，teacher-classrooms-page.test.tsx lint 2 筆為本批 Task 5（15e2c58）引入，已於終審 fix wave 修正）。`npx vitest run src/components/ui/game-pager.test.tsx src/features/classrooms/pages/teacher-classrooms-page.test.tsx` 15/15 PASS；`npx vitest run src/features/classrooms` 35/35 PASS（無回歸）。`npx playwright test tests/e2e/live-smoke.spec.ts --project=chromium`（本機 Supabase stack 已起、補 `SUPABASE_URL`/`SUPABASE_ANON_KEY` 沿既有慣例）**1/1 PASS**（5.0s），live-smoke 迴歸關閉，Teacher Workspace Batch 由 CONDITIONAL 轉為可合併狀態（webServer 內建 `tsc -b && vite build` 亦綠，型別/建置無新增問題）。詳見 `.superpowers/sdd/teacher-fixwave-1-report.md`。
+Task 10: complete (commit a73b60a, gate PASS after fix wave; 44px 補丁 .classroom-card__copy min-height)
+Fix wave 1: complete (commits f477e4a+d0ab54c, owner 裁定 followTail; live-smoke 1/1 轉綠; Minor: followTail 跳頁未經 goToPage 焦點交接—窄路徑)
+
+### Final review fix wave（opus 終審，2026-08-02）
+
+C1 lint error 修正（teacher-classrooms-page.test.tsx sevenClassrooms fixture 174-175 行 `String(index + 1)`）＋M4 CSS 註解更正（globals.css `.teacher-dashboard-grid--forge` 上方）＋兩處歸屬更正（progress.md fix wave 行、teacher-task-10-gate-report.md `.sage-title-bar` 兩處）。debt 移交清單增補：
+
+- I1: `tests/e2e/helpers/classrooms.ts` 的 `findClassroomIdByName`/`readClassroomJoinCode` 仍假設整份清單在 DOM——分頁後目標班級不在當頁會 silent null/逾時（目前靠 created_at 升冪巧合豁免）；`capture-screens.mjs` 兩呼叫端受影響。
+- M1: `.sage-title-bar`（`src/styles/globals.css`，Task 3 引入）死 CSS 零消費者——下批決定接用或移除。
+- M2: `.sage-page-header h1` font-size 22px 在 detail/progress 兩頁被 `.teacher-dashboard-header__intro h1` 的 clamp 壓過（specificity），僅 live report 生效——同類異尺寸，視覺一致性 debt。
+- M3: `GamePager` followTail 跳頁走 `setRawPage` 未經 `goToPage` 焦點交接（`src/components/ui/game-pager.tsx`）——焦點停在即將 disabled 箭頭時會掉回 body（窄路徑）。
+- M4-spec: spec §2 工坊台「三欄／Live 置左主位」未落地（已核准計畫即為全寬置頂＋兩欄）——下批若要三欄需重新提案。
+- token: `--font-pixel-latin` 無 `@font-face` 全站 fallback monospace（既有 repo 級 debt，票券碼同受影響）。
+- 對比壓線: `--color-muted` on `--pixel-parchment-card` 實測 4.68:1（達標但無餘裕）。

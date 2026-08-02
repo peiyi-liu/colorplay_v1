@@ -97,7 +97,7 @@ waiting for locator('ul[aria-label="教師班級列表"] li article')
 
 Note：`.teacher-error-card__severity` 在 `live.host.teacher` 帳號的分析頁資料下沒有觸發嚴重度卡片（count=0），改用 `teacher@colorplay.test` 帳號（有 2 張錯誤卡）量得上表數字；同一組演算法（含 alpha 疊色修正）跑兩次結果一致（5.12），非量測誤差。
 
-Note：`.sage-title-bar`（`globals.css:6758`）目前在整個 `src/` 沒有任何 `.tsx` 消費它（`grep -rn "sage-title-bar" src/` 僅命中 CSS 定義本身），是死選擇器。並非本批引入的迴歸（本批 Task 3 開始就沒有任何 commit 對它加消費端），僅記錄，不在 Task 10 授權範圍內清理。
+Note：`.sage-title-bar`（`globals.css:6758`）目前在整個 `src/` 沒有任何 `.tsx` 消費它（`grep -rn "sage-title-bar" src/` 僅命中 CSS 定義本身），是死選擇器。本批 Task 3（b31485a）引入，目前零消費者（死 CSS），記 debt，不在 Task 10 授權範圍內清理。
 
 #### 觸控（boundingBox，1440px；1 項回修）
 
@@ -185,7 +185,7 @@ Note：`.sage-title-bar`（`globals.css:6758`）目前在整個 `src/` 沒有任
 2. sizing 報告結論（Task 9）：`assignments-live` M/2 tasks、`live-advanced` L/4-5 tasks 需 owner 先裁 team/schedule 範疇；`learning-experience` S/2 tasks 優先。
 3. toast 錨定另議（承 Task 1-9 既有記錄，未在本批處理）。
 4. skip-link 卷動邊界低影響未做（承 Task 1-9 既有記錄）。
-5. `.sage-title-bar` 死 CSS（`globals.css:6758`，零消費者），非本批引入，僅記錄不清理。
+5. `.sage-title-bar` 死 CSS（`globals.css:6758`，零消費者），本批 Task 3（b31485a）引入，目前零消費者（死 CSS），記 debt，僅記錄不清理。
 
 ## 變更檔案
 
