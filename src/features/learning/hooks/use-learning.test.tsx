@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { LearningRepository } from '../api/learning-repository';
 import { studentChapterMapKey } from './use-chapter-map';
-import { useCompleteReviewCard } from './use-learning';
+import { useChapterReview, useCompleteReviewCard } from './use-learning';
 
 const repository = (): LearningRepository => ({
   completeReviewCard: vi.fn().mockResolvedValue(undefined),
@@ -26,6 +26,25 @@ const wrapper = (client: QueryClient) =>
   };
 
 describe('learning mutations', () => {
+  it('does not read guarded review cards before map access is confirmed', () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const supplied = repository();
+    const { result } = renderHook(
+      () =>
+        useChapterReview(
+          '21000000-0000-0000-0000-000000000001',
+          supplied,
+          false,
+        ),
+      { wrapper: wrapper(queryClient) },
+    );
+
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(supplied.listChapterReview).not.toHaveBeenCalled();
+  });
+
   it('invalidates the authoritative chapter map after review completion', async () => {
     const queryClient = new QueryClient({
       defaultOptions: {

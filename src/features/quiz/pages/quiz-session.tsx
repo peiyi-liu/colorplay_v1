@@ -11,7 +11,10 @@ import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { MapStepper } from '../../../components/ui/map-stepper';
 import { parsePublicEnv } from '../../../lib/config/public-env';
 import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
-import { studentChapterMapKey } from '../../learning/hooks/use-chapter-map';
+import {
+  studentChapterMapKey,
+  useStudentChapterMap,
+} from '../../learning/hooks/use-chapter-map';
 import { economyQueryKey } from '../../rewards/hooks/use-economy-summary';
 import {
   createQuizRepository,
@@ -94,6 +97,7 @@ export function QuizSessionPage({
   );
   const isNewSession = routeSessionId === 'new';
   const templateId = searchParams.get('template');
+  const chapterMap = useStudentChapterMap();
   const [selection, setSelection] = useState<
     Readonly<{ optionId: string; questionId: string }> | undefined
   >();
@@ -131,6 +135,25 @@ export function QuizSessionPage({
       void navigate(`/app/quiz/${createdSession.sessionId}`, { replace: true });
     },
   });
+
+  const lockedCreation =
+    createMutation.isError &&
+    createMutation.error instanceof QuizRepositoryError &&
+    createMutation.error.code === 'CHAPTER_LOCKED';
+  const lockedChapter =
+    lockedCreation && templateId
+      ? chapterMap.data?.chapters.find(
+          (chapter) => chapter.templateId === templateId,
+        )
+      : undefined;
+
+  useEffect(() => {
+    if (!lockedChapter) return;
+    void navigate(
+      `/app?chapter=${encodeURIComponent(lockedChapter.chapterId)}&reason=locked`,
+      { replace: true },
+    );
+  }, [lockedChapter, navigate]);
 
   useEffect(() => {
     if (!isNewSession || !templateId || creationStarted.current) return;
@@ -296,6 +319,20 @@ export function QuizSessionPage({
   }
 
   if (isNewSession && createMutation.isError) {
+    if (lockedCreation) {
+      if (chapterMap.isPending || lockedChapter) {
+        return <RouteLoading withinMain />;
+      }
+      return (
+        <section className="quiz-message-panel">
+          <h1>無法建立挑戰</h1>
+          <p role="alert">章節狀態暫時無法確認</p>
+          <Link className="primary-action" to="/app">
+            回學習地圖
+          </Link>
+        </section>
+      );
+    }
     return (
       <section className="quiz-message-panel">
         <h1>無法建立挑戰</h1>

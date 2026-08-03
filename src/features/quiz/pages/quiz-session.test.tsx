@@ -16,7 +16,18 @@ import {
   type QuizRepository,
   type QuizSession,
 } from '../api/quiz-repository';
+import { useStudentChapterMap } from '../../learning/hooks/use-chapter-map';
 import { QuizSessionPage } from './quiz-session';
+
+vi.mock('../../learning/hooks/use-chapter-map', async (importOriginal) => {
+  const original =
+    await importOriginal<
+      typeof import('../../learning/hooks/use-chapter-map')
+    >();
+  return { ...original, useStudentChapterMap: vi.fn() };
+});
+
+const mockedChapterMap = vi.mocked(useStudentChapterMap);
 
 const sessionId = '31000000-0000-0000-0000-000000000001';
 const templateId = '26000000-0000-0000-0000-000000000003';
@@ -119,6 +130,10 @@ function renderQuiz(
   });
   const routes: RouteObject[] = [
     {
+      path: '/app',
+      element: <h1>學習地圖</h1>,
+    },
+    {
       path: '/app/quiz/:sessionId',
       element: <QuizSessionPage repository={repository} />,
     },
@@ -138,7 +153,81 @@ function renderQuiz(
 }
 
 describe('QuizSessionPage', () => {
-  beforeEach(() => vi.restoreAllMocks());
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    mockedChapterMap.mockReturnValue({
+      data: {
+        chapters: [
+          {
+            accessState: 'available',
+            blockers: [],
+            chapterId: '21000000-0000-0000-0000-000000000003',
+            description: '色彩表示',
+            mastery: null,
+            progressStatus: 'not_started',
+            reviewCompleted: 0,
+            reviewTotal: 5,
+            sortOrder: 3,
+            stableCode: 'chapter-3',
+            templateId,
+            templateQuestionCount: 10,
+            title: '色彩表示',
+          },
+        ],
+        mode: 'sequential',
+        rulesVersion: '2026-08-sequence-1',
+      },
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    } as never);
+  });
+
+  it('returns a locked direct template URL to the authoritative map panel', async () => {
+    const mock = repositoryMock();
+    mock.createSession.mockRejectedValue(
+      new QuizRepositoryError('CHAPTER_LOCKED'),
+    );
+    mockedChapterMap.mockReturnValue({
+      data: {
+        chapters: [
+          {
+            accessState: 'locked',
+            blockers: [],
+            chapterId: '21000000-0000-0000-0000-000000000003',
+            description: '色彩表示',
+            mastery: null,
+            progressStatus: 'not_started',
+            reviewCompleted: 0,
+            reviewTotal: 5,
+            sortOrder: 3,
+            stableCode: 'chapter-3',
+            templateId,
+            templateQuestionCount: 10,
+            title: '色彩表示',
+          },
+        ],
+        mode: 'sequential',
+        rulesVersion: '2026-08-sequence-1',
+      },
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    } as never);
+    const { router } = renderQuiz(
+      mock.repository,
+      `/app/quiz/new?template=${templateId}`,
+    );
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/app');
+    });
+    expect(router.state.location.search).toBe(
+      '?chapter=21000000-0000-0000-0000-000000000003&reason=locked',
+    );
+    expect(router.state.historyAction).toBe('REPLACE');
+    expect(mock.createSession).toHaveBeenCalledTimes(1);
+  });
 
   it('submits one answer, locks options during feedback, then advances with clean state', async () => {
     const mock = repositoryMock();

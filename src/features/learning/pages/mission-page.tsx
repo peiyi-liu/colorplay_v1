@@ -14,10 +14,9 @@ import {
   spiritLabels,
 } from '../../../components/ui/spirit-avatar';
 import { VictoryCard } from '../../../components/ui/victory-card';
-import type { LearningRepository } from '../api/learning-repository';
 import type { MasteryRepository } from '../api/mastery-repository';
-import { usePublishedChapters } from '../api/chapters';
-import { useLearningProgress } from '../hooks/use-learning';
+import type { ChapterAccessBlocker } from '../api/chapter-map';
+import { useStudentChapterMap } from '../hooks/use-chapter-map';
 import {
   useMasteryHint,
   useMasteryState,
@@ -27,45 +26,50 @@ import {
 import { statusLabels, type ChapterStatus } from '../lib/progress-status';
 
 export function MissionSelectPage({
-  learningRepository,
   repository,
 }: Readonly<{
-  learningRepository?: LearningRepository;
   repository?: MasteryRepository;
 }>) {
-  const chapters = usePublishedChapters();
-  // 決議 1:四態直接映射 get_learning_progress 的 status(null=全章節,零後端)。
-  // 讀不到就全部退灰霧,不阻擋、不報錯(軟鎖=純視覺引導)。
-  const progress = useLearningProgress(null, learningRepository);
+  const chapterMap = useStudentChapterMap();
   const start = useStartMastery(repository);
   const navigate = useNavigate();
   const [startError, setStartError] = useState<string>();
   const stageWide = useStageWide();
 
-  if (chapters.isPending) return <RouteLoading withinMain />;
-  if (chapters.isError) {
+  if (chapterMap.isPending) return <RouteLoading withinMain />;
+  if (chapterMap.isError) {
     return (
       <section className="route-panel">
         <h1>課後任務實戰</h1>
-        <p role="alert">章節暫時無法載入，請稍後重試。</p>
+        <p role="alert">章節狀態暫時無法確認</p>
+        <button
+          className="primary-action"
+          onClick={() => {
+            void chapterMap.refetch();
+          }}
+          type="button"
+        >
+          重新載入
+        </button>
       </section>
     );
   }
 
-  const playable = (chapters.data ?? []).filter(
-    (chapter) => chapter.isPlayable,
-  );
+  const chapters = chapterMap.data.chapters;
+  const heroChapterId = chapters.find(
+    (chapter) =>
+      (chapter.accessState === 'available' ||
+        chapter.accessState === 'completed') &&
+      chapter.progressStatus !== 'mastered',
+  )?.chapterId;
 
-  const chapterStatuses = new Map<string, ChapterStatus>(
-    (progress.data ?? [])
-      .filter((row) => row.scope === 'chapter')
-      .map((row) => [row.chapterId, row.status]),
-  );
-  const statusOf = (chapterId: string): ChapterStatus =>
-    chapterStatuses.get(chapterId) ?? 'not_started';
-  const heroChapterId = playable.find(
-    (chapter) => statusOf(chapter.id) !== 'mastered',
-  )?.id;
+  const blockerText = (blocker: ChapterAccessBlocker): string => {
+    if (blocker.code === 'CONTENT_UNAVAILABLE') return '內容準備中';
+    if (blocker.code === 'PREREQUISITE_REVIEW') {
+      return `「${blocker.chapterTitle}」複習 ${String(blocker.current ?? 0)} / ${String(blocker.required ?? '—')}`;
+    }
+    return `「${blocker.chapterTitle}」精熟度 ${String(blocker.current ?? 0)}% / ${String(blocker.required ?? 80)}%`;
+  };
 
   return (
     <section
@@ -82,21 +86,27 @@ export function MissionSelectPage({
           課後任務實戰
         </h1>
         {startError ? <p role="alert">{startError}</p> : null}
-        {playable.length === 0 ? (
+        {chapters.length === 0 ? (
           <p>目前沒有可挑戰的章節。</p>
         ) : (
           <GamePager
             ariaLabel="任務章節分頁"
-            items={playable}
+            items={chapters}
             pageSize={stageWide ? 2 : 1}
           >
             {(pageChapters) => (
               <ul className="mission-select__list">
                 {pageChapters.map((chapter) => {
-                  const status = statusOf(chapter.id);
-                  const isHero = chapter.id === heroChapterId;
+                  const status: ChapterStatus = chapter.progressStatus;
+                  const isHero = chapter.chapterId === heroChapterId;
+                  const actionable =
+                    chapter.accessState === 'available' ||
+                    chapter.accessState === 'completed';
                   return (
-                    <li className="mission-select__item" key={chapter.id}>
+                    <li
+                      className="mission-select__item"
+                      key={chapter.chapterId}
+                    >
                       <span
                         aria-hidden="true"
                         className={`map-node map-node--${status}`}
@@ -112,40 +122,56 @@ export function MissionSelectPage({
                           className={`map-node-status map-node-status--${status}`}
                         >
                           {statusLabels[status]}
-                          {isHero ? '・目前位置' : null}
+                          {chapter.accessState === 'locked'
+                            ? '・尚未解鎖'
+                            : chapter.accessState === 'content_unavailable'
+                              ? '・內容準備中'
+                              : null}
                         </p>
-                        {/* owner 0730 #5:測驗小節分節、標題完整列出。 */}
-                        {chapter.subtopicTitles.length > 0 ? (
-                          <ul
-                            aria-label={`${chapter.title} 小節`}
-                            className="mission-select__subtopics"
-                          >
-                            {chapter.subtopicTitles.map((subtopicTitle) => (
-                              <li key={subtopicTitle}>{subtopicTitle}</li>
+                        <p>{chapter.description}</p>
+                        {chapter.blockers.length > 0 ? (
+                          <ul aria-label={`${chapter.title} 解鎖條件`}>
+                            {chapter.blockers.map((blocker) => (
+                              <li key={`${blocker.code}-${blocker.chapterId}`}>
+                                {blockerText(blocker)}
+                              </li>
                             ))}
                           </ul>
-                        ) : (
-                          <p>{chapter.description}</p>
-                        )}
+                        ) : null}
                       </div>
-                      <button
-                        className="primary-action"
-                        disabled={start.isPending}
-                        onClick={() => {
-                          setStartError(undefined);
-                          start.mutate(chapter.id, {
-                            onError: () => {
-                              setStartError('無法開始精熟任務，請稍後重試。');
-                            },
-                            onSuccess: (sessionId) => {
-                              void navigate(`/app/missions/${sessionId}`);
-                            },
-                          });
-                        }}
-                        type="button"
-                      >
-                        展開小節任務
-                      </button>
+                      {actionable ? (
+                        <button
+                          className="primary-action"
+                          disabled={start.isPending}
+                          onClick={() => {
+                            setStartError(undefined);
+                            start.mutate(chapter.chapterId, {
+                              onError: (error) => {
+                                if (error.code === 'CHAPTER_LOCKED') {
+                                  void navigate(
+                                    `/app?chapter=${encodeURIComponent(chapter.chapterId)}&reason=locked`,
+                                    { replace: true },
+                                  );
+                                  return;
+                                }
+                                setStartError('無法開始精熟任務，請稍後重試。');
+                              },
+                              onSuccess: (sessionId) => {
+                                void navigate(`/app/missions/${sessionId}`);
+                              },
+                            });
+                          }}
+                          type="button"
+                        >
+                          展開小節任務
+                        </button>
+                      ) : (
+                        <span className="map-node-status">
+                          {chapter.accessState === 'locked'
+                            ? '尚未解鎖'
+                            : '內容準備中'}
+                        </span>
+                      )}
                     </li>
                   );
                 })}
