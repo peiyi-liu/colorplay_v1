@@ -265,6 +265,17 @@ describe('quiz repository', () => {
     ).rejects.toEqual(new QuizRepositoryError('QUESTION_ALREADY_ANSWERED'));
   });
 
+  it('maps locked ordinary challenge creation to CHAPTER_LOCKED', async () => {
+    rpc.mockResolvedValue({
+      data: null,
+      error: { message: 'CHAPTER_LOCKED' },
+    });
+
+    await expect(
+      createQuizRepository(client).createSession(templateId, requestId),
+    ).rejects.toEqual(new QuizRepositoryError('CHAPTER_LOCKED'));
+  });
+
   it('rejects malformed RPC data instead of exposing parse details', async () => {
     rpc.mockResolvedValue({ data: { score_delta: '150' }, error: null });
 

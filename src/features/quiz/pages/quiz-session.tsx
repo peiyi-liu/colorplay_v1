@@ -11,6 +11,7 @@ import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { MapStepper } from '../../../components/ui/map-stepper';
 import { parsePublicEnv } from '../../../lib/config/public-env';
 import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
+import { studentChapterMapKey } from '../../learning/hooks/use-chapter-map';
 import { economyQueryKey } from '../../rewards/hooks/use-economy-summary';
 import {
   createQuizRepository,
@@ -248,7 +249,10 @@ export function QuizSessionPage({
         const finalResult = await finalizeMutation.mutateAsync(
           session.sessionId,
         );
-        await queryClient.invalidateQueries({ queryKey: economyQueryKey });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: economyQueryKey }),
+          queryClient.invalidateQueries({ queryKey: studentChapterMapKey }),
+        ]);
         void navigate(`/app/quiz/${session.sessionId}/result`, {
           state: {
             fromFinalize: true,

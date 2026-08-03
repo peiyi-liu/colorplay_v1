@@ -405,6 +405,9 @@ describe('QuizSessionPage', () => {
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: ['economy', 'summary'],
     });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['learning', 'chapter-map'],
+    });
     expect(mock.finalizeSession.mock.invocationCallOrder[0]).toBeLessThan(
       invalidateQueries.mock.invocationCallOrder[0] ?? 0,
     );

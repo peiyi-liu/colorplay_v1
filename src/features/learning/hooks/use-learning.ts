@@ -19,6 +19,7 @@ import {
   type QuestionHintView,
   type ReviewCompletionRow,
 } from '../api/learning-repository';
+import { studentChapterMapKey } from './use-chapter-map';
 
 export const learningKeys = {
   chapterReview: (chapterId: string) =>
@@ -101,6 +102,7 @@ export function useCompleteReviewCard(
         queryClient.invalidateQueries({
           queryKey: learningKeys.progress(null),
         }),
+        queryClient.invalidateQueries({ queryKey: studentChapterMapKey }),
       ]);
     },
     retry: false,

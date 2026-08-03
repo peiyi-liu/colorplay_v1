@@ -184,6 +184,7 @@ export type QuizFinalResult = Readonly<{
 
 export type QuizRepositoryErrorCode =
   | 'AUTH_REQUIRED'
+  | 'CHAPTER_LOCKED'
   | 'INVALID_RESPONSE'
   | 'QUESTION_ALREADY_ANSWERED'
   | 'SESSION_INCOMPLETE'
@@ -192,6 +193,7 @@ export type QuizRepositoryErrorCode =
 
 const errorMessages: Record<QuizRepositoryErrorCode, string> = {
   AUTH_REQUIRED: '請先登入再開始挑戰。',
+  CHAPTER_LOCKED: '請先完成上一章的複習與挑戰。',
   INVALID_RESPONSE: '答題資料格式不正確，請重新載入。',
   QUESTION_ALREADY_ANSWERED: '這一題已經作答，正在載入最新結果。',
   SESSION_INCOMPLETE: '還有題目尚未完成，暫時不能結算。',
@@ -210,6 +212,9 @@ export class QuizRepositoryError extends Error {
 }
 
 const mapServerError = (message: string): QuizRepositoryError => {
+  if (message.includes('CHAPTER_LOCKED')) {
+    return new QuizRepositoryError('CHAPTER_LOCKED');
+  }
   if (message.includes('AUTH_REQUIRED')) {
     return new QuizRepositoryError('AUTH_REQUIRED');
   }
