@@ -447,6 +447,120 @@ begin
 end;
 $$;
 
+create function public.grant_next_chapter_if_completed(
+  p_user_id uuid,
+  p_source_chapter_id uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  completion_record record;
+  next_chapter_id uuid;
+begin
+  select * into completion_record
+  from public.student_chapter_completion(p_user_id, p_source_chapter_id);
+
+  if not coalesce(completion_record.is_complete, false) then
+    return;
+  end if;
+
+  select candidate.id into next_chapter_id
+  from public.chapters source
+  join public.chapters candidate
+    on candidate.course_id = source.course_id
+   and candidate.status = 'published'
+   and candidate.sort_order > source.sort_order
+  where source.id = p_source_chapter_id
+  order by candidate.sort_order, candidate.id
+  limit 1;
+
+  if next_chapter_id is null then
+    return;
+  end if;
+
+  insert into public.student_chapter_unlocks (
+    user_id,
+    chapter_id,
+    source_chapter_id,
+    rules_version
+  )
+  values (
+    p_user_id,
+    next_chapter_id,
+    p_source_chapter_id,
+    '2026-08-sequence-1'
+  )
+  on conflict (user_id, chapter_id) do nothing;
+end;
+$$;
+
+create function public.grant_next_chapter_after_review()
+returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  source_chapter_id uuid;
+begin
+  select section.chapter_id into source_chapter_id
+  from public.review_cards card
+  join public.subtopics subtopic on subtopic.id = card.subtopic_id
+  join public.sections section on section.id = subtopic.section_id
+  where card.id = new.review_card_id;
+
+  if source_chapter_id is not null then
+    perform public.grant_next_chapter_if_completed(
+      new.user_id,
+      source_chapter_id
+    );
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger review_progress_grant_next_chapter
+after insert on public.review_progress
+for each row
+execute function public.grant_next_chapter_after_review();
+
+create function public.grant_next_chapter_after_practice()
+returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  source_chapter_id uuid;
+begin
+  if new.status = 'completed'
+    and old.status <> 'completed'
+    and new.purpose = 'practice' then
+    select template.chapter_id into source_chapter_id
+    from public.quiz_templates template
+    where template.id = new.template_id;
+
+    if source_chapter_id is not null then
+      perform public.grant_next_chapter_if_completed(
+        new.user_id,
+        source_chapter_id
+      );
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger quiz_sessions_grant_next_chapter
+after update of status on public.quiz_sessions
+for each row
+execute function public.grant_next_chapter_after_practice();
+
 revoke all on function public.student_chapter_completion(uuid, uuid)
 from public, anon, authenticated;
 revoke all on function public.chapter_content_is_available(uuid)
@@ -456,6 +570,12 @@ from public, anon, authenticated;
 revoke all on function public.chapter_access_blockers(uuid)
 from public, anon, authenticated;
 revoke all on function public.assert_student_chapter_access(uuid)
+from public, anon, authenticated;
+revoke all on function public.grant_next_chapter_if_completed(uuid, uuid)
+from public, anon, authenticated;
+revoke all on function public.grant_next_chapter_after_review()
+from public, anon, authenticated;
+revoke all on function public.grant_next_chapter_after_practice()
 from public, anon, authenticated;
 revoke all on function public.get_student_chapter_map()
 from public, anon;

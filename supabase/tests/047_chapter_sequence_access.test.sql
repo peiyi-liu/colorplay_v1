@@ -1,6 +1,6 @@
 begin;
 
-select plan(28);
+select plan(40);
 
 select has_table(
   'public',
@@ -36,6 +36,14 @@ values
     '47000000-0000-0000-0000-000000000002',
     'authenticated', 'authenticated', 'sequence.access.b@colorplay.test',
     crypt('LocalOnly-SequenceAccess2!', gen_salt('bf')), now(),
+    '{"provider":"email","providers":["email"]}', '{}', now(), now(),
+    '', '', '', ''
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '47000000-0000-0000-0000-000000000003',
+    'authenticated', 'authenticated', 'sequence.access.c@colorplay.test',
+    crypt('LocalOnly-SequenceAccess3!', gen_salt('bf')), now(),
     '{"provider":"email","providers":["email"]}', '{}', now(), now(),
     '', '', '', ''
   );
@@ -216,24 +224,102 @@ select throws_ok(
   'the guarded review read cannot bypass a lock'
 );
 
-insert into public.student_chapter_unlocks (
-  user_id, chapter_id, source_chapter_id
-)
-values (
-  '47000000-0000-0000-0000-000000000001',
-  '21000000-0000-0000-0000-000000000002',
-  '21000000-0000-0000-0000-000000000001'
-)
-on conflict (user_id, chapter_id) do nothing;
-insert into public.student_chapter_unlocks (
-  user_id, chapter_id, source_chapter_id
-)
-values (
-  '47000000-0000-0000-0000-000000000001',
-  '21000000-0000-0000-0000-000000000002',
-  '21000000-0000-0000-0000-000000000001'
-)
-on conflict (user_id, chapter_id) do nothing;
+select throws_ok(
+  $$select public.complete_review_card(
+    '47500000-0000-0000-0000-000000000002',
+    '47600000-0000-0000-0000-000000000001'
+  )$$,
+  'P0001',
+  'CHAPTER_LOCKED',
+  'review completion cannot bypass a chapter lock'
+);
+select throws_ok(
+  $$select public.create_quiz_session(
+    '26000000-0000-0000-0000-000000000002',
+    '47600000-0000-0000-0000-000000000002'
+  )$$,
+  'P0001',
+  'CHAPTER_LOCKED',
+  'ordinary challenge creation cannot bypass a chapter lock'
+);
+select throws_ok(
+  $$select public.start_mastery_session(
+    '21000000-0000-0000-0000-000000000002'
+  )$$,
+  'P0001',
+  'CHAPTER_LOCKED',
+  'after-school mastery cannot bypass a chapter lock'
+);
+select throws_ok(
+  $$select public.start_remediation_session(
+    '47200000-0000-0000-0000-000000000002',
+    '47600000-0000-0000-0000-000000000003'
+  )$$,
+  'P0001',
+  'CHAPTER_LOCKED',
+  'remediation cannot bypass a chapter lock'
+);
+
+select lives_ok(
+  $$select public.complete_review_card(
+    '47500000-0000-0000-0000-000000000001',
+    '47600000-0000-0000-0000-000000000004'
+  )$$,
+  'Chapter 1 review completion remains available'
+);
+select is(
+  (
+    select count(*)::integer
+    from public.student_chapter_unlocks
+    where user_id = '47000000-0000-0000-0000-000000000001'
+  ),
+  0,
+  'review completion without mastery does not unlock Chapter 2'
+);
+
+select set_config(
+  'test.sequence_a_quiz',
+  public.create_quiz_session(
+    '26000000-0000-0000-0000-000000000001',
+    '47600000-0000-0000-0000-000000000005'
+  )::text,
+  true
+);
+select set_config(
+  'test.sequence_a_session',
+  current_setting('test.sequence_a_quiz')::jsonb ->> 'session_id',
+  true
+);
+select set_config(
+  'test.sequence_a_question',
+  current_setting('test.sequence_a_quiz')::jsonb
+    #>> '{questions,0,session_question_id}',
+  true
+);
+select set_config(
+  'test.sequence_a_correct',
+  (
+    select question.correct_option_id::text
+    from public.quiz_session_questions question
+    where question.id = current_setting('test.sequence_a_question')::uuid
+  ),
+  true
+);
+select set_config(
+  'test.sequence_a_answer',
+  public.submit_quiz_answer(
+    current_setting('test.sequence_a_question')::uuid,
+    '47600000-0000-0000-0000-000000000006',
+    current_setting('test.sequence_a_correct')::uuid
+  )::text,
+  true
+);
+select lives_ok(
+  $$select public.finalize_quiz_session(
+    current_setting('test.sequence_a_session')::uuid
+  )$$,
+  'the completion transition grants the next chapter'
+);
 
 select ok(
   public.student_can_access_chapter(
@@ -251,6 +337,12 @@ select is(
   1,
   'idempotent insertion stores one unlock per student and chapter'
 );
+select lives_ok(
+  $$select public.finalize_quiz_session(
+    current_setting('test.sequence_a_session')::uuid
+  )$$,
+  'repeating the terminal request is harmless'
+);
 select is(
   jsonb_array_length(
     public.get_accessible_chapter_review(
@@ -260,6 +352,88 @@ select is(
   1,
   'an unlocked chapter returns its published review tree'
 );
+
+select set_config(
+  'request.jwt.claim.sub',
+  '47000000-0000-0000-0000-000000000002',
+  true
+);
+select set_config(
+  'test.sequence_b_quiz',
+  public.create_quiz_session(
+    '26000000-0000-0000-0000-000000000001',
+    '47600000-0000-0000-0000-000000000007'
+  )::text,
+  true
+);
+select set_config(
+  'test.sequence_b_session',
+  current_setting('test.sequence_b_quiz')::jsonb ->> 'session_id',
+  true
+);
+select set_config(
+  'test.sequence_b_question',
+  current_setting('test.sequence_b_quiz')::jsonb
+    #>> '{questions,0,session_question_id}',
+  true
+);
+select set_config(
+  'test.sequence_b_correct',
+  (
+    select question.correct_option_id::text
+    from public.quiz_session_questions question
+    where question.id = current_setting('test.sequence_b_question')::uuid
+  ),
+  true
+);
+select set_config(
+  'test.sequence_b_answer',
+  public.submit_quiz_answer(
+    current_setting('test.sequence_b_question')::uuid,
+    '47600000-0000-0000-0000-000000000008',
+    current_setting('test.sequence_b_correct')::uuid
+  )::text,
+  true
+);
+select lives_ok(
+  $$select public.finalize_quiz_session(
+    current_setting('test.sequence_b_session')::uuid
+  )$$,
+  'a second student can reach formal mastery in Chapter 1'
+);
+select is(
+  (
+    select count(*)::integer
+    from public.student_chapter_unlocks
+    where user_id = '47000000-0000-0000-0000-000000000002'
+  ),
+  0,
+  'mastery without review completion does not unlock Chapter 2'
+);
+
+update public.course_progression_settings
+set mode = 'open', updated_at = clock_timestamp()
+where course_id = '20000000-0000-0000-0000-000000000001';
+select lives_ok(
+  $$select public.complete_review_card(
+    '47500000-0000-0000-0000-000000000001',
+    '47600000-0000-0000-0000-000000000009'
+  )$$,
+  'open mode still records an earned permanent unlock'
+);
+select is(
+  (
+    select count(*)::integer
+    from public.student_chapter_unlocks
+    where user_id = '47000000-0000-0000-0000-000000000002'
+      and chapter_id = '21000000-0000-0000-0000-000000000002'
+  ),
+  1,
+  'open mode completion records Chapter 2 before activation'
+);
+update public.course_progression_settings
+set mode = 'sequential', updated_at = clock_timestamp()
+where course_id = '20000000-0000-0000-0000-000000000001';
 
 update public.review_cards
 set status = 'archived'
@@ -273,7 +447,7 @@ select ok(
 
 select set_config(
   'request.jwt.claim.sub',
-  '47000000-0000-0000-0000-000000000002',
+  '47000000-0000-0000-0000-000000000003',
   true
 );
 select ok(
@@ -285,7 +459,7 @@ select ok(
 
 insert into public.student_chapter_unlocks (user_id, chapter_id)
 values (
-  '47000000-0000-0000-0000-000000000002',
+  '47000000-0000-0000-0000-000000000003',
   '21000000-0000-0000-0000-000000000004'
 );
 select ok(

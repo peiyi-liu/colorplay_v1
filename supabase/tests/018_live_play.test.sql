@@ -1,6 +1,6 @@
 begin;
 
-select plan(43);
+select plan(44);
 
 select has_function('public', 'open_live_question', 'open live question exists');
 select has_function('public', 'submit_live_answer', 'submit live answer exists');
@@ -576,6 +576,18 @@ select is(
   'the perfect participant ranks first'
 );
 reset role;
+select is(
+  (
+    select count(*)::integer
+    from public.student_chapter_unlocks
+    where user_id in (
+      '18000000-0000-0000-0000-000000000003',
+      '18000000-0000-0000-0000-000000000004'
+    )
+  ),
+  0,
+  'Live participation and finalization grant no self-study chapter unlocks'
+);
 select is(
   (
     select amount

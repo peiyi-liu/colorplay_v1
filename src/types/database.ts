@@ -493,6 +493,7 @@ export type Database = {
           deactivated_at: string | null
           joined_at: string
           last_join_request_id: string
+          member_ref: string
           member_role: Database["public"]["Enums"]["classroom_member_role"]
           status: Database["public"]["Enums"]["classroom_member_status"]
           updated_at: string
@@ -505,6 +506,7 @@ export type Database = {
           deactivated_at?: string | null
           joined_at?: string
           last_join_request_id: string
+          member_ref?: string
           member_role: Database["public"]["Enums"]["classroom_member_role"]
           status?: Database["public"]["Enums"]["classroom_member_status"]
           updated_at?: string
@@ -517,6 +519,7 @@ export type Database = {
           deactivated_at?: string | null
           joined_at?: string
           last_join_request_id?: string
+          member_ref?: string
           member_role?: Database["public"]["Enums"]["classroom_member_role"]
           status?: Database["public"]["Enums"]["classroom_member_status"]
           updated_at?: string
@@ -543,6 +546,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          join_code: string | null
           join_code_hash: string
           join_code_rotated_at: string
           join_code_version: number
@@ -554,6 +558,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          join_code?: string | null
           join_code_hash: string
           join_code_rotated_at?: string
           join_code_version?: number
@@ -565,6 +570,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          join_code?: string | null
           join_code_hash?: string
           join_code_rotated_at?: string
           join_code_version?: number
@@ -720,6 +726,35 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_progression_settings: {
+        Row: {
+          course_id: string
+          mode: string
+          rules_version: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          mode?: string
+          rules_version?: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          mode?: string
+          rules_version?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_progression_settings_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: true
+            referencedRelation: "courses"
             referencedColumns: ["id"]
           },
         ]
@@ -2161,6 +2196,52 @@ export type Database = {
           },
         ]
       }
+      student_chapter_unlocks: {
+        Row: {
+          chapter_id: string
+          rules_version: string
+          source_chapter_id: string | null
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          chapter_id: string
+          rules_version?: string
+          source_chapter_id?: string | null
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string
+          rules_version?: string
+          source_chapter_id?: string | null
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_chapter_unlocks_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_chapter_unlocks_source_chapter_id_fkey"
+            columns: ["source_chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_chapter_unlocks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subtopics: {
         Row: {
           created_at: string
@@ -2527,6 +2608,10 @@ export type Database = {
         Args: { p_value: string }
         Returns: undefined
       }
+      assert_student_chapter_access: {
+        Args: { p_chapter_id: string }
+        Returns: undefined
+      }
       build_assignment_attempt_payload: {
         Args: { target_attempt_id: string }
         Returns: Json
@@ -2542,6 +2627,11 @@ export type Database = {
       cancel_live_session: {
         Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
+      }
+      chapter_access_blockers: { Args: { p_chapter_id: string }; Returns: Json }
+      chapter_content_is_available: {
+        Args: { p_chapter_id: string }
+        Returns: boolean
       }
       close_live_question: {
         Args: { p_expected_version: number; p_session_id: string }
@@ -2630,6 +2720,10 @@ export type Database = {
       }
       finalize_quiz_session: { Args: { session_id: string }; Returns: Json }
       generate_live_join_code: { Args: never; Returns: Record<string, unknown> }
+      get_accessible_chapter_review: {
+        Args: { p_chapter_id: string }
+        Returns: Json
+      }
       get_classroom_leaderboard: {
         Args: { p_classroom_id: string }
         Returns: Json
@@ -2679,6 +2773,11 @@ export type Database = {
           total_count: number
         }[]
       }
+      get_student_chapter_map: { Args: never; Returns: Json }
+      grant_next_chapter_if_completed: {
+        Args: { p_source_chapter_id: string; p_user_id: string }
+        Returns: undefined
+      }
       is_active_classroom_member: {
         Args: { p_classroom_id: string; p_user_id: string }
         Returns: boolean
@@ -2708,6 +2807,24 @@ export type Database = {
       join_live_session: {
         Args: { p_join_code: string; p_request_id: string }
         Returns: Json
+      }
+      learning_progress_for: {
+        Args: { p_chapter_id?: string; p_user_id: string }
+        Returns: {
+          accuracy: number
+          chapter_id: string
+          coverage: number
+          mastery: number
+          question_answered: number
+          question_correct: number
+          question_total: number
+          review_completed: number
+          review_total: number
+          rules_version: string
+          scope: string
+          status: string
+          subtopic_id: string
+        }[]
       }
       list_classroom_assignments: {
         Args: { p_classroom_id: string }
@@ -2759,9 +2876,9 @@ export type Database = {
         Returns: {
           active_blook_id: string
           display_name: string
-          full_name: string | null
+          full_name: string
           joined_at: string
-          login_account: string | null
+          login_account: string
           member_ref: string
           membership_status: Database["public"]["Enums"]["classroom_member_status"]
         }[]
@@ -2773,7 +2890,7 @@ export type Database = {
           classroom_name: string
           classroom_status: Database["public"]["Enums"]["classroom_status"]
           created_at: string
-          join_code: string | null
+          join_code: string
           join_code_version: number
           member_count: number
         }[]
@@ -2878,6 +2995,15 @@ export type Database = {
         Args: { p_card_id: string }
         Returns: Json
       }
+      review_completion_for: {
+        Args: { p_chapter_id?: string; p_user_id: string }
+        Returns: {
+          chapter_id: string
+          completed_count: number
+          subtopic_id: string
+          total_count: number
+        }[]
+      }
       rotate_classroom_join_code: {
         Args: { p_classroom_id: string }
         Returns: {
@@ -2903,6 +3029,20 @@ export type Database = {
       start_remediation_session: {
         Args: { p_request_id: string; p_subtopic_id: string }
         Returns: Json
+      }
+      student_can_access_chapter: {
+        Args: { p_chapter_id: string }
+        Returns: boolean
+      }
+      student_chapter_completion: {
+        Args: { p_chapter_id: string; p_user_id: string }
+        Returns: {
+          is_complete: boolean
+          mastery: number
+          progress_status: string
+          review_completed: number
+          review_total: number
+        }[]
       }
       submit_live_answer: {
         Args: {
