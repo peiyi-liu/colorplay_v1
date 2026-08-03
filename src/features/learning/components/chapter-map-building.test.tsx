@@ -1,0 +1,98 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
+
+import type { StudentChapterMapEntry } from '../api/chapter-map';
+import { ChapterMapBuilding } from './chapter-map-building';
+
+const chapter = (
+  accessState: StudentChapterMapEntry['accessState'],
+): StudentChapterMapEntry => ({
+  accessState,
+  blockers: [],
+  chapterId: '21000000-0000-0000-0000-000000000001',
+  description: '建立色彩世界的第一塊基石。',
+  mastery: accessState === 'completed' ? 90 : null,
+  progressStatus: accessState === 'completed' ? 'mastered' : 'not_started',
+  reviewCompleted: accessState === 'completed' ? 3 : 0,
+  reviewTotal: 3,
+  sortOrder: 1,
+  stableCode: 'chapter-1',
+  templateId: '26000000-0000-0000-0000-000000000001',
+  templateQuestionCount: 10,
+  title: '認識色彩',
+});
+
+describe('ChapterMapBuilding', () => {
+  it.each([
+    ['content_unavailable', '內容準備中'],
+    ['locked', '尚未解鎖'],
+    ['available', '可進入'],
+    ['completed', '已完成'],
+  ] as const)('keeps %s as a real labelled button', (state, label) => {
+    render(
+      <ol>
+        <ChapterMapBuilding
+          chapter={chapter(state)}
+          onSelect={vi.fn()}
+          selected={state === 'available'}
+        />
+      </ol>,
+    );
+
+    const button = screen.getByRole('button', {
+      name: `Chapter 1 認識色彩 ${label}`,
+    });
+    expect(button).toHaveAttribute(
+      'aria-pressed',
+      state === 'available' ? 'true' : 'false',
+    );
+    expect(screen.getByText(label)).toBeVisible();
+  });
+
+  it('selects by pointer and keyboard without navigating', async () => {
+    const onSelect = vi.fn();
+    render(
+      <ol>
+        <ChapterMapBuilding
+          chapter={chapter('available')}
+          onSelect={onSelect}
+          selected={false}
+        />
+      </ol>,
+    );
+
+    const button = screen.getByRole('button', {
+      name: 'Chapter 1 認識色彩 可進入',
+    });
+    await userEvent.click(button);
+    button.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(onSelect).toHaveBeenNthCalledWith(
+      1,
+      '21000000-0000-0000-0000-000000000001',
+    );
+    expect(onSelect).toHaveBeenCalledTimes(2);
+  });
+
+  it('falls back to a semantic CSS building when artwork fails', () => {
+    render(
+      <ol>
+        <ChapterMapBuilding
+          chapter={chapter('locked')}
+          onSelect={vi.fn()}
+          selected={false}
+        />
+      </ol>,
+    );
+
+    fireEvent.error(screen.getByTestId('chapter-building-art'));
+    expect(screen.queryByTestId('chapter-building-art')).toBeNull();
+    expect(screen.getByTestId('chapter-building-fallback')).toBeVisible();
+    expect(
+      screen.getByRole('button', {
+        name: 'Chapter 1 認識色彩 尚未解鎖',
+      }),
+    ).toBeEnabled();
+  });
+});
