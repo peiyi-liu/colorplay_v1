@@ -45,7 +45,7 @@ function StudentHudAvatar() {
       {equipped ? (
         <BlookArt
           emoji={equipped.emoji}
-          size={26}
+          size={47}
           stableCode={equipped.stableCode}
         />
       ) : null}

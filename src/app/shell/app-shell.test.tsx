@@ -252,7 +252,11 @@ describe('AppShell', () => {
 
     expect(await screen.findByText(/Level \d+/u)).toBeInTheDocument();
     expect(document.querySelector('.hud-economy-group')).not.toBeNull();
-    expect(document.querySelector('.hud-avatar')).not.toBeNull();
+    const avatar = document.querySelector('.hud-avatar');
+    expect(avatar).not.toBeNull();
+    const avatarImage = avatar?.querySelector('img');
+    expect(avatarImage).toHaveAttribute('width', '47');
+    expect(avatarImage).toHaveAttribute('height', '47');
   });
 
   it('教師頂部顯示歡迎識別且不渲染經濟數字', async () => {

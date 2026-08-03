@@ -1109,6 +1109,11 @@ a {
   place-items: center;
 }
 
+.blook-card__art .blook-art {
+  max-width: 100%;
+  height: auto;
+}
+
 .blook-art {
   display: block;
   object-fit: contain;
@@ -6991,8 +6996,8 @@ select#dashboard-classroom {
 
 .hud-avatar {
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 52px;
+  height: 40px;
   flex-shrink: 0;
   border: 2px solid var(--pixel-gold);
   border-radius: var(--radius-pixel);
@@ -7000,10 +7005,18 @@ select#dashboard-classroom {
   place-items: center;
 }
 
+.hud-avatar .blook-art {
+  max-width: 100%;
+  height: auto;
+}
+
 .hud-avatar--hero {
   background:
-    url('../assets/sprites/hero.png') center / 24px 24px no-repeat,
+    url('../assets/sprites/hero.png') center / 32px 32px no-repeat,
     var(--pixel-night-deep);
+  background-size:
+    32px 32px,
+    auto;
   image-rendering: pixelated;
 }
 

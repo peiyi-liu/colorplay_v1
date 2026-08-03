@@ -282,7 +282,7 @@ export function ShopPage({
                     <span className="blook-card__art" aria-hidden="true">
                       <BlookArt
                         emoji={item.emoji}
-                        size={72}
+                        size={130}
                         stableCode={item.stableCode}
                       />
                     </span>
