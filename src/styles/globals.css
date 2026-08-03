@@ -7249,27 +7249,27 @@ select#dashboard-classroom {
 
 .chapter-map__companion[data-position='1'] {
   left: 17%;
-  top: 42%;
+  top: 25%;
 }
 .chapter-map__companion[data-position='2'] {
   left: 50%;
-  top: 42%;
+  top: 25%;
 }
 .chapter-map__companion[data-position='3'] {
   left: 83%;
-  top: 42%;
+  top: 25%;
 }
 .chapter-map__companion[data-position='4'] {
   left: 17%;
-  top: 88%;
+  top: 70%;
 }
 .chapter-map__companion[data-position='5'] {
   left: 50%;
-  top: 88%;
+  top: 70%;
 }
 .chapter-map__companion[data-position='6'] {
   left: 83%;
-  top: 88%;
+  top: 70%;
 }
 
 .chapter-map__adventurer {
@@ -7278,7 +7278,7 @@ select#dashboard-classroom {
   overflow: hidden;
   width: 48px;
   height: 60px;
-  inset: auto auto 3% 50%;
+  inset: auto auto 34% 50%;
   image-rendering: pixelated;
   pointer-events: none;
   transform: translateX(-50%);
@@ -7444,6 +7444,12 @@ select#dashboard-classroom {
   }
 }
 
+@media (max-height: 30rem) and (orientation: landscape) {
+  .chapter-map__adventurer {
+    inset: 5% auto auto 50%;
+  }
+}
+
 @media (max-width: 30rem) and (orientation: portrait) {
   .chapter-map__scene {
     aspect-ratio: 4 / 5;
@@ -7459,27 +7465,27 @@ select#dashboard-classroom {
 
   .chapter-map__companion[data-position='1'] {
     left: 25%;
-    top: 29%;
+    top: 20%;
   }
   .chapter-map__companion[data-position='2'] {
     left: 75%;
-    top: 29%;
+    top: 20%;
   }
   .chapter-map__companion[data-position='3'] {
     left: 25%;
-    top: 59%;
+    top: 50%;
   }
   .chapter-map__companion[data-position='4'] {
     left: 75%;
-    top: 59%;
+    top: 50%;
   }
   .chapter-map__companion[data-position='5'] {
     left: 25%;
-    top: 89%;
+    top: 80%;
   }
   .chapter-map__companion[data-position='6'] {
     left: 75%;
-    top: 89%;
+    top: 80%;
   }
 }
 
