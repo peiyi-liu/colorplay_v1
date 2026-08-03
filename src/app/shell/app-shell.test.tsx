@@ -78,6 +78,21 @@ const renderTeacherShell = () => {
   return renderStudentShell();
 };
 
+const expectCommandBeforeHeaderAndMain = () => {
+  const main = screen.getByRole('main');
+  const stage = main.parentElement;
+  const command = stage?.querySelector('.hud-command');
+  const header = stage?.querySelector('.hud-top');
+
+  if (!stage || !command || !header) {
+    throw new Error('authenticated HUD shell is incomplete');
+  }
+
+  const children = [...stage.children];
+  expect(children.indexOf(command)).toBeLessThan(children.indexOf(header));
+  expect(children.indexOf(command)).toBeLessThan(children.indexOf(main));
+};
+
 describe('AppShell', () => {
   beforeEach(() => {
     vi.stubGlobal(
@@ -186,6 +201,18 @@ describe('AppShell', () => {
     );
     expect(screen.getByRole('banner')).toBeVisible();
     expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
+  });
+
+  it('renders student HUD navigation before the identity header and main content', () => {
+    renderStudentShell();
+
+    expectCommandBeforeHeaderAndMain();
+  });
+
+  it('renders teacher HUD navigation before the identity header and main content', () => {
+    renderTeacherShell();
+
+    expectCommandBeforeHeaderAndMain();
   });
 
   it('遊戲 HUD 不再提供頂列品牌連結（chrome 收進舞台）', () => {

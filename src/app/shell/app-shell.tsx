@@ -116,6 +116,22 @@ export function AppShell() {
           跳到主要內容
         </a>
         <RotateBanner />
+        {isAuthenticatedProfile && !isTeacher ? (
+          <HudCommandBar
+            displayName={profile.data?.displayName ?? ''}
+            isSigningOut={isSigningOut}
+            onSignOut={handleSignOut}
+            variant="student"
+          />
+        ) : null}
+        {isTeacher ? (
+          <HudCommandBar
+            displayName={profile.data?.displayName ?? ''}
+            isSigningOut={isSigningOut}
+            onSignOut={handleSignOut}
+            variant="teacher"
+          />
+        ) : null}
         {isAuthenticatedProfile ? (
           <header className="hud-top">
             {isTeacher ? (
@@ -156,22 +172,6 @@ export function AppShell() {
         <main className="game-stage__scene" id="main-content" tabIndex={-1}>
           <Outlet />
         </main>
-        {isAuthenticatedProfile && !isTeacher ? (
-          <HudCommandBar
-            displayName={profile.data?.displayName ?? ''}
-            isSigningOut={isSigningOut}
-            onSignOut={handleSignOut}
-            variant="student"
-          />
-        ) : null}
-        {isTeacher ? (
-          <HudCommandBar
-            displayName={profile.data?.displayName ?? ''}
-            isSigningOut={isSigningOut}
-            onSignOut={handleSignOut}
-            variant="teacher"
-          />
-        ) : null}
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ const commandTabClassName = ({ isActive }: { isActive: boolean }) =>
 const menuLinkClassName = ({ isActive }: { isActive: boolean }) =>
   `hud-menu__nav-link${isActive ? ' hud-menu__nav-link--active' : ''}`;
 
-// 底部 HUD 指令列（HUD 重組批 spec 2026-08-02）：列上僅留主要 2 項 tab；
+// 頂部 HUD 指令列（HUD 重組批 spec 2026-08-02）：列上僅留主要 2 項 tab；
 // 其餘導覽收進 MENU 面板的「更多導覽」區。MENU 仍收使用者資訊＋登出。
 export function HudCommandBar({
   displayName,
