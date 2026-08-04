@@ -1,8 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { TEST_USERS } from '../fixtures/users';
 import { signInStudent } from './helpers/auth';
-import { readMapScrollGap } from './helpers/learning-map';
+import { dragMapBackground, readMapScrollGap } from './helpers/learning-map';
 
 const SCROLL_INSTRUCTION = '選擇一棟建築，查看章節的複習、精熟度與解鎖條件。';
 const MINIMUM_CLEARANCE = 8;
@@ -12,6 +12,104 @@ const desktopViewports = [
   { height: 720, label: '1280x720', width: 1280 },
   { height: 768, label: '1024x768', width: 1024 },
 ] as const;
+
+const signAndMedalViewports = [
+  { height: 720, label: '1280x720', width: 1280 },
+  { height: 375, label: '812x375', width: 812 },
+  { height: 812, label: '375x812', width: 375 },
+] as const;
+
+const readSurfaceCenter = async (surface: Locator) =>
+  surface.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const mapViewport = element.closest<HTMLElement>('.chapter-map__viewport');
+    const parentButton = element.closest('button');
+    if (!mapViewport || !parentButton) {
+      throw new Error('Chapter surface is outside its map button');
+    }
+    const mapRect = mapViewport.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    let scrollClip: DOMRect | null = null;
+    let ancestor = element.parentElement;
+    while (ancestor) {
+      const overflowY = getComputedStyle(ancestor).overflowY;
+      if (overflowY === 'auto' || overflowY === 'scroll') {
+        scrollClip = ancestor.getBoundingClientRect();
+        break;
+      }
+      ancestor = ancestor.parentElement;
+    }
+    return {
+      hitWithinButton: parentButton.contains(document.elementFromPoint(x, y)),
+      map: { left: mapRect.left, right: mapRect.right, width: mapRect.width },
+      position: getComputedStyle(element).position,
+      scrollClip: scrollClip
+        ? {
+            bottom: scrollClip.bottom,
+            left: scrollClip.left,
+            right: scrollClip.right,
+            top: scrollClip.top,
+          }
+        : null,
+      viewport: { height: window.innerHeight, width: window.innerWidth },
+      x,
+      y,
+    };
+  });
+
+async function reachSurfaceCenter(
+  page: Page,
+  mapViewport: Locator,
+  surface: Locator,
+) {
+  for (let attempt = 0; attempt < 18; attempt += 1) {
+    const center = await readSurfaceCenter(surface);
+    const clip = center.scrollClip ?? {
+      bottom: center.viewport.height,
+      left: 0,
+      right: center.viewport.width,
+      top: 0,
+    };
+    const clipTop = Math.max(clip.top, 0);
+    const clipBottom = Math.min(clip.bottom, center.viewport.height);
+
+    if (center.y < clipTop + 1 || center.y > clipBottom - 1) {
+      await page.mouse.move(
+        Math.min(
+          Math.max((clip.left + clip.right) / 2, 12),
+          center.viewport.width - 12,
+        ),
+        Math.min(
+          Math.max((clipTop + clipBottom) / 2, 12),
+          center.viewport.height - 12,
+        ),
+      );
+      await page.mouse.wheel(
+        0,
+        center.y > clipBottom
+          ? center.viewport.height * 0.65
+          : -center.viewport.height * 0.65,
+      );
+      await page.waitForTimeout(50);
+      continue;
+    }
+
+    if (center.x < center.map.left + 1 || center.x > center.map.right - 1) {
+      await dragMapBackground(
+        mapViewport,
+        center.x > center.map.right ? -1 : 1,
+        Math.min(140, center.map.width * 0.3),
+      );
+      await page.waitForTimeout(50);
+      continue;
+    }
+
+    return center;
+  }
+
+  throw new Error(`Surface center remained unreachable: ${surface.toString()}`);
+}
 
 for (const viewport of desktopViewports) {
   test(`keeps all three scroll lines clear of desktop overlays at ${viewport.label}`, async ({
@@ -252,45 +350,49 @@ for (const viewport of desktopViewports) {
   });
 }
 
-test('selects every chapter from the rendered center of its wood sign and state medal', async ({
-  page,
-}) => {
-  await page.setViewportSize({ height: 720, width: 1280 });
-  await signInStudent(page, TEST_USERS.learningStudent);
+for (const viewport of signAndMedalViewports) {
+  test(`selects every sign and medal from its rendered center at ${viewport.label}`, async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize(viewport);
+    await signInStudent(page, TEST_USERS.learningStudent);
 
-  const buttons = page.locator('.chapter-map__building-button');
-  await expect(buttons).toHaveCount(6);
-  await buttons.nth(5).click();
-  await expect(buttons.nth(5)).toHaveAttribute('aria-pressed', 'true');
-
-  for (const selector of [
-    '.chapter-map__building-label',
-    '.chapter-map__status-medal',
-  ]) {
-    const surfaces = page.locator(selector);
-    await expect(surfaces).toHaveCount(6);
-
-    for (let index = 0; index < 6; index += 1) {
-      const button = buttons.nth(index);
-      const surface = surfaces.nth(index);
-      const center = await surface.evaluate((element) => {
-        const rect = element.getBoundingClientRect();
-        const parentButton = element.closest('button');
-        const x = rect.left + rect.width / 2;
-        const y = rect.top + rect.height / 2;
-        return {
-          hitWithinButton:
-            parentButton?.contains(document.elementFromPoint(x, y)) === true,
-          position: getComputedStyle(element).position,
-          x,
-          y,
-        };
-      });
-
-      expect(center.position).toBe('absolute');
-      expect(center.hitWithinButton).toBe(true);
-      await page.mouse.click(center.x, center.y);
-      await expect(button).toHaveAttribute('aria-pressed', 'true');
+    if (viewport.label === '375x812') {
+      await page.getByRole('button', { name: '關閉轉向提示' }).click();
     }
-  }
-});
+
+    const mapViewport = page.getByRole('region', { name: '村莊地圖探索區' });
+    const buttons = page.locator('.chapter-map__building-button');
+    await expect(buttons).toHaveCount(6);
+
+    for (const [surfaceName, selector] of [
+      ['wood sign', '.chapter-map__building-label'],
+      ['state medal', '.chapter-map__status-medal'],
+    ] as const) {
+      const surfaces = page.locator(selector);
+      await expect(surfaces).toHaveCount(6);
+      const selectedIndex = await buttons.evaluateAll((items) =>
+        items.findIndex((item) => item.getAttribute('aria-pressed') === 'true'),
+      );
+      expect(selectedIndex).toBeGreaterThanOrEqual(0);
+      const order = Array.from(
+        { length: 6 },
+        (_, offset) => (selectedIndex + offset + 1) % 6,
+      );
+
+      for (const index of order) {
+        const button = buttons.nth(index);
+        const surface = surfaces.nth(index);
+        const center = await reachSurfaceCenter(page, mapViewport, surface);
+        expect(center.position).toBe('absolute');
+        expect(
+          center.hitWithinButton,
+          `${surfaceName} Chapter ${String(index + 1)} center`,
+        ).toBe(true);
+        await page.mouse.click(center.x, center.y);
+        await expect(button).toHaveAttribute('aria-pressed', 'true');
+      }
+    }
+  });
+}

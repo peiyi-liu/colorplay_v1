@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { RouteLoading } from '../boundaries/route-loading';
 import { BlookArt } from '../../components/ui/blook-art';
 import { Icon } from '../../components/ui/icons';
 import { useToast } from '../../components/ui/toast';
@@ -214,8 +215,22 @@ export function AppShell() {
         ) : null}
         {isAuthenticatedProfile && !isTeacher ? null : (
           <main className="game-stage__scene" id="main-content" tabIndex={-1}>
-            {auth.status === 'authenticated' &&
-            !isAuthenticatedProfile ? null : (
+            {auth.status === 'authenticated' && !isAuthenticatedProfile ? (
+              profile.isPending ? (
+                <RouteLoading withinMain />
+              ) : profile.isError ? (
+                <section className="route-panel">
+                  <p role="alert">個人資料載入失敗，請稍後重試。</p>
+                  <button
+                    className="primary-action"
+                    onClick={() => void profile.refetch()}
+                    type="button"
+                  >
+                    重新載入
+                  </button>
+                </section>
+              ) : null
+            ) : (
               <Outlet />
             )}
           </main>

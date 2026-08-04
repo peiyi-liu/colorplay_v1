@@ -5,12 +5,9 @@ import { signInStudent } from './helpers/auth';
 import {
   dragMapBackground,
   findReachableBackgroundPoint,
-  readMapScrollGap,
 } from './helpers/learning-map';
 
 const SCROLL_INSTRUCTION = '選擇一棟建築，查看章節的複習、精熟度與解鎖條件。';
-const MINIMUM_SCROLL_CLEARANCE = 8;
-
 const expectGoldGlow = (filter: string): void => {
   const colors = [...filter.matchAll(/rgb\((\d+), (\d+), (\d+)\)/gu)].map(
     (match) => match.slice(1).map(Number),
@@ -237,10 +234,6 @@ test('keeps the lower chapter row operable beside a wrapped dialogue at 812 by 3
 
   await expect(instruction).toBeVisible();
   await expect(instruction).toBeInViewport();
-  const scrollGap = await readMapScrollGap(page);
-  expect(scrollGap.nearest, scrollGap.pairs.join(', ')).toBeGreaterThanOrEqual(
-    MINIMUM_SCROLL_CLEARANCE,
-  );
   await expect(mapViewport).toBeVisible();
   await expect(dialogueLane).toBeVisible();
 

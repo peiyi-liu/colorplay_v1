@@ -12,6 +12,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
+import { ProfileRepositoryError } from '../../features/profile/types';
 import { useBlookInventory } from '../../features/inventory/hooks/use-blook-inventory';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
 import { ToastProvider } from '../../components/ui/toast';
@@ -328,13 +329,14 @@ describe('AppShell', () => {
     expect(document.querySelector('.economy-summary--learning-map')).toBeNull();
   });
 
-  it('mounts the authenticated route subtree once when profile authority resolves', async () => {
-    let profileResolved = false;
+  it('shows recoverable profile resolution states and mounts the route subtree once', async () => {
+    let profileState: 'error' | 'pending' | 'resolved' = 'pending';
     const mounted = vi.fn();
     const unmounted = vi.fn();
+    const refetchProfile = vi.fn();
 
     mockedUseMyProfile.mockImplementation(() =>
-      profileResolved
+      profileState === 'resolved'
         ? {
             data: {
               displayName: 'student.one',
@@ -346,14 +348,17 @@ describe('AppShell', () => {
             error: null,
             isError: false,
             isPending: false,
-            refetch: vi.fn(),
+            refetch: refetchProfile,
           }
         : {
             data: undefined,
-            error: null,
-            isError: false,
-            isPending: true,
-            refetch: vi.fn(),
+            error:
+              profileState === 'error'
+                ? new ProfileRepositoryError('PROFILE_UNAVAILABLE')
+                : null,
+            isError: profileState === 'error',
+            isPending: profileState === 'pending',
+            refetch: refetchProfile,
           },
     );
 
@@ -373,8 +378,17 @@ describe('AppShell', () => {
         <ToastProvider>
           <button
             onClick={() => {
-              profileResolved = true;
+              profileState = 'error';
               setRevision(1);
+            }}
+            type="button"
+          >
+            模擬權限錯誤
+          </button>
+          <button
+            onClick={() => {
+              profileState = 'resolved';
+              setRevision(2);
             }}
             type="button"
           >
@@ -396,6 +410,23 @@ describe('AppShell', () => {
       { initialEntries: ['/app'] },
     );
     render(<RouterProvider router={router} />);
+
+    const main = screen.getByRole('main');
+    expect(
+      within(main).getByRole('status', { name: '頁面載入中' }),
+    ).toBeVisible();
+    expect(screen.queryByText('受保護路由內容')).toBeNull();
+    expect(mounted).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole('button', { name: '模擬權限錯誤' }));
+    expect(within(main).getByRole('alert')).toHaveTextContent(
+      '個人資料載入失敗，請稍後重試。',
+    );
+    await userEvent.click(
+      within(main).getByRole('button', { name: '重新載入' }),
+    );
+    expect(refetchProfile).toHaveBeenCalledOnce();
+    expect(screen.queryByText('受保護路由內容')).toBeNull();
 
     await userEvent.click(screen.getByRole('button', { name: '完成權限解析' }));
 
