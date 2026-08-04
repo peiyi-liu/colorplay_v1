@@ -14,7 +14,8 @@ export const ACCEPTANCE_IDS = Object.freeze([
 ]);
 
 const COMMAND_LABELS = Object.freeze([
-  'pnpm format:check',
+  'bash -n scripts/acceptance/run-teacher-content.sh',
+  'pnpm exec prettier --check teacher-content-retirement-v2',
   'pnpm lint',
   'pnpm typecheck',
   'pnpm test',

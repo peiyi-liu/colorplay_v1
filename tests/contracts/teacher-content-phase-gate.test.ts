@@ -32,8 +32,10 @@ describe('teacher content retirement gate contract', () => {
     expect(runner).toContain("--grep='Teacher Content retirement gate'");
     expect(runner).toContain('finalize-teacher-content.mjs');
     expect(runner).not.toContain('supabase db reset --local');
+    expect(runner).not.toContain("run_logged 'pnpm format:check'");
     const order = [
-      'pnpm format:check',
+      'bash -n scripts/acceptance/run-teacher-content.sh',
+      'pnpm exec prettier --check teacher-content-retirement-v2',
       'pnpm lint',
       'pnpm typecheck',
       'pnpm test',

@@ -80,7 +80,20 @@ node -e '
   }, null, 2)}\n`);
 ' "$phase_root/run.json" "$git_sha"
 
-run_logged 'pnpm format:check' "$phase_root/reports/format-check.log" pnpm format:check
+run_logged \
+  'bash -n scripts/acceptance/run-teacher-content.sh' \
+  "$phase_root/reports/shell-syntax.log" \
+  bash -n scripts/acceptance/run-teacher-content.sh
+run_logged \
+  'pnpm exec prettier --check teacher-content-retirement-v2' \
+  "$phase_root/reports/format-check.log" \
+  pnpm exec prettier --check \
+    package.json \
+    scripts/acceptance/finalize-teacher-content.mjs \
+    scripts/acceptance/finalize-teacher-content.d.mts \
+    tests/contracts/teacher-content-phase-gate.test.ts \
+    tests/e2e/teacher-content.spec.ts \
+    tests/e2e/teacher-content-expected-failures.ts
 run_logged 'pnpm lint' "$phase_root/reports/lint.log" pnpm lint
 run_logged 'pnpm typecheck' "$phase_root/reports/typecheck.log" pnpm typecheck
 run_logged 'pnpm test' "$phase_root/reports/unit.log" pnpm test
