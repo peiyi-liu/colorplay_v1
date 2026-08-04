@@ -1,4 +1,4 @@
-import { expect, type Locator } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 type Rect = Readonly<{
   bottom: number;
@@ -22,9 +22,9 @@ const rectFor = async (locator: Locator): Promise<Rect> =>
     };
   });
 
-const backgroundDragPoint = async (
+export const findReachableBackgroundPoint = async (
   mapViewport: Locator,
-  direction: -1 | 1,
+  direction: -1 | 1 = -1,
 ): Promise<Readonly<{ x: number; y: number }>> =>
   mapViewport.evaluate((element, dragDirection) => {
     const rect = element.getBoundingClientRect();
@@ -47,6 +47,21 @@ const backgroundDragPoint = async (
 
     throw new Error('No pointer-reachable village background point was found');
   }, direction);
+
+export async function dragMapBackground(
+  mapViewport: Locator,
+  direction: -1 | 1,
+  distance = 120,
+): Promise<void> {
+  const page = mapViewport.page();
+  const start = await findReachableBackgroundPoint(mapViewport, direction);
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(start.x + direction * distance, start.y, {
+    steps: 12,
+  });
+  await page.mouse.up();
+}
 
 export async function expectPointerReachable(locator: Locator): Promise<void> {
   const page = locator.page();
@@ -119,14 +134,8 @@ export async function expectPointerReachable(locator: Locator): Promise<void> {
       const mapRect = await rectFor(mapViewport);
       if (target.left < mapRect.left + 1 || target.right > mapRect.right - 1) {
         const direction: -1 | 1 = target.right > mapRect.right ? -1 : 1;
-        const start = await backgroundDragPoint(mapViewport, direction);
         const distance = Math.min(140, mapRect.width * 0.3);
-        await page.mouse.move(start.x, start.y);
-        await page.mouse.down();
-        await page.mouse.move(start.x + direction * distance, start.y, {
-          steps: 10,
-        });
-        await page.mouse.up();
+        await dragMapBackground(mapViewport, direction, distance);
         await page.waitForTimeout(50);
         continue;
       }
@@ -162,7 +171,7 @@ export async function expectPointerReachable(locator: Locator): Promise<void> {
     };
   });
   throw new Error(
-    `Pointer target remained unreachable: ${await locator.toString()} ${JSON.stringify(diagnostics)}`,
+    `Pointer target remained unreachable: ${locator.toString()} ${JSON.stringify(diagnostics)}`,
   );
 }
 
@@ -240,6 +249,59 @@ export async function readRenderedContrast(locator: Locator): Promise<number> {
       (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) /
       (Math.min(foregroundLuminance, backgroundLuminance) + 0.05)
     );
+  });
+}
+
+export async function readMapScrollGap(
+  page: Page,
+): Promise<Readonly<{ nearest: number; pairs: string[] }>> {
+  return page.evaluate(() => {
+    const scroll = document
+      .querySelector<HTMLElement>('.chapter-map-scroll')
+      ?.getBoundingClientRect();
+    if (!scroll) throw new Error('Learning-map scroll heading is missing');
+
+    const candidates = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        '.hud-top, .hud-command, .chapter-map__building-visual, .chapter-map__status-medal',
+      ),
+    )
+      .map((element) => ({
+        label: element.className,
+        rect: element.getBoundingClientRect(),
+      }))
+      .filter(
+        ({ rect }) =>
+          rect.width > 0 &&
+          rect.height > 0 &&
+          rect.right > 0 &&
+          rect.bottom > 0 &&
+          rect.left < window.innerWidth &&
+          rect.top < window.innerHeight,
+      );
+    const gaps = candidates.map(({ label, rect }) => {
+      const horizontal = Math.max(
+        rect.left - scroll.right,
+        scroll.left - rect.right,
+        0,
+      );
+      const vertical = Math.max(
+        rect.top - scroll.bottom,
+        scroll.top - rect.bottom,
+        0,
+      );
+      return {
+        gap: Math.hypot(horizontal, vertical),
+        label: `${label}[${rect.left.toFixed(1)},${rect.top.toFixed(1)},${rect.right.toFixed(1)},${rect.bottom.toFixed(1)}] scroll[${scroll.left.toFixed(1)},${scroll.top.toFixed(1)},${scroll.right.toFixed(1)},${scroll.bottom.toFixed(1)}]`,
+      };
+    });
+    const nearest = Math.min(...gaps.map(({ gap }) => gap));
+    return {
+      nearest,
+      pairs: gaps
+        .filter(({ gap }) => Math.abs(gap - nearest) < 0.01)
+        .map(({ gap, label }) => `${label}:${gap.toFixed(2)}`),
+    };
   });
 }
 
@@ -373,13 +435,17 @@ export async function readWorldAnchorError(
     }
 
     const worldRect = world.getBoundingClientRect();
-    const buildingRect = element.getBoundingClientRect();
+    const visual = element.querySelector<HTMLElement>(
+      '.chapter-map__building-visual',
+    );
+    if (!visual) throw new Error('Building is missing its rendered visual');
+    const visualRect = visual.getBoundingClientRect();
     const renderedScaleX = worldRect.width / worldWidth;
     const renderedScaleY = worldRect.height / worldHeight;
     const expectedX = worldRect.left + groundX * renderedScaleX;
     const expectedY = worldRect.top + groundY * renderedScaleY;
-    const actualX = buildingRect.left + buildingRect.width / 2;
-    const actualY = buildingRect.bottom;
+    const actualX = visualRect.left + visualRect.width / 2;
+    const actualY = visualRect.bottom;
 
     return {
       x: Math.abs(actualX - expectedX) / renderedScaleX,

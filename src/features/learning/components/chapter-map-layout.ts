@@ -12,12 +12,12 @@ export type ChapterGroundAnchor = Readonly<{
 export const CHAPTER_GROUND_ANCHORS: Readonly<
   Record<number, ChapterGroundAnchor>
 > = {
-  1: { x: 290, y: 298, visualOffsetX: 0, visualOffsetY: 0 },
-  2: { x: 582, y: 282, visualOffsetX: 0, visualOffsetY: 0 },
-  3: { x: 896, y: 298, visualOffsetX: 0, visualOffsetY: 0 },
-  4: { x: 300, y: 575, visualOffsetX: 0, visualOffsetY: 0 },
-  5: { x: 586, y: 620, visualOffsetX: 0, visualOffsetY: 0 },
-  6: { x: 888, y: 575, visualOffsetX: 0, visualOffsetY: 0 },
+  1: { x: 290, y: 298, visualOffsetX: 0, visualOffsetY: 8 },
+  2: { x: 582, y: 282, visualOffsetX: 0, visualOffsetY: 8 },
+  3: { x: 896, y: 298, visualOffsetX: 0, visualOffsetY: 8 },
+  4: { x: 300, y: 575, visualOffsetX: 0, visualOffsetY: 8 },
+  5: { x: 586, y: 620, visualOffsetX: 0, visualOffsetY: 8 },
+  6: { x: 888, y: 575, visualOffsetX: 0, visualOffsetY: 8 },
 };
 
 export const ADVENTURER_GROUND_ANCHOR: ChapterGroundAnchor = {

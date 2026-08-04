@@ -1441,7 +1441,7 @@ a {
   padding: 0 var(--space-3);
 }
 
-.hud-menu__toggle:focus-visible {
+.game-stage--learning-map .hud-menu__toggle:focus-visible {
   outline-offset: -3px;
 }
 

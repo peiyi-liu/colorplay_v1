@@ -25,7 +25,7 @@ describe('chapter map world layout', () => {
       '--chapter-anchor-x': '290',
       '--chapter-anchor-y': '298',
       '--chapter-visual-offset-x': '0cqw',
-      '--chapter-visual-offset-y': '0cqh',
+      '--chapter-visual-offset-y': '1cqh',
       left: '24.166666666666668%',
       top: '37.25%',
     });
