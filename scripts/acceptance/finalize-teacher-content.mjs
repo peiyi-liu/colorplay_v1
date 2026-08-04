@@ -20,7 +20,7 @@ const COMMAND_LABELS = Object.freeze([
   'pnpm typecheck',
   'pnpm test',
   'pnpm build',
-  'pnpm test:db',
+  'pnpm exec supabase test db --local',
   'bash scripts/supabase/wait-for-postgrest.sh',
   'pnpm exec tsx scripts/supabase/seed-auth.ts',
   "bash scripts/test-e2e-local.sh --project=chromium --headed --grep='Teacher Content retirement gate'",
