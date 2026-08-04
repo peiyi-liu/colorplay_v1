@@ -35,16 +35,33 @@ type ChapterAnchorStyle = CSSProperties &
     '--chapter-visual-offset-y': string;
   }>;
 
+const assertVisualOffsetIsSafe = (anchor: ChapterGroundAnchor): void => {
+  if (
+    Math.abs(anchor.visualOffsetX) > 8 ||
+    Math.abs(anchor.visualOffsetY) > 8
+  ) {
+    throw new Error('Chapter visual offset exceeds 8 logical pixels');
+  }
+};
+
 export const anchorStyle = (
   anchor: ChapterGroundAnchor,
-): ChapterAnchorStyle => ({
-  '--chapter-anchor-x': String(anchor.x),
-  '--chapter-anchor-y': String(anchor.y),
-  '--chapter-visual-offset-x': `${String(anchor.visualOffsetX)}px`,
-  '--chapter-visual-offset-y': `${String(anchor.visualOffsetY)}px`,
-  left: `${String((anchor.x / CHAPTER_MAP_WORLD.width) * 100)}%`,
-  top: `${String((anchor.y / CHAPTER_MAP_WORLD.height) * 100)}%`,
-});
+): ChapterAnchorStyle => {
+  assertVisualOffsetIsSafe(anchor);
+
+  return {
+    '--chapter-anchor-x': String(anchor.x),
+    '--chapter-anchor-y': String(anchor.y),
+    '--chapter-visual-offset-x': `${String(
+      (anchor.visualOffsetX / CHAPTER_MAP_WORLD.width) * 100,
+    )}cqw`,
+    '--chapter-visual-offset-y': `${String(
+      (anchor.visualOffsetY / CHAPTER_MAP_WORLD.height) * 100,
+    )}cqh`,
+    left: `${String((anchor.x / CHAPTER_MAP_WORLD.width) * 100)}%`,
+    top: `${String((anchor.y / CHAPTER_MAP_WORLD.height) * 100)}%`,
+  };
+};
 
 export const getChapterGroundAnchor = (
   sortOrder: number,

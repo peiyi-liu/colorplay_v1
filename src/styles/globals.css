@@ -7189,6 +7189,7 @@ select#dashboard-classroom {
 
 .chapter-map__world {
   position: relative;
+  container-type: size;
   width: 100%;
   min-width: 100%;
   aspect-ratio: 3 / 2;
