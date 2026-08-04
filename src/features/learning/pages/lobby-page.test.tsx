@@ -92,13 +92,35 @@ describe('LobbyPage', () => {
     expect(screen.queryByRole('link', { name: /quiz/u })).toBeNull();
   });
 
+  it('renders the approved map copy in one semantic parchment scroll', () => {
+    const { container } = renderPage();
+    const headings = screen.getAllByRole('heading', { level: 1 });
+    const scroll = container.querySelector('.chapter-map-scroll');
+
+    expect(headings).toHaveLength(1);
+    expect(headings[0]).toHaveTextContent('學習地圖');
+    expect(screen.getByText('學生端 · 森林王國村')).toBeVisible();
+    expect(
+      screen.getByText('選擇一棟建築，查看章節的複習、精熟度與解鎖條件。'),
+    ).toBeVisible();
+    expect(scroll).toContainElement(headings[0] ?? null);
+
+    const decorations = container.querySelectorAll(
+      '.chapter-map-scroll__roller, .chapter-map-scroll__crest',
+    );
+    expect(decorations).toHaveLength(3);
+    for (const decoration of decorations) {
+      expect(decoration).toHaveAttribute('aria-hidden', 'true');
+    }
+  });
+
   it('selects the requested locked chapter from the exact map query', () => {
     renderPage(
       '/app?chapter=21000000-0000-0000-0000-000000000003&reason=locked',
     );
     expect(
       screen.getByRole('button', {
-        name: 'Chapter 3 色彩表示 尚未解鎖',
+        name: 'Chapter 3 色彩表示 未解鎖',
       }),
     ).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('「色彩呈現」精熟度 60% / 80%')).toBeVisible();

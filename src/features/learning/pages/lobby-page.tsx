@@ -40,10 +40,21 @@ export function LobbyPage() {
       className="lobby lobby--map-fullscreen scene-day"
     >
       <div className="lobby-panel chapter-map-shell">
-        <header className="chapter-map-shell__heading">
-          <p>學生端 · 森林王國村</p>
-          <h1 id="learning-map-title">學習地圖</h1>
-          <p>選擇一棟建築，查看章節的複習、精熟度與解鎖條件。</p>
+        <header className="chapter-map-shell__heading chapter-map-scroll">
+          <span
+            aria-hidden="true"
+            className="chapter-map-scroll__roller chapter-map-scroll__roller--top"
+          />
+          <span aria-hidden="true" className="chapter-map-scroll__crest" />
+          <div className="chapter-map-scroll__copy">
+            <p>學生端 · 森林王國村</p>
+            <h1 id="learning-map-title">學習地圖</h1>
+            <p>選擇一棟建築，查看章節的複習、精熟度與解鎖條件。</p>
+          </div>
+          <span
+            aria-hidden="true"
+            className="chapter-map-scroll__roller chapter-map-scroll__roller--bottom"
+          />
         </header>
         <ChapterMap
           chapters={chapterMap.data.chapters}

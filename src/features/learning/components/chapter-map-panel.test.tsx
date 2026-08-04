@@ -55,8 +55,11 @@ describe('ChapterMapPanel', () => {
       renderPanel(chapter(state));
       expect(screen.getByRole('region')).toHaveAttribute('aria-live', 'polite');
       expect(
-        screen.getByRole('heading', { name: 'Chapter 2 色彩呈現' }),
+        screen.getByText(
+          `Chapter 2 · ${state === 'completed' ? '已完成' : '可進入'}`,
+        ),
       ).toBeVisible();
+      expect(screen.getByRole('heading', { name: '色彩呈現' })).toBeVisible();
       expect(screen.getByText('複習進度 2 / 5')).toBeVisible();
       expect(
         screen.getByText(
@@ -70,12 +73,16 @@ describe('ChapterMapPanel', () => {
         '/app/chapters/21000000-0000-0000-0000-000000000002',
       );
       expect(screen.queryByText('開始挑戰')).toBeNull();
+      expect(screen.queryByText('理解色彩如何被呈現。')).toBeNull();
+      expect(screen.queryByText('學習狀態')).toBeNull();
+      expect(screen.queryByText('已精熟')).toBeNull();
+      expect(screen.queryByText('持續精進')).toBeNull();
     },
   );
 
   it('shows exact prerequisite numbers and no action while locked', () => {
     renderPanel(chapter('locked'));
-    expect(screen.getByText('尚未解鎖')).toBeVisible();
+    expect(screen.getByText('Chapter 2 · 未解鎖')).toBeVisible();
     expect(screen.getByText('「認識色彩」複習 2 / 5')).toBeVisible();
     expect(screen.getByText('「認識色彩」精熟度 72% / 80%')).toBeVisible();
     expect(screen.queryByRole('link')).toBeNull();
@@ -83,7 +90,7 @@ describe('ChapterMapPanel', () => {
 
   it('shows a content preparation state without an action', () => {
     renderPanel(chapter('content_unavailable'));
-    expect(screen.getByText('內容準備中')).toBeVisible();
+    expect(screen.getByText('Chapter 2 · 內容準備中')).toBeVisible();
     expect(screen.queryByRole('link')).toBeNull();
   });
 });

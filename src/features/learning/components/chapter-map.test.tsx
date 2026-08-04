@@ -72,7 +72,8 @@ describe('ChapterMap', () => {
         name: 'Chapter 2 色彩呈現 可進入',
       }),
     ).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('第 2 章說明')).toBeVisible();
+    expect(screen.queryByText('第 2 章說明')).toBeNull();
+    expect(screen.getByRole('heading', { name: '色彩呈現' })).toBeVisible();
     expect(screen.getByTestId('equipped-blook-badge')).toBeVisible();
     expect(screen.queryByText('目前位置')).toBeNull();
   });
@@ -80,12 +81,13 @@ describe('ChapterMap', () => {
   it('selects a building without navigation or focus theft', async () => {
     renderMap();
     const third = screen.getByRole('button', {
-      name: 'Chapter 3 色彩表示 尚未解鎖',
+      name: 'Chapter 3 色彩表示 未解鎖',
     });
     await userEvent.click(third);
     expect(third).toHaveFocus();
     expect(third).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('第 3 章說明')).toBeVisible();
+    expect(screen.queryByText('第 3 章說明')).toBeNull();
+    expect(screen.getByRole('heading', { name: '色彩表示' })).toBeVisible();
   });
 
   it('honors a valid initial chapter and selects chapter 6 when all are complete', () => {
@@ -95,7 +97,7 @@ describe('ChapterMap', () => {
     );
     expect(
       screen.getByRole('button', {
-        name: 'Chapter 4 色彩感知 尚未解鎖',
+        name: 'Chapter 4 色彩感知 未解鎖',
       }),
     ).toHaveAttribute('aria-pressed', 'true');
     unmount();

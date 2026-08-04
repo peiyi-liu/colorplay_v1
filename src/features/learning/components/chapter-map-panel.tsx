@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import type {
   ChapterAccessBlocker,
   ChapterAccessState,
-  ChapterProgressStatus,
   StudentChapterMapEntry,
 } from '../api/chapter-map';
 
@@ -11,14 +10,7 @@ const accessLabels: Readonly<Record<ChapterAccessState, string>> = {
   available: '可進入',
   completed: '已完成',
   content_unavailable: '內容準備中',
-  locked: '尚未解鎖',
-};
-
-const progressLabels: Readonly<Record<ChapterProgressStatus, string>> = {
-  developing: '持續精進',
-  learning: '學習中',
-  mastered: '已精熟',
-  not_started: '尚未開始',
+  locked: '未解鎖',
 };
 
 const progressValue = (value: number | null, suffix = ''): string =>
@@ -48,20 +40,12 @@ export function ChapterMapPanel({
     >
       <div className="chapter-map__panel-heading">
         <p className="chapter-map__eyebrow">
-          Chapter {chapter.sortOrder} ·{' '}
-          <span>{accessLabels[chapter.accessState]}</span>
+          Chapter {chapter.sortOrder} · {accessLabels[chapter.accessState]}
         </p>
-        <h2 id={titleId}>
-          Chapter {chapter.sortOrder} {chapter.title}
-        </h2>
-        <p>{chapter.description}</p>
+        <h2 id={titleId}>{chapter.title}</h2>
       </div>
 
       <dl className="chapter-map__progress">
-        <div>
-          <dt>學習狀態</dt>
-          <dd>{progressLabels[chapter.progressStatus]}</dd>
-        </div>
         <div>
           <dt>複習進度</dt>
           <dd>
@@ -75,34 +59,36 @@ export function ChapterMapPanel({
         </div>
       </dl>
 
-      {chapter.blockers.length > 0 ? (
-        <div className="chapter-map__blockers">
-          <h3>解鎖條件</h3>
-          <ul>
-            {chapter.blockers.map((blocker) => (
-              <li key={`${blocker.code}-${blocker.chapterId}`}>
-                {blockerText(blocker)}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      <div className="chapter-map__panel-outcome">
+        {chapter.blockers.length > 0 ? (
+          <div className="chapter-map__blockers">
+            <h3>解鎖條件</h3>
+            <ul>
+              {chapter.blockers.map((blocker) => (
+                <li key={`${blocker.code}-${blocker.chapterId}`}>
+                  {blockerText(blocker)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
-      {actionable ? (
-        <Link
-          className="chapter-map__entry-action"
-          data-primary-action="true"
-          to={`/app/chapters/${chapter.chapterId}`}
-        >
-          進入複習與進度
-        </Link>
-      ) : (
-        <p className="chapter-map__unavailable">
-          {chapter.accessState === 'locked'
-            ? '完成解鎖條件後即可進入。'
-            : '本章內容仍在準備中。'}
-        </p>
-      )}
+        {actionable ? (
+          <Link
+            className="chapter-map__entry-action"
+            data-primary-action="true"
+            to={`/app/chapters/${chapter.chapterId}`}
+          >
+            進入複習與進度
+          </Link>
+        ) : (
+          <p className="chapter-map__unavailable">
+            {chapter.accessState === 'locked'
+              ? '完成解鎖條件後即可進入。'
+              : '本章內容仍在準備中。'}
+          </p>
+        )}
+      </div>
     </aside>
   );
 }

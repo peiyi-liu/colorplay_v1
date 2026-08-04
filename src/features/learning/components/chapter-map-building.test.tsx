@@ -34,11 +34,11 @@ const anchor: ChapterGroundAnchor = {
 describe('ChapterMapBuilding', () => {
   it.each([
     ['content_unavailable', '內容準備中'],
-    ['locked', '尚未解鎖'],
+    ['locked', '未解鎖'],
     ['available', '可進入'],
     ['completed', '已完成'],
   ] as const)('keeps %s as a real labelled button', (state, label) => {
-    render(
+    const { container } = render(
       <ol>
         <ChapterMapBuilding
           anchor={anchor}
@@ -56,7 +56,72 @@ describe('ChapterMapBuilding', () => {
       'aria-pressed',
       state === 'available' ? 'true' : 'false',
     );
-    expect(screen.getByText(label)).toBeVisible();
+    expect(button.closest('.chapter-map__building')).toHaveAttribute(
+      'data-selected',
+      state === 'available' ? 'true' : 'false',
+    );
+
+    const sign = container.querySelector('.chapter-map__building-label');
+    const medal = container.querySelector('.chapter-map__status-medal');
+    expect(sign).toHaveTextContent('Chapter 1');
+    expect(sign).toHaveTextContent('認識色彩');
+    expect(sign).not.toHaveTextContent(label);
+    expect(medal).toHaveTextContent(label);
+    expect(medal).not.toBeNull();
+    expect(medal?.querySelector('svg')).toHaveAttribute(
+      'data-icon',
+      {
+        available: 'star',
+        completed: 'check',
+        content_unavailable: 'alert',
+        locked: 'lock',
+      }[state],
+    );
+
+    const chains = container.querySelectorAll('.chapter-map__sign-chain');
+    expect(chains).toHaveLength(2);
+    for (const chain of chains) {
+      expect(chain).toHaveAttribute('aria-hidden', 'true');
+    }
+  });
+
+  it.each([
+    ['locked', '.chapter-map__cloud'],
+    ['content_unavailable', '.chapter-map__construction'],
+  ] as const)('adds the decorative %s scene overlay', (state, selector) => {
+    const { container } = render(
+      <ol>
+        <ChapterMapBuilding
+          anchor={anchor}
+          chapter={chapter(state)}
+          onSelect={vi.fn()}
+          selected={false}
+        />
+      </ol>,
+    );
+
+    expect(container.querySelector(selector)).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    );
+  });
+
+  it('expresses completion with an independent medal and no scene overlay', () => {
+    const { container } = render(
+      <ol>
+        <ChapterMapBuilding
+          anchor={anchor}
+          chapter={chapter('completed')}
+          onSelect={vi.fn()}
+          selected={false}
+        />
+      </ol>,
+    );
+
+    expect(
+      container.querySelector('.chapter-map__status-medal'),
+    ).toHaveTextContent('已完成');
+    expect(container.querySelector('.chapter-map__completion')).toBeNull();
   });
 
   it('selects by pointer and keyboard without navigating', async () => {
@@ -102,7 +167,7 @@ describe('ChapterMapBuilding', () => {
     expect(screen.getByTestId('chapter-building-fallback')).toBeVisible();
     expect(
       screen.getByRole('button', {
-        name: 'Chapter 1 認識色彩 尚未解鎖',
+        name: 'Chapter 1 認識色彩 未解鎖',
       }),
     ).toBeEnabled();
   });
