@@ -214,7 +214,10 @@ export function AppShell() {
         ) : null}
         {isAuthenticatedProfile && !isTeacher ? null : (
           <main className="game-stage__scene" id="main-content" tabIndex={-1}>
-            <Outlet />
+            {auth.status === 'authenticated' &&
+            !isAuthenticatedProfile ? null : (
+              <Outlet />
+            )}
           </main>
         )}
       </div>

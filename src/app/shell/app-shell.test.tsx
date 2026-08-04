@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { useEffect, useState } from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -325,6 +326,82 @@ describe('AppShell', () => {
     const stage = screen.getByRole('main').closest('.game-stage');
     expect(stage).not.toHaveClass('game-stage--learning-map');
     expect(document.querySelector('.economy-summary--learning-map')).toBeNull();
+  });
+
+  it('mounts the authenticated route subtree once when profile authority resolves', async () => {
+    let profileResolved = false;
+    const mounted = vi.fn();
+    const unmounted = vi.fn();
+
+    mockedUseMyProfile.mockImplementation(() =>
+      profileResolved
+        ? {
+            data: {
+              displayName: 'student.one',
+              id: 'student-one-id',
+              role: 'student',
+              timezone: 'Asia/Taipei',
+              reducedMotion: false,
+            },
+            error: null,
+            isError: false,
+            isPending: false,
+            refetch: vi.fn(),
+          }
+        : {
+            data: undefined,
+            error: null,
+            isError: false,
+            isPending: true,
+            refetch: vi.fn(),
+          },
+    );
+
+    function RemountSentinel() {
+      useEffect(() => {
+        mounted();
+        return () => {
+          unmounted();
+        };
+      }, []);
+      return <p>受保護路由內容</p>;
+    }
+
+    function ProfileResolutionHarness() {
+      const [, setRevision] = useState(0);
+      return (
+        <ToastProvider>
+          <button
+            onClick={() => {
+              profileResolved = true;
+              setRevision(1);
+            }}
+            type="button"
+          >
+            完成權限解析
+          </button>
+          <AppShell />
+        </ToastProvider>
+      );
+    }
+
+    const router = createMemoryRouter(
+      [
+        {
+          children: [{ element: <RemountSentinel />, index: true }],
+          element: <ProfileResolutionHarness />,
+          path: '/app',
+        },
+      ],
+      { initialEntries: ['/app'] },
+    );
+    render(<RouterProvider router={router} />);
+
+    await userEvent.click(screen.getByRole('button', { name: '完成權限解析' }));
+
+    expect(screen.getByText('受保護路由內容')).toBeVisible();
+    expect(mounted).toHaveBeenCalledTimes(1);
+    expect(unmounted).not.toHaveBeenCalled();
   });
 
   it('uses non-blocking map copy only on exact /app and dismissal preserves map controls', async () => {

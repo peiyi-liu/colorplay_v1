@@ -140,6 +140,36 @@ describe('ChapterMapCamera', () => {
     expect(document.body).toHaveFocus();
   });
 
+  it('cancels an active drag before resize recentering can reuse its stale origin', () => {
+    render(
+      <ChapterMapCamera activeChapter={activeChapter(6)}>
+        <div data-testid="blank-world">村莊世界</div>
+      </ChapterMapCamera>,
+    );
+    const viewport = screen.getByRole('region', { name: '村莊地圖探索區' });
+    const release = vi.fn();
+    viewport.setPointerCapture = vi.fn();
+    viewport.releasePointerCapture = release;
+    viewport.hasPointerCapture = vi.fn().mockReturnValue(true);
+    viewport.scrollLeft = 300;
+
+    fireEvent.pointerDown(screen.getByTestId('blank-world'), {
+      button: 0,
+      clientX: 200,
+      isPrimary: true,
+      pointerId: 7,
+    });
+
+    viewportClientWidth = 300;
+    viewportScrollWidth = 1200;
+    resizeCallback?.([], {} as ResizeObserver);
+    expect(viewport.scrollLeft).toBe(738);
+    expect(release).toHaveBeenCalledWith(7);
+
+    fireEvent.pointerMove(viewport, { clientX: 150, pointerId: 7 });
+    expect(viewport.scrollLeft).toBe(738);
+  });
+
   it('drags blank world directly but leaves button and link gestures alone', () => {
     render(
       <ChapterMapCamera activeChapter={activeChapter(2)}>

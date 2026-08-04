@@ -5,7 +5,11 @@ import { signInStudent } from './helpers/auth';
 import {
   dragMapBackground,
   findReachableBackgroundPoint,
+  readMapScrollGap,
 } from './helpers/learning-map';
+
+const SCROLL_INSTRUCTION = '選擇一棟建築，查看章節的複習、精熟度與解鎖條件。';
+const MINIMUM_SCROLL_CLEARANCE = 8;
 
 const expectGoldGlow = (filter: string): void => {
   const colors = [...filter.matchAll(/rgb\((\d+), (\d+), (\d+)\)/gu)].map(
@@ -229,7 +233,14 @@ test('keeps the lower chapter row operable beside a wrapped dialogue at 812 by 3
   const dialogueLane = page.locator('.chapter-map__dialogue-lane');
   const panel = page.locator('.chapter-map__panel');
   const map = page.getByRole('list', { name: '六章學習地圖' });
+  const instruction = page.getByText(SCROLL_INSTRUCTION, { exact: true });
 
+  await expect(instruction).toBeVisible();
+  await expect(instruction).toBeInViewport();
+  const scrollGap = await readMapScrollGap(page);
+  expect(scrollGap.nearest, scrollGap.pairs.join(', ')).toBeGreaterThanOrEqual(
+    MINIMUM_SCROLL_CLEARANCE,
+  );
   await expect(mapViewport).toBeVisible();
   await expect(dialogueLane).toBeVisible();
 

@@ -7936,7 +7936,9 @@ select#dashboard-classroom {
   }
 
   .chapter-map-scroll__copy > p:last-child {
-    display: none;
+    font-size: 10px;
+    line-height: 1.2;
+    white-space: normal;
   }
 
   .chapter-map__panel {

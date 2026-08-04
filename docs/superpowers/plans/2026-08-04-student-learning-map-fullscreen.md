@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Plan-size rationale (>500 lines):** This owner-approved cross-layer plan was originally 616 lines and stays in one document because its five ordered TDD tasks share protected-WIP rules, exact viewport measurements, and one final acceptance gate; splitting it would duplicate those safety constraints and make task isolation harder to audit.
+
 **Goal:** 將學生精確路由 `/app` 實作成 owner 核准的全螢幕 JRPG 森林王國村：App Shell 左上精簡 HUD、上緣中央卷軸、右上既有導覽、六棟依 1200×800 世界座標落地的建築、吊掛木牌與獨立狀態徽章、底部章節對話框，以及直向可關閉旋轉提示加地圖內平移。
 
 **Architecture:** 保留 `AppShell` 作為 inventory/economy 的唯一消費點，使用 `useLocation().pathname === '/app'` 切換純版面 class；`LobbyPage` 只取得 server-authoritative chapter map。地圖以單一 3:2 world layer 承載背景與所有場景物件，座標由純資料模組換算為百分比；直向平移只改 viewport 的 `scrollLeft`，不改 query、不寫資料、不重繪整棵應用樹。

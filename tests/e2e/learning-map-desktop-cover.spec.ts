@@ -251,3 +251,46 @@ for (const viewport of desktopViewports) {
     }
   });
 }
+
+test('selects every chapter from the rendered center of its wood sign and state medal', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 720, width: 1280 });
+  await signInStudent(page, TEST_USERS.learningStudent);
+
+  const buttons = page.locator('.chapter-map__building-button');
+  await expect(buttons).toHaveCount(6);
+  await buttons.nth(5).click();
+  await expect(buttons.nth(5)).toHaveAttribute('aria-pressed', 'true');
+
+  for (const selector of [
+    '.chapter-map__building-label',
+    '.chapter-map__status-medal',
+  ]) {
+    const surfaces = page.locator(selector);
+    await expect(surfaces).toHaveCount(6);
+
+    for (let index = 0; index < 6; index += 1) {
+      const button = buttons.nth(index);
+      const surface = surfaces.nth(index);
+      const center = await surface.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        const parentButton = element.closest('button');
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        return {
+          hitWithinButton:
+            parentButton?.contains(document.elementFromPoint(x, y)) === true,
+          position: getComputedStyle(element).position,
+          x,
+          y,
+        };
+      });
+
+      expect(center.position).toBe('absolute');
+      expect(center.hitWithinButton).toBe(true);
+      await page.mouse.click(center.x, center.y);
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+    }
+  }
+});

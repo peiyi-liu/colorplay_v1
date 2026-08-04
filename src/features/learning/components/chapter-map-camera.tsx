@@ -53,10 +53,21 @@ export function ChapterMapCamera({
       );
     };
 
+    const handleResize = () => {
+      const drag = dragRef.current;
+      if (drag) {
+        dragRef.current = null;
+        if (viewport.hasPointerCapture(drag.pointerId)) {
+          viewport.releasePointerCapture(drag.pointerId);
+        }
+      }
+      centerActiveChapter();
+    };
+
     centerActiveChapter();
     if (typeof ResizeObserver === 'undefined') return;
 
-    const resizeObserver = new ResizeObserver(centerActiveChapter);
+    const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(viewport);
     const world = viewport.firstElementChild;
     if (world) resizeObserver.observe(world);
