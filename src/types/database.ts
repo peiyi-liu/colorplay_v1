@@ -2579,6 +2579,10 @@ export type Database = {
         }
         Returns: number
       }
+      activate_course_sequential: {
+        Args: { p_course_id: string }
+        Returns: Json
+      }
       activate_next_quiz_question: {
         Args: { session_id: string }
         Returns: Json
@@ -2982,6 +2986,10 @@ export type Database = {
           p_version: number
         }
         Returns: undefined
+      }
+      reopen_course_progression: {
+        Args: { p_course_id: string }
+        Returns: Json
       }
       request_question_hint: {
         Args: { p_hint_level: number; p_session_question_id: string }
