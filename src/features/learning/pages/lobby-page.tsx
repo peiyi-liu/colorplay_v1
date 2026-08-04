@@ -34,7 +34,10 @@ export function LobbyPage() {
   const requestedChapter = searchParams.get('chapter') ?? undefined;
 
   return (
-    <section aria-labelledby="learning-map-title" className="lobby scene-day">
+    <section
+      aria-labelledby="learning-map-title"
+      className="lobby lobby--map-fullscreen scene-day"
+    >
       <div className="hud-bar">
         <StudentSummaryCard />
       </div>

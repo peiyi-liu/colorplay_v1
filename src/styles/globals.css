@@ -7030,6 +7030,35 @@ select#dashboard-classroom {
 }
 
 /* JRPG learning map */
+#main-content:has(> .lobby--map-fullscreen) {
+  align-items: start;
+  justify-items: stretch;
+  padding: 0;
+}
+
+.lobby--map-fullscreen {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  gap: 0;
+  padding: 0;
+}
+
+.lobby--map-fullscreen .hud-bar {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: 0 3px 0 var(--pixel-shadow);
+}
+
+.scene-day.lobby--map-fullscreen .chapter-map-shell {
+  width: 100%;
+  min-width: 0;
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .chapter-map-shell {
   gap: var(--space-4);
   overflow: hidden;
@@ -7427,6 +7456,33 @@ select#dashboard-classroom {
 
   .chapter-map__panel {
     max-height: min(560px, 66vw);
+  }
+}
+
+@media (min-width: 64rem) and (orientation: landscape) {
+  .lobby--map-fullscreen {
+    height: 100%;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .lobby--map-fullscreen .chapter-map-shell {
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .lobby--map-fullscreen .chapter-map {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .lobby--map-fullscreen .chapter-map__scene {
+    height: 100%;
+    aspect-ratio: auto;
+  }
+
+  .lobby--map-fullscreen .chapter-map__panel {
+    height: 100%;
+    max-height: none;
   }
 }
 
