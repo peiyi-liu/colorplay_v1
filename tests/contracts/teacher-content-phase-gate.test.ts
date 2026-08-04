@@ -6,8 +6,8 @@ import { ACCEPTANCE_IDS } from '../../scripts/acceptance/finalize-teacher-conten
 
 const readText = (path: string) => readFile(path, 'utf8');
 
-describe('teacher content phase gate contract', () => {
-  it('registers the package entry point and generic exclusion', async () => {
+describe('teacher content retirement gate contract', () => {
+  it('registers the retirement gate and generic exclusion', async () => {
     const packageJson = JSON.parse(await readText('package.json')) as {
       scripts: Record<string, string>;
     };
@@ -15,42 +15,29 @@ describe('teacher content phase gate contract', () => {
       'bash scripts/acceptance/run-teacher-content.sh',
     );
     expect(packageJson.scripts['test:e2e']).toContain(
-      'Teacher Content phase gate',
+      'Teacher Content retirement gate',
     );
   });
 
-  it('locks exactly the ten exit acceptance ids', () => {
-    expect(ACCEPTANCE_IDS).toEqual([
-      'AC-TCH-001',
-      'AC-TCH-002',
-      'AC-TCH-003',
-      'AC-TCH-004',
-      'AC-TCH-005',
-      'AC-TCH-006',
-      'AC-TCH-007',
-      'AC-TCH-008',
-      'AC-TCH-009',
-      'AC-MIG-003',
-    ]);
+  it('replaces retired feature acceptance ids with route-retirement ids', () => {
+    expect(ACCEPTANCE_IDS).toEqual(['AC-RETIRE-TCH-001', 'AC-RETIRE-TCH-002']);
   });
 
-  it('keeps the runner fail-closed and ordered', async () => {
+  it('keeps the runner fail-closed without resetting product data', async () => {
     const runner = await readText('scripts/acceptance/run-teacher-content.sh');
     expect(runner).toContain('TEACHER_CONTENT_DIRTY_WORKTREE');
     expect(runner).toContain('TEACHER_CONTENT_EVIDENCE_ALREADY_EXISTS');
     expect(runner).toContain('wait-for-postgrest.sh');
     expect(runner).toContain('unset SUPABASE_SERVICE_ROLE_KEY');
-    expect(runner).toContain("--grep='Teacher Content phase gate'");
+    expect(runner).toContain("--grep='Teacher Content retirement gate'");
     expect(runner).toContain('finalize-teacher-content.mjs');
-    // The reset precedes the db tests: browser runs commit real content
-    // imports, and pgTAP asserts against the seeded curriculum.
+    expect(runner).not.toContain('supabase db reset --local');
     const order = [
       'pnpm format:check',
       'pnpm lint',
       'pnpm typecheck',
       'pnpm test',
       'pnpm build',
-      'supabase db reset --local',
       'pnpm test:db',
       'wait-for-postgrest.sh',
       'seed-auth.ts',
@@ -64,35 +51,29 @@ describe('teacher content phase gate contract', () => {
     }
   });
 
-  it('keeps the finalizer evidence gates fail-closed', async () => {
+  it('requires only retirement evidence and zero expected failures', async () => {
     const finalizer = await readText(
       'scripts/acceptance/finalize-teacher-content.mjs',
     );
-    expect(finalizer).toContain("'teacher-dashboard-1440x900.png'");
-    expect(finalizer).toContain("'import-preview-768x1024.png'");
-    expect(finalizer).toContain("'content-workspace-375x812.png'");
-    expect(finalizer).toContain('colorplay-content-template.xlsx');
-    expect(finalizer).toContain('upsert_question_draft');
+    expect(finalizer).toContain("'teacher-import-retired-1280x720.png'");
+    expect(finalizer).toContain("'teacher-content-retired-375x812.png'");
+    expect(finalizer).toContain('teacher-content-retirement-v2');
+    expect(finalizer).toContain(
+      'const EXPECTED_BROWSER_FAILURES = Object.freeze([])',
+    );
     expect(finalizer).toContain('evidence-policy.mjs');
-    expect(finalizer).toContain('teacher-content-v1');
-    expect(finalizer).not.toContain('Learning Experience');
-    expect(finalizer).not.toContain('live-latency');
+    expect(finalizer).not.toContain('colorplay-content-template.xlsx');
+    expect(finalizer).not.toContain('upsert_question_draft');
   });
 
-  it('keeps the acceptance spec honest about waits and privacy', async () => {
+  it('pins both removed routes, no writes, and no bypasses', async () => {
     const spec = await readText('tests/e2e/teacher-content.spec.ts');
-    expect(spec).toContain("test('Teacher Content phase gate'");
-    expect(spec).toContain("PLAYWRIGHT_ACCEPTANCE !== 'on'");
-    expect(spec).toContain('colorplay-content-template.xlsx');
-    expect(spec).toContain('ANSWER_INVALID');
-    expect(spec).toContain('已發布第 2 版。');
-    expect(spec).toContain('window.__xss');
-    expect(spec).toContain('teacher-dashboard-1440x900.png');
-    expect(spec).toContain('import-preview-768x1024.png');
-    expect(spec).toContain('content-workspace-375x812.png');
-    expect(spec).toContain('declareExpectedBrowserFailure');
-    expect(spec).toContain('await teacherBContext.close();');
-    expect(spec).toContain('await studentPage.reload();');
+    expect(spec).toContain("test('Teacher Content retirement gate'");
+    expect(spec).toContain("'/teacher/import'");
+    expect(spec).toContain("'/teacher/content'");
+    expect(spec).toContain("name: '找不到頁面'");
+    expect(spec).toContain('unexpectedMutations');
+    expect(spec).toContain('expect(declaredFailures).toEqual([])');
     expect(spec).not.toContain('page.route(');
     expect(spec).not.toContain('test.skip(');
     expect(spec).not.toContain('service_role');

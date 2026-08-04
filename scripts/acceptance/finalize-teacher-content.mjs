@@ -9,16 +9,8 @@ import {
 } from './evidence-policy.mjs';
 
 export const ACCEPTANCE_IDS = Object.freeze([
-  'AC-TCH-001',
-  'AC-TCH-002',
-  'AC-TCH-003',
-  'AC-TCH-004',
-  'AC-TCH-005',
-  'AC-TCH-006',
-  'AC-TCH-007',
-  'AC-TCH-008',
-  'AC-TCH-009',
-  'AC-MIG-003',
+  'AC-RETIRE-TCH-001',
+  'AC-RETIRE-TCH-002',
 ]);
 
 const COMMAND_LABELS = Object.freeze([
@@ -27,21 +19,13 @@ const COMMAND_LABELS = Object.freeze([
   'pnpm typecheck',
   'pnpm test',
   'pnpm build',
-  'pnpm exec supabase db reset --local',
   'pnpm test:db',
   'bash scripts/supabase/wait-for-postgrest.sh',
   'pnpm exec tsx scripts/supabase/seed-auth.ts',
-  "bash scripts/test-e2e-local.sh --project=chromium --headed --grep='Teacher Content phase gate'",
+  "bash scripts/test-e2e-local.sh --project=chromium --headed --grep='Teacher Content retirement gate'",
 ]);
 
-const EXPECTED_BROWSER_FAILURES = Object.freeze([
-  Object.freeze({
-    expected_count: 1,
-    observed_count: 1,
-    status: 400,
-    url_pattern: /\/rest\/v1\/rpc\/upsert_question_draft(?:\?.*)?$/u.source,
-  }),
-]);
+const EXPECTED_BROWSER_FAILURES = Object.freeze([]);
 
 const isPlainObject = (value) =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -134,7 +118,7 @@ const parseCommands = async (root) => {
 const assertSourceState = (run) => {
   if (
     !isPlainObject(run) ||
-    run.phase !== 'teacher-content-v1' ||
+    run.phase !== 'teacher-content-retirement-v2' ||
     !/^[0-9a-f]{40}$/u.test(run.git_sha ?? '') ||
     run.dirty_worktree !== false ||
     run.supabase_environment !== 'local' ||
@@ -143,6 +127,7 @@ const assertSourceState = (run) => {
     throw new Error('TEACHER_CONTENT_INVALID_SOURCE_STATE');
   }
 };
+
 const assertBrowserHealth = (health) => {
   if (
     !isPlainObject(health) ||
@@ -162,20 +147,17 @@ export async function finalizeTeacherContent(runDirectory) {
   const run = await readJson(join(root, 'run.json'));
   assertSourceState(run);
   const commands = await parseCommands(root);
-  const [downloads, screenshots, videos, traces, reports] = await Promise.all(
-    ['downloads', 'screenshots', 'videos', 'traces', 'reports'].map(
-      (directory) => listFiles(join(root, directory)),
+  const [screenshots, videos, traces, reports] = await Promise.all(
+    ['screenshots', 'videos', 'traces', 'reports'].map((directory) =>
+      listFiles(join(root, directory)),
     ),
   );
   const requiredScreenshots = [
-    'teacher-dashboard-1440x900.png',
-    'import-preview-768x1024.png',
-    'content-workspace-375x812.png',
+    'teacher-import-retired-1280x720.png',
+    'teacher-content-retired-375x812.png',
   ];
   if (
-    downloads.length !== 1 ||
-    !downloads[0]?.endsWith('/colorplay-content-template.xlsx') ||
-    screenshots.length !== 3 ||
+    screenshots.length !== requiredScreenshots.length ||
     videos.length !== 1 ||
     traces.length !== 1 ||
     !requiredScreenshots.every((name) =>
@@ -186,13 +168,7 @@ export async function finalizeTeacherContent(runDirectory) {
   ) {
     throw new Error('TEACHER_CONTENT_REQUIRED_EVIDENCE_MISSING');
   }
-  await requireEvidence([
-    ...downloads,
-    ...screenshots,
-    ...videos,
-    ...traces,
-    ...reports,
-  ]);
+  await requireEvidence([...screenshots, ...videos, ...traces, ...reports]);
   const browserHealth = await readJson(
     join(root, 'reports/browser-health.json'),
   );
@@ -200,23 +176,20 @@ export async function finalizeTeacherContent(runDirectory) {
   await assertSafe({
     evidencePaths: [
       join(root, 'run.json'),
-      ...downloads,
       ...screenshots,
       ...videos,
       ...traces,
       ...reports,
     ],
     root,
-    // The xlsx template is a PK zip archive: scan its textual entries the
-    // same way trace archives are scanned instead of as raw bytes.
-    tracePaths: [...traces, ...downloads],
+    tracePaths: traces,
   });
   const sortedRelative = (paths) =>
     paths.map((path) => relativeEvidencePath(root, path)).sort();
   const manifest = {
     acceptance_ids: [...ACCEPTANCE_IDS],
     artifacts: {
-      downloads: sortedRelative(downloads),
+      downloads: [],
       reports: sortedRelative(reports),
       screenshots: sortedRelative(screenshots),
       traces: sortedRelative(traces),
@@ -233,7 +206,7 @@ export async function finalizeTeacherContent(runDirectory) {
     decision: 'PASS',
     dirty_worktree: false,
     git_sha: run.git_sha,
-    phase: 'teacher-content-v1',
+    phase: 'teacher-content-retirement-v2',
     schema_version: 1,
     supabase_environment: 'local',
   };
