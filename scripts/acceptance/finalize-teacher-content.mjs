@@ -143,6 +143,24 @@ const assertBrowserHealth = (health) => {
   }
 };
 
+const assertDatabaseGate = async (root) => {
+  const databaseReport = await readFile(
+    join(root, 'reports/database-integration.log'),
+    'utf8',
+  );
+  const summaryMatch = databaseReport.match(/Files=(\d+), Tests=(\d+)/u);
+  const resultMatch = databaseReport.match(/Result:\s+(\w+)/u);
+  if (
+    !summaryMatch ||
+    !resultMatch ||
+    Number(summaryMatch[1]) <= 0 ||
+    Number(summaryMatch[2]) <= 0 ||
+    resultMatch[1] !== 'PASS'
+  ) {
+    throw new Error('TEACHER_CONTENT_DATABASE_GATE_FAILED');
+  }
+};
+
 export async function finalizeTeacherContent(runDirectory) {
   const root = resolve(runDirectory);
   const run = await readJson(join(root, 'run.json'));
@@ -173,6 +191,7 @@ export async function finalizeTeacherContent(runDirectory) {
   const browserHealth = await readJson(
     join(root, 'reports/browser-health.json'),
   );
+  await assertDatabaseGate(root);
   assertBrowserHealth(browserHealth);
   await assertSafe({
     evidencePaths: [

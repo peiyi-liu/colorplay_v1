@@ -69,6 +69,16 @@ describe('teacher content retirement gate contract', () => {
     expect(finalizer).not.toContain('upsert_question_draft');
   });
 
+  it('rejects a database report that ran zero tests', async () => {
+    const finalizer = await readText(
+      'scripts/acceptance/finalize-teacher-content.mjs',
+    );
+    expect(finalizer).toContain('TEACHER_CONTENT_DATABASE_GATE_FAILED');
+    expect(finalizer).toContain("resultMatch[1] !== 'PASS'");
+    expect(finalizer).toContain('Number(summaryMatch[1]) <= 0');
+    expect(finalizer).toContain('Number(summaryMatch[2]) <= 0');
+  });
+
   it('pins both removed routes, no writes, and no bypasses', async () => {
     const spec = await readText('tests/e2e/teacher-content.spec.ts');
     expect(spec).toContain("test('Teacher Content retirement gate'");
