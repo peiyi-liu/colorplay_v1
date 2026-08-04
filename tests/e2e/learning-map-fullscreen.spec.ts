@@ -70,6 +70,10 @@ for (const viewport of viewports) {
       await page.mouse.move(viewport.width / 2, viewport.height - 12);
       await page.mouse.wheel(0, viewport.height);
     }
+    const mapViewport = page.getByRole('region', {
+      name: '村莊地圖探索區',
+    });
+    await mapViewport.press('Home');
     await expect(firstBuilding).toBeInViewport();
     await firstBuilding.click();
     await expect(firstBuilding).toHaveAttribute('aria-pressed', 'true');
@@ -219,4 +223,87 @@ test('keeps the lower chapter row operable beside a wrapped dialogue at 812 by 3
   await expect(
     page.getByRole('heading', { name: /^Chapter \d+：/u }),
   ).toBeVisible();
+});
+
+test('recenters after portrait resize and drags from the real village background image', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 375, width: 812 });
+  await signInStudent(page, TEST_USERS.learningStudent);
+
+  const viewport = page.getByRole('region', { name: '村莊地圖探索區' });
+  const map = page.getByRole('list', { name: '六章學習地圖' });
+  const sixth = map.getByRole('button', { name: /^Chapter 6 /u });
+  await sixth.click();
+  await expect(sixth).toBeFocused();
+
+  await page.setViewportSize({ height: 812, width: 375 });
+  await expect
+    .poll(() => viewport.evaluate((element) => element.scrollLeft))
+    .toBeGreaterThan(0);
+  await expect(sixth).toBeFocused();
+  await expect(sixth).toBeInViewport();
+
+  const centered = await Promise.all([
+    viewport.boundingBox(),
+    sixth.boundingBox(),
+  ]);
+  const [viewportBox, sixthBox] = centered;
+  if (!viewportBox || !sixthBox) {
+    throw new Error('Portrait camera geometry is unavailable');
+  }
+  expect(
+    Math.abs(
+      sixthBox.x + sixthBox.width / 2 - (viewportBox.x + viewportBox.width / 2),
+    ),
+  ).toBeLessThanOrEqual(8);
+
+  const first = map.getByRole('button', { name: /^Chapter 1 /u });
+  await first.click();
+  await expect(first).toBeFocused();
+  await expect
+    .poll(() => viewport.evaluate((element) => element.scrollLeft))
+    .toBe(0);
+
+  await expect(page.locator('.chapter-map__base')).toHaveAttribute(
+    'draggable',
+    'false',
+  );
+  const backgroundPoint = await viewport.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const xRatios = [0.8, 0.7, 0.6, 0.5];
+    const yRatios = [0.5, 0.18, 0.82, 0.65, 0.35];
+    const hits = new Set<string>();
+
+    for (const xRatio of xRatios) {
+      for (const yRatio of yRatios) {
+        const x = rect.left + rect.width * xRatio;
+        const y = rect.top + rect.height * yRatio;
+        const hit = document.elementFromPoint(x, y);
+        if (hit?.classList.contains('chapter-map__base')) return { x, y };
+        hits.add(
+          `${hit?.tagName ?? 'none'}.${
+            hit instanceof HTMLElement ? hit.className : ''
+          }`,
+        );
+      }
+    }
+
+    throw new Error(
+      `No visible blank point resolves to the village base image; hits=${[
+        ...hits,
+      ].join(',')}`,
+    );
+  });
+  const beforeDrag = await viewport.evaluate((element) => element.scrollLeft);
+  await page.mouse.move(backgroundPoint.x, backgroundPoint.y);
+  await page.mouse.down();
+  await page.mouse.move(backgroundPoint.x - 120, backgroundPoint.y, {
+    steps: 12,
+  });
+  await page.mouse.up();
+
+  await expect
+    .poll(() => viewport.evaluate((element) => element.scrollLeft))
+    .toBeGreaterThan(beforeDrag + 80);
 });

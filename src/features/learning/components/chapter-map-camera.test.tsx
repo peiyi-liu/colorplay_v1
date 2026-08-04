@@ -22,15 +22,38 @@ const dimensions = {
   ),
 };
 
+let viewportClientWidth = 500;
+let viewportScrollWidth = 1000;
+let resizeCallback: ResizeObserverCallback | undefined;
+const observeResize = vi.fn();
+const disconnectResize = vi.fn();
+
 describe('ChapterMapCamera', () => {
   beforeEach(() => {
+    viewportClientWidth = 500;
+    viewportScrollWidth = 1000;
+    resizeCallback = undefined;
+    observeResize.mockReset();
+    disconnectResize.mockReset();
+    vi.stubGlobal(
+      'ResizeObserver',
+      class ResizeObserverStub {
+        constructor(callback: ResizeObserverCallback) {
+          resizeCallback = callback;
+        }
+
+        disconnect = disconnectResize;
+        observe = observeResize;
+        unobserve = vi.fn();
+      },
+    );
     Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
       configurable: true,
-      get: () => 500,
+      get: () => viewportClientWidth,
     });
     Object.defineProperty(HTMLElement.prototype, 'scrollWidth', {
       configurable: true,
-      get: () => 1000,
+      get: () => viewportScrollWidth,
     });
   });
 
@@ -53,6 +76,7 @@ describe('ChapterMapCamera', () => {
     } else {
       Reflect.deleteProperty(HTMLElement.prototype, 'scrollWidth');
     }
+    vi.unstubAllGlobals();
   });
 
   it('centers the active chapter and clamps the camera without moving focus', () => {
@@ -94,6 +118,28 @@ describe('ChapterMapCamera', () => {
     expect(viewport.scrollLeft).toBe(500);
   });
 
+  it('recenters the unchanged active chapter after viewport and world dimensions change', () => {
+    render(
+      <ChapterMapCamera activeChapter={activeChapter(6)}>
+        <div data-testid="village-world">村莊世界</div>
+      </ChapterMapCamera>,
+    );
+    const viewport = screen.getByRole('region', { name: '村莊地圖探索區' });
+    const world = screen.getByTestId('village-world');
+    expect(viewport.scrollLeft).toBe(490);
+    expect(observeResize).toHaveBeenCalledWith(viewport);
+    expect(observeResize).toHaveBeenCalledWith(world);
+
+    viewportClientWidth = 300;
+    viewportScrollWidth = 1200;
+    viewport.scrollLeft = 0;
+    resizeCallback?.([], {} as ResizeObserver);
+
+    expect(viewport.scrollLeft).toBe(738);
+    expect(viewport).not.toHaveFocus();
+    expect(document.body).toHaveFocus();
+  });
+
   it('drags blank world directly but leaves button and link gestures alone', () => {
     render(
       <ChapterMapCamera activeChapter={activeChapter(2)}>
@@ -106,13 +152,16 @@ describe('ChapterMapCamera', () => {
     const viewport = screen.getByRole('region', { name: '村莊地圖探索區' });
     const capture = vi.fn();
     const release = vi.fn();
+    const hasCapture = vi.fn().mockReturnValue(true);
     viewport.setPointerCapture = capture;
     viewport.releasePointerCapture = release;
+    viewport.hasPointerCapture = hasCapture;
     viewport.scrollLeft = 300;
 
     fireEvent.pointerDown(screen.getByTestId('blank-world'), {
       button: 0,
       clientX: 200,
+      isPrimary: true,
       pointerId: 7,
     });
     fireEvent.pointerMove(viewport, { clientX: 150, pointerId: 7 });
@@ -135,6 +184,49 @@ describe('ChapterMapCamera', () => {
     fireEvent.pointerMove(viewport, { clientX: 100, pointerId: 9 });
     expect(viewport.scrollLeft).toBe(350);
     expect(capture).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps one primary drag and cleans it up on matching lost capture', () => {
+    render(
+      <ChapterMapCamera activeChapter={activeChapter(2)}>
+        <div data-testid="blank-world">村莊世界</div>
+      </ChapterMapCamera>,
+    );
+    const viewport = screen.getByRole('region', { name: '村莊地圖探索區' });
+    const capture = vi.fn();
+    const release = vi.fn();
+    viewport.setPointerCapture = capture;
+    viewport.releasePointerCapture = release;
+    viewport.hasPointerCapture = vi.fn().mockReturnValue(false);
+    viewport.scrollLeft = 300;
+
+    fireEvent.pointerDown(screen.getByTestId('blank-world'), {
+      button: 0,
+      clientX: 200,
+      isPrimary: true,
+      pointerId: 7,
+    });
+    fireEvent.pointerDown(screen.getByTestId('blank-world'), {
+      button: 0,
+      clientX: 100,
+      isPrimary: false,
+      pointerId: 8,
+    });
+    fireEvent.pointerMove(viewport, { clientX: 20, pointerId: 8 });
+    expect(viewport.scrollLeft).toBe(300);
+    expect(capture).toHaveBeenCalledTimes(1);
+
+    fireEvent.pointerMove(viewport, { clientX: 150, pointerId: 7 });
+    expect(viewport.scrollLeft).toBe(350);
+    fireEvent.lostPointerCapture(viewport, { pointerId: 8 });
+    fireEvent.pointerMove(viewport, { clientX: 140, pointerId: 7 });
+    expect(viewport.scrollLeft).toBe(360);
+
+    fireEvent.lostPointerCapture(viewport, { pointerId: 7 });
+    fireEvent.pointerMove(viewport, { clientX: 100, pointerId: 7 });
+    expect(viewport.scrollLeft).toBe(360);
+    fireEvent.pointerUp(viewport, { pointerId: 7 });
+    expect(release).not.toHaveBeenCalled();
   });
 
   it('shows six passive positions and marks the active step without storage writes', () => {

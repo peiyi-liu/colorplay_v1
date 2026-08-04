@@ -7401,6 +7401,7 @@ select#dashboard-classroom {
   inset: 0;
   list-style: none;
   padding: 0;
+  pointer-events: none;
 }
 
 .chapter-map__building {
@@ -7421,6 +7422,7 @@ select#dashboard-classroom {
   color: var(--pixel-window-ink);
   cursor: pointer;
   padding: 0;
+  pointer-events: auto;
 }
 
 .chapter-map__entry-action:focus-visible {

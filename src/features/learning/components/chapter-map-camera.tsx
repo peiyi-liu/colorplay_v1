@@ -44,12 +44,26 @@ export function ChapterMapCamera({
     const viewport = viewportRef.current;
     if (!viewport) return;
 
-    const anchor = getChapterGroundAnchor(activeChapter.sortOrder);
-    const worldScale = viewport.scrollWidth / CHAPTER_MAP_WORLD.width;
-    viewport.scrollLeft = clampScrollLeft(
-      viewport,
-      anchor.x * worldScale - viewport.clientWidth / 2,
-    );
+    const centerActiveChapter = () => {
+      const anchor = getChapterGroundAnchor(activeChapter.sortOrder);
+      const worldScale = viewport.scrollWidth / CHAPTER_MAP_WORLD.width;
+      viewport.scrollLeft = clampScrollLeft(
+        viewport,
+        anchor.x * worldScale - viewport.clientWidth / 2,
+      );
+    };
+
+    centerActiveChapter();
+    if (typeof ResizeObserver === 'undefined') return;
+
+    const resizeObserver = new ResizeObserver(centerActiveChapter);
+    resizeObserver.observe(viewport);
+    const world = viewport.firstElementChild;
+    if (world) resizeObserver.observe(world);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
   }, [activeChapter.chapterId, activeChapter.sortOrder]);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -80,6 +94,8 @@ export function ChapterMapCamera({
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (
       event.button !== 0 ||
+      !event.isPrimary ||
+      dragRef.current !== null ||
       (event.target instanceof Element && event.target.closest('button, a'))
     ) {
       return;
@@ -108,7 +124,15 @@ export function ChapterMapCamera({
     if (drag?.pointerId !== event.pointerId) return;
 
     dragRef.current = null;
-    event.currentTarget.releasePointerCapture(event.pointerId);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  const handleLostPointerCapture = (event: PointerEvent<HTMLDivElement>) => {
+    if (dragRef.current?.pointerId === event.pointerId) {
+      dragRef.current = null;
+    }
   };
 
   return (
@@ -116,6 +140,7 @@ export function ChapterMapCamera({
       aria-label="村莊地圖探索區"
       className="chapter-map__viewport"
       onKeyDown={handleKeyDown}
+      onLostPointerCapture={handleLostPointerCapture}
       onPointerCancel={finishPointerDrag}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}

@@ -75,6 +75,7 @@ export function ChapterMap({
             aria-hidden="true"
             className="chapter-map__base"
             decoding="async"
+            draggable={false}
             src={forestVillageBase}
           />
           <ol aria-label="六章學習地圖" className="chapter-map__buildings">

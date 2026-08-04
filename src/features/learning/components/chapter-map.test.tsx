@@ -121,6 +121,10 @@ describe('ChapterMap', () => {
     for (const decoration of decorations) {
       expect(decoration).toHaveAttribute('aria-hidden', 'true');
     }
+    expect(container.querySelector('.chapter-map__base')).toHaveAttribute(
+      'draggable',
+      'false',
+    );
   });
 
   it('places the village art, buildings, and characters in one labelled logical world', () => {
