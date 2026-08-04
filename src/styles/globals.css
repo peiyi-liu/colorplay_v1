@@ -7172,9 +7172,10 @@ select#dashboard-classroom {
   gap: var(--space-4);
 }
 
-.chapter-map__scene {
+.chapter-map__viewport {
   position: relative;
-  overflow: clip;
+  display: grid;
+  overflow: auto hidden;
   min-width: 0;
   aspect-ratio: 3 / 2;
   border: 3px solid var(--pixel-gold-deep);
@@ -7186,9 +7187,16 @@ select#dashboard-classroom {
   isolation: isolate;
 }
 
+.chapter-map__world {
+  position: relative;
+  width: 100%;
+  min-width: 100%;
+  aspect-ratio: 3 / 2;
+}
+
 .chapter-map__base {
   position: absolute;
-  z-index: -1;
+  z-index: 0;
   width: 100%;
   height: 100%;
   inset: 0;
@@ -7197,35 +7205,30 @@ select#dashboard-classroom {
 
 .chapter-map__buildings {
   position: absolute;
-  display: grid;
   margin: 0;
-  gap: 0;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  inset: 4% 3% 5%;
+  inset: 0;
   list-style: none;
   padding: 0;
 }
 
 .chapter-map__building {
-  position: relative;
-  display: grid;
-  min-width: 0;
-  place-items: center;
+  position: absolute;
+  z-index: 1;
+  width: 17.5%;
+  min-width: 44px;
+  transform: translate(-50%, -100%);
 }
 
 .chapter-map__building-button {
   position: relative;
-  display: grid;
   width: 100%;
   min-width: 44px;
-  min-height: 44px;
   border: 2px solid transparent;
   border-radius: var(--radius-pixel);
   background: transparent;
   color: var(--pixel-window-ink);
   cursor: pointer;
-  grid-template-rows: minmax(0, 1fr) auto;
-  place-items: stretch center;
+  padding: 0;
 }
 
 .chapter-map__building-button:hover,
@@ -7244,20 +7247,24 @@ select#dashboard-classroom {
   position: relative;
   display: grid;
   width: 100%;
-  min-height: 0;
+  aspect-ratio: 7 / 5;
   place-items: end center;
+  transform: translate(
+    var(--chapter-visual-offset-x),
+    var(--chapter-visual-offset-y)
+  );
 }
 
 .chapter-map__building-art {
-  width: min(100%, 210px);
-  max-height: clamp(82px, 14vw, 174px);
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   filter: drop-shadow(3px 4px 0 rgb(5 17 27 / 55%));
 }
 
 .chapter-map__building-fallback {
-  width: min(70%, 120px);
-  height: min(72%, 96px);
+  width: 70%;
+  height: 72%;
   border: 4px solid var(--pixel-window-ink);
   background:
     linear-gradient(
@@ -7280,29 +7287,31 @@ select#dashboard-classroom {
 }
 
 .chapter-map__cloud {
-  width: min(88%, 170px);
+  width: 88%;
   inset: 18% auto auto 50%;
   animation: chapter-cloud-drift 2.8s ease-in-out infinite alternate;
   transform: translateX(-50%);
 }
 
 .chapter-map__construction {
-  width: min(82%, 170px);
+  width: 82%;
   inset: auto auto 3% 50%;
   transform: translateX(-50%);
 }
 
 .chapter-map__completion {
-  width: clamp(32px, 4vw, 48px);
-  inset: 4px 5px auto auto;
+  width: 26%;
+  inset: 2% 4% auto auto;
   filter: drop-shadow(2px 2px 0 var(--pixel-shadow));
 }
 
 .chapter-map__building-label {
-  position: relative;
+  position: absolute;
+  top: 100%;
+  left: 50%;
   z-index: 3;
   display: grid;
-  width: min(100%, 180px);
+  width: min(180px, 130%);
   min-height: 44px;
   align-content: center;
   border: 2px solid var(--pixel-gold-deep);
@@ -7312,6 +7321,7 @@ select#dashboard-classroom {
   line-height: 1.15;
   padding: 5px 8px;
   text-align: center;
+  transform: translateX(-50%);
 }
 
 .chapter-map__building-chapter,
@@ -7349,35 +7359,10 @@ select#dashboard-classroom {
   image-rendering: pixelated;
   place-items: center;
   pointer-events: none;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, calc(-100% - 12px));
   transition:
     left 180ms ease,
     top 180ms ease;
-}
-
-.chapter-map__companion[data-position='1'] {
-  left: 17%;
-  top: 25%;
-}
-.chapter-map__companion[data-position='2'] {
-  left: 50%;
-  top: 25%;
-}
-.chapter-map__companion[data-position='3'] {
-  left: 83%;
-  top: 25%;
-}
-.chapter-map__companion[data-position='4'] {
-  left: 17%;
-  top: 70%;
-}
-.chapter-map__companion[data-position='5'] {
-  left: 50%;
-  top: 70%;
-}
-.chapter-map__companion[data-position='6'] {
-  left: 83%;
-  top: 70%;
 }
 
 .chapter-map__adventurer {
@@ -7386,10 +7371,9 @@ select#dashboard-classroom {
   overflow: hidden;
   width: 48px;
   height: 60px;
-  inset: auto auto 34% 50%;
   image-rendering: pixelated;
   pointer-events: none;
-  transform: translateX(-50%);
+  transform: translate(-50%, -100%);
 }
 
 .chapter-map__adventurer img {
@@ -7554,9 +7538,16 @@ select#dashboard-classroom {
     min-height: 0;
   }
 
-  .lobby--map-fullscreen .chapter-map__scene {
+  .lobby--map-fullscreen .chapter-map__viewport {
     height: 100%;
     aspect-ratio: auto;
+  }
+
+  .lobby--map-fullscreen .chapter-map__world {
+    width: auto;
+    min-width: 0;
+    height: 100%;
+    max-width: 100%;
   }
 
   .lobby--map-fullscreen .chapter-map__panel {
@@ -7579,48 +7570,15 @@ select#dashboard-classroom {
   }
 }
 
-@media (max-height: 30rem) and (orientation: landscape) {
-  .chapter-map__adventurer {
-    inset: 5% auto auto 50%;
-  }
-}
-
 @media (max-width: 30rem) and (orientation: portrait) {
-  .chapter-map__scene {
+  .chapter-map__viewport {
     aspect-ratio: 4 / 5;
   }
 
-  .chapter-map__buildings {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .chapter-map__building-art {
-    max-height: 112px;
-  }
-
-  .chapter-map__companion[data-position='1'] {
-    left: 25%;
-    top: 20%;
-  }
-  .chapter-map__companion[data-position='2'] {
-    left: 75%;
-    top: 20%;
-  }
-  .chapter-map__companion[data-position='3'] {
-    left: 25%;
-    top: 50%;
-  }
-  .chapter-map__companion[data-position='4'] {
-    left: 75%;
-    top: 50%;
-  }
-  .chapter-map__companion[data-position='5'] {
-    left: 25%;
-    top: 80%;
-  }
-  .chapter-map__companion[data-position='6'] {
-    left: 75%;
-    top: 80%;
+  .chapter-map__world {
+    width: auto;
+    min-width: 150%;
+    height: 100%;
   }
 }
 

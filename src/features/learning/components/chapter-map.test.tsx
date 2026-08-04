@@ -120,4 +120,39 @@ describe('ChapterMap', () => {
       expect(decoration).toHaveAttribute('aria-hidden', 'true');
     }
   });
+
+  it('places the village art, buildings, and characters in one labelled logical world', () => {
+    const { container } = renderMap();
+    const world = container.querySelector('.chapter-map__world');
+
+    expect(world).toHaveAttribute('data-world-width', '1200');
+    expect(world).toHaveAttribute('data-world-height', '800');
+    expect(container.querySelector('.chapter-map__base')?.parentElement).toBe(
+      world,
+    );
+
+    const expectedGroundPoints = [
+      ['290', '298'],
+      ['582', '282'],
+      ['896', '298'],
+      ['300', '575'],
+      ['586', '620'],
+      ['888', '575'],
+    ];
+    const buildings = Array.from(
+      container.querySelectorAll('.chapter-map__building'),
+    );
+    expect(
+      buildings.map((building) => [
+        building.getAttribute('data-ground-x'),
+        building.getAttribute('data-ground-y'),
+      ]),
+    ).toEqual(expectedGroundPoints);
+
+    for (const decoration of container.querySelectorAll(
+      '.chapter-map__base, .chapter-map__buildings, .chapter-map__cloud, .chapter-map__construction, .chapter-map__adventurer, .chapter-map__companion',
+    )) {
+      expect(world?.contains(decoration)).toBe(true);
+    }
+  });
 });

@@ -13,6 +13,7 @@ import type {
   ChapterAccessState,
   StudentChapterMapEntry,
 } from '../api/chapter-map';
+import { anchorStyle, type ChapterGroundAnchor } from './chapter-map-layout';
 
 const buildingArt: Readonly<Record<string, string>> = {
   'chapter-1': chapter1School,
@@ -31,12 +32,14 @@ const accessLabels: Readonly<Record<ChapterAccessState, string>> = {
 };
 
 type ChapterMapBuildingProps = Readonly<{
+  anchor: ChapterGroundAnchor;
   chapter: StudentChapterMapEntry;
   onSelect: (chapterId: string) => void;
   selected: boolean;
 }>;
 
 export function ChapterMapBuilding({
+  anchor,
   chapter,
   onSelect,
   selected,
@@ -49,7 +52,10 @@ export function ChapterMapBuilding({
     <li
       className="chapter-map__building"
       data-access-state={chapter.accessState}
+      data-ground-x={anchor.x}
+      data-ground-y={anchor.y}
       data-selected={selected ? 'true' : 'false'}
+      style={anchorStyle(anchor)}
     >
       <button
         aria-label={`Chapter ${String(chapter.sortOrder)} ${chapter.title} ${stateLabel}`}

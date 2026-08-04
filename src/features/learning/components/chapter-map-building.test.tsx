@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { StudentChapterMapEntry } from '../api/chapter-map';
 import { ChapterMapBuilding } from './chapter-map-building';
+import type { ChapterGroundAnchor } from './chapter-map-layout';
 
 const chapter = (
   accessState: StudentChapterMapEntry['accessState'],
@@ -23,6 +24,13 @@ const chapter = (
   title: '認識色彩',
 });
 
+const anchor: ChapterGroundAnchor = {
+  visualOffsetX: 0,
+  visualOffsetY: 0,
+  x: 290,
+  y: 298,
+};
+
 describe('ChapterMapBuilding', () => {
   it.each([
     ['content_unavailable', '內容準備中'],
@@ -33,6 +41,7 @@ describe('ChapterMapBuilding', () => {
     render(
       <ol>
         <ChapterMapBuilding
+          anchor={anchor}
           chapter={chapter(state)}
           onSelect={vi.fn()}
           selected={state === 'available'}
@@ -55,6 +64,7 @@ describe('ChapterMapBuilding', () => {
     render(
       <ol>
         <ChapterMapBuilding
+          anchor={anchor}
           chapter={chapter('available')}
           onSelect={onSelect}
           selected={false}
@@ -79,6 +89,7 @@ describe('ChapterMapBuilding', () => {
     render(
       <ol>
         <ChapterMapBuilding
+          anchor={anchor}
           chapter={chapter('locked')}
           onSelect={vi.fn()}
           selected={false}
@@ -94,5 +105,28 @@ describe('ChapterMapBuilding', () => {
         name: 'Chapter 1 認識色彩 尚未解鎖',
       }),
     ).toBeEnabled();
+  });
+
+  it('uses its bottom-center ground anchor instead of participating in a grid', () => {
+    const { container } = render(
+      <ol>
+        <ChapterMapBuilding
+          anchor={anchor}
+          chapter={chapter('available')}
+          onSelect={vi.fn()}
+          selected={false}
+        />
+      </ol>,
+    );
+
+    const building = container.querySelector('.chapter-map__building');
+    expect(building).toHaveAttribute('data-ground-x', '290');
+    expect(building).toHaveAttribute('data-ground-y', '298');
+    expect(building).toHaveStyle({
+      '--chapter-anchor-x': '290',
+      '--chapter-anchor-y': '298',
+      left: '24.166666666666668%',
+      top: '37.25%',
+    });
   });
 });

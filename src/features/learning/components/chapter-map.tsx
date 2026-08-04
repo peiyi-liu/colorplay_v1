@@ -6,6 +6,12 @@ import { BlookArt } from '../../../components/ui/blook-art';
 import type { BlookInventoryItem } from '../../inventory/types';
 import type { StudentChapterMapEntry } from '../api/chapter-map';
 import { ChapterMapBuilding } from './chapter-map-building';
+import {
+  ADVENTURER_GROUND_ANCHOR,
+  CHAPTER_MAP_WORLD,
+  anchorStyle,
+  getChapterGroundAnchor,
+} from './chapter-map-layout';
 import { ChapterMapPanel } from './chapter-map-panel';
 
 const initialSelection = (
@@ -53,41 +59,55 @@ export function ChapterMap({
 
   if (!selectedChapter) return null;
 
+  const selectedAnchor = getChapterGroundAnchor(selectedPosition);
+
   return (
     <div className="chapter-map">
-      <div className="chapter-map__scene">
-        <img
-          alt=""
-          aria-hidden="true"
-          className="chapter-map__base"
-          decoding="async"
-          src={forestVillageBase}
-        />
-        <ol aria-label="六章學習地圖" className="chapter-map__buildings">
-          {chapters.map((chapter) => (
-            <ChapterMapBuilding
-              chapter={chapter}
-              key={chapter.chapterId}
-              onSelect={setSelectedId}
-              selected={chapter.chapterId === selectedChapter.chapterId}
-            />
-          ))}
-        </ol>
-        <span
-          aria-hidden="true"
-          className="chapter-map__companion"
-          data-position={selectedPosition}
-          data-testid="equipped-blook-badge"
+      <div className="chapter-map__viewport">
+        <div
+          className="chapter-map__world"
+          data-world-height={CHAPTER_MAP_WORLD.height}
+          data-world-width={CHAPTER_MAP_WORLD.width}
         >
-          <BlookArt
-            emoji={equippedBlook?.emoji}
-            size={40}
-            stableCode={equippedBlook?.stableCode ?? 'little_fox'}
+          <img
+            alt=""
+            aria-hidden="true"
+            className="chapter-map__base"
+            decoding="async"
+            src={forestVillageBase}
           />
-        </span>
-        <span aria-hidden="true" className="chapter-map__adventurer">
-          <img alt="" aria-hidden="true" src={adventurerIdle} />
-        </span>
+          <ol aria-label="六章學習地圖" className="chapter-map__buildings">
+            {chapters.map((chapter) => (
+              <ChapterMapBuilding
+                anchor={getChapterGroundAnchor(chapter.sortOrder)}
+                chapter={chapter}
+                key={chapter.chapterId}
+                onSelect={setSelectedId}
+                selected={chapter.chapterId === selectedChapter.chapterId}
+              />
+            ))}
+          </ol>
+          <span
+            aria-hidden="true"
+            className="chapter-map__companion"
+            data-position={selectedPosition}
+            data-testid="equipped-blook-badge"
+            style={anchorStyle(selectedAnchor)}
+          >
+            <BlookArt
+              emoji={equippedBlook?.emoji}
+              size={40}
+              stableCode={equippedBlook?.stableCode ?? 'little_fox'}
+            />
+          </span>
+          <span
+            aria-hidden="true"
+            className="chapter-map__adventurer"
+            style={anchorStyle(ADVENTURER_GROUND_ANCHOR)}
+          >
+            <img alt="" aria-hidden="true" src={adventurerIdle} />
+          </span>
+        </div>
       </div>
       <ChapterMapPanel chapter={selectedChapter} />
     </div>
