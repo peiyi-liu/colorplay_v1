@@ -141,6 +141,24 @@ test('desktop village imagery covers the usable learning stage beneath its overl
       }),
     ) as Record<keyof typeof selectors, MeasuredRect>;
     const { lobby, panel, scroll, viewport, world } = rectangles;
+    const viewportElement = document.querySelector<HTMLElement>(
+      selectors.viewport,
+    );
+    if (!viewportElement) throw new Error('Missing map viewport border');
+    const viewportStyle = getComputedStyle(viewportElement);
+    const viewportBorder = {
+      bottom: Number.parseFloat(viewportStyle.borderBottomWidth),
+      color: viewportStyle.borderTopColor,
+      left: Number.parseFloat(viewportStyle.borderLeftWidth),
+      right: Number.parseFloat(viewportStyle.borderRightWidth),
+      top: Number.parseFloat(viewportStyle.borderTopWidth),
+    };
+    const viewportContent = {
+      bottom: viewport.bottom - viewportBorder.bottom,
+      left: viewport.left + viewportBorder.left,
+      right: viewport.right - viewportBorder.right,
+      top: viewport.top + viewportBorder.top,
+    };
     return {
       dialogueInsideMap:
         panel.top >= viewport.top + 8 && panel.bottom <= viewport.bottom - 8,
@@ -156,12 +174,14 @@ test('desktop village imagery covers the usable learning stage beneath its overl
       scrollInsideMap:
         scroll.top >= viewport.top + 8 && scroll.bottom <= viewport.bottom - 8,
       viewport,
+      viewportBorder,
+      viewportContent,
       world,
       worldGutters: {
-        bottom: viewport.bottom - world.bottom,
-        left: world.left - viewport.left,
-        right: viewport.right - world.right,
-        top: world.top - viewport.top,
+        bottom: viewportContent.bottom - world.bottom,
+        left: world.left - viewportContent.left,
+        right: viewportContent.right - world.right,
+        top: world.top - viewportContent.top,
       },
     };
   });
@@ -176,7 +196,13 @@ test('desktop village imagery covers the usable learning stage beneath its overl
     expect.soft(gap, `map-to-stage ${edge} gap`).toBeLessThanOrEqual(1);
   }
   for (const [edge, gutter] of Object.entries(geometry.worldGutters)) {
-    expect.soft(gutter, `world-to-map ${edge} gutter`).toBeLessThanOrEqual(4);
+    expect.soft(gutter, `world-to-map ${edge} gutter`).toBeLessThanOrEqual(1);
+  }
+  expect.soft(geometry.viewportBorder.color).toBe('rgb(138, 101, 31)');
+  for (const [edge, width] of Object.entries(geometry.viewportBorder).filter(
+    ([edge]) => edge !== 'color',
+  )) {
+    expect.soft(width, `viewport ${edge} gold border`).toBe(3);
   }
   expect.soft(geometry.scrollInsideMap, 'scroll must overlay map').toBe(true);
   expect

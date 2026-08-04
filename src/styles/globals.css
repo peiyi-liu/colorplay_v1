@@ -7852,8 +7852,23 @@ select#dashboard-classroom {
     transform: translateX(-50%);
   }
 
+  .lobby--map-fullscreen .chapter-map-scroll__copy {
+    gap: 0;
+  }
+
+  .lobby--map-fullscreen .chapter-map-scroll__copy > p:first-child {
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  .lobby--map-fullscreen .chapter-map-scroll h1 {
+    font-size: 18px;
+    line-height: 1;
+  }
+
   .lobby--map-fullscreen .chapter-map-scroll__copy > p:last-child {
-    display: none;
+    font-size: 10px;
+    line-height: 1.1;
   }
 
   .lobby--map-fullscreen .chapter-map {
