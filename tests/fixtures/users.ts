@@ -15,6 +15,10 @@ export const TEST_USERS = {
     email: 'learning.student@colorplay.test',
     password: 'LocalOnly-LearningStudent1!',
   },
+  sequenceStudent: {
+    email: 'sequence.student@colorplay.test',
+    password: 'LocalOnly-SequenceStudent1!',
+  },
   teacher: {
     email: 'teacher@colorplay.test',
     password: 'LocalOnly-Teacher1!',
@@ -100,6 +104,7 @@ export const TEST_USER_ROLES = {
   authLifecycleTwo: 'student',
   learningTeacher: 'teacher',
   learningStudent: 'student',
+  sequenceStudent: 'student',
   teacher: 'teacher',
   teacherTwo: 'teacher',
   classroomRepositoryTeacher: 'teacher',
