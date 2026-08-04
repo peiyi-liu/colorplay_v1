@@ -30,6 +30,7 @@
 
 - Modify: `src/app/shell/app-shell.tsx:1-178`
 - Modify: `src/app/shell/app-shell.test.tsx:44-51, 96-357`
+- Create: `src/features/learning/context/student-map-shell-context.ts`
 - Modify: `src/features/rewards/components/economy-summary.tsx:1-26`
 - Modify: `src/features/rewards/components/economy-summary.test.tsx`
 - Modify: `src/features/learning/pages/lobby-page.tsx:1-55`
@@ -71,7 +72,7 @@ const isStudentLearningMap =
 
   - `lobby-page.test.tsx` 移除 `StudentSummaryCard` mock，將第一個測試改為 `queryByRole('region', { name: '學生資訊' })` 為 `null`；六棟建築、loading、error、retry、query selection 斷言全部保留。
   - `economy-summary.test.tsx` 增加 learning-map variant，逐字斷言 `Lv. 2`、`250 / 500 XP`、`250 Token`，且 default variant 仍顯示原本 `Level 2`。
-  - `chapter-map.test.tsx` 移除 inventory mock 與 equipped badge 斷言；保留六顆建築 button、selection 與 decorative image 測試。hook import absence 留給 Step 7 的 source grep 驗證。
+  - `chapter-map.test.tsx` 移除 inventory mock，改由 `equippedBlook` prop 注入 `little_fox`；保留 equipped badge、六顆建築 button、selection 與 decorative image 測試。hook import absence留給 Step 7 的 source grep 驗證。
 
 - [ ] **Step 3: Run RED tests and confirm the reasons**
 
@@ -96,10 +97,12 @@ const isStudentLearningMap =
   - map HUD 約 `clamp(250px, 24vw, 304px)` × `clamp(58px, 6vw, 66px)`，只顯示 avatar、level、progress/XP 與 Token；用 `.game-stage--learning-map` descendant 覆寫，不污染其他路由。
   - Blook 圖以高度填滿正方形 avatar well、`max-width:none`、`left:50%/translateX(-50%)` 水平置中；fallback `hero.png` 套同一個方框裁切規則。
 
-- [ ] **Step 5: Remove page-level duplicate summary and map inventory**
+- [ ] **Step 5: Remove the page-level duplicate summary and share the shell-owned equipped Blook**
 
   - 從 `LobbyPage` 刪除 `StudentSummaryCard` import、`.hud-bar` 及 render。
-  - 從 `ChapterMap` 刪除 `useBlookInventory`、`BlookArt` 與 `.chapter-map__companion`。保留核准稿中央固定冒險者；地圖不再顯示第二份個人角色徽章。
+  - 新增 `StudentMapShellContext`，只包含 `equippedBlook: BlookInventoryItem | null`。由 authenticated student shell 呼叫唯一一次 `useBlookInventory`，同一份結果同時提供左上 `StudentHudAvatar` 與 `<Outlet context={...}>`。
+  - `LobbyPage` 透過 `useOutletContext` 讀取同一份 equipped Blook 並以 prop 傳給 `ChapterMap`；`ChapterMap` 刪除自己的 `useBlookInventory`，但保留 `.chapter-map__companion` 個人角色圖片與既有 fallback stable code，且不顯示「目前位置」文字。
+  - 教師、anonymous/profile fallback 分支不得呼叫 inventory hook；既有 logged-out 單元測試必須維持綠。
   - 不刪通用 `student-summary-card.tsx`。
 
 - [ ] **Step 6: Run GREEN tests and static checks**
@@ -116,6 +119,7 @@ const isStudentLearningMap =
   pnpm exec prettier --check \
     src/app/shell/app-shell.tsx \
     src/app/shell/app-shell.test.tsx \
+    src/features/learning/context/student-map-shell-context.ts \
     src/features/rewards/components/economy-summary.tsx \
     src/features/rewards/components/economy-summary.test.tsx \
     src/features/learning/pages/lobby-page.tsx \
@@ -127,7 +131,7 @@ const isStudentLearningMap =
 
 - [ ] **Step 7: Review and commit only Task 1 files**
 
-  Review `git diff -- src/app/shell/app-shell.tsx src/app/shell/app-shell.test.tsx src/features/rewards/components/economy-summary.tsx src/features/rewards/components/economy-summary.test.tsx src/features/learning/pages/lobby-page.tsx src/features/learning/pages/lobby-page.test.tsx src/features/learning/components/chapter-map.tsx src/features/learning/components/chapter-map.test.tsx src/styles/globals.css`；確認 `HudCommandBar` 未改，protected WIP 未 stage。Commit subject:
+  Review `git diff -- src/app/shell/app-shell.tsx src/app/shell/app-shell.test.tsx src/features/learning/context/student-map-shell-context.ts src/features/rewards/components/economy-summary.tsx src/features/rewards/components/economy-summary.test.tsx src/features/learning/pages/lobby-page.tsx src/features/learning/pages/lobby-page.test.tsx src/features/learning/components/chapter-map.tsx src/features/learning/components/chapter-map.test.tsx src/styles/globals.css`；確認 `HudCommandBar` 未改，protected WIP 未 stage。Commit subject:
 
   ```text
   feat(learning): add exact-route fullscreen map shell mode
@@ -210,7 +214,7 @@ export const CHAPTER_GROUND_ANCHORS: Readonly<
   - `ChapterMap` DOM 改為 `.chapter-map__viewport > .chapter-map__world`；背景、`ol`、六棟建築、decorative adventurer 全置於 world。
   - world 固定 3:2 邏輯比例。landscape/desktop 以同一 world layer fit/cover；portrait 只放大 world 寬度供內部 pan，不另排 2×3、不改座標。
   - `ChapterMapBuilding` 接收 `anchor`，`li` 以 bottom-center contact point 絕對定位：元件本體使用 `transform: translate(-50%, -100%)`；木牌可往 anchor 下方延伸，但建築 PNG 的底部中心必須對準 anchor。
-  - 將固定 adventurer 的位置也改為同一 logical world 百分比；刪除已移除 companion 遺留的 `data-position` 與 portrait grid 重排規則。
+  - 將固定 adventurer 與保留的個人角色 companion 位置都改為同一 logical world 百分比；刪除 portrait 專用 2×3 grid 重排規則。
 
 - [ ] **Step 5: Add coordinate-safe CSS**
 
@@ -605,6 +609,7 @@ Camera DOM owns `.chapter-map__viewport`, `tabIndex={0}`, blank-world pointer dr
 - [ ] 地圖座標只存在 `chapter-map-layout.ts` 一份，CSS/測試從同一資料衍生。
 - [ ] App Shell exact-route mode 不會套到 `/app/shop`、章節詳情或教師端。
 - [ ] `LobbyPage`/`ChapterMap` 沒有 inventory/economy hook；App Shell 每 hook 一次。
+- [ ] 地圖保留 equipped Blook 個人角色圖片但不顯示「目前位置」文字；資料來自 shell outlet context。
 - [ ] portrait pan 不讓 document 水平溢出，也不攔截 button/link activation。
 - [ ] 三支 protected WIP、題庫、login、seed、Supabase 都不在任何 stage 清單。
 - [ ] 每一 task 都有 RED、GREEN、static checks、exact review 與獨立 commit。
