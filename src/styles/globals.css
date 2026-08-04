@@ -7675,10 +7675,10 @@ select#dashboard-classroom {
 .chapter-map__panel {
   position: relative;
   display: grid;
-  overflow-y: auto;
+  overflow: visible;
   width: 100%;
   min-width: 0;
-  max-height: 240px;
+  max-height: none;
   grid-template-columns: minmax(150px, 0.85fr) minmax(220px, 1.2fr) minmax(
       180px,
       1fr
@@ -7844,31 +7844,31 @@ select#dashboard-classroom {
 
   .lobby--map-fullscreen .chapter-map-scroll {
     position: absolute;
-    top: 10px;
+    top: 8px;
     left: 50%;
     z-index: 12;
     width: min(600px, calc(100% - 680px));
-    padding-block: 3px;
+    padding-block: 0;
     transform: translateX(-50%);
   }
 
   .lobby--map-fullscreen .chapter-map-scroll__copy {
-    gap: 0;
+    gap: 1px;
   }
 
   .lobby--map-fullscreen .chapter-map-scroll__copy > p:first-child {
-    font-size: 10px;
-    line-height: 1;
+    font-size: 11px;
+    line-height: 1.1;
   }
 
   .lobby--map-fullscreen .chapter-map-scroll h1 {
-    font-size: 18px;
-    line-height: 1;
+    font-size: 22px;
+    line-height: 1.1;
   }
 
   .lobby--map-fullscreen .chapter-map-scroll__copy > p:last-child {
-    font-size: 10px;
-    line-height: 1.1;
+    font-size: 12px;
+    line-height: 1.2;
   }
 
   .lobby--map-fullscreen .chapter-map {
@@ -7907,20 +7907,29 @@ select#dashboard-classroom {
 
   .lobby--map-fullscreen .chapter-map__dialogue-lane {
     position: absolute;
-    right: 0;
-    bottom: 8px;
-    left: 0;
-    padding-inline: 22px;
+    right: 12px;
+    bottom: 12px;
+    left: auto;
+    width: min(440px, calc(100% - 24px));
+    padding-inline: 0;
   }
 
   .lobby--map-fullscreen .chapter-map__panel {
-    max-height: 96px;
-    gap: 8px 16px;
-    padding: 6px 10px;
+    max-height: none;
+    grid-template-columns: minmax(132px, 0.75fr) minmax(216px, 1.25fr);
+    align-items: start;
+    gap: 8px 14px;
+    padding: 10px 12px;
   }
 
   .lobby--map-fullscreen .chapter-map__progress > div {
     min-height: 26px;
+  }
+
+  .lobby--map-fullscreen .chapter-map__panel-outcome {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
   }
 }
 
@@ -7936,13 +7945,23 @@ select#dashboard-classroom {
   }
 
   .chapter-map-scroll__copy > p:last-child {
-    font-size: 10px;
+    font-size: 11px;
     line-height: 1.2;
     white-space: normal;
   }
 
+  .chapter-map__dialogue-lane {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: min(440px, calc(100% - 24px));
+    justify-self: end;
+    padding-inline: 0;
+  }
+
   .chapter-map__panel {
-    max-height: 152px;
+    max-height: none;
     grid-template-columns: minmax(130px, 0.8fr) minmax(210px, 1.2fr);
     align-items: start;
     gap: 8px 14px;
@@ -7997,6 +8016,15 @@ select#dashboard-classroom {
   .chapter-map__panel {
     max-height: none;
     grid-template-columns: 1fr;
+  }
+
+  .chapter-map__dialogue-lane {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    padding-inline: 10px;
   }
 }
 
