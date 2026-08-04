@@ -62,7 +62,10 @@ const renderShellRoute = (entry: string) => {
     [
       {
         children: [
-          { element: <div>學習地圖內容</div>, index: true },
+          {
+            element: <button type="button">地圖操作</button>,
+            index: true,
+          },
           { element: <div>裝備商店內容</div>, path: 'shop' },
         ],
         element: (
@@ -124,6 +127,7 @@ const expectCommandBeforeHeaderAndMain = () => {
 
 describe('AppShell', () => {
   beforeEach(() => {
+    sessionStorage.clear();
     vi.stubGlobal(
       'matchMedia',
       vi.fn().mockReturnValue({
@@ -321,6 +325,36 @@ describe('AppShell', () => {
     const stage = screen.getByRole('main').closest('.game-stage');
     expect(stage).not.toHaveClass('game-stage--learning-map');
     expect(document.querySelector('.economy-summary--learning-map')).toBeNull();
+  });
+
+  it('uses non-blocking map copy only on exact /app and dismissal preserves map controls', async () => {
+    vi.mocked(window.matchMedia).mockReturnValue({
+      addEventListener: vi.fn(),
+      matches: true,
+      media: '(orientation: portrait)',
+      removeEventListener: vi.fn(),
+    } as unknown as MediaQueryList);
+    renderShellRoute('/app');
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      '轉橫可看完整森林王國村',
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: '關閉轉向提示' }));
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('button', { name: '地圖操作' })).toBeVisible();
+  });
+
+  it('keeps default rotate copy on student child routes', () => {
+    vi.mocked(window.matchMedia).mockReturnValue({
+      addEventListener: vi.fn(),
+      matches: true,
+      media: '(orientation: portrait)',
+      removeEventListener: vi.fn(),
+    } as unknown as MediaQueryList);
+    renderShellRoute('/app/shop');
+
+    expect(screen.getByRole('status')).toHaveTextContent('轉橫體驗更佳');
   });
 
   it('keeps compact map HUD contents within the 58px minimum outer height', () => {

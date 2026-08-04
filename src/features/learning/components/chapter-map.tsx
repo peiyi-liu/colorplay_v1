@@ -6,6 +6,7 @@ import { BlookArt } from '../../../components/ui/blook-art';
 import type { BlookInventoryItem } from '../../inventory/types';
 import type { StudentChapterMapEntry } from '../api/chapter-map';
 import { ChapterMapBuilding } from './chapter-map-building';
+import { ChapterMapCamera } from './chapter-map-camera';
 import {
   ADVENTURER_GROUND_ANCHOR,
   CHAPTER_MAP_WORLD,
@@ -63,7 +64,7 @@ export function ChapterMap({
 
   return (
     <div className="chapter-map">
-      <div className="chapter-map__viewport">
+      <ChapterMapCamera activeChapter={selectedChapter}>
         <div
           className="chapter-map__world"
           data-world-height={CHAPTER_MAP_WORLD.height}
@@ -108,7 +109,7 @@ export function ChapterMap({
             <img alt="" aria-hidden="true" src={adventurerIdle} />
           </span>
         </div>
-      </div>
+      </ChapterMapCamera>
       <div className="chapter-map__dialogue-lane">
         <ChapterMapPanel chapter={selectedChapter} />
       </div>

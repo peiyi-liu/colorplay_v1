@@ -185,4 +185,26 @@ describe('ChapterMap', () => {
       expect(dialogueLane).not.toContainElement(button);
     }
   });
+
+  it('keeps the camera operable while selection recenters without stealing building focus', async () => {
+    const { container } = renderMap();
+    const viewport = screen.getByRole('region', { name: '村莊地圖探索區' });
+    Object.defineProperties(viewport, {
+      clientWidth: { configurable: true, value: 500 },
+      scrollWidth: { configurable: true, value: 1000 },
+    });
+    const sixth = screen.getByRole('button', {
+      name: 'Chapter 6 色彩應用 內容準備中',
+    });
+
+    await userEvent.click(sixth);
+
+    expect(sixth).toHaveFocus();
+    expect(viewport).not.toHaveFocus();
+    expect(viewport.scrollLeft).toBe(490);
+    expect(screen.getByText('拖曳探索村莊')).toBeVisible();
+    expect(
+      container.querySelector('.chapter-map__dialogue-lane'),
+    ).toContainElement(screen.getByRole('heading', { name: '色彩應用' }));
+  });
 });

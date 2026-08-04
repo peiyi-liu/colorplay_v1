@@ -156,7 +156,11 @@ export function AppShell() {
         <a className="skip-link" href="#main-content">
           跳到主要內容
         </a>
-        <RotateBanner />
+        {isStudentLearningMap ? (
+          <RotateBanner message="轉橫可看完整森林王國村" />
+        ) : (
+          <RotateBanner />
+        )}
         {isAuthenticatedProfile && !isTeacher ? (
           <HudCommandBar
             displayName={profile.data?.displayName ?? ''}
