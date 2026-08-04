@@ -136,11 +136,18 @@ describe('chapter map dialogue lane contract', () => {
       (rule): rule is CSSStyleRule =>
         isStyleRule(rule) && rule.selectorText === '.chapter-map__blockers ul',
     );
+    const actionRule = nestedRules.find(
+      (rule): rule is CSSStyleRule =>
+        isStyleRule(rule) && rule.selectorText === '.chapter-map__entry-action',
+    );
 
     expect(panelRule?.style.gridTemplateColumns).toBe(
       'minmax(130px, 0.8fr) minmax(210px, 1.2fr)',
     );
     expect(outcomeRule?.style.gridTemplateColumns).toBe('minmax(0, 1fr) auto');
     expect(blockersRule?.style.flexWrap).toBe('wrap');
+    expect(
+      Number.parseFloat(actionRule?.style.minHeight ?? '0'),
+    ).toBeGreaterThanOrEqual(44);
   });
 });
