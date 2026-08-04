@@ -97,6 +97,102 @@ for (const viewport of viewports) {
   });
 }
 
+test('desktop village imagery covers the usable learning stage beneath its overlays', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 720, width: 1280 });
+  await signInStudent(page, TEST_USERS.learningStudent);
+  await expect(
+    page.getByRole('heading', { level: 1, name: '學習地圖' }),
+  ).toBeVisible();
+
+  const geometry = await page.evaluate(() => {
+    type MeasuredRect = Readonly<{
+      bottom: number;
+      height: number;
+      left: number;
+      right: number;
+      top: number;
+      width: number;
+    }>;
+    const selectors = {
+      lobby: '.lobby--map-fullscreen',
+      panel: '.chapter-map__panel',
+      scroll: '.chapter-map-scroll',
+      viewport: '.chapter-map__viewport',
+      world: '.chapter-map__world',
+    } as const;
+    const rectangles = Object.fromEntries(
+      Object.entries(selectors).map(([name, selector]) => {
+        const element = document.querySelector<HTMLElement>(selector);
+        if (!element) throw new Error(`Missing map geometry: ${selector}`);
+        const rect = element.getBoundingClientRect();
+        return [
+          name,
+          {
+            bottom: rect.bottom,
+            height: rect.height,
+            left: rect.left,
+            right: rect.right,
+            top: rect.top,
+            width: rect.width,
+          },
+        ];
+      }),
+    ) as Record<keyof typeof selectors, MeasuredRect>;
+    const { lobby, panel, scroll, viewport, world } = rectangles;
+    return {
+      dialogueInsideMap:
+        panel.top >= viewport.top + 8 && panel.bottom <= viewport.bottom - 8,
+      lobby,
+      mapStageGaps: {
+        bottom: lobby.bottom - viewport.bottom,
+        left: viewport.left - lobby.left,
+        right: lobby.right - viewport.right,
+        top: viewport.top - lobby.top,
+      },
+      panel,
+      scroll,
+      scrollInsideMap:
+        scroll.top >= viewport.top + 8 && scroll.bottom <= viewport.bottom - 8,
+      viewport,
+      world,
+      worldGutters: {
+        bottom: viewport.bottom - world.bottom,
+        left: world.left - viewport.left,
+        right: viewport.right - world.right,
+        top: world.top - viewport.top,
+      },
+    };
+  });
+  console.log(`learning-map desktop-cover=${JSON.stringify(geometry)}`);
+
+  const screenshotPath = process.env.LEARNING_MAP_GEOMETRY_SCREENSHOT;
+  if (screenshotPath) {
+    await page.screenshot({ animations: 'disabled', path: screenshotPath });
+  }
+
+  for (const [edge, gap] of Object.entries(geometry.mapStageGaps)) {
+    expect.soft(gap, `map-to-stage ${edge} gap`).toBeLessThanOrEqual(1);
+  }
+  for (const [edge, gutter] of Object.entries(geometry.worldGutters)) {
+    expect.soft(gutter, `world-to-map ${edge} gutter`).toBeLessThanOrEqual(4);
+  }
+  expect.soft(geometry.scrollInsideMap, 'scroll must overlay map').toBe(true);
+  expect
+    .soft(geometry.dialogueInsideMap, 'dialogue must overlay map')
+    .toBe(true);
+
+  const buildingButtons = page.locator('.chapter-map__building-button');
+  await expect(buildingButtons).toHaveCount(6);
+  for (let index = 0; index < 6; index += 1) {
+    await expect(buildingButtons.nth(index)).toBeInViewport();
+  }
+  await expect(
+    page.getByRole('link', { name: '進入複習與進度' }),
+  ).toBeInViewport();
+});
+
 test('keeps the lower chapter row operable beside a wrapped dialogue at 812 by 375', async ({
   page,
 }) => {
