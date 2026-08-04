@@ -157,4 +157,32 @@ describe('ChapterMap', () => {
       expect(world?.contains(decoration)).toBe(true);
     }
   });
+
+  it('keeps the lower-row controls and dialogue in separate pointer lanes', () => {
+    const { container } = renderMap();
+    const viewport = container.querySelector<HTMLElement>(
+      '.chapter-map__viewport',
+    );
+    const world = container.querySelector<HTMLElement>('.chapter-map__world');
+    const dialogueLane = container.querySelector<HTMLElement>(
+      '.chapter-map__dialogue-lane',
+    );
+    const panel = container.querySelector<HTMLElement>('.chapter-map__panel');
+    const lowerRowButtons = chapters.slice(3).map((entry) =>
+      screen.getByRole('button', {
+        name: new RegExp(
+          `^Chapter ${String(entry.sortOrder)} ${entry.title}`,
+          'u',
+        ),
+      }),
+    );
+
+    expect(dialogueLane).toContainElement(panel);
+    expect(viewport).not.toContainElement(panel);
+    expect(world).not.toContainElement(panel);
+    for (const button of lowerRowButtons) {
+      expect(viewport).toContainElement(button);
+      expect(dialogueLane).not.toContainElement(button);
+    }
+  });
 });

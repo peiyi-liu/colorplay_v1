@@ -109,7 +109,9 @@ export function ChapterMap({
           </span>
         </div>
       </div>
-      <ChapterMapPanel chapter={selectedChapter} />
+      <div className="chapter-map__dialogue-lane">
+        <ChapterMapPanel chapter={selectedChapter} />
+      </div>
     </div>
   );
 }
