@@ -50,6 +50,28 @@ const renderStudentShell = () =>
     </MemoryRouter>,
   );
 
+const renderShellRoute = (entry: string) => {
+  const router = createMemoryRouter(
+    [
+      {
+        children: [
+          { element: <div>學習地圖內容</div>, index: true },
+          { element: <div>裝備商店內容</div>, path: 'shop' },
+        ],
+        element: (
+          <ToastProvider>
+            <AppShell />
+          </ToastProvider>
+        ),
+        path: '/app',
+      },
+    ],
+    { initialEntries: [entry] },
+  );
+
+  return render(<RouterProvider router={router} />);
+};
+
 const renderTeacherShell = () => {
   mockedUseAuth.mockReturnValue({
     session: {
@@ -272,6 +294,26 @@ describe('AppShell', () => {
     expect(screen.getByText('250 Token')).toBeVisible();
     expect(mockedUseEconomySummary).toHaveBeenCalledOnce();
     expect(mockedUseBlookInventory).toHaveBeenCalledOnce();
+  });
+
+  it('uses the learning-map HUD only for the exact /app route, including query strings', () => {
+    renderShellRoute('/app?chapter=21000000-0000-0000-0000-000000000002');
+
+    const stage = screen.getByRole('main').closest('.game-stage');
+    expect(stage).toHaveClass('game-stage--learning-map');
+    expect(screen.getByRole('banner')).toContainElement(
+      document.querySelector('.economy-summary--learning-map'),
+    );
+    expect(mockedUseEconomySummary).toHaveBeenCalledOnce();
+    expect(mockedUseBlookInventory).toHaveBeenCalledOnce();
+  });
+
+  it('does not use the learning-map HUD for child student routes', () => {
+    renderShellRoute('/app/shop');
+
+    const stage = screen.getByRole('main').closest('.game-stage');
+    expect(stage).not.toHaveClass('game-stage--learning-map');
+    expect(document.querySelector('.economy-summary--learning-map')).toBeNull();
   });
 
   it('學生頂部顯示頭像框與經濟群組', async () => {

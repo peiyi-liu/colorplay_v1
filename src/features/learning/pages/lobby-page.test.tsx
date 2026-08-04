@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useBlookInventory } from '../../inventory/hooks/use-blook-inventory';
 import type { StudentChapterMapEntry } from '../api/chapter-map';
 import { useStudentChapterMap } from '../hooks/use-chapter-map';
 import { LobbyPage } from './lobby-page';
@@ -11,19 +10,7 @@ import { LobbyPage } from './lobby-page';
 vi.mock('../hooks/use-chapter-map', () => ({
   useStudentChapterMap: vi.fn(),
 }));
-vi.mock('../components/student-summary-card', () => ({
-  StudentSummaryCard: () => <section aria-label="學生資訊">學生摘要</section>,
-}));
-vi.mock('../../inventory/hooks/use-blook-inventory', async (importOriginal) => {
-  const original =
-    await importOriginal<
-      typeof import('../../inventory/hooks/use-blook-inventory')
-    >();
-  return { ...original, useBlookInventory: vi.fn() };
-});
-
 const mockedChapterMap = vi.mocked(useStudentChapterMap);
-const mockedInventory = vi.mocked(useBlookInventory);
 const asResult = (value: unknown) => value as never;
 
 const chapter = (
@@ -77,9 +64,6 @@ const renderPage = (entry = '/app') =>
 
 describe('LobbyPage', () => {
   beforeEach(() => {
-    mockedInventory.mockReturnValue(
-      asResult({ data: undefined, isError: false, isPending: false }),
-    );
     mockedChapterMap.mockReturnValue(
       asResult({
         data: {
@@ -95,9 +79,9 @@ describe('LobbyPage', () => {
     );
   });
 
-  it('keeps the student summary and replaces cards and pagination with the six-building map', () => {
+  it('removes the duplicate student summary and keeps the six-building map', () => {
     const { container } = renderPage();
-    expect(screen.getByRole('region', { name: '學生資訊' })).toBeVisible();
+    expect(screen.queryByRole('region', { name: '學生資訊' })).toBeNull();
     expect(
       screen.getByRole('heading', { level: 1, name: '學習地圖' }),
     ).toBeVisible();

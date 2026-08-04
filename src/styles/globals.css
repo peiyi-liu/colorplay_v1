@@ -7011,6 +7011,15 @@ select#dashboard-classroom {
   height: auto;
 }
 
+.game-stage--learning-map .hud-avatar .blook-art {
+  max-width: none;
+  height: 100%;
+  left: 50%;
+  position: relative;
+  transform: translateX(-50%);
+  width: auto;
+}
+
 .hud-avatar--hero {
   background:
     url('../assets/sprites/hero.png') center / 32px 32px no-repeat,
@@ -7019,6 +7028,13 @@ select#dashboard-classroom {
     32px 32px,
     auto;
   image-rendering: pixelated;
+}
+
+.game-stage--learning-map .hud-avatar--hero {
+  background-position: 50% 50%;
+  background-size:
+    auto 100%,
+    auto;
 }
 
 @media (orientation: landscape) and (max-height: 480px) {
@@ -7048,6 +7064,54 @@ select#dashboard-classroom {
   margin: 0;
   border-radius: 0;
   box-shadow: 0 3px 0 var(--pixel-shadow);
+}
+
+.game-stage--learning-map .hud-economy-group {
+  width: clamp(250px, 24vw, 304px);
+  height: clamp(58px, 6vw, 66px);
+  gap: 6px;
+  padding: 4px;
+}
+
+.game-stage--learning-map .hud-avatar {
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
+}
+
+.game-stage--learning-map .economy-summary--learning-map {
+  min-width: 0;
+  gap: 4px;
+}
+
+.game-stage--learning-map
+  .economy-summary--learning-map
+  .economy-summary__level {
+  min-width: 0;
+  flex: 1;
+}
+
+.game-stage--learning-map
+  .economy-summary--learning-map
+  .economy-summary__level
+  progress {
+  width: 100%;
+}
+
+@media (min-width: 48rem) and (orientation: landscape) {
+  .game-stage--learning-map .hud-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .game-stage--learning-map .hud-command {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: auto;
+    border-bottom: 0;
+  }
 }
 
 .scene-day.lobby--map-fullscreen .chapter-map-shell {

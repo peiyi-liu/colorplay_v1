@@ -1,13 +1,14 @@
-import { useSearchParams } from 'react-router-dom';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { Card } from '../../../components/ui/card';
 import { ChapterMap } from '../components/chapter-map';
-import { StudentSummaryCard } from '../components/student-summary-card';
+import type { StudentMapShellContext } from '../context/student-map-shell-context';
 import { useStudentChapterMap } from '../hooks/use-chapter-map';
 
 export function LobbyPage() {
   const chapterMap = useStudentChapterMap();
+  const shell = useOutletContext<StudentMapShellContext | null>();
   const [searchParams] = useSearchParams();
 
   if (chapterMap.isPending) return <RouteLoading withinMain />;
@@ -38,9 +39,6 @@ export function LobbyPage() {
       aria-labelledby="learning-map-title"
       className="lobby lobby--map-fullscreen scene-day"
     >
-      <div className="hud-bar">
-        <StudentSummaryCard />
-      </div>
       <div className="lobby-panel chapter-map-shell">
         <header className="chapter-map-shell__heading">
           <p>學生端 · 森林王國村</p>
@@ -49,6 +47,7 @@ export function LobbyPage() {
         </header>
         <ChapterMap
           chapters={chapterMap.data.chapters}
+          equippedBlook={shell?.equippedBlook ?? null}
           initialChapterId={requestedChapter}
         />
       </div>

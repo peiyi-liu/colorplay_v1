@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { BlookArt } from '../../components/ui/blook-art';
 import { Icon } from '../../components/ui/icons';
 import { useToast } from '../../components/ui/toast';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useBlookInventory } from '../../features/inventory/hooks/use-blook-inventory';
+import type { StudentMapShellContext } from '../../features/learning/context/student-map-shell-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { EconomySummaryView } from '../../features/rewards/components/economy-summary';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
@@ -12,7 +13,9 @@ import { HudCommandBar } from './hud-command-bar';
 import { RotateBanner } from './rotate-banner';
 import { useIdleLogout } from './use-idle-logout';
 
-function AuthenticatedEconomySummary() {
+function AuthenticatedEconomySummary({
+  variant = 'default',
+}: Readonly<{ variant?: 'default' | 'learning-map' }>) {
   const economy = useEconomySummary();
 
   if (economy.isPending) {
@@ -30,13 +33,12 @@ function AuthenticatedEconomySummary() {
     );
   }
 
-  return <EconomySummaryView summary={economy.data} />;
+  return <EconomySummaryView summary={economy.data} variant={variant} />;
 }
 
-function StudentHudAvatar() {
-  const inventory = useBlookInventory();
-  const equipped = inventory.data?.items.find((item) => item.equipped) ?? null;
-
+function StudentHudAvatar({
+  equipped,
+}: Readonly<{ equipped: StudentMapShellContext['equippedBlook'] }>) {
   return (
     <span
       aria-hidden="true"
@@ -53,8 +55,43 @@ function StudentHudAvatar() {
   );
 }
 
+function AuthenticatedStudentShell({
+  isLearningMap,
+  signOutError,
+}: Readonly<{
+  isLearningMap: boolean;
+  signOutError: boolean;
+}>) {
+  const inventory = useBlookInventory();
+  const equippedBlook =
+    inventory.data?.items.find((item) => item.equipped) ?? null;
+  const outletContext: StudentMapShellContext = { equippedBlook };
+
+  return (
+    <>
+      <header className="hud-top">
+        <div className="hud-economy-group">
+          <StudentHudAvatar equipped={equippedBlook} />
+          <AuthenticatedEconomySummary
+            variant={isLearningMap ? 'learning-map' : 'default'}
+          />
+        </div>
+        {signOutError ? (
+          <p className="app-shell__auth-error" role="alert">
+            登出失敗，請稍後重試。
+          </p>
+        ) : null}
+      </header>
+      <main className="game-stage__scene" id="main-content" tabIndex={-1}>
+        <Outlet context={outletContext} />
+      </main>
+    </>
+  );
+}
+
 export function AppShell() {
   const auth = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const profile = useMyProfile();
   const toast = useToast();
@@ -66,6 +103,8 @@ export function AppShell() {
     auth.session !== null &&
     profile.data?.id === auth.session.userId;
   const isTeacher = isAuthenticatedProfile && profile.data?.role === 'teacher';
+  const isStudentLearningMap =
+    isAuthenticatedProfile && !isTeacher && location.pathname === '/app';
   const reducedMotion = profile.data?.reducedMotion === true;
 
   // 閒置 30 分鐘強制登出（UAT 0727 #5）：走與登出鍵相同的安全流程。
@@ -111,7 +150,9 @@ export function AppShell() {
 
   return (
     <div className="game-viewport">
-      <div className="game-stage">
+      <div
+        className={`game-stage${isStudentLearningMap ? ' game-stage--learning-map' : ''}`}
+      >
         <a className="skip-link" href="#main-content">
           跳到主要內容
         </a>
@@ -132,19 +173,17 @@ export function AppShell() {
             variant="teacher"
           />
         ) : null}
-        {isAuthenticatedProfile ? (
+        {isAuthenticatedProfile && !isTeacher ? (
+          <AuthenticatedStudentShell
+            isLearningMap={isStudentLearningMap}
+            signOutError={signOutError}
+          />
+        ) : isTeacher ? (
           <header className="hud-top">
-            {isTeacher ? (
-              <span className="hud-top__identity">
-                <Icon name="lock-open" size={14} />
-                歡迎，{profile.data?.displayName}・教師端
-              </span>
-            ) : (
-              <div className="hud-economy-group">
-                <StudentHudAvatar />
-                <AuthenticatedEconomySummary />
-              </div>
-            )}
+            <span className="hud-top__identity">
+              <Icon name="lock-open" size={14} />
+              歡迎，{profile.data?.displayName}・教師端
+            </span>
             {signOutError ? (
               <p className="app-shell__auth-error" role="alert">
                 登出失敗，請稍後重試。
@@ -169,9 +208,11 @@ export function AppShell() {
             ) : null}
           </>
         ) : null}
-        <main className="game-stage__scene" id="main-content" tabIndex={-1}>
-          <Outlet />
-        </main>
+        {isAuthenticatedProfile && !isTeacher ? null : (
+          <main className="game-stage__scene" id="main-content" tabIndex={-1}>
+            <Outlet />
+          </main>
+        )}
       </div>
     </div>
   );

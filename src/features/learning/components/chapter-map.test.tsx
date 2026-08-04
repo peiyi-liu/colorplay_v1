@@ -1,22 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { useBlookInventory } from '../../inventory/hooks/use-blook-inventory';
+import type { BlookInventoryItem } from '../../inventory/types';
 import type { StudentChapterMapEntry } from '../api/chapter-map';
 import { ChapterMap } from './chapter-map';
-
-vi.mock('../../inventory/hooks/use-blook-inventory', async (importOriginal) => {
-  const original =
-    await importOriginal<
-      typeof import('../../inventory/hooks/use-blook-inventory')
-    >();
-  return { ...original, useBlookInventory: vi.fn() };
-});
-
-const mockedInventory = vi.mocked(useBlookInventory);
-const asResult = (value: unknown) => value as never;
 
 const chapter = (
   sortOrder: number,
@@ -49,43 +38,31 @@ const chapters = [
   chapter(6, 'content_unavailable'),
 ];
 
+const equippedBlook: BlookInventoryItem = {
+  costTokens: 30,
+  emoji: '🦊',
+  equipped: true,
+  id: 'b1',
+  name: '小狐狸',
+  owned: true,
+  stableCode: 'little_fox',
+};
+
 const renderMap = (
   entries: readonly StudentChapterMapEntry[] = chapters,
   initialChapterId?: string,
 ) =>
   render(
     <MemoryRouter>
-      <ChapterMap chapters={entries} initialChapterId={initialChapterId} />
+      <ChapterMap
+        chapters={entries}
+        equippedBlook={equippedBlook}
+        initialChapterId={initialChapterId}
+      />
     </MemoryRouter>,
   );
 
 describe('ChapterMap', () => {
-  beforeEach(() => {
-    mockedInventory.mockReturnValue(
-      asResult({
-        data: {
-          activeBlookId: 'b1',
-          frameGradientEnd: null,
-          frameGradientStart: null,
-          items: [
-            {
-              costTokens: 30,
-              emoji: '🦊',
-              equipped: true,
-              id: 'b1',
-              name: '小狐狸',
-              owned: true,
-              stableCode: 'little_fox',
-            },
-          ],
-          tokenBalance: 40,
-        },
-        isError: false,
-        isPending: false,
-      }),
-    );
-  });
-
   it('renders six ordered buttons and defaults to the first accessible incomplete chapter', () => {
     renderMap();
     expect(screen.getByRole('list', { name: '六章學習地圖' })).toBeVisible();

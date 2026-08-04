@@ -3,7 +3,7 @@ import { useState } from 'react';
 import adventurerIdle from '../../../assets/learning-map/adventurer-idle.png';
 import forestVillageBase from '../../../assets/learning-map/forest-village-base.webp';
 import { BlookArt } from '../../../components/ui/blook-art';
-import { useBlookInventory } from '../../inventory/hooks/use-blook-inventory';
+import type { BlookInventoryItem } from '../../inventory/types';
 import type { StudentChapterMapEntry } from '../api/chapter-map';
 import { ChapterMapBuilding } from './chapter-map-building';
 import { ChapterMapPanel } from './chapter-map-panel';
@@ -37,16 +37,16 @@ const initialSelection = (
 
 export function ChapterMap({
   chapters,
+  equippedBlook,
   initialChapterId,
 }: Readonly<{
   chapters: readonly StudentChapterMapEntry[];
+  equippedBlook: BlookInventoryItem | null;
   initialChapterId?: string | undefined;
 }>) {
   const [selectedId, setSelectedId] = useState(() =>
     initialSelection(chapters, initialChapterId),
   );
-  const inventory = useBlookInventory();
-  const equipped = inventory.data?.items.find((item) => item.equipped);
   const selectedChapter =
     chapters.find((chapter) => chapter.chapterId === selectedId) ?? chapters[0];
   const selectedPosition = selectedChapter?.sortOrder ?? 1;
@@ -80,9 +80,9 @@ export function ChapterMap({
           data-testid="equipped-blook-badge"
         >
           <BlookArt
-            emoji={equipped?.emoji}
+            emoji={equippedBlook?.emoji}
             size={40}
-            stableCode={equipped?.stableCode ?? 'little_fox'}
+            stableCode={equippedBlook?.stableCode ?? 'little_fox'}
           />
         </span>
         <span aria-hidden="true" className="chapter-map__adventurer">
