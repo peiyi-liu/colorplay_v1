@@ -375,6 +375,47 @@ describe('AppShell', () => {
     );
   });
 
+  it.each([
+    ['little_fox', '小狐狸', '🦊'],
+    ['indigo_dragon', '東方靛龍', '🐲'],
+  ] as const)(
+    'centers the 3:2 %s art through the same learning-map HUD container',
+    (stableCode, name, emoji) => {
+      mockedUseBlookInventory.mockReturnValue(
+        inventoryResult({
+          data: {
+            activeBlookId: `${stableCode}-id`,
+            items: [
+              {
+                costTokens: 0,
+                emoji,
+                equipped: true,
+                id: `${stableCode}-id`,
+                name,
+                owned: true,
+                stableCode,
+              },
+            ],
+            tokenBalance: 250,
+          },
+          isError: false,
+          isPending: false,
+        }),
+      );
+
+      renderShellRoute('/app');
+
+      const image = document.querySelector<HTMLImageElement>(
+        '.hud-avatar .blook-art',
+      );
+      expect(image).toHaveAttribute('src', `/assets/blooks/${stableCode}.png`);
+      expect(image?.parentElement).toHaveClass('hud-avatar');
+      expect(globalStyles).toMatch(
+        /\.game-stage--learning-map \.hud-avatar \.blook-art\s*\{[^}]*position:\s*absolute;[^}]*height:\s*100%;[^}]*left:\s*50%;[^}]*transform:\s*translateX\(-50%\);[^}]*width:\s*auto;/u,
+      );
+    },
+  );
+
   it('學生頂部顯示頭像框與經濟群組', async () => {
     renderStudentShell();
 

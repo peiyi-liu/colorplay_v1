@@ -1441,6 +1441,10 @@ a {
   padding: 0 var(--space-3);
 }
 
+.hud-menu__toggle:focus-visible {
+  outline-offset: -3px;
+}
+
 .hud-menu__panel {
   position: absolute;
   z-index: 60;
@@ -7014,10 +7018,11 @@ select#dashboard-classroom {
 }
 
 .game-stage--learning-map .hud-avatar .blook-art {
+  position: absolute;
+  top: 0;
   max-width: none;
   height: 100%;
   left: 50%;
-  position: relative;
   transform: translateX(-50%);
   width: auto;
 }
@@ -7076,6 +7081,7 @@ select#dashboard-classroom {
 }
 
 .game-stage--learning-map .hud-avatar {
+  position: relative;
   width: calc(clamp(58px, 6vw, 66px) - 12px);
   height: calc(clamp(58px, 6vw, 66px) - 12px);
   overflow: hidden;
@@ -7128,6 +7134,10 @@ select#dashboard-classroom {
     right: 0;
     width: auto;
     border-bottom: 0;
+  }
+
+  .game-stage--learning-map .chapter-map-shell {
+    padding-top: calc(clamp(58px, 6vw, 66px) + 16px);
   }
 }
 
@@ -7427,11 +7437,12 @@ select#dashboard-classroom {
 
 .chapter-map__entry-action:focus-visible {
   outline: 3px solid var(--pixel-window-ink);
-  outline-offset: 3px;
+  outline-offset: -3px;
 }
 
 .chapter-map__building-button:focus-visible {
-  outline: none;
+  outline: 3px solid #fff4bd;
+  outline-offset: -3px;
 }
 
 .chapter-map__building-button:focus-visible .chapter-map__building-label,
@@ -7814,7 +7825,7 @@ select#dashboard-classroom {
 @media (min-width: 64rem) and (orientation: landscape) {
   .lobby--map-fullscreen {
     height: 100%;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
   }
 
   .lobby--map-fullscreen .chapter-map-shell {
@@ -7837,6 +7848,7 @@ select#dashboard-classroom {
     min-width: 0;
     height: 100%;
     max-width: 100%;
+    justify-self: center;
   }
 }
 
