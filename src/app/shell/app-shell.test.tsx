@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -13,6 +15,11 @@ import { useBlookInventory } from '../../features/inventory/hooks/use-blook-inve
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
 import { ToastProvider } from '../../components/ui/toast';
 import { AppShell } from './app-shell';
+
+const globalStyles = readFileSync(
+  resolve(process.cwd(), 'src/styles/globals.css'),
+  'utf8',
+);
 
 vi.mock('../../features/auth/context/auth-context', () => ({
   useAuth: vi.fn(),
@@ -314,6 +321,24 @@ describe('AppShell', () => {
     const stage = screen.getByRole('main').closest('.game-stage');
     expect(stage).not.toHaveClass('game-stage--learning-map');
     expect(document.querySelector('.economy-summary--learning-map')).toBeNull();
+  });
+
+  it('keeps compact map HUD contents within the 58px minimum outer height', () => {
+    expect(globalStyles).toMatch(
+      /\.game-stage--learning-map \.hud-economy-group\s*\{[^}]*height:\s*clamp\(58px, 6vw, 66px\);[^}]*padding:\s*4px;/u,
+    );
+    expect(globalStyles).toMatch(
+      /\.game-stage--learning-map \.hud-avatar\s*\{[^}]*width:\s*calc\(clamp\(58px, 6vw, 66px\) - 12px\);[^}]*height:\s*calc\(clamp\(58px, 6vw, 66px\) - 12px\);/u,
+    );
+    expect(globalStyles).toMatch(
+      /\.economy-summary--learning-map\s+\.economy-summary__level\s*\{[^}]*gap:\s*1px;[^}]*border-width:\s*1px;[^}]*font-size:\s*11px;[^}]*line-height:\s*12px;[^}]*padding:\s*0 4px;/u,
+    );
+    expect(globalStyles).toMatch(
+      /\.economy-summary--learning-map\s+\.economy-summary__level\s+progress\s*\{[^}]*height:\s*5px;/u,
+    );
+    expect(globalStyles).toMatch(
+      /\.economy-summary--learning-map\s+\.economy-summary__tokens\s*\{[^}]*border-width:\s*1px;[^}]*font-size:\s*11px;[^}]*line-height:\s*12px;[^}]*padding:\s*1px 4px;/u,
+    );
   });
 
   it('學生頂部顯示頭像框與經濟群組', async () => {

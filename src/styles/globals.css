@@ -7074,8 +7074,8 @@ select#dashboard-classroom {
 }
 
 .game-stage--learning-map .hud-avatar {
-  width: 52px;
-  height: 52px;
+  width: calc(clamp(58px, 6vw, 66px) - 12px);
+  height: calc(clamp(58px, 6vw, 66px) - 12px);
   overflow: hidden;
 }
 
@@ -7089,6 +7089,11 @@ select#dashboard-classroom {
   .economy-summary__level {
   min-width: 0;
   flex: 1;
+  gap: 1px;
+  border-width: 1px;
+  font-size: 11px;
+  line-height: 12px;
+  padding: 0 4px;
 }
 
 .game-stage--learning-map
@@ -7096,6 +7101,16 @@ select#dashboard-classroom {
   .economy-summary__level
   progress {
   width: 100%;
+  height: 5px;
+}
+
+.game-stage--learning-map
+  .economy-summary--learning-map
+  .economy-summary__tokens {
+  border-width: 1px;
+  font-size: 11px;
+  line-height: 12px;
+  padding: 1px 4px;
 }
 
 @media (min-width: 48rem) and (orientation: landscape) {
