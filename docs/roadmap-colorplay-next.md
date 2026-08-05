@@ -24,8 +24,8 @@ Complete the Phase 0 design discussion. Then write and review a dedicated design
 spec before creating projects, changing DNS, uploading environment variables,
 linking Supabase, resetting data, deploying, or modifying product code.
 
-The first unresolved Phase 0 decision is the backup data-residency boundary and
-Backblaze B2 region. No B2 account or bucket is created before it is resolved.
+The first unresolved Phase 0 decision is the CI job set and the human approval
+gates for Staging deployment and Production promotion.
 
 ## Approved program structure
 
@@ -370,10 +370,19 @@ and approved restore exercises. The primary B2 account credential is never used
 by CI or a backup script. Access, failed uploads, retention state, capacity, and
 unexpected deletion attempts are included in the sanitized backup evidence.
 
-The B2 region and legal data-residency boundary remain an explicit owner choice
-because encrypted backups still contain recoverable personal and educational
-records. Account and bucket creation remain prohibited until that choice is
-recorded.
+The owner accepts encrypted backup storage in the United States and selected
+the Backblaze US West region. The account therefore stores data in Backblaze's
+US West facilities and is not described as Taiwan- or Asia-resident. The
+cross-border location must be reflected in the applicable privacy notice,
+school authorization, and vendor-processing record before real student data is
+uploaded.
+
+On 2026-08-05, the owner reported that a dedicated Backblaze account had been
+created in US West. This is owner-supplied status, not independent verification.
+It proves neither that a Bucket exists nor that MFA, recovery custody, private
+access, application keys, encryption, lifecycle settings, billing alerts, or
+30-day Compliance Object Lock are configured. No secret value is requested or
+stored in this tracker.
 
 ## Approved Admin and security decisions
 
@@ -525,7 +534,6 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- Backup data residency and Backblaze B2 region.
 - CI jobs and human approval gates for Staging and Production.
 - Release record format, monitoring, rollback, and post-deploy smoke.
 
