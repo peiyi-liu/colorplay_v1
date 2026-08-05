@@ -451,6 +451,14 @@ identifier is stored in this tracker.
 
 - Google Sheets is the authoring source for chapter names, sections, review
   cards, section-question banks, and chapter-final question banks.
+- Every Question has a permanent stable identifier. The system generates it;
+  content authors neither invent nor modify it. Google Sheets stores the
+  generated value in a protected, visible column. Existing identifiers are
+  retained, missing legacy values receive a one-time reviewed backfill, edits
+  keep the original identifier, and only a genuinely new Question receives a
+  new one. The value is persisted, never calculated from row number, position,
+  or mutable Question text. Import fails closed on a missing, duplicate,
+  malformed, or conflicting identifier.
 - Content is imported into Staging, validated, and frozen as an immutable,
   versioned release candidate.
 - Production does not allow direct editing of an already published content
