@@ -1,6 +1,7 @@
 # ColorPlay Current Program
 
-- Status: DESIGN IN PROGRESS — no Phase 0 hosted mutation is authorized yet
+- Status: DESIGN IN PROGRESS — only the owner-authorized B2 backup-target setup
+  has changed hosted state
 - Last updated: 2026-08-05 (Asia/Taipei)
 - Current phase: Phase 0, environment and release foundation design
 - Canonical entry point: this file
@@ -20,9 +21,11 @@ as a completed production release.
 
 ## Immediate next action
 
-Complete the Phase 0 design discussion. Then write and review a dedicated design
-spec before creating projects, changing DNS, uploading environment variables,
-linking Supabase, resetting data, deploying, or modifying product code.
+Complete the owner-authorized B2 setup by configuring billing alerts, then
+resume the Phase 0 design discussion. Write and review a dedicated design spec
+before creating Vercel or Supabase projects, changing DNS, uploading application
+environment variables, linking Supabase, resetting data, deploying, or modifying
+product code.
 
 The first unresolved Phase 0 decision is the CI job set and the human approval
 gates for Staging deployment and Production promotion.
@@ -400,9 +403,13 @@ for approved integrity checks and recovery exercises. A second sanitized CLI
 gate confirmed that this credential can list the approved prefix and download
 the exact writer canary, while upload and deletion attempts are rejected.
 Temporary authentication data was again cleared after the gate. Client-side
-encrypted backup upload, billing alerts, retention automation, and a restore
-test remain outstanding. No Application Key ID, secret value, File ID, object
-URL, or Bucket identifier is stored in this tracker.
+encrypted backup upload, billing alerts, the first observed lifecycle execution,
+and a restore test remain outstanding. On 2026-08-05, the owner reported saving
+and reopening a custom Lifecycle Rule scoped to `production/` that hides objects
+30 days after upload and deletes them one day after hiding. The configuration is
+confirmed, but its scheduled execution has not yet occurred. No Application Key
+ID, secret value, File ID, object URL, or Bucket identifier is stored in this
+tracker.
 
 ## Approved Admin and security decisions
 
