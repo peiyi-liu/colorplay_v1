@@ -21,9 +21,9 @@ as a completed production release.
 
 ## Immediate next action
 
-Complete the owner-authorized B2 setup by configuring billing alerts, then
-resume the Phase 0 design discussion. Write and review a dedicated design spec
-before creating Vercel or Supabase projects, changing DNS, uploading application
+Complete the B2 free-tier capacity and usage-monitoring design, then resume the
+Phase 0 design discussion. Write and review a dedicated design spec before
+creating Vercel or Supabase projects, changing DNS, uploading application
 environment variables, linking Supabase, resetting data, deploying, or modifying
 product code.
 
@@ -403,13 +403,22 @@ for approved integrity checks and recovery exercises. A second sanitized CLI
 gate confirmed that this credential can list the approved prefix and download
 the exact writer canary, while upload and deletion attempts are rejected.
 Temporary authentication data was again cleared after the gate. Client-side
-encrypted backup upload, billing alerts, the first observed lifecycle execution,
-and a restore test remain outstanding. On 2026-08-05, the owner reported saving
-and reopening a custom Lifecycle Rule scoped to `production/` that hides objects
-30 days after upload and deletes them one day after hiding. The configuration is
-confirmed, but its scheduled execution has not yet occurred. No Application Key
-ID, secret value, File ID, object URL, or Bucket identifier is stored in this
-tracker.
+encrypted backup upload, free-tier capacity monitoring, the first observed
+lifecycle execution, and a restore test remain outstanding. On 2026-08-05, the
+owner reported saving and reopening a custom Lifecycle Rule scoped to
+`production/` that hides objects 30 days after upload and deletes them one day
+after hiding. The configuration is confirmed, but its scheduled execution has
+not yet occurred.
+
+The owner selected a free-only B2 posture and has not added a payment method.
+Backblaze currently includes 10 GB of free storage without requiring billing
+information; the owner reports that charge-based Caps and Alerts cannot be
+configured in the account's current state. Free-tier fit is not yet proven for
+30 daily encrypted backup sets. The backup design must measure projected retained
+bytes before its first real upload and monitor actual account usage without
+silently dropping a required backup; the warning and stop thresholds remain to
+be approved. No Application Key ID, secret value, File ID, object URL, or Bucket
+identifier is stored in this tracker.
 
 ## Approved Admin and security decisions
 
