@@ -528,6 +528,10 @@ Economy and reward presentation decisions currently approved:
 
 - The existing speed bonus remains in both autonomous Quiz and Live rewards.
 - Mastery remains accuracy-only; response speed never changes mastery.
+- For each Student and logical autonomous challenge, only the first completed
+  session on an Asia/Taipei calendar day receives full XP and 金幣. Later
+  completions that day remain valid for mastery and formal-retake purposes but
+  award 20% XP and zero 金幣.
 - Every user-facing web label, result explanation, purchase control, accessible
   name, and HUD summary uses `金幣` instead of `Token` or `代幣`.
 - Existing internal database columns, RPC payload fields, TypeScript property
