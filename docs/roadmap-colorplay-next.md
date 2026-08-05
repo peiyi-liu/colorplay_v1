@@ -24,8 +24,8 @@ Complete the Phase 0 design discussion. Then write and review a dedicated design
 spec before creating projects, changing DNS, uploading environment variables,
 linking Supabase, resetting data, deploying, or modifying product code.
 
-The first unresolved Phase 0 decision is the Vercel project creation, rename,
-and zero-downtime domain cutover sequence.
+The first unresolved Phase 0 decision is DNS ownership and the controlled change
+procedure for `staging.colorplayapp.com` and the final Production cutover.
 
 ## Approved program structure
 
@@ -150,6 +150,41 @@ Migration reconciliation passes only when:
 - Security Advisor has no unresolved error and every warning has an explicit
   disposition plus relevant authorization tests;
 - regenerated database types have no unexpected difference.
+
+### Approved two-slot hosted cutover
+
+The Free Plan's two Supabase project slots are rotated without interrupting the
+current Production site:
+
+1. Keep the current `colorplayapp.com` deployment and existing hosted Supabase
+   project unchanged.
+2. Create the second Supabase project as a clean Production Candidate.
+3. Create the separate `colorplay-staging-web` Vercel project, temporarily point
+   it at the Candidate, and attach `staging.colorplayapp.com`.
+4. Replay repository migrations, create fixture identities, and run the full
+   Staging gate against the Candidate.
+5. After that gate passes, reset the Candidate again, replay the frozen
+   migration chain without fixtures, import only approved formal content, and
+   rerun the clean Production data and security gates.
+6. Build the Production Vercel artifact with the new Production Supabase public
+   values. Deploy it first to an isolated candidate URL and perform only
+   non-mutating Production smoke checks.
+7. After explicit owner approval, atomically promote that exact artifact to
+   `colorplayapp.com`. Keep the previous Vercel deployment addressable for
+   rollback and use backward-compatible database changes.
+8. Only after the new Production site is verified may the old Supabase project
+   enter its approved backup, cleanup, and reset procedure. It then becomes the
+   permanent `colorplay-staging` project.
+9. Repoint `colorplay-staging-web` to permanent Staging, recreate fixtures, and
+   rerun the Staging gate.
+10. After stability is established, rename the existing Production Vercel
+    project from the misleading `colorplay-staging` name to `colorplay-web`.
+    Renaming a project is not used as a domain-cutover mechanism.
+
+At no point may both public sites write to the same Supabase project. A Vercel
+`READY` result or an HTTP 200 does not authorize promotion; the release record
+must bind the tested artifact, Git SHA, migration range, environment, Supabase
+project ref, and owner approval.
 
 ## Approved Admin and security decisions
 
@@ -301,7 +336,6 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- Vercel project rename/new-project order and zero-downtime domain cutover.
 - DNS ownership and change procedure for `staging.colorplayapp.com`.
 - Auth Site URL, redirect, SMTP, and email-template values per environment.
 - Secrets ownership, rotation, incident response, and recovery contacts.
