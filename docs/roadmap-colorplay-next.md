@@ -24,8 +24,8 @@ Complete the Phase 0 design discussion. Then write and review a dedicated design
 spec before creating projects, changing DNS, uploading environment variables,
 linking Supabase, resetting data, deploying, or modifying product code.
 
-The first unresolved Phase 0 decision is secrets ownership, rotation, incident
-response, and recovery contacts for Local, Staging, and Production.
+The first unresolved Phase 0 decision is the Production backup and restore
+objective and its evidence under the selected Supabase Free Plan.
 
 ## Approved program structure
 
@@ -246,6 +246,54 @@ gate are required before either hosted environment is accepted.
 Admin TOTP MFA remains a separate factor. It is not delivered by email and has
 no email bypass.
 
+### Approved infrastructure custody and secret lifecycle
+
+Infrastructure uses two-person custody without shared daily credentials:
+
+- The owner is the primary account owner for GitHub, Cloudflare, Vercel,
+  Supabase, Resend, and the encrypted recovery vault.
+- One separately identified emergency recovery custodian holds only the access
+  needed to recover ownership when the primary owner is unavailable or locked
+  out. Where a provider supports member accounts, the custodian uses a distinct
+  account and MFA. Where it does not, the custodian holds a sealed encrypted
+  recovery package that is never used for routine work.
+- Release operators use individually attributable, least-privilege access for
+  the shortest practical period. Temporary access is revoked when the approved
+  operation ends.
+- Product `/admin` authority does not imply infrastructure access. An
+  application Admin cannot read or manage Cloudflare, Vercel, Supabase, Resend,
+  GitHub, backup, or deployment credentials.
+
+Browser-publishable Supabase configuration is documented separately from
+server secrets. Database passwords, service-role or secret keys, JWT signing
+material, SMTP credentials, provider access tokens, backup encryption keys,
+MFA recovery codes, and monitoring write keys stay only in the appropriate
+provider secret store or encrypted recovery vault. They never enter Git,
+issue text, chat transcripts, logs, screenshots, acceptance artifacts, or the
+browser bundle. A backup encryption key is not stored beside the backup.
+
+Secret rotation is event-driven rather than ceremonial. Rotation is mandatory
+after suspected disclosure, accidental use in the wrong environment, provider
+security notice, personnel or role change, loss of a device, use of an
+emergency recovery package, or an authorization-boundary change. Rotation
+revokes active sessions and obsolete credentials before the replacement is
+accepted, updates dependent services in trust order, redeploys the exact
+reviewed artifact when necessary, and reruns the affected Auth, secret-scan,
+and connectivity gates.
+
+Once per year, the owner and recovery custodian perform a non-disclosing access
+inventory and recovery exercise. It verifies that both people can execute the
+documented recovery path without revealing secret values in evidence. The
+custodian's identity and private contact route are stored outside the
+repository and must be assigned before any new hosted project is accepted.
+
+An infrastructure incident freezes Production promotion until containment.
+The response record contains only a sanitized timeline: detection source,
+affected systems and scopes, revoked credentials and sessions by identifier,
+rotation completion, redeployed artifact, verification evidence, owner
+decision, and follow-up actions. It never contains the compromised or new
+secret values.
+
 ## Approved Admin and security decisions
 
 - `admin` is a distinct account role, not a teacher elevated temporarily.
@@ -396,7 +444,6 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- Secrets ownership, rotation, incident response, and recovery contacts.
 - Production backup/restore objective and evidence compatible with the selected
   Supabase plan.
 - CI jobs and human approval gates for Staging and Production.
