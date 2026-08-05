@@ -1,9 +1,9 @@
 # ColorPlay Current Program
 
-- Status: PHASE 0 DESIGN APPROVED — design spec awaiting owner review; only the
-  owner-authorized B2 backup-target setup has changed hosted state
-- Last updated: 2026-08-05 (Asia/Taipei)
-- Current phase: Phase 0, design-spec review
+- Status: PHASE 0 SPEC APPROVED — implementation plan awaiting owner review;
+  only the owner-authorized B2 backup-target setup has changed hosted state
+- Last updated: 2026-08-06 (Asia/Taipei)
+- Current phase: Phase 0, implementation-plan review
 - Canonical entry point: this file
 - Historical task ledger: `.superpowers/sdd/progress.md`
 
@@ -22,11 +22,12 @@ as a completed production release.
 ## Immediate next action
 
 Owner reviews
-`docs/superpowers/specs/2026-08-05-phase-0-environment-release-foundation-design.md`.
-After approval, use `superpowers:writing-plans` to produce and review the Phase 0
-implementation plan. Do not create Vercel or Supabase projects, change DNS,
-upload application environment variables, link Supabase, reset data, deploy, or
-modify product code before that plan is approved.
+`docs/superpowers/plans/2026-08-06-phase-0-environment-release-foundation.md`.
+After approval, first complete its Human Readiness checklist, then execute local
+Tasks 1–12 in an isolated worktree. Hosted Tasks 13–18 remain separately gated;
+do not create Vercel or Supabase projects, change DNS, upload application
+environment variables, link Supabase, reset data, deploy, or modify product code
+before the implementation plan is approved.
 
 ## Approved program structure
 
@@ -35,7 +36,7 @@ batches. Each batch must pass its own Staging gate before Production promotion.
 
 | Phase | Scope                                         | Status                                              |
 | ----- | --------------------------------------------- | --------------------------------------------------- |
-| 0     | Environment and release foundation            | Design approved; spec awaiting owner review         |
+| 0     | Environment and release foundation            | Spec approved; implementation plan awaiting review  |
 | 1     | Admin identity and security core              | Decisions captured; spec not started                |
 | 2     | Content SSOT and version publishing           | Decisions captured; spec not started                |
 | 3     | Learning progression and assessment authority | Decisions captured; spec not started                |
@@ -713,7 +714,8 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- No unresolved design choice; consolidated design and spec approval remain.
+- No unresolved design choice; implementation-plan review and the plan's
+  human-readiness checklist remain before implementation.
 
 ### Later phases
 
