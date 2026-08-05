@@ -24,8 +24,8 @@ Complete the Phase 0 design discussion. Then write and review a dedicated design
 spec before creating projects, changing DNS, uploading environment variables,
 linking Supabase, resetting data, deploying, or modifying product code.
 
-The first unresolved Phase 0 decision is the Production backup and restore
-objective and its evidence under the selected Supabase Free Plan.
+The first unresolved Phase 0 decision is the external encrypted backup target,
+account isolation, and overwrite-protection policy.
 
 ## Approved program structure
 
@@ -294,6 +294,54 @@ rotation completion, redeployed artifact, verification evidence, owner
 decision, and follow-up actions. It never contains the compromised or new
 secret values.
 
+### Approved Free Plan backup and restore objective
+
+Production uses an external encrypted backup workflow because the selected
+Supabase Free Plan does not provide the required downloadable backup and
+point-in-time recovery guarantees. The operational objectives are:
+
+- recovery point objective (RPO): at most 24 hours of committed data loss;
+- recovery time objective (RTO): service restoration within 8 hours;
+- the RTO is a team operating target, not a Supabase Free Plan service-level
+  guarantee, and no seconds-level point-in-time recovery is claimed.
+
+Once per day, an isolated backup job exports database roles, schema, and data as
+separate logical artifacts using the reviewed Supabase CLI workflow. The job
+also copies every Supabase Storage object separately because a database dump
+contains Storage metadata but not the object payloads. Its manifest records the
+environment, project ref, frozen repository SHA and migration range, UTC backup
+time, CLI version, bucket and object inventory, byte sizes, and cryptographic
+checksums without recording credentials or personal-data contents.
+
+Each backup set is encrypted before it leaves the controlled job environment,
+stored outside Supabase and Vercel, and retained on a rolling 30-day schedule.
+The backup encryption key is kept in the approved recovery vault and never
+beside the encrypted backup. Backup access is limited to the infrastructure
+owner and emergency recovery custodian. Expired sets are deleted with a
+non-secret audit record; backup data is never reused for analytics, development,
+or test fixtures.
+
+A job is successful only when all expected artifacts exist, checksums verify,
+the encrypted set can be opened in the verification environment, and the
+manifest matches the source inventory. A missing or invalid backup that would
+breach the 24-hour RPO alerts the owner and recovery custodian, freezes
+Production promotion, and remains an incident until a valid replacement exists.
+
+Once per quarter, the newest backup is fully restored into an isolated Local
+Supabase environment with external email and outbound integrations disabled.
+The exercise verifies migrations, roles, Auth records, representative table
+counts and invariants, Storage inventory and sampled object checksums, RLS and
+authorization gates, and application startup. Before a major Production
+release, the same restore path is rehearsed against the isolated Hosted
+Candidate used by the approved two-slot procedure.
+
+Restore evidence contains only checksums, aggregate counts, timings, pass/fail
+results, and operator approvals. The recovery record names the selected backup,
+restored repository SHA and migration range, actual data-loss window, actual
+recovery duration, and any manual configuration that had to be recreated.
+Repository migrations remain the schema authority; a backup is recovery data,
+not a competing source of schema changes.
+
 ## Approved Admin and security decisions
 
 - `admin` is a distinct account role, not a teacher elevated temporarily.
@@ -444,8 +492,7 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- Production backup/restore objective and evidence compatible with the selected
-  Supabase plan.
+- External backup target, account isolation, and overwrite protection.
 - CI jobs and human approval gates for Staging and Production.
 - Release record format, monitoring, rollback, and post-deploy smoke.
 
