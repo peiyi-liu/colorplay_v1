@@ -387,10 +387,13 @@ or Governance mode, so the approved 30-day Compliance Mode control remains
 unverified. The owner subsequently reported creating and securely storing a
 standard Application Key restricted to this Bucket, `Write Only` access, and
 the `production/` object-name prefix. Its effective capabilities have not yet
-been verified by API. The separate read-only recovery key, client-side encrypted
-backup upload, billing alerts, retention automation, and a restore test also
-remain outstanding. No Application Key ID, secret value, or Bucket identifier
-is stored in this tracker.
+been verified by API. The owner then reported creating and separately securing
+a second standard Application Key restricted to the same Bucket and prefix with
+`Read Only` access for approved integrity checks and recovery exercises. Its
+effective capabilities also remain unverified. Client-side encrypted backup
+upload, billing alerts, retention automation, and a restore test remain
+outstanding. No Application Key ID, secret value, or Bucket identifier is stored
+in this tracker.
 
 ## Approved Admin and security decisions
 
