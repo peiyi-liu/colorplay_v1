@@ -21,14 +21,12 @@ as a completed production release.
 
 ## Immediate next action
 
-Complete the B2 free-tier capacity and usage-monitoring design, then resume the
-Phase 0 design discussion. Write and review a dedicated design spec before
-creating Vercel or Supabase projects, changing DNS, uploading application
-environment variables, linking Supabase, resetting data, deploying, or modifying
-product code.
-
-The first unresolved Phase 0 decision is the CI job set and the human approval
-gates for Staging deployment and Production promotion.
+Complete the Phase 0 release-record, monitoring, rollback, post-deploy smoke,
+and B2 free-tier usage-monitoring decisions, then present the consolidated Phase
+0 design for approval. Write and review a dedicated design spec before creating
+Vercel or Supabase projects, changing DNS, uploading application environment
+variables, linking Supabase, resetting data, deploying, or modifying product
+code.
 
 ## Approved program structure
 
@@ -62,6 +60,28 @@ brainstorm → approved design → committed spec → owner review
 | Local       | developer worktree         | local Vite              | loopback URL               | local CLI stack                                                                                             | deterministic synthetic fixtures                |
 | Staging     | protected `staging` branch | `colorplay-staging-web` | `staging.colorplayapp.com` | existing project ref `onkxnkzeixpezetkmocf`, renamed `colorplay-staging` after the approved reset procedure | approved content plus fixture identities only   |
 | Production  | protected `main`           | `colorplay-web`         | `colorplayapp.com`         | new clean `colorplay-production` project                                                                    | approved content and authorized real users only |
+
+### Approved CI and deployment approval gates
+
+- A Feature branch enters Staging only through a Pull Request to the protected
+  `staging` branch. Required checks cover formatting, lint, typecheck, unit
+  coverage, build, a clean Local Supabase replay, pgTAP and integration tests,
+  Chromium E2E, and credential scanning. The owner must approve the Pull Request
+  before merge.
+- Merging `staging` automatically deploys that commit to
+  `staging.colorplayapp.com`, then runs hosted smoke and the affected Phase's
+  acceptance gate. Firefox, WebKit, responsive viewport, and human real-device
+  acceptance belong to the Staging gate rather than every Feature Pull Request.
+- Updating `main` never automatically releases Production. The approved Staging
+  Git SHA is built as an isolated Production Candidate with Production
+  configuration. Its release evidence binds the Git SHA, Vercel deployment ID,
+  migration range, Supabase project ref, and test results.
+- Promotion requires explicit owner approval through the GitHub Production
+  Environment. The exact approved Candidate artifact is promoted; it is not
+  rebuilt after approval. The protected `main` ref must finish at the same Git
+  SHA served by Production.
+- Any missing check, evidence binding, owner approval, or SHA match fails closed
+  and cannot be bypassed by an HTTP 200 or Vercel `READY` state alone.
 
 The owner adopted ADR 0002's clean-environment approach on 2026-08-05:
 
@@ -649,7 +669,6 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- CI jobs and human approval gates for Staging and Production.
 - Release record format, monitoring, rollback, and post-deploy smoke.
 
 ### Later phases
