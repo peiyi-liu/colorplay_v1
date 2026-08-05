@@ -394,10 +394,13 @@ cleared after the gate.
 
 The owner also reported creating and separately securing a second standard
 Application Key restricted to the same Bucket and prefix with `Read Only` access
-for approved integrity checks and recovery exercises. Its effective capabilities
-remain unverified. Client-side encrypted backup upload, billing alerts,
-retention automation, and a restore test remain outstanding. No Application Key
-ID, secret value, or Bucket identifier is stored in this tracker.
+for approved integrity checks and recovery exercises. A second sanitized CLI
+gate confirmed that this credential can list the approved prefix and download
+the exact writer canary, while upload and deletion attempts are rejected.
+Temporary authentication data was again cleared after the gate. Client-side
+encrypted backup upload, billing alerts, retention automation, object-level
+Compliance Mode evidence, and a restore test remain outstanding. No Application
+Key ID, secret value, or Bucket identifier is stored in this tracker.
 
 ## Approved Admin and security decisions
 
