@@ -553,6 +553,24 @@ Economy and reward presentation decisions currently approved:
   names, and ledger source identifiers that contain `token` remain unchanged;
   this is a presentation-language change, not a schema migration.
 
+Achievement decisions currently approved:
+
+| Badge      | Server-authoritative trigger                                                |
+| ---------- | --------------------------------------------------------------------------- |
+| 初出茅廬   | Complete the first valid non-Live formal challenge                          |
+| 百發百中   | Answer every question correctly in one valid formal challenge               |
+| 不屈不撓   | Complete explanation review for ten distinct Mistake Items                  |
+| 章節精熟   | Complete and master the first chapter                                       |
+| 色彩大師   | Complete and master all six chapters                                        |
+| 登峰造極   | Reach Level 10                                                              |
+| 連擊之王   | Answer twenty consecutive questions correctly in non-Live formal challenges |
+| 課堂挑戰者 | Complete five valid Teacher-hosted Live Sessions                            |
+| 收藏家     | Own all six initial characters                                              |
+
+The nine existing badge identities remain. Unlocking a badge awards no extra XP
+or 金幣; badges are recognition and progress markers rather than a second reward
+ledger.
+
 ## Approved Learning Hall and JRPG direction
 
 - Student learning experiences use a detailed full-screen JRPG pixel-art Forest
@@ -617,7 +635,6 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Later phases
 
-- Badge triggers for autonomous and Live work.
 - Teacher report calculations and privacy-preserving exports.
 - Admin information architecture and per-table sensitivity catalog.
 - Detailed map motion, transitions, guide dialogue, and chapter-interior layouts.
