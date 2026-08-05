@@ -386,14 +386,18 @@ of 30 days. The screenshot does not identify whether that lock uses Compliance
 or Governance mode, so the approved 30-day Compliance Mode control remains
 unverified. The owner subsequently reported creating and securely storing a
 standard Application Key restricted to this Bucket, `Write Only` access, and
-the `production/` object-name prefix. Its effective capabilities have not yet
-been verified by API. The owner then reported creating and separately securing
-a second standard Application Key restricted to the same Bucket and prefix with
-`Read Only` access for approved integrity checks and recovery exercises. Its
-effective capabilities also remain unverified. Client-side encrypted backup
-upload, billing alerts, retention automation, and a restore test remain
-outstanding. No Application Key ID, secret value, or Bucket identifier is stored
-in this tracker.
+the `production/` object-name prefix. Later that day, the owner ran a sanitized
+CLI gate using a non-personal canary under `production/verification/`: the
+writer uploaded inside the approved prefix and was rejected when attempting an
+outside-prefix upload, read, and deletion. Temporary authentication data was
+cleared after the gate.
+
+The owner also reported creating and separately securing a second standard
+Application Key restricted to the same Bucket and prefix with `Read Only` access
+for approved integrity checks and recovery exercises. Its effective capabilities
+remain unverified. Client-side encrypted backup upload, billing alerts,
+retention automation, and a restore test remain outstanding. No Application Key
+ID, secret value, or Bucket identifier is stored in this tracker.
 
 ## Approved Admin and security decisions
 
