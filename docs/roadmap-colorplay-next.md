@@ -21,12 +21,11 @@ as a completed production release.
 
 ## Immediate next action
 
-Complete the Phase 0 monitoring, rollback, post-deploy smoke, and B2 free-tier
-usage-monitoring decisions, then present the consolidated Phase 0 design for
-approval. Write and review a dedicated design spec before creating
-Vercel or Supabase projects, changing DNS, uploading application environment
-variables, linking Supabase, resetting data, deploying, or modifying product
-code.
+Present the consolidated Phase 0 design for owner approval, then write and
+review its dedicated design spec. Do not create Vercel or Supabase projects,
+change DNS, upload application environment variables, link Supabase, reset data,
+deploy, or modify product code before the spec is approved and an implementation
+plan is reviewed.
 
 ## Approved program structure
 
@@ -99,6 +98,31 @@ brainstorm → approved design → committed spec → owner review
   generation and verification tooling.
 - No documentation commit is added to `main` after promotion merely to record
   the release; doing so would make `main` differ from the deployed SHA.
+
+### Approved monitoring, smoke, and rollback policy
+
+- Immediate Production smoke is read-only. It verifies DNS, TLS, HTTP success,
+  PRESS START, Login rendering, JavaScript and CSS loading, public health calls,
+  absence of a Staging marker or redirect, and zero required-console or network
+  errors. It never signs in with a test account or writes Production data.
+- A critical smoke result is retried and must fail three consecutive times
+  before the promotion is classified as failed. The workflow then restores the
+  Vercel alias to the previous healthy deployment named in the release record
+  and alerts the owner.
+- Automatic rollback changes only the web artifact. It never runs a database
+  down migration. Release migrations must be backward compatible with the
+  previous web artifact. Suspected data corruption, authorization failure, or a
+  security incident stops automation and enters the separately reviewed
+  recovery procedure.
+- Production and Staging receive scheduled read-only health checks. Sampling is
+  more frequent during the first 30 minutes after a release and continues every
+  30 minutes afterward. Persistent failure creates a GitHub Issue and notifies
+  the owner; provider dashboards are supplementary rather than authoritative.
+- A daily backup monitor verifies that the newest B2 backup is no more than 26
+  hours old and that its checksum, Object Lock, and lifecycle metadata are
+  valid. It alerts at 70%, 85%, and 95% of an owner-configured storage budget;
+  the Backblaze free-tier allowance is never hardcoded. Vercel, Supabase, and B2
+  native usage and error notifications are enabled when available.
 
 The owner adopted ADR 0002's clean-environment approach on 2026-08-05:
 
@@ -686,7 +710,7 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- Monitoring, rollback, and post-deploy smoke.
+- No unresolved design choice; consolidated design and spec approval remain.
 
 ### Later phases
 
