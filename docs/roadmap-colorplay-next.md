@@ -1,9 +1,9 @@
 # ColorPlay Current Program
 
-- Status: DESIGN IN PROGRESS — only the owner-authorized B2 backup-target setup
-  has changed hosted state
+- Status: PHASE 0 DESIGN APPROVED — design spec awaiting owner review; only the
+  owner-authorized B2 backup-target setup has changed hosted state
 - Last updated: 2026-08-05 (Asia/Taipei)
-- Current phase: Phase 0, environment and release foundation design
+- Current phase: Phase 0, design-spec review
 - Canonical entry point: this file
 - Historical task ledger: `.superpowers/sdd/progress.md`
 
@@ -21,11 +21,12 @@ as a completed production release.
 
 ## Immediate next action
 
-Present the consolidated Phase 0 design for owner approval, then write and
-review its dedicated design spec. Do not create Vercel or Supabase projects,
-change DNS, upload application environment variables, link Supabase, reset data,
-deploy, or modify product code before the spec is approved and an implementation
-plan is reviewed.
+Owner reviews
+`docs/superpowers/specs/2026-08-05-phase-0-environment-release-foundation-design.md`.
+After approval, use `superpowers:writing-plans` to produce and review the Phase 0
+implementation plan. Do not create Vercel or Supabase projects, change DNS,
+upload application environment variables, link Supabase, reset data, deploy, or
+modify product code before that plan is approved.
 
 ## Approved program structure
 
@@ -34,7 +35,7 @@ batches. Each batch must pass its own Staging gate before Production promotion.
 
 | Phase | Scope                                         | Status                                              |
 | ----- | --------------------------------------------- | --------------------------------------------------- |
-| 0     | Environment and release foundation            | Design in progress                                  |
+| 0     | Environment and release foundation            | Design approved; spec awaiting owner review         |
 | 1     | Admin identity and security core              | Decisions captured; spec not started                |
 | 2     | Content SSOT and version publishing           | Decisions captured; spec not started                |
 | 3     | Learning progression and assessment authority | Decisions captured; spec not started                |
@@ -477,9 +478,11 @@ information; the owner reports that charge-based Caps and Alerts cannot be
 configured in the account's current state. Free-tier fit is not yet proven for
 30 daily encrypted backup sets. The backup design must measure projected retained
 bytes before its first real upload and monitor actual account usage without
-silently dropping a required backup; the warning and stop thresholds remain to
-be approved. No Application Key ID, secret value, File ID, object URL, or Bucket
-identifier is stored in this tracker.
+silently dropping a required backup. The owner-configured capacity budget alerts
+at 70%, 85%, and 95%; a projected next backup beyond the remaining budget freezes
+Production promotion and opens an incident rather than deleting locked sets or
+silently missing the RPO. No Application Key ID, secret value, File ID, object
+URL, or Bucket identifier is stored in this tracker.
 
 ## Approved Admin and security decisions
 
