@@ -524,12 +524,22 @@ Assessment rules currently approved:
   each remediation card before a formal retake opens. No correction question is
   required.
 
+Economy and reward presentation decisions currently approved:
+
+- The existing speed bonus remains in both autonomous Quiz and Live rewards.
+- Mastery remains accuracy-only; response speed never changes mastery.
+- Every user-facing web label, result explanation, purchase control, accessible
+  name, and HUD summary uses `金幣` instead of `Token` or `代幣`.
+- Existing internal database columns, RPC payload fields, TypeScript property
+  names, and ledger source identifiers that contain `token` remain unchanged;
+  this is a presentation-language change, not a schema migration.
+
 ## Approved Learning Hall and JRPG direction
 
 - Student learning experiences use a detailed full-screen JRPG pixel-art Forest
   Kingdom Village rather than a centered letterboxed card.
 - The top HUD and map form one visual surface. The HUD consistently shows the
-  compact avatar, level, XP, Token, primary navigation, and MENU.
+  compact avatar, level, XP, 金幣, primary navigation, and MENU.
 - The map contains six fixed chapter buildings aligned to their terrain plots.
 - Selecting a building selects it only; the chapter panel separately exposes
   `進入複習與進度` and, when eligible, `開始挑戰`.
@@ -588,7 +598,8 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Later phases
 
-- Exact XP, Token, badge, and anti-farming rules for autonomous and Live work.
+- Exact XP, 金幣 amounts, badge triggers, and anti-farming limits for autonomous
+  and Live work.
 - Teacher report calculations and privacy-preserving exports.
 - Admin information architecture and per-table sensitivity catalog.
 - Detailed map motion, transitions, guide dialogue, and chapter-interior layouts.
