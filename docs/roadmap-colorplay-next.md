@@ -378,11 +378,12 @@ school authorization, and vendor-processing record before real student data is
 uploaded.
 
 On 2026-08-05, the owner reported that a dedicated Backblaze account had been
-created in US West. This is owner-supplied status, not independent verification.
-It proves neither that a Bucket exists nor that MFA, recovery custody, private
-access, application keys, encryption, lifecycle settings, billing alerts, or
-30-day Compliance Object Lock are configured. No secret value is requested or
-stored in this tracker.
+created in US West and clarified that account creation is the only completed
+step. No Bucket or Application Key has been created. This is owner-supplied
+status, not independent verification. MFA, recovery custody, private access,
+encryption, lifecycle settings, billing alerts, and 30-day Compliance Object
+Lock remain unverified and unconfigured. No secret value is requested or stored
+in this tracker.
 
 ## Approved Admin and security decisions
 
