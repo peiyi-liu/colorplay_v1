@@ -459,6 +459,13 @@ identifier is stored in this tracker.
   new one. The value is persisted, never calculated from row number, position,
   or mutable Question text. Import fails closed on a missing, duplicate,
   malformed, or conflicting identifier.
+- A bound Google Apps Script command named `產生題目識別碼` creates the value
+  once for a new Question row, writes a fixed value into the protected
+  identifier cell, and does not recalculate it. The website and content importer
+  receive read-only Sheet access and only validate the identifier; they never
+  write it back. The implementation deliverables include an owner setup guide
+  for installing the script, protecting the column, granting the minimum Sheet
+  permissions, and verifying generation plus rejection behavior.
 - Content is imported into Staging, validated, and frozen as an immutable,
   versioned release candidate.
 - Production does not allow direct editing of an already published content
