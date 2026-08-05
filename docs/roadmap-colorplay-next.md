@@ -380,10 +380,11 @@ uploaded.
 On 2026-08-05, the owner reported that a dedicated Backblaze account had been
 created in US West and clarified that account creation is the only completed
 step. No Bucket or Application Key has been created. This is owner-supplied
-status, not independent verification. MFA, recovery custody, private access,
+status, not independent verification. The owner subsequently reported that TOTP
+MFA is enabled and its recovery codes are safely stored. Private Bucket access,
 encryption, lifecycle settings, billing alerts, and 30-day Compliance Object
-Lock remain unverified and unconfigured. No secret value is requested or stored
-in this tracker.
+Lock remain unconfigured. No secret value is requested or stored in this
+tracker.
 
 ## Approved Admin and security decisions
 
