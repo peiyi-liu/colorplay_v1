@@ -24,9 +24,8 @@ Complete the Phase 0 design discussion. Then write and review a dedicated design
 spec before creating projects, changing DNS, uploading environment variables,
 linking Supabase, resetting data, deploying, or modifying product code.
 
-The first unresolved Phase 0 decision is the migration-history reconciliation
-method and pass criteria for turning the current hosted Supabase project into
-Staging while creating a clean Production project.
+The first unresolved Phase 0 decision is the Vercel project creation, rename,
+and zero-downtime domain cutover sequence.
 
 ## Approved program structure
 
@@ -120,6 +119,37 @@ delete it: destruction still requires explicit owner authorization, must verify
 the backup target and retention deadline, and must leave a non-secret audit
 record. No password, private key, database credential, or backup payload enters
 Git history, logs, artifacts, or the Program Tracker.
+
+### Approved migration reconciliation policy
+
+Repository migrations are the only schema authority. Before any hosted reset,
+the release operator freezes a repo SHA and compares all of the following:
+
+- migration filenames and checksums in Git;
+- the hosted migration ledger;
+- the schema produced by replaying Git migrations from an empty local database;
+- the current hosted schema.
+
+Every difference is classified as semantically equivalent with a different
+version, hosted-only and untracked, repo-only and unapplied, or a
+Supabase-managed schema/extension difference. Existing committed migration
+files are not renamed, and `migration repair` is not used merely to make the
+ledger appear green.
+
+After the encrypted backup is verified, Staging is rebuilt by replaying the
+frozen repository migration chain in order. Auth users and sessions, Storage
+objects, and cluster-level custom roles receive separate explicit inventory and
+cleanup because a linked database reset cannot be assumed to remove them.
+
+Migration reconciliation passes only when:
+
+- migration-zero local reset succeeds;
+- the Staging migration list exactly matches the frozen repo list;
+- schema diff is empty after documented Supabase-managed exclusions;
+- no prior Auth user, session, or Storage object remains;
+- Security Advisor has no unresolved error and every warning has an explicit
+  disposition plus relevant authorization tests;
+- regenerated database types have no unexpected difference.
 
 ## Approved Admin and security decisions
 
@@ -271,7 +301,6 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- Migration-history reconciliation method and pass criteria.
 - Vercel project rename/new-project order and zero-downtime domain cutover.
 - DNS ownership and change procedure for `staging.colorplayapp.com`.
 - Auth Site URL, redirect, SMTP, and email-template values per environment.
