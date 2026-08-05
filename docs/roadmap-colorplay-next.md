@@ -24,9 +24,9 @@ Complete the Phase 0 design discussion. Then write and review a dedicated design
 spec before creating projects, changing DNS, uploading environment variables,
 linking Supabase, resetting data, deploying, or modifying product code.
 
-The first unresolved Phase 0 decision is the exact cutover and preservation
-procedure for turning the current hosted Supabase project into Staging while
-creating a clean Production project.
+The first unresolved Phase 0 decision is the migration-history reconciliation
+method and pass criteria for turning the current hosted Supabase project into
+Staging while creating a clean Production project.
 
 ## Approved program structure
 
@@ -95,6 +95,31 @@ The owner adopted ADR 0002's clean-environment approach on 2026-08-05:
   migration reconciliation is required before reset or cutover.
 
 These facts are observations, not authorization to mutate hosted resources.
+
+### Approved backup and clean-rebuild policy
+
+Before the current hosted project is reset into Staging, the release operator
+must produce all of the following:
+
+- an encrypted database backup;
+- a schema and migration-history comparison;
+- aggregate row counts without exposing personal data;
+- a Storage bucket and object inventory;
+- a manifest recording the project ref, backup time, operator, checksums,
+  encryption method, and planned destruction date.
+
+The clean Staging rebuild restores none of the current Auth users, profiles,
+progress, Quiz Sessions, Live Sessions, Mistake Items, mastery records, XP,
+Token, inventory, or rewards. It recreates only reviewed fixture identities,
+the separately provisioned Staging Admin and teacher identities, and approved
+content from tracked inputs.
+
+The encrypted backup is retained outside the repository for 30 days solely for
+verification and recovery. Passing the Staging gate does not automatically
+delete it: destruction still requires explicit owner authorization, must verify
+the backup target and retention deadline, and must leave a non-secret audit
+record. No password, private key, database credential, or backup payload enters
+Git history, logs, artifacts, or the Program Tracker.
 
 ## Approved Admin and security decisions
 
@@ -246,8 +271,6 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- Exact backup and preservation evidence before resetting the current hosted
-  project into Staging.
 - Migration-history reconciliation method and pass criteria.
 - Vercel project rename/new-project order and zero-downtime domain cutover.
 - DNS ownership and change procedure for `staging.colorplayapp.com`.
