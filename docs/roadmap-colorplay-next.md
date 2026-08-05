@@ -382,15 +382,17 @@ created in US West, that TOTP MFA is enabled, and that its recovery codes are
 safely stored. An owner-supplied Backblaze screenshot dated the same day shows
 an empty Private Bucket on a US West endpoint with provider-side encryption
 enabled, lifecycle set to keep all versions, and a default Object Lock retention
-of 30 days. The screenshot does not identify whether that lock uses Compliance
-or Governance mode, so the approved 30-day Compliance Mode control remains
-unverified. The owner subsequently reported creating and securely storing a
-standard Application Key restricted to this Bucket, `Write Only` access, and
-the `production/` object-name prefix. Later that day, the owner ran a sanitized
-CLI gate using a non-personal canary under `production/verification/`: the
-writer uploaded inside the approved prefix and was rejected when attempting an
-outside-prefix upload, read, and deletion. Temporary authentication data was
-cleared after the gate.
+of 30 days. Although the Bucket card does not identify the retention mode, a
+subsequent owner-supplied file-details screenshot shows that the non-personal
+canary is protected in Compliance Mode from its 2026-08-05 14:51 UTC upload
+through 2026-09-04 14:51 GMT, confirming the approved 30-day immutable window.
+The owner subsequently reported creating and securely storing a standard
+Application Key restricted to this Bucket, `Write Only` access, and the
+`production/` object-name prefix. Later that day, the owner ran a sanitized CLI
+gate using that canary under `production/verification/`: the writer uploaded
+inside the approved prefix and was rejected when attempting an outside-prefix
+upload, read, and deletion. Temporary authentication data was cleared after the
+gate.
 
 The owner also reported creating and separately securing a second standard
 Application Key restricted to the same Bucket and prefix with `Read Only` access
@@ -398,9 +400,9 @@ for approved integrity checks and recovery exercises. A second sanitized CLI
 gate confirmed that this credential can list the approved prefix and download
 the exact writer canary, while upload and deletion attempts are rejected.
 Temporary authentication data was again cleared after the gate. Client-side
-encrypted backup upload, billing alerts, retention automation, object-level
-Compliance Mode evidence, and a restore test remain outstanding. No Application
-Key ID, secret value, or Bucket identifier is stored in this tracker.
+encrypted backup upload, billing alerts, retention automation, and a restore
+test remain outstanding. No Application Key ID, secret value, File ID, object
+URL, or Bucket identifier is stored in this tracker.
 
 ## Approved Admin and security decisions
 
