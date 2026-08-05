@@ -24,8 +24,8 @@ Complete the Phase 0 design discussion. Then write and review a dedicated design
 spec before creating projects, changing DNS, uploading environment variables,
 linking Supabase, resetting data, deploying, or modifying product code.
 
-The first unresolved Phase 0 decision is the Auth Site URL, redirect, SMTP, and
-email-template contract for Local, Staging, and Production.
+The first unresolved Phase 0 decision is secrets ownership, rotation, incident
+response, and recovery contacts for Local, Staging, and Production.
 
 ## Approved program structure
 
@@ -214,6 +214,38 @@ does not require a DNS cutover. Renaming that project after stability does not
 move `colorplayapp.com`. Cloudflare proxying, WAF, or CDN policy is a separate
 future decision and is not enabled implicitly.
 
+### Approved Auth URL and SMTP isolation contract
+
+Auth redirects and transactional email are isolated by environment. A redirect
+allowlist is not shared across Local, Staging, and Production, and Vercel Preview
+URLs do not receive sign-in, OTP, or password-recovery links.
+
+- Local uses `http://127.0.0.1:4173` as its tracked Site URL. Its redirect
+  allowlist is limited to loopback hosts on the two approved ports: `4173` for
+  the built-app server and `5173` for the Vite development server. The Supabase
+  CLI Mailpit instance captures all Local Auth email; Local does not use an
+  external SMTP credential.
+- Staging uses `https://staging.colorplayapp.com` as its Site URL and permits
+  only the exact Staging callback and recovery routes used by the application,
+  including `https://staging.colorplayapp.com/reset-password`. Auth email is
+  sent as `ColorPlay Staging <staging@colorplayapp.com>` through a dedicated
+  Staging SMTP credential. Vercel Preview deployments do not test email-link
+  flows; those acceptance tests run on the stable Staging domain.
+- Production uses `https://colorplayapp.com` as its Site URL and permits only
+  exact Production callback and recovery routes, including
+  `https://colorplayapp.com/reset-password`. Auth email is sent as
+  `ColorPlay <noreply@colorplayapp.com>` through a dedicated Production SMTP
+  credential. Local, Staging, and Preview origins are not accepted redirects.
+
+The two hosted environments use separately verified SMTP credentials and do
+not share secrets. The email templates remain tracked and reviewable. SMTP link
+tracking must be disabled so the provider does not rewrite single-use Auth
+links. Sender-domain SPF/DKIM verification and an end-to-end OTP and recovery
+gate are required before either hosted environment is accepted.
+
+Admin TOTP MFA remains a separate factor. It is not delivered by email and has
+no email bypass.
+
 ## Approved Admin and security decisions
 
 - `admin` is a distinct account role, not a teacher elevated temporarily.
@@ -364,7 +396,6 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- Auth Site URL, redirect, SMTP, and email-template values per environment.
 - Secrets ownership, rotation, incident response, and recovery contacts.
 - Production backup/restore objective and evidence compatible with the selected
   Supabase plan.
