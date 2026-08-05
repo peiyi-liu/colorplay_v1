@@ -378,13 +378,15 @@ school authorization, and vendor-processing record before real student data is
 uploaded.
 
 On 2026-08-05, the owner reported that a dedicated Backblaze account had been
-created in US West and clarified that account creation is the only completed
-step. No Bucket or Application Key has been created. This is owner-supplied
-status, not independent verification. The owner subsequently reported that TOTP
-MFA is enabled and its recovery codes are safely stored. Private Bucket access,
-encryption, lifecycle settings, billing alerts, and 30-day Compliance Object
-Lock remain unconfigured. No secret value is requested or stored in this
-tracker.
+created in US West, that TOTP MFA is enabled, and that its recovery codes are
+safely stored. An owner-supplied Backblaze screenshot dated the same day shows
+an empty Private Bucket on a US West endpoint with provider-side encryption
+enabled, lifecycle set to keep all versions, and a default Object Lock retention
+of 30 days. The screenshot does not identify whether that lock uses Compliance
+or Governance mode, so the approved 30-day Compliance Mode control remains
+unverified. Application Keys, client-side encrypted backup upload, billing
+alerts, retention automation, and a restore test also remain outstanding. No
+secret value or Bucket identifier is stored in this tracker.
 
 ## Approved Admin and security decisions
 
