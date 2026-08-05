@@ -569,7 +569,11 @@ Achievement decisions currently approved:
 
 The nine existing badge identities remain. Unlocking a badge awards no extra XP
 or 金幣; badges are recognition and progress markers rather than a second reward
-ledger.
+ledger. `不屈不撓` deduplicates by the Question's permanent stable identifier:
+the same Question counts at most once per Student across assessments, formal
+retakes, and content versions. It counts only after the Student explicitly
+completes its explanation review; repeated review never increments it. Minor
+wording edits that retain the stable identifier remain the same Question.
 
 ## Approved Learning Hall and JRPG direction
 
