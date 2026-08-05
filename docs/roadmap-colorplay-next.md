@@ -526,7 +526,11 @@ Assessment rules currently approved:
 
 Economy and reward presentation decisions currently approved:
 
-- The existing speed bonus remains in both autonomous Quiz and Live rewards.
+- The existing per-answer reward amounts remain in both autonomous Quiz and
+  Live: a server-confirmed correct answer awards 50 XP and 15 金幣, increased to
+  75 XP and 25 金幣 when answered within five seconds. An incorrect or timed-out
+  answer awards neither XP nor 金幣. Session totals continue to scale with the
+  number of qualifying correct answers; there is no new fixed session cap.
 - Mastery remains accuracy-only; response speed never changes mastery.
 - For each Student and logical autonomous challenge, only the first completed
   session on an Asia/Taipei calendar day receives full XP and 金幣. Later
