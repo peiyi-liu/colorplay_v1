@@ -494,6 +494,14 @@ available regardless of the Participant's personal chapter progress. Assignment
 is removed from the product and stops accepting new writes; structural cleanup
 is a separate migration.
 
+A Teacher may grant a permanent, chapter-specific access exception to one
+Student after entering a reason and confirming the action. The exception does
+not mark any chapter complete, change mastery or rewards, satisfy an omitted
+prerequisite, or cascade to later chapters. Completing the manually accessible
+chapter may unlock its next chapter through the normal completion rule. Teachers
+cannot revoke the exception; an audited Admin correction path is the only
+possible reversal, and its eligibility boundary remains to be approved.
+
 Assessment rules currently approved:
 
 - Pilot question counts: five per section challenge and ten per chapter final.
@@ -575,7 +583,8 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Later phases
 
-- Teacher manual unlock semantics, expiry, reversal, and audit presentation.
+- Admin correction eligibility and audit presentation for a mistaken permanent
+  Teacher chapter-access exception.
 - Exact XP, Token, badge, and anti-farming rules for autonomous and Live work.
 - Teacher report calculations and privacy-preserving exports.
 - Admin information architecture and per-table sensitivity catalog.
