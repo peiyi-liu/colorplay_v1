@@ -24,8 +24,8 @@ Complete the Phase 0 design discussion. Then write and review a dedicated design
 spec before creating projects, changing DNS, uploading environment variables,
 linking Supabase, resetting data, deploying, or modifying product code.
 
-The first unresolved Phase 0 decision is DNS ownership and the controlled change
-procedure for `staging.colorplayapp.com` and the final Production cutover.
+The first unresolved Phase 0 decision is the Auth Site URL, redirect, SMTP, and
+email-template contract for Local, Staging, and Production.
 
 ## Approved program structure
 
@@ -186,6 +186,34 @@ At no point may both public sites write to the same Supabase project. A Vercel
 must bind the tested artifact, Git SHA, migration range, environment, Supabase
 project ref, and owner approval.
 
+### Approved DNS ownership and change procedure
+
+Cloudflare remains the authoritative DNS provider for `colorplayapp.com`.
+Nameservers are not moved to Vercel, and the existing apex and `www` records are
+not changed merely to introduce Staging.
+
+The Staging DNS sequence is:
+
+1. Add `staging.colorplayapp.com` to the new `colorplay-staging-web` Vercel
+   project first.
+2. Read the exact CNAME and any TXT verification value returned by Vercel at
+   that time. Do not hardcode a remembered target.
+3. Capture the relevant Cloudflare DNS records and TTLs before mutation.
+4. Present the exact proposed additions to the owner. The owner performs or
+   explicitly authorizes the Cloudflare mutation.
+5. Create the Staging record as `DNS only`; do not enable the Cloudflare proxy
+   during initial domain and TLS verification.
+6. Wait for DNS propagation and Vercel domain/certificate readiness, then verify
+   resolution, HTTPS certificate validity, HTTP-to-HTTPS behavior, a visible
+   Staging environment marker, and absence of redirects to Production.
+7. Record the operator, previous and new values, UTC time, TTL, Vercel project,
+   and verification result in the release record.
+
+Production deployment promotion occurs inside the existing Vercel project and
+does not require a DNS cutover. Renaming that project after stability does not
+move `colorplayapp.com`. Cloudflare proxying, WAF, or CDN policy is a separate
+future decision and is not enabled implicitly.
+
 ## Approved Admin and security decisions
 
 - `admin` is a distinct account role, not a teacher elevated temporarily.
@@ -336,7 +364,6 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- DNS ownership and change procedure for `staging.colorplayapp.com`.
 - Auth Site URL, redirect, SMTP, and email-template values per environment.
 - Secrets ownership, rotation, incident response, and recovery contacts.
 - Production backup/restore objective and evidence compatible with the selected
