@@ -24,8 +24,8 @@ Complete the Phase 0 design discussion. Then write and review a dedicated design
 spec before creating projects, changing DNS, uploading environment variables,
 linking Supabase, resetting data, deploying, or modifying product code.
 
-The first unresolved Phase 0 decision is the external encrypted backup target,
-account isolation, and overwrite-protection policy.
+The first unresolved Phase 0 decision is the backup data-residency boundary and
+Backblaze B2 region. No B2 account or bucket is created before it is resolved.
 
 ## Approved program structure
 
@@ -342,6 +342,39 @@ recovery duration, and any manual configuration that had to be recreated.
 Repository migrations remain the schema authority; a backup is recovery data,
 not a competing source of schema changes.
 
+### Approved Backblaze B2 backup target
+
+Production backup sets are stored in a dedicated Backblaze B2 account rather
+than in Supabase, Vercel, the Cloudflare account that controls Production DNS,
+GitHub, or a local disk. The B2 account follows the approved two-person custody
+policy and uses its own MFA, recovery material, billing alerts, and private
+contact path.
+
+The backup bucket is private, has no public URL, custom domain, anonymous list
+access, or browser CORS policy, and is used only for encrypted ColorPlay backup
+artifacts. Every uploaded object receives a 30-day Backblaze Compliance Mode
+Object Lock. The retention period cannot be shortened or bypassed by the backup
+job, release operator, or routine account administration. Expiration automation
+may delete a set only after its lock has expired and the rolling 30-day
+retention condition is satisfied.
+
+Client-side encryption occurs before upload, in addition to provider encryption
+at rest. The client-side decryption material stays in the separate recovery
+vault. Object names and manifests use non-personal identifiers and never expose
+student, teacher, class, or email data.
+
+Automation uses a bucket-scoped writer credential that cannot administer the
+account, change retention, read unrelated objects, or delete backup sets. A
+separate read-only recovery credential is activated only for integrity checks
+and approved restore exercises. The primary B2 account credential is never used
+by CI or a backup script. Access, failed uploads, retention state, capacity, and
+unexpected deletion attempts are included in the sanitized backup evidence.
+
+The B2 region and legal data-residency boundary remain an explicit owner choice
+because encrypted backups still contain recoverable personal and educational
+records. Account and bucket creation remain prohibited until that choice is
+recorded.
+
 ## Approved Admin and security decisions
 
 - `admin` is a distinct account role, not a teacher elevated temporarily.
@@ -492,7 +525,7 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- External backup target, account isolation, and overwrite protection.
+- Backup data residency and Backblaze B2 region.
 - CI jobs and human approval gates for Staging and Production.
 - Release record format, monitoring, rollback, and post-deploy smoke.
 
