@@ -384,9 +384,13 @@ an empty Private Bucket on a US West endpoint with provider-side encryption
 enabled, lifecycle set to keep all versions, and a default Object Lock retention
 of 30 days. The screenshot does not identify whether that lock uses Compliance
 or Governance mode, so the approved 30-day Compliance Mode control remains
-unverified. Application Keys, client-side encrypted backup upload, billing
-alerts, retention automation, and a restore test also remain outstanding. No
-secret value or Bucket identifier is stored in this tracker.
+unverified. The owner subsequently reported creating and securely storing a
+standard Application Key restricted to this Bucket, `Write Only` access, and
+the `production/` object-name prefix. Its effective capabilities have not yet
+been verified by API. The separate read-only recovery key, client-side encrypted
+backup upload, billing alerts, retention automation, and a restore test also
+remain outstanding. No Application Key ID, secret value, or Bucket identifier
+is stored in this tracker.
 
 ## Approved Admin and security decisions
 
