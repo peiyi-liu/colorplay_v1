@@ -21,9 +21,9 @@ as a completed production release.
 
 ## Immediate next action
 
-Complete the Phase 0 release-record, monitoring, rollback, post-deploy smoke,
-and B2 free-tier usage-monitoring decisions, then present the consolidated Phase
-0 design for approval. Write and review a dedicated design spec before creating
+Complete the Phase 0 monitoring, rollback, post-deploy smoke, and B2 free-tier
+usage-monitoring decisions, then present the consolidated Phase 0 design for
+approval. Write and review a dedicated design spec before creating
 Vercel or Supabase projects, changing DNS, uploading application environment
 variables, linking Supabase, resetting data, deploying, or modifying product
 code.
@@ -82,6 +82,23 @@ brainstorm → approved design → committed spec → owner review
   SHA served by Production.
 - Any missing check, evidence binding, owner approval, or SHA match fails closed
   and cannot be bypassed by an HTTP 200 or Vercel `READY` state alone.
+
+### Approved Production release record
+
+- Each successful Production promotion creates a protected tag named
+  `prod-YYYYMMDD-HHMM` that points to the exact Production Git SHA. A GitHub
+  Release attached to that tag is the human-readable authoritative release
+  record, while GitHub Deployment history preserves the Production Environment
+  approval.
+- The Release attaches a generated `release-record.json` and checksum. The
+  record binds the Git SHA, Vercel deployment ID, Production Supabase project
+  ref, migration range, Staging and Production gate runs, owner approval and
+  timestamp, post-deploy smoke result, and previous rollback deployment ID.
+- Release records contain no passwords, keys, Student data, or other personal
+  information. The repository stores only the record schema, template, and
+  generation and verification tooling.
+- No documentation commit is added to `main` after promotion merely to record
+  the release; doing so would make `main` differ from the deployed SHA.
 
 The owner adopted ADR 0002's clean-environment approach on 2026-08-05:
 
@@ -669,7 +686,7 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- Release record format, monitoring, rollback, and post-deploy smoke.
+- Monitoring, rollback, and post-deploy smoke.
 
 ### Later phases
 
