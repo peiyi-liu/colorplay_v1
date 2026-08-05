@@ -519,10 +519,16 @@ Assessment rules currently approved:
   concept coverage.
 - The highest valid formal-attempt score across versions is official mastery;
   the UI also shows the latest-version score and both version identifiers.
-- Below 80%, the student must review every incorrect question, their answer, the
-  correct answer, and the explanation, then explicitly select `完成閱讀` for
-  each remediation card before a formal retake opens. No correction question is
-  required.
+- Every incorrect answer from a non-Live assessment is added to `我的錯題`;
+  Teacher-hosted Live answers are excluded. Below 80%, the Student must review
+  every incorrect question, their answer, the correct answer, and the
+  explanation, then explicitly select `完成閱讀` for each assigned remediation
+  card before a formal retake opens. No correction question is required.
+- Completing the assigned mistake review awards neither XP nor 金幣, does not
+  change mastery, and does not unlock the next chapter. It only completes the
+  remediation gate. The Student may continue reviewing without immediately
+  retaking, but must later earn at least 80% on a valid formal attempt to satisfy
+  the mastery requirement.
 
 Economy and reward presentation decisions currently approved:
 
