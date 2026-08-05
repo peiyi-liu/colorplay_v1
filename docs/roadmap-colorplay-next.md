@@ -617,8 +617,7 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Later phases
 
-- Exact XP, 金幣 amounts, badge triggers, and anti-farming limits for autonomous
-  and Live work.
+- Badge triggers for autonomous and Live work.
 - Teacher report calculations and privacy-preserving exports.
 - Admin information architecture and per-table sensitivity catalog.
 - Detailed map motion, transitions, guide dialogue, and chapter-interior layouts.
