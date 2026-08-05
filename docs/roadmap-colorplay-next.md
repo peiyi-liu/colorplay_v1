@@ -499,8 +499,13 @@ Student after entering a reason and confirming the action. The exception does
 not mark any chapter complete, change mastery or rewards, satisfy an omitted
 prerequisite, or cascade to later chapters. Completing the manually accessible
 chapter may unlock its next chapter through the normal completion rule. Teachers
-cannot revoke the exception; an audited Admin correction path is the only
-possible reversal, and its eligibility boundary remains to be approved.
+cannot revoke the exception. An Admin may reverse a mistaken grant only while
+the Student has no active Quiz Session and no durable chapter activity after
+the grant, including review completion, submitted answers, formal attempts,
+remediation, rewards, or downstream unlocks. Reversal requires fresh MFA, a
+reason, and a compensating immutable audit record; the original grant record is
+retained. Once any disqualifying activity exists, the exception remains
+permanent.
 
 Assessment rules currently approved:
 
@@ -583,8 +588,6 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Later phases
 
-- Admin correction eligibility and audit presentation for a mistaken permanent
-  Teacher chapter-access exception.
 - Exact XP, Token, badge, and anti-farming rules for autonomous and Live work.
 - Teacher report calculations and privacy-preserving exports.
 - Admin information architecture and per-table sensitivity catalog.
