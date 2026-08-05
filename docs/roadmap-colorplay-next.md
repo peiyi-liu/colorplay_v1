@@ -532,6 +532,11 @@ Economy and reward presentation decisions currently approved:
   session on an Asia/Taipei calendar day receives full XP and 金幣. Later
   completions that day remain valid for mastery and formal-retake purposes but
   award 20% XP and zero 金幣.
+- Every valid Teacher-hosted Live Session awards full speed-sensitive XP and
+  金幣 for server-confirmed answers. Each Student may settle each Live Session
+  only once; retries, reconnects, and repeated finalization are idempotent.
+  Session creation and settlement remain auditable, and anomalous high-frequency
+  activity is surfaced for Admin review instead of applying a daily reward cap.
 - Every user-facing web label, result explanation, purchase control, accessible
   name, and HUD summary uses `金幣` instead of `Token` or `代幣`.
 - Existing internal database columns, RPC payload fields, TypeScript property
