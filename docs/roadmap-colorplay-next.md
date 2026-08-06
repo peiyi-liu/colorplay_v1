@@ -1,10 +1,10 @@
 # ColorPlay Current Program
 
-- Status: LOCAL IMPLEMENTATION READY — hosted configuration and gates NOT
-  EXECUTED; remaining format/login viewport gates and OWNER GATE 0 are blocking
+- Status: FOUNDATION CI GATE PASSED — PR #1 awaits owner approval; no Staging
+  merge, data-plane mutation, Candidate, or Production release has occurred
 - Last updated: 2026-08-06 (Asia/Taipei)
-- Current phase: Phase 0, local Tasks 1–12 implemented and strictly reviewed;
-  coverage and three stale E2E gate failures repaired
+- Current phase: Phase 0, local Tasks 1–12 and the GitHub control/CI portion of
+  Task 13 verified; the exact next human action is PR #1 review and approval
 - Canonical entry point: this file
 - Historical task ledger: `.superpowers/sdd/progress.md`
 
@@ -22,15 +22,19 @@ as a completed production release.
 
 ## Immediate next action
 
-Coverage and three stale Chromium E2E failures are repaired in
-`9f28f2e..9143c58`. Resolve the remaining short-viewport login product defect
-and formatting gate without touching protected login WIP or weakening frozen
-evidence. Then complete OWNER GATE 0 by making the separate encrypted age-key
-copy and creating distinct Staging/Production SMTP credentials. Reverify
-provider capabilities read-only and obtain explicit OWNER GATE 1 approval
-before Task 13. Hosted Tasks 13–18 remain unexecuted: do not create or
-reconfigure Vercel/Supabase resources, change DNS, upload hosted environment
-variables, reset data, deploy, promote, or push from this state.
+Owner reviews and approves PR #1 at its current head
+`0d7d0e1fda6eee2842f0218377581f75cbc61663`. Foundation CI run
+[`31091970044`](https://github.com/peiyi-liu/colorplay_v1/actions/runs/31091970044)
+passed all eight required checks: format, lint, typecheck, unit coverage,
+Production build, Local database, Chromium E2E, and credential scan. The PR is
+intentionally `BLOCKED` until owner approval; no agent should merge it.
+
+After an approved merge to protected `staging`, collect a fresh read-only
+preflight before any further hosted mutation. DNS, hosted Supabase reset,
+Staging acceptance, Production Candidate creation, Production promotion, and
+all data-plane changes remain explicitly unexecuted. Real B2 backup automation
+also remains blocked until the existing over-privileged B2 writer/recovery keys
+are replaced by credentials that meet the create-only and read-only contracts.
 
 ## Approved program structure
 
@@ -39,7 +43,7 @@ batches. Each batch must pass its own Staging gate before Production promotion.
 
 | Phase | Scope                                         | Status                                              |
 | ----- | --------------------------------------------- | --------------------------------------------------- |
-| 0     | Environment and release foundation            | Local Tasks 1–12 ready; hosted Tasks 13–18 blocked  |
+| 0     | Environment and release foundation            | Foundation CI passed; PR #1 awaits owner approval   |
 | 1     | Admin identity and security core              | Decisions captured; spec not started                |
 | 2     | Content SSOT and version publishing           | Decisions captured; spec not started                |
 | 3     | Learning progression and assessment authority | Decisions captured; spec not started                |
@@ -715,14 +719,16 @@ Do not overwrite, stash, reset, or accidentally stage unrelated changes.
 - Path: `.worktrees/phase0-release-foundation`
 - Branch: `phase0/release-foundation`
 - Plan base: `2295fd6c430fc4a843d2da3e391fd0d48b902704`
-- State: local Tasks 1–12 implemented and strictly reviewed; coverage threshold
-  and three stale E2E failures repaired through `9143c58`; no hosted mutation,
-  push, deployment, DNS change, reset, Candidate, or Production promotion
-- Preserve exact-path staging. The inherited formatting, coverage, and four
-  Chromium E2E failures are recorded with plan-base reproductions in the Task 12
-  report. Coverage and three stale assertions are now repaired; the login
-  short-viewport defect and formatting gate remain and must not be hidden by
-  lowering gates.
+- Current PR head: `0d7d0e1fda6eee2842f0218377581f75cbc61663` (PR #1 to
+  protected `staging`)
+- State: GitHub protective controls were configured; Foundation CI passed all
+  eight required checks in run `31091970044`. The short-viewport login defect,
+  formatting debt, coverage threshold, and stale E2E assertions were repaired
+  without weakening gates. PR #1 remains blocked for owner approval.
+- Hosted scope still not executed: no Staging merge/deployment acceptance, DNS
+  change, Supabase reset/migration, Candidate creation, Production promotion,
+  or hosted backup/restore. A Vercel Preview is not a Staging or Production
+  release.
 
 Use exact-path staging. Never use `git add -A`, destructive reset, broad restore,
 stash, or branch switching in a dirty shared worktree.
@@ -731,14 +737,14 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- Local repository implementation is ready, but hosted execution remains
-  blocked. Owner authorization is required before the minimal short-viewport
-  login CSS fix; the formatting gate also needs an explicit policy for frozen
-  generated evidence while protected login WIP remains untouched. OWNER GATE 0,
-  provider capability reverification, and exact Task 13 approval still follow.
-- OWNER GATE 0 still lacks a separate encrypted age-key copy and distinct
-  Staging/Production SMTP credentials. The Apple Note copy alone is not the
-  approved independent recovery copy.
+- PR #1 needs owner review and approval before it may merge to `staging`.
+  Passing CI does not authorize a merge, a deploy, or any data-plane action.
+- A fresh provider preflight is required on the day of each later hosted action;
+  previously observed project/domain state is not durable evidence.
+- Real B2 backup automation is blocked by the currently over-privileged writer
+  and recovery keys. Rotate to the plan's least-privilege pair before a hosted
+  backup or restore drill. This is a safety prerequisite, not a reason to weaken
+  Object Lock or fall back to an unencrypted local-only backup.
 
 ### Later phases
 
