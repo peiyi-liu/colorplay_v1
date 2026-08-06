@@ -93,6 +93,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Install Chromium for evidence contracts
         run: pnpm exec playwright install --with-deps chromium
+      - name: Install age for encrypted backup contracts
+        run: sudo apt-get update && sudo apt-get install --yes age
       - name: Run stack-independent unit coverage
         run: pnpm test:coverage
 

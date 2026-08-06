@@ -49,8 +49,14 @@ started_at="$(date +%s)"
 
 cleanup() {
   if [[ "$stack_started" == 'true' && "$restore_project_id" == colorplay_restore_* ]]; then
-    pnpm --dir "$project_root" exec supabase stop --project-id "$restore_project_id" --no-backup \
-      >/dev/null 2>&1 || true
+    while IFS= read -r container; do
+      [[ -n "$container" && "$container" == supabase_*_"$restore_project_id" ]] || continue
+      docker rm --force "$container" >/dev/null 2>&1 || true
+    done < <(
+      docker ps --all \
+        --filter "label=com.supabase.cli.project=$restore_project_id" \
+        --format '{{.Names}}'
+    )
   fi
   if [[ "$temporary_root" == "${TMPDIR:-/tmp}/colorplay-restore."* ]]; then
     rm -rf "$temporary_root"

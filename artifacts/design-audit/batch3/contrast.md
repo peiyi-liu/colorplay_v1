@@ -8,6 +8,7 @@ are additionally judged against the WCAG 1.4.11 non-text 3:1 guideline, noted
 inline.
 
 Two measurement modes, both against the real live stylesheet/cascade:
+
 - **live** — read directly off the actually-rendered app state (real seeded
   student progress).
 - **swatch** — a DOM clone of the real element, with only the state-variant
@@ -24,20 +25,20 @@ JSON: `gate-capture-raw.json` in this directory.
 
 ## World map (`/app/missions`, day scene, studentOne)
 
-| Pair | Color | Background | Ratio | Verdict |
-|---|---|---|---|---|
-| item h2 × item bg | `rgb(37,48,66)` | `rgb(246,238,216)` | 11.48 | PASS |
-| item subtopic li × item bg | `rgb(102,112,133)` | `rgb(246,238,216)` | **4.30** | **FAIL** (borderline, text ~4.30 < 4.5) |
-| SectionHeader title × world-map-panel bg | — | `rgb(253,248,234)` | 12.53 | PASS |
-| SectionHeader description × world-map-panel bg | — | `rgb(253,248,234)` | 4.69 | PASS (tight margin) |
-| map-node-status--not_started (swatch) × item bg | — | — | 9.04 | PASS |
-| map-node-status--learning (live) × item bg | — | — | 4.58 | PASS (tight margin) |
-| map-node-status--developing (swatch) × item bg | — | — | 7.37 | PASS |
-| map-node-status--mastered (swatch) × item bg | — | — | 4.58 | PASS (tight margin) |
-| map-node__number in --not_started (swatch) × badge bg | — | — | 9.49 | PASS |
-| map-node__number in --learning (live) × badge bg | — | — | 5.00 | PASS |
-| map-node__number in --developing (swatch) × badge bg | — | — | 8.04 | PASS |
-| map-node__number in --mastered (swatch) × badge bg | — | — | 5.09 | PASS |
+| Pair                                                  | Color              | Background         | Ratio    | Verdict                                 |
+| ----------------------------------------------------- | ------------------ | ------------------ | -------- | --------------------------------------- |
+| item h2 × item bg                                     | `rgb(37,48,66)`    | `rgb(246,238,216)` | 11.48    | PASS                                    |
+| item subtopic li × item bg                            | `rgb(102,112,133)` | `rgb(246,238,216)` | **4.30** | **FAIL** (borderline, text ~4.30 < 4.5) |
+| SectionHeader title × world-map-panel bg              | —                  | `rgb(253,248,234)` | 12.53    | PASS                                    |
+| SectionHeader description × world-map-panel bg        | —                  | `rgb(253,248,234)` | 4.69     | PASS (tight margin)                     |
+| map-node-status--not_started (swatch) × item bg       | —                  | —                  | 9.04     | PASS                                    |
+| map-node-status--learning (live) × item bg            | —                  | —                  | 4.58     | PASS (tight margin)                     |
+| map-node-status--developing (swatch) × item bg        | —                  | —                  | 7.37     | PASS                                    |
+| map-node-status--mastered (swatch) × item bg          | —                  | —                  | 4.58     | PASS (tight margin)                     |
+| map-node__number in --not_started (swatch) × badge bg | —                  | —                  | 9.49     | PASS                                    |
+| map-node__number in --learning (live) × badge bg      | —                  | —                  | 5.00     | PASS                                    |
+| map-node__number in --developing (swatch) × badge bg  | —                  | —                  | 8.04     | PASS                                    |
+| map-node__number in --mastered (swatch) × badge bg    | —                  | —                  | 5.09     | PASS                                    |
 
 **Defect found:** `.mission-select__subtopics li` (`src/styles/globals.css:3403-3404`,
 `color: var(--color-muted)` = `--ink-500` `#667085`) on `.mission-select__item`
@@ -50,24 +51,24 @@ Task 4 explicitly delegated to this gate, but caught by the required
 
 ## Dungeon (`/app/chapters/:id`, night scene, studentOne, chapter-3)
 
-| Pair | Ratio | Verdict |
-|---|---|---|
-| eyebrow × header bg | 5.09 | PASS |
-| h1 × header bg | 14.56 | PASS |
-| review-progress label × header bg | 7.74 | PASS |
-| review-progress value × header bg | 14.56 | PASS |
-| **mastery-ring__track stroke × header bg** (delegated, non-text 3:1) | 13.29 | PASS |
-| chapter-status-pill--success (live) text × own bg | 5.36 | PASS |
-| chapter-status-pill--primary (swatch) text × own bg | 12.53 | PASS |
-| chapter-status-pill--neutral (swatch) text × own bg | 9.49 | PASS |
-| subtopic h2 × floor-window bg | 14.56 | PASS |
-| subtopic progress row × floor-window bg | 14.56 | PASS |
-| **subtopic-tag text × own chip bg** (delegated, self-contained) | 11.83 | PASS |
-| **subtopic-tag chip bg × floor-window bg** (delegated, non-text 3:1) | 14.67 | PASS |
-| accordion title × accordion bg | 12.53 | PASS |
-| 完成複習 button text × button bg | 10.46 | PASS |
-| 空狀態 p × 頁底 (chapter-1, no cards) | 15.97 | PASS |
-| alert p[role=alert] (synthetic) × 頁底 | 7.98 | PASS |
+| Pair                                                                 | Ratio | Verdict |
+| -------------------------------------------------------------------- | ----- | ------- |
+| eyebrow × header bg                                                  | 5.09  | PASS    |
+| h1 × header bg                                                       | 14.56 | PASS    |
+| review-progress label × header bg                                    | 7.74  | PASS    |
+| review-progress value × header bg                                    | 14.56 | PASS    |
+| **mastery-ring__track stroke × header bg** (delegated, non-text 3:1) | 13.29 | PASS    |
+| chapter-status-pill--success (live) text × own bg                    | 5.36  | PASS    |
+| chapter-status-pill--primary (swatch) text × own bg                  | 12.53 | PASS    |
+| chapter-status-pill--neutral (swatch) text × own bg                  | 9.49  | PASS    |
+| subtopic h2 × floor-window bg                                        | 14.56 | PASS    |
+| subtopic progress row × floor-window bg                              | 14.56 | PASS    |
+| **subtopic-tag text × own chip bg** (delegated, self-contained)      | 11.83 | PASS    |
+| **subtopic-tag chip bg × floor-window bg** (delegated, non-text 3:1) | 14.67 | PASS    |
+| accordion title × accordion bg                                       | 12.53 | PASS    |
+| 完成複習 button text × button bg                                     | 10.46 | PASS    |
+| 空狀態 p × 頁底 (chapter-1, no cards)                                | 15.97 | PASS    |
+| alert p[role=alert] (synthetic) × 頁底                               | 7.98  | PASS    |
 
 Both items Task 4 delegated to this gate for a legibility check on the new
 dark dungeon surfaces — `.chapter-detail__subtopic-tag` and
@@ -86,14 +87,14 @@ colors for the night background, but **never overrides
 `.feedback-card__mentor-name--{red,blue,green}`** (`src/styles/globals.css:679-689`),
 which keep the same "700" shades tuned for a light background in both contexts.
 
-| Pair | Ratio | Verdict |
-|---|---|---|
+| Pair                                                                         | Ratio    | Verdict  |
+| ---------------------------------------------------------------------------- | -------- | -------- |
 | mentor-name--green (live, battle-scene) × feedback-card bg (`--pixel-night`) | **2.90** | **FAIL** |
-| mentor-name--red (swatch, battle-scene) × feedback-card bg | **3.22** | **FAIL** |
-| mentor-name--blue (swatch, battle-scene) × feedback-card bg | **1.93** | **FAIL** |
-| mentor-name--blue (live, mission) × feedback-card bg (white) | 8.53 | PASS |
-| mentor-name--red (swatch, mission) × feedback-card bg | 5.12 | PASS |
-| mentor-name--green (swatch, mission) × feedback-card bg | 5.69 | PASS |
+| mentor-name--red (swatch, battle-scene) × feedback-card bg                   | **3.22** | **FAIL** |
+| mentor-name--blue (swatch, battle-scene) × feedback-card bg                  | **1.93** | **FAIL** |
+| mentor-name--blue (live, mission) × feedback-card bg (white)                 | 8.53     | PASS     |
+| mentor-name--red (swatch, mission) × feedback-card bg                        | 5.12     | PASS     |
+| mentor-name--green (swatch, mission) × feedback-card bg                      | 5.69     | PASS     |
 
 **Defect found (all 3 battle-scene mentor colors fail, worst case 1.93:1):**
 `src/styles/globals.css:5675-5699` (`.battle-scene .feedback-card` override
@@ -130,6 +131,7 @@ and passes with margin.
 Fix wave `4460d65` ("fix(quiz): night-safe tri-spirit mentor colors on
 battle feedback; deepen world-map subtopic ink", `src/styles/globals.css`
 only, +19 lines) added:
+
 - `.battle-scene .feedback-card__mentor-name--red` → `var(--pixel-danger)` (`#ff8a8d`)
 - `.battle-scene .feedback-card__mentor-name--blue` → `var(--hue-ch1)` (`#6c8ff8`)
 - `.battle-scene .feedback-card__mentor-name--green` → `var(--hue-ch4)` (`#48cfa5`)
@@ -139,12 +141,12 @@ Re-measured with the same tooling/methodology (`.superpowers/sdd/gate-capture.mj
 re-run in full against the current HEAD; screenshots re-captured and
 overwritten in this directory).
 
-| Pair | Color (before) | Color (after) | Ratio (before) | Ratio (after) | Verdict |
-|---|---|---|---|---|---|
-| item subtopic li × item bg (world map) | `rgb(102,112,133)` (`--ink-500`) | `rgb(52,64,84)` (`--ink-700`) | 4.30 | **9.04** | **PASS** |
-| mentor-name--green × battle-scene feedback-card bg (live) | `rgb(23,117,78)` (`--jade-700`) | `rgb(72,207,165)` (`--hue-ch4`) | 2.90 | **8.43** | **PASS** |
-| mentor-name--red × battle-scene feedback-card bg (swatch) | `rgb(199,58,63)` (`--coral-700`) | `rgb(255,138,141)` (`--pixel-danger`) | 3.22 | **7.28** | **PASS** |
-| mentor-name--blue × battle-scene feedback-card bg (swatch) | `rgb(37,66,173)` (`--cobalt-700`) | `rgb(108,143,248)` (`--hue-ch1`) | 1.93 | **5.43** | **PASS** |
+| Pair                                                       | Color (before)                    | Color (after)                         | Ratio (before) | Ratio (after) | Verdict  |
+| ---------------------------------------------------------- | --------------------------------- | ------------------------------------- | -------------- | ------------- | -------- |
+| item subtopic li × item bg (world map)                     | `rgb(102,112,133)` (`--ink-500`)  | `rgb(52,64,84)` (`--ink-700`)         | 4.30           | **9.04**      | **PASS** |
+| mentor-name--green × battle-scene feedback-card bg (live)  | `rgb(23,117,78)` (`--jade-700`)   | `rgb(72,207,165)` (`--hue-ch4`)       | 2.90           | **8.43**      | **PASS** |
+| mentor-name--red × battle-scene feedback-card bg (swatch)  | `rgb(199,58,63)` (`--coral-700`)  | `rgb(255,138,141)` (`--pixel-danger`) | 3.22           | **7.28**      | **PASS** |
+| mentor-name--blue × battle-scene feedback-card bg (swatch) | `rgb(37,66,173)` (`--cobalt-700`) | `rgb(108,143,248)` (`--hue-ch1`)      | 1.93           | **5.43**      | **PASS** |
 
 All 4 previously-failing pairs now clear 4.5:1, worst case 5.43:1 (mentor-name--blue,
 battle-scene). Note: my independently re-measured values (7.28 / 5.43 / 8.43 / 9.04)
@@ -156,11 +158,11 @@ the verdict.
 
 **Regression check — mission-page (light) mentor-name, must be unaffected:**
 
-| Pair | Ratio (initial pass) | Ratio (re-verify) | Verdict |
-|---|---|---|---|
-| mentor-name--blue (live, mission) × feedback-card bg (white) | 8.53 | 8.53 | **PASS, unchanged** |
-| mentor-name--red (swatch, mission) × feedback-card bg | 5.12 | 5.12 | **PASS, unchanged** |
-| mentor-name--green (swatch, mission) × feedback-card bg | 5.69 | 5.69 | **PASS, unchanged** |
+| Pair                                                         | Ratio (initial pass) | Ratio (re-verify) | Verdict             |
+| ------------------------------------------------------------ | -------------------- | ----------------- | ------------------- |
+| mentor-name--blue (live, mission) × feedback-card bg (white) | 8.53                 | 8.53              | **PASS, unchanged** |
+| mentor-name--red (swatch, mission) × feedback-card bg        | 5.12                 | 5.12              | **PASS, unchanged** |
+| mentor-name--green (swatch, mission) × feedback-card bg      | 5.69                 | 5.69              | **PASS, unchanged** |
 
 Byte-identical to the initial pass — confirms the new `.battle-scene`/`.scene-day`
 scoped overrides did not leak into the mission-page (light) context.
@@ -196,10 +198,10 @@ flagged in the round-1 evidence:
   `var(--ink-700)`.
 - **I2**: `.map-node--not_started { opacity: 0.7; }` was flagged because
   `getComputedStyle` alone can't see that CSS `opacity` renders the whole
-  element (badge background *and* the number text inside it) as one
+  element (badge background _and_ the number text inside it) as one
   compositing group, then alpha-blends that whole group against the true
-  backdrop — so the *rendered* pixel contrast between the number and its
-  badge was lower than the *declared* color-vs-background values alone would
+  backdrop — so the _rendered_ pixel contrast between the number and its
+  badge was lower than the _declared_ color-vs-background values alone would
   suggest (the review's own estimate: composited down to ~4.2:1).
   `opacity: 0.7` removed; the "grey fog" for not-yet-unlocked nodes is now
   carried entirely by the slate border/background colors, with the number
@@ -209,19 +211,19 @@ This round's tooling gained an opacity-compositing helper
 (`window.__compositeOpacity` + `window.__effectiveColor` in
 `gate-capture.mjs`) that walks the ancestor chain from the measured element
 up through the element that owns the opacity/background group, multiplies
-every `opacity` found, and alpha-blends the *declared* color/background
-toward the *true* backdrop by that combined factor before computing the
+every `opacity` found, and alpha-blends the _declared_ color/background
+toward the _true_ backdrop by that combined factor before computing the
 ratio — so this round's numbers reflect the actually-rendered pixel, not
 just the declared CSS values.
 
 **1a. `.map-node--not_started .map-node__number` × badge bg (opacity-composited):**
 
-| | Value |
-|---|---|
+|                                                                 | Value                                                                                                           |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | Composited ancestor opacity (`.map-node--not_started` → number) | **1** (opacity rule removed by `675aff3`; confirmed via live `getComputedStyle(...).opacity` read, not assumed) |
-| Declared color / declared badge bg | `rgb(52,64,84)` / `rgb(242,244,247)` |
-| Effective (opacity-composited) color / bg | identical to declared (opacity=1, no blending applied) |
-| **Ratio** | **9.49:1** | **PASS** |
+| Declared color / declared badge bg                              | `rgb(52,64,84)` / `rgb(242,244,247)`                                                                            |
+| Effective (opacity-composited) color / bg                       | identical to declared (opacity=1, no blending applied)                                                          |
+| **Ratio**                                                       | **9.49:1**                                                                                                      | **PASS** |
 
 Since `groupOpacity` is now exactly 1, effective == declared and this ratio
 is directly comparable to a plain `getComputedStyle` read — confirming the
@@ -235,8 +237,8 @@ class, so only the base `.mission-select__item p` rule applies — same
 selector-context clone technique as the rest of this file) inside a clone of
 the real `.mission-select__item`.
 
-| Color | Background | Ratio | Verdict |
-|---|---|---|---|
+| Color                         | Background                               | Ratio      | Verdict  |
+| ----------------------------- | ---------------------------------------- | ---------- | -------- |
 | `rgb(52,64,84)` (`--ink-700`) | `rgb(246,238,216)` (`--pixel-parchment`) | **9.04:1** | **PASS** |
 
 **2. Regression spot-check — state-specific status-label rules still win:**

@@ -9,14 +9,14 @@
 
 真正的增量共 6 項：
 
-| # | 項目 | 類型 | 前端 | 後端 |
-|---|------|------|------|------|
-| D1 | 班級成員表欄位擴充（名字／學號／暱稱／查看細節） | 修改 | teacher-classroom-detail-page | 擴充 `list_owned_classroom_members` |
-| D2 | 學生學習進度頁（教師視角，全新畫面 tStudentProgress） | 新增 | 新頁＋新路由 | 新 RPC `teacher_student_progress` |
-| D3 | Live 題間名次激勵文案（「再追一題就能進前二！」） | 新增 | live-session-page | 無（`live_my_standing` 已回傳 `ahead_rank`/`points_behind`） |
-| D4 | 教師導覽精簡（移除「題庫管理」，順序改為 工作區→Live 主持→班級管理→教學分析） | 修改 | app-shell | 無 |
-| D5 | 場次報表文案／門檻：「建議重教 <35%」→「請加油 <60%」 | ⚠️ 待 owner 確認 | teacher-live-report-page | `RETEACH_THRESHOLD` 常數（前端 lib） |
-| D6 | 全站視覺收尾比對（琥珀主持台底色、報表提醒底色、正解長條放大等） | 微調 | 各頁 CSS | 無 |
+| #   | 項目                                                                          | 類型             | 前端                          | 後端                                                         |
+| --- | ----------------------------------------------------------------------------- | ---------------- | ----------------------------- | ------------------------------------------------------------ |
+| D1  | 班級成員表欄位擴充（名字／學號／暱稱／查看細節）                              | 修改             | teacher-classroom-detail-page | 擴充 `list_owned_classroom_members`                          |
+| D2  | 學生學習進度頁（教師視角，全新畫面 tStudentProgress）                         | 新增             | 新頁＋新路由                  | 新 RPC `teacher_student_progress`                            |
+| D3  | Live 題間名次激勵文案（「再追一題就能進前二！」）                             | 新增             | live-session-page             | 無（`live_my_standing` 已回傳 `ahead_rank`/`points_behind`） |
+| D4  | 教師導覽精簡（移除「題庫管理」，順序改為 工作區→Live 主持→班級管理→教學分析） | 修改             | app-shell                     | 無                                                           |
+| D5  | 場次報表文案／門檻：「建議重教 <35%」→「請加油 <60%」                         | ⚠️ 待 owner 確認 | teacher-live-report-page      | `RETEACH_THRESHOLD` 常數（前端 lib）                         |
+| D6  | 全站視覺收尾比對（琥珀主持台底色、報表提醒底色、正解長條放大等）              | 微調             | 各頁 CSS                      | 無                                                           |
 
 另有內容項待確認：tLive 單元下拉出現「3-3 數位色彩與色票的表示（**暫定，待教師確認**）」——是否要新增 3-3 小節題庫屬內容決策，不在本批工程範圍。
 
@@ -26,47 +26,47 @@
 
 ### 學生端
 
-| 畫面 | 功能鍵／行為 | 後端 | 狀態 |
-|------|------------|------|------|
-| 學生登入 | 登入 | Edge Fn `auth-login` | ✅ |
-| 學生註冊 | 送出＋OTP 驗證（60s 重送倒數） | Edge Fn `student-register` | ✅ |
-| Live 加入 | 加入課堂（六碼） | `join_live_session`（含 rate-limit） | ✅ |
-| Live 作答 | 形狀鍵送出 | `submit_live_answer`＋`live_answer_streak_apply` | ✅ |
-| Live 作答 | 倒數（伺服器時間為準）／題目載入 | `get_live_session_state`＋`live_question_student_payload` | ✅ |
-| Live 題間 | 對錯＋得分＋分布＋教師引導解析 | `live_feedback_snapshot` | ✅ |
-| Live 題間 | 目前名次／累積分 | `live_my_standing` | ✅ |
-| Live 題間 | **激勵文案「再追一題就能進前 N！」** | 同上（`ahead_rank`、`points_behind` 與單題可得分比較） | ➖ D3 |
-| Live 全屏結果 | 綠勾／紅叉＋加分＋名次 | `live_feedback_snapshot` | ✅ |
-| 學習大廳 | XP／全體排名／PR、章節開放狀態 | 既有 economy/progress RPC | ✅ |
+| 畫面          | 功能鍵／行為                         | 後端                                                      | 狀態  |
+| ------------- | ------------------------------------ | --------------------------------------------------------- | ----- |
+| 學生登入      | 登入                                 | Edge Fn `auth-login`                                      | ✅    |
+| 學生註冊      | 送出＋OTP 驗證（60s 重送倒數）       | Edge Fn `student-register`                                | ✅    |
+| Live 加入     | 加入課堂（六碼）                     | `join_live_session`（含 rate-limit）                      | ✅    |
+| Live 作答     | 形狀鍵送出                           | `submit_live_answer`＋`live_answer_streak_apply`          | ✅    |
+| Live 作答     | 倒數（伺服器時間為準）／題目載入     | `get_live_session_state`＋`live_question_student_payload` | ✅    |
+| Live 題間     | 對錯＋得分＋分布＋教師引導解析       | `live_feedback_snapshot`                                  | ✅    |
+| Live 題間     | 目前名次／累積分                     | `live_my_standing`                                        | ✅    |
+| Live 題間     | **激勵文案「再追一題就能進前 N！」** | 同上（`ahead_rank`、`points_behind` 與單題可得分比較）    | ➖ D3 |
+| Live 全屏結果 | 綠勾／紅叉＋加分＋名次               | `live_feedback_snapshot`                                  | ✅    |
+| 學習大廳      | XP／全體排名／PR、章節開放狀態       | 既有 economy/progress RPC                                 | ✅    |
 
 ### 教師端
 
-| 畫面 | 功能鍵／行為 | 後端 | 狀態 |
-|------|------------|------|------|
-| 教師登入 | 帳號＋密碼＋班級序號 | Edge Fn `auth-login`（Phase 9-AUTH） | ✅ |
-| 教師工作區 | 選擇班級下拉 | `list_owned_classrooms` | ✅ |
-| 教師工作區 | 班級總覽（次數／人數／平均正確率）＋最需加強子題 | `teacher_classroom_summary`＋`teacher_subtopic_mastery` | ✅ |
-| 教師工作區 | 前往主持 ▶／功能捷徑 | 導頁 | ➖ |
-| Live 開場 | 選擇單元下拉 | `list_live_section_options` | ✅ |
-| Live 開場 | 建立活動並開場 | `create_live_activity`→`create_live_session`→`start_live_session` | ✅ |
-| 主持台 | 已作答 n/N＋即時分布（僅主持人） | `teacher_live_session_detail`＋`live_question_distribution` | ✅ |
-| 主持台／投影 | 收題並公布答案 | `live_close_open_question` | ✅ |
-| 主持台／投影 | 下一題 | `live_open_next_question` | ✅ |
-| 主持台／投影 | 暫停／繼續 | `pause_live_session`／`resume_live_session` | ✅ |
-| 主持台／投影 | 取消挑戰 | close/cancel transition（`close_live_question` 家族） | ✅ |
-| 投影 | 音效開關 | 前端 `live-audio-cue` | ➖ |
-| 投影・分布 | 長條圖＋正解強調＋Top5（↑↓—） | `live_question_distribution`＋`live_session_standings` | ✅ |
-| 投影・頒獎 | 頒獎台動畫→結算成績 | `live_session_standings`＋結算（含 `live_session_mistakes_on_complete` 錯題寫入） | ✅ |
-| 場次報表 | 逐題分析／作答矩陣／最終排名 | `teacher_live_session_report` | ✅ |
-| 場次報表 | 匯出 CSV | 前端 `report-export` | ➖ |
-| 場次報表 | 一鍵生成課後複習任務 | 既有 assignment 草稿 RPC（10E） | ✅ |
-| 場次報表 | 「請加油（<60%）」 | 前端 `RETEACH_THRESHOLD` | ⚠️ D5 |
-| 班級管理 | 建立班級／清單 | `create_classroom`／`list_owned_classrooms` | ✅ |
-| 班級成員 | 一次性加入碼＋版本＋複製＋輪替 | `rotate_classroom_join_code`（版本已存在） | ✅ |
-| 班級成員 | 成員表：**名字／學號／暱稱**／Blook／狀態／加入日期 | `list_owned_classroom_members` **v2** | 🆕 D1 |
-| 班級成員 | **查看細節 ›**（每列） | 導向 D2 新頁，key 用 membership id | 🆕 D1 |
-| **學生學習進度（新頁）** | 統計卡＋章節進度表＋待補救錯題 | **新 RPC `teacher_student_progress`** | 🆕 D2 |
-| 導覽列 | 移除「題庫管理」（路由保留，開發者可直達 URL） | 無 | ➖ D4 |
+| 畫面                     | 功能鍵／行為                                        | 後端                                                                              | 狀態  |
+| ------------------------ | --------------------------------------------------- | --------------------------------------------------------------------------------- | ----- |
+| 教師登入                 | 帳號＋密碼＋班級序號                                | Edge Fn `auth-login`（Phase 9-AUTH）                                              | ✅    |
+| 教師工作區               | 選擇班級下拉                                        | `list_owned_classrooms`                                                           | ✅    |
+| 教師工作區               | 班級總覽（次數／人數／平均正確率）＋最需加強子題    | `teacher_classroom_summary`＋`teacher_subtopic_mastery`                           | ✅    |
+| 教師工作區               | 前往主持 ▶／功能捷徑                                | 導頁                                                                              | ➖    |
+| Live 開場                | 選擇單元下拉                                        | `list_live_section_options`                                                       | ✅    |
+| Live 開場                | 建立活動並開場                                      | `create_live_activity`→`create_live_session`→`start_live_session`                 | ✅    |
+| 主持台                   | 已作答 n/N＋即時分布（僅主持人）                    | `teacher_live_session_detail`＋`live_question_distribution`                       | ✅    |
+| 主持台／投影             | 收題並公布答案                                      | `live_close_open_question`                                                        | ✅    |
+| 主持台／投影             | 下一題                                              | `live_open_next_question`                                                         | ✅    |
+| 主持台／投影             | 暫停／繼續                                          | `pause_live_session`／`resume_live_session`                                       | ✅    |
+| 主持台／投影             | 取消挑戰                                            | close/cancel transition（`close_live_question` 家族）                             | ✅    |
+| 投影                     | 音效開關                                            | 前端 `live-audio-cue`                                                             | ➖    |
+| 投影・分布               | 長條圖＋正解強調＋Top5（↑↓—）                       | `live_question_distribution`＋`live_session_standings`                            | ✅    |
+| 投影・頒獎               | 頒獎台動畫→結算成績                                 | `live_session_standings`＋結算（含 `live_session_mistakes_on_complete` 錯題寫入） | ✅    |
+| 場次報表                 | 逐題分析／作答矩陣／最終排名                        | `teacher_live_session_report`                                                     | ✅    |
+| 場次報表                 | 匯出 CSV                                            | 前端 `report-export`                                                              | ➖    |
+| 場次報表                 | 一鍵生成課後複習任務                                | 既有 assignment 草稿 RPC（10E）                                                   | ✅    |
+| 場次報表                 | 「請加油（<60%）」                                  | 前端 `RETEACH_THRESHOLD`                                                          | ⚠️ D5 |
+| 班級管理                 | 建立班級／清單                                      | `create_classroom`／`list_owned_classrooms`                                       | ✅    |
+| 班級成員                 | 一次性加入碼＋版本＋複製＋輪替                      | `rotate_classroom_join_code`（版本已存在）                                        | ✅    |
+| 班級成員                 | 成員表：**名字／學號／暱稱**／Blook／狀態／加入日期 | `list_owned_classroom_members` **v2**                                             | 🆕 D1 |
+| 班級成員                 | **查看細節 ›**（每列）                              | 導向 D2 新頁，key 用 membership id                                                | 🆕 D1 |
+| **學生學習進度（新頁）** | 統計卡＋章節進度表＋待補救錯題                      | **新 RPC `teacher_student_progress`**                                             | 🆕 D2 |
+| 導覽列                   | 移除「題庫管理」（路由保留，開發者可直達 URL）      | 無                                                                                | ➖ D4 |
 
 ## 三、後端變更規格（僅 D1、D2 需要 migration）
 

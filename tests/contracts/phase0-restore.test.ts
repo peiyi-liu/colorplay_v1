@@ -109,8 +109,10 @@ describe('isolated Local restore', () => {
     expect(source).toContain('colorplay-restore.XXXXXXXX');
     expect(source).toContain('supabase start --workdir "$restore_workdir"');
     expect(source).toContain(
-      'supabase stop --project-id "$restore_project_id" --no-backup',
+      'label=com.supabase.cli.project=$restore_project_id',
     );
+    expect(source).toContain('docker rm --force "$container"');
+    expect(source).toContain('supabase_*_"$restore_project_id"');
     expect(source).toContain(
       '[[ "$temporary_root" == "${TMPDIR:-/tmp}/colorplay-restore."* ]]',
     );
