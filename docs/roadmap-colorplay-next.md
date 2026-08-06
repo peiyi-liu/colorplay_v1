@@ -1,9 +1,10 @@
 # ColorPlay Current Program
 
 - Status: LOCAL IMPLEMENTATION READY — hosted configuration and gates NOT
-  EXECUTED; inherited repository gates and OWNER GATE 0 remain blocking
+  EXECUTED; remaining format/login viewport gates and OWNER GATE 0 are blocking
 - Last updated: 2026-08-06 (Asia/Taipei)
-- Current phase: Phase 0, local Tasks 1–12 implemented and strictly reviewed
+- Current phase: Phase 0, local Tasks 1–12 implemented and strictly reviewed;
+  coverage and three stale E2E gate failures repaired
 - Canonical entry point: this file
 - Historical task ledger: `.superpowers/sdd/progress.md`
 
@@ -21,13 +22,15 @@ as a completed production release.
 
 ## Immediate next action
 
-Resolve the inherited repository gate debt recorded in
-`.superpowers/sdd/phase0-task-12-report.md`, then complete OWNER GATE 0 by making
-the separate encrypted age-key copy and creating distinct Staging/Production
-SMTP credentials. Reverify provider capabilities read-only and obtain explicit
-OWNER GATE 1 approval before Task 13. Hosted Tasks 13–18 remain unexecuted: do
-not create or reconfigure Vercel/Supabase resources, change DNS, upload hosted
-environment variables, reset data, deploy, promote, or push from this state.
+Coverage and three stale Chromium E2E failures are repaired in
+`9f28f2e..9143c58`. Resolve the remaining short-viewport login product defect
+and formatting gate without touching protected login WIP or weakening frozen
+evidence. Then complete OWNER GATE 0 by making the separate encrypted age-key
+copy and creating distinct Staging/Production SMTP credentials. Reverify
+provider capabilities read-only and obtain explicit OWNER GATE 1 approval
+before Task 13. Hosted Tasks 13–18 remain unexecuted: do not create or
+reconfigure Vercel/Supabase resources, change DNS, upload hosted environment
+variables, reset data, deploy, promote, or push from this state.
 
 ## Approved program structure
 
@@ -712,11 +715,14 @@ Do not overwrite, stash, reset, or accidentally stage unrelated changes.
 - Path: `.worktrees/phase0-release-foundation`
 - Branch: `phase0/release-foundation`
 - Plan base: `2295fd6c430fc4a843d2da3e391fd0d48b902704`
-- State: local Tasks 1–12 implemented and strictly reviewed; no hosted mutation,
+- State: local Tasks 1–12 implemented and strictly reviewed; coverage threshold
+  and three stale E2E failures repaired through `9143c58`; no hosted mutation,
   push, deployment, DNS change, reset, Candidate, or Production promotion
 - Preserve exact-path staging. The inherited formatting, coverage, and four
   Chromium E2E failures are recorded with plan-base reproductions in the Task 12
-  report and must not be hidden by lowering gates.
+  report. Coverage and three stale assertions are now repaired; the login
+  short-viewport defect and formatting gate remain and must not be hidden by
+  lowering gates.
 
 Use exact-path staging. Never use `git add -A`, destructive reset, broad restore,
 stash, or branch switching in a dirty shared worktree.
@@ -725,10 +731,11 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- No unresolved design choice. Local repository implementation is ready, but
-  hosted execution is blocked until inherited repository gates are repaired,
-  OWNER GATE 0 is complete, provider capabilities are freshly reverified, and
-  the owner explicitly approves the exact Task 13 mutations.
+- Local repository implementation is ready, but hosted execution remains
+  blocked. Owner authorization is required before the minimal short-viewport
+  login CSS fix; the formatting gate also needs an explicit policy for frozen
+  generated evidence while protected login WIP remains untouched. OWNER GATE 0,
+  provider capability reverification, and exact Task 13 approval still follow.
 - OWNER GATE 0 still lacks a separate encrypted age-key copy and distinct
   Staging/Production SMTP credentials. The Apple Note copy alone is not the
   approved independent recovery copy.
