@@ -853,3 +853,4 @@ Task 2: complete (`f3a24e4`；Learning Experience current classroom/member flow�
 ## Phase 0 Environment and Release Foundation (2026-08-06)
 
 Task 1: complete（隔離 worktree `phase0/release-foundation@2295fd6`；fail-closed hosted mutation schema/verifier 8/8、typecheck、lint、Prettier 全綠）。Owner 明確覆寫 readiness 順序、允許先完成 local implementation；USB 加密離線副本與分離的 Staging/Production SMTP credential 仍為 `blocked`，正式對外發布及 Task 13 hosted mutation 前必須重驗 OWNER GATE 0。詳見 `.superpowers/sdd/phase0-task-1-report.md`。
+Task 2: complete（typed build-time environment＋AppShell Staging marker；unit/contract 22/22、Staging/Production Chromium 各 1/1、三 viewport containment/pointer/contrast 全綠）。Focus-safety browser RED 證實 marker z-index 76 會蓋過 skip-link 75，回修至 39 後轉綠；Local/Production marker 為 0，browser `VITE_*` 仍僅既有兩項。詳見 `.superpowers/sdd/phase0-task-2-report.md`。
