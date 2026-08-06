@@ -140,5 +140,9 @@ describe('isolated Local restore', () => {
     expect(report.target).toBe('isolated-local');
     expect(typeof report.elapsed_seconds).toBe('number');
     expect(report.elapsed_seconds).toBeGreaterThanOrEqual(0);
-  }, 120_000);
+    // A cold GitHub runner may need almost two minutes to start the disposable
+    // Supabase stack (the prior passing run took 119.838 seconds). This is an
+    // integrity drill, not a two-minute RTO requirement; the CI job itself
+    // remains bounded at 30 minutes and the product RTO target is eight hours.
+  }, 300_000);
 });
