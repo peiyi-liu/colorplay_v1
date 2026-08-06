@@ -22,6 +22,9 @@
     "acceptance:count": "node scripts/verify/count-acceptance.mjs acceptance/ACCEPTANCE_CRITERIA.md",
     "document:manifest": "node scripts/verify/generate-document-manifest.mjs --write",
     "document:manifest:check": "node scripts/verify/generate-document-manifest.mjs --check",
+    "phase0:release-record": "node scripts/release/release-record.mjs",
+    "phase0:backup-manifest": "node scripts/backup/create-manifest.mjs",
+    "phase0:contracts": "vitest run tests/contracts/phase0-*.test.ts",
     "content:import": "node scripts/content/import-questions.mjs && node scripts/content/import-review-cards.mjs",
     "phase:game-economy": "bash scripts/acceptance/run-game-economy-v2.sh",
     "phase:achievements": "bash scripts/acceptance/run-achievements.sh",
@@ -74,6 +77,7 @@
     "tsx": "4.23.0",
     "typescript": "5.8.3",
     "typescript-eslint": "^8.63.0",
+    "vercel": "58.5.1",
     "vite": "^8.1.4",
     "vitest": "^4.1.10"
   }
