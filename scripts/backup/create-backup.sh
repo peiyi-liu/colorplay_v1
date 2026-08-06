@@ -9,6 +9,10 @@ output_root=''
 fixture=''
 fake_upload_root=''
 
+if [[ "${1:-}" == '--' ]]; then
+  shift
+fi
+
 fail() {
   printf '%s\n' "$1" >&2
   exit 1
@@ -83,8 +87,8 @@ upload_production_object() {
 }
 
 create_synthetic_fixture() {
-  [[ "$fixture" == 'synthetic' && -n "$fake_upload_root" ]] ||
-    fail 'BACKUP_INVALID_FIXTURE'
+  [[ "$fixture" == 'synthetic' ]] || fail 'BACKUP_INVALID_FIXTURE'
+  fake_upload_root="${fake_upload_root:-$output_root/fake-s3}"
   command -v age >/dev/null || fail 'BACKUP_TOOL_MISSING'
   command -v age-keygen >/dev/null || fail 'BACKUP_TOOL_MISSING'
 
@@ -135,6 +139,9 @@ NODE
   age --recipient "$recipient" \
     --output "$output_root/backup-manifest.json.age" \
     "$temporary_root/backup-manifest.json"
+  printf '%s  %s\n' \
+    "$(sha256_file "$output_root/backup-manifest.json.age")" \
+    'backup-manifest.json.age' > "$output_root/backup-manifest.json.age.sha256"
 
   upload_root="$fake_upload_root/$object_prefix"
   mkdir -p "$upload_root"
@@ -243,6 +250,9 @@ NODE
   age --recipient "$AGE_RECIPIENT" \
     --output "$output_root/backup-manifest.json.age" \
     "$temporary_root/backup-manifest.json"
+  printf '%s  %s\n' \
+    "$(sha256_file "$output_root/backup-manifest.json.age")" \
+    'backup-manifest.json.age' > "$output_root/backup-manifest.json.age.sha256"
 
   projected_bytes="$(( $(sum_file_sizes "$encrypted_root") + $(wc -c < "$output_root/backup-manifest.json.age") ))"
   if ((B2_CURRENT_USAGE_BYTES + projected_bytes > B2_CAPACITY_BUDGET_BYTES)); then

@@ -26,6 +26,7 @@
     "phase0:backup-manifest": "node scripts/backup/create-manifest.mjs",
     "phase0:backup:create": "bash scripts/backup/create-backup.sh",
     "phase0:backup:verify": "node scripts/backup/verify-backup.mjs",
+    "phase0:restore:local": "bash scripts/backup/restore-local.sh",
     "phase0:contracts": "vitest run tests/contracts/phase0-*.test.ts",
     "phase0:migration:inventory": "node scripts/migration/create-inventory.mjs",
     "phase0:migration:compare": "node scripts/migration/compare-inventory.mjs",
