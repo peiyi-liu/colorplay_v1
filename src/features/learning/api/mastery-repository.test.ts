@@ -71,6 +71,32 @@ describe('mastery repository', () => {
     });
   });
 
+  it('preserves a valid null current question from a terminal mastery state', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: { ...statePayload, question: null, status: 'completed' },
+      error: null,
+    });
+
+    await expect(
+      createMasteryRepository(clientFor(rpc)).getState(sessionId),
+    ).resolves.toEqual({
+      chapterId,
+      chapterTitle: '色彩基礎',
+      position: 2,
+      question: null,
+      questionCount: 5,
+      sessionId,
+      stages: [
+        { attempts: 1, completed: true, position: 1 },
+        { attempts: 0, completed: false, position: 2 },
+      ],
+      status: 'completed',
+    });
+    expect(rpc).toHaveBeenCalledWith('get_mastery_state', {
+      p_session_id: sessionId,
+    });
+  });
+
   it('starts sessions and requests hints only through their server RPCs', async () => {
     const rpc = vi
       .fn()

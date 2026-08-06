@@ -33,3 +33,22 @@ Reviewed the exact staged test diff with `git diff --cached --check` and `git di
 ## Concerns
 
 None. The function-coverage buffer is 9 functions above the configured minimum.
+
+## Review follow-up 1
+
+Added a valid terminal-state `getState` case to verify that a server response with `question: null` projects to camelCase state while preserving `question: null`.
+
+### Commands and results
+
+- `pnpm exec prettier --write src/features/learning/api/mastery-repository.test.ts` — passed.
+- `pnpm vitest run src/features/learning/api/mastery-repository.test.ts` — passed: 1 file, 18 tests.
+- `pnpm lint` — passed.
+- `pnpm typecheck` — passed.
+- `pnpm test:coverage` — passed all configured global coverage thresholds.
+
+### Final coverage after follow-up
+
+- Statements: `2656/3356` (`79.14%`, threshold `75%`)
+- Functions: `816/1061` (`76.90%`, threshold `76%`; minimum `807`)
+- Lines: `2497/3045` (`82.00%`, threshold `78%`)
+- Branches: `69.85%` (threshold `64%`)
