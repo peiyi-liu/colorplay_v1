@@ -1,9 +1,9 @@
 # ColorPlay Current Program
 
-- Status: PHASE 0 SPEC APPROVED — implementation plan awaiting owner review;
-  only the owner-authorized B2 backup-target setup has changed hosted state
+- Status: LOCAL IMPLEMENTATION READY — hosted configuration and gates NOT
+  EXECUTED; inherited repository gates and OWNER GATE 0 remain blocking
 - Last updated: 2026-08-06 (Asia/Taipei)
-- Current phase: Phase 0, implementation-plan review
+- Current phase: Phase 0, local Tasks 1–12 implemented and strictly reviewed
 - Canonical entry point: this file
 - Historical task ledger: `.superpowers/sdd/progress.md`
 
@@ -21,13 +21,13 @@ as a completed production release.
 
 ## Immediate next action
 
-Owner reviews
-`docs/superpowers/plans/2026-08-06-phase-0-environment-release-foundation.md`.
-After approval, first complete its Human Readiness checklist, then execute local
-Tasks 1–12 in an isolated worktree. Hosted Tasks 13–18 remain separately gated;
-do not create Vercel or Supabase projects, change DNS, upload application
-environment variables, link Supabase, reset data, deploy, or modify product code
-before the implementation plan is approved.
+Resolve the inherited repository gate debt recorded in
+`.superpowers/sdd/phase0-task-12-report.md`, then complete OWNER GATE 0 by making
+the separate encrypted age-key copy and creating distinct Staging/Production
+SMTP credentials. Reverify provider capabilities read-only and obtain explicit
+OWNER GATE 1 approval before Task 13. Hosted Tasks 13–18 remain unexecuted: do
+not create or reconfigure Vercel/Supabase resources, change DNS, upload hosted
+environment variables, reset data, deploy, promote, or push from this state.
 
 ## Approved program structure
 
@@ -36,7 +36,7 @@ batches. Each batch must pass its own Staging gate before Production promotion.
 
 | Phase | Scope                                         | Status                                              |
 | ----- | --------------------------------------------- | --------------------------------------------------- |
-| 0     | Environment and release foundation            | Spec approved; implementation plan awaiting review  |
+| 0     | Environment and release foundation            | Local Tasks 1–12 ready; hosted Tasks 13–18 blocked  |
 | 1     | Admin identity and security core              | Decisions captured; spec not started                |
 | 2     | Content SSOT and version publishing           | Decisions captured; spec not started                |
 | 3     | Learning progression and assessment authority | Decisions captured; spec not started                |
@@ -707,6 +707,17 @@ Do not overwrite, stash, reset, or accidentally stage unrelated changes.
   - `tests/e2e/helpers/quiz.ts`
   - `tests/e2e/learning-experience.spec.ts`
 
+### Phase 0 release-foundation worktree
+
+- Path: `.worktrees/phase0-release-foundation`
+- Branch: `phase0/release-foundation`
+- Plan base: `2295fd6c430fc4a843d2da3e391fd0d48b902704`
+- State: local Tasks 1–12 implemented and strictly reviewed; no hosted mutation,
+  push, deployment, DNS change, reset, Candidate, or Production promotion
+- Preserve exact-path staging. The inherited formatting, coverage, and four
+  Chromium E2E failures are recorded with plan-base reproductions in the Task 12
+  report and must not be hidden by lowering gates.
+
 Use exact-path staging. Never use `git add -A`, destructive reset, broad restore,
 stash, or branch switching in a dirty shared worktree.
 
@@ -714,8 +725,13 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- No unresolved design choice; implementation-plan review and the plan's
-  human-readiness checklist remain before implementation.
+- No unresolved design choice. Local repository implementation is ready, but
+  hosted execution is blocked until inherited repository gates are repaired,
+  OWNER GATE 0 is complete, provider capabilities are freshly reverified, and
+  the owner explicitly approves the exact Task 13 mutations.
+- OWNER GATE 0 still lacks a separate encrypted age-key copy and distinct
+  Staging/Production SMTP credentials. The Apple Note copy alone is not the
+  approved independent recovery copy.
 
 ### Later phases
 
