@@ -53,6 +53,7 @@ jobs:
             --evidence-root "$RUNNER_TEMP"
       - name: Secret-scan sanitized JSON
         id: evidence-scan
+        continue-on-error: true
         run: |
           test -f "$RUNNER_TEMP/smoke-${{ matrix.environment }}.json"
           ! rg --pcre2 -q '(?i)(cookie|authorization|bearer|email|token|password|<html)' \
@@ -66,7 +67,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Open or update deduplicated environment incident
-        if: ${{ steps.smoke.outcome == 'failure' }}
+        if: ${{ always() && steps.smoke.outcome == 'failure' }}
         uses: actions/github-script@v8
         with:
           script: |
@@ -98,5 +99,5 @@ jobs:
               });
             }
       - name: Fail the monitor after evidence and incident handling
-        if: ${{ steps.smoke.outcome == 'failure' }}
+        if: ${{ always() && (steps.smoke.outcome == 'failure' || steps.evidence-scan.outcome == 'failure') }}
         run: exit 1

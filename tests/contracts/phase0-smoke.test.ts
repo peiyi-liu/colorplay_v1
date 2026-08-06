@@ -156,6 +156,23 @@ describe('web-only rollback', () => {
     expect(rollback).not.toMatch(/supabase|\bsql\b|migration|database/iu);
   });
 
+  it('opens a smoke incident when a crash leaves no sanitized JSON evidence', async () => {
+    const workflow = await readFile(
+      '.github/workflows/health-monitor.yml',
+      'utf8',
+    );
+
+    expect(workflow).toContain(
+      'id: evidence-scan\n        continue-on-error: true',
+    );
+    expect(workflow).toContain(
+      "if: ${{ always() && steps.smoke.outcome == 'failure' }}\n        uses: actions/github-script@v8",
+    );
+    expect(workflow).toContain(
+      "if: ${{ always() && (steps.smoke.outcome == 'failure' || steps.evidence-scan.outcome == 'failure') }}\n        run: exit 1",
+    );
+  });
+
   async function createReleaseRecord() {
     const record = resolve(root, 'release-record.json');
     const input = resolve(root, 'release-input.json');
