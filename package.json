@@ -23,6 +23,8 @@
     "document:manifest": "node scripts/verify/generate-document-manifest.mjs --write",
     "document:manifest:check": "node scripts/verify/generate-document-manifest.mjs --check",
     "phase0:release-record": "node scripts/release/release-record.mjs",
+    "phase0:smoke": "node scripts/release/read-only-smoke.mjs",
+    "phase0:rollback:web": "bash scripts/release/rollback-web.sh",
     "phase0:backup-manifest": "node scripts/backup/create-manifest.mjs",
     "phase0:backup:create": "bash scripts/backup/create-backup.sh",
     "phase0:backup:verify": "node scripts/backup/verify-backup.mjs",

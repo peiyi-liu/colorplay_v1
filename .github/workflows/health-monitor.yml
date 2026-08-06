@@ -1,0 +1,102 @@
+name: Environment health monitor
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  read-only-smoke:
+    name: read-only-smoke-${{ matrix.environment }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - environment: staging
+            target_origin: https://staging.colorplayapp.com
+            http_origin: http://staging.colorplayapp.com
+          - environment: production
+            target_origin: https://colorplayapp.com
+            http_origin: http://colorplayapp.com
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Check out smoke implementation
+        uses: actions/checkout@v6
+      - name: Set up pnpm from packageManager
+        run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run non-mutating environment smoke
+        id: smoke
+        continue-on-error: true
+        run: |
+          node scripts/release/read-only-smoke.mjs \
+            --environment "${{ matrix.environment }}" \
+            --target-origin "${{ matrix.target_origin }}" \
+            --http-origin "${{ matrix.http_origin }}" \
+            --output "$RUNNER_TEMP/smoke-${{ matrix.environment }}.json" \
+            --evidence-root "$RUNNER_TEMP"
+      - name: Secret-scan sanitized JSON
+        id: evidence-scan
+        run: |
+          test -f "$RUNNER_TEMP/smoke-${{ matrix.environment }}.json"
+          ! rg --pcre2 -q '(?i)(cookie|authorization|bearer|email|token|password|<html)' \
+            "$RUNNER_TEMP/smoke-${{ matrix.environment }}.json"
+      - name: Upload sanitized smoke result
+        if: ${{ always() && steps.evidence-scan.outcome == 'success' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: smoke-${{ matrix.environment }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/smoke-${{ matrix.environment }}.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Open or update deduplicated environment incident
+        if: ${{ steps.smoke.outcome == 'failure' }}
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const environment = '${{ matrix.environment }}';
+            const failureClass = 'read-only-smoke';
+            const title = `[dedupe] ${environment}:${failureClass}`;
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'environment-health',
+            });
+            const body = `Sanitized smoke failed. Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const existing = issues.find((issue) => issue.title === title);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['environment-health'],
+              });
+            }
+      - name: Fail the monitor after evidence and incident handling
+        if: ${{ steps.smoke.outcome == 'failure' }}
+        run: exit 1
