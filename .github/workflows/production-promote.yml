@@ -1,0 +1,168 @@
+name: Promote Production Candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_run_id:
+        description: Successful Candidate workflow run ID
+        required: true
+
+concurrency:
+  group: production-promotion
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: write
+  deployments: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-24.04
+    environment: production
+    env:
+      PROMOTION_VERCEL_TOKEN: ${{ secrets.PROMOTION_VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ vars.PRODUCTION_VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.PRODUCTION_VERCEL_PROJECT_ID }}
+      PRODUCTION_SUPABASE_REF: ${{ vars.PRODUCTION_SUPABASE_REF }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v6
+        with:
+          name: production-candidate-${{ inputs.candidate_run_id }}
+          run-id: ${{ inputs.candidate_run_id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/candidate
+      - name: Verify checksummed Candidate record
+        id: record
+        run: |
+          set -euo pipefail
+          record="$RUNNER_TEMP/candidate/release-record.json"
+          checksum="$RUNNER_TEMP/candidate/release-record.json.sha256"
+          observation="$RUNNER_TEMP/candidate/observation.json"
+          node scripts/release/release-record.mjs verify --record "$record" --checksum "$checksum"
+          approved_sha="$(node -p "JSON.parse(require('fs').readFileSync(process.argv[1])).git_sha" "$record")"
+          deployment_id="$(node -p "JSON.parse(require('fs').readFileSync(process.argv[1])).vercel_deployment_id" "$record")"
+          deployment_url="$(node -p "JSON.parse(require('fs').readFileSync(process.argv[1])).vercel_deployment_url" "$record")"
+          previous_id="$(node -p "JSON.parse(require('fs').readFileSync(process.argv[1])).previous_healthy_deployment_id" "$record")"
+          now="$(date -u '+%Y-%m-%dT%H:%M:%S.000Z')"
+          node scripts/release/verify-candidate.mjs --record "$record" --checksum "$checksum" --observation "$observation" --expected-sha "$approved_sha" --expected-project-ref "$PRODUCTION_SUPABASE_REF" --now "$now"
+          printf 'approved_sha=%s\n' "$approved_sha" >> "$GITHUB_OUTPUT"
+          printf 'deployment_id=%s\n' "$deployment_id" >> "$GITHUB_OUTPUT"
+          printf 'deployment_url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
+          printf 'previous_id=%s\n' "$previous_id" >> "$GITHUB_OUTPUT"
+      - name: Create GitHub deployment audit object
+        id: github-deployment
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: '${{ steps.record.outputs.approved_sha }}',
+              environment: 'production',
+              auto_merge: false,
+              required_contexts: [],
+            });
+            core.setOutput('id', deployment.data.id);
+      - name: Promote exact approved artifact
+        id: promote-artifact
+        env:
+          DEPLOYMENT_ID: ${{ steps.record.outputs.deployment_id }}
+          DEPLOYMENT_URL: ${{ steps.record.outputs.deployment_url }}
+        run: |
+          inspect_id="$(pnpm exec vercel inspect "$DEPLOYMENT_URL" --token "$PROMOTION_VERCEL_TOKEN" --json | jq -r '.id')"
+          test "$inspect_id" = "$DEPLOYMENT_ID"
+          pnpm exec vercel promote "$DEPLOYMENT_URL" --token "$PROMOTION_VERCEL_TOKEN"
+      - name: Three immediate read-only samples
+        run: |
+          set -euo pipefail
+          for sample in 1 2 3; do
+            pnpm phase0:smoke -- --environment production --target-origin https://colorplayapp.com --output "$RUNNER_TEMP/production-smoke-$sample.json" --evidence-root "$RUNNER_TEMP"
+          done
+      - name: Create final checksummed release record after Production smoke
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          approval_actor="$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/approvals" --jq '[.[] | select(.state == "approved")][-1].user.login')"
+          [[ "$approval_actor" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,38}$ ]]
+          now="$(date -u '+%Y-%m-%dT%H:%M:%S.000Z')"
+          node --input-type=module - "$RUNNER_TEMP/candidate/release-record.json" "$RUNNER_TEMP/final-release-input.json" "$approval_actor" "$now" <<'NODE'
+          import { readFile, writeFile } from 'node:fs/promises';
+          const [draftPath, outputPath, approvalActor, now] = process.argv.slice(2);
+          const record = JSON.parse(await readFile(draftPath, 'utf8'));
+          record.production_gate_run_url = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+          record.approval_actor = approvalActor;
+          record.approval_at_utc = now;
+          record.post_deploy_smoke = 'passed';
+          record.created_at_utc = now;
+          await writeFile(outputPath, `${JSON.stringify(record)}\n`, { mode: 0o600 });
+          NODE
+          node scripts/release/release-record.mjs create --input "$RUNNER_TEMP/final-release-input.json" --output "$RUNNER_TEMP/final-release-record.json" --evidence-root "$RUNNER_TEMP"
+      - name: Fast-forward main to the approved SHA without rebuild
+        env:
+          APPROVED_SHA: ${{ steps.record.outputs.approved_sha }}
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor origin/main "$APPROVED_SHA"
+          git push origin "$APPROVED_SHA:main"
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$APPROVED_SHA"
+      - name: Verify Vercel source, main and local release tag parity
+        env:
+          APPROVED_SHA: ${{ steps.record.outputs.approved_sha }}
+          DEPLOYMENT_URL: ${{ steps.record.outputs.deployment_url }}
+        run: |
+          set -euo pipefail
+          release_tag="prod-$(date -u '+%Y%m%d-%H%M')"
+          ! git rev-parse "$release_tag" >/dev/null 2>&1
+          git tag "$release_tag" "$APPROVED_SHA"
+          vercel_source_sha="$(pnpm exec vercel inspect "$DEPLOYMENT_URL" --token "$PROMOTION_VERCEL_TOKEN" --json | jq -r '.meta.githubCommitSha // .gitSource.sha')"
+          tag_sha="$(git rev-parse "$release_tag^{commit}")"
+          now="$(date -u '+%Y-%m-%dT%H:%M:%S.000Z')"
+          node scripts/release/verify-main-parity.mjs --record "$RUNNER_TEMP/final-release-record.json" --checksum "$RUNNER_TEMP/final-release-record.json.sha256" --observation "$RUNNER_TEMP/candidate/observation.json" --expected-project-ref "$PRODUCTION_SUPABASE_REF" --main-sha "$(git rev-parse origin/main)" --vercel-source-sha "$vercel_source_sha" --tag-sha "$tag_sha" --now "$now"
+          printf 'release_tag=%s\n' "$release_tag" >> "$GITHUB_ENV"
+      - name: Publish tag and GitHub Release only after parity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git push origin "$release_tag"
+          printf 'Exact artifact promotion passed. SHA: %s\n' "${{ steps.record.outputs.approved_sha }}" > "$RUNNER_TEMP/release-summary.txt"
+          gh release create "$release_tag" "$RUNNER_TEMP/final-release-record.json" "$RUNNER_TEMP/final-release-record.json.sha256" "$RUNNER_TEMP/release-summary.txt" --title "$release_tag" --notes-file "$RUNNER_TEMP/release-summary.txt"
+      - name: Mark GitHub deployment successful
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: Number('${{ steps.github-deployment.outputs.id }}'),
+              state: 'success',
+              environment_url: 'https://colorplayapp.com',
+            });
+      - name: Guarded rollback after any post-promote failure
+        if: ${{ failure() && steps.promote-artifact.outcome == 'success' }}
+        env:
+          PATH: ${{ github.workspace }}/node_modules/.bin:${{ env.PATH }}
+        run: bash scripts/release/rollback-web.sh --record "$RUNNER_TEMP/candidate/release-record.json" --checksum "$RUNNER_TEMP/candidate/release-record.json.sha256" --current-deployment-id "${{ steps.record.outputs.deployment_id }}" --failure-class web-render --consecutive-failures 3
+      - name: Mark GitHub deployment failed
+        if: ${{ failure() && steps.github-deployment.outputs.id != '' }}
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: Number('${{ steps.github-deployment.outputs.id }}'),
+              state: 'failure',
+            });

@@ -1,0 +1,244 @@
+name: Create Production Candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      approved_sha:
+        description: Exact Staging-gated SHA
+        required: true
+      staging_gate_run_url:
+        description: Exact successful Staging gate run
+        required: true
+      backup_freshness_run_url:
+        description: Exact successful backup verification run
+        required: true
+      previous_healthy_deployment_id:
+        description: Verified rollback target
+        required: true
+
+concurrency:
+  group: production-candidate
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  statuses: read
+
+env:
+  COLORPLAY_DEPLOYMENT_ENVIRONMENT: production
+  APPROVED_SHA: ${{ inputs.approved_sha }}
+  PRODUCTION_VERCEL_PROJECT: colorplay-web
+
+jobs:
+  candidate:
+    runs-on: ubuntu-24.04
+    environment: production-candidate
+    env:
+      CANDIDATE_VERCEL_TOKEN: ${{ secrets.CANDIDATE_VERCEL_TOKEN }}
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.CANDIDATE_AUTOMATION_BYPASS_SECRET }}
+      VERCEL_ORG_ID: ${{ vars.PRODUCTION_VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.PRODUCTION_VERCEL_PROJECT_ID }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
+      VITE_SUPABASE_URL: ${{ vars.PRODUCTION_SUPABASE_URL }}
+      PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      PRODUCTION_SUPABASE_REF: ${{ vars.PRODUCTION_SUPABASE_REF }}
+      PRODUCTION_CONTENT_INVENTORY_STATUS: ${{ vars.PRODUCTION_CONTENT_INVENTORY_STATUS }}
+    steps:
+      - name: Validate exact SHA and required checks
+        env:
+          EXPECTED_BACKUP_RUN_URL: ${{ inputs.backup_freshness_run_url }}
+          EXPECTED_STAGING_RUN_URL: ${{ inputs.staging_gate_run_url }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [[ "$APPROVED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          gh api "repos/${{ github.repository }}/commits/$APPROVED_SHA/check-runs" > "$RUNNER_TEMP/checks.json"
+          gh api "repos/${{ github.repository }}/commits/$APPROVED_SHA/status" > "$RUNNER_TEMP/statuses.json"
+          node --input-type=module - "$RUNNER_TEMP/checks.json" "$RUNNER_TEMP/statuses.json" "$RUNNER_TEMP/gate-times.json" <<'NODE'
+          import { readFile, writeFile } from 'node:fs/promises';
+          const [checksPath, statusesPath, outputPath] = process.argv.slice(2);
+          const checks = JSON.parse(await readFile(checksPath, 'utf8')).check_runs ?? [];
+          const statuses = JSON.parse(await readFile(statusesPath, 'utf8')).statuses ?? [];
+          const required = [
+            'format', 'lint', 'typecheck', 'unit-coverage', 'production-build',
+            'local-database', 'chromium-e2e', 'credential-scan', 'owner-approval',
+            'staging-gate', 'backup-freshness',
+          ];
+          const successes = new Map();
+          for (const check of checks) {
+            if (check.conclusion === 'success') {
+              successes.set(check.name, { at: check.completed_at, url: check.details_url });
+            }
+          }
+          for (const status of statuses) {
+            if (status.state === 'success' && !successes.has(status.context)) {
+              successes.set(status.context, { at: status.updated_at, url: status.target_url });
+            }
+          }
+          if (required.some((name) => !successes.has(name))) process.exit(1);
+          if (
+            successes.get('staging-gate').url !== process.env.EXPECTED_STAGING_RUN_URL ||
+            successes.get('backup-freshness').url !== process.env.EXPECTED_BACKUP_RUN_URL
+          ) process.exit(1);
+          await writeFile(outputPath, `${JSON.stringify({
+            staging_gate_observed_at_utc: new Date(successes.get('staging-gate').at).toISOString(),
+            backup_freshness_observed_at_utc: new Date(successes.get('backup-freshness').at).toISOString(),
+          })}\n`, { mode: 0o600 });
+          NODE
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.approved_sha }}
+          fetch-depth: 0
+      - run: test "$(git rev-parse HEAD)" = "$APPROVED_SHA"
+      - run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install --yes postgresql-client
+      - name: Bind the Production Vercel project
+        run: |
+          node -e '
+            const endpoint = new URL(`https://api.vercel.com/v9/projects/${process.env.VERCEL_PROJECT_ID}`);
+            endpoint.searchParams.set("teamId", process.env.VERCEL_ORG_ID);
+            fetch(endpoint, { headers: { Authorization: `Bearer ${process.env.CANDIDATE_VERCEL_TOKEN}` } })
+              .then(async (response) => {
+                if (!response.ok) throw new Error("CANDIDATE_PROJECT_LOOKUP_FAILED");
+                const project = await response.json();
+                if (project.name !== process.env.PRODUCTION_VERCEL_PROJECT) {
+                  throw new Error("CANDIDATE_PROJECT_MISMATCH");
+                }
+              })
+              .catch((error) => { console.error(error.message); process.exit(1); });
+          '
+      - name: Build Production artifact
+        run: |
+          pnpm exec vercel pull --yes --environment=production --token "$CANDIDATE_VERCEL_TOKEN"
+          pnpm exec vercel build --prod --token "$CANDIDATE_VERCEL_TOKEN"
+      - name: Deploy isolated Candidate without domain assignment
+        id: deploy
+        run: |
+          set -euo pipefail
+          candidate_url="$(pnpm exec vercel deploy --prebuilt --prod --skip-domain --token "$CANDIDATE_VERCEL_TOKEN")"
+          inspect="$(pnpm exec vercel inspect "$candidate_url" --token "$CANDIDATE_VERCEL_TOKEN" --json)"
+          deployment_id="$(jq -r '.id' <<<"$inspect")"
+          [[ "$deployment_id" == dpl_* ]]
+          printf 'candidate_url=%s\n' "$candidate_url" >> "$GITHUB_OUTPUT"
+          printf 'deployment_id=%s\n' "$deployment_id" >> "$GITHUB_OUTPUT"
+      - name: Verify protection, marker, redirect and read-only browser health
+        env:
+          CANDIDATE_URL: ${{ steps.deploy.outputs.candidate_url }}
+        run: |
+          set -euo pipefail
+          unauthenticated_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$CANDIDATE_URL")"
+          [[ "$unauthenticated_status" == 401 || "$unauthenticated_status" == 403 ]]
+          node --input-type=module - "$CANDIDATE_URL" "$RUNNER_TEMP/runtime-observation.json" <<'NODE'
+          import { chromium } from '@playwright/test';
+          import { writeFile } from 'node:fs/promises';
+          const [candidateUrl, outputPath] = process.argv.slice(2);
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext({
+            extraHTTPHeaders: { 'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET },
+            serviceWorkers: 'block',
+          });
+          const page = await context.newPage();
+          let writes = 0;
+          let consoleErrors = 0;
+          let networkErrors = 0;
+          await page.route('**/*', async (route) => {
+            if (!['GET', 'HEAD'].includes(route.request().method())) {
+              writes += 1;
+              await route.abort('blockedbyclient');
+            } else await route.continue();
+          });
+          page.on('console', (message) => { if (message.type() === 'error') consoleErrors += 1; });
+          page.on('response', (response) => { if (response.status() >= 400) networkErrors += 1; });
+          await page.goto(candidateUrl, { waitUntil: 'networkidle' });
+          const result = {
+            production_marker_count: await page.getByText('STAGING 測試環境', { exact: true }).count(),
+            redirected_to_staging: new URL(page.url()).hostname === 'staging.colorplayapp.com',
+            writes,
+            console_errors: consoleErrors,
+            network_errors: networkErrors,
+          };
+          await browser.close();
+          if (writes || consoleErrors || networkErrors) process.exit(1);
+          await writeFile(outputPath, `${JSON.stringify(result)}\n`, { mode: 0o600 });
+          NODE
+      - name: Verify aggregate-only Production inventory
+        id: inventory
+        run: |
+          set -euo pipefail
+          fixture_count="$(psql "$PRODUCTION_DATABASE_URL" -Atqc "select count(*) from auth.users where email like '%@colorplay.test'")"
+          [[ "$fixture_count" =~ ^[0-9]+$ ]]
+          [[ "$PRODUCTION_CONTENT_INVENTORY_STATUS" == formal ]]
+          printf 'fixture_count=%s\n' "$fixture_count" >> "$GITHUB_OUTPUT"
+      - name: Create and verify checksummed draft release record
+        env:
+          CANDIDATE_URL: ${{ steps.deploy.outputs.candidate_url }}
+          DEPLOYMENT_ID: ${{ steps.deploy.outputs.deployment_id }}
+          FIXTURE_COUNT: ${{ steps.inventory.outputs.fixture_count }}
+          PREVIOUS_HEALTHY_DEPLOYMENT_ID: ${{ inputs.previous_healthy_deployment_id }}
+          RELEASE_TRIGGER_ACTOR: ${{ github.actor }}
+          STAGING_GATE_RUN_URL: ${{ inputs.staging_gate_run_url }}
+        run: |
+          set -euo pipefail
+          migration_first="$(find supabase/migrations -type f -name '*.sql' -exec basename {} \; | sort | head -1)"
+          migration_last="$(find supabase/migrations -type f -name '*.sql' -exec basename {} \; | sort | tail -1)"
+          now="$(date -u '+%Y-%m-%dT%H:%M:%S.000Z')"
+          node --input-type=module - "$RUNNER_TEMP/release-input.json" "$RUNNER_TEMP/observation.json" "$RUNNER_TEMP/gate-times.json" "$RUNNER_TEMP/runtime-observation.json" "$migration_first" "$migration_last" "$now" <<'NODE'
+          import { readFile, writeFile } from 'node:fs/promises';
+          const [recordPath, observationPath, gatePath, runtimePath, migrationFirst, migrationLast, now] = process.argv.slice(2);
+          const gate = JSON.parse(await readFile(gatePath, 'utf8'));
+          const runtime = JSON.parse(await readFile(runtimePath, 'utf8'));
+          const record = {
+            schema_version: 1,
+            attempt_id: `candidate-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}`,
+            git_sha: process.env.APPROVED_SHA,
+            vercel_deployment_id: process.env.DEPLOYMENT_ID,
+            vercel_deployment_url: process.env.CANDIDATE_URL,
+            production_supabase_ref: process.env.PRODUCTION_SUPABASE_REF,
+            migration_first: migrationFirst,
+            migration_last: migrationLast,
+            staging_gate_run_url: process.env.STAGING_GATE_RUN_URL,
+            production_gate_run_url: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+            approval_actor: process.env.RELEASE_TRIGGER_ACTOR,
+            approval_at_utc: now,
+            post_deploy_smoke: 'passed',
+            previous_healthy_deployment_id: process.env.PREVIOUS_HEALTHY_DEPLOYMENT_ID,
+            created_at_utc: now,
+          };
+          const observation = {
+            schema_version: 1,
+            git_sha: process.env.APPROVED_SHA,
+            vercel_deployment_id: process.env.DEPLOYMENT_ID,
+            vercel_deployment_url: process.env.CANDIDATE_URL,
+            staging_gate_status: 'success',
+            staging_gate_observed_at_utc: gate.staging_gate_observed_at_utc,
+            backup_freshness_status: 'success',
+            backup_freshness_observed_at_utc: gate.backup_freshness_observed_at_utc,
+            production_marker_count: runtime.production_marker_count,
+            redirected_to_staging: runtime.redirected_to_staging,
+            deployment_protection: 'verified',
+            fixture_identity_count: Number(process.env.FIXTURE_COUNT),
+            content_inventory_status: process.env.PRODUCTION_CONTENT_INVENTORY_STATUS,
+          };
+          await writeFile(recordPath, `${JSON.stringify(record)}\n`, { mode: 0o600 });
+          await writeFile(observationPath, `${JSON.stringify(observation)}\n`, { mode: 0o600 });
+          NODE
+          pnpm phase0:release-record create --input "$RUNNER_TEMP/release-input.json" --output "$RUNNER_TEMP/release-record.json" --evidence-root "$RUNNER_TEMP"
+          node scripts/release/verify-candidate.mjs --record "$RUNNER_TEMP/release-record.json" --checksum "$RUNNER_TEMP/release-record.json.sha256" --observation "$RUNNER_TEMP/observation.json" --expected-sha "$APPROVED_SHA" --expected-project-ref "$PRODUCTION_SUPABASE_REF" --now "$now"
+      - uses: actions/upload-artifact@v5
+        with:
+          name: production-candidate-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/release-record.json
+            ${{ runner.temp }}/release-record.json.sha256
+            ${{ runner.temp }}/observation.json
+          if-no-files-found: error
+          retention-days: 30
