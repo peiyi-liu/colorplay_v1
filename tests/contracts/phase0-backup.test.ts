@@ -178,9 +178,12 @@ describe('backup verification and workflow boundaries', () => {
     expect(verifyJob).toContain('B2_RECOVERY_APPLICATION_KEY');
     expect(verifyJob).toContain('AGE_IDENTITY');
     expect(verifyJob).toContain('s3api head-object');
+    expect(verifyJob).toContain('s3api get-object-retention');
     expect(verifyJob).toContain('s3api list-objects-v2');
-    expect(verifyJob).toContain('ObjectLockMode');
-    expect(verifyJob).toContain('ObjectLockRetainUntil');
+    expect(verifyJob).toContain('b2-retention.json');
+    expect(verifyJob).toContain('retention.Retention.Mode');
+    expect(verifyJob).toContain('retention.Retention.RetainUntilDate');
+    expect(verifyJob).not.toContain('head.ObjectLockRetainUntil');
     expect(workflow).toContain("context: 'backup-freshness'");
     expect(workflow).toContain("title: '[dedupe] Production backup failure'");
   });

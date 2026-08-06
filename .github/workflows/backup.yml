@@ -140,6 +140,14 @@ jobs:
           AWS_ACCESS_KEY_ID="$B2_RECOVERY_KEY_ID" \
             AWS_SECRET_ACCESS_KEY="$B2_RECOVERY_APPLICATION_KEY" \
             AWS_DEFAULT_REGION="$B2_REGION" \
+            aws s3api get-object-retention \
+              --endpoint-url "$B2_ENDPOINT" \
+              --bucket "$B2_BUCKET" \
+              --key "${{ needs.create-backup.outputs.object_prefix }}backup-manifest.json.age" \
+              > "$RUNNER_TEMP/verification/b2-retention.json"
+          AWS_ACCESS_KEY_ID="$B2_RECOVERY_KEY_ID" \
+            AWS_SECRET_ACCESS_KEY="$B2_RECOVERY_APPLICATION_KEY" \
+            AWS_DEFAULT_REGION="$B2_REGION" \
             aws s3api list-objects-v2 \
               --endpoint-url "$B2_ENDPOINT" \
               --bucket "$B2_BUCKET" \
@@ -153,10 +161,13 @@ jobs:
           const root = `${process.env.RUNNER_TEMP}/verification`;
           const metadata = JSON.parse(await readFile(`${root}/verification-metadata.json`, 'utf8'));
           const head = JSON.parse(await readFile(`${root}/b2-head.json`, 'utf8'));
+          const retention = JSON.parse(await readFile(`${root}/b2-retention.json`, 'utf8'));
           const listing = JSON.parse(await readFile(`${root}/b2-list.json`, 'utf8'));
           const lastModified = Date.parse(head.LastModified);
-          metadata.lock_mode = head.ObjectLockMode;
-          metadata.object_lock_expires_at_utc = new Date(head.ObjectLockRetainUntil).toISOString();
+          metadata.lock_mode = retention.Retention.Mode;
+          metadata.object_lock_expires_at_utc = new Date(
+            retention.Retention.RetainUntilDate,
+          ).toISOString();
           metadata.newest_object_age_hours = (Date.now() - lastModified) / 3_600_000;
           metadata.used_bytes = (listing.Contents ?? []).reduce(
             (total, object) => total + Number(object.Size ?? 0),
