@@ -25,6 +25,8 @@
     "phase0:release-record": "node scripts/release/release-record.mjs",
     "phase0:backup-manifest": "node scripts/backup/create-manifest.mjs",
     "phase0:contracts": "vitest run tests/contracts/phase0-*.test.ts",
+    "phase0:migration:inventory": "node scripts/migration/create-inventory.mjs",
+    "phase0:migration:compare": "node scripts/migration/compare-inventory.mjs",
     "content:import": "node scripts/content/import-questions.mjs && node scripts/content/import-review-cards.mjs",
     "phase:game-economy": "bash scripts/acceptance/run-game-economy-v2.sh",
     "phase:achievements": "bash scripts/acceptance/run-achievements.sh",
