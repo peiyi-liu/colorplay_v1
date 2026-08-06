@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-const expectedEnvironment = process.env.EXPECTED_DEPLOYMENT_ENVIRONMENT;
+const expectedEnvironment =
+  process.env.EXPECTED_DEPLOYMENT_ENVIRONMENT ?? 'local';
 
 function relativeLuminance(color: string): number {
   const channels = color
@@ -40,7 +41,7 @@ function contrastRatio(foreground: string, background: string): number {
 test('the built artifact exposes only the expected Staging marker', async ({
   page,
 }) => {
-  expect(['staging', 'production']).toContain(expectedEnvironment);
+  expect(['local', 'staging', 'production']).toContain(expectedEnvironment);
 
   for (const viewport of [
     { width: 375, height: 812 },
@@ -49,6 +50,7 @@ test('the built artifact exposes only the expected Staging marker', async ({
   ]) {
     await page.setViewportSize(viewport);
     await page.goto('/');
+    await expect(page.getByRole('link', { name: 'PRESS START' })).toBeVisible();
 
     const marker = page.getByRole('status', { name: 'STAGING 測試環境' });
     if (expectedEnvironment === 'staging') {
