@@ -96,6 +96,9 @@ describe('encrypted immutable backup creation', () => {
       'retention_epoch=$((upload_epoch + 30 * 24 * 60 * 60))',
     );
     expect(source).toContain('B2_CAPACITY_BUDGET_BYTES');
+    expect(source).toContain('select id from storage.buckets order by id');
+    expect(source).toContain('"s3://$bucket_id"');
+    expect(source).not.toContain('"s3://storage"');
     expect(source).not.toContain('AGE_SECRET_KEY');
     expect(uploadFunction).toContain('s3api put-object');
     expect(uploadFunction).not.toMatch(/s3api (?:get|delete)-object/u);
@@ -163,7 +166,7 @@ describe('backup verification and workflow boundaries', () => {
     expect(createJob).toContain('B2_WRITER_KEY_ID');
     expect(createJob).not.toContain('B2_RECOVERY_APPLICATION_KEY');
     expect(createJob).not.toContain('AGE_IDENTITY');
-    expect(verifyJob).toContain('environment: production-backup-recovery');
+    expect(verifyJob).toContain('environment: production-recovery');
     expect(verifyJob).toContain('B2_RECOVERY_APPLICATION_KEY');
     expect(verifyJob).toContain('AGE_IDENTITY');
     expect(verifyJob).toContain('s3api head-object');

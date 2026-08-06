@@ -166,6 +166,21 @@ describe('hosted mutation target verifier', () => {
       },
       error: 'HOSTED_MUTATION_SECRET_LIKE_KEY',
     },
+    {
+      breakName: 'credential embedded in a narrative value',
+      mutate: (record: HostedMutationRecord) => {
+        record.observed_current_state =
+          'Observed Authorization: Bearer synthetic-secret-value';
+      },
+      error: 'HOSTED_MUTATION_SENSITIVE_VALUE',
+    },
+    {
+      breakName: 'email embedded in a narrative value',
+      mutate: (record: HostedMutationRecord) => {
+        record.proposed_change = 'Notify student@example.com after mutation.';
+      },
+      error: 'HOSTED_MUTATION_SENSITIVE_VALUE',
+    },
   ])('rejects $breakName', async ({ error, mutate }) => {
     const record = validRecord();
     mutate(record);

@@ -56,5 +56,6 @@ if ((consecutive_failures < 3)); then
   exit 0
 fi
 
-vercel rollback "$previous_deployment"
+[[ -n "${PROMOTION_VERCEL_TOKEN:-}" ]] || fail 'ROLLBACK_CREDENTIAL_MISSING'
+vercel rollback "$previous_deployment" --token "$PROMOTION_VERCEL_TOKEN"
 printf 'WEB_ROLLBACK_TRIGGERED\n'

@@ -240,10 +240,15 @@ describe('web-only rollback', () => {
         '--consecutive-failures',
         '3',
       ],
-      { PATH: `${fakeBin}:${process.env.PATH ?? ''}` },
+      {
+        PATH: `${fakeBin}:${process.env.PATH ?? ''}`,
+        PROMOTION_VERCEL_TOKEN: 'synthetic-promotion-token',
+      },
     );
     expect(result.code).toBe(0);
-    expect(await readFile(calls, 'utf8')).toBe('rollback dpl_previous123456\n');
+    expect(await readFile(calls, 'utf8')).toBe(
+      'rollback dpl_previous123456 --token synthetic-promotion-token\n',
+    );
   });
 
   it.each(['security', 'data-corruption'])(

@@ -135,7 +135,7 @@ export async function runReadOnlySmoke({
   } catch {
     dns = 'failed';
   }
-  let httpsRedirect = target.protocol === 'https:' ? 'passed' : 'passed';
+  let httpsRedirect = target.protocol === 'http:' ? 'passed' : 'failed';
   if (httpOrigin) {
     try {
       const response = await globalThis.fetch(httpOrigin, {

@@ -169,6 +169,9 @@ describe('Production release workflows', () => {
     expect(workflow).toContain('backup-freshness');
     expect(workflow).toContain('verify-candidate.mjs');
     expect(workflow).toContain('CANDIDATE_VERCEL_TOKEN');
+    expect(workflow).toContain(
+      'test "${{ github.ref }}" = "refs/heads/staging"',
+    );
     expect(workflow).not.toContain('PROMOTION_VERCEL_TOKEN');
     expect(workflow).not.toContain('vercel promote');
   });
@@ -187,6 +190,14 @@ describe('Production release workflows', () => {
     expect(workflow).toContain('PROMOTION_VERCEL_TOKEN');
     expect(workflow).not.toContain('CANDIDATE_VERCEL_TOKEN');
     expect(workflow).toContain('release-record.mjs verify');
+    expect(workflow).toContain('Verify successful Candidate workflow identity');
+    expect(workflow).toContain(
+      "candidate.name !== 'Create Production Candidate'",
+    );
+    expect(workflow).toContain('ref: ${{ steps.record.outputs.approved_sha }}');
+    expect(workflow).toContain(
+      'test "${{ github.ref }}" = "refs/heads/staging"',
+    );
     expect(promoteIndex).toBeGreaterThan(0);
     expect(workflow).not.toMatch(/vercel (?:deploy|build)/u);
     expect(smokeIndex).toBeGreaterThan(promoteIndex);
@@ -199,10 +210,12 @@ describe('Production release workflows', () => {
     expect(workflow).toContain('rollback-web.sh');
     expect(workflow).toContain('id: production-smoke');
     expect(workflow).toContain('consecutive_failures=0');
-    expect(workflow).toContain("steps.production-smoke.outcome == 'failure'");
-    expect(workflow).not.toContain(
+    expect(workflow).toContain(
       "failure() && steps.promote-artifact.outcome == 'success'",
     );
+    expect(workflow).toContain('--http-origin http://colorplayapp.com');
+    expect(workflow).toContain('Six five-minute post-release samples');
+    expect(workflow).toContain('sleep 300');
     expect(workflow).not.toMatch(
       /supabase db (?:reset|down)|seed-auth|\/login/u,
     );

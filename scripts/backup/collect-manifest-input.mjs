@@ -29,7 +29,15 @@ async function walk(root, directory = root) {
 const input = JSON.parse(await readFile(process.argv[2], 'utf8'));
 const encryptedRoot = resolve(process.argv[3]);
 const outputPath = resolve(process.argv[4]);
-const dumpNames = ['roles.sql.age', 'schema.sql.age', 'data.sql.age'];
+const requiredDumpNames = ['roles.sql.age', 'schema.sql.age', 'data.sql.age'];
+const optionalDumpNames = ['database-inventory.json.age'];
+const encryptedNames = new Set(
+  (await walk(encryptedRoot)).map((path) => relative(encryptedRoot, path)),
+);
+const dumpNames = [
+  ...requiredDumpNames,
+  ...optionalDumpNames.filter((name) => encryptedNames.has(name)),
+];
 const dumpFiles = await Promise.all(
   dumpNames.map((name) =>
     fileEntry(encryptedRoot, resolve(encryptedRoot, name)),

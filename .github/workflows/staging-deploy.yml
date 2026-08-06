@@ -10,6 +10,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
+  actions: read
   contents: read
   deployments: write
   issues: write
@@ -23,7 +24,7 @@ env:
 jobs:
   deploy-exact-sha:
     runs-on: ubuntu-24.04
-    environment: staging-deploy
+    environment: staging
     outputs:
       deployment_id: ${{ steps.deploy.outputs.deployment_id }}
       deployed_functions: ${{ steps.functions.outputs.deployed_functions }}
@@ -91,7 +92,7 @@ jobs:
   browser-rwd-gate:
     needs: deploy-exact-sha
     runs-on: ubuntu-24.04
-    environment: staging-acceptance
+    environment: staging
     strategy:
       fail-fast: false
       matrix:
@@ -109,7 +110,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
       - name: Read-only marker and runtime smoke
-        run: pnpm phase0:smoke -- --environment staging --target-origin https://staging.colorplayapp.com --evidence-root artifacts/phase0 --output artifacts/phase0/staging-smoke-${{ matrix.browser }}-${{ matrix.viewport }}.json
+        run: pnpm phase0:smoke -- --environment staging --target-origin https://staging.colorplayapp.com --http-origin http://staging.colorplayapp.com --evidence-root artifacts/phase0 --output artifacts/phase0/staging-smoke-${{ matrix.browser }}-${{ matrix.viewport }}.json
       - name: Marker, console/network, three-browser and RWD gate
         env:
           PLAYWRIGHT_BASE_URL: https://staging.colorplayapp.com
@@ -120,7 +121,7 @@ jobs:
   phase-acceptance:
     needs: browser-rwd-gate
     runs-on: ubuntu-24.04
-    environment: staging-acceptance
+    environment: staging
     steps:
       - uses: actions/checkout@v6
         with:
@@ -144,9 +145,22 @@ jobs:
   real-device-approval:
     needs: phase-acceptance
     runs-on: ubuntu-24.04
-    environment: staging-real-device
+    environment: staging-approval
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      real_device_evidence_url: ${{ steps.evidence.outputs.real_device_evidence_url }}
     steps:
-      - run: echo 'Owner approved the recorded real-device result.'
+      - name: Bind the human real-device evidence URL from the approval record
+        id: evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          evidence_url="$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/approvals" --jq '[.[] | select(.state == "approved") | .comment // empty] | last // empty')"
+          node -e 'const url = new URL(process.argv[1]); if (url.protocol !== "https:" || url.href !== process.argv[1]) process.exit(1)' "$evidence_url"
+          printf 'real_device_evidence_url=%s\n' "$evidence_url" >> "$GITHUB_OUTPUT"
 
   record-staging-gate:
     needs: [deploy-exact-sha, real-device-approval]
@@ -156,9 +170,15 @@ jobs:
         env:
           DEPLOYMENT_ID: ${{ needs.deploy-exact-sha.outputs.deployment_id }}
           DEPLOYED_FUNCTIONS: ${{ needs.deploy-exact-sha.outputs.deployed_functions }}
+          REAL_DEVICE_EVIDENCE_URL: ${{ needs.real-device-approval.outputs.real_device_evidence_url }}
         run: |
-          printf '{"deployment_id":"%s","git_sha":"%s","deployed_functions":"%s","staging-gate":"pass"}\n' \
-            "$DEPLOYMENT_ID" "${{ github.sha }}" "$DEPLOYED_FUNCTIONS" > staging-release-evidence.json
+          jq -n \
+            --arg deployment_id "$DEPLOYMENT_ID" \
+            --arg git_sha "${{ github.sha }}" \
+            --arg deployed_functions "$DEPLOYED_FUNCTIONS" \
+            --arg real_device_evidence_url "$REAL_DEVICE_EVIDENCE_URL" \
+            '{deployment_id:$deployment_id,git_sha:$git_sha,deployed_functions:$deployed_functions,real_device_evidence_url:$real_device_evidence_url,"staging-gate":"pass"}' \
+            > staging-release-evidence.json
       - uses: actions/upload-artifact@v5
         with:
           name: staging-release-evidence

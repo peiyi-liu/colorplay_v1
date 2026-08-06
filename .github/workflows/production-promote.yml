@@ -26,6 +26,8 @@ jobs:
       VERCEL_PROJECT_ID: ${{ vars.PRODUCTION_VERCEL_PROJECT_ID }}
       PRODUCTION_SUPABASE_REF: ${{ vars.PRODUCTION_SUPABASE_REF }}
     steps:
+      - name: Require the protected Staging workflow definition
+        run: test "${{ github.ref }}" = "refs/heads/staging"
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
@@ -36,6 +38,23 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - name: Verify successful Candidate workflow identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [[ "${{ inputs.candidate_run_id }}" =~ ^[0-9]+$ ]]
+          gh api "repos/${{ github.repository }}/actions/runs/${{ inputs.candidate_run_id }}" > "$RUNNER_TEMP/candidate-run.json"
+          node --input-type=module - "$RUNNER_TEMP/candidate-run.json" <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const candidate = JSON.parse(await readFile(process.argv[2], 'utf8'));
+          if (
+            candidate.name !== 'Create Production Candidate' ||
+            candidate.conclusion !== 'success' ||
+            candidate.event !== 'workflow_dispatch' ||
+            candidate.head_branch !== 'staging'
+          ) process.exit(1);
+          NODE
       - uses: actions/download-artifact@v6
         with:
           name: production-candidate-${{ inputs.candidate_run_id }}
@@ -60,6 +79,15 @@ jobs:
           printf 'deployment_id=%s\n' "$deployment_id" >> "$GITHUB_OUTPUT"
           printf 'deployment_url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
           printf 'previous_id=%s\n' "$previous_id" >> "$GITHUB_OUTPUT"
+      - name: Check out the exact approved release implementation
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.record.outputs.approved_sha }}
+          fetch-depth: 0
+      - name: Reinstall the exact approved dependency graph
+        run: |
+          test "$(git rev-parse HEAD)" = "${{ steps.record.outputs.approved_sha }}"
+          pnpm install --frozen-lockfile
       - name: Create GitHub deployment audit object
         id: github-deployment
         uses: actions/github-script@v8
@@ -89,13 +117,27 @@ jobs:
           set -uo pipefail
           consecutive_failures=0
           for sample in 1 2 3; do
-            if pnpm phase0:smoke -- --environment production --target-origin https://colorplayapp.com --output "$RUNNER_TEMP/production-smoke-$sample.json" --evidence-root "$RUNNER_TEMP"; then
+            if pnpm phase0:smoke -- --environment production --target-origin https://colorplayapp.com --http-origin http://colorplayapp.com --output "$RUNNER_TEMP/production-smoke-$sample.json" --evidence-root "$RUNNER_TEMP"; then
               consecutive_failures=0
             else
               ((consecutive_failures += 1))
             fi
           done
           test "$consecutive_failures" -lt 3
+      - name: Six five-minute post-release samples
+        id: post-release-sampling
+        run: |
+          set -uo pipefail
+          consecutive_failures=0
+          for sample in 1 2 3 4 5 6; do
+            if [[ "$sample" -gt 1 ]]; then sleep 300; fi
+            if pnpm phase0:smoke -- --environment production --target-origin https://colorplayapp.com --http-origin http://colorplayapp.com --output "$RUNNER_TEMP/production-monitor-$sample.json" --evidence-root "$RUNNER_TEMP"; then
+              consecutive_failures=0
+            else
+              ((consecutive_failures += 1))
+              if [[ "$consecutive_failures" -ge 3 ]]; then exit 1; fi
+            fi
+          done
       - name: Create final checksummed release record after Production smoke
         env:
           GH_TOKEN: ${{ github.token }}
@@ -157,8 +199,8 @@ jobs:
               state: 'success',
               environment_url: 'https://colorplayapp.com',
             });
-      - name: Guarded rollback after three consecutive web-render failures
-        if: ${{ steps.production-smoke.outcome == 'failure' && steps.promote-artifact.outcome == 'success' }}
+      - name: Guarded rollback after a confirmed post-promote failure
+        if: ${{ failure() && steps.promote-artifact.outcome == 'success' }}
         env:
           PATH: ${{ github.workspace }}/node_modules/.bin:${{ env.PATH }}
         run: bash scripts/release/rollback-web.sh --record "$RUNNER_TEMP/candidate/release-record.json" --checksum "$RUNNER_TEMP/candidate/release-record.json.sha256" --current-deployment-id "${{ steps.record.outputs.deployment_id }}" --failure-class web-render --consecutive-failures 3

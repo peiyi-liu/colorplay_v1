@@ -145,18 +145,46 @@ if [[ -d "$temporary_root/decrypted/storage" ]]; then
   cp -R "$temporary_root/decrypted/storage/." "$restore_workdir/restored-storage/"
 fi
 
-row_count="$(docker exec "$database_container" psql -U postgres -d postgres -Atqc \
-  "select count(*) from public.synthetic_fixture")"
-source_storage_sha="$(find "$temporary_root/decrypted/storage" -type f -exec shasum -a 256 {} \; | awk '{print $1}' | LC_ALL=C sort | shasum -a 256 | awk '{print $1}')"
-restored_storage_sha="$(find "$restore_workdir/restored-storage" -type f -exec shasum -a 256 {} \; | awk '{print $1}' | LC_ALL=C sort | shasum -a 256 | awk '{print $1}')"
-find "$project_root/supabase/migrations" -type f -name '*.sql' -exec basename {} \; \
-  | cut -d_ -f1 | LC_ALL=C sort > "$temporary_root/source-migrations.txt"
-docker exec "$database_container" psql -U postgres -d postgres -Atqc \
-  'select version from supabase_migrations.schema_migrations order by version' \
-  > "$temporary_root/restored-migrations.txt"
-source_migration_sha="$(shasum -a 256 "$temporary_root/source-migrations.txt" | awk '{print $1}')"
-restored_migration_sha="$(shasum -a 256 "$temporary_root/restored-migrations.txt" | awk '{print $1}')"
-node - "$temporary_root/source-inventory.json" 1 "$source_storage_sha" "$source_migration_sha" <<'NODE'
+storage_tree_sha() {
+  local root="$1"
+  if [[ -d "$root" ]]; then
+    find "$root" -type f -exec shasum -a 256 {} \; | awk '{print $1}' | \
+      LC_ALL=C sort | shasum -a 256 | awk '{print $1}'
+  else
+    printf '' | shasum -a 256 | awk '{print $1}'
+  fi
+}
+
+source_storage_sha="$(storage_tree_sha "$temporary_root/decrypted/storage")"
+restored_storage_sha="$(storage_tree_sha "$restore_workdir/restored-storage")"
+if [[ -f "$temporary_root/decrypted/database-inventory.json" ]]; then
+  node "$project_root/scripts/backup/create-database-inventory.mjs" \
+    --docker-container "$database_container" \
+    --output "$temporary_root/restored-database-inventory.json"
+  node --input-type=module - \
+    "$temporary_root/decrypted/database-inventory.json" \
+    "$temporary_root/restored-database-inventory.json" \
+    "$temporary_root/source-inventory.json" \
+    "$temporary_root/restored-inventory.json" \
+    "$source_storage_sha" "$restored_storage_sha" <<'NODE'
+import { readFile, writeFile } from 'node:fs/promises';
+const [sourcePath, restoredPath, sourceOutput, restoredOutput, sourceStorage, restoredStorage] = process.argv.slice(2);
+const source = JSON.parse(await readFile(sourcePath, 'utf8'));
+const restored = JSON.parse(await readFile(restoredPath, 'utf8'));
+await writeFile(sourceOutput, `${JSON.stringify({ ...source, storage_sha256: sourceStorage })}\n`);
+await writeFile(restoredOutput, `${JSON.stringify({ ...restored, storage_sha256: restoredStorage })}\n`);
+NODE
+else
+  row_count="$(docker exec "$database_container" psql -U postgres -d postgres -Atqc \
+    "select count(*) from public.synthetic_fixture")"
+  find "$project_root/supabase/migrations" -type f -name '*.sql' -exec basename {} \; \
+    | cut -d_ -f1 | LC_ALL=C sort > "$temporary_root/source-migrations.txt"
+  docker exec "$database_container" psql -U postgres -d postgres -Atqc \
+    'select version from supabase_migrations.schema_migrations order by version' \
+    > "$temporary_root/restored-migrations.txt"
+  source_migration_sha="$(shasum -a 256 "$temporary_root/source-migrations.txt" | awk '{print $1}')"
+  restored_migration_sha="$(shasum -a 256 "$temporary_root/restored-migrations.txt" | awk '{print $1}')"
+  node - "$temporary_root/source-inventory.json" 1 "$source_storage_sha" "$source_migration_sha" <<'NODE'
 import { writeFile } from 'node:fs/promises';
 await writeFile(process.argv[2], JSON.stringify({
   schema_version: 1,
@@ -166,7 +194,7 @@ await writeFile(process.argv[2], JSON.stringify({
   migration_sha256: process.argv[5]
 }, null, 2));
 NODE
-node - "$temporary_root/restored-inventory.json" "$row_count" "$restored_storage_sha" "$restored_migration_sha" <<'NODE'
+  node - "$temporary_root/restored-inventory.json" "$row_count" "$restored_storage_sha" "$restored_migration_sha" <<'NODE'
 import { writeFile } from 'node:fs/promises';
 await writeFile(process.argv[2], JSON.stringify({
   schema_version: 1,
@@ -176,6 +204,7 @@ await writeFile(process.argv[2], JSON.stringify({
   migration_sha256: process.argv[5]
 }, null, 2));
 NODE
+fi
 node "$project_root/scripts/backup/compare-restored-inventory.mjs" \
   --source "$temporary_root/source-inventory.json" \
   --restored "$temporary_root/restored-inventory.json" \

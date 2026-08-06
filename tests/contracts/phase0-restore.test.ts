@@ -116,6 +116,8 @@ describe('isolated Local restore', () => {
     );
     expect(source).not.toContain('docker exec supabase_db_colorplay');
     expect(source).not.toContain('supabase stop --all');
+    expect(source).toContain('database-inventory.json');
+    expect(source).toContain('create-database-inventory.mjs');
   });
 
   it('restores the encrypted synthetic set and records a matching RTO report', async () => {

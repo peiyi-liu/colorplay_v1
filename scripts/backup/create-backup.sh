@@ -187,7 +187,7 @@ create_production_backup() {
   done
   [[ "$B2_CAPACITY_BUDGET_BYTES" =~ ^[0-9]+$ && "$B2_CURRENT_USAGE_BYTES" =~ ^[0-9]+$ ]] ||
     fail 'BACKUP_INVALID_BUDGET'
-  for tool in age aws pg_dump pg_dumpall; do
+  for tool in age aws pg_dump pg_dumpall psql; do
     command -v "$tool" >/dev/null || fail 'BACKUP_TOOL_MISSING'
   done
 
@@ -197,11 +197,23 @@ create_production_backup() {
   pg_dumpall --roles-only --database="$SUPABASE_DB_URL" > "$payload_root/roles.sql" 2>/dev/null
   pg_dump --schema-only --dbname="$SUPABASE_DB_URL" > "$payload_root/schema.sql" 2>/dev/null
   pg_dump --data-only --dbname="$SUPABASE_DB_URL" > "$payload_root/data.sql" 2>/dev/null
-  AWS_ACCESS_KEY_ID="$SUPABASE_STORAGE_ACCESS_KEY_ID" \
-    AWS_SECRET_ACCESS_KEY="$SUPABASE_STORAGE_SECRET_ACCESS_KEY" \
-    aws s3 sync --only-show-errors \
-      --endpoint-url "$SUPABASE_STORAGE_S3_ENDPOINT" \
-      "s3://storage" "$payload_root/storage"
+  SUPABASE_DB_URL="$SUPABASE_DB_URL" node \
+    "$project_root/scripts/backup/create-database-inventory.mjs" \
+    --output "$payload_root/database-inventory.json"
+  storage_bucket_ids=()
+  while IFS= read -r bucket_id; do
+    storage_bucket_ids+=("$bucket_id")
+  done < <(psql "$SUPABASE_DB_URL" -Atqc 'select id from storage.buckets order by id')
+  for bucket_id in "${storage_bucket_ids[@]}"; do
+    [[ -n "$bucket_id" && "$bucket_id" != */* && "$bucket_id" != '.' && "$bucket_id" != '..' ]] || \
+      fail 'BACKUP_STORAGE_BUCKET_INVALID'
+    mkdir -p "$payload_root/storage/$bucket_id"
+    AWS_ACCESS_KEY_ID="$SUPABASE_STORAGE_ACCESS_KEY_ID" \
+      AWS_SECRET_ACCESS_KEY="$SUPABASE_STORAGE_SECRET_ACCESS_KEY" \
+      aws s3 sync --only-show-errors \
+        --endpoint-url "$SUPABASE_STORAGE_S3_ENDPOINT" \
+        "s3://$bucket_id" "$payload_root/storage/$bucket_id"
+  done
   encrypt_payload_tree "$AGE_RECIPIENT" "$payload_root" "$encrypted_root"
 
   backup_date="$(date -u +%Y/%m/%d)"

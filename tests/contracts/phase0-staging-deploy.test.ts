@@ -168,6 +168,7 @@ describe('automatic Staging deployment', () => {
 
     expect(workflow).toContain('phase0:smoke');
     expect(workflow).toContain('--target-origin');
+    expect(workflow).toContain('--http-origin http://staging.colorplayapp.com');
     expect(workflow).toContain('--output');
     expect(workflow).not.toContain('--url ');
     expect(workflow).toContain('phase:learning-experience');
@@ -179,7 +180,9 @@ describe('automatic Staging deployment', () => {
     expect(workflow).toContain('375x812');
     expect(workflow).toContain('staging-marker');
     expect(workflow).toContain('rls-cross-tenant-negative');
-    expect(workflow).toContain('environment: staging-real-device');
+    expect(workflow).toContain('environment: staging-approval');
+    expect(workflow).toContain('/actions/runs/${{ github.run_id }}/approvals');
+    expect(workflow).toContain('real_device_evidence_url');
     expect(workflow).toContain('staging-gate');
     expect(workflow).toContain('target_url=');
     expect(workflow).toContain('deployment_id');

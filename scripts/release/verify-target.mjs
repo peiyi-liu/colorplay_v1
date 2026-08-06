@@ -17,6 +17,9 @@ const REQUIRED_FIELDS = [
 const ALLOWED_FIELDS = new Set(REQUIRED_FIELDS);
 const SECRET_LIKE_KEY =
   /password|secret|token|authorization|email|student|teacher/iu;
+const EMAIL_PATTERN = /\b[^\s@]+@[^\s@]+\.[^\s@]+\b/u;
+const SECRET_VALUE_PATTERN =
+  /(?:Bearer\s+|service_role|sb_secret_[A-Za-z0-9_-]+|-----BEGIN [A-Z ]*PRIVATE KEY-----|\bsk_[A-Za-z0-9_-]+|postgres(?:ql)?:\/\/[^\s:]+:[^@\s]+@)/iu;
 const SHA_PATTERN = /^[0-9a-f]{40}$/u;
 const MAX_OBSERVATION_AGE_MS = 30 * 60_000;
 const MAX_FUTURE_CLOCK_SKEW_MS = 60_000;
@@ -35,6 +38,17 @@ function isNonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+function containsSensitiveValue(value) {
+  if (typeof value === 'string') {
+    return EMAIL_PATTERN.test(value) || SECRET_VALUE_PATTERN.test(value);
+  }
+  if (Array.isArray(value)) return value.some(containsSensitiveValue);
+  if (isRecord(value)) {
+    return Object.values(value).some(containsSensitiveValue);
+  }
+  return false;
+}
+
 function isCanonicalUtcTimestamp(value) {
   if (typeof value !== 'string' || !value.endsWith('Z')) return false;
   const milliseconds = Date.parse(value);
@@ -51,6 +65,9 @@ export function verifyHostedMutationRecord(value, options) {
     if (key !== 'owner_authorization_id' && SECRET_LIKE_KEY.test(key)) {
       fail('HOSTED_MUTATION_SECRET_LIKE_KEY');
     }
+  }
+  if (containsSensitiveValue(value)) {
+    fail('HOSTED_MUTATION_SENSITIVE_VALUE');
   }
 
   const keys = Object.keys(value);

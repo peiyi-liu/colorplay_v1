@@ -84,7 +84,7 @@ jobs:
     needs: create-backup
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    environment: production-backup-recovery
+    environment: production-recovery
     permissions:
       contents: read
       statuses: write

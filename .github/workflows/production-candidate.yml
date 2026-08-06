@@ -46,6 +46,8 @@ jobs:
       PRODUCTION_SUPABASE_REF: ${{ vars.PRODUCTION_SUPABASE_REF }}
       PRODUCTION_CONTENT_INVENTORY_STATUS: ${{ vars.PRODUCTION_CONTENT_INVENTORY_STATUS }}
     steps:
+      - name: Require the protected Staging workflow definition
+        run: test "${{ github.ref }}" = "refs/heads/staging"
       - name: Validate exact SHA and required checks
         env:
           EXPECTED_BACKUP_RUN_URL: ${{ inputs.backup_freshness_run_url }}
