@@ -22,12 +22,12 @@ as a completed production release.
 
 ## Immediate next action
 
-Owner reviews and approves PR #1 at its current head
-`0d7d0e1fda6eee2842f0218377581f75cbc61663`. Foundation CI run
-[`31091970044`](https://github.com/peiyi-liu/colorplay_v1/actions/runs/31091970044)
-passed all eight required checks: format, lint, typecheck, unit coverage,
-Production build, Local database, Chromium E2E, and credential scan. The PR is
-intentionally `BLOCKED` until owner approval; no agent should merge it.
+Owner reviews and approves PR #1. The latest functional SHA
+`5cb1ed35aec0ae8a99712a41143b5f6c7067e495` passed Foundation CI run
+[`31093226087`](https://github.com/peiyi-liu/colorplay_v1/actions/runs/31093226087):
+format, lint, typecheck, unit coverage, Production build, Local database,
+Chromium E2E, and credential scan all passed. The PR is intentionally `BLOCKED`
+until owner approval; no agent should merge it.
 
 After an approved merge to protected `staging`, collect a fresh read-only
 preflight before any further hosted mutation. DNS, hosted Supabase reset,
@@ -719,12 +719,13 @@ Do not overwrite, stash, reset, or accidentally stage unrelated changes.
 - Path: `.worktrees/phase0-release-foundation`
 - Branch: `phase0/release-foundation`
 - Plan base: `2295fd6c430fc4a843d2da3e391fd0d48b902704`
-- Current PR head: `0d7d0e1fda6eee2842f0218377581f75cbc61663` (PR #1 to
-  protected `staging`)
+- Latest functional PR SHA: `5cb1ed35aec0ae8a99712a41143b5f6c7067e495` (PR #1
+  to protected `staging`); its complete CI evidence is run `31093226087`
 - State: GitHub protective controls were configured; Foundation CI passed all
-  eight required checks in run `31091970044`. The short-viewport login defect,
-  formatting debt, coverage threshold, and stale E2E assertions were repaired
-  without weakening gates. PR #1 remains blocked for owner approval.
+  eight required checks. The short-viewport login defect, formatting debt,
+  coverage threshold, stale E2E assertions, and cold-runner restore-test
+  timeout were repaired without weakening gates. PR #1 remains blocked for
+  owner approval.
 - Hosted scope still not executed: no Staging merge/deployment acceptance, DNS
   change, Supabase reset/migration, Candidate creation, Production promotion,
   or hosted backup/restore. A Vercel Preview is not a Staging or Production
