@@ -46,7 +46,7 @@ function StudentHudAvatar() {
       {equipped ? (
         <BlookArt
           emoji={equipped.emoji}
-          size={26}
+          size={47}
           stableCode={equipped.stableCode}
         />
       ) : null}
@@ -118,6 +118,22 @@ export function AppShell() {
           跳到主要內容
         </a>
         <RotateBanner />
+        {isAuthenticatedProfile && !isTeacher ? (
+          <HudCommandBar
+            displayName={profile.data?.displayName ?? ''}
+            isSigningOut={isSigningOut}
+            onSignOut={handleSignOut}
+            variant="student"
+          />
+        ) : null}
+        {isTeacher ? (
+          <HudCommandBar
+            displayName={profile.data?.displayName ?? ''}
+            isSigningOut={isSigningOut}
+            onSignOut={handleSignOut}
+            variant="teacher"
+          />
+        ) : null}
         {isAuthenticatedProfile ? (
           <header className="hud-top">
             {isTeacher ? (
@@ -158,22 +174,6 @@ export function AppShell() {
         <main className="game-stage__scene" id="main-content" tabIndex={-1}>
           <Outlet />
         </main>
-        {isAuthenticatedProfile && !isTeacher ? (
-          <HudCommandBar
-            displayName={profile.data?.displayName ?? ''}
-            isSigningOut={isSigningOut}
-            onSignOut={handleSignOut}
-            variant="student"
-          />
-        ) : null}
-        {isTeacher ? (
-          <HudCommandBar
-            displayName={profile.data?.displayName ?? ''}
-            isSigningOut={isSigningOut}
-            onSignOut={handleSignOut}
-            variant="teacher"
-          />
-        ) : null}
       </div>
     </div>
   );

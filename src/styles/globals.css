@@ -1128,6 +1128,11 @@ a {
   place-items: center;
 }
 
+.blook-card__art .blook-art {
+  max-width: 100%;
+  height: auto;
+}
+
 .blook-art {
   display: block;
   object-fit: contain;
@@ -1358,18 +1363,18 @@ a {
   }
 }
 
-/* ── 底部 HUD 指令列（spec §4）─────────────────────────────────── */
+/* ── 頂部 HUD 指令列（spec §4）─────────────────────────────────── */
 .hud-command {
   position: sticky;
   z-index: 50;
-  bottom: 0;
+  top: 0;
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  border-top: 2px solid var(--pixel-window-frame);
+  border-bottom: 2px solid var(--pixel-window-frame);
   background: var(--pixel-night);
-  padding: var(--space-1) max(var(--space-2), env(safe-area-inset-right))
-    max(var(--space-1), env(safe-area-inset-bottom))
+  padding: max(var(--space-1), env(safe-area-inset-top))
+    max(var(--space-2), env(safe-area-inset-right)) var(--space-1)
     max(var(--space-2), env(safe-area-inset-left));
 }
 
@@ -1456,8 +1461,9 @@ a {
 .hud-menu__panel {
   position: absolute;
   z-index: 60;
+  top: calc(100% + var(--space-2));
   right: 0;
-  bottom: calc(100% + var(--space-2));
+  bottom: auto;
   min-width: 200px;
   border: 3px solid var(--pixel-window-frame);
   border-radius: var(--radius-pixel);
@@ -1486,7 +1492,7 @@ a {
   font-weight: 800;
 }
 
-/* 舞台模式：指令列是舞台底列（flex 尾），sticky 還原為普通列。 */
+/* 舞台模式：指令列是舞台頂列，sticky 還原為普通列。 */
 @media (min-width: 768px) and (orientation: landscape) {
   .hud-command {
     position: static;
@@ -1525,7 +1531,7 @@ a {
 }
 
 /* ═══ 淡彩卡片系統(owner 0728 深夜裁定:自兩頁擴大至全站——主背景
-   已由 token 層翻白;導覽列已於 GameStage Shell 批改走底部 .hud-command,
+   已由 token 層翻白;導覽列已於 GameStage Shell 批改走頂部 .hud-command,
    不再以 :has() 限定)。 ═══ */
 .lobby,
 .achievements {
@@ -5348,7 +5354,7 @@ select#dashboard-classroom {
 }
 
 /* 學生 Live 場次:沉浸模式,隱藏導覽列(owner 2026-07-23；GameStage Shell 批
-   將 student-rail/teacher-rail 併入底部 .hud-command，選擇器隨之遷移) */
+   將 student-rail/teacher-rail 併入頂部 .hud-command，選擇器隨之遷移) */
 .game-stage:has(.live-session-shell) .hud-command {
   display: none;
 }
@@ -7010,8 +7016,8 @@ select#dashboard-classroom {
 
 .hud-avatar {
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 52px;
+  height: 40px;
   flex-shrink: 0;
   border: 2px solid var(--pixel-gold);
   border-radius: var(--radius-pixel);
@@ -7019,10 +7025,18 @@ select#dashboard-classroom {
   place-items: center;
 }
 
+.hud-avatar .blook-art {
+  max-width: 100%;
+  height: auto;
+}
+
 .hud-avatar--hero {
   background:
-    url('../assets/sprites/hero.png') center / 24px 24px no-repeat,
+    url('../assets/sprites/hero.png') center / 32px 32px no-repeat,
     var(--pixel-night-deep);
+  background-size:
+    32px 32px,
+    auto;
   image-rendering: pixelated;
 }
 

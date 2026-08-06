@@ -103,9 +103,12 @@ describe('ShopPage', () => {
       expect(screen.queryByRole('heading', { name })).toBeNull();
     });
     // 每張卡片以 ref-image PNG 角色呈現(不再用 emoji 文字)。
-    expect(document.querySelectorAll('.blook-card__art img')).toHaveLength(
-      page1.length,
-    );
+    const page1Art = document.querySelectorAll('.blook-card__art img');
+    expect(page1Art).toHaveLength(page1.length);
+    for (const image of page1Art) {
+      expect(image).toHaveAttribute('width', '130');
+      expect(image).toHaveAttribute('height', '130');
+    }
     expect(screen.getAllByText('已裝備')).toHaveLength(1);
     expect(screen.getByRole('button', { name: '選用 招財貓' })).toBeEnabled();
     expect(
@@ -121,9 +124,12 @@ describe('ShopPage', () => {
     page1.forEach(([, , name]) => {
       expect(screen.queryByRole('heading', { name })).toBeNull();
     });
-    expect(document.querySelectorAll('.blook-card__art img')).toHaveLength(
-      page2.length,
-    );
+    const page2Art = document.querySelectorAll('.blook-card__art img');
+    expect(page2Art).toHaveLength(page2.length);
+    for (const image of page2Art) {
+      expect(image).toHaveAttribute('width', '130');
+      expect(image).toHaveAttribute('height', '130');
+    }
     expect(
       screen.getByRole('button', { name: '還差 750 Token，無法購買 原色獅' }),
     ).toBeDisabled();
