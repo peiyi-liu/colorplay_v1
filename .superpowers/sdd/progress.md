@@ -849,3 +849,7 @@ Fresh pre-deploy gate：Vitest 120 files / 833 tests PASS；`npx tsc -b --pretty
 Task 1: complete (inventory＋scope decision；fix round 1/5 三項全關閉、獨立 review approved；`live-advanced` 不合併，保留獨立 AC-LIVE-012 最小個人模式 gate，team/schedule/team scoreboard 全刪；三支 stale phase finalizer/contract 納入各自同步 task；報告 `.superpowers/sdd/redspec-task-1-report.md`)
 
 Task 2: complete (`f3a24e4`；Learning Experience current classroom/member flow＋1280×720 remediation-result clipping regression fix)。根因為 `#main-content` 的 grid `place-items:center` 在 landscape fixed/overflow scrollport 內把 1659px 長內容置中到負 scroll origin；最小修正為 `justify-items:center`＋`align-items:safe center`。TDD RED 捕捉 link top `-61.6953125`；GREEN 於 1280×720、812×375、375×812 全部使用真實 pointer click，`hitIsLink`／focus-visible／outline 皆通過且不與上下 HUD 相交。Clean local Supabase full phase gate PASS：Prettier、ESLint、TypeScript、build；Vitest 118 files/814 tests；pgTAP 47 files/1070 tests＋smoke 3；integration 12 files/24 tests；headed Chromium 1/1；browser unexpected error 0，跨教師 `teacher_student_progress` 403 依 fail-closed 語意恰一筆。獎勵基線仍為 450/500 XP＋150 Token，補救後 480/500 XP、Token 不變；詳見 `.superpowers/sdd/redspec-task-2-report.md`。
+
+## Phase 0 Environment and Release Foundation (2026-08-06)
+
+Task 1: complete（隔離 worktree `phase0/release-foundation@2295fd6`；fail-closed hosted mutation schema/verifier 8/8、typecheck、lint、Prettier 全綠）。Owner 明確覆寫 readiness 順序、允許先完成 local implementation；USB 加密離線副本與分離的 Staging/Production SMTP credential 仍為 `blocked`，正式對外發布及 Task 13 hosted mutation 前必須重驗 OWNER GATE 0。詳見 `.superpowers/sdd/phase0-task-1-report.md`。

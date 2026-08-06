@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://colorplayapp.com/schemas/hosted-mutation.schema.json",
+  "title": "ColorPlay hosted mutation preflight",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "action",
+    "exact_target",
+    "frozen_git_sha",
+    "observed_current_state",
+    "proposed_change",
+    "rollback_or_recovery",
+    "owner_authorization_id",
+    "observed_at_utc"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "exact_target": {
+      "type": "string",
+      "minLength": 1
+    },
+    "frozen_git_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "observed_current_state": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proposed_change": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rollback_or_recovery": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner_authorization_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observed_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    }
+  }
+}
