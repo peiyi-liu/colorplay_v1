@@ -197,6 +197,12 @@ describe('Production release workflows', () => {
     );
     expect(workflow).toContain('git push origin "$APPROVED_SHA:main"');
     expect(workflow).toContain('rollback-web.sh');
+    expect(workflow).toContain('id: production-smoke');
+    expect(workflow).toContain('consecutive_failures=0');
+    expect(workflow).toContain("steps.production-smoke.outcome == 'failure'");
+    expect(workflow).not.toContain(
+      "failure() && steps.promote-artifact.outcome == 'success'",
+    );
     expect(workflow).not.toMatch(
       /supabase db (?:reset|down)|seed-auth|\/login/u,
     );

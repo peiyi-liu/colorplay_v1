@@ -84,11 +84,18 @@ jobs:
           test "$inspect_id" = "$DEPLOYMENT_ID"
           pnpm exec vercel promote "$DEPLOYMENT_URL" --token "$PROMOTION_VERCEL_TOKEN"
       - name: Three immediate read-only samples
+        id: production-smoke
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          consecutive_failures=0
           for sample in 1 2 3; do
-            pnpm phase0:smoke -- --environment production --target-origin https://colorplayapp.com --output "$RUNNER_TEMP/production-smoke-$sample.json" --evidence-root "$RUNNER_TEMP"
+            if pnpm phase0:smoke -- --environment production --target-origin https://colorplayapp.com --output "$RUNNER_TEMP/production-smoke-$sample.json" --evidence-root "$RUNNER_TEMP"; then
+              consecutive_failures=0
+            else
+              ((consecutive_failures += 1))
+            fi
           done
+          test "$consecutive_failures" -lt 3
       - name: Create final checksummed release record after Production smoke
         env:
           GH_TOKEN: ${{ github.token }}
@@ -150,8 +157,8 @@ jobs:
               state: 'success',
               environment_url: 'https://colorplayapp.com',
             });
-      - name: Guarded rollback after any post-promote failure
-        if: ${{ failure() && steps.promote-artifact.outcome == 'success' }}
+      - name: Guarded rollback after three consecutive web-render failures
+        if: ${{ steps.production-smoke.outcome == 'failure' && steps.promote-artifact.outcome == 'success' }}
         env:
           PATH: ${{ github.workspace }}/node_modules/.bin:${{ env.PATH }}
         run: bash scripts/release/rollback-web.sh --record "$RUNNER_TEMP/candidate/release-record.json" --checksum "$RUNNER_TEMP/candidate/release-record.json.sha256" --current-deployment-id "${{ steps.record.outputs.deployment_id }}" --failure-class web-render --consecutive-failures 3
