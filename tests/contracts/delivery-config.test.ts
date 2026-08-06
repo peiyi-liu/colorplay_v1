@@ -25,8 +25,18 @@ describe('delivery configuration', () => {
     });
   });
 
-  it('exposes the required foundation-ci check and full clean-install gates', async () => {
+  it('exposes the eight unique Feature CI checks and full clean-install gates', async () => {
     const workflow = await readFile(workflowPath, 'utf8');
+    const expectedChecks = [
+      'format',
+      'lint',
+      'typecheck',
+      'unit-coverage',
+      'production-build',
+      'local-database',
+      'chromium-e2e',
+      'credential-scan',
+    ];
     const requiredCommands = [
       'pnpm install --frozen-lockfile',
       'pnpm format:check',
@@ -39,7 +49,11 @@ describe('delivery configuration', () => {
       'pnpm test:e2e --project=chromium',
     ];
 
-    expect(workflow).toMatch(/^ {2}foundation-ci:\n {4}name: foundation-ci$/mu);
+    const jobNames = [...workflow.matchAll(/^ {4}name: (\S+)$/gmu)].map(
+      ([, name]) => name,
+    );
+    expect(jobNames).toEqual(expectedChecks);
+    expect(new Set(jobNames).size).toBe(expectedChecks.length);
     for (const command of requiredCommands) expect(workflow).toContain(command);
   });
 
@@ -66,7 +80,7 @@ describe('delivery configuration', () => {
       ([, name]) => name,
     );
     const declaredEnvironmentNames = [
-      ...workflow.matchAll(/^\s{6}([A-Z][A-Z0-9_]+):/gmu),
+      ...workflow.matchAll(/^\s{6,10}([A-Z][A-Z0-9_]+):/gmu),
     ].map(([, name]) => name);
 
     expect(new Set(viteNames)).toEqual(
