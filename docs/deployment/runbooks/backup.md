@@ -6,7 +6,7 @@ The daily job runs in the protected `production-backup` Environment and accepts
 the database, Supabase Storage S3, B2 writer, age recipient, and owner capacity
 budget only from protected variables/secrets. Creation uses the write-only B2
 key; it has no download or delete operation. Verification runs in the separate
-`production-backup-recovery` Environment with a read-only B2 key and the age
+`production-recovery` Environment with a read-only B2 key and the age
 identity.
 
 Each set contains encrypted roles, schema, data, Storage objects, and encrypted

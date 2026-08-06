@@ -6,6 +6,7 @@ const governedFiles = [
   'docs/adr/0002-colorplay-new-integration-and-production-environments.md',
   'docs/deployment/environment-matrix.md',
   'docs/deployment/production-readiness.md',
+  'docs/deployment/runbooks/backup.md',
   'docs/deployment/vercel.md',
   'docs/staging-runbook.md',
 ];
@@ -52,6 +53,8 @@ describe('Phase 0 operational documentation', () => {
     expect(text).toContain('three consecutive');
     expect(text).toContain('HTTP 200');
     expect(text).toContain('READY');
+    expect(text).toContain('production-recovery');
+    expect(text).not.toContain('production-backup-recovery');
   });
 
   it('states that hosted Phase 0 execution is still gated', async () => {
