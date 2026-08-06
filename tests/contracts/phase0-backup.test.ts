@@ -104,6 +104,14 @@ describe('encrypted immutable backup creation', () => {
     expect(uploadFunction).not.toMatch(/s3api (?:get|delete)-object/u);
     expect(uploadFunction).not.toMatch(/\bs3 rm\b/u);
   });
+
+  it('formats retention timestamps on both BSD and GNU date implementations', async () => {
+    const source = await readFile(createScript, 'utf8');
+
+    expect(source).toContain('format_retention_until_utc()');
+    expect(source).toContain('date -u -r "$epoch"');
+    expect(source).toContain('date -u --date "@$epoch"');
+  });
 });
 
 describe('backup verification and workflow boundaries', () => {

@@ -47,6 +47,16 @@ sha256_file() {
   shasum -a 256 "$1" | awk '{print $1}'
 }
 
+format_retention_until_utc() {
+  local epoch="$1"
+  local formatted=''
+  if formatted="$(date -u -r "$epoch" +%Y-%m-%dT%H:%M:%S.000Z 2>/dev/null)"; then
+    printf '%s\n' "$formatted"
+  else
+    date -u --date "@$epoch" +%Y-%m-%dT%H:%M:%S.000Z
+  fi
+}
+
 sum_file_sizes() {
   local root="$1"
   local path size total=0
@@ -110,7 +120,7 @@ create_synthetic_fixture() {
   object_prefix="production/$backup_date/$backup_id/"
   upload_epoch="$(date -u +%s)"
   retention_epoch=$((upload_epoch + 30 * 24 * 60 * 60))
-  retention_until_utc="$(date -u -r "$retention_epoch" +%Y-%m-%dT%H:%M:%S.000Z)"
+  retention_until_utc="$(format_retention_until_utc "$retention_epoch")"
 
   node - "$temporary_root/base-input.json" "$recipient" "$object_prefix" "$retention_until_utc" <<'NODE'
 import { writeFile } from 'node:fs/promises';
@@ -221,7 +231,7 @@ create_production_backup() {
   object_prefix="production/$backup_date/$backup_id/"
   upload_epoch="$(date -u +%s)"
   retention_epoch=$((upload_epoch + 30 * 24 * 60 * 60))
-  retention_until_utc="$(date -u -r "$retention_epoch" +%Y-%m-%dT%H:%M:%S.000Z)"
+  retention_until_utc="$(format_retention_until_utc "$retention_epoch")"
   migration_first="$(find "$project_root/supabase/migrations" -type f -name '*.sql' -exec basename {} \; | LC_ALL=C sort | head -n 1 | cut -d_ -f1)"
   migration_last="$(find "$project_root/supabase/migrations" -type f -name '*.sql' -exec basename {} \; | LC_ALL=C sort | tail -n 1 | cut -d_ -f1)"
   repo_sha="$(git -C "$project_root" rev-parse HEAD)"
