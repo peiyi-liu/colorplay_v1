@@ -493,6 +493,7 @@ export type Database = {
           deactivated_at: string | null
           joined_at: string
           last_join_request_id: string
+          member_ref: string
           member_role: Database["public"]["Enums"]["classroom_member_role"]
           status: Database["public"]["Enums"]["classroom_member_status"]
           updated_at: string
@@ -505,6 +506,7 @@ export type Database = {
           deactivated_at?: string | null
           joined_at?: string
           last_join_request_id: string
+          member_ref?: string
           member_role: Database["public"]["Enums"]["classroom_member_role"]
           status?: Database["public"]["Enums"]["classroom_member_status"]
           updated_at?: string
@@ -517,6 +519,7 @@ export type Database = {
           deactivated_at?: string | null
           joined_at?: string
           last_join_request_id?: string
+          member_ref?: string
           member_role?: Database["public"]["Enums"]["classroom_member_role"]
           status?: Database["public"]["Enums"]["classroom_member_status"]
           updated_at?: string
@@ -543,6 +546,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          join_code: string | null
           join_code_hash: string
           join_code_rotated_at: string
           join_code_version: number
@@ -554,6 +558,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          join_code?: string | null
           join_code_hash: string
           join_code_rotated_at?: string
           join_code_version?: number
@@ -565,6 +570,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          join_code?: string | null
           join_code_hash?: string
           join_code_rotated_at?: string
           join_code_version?: number
@@ -2709,6 +2715,24 @@ export type Database = {
         Args: { p_join_code: string; p_request_id: string }
         Returns: Json
       }
+      learning_progress_for: {
+        Args: { p_chapter_id?: string; p_user_id: string }
+        Returns: {
+          accuracy: number
+          chapter_id: string
+          coverage: number
+          mastery: number
+          question_answered: number
+          question_correct: number
+          question_total: number
+          review_completed: number
+          review_total: number
+          rules_version: string
+          scope: string
+          status: string
+          subtopic_id: string
+        }[]
+      }
       list_classroom_assignments: {
         Args: { p_classroom_id: string }
         Returns: {
@@ -2759,9 +2783,9 @@ export type Database = {
         Returns: {
           active_blook_id: string
           display_name: string
-          full_name: string | null
+          full_name: string
           joined_at: string
-          login_account: string | null
+          login_account: string
           member_ref: string
           membership_status: Database["public"]["Enums"]["classroom_member_status"]
         }[]
@@ -2773,7 +2797,7 @@ export type Database = {
           classroom_name: string
           classroom_status: Database["public"]["Enums"]["classroom_status"]
           created_at: string
-          join_code: string | null
+          join_code: string
           join_code_version: number
           member_count: number
         }[]
@@ -2851,6 +2875,10 @@ export type Database = {
         Args: { p_question_id: string }
         Returns: Json
       }
+      quiz_answer_explanation: {
+        Args: { p_session_question_id: string }
+        Returns: string
+      }
       reconcile_wallet_cache: {
         Args: { target_user_id: string }
         Returns: number
@@ -2877,6 +2905,15 @@ export type Database = {
       review_card_semantic_payload: {
         Args: { p_card_id: string }
         Returns: Json
+      }
+      review_completion_for: {
+        Args: { p_chapter_id?: string; p_user_id: string }
+        Returns: {
+          chapter_id: string
+          completed_count: number
+          subtopic_id: string
+          total_count: number
+        }[]
       }
       rotate_classroom_join_code: {
         Args: { p_classroom_id: string }
