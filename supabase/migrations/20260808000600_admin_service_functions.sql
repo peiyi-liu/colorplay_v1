@@ -115,6 +115,7 @@ begin
   -- 同 key 不同 hash 在受理層即衝突。
   select * into v_live_receipt from public.admin_command_authorizations
     where actor_principal_id = v_identity.audit_principal_id
+      and auth_session_id = p_auth_session_id
       and command_name = p_command_name
       and idempotency_key = p_idempotency_key
       and consumed_at is null and now() < expires_at

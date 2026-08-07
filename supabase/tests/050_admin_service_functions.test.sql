@@ -1,6 +1,6 @@
 -- supabase/tests/050_admin_service_functions.test.sql
 begin;
-select plan(33);
+select plan(35);
 
 -- 種一個 admin 身分供流程測試
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password,
@@ -130,6 +130,23 @@ select is((public.svc_admin_issue_command_receipt(
   '50000000-0000-0000-0000-0000000000aa', true))->>'code',
   'IDEMPOTENCY_CONFLICT',
   'same key with a different request hash is rejected at receipt level');
+
+-- 換 session 後不得重放舊 session 的 receipt(Codex P1 guard):
+-- replay 綁定 auth_session_id;輪替後同 key 同 hash 鑄新張,舊張自然過期。
+select ok((public.svc_admin_create_session(
+  '50000000-0000-0000-0000-000000000001',
+  '50000000-0000-0000-0000-0000000000e3'::uuid,
+  '50000000-0000-0000-0000-0000000000aa', 'rotated device', 'c3'))->>'outcome'
+  = 'ok', 'session rotation for the replay-scope guard');
+select isnt(((public.svc_admin_issue_command_receipt(
+  '50000000-0000-0000-0000-000000000001',
+  '50000000-0000-0000-0000-0000000000e3'::uuid,
+  'deactivate_admin', 'idem-1', sha256('{"target":"x"}'::bytea),
+  '50000000-0000-0000-0000-0000000000aa', true))->>'receipt_id')::uuid,
+  (select id from public.admin_command_authorizations
+    where idempotency_key = 'idem-1'
+      and auth_session_id = '50000000-0000-0000-0000-0000000000e2'),
+  'a rotated session mints a fresh receipt instead of replaying the old one');
 
 -- MFA lockout:第 5 次連續失敗鎖定並入帳;鎖定中 probe 亦回 MFA_LOCKED
 select public.svc_admin_record_totp_outcome(
