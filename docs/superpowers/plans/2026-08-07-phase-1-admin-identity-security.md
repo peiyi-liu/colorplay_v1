@@ -108,13 +108,39 @@ Expected:log 首行 SHA 等於 `$PLAN_SHA`;`supabase start` 輸出 local API/DB 
 
 依 spec §14.5:Supabase Free Plan 的 factor lifecycle、Admin MFA API、AAL/AMR timestamp、Edge user-scoped MFA 行為必須先在 Local 實證。**任一斷言失敗即 STOP:回報落差、修訂 spec,不得自製 TOTP 或放寬 gate。**
 
+> **2026-08-07 owner/Codex-approved capability-gate correction:** 原版遺漏
+> local stack 前置條件——repo 的 `supabase/config.toml` 將 `[auth.mfa.totp]`
+> enroll/verify 設為 false,導致 gate 在 config 層即失敗。核准的窄幅修正:
+> 將該兩值改為 true、更正過時的 Pro-only 註解,並於測試前重啟 local stack。
+> 此修正不變更 spec 架構或任何 capability 斷言。
+
 **Files:**
 - Test: `tests/integration/admin-mfa-capability.integration.test.ts`
-- Modify: `package.json`(新增 devDependency `otpauth`)、`pnpm-lock.yaml`
+- Modify: `package.json`(新增 devDependency `otpauth`)、`pnpm-lock.yaml`、
+  `supabase/config.toml`(啟用 local TOTP MFA;2026-08-07 核准修正)
 
 **Interfaces:**
 - Consumes:local Supabase stack(`supabase start`)、`tests/integration/supabase-health.test.ts` 既有的 env 讀取慣例(`SUPABASE_URL`、`SUPABASE_ANON_KEY`、`SUPABASE_SERVICE_ROLE_KEY`,由 `scripts/supabase/load-local-environment.sh` 載入)。
 - Produces:能力證明(通過的 integration test),後續 Edge/E2E task 依賴的四個事實:(1) user-scoped `auth.mfa.enroll/challenge/verify` 可用且回傳 TOTP secret;(2) `auth.admin.mfa.listFactors`/`deleteFactor` 可用;(3) JWT payload 含 `session_id` 與 `amr`(password entry 含 timestamp);(4) verify 成功後 `aal2`。
+
+- [ ] **Step 0: 啟用 local TOTP MFA 並重啟 local stack(2026-08-07 核准修正)**
+
+在 `supabase/config.toml` 設定:
+
+```toml
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+```
+
+並將第 312 行過時註解改為
+`# TOTP MFA is available on all Supabase plans; phone MFA has separate plan requirements.`,
+然後重啟使 auth config 生效:
+
+```bash
+pnpm exec supabase stop
+pnpm exec supabase start
+```
 
 - [ ] **Step 1: 安裝 TOTP 測試依賴**
 
