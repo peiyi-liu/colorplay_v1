@@ -232,7 +232,8 @@ create_production_backup() {
   mkdir -p "$payload_root/storage"
   pg_dumpall --roles-only --database="$SUPABASE_DB_URL" > "$payload_root/roles.sql" 2>/dev/null
   pg_dump --schema-only --dbname="$SUPABASE_DB_URL" > "$payload_root/schema.sql" 2>/dev/null
-  pg_dump --data-only --dbname="$SUPABASE_DB_URL" > "$payload_root/data.sql" 2>/dev/null
+  pg_dump --data-only --disable-triggers --dbname="$SUPABASE_DB_URL" \
+    > "$payload_root/data.sql" 2>/dev/null
   SUPABASE_DB_URL="$SUPABASE_DB_URL" node \
     "$project_root/scripts/backup/create-database-inventory.mjs" \
     --output "$payload_root/database-inventory.json"

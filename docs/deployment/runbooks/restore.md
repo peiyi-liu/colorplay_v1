@@ -12,7 +12,11 @@ roles make only duplicate `CREATE ROLE` statements idempotent; every other role
 statement remains fail-closed. The disposable cluster's `supabase_admin`
 superuser applies roles, schema, and data; hosted Production credentials are
 never used as the restore target. Schema and data restore into a clean
-`template0` database, followed by Storage and aggregate inventory comparison.
+`template0` database. Production data-only dumps include `pg_dump`'s
+trigger-disable and trigger-enable statements so application triggers cannot
+run against partially restored reference tables; the triggers are restored
+before replay completes, and all SQL remains guarded by `ON_ERROR_STOP`.
+Storage and aggregate inventory comparison then run fail-closed.
 The runner records elapsed seconds, removes that exact project, and deletes only
 the validated temporary root.
 

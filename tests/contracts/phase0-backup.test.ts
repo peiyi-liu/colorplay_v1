@@ -169,6 +169,7 @@ describe('encrypted immutable backup creation', () => {
       '$(wc -c < "$output_root/backup-manifest.json.age.sha256")',
     );
     expect(source).toContain('select id from storage.buckets order by id');
+    expect(source).toContain('pg_dump --data-only --disable-triggers');
     expect(source).toContain('"s3://$bucket_id"');
     expect(source).not.toContain('"s3://storage"');
     expect(source).not.toContain('AGE_SECRET_KEY');
