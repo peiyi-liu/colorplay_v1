@@ -44,7 +44,7 @@ batches. Each batch must pass its own Staging gate before Production promotion.
 | Phase | Scope                                         | Status                                              |
 | ----- | --------------------------------------------- | --------------------------------------------------- |
 | 0     | Environment and release foundation            | Foundation CI passed; PR #1 awaits owner approval   |
-| 1     | Admin identity and security core              | Design approved 2026-08-07; spec awaits owner review |
+| 1     | Admin identity and security core              | Revised design approved 2026-08-07; writing-plans next |
 | 2     | Content SSOT and version publishing           | Decisions captured; spec not started                |
 | 3     | Learning progression and assessment authority | Decisions captured; spec not started                |
 | 4     | Learning Hall and chapter experience          | Visual/product decisions captured; spec not started |
@@ -750,7 +750,7 @@ stash, or branch switching in a dirty shared worktree.
 ### Later phases
 
 - Teacher report calculations and privacy-preserving exports.
-- Admin information architecture and per-table sensitivity catalog.
+- Phase 1 implementation plan review, implementation, and hosted acceptance remain separate gated work; the Admin IA and 46-table per-column sensitivity catalog are approved in the Phase 1 design spec.
 - Detailed map motion, transitions, guide dialogue, and chapter-interior layouts.
 - Real-device acceptance supplied by a human before formal release.
 
