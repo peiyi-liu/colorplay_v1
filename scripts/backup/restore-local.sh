@@ -90,7 +90,14 @@ const encryptedRoot = resolve(process.argv[3]);
 const storageRoot = resolve(encryptedRoot, 'storage');
 async function walk(directory) {
   const files = [];
-  for (const entry of await readdir(directory, { withFileTypes: true })) {
+  let entries;
+  try {
+    entries = await readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if (error?.code === 'ENOENT') return files;
+    throw error;
+  }
+  for (const entry of entries) {
     const path = resolve(directory, entry.name);
     if (entry.isDirectory()) files.push(...(await walk(path)));
     else if (entry.isFile() && path.endsWith('.age')) files.push(path);

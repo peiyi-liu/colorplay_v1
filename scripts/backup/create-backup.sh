@@ -97,7 +97,8 @@ upload_production_object() {
 }
 
 create_synthetic_fixture() {
-  [[ "$fixture" == 'synthetic' ]] || fail 'BACKUP_INVALID_FIXTURE'
+  [[ "$fixture" == 'synthetic' || "$fixture" == 'synthetic-empty-storage' ]] ||
+    fail 'BACKUP_INVALID_FIXTURE'
   fake_upload_root="${fake_upload_root:-$output_root/fake-s3}"
   command -v age >/dev/null || fail 'BACKUP_TOOL_MISSING'
   command -v age-keygen >/dev/null || fail 'BACKUP_TOOL_MISSING'
@@ -106,11 +107,14 @@ create_synthetic_fixture() {
   local encrypted_root="$output_root/encrypted"
   local identity_path="$output_root/fixture-recovery-key.txt"
   local recipient backup_date backup_id object_prefix upload_root
-  mkdir -p "$payload_root/storage/fixture"
+  mkdir -p "$payload_root/storage"
   printf '%s\n' 'create role synthetic_fixture;' > "$payload_root/roles.sql"
   printf '%s\n' 'create table public.synthetic_fixture(id bigint);' > "$payload_root/schema.sql"
   printf '%s\n' 'insert into public.synthetic_fixture values (1);' > "$payload_root/data.sql"
-  printf '%s\n' 'synthetic-storage-object' > "$payload_root/storage/fixture/sample.txt"
+  if [[ "$fixture" == 'synthetic' ]]; then
+    mkdir -p "$payload_root/storage/fixture"
+    printf '%s\n' 'synthetic-storage-object' > "$payload_root/storage/fixture/sample.txt"
+  fi
   age-keygen --output "$identity_path" 2>/dev/null
   recipient="$(age-keygen -y "$identity_path")"
   encrypt_payload_tree "$recipient" "$payload_root" "$encrypted_root"

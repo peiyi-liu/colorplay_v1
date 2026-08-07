@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -50,12 +50,12 @@ function run(
   );
 }
 
-async function createFixture() {
+async function createFixture(fixture = 'synthetic') {
   const backupRoot = resolve(root, 'backup');
   const created = await run('bash', [
     createScript,
     '--fixture',
-    'synthetic',
+    fixture,
     '--output-root',
     backupRoot,
     '--fake-upload-root',
@@ -179,6 +179,27 @@ describe('isolated Local restore', () => {
     // integrity drill, not a two-minute RTO requirement; the CI job itself
     // remains bounded at 30 minutes and the product RTO target is eight hours.
   }, 300_000);
+
+  it('accepts an empty Storage inventory before starting the isolated stack', async () => {
+    const backupRoot = await createFixture('synthetic-empty-storage');
+    const fakeBin = resolve(root, 'bin');
+    const fakePnpm = resolve(fakeBin, 'pnpm');
+    await mkdir(fakeBin);
+    await writeFile(
+      fakePnpm,
+      "#!/usr/bin/env bash\nprintf '%s\\n' 'RESTORE_STACK_START_REACHED' >&2\nexit 86\n",
+      { mode: 0o700 },
+    );
+    const result = await run(
+      'bash',
+      [restoreScript, '--backup-root', backupRoot],
+      { PATH: `${fakeBin}:${process.env.PATH ?? ''}` },
+    );
+
+    expect(result.code).toBe(86);
+    expect(result.stderr).toBe('');
+    expect(result.stderr).not.toContain('ENOENT');
+  });
 
   it('uses recovery-only credentials in a protected manual restore workflow', async () => {
     const workflow = await readFile(
