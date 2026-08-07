@@ -197,7 +197,8 @@ language sql
 security definer
 set search_path = public, pg_temp
 as $$
-  select sha256(convert_to(
+  -- sha256(bytea) 是 pg_catalog 內建(PG≥11),非 pgcrypto;顯式限定以絕歧義
+  select pg_catalog.sha256(pg_catalog.convert_to(
     '{' || coalesce((
       select string_agg(
         to_json(key)::text || ':' ||
