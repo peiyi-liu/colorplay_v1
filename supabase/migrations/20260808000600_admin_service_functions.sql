@@ -377,6 +377,14 @@ begin
       'SECURITY_OPERATION_PENDING', 'reset_step2_complete',
       'security_operation', 'service', null, null);
   end if;
+  -- 只有 reset saga 可被 service 推進;factor incident 的復原走 owner OOB
+  -- (spec §4.2),不得經 reset steps 改變 operation/identity 狀態。
+  if v_operation.operation_type <> 'reset_admin_mfa' then
+    return public.admin_internal_service_deny('service/reset_saga',
+      'SECURITY_OPERATION_PENDING', 'reset_step2_complete',
+      'security_operation', 'service', null,
+      v_operation.target_principal_id, v_operation.correlation_id);
+  end if;
   if v_operation.state in ('step2_complete', 'completed') then
     return jsonb_build_object('outcome', 'ok', 'idempotent', true);
   end if;
@@ -412,6 +420,13 @@ begin
     return public.admin_internal_service_deny('service/reset_saga',
       'SECURITY_OPERATION_PENDING', 'reset_completed',
       'security_operation', 'service', null, null);
+  end if;
+  -- 同 step2:非 reset saga 一律拒絕(spec §4.2)
+  if v_operation.operation_type <> 'reset_admin_mfa' then
+    return public.admin_internal_service_deny('service/reset_saga',
+      'SECURITY_OPERATION_PENDING', 'reset_completed',
+      'security_operation', 'service', null,
+      v_operation.target_principal_id, v_operation.correlation_id);
   end if;
   if v_operation.state = 'completed' then
     return jsonb_build_object('outcome', 'ok', 'idempotent', true);

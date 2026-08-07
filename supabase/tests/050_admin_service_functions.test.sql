@@ -1,6 +1,6 @@
 -- supabase/tests/050_admin_service_functions.test.sql
 begin;
-select plan(28);
+select plan(30);
 
 -- 種一個 admin 身分供流程測試
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password,
@@ -172,6 +172,18 @@ select is((select count(*)::int from public.admin_audit_events
     and actor_type = 'owner_out_of_band'
     and runbook_operation_id = '50000000-0000-0000-0000-00000000f00b'), 1,
   'oob isolation audits owner actor with its runbook operation id');
+
+-- 非 reset saga 不得被 service reset steps 推進(spec §4.2;Codex P2 guard)
+select is((public.svc_admin_complete_reset_step2(
+  (select id from public.admin_security_operations
+    where operation_type = 'factor_incident_isolation'
+    order by created_at limit 1)))->>'code',
+  'SECURITY_OPERATION_PENDING',
+  'reset step2 rejects a factor-incident operation');
+select is((select state::text from public.admin_security_operations
+  where operation_type = 'factor_incident_isolation'
+  order by created_at limit 1),
+  'step1_complete', 'rejected incident operation state is unchanged');
 
 -- 全量 service-only 權限斷言:一次涵蓋本 migration 全部 svc_admin_* function
 select is((
