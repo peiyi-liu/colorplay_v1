@@ -70,6 +70,15 @@ identity_path="${AGE_IDENTITY_FILE:-$backup_root/fixture-recovery-key.txt}"
 age --decrypt --identity "$identity_path" \
   --output "$temporary_root/backup-manifest.json" "$manifest_encrypted" 2>/dev/null ||
   fail 'RESTORE_DECRYPT_FAILED'
+if [[ -n "${RESTORE_EXPECTED_REPO_SHA:-}" ]]; then
+  [[ "$RESTORE_EXPECTED_REPO_SHA" =~ ^[0-9a-f]{40}$ ]] ||
+    fail 'RESTORE_SOURCE_SHA_MISMATCH'
+  manifest_repo_sha="$(node -e \
+    "const fs=require('node:fs');process.stdout.write(JSON.parse(fs.readFileSync(process.argv[1],'utf8')).repo_sha ?? '')" \
+    "$temporary_root/backup-manifest.json")"
+  [[ "$manifest_repo_sha" == "$RESTORE_EXPECTED_REPO_SHA" ]] ||
+    fail 'RESTORE_SOURCE_SHA_MISMATCH'
+fi
 
 mkdir -p "$temporary_root/decrypted"
 node --input-type=module - "$temporary_root/backup-manifest.json" "$backup_root/encrypted" <<'NODE' > "$temporary_root/files.tsv"
@@ -217,12 +226,25 @@ node "$project_root/scripts/backup/compare-restored-inventory.mjs" \
   --output "$temporary_root/comparison.json" >/dev/null
 
 elapsed_seconds="$(( $(date +%s) - started_at ))"
-node - "$backup_root/restore-report.json" "$elapsed_seconds" <<'NODE'
-import { writeFile } from 'node:fs/promises';
+node - \
+  "$backup_root/restore-report.json" \
+  "$elapsed_seconds" \
+  "$temporary_root/backup-manifest.json" <<'NODE'
+import { readFile, writeFile } from 'node:fs/promises';
+const manifest = JSON.parse(await readFile(process.argv[4], 'utf8'));
+const createdAt = Date.parse(manifest.created_at_utc);
+const actualDataLossHours = Math.max(0, (Date.now() - createdAt) / 3_600_000);
 await writeFile(process.argv[2], `${JSON.stringify({
+  schema_version: 1,
   decision: 'pass',
   elapsed_seconds: Number(process.argv[3]),
-  target: 'isolated-local'
+  target: 'isolated-local',
+  backup_prefix: manifest.b2_prefix,
+  repo_sha: manifest.repo_sha,
+  migration_first: manifest.migration_first,
+  migration_last: manifest.migration_last,
+  backup_created_at_utc: manifest.created_at_utc,
+  actual_data_loss_hours: actualDataLossHours
 }, null, 2)}\n`, { mode: 0o600 });
 NODE
 printf 'LOCAL_RESTORE_VERIFIED\n'

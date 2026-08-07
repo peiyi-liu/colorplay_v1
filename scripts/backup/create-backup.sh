@@ -161,6 +161,9 @@ NODE
     cp "$encrypted_path" "$upload_root/$relative_path"
   done < <(find "$encrypted_root" -type f -name '*.age' -print | LC_ALL=C sort)
   cp "$output_root/backup-manifest.json.age" "$upload_root/backup-manifest.json.age"
+  cp \
+    "$output_root/backup-manifest.json.age.sha256" \
+    "$upload_root/backup-manifest.json.age.sha256"
 
   manifest_sha="$(sha256_file "$temporary_root/backup-manifest.json")"
   projected_bytes="$(sum_file_sizes "$upload_root")"
@@ -283,7 +286,7 @@ NODE
     "$(sha256_file "$output_root/backup-manifest.json.age")" \
     'backup-manifest.json.age' > "$output_root/backup-manifest.json.age.sha256"
 
-  projected_bytes="$(( $(sum_file_sizes "$encrypted_root") + $(wc -c < "$output_root/backup-manifest.json.age") ))"
+  projected_bytes="$(($(sum_file_sizes "$encrypted_root") + $(wc -c < "$output_root/backup-manifest.json.age") + $(wc -c < "$output_root/backup-manifest.json.age.sha256")))"
   if ((B2_CURRENT_USAGE_BYTES + projected_bytes > B2_CAPACITY_BUDGET_BYTES)); then
     fail 'BACKUP_CAPACITY_FREEZE'
   fi
@@ -294,6 +297,9 @@ NODE
   upload_production_object \
     "$output_root/backup-manifest.json.age" \
     "${object_prefix}backup-manifest.json.age"
+  upload_production_object \
+    "$output_root/backup-manifest.json.age.sha256" \
+    "${object_prefix}backup-manifest.json.age.sha256"
   manifest_sha="$(sha256_file "$temporary_root/backup-manifest.json")"
   node - "$output_root/verification-metadata.json" "$temporary_root/backup-manifest.json" "$manifest_sha" "$retention_until_utc" "$projected_bytes" "$B2_CURRENT_USAGE_BYTES" "$B2_CAPACITY_BUDGET_BYTES" <<'NODE'
 import { readFile, writeFile } from 'node:fs/promises';

@@ -71,7 +71,16 @@ describe('encrypted immutable backup creation', () => {
     const uploaded = await readdir(uploadRoot, { recursive: true });
     const files = uploaded.filter((path) => path.includes('.'));
     expect(files.length).toBeGreaterThan(4);
-    expect(files.every((path) => path.endsWith('.age'))).toBe(true);
+    expect(
+      files.every(
+        (path) =>
+          path.endsWith('.age') ||
+          path.endsWith('backup-manifest.json.age.sha256'),
+      ),
+    ).toBe(true);
+    expect(
+      files.some((path) => path.endsWith('backup-manifest.json.age.sha256')),
+    ).toBe(true);
     expect(files.some((path) => path.endsWith('.sql'))).toBe(false);
     expect(files.some((path) => path.endsWith('manifest.json'))).toBe(false);
   });
@@ -153,6 +162,12 @@ describe('encrypted immutable backup creation', () => {
       'retention_epoch=$((upload_epoch + 30 * 24 * 60 * 60))',
     );
     expect(source).toContain('B2_CAPACITY_BUDGET_BYTES');
+    expect(source).toContain(
+      '"${object_prefix}backup-manifest.json.age.sha256"',
+    );
+    expect(source).toContain(
+      '$(wc -c < "$output_root/backup-manifest.json.age.sha256")',
+    );
     expect(source).toContain('select id from storage.buckets order by id');
     expect(source).toContain('"s3://$bucket_id"');
     expect(source).not.toContain('"s3://storage"');
