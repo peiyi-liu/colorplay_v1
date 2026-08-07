@@ -1,5 +1,13 @@
 import { spawn } from 'node:child_process';
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import {
+  chmod,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -81,6 +89,55 @@ describe('encrypted immutable backup creation', () => {
 
     expect(result.code).toBe(1);
     expect(result.stderr).toBe('BACKUP_REQUIRED_ENV_MISSING\n');
+  });
+
+  it('rejects a PostgreSQL client older than the hosted database major before connecting', async () => {
+    const fakeBin = resolve(root, 'bin');
+    await mkdir(fakeBin);
+    for (const command of ['age', 'aws', 'pg_dumpall', 'psql']) {
+      const path = resolve(fakeBin, command);
+      await writeFile(path, '#!/usr/bin/env bash\nexit 0\n');
+      await chmod(path, 0o755);
+    }
+    const pgDump = resolve(fakeBin, 'pg_dump');
+    await writeFile(
+      pgDump,
+      '#!/usr/bin/env bash\nprintf "pg_dump (PostgreSQL) 16.13\\n"\n',
+    );
+    await chmod(pgDump, 0o755);
+
+    const result = await run(
+      'bash',
+      [
+        createScript,
+        '--environment',
+        'production',
+        '--project-ref',
+        'abcdefghijklmnopqrst',
+        '--output-root',
+        resolve(root, 'output'),
+      ],
+      {
+        AGE_RECIPIENT: 'age1syntheticrecipient',
+        B2_BUCKET: 'synthetic-bucket',
+        B2_CAPACITY_BUDGET_BYTES: '1000',
+        B2_CURRENT_USAGE_BYTES: '0',
+        B2_ENDPOINT: 'https://example.invalid',
+        B2_REGION: 'synthetic-region',
+        B2_WRITER_APPLICATION_KEY: 'synthetic-writer-key',
+        B2_WRITER_KEY_ID: 'synthetic-writer-id',
+        PATH: `${fakeBin}:${process.env.PATH ?? ''}`,
+        PRODUCTION_POSTGRES_MAJOR: '17',
+        SUPABASE_DB_URL: 'postgresql://synthetic.invalid/postgres',
+        SUPABASE_STORAGE_ACCESS_KEY_ID: 'synthetic-storage-id',
+        SUPABASE_STORAGE_S3_ENDPOINT: 'https://storage.invalid',
+        SUPABASE_STORAGE_SECRET_ACCESS_KEY: 'synthetic-storage-key',
+      },
+    );
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toBe('BACKUP_POSTGRES_CLIENT_MAJOR_MISMATCH\n');
+    expect(result.stdout).toBe('');
   });
 
   it('keeps writer operations write-only with fixed prefix and Compliance lock', async () => {
@@ -174,6 +231,11 @@ describe('backup verification and workflow boundaries', () => {
     expect(createJob).toContain('B2_WRITER_KEY_ID');
     expect(createJob).not.toContain('B2_RECOVERY_APPLICATION_KEY');
     expect(createJob).not.toContain('AGE_IDENTITY');
+    expect(createJob).toContain("PRODUCTION_POSTGRES_MAJOR: '17'");
+    expect(createJob).toContain('postgresql-client-$PRODUCTION_POSTGRES_MAJOR');
+    expect(createJob).not.toMatch(
+      /apt-get install --yes age postgresql-client(?:\s|$)/u,
+    );
     expect(verifyJob).toContain('environment: production-recovery');
     expect(verifyJob).toContain('B2_RECOVERY_APPLICATION_KEY');
     expect(verifyJob).toContain('AGE_IDENTITY');

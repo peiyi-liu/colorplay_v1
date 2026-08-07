@@ -187,19 +187,26 @@ NODE
 }
 
 create_production_backup() {
+  local postgres_client_major
   [[ "$environment" == 'production' ]] || fail 'BACKUP_INVALID_ENVIRONMENT'
   [[ "$project_ref" =~ ^[a-z]{20}$ ]] || fail 'BACKUP_INVALID_PROJECT_REF'
   for required_name in AGE_RECIPIENT B2_ENDPOINT B2_BUCKET B2_REGION \
     B2_WRITER_KEY_ID B2_WRITER_APPLICATION_KEY B2_CAPACITY_BUDGET_BYTES \
-    B2_CURRENT_USAGE_BYTES SUPABASE_DB_URL SUPABASE_STORAGE_S3_ENDPOINT \
-    SUPABASE_STORAGE_ACCESS_KEY_ID SUPABASE_STORAGE_SECRET_ACCESS_KEY; do
+    B2_CURRENT_USAGE_BYTES PRODUCTION_POSTGRES_MAJOR SUPABASE_DB_URL \
+    SUPABASE_STORAGE_S3_ENDPOINT SUPABASE_STORAGE_ACCESS_KEY_ID \
+    SUPABASE_STORAGE_SECRET_ACCESS_KEY; do
     [[ -n "${!required_name:-}" ]] || fail 'BACKUP_REQUIRED_ENV_MISSING'
   done
   [[ "$B2_CAPACITY_BUDGET_BYTES" =~ ^[0-9]+$ && "$B2_CURRENT_USAGE_BYTES" =~ ^[0-9]+$ ]] ||
     fail 'BACKUP_INVALID_BUDGET'
+  [[ "$PRODUCTION_POSTGRES_MAJOR" =~ ^[0-9]+$ ]] ||
+    fail 'BACKUP_POSTGRES_MAJOR_INVALID'
   for tool in age aws pg_dump pg_dumpall psql; do
     command -v "$tool" >/dev/null || fail 'BACKUP_TOOL_MISSING'
   done
+  postgres_client_major="$(pg_dump --version | sed -E 's/^pg_dump \(PostgreSQL\) ([0-9]+).*/\1/')"
+  [[ "$postgres_client_major" == "$PRODUCTION_POSTGRES_MAJOR" ]] ||
+    fail 'BACKUP_POSTGRES_CLIENT_MAJOR_MISMATCH'
 
   payload_root="$temporary_root/payload"
   encrypted_root="$output_root/encrypted"

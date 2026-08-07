@@ -29,6 +29,7 @@ jobs:
       B2_CURRENT_USAGE_BYTES: ${{ vars.B2_CURRENT_USAGE_BYTES }}
       B2_WRITER_KEY_ID: ${{ secrets.B2_WRITER_KEY_ID }}
       B2_WRITER_APPLICATION_KEY: ${{ secrets.B2_WRITER_APPLICATION_KEY }}
+      PRODUCTION_POSTGRES_MAJOR: '17'
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       SUPABASE_STORAGE_S3_ENDPOINT: ${{ vars.SUPABASE_STORAGE_S3_ENDPOINT }}
       SUPABASE_STORAGE_ACCESS_KEY_ID: ${{ secrets.SUPABASE_STORAGE_ACCESS_KEY_ID }}
@@ -47,7 +48,27 @@ jobs:
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
       - name: Install encryption and database clients
-        run: sudo apt-get update && sudo apt-get install --yes age postgresql-client
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes age ca-certificates curl postgresql-common
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl --fail --silent --show-error \
+            --output /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          source /etc/os-release
+          printf '%s\n' \
+            'Types: deb' \
+            'URIs: https://apt.postgresql.org/pub/repos/apt' \
+            "Suites: ${VERSION_CODENAME}-pgdg" \
+            "Architectures: $(dpkg --print-architecture)" \
+            'Components: main' \
+            'Signed-By: /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc' | \
+            sudo tee /etc/apt/sources.list.d/pgdg.sources >/dev/null
+          sudo apt-get update
+          sudo apt-get install --yes "postgresql-client-$PRODUCTION_POSTGRES_MAJOR"
+          pg_dump --version
       - name: Create and upload encrypted immutable backup
         id: create
         shell: bash
