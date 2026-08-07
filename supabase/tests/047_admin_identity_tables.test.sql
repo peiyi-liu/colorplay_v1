@@ -4,7 +4,7 @@
 -- TC 編號對齊 implementation plan Task 2(2026-08-07 amendment)。
 begin;
 set local search_path = public, extensions;
-select plan(68);
+select plan(70);
 
 -- ---------------------------------------------------------------------------
 -- TC-047-01 存在性(6)
@@ -281,7 +281,7 @@ select lives_ok(
   'acceptance within validity is accepted');
 
 -- ---------------------------------------------------------------------------
--- TC-047-07 service-only helpers(16)
+-- TC-047-07 service-only helpers(18)
 -- ---------------------------------------------------------------------------
 select has_function('public', 'admin_internal_lifecycle_lock',
   array[]::name[], 'lifecycle lock helper exists');
@@ -317,6 +317,22 @@ select ok(
     'c0000000-0000-0000-0000-000000000003',
     'pgTAP fixture device', 'tc-047-07-first') is not null,
   'create helper returns a session id for an eligible active identity');
+
+select is(
+  public.create_admin_identity_session(
+    'a0000000-0000-0000-0000-000000000003',
+    'd0000000-0000-0000-0000-000000000009',
+    'c0000000-0000-0000-0000-0000000000ff',
+    'pgTAP fixture device', 'tc-047-07-wrong-factor'),
+  null,
+  'create helper returns null for a mismatched factor without side effects');
+
+select is(
+  (select count(*)::int from public.admin_sessions
+    where admin_user_id = 'a0000000-0000-0000-0000-000000000003'
+      and revoked_at is null
+      and auth_session_id = 'd0000000-0000-0000-0000-000000000007'),
+  1, 'a failed create does not revoke the existing active session');
 
 select public.create_admin_identity_session(
   'a0000000-0000-0000-0000-000000000003',

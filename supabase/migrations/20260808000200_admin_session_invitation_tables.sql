@@ -77,6 +77,18 @@ declare
 begin
   perform public.admin_internal_lifecycle_lock();
 
+  -- 資格先驗(spec §4.1/§5.1):不合格直接回 null,不得產生任何副作用;
+  -- 只有成功建立新 session 的路徑才允許 supersede 既有 active 列。
+  if not exists (
+    select 1
+      from public.admin_security_identities i
+     where i.admin_user_id = p_admin_user_id
+       and i.state = 'active'
+       and i.bound_factor_id = p_bound_factor_id
+  ) then
+    return null;
+  end if;
+
   -- 冪等:同一 identity + auth session + correlation 重送回原 active session
   select id into v_existing
     from public.admin_sessions
