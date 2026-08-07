@@ -46,8 +46,13 @@ restore_workdir="$temporary_root/workdir"
 restore_project_id="colorplay_restore_${$}"
 restore_database='colorplay_restore_target'
 started_at="$(date +%s)"
+preview_pid=''
 
 cleanup() {
+  if [[ -n "$preview_pid" && "$preview_pid" =~ ^[0-9]+$ ]]; then
+    kill "$preview_pid" >/dev/null 2>&1 || true
+    wait "$preview_pid" >/dev/null 2>&1 || true
+  fi
   if [[ "$restore_project_id" == colorplay_restore_* ]]; then
     while IFS= read -r container; do
       [[ -n "$container" && "$container" == supabase_*_"$restore_project_id" ]] || continue
@@ -55,7 +60,7 @@ cleanup() {
     done < <(
       docker ps --all \
         --filter "label=com.supabase.cli.project=$restore_project_id" \
-        --format '{{.Names}}'
+        --format '{{.Names}}' 2>/dev/null
     )
     docker network rm "supabase_network_$restore_project_id" \
       >/dev/null 2>&1 || true
@@ -162,13 +167,17 @@ node "$project_root/scripts/backup/prepare-roles-for-restore.mjs" \
   --input "$temporary_root/decrypted/roles.sql" \
   --output "$temporary_root/prepared-roles.sql" >/dev/null
 docker exec -i "$database_container" psql -v ON_ERROR_STOP=1 -U supabase_admin -d postgres \
-  < "$temporary_root/prepared-roles.sql" >/dev/null
+  < "$temporary_root/prepared-roles.sql" >/dev/null \
+  2>"$temporary_root/roles-restore.log" || fail 'RESTORE_ROLES_FAILED'
 docker exec "$database_container" createdb -U supabase_admin --template=template0 \
-  "$restore_database"
+  "$restore_database" >/dev/null 2>"$temporary_root/database-create.log" || \
+  fail 'RESTORE_DATABASE_CREATE_FAILED'
 docker exec -i "$database_container" psql -v ON_ERROR_STOP=1 -U supabase_admin -d "$restore_database" \
-  < "$temporary_root/decrypted/schema.sql" >/dev/null
+  < "$temporary_root/decrypted/schema.sql" >/dev/null \
+  2>"$temporary_root/schema-restore.log" || fail 'RESTORE_SCHEMA_FAILED'
 docker exec -i "$database_container" psql -v ON_ERROR_STOP=1 -U supabase_admin -d "$restore_database" \
-  < "$temporary_root/decrypted/data.sql" >/dev/null
+  < "$temporary_root/decrypted/data.sql" >/dev/null \
+  2>"$temporary_root/data-restore.log" || fail 'RESTORE_DATA_FAILED'
 mkdir -p "$restore_workdir/restored-storage"
 if [[ -d "$temporary_root/decrypted/storage" ]]; then
   cp -R "$temporary_root/decrypted/storage/." "$restore_workdir/restored-storage/"
@@ -204,6 +213,28 @@ const restored = JSON.parse(await readFile(restoredPath, 'utf8'));
 await writeFile(sourceOutput, `${JSON.stringify({ ...source, storage_sha256: sourceStorage })}\n`);
 await writeFile(restoredOutput, `${JSON.stringify({ ...restored, storage_sha256: restoredStorage })}\n`);
 NODE
+  for probe_role in anon authenticated; do
+    role_exists="$(docker exec "$database_container" psql -X -U supabase_admin \
+      -d "$restore_database" -Atqc \
+      "select exists(select 1 from pg_roles where rolname = '$probe_role')")"
+    [[ "$role_exists" == 't' ]] || fail 'RESTORE_AUTHORIZATION_PROBE_FAILED'
+    profiles_exists="$(docker exec "$database_container" psql -X -U supabase_admin \
+      -d "$restore_database" -Atqc \
+      "select to_regclass('public.profiles') is not null")"
+    if [[ "$profiles_exists" == 't' ]]; then
+      can_select="$(docker exec "$database_container" psql -X -U supabase_admin \
+        -d "$restore_database" -Atqc \
+        "select has_table_privilege('$probe_role', 'public.profiles', 'select')")"
+      if [[ "$can_select" == 't' ]]; then
+        visible_profiles="$(docker exec "$database_container" psql -X -v ON_ERROR_STOP=1 \
+          -U supabase_admin -d "$restore_database" -Atqc \
+          "set role $probe_role; select count(*) from public.profiles" \
+          2>"$temporary_root/authorization-probe.log")" || \
+          fail 'RESTORE_AUTHORIZATION_PROBE_FAILED'
+        [[ "$visible_profiles" == '0' ]] || fail 'RESTORE_AUTHORIZATION_PROBE_FAILED'
+      fi
+    fi
+  done
 else
   row_count="$(docker exec "$database_container" psql -U supabase_admin -d "$restore_database" -Atqc \
     "select count(*) from public.synthetic_fixture")"
@@ -240,6 +271,24 @@ node "$project_root/scripts/backup/compare-restored-inventory.mjs" \
   --restored "$temporary_root/restored-inventory.json" \
   --output "$temporary_root/comparison.json" >/dev/null
 
+pnpm --dir "$project_root" build >"$temporary_root/application-build.log" 2>&1 || \
+  fail 'RESTORE_APPLICATION_BUILD_FAILED'
+preview_port="$((45000 + $$ % 10000))"
+pnpm --dir "$project_root" exec vite preview \
+  --host 127.0.0.1 --port "$preview_port" --strictPort \
+  >"$temporary_root/application-preview.log" 2>&1 &
+preview_pid="$!"
+application_started='false'
+for _ in {1..30}; do
+  if curl --fail --silent --show-error \
+    "http://127.0.0.1:$preview_port/" >/dev/null 2>&1; then
+    application_started='true'
+    break
+  fi
+  sleep 1
+done
+[[ "$application_started" == 'true' ]] || fail 'RESTORE_APPLICATION_STARTUP_FAILED'
+
 elapsed_seconds="$(( $(date +%s) - started_at ))"
 node - \
   "$backup_root/restore-report.json" \
@@ -259,7 +308,10 @@ await writeFile(process.argv[2], `${JSON.stringify({
   migration_first: manifest.migration_first,
   migration_last: manifest.migration_last,
   backup_created_at_utc: manifest.created_at_utc,
-  actual_data_loss_hours: actualDataLossHours
+  actual_data_loss_hours: actualDataLossHours,
+  role_inventory: 'passed',
+  authorization_probe: 'passed',
+  application_startup: 'passed'
 }, null, 2)}\n`, { mode: 0o600 });
 NODE
 printf 'LOCAL_RESTORE_VERIFIED\n'

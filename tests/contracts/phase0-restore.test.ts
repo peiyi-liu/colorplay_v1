@@ -18,6 +18,10 @@ const createDatabaseInventoryScript = resolve(
   repositoryRoot,
   'scripts/backup/create-database-inventory.mjs',
 );
+const restoreWorkflow = resolve(
+  repositoryRoot,
+  '.github/workflows/restore-drill.yml',
+);
 let root = '';
 
 beforeEach(async () => {
@@ -142,6 +146,12 @@ describe('isolated Local restore', () => {
     expect(source).toContain('--template=template0');
     expect(source).toContain('-d "$restore_database"');
     expect(source).toContain('--database "$restore_database"');
+    expect(source).toContain('RESTORE_ROLES_FAILED');
+    expect(source).toContain('RESTORE_SCHEMA_FAILED');
+    expect(source).toContain('RESTORE_DATA_FAILED');
+    expect(source).toContain('2>"$temporary_root/roles-restore.log"');
+    expect(source).toContain('authorization_probe');
+    expect(source).toContain('application_startup');
     expect(source.match(/-U supabase_admin/gu)?.length).toBeGreaterThanOrEqual(
       4,
     );
@@ -179,6 +189,25 @@ describe('isolated Local restore', () => {
 
     expect(source).toMatch(/'-U',\s*'supabase_admin',\s*'-d',\s*database,/u);
     expect(source).toContain('colorplay_restore_target');
+    expect(source).toContain('custom_roles');
+    expect(source).toContain('auth_invariants');
+    expect(source).toContain('authorization_sha256');
+  });
+
+  it('runs only trusted workflow code before and during recovery-secret use', async () => {
+    const workflow = await readFile(restoreWorkflow, 'utf8');
+    const jobHeader = workflow.slice(
+      workflow.indexOf('  restore-drill:'),
+      workflow.indexOf('    steps:'),
+    );
+
+    expect(workflow).toContain('ref: ${{ github.sha }}');
+    expect(workflow).toContain('RESTORE_WORKFLOW_REF_UNTRUSTED');
+    expect(workflow).toContain('Verify decrypted manifest binding');
+    expect(workflow).not.toContain('ref: ${{ inputs.source_sha }}');
+    expect(jobHeader).not.toContain('AGE_IDENTITY:');
+    expect(jobHeader).not.toContain('B2_RECOVERY_KEY_ID:');
+    expect(jobHeader).not.toContain('B2_RECOVERY_APPLICATION_KEY:');
   });
 
   it('rejects a CREATE ROLE statement outside the strict dump shape', async () => {
@@ -228,6 +257,9 @@ describe('isolated Local restore', () => {
       backup_prefix: string;
       decision: string;
       elapsed_seconds: number;
+      application_startup: string;
+      authorization_probe: string;
+      role_inventory: string;
       migration_first: string;
       migration_last: string;
       repo_sha: string;
@@ -242,6 +274,9 @@ describe('isolated Local restore', () => {
     expect(report.migration_first).toBe('20260713000100');
     expect(report.migration_last).toBe('20260728000100');
     expect(report.actual_data_loss_hours).toBeGreaterThanOrEqual(0);
+    expect(report.application_startup).toBe('passed');
+    expect(report.authorization_probe).toBe('passed');
+    expect(report.role_inventory).toBe('passed');
     expect(typeof report.elapsed_seconds).toBe('number');
     expect(report.elapsed_seconds).toBeGreaterThanOrEqual(0);
     // A cold GitHub runner may need almost two minutes to start the disposable

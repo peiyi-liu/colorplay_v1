@@ -14,6 +14,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const repositoryRoot = resolve(import.meta.dirname, '../..');
 const createScript = resolve(repositoryRoot, 'scripts/backup/create-backup.sh');
+const lifecycleScript = resolve(
+  repositoryRoot,
+  'scripts/backup/verify-b2-lifecycle.mjs',
+);
 
 let root = '';
 
@@ -188,6 +192,71 @@ describe('encrypted immutable backup creation', () => {
 });
 
 describe('backup verification and workflow boundaries', () => {
+  it('accepts only the exact provider-read lifecycle rule', async () => {
+    const input = resolve(root, 'bucket.json');
+    const output = resolve(root, 'lifecycle.json');
+    await writeFile(
+      input,
+      JSON.stringify({
+        buckets: [
+          {
+            bucketName: 'colorplay-prod-backup-20260805',
+            lifecycleRules: [
+              {
+                daysFromHidingToDeleting: 1,
+                daysFromUploadingToHiding: 30,
+                fileNamePrefix: 'production/',
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const accepted = await run(process.execPath, [
+      lifecycleScript,
+      '--input',
+      input,
+      '--bucket',
+      'colorplay-prod-backup-20260805',
+      '--output',
+      output,
+      '--evidence-root',
+      root,
+    ]);
+    expect(accepted).toEqual({
+      code: 0,
+      stderr: '',
+      stdout: 'B2_LIFECYCLE_VERIFIED\n',
+    });
+    expect(JSON.parse(await readFile(output, 'utf8'))).toEqual({
+      schema_version: 1,
+      decision: 'pass',
+      file_name_prefix: 'production/',
+      days_from_uploading_to_hiding: 30,
+      days_from_hiding_to_deleting: 1,
+    });
+
+    const value = JSON.parse(await readFile(input, 'utf8')) as {
+      buckets: { lifecycleRules: { daysFromUploadingToHiding: number }[] }[];
+    };
+    value.buckets[0]!.lifecycleRules[0]!.daysFromUploadingToHiding = 29;
+    await writeFile(input, JSON.stringify(value));
+    const rejected = await run(process.execPath, [
+      lifecycleScript,
+      '--input',
+      input,
+      '--bucket',
+      'colorplay-prod-backup-20260805',
+      '--output',
+      output,
+      '--evidence-root',
+      root,
+    ]);
+    expect(rejected.code).toBe(1);
+    expect(rejected.stderr).toBe('B2_LIFECYCLE_MISMATCH\n');
+  });
+
   it('freezes promotion when projected capacity exceeds the owner budget', async () => {
     const outputRoot = resolve(root, 'output');
     await run('bash', [
@@ -265,6 +334,9 @@ describe('backup verification and workflow boundaries', () => {
     expect(verifyJob).toContain('s3api head-object');
     expect(verifyJob).toContain('s3api get-object-retention');
     expect(verifyJob).toContain('s3api list-objects-v2');
+    expect(verifyJob).toContain('b2_list_buckets');
+    expect(verifyJob).toContain('verify-b2-lifecycle.mjs');
+    expect(verifyJob).toContain('b2-lifecycle.json');
     expect(verifyJob).toContain('b2-retention.json');
     expect(verifyJob).toContain('retention.Retention.Mode');
     expect(verifyJob).toContain('retention.Retention.RetainUntilDate');

@@ -24,19 +24,27 @@ jobs:
     timeout-minutes: 45
     environment: production-recovery
     env:
-      AGE_IDENTITY: ${{ secrets.AGE_IDENTITY }}
       B2_ENDPOINT: ${{ vars.B2_ENDPOINT }}
       B2_BUCKET: ${{ vars.B2_BUCKET }}
       B2_REGION: ${{ vars.B2_REGION }}
-      B2_RECOVERY_KEY_ID: ${{ secrets.B2_RECOVERY_KEY_ID }}
-      B2_RECOVERY_APPLICATION_KEY: ${{ secrets.B2_RECOVERY_APPLICATION_KEY }}
       BACKUP_PREFIX: ${{ inputs.backup_prefix }}
       RESTORE_EXPECTED_REPO_SHA: ${{ inputs.source_sha }}
     steps:
-      - name: Check out the manifest source SHA
+      - name: Require a protected workflow ref
+        shell: bash
+        run: |
+          case "$GITHUB_REF" in
+            refs/heads/main|refs/heads/staging) ;;
+            *)
+              printf '%s\n' 'RESTORE_WORKFLOW_REF_UNTRUSTED' >&2
+              exit 1
+              ;;
+          esac
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 1
+      - name: Check out trusted restore harness
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.source_sha }}
+          ref: ${{ github.sha }}
       - name: Validate immutable backup identity
         shell: bash
         run: |
@@ -46,7 +54,7 @@ jobs:
             exit 1
           }
           [[ "$RESTORE_EXPECTED_REPO_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 1
-          [[ "$(git rev-parse HEAD)" == "$RESTORE_EXPECTED_REPO_SHA" ]] || exit 1
+          [[ "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]] || exit 1
       - name: Set up pnpm from packageManager
         run: npm install --global "$(node --print "require('./package.json').packageManager")"
       - name: Set up pinned Node.js
@@ -60,6 +68,10 @@ jobs:
       - name: Install age
         run: sudo apt-get update && sudo apt-get install --yes age
       - name: Download the complete immutable set with recovery-only credentials
+        env:
+          AGE_IDENTITY: ${{ secrets.AGE_IDENTITY }}
+          B2_RECOVERY_KEY_ID: ${{ secrets.B2_RECOVERY_KEY_ID }}
+          B2_RECOVERY_APPLICATION_KEY: ${{ secrets.B2_RECOVERY_APPLICATION_KEY }}
         shell: bash
         run: |
           set -euo pipefail
@@ -93,6 +105,31 @@ jobs:
           [[ -f "$backup_root/backup-manifest.json.age" ]] || exit 1
           [[ -f "$backup_root/backup-manifest.json.age.sha256" ]] || exit 1
           printf '%s' "$AGE_IDENTITY" > "$RUNNER_TEMP/age-identity.txt"
+      - name: Verify decrypted manifest binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          backup_root="$RUNNER_TEMP/colorplay-restore-backup"
+          (
+            cd "$backup_root"
+            shasum -a 256 --check backup-manifest.json.age.sha256 >/dev/null 2>&1
+          ) || {
+            printf '%s\n' 'RESTORE_CHECKSUM_MISMATCH' >&2
+            exit 1
+          }
+          age --decrypt \
+            --identity "$RUNNER_TEMP/age-identity.txt" \
+            --output "$RUNNER_TEMP/verified-backup-manifest.json" \
+            "$backup_root/backup-manifest.json.age" 2>/dev/null || {
+              printf '%s\n' 'RESTORE_DECRYPT_FAILED' >&2
+              exit 1
+            }
+          node --input-type=module - <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const manifest = JSON.parse(await readFile(`${process.env.RUNNER_TEMP}/verified-backup-manifest.json`, 'utf8'));
+          if (manifest.repo_sha !== process.env.RESTORE_EXPECTED_REPO_SHA) process.exit(1);
+          if (manifest.b2_prefix !== process.env.BACKUP_PREFIX) process.exit(1);
+          NODE
       - name: Restore roles, schema, data and Storage to isolated Local Supabase
         env:
           AGE_IDENTITY_FILE: ${{ runner.temp }}/age-identity.txt
@@ -120,6 +157,7 @@ jobs:
         shell: bash
         run: |
           rm -f "$RUNNER_TEMP/age-identity.txt"
+          rm -f "$RUNNER_TEMP/verified-backup-manifest.json"
           rm -rf \
             "$RUNNER_TEMP/colorplay-restore-download" \
             "$RUNNER_TEMP/colorplay-restore-backup"

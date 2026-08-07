@@ -92,6 +92,24 @@ function addManagedDrift(drift) {
   }
 }
 
+function sumCounts(counts) {
+  return Object.values(counts).reduce((total, value) => total + value, 0);
+}
+
+function summarizeStorage(storage) {
+  return {
+    bucket_count: storage.length,
+    object_count: storage.reduce(
+      (total, bucket) => total + bucket.object_count,
+      0,
+    ),
+    total_bytes: storage.reduce(
+      (total, bucket) => total + bucket.total_bytes,
+      0,
+    ),
+  };
+}
+
 function outputInsideRoot(path, root) {
   const absoluteRoot = resolve(root);
   const absolutePath = resolve(path);
@@ -245,11 +263,40 @@ async function main() {
   }
   if (extensionDifferences.length > 0) addManagedDrift(drift);
 
+  const repoAggregateKeys = Object.keys(repo.aggregate_counts).sort();
+  const targetAggregateKeys = Object.keys(target.aggregate_counts).sort();
+  const aggregateTableKeysMatch =
+    JSON.stringify(repoAggregateKeys) === JSON.stringify(targetAggregateKeys);
+  if (!aggregateTableKeysMatch) fail('UNCLASSIFIED_SCHEMA_DRIFT');
+  const repoStorage = summarizeStorage(repo.storage);
+  const targetStorage = summarizeStorage(target.storage);
+  const inventoryDisposition = {
+    aggregate_table_keys_match: true,
+    aggregate_counts_equal:
+      JSON.stringify(repo.aggregate_counts) ===
+      JSON.stringify(target.aggregate_counts),
+    repo_total_rows: sumCounts(repo.aggregate_counts),
+    target_total_rows: sumCounts(target.aggregate_counts),
+    auth_user_count: {
+      repo: repo.auth_user_count,
+      target: target.auth_user_count,
+    },
+    storage: {
+      repo_bucket_count: repoStorage.bucket_count,
+      repo_object_count: repoStorage.object_count,
+      repo_total_bytes: repoStorage.total_bytes,
+      target_bucket_count: targetStorage.bucket_count,
+      target_object_count: targetStorage.object_count,
+      target_total_bytes: targetStorage.total_bytes,
+    },
+  };
+
   const blocking = drift.some(({ class: value }) => value !== CLASSES.managed);
   const result = {
     schema_version: 1,
     decision: blocking ? 'blocked' : 'pass',
     drift,
+    inventory_disposition: inventoryDisposition,
   };
   const output = outputInsideRoot(
     flags.get('--output') ?? 'artifacts/phase0/migration-comparison.json',

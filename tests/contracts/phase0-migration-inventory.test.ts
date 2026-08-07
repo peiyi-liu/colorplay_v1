@@ -275,6 +275,7 @@ describe('migration inventory comparator', () => {
         ? (JSON.parse(await readFile(outputPath, 'utf8')) as {
             decision: string;
             drift: { class: string }[];
+            inventory_disposition: unknown;
           })
         : null;
     return { output, result };
@@ -283,7 +284,58 @@ describe('migration inventory comparator', () => {
   it('passes identical inventories with zero drift', async () => {
     const { output, result } = await compare({}, {});
     expect(result.code).toBe(0);
-    expect(output).toEqual({ schema_version: 1, decision: 'pass', drift: [] });
+    expect(output).toEqual({
+      schema_version: 1,
+      decision: 'pass',
+      drift: [],
+      inventory_disposition: {
+        aggregate_table_keys_match: true,
+        aggregate_counts_equal: true,
+        repo_total_rows: 3,
+        target_total_rows: 3,
+        auth_user_count: { repo: 3, target: 3 },
+        storage: {
+          repo_bucket_count: 2,
+          repo_object_count: 3,
+          repo_total_bytes: 30,
+          target_bucket_count: 2,
+          target_object_count: 3,
+          target_total_bytes: 30,
+        },
+      },
+    });
+  });
+
+  it('records sanitized expected data differences without treating rows as schema authority', async () => {
+    const { output, result } = await compare(
+      {
+        aggregate_counts: { profiles: 0, quiz_sessions: 0 },
+        auth_user_count: 0,
+        storage: [],
+      },
+      {
+        aggregate_counts: { profiles: 27, quiz_sessions: 41 },
+        auth_user_count: 27,
+        storage: [{ bucket: 'avatars', object_count: 4, total_bytes: 1024 }],
+      },
+    );
+
+    expect(result.code).toBe(0);
+    expect(output?.inventory_disposition).toEqual({
+      aggregate_table_keys_match: true,
+      aggregate_counts_equal: false,
+      repo_total_rows: 0,
+      target_total_rows: 68,
+      auth_user_count: { repo: 0, target: 27 },
+      storage: {
+        repo_bucket_count: 0,
+        repo_object_count: 0,
+        repo_total_bytes: 0,
+        target_bucket_count: 1,
+        target_object_count: 4,
+        target_total_bytes: 1024,
+      },
+    });
   });
 
   it.each([
