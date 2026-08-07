@@ -108,9 +108,21 @@ create_synthetic_fixture() {
   local identity_path="$output_root/fixture-recovery-key.txt"
   local recipient backup_date backup_id object_prefix upload_root
   mkdir -p "$payload_root/storage"
-  printf '%s\n' 'create role synthetic_fixture;' > "$payload_root/roles.sql"
-  printf '%s\n' 'create table public.synthetic_fixture(id bigint);' > "$payload_root/schema.sql"
+  printf '%s\n' 'CREATE ROLE synthetic_fixture;' > "$payload_root/roles.sql"
+  printf '%s\n' \
+    'create table public.synthetic_fixture(id bigint);' \
+    'create schema supabase_migrations;' \
+    'create table supabase_migrations.schema_migrations(version text primary key);' \
+    > "$payload_root/schema.sql"
   printf '%s\n' 'insert into public.synthetic_fixture values (1);' > "$payload_root/data.sql"
+  while IFS= read -r migration_version; do
+    [[ "$migration_version" =~ ^[0-9]{14}$ ]] || fail 'BACKUP_FIXTURE_MIGRATION_INVALID'
+    printf "insert into supabase_migrations.schema_migrations values ('%s');\n" \
+      "$migration_version" >> "$payload_root/data.sql"
+  done < <(
+    find "$project_root/supabase/migrations" -type f -name '*.sql' -exec basename {} \; |
+      cut -d_ -f1 | LC_ALL=C sort
+  )
   if [[ "$fixture" == 'synthetic' ]]; then
     mkdir -p "$payload_root/storage/fixture"
     printf '%s\n' 'synthetic-storage-object' > "$payload_root/storage/fixture/sample.txt"

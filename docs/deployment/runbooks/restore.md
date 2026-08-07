@@ -7,10 +7,12 @@ stack are rejected.
 
 The runner verifies the encrypted manifest checksum before invoking age, then
 verifies each encrypted payload checksum before decryption. It creates a unique
-`mktemp -d` Supabase workdir and unique project/port set, restores in the order
-roles → schema → data → Storage, compares aggregate inventory, records elapsed
-seconds, stops that exact project with `--no-backup`, and removes only the
-validated temporary root.
+`mktemp -d` Supabase workdir and project/port set. Existing Supabase platform
+roles make only duplicate `CREATE ROLE` statements idempotent; every other role
+statement remains fail-closed. Schema and data restore into a clean
+`template0` database inside that disposable cluster, followed by Storage and
+aggregate inventory comparison. The runner records elapsed seconds, removes
+that exact project, and deletes only the validated temporary root.
 
 Run a synthetic drill with:
 

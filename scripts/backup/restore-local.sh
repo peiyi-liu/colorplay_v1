@@ -44,6 +44,7 @@ actual_checksum="$(shasum -a 256 "$manifest_encrypted" | awk '{print $1}')"
 temporary_root="$(mktemp -d "${TMPDIR:-/tmp}/colorplay-restore.XXXXXXXX")"
 restore_workdir="$temporary_root/workdir"
 restore_project_id="colorplay_restore_${$}"
+restore_database='colorplay_restore_target'
 stack_started='false'
 started_at="$(date +%s)"
 
@@ -155,12 +156,18 @@ pnpm --dir "$project_root" exec supabase start --workdir "$restore_workdir" >/de
 stack_started='true'
 database_container="supabase_db_$restore_project_id"
 [[ "$database_container" == supabase_db_colorplay_restore_* ]] || fail 'RESTORE_TARGET_INVALID'
+[[ "$restore_database" == 'colorplay_restore_target' ]] || fail 'RESTORE_TARGET_INVALID'
 
+node "$project_root/scripts/backup/prepare-roles-for-restore.mjs" \
+  --input "$temporary_root/decrypted/roles.sql" \
+  --output "$temporary_root/prepared-roles.sql" >/dev/null
 docker exec -i "$database_container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
-  < "$temporary_root/decrypted/roles.sql" >/dev/null
-docker exec -i "$database_container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
+  < "$temporary_root/prepared-roles.sql" >/dev/null
+docker exec "$database_container" createdb -U postgres --template=template0 \
+  "$restore_database"
+docker exec -i "$database_container" psql -v ON_ERROR_STOP=1 -U postgres -d "$restore_database" \
   < "$temporary_root/decrypted/schema.sql" >/dev/null
-docker exec -i "$database_container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
+docker exec -i "$database_container" psql -v ON_ERROR_STOP=1 -U postgres -d "$restore_database" \
   < "$temporary_root/decrypted/data.sql" >/dev/null
 mkdir -p "$restore_workdir/restored-storage"
 if [[ -d "$temporary_root/decrypted/storage" ]]; then
@@ -182,6 +189,7 @@ restored_storage_sha="$(storage_tree_sha "$restore_workdir/restored-storage")"
 if [[ -f "$temporary_root/decrypted/database-inventory.json" ]]; then
   node "$project_root/scripts/backup/create-database-inventory.mjs" \
     --docker-container "$database_container" \
+    --database "$restore_database" \
     --output "$temporary_root/restored-database-inventory.json"
   node --input-type=module - \
     "$temporary_root/decrypted/database-inventory.json" \
@@ -197,11 +205,11 @@ await writeFile(sourceOutput, `${JSON.stringify({ ...source, storage_sha256: sou
 await writeFile(restoredOutput, `${JSON.stringify({ ...restored, storage_sha256: restoredStorage })}\n`);
 NODE
 else
-  row_count="$(docker exec "$database_container" psql -U postgres -d postgres -Atqc \
+  row_count="$(docker exec "$database_container" psql -U postgres -d "$restore_database" -Atqc \
     "select count(*) from public.synthetic_fixture")"
   find "$project_root/supabase/migrations" -type f -name '*.sql' -exec basename {} \; \
     | cut -d_ -f1 | LC_ALL=C sort > "$temporary_root/source-migrations.txt"
-  docker exec "$database_container" psql -U postgres -d postgres -Atqc \
+  docker exec "$database_container" psql -U postgres -d "$restore_database" -Atqc \
     'select version from supabase_migrations.schema_migrations order by version' \
     > "$temporary_root/restored-migrations.txt"
   source_migration_sha="$(shasum -a 256 "$temporary_root/source-migrations.txt" | awk '{print $1}')"

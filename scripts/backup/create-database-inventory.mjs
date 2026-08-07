@@ -15,7 +15,7 @@ function parseArguments(argumentsList) {
     const flag = argumentsList[index];
     const value = argumentsList[index + 1];
     if (
-      !['--output', '--docker-container'].includes(flag) ||
+      !['--output', '--docker-container', '--database'].includes(flag) ||
       typeof value !== 'string' ||
       value.length === 0 ||
       values.has(flag)
@@ -30,9 +30,16 @@ function parseArguments(argumentsList) {
 
 const flags = parseArguments(process.argv.slice(2));
 const container = flags.get('--docker-container');
+const database = flags.get('--database') ?? 'postgres';
 const databaseUrl = process.env.SUPABASE_DB_URL;
 if (!container && !databaseUrl) fail();
 if (container && !/^supabase_db_colorplay_restore_[0-9]+$/u.test(container)) {
+  fail();
+}
+if (
+  (flags.has('--database') && !container) ||
+  (container && !/^(?:postgres|colorplay_restore_target)$/u.test(database))
+) {
   fail();
 }
 
@@ -47,7 +54,7 @@ function query(sql) {
         '-U',
         'postgres',
         '-d',
-        'postgres',
+        database,
         '-Atqc',
         sql,
       ]

@@ -10,6 +10,14 @@ const restoreScript = resolve(
   repositoryRoot,
   'scripts/backup/restore-local.sh',
 );
+const prepareRolesScript = resolve(
+  repositoryRoot,
+  'scripts/backup/prepare-roles-for-restore.mjs',
+);
+const createDatabaseInventoryScript = resolve(
+  repositoryRoot,
+  'scripts/backup/create-database-inventory.mjs',
+);
 let root = '';
 
 beforeEach(async () => {
@@ -125,6 +133,62 @@ describe('isolated Local restore', () => {
     expect(source).not.toContain('supabase stop --all');
     expect(source).toContain('database-inventory.json');
     expect(source).toContain('create-database-inventory.mjs');
+    expect(source).toContain('prepare-roles-for-restore.mjs');
+    expect(source).toContain("restore_database='colorplay_restore_target'");
+    expect(source).toContain('createdb');
+    expect(source).toContain('--template=template0');
+    expect(source).toContain('-d "$restore_database"');
+    expect(source).toContain('--database "$restore_database"');
+  });
+
+  it('makes only duplicate CREATE ROLE statements idempotent', async () => {
+    const input = resolve(root, 'roles.sql');
+    const output = resolve(root, 'prepared-roles.sql');
+    await writeFile(
+      input,
+      'CREATE ROLE anon;\nALTER ROLE anon WITH NOLOGIN;\nGRANT anon TO postgres;\n',
+    );
+    const result = await run(process.execPath, [
+      prepareRolesScript,
+      '--input',
+      input,
+      '--output',
+      output,
+    ]);
+
+    expect(result).toEqual({
+      code: 0,
+      stderr: '',
+      stdout: 'ROLE_RESTORE_SQL_PREPARED\n',
+    });
+    const prepared = await readFile(output, 'utf8');
+    expect(prepared).toContain('WHEN duplicate_object THEN NULL;');
+    expect(prepared).toContain('CREATE ROLE anon;');
+    expect(prepared).toContain('ALTER ROLE anon WITH NOLOGIN;');
+    expect(prepared).toContain('GRANT anon TO postgres;');
+  });
+
+  it('collects restored inventory from the clean database as postgres', async () => {
+    const source = await readFile(createDatabaseInventoryScript, 'utf8');
+
+    expect(source).toMatch(/'-U',\s*'postgres',\s*'-d',\s*database,/u);
+    expect(source).toContain('colorplay_restore_target');
+  });
+
+  it('rejects a CREATE ROLE statement outside the strict dump shape', async () => {
+    const input = resolve(root, 'roles.sql');
+    const output = resolve(root, 'prepared-roles.sql');
+    await writeFile(input, 'CREATE ROLE anon WITH LOGIN;\n');
+    const result = await run(process.execPath, [
+      prepareRolesScript,
+      '--input',
+      input,
+      '--output',
+      output,
+    ]);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toBe('ROLE_RESTORE_INPUT_INVALID\n');
   });
 
   it('rejects a backup whose manifest does not match the approved source SHA', async () => {
