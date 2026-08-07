@@ -68,7 +68,9 @@ jobs:
             sudo tee /etc/apt/sources.list.d/pgdg.sources >/dev/null
           sudo apt-get update
           sudo apt-get install --yes "postgresql-client-$PRODUCTION_POSTGRES_MAJOR"
-          pg_dump --version
+          printf '%s\n' \
+            "/usr/lib/postgresql/$PRODUCTION_POSTGRES_MAJOR/bin" >> "$GITHUB_PATH"
+          "/usr/lib/postgresql/$PRODUCTION_POSTGRES_MAJOR/bin/pg_dump" --version
       - name: Create and upload encrypted immutable backup
         id: create
         shell: bash

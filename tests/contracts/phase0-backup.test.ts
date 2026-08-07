@@ -233,6 +233,13 @@ describe('backup verification and workflow boundaries', () => {
     expect(createJob).not.toContain('AGE_IDENTITY');
     expect(createJob).toContain("PRODUCTION_POSTGRES_MAJOR: '17'");
     expect(createJob).toContain('postgresql-client-$PRODUCTION_POSTGRES_MAJOR');
+    expect(createJob).toContain(
+      '"/usr/lib/postgresql/$PRODUCTION_POSTGRES_MAJOR/bin"',
+    );
+    expect(createJob).toContain('>> "$GITHUB_PATH"');
+    expect(createJob).toContain(
+      '"/usr/lib/postgresql/$PRODUCTION_POSTGRES_MAJOR/bin/pg_dump" --version',
+    );
     expect(createJob).not.toMatch(
       /apt-get install --yes age postgresql-client(?:\s|$)/u,
     );
