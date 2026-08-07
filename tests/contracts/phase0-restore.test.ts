@@ -139,6 +139,9 @@ describe('isolated Local restore', () => {
     expect(source).toContain('--template=template0');
     expect(source).toContain('-d "$restore_database"');
     expect(source).toContain('--database "$restore_database"');
+    expect(source.match(/-U supabase_admin/gu)?.length).toBeGreaterThanOrEqual(
+      4,
+    );
   });
 
   it('makes only duplicate CREATE ROLE statements idempotent', async () => {
@@ -168,10 +171,10 @@ describe('isolated Local restore', () => {
     expect(prepared).toContain('GRANT anon TO postgres;');
   });
 
-  it('collects restored inventory from the clean database as postgres', async () => {
+  it('collects restored inventory from the clean database as the Local superuser', async () => {
     const source = await readFile(createDatabaseInventoryScript, 'utf8');
 
-    expect(source).toMatch(/'-U',\s*'postgres',\s*'-d',\s*database,/u);
+    expect(source).toMatch(/'-U',\s*'supabase_admin',\s*'-d',\s*database,/u);
     expect(source).toContain('colorplay_restore_target');
   });
 

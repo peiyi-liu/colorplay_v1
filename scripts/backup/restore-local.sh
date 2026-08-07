@@ -161,13 +161,13 @@ database_container="supabase_db_$restore_project_id"
 node "$project_root/scripts/backup/prepare-roles-for-restore.mjs" \
   --input "$temporary_root/decrypted/roles.sql" \
   --output "$temporary_root/prepared-roles.sql" >/dev/null
-docker exec -i "$database_container" psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
+docker exec -i "$database_container" psql -v ON_ERROR_STOP=1 -U supabase_admin -d postgres \
   < "$temporary_root/prepared-roles.sql" >/dev/null
-docker exec "$database_container" createdb -U postgres --template=template0 \
+docker exec "$database_container" createdb -U supabase_admin --template=template0 \
   "$restore_database"
-docker exec -i "$database_container" psql -v ON_ERROR_STOP=1 -U postgres -d "$restore_database" \
+docker exec -i "$database_container" psql -v ON_ERROR_STOP=1 -U supabase_admin -d "$restore_database" \
   < "$temporary_root/decrypted/schema.sql" >/dev/null
-docker exec -i "$database_container" psql -v ON_ERROR_STOP=1 -U postgres -d "$restore_database" \
+docker exec -i "$database_container" psql -v ON_ERROR_STOP=1 -U supabase_admin -d "$restore_database" \
   < "$temporary_root/decrypted/data.sql" >/dev/null
 mkdir -p "$restore_workdir/restored-storage"
 if [[ -d "$temporary_root/decrypted/storage" ]]; then
@@ -205,11 +205,11 @@ await writeFile(sourceOutput, `${JSON.stringify({ ...source, storage_sha256: sou
 await writeFile(restoredOutput, `${JSON.stringify({ ...restored, storage_sha256: restoredStorage })}\n`);
 NODE
 else
-  row_count="$(docker exec "$database_container" psql -U postgres -d "$restore_database" -Atqc \
+  row_count="$(docker exec "$database_container" psql -U supabase_admin -d "$restore_database" -Atqc \
     "select count(*) from public.synthetic_fixture")"
   find "$project_root/supabase/migrations" -type f -name '*.sql' -exec basename {} \; \
     | cut -d_ -f1 | LC_ALL=C sort > "$temporary_root/source-migrations.txt"
-  docker exec "$database_container" psql -U postgres -d "$restore_database" -Atqc \
+  docker exec "$database_container" psql -U supabase_admin -d "$restore_database" -Atqc \
     'select version from supabase_migrations.schema_migrations order by version' \
     > "$temporary_root/restored-migrations.txt"
   source_migration_sha="$(shasum -a 256 "$temporary_root/source-migrations.txt" | awk '{print $1}')"

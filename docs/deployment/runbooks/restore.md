@@ -9,10 +9,12 @@ The runner verifies the encrypted manifest checksum before invoking age, then
 verifies each encrypted payload checksum before decryption. It creates a unique
 `mktemp -d` Supabase workdir and project/port set. Existing Supabase platform
 roles make only duplicate `CREATE ROLE` statements idempotent; every other role
-statement remains fail-closed. Schema and data restore into a clean
-`template0` database inside that disposable cluster, followed by Storage and
-aggregate inventory comparison. The runner records elapsed seconds, removes
-that exact project, and deletes only the validated temporary root.
+statement remains fail-closed. The disposable cluster's `supabase_admin`
+superuser applies roles, schema, and data; hosted Production credentials are
+never used as the restore target. Schema and data restore into a clean
+`template0` database, followed by Storage and aggregate inventory comparison.
+The runner records elapsed seconds, removes that exact project, and deletes only
+the validated temporary root.
 
 Run a synthetic drill with:
 

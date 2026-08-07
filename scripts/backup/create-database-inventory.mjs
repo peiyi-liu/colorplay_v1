@@ -52,7 +52,7 @@ function query(sql) {
         'psql',
         '-X',
         '-U',
-        'postgres',
+        'supabase_admin',
         '-d',
         database,
         '-Atqc',
