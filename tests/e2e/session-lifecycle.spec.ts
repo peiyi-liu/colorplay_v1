@@ -14,7 +14,7 @@ const signIn = async (page: Page) => {
   await page.getByRole('button', { name: '登入' }).click();
 };
 
-test('restores the session and intended route, then protects it after keyboard logout and Back', async ({
+test('restores the session at the fixed post-login route, then protects it after keyboard logout and Back', async ({
   browserName,
   page,
 }) => {
@@ -24,25 +24,19 @@ test('restores the session and intended route, then protects it after keyboard l
   await page.goto('/app?chapter=color-theory#checkpoint');
   await expect(page).toHaveURL(/\/login$/u);
   await signIn(page);
-  await expect(page).toHaveURL(/\/app\?chapter=color-theory#checkpoint$/u);
+  await expect(page).toHaveURL(/\/app$/u);
   await expect(
     page.getByRole('heading', { name: '色彩任務選擇大廳' }),
   ).toBeVisible();
 
   await page.reload();
-  await expect(page).toHaveURL(/\/app\?chapter=color-theory#checkpoint$/u);
+  await expect(page).toHaveURL(/\/app$/u);
   await expect(
     page.getByRole('heading', { name: '色彩任務選擇大廳' }),
   ).toBeVisible();
 
-  await page.getByRole('link', { name: '個人資料' }).click();
-  await expect(page).toHaveURL(/\/app\/profile$/u);
-  await expect(
-    page.getByRole('heading', { name: 'student.one' }),
-  ).toBeVisible();
-
   // GameStage Shell（2026-08-01）：登出鈕收進底部 HUD 的 MENU 面板，鍵盤路
-  // 徑改兩段——先聚焦 MENU 鈕開面板，面板內再聚焦登出鈕送出。
+  // 徑改兩段——先聚焦 MENU 鈕開面板，面板內再聚焦目前可用的入口與登出鈕送出。
   const focusViaKeyboard = async (target: Locator) => {
     if (browserName === 'firefox') {
       // macOS Firefox 預設 Tab 僅在表單控制間移動（按鈕/連結不入焦點環，
@@ -68,6 +62,16 @@ test('restores the session and intended route, then protects it after keyboard l
   };
 
   const menuButton = page.getByRole('button', { name: 'MENU' });
+  await expect(menuButton).toBeVisible();
+  await focusViaKeyboard(menuButton);
+  await page.keyboard.press('Enter');
+
+  const missions = page.getByRole('link', { name: '課後任務實戰' });
+  await expect(missions).toBeVisible();
+  await focusViaKeyboard(missions);
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/app\/missions$/u);
+
   await expect(menuButton).toBeVisible();
   await focusViaKeyboard(menuButton);
   await page.keyboard.press('Enter');

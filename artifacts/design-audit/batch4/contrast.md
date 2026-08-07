@@ -6,6 +6,7 @@ Ratios computed with the standard WCAG relative-luminance formula. Threshold:
 **4.5:1 for text**.
 
 Two measurement modes, both against the real live stylesheet/cascade:
+
 - **live** — read directly off the actually-rendered app state (real seeded
   student `student.one`, Level 7, 700 Token).
 - **swatch** — a DOM clone of the real element, with only the state-variant
@@ -28,14 +29,14 @@ Before measuring anything batch-4-specific, this gate re-ran that proof:
 **Target:** `.scene-day .mission-select__list::before` (`/app/missions`),
 declared `opacity: 0.5`.
 
-| Field | Value |
-|---|---|
-| declared color (opaque) | `rgb(138, 101, 31)` |
-| backdrop (page bg behind it) | `rgb(253, 248, 234)` |
-| helper's manual recompute (0.5 · declared + 0.5 · backdrop) | `rgb(195.5, 174.5, 132.5)` |
-| **browser's own `getComputedStyle` after compositing** | `rgb(195.5, 174.5, 132.5)` |
-| delta (manual − browser) | `[0, 0, 0]` |
-| **proof** | **PASSES** — exact match, 0 delta on all 3 channels |
+| Field                                                       | Value                                               |
+| ----------------------------------------------------------- | --------------------------------------------------- |
+| declared color (opaque)                                     | `rgb(138, 101, 31)`                                 |
+| backdrop (page bg behind it)                                | `rgb(253, 248, 234)`                                |
+| helper's manual recompute (0.5 · declared + 0.5 · backdrop) | `rgb(195.5, 174.5, 132.5)`                          |
+| **browser's own `getComputedStyle` after compositing**      | `rgb(195.5, 174.5, 132.5)`                          |
+| delta (manual − browser)                                    | `[0, 0, 0]`                                         |
+| **proof**                                                   | **PASSES** — exact match, 0 delta on all 3 channels |
 
 The helper's alpha-blend math is byte-exact against what Chromium actually
 paints. Every ratio below that involves an `opacity`- or alpha-composited
@@ -46,18 +47,18 @@ the probe just validated.
 
 ## Shop (`/app/inventory/shop`, day scene → night purchase window, live)
 
-| Pair | Color | Background | Ratio | Verdict |
-|---|---|---|---|---|
-| shop-tab `data-on='true'` (釘牌反白字) × 金深底 | `rgb(246,238,216)` | `rgb(138,101,31)` | 4.58 | PASS (tight) |
-| 貨架卡 h2 (item name) × 卡底 | `rgb(37,48,66)` | `rgb(253,248,234)` | 12.53 | PASS |
-| 貨架卡 p (price) × 卡底 | `rgb(102,112,133)` | `rgb(253,248,234)` | 4.69 | PASS (tight) |
-| `已裝備` (blook-card__state) × 卡底 | `rgb(23,117,78)` | `rgb(253,248,234)` | 5.36 | PASS |
-| `還差` disabled (blook-card__disabled) × own bg | `rgb(102,112,133)` | `rgb(255,248,225)` | 4.68 | PASS (tight) |
-| `選用` (owned-not-equipped, swatch) × 卡底 | `rgb(37,48,66)` | `rgb(239,239,239)` | 11.56 | PASS |
-| 夜窗 h2 × night bg | `rgb(244,241,228)` | `rgb(23,28,63)` | 14.56 | PASS |
-| 夜窗 p × night bg | `rgb(244,241,228)` | `rgb(23,28,63)` | 14.56 | PASS |
-| 取消鍵字 × 鍵底 (browser default chrome) | `rgb(37,48,66)` | `rgb(239,239,239)` | 11.56 | PASS |
-| 確認購買鍵字 × 鍵底 | `rgb(45,38,0)` | `rgb(245,196,0)` | 9.20 | PASS |
+| Pair                                            | Color              | Background         | Ratio | Verdict      |
+| ----------------------------------------------- | ------------------ | ------------------ | ----- | ------------ |
+| shop-tab `data-on='true'` (釘牌反白字) × 金深底 | `rgb(246,238,216)` | `rgb(138,101,31)`  | 4.58  | PASS (tight) |
+| 貨架卡 h2 (item name) × 卡底                    | `rgb(37,48,66)`    | `rgb(253,248,234)` | 12.53 | PASS         |
+| 貨架卡 p (price) × 卡底                         | `rgb(102,112,133)` | `rgb(253,248,234)` | 4.69  | PASS (tight) |
+| `已裝備` (blook-card__state) × 卡底             | `rgb(23,117,78)`   | `rgb(253,248,234)` | 5.36  | PASS         |
+| `還差` disabled (blook-card__disabled) × own bg | `rgb(102,112,133)` | `rgb(255,248,225)` | 4.68  | PASS (tight) |
+| `選用` (owned-not-equipped, swatch) × 卡底      | `rgb(37,48,66)`    | `rgb(239,239,239)` | 11.56 | PASS         |
+| 夜窗 h2 × night bg                              | `rgb(244,241,228)` | `rgb(23,28,63)`    | 14.56 | PASS         |
+| 夜窗 p × night bg                               | `rgb(244,241,228)` | `rgb(23,28,63)`    | 14.56 | PASS         |
+| 取消鍵字 × 鍵底 (browser default chrome)        | `rgb(37,48,66)`    | `rgb(239,239,239)` | 11.56 | PASS         |
+| 確認購買鍵字 × 鍵底                             | `rgb(45,38,0)`     | `rgb(245,196,0)`   | 9.20  | PASS         |
 
 Purchase dialog was opened on `招財貓` (100 Token) to capture `shop-dialog.png`,
 then closed via **取消** — `確認購買` was never clicked, economy state was
@@ -65,16 +66,16 @@ not mutated.
 
 ## Mistakes / monster codex (`/app/learning/mistakes`, day scene, live)
 
-| Pair | Color | Background | Ratio | Verdict |
-|---|---|---|---|---|
-| header eyebrow/h1/intro p × parchment-card | `rgb(37,48,66)` | `rgb(253,248,234)` | 12.53 | PASS |
-| mistake-group__title × parchment-card | `rgb(37,48,66)` | `rgb(253,248,234)` | 12.53 | PASS |
+| Pair                                                                        | Color            | Background               | Ratio    | Verdict                   |
+| --------------------------------------------------------------------------- | ---------------- | ------------------------ | -------- | ------------------------- |
+| header eyebrow/h1/intro p × parchment-card                                  | `rgb(37,48,66)`  | `rgb(253,248,234)`       | 12.53    | PASS                      |
+| mistake-group__title × parchment-card                                       | `rgb(37,48,66)`  | `rgb(253,248,234)`       | 12.53    | PASS                      |
 | `mistake-group__badge` 字 × badge 底 (alpha-composited, NOT self-contained) | `rgb(199,58,63)` | `rgb(250.6,230.4,218.3)` | **4.25** | **FAIL** — see note below |
-| mistake-list__prompt × card bg | `rgb(37,48,66)` | `rgb(255,251,234)` | 12.81 | PASS |
-| mistake-list__answer (正確答案) × card bg | `rgb(23,117,78)` | `rgb(255,251,234)` | 5.48 | PASS |
-| 已解決 title (swatch) × card bg | `rgb(52,64,84)` | `rgb(253,248,234)` | 9.86 | PASS |
-| 已解決 answer span (swatch) × card bg | `rgb(23,117,78)` | `rgb(253,248,234)` | 5.36 | PASS |
-| 空狀態 p[role=status] (swatch) × scene-day 底 | `rgb(37,48,66)` | `rgb(246,238,216)` | 11.48 | PASS |
+| mistake-list__prompt × card bg                                              | `rgb(37,48,66)`  | `rgb(255,251,234)`       | 12.81    | PASS                      |
+| mistake-list__answer (正確答案) × card bg                                   | `rgb(23,117,78)` | `rgb(255,251,234)`       | 5.48     | PASS                      |
+| 已解決 title (swatch) × card bg                                             | `rgb(52,64,84)`  | `rgb(253,248,234)`       | 9.86     | PASS                      |
+| 已解決 answer span (swatch) × card bg                                       | `rgb(23,117,78)` | `rgb(253,248,234)`       | 5.36     | PASS                      |
+| 空狀態 p[role=status] (swatch) × scene-day 底                               | `rgb(37,48,66)`  | `rgb(246,238,216)`       | 11.48    | PASS                      |
 
 **Note (pre-existing, not batch-4 scope):** `.mistake-group__badge`
 (`src/styles/globals.css:3745-3751`) was introduced at `cd5eceb`, long before
@@ -86,18 +87,18 @@ to batch-4.
 
 ## Leaderboard / guild notice-board (`/app/leaderboard`, live + swatch)
 
-| Pair | Color | Background | Ratio | Verdict |
-|---|---|---|---|---|
-| eyebrow × 木板底 (script's original pairing — see defect below) | `rgb(246,238,216)` | `rgb(138,101,31)` | 4.58 | PASS-as-measured, **misleading — see defect** |
-| h1 × 木板底 | `rgb(246,238,216)` | `rgb(138,101,31)` | 4.58 | PASS (tight) |
-| description p × 木板底 | `rgb(246,238,216)` | `rgb(138,101,31)` | 4.58 | PASS (tight) |
-| thead th × parchment (self-contained) | `rgb(52,64,84)` | `rgb(246,238,216)` | 9.04 | PASS |
-| 金列 (gold, live) td × 紙條 | `rgb(23,28,63)` | `rgb(184,134,47)` | 5.09 | PASS |
-| `這是你` × own bg | `rgb(23,28,63)` | `rgb(184,134,47)` | 5.09 | PASS |
-| 銀列 (silver, swatch) td × 紙條 | `rgb(37,48,66)` | `rgb(228,231,236)` | 10.72 | PASS |
-| 銅列 (bronze, swatch) td × 紙條 | `rgb(37,48,66)` | `rgb(255,244,199)` | 12.04 | PASS |
-| 一般列 (no tier, swatch) td × 紙條 | `rgb(37,48,66)` | `rgb(253,248,234)` | 12.53 | PASS |
-| SelfRankCard (swatch, rank>10) × 紙條 | `rgb(37,48,66)` | `rgb(253,248,234)` | 12.53 | PASS |
+| Pair                                                            | Color              | Background         | Ratio | Verdict                                       |
+| --------------------------------------------------------------- | ------------------ | ------------------ | ----- | --------------------------------------------- |
+| eyebrow × 木板底 (script's original pairing — see defect below) | `rgb(246,238,216)` | `rgb(138,101,31)`  | 4.58  | PASS-as-measured, **misleading — see defect** |
+| h1 × 木板底                                                     | `rgb(246,238,216)` | `rgb(138,101,31)`  | 4.58  | PASS (tight)                                  |
+| description p × 木板底                                          | `rgb(246,238,216)` | `rgb(138,101,31)`  | 4.58  | PASS (tight)                                  |
+| thead th × parchment (self-contained)                           | `rgb(52,64,84)`    | `rgb(246,238,216)` | 9.04  | PASS                                          |
+| 金列 (gold, live) td × 紙條                                     | `rgb(23,28,63)`    | `rgb(184,134,47)`  | 5.09  | PASS                                          |
+| `這是你` × own bg                                               | `rgb(23,28,63)`    | `rgb(184,134,47)`  | 5.09  | PASS                                          |
+| 銀列 (silver, swatch) td × 紙條                                 | `rgb(37,48,66)`    | `rgb(228,231,236)` | 10.72 | PASS                                          |
+| 銅列 (bronze, swatch) td × 紙條                                 | `rgb(37,48,66)`    | `rgb(255,244,199)` | 12.04 | PASS                                          |
+| 一般列 (no tier, swatch) td × 紙條                              | `rgb(37,48,66)`    | `rgb(253,248,234)` | 12.53 | PASS                                          |
+| SelfRankCard (swatch, rank>10) × 紙條                           | `rgb(37,48,66)`    | `rgb(253,248,234)` | 12.53 | PASS                                          |
 
 **Defect found (this gate, beyond the script's pairing list) — CRITICAL:**
 `.guild-board > header .route-panel__eyebrow` (`src/styles/globals.css:4581-4583`,
@@ -111,8 +112,8 @@ original gate pairing missed (it read the ancestor `.guild-board`
 `background-color`, not the pill's own, closer, fully-opaque background
 layer). True rendered pair:
 
-| Color | Background (pill's own, opaque) | Ratio |
-|---|---|---|
+| Color                                    | Background (pill's own, opaque)                            | Ratio      |
+| ---------------------------------------- | ---------------------------------------------------------- | ---------- |
 | `rgb(246,238,216)` (`--pixel-parchment`) | `rgb(252.8,242.0,198.9)` (`color-mix(#f5c400 22%, white)`) | **1.03:1** |
 
 Visually confirmed: cropped `leaderboard-desktop.png` around the eyebrow pill
@@ -127,16 +128,16 @@ not patched** (gate scope).
 
 ## Achievements / hall of medals (`/app/achievements`, live + swatch)
 
-| Pair | Color | Background | Ratio | Verdict |
-|---|---|---|---|---|
-| unlocked 卡 title × 光柱最亮處合成底 (beam-composited, f=0.389) | `rgb(37,48,66)` | `rgb(230.5,236.2,215.9)` | 11.01 | PASS |
+| Pair                                                                  | Color              | Background               | Ratio     | Verdict                          |
+| --------------------------------------------------------------------- | ------------------ | ------------------------ | --------- | -------------------------------- |
+| unlocked 卡 title × 光柱最亮處合成底 (beam-composited, f=0.389)       | `rgb(37,48,66)`    | `rgb(230.5,236.2,215.9)` | 11.01     | PASS                             |
 | unlocked 卡 description × 光柱最亮處合成底 (beam-composited, f=0.563) | `rgb(102,112,133)` | `rgb(235.2,246.7,233.3)` | **4.499** | **FAIL** (0.001 under threshold) |
-| unlocked 卡 title × 卡底 (naive, no beam — comparison only) | `rgb(37,48,66)` | `rgb(239,255,247)` | 12.86 | (reference) |
-| locked 卡 title (石膏) × slate-100 | `rgb(52,64,84)` | `rgb(242,244,247)` | 9.49 | PASS |
-| locked 卡 description × slate-100 | `rgb(52,64,84)` | `rgb(242,244,247)` | 9.49 | PASS |
-| locked 卡 progress-value × slate-100 | `rgb(52,64,84)` | `rgb(242,244,247)` | 9.49 | PASS |
-| StatusBadge `已解鎖` × own bg (self-contained) | `rgb(23,117,78)` | `rgb(220,243,232)` | 4.88 | PASS |
-| StatusBadge `未解鎖` × own bg (self-contained) | `rgb(86,97,113)` | `rgb(238,241,244)` | 5.54 | PASS |
+| unlocked 卡 title × 卡底 (naive, no beam — comparison only)           | `rgb(37,48,66)`    | `rgb(239,255,247)`       | 12.86     | (reference)                      |
+| locked 卡 title (石膏) × slate-100                                    | `rgb(52,64,84)`    | `rgb(242,244,247)`       | 9.49      | PASS                             |
+| locked 卡 description × slate-100                                     | `rgb(52,64,84)`    | `rgb(242,244,247)`       | 9.49      | PASS                             |
+| locked 卡 progress-value × slate-100                                  | `rgb(52,64,84)`    | `rgb(242,244,247)`       | 9.49      | PASS                             |
+| StatusBadge `已解鎖` × own bg (self-contained)                        | `rgb(23,117,78)`   | `rgb(220,243,232)`       | 4.88      | PASS                             |
+| StatusBadge `未解鎖` × own bg (self-contained)                        | `rgb(86,97,113)`   | `rgb(238,241,244)`       | 5.54      | PASS                             |
 
 **Defect found — marginal, batch-4-introduced:** the description text on
 unlocked cards is otherwise a clean 12.86:1 against the plain card
@@ -150,7 +151,7 @@ between `1` and `0.55` on an infinite `steps(2, jump-none)` alternate, i.e.
 the true backdrop composited under the text is **not static** — it holds at
 two different alpha levels forever. This gate's contrast helper (like all
 static-screenshot gates) can only sample one frozen instant; it cannot prove
-the *worst-case* frame across the animation cycle is ≥ 4.499. Given the
+the _worst-case_ frame across the animation cycle is ≥ 4.499. Given the
 sampled frame is already sub-threshold, the true worst-case across the cycle
 is plausibly lower. **Reported, not patched** (gate scope) — recommend a
 fix-wave sampling both keyframe extremes explicitly, or excluding text from
@@ -184,7 +185,7 @@ Fix wave `862cc5f` (CSS-only, `src/styles/globals.css`) landed 4 changes:
    `var(--pixel-parchment-card)` (was a 10%-alpha coral tint). Now
    self-contained/opaque.
 3. `.hall-of-medals .achievement-card:not(.achievement-card--locked)
-   .pastel-card__description` — `color` → `var(--ink-900)` (was the default
+.pastel-card__description` — `color` → `var(--ink-900)` (was the default
    slate-gray description color).
 4. `.chapter-dungeon .route-panel__eyebrow` — same transparent-pill pattern
    as (1), `border-color`/`color` → `var(--pixel-gold)`. This is a **batch-3
@@ -203,12 +204,12 @@ ancestor-chain walk. Script: session-scratchpad
 `gate-reverify-862cc5f.mjs`. Raw JSON: `gate-reverify-862cc5f-raw.json` in
 this directory.
 
-| # | Pair | Color | Resolved background | Ratio | Verdict |
-|---|---|---|---|---|---|
-| 1 | guild-board eyebrow (transparent pill) × true resolved backdrop (= 木板底, since pill bg is now `rgba(0,0,0,0)`) | `rgb(246,238,216)` | `rgb(138,101,31)` | **4.579** | **PASS** — genuinely above 4.5, not a rounding artifact (measured to 13 significant figures: `4.578584990628881`) |
-| 2 | `mistake-group__badge` (now solid parchment-card) × own opaque bg | `rgb(199,58,63)` | `rgb(253,248,234)` | **4.821** | **PASS** |
-| 3 | unlocked-card description (now `ink-900`) × beam-composited backdrop, same sample position as original (f=0.563) | `rgb(37,48,66)` | `rgb(235.24,246.73,233.32)` (unchanged from original pass — confirms only the text color changed, not the beam math) | **12.019** | **PASS** |
-| 4 | chapter-dungeon eyebrow (transparent pill, gold) × true resolved backdrop (dungeon header's dark navy) | `rgb(184,134,47)` | `rgb(23,28,63)` | **5.092** | **PASS** |
+| #   | Pair                                                                                                             | Color              | Resolved background                                                                                                  | Ratio      | Verdict                                                                                                           |
+| --- | ---------------------------------------------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------- |
+| 1   | guild-board eyebrow (transparent pill) × true resolved backdrop (= 木板底, since pill bg is now `rgba(0,0,0,0)`) | `rgb(246,238,216)` | `rgb(138,101,31)`                                                                                                    | **4.579**  | **PASS** — genuinely above 4.5, not a rounding artifact (measured to 13 significant figures: `4.578584990628881`) |
+| 2   | `mistake-group__badge` (now solid parchment-card) × own opaque bg                                                | `rgb(199,58,63)`   | `rgb(253,248,234)`                                                                                                   | **4.821**  | **PASS**                                                                                                          |
+| 3   | unlocked-card description (now `ink-900`) × beam-composited backdrop, same sample position as original (f=0.563) | `rgb(37,48,66)`    | `rgb(235.24,246.73,233.32)` (unchanged from original pass — confirms only the text color changed, not the beam math) | **12.019** | **PASS**                                                                                                          |
+| 4   | chapter-dungeon eyebrow (transparent pill, gold) × true resolved backdrop (dungeon header's dark navy)           | `rgb(184,134,47)`  | `rgb(23,28,63)`                                                                                                      | **5.092**  | **PASS**                                                                                                          |
 
 All 4 pairs measured comfortably ≥ 4.5:1 via the rendered opacity/alpha-
 compositing method — none is a borderline rounding call. Pair #1 in
@@ -267,13 +268,13 @@ beam-compositing approach as round 1. Script: session-scratchpad
 `gate-reverify-bf70538.mjs`. Raw JSON: `gate-reverify-bf70538-raw.json` in
 this directory.
 
-| # | Pair | Color | Background | Ratio | Verdict |
-|---|---|---|---|---|---|
-| 1a | `.hall-of-medals .pastel-hero__description` (now `--ink-700`) × resolved `.scene-day.hall-of-medals` ground | `rgb(52,64,84)` | `rgb(246,238,216)` | **9.037** | **PASS** |
-| 1b | `.scene-day .frame-shop__hint` (now `--ink-700`) × resolved ground | `rgb(52,64,84)` | `rgb(246,238,216)` | **9.037** | **PASS** |
-| 1c | `.achievement-card__date` (解鎖於…, color unchanged from base) × beam-tail composited backdrop at its own measured position (f=0.682, past the beam's 70% fade-out stop — alpha only 0.0089) | `rgb(102,112,133)` | `rgb(238.51,253.93,245.23)` | **4.772** | **PASS** |
-| 1d | `.purchase-dialog .secondary-action` (取消, now explicit `--pixel-parchment-card` ground instead of UA `buttonface`) × own bg | `rgb(37,48,66)` | `rgb(253,248,234)` | **12.525** | **PASS** |
-| 2 | `.blook-card__frame-name` h3 (外框 tab, wood-shelf card) × card bg | `rgb(37,48,66)` | `rgb(253,248,234)` | **12.525** | **PASS** |
+| #   | Pair                                                                                                                                                                                         | Color              | Background                  | Ratio      | Verdict  |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------------- | ---------- | -------- |
+| 1a  | `.hall-of-medals .pastel-hero__description` (now `--ink-700`) × resolved `.scene-day.hall-of-medals` ground                                                                                  | `rgb(52,64,84)`    | `rgb(246,238,216)`          | **9.037**  | **PASS** |
+| 1b  | `.scene-day .frame-shop__hint` (now `--ink-700`) × resolved ground                                                                                                                           | `rgb(52,64,84)`    | `rgb(246,238,216)`          | **9.037**  | **PASS** |
+| 1c  | `.achievement-card__date` (解鎖於…, color unchanged from base) × beam-tail composited backdrop at its own measured position (f=0.682, past the beam's 70% fade-out stop — alpha only 0.0089) | `rgb(102,112,133)` | `rgb(238.51,253.93,245.23)` | **4.772**  | **PASS** |
+| 1d  | `.purchase-dialog .secondary-action` (取消, now explicit `--pixel-parchment-card` ground instead of UA `buttonface`) × own bg                                                                | `rgb(37,48,66)`    | `rgb(253,248,234)`          | **12.525** | **PASS** |
+| 2   | `.blook-card__frame-name` h3 (外框 tab, wood-shelf card) × card bg                                                                                                                           | `rgb(37,48,66)`    | `rgb(253,248,234)`          | **12.525** | **PASS** |
 
 All 5 pairs comfortably ≥ 4.5:1. Pair 1c is the interesting one: the
 `achievement-card__date` line sits low enough on the card (68% of the way
@@ -298,7 +299,7 @@ transition/query settle briefly outran a bare `waitForLoadState:networkidle`
 already switched; a build-tooling issue in the gate script, not a product
 defect. Re-captured with an explicit wait on `.frame-shop .blook-card`
 visibility + the tab's own `data-on` flip before screenshotting; the
-contrast *measurements* in the table above were unaffected since they were
+contrast _measurements_ in the table above were unaffected since they were
 read via `page.evaluate` after the DOM had already switched, only the
 screenshot file needed redoing.)
 
@@ -318,12 +319,12 @@ overflows" was asked; not attributed to this fix wave and not fixed here
 
 **Method note (final review M7) — beam overlay paints ABOVE text, not
 just behind it:** `.hall-of-medals .achievement-card:not(.achievement-card--locked)::before`
-is a *positioned* pseudo-element (`position: absolute`, no explicit
+is a _positioned_ pseudo-element (`position: absolute`, no explicit
 `z-index`, but it comes after the text nodes in paint order and has its
 own stacking context via `position`), so in the real paint order it composites
 **over** the title/description/date text, not purely behind it as a
 backdrop. This gate's method (both original and round 1/round 2 re-verify)
-has consistently treated the beam as a *background* layer — composite it
+has consistently treated the beam as a _background_ layer — composite it
 under the card's own background, then read the text color against that
 composited result — which is optimistic: it silently assumes the beam
 paints below the text z-order. If the beam actually paints above the text

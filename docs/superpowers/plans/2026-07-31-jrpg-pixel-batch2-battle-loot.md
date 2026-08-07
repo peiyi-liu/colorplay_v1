@@ -28,12 +28,14 @@
 ### Task 1: 夜景戰鬥場景＋指令窗（QuestionCard 命令窗化）
 
 **Files:**
+
 - Modify: `src/features/quiz/pages/quiz-session.tsx:335`（root section className）
 - Modify: `src/features/quiz/components/question-card.tsx:27,30`（兩個 className）
 - Modify: `src/styles/globals.css`（檔尾 append 批次②區段）
 - Test: `src/features/quiz/pages/quiz-session.test.tsx`、`src/features/quiz/components/question-card.test.tsx`
 
 **Interfaces:**
+
 - Consumes: 批次① `.scene-night`（globals.css:4772，夜空底＋星空＋chrome reset）、P0 tokens `--pixel-night`/`--pixel-night-deep`/`--pixel-gold`/`--pixel-window-frame`/`--pixel-window-ink`/`--pixel-window-muted`/`--pixel-shadow`/`--pixel-danger`/`--radius-pixel`/`--font-pixel-tc`/`--font-pixel-latin`、`.rpg-window` 框線配方（globals.css:4738）。
 - Produces: `.battle-scene`（Task 2/3 的 CSS 掛載點）、`.command-window`、`.question-options--command`。DOM 結構與所有文字不變。
 
@@ -72,7 +74,9 @@ it('renders the command window grid while keeping the question-option class', ()
     />,
   );
 
-  expect(container.querySelector('form.question-card.command-window')).not.toBeNull();
+  expect(
+    container.querySelector('form.question-card.command-window'),
+  ).not.toBeNull();
   expect(
     container.querySelector('.question-options.question-options--command'),
   ).not.toBeNull();
@@ -194,7 +198,9 @@ Expected: 新增兩測試 FAIL（class 不存在），既有測試 PASS。
   background: var(--pixel-night);
 }
 
-.command-window .question-option[data-selected='true'] .question-option__key::before {
+.command-window
+  .question-option[data-selected='true']
+  .question-option__key::before {
   content: '▶ ';
   color: var(--pixel-gold);
 }
@@ -234,12 +240,14 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 2: ATB 行動條（Countdown 擴充）
 
 **Files:**
+
 - Modify: `src/features/quiz/components/countdown.tsx`
 - Modify: `src/features/quiz/pages/quiz-session.tsx:361-365`（傳入 `startedAt`）
 - Modify: `src/styles/globals.css`（批次②區段內續加）
 - Test: `src/features/quiz/components/countdown.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `QuizQuestion.startedAt: string | null`（quiz-repository 既有欄位）；Task 1 的 `.battle-scene`。
 - Produces: `Countdown` 新增 optional prop `startedAt?: string | null`（不傳＝行為與現狀完全相同，其他呼叫點免改）；文字輸出（`剩餘 N 秒`/`已作答`/`時間到`）與 `role="timer"` 不變。
 
@@ -428,6 +436,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 3: 魔物舞台＋三拍特效＋COMBO＋回饋對話窗
 
 **Files:**
+
 - Create: `src/features/quiz/lib/combo.ts`、`src/features/quiz/lib/combo.test.ts`
 - Create: `src/features/quiz/components/battle-stage.tsx`、`src/features/quiz/components/battle-stage.test.tsx`
 - Modify: `src/features/quiz/pages/quiz-session.tsx`（attacking 狀態＋phase 派生＋渲染 BattleStage）
@@ -436,6 +445,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Test: `src/features/quiz/pages/quiz-session.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `QuizQuestion.answerStatus: 'correct' | 'incorrect' | 'timeout' | null`；`QuizFeedbackResult.answerStatus`；quiz-session 既有 `submit()`（quiz-session.tsx:193）與 `feedbackResult` 派生。
 - Produces:
   - `comboCount(questions: readonly QuizQuestion[]): number`（純函式）
@@ -493,12 +503,18 @@ describe('comboCount', () => {
         answered(3, 'correct'),
       ]),
     ).toBe(1);
-    expect(comboCount([answered(1, 'correct'), answered(2, 'timeout')])).toBe(0);
+    expect(comboCount([answered(1, 'correct'), answered(2, 'timeout')])).toBe(
+      0,
+    );
   });
 
   it('stops at the first unanswered question', () => {
     expect(
-      comboCount([answered(1, 'correct'), answered(2, null), answered(3, 'correct')]),
+      comboCount([
+        answered(1, 'correct'),
+        answered(2, null),
+        answered(3, 'correct'),
+      ]),
     ).toBe(1);
   });
 });
@@ -522,7 +538,9 @@ describe('BattleStage', () => {
   });
 
   it('shows the slash only while attacking, before any verdict exists', () => {
-    const { container } = render(<BattleStage comboCount={0} phase="attacking" />);
+    const { container } = render(
+      <BattleStage comboCount={0} phase="attacking" />,
+    );
     expect(container.querySelector('.battle-stage__slash')).not.toBeNull();
     expect(container.textContent).not.toContain('MISS');
   });
@@ -740,24 +758,21 @@ Expected: 兩新測試 FAIL（`.battle-stage` 不存在）。
 4. phase 派生（`displayedQuestion` 派生區之後）：
 
 ```tsx
-  const battlePhase: BattlePhase = feedbackResult
-    ? feedbackResult.answerStatus === 'correct'
-      ? 'hit'
-      : feedbackResult.answerStatus === 'incorrect'
-        ? 'miss'
-        : 'enemyStrike'
-    : attacking
-      ? 'attacking'
-      : 'idle';
+const battlePhase: BattlePhase = feedbackResult
+  ? feedbackResult.answerStatus === 'correct'
+    ? 'hit'
+    : feedbackResult.answerStatus === 'incorrect'
+      ? 'miss'
+      : 'enemyStrike'
+  : attacking
+    ? 'attacking'
+    : 'idle';
 ```
 
 5. 渲染：`</header>` 與 remediation 提示之間插入：
 
 ```tsx
-      <BattleStage
-        comboCount={comboCount(session.questions)}
-        phase={battlePhase}
-      />
+<BattleStage comboCount={comboCount(session.questions)} phase={battlePhase} />
 ```
 
 `feedback-card.tsx`：heading 前加裝飾 flair（文字、按鈕、結構一律不動）：
@@ -800,7 +815,14 @@ const verdictFlair = {
   inset: 0;
   background: var(--pixel-window-muted);
   clip-path: polygon(
-    15% 100%, 15% 55%, 25% 35%, 40% 22%, 60% 22%, 75% 35%, 85% 55%, 85% 100%
+    15% 100%,
+    15% 55%,
+    25% 35%,
+    40% 22%,
+    60% 22%,
+    75% 35%,
+    85% 55%,
+    85% 100%
   );
 }
 
@@ -995,12 +1017,14 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 4: 勝利結算：VICTORY＋寶箱 Loot Reveal
 
 **Files:**
+
 - Create: `src/features/quiz/components/loot-reveal.tsx`、`src/features/quiz/components/loot-reveal.test.tsx`
 - Modify: `src/features/quiz/pages/quiz-result.tsx`
 - Modify: `src/styles/globals.css`
 - Test: `src/features/quiz/pages/quiz-result.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `QuizSession.totalScore/correctCount/questionCount/xpAwarded/tokensAwarded`（伺服器已回傳值——確定性，無隨機）；`.scene-night`。
 - Produces: `LootReveal({ correctCount, questionCount, tokensAwarded, totalScore, xpAwarded }: Readonly<{ correctCount: number; questionCount: number; tokensAwarded: number; totalScore: number; xpAwarded: number }>)`——渲染寶箱＋`.quiz-result__totals`（**四行文字格式與現狀一字不差**）。Task 5 消費 `.victory-scene` 區段。
 
@@ -1191,21 +1215,21 @@ export function LootReveal({
 3. header 內第一行（eyebrow 之前）插入：
 
 ```tsx
-        <p aria-hidden="true" className="victory-banner">
-          VICTORY
-        </p>
+<p aria-hidden="true" className="victory-banner">
+  VICTORY
+</p>
 ```
 
 4. 既有 `<div className="quiz-result__totals" aria-label="挑戰結果摘要">…四個 <p>…</div>` 整塊替換為：
 
 ```tsx
-        <LootReveal
-          correctCount={session.correctCount}
-          questionCount={session.questionCount}
-          tokensAwarded={session.tokensAwarded}
-          totalScore={session.totalScore}
-          xpAwarded={session.xpAwarded}
-        />
+<LootReveal
+  correctCount={session.correctCount}
+  questionCount={session.questionCount}
+  tokensAwarded={session.tokensAwarded}
+  totalScore={session.totalScore}
+  xpAwarded={session.xpAwarded}
+/>
 ```
 
 （decay／remediation 條件區塊與逐題回顧、行動列一律不動。）
@@ -1329,6 +1353,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 5: 升級 fanfare＋本次新解鎖成就
 
 **Files:**
+
 - Create: `src/features/quiz/lib/reward-derivations.ts`、`src/features/quiz/lib/reward-derivations.test.ts`
 - Modify: `src/features/quiz/pages/quiz-session.tsx:238-242`（navigate state 加 `fromFinalize`）
 - Modify: `src/features/quiz/pages/quiz-result.tsx`
@@ -1336,6 +1361,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Test: `src/features/quiz/pages/quiz-result.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `useEconomySummary(repository?: EconomyRepository)`（src/features/rewards/hooks/use-economy-summary.ts，回傳 `EconomySummary { totalXp, level, xpPerLevel: 500, … }`）；`useAchievements(repository?: AchievementRepository)`（src/features/achievements/hooks/use-achievements.ts，回傳 `AchievementCatalog { items }`，item 含 `state/unlockedAt/stableCode/displayName/description/badgeKey`）；`QuizSession.completedAt`；achievements 解鎖與 finalize 同交易（Phase 2），時間戳相等，故 `>=` 篩選成立。
 - Produces:
   - `crossedLevelBoundary(totalXp: number, xpAwarded: number, xpPerLevel: number): boolean`
@@ -1420,7 +1446,8 @@ export const crossedLevelBoundary = (
 ): boolean =>
   xpAwarded > 0 &&
   xpPerLevel > 0 &&
-  Math.floor((totalXp - xpAwarded) / xpPerLevel) < Math.floor(totalXp / xpPerLevel);
+  Math.floor((totalXp - xpAwarded) / xpPerLevel) <
+    Math.floor(totalXp / xpPerLevel);
 
 /** 本次新解鎖成就:unlockedAt 不早於 session 完成時間(finalize 同交易,時間戳相等) */
 export const unlockedSince = (
@@ -1511,7 +1538,9 @@ const catalog = (items: AchievementCatalog['items']): AchievementCatalog => ({
 
 it('celebrates a level up only when arriving fresh from finalize', async () => {
   renderResult(repository(vi.fn().mockResolvedValue(completedSession)), {
-    economyRepository: { getSummary: vi.fn().mockResolvedValue(economySummary) },
+    economyRepository: {
+      getSummary: vi.fn().mockResolvedValue(economySummary),
+    },
     state: { fromFinalize: true },
   });
 
@@ -1521,7 +1550,9 @@ it('celebrates a level up only when arriving fresh from finalize', async () => {
 
 it('stays silent about levels when revisiting the result page', async () => {
   renderResult(repository(vi.fn().mockResolvedValue(completedSession)), {
-    economyRepository: { getSummary: vi.fn().mockResolvedValue(economySummary) },
+    economyRepository: {
+      getSummary: vi.fn().mockResolvedValue(economySummary),
+    },
   });
 
   await screen.findByRole('heading', { name: '挑戰完成 🎉' });
@@ -1574,14 +1605,14 @@ Expected: 三新測試 FAIL。
 `quiz-session.tsx` finalize 導向（238-242）改為：
 
 ```tsx
-        void navigate(`/app/quiz/${session.sessionId}/result`, {
-          state: {
-            fromFinalize: true,
-            ...(finalResult.assignmentAttempt
-              ? { assignmentAttempt: finalResult.assignmentAttempt }
-              : {}),
-          },
-        });
+void navigate(`/app/quiz/${session.sessionId}/result`, {
+  state: {
+    fromFinalize: true,
+    ...(finalResult.assignmentAttempt
+      ? { assignmentAttempt: finalResult.assignmentAttempt }
+      : {}),
+  },
+});
 ```
 
 `quiz-result.tsx`：
@@ -1623,52 +1654,56 @@ export function QuizResultPage({
 3. 成功分支內派生（catalog／summary 載入失敗或載入中＝直接不顯示慶祝區，不阻擋結果頁）：
 
 ```tsx
-  const newAchievements =
-    achievementsQuery.data && session.completedAt
-      ? unlockedSince(achievementsQuery.data.items, session.completedAt)
-      : [];
-  const leveledUp =
-    fromFinalize && economyQuery.data
-      ? crossedLevelBoundary(
-          economyQuery.data.totalXp,
-          session.xpAwarded,
-          economyQuery.data.xpPerLevel,
-        )
-      : false;
+const newAchievements =
+  achievementsQuery.data && session.completedAt
+    ? unlockedSince(achievementsQuery.data.items, session.completedAt)
+    : [];
+const leveledUp =
+  fromFinalize && economyQuery.data
+    ? crossedLevelBoundary(
+        economyQuery.data.totalXp,
+        session.xpAwarded,
+        economyQuery.data.xpPerLevel,
+      )
+    : false;
 ```
 
 4. `LootReveal` 之後、decay 區塊之前插入 fanfare：
 
 ```tsx
-        {leveledUp && economyQuery.data ? (
-          <p className="level-up-fanfare" role="status">
-            LEVEL UP！等級提升至 Lv.{String(economyQuery.data.level)}
-          </p>
-        ) : null}
+{
+  leveledUp && economyQuery.data ? (
+    <p className="level-up-fanfare" role="status">
+      LEVEL UP！等級提升至 Lv.{String(economyQuery.data.level)}
+    </p>
+  ) : null;
+}
 ```
 
 5. `</header>` 之後、逐題回顧之前插入成就區：
 
 ```tsx
-      {newAchievements.length > 0 ? (
-        <section
-          className="quiz-result__achievements"
-          aria-labelledby="quiz-result-achievements-title"
-        >
-          <h2 id="quiz-result-achievements-title">本次新解鎖成就</h2>
-          <ul>
-            {newAchievements.map((item) => (
-              <li className="achievement-loot" key={item.stableCode}>
-                <span aria-hidden="true" className="achievement-loot__badge" />
-                <div>
-                  <strong>{item.displayName}</strong>
-                  <p>{item.description}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+{
+  newAchievements.length > 0 ? (
+    <section
+      className="quiz-result__achievements"
+      aria-labelledby="quiz-result-achievements-title"
+    >
+      <h2 id="quiz-result-achievements-title">本次新解鎖成就</h2>
+      <ul>
+        {newAchievements.map((item) => (
+          <li className="achievement-loot" key={item.stableCode}>
+            <span aria-hidden="true" className="achievement-loot__badge" />
+            <div>
+              <strong>{item.displayName}</strong>
+              <p>{item.description}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ) : null;
+}
 ```
 
 `globals.css` 批次②區段續加：
@@ -1767,10 +1802,12 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 6: 批次② Gate（驗證＋截圖＋ledger）
 
 **Files:**
+
 - No production files（僅驗證；若發現缺陷，修復另立 commit 並記錄）
 - Update（不入 commit，`.superpowers/` 已 git-ignore）：`.superpowers/sdd/progress.md`
 
 **Interfaces:**
+
 - Consumes: Tasks 1–5 全部 commit；`scripts/design-audit/capture-screens.mjs`（含 `quiz`/`quizFeedback`/`quizResult` 三路由與 `start-quiz`/`finish-quiz` setup）；本機 Supabase stack。
 - Produces: gate 判定＋截圖證據＋ledger 紀錄；供批終審（opus whole-batch review）使用的範圍 `58c9a7a..HEAD`。
 
@@ -1807,6 +1844,7 @@ Expected: quiz-runner PASS。**注意**：平行 session 有未 commit 的 `supa
 - [ ] **Step 5: design-audit 截圖與 375px 驗證**
 
 以 batch-1 Task 5 同一程序（dev server＋local Supabase）執行 `scripts/design-audit/capture-screens.mjs`，取 `quiz`/`quizFeedback`/`quizResult` 三畫面，桌機＋375px（腳本既有窄幅模式）。逐張目視檢查：
+
 - 夜景生效、無水平溢出、星空不吃掉可讀性；
 - 指令窗選項、選中金框＋▶、ATB 條、COMBO、揮刀→判定時序（quizFeedback 截圖應已顯示對話窗回饋）；
 - 結算頁 VICTORY／寶箱開啟後狀態／四行總計／成就區（若該 setup 流程有解鎖）；

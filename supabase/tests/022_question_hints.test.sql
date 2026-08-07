@@ -150,7 +150,9 @@ values
     current_setting('test.q1v')::integer,
     2,
     '提示二：把每個選項對照定義逐一排除。'
-  );
+  )
+on conflict (question_id, question_version, hint_level) do update
+set content = excluded.content;
 
 set local role authenticated;
 select pg_temp.as_user('22000000-0000-0000-0000-000000000001');

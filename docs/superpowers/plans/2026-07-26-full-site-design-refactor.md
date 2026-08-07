@@ -22,6 +22,7 @@
 ## 驗證基準（本計畫的核心，先建再改頁）
 
 **每個畫面的 Definition of Done（四條全過才算完成）：**
+
 1. 兩檔寬度截圖中，該畫面驗收清單（各 Task 內）逐項可目視確認。
 2. 該頁 unit 測試（結構斷言同步更新）綠。
 3. 截圖過程 console 無 error。
@@ -36,10 +37,12 @@
 ### Task 0: 截圖驗證 runner（測試基準基礎設施）
 
 **Files:**
+
 - Create: `scripts/design-audit/capture-screens.mjs`
 - Create: `scripts/design-audit/screen-routes.mjs`
 
 **Interfaces:**
+
 - Produces: CLI `node scripts/design-audit/capture-screens.mjs [--screen <id>] [--width 1280|393]`，輸出 `artifacts/design-audit/<screen>/<width>.png` 與 `manifest.json`（`{screen, route, width, path, consoleErrors: []}`）。後續每個 Task 的「截圖驗證」步驟都呼叫它。
 
 - [ ] **Step 1: 寫路由清單（35 畫面 → 路由/前置動作）**
@@ -51,15 +54,40 @@
 export const SCREENS = [
   { id: 'login', route: '/login', auth: 'anon' },
   { id: 'tLogin', route: '/login', auth: 'anon', setup: 'switch-teacher-tab' },
-  { id: 'tLoginError', route: '/login', auth: 'anon', setup: 'teacher-tab-submit-bad' },
+  {
+    id: 'tLoginError',
+    route: '/login',
+    auth: 'anon',
+    setup: 'teacher-tab-submit-bad',
+  },
   { id: 'register', route: '/register', auth: 'anon' },
   { id: 'lobby', route: '/app', auth: 'student' },
   { id: 'chapter', route: '/app/chapters/:firstChapterId', auth: 'student' },
   { id: 'missionSelect', route: '/app/missions', auth: 'student' },
-  { id: 'mission', route: '/app/missions/:sessionId', auth: 'student', setup: 'start-mission' },
-  { id: 'quiz', route: '/app/quiz/:sessionId', auth: 'student', setup: 'start-quiz' },
-  { id: 'quizFeedback', route: '/app/quiz/:sessionId', auth: 'student', setup: 'answer-one' },
-  { id: 'quizResult', route: '/app/quiz/:sessionId/result', auth: 'student', setup: 'finish-quiz' },
+  {
+    id: 'mission',
+    route: '/app/missions/:sessionId',
+    auth: 'student',
+    setup: 'start-mission',
+  },
+  {
+    id: 'quiz',
+    route: '/app/quiz/:sessionId',
+    auth: 'student',
+    setup: 'start-quiz',
+  },
+  {
+    id: 'quizFeedback',
+    route: '/app/quiz/:sessionId',
+    auth: 'student',
+    setup: 'answer-one',
+  },
+  {
+    id: 'quizResult',
+    route: '/app/quiz/:sessionId/result',
+    auth: 'student',
+    setup: 'finish-quiz',
+  },
   { id: 'shop', route: '/app/shop', auth: 'student' },
   { id: 'achievements', route: '/app/achievements', auth: 'student' },
   { id: 'classrooms', route: '/app/profile', auth: 'student' },
@@ -67,23 +95,76 @@ export const SCREENS = [
   { id: 'mistakes', route: '/app/mistakes', auth: 'student' },
   // progress 畫面依 owner 批示改為教師專屬，學生端不收錄（見批示紀錄 #2）
   { id: 'liveJoin', route: '/app/live/join', auth: 'student' },
-  { id: 'liveQuestion', route: '/app/live/:sessionId', auth: 'student', setup: 'live-open-question' },
-  { id: 'liveFeedback', route: '/app/live/:sessionId', auth: 'student', setup: 'live-after-answer' },
-  { id: 'liveFull', route: '/app/live/:sessionId', auth: 'student', setup: 'live-fullscreen-result' },
-  { id: 'loading', route: '/app', auth: 'student', setup: 'throttle-first-paint' },
+  {
+    id: 'liveQuestion',
+    route: '/app/live/:sessionId',
+    auth: 'student',
+    setup: 'live-open-question',
+  },
+  {
+    id: 'liveFeedback',
+    route: '/app/live/:sessionId',
+    auth: 'student',
+    setup: 'live-after-answer',
+  },
+  {
+    id: 'liveFull',
+    route: '/app/live/:sessionId',
+    auth: 'student',
+    setup: 'live-fullscreen-result',
+  },
+  {
+    id: 'loading',
+    route: '/app',
+    auth: 'student',
+    setup: 'throttle-first-paint',
+  },
   { id: 'unauthorized', route: '/unauthorized', auth: 'student' },
   { id: 'tDash', route: '/teacher', auth: 'teacher' },
   { id: 'tLive', route: '/teacher/live', auth: 'teacher' },
-  { id: 'tHost', route: '/teacher/live/:sessionId', auth: 'teacher', setup: 'live-hosting' },
-  { id: 'tPresenter', route: '/teacher/live/:sessionId?presenter=1', auth: 'teacher', setup: 'live-hosting' },
-  { id: 'tPresenterChart', route: '/teacher/live/:sessionId?presenter=1', auth: 'teacher', setup: 'live-close-question' },
-  { id: 'tPresenterPodium', route: '/teacher/live/:sessionId?presenter=1', auth: 'teacher', setup: 'live-final' },
-  { id: 'tReport', route: '/teacher/live/:sessionId/report', auth: 'teacher', setup: 'live-final' },
+  {
+    id: 'tHost',
+    route: '/teacher/live/:sessionId',
+    auth: 'teacher',
+    setup: 'live-hosting',
+  },
+  {
+    id: 'tPresenter',
+    route: '/teacher/live/:sessionId?presenter=1',
+    auth: 'teacher',
+    setup: 'live-hosting',
+  },
+  {
+    id: 'tPresenterChart',
+    route: '/teacher/live/:sessionId?presenter=1',
+    auth: 'teacher',
+    setup: 'live-close-question',
+  },
+  {
+    id: 'tPresenterPodium',
+    route: '/teacher/live/:sessionId?presenter=1',
+    auth: 'teacher',
+    setup: 'live-final',
+  },
+  {
+    id: 'tReport',
+    route: '/teacher/live/:sessionId/report',
+    auth: 'teacher',
+    setup: 'live-final',
+  },
   { id: 'tContent', route: '/teacher/content', auth: 'teacher' },
   { id: 'tAnalytics', route: '/teacher/analytics', auth: 'teacher' },
   { id: 'tClasses', route: '/teacher/classes', auth: 'teacher' },
-  { id: 'tClassDetail', route: '/teacher/classes/:classroomId', auth: 'teacher' },
-  { id: 'tStudentProgress', route: '/teacher/classes/:classroomId/members/:memberRef', auth: 'teacher' },
+  {
+    id: 'tClassDetail',
+    route: '/teacher/classes/:classroomId',
+    auth: 'teacher',
+  },
+  {
+    id: 'tStudentProgress',
+    route: '/teacher/classes/:classroomId/members/:memberRef',
+    auth: 'teacher',
+  },
 ];
 export const WIDTHS = [
   { name: '1280', viewport: { width: 1280, height: 900 } },
@@ -112,20 +193,32 @@ for (const screen of SCREENS.filter((s) => !only || s.id === only)) {
     const context = await browser.newContext({ viewport: width.viewport });
     const page = await context.newPage();
     const consoleErrors = [];
-    page.on('console', (m) => m.type() === 'error' && consoleErrors.push(m.text()));
-    await loginAs(page, base, screen.auth);      // 重用 e2e login helper
-    await runSetup(page, base, screen);           // 重用 live-smoke fixture 動作
+    page.on(
+      'console',
+      (m) => m.type() === 'error' && consoleErrors.push(m.text()),
+    );
+    await loginAs(page, base, screen.auth); // 重用 e2e login helper
+    await runSetup(page, base, screen); // 重用 live-smoke fixture 動作
     await page.goto(base + resolveRoute(screen)); // :param 由 setup 回填
     await page.waitForLoadState('networkidle');
     const dir = `artifacts/design-audit/${screen.id}`;
     mkdirSync(dir, { recursive: true });
     const path = `${dir}/${width.name}.png`;
     await page.screenshot({ path, fullPage: true });
-    manifest.push({ screen: screen.id, route: screen.route, width: width.name, path, consoleErrors });
+    manifest.push({
+      screen: screen.id,
+      route: screen.route,
+      width: width.name,
+      path,
+      consoleErrors,
+    });
     await context.close();
   }
 }
-writeFileSync('artifacts/design-audit/manifest.json', JSON.stringify(manifest, null, 2));
+writeFileSync(
+  'artifacts/design-audit/manifest.json',
+  JSON.stringify(manifest, null, 2),
+);
 await browser.close();
 ```
 
@@ -148,11 +241,13 @@ git commit -m "test: 全站設計稽核截圖 runner（35 畫面×2 寬度）"
 ### Task 1: Tokens 增補＋教師紫識別基礎
 
 **Files:**
+
 - Modify: `src/styles/tokens.css`
 - Modify: `src/styles/globals.css`（新增 `ui-chip--teacher`）
 - Test: `src/components/ui/chip.test.tsx`（若無則新建）
 
 **Interfaces:**
+
 - Produces: `--color-teacher: #7b48ce`、`--color-teacher-soft: #e0e7fb`、`--surface-host: #fdf8ee`（Task 2/3/4/12 消費）；`.ui-chip--teacher` 樣式（紫框紫字淡紫底，DC 1318）。
 
 - [ ] **Step 1: 失敗測試**——`chip.test.tsx` 斷言 `<Chip tone="teacher">` 產出 class `ui-chip--teacher`。
@@ -175,12 +270,14 @@ git commit -m "test: 全站設計稽核截圖 runner（35 畫面×2 寬度）"
 ### Task 2: App Shell 對齊（header／學生導覽／教師導覽）
 
 **Files:**
+
 - Modify: `src/app/shell/app-shell.tsx`、`src/styles/globals.css`
 - Test: `src/app/shell/app-shell.test.tsx`
 
 **DC 規格：** 85–154 行。
 
 **驗收清單（截圖逐項確認）：**
+
 - [ ] header：白底、底線 `2px solid #ffd600`、min-height 64px；左側三圓 logo＋「ColorPlay／色彩原理遊戲式學習平台」雙行（DC 87–95）。
 - [ ] 學生已登入：獎勵膠囊（圓角 999、白底灰框）內含 `Level n`＋progress＋`x / y XP`＋粗體 `n Token`（DC 98–105）。
 - [ ] 教師已登入：header 右側**紫色徽章**「`{display_name}`・教師端」＋鎖 icon（DC 108–111；姓名用 profile 的 display_name，不寫死「劉老師」）。
@@ -200,12 +297,14 @@ git commit -m "test: 全站設計稽核截圖 runner（35 畫面×2 寬度）"
 ### Task 3: 教師工作區 tDash 重構（已知最大落差）
 
 **Files:**
+
 - Modify: `src/features/teacher-content/pages/teacher-dashboard-page.tsx`、`src/styles/globals.css`
 - Test: `src/features/teacher-content/pages/teacher-dashboard-page.test.tsx`
 
 **DC 規格：** 1314–1389 行。
 
 **驗收清單：**
+
 - [ ] header：紫 chip「教師決策工具」＋h1＋說明；**右側**「選擇班級」下拉（min-width 200、2px 灰框）；header 底線 `2px solid #ffd600`（DC 1316–1329）。
 - [ ] Live hero：`#1d212e` 黑底圓角 20 卡；左側 48px **黃色圓形閃電徽章**（SVG 路徑 DC 1333）；標題 Syne 1.2rem「課堂即時競賽（Live）廣播控制台」＋灰說明（`#c2c7d3` .8rem）；右側黃色「前往主持 ▶」按鈕，hover `#ffb300`（DC 1330–1341）。
 - [ ] 雙欄 grid（`auto-fit minmax(320px,1fr)`）：左「班級總覽」白卡（卡頭標題＋右側班名小字）＋三張統計卡（黃左框 4px、`#f6f7fa` 底、dt 灰小字/dd 1.5rem 900），平均正確率卡跨欄含黃色 progressbar（DC 1345–1365）。
@@ -223,12 +322,14 @@ git commit -m "test: 全站設計稽核截圖 runner（35 畫面×2 寬度）"
 ### Task 4: 認證群（login／tLogin／tLoginError／register）
 
 **Files:**
+
 - Modify: `src/features/auth/pages/login-page.tsx`、`register-page.tsx`、`src/styles/globals.css`
 - Test: `src/features/auth/pages/login-page.test.tsx`、`register-page.test.tsx`
 
 **DC 規格：** login 175–217、tLogin 1265–1312、tLoginError 1943–1994、register 1996–2072。
 
 **驗收清單：**
+
 - [ ] 卡片：`2px solid #1d212e` 框、圓角 16、頂部置中三圓 logo＋ColorPlay 雙行（DC 176–183）。
 - [ ] 分頁膠囊：灰底容器內兩鍵；學生 tab active＝墨黑底白字，教師 tab active＝**紫底白字**（DC 187–194 vs 1276–1285）。
 - [ ] 教師 portal：靛藍說明框「教師帳號由開發後台建立。」含警告 icon（DC 1286–1289）；欄位 帳號/密碼/班級序號；送出鍵**紫色**（DC 1305）。
@@ -251,6 +352,7 @@ git commit -m "test: 全站設計稽核截圖 runner（35 畫面×2 寬度）"
 **DC 規格：** 219–361。
 
 **驗收清單：**
+
 - [ ] 頂部白卡：左 Blook 頭像（64px 圓角 16 漸層底）＋「{暱稱}」＋副標「讓我們開始今日的色彩複習與挑戰！」；右統計卡（`#f6f7fa` 底圓角 16）三欄：累計積分(XP)/全體排名/當前 PR，值 1.5rem 900（DC 221–239）。
 - [ ] 「色彩任務選擇大廳」白卡＋卡頭底線；章節卡 grid `minmax(280px,1fr)`（DC 242–250）。
 - [ ] 章節卡（六章全列）：鎖定＝灰帶（`#eef0f4` 底＋`#c2c7d3` 3px 底線＋鎖 icon＋「鎖定中」pill＋右下「敬請期待」）；開放＝**章節色帶**（Ch3 藍 `#e0e7fb`/`#3056d8`、Ch4 紫 `#ede4f9`/`#7b48ce`）＋琥珀 2px 卡框＋綠「已開放」pill＋黃「開始挑戰」＋「複習與進度 ›」（DC 251–353）。開放章節以 DB 實際狀態為準。
@@ -265,6 +367,7 @@ Steps（同 Task 3 模式）：測試紅（章節卡 pill 與按鈕斷言）→ 
 **DC 規格：** 534–636。
 
 **驗收清單：**
+
 - [ ] 單一大白卡（圓角 20、padding 40）；黃 pill「章節複習」＋h1＋右側黃色「開始挑戰」。
 - [ ] 章節進度列：綠「學習中」pill（帶光暈圓點）＋「複習完成 x/y」黃 progressbar＋**44px 圓環**「精熟程度 n%」（綠 stroke，DC 556–567）。
 - [ ] 小節區：黃左框 3px＋「小節」黃 pill＋小節碼標題；進度行「已學習圓點・複習 x/y 迷你條・精熟 n%」（DC 571–590）。
@@ -280,6 +383,7 @@ Steps：測試紅（圓環 role/精熟百分比、完成複習按鈕）→ 實�
 **DC 規格：** missionSelect 638–666、mission 668–734。
 
 **驗收清單：**
+
 - [ ] 選擇頁：白卡＋卡頭（黃 pill「5 階精熟測驗」＋h2「課後任務實戰」＋說明）；小節列 `#f6f7fa` 圓角卡＋右黃鍵「展開小節任務」（DC 640–663）。
 - [ ] 作答頁：精熟地圖（5 節點、通過段黃線、目前節點黃底、未解鎖 disabled 60% 透明）（DC 671–681）；「關卡進度:x / 5」黃 pill；情境任務灰卡（琥珀小標）；選項鎖定態＝灰底刪除線＋●（DC 698–715）；提示卡紅左框＋「索取第 n 層提示」黃底琥珀字鍵（DC 719–725）；底部「← 回任務實戰」膠囊。
 
@@ -293,6 +397,7 @@ Steps：測試紅（鎖定選項 disabled＋line-through class、提示鍵文案
 **DC 規格：** quiz 363–422、quizFeedback 424–472、quizResult 474–532。
 
 **驗收清單：**
+
 - [ ] quiz：10 節點精熟地圖（同 Task 7 樣式）；右上進度卡（2px 灰框：第 x/y 題、Quiz Score、琥珀「剩餘 n 秒」）；題卡 2px 灰框；選項＝圓字母＋2px 框，選取態黃框 `#fff0b3` 底；右下黃鍵「送出答案」。
 - [ ] feedback：同版面、fieldset disabled、計時顯示「已作答」。
 - [ ] result：header 卡**頂部 8px 黃條**＋章節 pill＋「挑戰完成 🎉」＋四張成績膠囊（總分/答對/+XP/+Token，`#f6f4ee` 底 2px 框）＋琥珀左框重複挑戰折扣說明（DC 476–485）；逐題回顧卡：✓答對綠 `#0e6f4c`／✕答錯紅 `#b23425`／⌛逾時藍 `#3056d8` 標題，我的答案/正確答案/解析 三格 `#f6f4ee` 圓角格（DC 488–524）；底部「再玩一次」黃鍵＋「回章節」框線鍵。
@@ -307,6 +412,7 @@ Steps：測試紅（result 三種狀態圖示與色 class、四膠囊）→ 實�
 **DC 規格：** shop 736–866、achievements 867–977。
 
 **驗收清單：**
+
 - [ ] shop header：墨黑 2px 框白卡＋頂部六色彩虹條＋黃 pill「你的角色收藏」＋Syne h1＋右側墨黑底白字「n Token 可用」膠囊（DC 738–746）。
 - [ ] 商品卡四態（DC 749–810）：已裝備＝綠框「已裝備」；已擁有＝框線「選用」；可購買＝黃鍵「購買 n Token」；不足＝disabled 灰鍵「還差 n Token」。
 - [ ] achievements：已獲得卡＝黃框＋`linear-gradient(135deg,#fff,#fff8d6)` 底＋彩色 icon 方塊＋「已獲得」黃 pill＋「解鎖於 {日期}」；未獲得卡＝灰框白底 `opacity:.78 grayscale(1)`＋灰進度條（DC 878–974）。
@@ -321,6 +427,7 @@ Steps：測試紅（四態按鈕文案/disabled、成就灰階 class）→ 實�
 **DC 規格：** classrooms 979–1003、leaderboard 1005–1050、mistakes 1052–1105、progress 1107–1163。
 
 **驗收清單：**
+
 - [ ] classrooms：外層白卡＋黃 pill「班級學習」；加入表單卡；班級列卡含「查看排行榜」黃鍵。
 - [ ] leaderboard：前三名列底色 金 `#fffcea`／銀 `#f3f2f4`／銅 `#fdf6e8`（DC 1022–1035）；欄位 名次/暱稱/XP。
 - [ ] mistakes：黃 pill「補救學習」＋規則說明；子題群黃左框＋紅「n 題待補救」pill；錯題卡 `#fffdf2` 黃左框、綠字正確答案；每群右下「再挑戰（補救練習）」黃鍵；已解決群灰左框灰卡（DC 1059–1103）。
@@ -336,6 +443,7 @@ Steps：測試紅（前三名列 class、錯題 pill 文案）→ 實作 → 綠
 **DC 規格：** liveJoin 1165–1178、liveQuestion 1180–1205、liveFeedback 1207–1246、liveFull 1248–1263。
 
 **驗收清單：**
+
 - [ ] join：560px 白卡＋黃 pill、六碼輸入 `letter-spacing:.35em` 置中、黃鍵「加入課堂」。
 - [ ] question:「題目在投影幕上，選出你的答案！」legend；四形狀鍵色序 紅▲/藍■/黃●/綠◆、高度 `clamp(6rem,22vh,11rem)`；「已收到你的答案…」status；連擊 🔥 pop 動畫。
 - [ ] feedback：✓/✕＋分數 h2；分布條（正解綠、其餘藍）；琥珀左框「教師引導解析」；名次卡（第 n 名／共 m 人＋累積分＋激勵語）；「等待主持人進入下一題…」。
@@ -351,6 +459,7 @@ Steps：先截圖比對（前批已重構，預期僅微調）→ 有差異才�
 **DC 規格：** tLive 1391–1421、tHost 1423–1450、tPresenter 1452–1483、tPresenterChart 1485–1533、tPresenterPodium 1535–1565、tReport 1567–1638。
 
 **驗收清單：**
+
 - [ ] tLive：黑 header 卡（黃圓閃電 40px＋Syne 標題＋灰副標）＋「1・選擇對戰單元」「2・每題秒數」下拉＋滿版黃鍵「建立活動並開場」（前批已做，截圖確認）。
 - [ ] tHost：**卡片底 `#fdf8ee`（`--surface-host`）＋琥珀 35% 邊框**（DC 1424）；黃 pill「ColorPlay Live 主持台」；「已作答 n/m」；「即時作答分布（僅主持人可見）」；鍵組 黃「收題並公布答案」＋小鍵「暫停」「取消挑戰」＋「投影模式」。
 - [ ] presenter 三態：黑底、圓形倒數、Top5 ↑↓—、正解列 `scale(1.06)`＋綠 outline、頒獎台 0/1.2/2.4s 延遲（多已上線，逐項截圖確認）。
@@ -366,6 +475,7 @@ Steps：截圖六畫面 → 差異項修（預期集中 tHost 底色）＋測試
 **DC 規格：** tContent 1640–1746、tAnalytics 1748–1871、tClasses 1873–1941、tClassDetail 2072–2179、tStudentProgress 2181–2278。
 
 **驗收清單：**
+
 - [ ] tContent：題庫/複習卡兩張白卡表格（欄位 題號/題目/狀態/版本/動作；動作小鍵 34px）。
 - [ ] tAnalytics：篩選白卡五欄（班級/起訖日期/章節/子題）；班級總覽四統計卡（含最弱子題卡）；「高頻錯誤 n」紅標卡；題目分析/子題精熟/Live 報表三表格。
 - [ ] tClasses：header 黃底線＋右側「班級數/有效學生」雙統計；建立表單卡黃左框 6px；班級卡（卡頭班名＋綠「n 位有效學生」pill、dl 加入碼版本/建立日期、墨框「管理班級」hover 反白＋「教學分析」小鍵）（DC 1893–1937）。

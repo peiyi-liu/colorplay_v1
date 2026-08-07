@@ -340,8 +340,8 @@ critical finding below). `student-question.png` and
 a real driven session (viewport 1280×800, not the static harness's 1920×1080
 — pairing is viewport-independent since it's just a color/color pair):
 
-| Pair | Color | Background | Ratio | Verdict |
-|---|---|---|---|---|
+| Pair                                      | Color             | Background           | Ratio      | Verdict  |
+| ----------------------------------------- | ----------------- | -------------------- | ---------- | -------- |
 | question-card legend (live) × fieldset bg | `rgb(37, 48, 66)` | `rgb(255, 255, 255)` | **13.290** | **PASS** |
 
 Matches the static harness's 13.290 exactly (same ink-900/white pairing this
@@ -385,12 +385,12 @@ collapsing the entire 2×2 answer-button grid into a ~48px-wide sliver at
 the fieldset's right edge, with all four buttons visually **overlapping
 each other**:
 
-| Button | left | right |
-|---|---|---|
-| rose | 1076 | 1124 |
-| sky | 1088 | 1136 |
-| amber | 1076 | 1124 |
-| emerald | 1088 | 1136 |
+| Button  | left | right |
+| ------- | ---- | ----- |
+| rose    | 1076 | 1124  |
+| sky     | 1088 | 1136  |
+| amber   | 1076 | 1124  |
+| emerald | 1088 | 1136  |
 
 rose/sky overlap by 36px (same for amber/emerald) — confirmed both by
 `getBoundingClientRect()` and visually (`student-question.png`, re-captured

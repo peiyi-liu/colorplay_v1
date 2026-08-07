@@ -28,7 +28,7 @@ test('isolates two accounts that use the same browser page in sequence', async (
   await expect(
     page.getByRole('heading', { name: '色彩任務選擇大廳' }),
   ).toBeVisible();
-  await page.getByRole('link', { name: '個人資料' }).click();
+  await expect(page).toHaveURL(/\/app$/u);
   await expect(
     page.getByRole('heading', { name: 'student.one' }),
   ).toBeVisible();
@@ -66,8 +66,7 @@ test('isolates two accounts that use the same browser page in sequence', async (
   });
 
   await signIn(page, TEST_USERS.studentTwo);
-  // 登出前停在 /app/profile，登入會回到原頁（個人資料入口現只在大廳）。
-  await expect(page).toHaveURL(/\/app\/profile$/u);
+  await expect(page).toHaveURL(/\/app$/u);
   await expect(
     page.getByRole('heading', { name: 'student.two' }),
   ).toBeVisible();
