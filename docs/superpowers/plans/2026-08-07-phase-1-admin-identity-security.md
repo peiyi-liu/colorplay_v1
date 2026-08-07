@@ -5255,4 +5255,18 @@ grep -noE "'[0-9a-zA-Z-]{36}'" \
 - `get_admin_session_state` 回傳 `state` 值域與 `useAdminSessionState`/`RequirePrivilegedSession` 分支一致(`privileged|pending_mfa|recovery_pending|deactivated|none|stale`)。✔
 - 錯誤碼 union 與 spec §11 十一碼逐字一致,pgTAP/RTL/E2E 斷言引用相同字串。✔
 
+### 2026-08-07 owner 裁定紀錄:otpauth P2 override(Option A)
+
+Codex 對 f95b1dc 提出 P2(要求 lockfile 降版至 9.3.4 或還原 manifest)。
+Owner 裁定採 Option A 覆寫,理由:
+
+1. semver 範圍覆蓋:`^9.3.4` 合法涵蓋 resolved `9.5.1`,manifest 與 lockfile
+   並無矛盾;本次調整目的是宣告範圍對齊本計畫,不是降版。
+2. `pnpm install --frozen-lockfile` 通過,即 specifier/lockfile 一致性的
+   機器證明。
+3. Task 1 capability proof 已在 9.5.1 上全綠;降版反而引入未驗證變因。
+
+f95b1dc 維持為有效 checkpoint。後續 Codex 審查若再對此提出相同意見,
+一律標示為 tool-specific 偏好,等待 owner override,不回到降版流程。
+
 PLAN COMPLETE FOR CODEX REVIEW
