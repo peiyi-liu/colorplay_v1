@@ -27,3 +27,11 @@ tokens before comparison; no DDL is removed or normalized.
 Never rewrite migration history or alter the hosted ledger merely to make the
 comparison green. Resolve formal capability drift with a reviewed forward
 migration; otherwise stop the rebuild or promotion.
+
+For the approved two-slot cutover, a legacy Production comparison containing
+only reviewed provider-managed drift plus name-matched semantic timestamp drift
+may close the Task 14 classification step while remaining `blocked` for
+in-place use. It does not authorize `migration repair`, ledger reuse, or a reset
+of that project. Task 15 must replay the frozen repository chain from migration
+zero on the clean Candidate; any hosted-only, repo-only, name mismatch, or
+unclassified schema/type/role/extension difference still blocks that path.

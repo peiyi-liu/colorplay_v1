@@ -1,10 +1,11 @@
 # ColorPlay Current Program
 
-- Status: FOUNDATION CI GATE PASSED — PR #1 awaits owner approval; no Staging
-  merge, data-plane mutation, Candidate, or Production release has occurred
-- Last updated: 2026-08-06 (Asia/Taipei)
-- Current phase: Phase 0, local Tasks 1–12 and the GitHub control/CI portion of
-  Task 13 verified; the exact next human action is PR #1 review and approval
+- Status: TASK 14 COMPLETE FOR THE TWO-SLOT CANDIDATE PATH — first immutable
+  backup, isolated restore, and migration classification passed; no Staging
+  merge, Candidate, DNS change, Production migration, or release has occurred
+- Last updated: 2026-08-07 (Asia/Taipei)
+- Current phase: Phase 0 Task 14 closure on `phase0/release-foundation`; the
+  exact next human action is authorization to push the reviewed closure SHA
 - Canonical entry point: this file
 - Historical task ledger: `.superpowers/sdd/progress.md`
 
@@ -22,19 +23,26 @@ as a completed production release.
 
 ## Immediate next action
 
-Owner reviews and approves PR #1. The latest functional SHA
-`5cb1ed35aec0ae8a99712a41143b5f6c7067e495` passed Foundation CI run
-[`31093226087`](https://github.com/peiyi-liu/colorplay_v1/actions/runs/31093226087):
-format, lint, typecheck, unit coverage, Production build, Local database,
-Chromium E2E, and credential scan all passed. The PR is intentionally `BLOCKED`
-until owner approval; no agent should merge it.
+Review the Task 14 closure diff, then obtain explicit owner authorization before
+pushing the exact branch SHA. PR #1 is still open against protected `staging`;
+its remote head remains frozen backup SHA
+`9af07ee9ee883d5813a3c2d1deb5e72d3af5fd20`, while the Task 14 remediation and
+closure commits remain local. The protected CI and exact-SHA owner approval must
+be rerun after that push; no agent should merge the PR merely because the older
+run passed.
 
-After an approved merge to protected `staging`, collect a fresh read-only
-preflight before any further hosted mutation. DNS, hosted Supabase reset,
-Staging acceptance, Production Candidate creation, Production promotion, and
-all data-plane changes remain explicitly unexecuted. Real B2 backup automation
-also remains blocked until the existing over-privileged B2 writer/recovery keys
-are replaced by credentials that meet the create-only and read-only contracts.
+Task 14 evidence: backup run
+[`31158344282`](https://github.com/peiyi-liu/colorplay_v1/actions/runs/31158344282)
+and isolated restore run
+[`31158754421`](https://github.com/peiyi-liu/colorplay_v1/actions/runs/31158754421)
+passed at `9af07ee`. Migration reconciliation found 57/57 entries: 48 exact and
+9 name-matched historical timestamp differences, with zero hosted-only or
+repo-only migrations. The comparator remains fail-closed for in-place reuse;
+Task 15 may proceed only by replaying migration zero on the clean Candidate.
+
+After the new SHA passes protected CI and approval, collect a fresh provider
+preflight before Task 15. DNS, Staging deployment/acceptance, Candidate replay,
+Production promotion, and Production data-plane mutation remain unexecuted.
 
 ## Approved program structure
 
@@ -43,7 +51,7 @@ batches. Each batch must pass its own Staging gate before Production promotion.
 
 | Phase | Scope                                         | Status                                              |
 | ----- | --------------------------------------------- | --------------------------------------------------- |
-| 0     | Environment and release foundation            | Foundation CI passed; PR #1 awaits owner approval   |
+| 0     | Environment and release foundation            | Task 14 complete; closure push/CI approval pending  |
 | 1     | Admin identity and security core              | Decisions captured; spec not started                |
 | 2     | Content SSOT and version publishing           | Decisions captured; spec not started                |
 | 3     | Learning progression and assessment authority | Decisions captured; spec not started                |
@@ -719,16 +727,19 @@ Do not overwrite, stash, reset, or accidentally stage unrelated changes.
 - Path: `.worktrees/phase0-release-foundation`
 - Branch: `phase0/release-foundation`
 - Plan base: `2295fd6c430fc4a843d2da3e391fd0d48b902704`
-- Latest functional PR SHA: `5cb1ed35aec0ae8a99712a41143b5f6c7067e495` (PR #1
-  to protected `staging`); its complete CI evidence is run `31093226087`
-- State: GitHub protective controls were configured; Foundation CI passed all
-  eight required checks. The short-viewport login defect, formatting debt,
-  coverage threshold, stale E2E assertions, and cold-runner restore-test
-  timeout were repaired without weakening gates. PR #1 remains blocked for
-  owner approval.
+- Remote PR SHA: `9af07ee9ee883d5813a3c2d1deb5e72d3af5fd20` (PR #1 to
+  protected `staging`); backup/restore runs are bound to that exact SHA.
+- Local Task 14 commits after the remote SHA: `11d92ec`, `42982af`, `3f1c80c`,
+  and `0c206ee`, plus the pending documentation closure commit. They have not
+  been pushed.
+- State: Task 14's immutable Production backup, recovery-only verification,
+  isolated Local restore, migration-zero replay, hosted inventory, Security
+  Advisor disposition, forward migration, generated types, and local gates are
+  complete. PR #1 remains open and must rerun all required checks plus exact-SHA
+  owner approval after the closure SHA is pushed.
 - Hosted scope still not executed: no Staging merge/deployment acceptance, DNS
   change, Supabase reset/migration, Candidate creation, Production promotion,
-  or hosted backup/restore. A Vercel Preview is not a Staging or Production
+  or Production release. A Vercel Preview is not a Staging or Production
   release.
 
 Use exact-path staging. Never use `git add -A`, destructive reset, broad restore,
@@ -738,14 +749,17 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- PR #1 needs owner review and approval before it may merge to `staging`.
-  Passing CI does not authorize a merge, a deploy, or any data-plane action.
+- The Task 14 closure SHA needs owner authorization to push. PR #1 then needs a
+  fresh complete CI run and exact-SHA owner approval before it may merge to
+  `staging`; older approval does not cover a changed head.
 - A fresh provider preflight is required on the day of each later hosted action;
   previously observed project/domain state is not durable evidence.
-- Real B2 backup automation is blocked by the currently over-privileged writer
-  and recovery keys. Rotate to the plan's least-privilege pair before a hosted
-  backup or restore drill. This is a safety prerequisite, not a reason to weaken
-  Object Lock or fall back to an unencrypted local-only backup.
+- Current Production's nine name-matched timestamp differences remain blocked
+  for in-place ledger repair. Task 15 must use the clean Candidate and replay the
+  frozen repository migration chain from zero.
+- Twenty-six stale `colorplay_restore_*` Docker networks predate the cleanup
+  fix. They are local-only cleanup debt and require explicit authorization for
+  bulk removal; new drills must not add another network.
 
 ### Later phases
 
