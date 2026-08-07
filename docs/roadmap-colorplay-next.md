@@ -44,7 +44,7 @@ batches. Each batch must pass its own Staging gate before Production promotion.
 | Phase | Scope                                         | Status                                              |
 | ----- | --------------------------------------------- | --------------------------------------------------- |
 | 0     | Environment and release foundation            | Foundation CI passed; PR #1 awaits owner approval   |
-| 1     | Admin identity and security core              | Decisions captured; spec not started                |
+| 1     | Admin identity and security core              | Design approved 2026-08-07; spec awaits owner review |
 | 2     | Content SSOT and version publishing           | Decisions captured; spec not started                |
 | 3     | Learning progression and assessment authority | Decisions captured; spec not started                |
 | 4     | Learning Hall and chapter experience          | Visual/product decisions captured; spec not started |
