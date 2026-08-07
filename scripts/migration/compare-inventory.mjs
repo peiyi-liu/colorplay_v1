@@ -50,10 +50,10 @@ function migrationVersion(filename) {
   return filename.slice(0, 14);
 }
 
-function isReviewedSchemaExclusion(exclusions, repoValue, targetValue) {
+function isReviewedHashExclusion(exclusions, kind, repoValue, targetValue) {
   return exclusions.some(
     (entry) =>
-      entry?.kind === 'schema_sha256' &&
+      entry?.kind === kind &&
       entry.repo_value === repoValue &&
       entry.target_value === targetValue &&
       typeof entry.reason === 'string' &&
@@ -63,17 +63,33 @@ function isReviewedSchemaExclusion(exclusions, repoValue, targetValue) {
   );
 }
 
-function isReviewedExtensionExclusion(exclusions, extension, direction) {
+function isReviewedNamedExclusion(exclusions, kind, key, value, direction) {
   return exclusions.some(
     (entry) =>
-      entry?.kind === 'extension' &&
-      entry.extension === extension &&
+      entry?.kind === kind &&
+      entry?.[key] === value &&
       entry.direction === direction &&
       typeof entry.reason === 'string' &&
       entry.reason.length >= 12 &&
       typeof entry.source === 'string' &&
       entry.source.startsWith('https://'),
   );
+}
+
+function isReviewedExtensionExclusion(exclusions, extension, direction) {
+  return isReviewedNamedExclusion(
+    exclusions,
+    'extension',
+    'extension',
+    extension,
+    direction,
+  );
+}
+
+function addManagedDrift(drift) {
+  if (!drift.some(({ class: value }) => value === CLASSES.managed)) {
+    drift.push({ class: CLASSES.managed });
+  }
 }
 
 function outputInsideRoot(path, root) {
@@ -154,26 +170,57 @@ async function main() {
 
   if (repo.schema_sha256 !== target.schema_sha256) {
     if (
-      isReviewedSchemaExclusion(
+      isReviewedHashExclusion(
         allowlist.exclusions,
+        'schema_sha256',
         repo.schema_sha256,
         target.schema_sha256,
       )
     ) {
-      drift.push({ class: CLASSES.managed });
+      addManagedDrift(drift);
     } else {
       fail('UNCLASSIFIED_SCHEMA_DRIFT');
     }
   }
   if (repo.generated_types_sha256 !== target.generated_types_sha256) {
-    fail('UNCLASSIFIED_SCHEMA_DRIFT');
+    if (
+      isReviewedHashExclusion(
+        allowlist.exclusions,
+        'generated_types_sha256',
+        repo.generated_types_sha256,
+        target.generated_types_sha256,
+      )
+    ) {
+      addManagedDrift(drift);
+    } else {
+      fail('UNCLASSIFIED_SCHEMA_DRIFT');
+    }
   }
+  const repoRoles = new Set(repo.custom_roles);
+  const targetRoles = new Set(target.custom_roles);
+  const roleDifferences = [
+    ...repo.custom_roles
+      .filter((role) => !targetRoles.has(role))
+      .map((role) => ({ role, direction: 'repo_only' })),
+    ...target.custom_roles
+      .filter((role) => !repoRoles.has(role))
+      .map((role) => ({ role, direction: 'target_only' })),
+  ];
   if (
-    JSON.stringify([...repo.custom_roles].sort()) !==
-    JSON.stringify([...target.custom_roles].sort())
+    roleDifferences.some(
+      ({ role, direction }) =>
+        !isReviewedNamedExclusion(
+          allowlist.exclusions,
+          'custom_role',
+          'role',
+          role,
+          direction,
+        ),
+    )
   ) {
     fail('UNCLASSIFIED_SCHEMA_DRIFT');
   }
+  if (roleDifferences.length > 0) addManagedDrift(drift);
   const repoExtensions = new Set(repo.extensions);
   const targetExtensions = new Set(target.extensions);
   const extensionDifferences = [
@@ -196,12 +243,7 @@ async function main() {
   ) {
     fail('UNCLASSIFIED_SCHEMA_DRIFT');
   }
-  if (
-    extensionDifferences.length > 0 &&
-    !drift.some(({ class: value }) => value === CLASSES.managed)
-  ) {
-    drift.push({ class: CLASSES.managed });
-  }
+  if (extensionDifferences.length > 0) addManagedDrift(drift);
 
   const blocking = drift.some(({ class: value }) => value !== CLASSES.managed);
   const result = {

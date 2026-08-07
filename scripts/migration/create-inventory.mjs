@@ -156,6 +156,10 @@ function sha256(contents) {
   return createHash('sha256').update(contents).digest('hex');
 }
 
+function normalizeSchemaDump(contents) {
+  return contents.replace(/^\\(?:un)?restrict[^\r\n]*(?:\r?\n|$)/gmu, '');
+}
+
 function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (!isRecord(value)) return value;
@@ -386,7 +390,9 @@ async function main() {
       hosted_ledger: [...input.hosted_ledger].sort((left, right) =>
         left.version.localeCompare(right.version),
       ),
-      schema_sha256: sha256(await readFile(input.schema_path)),
+      schema_sha256: sha256(
+        normalizeSchemaDump(await readFile(input.schema_path, 'utf8')),
+      ),
       generated_types_sha256: sha256(
         await readFile(input.generated_types_path),
       ),

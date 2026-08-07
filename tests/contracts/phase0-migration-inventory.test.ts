@@ -183,6 +183,59 @@ describe('migration inventory collector', () => {
       expect(result.stderr).toBe('MIGRATION_INVENTORY_INVALID\n');
     }
   });
+
+  it('removes pg_dump session guard tokens before hashing schema', async () => {
+    const fixture = await createFixtureInventory();
+    const input = JSON.parse(await readFile(fixture.inputPath, 'utf8')) as {
+      schema_path: string;
+    };
+    const canonicalSchema = 'create table public.safe();\n';
+
+    await writeFile(
+      input.schema_path,
+      `\\restrict first-random-token\n${canonicalSchema}\\unrestrict first-random-token\n`,
+    );
+    const first = await run(createScript, [
+      '--environment',
+      'local',
+      '--input',
+      fixture.inputPath,
+      '--migrations-root',
+      fixture.migrations,
+      '--output',
+      fixture.outputPath,
+      '--evidence-root',
+      root,
+    ]);
+    const firstInventory = JSON.parse(
+      await readFile(fixture.outputPath, 'utf8'),
+    ) as { schema_sha256: string };
+
+    await writeFile(
+      input.schema_path,
+      `\\restrict second-random-token\n${canonicalSchema}\\unrestrict second-random-token\n`,
+    );
+    const second = await run(createScript, [
+      '--environment',
+      'local',
+      '--input',
+      fixture.inputPath,
+      '--migrations-root',
+      fixture.migrations,
+      '--output',
+      fixture.outputPath,
+      '--evidence-root',
+      root,
+    ]);
+    const secondInventory = JSON.parse(
+      await readFile(fixture.outputPath, 'utf8'),
+    ) as { schema_sha256: string };
+
+    expect(first.code).toBe(0);
+    expect(second.code).toBe(0);
+    expect(firstInventory.schema_sha256).toBe(sha256(canonicalSchema));
+    expect(secondInventory.schema_sha256).toBe(sha256(canonicalSchema));
+  });
 });
 
 describe('migration inventory comparator', () => {
@@ -289,6 +342,49 @@ describe('migration inventory comparator', () => {
         direction: 'target_only',
         reason: 'Supabase managed extension',
         source: 'https://supabase.com/docs/guides/database/extensions',
+      },
+    ]);
+    expect(reviewed.result.code).toBe(0);
+    expect(reviewed.output?.drift).toEqual([
+      { class: 'supabase_managed_schema_extension_difference' },
+    ]);
+  });
+
+  it('requires an exact reviewed exclusion for generated managed types', async () => {
+    const targetHash = 'e'.repeat(64);
+    const without = await compare({}, { generated_types_sha256: targetHash });
+    expect(without.result.code).toBe(1);
+    expect(without.result.stderr).toBe('UNCLASSIFIED_SCHEMA_DRIFT\n');
+
+    const reviewed = await compare({}, { generated_types_sha256: targetHash }, [
+      {
+        kind: 'generated_types_sha256',
+        repo_value: sha256('export type Database = {};\n'),
+        target_value: targetHash,
+        reason: 'Supabase managed Auth and Storage type metadata',
+        source: 'https://supabase.com/docs/guides/storage/schema/design',
+      },
+    ]);
+    expect(reviewed.result.code).toBe(0);
+    expect(reviewed.output?.drift).toEqual([
+      { class: 'supabase_managed_schema_extension_difference' },
+    ]);
+  });
+
+  it('requires exact reviewed exclusions for provider-managed roles', async () => {
+    const targetRoles = ['admin_role', 'cli_login_postgres', 'teacher_role'];
+    const without = await compare({}, { custom_roles: targetRoles });
+    expect(without.result.code).toBe(1);
+    expect(without.result.stderr).toBe('UNCLASSIFIED_SCHEMA_DRIFT\n');
+
+    const reviewed = await compare({}, { custom_roles: targetRoles }, [
+      {
+        kind: 'custom_role',
+        role: 'cli_login_postgres',
+        direction: 'target_only',
+        reason: 'Supabase CLI managed passwordless login role',
+        source:
+          'https://supabase.com/docs/guides/troubleshooting/supabase-cli-failed-sasl-auth-or-invalid-scram-server-final-message',
       },
     ]);
     expect(reviewed.result.code).toBe(0);

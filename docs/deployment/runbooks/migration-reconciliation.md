@@ -19,6 +19,10 @@ The gate blocks hosted-only, repo-only, semantically renamed/versioned, and
 unclassified schema drift. A Supabase-managed schema difference is allowed only
 after adding its exact before/after hashes, reason, and authoritative HTTPS
 source to `docs/deployment/provider-managed-exclusions.json` in review.
+Generated types and custom-role differences follow the same fail-closed rule:
+the allowlist must bind the exact hash pair or exact role and direction. Schema
+hashing removes PostgreSQL 17's random `\\restrict`/`\\unrestrict` session guard
+tokens before comparison; no DDL is removed or normalized.
 
 Never rewrite migration history or alter the hosted ledger merely to make the
 comparison green. Resolve formal capability drift with a reviewed forward
