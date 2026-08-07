@@ -243,6 +243,16 @@ git commit -m "test(phase1): prove GoTrue MFA capability gate for admin security
 
 spec §4.1、§5.1、§6.3、§13(migration 順序:principals/identities → sessions/invitations)。
 
+> **2026-08-07 plan amendment(Task 1 follow-up 批次核准):** 047 pgTAP 由
+> 「存在性檢查」提升為「行為式保障」,對齊 spec §4.1(lifecycle/factor 綁定)、
+> §5.1(單一 active session、8 小時 absolute expiry)、§6.3(default-deny)、
+> §14.1(pgTAP 不變量)。同時把兩個 service-only session helpers
+> (`create_admin_identity_session`、`close_admin_identity_session`)提前到本
+> task 的 migration 000200 交付,Task 5 的 svc 函式改為包裝/重用它們。
+> 修訂指示中的簡稱表名對應本計畫正式表名:identities →
+> `admin_security_identities`、invitations → `admin_invitations`、
+> events/principals → `admin_audit_principals`。
+
 **Files:**
 - Create: `supabase/migrations/20260808000100_admin_identity_tables.sql`
 - Create: `supabase/migrations/20260808000200_admin_session_invitation_tables.sql`
@@ -250,54 +260,75 @@ spec §4.1、§5.1、§6.3、§13(migration 順序:principals/identities → ses
 
 **Interfaces:**
 - Consumes:`auth.users`、`public.profiles`(`role` enum 已含 `admin`,spec §13)。
-- Produces:tables `admin_audit_principals`、`admin_security_identities`、`admin_sessions`、`admin_invitations`;enum `admin_identity_state`、`admin_invitation_status`;function `admin_internal_lifecycle_lock()`。後續 task 依賴的欄位名以下列 SQL 為準。
+- Produces:tables `admin_audit_principals`、`admin_security_identities`、`admin_sessions`、`admin_invitations`;enum `admin_identity_state`、`admin_invitation_status`;functions `admin_internal_lifecycle_lock()`、`create_admin_identity_session(...)`、`close_admin_identity_session(...)`(皆 service-only)。後續 task 依賴的欄位名以下列 SQL 為準。
 
 - [ ] **Step 1: 寫失敗的 pgTAP 測試**
 
+047 依下列 TC 清單撰寫;行為式 TC 由測試開頭以 superuser(pgTAP 執行角色)
+插入合成 `auth.users`/principal/identity fixture rows 後執行,全檔包在
+`begin … rollback` 內不留資料。`plan(n)` 以最終 assertion 數為準
+(依下表估計 60,實作時重新核對)。
+
 ```sql
 -- supabase/tests/047_admin_identity_tables.test.sql
--- Phase 1 控制表 I:存在性、default-deny、單一 active session、狀態機約束。
+-- Phase 1 控制表 I:存在性、default-deny 矩陣、單一 active session、
+-- 8h expiry 邊界、identity/factor 綁定、邀請 token 安全、service-only helpers。
 begin;
-select plan(14);
+select plan(60);  -- 實作時依 TC 清單重新核對
 
-select has_table('public', 'admin_audit_principals', 'principals table exists');
-select has_table('public', 'admin_security_identities', 'identities table exists');
-select has_table('public', 'admin_sessions', 'sessions table exists');
-select has_table('public', 'admin_invitations', 'invitations table exists');
+-- TC-047-01 存在性(6):has_table ×4;admin_identity_state 恰 4 值;
+--   admin_invitation_status 恰 3 值。
 
--- default-deny:anon / authenticated 對四張表無任何 SELECT 權(spec §6.3)
-select ok(not has_table_privilege('anon', 'public.admin_audit_principals', 'SELECT'),
-  'anon cannot select principals');
-select ok(not has_table_privilege('authenticated', 'public.admin_security_identities', 'SELECT'),
-  'authenticated cannot select identities');
-select ok(not has_table_privilege('authenticated', 'public.admin_sessions', 'SELECT'),
-  'authenticated cannot select sessions');
-select ok(not has_table_privilege('authenticated', 'public.admin_invitations', 'SELECT'),
-  'authenticated cannot select invitations');
-select ok(not has_table_privilege('authenticated', 'public.admin_sessions', 'INSERT'),
-  'authenticated cannot insert sessions');
+-- TC-047-02 default-deny 矩陣(32):4 表 × {SELECT,INSERT,UPDATE,DELETE}
+--   × {anon,authenticated} 全部 has_table_privilege = false(spec §6.3)。
 
-select is(
-  (select count(*)::int from pg_enum e
-     join pg_type t on t.oid = e.enumtypid where t.typname = 'admin_identity_state'),
-  4, 'identity state enum has exactly four states');
+-- TC-047-03 單一 active session(3):
+--   a) has_index admin_sessions_one_active_idx;
+--   b) 同 identity 第二筆 revoked_at is null 直接 INSERT →
+--      throws_ok '23505'(partial unique index 違反);
+--   c) 既有列 revoked 後再插新 active 列 → lives_ok。
 
--- 單一 active session:同 admin 第二筆未撤銷 row 必須違反 partial unique index
-select has_index('public', 'admin_sessions', 'admin_sessions_one_active_idx',
-  'partial unique index for single active session exists');
+-- TC-047-04 8 小時 absolute expiry 邊界(3):
+--   a) absolute_expires_at = created_at + interval '8 hours' → lives_ok;
+--   b) created_at + '8 hours' - '1 second' → throws_ok '23514';
+--   c) created_at + '8 hours' + '1 second' → throws_ok '23514'。
 
--- lifecycle advisory lock helper 存在且不可被 authenticated 執行
-select has_function('public', 'admin_internal_lifecycle_lock', 'lock helper exists');
-select ok(not has_function_privilege('authenticated',
-  'public.admin_internal_lifecycle_lock()', 'EXECUTE'),
-  'authenticated cannot execute lifecycle lock helper');
-select ok(not has_function_privilege('anon',
-  'public.admin_internal_lifecycle_lock()', 'EXECUTE'),
-  'anon cannot execute lifecycle lock helper');
+-- TC-047-05 identity/factor 綁定(4):
+--   a) state='active' 且 bound_factor_id null → throws_ok '23514';
+--   b) state='recovery_pending' 且 bound_factor_id 非 null → throws_ok '23514';
+--   c) state='active_pending_mfa' 且 bound_factor_id 非 null → throws_ok '23514';
+--   d) active→recovery_pending 且同語句清空 bound_factor_id → lives_ok。
+
+-- TC-047-06 邀請 token 安全(4):
+--   a) 相同 token_hash 第二筆 → throws_ok '23505';
+--   b) expires_at ≠ created_at + '72 hours' → throws_ok '23514';
+--   c) accepted_at > expires_at(過期兌換)→ throws_ok '23514'
+--      (accepted_within_validity 約束);
+--   d) accepted_at ≤ expires_at 且 status='accepted' → lives_ok。
+
+-- TC-047-07 service-only helpers(8):
+--   a) has_function ×3(admin_internal_lifecycle_lock、
+--      create_admin_identity_session、close_admin_identity_session);
+--   b) anon/authenticated 對 create/close 均無 EXECUTE(4 assertions);
+--   c) create 冪等/supersede:對同一 active identity 連呼兩次
+--      (不同 auth_session_id)後,active 列數恰為 1 且為第二次的
+--      auth_session_id;
+--   d) close 冪等:對同一 session 連呼兩次 → lives_ok,第二次回 false,
+--      列維持 revoked。
 
 select * from finish();
 rollback;
 ```
+
+| TC | 對齊 spec | 預期 SQL 行為 |
+|---|---|---|
+| 047-01 | §4.1/§4.3 | 結構存在;enum 值數精確 |
+| 047-02 | §6.3 | 4 表 × 4 動作 × 2 角色全 deny |
+| 047-03 | §5.1/§2.3 | 第二筆 active 觸發 23505;revoke 後可續建 |
+| 047-04 | §5.1 | 8h 等式檢查;±1 秒皆 23514 |
+| 047-05 | §4.1 | active 必有 factor;recovery/pending 必清空 |
+| 047-06 | §4.3 | token_hash 唯一;72h 等式;過期不可 accepted |
+| 047-07 | §5.1/§6 | helpers 僅 service;create supersede 冪等;close 冪等 |
 
 - [ ] **Step 2: 執行確認失敗**
 
@@ -409,13 +440,101 @@ create table public.admin_invitations (
   revoked_at timestamptz,
   -- 72 小時一次性(spec §4.3);明文 token 只在簽發 response 出現一次
   constraint invitation_expiry_is_72h
-    check (expires_at = created_at + interval '72 hours')
+    check (expires_at = created_at + interval '72 hours'),
+  -- 2026-08-07 amendment:過期不可生效、狀態與時間戳一致(fail closed)
+  constraint accepted_within_validity
+    check (accepted_at is null or accepted_at <= expires_at),
+  constraint status_matches_timestamps
+    check (
+      (status = 'pending' and accepted_at is null and revoked_at is null)
+      or (status = 'accepted' and accepted_at is not null and revoked_at is null)
+      or (status = 'revoked' and revoked_at is not null and accepted_at is null)
+    )
 );
 
 alter table public.admin_sessions enable row level security;
 alter table public.admin_invitations enable row level security;
 revoke all on public.admin_sessions from anon, authenticated;
 revoke all on public.admin_invitations from anon, authenticated;
+
+-- 2026-08-07 amendment:service-only session helpers(Task 5 svc 函式包裝重用;
+-- 預期 denial 以 null/false 回傳,不 RAISE,typed outcome 由呼叫端組裝)。
+create function public.create_admin_identity_session(
+  p_admin_user_id uuid,
+  p_auth_session_id uuid,
+  p_bound_factor_id uuid,
+  p_device_summary text,
+  p_correlation_id text
+) returns uuid
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_existing uuid;
+  v_id uuid;
+begin
+  perform public.admin_internal_lifecycle_lock();
+
+  -- 冪等:同一 identity + auth session + correlation 重送回原 active session
+  select id into v_existing
+    from public.admin_sessions
+   where admin_user_id = p_admin_user_id
+     and revoked_at is null
+     and auth_session_id = p_auth_session_id
+     and correlation_id is not distinct from p_correlation_id;
+  if v_existing is not null then
+    return v_existing;
+  end if;
+
+  -- supersede:同交易撤銷既有 active 列(spec §5.3)
+  update public.admin_sessions
+     set revoked_at = now(), revoke_reason = 'superseded'
+   where admin_user_id = p_admin_user_id
+     and revoked_at is null;
+
+  -- 只有 active 且 factor 綁定相符的 identity 能建立 session(spec §4.1/§5.1)
+  insert into public.admin_sessions
+    (admin_user_id, audit_principal_id, auth_session_id,
+     bound_factor_id_snapshot, absolute_expires_at,
+     device_summary, correlation_id)
+  select i.admin_user_id, i.audit_principal_id, p_auth_session_id,
+         p_bound_factor_id, now() + interval '8 hours',
+         left(p_device_summary, 120), p_correlation_id
+    from public.admin_security_identities i
+   where i.admin_user_id = p_admin_user_id
+     and i.state = 'active'
+     and i.bound_factor_id = p_bound_factor_id
+  returning id into v_id;
+
+  return v_id;  -- 不合格回 null(fail closed,不 RAISE)
+end;
+$$;
+
+create function public.close_admin_identity_session(
+  p_session_id uuid,
+  p_revoke_reason text
+) returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  update public.admin_sessions
+     set revoked_at = now(),
+         revoke_reason = coalesce(p_revoke_reason, 'revoked_by_admin')
+   where id = p_session_id
+     and revoked_at is null;
+  return found;  -- 已撤銷/不存在回 false,冪等不丟錯
+end;
+$$;
+
+revoke execute on function
+  public.create_admin_identity_session(uuid, uuid, uuid, text, text)
+  from public, anon, authenticated;
+revoke execute on function
+  public.close_admin_identity_session(uuid, text)
+  from public, anon, authenticated;
 ```
 
 - [ ] **Step 5: Reset 資料庫並確認測試通過**
@@ -426,6 +545,22 @@ pnpm test:db
 ```
 
 Expected:reset 重放全部 migrations 無錯;047 全數通過(`Result: PASS` 區段含 047)。
+
+**預估工時(2026-08-07 amendment 後):** 原估 0.5 天 → **1 天**。行為式 TC
+需要 superuser fixture 佈建(合成 `auth.users` 列)、23505/23514 錯誤碼斷言
+與 helper 冪等雙呼叫場景,較存在性檢查工作量約增一倍。
+
+**Risk note(2026-08-07 amendment 後):**
+1. 行為式 INSERT/UPDATE TC 依賴以 superuser 直寫控制表;它們驗證的是約束與
+   helper,不代表 anon/authenticated 有任何寫入路徑(TC-047-02 反向保證)。
+2. `create_admin_identity_session` 的 8h expiry 由 `now() + interval '8 hours'`
+   與 `absolute_expiry_is_8h` 約束共同保證;兩者都依交易內 `now()` 穩定性,
+   TC-047-04 邊界值同時覆蓋等式兩側。
+3. helpers 提前至 Task 2 交付後,Task 5 svc 函式必須重用而非重複實作;
+   若 Task 5 發現簽名不足(例如需回傳 receipt 綁定欄位),以 additive 參數
+   /新 wrapper 處理,不回頭改本 task 已 commit 的 migration。
+4. `status_matches_timestamps` 禁止 accepted 後 revoke;錯誤入職的補償路徑
+   是 `deactivate_admin`(spec §8.1),不是改寫邀請列。
 
 - [ ] **Step 6: Commit**
 

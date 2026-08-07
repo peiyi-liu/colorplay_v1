@@ -459,7 +459,7 @@ importers:
         specifier: ^13.4.0
         version: 13.4.0(yauzl@2.10.0)
       otpauth:
-        specifier: ^9.5.1
+        specifier: ^9.3.4
         version: 9.5.1
       prettier:
         specifier: ^3.9.5
