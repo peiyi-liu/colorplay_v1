@@ -2,13 +2,15 @@
 
 ## Outcome
 
-Task 14 passed for the approved two-slot Candidate path. The first real
-Production backup and isolated Local restore drill passed at frozen source SHA
-`9af07ee9ee883d5813a3c2d1deb5e72d3af5fd20`. Current Production remains
-unchanged. Its historical ledger is intentionally ineligible for in-place
-repair because nine migrations have semantically equivalent names under
-different timestamps; Task 15 must replay the repository chain from migration
-zero on the clean Candidate.
+Task 14 is **reopened and blocked from Task 15** after independent review. The
+first real Production backup and isolated Local restore drill passed at frozen
+source SHA `9af07ee9ee883d5813a3c2d1deb5e72d3af5fd20`, but those runs predate the
+trusted-harness, provider-read lifecycle, role/Auth/authorization, and
+application-startup checks now required by the corrected implementation.
+Current Production remains unchanged. Its historical ledger remains ineligible
+for in-place repair because nine migrations have semantically equivalent names
+under different timestamps. After the corrected Task 14 gate passes, Task 15
+must replay the repository chain from migration zero on the clean Candidate.
 
 ## Backup and restore evidence
 
@@ -96,6 +98,34 @@ Advisor back with zero unresolved error before Staging acceptance.
   canonicalization.
 - `3f1c80c` — bounded restore network cleanup.
 - `0c206ee` — isolated generated database types refresh.
+- `4a5044a` — trusted restore harness, complete recoverability inventory,
+  provider-read B2 lifecycle verification, and aggregate inventory disposition.
+
+## Independent review remediation
+
+The complete-range review found that the earlier restore workflow checked out
+the caller-supplied backup SHA while recovery secrets were job-wide, database
+restore stderr could reach Actions logs, the restore comparison omitted custom
+roles/Auth/authorization semantics and application startup, and the lifecycle
+label was declared rather than read from Backblaze. Those findings invalidate
+the earlier completion claim even though runs `31158344282` and `31158754421`
+were green.
+
+The corrected implementation executes recovery only from protected `main` or
+`staging` workflow code, binds the decrypted manifest to the requested prefix
+and source SHA, scopes recovery secrets to the download step, captures restore
+errors in mode-0600 temporary logs, and emits only sanitized failure sentinels.
+It compares custom role attributes, aggregate Auth invariants, a deterministic
+RLS/policy/ACL/function-authorization hash, row counts, migrations and Storage;
+then probes anonymous/authenticated visibility and starts the built application
+locally. It also reads the actual `production/` Backblaze lifecycle rule and
+requires exactly 30 days uploading-to-hiding plus 1 day hiding-to-delete, while
+recording sanitized aggregate-count/Auth/Storage disposition.
+
+The corrected hosted proof cannot be produced from the unprotected feature
+branch. It requires owner-authorized push, protected CI/approval and merge to
+`staging`, a recovery key that includes `listBuckets`, then fresh backup and
+restore runs from the protected ref.
 
 ## Verification
 
@@ -113,6 +143,10 @@ Advisor back with zero unresolved error before Staging acceptance.
 
 No commit in this task has been pushed. No DNS, Vercel deployment, Candidate,
 Staging merge, Production migration, reset, promotion, or product-data write was
-performed. The next action is owner authorization to push the exact Task 14
-closure SHA, rerun protected CI/approval, and only then begin Task 15 on the
-clean Candidate.
+performed. Task 14 is not complete and Task 15 must not start. Local coverage
+and restore gates also require clearing the verified-empty disposable
+`supabase_network_colorplay_restore_*` subnet debt with explicit owner
+authorization. After local gates pass, the next hosted actions are owner
+authorization to push the exact remediation SHA, rerun protected CI/approval,
+merge to protected `staging`, rotate the recovery credential to add only the
+required `listBuckets` capability, and rerun both corrected hosted workflows.

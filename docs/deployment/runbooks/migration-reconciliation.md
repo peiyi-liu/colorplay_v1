@@ -15,6 +15,12 @@ Pass the sanitized JSON, schema file, generated types file, and frozen migration
 directory to `pnpm phase0:migration:inventory`. Compare the Local replay inventory
 and hosted inventory with `pnpm phase0:migration:compare`.
 
+The comparison result must retain a sanitized disposition of aggregate table
+counts, Auth user count, and Storage bucket/object/byte totals. Data-count
+differences between an empty replay and the legacy Hosted project are expected
+and are not schema authority, but missing aggregate table keys are unclassified
+drift and block the gate.
+
 The gate blocks hosted-only, repo-only, semantically renamed/versioned, and
 unclassified schema drift. A Supabase-managed schema difference is allowed only
 after adding its exact before/after hashes, reason, and authoritative HTTPS
@@ -35,3 +41,12 @@ in-place use. It does not authorize `migration repair`, ledger reuse, or a reset
 of that project. Task 15 must replay the frozen repository chain from migration
 zero on the clean Candidate; any hosted-only, repo-only, name mismatch, or
 unclassified schema/type/role/extension difference still blocks that path.
+
+Task 14 recoverability is complete only when the protected recovery workflow
+compares custom role attributes, Auth aggregate/orphan invariants,
+RLS/policy/ACL/function authorization hash, row counts, migration hash and
+Storage, runs anonymous/authenticated denial probes, and starts the built
+application locally. Recovery secrets must never be job-wide or exposed to a
+caller-supplied checkout SHA. Backblaze lifecycle evidence must be read from
+the provider and prove the exact `production/` 30-day-hide/1-day-delete rule;
+a manifest label alone is not evidence.

@@ -1,11 +1,13 @@
 # ColorPlay Current Program
 
-- Status: TASK 14 COMPLETE FOR THE TWO-SLOT CANDIDATE PATH — first immutable
-  backup, isolated restore, and migration classification passed; no Staging
-  merge, Candidate, DNS change, Production migration, or release has occurred
+- Status: TASK 14 REOPENED — corrected recoverability controls are local, but
+  local cleanup/gates and fresh protected hosted evidence remain; Task 15 is
+  blocked and no Staging merge, Candidate, DNS change, Production migration, or
+  release has occurred
 - Last updated: 2026-08-07 (Asia/Taipei)
-- Current phase: Phase 0 Task 14 closure on `phase0/release-foundation`; the
-  exact next human action is authorization to push the reviewed closure SHA
+- Current phase: Phase 0 Task 14 remediation on `phase0/release-foundation`;
+  the exact next human action is authorization to remove 27 verified-empty
+  disposable restore networks so local coverage/restore gates can complete
 - Canonical entry point: this file
 - Historical task ledger: `.superpowers/sdd/progress.md`
 
@@ -23,26 +25,31 @@ as a completed production release.
 
 ## Immediate next action
 
-Review the Task 14 closure diff, then obtain explicit owner authorization before
-pushing the exact branch SHA. PR #1 is still open against protected `staging`;
-its remote head remains frozen backup SHA
+Authorize removal of only the 27 verified-empty
+`supabase_network_colorplay_restore_<pid>` networks, then complete local
+coverage/restore gates and strict review. Do not push until that evidence is
+green. PR #1 is still open against protected `staging`; its remote head remains frozen backup SHA
 `9af07ee9ee883d5813a3c2d1deb5e72d3af5fd20`, while the Task 14 remediation and
 closure commits remain local. The protected CI and exact-SHA owner approval must
 be rerun after that push; no agent should merge the PR merely because the older
 run passed.
 
-Task 14 evidence: backup run
+Historical Task 14 evidence: backup run
 [`31158344282`](https://github.com/peiyi-liu/colorplay_v1/actions/runs/31158344282)
 and isolated restore run
 [`31158754421`](https://github.com/peiyi-liu/colorplay_v1/actions/runs/31158754421)
-passed at `9af07ee`. Migration reconciliation found 57/57 entries: 48 exact and
+passed at `9af07ee`, but independent review found those workflows incomplete,
+so they no longer close Task 14. Migration reconciliation found 57/57 entries: 48 exact and
 9 name-matched historical timestamp differences, with zero hosted-only or
 repo-only migrations. The comparator remains fail-closed for in-place reuse;
 Task 15 may proceed only by replaying migration zero on the clean Candidate.
 
-After the new SHA passes protected CI and approval, collect a fresh provider
-preflight before Task 15. DNS, Staging deployment/acceptance, Candidate replay,
-Production promotion, and Production data-plane mutation remain unexecuted.
+After the corrected SHA passes local gates, it needs owner-authorized push,
+protected CI/approval, and merge to `staging`. Rotate the recovery key to add
+only `listBuckets`, then rerun corrected backup/lifecycle/restore proof from the
+protected ref before Task 15. DNS, Staging deployment/acceptance, Candidate
+replay, Production promotion, and Production data-plane mutation remain
+unexecuted.
 
 ## Approved program structure
 
@@ -51,7 +58,7 @@ batches. Each batch must pass its own Staging gate before Production promotion.
 
 | Phase | Scope                                         | Status                                              |
 | ----- | --------------------------------------------- | --------------------------------------------------- |
-| 0     | Environment and release foundation            | Task 14 complete; closure push/CI approval pending  |
+| 0     | Environment and release foundation            | Task 14 reopened; local and hosted proof pending    |
 | 1     | Admin identity and security core              | Decisions captured; spec not started                |
 | 2     | Content SSOT and version publishing           | Decisions captured; spec not started                |
 | 3     | Learning progression and assessment authority | Decisions captured; spec not started                |
@@ -730,13 +737,13 @@ Do not overwrite, stash, reset, or accidentally stage unrelated changes.
 - Remote PR SHA: `9af07ee9ee883d5813a3c2d1deb5e72d3af5fd20` (PR #1 to
   protected `staging`); backup/restore runs are bound to that exact SHA.
 - Local Task 14 commits after the remote SHA: `11d92ec`, `42982af`, `3f1c80c`,
-  and `0c206ee`, plus the pending documentation closure commit. They have not
-  been pushed.
-- State: Task 14's immutable Production backup, recovery-only verification,
-  isolated Local restore, migration-zero replay, hosted inventory, Security
-  Advisor disposition, forward migration, generated types, and local gates are
-  complete. PR #1 remains open and must rerun all required checks plus exact-SHA
-  owner approval after the closure SHA is pushed.
+  `0c206ee`, `04d0a3c`, and `4a5044a`, plus pending follow-up corrections. They
+  have not been pushed.
+- State: migration reconciliation and Security Advisor remediation are
+  classified, and the corrected restore/lifecycle implementation is local.
+  Task 14 remains open until local Task 12-level gates pass and fresh corrected
+  backup/restore evidence runs from protected `staging`. PR #1 must rerun all
+  required checks plus exact-SHA owner approval after the final SHA is pushed.
 - Hosted scope still not executed: no Staging merge/deployment acceptance, DNS
   change, Supabase reset/migration, Candidate creation, Production promotion,
   or Production release. A Vercel Preview is not a Staging or Production
@@ -749,17 +756,23 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- The Task 14 closure SHA needs owner authorization to push. PR #1 then needs a
-  fresh complete CI run and exact-SHA owner approval before it may merge to
-  `staging`; older approval does not cover a changed head.
+- Twenty-seven verified-empty disposable restore networks currently exhaust
+  the local Docker subnet pool. Exact removal requires owner authorization;
+  no other Docker resource is in scope.
+- After local gates pass, the Task 14 remediation SHA needs owner authorization
+  to push. PR #1 then needs a fresh complete CI run and exact-SHA owner approval
+  before it may merge to `staging`; older approval does not cover a changed
+  head.
+- The Production recovery key needs least-privilege rotation to add
+  `listBuckets`, because actual lifecycle metadata is now read with the Native
+  Backblaze API. Do not expose or paste the credential.
 - A fresh provider preflight is required on the day of each later hosted action;
   previously observed project/domain state is not durable evidence.
 - Current Production's nine name-matched timestamp differences remain blocked
   for in-place ledger repair. Task 15 must use the clean Candidate and replay the
   frozen repository migration chain from zero.
-- Twenty-six stale `colorplay_restore_*` Docker networks predate the cleanup
-  fix. They are local-only cleanup debt and require explicit authorization for
-  bulk removal; new drills must not add another network.
+- Fresh corrected backup/lifecycle/restore runs must originate from protected
+  `staging`; the earlier feature-branch runs remain historical evidence only.
 
 ### Later phases
 
