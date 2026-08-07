@@ -45,11 +45,10 @@ temporary_root="$(mktemp -d "${TMPDIR:-/tmp}/colorplay-restore.XXXXXXXX")"
 restore_workdir="$temporary_root/workdir"
 restore_project_id="colorplay_restore_${$}"
 restore_database='colorplay_restore_target'
-stack_started='false'
 started_at="$(date +%s)"
 
 cleanup() {
-  if [[ "$stack_started" == 'true' && "$restore_project_id" == colorplay_restore_* ]]; then
+  if [[ "$restore_project_id" == colorplay_restore_* ]]; then
     while IFS= read -r container; do
       [[ -n "$container" && "$container" == supabase_*_"$restore_project_id" ]] || continue
       docker rm --force "$container" >/dev/null 2>&1 || true
@@ -58,6 +57,8 @@ cleanup() {
         --filter "label=com.supabase.cli.project=$restore_project_id" \
         --format '{{.Names}}'
     )
+    docker network rm "supabase_network_$restore_project_id" \
+      >/dev/null 2>&1 || true
   fi
   if [[ "$temporary_root" == "${TMPDIR:-/tmp}/colorplay-restore."* ]]; then
     rm -rf "$temporary_root"
@@ -153,7 +154,6 @@ await writeFile(path, config, 'utf8');
 NODE
 
 pnpm --dir "$project_root" exec supabase start --workdir "$restore_workdir" >/dev/null 2>&1
-stack_started='true'
 database_container="supabase_db_$restore_project_id"
 [[ "$database_container" == supabase_db_colorplay_restore_* ]] || fail 'RESTORE_TARGET_INVALID'
 [[ "$restore_database" == 'colorplay_restore_target' ]] || fail 'RESTORE_TARGET_INVALID'

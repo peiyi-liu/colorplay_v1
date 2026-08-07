@@ -125,6 +125,9 @@ describe('isolated Local restore', () => {
       'label=com.supabase.cli.project=$restore_project_id',
     );
     expect(source).toContain('docker rm --force "$container"');
+    expect(source).toContain(
+      'docker network rm "supabase_network_$restore_project_id"',
+    );
     expect(source).toContain('supabase_*_"$restore_project_id"');
     expect(source).toContain(
       '[[ "$temporary_root" == "${TMPDIR:-/tmp}/colorplay-restore."* ]]',
