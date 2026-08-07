@@ -4,7 +4,7 @@
 -- TC 編號對齊 implementation plan Task 2(2026-08-07 amendment)。
 begin;
 set local search_path = public, extensions;
-select plan(70);
+select plan(74);
 
 -- ---------------------------------------------------------------------------
 -- TC-047-01 存在性(6)
@@ -281,7 +281,7 @@ select lives_ok(
   'acceptance within validity is accepted');
 
 -- ---------------------------------------------------------------------------
--- TC-047-07 service-only helpers(18)
+-- TC-047-07 service-only helpers(20)
 -- ---------------------------------------------------------------------------
 select has_function('public', 'admin_internal_lifecycle_lock',
   array[]::name[], 'lifecycle lock helper exists');
@@ -309,6 +309,12 @@ select ok(not has_function_privilege('anon',
 select ok(not has_function_privilege('authenticated',
   'public.close_admin_identity_session(uuid, text)', 'EXECUTE'),
   'authenticated cannot execute close session helper');
+select ok(has_function_privilege('service_role',
+  'public.create_admin_identity_session(uuid, uuid, uuid, text, text)', 'EXECUTE'),
+  'service_role can execute create session helper');
+select ok(has_function_privilege('service_role',
+  'public.close_admin_identity_session(uuid, text)', 'EXECUTE'),
+  'service_role can execute close session helper');
 
 select ok(
   public.create_admin_identity_session(
@@ -387,6 +393,21 @@ select is(
     where admin_user_id = 'a0000000-0000-0000-0000-000000000003'
       and revoked_at is null),
   0, 'no active session remains after close');
+
+-- ---------------------------------------------------------------------------
+-- TC-047-08 principal mapping 完整性(2)
+-- ---------------------------------------------------------------------------
+select throws_ok(
+  $$insert into public.admin_audit_principals (id, user_id)
+    values ('b0000000-0000-0000-0000-0000000000aa', null)$$,
+  '23514',
+  null,
+  'a non-tombstoned principal without a user mapping is rejected');
+
+select lives_ok(
+  $$insert into public.admin_audit_principals (id, user_id, tombstoned_at)
+    values ('b0000000-0000-0000-0000-0000000000ab', null, now())$$,
+  'a tombstoned principal with a cleared mapping is accepted');
 
 select * from finish();
 rollback;

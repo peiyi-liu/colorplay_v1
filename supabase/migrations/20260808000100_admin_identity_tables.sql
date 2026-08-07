@@ -10,8 +10,9 @@ create table public.admin_audit_principals (
   user_id uuid unique references auth.users (id),
   created_at timestamptz not null default now(),
   tombstoned_at timestamptz,
+  -- 非 tombstoned 的 principal 必須保有 user mapping;tombstone 時必清空
   constraint tombstone_clears_mapping
-    check (tombstoned_at is null or user_id is null)
+    check ((tombstoned_at is null) = (user_id is not null))
 );
 
 create table public.admin_security_identities (

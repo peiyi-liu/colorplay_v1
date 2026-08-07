@@ -148,3 +148,10 @@ revoke execute on function
 revoke execute on function
   public.close_admin_identity_session(uuid, text)
   from public, anon, authenticated;
+-- service-only 的正向授權:Edge/受保護 job 以 service_role 呼叫
+grant execute on function
+  public.create_admin_identity_session(uuid, uuid, uuid, text, text)
+  to service_role;
+grant execute on function
+  public.close_admin_identity_session(uuid, text)
+  to service_role;
