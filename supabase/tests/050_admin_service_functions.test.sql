@@ -1,6 +1,6 @@
 -- supabase/tests/050_admin_service_functions.test.sql
 begin;
-select plan(30);
+select plan(33);
 
 -- 種一個 admin 身分供流程測試
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password,
@@ -110,6 +110,26 @@ select is((select count(*)::int from public.admin_audit_events
     and actor_type = 'admin' and actor_principal_id is not null
     and target_principal_id is not null), 4,
   'each mint denial audited with admin actor and target evidence');
+
+-- Receipt-level replay/conflict(Codex P2 guard)
+select is(((public.svc_admin_issue_command_receipt(
+  '50000000-0000-0000-0000-000000000001',
+  '50000000-0000-0000-0000-0000000000e2'::uuid,
+  'deactivate_admin', 'idem-1', sha256('{"target":"x"}'::bytea),
+  '50000000-0000-0000-0000-0000000000aa', true))->>'receipt_id')::uuid,
+  (select id from public.admin_command_authorizations
+    where idempotency_key = 'idem-1' and consumed_at is null
+    order by issued_at desc limit 1),
+  'retry with same key and hash replays the live receipt');
+select is((select count(*)::int from public.admin_command_authorizations
+  where idempotency_key = 'idem-1'), 1, 'no second live receipt is minted');
+select is((public.svc_admin_issue_command_receipt(
+  '50000000-0000-0000-0000-000000000001',
+  '50000000-0000-0000-0000-0000000000e2'::uuid,
+  'deactivate_admin', 'idem-1', sha256('{"other":"y"}'::bytea),
+  '50000000-0000-0000-0000-0000000000aa', true))->>'code',
+  'IDEMPOTENCY_CONFLICT',
+  'same key with a different request hash is rejected at receipt level');
 
 -- MFA lockout:第 5 次連續失敗鎖定並入帳;鎖定中 probe 亦回 MFA_LOCKED
 select public.svc_admin_record_totp_outcome(

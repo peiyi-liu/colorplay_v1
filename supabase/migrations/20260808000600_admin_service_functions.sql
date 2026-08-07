@@ -64,6 +64,7 @@ declare
   v_session public.admin_sessions;
   v_existing public.admin_command_executions;
   v_receipt_id uuid;
+  v_live_receipt public.admin_command_authorizations;
 begin
   perform public.admin_internal_lifecycle_lock();
   select * into v_identity from public.admin_security_identities
@@ -103,6 +104,27 @@ begin
     if v_existing.request_hash = p_request_hash then
       return jsonb_build_object('outcome', 'replayed',
         'result', v_existing.redacted_result_receipt);
+    end if;
+    return public.admin_internal_service_deny('service/issue_command_receipt',
+      'IDEMPOTENCY_CONFLICT', p_command_name, 'command_receipt',
+      'admin', v_identity.audit_principal_id, v_identity.audit_principal_id);
+  end if;
+
+  -- Receipt-level replay(Codex P2):執行列尚未寫入前的 timeout 重試,
+  -- 同 key 同 hash 一律回原張未消耗未過期 receipt,不得鑄第二張活 receipt;
+  -- 同 key 不同 hash 在受理層即衝突。
+  select * into v_live_receipt from public.admin_command_authorizations
+    where actor_principal_id = v_identity.audit_principal_id
+      and command_name = p_command_name
+      and idempotency_key = p_idempotency_key
+      and consumed_at is null and now() < expires_at
+    order by issued_at desc limit 1;
+  if found then
+    if v_live_receipt.request_hash = p_request_hash then
+      return jsonb_build_object('outcome', 'issued',
+        'receipt_id', v_live_receipt.id, 'replayed', true,
+        'mfa_age_seconds',
+        extract(epoch from now() - v_session.last_totp_verified_at)::int);
     end if;
     return public.admin_internal_service_deny('service/issue_command_receipt',
       'IDEMPOTENCY_CONFLICT', p_command_name, 'command_receipt',
