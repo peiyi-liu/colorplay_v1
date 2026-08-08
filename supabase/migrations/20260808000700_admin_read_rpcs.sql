@@ -3,7 +3,7 @@
 -- 遮罩實作(spec §9.3 括號註記的機器化;與 catalog mask_strategy 一一對應)
 create function public.admin_internal_mask(p_value text, p_strategy text)
 returns text
-language sql immutable
+language sql immutable security definer set search_path = public, pg_temp
 as $$
   select case p_strategy
     when 'first_char_mask' then left(p_value, 1) || '＊＊'
@@ -114,13 +114,27 @@ begin
       (v_auth ->> 'mfa_age_seconds')::int);
   end if;
 
+  -- 複合主鍵資源尚無定址契約(HUMAN_REQUIRED 追蹤中):typed deny,不得裸例外
+  if not exists (select 1 from information_schema.columns
+      where table_schema = 'public' and table_name = p_resource
+        and column_name = 'id') then
+    return public.admin_internal_deny(
+      p_domain || '/' || p_resource, 'RESOURCE_NOT_ALLOWED',
+      'admin_list_resource', 'browser_resource', 'admin',
+      (v_auth ->> 'principal_id')::uuid, (v_auth ->> 'session_id')::uuid,
+      (v_auth ->> 'auth_session_id')::uuid, null, null,
+      (v_auth ->> 'mfa_age_seconds')::int);
+  end if;
+
   -- projection:open/internal 原值;personal 固定遮罩 SQL;forbidden 永不出現
   v_select := public.admin_internal_catalog_projection(p_resource, 'browser');
 
-  -- filters:只允許 catalog filterable 欄;operator 僅 eq
+  -- filters:只允許 browser surface 的 catalog filterable 欄(forbidden 永不可);
+  -- operator 僅 eq
   for v_key in select jsonb_object_keys(coalesce(p_filters, '{}'::jsonb)) loop
     if not exists (select 1 from public.admin_sensitivity_catalog
-        where resource = p_resource and column_name = v_key and filterable) then
+        where resource = p_resource and column_name = v_key and filterable
+          and surface = 'browser' and class <> 'forbidden') then
       return public.admin_internal_deny(
         p_domain || '/' || p_resource, 'COLUMN_NOT_ALLOWED',
         'admin_list_resource', 'browser_resource', 'admin',
@@ -136,9 +150,12 @@ begin
   -- opaque base64(jsonb),綁 resource/filters/sort hash,不含 SQL 片段。
   v_sort_column := coalesce(p_sort ->> 'column',
     (select column_name from public.admin_sensitivity_catalog
-      where resource = p_resource and sortable limit 1));
+      where resource = p_resource and sortable
+        and surface = 'browser' and class <> 'forbidden'
+      order by column_name limit 1));
   if not exists (select 1 from public.admin_sensitivity_catalog
-      where resource = p_resource and column_name = v_sort_column and sortable) then
+      where resource = p_resource and column_name = v_sort_column and sortable
+        and surface = 'browser' and class <> 'forbidden') then
     return public.admin_internal_deny(
       p_domain || '/' || p_resource, 'COLUMN_NOT_ALLOWED',
       'admin_list_resource', 'browser_resource', 'admin',
@@ -147,7 +164,17 @@ begin
       (v_auth ->> 'mfa_age_seconds')::int);
   end if;
   if p_cursor is not null then
-    v_cursor := convert_from(decode(p_cursor, 'base64'), 'utf8')::jsonb;
+    -- 毀損 cursor 不得裸例外:denial 必須經 helper 入帳(000400 不變式)
+    begin
+      v_cursor := convert_from(decode(p_cursor, 'base64'), 'utf8')::jsonb;
+    exception when others then
+      return public.admin_internal_deny(
+        p_domain || '/' || p_resource, 'COLUMN_NOT_ALLOWED',
+        'admin_list_resource', 'browser_resource', 'admin',
+        (v_auth ->> 'principal_id')::uuid, (v_auth ->> 'session_id')::uuid,
+        (v_auth ->> 'auth_session_id')::uuid, null, null,
+        (v_auth ->> 'mfa_age_seconds')::int);
+    end;
     if (v_cursor ->> 'binding') is distinct from
        md5(p_resource || coalesce(p_filters::text, '') || v_sort_column) then
       return public.admin_internal_deny(
@@ -185,6 +212,7 @@ declare
   v_auth jsonb;
   v_identity public.admin_security_identities;
 begin
+  perform set_config('statement_timeout', '5000', true);
   v_auth := public.admin_internal_authorize();
   if (v_auth ->> 'ok')::boolean then
     return jsonb_build_object('state', 'privileged',
@@ -230,6 +258,16 @@ begin
   if not exists (select 1 from public.admin_sensitivity_catalog
       where resource = p_resource and domain = p_domain
         and surface = 'browser') then
+    return public.admin_internal_deny(p_domain || '/' || p_resource,
+      'RESOURCE_NOT_ALLOWED', 'admin_get_resource_detail', 'browser_resource',
+      'admin', (v_auth ->> 'principal_id')::uuid,
+      (v_auth ->> 'session_id')::uuid, (v_auth ->> 'auth_session_id')::uuid,
+      null, null, (v_auth ->> 'mfa_age_seconds')::int);
+  end if;
+  -- 複合主鍵資源尚無定址契約(HUMAN_REQUIRED 追蹤中):typed deny,不得裸例外
+  if not exists (select 1 from information_schema.columns
+      where table_schema = 'public' and table_name = p_resource
+        and column_name = 'id') then
     return public.admin_internal_deny(p_domain || '/' || p_resource,
       'RESOURCE_NOT_ALLOWED', 'admin_get_resource_detail', 'browser_resource',
       'admin', (v_auth ->> 'principal_id')::uuid,
@@ -366,7 +404,17 @@ begin
       (v_auth ->> 'auth_session_id')::uuid, null, null, null);
   end if;
   if p_cursor is not null then
-    v_cursor := convert_from(decode(p_cursor, 'base64'), 'utf8')::jsonb;
+    -- 毀損 cursor(含欄位型別)不得裸例外:denial 必須經 helper 入帳
+    begin
+      v_cursor := convert_from(decode(p_cursor, 'base64'), 'utf8')::jsonb;
+      perform (v_cursor ->> 'k')::timestamptz, (v_cursor ->> 'id')::uuid;
+    exception when others then
+      return public.admin_internal_deny('audit/events', 'COLUMN_NOT_ALLOWED',
+        'admin_query_audit', 'audit_screen', 'admin',
+        (v_auth ->> 'principal_id')::uuid, (v_auth ->> 'session_id')::uuid,
+        (v_auth ->> 'auth_session_id')::uuid, null, null,
+        (v_auth ->> 'mfa_age_seconds')::int);
+    end;
   end if;
   select coalesce(jsonb_agg(row_to_json(t)), '[]'::jsonb) into v_rows from (
     select id, occurred_at, action, target_type, result, actor_type,

@@ -1,6 +1,6 @@
 -- supabase/tests/051_admin_safe_browser.test.sql
 begin;
-select plan(14);
+select plan(21);
 
 \ir helpers/admin_test_seed.psql
 select pg_temp.admin_test_seed();
@@ -13,6 +13,8 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select is((public.get_admin_session_state())->>'state', 'privileged',
   'active bound session reports privileged');
+select is(current_setting('statement_timeout'), '5s',
+  'session state RPC arms the local statement timeout');
 
 -- 唯讀契約(Codex 修訂 1):user-scoped read 絕不寫 session
 select last_activity_at as activity_before from public.admin_sessions
@@ -53,6 +55,32 @@ select is((public.admin_list_resource('users', 'profiles', null,
 select is((select count(*)::int from public.admin_denial_counters
   where safe_reason_code = 'COLUMN_NOT_ALLOWED'), 1,
   'column denial counter recorded');
+
+-- 毀損 cursor → typed denial,不得裸例外(denial 必須入帳,審計不可繞過)
+select is((public.admin_list_resource('users', 'profiles', 'not-valid-base64!!', '{}', null))->>'code',
+  'COLUMN_NOT_ALLOWED', 'malformed cursor yields typed denial, not an exception');
+select is((public.admin_query_audit(null, null, null, null, null, null, 'not-valid-base64!!'))->>'code',
+  'COLUMN_NOT_ALLOWED', 'audit malformed cursor yields typed denial');
+
+-- 防守深度:catalog 誤旗標 forbidden 欄不得成為 filter/sort oracle
+insert into public.admin_sensitivity_catalog
+  (resource, domain, surface, column_name, class, mask_strategy,
+   searchable, filterable, sortable)
+values ('profiles', 'users', 'browser', 'synthetic_forbidden_probe',
+  'forbidden', null, false, true, true);
+select is((public.admin_list_resource('users', 'profiles', null,
+  '{"synthetic_forbidden_probe": {"eq": "x"}}', null))->>'code',
+  'COLUMN_NOT_ALLOWED', 'forbidden-class column cannot filter even if flagged filterable');
+select is((public.admin_list_resource('users', 'profiles', null, '{}',
+  '{"column": "synthetic_forbidden_probe"}'))->>'code',
+  'COLUMN_NOT_ALLOWED', 'forbidden-class column cannot sort even if flagged sortable');
+
+-- id-less 資源(複合主鍵表)→ typed denial,不得裸 column-does-not-exist 例外
+select is((public.admin_list_resource('rewards', 'wallets', null, '{}', null))->>'code',
+  'RESOURCE_NOT_ALLOWED', 'id-less resource list denies typed instead of raising');
+select is((public.admin_get_resource_detail('rewards', 'wallets',
+  '00000000-0000-0000-0000-00000000dead'))->>'code',
+  'RESOURCE_NOT_ALLOWED', 'id-less resource detail denies typed instead of raising');
 
 -- detail:未知列回 ok + null row,不洩漏存在性
 select is(((public.admin_get_resource_detail('users', 'profiles',

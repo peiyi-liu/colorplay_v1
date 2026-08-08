@@ -1,4 +1,4 @@
--- supabase/tests/helpers/admin_test_seed.sql
+-- supabase/tests/helpers/admin_test_seed.psql
 -- 建立兩個 active Admin(A、B,各有 bound factor 與 active session)與一個
 -- 非 admin 使用者 C。固定合法 hex UUID:
 --   A user aa000000-0000-0000-0000-000000000001
