@@ -178,7 +178,8 @@ Auth verify 已成功但 PostgreSQL finalize 失敗時，client 直接重試 con
 
 - 其他 active Admin 執行 reset：actor 必須 fresh TOTP、理由與有效 receipt。
 - Step 1（PG 原子）：取得 lifecycle lock，確認一般操作後仍至少一位 active，target 轉 `recovery_pending`、清空 `bound_factor_id`、撤銷 target 全部 privileged sessions、建立 security operation 與 audit。
-- Step 2（Auth）：server-only Admin API 刪除 target 全部 factors；Auth global sign-out 是 best-effort、可重試，PG gate 已立即撤權。
+- Step 2（Auth）：server-only Admin API 刪除 target 全部 factors；PG gate 已立即撤權。
+- 已知限制（owner 裁定接受，2026-08-09）：本版 GoTrue 無 per-user admin sign-out API（auth-js `signOut` 只收 JWT；per-user logout 路由不存在），目標 admin 被撤權後，底層 Auth session token 在自然過期前仍存在、但受 PG 層 gate 約束——無法建立 privileged session、無法執行任何需要 factor binding／authorization 的特權操作。若未來合規需求要求零容忍，需另評估 GoTrue 升級或自建 session deny-list 機制。
 - Step 3（PG）：operation 完成後 target 轉 `active_pending_mfa`，通知 owner 與 target；通知不含 bypass。
 - 任一步可重入、按 operation ID 對帳；失敗維持 `recovery_pending`。
 - 最後一位不能由產品 reset；走 owner OOB。已知 factor 異常則仍立即隔離，安全優先。

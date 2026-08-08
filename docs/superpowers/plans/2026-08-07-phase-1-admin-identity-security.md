@@ -4283,7 +4283,8 @@ Deno.serve(async (request) => {
       for (const factor of targetFactors.data?.factors ?? []) {
         await service.auth.admin.mfa.deleteFactor({ userId: targetUserId, id: factor.id });
       }
-      await service.auth.admin.signOut(targetUserId); // best-effort(spec §4.5 Step 2)
+      // Auth session 終止:本版 GoTrue 無 per-user admin sign-out API,
+      // 依 spec §4.5 已知限制(owner 裁定接受)不呼叫;PG gate 已撤權。
       await service.rpc('svc_admin_complete_reset_step2', { p_operation_id: operationId });
       await service.rpc('svc_admin_complete_reset_step3', { p_operation_id: operationId });
     } catch {
