@@ -6,8 +6,8 @@ import { z } from 'zod';
 
 import { RpgWindow } from '../../../components/ui/rpg-window';
 import {
+  extractErrorCode,
   invokeAdminMfa,
-  isAdminErrorCode,
   type AdminErrorCode,
 } from '../api/admin-client';
 import { AdminStatusBanner } from '../components/admin-status-banner';
@@ -19,30 +19,18 @@ type CodeFormValues = z.infer<typeof codeSchema>;
 
 interface EnrolledFactor {
   factorId: string;
-  qrUri: string;
   totpSecret: string;
 }
 
-// admin-mfa 回應是 {outcome:'ok',...} | {outcome:'denied',code} |
-// {error}(protocol-level 503/400);兩種都可能帶穩定碼,統一轉譯成
-// AdminErrorCode 供頁面與 AdminStatusBanner 使用(spec §11)。
-function extractErrorCode(response: {
-  code?: string;
-  error?: string;
-  outcome?: string;
-}): AdminErrorCode | null {
-  if (response.outcome === 'denied' && isAdminErrorCode(response.code)) {
-    return response.code;
-  }
-  return isAdminErrorCode(response.error) ? response.error : null;
-}
-
-function AdminMfaEnrollPage() {
+export function AdminMfaEnrollPage() {
   const navigate = useNavigate();
   const [factor, setFactor] = useState<EnrolledFactor | null>(null);
   const [beginError, setBeginError] = useState<AdminErrorCode | null>(null);
   const [submitError, setSubmitError] = useState<AdminErrorCode | null>(null);
-  const [networkError, setNetworkError] = useState(false);
+  // 涵蓋兩種都無法對應到具體穩定碼的失敗:invokeAdminMfa 拋出
+  // AdminClientError(網路/回應無法解析),或回應不是 ok 但
+  // extractErrorCode 也認不出代碼(不得靜默不顯示任何訊息)。
+  const [unexpectedError, setUnexpectedError] = useState(false);
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -60,20 +48,23 @@ function AdminMfaEnrollPage() {
         if (
           response.outcome === 'ok' &&
           typeof response.factorId === 'string' &&
-          typeof response.totpSecret === 'string' &&
-          typeof response.qrUri === 'string'
+          typeof response.totpSecret === 'string'
         ) {
           setFactor({
             factorId: response.factorId,
-            qrUri: response.qrUri,
             totpSecret: response.totpSecret,
           });
           return;
         }
-        setBeginError(extractErrorCode(response));
+        const code = extractErrorCode(response);
+        if (code) {
+          setBeginError(code);
+        } else {
+          setUnexpectedError(true);
+        }
       })
       .catch(() => {
-        if (!cancelled) setNetworkError(true);
+        if (!cancelled) setUnexpectedError(true);
       });
     return () => {
       cancelled = true;
@@ -92,17 +83,22 @@ function AdminMfaEnrollPage() {
         await navigate('/admin/mfa/challenge', { replace: true });
         return;
       }
-      setSubmitError(extractErrorCode(response));
+      const responseCode = extractErrorCode(response);
+      if (responseCode) {
+        setSubmitError(responseCode);
+      } else {
+        setUnexpectedError(true);
+      }
     } catch {
-      setNetworkError(true);
+      setUnexpectedError(true);
     }
   });
 
-  if (networkError) {
+  if (unexpectedError) {
     return (
       <RpgWindow>
         <h1 className="pixel-heading">管理員驗證器綁定</h1>
-        <p role="alert">無法連線，請檢查網路連線後重新整理頁面再試。</p>
+        <p role="alert">發生非預期的錯誤，請稍後再試或聯絡負責人。</p>
       </RpgWindow>
     );
   }
@@ -111,8 +107,16 @@ function AdminMfaEnrollPage() {
     return (
       <RpgWindow>
         <h1 className="pixel-heading">管理員驗證器綁定</h1>
-        <p>請重新輸入密碼登入後再繼續</p>
-        <Link className="primary-action" to="/login">
+        <p aria-live="polite" role="status">
+          請重新輸入密碼登入後再繼續
+        </p>
+        <Link
+          className="primary-action"
+          data-acceptance-interactive="true"
+          data-acceptance-target
+          data-primary-action="true"
+          to="/login"
+        >
           返回登入
         </Link>
       </RpgWindow>
@@ -123,22 +127,36 @@ function AdminMfaEnrollPage() {
     <RpgWindow>
       <h1 className="pixel-heading">管理員驗證器綁定</h1>
       {factor ? (
-        <form onSubmit={(event) => void onSubmit(event)}>
-          <p>
-            請以驗證器 App 掃描 QR 或手動輸入密鑰，再輸入產生的 6 位數驗證碼。
-          </p>
+        <form
+          className="admin-mfa-form"
+          onSubmit={(event) => void onSubmit(event)}
+        >
+          <p>請在驗證器 App 中手動輸入下方密鑰，再輸入產生的 6 位數驗證碼。</p>
           <p data-testid="totp-secret">{factor.totpSecret}</p>
-          <label>
-            驗證碼
+          <div>
+            <label htmlFor="admin-mfa-enroll-code">驗證碼</label>
             <input
+              aria-describedby={
+                errors.code ? 'admin-mfa-enroll-code-error' : undefined
+              }
+              aria-invalid={errors.code ? 'true' : 'false'}
               autoComplete="one-time-code"
+              id="admin-mfa-enroll-code"
               inputMode="numeric"
               maxLength={6}
               {...register('code')}
             />
-          </label>
-          {errors.code ? <p role="alert">{errors.code.message}</p> : null}
+            {errors.code ? (
+              <p id="admin-mfa-enroll-code-error" role="alert">
+                {errors.code.message}
+              </p>
+            ) : null}
+          </div>
           <button
+            className="primary-action"
+            data-acceptance-interactive="true"
+            data-acceptance-target
+            data-primary-action="true"
             disabled={isSubmitting || submitError === 'MFA_LOCKED'}
             type="submit"
           >
@@ -151,5 +169,4 @@ function AdminMfaEnrollPage() {
   );
 }
 
-export { AdminMfaEnrollPage };
 export { AdminMfaEnrollPage as Component };

@@ -29,6 +29,22 @@ export function isAdminErrorCode(value: unknown): value is AdminErrorCode {
   );
 }
 
+// admin-mfa/admin-command 回應是 {outcome:'ok',...} |
+// {outcome:'denied',code} | {error}(Edge protocol-level 400/503,無
+// outcome)。兩種都可能帶穩定碼,統一轉譯成 AdminErrorCode;不認得的字串
+// (INVALID_JSON/METHOD_NOT_ALLOWED 等純協定層錯誤,或伺服端穩定碼未來
+// 領先前端常數)一律回 null,由呼叫端落到通用的非預期錯誤處理,不靜默消失。
+export function extractErrorCode(response: {
+  code?: string;
+  error?: string;
+  outcome?: string;
+}): AdminErrorCode | null {
+  if (response.outcome === 'denied' && isAdminErrorCode(response.code)) {
+    return response.code;
+  }
+  return isAdminErrorCode(response.error) ? response.error : null;
+}
+
 export const ADMIN_ERROR_MESSAGES: Record<AdminErrorCode, string> = {
   AUTHORIZATION_RECEIPT_INVALID: '授權憑據無效或已使用，請重新確認後再試。',
   COLUMN_NOT_ALLOWED: '此欄位不允許這項操作。',
@@ -138,9 +154,13 @@ export async function invokeAdminCommand(
 // session 的 GoTrue MFA factor 列表(user-scoped,非 admin 權限),不經
 // admin-mfa Edge。server 端仍會獨立比對 bound_factor_id,錯誤 factorId
 // 只會導致 fail-closed 的 FACTOR_BINDING_MISMATCH,不構成信任邊界問題。
+//
+// null 只代表「確實查無已驗證 factor」;GoTrue 呼叫本身失敗時拋出,不能
+// 兩者混為一談 —— 否則暫時性網路問題會被呼叫端誤判成「帳號沒有 factor,
+// 請聯絡負責人」這種看起來永久的死路。
 export async function listOwnVerifiedTotpFactorId(): Promise<string | null> {
   const { data, error } = await browserClient().auth.mfa.listFactors();
-  if (error) return null;
+  if (error) throw new AdminClientError();
   return data.totp[0]?.id ?? null;
 }
 

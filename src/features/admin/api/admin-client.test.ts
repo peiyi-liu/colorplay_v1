@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { isAdminErrorCode, listOwnVerifiedTotpFactorId } from './admin-client';
+import {
+  AdminClientError,
+  extractErrorCode,
+  isAdminErrorCode,
+  listOwnVerifiedTotpFactorId,
+} from './admin-client';
 
 const authMocks = vi.hoisted(() => ({
   listFactors: vi.fn(),
@@ -49,12 +54,37 @@ describe('listOwnVerifiedTotpFactorId', () => {
     await expect(listOwnVerifiedTotpFactorId()).resolves.toBeNull();
   });
 
-  it('fails closed to null when GoTrue errors', async () => {
+  it('throws instead of conflating a lookup failure with "no factor bound"', async () => {
     authMocks.listFactors.mockResolvedValue({
       data: null,
       error: { message: 'boom' },
     });
 
-    await expect(listOwnVerifiedTotpFactorId()).resolves.toBeNull();
+    await expect(listOwnVerifiedTotpFactorId()).rejects.toBeInstanceOf(
+      AdminClientError,
+    );
+  });
+});
+
+describe('extractErrorCode', () => {
+  it('reads the code from a typed denial', () => {
+    expect(extractErrorCode({ code: 'MFA_LOCKED', outcome: 'denied' })).toBe(
+      'MFA_LOCKED',
+    );
+  });
+
+  it('reads the code from a protocol-level failure with no outcome', () => {
+    expect(extractErrorCode({ error: 'SECURITY_AUDIT_UNAVAILABLE' })).toBe(
+      'SECURITY_AUDIT_UNAVAILABLE',
+    );
+  });
+
+  it('returns null for an unrecognized or client-bug protocol error', () => {
+    expect(extractErrorCode({ error: 'INVALID_JSON' })).toBeNull();
+    expect(extractErrorCode({})).toBeNull();
+  });
+
+  it('ignores a code field when outcome is not denied', () => {
+    expect(extractErrorCode({ code: 'MFA_LOCKED', outcome: 'ok' })).toBeNull();
   });
 });

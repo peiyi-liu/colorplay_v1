@@ -7,10 +7,9 @@ import { invokeAdminMfa } from '../api/admin-client';
 import { AdminMfaEnrollPage } from './admin-mfa-enroll-page';
 
 vi.mock('../api/admin-client', async () => {
-  const actual =
-    await vi.importActual<typeof import('../api/admin-client')>(
-      '../api/admin-client',
-    );
+  const actual = await vi.importActual<typeof import('../api/admin-client')>(
+    '../api/admin-client',
+  );
   return { ...actual, invokeAdminMfa: vi.fn() };
 });
 
@@ -114,5 +113,51 @@ describe('AdminMfaEnrollPage', () => {
     await user.click(screen.getByRole('button', { name: '完成綁定' }));
 
     expect(await screen.findByText('challenge 頁')).toBeInTheDocument();
+  });
+
+  it('shows a generic failure message when begin-enrollment throws', async () => {
+    vi.mocked(invokeAdminMfa).mockRejectedValueOnce(new Error('network down'));
+
+    renderPage();
+
+    expect(
+      await screen.findByText('發生非預期的錯誤，請稍後再試或聯絡負責人。'),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('totp-secret')).not.toBeInTheDocument();
+  });
+
+  it('shows a generic failure message when confirm-enrollment throws', async () => {
+    const user = userEvent.setup();
+    vi.mocked(invokeAdminMfa).mockResolvedValueOnce({
+      factorId: 'factor-1',
+      outcome: 'ok',
+      qrUri: 'otpauth://totp/example',
+      totpSecret: 'JBSWY3DPEHPK3PXP',
+    });
+    vi.mocked(invokeAdminMfa).mockRejectedValueOnce(new Error('network down'));
+
+    renderPage();
+    await screen.findByTestId('totp-secret');
+    await user.type(screen.getByLabelText('驗證碼'), '123456');
+    await user.click(screen.getByRole('button', { name: '完成綁定' }));
+
+    expect(
+      await screen.findByText('發生非預期的錯誤，請稍後再試或聯絡負責人。'),
+    ).toBeInTheDocument();
+  });
+
+  it('gives the submit button the standard primary-action affordances', async () => {
+    vi.mocked(invokeAdminMfa).mockResolvedValueOnce({
+      factorId: 'factor-1',
+      outcome: 'ok',
+      qrUri: 'otpauth://totp/example',
+      totpSecret: 'JBSWY3DPEHPK3PXP',
+    });
+
+    renderPage();
+
+    const button = await screen.findByRole('button', { name: '完成綁定' });
+    expect(button).toHaveClass('primary-action');
+    expect(button).toHaveAttribute('data-acceptance-target');
   });
 });

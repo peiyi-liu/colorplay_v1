@@ -26,7 +26,10 @@ export type AdminSessionState = z.infer<typeof sessionStateSchema>['state'];
 export interface AdminSessionStateResult {
   isPending: boolean;
   mfaAgeSeconds: number;
-  refetch: () => void;
+  // 回傳 Promise:呼叫端(如 MFA challenge 成功後)需要在導向受保護路由
+  // 前等 cache 真的更新,否則 RequirePrivilegedSession 會讀到 refetch
+  // 觸發前的舊 state 又把使用者彈回 challenge 頁。
+  refetch: () => Promise<void>;
   state: AdminSessionState;
 }
 
@@ -54,8 +57,8 @@ export function useAdminSessionState(): AdminSessionStateResult {
   return {
     isPending: query.isPending,
     mfaAgeSeconds: query.data?.mfa_age_seconds ?? 0,
-    refetch: () => {
-      void query.refetch();
+    refetch: async () => {
+      await query.refetch();
     },
     state: query.data?.state ?? 'none',
   };

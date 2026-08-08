@@ -11,10 +11,9 @@ import { useAdminSessionState } from '../hooks/use-admin-session-state';
 import { AdminMfaChallengePage } from './admin-mfa-challenge-page';
 
 vi.mock('../api/admin-client', async () => {
-  const actual =
-    await vi.importActual<typeof import('../api/admin-client')>(
-      '../api/admin-client',
-    );
+  const actual = await vi.importActual<typeof import('../api/admin-client')>(
+    '../api/admin-client',
+  );
   return {
     ...actual,
     invokeAdminMfa: vi.fn(),
@@ -123,5 +122,70 @@ describe('AdminMfaChallengePage', () => {
     });
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('驗證碼')).not.toBeInTheDocument();
+  });
+
+  it('waits for the session refetch to resolve before navigating away', async () => {
+    const user = userEvent.setup();
+    vi.mocked(listOwnVerifiedTotpFactorId).mockResolvedValue('factor-1');
+    vi.mocked(invokeAdminMfa).mockResolvedValue({ outcome: 'ok' });
+    let resolveRefetch: () => void = () => {
+      throw new Error('resolveRefetch called before assignment');
+    };
+    refetch.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveRefetch = resolve;
+        }),
+    );
+
+    renderPage(['/admin/mfa/challenge']);
+    const input = await screen.findByLabelText('驗證碼');
+    await user.type(input, '123456');
+    await user.click(screen.getByRole('button', { name: '驗證' }));
+
+    await waitFor(() => {
+      expect(refetch).toHaveBeenCalled();
+    });
+    expect(screen.queryByText('admin 首頁')).not.toBeInTheDocument();
+
+    resolveRefetch();
+    expect(await screen.findByText('admin 首頁')).toBeInTheDocument();
+  });
+
+  it('shows a generic failure message when the challenge call throws', async () => {
+    const user = userEvent.setup();
+    vi.mocked(listOwnVerifiedTotpFactorId).mockResolvedValue('factor-1');
+    vi.mocked(invokeAdminMfa).mockRejectedValue(new Error('network down'));
+
+    renderPage(['/admin/mfa/challenge']);
+    const input = await screen.findByLabelText('驗證碼');
+    await user.type(input, '123456');
+    await user.click(screen.getByRole('button', { name: '驗證' }));
+
+    expect(
+      await screen.findByText('發生非預期的錯誤，請稍後再試或聯絡負責人。'),
+    ).toBeInTheDocument();
+    expect(refetch).not.toHaveBeenCalled();
+  });
+
+  it('shows a generic failure message when the factor lookup fails unexpectedly', async () => {
+    vi.mocked(listOwnVerifiedTotpFactorId).mockRejectedValue(new Error('boom'));
+
+    renderPage(['/admin/mfa/challenge']);
+
+    expect(
+      await screen.findByText('發生非預期的錯誤，請稍後再試或聯絡負責人。'),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText('驗證碼')).not.toBeInTheDocument();
+  });
+
+  it('gives the submit button the standard primary-action affordances', async () => {
+    vi.mocked(listOwnVerifiedTotpFactorId).mockResolvedValue('factor-1');
+
+    renderPage(['/admin/mfa/challenge']);
+
+    const button = await screen.findByRole('button', { name: '驗證' });
+    expect(button).toHaveClass('primary-action');
+    expect(button).toHaveAttribute('data-acceptance-target');
   });
 });

@@ -6,8 +6,8 @@ import { z } from 'zod';
 
 import { RpgWindow } from '../../../components/ui/rpg-window';
 import {
+  extractErrorCode,
   invokeAdminMfa,
-  isAdminErrorCode,
   listOwnVerifiedTotpFactorId,
   type AdminErrorCode,
 } from '../api/admin-client';
@@ -19,18 +19,7 @@ const codeSchema = z.object({
 });
 type CodeFormValues = z.infer<typeof codeSchema>;
 
-function extractErrorCode(response: {
-  code?: string;
-  error?: string;
-  outcome?: string;
-}): AdminErrorCode | null {
-  if (response.outcome === 'denied' && isAdminErrorCode(response.code)) {
-    return response.code;
-  }
-  return isAdminErrorCode(response.error) ? response.error : null;
-}
-
-function AdminMfaChallengePage() {
+export function AdminMfaChallengePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const session = useAdminSessionState();
@@ -43,6 +32,9 @@ function AdminMfaChallengePage() {
   // FACTOR_BINDING_MISMATCH 是伺服端已入帳的 factor incident(spec §3.3):
   // 終止表單,不提供任何繞過或重試按鈕。
   const [incident, setIncident] = useState(false);
+  // 涵蓋:factor 查詢本身失敗(非「查無 factor」)、invokeAdminMfa 拋出、
+  // 或回應不是 ok 但 extractErrorCode 也認不出代碼 —— 都不能靜默不顯示。
+  const [unexpectedError, setUnexpectedError] = useState(false);
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -59,7 +51,7 @@ function AdminMfaChallengePage() {
         if (!cancelled) setFactorId(id);
       })
       .catch(() => {
-        if (!cancelled) setFactorId(null);
+        if (!cancelled) setUnexpectedError(true);
       });
     return () => {
       cancelled = true;
@@ -68,23 +60,33 @@ function AdminMfaChallengePage() {
 
   const onSubmit = handleSubmit(async ({ code }) => {
     if (!factorId) return;
-    const response = await invokeAdminMfa({
-      action: 'challenge',
-      code,
-      factorId,
-    });
-    if (response.outcome === 'ok') {
-      session.refetch();
-      const state = location.state as { returnTo?: string } | null;
-      await navigate(state?.returnTo ?? '/admin', { replace: true });
-      return;
+    try {
+      const response = await invokeAdminMfa({
+        action: 'challenge',
+        code,
+        factorId,
+      });
+      if (response.outcome === 'ok') {
+        // 先等 cache 真的更新再導向:否則 RequirePrivilegedSession 會在
+        // 目的地讀到 refetch 觸發前的舊 state,又把使用者彈回本頁重驗。
+        await session.refetch();
+        const state = location.state as { returnTo?: string } | null;
+        await navigate(state?.returnTo ?? '/admin', { replace: true });
+        return;
+      }
+      const responseCode = extractErrorCode(response);
+      if (responseCode === 'FACTOR_BINDING_MISMATCH') {
+        setIncident(true);
+        return;
+      }
+      if (responseCode) {
+        setError(responseCode);
+      } else {
+        setUnexpectedError(true);
+      }
+    } catch {
+      setUnexpectedError(true);
     }
-    const responseCode = extractErrorCode(response);
-    if (responseCode === 'FACTOR_BINDING_MISMATCH') {
-      setIncident(true);
-      return;
-    }
-    setError(responseCode);
   });
 
   if (incident) {
@@ -92,6 +94,15 @@ function AdminMfaChallengePage() {
       <RpgWindow>
         <h1 className="pixel-heading">管理員雙因素驗證</h1>
         <AdminStatusBanner code="FACTOR_BINDING_MISMATCH" />
+      </RpgWindow>
+    );
+  }
+
+  if (unexpectedError) {
+    return (
+      <RpgWindow>
+        <h1 className="pixel-heading">管理員雙因素驗證</h1>
+        <p role="alert">發生非預期的錯誤，請稍後再試或聯絡負責人。</p>
       </RpgWindow>
     );
   }
@@ -109,19 +120,38 @@ function AdminMfaChallengePage() {
     <RpgWindow>
       <h1 className="pixel-heading">管理員雙因素驗證</h1>
       {factorId ? (
-        <form onSubmit={(event) => void onSubmit(event)}>
+        <form
+          className="admin-mfa-form"
+          onSubmit={(event) => void onSubmit(event)}
+        >
           <p>請輸入驗證器 App 產生的 6 位數驗證碼。</p>
-          <label>
-            驗證碼
+          <div>
+            <label htmlFor="admin-mfa-challenge-code">驗證碼</label>
             <input
+              aria-describedby={
+                errors.code ? 'admin-mfa-challenge-code-error' : undefined
+              }
+              aria-invalid={errors.code ? 'true' : 'false'}
               autoComplete="one-time-code"
+              id="admin-mfa-challenge-code"
               inputMode="numeric"
               maxLength={6}
               {...register('code')}
             />
-          </label>
-          {errors.code ? <p role="alert">{errors.code.message}</p> : null}
-          <button disabled={isSubmitting || error === 'MFA_LOCKED'} type="submit">
+            {errors.code ? (
+              <p id="admin-mfa-challenge-code-error" role="alert">
+                {errors.code.message}
+              </p>
+            ) : null}
+          </div>
+          <button
+            className="primary-action"
+            data-acceptance-interactive="true"
+            data-acceptance-target
+            data-primary-action="true"
+            disabled={isSubmitting || error === 'MFA_LOCKED'}
+            type="submit"
+          >
             驗證
           </button>
         </form>
@@ -131,5 +161,4 @@ function AdminMfaChallengePage() {
   );
 }
 
-export { AdminMfaChallengePage };
 export { AdminMfaChallengePage as Component };
