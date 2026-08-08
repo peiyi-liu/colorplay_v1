@@ -1,6 +1,6 @@
 -- supabase/tests/051_admin_safe_browser.test.sql
 begin;
-select plan(21);
+select plan(26);
 
 \ir helpers/admin_test_seed.psql
 select pg_temp.admin_test_seed();
@@ -75,16 +75,32 @@ select is((public.admin_list_resource('users', 'profiles', null, '{}',
   '{"column": "synthetic_forbidden_probe"}'))->>'code',
   'COLUMN_NOT_ALLOWED', 'forbidden-class column cannot sort even if flagged sortable');
 
--- id-less 資源(複合主鍵表)→ typed denial,不得裸 column-does-not-exist 例外
-select is((public.admin_list_resource('rewards', 'wallets', null, '{}', null))->>'code',
-  'RESOURCE_NOT_ALLOWED', 'id-less resource list denies typed instead of raising');
+-- 複合主鍵定址(spec §1.3):id-less 表可 list、可 row_key detail
+select is((public.admin_list_resource('rewards', 'wallets', null, '{}', null))->>'outcome',
+  'ok', 'id-less resource lists with PK tie-breaker');
 select is((public.admin_get_resource_detail('rewards', 'wallets',
-  '00000000-0000-0000-0000-00000000dead'))->>'code',
-  'RESOURCE_NOT_ALLOWED', 'id-less resource detail denies typed instead of raising');
+  '00000000-0000-0000-0000-00000000dead'::uuid))->>'code',
+  'RESOURCE_NOT_ALLOWED', 'uuid overload still denies id-less resource');
+select is(((public.admin_get_resource_detail('rewards', 'wallets',
+  jsonb_build_object('user_id', '00000000-0000-0000-0000-00000000dead')))
+  ->> 'outcome'), 'ok', 'row_key detail addresses single-column non-id PK');
+select is(((public.admin_get_resource_detail('classrooms', 'classroom_members',
+  jsonb_build_object('classroom_id', '00000000-0000-0000-0000-00000000dead',
+    'user_id', '00000000-0000-0000-0000-00000000beef')))
+  ->> 'outcome'), 'ok', 'composite row_key detail returns ok without existence leak');
+select is((public.admin_get_resource_detail('rewards', 'wallets',
+  '{"wrong_column": "x"}'::jsonb))->>'code',
+  'COLUMN_NOT_ALLOWED', 'row_key with non-PK key denied');
+select is((public.admin_get_resource_detail('classrooms', 'classroom_members',
+  jsonb_build_object('classroom_id', '00000000-0000-0000-0000-00000000dead')))->>'code',
+  'COLUMN_NOT_ALLOWED', 'row_key missing a PK column denied');
+select is((public.admin_get_resource_detail('rewards', 'wallets',
+  '["not-an-object"]'::jsonb))->>'code',
+  'COLUMN_NOT_ALLOWED', 'non-object row_key denied');
 
 -- detail:未知列回 ok + null row,不洩漏存在性
 select is(((public.admin_get_resource_detail('users', 'profiles',
-  '00000000-0000-0000-0000-00000000dead')) ->> 'outcome'), 'ok',
+  '00000000-0000-0000-0000-00000000dead'::uuid)) ->> 'outcome'), 'ok',
   'detail for unknown row returns ok with null row');
 
 -- 非 admin 呼叫 → typed denial + 安全 actor 佐證 audit

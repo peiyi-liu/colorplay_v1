@@ -35,6 +35,20 @@ $$;
 revoke execute on function public.admin_internal_catalog_projection(text, text)
   from public, anon, authenticated;
 
+-- 該表 PRIMARY KEY 欄位,依 constraint ordinal(spec §1.3:row key 權威在 DB schema)
+create function public.admin_internal_key_columns(p_resource text)
+returns text[]
+language sql stable security definer set search_path = public, pg_temp
+as $$
+  select array_agg(a.attname::text order by array_position(c.conkey, a.attnum))
+  from pg_constraint c
+  join pg_attribute a on a.attrelid = c.conrelid and a.attnum = any(c.conkey)
+  where c.contype = 'p'
+    and c.conrelid = to_regclass(format('public.%I', p_resource));
+$$;
+revoke execute on function public.admin_internal_key_columns(text)
+  from public, anon, authenticated;
+
 -- 統一授權(spec §5.1、§6.1;Codex 修訂 1):JWT 有效 + auth.uid()=identity +
 -- JWT session_id=auth_session_id + identity active + factor snapshot 相同 +
 -- 未撤銷未逾時。純判斷、絕不寫入 —— activity 續期只存在於 service-only path。
@@ -90,6 +104,10 @@ declare
   v_key text;
   v_sort_column text;
   v_cursor jsonb;
+  v_key_columns text[];
+  v_pk_order text;
+  v_pk_list text;
+  v_pk_vals text;
 begin
   perform set_config('statement_timeout', '5000', true); -- spec §7:5 秒
   v_auth := public.admin_internal_authorize();
@@ -114,10 +132,13 @@ begin
       (v_auth ->> 'mfa_age_seconds')::int);
   end if;
 
-  -- 複合主鍵資源尚無定址契約(HUMAN_REQUIRED 追蹤中):typed deny,不得裸例外
-  if not exists (select 1 from information_schema.columns
-      where table_schema = 'public' and table_name = p_resource
-        and column_name = 'id') then
+  -- spec §1.3:tie-breaker=全部 PK 欄;key columns 必須 catalog-listed open/internal
+  v_key_columns := public.admin_internal_key_columns(p_resource);
+  if v_key_columns is null or exists (
+      select 1 from unnest(v_key_columns) kc
+      where not exists (select 1 from public.admin_sensitivity_catalog
+        where resource = p_resource and column_name = kc
+          and surface = 'browser' and class in ('open', 'internal'))) then
     return public.admin_internal_deny(
       p_domain || '/' || p_resource, 'RESOURCE_NOT_ALLOWED',
       'admin_list_resource', 'browser_resource', 'admin',
@@ -125,6 +146,8 @@ begin
       (v_auth ->> 'auth_session_id')::uuid, null, null,
       (v_auth ->> 'mfa_age_seconds')::int);
   end if;
+  select string_agg(format('%I asc', kc), ', ')
+    into v_pk_order from unnest(v_key_columns) kc;
 
   -- projection:open/internal 原值;personal 固定遮罩 SQL;forbidden 永不出現
   v_select := public.admin_internal_catalog_projection(p_resource, 'browser');
@@ -184,15 +207,29 @@ begin
         (v_auth ->> 'auth_session_id')::uuid, null, null,
         (v_auth ->> 'mfa_age_seconds')::int);
     end if;
-    v_where := v_where || format(' and (%I::text, id::text) > (%L, %L)',
-      v_sort_column, v_cursor ->> 'k', v_cursor ->> 'id');
+    -- keyset 比較鍵=(sort, pk…);cursor 'key' object 必須含每個 PK 欄(spec §1.3)
+    if exists (select 1 from unnest(v_key_columns) kc
+        where v_cursor -> 'key' ->> kc is null) then
+      return public.admin_internal_deny(
+        p_domain || '/' || p_resource, 'COLUMN_NOT_ALLOWED',
+        'admin_list_resource', 'browser_resource', 'admin',
+        (v_auth ->> 'principal_id')::uuid, (v_auth ->> 'session_id')::uuid,
+        (v_auth ->> 'auth_session_id')::uuid, null, null,
+        (v_auth ->> 'mfa_age_seconds')::int);
+    end if;
+    select string_agg(format('%I::text', kc), ', ')
+      into v_pk_list from unnest(v_key_columns) kc;
+    select string_agg(format('%L', v_cursor -> 'key' ->> kc), ', ')
+      into v_pk_vals from unnest(v_key_columns) kc;
+    v_where := v_where || format(' and (%I::text, %s) > (%L, %s)',
+      v_sort_column, v_pk_list, v_cursor ->> 'k', v_pk_vals);
   end if;
 
   execute format(
     'select coalesce(jsonb_agg(row_to_json(t)), ''[]''::jsonb)
        from (select %s from public.%I where %s
-             order by %I asc, id asc limit 50) t',
-    v_select, p_resource, v_where, v_sort_column) into v_rows;
+             order by %I asc, %s limit 50) t',
+    v_select, p_resource, v_where, v_sort_column, v_pk_order) into v_rows;
 
   return jsonb_build_object('outcome', 'ok', 'rows', v_rows,
     'page_size_limit', 50);
@@ -286,6 +323,77 @@ $$;
 revoke execute on function public.admin_get_resource_detail(text, text, uuid)
   from public, anon;
 grant execute on function public.admin_get_resource_detail(text, text, uuid)
+  to authenticated;
+
+-- 複合主鍵定址 overload(spec §1.3):row_key 恰為全部 PK 欄的 object,值以 text 比對
+create function public.admin_get_resource_detail(
+  p_domain text, p_resource text, p_row_key jsonb
+) returns jsonb
+language plpgsql security definer set search_path = public, pg_temp
+as $$
+declare
+  v_auth jsonb;
+  v_row jsonb;
+  v_key_columns text[];
+  v_where text;
+begin
+  perform set_config('statement_timeout', '5000', true);
+  v_auth := public.admin_internal_authorize();
+  if not (v_auth ->> 'ok')::boolean then
+    return public.admin_internal_deny(p_domain || '/' || p_resource,
+      v_auth ->> 'code', 'admin_get_resource_detail', 'browser_resource',
+      case when (v_auth ->> 'principal_id') is not null
+        then 'admin' else 'unknown' end::public.admin_actor_type,
+      (v_auth ->> 'principal_id')::uuid, null,
+      (v_auth ->> 'auth_session_id')::uuid, null, null, null);
+  end if;
+  if not exists (select 1 from public.admin_sensitivity_catalog
+      where resource = p_resource and domain = p_domain
+        and surface = 'browser') then
+    return public.admin_internal_deny(p_domain || '/' || p_resource,
+      'RESOURCE_NOT_ALLOWED', 'admin_get_resource_detail', 'browser_resource',
+      'admin', (v_auth ->> 'principal_id')::uuid,
+      (v_auth ->> 'session_id')::uuid, (v_auth ->> 'auth_session_id')::uuid,
+      null, null, (v_auth ->> 'mfa_age_seconds')::int);
+  end if;
+  -- key columns 必須存在且全數 catalog-listed open/internal(spec §1.3)
+  v_key_columns := public.admin_internal_key_columns(p_resource);
+  if v_key_columns is null or exists (
+      select 1 from unnest(v_key_columns) kc
+      where not exists (select 1 from public.admin_sensitivity_catalog
+        where resource = p_resource and column_name = kc
+          and surface = 'browser' and class in ('open', 'internal'))) then
+    return public.admin_internal_deny(p_domain || '/' || p_resource,
+      'RESOURCE_NOT_ALLOWED', 'admin_get_resource_detail', 'browser_resource',
+      'admin', (v_auth ->> 'principal_id')::uuid,
+      (v_auth ->> 'session_id')::uuid, (v_auth ->> 'auth_session_id')::uuid,
+      null, null, (v_auth ->> 'mfa_age_seconds')::int);
+  end if;
+  -- row_key 形狀:object 且鍵集合恰等於 PK 欄集合;否則 typed denial
+  if jsonb_typeof(p_row_key) is distinct from 'object'
+     or (select array_agg(k order by k)
+           from jsonb_object_keys(p_row_key) k) is distinct from
+        (select array_agg(kc order by kc) from unnest(v_key_columns) kc) then
+    return public.admin_internal_deny(p_domain || '/' || p_resource,
+      'COLUMN_NOT_ALLOWED', 'admin_get_resource_detail', 'browser_resource',
+      'admin', (v_auth ->> 'principal_id')::uuid,
+      (v_auth ->> 'session_id')::uuid, (v_auth ->> 'auth_session_id')::uuid,
+      null, null, (v_auth ->> 'mfa_age_seconds')::int);
+  end if;
+  select string_agg(format('%I::text = %L', kc, p_row_key ->> kc), ' and ')
+    into v_where from unnest(v_key_columns) kc;
+  execute format(
+    'select row_to_json(t)::jsonb from (select %s from public.%I where %s limit 1) t',
+    public.admin_internal_catalog_projection(p_resource, 'browser'), p_resource,
+    v_where) into v_row;
+  -- 未知列回 null row,不洩漏存在性;relations 介面與 uuid overload 一致
+  return jsonb_build_object('outcome', 'ok', 'row', v_row,
+    'relations', '[]'::jsonb);
+end;
+$$;
+revoke execute on function public.admin_get_resource_detail(text, text, jsonb)
+  from public, anon;
+grant execute on function public.admin_get_resource_detail(text, text, jsonb)
   to authenticated;
 
 -- Access screens(§9.4 surface=access;三個 function 僅表名/排序不同)
