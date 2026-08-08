@@ -312,7 +312,7 @@ begin
       'STALE_PRIVILEGED_SESSION', 'totp_attempt_denied', 'admin_identity',
       'unknown', null, null);
   end if;
-  -- 鎖定中一律回 MFA_LOCKED:不歸零、不累計(Edge 以 p_success=true 作 probe;
+  -- 鎖定中一律回 MFA_LOCKED:不歸零、不累計(Edge 以 p_success=null 作 probe;
   -- 此 denial 在此入帳一次,Edge 不重複記錄)
   if v_identity.locked_until is not null and now() < v_identity.locked_until then
     return public.admin_internal_service_deny('service/totp_attempts',

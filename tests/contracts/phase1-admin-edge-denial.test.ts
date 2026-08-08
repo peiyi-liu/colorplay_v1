@@ -11,12 +11,12 @@ describe('edge denial recorder fail-closed contract', () => {
     const calls: unknown[] = [];
     const recordAndDeny = makeRecordAndDeny(
       {
-        rpc: async (fn, args) => {
+        rpc: (fn, args) => {
           calls.push([fn, args]);
-          return {
+          return Promise.resolve({
             data: { outcome: 'denied', code: 'INSUFFICIENT_MFA' },
             error: null,
-          };
+          });
         },
       },
       'edge/test',
@@ -39,7 +39,8 @@ describe('edge denial recorder fail-closed contract', () => {
   it('fails closed with 503 when the recorder errors', async () => {
     const recordAndDeny = makeRecordAndDeny(
       {
-        rpc: async () => ({ data: null, error: { message: 'db down' } }),
+        rpc: () =>
+          Promise.resolve({ data: null, error: { message: 'db down' } }),
       },
       'edge/test',
       jsonResponse,
@@ -59,7 +60,7 @@ describe('edge denial recorder fail-closed contract', () => {
   it('fails closed with 503 on malformed recorder output', async () => {
     const recordAndDeny = makeRecordAndDeny(
       {
-        rpc: async () => ({ data: { outcome: 'ok' }, error: null }),
+        rpc: () => Promise.resolve({ data: { outcome: 'ok' }, error: null }),
       },
       'edge/test',
       jsonResponse,

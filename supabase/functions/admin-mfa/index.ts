@@ -79,8 +79,13 @@ Deno.serve(async (request) => {
     p_admin_user_id: userId,
     p_success: null,
   });
+  // probe 失敗或輸出畸形一律 fail closed(同 edge-denial 契約):
+  // 鎖定狀態不明時不得放行
+  if (lockState.error !== null || !lockState.data) {
+    return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
+  }
   // MFA_LOCKED 已由 svc_admin_record_totp_outcome 入帳,原樣回傳不重複記錄
-  if (lockState.data?.code === 'MFA_LOCKED') return denied('MFA_LOCKED', 429);
+  if (lockState.data.code === 'MFA_LOCKED') return denied('MFA_LOCKED', 429);
 
   if (action === 'begin-enrollment') {
     // primary re-auth ≤ 5 分鐘:GoTrue amr password timestamp,不用 JWT iat(spec §4.4-1)
@@ -156,14 +161,25 @@ Deno.serve(async (request) => {
         p_admin_user_id: userId,
         p_success: false,
       });
+      // 失敗嘗試未能入帳(RPC error/畸形輸出)→ fail closed,
+      // 不得偽裝成已入帳的 denial
+      if (attempt.error !== null || !attempt.data) {
+        return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
+      }
       // 第 5 次失敗:MFA_LOCKED 已由 DB 入帳,原樣回傳;其餘失敗在此入帳
-      if (attempt.data?.code === 'MFA_LOCKED') return denied('MFA_LOCKED', 429);
+      if (attempt.data.code === 'MFA_LOCKED') return denied('MFA_LOCKED', 429);
       return recordAndDeny(action, userId, 'INSUFFICIENT_MFA', 401);
     }
-    await service.rpc('svc_admin_record_totp_outcome', {
+    const cleared = await service.rpc('svc_admin_record_totp_outcome', {
       p_admin_user_id: userId,
       p_success: true,
     });
+    if (cleared.error !== null || !cleared.data) {
+      return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
+    }
+    // probe 之後、verify 期間被並發第 5 敗鎖定(TOCTOU 窗):此回傳是鎖定
+    // 的 DB 兜底,MFA_LOCKED 不得丟棄
+    if (cleared.data.code === 'MFA_LOCKED') return denied('MFA_LOCKED', 429);
 
     // server-only factor binding 確認:恰一個 verified factor(spec §5.3)
     const factors = await service.auth.admin.mfa.listFactors({ userId });
@@ -185,11 +201,19 @@ Deno.serve(async (request) => {
         p_verified_factor_id: factorId,
         p_operation_id: crypto.randomUUID(),
       });
-      if (confirm.error || confirm.data?.outcome !== 'ok') {
-        // typed denial 已由 svc_admin_confirm_enrollment 入帳,不重複記錄
-        return denied(confirm.data?.code ?? 'FACTOR_BINDING_MISMATCH');
+      if (confirm.error === null && confirm.data?.outcome === 'ok') {
+        return jsonResponse(200, { outcome: 'ok' });
       }
-      return jsonResponse(200, { outcome: 'ok' });
+      // typed denial 已由 svc_admin_confirm_enrollment 入帳,原樣回傳;
+      // RPC error/畸形輸出未入帳,不得偽裝成 typed denial → fail closed
+      if (
+        confirm.error === null &&
+        confirm.data?.outcome === 'denied' &&
+        typeof confirm.data.code === 'string'
+      ) {
+        return denied(confirm.data.code);
+      }
+      return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
     }
 
     // challenge:既有 session 相同 auth_session_id → refresh fresh-MFA;否則建新 session
@@ -208,14 +232,22 @@ Deno.serve(async (request) => {
       p_device_summary: (request.headers.get('User-Agent') ?? '').slice(0, 120),
       p_correlation_id: crypto.randomUUID(),
     });
-    if (created.error || created.data?.outcome !== 'ok') {
-      // typed denial 已由 svc_admin_create_session 入帳,不重複記錄
-      return denied(created.data?.code ?? 'STALE_PRIVILEGED_SESSION');
+    if (created.error === null && created.data?.outcome === 'ok') {
+      return jsonResponse(200, {
+        outcome: 'ok',
+        sessionId: created.data.session_id,
+      });
     }
-    return jsonResponse(200, {
-      outcome: 'ok',
-      sessionId: created.data.session_id,
-    });
+    // typed denial 已由 svc_admin_create_session 入帳,原樣回傳;
+    // RPC error/畸形輸出未入帳,不得偽裝成 typed denial → fail closed
+    if (
+      created.error === null &&
+      created.data?.outcome === 'denied' &&
+      typeof created.data.code === 'string'
+    ) {
+      return denied(created.data.code);
+    }
+    return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
   }
 
   return jsonResponse(400, { error: 'INVALID_JSON' });
