@@ -2857,6 +2857,31 @@ git commit -m "feat(phase1): add catalog-driven safe browser and session state R
 
 ---
 
+### Task 6b: 複合主鍵定址契約（2026-08-08 owner 裁定，spec §1.3）
+
+spec §1.3、§7。背景:7 個 browser 資源(wallets、classroom_members、user_blooks、user_frames、assignment_targets、live_join_throttle、achievement_progress)無單一 `id` 欄;owner 裁定方案 (b) 擴充定址契約。migration 000700 為 local-only 未部署,直接原地修訂(比照 review 回修波慣例)。
+
+**Files:**
+- Modify: `supabase/migrations/20260808000700_admin_read_rpcs.sql`
+- Test: `supabase/tests/051_admin_safe_browser.test.sql`
+
+**Interfaces:**
+- Produces:
+  - `admin_internal_key_columns(p_resource text) returns text[]`(internal;由 `pg_catalog` 解析 PK 欄,依 constraint ordinal)
+  - `admin_get_resource_detail(p_domain text, p_resource text, p_row_key jsonb) returns jsonb`(overload;row_key 恰為全部 PK 欄的 object,值以 text 比對)
+  - `admin_list_resource` tie-breaker 改為全部 PK 欄升冪;id-less list 解除 deny
+- 保留:`admin_get_resource_detail(text, text, uuid)` 僅適用具 `id` 欄的表
+- 錯誤碼不變:key column 資格不符 → `RESOURCE_NOT_ALLOWED`;row_key 形狀不符(非 object、缺鍵、多鍵、非 PK 鍵)→ `COLUMN_NOT_ALLOWED`
+- Task 7 註記:`admin_reveal_field` 依 spec §1.3 於 Task 7 增加 `row_key jsonb` 形態
+
+- [ ] **Step 1: 051 擴充(先 RED)** — 置換「id-less list deny」斷言為 `wallets` list ok;新增:`wallets` row_key detail ok(null row 安全)、`classroom_members` 複合 row_key detail ok、缺鍵/多鍵/非 object row_key → `COLUMN_NOT_ALLOWED`;保留 uuid overload 對 id-less 表的 `RESOURCE_NOT_ALLOWED` 斷言。
+- [ ] **Step 2: 執行確認失敗** — `supabase test db --local supabase/tests/051_admin_safe_browser.test.sql`,新斷言 FAIL。
+- [ ] **Step 3: 修訂 migration 000700** — 新增 `admin_internal_key_columns`(revoke all callers);detail jsonb overload(authorize → catalog resource 檢查 → PK 解析 → key column 全數 catalog-listed 且 class ∈ open/internal → row_key 鍵集合恰等於 PK 集合 → `%I::text = %L` 等值查詢);list 以 PK 欄組 tie-breaker 並移除 id guard;cursor 比較鍵同步 PK 欄(cursor 仍不簽發)。
+- [ ] **Step 4: Reset 並確認通過** — `pnpm exec supabase db reset && pnpm test:db` 全綠。
+- [ ] **Step 5: Commit** — exact path 兩檔。
+
+---
+
 ### Task 7: 特權命令 RPCs — receipt 重驗、lifecycle、邀請、reveal、reconcile
 
 spec §4.3、§4.5、§6.2、§7(reveal)、§8。**每個特權命令 RPC 在消耗 receipt 的同一交易內重驗 identity/factor/session/receipt 全欄位;預期 denial 以 typed outcome 返回並在同一提交交易寫 audit(硬性修正 #6:絕不以 RAISE 造成 audit 回滾)。**

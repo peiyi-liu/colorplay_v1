@@ -35,6 +35,16 @@
 9. Denial counter 與正式 append-only audit 分離。
 10. Production smoke 不改產品領域資料，但明列必要安全控制面寫入。
 
+### 1.3 2026-08-08 複合主鍵定址修訂（owner 裁定）
+
+背景：46 個 browser catalog 資源中有 7 個（`wallets`、`classroom_members`、`user_blooks`、`user_frames`、`assignment_targets`、`live_join_throttle`、`achievement_progress`）不具單一 `id` 欄，原 §7 的 `row_id` 單一 uuid 定址無法涵蓋。owner 裁定採擴充定址契約（方案 b）：稽核流程必須能經 admin UI 查到這些表的單筆記錄，不得犧牲瀏覽能力。
+
+1. **Row key 權威**：每個 resource 的 key columns＝該表 PRIMARY KEY 欄位（依 constraint ordinal），執行期由 DB `pg_catalog` 解析；PK 結構權威在 DB schema，敏感度權威仍在 catalog，CI drift enforcement 不變。
+2. **Key column 資格**：每個 key column 必須出現在該 resource 的 catalog 且 class ∈ {`open`,`internal`}；任何 key column 缺列或屬 `personal`／`forbidden` → 整個 resource 的逐筆定址 fail closed（`RESOURCE_NOT_ALLOWED`）。
+3. **RPC 形態**：`admin_get_resource_detail(domain, resource, row_key jsonb)` 新 overload——`row_key` 為 object，鍵＝PK 欄名、值＝文字表示（server 以 `%I::text = %L` 比對，不做型別 cast）；必須恰好提供全部 PK 欄，多鍵、缺鍵、非 PK 鍵、非 object → `COLUMN_NOT_ALLOWED` typed denial。既有 `(…, row_id uuid)` overload 保留，僅適用於具 `id` 欄的表，語意不變。`admin_reveal_field` 同步增加 `row_key jsonb` 形態（Task 7 實作）。
+4. **List tie-breaker**：`admin_list_resource` 的排序 tie-breaker 由固定 `id` 改為「全部 PK 欄依 ordinal 升冪」；keyset cursor 的比較鍵同步為 (sort_column, pk…)，cursor payload 以 `key` object 取代單一 `id`（cursor 仍為 server-issued，Phase 1 尚未簽發，於 Task 13 接線）。
+5. **URL 編碼**（Task 12/13）：detail 路由 `/admin/data/:domain/:resource/:rowKey`；`rowKey`＝base64url(canonical JSON，鍵依字母序)；具 `id` 欄的表允許裸 uuid 簡寫（視為 `{"id": value}`）。前端只透傳，驗證一律在 server。
+
 ## 2. 範圍、非目標、術語與權威
 
 ### 2.1 Phase 1 交付
@@ -101,6 +111,7 @@ Phase 2–5 domain commands ── reuse receipts, idempotency and audit contrac
 | `/admin/mfa/enroll` | enrollment gate | `active_pending_mfa`＋recent primary re-auth |
 | `/admin/mfa/challenge` | 登入 challenge／step-up | active identity；不要求既有 privileged session |
 | `/admin/data/:domain/:resource` | allowlisted safe browser | privileged＋catalog |
+| `/admin/data/:domain/:resource/:rowKey` | 單筆 detail（`rowKey`＝base64url(canonical JSON row key)；具 `id` 欄的表允許裸 uuid） | privileged＋catalog＋server 端 row key 驗證 |
 | `/admin/audit` | 受控 audit 查詢 | privileged |
 | `/admin/health` | Phase 1 控制面健康摘要 | privileged |
 
@@ -228,9 +239,9 @@ Auth verify 已成功但 PostgreSQL finalize 失敗時，以原 operation ID 重
 ## 7. Safe database browser query contract
 
 - `admin_list_resource(domain, resource, cursor, filters, sort)`：resource、projection、operator 與 query columns 全部由 machine catalog 決定；page size 最高 50；keyset cursor；statement timeout 5 秒。
-- Cursor 是 server-issued opaque value，綁 resource、filter、sort 與 stable tie-breaker；client 不能自行構造任意 SQL 片段。
-- `admin_get_resource_detail(domain, resource, row_id)`：固定 detail projection 與預先定義 relation summaries；不接受任意 join。
-- `admin_reveal_field(domain, resource, row_id, column, purpose)`：只允許 catalog 中的 `personal` 欄；purpose trim 後至少 10 字、fresh TOTP、receipt、一次一欄、immutable audit。
+- Cursor 是 server-issued opaque value，綁 resource、filter、sort 與 stable tie-breaker（tie-breaker＝該表全部 PK 欄依 ordinal 升冪；§1.3）；client 不能自行構造任意 SQL 片段。
+- `admin_get_resource_detail(domain, resource, row_id uuid)` 與 `admin_get_resource_detail(domain, resource, row_key jsonb)`（§1.3 複合主鍵定址）：固定 detail projection 與預先定義 relation summaries；不接受任意 join。
+- `admin_reveal_field(domain, resource, row_id, column, purpose)`（另有 `row_key jsonb` 形態；§1.3）：只允許 catalog 中的 `personal` 欄；purpose trim 後至少 10 字、fresh TOTP、receipt、一次一欄、immutable audit。
 - Reveal 明文只在核准後 response 返回；cache、persistent payload、receipt、audit、application log 均不得保存。Response 遺失必須重新核准。
 - 不存在 raw SQL、任意 table/column、generic update、bulk reveal、cross-resource search、export 或 download endpoint。
 
