@@ -22,6 +22,13 @@ export const ADMIN_ERROR_CODES = [
 
 export type AdminErrorCode = (typeof ADMIN_ERROR_CODES)[number];
 
+export function isAdminErrorCode(value: unknown): value is AdminErrorCode {
+  return (
+    typeof value === 'string' &&
+    (ADMIN_ERROR_CODES as readonly string[]).includes(value)
+  );
+}
+
 export const ADMIN_ERROR_MESSAGES: Record<AdminErrorCode, string> = {
   AUTHORIZATION_RECEIPT_INVALID: '授權憑據無效或已使用，請重新確認後再試。',
   COLUMN_NOT_ALLOWED: '此欄位不允許這項操作。',
@@ -125,6 +132,16 @@ export async function invokeAdminCommand(
     body: { args, command, idempotencyKey },
   });
   return await readFunctionResponse(response);
+}
+
+// challenge action 需要 factorId 才能請求(admin-mfa 契約);這是使用者自己
+// session 的 GoTrue MFA factor 列表(user-scoped,非 admin 權限),不經
+// admin-mfa Edge。server 端仍會獨立比對 bound_factor_id,錯誤 factorId
+// 只會導致 fail-closed 的 FACTOR_BINDING_MISMATCH,不構成信任邊界問題。
+export async function listOwnVerifiedTotpFactorId(): Promise<string | null> {
+  const { data, error } = await browserClient().auth.mfa.listFactors();
+  if (error) return null;
+  return data.totp[0]?.id ?? null;
 }
 
 export async function adminRpc<T>(
