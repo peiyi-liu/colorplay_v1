@@ -379,7 +379,7 @@ Auth verify 已成功但 PostgreSQL finalize 失敗時，以原 operation ID 重
 ## 11. Errors、incident 與 accessibility
 
 - 新增穩定碼：`STALE_PRIVILEGED_SESSION`、`INSUFFICIENT_MFA`、`INVITATION_INVALID`、`LAST_ADMIN_PROTECTED`、`RESOURCE_NOT_ALLOWED`、`COLUMN_NOT_ALLOWED`、`MFA_LOCKED`、`FACTOR_BINDING_MISMATCH`、`AUTHORIZATION_RECEIPT_INVALID`、`IDEMPOTENCY_CONFLICT`、`SECURITY_OPERATION_PENDING`、`TARGET_STATE_INVALID`。
-- `TARGET_STATE_INVALID`：命令通過授權 gate 後發現目標當前狀態不允許該操作（如停用已停用的 admin、撤銷已撤銷的 session）。receipt 依 §6.2 已於 gate 消耗且授權本身有效；client 應修正目標選擇後重新申請，不得將此碼視為授權失效而重走 fresh-MFA／mint 迴圈。
+- `TARGET_STATE_INVALID`：命令通過授權 gate 後發現目標當前狀態不允許該操作（如停用已停用的 admin、撤銷已撤銷的 session；目標不存在亦同碼——依「無目標存在性洩漏」原則不區分）。receipt 依 §6.2 已於 gate 消耗且授權本身有效；client 應修正目標選擇後重新申請，不得將此碼視為授權失效而重走 fresh-MFA／mint 迴圈。
 - Response 只含 stable code、安全 message、request ID、retryable flag；無 SQL、stack、secret 或目標存在性。
 - 預期 denial 使用 typed outcome，讓 denial audit 同交易提交。Audit transaction 不可用時不執行命令。
 - Incident dashboard 顯示 factor mismatch、MFA lock、reconciliation timeout、denial threshold、last-admin protection；只提供合法 follow-up operation。
@@ -417,6 +417,7 @@ Auth verify 已成功但 PostgreSQL finalize 失敗時，以原 operation ID 重
 - Confirm 中間態、reset 各 saga step、Auth sign-out failure、idempotent reconciliation、timeout incident。
 - 兩 Admin 互相 reset／deactivate 的並發；advisory lock 後不得 active 歸零。
 - Receipt：missing、expired、wrong actor/session/command/key/hash/factor、replay；有效 receipt 但 identity recovery、factor changed、session revoked／idle／absolute timeout 仍拒絕。
+- Target-state：停用已停用、重啟非停用、撤銷已撤銷 session、reset 非 active 目標 → `TARGET_STATE_INVALID`（非 receipt 碼）；client 不重走 fresh-MFA／mint；denial audit 帶 `mfa_age_seconds` 佐證。
 - Idempotency：同 key同 request 回原 redacted result；同 key不同 request `IDEMPOTENCY_CONFLICT`。
 - Audit：success、typed denial、external error、pre-session actor、OOB actor、mapping tombstone、audit unavailable fail closed。
 
