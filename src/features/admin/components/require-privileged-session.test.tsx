@@ -1,5 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  Route,
+  RouterProvider,
+  Routes,
+} from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import { useAdminSessionState } from '../hooks/use-admin-session-state';
@@ -41,8 +47,29 @@ describe('RequirePrivilegedSession', () => {
   });
 
   it('sends stale sessions to challenge with return intent', () => {
-    renderWithState('stale');
+    vi.mocked(useAdminSessionState).mockReturnValue({
+      isPending: false,
+      mfaAgeSeconds: 0,
+      refetch: vi.fn(),
+      state: 'stale',
+    } as unknown as ReturnType<typeof useAdminSessionState>);
+    const router = createMemoryRouter(
+      [
+        {
+          element: <RequirePrivilegedSession />,
+          children: [{ element: <p>稽核頁</p>, path: '/admin/audit' }],
+        },
+        { element: <p>challenge 頁</p>, path: '/admin/mfa/challenge' },
+      ],
+      { initialEntries: ['/admin/audit'] },
+    );
+    render(<RouterProvider router={router} />);
     expect(screen.getByText('challenge 頁')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/mfa/challenge');
+    expect(
+      (router.state.location.state as { returnTo?: string }).returnTo,
+    ).toBe('/admin/audit');
+    expect(router.state.historyAction).toBe('REPLACE');
   });
 
   it('shows the route loading state while the query is pending', () => {

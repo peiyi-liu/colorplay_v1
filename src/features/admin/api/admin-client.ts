@@ -98,7 +98,8 @@ async function readFunctionResponse(response: {
   const context = (response.error as { context?: unknown }).context;
   if (context instanceof Response) {
     try {
-      return (await context.json()) as Record<string, unknown>;
+      // clone:Response body 單次可讀,保留原件給日後的呼叫端/記錄使用
+      return (await context.clone().json()) as Record<string, unknown>;
     } catch {
       throw new AdminClientError();
     }

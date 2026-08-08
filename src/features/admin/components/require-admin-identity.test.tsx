@@ -39,6 +39,11 @@ describe('RequireAdminIdentity', () => {
     expect(screen.getByText('未授權頁')).toBeInTheDocument();
   });
 
+  it('sends student roles to the unauthorized page', () => {
+    renderWithProfile({ data: { role: 'student' }, isPending: false });
+    expect(screen.getByText('未授權頁')).toBeInTheDocument();
+  });
+
   it('shows the route loading state while the profile is pending', () => {
     renderWithProfile({ data: undefined, isPending: true });
     expect(screen.getByRole('status', { name: '頁面載入中' })).toBeVisible();

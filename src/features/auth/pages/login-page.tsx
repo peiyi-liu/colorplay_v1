@@ -8,6 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../../../components/ui/toast';
 import { parsePublicEnv } from '../../../lib/config/public-env';
 import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
+import { createProfileRepository } from '../../profile/api/profile-repository';
 import { useAuth } from '../context/auth-context';
 import {
   accountSignInSchema,
@@ -34,21 +35,14 @@ const fallbackDestination = { hash: '', pathname: '/app', search: '' };
 const teacherDestination = { hash: '', pathname: '/teacher', search: '' };
 const adminDestination = { hash: '', pathname: '/admin', search: '' };
 
-// admin 經教師端登入(spec §3.1):登入成功後依 profile.role 決定導向。
+// admin 經教師端登入(spec §2.1):登入成功後依 profile.role 決定導向。
 // 這只是 UX 導向;/admin 樹的授權權威在 RLS/RPC/Edge,非 admin 進入
-// 也拿不到任何伺服端資料。
+// 也拿不到任何伺服端資料。查詢失敗時保守落回教師工作區。
 async function resolveTeacherPortalDestination() {
   try {
     const client = getBrowserSupabaseClient(parsePublicEnv(import.meta.env));
-    const { data: userData } = await client.auth.getUser();
-    const userId = userData.user?.id;
-    if (!userId) return teacherDestination;
-    const { data: profileRow } = await client
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .maybeSingle();
-    return profileRow?.role === 'admin' ? adminDestination : teacherDestination;
+    const profile = await createProfileRepository(client).getMyProfile();
+    return profile.role === 'admin' ? adminDestination : teacherDestination;
   } catch {
     return teacherDestination;
   }
