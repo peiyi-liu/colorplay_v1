@@ -1,7 +1,7 @@
 -- supabase/tests/052_admin_lifecycle_commands.test.sql
 -- reset saga 的跨系統行為由 Task 9 integration 測試覆蓋;本檔覆蓋 DB 契約。
 begin;
-select plan(29);
+select plan(43);
 
 \ir helpers/admin_test_seed.psql
 select pg_temp.admin_test_seed();
@@ -69,6 +69,10 @@ select set_config('request.jwt.claim.sub',
   'aa000000-0000-0000-0000-000000000001', true);
 select set_config('request.jwt.claim.session_id',
   'aa000000-0000-0000-0000-0000000000e1', true);
+-- 先把 activity 回撥到過去,避免交易內 now() 凍結讓斷言恆真
+update public.admin_sessions set last_activity_at = now() - interval '5 minutes'
+  where admin_user_id = 'aa000000-0000-0000-0000-000000000001'
+    and revoked_at is null;
 select last_activity_at as activity_a from public.admin_sessions
   where admin_user_id = 'aa000000-0000-0000-0000-000000000001'
     and revoked_at is null \gset
@@ -213,6 +217,152 @@ select is((public.admin_reveal_field(:'receipt_r3'::uuid, 'k-r3', 'rewards',
   'wallets', '{"wrong_column": "x"}'::jsonb, 'token_balance',
   '稽核需要核對錢包餘額明細'))->>'code', 'COLUMN_NOT_ALLOWED',
   'row_key reveal rejects non-PK key shape like Task 6b detail');
+
+-- 12) JWT session_id claim 與 privileged session 不符 → STALE,receipt 不消耗
+--     (spec §6.1;與 admin_internal_authorize 同一檢查,命令腿不得缺席)
+select public.admin_internal_canonical_hash(jsonb_build_object(
+  'reason', '裝置不符測試理由超過十字',
+  'target_principal_id', :'principal_b'::text)) as hash_5 \gset
+select public.svc_admin_issue_command_receipt(
+  'aa000000-0000-0000-0000-000000000001',
+  'aa000000-0000-0000-0000-0000000000e1', 'deactivate_admin', 'k-5',
+  :'hash_5'::bytea, 'aa000000-0000-0000-0000-0000000000a1', true
+) ->> 'receipt_id' as receipt_5 \gset
+select set_config('request.jwt.claim.session_id',
+  '99999999-9999-9999-9999-999999999999', true);
+select is((public.deactivate_admin(:'receipt_5', 'k-5', :'principal_b',
+  '裝置不符測試理由超過十字'))->>'code', 'STALE_PRIVILEGED_SESSION',
+  'mismatched jwt session claim denied as stale like the read path');
+select is((select consumed_at from public.admin_command_authorizations
+  where id = :'receipt_5'), null,
+  'jwt-session mismatch leaves the receipt unconsumed');
+select set_config('request.jwt.claim.session_id',
+  'aa000000-0000-0000-0000-0000000000e1', true);
+
+-- 13) row_key 含 JSON null 值 key → canonical 不得丟棄該 key(§1.3.5 同
+--     admin_internal_canonical_hash 的 null 規則)→ hash 不符,receipt 不消耗
+select public.admin_internal_canonical_hash(jsonb_build_object(
+  'column', 'token_balance', 'domain', 'rewards',
+  'purpose', '稽核需要核對錢包餘額明細', 'resource', 'wallets',
+  'row_key', '{"user_id":"cc000000-0000-0000-0000-000000000001"}')) as hash_r4 \gset
+select public.svc_admin_issue_command_receipt(
+  'aa000000-0000-0000-0000-000000000001',
+  'aa000000-0000-0000-0000-0000000000e1', 'admin_reveal_field', 'k-r4',
+  :'hash_r4'::bytea, 'aa000000-0000-0000-0000-0000000000a1', true
+) ->> 'receipt_id' as receipt_r4 \gset
+select is((public.admin_reveal_field(:'receipt_r4'::uuid, 'k-r4', 'rewards',
+  'wallets',
+  '{"user_id": "cc000000-0000-0000-0000-000000000001", "extra": null}'::jsonb,
+  'token_balance', '稽核需要核對錢包餘額明細'))->>'code',
+  'AUTHORIZATION_RECEIPT_INVALID',
+  'null-valued extra key changes the canonical hash instead of vanishing');
+select is((select consumed_at from public.admin_command_authorizations
+  where id = :'receipt_r4'), null,
+  'null-key hash mismatch leaves the receipt unconsumed');
+
+-- 14) personal 欄 catalog 資格必須含 surface = browser(系列雙重謂詞慣例):
+--     catalog drift 成非 browser surface 後,reveal 必須拒絕
+update public.admin_sensitivity_catalog set surface = 'none'
+  where resource = 'profiles' and column_name = 'full_name';
+select public.admin_internal_canonical_hash(jsonb_build_object(
+  'column', 'full_name', 'domain', 'users',
+  'purpose', '客訴處理需要核對使用者全名', 'resource', 'profiles',
+  'row_id', 'cc000000-0000-0000-0000-000000000001')) as hash_r5 \gset
+select public.svc_admin_issue_command_receipt(
+  'aa000000-0000-0000-0000-000000000001',
+  'aa000000-0000-0000-0000-0000000000e1', 'admin_reveal_field', 'k-r5',
+  :'hash_r5'::bytea, 'aa000000-0000-0000-0000-0000000000a1', true
+) ->> 'receipt_id' as receipt_r5 \gset
+select is((public.admin_reveal_field(:'receipt_r5'::uuid, 'k-r5', 'users',
+  'profiles', 'cc000000-0000-0000-0000-000000000001'::uuid, 'full_name',
+  '客訴處理需要核對使用者全名'))->>'code', 'COLUMN_NOT_ALLOWED',
+  'non-browser-surface personal column cannot be revealed');
+update public.admin_sensitivity_catalog set surface = 'browser'
+  where resource = 'profiles' and column_name = 'full_name';
+
+-- 15) accept 成功路徑:無 identity 的受邀者(C)建立 identity 並升 role
+select public.admin_internal_canonical_hash(jsonb_build_object(
+  'invited_email', 'plain.test.c@colorplay.test',
+  'reason', '新任管理員到職需要開通權限')) as hash_6 \gset
+select public.svc_admin_issue_command_receipt(
+  'aa000000-0000-0000-0000-000000000001',
+  'aa000000-0000-0000-0000-0000000000e1', 'issue_admin_invitation', 'k-6',
+  :'hash_6'::bytea, 'aa000000-0000-0000-0000-0000000000a1', true
+) ->> 'receipt_id' as receipt_6 \gset
+select public.issue_admin_invitation(:'receipt_6', 'k-6',
+  'plain.test.c@colorplay.test', '新任管理員到職需要開通權限'
+) ->> 'invitation_token' as token_c \gset
+select set_config('request.jwt.claim.sub',
+  'cc000000-0000-0000-0000-000000000001', true);
+select set_config('request.jwt.claim.session_id',
+  'cc000000-0000-0000-0000-0000000000e3', true);
+select is((public.accept_admin_invitation(:'token_c'))->>'outcome', 'ok',
+  'invitee without identity accepts successfully');
+select is((select state::text from public.admin_security_identities
+  where admin_user_id = 'cc000000-0000-0000-0000-000000000001'),
+  'active_pending_mfa', 'accept creates identity in active_pending_mfa');
+select is((select role::text from public.profiles
+  where id = 'cc000000-0000-0000-0000-000000000001'), 'admin',
+  'accept promotes profile role to admin');
+select is((select status::text from public.admin_invitations
+  where invited_email = 'plain.test.c@colorplay.test'), 'accepted',
+  'accepted invitation marked accepted');
+
+-- 16) 已有 identity 者(B,已停用)accept → INVITATION_INVALID;邀請不消耗、
+--     identity 不動(spec §4.1:deactivated 只能走 reactivate_admin)
+select set_config('request.jwt.claim.sub',
+  'aa000000-0000-0000-0000-000000000001', true);
+select set_config('request.jwt.claim.session_id',
+  'aa000000-0000-0000-0000-0000000000e1', true);
+select public.admin_internal_canonical_hash(jsonb_build_object(
+  'invited_email', 'admin.test.b@colorplay.test',
+  'reason', '誤發給既有管理員帳號的邀請')) as hash_7 \gset
+select public.svc_admin_issue_command_receipt(
+  'aa000000-0000-0000-0000-000000000001',
+  'aa000000-0000-0000-0000-0000000000e1', 'issue_admin_invitation', 'k-7',
+  :'hash_7'::bytea, 'aa000000-0000-0000-0000-0000000000a1', true
+) ->> 'receipt_id' as receipt_7 \gset
+select public.issue_admin_invitation(:'receipt_7', 'k-7',
+  'admin.test.b@colorplay.test', '誤發給既有管理員帳號的邀請'
+) ->> 'invitation_token' as token_b \gset
+select set_config('request.jwt.claim.sub',
+  'bb000000-0000-0000-0000-000000000001', true);
+select set_config('request.jwt.claim.session_id',
+  'bb000000-0000-0000-0000-0000000000e2', true);
+select is((public.accept_admin_invitation(:'token_b'))->>'code',
+  'INVITATION_INVALID',
+  'holder of an existing identity cannot accept an invitation');
+select is((select status::text from public.admin_invitations
+  where invited_email = 'admin.test.b@colorplay.test'), 'pending',
+  'denied accept leaves the invitation pending');
+select is((select state::text from public.admin_security_identities
+  where admin_user_id = 'bb000000-0000-0000-0000-000000000001'),
+  'deactivated', 'denied accept leaves the deactivated identity untouched');
+
+-- 17) session 已撤銷 → STALE_PRIVILEGED_SESSION(spec §5.2:撤銷與逾時同碼),
+--     receipt 不消耗。本區塊撤銷 A 的 session,必須留在檔尾。
+select set_config('request.jwt.claim.sub',
+  'aa000000-0000-0000-0000-000000000001', true);
+select set_config('request.jwt.claim.session_id',
+  'aa000000-0000-0000-0000-0000000000e1', true);
+select public.admin_internal_canonical_hash(jsonb_build_object(
+  'reason', '撤銷後嘗試執行命令的測試',
+  'target_principal_id', :'principal_b'::text)) as hash_8 \gset
+select public.svc_admin_issue_command_receipt(
+  'aa000000-0000-0000-0000-000000000001',
+  'aa000000-0000-0000-0000-0000000000e1', 'deactivate_admin', 'k-8',
+  :'hash_8'::bytea, 'aa000000-0000-0000-0000-0000000000a1', true
+) ->> 'receipt_id' as receipt_8 \gset
+update public.admin_sessions
+  set revoked_at = now(), revoke_reason = 'test_revocation'
+  where admin_user_id = 'aa000000-0000-0000-0000-000000000001'
+    and revoked_at is null;
+select is((public.deactivate_admin(:'receipt_8', 'k-8', :'principal_b',
+  '撤銷後嘗試執行命令的測試'))->>'code', 'STALE_PRIVILEGED_SESSION',
+  'revoked session denied as stale like timeout, not as receipt-invalid');
+select is((select consumed_at from public.admin_command_authorizations
+  where id = :'receipt_8'), null,
+  'revoked-session denial leaves the receipt unconsumed');
 
 select * from finish();
 rollback;

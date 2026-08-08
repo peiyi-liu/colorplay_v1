@@ -1,7 +1,5 @@
 -- supabase/migrations/20260808000800_admin_lifecycle_commands.sql
 
--- supabase/migrations/20260808000800_admin_lifecycle_commands.sql
-
 -- 命令共用前置(spec §6.2 步驟 5;Codex 修訂 2):鎖定順序固定 identity →
 -- session → receipt。先 SELECT ... FOR UPDATE 取回候選 receipt,逐欄驗證
 -- ownership、session、command、idempotency key、request hash、factor snapshot、
@@ -19,9 +17,12 @@ declare
   v_identity public.admin_security_identities;
   v_session public.admin_sessions;
   v_receipt public.admin_command_authorizations;
+  v_jwt_session uuid;
   v_consumed uuid;
 begin
   perform public.admin_internal_lifecycle_lock();
+  v_jwt_session := nullif(coalesce(auth.jwt() ->> 'session_id',
+    current_setting('request.jwt.claim.session_id', true)), '')::uuid;
   select * into v_identity from public.admin_security_identities
     where admin_user_id = auth.uid() for update;
   select * into v_session from public.admin_sessions
@@ -33,9 +34,19 @@ begin
   if v_receipt.id is null
      or v_receipt.consumed_at is not null
      or now() >= v_receipt.expires_at
-     or v_identity.admin_user_id is null
-     or v_session.id is null
-     or v_receipt.actor_principal_id is distinct from v_identity.audit_principal_id
+     or v_identity.admin_user_id is null then
+    return jsonb_build_object('ok', false, 'code', 'AUTHORIZATION_RECEIPT_INVALID');
+  end if;
+  -- session 撤銷/JWT session claim 不符/非 active/逾時,與讀路徑
+  -- admin_internal_authorize 同碼(spec §5.2:timeout 與 revocation 同 STALE)
+  if v_session.id is null
+     or v_session.auth_session_id is distinct from v_jwt_session
+     or v_identity.state is distinct from 'active'
+     or now() - v_session.last_activity_at >= interval '15 minutes'
+     or now() >= v_session.absolute_expires_at then
+    return jsonb_build_object('ok', false, 'code', 'STALE_PRIVILEGED_SESSION');
+  end if;
+  if v_receipt.actor_principal_id is distinct from v_identity.audit_principal_id
      or v_receipt.auth_session_id is distinct from v_session.auth_session_id
      or v_receipt.command_name is distinct from p_command_name
      or v_receipt.idempotency_key is distinct from p_idempotency_key
@@ -45,11 +56,6 @@ begin
      or v_receipt.bound_factor_id_snapshot
         is distinct from v_session.bound_factor_id_snapshot then
     return jsonb_build_object('ok', false, 'code', 'AUTHORIZATION_RECEIPT_INVALID');
-  end if;
-  if v_identity.state is distinct from 'active'
-     or now() - v_session.last_activity_at >= interval '15 minutes'
-     or now() >= v_session.absolute_expires_at then
-    return jsonb_build_object('ok', false, 'code', 'STALE_PRIVILEGED_SESSION');
   end if;
   if p_requires_fresh_totp
      and now() - v_session.last_totp_verified_at > interval '10 minutes' then
@@ -393,7 +399,8 @@ begin
   insert into public.admin_invitations
     (issuer_principal_id, invited_email, token_hash, expires_at)
   values ((v_gate ->> 'principal_id')::uuid, v_email,
-    sha256(convert_to(v_token, 'utf8')), now() + interval '72 hours')
+    pg_catalog.sha256(pg_catalog.convert_to(v_token, 'utf8')),
+    now() + interval '72 hours')
   returning id into v_invitation_id;
   -- 明文 token 只在最終回傳附加;finalize 的 redacted result 不含 token
   return public.admin_internal_finalize_command(v_gate,
@@ -479,9 +486,12 @@ begin
     return public.admin_internal_command_deny('admin_reveal_field',
       null, v_gate ->> 'code', p_purpose);
   end if;
+  -- personal 欄資格與系列其他 catalog 查詢同用 surface 雙重謂詞:
+  -- 只有 browser surface 的 personal 欄可經 safe browser reveal(spec §7)
   if not exists (select 1 from public.admin_sensitivity_catalog
       where resource = p_resource and domain = p_domain
-        and column_name = p_column and class = 'personal') then
+        and column_name = p_column and class = 'personal'
+        and surface = 'browser') then
     return public.admin_internal_command_deny('admin_reveal_field',
       null, 'COLUMN_NOT_ALLOWED', p_purpose);
   end if;
@@ -539,8 +549,11 @@ begin
     return public.admin_internal_command_deny('admin_reveal_field',
       null, 'COLUMN_NOT_ALLOWED', p_purpose);
   end if;
+  -- null 值輸出字面 null,與 admin_internal_canonical_hash 同一規則(§1.3.5);
+  -- 否則 null 值 key 會被 string_agg 靜默丟棄,兩端 canonical 編碼分歧
   select '{' || coalesce(string_agg(
-      to_json(key)::text || ':' || to_json(value)::text,
+      to_json(key)::text || ':' ||
+      case when value is null then 'null' else to_json(value)::text end,
       ',' order by key collate "C"), '') || '}'
     into v_row_key_canonical from jsonb_each_text(p_row_key);
   v_request_hash := public.admin_internal_canonical_hash(jsonb_build_object(
@@ -553,9 +566,11 @@ begin
     return public.admin_internal_command_deny('admin_reveal_field',
       null, v_gate ->> 'code', p_purpose);
   end if;
+  -- personal 欄資格同 uuid 形態:surface 雙重謂詞(spec §7)
   if not exists (select 1 from public.admin_sensitivity_catalog
       where resource = p_resource and domain = p_domain
-        and column_name = p_column and class = 'personal') then
+        and column_name = p_column and class = 'personal'
+        and surface = 'browser') then
     return public.admin_internal_command_deny('admin_reveal_field',
       null, 'COLUMN_NOT_ALLOWED', p_purpose);
   end if;
@@ -659,7 +674,8 @@ begin
   perform public.admin_internal_lifecycle_lock();
   select u.email into v_email from auth.users u where u.id = auth.uid();
   select * into v_invitation from public.admin_invitations
-    where token_hash = sha256(convert_to(p_token, 'utf8')) for update;
+    where token_hash = pg_catalog.sha256(pg_catalog.convert_to(p_token, 'utf8'))
+    for update;
   -- 重放、逾期、撤銷、錯帳號一律同碼,不洩漏存在性(spec §4.3)
   if v_invitation.id is null or v_invitation.status <> 'pending'
      or now() >= v_invitation.expires_at
@@ -668,6 +684,21 @@ begin
     return public.admin_internal_deny('command/accept_admin_invitation',
       'INVITATION_INVALID', 'accept_admin_invitation', 'admin_invitation',
       'pre_session_user', null, null,
+      nullif(coalesce(auth.jwt() ->> 'session_id',
+        current_setting('request.jwt.claim.session_id', true)), '')::uuid,
+      null, null, null);
+  end if;
+  -- 既有 identity(active/deactivated/recovery…)一律不得經邀請重新授權:
+  -- lifecycle 轉換只走治理命令(spec §4.1,deactivated 只能 reactivate_admin)。
+  -- 同碼拒絕不洩漏存在性;邀請保持 pending,不消耗。
+  if exists (select 1 from public.admin_security_identities
+      where admin_user_id = auth.uid()) then
+    return public.admin_internal_deny('command/accept_admin_invitation',
+      'INVITATION_INVALID', 'accept_admin_invitation', 'admin_invitation',
+      'pre_session_user',
+      (select audit_principal_id from public.admin_security_identities
+        where admin_user_id = auth.uid()),
+      null,
       nullif(coalesce(auth.jwt() ->> 'session_id',
         current_setting('request.jwt.claim.session_id', true)), '')::uuid,
       null, null, null);
