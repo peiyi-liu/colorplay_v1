@@ -609,6 +609,36 @@ begin
 end;
 $$;
 
+-- Task 9 reconcile 記帳:每輪嘗試先遞增 attempt_count 並設 5 分鐘退避,
+-- 讓 stuck 門檻(attempt_count>=10)在失敗迴圈下仍然可達 —— 否則
+-- attempt_count 只在 step2 成功時遞增,卡在 GoTrue 失敗的 operation
+-- 永遠不會被標 stuck。終態 operation 回 skipped,不動任何欄位。
+create function public.svc_admin_touch_security_operation(p_operation_id uuid)
+returns jsonb
+language plpgsql security definer set search_path = public, pg_temp
+as $$
+declare
+  v_attempts integer;
+begin
+  perform public.admin_internal_lifecycle_lock();
+  update public.admin_security_operations
+    set attempt_count = attempt_count + 1,
+        next_retry_at = now() + interval '5 minutes',
+        updated_at = now()
+    where id = p_operation_id
+      and state in ('pending', 'step1_complete', 'step2_complete')
+    returning attempt_count into v_attempts;
+  if not found then
+    return jsonb_build_object('outcome', 'skipped');
+  end if;
+  return jsonb_build_object('outcome', 'ok', 'attempt_count', v_attempts);
+end;
+$$;
+
+revoke execute on function public.svc_admin_touch_security_operation(uuid)
+  from public, anon, authenticated;
+grant execute on function public.svc_admin_touch_security_operation(uuid)
+  to service_role;
 revoke execute on function public.svc_admin_create_session(uuid, uuid, uuid, text, text)
   from public, anon, authenticated;
 grant execute on function public.svc_admin_create_session(uuid, uuid, uuid, text, text)

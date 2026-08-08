@@ -6,68 +6,68 @@ begin;
 select plan(20);
 
 select ok(has_table_privilege('service_role',
-  'public.admin_security_identities', 'select'),
+  'public.admin_security_identities', 'SELECT'),
   'service_role can read admin_security_identities');
 select ok(not has_table_privilege('service_role',
-  'public.admin_security_identities', 'insert'),
+  'public.admin_security_identities', 'INSERT'),
   'service_role cannot insert admin_security_identities');
 select ok(not has_table_privilege('service_role',
-  'public.admin_security_identities', 'update'),
+  'public.admin_security_identities', 'UPDATE'),
   'service_role cannot update admin_security_identities');
 select ok(not has_table_privilege('service_role',
-  'public.admin_security_identities', 'delete'),
+  'public.admin_security_identities', 'DELETE'),
   'service_role cannot delete admin_security_identities');
 
 select ok(has_table_privilege('service_role',
-  'public.admin_sessions', 'select'),
+  'public.admin_sessions', 'SELECT'),
   'service_role can read admin_sessions');
 select ok(not has_table_privilege('service_role',
-  'public.admin_sessions', 'insert'),
+  'public.admin_sessions', 'INSERT'),
   'service_role cannot insert admin_sessions');
 select ok(not has_table_privilege('service_role',
-  'public.admin_sessions', 'update'),
+  'public.admin_sessions', 'UPDATE'),
   'service_role cannot update admin_sessions');
 select ok(not has_table_privilege('service_role',
-  'public.admin_sessions', 'delete'),
+  'public.admin_sessions', 'DELETE'),
   'service_role cannot delete admin_sessions');
 
 select ok(has_table_privilege('service_role',
-  'public.admin_invitations', 'select'),
+  'public.admin_invitations', 'SELECT'),
   'service_role can read admin_invitations');
 select ok(not has_table_privilege('service_role',
-  'public.admin_invitations', 'insert'),
+  'public.admin_invitations', 'INSERT'),
   'service_role cannot insert admin_invitations');
 select ok(not has_table_privilege('service_role',
-  'public.admin_invitations', 'update'),
+  'public.admin_invitations', 'UPDATE'),
   'service_role cannot update admin_invitations');
 select ok(not has_table_privilege('service_role',
-  'public.admin_invitations', 'delete'),
+  'public.admin_invitations', 'DELETE'),
   'service_role cannot delete admin_invitations');
 
 select ok(has_table_privilege('service_role',
-  'public.admin_audit_principals', 'select'),
+  'public.admin_audit_principals', 'SELECT'),
   'service_role can read admin_audit_principals');
 select ok(not has_table_privilege('service_role',
-  'public.admin_audit_principals', 'insert'),
+  'public.admin_audit_principals', 'INSERT'),
   'service_role cannot insert admin_audit_principals');
 select ok(not has_table_privilege('service_role',
-  'public.admin_audit_principals', 'update'),
+  'public.admin_audit_principals', 'UPDATE'),
   'service_role cannot update admin_audit_principals');
 select ok(not has_table_privilege('service_role',
-  'public.admin_audit_principals', 'delete'),
+  'public.admin_audit_principals', 'DELETE'),
   'service_role cannot delete admin_audit_principals');
 
 select ok(has_table_privilege('service_role',
-  'public.admin_security_operations', 'select'),
+  'public.admin_security_operations', 'SELECT'),
   'service_role can read admin_security_operations');
 select ok(not has_table_privilege('service_role',
-  'public.admin_security_operations', 'insert'),
+  'public.admin_security_operations', 'INSERT'),
   'service_role cannot insert admin_security_operations');
 select ok(not has_table_privilege('service_role',
-  'public.admin_security_operations', 'update'),
+  'public.admin_security_operations', 'UPDATE'),
   'service_role cannot update admin_security_operations');
 select ok(not has_table_privilege('service_role',
-  'public.admin_security_operations', 'delete'),
+  'public.admin_security_operations', 'DELETE'),
   'service_role cannot delete admin_security_operations');
 
 select * from finish();

@@ -234,7 +234,7 @@ Auth verify 已成功但 PostgreSQL finalize 失敗時，client 直接重試 con
 
 ### 6.3 新控制表權限
 
-`admin_security_identities`、`admin_sessions`、`admin_invitations`、`admin_security_operations`、`admin_command_authorizations`、`admin_command_executions`、`admin_audit_principals`、`admin_audit_events`、`admin_denial_counters` 對 `anon`／`authenticated` default-deny；只有明確 user-scoped read RPC 或 service-only function 可存取。
+`admin_security_identities`、`admin_sessions`、`admin_invitations`、`admin_security_operations`、`admin_command_authorizations`、`admin_command_executions`、`admin_audit_principals`、`admin_audit_events`、`admin_denial_counters` 對 `anon`／`authenticated` default-deny；只有明確 user-scoped read RPC 或 service-only function 可存取。`service_role` 另具 identities／sessions／invitations／audit_principals／security_operations 五表的唯讀 SELECT（Edge orchestration 的 server-side 讀取；寫入仍僅 service-only functions）。
 
 ## 7. Safe database browser query contract
 

@@ -176,6 +176,34 @@ describe('admin-command saga, replay and concurrency', () => {
     expect(requireValue(rows.data, 'invitation rows')).toHaveLength(1);
   }, 30_000);
 
+  it('normalization parity: whitespace and uuid case survive the edge hash', async () => {
+    // reason 首尾含換行(textarea 貼上常見):Edge 正規化必須與 DB btrim
+    // (僅去 0x20)一致,否則 hash mismatch 使命令對真實輸入永久失敗。
+    const first = await runCommand(
+      adminA,
+      'issue_admin_invitation',
+      crypto.randomUUID(),
+      {
+        invited_email: `invitee.nl.${String(Date.now())}@colorplay.test`,
+        reason: '\n 尾端含換行的合法理由字串 \n',
+      },
+    );
+    expect(asStr(first.json.outcome)).toBe('ok');
+    // 大寫 uuid:DB ::text 一律輸出小寫連字號,Edge hash 端必須先正規化。
+    // 對 active 目標 reactivate 的預期碼是 TARGET_STATE_INVALID ——
+    // 能拿到這個碼就證明 hash 已相符、gate 已通過。
+    const second = await runCommand(
+      adminA,
+      'reactivate_admin',
+      crypto.randomUUID(),
+      {
+        target_principal_id: adminB.principalId.toUpperCase(),
+        reason: '大寫識別碼正規化測試理由',
+      },
+    );
+    expect(asStr(second.json.code)).toBe('TARGET_STATE_INVALID');
+  }, 30_000);
+
   it('expired receipt is rejected after the fixed 60-second ttl', async () => {
     // TTL 不可配置,因此真實等待 61 秒;直呼 mint+RPC 模擬 Edge 逾時。
     const reason = '逾時測試需要足夠長的理由';

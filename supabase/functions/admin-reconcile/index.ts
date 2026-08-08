@@ -21,11 +21,14 @@ Deno.serve(async (request) => {
     auth: { persistSession: false },
   });
   // PostgREST 的 or-filter 不支援 now() 函式字面值,改用去毫秒的 ISO
-  // timestamp(值內不得含逗號/多餘的點,避免 or 解析歧義)。
+  // timestamp(值內不得含逗號/多餘的點,避免 or 解析歧義)。掃描僅限
+  // reconcile 能推進的 operation type:factor_incident_isolation 依
+  // spec §4.2 只能走 owner OOB,不得佔用掃描名額。
   const nowIso = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
   const due = await service
     .from('admin_security_operations')
     .select('id, operation_type, state, target_principal_id, attempt_count')
+    .eq('operation_type', 'reset_admin_mfa')
     .in('state', ['pending', 'step1_complete', 'step2_complete'])
     .or(`next_retry_at.is.null,next_retry_at.lte.${nowIso}`)
     .limit(20);
@@ -33,9 +36,24 @@ Deno.serve(async (request) => {
     return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
   }
 
+  const asStr = (value: unknown): string =>
+    typeof value === 'string' ? value : '';
+
   const results: Array<{ id: string; state: string }> = [];
   for (const operation of due.data ?? []) {
-    if (operation.attempt_count >= 10) {
+    // 每輪嘗試先記帳(遞增 attempt_count+5 分鐘退避):stuck 門檻在失敗
+    // 迴圈下才可達,且不會無限即時重試
+    const touched = await service.rpc('svc_admin_touch_security_operation', {
+      p_operation_id: operation.id,
+    });
+    const touchData = touched.data as Record<string, unknown> | null;
+    if (touched.error !== null || touchData?.outcome !== 'ok') {
+      results.push({ id: operation.id, state: 'skipped' });
+      continue;
+    }
+    const attempts =
+      typeof touchData.attempt_count === 'number' ? touchData.attempt_count : 0;
+    if (attempts >= 10) {
       // 卡住門檻:標 stuck + incident audit;不得放寬權限(spec §8.3)
       await service.rpc('svc_admin_mark_operation_stuck', {
         p_operation_id: operation.id,
@@ -43,29 +61,59 @@ Deno.serve(async (request) => {
       results.push({ id: operation.id, state: 'stuck' });
       continue;
     }
-    if (operation.operation_type === 'reset_admin_mfa') {
-      const principal = await service
-        .from('admin_audit_principals')
-        .select('user_id')
-        .eq('id', operation.target_principal_id)
-        .single();
-      if (operation.state === 'step1_complete' && principal.data?.user_id) {
-        const factors = await service.auth.admin.mfa.listFactors({
-          userId: principal.data.user_id,
-        });
-        for (const factor of factors.data?.factors ?? []) {
-          await service.auth.admin.mfa.deleteFactor({
-            userId: principal.data.user_id,
-            id: factor.id,
-          });
-        }
-        await service.rpc('svc_admin_complete_reset_step2', {
-          p_operation_id: operation.id,
-        });
+    const principal = await service
+      .from('admin_audit_principals')
+      .select('user_id')
+      .eq('id', operation.target_principal_id)
+      .single();
+    const targetUserId = asStr(
+      (principal.data as Record<string, unknown> | null)?.user_id,
+    );
+    if (principal.error !== null || targetUserId === '') {
+      results.push({ id: operation.id, state: 'retrying' });
+      continue;
+    }
+    // 每一步的結果都必須確認:GoTrue 失敗或 step RPC 非 ok 一律不推進,
+    // 回報 retrying(下一輪退避後重試),不得把未完成標成 advanced
+    if (operation.state === 'step1_complete') {
+      const factors = await service.auth.admin.mfa.listFactors({
+        userId: targetUserId,
+      });
+      if (factors.error !== null) {
+        results.push({ id: operation.id, state: 'retrying' });
+        continue;
       }
-      await service.rpc('svc_admin_complete_reset_step3', {
+      let deletionsOk = true;
+      for (const factor of factors.data?.factors ?? []) {
+        const removal = await service.auth.admin.mfa.deleteFactor({
+          userId: targetUserId,
+          id: factor.id,
+        });
+        if (removal.error !== null) {
+          deletionsOk = false;
+          break;
+        }
+      }
+      if (!deletionsOk) {
+        results.push({ id: operation.id, state: 'retrying' });
+        continue;
+      }
+      const step2 = await service.rpc('svc_admin_complete_reset_step2', {
         p_operation_id: operation.id,
       });
+      const step2Data = step2.data as Record<string, unknown> | null;
+      if (step2.error !== null || step2Data?.outcome !== 'ok') {
+        results.push({ id: operation.id, state: 'retrying' });
+        continue;
+      }
+    }
+    const step3 = await service.rpc('svc_admin_complete_reset_step3', {
+      p_operation_id: operation.id,
+    });
+    const step3Data = step3.data as Record<string, unknown> | null;
+    if (step3.error !== null || step3Data?.outcome !== 'ok') {
+      results.push({ id: operation.id, state: 'retrying' });
+      continue;
     }
     results.push({ id: operation.id, state: 'advanced' });
   }

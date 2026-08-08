@@ -2,7 +2,9 @@
 // 直接 import 生產 Edge 模組(Codex 修訂三-3:測試不得自帶演算法副本;
 // 生產編碼漂移時本測試必然失敗)。canonical.ts 只用 Web 標準 API
 // (TextEncoder、crypto.subtle),Node 20+/vitest 原生可執行。
-// 固定向量涵蓋:Unicode 繁中、引號、null、uuid 字串、email 小寫。
+// 固定向量涵蓋:Unicode 繁中、引號、null、uuid 字串、email 字串。
+// (trim/lowercase 等值正規化住在 admin-command 的政策層,不在本編碼器;
+// 其 parity 由 saga 測試的 normalization 案端到端驗證。)
 import { createClient } from '@supabase/supabase-js';
 import { describe, expect, it } from 'vitest';
 

@@ -65,8 +65,12 @@ pnpm exec supabase test db --local "$db_test_file"
 # The MFA capability and edge-flow gates must stay fail-closed, so run them
 # alone with the service key they require, then run every other integration
 # test without it.
+# --no-file-parallelism:GoTrue 的 mfa_factors.last_challenged_at 帶唯一
+# 約束,平行檔案同時 challenge 不同 factor 會撞同一時間戳(23505 → 500),
+# 造成假紅;帶 key 的 MFA 流程檔一律序列執行。
 SUPABASE_SERVICE_ROLE_KEY="$mfa_capability_service_role_key" \
   pnpm exec vitest run --config vitest.integration.config.ts \
+  --no-file-parallelism \
   tests/integration/admin-mfa-capability.integration.test.ts \
   tests/integration/admin-mfa-flow.integration.test.ts \
   tests/integration/admin-canonical-hash.integration.test.ts \

@@ -183,7 +183,18 @@ Deno.serve(async (request) => {
   // 不得延長 idle 窗。
 
   // canonical request hash(修訂 8):正規化規則與 RPC 端逐字一致 ——
-  // reason/purpose → trim;invited_email → trim+lowercase;uuid → String。
+  // DB 端 btrim(單參數)僅剝 0x20,不可用 JS trim()(會多剝 \n/\t 等,
+  // 尾端含換行的 reason 會 hash mismatch 使命令永久失敗);uuid 經
+  // ::text 一律輸出小寫連字號,Edge 端先行小寫對齊。
+  const trimAsciiSpaces = (value: string): string =>
+    value.replace(/^ +/, '').replace(/ +$/, '');
+  const UUID_HASH_FIELDS = new Set([
+    'target_principal_id',
+    'session_id',
+    'invitation_id',
+    'operation_id',
+    'row_id',
+  ]);
   const fields: Record<string, string | null> = {};
   for (const field of policy.hashFields) {
     const raw = args[field];
@@ -192,8 +203,12 @@ Deno.serve(async (request) => {
       continue;
     }
     let value = String(raw);
-    if (field === 'reason' || field === 'purpose') value = value.trim();
-    if (field === 'invited_email') value = value.trim().toLowerCase();
+    if (field === 'reason' || field === 'purpose')
+      value = trimAsciiSpaces(value);
+    if (field === 'invited_email') {
+      value = trimAsciiSpaces(value).toLowerCase();
+    }
+    if (UUID_HASH_FIELDS.has(field)) value = value.toLowerCase();
     fields[field] = value;
   }
   const hashHex = await canonicalCommandHashHex(fields);
@@ -221,12 +236,13 @@ Deno.serve(async (request) => {
     return auditUnavailable();
   }
 
-  // 命令本體:caller JWT 的 user-scoped client(spec §6.2 步驟 4)
-  const rpcArgs: Record<string, unknown> = {
-    p_receipt_id: mint.receipt_id,
-    p_idempotency_key: idempotencyKey,
-  };
+  // 命令本體:caller JWT 的 user-scoped client(spec §6.2 步驟 4)。
+  // orchestration 受控參數最後覆寫:args 挾帶 receipt_id/idempotency_key
+  // 不得覆蓋剛鑄的 receipt 綁定。
+  const rpcArgs: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(args)) rpcArgs[`p_${key}`] = value;
+  rpcArgs.p_receipt_id = mint.receipt_id;
+  rpcArgs.p_idempotency_key = idempotencyKey;
   const result = await user.rpc(policy.rpc, rpcArgs);
   if (result.error !== null || !result.data) return auditUnavailable();
   const outcome = result.data as Record<string, unknown>;
@@ -236,7 +252,11 @@ Deno.serve(async (request) => {
   if (outcome.outcome !== 'ok') return auditUnavailable();
 
   // reset saga step 2/3(spec §4.5):step1 成功後由同請求嘗試完成;
-  // 失敗留給 admin-reconcile,PG gate 已撤權。
+  // 每一步的結果都必須確認 —— GoTrue 讀取/刪除失敗或 step RPC 非 ok
+  // 一律中止,不得在因子未刪除時推進 saga(維持 recovery_pending 留給
+  // admin-reconcile)。GoTrue 的 per-user admin sign-out 端點在本版
+  // 不存在(探針 404):PG gate 已於 step1 撤銷全部特權 session,
+  // Auth session 終止列為 §4.5 已知缺口待 owner 裁定。
   if (command === 'reset_admin_mfa') {
     const operationId = asString(outcome.operation_id);
     const targetUserId = asString(outcome.target_user_id);
@@ -245,21 +265,33 @@ Deno.serve(async (request) => {
         const targetFactors = await service.auth.admin.mfa.listFactors({
           userId: targetUserId,
         });
-        for (const factor of targetFactors.data?.factors ?? []) {
-          await service.auth.admin.mfa.deleteFactor({
-            userId: targetUserId,
-            id: factor.id,
-          });
+        if (targetFactors.error === null) {
+          let deletionsOk = true;
+          for (const factor of targetFactors.data?.factors ?? []) {
+            const removal = await service.auth.admin.mfa.deleteFactor({
+              userId: targetUserId,
+              id: factor.id,
+            });
+            if (removal.error !== null) {
+              deletionsOk = false;
+              break;
+            }
+          }
+          if (deletionsOk) {
+            const step2 = await service.rpc('svc_admin_complete_reset_step2', {
+              p_operation_id: operationId,
+            });
+            const step2Data = step2.data as Record<string, unknown> | null;
+            if (step2.error === null && step2Data?.outcome === 'ok') {
+              // step3 失敗維持 step2_complete,由 admin-reconcile 收尾
+              await service.rpc('svc_admin_complete_reset_step3', {
+                p_operation_id: operationId,
+              });
+            }
+          }
         }
-        await service.auth.admin.signOut(targetUserId); // best-effort(spec §4.5 Step 2)
-        await service.rpc('svc_admin_complete_reset_step2', {
-          p_operation_id: operationId,
-        });
-        await service.rpc('svc_admin_complete_reset_step3', {
-          p_operation_id: operationId,
-        });
       } catch {
-        // 維持 recovery_pending;admin-reconcile 依 operation ID 重入
+        // 網路層例外同樣維持 recovery_pending,留給 admin-reconcile
       }
     }
   }

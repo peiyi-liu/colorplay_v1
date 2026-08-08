@@ -1,6 +1,6 @@
 -- supabase/tests/050_admin_service_functions.test.sql
 begin;
-select plan(38);
+select plan(42);
 
 -- 種一個 admin 身分供流程測試
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password,
@@ -243,6 +243,24 @@ select is((select state::text from public.admin_security_operations
   where operation_type = 'factor_incident_isolation'
   order by created_at limit 1),
   'step1_complete', 'rejected incident operation state is unchanged');
+
+-- svc_admin_touch_security_operation(Task 9 reconcile 記帳):每輪嘗試
+-- 先遞增 attempt_count 並設 next_retry_at 退避,stuck 門檻才可達;
+-- 終態(completed/stuck)的 operation 回 skipped 不動任何欄位。
+select id as op_touch from public.admin_security_operations
+  where operation_type = 'factor_incident_isolation'
+    and state = 'step1_complete'
+  order by created_at limit 1 \gset
+select is((public.svc_admin_touch_security_operation(:'op_touch'))->>'outcome',
+  'ok', 'touch increments an in-flight operation');
+select is((select attempt_count from public.admin_security_operations
+  where id = :'op_touch'), 1, 'touch adds exactly one attempt');
+select ok((select next_retry_at > now() from public.admin_security_operations
+  where id = :'op_touch'), 'touch schedules a backoff retry');
+update public.admin_security_operations set state = 'completed'
+  where id = :'op_touch';
+select is((public.svc_admin_touch_security_operation(:'op_touch'))->>'outcome',
+  'skipped', 'touch skips a terminal operation');
 
 -- 全量 service-only 權限斷言:一次涵蓋本 migration 全部 svc_admin_* function
 select is((
