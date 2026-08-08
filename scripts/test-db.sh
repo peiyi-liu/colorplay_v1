@@ -45,6 +45,9 @@ load_local_supabase_environment \
   < <(pnpm exec supabase status -o env 2>/dev/null)
 export SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY
 pnpm exec tsx scripts/supabase/seed-auth.ts
+# Keep the service key out of the sanitized integration run below, but retain
+# it unexported for the one capability gate whose GoTrue admin calls need it.
+mfa_capability_service_role_key="$SUPABASE_SERVICE_ROLE_KEY"
 unset SUPABASE_SERVICE_ROLE_KEY
 
 printf '%s\n' \
@@ -59,7 +62,14 @@ printf '%s\n' \
 
 pnpm exec supabase test db --local
 pnpm exec supabase test db --local "$db_test_file"
-pnpm test:integration
+# The MFA capability gate must stay fail-closed, so run it alone with the
+# service key it requires, then run every other integration test without it.
+SUPABASE_SERVICE_ROLE_KEY="$mfa_capability_service_role_key" \
+  pnpm exec vitest run --config vitest.integration.config.ts \
+  tests/integration/admin-mfa-capability.integration.test.ts
+unset mfa_capability_service_role_key
+pnpm test:integration \
+  --exclude tests/integration/admin-mfa-capability.integration.test.ts
 node scripts/verify/task-11-network-evidence.mjs "$task11_network_report" "$task11_secret_scan_report"
 
 auth_http_status="$(
