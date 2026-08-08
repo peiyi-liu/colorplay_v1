@@ -11,13 +11,13 @@ export const CONTENT_MANIFEST: readonly ChapterContent[] = [
   {
     chapterCode: 'chapter-1',
     chapterNumber: 1,
-    questionCount: 0,
+    questionCount: 3,
     templateId: '26000000-0000-0000-0000-000000000001',
   },
   {
     chapterCode: 'chapter-2',
     chapterNumber: 2,
-    questionCount: 0,
+    questionCount: 4,
     templateId: '26000000-0000-0000-0000-000000000002',
   },
   {
@@ -29,19 +29,19 @@ export const CONTENT_MANIFEST: readonly ChapterContent[] = [
   {
     chapterCode: 'chapter-4',
     chapterNumber: 4,
-    questionCount: 8,
+    questionCount: 12,
     templateId: '26000000-0000-0000-0000-000000000004',
   },
   {
     chapterCode: 'chapter-5',
     chapterNumber: 5,
-    questionCount: 0,
+    questionCount: 3,
     templateId: '26000000-0000-0000-0000-000000000005',
   },
   {
     chapterCode: 'chapter-6',
     chapterNumber: 6,
-    questionCount: 0,
+    questionCount: 3,
     templateId: '26000000-0000-0000-0000-000000000006',
   },
 ];

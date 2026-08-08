@@ -42,7 +42,7 @@ export const GENERATED_QUESTION_HINTS: ReadonlyMap<string, readonly string[]> =
       ],
     ],
     [
-      '眼球中負責分辦色彩的是：',
+      '眼球中負責分辨色彩的是：',
       [
         '想想哪一種感光細胞在明亮環境下運作。',
         '能分辨色彩的感光細胞是哪一種？',
