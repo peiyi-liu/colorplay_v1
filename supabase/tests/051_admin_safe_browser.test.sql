@@ -1,6 +1,6 @@
 -- supabase/tests/051_admin_safe_browser.test.sql
 begin;
-select plan(26);
+select plan(28);
 
 \ir helpers/admin_test_seed.psql
 select pg_temp.admin_test_seed();
@@ -97,6 +97,12 @@ select is((public.admin_get_resource_detail('classrooms', 'classroom_members',
 select is((public.admin_get_resource_detail('rewards', 'wallets',
   '["not-an-object"]'::jsonb))->>'code',
   'COLUMN_NOT_ALLOWED', 'non-object row_key denied');
+select is((public.admin_get_resource_detail('rewards', 'wallets',
+  '{"user_id": "00000000-0000-0000-0000-00000000dead", "extra_key": "x"}'::jsonb))->>'code',
+  'COLUMN_NOT_ALLOWED', 'row_key superset of PK columns denied');
+select is((public.admin_get_resource_detail('rewards', 'wallets',
+  '{"user_id": null}'::jsonb))->>'code',
+  'COLUMN_NOT_ALLOWED', 'row_key with JSON null value denied');
 
 -- detail:未知列回 ok + null row,不洩漏存在性
 select is(((public.admin_get_resource_detail('users', 'profiles',

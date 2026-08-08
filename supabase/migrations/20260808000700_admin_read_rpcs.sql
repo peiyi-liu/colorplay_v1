@@ -146,8 +146,8 @@ begin
       (v_auth ->> 'auth_session_id')::uuid, null, null,
       (v_auth ->> 'mfa_age_seconds')::int);
   end if;
-  select string_agg(format('%I asc', kc), ', ')
-    into v_pk_order from unnest(v_key_columns) kc;
+  select string_agg(format('%I asc', kc), ', ' order by ord)
+    into v_pk_order from unnest(v_key_columns) with ordinality as t(kc, ord);
 
   -- projection:open/internal 原值;personal 固定遮罩 SQL;forbidden 永不出現
   v_select := public.admin_internal_catalog_projection(p_resource, 'browser');
@@ -217,10 +217,11 @@ begin
         (v_auth ->> 'auth_session_id')::uuid, null, null,
         (v_auth ->> 'mfa_age_seconds')::int);
     end if;
-    select string_agg(format('%I::text', kc), ', ')
-      into v_pk_list from unnest(v_key_columns) kc;
-    select string_agg(format('%L', v_cursor -> 'key' ->> kc), ', ')
-      into v_pk_vals from unnest(v_key_columns) kc;
+    -- 三個聚合必須同序(WITH ORDINALITY):欄名/值配對不可依賴實作順序
+    select string_agg(format('%I::text', kc), ', ' order by ord)
+      into v_pk_list from unnest(v_key_columns) with ordinality as t(kc, ord);
+    select string_agg(format('%L', v_cursor -> 'key' ->> kc), ', ' order by ord)
+      into v_pk_vals from unnest(v_key_columns) with ordinality as t(kc, ord);
     v_where := v_where || format(' and (%I::text, %s) > (%L, %s)',
       v_sort_column, v_pk_list, v_cursor ->> 'k', v_pk_vals);
   end if;
@@ -301,10 +302,14 @@ begin
       (v_auth ->> 'session_id')::uuid, (v_auth ->> 'auth_session_id')::uuid,
       null, null, (v_auth ->> 'mfa_age_seconds')::int);
   end if;
-  -- 複合主鍵資源尚無定址契約(HUMAN_REQUIRED 追蹤中):typed deny,不得裸例外
+  -- uuid overload 僅適用具 id 欄且 id 為 catalog open/internal 的表(spec §1.3);
+  -- id-less 表走 jsonb overload:typed deny,不得裸例外
   if not exists (select 1 from information_schema.columns
       where table_schema = 'public' and table_name = p_resource
-        and column_name = 'id') then
+        and column_name = 'id')
+     or not exists (select 1 from public.admin_sensitivity_catalog
+      where resource = p_resource and column_name = 'id'
+        and surface = 'browser' and class in ('open', 'internal')) then
     return public.admin_internal_deny(p_domain || '/' || p_resource,
       'RESOURCE_NOT_ALLOWED', 'admin_get_resource_detail', 'browser_resource',
       'admin', (v_auth ->> 'principal_id')::uuid,
@@ -369,11 +374,13 @@ begin
       (v_auth ->> 'session_id')::uuid, (v_auth ->> 'auth_session_id')::uuid,
       null, null, (v_auth ->> 'mfa_age_seconds')::int);
   end if;
-  -- row_key 形狀:object 且鍵集合恰等於 PK 欄集合;否則 typed denial
+  -- row_key 形狀:object、鍵集合恰等於 PK 欄集合、值不得為 JSON null;否則 typed denial
   if jsonb_typeof(p_row_key) is distinct from 'object'
      or (select array_agg(k order by k)
            from jsonb_object_keys(p_row_key) k) is distinct from
-        (select array_agg(kc order by kc) from unnest(v_key_columns) kc) then
+        (select array_agg(kc order by kc) from unnest(v_key_columns) kc)
+     or exists (select 1 from unnest(v_key_columns) kc
+          where p_row_key ->> kc is null) then
     return public.admin_internal_deny(p_domain || '/' || p_resource,
       'COLUMN_NOT_ALLOWED', 'admin_get_resource_detail', 'browser_resource',
       'admin', (v_auth ->> 'principal_id')::uuid,
