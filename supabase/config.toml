@@ -417,6 +417,14 @@ verify_jwt = false
 [functions.admin-mfa]
 verify_jwt = false
 
+# admin-command 同 admin-mfa:自行驗 JWT 並入帳 denial。
+[functions.admin-command]
+verify_jwt = false
+
+# admin-reconcile 為排程入口,以 x-reconcile-key 部署 secret 驗證,無 JWT。
+[functions.admin-reconcile]
+verify_jwt = false
+
 [analytics]
 enabled = false
 port = 54327
