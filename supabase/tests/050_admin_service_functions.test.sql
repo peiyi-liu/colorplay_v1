@@ -1,6 +1,6 @@
 -- supabase/tests/050_admin_service_functions.test.sql
 begin;
-select plan(35);
+select plan(38);
 
 -- 種一個 admin 身分供流程測試
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password,
@@ -166,6 +166,28 @@ select is((select c.count from public.admin_denial_counters c
     and c.safe_reason_code = 'MFA_LOCKED'), 2,
   'both lock denials aggregated in the counter window');
 update public.admin_security_identities set locked_until = null
+  where admin_user_id = '50000000-0000-0000-0000-000000000001';
+
+-- probe 模式(p_success null;Task 8 Edge 每 action 前檢查鎖定):
+-- 未鎖定 → ok 且不累計不歸零;鎖定中 → MFA_LOCKED。
+-- p_success=true 的歸零語意保留給真正的 provider verify 成功。
+select public.svc_admin_record_totp_outcome(
+  '50000000-0000-0000-0000-000000000001', false)
+from generate_series(1, 2);
+select is((public.svc_admin_record_totp_outcome(
+  '50000000-0000-0000-0000-000000000001', null))->>'outcome', 'ok',
+  'probe outside lock reports ok');
+select is((select failed_totp_attempts from public.admin_security_identities
+  where admin_user_id = '50000000-0000-0000-0000-000000000001'), 2,
+  'probe never increments nor resets the failure counter');
+update public.admin_security_identities
+  set locked_until = now() + interval '15 minutes'
+  where admin_user_id = '50000000-0000-0000-0000-000000000001';
+select is((public.svc_admin_record_totp_outcome(
+  '50000000-0000-0000-0000-000000000001', null))->>'code', 'MFA_LOCKED',
+  'probe during lock stays denied');
+update public.admin_security_identities
+  set locked_until = null, failed_totp_attempts = 0
   where admin_user_id = '50000000-0000-0000-0000-000000000001';
 
 -- Edge denial 入帳語意(修訂四-1):已知使用者 → admin actor、target null;

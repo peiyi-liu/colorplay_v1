@@ -66,10 +66,12 @@ pnpm exec supabase test db --local "$db_test_file"
 # service key it requires, then run every other integration test without it.
 SUPABASE_SERVICE_ROLE_KEY="$mfa_capability_service_role_key" \
   pnpm exec vitest run --config vitest.integration.config.ts \
-  tests/integration/admin-mfa-capability.integration.test.ts
+  tests/integration/admin-mfa-capability.integration.test.ts \
+  tests/integration/admin-mfa-flow.integration.test.ts
 unset mfa_capability_service_role_key
 pnpm test:integration \
-  --exclude tests/integration/admin-mfa-capability.integration.test.ts
+  --exclude tests/integration/admin-mfa-capability.integration.test.ts \
+  --exclude tests/integration/admin-mfa-flow.integration.test.ts
 node scripts/verify/task-11-network-evidence.mjs "$task11_network_report" "$task11_secret_scan_report"
 
 auth_http_status="$(

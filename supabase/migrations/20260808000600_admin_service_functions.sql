@@ -319,6 +319,12 @@ begin
       'MFA_LOCKED', 'totp_attempt_denied', 'admin_identity',
       'admin', v_identity.audit_principal_id, v_identity.audit_principal_id);
   end if;
+  -- 純 probe(p_success null;Task 8 Edge 每 action 前檢查鎖定):未鎖定時
+  -- 不累計不歸零 —— 歸零語意保留給真正的 provider verify 成功,否則
+  -- Edge 的 pre-action probe 會在每次失敗嘗試前清空計數,鎖定永不觸發
+  if p_success is null then
+    return jsonb_build_object('outcome', 'ok');
+  end if;
   if p_success then
     update public.admin_security_identities
       set failed_totp_attempts = 0, locked_until = null, updated_at = now()

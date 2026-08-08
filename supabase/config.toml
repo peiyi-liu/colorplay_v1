@@ -412,6 +412,11 @@ verify_jwt = false
 [functions.auth-recover]
 verify_jwt = false
 
+# admin-mfa 自行驗證 JWT(getUser)並對缺失/無效 JWT 做 fail-closed denial
+# 入帳;runtime 層先擋會讓這些 denial 永不入帳,故關閉 verify_jwt。
+[functions.admin-mfa]
+verify_jwt = false
+
 [analytics]
 enabled = false
 port = 54327
