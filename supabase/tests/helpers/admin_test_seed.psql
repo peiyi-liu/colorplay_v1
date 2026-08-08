@@ -1,0 +1,49 @@
+-- supabase/tests/helpers/admin_test_seed.sql
+-- 建立兩個 active Admin(A、B,各有 bound factor 與 active session)與一個
+-- 非 admin 使用者 C。固定合法 hex UUID:
+--   A user aa000000-0000-0000-0000-000000000001
+--     factor aa000000-0000-0000-0000-0000000000a1 / auth session …0000000000e1
+--   B user bb000000-0000-0000-0000-000000000001
+--     factor bb000000-0000-0000-0000-0000000000b1 / auth session …0000000000e2
+--   C user cc000000-0000-0000-0000-000000000001(無 identity)
+create or replace function pg_temp.admin_test_seed()
+returns void
+language plpgsql
+as $$
+declare
+  fixture record;
+begin
+  for fixture in
+    select * from (values
+      ('aa000000-0000-0000-0000-000000000001'::uuid,
+       'aa000000-0000-0000-0000-0000000000a1'::uuid,
+       'aa000000-0000-0000-0000-0000000000e1'::uuid,
+       'admin.test.a@colorplay.test', true),
+      ('bb000000-0000-0000-0000-000000000001'::uuid,
+       'bb000000-0000-0000-0000-0000000000b1'::uuid,
+       'bb000000-0000-0000-0000-0000000000e2'::uuid,
+       'admin.test.b@colorplay.test', true),
+      ('cc000000-0000-0000-0000-000000000001'::uuid,
+       null::uuid, null::uuid, 'plain.test.c@colorplay.test', false)
+    ) as t(user_id, factor_id, auth_session_id, email, is_admin)
+  loop
+    insert into auth.users (instance_id, id, aud, role, email,
+      encrypted_password, email_confirmed_at, raw_app_meta_data,
+      raw_user_meta_data, created_at, updated_at, confirmation_token,
+      email_change, email_change_token_new, recovery_token)
+    values ('00000000-0000-0000-0000-000000000000', fixture.user_id,
+      'authenticated', 'authenticated', fixture.email,
+      crypt('LocalOnly-AdminSeed1!', gen_salt('bf')), now(),
+      '{"provider":"email","providers":["email"]}', '{}', now(), now(),
+      '', '', '', '');
+    if fixture.is_admin then
+      perform public.svc_admin_bootstrap_identity(fixture.user_id, gen_random_uuid());
+      perform public.svc_admin_confirm_enrollment(
+        fixture.user_id, fixture.factor_id, gen_random_uuid());
+      perform public.svc_admin_create_session(
+        fixture.user_id, fixture.auth_session_id, fixture.factor_id,
+        'pgTAP seed', 'seed');
+    end if;
+  end loop;
+end;
+$$;
