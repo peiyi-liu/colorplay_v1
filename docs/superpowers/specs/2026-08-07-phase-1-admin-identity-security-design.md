@@ -378,7 +378,8 @@ Auth verify 已成功但 PostgreSQL finalize 失敗時，以原 operation ID 重
 
 ## 11. Errors、incident 與 accessibility
 
-- 新增穩定碼：`STALE_PRIVILEGED_SESSION`、`INSUFFICIENT_MFA`、`INVITATION_INVALID`、`LAST_ADMIN_PROTECTED`、`RESOURCE_NOT_ALLOWED`、`COLUMN_NOT_ALLOWED`、`MFA_LOCKED`、`FACTOR_BINDING_MISMATCH`、`AUTHORIZATION_RECEIPT_INVALID`、`IDEMPOTENCY_CONFLICT`、`SECURITY_OPERATION_PENDING`。
+- 新增穩定碼：`STALE_PRIVILEGED_SESSION`、`INSUFFICIENT_MFA`、`INVITATION_INVALID`、`LAST_ADMIN_PROTECTED`、`RESOURCE_NOT_ALLOWED`、`COLUMN_NOT_ALLOWED`、`MFA_LOCKED`、`FACTOR_BINDING_MISMATCH`、`AUTHORIZATION_RECEIPT_INVALID`、`IDEMPOTENCY_CONFLICT`、`SECURITY_OPERATION_PENDING`、`TARGET_STATE_INVALID`。
+- `TARGET_STATE_INVALID`：命令通過授權 gate 後發現目標當前狀態不允許該操作（如停用已停用的 admin、撤銷已撤銷的 session）。receipt 依 §6.2 已於 gate 消耗且授權本身有效；client 應修正目標選擇後重新申請，不得將此碼視為授權失效而重走 fresh-MFA／mint 迴圈。
 - Response 只含 stable code、安全 message、request ID、retryable flag；無 SQL、stack、secret 或目標存在性。
 - 預期 denial 使用 typed outcome，讓 denial audit 同交易提交。Audit transaction 不可用時不執行命令。
 - Incident dashboard 顯示 factor mismatch、MFA lock、reconciliation timeout、denial threshold、last-admin protection；只提供合法 follow-up operation。

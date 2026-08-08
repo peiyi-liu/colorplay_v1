@@ -3027,6 +3027,7 @@ export type Database = {
         Args: {
           p_code: string
           p_command_name: string
+          p_mfa_age_seconds?: number
           p_reason_or_purpose: string
           p_target_principal_id: string
         }

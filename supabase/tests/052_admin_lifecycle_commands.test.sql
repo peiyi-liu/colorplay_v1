@@ -1,7 +1,7 @@
 -- supabase/tests/052_admin_lifecycle_commands.test.sql
 -- reset saga 的跨系統行為由 Task 9 integration 測試覆蓋;本檔覆蓋 DB 契約。
 begin;
-select plan(43);
+select plan(47);
 
 \ir helpers/admin_test_seed.psql
 select pg_temp.admin_test_seed();
@@ -339,7 +339,51 @@ select is((select state::text from public.admin_security_identities
   where admin_user_id = 'bb000000-0000-0000-0000-000000000001'),
   'deactivated', 'denied accept leaves the deactivated identity untouched');
 
--- 17) session 已撤銷 → STALE_PRIVILEGED_SESSION(spec §5.2:撤銷與逾時同碼),
+-- 17) target-state denial 用專用碼 TARGET_STATE_INVALID(spec §11):
+--     receipt 有效且已於 gate 消耗,但目標狀態不允許 → 不得誤用 receipt 碼;
+--     且命令類 denial audit 帶 mfa_age_seconds 佐證(與 read 類對稱)
+select set_config('request.jwt.claim.sub',
+  'aa000000-0000-0000-0000-000000000001', true);
+select set_config('request.jwt.claim.session_id',
+  'aa000000-0000-0000-0000-0000000000e1', true);
+select public.admin_internal_canonical_hash(jsonb_build_object(
+  'reason', '重複停用已停用帳號的測試',
+  'target_principal_id', :'principal_b'::text)) as hash_9 \gset
+select public.svc_admin_issue_command_receipt(
+  'aa000000-0000-0000-0000-000000000001',
+  'aa000000-0000-0000-0000-0000000000e1', 'deactivate_admin', 'k-9',
+  :'hash_9'::bytea, 'aa000000-0000-0000-0000-0000000000a1', true
+) ->> 'receipt_id' as receipt_9 \gset
+select is((public.deactivate_admin(:'receipt_9', 'k-9', :'principal_b',
+  '重複停用已停用帳號的測試'))->>'code', 'TARGET_STATE_INVALID',
+  'already-deactivated target denied with the dedicated state code');
+select is((select count(*)::int from public.admin_audit_events
+  where action = 'deactivate_admin' and result = 'TARGET_STATE_INVALID'
+    and mfa_age_seconds is not null), 1,
+  'target-state denial audited with mfa age evidence');
+
+-- 18) 已撤銷 session 的 revoke → TARGET_STATE_INVALID;
+--     既有 last-admin denial 的 audit 也必須帶 mfa 佐證
+select id as b_session from public.admin_sessions
+  where admin_user_id = 'bb000000-0000-0000-0000-000000000001' \gset
+select public.admin_internal_canonical_hash(jsonb_build_object(
+  'reason', '重複撤銷已撤銷連線的測試',
+  'session_id', :'b_session'::text)) as hash_10 \gset
+select public.svc_admin_issue_command_receipt(
+  'aa000000-0000-0000-0000-000000000001',
+  'aa000000-0000-0000-0000-0000000000e1', 'revoke_admin_session', 'k-10',
+  :'hash_10'::bytea, 'aa000000-0000-0000-0000-0000000000a1', true
+) ->> 'receipt_id' as receipt_10 \gset
+select is((public.revoke_admin_session(:'receipt_10', 'k-10',
+  :'b_session'::uuid, '重複撤銷已撤銷連線的測試'))->>'code',
+  'TARGET_STATE_INVALID',
+  'already-revoked session denied with the dedicated state code');
+select is((select count(*)::int from public.admin_audit_events
+  where action = 'deactivate_admin' and result = 'LAST_ADMIN_PROTECTED'
+    and mfa_age_seconds is not null), 1,
+  'last-admin denial audited with mfa age evidence');
+
+-- 19) session 已撤銷 → STALE_PRIVILEGED_SESSION(spec §5.2:撤銷與逾時同碼),
 --     receipt 不消耗。本區塊撤銷 A 的 session,必須留在檔尾。
 select set_config('request.jwt.claim.sub',
   'aa000000-0000-0000-0000-000000000001', true);

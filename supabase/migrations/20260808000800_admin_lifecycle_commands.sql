@@ -92,7 +92,7 @@ revoke execute on function public.admin_internal_execute_command(
 -- 佐證,轉呼統一 admin_internal_deny(audit + counter + typed outcome 同交易)。
 create function public.admin_internal_command_deny(
   p_command_name text, p_target_principal_id uuid, p_code text,
-  p_reason_or_purpose text
+  p_reason_or_purpose text, p_mfa_age_seconds integer default null
 ) returns jsonb
 language plpgsql security definer set search_path = public, pg_temp
 as $$
@@ -112,11 +112,11 @@ begin
     v_principal, v_session_id,
     nullif(coalesce(auth.jwt() ->> 'session_id',
       current_setting('request.jwt.claim.session_id', true)), '')::uuid,
-    p_target_principal_id, p_reason_or_purpose, null);
+    p_target_principal_id, p_reason_or_purpose, p_mfa_age_seconds);
 end;
 $$;
-revoke execute on function public.admin_internal_command_deny(text, uuid, text, text)
-  from public, anon, authenticated;
+revoke execute on function public.admin_internal_command_deny(
+  text, uuid, text, text, integer) from public, anon, authenticated;
 
 -- 成功收尾:audit + execution row + 統一回傳(redacted result 不含任何明文)
 create function public.admin_internal_finalize_command(
@@ -183,7 +183,8 @@ begin
     where audit_principal_id = p_target_principal_id for update;
   if not found or v_target.state <> 'active' then
     return public.admin_internal_command_deny('deactivate_admin',
-      p_target_principal_id, 'AUTHORIZATION_RECEIPT_INVALID', p_reason);
+      p_target_principal_id, 'TARGET_STATE_INVALID', p_reason,
+      (v_gate ->> 'mfa_age_seconds')::int);
   end if;
 
   -- last-admin 保護(spec §4.1):轉換後至少一位 active
@@ -191,7 +192,8 @@ begin
     where state = 'active' and audit_principal_id <> p_target_principal_id;
   if v_remaining = 0 then
     return public.admin_internal_command_deny('deactivate_admin',
-      p_target_principal_id, 'LAST_ADMIN_PROTECTED', p_reason);
+      p_target_principal_id, 'LAST_ADMIN_PROTECTED', p_reason,
+      (v_gate ->> 'mfa_age_seconds')::int);
   end if;
 
   update public.admin_security_identities
@@ -241,7 +243,8 @@ begin
     where audit_principal_id = p_target_principal_id for update;
   if not found or v_target.state <> 'deactivated' then
     return public.admin_internal_command_deny('reactivate_admin',
-      p_target_principal_id, 'AUTHORIZATION_RECEIPT_INVALID', p_reason);
+      p_target_principal_id, 'TARGET_STATE_INVALID', p_reason,
+      (v_gate ->> 'mfa_age_seconds')::int);
   end if;
   update public.admin_security_identities
     set state = 'active_pending_mfa', lifecycle_version = lifecycle_version + 1,
@@ -286,8 +289,8 @@ begin
     where id = p_session_id for update;
   if not found or v_target_session.revoked_at is not null then
     return public.admin_internal_command_deny('revoke_admin_session',
-      v_target_session.audit_principal_id, 'AUTHORIZATION_RECEIPT_INVALID',
-      p_reason);
+      v_target_session.audit_principal_id, 'TARGET_STATE_INVALID',
+      p_reason, (v_gate ->> 'mfa_age_seconds')::int);
   end if;
   update public.admin_sessions
     set revoked_at = now(), revoke_reason = 'revoked_by_admin'
@@ -335,14 +338,16 @@ begin
     where audit_principal_id = p_target_principal_id for update;
   if not found or v_target.state <> 'active' then
     return public.admin_internal_command_deny('reset_admin_mfa',
-      p_target_principal_id, 'AUTHORIZATION_RECEIPT_INVALID', p_reason);
+      p_target_principal_id, 'TARGET_STATE_INVALID', p_reason,
+      (v_gate ->> 'mfa_age_seconds')::int);
   end if;
   select count(*) into v_remaining from public.admin_security_identities
     where state = 'active' and audit_principal_id <> p_target_principal_id;
   if v_remaining = 0 then
     -- 最後一位不能由產品 reset(spec §4.5);已知事故走 OOB isolation
     return public.admin_internal_command_deny('reset_admin_mfa',
-      p_target_principal_id, 'LAST_ADMIN_PROTECTED', p_reason);
+      p_target_principal_id, 'LAST_ADMIN_PROTECTED', p_reason,
+      (v_gate ->> 'mfa_age_seconds')::int);
   end if;
   update public.admin_security_identities
     set state = 'recovery_pending', bound_factor_id = null,
@@ -442,7 +447,8 @@ begin
     where id = p_invitation_id for update;
   if not found or v_invitation.status <> 'pending' then
     return public.admin_internal_command_deny('revoke_admin_invitation',
-      null, 'INVITATION_INVALID', p_reason);
+      null, 'INVITATION_INVALID', p_reason,
+      (v_gate ->> 'mfa_age_seconds')::int);
   end if;
   update public.admin_invitations
     set status = 'revoked', revoked_at = now()
@@ -493,7 +499,8 @@ begin
         and column_name = p_column and class = 'personal'
         and surface = 'browser') then
     return public.admin_internal_command_deny('admin_reveal_field',
-      null, 'COLUMN_NOT_ALLOWED', p_purpose);
+      null, 'COLUMN_NOT_ALLOWED', p_purpose,
+      (v_gate ->> 'mfa_age_seconds')::int);
   end if;
   -- uuid 形態僅適用具 id 欄且 id 為 catalog open/internal 的表(spec §1.3);
   -- id-less 表走 row_key overload
@@ -504,7 +511,8 @@ begin
       where resource = p_resource and column_name = 'id'
         and surface = 'browser' and class in ('open', 'internal')) then
     return public.admin_internal_command_deny('admin_reveal_field',
-      null, 'RESOURCE_NOT_ALLOWED', p_purpose);
+      null, 'RESOURCE_NOT_ALLOWED', p_purpose,
+      (v_gate ->> 'mfa_age_seconds')::int);
   end if;
   execute format('select %I::text from public.%I where id = $1',
     p_column, p_resource) into v_value using p_row_id;
@@ -572,7 +580,8 @@ begin
         and column_name = p_column and class = 'personal'
         and surface = 'browser') then
     return public.admin_internal_command_deny('admin_reveal_field',
-      null, 'COLUMN_NOT_ALLOWED', p_purpose);
+      null, 'COLUMN_NOT_ALLOWED', p_purpose,
+      (v_gate ->> 'mfa_age_seconds')::int);
   end if;
   -- 定址資格與形狀:與 Task 6b detail jsonb overload 同一契約
   v_key_columns := public.admin_internal_key_columns(p_resource);
@@ -582,7 +591,8 @@ begin
         where resource = p_resource and column_name = kc
           and surface = 'browser' and class in ('open', 'internal'))) then
     return public.admin_internal_command_deny('admin_reveal_field',
-      null, 'RESOURCE_NOT_ALLOWED', p_purpose);
+      null, 'RESOURCE_NOT_ALLOWED', p_purpose,
+      (v_gate ->> 'mfa_age_seconds')::int);
   end if;
   if (select array_agg(k order by k) from jsonb_object_keys(p_row_key) k)
        is distinct from
@@ -590,7 +600,8 @@ begin
      or exists (select 1 from unnest(v_key_columns) kc
           where p_row_key ->> kc is null) then
     return public.admin_internal_command_deny('admin_reveal_field',
-      null, 'COLUMN_NOT_ALLOWED', p_purpose);
+      null, 'COLUMN_NOT_ALLOWED', p_purpose,
+      (v_gate ->> 'mfa_age_seconds')::int);
   end if;
   select string_agg(format('%I::text = %L', kc, p_row_key ->> kc), ' and ')
     into v_where from unnest(v_key_columns) kc;
@@ -638,7 +649,8 @@ begin
     where id = p_operation_id for update;
   if not found or v_operation.state in ('completed', 'stuck') then
     return public.admin_internal_command_deny('reconcile_admin_security_operation',
-      v_operation.target_principal_id, 'SECURITY_OPERATION_PENDING', p_reason);
+      v_operation.target_principal_id, 'SECURITY_OPERATION_PENDING', p_reason,
+      (v_gate ->> 'mfa_age_seconds')::int);
   end if;
   -- 只標記立即重試;實際續跑由 admin-reconcile 的 service path 執行
   update public.admin_security_operations

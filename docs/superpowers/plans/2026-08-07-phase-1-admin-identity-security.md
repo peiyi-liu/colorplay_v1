@@ -2906,7 +2906,7 @@ spec §4.3、§4.5、§6.2、§7(reveal)、§8。**每個特權命令 RPC 在消
   - `reset_admin_mfa(p_receipt_id uuid, p_idempotency_key text, p_target_principal_id uuid, p_reason text) returns jsonb`(saga step 1,PG 原子)
   - `admin_reveal_field(p_receipt_id uuid, p_idempotency_key text, p_domain text, p_resource text, p_row_id uuid, p_column text, p_purpose text) returns jsonb`
   - `reconcile_admin_security_operation(p_receipt_id uuid, p_idempotency_key text, p_operation_id uuid, p_reason text) returns jsonb`(手動觸發;排程走 Edge service path;簽名以本 plan 後文 SQL 全文為準,含 reason 重驗)
-- 錯誤碼新增:`AUTHORIZATION_RECEIPT_INVALID`、`LAST_ADMIN_PROTECTED`、`INVITATION_INVALID`、`IDEMPOTENCY_CONFLICT`、`SECURITY_OPERATION_PENDING`。
+- 錯誤碼新增:`AUTHORIZATION_RECEIPT_INVALID`、`LAST_ADMIN_PROTECTED`、`INVITATION_INVALID`、`IDEMPOTENCY_CONFLICT`、`SECURITY_OPERATION_PENDING`、`TARGET_STATE_INVALID`(spec §11:target-state denial 專用;receipt 已於 gate 消耗且授權有效,client 不應重走 MFA/mint)。
 
 - [ ] **Step 1: 寫失敗的 pgTAP 測試(核心矩陣)**
 
@@ -3249,7 +3249,7 @@ begin
     where audit_principal_id = p_target_principal_id for update;
   if not found or v_target.state <> 'active' then
     return public.admin_internal_command_deny('deactivate_admin',
-      p_target_principal_id, 'AUTHORIZATION_RECEIPT_INVALID', p_reason);
+      p_target_principal_id, 'TARGET_STATE_INVALID', p_reason);
   end if;
 
   -- last-admin 保護(spec §4.1):轉換後至少一位 active
@@ -3311,7 +3311,7 @@ begin
     where audit_principal_id = p_target_principal_id for update;
   if not found or v_target.state <> 'deactivated' then
     return public.admin_internal_command_deny('reactivate_admin',
-      p_target_principal_id, 'AUTHORIZATION_RECEIPT_INVALID', p_reason);
+      p_target_principal_id, 'TARGET_STATE_INVALID', p_reason);
   end if;
   update public.admin_security_identities
     set state = 'active_pending_mfa', lifecycle_version = lifecycle_version + 1,
@@ -3356,7 +3356,7 @@ begin
     where id = p_session_id for update;
   if not found or v_target_session.revoked_at is not null then
     return public.admin_internal_command_deny('revoke_admin_session',
-      v_target_session.audit_principal_id, 'AUTHORIZATION_RECEIPT_INVALID',
+      v_target_session.audit_principal_id, 'TARGET_STATE_INVALID',
       p_reason);
   end if;
   update public.admin_sessions
@@ -3405,7 +3405,7 @@ begin
     where audit_principal_id = p_target_principal_id for update;
   if not found or v_target.state <> 'active' then
     return public.admin_internal_command_deny('reset_admin_mfa',
-      p_target_principal_id, 'AUTHORIZATION_RECEIPT_INVALID', p_reason);
+      p_target_principal_id, 'TARGET_STATE_INVALID', p_reason);
   end if;
   select count(*) into v_remaining from public.admin_security_identities
     where state = 'active' and audit_principal_id <> p_target_principal_id;
