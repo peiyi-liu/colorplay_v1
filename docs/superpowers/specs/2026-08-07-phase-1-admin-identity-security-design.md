@@ -172,7 +172,7 @@ Owner runbook 以受控外部程序建立 `profiles.role=admin`、`admin_securit
 4. 使用者在目前 Auth `session_id` 再完成 `challenge_admin_mfa`；MFA Edge 驗證實際 factor ID 等於 `bound_factor_id` 後，才以 service-only DB function 建立 session。
 5. 新 session 建立時，同交易 supersede 該 identity 既有 `admin_sessions` rows。
 
-Auth verify 已成功但 PostgreSQL finalize 失敗時，以原 operation ID 重入，只補 identity／factor binding；排程 reconciliation 也不能替使用者建立 session。
+Auth verify 已成功但 PostgreSQL finalize 失敗時，client 直接重試 confirm（每次呼叫可使用新的 operation ID，僅作 audit correlation）；重入安全由 `confirm_admin_mfa_enrollment` 的 DB 端 state-based 冪等保證（identity 已 active 且 `bound_factor_id` 相同即回 idempotent ok），只補 identity／factor binding、不建立 session。稽核對帳以 DB 狀態變遷（audit 事件與 identity lifecycle）為準，不依賴 operation ID 相同性。排程 reconciliation 也不能替使用者建立 session。
 
 ### 4.5 Reset 與事故復原
 
