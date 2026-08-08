@@ -3,288 +3,146 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useAchievements } from '../../achievements/hooks/use-achievements';
-import { useMyProfile } from '../../profile/hooks/use-my-profile';
-import { useEconomySummary } from '../../rewards/hooks/use-economy-summary';
-import {
-  useBlookInventory,
-  useFrameInventory,
-} from '../../inventory/hooks/use-blook-inventory';
-import { useMyClassrooms } from '../../classrooms/hooks/use-classrooms';
-import { useClassroomLeaderboard } from '../../leaderboard/hooks/use-classroom-leaderboard';
-import { usePublishedChapters, type PublishedChapter } from '../api/chapters';
-import { useMistakes } from '../hooks/use-learning';
+import type { StudentChapterMapEntry } from '../api/chapter-map';
+import { useStudentChapterMap } from '../hooks/use-chapter-map';
 import { LobbyPage } from './lobby-page';
 
-vi.mock('../api/chapters', async (importOriginal) => {
-  const original = await importOriginal<typeof import('../api/chapters')>();
-  return { ...original, usePublishedChapters: vi.fn() };
-});
-vi.mock('../hooks/use-learning', async (importOriginal) => {
-  const original =
-    await importOriginal<typeof import('../hooks/use-learning')>();
-  return { ...original, useMistakes: vi.fn() };
-});
-vi.mock('../../profile/hooks/use-my-profile', () => ({
-  useMyProfile: vi.fn(),
+vi.mock('../hooks/use-chapter-map', () => ({
+  useStudentChapterMap: vi.fn(),
 }));
-vi.mock('../../achievements/hooks/use-achievements', async (importOriginal) => {
-  const original =
-    await importOriginal<
-      typeof import('../../achievements/hooks/use-achievements')
-    >();
-  return { ...original, useAchievements: vi.fn() };
-});
-vi.mock('../../rewards/hooks/use-economy-summary', () => ({
-  useEconomySummary: vi.fn(),
-}));
-vi.mock('../../inventory/hooks/use-blook-inventory', async (importOriginal) => {
-  const original =
-    await importOriginal<
-      typeof import('../../inventory/hooks/use-blook-inventory')
-    >();
-  return {
-    ...original,
-    useBlookInventory: vi.fn(),
-    useFrameInventory: vi.fn(),
-  };
-});
-vi.mock('../../classrooms/hooks/use-classrooms', async (importOriginal) => {
-  const original =
-    await importOriginal<
-      typeof import('../../classrooms/hooks/use-classrooms')
-    >();
-  return { ...original, useMyClassrooms: vi.fn() };
-});
-vi.mock(
-  '../../leaderboard/hooks/use-classroom-leaderboard',
-  async (importOriginal) => {
-    const original =
-      await importOriginal<
-        typeof import('../../leaderboard/hooks/use-classroom-leaderboard')
-      >();
-    return { ...original, useClassroomLeaderboard: vi.fn() };
-  },
-);
-
-const mockedChapters = vi.mocked(usePublishedChapters);
-const mockedMistakes = vi.mocked(useMistakes);
-const mockedProfile = vi.mocked(useMyProfile);
-const mockedAchievements = vi.mocked(useAchievements);
-const mockedEconomy = vi.mocked(useEconomySummary);
-const mockedInventory = vi.mocked(useBlookInventory);
-const mockedFrames = vi.mocked(useFrameInventory);
-const mockedClassrooms = vi.mocked(useMyClassrooms);
-const mockedLeaderboard = vi.mocked(useClassroomLeaderboard);
-
+const mockedChapterMap = vi.mocked(useStudentChapterMap);
 const asResult = (value: unknown) => value as never;
 
-const chapters: PublishedChapter[] = ['色彩與光源', '色彩表示'].map(
-  (title, index) => ({
-    description: `${title}的學習重點。`,
-    id: `21000000-0000-0000-0000-${String(index + 1).padStart(12, '0')}`,
-    isPlayable: index === 1,
-    sortOrder: index + 1,
-    stableCode: `chapter-${String(index + 1)}`,
-    subtopicCodes: index === 1 ? [`${String(index + 1)}-1`] : [],
-    subtopicTitles: index === 1 ? [`${String(index + 1)}-1 ${title}`] : [],
-    template: {
-      id: `26000000-0000-0000-0000-${String(index + 1).padStart(12, '0')}`,
-      questionCount: 10,
-      title: `第${String(index + 1)}章綜合挑戰`,
-    },
-    title,
-  }),
-);
+const chapter = (
+  sortOrder: number,
+  accessState: StudentChapterMapEntry['accessState'],
+): StudentChapterMapEntry => ({
+  accessState,
+  blockers:
+    sortOrder === 3
+      ? [
+          {
+            chapterId: '21000000-0000-0000-0000-000000000002',
+            chapterTitle: '色彩呈現',
+            code: 'PREREQUISITE_MASTERY',
+            current: 60,
+            required: 80,
+          },
+        ]
+      : [],
+  chapterId: `21000000-0000-0000-0000-${String(sortOrder).padStart(12, '0')}`,
+  description: `第 ${String(sortOrder)} 章說明`,
+  mastery: accessState === 'completed' ? 90 : null,
+  progressStatus: accessState === 'completed' ? 'mastered' : 'not_started',
+  reviewCompleted: accessState === 'completed' ? 5 : 0,
+  reviewTotal: 5,
+  sortOrder,
+  stableCode: `chapter-${String(sortOrder)}`,
+  templateId: `26000000-0000-0000-0000-${String(sortOrder).padStart(12, '0')}`,
+  templateQuestionCount: 10,
+  title:
+    ['認識色彩', '色彩呈現', '色彩表示', '色彩感知', '色彩認知', '色彩應用'][
+      sortOrder - 1
+    ] ?? '',
+});
 
-const renderPage = () =>
+const chapters = [
+  chapter(1, 'completed'),
+  chapter(2, 'available'),
+  chapter(3, 'locked'),
+  chapter(4, 'locked'),
+  chapter(5, 'content_unavailable'),
+  chapter(6, 'content_unavailable'),
+];
+
+const renderPage = (entry = '/app') =>
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[entry]}>
       <LobbyPage />
     </MemoryRouter>,
   );
 
 describe('LobbyPage', () => {
   beforeEach(() => {
-    mockedChapters.mockReturnValue(
+    mockedChapterMap.mockReturnValue(
       asResult({
-        data: chapters,
+        data: {
+          chapters,
+          mode: 'open',
+          rulesVersion: '2026-08-sequence-1',
+        },
         error: null,
         isError: false,
         isPending: false,
         refetch: vi.fn(),
       }),
     );
-    mockedMistakes.mockReturnValue(
-      asResult({
-        data: [{ id: 'm1' }, { id: 'm2' }],
-        isError: false,
-        isPending: false,
-      }),
-    );
-    mockedProfile.mockReturnValue(
-      asResult({
-        data: {
-          displayName: '學生一號',
-          id: 'student-1',
-          role: 'student',
-          timezone: 'Asia/Taipei',
-          reducedMotion: false,
-        },
-        isError: false,
-        isPending: false,
-      }),
-    );
-    mockedEconomy.mockReturnValue(
-      asResult({
-        data: {
-          currentLevelXp: 250,
-          level: 2,
-          tokenBalance: 40,
-          totalXp: 750,
-          walletReconciled: true,
-          xpPerLevel: 500,
-        },
-        isError: false,
-        isPending: false,
-      }),
-    );
-    mockedFrames.mockReturnValue(
-      asResult({ data: undefined, isError: false, isPending: false }),
-    );
-    mockedAchievements.mockReturnValue(
-      asResult({
-        data: { items: [], totalCount: 8, unlockedCount: 3 },
-        isError: false,
-        isPending: false,
-      }),
-    );
-    mockedInventory.mockReturnValue(
-      asResult({
-        data: {
-          activeBlookId: 'b1',
-          frameGradientEnd: null,
-          frameGradientStart: null,
-          tokenBalance: 40,
-          items: [
-            {
-              id: 'b1',
-              stableCode: 'dino',
-              name: '色彩巨獸',
-              emoji: '🦖',
-              costTokens: 30,
-              owned: true,
-              equipped: true,
-            },
-          ],
-        },
-        isError: false,
-        isPending: false,
-      }),
-    );
-    mockedClassrooms.mockReturnValue(
-      asResult({
-        data: [
-          {
-            classroomId: '31000000-0000-0000-0000-000000000001',
-            classroomName: '設計一甲',
-            joinedAt: '2026-07-01T00:00:00Z',
-            membershipStatus: 'active',
-          },
-        ],
-        isError: false,
-        isPending: false,
-      }),
-    );
-    mockedLeaderboard.mockReturnValue(
-      asResult({
-        data: {
-          classroomId: '31000000-0000-0000-0000-000000000001',
-          classroomName: '設計一甲',
-          generatedAt: '2026-07-19T00:00:00Z',
-          memberCount: 12,
-          selfEntry: {
-            activeBlookId: 'b1',
-            frameGradientEnd: null,
-            frameGradientStart: null,
-            displayName: '學生一號',
-            isSelf: true,
-            rank: 6,
-            totalXp: 750,
-          },
-          topEntries: [],
-        },
-        isError: false,
-        isPending: false,
-      }),
-    );
   });
 
-  it('shows the summary card with xp, token, badge count and rank', () => {
-    renderPage();
-    expect(screen.getByText('🦖')).toBeInTheDocument();
-    expect(screen.getByText('學生一號')).toBeInTheDocument();
-    // UAT 0727 #2 的「修改」連結維持移除;owner 0728 淡彩批(spec §九)改為
-    // 顯示 XP/代幣/徽章/排名四格,取代先前「不顯示代幣」的裁定。
-    expect(screen.queryByRole('link', { name: '個人資料' })).toBeNull();
-    expect(screen.getByText('Lv.2')).toBeInTheDocument();
-    expect(screen.getByText('累計積分 (XP)')).toBeInTheDocument();
-    expect(screen.getByText('750')).toBeInTheDocument();
-    expect(screen.getByText('代幣')).toBeInTheDocument();
-    expect(screen.getByText('40')).toBeInTheDocument();
-    expect(screen.getByText('徽章')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
-    expect(screen.getByText('全體排名')).toBeInTheDocument();
-    expect(screen.getByText('6')).toBeInTheDocument();
-  });
-
-  it('hides classroom rank when the student has no classroom', () => {
-    mockedClassrooms.mockReturnValue(
-      asResult({ data: [], isError: false, isPending: false }),
-    );
-    renderPage();
-    expect(screen.queryByText('全體排名')).toBeNull();
-  });
-
-  it('renders the pastel chapter grid with locked and current cards', () => {
-    renderPage();
+  it('removes the duplicate student summary and keeps the six-building map', () => {
+    const { container } = renderPage();
+    expect(screen.queryByRole('region', { name: '學生資訊' })).toBeNull();
     expect(
-      screen.getByRole('heading', { level: 1, name: '色彩任務選擇大廳' }),
-    ).toBeInTheDocument();
-    // mock 只有第二章可玩→它是解鎖前緣(進行中);第一章鎖定。
-    expect(screen.getByText('進行中')).toBeInTheDocument();
-    expect(screen.getByText('尚未解鎖')).toBeInTheDocument();
-    expect(screen.getByText('完成前一章節後解鎖')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '繼續學習' })).toHaveAttribute(
-      'href',
-      '/app/quiz/new?template=26000000-0000-0000-0000-000000000002',
+      screen.getByRole('heading', { level: 1, name: '學習地圖' }),
+    ).toBeVisible();
+    expect(screen.getAllByRole('button')).toHaveLength(6);
+    expect(container.querySelector('.chapter-card')).toBeNull();
+    expect(container.querySelector('.game-pager')).toBeNull();
+    expect(screen.queryByRole('link', { name: /開始挑戰/u })).toBeNull();
+    expect(screen.queryByRole('link', { name: /quiz/u })).toBeNull();
+  });
+
+  it('renders the approved map copy in one semantic parchment scroll', () => {
+    const { container } = renderPage();
+    const headings = screen.getAllByRole('heading', { level: 1 });
+    const scroll = container.querySelector('.chapter-map-scroll');
+
+    expect(headings).toHaveLength(1);
+    expect(headings[0]).toHaveTextContent('學習地圖');
+    expect(screen.getByText('學生端 · 森林王國村')).toBeVisible();
+    expect(
+      screen.getByText('選擇一棟建築，查看章節的複習、精熟度與解鎖條件。'),
+    ).toBeVisible();
+    expect(scroll).toContainElement(headings[0] ?? null);
+
+    const decorations = container.querySelectorAll(
+      '.chapter-map-scroll__roller, .chapter-map-scroll__crest',
+    );
+    expect(decorations).toHaveLength(3);
+    for (const decoration of decorations) {
+      expect(decoration).toHaveAttribute('aria-hidden', 'true');
+    }
+  });
+
+  it('selects the requested locked chapter from the exact map query', () => {
+    renderPage(
+      '/app?chapter=21000000-0000-0000-0000-000000000003&reason=locked',
     );
     expect(
-      screen.getByRole('link', { name: '色彩表示 複習與進度' }),
-    ).toBeInTheDocument();
+      screen.getByRole('button', {
+        name: 'Chapter 3 色彩表示 未解鎖',
+      }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('「色彩呈現」精熟度 60% / 80%')).toBeVisible();
   });
 
-  it('keeps the lobby to the chapter hall only (no hub entry cards)', () => {
+  it('renders the route loading boundary while access is pending', () => {
+    mockedChapterMap.mockReturnValue(
+      asResult({
+        data: undefined,
+        error: null,
+        isError: false,
+        isPending: true,
+        refetch: vi.fn(),
+      }),
+    );
     renderPage();
-    // UAT 0727 #2：分隔線以下的入口卡全部移除，功能改由導覽列進入。
-    expect(screen.queryByRole('link', { name: /前往修正/u })).toBeNull();
-    expect(screen.queryByRole('link', { name: /我的作業/u })).toBeNull();
-    expect(screen.queryByRole('link', { name: /成就徽章/u })).toBeNull();
-    expect(screen.queryByRole('link', { name: /班級排行榜/u })).toBeNull();
-    expect(screen.queryByRole('link', { name: /Live 課堂/u })).toBeNull();
+    expect(screen.getByRole('status', { name: '頁面載入中' })).toBeVisible();
   });
 
-  it('does not link to the removed student progress page (owner batch #2: teacher-only)', () => {
-    renderPage();
-    expect(screen.queryByRole('link', { name: /查看進度/u })).toBeNull();
-    expect(
-      screen.queryByRole('link', { name: /每日自主精熟目標/u }),
-    ).toBeNull();
-  });
-
-  it('keeps the recoverable error state', () => {
+  it('fails closed with an explicit retry when access cannot be confirmed', async () => {
     const refetch = vi.fn();
-    mockedChapters.mockReturnValue(
+    mockedChapterMap.mockReturnValue(
       asResult({
         data: undefined,
         error: null,
@@ -294,65 +152,8 @@ describe('LobbyPage', () => {
       }),
     );
     renderPage();
-    expect(screen.getByRole('alert')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: '重新載入' }),
-    ).toBeInTheDocument();
-  });
-
-  it('applies the day scene and HUD wrapper to the lobby', async () => {
-    renderPage();
-    const section = await screen.findByRole('region', {
-      name: /色彩任務選擇大廳/,
-    });
-    expect(section).toHaveClass('scene-day');
-    expect(section.querySelector('.hud-bar')).not.toBeNull();
-  });
-
-  it('章節超過單頁容量時分頁且跨頁章節仍照全域序渲染', async () => {
-    const overflowChapters: PublishedChapter[] = [
-      '章節一',
-      '章節二',
-      '章節三',
-      '章節四',
-      '章節五',
-      '章節六',
-      '章節七',
-    ].map((title, index) => ({
-      description: `${title}的學習重點。`,
-      id: `21000000-0000-0000-0000-${String(index + 1).padStart(12, '0')}`,
-      isPlayable: index === 1,
-      sortOrder: index + 1,
-      stableCode: `chapter-${String(index + 1)}`,
-      subtopicCodes: index === 1 ? [`${String(index + 1)}-1`] : [],
-      subtopicTitles: index === 1 ? [`${String(index + 1)}-1 ${title}`] : [],
-      template: {
-        id: `26000000-0000-0000-0000-${String(index + 1).padStart(12, '0')}`,
-        questionCount: 10,
-        title: `第${String(index + 1)}章綜合挑戰`,
-      },
-      title,
-    }));
-    mockedChapters.mockReturnValue(
-      asResult({
-        data: overflowChapters,
-        error: null,
-        isError: false,
-        isPending: false,
-        refetch: vi.fn(),
-      }),
-    );
-    renderPage();
-    // 全域 matchMedia stub matches:false → narrow 容量 2 → 4 頁。
-    expect(screen.getByText('第 1 / 4 頁')).toBeVisible();
-    // 卡片標題為 h3「Chapter {n}：{title}」組合文字節點，說明段落亦含標題
-    // 字串，故鎖定 heading 角色＋子字串比對，避免同時命中卡片說明文字。
-    expect(
-      screen.queryByRole('heading', { level: 3, name: /章節三/u }),
-    ).toBeNull();
-    await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
-    expect(
-      screen.getByRole('heading', { level: 3, name: /章節三/u }),
-    ).toBeVisible();
+    expect(screen.getByRole('alert')).toHaveTextContent('章節狀態暫時無法確認');
+    await userEvent.click(screen.getByRole('button', { name: '重新載入' }));
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 });

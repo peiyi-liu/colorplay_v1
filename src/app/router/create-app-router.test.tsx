@@ -31,6 +31,40 @@ vi.mock('../../features/learning/api/chapters', () => ({
     refetch: vi.fn(),
   })),
 }));
+vi.mock('../../features/learning/hooks/use-chapter-map', () => ({
+  useStudentChapterMap: vi.fn(() => ({
+    data: {
+      chapters: [
+        '認識色彩',
+        '色彩呈現',
+        '色彩表示',
+        '色彩感知',
+        '色彩認知',
+        '色彩應用',
+      ].map((title, index) => ({
+        accessState: index === 2 ? 'available' : 'content_unavailable',
+        blockers: [],
+        chapterId: `21000000-0000-0000-0000-${String(index + 1).padStart(12, '0')}`,
+        description: `第 ${String(index + 1)} 章說明`,
+        mastery: null,
+        progressStatus: 'not_started',
+        reviewCompleted: 0,
+        reviewTotal: index === 2 ? 5 : null,
+        sortOrder: index + 1,
+        stableCode: `chapter-${String(index + 1)}`,
+        templateId: index === 2 ? '26000000-0000-0000-0000-000000000003' : null,
+        templateQuestionCount: index === 2 ? 10 : null,
+        title,
+      })),
+      mode: 'open',
+      rulesVersion: '2026-08-sequence-1',
+    },
+    error: null,
+    isError: false,
+    isPending: false,
+    refetch: vi.fn(),
+  })),
+}));
 vi.mock('../../features/rewards/hooks/use-economy-summary', () => ({
   useEconomySummary: vi.fn(() => ({
     data: {
@@ -288,7 +322,7 @@ describe('createAppRouter', () => {
     ).toBeVisible();
   });
 
-  it('renders the published chapter home at /app for an authenticated session', async () => {
+  it('renders the six-chapter learning map at /app for an authenticated session', async () => {
     mockedUsePublishedChapters.mockReturnValue({
       data: [
         {
@@ -318,9 +352,12 @@ describe('createAppRouter', () => {
     });
 
     expect(
-      await screen.findByRole('heading', { name: '色彩任務選擇大廳' }),
+      await screen.findByRole('heading', { name: '學習地圖' }),
     ).toBeVisible();
-    expect(screen.getByRole('link', { name: '繼續學習' })).toBeVisible();
+    expect(screen.getByRole('list', { name: '六章學習地圖' })).toBeVisible();
+    expect(screen.getAllByRole('button', { name: /^Chapter /u })).toHaveLength(
+      6,
+    );
     expect(document.body).not.toHaveTextContent('learner@colorplay.invalid');
   });
 

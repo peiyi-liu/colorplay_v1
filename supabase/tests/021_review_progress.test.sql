@@ -100,6 +100,40 @@ values
     'progress-subtopic-021-empty', 'Progress 空子題', '', 'published', 2
   );
 
+-- The chapter-access service only exposes content-ready chapters. Keep this
+-- review contract's chapter playable without changing its review assertions.
+insert into public.quiz_templates (
+  id, chapter_id, stable_code, title, question_count, status
+)
+values (
+  '21800000-0000-0000-0000-000000000001',
+  '21300000-0000-0000-0000-000000000001',
+  'progress-template-021', 'Progress 測試挑戰', 1, 'published'
+);
+insert into public.questions (
+  id, subtopic_id, stable_code, prompt, explanation, status, sort_order
+)
+values (
+  '21900000-0000-0000-0000-000000000001',
+  '21500000-0000-0000-0000-000000000001',
+  '91-1-01', 'Progress 測試題？', 'Progress 測試解說。',
+  'published', 1
+);
+insert into public.question_options (
+  id, question_id, option_key, option_text, is_correct, sort_order
+)
+values
+  (
+    '21910000-0000-0000-0000-000000000001',
+    '21900000-0000-0000-0000-000000000001',
+    'A', '正確', true, 1
+  ),
+  (
+    '21910000-0000-0000-0000-000000000002',
+    '21900000-0000-0000-0000-000000000001',
+    'B', '錯誤', false, 2
+  );
+
 insert into public.review_cards (
   id, subtopic_id, stable_code, group_label, title, content, version, status,
   requires_recompletion, sort_order

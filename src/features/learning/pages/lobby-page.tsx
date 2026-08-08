@@ -1,43 +1,28 @@
+import { useOutletContext, useSearchParams } from 'react-router-dom';
+
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { Card } from '../../../components/ui/card';
-import { Chip } from '../../../components/ui/chip';
-import { GamePager, useStageWide } from '../../../components/ui/game-pager';
-import type { IconName } from '../../../components/ui/icons';
-import { PageHeader } from '../../../components/ui/page-header';
-import { pastelThemeForIndex } from '../../../components/ui/pastel-themes';
-import { usePublishedChapters } from '../api/chapters';
-import { LearningChapterCard } from '../components/learning-chapter-card';
-import { StudentSummaryCard } from '../components/student-summary-card';
-
-/** 六章節 icon(spec §五建議:色環/三屬性/表示/混合/心理感知/配色)。 */
-const CHAPTER_ICONS: readonly IconName[] = [
-  'palette',
-  'sparkles',
-  'bolt',
-  'grid',
-  'eye',
-  'star',
-];
+import { ChapterMap } from '../components/chapter-map';
+import type { StudentMapShellContext } from '../context/student-map-shell-context';
+import { useStudentChapterMap } from '../hooks/use-chapter-map';
 
 export function LobbyPage() {
-  const chapters = usePublishedChapters();
-  const stageWide = useStageWide();
+  const chapterMap = useStudentChapterMap();
+  const shell = useOutletContext<StudentMapShellContext | null>();
+  const [searchParams] = useSearchParams();
 
-  if (chapters.isPending) return <RouteLoading withinMain />;
+  if (chapterMap.isPending) return <RouteLoading withinMain />;
 
-  if (chapters.isError) {
+  if (chapterMap.isError) {
     return (
       <section className="lobby lobby--message scene-day">
         <Card padding="lg">
-          <Chip tone="primary">學習大廳</Chip>
-          <h1>章節載入失敗</h1>
-          <p role="alert">
-            {chapters.error?.message ?? '目前無法載入章節，請稍後重試。'}
-          </p>
+          <h1>學習地圖</h1>
+          <p role="alert">章節狀態暫時無法確認</p>
           <button
             className="primary-action"
             data-primary-action="true"
-            onClick={() => void chapters.refetch()}
+            onClick={() => void chapterMap.refetch()}
             type="button"
           >
             重新載入
@@ -47,75 +32,35 @@ export function LobbyPage() {
     );
   }
 
-  const chapterList = chapters.data ?? [];
-  // 進行中章節=解鎖順序的最前緣(最後一個可玩章節);僅呈現用途,
-  // 解鎖與完成判斷仍完全由後端 isPlayable 決定。
-  const frontierIndex = chapterList.reduce(
-    (frontier, chapter, index) => (chapter.isPlayable ? index : frontier),
-    -1,
-  );
-  // 分頁批:icon/theme/frontier 比對皆以全域 index 計,故先把 index 綁進
-  // entries 再交給 GamePager 切片,切片後語意不變(spec 關鍵約束)。
-  const chapterEntries = chapterList.map((chapter, index) => ({
-    chapter,
-    index,
-  }));
+  const requestedChapter = searchParams.get('chapter') ?? undefined;
 
   return (
-    <section aria-labelledby="lobby-title" className="lobby scene-day">
-      {/* live-v2 設計稿:資訊卡在最上,標題與章節格包進白卡浮於暖黃頁底。 */}
-      <div className="hud-bar">
-        <StudentSummaryCard />
-      </div>
-      <div className="lobby-panel">
-        <PageHeader
-          description="選擇下方的色彩原理核心章節，展開你的色彩知識與視覺挑戰。"
-          title="色彩任務選擇大廳"
-          titleId="lobby-title"
+    <section
+      aria-labelledby="learning-map-title"
+      className="lobby lobby--map-fullscreen scene-day"
+    >
+      <div className="lobby-panel chapter-map-shell">
+        <header className="chapter-map-shell__heading chapter-map-scroll">
+          <span
+            aria-hidden="true"
+            className="chapter-map-scroll__roller chapter-map-scroll__roller--top"
+          />
+          <span aria-hidden="true" className="chapter-map-scroll__crest" />
+          <div className="chapter-map-scroll__copy">
+            <p>學生端 · 森林王國村</p>
+            <h1 id="learning-map-title">學習地圖</h1>
+            <p>選擇一棟建築，查看章節的複習、精熟度與解鎖條件。</p>
+          </div>
+          <span
+            aria-hidden="true"
+            className="chapter-map-scroll__roller chapter-map-scroll__roller--bottom"
+          />
+        </header>
+        <ChapterMap
+          chapters={chapterMap.data.chapters}
+          equippedBlook={shell?.equippedBlook ?? null}
+          initialChapterId={requestedChapter}
         />
-        {chapterList.length === 0 ? (
-          <p className="lobby__empty">課程內容準備中，請稍後再回來看看。</p>
-        ) : (
-          <GamePager
-            ariaLabel="章節分頁"
-            items={chapterEntries}
-            pageSize={stageWide ? 3 : 2}
-          >
-            {(pageEntries) => (
-              <div className="pastel-grid">
-                {pageEntries.map(({ chapter, index }) => {
-                  const current = index === frontierIndex;
-                  return (
-                    <LearningChapterCard
-                      chapterNumber={chapter.sortOrder}
-                      current={current}
-                      description={chapter.description}
-                      icon={
-                        CHAPTER_ICONS[index % CHAPTER_ICONS.length] ?? 'palette'
-                      }
-                      key={chapter.id}
-                      status={
-                        chapter.isPlayable
-                          ? current
-                            ? 'active'
-                            : 'open'
-                          : 'locked'
-                      }
-                      theme={pastelThemeForIndex(index)}
-                      title={chapter.title}
-                      {...(chapter.isPlayable
-                        ? {
-                            reviewHref: `/app/chapters/${chapter.id}`,
-                            startHref: `/app/quiz/new?template=${chapter.template.id}`,
-                          }
-                        : {})}
-                    />
-                  );
-                })}
-              </div>
-            )}
-          </GamePager>
-        )}
       </div>
     </section>
   );

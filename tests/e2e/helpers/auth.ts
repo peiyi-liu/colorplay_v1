@@ -46,7 +46,7 @@ export async function openHudMenu(page: Page): Promise<void> {
   await expect(page.locator('#hud-menu-panel')).toBeVisible();
 }
 
-// GameStage Shell（2026-08-01）：登出鈕收進底部 HUD 的 MENU 面板。
+// GameStage Shell（2026-08-01）：登出鈕收進頂部 HUD 的 MENU 面板。
 export async function signOutViaHud(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'MENU' }).click();
   await page.getByRole('button', { name: '登出' }).click();

@@ -21,6 +21,7 @@ const fixtureLabels = [
   'authLifecycleTwo',
   'learningTeacher',
   'learningStudent',
+  'sequenceStudent',
   'teacher',
   'teacherTwo',
   'classroomRepositoryTeacher',

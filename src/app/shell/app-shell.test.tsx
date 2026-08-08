@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { useEffect, useState } from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -9,10 +12,16 @@ import {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
+import { ProfileRepositoryError } from '../../features/profile/types';
 import { useBlookInventory } from '../../features/inventory/hooks/use-blook-inventory';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
 import { ToastProvider } from '../../components/ui/toast';
 import { AppShell } from './app-shell';
+
+const globalStyles = readFileSync(
+  resolve(process.cwd(), 'src/styles/globals.css'),
+  'utf8',
+);
 
 vi.mock('../../features/auth/context/auth-context', () => ({
   useAuth: vi.fn(),
@@ -50,6 +59,31 @@ const renderStudentShell = () =>
     </MemoryRouter>,
   );
 
+const renderShellRoute = (entry: string) => {
+  const router = createMemoryRouter(
+    [
+      {
+        children: [
+          {
+            element: <button type="button">地圖操作</button>,
+            index: true,
+          },
+          { element: <div>裝備商店內容</div>, path: 'shop' },
+        ],
+        element: (
+          <ToastProvider>
+            <AppShell />
+          </ToastProvider>
+        ),
+        path: '/app',
+      },
+    ],
+    { initialEntries: [entry] },
+  );
+
+  return render(<RouterProvider router={router} />);
+};
+
 const renderTeacherShell = () => {
   mockedUseAuth.mockReturnValue({
     session: {
@@ -78,8 +112,24 @@ const renderTeacherShell = () => {
   return renderStudentShell();
 };
 
+const expectCommandBeforeHeaderAndMain = () => {
+  const main = screen.getByRole('main');
+  const stage = main.parentElement;
+  const command = stage?.querySelector('.hud-command');
+  const header = stage?.querySelector('.hud-top');
+
+  if (!stage || !command || !header) {
+    throw new Error('authenticated HUD shell is incomplete');
+  }
+
+  const children = [...stage.children];
+  expect(children.indexOf(command)).toBeLessThan(children.indexOf(header));
+  expect(children.indexOf(command)).toBeLessThan(children.indexOf(main));
+};
+
 describe('AppShell', () => {
   beforeEach(() => {
+    sessionStorage.clear();
     vi.stubGlobal(
       'matchMedia',
       vi.fn().mockReturnValue({
@@ -188,6 +238,18 @@ describe('AppShell', () => {
     expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
   });
 
+  it('renders student HUD navigation before the identity header and main content', () => {
+    renderStudentShell();
+
+    expectCommandBeforeHeaderAndMain();
+  });
+
+  it('renders teacher HUD navigation before the identity header and main content', () => {
+    renderTeacherShell();
+
+    expectCommandBeforeHeaderAndMain();
+  });
+
   it('遊戲 HUD 不再提供頂列品牌連結（chrome 收進舞台）', () => {
     render(
       <MemoryRouter>
@@ -247,12 +309,231 @@ describe('AppShell', () => {
     expect(mockedUseBlookInventory).toHaveBeenCalledOnce();
   });
 
+  it('uses the learning-map HUD only for the exact /app route, including query strings', () => {
+    renderShellRoute('/app?chapter=21000000-0000-0000-0000-000000000002');
+
+    const stage = screen.getByRole('main').closest('.game-stage');
+    expect(stage).toHaveClass('game-stage--learning-map');
+    expect(screen.getByRole('banner')).toContainElement(
+      document.querySelector('.economy-summary--learning-map'),
+    );
+    expect(mockedUseEconomySummary).toHaveBeenCalledOnce();
+    expect(mockedUseBlookInventory).toHaveBeenCalledOnce();
+  });
+
+  it('does not use the learning-map HUD for child student routes', () => {
+    renderShellRoute('/app/shop');
+
+    const stage = screen.getByRole('main').closest('.game-stage');
+    expect(stage).not.toHaveClass('game-stage--learning-map');
+    expect(document.querySelector('.economy-summary--learning-map')).toBeNull();
+  });
+
+  it('shows recoverable profile resolution states and mounts the route subtree once', async () => {
+    let profileState: 'error' | 'pending' | 'resolved' = 'pending';
+    const mounted = vi.fn();
+    const unmounted = vi.fn();
+    const refetchProfile = vi.fn();
+
+    mockedUseMyProfile.mockImplementation(() =>
+      profileState === 'resolved'
+        ? {
+            data: {
+              displayName: 'student.one',
+              id: 'student-one-id',
+              role: 'student',
+              timezone: 'Asia/Taipei',
+              reducedMotion: false,
+            },
+            error: null,
+            isError: false,
+            isPending: false,
+            refetch: refetchProfile,
+          }
+        : {
+            data: undefined,
+            error:
+              profileState === 'error'
+                ? new ProfileRepositoryError('PROFILE_UNAVAILABLE')
+                : null,
+            isError: profileState === 'error',
+            isPending: profileState === 'pending',
+            refetch: refetchProfile,
+          },
+    );
+
+    function RemountSentinel() {
+      useEffect(() => {
+        mounted();
+        return () => {
+          unmounted();
+        };
+      }, []);
+      return <p>受保護路由內容</p>;
+    }
+
+    function ProfileResolutionHarness() {
+      const [, setRevision] = useState(0);
+      return (
+        <ToastProvider>
+          <button
+            onClick={() => {
+              profileState = 'error';
+              setRevision(1);
+            }}
+            type="button"
+          >
+            模擬權限錯誤
+          </button>
+          <button
+            onClick={() => {
+              profileState = 'resolved';
+              setRevision(2);
+            }}
+            type="button"
+          >
+            完成權限解析
+          </button>
+          <AppShell />
+        </ToastProvider>
+      );
+    }
+
+    const router = createMemoryRouter(
+      [
+        {
+          children: [{ element: <RemountSentinel />, index: true }],
+          element: <ProfileResolutionHarness />,
+          path: '/app',
+        },
+      ],
+      { initialEntries: ['/app'] },
+    );
+    render(<RouterProvider router={router} />);
+
+    const main = screen.getByRole('main');
+    expect(
+      within(main).getByRole('status', { name: '頁面載入中' }),
+    ).toBeVisible();
+    expect(screen.queryByText('受保護路由內容')).toBeNull();
+    expect(mounted).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole('button', { name: '模擬權限錯誤' }));
+    expect(within(main).getByRole('alert')).toHaveTextContent(
+      '個人資料載入失敗，請稍後重試。',
+    );
+    await userEvent.click(
+      within(main).getByRole('button', { name: '重新載入' }),
+    );
+    expect(refetchProfile).toHaveBeenCalledOnce();
+    expect(screen.queryByText('受保護路由內容')).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: '完成權限解析' }));
+
+    expect(screen.getByText('受保護路由內容')).toBeVisible();
+    expect(mounted).toHaveBeenCalledTimes(1);
+    expect(unmounted).not.toHaveBeenCalled();
+  });
+
+  it('uses non-blocking map copy only on exact /app and dismissal preserves map controls', async () => {
+    vi.mocked(window.matchMedia).mockReturnValue({
+      addEventListener: vi.fn(),
+      matches: true,
+      media: '(orientation: portrait)',
+      removeEventListener: vi.fn(),
+    } as unknown as MediaQueryList);
+    renderShellRoute('/app');
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      '轉橫可看完整森林王國村',
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: '關閉轉向提示' }));
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('button', { name: '地圖操作' })).toBeVisible();
+  });
+
+  it('keeps default rotate copy on student child routes', () => {
+    vi.mocked(window.matchMedia).mockReturnValue({
+      addEventListener: vi.fn(),
+      matches: true,
+      media: '(orientation: portrait)',
+      removeEventListener: vi.fn(),
+    } as unknown as MediaQueryList);
+    renderShellRoute('/app/shop');
+
+    expect(screen.getByRole('status')).toHaveTextContent('轉橫體驗更佳');
+  });
+
+  it('keeps compact map HUD contents within the 58px minimum outer height', () => {
+    expect(globalStyles).toMatch(
+      /\.game-stage--learning-map \.hud-economy-group\s*\{[^}]*height:\s*clamp\(58px, 6vw, 66px\);[^}]*padding:\s*4px;/u,
+    );
+    expect(globalStyles).toMatch(
+      /\.game-stage--learning-map \.hud-avatar\s*\{[^}]*width:\s*calc\(clamp\(58px, 6vw, 66px\) - 12px\);[^}]*height:\s*calc\(clamp\(58px, 6vw, 66px\) - 12px\);/u,
+    );
+    expect(globalStyles).toMatch(
+      /\.economy-summary--learning-map\s+\.economy-summary__level\s*\{[^}]*gap:\s*1px;[^}]*border-width:\s*1px;[^}]*font-size:\s*11px;[^}]*line-height:\s*12px;[^}]*padding:\s*0 4px;/u,
+    );
+    expect(globalStyles).toMatch(
+      /\.economy-summary--learning-map\s+\.economy-summary__level\s+progress\s*\{[^}]*height:\s*5px;/u,
+    );
+    expect(globalStyles).toMatch(
+      /\.economy-summary--learning-map\s+\.economy-summary__tokens\s*\{[^}]*border-width:\s*1px;[^}]*font-size:\s*11px;[^}]*line-height:\s*12px;[^}]*padding:\s*1px 4px;/u,
+    );
+  });
+
+  it.each([
+    ['little_fox', '小狐狸', '🦊'],
+    ['indigo_dragon', '東方靛龍', '🐲'],
+  ] as const)(
+    'centers the 3:2 %s art through the same learning-map HUD container',
+    (stableCode, name, emoji) => {
+      mockedUseBlookInventory.mockReturnValue(
+        inventoryResult({
+          data: {
+            activeBlookId: `${stableCode}-id`,
+            items: [
+              {
+                costTokens: 0,
+                emoji,
+                equipped: true,
+                id: `${stableCode}-id`,
+                name,
+                owned: true,
+                stableCode,
+              },
+            ],
+            tokenBalance: 250,
+          },
+          isError: false,
+          isPending: false,
+        }),
+      );
+
+      renderShellRoute('/app');
+
+      const image = document.querySelector<HTMLImageElement>(
+        '.hud-avatar .blook-art',
+      );
+      expect(image).toHaveAttribute('src', `/assets/blooks/${stableCode}.png`);
+      expect(image?.parentElement).toHaveClass('hud-avatar');
+      expect(globalStyles).toMatch(
+        /\.game-stage--learning-map \.hud-avatar \.blook-art\s*\{[^}]*position:\s*absolute;[^}]*height:\s*100%;[^}]*left:\s*50%;[^}]*transform:\s*translateX\(-50%\);[^}]*width:\s*auto;/u,
+      );
+    },
+  );
+
   it('學生頂部顯示頭像框與經濟群組', async () => {
     renderStudentShell();
 
     expect(await screen.findByText(/Level \d+/u)).toBeInTheDocument();
     expect(document.querySelector('.hud-economy-group')).not.toBeNull();
-    expect(document.querySelector('.hud-avatar')).not.toBeNull();
+    const avatar = document.querySelector('.hud-avatar');
+    expect(avatar).not.toBeNull();
+    const avatarImage = avatar?.querySelector('img');
+    expect(avatarImage).toHaveAttribute('width', '47');
+    expect(avatarImage).toHaveAttribute('height', '47');
   });
 
   it('教師頂部顯示歡迎識別且不渲染經濟數字', async () => {
