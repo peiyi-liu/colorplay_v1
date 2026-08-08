@@ -1,0 +1,52 @@
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
+
+import { useAdminSessionState } from '../hooks/use-admin-session-state';
+import { RequirePrivilegedSession } from './require-privileged-session';
+
+vi.mock('../hooks/use-admin-session-state', () => ({
+  useAdminSessionState: vi.fn(),
+}));
+
+function renderWithState(state: string, isPending = false) {
+  vi.mocked(useAdminSessionState).mockReturnValue({
+    isPending,
+    mfaAgeSeconds: 0,
+    refetch: vi.fn(),
+    state,
+  } as unknown as ReturnType<typeof useAdminSessionState>);
+  render(
+    <MemoryRouter initialEntries={['/admin/audit']}>
+      <Routes>
+        <Route element={<RequirePrivilegedSession />}>
+          <Route element={<p>稽核頁</p>} path="/admin/audit" />
+        </Route>
+        <Route element={<p>enroll 頁</p>} path="/admin/mfa/enroll" />
+        <Route element={<p>challenge 頁</p>} path="/admin/mfa/challenge" />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
+describe('RequirePrivilegedSession', () => {
+  it('renders the outlet for a privileged session', () => {
+    renderWithState('privileged');
+    expect(screen.getByText('稽核頁')).toBeInTheDocument();
+  });
+
+  it('sends pending_mfa to the enrollment gate', () => {
+    renderWithState('pending_mfa');
+    expect(screen.getByText('enroll 頁')).toBeInTheDocument();
+  });
+
+  it('sends stale sessions to challenge with return intent', () => {
+    renderWithState('stale');
+    expect(screen.getByText('challenge 頁')).toBeInTheDocument();
+  });
+
+  it('shows the route loading state while the query is pending', () => {
+    renderWithState('none', true);
+    expect(screen.getByRole('status', { name: '頁面載入中' })).toBeVisible();
+  });
+});

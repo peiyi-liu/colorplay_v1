@@ -6,6 +6,8 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useToast } from '../../../components/ui/toast';
+import { parsePublicEnv } from '../../../lib/config/public-env';
+import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
 import { useAuth } from '../context/auth-context';
 import {
   accountSignInSchema,
@@ -30,6 +32,27 @@ const safeErrorMessages = {
 
 const fallbackDestination = { hash: '', pathname: '/app', search: '' };
 const teacherDestination = { hash: '', pathname: '/teacher', search: '' };
+const adminDestination = { hash: '', pathname: '/admin', search: '' };
+
+// admin 經教師端登入(spec §3.1):登入成功後依 profile.role 決定導向。
+// 這只是 UX 導向;/admin 樹的授權權威在 RLS/RPC/Edge,非 admin 進入
+// 也拿不到任何伺服端資料。
+async function resolveTeacherPortalDestination() {
+  try {
+    const client = getBrowserSupabaseClient(parsePublicEnv(import.meta.env));
+    const { data: userData } = await client.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) return teacherDestination;
+    const { data: profileRow } = await client
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .maybeSingle();
+    return profileRow?.role === 'admin' ? adminDestination : teacherDestination;
+  } catch {
+    return teacherDestination;
+  }
+}
 
 const messageForError = (error: unknown, portal: 'student' | 'teacher') => {
   const messages = safeErrorMessages[portal];
@@ -49,7 +72,6 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
     handleSubmit,
     register,
-    setError,
   } = useForm<AccountSignInValues>({
     defaultValues: { account: '', classCode: '', password: '' },
     resolver: zodResolver(accountSignInSchema),
@@ -136,11 +158,10 @@ export function LoginPage() {
 
               const identifier = values.account.trim();
               const usesEmailBridge = identifier.includes('@');
+              // 班級序號:教師必填、管理員免填。角色在登入前不可知,
+              // 由 auth-login 伺服端強制(教師缺碼一律
+              // AUTH_INVALID_CREDENTIALS),client 不做角色判斷。
               const classCode = values.classCode?.trim() ?? '';
-              if (portal === 'teacher' && !usesEmailBridge && !classCode) {
-                setError('classCode', { message: '請輸入班級序號' });
-                return;
-              }
 
               pendingSubmission.current = true;
               setSubmitError(null);
@@ -162,11 +183,11 @@ export function LoginPage() {
                   message: '登入成功，歡迎回到 ColorPlay！',
                   tone: 'success',
                 });
-                // 固定導向（UAT 0727 #5）：學生一律進學習大廳、教師一律進
-                // 教師工作區，不再回跳登入前頁面。
+                // 固定導向（UAT 0727 #5）：學生一律進學習大廳、教師進
+                // 教師工作區、管理員進管理主控台，不再回跳登入前頁面。
                 await navigate(
                   portal === 'teacher'
-                    ? teacherDestination
+                    ? await resolveTeacherPortalDestination()
                     : fallbackDestination,
                   { replace: true },
                 );
@@ -218,7 +239,7 @@ export function LoginPage() {
 
           {portal === 'teacher' ? (
             <div className="login-form__field">
-              <label htmlFor="login-class-code">班級序號</label>
+              <label htmlFor="login-class-code">班級序號（管理員免填）</label>
               <input
                 {...register('classCode')}
                 aria-describedby={

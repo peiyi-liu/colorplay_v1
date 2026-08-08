@@ -57,9 +57,16 @@ Deno.serve(async (request) => {
     .eq('login_account', normalizedAccount)
     .maybeSingle();
   if (profileError || !profile) return invalidCredentials();
-  if (profile.role !== portalValue) return invalidCredentials();
+  // admin 經教師入口登入(spec §3.1);防列舉:所有失敗一律同一回應
+  if (
+    profile.role !== portalValue &&
+    !(portalValue === 'teacher' && profile.role === 'admin')
+  ) {
+    return invalidCredentials();
+  }
 
-  if (portalValue === 'teacher') {
+  // 班級碼驗證只對 teacher 角色:admin 無班級,免班級碼(spec §3.1)
+  if (portalValue === 'teacher' && profile.role === 'teacher') {
     if (typeof classCode !== 'string') return invalidCredentials();
     const normalizedCode = normalizeClassCode(classCode);
     if (!CLASS_CODE_PATTERN.test(normalizedCode)) return invalidCredentials();
