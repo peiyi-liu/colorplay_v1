@@ -33,3 +33,10 @@
 - 下一步：要接上正式通道，`staging-deploy.yml`（目前只在 `phase0/release-foundation`、`phase1/admin-security-impl`、`phase1/admin-security-spec` 三個分支）需要先進到 `feature/v2-major-update`，且 `staging` 分支（停在 2026-08-03 的 `24ee1ee`）需要重新被推進。`docs/roadmap-colorplay-next.md` 本身 8/6 後沒再更新，未反映 Phase 1 Task 12/13 完成與本次 staging 綁定，尚未與 owner 確認是否要一併更新。
 - Blocker／待決策：`phase0/release-foundation`、`phase1/admin-security-impl`、`phase1/admin-security-spec` 三個分支尚未同步今天新增的 CLAUDE.md／AGENTS.md 新章節／本檔案；`phase1/admin-security-impl` 目前有背景 session 在用，需要協調而非直接改分支。
 - 相關檔案／commit：`docs/staging-runbook.md`。
+
+## 2026-08-09 21:50 [Claude Code] — 同步三個 phase 分支 + 更新 roadmap-colorplay-next.md
+
+- 做了什麼：`phase1/admin-security-impl` 背景 session 已結束（不再是 blocker）。改用「只 checkout 特定路徑」而非完整 merge，把 `CLAUDE.md`／`AGENTS.md`／`docs/handoff.md`／`.codex/**` 同步進 `phase0/release-foundation`、`phase1/admin-security-impl`、`phase1/admin-security-spec` 三個分支（確認 `AGENTS.md` 在這三邊都跟共同祖先零差異，完整 merge 會撞上 `app-shell.tsx`／`mastery-repository.test.ts`／`database.ts`／`docs/staging-runbook.md`／`.claude/settings.json` 等真實衝突，已中止過一次完整 merge 嘗試改走這條路）；`phase0/release-foundation` 已推 origin（原本就有 upstream），另外兩個分支本來就沒有 upstream，維持本地。同時更新 `docs/roadmap-colorplay-next.md`：Phase 1 狀態列（原本寫「spec not started」是舊的）、新增 2026-08-09 dated 的 staging 綁定現況段落（含「這是手動 bypass 不是正式 CI 閘門」的警告）。
+- 下一步：`docs/roadmap-colorplay-next.md` 其餘章節（Immediate next action、Protected work in progress 的舊 SHA 等）未重新驗證，只動了有把握的部分。
+- Blocker／待決策：無。
+- 相關檔案／commit：`phase0/release-foundation`（428dc78）、`phase1/admin-security-impl`（10bf6aa，本地）、`phase1/admin-security-spec`（ee65086，本地）、`docs/roadmap-colorplay-next.md`。

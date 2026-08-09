@@ -2,7 +2,10 @@
 
 - Status: PHASE 0 SPEC APPROVED — implementation plan awaiting owner review;
   only the owner-authorized B2 backup-target setup has changed hosted state
-- Last updated: 2026-08-06 (Asia/Taipei)
+- Last updated: 2026-08-09 (Asia/Taipei) — added a dated Phase 1 status
+  correction and a 2026-08-09 hosted-state update below; the rest of this
+  tracker was not re-verified end-to-end in that pass
+- Last full review: 2026-08-06 (Asia/Taipei)
 - Current phase: Phase 0, implementation-plan review
 - Canonical entry point: this file
 - Historical task ledger: `.superpowers/sdd/progress.md`
@@ -37,7 +40,7 @@ batches. Each batch must pass its own Staging gate before Production promotion.
 | Phase | Scope                                         | Status                                              |
 | ----- | --------------------------------------------- | --------------------------------------------------- |
 | 0     | Environment and release foundation            | Spec approved; implementation plan awaiting review  |
-| 1     | Admin identity and security core              | Decisions captured; spec not started                |
+| 1     | Admin identity and security core              | Spec and implementation plan approved; implementation in progress on `phase1/admin-security-impl` (not yet merged to this branch). See `docs/superpowers/plans/2026-08-07-phase-1-admin-identity-security.md` on that branch. Confirmed 2026-08-09 |
 | 2     | Content SSOT and version publishing           | Decisions captured; spec not started                |
 | 3     | Learning progression and assessment authority | Decisions captured; spec not started                |
 | 4     | Learning Hall and chapter experience          | Visual/product decisions captured; spec not started |
@@ -160,6 +163,27 @@ The owner adopted ADR 0002's clean-environment approach on 2026-08-05:
   migration reconciliation is required before reset or cutover.
 
 These facts are observations, not authorization to mutate hosted resources.
+
+### Verified current state (2026-08-09)
+
+- `staging.colorplayapp.com` now resolves and serves `HTTP 200` with a valid
+  certificate, superseding the "does not resolve yet" observation above.
+  Evidence: owner added Cloudflare `A staging 76.76.21.21` (DNS only, no
+  proxy); this session ran `vercel domains add staging.colorplayapp.com
+  colorplay-staging-web` then `vercel alias set`; confirmed via
+  `curl -sI https://staging.colorplayapp.com/` returning `200`.
+- This is a **manual alias of whatever deployment already existed** in
+  `colorplay-staging-web`, not a build produced by the PR-to-protected-
+  `staging`-branch CI gate described under "Approved CI and deployment
+  approval gates" below. The `staging` branch is still at `24ee1ee`
+  (2026-08-03); `staging-deploy.yml` has not run since, and it does not yet
+  exist on `feature/v2-major-update` (only on `phase0/release-foundation`,
+  `phase1/admin-security-impl`, `phase1/admin-security-spec`). Treat today's
+  binding as an interim visibility fix, not Staging-gate evidence for any
+  phase. Full chain and caveats: `docs/staging-runbook.md` §5.
+- Staging's Supabase project is confirmed `onkxnkzeixpezetkmocf` (matches the
+  Target topology table above), separate from the `colorplay-production`
+  project (`xdjumzdqyexpyndanwkp`, created 2026-08-06).
 
 ### Approved backup and clean-rebuild policy
 
