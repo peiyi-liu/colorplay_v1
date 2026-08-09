@@ -19,6 +19,7 @@ import {
   type QuestionHintView,
   type ReviewCompletionRow,
 } from '../api/learning-repository';
+import { studentChapterMapKey } from './use-chapter-map';
 
 export const learningKeys = {
   chapterReview: (chapterId: string) =>
@@ -42,10 +43,11 @@ const resolveRepository = (
 export function useChapterReview(
   chapterId: string,
   repository?: LearningRepository,
+  accessConfirmed = true,
 ): UseQueryResult<readonly ChapterReviewSection[], LearningError> {
   const resolved = resolveRepository(repository);
   return useQuery<readonly ChapterReviewSection[], LearningError>({
-    enabled: chapterId.length > 0,
+    enabled: chapterId.length > 0 && accessConfirmed,
     queryFn: () => resolved.listChapterReview(chapterId),
     queryKey: learningKeys.chapterReview(chapterId),
     retry: (failureCount, error) =>
@@ -101,6 +103,7 @@ export function useCompleteReviewCard(
         queryClient.invalidateQueries({
           queryKey: learningKeys.progress(null),
         }),
+        queryClient.invalidateQueries({ queryKey: studentChapterMapKey }),
       ]);
     },
     retry: false,

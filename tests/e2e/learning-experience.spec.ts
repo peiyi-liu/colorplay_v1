@@ -18,6 +18,7 @@ import {
   unexpectedBrowserHealth,
 } from './browser-health';
 import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
+import { startQuizFromLobby } from './helpers/quiz';
 
 // The quiz chapter must show every question in a single run so hint and
 // mistake targets are deterministic: chapter 4 has fewer questions than the
@@ -70,9 +71,7 @@ const signIn = async (
   ).toBeVisible();
   // Wait for the chapter query to settle before the caller navigates away,
   // so browser health never records a navigation-aborted manifest fetch.
-  await expect(
-    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: '學習地圖' })).toBeVisible();
 };
 
 test('Learning Experience phase gate', async ({
@@ -109,8 +108,12 @@ test('Learning Experience phase gate', async ({
 
   // --- Review cards: published content only, explicit completion, media ---
   await studentPage
-    .getByRole('link', { name: `${REVIEW_CHAPTER_TITLE} 複習與進度` })
+    .getByRole('list', { name: '六章學習地圖' })
+    .getByRole('button', {
+      name: new RegExp(`^Chapter \\d+ ${REVIEW_CHAPTER_TITLE} `, 'u'),
+    })
     .click();
+  await studentPage.getByRole('link', { name: '進入複習與進度' }).click();
   await expect(
     studentPage.getByRole('heading', { name: REVIEW_CHAPTER_TITLE }),
   ).toBeVisible();
@@ -159,19 +162,9 @@ test('Learning Experience phase gate', async ({
   await studentPage.setViewportSize({ width: 1280, height: 720 });
 
   // --- Formal quiz with tiered hints and two deliberate mistakes ---
-  await studentPage.goto('/app');
-  await expect(
-    studentPage.getByRole('heading', { name: '色彩任務選擇大廳' }),
-  ).toBeVisible();
-  await studentPage
-    .getByRole('group', { name: '章節分頁' })
-    .getByRole('button', { name: '下一頁' })
-    .click();
-  await studentPage
-    .locator('article.chapter-card')
-    .filter({ hasText: QUIZ_CHAPTER_TITLE })
-    .getByRole('link', { name: /開始任務|繼續學習/u })
-    .click();
+  await startQuizFromLobby(studentPage, {
+    templateId: quizChapter.templateId,
+  });
 
   const questionTotal = quizChapter.questionCount;
   let declaredUnavailable = false;

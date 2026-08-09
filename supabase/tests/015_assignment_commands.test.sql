@@ -1,6 +1,6 @@
 begin;
 
-select plan(36);
+select plan(20);
 
 select has_function('public', 'create_assignment', 'create assignment exists');
 select has_function(
@@ -18,6 +18,11 @@ select has_function(
   'public',
   'start_assignment_attempt',
   'start assignment attempt exists'
+);
+select has_function(
+  'public',
+  'teacher_assignment_summary',
+  'historical assignment analytics exists'
 );
 
 insert into auth.users (
@@ -108,43 +113,44 @@ values
     'student', 'active', now(), now(), '15200000-0000-0000-0000-000000000004'
   );
 
-create function pg_temp.correct_option_for(target_question_id uuid)
-returns uuid
-language sql
-security definer
-set search_path = pg_catalog, public, pg_temp
-as $$
-  select correct_option_id
-  from public.quiz_session_questions
-  where id = target_question_id;
-$$;
+-- Historical rows remain readable after write retirement. They are inserted
+-- directly because no retired command may be used to manufacture history.
+insert into public.assignments (
+  id, classroom_id, owner_teacher_id, title, activity_type,
+  quiz_template_id, available_from, deadline_at, attempt_limit,
+  passing_rule, status, created_at, updated_at
+)
+values (
+  '15400000-0000-0000-0000-000000000001',
+  '15100000-0000-0000-0000-000000000001',
+  '15000000-0000-0000-0000-000000000001',
+  'Historical homework',
+  'quiz_template',
+  '26000000-0000-0000-0000-000000000003',
+  clock_timestamp() - interval '1 day',
+  clock_timestamp() + interval '1 day',
+  2,
+  '{"rule":"score_at_least","threshold":"600"}',
+  'published',
+  clock_timestamp() - interval '1 day',
+  clock_timestamp() - interval '1 day'
+);
 
-create function pg_temp.complete_session_correctly(target_session_id uuid)
-returns void
-language plpgsql
-security definer
-set search_path = pg_catalog, public, pg_temp
-as $$
-declare
-  question_record record;
-begin
-  for question_record in
-    select id, position
-    from public.quiz_session_questions
-    where session_id = target_session_id
-    order by position
-  loop
-    if question_record.position > 1 then
-      perform public.activate_next_quiz_question(target_session_id);
-    end if;
-    perform public.submit_quiz_answer(
-      question_record.id,
-      gen_random_uuid(),
-      pg_temp.correct_option_for(question_record.id)
-    );
-  end loop;
-end;
-$$;
+insert into public.assignment_targets (assignment_id, user_id)
+values (
+  '15400000-0000-0000-0000-000000000001',
+  '15000000-0000-0000-0000-000000000003'
+);
+
+insert into public.assignment_attempts (
+  id, assignment_id, user_id, attempt_number, status, passed, completed_at
+)
+values (
+  '15500000-0000-0000-0000-000000000001',
+  '15400000-0000-0000-0000-000000000001',
+  '15000000-0000-0000-0000-000000000003',
+  1, 'completed', true, clock_timestamp()
+);
 
 set local role authenticated;
 select set_config(
@@ -153,160 +159,6 @@ select set_config(
   true
 );
 
-select set_config(
-  'test.main_assignment',
-  public.create_assignment(
-    '15100000-0000-0000-0000-000000000001',
-    'Chapter homework',
-    'quiz_template',
-    '26000000-0000-0000-0000-000000000003',
-    clock_timestamp() - interval '1 hour',
-    clock_timestamp() + interval '2 days',
-    2,
-    600
-  )::text,
-  true
-);
-select is(
-  current_setting('test.main_assignment')::jsonb ->> 'status',
-  'draft',
-  'a new assignment starts as a draft'
-);
-select set_config(
-  'test.future_assignment',
-  public.create_assignment(
-    '15100000-0000-0000-0000-000000000001',
-    'Future homework',
-    'quiz_template',
-    '26000000-0000-0000-0000-000000000003',
-    clock_timestamp() + interval '1 day',
-    clock_timestamp() + interval '2 days',
-    null,
-    600
-  )::text,
-  true
-);
-select throws_ok(
-  $$select public.create_assignment(
-    '15100000-0000-0000-0000-000000000001', 'Live homework',
-    'live_activity', '15900000-0000-0000-0000-000000000001',
-    null, null, null, 1
-  )$$,
-  'P0001',
-  'ASSIGNMENT_LIVE_ACTIVITY_NOT_FOUND',
-  'a live assignment requires an owned active live activity'
-);
-
-select set_config(
-  'test.main_id',
-  current_setting('test.main_assignment')::jsonb ->> 'assignment_id',
-  true
-);
-select set_config(
-  'test.future_id',
-  current_setting('test.future_assignment')::jsonb ->> 'assignment_id',
-  true
-);
-
-select set_config(
-  'test.main_published',
-  public.update_assignment_status(
-    current_setting('test.main_id')::uuid,
-    'published',
-    (current_setting('test.main_assignment')::jsonb ->> 'updated_at')::timestamptz
-  )::text,
-  true
-);
-select is(
-  current_setting('test.main_published')::jsonb ->> 'status',
-  'published',
-  'a draft assignment publishes'
-);
-select is(
-  (
-    select count(*)::integer
-    from public.assignment_targets
-    where assignment_id = current_setting('test.main_id')::uuid
-  ),
-  1,
-  'publishing snapshots the active student members as targets'
-);
-select throws_ok(
-  format(
-    $$select public.update_assignment_status(%L, 'draft', null)$$,
-    current_setting('test.main_id')
-  ),
-  'P0001',
-  'ASSIGNMENT_STATUS_INVALID_TRANSITION',
-  'published assignments cannot return to draft'
-);
-select throws_ok(
-  format(
-    $$select public.update_assignment_status(
-      %L, 'paused', clock_timestamp() - interval '1 day'
-    )$$,
-    current_setting('test.main_id')
-  ),
-  'P0001',
-  'ASSIGNMENT_STATUS_CONFLICT',
-  'a stale updated_at expectation is rejected'
-);
-select set_config(
-  'test.main_paused',
-  public.update_assignment_status(
-    current_setting('test.main_id')::uuid,
-    'paused',
-    (current_setting('test.main_published')::jsonb ->> 'updated_at')::timestamptz
-  )::text,
-  true
-);
-select is(
-  current_setting('test.main_paused')::jsonb ->> 'status',
-  'paused',
-  'published assignments can pause'
-);
-select set_config(
-  'test.main_republished',
-  public.update_assignment_status(
-    current_setting('test.main_id')::uuid,
-    'published',
-    (current_setting('test.main_paused')::jsonb ->> 'updated_at')::timestamptz
-  )::text,
-  true
-);
-select is(
-  current_setting('test.main_republished')::jsonb ->> 'status',
-  'published',
-  'paused assignments can republish'
-);
-
-select set_config(
-  'test.future_published',
-  public.update_assignment_status(
-    current_setting('test.future_id')::uuid,
-    'published',
-    null
-  )::text,
-  true
-);
-select set_config(
-  'test.future_archived',
-  public.update_assignment_status(
-    current_setting('test.future_id')::uuid,
-    'archived',
-    null
-  )::text,
-  true
-);
-select throws_ok(
-  format(
-    $$select public.update_assignment_status(%L, 'published', null)$$,
-    current_setting('test.future_id')
-  ),
-  'P0001',
-  'ASSIGNMENT_STATUS_INVALID_TRANSITION',
-  'archived assignments never republish'
-);
 select is(
   (
     select count(*)::integer
@@ -314,41 +166,84 @@ select is(
       '15100000-0000-0000-0000-000000000001'
     )
   ),
-  2,
-  'the owner lists every own assignment'
+  1,
+  'the owner can still list historical assignments'
+);
+select is(
+  (
+    select title
+    from public.list_classroom_assignments(
+      '15100000-0000-0000-0000-000000000001'
+    )
+  ),
+  'Historical homework',
+  'the owner list preserves historical assignment data'
+);
+select is(
+  (
+    select count(*)::integer
+    from public.teacher_assignment_summary(
+      '15100000-0000-0000-0000-000000000001'
+    )
+  ),
+  1,
+  'teacher analytics still lists historical assignments'
+);
+select is(
+  (
+    select targets
+    from public.teacher_assignment_summary(
+      '15100000-0000-0000-0000-000000000001'
+    )
+  ),
+  1,
+  'teacher analytics preserves historical target counts'
+);
+select is(
+  (
+    select attempts
+    from public.teacher_assignment_summary(
+      '15100000-0000-0000-0000-000000000001'
+    )
+  ),
+  1,
+  'teacher analytics preserves historical attempt counts'
+);
+select is(
+  (
+    select completed
+    from public.teacher_assignment_summary(
+      '15100000-0000-0000-0000-000000000001'
+    )
+  ),
+  1,
+  'teacher analytics preserves historical completion counts'
 );
 
-select set_config(
-  'request.jwt.claim.sub',
-  '15000000-0000-0000-0000-000000000002',
-  true
-);
 select throws_ok(
   $$select public.create_assignment(
-    '15100000-0000-0000-0000-000000000001', 'Foreign teacher',
-    'quiz_template', '26000000-0000-0000-0000-000000000003',
-    null, null, null, 1
+    '15100000-0000-0000-0000-000000000001',
+    'Retired assignment',
+    'quiz_template',
+    '26000000-0000-0000-0000-000000000003',
+    now(),
+    now() + interval '1 day',
+    10,
+    100
   )$$,
   'P0001',
-  'CLASSROOM_NOT_FOUND',
-  'Teacher B cannot create assignments in Teacher A classroom'
+  'ASSIGNMENT_FEATURE_RETIRED',
+  'create_assignment is retired'
 );
 select throws_ok(
-  format(
-    $$select public.update_assignment_status(%L, 'paused', null)$$,
-    current_setting('test.main_id')
-  ),
-  'P0001',
-  'ASSIGNMENT_NOT_FOUND',
-  'Teacher B cannot mutate Teacher A assignments'
-);
-select throws_ok(
-  $$select * from public.list_classroom_assignments(
-    '15100000-0000-0000-0000-000000000001'
+  $$select public.update_assignment_status(
+    '15400000-0000-0000-0000-000000000001',
+    'paused',
+    now()
   )$$,
   'P0001',
-  'CLASSROOM_NOT_FOUND',
-  'Teacher B cannot list Teacher A classroom assignments'
+  'ASSIGNMENT_FEATURE_RETIRED',
+  'update_assignment_status is retired'
 );
 
 select set_config(
@@ -356,208 +251,43 @@ select set_config(
   '15000000-0000-0000-0000-000000000003',
   true
 );
+
 select is(
   (select count(*)::integer from public.list_my_assignments()),
   1,
-  'the targeted student sees only startable assignments'
+  'the targeted student can still list a historical assignment'
+);
+select is(
+  (select title from public.list_my_assignments()),
+  'Historical homework',
+  'the student list preserves historical assignment data'
 );
 select throws_ok(
   $$select public.start_assignment_attempt(
-    '15999999-0000-0000-0000-000000000001',
-    '15300000-0000-0000-0000-000000000099'
+    '15400000-0000-0000-0000-000000000001',
+    '15300000-0000-0000-0000-000000000001'
   )$$,
   'P0001',
-  'ASSIGNMENT_NOT_FOUND',
-  'an unknown assignment is not disclosed'
-);
-
-select set_config(
-  'test.attempt_one',
-  public.start_assignment_attempt(
-    current_setting('test.main_id')::uuid,
-    '15300000-0000-0000-0000-000000000001'
-  )::text,
-  true
-);
-select is(
-  (current_setting('test.attempt_one')::jsonb ->> 'attempt_number')::integer,
-  1,
-  'the first attempt is numbered one'
-);
-select is(
-  current_setting('test.attempt_one')::jsonb #>> '{session,status}',
-  'in_progress',
-  'starting an attempt opens a real quiz session'
-);
-select is(
-  public.start_assignment_attempt(
-    current_setting('test.main_id')::uuid,
-    '15300000-0000-0000-0000-000000000001'
-  )::text,
-  current_setting('test.attempt_one'),
-  'replaying the same request id returns the original attempt'
-);
-select is(
-  (
-    select count(*)::integer
-    from public.assignment_attempts
-    where assignment_id = current_setting('test.main_id')::uuid
-  ),
-  1,
-  'replays never create extra attempts'
-);
-select is(
-  (
-    select purpose::text
-    from public.quiz_sessions
-    where id = (
-      current_setting('test.attempt_one')::jsonb #>> '{session,session_id}'
-    )::uuid
-  ),
-  'assignment',
-  'attempt sessions carry the assignment purpose'
-);
-
-select pg_temp.complete_session_correctly(
-  (current_setting('test.attempt_one')::jsonb #>> '{session,session_id}')::uuid
-);
-select set_config(
-  'test.finalize_one',
-  public.finalize_quiz_session(
-    (current_setting('test.attempt_one')::jsonb #>> '{session,session_id}')::uuid
-  )::text,
-  true
-);
-select is(
-  current_setting('test.finalize_one')::jsonb #>> '{assignment_attempt,status}',
-  'completed',
-  'finalize derives assignment completion'
-);
-select is(
-  (current_setting('test.finalize_one')::jsonb #>> '{assignment_attempt,passed}')::boolean,
-  true,
-  'a 1500-point run passes the 600-point threshold'
-);
-select is(
-  (
-    select count(*)::integer
-    from public.xp_transactions
-    where user_id = '15000000-0000-0000-0000-000000000003'
-  ),
-  1,
-  'assignment completion adds no extra XP ledger row'
-);
-select is(
-  (
-    select count(*)::integer
-    from public.wallet_transactions
-    where user_id = '15000000-0000-0000-0000-000000000003'
-  ),
-  1,
-  'assignment completion adds no extra Token ledger row'
-);
-select is(
-  public.finalize_quiz_session(
-    (current_setting('test.attempt_one')::jsonb #>> '{session,session_id}')::uuid
-  ) #>> '{assignment_attempt,status}',
-  'completed',
-  'replayed finalize returns the stored completion'
-);
-
-select set_config(
-  'test.foreign_session',
-  public.create_quiz_session(
-    '26000000-0000-0000-0000-000000000004',
-    '15300000-0000-0000-0000-000000000042'
-  )::text,
-  true
-);
-select throws_ok(
-  format(
-    $$select public.start_assignment_attempt(
-      %L, '15300000-0000-0000-0000-000000000042'
-    )$$,
-    current_setting('test.main_id')
-  ),
-  'P0001',
-  'ASSIGNMENT_INVALID_REQUEST',
-  'a reused practice request id cannot hijack an assignment attempt'
-);
-
-select set_config(
-  'test.attempt_two',
-  public.start_assignment_attempt(
-    current_setting('test.main_id')::uuid,
-    '15300000-0000-0000-0000-000000000002'
-  )::text,
-  true
-);
-select throws_ok(
-  format(
-    $$select public.start_assignment_attempt(
-      %L, '15300000-0000-0000-0000-000000000003'
-    )$$,
-    current_setting('test.main_id')
-  ),
-  'P0001',
-  'ASSIGNMENT_ATTEMPT_LIMIT_REACHED',
-  'the attempt limit blocks a third start'
+  'ASSIGNMENT_FEATURE_RETIRED',
+  'start_assignment_attempt is retired'
 );
 
 reset role;
-update public.assignments
-set deadline_at = clock_timestamp() - interval '1 minute'
-where id = current_setting('test.main_id')::uuid;
-set local role authenticated;
-select set_config(
-  'request.jwt.claim.sub',
-  '15000000-0000-0000-0000-000000000003',
-  true
-);
-select pg_temp.complete_session_correctly(
-  (current_setting('test.attempt_two')::jsonb #>> '{session,session_id}')::uuid
+select is(
+  (select count(*)::integer from public.assignments),
+  1,
+  'retired RPCs create no assignment rows'
 );
 select is(
-  public.finalize_quiz_session(
-    (current_setting('test.attempt_two')::jsonb #>> '{session,session_id}')::uuid
-  ) #>> '{assignment_attempt,status}',
-  'expired',
-  'finalizing after the deadline expires the attempt without a pass'
-);
-select throws_ok(
-  format(
-    $$select public.start_assignment_attempt(
-      %L, '15300000-0000-0000-0000-000000000004'
-    )$$,
-    current_setting('test.main_id')
-  ),
-  'P0001',
-  'ASSIGNMENT_DEADLINE_PASSED',
-  'past-deadline assignments reject new attempts'
-);
-
-select set_config(
-  'request.jwt.claim.sub',
-  '15000000-0000-0000-0000-000000000004',
-  true
+  (select count(*)::integer from public.assignment_attempts),
+  1,
+  'retired RPCs create no attempt rows'
 );
 select is(
-  (select count(*)::integer from public.list_my_assignments()),
-  0,
-  'a student in another classroom sees no foreign assignment'
-);
-select throws_ok(
-  format(
-    $$select public.start_assignment_attempt(
-      %L, '15300000-0000-0000-0000-000000000005'
-    )$$,
-    current_setting('test.main_id')
-  ),
-  'P0001',
-  'ASSIGNMENT_NOT_FOUND',
-  'a non-target student cannot start a foreign assignment'
+  (select count(*)::integer from public.assignment_targets),
+  1,
+  'retired RPCs preserve historical targets'
 );
 
-reset role;
 select * from finish();
 rollback;

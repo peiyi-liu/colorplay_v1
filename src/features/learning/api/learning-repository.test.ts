@@ -58,6 +58,7 @@ describe('learning repository', () => {
 
   it('maps trusted learning errors onto stable codes', async () => {
     const cases: readonly (readonly [string, string])[] = [
+      ['CHAPTER_LOCKED', 'CHAPTER_LOCKED'],
       ['REVIEW_CARD_NOT_FOUND', 'REVIEW_CARD_NOT_FOUND'],
       ['HINT_UNAVAILABLE', 'HINT_UNAVAILABLE'],
       ['HINT_SEQUENCE', 'HINT_SEQUENCE'],
@@ -119,56 +120,52 @@ describe('learning repository', () => {
   });
 
   it('parses nested chapter review content with ordered media', async () => {
-    const select = vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue({
-          data: [
+    const rpc = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+          sort_order: 1,
+          stable_code: 'sheet-3-1',
+          subtopics: [
             {
-              id: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
-              sort_order: 1,
-              stable_code: 'sheet-3-1',
-              subtopics: [
+              id: 'f929cde5-c294-46ce-5faf-c866b3cb9583',
+              review_cards: [
                 {
-                  id: 'f929cde5-c294-46ce-5faf-c866b3cb9583',
-                  review_cards: [
+                  content: '內容',
+                  group_label: '色彩的分類',
+                  id: '25400000-0000-0000-0000-000000000006',
+                  requires_recompletion: false,
+                  review_card_media: [
                     {
-                      content: '內容',
-                      group_label: '色彩的分類',
-                      id: '25400000-0000-0000-0000-000000000006',
-                      requires_recompletion: false,
-                      review_card_media: [
-                        {
-                          alt_text: '十二色相環示意圖',
-                          asset_path: '/media/review/color-wheel.svg',
-                          sort_order: 1,
-                        },
-                      ],
+                      alt_text: '十二色相環示意圖',
+                      asset_path: '/media/review/color-wheel.svg',
                       sort_order: 1,
-                      title: '有彩色與無彩色',
-                      version: 1,
                     },
                   ],
                   sort_order: 1,
-                  stable_code: 'sheet-3-1-all',
-                  title: '3-1 色彩三要素與色名的表示',
+                  title: '有彩色與無彩色',
+                  version: 1,
                 },
               ],
+              sort_order: 1,
+              stable_code: 'sheet-3-1-all',
               title: '3-1 色彩三要素與色名的表示',
             },
           ],
-          error: null,
-        }),
-      }),
+          title: '3-1 色彩三要素與色名的表示',
+        },
+      ],
+      error: null,
     });
-    const client = {
-      from: vi.fn().mockReturnValue({ select }),
-    } as unknown as SupabaseClient<Database>;
-    const repository = createLearningRepository(client);
+    const repository = createLearningRepository(rpcClient(rpc));
 
     const sections = await repository.listChapterReview(
       '21000000-0000-0000-0000-000000000003',
     );
 
+    expect(rpc).toHaveBeenCalledWith('get_accessible_chapter_review', {
+      p_chapter_id: '21000000-0000-0000-0000-000000000003',
+    });
     expect(sections[0]?.subtopics[0]?.cards[0]).toMatchObject({
       groupLabel: '色彩的分類',
       media: [

@@ -35,4 +35,24 @@ describe('EconomySummaryView', () => {
       expect(screen.getByText(`${String(tokenBalance)} Token`)).toBeVisible();
     },
   );
+
+  it('renders the compact learning-map labels without changing the default view', () => {
+    const summary: EconomySummary = {
+      currentLevelXp: 250,
+      level: 2,
+      tokenBalance: 250,
+      totalXp: 750,
+      walletReconciled: true,
+      xpPerLevel: 500,
+    };
+
+    render(<EconomySummaryView summary={summary} variant="learning-map" />);
+
+    expect(document.querySelector('.economy-summary')).toHaveClass(
+      'economy-summary--learning-map',
+    );
+    expect(screen.getByText('Lv. 2')).toBeVisible();
+    expect(screen.getByText('250 / 500 XP')).toBeVisible();
+    expect(screen.getByText('250 Token')).toBeVisible();
+  });
 });

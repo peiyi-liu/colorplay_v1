@@ -2,6 +2,19 @@
 
 A classroom quiz platform. Teachers publish question content and open a Live Session from a Live Activity; during that session the teacher is its Host, Participants answer on their own devices, and the Projector carries the shared screen.
 
+## Current program
+
+Before starting or resuming ColorPlay work, read
+[`docs/roadmap-colorplay-next.md`](docs/roadmap-colorplay-next.md). It is the
+single current-status entry point for the active environment, Admin, content,
+learning-progression, Live, and JRPG rollout program. It records what is
+approved, what is in progress, what remains, and which worktrees contain
+protected work in progress.
+
+Historical task-level evidence remains in `.superpowers/sdd/progress.md` and
+does not replace the current program tracker. Re-verify time-sensitive Git,
+Vercel, Supabase, DNS, and deployment facts before acting on them.
+
 ## Language
 
 ### Live

@@ -27,18 +27,37 @@ const quizFeedbackHeadingPattern = /(?:✓ 答對了|✕ 答錯了)/u;
 const isOnQuizResultPage = (page: Page): boolean =>
   new URL(page.url()).pathname.endsWith('/result');
 
-// 從大廳開始一場 quiz。傳 templateId 可以指定特定章節（例如需要保證 ≥10 題
-// 的完整挑戰）；不傳則點大廳第一個可玩章節的「開始挑戰」連結。
+// 從地圖開始一場 quiz。傳 templateId 時先由型別化 manifest 解回章節序號，
+// 再依學生真的看得到的兩步流程「選建築→進入複習與進度→開始挑戰」操作；
+// 不使用舊卡片 selector 或隱藏直達 URL。
 export async function startQuizFromLobby(
   page: Page,
   options?: Readonly<{ templateId?: string }>,
 ): Promise<void> {
   await page.goto('/app');
   await page.waitForLoadState('networkidle');
-  const link = options?.templateId
-    ? page.locator(`a[href="/app/quiz/new?template=${options.templateId}"]`)
-    : page.locator('.chapter-card .pastel-action').first();
-  await link.click();
+  const chapter = options?.templateId
+    ? CONTENT_MANIFEST.find((entry) => entry.templateId === options.templateId)
+    : CONTENT_MANIFEST.find((entry) => entry.questionCount > 0);
+  if (!chapter) throw new Error('QUIZ_HELPER_TEMPLATE_NOT_IN_MANIFEST');
+
+  const map = page.getByRole('list', { name: '六章學習地圖' });
+  await map
+    .getByRole('button', {
+      name: new RegExp(`^Chapter ${String(chapter.chapterNumber)} `, 'u'),
+    })
+    .click();
+  const detailAction = page.getByRole('link', { name: '進入複習與進度' });
+  await detailAction.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {
+    throw new Error(
+      `QUIZ_HELPER_CHAPTER_NOT_ENTERABLE: Chapter ${String(chapter.chapterNumber)}`,
+    );
+  });
+  await detailAction.click();
+
+  const challengeAction = page.getByRole('link', { name: '開始挑戰' });
+  await challengeAction.waitFor({ state: 'visible', timeout: 10000 });
+  await challengeAction.click();
   await page.waitForURL(quizSessionUrlPattern);
 }
 

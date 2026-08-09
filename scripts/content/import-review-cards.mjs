@@ -66,6 +66,10 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
   const seenKeys = new Set();
   let carriedChapter = '';
   let carriedSection = '';
+  // 子主題／卡片標題皆空白的列＝上一張卡的延續內容（合併儲存格語意），
+  // 內容併入 currentCard，不當成獨立卡片。任何列被拒絕後 currentCard 歸零，
+  // 避免後續延續列誤併到不相關的舊卡片。
+  let currentCard = null;
 
   rows.forEach((raw, index) => {
     const rowNumber = index + 2;
@@ -80,6 +84,20 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
     const chapter = carriedChapter;
     const sectionLabel = carriedSection;
 
+    if (groupLabel === '' && title === '') {
+      if (content === '') return;
+      if (!currentCard) {
+        skipped.push({
+          rowNumber,
+          preview: content.slice(0, 20),
+          reason: '延續內容列（子主題／卡片標題皆空白）找不到前面已開始的卡片',
+        });
+        return;
+      }
+      currentCard.content = `${currentCard.content}\n\n${content}`;
+      return;
+    }
+
     const missing = [];
     if (chapter === '') missing.push('章節編號');
     if (sectionLabel === '') missing.push('小節');
@@ -91,6 +109,7 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
         preview: title !== '' ? title : content.slice(0, 20) || groupLabel,
         reason: `缺少必填欄位：${missing.join('、')}`,
       });
+      currentCard = null;
       return;
     }
 
@@ -99,6 +118,7 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
       problems.push(
         `第 ${rowNumber} 列：章節編號「${chapter}」沒有對應的平台章節（請更新 import-fixes.json 的 chapterMap）`,
       );
+      currentCard = null;
       return;
     }
 
@@ -109,23 +129,20 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
         preview: title,
         reason: `小節「${sectionLabel}」缺少 n-n 編號前綴`,
       });
+      currentCard = null;
       return;
     }
     const sectionKey = sectionKeyMatch[1];
 
-    if (content.length > TEXT_LIMITS.reviewCardContent) {
-      problems.push(`第 ${rowNumber} 列（${title}）：卡片內容超過 8000 字`);
-      return;
-    }
-
     const identity = `${sectionKey}:${groupLabel}:${title}`;
     if (seenKeys.has(identity)) {
       problems.push(`第 ${rowNumber} 列：卡片「${identity}」重複`);
+      currentCard = null;
       return;
     }
     seenKeys.add(identity);
 
-    cards.push({
+    const card = {
       id: deterministicUuid('review-card', identity),
       stableCode: `sheet-card-${sectionKey}-${stableHash(identity)}`,
       identity,
@@ -136,8 +153,19 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
       title,
       content,
       sortOrder: 0,
-    });
+    };
+    cards.push(card);
+    currentCard = card;
   });
+
+  // 延續列合併後才知道最終長度，故長度檢查移到迴圈結束後統一執行。
+  for (const card of cards) {
+    if (card.content.length > TEXT_LIMITS.reviewCardContent) {
+      problems.push(
+        `卡片「${card.identity}」內容（含延續列合併後）超過 8000 字`,
+      );
+    }
+  }
 
   const mediaEntries = Object.entries(fixes.reviewCardMedia ?? {}).filter(
     ([key]) => key !== '$comment',

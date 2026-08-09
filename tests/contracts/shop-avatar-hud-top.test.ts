@@ -10,6 +10,12 @@ const globalsCss = readFileSync(
 
 let styleElement: HTMLStyleElement;
 
+const isMediaRule = (rule: CSSRule): rule is CSSMediaRule =>
+  'conditionText' in rule && 'cssRules' in rule;
+
+const isStyleRule = (rule: CSSRule): rule is CSSStyleRule =>
+  'selectorText' in rule && 'style' in rule;
+
 const mount = (className: string, childClassName?: string) => {
   const element = document.createElement('span');
   element.className = className;
@@ -77,5 +83,71 @@ describe('top HUD navigation positioning contract', () => {
 
     expect(styles.top).not.toBe('auto');
     expect(styles.bottom).toBe('auto');
+  });
+});
+
+describe('chapter map dialogue lane contract', () => {
+  it('reserves a non-overlapping grid row below the map viewport', () => {
+    const map = mount('chapter-map');
+    const viewport = document.createElement('div');
+    const dialogueLane = document.createElement('div');
+    const panel = document.createElement('aside');
+    viewport.className = 'chapter-map__viewport';
+    dialogueLane.className = 'chapter-map__dialogue-lane';
+    panel.className = 'chapter-map__panel';
+    dialogueLane.append(panel);
+    map.append(viewport, dialogueLane);
+
+    const mapStyles = getComputedStyle(map);
+    const panelStyles = getComputedStyle(panel);
+    expect(mapStyles.display).toBe('grid');
+    expect(mapStyles.gridTemplateRows).toBe('minmax(0, 1fr) auto');
+    expect(panelStyles.position).toBe('relative');
+    expect(panelStyles.bottom).toBe('auto');
+  });
+
+  it('applies the wrapping dialogue layout at 812 by 375', () => {
+    const mediaRules = Array.from(styleElement.sheet?.cssRules ?? []).filter(
+      isMediaRule,
+    );
+    const shortLandscape = mediaRules.find(
+      (rule) =>
+        rule.conditionText.includes('(orientation: landscape)') &&
+        rule.conditionText.includes('(max-height: 480px)') &&
+        Array.from(rule.cssRules).some(
+          (nestedRule) =>
+            isStyleRule(nestedRule) &&
+            nestedRule.selectorText === '.chapter-map__panel-outcome',
+        ),
+    );
+    expect(shortLandscape).toBeDefined();
+
+    const nestedRules = Array.from(shortLandscape?.cssRules ?? []);
+    const panelRule = nestedRules.find(
+      (rule): rule is CSSStyleRule =>
+        isStyleRule(rule) && rule.selectorText === '.chapter-map__panel',
+    );
+    const outcomeRule = nestedRules.find(
+      (rule): rule is CSSStyleRule =>
+        isStyleRule(rule) &&
+        rule.selectorText === '.chapter-map__panel-outcome',
+    );
+    const blockersRule = nestedRules.find(
+      (rule): rule is CSSStyleRule =>
+        isStyleRule(rule) && rule.selectorText === '.chapter-map__blockers ul',
+    );
+    const actionRule = nestedRules.find(
+      (rule): rule is CSSStyleRule =>
+        isStyleRule(rule) && rule.selectorText === '.chapter-map__entry-action',
+    );
+
+    expect(panelRule?.style.gridTemplateColumns).toBe(
+      'minmax(130px, 0.8fr) minmax(210px, 1.2fr)',
+    );
+    expect(outcomeRule?.style.gridTemplateColumns).toBe('minmax(0, 1fr) auto');
+    expect(blockersRule?.style.flexWrap).toBe('wrap');
+    expect(
+      Number.parseFloat(actionRule?.style.minHeight ?? '0'),
+    ).toBeGreaterThanOrEqual(44);
   });
 });

@@ -8,10 +8,19 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  RouterProvider,
+} from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { LearningRepository } from '../api/learning-repository';
+import type { StudentChapterMapEntry } from '../api/chapter-map';
+import {
+  LearningError,
+  type LearningRepository,
+} from '../api/learning-repository';
+import { useStudentChapterMap } from '../hooks/use-chapter-map';
 import {
   isCardCompleted,
   percentText,
@@ -46,6 +55,41 @@ vi.mock('../api/chapters', async (importOriginal) => {
     }),
   };
 });
+vi.mock('../hooks/use-chapter-map', () => ({
+  useStudentChapterMap: vi.fn(),
+}));
+
+const mockedChapterMap = vi.mocked(useStudentChapterMap);
+const chapterMapEntry = (
+  accessState: StudentChapterMapEntry['accessState'] = 'available',
+): StudentChapterMapEntry => ({
+  accessState,
+  blockers: [],
+  chapterId: '21000000-0000-0000-0000-000000000003',
+  description: '色彩體系與應用',
+  mastery: 59.5,
+  progressStatus: 'learning',
+  reviewCompleted: 1,
+  reviewTotal: 3,
+  sortOrder: 3,
+  stableCode: 'chapter-3',
+  templateId: '26000000-0000-0000-0000-000000000003',
+  templateQuestionCount: 10,
+  title: '色彩體系與應用',
+});
+
+const mapResult = (entry = chapterMapEntry()) =>
+  ({
+    data: {
+      chapters: [entry],
+      mode: 'sequential',
+      rulesVersion: '2026-08-sequence-1',
+    },
+    error: null,
+    isError: false,
+    isPending: false,
+    refetch: vi.fn(),
+  }) as never;
 
 const sections = [
   {
@@ -157,6 +201,95 @@ const renderPage = (repository: LearningRepository) => {
 };
 
 describe('ChapterDetailPage', () => {
+  beforeEach(() => {
+    mockedChapterMap.mockReturnValue(mapResult());
+  });
+
+  it('redirects a locked stale deep link before reading review cards', async () => {
+    mockedChapterMap.mockReturnValue(mapResult(chapterMapEntry('locked')));
+    const repository = repositoryWith();
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const router = createMemoryRouter(
+      [
+        {
+          element: <ChapterDetailPage repository={repository} />,
+          path: '/app/chapters/:chapterId',
+        },
+        { element: <h1>學習地圖</h1>, path: '/app' },
+      ],
+      {
+        initialEntries: ['/app/chapters/21000000-0000-0000-0000-000000000003'],
+      },
+    );
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/app');
+    });
+    expect(router.state.location.search).toBe(
+      '?chapter=21000000-0000-0000-0000-000000000003&reason=locked',
+    );
+    expect(router.state.historyAction).toBe('REPLACE');
+    expect(repository.listChapterReview).not.toHaveBeenCalled();
+  });
+
+  it('redirects when the guarded review read detects a stale lock', async () => {
+    const repository = repositoryWith({
+      listChapterReview: vi
+        .fn()
+        .mockRejectedValue(new LearningError('CHAPTER_LOCKED')),
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const router = createMemoryRouter(
+      [
+        {
+          element: <ChapterDetailPage repository={repository} />,
+          path: '/app/chapters/:chapterId',
+        },
+        { element: <h1>學習地圖</h1>, path: '/app' },
+      ],
+      {
+        initialEntries: ['/app/chapters/21000000-0000-0000-0000-000000000003'],
+      },
+    );
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/app');
+    });
+    expect(router.state.location.search).toContain('reason=locked');
+    expect(screen.queryByText('第一行')).toBeNull();
+  });
+
+  it('fails closed and retries only the map when access is unavailable', async () => {
+    const refetch = vi.fn();
+    mockedChapterMap.mockReturnValue({
+      data: undefined,
+      error: new LearningError('UNAVAILABLE'),
+      isError: true,
+      isPending: false,
+      refetch,
+    } as never);
+    const repository = repositoryWith();
+    renderPage(repository);
+    expect(screen.getByRole('alert')).toHaveTextContent('章節狀態暫時無法確認');
+    expect(repository.listChapterReview).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: '重試' }));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
   it('renders subtopic progress, cards, media, and completion states', async () => {
     renderPage(repositoryWith());
 
@@ -166,6 +299,10 @@ describe('ChapterDetailPage', () => {
         screen.getByRole('heading', { name: 'Chapter 3：色彩體系與應用' }),
       ).toBeInTheDocument();
     });
+    expect(screen.getByRole('link', { name: '開始挑戰' })).toHaveAttribute(
+      'href',
+      '/app/quiz/new?template=26000000-0000-0000-0000-000000000003',
+    );
     expect(
       screen.getByRole('heading', {
         name: '小節 3-1 色彩三要素與色名的表示',
@@ -237,7 +374,7 @@ describe('ChapterDetailPage', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
-        '無法載入章節內容，請稍後重試。',
+        '章節狀態暫時無法確認',
       );
     });
     expect(screen.getByRole('button', { name: '重試' })).toBeInTheDocument();

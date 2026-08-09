@@ -27,3 +27,10 @@ yarn-debug.log*
 
 # 設計 hook 快取（工具產生）
 .impeccable/
+artifacts/content/
+
+# review gate 狀態檔（hook 產生）
+.claude/review-gate/
+
+# 個人機器層設定（enabledPlugins、個人 permission 覆寫），不共用
+.claude/settings.local.json

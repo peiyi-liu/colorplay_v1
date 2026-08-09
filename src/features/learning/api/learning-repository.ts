@@ -8,6 +8,7 @@ const uuidString = z
   .regex(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu);
 
 export type LearningErrorCode =
+  | 'CHAPTER_LOCKED'
   | 'HINT_CLOSED'
   | 'HINT_SEQUENCE'
   | 'HINT_UNAVAILABLE'
@@ -17,6 +18,7 @@ export type LearningErrorCode =
   | 'UNAVAILABLE';
 
 const learningMessages: Record<LearningErrorCode, string> = {
+  CHAPTER_LOCKED: '請先完成上一章的複習與挑戰。',
   HINT_CLOSED: '這一題已經作答，提示已關閉。',
   HINT_SEQUENCE: '請依序索取提示。',
   HINT_UNAVAILABLE: '這一題沒有更多提示了。',
@@ -38,6 +40,7 @@ export class LearningError extends Error {
 
 const toLearningError = (message: string): LearningError => {
   const known: readonly LearningErrorCode[] = [
+    'CHAPTER_LOCKED',
     'HINT_CLOSED',
     'HINT_SEQUENCE',
     'HINT_UNAVAILABLE',
@@ -295,13 +298,10 @@ export function createLearningRepository(
     },
 
     async listChapterReview(chapterId) {
-      const { data, error } = await client
-        .from('sections')
-        .select(
-          'id, stable_code, title, sort_order, subtopics(id, stable_code, title, sort_order, review_cards(id, group_label, title, content, version, requires_recompletion, sort_order, review_card_media(asset_path, alt_text, sort_order)))',
-        )
-        .eq('chapter_id', chapterId)
-        .order('sort_order', { ascending: true });
+      const { data, error } = await client.rpc(
+        'get_accessible_chapter_review',
+        { p_chapter_id: chapterId },
+      );
       if (error) throw toLearningError(error.message);
       const sections = parseWith(chapterReviewSchema, data);
       return sections.map((section) => ({

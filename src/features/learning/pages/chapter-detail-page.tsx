@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { GamePager, useStageWide } from '../../../components/ui/game-pager';
 import { ProgressBar } from '../../../components/ui/progress-bar';
-import { usePublishedChapters } from '../api/chapters';
 import type {
   LearningProgressRow,
   LearningRepository,
   ReviewCardView,
   ReviewCompletionRow,
 } from '../api/learning-repository';
+import { useStudentChapterMap } from '../hooks/use-chapter-map';
 import {
   useChapterReview,
   useCompleteReviewCard,
@@ -207,31 +207,73 @@ export function ChapterDetailPage({
 }>) {
   const params = useParams();
   const chapterId = suppliedChapterId ?? params.chapterId ?? '';
-  const chapters = usePublishedChapters();
-  const review = useChapterReview(chapterId, repository);
+  const chapterMap = useStudentChapterMap();
+  const chapter = chapterMap.data?.chapters.find(
+    (entry) => entry.chapterId === chapterId,
+  );
+  const accessConfirmed =
+    chapter?.accessState === 'available' ||
+    chapter?.accessState === 'completed';
+  const review = useChapterReview(chapterId, repository, accessConfirmed);
   const progress = useLearningProgress(chapterId, repository);
   const completions = useReviewProgressRows(repository);
   const complete = useCompleteReviewCard(chapterId, repository);
   const [completeError, setCompleteError] = useState<string>();
+  const [accessRevoked, setAccessRevoked] = useState(false);
   const stageWide = useStageWide();
 
-  if (
-    chapters.isPending ||
-    review.isPending ||
-    progress.isPending ||
-    completions.isPending
-  ) {
-    return <RouteLoading withinMain />;
-  }
-  if (chapters.isError || review.isError || progress.isError) {
+  const lockedMapHref = `/app?chapter=${encodeURIComponent(chapterId)}&reason=locked`;
+
+  if (chapterMap.isPending) return <RouteLoading withinMain />;
+  if (chapterMap.isError) {
     return (
       <section className="route-panel">
         <h1>章節複習</h1>
-        <p role="alert">無法載入章節內容，請稍後重試。</p>
+        <p role="alert">章節狀態暫時無法確認</p>
         <button
           className="primary-action"
           onClick={() => {
-            void chapters.refetch();
+            void chapterMap.refetch();
+          }}
+          type="button"
+        >
+          重試
+        </button>
+      </section>
+    );
+  }
+
+  if (!chapter) {
+    return (
+      <section className="route-panel">
+        <h1>章節複習</h1>
+        <p role="alert">找不到這個章節，或內容尚未發布。</p>
+        <Link className="primary-action" to="/app">
+          回學習地圖
+        </Link>
+      </section>
+    );
+  }
+
+  if (!accessConfirmed || accessRevoked) {
+    return <Navigate replace to={lockedMapHref} />;
+  }
+
+  if (review.isError && review.error.code === 'CHAPTER_LOCKED') {
+    return <Navigate replace to={lockedMapHref} />;
+  }
+
+  if (review.isPending || progress.isPending || completions.isPending) {
+    return <RouteLoading withinMain />;
+  }
+  if (review.isError || progress.isError || completions.isError) {
+    return (
+      <section className="route-panel">
+        <h1>章節複習</h1>
+        <p role="alert">章節狀態暫時無法確認</p>
+        <button
+          className="primary-action"
+          onClick={() => {
             void review.refetch();
             void progress.refetch();
           }}
@@ -243,21 +285,8 @@ export function ChapterDetailPage({
     );
   }
 
-  const chapter = chapters.data?.find((entry) => entry.id === chapterId);
-  if (!chapter) {
-    return (
-      <section className="route-panel">
-        <h1>章節複習</h1>
-        <p role="alert">找不到這個章節，或內容尚未發布。</p>
-        <Link className="primary-action" to="/app">
-          回章節列表
-        </Link>
-      </section>
-    );
-  }
-
   const chapterRow = progress.data.find((row) => row.scope === 'chapter');
-  const completionRows = completions.data ?? [];
+  const completionRows = completions.data;
   const hasCards = review.data.some((section) =>
     section.subtopics.some((subtopic) => subtopic.cards.length > 0),
   );
@@ -277,10 +306,10 @@ export function ChapterDetailPage({
           <h1 className="chapter-detail__title" id="chapter-detail-title">
             Chapter {chapter.sortOrder}：{chapter.title}
           </h1>
-          {chapter.isPlayable ? (
+          {chapter.templateId ? (
             <Link
               className="primary-action"
-              to={`/app/quiz/new?template=${chapter.template.id}`}
+              to={`/app/quiz/new?template=${chapter.templateId}`}
             >
               開始挑戰
             </Link>
@@ -421,6 +450,10 @@ export function ChapterDetailPage({
                               },
                               {
                                 onError: (error) => {
+                                  if (error.code === 'CHAPTER_LOCKED') {
+                                    setAccessRevoked(true);
+                                    return;
+                                  }
                                   setCompleteError(error.message);
                                 },
                               },
