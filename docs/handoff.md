@@ -26,3 +26,10 @@
 - 下一步：使用者的主要 checkout（`/Users/guanyucheng/Desktop/pei-game/colorplay`，分支 `feature/v2-major-update`）目前本地還有一份未追蹤、內容較舊的 `docs/handoff.md` 與 `.codex/`，merge 這個分支前需要先處理掉（見對應回報），否則 git 會擋 merge。之後不論用 Codex 或 Claude Code 開新 session，先讀本檔最新一段再開始工作。
 - Blocker／待決策：無。
 - 相關檔案／commit：`CLAUDE.md`、`AGENTS.md`、`docs/handoff.md`、`docs/archive/2026-08-09-handoff-landing-redesign.md`、`.codex/**`。
+
+## 2026-08-09 21:34 [Claude Code] — staging.colorplayapp.com 手動綁定 + runbook 記錄
+
+- 做了什麼：owner 在 Cloudflare 加了 `A staging 76.76.21.21`；我用 `vercel domains add staging.colorplayapp.com colorplay-staging-web` 正式登記網域（單靠 `vercel alias set` 不會觸發 SSO 例外），再 `vercel alias set` 把既有一筆 `colorplay-staging-web` 部署綁上去，確認 `https://staging.colorplayapp.com` 回 200、不需要 Vercel 登入。查證確認 staging 資料庫是 `onkxnkzeixpezetkmocf`（不是 `colorplay-production`），且已有種子測試帳號（`docs/staging-runbook.md` 第 3 節）。把整條鏈路、以及「這是手動 bypass，不是 `docs/roadmap-colorplay-next.md` 規定的 PR→staging 分支→CI 閘門正式通道」的警告寫進 `docs/staging-runbook.md` 第 5 節。
+- 下一步：要接上正式通道，`staging-deploy.yml`（目前只在 `phase0/release-foundation`、`phase1/admin-security-impl`、`phase1/admin-security-spec` 三個分支）需要先進到 `feature/v2-major-update`，且 `staging` 分支（停在 2026-08-03 的 `24ee1ee`）需要重新被推進。`docs/roadmap-colorplay-next.md` 本身 8/6 後沒再更新，未反映 Phase 1 Task 12/13 完成與本次 staging 綁定，尚未與 owner 確認是否要一併更新。
+- Blocker／待決策：`phase0/release-foundation`、`phase1/admin-security-impl`、`phase1/admin-security-spec` 三個分支尚未同步今天新增的 CLAUDE.md／AGENTS.md 新章節／本檔案；`phase1/admin-security-impl` 目前有背景 session 在用，需要協調而非直接改分支。
+- 相關檔案／commit：`docs/staging-runbook.md`。

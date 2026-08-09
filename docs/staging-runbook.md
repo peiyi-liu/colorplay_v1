@@ -92,3 +92,55 @@ pnpm exec tsx scripts/supabase/seed-auth.ts
 - `/login` 學生：帳號（學號）＋密碼；教師：帳號＋密碼＋班級序號。
   既有 `*.@colorplay.test` 測試帳號仍可直接輸入 Email 登入（測試橋接）。
 - `/forgot-password` → 信中連結 → `/reset-password` → 跳回登入頁。
+
+## 5. 自訂網域綁定：`staging.colorplayapp.com`（2026-08-09）
+
+> **狀態：已完成**。`https://staging.colorplayapp.com` 現在回應 `200`，不需要
+> 登入 Vercel 帳號即可看到（見下方「Deployment Protection 例外」）。
+
+### 現況鏈路
+
+```
+staging.colorplayapp.com
+  → Cloudflare A record（灰雲／DNS only）→ 76.76.21.21
+  → Vercel 專案 colorplay-staging-web（prj_Ovywu34q8URtgOQCtc5WwCNFz7oo）
+  → 目前綁定的部署：手動 `vercel deploy` 產生的既有 build（非本次新建）
+  → 前端連的 Supabase：onkxnkzeixpezetkmocf（見上方第 1 節，即本文件所稱
+    「重置後的舊 Supabase 專案」；不是 `colorplay-production`）
+```
+
+### 執行過的步驟
+
+1. `colorplayapp.com` 的 DNS 掛在 Cloudflare（nameserver 未轉去 Vercel），所以
+   走子網域 CNAME/A record 而非整個網域轉移：owner 在 Cloudflare 後台加了
+   `A staging 76.76.21.21`（DNS only，灰雲）。
+2. `vercel domains add staging.colorplayapp.com colorplay-staging-web`——
+   把網域正式登記進專案。**這一步是必要的**，光靠 `vercel alias set` 綁定
+   單一部署 URL 不會觸發下面第 3 點的 SSO 例外規則。
+3. `vercel alias set <existing-deployment-url> staging.colorplayapp.com`——
+   把網域指到當時最新的一筆既有部署，Vercel 自動簽發憑證。
+
+### Deployment Protection 例外
+
+`vercel project protection colorplay-staging-web` 回報
+`ssoProtection.deploymentType: "all_except_custom_domains"`：凡是透過**已登記的
+自訂網域**（如 `staging.colorplayapp.com`）存取都會跳過 Vercel SSO 保護；但
+透過自動產生的 `colorplay-web-git-<branch>-*.vercel.app` 這類分支預覽網址，
+仍然會被導去 `vercel.com/sso-api` 要求登入——這是預期行為，不是漏未設定。
+
+### ⚠️ 這不是文件規定的正式 Staging 通道
+
+`docs/roadmap-colorplay-next.md`「Approved CI and deployment approval gates」
+一節規定：Feature 分支要先 PR 到受保護的 `staging` 分支、跑完必要檢查
+（lint/typecheck/unit/pgTAP/整合/Chromium E2E）並經 owner 核准 merge，
+`staging` 分支的 merge 才會自動部署並綁定 `staging.colorplayapp.com`。
+
+本節記錄的是**手動綁定**：把 `colorplay-staging-web` 專案裡既有的一筆部署
+（來源不明、非來自 `staging` 分支 push——`staging` 分支最新 commit 停在
+2026-08-03 的 `24ee1ee`，`staging-deploy.yml` 從那之後就沒被觸發過）直接
+alias 給網域，跳過了上述 PR／CI 閘門。適合「先讓 owner 立即看到頁面」這種
+臨時需求，**不代表** `staging.colorplayapp.com` 現在顯示的內容對應到任何
+一個通過檢查的 commit。要接上正式通道，`staging-deploy.yml` 需要先出現在
+`feature/v2-major-update`（目前只存在於 `phase0/release-foundation`、
+`phase1/admin-security-impl`、`phase1/admin-security-spec` 這幾個尚未合併
+回來的分支），且 `staging` 分支需要重新被推進。
