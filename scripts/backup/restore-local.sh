@@ -80,16 +80,17 @@ age --decrypt --identity "$identity_path" \
 if [[ -n "${RESTORE_EXPECTED_REPO_SHA:-}" ]]; then
   [[ "$RESTORE_EXPECTED_REPO_SHA" =~ ^[0-9a-f]{40}$ ]] ||
     fail 'RESTORE_SOURCE_SHA_MISMATCH'
-  manifest_repo_sha="$(node -e \
-    "const fs=require('node:fs');process.stdout.write(JSON.parse(fs.readFileSync(process.argv[1],'utf8')).repo_sha ?? '')" \
-    "$temporary_root/backup-manifest.json")"
-  [[ "$manifest_repo_sha" == "$RESTORE_EXPECTED_REPO_SHA" ]] ||
-    fail 'RESTORE_SOURCE_SHA_MISMATCH'
 fi
+manifest_check_status=0
 artifact_kind="$(node -e \
-  "const fs=require('node:fs');let value;try{value=JSON.parse(fs.readFileSync(process.argv[1],'utf8')).artifact_kind}catch{process.exit(1)};if(value!=='production'&&value!=='synthetic_fixture')process.exit(1);process.stdout.write(value)" \
-  "$temporary_root/backup-manifest.json" 2>/dev/null)" ||
-  fail 'RESTORE_ARTIFACT_KIND_INVALID'
+  "const fs=require('node:fs');let manifest;try{manifest=JSON.parse(fs.readFileSync(process.argv[1],'utf8'))}catch{process.exit(1)};const expected=process.argv[2];if(expected&&manifest.repo_sha!==expected)process.exit(2);const value=manifest.artifact_kind;if(value!=='production'&&value!=='synthetic_fixture')process.exit(3);process.stdout.write(value)" \
+  "$temporary_root/backup-manifest.json" "${RESTORE_EXPECTED_REPO_SHA:-}" 2>/dev/null)" ||
+  manifest_check_status=$?
+case "$manifest_check_status" in
+  0) ;;
+  2) fail 'RESTORE_SOURCE_SHA_MISMATCH' ;;
+  *) fail 'RESTORE_ARTIFACT_KIND_INVALID' ;;
+esac
 
 mkdir -p "$temporary_root/decrypted"
 node --input-type=module - "$temporary_root/backup-manifest.json" "$backup_root/encrypted" <<'NODE' > "$temporary_root/files.tsv"

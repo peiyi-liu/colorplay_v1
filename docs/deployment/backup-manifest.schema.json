@@ -7,6 +7,7 @@
   "required": [
     "schema_version",
     "environment",
+    "artifact_kind",
     "project_ref",
     "repo_sha",
     "migration_first",
@@ -23,6 +24,7 @@
   "properties": {
     "schema_version": { "const": 1 },
     "environment": { "const": "production" },
+    "artifact_kind": { "enum": ["production", "synthetic_fixture"] },
     "project_ref": { "type": "string", "pattern": "^[a-z]{20}$" },
     "repo_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
     "migration_first": {

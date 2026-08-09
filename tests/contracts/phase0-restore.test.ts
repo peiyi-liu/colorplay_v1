@@ -499,6 +499,36 @@ describe('isolated Local restore', () => {
     expect(result.stderr).toBe('RESTORE_ARTIFACT_KIND_INVALID\n');
   });
 
+  it('rejects a malformed manifest without leaking a stack trace even when a protected workflow sets RESTORE_EXPECTED_REPO_SHA', async () => {
+    const backupRoot = await createFixture('synthetic');
+    const manifestPath = resolve(backupRoot, 'backup-manifest.json.age');
+    const checksumPath = resolve(backupRoot, 'backup-manifest.json.age.sha256');
+    const malformedPath = resolve(root, 'malformed-manifest-with-sha.json');
+    await writeFile(malformedPath, '{');
+    const recipient = await recipientFor(backupRoot);
+    const encrypted = await run('age', [
+      '--recipient',
+      recipient,
+      '--output',
+      manifestPath,
+      malformedPath,
+    ]);
+    expect(encrypted.code).toBe(0);
+    const checksum = createHash('sha256')
+      .update(await readFile(manifestPath))
+      .digest('hex');
+    await writeFile(checksumPath, `${checksum}  backup-manifest.json.age\n`);
+
+    const result = await run(
+      'bash',
+      [restoreScript, '--backup-root', backupRoot],
+      { RESTORE_EXPECTED_REPO_SHA: 'a'.repeat(40) },
+    );
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toBe('RESTORE_ARTIFACT_KIND_INVALID\n');
+  });
+
   it('rejects errors without leaking paths, SQL, or credentials for artifact classification failures', async () => {
     const backupRoot = await createFixture('synthetic');
     await patchManifest(backupRoot, (manifest) => {

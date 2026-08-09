@@ -345,4 +345,43 @@ describe('backup manifest evidence', () => {
     };
     expect(manifest.artifact_kind).toBe('synthetic_fixture');
   });
+
+  it('keeps the published manifest schema in sync with the generated manifest fields', async () => {
+    const schemaPath = resolve(
+      repositoryRoot,
+      'docs/deployment/backup-manifest.schema.json',
+    );
+    const schema = JSON.parse(await readFile(schemaPath, 'utf8')) as {
+      additionalProperties: boolean;
+      properties: Record<string, { const?: unknown; enum?: unknown[] }>;
+      required: string[];
+    };
+    expect(schema.additionalProperties).toBe(false);
+
+    const created = await createBackupManifest(validBackupInput());
+    expect(created.result.exitCode).toBe(0);
+    const manifest = JSON.parse(
+      await readFile(created.outputPath, 'utf8'),
+    ) as Record<string, unknown>;
+    const manifestFields = Object.keys(manifest).sort();
+    const schemaFields = Object.keys(schema.properties).sort();
+
+    expect(schemaFields).toEqual(manifestFields);
+    expect([...schema.required].sort()).toEqual(manifestFields);
+
+    for (const field of manifestFields) {
+      const declaration = schema.properties[field];
+      const value = manifest[field];
+      if (declaration?.const !== undefined) {
+        expect(value).toBe(declaration.const);
+      }
+      if (declaration?.enum !== undefined) {
+        expect(declaration.enum).toContain(value);
+      }
+    }
+    expect(schema.properties.artifact_kind?.enum).toEqual([
+      'production',
+      'synthetic_fixture',
+    ]);
+  });
 });
