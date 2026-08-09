@@ -32,6 +32,12 @@ interface AdminQueryAuditOk {
 interface AdminOutcomeDenied {
   code?: string;
   outcome: 'denied';
+  request_id?: string;
+  /**
+   * spec §11 的 response 契約欄位;目前 RPC 尚未回傳,缺漏時一律視為
+   * **不可重試**(原樣重送同一組 filter/cursor 只會再被拒一次)。
+   */
+  retryable?: boolean;
 }
 
 type AdminQueryAuditResponse = AdminQueryAuditOk | AdminOutcomeDenied;
@@ -268,15 +274,27 @@ export function AdminAuditPage() {
           ) : (
             <p role="alert">載入更多資料失敗，請稍後重試。</p>
           )}
-          <button
-            className="secondary-action"
-            onClick={() => {
-              void query.refetch();
-            }}
-            type="button"
-          >
-            重試載入更多
-          </button>
+          {typeof laterDeniedPage.request_id === 'string' ? (
+            <p>
+              追蹤代碼：
+              <span data-testid="admin-audit-later-request-id">
+                {laterDeniedPage.request_id}
+              </span>
+            </p>
+          ) : null}
+          {laterDeniedPage.retryable === true ? (
+            <button
+              className="secondary-action"
+              onClick={() => {
+                void query.refetch();
+              }}
+              type="button"
+            >
+              重試載入更多
+            </button>
+          ) : (
+            <p>請調整查詢條件後重新查詢。</p>
+          )}
         </div>
       ) : null}
       {rows.length === 0 ? (

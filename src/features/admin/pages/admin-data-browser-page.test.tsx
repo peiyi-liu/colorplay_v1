@@ -570,9 +570,13 @@ describe('AdminDataBrowserPage', () => {
     expect(
       screen.queryByRole('button', { name: '載入更多' }),
     ).not.toBeInTheDocument();
-    // 一定要有出路:否則 cursor 消失後這一頁就再也載不到了
+    // server 沒說可重試:refetch 會原樣重送同一個 cursor/filter,只會再被拒
+    // 一次。與其給一顆註定失敗的按鈕,不如引導使用者改查詢條件。
     expect(
-      screen.getByRole('button', { name: '重試載入更多' }),
+      screen.queryByRole('button', { name: '重試載入更多' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/請調整篩選或排序條件後重新查詢/u),
     ).toBeInTheDocument();
   });
 
@@ -585,7 +589,11 @@ describe('AdminDataBrowserPage', () => {
         page_size_limit: 2,
         rows: okRows,
       })
-      .mockResolvedValueOnce({ code: 'COLUMN_NOT_ALLOWED', outcome: 'denied' })
+      .mockResolvedValueOnce({
+        code: 'SECURITY_AUDIT_UNAVAILABLE',
+        outcome: 'denied',
+        retryable: true,
+      })
       .mockResolvedValue({
         next_cursor: 'eyJrIjoiMSJ9',
         outcome: 'ok',
@@ -631,9 +639,6 @@ describe('AdminDataBrowserPage', () => {
       await screen.findByText('載入更多資料失敗，請稍後重試。'),
     ).toBeInTheDocument();
     expect(screen.getByText('req-page-2')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: '重試載入更多' }),
-    ).toBeInTheDocument();
   });
 
   it('offers no load-more when the server issues no cursor', async () => {

@@ -221,7 +221,11 @@ describe('AdminAuditPage', () => {
         outcome: 'ok',
         rows: auditRows,
       })
-      .mockResolvedValueOnce({ code: 'COLUMN_NOT_ALLOWED', outcome: 'denied' });
+      .mockResolvedValueOnce({
+        code: 'COLUMN_NOT_ALLOWED',
+        outcome: 'denied',
+        request_id: 'req-audit-2',
+      });
     renderPage();
     await screen.findByText('admin_reveal_field');
 
@@ -233,8 +237,35 @@ describe('AdminAuditPage', () => {
       );
     });
     expect(screen.getByText('admin_reveal_field')).toBeInTheDocument();
+    // 可追蹤的 partial failure(spec §3.3):必須帶出 request ID
+    expect(screen.getByText('req-audit-2')).toBeInTheDocument();
+    // 非 retryable:不給註定重蹈覆轍的按鈕,改引導調整查詢條件
     expect(
-      screen.getByRole('button', { name: '重試載入更多' }),
+      screen.queryByRole('button', { name: '重試載入更多' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/請調整查詢條件後重新查詢/u)).toBeInTheDocument();
+  });
+
+  it('offers a retry for the audit page only when the server marks it retryable', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc)
+      .mockResolvedValueOnce({
+        next_cursor: 'eyJrIjoiMiJ9',
+        outcome: 'ok',
+        rows: auditRows,
+      })
+      .mockResolvedValueOnce({
+        code: 'SECURITY_AUDIT_UNAVAILABLE',
+        outcome: 'denied',
+        retryable: true,
+      });
+    renderPage();
+    await screen.findByText('admin_reveal_field');
+
+    await user.click(screen.getByRole('button', { name: '載入更多' }));
+
+    expect(
+      await screen.findByRole('button', { name: '重試載入更多' }),
     ).toBeInTheDocument();
   });
 

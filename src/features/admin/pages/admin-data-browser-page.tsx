@@ -28,6 +28,13 @@ interface AdminOutcomeDenied {
   code?: string;
   outcome: 'denied';
   request_id?: string;
+  /**
+   * spec §11 的 response 契約欄位。目前 `admin_internal_deny` 尚未回傳,
+   * 因此實務上會是 undefined —— 這時一律當作**不可重試**:refetch 會原樣
+   * 重送同一個 cursor/filter,對 COLUMN_NOT_ALLOWED 這類決定性的拒絕只會
+   * 再被拒一次,變成永遠點不出結果的無效重試迴圈。
+   */
+  retryable?: boolean;
 }
 
 type AdminListResourceResponse = AdminListResourceOk | AdminOutcomeDenied;
@@ -296,17 +303,23 @@ export function AdminDataBrowserPage() {
               </span>
             </p>
           ) : null}
-          <button
-            className="secondary-action"
-            onClick={() => {
-              // refetch 會用各頁自己的 pageParam 重跑,成功後被拒的那一頁
-              // 會被正常結果取代,cursor 與「載入更多」也隨之回復。
-              void list.refetch();
-            }}
-            type="button"
-          >
-            重試載入更多
-          </button>
+          {laterDeniedPage.retryable === true ? (
+            <button
+              className="secondary-action"
+              onClick={() => {
+                // refetch 會用各頁自己的 pageParam 重跑,成功後被拒的那一頁
+                // 會被正常結果取代,cursor 與「載入更多」也隨之回復。
+                void list.refetch();
+              }}
+              type="button"
+            >
+              重試載入更多
+            </button>
+          ) : (
+            // 重送同一個 cursor/filter 只會得到同一個拒絕;真正的出路是改條件
+            // 後用上方的「套用」重跑整個查詢。
+            <p>請調整篩選或排序條件後重新查詢。</p>
+          )}
         </div>
       ) : null}
 
