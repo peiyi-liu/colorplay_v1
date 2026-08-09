@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Write(.claude/review-gate/**)",
+      "Bash(touch .claude/review-gate/clear)",
+      "Bash(pnpm vitest run *)",
+      "Bash(pnpm typecheck *)",
+      "Bash(node \"$HOME/.claude/plugins/cache/openai-codex/codex/1.0.6/scripts/codex-companion.mjs\" setup --json*)",
+      "Bash(node \"/Users/guanyucheng/.claude/plugins/cache/openai-codex/codex/1.0.6/scripts/codex-companion.mjs\" setup --json*)",
+      "Bash(npx vitest run *)",
+      "Bash(pnpm lint *)",
+      "Bash(pnpm test *)",
+      "Bash(pnpm format:check *)",
+      "Bash(docker network ls *)",
+      "Bash(node scripts/admin/generate-sensitivity-catalog.mjs --check*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/review-gate.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
