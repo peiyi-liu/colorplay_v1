@@ -6,6 +6,7 @@ import { adminRpc, extractErrorCode } from '../api/admin-client';
 import { AdminCommandDialog } from '../components/admin-command-dialog';
 import { AdminStatusBanner } from '../components/admin-status-banner';
 import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
+import { formatAdminTimestamp } from '../lib/admin-time';
 
 interface AdminHealthOperation {
   attempt_count: number;
@@ -207,9 +208,7 @@ export function AdminHealthPage() {
                     <td>{denial.resource_key}</td>
                     <td>{denial.safe_reason_code}</td>
                     <td>{denial.count}</td>
-                    <td>
-                      {new Date(denial.window_ends_at).toLocaleString('zh-TW')}
-                    </td>
+                    <td>{formatAdminTimestamp(denial.window_ends_at)}</td>
                   </tr>
                 ))}
               </tbody>

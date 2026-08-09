@@ -1,13 +1,16 @@
-// Build-time import of the machine-generated sensitivity catalog
-// (spec §9;Task 4 產出 + CI drift 強制)。`?raw` 讓 tsc 只看到 string、不必
-// 為 113KB JSON 推導巨型字面型別,也不需要動 tsconfig 的 resolveJsonModule/
-// include —— 但打包時仍是 build-time 內嵌,不會在執行期去抓檔案。
+// Build-time 匯入 machine-generated sensitivity catalog 的**瀏覽器子集**
+// (spec §9;Task 4 產出 + CI drift 強制)。
+//
+// 刻意不直接讀整份 JSON:那會把全部控制表與 forbidden 欄名打進一個公開可取
+// 的靜態 chunk(route guard 保護不了 /assets/*.js),違反 spec §3.3「無 schema
+// 洩漏」。改由 scripts/vite/admin-browser-catalog.ts 在 build time 濾成
+// browser surface + 非 forbidden 欄,單一事實來源仍是同一份 JSON。
 //
 // **這份資料只決定 UI 選項渲染**(要顯示哪些欄、哪些欄可 filter/sort、哪些
 // 欄是 personal 需要遮罩與「揭露」入口)。授權與投影的權威一律在 PostgreSQL
 // RPC 自己的 catalog 查詢(AGENTS.md §5、spec §7):前端就算被竄改成把
 // forbidden 欄排進 filter,server 仍會回 COLUMN_NOT_ALLOWED。
-import catalogRaw from '../../../../supabase/catalog/admin-sensitivity-catalog.json?raw';
+import browserCatalog from 'virtual:admin-browser-catalog';
 
 export type AdminCatalogClass = 'open' | 'internal' | 'personal' | 'forbidden';
 
@@ -28,13 +31,14 @@ export interface AdminCatalogResource {
   surface: string;
 }
 
-interface AdminCatalogFile {
+const catalog = browserCatalog as {
   resources: readonly AdminCatalogResource[];
-  source_sha256: string;
-  version: number;
-}
+};
 
-const catalog = JSON.parse(catalogRaw) as AdminCatalogFile;
+/** 給測試用:client bundle 實際看得到的全部資源(已是過濾後的子集)。 */
+export function allClientCatalogResources(): readonly AdminCatalogResource[] {
+  return catalog.resources;
+}
 
 /**
  * 只回傳 `surface='browser'` 的資源。控制表(admin_sessions、

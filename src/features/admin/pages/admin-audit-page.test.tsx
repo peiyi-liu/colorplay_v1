@@ -143,8 +143,10 @@ describe('AdminAuditPage', () => {
     });
     const lastCall = vi.mocked(adminRpc).mock.calls.at(-1);
     if (!lastCall) throw new Error('expected an admin_query_audit call');
-    expect(lastCall[1].p_from).toBe(new Date('2026-08-09T00:00').toISOString());
-    expect(lastCall[1].p_to).toBe(new Date('2026-08-09T23:59').toISOString());
+    // AGENTS.md:時間存 UTC、以 Asia/Taipei 解讀/顯示。datetime-local 沒有
+    // 時區資訊,必須固定當成台北時間(+08:00),不能跟著瀏覽器時區跑。
+    expect(lastCall[1].p_from).toBe('2026-08-08T16:00:00.000Z');
+    expect(lastCall[1].p_to).toBe('2026-08-09T15:59:00.000Z');
   });
 
   it('sends null rather than empty strings for untouched filters', async () => {
@@ -161,6 +163,44 @@ describe('AdminAuditPage', () => {
       p_target_type: null,
       p_to: null,
     });
+  });
+
+  it('loads the next audit page with the exact server-issued cursor and appends rows', async () => {
+    const user = userEvent.setup();
+    const laterRow = {
+      ...auditRows[0],
+      action: 'issue_admin_invitation',
+      id: 'event-3',
+    };
+    vi.mocked(adminRpc)
+      .mockResolvedValueOnce({
+        next_cursor: 'eyJrIjoiMiJ9',
+        outcome: 'ok',
+        rows: auditRows,
+      })
+      .mockResolvedValueOnce({ outcome: 'ok', rows: [laterRow] });
+    renderPage();
+    await screen.findByText('admin_reveal_field');
+
+    await user.click(screen.getByRole('button', { name: '載入更多' }));
+
+    expect(
+      await screen.findByText('issue_admin_invitation'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('deactivate_admin')).toBeInTheDocument();
+    const secondCall = vi.mocked(adminRpc).mock.calls[1];
+    if (!secondCall) throw new Error('expected a second page request');
+    expect(secondCall[1].p_cursor).toBe('eyJrIjoiMiJ9');
+  });
+
+  it('offers no load-more when the audit RPC issues no cursor', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({ outcome: 'ok', rows: auditRows });
+    renderPage();
+    await screen.findByText('admin_reveal_field');
+
+    expect(
+      screen.queryByRole('button', { name: '載入更多' }),
+    ).not.toBeInTheDocument();
   });
 
   it('exposes no export or download control (spec §10)', async () => {

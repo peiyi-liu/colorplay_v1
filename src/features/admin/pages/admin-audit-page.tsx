@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { adminRpc, extractErrorCode } from '../api/admin-client';
 import { AdminStatusBanner } from '../components/admin-status-banner';
 import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
+import { formatAdminTimestamp, taipeiLocalToIso } from '../lib/admin-time';
 
 interface AdminAuditRow {
   action: string;
@@ -22,6 +23,8 @@ interface AdminAuditRow {
 }
 
 interface AdminQueryAuditOk {
+  /** server 簽發的 keyset cursor;目前的 RPC 尚未簽發(見 checkpoint 記錄)。 */
+  next_cursor?: string | null;
   outcome: 'ok';
   rows: readonly AdminAuditRow[];
 }
@@ -56,14 +59,6 @@ const orNull = (value: string): string | null => (value === '' ? null : value);
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 
-// datetime-local 是本地時間字串;RPC 參數是 timestamptz,統一轉 ISO 再送,
-// 避免瀏覽器時區被當成 UTC 解讀而查錯區間。
-const toIso = (value: string): string | null => {
-  if (value === '') return null;
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
-};
-
 /**
  * 受控 audit 查詢(spec §3.2、§10):
  * - 僅五個 filter(時間、actor principal、action、target type、result),
@@ -77,21 +72,30 @@ export function AdminAuditPage() {
   const [applied, setApplied] = useState<AuditFilters>(EMPTY_FILTERS);
   const [actorError, setActorError] = useState(false);
 
-  const query = useQuery({
-    queryFn: () =>
+  // keyset 分頁:cursor 一律 server 簽發、前端原樣帶回(今日 RPC 尚未簽發)。
+  const query = useInfiniteQuery({
+    getNextPageParam: (lastPage: AdminQueryAuditResponse) =>
+      lastPage.outcome === 'ok' &&
+      typeof lastPage.next_cursor === 'string' &&
+      lastPage.next_cursor !== ''
+        ? lastPage.next_cursor
+        : null,
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
       adminRpc<AdminQueryAuditResponse>('admin_query_audit', {
         p_action: orNull(applied.action),
         p_actor_principal_id: orNull(applied.actorPrincipalId),
-        p_cursor: null,
-        p_from: toIso(applied.from),
+        p_cursor: pageParam,
+        p_from: taipeiLocalToIso(applied.from),
         p_result: orNull(applied.result),
         p_target_type: orNull(applied.targetType),
-        p_to: toIso(applied.to),
+        p_to: taipeiLocalToIso(applied.to),
       }),
     queryKey: ['admin', 'audit', applied],
   });
 
-  const code = query.data ? extractErrorCode(query.data) : null;
+  const firstPage = query.data?.pages[0];
+  const code = firstPage ? extractErrorCode(firstPage) : null;
   const staleSession = code === 'STALE_PRIVILEGED_SESSION';
   useAdminStaleSessionRedirect(staleSession);
 
@@ -204,7 +208,7 @@ export function AdminAuditPage() {
 
   if (query.isPending || staleSession) return <RouteLoading withinMain />;
 
-  if (query.isError || query.data.outcome === 'denied') {
+  if (query.isError || !firstPage || firstPage.outcome === 'denied') {
     return (
       <section
         aria-labelledby="admin-audit-page-heading"
@@ -232,7 +236,12 @@ export function AdminAuditPage() {
     );
   }
 
-  const rows = query.data.rows;
+  const rows = query.data.pages.flatMap((page) =>
+    page.outcome === 'ok' ? page.rows : [],
+  );
+  const lastPage = query.data.pages.at(-1);
+  const nextCursor =
+    lastPage?.outcome === 'ok' ? (lastPage.next_cursor ?? null) : null;
 
   return (
     <section
@@ -261,7 +270,7 @@ export function AdminAuditPage() {
             <tbody>
               {rows.map((row) => (
                 <tr key={row.id}>
-                  <td>{new Date(row.occurred_at).toLocaleString('zh-TW')}</td>
+                  <td>{formatAdminTimestamp(row.occurred_at)}</td>
                   <td>{row.action}</td>
                   <td>{row.target_type}</td>
                   <td>{row.result}</td>
@@ -273,6 +282,18 @@ export function AdminAuditPage() {
               ))}
             </tbody>
           </table>
+          {typeof nextCursor === 'string' && nextCursor !== '' ? (
+            <button
+              className="secondary-action"
+              disabled={query.isFetchingNextPage}
+              onClick={() => {
+                void query.fetchNextPage();
+              }}
+              type="button"
+            >
+              {query.isFetchingNextPage ? '載入中…' : '載入更多'}
+            </button>
+          ) : null}
         </div>
       )}
     </section>

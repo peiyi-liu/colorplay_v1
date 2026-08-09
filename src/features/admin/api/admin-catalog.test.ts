@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  allClientCatalogResources,
   browserProjectionColumns,
   filterableColumns,
   findBrowserResource,
@@ -74,6 +75,54 @@ describe('admin catalog accessors', () => {
     expect(filterableColumns(null)).toEqual([]);
     expect(sortableColumns(null)).toEqual([]);
     expect(personalColumnNames(null)).toEqual([]);
+  });
+
+  it('ships no admin control table to the client bundle (spec §3.3 無 schema 洩漏)', () => {
+    // client chunk 是公開靜態資產,route guard 保護不了它。整份 catalog 一旦
+    // 被打進 bundle,任何未登入的人都能讀到安全 schema。
+    const shipped = allClientCatalogResources().map((entry) => entry.resource);
+
+    for (const controlTable of [
+      'admin_audit_events',
+      'admin_audit_principals',
+      'admin_command_authorizations',
+      'admin_command_executions',
+      'admin_denial_counters',
+      'admin_invitations',
+      'admin_security_identities',
+      'admin_security_operations',
+      'admin_sessions',
+    ]) {
+      expect(shipped).not.toContain(controlTable);
+    }
+    expect(
+      allClientCatalogResources().every((entry) => entry.surface === 'browser'),
+    ).toBe(true);
+  });
+
+  it('ships no forbidden column name to the client bundle', () => {
+    const shippedColumns = allClientCatalogResources().flatMap((entry) =>
+      entry.columns.map((column) => column.name),
+    );
+
+    for (const secretColumn of [
+      'token_hash',
+      'request_hash',
+      'bound_factor_id_snapshot',
+      'auth_session_id',
+      'join_code_hash',
+      'join_code',
+      'idempotency_key',
+      'last_join_request_id',
+      'client_request_id',
+    ]) {
+      expect(shippedColumns).not.toContain(secretColumn);
+    }
+    expect(
+      allClientCatalogResources().every((entry) =>
+        entry.columns.every((column) => column.class !== 'forbidden'),
+      ),
+    ).toBe(true);
   });
 
   it('never marks a Phase 1 resource as exportable (spec §9.2)', () => {

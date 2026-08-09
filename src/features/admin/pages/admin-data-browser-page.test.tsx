@@ -160,7 +160,11 @@ describe('AdminDataBrowserPage', () => {
     });
   });
 
-  it('shows an unbrowsable message with the request id and no existence leak on RESOURCE_NOT_ALLOWED', async () => {
+  // 注意:現行 `admin_internal_deny` 只回 `{outcome, code}`,並不會附
+  // request_id(spec §11 要求 response 含 request ID,是尚未補上的 DB 缺口)。
+  // 這個案例證明的是「**萬一** server 之後補上就會顯示」的前向相容路徑,
+  // 不代表今天的 RPC 會回這個欄位;真實形狀由下一個案例覆蓋。
+  it('renders a request id only if a future server build supplies one, and never leaks existence', async () => {
     vi.mocked(adminRpc).mockResolvedValue({
       code: 'RESOURCE_NOT_ALLOWED',
       outcome: 'denied',
@@ -175,7 +179,7 @@ describe('AdminDataBrowserPage', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
-  it('never fabricates a request id when the server did not return one', async () => {
+  it('never fabricates a request id for the shape the RPC actually returns today', async () => {
     vi.mocked(adminRpc).mockResolvedValue({
       code: 'RESOURCE_NOT_ALLOWED',
       outcome: 'denied',
@@ -419,6 +423,53 @@ describe('AdminDataBrowserPage', () => {
     if (!lastCall) throw new Error('expected an admin_list_resource call');
     expect(lastCall[1].p_resource).toBe('classrooms');
     expect(lastCall[1].p_filters).toEqual({});
+  });
+
+  it('loads the next keyset page with the exact server-issued cursor and appends rows', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc)
+      .mockResolvedValueOnce({
+        next_cursor: 'eyJrIjoiMSJ9',
+        outcome: 'ok',
+        page_size_limit: 2,
+        rows: okRows,
+      })
+      .mockResolvedValueOnce({
+        outcome: 'ok',
+        page_size_limit: 2,
+        rows: [
+          {
+            created_at: '2026-08-03T00:00:00Z',
+            display_name: '小華',
+            full_name: '林＊＊',
+            id: 'row-3',
+            login_account: '＊＊＊789',
+            role: 'student',
+            updated_at: '2026-08-03T00:00:00Z',
+          },
+        ],
+      });
+    renderPage();
+    await screen.findByText('小明');
+
+    await user.click(screen.getByRole('button', { name: '載入更多' }));
+
+    expect(await screen.findByText('小華')).toBeInTheDocument();
+    // 前一頁的資料要留著(累加),不是被換掉
+    expect(screen.getByText('小明')).toBeInTheDocument();
+    const secondCall = vi.mocked(adminRpc).mock.calls[1];
+    if (!secondCall) throw new Error('expected a second page request');
+    expect(secondCall[1].p_cursor).toBe('eyJrIjoiMSJ9');
+  });
+
+  it('offers no load-more when the server issues no cursor', async () => {
+    vi.mocked(adminRpc).mockResolvedValue(okResponse);
+    renderPage();
+    await screen.findByText('小明');
+
+    expect(
+      screen.queryByRole('button', { name: '載入更多' }),
+    ).not.toBeInTheDocument();
   });
 
   it('links each row to its detail route using the bare uuid shorthand', async () => {

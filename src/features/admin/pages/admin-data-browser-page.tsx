@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
@@ -17,6 +17,8 @@ import { AdminStatusBanner } from '../components/admin-status-banner';
 import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
 
 interface AdminListResourceOk {
+  /** server 簽發的 keyset cursor;目前的 RPC 尚未簽發(見 checkpoint 記錄)。 */
+  next_cursor?: string | null;
   outcome: 'ok';
   page_size_limit?: number;
   rows: readonly Record<string, unknown>[];
@@ -90,10 +92,20 @@ export function AdminDataBrowserPage() {
   const sort =
     applied.sortColumn !== '' ? { column: applied.sortColumn } : null;
 
-  const list = useQuery({
-    queryFn: () =>
+  // keyset 分頁(spec §7):cursor 一律是 server 簽發的 opaque 值,前端只負責
+  // 原樣帶回。今天的 admin_list_resource 尚未簽發 cursor,所以實務上只會有
+  // 第一頁;等 server 開始回 next_cursor,這裡不必再改就能翻頁。
+  const list = useInfiniteQuery({
+    getNextPageParam: (lastPage: AdminListResourceResponse) =>
+      lastPage.outcome === 'ok' &&
+      typeof lastPage.next_cursor === 'string' &&
+      lastPage.next_cursor !== ''
+        ? lastPage.next_cursor
+        : null,
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
       adminRpc<AdminListResourceResponse>('admin_list_resource', {
-        p_cursor: null,
+        p_cursor: pageParam,
         p_domain: domain,
         p_filters: filters,
         p_resource: resource,
@@ -102,7 +114,8 @@ export function AdminDataBrowserPage() {
     queryKey: ['admin', 'data', domain, resource, applied],
   });
 
-  const code = list.data ? extractErrorCode(list.data) : null;
+  const firstPage = list.data?.pages[0];
+  const code = firstPage ? extractErrorCode(firstPage) : null;
   const staleSession = code === 'STALE_PRIVILEGED_SESSION';
   useAdminStaleSessionRedirect(staleSession);
 
@@ -110,7 +123,7 @@ export function AdminDataBrowserPage() {
 
   if (code === 'RESOURCE_NOT_ALLOWED') {
     const requestId =
-      list.data && 'request_id' in list.data ? list.data.request_id : undefined;
+      firstPage && 'request_id' in firstPage ? firstPage.request_id : undefined;
     return (
       <section
         aria-labelledby="admin-data-browser-page-heading"
@@ -128,7 +141,7 @@ export function AdminDataBrowserPage() {
     );
   }
 
-  if (list.isError || list.data.outcome === 'denied') {
+  if (list.isError || !firstPage || firstPage.outcome === 'denied') {
     return (
       <section
         aria-labelledby="admin-data-browser-page-heading"
@@ -153,7 +166,12 @@ export function AdminDataBrowserPage() {
     );
   }
 
-  const rows = list.data.rows;
+  const rows = list.data.pages.flatMap((page) =>
+    page.outcome === 'ok' ? page.rows : [],
+  );
+  const lastPage = list.data.pages.at(-1);
+  const nextCursor =
+    lastPage?.outcome === 'ok' ? (lastPage.next_cursor ?? null) : null;
   // 欄位順序以 catalog 為準,但實際顯示哪些欄由 server 投影決定(server 是
   // 權威);若 server 回了 catalog 未列的欄(drift),仍照實顯示在最後,
   // 不靜默吞掉。
@@ -251,7 +269,12 @@ export function AdminDataBrowserPage() {
       <AdminDataTable
         caption={`${domain}/${resource}`}
         columns={columns}
-        pageSizeLimit={list.data.page_size_limit ?? 50}
+        isLoadingMore={list.isFetchingNextPage}
+        nextCursor={nextCursor}
+        onLoadMore={() => {
+          void list.fetchNextPage();
+        }}
+        pageSizeLimit={firstPage.page_size_limit ?? 50}
         rowActions={(rowIndex) => {
           // spec §1.3.5:具 id 欄的表允許裸 uuid 簡寫作為 rowKey。複合主鍵表
           // 的 PK 欄名權威在 DB schema(執行期由 pg_catalog 解析),沒有匯出到
