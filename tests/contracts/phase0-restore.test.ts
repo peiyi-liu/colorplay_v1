@@ -23,6 +23,10 @@ const restoreWorkflow = resolve(
   repositoryRoot,
   '.github/workflows/restore-drill.yml',
 );
+const verifyManifestBindingScript = resolve(
+  repositoryRoot,
+  'scripts/backup/verify-manifest-binding.mjs',
+);
 let root = '';
 
 beforeEach(async () => {
@@ -566,5 +570,94 @@ describe('isolated Local restore', () => {
     expect(workflow).toContain('RESTORE_EXPECTED_REPO_SHA');
     expect(workflow).toContain('Secret-scan sanitized restore evidence');
     expect(workflow).toContain('production-restore-drill-result');
+    expect(workflow).toContain('scripts/backup/verify-manifest-binding.mjs');
+    expect(workflow).not.toContain('node --input-type=module -');
+  });
+
+  describe('verify-manifest-binding.mjs', () => {
+    async function writeManifest(contents: string) {
+      const manifestPath = resolve(root, 'verified-backup-manifest.json');
+      await writeFile(manifestPath, contents);
+      return manifestPath;
+    }
+
+    it('verifies a manifest whose repo_sha and b2_prefix match', async () => {
+      const manifestPath = await writeManifest(
+        JSON.stringify({
+          repo_sha: 'a'.repeat(40),
+          b2_prefix: 'production/2026/08/09/backup-20260809T000000Z/',
+        }),
+      );
+
+      const result = await run(process.execPath, [
+        verifyManifestBindingScript,
+        '--manifest',
+        manifestPath,
+        '--expected-repo-sha',
+        'a'.repeat(40),
+        '--expected-b2-prefix',
+        'production/2026/08/09/backup-20260809T000000Z/',
+      ]);
+
+      expect(result).toEqual({
+        code: 0,
+        stderr: '',
+        stdout: 'RESTORE_MANIFEST_BINDING_VERIFIED\n',
+      });
+    });
+
+    it.each([
+      [
+        'mismatched repo_sha',
+        JSON.stringify({
+          repo_sha: 'b'.repeat(40),
+          b2_prefix: 'production/2026/08/09/backup-20260809T000000Z/',
+        }),
+      ],
+      [
+        'mismatched b2_prefix',
+        JSON.stringify({
+          repo_sha: 'a'.repeat(40),
+          b2_prefix: 'production/2026/08/09/backup-different/',
+        }),
+      ],
+      ['malformed JSON', '{'],
+      ['empty file', ''],
+    ])(
+      'rejects %s without leaking paths or a stack trace',
+      async (_name, contents) => {
+        const manifestPath = await writeManifest(contents);
+
+        const result = await run(process.execPath, [
+          verifyManifestBindingScript,
+          '--manifest',
+          manifestPath,
+          '--expected-repo-sha',
+          'a'.repeat(40),
+          '--expected-b2-prefix',
+          'production/2026/08/09/backup-20260809T000000Z/',
+        ]);
+
+        expect(result.code).toBe(1);
+        expect(result.stdout).toBe('');
+        expect(result.stderr).toBe('RESTORE_MANIFEST_BINDING_INVALID\n');
+      },
+    );
+
+    it('rejects a missing manifest file without leaking its path', async () => {
+      const result = await run(process.execPath, [
+        verifyManifestBindingScript,
+        '--manifest',
+        resolve(root, 'does-not-exist.json'),
+        '--expected-repo-sha',
+        'a'.repeat(40),
+        '--expected-b2-prefix',
+        'production/2026/08/09/backup-20260809T000000Z/',
+      ]);
+
+      expect(result.code).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toBe('RESTORE_MANIFEST_BINDING_INVALID\n');
+    });
   });
 });

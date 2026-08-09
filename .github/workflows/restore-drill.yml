@@ -124,12 +124,10 @@ jobs:
               printf '%s\n' 'RESTORE_DECRYPT_FAILED' >&2
               exit 1
             }
-          node --input-type=module - <<'NODE'
-          import { readFile } from 'node:fs/promises';
-          const manifest = JSON.parse(await readFile(`${process.env.RUNNER_TEMP}/verified-backup-manifest.json`, 'utf8'));
-          if (manifest.repo_sha !== process.env.RESTORE_EXPECTED_REPO_SHA) process.exit(1);
-          if (manifest.b2_prefix !== process.env.BACKUP_PREFIX) process.exit(1);
-          NODE
+          node scripts/backup/verify-manifest-binding.mjs \
+            --manifest "$RUNNER_TEMP/verified-backup-manifest.json" \
+            --expected-repo-sha "$RESTORE_EXPECTED_REPO_SHA" \
+            --expected-b2-prefix "$BACKUP_PREFIX"
       - name: Restore roles, schema, data and Storage to isolated Local Supabase
         env:
           AGE_IDENTITY_FILE: ${{ runner.temp }}/age-identity.txt
