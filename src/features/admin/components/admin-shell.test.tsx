@@ -46,6 +46,13 @@ describe('AdminShell', () => {
     vi.unstubAllGlobals();
   });
 
+  it('does not render its own <main> landmark (AppShell already owns the single #main-content landmark)', () => {
+    stubWide(true);
+    renderShell('/admin');
+
+    expect(document.querySelector('main')).not.toBeInTheDocument();
+  });
+
   it('renders the five sidebar groups and passes through routed content', () => {
     stubWide(true);
     renderShell('/admin');

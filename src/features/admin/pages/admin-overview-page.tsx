@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { StatTile } from '../../../components/ui/stat-tile';
-import { adminRpc } from '../api/admin-client';
-import { useAdminSessionState } from '../hooks/use-admin-session-state';
+import { adminRpc, extractErrorCode } from '../api/admin-client';
+import { AdminStatusBanner } from '../components/admin-status-banner';
+import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
 
 interface AdminHealthOperation {
   attempt_count: number;
@@ -79,51 +78,43 @@ function useAdminSessionsList() {
 /**
  * 安全總覽(spec §3.1、§8.3、§11):sessions/pending operations/denial
  * windows/incident 旗標,資料源 admin_health_summary + admin_list_sessions。
- * Stale session 導向 challenge 並保留 return intent(spec §3.3),不在此頁
- * 另外發明過期/重試迴圈。
+ * Stale session 導向 challenge 並保留 return intent(spec §3.3),經共用
+ * useAdminStaleSessionRedirect,不在此頁另外發明過期/重試迴圈。
  */
 export function AdminOverviewPage() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const session = useAdminSessionState();
   const health = useAdminHealthSummary();
   const sessions = useAdminSessionsList();
 
-  const healthDenied =
-    health.data?.outcome === 'denied' ? health.data.code : undefined;
-  const sessionsDenied =
-    sessions.data?.outcome === 'denied' ? sessions.data.code : undefined;
+  const healthCode = health.data ? extractErrorCode(health.data) : null;
+  const sessionsCode = sessions.data ? extractErrorCode(sessions.data) : null;
   const staleSession =
-    healthDenied === 'STALE_PRIVILEGED_SESSION' ||
-    sessionsDenied === 'STALE_PRIVILEGED_SESSION';
+    healthCode === 'STALE_PRIVILEGED_SESSION' ||
+    sessionsCode === 'STALE_PRIVILEGED_SESSION';
 
-  useEffect(() => {
-    if (!staleSession) return;
-    let cancelled = false;
-    void session.refetch().then(() => {
-      if (cancelled) return;
-      void navigate('/admin/mfa/challenge', {
-        state: { returnTo: location.pathname },
-      });
-    });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在偵測到 stale 的那次觸發一次導向
-  }, [staleSession]);
+  useAdminStaleSessionRedirect(staleSession);
 
   if (health.isPending || sessions.isPending || staleSession) {
-    return <RouteLoading />;
+    return <RouteLoading withinMain />;
   }
 
-  if (health.isError || sessions.isError || healthDenied || sessionsDenied) {
+  if (
+    health.isError ||
+    sessions.isError ||
+    health.data.outcome === 'denied' ||
+    sessions.data.outcome === 'denied'
+  ) {
+    const code = healthCode ?? sessionsCode;
     return (
       <section
         aria-labelledby="admin-overview-page-heading"
         className="page-wide"
       >
         <h1 id="admin-overview-page-heading">安全總覽</h1>
-        <p role="alert">安全總覽資料載入失敗，請稍後重試。</p>
+        {code ? (
+          <AdminStatusBanner code={code} />
+        ) : (
+          <p role="alert">安全總覽資料載入失敗，請稍後重試。</p>
+        )}
         <button
           className="secondary-action"
           onClick={() => {
@@ -138,8 +129,8 @@ export function AdminOverviewPage() {
     );
   }
 
-  const healthData = health.data as AdminHealthSummaryOk;
-  const sessionsData = sessions.data as AdminSessionsOk;
+  const healthData = health.data;
+  const sessionsData = sessions.data;
   const activeSessionCount = sessionsData.rows.filter(
     (row) => row.revoked_at === null,
   ).length;

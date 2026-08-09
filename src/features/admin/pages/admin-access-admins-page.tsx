@@ -2,8 +2,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
-import { adminRpc, type AdminCommandName } from '../api/admin-client';
+import {
+  adminRpc,
+  extractErrorCode,
+  type AdminCommandName,
+} from '../api/admin-client';
 import { AdminCommandDialog } from '../components/admin-command-dialog';
+import { AdminStatusBanner } from '../components/admin-status-banner';
+import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
 
 interface AdminIdentityRow {
   admin_user_id: string;
@@ -49,8 +55,11 @@ export function AdminAccessAdminsPage() {
     queryFn: () => adminRpc<AdminListAdminsResponse>('admin_list_admins', {}),
     queryKey: ADMIN_LIST_QUERY_KEY,
   });
+  const code = list.data ? extractErrorCode(list.data) : null;
+  const staleSession = code === 'STALE_PRIVILEGED_SESSION';
+  useAdminStaleSessionRedirect(staleSession);
 
-  if (list.isPending) return <RouteLoading />;
+  if (list.isPending || staleSession) return <RouteLoading withinMain />;
 
   if (list.isError || list.data.outcome === 'denied') {
     return (
@@ -59,7 +68,11 @@ export function AdminAccessAdminsPage() {
         className="page-wide"
       >
         <h1 id="admin-access-admins-page-heading">管理員帳號</h1>
-        <p role="alert">管理員清單載入失敗，請稍後重試。</p>
+        {code ? (
+          <AdminStatusBanner code={code} />
+        ) : (
+          <p role="alert">管理員清單載入失敗，請稍後重試。</p>
+        )}
         <button
           className="secondary-action"
           onClick={() => {

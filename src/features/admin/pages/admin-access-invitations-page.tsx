@@ -7,10 +7,13 @@ import { z } from 'zod';
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import {
   adminRpc,
+  extractErrorCode,
   type AdminCommandName,
   type AdminCommandResponse,
 } from '../api/admin-client';
 import { AdminCommandDialog } from '../components/admin-command-dialog';
+import { AdminStatusBanner } from '../components/admin-status-banner';
+import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
 
 interface AdminInvitationRow {
   accepted_at: string | null;
@@ -59,11 +62,15 @@ export function AdminAccessInvitationsPage() {
   const queryClient = useQueryClient();
   const [pending, setPending] = useState<PendingCommand | null>(null);
   const [issuedToken, setIssuedToken] = useState<string | null>(null);
+  const [replayNotice, setReplayNotice] = useState(false);
   const list = useQuery({
     queryFn: () =>
       adminRpc<AdminListInvitationsResponse>('admin_list_invitations', {}),
     queryKey: INVITATIONS_QUERY_KEY,
   });
+  const code = list.data ? extractErrorCode(list.data) : null;
+  const staleSession = code === 'STALE_PRIVILEGED_SESSION';
+  useAdminStaleSessionRedirect(staleSession);
   const {
     formState: { errors },
     handleSubmit,
@@ -74,7 +81,7 @@ export function AdminAccessInvitationsPage() {
     resolver: zodResolver(emailSchema),
   });
 
-  if (list.isPending) return <RouteLoading />;
+  if (list.isPending || staleSession) return <RouteLoading withinMain />;
 
   if (list.isError || list.data.outcome === 'denied') {
     return (
@@ -83,7 +90,11 @@ export function AdminAccessInvitationsPage() {
         className="page-wide"
       >
         <h1 id="admin-access-invitations-page-heading">管理員邀請</h1>
-        <p role="alert">邀請清單載入失敗，請稍後重試。</p>
+        {code ? (
+          <AdminStatusBanner code={code} />
+        ) : (
+          <p role="alert">邀請清單載入失敗，請稍後重試。</p>
+        )}
         <button
           className="secondary-action"
           onClick={() => {
@@ -208,6 +219,24 @@ export function AdminAccessInvitationsPage() {
         </div>
       ) : null}
 
+      {replayNotice ? (
+        <div className="admin-access-invitations__token-box" role="status">
+          <p>
+            此邀請先前已成功建立，一次性 token
+            僅在當下顯示過，系統不會再次提供。如仍需要，請先撤銷再重新發出。
+          </p>
+          <button
+            className="secondary-action"
+            onClick={() => {
+              setReplayNotice(false);
+            }}
+            type="button"
+          >
+            知道了
+          </button>
+        </div>
+      ) : null}
+
       {pending ? (
         <AdminCommandDialog
           args={pending.args}
@@ -219,7 +248,18 @@ export function AdminAccessInvitationsPage() {
             setPending(null);
             reset();
             const token = result.invitation_token;
-            if (typeof token === 'string') setIssuedToken(token);
+            if (typeof token === 'string') {
+              setIssuedToken(token);
+            } else if (
+              pending.command === 'issue_admin_invitation' &&
+              result.outcome === 'replayed'
+            ) {
+              // spec §8.2:replay 的 redacted result 依 DB 設計不含明文
+              // token(一次性,只在 fresh 'ok' 附加)——不能靜默當成一般成功,
+              // 否則管理員以為拿到了 token 但畫面其實什麼都沒顯示
+              // (bugs 軸 review 抓到的真實缺口)。
+              setReplayNotice(true);
+            }
             void queryClient.invalidateQueries({
               queryKey: INVITATIONS_QUERY_KEY,
             });

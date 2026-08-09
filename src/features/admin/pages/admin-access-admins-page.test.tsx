@@ -224,4 +224,17 @@ describe('AdminAccessAdminsPage', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '重試' })).toBeInTheDocument();
   });
+
+  it('redirects to challenge and refetches session state when the list call is denied as stale', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({
+      code: 'STALE_PRIVILEGED_SESSION',
+      outcome: 'denied',
+    });
+    renderPage();
+
+    expect(await screen.findByText('challenge 頁')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(refetch).toHaveBeenCalled();
+    });
+  });
 });

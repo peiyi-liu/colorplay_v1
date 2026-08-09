@@ -124,9 +124,12 @@ export function AdminShell(): ReactElement {
           </div>
         ))}
       </nav>
-      <main className="admin-shell__main">
+      {/* div 不用 main:AppShell 的 <main id="main-content"> 已是全站唯一 main
+          landmark(review 波標準軸抓到巢狀 main 會讓螢幕閱讀器多出重複
+          landmark)。 */}
+      <div className="admin-shell__main">
         <Outlet />
-      </main>
+      </div>
     </div>
   );
 }

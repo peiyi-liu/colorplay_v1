@@ -147,7 +147,7 @@ describe('AdminAccessInvitationsPage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('does not show a token box when the response is a replay without one', async () => {
+  it('shows an explicit replay notice instead of silently losing the one-time token', async () => {
     const user = userEvent.setup();
     vi.mocked(adminRpc).mockResolvedValue({ outcome: 'ok', rows: [] });
     vi.mocked(invokeAdminCommand).mockResolvedValueOnce({
@@ -170,6 +170,14 @@ describe('AdminAccessInvitationsPage', () => {
     });
     expect(
       screen.queryByRole('region', { name: '邀請 token' }),
+    ).not.toBeInTheDocument();
+    expect(
+      await screen.findByText(/一次性 token 僅在當下顯示過/u),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '知道了' }));
+    expect(
+      screen.queryByText(/一次性 token 僅在當下顯示過/u),
     ).not.toBeInTheDocument();
   });
 
@@ -209,5 +217,18 @@ describe('AdminAccessInvitationsPage', () => {
       await screen.findByText('邀請清單載入失敗，請稍後重試。'),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '重試' })).toBeInTheDocument();
+  });
+
+  it('redirects to challenge and refetches session state when the list call is denied as stale', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({
+      code: 'STALE_PRIVILEGED_SESSION',
+      outcome: 'denied',
+    });
+    renderPage();
+
+    expect(await screen.findByText('challenge 頁')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(refetch).toHaveBeenCalled();
+    });
   });
 });

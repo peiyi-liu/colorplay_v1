@@ -114,6 +114,8 @@ describe('AdminCommandDialog', () => {
         target_principal_id: 'target-1',
       }),
     );
+    // spec §3.4:命令結果要以 aria-live 播報,不能只是「dialog 消失了」。
+    expect(await screen.findByRole('status')).toHaveTextContent('操作已完成');
   });
 
   it('shows a clear denial message and keeps the dialog open for LAST_ADMIN_PROTECTED', async () => {
@@ -221,6 +223,22 @@ describe('AdminCommandDialog', () => {
 
     expect(await screen.findByText('清單頁')).toBeInTheDocument();
     expect(invokeAdminCommand).not.toHaveBeenCalled();
+  });
+
+  it('stops Escape from bubbling to document-level listeners (e.g. the mobile drawer, which is not a blocking overlay)', async () => {
+    const user = userEvent.setup();
+    const outerListener = vi.fn();
+    document.addEventListener('keydown', outerListener);
+    try {
+      renderDialog();
+
+      await user.keyboard('{Escape}');
+
+      expect(await screen.findByText('清單頁')).toBeInTheDocument();
+      expect(outerListener).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('keydown', outerListener);
+    }
   });
 
   it('gives both actions the standard action affordances at 44px+', () => {

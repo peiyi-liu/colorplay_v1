@@ -84,6 +84,13 @@ export function AdminCommandDialog({
 
   const onDialogKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
+      // 這是 modal(aria-modal="true"):Escape 應該只關這個框,不能繼續
+      // 冒泡到別的 document-level 監聽器——窄視口的 MENU drawer 不是遮擋式
+      // overlay(底層內容仍可互動),使用者可能在 drawer 開著時另外開了這個
+      // dialog;沒有 stopPropagation 會讓同一次 Escape 同時關掉 dialog 和
+      // drawer,兩邊的 focus-restore 互搶造成焦點恢復競態(review 波 bugs
+      // 軸抓到)。
+      event.stopPropagation();
       if (submitting) return;
       onCancel();
       return;
