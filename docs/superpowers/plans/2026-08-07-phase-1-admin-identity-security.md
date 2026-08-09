@@ -4989,7 +4989,77 @@ git commit -m "feat(phase1): add safe data browser, reveal, audit and health pag
 
 ---
 
+### Task 13A: Admin read/control contract completion(2026-08-09 owner 追加)
+
+Task 13 的前端在 review 波中暴露三個**已核准規格與實作之間的契約缺口**;owner
+於 2026-08-09 裁定不得降級為「已知限制」,另立本 task 以 forward migration 修
+補後端契約。**Task 14 的前置條件包含 Task 13A 完成。**
+
+背景(Task 13 checkpoint 記錄,產品碼基準 `1ebfb09`):
+
+1. `admin_list_resource`／`admin_query_audit` 只接受 `p_cursor`、**從不簽發**
+   cursor(原 plan Task 6 Step 3 註記「cursor 仍不簽發」),因此 spec §7 的
+   keyset 分頁在 UI 上永遠停在第一頁,超過 50 筆不可達。
+2. spec §1.3 為 7 張無單一 `id` 欄的資源訂了複合主鍵定址,但 PK 欄名權威在 DB
+   `pg_catalog`、未匯出到前端,list 回應也不含可導航的 row key,前端無從組出
+   canonical row key,這 7 張表無法由列表進入 detail/reveal。
+3. `reconcile_admin_security_operation` 對 `state='stuck'` 直接回
+   `SECURITY_OPERATION_PENDING`,與 spec §8.3「active Admin 可手動觸發」相斥。
+
+**Owner 核准語意(一次性人工重試)**:stuck operation 的人工重試每次只授權
+**一次**;不重設 `attempt_count`、不清除既有 incident/audit/failure history、
+不放寬 identity/session/factor 權限、不恢復自動重試迴圈;只續跑 `current_step`
+之後尚未完成的 idempotent steps;成功才推進下一個安全 step 或 completed;失敗
+維持 `stuck`;再次嘗試必須重新取得 fresh TOTP、reason 與新 receipt。
+`factor_incident_isolation` 仍只能走 owner OOB,不得藉本路徑進入一般 reconcile。
+
+**三組交付:**
+
+- **13A-1 server-issued cursor 與 row key**:list/audit 改用 page size + 1 探
+  測、最多回 50 筆、只有存在第 51 筆才簽發 `next_cursor`;cursor 綁 domain／
+  resource／normalized filters／sort／完整 PK tie-breaker(audit 綁時間範圍、
+  actor、action、target type、result),client opaque、server validated,
+  malformed／跨 resource／跨 filter／跨 sort 一律 typed deny。list 每列附
+  server-issued row-key token(spec §1.3 base64url canonical JSON),client 僅
+  當作 opaque navigation token,不得推測 PK 欄名、不得當成可顯示或可查詢的資料
+  欄位。detail 與 **reveal** 都要支援 row_key;`row_id`／`row_key` exactly
+  one-of;receipt request hash 與實際使用的定址形態一致;Edge 不得把 row_key
+  改寫成 row_id。
+- **13A-2 stuck 一次性人工重試**:見上方 owner 核准語意。實作必須涵蓋完整
+  service path —— stuck 預設不得被 scheduler 自動選取;manual command 原子建立
+  一次 retry request;service path 原子 claim 並即消耗該次授權;`attempt_count`
+  ≥10 不得讓 manual retry 在真正執行前又立刻被 mark stuck;失敗後不得留下可被
+  scheduler 無限重試的 due marker。
+- **13A-3 §11 denial response envelope**:統一 allowlist 為 `outcome`／stable
+  `code`／safe `message`／`request_id`／`retryable`,DB 與 Edge 皆適用。
+  `admin_internal_deny` 回傳與 durable denial audit 對應的 `request_id`;
+  `admin_internal_command_deny` 與 direct read RPC 沿用同一 envelope;
+  admin-command Edge 不得再把 DB outcome 壓成只有 outcome/code,只轉送
+  allowlisted 欄位;`SECURITY_AUDIT_UNAVAILABLE` 等 Edge-level failure 也要有
+  request ID,但不得偽稱已寫入 durable audit。retryable mapping 集中、由
+  stable-code union 驗證,未明列者一律 `false`(未知碼 fail closed)。
+
+**Files:**
+- Create: `supabase/migrations/20260809000100_admin_contract_completion.sql`
+  (forward migration;**不修改** `20260808000700_admin_read_rpcs.sql` 與
+  `20260808000800_admin_lifecycle_commands.sql`)
+- Create: `supabase/tests/053_admin_contract_completion.sql`(pgTAP)
+- Modify: `supabase/functions/admin-command/index.ts`、
+  `supabase/functions/admin-reconcile/index.ts`、`supabase/functions/_shared/*`
+- Modify: Task 13 前端(`admin-data-table`、`admin-data-browser-page`、
+  `admin-data-detail-page`、`admin-reveal-dialog`、`admin-audit-page`)
+- Modify: 本 plan 與 spec §1.3／§7／§8.3／§11 的對應段落
+
+**驗證**:focused pgTAP、受影響 Edge/unit/integration、`pnpm test:db`、
+`pnpm test -- src/features/admin`、lint、typecheck、scoped Prettier、
+`pnpm build`、`git diff --check`。不跑 acceptance／Task 14 E2E／visual gate／
+hosted smoke。
+
+---
+
 ### Task 14: E2E 旅程、三視口與無障礙 gate、local fixtures
+
+> **前置條件**:Task 13 與 **Task 13A** 皆完成並經 owner 核准後才可開始。
 
 spec §3.4、§12、§14.4。fixture Admin 與 TOTP 只進 local seed(spec §12);E2E 以 UI enrollment 取得 secret,`otpauth` 計碼。單一 privileged session ⇒ admin E2E 以 `workers: 1` 串行。
 

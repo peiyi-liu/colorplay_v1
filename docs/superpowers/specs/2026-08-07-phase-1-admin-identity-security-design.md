@@ -44,6 +44,7 @@
 3. **RPC 形態**：`admin_get_resource_detail(domain, resource, row_key jsonb)` 新 overload——`row_key` 為 object，鍵＝PK 欄名、值＝文字表示（server 以 `%I::text = %L` 比對，不做型別 cast）；必須恰好提供全部 PK 欄，多鍵、缺鍵、非 PK 鍵、非 object → `COLUMN_NOT_ALLOWED` typed denial。既有 `(…, row_id uuid)` overload 保留，僅適用於具 `id` 欄的表，語意不變。`admin_reveal_field` 同步增加 `row_key jsonb` 形態（Task 7 實作）。
 4. **List tie-breaker**：`admin_list_resource` 的排序 tie-breaker 由固定 `id` 改為「全部 PK 欄依 ordinal 升冪」；keyset cursor 的比較鍵同步為 (sort_column, pk…)，cursor payload 以 `key` object 取代單一 `id`（cursor 仍為 server-issued，Phase 1 尚未簽發，於 Task 13 接線）。
 5. **URL 編碼**（Task 12/13）：detail 路由 `/admin/data/:domain/:resource/:rowKey`；`rowKey`＝base64url(canonical JSON，鍵依字母序)；具 `id` 欄的表允許裸 uuid 簡寫（視為 `{"id": value}`）。前端只透傳，驗證一律在 server。
+6. **Row key 由 server 簽發（2026-08-09 owner 追加，Task 13A）**：PK 欄名權威在 DB `pg_catalog`、不匯出到前端，因此前端**無法也不應**自行組出 canonical row key。`admin_list_resource` 必須為每一筆資料附上 server-issued row-key token；client 只當作 opaque navigation token 原樣帶回。單一 `id` 資源亦可使用同一 token，既有裸 UUID route 維持相容。malformed token、缺 PK、多 PK、非 PK 鍵、null 值仍由 server typed deny。
 
 ## 2. 範圍、非目標、術語與權威
 
@@ -246,6 +247,14 @@ Auth verify 已成功但 PostgreSQL finalize 失敗時，client 直接重試 con
 - Reveal 明文只在核准後 response 返回；cache、persistent payload、receipt、audit、application log 均不得保存。Response 遺失必須重新核准。
 - 不存在 raw SQL、任意 table/column、generic update、bulk reveal、cross-resource search、export 或 download endpoint。
 
+**2026-08-09 owner 追加（Task 13A）：cursor 與 row key 由 server 簽發。**
+原實作只接受 `p_cursor` 而從不簽發，等於 keyset 分頁在 UI 上不可用。修訂後：
+
+- List/audit 以 **page size + 1** 探測是否真有下一頁；最多回傳 50 筆；**只有存在第 51 筆時**才簽發 `next_cursor`，且 cursor 由最後一筆實際回傳的資料產生。
+- `admin_list_resource` 的 cursor 綁 domain、resource、normalized filters、sort 與完整 PK tie-breaker；`admin_query_audit` 的 cursor 綁時間範圍、actor、action、target type、result 與 `(occurred_at, id)` 穩定排序。跨 resource／跨 filter／跨 sort／跨查詢條件重用一律 typed deny（fail closed）。
+- List 回應為**每一筆**附 server-issued row-key token（§1.3.5 的 base64url canonical JSON）。client 只當作 opaque navigation token：不得推測 PK 欄名、不得把它當成可顯示或可查詢的資料欄位、不得與真實 catalog column 混淆。
+- Detail 與 **reveal** 都必須支援 row_key 形態；`row_id` 與 `row_key` **exactly one-of**；receipt 的 canonical request hash 必須與實際使用的定址形態一致；Edge 不得把 row_key 改寫成 row_id。
+
 ## 8. Named operations、idempotency 與 reconciliation
 
 ### 8.1 Product operations
@@ -281,6 +290,16 @@ Auth verify 已成功但 PostgreSQL finalize 失敗時，client 直接重試 con
 - 受保護排程掃描逾時 operation；active Admin 可手動觸發相同 operation ID。兩者只續跑剩餘 idempotent steps。
 - 卡住超過門檻：dashboard incident＋immutable audit；不能自動放寬權限或把 state 改回 active。
 - Audit DB／transaction 本身不可用時，操作維持 fail closed；correlation ID 可留在基礎設施日誌，但不得宣稱 durable audit 已寫入。
+
+**2026-08-09 owner 裁定（Task 13A）：stuck operation 的一次性人工重試。**
+原實作對 `state='stuck'` 直接回 `SECURITY_OPERATION_PENDING`，與本節「active Admin 可手動觸發」相斥。修訂後語意：
+
+- Active Admin 必須經 fresh TOTP、reason ≥10 字、receipt 與 idempotency contract；每次 `reconcile_admin_security_operation` **只授權一次** manual retry。
+- 不重設 `attempt_count`、不清除既有 incident／audit／failure history、不放寬 identity／session／factor 或其他權限、不恢復自動重試迴圈。
+- 只續跑 `current_step` 之後尚未完成的 idempotent steps；成功才進入下一個安全 step 或 `completed`；失敗維持 `stuck`。再次嘗試必須重新取得 fresh TOTP、reason 與新 receipt。
+- 受保護排程**預設不得自動選取** `stuck`；manual command 原子建立一次 retry request，service path 原子 claim 並於 claim 當下即消耗該次授權（兩個 worker 不得重複執行）。
+- `attempt_count` 已達 stuck 門檻（≥10）不得讓 manual retry 在真正執行前又立刻被 mark stuck；失敗後不得留下可被 scheduler 無限重試的 due marker。
+- `factor_incident_isolation` 仍只能走 owner OOB（§4.2），不得藉本路徑進入一般 reconcile。
 
 ## 9. Per-table／per-column sensitivity catalog
 
@@ -383,6 +402,22 @@ Auth verify 已成功但 PostgreSQL finalize 失敗時，client 直接重試 con
 - `TARGET_STATE_INVALID`：命令通過授權 gate 後發現目標當前狀態不允許該操作（如停用已停用的 admin、撤銷已撤銷的 session；目標不存在亦同碼——依「無目標存在性洩漏」原則不區分）。receipt 依 §6.2 已於 gate 消耗且授權本身有效；client 應修正目標選擇後重新申請，不得將此碼視為授權失效而重走 fresh-MFA／mint 迴圈。
 - Edge 層 protocol-level 碼：`SECURITY_AUDIT_UNAVAILABLE`（503）——Edge 判定的預期 denial 無法確認 audit＋counter 已提交時 fail closed，不得偽稱已入帳的 typed denial；`INVALID_JSON`／`METHOD_NOT_ALLOWED`（4xx）屬輸入層錯誤，不入 denial 帳。
 - Response 只含 stable code、安全 message、request ID、retryable flag；無 SQL、stack、secret 或目標存在性。
+
+**2026-08-09 owner 追加（Task 13A）：denial response envelope 的機械化定義。**
+原實作只回 `{outcome, code}`，request ID 與 retryable 從未存在，使前端無從做可追蹤的 partial failure，也只能自行猜測能不能重試。修訂後 DB 與 Edge 共用同一 allowlist：
+
+| 欄位 | 說明 |
+|---|---|
+| `outcome` | 固定 `denied` |
+| `code` | §11 stable code union 之一 |
+| `message` | 集中 mapping 產生的安全文案；**不得逐 RPC 自行編造** |
+| `request_id` | 對應該次 durable denial audit 的可追蹤 ID |
+| `retryable` | 集中 mapping；未明確列為可重試者一律 `false` |
+
+- 禁止出現：SQL、stack、secret、raw provider error、目標存在性、reveal 明文、internal exception details。
+- `admin_internal_deny` 回傳與 durable denial audit **對應**的 `request_id`；`admin_internal_command_deny` 與 direct read RPC 沿用同一 envelope。
+- admin-command Edge 不得再把 DB outcome 壓成只有 `outcome`/`code`，只轉送 allowlisted、安全化欄位。`SECURITY_AUDIT_UNAVAILABLE` 等 Edge-level failure 也要有 request ID，但**不得偽稱**已寫入 durable audit。
+- retryable mapping（集中、型別完整、由 stable-code union 驗證）：`SECURITY_AUDIT_UNAVAILABLE`＝true；authorization／validation／target-state／idempotency conflict 類一律 false；`STALE_PRIVILEGED_SESSION` 由 challenge redirect 處理，不提供原地 retry loop（false）；未知碼 fail closed（false）。
 - 預期 denial 使用 typed outcome，讓 denial audit 同交易提交。Audit transaction 不可用時不執行命令。
 - Incident dashboard 顯示 factor mismatch、MFA lock、reconciliation timeout、denial threshold、last-admin protection；只提供合法 follow-up operation。
 - Accessibility 與三視口 gate 沿用 3.4。
