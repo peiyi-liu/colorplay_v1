@@ -4,6 +4,7 @@
 - 狀態：草案待 owner 核准
 - 對應：`docs/roadmap-colorplay-next.md` Phase 2（內容 SSOT 與版本發布）／Phase 3（學習歷程與評量權威）／Phase 4（學習大廳與章節體驗）。三者目前狀態皆為「決策已拍板、spec 未開始」，本文件是三者的第一份正式 spec。
 - 來源：owner 2026-08-10 深夜 brainstorming（涵蓋內容 pipeline 現況盤點、教師端功能盤點、JRPG 視覺方向討論，含真實截圖與 Codédex 參考圖比對）。
+- **範圍提前候併說明**：roadmap 原始劃分中，教師端與 Live 相關視覺工作屬於 **Phase 5（Live 與教師報表）**，不是 Phase 4（Phase 4 原本專指學生端學習大廳/章節體驗）。Owner 在本次 brainstorming 中明確要求把教師端（含 Live）一併納入這次規劃，因此本文件第 4.3 節「教師端交付項目」實質上是**提前候併 Phase 5 的範圍**到這次一起做，不是重新定義 Phase 4 的邊界。`docs/roadmap-colorplay-next.md` 的 Phase 5 狀態列需同步更新，標明其教師端/Live 視覺部分已隨本文件提前執行。Phase 6（全站 JRPG 視覺統一）維持原範圍不變——本文件不處理次要頁面（如 `/forgot-password`、`/unauthorized`）的最終掃尾統一。
 
 ## 1. 策略：以第三章為垂直切片
 
@@ -78,7 +79,7 @@ Owner 提供 Codédex（程式學習平台）截圖作為暗色系參考：深�
    - 班級排行榜表頭錯字「曜稱」→「暱稱」。
 5. **既有已完成頁面的按鈕/卡片風格基準**：以商店（`/app/shop`）與成就（`/app/achievements`）兩頁的按鈕狀態設計（已裝備／可購買／點數不足三種樣式）為基準，其餘頁面的按鈕/卡片風格往這個方向對齊。
 
-### 4.3 教師端交付項目
+### 4.3 教師端交付項目（提前候併 Phase 5 範圍，見文件開頭說明）
 
 1. **補完既有已核准的 08-02「賢者工坊」設計**（`docs/superpowers/specs/2026-08-02-teacher-workspace-design.md`，owner 已核准；對應 plan `docs/superpowers/plans/2026-08-02-teacher-workspace.md`）尚未完成的部分。註：該 plan 的 checkbox 全數未勾但程式碼證明部分工作已完成，執行前需先以程式碼實際狀態（而非 checkbox）重新核對剩餘範圍，已知尚未觸及：
    - 教學分析（`/teacher/analytics`）
