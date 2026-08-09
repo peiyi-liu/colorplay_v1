@@ -82,6 +82,9 @@ export interface AdminMfaResponse {
   code?: string;
   error?: string;
   factorId?: string;
+  // FACTOR_BINDING_MISMATCH incident denial 才會帶(spec §3.3 可追蹤 ID);
+  // 其餘 outcome/code 一律不含,前端不得假設一定存在。
+  operationId?: string;
   outcome?: string;
   qrUri?: string;
   refreshed?: boolean;

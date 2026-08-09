@@ -32,6 +32,10 @@ export function AdminMfaChallengePage() {
   // FACTOR_BINDING_MISMATCH 是伺服端已入帳的 factor incident(spec §3.3):
   // 終止表單,不提供任何繞過或重試按鈕。
   const [incident, setIncident] = useState(false);
+  // Edge 只在隔離 RPC 成功時才附這個欄位;沒有就不顯示,不得杜撰。
+  const [incidentOperationId, setIncidentOperationId] = useState<string | null>(
+    null,
+  );
   // 涵蓋:factor 查詢本身失敗(非「查無 factor」)、invokeAdminMfa 拋出、
   // 或回應不是 ok 但 extractErrorCode 也認不出代碼 —— 都不能靜默不顯示。
   const [unexpectedError, setUnexpectedError] = useState(false);
@@ -76,6 +80,11 @@ export function AdminMfaChallengePage() {
       }
       const responseCode = extractErrorCode(response);
       if (responseCode === 'FACTOR_BINDING_MISMATCH') {
+        setIncidentOperationId(
+          typeof response.operationId === 'string'
+            ? response.operationId
+            : null,
+        );
         setIncident(true);
         return;
       }
@@ -94,6 +103,14 @@ export function AdminMfaChallengePage() {
       <RpgWindow>
         <h1 className="pixel-heading">管理員雙因素驗證</h1>
         <AdminStatusBanner code="FACTOR_BINDING_MISMATCH" />
+        {incidentOperationId ? (
+          <p>
+            回報代碼：
+            <span data-testid="incident-operation-id">
+              {incidentOperationId}
+            </span>
+          </p>
+        ) : null}
       </RpgWindow>
     );
   }

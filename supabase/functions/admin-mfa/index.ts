@@ -187,11 +187,37 @@ Deno.serve(async (request) => {
       (f) => f.status === 'verified',
     );
     if (verified.length !== 1 || verified[0].id !== factorId) {
-      await service.rpc('svc_admin_isolate_factor_incident', {
+      const isolate = await service.rpc('svc_admin_isolate_factor_incident', {
         p_admin_user_id: userId,
         p_correlation_id: crypto.randomUUID(),
       });
-      return recordAndDeny(action, userId, 'FACTOR_BINDING_MISMATCH');
+      // 隔離是緊急安全動作,結果必須誠實回報:RPC error/畸形輸出不得被
+      // 當成「已隔離」直接回 denied——那會讓帳號實際上還留在可攻擊狀態,
+      // 卻告訴呼叫端已經安全(spec §4.1)。已確認的 typed denial(如
+      // identity 競態消失)原樣 passthrough,不重複記錄。
+      if (isolate.error !== null || !isolate.data) {
+        return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
+      }
+      if (isolate.data.outcome === 'ok') {
+        const operationId =
+          typeof isolate.data.operation_id === 'string'
+            ? isolate.data.operation_id
+            : undefined;
+        return recordAndDeny(
+          action,
+          userId,
+          'FACTOR_BINDING_MISMATCH',
+          403,
+          operationId ? { operationId } : undefined,
+        );
+      }
+      if (
+        isolate.data.outcome === 'denied' &&
+        typeof isolate.data.code === 'string'
+      ) {
+        return denied(isolate.data.code);
+      }
+      return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
     }
 
     if (action === 'confirm-enrollment') {

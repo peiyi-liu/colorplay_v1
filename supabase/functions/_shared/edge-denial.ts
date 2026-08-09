@@ -25,6 +25,9 @@ export function makeRecordAndDeny(
     adminUserId: string | null,
     code: string,
     status = 403,
+    // 選填的額外欄位(如 factor incident 的 operationId),只在 record 確認
+    // 入帳後才併入回應;fail-closed 的 503 分支絕不帶出這些欄位。
+    extra?: Record<string, unknown>,
   ): Promise<Response> {
     const recorded = await service.rpc('svc_admin_record_edge_denial', {
       p_resource_key: resourceKey,
@@ -39,6 +42,6 @@ export function makeRecordAndDeny(
     ) {
       return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
     }
-    return jsonResponse(status, { outcome: 'denied', code });
+    return jsonResponse(status, { outcome: 'denied', code, ...extra });
   };
 }

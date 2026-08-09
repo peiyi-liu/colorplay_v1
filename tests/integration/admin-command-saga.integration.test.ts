@@ -344,4 +344,88 @@ describe('admin-command saga, replay and concurrency', () => {
     });
     expect(response.status).toBe(401);
   });
+
+  it('a factor binding mismatch returns a real, DB-traceable operation_id', async () => {
+    // 獨立 provision,不沿用 adminA/B/C 共享狀態;直接用該 actor 自己的
+    // GoTrue session 繞過 admin-mfa Edge 另外驗證第二個 factor,製造真實
+    // binding 不符(同 admin-mfa-flow.integration.test.ts 的手法)。
+    const email = `admin.saga.incident.${String(Date.now())}@colorplay.test`;
+    const password = 'LocalOnly-AdminSagaIncident1!';
+    const created = await service.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+    const userId = requireValue(created.data.user, 'incident user').id;
+    await service.rpc('svc_admin_bootstrap_identity', {
+      p_user_id: userId,
+      p_runbook_operation_id: crypto.randomUUID(),
+    });
+    const client = createClient(url, anonKey, {
+      auth: { persistSession: false },
+    });
+    const signIn = await client.auth.signInWithPassword({ email, password });
+    const accessToken = requireValue(
+      signIn.data.session,
+      'incident session',
+    ).access_token;
+    const begin = await invokeEdge('admin-mfa', accessToken, {
+      action: 'begin-enrollment',
+    });
+    const factorId = asStr(begin.json.factorId);
+    const secret = asStr(begin.json.totpSecret);
+    const code = () =>
+      new OTPAuth.TOTP({ digits: 6, period: 30, secret }).generate();
+    await invokeEdge('admin-mfa', accessToken, {
+      action: 'confirm-enrollment',
+      factorId,
+      code: code(),
+    });
+    await invokeEdge('admin-mfa', accessToken, {
+      action: 'challenge',
+      factorId,
+      code: code(),
+    });
+
+    const enrollB = await client.auth.mfa.enroll({
+      factorType: 'totp',
+      friendlyName: 'second-factor-probe',
+    });
+    const factorIdB = requireValue(enrollB.data, 'second factor enroll').id;
+    const secretB = requireValue(enrollB.data, 'second factor enroll').totp
+      .secret;
+    const challengeB = await client.auth.mfa.challenge({
+      factorId: factorIdB,
+    });
+    await client.auth.mfa.verify({
+      factorId: factorIdB,
+      challengeId: requireValue(challengeB.data, 'second factor challenge').id,
+      code: new OTPAuth.TOTP({
+        digits: 6,
+        period: 30,
+        secret: secretB,
+      }).generate(),
+    });
+
+    const response = await invokeEdge('admin-command', accessToken, {
+      command: 'deactivate_admin',
+      idempotencyKey: crypto.randomUUID(),
+      args: {
+        target_principal_id: adminB.principalId,
+        reason: '驗證 binding 不符是否正確回傳 operation_id',
+      },
+    });
+    expect(response.status).toBe(403);
+    expect(asStr(response.json.code)).toBe('FACTOR_BINDING_MISMATCH');
+    const operationId = asStr(response.json.operationId);
+    expect(operationId).not.toBe('');
+
+    const operationRow = await service
+      .from('admin_security_operations')
+      .select('id, operation_type')
+      .eq('id', operationId)
+      .maybeSingle();
+    expect(operationRow.error).toBeNull();
+    expect(operationRow.data?.operation_type).toBe('factor_incident_isolation');
+  }, 30_000);
 });

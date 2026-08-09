@@ -73,4 +73,51 @@ describe('edge denial recorder fail-closed contract', () => {
     );
     expect(response.status).toBe(503);
   });
+
+  it('merges optional extra fields into the confirmed denial response', async () => {
+    const recordAndDeny = makeRecordAndDeny(
+      {
+        rpc: () =>
+          Promise.resolve({
+            data: { outcome: 'denied', code: 'FACTOR_BINDING_MISMATCH' },
+            error: null,
+          }),
+      },
+      'edge/test',
+      jsonResponse,
+    );
+    const response = await recordAndDeny(
+      'challenge',
+      'user-1',
+      'FACTOR_BINDING_MISMATCH',
+      403,
+      { operationId: 'op-123' },
+    );
+    expect(await response.json()).toEqual({
+      outcome: 'denied',
+      code: 'FACTOR_BINDING_MISMATCH',
+      operationId: 'op-123',
+    });
+  });
+
+  it('never includes extra fields in the fail-closed 503 response', async () => {
+    const recordAndDeny = makeRecordAndDeny(
+      {
+        rpc: () =>
+          Promise.resolve({ data: null, error: { message: 'db down' } }),
+      },
+      'edge/test',
+      jsonResponse,
+    );
+    const response = await recordAndDeny(
+      'challenge',
+      'user-1',
+      'FACTOR_BINDING_MISMATCH',
+      403,
+      { operationId: 'op-123' },
+    );
+    expect(await response.json()).toEqual({
+      error: 'SECURITY_AUDIT_UNAVAILABLE',
+    });
+  });
 });

@@ -103,7 +103,30 @@ describe('AdminMfaChallengePage', () => {
     expect(refetch).not.toHaveBeenCalled();
   });
 
-  it('shows a fail-closed incident state with no bypass on factor binding mismatch', async () => {
+  it('shows a fail-closed incident state with a traceable operation id and no bypass', async () => {
+    const user = userEvent.setup();
+    vi.mocked(listOwnVerifiedTotpFactorId).mockResolvedValue('factor-1');
+    vi.mocked(invokeAdminMfa).mockResolvedValue({
+      code: 'FACTOR_BINDING_MISMATCH',
+      operationId: 'op-abc-123',
+      outcome: 'denied',
+    });
+
+    renderPage(['/admin/mfa/challenge']);
+
+    const input = await screen.findByLabelText('驗證碼');
+    await user.type(input, '000000');
+    await user.click(screen.getByRole('button', { name: '驗證' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('驗證器綁定異常');
+    });
+    expect(screen.getByText('op-abc-123')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('驗證碼')).not.toBeInTheDocument();
+  });
+
+  it('shows the incident state without an id line when the server omits one', async () => {
     const user = userEvent.setup();
     vi.mocked(listOwnVerifiedTotpFactorId).mockResolvedValue('factor-1');
     vi.mocked(invokeAdminMfa).mockResolvedValue({
@@ -120,8 +143,9 @@ describe('AdminMfaChallengePage', () => {
     await waitFor(() => {
       expect(screen.getByRole('status')).toHaveTextContent('驗證器綁定異常');
     });
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('驗證碼')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('incident-operation-id'),
+    ).not.toBeInTheDocument();
   });
 
   it('waits for the session refetch to resolve before navigating away', async () => {
