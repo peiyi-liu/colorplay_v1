@@ -400,6 +400,56 @@ Committed as `1c2ec39` (four files: `backup-manifest.schema.json`,
 `restore-local.sh`, `phase0-evidence-schema.test.ts`,
 `phase0-restore.test.ts`).
 
+### Second stop-time review follow-up (commit `b0471dd`)
+
+A second automatic Stop-time review ran against the `1c2ec39` diff and found
+that it was incomplete: `1c2ec39` only sanitized `restore-local.sh`'s
+parsing. The actual protected `.github/workflows/restore-drill.yml` runs its
+own **separate** unguarded `JSON.parse` of the same decrypted manifest one
+step earlier, in the "Verify decrypted manifest binding" step (lines
+108–132 before this fix), before `restore-local.sh` is ever invoked. A
+malformed manifest reaching that step would print a raw Node stack trace and
+the GitHub Actions runner's temp path (`$RUNNER_TEMP`) straight to the job
+log — the class of leak already fixed twice elsewhere in this same task,
+just in a third, independent code path. The regression test added in
+`1c2ec39` was named "...even when a protected workflow sets
+RESTORE_EXPECTED_REPO_SHA" but only simulated that environment variable
+against `restore-local.sh` directly; it never exercised the workflow's own
+parse step, so it gave false confidence.
+
+**Fix.** Extracted the inline `node --input-type=module -` heredoc into
+`scripts/backup/verify-manifest-binding.mjs`, following this codebase's
+established pattern (`create-manifest.mjs`, `create-database-inventory.mjs`,
+`compare-restored-inventory.mjs`) of a standalone script with a top-level
+`try/catch` collapsing every failure mode — malformed JSON, missing file,
+`repo_sha` mismatch, `b2_prefix` mismatch — into one sanitized
+`RESTORE_MANIFEST_BINDING_INVALID` sentinel. `restore-drill.yml`'s step now
+calls this script instead of embedding the parse. This is a genuine
+behavioral improvement, not just a refactor: the workflow step previously
+had no sanitization at all.
+
+**TDD, verified live.** Added tests that spawn the new script directly
+(match, mismatched `repo_sha`, mismatched `b2_prefix`, malformed JSON, empty
+file, missing manifest file). To confirm these tests actually catch the
+defect rather than being tautological, the safe implementation was
+temporarily swapped for a copy of the original unguarded logic and rerun —
+it reproduced a real leaked stack trace including the absolute
+`file:///.../scripts/backup/verify-manifest-binding.mjs:13:23` path, exactly
+the class of leak this fix closes — then the safe version was restored and
+reconfirmed GREEN.
+
+**Verification.** `pnpm typecheck` clean; scoped ESLint
+(`verify-manifest-binding.mjs`, `phase0-restore.test.ts`) 0
+errors/warnings; scoped Prettier clean (including the workflow YAML);
+`git diff --check` clean; full `phase0-restore.test.ts` 32/32 passed; full
+`pnpm phase0:contracts` 11 files / 133 tests passed. Docker: 0 orphaned
+restore containers, the pre-existing 12 orphaned restore networks
+unchanged, shared `colorplay` stack untouched. No new Codex review round
+was started — same Stop-time review cycle, fixed and verified directly.
+
+Committed as `b0471dd` (three files: `restore-drill.yml`,
+`verify-manifest-binding.mjs` (new), `phase0-restore.test.ts`).
+
 **Task 14 / Task 14A status boundary.** This task only advances *local*
 correctness of the restore harness's artifact classification. It does not
 change, re-verify, or supersede the hosted backup/restore evidence recorded

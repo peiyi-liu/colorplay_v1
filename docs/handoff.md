@@ -56,3 +56,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 下一步：同上一段——**Task 14 overall 仍非 complete，Task 15 仍不得開始**；hosted proof 仍待 owner 授權。
 - Blocker／待決策：同上一段。
 - 相關檔案／commit：`docs/deployment/backup-manifest.schema.json`、`scripts/backup/restore-local.sh`、`tests/contracts/phase0-evidence-schema.test.ts`、`tests/contracts/phase0-restore.test.ts`、`.superpowers/sdd/phase0-task-14-report.md`、`.superpowers/sdd/progress.md`；commit `1c2ec39`。
+
+## 2026-08-10 00:05 [Claude Code] — Task 14A 第二輪 stop-time review follow-up（commit b0471dd）
+
+- 做了什麼：第二次自動 Stop-time review 對上一段 `1c2ec39` diff 找出還是不完整——`1c2ec39` 只消毒了 `restore-local.sh` 的解析，但實際的 protected `.github/workflows/restore-drill.yml` 在呼叫 `restore-local.sh`**之前**、"Verify decrypted manifest binding" step 裡有自己獨立、未受保護的 `JSON.parse`（inline node heredoc），malformed manifest 到這裡就洩漏 Node stack trace 與 `$RUNNER_TEMP` runner 路徑——同一類問題在第三個獨立程式碼路徑又出現一次；`1c2ec39` 那個測試名稱聲稱涵蓋「protected workflow」但其實只是模擬環境變數直接呼叫 `restore-local.sh`，從未真正執行過 workflow 自己這段解析。修復：把 inline heredoc 抽成獨立腳本 `scripts/backup/verify-manifest-binding.mjs`（遵循既有 `create-manifest.mjs` 等 pattern：頂層 try/catch，所有失敗統一收斂成消毒過的 `RESTORE_MANIFEST_BINDING_INVALID`），workflow 改呼叫它。新增測試直接 spawn 腳本驗證各種失敗情境；為確認測試真的有效，暫時把安全實作換回原始未受保護版本重跑，真實重現洩漏完整 `file://` 路徑與 stack trace，再換回安全版本確認 GREEN。Verification 全綠；`phase0-restore.test.ts` 32/32；`phase0:contracts` 11/133；Docker 0 殘留容器、既有 12 個殘留 network 不變、共享 stack 未受影響。同一輪 Stop-time review 週期，未啟動新的 Codex review round。
+- 下一步：同上一段——**Task 14 overall 仍非 complete，Task 15 仍不得開始**；hosted proof 仍待 owner 授權。
+- Blocker／待決策：同上一段。
+- 相關檔案／commit：`.github/workflows/restore-drill.yml`、`scripts/backup/verify-manifest-binding.mjs`（新增）、`tests/contracts/phase0-restore.test.ts`、`.superpowers/sdd/phase0-task-14-report.md`、`.superpowers/sdd/progress.md`；commit `b0471dd`。
