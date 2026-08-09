@@ -175,6 +175,53 @@ describe('AdminRevealDialog', () => {
     expect(screen.queryByTestId('reveal-plaintext')).not.toBeInTheDocument();
   });
 
+  it('mints a fresh idempotency key after a replay so the advised re-request is not a guaranteed conflict', async () => {
+    const user = userEvent.setup();
+    vi.mocked(invokeAdminCommand)
+      .mockResolvedValueOnce({
+        outcome: 'replayed',
+        result: { column: 'full_name', resource: 'profiles' },
+      })
+      .mockResolvedValueOnce({ outcome: 'ok', value: PLAINTEXT });
+    renderDialog();
+
+    await submitPurpose(user);
+    await waitFor(() => {
+      expect(invokeAdminCommand).toHaveBeenCalledTimes(1);
+    });
+    // UI 叫使用者「以新的目的重新申請」;新目的 = 不同 request hash,
+    // 沿用舊 key 必然撞 IDEMPOTENCY_CONFLICT(spec §8.2)
+    await user.clear(screen.getByLabelText('揭露目的'));
+    await user.type(
+      screen.getByLabelText('揭露目的'),
+      '稽核抽查需要核對本人姓名',
+    );
+    await user.click(screen.getByRole('button', { name: '揭露' }));
+    await waitFor(() => {
+      expect(invokeAdminCommand).toHaveBeenCalledTimes(2);
+    });
+
+    const calls = vi.mocked(invokeAdminCommand).mock.calls;
+    const [first, second] = calls;
+    if (!first || !second) throw new Error('expected two calls');
+    expect(second[1]).not.toBe(first[1]);
+  });
+
+  it('reports an empty column instead of silently doing nothing when the value is null', async () => {
+    const user = userEvent.setup();
+    vi.mocked(invokeAdminCommand).mockResolvedValueOnce({
+      outcome: 'ok',
+      value: null,
+    });
+    renderDialog();
+
+    await submitPurpose(user);
+
+    expect(await screen.findByText(/此欄位目前是空值/u)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '關閉' })).toBeInTheDocument();
+    expect(screen.queryByTestId('reveal-plaintext')).not.toBeInTheDocument();
+  });
+
   it('keeps the dialog open and explains a typed denial', async () => {
     const user = userEvent.setup();
     vi.mocked(invokeAdminCommand).mockResolvedValueOnce({

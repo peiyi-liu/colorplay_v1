@@ -53,6 +53,9 @@ const EMPTY_FILTERS: AuditFilters = {
 
 const orNull = (value: string): string | null => (value === '' ? null : value);
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+
 // datetime-local 是本地時間字串;RPC 參數是 timestamptz,統一轉 ISO 再送,
 // 避免瀏覽器時區被當成 UTC 解讀而查錯區間。
 const toIso = (value: string): string | null => {
@@ -72,6 +75,7 @@ const toIso = (value: string): string | null => {
 export function AdminAuditPage() {
   const [draft, setDraft] = useState<AuditFilters>(EMPTY_FILTERS);
   const [applied, setApplied] = useState<AuditFilters>(EMPTY_FILTERS);
+  const [actorError, setActorError] = useState(false);
 
   const query = useQuery({
     queryFn: () =>
@@ -96,7 +100,21 @@ export function AdminAuditPage() {
       className="admin-audit__filters"
       onSubmit={(event) => {
         event.preventDefault();
-        setApplied(draft);
+        // p_actor_principal_id 是 uuid 參數:送出畸形值會讓 PostgREST 直接
+        // 丟型別轉換錯誤(非 typed denial),頁面只剩「重試」而重試又送同一個
+        // 壞值。先在前端擋住,server 仍然是最終權威。
+        if (
+          draft.actorPrincipalId !== '' &&
+          !UUID_PATTERN.test(draft.actorPrincipalId.trim())
+        ) {
+          setActorError(true);
+          return;
+        }
+        setActorError(false);
+        setApplied({
+          ...draft,
+          actorPrincipalId: draft.actorPrincipalId.trim(),
+        });
       }}
     >
       <div>
@@ -124,6 +142,8 @@ export function AdminAuditPage() {
       <div>
         <label htmlFor="admin-audit-actor">Actor principal</label>
         <input
+          aria-describedby={actorError ? 'admin-audit-actor-error' : undefined}
+          aria-invalid={actorError ? 'true' : 'false'}
           id="admin-audit-actor"
           onChange={(event) => {
             setDraft((current) => ({
@@ -134,6 +154,11 @@ export function AdminAuditPage() {
           type="text"
           value={draft.actorPrincipalId}
         />
+        {actorError ? (
+          <p id="admin-audit-actor-error" role="alert">
+            Actor principal 必須是有效的 UUID
+          </p>
+        ) : null}
       </div>
       <div>
         <label htmlFor="admin-audit-action">動作</label>
@@ -191,6 +216,9 @@ export function AdminAuditPage() {
         ) : (
           <p role="alert">稽核查詢失敗，請稍後重試。</p>
         )}
+        {/* 表單必須留著:失敗常常就是某個 filter 值造成的,只給「重試」
+            會把同一個壞值再送一次,使用者永遠出不來。 */}
+        {filterForm}
         <button
           className="secondary-action"
           onClick={() => {

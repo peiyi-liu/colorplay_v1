@@ -52,7 +52,11 @@ export function AdminRevealDialog({
     crypto.randomUUID(),
   );
   const [submitting, setSubmitting] = useState(false);
-  const [plaintext, setPlaintext] = useState<string | null>(null);
+  // null = 尚未揭露;{ value: null } = 已揭露且該欄本來就是空值。兩者必須
+  // 分開,否則 NULL 的 personal 欄會讓使用者按下「揭露」後畫面毫無反應。
+  const [revealResult, setRevealResult] = useState<{
+    value: string | null;
+  } | null>(null);
   // replay:server 的 redacted result receipt 依設計不含明文(只有首次
   // 'ok' 才附 value),不能假裝成功顯示空白,必須誠實要求重新核准。
   const [replayed, setReplayed] = useState(false);
@@ -122,12 +126,16 @@ export function AdminRevealDialog({
         },
       );
       if (response.outcome === 'ok') {
-        setPlaintext(
-          typeof response.value === 'string' ? response.value : null,
-        );
+        setRevealResult({
+          value: typeof response.value === 'string' ? response.value : null,
+        });
         return;
       }
       if (response.outcome === 'replayed') {
+        // replay 的 redacted receipt 不含明文,UI 會請使用者以新的目的重新
+        // 申請 —— 新目的就是新的 canonical request hash,沿用同一把 key
+        // 必然撞 IDEMPOTENCY_CONFLICT(spec §8.2),所以這裡就換新 key。
+        setIdempotencyKey(crypto.randomUUID());
         setReplayed(true);
         return;
       }
@@ -154,7 +162,7 @@ export function AdminRevealDialog({
     }
   });
 
-  const revealed = plaintext !== null;
+  const revealed = revealResult !== null;
 
   return (
     <div className="admin-command-dialog__backdrop">
@@ -172,8 +180,16 @@ export function AdminRevealDialog({
 
         {revealed ? (
           <div className="admin-reveal-dialog__result">
-            <p role="status">已揭露 {column}，關閉後即不可再查看。</p>
-            <code data-testid="reveal-plaintext">{plaintext}</code>
+            {revealResult.value === null ? (
+              <p role="status">
+                已揭露 {column}：此欄位目前是空值（資料庫中沒有內容）。
+              </p>
+            ) : (
+              <>
+                <p role="status">已揭露 {column}，關閉後即不可再查看。</p>
+                <code data-testid="reveal-plaintext">{revealResult.value}</code>
+              </>
+            )}
             <button
               className="primary-action"
               data-primary-action="true"

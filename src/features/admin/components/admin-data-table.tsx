@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 export interface AdminDataTableColumn {
   header: string;
   key: string;
@@ -14,6 +16,9 @@ export interface AdminDataTableProps {
   onLoadMore?: (cursor: string) => void;
   onReveal?: (rowIndex: number, column: string) => void;
   pageSizeLimit?: number;
+  /** 由呼叫端渲染(明細連結等);表格本身保持與 router 解耦。 */
+  rowActions?: (rowIndex: number) => ReactNode;
+  rowActionsHeader?: string;
   rows: readonly Record<string, unknown>[];
 }
 
@@ -46,6 +51,8 @@ export function AdminDataTable({
   onLoadMore,
   onReveal,
   pageSizeLimit,
+  rowActions,
+  rowActionsHeader = '操作',
   rows,
 }: Readonly<AdminDataTableProps>) {
   if (rows.length === 0) {
@@ -69,6 +76,7 @@ export function AdminDataTable({
                 {column.header}
               </th>
             ))}
+            {rowActions ? <th scope="col">{rowActionsHeader}</th> : null}
           </tr>
         </thead>
         <tbody>
@@ -92,6 +100,7 @@ export function AdminDataTable({
                   ) : null}
                 </td>
               ))}
+              {rowActions ? <td>{rowActions(rowIndex)}</td> : null}
             </tr>
           ))}
         </tbody>

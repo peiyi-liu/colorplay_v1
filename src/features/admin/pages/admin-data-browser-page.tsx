@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import {
@@ -66,6 +66,22 @@ export function AdminDataBrowserPage() {
   const [draft, setDraft] = useState<AppliedQuery>(EMPTY_QUERY);
   const [applied, setApplied] = useState<AppliedQuery>(EMPTY_QUERY);
   const [revealTarget, setRevealTarget] = useState<RevealTarget | null>(null);
+
+  // `/admin/data/:domain/:resource` 換 params 時 React Router 會**重用**同一個
+  // 元件實例,useState 不會重置。若不主動清掉:
+  //  1. 已揭露的明文與開著的 reveal dialog 會活過資源切換(明文外洩到另一個
+  //     資源的畫面上),且舊的 row/column 會跟新的 domain/resource 混搭送出;
+  //  2. 舊資源的 filter/sort 欄對新資源可能根本不合法,直接吃 COLUMN_NOT_ALLOWED。
+  // 用渲染期調整狀態(React 官方 pattern,同 admin-shell.tsx 慣例),比 effect
+  // 更早生效,不會先用舊 state 渲染一幀。
+  const routeKey = `${domain}/${resource}`;
+  const [previousRouteKey, setPreviousRouteKey] = useState(routeKey);
+  if (previousRouteKey !== routeKey) {
+    setPreviousRouteKey(routeKey);
+    setDraft(EMPTY_QUERY);
+    setApplied(EMPTY_QUERY);
+    setRevealTarget(null);
+  }
 
   const filters =
     applied.filterColumn !== '' && applied.filterValue !== ''
@@ -236,6 +252,18 @@ export function AdminDataBrowserPage() {
         caption={`${domain}/${resource}`}
         columns={columns}
         pageSizeLimit={list.data.page_size_limit ?? 50}
+        rowActions={(rowIndex) => {
+          // spec §1.3.5:具 id 欄的表允許裸 uuid 簡寫作為 rowKey。複合主鍵表
+          // 的 PK 欄名權威在 DB schema(執行期由 pg_catalog 解析),沒有匯出到
+          // 前端 catalog,因此前端無法自行組出 canonical row key —— 這些表
+          // 不提供自動連結(見 checkpoint 記錄待決),而不是產生錯的連結。
+          const rowId = rows[rowIndex]?.id;
+          if (typeof rowId !== 'string') return null;
+          return (
+            <Link to={`/admin/data/${domain}/${resource}/${rowId}`}>明細</Link>
+          );
+        }}
+        rowActionsHeader="明細"
         rows={rows}
         {...(personalColumns.length > 0
           ? {

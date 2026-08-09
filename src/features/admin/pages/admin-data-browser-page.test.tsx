@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { adminRpc, invokeAdminCommand } from '../api/admin-client';
@@ -41,6 +41,21 @@ const okRows = [
 ];
 
 const okResponse = { outcome: 'ok', page_size_limit: 50, rows: okRows };
+
+/** 在同一個 route pattern 內只改 params,重現 React Router 重用元件實例的情況。 */
+function SwitchResourceButton() {
+  const navigate = useNavigate();
+  return (
+    <button
+      onClick={() => {
+        void navigate('/admin/data/classrooms/classrooms');
+      }}
+      type="button"
+    >
+      切換資源
+    </button>
+  );
+}
 
 function renderPage(path = '/admin/data/users/profiles') {
   const queryClient = new QueryClient({
@@ -306,6 +321,115 @@ describe('AdminDataBrowserPage', () => {
         .map((entry) => entry.state.data),
     );
     expect(cacheDump).not.toContain('陳小美');
+  });
+
+  it('drops revealed plaintext and the open dialog when the route switches resource', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc).mockResolvedValue(okResponse);
+    vi.mocked(invokeAdminCommand).mockResolvedValue({
+      outcome: 'ok',
+      value: '陳小美',
+    });
+    render(
+      <MemoryRouter initialEntries={['/admin/data/users/profiles']}>
+        <QueryClientProvider
+          client={
+            new QueryClient({
+              defaultOptions: {
+                mutations: { retry: false },
+                queries: { retry: false },
+              },
+            })
+          }
+        >
+          <SwitchResourceButton />
+          <Routes>
+            <Route
+              element={<AdminDataBrowserPage />}
+              path="/admin/data/:domain/:resource"
+            />
+          </Routes>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('小美');
+    const secondRow = screen.getByText('小美').closest('tr') as HTMLElement;
+    await user.click(
+      within(secondRow).getByRole('button', { name: '揭露 full_name' }),
+    );
+    const dialog = await screen.findByRole('dialog');
+    await user.type(
+      within(dialog).getByLabelText('揭露目的'),
+      '家長來電確認學生身分需要核對',
+    );
+    await user.click(within(dialog).getByRole('button', { name: '揭露' }));
+    expect(await screen.findByText('陳小美')).toBeInTheDocument();
+
+    // 同一個 route pattern 只換 params:React Router 會重用元件實例,
+    // 明文與舊的 row/column 目標絕不能存活到新資源
+    await user.click(screen.getByRole('button', { name: '切換資源' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect(screen.queryByText('陳小美')).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toContain('陳小美');
+  });
+
+  it('resets filter and sort state when the route switches resource', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc).mockResolvedValue(okResponse);
+    render(
+      <MemoryRouter initialEntries={['/admin/data/users/profiles']}>
+        <QueryClientProvider
+          client={
+            new QueryClient({
+              defaultOptions: {
+                mutations: { retry: false },
+                queries: { retry: false },
+              },
+            })
+          }
+        >
+          <SwitchResourceButton />
+          <Routes>
+            <Route
+              element={<AdminDataBrowserPage />}
+              path="/admin/data/:domain/:resource"
+            />
+          </Routes>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByText('小明');
+
+    await user.selectOptions(screen.getByLabelText('篩選欄位'), 'role');
+    await user.type(screen.getByLabelText('篩選值'), 'teacher');
+    await user.click(screen.getByRole('button', { name: '套用' }));
+
+    // role 是 profiles 的可篩選欄,對 classrooms 不成立;沿用舊 filter 會直接
+    // 讓新資源的查詢吃到 COLUMN_NOT_ALLOWED
+    await user.click(screen.getByRole('button', { name: '切換資源' }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('篩選值')).toHaveValue('');
+    });
+    const lastCall = vi.mocked(adminRpc).mock.calls.at(-1);
+    if (!lastCall) throw new Error('expected an admin_list_resource call');
+    expect(lastCall[1].p_resource).toBe('classrooms');
+    expect(lastCall[1].p_filters).toEqual({});
+  });
+
+  it('links each row to its detail route using the bare uuid shorthand', async () => {
+    vi.mocked(adminRpc).mockResolvedValue(okResponse);
+    renderPage();
+    await screen.findByText('小明');
+
+    const firstRow = screen.getByText('小明').closest('tr') as HTMLElement;
+    expect(
+      within(firstRow).getByRole('link', { name: '明細' }),
+    ).toHaveAttribute('href', '/admin/data/users/profiles/row-1');
   });
 
   it('exposes no export or download control (spec §7)', async () => {

@@ -238,6 +238,11 @@ export function createAppRouter() {
                             import('../../features/admin/pages/admin-data-browser-page'),
                         },
                         {
+                          path: '/admin/data/:domain/:resource/:rowKey',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-data-detail-page'),
+                        },
+                        {
                           path: '/admin/audit',
                           lazy: () =>
                             import('../../features/admin/pages/admin-audit-page'),

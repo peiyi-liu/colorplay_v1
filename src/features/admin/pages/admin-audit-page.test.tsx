@@ -121,7 +121,10 @@ describe('AdminAuditPage', () => {
 
     await user.type(screen.getByLabelText('起始時間'), '2026-08-09T00:00');
     await user.type(screen.getByLabelText('結束時間'), '2026-08-09T23:59');
-    await user.type(screen.getByLabelText('Actor principal'), 'principal-1');
+    await user.type(
+      screen.getByLabelText('Actor principal'),
+      '3f7c1b2e-4a5d-4c6e-8f90-1a2b3c4d5e6f',
+    );
     await user.type(screen.getByLabelText('動作'), 'deactivate_admin');
     await user.type(screen.getByLabelText('目標類型'), 'admin_command');
     await user.type(screen.getByLabelText('結果'), 'success');
@@ -132,7 +135,7 @@ describe('AdminAuditPage', () => {
         'admin_query_audit',
         expect.objectContaining({
           p_action: 'deactivate_admin',
-          p_actor_principal_id: 'principal-1',
+          p_actor_principal_id: '3f7c1b2e-4a5d-4c6e-8f90-1a2b3c4d5e6f',
           p_result: 'success',
           p_target_type: 'admin_command',
         }),
@@ -202,6 +205,61 @@ describe('AdminAuditPage', () => {
         '此欄位不允許這項操作',
       );
     });
+  });
+
+  it('keeps the filter form editable when the query fails, so a bad filter can be corrected', async () => {
+    vi.mocked(adminRpc).mockRejectedValue(
+      new Error('invalid input syntax for type uuid'),
+    );
+    renderPage();
+
+    expect(
+      await screen.findByText('稽核查詢失敗，請稍後重試。'),
+    ).toBeInTheDocument();
+    // 只留「重試」等於把同一個壞值再送一次,使用者永遠出不來
+    expect(screen.getByLabelText('Actor principal')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '查詢' })).toBeInTheDocument();
+  });
+
+  it('rejects a malformed actor principal before spending a request', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc).mockResolvedValue({ outcome: 'ok', rows: auditRows });
+    renderPage();
+    await screen.findByText('admin_reveal_field');
+    const callsBefore = vi.mocked(adminRpc).mock.calls.length;
+
+    await user.type(screen.getByLabelText('Actor principal'), 'not-a-uuid');
+    await user.click(screen.getByRole('button', { name: '查詢' }));
+
+    expect(
+      await screen.findByText('Actor principal 必須是有效的 UUID'),
+    ).toBeInTheDocument();
+    expect(vi.mocked(adminRpc).mock.calls.length).toBe(callsBefore);
+  });
+
+  it('accepts a well-formed actor principal uuid', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc).mockResolvedValue({ outcome: 'ok', rows: auditRows });
+    renderPage();
+    await screen.findByText('admin_reveal_field');
+
+    await user.type(
+      screen.getByLabelText('Actor principal'),
+      '3f7c1b2e-4a5d-4c6e-8f90-1a2b3c4d5e6f',
+    );
+    await user.click(screen.getByRole('button', { name: '查詢' }));
+
+    await waitFor(() => {
+      expect(adminRpc).toHaveBeenCalledWith(
+        'admin_query_audit',
+        expect.objectContaining({
+          p_actor_principal_id: '3f7c1b2e-4a5d-4c6e-8f90-1a2b3c4d5e6f',
+        }),
+      );
+    });
+    expect(
+      screen.queryByText('Actor principal 必須是有效的 UUID'),
+    ).not.toBeInTheDocument();
   });
 
   it('redirects to challenge and refetches session state on a stale privileged session', async () => {
