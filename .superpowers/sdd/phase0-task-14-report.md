@@ -227,6 +227,133 @@ covered by the focused restore/backup rerun above.
 
 Committed as `d274da0` (three files, no `.env`/secrets/artifacts).
 
+## Task 14A: explicit artifact_kind discriminant (2026-08-09, commit `a69f87b`)
+
+Owner-approved independent, small-scope corrective task — **not** a second
+round of Task 14 review. Baseline `970f3df`, working tree clean at start,
+Local Supabase exclusive window already ended (Phase 1 held it; this task
+never touched `pnpm test:db`, `supabase db reset/start/stop`, or any
+port-54322 operation).
+
+**Problem.** The Task 14 fix above made `restore-local.sh` correctly report
+`skipped` when it skipped the production probe path, but *deciding* whether
+to skip it still relied on an implicit signal: whether
+`database-inventory.json` happened to be present. The `else` branch's
+fail-closed behavior against real production schemas was accidental — it
+only failed because `public.synthetic_fixture` doesn't exist in a real
+schema, not because of an explicit check.
+
+**Manifest contract change.** `create-manifest.mjs` now requires a new
+`artifact_kind` field (`'production' | 'synthetic_fixture'`), added to
+`INPUT_FIELDS` and validated against an explicit `ARTIFACT_KINDS` set;
+`create-manifest.d.mts`'s `BackupManifest` type carries the same union.
+Both `create-backup.sh` paths write the corresponding literal
+(`create_production_backup` → `'production'`; `create_synthetic_fixture` →
+`'synthetic_fixture'`). This is a **backward-incompatible** manifest change,
+deliberately: any backup produced before this commit — including the
+existing `production/2026/08/07/backup-20260807T074026Z/` evidence cited
+earlier in this report — lacks `artifact_kind` and will now be rejected by
+`restore-local.sh` as `RESTORE_ARTIFACT_KIND_INVALID` (a missing field is
+indistinguishable from an unknown one, and both must fail closed per this
+task's brief). No `schema_version` bump: `artifact_kind` is a new required
+field on the existing v1 shape, not a semantic change to any existing field,
+and `restore-local.sh` never ran the manifest through `create-manifest.mjs`'s
+validator in the first place (it reads fields directly from decrypted JSON),
+so there is no version-dispatch path to add. Re-running a fresh production
+backup after this commit is the only way to produce a restorable artifact
+going forward — this does not retroactively invalidate the Task 14
+backup/restore *evidence* already recorded above, only future local restore
+drills against artifacts made before this fix.
+
+**restore-local.sh classification.** Reads `artifact_kind` from the decrypted
+manifest immediately after the optional repo-SHA check and validates it
+entirely inside one `node -e` invocation (parse in a `try/catch`, exact
+string comparison against `'production'`/`'synthetic_fixture'`, stderr
+suppressed with `2>/dev/null`); any parse failure or non-matching value exits
+1 and the shell side turns that into `fail 'RESTORE_ARTIFACT_KIND_INVALID'`.
+After all dump files are decrypted (still before `supabase start`, i.e.
+before any schema or application probe), `artifact_kind == 'production'` sets
+`application_probe_required='true'` and requires
+`decrypted/database-inventory.json` to exist or aborts with
+`RESTORE_DATABASE_INVENTORY_REQUIRED`; any other classified kind sets
+`application_probe_required='false'`. The old `if [[ -f
+.../database-inventory.json ]]` inference further down was deleted and
+replaced with a direct read of the already-decided `application_probe_required`
+flag — checksum, signature, role-inventory, authorization-probe, and
+application-startup logic are otherwise untouched.
+
+**TDD.** Added a matrix to `phase0-restore.test.ts`: production+inventory
+present advances past classification (proven by short-circuiting the
+expensive `supabase start` step with a fake `pnpm` binary that always fails,
+so the assertion is "reached stack-start, not blocked earlier" rather than a
+full end-to-end happy path — constructing a fixture that could pass the real
+authorization-probe/`authorization_sha256` comparison would require a live
+Postgres instance this task's Local-Supabase restriction rules out);
+production+missing-inventory rejects; missing/unknown/non-string/empty
+`artifact_kind` rejects; and — added after the review finding below —
+trailing-newline and trailing-whitespace `artifact_kind` values, and a
+malformed (non-JSON) manifest, both reject. `phase0-evidence-schema.test.ts`
+gained matching manifest-schema cases (missing/unknown/non-string
+`artifact_kind` rejected, `synthetic_fixture` accepted, `artifact_kind`
+echoed in the written manifest). All new tests were RED before the
+implementation (one RED discovery: the old code doesn't fail fast on a
+missing/invalid `artifact_kind` — it falls through to the expensive `else`
+branch and starts a real disposable Supabase stack, which is itself evidence
+of the problem this task fixes) and GREEN after.
+
+**Single review round.** `codex review` (non-interactive Codex CLI, scoped
+to exactly the six changed files), one reviewer, one round. Finding (P1,
+CONFIRMED with a live repro): Bash command substitution strips a trailing
+newline, so a manifest with `artifact_kind: "synthetic_fixture\n"` was
+wrongly accepted by the original `case` statement instead of failing closed;
+a malformed (non-JSON) manifest also let an uncaught Node exception print a
+raw stack trace to stderr instead of a sanitized `fail()` sentinel. **Fix**:
+moved the entire validation (JSON parse in `try/catch`, exact equality
+against the two allowed literals) inside the Node process itself with stderr
+suppressed, so the shell side only ever sees either the exact clean string or
+a non-zero exit — no substitution-driven normalization can smuggle an invalid
+value through. Verified RED (the two new test cases: trailing-newline value,
+malformed JSON) then GREEN after the fix; no second review round was
+started per this task's rule.
+
+**Scoped verification (final).** ShellCheck clean on both changed `.sh`
+files; `pnpm typecheck` clean; scoped ESLint (`create-manifest.mjs`,
+`phase0-evidence-schema.test.ts`, `phase0-restore.test.ts`) 0
+errors/warnings; scoped Prettier clean; `git diff --check` clean;
+`phase0-restore.test.ts` + `phase0-backup.test.ts` + `phase0-evidence-schema.test.ts`
+together 58/58 passed; full `pnpm phase0:contracts` 11 files / 125 tests
+passed. Did not run `pnpm test:db`, `supabase db reset/start/stop`, full
+`pnpm vitest run`, `pnpm test:e2e`, `pnpm build`, or any Docker cleanup, per
+this task's explicit scope limits.
+
+**Docker side effect (disclosed, not cleaned up).** Vitest's default 5s
+per-test timeout does not kill the underlying spawned `bash` child process
+when a test times out. Several of this task's early RED runs (before the
+fix made classification fast) hit that timeout while `restore-local.sh` was
+mid-way through starting a real disposable Supabase stack, leaving orphaned
+`colorplay_restore_<pid>` containers running in the background — at one
+point 18 containers across 5 different stacks were observed simultaneously,
+which caused a knock-on transient failure in an unrelated, unmodified
+existing test (`restores the encrypted synthetic set...`) due to Docker
+resource contention; a manual rerun in isolation confirmed that test's logic
+was never broken. All orphaned containers from this task have since exited
+and self-cleaned on their own (confirmed 0 remaining before this commit).
+The pre-existing 12 orphaned `supabase_network_colorplay_restore_<pid>`
+networks (documented in the Task 14 section above) are unchanged — still 12,
+not cleaned up, no new ones added. No Docker cleanup command was run in this
+task, per its explicit restriction.
+
+Committed as `a69f87b` (six files: `create-backup.sh`,
+`create-manifest.d.mts`, `create-manifest.mjs`, `restore-local.sh`,
+`phase0-evidence-schema.test.ts`, `phase0-restore.test.ts`).
+
+**Task 14 / Task 14A status boundary.** This task only advances *local*
+correctness of the restore harness's artifact classification. It does not
+change, re-verify, or supersede the hosted backup/restore evidence recorded
+in the "Backup and restore evidence" section above, and it does not clear
+the "Remaining boundary" section's hosted-proof requirements. **Task 14
+overall remains not complete; Task 15 must not start.**
+
 ## Verification
 
 - `pnpm test:db`: 48 pgTAP files / 1080 assertions; runtime smoke 3/3;
