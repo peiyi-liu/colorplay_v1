@@ -332,3 +332,6 @@ opus 對整條 `feature/v2-major-update` 分支（tip `c7d03da`）跑的最終�
 教師導覽分層/active state 精修、`aria-controls` 懸空（`hud-menu-panel` id 在面板未展開時不存在於 DOM，`aria-controls` 短暫指向不存在的 id）、skip-link `position:absolute` 邊界情況（極端捲動狀態下的錨定行為）、toast 錨點搬移進 AppShell 樹（F7(b) 記載的 design-debt）、`.hud-menu` 點外部關閉／focus-trap（目前只有 Escape 關閉，未攔截點擊面板外部或 Tab 循環）。
 
 **FINAL-REVIEW FIX WAVE COMPLETE.**
+
+---
+**Controller correction (post-final-review):** fix-wave 報告的 `1440x900-teacher` 量測列誤標——實際擷取的是教師儀表板卡片（教學分析›/班級管理›），非 .hud-command__nav 的 post-fix 再量測。無殘留風險：教師 4 項合計約 356px、最寬 103px，遠小於最窄行寬 279px，wrap 安全（opus 複審已驗算）。

@@ -1,6 +1,6 @@
 # Phase 0 Environment and Release Foundation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+**For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 建立 Local／Staging／Production 完整隔離、可重現 migration、每日 B2 加密備份、可稽核 Staging gate、同一 Vercel Production artifact 人工 promote、唯讀 smoke 與 web-only rollback 的 Phase 0 發布基礎。
 
