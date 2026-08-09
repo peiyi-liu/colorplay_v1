@@ -1,0 +1,319 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { adminRpc, invokeAdminCommand } from '../api/admin-client';
+import { useAdminSessionState } from '../hooks/use-admin-session-state';
+import { AdminDataBrowserPage } from './admin-data-browser-page';
+
+vi.mock('../api/admin-client', async () => {
+  const actual = await vi.importActual<typeof import('../api/admin-client')>(
+    '../api/admin-client',
+  );
+  return { ...actual, adminRpc: vi.fn(), invokeAdminCommand: vi.fn() };
+});
+vi.mock('../hooks/use-admin-session-state', () => ({
+  useAdminSessionState: vi.fn(),
+}));
+
+const okRows = [
+  {
+    created_at: '2026-08-01T00:00:00Z',
+    display_name: '小明',
+    full_name: '王＊＊',
+    id: 'row-1',
+    login_account: '＊＊＊123',
+    role: 'student',
+    updated_at: '2026-08-02T00:00:00Z',
+  },
+  {
+    created_at: '2026-08-01T00:00:00Z',
+    display_name: '小美',
+    full_name: '陳＊＊',
+    id: 'row-2',
+    login_account: '＊＊＊456',
+    role: 'teacher',
+    updated_at: '2026-08-02T00:00:00Z',
+  },
+];
+
+const okResponse = { outcome: 'ok', page_size_limit: 50, rows: okRows };
+
+function renderPage(path = '/admin/data/users/profiles') {
+  const queryClient = new QueryClient({
+    defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
+  });
+  function Wrapper({ children }: Readonly<{ children: ReactNode }>) {
+    return (
+      <MemoryRouter initialEntries={[path]}>
+        <QueryClientProvider client={queryClient}>
+          <Routes>
+            <Route element={children} path="/admin/data/:domain/:resource" />
+            <Route element={<p>challenge 頁</p>} path="/admin/mfa/challenge" />
+          </Routes>
+        </QueryClientProvider>
+      </MemoryRouter>
+    );
+  }
+  render(<AdminDataBrowserPage />, { wrapper: Wrapper });
+  return queryClient;
+}
+
+describe('AdminDataBrowserPage', () => {
+  const refetch = vi.fn();
+
+  beforeEach(() => {
+    vi.mocked(adminRpc).mockReset();
+    vi.mocked(invokeAdminCommand).mockReset();
+    refetch.mockReset();
+    refetch.mockResolvedValue(undefined);
+    vi.mocked(useAdminSessionState).mockReturnValue({
+      isPending: false,
+      mfaAgeSeconds: 60,
+      refetch,
+      state: 'privileged',
+    } as unknown as ReturnType<typeof useAdminSessionState>);
+  });
+
+  it('shows a loading state before the resource resolves', () => {
+    vi.mocked(adminRpc).mockReturnValue(new Promise(() => undefined));
+    renderPage();
+
+    expect(screen.getByRole('status', { name: '頁面載入中' })).toBeVisible();
+  });
+
+  it('renders the server projection with personal columns kept masked', async () => {
+    vi.mocked(adminRpc).mockResolvedValue(okResponse);
+    renderPage();
+
+    expect(await screen.findByText('小明')).toBeInTheDocument();
+    // 遮罩值原樣呈現;頁面沒有任何地方出現明文
+    expect(screen.getByText('王＊＊')).toBeInTheDocument();
+    expect(screen.getByText('＊＊＊123')).toBeInTheDocument();
+    expect(
+      screen.getByRole('table', { name: /profiles/u }),
+    ).toBeInTheDocument();
+    expect(vi.mocked(adminRpc).mock.calls[0]?.[0]).toBe('admin_list_resource');
+    expect(vi.mocked(adminRpc).mock.calls[0]?.[1]).toMatchObject({
+      p_domain: 'users',
+      p_resource: 'profiles',
+    });
+  });
+
+  it('offers filter and sort options strictly from the catalog', async () => {
+    vi.mocked(adminRpc).mockResolvedValue(okResponse);
+    renderPage();
+    await screen.findByText('小明');
+
+    const filterSelect = screen.getByLabelText('篩選欄位');
+    const filterOptions = within(filterSelect)
+      .getAllByRole('option')
+      .map((option) => option.textContent);
+    expect(filterOptions).toEqual(['不篩選', 'role']);
+
+    const sortSelect = screen.getByLabelText('排序欄位');
+    const sortOptions = within(sortSelect)
+      .getAllByRole('option')
+      .map((option) => option.textContent);
+    expect(sortOptions).toEqual(['預設排序', 'display_name', 'created_at']);
+  });
+
+  it('re-queries with the catalog-shaped filter and sort arguments', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc).mockResolvedValue(okResponse);
+    renderPage();
+    await screen.findByText('小明');
+
+    await user.selectOptions(screen.getByLabelText('篩選欄位'), 'role');
+    await user.type(screen.getByLabelText('篩選值'), 'teacher');
+    await user.selectOptions(screen.getByLabelText('排序欄位'), 'created_at');
+    await user.click(screen.getByRole('button', { name: '套用' }));
+
+    await waitFor(() => {
+      expect(adminRpc).toHaveBeenCalledWith(
+        'admin_list_resource',
+        expect.objectContaining({
+          p_domain: 'users',
+          p_filters: { role: { eq: 'teacher' } },
+          p_resource: 'profiles',
+          p_sort: { column: 'created_at' },
+        }),
+      );
+    });
+  });
+
+  it('shows an unbrowsable message with the request id and no existence leak on RESOURCE_NOT_ALLOWED', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({
+      code: 'RESOURCE_NOT_ALLOWED',
+      outcome: 'denied',
+      request_id: 'req-abc-123',
+    });
+    renderPage('/admin/data/users/secret_table');
+
+    expect(await screen.findByText('此資源不可瀏覽')).toBeInTheDocument();
+    expect(screen.getByText('req-abc-123')).toBeInTheDocument();
+    // 不得洩漏資源是否存在
+    expect(screen.queryByText(/不存在|找不到|已刪除/u)).toBeNull();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  });
+
+  it('never fabricates a request id when the server did not return one', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({
+      code: 'RESOURCE_NOT_ALLOWED',
+      outcome: 'denied',
+    });
+    renderPage('/admin/data/users/secret_table');
+
+    expect(await screen.findByText('此資源不可瀏覽')).toBeInTheDocument();
+    expect(screen.queryByTestId('admin-request-id')).not.toBeInTheDocument();
+  });
+
+  it('translates other typed denials through the shared banner and allows retry', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({
+      code: 'COLUMN_NOT_ALLOWED',
+      outcome: 'denied',
+    });
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent(
+        '此欄位不允許這項操作',
+      );
+    });
+    expect(screen.getByRole('button', { name: '重試' })).toBeInTheDocument();
+  });
+
+  it('shows a retryable error when the list call throws', async () => {
+    vi.mocked(adminRpc).mockRejectedValue(new Error('network down'));
+    renderPage();
+
+    expect(
+      await screen.findByText('資料載入失敗，請稍後重試。'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '重試' })).toBeInTheDocument();
+  });
+
+  it('redirects to challenge and refetches session state on a stale privileged session', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({
+      code: 'STALE_PRIVILEGED_SESSION',
+      outcome: 'denied',
+    });
+    renderPage();
+
+    expect(await screen.findByText('challenge 頁')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(refetch).toHaveBeenCalled();
+    });
+  });
+
+  it('opens the reveal dialog scoped to the clicked row and column', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc).mockResolvedValue(okResponse);
+    vi.mocked(invokeAdminCommand).mockResolvedValue({
+      outcome: 'ok',
+      value: '陳小美',
+    });
+    renderPage();
+    await screen.findByText('小美');
+
+    const secondRow = screen.getByText('小美').closest('tr') as HTMLElement;
+    await user.click(
+      within(secondRow).getByRole('button', { name: '揭露 full_name' }),
+    );
+
+    const dialog = await screen.findByRole('dialog');
+    await user.type(
+      within(dialog).getByLabelText('揭露目的'),
+      '家長來電確認學生身分需要核對',
+    );
+    await user.click(within(dialog).getByRole('button', { name: '揭露' }));
+
+    await waitFor(() => {
+      expect(invokeAdminCommand).toHaveBeenCalledWith(
+        'admin_reveal_field',
+        expect.any(String),
+        expect.objectContaining({
+          column: 'full_name',
+          domain: 'users',
+          resource: 'profiles',
+          row_id: 'row-2',
+        }),
+      );
+    });
+  });
+
+  it('returns the cell to its mask once the reveal dialog closes', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc).mockResolvedValue(okResponse);
+    vi.mocked(invokeAdminCommand).mockResolvedValue({
+      outcome: 'ok',
+      value: '陳小美',
+    });
+    renderPage();
+    await screen.findByText('小美');
+
+    const secondRow = screen.getByText('小美').closest('tr') as HTMLElement;
+    await user.click(
+      within(secondRow).getByRole('button', { name: '揭露 full_name' }),
+    );
+    const dialog = await screen.findByRole('dialog');
+    await user.type(
+      within(dialog).getByLabelText('揭露目的'),
+      '家長來電確認學生身分需要核對',
+    );
+    await user.click(within(dialog).getByRole('button', { name: '揭露' }));
+    expect(await screen.findByText('陳小美')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '關閉' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect(screen.queryByText('陳小美')).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toContain('陳小美');
+    expect(screen.getByText('陳＊＊')).toBeInTheDocument();
+  });
+
+  it('keeps revealed plaintext out of the query cache entirely', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc).mockResolvedValue(okResponse);
+    vi.mocked(invokeAdminCommand).mockResolvedValue({
+      outcome: 'ok',
+      value: '陳小美',
+    });
+    const queryClient = renderPage();
+    await screen.findByText('小美');
+
+    const secondRow = screen.getByText('小美').closest('tr') as HTMLElement;
+    await user.click(
+      within(secondRow).getByRole('button', { name: '揭露 full_name' }),
+    );
+    const dialog = await screen.findByRole('dialog');
+    await user.type(
+      within(dialog).getByLabelText('揭露目的'),
+      '家長來電確認學生身分需要核對',
+    );
+    await user.click(within(dialog).getByRole('button', { name: '揭露' }));
+    expect(await screen.findByText('陳小美')).toBeInTheDocument();
+
+    const cacheDump = JSON.stringify(
+      queryClient
+        .getQueryCache()
+        .getAll()
+        .map((entry) => entry.state.data),
+    );
+    expect(cacheDump).not.toContain('陳小美');
+  });
+
+  it('exposes no export or download control (spec §7)', async () => {
+    vi.mocked(adminRpc).mockResolvedValue(okResponse);
+    renderPage();
+    await screen.findByText('小明');
+
+    expect(screen.queryByText(/匯出|下載|CSV|export|download/iu)).toBeNull();
+    expect(document.querySelector('a[download]')).toBeNull();
+  });
+});

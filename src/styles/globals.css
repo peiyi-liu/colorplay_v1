@@ -5708,6 +5708,79 @@ select#dashboard-classroom {
   font-family: monospace;
 }
 
+/* ── Admin 資料瀏覽器／稽核／健康頁(Task 13;spec §3.4、§7、§10)────── */
+
+/* .ui-table 是 width:100%,寬表會被壓縮而不是溢出,容器的 overflow-x 就永遠
+   不會觸發。min-width:max-content 讓表格照內容撐開 → 由 .ui-table-scroll
+   自己橫向捲動,頁面本體不水平捲動(spec §3.4)。同 .live-matrix-scroll 慣例。 */
+.admin-data-table__scroll .ui-table {
+  min-width: max-content;
+}
+
+/* 揭露鈕:44px 觸控目標下限(spec §3.4);與遮罩值同格並排。 */
+.admin-data-table__reveal {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--ink-700);
+  cursor: pointer;
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+  margin-left: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+}
+
+.admin-data-table__reveal:hover {
+  border-color: var(--ink-900);
+}
+
+.admin-data-browser__query,
+.admin-audit__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.admin-data-browser__query label,
+.admin-audit__filters label {
+  display: block;
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+
+.admin-data-browser__query input,
+.admin-data-browser__query select,
+.admin-audit__filters input,
+.admin-audit__filters select {
+  min-height: 44px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  font: inherit;
+  padding: 0 var(--space-3);
+}
+
+/* 揭露結果:明文只在這個框裡短暫出現,關閉即消失(spec §7)。 */
+.admin-reveal-dialog__result code {
+  display: block;
+  overflow-wrap: anywhere;
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--ink-100);
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  font-family: monospace;
+  font-size: 1.1rem;
+}
+
 /* ── JRPG 對話窗(ADR 0005;元件 src/components/ui/rpg-window.tsx) ── */
 .rpg-window {
   background: var(--pixel-night);

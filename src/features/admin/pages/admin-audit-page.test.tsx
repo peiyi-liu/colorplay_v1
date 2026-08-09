@@ -1,0 +1,219 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { adminRpc } from '../api/admin-client';
+import { useAdminSessionState } from '../hooks/use-admin-session-state';
+import { AdminAuditPage } from './admin-audit-page';
+
+vi.mock('../api/admin-client', async () => {
+  const actual = await vi.importActual<typeof import('../api/admin-client')>(
+    '../api/admin-client',
+  );
+  return { ...actual, adminRpc: vi.fn() };
+});
+vi.mock('../hooks/use-admin-session-state', () => ({
+  useAdminSessionState: vi.fn(),
+}));
+
+const auditRows = [
+  {
+    action: 'admin_reveal_field',
+    actor_principal_id: 'principal-1',
+    actor_type: 'admin',
+    admin_session_id: 'session-1',
+    before_after_redacted: { column: 'full_name', resource: 'profiles' },
+    compensates_event_id: null,
+    correlation_id: 'corr-1',
+    id: 'event-1',
+    mfa_age_seconds: 42,
+    occurred_at: '2026-08-09T10:00:00Z',
+    reason_or_purpose_redacted: '家長來電確認學生身分需要核對',
+    request_id: 'req-1',
+    result: 'success',
+    source_summary_redacted: null,
+    target_principal_id: null,
+    target_type: 'browser_resource',
+  },
+  {
+    action: 'deactivate_admin',
+    actor_principal_id: 'principal-1',
+    actor_type: 'admin',
+    admin_session_id: 'session-1',
+    before_after_redacted: { after: 'deactivated', before: 'active' },
+    compensates_event_id: null,
+    correlation_id: 'corr-2',
+    id: 'event-2',
+    mfa_age_seconds: 10,
+    occurred_at: '2026-08-09T09:00:00Z',
+    reason_or_purpose_redacted: '帳號異常需要立即停用處理',
+    request_id: 'req-2',
+    result: 'LAST_ADMIN_PROTECTED',
+    source_summary_redacted: null,
+    target_principal_id: 'principal-2',
+    target_type: 'admin_command',
+  },
+];
+
+function renderPage() {
+  const queryClient = new QueryClient({
+    defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
+  });
+  function Wrapper({ children }: Readonly<{ children: ReactNode }>) {
+    return (
+      <MemoryRouter initialEntries={['/admin/audit']}>
+        <QueryClientProvider client={queryClient}>
+          <Routes>
+            <Route element={children} path="/admin/audit" />
+            <Route element={<p>challenge 頁</p>} path="/admin/mfa/challenge" />
+          </Routes>
+        </QueryClientProvider>
+      </MemoryRouter>
+    );
+  }
+  return render(<AdminAuditPage />, { wrapper: Wrapper });
+}
+
+describe('AdminAuditPage', () => {
+  const refetch = vi.fn();
+
+  beforeEach(() => {
+    vi.mocked(adminRpc).mockReset();
+    refetch.mockReset();
+    refetch.mockResolvedValue(undefined);
+    vi.mocked(useAdminSessionState).mockReturnValue({
+      isPending: false,
+      mfaAgeSeconds: 60,
+      refetch,
+      state: 'privileged',
+    } as unknown as ReturnType<typeof useAdminSessionState>);
+  });
+
+  it('shows a loading state before the query resolves', () => {
+    vi.mocked(adminRpc).mockReturnValue(new Promise(() => undefined));
+    renderPage();
+
+    expect(screen.getByRole('status', { name: '頁面載入中' })).toBeVisible();
+  });
+
+  it('renders redacted audit rows', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({ outcome: 'ok', rows: auditRows });
+    renderPage();
+
+    expect(await screen.findByText('admin_reveal_field')).toBeInTheDocument();
+    expect(screen.getByText('deactivate_admin')).toBeInTheDocument();
+    expect(screen.getByText('LAST_ADMIN_PROTECTED')).toBeInTheDocument();
+    expect(screen.getByText('browser_resource')).toBeInTheDocument();
+    expect(
+      screen.getByText('家長來電確認學生身分需要核對'),
+    ).toBeInTheDocument();
+    expect(vi.mocked(adminRpc).mock.calls[0]?.[0]).toBe('admin_query_audit');
+  });
+
+  it('offers every spec §10 filter and passes them to the RPC', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc).mockResolvedValue({ outcome: 'ok', rows: auditRows });
+    renderPage();
+    await screen.findByText('admin_reveal_field');
+
+    await user.type(screen.getByLabelText('起始時間'), '2026-08-09T00:00');
+    await user.type(screen.getByLabelText('結束時間'), '2026-08-09T23:59');
+    await user.type(screen.getByLabelText('Actor principal'), 'principal-1');
+    await user.type(screen.getByLabelText('動作'), 'deactivate_admin');
+    await user.type(screen.getByLabelText('目標類型'), 'admin_command');
+    await user.type(screen.getByLabelText('結果'), 'success');
+    await user.click(screen.getByRole('button', { name: '查詢' }));
+
+    await waitFor(() => {
+      expect(adminRpc).toHaveBeenCalledWith(
+        'admin_query_audit',
+        expect.objectContaining({
+          p_action: 'deactivate_admin',
+          p_actor_principal_id: 'principal-1',
+          p_result: 'success',
+          p_target_type: 'admin_command',
+        }),
+      );
+    });
+    const lastCall = vi.mocked(adminRpc).mock.calls.at(-1);
+    if (!lastCall) throw new Error('expected an admin_query_audit call');
+    expect(lastCall[1].p_from).toBe(new Date('2026-08-09T00:00').toISOString());
+    expect(lastCall[1].p_to).toBe(new Date('2026-08-09T23:59').toISOString());
+  });
+
+  it('sends null rather than empty strings for untouched filters', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({ outcome: 'ok', rows: auditRows });
+    renderPage();
+    await screen.findByText('admin_reveal_field');
+
+    expect(adminRpc).toHaveBeenCalledWith('admin_query_audit', {
+      p_action: null,
+      p_actor_principal_id: null,
+      p_cursor: null,
+      p_from: null,
+      p_result: null,
+      p_target_type: null,
+      p_to: null,
+    });
+  });
+
+  it('exposes no export or download control (spec §10)', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({ outcome: 'ok', rows: auditRows });
+    renderPage();
+    await screen.findByText('admin_reveal_field');
+
+    expect(screen.queryByText(/匯出|下載|CSV|export|download/iu)).toBeNull();
+    expect(document.querySelector('a[download]')).toBeNull();
+    expect(document.querySelector('a[href^="blob:"]')).toBeNull();
+    expect(document.querySelector('a[href^="data:"]')).toBeNull();
+  });
+
+  it('shows a truthful empty state', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({ outcome: 'ok', rows: [] });
+    renderPage();
+
+    expect(
+      await screen.findByText('這段期間沒有稽核事件。'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows a retryable error when the query throws', async () => {
+    vi.mocked(adminRpc).mockRejectedValue(new Error('network down'));
+    renderPage();
+
+    expect(
+      await screen.findByText('稽核查詢失敗，請稍後重試。'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '重試' })).toBeInTheDocument();
+  });
+
+  it('translates a typed denial through the shared banner', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({
+      code: 'COLUMN_NOT_ALLOWED',
+      outcome: 'denied',
+    });
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent(
+        '此欄位不允許這項操作',
+      );
+    });
+  });
+
+  it('redirects to challenge and refetches session state on a stale privileged session', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({
+      code: 'STALE_PRIVILEGED_SESSION',
+      outcome: 'denied',
+    });
+    renderPage();
+
+    expect(await screen.findByText('challenge 頁')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(refetch).toHaveBeenCalled();
+    });
+  });
+});
