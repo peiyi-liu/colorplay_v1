@@ -49,3 +49,10 @@
 - 相關檔案／commit：`scripts/backup/create-backup.sh`、`scripts/backup/create-manifest.d.mts`、`scripts/backup/create-manifest.mjs`、`scripts/backup/restore-local.sh`、`tests/contracts/phase0-evidence-schema.test.ts`、`tests/contracts/phase0-restore.test.ts`、`.superpowers/sdd/phase0-task-14-report.md`、`.superpowers/sdd/progress.md`；commit `a69f87b`。
 
 PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在不再使用共享 colorplay local stack。Phase 1 可依已核准的 Task 13A prompt 開始 Local Supabase 工作；若偵測到其他 session 使用 port 54322，立即停止並回報。
+
+## 2026-08-09 23:50 [Claude Code] — Task 14A stop-time review follow-up（commit 1c2ec39）
+
+- 做了什麼：session 自己的 Stop hook 在收工前自動觸發 Codex stop-time review，對上一段的 `a69f87b` diff 找出兩個未修到的 P1 契約缺陷：(1) `restore-local.sh` 既有的 `RESTORE_EXPECTED_REPO_SHA` 解析邏輯緊接在新版 `artifact_kind` sanitizer**之前**、仍用未受保護的 `node -e`，protected workflow 一定會設這個環境變數，malformed manifest 會洩漏未消毒的 Node stack trace/路徑（正是剛修過的同一類問題,只是早一步，回歸測試沒設這個環境變數所以沒測到）；(2) `docs/deployment/backup-manifest.schema.json` 是一份獨立、`additionalProperties: false` 的正式 manifest schema，完全沒有測試強制驗證，`a69f87b` 新增 `artifact_kind` 沒同步進去，所有新 manifest 因此違反正式 schema。修復：合併 `repo_sha`／`artifact_kind` 驗證為一次 try/catch＋stderr 抑制的 Node 呼叫；schema 補欄位並新增 schema-sync contract test 防止未來再漂移。TDD RED→GREEN，直接修復驗證，未啟動第二輪 Codex review（同一輪 Stop-time review 的 finding）。Verification 全綠（ShellCheck/typecheck/scoped ESLint/Prettier/`git diff --check`；三個 contract test 檔共 60/60；`phase0:contracts` 11/127；Docker 0 殘留容器、既有 12 個殘留 network 不變、共享 stack 未受影響）。
+- 下一步：同上一段——**Task 14 overall 仍非 complete，Task 15 仍不得開始**；hosted proof 仍待 owner 授權。
+- Blocker／待決策：同上一段。
+- 相關檔案／commit：`docs/deployment/backup-manifest.schema.json`、`scripts/backup/restore-local.sh`、`tests/contracts/phase0-evidence-schema.test.ts`、`tests/contracts/phase0-restore.test.ts`、`.superpowers/sdd/phase0-task-14-report.md`、`.superpowers/sdd/progress.md`；commit `1c2ec39`。

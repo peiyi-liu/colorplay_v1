@@ -347,6 +347,59 @@ Committed as `a69f87b` (six files: `create-backup.sh`,
 `create-manifest.d.mts`, `create-manifest.mjs`, `restore-local.sh`,
 `phase0-evidence-schema.test.ts`, `phase0-restore.test.ts`).
 
+### Stop-time review follow-up (commit `1c2ec39`)
+
+The session's own Stop hook triggered an automatic Codex stop-time review of
+the `a69f87b` diff before the session could end, which found two additional
+P1 contract defects that `a69f87b` had missed:
+
+1. **`restore-local.sh:80`** — the pre-existing `RESTORE_EXPECTED_REPO_SHA`
+   handling still parsed `repo_sha` through an unguarded `node -e` call
+   *immediately before* the new `artifact_kind` sanitizer added in
+   `a69f87b`. A protected workflow always sets that environment variable, so
+   a malformed manifest hitting that earlier check would leak a raw Node
+   stack trace and internal file path to stderr — exactly the class of leak
+   `a69f87b` had just fixed one check later in the same file. The new
+   malformed-JSON regression test in `a69f87b` didn't catch this because it
+   didn't set `RESTORE_EXPECTED_REPO_SHA`, so execution never reached the
+   vulnerable branch.
+2. **`docs/deployment/backup-manifest.schema.json`** — a separate, formally
+   published manifest schema (`additionalProperties: false`) that nothing in
+   the codebase enforces against at runtime, so `a69f87b`'s new
+   `artifact_kind` field silently made every manifest `create-manifest.mjs`
+   produces violate this document. Not referenced by any test before this
+   fix, which is why the drift went undetected.
+
+**Fix.** Merged the `repo_sha` and `artifact_kind` checks into one
+try/catched, stderr-suppressed Node invocation that reports SHA mismatch and
+invalid/malformed/missing `artifact_kind` through distinct exit codes read
+back into a `case` statement — eliminating the unguarded parse entirely
+rather than duplicating the sanitization pattern. Added `artifact_kind` to
+the schema's `required`/`properties`, and added a schema-sync contract test
+(`phase0-evidence-schema.test.ts`) that diffs the schema's declared field
+set against `create-manifest.mjs`'s actual output on every run, so this
+class of drift fails a test immediately instead of silently accumulating.
+
+**TDD.** Both fixes were preceded by a RED regression test: a malformed
+manifest with `RESTORE_EXPECTED_REPO_SHA` set (reproduced the stack-trace
+leak before the fix) and the schema-sync test (failed with a field-set diff
+missing `artifact_kind` before the fix). Both GREEN after.
+
+**Verification.** ShellCheck clean; `pnpm typecheck` clean; scoped ESLint
+(`phase0-evidence-schema.test.ts`, `phase0-restore.test.ts`) 0
+errors/warnings; scoped Prettier clean (including the schema JSON);
+`git diff --check` clean; `phase0-restore.test.ts` +
+`phase0-backup.test.ts` + `phase0-evidence-schema.test.ts` together 60/60
+passed; full `pnpm phase0:contracts` 11 files / 127 tests passed. Docker: 0
+orphaned restore containers, the pre-existing 12 orphaned restore networks
+unchanged, shared `colorplay` stack untouched. No second Codex review round
+was started — this was the same Stop-time review's finding, fixed and
+verified directly per this task's single-review-round rule.
+
+Committed as `1c2ec39` (four files: `backup-manifest.schema.json`,
+`restore-local.sh`, `phase0-evidence-schema.test.ts`,
+`phase0-restore.test.ts`).
+
 **Task 14 / Task 14A status boundary.** This task only advances *local*
 correctness of the restore harness's artifact classification. It does not
 change, re-verify, or supersede the hosted backup/restore evidence recorded
