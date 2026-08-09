@@ -194,6 +194,17 @@ describe('AdminDataDetailPage', () => {
     expect(screen.queryByText(/已刪除|不存在於|曾經/u)).toBeNull();
   });
 
+  it('refuses a malformed rowKey instead of sending it to the uuid overload', async () => {
+    // 既不是 uuid、也不是可解碼的 base64url canonical JSON。送去 p_row_id
+    // 只會讓 Postgres 丟型別轉換錯誤(不是 typed denial),使用者卡在
+    // 「重試」而重試永遠一樣失敗。
+    renderPage('/admin/data/users/profiles/not-a-valid-key');
+
+    expect(await screen.findByText('此筆資料位址無效')).toBeInTheDocument();
+    expect(adminRpc).not.toHaveBeenCalled();
+    expect(screen.getByRole('link', { name: '返回列表' })).toBeInTheDocument();
+  });
+
   it('shows the unbrowsable message on RESOURCE_NOT_ALLOWED', async () => {
     vi.mocked(adminRpc).mockResolvedValue({
       code: 'RESOURCE_NOT_ALLOWED',

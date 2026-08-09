@@ -94,12 +94,18 @@ export function AdminDataDetailPage() {
     setRevealColumn(null);
   }
 
-  const compositeKey = UUID_PATTERN.test(rowKey) ? null : decodeRowKey(rowKey);
+  // spec §1.3.5 只承認兩種位址:裸 uuid 簡寫、或 base64url(canonical JSON)。
+  // 兩者都不是就是壞位址 —— 硬塞給 uuid overload 只會讓 Postgres 丟型別轉換
+  // 錯誤(不是 typed denial),使用者卡在一個永遠失敗的「重試」。
+  const isUuidKey = UUID_PATTERN.test(rowKey);
+  const compositeKey = isUuidKey ? null : decodeRowKey(rowKey);
+  const malformedRowKey = !isUuidKey && compositeKey === null;
   const detailArgs = compositeKey
     ? { p_domain: domain, p_resource: resource, p_row_key: compositeKey }
     : { p_domain: domain, p_resource: resource, p_row_id: rowKey };
 
   const detail = useQuery({
+    enabled: !malformedRowKey,
     queryFn: () =>
       adminRpc<AdminDetailResponse>('admin_get_resource_detail', detailArgs),
     queryKey: ['admin', 'data-detail', domain, resource, rowKey],
@@ -112,6 +118,19 @@ export function AdminDataDetailPage() {
   const backLink = (
     <Link to={`/admin/data/${domain}/${resource}`}>返回列表</Link>
   );
+
+  if (malformedRowKey) {
+    return (
+      <section
+        aria-labelledby="admin-data-detail-page-heading"
+        className="page-wide page-stack"
+      >
+        <h1 id="admin-data-detail-page-heading">資料明細</h1>
+        <p role="alert">此筆資料位址無效</p>
+        {backLink}
+      </section>
+    );
+  }
 
   if (detail.isPending || staleSession) return <RouteLoading withinMain />;
 

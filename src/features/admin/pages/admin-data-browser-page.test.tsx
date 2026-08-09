@@ -462,6 +462,57 @@ describe('AdminDataBrowserPage', () => {
     expect(secondCall[1].p_cursor).toBe('eyJrIjoiMSJ9');
   });
 
+  it('redirects to challenge when a later page expires the privileged session', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc)
+      .mockResolvedValueOnce({
+        next_cursor: 'eyJrIjoiMSJ9',
+        outcome: 'ok',
+        page_size_limit: 2,
+        rows: okRows,
+      })
+      .mockResolvedValueOnce({
+        code: 'STALE_PRIVILEGED_SESSION',
+        outcome: 'denied',
+      });
+    renderPage();
+    await screen.findByText('小明');
+
+    await user.click(screen.getByRole('button', { name: '載入更多' }));
+
+    // 第二頁的 denial 不能被 flatMap 靜靜吃掉 —— session 過期一定要導向 challenge
+    expect(await screen.findByText('challenge 頁')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(refetch).toHaveBeenCalled();
+    });
+  });
+
+  it('surfaces a later-page denial without discarding the rows already loaded', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc)
+      .mockResolvedValueOnce({
+        next_cursor: 'eyJrIjoiMSJ9',
+        outcome: 'ok',
+        page_size_limit: 2,
+        rows: okRows,
+      })
+      .mockResolvedValueOnce({ code: 'COLUMN_NOT_ALLOWED', outcome: 'denied' });
+    renderPage();
+    await screen.findByText('小明');
+
+    await user.click(screen.getByRole('button', { name: '載入更多' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent(
+        '此欄位不允許這項操作',
+      );
+    });
+    expect(screen.getByText('小明')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: '載入更多' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('offers no load-more when the server issues no cursor', async () => {
     vi.mocked(adminRpc).mockResolvedValue(okResponse);
     renderPage();

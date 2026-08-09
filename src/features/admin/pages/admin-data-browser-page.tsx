@@ -115,13 +115,24 @@ export function AdminDataBrowserPage() {
   });
 
   const firstPage = list.data?.pages[0];
-  const code = firstPage ? extractErrorCode(firstPage) : null;
+  // denial 可能發生在**任何一頁**(翻到第二頁時 session 剛好過期最典型)。
+  // 只看第一頁的話,後續頁的 denial 會被下面的 flatMap 靜靜濾掉:畫面沒有
+  // 錯誤、沒有導向,使用者只覺得「按了沒反應」,STALE_PRIVILEGED_SESSION
+  // 更會因此不導向 challenge(違反 spec §3.3)。
+  const firstPageCode = firstPage ? extractErrorCode(firstPage) : null;
+  const laterDeniedPage = list.data?.pages
+    .slice(1)
+    .find((page) => page.outcome === 'denied');
+  const laterPageCode = laterDeniedPage
+    ? extractErrorCode(laterDeniedPage)
+    : null;
+  const code = firstPageCode ?? laterPageCode;
   const staleSession = code === 'STALE_PRIVILEGED_SESSION';
   useAdminStaleSessionRedirect(staleSession);
 
   if (list.isPending || staleSession) return <RouteLoading withinMain />;
 
-  if (code === 'RESOURCE_NOT_ALLOWED') {
+  if (firstPageCode === 'RESOURCE_NOT_ALLOWED') {
     const requestId =
       firstPage && 'request_id' in firstPage ? firstPage.request_id : undefined;
     return (
@@ -148,8 +159,8 @@ export function AdminDataBrowserPage() {
         className="page-wide page-stack"
       >
         <h1 id="admin-data-browser-page-heading">資料瀏覽器</h1>
-        {code ? (
-          <AdminStatusBanner code={code} />
+        {firstPageCode ? (
+          <AdminStatusBanner code={firstPageCode} />
         ) : (
           <p role="alert">資料載入失敗，請稍後重試。</p>
         )}
@@ -265,6 +276,10 @@ export function AdminDataBrowserPage() {
           套用
         </button>
       </form>
+
+      {/* 後續頁被拒:保留已載入的資料,但要明確說明為什麼載不到更多,
+          而不是讓「載入更多」按了沒反應。 */}
+      <AdminStatusBanner code={laterPageCode} />
 
       <AdminDataTable
         caption={`${domain}/${resource}`}
