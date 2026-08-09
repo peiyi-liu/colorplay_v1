@@ -240,7 +240,10 @@ describe('backup verification and workflow boundaries', () => {
     const value = JSON.parse(await readFile(input, 'utf8')) as {
       buckets: { lifecycleRules: { daysFromUploadingToHiding: number }[] }[];
     };
-    value.buckets[0]!.lifecycleRules[0]!.daysFromUploadingToHiding = 29;
+    const firstRule = value.buckets.at(0)?.lifecycleRules.at(0);
+    expect(firstRule).toBeDefined();
+    if (!firstRule) throw new Error('expected lifecycle fixture rule');
+    firstRule.daysFromUploadingToHiding = 29;
     await writeFile(input, JSON.stringify(value));
     const rejected = await run(process.execPath, [
       lifecycleScript,

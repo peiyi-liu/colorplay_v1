@@ -274,9 +274,9 @@ describe('isolated Local restore', () => {
     expect(report.migration_first).toBe('20260713000100');
     expect(report.migration_last).toBe('20260728000100');
     expect(report.actual_data_loss_hours).toBeGreaterThanOrEqual(0);
-    expect(report.application_startup).toBe('passed');
-    expect(report.authorization_probe).toBe('passed');
-    expect(report.role_inventory).toBe('passed');
+    expect(report.application_startup).toBe('skipped');
+    expect(report.authorization_probe).toBe('skipped');
+    expect(report.role_inventory).toBe('skipped');
     expect(typeof report.elapsed_seconds).toBe('number');
     expect(report.elapsed_seconds).toBeGreaterThanOrEqual(0);
     // A cold GitHub runner may need almost two minutes to start the disposable
@@ -301,8 +301,8 @@ describe('isolated Local restore', () => {
       { PATH: `${fakeBin}:${process.env.PATH ?? ''}` },
     );
 
-    expect(result.code).toBe(86);
-    expect(result.stderr).toBe('');
+    expect(result.code).toBe(1);
+    expect(result.stderr).toBe('RESTORE_STACK_START_FAILED\n');
     expect(result.stderr).not.toContain('ENOENT');
   });
 

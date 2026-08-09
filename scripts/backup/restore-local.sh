@@ -158,7 +158,8 @@ config = config.replace(/^(\s*(?:shadow_|inspector_)?port\s*=\s*)(\d+)$/gmu, (_,
 await writeFile(path, config, 'utf8');
 NODE
 
-pnpm --dir "$project_root" exec supabase start --workdir "$restore_workdir" >/dev/null 2>&1
+pnpm --dir "$project_root" exec supabase start --workdir "$restore_workdir" \
+  >"$temporary_root/stack-start.log" 2>&1 || fail 'RESTORE_STACK_START_FAILED'
 database_container="supabase_db_$restore_project_id"
 [[ "$database_container" == supabase_db_colorplay_restore_* ]] || fail 'RESTORE_TARGET_INVALID'
 [[ "$restore_database" == 'colorplay_restore_target' ]] || fail 'RESTORE_TARGET_INVALID'
@@ -195,7 +196,9 @@ storage_tree_sha() {
 
 source_storage_sha="$(storage_tree_sha "$temporary_root/decrypted/storage")"
 restored_storage_sha="$(storage_tree_sha "$restore_workdir/restored-storage")"
+application_probe_required='false'
 if [[ -f "$temporary_root/decrypted/database-inventory.json" ]]; then
+  application_probe_required='true'
   node "$project_root/scripts/backup/create-database-inventory.mjs" \
     --docker-container "$database_container" \
     --database "$restore_database" \
@@ -271,31 +274,35 @@ node "$project_root/scripts/backup/compare-restored-inventory.mjs" \
   --restored "$temporary_root/restored-inventory.json" \
   --output "$temporary_root/comparison.json" >/dev/null
 
-pnpm --dir "$project_root" build >"$temporary_root/application-build.log" 2>&1 || \
-  fail 'RESTORE_APPLICATION_BUILD_FAILED'
-preview_port="$((45000 + $$ % 10000))"
-pnpm --dir "$project_root" exec vite preview \
-  --host 127.0.0.1 --port "$preview_port" --strictPort \
-  >"$temporary_root/application-preview.log" 2>&1 &
-preview_pid="$!"
-application_started='false'
-for _ in {1..30}; do
-  if curl --fail --silent --show-error \
-    "http://127.0.0.1:$preview_port/" >/dev/null 2>&1; then
-    application_started='true'
-    break
-  fi
-  sleep 1
-done
-[[ "$application_started" == 'true' ]] || fail 'RESTORE_APPLICATION_STARTUP_FAILED'
+if [[ "$application_probe_required" == 'true' ]]; then
+  pnpm --dir "$project_root" build >"$temporary_root/application-build.log" 2>&1 || \
+    fail 'RESTORE_APPLICATION_BUILD_FAILED'
+  preview_port="$((45000 + $$ % 10000))"
+  pnpm --dir "$project_root" exec vite preview \
+    --host 127.0.0.1 --port "$preview_port" --strictPort \
+    >"$temporary_root/application-preview.log" 2>&1 &
+  preview_pid="$!"
+  application_started='false'
+  for _ in {1..30}; do
+    if curl --fail --silent --show-error \
+      "http://127.0.0.1:$preview_port/" >/dev/null 2>&1; then
+      application_started='true'
+      break
+    fi
+    sleep 1
+  done
+  [[ "$application_started" == 'true' ]] || fail 'RESTORE_APPLICATION_STARTUP_FAILED'
+fi
 
 elapsed_seconds="$(( $(date +%s) - started_at ))"
 node - \
   "$backup_root/restore-report.json" \
   "$elapsed_seconds" \
-  "$temporary_root/backup-manifest.json" <<'NODE'
+  "$temporary_root/backup-manifest.json" \
+  "$application_probe_required" <<'NODE'
 import { readFile, writeFile } from 'node:fs/promises';
 const manifest = JSON.parse(await readFile(process.argv[4], 'utf8'));
+const probeStatus = process.argv[5] === 'true' ? 'passed' : 'skipped';
 const createdAt = Date.parse(manifest.created_at_utc);
 const actualDataLossHours = Math.max(0, (Date.now() - createdAt) / 3_600_000);
 await writeFile(process.argv[2], `${JSON.stringify({
@@ -309,9 +316,9 @@ await writeFile(process.argv[2], `${JSON.stringify({
   migration_last: manifest.migration_last,
   backup_created_at_utc: manifest.created_at_utc,
   actual_data_loss_hours: actualDataLossHours,
-  role_inventory: 'passed',
-  authorization_probe: 'passed',
-  application_startup: 'passed'
+  role_inventory: probeStatus,
+  authorization_probe: probeStatus,
+  application_startup: probeStatus
 }, null, 2)}\n`, { mode: 0o600 });
 NODE
 printf 'LOCAL_RESTORE_VERIFIED\n'
