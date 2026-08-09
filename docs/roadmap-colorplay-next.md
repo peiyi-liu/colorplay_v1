@@ -44,7 +44,7 @@ batches. Each batch must pass its own Staging gate before Production promotion.
 | 2     | Content SSOT and version publishing           | Decisions captured; spec not started                |
 | 3     | Learning progression and assessment authority | Decisions captured; spec not started                |
 | 4     | Learning Hall and chapter experience          | Visual/product decisions captured; spec not started |
-| 5     | Live and teacher reporting                    | Product rules captured; spec not started            |
+| 5     | Live and teacher reporting                    | Product rules captured; spec not started. Teacher-side and Live visual work (JRPG restyle) borrowed forward into the 2026-08-10 Phase 2/3/4 chapter-3 slice spec -- see docs/superpowers/specs/2026-08-10-phase-2-3-4-chapter-three-slice-design.md section 4.3. Non-visual Phase 5 scope (teacher reporting product rules beyond that spec) remains not started. |
 | 6     | Full-site JRPG visual unification             | Direction captured; spec not started                |
 
 The required workflow for every phase is:
