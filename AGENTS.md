@@ -96,3 +96,13 @@ Issue 追蹤使用 GitHub Issues（github.com/peiyi-liu/colorplay_v1，透過 `g
 ### Domain docs
 
 Single-context：根目錄 `CONTEXT.md` + `docs/adr/`。See `docs/agents/domain.md`.
+
+### Progress log
+
+跨工具（Codex／Claude Code）進度交接記錄在根目錄 `docs/handoff.md`（append-only rolling log，格式見檔案開頭說明）。**任何工具開新 session 前先讀最新一段**；完成 task、拍板決策、遇到 blocker、或 session 結束時，在檔案最下方新增一段，不要覆蓋或刪除舊段落。詳細 phase/task 規劃仍在 `docs/superpowers/plans/`，`docs/handoff.md` 只記「現在做到哪、下一步是什麼」，不重複貼 plan 內容。
+
+Session 內部記憶（claude-mem observations、Claude Code auto-memory 等）只是單一工具、單一機器的本機加速記憶，**不是跨工具真相來源**；會影響專案走向的規則、決策、進度一律要落地在本檔案、`docs/handoff.md` 或 GitHub Issues。
+
+### 平行工具設定鏡像（.codex/ ↔ .claude/）
+
+`.claude/agents/**`、`.claude/hooks/**` 與 `.codex/agents/**`、`.codex/hooks/**` 是同一套行為的兩種工具格式（Markdown＋shell vs TOML＋shell）。修改其中一邊時，同一輪檢查並同步更新對應的另一邊，一起 commit；不要留到下次才發現兩邊行為不一致。兩邊都必須進 git——只存在工作目錄裡的未追蹤檔案不算完成，其他機器 clone 不到就等於沒有鏡像。
