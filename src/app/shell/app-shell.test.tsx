@@ -87,6 +87,34 @@ const renderTeacherShell = () => {
   return renderStudentShell();
 };
 
+const renderAdminShell = () => {
+  mockedUseAuth.mockReturnValue({
+    session: {
+      email: 'admin.primary@colorplay.test',
+      userId: 'admin-id',
+    },
+    signIn: vi.fn(),
+    signInWithAccount: vi.fn(),
+    signOut: vi.fn(),
+    status: 'authenticated',
+  });
+  mockedUseMyProfile.mockReturnValue({
+    data: {
+      displayName: 'admin.primary',
+      id: 'admin-id',
+      role: 'admin',
+      timezone: 'Asia/Taipei',
+      reducedMotion: false,
+    },
+    error: null,
+    isError: false,
+    isPending: false,
+    refetch: vi.fn(),
+  });
+
+  return renderStudentShell();
+};
+
 const expectCommandBeforeHeaderAndMain = () => {
   const main = screen.getByRole('main');
   const stage = main.parentElement;
@@ -230,6 +258,60 @@ describe('AppShell', () => {
     renderTeacherShell();
 
     expectCommandBeforeHeaderAndMain();
+  });
+
+  it('renders no game HUD chrome for an admin profile, only an identity/sign-out strip', () => {
+    renderAdminShell();
+
+    expect(document.querySelector('.hud-command')).toBeNull();
+    expect(document.querySelector('.hud-economy-group')).toBeNull();
+    expect(document.querySelector('.hud-avatar')).toBeNull();
+    expect(screen.queryByRole('link', { name: '學習大廳' })).toBeNull();
+    expect(screen.queryByRole('link', { name: '教師工作區' })).toBeNull();
+    expect(screen.getByText(/管理主控台/u)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '登出' })).toBeVisible();
+  });
+
+  it('signs an admin out directly without a MENU panel', async () => {
+    const signOut = vi.fn(() => Promise.resolve());
+    mockedUseAuth.mockReturnValue({
+      session: { email: 'admin.primary@colorplay.test', userId: 'admin-id' },
+      signIn: vi.fn(),
+      signInWithAccount: vi.fn(),
+      signOut,
+      status: 'authenticated',
+    });
+    mockedUseMyProfile.mockReturnValue({
+      data: {
+        displayName: 'admin.primary',
+        id: 'admin-id',
+        role: 'admin',
+        timezone: 'Asia/Taipei',
+        reducedMotion: false,
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+    const router = createMemoryRouter(
+      [
+        { element: <AppShell />, path: '/admin' },
+        { element: <h1>登入</h1>, path: '/login' },
+      ],
+      { initialEntries: ['/admin'] },
+    );
+    render(
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>,
+    );
+
+    expect(screen.queryByRole('button', { name: 'MENU' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: '登出' }));
+
+    expect(signOut).toHaveBeenCalledOnce();
+    expect(await screen.findByRole('heading', { name: '登入' })).toBeVisible();
   });
 
   it('遊戲 HUD 不再提供頂列品牌連結（chrome 收進舞台）', () => {

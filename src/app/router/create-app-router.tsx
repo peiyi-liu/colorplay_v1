@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom';
+import { AdminShell } from '../../features/admin/components/admin-shell';
 import { RequireAdminIdentity } from '../../features/admin/components/require-admin-identity';
 import { RequirePrivilegedSession } from '../../features/admin/components/require-privileged-session';
 import { RequireAuth } from '../../features/auth/components/require-auth';
@@ -209,39 +210,44 @@ export function createAppRouter() {
                   element: <RequirePrivilegedSession />,
                   children: [
                     {
-                      path: '/admin',
-                      lazy: () =>
-                        import('../../features/admin/pages/admin-overview-page'),
-                    },
-                    {
-                      path: '/admin/access/admins',
-                      lazy: () =>
-                        import('../../features/admin/pages/admin-access-admins-page'),
-                    },
-                    {
-                      path: '/admin/access/invitations',
-                      lazy: () =>
-                        import('../../features/admin/pages/admin-access-invitations-page'),
-                    },
-                    {
-                      path: '/admin/access/sessions',
-                      lazy: () =>
-                        import('../../features/admin/pages/admin-access-sessions-page'),
-                    },
-                    {
-                      path: '/admin/data/:domain/:resource',
-                      lazy: () =>
-                        import('../../features/admin/pages/admin-data-browser-page'),
-                    },
-                    {
-                      path: '/admin/audit',
-                      lazy: () =>
-                        import('../../features/admin/pages/admin-audit-page'),
-                    },
-                    {
-                      path: '/admin/health',
-                      lazy: () =>
-                        import('../../features/admin/pages/admin-health-page'),
+                      element: <AdminShell />,
+                      children: [
+                        {
+                          path: '/admin',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-overview-page'),
+                        },
+                        {
+                          path: '/admin/access/admins',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-access-admins-page'),
+                        },
+                        {
+                          path: '/admin/access/invitations',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-access-invitations-page'),
+                        },
+                        {
+                          path: '/admin/access/sessions',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-access-sessions-page'),
+                        },
+                        {
+                          path: '/admin/data/:domain/:resource',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-data-browser-page'),
+                        },
+                        {
+                          path: '/admin/audit',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-audit-page'),
+                        },
+                        {
+                          path: '/admin/health',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-health-page'),
+                        },
+                      ],
                     },
                   ],
                 },

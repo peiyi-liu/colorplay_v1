@@ -5507,6 +5507,207 @@ select#dashboard-classroom {
   padding: var(--space-2) var(--space-3);
 }
 
+/* ── Admin 命令 UI 外殼(Task 12;spec §3.1、§3.4)────────────────── */
+
+.admin-shell {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  background: var(--surface-page);
+  color: var(--color-text);
+}
+
+.admin-shell__menu-toggle {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--color-text);
+  font-weight: 800;
+  margin: var(--space-3);
+}
+
+.admin-shell__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  padding: var(--space-4);
+}
+
+.admin-shell__group-label {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 var(--space-2);
+}
+
+.admin-shell__group ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-shell__link {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+  font-weight: 700;
+  text-decoration: none;
+  padding: 0 var(--space-3);
+}
+
+.admin-shell__link:hover {
+  background: var(--ink-100);
+}
+
+.admin-shell__link--active {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+.admin-shell__main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-6);
+}
+
+@media (min-width: 1024px) {
+  .admin-shell--wide {
+    flex-direction: row;
+  }
+
+  .admin-shell--wide .admin-shell__nav {
+    flex: 0 0 260px;
+    overflow-y: auto;
+    border-right: 1px solid var(--border-subtle);
+    border-bottom: none;
+  }
+
+  .admin-shell--wide .admin-shell__main {
+    overflow-y: auto;
+  }
+}
+
+/* ── Admin 命令確認框(Task 12;spec §3.1、§3.4、§8.2)──────────── */
+
+.admin-command-dialog__backdrop {
+  position: fixed;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 55%);
+  inset: 0;
+  padding: var(--space-4);
+}
+
+.admin-command-dialog {
+  width: min(100%, 480px);
+  max-height: calc(100vh - var(--space-8));
+  max-height: calc(100dvh - var(--space-8));
+  overflow-y: auto;
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  padding: var(--space-6);
+}
+
+.admin-command-dialog__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+
+.admin-command-dialog__field textarea {
+  min-height: 96px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font: inherit;
+  padding: var(--space-3);
+  resize: vertical;
+}
+
+.admin-command-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+/* ── Admin 安全總覽(Task 12;spec §3.1、§8.3)──────────────────── */
+
+.admin-overview__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.admin-overview__incidents {
+  border: 2px solid var(--color-alert);
+  border-radius: var(--radius-card);
+  background: var(--amber-tint-card);
+  padding: var(--space-4);
+}
+
+.admin-overview__incidents ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+/* ── Admin 身分與存取頁(Task 12;spec §3.1、§8.1)──────────────── */
+
+.admin-access-admins__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.admin-access-invitations__issue-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.admin-access-invitations__issue-form input {
+  min-height: 44px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font: inherit;
+  padding: 0 var(--space-3);
+}
+
+.admin-access-invitations__token-box {
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  padding: var(--space-4);
+}
+
+.admin-access-invitations__token-box code {
+  display: block;
+  overflow-wrap: anywhere;
+  border-radius: var(--radius-control);
+  background: var(--ink-100);
+  margin: var(--space-2) 0;
+  padding: var(--space-3);
+  font-family: monospace;
+}
+
 /* ── JRPG 對話窗(ADR 0005;元件 src/components/ui/rpg-window.tsx) ── */
 .rpg-window {
   background: var(--pixel-night);

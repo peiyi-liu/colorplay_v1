@@ -67,6 +67,11 @@ export function AppShell() {
     auth.session !== null &&
     profile.data?.id === auth.session.userId;
   const isTeacher = isAuthenticatedProfile && profile.data?.role === 'teacher';
+  // Admin 走專屬 admin-shell 命令 UI(spec 2026-08-07 phase 1 §3.1),不是
+  // 遊戲 HUD 的第三個 variant:學生導覽列/blook 頭像/經濟數字對管理主控台
+  // 無意義,且 HudCommandBar 目前只認 student/teacher 兩種 variant——
+  // isTeacher 為 false 會落入 student 分支,把遊戲 HUD 疊在 admin 頁面上。
+  const isAdmin = isAuthenticatedProfile && profile.data?.role === 'admin';
   const reducedMotion = profile.data?.reducedMotion === true;
 
   // 閒置 30 分鐘強制登出（UAT 0727 #5）：走與登出鍵相同的安全流程。
@@ -118,7 +123,7 @@ export function AppShell() {
           跳到主要內容
         </a>
         <RotateBanner />
-        {isAuthenticatedProfile && !isTeacher ? (
+        {isAuthenticatedProfile && !isTeacher && !isAdmin ? (
           <HudCommandBar
             displayName={profile.data?.displayName ?? ''}
             isSigningOut={isSigningOut}
@@ -141,6 +146,21 @@ export function AppShell() {
                 <Icon name="lock-open" size={14} />
                 歡迎，{profile.data?.displayName}・教師端
               </span>
+            ) : isAdmin ? (
+              <>
+                <span className="hud-top__identity">
+                  <Icon name="lock-open" size={14} />
+                  歡迎，{profile.data?.displayName}・管理主控台
+                </span>
+                <button
+                  className="hud-menu__logout hud-menu__logout--fallback"
+                  disabled={isSigningOut}
+                  onClick={handleSignOut}
+                  type="button"
+                >
+                  {isSigningOut ? '登出中…' : '登出'}
+                </button>
+              </>
             ) : (
               <div className="hud-economy-group">
                 <StudentHudAvatar />
