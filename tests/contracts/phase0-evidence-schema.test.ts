@@ -56,6 +56,7 @@ function validBackupInput() {
   return {
     schema_version: 1,
     environment: 'production',
+    artifact_kind: 'production',
     project_ref: 'abcdefghijklmnopqrst',
     repo_sha: '8e521b7f4bd9194f0ac23ea531ccf9f20da3d407',
     migration_first: '20260713000000',
@@ -271,6 +272,7 @@ describe('backup manifest evidence', () => {
       stdout: 'BACKUP_MANIFEST_CREATED\n',
     });
     const manifest = JSON.parse(await readFile(created.outputPath, 'utf8')) as {
+      artifact_kind: string;
       dump_files: { path: string }[];
       storage: {
         inventory_sha256: string;
@@ -279,6 +281,7 @@ describe('backup manifest evidence', () => {
       };
       storage_objects?: unknown;
     };
+    expect(manifest.artifact_kind).toBe('production');
     expect(manifest.dump_files.map(({ path }) => path)).toEqual([
       'data.sql.age',
       'roles.sql.age',
@@ -292,6 +295,8 @@ describe('backup manifest evidence', () => {
   it.each([
     ['extra field', { debug: true }],
     ['wrong environment', { environment: 'staging' }],
+    ['unknown artifact_kind', { artifact_kind: 'staging' }],
+    ['non-string artifact_kind', { artifact_kind: 1 }],
     ['secret-looking key', { api_secret: 'synthetic' }],
     ['credential value', { lifecycle_policy_version: 'Bearer synthetic' }],
     ['Email value', { age_recipient_fingerprint: 'owner@example.com' }],
@@ -312,5 +317,32 @@ describe('backup manifest evidence', () => {
 
     expect(created.result.stderr).toBe('BACKUP_MANIFEST_INVALID\n');
     expect(created.result.exitCode).toBe(1);
+  });
+
+  it('rejects a missing artifact_kind', async () => {
+    const input: Partial<ReturnType<typeof validBackupInput>> =
+      validBackupInput();
+    delete input.artifact_kind;
+    const created = await createBackupManifest(input);
+
+    expect(created.result.stderr).toBe('BACKUP_MANIFEST_INVALID\n');
+    expect(created.result.exitCode).toBe(1);
+  });
+
+  it('accepts a synthetic_fixture artifact_kind', async () => {
+    const created = await createBackupManifest({
+      ...validBackupInput(),
+      artifact_kind: 'synthetic_fixture',
+    });
+
+    expect(created.result).toEqual({
+      exitCode: 0,
+      stderr: '',
+      stdout: 'BACKUP_MANIFEST_CREATED\n',
+    });
+    const manifest = JSON.parse(await readFile(created.outputPath, 'utf8')) as {
+      artifact_kind: string;
+    };
+    expect(manifest.artifact_kind).toBe('synthetic_fixture');
   });
 });

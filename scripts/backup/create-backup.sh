@@ -144,6 +144,7 @@ const [, , path, recipient, prefix, retention] = process.argv;
 await writeFile(path, JSON.stringify({
   schema_version: 1,
   environment: 'production',
+  artifact_kind: 'synthetic_fixture',
   project_ref: 'abcdefghijklmnopqrst',
   repo_sha: 'a'.repeat(40),
   migration_first: '20260713000100',
@@ -273,6 +274,7 @@ const [, , path, recipient, prefix, retention, projectRef, repoSha, first, last]
 await writeFile(path, JSON.stringify({
   schema_version: 1,
   environment: 'production',
+  artifact_kind: 'production',
   project_ref: projectRef,
   repo_sha: repoSha,
   migration_first: first,

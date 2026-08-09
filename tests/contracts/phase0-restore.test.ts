@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
@@ -75,6 +76,92 @@ async function createFixture(fixture = 'synthetic') {
   ]);
   expect(created.code).toBe(0);
   return backupRoot;
+}
+
+async function recipientFor(backupRoot: string) {
+  const identityPath = resolve(backupRoot, 'fixture-recovery-key.txt');
+  const recipientResult = await run('age-keygen', ['-y', identityPath]);
+  expect(recipientResult.code).toBe(0);
+  return recipientResult.stdout.trim();
+}
+
+async function patchManifest(
+  backupRoot: string,
+  mutate: (manifest: Record<string, unknown>) => void,
+) {
+  const identityPath = resolve(backupRoot, 'fixture-recovery-key.txt');
+  const manifestPath = resolve(backupRoot, 'backup-manifest.json.age');
+  const checksumPath = resolve(backupRoot, 'backup-manifest.json.age.sha256');
+  const plaintextPath = resolve(root, 'manifest-plaintext.json');
+
+  const decrypted = await run('age', [
+    '--decrypt',
+    '--identity',
+    identityPath,
+    '--output',
+    plaintextPath,
+    manifestPath,
+  ]);
+  expect(decrypted.code).toBe(0);
+
+  const manifest = JSON.parse(await readFile(plaintextPath, 'utf8')) as Record<
+    string,
+    unknown
+  >;
+  mutate(manifest);
+  await writeFile(plaintextPath, JSON.stringify(manifest));
+
+  const recipient = await recipientFor(backupRoot);
+  const encrypted = await run('age', [
+    '--recipient',
+    recipient,
+    '--output',
+    manifestPath,
+    plaintextPath,
+  ]);
+  expect(encrypted.code).toBe(0);
+
+  const checksum = createHash('sha256')
+    .update(await readFile(manifestPath))
+    .digest('hex');
+  await writeFile(checksumPath, `${checksum}  backup-manifest.json.age\n`);
+}
+
+async function addEncryptedInventoryFile(backupRoot: string) {
+  const recipient = await recipientFor(backupRoot);
+  const plaintextPath = resolve(root, 'inventory-plaintext.json');
+  await writeFile(plaintextPath, JSON.stringify({ placeholder: true }));
+  const encryptedPath = resolve(
+    backupRoot,
+    'encrypted',
+    'database-inventory.json.age',
+  );
+  const encrypted = await run('age', [
+    '--recipient',
+    recipient,
+    '--output',
+    encryptedPath,
+    plaintextPath,
+  ]);
+  expect(encrypted.code).toBe(0);
+  const contents = await readFile(encryptedPath);
+  return {
+    path: 'database-inventory.json.age',
+    sha256: createHash('sha256').update(contents).digest('hex'),
+    size_bytes: contents.length,
+  };
+}
+
+function installFakePnpmStackStartProbe() {
+  const fakeBin = resolve(root, 'bin');
+  const fakePnpm = resolve(fakeBin, 'pnpm');
+  return mkdir(fakeBin).then(() =>
+    writeFile(
+      fakePnpm,
+      "#!/usr/bin/env bash\nprintf '%s\\n' 'RESTORE_STACK_START_REACHED' >&2\nexit 86\n",
+      { mode: 0o700 },
+    ).then(() => ({ PATH: `${fakeBin}:${process.env.PATH ?? ''}` })),
+  );
 }
 
 describe('isolated Local restore', () => {
@@ -304,6 +391,130 @@ describe('isolated Local restore', () => {
     expect(result.code).toBe(1);
     expect(result.stderr).toBe('RESTORE_STACK_START_FAILED\n');
     expect(result.stderr).not.toContain('ENOENT');
+  });
+
+  it('advances past artifact classification for a production artifact with inventory present', async () => {
+    const backupRoot = await createFixture('synthetic');
+    const inventoryEntry = await addEncryptedInventoryFile(backupRoot);
+    await patchManifest(backupRoot, (manifest) => {
+      manifest.artifact_kind = 'production';
+      (manifest.dump_files as unknown[]).push(inventoryEntry);
+    });
+    const env = await installFakePnpmStackStartProbe();
+
+    const result = await run(
+      'bash',
+      [restoreScript, '--backup-root', backupRoot],
+      env,
+    );
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toBe('RESTORE_STACK_START_FAILED\n');
+  });
+
+  it('rejects a production artifact missing database-inventory.json', async () => {
+    const backupRoot = await createFixture('synthetic');
+    await patchManifest(backupRoot, (manifest) => {
+      manifest.artifact_kind = 'production';
+    });
+
+    const result = await run('bash', [
+      restoreScript,
+      '--backup-root',
+      backupRoot,
+    ]);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toBe('RESTORE_DATABASE_INVENTORY_REQUIRED\n');
+  });
+
+  it('rejects a backup missing artifact_kind', async () => {
+    const backupRoot = await createFixture('synthetic');
+    await patchManifest(backupRoot, (manifest) => {
+      delete manifest.artifact_kind;
+    });
+
+    const result = await run('bash', [
+      restoreScript,
+      '--backup-root',
+      backupRoot,
+    ]);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toBe('RESTORE_ARTIFACT_KIND_INVALID\n');
+  });
+
+  it.each([
+    ['unknown string value', 'staging'],
+    ['numeric value', 7],
+    ['empty string', ''],
+    ['trailing newline value', 'synthetic_fixture\n'],
+    ['trailing whitespace value', 'production '],
+  ])(
+    'rejects a backup with an invalid artifact_kind (%s)',
+    async (_name, value) => {
+      const backupRoot = await createFixture('synthetic');
+      await patchManifest(backupRoot, (manifest) => {
+        manifest.artifact_kind = value;
+      });
+
+      const result = await run('bash', [
+        restoreScript,
+        '--backup-root',
+        backupRoot,
+      ]);
+
+      expect(result.code).toBe(1);
+      expect(result.stderr).toBe('RESTORE_ARTIFACT_KIND_INVALID\n');
+    },
+  );
+
+  it('rejects a manifest that is not valid JSON without leaking a stack trace', async () => {
+    const backupRoot = await createFixture('synthetic');
+    const manifestPath = resolve(backupRoot, 'backup-manifest.json.age');
+    const checksumPath = resolve(backupRoot, 'backup-manifest.json.age.sha256');
+    const malformedPath = resolve(root, 'malformed-manifest.json');
+    await writeFile(malformedPath, '{');
+    const recipient = await recipientFor(backupRoot);
+    const encrypted = await run('age', [
+      '--recipient',
+      recipient,
+      '--output',
+      manifestPath,
+      malformedPath,
+    ]);
+    expect(encrypted.code).toBe(0);
+    const checksum = createHash('sha256')
+      .update(await readFile(manifestPath))
+      .digest('hex');
+    await writeFile(checksumPath, `${checksum}  backup-manifest.json.age\n`);
+
+    const result = await run('bash', [
+      restoreScript,
+      '--backup-root',
+      backupRoot,
+    ]);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toBe('RESTORE_ARTIFACT_KIND_INVALID\n');
+  });
+
+  it('rejects errors without leaking paths, SQL, or credentials for artifact classification failures', async () => {
+    const backupRoot = await createFixture('synthetic');
+    await patchManifest(backupRoot, (manifest) => {
+      manifest.artifact_kind = 'production';
+    });
+
+    const result = await run('bash', [
+      restoreScript,
+      '--backup-root',
+      backupRoot,
+    ]);
+
+    expect(result.stderr).not.toMatch(
+      /select|insert|psql|\/(Users|tmp|private)\//iu,
+    );
+    expect(result.stdout).toBe('');
   });
 
   it('uses recovery-only credentials in a protected manual restore workflow', async () => {

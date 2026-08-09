@@ -86,6 +86,10 @@ if [[ -n "${RESTORE_EXPECTED_REPO_SHA:-}" ]]; then
   [[ "$manifest_repo_sha" == "$RESTORE_EXPECTED_REPO_SHA" ]] ||
     fail 'RESTORE_SOURCE_SHA_MISMATCH'
 fi
+artifact_kind="$(node -e \
+  "const fs=require('node:fs');let value;try{value=JSON.parse(fs.readFileSync(process.argv[1],'utf8')).artifact_kind}catch{process.exit(1)};if(value!=='production'&&value!=='synthetic_fixture')process.exit(1);process.stdout.write(value)" \
+  "$temporary_root/backup-manifest.json" 2>/dev/null)" ||
+  fail 'RESTORE_ARTIFACT_KIND_INVALID'
 
 mkdir -p "$temporary_root/decrypted"
 node --input-type=module - "$temporary_root/backup-manifest.json" "$backup_root/encrypted" <<'NODE' > "$temporary_root/files.tsv"
@@ -146,6 +150,14 @@ while IFS=$'\t' read -r expected path; do
     2>/dev/null || fail 'RESTORE_DECRYPT_FAILED'
 done < "$temporary_root/files.tsv"
 
+if [[ "$artifact_kind" == 'production' ]]; then
+  application_probe_required='true'
+  [[ -f "$temporary_root/decrypted/database-inventory.json" ]] ||
+    fail 'RESTORE_DATABASE_INVENTORY_REQUIRED'
+else
+  application_probe_required='false'
+fi
+
 mkdir -p "$restore_workdir"
 cp -R "$project_root/supabase" "$restore_workdir/supabase"
 node --input-type=module - "$restore_workdir/supabase/config.toml" "$restore_project_id" "$((1000 + $$ % 500))" <<'NODE'
@@ -196,9 +208,7 @@ storage_tree_sha() {
 
 source_storage_sha="$(storage_tree_sha "$temporary_root/decrypted/storage")"
 restored_storage_sha="$(storage_tree_sha "$restore_workdir/restored-storage")"
-application_probe_required='false'
-if [[ -f "$temporary_root/decrypted/database-inventory.json" ]]; then
-  application_probe_required='true'
+if [[ "$application_probe_required" == 'true' ]]; then
   node "$project_root/scripts/backup/create-database-inventory.mjs" \
     --docker-container "$database_container" \
     --database "$restore_database" \

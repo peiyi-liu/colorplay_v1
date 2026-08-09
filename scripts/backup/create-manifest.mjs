@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 const INPUT_FIELDS = [
   'schema_version',
   'environment',
+  'artifact_kind',
   'project_ref',
   'repo_sha',
   'migration_first',
@@ -21,6 +22,7 @@ const INPUT_FIELDS = [
   'lifecycle_policy_version',
 ];
 const CLI_FIELDS = ['age', 'b2', 'pg_dump', 'supabase'];
+const ARTIFACT_KINDS = new Set(['production', 'synthetic_fixture']);
 const FILE_FIELDS = ['path', 'sha256', 'size_bytes'];
 const STORAGE_FIELDS = ['bucket', 'path', 'sha256', 'size_bytes'];
 const SHA_PATTERN = /^[0-9a-f]{64}$/u;
@@ -132,6 +134,7 @@ export function createBackupManifest(value) {
     containsSensitiveData(value) ||
     value.schema_version !== 1 ||
     value.environment !== 'production' ||
+    !ARTIFACT_KINDS.has(value.artifact_kind) ||
     !PROJECT_REF_PATTERN.test(value.project_ref) ||
     !GIT_SHA_PATTERN.test(value.repo_sha) ||
     !MIGRATION_PATTERN.test(value.migration_first) ||
@@ -173,6 +176,7 @@ export function createBackupManifest(value) {
   return {
     schema_version: 1,
     environment: 'production',
+    artifact_kind: value.artifact_kind,
     project_ref: value.project_ref,
     repo_sha: value.repo_sha,
     migration_first: value.migration_first,

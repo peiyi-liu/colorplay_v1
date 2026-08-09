@@ -7,6 +7,7 @@ export type BackupFileEntry = Readonly<{
 export type BackupManifest = Readonly<{
   schema_version: 1;
   environment: 'production';
+  artifact_kind: 'production' | 'synthetic_fixture';
   project_ref: string;
   repo_sha: string;
   migration_first: string;
