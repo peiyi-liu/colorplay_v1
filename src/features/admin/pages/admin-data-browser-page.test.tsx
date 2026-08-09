@@ -487,6 +487,65 @@ describe('AdminDataBrowserPage', () => {
     });
   });
 
+  it('does not bounce straight back to challenge after a successful round trip', async () => {
+    const user = userEvent.setup();
+    // 共用同一個 QueryClient 模擬「導向 challenge → 驗證成功 → 回到原頁」:
+    // 若帶著 STALE denial 的快取沒被清掉,一掛載就會又被踢回 challenge。
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        mutations: { retry: false },
+        queries: { retry: false },
+      },
+    });
+    function Harness() {
+      return (
+        <Routes>
+          <Route
+            element={<AdminDataBrowserPage />}
+            path="/admin/data/:domain/:resource"
+          />
+          <Route element={<p>challenge 頁</p>} path="/admin/mfa/challenge" />
+        </Routes>
+      );
+    }
+    vi.mocked(adminRpc)
+      .mockResolvedValueOnce({
+        next_cursor: 'eyJrIjoiMSJ9',
+        outcome: 'ok',
+        page_size_limit: 2,
+        rows: okRows,
+      })
+      .mockResolvedValueOnce({
+        code: 'STALE_PRIVILEGED_SESSION',
+        outcome: 'denied',
+      })
+      .mockResolvedValue(okResponse);
+
+    const first = render(
+      <MemoryRouter initialEntries={['/admin/data/users/profiles']}>
+        <QueryClientProvider client={queryClient}>
+          <Harness />
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByText('小明');
+    await user.click(screen.getByRole('button', { name: '載入更多' }));
+    expect(await screen.findByText('challenge 頁')).toBeInTheDocument();
+    first.unmount();
+
+    // 驗證成功後回到原頁(同一個 QueryClient)
+    render(
+      <MemoryRouter initialEntries={['/admin/data/users/profiles']}>
+        <QueryClientProvider client={queryClient}>
+          <Harness />
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('小明')).toBeInTheDocument();
+    expect(screen.queryByText('challenge 頁')).not.toBeInTheDocument();
+  });
+
   it('surfaces a later-page denial without discarding the rows already loaded', async () => {
     const user = userEvent.setup();
     vi.mocked(adminRpc)
@@ -511,6 +570,70 @@ describe('AdminDataBrowserPage', () => {
     expect(
       screen.queryByRole('button', { name: '載入更多' }),
     ).not.toBeInTheDocument();
+    // 一定要有出路:否則 cursor 消失後這一頁就再也載不到了
+    expect(
+      screen.getByRole('button', { name: '重試載入更多' }),
+    ).toBeInTheDocument();
+  });
+
+  it('retries the failed page and recovers the load-more entry', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc)
+      .mockResolvedValueOnce({
+        next_cursor: 'eyJrIjoiMSJ9',
+        outcome: 'ok',
+        page_size_limit: 2,
+        rows: okRows,
+      })
+      .mockResolvedValueOnce({ code: 'COLUMN_NOT_ALLOWED', outcome: 'denied' })
+      .mockResolvedValue({
+        next_cursor: 'eyJrIjoiMSJ9',
+        outcome: 'ok',
+        page_size_limit: 2,
+        rows: okRows,
+      });
+    renderPage();
+    await screen.findByText('小明');
+    await user.click(screen.getByRole('button', { name: '載入更多' }));
+    await screen.findByRole('button', { name: '重試載入更多' });
+
+    await user.click(screen.getByRole('button', { name: '重試載入更多' }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: '載入更多' }),
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByRole('button', { name: '重試載入更多' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('explains an unrecognised later-page failure instead of showing an empty banner', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc)
+      .mockResolvedValueOnce({
+        next_cursor: 'eyJrIjoiMSJ9',
+        outcome: 'ok',
+        page_size_limit: 2,
+        rows: okRows,
+      })
+      .mockResolvedValueOnce({
+        outcome: 'denied',
+        request_id: 'req-page-2',
+      });
+    renderPage();
+    await screen.findByText('小明');
+
+    await user.click(screen.getByRole('button', { name: '載入更多' }));
+
+    expect(
+      await screen.findByText('載入更多資料失敗，請稍後重試。'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('req-page-2')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: '重試載入更多' }),
+    ).toBeInTheDocument();
   });
 
   it('offers no load-more when the server issues no cursor', async () => {

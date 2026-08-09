@@ -193,6 +193,51 @@ describe('AdminAuditPage', () => {
     expect(secondCall[1].p_cursor).toBe('eyJrIjoiMiJ9');
   });
 
+  it('redirects to challenge when a later audit page expires the session', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc)
+      .mockResolvedValueOnce({
+        next_cursor: 'eyJrIjoiMiJ9',
+        outcome: 'ok',
+        rows: auditRows,
+      })
+      .mockResolvedValueOnce({
+        code: 'STALE_PRIVILEGED_SESSION',
+        outcome: 'denied',
+      });
+    renderPage();
+    await screen.findByText('admin_reveal_field');
+
+    await user.click(screen.getByRole('button', { name: '載入更多' }));
+
+    expect(await screen.findByText('challenge 頁')).toBeInTheDocument();
+  });
+
+  it('surfaces a later audit page denial with a retry entry', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc)
+      .mockResolvedValueOnce({
+        next_cursor: 'eyJrIjoiMiJ9',
+        outcome: 'ok',
+        rows: auditRows,
+      })
+      .mockResolvedValueOnce({ code: 'COLUMN_NOT_ALLOWED', outcome: 'denied' });
+    renderPage();
+    await screen.findByText('admin_reveal_field');
+
+    await user.click(screen.getByRole('button', { name: '載入更多' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent(
+        '此欄位不允許這項操作',
+      );
+    });
+    expect(screen.getByText('admin_reveal_field')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: '重試載入更多' }),
+    ).toBeInTheDocument();
+  });
+
   it('offers no load-more when the audit RPC issues no cursor', async () => {
     vi.mocked(adminRpc).mockResolvedValue({ outcome: 'ok', rows: auditRows });
     renderPage();

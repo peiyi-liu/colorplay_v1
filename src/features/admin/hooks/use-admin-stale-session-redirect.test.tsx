@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -15,17 +16,27 @@ function Probe({ isStale }: Readonly<{ isStale: boolean }>) {
 }
 
 function renderProbe(isStale: boolean) {
-  return render(
-    <MemoryRouter initialEntries={['/admin/access/admins']}>
-      <Routes>
-        <Route
-          element={<Probe isStale={isStale} />}
-          path="/admin/access/admins"
-        />
-        <Route element={<p>challenge 頁</p>} path="/admin/mfa/challenge" />
-      </Routes>
-    </MemoryRouter>,
-  );
+  // hook 現在會在導向前清掉 admin query cache(避免 STALE denial 殘留造成
+  // challenge 迴圈),因此需要真實的 QueryClient。
+  const queryClient = new QueryClient({
+    defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
+  });
+  return {
+    queryClient,
+    ...render(
+      <MemoryRouter initialEntries={['/admin/access/admins']}>
+        <QueryClientProvider client={queryClient}>
+          <Routes>
+            <Route
+              element={<Probe isStale={isStale} />}
+              path="/admin/access/admins"
+            />
+            <Route element={<p>challenge 頁</p>} path="/admin/mfa/challenge" />
+          </Routes>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    ),
+  };
 }
 
 describe('useAdminStaleSessionRedirect', () => {
@@ -56,6 +67,35 @@ describe('useAdminStaleSessionRedirect', () => {
       expect(refetch).toHaveBeenCalled();
     });
     expect(await screen.findByText('challenge 頁')).toBeInTheDocument();
+  });
+
+  it('drops cached admin query data so a stale denial cannot loop the challenge', async () => {
+    const { queryClient } = renderProbe(false);
+    queryClient.setQueryData(['admin', 'data', 'users', 'profiles'], {
+      rows: [{ full_name: '王＊＊' }],
+    });
+
+    expect(
+      queryClient.getQueryData(['admin', 'data', 'users', 'profiles']),
+    ).toBeDefined();
+
+    // 重新以 stale 狀態掛載同一個 client
+    render(
+      <MemoryRouter initialEntries={['/admin/access/admins']}>
+        <QueryClientProvider client={queryClient}>
+          <Routes>
+            <Route element={<Probe isStale />} path="/admin/access/admins" />
+            <Route element={<p>challenge 頁</p>} path="/admin/mfa/challenge" />
+          </Routes>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(
+        queryClient.getQueryData(['admin', 'data', 'users', 'profiles']),
+      ).toBeUndefined();
+    });
   });
 
   it('does not navigate after unmount even if refetch resolves late', async () => {

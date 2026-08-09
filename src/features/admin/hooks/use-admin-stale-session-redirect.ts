@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -14,10 +15,18 @@ export function useAdminStaleSessionRedirect(isStale: boolean): void {
   const navigate = useNavigate();
   const location = useLocation();
   const session = useAdminSessionState();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isStale) return;
     let cancelled = false;
+    // 特權 session 已失效,快取裡所有 admin 查詢結果都不該再留著:
+    //  1. 安全面 —— 不保留失效期間取得的特權資料;
+    //  2. 正確性 —— 帶著 STALE denial 的快取若留到 challenge 成功返回,
+    //     元件一掛載就又讀到舊 denial、再次把使用者踢回 challenge,形成
+    //     永遠出不來的 MFA 迴圈(review 波 P1)。
+    // session-state 本身也一起清掉,緊接著的 refetch 會重新填。
+    queryClient.removeQueries({ queryKey: ['admin'] });
     void session.refetch().then(() => {
       if (cancelled) return;
       void navigate('/admin/mfa/challenge', {

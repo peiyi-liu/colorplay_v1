@@ -5739,6 +5739,18 @@ select#dashboard-classroom {
   border-color: var(--ink-900);
 }
 
+/* 後續頁載入失敗:與表格區隔開,確保重試入口明顯可見。 */
+.admin-data-browser__page-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  border: 2px solid var(--color-alert);
+  border-radius: var(--radius-card);
+  background: var(--amber-tint-card);
+  padding: var(--space-3) var(--space-4);
+}
+
 .admin-data-browser__query,
 .admin-audit__filters {
   display: flex;

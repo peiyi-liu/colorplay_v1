@@ -95,7 +95,16 @@ export function AdminAuditPage() {
   });
 
   const firstPage = query.data?.pages[0];
-  const code = firstPage ? extractErrorCode(firstPage) : null;
+  const firstPageCode = firstPage ? extractErrorCode(firstPage) : null;
+  // denial 可能發生在任何一頁;只看第一頁會讓後續頁的 denial 被 flatMap
+  // 靜靜濾掉(含 STALE_PRIVILEGED_SESSION 不導向 challenge)。
+  const laterDeniedPage = query.data?.pages
+    .slice(1)
+    .find((page) => page.outcome === 'denied');
+  const laterPageCode = laterDeniedPage
+    ? extractErrorCode(laterDeniedPage)
+    : null;
+  const code = firstPageCode ?? laterPageCode;
   const staleSession = code === 'STALE_PRIVILEGED_SESSION';
   useAdminStaleSessionRedirect(staleSession);
 
@@ -215,8 +224,8 @@ export function AdminAuditPage() {
         className="page-wide page-stack"
       >
         <h1 id="admin-audit-page-heading">稽核紀錄</h1>
-        {code ? (
-          <AdminStatusBanner code={code} />
+        {firstPageCode ? (
+          <AdminStatusBanner code={firstPageCode} />
         ) : (
           <p role="alert">稽核查詢失敗，請稍後重試。</p>
         )}
@@ -250,6 +259,26 @@ export function AdminAuditPage() {
     >
       <h1 id="admin-audit-page-heading">稽核紀錄</h1>
       {filterForm}
+      {/* 後續頁被拒:保留已載入的事件,說明原因並留下重試入口(被拒的那頁
+          會讓 cursor 消失,沒有出路就再也載不到)。 */}
+      {laterDeniedPage ? (
+        <div className="admin-data-browser__page-error">
+          {laterPageCode ? (
+            <AdminStatusBanner code={laterPageCode} />
+          ) : (
+            <p role="alert">載入更多資料失敗，請稍後重試。</p>
+          )}
+          <button
+            className="secondary-action"
+            onClick={() => {
+              void query.refetch();
+            }}
+            type="button"
+          >
+            重試載入更多
+          </button>
+        </div>
+      ) : null}
       {rows.length === 0 ? (
         <p>這段期間沒有稽核事件。</p>
       ) : (

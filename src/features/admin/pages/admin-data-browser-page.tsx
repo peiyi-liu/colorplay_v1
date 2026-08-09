@@ -277,9 +277,38 @@ export function AdminDataBrowserPage() {
         </button>
       </form>
 
-      {/* 後續頁被拒:保留已載入的資料,但要明確說明為什麼載不到更多,
-          而不是讓「載入更多」按了沒反應。 */}
-      <AdminStatusBanner code={laterPageCode} />
+      {/* 後續頁被拒:保留已載入的資料,但要明確說明為什麼載不到更多,並且
+          一定要留一條出路 —— 被拒的那一頁會讓 cursor 消失,沒有重試入口的話
+          這一頁就再也載不到了(review 波 P2)。 */}
+      {laterDeniedPage ? (
+        <div className="admin-data-browser__page-error">
+          {laterPageCode ? (
+            <AdminStatusBanner code={laterPageCode} />
+          ) : (
+            // 未知/缺漏的 code 不能只留一個空 banner
+            <p role="alert">載入更多資料失敗，請稍後重試。</p>
+          )}
+          {typeof laterDeniedPage.request_id === 'string' ? (
+            <p>
+              追蹤代碼：
+              <span data-testid="admin-later-request-id">
+                {laterDeniedPage.request_id}
+              </span>
+            </p>
+          ) : null}
+          <button
+            className="secondary-action"
+            onClick={() => {
+              // refetch 會用各頁自己的 pageParam 重跑,成功後被拒的那一頁
+              // 會被正常結果取代,cursor 與「載入更多」也隨之回復。
+              void list.refetch();
+            }}
+            type="button"
+          >
+            重試載入更多
+          </button>
+        </div>
+      ) : null}
 
       <AdminDataTable
         caption={`${domain}/${resource}`}
