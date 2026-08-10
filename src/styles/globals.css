@@ -2934,6 +2934,14 @@ a {
   font-weight: 900;
 }
 
+/* Phase 5V Task 3：成員數／加入碼摘要並列徽章。 */
+.classroom-section-header__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 /* 成員表狀態欄：純文字＋小圓點（無邊框，區別於上面的膠囊 chip） */
 .status-inline {
   display: inline-flex;
