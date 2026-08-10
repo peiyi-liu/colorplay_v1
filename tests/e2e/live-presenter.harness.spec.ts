@@ -70,6 +70,53 @@ const expectInside = async (
   );
 };
 
+const expectTouchTarget = async (control: Locator) => {
+  const box = await control.boundingBox();
+  expect(box).not.toBeNull();
+  if (!box) return;
+  expect(box.width).toBeGreaterThanOrEqual(44);
+  expect(box.height).toBeGreaterThanOrEqual(44);
+};
+
+const focusEvidence = (control: Locator) =>
+  control.evaluate((element) => {
+    const channels = (color: string): readonly [number, number, number] => {
+      const values = color
+        .match(/[\d.]+/gu)
+        ?.slice(0, 3)
+        .map(Number);
+      if (values?.length !== 3 || values.some(Number.isNaN)) {
+        throw new Error(`unsupported computed color: ${color}`);
+      }
+      return [values[0] ?? 0, values[1] ?? 0, values[2] ?? 0];
+    };
+    const luminance = (color: string) => {
+      const linear = channels(color).map((channel) => {
+        const value = channel / 255;
+        return value <= 0.04045
+          ? value / 12.92
+          : Math.pow((value + 0.055) / 1.055, 2.4);
+      });
+      return (
+        0.2126 * (linear[0] ?? 0) +
+        0.7152 * (linear[1] ?? 0) +
+        0.0722 * (linear[2] ?? 0)
+      );
+    };
+    const presenter = element.closest('.live-presenter');
+    if (!presenter) throw new Error('presenter missing for focus evidence');
+    const style = getComputedStyle(element);
+    const outline = luminance(style.outlineColor);
+    const background = luminance(getComputedStyle(presenter).backgroundColor);
+    return {
+      contrast:
+        (Math.max(outline, background) + 0.05) /
+        (Math.min(outline, background) + 0.05),
+      outlineStyle: style.outlineStyle,
+      outlineWidth: Number.parseFloat(style.outlineWidth),
+    };
+  });
+
 const measureQuestion = (page: Page) =>
   page.evaluate(() => {
     const rectangle = (element: HTMLElement) => {
@@ -287,4 +334,127 @@ test('too-small cancelled keeps the existing exit path', async ({ page }) => {
   expect(runtime.consoleErrors).toEqual([]);
   expect(runtime.pageErrors).toEqual([]);
   expect(runtime.unexpectedRequests).toEqual([]);
+});
+
+for (const scenario of ['lobby-boundary', 'reveal-boundary'] as const) {
+  test(`${scenario} keyboard order exposes a 3:1 focus indicator`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ height: 720, width: 1280 });
+    await page.goto(
+      `/dev-harness/live-presenter.html?scenario=${scenario}&promptLength=36&optionLength=21`,
+    );
+    await page.waitForLoadState('networkidle');
+    const scrollRegion =
+      scenario === 'lobby-boundary'
+        ? page.getByRole('list', { name: '已加入同學名單' })
+        : page.getByRole('region', { name: '目前排行榜' });
+    await expect(scrollRegion).toBeVisible();
+    const order = [
+      page.getByRole('button', { name: '音效開啟' }),
+      page.getByRole('button', { name: '取消挑戰' }),
+      scrollRegion,
+      page.getByRole('button', {
+        name: scenario === 'lobby-boundary' ? '開始第一題' : '下一題',
+      }),
+    ];
+
+    for (const target of order) {
+      await page.keyboard.press('Tab');
+      await expect(target).toBeFocused();
+      const evidence = await focusEvidence(target);
+      expect(evidence.outlineStyle).not.toBe('none');
+      expect(evidence.outlineWidth).toBeGreaterThanOrEqual(3);
+      expect(evidence.contrast).toBeGreaterThanOrEqual(3);
+    }
+  });
+}
+
+for (const viewport of VIEWPORTS) {
+  test(`controls meet 44px and pending stays visible at ${String(viewport.width)}x${String(viewport.height)}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await page.goto(
+      '/dev-harness/live-presenter.html?scenario=question-boundary&promptLength=36&optionLength=21&pending=1',
+    );
+    await page.waitForLoadState('networkidle');
+
+    const activeControls = page.locator(
+      '.live-presenter__bar button, .live-presenter__controls button',
+    );
+    await expect(activeControls).toHaveCount(4);
+    for (const control of await activeControls.all()) {
+      await expectTouchTarget(control);
+    }
+    const pendingControls = page.locator(
+      '.live-presenter__controls button:disabled',
+    );
+    await expect(pendingControls).toHaveCount(2);
+    await expect(page.getByRole('button', { name: '處理中…' })).toBeVisible();
+    for (const control of await pendingControls.all()) {
+      const style = await control.evaluate((element) => {
+        const computed = getComputedStyle(element);
+        return { cursor: computed.cursor, opacity: Number(computed.opacity) };
+      });
+      expect(style.cursor).toBe('wait');
+      expect(style.opacity).toBeLessThan(1);
+    }
+
+    await page.goto('/dev-harness/live-presenter.html?scenario=cancelled');
+    await page.waitForLoadState('networkidle');
+    const exitControls = page.locator('.live-presenter__bar button');
+    await expect(exitControls).toHaveCount(2);
+    for (const control of await exitControls.all()) {
+      await expectTouchTarget(control);
+    }
+  });
+}
+
+test('reduced motion clears named presenter keyframes', async ({ page }) => {
+  await page.setViewportSize({ height: 720, width: 1280 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/dev-harness/live-presenter.html?scenario=lobby-boundary');
+  const wallChip = page.locator('.live-presenter__wall-chip').first();
+  await expect(wallChip).toBeVisible();
+  await expect
+    .poll(() =>
+      wallChip.evaluate((element) => getComputedStyle(element).animationName),
+    )
+    .toBe('live-wall-pop');
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect
+    .poll(() =>
+      wallChip.evaluate((element) => getComputedStyle(element).animationName),
+    )
+    .toBe('none');
+
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/dev-harness/live-presenter.html?scenario=podium-boundary');
+  const podiumStep = page.locator('.live-presenter__podium-step').first();
+  const podium = page.locator('.live-presenter__podium');
+  await expect(podiumStep).toBeVisible();
+  expect(
+    await podiumStep.evaluate(
+      (element) => getComputedStyle(element).animationName,
+    ),
+  ).toBe('live-podium-reveal');
+  expect(
+    await podium.evaluate(
+      (element) => getComputedStyle(element, '::before').animationName,
+    ),
+  ).toBe('fireworks-burst');
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(
+    await podiumStep.evaluate(
+      (element) => getComputedStyle(element).animationName,
+    ),
+  ).toBe('none');
+  expect(
+    await podium.evaluate(
+      (element) => getComputedStyle(element, '::before').animationName,
+    ),
+  ).toBe('none');
 });

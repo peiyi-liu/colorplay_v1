@@ -4878,6 +4878,11 @@ a {
   padding: var(--space-2) var(--space-4);
 }
 
+.live-presenter :focus-visible {
+  outline: 3px solid var(--yellow-brand);
+  outline-offset: 2px;
+}
+
 .live-presenter__lobby,
 .live-presenter__question,
 .live-presenter__feedback,
@@ -5211,6 +5216,11 @@ a {
   padding: var(--space-2) var(--space-5);
 }
 
+.live-presenter__controls button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .live-presenter__controls .primary-action {
   border: none;
   background: var(--yellow-brand);
@@ -5221,6 +5231,13 @@ a {
 [data-reduced-motion='true'] .live-presenter__wall-chip,
 [data-reduced-motion='true'] .live-presenter__podium-step {
   animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-presenter__wall-chip,
+  .live-presenter__podium-step {
+    animation-name: none;
+  }
 }
 
 [data-reduced-motion='true'] .live-presenter__ring svg {

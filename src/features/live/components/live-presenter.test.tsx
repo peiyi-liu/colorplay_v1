@@ -237,6 +237,38 @@ describe('LivePresenter', () => {
     expect(runPrimary).not.toHaveBeenCalled();
   });
 
+  it('keeps lobby keyboard order from header through the bounded wall to footer', async () => {
+    renderPresenter(lobbyState, { onCancel: vi.fn() });
+    const user = userEvent.setup();
+
+    await user.tab();
+    expect(screen.getByRole('button', { name: '音效開啟' })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: '取消挑戰' })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('list', { name: '已加入同學名單' })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: '開始第一題' })).toHaveFocus();
+  });
+
+  it('orders the two-step cancel controls before the footer and calls cancel once', async () => {
+    const onCancel = vi.fn();
+    renderPresenter(draftState, { onCancel });
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: '取消挑戰' }));
+    const buttons = screen.getAllByRole('button');
+    expect(buttons.map((button) => button.textContent)).toEqual([
+      '音效開啟',
+      '返回',
+      '確認取消挑戰',
+      '開啟等待室',
+    ]);
+
+    await user.click(screen.getByRole('button', { name: '確認取消挑戰' }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
   it('shows the six-digit code and the nickname wall in the lobby', () => {
     window.sessionStorage.setItem(presenterJoinCodeKey(SESSION_ID), '123456');
     const audio = stubAudio();
@@ -244,7 +276,7 @@ describe('LivePresenter', () => {
 
     expect(screen.getByLabelText('課堂代碼')).toHaveTextContent('123456');
     expect(screen.getByText('2 位同學已加入')).toBeVisible();
-    const wall = screen.getByLabelText('已加入同學');
+    const wall = screen.getByLabelText('已加入同學名單');
     expect(wall).toHaveTextContent('小艾');
     expect(wall).toHaveTextContent('小畢');
     expect(audio.startLobbyLoop).toHaveBeenCalled();
@@ -290,6 +322,27 @@ describe('LivePresenter', () => {
     expect(await screen.findByText(/第 1 名 小艾（150 分）/u)).toBeVisible();
     // 重連（初次掛載）進入 reveal：Cue 不發（一次性音效屬於轉場）。
     expect(audio.playReveal).not.toHaveBeenCalled();
+  });
+
+  it('keeps reveal keyboard order from header through standings to footer', async () => {
+    const repository = repositoryWith({
+      getStandings: vi.fn().mockResolvedValue({
+        participantCount: 2,
+        standings: [{ rank: 1, displayName: '小艾', score: 150 }],
+      }),
+    });
+    renderPresenter(feedbackState, { onCancel: vi.fn(), repository });
+    const user = userEvent.setup();
+    const standings = await screen.findByRole('region', { name: '目前排行榜' });
+
+    await user.tab();
+    expect(screen.getByRole('button', { name: '音效開啟' })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: '取消挑戰' })).toHaveFocus();
+    await user.tab();
+    expect(standings).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: '下一題' })).toHaveFocus();
   });
 
   it('stages the podium reveal on completion', () => {
