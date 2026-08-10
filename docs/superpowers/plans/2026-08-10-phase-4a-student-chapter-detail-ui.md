@@ -1913,6 +1913,15 @@ git commit -m "refactor(learning): wire chapter-detail-page to typed view-model,
 - Create: `playwright.chapter-detail-harness.config.ts`
 - Create: `tests/e2e/chapter-detail-page.harness.spec.ts`
 
+> **Inventory correction（implementation 後、2026-08-10 owner 核准，非原始需求）：** 上述清單原本未列
+> `tsconfig.app.json`、`tsconfig.node.json`。實作時發現 `dev-harness/`（`chapter-detail.harness.tsx`／
+> `chapter-detail.main.tsx`）與新的 `playwright.chapter-detail-harness.config.ts` 都不在任何既有
+> tsconfig 的 `include` 範圍內，導致 `pnpm typecheck` 實際上完全沒有覆蓋這些新檔案——這個缺口在原始
+> plan 撰寫時沒有被發現。Owner 事後核准把這兩個檔案的 `include` 各加一行（`tsconfig.app.json` 加
+> `"dev-harness"`；`tsconfig.node.json` 加 `"playwright.chapter-detail-harness.config.ts"`）列為 Phase
+> 4A 必要的 companion changes，理由：沒有這個修正，Task 3 自己要求的 `pnpm typecheck` 驗證步驟形同虛
+> 設。這項裁定**不**代表其他 build／test／production 設定可以比照修改。
+
 #### Part A：焦點管理（有行為，走 TDD）
 
 - [ ] **Step 1：在 `chapter-detail-states.test.tsx` 附加失敗測試**
