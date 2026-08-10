@@ -542,7 +542,7 @@ describe('TeacherLiveSessionPage (host console)', () => {
     );
 
     expect(
-      await screen.findByRole('dialog', { name: '投影模式' }),
+      await screen.findByRole('region', { name: 'Live 投影模式' }),
     ).toBeVisible();
     expect(screen.getByText(/已作答 2/u)).toBeVisible();
   });

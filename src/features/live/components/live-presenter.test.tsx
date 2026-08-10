@@ -7,7 +7,11 @@ import type { LiveRepository, LiveSessionState } from '../types';
 import { actionCopy } from '../lib/live-action-copy';
 import { hostConsoleView } from '../lib/live-phase-view';
 import type { PresenterAudio } from '../lib/presenter-audio';
-import { LivePresenter, presenterJoinCodeKey } from './live-presenter';
+import {
+  LivePresenter,
+  presenterJoinCodeKey,
+  type ProjectorFooterAction,
+} from './live-presenter';
 
 const SESSION_ID = '18400000-0000-0000-0000-000000000001';
 
@@ -33,6 +37,18 @@ const lobbyState: LiveSessionState = {
   serverTime: new Date().toISOString(),
   isHost: true,
   participants: [{ displayName: '小艾' }, { displayName: '小畢' }],
+};
+
+const draftState: LiveSessionState = {
+  ...lobbyState,
+  state: 'draft',
+  stateVersion: 1,
+};
+
+const cancelledState: LiveSessionState = {
+  ...lobbyState,
+  state: 'cancelled',
+  stateVersion: 13,
 };
 
 const openState: LiveSessionState = {
@@ -106,8 +122,11 @@ const renderPresenter = (
   state: LiveSessionState,
   options?: Readonly<{
     audio?: PresenterAudio;
+    footerActions?: readonly ProjectorFooterAction[];
+    onCancel?: () => void;
     repository?: LiveRepository;
     onExit?: () => void;
+    transitionPending?: boolean;
   }>,
 ) => {
   const queryClient = new QueryClient({
@@ -118,11 +137,12 @@ const renderPresenter = (
     <QueryClientProvider client={queryClient}>
       <LivePresenter
         audio={audio}
-        footerActions={footerActionsFor(nextState)}
+        footerActions={options?.footerActions ?? footerActionsFor(nextState)}
+        onCancel={options?.onCancel ?? null}
         onExit={options?.onExit ?? vi.fn()}
         sessionId={SESSION_ID}
         state={nextState}
-        transitionPending={false}
+        transitionPending={options?.transitionPending ?? false}
         {...(options?.repository ? { repository: options.repository } : {})}
       />
     </QueryClientProvider>
@@ -135,6 +155,86 @@ describe('LivePresenter', () => {
   beforeEach(() => {
     window.sessionStorage.clear();
     window.localStorage.clear();
+  });
+
+  it('exposes projector mode as a named route region instead of a modal', () => {
+    renderPresenter(lobbyState);
+
+    const region = screen.getByRole('region', { name: 'Live 投影模式' });
+    expect(region).not.toHaveAttribute('aria-modal');
+    expect(
+      screen.queryByRole('dialog', { name: '投影模式' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders the draft phase honestly and keeps existing host actions', async () => {
+    const onCancel = vi.fn();
+    renderPresenter(draftState, { onCancel });
+    const user = userEvent.setup();
+
+    expect(
+      screen.getByRole('heading', { name: '場次準備中' }),
+    ).toBeVisible();
+    expect(screen.getByText(/尚未開放學生加入/u)).toBeVisible();
+    expect(screen.queryByText(/位同學已加入/u)).not.toBeInTheDocument();
+    expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: '開啟等待室' }),
+    ).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: '取消挑戰' }));
+    await user.click(screen.getByRole('button', { name: '確認取消挑戰' }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the cancelled phase without provisional results and exits through the existing handler', async () => {
+    const onExit = vi.fn();
+    renderPresenter(cancelledState, { onExit });
+    const user = userEvent.setup();
+
+    expect(
+      screen.getByRole('heading', { name: '本場已取消' }),
+    ).toBeVisible();
+    expect(
+      screen.getByText(/不會產生正式名次或完整正確率/u),
+    ).toBeVisible();
+    expect(screen.queryByText(/第 [1-9] 名/u)).not.toBeInTheDocument();
+    expect(screen.queryByText(/%/u)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '離開投影' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps primary and secondary host controls locked while a transition is pending', async () => {
+    const runPrimary = vi.fn();
+    const runSecondary = vi.fn();
+    renderPresenter(openState, {
+      footerActions: [
+        {
+          id: 'secondary',
+          label: '次要操作',
+          precedence: 'secondary',
+          run: runSecondary,
+        },
+        {
+          id: 'primary',
+          label: '主要操作',
+          precedence: 'primary',
+          run: runPrimary,
+        },
+      ],
+      transitionPending: true,
+    });
+    const user = userEvent.setup();
+
+    const secondary = screen.getByRole('button', { name: '次要操作' });
+    const primary = screen.getByRole('button', { name: '處理中…' });
+    expect(secondary).toBeDisabled();
+    expect(primary).toBeDisabled();
+    await user.click(secondary);
+    await user.click(primary);
+    expect(runSecondary).not.toHaveBeenCalled();
+    expect(runPrimary).not.toHaveBeenCalled();
   });
 
   it('shows the six-digit code and the nickname wall in the lobby', () => {

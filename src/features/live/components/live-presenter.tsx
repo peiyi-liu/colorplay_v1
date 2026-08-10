@@ -238,10 +238,9 @@ export function LivePresenter({
 
   return (
     <div
-      aria-label="投影模式"
-      aria-modal="true"
+      aria-label="Live 投影模式"
       className="live-presenter"
-      role="dialog"
+      role="region"
     >
       <header className="live-presenter__bar">
         <p>
@@ -302,6 +301,20 @@ export function LivePresenter({
           ) : null}
         </div>
       </header>
+
+      {phase === 'draft' ? (
+        <div className="live-presenter__status">
+          <h2>場次準備中</h2>
+          <p>尚未開放學生加入，請稍候或開啟等待室。</p>
+        </div>
+      ) : null}
+
+      {phase === 'cancelled' ? (
+        <div className="live-presenter__status">
+          <h2>本場已取消</h2>
+          <p>這場挑戰已取消，不會產生正式名次或完整正確率。</p>
+        </div>
+      ) : null}
 
       {phase === 'lobby' ? (
         <div className="live-presenter__lobby">
