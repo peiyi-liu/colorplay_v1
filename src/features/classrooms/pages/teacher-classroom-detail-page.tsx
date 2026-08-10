@@ -2,7 +2,10 @@ import { Link, useParams } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { Chip } from '../../../components/ui/chip';
-import { useOwnedClassroomMembers } from '../hooks/use-classrooms';
+import {
+  useOwnedClassroomMembers,
+  useOwnedClassrooms,
+} from '../hooks/use-classrooms';
 import type { ClassroomRepository } from '../types';
 
 export function TeacherClassroomDetailPage({
@@ -15,6 +18,12 @@ export function TeacherClassroomDetailPage({
   const params = useParams();
   const classroomId = suppliedClassroomId ?? params.classroomId ?? '';
   const members = useOwnedClassroomMembers(classroomId, repository);
+  // 加入碼摘要徽章沿用既有 useOwnedClassrooms（/teacher/classes 已在用），
+  // 不新增 repository method，只是這個頁面多呼叫一次既有 hook。
+  const classrooms = useOwnedClassrooms(repository);
+  const classroom = classrooms.data?.find(
+    (candidate) => candidate.classroomId === classroomId,
+  );
 
   if (members.isPending) return <RouteLoading withinMain />;
   if (members.isError) {
@@ -52,7 +61,12 @@ export function TeacherClassroomDetailPage({
       <section aria-label="班級學生" className="ui-card ui-card--md">
         <header className="classroom-section-header">
           <h2>班級學生</h2>
-          <Chip tone="success">{String(activeMemberCount)} 位有效成員</Chip>
+          <div className="classroom-section-header__badges">
+            <Chip tone="success">{String(activeMemberCount)} 位有效成員</Chip>
+            {classroom?.joinCode ? (
+              <Chip tone="neutral">加入碼 {classroom.joinCode}</Chip>
+            ) : null}
+          </div>
         </header>
         {members.data.length === 0 ? (
           <p>目前沒有學生。</p>

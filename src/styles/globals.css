@@ -1416,6 +1416,14 @@ a {
   color: var(--pixel-night);
 }
 
+/* Phase 5V Task 1：教師端 HUD 識別——沿用既有 --color-teacher 暖橘 token，
+   與學生端共用 design system 但視覺可辨識（spec/07-ui-visual-system.md §4
+   Teacher：需有明顯視覺區隔，但共用 design system）。 */
+.hud-command[data-variant='teacher'] .hud-command__tab--active,
+.hud-command[data-variant='teacher'] .hud-command__link--active {
+  border-color: var(--color-teacher);
+}
+
 .hud-command__tab:hover,
 .hud-command__link:hover {
   border-color: var(--pixel-window-frame);
@@ -2924,6 +2932,14 @@ a {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 900;
+}
+
+/* Phase 5V Task 3：成員數／加入碼摘要並列徽章。 */
+.classroom-section-header__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 /* 成員表狀態欄：純文字＋小圓點（無邊框，區別於上面的膠囊 chip） */
@@ -5183,6 +5199,25 @@ a {
   border-radius: var(--radius-control);
   background: var(--surface-card);
   padding: var(--space-2) var(--space-3);
+}
+
+/* Phase 5V Task 2：篩選欄位有值時的 selected 態（client-only 視覺，不改查詢
+   邏輯本身；狀態不只靠顏色，邊框寬度也一起變化）。 */
+.teacher-analytics-filters > div[data-active='true'] {
+  border-color: var(--color-teacher);
+}
+
+.teacher-analytics-filters > div[data-active='true'] select,
+.teacher-analytics-filters > div[data-active='true'] input {
+  border: 2px solid var(--color-teacher);
+}
+
+/* Phase 5V Task 2：表格容器外層框線（僅框線與捲動容器，表格本身內距/欄寬/
+   字級不動）。 */
+.teacher-table-frame {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
 }
 
 /* Task 8（盤點 G 未守門缺口）：教學分析頁三張表（題目分析／子題精熟／Live

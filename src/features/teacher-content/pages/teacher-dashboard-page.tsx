@@ -163,6 +163,9 @@ export function TeacherDashboardPage({
             <Link className="pixel-command" to="/teacher/classes">
               班級管理 <span aria-hidden="true">›</span>
             </Link>
+            <Link className="pixel-command" to="/teacher/live">
+              Live 主持 <span aria-hidden="true">›</span>
+            </Link>
           </div>
         </nav>
       </div>

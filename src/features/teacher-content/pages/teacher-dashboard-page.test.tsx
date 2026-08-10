@@ -91,7 +91,7 @@ describe('TeacherDashboardPage', () => {
     );
   });
 
-  it('limits teacher shortcuts to analytics and classroom management', async () => {
+  it('限制教師功能捷徑為教學分析、班級管理、Live 主持，不含內容管理（屬 Admin 後台）', async () => {
     const repository = teacherRepositoryOf({
       attempts: 1,
       averageAccuracy: 50,
@@ -104,9 +104,10 @@ describe('TeacherDashboardPage', () => {
       name: '教師功能捷徑',
     });
     const links = within(nav).getAllByRole('link');
-    expect(links).toHaveLength(2);
+    expect(links).toHaveLength(3);
     expect(links[0]).toHaveAttribute('href', '/teacher/analytics');
     expect(links[1]).toHaveAttribute('href', '/teacher/classes');
+    expect(links[2]).toHaveAttribute('href', '/teacher/live');
   });
 
   it('places the classroom selector inside the page header', async () => {

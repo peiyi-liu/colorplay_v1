@@ -99,7 +99,7 @@ export function TeacherAnalyticsPage({
 
   return (
     <section aria-labelledby="teacher-analytics-title" className="page-wide">
-      <header>
+      <header className="sage-page-header">
         <p className="route-panel__eyebrow">教師功能</p>
         <h1 id="teacher-analytics-title">教學分析</h1>
         <p>
@@ -135,7 +135,7 @@ export function TeacherAnalyticsPage({
                 ))}
               </select>
             </div>
-            <div>
+            <div data-active={fromDate.length > 0}>
               <label htmlFor="analytics-from">開始日期</label>
               <input
                 id="analytics-from"
@@ -146,7 +146,7 @@ export function TeacherAnalyticsPage({
                 value={fromDate}
               />
             </div>
-            <div>
+            <div data-active={toDate.length > 0}>
               <label htmlFor="analytics-to">結束日期</label>
               <input
                 id="analytics-to"
@@ -157,7 +157,7 @@ export function TeacherAnalyticsPage({
                 value={toDate}
               />
             </div>
-            <div>
+            <div data-active={chapterId.length > 0}>
               <label htmlFor="analytics-chapter">章節</label>
               <select
                 id="analytics-chapter"
@@ -174,7 +174,7 @@ export function TeacherAnalyticsPage({
                 ))}
               </select>
             </div>
-            <div>
+            <div data-active={subtopicId.length > 0}>
               <label htmlFor="analytics-subtopic">子題</label>
               <select
                 id="analytics-subtopic"
@@ -285,26 +285,28 @@ export function TeacherAnalyticsPage({
             title="題目分析"
           >
             {(rows) => (
-              <table className="ui-table">
-                <thead>
-                  <tr>
-                    <th scope="col">題號</th>
-                    <th scope="col">題目</th>
-                    <th scope="col">作答數</th>
-                    <th scope="col">正確率</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.stable_code}>
-                      <td>{row.stable_code}</td>
-                      <td>{row.prompt}</td>
-                      <td>{row.attempts}</td>
-                      <td>{formatPercent(row.correct_rate)}</td>
+              <div className="teacher-table-frame">
+                <table className="ui-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">題號</th>
+                      <th scope="col">題目</th>
+                      <th scope="col">作答數</th>
+                      <th scope="col">正確率</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.stable_code}>
+                        <td>{row.stable_code}</td>
+                        <td>{row.prompt}</td>
+                        <td>{row.attempts}</td>
+                        <td>{formatPercent(row.correct_rate)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </ProjectionSection>
 
@@ -314,28 +316,30 @@ export function TeacherAnalyticsPage({
             title="子題精熟"
           >
             {(rows) => (
-              <table className="ui-table">
-                <thead>
-                  <tr>
-                    <th scope="col">子題代碼</th>
-                    <th scope="col">子題</th>
-                    <th scope="col">作答數</th>
-                    <th scope="col">正確率</th>
-                    <th scope="col">學生數</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.subtopic_code}>
-                      <td>{row.subtopic_code}</td>
-                      <td>{row.subtopic_title}</td>
-                      <td>{row.answers}</td>
-                      <td>{formatPercent(row.accuracy)}</td>
-                      <td>{row.students}</td>
+              <div className="teacher-table-frame">
+                <table className="ui-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">子題代碼</th>
+                      <th scope="col">子題</th>
+                      <th scope="col">作答數</th>
+                      <th scope="col">正確率</th>
+                      <th scope="col">學生數</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.subtopic_code}>
+                        <td>{row.subtopic_code}</td>
+                        <td>{row.subtopic_title}</td>
+                        <td>{row.answers}</td>
+                        <td>{formatPercent(row.accuracy)}</td>
+                        <td>{row.students}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </ProjectionSection>
 
@@ -345,30 +349,32 @@ export function TeacherAnalyticsPage({
             title="Live 報表"
           >
             {(rows) => (
-              <table className="ui-table">
-                <thead>
-                  <tr>
-                    <th scope="col">活動</th>
-                    <th scope="col">狀態</th>
-                    <th scope="col">參與人數</th>
-                    <th scope="col">作答數</th>
-                    <th scope="col">正確率</th>
-                    <th scope="col">完成日期</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.session_id}>
-                      <td>{row.activity_title}</td>
-                      <td>{row.state}</td>
-                      <td>{row.participants}</td>
-                      <td>{row.answers}</td>
-                      <td>{formatPercent(row.correct_rate)}</td>
-                      <td>{formatTaipeiDate(row.completed_at)}</td>
+              <div className="teacher-table-frame">
+                <table className="ui-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">活動</th>
+                      <th scope="col">狀態</th>
+                      <th scope="col">參與人數</th>
+                      <th scope="col">作答數</th>
+                      <th scope="col">正確率</th>
+                      <th scope="col">完成日期</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.session_id}>
+                        <td>{row.activity_title}</td>
+                        <td>{row.state}</td>
+                        <td>{row.participants}</td>
+                        <td>{row.answers}</td>
+                        <td>{formatPercent(row.correct_rate)}</td>
+                        <td>{formatTaipeiDate(row.completed_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </ProjectionSection>
         </>

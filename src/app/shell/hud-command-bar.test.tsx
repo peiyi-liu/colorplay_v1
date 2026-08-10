@@ -138,4 +138,44 @@ describe('HudCommandBar', () => {
     await userEvent.click(document.body);
     expect(panel).toHaveAttribute('hidden');
   });
+
+  it('MENU 開啟時，Tab 從面板內最後一個可聚焦元素回到第一個（focus trap）', async () => {
+    renderTeacherAt('/teacher');
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
+    const panel = document.getElementById('hud-menu-panel');
+    if (!panel) throw new Error('panel missing');
+    const focusable = within(panel)
+      .getAllByRole('link')
+      .concat(within(panel).getAllByRole('button'));
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!first || !last) throw new Error('panel has no focusable elements');
+    last.focus();
+    await userEvent.tab();
+    expect(first).toHaveFocus();
+  });
+
+  it('MENU 開啟時，Shift+Tab 從面板內第一個可聚焦元素回到最後一個（focus trap）', async () => {
+    renderTeacherAt('/teacher');
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
+    const panel = document.getElementById('hud-menu-panel');
+    if (!panel) throw new Error('panel missing');
+    const focusable = within(panel)
+      .getAllByRole('link')
+      .concat(within(panel).getAllByRole('button'));
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!first || !last) throw new Error('panel has no focusable elements');
+    first.focus();
+    await userEvent.tab({ shift: true });
+    expect(last).toHaveFocus();
+  });
+
+  it('MENU 關閉時，Tab 不被攔截（正常瀏覽器 tab order，不強制回到面板內）', async () => {
+    renderTeacherAt('/teacher');
+    const toggle = screen.getByRole('button', { name: 'MENU' });
+    toggle.focus();
+    await userEvent.tab();
+    expect(toggle).not.toHaveFocus();
+  });
 });

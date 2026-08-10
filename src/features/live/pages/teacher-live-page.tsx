@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { Icon } from '../../../components/ui/icons';
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { useOwnedClassrooms } from '../../classrooms/hooks/use-classrooms';
+import type { ClassroomRepository } from '../../classrooms/types';
 import { presenterJoinCodeKey } from '../components/live-presenter';
 import {
   useCreateLiveActivity,
@@ -30,12 +31,16 @@ const createSchema = z.strictObject({
 type CreateValues = z.infer<typeof createSchema>;
 
 export function TeacherLivePage({
+  classroomRepository,
   repository,
-}: Readonly<{ repository?: LiveRepository }>) {
+}: Readonly<{
+  classroomRepository?: ClassroomRepository;
+  repository?: LiveRepository;
+}>) {
   const navigate = useNavigate();
   const activities = useLiveActivities(repository);
   const sections = useLiveSectionOptions(repository);
-  const classrooms = useOwnedClassrooms();
+  const classrooms = useOwnedClassrooms(classroomRepository);
   const createActivity = useCreateLiveActivity(repository);
   const launchSession = useLaunchLiveSession(repository);
   const [actionError, setActionError] = useState<string>();

@@ -26,7 +26,19 @@ const repository = (
   getStudentProgress: vi.fn(),
   joinClassroom: vi.fn(),
   listMine: vi.fn(),
-  listOwned: vi.fn(),
+  // Phase 5V Task 3：加入碼摘要徽章新增呼叫既有 useOwnedClassrooms，這裡補上
+  // 對應班級的 fixture，讓徽章可以渲染出真實資料；不動其餘 mock 設置。
+  listOwned: vi.fn().mockResolvedValue([
+    {
+      classroomId,
+      classroomName: '色彩一班',
+      classroomStatus: 'active',
+      createdAt: '2026-07-01T00:00:00.000Z',
+      joinCode: 'ABCD-1234-EF56-7890',
+      joinCodeVersion: 1,
+      memberCount: 1,
+    },
+  ]),
   rotateJoinCode: vi.fn().mockResolvedValue({
     classroomId,
     classroomName: null,
@@ -73,4 +85,8 @@ describe('TeacherClassroomDetailPage', () => {
     );
   });
 
+  it('顯示加入碼摘要徽章（沿用既有 useOwnedClassrooms，非新 repository method）', async () => {
+    renderPage(repository());
+    expect(await screen.findByText('加入碼 ABCD-1234-EF56-7890')).toBeVisible();
+  });
 });
