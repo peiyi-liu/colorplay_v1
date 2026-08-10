@@ -1,12 +1,12 @@
 # Phase 5F-U1：Teacher LivePresenter UI Implementation Plan
 
-**Status：** Owner approved：2026-08-10 ／ Claude Code single plan review completed ／ remediation completed ／ Authorized for implementation
+**Status：** Owner approved：2026-08-10 ／ Claude Code single plan review completed ／ remediation completed ／ Authorized for implementation ／ Implementation in progress
 
 **Spec：** `docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`（Owner approved 2026-08-10）
 
 **Parent spec：** `docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-design.md` 第 13 節「Delivery Slices」
 
-**Base：** `feature/v2-major-update`，本次盤點時 HEAD `9b4e459dc35158c985fb285f811d3e5ebd6ee58b`（含 Phase 4A merge `3644bf2`、Phase 5V merge `3230e16` 與核准的 5F-U1 spec commit）。
+**Base：** 建立 worktree 當下重新確認的 `feature/v2-major-update` tip `e559a5c32d7c685fb950033f97405680292cb1e5`。
 
 ## A. Objective / Completion Claim
 
@@ -69,14 +69,14 @@ Owner 已採用選項 1：以 Chromium 實測定案一組 LivePresenter 專用 p
 
 ### U1 強制點與 deferred enforcement
 
-- **U1 本輪可強制的範圍**：Task 2 的 fixture builder 與 Chromium contract test 只接受定案後上限；Presenter UI 對該上限負責四 viewport 零根層捲動與全文可見。這是可重現的 presentation contract，不是假資料冒充 production 功能。
+- **U1 本輪可強制的範圍**：Task 2 的 boundary fixture 與 Chromium contract test 以定案上限為正式通過契約；Presenter UI 對該上限負責四 viewport 零根層捲動與全文可見。量測 tracer 另保留 74／50 baseline 與相鄰失敗邊界，不冒充 production 可顯示內容。
 - **建立 Live 時的 client-side 驗證不可在 U1 實作**：目前 `LiveSectionOption` 只有 `sectionId`／`title`／`quizTemplateId`，`list_live_section_options` 不回傳題幹或選項。要在 `TeacherLivePage` 驗證長度必須新增 query/data contract，違反 B 節禁止新增 query/data 的邊界。
 - **不得收緊全站 schema**：`questions.prompt` 的 1–1000 與 `question_options.option_text` 的 1–500 是 Quiz／複習共用 CHECK，不得為 Live 修改。
 - **真正 content enforcement 移交但不阻塞 U1**：優先由 2A content import gate 依 Task 2 定案值拒絕不適合 Live 的內容；若需要 server-authoritative activity/session guard，移交 5F-F2。兩者落地前，U1 仍可獨立交付其 presentation contract 與既有 62 題的改寫清單，不宣稱 production 已全面強制內容上限。
 
-### Task 2 定案方式
+### Task 2 實測定案
 
-Task 2 不預填紙上數字。Harness 建立後先以既有題庫真實最長值（prompt 74、option 50）量測 1024×768 的 header/footer/body 實際高度，再在不縮字前提下逐步校準候選組合。最終必須得到一組「prompt 字數 × 每個 option 字數 × 4 options」可同時通過的上限，當場回寫 spec 第 5／7 節、Task 2 fixture 與 handoff；若無合理組合可通過，依停止條件回報。
+Chromium 定案為**題幹 36 字 × 每個選項 21 字 × 4 選項**。初始 74／50 baseline 在 1024×768 為 `scrollHeight 1411px / clientHeight 768px`。36／21 在四 viewport 均保留既有題幹 `51.2px`／`52px`與選項 `32px`，最緊的 1280×720 主體高 `581px`且與 header／footer 各留約 `6.25px`；37／21 與 36／22 均失敗。現有 CSV 需改寫 11／62 題題幹與 22／248 個選項。
 
 ## E. File Inventory
 
@@ -167,7 +167,7 @@ rg -n "test-fixtures|\.harness" src/main.tsx src/app/router/ && exit 1 || true
 
 ### Task 2：Four-viewport layout and isolated Chromium harness
 
-**前置狀態：** D 節選項 1 已由 owner 裁定。Task 2 先量測再定案數值；fixture 不得以未量測的短文案代替。
+**前置狀態：** D 節選項 1 已由 owner 裁定；Task 2 已以 Chromium 定案 36／21，fixture 使用該邊界而非一般短文案。
 
 **目的：** 建立 dev/test-only harness，以真實 `LiveSessionState` 形狀走 `LivePresenter` 同一 interface；先讓 overflow/visibility assertions RED，再以 `.live-presenter*` CSS 與最小 markup 使其 GREEN。
 

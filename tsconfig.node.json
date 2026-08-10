@@ -23,6 +23,7 @@
   "include": [
     "playwright.config.ts",
     "playwright.chapter-detail-harness.config.ts",
+    "playwright.live-presenter-harness.config.ts",
     "playwright.teacher-routes-harness.config.ts",
     "scripts/**/*.ts",
     "tests/acceptance/**/*.ts",

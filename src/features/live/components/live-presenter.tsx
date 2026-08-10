@@ -149,7 +149,11 @@ function StandingsBoard({
 
   if (!board || board.rows.length === 0) return null;
   return (
-    <section aria-label="目前排行榜" className="live-presenter__standings">
+    <section
+      aria-label="目前排行榜"
+      className="live-presenter__standings"
+      tabIndex={0}
+    >
       <h3>目前 Top 5</h3>
       <ol>
         {board.rows.map(({ arrow, entry }) => (
@@ -302,6 +306,10 @@ export function LivePresenter({
         </div>
       </header>
 
+      <p className="live-presenter__viewport-warning" role="status">
+        投影視窗過小
+      </p>
+
       {phase === 'draft' ? (
         <div className="live-presenter__status">
           <h2>場次準備中</h2>
@@ -325,7 +333,11 @@ export function LivePresenter({
           <p aria-live="polite" className="live-presenter__count">
             {state.participantCount} 位同學已加入
           </p>
-          <ul aria-label="已加入同學" className="live-presenter__wall">
+          <ul
+            aria-label="已加入同學名單"
+            className="live-presenter__wall"
+            tabIndex={0}
+          >
             {(state.participants ?? []).map((participant, index) => (
               <li
                 className="live-presenter__wall-chip"

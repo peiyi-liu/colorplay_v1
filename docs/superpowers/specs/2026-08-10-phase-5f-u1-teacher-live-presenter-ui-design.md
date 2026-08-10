@@ -4,7 +4,7 @@
 - 狀態：Owner approved：2026-08-10／Codex single spec review completed／Claude Code single plan review completed／Plan remediation completed／Authorized for implementation
 - 母文件：`docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-design.md` 第 13 節「Delivery Slices」
 - Umbrella：`docs/superpowers/specs/2026-08-10-chapter-three-umbrella-brief.md`
-- Implementation：已授權；本次文件 remediation checkpoint 尚未開始產品實作
+- Implementation：已授權；專用 worktree 實作進行中
 - 完成本文件範圍不代表 5F 完成、Phase 5 完成，也不代表通過 5F Slice Gate
 
 ## 0. 明確聲明（Explicit Non-Claims）
@@ -126,7 +126,9 @@ U1 直接複用這兩組既有型別。實作缺口只在**呈現面**（`draft`
 | Podium entry count                  | 3 筆                                                                                            | finalize/state RPC 的 `limit 3`（`20260724000200_live_presenter.sql:334`）                                                                                                              |
 | Standings entry count               | 5 筆                                                                                            | `live_session_standings` RPC 的 `limit 5`（`20260724000200_live_presenter.sql:423`）                                                                                                    |
 
-**Owner 裁定（2026-08-10）**：採用 LivePresenter 專用內容上限，但不接受未實測的 120／40 紙上數字。Task 2 必須先以 Chromium 量測既有最長 prompt 74／option 50 與候選組合，在不降低既有題幹 `51.2px`／選項 `32px` 字級、不裁切、不新增第三個 scroll region的前提下，定案一組「prompt 字數 × option 字數 × 4 options」可同時通過 1024×768 的上限，並回寫本節與第 7 節。
+**Owner 裁定（2026-08-10）與 Chromium 實測定案**：LivePresenter 專用顯示上限為**題幹 36 字／每個選項 21 字／4 個選項**。真實最長 74／50 在 1024×768 的初始 baseline 量得 presenter `scrollHeight=1411px`（`clientHeight=768px`）；36／21 在四個正式 viewport 均保留題幹 `51.2px`（1024px 寬）／`52px`（其餘寬度）與選項 `32px`、四選項全文可見、無 root 捲動。最緊的 1280×720 中 header `50.5px`、footer `52px`、主體 `581px`，主體與上下控制各留約 `6.25px`；相鄰的 37／21 與 36／22 均越界。120／40 因無法滿足同一契約而否決。
+
+以 `artifacts/content/questions.csv` 重算，此上限使既有 62 題中 11 題題幹、248 個選項中 22 個選項需改寫。
 
 **強制邊界**：U1 只強制 Presenter fixture／Chromium presentation contract。現有 `LiveSectionOption` 不含題幹／選項，若在建立 Live 時做 client-side validation，必須新增 query/data contract，超出 U1；真正 content enforcement 優先移交 2A import gate，若需 server-authoritative guard 則移交 5F-F2。此 deferred enforcement 不阻塞 U1 獨立交付，但在落地前不得宣稱 production 已全面強制內容上限。
 
@@ -163,19 +165,19 @@ U1 直接複用這兩組既有型別。實作缺口只在**呈現面**（`draft`
 
 ## 7. Viewport Fixture Matrix（本輪新增）
 
-以下 fixture 全部使用第 5 節查證到的硬上限或等價 boundary case，**不得以一般短文案 fixture 宣稱 viewport 契約通過**：
+以下 fixture 全部使用第 5 節查證到的 production 硬上限或 Chromium 定案的 LivePresenter boundary case，**不得以一般短文案 fixture 宣稱 viewport 契約通過**：
 
-| Fixture               | 內容設計                                                                                                               | 覆蓋 viewport                                                               |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `draft`               | 場次準備中主體（第 3.1 節）                                                                                            | 四個正式 viewport                                                           |
-| `lobby-boundary`      | 參與者數量刻意設為大量（例如 60 人，代表大班級量級）＋每筆 display name 皆用 30 字元上限                               | 四個正式 viewport；lobby wall 的捲動行為至少在 1024×768、1280×720 額外驗證  |
-| `question-boundary`   | prompt／4 個 option 使用 Task 2 Chromium 量測後定案的 LivePresenter 專用上限；不得使用 schema 1000／500 冒充可顯示上限 | 四個正式 viewport；核心內容不捲動的驗證至少在 1024×768、1280×720 額外驗證   |
-| `paused-boundary`     | 同 `question-boundary` 的內容邊界，額外驗證 `CountdownRing` 凍結顯示                                                   | 四個正式 viewport；同上額外於 1024×768、1280×720 驗證                       |
-| `reveal-boundary`     | option count 用上限 4；每個選項的作答數（`optionCounts`）用足以撐開長條圖寬度的最大值                                  | 四個正式 viewport；同上額外於 1024×768、1280×720 驗證                       |
-| `podium-boundary`     | 恰好 3 筆（伺服器硬上限），每筆 display name 用 30 字元上限                                                            | 四個正式 viewport                                                           |
-| `cancelled`           | 本場已取消主體（第 3.2 節）                                                                                            | 四個正式 viewport                                                           |
-| `too-small-cancelled` | cancelled phase，viewport 低於 1024×720（例如 900×600）                                                                | 額外情境；驗證訊息與 cancelled 原有安全離開路徑，不替進行中 phase 新增 exit |
-| `reduced-motion`      | `lobby`／`podium` 場景搭配 `page.emulateMedia({ reducedMotion: 'reduce' })`                                            | 只需於 1 個代表性 viewport（建議 1280×720）驗證動畫停用，不需四個尺寸重複   |
+| Fixture               | 內容設計                                                                                             | 覆蓋 viewport                                                               |
+| --------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `draft`               | 場次準備中主體（第 3.1 節）                                                                          | 四個正式 viewport                                                           |
+| `lobby-boundary`      | 參與者數量刻意設為大量（例如 60 人，代表大班級量級）＋每筆 display name 皆用 30 字元上限             | 四個正式 viewport；lobby wall 的捲動行為至少在 1024×768、1280×720 額外驗證  |
+| `question-boundary`   | prompt 36 字／4 個 option 各 21 字（Task 2 Chromium 定案）；不得使用 schema 1000／500 冒充可顯示上限 | 四個正式 viewport；核心內容不捲動的驗證至少在 1024×768、1280×720 額外驗證   |
+| `paused-boundary`     | 同 `question-boundary` 的內容邊界，額外驗證 `CountdownRing` 凍結顯示                                 | 四個正式 viewport；同上額外於 1024×768、1280×720 驗證                       |
+| `reveal-boundary`     | option count 用上限 4；每個選項的作答數（`optionCounts`）用足以撐開長條圖寬度的最大值                | 四個正式 viewport；同上額外於 1024×768、1280×720 驗證                       |
+| `podium-boundary`     | 恰好 3 筆（伺服器硬上限），每筆 display name 用 30 字元上限                                          | 四個正式 viewport                                                           |
+| `cancelled`           | 本場已取消主體（第 3.2 節）                                                                          | 四個正式 viewport                                                           |
+| `too-small-cancelled` | cancelled phase，viewport 低於 1024×720（例如 900×600）                                              | 額外情境；驗證訊息與 cancelled 原有安全離開路徑，不替進行中 phase 新增 exit |
+| `reduced-motion`      | `lobby`／`podium` 場景搭配 `page.emulateMedia({ reducedMotion: 'reduce' })`                          | 只需於 1 個代表性 viewport（建議 1280×720）驗證動畫停用，不需四個尺寸重複   |
 
 四個正式 viewport 都需覆蓋全部 7 個核心 phase（`draft`／`lobby-boundary`／`question-boundary`／`paused-boundary`／`reveal-boundary`／`podium-boundary`／`cancelled`）；高風險的 boundary fixture（`lobby-boundary`／`question-boundary`／`paused-boundary`／`reveal-boundary`）至少要在 1024×768（最小正式尺寸）與 1280×720 執行，這兩個尺寸最容易先觸發溢出。
 
