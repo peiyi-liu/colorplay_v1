@@ -7843,6 +7843,120 @@ select#dashboard-classroom {
   min-height: 44px;
 }
 
+/* Owner 2026-08-10：教師端可見修正。七個 production route 共用同一個
+   「賢者工坊」surface；資料表仍維持現代可讀性，像素語彙只落在外框、
+   header 與 action hierarchy。 */
+.teacher-workshop-page {
+  position: relative;
+  border-top: 6px solid var(--pixel-gold-deep);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--pixel-gold) 12%, transparent),
+      transparent 42%
+    ),
+    var(--surface-page);
+  box-shadow: 4px 4px 0 var(--pixel-shadow);
+  padding: clamp(16px, 2.5vw, 32px);
+}
+
+.teacher-workshop-page::before {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  width: 54px;
+  height: 12px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--coral-700) 0 14px,
+    var(--cobalt-600) 14px 28px,
+    var(--jade-600) 28px 42px,
+    transparent 42px 54px
+  );
+  content: '';
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.teacher-workshop-page h1 {
+  font-family: var(--font-pixel-tc);
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 1.35;
+}
+
+.teacher-workshop-page > .teacher-dashboard-header,
+.teacher-workshop-page > .sage-page-header {
+  border: 2px solid var(--pixel-gold-deep);
+  border-bottom-width: 6px;
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 4px 4px 0 var(--pixel-shadow);
+  padding: clamp(16px, 2vw, 24px);
+}
+
+.teacher-workshop-page .teacher-summary-card,
+.teacher-workshop-page .teacher-shortcut-card,
+.teacher-workshop-page .teacher-analytics-section,
+.teacher-workshop-page .ui-card,
+.teacher-workshop-page .classroom-create-form,
+.teacher-workshop-page .classroom-card,
+.teacher-workshop-page .live-matrix-scroll,
+.teacher-workshop-page > section[aria-label='作答矩陣'],
+.teacher-workshop-page > section[aria-label='最終排名'] {
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+}
+
+.teacher-workshop-page .teacher-summary-card,
+.teacher-workshop-page .teacher-shortcut-card,
+.teacher-workshop-page .teacher-analytics-section,
+.teacher-workshop-page > section[aria-label='作答矩陣'],
+.teacher-workshop-page > section[aria-label='最終排名'] {
+  padding: clamp(14px, 2vw, 22px);
+}
+
+.teacher-workshop-page .teacher-summary-card__header,
+.teacher-workshop-page .teacher-shortcut-card__header,
+.teacher-workshop-page .classroom-section-header,
+.teacher-workshop-page .teacher-analytics-section > h2,
+.teacher-workshop-page > section > h2 {
+  border-bottom: 3px solid var(--pixel-gold-deep);
+  padding-bottom: 8px;
+}
+
+.teacher-workshop-page .primary-action,
+.teacher-workshop-page .secondary-action,
+.teacher-workshop-page .teacher-live-console__action,
+.teacher-workshop-page .live-report__action {
+  min-height: 44px;
+  border-radius: var(--radius-pixel);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+  font-weight: 800;
+}
+
+.teacher-workshop-page--live {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--pixel-gold) 10%, transparent),
+      transparent 46%
+    ),
+    var(--pixel-night-deep);
+}
+
+@media (max-width: 30rem) {
+  .teacher-workshop-page {
+    padding: 14px;
+  }
+
+  .teacher-workshop-page::before {
+    width: 42px;
+    background-size: 42px 12px;
+  }
+}
+
 .chapter-map__building[data-access-state='completed']
   .chapter-map__status-medal {
   background: #d8edb0;

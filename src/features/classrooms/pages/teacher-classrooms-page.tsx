@@ -107,7 +107,7 @@ export function TeacherClassroomsPage({
   return (
     <section
       aria-labelledby="teacher-classrooms-title"
-      className="page-wide page-stack"
+      className="page-wide page-stack teacher-workshop-page"
     >
       <header className="teacher-dashboard-header">
         <div className="teacher-dashboard-header__intro">

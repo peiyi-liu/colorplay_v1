@@ -98,7 +98,10 @@ export function TeacherAnalyticsPage({
   const liveReport = useTeacherLiveReport(classroomId, dateFilters, repository);
 
   return (
-    <section aria-labelledby="teacher-analytics-title" className="page-wide">
+    <section
+      aria-labelledby="teacher-analytics-title"
+      className="page-wide teacher-workshop-page"
+    >
       <header className="sage-page-header">
         <p className="route-panel__eyebrow">教師功能</p>
         <h1 id="teacher-analytics-title">教學分析</h1>

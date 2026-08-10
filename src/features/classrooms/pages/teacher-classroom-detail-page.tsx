@@ -49,7 +49,7 @@ export function TeacherClassroomDetailPage({
   return (
     <section
       aria-labelledby="teacher-classroom-detail-title"
-      className="page-wide page-stack"
+      className="page-wide page-stack teacher-workshop-page"
     >
       <header className="teacher-dashboard-header sage-page-header">
         <div className="teacher-dashboard-header__intro">

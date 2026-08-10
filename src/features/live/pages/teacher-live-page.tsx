@@ -103,7 +103,7 @@ export function TeacherLivePage({
   return (
     <section
       aria-labelledby="teacher-live-title"
-      className="page-mid live-launch"
+      className="page-mid live-launch teacher-workshop-page teacher-workshop-page--live"
     >
       <header className="live-launch__hero">
         <span aria-hidden="true" className="live-launch__bolt">

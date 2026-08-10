@@ -44,7 +44,10 @@ export function TeacherLiveReportPage({
   const report = detail.data;
 
   return (
-    <section aria-labelledby="live-report-title" className="page-mid">
+    <section
+      aria-labelledby="live-report-title"
+      className="page-mid teacher-workshop-page"
+    >
       <header className="sage-page-header">
         <p className="route-panel__eyebrow">ColorPlay Live</p>
         <h1 id="live-report-title">場次報表</h1>

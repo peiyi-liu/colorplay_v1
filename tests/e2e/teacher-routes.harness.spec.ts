@@ -68,6 +68,37 @@ test('all 7 teacher routes are reachable and injected-repository harness isolate
   expect(runtimeErrors.pageErrors).toEqual([]);
 });
 
+test('all 7 teacher routes expose the shared sage-workshop visual surface', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 900, width: 1440 });
+  for (const scenario of ROUTE_SCENARIOS) {
+    await page.goto(`/dev-harness/teacher-routes.html?scenario=${scenario}`);
+    await page.waitForLoadState('networkidle');
+
+    const surface = page.locator('.teacher-workshop-page');
+    await expect(surface, scenario).toHaveCount(1);
+    const visual = await surface.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        backgroundImage: style.backgroundImage,
+        borderTopWidth: Number.parseFloat(style.borderTopWidth),
+        boxShadow: style.boxShadow,
+      };
+    });
+    expect(visual.backgroundImage, scenario).not.toBe('none');
+    expect(visual.borderTopWidth, scenario).toBeGreaterThanOrEqual(2);
+    expect(visual.boxShadow, scenario).not.toBe('none');
+
+    const title = surface.getByRole('heading', { level: 1 }).first();
+    await expect(title, scenario).toBeVisible();
+    expect(
+      await title.evaluate((element) => getComputedStyle(element).fontFamily),
+      scenario,
+    ).toContain('Cubic 11');
+  }
+});
+
 test('HUD highlights the active top tab for the current route', async ({
   page,
 }) => {

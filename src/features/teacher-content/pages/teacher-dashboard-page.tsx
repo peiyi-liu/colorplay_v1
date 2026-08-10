@@ -76,7 +76,7 @@ export function TeacherDashboardPage({
   return (
     <section
       aria-labelledby="teacher-dashboard-title"
-      className="page-wide teacher-dashboard-page"
+      className="page-wide teacher-dashboard-page teacher-workshop-page"
     >
       <header className="teacher-dashboard-header">
         <div className="teacher-dashboard-header__intro">
