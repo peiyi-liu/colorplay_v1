@@ -112,15 +112,17 @@ export function ChapterMapBuilding({
           aria-hidden="true"
           className="chapter-map__sign-chain chapter-map__sign-chain--right"
         />
-        <span className="chapter-map__building-label">
-          <span className="chapter-map__building-chapter">
-            Chapter {chapter.sortOrder}
+        <span className="chapter-map__building-caption">
+          <span className="chapter-map__building-label">
+            <span className="chapter-map__building-chapter">
+              Chapter {chapter.sortOrder}
+            </span>
+            <strong>{chapter.title}</strong>
           </span>
-          <strong>{chapter.title}</strong>
-        </span>
-        <span className="chapter-map__status-medal">
-          <Icon data-icon={state.icon} name={state.icon} size={14} />
-          <span>{state.label}</span>
+          <span className="chapter-map__status-medal">
+            <Icon data-icon={state.icon} name={state.icon} size={14} />
+            <span>{state.label}</span>
+          </span>
         </span>
       </button>
     </li>

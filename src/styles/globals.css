@@ -438,6 +438,7 @@ a {
 
 /* ── 遊戲標題畫面（spec §8）────────────────────────────────────── */
 .title-screen {
+  position: relative;
   display: flex;
   flex: 1;
   min-width: 0; /* 阻斷 flexbox 預設 min-width:auto 隨不可斷詞子項向上撐開祖先(320px 溢出根因) */
@@ -450,6 +451,34 @@ a {
   color: var(--pixel-parchment);
   text-align: center;
   padding: var(--space-6) var(--space-4);
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.title-screen::before {
+  position: absolute;
+  z-index: -2;
+  background:
+    radial-gradient(circle at 18% 20%, var(--pixel-window-frame) 0 2px, transparent 3px),
+    radial-gradient(circle at 72% 16%, var(--pixel-window-muted) 0 2px, transparent 3px),
+    radial-gradient(circle at 84% 42%, var(--pixel-window-frame) 0 2px, transparent 3px),
+    linear-gradient(var(--pixel-night), var(--pixel-night-deep));
+  background-size: 210px 160px, 260px 190px, 320px 220px, auto;
+  content: '';
+  inset: 0;
+}
+
+.title-screen::after {
+  position: absolute;
+  z-index: -1;
+  height: min(34vh, 240px);
+  background: url('../assets/sprites/village-silhouette.png') center bottom /
+    auto 100% repeat-x;
+  content: '';
+  image-rendering: pixelated;
+  inset: auto 0 0;
+  opacity: 0.72;
+  pointer-events: none;
 }
 
 .title-screen__logo {
@@ -7689,12 +7718,9 @@ select#dashboard-classroom {
 }
 
 .chapter-map__building-label {
-  position: absolute;
-  top: calc(100% + 5px);
-  left: 50%;
-  z-index: 3;
+  position: relative;
   display: grid;
-  width: min(176px, 132%);
+  width: 100%;
   min-height: 40px;
   align-content: center;
   border: 2px solid #4f2c16;
@@ -7714,6 +7740,17 @@ select#dashboard-classroom {
   line-height: 1.15;
   padding: 5px 8px;
   text-align: center;
+}
+
+.chapter-map__building-caption {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 50%;
+  z-index: 3;
+  display: grid;
+  width: min(184px, 150%);
+  justify-items: center;
+  gap: 5px;
   transform: translateX(-50%);
 }
 
@@ -7743,17 +7780,17 @@ select#dashboard-classroom {
 }
 
 .chapter-map__building-label strong {
-  overflow: hidden;
+  overflow: visible;
   font-family: var(--font-pixel-tc);
   font-size: clamp(11px, 1.4vw, 15px);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .chapter-map__status-medal {
-  position: absolute;
-  top: calc(100% + 46px);
-  left: 50%;
+  position: relative;
   z-index: 4;
   display: inline-flex;
   min-height: 24px;
@@ -7770,8 +7807,40 @@ select#dashboard-classroom {
   font-weight: 900;
   gap: 4px;
   padding: 2px 7px;
-  transform: translateX(-50%);
+  transform: none;
   white-space: nowrap;
+}
+
+/* Owner 2026-08-10 可見 UI 修正：登入卡保留完整欄位，但移除 desktop
+   不必要的垂直裝飾間距，避免 1440×900 首屏被推出 viewport。 */
+.auth-portal.scene-night {
+  min-height: auto;
+  padding: 24px 20px 28px;
+}
+
+.auth-portal.scene-night .auth-portal-brand {
+  margin-bottom: 12px;
+}
+
+.auth-portal.scene-night .press-start {
+  margin-top: 8px;
+}
+
+.auth-portal.scene-night .route-panel__message {
+  margin-top: 8px;
+}
+
+.auth-portal.scene-night .auth-window {
+  margin-top: 12px;
+}
+
+.auth-portal.scene-night .login-form {
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.auth-portal.scene-night .login-form__portal label {
+  min-height: 44px;
 }
 
 .chapter-map__building[data-access-state='completed']
