@@ -192,3 +192,17 @@
 - 下一步：由 **Codex** 撰寫 `docs/superpowers/plans/2026-08-10-phase-5f-u1-teacher-live-presenter-ui.md`（implementation plan）。Claude Code 本輪未撰寫此 plan、未寫產品碼、未建立 worktree、未開始 implementation。
 - Blocker／待決策：無。
 - 相關檔案／commit：`docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-design.md`、`docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`、`docs/superpowers/specs/2026-08-10-chapter-three-umbrella-brief.md`、`docs/roadmap-colorplay-next.md`（本次 commit 待建立，純文件、無產品程式碼變更）。
+
+## 2026-08-10 17:15 [Codex] — 5F-U1 implementation plan draft 完成，發現最大內容契約 blocker
+
+- 做了什麼：核對 `feature/v2-major-update` HEAD `9b4e459dc35158c985fb285f811d3e5ebd6ee58b`、核准的 U1／母功能 spec、現有 `LivePresenter`／route wrapper／RTL／phase projection／CSS 與 Phase 4A／5V harness 慣例，建立 `docs/superpowers/plans/2026-08-10-phase-5f-u1-teacher-live-presenter-ui.md`。Plan 固定既有 `LivePresenter` props 為唯一 production interface，切成 3 個 TDD task（seven-state/region semantics、四 viewport harness/layout、keyboard/focus/pending/reduced-motion），保留 Claude Code 為 plan 與 implementation 各自唯一 reviewer，未建立 worktree、未開始產品實作。
+- 下一步：先由 owner 裁定 plan D 節的內容上限選項並回寫核准 spec，再交 Claude Code 做唯一一次 plan review；兩者完成且 owner 核准 plan 後，才可建立 `.worktrees/phase5f-u1-live-presenter-ui`。
+- Blocker／待決策：核准 spec 同時要求 1000 字 prompt＋4×500 字 options 在 1024×768 全文可讀、零裁切、核心區零捲動。最多 3000 字即使以 16×16 px 計算已約占 768,000 px²，而整個 viewport 僅 786,432 px²，尚未計 header/footer/timer/間距，四條要求客觀無法同時成立。建議新增並強制 Live 專用內容上限；次選是修 spec 允許 question/options 成為第三個有界 scroll region；動態縮到不可讀或裁切已排除。
+- 相關檔案／commit：`docs/superpowers/plans/2026-08-10-phase-5f-u1-teacher-live-presenter-ui.md`、`docs/handoff.md`（本輪未 commit）。
+
+## 2026-08-10 17:44 [Codex] — 5F-U1 plan review remediation 完成，implementation 已授權
+
+- 做了什麼：依 Claude Code 唯一一次 plan review 的 `BLOCK`（4 High／4 Medium／1 Low）逐項 remediation：補正全域 reduced-motion baseline 與單一 `animation-name:none` 策略；too-small 收斂為 `cancelled`／podium 原有 exit phase；加入四 viewport 全控制項 `>=44×44px`；確認 `LiveSectionOption` 不含題幹／選項，故 U1 不新增 query/data，真正內容強制移交 2A import gate 或 5F-F2且不阻塞 U1；補齊 phase tests、每 task changed-path／harness-import 機械檢查、pending 可辨識契約與 CSS selector 實測值。同步更正核准 spec 第 8.4 節原稱「沒有任何 prefers-reduced-motion 覆寫」的錯誤事實，並修正 too-small 與 8.5 的離開路徑邊界。
+- 下一步：本 planning/spec checkpoint commit 後，記錄主 checkout dirty fingerprints，建立 `.worktrees/phase5f-u1-live-presenter-ui`／`phase5f/u1-live-presenter-ui`，依三個 task TDD 實作。Task 2 先以 Chromium 量測 prompt 74／option 50 與候選組合，不縮小既有 51.2px／32px 字級，再定案 LivePresenter 專用內容上限並回寫 spec／plan。
+- Blocker／待決策：無。Owner 已裁定採用 Live 專用內容上限；具體數值由 Task 2 Chromium 實測定案。若無合理組合能在 1024×768 通過，依停止條件回報。
+- 相關檔案／commit：`docs/superpowers/plans/2026-08-10-phase-5f-u1-teacher-live-presenter-ui.md`、`docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`、`docs/handoff.md`（planning remediation commit 待建立；無產品碼）。

@@ -1,10 +1,10 @@
 # Phase 5F-U1：LivePresenter UI Surface Design
 
 - 日期：2026-08-10
-- 狀態：Owner approved：2026-08-10／Codex single spec review completed／Remediation completed／Authorized for implementation planning
+- 狀態：Owner approved：2026-08-10／Codex single spec review completed／Claude Code single plan review completed／Plan remediation completed／Authorized for implementation
 - 母文件：`docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-design.md` 第 13 節「Delivery Slices」
 - Umbrella：`docs/superpowers/specs/2026-08-10-chapter-three-umbrella-brief.md`
-- Implementation planning：已授權，可撰寫 implementation plan；implementation 本身尚未開始
+- Implementation：已授權；本次文件 remediation checkpoint 尚未開始產品實作
 - 完成本文件範圍不代表 5F 完成、Phase 5 完成，也不代表通過 5F Slice Gate
 
 ## 0. 明確聲明（Explicit Non-Claims）
@@ -112,9 +112,9 @@ HostConsolePhaseView:
 
 U1 直接複用這兩組既有型別。實作缺口只在**呈現面**（`draft`／`cancelled` 兩個既有可達 kind 目前沒有對應 JSX 分支，見第 3.1／3.2 節），不是**型別面**。
 
-## 5. Production Content Bounds（本輪唯讀查證，新增）
+## 5. Production Content Bounds 與 LivePresenter 顯示契約
 
-為了讓 Chromium fixture 使用真實的 boundary case（而非隨意想像的長文案），本節唯讀查證 production schema／validator 對 LivePresenter 會顯示之內容的硬上限。查證方式：`supabase/migrations/*.sql` 的 `CHECK` constraint 與 RPC 內的 `limit` 子句，逐一核對。
+下表的 schema/RPC 上限是 production 資料可接受的全站範圍，不等於 1024×768 的 LivePresenter 可讀顯示上限。`questions.prompt` 與 `question_options.option_text` 同時服務 Quiz／複習流程，U1 不得為 Live 單獨收緊這兩個共用 CHECK。
 
 | 內容項目                            | 硬上限                                                                                          | 來源                                                                                                                                                                                    |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -126,7 +126,9 @@ U1 直接複用這兩組既有型別。實作缺口只在**呈現面**（`draft`
 | Podium entry count                  | 3 筆                                                                                            | finalize/state RPC 的 `limit 3`（`20260724000200_live_presenter.sql:334`）                                                                                                              |
 | Standings entry count               | 5 筆                                                                                            | `live_session_standings` RPC 的 `limit 5`（`20260724000200_live_presenter.sql:423`）                                                                                                    |
 
-**Owner blocker 判定**：**不存在**。六項核心內容（prompt／option text／option count／display name／podium／standings）皆有明確硬上限，可直接用於 Chromium fixture 的 boundary case。唯一沒有硬上限的是「participant count」，但這一項屬於本文件第 6 節明確歸類的**非核心、可捲動區域**（lobby chips wall）——依本輪 remediation 指示，這類項目不構成 owner blocker，只需要求 fixture 測試大量資料（見第 7 節）。因此本輪 remediation 可以完整定案，不需要回報任何 owner 決策問題。
+**Owner 裁定（2026-08-10）**：採用 LivePresenter 專用內容上限，但不接受未實測的 120／40 紙上數字。Task 2 必須先以 Chromium 量測既有最長 prompt 74／option 50 與候選組合，在不降低既有題幹 `51.2px`／選項 `32px` 字級、不裁切、不新增第三個 scroll region的前提下，定案一組「prompt 字數 × option 字數 × 4 options」可同時通過 1024×768 的上限，並回寫本節與第 7 節。
+
+**強制邊界**：U1 只強制 Presenter fixture／Chromium presentation contract。現有 `LiveSectionOption` 不含題幹／選項，若在建立 Live 時做 client-side validation，必須新增 query/data contract，超出 U1；真正 content enforcement 優先移交 2A import gate，若需 server-authoritative guard 則移交 5F-F2。此 deferred enforcement 不阻塞 U1 獨立交付，但在落地前不得宣稱 production 已全面強制內容上限。
 
 ## 6. Presenter Viewport Contract（本輪收緊）
 
@@ -157,23 +159,23 @@ U1 直接複用這兩組既有型別。實作缺口只在**呈現面**（`draft`
 
 - Viewport width `< 1024px` 或 height `< 720px` 時，顯示「投影視窗過小」訊息。
 - 四個 owner 核准的正式 viewport（1024×768／1280×720／1366×768／1920×1080）**絕對不能觸發** too-small 判定——1024×768 剛好等於門檻（`width === 1024` 且 `height === 768 > 720`），predicate 必須用嚴格小於（`<`），不得用小於等於，否則會誤判最小的正式尺寸。
-- Too-small 狀態仍需保留安全離開路徑（既有 `onExit` 或等價機制），**不得成為無法操作的遮罩**——教師必須能在畫面過小時仍然離開投影模式，不能被鎖死。
+- Too-small harness 以 `cancelled`（或 podium）這類 DOM 原本就有「離開投影」的 phase 驗證既有 `onExit`；進行中的 lobby／question／paused／reveal 不新增 exit control，維持第 8.5 節「進行中沒有離開路徑」的既有 hosting semantics。Too-small 提示不得遮住 phase 原本已有的離開控制。
 
 ## 7. Viewport Fixture Matrix（本輪新增）
 
 以下 fixture 全部使用第 5 節查證到的硬上限或等價 boundary case，**不得以一般短文案 fixture 宣稱 viewport 契約通過**：
 
-| Fixture             | 內容設計                                                                                 | 覆蓋 viewport                                                              |
-| ------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `draft`             | 場次準備中主體（第 3.1 節）                                                              | 四個正式 viewport                                                          |
-| `lobby-boundary`    | 參與者數量刻意設為大量（例如 60 人，代表大班級量級）＋每筆 display name 皆用 30 字元上限 | 四個正式 viewport；lobby wall 的捲動行為至少在 1024×768、1280×720 額外驗證 |
-| `question-boundary` | prompt 用 1000 字元上限；option count 用上限 4；每個 option text 用 500 字元上限         | 四個正式 viewport；核心內容不捲動的驗證至少在 1024×768、1280×720 額外驗證  |
-| `paused-boundary`   | 同 `question-boundary` 的內容邊界，額外驗證 `CountdownRing` 凍結顯示                     | 四個正式 viewport；同上額外於 1024×768、1280×720 驗證                      |
-| `reveal-boundary`   | option count 用上限 4；每個選項的作答數（`optionCounts`）用足以撐開長條圖寬度的最大值    | 四個正式 viewport；同上額外於 1024×768、1280×720 驗證                      |
-| `podium-boundary`   | 恰好 3 筆（伺服器硬上限），每筆 display name 用 30 字元上限                              | 四個正式 viewport                                                          |
-| `cancelled`         | 本場已取消主體（第 3.2 節）                                                              | 四個正式 viewport                                                          |
-| `too-small`         | Viewport 低於 1024×720（例如 900×600）                                                   | 額外情境，不算在四個正式 viewport 內；只需驗證訊息顯示與安全離開路徑       |
-| `reduced-motion`    | `lobby`／`podium` 場景搭配 `page.emulateMedia({ reducedMotion: 'reduce' })`              | 只需於 1 個代表性 viewport（建議 1280×720）驗證動畫停用，不需四個尺寸重複  |
+| Fixture               | 內容設計                                                                                                               | 覆蓋 viewport                                                               |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `draft`               | 場次準備中主體（第 3.1 節）                                                                                            | 四個正式 viewport                                                           |
+| `lobby-boundary`      | 參與者數量刻意設為大量（例如 60 人，代表大班級量級）＋每筆 display name 皆用 30 字元上限                               | 四個正式 viewport；lobby wall 的捲動行為至少在 1024×768、1280×720 額外驗證  |
+| `question-boundary`   | prompt／4 個 option 使用 Task 2 Chromium 量測後定案的 LivePresenter 專用上限；不得使用 schema 1000／500 冒充可顯示上限 | 四個正式 viewport；核心內容不捲動的驗證至少在 1024×768、1280×720 額外驗證   |
+| `paused-boundary`     | 同 `question-boundary` 的內容邊界，額外驗證 `CountdownRing` 凍結顯示                                                   | 四個正式 viewport；同上額外於 1024×768、1280×720 驗證                       |
+| `reveal-boundary`     | option count 用上限 4；每個選項的作答數（`optionCounts`）用足以撐開長條圖寬度的最大值                                  | 四個正式 viewport；同上額外於 1024×768、1280×720 驗證                       |
+| `podium-boundary`     | 恰好 3 筆（伺服器硬上限），每筆 display name 用 30 字元上限                                                            | 四個正式 viewport                                                           |
+| `cancelled`           | 本場已取消主體（第 3.2 節）                                                                                            | 四個正式 viewport                                                           |
+| `too-small-cancelled` | cancelled phase，viewport 低於 1024×720（例如 900×600）                                                                | 額外情境；驗證訊息與 cancelled 原有安全離開路徑，不替進行中 phase 新增 exit |
+| `reduced-motion`      | `lobby`／`podium` 場景搭配 `page.emulateMedia({ reducedMotion: 'reduce' })`                                            | 只需於 1 個代表性 viewport（建議 1280×720）驗證動畫停用，不需四個尺寸重複   |
 
 四個正式 viewport 都需覆蓋全部 7 個核心 phase（`draft`／`lobby-boundary`／`question-boundary`／`paused-boundary`／`reveal-boundary`／`podium-boundary`／`cancelled`）；高風險的 boundary fixture（`lobby-boundary`／`question-boundary`／`paused-boundary`／`reveal-boundary`）至少要在 1024×768（最小正式尺寸）與 1280×720 執行，這兩個尺寸最容易先觸發溢出。
 
@@ -197,7 +199,7 @@ U1 直接複用這兩組既有型別。實作缺口只在**呈現面**（`draft`
 
 ### 8.4 動效與可讀性
 
-- Reduced-motion：目前 `live-wall-pop`、`live-podium-reveal`、`podium-fireworks` 等 LivePresenter 專屬動畫**沒有任何 `prefers-reduced-motion` 覆寫**（全站僅 `live-streak-badge` 等少數其他元件有此處理，經全域搜尋確認）；U1 需為這些動畫新增 `prefers-reduced-motion: reduce` 下的靜態替代，屬於既有 CSS 補完，不涉及新資料。
+- Reduced-motion：`globals.css:1285-1298` 已以全域 `*` 規則把所有動畫 duration 壓到 `0.01ms !important`、iteration 壓到 1；`globals.css:6802-6806` 另已把 podium fireworks 設為 `animation:none`。但 wall chip 的 `live-wall-pop` 與 podium step 的 `live-podium-reveal` 在 reduced-motion 下 computed `animation-name` 仍是具名 keyframes。U1 需以 scoped `animation:none` 補齊這兩者；Chromium RED 判準是現況 `animation-name` 仍具名，GREEN 統一驗證 `animation-name:none`。
 - Projector readable typography：投影距離下的可讀性優化（字級／字重／對比），沿用既有 pixel 字體系統（`--font-pixel-tc`／`--font-pixel-latin`）與既有 JRPG 批次對比門檻，不引入新字體家族。
 
 ### 8.5 Full-Screen Region Accessibility（本輪修正，取代原 Dialog 語意）
@@ -219,7 +221,7 @@ U1 直接複用這兩組既有型別。實作缺口只在**呈現面**（`draft`
 - 大型題目與答案區：題目與選項文字尺寸需比一般 UI 元件明顯放大，優先保證投影可讀性而非資訊密度。
 - 主持控制與學生投影內容需有清楚視覺層級：header（狀態列＋主持控制）與主體投影內容（題目／答案／排行榜／頒獎台）之間需有明確的視覺分隔，不得讓兩者混淆。
 - 不使用玻璃擬態（glassmorphism）、多層陰影堆疊或裝飾性持續動畫——與既有 JRPG 像素扁平語彙一致，裝飾性動畫只能是既有的、一次性的轉場提示（cue），不得引入持續播放的裝飾動效。
-- 不污染 `.teacher-*`、`.chapter-*`、`.admin-*` 既有 ownership 命名空間——LivePresenter 已有專屬的 `.live-presenter*` 命名空間（目前 globals.css 內 86 個選擇器全部以此為字首），U1 新增規則必須延續此命名空間，不得跨界修改其他 namespace 的既有規則。
+- 不污染 `.teacher-*`、`.chapter-*`、`.admin-*` 既有 ownership 命名空間——LivePresenter 已有專屬的 `.live-presenter*` 命名空間（本輪實測 `.live-presenter` 字樣 90 處、45 個 unique name、71 個行首 selector），U1 新增規則必須延續此命名空間，不得跨界修改其他 namespace 的既有規則。
 - Token 使用範圍限於既有 pixel／night 系列變數（`--pixel-night-deep`、`--pixel-window-frame`、`--pixel-gold-deep` 等）與既有 `--font-pixel-tc`／`--font-pixel-latin`，不新增新的色彩或字體 token，除非既有 token 確實無法滿足對比要求（若發生，需在 implementation plan 階段個別提出，本文件不預先核准新增 token）。
 
 ## 10. AC Mapping（本輪修正）
@@ -257,7 +259,7 @@ U1 直接複用這兩組既有型別。實作缺口只在**呈現面**（`draft`
 
 - 比照 Phase 4A（`chapter-detail-page.harness.tsx`＋`playwright.chapter-detail-harness.config.ts`，port `4176`）與 Phase 5V（`teacher-routes.harness.tsx`＋`playwright.teacher-routes-harness.config.ts`，port `4177`）既有模式，建立 dev-only harness，經既有 `repository?` DI seam 注入第 7 節定義的 fixture。
 - **Chromium 專用 port 定案為 `localhost:4178`**（不與既有 `4173`／`4176`／`4177` 衝突），設定 `--strictPort`、`reuseExistingServer: false`，比照既有兩個 harness config 的固定 port 慣例。
-- Reduced-motion 驗證方式：`page.emulateMedia({ reducedMotion: 'reduce' })`，接著驗證 `live-wall-pop`／`live-podium-reveal`／`podium-fireworks` 等裝飾動畫的 computed style——`animation-name` 為 `none`，或 `animation-duration` 為 `0s`（兩種寫法擇一驗證，取決於實作時選用哪種 CSS 覆寫策略）。
+- Reduced-motion 驗證方式：`page.emulateMedia({ reducedMotion: 'reduce' })`，先確認 RED 現況 wall/podium 的 `animation-name` 仍為具名 keyframes，再以 scoped CSS 使 `live-wall-pop`／`live-podium-reveal`／`podium-fireworks` computed `animation-name` 全部為 `none`。全域 duration `0.01ms !important` 已存在，不能以 duration assertion 代替 `animation-name:none`。
 - 同時驗證：**正常模式**（未 emulate reduced-motion）下，既有核准的一次性功能提示（例如 reveal／fanfare 音效觸發的視覺 cue）仍然保留，不因為新增 reduced-motion 支援而被誤刪。
 - Overflow／console checks：`document.documentElement.scrollWidth`／`scrollHeight` 於四個正式 viewport 下不得超出 `clientWidth`／`clientHeight`；console／page error 數為 0。
 
