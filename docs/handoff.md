@@ -216,3 +216,11 @@
 - 下一步：交 Claude Code 做本 artifact 的唯一一次 implementation review（只 review，不直接改 Codex worktree）。本輪只宣稱**「5F-U1 LivePresenter UI surface complete」**；不宣稱 5F／Phase 5／Slice Gate／production-ready。merge／push／hosted 操作仍需 owner 另行授權。
 - Blocker／待決策：無實作 blocker；待 Claude Code implementation review 結果。
 - 相關檔案／commit：`phase5f/u1-live-presenter-ui` branch，base `e559a5c`，implementation tip `b0ac1f2`（handoff append commit 待建立）。
+
+## 2026-08-10 18:48 [Codex] — 5F-U1 implementation review remediation 完成，交 owner 核准
+
+- Review 結論：Claude Code 作為唯一 reviewer 對 `e559a5c..180c573` 給出 `BLOCK`（1 High／1 Medium／2 Low）；本輪未啟動第二位 reviewer，也未進行第二輪完整 review。
+- Findings remediation：H1 先在既有 draft／cancelled RTL 測試加入題號負向斷言，兩態皆精準 RED，再把 header 映射收斂為 draft「尚未開始」／cancelled「已取消」／lobby 沿用「等待室」／其餘 phase 沿用既有題號；M2 採首選方案，移除無條件覆蓋正解列 `scale(1.06)` 的高 specificity 規則，改以 chart `width:100%`＋`padding-right:6%` 容納右緣外擴，保留既有正解放大強調與 reduced-motion `transform:none`；L3 把 too-small 警示改為 `role="alert"`；L4 不改程式碼，只在 spec 第 6 節記錄 header／footer 刻意保留、主體隱藏，footer transition 是否停用待 owner 裁定。Spec 第 9 節亦補記 M2 視覺決策與原因。
+- Scoped validation：H1 RED 為 2 failed／13 passed，GREEN 後 `live-presenter.test.tsx` 15／15；Chromium harness 維持 39／39，並在四個正式 viewport 驗證 reveal 正解列仍為 `scale(1.06)` 且位於主體範圍內，1280×720 最緊尺寸仍通過；`npx tsc -b --pretty false`、scoped ESLint、5 個 affected files Prettier、`git diff --check`、production harness-import 機械檢查皆 exit 0。Forbidden paths 相對 base 維持零 diff；Phase 1 tip 仍為 `def3fc96`，無新增 `.live-presenter*` overlap。
+- Remediation commit：`0bcd53a9a6c77ce711be275ea5ba3f5e48f0ec51`（`fix(live): remediate H1 M2 L3 and document L4`，5 paths，22 insertions／7 deletions）。
+- 下一步：本 checkpoint 直接交 owner 依 findings、remediation 與 validation 核准，不再交第二輪 review。只可宣稱「5F-U1 LivePresenter UI surface complete」；不是 5F／Phase 5／Slice Gate／production-ready。Merge／push／hosted 操作仍分別以 owner 授權與 staging runbook 為準。
