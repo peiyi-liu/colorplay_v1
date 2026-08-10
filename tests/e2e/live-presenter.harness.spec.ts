@@ -286,7 +286,13 @@ for (const viewport of VIEWPORTS) {
 
       if (scenario === 'reveal-boundary') {
         const standings = page.getByRole('region', { name: '目前排行榜' });
+        const correctRow = page.locator('.live-presenter__chart-row--correct');
         await expect(standings).toHaveAttribute('tabindex', '0');
+        await expect(correctRow).toHaveCSS(
+          'transform',
+          /matrix\(1\.06, 0, 0, 1\.06,/u,
+        );
+        await expectInside(correctRow, body);
         await standings.focus();
         await expect(standings).toBeFocused();
       }
@@ -327,7 +333,7 @@ test('too-small cancelled keeps the existing exit path', async ({ page }) => {
   );
   await page.waitForLoadState('networkidle');
 
-  await expect(page.getByText('投影視窗過小')).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveText('投影視窗過小');
   await expect(page.getByText('本場已取消')).toBeHidden();
   await page.getByRole('button', { name: '離開投影' }).click();
   await expect(page.getByRole('status')).toHaveText('已離開投影');

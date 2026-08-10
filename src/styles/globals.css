@@ -4906,8 +4906,9 @@ a {
   justify-content: flex-start;
 }
 
-.live-presenter .live-presenter__chart-row--correct {
-  transform: none;
+.live-presenter__feedback .live-presenter__chart {
+  width: 100%;
+  padding-right: 6%;
 }
 
 /* Neutralize inherited paragraph margins and accidental growth so the

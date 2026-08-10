@@ -162,6 +162,7 @@ U1 直接複用這兩組既有型別。實作缺口只在**呈現面**（`draft`
 - Viewport width `< 1024px` 或 height `< 720px` 時，顯示「投影視窗過小」訊息。
 - 四個 owner 核准的正式 viewport（1024×768／1280×720／1366×768／1920×1080）**絕對不能觸發** too-small 判定——1024×768 剛好等於門檻（`width === 1024` 且 `height === 768 > 720`），predicate 必須用嚴格小於（`<`），不得用小於等於，否則會誤判最小的正式尺寸。
 - Too-small harness 以 `cancelled`（或 podium）這類 DOM 原本就有「離開投影」的 phase 驗證既有 `onExit`；進行中的 lobby／question／paused／reveal 不新增 exit control，維持第 8.5 節「進行中沒有離開路徑」的既有 hosting semantics。Too-small 提示不得遮住 phase 原本已有的離開控制。
+- Too-small 時刻意保留 header 與 footer、隱藏 phase 主體；footer transition 在此狀態是否應停用仍待 owner 裁定，本輪不改變既有 handler 或可操作性。
 
 ## 7. Viewport Fixture Matrix（本輪新增）
 
@@ -222,6 +223,7 @@ U1 直接複用這兩組既有型別。實作缺口只在**呈現面**（`draft`
 - 高對比：深色背景（沿用既有 `--pixel-night-deep`）搭配高對比文字與控制項，確保投影機／教室後排可讀。
 - 大型題目與答案區：題目與選項文字尺寸需比一般 UI 元件明顯放大，優先保證投影可讀性而非資訊密度。
 - 主持控制與學生投影內容需有清楚視覺層級：header（狀態列＋主持控制）與主體投影內容（題目／答案／排行榜／頒獎台）之間需有明確的視覺分隔，不得讓兩者混淆。
+- Reveal 正解列保留既有 `scale(1.06)` 放大強調；U1 以 chart 右內距容納 transform 外擴，避免正式 viewport 溢出，reduced-motion 仍沿用既有 `transform: none`。
 - 不使用玻璃擬態（glassmorphism）、多層陰影堆疊或裝飾性持續動畫——與既有 JRPG 像素扁平語彙一致，裝飾性動畫只能是既有的、一次性的轉場提示（cue），不得引入持續播放的裝飾動效。
 - 不污染 `.teacher-*`、`.chapter-*`、`.admin-*` 既有 ownership 命名空間——LivePresenter 已有專屬的 `.live-presenter*` 命名空間（本輪實測 `.live-presenter` 字樣 90 處、45 個 unique name、71 個行首 selector），U1 新增規則必須延續此命名空間，不得跨界修改其他 namespace 的既有規則。
 - Token 使用範圍限於既有 pixel／night 系列變數（`--pixel-night-deep`、`--pixel-window-frame`、`--pixel-gold-deep` 等）與既有 `--font-pixel-tc`／`--font-pixel-latin`，不新增新的色彩或字體 token，除非既有 token 確實無法滿足對比要求（若發生，需在 implementation plan 階段個別提出，本文件不預先核准新增 token）。

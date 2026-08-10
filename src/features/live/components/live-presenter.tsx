@@ -248,9 +248,13 @@ export function LivePresenter({
     >
       <header className="live-presenter__bar">
         <p>
-          {phase === 'lobby'
-            ? '等待室'
-            : `第 ${String(state.currentPosition)} / ${String(state.questionCount)} 題`}
+          {phase === 'draft'
+            ? '尚未開始'
+            : phase === 'cancelled'
+              ? '已取消'
+              : phase === 'lobby'
+                ? '等待室'
+                : `第 ${String(state.currentPosition)} / ${String(state.questionCount)} 題`}
         </p>
         <div>
           <button
@@ -306,7 +310,7 @@ export function LivePresenter({
         </div>
       </header>
 
-      <p className="live-presenter__viewport-warning" role="status">
+      <p className="live-presenter__viewport-warning" role="alert">
         投影視窗過小
       </p>
 

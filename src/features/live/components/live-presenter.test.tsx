@@ -177,6 +177,7 @@ describe('LivePresenter', () => {
     ).toBeVisible();
     expect(screen.getByText(/尚未開放學生加入/u)).toBeVisible();
     expect(screen.queryByText(/位同學已加入/u)).not.toBeInTheDocument();
+    expect(screen.queryByText(/第 \d+ \/ \d+ 題/u)).not.toBeInTheDocument();
     expect(screen.queryByRole('timer')).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: '開啟等待室' }),
@@ -200,6 +201,7 @@ describe('LivePresenter', () => {
     ).toBeVisible();
     expect(screen.queryByText(/第 [1-9] 名/u)).not.toBeInTheDocument();
     expect(screen.queryByText(/%/u)).not.toBeInTheDocument();
+    expect(screen.queryByText(/第 \d+ \/ \d+ 題/u)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '離開投影' }));
     expect(onExit).toHaveBeenCalledTimes(1);
