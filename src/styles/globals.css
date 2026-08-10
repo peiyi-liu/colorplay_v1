@@ -4452,6 +4452,11 @@ a {
   color: var(--pixel-window-ink);
 }
 
+.chapter-dungeon .chapter-detail__mastery-value--pending {
+  color: var(--pixel-window-muted);
+  font-size: 0.85em;
+}
+
 /* 透明底 pill 疊夜底字不可讀(批②同構缺陷)→ 改實色淺底。 */
 .chapter-dungeon .chapter-status-pill--success,
 .chapter-dungeon .chapter-status-pill--primary {
@@ -4488,6 +4493,30 @@ a {
 .chapter-dungeon .review-accordion {
   background: var(--pixel-parchment-card);
   border: 2px solid var(--pixel-gold-deep);
+}
+
+/* Phase 4A：locked／content-preparing／content-readiness-error／error 頁內狀態卡
+   （原 Navigate-away 行為改為頁內渲染，沿用本區塊既有夜窗配方，不新增 token）。 */
+.chapter-dungeon .chapter-detail-state {
+  background: var(--pixel-night);
+  border: 3px solid var(--pixel-window-frame);
+  outline: 2px solid var(--pixel-night);
+  box-shadow:
+    0 0 0 5px var(--pixel-window-frame),
+    4px 4px 0 var(--pixel-shadow);
+  border-radius: var(--radius-pixel);
+  padding: 20px 24px;
+  color: var(--pixel-window-ink);
+}
+
+.chapter-detail-state__icon {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: 32px;
+}
+
+.chapter-detail-state--error > p[role='alert'] {
+  color: var(--pixel-danger);
 }
 
 /* 空狀態與錯誤列直接坐夜底。 */

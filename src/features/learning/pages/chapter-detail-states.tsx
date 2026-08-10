@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import type { ChapterAccessBlocker } from '../api/chapter-map';
@@ -30,6 +31,10 @@ export function LockedState({
   chapterTitle: string;
   unmetConditions: readonly ChapterAccessBlocker[];
 }>) {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
   return (
     <section
       aria-label={`${chapterTitle}：鎖定中`}
@@ -39,7 +44,9 @@ export function LockedState({
       <span aria-hidden="true" className="chapter-detail-state__icon">
         🔒
       </span>
-      <h1>{chapterTitle}</h1>
+      <h1 ref={headingRef} tabIndex={-1}>
+        {chapterTitle}
+      </h1>
       {unmetConditions.length > 0 ? (
         <>
           <p>這個章節目前鎖定，需要先完成：</p>
@@ -61,6 +68,10 @@ export function LockedState({
 export function ContentPreparingState({
   chapterTitle,
 }: Readonly<{ chapterTitle: string }>) {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
   return (
     <section
       aria-label={`${chapterTitle}：內容準備中`}
@@ -70,7 +81,9 @@ export function ContentPreparingState({
       <span aria-hidden="true" className="chapter-detail-state__icon">
         🛠️
       </span>
-      <h1>{chapterTitle}</h1>
+      <h1 ref={headingRef} tabIndex={-1}>
+        {chapterTitle}
+      </h1>
       <p>這個章節的內容還在準備中，敬請期待。</p>
     </section>
   );
@@ -80,12 +93,18 @@ export function ContentReadinessErrorState({
   chapterTitle,
   reason,
 }: Readonly<{ chapterTitle: string; reason: string }>) {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
   return (
     <section
       aria-label={`${chapterTitle}：內容異常`}
       className="chapter-dungeon scene-dungeon chapter-detail-state chapter-detail-state--readiness-error"
     >
-      <h1>{chapterTitle}</h1>
+      <h1 ref={headingRef} tabIndex={-1}>
+        {chapterTitle}
+      </h1>
       <p aria-live="assertive" role="alert">
         {reason}
       </p>

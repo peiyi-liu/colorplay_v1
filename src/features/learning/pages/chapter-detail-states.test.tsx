@@ -247,3 +247,22 @@ describe('chapterMasteryRingValue', () => {
     ).toBe(82);
   });
 });
+
+describe('焦點管理', () => {
+  it('LockedState 掛載時焦點移動到標題', () => {
+    render(<LockedState chapterTitle="色彩認知" unmetConditions={[]} />);
+    expect(screen.getByRole('heading', { name: /色彩認知/u })).toHaveFocus();
+  });
+
+  it('ContentPreparingState 掛載時焦點移動到標題', () => {
+    render(<ContentPreparingState chapterTitle="色彩心理" />);
+    expect(screen.getByRole('heading', { name: /色彩心理/u })).toHaveFocus();
+  });
+
+  it('ContentReadinessErrorState 掛載時焦點移動到標題', () => {
+    render(
+      <ContentReadinessErrorState chapterTitle="色彩表示" reason="測試原因" />,
+    );
+    expect(screen.getByRole('heading', { name: /色彩表示/u })).toHaveFocus();
+  });
+});
