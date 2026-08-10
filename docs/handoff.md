@@ -206,3 +206,45 @@
 - 下一步：本 planning/spec checkpoint commit 後，記錄主 checkout dirty fingerprints，建立 `.worktrees/phase5f-u1-live-presenter-ui`／`phase5f/u1-live-presenter-ui`，依三個 task TDD 實作。Task 2 先以 Chromium 量測 prompt 74／option 50 與候選組合，不縮小既有 51.2px／32px 字級，再定案 LivePresenter 專用內容上限並回寫 spec／plan。
 - Blocker／待決策：無。Owner 已裁定採用 Live 專用內容上限；具體數值由 Task 2 Chromium 實測定案。若無合理組合能在 1024×768 通過，依停止條件回報。
 - 相關檔案／commit：`docs/superpowers/plans/2026-08-10-phase-5f-u1-teacher-live-presenter-ui.md`、`docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`、`docs/handoff.md`（planning remediation commit 待建立；無產品碼）。
+
+## 2026-08-10 22:26 [Codex] — Owner 選定 JRPG App Shell「C：連續世界旅程」
+
+- 做了什麼：Owner 從三個 JRPG App Shell 草圖中選定 C「連續世界旅程」作為全站改版方向。固定決策包含：深藍夜空 App Shell 與 HUD 跨 route 穩定、內容以道路／橋樑／霧帶／階梯／光線連成世界段落、不再使用包住主要內容的頁面級大外框、手機版重新構圖、閱讀→小節測驗→複習→章節總測驗以可見旅程節點呈現，並要求每個 route-level 畫面在實作前產生桌機與 393px 草圖供 owner 確認；畫面與場景之間需有轉場。
+- 下一步：先完成 App Shell／HUD／世界連接方式／轉場 storyboard 的設計確認，再分批生成首頁與 Auth、學生核心學習循環、其餘學生功能、教師端、Live／投影等逐頁草圖；全部仍是設計階段，尚未授權產品實作。
+- Blocker／待決策：需由 owner 選定跨 route 的主要轉場語彙（短距道路推進＋霧幕、門扉／地標遮罩、或純 crossfade）；功能層的「移除課後任務實戰、加入小節測驗與章節總測驗」另需明確 route／資料契約，不能只靠 UI 換標籤完成。
+- 相關檔案／commit：`artifacts/design-audit/jrpg-app-shell/selected/continuous-world-journey-c.png`、`artifacts/design-audit/jrpg-app-shell/selected/selection-manifest.md`（設計參考，未 commit）；本筆 handoff 尚未 commit，無產品程式碼變更。
+
+## 2026-08-10 23:10 [Codex] — JRPG App Shell 第一批核准與第二批功能畫面待審
+
+- 做了什麼：Owner 核准第一批 01 固定學生 HUD、03 登入公會櫃台、04 道路推進／霧幕轉場、05 六章學習地圖；02 首頁要求桌機版「開始冒險」移至右下，已另存 `02-home-world-entrance-v2.png`，手機版維持不變，待 owner 確認。依 owner 追加範圍完成第二批草圖：06 複習閱讀、07 小節測驗、08 Live 學生端、09 Live 教師主持台、10 Live 投影、11 教師登入後固定選單、12 教師表格、13 商店。Codex 在交 owner 前主動否決 09-v1（誤加教師等級／點數）與 12-v1（誤用學生 XP／金幣 HUD），已產生 09-v2／12-v2 修正候選。
+- 下一步：Owner 逐張核准或提出修改；完成第二批核准後才繼續生成章節總測驗／結果、錯題、進度、成就、排行榜、其餘教師 route 與系統狀態。仍未撰寫 implementation plan、未修改產品程式碼、未部署。
+- Blocker／待決策：02-v2 與第二批 06–13 尚待 owner 核准。生成圖的教育內容、數值與中文字形均為示意，不得直接成為正式產品內容。
+- 相關檔案／commit：`artifacts/design-audit/jrpg-app-shell/batch-01/**`、`artifacts/design-audit/jrpg-app-shell/batch-02/**`、`docs/handoff.md`（均尚未 commit；無產品程式碼變更）。
+
+## 2026-08-10 23:37 [Codex] — 複習／測驗／Live 流程 v2 草圖完成
+
+- 做了什麼：依 owner 回饋重畫第二批核心畫面。06-v2 改為桌機近滿版雙頁書、手機單頁直向閱讀；07-v2 桌機答案改 2x2 四宮格並示範長選項換行／有下限縮字，手機結構維持；08-v2 學生 Live 只顯示 A／B／C／D 與「請看投影幕作答」，不顯示題目；新增 14 Live 六位加入代碼頁；09 拆成 09A 建立 Live（班級、小節單選／多選、20 秒預設倒數）與 09B 全螢幕主持（加入代碼、人數、暱稱、開始遊戲與進行中控制）；10-v2 投影 storyboard 補齊等待、題目倒數、公布正解／作答統計、排名四態。所有草圖已存入 batch-02 並記錄 SHA-256。
+- 下一步：等待 owner 逐張核准或修正；確認「20 秒」究竟是每題作答倒數或 Lobby 等候時間後，才可把 Live 設計寫成正式契約。後續仍需產生章節總測驗／結果、錯題、進度、成就、排行榜與其餘教師 route。
+- Blocker／待決策：學生端只顯示選項會讓只使用螢幕閱讀器的學生缺少題目語意；正式設計需決定是否提供視覺隱藏但 AT 可讀的題目，或把此模式明確限定為必須觀看教室投影的同步活動。生成圖內教育文字、排名、分數與暱稱均非權威內容。
+- 相關檔案／commit：`artifacts/design-audit/jrpg-app-shell/batch-02/{06-review-reading-v2,07-student-section-quiz-v2,08-live-student-options-only-v2,09a-live-create,09b-live-fullscreen-host,10-live-projector-phases-v2,14-live-join-code}.png`、`artifacts/design-audit/jrpg-app-shell/batch-02/manifest.md`、`docs/handoff.md`（尚未 commit；無產品程式碼變更）。
+
+## 2026-08-10 23:55 [Codex] — JRPG Continuous World 全站設計契約與實作計畫草案
+
+- 做了什麼：把 owner 已選定的「連續世界旅程」整理成全站設計契約，涵蓋固定夜空 App Shell／HUD、取消奶黃色頁底與頁面級大外框、route 霧幕轉場、公開/Auth、學生學習循環、Quiz／結果／錯題、商店／成就／排行榜、教師固定選單與表格、Live join／participant／create／host／projector／report；另建立 implementation plan，順序為 Foundation → Public/Map → Learning → Student Meta → Teacher → Live。唯讀確認現況：Live `screen_only` 與每題預設 20 秒已有正式 repository contract；Live 多小節目前只有單一 `quizTemplateId`／`sectionId`，小節測驗也缺 authoritative template/gate，兩者列為獨立功能切片，不以假 UI 冒充完成。
+- 下一步：owner 確認 plan B 節的四個測試 seams 後，重新確認 `feature/v2-major-update` tip 與 dirty fingerprints，建立 `.worktrees/jrpg-continuous-world-shell`，從 Task 1 固定 Shell／HUD／背景／轉場開始 TDD。未核准的 route 草圖仍先產生並由 owner 確認，再進對應頁面 task。
+- Blocker／待決策：依 TDD skill，任何測試前必須由 owner 確認公開測試 seams；02 首頁 v2 與尚未生成的結果／錯題／進度／成就／排行榜／其餘教師狀態仍需依先前決策逐頁核准。Live 多小節與小節測驗需新 server contract，不能納入純 UI task。
+- 相關檔案／commit：`docs/superpowers/specs/2026-08-10-jrpg-continuous-world-app-shell-design.md`、`docs/superpowers/plans/2026-08-10-jrpg-continuous-world-app-shell.md`、`docs/handoff.md`（均未 commit；尚未建立 worktree或修改產品碼）。
+
+## 2026-08-11 00:08 [Codex] — 全站改版改採 generated-board visual parity first
+
+- 做了什麼：Owner 修改執行順序，裁定以 `artifacts/design-audit/jrpg-app-shell/` 目前生成的非 rejected／非 superseded 圖片作為 UI／UX implementation references，先把畫面更新為相同的場景、構圖、色彩、HUD、資訊層級與 desktop/mobile composition，再逐項加入新功能。Codex 重寫設計契約與 implementation plan：以 JourneyAppShell、RouteWorldStage、BookReadingSurface、BattleChoiceSurface、TeacherWorkSurface、LiveStageSurface 六個深 Visual Modules 消化 14 張 boards；UI 分為 Shell → Public/Auth/Map → Book/Battle/Market → Teacher → Live 五波，新功能改為 missions removal → journey progress → subtopic Quiz → chapter final gate → Live multi-section 五個獨立 vertical slices。同步把 batch-01 的 02-v2 與 batch-02 所有有效 v2 boards 標為 owner adopted visual references。
+- 下一步：Owner 確認新版 plan D 節四個 seams 後，重新確認 `feature/v2-major-update` tip 與主 checkout dirty fingerprints，建立 `.worktrees/jrpg-generated-board-ui`／`phase6/jrpg-generated-board-ui`，從 UI-1 Shell／HUD／夜空／轉場開始 TDD。現有 hooks／repository／handlers 在 restyle 時保持連線，不先拔除再用 mock 補回。
+- Blocker／待決策：pre-code TDD seam confirmation 尚未完成。Generated board 的錯字、假數值、假資料、任意角色／圖示不具權威性；visual parity 只約束 layout／scene／hierarchy，正式 DOM copy、server data、a11y 優先。
+- 相關檔案／commit：`docs/superpowers/specs/2026-08-10-jrpg-continuous-world-app-shell-design.md`、`docs/superpowers/plans/2026-08-10-jrpg-continuous-world-app-shell.md`、`artifacts/design-audit/jrpg-app-shell/batch-{01,02}/manifest.md`、`docs/handoff.md`（均未 commit；本輪無產品碼、無 worktree、無 push／deploy）。
+
+## 2026-08-11 00:12 [Codex] — Generated-board UI plan seams 核准，UI-1 implementation 授權
+
+- 做了什麼：Owner 回覆「是」，核准新版 plan D 節四個 pre-code test seams：JourneyAppShell、typed Visual Modules、production route adapters、production browser／dev-only harness isolation。Plan status 更新為 owner approved／four implementation test seams confirmed／authorized for UI-1 implementation。Codex 重新讀取 `codebase-design` 與 `tdd` skills、`CONTEXT.md`、current roadmap、design spec 與 UI acceptance contract；本 checkpoint 尚未寫產品測試或產品碼。
+- 下一步：建立 planning checkpoint commit；記錄 `feature/v2-major-update` tip 與主 checkout dirty fingerprints；建立 `.worktrees/jrpg-generated-board-ui`／`phase6/jrpg-generated-board-ui`。UI-1 依 Shell seam 一個 behavior slice 一次 RED → GREEN：先 avatar＋nickname identity，再 HUD role/geometry，再 deep-navy root／RouteWorldStage，再 reduced-motion transition。
+- Blocker／待決策：無。生成 PNG 約 40MB，只作主 checkout 的只讀視覺參考，不放入產品 bundle，也不把整張圖當 runtime background。
+- 相關檔案／commit：`docs/superpowers/plans/2026-08-10-jrpg-continuous-world-app-shell.md`、`docs/superpowers/specs/2026-08-10-jrpg-continuous-world-app-shell-design.md`、`artifacts/design-audit/jrpg-app-shell/batch-{01,02}/manifest.md`、`docs/handoff.md`（planning checkpoint commit 待建立）。
