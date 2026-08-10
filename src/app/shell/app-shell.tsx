@@ -11,12 +11,11 @@ import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { EconomySummaryView } from '../../features/rewards/components/economy-summary';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
 import { HudCommandBar } from './hud-command-bar';
+import { RouteWorldStage } from './route-world-stage';
 import { RotateBanner } from './rotate-banner';
 import { useIdleLogout } from './use-idle-logout';
 
-function AuthenticatedEconomySummary({
-  variant = 'default',
-}: Readonly<{ variant?: 'default' | 'learning-map' }>) {
+function AuthenticatedEconomySummary() {
   const economy = useEconomySummary();
 
   if (economy.isPending) {
@@ -34,7 +33,7 @@ function AuthenticatedEconomySummary({
     );
   }
 
-  return <EconomySummaryView summary={economy.data} variant={variant} />;
+  return <EconomySummaryView summary={economy.data} />;
 }
 
 function StudentHudAvatar({
@@ -57,11 +56,17 @@ function StudentHudAvatar({
 }
 
 function AuthenticatedStudentShell({
+  displayName,
   isLearningMap,
+  reducedMotion,
   signOutError,
+  transitionKey,
 }: Readonly<{
+  displayName: string;
   isLearningMap: boolean;
+  reducedMotion: boolean;
   signOutError: boolean;
+  transitionKey: string;
 }>) {
   const inventory = useBlookInventory();
   const equippedBlook =
@@ -72,10 +77,11 @@ function AuthenticatedStudentShell({
     <>
       <header className="hud-top">
         <div className="hud-economy-group">
-          <StudentHudAvatar equipped={equippedBlook} />
-          <AuthenticatedEconomySummary
-            variant={isLearningMap ? 'learning-map' : 'default'}
-          />
+          <div aria-label="學生身分" className="hud-identity" role="group">
+            <StudentHudAvatar equipped={equippedBlook} />
+            <strong className="hud-identity__name">{displayName}</strong>
+          </div>
+          <AuthenticatedEconomySummary />
         </div>
         {signOutError ? (
           <p className="app-shell__auth-error" role="alert">
@@ -83,9 +89,13 @@ function AuthenticatedStudentShell({
           </p>
         ) : null}
       </header>
-      <main className="game-stage__scene" id="main-content" tabIndex={-1}>
+      <RouteWorldStage
+        reducedMotion={reducedMotion}
+        scene={isLearningMap ? 'learning-map' : 'student-route'}
+        transitionKey={transitionKey}
+      >
         <Outlet context={outletContext} />
-      </main>
+      </RouteWorldStage>
     </>
   );
 }
@@ -104,6 +114,11 @@ export function AppShell() {
     auth.session !== null &&
     profile.data?.id === auth.session.userId;
   const isTeacher = isAuthenticatedProfile && profile.data?.role === 'teacher';
+  const shellRole = isAuthenticatedProfile
+    ? isTeacher
+      ? 'teacher'
+      : 'student'
+    : 'public';
   const isStudentLearningMap =
     isAuthenticatedProfile && !isTeacher && location.pathname === '/app';
   const reducedMotion = profile.data?.reducedMotion === true;
@@ -151,9 +166,7 @@ export function AppShell() {
 
   return (
     <div className="game-viewport">
-      <div
-        className={`game-stage${isStudentLearningMap ? ' game-stage--learning-map' : ''}`}
-      >
+      <div className="game-stage" data-shell-role={shellRole}>
         <a className="skip-link" href="#main-content">
           跳到主要內容
         </a>
@@ -180,8 +193,11 @@ export function AppShell() {
         ) : null}
         {isAuthenticatedProfile && !isTeacher ? (
           <AuthenticatedStudentShell
+            displayName={profile.data?.displayName ?? ''}
             isLearningMap={isStudentLearningMap}
+            reducedMotion={reducedMotion}
             signOutError={signOutError}
+            transitionKey={location.pathname}
           />
         ) : isTeacher ? (
           <header className="hud-top">
@@ -214,7 +230,11 @@ export function AppShell() {
           </>
         ) : null}
         {isAuthenticatedProfile && !isTeacher ? null : (
-          <main className="game-stage__scene" id="main-content" tabIndex={-1}>
+          <RouteWorldStage
+            reducedMotion={reducedMotion}
+            scene={isTeacher ? 'teacher-route' : 'public-route'}
+            transitionKey={location.pathname}
+          >
             {auth.status === 'authenticated' && !isAuthenticatedProfile ? (
               profile.isPending ? (
                 <RouteLoading withinMain />
@@ -233,7 +253,7 @@ export function AppShell() {
             ) : (
               <Outlet />
             )}
-          </main>
+          </RouteWorldStage>
         )}
       </div>
     </div>

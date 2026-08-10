@@ -360,16 +360,19 @@ describe('LoginPage', () => {
     expect(router.state.historyAction).toBe('REPLACE');
   });
 
-  it('renders the PRESS START marquee on the title screen', () => {
+  it('renders the adventurers guild identity on the login desk', () => {
     renderLoginPage(createAuthValue());
-    expect(screen.getByText('PRESS START')).toBeInTheDocument();
+    expect(screen.getByText('冒險者公會')).toBeInTheDocument();
+    expect(
+      document.querySelector('.auth-portal-brand__mark img'),
+    ).toHaveAttribute('src', '/colorplay-grimoire-design.png');
   });
 });
 
 it('shows the ggame auth portal branding', () => {
   renderLoginPage(createAuthValue());
-  expect(screen.getByText('ColorPlay')).toBeInTheDocument();
-  expect(screen.getByText('色彩原理遊戲式學習平台')).toBeInTheDocument();
+  expect(screen.getByText('冒險者公會')).toBeInTheDocument();
+  expect(screen.getByText('歡迎回來，冒險者')).toBeInTheDocument();
 });
 
 it('switches the ggame portal tone and teacher note with the tabs', async () => {

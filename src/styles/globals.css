@@ -70,7 +70,7 @@ a {
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  background: var(--surface-page);
+  background: var(--pixel-night-deep);
 }
 
 /* F7 final-review 修正：這條規則掛在同一個 <main class="game-stage__scene"
@@ -86,6 +86,67 @@ a {
   min-height: 0;
   flex: 1;
   flex-direction: column;
+}
+
+/* 連續世界舞台：路由內容留在同一個深夜 App Shell，僅由場景層換色。
+   轉場是獨立裝飾節點，不 key／重掛 Outlet，避免閱讀與測驗狀態被重置。 */
+.route-world-stage {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(
+      circle at 18% 14%,
+      color-mix(in srgb, var(--pixel-window-muted) 28%, transparent) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 76% 28%,
+      color-mix(in srgb, var(--pixel-gold) 25%, transparent) 0 1px,
+      transparent 2px
+    ),
+    linear-gradient(var(--pixel-night-deep), var(--stage-void));
+  background-size:
+    128px 96px,
+    176px 132px,
+    auto;
+}
+
+.route-world-stage > :not(.route-world-stage__transition) {
+  position: relative;
+  z-index: 1;
+}
+
+.route-world-stage__transition {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--pixel-window-muted) 18%, transparent),
+    transparent
+  );
+  opacity: 0;
+  transform: translateX(14%);
+  animation: route-world-transition var(--journey-transition-duration) ease-out;
+}
+
+@keyframes route-world-transition {
+  from {
+    opacity: 0.48;
+    transform: translateX(-14%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-world-stage__transition {
+    animation-name: none;
+  }
+}
+
+.route-world-stage[data-motion='reduced'] .route-world-stage__transition {
+  animation-name: none;
 }
 
 @media (min-width: 768px) and (orientation: landscape) {
@@ -241,10 +302,13 @@ a {
 .hud-top {
   z-index: 40;
   display: flex;
-  align-items: flex-start;
+  min-height: var(--journey-hud-status-height);
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3) 0;
+  border-bottom: 2px solid var(--pixel-gold-deep);
+  background: color-mix(in srgb, var(--pixel-night) 94%, transparent);
+  padding: var(--space-1) var(--space-3);
 }
 
 /* 左上狀態窗：夜空窗小卡（Level＋EXP 條）。
@@ -436,72 +500,218 @@ a {
   margin-top: var(--space-8);
 }
 
-/* ── 遊戲標題畫面（spec §8）────────────────────────────────────── */
-.title-screen {
-  display: flex;
-  flex: 1;
-  min-width: 0; /* 阻斷 flexbox 預設 min-width:auto 隨不可斷詞子項向上撐開祖先(320px 溢出根因) */
+/* ── 世界入口首頁：board 02-v2 的桌機／手機獨立構圖 ─────────── */
+#main-content:has(> .home-world) {
+  align-items: stretch;
+  padding: 0;
+}
+
+.home-world {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  width: 100%;
   min-height: 100%;
-  flex-direction: column;
+  overflow: hidden;
+  grid-template-rows: auto 1fr auto;
+  background-color: var(--pixel-night-deep);
+  background-image: url('../assets/home/night-kingdom-desktop.png');
+  background-position: center;
+  background-size: cover;
+  color: var(--pixel-window-ink);
+}
+
+.home-world::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--stage-void) 76%, transparent) 0%,
+    color-mix(in srgb, var(--stage-void) 26%, transparent) 43%,
+    transparent 70%
+  );
+  content: '';
+  pointer-events: none;
+}
+
+.home-world__brand-bar,
+.home-world__story,
+.home-world__actions {
+  position: relative;
+  z-index: 1;
+}
+
+.home-world__brand-bar {
+  display: flex;
+  min-height: 86px;
   align-items: center;
-  justify-content: center;
   gap: var(--space-3);
-  background: var(--pixel-night-deep);
-  color: var(--pixel-parchment);
-  text-align: center;
-  padding: var(--space-6) var(--space-4);
+  background: color-mix(in srgb, var(--stage-void) 86%, transparent);
+  padding: var(--space-3) clamp(var(--space-5), 4vw, var(--space-12));
 }
 
-.title-screen__logo {
-  margin: 0;
+.home-world__crest {
+  display: grid;
+  width: 52px;
+  height: 60px;
+  flex: none;
+  place-items: center;
+}
+
+.home-world__crest svg {
+  width: 100%;
+  height: 100%;
+}
+
+.home-world__brand-name {
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 2.4vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.home-world__story {
+  align-self: start;
+  justify-self: start;
+  margin: clamp(108px, 15vh, 164px) 0 0 clamp(42px, 7vw, 118px);
+}
+
+.home-world__title {
   max-width: 100%;
-  overflow-wrap: anywhere; /* "ColorPlay" 單詞不可斷詞的保底：極窄寬度改行而非溢出 */
-  font-family: var(--font-pixel-latin), var(--font-pixel-tc), sans-serif;
-  font-size: clamp(1.5rem, 8vw, 4rem);
-  letter-spacing: 0.06em;
-}
-
-.title-screen__subtitle {
   margin: 0;
-  font-size: 15px;
-  font-weight: 700;
+  background: linear-gradient(
+    90deg,
+    var(--coral-600),
+    var(--amber-avatar),
+    var(--jade-600),
+    var(--cobalt-600),
+    var(--hue-ch3)
+  );
+  background-clip: text;
+  color: transparent;
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 7vw, 6.4rem);
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  overflow-wrap: anywhere;
 }
 
-.title-screen__start {
+.home-world__subtitle {
+  margin: var(--space-5) 0 0;
+  font-size: clamp(1.7rem, 3.2vw, 3rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.35;
+}
+
+.home-world__actions {
+  display: flex;
+  width: min(330px, calc(100% - var(--space-8)));
+  align-self: end;
+  justify-self: end;
+  flex-direction: column-reverse;
+  gap: var(--space-3);
+  margin: 0 clamp(var(--space-6), 5vw, var(--space-12))
+    clamp(var(--space-6), 5vh, var(--space-12)) 0;
+}
+
+.home-world__start,
+.home-world__login {
   display: inline-flex;
-  min-width: 44px;
-  min-height: 48px;
+  width: 100%;
+  min-height: 56px;
   align-items: center;
   justify-content: center;
-  border: 3px solid var(--pixel-window-frame);
   border-radius: var(--radius-pixel);
-  background: var(--pixel-night);
-  box-shadow: 4px 4px 0 var(--pixel-shadow);
-  color: var(--pixel-parchment);
-  font-family: var(--font-pixel-latin), var(--font-pixel-tc), sans-serif;
-  font-size: 18px;
+  color: var(--pixel-window-ink);
+  font-size: 1rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
-  margin-top: var(--space-3);
-  padding: var(--space-2) var(--space-5);
+  padding: var(--space-3) var(--space-5);
+  text-align: center;
   text-decoration: none;
-  animation: title-start-blink 1.6s steps(2, jump-none) infinite;
 }
 
-@keyframes title-start-blink {
-  50% {
-    opacity: 0.7; /* 最暗幀對比仍 ≥4.5:1（parchment on night-deep ≈14:1，×0.7 有餘裕；gate 實測把關） */
+.home-world__start {
+  border: 2px solid color-mix(in srgb, var(--cobalt-600) 70%, white);
+  background: linear-gradient(
+    var(--cobalt-600),
+    color-mix(in srgb, var(--cobalt-700) 82%, var(--pixel-night))
+  );
+  box-shadow: 0 4px 0 var(--pixel-shadow);
+  font-size: 1.35rem;
+}
+
+.home-world__login {
+  border: 2px solid var(--pixel-window-muted);
+  background: color-mix(in srgb, var(--stage-void) 78%, transparent);
+}
+
+.home-world__start:hover,
+.home-world__login:hover {
+  border-color: var(--pixel-window-frame);
+}
+
+@media (max-width: 47.99rem) {
+  .home-world {
+    min-height: max(100%, 720px);
+    background-image: url('../assets/home/night-kingdom-mobile.png');
+    background-position: center;
   }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .title-screen__start {
-    animation: none;
+  .home-world::before {
+    background: linear-gradient(
+      var(--stage-void) 0%,
+      color-mix(in srgb, var(--stage-void) 42%, transparent) 22%,
+      transparent 54%,
+      color-mix(in srgb, var(--stage-void) 82%, transparent) 100%
+    );
   }
-}
 
-[data-reduced-motion='true'] .title-screen__start {
-  animation: none;
+  .home-world__brand-bar {
+    min-height: 78px;
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .home-world__crest {
+    width: 44px;
+    height: 52px;
+  }
+
+  .home-world__brand-name {
+    font-size: 1.55rem;
+  }
+
+  .home-world__story {
+    align-self: start;
+    justify-self: center;
+    margin: var(--space-12) var(--space-4) 0;
+    text-align: center;
+  }
+
+  .home-world__title {
+    font-size: clamp(2.8rem, 14vw, 4rem);
+    line-height: 1;
+  }
+
+  .home-world__subtitle {
+    margin-top: var(--space-3);
+    font-size: clamp(1.1rem, 5vw, 1.45rem);
+    letter-spacing: 0.12em;
+  }
+
+  .home-world__actions {
+    width: calc(100% - var(--space-8));
+    flex-direction: column;
+    justify-self: center;
+    margin: 0 0 max(var(--space-6), env(safe-area-inset-bottom));
+  }
+
+  .home-world__start,
+  .home-world__login {
+    min-height: 58px;
+  }
 }
 
 .login-form {
@@ -1352,6 +1562,7 @@ a {
   z-index: 50;
   top: 0;
   display: flex;
+  min-height: var(--journey-hud-command-height);
   align-items: center;
   gap: var(--space-2);
   border-bottom: 2px solid var(--pixel-window-frame);
@@ -1449,7 +1660,7 @@ a {
   padding: 0 var(--space-3);
 }
 
-.game-stage--learning-map .hud-menu__toggle:focus-visible {
+.hud-menu__toggle:focus-visible {
   outline-offset: -3px;
 }
 
@@ -7056,6 +7267,9 @@ select#dashboard-classroom {
 /* 學生頂部：頭像＋Level/XP/Token 一體群組卡（像素金框）。 */
 .hud-economy-group {
   display: flex;
+  min-width: 0;
+  width: min(100%, 620px);
+  min-height: calc(var(--journey-hud-status-height) - var(--space-2));
   align-items: center;
   border: 2px solid var(--pixel-gold-deep);
   border-radius: var(--radius-pixel);
@@ -7063,6 +7277,22 @@ select#dashboard-classroom {
   box-shadow: 2px 2px 0 var(--pixel-shadow);
   gap: var(--space-2);
   padding: 4px 10px 4px 4px;
+}
+
+.hud-identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.hud-identity__name {
+  max-width: 14ch;
+  color: var(--pixel-window-ink);
+  font-family: var(--font-pixel-tc);
+  font-size: 13px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .hud-avatar {
@@ -7081,16 +7311,6 @@ select#dashboard-classroom {
   height: auto;
 }
 
-.game-stage--learning-map .hud-avatar .blook-art {
-  position: absolute;
-  top: 0;
-  max-width: none;
-  height: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: auto;
-}
-
 .hud-avatar--hero {
   background:
     url('../assets/sprites/hero.png') center / 32px 32px no-repeat,
@@ -7099,13 +7319,6 @@ select#dashboard-classroom {
     32px 32px,
     auto;
   image-rendering: pixelated;
-}
-
-.game-stage--learning-map .hud-avatar--hero {
-  background-position: 50% 50%;
-  background-size:
-    auto 100%,
-    auto;
 }
 
 @media (orientation: landscape) and (max-height: 480px) {
@@ -7135,74 +7348,6 @@ select#dashboard-classroom {
   margin: 0;
   border-radius: 0;
   box-shadow: 0 3px 0 var(--pixel-shadow);
-}
-
-.game-stage--learning-map .hud-economy-group {
-  width: clamp(250px, 24vw, 304px);
-  height: clamp(58px, 6vw, 66px);
-  gap: 6px;
-  padding: 4px;
-}
-
-.game-stage--learning-map .hud-avatar {
-  position: relative;
-  width: calc(clamp(58px, 6vw, 66px) - 12px);
-  height: calc(clamp(58px, 6vw, 66px) - 12px);
-  overflow: hidden;
-}
-
-.game-stage--learning-map .economy-summary--learning-map {
-  min-width: 0;
-  gap: 4px;
-}
-
-.game-stage--learning-map
-  .economy-summary--learning-map
-  .economy-summary__level {
-  min-width: 0;
-  flex: 1;
-  gap: 1px;
-  border-width: 1px;
-  font-size: 11px;
-  line-height: 12px;
-  padding: 0 4px;
-}
-
-.game-stage--learning-map
-  .economy-summary--learning-map
-  .economy-summary__level
-  progress {
-  width: 100%;
-  height: 5px;
-}
-
-.game-stage--learning-map
-  .economy-summary--learning-map
-  .economy-summary__tokens {
-  border-width: 1px;
-  font-size: 11px;
-  line-height: 12px;
-  padding: 1px 4px;
-}
-
-@media (min-width: 48rem) and (orientation: landscape) {
-  .game-stage--learning-map .hud-top {
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-
-  .game-stage--learning-map .hud-command {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: auto;
-    border-bottom: 0;
-  }
-
-  .game-stage--learning-map .chapter-map-shell {
-    padding-top: calc(clamp(58px, 6vw, 66px) + 16px);
-  }
 }
 
 .scene-day.lobby--map-fullscreen .chapter-map-shell {
@@ -8121,4 +8266,191 @@ select#dashboard-classroom {
 [data-reduced-motion='true'] .chapter-map__companion {
   animation: none;
   transition: none;
+}
+
+/* ── 冒險者公會認證場景：board 03 桌機／手機獨立構圖 ─────── */
+.game-stage #main-content:has(> .auth-portal) {
+  min-height: 100%;
+  align-items: center;
+  justify-items: stretch;
+  background-color: var(--pixel-night-deep);
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent 0 35%,
+      color-mix(in srgb, var(--stage-void) 30%, transparent) 52% 72%,
+      transparent 92%
+    ),
+    url('../assets/auth/guild-desk-desktop.png');
+  background-position: center;
+  background-size: cover;
+  padding: clamp(var(--space-4), 3vw, var(--space-8));
+}
+
+.game-stage #main-content:has(> .auth-portal)::before {
+  content: none;
+}
+
+.auth-portal:has(> .auth-portal__welcome) {
+  position: relative;
+  width: min(440px, 42vw);
+  justify-self: end;
+  margin-right: clamp(var(--space-8), 13vw, 190px);
+  background: transparent;
+  padding: 0;
+}
+
+.auth-portal:has(> .auth-portal__welcome) > .auth-portal-brand,
+.auth-portal:has(> .auth-portal__welcome) > .route-panel__message {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.auth-portal:has(> .auth-portal__welcome) > .pixel-heading {
+  margin: 0 0 var(--space-3);
+  color: var(--pixel-window-ink);
+  font-size: 1.5rem;
+}
+
+.auth-portal__welcome {
+  position: absolute;
+  top: 56px;
+  right: calc(100% + clamp(180px, 17vw, 260px));
+  width: 330px;
+  margin: 0;
+  color: var(--pixel-window-ink);
+  font-family: var(--font-pixel-tc);
+  font-size: clamp(1.5rem, 2.6vw, 2.2rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.45;
+}
+
+.auth-portal:has(> .auth-portal__welcome) .auth-window {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  border-color: var(--pixel-window-muted);
+  background: color-mix(in srgb, var(--pixel-night) 95%, transparent);
+  box-shadow:
+    0 0 0 3px var(--pixel-night-deep),
+    5px 5px 0 var(--pixel-shadow);
+}
+
+.auth-portal:has(> .auth-portal__welcome) .login-form__portal {
+  border-color: var(--pixel-window-muted);
+  background: var(--pixel-night-deep);
+}
+
+.auth-portal:has(> .auth-portal__welcome)
+  .login-form__portal
+  label[data-active='true'] {
+  background: var(--cobalt-600);
+  color: var(--pixel-window-ink);
+}
+
+.auth-portal:has(> .auth-portal__welcome)
+  input:not([type='radio']):not([type='checkbox']) {
+  border: 2px solid var(--pixel-window-muted);
+  background: var(--stage-void);
+  color: var(--pixel-window-ink);
+}
+
+.auth-portal:has(> .auth-portal__welcome)
+  input:not([type='radio']):not([type='checkbox']):focus {
+  border-color: var(--cobalt-600);
+}
+
+.auth-portal:has(> .auth-portal__welcome) .primary-action {
+  border-color: color-mix(
+    in srgb,
+    var(--cobalt-600) 70%,
+    var(--pixel-window-frame)
+  );
+  background: linear-gradient(var(--cobalt-600), var(--cobalt-700));
+  box-shadow: 0 4px 0 var(--pixel-shadow);
+  color: var(--pixel-window-ink);
+  font-size: 1.25rem;
+}
+
+.auth-portal:has(> .auth-portal__welcome) .login-form__link {
+  color: color-mix(in srgb, var(--cobalt-600) 58%, var(--pixel-window-frame));
+}
+
+.auth-portal:has(> .auth-portal__welcome) .login-form__divider {
+  color: var(--pixel-window-muted);
+}
+
+@media (max-width: 47.99rem) {
+  .game-stage #main-content:has(> .auth-portal) {
+    min-height: 900px;
+    align-items: start;
+    background-image:
+      linear-gradient(
+        transparent 0 42%,
+        color-mix(in srgb, var(--stage-void) 52%, transparent) 54%,
+        var(--stage-void) 78%
+      ),
+      url('../assets/auth/guild-desk-mobile.png');
+    background-position: top center;
+    background-size: 100% auto;
+    padding: 0 var(--space-3) var(--space-6);
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) {
+    width: 100%;
+    justify-self: stretch;
+    margin: clamp(420px, 112vw, 500px) 0 0;
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) > .auth-portal-brand {
+    position: absolute;
+    top: clamp(-405px, -103vw, -350px);
+    left: 50%;
+    display: flex;
+    width: min(82vw, 330px);
+    height: auto;
+    clip: auto;
+    clip-path: none;
+    overflow: visible;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    transform: translateX(-50%);
+    white-space: normal;
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) .auth-portal-brand__mark {
+    margin: 0;
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) .auth-portal-brand__mark img {
+    width: 38px;
+    height: 38px;
+    image-rendering: pixelated;
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) .auth-portal-brand__title {
+    color: var(--pixel-window-ink);
+    font-family: var(--font-pixel-tc);
+    font-size: clamp(1.35rem, 6vw, 1.75rem);
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) .auth-portal-brand__subtitle,
+  .auth-portal:has(> .auth-portal__welcome) > .auth-portal__welcome {
+    display: none;
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) .auth-window {
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) .login-form__portal {
+    flex-direction: column;
+  }
 }

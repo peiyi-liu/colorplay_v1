@@ -62,30 +62,17 @@ export function LoginPage() {
     >
       <div className="auth-portal-brand">
         <span aria-hidden="true" className="auth-portal-brand__mark">
-          <svg fill="none" height="40" viewBox="0 0 32 32" width="40">
-            <circle cx="11" cy="12" fill="var(--coral-700)" r="7" />
-            <circle
-              cx="21"
-              cy="12"
-              fill="var(--cobalt-600)"
-              fillOpacity="0.92"
-              r="7"
-            />
-            <circle
-              cx="16"
-              cy="20"
-              fill="var(--jade-600)"
-              fillOpacity="0.92"
-              r="7"
-            />
-          </svg>
+          <img
+            alt=""
+            height="48"
+            src="/colorplay-grimoire-design.png"
+            width="48"
+          />
         </span>
-        <p className="auth-portal-brand__title">ColorPlay</p>
-        <p className="auth-portal-brand__subtitle">色彩原理遊戲式學習平台</p>
-        <p className="press-start" aria-hidden="true">
-          PRESS START
-        </p>
+        <p className="auth-portal-brand__title">冒險者公會</p>
+        <p className="auth-portal-brand__subtitle">色彩王國通行證</p>
       </div>
+      <p className="auth-portal__welcome">歡迎回來，冒險者</p>
       <h1 className="pixel-heading">登入</h1>
       <p className="route-panel__message">
         {portal === 'teacher'
@@ -259,9 +246,10 @@ export function LoginPage() {
               data-acceptance-target
               data-primary-action="true"
               disabled={isSubmitting}
+              aria-label={isSubmitting ? '登入中…' : '登入'}
               type="submit"
             >
-              {isSubmitting ? '登入中…' : '登入'}
+              {isSubmitting ? '進入中…' : '進入王國'}
             </button>
           </div>
           <div className="login-form__links">

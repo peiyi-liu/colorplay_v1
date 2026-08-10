@@ -127,7 +127,7 @@
   --color-success: var(--jade-700);
   --color-danger: var(--coral-700);
   --color-warning: var(--amber-600);
-  --color-bg: var(--surface-page);
+  --color-bg: var(--pixel-night-deep);
   --color-surface: var(--surface-card);
   --color-border: var(--ink-300);
   --color-text: var(--ink-900);
@@ -229,4 +229,7 @@
   --radius-pixel: 0px; /* 像素風零圓角 */
   --font-pixel-latin: 'Press Start 2P', monospace;
   --font-pixel-tc: 'Cubic 11', 'Noto Sans TC', sans-serif;
+  --journey-hud-command-height: 58px;
+  --journey-hud-status-height: 68px;
+  --journey-transition-duration: 360ms;
 }

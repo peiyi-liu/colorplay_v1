@@ -309,13 +309,26 @@ describe('AppShell', () => {
     expect(mockedUseBlookInventory).toHaveBeenCalledOnce();
   });
 
-  it('uses the learning-map HUD only for the exact /app route, including query strings', () => {
+  it('groups the equipped avatar and profile nickname in the visible student HUD identity', () => {
+    renderStudentShell();
+
+    const identity = screen.getByRole('group', { name: '學生身分' });
+    expect(identity.querySelector('.hud-avatar')).not.toBeNull();
+    expect(within(identity).getByText('student.one')).toBeVisible();
+  });
+
+  it('uses the learning-map scene only for the exact /app route, including query strings', () => {
     renderShellRoute('/app?chapter=21000000-0000-0000-0000-000000000002');
 
-    const stage = screen.getByRole('main').closest('.game-stage');
-    expect(stage).toHaveClass('game-stage--learning-map');
+    const main = screen.getByRole('main');
+    const stage = main.closest('.game-stage');
+    expect(stage).toHaveAttribute('data-shell-role', 'student');
+    expect(main).toHaveAttribute('data-world-scene', 'learning-map');
     expect(screen.getByRole('banner')).toContainElement(
-      document.querySelector('.economy-summary--learning-map'),
+      document.querySelector('.economy-summary'),
+    );
+    expect(document.querySelector('.economy-summary')).not.toHaveClass(
+      'economy-summary--learning-map',
     );
     expect(mockedUseEconomySummary).toHaveBeenCalledOnce();
     expect(mockedUseBlookInventory).toHaveBeenCalledOnce();
@@ -324,9 +337,25 @@ describe('AppShell', () => {
   it('does not use the learning-map HUD for child student routes', () => {
     renderShellRoute('/app/shop');
 
-    const stage = screen.getByRole('main').closest('.game-stage');
+    const main = screen.getByRole('main');
+    const stage = main.closest('.game-stage');
     expect(stage).not.toHaveClass('game-stage--learning-map');
+    expect(stage).toHaveAttribute('data-shell-role', 'student');
+    expect(main).toHaveAttribute('data-world-scene', 'student-route');
     expect(document.querySelector('.economy-summary--learning-map')).toBeNull();
+  });
+
+  it('marks the learning map as a scene without switching to a route-specific HUD geometry', () => {
+    renderShellRoute('/app');
+
+    const main = screen.getByRole('main');
+    const stage = main.closest('.game-stage');
+    expect(stage).toHaveAttribute('data-shell-role', 'student');
+    expect(stage).not.toHaveClass('game-stage--learning-map');
+    expect(main).toHaveAttribute('data-world-scene', 'learning-map');
+    expect(document.querySelector('.economy-summary')).not.toHaveClass(
+      'economy-summary--learning-map',
+    );
   });
 
   it('shows recoverable profile resolution states and mounts the route subtree once', async () => {
@@ -465,29 +494,21 @@ describe('AppShell', () => {
     expect(screen.getByRole('status')).toHaveTextContent('轉橫體驗更佳');
   });
 
-  it('keeps compact map HUD contents within the 58px minimum outer height', () => {
+  it('keeps one fixed student HUD geometry across route scenes', () => {
     expect(globalStyles).toMatch(
-      /\.game-stage--learning-map \.hud-economy-group\s*\{[^}]*height:\s*clamp\(58px, 6vw, 66px\);[^}]*padding:\s*4px;/u,
+      /\.hud-command\s*\{[^}]*min-height:\s*var\(--journey-hud-command-height\);/u,
     );
     expect(globalStyles).toMatch(
-      /\.game-stage--learning-map \.hud-avatar\s*\{[^}]*width:\s*calc\(clamp\(58px, 6vw, 66px\) - 12px\);[^}]*height:\s*calc\(clamp\(58px, 6vw, 66px\) - 12px\);/u,
+      /\.hud-top\s*\{[^}]*min-height:\s*var\(--journey-hud-status-height\);/u,
     );
-    expect(globalStyles).toMatch(
-      /\.economy-summary--learning-map\s+\.economy-summary__level\s*\{[^}]*gap:\s*1px;[^}]*border-width:\s*1px;[^}]*font-size:\s*11px;[^}]*line-height:\s*12px;[^}]*padding:\s*0 4px;/u,
-    );
-    expect(globalStyles).toMatch(
-      /\.economy-summary--learning-map\s+\.economy-summary__level\s+progress\s*\{[^}]*height:\s*5px;/u,
-    );
-    expect(globalStyles).toMatch(
-      /\.economy-summary--learning-map\s+\.economy-summary__tokens\s*\{[^}]*border-width:\s*1px;[^}]*font-size:\s*11px;[^}]*line-height:\s*12px;[^}]*padding:\s*1px 4px;/u,
-    );
+    expect(globalStyles).not.toMatch(/\.game-stage--learning-map/u);
   });
 
   it.each([
     ['little_fox', '小狐狸', '🦊'],
     ['indigo_dragon', '東方靛龍', '🐲'],
   ] as const)(
-    'centers the 3:2 %s art through the same learning-map HUD container',
+    'centers the 3:2 %s art through the shared student HUD container',
     (stableCode, name, emoji) => {
       mockedUseBlookInventory.mockReturnValue(
         inventoryResult({
@@ -519,7 +540,7 @@ describe('AppShell', () => {
       expect(image).toHaveAttribute('src', `/assets/blooks/${stableCode}.png`);
       expect(image?.parentElement).toHaveClass('hud-avatar');
       expect(globalStyles).toMatch(
-        /\.game-stage--learning-map \.hud-avatar \.blook-art\s*\{[^}]*position:\s*absolute;[^}]*height:\s*100%;[^}]*left:\s*50%;[^}]*transform:\s*translateX\(-50%\);[^}]*width:\s*auto;/u,
+        /\.hud-avatar \.blook-art\s*\{[^}]*max-width:\s*100%;[^}]*height:\s*auto;/u,
       );
     },
   );
