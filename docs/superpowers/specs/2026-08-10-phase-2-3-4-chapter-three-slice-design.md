@@ -88,6 +88,8 @@ Owner 提供 Codédex（程式學習平台）截圖作為暗色系參考：深�
    - Live 報表（`/teacher/live/:sessionId/report`）的名次獎牌符號
    - HUD 教師導覽列（Link→NavLink、active 態、面板恆掛 DOM、click-outside 關閉、焦點管理）
 2. **教師端 Live 功能改採完整 JRPG 像素風**（不是賢者工坊低濃度處理）——`/teacher/live`、`/teacher/live/:sessionId`（含投影模式）、`/teacher/live/:sessionId/report`。理由：Live 是教師與學生共享的即時體驗，學生端已是完整像素風格的「公會團體戰」語彙，教師端維持一致濃度才不會視覺斷裂。
+   - **正式覆蓋 08-02 的 LivePresenter 零接觸規則**：`docs/superpowers/plans/2026-08-02-teacher-workspace.md` 原本明訂 `src/features/live/components/live-presenter.tsx`（教師 Live 投影主持台）零接觸、不改任何一行，理由是既交付投影元件、誤動風險高。Owner 2026-08-10 明確裁定：**投影畫面的視覺樣式可以改，但比照本文件所有其他 JRPG 改版項目同一條「純表現層、行為零變更」原則**——狀態機、RPC、按鍵觸發的動作、主持流程順序一律不動；只有外觀（顏色、邊框、字體、版面語彙）改成 JRPG 像素風。改版時涉及按鍵/流程配合視覺調整的部分，實作階段會搭配前端 UI 相關 skills 協助完成，但仍受「行為零變更」約束。
+   - **測試風險**：`tests/e2e/assignments-live.spec.ts`／`live-advanced.spec.ts` 先前已因 Live 互動模型改版部分失效（詳見 `docs/superpowers/plans/2026-08-02-red-spec-sizing.md` 的斷差盤點），LivePresenter 這次真的被觸碰，紅測試範圍大機率會再擴大，需要在實作 plan 裡一併估工。
 3. **Dashboard 功能捷徑補齊**：目前「功能捷徑」只連到教學分析／班級管理兩處，遺漏 Live。導覽資訊架構需要跟著新增/確認的教師功能同步更新。
 4. **學生進度頁（`/teacher/classes/:classroomId/members/:memberRef`）新增**：
    - 「Live 參與紀錄」區塊，與現有「各章節學習進度」表格並列——場次數、每場次正確率／名次。
