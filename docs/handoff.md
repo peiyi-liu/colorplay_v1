@@ -100,3 +100,21 @@
 - 下一步：等待 owner 決定是否核准將 Phase 5V 整合進 `feature/v2-major-update`（比照 Phase 4A 的 preflight → 核准 → `--no-ff` merge 流程）。整合後，依 UI-first 順序，下一個規劃階段是 **5F-U1**。
 - Blocker／待決策：無。
 - 相關檔案／commit：`phase5v/teacher-ui-ux-restyle` 分支，commits `b4079bd`（plan 核准）、`e246c4a`、`f27634f`、`e7d9feb`、`a954342`、`37f066b`；review 為單一 sub-agent、無額外 commit（無 findings 需修復）。
+
+## 2026-08-10 15:09 [Claude Code] — Phase 5V handoff 事實更正（append-only，不修改上一筆條目）
+
+- 做了什麼：Owner 要求對上一筆條目（2026-08-10 14:52）進行 integration preflight 稽核，發現兩處事實錯誤。上一筆條目本身**不修改、不刪除**（append-only），本筆只用新紀錄誠實更正，並補充 preflight 稽核當時查證到的其他細節。
+- **更正 1：commit 數量。** 更正前（即本 correction commit 建立前）`b4079bd..e5e5024` 實際是**六個** commits，不是「7 commits ahead」——Task 1–5 共五個（`e246c4a`、`f27634f`、`e7d9feb`、`a954342`、`37f066b`）＋handoff 一個（`e5e5024`）。原 checkpoint 的「7 commits」純粹是計數錯誤，經逐一核對 parent chain（`git log --format='%H | parent=%P'`）確認**不存在**隱藏、空白（empty）、merge 或未授權的 commit——六個全部是單一 parent 的線性 commit，且全部可對應到既定的 5 個 task 與 1 個 handoff 用途。
+- **更正 2：changed-path／統計數字的計算範圍。** Reviewer 實際審查的範圍是 `b4079bd..37f066b`（review 執行時 handoff commit 尚未建立）：**16 files，+927/-76**。待加入 `e5e5024` handoff commit 後，完整 integration candidate 範圍 `b4079bd..e5e5024` 是：**17 files，+937/-76**（差異恰為 `docs/handoff.md` 自身的 +1 file／+10 lines，可完全對帳，非遺漏檔案）。
+- **更正 3：Phase 1 exact-path overlap。** 上一筆條目稱「只有 2 個共用檔案」是錯的，實際是**三個**：
+  1. `src/app/shell/hud-command-bar.tsx`
+  2. `src/features/classrooms/pages/teacher-classroom-detail-page.test.tsx`
+  3. `src/styles/globals.css`
+
+  三個 overlap 均已唯讀核對（`git diff` 對照 Phase 1 tip `def3fc9` 與其 merge-base `2295fd6`）：HUD 檔案是 Phase 1 的單行 comment 修正（「底部 HUD」→「頂部 HUD」，與 Phase 5V 新增的 `data-variant`／focus trap 無關、無行級衝突）；classroom test 檔是 Phase 1 移除一行結尾空白行的調整；`globals.css` 雖然 Phase 1 那邊改動較大（348+/17-），但透過唯讀 `git merge-tree b4079bd HEAD e5e5024` 確認**無 conflict**（exit 0，0 個 CONFLICT 標記，17 個 file entry 全部是 `added in remote`／`merged` 乾淨結果）。
+
+- **更正 4：`TeacherLivePage` 的 `classroomRepository` DI seam 產品行為核對。** 該 prop 為 optional；正式 production route（`src/app/router/create-app-router.tsx`）用 React Router 的 `lazy: () => ({ Component: module.TeacherLivePage })` 掛載，路由層**不會手動傳入任何 props**，因此正式環境下 `classroomRepository` 恆為 `undefined`，會落到與變更前完全相同的 `resolveRepository(undefined)`（真實 Supabase repository）路徑；`use-live-commands.ts`／`use-classrooms.ts`／`live/types.ts`／`classrooms/types.ts` 這四個 hook／型別檔案在 `b4079bd..e5e5024` 全域 diff 中**零變更**；元件內 hook 呼叫順序未變（只有 `useOwnedClassrooms` 的參數從無參數改為 `classroomRepository`）。結論：**沒有 production behavior change**。
+- **本次更正的邊界**：以上只修正文檔中的事實／數字錯誤，**不改變** implementation 本身、review verdict（「ready to hand off as-is」不變）、或任何 scoped validation 結果（typecheck／eslint／vitest／Playwright 結果不變、未重跑）。
+- 下一步：本更正 commit 是 base（`b4079bd`）之後的**第七個** commit（更正前是六個，加入本 correction 後變成七個——刻意在此明確區分，避免與更正前的「6 vs 7」計數歧義混淆）。更正完成後，依 owner 裁定執行本機 `--no-ff` 整合進 `feature/v2-major-update`（見下一筆條目）。
+- Blocker／待決策：無。
+- 相關檔案／commit：`docs/handoff.md`（本次 correction commit 待建立，僅此一檔）。
