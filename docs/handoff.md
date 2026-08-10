@@ -40,3 +40,10 @@
 - 下一步：`docs/roadmap-colorplay-next.md` 其餘章節（Immediate next action、Protected work in progress 的舊 SHA 等）未重新驗證，只動了有把握的部分。
 - Blocker／待決策：無。
 - 相關檔案／commit：`phase0/release-foundation`（428dc78）、`phase1/admin-security-impl`（10bf6aa，本地）、`phase1/admin-security-spec`（ee65086，本地）、`docs/roadmap-colorplay-next.md`。
+
+## 2026-08-10 12:16 [Claude Code] — Phase 4A UI implementation plan 核准，準備建立 worktree
+
+- 做了什麼：Owner 核准 `docs/superpowers/plans/2026-08-10-phase-4a-student-chapter-detail-ui.md`（Codex plan review 已完成、四態 mastery contract 已 remediate），plan 檔案 status 更新為「Owner approved：2026-08-10／Codex plan review completed／Authorized for Phase 4A implementation」。
+- 下一步：建立獨立 worktree `.worktrees/phase4a-chapter-detail-ui`（branch `phase4a/chapter-detail-ui`，base 為本次 plan 核准 commit），在該 worktree 內依序執行 plan 的 Task 1（typed view-model + pure adapter）、Task 2（頁面整合，七態頁內呈現）、Task 3（CSS 就地擴充＋dev-only Chromium harness），完成後跑 scoped validation 與一次 code review。UI-first 執行順序（已於 umbrella brief／roadmap 記錄）：4A-UI → 5V-UI → 5F-U1 → 2A → 3A → 5F-F2 → Integration；Phase 4A 完成後下一個核准順序是 5V-UI。
+- Blocker／待決策：無。Phase 1（admin-security）仍在使用 Local Supabase（port 54322）；Phase 4A 的 UI-only 實作明確不使用 Local Supabase／DB／Docker／hosted 操作，兩者互不影響。
+- 相關檔案／commit：`docs/superpowers/plans/2026-08-10-phase-4a-student-chapter-detail-ui.md`（本次 commit 待建立）。
