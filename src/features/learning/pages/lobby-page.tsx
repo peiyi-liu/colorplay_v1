@@ -39,7 +39,7 @@ export function LobbyPage() {
     <LobbyPageView
       chapters={chapterMap.data.chapters}
       equippedBlook={shell?.equippedBlook ?? null}
-      requestedChapter={requestedChapter}
+      {...(requestedChapter ? { requestedChapter } : {})}
     />
   );
 }
@@ -78,7 +78,7 @@ export function LobbyPageView({
         <ChapterMap
           chapters={chapters}
           equippedBlook={equippedBlook}
-          initialChapterId={requestedChapter}
+          {...(requestedChapter ? { initialChapterId: requestedChapter } : {})}
         />
       </div>
     </section>

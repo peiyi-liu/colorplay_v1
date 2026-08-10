@@ -2,7 +2,10 @@
 import { MemoryRouter } from 'react-router-dom';
 
 import { ToastProvider } from '../../components/ui/toast';
-import { AuthContext, type AuthContextValue } from '../../features/auth/context/auth-context';
+import {
+  AuthContext,
+  type AuthContextValue,
+} from '../../features/auth/context/auth-context';
 import { LoginPage } from '../../features/auth/pages/login-page';
 import type { StudentChapterMapEntry } from '../../features/learning/api/chapter-map';
 import { LobbyPageView } from '../../features/learning/pages/lobby-page';
@@ -76,7 +79,7 @@ export function VisibleUiHarness({
         <LobbyPageView
           chapters={chapters}
           equippedBlook={null}
-          requestedChapter={chapters[2]?.chapterId}
+          {...(chapters[2] ? { requestedChapter: chapters[2].chapterId } : {})}
         />
       )}
     </MemoryRouter>

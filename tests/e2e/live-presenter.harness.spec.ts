@@ -149,6 +149,25 @@ const measureQuestion = (page: Page) =>
     };
   });
 
+for (const viewport of [
+  { height: 720, width: 1280 },
+  { height: 852, width: 393 },
+] as const) {
+  test(`captures feedback design audit at ${String(viewport.width)}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await page.goto(
+      '/dev-harness/live-presenter.html?scenario=reveal-boundary&promptLength=36&optionLength=21',
+    );
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({
+      fullPage: true,
+      path: `artifacts/design-audit/ui-content-correction/live-feedback/${String(viewport.width)}.png`,
+    });
+  });
+}
+
 test('records the real-longest 1024x768 overflow baseline', async ({
   page,
 }) => {
@@ -315,8 +334,9 @@ test('all presenter phases keep the visible cluster centered in the viewport', a
     );
     await page.waitForLoadState('networkidle');
 
-    const offset = await page.locator(bodySelector(scenario)).evaluate(
-      (body, viewportHeight) => {
+    const offset = await page
+      .locator(bodySelector(scenario))
+      .evaluate((body, viewportHeight) => {
         const visibleChildren = Array.from(body.children).filter(
           (element) => getComputedStyle(element).display !== 'none',
         );
@@ -326,9 +346,7 @@ test('all presenter phases keep the visible cluster centered in the viewport', a
         const top = Math.min(...boxes.map((box) => box.top));
         const bottom = Math.max(...boxes.map((box) => box.bottom));
         return (top + bottom) / 2 - viewportHeight / 2;
-      },
-      720,
-    );
+      }, 720);
     expect(Math.abs(offset), scenario).toBeLessThanOrEqual(8);
   }
 });

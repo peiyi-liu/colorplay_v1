@@ -25,6 +25,7 @@ import type {
 } from '../../classrooms/types';
 import { TeacherLivePage } from '../../live/pages/teacher-live-page';
 import { TeacherLiveReportPage } from '../../live/pages/teacher-live-report-page';
+import { LivePresenterHarness } from '../../live/components/live-presenter.harness';
 import type {
   LiveActivity,
   LiveRepository,
@@ -42,6 +43,7 @@ export type TeacherRoutesHarnessScenario =
   | 'classroom-detail'
   | 'live'
   | 'live-report'
+  | 'live-session'
   | 'student-progress'
   | 'hud';
 
@@ -53,6 +55,7 @@ export const TEACHER_ROUTES_HARNESS_SCENARIOS: readonly TeacherRoutesHarnessScen
     'classroom-detail',
     'live',
     'live-report',
+    'live-session',
     'student-progress',
     'hud',
   ];
@@ -297,6 +300,18 @@ export function TeacherRoutesHarness({
             repository={liveRepositoryFixture()}
             sessionId={SESSION_ID}
           />
+        ) : scenario === 'live-session' ? (
+          <section
+            aria-label="Live 主持工作階段"
+            className="teacher-live-session-page"
+          >
+            <LivePresenterHarness
+              optionLength={21}
+              pending={false}
+              promptLength={36}
+              scenario="reveal-boundary"
+            />
+          </section>
         ) : (
           <TeacherStudentProgressPage
             classroomId={CLASSROOM_ID}

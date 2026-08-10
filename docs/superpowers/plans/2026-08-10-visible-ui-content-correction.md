@@ -20,7 +20,7 @@ TDD：先讓 1440×900 login height、mobile text overlap、title/map background
 
 ## Task 2 — Teacher visible restyle
 
-修改既有七個 teacher route pages 的 shared classes 與 `.teacher-*` CSS；優先使用 shared page header／surface recipes，不改 repository props、hooks 或 handler。
+修改既有八個 teacher route pages（含 `TeacherLiveSessionPage`）的 shared classes 與 `.teacher-*` CSS；優先使用 shared page header／surface recipes，不改 repository props、hooks 或 handler。
 
 TDD：擴充既有 teacher harness，驗每 route 的 page header、section surface、primary action hierarchy 與五 viewport page-level overflow。每個可見 recipe 至少由兩個 route 共用，避免逐頁疊 selector。
 
@@ -49,7 +49,7 @@ TDD vertical slices：
 3. Sheet attachment label 無 source asset 時報告 missing 且零 media insert。
 4. 移除錯誤 placeholder mapping，使用 2026-08-10 workbook 離線重產。
 
-禁止執行 hosted import。
+Owner 於本任務明確授權：結構 gate 0 錯誤後，可將本批第三章 review cards 交易性同步至 staging 專案 `onkxnkzeixpezetkmocf`；不得寫 production，亦不得藉此宣稱 Phase 2A Slice Gate 完成。
 
 ## Task 5 — Scoped validation and checkpoint
 

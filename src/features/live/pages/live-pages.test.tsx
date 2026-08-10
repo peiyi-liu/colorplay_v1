@@ -544,6 +544,9 @@ describe('TeacherLiveSessionPage (host console)', () => {
     expect(
       await screen.findByRole('region', { name: 'Live 投影模式' }),
     ).toBeVisible();
+    expect(
+      screen.getByRole('region', { name: 'Live 主持工作階段' }),
+    ).toHaveClass('teacher-live-session-page');
     expect(screen.getByText(/已作答 2/u)).toBeVisible();
   });
 

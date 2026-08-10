@@ -12,8 +12,8 @@ const observeRuntimeErrors = (page: Page) => {
   return { consoleErrors, pageErrors };
 };
 
-const WIDTHS = [320, 375, 768, 1024, 1440] as const;
-const ROUTE_SCENARIOS = [
+const WIDTHS = [320, 375, 393, 768, 1024, 1280, 1440] as const;
+const WORKSHOP_ROUTE_SCENARIOS = [
   'dashboard',
   'analytics',
   'classes',
@@ -22,6 +22,68 @@ const ROUTE_SCENARIOS = [
   'live-report',
   'student-progress',
 ] as const;
+const ROUTE_SCENARIOS = [...WORKSHOP_ROUTE_SCENARIOS, 'live-session'] as const;
+
+const expectNoClippedOrOverlappingText = async (
+  page: Page,
+  scenario: string,
+) => {
+  const root = page.locator(
+    scenario === 'live-session' ? '.live-presenter' : '.teacher-workshop-page',
+  );
+  const result = await root.evaluate((element) => {
+    const candidates = Array.from(
+      element.querySelectorAll<HTMLElement>(
+        'h1, h2, h3, p, a, button, label, th, td',
+      ),
+    ).filter((target) => {
+      const style = getComputedStyle(target);
+      const box = target.getBoundingClientRect();
+      return (
+        style.display !== 'none' &&
+        style.visibility !== 'hidden' &&
+        box.width > 1 &&
+        box.height > 1 &&
+        (target.textContent?.trim().length ?? 0) > 0
+      );
+    });
+    const clipped = candidates
+      .filter(
+        (target) =>
+          target.scrollWidth > target.clientWidth + 1 ||
+          target.scrollHeight > target.clientHeight + 1 ||
+          getComputedStyle(target).textOverflow === 'ellipsis',
+      )
+      .map(
+        (target) =>
+          `${target.tagName}:${(target.textContent ?? '').trim().slice(0, 24)}`,
+      );
+    const overlaps: string[] = [];
+    for (let left = 0; left < candidates.length; left += 1) {
+      for (let right = left + 1; right < candidates.length; right += 1) {
+        const a = candidates[left];
+        const b = candidates[right];
+        if (!a || !b || a.contains(b) || b.contains(a)) continue;
+        const first = a.getBoundingClientRect();
+        const second = b.getBoundingClientRect();
+        const overlapWidth =
+          Math.min(first.right, second.right) -
+          Math.max(first.left, second.left);
+        const overlapHeight =
+          Math.min(first.bottom, second.bottom) -
+          Math.max(first.top, second.top);
+        if (overlapWidth > 1 && overlapHeight > 1) {
+          overlaps.push(
+            `${a.tagName}:${(a.textContent ?? '').trim().slice(0, 24)} <> ${b.tagName}:${(b.textContent ?? '').trim().slice(0, 24)}`,
+          );
+        }
+      }
+    }
+    return { clipped, overlaps };
+  });
+  expect(result.clipped, `${scenario} clipped text`).toEqual([]);
+  expect(result.overlaps, `${scenario} overlapping text`).toEqual([]);
+};
 
 for (const width of WIDTHS) {
   test(`teacher routes render without layout/console defects at ${String(width)}px`, async ({
@@ -41,7 +103,12 @@ for (const width of WIDTHS) {
       expect(overflow.scrollWidth, scenario).toBeLessThanOrEqual(
         overflow.clientWidth,
       );
-      await expect(page.getByRole('heading').first()).toBeVisible();
+      if (scenario === 'live-session' && width < 1024) {
+        await expect(page.getByRole('alert')).toHaveText('投影視窗過小');
+      } else {
+        await expect(page.getByRole('heading').first()).toBeVisible();
+      }
+      await expectNoClippedOrOverlappingText(page, scenario);
     }
 
     expect(
@@ -55,7 +122,7 @@ for (const width of WIDTHS) {
   });
 }
 
-test('all 7 teacher routes are reachable and injected-repository harness isolated (no real Supabase/RequireAuth)', async ({
+test('all 8 teacher routes are reachable and injected-repository harness isolated (no real Supabase/RequireAuth)', async ({
   page,
 }) => {
   const runtimeErrors = observeRuntimeErrors(page);
@@ -68,11 +135,11 @@ test('all 7 teacher routes are reachable and injected-repository harness isolate
   expect(runtimeErrors.pageErrors).toEqual([]);
 });
 
-test('all 7 teacher routes expose the shared sage-workshop visual surface', async ({
+test('all 7 workshop routes expose the shared sage-workshop visual surface', async ({
   page,
 }) => {
   await page.setViewportSize({ height: 900, width: 1440 });
-  for (const scenario of ROUTE_SCENARIOS) {
+  for (const scenario of WORKSHOP_ROUTE_SCENARIOS) {
     await page.goto(`/dev-harness/teacher-routes.html?scenario=${scenario}`);
     await page.waitForLoadState('networkidle');
 
@@ -98,6 +165,30 @@ test('all 7 teacher routes expose the shared sage-workshop visual surface', asyn
     ).toContain('Cubic 11');
   }
 });
+
+for (const scenario of [
+  'classes',
+  'student-progress',
+  'live-report',
+  'live-session',
+] as const) {
+  for (const viewport of [
+    { height: 900, width: 1280 },
+    { height: 852, width: 393 },
+  ] as const) {
+    test(`captures ${scenario} design audit at ${String(viewport.width)}px`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(viewport);
+      await page.goto(`/dev-harness/teacher-routes.html?scenario=${scenario}`);
+      await page.waitForLoadState('networkidle');
+      await page.screenshot({
+        fullPage: true,
+        path: `artifacts/design-audit/ui-content-correction/${scenario}/${String(viewport.width)}.png`,
+      });
+    });
+  }
+}
 
 test('HUD highlights the active top tab for the current route', async ({
   page,
