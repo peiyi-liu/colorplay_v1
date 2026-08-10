@@ -5193,6 +5193,25 @@ a {
   padding: var(--space-2) var(--space-3);
 }
 
+/* Phase 5V Task 2：篩選欄位有值時的 selected 態（client-only 視覺，不改查詢
+   邏輯本身；狀態不只靠顏色，邊框寬度也一起變化）。 */
+.teacher-analytics-filters > div[data-active='true'] {
+  border-color: var(--color-teacher);
+}
+
+.teacher-analytics-filters > div[data-active='true'] select,
+.teacher-analytics-filters > div[data-active='true'] input {
+  border: 2px solid var(--color-teacher);
+}
+
+/* Phase 5V Task 2：表格容器外層框線（僅框線與捲動容器，表格本身內距/欄寬/
+   字級不動）。 */
+.teacher-table-frame {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+}
+
 /* Task 8（盤點 G 未守門缺口）：教學分析頁三張表（題目分析／子題精熟／Live
    報表）直接掛在這個 section 下，原本沒有任何橫向捲動容器；舞台批把全站
    收進固定寬度 16:9 letterbox 後需要守門，補上 overflow-x:auto，與其餘教師
