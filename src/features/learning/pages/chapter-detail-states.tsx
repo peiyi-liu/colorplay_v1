@@ -5,6 +5,15 @@ import type { ChapterAccessBlocker } from '../api/chapter-map';
 import type { LearningErrorCode } from '../api/learning-repository';
 import type { MasteryDisplay } from './chapter-detail-view-model';
 
+// 狀態切換時把焦點移到有意義的標題上，不停留在已消失的元素。
+const useFocusOnMount = <Element extends HTMLElement>() => {
+  const ref = useRef<Element>(null);
+  useEffect(() => {
+    ref.current?.focus();
+  }, []);
+  return ref;
+};
+
 // 固定 code→copy 對照表——不顯示 raw code，不由前端推導新的 unmet condition。
 const blockerText = (blocker: ChapterAccessBlocker): string => {
   if (blocker.code === 'PREREQUISITE_MASTERY') {
@@ -31,10 +40,7 @@ export function LockedState({
   chapterTitle: string;
   unmetConditions: readonly ChapterAccessBlocker[];
 }>) {
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
-    headingRef.current?.focus();
-  }, []);
+  const headingRef = useFocusOnMount<HTMLHeadingElement>();
   return (
     <section
       aria-label={`${chapterTitle}：鎖定中`}
@@ -68,10 +74,7 @@ export function LockedState({
 export function ContentPreparingState({
   chapterTitle,
 }: Readonly<{ chapterTitle: string }>) {
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
-    headingRef.current?.focus();
-  }, []);
+  const headingRef = useFocusOnMount<HTMLHeadingElement>();
   return (
     <section
       aria-label={`${chapterTitle}：內容準備中`}
@@ -93,10 +96,7 @@ export function ContentReadinessErrorState({
   chapterTitle,
   reason,
 }: Readonly<{ chapterTitle: string; reason: string }>) {
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
-    headingRef.current?.focus();
-  }, []);
+  const headingRef = useFocusOnMount<HTMLHeadingElement>();
   return (
     <section
       aria-label={`${chapterTitle}：內容異常`}
