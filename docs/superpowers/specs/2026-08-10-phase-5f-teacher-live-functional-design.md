@@ -3,7 +3,7 @@
 - 日期：2026-08-10（2026-08-10 Codex review remediation 更新）
 - 狀態：Owner approved：2026-08-10
 - Codex design review completed
-- Implementation planning：尚未授權（not yet authorized）
+- Implementation planning：5F-U1（LivePresenter UI Surface）已授權，見 `2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`；5F-F2（統計／伺服器語意）尚未授權（not yet authorized）
 - 完成本文件定義的 Slice Gate 不代表對應的完整 Phase 已完成
 - 對應：`docs/roadmap-colorplay-next.md` Phase 5（Live 與教師報表）的功能性子集，**不是 Phase 5 的完整 spec**。UI/UX 子集在 `2026-08-10-phase-5v-teacher-ui-ux-restyle-design.md`。
 - Umbrella：`docs/superpowers/specs/2026-08-10-chapter-three-umbrella-brief.md`
@@ -201,3 +201,39 @@ RLSErrorEnvelope:
 - 「逾時未答不計入分母」：owner 已裁定分母不排除逾時題目，排除。
 - 「摘要用固定 rolling window（如近 30 天）」：Codex review 明確排除，改用 active-version 範圍，排除 rolling window 選項。
 - 「各場正確率先算百分比再平均」：會讓題數不同的場次權重失真，Codex review 明確要求題目加權，排除平均法。
+
+## 13. Delivery Slices（Owner UI-First 裁定新增，2026-08-10）
+
+### 決策歷程
+
+本文件第 1.1-1.6 節定義的是 5F 的**完整功能契約**（LivePresenter 視覺呈現要求＋viewport 契約＋教師端 Live／自主正確率統計＋取消場次歷史列＋RLS 邊界）。這些條文全部保留、不刪除——第 13 節不是修改第 1-12 節的產品規則，只是新增「這些規則什麼時候、分幾次交付」的排序決定。
+
+先前的框架把 LivePresenter 的視覺呈現要求（第 1.1 節）與其餘功能語意（第 1.2-1.6 節）視為同一個不可拆分的整體，隱含「要嘛全部一起做，要嘛都不做」。owner 較晚在 UI-first program sequencing 裁定（見 `2026-08-10-chapter-three-umbrella-brief.md` 第 2 節）中正式取代這個框架：LivePresenter 的視覺／呈現／viewport／focus／keyboard／accessibility 工作可以獨立於統計與伺服器語意工作先行交付，稱為 **5F-U1**；統計資料、伺服器權威計分、reconnect／finalize 等功能語意留到 2A/3A 之後、稱為 **5F-F2**。
+
+**這個較晚裁定不是授權用假資料或假按鈕做出「看起來完成」的靜態介面。** 5F-U1 必須在**既有 production-wired 的 LivePresenter**（`src/features/live/components/live-presenter.tsx`，經 `/teacher/live/:sessionId` route 掛載、走真實 hooks／repository／server state）上直接施工，只調整呈現層，不繞過、不取代任何既有資料流。
+
+### 5F-U1：LivePresenter UI Surface
+
+- 範圍：本文件第 1.1 節（視覺／呈現要求）與第 1.2 節（viewport 契約），加上既有 production 元件現有可達狀態的 focus／keyboard／accessibility 補強。
+- 使用既有 production route（`/teacher/live/:sessionId`）、既有 hooks（`useLiveSession`／`useLiveTransition`／`useLiveStandings`）、既有 handlers（`runTransition`／`runCancel`／`onExit`）與既有 server state（`LiveSessionState`）——全部原樣保留，U1 不重新設計資料流。
+- 只新增 client-side presentation：CSS／排版／對比／viewport 適配／focus-visible／keyboard order／`prefers-reduced-motion`／文字可讀性。
+- 不新增任何 API／RPC／schema／query／mutation。
+- 不修改計分、排名、題目時間、答案接受窗口、reconnect、finalize、cancel 的 lifecycle 或其判斷邏輯——這些全部由既有 Postgres 狀態機與既有 hook 決定，U1 只讀取、不改寫。
+- Test-only harness fixtures 可以用來建置/驗證 Chromium viewport 快照，但**不得被 production route 或任何 production import path 引用**（比照 Phase 4A／5V 既有 `dev-harness/*` 隔離慣例）。
+- 完成只能宣稱「5F-U1 LivePresenter UI surface complete」，**不宣稱**通過本文件第 6 節的 5F Slice Gate（Slice Gate 涵蓋第 1-3 節全部功能語意，U1 只完成其中第 1-2 節的視覺子集）。
+- 詳細契約見 `docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`——該文件已完成 Codex 唯一一次 spec review 與 remediation，owner 已核准，implementation planning 已授權（implementation 本身尚未開始）。
+
+### 5F-F2：功能語意補完
+
+- 範圍：本文件第 1.3 節（教師端 Live／自主正確率統計）、第 1.4 節（取消場次歷史列）、第 1.5 節（平手／缺席名次）、第 1.6 節（RLS 邊界）——這些全部需要**新的 server-authoritative 資料契約**（新 RPC／新 query／新 aggregation），目前 production 完全不存在對應資料，U1 因此不得涉足，全部留到 F2。
+- 新增或完成第 3 節 Typed Input/Output Contract 定義的 RPC／查詢層（`LiveParticipationSummary`／`LiveParticipationHistoryRow`／`RLSErrorEnvelope`）。
+- 新統計與 version-scoped aggregation（第 1.3 節 active-version 範圍規則）。
+- Join／reconnect／答案接受窗口的伺服器端規則驗證（第三方 AC-LIVE-005/007 對應的正式測試，U1 階段不執行、不宣稱驗證）。
+- 取消／不完整場次的歷史紀錄呈現（第 1.4 節，含 server-confirmed 的「答對 X／已出題 Y」格式）。
+- Finalize／排名的正式驗收（第 1.5 節平手規則的伺服器端驗證）。
+- 需要 2A／3A 完成後才能以第三章真實內容驗證（教師統計資料依附第三章的真實作答紀錄）。
+- Production network 與真實資料驗證：staging hosted 驗證（見第 8 節 Hosted Mutation Owner Gate），比照既有 Phase 3A hosted 邊界辦理。
+
+### 與既有第 1-12 節的關係
+
+第 13 節只決定「先交付什麼、後交付什麼」，不改變、不放寬、不加嚴第 1-12 節任何一條產品規則。第 6 節「Slice Gate」的定義（第 1-3 節全數實作並通過測試）維持不變——U1 完成不代表 Slice Gate 通過，只有 U1＋F2 都完成、且第 1-3 節全數驗證過，才算通過本文件定義的 Slice Gate。

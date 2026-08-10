@@ -130,3 +130,65 @@
 - 下一步：下一個規劃階段是 **Phase 5F-U1 的 implementation planning**——是規劃，不是直接實作；本輪未開始。
 - Blocker／待決策：無。
 - 相關檔案／commit：`feature/v2-major-update` merge commit `3230e16118e479c793de806dc49f2388e335d62e`（第二 parent `654d185ea8605e600d552b45d0803683bcb8b434`）。
+
+## 2026-08-10 15:35 [Claude Code] — Phase 5F-U1／F2 delivery-boundary remediation（文件層，無實作）
+
+- 做了什麼：Phase 4A、5V 的 UI surface 皆已整合進 `feature/v2-major-update`（見前兩筆條目）。Owner 再確認 UI-first 順序 `4A-UI → 5V-UI → 5F-U1 → 2A → 3A → 5F-F2 → Integration` 不變，並裁定較晚的 UI-first program sequencing 正式取代先前把 LivePresenter 視覺與功能視為單一不可拆分整體的舊框架——**但這不是授權建立假的靜態介面**，5F-U1 必須在既有 production-wired 的 LivePresenter 上直接施工。本輪只做規格盤點與文件修訂：唯讀盤點 `/teacher/live/:sessionId` route（`teacher-live-session-page.tsx`、`live-presenter.tsx`、`live-phase-view.ts`、既有 249 行單元測試＋`live-pages.test.tsx` host console 區塊、既有 86 個 `.live-presenter*` CSS 選擇器），確認 LivePresenter 現有 7 態 typed 投影規則（`ProjectorPhaseView`／`HostConsolePhaseView`）已可誠實驅動 U1 的呈現層工作，唯一現況缺口是 `cancelled` 態主體區塊目前渲染空白（型別已存在，只缺 JSX 分支）。同時發現舊 umbrella 文字把教師統計區塊（Live 參與紀錄）與 LivePresenter 一起併入「5F-U1」範圍、且要求用 test/dev-only fixtures 開發——這與該區塊完全沒有既有 production 資料矛盾（用 fixture 呈現會變成假裝功能存在），本輪已將其完整移出 U1、併入 5F-F2。
+- 修改／新增文件：`docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-design.md`（新增第 13 節 Delivery Slices，不刪除既有第 1-12 節任何產品規則）、新增 `docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`（259 行 Draft，含 Objective／Explicit Non-Goals／Existing-Contract Matrix／Typed UI States／Presenter Viewport Contract／Interaction Contract／Visual Direction／AC Mapping／Test Boundary（規劃不執行）／Completion Boundary／Dependency-Deferred Table／Open Questions／盤點來源）、`docs/superpowers/specs/2026-08-10-chapter-three-umbrella-brief.md`（同步 5F-U1 範圍收斂為 LivePresenter 專屬、補充決策歷程與目前進度）、`docs/roadmap-colorplay-next.md`（同步同一段落）。
+- 舊規則與新裁定：舊框架把 LivePresenter 視覺與功能語意視為同一個不可拆分整體；較晚 owner UI-first 裁定正式取代此框架，改為 5F-U1（LivePresenter 視覺，使用既有 production route/hooks/handlers，零新增 API/RPC/schema，不宣稱通過 5F Slice Gate）／5F-F2（統計、reconnect/finalize 等功能語意，2A/3A 之後）的正式分工。
+- 下一步：新文件交給 **Codex 做唯一一次 5F-U1 spec review**，remediation 完成、owner 核准後才進入 implementation plan——本輪尚未撰寫 implementation plan，也未建立對應 worktree。
+- Blocker／待決策：無。已知未同步項目（刻意，超出本輪授權範圍）：umbrella brief 第 7 行與 roadmap.md 第 47 行的「implementation planning not yet authorized」措辭，對 5V 而言已經過時（5V 已實作並整合），但本輪指示只授權同步 5F-U1/F2 相關措辭，不得改寫其他 phase 狀態，故保留原樣，留待未來一輪一併處理。
+- 相關檔案／commit：`docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-design.md`、`docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`（新增）、`docs/superpowers/specs/2026-08-10-chapter-three-umbrella-brief.md`、`docs/roadmap-colorplay-next.md`（本次 commit 待建立，純文件、無產品程式碼變更）。
+
+## 2026-08-10 16:51 [Claude Code] — Codex 唯一一次 5F-U1 spec review remediation 完成（文件層，無實作）
+
+- 做了什麼：完成 Codex 對 `docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md` 的唯一一次 spec review remediation，未啟動第二個 reviewer。
+- **Findings 與 remediation 結果**：
+  1. **`draft` 態空白**——先前版本錯誤假設 `draft` 態經現有進場路徑不可達、不需特別設計。已更正：`draft`／`cancelled` 皆是 production union 的合法狀態，deep link／refresh／transition race 下可能停留在 `draft`。已為兩者定案主體契約（`draft`＝「場次準備中」＋既有 `startSession`／`cancel` actions；`cancelled`＝「本場已取消」＋既有 `onExit`，不顯示 provisional rank 或百分比），皆不新增資料或 handler，不新增第三套 phase union，不修改 `projectorView()`／`hostConsoleView()`。
+  2. **Root overflow 未收緊**——先前版本把 `.live-presenter` 既有的 `overflow:auto` 視為足夠。已更正：根層在四個投影尺寸下不得捲動，`overflow:auto` 不構成通過條件；只有 participant chips wall 與 standings list 兩處允許有界子容器 overflow（需鍵盤可達＋accessible label＋不遮 header/footer）。新增 too-small predicate（`width<1024 || height<720`，四個正式尺寸絕對不觸發，過小時仍保留安全離開路徑）。
+  3. **錯誤的 modal dialog semantics**——先前版本把 LivePresenter 定義為 `role="dialog" aria-modal="true"`。已更正：LivePresenter 是 full-screen route region 非 modal overlay，改為 `role="region"`＋`aria-label="Live 投影模式"`；既有離開流程（`onExit` 只在 podium/cancelled 出現）不變，不新增離開 transition 或 server mutation。AC Mapping 同步移除 AC-UI-011 的正式適用宣稱（不再是 Dialog），保留 AC-UI-008/013/015。
+  4. **Reduced-motion 測試層未區分 JSDOM 與 Chromium 能力邊界**——已更正：RTL 只驗證 draft/cancelled 渲染、handler binding、pending、accessible semantics，明確聲明不得宣稱 JSDOM 能驗證實際 media-query CSS；Chromium 用 `page.emulateMedia({reducedMotion:'reduce'})` 驗證動畫 `animation-name:none` 或 `duration:0s`，同時驗證正常模式仍保留核准的一次性提示。Chromium 專用 port 定案為 `localhost:4178`（`--strictPort`、`reuseExistingServer:false`），不與既有 `4173`／`4176`／`4177` 衝突。
+  5. **Production content bounds 未查證**——唯讀查證 `supabase/migrations/*.sql`（61 個檔案）的 CHECK constraint 與 RPC `limit` 子句：question prompt 1–1000 字元、option text 1–500 字元、option count 2–4、display name 1–30 字元、podium 硬上限 3 筆、standings 硬上限 5 筆，六項核心內容全數查得明確硬上限。唯一沒有硬上限的是 participant count（`classroom_members`／`live_participants` 無對應 CHECK），但依本輪指示歸類為非核心可捲動區域，不構成 blocker。新增完整 viewport fixture matrix（draft／lobby-boundary／question-boundary／paused-boundary／reveal-boundary／podium-boundary／cancelled／too-small／reduced-motion），全部使用查證到的真實邊界值，不得以短文案 fixture 宣稱契約通過。
+  6. **Umbrella／roadmap DAG 未反映 U1/F2 的正確依賴關係，且 5V 狀態文字過時**——已更正 umbrella brief 第 4 節 DAG 與 bullet（5F-U1 獨立於 2A/3A 可先完成；5F-F2 依賴 2A/3A；取消歷史/lifecycle 測試可獨立實作但整體 F2 Slice Gate 仍需母文件逐項判定；5F 完整 Slice Gate 需 U1+F2 皆完成），並修正 umbrella 標頭與 roadmap.md 兩處「5V implementation planning not yet authorized」的過時措辭，改為明確記錄 5V 已實作並以 merge commit `3230e16118e479c793de806dc49f2388e335d62e` 整合（task-level UI surface complete，非 feature complete）。此為本輪明確授權範圍內的修正，未改寫其他 phase 狀態或歷史。
+- **是否存在 production content-bound owner blocker**：**不存在**。全部六項核心內容皆有明確硬上限可直接用於 fixture；唯一無硬上限的 participant count 屬於已預先分類的非核心可捲動例外，不需 owner 裁定。
+- 5F-U1 spec 全文重寫（`docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`，259→334 行），Open Questions 段落中先前 3 項（cancelled 文案、port 選號、root overflow 策略）本輪全數定案收斂，不再保留。
+- 下一步：**尚未核准、未建立 implementation plan**——等待 owner 對本輪 remediation 結果核准。核准後才進入 implementation planning，本輪未建立對應 worktree。
+- Blocker／待決策：無（見上方 owner blocker 判定）。
+- 相關檔案／commit：`docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`（全文 remediation）、`docs/superpowers/specs/2026-08-10-chapter-three-umbrella-brief.md`（DAG＋5V 狀態修正）、`docs/roadmap-colorplay-next.md`（同步修正）（本次 commit 待建立，純文件、無產品程式碼變更）。
+
+## 2026-08-10 17:10 [Claude Code] — 5F-U1 spec owner 核准，Codex／Claude Code 角色正式交換
+
+### 已完成
+
+- Phase 4A UI surface 已整合進 `feature/v2-major-update`（merge commit `3644bf2`）。
+- Phase 5V UI surface 已整合進 `feature/v2-major-update`（merge commit `3230e16118e479c793de806dc49f2388e335d62e`）。
+- 5F-U1／5F-F2 delivery boundary 已定案（母文件第 13 節「Delivery Slices」）。
+- 5F-U1 spec 已通過 Codex 唯一一次 spec review 與 remediation。
+- Production content bounds（question prompt／option text／option count／display name／podium／standings）已唯讀查證，全數有明確硬上限。
+- **無 owner blocker**——participant count 雖無硬上限，但歸類為非核心可捲動區域，不構成 blocker。
+- Owner 已正式核准 5F-U1 spec，狀態更新為「Owner approved：2026-08-10／Codex single spec review completed／Remediation completed／Authorized for implementation planning」。
+
+### 5F-U1 核准契約摘要
+
+- 在既有 production-wired 的 LivePresenter（`/teacher/live/:sessionId`）上直接施工，不重寫元件、不重新設計互動流程。
+- 複用既有 7 個 typed phases（`draft`／`lobby`／`question`／`paused`／`reveal`／`podium`／`cancelled`），不新增第三套 phase union。
+- `draft`（「場次準備中」）與 `cancelled`（「本場已取消」）補上誠實主體，皆沿用既有 handler，零新資料。
+- LivePresenter 定義為 full-screen region（`role="region"`＋`aria-label="Live 投影模式"`），不是 modal dialog——移除 `role="dialog"`／`aria-modal="true"`。
+- 根層 `.live-presenter` 在四個投影尺寸下不可捲動；只有 participant wall／standings list 兩處允許有界子容器 overflow。
+- Too-small predicate：`width < 1024px` 或 `height < 720px` 顯示「投影視窗過小」，四個正式尺寸絕不觸發，過小時仍保留安全離開路徑。
+- 四個投影 viewport 契約：1024×768／1280×720／1366×768／1920×1080。
+- `prefers-reduced-motion` 以 Chromium（`page.emulateMedia`）驗證，JSDOM 不宣稱能驗證實際 media-query CSS。
+- Dev-only Chromium harness 固定 `localhost:4178`（`--strictPort`、`reuseExistingServer:false`）。
+- 不新增任何 API／RPC／schema／query／mutation，不修改 hosting semantics（開場／開題／收題／暫停／續行／推進／結算／取消的判斷邏輯）。
+- Test-only harness fixtures 不得被 production route import，production runtime 不得顯示 sample data。
+- U1 完成只能宣稱「5F-U1 LivePresenter UI surface complete」，不宣稱 5F／Phase 5／Slice Gate 完成。
+
+### 角色交換
+
+- **Codex** 從本次交接起是 5F-U1 的主要實作者：撰寫 implementation plan、建立 implementation worktree、TDD、產品程式碼、scoped validation、review findings remediation、integration preflight 建議。
+- **Claude Code** 從本次交接起轉為 5F-U1 的唯一 reviewer：審查 Codex 的 implementation plan 與 implementation diff、驗證 spec conformance／behavioral regression／accessibility 與 viewport 契約／scope boundary／validation evidence 合理性。Claude Code 不得直接修改 Codex 的 implementation worktree、不得代替 Codex 修復 finding、不得使用 reviewer sub-agent 或 Codex plugin／CLI 來 review Codex 自己的實作、不得疊加第二位 reviewer、不得為了讓檢查通過而自行修改產品碼。若 Stop hook 沒有 pending marker，Claude 不主動建立 marker 觸發 Codex review——Claude 本身就是 reviewer。
+- **Owner** 維持 spec／plan 範圍變更、新資料／新 API／新互動語意、blocker 裁定、merge／push／hosted 操作授權。
+- Review 回覆格式（Claude 審查 Codex 產出時）：先給 `ALLOW:` 或 `BLOCK:` 結論，findings 依 Critical／High／Medium／Low 排序，每項附檔案與行號、具體改法，明確區分事實／推測／需查證資訊；無 finding 直接寫 `ALLOW: 未發現阻塞性問題`；不用 sub-agent 建立 Standards／Spec 雙軸；不自行修改程式碼。Plan review 與 implementation review 是不同 artifact，各自一次；修復後只重跑受影響的 scoped validation，不啟動第二位 reviewer。
+- 下一步：由 **Codex** 撰寫 `docs/superpowers/plans/2026-08-10-phase-5f-u1-teacher-live-presenter-ui.md`（implementation plan）。Claude Code 本輪未撰寫此 plan、未寫產品碼、未建立 worktree、未開始 implementation。
+- Blocker／待決策：無。
+- 相關檔案／commit：`docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-design.md`、`docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`、`docs/superpowers/specs/2026-08-10-chapter-three-umbrella-brief.md`、`docs/roadmap-colorplay-next.md`（本次 commit 待建立，純文件、無產品程式碼變更）。

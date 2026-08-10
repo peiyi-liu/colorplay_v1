@@ -4,7 +4,7 @@
 - 狀態：Umbrella brief（協調文件，非任一 Phase 的完整 spec）
 - Owner approved：2026-08-10（五份 draft spec 邊界與依賴關係皆經 owner 核准）
 - Codex design review completed
-- Implementation planning：僅 Phase 4A 已授權（見 `docs/superpowers/plans/2026-08-10-phase-4a-student-chapter-detail-ui.md`）；2A/3A/5V/5F 尚未授權
+- Implementation planning：Phase 4A 與 5V 已授權並完成實作，皆已以 `--no-ff` merge 整合進 `feature/v2-major-update`（4A：`3644bf2`；5V：`3230e16`，task-level UI surface complete，非 feature complete）；2A/3A/5F 尚未授權
 - 完成任一 Slice Gate 不代表對應的完整 Phase 已完成
 - 前身：本檔案原名 `2026-08-10-phase-2-3-4-chapter-three-slice-design.md`，經 owner 2026-08-10 remediation 裁定降級重構為 umbrella + 5 份獨立 draft spec。
 
@@ -15,6 +15,7 @@
 > - Phase 4A：`docs/superpowers/specs/2026-08-10-phase-4a-student-chapter-detail-ui-design.md`
 > - Phase 5V：`docs/superpowers/specs/2026-08-10-phase-5v-teacher-ui-ux-restyle-design.md`（2026-08-10 remediation 重新命名，範圍由「純視覺」擴大為「UI/UX」）
 > - Phase 5F：`docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-design.md`（owner 已裁定全部待決問題）
+>   - 5F-U1（LivePresenter UI surface 子集）：`docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`（Owner approved 2026-08-10／Codex single spec review completed／Remediation completed／Authorized for implementation planning；implementation 尚未開始）
 
 ## 1. 為什麼用第三章作為共同垂直切片
 
@@ -38,10 +39,12 @@
 
 **定義**：
 
-- **5F-U1**：`docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-design.md` 範圍的**視覺/UI 子集**——只做 LivePresenter 視覺、以及教師統計區塊（Live 參與紀錄）的 layout／loading／empty／error／history UI states。使用 test/dev-only fixtures 開發，**不新增 API/RPC/RLS**，不得在 production runtime 顯示 sample data。
-- **5F-F2**：5F 範圍的**功能子集**——之後才實作統計 RPC/RLS、server-authoritative aggregation、正式資料串接與 integration（對應 5F spec 第 1.3/1.6 節的計分與 RLS 規則）。
+- **5F-U1**：`docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-design.md` 範圍的**視覺/UI 子集，範圍已於 2026-08-10 收斂為 LivePresenter 專屬**——在既有 production-wired 的 LivePresenter（`/teacher/live/:sessionId` route，走真實 hooks／repository／server state）上完成視覺、viewport、focus、keyboard、accessibility 補強，不重新設計互動流程，不新增 API/RPC/schema/query/mutation。**教師統計區塊（Live 參與紀錄）已從 5F-U1 移除、完整併入 5F-F2**——該區塊目前沒有任何既有 production 資料可誠實呈現，不像 LivePresenter 有真實資料只是呈現需要補強，用 fixture 呈現會落入「假裝功能存在」的風險。test-only harness fixtures 只能用於驗證 LivePresenter 呈現（不得被 production route import），不得在 production runtime 顯示 sample data。詳細契約見 `docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`。
+- **5F-F2**：5F 範圍的**功能子集**——教師統計區塊（Live／自主正確率、參與紀錄）全部功能（資料＋UI）、取消場次歷史列、平手／缺席名次伺服器驗證、統計 RPC/RLS、server-authoritative aggregation、正式資料串接與 integration（對應 5F spec 第 1.3/1.4/1.5/1.6 節），之後才實作。
 - **5V-UI 開始前**，必須先盤點與當時 Phase 1 AppShell/HUD/shared CSS 的檔案重疊範圍，避免重複改動或互相覆蓋。
 - **4A/5V/5F-U1 可以標記「UI surface complete」**，但**不得標記為 feature complete 或 Phase complete**——這三者交付的都是介面層，底層資料/邏輯尚未串接。
+- **較晚裁定取代舊框架**：先前框架把 LivePresenter 的視覺呈現要求與其餘功能語意（統計、reconnect、finalize 判斷等）視為同一個不可拆分的整體。本次 UI-first program sequencing 裁定正式取代這個框架，改為 5F-U1（視覺，可先行）／5F-F2（功能語意，2A/3A 之後）的正式分工——**這不是授權用假資料或假按鈕做出「看起來完成」的靜態介面**，5F-U1 必須在既有 production-wired 的 LivePresenter 上直接施工，細節見 `2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`。
+- **目前進度**：5F-U1 design spec 已完成 Codex 唯一一次 spec review 與 remediation，owner 已核准（2026-08-10），implementation planning 已授權。Codex 是本階段起唯一的 implementation 執行者，Claude Code 轉為唯一 reviewer（見 `docs/handoff.md` 角色交接紀錄）；implementation 本身尚未開始，下一個 artifact 是 `docs/superpowers/plans/2026-08-10-phase-5f-u1-teacher-live-presenter-ui.md`。
 - **2A/3A/5F-F2** 才會補齊各自對應的功能與真實資料契約，是這條順序裡真正「讓功能可用」的部分。
 
 ## 3. Phase 2A/3A/4A/5V/5F 責任邊界
@@ -63,7 +66,8 @@
 
 5V（教師 UI/UX）── 獨立，不依賴 2A/3A/4A，也不依賴 5F
 
-5F（教師/Live 功能，含 LivePresenter）── 獨立於 2A/3A/4A；
+5F-U1（LivePresenter UI surface）── 獨立於 2A/3A/4A，可先完成
+5F-F2（教師統計、取消歷史、真實資料驗證）── 依賴 2A＋3A（教師統計資料需要第三章真實作答紀錄才有意義）；
     與 5V 共用同一批路由但範圍互斥；owner 已裁定全部待決問題，現為 draft spec
     （owner 已裁定全部待決問題，含第 1.4 節取消場次名次規則）
 ```
@@ -71,7 +75,11 @@
 - 2A 與 3A 互相獨立，皆可平行開始撰寫/討論/實作。
 - **4A 可以在 2A/3A 完成前就開始開發**（用明確標示的 test fixture），但 4A 的「真實功能完成」宣稱，明確依賴 2A 與 3A 都各自通過 Slice Gate——這是真實的完成依賴，不是可以跳過的形式。
 - 5V 不依賴任何其他 spec，可獨立執行，且不因 5F 是否完成而受影響。
-- 5F 現為 draft spec（owner 已裁定全部 7 項問題＋2 項後續澄清，含第 1.4 節取消場次名次規則）。
+- **5F-U1 獨立於 2A/3A，可先完成 UI surface**——比照 4A／5V 的「可先用既有 production 資料開發」模式，但 U1 只在既有 production-wired LivePresenter 上施工，不使用 fixture 假裝功能完成（見 `2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`）。
+- **5F-F2 的教師統計與真實資料驗證依賴 2A/3A**——統計資料（Live／自主正確率）必須附著在第三章的真實內容與真實作答紀錄上才有意義，這是真實的完成依賴。
+- **取消場次歷史列與部分 Live lifecycle 測試（例如 reconnect／deadline 驗收）可獨立於 2A/3A 實作**，因為這些驗證的是既有 Live 狀態機本身的行為，不依賴第三章內容；但整體 5F-F2 的 Slice Gate 判定仍需依母文件（`2026-08-10-phase-5f-teacher-live-functional-design.md`）第 1-3 節逐項確認，不因個別項目可獨立實作就提前宣稱 F2 完成。
+- **5F 完整 Slice Gate（母文件第 6 節）需 5F-U1＋5F-F2 全部完成**，兩者缺一不可。
+- 5F 現為 draft spec（owner 已裁定全部 7 項問題＋2 項後續澄清，含第 1.4 節取消場次名次規則）；5F-U1 子規格已完成 Codex 唯一一次 review remediation，owner 已核准，implementation planning 已授權（5F-F2 仍未授權）。
 
 ## 5. 各 spec 的輸入／輸出契約
 
