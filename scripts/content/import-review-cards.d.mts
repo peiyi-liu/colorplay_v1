@@ -2,12 +2,14 @@ export type ReviewCardImportRow = Readonly<{
   id: string;
   stableCode: string;
   identity: string;
+  identifier: string;
   chapterCode: string;
   sectionKey: string;
   sectionLabel: string;
   groupLabel: string;
   title: string;
   content: string;
+  attachment: string;
   sortOrder: number;
 }>;
 

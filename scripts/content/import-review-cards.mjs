@@ -10,7 +10,8 @@
  *   node scripts/content/import-review-cards.mjs --url   # 直接抓公開試算表
  *
  * 資料規則：試算表為主來源；合併儲存格造成的空白「章節編號／小節」自動承上。
- * 缺必填欄位的列跳過並列入報告；結構性錯誤（未對應章節、重複卡片）中止匯入。
+ * 複習卡序號是全域 identifier，同一子主題可有多張同標題卡片。缺必填欄位的列跳過
+ * 並列入報告；結構性錯誤（未對應章節、重複 identifier）中止匯入。
  */
 import console from 'node:console';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -54,9 +55,36 @@ const normalizeContent = (value) =>
     .join('\n')
     .trim();
 
+const normalizeHeader = (value) => compactWhitespace(value).replaceAll(' ', '');
+
+const headerIndex = (header, names) => {
+  const normalized = header.map((cell) => normalizeHeader(cell));
+  for (const name of names) {
+    const index = normalized.indexOf(name);
+    if (index >= 0) return index;
+  }
+  return -1;
+};
+
+// 目前 Sheet 既有數字序號視為 legacy identifier；新發號格式依 Phase 2A 為 CP-\d{6,}。
+const isValidIdentifier = (value) =>
+  /^[0-9]{4,}$/u.test(value) || /^CP-[0-9]{6,}$/u.test(value);
+
 export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
   const stamp = generatedAt ?? new Date().toISOString();
-  const rows = parseCsv(csvText)
+  const parsed = parseCsv(csvText);
+  const header = parsed[0] ?? [];
+  const columns = {
+    attachment: headerIndex(header, ['附件']),
+    chapter: headerIndex(header, ['章節編號', '章節']),
+    content: headerIndex(header, ['卡片內容']),
+    group: headerIndex(header, ['子主題']),
+    identifier: headerIndex(header, ['複習卡序號']),
+    section: headerIndex(header, ['小節']),
+    title: headerIndex(header, ['卡片標題', '子主題標題']),
+  };
+  const legacyCsv = columns.identifier < 0;
+  const rows = parsed
     .slice(1)
     .filter((row) => row.some((cell) => (cell ?? '').trim() !== ''));
 
@@ -73,18 +101,22 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
 
   rows.forEach((raw, index) => {
     const rowNumber = index + 2;
-    const chapterCell = compactWhitespace(raw[0]);
-    const sectionCell = compactWhitespace(raw[1]);
-    const groupLabel = compactWhitespace(raw[2]);
-    const title = compactWhitespace(raw[3]);
-    const content = normalizeContent(raw[4]);
+    const identifier =
+      columns.identifier >= 0 ? compactWhitespace(raw[columns.identifier]) : '';
+    const chapterCell = compactWhitespace(raw[columns.chapter]);
+    const sectionCell = compactWhitespace(raw[columns.section]);
+    const groupLabel = compactWhitespace(raw[columns.group]);
+    const title = compactWhitespace(raw[columns.title]);
+    const content = normalizeContent(raw[columns.content]);
+    const attachment =
+      columns.attachment >= 0 ? compactWhitespace(raw[columns.attachment]) : '';
 
     if (chapterCell !== '') carriedChapter = chapterCell;
     if (sectionCell !== '') carriedSection = sectionCell;
     const chapter = carriedChapter;
     const sectionLabel = carriedSection;
 
-    if (groupLabel === '' && title === '') {
+    if (identifier === '' && groupLabel === '' && title === '') {
       if (content === '') return;
       if (!currentCard) {
         skipped.push({
@@ -99,6 +131,7 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
     }
 
     const missing = [];
+    if (!legacyCsv && identifier === '') missing.push('複習卡序號');
     if (chapter === '') missing.push('章節編號');
     if (sectionLabel === '') missing.push('小節');
     if (title === '') missing.push('卡片標題');
@@ -109,6 +142,14 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
         preview: title !== '' ? title : content.slice(0, 20) || groupLabel,
         reason: `缺少必填欄位：${missing.join('、')}`,
       });
+      currentCard = null;
+      return;
+    }
+
+    if (!legacyCsv && !isValidIdentifier(identifier)) {
+      problems.push(
+        `第 ${rowNumber} 列：複習卡 identifier「${identifier}」格式錯誤`,
+      );
       currentCard = null;
       return;
     }
@@ -134,9 +175,15 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
     }
     const sectionKey = sectionKeyMatch[1];
 
-    const identity = `${sectionKey}:${groupLabel}:${title}`;
+    const identity = legacyCsv
+      ? `${sectionKey}:${groupLabel}:${title}`
+      : identifier;
     if (seenKeys.has(identity)) {
-      problems.push(`第 ${rowNumber} 列：卡片「${identity}」重複`);
+      problems.push(
+        legacyCsv
+          ? `第 ${rowNumber} 列：卡片「${identity}」重複`
+          : `第 ${rowNumber} 列：複習卡 identifier「${identity}」重複`,
+      );
       currentCard = null;
       return;
     }
@@ -144,14 +191,18 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
 
     const card = {
       id: deterministicUuid('review-card', identity),
-      stableCode: `sheet-card-${sectionKey}-${stableHash(identity)}`,
+      stableCode: legacyCsv
+        ? `sheet-card-${sectionKey}-${stableHash(identity)}`
+        : `sheet-card-${identifier.toLowerCase()}`,
       identity,
+      identifier,
       chapterCode,
       sectionKey,
       sectionLabel,
       groupLabel,
       title,
       content,
+      attachment,
       sortOrder: 0,
     };
     cards.push(card);
@@ -170,10 +221,10 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
   const mediaEntries = Object.entries(fixes.reviewCardMedia ?? {}).filter(
     ([key]) => key !== '$comment',
   );
-  for (const [identity] of mediaEntries) {
-    if (!cards.some((card) => card.identity === identity)) {
+  for (const [identifier] of mediaEntries) {
+    if (!cards.some((card) => card.identity === identifier)) {
       problems.push(
-        `reviewCardMedia 的「${identity}」找不到對應的匯入卡片（請確認試算表與 import-fixes.json 一致）`,
+        `reviewCardMedia 的「${identifier}」找不到對應的匯入卡片（請確認試算表與 import-fixes.json 一致）`,
       );
     }
   }
@@ -243,16 +294,54 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
   }
   if (cardValues.length > 0) {
     lines.push(
-      'insert into public.review_cards (id, subtopic_id, stable_code, group_label, title, content, version, status, requires_recompletion, sort_order)',
+      'insert into public.review_cards as existing (id, subtopic_id, stable_code, group_label, title, content, version, status, requires_recompletion, sort_order)',
       'values',
-      `${cardValues.join(',\n')};`,
+      cardValues.join(',\n'),
+      'on conflict (id) do update',
+      'set subtopic_id = excluded.subtopic_id,',
+      '    stable_code = excluded.stable_code,',
+      '    group_label = excluded.group_label,',
+      '    title = excluded.title,',
+      '    content = excluded.content,',
+      '    version = case',
+      '      when existing.group_label is distinct from excluded.group_label',
+      '        or existing.title is distinct from excluded.title',
+      '        or existing.content is distinct from excluded.content',
+      '      then existing.version + 1',
+      '      else existing.version',
+      '    end,',
+      '    status = excluded.status,',
+      '    requires_recompletion = case',
+      "      when existing.status = 'published' and (",
+      '        existing.group_label is distinct from excluded.group_label',
+      '        or existing.title is distinct from excluded.title',
+      '        or existing.content is distinct from excluded.content',
+      '      ) then true',
+      '      else excluded.requires_recompletion',
+      '    end,',
+      '    sort_order = excluded.sort_order,',
+      '    updated_at = clock_timestamp();',
+      '',
+    );
+  }
+
+  const syncedCardIds = [
+    ...cards.map((card) => card.id),
+    ...(firstSection
+      ? [deterministicUuid('review-card', DRAFT_PROBE_CARD.stableCode)]
+      : []),
+  ];
+  if (syncedCardIds.length > 0) {
+    lines.push(
+      'delete from public.review_card_media',
+      `where review_card_id in (${syncedCardIds.map(sqlText).join(', ')});`,
       '',
     );
   }
 
   const mediaValues = [];
-  for (const [identity, media] of mediaEntries) {
-    const card = cards.find((entry) => entry.identity === identity);
+  for (const [identifier, media] of mediaEntries) {
+    const card = cards.find((entry) => entry.identity === identifier);
     if (!card) continue;
     mediaValues.push(
       `  (${sqlText(card.id)}, 1, ${sqlText(media.asset)}, ${sqlText(media.alt)}, 1)`,
@@ -263,6 +352,24 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
       'insert into public.review_card_media (review_card_id, card_version, asset_path, alt_text, sort_order)',
       'values',
       `${mediaValues.join(',\n')};`,
+      '',
+    );
+  }
+  if (cards.length > 0) {
+    lines.push(
+      'update public.review_cards as card',
+      "set status = 'archived', updated_at = clock_timestamp()",
+      "where card.stable_code like 'sheet-card-%'",
+      "  and card.stable_code <> 'sheet-card-draft-probe'",
+      `  and card.stable_code not in (${cards.map((card) => sqlText(card.stableCode)).join(', ')})`,
+      '  and exists (',
+      '    select 1',
+      '    from public.subtopics as subtopic',
+      '    join public.sections as section on section.id = subtopic.section_id',
+      '    join public.chapters as chapter on chapter.id = section.chapter_id',
+      '    where subtopic.id = card.subtopic_id',
+      "      and chapter.stable_code = 'chapter-3'",
+      '  );',
       '',
     );
   }
@@ -326,11 +433,21 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
         `- 第 ${entry.rowNumber} 列（${entry.preview}）：${entry.reason}`,
     ),
     '',
-    '### 媒體附件（平台示意圖，待教師確認）',
+    '### 媒體附件對帳',
     ...mediaEntries.map(
-      ([identity, media]) =>
-        `- ${identity}：${media.asset}（alt：${media.alt}）`,
+      ([identifier, media]) =>
+        `- ${identifier}：${media.asset}（alt：${media.alt}）`,
     ),
+    ...cards
+      .filter(
+        (card) =>
+          card.attachment !== '' &&
+          !mediaEntries.some(([identifier]) => identifier === card.identity),
+      )
+      .map(
+        (card) =>
+          `- ${card.identifier || card.identity}：${card.attachment}（缺少可匯入資產）`,
+      ),
     '',
   ].join('\n');
 

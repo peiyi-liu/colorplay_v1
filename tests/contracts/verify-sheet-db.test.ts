@@ -60,7 +60,17 @@ function makeWorkbook(
   XLSX.utils.book_append_sheet(
     workbook,
     XLSX.utils.aoa_to_sheet([
-      [' ', '小節', '子主題', '卡片標題', '卡片內容'],
+      [
+        '複習卡序號',
+        '章節',
+        '章節標題',
+        '小節',
+        '小節標題',
+        '子主題',
+        '子主題標題',
+        '卡片內容',
+        '附件',
+      ],
       ...reviewRows.map((row) => [...row]),
     ]),
     REVIEW_TAB_NAME,
@@ -191,7 +201,19 @@ describe('buildSheetSnapshot 防呆', () => {
   it('缺標題複習卡列入 cardSkipped，不進比對', () => {
     const snapshot = snapshotOf(
       [question('3-1-01')],
-      [['3', '3-2 色彩體系', '結構', '', '缺標題的內容']],
+      [
+        [
+          '332101',
+          '3',
+          '色彩表示',
+          '3-2 色彩體系',
+          '色彩體系',
+          '結構',
+          '',
+          '缺標題的內容',
+          '',
+        ],
+      ],
     );
     expect(snapshot.reviewCards).toEqual([]);
     expect(snapshot.cardSkipped).toHaveLength(1);
@@ -202,7 +224,19 @@ describe('buildSheetSnapshot 防呆', () => {
 describe('compareSnapshots', () => {
   const sheet = snapshotOf(
     [question('3-1-01')],
-    [['3', '3-1 色彩三要素', '分類', '有彩色', '卡片內容甲']],
+    [
+      [
+        '331101',
+        '3',
+        '色彩表示',
+        '3-1 色彩三要素',
+        '色彩三要素',
+        '分類',
+        '有彩色',
+        '卡片內容甲',
+        '',
+      ],
+    ],
   );
   const card = sheet.reviewCards[0];
   const matchingDb = (): DbSnapshot => ({

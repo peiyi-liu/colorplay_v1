@@ -4,7 +4,7 @@
  * xlsx，轉成既有匯入器可直接讀取的 CSV：
  *   artifacts/content/question-bank.xlsx — 原始快照（不進 git）
  *   artifacts/content/questions.csv      — 「各單元隨機測驗題庫」→ import-questions.mjs 10 欄格式
- *   artifacts/content/review-cards.csv   — 「各單元複習大廳」→ import-review-cards.mjs 5 欄格式
+ *   artifacts/content/review-cards.csv   — 「各單元複習大廳」→ import-review-cards.mjs 7 欄格式
  *
  * 表頭以「去除所有空白」後比對，容忍欄名尾空格（如「選項 A 」「正確答案 」）。
  * 佔位列（題目／選項／正解全空、僅有解析）在此層過濾，不進 CSV；
@@ -43,7 +43,15 @@ const QUESTION_CSV_HEADER = [
   '正確答案',
   '答錯觀念解析',
 ];
-const REVIEW_CSV_HEADER = ['章節編號', '小節', '子主題', '卡片標題', '卡片內容'];
+const REVIEW_CSV_HEADER = [
+  '複習卡序號',
+  '章節編號',
+  '小節',
+  '子主題',
+  '卡片標題',
+  '卡片內容',
+  '附件',
+];
 
 const normalizeHeader = (value) => String(value ?? '').replace(/\s+/gu, '');
 
@@ -110,7 +118,7 @@ export function extractQuestionRows(workbook) {
   const columns = {
     answer: headerIndex(headerRow, ['正確答案', '正解']),
     chapter: headerIndex(headerRow, ['章節', '章節編號']),
-    code: headerIndex(headerRow, ['題號']),
+    code: headerIndex(headerRow, ['題號', '題庫序號']),
     explanation: headerIndex(headerRow, ['答錯觀念解析', '解析']),
     optionA: headerIndex(headerRow, ['選項A']),
     optionB: headerIndex(headerRow, ['選項B']),
@@ -178,14 +186,25 @@ export function extractReviewRows(workbook) {
   }
   const headerRow = aoa[0];
   const named = {
+    attachment: headerIndex(headerRow, ['附件']),
     content: headerIndex(headerRow, ['卡片內容']),
     group: headerIndex(headerRow, ['子主題']),
+    identifier: headerIndex(headerRow, ['複習卡序號']),
     section: headerIndex(headerRow, ['小節']),
     // Sheet 改版後子主題標題直接作為卡片標題（卡片內容的標題＝子主題標題），
     // 「卡片標題」欄已移除；保留舊名作為向前相容 fallback。
     title: headerIndex(headerRow, ['子主題標題', '卡片標題']),
   };
-  const missing = Object.entries(named)
+  const v2Sheet = named.identifier >= 0;
+  const required = v2Sheet
+    ? named
+    : {
+        content: named.content,
+        group: named.group,
+        section: named.section,
+        title: named.title,
+      };
+  const missing = Object.entries(required)
     .filter(([, index]) => index < 0)
     .map(([key]) => key);
   if (missing.length > 0) {
@@ -201,11 +220,13 @@ export function extractReviewRows(workbook) {
     .slice(1)
     .filter((raw) => raw.some((cell) => cellText(cell) !== ''))
     .map((raw) => [
+      named.identifier >= 0 ? cellText(raw[named.identifier]) : '',
       cellText(raw[chapterIndex]),
       normalizeSectionLabel(raw[named.section]),
       cellText(raw[named.group]),
       cellText(raw[named.title]),
       String(raw[named.content] ?? '').trim(),
+      named.attachment >= 0 ? cellText(raw[named.attachment]) : '',
     ]);
   return { problems: [], rows };
 }

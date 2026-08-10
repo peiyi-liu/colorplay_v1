@@ -14,7 +14,7 @@ import { buildReviewCardImport } from '../../scripts/content/import-review-cards
 import { parseCsv } from '../../scripts/content/import-shared.mjs';
 
 const MESSY_QUESTION_HEADER = [
-  '題號',
+  '題庫序號',
   '章節',
   '章節標題',
   '小節',
@@ -39,7 +39,17 @@ function makeWorkbook({
   XLSX.utils.book_append_sheet(
     workbook,
     XLSX.utils.aoa_to_sheet([
-      [' ', '小節', '子主題', '卡片標題', '卡片內容'],
+      [
+        '複習卡序號',
+        '章節',
+        '章節標題',
+        '小節',
+        '小節標題',
+        '子主題',
+        '子主題標題',
+        '卡片內容',
+        '附件',
+      ],
       ...reviewRows.map((row) => [...row]),
     ]),
     REVIEW_TAB_NAME,
@@ -199,13 +209,27 @@ describe('fetch-sheet 複習大廳解析', () => {
       makeWorkbook({
         reviewRows: [
           [
+            '331101',
             '3',
+            '色彩表示',
             '3-1 色彩三要素與色名的表示',
+            '色彩三要素與色名的表示',
             '色彩的分類',
             '有彩色',
             '第一行\n第二行',
+            '',
           ],
-          ['', '', '色彩三要素', '甚麼是HVC', '內容乙'],
+          [
+            '331201',
+            '',
+            '',
+            '',
+            '',
+            '色彩三要素',
+            '甚麼是HVC',
+            '內容乙',
+            '圖3-2',
+          ],
         ],
       }),
     );
@@ -220,6 +244,11 @@ describe('fetch-sheet 複習大廳解析', () => {
       '甚麼是HVC',
     ]);
     expect(imported.cards[0]?.content).toBe('第一行\n第二行');
+    expect(imported.cards[1]).toMatchObject({
+      attachment: '圖3-2',
+      identifier: '331201',
+    });
+    expect(imported.reportMd).toContain('331201：圖3-2（缺少可匯入資產）');
   });
 });
 
