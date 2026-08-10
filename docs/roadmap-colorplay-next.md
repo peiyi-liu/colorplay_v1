@@ -41,10 +41,10 @@ batches. Each batch must pass its own Staging gate before Production promotion.
 | ----- | --------------------------------------------- | --------------------------------------------------- |
 | 0     | Environment and release foundation            | Spec approved; implementation plan awaiting review  |
 | 1     | Admin identity and security core              | Spec and implementation plan approved; implementation in progress on `phase1/admin-security-impl` (not yet merged to this branch). See `docs/superpowers/plans/2026-08-07-phase-1-admin-identity-security.md` on that branch. Confirmed 2026-08-09 |
-| 2     | Content SSOT and version publishing           | Decisions captured; spec not started                |
-| 3     | Learning progression and assessment authority | Decisions captured; spec not started                |
-| 4     | Learning Hall and chapter experience          | Visual/product decisions captured; spec not started |
-| 5     | Live and teacher reporting                    | Product rules captured; spec not started. Teacher-side and Live visual work (JRPG restyle) borrowed forward into the 2026-08-10 Phase 2/3/4 chapter-3 slice spec -- see docs/superpowers/specs/2026-08-10-phase-2-3-4-chapter-three-slice-design.md section 4.3. Non-visual Phase 5 scope (teacher reporting product rules beyond that spec) remains not started. |
+| 2     | Content SSOT and version publishing           | Decisions captured; a chapter-3-scoped subset drafted 2026-08-10 as Phase 2A (not the full Phase 2 spec) -- see docs/superpowers/specs/2026-08-10-phase-2a-chapter-three-content-import-design.md. Draft only, not yet owner-approved. |
+| 3     | Learning progression and assessment authority | Decisions captured; a chapter-3-scoped subset drafted 2026-08-10 as Phase 3A (not the full Phase 3 spec) -- see docs/superpowers/specs/2026-08-10-phase-3a-chapter-three-progression-design.md. Draft only, not yet owner-approved. |
+| 4     | Learning Hall and chapter experience          | Visual/product decisions captured; a chapter-detail-page-scoped subset drafted 2026-08-10 as Phase 4A (not the full Phase 4 spec) -- see docs/superpowers/specs/2026-08-10-phase-4a-student-chapter-detail-ui-design.md. Draft only, not yet owner-approved. |
+| 5     | Live and teacher reporting                    | Product rules captured; split 2026-08-10 into a visual-only draft (Phase 5V, docs/superpowers/specs/2026-08-10-phase-5v-teacher-visual-restyle-design.md) and a functional question list not yet ready for spec status (Phase 5F, docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-questions.md, needs its own brainstorming pass before it can be approved). Neither is implemented; both are drafts awaiting owner review. |
 | 6     | Full-site JRPG visual unification             | Direction captured; spec not started                |
 
 The required workflow for every phase is:
