@@ -37,15 +37,15 @@ before the implementation plan is approved.
 The owner approved seven independent design, plan, implementation, and release
 batches. Each batch must pass its own Staging gate before Production promotion.
 
-| Phase | Scope                                         | Status                                              |
-| ----- | --------------------------------------------- | --------------------------------------------------- |
-| 0     | Environment and release foundation            | Spec approved; implementation plan awaiting review  |
-| 1     | Admin identity and security core              | Spec and implementation plan approved; implementation in progress on `phase1/admin-security-impl` (not yet merged to this branch). See `docs/superpowers/plans/2026-08-07-phase-1-admin-identity-security.md` on that branch. Confirmed 2026-08-09 |
-| 2     | Content SSOT and version publishing           | Decisions captured; a chapter-3-scoped subset drafted 2026-08-10 as Phase 2A (not the full Phase 2 spec) -- see docs/superpowers/specs/2026-08-10-phase-2a-chapter-three-content-import-design.md. Draft only, not yet owner-approved. |
-| 3     | Learning progression and assessment authority | Decisions captured; a chapter-3-scoped subset drafted 2026-08-10 as Phase 3A (not the full Phase 3 spec) -- see docs/superpowers/specs/2026-08-10-phase-3a-chapter-three-progression-design.md. Draft only, not yet owner-approved. |
-| 4     | Learning Hall and chapter experience          | Visual/product decisions captured; a chapter-detail-page-scoped subset drafted 2026-08-10 as Phase 4A (not the full Phase 4 spec) -- see docs/superpowers/specs/2026-08-10-phase-4a-student-chapter-detail-ui-design.md. Draft only, not yet owner-approved. |
-| 5     | Live and teacher reporting                    | Product rules captured; split 2026-08-10 into a visual-only draft (Phase 5V, docs/superpowers/specs/2026-08-10-phase-5v-teacher-visual-restyle-design.md) and a functional draft (Phase 5F, docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-design.md, all 7 blocking questions resolved by owner same day). Neither is implemented; both are drafts awaiting Codex review. Teacher report calculation methodology and privacy-preserving export remain untouched by either draft. |
-| 6     | Full-site JRPG visual unification             | Direction captured; spec not started                |
+| Phase | Scope                                         | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ----- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0     | Environment and release foundation            | Spec approved; implementation plan awaiting review                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 1     | Admin identity and security core              | Spec and implementation plan approved; implementation in progress on `phase1/admin-security-impl` (not yet merged to this branch). See `docs/superpowers/plans/2026-08-07-phase-1-admin-identity-security.md` on that branch. Confirmed 2026-08-09                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 2     | Content SSOT and version publishing           | Decisions captured; a chapter-3-scoped subset (Phase 2A, not the full Phase 2 spec) -- see docs/superpowers/specs/2026-08-10-phase-2a-chapter-three-content-import-design.md. Status: owner approved 2026-08-10 (scope boundary only) / Codex design review completed / implementation planning not yet authorized. Completing this slice does not mean the full Phase is complete.                                                                                                                                                                                                                                                                                             |
+| 3     | Learning progression and assessment authority | Decisions captured; a chapter-3-scoped subset (Phase 3A, not the full Phase 3 spec) -- see docs/superpowers/specs/2026-08-10-phase-3a-chapter-three-progression-design.md. Status: owner approved 2026-08-10 (scope boundary only) / Codex design review completed / implementation planning not yet authorized. Completing this slice does not mean the full Phase is complete.                                                                                                                                                                                                                                                                                                |
+| 4     | Learning Hall and chapter experience          | Visual/product decisions captured; a chapter-detail-page-scoped subset (Phase 4A, not the full Phase 4 spec) -- see docs/superpowers/specs/2026-08-10-phase-4a-student-chapter-detail-ui-design.md. Status: owner approved 2026-08-10 / Codex design review completed / implementation planning authorized -- see docs/superpowers/plans/2026-08-10-phase-4a-student-chapter-detail-ui.md. Completing this slice does not mean the full Phase is complete.                                                                                                                                                                                                                      |
+| 5     | Live and teacher reporting                    | Product rules captured; split into a UI/UX-only draft (Phase 5V, docs/superpowers/specs/2026-08-10-phase-5v-teacher-ui-ux-restyle-design.md) and a functional draft (Phase 5F, docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-design.md, further split into 5F-U1/5F-F2 for sequencing -- see \"Chapter 3 slice program sequencing\" below). Status: owner approved 2026-08-10 (scope boundary only) / Codex design review completed / implementation planning not yet authorized. Completing either slice does not mean the full Phase is complete. Teacher report calculation methodology and privacy-preserving export remain untouched by either draft. |
+| 6     | Full-site JRPG visual unification             | Direction captured; spec not started                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
 The required workflow for every phase is:
 
@@ -54,6 +54,35 @@ brainstorm → approved design → committed spec → owner review
 → implementation plan → isolated implementation → Staging gate
 → explicit Production authorization
 ```
+
+## Chapter 3 slice program sequencing (owner 2026-08-10)
+
+The five chapter-3 draft specs (2A, 3A, 4A, 5V, 5F -- see
+`docs/superpowers/specs/2026-08-10-chapter-three-umbrella-brief.md`) are
+approved for their scope boundaries, but only Phase 4A is authorized for
+implementation planning. Execution order is UI-first:
+
+```text
+1. 4A-UI
+2. 5V-UI
+3. 5F-U1
+4. 2A
+5. 3A
+6. 5F-F2
+7. Integration
+```
+
+`5F-U1` is the visual/UI subset of Phase 5F (LivePresenter visuals, teacher
+stats block layout/loading/empty/error/history states; test/dev-only
+fixtures; no new API/RPC/RLS; no sample data in production runtime).
+`5F-F2` is the functional subset (stats RPC/RLS, server-authoritative
+aggregation, real data integration), executed after 2A/3A. `5V-UI` requires
+an inventory of file overlap with the Phase 1 AppShell/HUD/shared CSS work
+before it starts. `4A`, `5V-UI`, and `5F-U1` may be marked "UI surface
+complete" but never "feature complete" or "Phase complete" -- 2A, 3A, and
+5F-F2 are what actually wire up real data and product rules. This is a
+sequencing decision only; it does not add or change any product rule beyond
+what each spec already defines.
 
 ## Environment decision
 
@@ -170,7 +199,7 @@ These facts are observations, not authorization to mutate hosted resources.
   certificate, superseding the "does not resolve yet" observation above.
   Evidence: owner added Cloudflare `A staging 76.76.21.21` (DNS only, no
   proxy); this session ran `vercel domains add staging.colorplayapp.com
-  colorplay-staging-web` then `vercel alias set`; confirmed via
+colorplay-staging-web` then `vercel alias set`; confirmed via
   `curl -sI https://staging.colorplayapp.com/` returning `200`.
 - This is a **manual alias of whatever deployment already existed** in
   `colorplay-staging-web`, not a build produced by the PR-to-protected-
