@@ -10,7 +10,7 @@
 > - Phase 3A：`docs/superpowers/specs/2026-08-10-phase-3a-chapter-three-progression-design.md`
 > - Phase 4A：`docs/superpowers/specs/2026-08-10-phase-4a-student-chapter-detail-ui-design.md`
 > - Phase 5V：`docs/superpowers/specs/2026-08-10-phase-5v-teacher-visual-restyle-design.md`
-> - Phase 5F：`docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-questions.md`（尚非可核准 spec，見該檔說明）
+> - Phase 5F：`docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-design.md`（2026-08-10 owner 已裁定全部待決問題，現為 draft spec）
 
 ## 1. 為什麼用第三章作為共同垂直切片
 
@@ -26,7 +26,7 @@
 | 3A | 第三章的學習歷程判定：完成條件、循序解鎖、RLS | 教師存取例外、Admin 撤銷例外、完整評量/補救/經濟規則 |
 | 4A | 學生端章節體驗畫面（chapter-detail-page）的 view-model 與各狀態 | 與 2A/3A 的真實資料串接（可用 fixture 開發，不得宣稱功能完成） |
 | 5V | 教師端既有頁面的純視覺調整 | 任何 API/RPC/狀態機/計分/finalize/主持流程變更、新統計資料、LivePresenter 功能改造 |
-| 5F | LivePresenter 狀態機/按鍵/主持流程/RPC、教師可見的 Live/自主統計 | 目前只是問題清單＋owner decision log，不是可執行 spec |
+| 5F | LivePresenter 視覺/呈現要求、教師可見的 Live/自主統計計分規則 | 具體的按鍵/流程/RPC 變更（owner 本輪未提出項目）、部分給分機制 |
 
 ## 3. 跨 spec Dependency DAG
 
@@ -38,7 +38,7 @@
 5V（教師純視覺）── 獨立，不依賴 2A/3A/4A
 
 5F（教師/Live功能，含 LivePresenter）── 獨立於 2A/3A/4A；
-    與 5V 共用同一批路由，但 5F 尚未進入 spec 狀態，需先完成獨立 brainstorming
+    與 5V 共用同一批路由，2026-08-10 owner 已裁定全部待決問題，現為 draft spec
 ```
 
 - 2A 與 3A 互相獨立，皆可平行開始。
@@ -54,7 +54,7 @@
 | 3A | 既有 migration（`chapter_sequence_access` 等）、staging 資料庫 | 正式 spec 文件、RLS 測試套件、第三章解鎖流程的 hosted 驗收證據 |
 | 4A | 2A/3A 的輸出契約（或開發期間的 test fixture）、4.1 節視覺方向 | `chapter-detail-page` 的 typed view-model 定義、各狀態的 UI 實作 |
 | 5V | 既有教師頁面程式碼、08-02 賢者工坊設計語彙 | 逐路由的視覺變更（不改行為） |
-| 5F | owner 對其問題清單的逐項裁定 | （本輪不產出，需先完成獨立 brainstorming） |
+| 5F | owner 對其問題清單的逐項裁定（已完成） | LivePresenter 視覺/呈現要求文件化、教師端 Live/自主正確率計分規則文件化 |
 
 ## 5. 各自獨立的 Phase Gate
 
@@ -69,7 +69,7 @@
 
 **明確聲明：此 integration acceptance 是額外的最後一道確認，不取代、不簡化、不能替代任一份 spec 自己的 phase gate。** 若 integration acceptance 發現問題，回歸該問題所屬的 spec 個別修正，不在 umbrella 層級直接修改行為。
 
-5F 因尚未成案，不納入本輪 integration acceptance 範圍。
+5F 現已是 draft spec，但其驗收（LivePresenter 實際改版、教師新統計資料上線）仍是獨立工作項目，本輪 umbrella 的 integration acceptance 範圍維持只涵蓋 2A/3A/4A/5V；5F 完整實作後另外驗收，不追加進本次第三章 cross-phase acceptance。
 
 ## 7. 本輪執行限制
 

@@ -2,7 +2,7 @@
 
 - 日期：2026-08-10
 - 狀態：Draft，待 owner 確認第 5 節後可核准
-- 對應：`docs/roadmap-colorplay-next.md` Phase 5（Live 與教師報表）的視覺子集，**不是 Phase 5 的完整 spec**。功能性工作（含 LivePresenter）在 `2026-08-10-phase-5f-teacher-live-functional-questions.md`。
+- 對應：`docs/roadmap-colorplay-next.md` Phase 5（Live 與教師報表）的視覺子集，**不是 Phase 5 的完整 spec**。功能性工作（含 LivePresenter）在 `2026-08-10-phase-5f-teacher-live-functional-design.md`。
 - Umbrella：`docs/superpowers/specs/2026-08-10-chapter-three-umbrella-brief.md`
 
 ## 0. 明確聲明
