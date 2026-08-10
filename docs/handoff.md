@@ -118,3 +118,15 @@
 - 下一步：本更正 commit 是 base（`b4079bd`）之後的**第七個** commit（更正前是六個，加入本 correction 後變成七個——刻意在此明確區分，避免與更正前的「6 vs 7」計數歧義混淆）。更正完成後，依 owner 裁定執行本機 `--no-ff` 整合進 `feature/v2-major-update`（見下一筆條目）。
 - Blocker／待決策：無。
 - 相關檔案／commit：`docs/handoff.md`（本次 correction commit 待建立，僅此一檔）。
+
+## 2026-08-10 15:15 [Claude Code] — Phase 5V teacher UI/UX restyle 整合進 feature/v2-major-update
+
+- 做了什麼：Owner 裁定先以 append-only 更正上一筆 handoff 條目的兩項事實錯誤（見 `phase5v/teacher-ui-ux-restyle` 分支的 correction commit），再整合。以 `--no-ff` merge 把 Phase 5V（`phase5v/teacher-ui-ux-restyle` branch tip，correction commit `654d185`）整合進 `feature/v2-major-update`。Merge commit `3230e16118e479c793de806dc49f2388e335d62e`（parent 1 `b4079bd65287269668387c137651a0b4258154e0` 即整合前 HEAD、parent 2 `654d185ea8605e600d552b45d0803683bcb8b434`）。
+- **Implementation 五個 task commits**：`e246c4a`（Task 1：HUD `data-variant`＋MENU focus trap＋Dashboard Live 捷徑）、`f27634f`（Task 2：教學分析／班級列表視覺）、`e7d9feb`（Task 3：班級詳情加入碼徽章／學生進度頁）、`a954342`（Task 4：Live 建立／報表，新增 `teacher-live-page.test.tsx`）、`37f066b`（Task 5：7-route＋HUD Chromium harness）。
+- **Correction handoff commit**：`654d185`（更正「7 commits」應為「更正前 6 個」的計數錯誤、更正「只有 2 個共用檔案」應為 3 個 Phase 1 overlap 檔案、補充 `TeacherLivePage` DI seam 產品行為零變更的核對證據）。
+- Merge 帶入的 17 個 changed paths 與整合前 candidate 完全一致（只有 `docs/handoff.md` 因兩筆 handoff commit 疊加行數變多，其餘 16 個檔案路徑集合逐一比對相同）；未納入 `docs/content/sheet-db-verify-report.md`，未納入 `artifacts/design-audit/**`／`live/`／`ref_image/`／`POSTGREST_READY` 暫存檔／截圖檔等既有 dirty／untracked 邊界；merge 前後三項 dirty-state SHA-256 fingerprints（`git status --porcelain=v1 -z`、`git diff -- docs/content/sheet-db-verify-report.md`、`git ls-files --others --exclude-standard -z`）完全一致。
+- Task-level checks（typecheck／eslint／8 個受影響測試檔 vitest／prettier／`git diff --check`）與 Chromium harness（`localhost:4177`，10/10 測試通過）沿用 Phase 5V branch 各 task commit 與單一 reviewer sub-agent 當時已跑過的結果，本輪（correction 與 merge）**未重跑**任何 reviewer、typecheck、Vitest、Playwright、ESLint、build、acceptance 或 Supabase／Docker／DB 操作。
+- **明確邊界聲明**：本次整合只能宣稱「Teacher UI/UX Restyle **task-level UI surface complete**」——**不是** Phase 5 完成、**不是** 5F 完成、**不是** Production-ready。Production network parity 仍明確 **deferred**，Phase 5V Slice Gate **未通過**、本輪未執行、未宣稱通過。既有主 checkout 的 dirty／untracked paths（`docs/content/sheet-db-verify-report.md`、`artifacts/design-audit/**`、`live/**`、`ref_image/**`、截圖檔、`POSTGREST_READY` 暫存檔）維持原樣，未納入本次整合。
+- 下一步：下一個規劃階段是 **Phase 5F-U1 的 implementation planning**——是規劃，不是直接實作；本輪未開始。
+- Blocker／待決策：無。
+- 相關檔案／commit：`feature/v2-major-update` merge commit `3230e16118e479c793de806dc49f2388e335d62e`（第二 parent `654d185ea8605e600d552b45d0803683bcb8b434`）。
