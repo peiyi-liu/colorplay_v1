@@ -5,10 +5,10 @@ export default defineConfig({
   testMatch: /chapter-detail-page\.harness\.spec\.ts$/u,
   workers: 1,
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  use: { baseURL: 'http://localhost:5173' },
+  use: { baseURL: 'http://localhost:4176' },
   webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:5173/dev-harness/chapter-detail.html?scenario=in-progress',
+    command: 'npx vite --host localhost --port 4176 --strictPort',
+    url: 'http://localhost:4176/dev-harness/chapter-detail.html?scenario=in-progress',
     reuseExistingServer: false,
     timeout: 60_000,
   },
