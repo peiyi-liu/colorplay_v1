@@ -62,3 +62,10 @@
 - 下一步：Phase 4A worktree（`phase4a/chapter-detail-ui`）維持未 push、未 merge。下一個核准階段仍是 **5V-UI**，本輪未開始。
 - Blocker／待決策：無。
 - 相關檔案／commit：`docs/superpowers/plans/2026-08-10-phase-4a-student-chapter-detail-ui.md`、`docs/handoff.md`、`playwright.chapter-detail-harness.config.ts`、`tsconfig.app.json`、`tsconfig.node.json`（correction commit 待建立）。
+
+## 2026-08-10 13:26 [Claude Code] — Phase 4A UI surface 整合進 feature/v2-major-update
+
+- 做了什麼：Owner 核准後，用 `--no-ff` merge 把 Phase 4A（`phase4a/chapter-detail-ui` branch tip `c91defb`）整合進 `feature/v2-major-update`。Merge commit `3644bf2`（parent 1 `10806e1` 即整合前 HEAD、parent 2 `c91defb`），只帶入 preflight 確認過的 18 個 Phase 4A 路徑，主 checkout 既有的 dirty/untracked 邊界（`docs/content/sheet-db-verify-report.md`、`artifacts/design-audit/**`、`live/**`、`ref_image/**`、截圖檔、POSTGREST_READY 暫存檔）完整保留，未納入這次整合，merge 前後三項 dirty-state SHA-256 指紋完全一致。Task-level checks（typecheck／eslint／90 個 vitest／prettier／`git diff --check`）與 4 個 viewport＋鍵盤 scoped Chromium 驗證沿用 Phase 4A branch checkpoint（各 task commit 與 closeout correction 當時已跑過），本輪未重跑。
+- 下一步：Phase 4A 是 UI surface 完成，**不是**完整 Phase 4 gate——章節體驗真實資料整合仍依賴 Phase 2A（內容匯入）與 Phase 3A（進度判定 RPC hosted 驗收）。下一步是撰寫 **Phase 5V**（教師端 UI/UX Restyle）的 implementation plan，不是直接寫產品程式碼；本輪未開始。
+- Blocker／待決策：無。
+- 相關檔案／commit：`feature/v2-major-update` merge commit `3644bf296398190e870aac8daf7dc94a4a604786`（第二 parent `c91defb678dec35bfcd24688eaea41fb315bdc55`）。
