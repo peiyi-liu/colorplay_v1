@@ -88,7 +88,7 @@ Owner 提供 Codédex（程式學習平台）截圖作為暗色系參考：深�
    - Live 報表（`/teacher/live/:sessionId/report`）的名次獎牌符號
    - HUD 教師導覽列（Link→NavLink、active 態、面板恆掛 DOM、click-outside 關閉、焦點管理）
 2. **教師端 Live 功能改採完整 JRPG 像素風**（不是賢者工坊低濃度處理）——`/teacher/live`、`/teacher/live/:sessionId`（含投影模式）、`/teacher/live/:sessionId/report`。理由：Live 是教師與學生共享的即時體驗，學生端已是完整像素風格的「公會團體戰」語彙，教師端維持一致濃度才不會視覺斷裂。
-   - **正式覆蓋 08-02 的 LivePresenter 零接觸規則**：`docs/superpowers/plans/2026-08-02-teacher-workspace.md` 原本明訂 `src/features/live/components/live-presenter.tsx`（教師 Live 投影主持台）零接觸、不改任何一行，理由是既交付投影元件、誤動風險高。Owner 2026-08-10 明確裁定：**投影畫面的視覺樣式可以改，但比照本文件所有其他 JRPG 改版項目同一條「純表現層、行為零變更」原則**——狀態機、RPC、按鍵觸發的動作、主持流程順序一律不動；只有外觀（顏色、邊框、字體、版面語彙）改成 JRPG 像素風。改版時涉及按鍵/流程配合視覺調整的部分，實作階段會搭配前端 UI 相關 skills 協助完成，但仍受「行為零變更」約束。
+   - **正式覆蓋 08-02 的 LivePresenter 零接觸規則**：`docs/superpowers/plans/2026-08-02-teacher-workspace.md` 原本明訂 `src/features/live/components/live-presenter.tsx`（教師 Live 投影主持台）零接觸、不改任何一行，理由是既交付投影元件、誤動風險高。Owner 2026-08-10 明確裁定推翻此限制：**投影畫面的視覺樣式可以改，狀態機／RPC／按鍵行為／主持流程順序也可以一併優化**——這一項不是純表現層變更，是視覺＋功能一起重新設計。實作時會搭配前端 UI 相關 skills 處理改版後按鍵/流程配合調整的部分。精確的功能優化範圍（哪些流程步驟要調整、RPC 是否新增/合併）於實作 plan 階段另外定義，本 spec 只確認「不受零接觸限制」這個授權範圍。
    - **測試風險**：`tests/e2e/assignments-live.spec.ts`／`live-advanced.spec.ts` 先前已因 Live 互動模型改版部分失效（詳見 `docs/superpowers/plans/2026-08-02-red-spec-sizing.md` 的斷差盤點），LivePresenter 這次真的被觸碰，紅測試範圍大機率會再擴大，需要在實作 plan 裡一併估工。
 3. **Dashboard 功能捷徑補齊**：目前「功能捷徑」只連到教學分析／班級管理兩處，遺漏 Live。導覽資訊架構需要跟著新增/確認的教師功能同步更新。
 4. **學生進度頁（`/teacher/classes/:classroomId/members/:memberRef`）新增**：
@@ -100,6 +100,9 @@ Owner 提供 Codédex（程式學習平台）截圖作為暗色系參考：深�
 
 - **教師評分／評語功能**：owner 提出但決定本次不設計細節,記錄為未來項目。資料模型、可見範圍、與既有客觀指標（XP/精熟度/排名）的關係，留待該功能正式立案時再討論。
 - **視覺 token 細節**（確切顏色、間距、字重）：本 spec 只定方向（4.1 的插畫/扁平卡混合策略），實作階段會搭配前端 UI 相關 skills（如 frontend-design、ui-ux-pro-max）產出實際視覺稿。
+- **Phase 6（全站 JRPG 視覺統一）的邊角頁面**：`/forgot-password`、`/unauthorized` 這類次要/例外狀態頁面的最終視覺統一掃尾，不在本次範圍，維持 roadmap 原訂的 Phase 6 範圍不變。
+- **前測／後測題目**：詳見 2.1／2.3——新內容類型，本次匯入 pipeline 不處理。
+- **Admin 後台內容管理介面**：詳見 2.3——owner 裁定改放 Admin 後台，2026-08-10 確認本次不一併設計，當未來獨立項目。
 
 ## 5. 跨 Phase 依賴與驗收
 
