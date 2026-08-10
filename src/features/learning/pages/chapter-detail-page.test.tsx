@@ -8,11 +8,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import {
-  createMemoryRouter,
-  MemoryRouter,
-  RouterProvider,
-} from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { StudentChapterMapEntry } from '../api/chapter-map';
@@ -22,11 +18,11 @@ import {
 } from '../api/learning-repository';
 import { useStudentChapterMap } from '../hooks/use-chapter-map';
 import {
-  isCardCompleted,
+  ChapterDetailPage,
   percentText,
   reviewText,
-  ChapterDetailPage,
 } from './chapter-detail-page';
+import { chapterReviewSectionsFixture } from './chapter-detail-page.test-fixtures';
 
 vi.mock('../api/chapters', async (importOriginal) => {
   const original = await importOriginal<typeof import('../api/chapters')>();
@@ -205,72 +201,57 @@ describe('ChapterDetailPage', () => {
     mockedChapterMap.mockReturnValue(mapResult());
   });
 
-  it('redirects a locked stale deep link before reading review cards', async () => {
-    mockedChapterMap.mockReturnValue(mapResult(chapterMapEntry('locked')));
+  it('renders the locked state in place instead of navigating away, showing server unmet conditions', async () => {
+    mockedChapterMap.mockReturnValue(
+      mapResult({
+        ...chapterMapEntry('locked'),
+        blockers: [
+          {
+            chapterId: 'c2',
+            chapterTitle: '色彩表示',
+            code: 'PREREQUISITE_MASTERY',
+            current: 45,
+            required: 80,
+          },
+        ],
+      }),
+    );
     const repository = repositoryWith();
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
-    const router = createMemoryRouter(
-      [
-        {
-          element: <ChapterDetailPage repository={repository} />,
-          path: '/app/chapters/:chapterId',
-        },
-        { element: <h1>學習地圖</h1>, path: '/app' },
-      ],
-      {
-        initialEntries: ['/app/chapters/21000000-0000-0000-0000-000000000003'],
-      },
-    );
-    render(
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>,
-    );
+    renderPage(repository);
 
-    await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/app');
-    });
-    expect(router.state.location.search).toBe(
-      '?chapter=21000000-0000-0000-0000-000000000003&reason=locked',
-    );
-    expect(router.state.historyAction).toBe('REPLACE');
+    expect(
+      await screen.findByRole('heading', { name: '色彩體系與應用' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/色彩表示/u)).toBeInTheDocument();
+    expect(screen.getByText(/80/u)).toBeInTheDocument();
     expect(repository.listChapterReview).not.toHaveBeenCalled();
   });
 
-  it('redirects when the guarded review read detects a stale lock', async () => {
+  it('renders the locked state and reconciles with the server when the guarded review read detects a stale lock', async () => {
+    const refetch = vi.fn();
+    mockedChapterMap.mockReturnValue({
+      data: {
+        chapters: [chapterMapEntry()],
+        mode: 'sequential',
+        rulesVersion: '2026-08-sequence-1',
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch,
+    } as never);
     const repository = repositoryWith({
       listChapterReview: vi
         .fn()
         .mockRejectedValue(new LearningError('CHAPTER_LOCKED')),
     });
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
-    const router = createMemoryRouter(
-      [
-        {
-          element: <ChapterDetailPage repository={repository} />,
-          path: '/app/chapters/:chapterId',
-        },
-        { element: <h1>學習地圖</h1>, path: '/app' },
-      ],
-      {
-        initialEntries: ['/app/chapters/21000000-0000-0000-0000-000000000003'],
-      },
-    );
-    render(
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>,
-    );
+    renderPage(repository);
 
-    await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/app');
-    });
-    expect(router.state.location.search).toContain('reason=locked');
+    await screen.findByRole('heading', { name: '色彩體系與應用' });
     expect(screen.queryByText('第一行')).toBeNull();
+    await waitFor(() => {
+      expect(refetch).toHaveBeenCalled();
+    });
   });
 
   it('fails closed and retries only the map when access is unavailable', async () => {
@@ -314,7 +295,9 @@ describe('ChapterDetailPage', () => {
     expect(chapterProgress).toHaveTextContent('學習中');
     expect(chapterProgress).toHaveTextContent('複習完成 1 / 3');
     expect(chapterProgress).toHaveTextContent('精熟程度');
-    expect(chapterProgress).toHaveTextContent('59.5%');
+    expect(chapterProgress).toHaveTextContent('目前記錄精熟度 59.5%');
+    expect(chapterProgress).toHaveTextContent('規則版本 2026-07-progress-1');
+    expect(chapterProgress).toHaveTextContent('跨版本比較尚待資料更新');
     const masteryRing = within(chapterProgress).getByRole('progressbar', {
       name: '精熟程度',
     });
@@ -398,22 +381,43 @@ describe('ChapterDetailPage', () => {
     ).not.toBeNull();
   });
 
-  it('derives completion with the recompletion rule', () => {
-    const completions = [{ cardVersion: 1, reviewCardId: 'card-a' }] as const;
-    expect(
-      isCardCompleted(
-        { cardId: 'card-a', requiresRecompletion: true, version: 2 },
-        completions,
-      ),
-    ).toBe(false);
-    expect(
-      isCardCompleted(
-        { cardId: 'card-a', requiresRecompletion: false, version: 2 },
-        completions,
-      ),
-    ).toBe(true);
+  it('formats missing review/mastery values without fabricating a percentage', () => {
     expect(percentText(null)).toBe('—');
     expect(reviewText(0, null)).toBe('—');
+  });
+
+  it('renders the content-preparing state in place when content is not yet available', async () => {
+    mockedChapterMap.mockReturnValue(
+      mapResult(chapterMapEntry('content_unavailable')),
+    );
+    renderPage(repositoryWith());
+    expect(
+      await screen.findByText('這個章節的內容還在準備中，敬請期待。'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the content-readiness-error state when the chapter has no cards despite being unlocked', async () => {
+    const emptySections = chapterReviewSectionsFixture([
+      {
+        subtopics: [
+          {
+            cards: [],
+            sortOrder: 1,
+            stableCode: 's',
+            subtopicId: 'sub-1',
+            title: '3-1',
+          },
+        ],
+      },
+    ]);
+    renderPage(
+      repositoryWith({
+        listChapterReview: vi.fn().mockResolvedValue(emptySections),
+      }),
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '沒有可用的複習卡',
+    );
   });
 
   it('單一 section 樓層數超過單頁容量時分頁,跨頁樓層仍可透過下一頁抵達', async () => {
@@ -421,8 +425,24 @@ describe('ChapterDetailPage', () => {
       sectionId: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
       sortOrder: 1,
       stableCode: 'sheet-3-1',
+      // 至少一張卡才不會觸發 content-readiness-error(章節整體無卡片時的
+      // 頁內狀態);其餘樓層維持空卡陣列,不影響本測試驗證的分頁行為。
       subtopics: [1, 2, 3, 4, 5, 6].map((n) => ({
-        cards: [],
+        cards:
+          n === 1
+            ? [
+                {
+                  cardId: '25500000-0000-0000-0000-000000000099',
+                  content: '佔位內容',
+                  groupLabel: '',
+                  media: [],
+                  requiresRecompletion: false,
+                  sortOrder: 1,
+                  title: '佔位卡片',
+                  version: 1,
+                },
+              ]
+            : [],
         sortOrder: n,
         stableCode: `sheet-3-1-${String(n)}`,
         subtopicId: `f929cde5-c294-46ce-5faf-c866b3cb${String(n).padStart(4, '0')}`,

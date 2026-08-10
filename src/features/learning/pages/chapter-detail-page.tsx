@@ -1,15 +1,9 @@
-import { useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 
-import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { GamePager, useStageWide } from '../../../components/ui/game-pager';
 import { ProgressBar } from '../../../components/ui/progress-bar';
-import type {
-  LearningProgressRow,
-  LearningRepository,
-  ReviewCardView,
-  ReviewCompletionRow,
-} from '../api/learning-repository';
+import type { LearningRepository } from '../api/learning-repository';
 import { useStudentChapterMap } from '../hooks/use-chapter-map';
 import {
   useChapterReview,
@@ -18,6 +12,21 @@ import {
   useReviewProgressRows,
 } from '../hooks/use-learning';
 import { statusLabels, type ChapterStatus } from '../lib/progress-status';
+import { deriveChapterDetailViewModel } from './chapter-detail-adapter';
+import {
+  chapterMasteryRingValue,
+  ContentPreparingState,
+  ContentReadinessErrorState,
+  ErrorState,
+  LoadingState,
+  LockedState,
+  MasteryDisplayView,
+} from './chapter-detail-states';
+import type {
+  ChapterDetailCardView,
+  ChapterDetailRetryTarget,
+  ChapterDetailViewModel,
+} from './chapter-detail-view-model';
 
 export { statusLabels };
 
@@ -77,16 +86,6 @@ function MasteryRing({ value }: Readonly<{ value: number | null }>) {
   );
 }
 
-export const isCardCompleted = (
-  card: Pick<ReviewCardView, 'cardId' | 'requiresRecompletion' | 'version'>,
-  completions: readonly ReviewCompletionRow[],
-): boolean =>
-  completions.some(
-    (row) =>
-      row.reviewCardId === card.cardId &&
-      (row.cardVersion === card.version || !card.requiresRecompletion),
-  );
-
 function CardMedia({
   altText,
   assetPath,
@@ -124,7 +123,7 @@ function ReviewCardItem({
   onComplete,
   pending,
 }: Readonly<{
-  card: ReviewCardView;
+  card: ChapterDetailCardView;
   completed: boolean;
   index: number;
   onComplete: () => void;
@@ -179,14 +178,6 @@ function ReviewCardItem({
   );
 }
 
-const subtopicRow = (
-  rows: readonly LearningProgressRow[] | undefined,
-  subtopicId: string,
-): LearningProgressRow | undefined =>
-  rows?.find(
-    (row) => row.scope === 'subtopic' && row.subtopicId === subtopicId,
-  );
-
 // 火把數顯示進度(spec §5 地城樓層):最多畫 10 支,亮的支數依完成比例四捨五入。
 export const torchStates = (
   completed: number,
@@ -198,101 +189,62 @@ export const torchStates = (
   return Array.from({ length: shown }, (_, index) => index < lit);
 };
 
-export function ChapterDetailPage({
-  chapterId: suppliedChapterId,
-  repository,
+export function ChapterDetailPageView({
+  completeError,
+  completePending,
+  onCompleteCard,
+  onRetry,
+  viewModel,
 }: Readonly<{
-  chapterId?: string;
-  repository?: LearningRepository;
+  completeError: string | undefined;
+  completePending: boolean;
+  onCompleteCard: (
+    input: Readonly<{ requestId: string; reviewCardId: string }>,
+  ) => void;
+  onRetry: (target: ChapterDetailRetryTarget) => void;
+  viewModel: ChapterDetailViewModel;
 }>) {
-  const params = useParams();
-  const chapterId = suppliedChapterId ?? params.chapterId ?? '';
-  const chapterMap = useStudentChapterMap();
-  const chapter = chapterMap.data?.chapters.find(
-    (entry) => entry.chapterId === chapterId,
-  );
-  const accessConfirmed =
-    chapter?.accessState === 'available' ||
-    chapter?.accessState === 'completed';
-  const review = useChapterReview(chapterId, repository, accessConfirmed);
-  const progress = useLearningProgress(chapterId, repository);
-  const completions = useReviewProgressRows(repository);
-  const complete = useCompleteReviewCard(chapterId, repository);
-  const [completeError, setCompleteError] = useState<string>();
-  const [accessRevoked, setAccessRevoked] = useState(false);
   const stageWide = useStageWide();
 
-  const lockedMapHref = `/app?chapter=${encodeURIComponent(chapterId)}&reason=locked`;
-
-  if (chapterMap.isPending) return <RouteLoading withinMain />;
-  if (chapterMap.isError) {
+  if (viewModel.state === 'loading') return <LoadingState />;
+  if (viewModel.state === 'locked') {
     return (
-      <section className="route-panel">
-        <h1>章節複習</h1>
-        <p role="alert">章節狀態暫時無法確認</p>
-        <button
-          className="primary-action"
-          onClick={() => {
-            void chapterMap.refetch();
-          }}
-          type="button"
-        >
-          重試
-        </button>
-      </section>
+      <LockedState
+        chapterTitle={viewModel.chapterTitle}
+        unmetConditions={viewModel.unmetConditions}
+      />
+    );
+  }
+  if (viewModel.state === 'content-preparing') {
+    return <ContentPreparingState chapterTitle={viewModel.chapterTitle} />;
+  }
+  if (viewModel.state === 'content-readiness-error') {
+    return (
+      <ContentReadinessErrorState
+        chapterTitle={viewModel.chapterTitle}
+        reason={viewModel.reason}
+      />
+    );
+  }
+  if (viewModel.state === 'error') {
+    const target = viewModel.retryTarget;
+    return (
+      <ErrorState
+        errorCode={viewModel.errorCode}
+        onRetry={
+          target
+            ? () => {
+                onRetry(target);
+              }
+            : undefined
+        }
+        retryable={viewModel.retryable}
+      />
     );
   }
 
-  if (!chapter) {
-    return (
-      <section className="route-panel">
-        <h1>章節複習</h1>
-        <p role="alert">找不到這個章節，或內容尚未發布。</p>
-        <Link className="primary-action" to="/app">
-          回學習地圖
-        </Link>
-      </section>
-    );
-  }
-
-  if (!accessConfirmed || accessRevoked) {
-    return <Navigate replace to={lockedMapHref} />;
-  }
-
-  if (review.isError && review.error.code === 'CHAPTER_LOCKED') {
-    return <Navigate replace to={lockedMapHref} />;
-  }
-
-  if (review.isPending || progress.isPending || completions.isPending) {
-    return <RouteLoading withinMain />;
-  }
-  if (review.isError || progress.isError || completions.isError) {
-    return (
-      <section className="route-panel">
-        <h1>章節複習</h1>
-        <p role="alert">章節狀態暫時無法確認</p>
-        <button
-          className="primary-action"
-          onClick={() => {
-            void review.refetch();
-            void progress.refetch();
-          }}
-          type="button"
-        >
-          重試
-        </button>
-      </section>
-    );
-  }
-
-  const chapterRow = progress.data.find((row) => row.scope === 'chapter');
-  const completionRows = completions.data;
-  const hasCards = review.data.some((section) =>
-    section.subtopics.some((subtopic) => subtopic.cards.length > 0),
-  );
-
-  const chapterStatus = chapterRow?.status ?? 'not_started';
-  const chapterTone = statusTone[chapterStatus];
+  const { chapter } = viewModel;
+  const chapterTone = statusTone[chapter.status];
 
   return (
     <section
@@ -302,7 +254,6 @@ export function ChapterDetailPage({
       <header>
         <p className="route-panel__eyebrow">章節複習</p>
         <div className="chapter-detail__title-row">
-          {/* owner 0730 #4:章節標題表示完整(同大廳卡片格式)。 */}
           <h1 className="chapter-detail__title" id="chapter-detail-title">
             Chapter {chapter.sortOrder}：{chapter.title}
           </h1>
@@ -323,7 +274,7 @@ export function ChapterDetailPage({
               aria-hidden="true"
               className={`chapter-status-dot chapter-status-dot--${chapterTone}`}
             />
-            {statusLabels[chapterStatus]}
+            {statusLabels[chapter.status]}
           </span>
           <div className="chapter-detail__review-progress">
             <div className="chapter-detail__review-progress-row">
@@ -331,36 +282,31 @@ export function ChapterDetailPage({
                 複習完成
               </span>{' '}
               <span className="chapter-detail__review-progress-value">
-                {reviewText(
-                  chapterRow?.reviewCompleted ?? 0,
-                  chapterRow?.reviewTotal ?? null,
-                )}
+                {reviewText(chapter.reviewCompleted, chapter.reviewTotal)}
               </span>
             </div>
             <ProgressBar
               label="複習完成"
               tone="primary"
               value={reviewPercent(
-                chapterRow?.reviewCompleted ?? 0,
-                chapterRow?.reviewTotal ?? null,
+                chapter.reviewCompleted,
+                chapter.reviewTotal,
               )}
             />
           </div>
           <div className="chapter-detail__mastery">
-            <MasteryRing value={chapterRow?.mastery ?? null} />
+            <MasteryRing
+              value={chapterMasteryRingValue(chapter.masteryDisplay)}
+            />
             <span className="chapter-detail__mastery-text">
               <span className="chapter-detail__mastery-label">精熟程度</span>
-              <span className="chapter-detail__mastery-value">
-                {percentText(chapterRow?.mastery ?? null)}
-              </span>
+              <MasteryDisplayView display={chapter.masteryDisplay} />
             </span>
           </div>
         </div>
       </header>
 
-      {hasCards ? null : <p>這一章還沒有複習卡，內容準備中。</p>}
-
-      {review.data.map((section) => (
+      {chapter.sections.map((section) => (
         <section aria-label={section.title} key={section.sectionId}>
           <GamePager
             ariaLabel={`${section.title} 樓層分頁`}
@@ -369,102 +315,92 @@ export function ChapterDetailPage({
           >
             {(pageSubtopics) => (
               <>
-                {pageSubtopics.map((subtopic) => {
-                  const row = subtopicRow(progress.data, subtopic.subtopicId);
-                  const reviewCompleted = row?.reviewCompleted ?? 0;
-                  const reviewTotal = row?.reviewTotal ?? null;
-                  return (
-                    <section
-                      aria-label={subtopic.title}
-                      className="chapter-detail__subtopic"
-                      key={subtopic.subtopicId}
-                    >
-                      <h2 className="chapter-detail__subtopic-title">
-                        <span className="chapter-detail__subtopic-tag">
-                          小節
-                        </span>{' '}
-                        {subtopic.title}
-                      </h2>
-                      {torchStates(reviewCompleted, reviewTotal).length > 0 ? (
-                        <span aria-hidden="true" className="floor-torches">
-                          {torchStates(reviewCompleted, reviewTotal).map(
-                            (lit, index) => (
-                              <span
-                                className={
-                                  lit
-                                    ? 'floor-torch floor-torch--lit'
-                                    : 'floor-torch'
-                                }
-                                key={index}
-                              />
-                            ),
-                          )}
-                        </span>
-                      ) : null}
-                      <div
-                        aria-label="小節進度"
-                        className="chapter-detail__subtopic-progress"
-                      >
-                        <span className="chapter-detail__subtopic-studied">
+                {pageSubtopics.map((subtopic) => (
+                  <section
+                    aria-label={subtopic.title}
+                    className="chapter-detail__subtopic"
+                    key={subtopic.subtopicId}
+                  >
+                    <h2 className="chapter-detail__subtopic-title">
+                      <span className="chapter-detail__subtopic-tag">小節</span>{' '}
+                      {subtopic.title}
+                    </h2>
+                    {torchStates(subtopic.reviewCompleted, subtopic.reviewTotal)
+                      .length > 0 ? (
+                      <span aria-hidden="true" className="floor-torches">
+                        {torchStates(
+                          subtopic.reviewCompleted,
+                          subtopic.reviewTotal,
+                        ).map((lit, index) => (
                           <span
-                            aria-hidden="true"
-                            className="chapter-detail__subtopic-dot"
+                            className={
+                              lit
+                                ? 'floor-torch floor-torch--lit'
+                                : 'floor-torch'
+                            }
+                            key={index}
                           />
-                          已學習
-                        </span>
+                        ))}
+                      </span>
+                    ) : null}
+                    <div
+                      aria-label="小節進度"
+                      className="chapter-detail__subtopic-progress"
+                    >
+                      <span className="chapter-detail__subtopic-studied">
                         <span
                           aria-hidden="true"
-                          className="chapter-detail__subtopic-divider"
-                        >
-                          ・
-                        </span>
-                        <span className="chapter-detail__subtopic-review">
-                          複習 {reviewText(reviewCompleted, reviewTotal)}
-                          <ProgressBar
-                            label="複習完成"
-                            size="sm"
-                            tone="primary"
-                            value={reviewPercent(reviewCompleted, reviewTotal)}
-                          />
-                        </span>
-                        <span
-                          aria-hidden="true"
-                          className="chapter-detail__subtopic-divider"
-                        >
-                          ・
-                        </span>
-                        <span>精熟 {percentText(row?.mastery ?? null)}</span>
-                      </div>
-                      {subtopic.cards.map((card, index) => (
-                        <ReviewCardItem
-                          card={card}
-                          completed={isCardCompleted(card, completionRows)}
-                          index={index}
-                          key={card.cardId}
-                          onComplete={() => {
-                            setCompleteError(undefined);
-                            complete.mutate(
-                              {
-                                requestId: crypto.randomUUID(),
-                                reviewCardId: card.cardId,
-                              },
-                              {
-                                onError: (error) => {
-                                  if (error.code === 'CHAPTER_LOCKED') {
-                                    setAccessRevoked(true);
-                                    return;
-                                  }
-                                  setCompleteError(error.message);
-                                },
-                              },
-                            );
-                          }}
-                          pending={complete.isPending}
+                          className="chapter-detail__subtopic-dot"
                         />
-                      ))}
-                    </section>
-                  );
-                })}
+                        已學習
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="chapter-detail__subtopic-divider"
+                      >
+                        ・
+                      </span>
+                      <span className="chapter-detail__subtopic-review">
+                        複習{' '}
+                        {reviewText(
+                          subtopic.reviewCompleted,
+                          subtopic.reviewTotal,
+                        )}
+                        <ProgressBar
+                          label="複習完成"
+                          size="sm"
+                          tone="primary"
+                          value={reviewPercent(
+                            subtopic.reviewCompleted,
+                            subtopic.reviewTotal,
+                          )}
+                        />
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="chapter-detail__subtopic-divider"
+                      >
+                        ・
+                      </span>
+                      <span>精熟 {percentText(subtopic.mastery)}</span>
+                    </div>
+                    {subtopic.cards.map((card, index) => (
+                      <ReviewCardItem
+                        card={card}
+                        completed={card.completed}
+                        index={index}
+                        key={card.cardId}
+                        onComplete={() => {
+                          onCompleteCard({
+                            requestId: crypto.randomUUID(),
+                            reviewCardId: card.cardId,
+                          });
+                        }}
+                        pending={completePending}
+                      />
+                    ))}
+                  </section>
+                ))}
               </>
             )}
           </GamePager>
@@ -472,5 +408,81 @@ export function ChapterDetailPage({
       ))}
       {completeError ? <p role="alert">{completeError}</p> : null}
     </section>
+  );
+}
+
+export function ChapterDetailPage({
+  chapterId: suppliedChapterId,
+  repository,
+}: Readonly<{
+  chapterId?: string;
+  repository?: LearningRepository;
+}>) {
+  const params = useParams();
+  const chapterId = suppliedChapterId ?? params.chapterId ?? '';
+  const chapterMap = useStudentChapterMap();
+  const entry = chapterMap.data?.chapters.find(
+    (row) => row.chapterId === chapterId,
+  );
+  const accessGranted =
+    entry?.accessState === 'available' || entry?.accessState === 'completed';
+  const review = useChapterReview(chapterId, repository, accessGranted);
+  const progress = useLearningProgress(chapterId, repository);
+  const completions = useReviewProgressRows(repository);
+  const complete = useCompleteReviewCard(chapterId, repository);
+  const [completeError, setCompleteError] = useState<string>();
+
+  useEffect(() => {
+    if (review.error?.code === 'CHAPTER_LOCKED') {
+      void chapterMap.refetch();
+    }
+  }, [review.error, chapterMap]);
+
+  const viewModel = deriveChapterDetailViewModel({
+    chapterMapEntry: entry,
+    chapterMapIsError: chapterMap.isError,
+    chapterMapIsPending: chapterMap.isPending,
+    completions: completions.data,
+    completionsIsError: completions.isError,
+    completionsIsPending: completions.isPending,
+    progressIsError: progress.isError,
+    progressIsPending: progress.isPending,
+    progressRows: progress.data,
+    reviewError: review.error ?? null,
+    reviewIsPending: review.isPending,
+    reviewSections: review.data,
+  });
+
+  const retryActions: Record<ChapterDetailRetryTarget, () => void> = {
+    'chapter-content': () => {
+      void review.refetch();
+      void progress.refetch();
+    },
+    'chapter-map': () => {
+      void chapterMap.refetch();
+    },
+  };
+
+  return (
+    <ChapterDetailPageView
+      completeError={completeError}
+      completePending={complete.isPending}
+      onCompleteCard={(input) => {
+        setCompleteError(undefined);
+        complete.mutate(input, {
+          onError: (error) => {
+            if (error.code === 'CHAPTER_LOCKED') {
+              void chapterMap.refetch();
+              return;
+            }
+            setCompleteError(error.message);
+          },
+        });
+      }}
+      onRetry={(target) => {
+        retryActions[target]();
+      }}
+      viewModel={viewModel}
+    />
   );
 }
