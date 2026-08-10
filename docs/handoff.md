@@ -69,3 +69,24 @@
 - 下一步：Phase 4A 是 UI surface 完成，**不是**完整 Phase 4 gate——章節體驗真實資料整合仍依賴 Phase 2A（內容匯入）與 Phase 3A（進度判定 RPC hosted 驗收）。下一步是撰寫 **Phase 5V**（教師端 UI/UX Restyle）的 implementation plan，不是直接寫產品程式碼；本輪未開始。
 - Blocker／待決策：無。
 - 相關檔案／commit：`feature/v2-major-update` merge commit `3644bf296398190e870aac8daf7dc94a4a604786`（第二 parent `c91defb678dec35bfcd24688eaea41fb315bdc55`）。
+
+## 2026-08-10 14:05 [Claude Code] — Phase 5V teacher UI/UX restyle plan draft 建立
+
+- 做了什麼：Phase 4A 已整合（見上一筆紀錄）。依 `docs/superpowers/specs/2026-08-10-phase-5v-teacher-ui-ux-restyle-design.md` 完成現況盤點（8 個教師端 route/HUD 的實際 route config、component、測試、hooks/API 依賴）與 Phase 1（`phase1/admin-security-impl`）overlap 分析，建立 `docs/superpowers/plans/2026-08-10-phase-5v-teacher-ui-ux-restyle.md`（Draft，244 行，4 個 task seam）。盤點發現 spec 表格有兩處狀態過期：HUD 導覽列的 NavLink/active-state/click-outside/focus management 其實已完整實作並有測試覆蓋、`/teacher/classes` 的 GamePager 分頁機制也已存在，Task 1/2 因此改為「驗證不回歸＋視覺套用」而非新實作。找到 `hud-command-bar.tsx`／`app-shell.tsx`／`teacher-classroom-detail-page.test.tsx`／`globals.css` 與 Phase 1 worktree 有 exact file overlap，已在 plan 的 CSS containment 與逐 task 行為邊界中提出因應（限縮 diff 面積、不動既有 handler 邏輯）。
+- 下一步：Plan **尚未核准、未 commit**，等待 Codex 唯一一次 plan review。未建立 `phase5v/teacher-ui-ux-restyle` worktree，未開始任何產品實作。
+- Blocker／待決策：無。
+- 相關檔案／commit：`docs/superpowers/plans/2026-08-10-phase-5v-teacher-ui-ux-restyle.md`（unstaged，尚未 commit）。
+
+## 2026-08-10 14:20 [Claude Code] — Phase 5V plan：Codex 唯一一次 plan review 完成 remediation
+
+- 做了什麼：完成 Codex 對 `docs/superpowers/plans/2026-08-10-phase-5v-teacher-ui-ux-restyle.md` 的唯一一次 plan review remediation（333 行）。修正項目：（1）HUD baseline 拆成已完成（NavLink/active/hidden/click-outside/開啟聚焦/Escape）與尚未完成（Tab/Shift+Tab focus trap），Task 1 新增這一項精確受限的 TDD 行為；（2）拆解過度宣稱的 network parity——新增 H 節區分「task-level UI surface checks」（repository-call assertion、harness isolation 證據）與「deferred production network parity Slice Gate」（明確不得宣稱 Slice Gate 通過）；（3）補完 Chromium harness 組裝契約（route scenarios + 獨立 HUD scenario），固定 port `localhost:4177`／`--strictPort`／`reuseExistingServer: false`，不與共用或 Phase 4A harness 的 port 衝突；（4）4 tasks 拆成 5 tasks，Task 3 單獨承擔 `teacher-classroom-detail-page.test.tsx` 的 Phase 1 overlap，Task 4 負責新增 `teacher-live-page.test.tsx`；（5）AC mapping 收斂為 spec 已核准的 5 個（AC-UI-004/008/011/013/015），320px overflow／console error 改列為非正式的 scoped quality checks；（6）唯讀確認 tsconfig 現況：`tsconfig.app.json` 因 `dev-harness` 已在 include 中故 no change，`tsconfig.node.json` 確定需要新增一行 include，不再是「執行時再確認」的不確定描述；（7）Phase 1 overlap 措辭改為「已查證的寫事實、未查證的標 unknown ownership reason」，移除「很可能是」等推測字眼。
+- 下一步：Plan **尚未核准**，等待 owner 核准。未建立 `phase5v/teacher-ui-ux-restyle` worktree，未開始任何 implementation。
+- Blocker／待決策：無。
+- 相關檔案／commit：`docs/superpowers/plans/2026-08-10-phase-5v-teacher-ui-ux-restyle.md`（unstaged，尚未 commit）。
+
+## 2026-08-10 14:31 [Claude Code] — Phase 5V plan 核准，準備建立 worktree
+
+- 做了什麼：Owner 核准 `docs/superpowers/plans/2026-08-10-phase-5v-teacher-ui-ux-restyle.md`（Codex single plan review 已完成 remediation），plan 檔案 status 更新為「Owner approved：2026-08-10／Codex single plan review completed／Authorized for Phase 5V implementation」。
+- 下一步：建立獨立 worktree `.worktrees/phase5v-teacher-ui-ux-restyle`（branch `phase5v/teacher-ui-ux-restyle`，base 為本次 plan 核准 commit），依序執行五個 task（HUD/Dashboard、Analytics/Classes list、Classroom detail/Student progress、Live create/Live report、Responsive/A11y/Chromium harness）。全程仍是 UI-only，不使用 Local Supabase。Phase 1（`phase1/admin-security-impl`）繼續獨立持有 Local Supabase（port 54322），與 Phase 5V 互不影響。
+- Blocker／待決策：無。
+- 相關檔案／commit：`docs/superpowers/plans/2026-08-10-phase-5v-teacher-ui-ux-restyle.md`（本次 commit 待建立）。
