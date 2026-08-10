@@ -5214,6 +5214,8 @@ a {
 
 .live-presenter__controls {
   display: flex;
+  min-height: 44px;
+  align-items: center;
   justify-content: center;
   gap: var(--space-3);
 }

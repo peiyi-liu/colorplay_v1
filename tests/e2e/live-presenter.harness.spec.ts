@@ -304,6 +304,35 @@ for (const viewport of VIEWPORTS) {
   }
 }
 
+test('all presenter phases keep the visible cluster centered in the viewport', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 720, width: 1280 });
+
+  for (const scenario of SCENARIOS) {
+    await page.goto(
+      `/dev-harness/live-presenter.html?scenario=${scenario}&promptLength=36&optionLength=21`,
+    );
+    await page.waitForLoadState('networkidle');
+
+    const offset = await page.locator(bodySelector(scenario)).evaluate(
+      (body, viewportHeight) => {
+        const visibleChildren = Array.from(body.children).filter(
+          (element) => getComputedStyle(element).display !== 'none',
+        );
+        const boxes = visibleChildren.map((element) =>
+          element.getBoundingClientRect(),
+        );
+        const top = Math.min(...boxes.map((box) => box.top));
+        const bottom = Math.max(...boxes.map((box) => box.bottom));
+        return (top + bottom) / 2 - viewportHeight / 2;
+      },
+      720,
+    );
+    expect(Math.abs(offset), scenario).toBeLessThanOrEqual(8);
+  }
+});
+
 for (const boundary of [
   { optionLength: 21, promptLength: 37 },
   { optionLength: 22, promptLength: 36 },
