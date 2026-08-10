@@ -1416,6 +1416,14 @@ a {
   color: var(--pixel-night);
 }
 
+/* Phase 5V Task 1：教師端 HUD 識別——沿用既有 --color-teacher 暖橘 token，
+   與學生端共用 design system 但視覺可辨識（spec/07-ui-visual-system.md §4
+   Teacher：需有明顯視覺區隔，但共用 design system）。 */
+.hud-command[data-variant='teacher'] .hud-command__tab--active,
+.hud-command[data-variant='teacher'] .hud-command__link--active {
+  border-color: var(--color-teacher);
+}
+
 .hud-command__tab:hover,
 .hud-command__link:hover {
   border-color: var(--pixel-window-frame);

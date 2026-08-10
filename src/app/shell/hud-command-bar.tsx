@@ -36,6 +36,30 @@ export function HudCommandBar({
         // F6 final-review 修法：Escape 關閉面板後焦點回到 MENU 切換鈕，
         // 避免鍵盤/螢幕閱讀器使用者焦點掉回 body（無法察覺面板已關閉）。
         menuToggleRef.current?.focus();
+        return;
+      }
+      // Phase 5V Task 1：面板開啟時的 focus trap——Tab/Shift+Tab 只在面板
+      // 內可聚焦元素之間循環，不跳出面板。面板關閉時這個 effect 整體不掛載
+      // （見上方 `if (!menuOpen) return`），所以不需要額外開關判斷。
+      if (event.key === 'Tab') {
+        const panel = menuPanelRef.current;
+        if (!panel) return;
+        const focusable = panel.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled])',
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (!first || !last) return;
+        if (event.shiftKey) {
+          if (document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          }
+        } else if (document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     };
     document.addEventListener('keydown', onKeyDown);
@@ -59,7 +83,7 @@ export function HudCommandBar({
   }, [menuOpen]);
 
   return (
-    <div className="hud-command">
+    <div className="hud-command" data-variant={variant}>
       {variant === 'student' ? (
         <nav aria-label="主要導覽" className="hud-command__nav">
           <NavLink className={commandTabClassName} end to="/app">
