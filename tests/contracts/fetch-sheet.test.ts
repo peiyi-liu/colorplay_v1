@@ -160,6 +160,21 @@ describe('fetch-sheet 題庫分頁解析', () => {
     expect(result.rows[0]?.code).toBe('3-1-01');
   });
 
+  it('接受新版 Sheet 的題庫序號欄名', () => {
+    const workbook = makeWorkbook({ questionRows: [fullRow] });
+    const questionSheet = workbook.Sheets[QUESTION_TAB_NAME];
+    if (!questionSheet) throw new Error('測試題庫工作表不存在');
+    questionSheet.A1 = {
+      t: 's',
+      v: '題庫序號',
+    };
+
+    const result = extractQuestionRows(workbook);
+
+    expect(result.problems).toEqual([]);
+    expect(result.rows[0]?.code).toBe('3-1-01');
+  });
+
   it('缺少必要欄位時回報 problems', () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(

@@ -479,3 +479,10 @@
 - 版面：手機單頁書的文字 PageRect 改為動態上下安全區；頂端取 `14%` 與「header 起點 + 56px」較大值，底端取 `15%` 與「footer 起點 + 64px」較大值。直式保留原本較寬鬆的紙面留白，橫式則確保文字與返回／章節標題、下排三顆按鈕各至少相隔 10 CSS px，沒有用縮字或裁切掩蓋內容。
 - 旋轉：React 分頁判定與 CSS 共用同一 breakpoint；393×852、375×812、852×393、812×375 都使用手機單頁書，1280×720、1024×768、1440×900 維持桌機雙頁，不會在旋轉後出現雙頁 DOM 套用單頁樣式。
 - TDD／驗證：新增 852×393 契約先因實際渲染 2 頁而 RED；修正後 Reader Chromium 8/8、Chapter 05a＋Reader 整合 15/15，並確認每頁零水平／垂直 overflow、文字零裁切、控制 >=44×44px、換頁幾何差 <=0.5px。`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；1280／393 capture SHA 未變。未 commit、未 push、未 deploy。
+
+## 2026-08-11 18:06 [Codex] — JRPG UI Git checkpoint 與 Sheet 匯入前 gate
+
+- UI checkpoint：`fb9a0cd` 收錄 05a 選卡、06-v2 閱讀、HUD 空間感應收合、runtime assets、1280／393 實作 captures，以及 batch-01／batch-02／selected 核准參考圖。新增 `docs/jrpg-ui-development-workflow.md`，把多 session 改為「共同 staging baseline＋每個 session 擁有不重疊畫面／檔案＋每 task 一輪 review」，避免多人重複 review 同一 diff 或同時修改全站 CSS。
+- 驗證：`pnpm build`、全域 lint、AppShell／HUD／Chapter／Sheet contract 62/62 通過；首頁／地圖／HUD Chromium 8/8、章節選卡＋閱讀 15/15，認證 4 個 viewport 案例亦在較長命令被環境截斷前逐一通過。較長 27-case 命令本身沒有完成結論，未列為綠燈證據。
+- Sheet preflight：重新下載 owner 最新 Google Sheet，取得 140 題、8 張複習卡與 1 列過濾佔位。匯入器原先只認「題號」，已以 RED→GREEN contract 補上新版「題庫序號」相容（fetch-sheet 9/9）。結構 gate 仍以 1 項錯誤 BLOCK：`3-2-38` 與 `3-2-39` 題幹完全重複，但選項／答案不同；未自動跳過或猜改。
+- 附件 preflight：複習卡「附件」欄只有 `圖3-2`、`圖3-5` 圖號；XLSX 內只有 1 張 JPEG media，另有多組 Office drawing shapes，尚未形成兩張可追蹤的 web asset path＋alt text。現行 `reviewCardMedia` 仍是舊示意圖，不得冒充最新版附件。因兩項資料 blocker 未解除，本輪沒有產生新 seeds、沒有寫入 `onkxnkzeixpezetkmocf`，staging DB 維持原狀。

@@ -43,7 +43,13 @@ const QUESTION_CSV_HEADER = [
   '正確答案',
   '答錯觀念解析',
 ];
-const REVIEW_CSV_HEADER = ['章節編號', '小節', '子主題', '卡片標題', '卡片內容'];
+const REVIEW_CSV_HEADER = [
+  '章節編號',
+  '小節',
+  '子主題',
+  '卡片標題',
+  '卡片內容',
+];
 
 const normalizeHeader = (value) => String(value ?? '').replace(/\s+/gu, '');
 
@@ -110,7 +116,7 @@ export function extractQuestionRows(workbook) {
   const columns = {
     answer: headerIndex(headerRow, ['正確答案', '正解']),
     chapter: headerIndex(headerRow, ['章節', '章節編號']),
-    code: headerIndex(headerRow, ['題號']),
+    code: headerIndex(headerRow, ['題庫序號', '題號']),
     explanation: headerIndex(headerRow, ['答錯觀念解析', '解析']),
     optionA: headerIndex(headerRow, ['選項A']),
     optionB: headerIndex(headerRow, ['選項B']),
