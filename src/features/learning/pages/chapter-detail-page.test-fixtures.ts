@@ -52,6 +52,7 @@ export const chapterEntrySectionsFixture =
   (): readonly ChapterReviewSection[] => [
     {
       sectionId: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+      quizTemplateId: '26000000-0000-0000-0000-000000003101',
       sortOrder: 1,
       stableCode: 'sheet-3-1',
       subtopics: [
@@ -118,6 +119,7 @@ export const chapterEntrySectionsFixture =
     },
     {
       sectionId: 'cd9d5a87-3540-50ef-e85b-052ea5aac03c',
+      quizTemplateId: '26000000-0000-0000-0000-000000003201',
       sortOrder: 2,
       stableCode: 'sheet-3-2',
       subtopics: [
@@ -183,6 +185,7 @@ export const chapterReviewSectionsFixture = (
 ): readonly ChapterReviewSection[] => {
   const base: ChapterReviewSection = {
     sectionId: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+    quizTemplateId: '26000000-0000-0000-0000-000000003101',
     sortOrder: 1,
     stableCode: 'sheet-3-1',
     subtopics: [

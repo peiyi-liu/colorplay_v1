@@ -126,16 +126,25 @@ export function ChapterReviewLibrary({
             className="chapter-archive__challenge-actions"
             role="group"
           >
-            <button
-              aria-label="小節挑戰（題庫準備中）"
-              className="secondary-action chapter-archive__challenge-action"
-              disabled
-              title="小節題庫完成綁定後開放"
-              type="button"
-            >
-              <span>小節挑戰</span>
-              <small>題庫準備中</small>
-            </button>
+            {activeSubtopic?.quizTemplateId ? (
+              <Link
+                className="secondary-action chapter-archive__challenge-action"
+                to={`/app/quiz/new?template=${activeSubtopic.quizTemplateId}`}
+              >
+                小節挑戰
+              </Link>
+            ) : (
+              <button
+                aria-label="小節挑戰（題庫準備中）"
+                className="secondary-action chapter-archive__challenge-action"
+                disabled
+                title="小節題庫完成綁定後開放"
+                type="button"
+              >
+                <span>小節挑戰</span>
+                <small>題庫準備中</small>
+              </button>
+            )}
             {challengeHref ? (
               <Link
                 className="secondary-action chapter-archive__challenge-action chapter-archive__challenge-action--chapter"

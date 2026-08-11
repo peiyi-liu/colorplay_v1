@@ -10,7 +10,6 @@ export const REPORT_PATH: string;
 
 export type VerifyFixes = Readonly<{
   chapterMap?: Readonly<Record<string, string>>;
-  duplicateRenames?: Readonly<Record<string, string>>;
   reviewCardMedia?: Readonly<
     Record<string, Readonly<{ asset: string; alt: string }>>
   >;

@@ -2,6 +2,7 @@ import type XLSX from 'xlsx';
 
 export const SHEET_XLSX_URL: string;
 export const QUESTION_TAB_NAME: string;
+export const CHAPTER_REVIEW_TAB_NAME: string;
 export const REVIEW_TAB_NAME: string;
 export const OUTPUT_DIR: string;
 
@@ -14,6 +15,7 @@ export type SheetQuestionRow = Readonly<{
   prompt: string;
   rowNumber: number;
   sectionTitle: string;
+  source: 'chapter' | 'section';
 }>;
 
 export type SheetPlaceholderRow = Readonly<{
@@ -23,6 +25,12 @@ export type SheetPlaceholderRow = Readonly<{
 }>;
 
 export function extractQuestionRows(workbook: XLSX.WorkBook): Readonly<{
+  placeholders: readonly SheetPlaceholderRow[];
+  problems: readonly string[];
+  rows: readonly SheetQuestionRow[];
+}>;
+
+export function extractChapterReviewRows(workbook: XLSX.WorkBook): Readonly<{
   placeholders: readonly SheetPlaceholderRow[];
   problems: readonly string[];
   rows: readonly SheetQuestionRow[];

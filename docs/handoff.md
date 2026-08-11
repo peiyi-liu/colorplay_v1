@@ -498,3 +498,17 @@
 - 依 owner 指示嚴格採用「先檢查、通過後才匯入」。重新執行 `pnpm content:fetch`，最新版仍取得題目 140 列（其中 1 列為佔位而過濾）與複習卡 8 列。
 - `pnpm content:verify --gate --xlsx artifacts/content/question-bank.xlsx` 結果為結構錯誤 1、人工覆核提示 0：`3-2-38` 與 `3-2-39` 題幹完全重複。這屬教材內容決策，未自行猜改 Sheet SSOT、未略過 gate。
 - 本輪沒有執行 `content:import`、沒有產生或套用新 seed、沒有寫入 staging Supabase `onkxnkzeixpezetkmocf`。下一步需 owner／教師先修正兩題題幹差異，再重抓、重跑 gate；通過後才審查附件映射與執行 staging 匯入／表↔庫 audit。
+
+## 2026-08-11 21:25 [Owner／Codex] — RC／QB／CR 新序號契約通過結構 gate，兩題內容矛盾待裁定
+
+- Owner 裁定題幹相同但選項組不同可視為不同題目，並以 Apps Script 產生 `RC＋章＋小節＋兩位題號`、`QB＋章＋小節＋兩位題號`、`CR＋章＋三位題號`。重新抓取最新版 Sheet，確認三個正式分頁為 `(RC)各單元複習大廳`、`(QB)各單元隨機測驗題庫`、`(CR)章節總複習`；取得 RC 8 張、QB 139 題、CR 64 題，203 個題目序號與 8 個複習卡序號皆無缺漏、重複或格式／章節歸屬錯誤。
+- TDD 已讓 fetch／verify／review-card importer 接受新版分頁與序號，重複內容判定改為「題幹＋選項組」；負向題的「故選項 X 正確」不再被誤判。結構 gate 現為 0，人工提示由 7 降為 2，兩項皆為真實答案／解析矛盾：`QB3226` 正解 D 但解析稱 D 錯誤；`QB3311` 正解 C 但解析稱 C 錯誤。
+- RC 附件欄仍只有 `圖3-2`／`圖3-5` 圖號，沒有 web asset path 與 alt；已移除舊 `/media/review/color-wheel.svg` 示意映射，避免錯圖再上線，並在 review report 明列未建立媒體列。
+- 因內容矛盾尚未獲 owner 裁定，本輪尚未把任何 seed 套用至 staging Supabase `onkxnkzeixpezetkmocf`，也尚未更新 `staging`／custom domain。工作樹保留未提交的管線 WIP；下一步先由 owner 決定兩題應修改正解、解析或題幹，再完成題池 migration／小節挑戰與 Live／章節總挑戰串接、staging audit 與 GitHub-source 部署。
+
+## 2026-08-12 01:12 [Owner／Codex] — RC／QB／CR 路由與圖片私有化完成，待 staging 套用
+
+- 最新 SSOT 再抓為 QB 139、CR 64、RC 8；`QB3238`／`QB3239` 依 owner 裁定保留為題幹相同、選項組不同的兩題。結構 gate 為 0 error／0 warning，stable code disposition 已逐筆記入匯入報告。RC 附件只保留 P301～P305 代號，沒有實體檔與 alt，因此本批刻意產生 0 筆媒體 mapping。
+- 路由完成：RC 供複習閱讀、QB 供小節挑戰／Live／mastery、CR 只供章節總挑戰；小節 template 由 `section_id` 鎖定。Live 拒絕 chapter-wide／null section，mastery 只抽 QB 且保留既有 chapter access guard，所有受影響 consumer 與 progress denominator 同步更新。
+- 唯一一輪 implementation review 的 findings 已處理：重複 ID 與 QB 小節不一致改為 fail-closed；published seed 不再原地改寫 question/options/card/media，語意差異回 `CONTENT_VERSION_REQUIRED`；移除 mastery 動態 hint 測試遮罩；圖片 bucket 改 private，只允許已發布目前卡片版本的 authenticated SELECT，前端使用 1 小時 signed URL；P301～P305 後補須走 `publish_review_card` 新版本流程。`import-questions.mjs` 超過 500 行的理由已寫於檔頭：同一 validated dataset 必須原子產生 seed／fixtures／report，共用解析與驗證已拆模組。
+- 驗證：本機 clean reset 完整套用 5 migrations 與三份 seeds；首次 23 檔 pgTAP 為 473/474，抓到 mastery chapter lock 被覆寫，補回後代表性 7 檔 152/152 全綠；Vitest 8 檔 92/92、`pnpm typecheck`、`pnpm lint`、`pnpm build`、scoped Prettier、`git diff --check` 全綠。remote migration preflight 確認 linked project ref 為 `onkxnkzeixpezetkmocf`，遠端只缺 `20260811000100`～`00500`；本筆記錄時尚未執行 remote write／push／Vercel 更新。

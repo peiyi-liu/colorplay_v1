@@ -207,48 +207,56 @@ select set_config(
   true
 );
 
--- Subtopic 3-1 (13 published questions):
---   3-1-01 latest correct; 3-1-02 correct then wrong (latest wrong counts);
---   3-1-03 answered then version-bumped (old version excluded);
---   3-1-04 unfinished session (excluded); 3-1-05 correct via remediation.
+-- Subtopic 3-1 (26 published QB questions):
+--   QB3101 latest correct; QB3102 correct then wrong (latest wrong counts);
+--   QB3103 answered then version-bumped (old version excluded);
+--   QB3104 unfinished session (excluded); QB3105 correct via remediation.
 select pg_temp.drill(
-  '25000000-0000-0000-0000-000000000001', '3-1-01', 'correct', 'practice'
+  '25000000-0000-0000-0000-000000000001', 'QB3101', 'correct', 'practice'
 );
 select pg_temp.drill(
-  '25000000-0000-0000-0000-000000000001', '3-1-02', 'correct', 'practice'
+  '25000000-0000-0000-0000-000000000001', 'QB3102', 'correct', 'practice'
 );
 select pg_temp.drill(
-  '25000000-0000-0000-0000-000000000001', '3-1-02', 'incorrect', 'practice'
+  '25000000-0000-0000-0000-000000000001', 'QB3102', 'incorrect', 'practice'
 );
 select pg_temp.drill(
-  '25000000-0000-0000-0000-000000000001', '3-1-03', 'correct', 'practice'
+  '25000000-0000-0000-0000-000000000001', 'QB3103', 'correct', 'practice'
 );
-update public.questions set version = 2 where stable_code = '3-1-03';
+update public.questions set version = 2 where stable_code = 'QB3103';
 select pg_temp.build_session(
-  '25000000-0000-0000-0000-000000000001', '3-1-04', 'correct', 'practice',
+  '25000000-0000-0000-0000-000000000001', 'QB3104', 'correct', 'practice',
   '25300000-0000-0000-0000-000000000001'
 );
 select pg_temp.drill(
-  '25000000-0000-0000-0000-000000000001', '3-1-05', 'correct', 'remediation'
+  '25000000-0000-0000-0000-000000000001', 'QB3105', 'correct', 'remediation'
 );
 
--- Subtopic 3-2: nine of thirteen correct -> developing.
+-- Subtopic 3-2: 46 of 65 correct -> developing.
 select pg_temp.drill(
   '25000000-0000-0000-0000-000000000001', code, 'correct', 'practice'
 )
-from unnest(array[
-  '3-2-01', '3-2-02', '3-2-03', '3-2-04', '3-2-05', '3-2-06', '3-2-07',
-  '3-2-08', '3-2-09'
-]) as code;
+from (
+  select format('QB32%s', lpad(index::text, 2, '0')) as code
+  from generate_series(1, 46) as index
+) codes;
 
--- Subtopic 3-3: all eleven correct -> mastered.
+-- Subtopic 3-3: all 23 correct -> mastered.
 select pg_temp.drill(
   '25000000-0000-0000-0000-000000000001', code, 'correct', 'practice'
 )
-from unnest(array[
-  '3-3-01', '3-3-02', '3-3-03', '3-3-04', '3-3-05', '3-3-06', '3-3-07',
-  '3-3-08', '3-3-09', '3-3-10', '3-3-11'
-]) as code;
+from (
+  select format('QB33%s', lpad(index::text, 2, '0')) as code
+  from generate_series(1, 23) as index
+) codes;
+
+-- Chapter progress is intentionally isolated to the CR bank.
+select pg_temp.drill(
+  '25000000-0000-0000-0000-000000000001', 'CR3001', 'correct', 'practice'
+);
+select pg_temp.drill(
+  '25000000-0000-0000-0000-000000000001', 'CR3002', 'incorrect', 'practice'
+);
 
 -- One completed review card in 3-1 (three published cards exist).
 set local role authenticated;
@@ -268,8 +276,8 @@ select results_eq(
     where scope = 'subtopic'
       and subtopic_id = 'f929cde5-c294-46ce-5faf-c866b3cb9583'$$,
   $$values (
-    1, 3, round(3 * 100.0 / 13, 1), round(2 * 100.0 / 3, 1),
-    round(2 * 100.0 / 13, 1), 'learning'
+    1, 3, round(3 * 100.0 / 26, 1), round(2 * 100.0 / 3, 1),
+    round(2 * 100.0 / 26, 1), 'learning'
   )$$,
   'the 3-1 subtopic counts only latest current-version qualifying answers'
 );
@@ -282,10 +290,10 @@ select results_eq(
         where st.stable_code = 'sheet-3-2-all'
       )$$,
   $$values (
-    round(9 * 100.0 / 13, 1), 100.0::numeric, round(9 * 100.0 / 13, 1),
+    round(46 * 100.0 / 65, 1), 100.0::numeric, round(46 * 100.0 / 65, 1),
     'developing'
   )$$,
-  'nine of thirteen correct lands in developing'
+  '46 of 65 correct lands in developing'
 );
 select results_eq(
   $$select coverage, accuracy, mastery, status
@@ -301,7 +309,11 @@ select results_eq(
 select results_eq(
   $$select review_completed, review_total, coverage, accuracy, mastery, status
     from public.get_learning_progress('21000000-0000-0000-0000-000000000004')
-    where scope = 'subtopic'$$,
+    where scope = 'subtopic'
+      and subtopic_id = (
+        select st.id from public.subtopics st
+        where st.stable_code = 'sheet-4-1-all'
+      )$$,
   $$values (0, null::integer, 0.0::numeric, null::numeric, 0.0::numeric,
     'not_started')$$,
   'an untouched subtopic reports not started with dash denominators'
@@ -311,10 +323,10 @@ select results_eq(
     from public.get_learning_progress('21000000-0000-0000-0000-000000000003')
     where scope = 'chapter'$$,
   $$values (
-    1, 3, round(23 * 100.0 / 37, 1), round(22 * 100.0 / 23, 1),
-    round(22 * 100.0 / 37, 1), 'learning'
+    1, 8, round(2 * 100.0 / 64, 1), 50.0::numeric,
+    round(1 * 100.0 / 64, 1), 'learning'
   )$$,
-  'the chapter aggregates over all current versions, not subtopic averages'
+  'the chapter aggregates the CR bank independently from QB subtopics'
 );
 select is(
   (
@@ -354,7 +366,7 @@ select results_eq(
   $$values (
     '25000000-0000-0000-0000-000000000001'::uuid,
     '21000000-0000-0000-0000-000000000003'::uuid,
-    round(22 * 100.0 / 37, 1), 'learning'
+    round(1 * 100.0 / 64, 1), 'learning'
   )$$,
   'the owning teacher reads DB-exact classroom mastery'
 );

@@ -206,7 +206,7 @@ select pg_temp.as_user('43000000-0000-0000-0000-000000000001');
 select set_config(
   'test.activity_id',
   public.create_live_activity(
-    '報表閉環對戰', '26000000-0000-0000-0000-000000000003', 20
+    '報表閉環對戰', '4f208855-dfc8-6cc5-7671-02dfacba85d1', 20
   )::jsonb ->> 'activity_id',
   true
 );
@@ -238,7 +238,7 @@ select is(
 );
 select is(
   current_setting('test.detail')::jsonb -> 'activity' ->> 'quiz_template_id',
-  '26000000-0000-0000-0000-000000000003',
+  '4f208855-dfc8-6cc5-7671-02dfacba85d1',
   'the detail names the quiz template behind the activity'
 );
 select is(

@@ -47,6 +47,7 @@ export type ChapterDetailCardView = Readonly<{
 }>;
 
 export type ChapterDetailSubtopicView = Readonly<{
+  quizTemplateId: string | null;
   subtopicId: string;
   title: string;
   reviewCompleted: number;
@@ -56,6 +57,7 @@ export type ChapterDetailSubtopicView = Readonly<{
 }>;
 
 export type ChapterDetailSectionView = Readonly<{
+  quizTemplateId: string | null;
   sectionId: string;
   title: string;
   subtopics: readonly ChapterDetailSubtopicView[];

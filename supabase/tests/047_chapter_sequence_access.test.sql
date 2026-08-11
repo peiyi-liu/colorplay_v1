@@ -87,18 +87,18 @@ values
   );
 
 insert into public.questions (
-  id, subtopic_id, stable_code, prompt, explanation, status, sort_order
+  id, subtopic_id, stable_code, bank_kind, prompt, explanation, status, sort_order
 )
 values
   (
     '47300000-0000-0000-0000-000000000001',
     '47200000-0000-0000-0000-000000000001',
-    '1-1-01', 'Sequence question 1?', 'Sequence explanation 1.', 'published', 1
+    '1-1-01', 'chapter', 'Sequence question 1?', 'Sequence explanation 1.', 'published', 1
   ),
   (
     '47300000-0000-0000-0000-000000000002',
     '47200000-0000-0000-0000-000000000002',
-    '2-1-01', 'Sequence question 2?', 'Sequence explanation 2.', 'published', 1
+    '2-1-01', 'chapter', 'Sequence question 2?', 'Sequence explanation 2.', 'published', 1
   );
 
 insert into public.question_options (

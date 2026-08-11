@@ -245,7 +245,7 @@ select pg_temp.as_user('34000000-0000-0000-0000-000000000001');
 select set_config(
   'test.activity',
   public.create_live_activity(
-    'Insights 對戰', '26000000-0000-0000-0000-000000000003', 20
+    'Insights 對戰', '4f208855-dfc8-6cc5-7671-02dfacba85d1', 20
   )::text,
   true
 );

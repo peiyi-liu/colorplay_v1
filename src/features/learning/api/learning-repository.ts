@@ -60,9 +60,31 @@ const parseWith = <Output>(
   return parsed.data;
 };
 
+const resolveReviewMediaAssetPath = async (
+  client: SupabaseClient<Database>,
+  assetPath: string,
+): Promise<string> => {
+  if (assetPath.startsWith('/') || assetPath.startsWith('https://')) {
+    return assetPath;
+  }
+
+  const separator = assetPath.indexOf('/');
+  if (separator <= 0 || separator === assetPath.length - 1) {
+    throw new LearningError('INVALID_RESPONSE');
+  }
+  const bucket = assetPath.slice(0, separator);
+  const objectPath = assetPath.slice(separator + 1);
+  const { data, error } = await client.storage
+    .from(bucket)
+    .createSignedUrl(objectPath, 3600);
+  if (error || !data.signedUrl) throw new LearningError('UNAVAILABLE');
+  return data.signedUrl;
+};
+
 const chapterReviewSchema = z.array(
   z.object({
     id: uuidString,
+    quiz_template_id: uuidString.nullable(),
     sort_order: z.number().int().nonnegative(),
     stable_code: z.string().min(1),
     subtopics: z.array(
@@ -169,6 +191,7 @@ export type ChapterReviewSubtopic = Readonly<{
 }>;
 
 export type ChapterReviewSection = Readonly<{
+  quizTemplateId: string | null;
   sectionId: string;
   sortOrder: number;
   stableCode: string;
@@ -304,37 +327,51 @@ export function createLearningRepository(
       );
       if (error) throw toLearningError(error.message);
       const sections = parseWith(chapterReviewSchema, data);
-      return sections.map((section) => ({
-        sectionId: section.id,
-        sortOrder: section.sort_order,
-        stableCode: section.stable_code,
-        subtopics: [...section.subtopics]
-          .sort((left, right) => left.sort_order - right.sort_order)
-          .map((subtopic) => ({
-            cards: [...subtopic.review_cards]
+      return Promise.all(
+        sections.map(async (section) => ({
+          quizTemplateId: section.quiz_template_id,
+          sectionId: section.id,
+          sortOrder: section.sort_order,
+          stableCode: section.stable_code,
+          subtopics: await Promise.all(
+            [...section.subtopics]
               .sort((left, right) => left.sort_order - right.sort_order)
-              .map((card) => ({
-                cardId: card.id,
-                content: card.content,
-                groupLabel: card.group_label,
-                media: [...card.review_card_media]
-                  .sort((left, right) => left.sort_order - right.sort_order)
-                  .map((media) => ({
-                    altText: media.alt_text,
-                    assetPath: media.asset_path,
-                  })),
-                requiresRecompletion: card.requires_recompletion,
-                sortOrder: card.sort_order,
-                title: card.title,
-                version: card.version,
+              .map(async (subtopic) => ({
+                cards: await Promise.all(
+                  [...subtopic.review_cards]
+                    .sort((left, right) => left.sort_order - right.sort_order)
+                    .map(async (card) => ({
+                      cardId: card.id,
+                      content: card.content,
+                      groupLabel: card.group_label,
+                      media: await Promise.all(
+                        [...card.review_card_media]
+                          .sort(
+                            (left, right) => left.sort_order - right.sort_order,
+                          )
+                          .map(async (media) => ({
+                            altText: media.alt_text,
+                            assetPath: await resolveReviewMediaAssetPath(
+                              client,
+                              media.asset_path,
+                            ),
+                          })),
+                      ),
+                      requiresRecompletion: card.requires_recompletion,
+                      sortOrder: card.sort_order,
+                      title: card.title,
+                      version: card.version,
+                    })),
+                ),
+                sortOrder: subtopic.sort_order,
+                stableCode: subtopic.stable_code,
+                subtopicId: subtopic.id,
+                title: subtopic.title,
               })),
-            sortOrder: subtopic.sort_order,
-            stableCode: subtopic.stable_code,
-            subtopicId: subtopic.id,
-            title: subtopic.title,
-          })),
-        title: section.title,
-      }));
+          ),
+          title: section.title,
+        })),
+      );
     },
 
     async listMistakes() {

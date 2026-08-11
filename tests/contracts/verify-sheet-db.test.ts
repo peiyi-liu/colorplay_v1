@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import XLSX from 'xlsx';
 
 import {
+  CHAPTER_REVIEW_TAB_NAME,
   QUESTION_TAB_NAME,
   REVIEW_TAB_NAME,
 } from '../../scripts/content/fetch-sheet.mjs';
@@ -60,10 +61,31 @@ function makeWorkbook(
   XLSX.utils.book_append_sheet(
     workbook,
     XLSX.utils.aoa_to_sheet([
-      [' ', '小節', '子主題', '卡片標題', '卡片內容'],
-      ...reviewRows.map((row) => [...row]),
+      ['複習卡序號', ' ', '小節', '子主題', '卡片標題', '卡片內容'],
+      ...reviewRows.map((row, index) => [
+        `RC31${String(index + 1).padStart(2, '0')}`,
+        ...row,
+      ]),
     ]),
     REVIEW_TAB_NAME,
+  );
+  XLSX.utils.book_append_sheet(
+    workbook,
+    XLSX.utils.aoa_to_sheet([
+      [
+        '總章節題庫序號',
+        '章節',
+        '章節標題',
+        '題目',
+        '選項 A ',
+        '選項 B ',
+        '選項 C',
+        '選項 D',
+        '正確答案 ',
+        '答錯觀念解析',
+      ],
+    ]),
+    CHAPTER_REVIEW_TAB_NAME,
   );
   return workbook;
 }
@@ -129,6 +151,17 @@ describe('detectAnswerConflict 啟發式', () => {
     ).toBeNull();
   });
 
+  it('負向題以「故選項 X 正確」表示作答結論時不誤判為敘述為真', () => {
+    expect(
+      detectAnswerConflict({
+        answer: 'D',
+        explanation:
+          'ITTEN 為色彩教學體系，並未發行工業用油墨色票。故選項D正確。',
+        prompt: '下列何者不是印刷用的油墨色票？',
+      }),
+    ).toBeNull();
+  });
+
   it('解析明示不同答案時提示矛盾', () => {
     expect(
       detectAnswerConflict({
@@ -152,21 +185,42 @@ describe('detectAnswerConflict 啟發式', () => {
 });
 
 describe('buildSheetSnapshot 防呆', () => {
-  it('題號重複且無改號設定 → 結構錯誤；有設定 → 改號並提示', () => {
+  it('QB 系統序號的小節必須與 Sheet 小節欄一致', () => {
+    const mismatched = [
+      'QB3201',
+      '3',
+      '章名',
+      '1',
+      '小節名',
+      '題目？',
+      '甲',
+      '乙',
+      '丙',
+      '丁',
+      'A',
+      '解析。',
+    ];
+
+    expect(snapshotOf([mismatched]).errors.join()).toContain(
+      '小節 2 與小節欄「1」不一致',
+    );
+  });
+
+  it('題號重複一律為結構錯誤，不允許匯入器自動改號', () => {
     const rows = [
       question('3-1-01'),
       question('3-1-01', { prompt: '另一題？' }),
     ];
     expect(snapshotOf(rows).errors.join()).toContain('重複');
-    const renamed = snapshotOf(rows, [], {
+    const stillRejected = snapshotOf(rows, [], {
       duplicateRenames: { '3-1-01': '3-1-02' },
     });
-    expect(renamed.errors).toEqual([]);
-    expect(renamed.questions.map((entry) => entry.code)).toEqual([
+    expect(stillRejected.errors.join()).toContain(
+      '系統序號必須由 Google Sheet 修正',
+    );
+    expect(stillRejected.questions.map((entry) => entry.code)).toEqual([
       '3-1-01',
-      '3-1-02',
     ]);
-    expect(renamed.warnings.join()).toContain('改號為 3-1-02');
   });
 
   it('缺正解 → 錯誤；列入 skipCodes → 略過', () => {
@@ -186,6 +240,27 @@ describe('buildSheetSnapshot 防呆', () => {
       question('4-1-01', { answer: 'B' }, ['相同文字', '相同文字', '丙', '丁']),
     ];
     expect(snapshotOf(rows).errors.join()).toContain('文字完全相同');
+  });
+
+  it('題幹相同但選項組不同時視為兩道不同題目', () => {
+    const samePrompt = '下列有關曼塞爾表色系的敘述，何者錯誤？';
+    const snapshot = snapshotOf([
+      question('3-2-38', { prompt: samePrompt }, [
+        '應用敘述甲',
+        '應用敘述乙',
+        '應用敘述丙',
+        '應用敘述丁',
+      ]),
+      question('3-2-39', { prompt: samePrompt }, [
+        '規則敘述甲',
+        '規則敘述乙',
+        '規則敘述丙',
+        '規則敘述丁',
+      ]),
+    ]);
+
+    expect(snapshot.errors).toEqual([]);
+    expect(snapshot.questions).toHaveLength(2);
   });
 
   it('缺標題複習卡列入 cardSkipped，不進比對', () => {

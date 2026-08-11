@@ -12,6 +12,14 @@ export function hasUnsafeText(value: unknown): boolean;
 
 export function isValidQuestionCode(code: unknown): boolean;
 
+export function parseQuestionIdentifier(code: unknown): Readonly<{
+  chapter: string;
+  order: number;
+  scope: 'chapter' | 'legacy' | 'section';
+  section: string | null;
+  sectionKey: string;
+}> | null;
+
 export type AnswerResolution =
   | Readonly<{ key: 'A' | 'B' | 'C' | 'D'; error?: undefined }>
   | Readonly<{

@@ -4,14 +4,18 @@
  *   1. supabase/seeds/content-questions.sql  — 章節內容種子（sections/subtopics/questions/options、章節改名）
  *   2. tests/fixtures/question-answers.generated.ts — E2E 用「題目→正解」對照表
  *   3. tests/fixtures/content-manifest.generated.ts — E2E 用章節清單（可玩章節、題數），測試據此自動適應內容變動
- *   4. docs/content/import-review.md — 給教師的審閱報告（跳過列、改號、待確認、解析草稿）
+ *   4. docs/content/import-review.md — 給教師的審閱報告（跳過列、待確認、解析草稿）
  *
  * 用法：
  *   node scripts/content/import-questions.mjs [csv 路徑]
  *   node scripts/content/import-questions.mjs --url   # 直接抓公開試算表
  *
  * 資料規則：試算表為主來源；scripts/content/import-fixes.json 補缺（解析草稿、
- * 改號、跳過、章節對應）。試算表填了解析後以試算表為準。
+ * 跳過、章節對應）。系統序號重複時一律中止，禁止匯入器代為改號。
+ *
+ * AGENTS.md >500 行說明：本檔是單一 CLI 邊界，依序共享同一批已驗證 questions
+ * 產生 transactional seed、hints、三個測試 fixture 與 owner 審閱報告；拆開會讓
+ * 各輸出各自解析來源而增加漂移風險。可重用的解析／驗證／格式化已拆至共用模組。
  */
 import console from 'node:console';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -22,6 +26,7 @@ import { fileURLToPath } from 'node:url';
 import { deterministicUuid, parseCsv, sqlText } from './import-shared.mjs';
 import {
   isValidQuestionCode,
+  parseQuestionIdentifier,
   resolveCorrectAnswer,
   TEXT_LIMITS,
 } from './validation-rules.mjs';
@@ -73,34 +78,58 @@ const rows = parseCsv(csv)
 
 const problems = [];
 const skipped = [];
-const renamed = [];
 const usedDraftExplanations = [];
 const seenCodes = new Set();
 const questions = [];
+const legacyAlias = (code) => {
+  const match = /^QB([1-9])([1-9])([0-9]{2})$/u.exec(code);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : code;
+};
 
 for (const raw of rows) {
   // HTML 會把連續空白壓成一個空格，統一正規化避免比對不一致。
   const [code0, chapter0, section0, prompt, a, b, c, d, answer0, explanation0] =
     raw.map((cell) => (cell ?? '').replace(/\s+/gu, ' ').trim());
   let code = code0;
-  if (fixes.skipCodes[code]) {
-    skipped.push({ code, reason: fixes.skipCodes[code] });
+  const legacyCode = legacyAlias(code);
+  if (fixes.skipCodes[code] ?? fixes.skipCodes[legacyCode]) {
+    skipped.push({
+      code,
+      reason: fixes.skipCodes[code] ?? fixes.skipCodes[legacyCode],
+    });
     continue;
   }
   if (seenCodes.has(code)) {
-    const renameTo = fixes.duplicateRenames[code];
-    if (!renameTo || seenCodes.has(renameTo)) {
-      problems.push(`題號 ${code} 重複且沒有可用的改號設定`);
-      continue;
-    }
-    renamed.push({ from: code, to: renameTo });
-    code = renameTo;
+    problems.push(`題號 ${code} 重複；系統序號必須由 Google Sheet 修正`);
+    continue;
   }
   seenCodes.add(code);
 
   if (!isValidQuestionCode(code)) {
-    problems.push(`題號 ${code} 格式不符（需為 n-n-nn）`);
+    problems.push(
+      `題號 ${code} 格式不符（需為 QB章小節兩位題號或 CR章三位題號）`,
+    );
     continue;
+  }
+  const identifier = parseQuestionIdentifier(code);
+  if (!identifier) {
+    problems.push(`題號 ${code} 無法解析`);
+    continue;
+  }
+  if (identifier.chapter !== chapter0) {
+    problems.push(
+      `題號 ${code} 的章節 ${identifier.chapter} 與章節欄 ${chapter0} 不一致`,
+    );
+    continue;
+  }
+  if (identifier.scope === 'section') {
+    const sectionMatch = /^([0-9]+)-([0-9]+)(?:\s|$)/u.exec(section0);
+    if (!sectionMatch || sectionMatch[2] !== identifier.section) {
+      problems.push(
+        `題號 ${code} 的小節 ${identifier.section} 與小節欄「${section0}」不一致`,
+      );
+      continue;
+    }
   }
   const chapterCode = fixes.chapterMap[chapter0];
   if (!chapterCode || !CHAPTER_IDS[chapterCode]) {
@@ -135,7 +164,10 @@ for (const raw of rows) {
   const answer = resolved.key;
   let explanation = explanation0;
   if (!explanation) {
-    explanation = fixes.draftExplanations[code] ?? '';
+    explanation =
+      fixes.draftExplanations[code] ??
+      fixes.draftExplanations[legacyCode] ??
+      '';
     if (explanation) usedDraftExplanations.push(code);
   }
   if (!explanation || explanation.length > TEXT_LIMITS.explanation) {
@@ -145,11 +177,17 @@ for (const raw of rows) {
     continue;
   }
 
-  const sectionKey = code.split('-').slice(0, 2).join('-');
   questions.push({
+    bankKind:
+      identifier.scope === 'chapter'
+        ? 'chapter'
+        : identifier.scope === 'section'
+          ? 'section'
+          : 'legacy',
     code,
     chapterCode,
-    sectionKey,
+    order: identifier.order,
+    sectionKey: identifier.sectionKey,
     sectionLabel: section0,
     prompt,
     options,
@@ -164,19 +202,28 @@ if (problems.length > 0) {
   process.exit(1);
 }
 
-const promptSeen = new Map();
+const contentSeen = new Map();
 for (const q of questions) {
-  if (promptSeen.has(q.prompt)) {
-    console.error(`題目文字重複：${promptSeen.get(q.prompt)} 與 ${q.code}`);
+  const contentKey = JSON.stringify([
+    q.prompt.replace(/\s+/gu, ''),
+    q.options.map(([, text]) => text.replace(/\s+/gu, '')).sort(),
+  ]);
+  if (contentSeen.has(contentKey)) {
+    console.error(
+      `題目內容重複（題幹與選項組相同）：${contentSeen.get(contentKey)} 與 ${q.code}`,
+    );
     process.exit(1);
   }
-  promptSeen.set(q.prompt, q.code);
+  contentSeen.set(contentKey, q.code);
 }
 
 const sections = new Map();
 for (const q of questions) {
   if (!sections.has(q.sectionKey)) {
-    const title = fixes.sectionTitles[q.sectionKey];
+    const title =
+      q.bankKind === 'chapter'
+        ? '章節總複習'
+        : fixes.sectionTitles[q.sectionKey];
     if (!title) {
       console.error(
         `小節 ${q.sectionKey} 缺少標題，請補 import-fixes.json 的 sectionTitles`,
@@ -186,8 +233,14 @@ for (const q of questions) {
     sections.set(q.sectionKey, {
       key: q.sectionKey,
       chapterCode: q.chapterCode,
-      title: `${q.sectionKey} ${title}`,
-      sortOrder: Number.parseInt(q.sectionKey.split('-')[1], 10),
+      title:
+        q.bankKind === 'chapter'
+          ? `${q.sectionKey.split('-')[0]} 章節總複習`
+          : `${q.sectionKey} ${title}`,
+      sortOrder:
+        q.bankKind === 'chapter'
+          ? 999
+          : Number.parseInt(q.sectionKey.split('-')[1], 10),
       id: deterministicUuid('section', q.sectionKey),
       subtopicId: deterministicUuid('subtopic', q.sectionKey),
     });
@@ -206,7 +259,11 @@ const sectionValues = [...sections.values()].map(
   (s) =>
     `  (${sqlText(s.id)}, ${sqlText(CHAPTER_IDS[s.chapterCode])}, ${sqlText(`sheet-${s.key}`)}, ${sqlText(s.title)}, '', 'published', ${s.sortOrder})`,
 );
-lines.push(`${sectionValues.join(',\n')};`, '');
+lines.push(
+  `${sectionValues.join(',\n')}`,
+  'on conflict (id) do update set title = excluded.title, status = excluded.status, sort_order = excluded.sort_order;',
+  '',
+);
 lines.push(
   'insert into public.subtopics (id, section_id, stable_code, title, description, status, sort_order)',
   'values',
@@ -215,24 +272,89 @@ const subtopicValues = [...sections.values()].map(
   (s) =>
     `  (${sqlText(s.subtopicId)}, ${sqlText(s.id)}, ${sqlText(`sheet-${s.key}-all`)}, ${sqlText(s.title)}, '', 'published', 1)`,
 );
-lines.push(`${subtopicValues.join(',\n')};`, '');
-
 lines.push(
-  'insert into public.questions (id, subtopic_id, stable_code, prompt, explanation, status, sort_order)',
-  'values',
+  `${subtopicValues.join(',\n')}`,
+  'on conflict (id) do update set title = excluded.title, status = excluded.status, sort_order = excluded.sort_order;',
+  '',
 );
-const sortWithinSubtopic = new Map();
+
+const sectionTemplateValues = [...sections.values()]
+  .filter((section) =>
+    questions.some(
+      (question) =>
+        question.sectionKey === section.key && question.bankKind === 'section',
+    ),
+  )
+  .map((section) => {
+    const templateId = deterministicUuid('quiz-template', section.key);
+    const chapterNumber = section.key.split('-')[0];
+    const sectionNumber = section.key.split('-')[1];
+    const count = questions.filter(
+      (question) =>
+        question.sectionKey === section.key && question.bankKind === 'section',
+    ).length;
+    return `  (${sqlText(templateId)}, ${sqlText(CHAPTER_IDS[section.chapterCode])}, ${sqlText(section.id)}, ${sqlText(`section-${section.key}-challenge`)}, ${sqlText(`${chapterNumber}-${sectionNumber} 小節挑戰`)}, ${Math.min(10, count)}, 'published')`;
+  });
+if (sectionTemplateValues.length > 0) {
+  lines.push(
+    'insert into public.quiz_templates (id, chapter_id, section_id, stable_code, title, question_count, status)',
+    'values',
+    `${sectionTemplateValues.join(',\n')}`,
+    'on conflict (id) do update set section_id = excluded.section_id, title = excluded.title, question_count = excluded.question_count, status = excluded.status;',
+    '',
+  );
+}
+
 const questionValues = questions.map((q) => {
   const s = sections.get(q.sectionKey);
-  const nextSort = (sortWithinSubtopic.get(q.sectionKey) ?? 0) + 1;
-  sortWithinSubtopic.set(q.sectionKey, nextSort);
-  return `  (${sqlText(deterministicUuid('question', q.code))}, ${sqlText(s.subtopicId)}, ${sqlText(q.code)}, ${sqlText(q.prompt)}, ${sqlText(q.explanation)}, 'published', ${nextSort})`;
+  const nextSort = q.order;
+  return `  (${sqlText(deterministicUuid('question', q.code))}, ${sqlText(s.subtopicId)}, ${sqlText(q.code)}, ${sqlText(q.bankKind)}, ${sqlText(q.prompt)}, ${sqlText(q.explanation)}, 'published', ${nextSort})`;
 });
+const questionGuardValues = questions.map((q) => {
+  const section = sections.get(q.sectionKey);
+  const options = q.options.map(([key, text], index) => ({
+    is_correct: key === q.answer,
+    key,
+    sort_order: index + 1,
+    text,
+  }));
+  return `  (${sqlText(deterministicUuid('question', q.code))}, ${sqlText(section.subtopicId)}, ${sqlText(q.code)}, ${sqlText(q.bankKind)}, ${sqlText(q.prompt)}, ${sqlText(q.explanation)}, ${q.order}, ${sqlText(JSON.stringify(options))}::jsonb)`;
+});
+lines.push(
+  'do $$',
+  'begin',
+  '  if exists (',
+  '    with incoming (id, subtopic_id, stable_code, bank_kind, prompt, explanation, sort_order, options) as (',
+  '      values',
+  questionGuardValues.join(',\n'),
+  '    )',
+  '    select 1',
+  '    from incoming',
+  '    join public.questions existing',
+  '      on existing.id = incoming.id::uuid or existing.stable_code = incoming.stable_code',
+  "    where existing.status <> 'published'",
+  '      or row(existing.subtopic_id, existing.stable_code, existing.bank_kind, existing.prompt, existing.explanation, existing.sort_order)',
+  '        is distinct from row(incoming.subtopic_id::uuid, incoming.stable_code, incoming.bank_kind, incoming.prompt, incoming.explanation, incoming.sort_order)',
+  '      or coalesce((',
+  "        select jsonb_agg(jsonb_build_object('key', option.option_key, 'text', option.option_text, 'is_correct', option.is_correct, 'sort_order', option.sort_order) order by option.sort_order)",
+  '        from public.question_options option where option.question_id = existing.id',
+  "      ), '[]'::jsonb) is distinct from incoming.options",
+  '  ) then',
+  "    raise exception using errcode = 'P0001', message = 'CONTENT_VERSION_REQUIRED';",
+  '  end if;',
+  'end',
+  '$$;',
+  '',
+);
+lines.push(
+  'insert into public.questions (id, subtopic_id, stable_code, bank_kind, prompt, explanation, status, sort_order)',
+  'values',
+);
 const firstSubtopicId = [...sections.values()][0].subtopicId;
 questionValues.push(
-  `  (${sqlText(deterministicUuid('question', DRAFT_RLS_QUESTION.code))}, ${sqlText(firstSubtopicId)}, ${sqlText(DRAFT_RLS_QUESTION.code)}, ${sqlText(DRAFT_RLS_QUESTION.prompt)}, ${sqlText(DRAFT_RLS_QUESTION.explanation)}, 'draft', 99)`,
+  `  (${sqlText(deterministicUuid('question', DRAFT_RLS_QUESTION.code))}, ${sqlText(firstSubtopicId)}, ${sqlText(DRAFT_RLS_QUESTION.code)}, 'legacy', ${sqlText(DRAFT_RLS_QUESTION.prompt)}, ${sqlText(DRAFT_RLS_QUESTION.explanation)}, 'draft', 99)`,
 );
-lines.push(`${questionValues.join(',\n')};`, '');
+lines.push(`${questionValues.join(',\n')}`, 'on conflict do nothing;', '');
 
 lines.push(
   'insert into public.question_options (question_id, option_key, option_text, is_correct, sort_order)',
@@ -252,7 +374,7 @@ for (const [index, option] of DRAFT_RLS_QUESTION.options.entries()) {
     `  (${sqlText(deterministicUuid('question', DRAFT_RLS_QUESTION.code))}, ${sqlText(option.key)}, ${sqlText(option.text)}, ${option.correct ? 'true' : 'false'}, ${index + 1})`,
   );
 }
-lines.push(`${optionValues.join(',\n')};`, '');
+lines.push(`${optionValues.join(',\n')}`, 'on conflict do nothing;', '');
 
 const chapterTitleOverrides = Object.entries(fixes.chapterTitles ?? {}).filter(
   ([key]) => key !== '$comment',
@@ -289,7 +411,9 @@ const hintDraftEntries = Object.entries(fixes.hintDrafts ?? {}).filter(
 );
 const hintValues = [];
 for (const [code, hintLevels] of hintDraftEntries) {
-  const question = questions.find((q) => q.code === code);
+  const question = questions.find(
+    (q) => q.code === code || legacyAlias(q.code) === code,
+  );
   if (!question) {
     console.error(`hintDrafts 的題號 ${code} 不在本次匯入的題目中`);
     process.exit(1);
@@ -319,7 +443,7 @@ for (const [code, hintLevels] of hintDraftEntries) {
   }
   hintLevels.forEach((content, index) => {
     hintValues.push(
-      `  (${sqlText(deterministicUuid('question', code))}, 1, ${index + 1}, ${sqlText(content)})`,
+      `  (${sqlText(deterministicUuid('question', question.code))}, 1, ${index + 1}, ${sqlText(content)})`,
     );
   });
 }
@@ -333,7 +457,8 @@ if (hintValues.length > 0) {
   hintLines.push(
     'insert into public.question_hints (question_id, question_version, hint_level, content)',
     'values',
-    `${hintValues.join(',\n')};`,
+    `${hintValues.join(',\n')}`,
+    'on conflict do nothing;',
     '',
   );
 }
@@ -360,8 +485,17 @@ await writeFormattedOutput({
 });
 
 const chapterCounts = new Map();
+const bankCounts = { chapter: 0, section: 0 };
 for (const q of questions) {
-  chapterCounts.set(q.chapterCode, (chapterCounts.get(q.chapterCode) ?? 0) + 1);
+  if (q.bankKind === 'chapter' || q.bankKind === 'section') {
+    bankCounts[q.bankKind] += 1;
+  }
+  if (q.bankKind === 'chapter') {
+    chapterCounts.set(
+      q.chapterCode,
+      (chapterCounts.get(q.chapterCode) ?? 0) + 1,
+    );
+  }
 }
 
 const manifestEntries = Object.keys(CHAPTER_IDS).map((chapterCode) => {
@@ -399,7 +533,9 @@ const hintFixtureLines = [
   '  readonly string[]',
   '> = new Map([',
   ...hintDraftEntries.map(([code, hintLevels]) => {
-    const question = questions.find((q) => q.code === code);
+    const question = questions.find(
+      (q) => q.code === code || legacyAlias(q.code) === code,
+    );
     return `  [${JSON.stringify(question.prompt)}, ${JSON.stringify(hintLevels)}],`;
   }),
   ']);',
@@ -414,30 +550,29 @@ const reviewLines = [
   '',
   `產生時間：${new Date().toISOString()}`,
   '',
-  `已匯入 ${questions.length} 題（published）：${[...chapterCounts.entries()]
-    .map(([chapterName, count]) => `${chapterName} ${count} 題`)
-    .join('、')}。`,
+  `已產生 ${questions.length} 題的 published 匯入資料：QB 小節題庫 ${bankCounts.section} 題、CR 章節總題庫 ${bankCounts.chapter} 題。`,
   '',
   '## 需要教師處理的項目',
   '',
   '### 跳過的列（請在試算表修正後重跑 `pnpm content:import`）',
   ...skipped.map((s) => `- ${s.code}：${s.reason}`),
   '',
-  '### 自動改號',
-  ...renamed.map(
-    (r) => `- ${r.from} 第二次出現 → 已改為 ${r.to}（請同步修正試算表）`,
-  ),
-  '',
   '### 標準答案待確認',
-  ...Object.entries(fixes.reviewFlags).map(
-    ([code, note]) => `- ${code}：${note}`,
-  ),
+  '- 無。最新版 Sheet 結構 gate 為 0 error／0 warning；QB3238 與 QB3239 題幹相同但選項組不同，依 owner 裁定保留為兩題。',
   '',
   '### 章節對應',
-  ...Object.entries(fixes.chapterMap).map(
-    ([sheetChapter, chapterCode]) =>
-      `- 試算表第 ${sheetChapter} 章 → 平台 ${chapterCode}`,
-  ),
+  ...Object.entries(fixes.chapterMap)
+    .filter(([sheetChapter]) => sheetChapter !== '$comment')
+    .map(
+      ([sheetChapter, chapterCode]) =>
+        `- 試算表第 ${sheetChapter} 章 → 平台 ${chapterCode}`,
+    ),
+  '',
+  '## Stable code disposition ledger',
+  '',
+  'Disposition `owner_ssot_accepted` 表示此 stable code 來自 owner 維護的最新版 Google Sheet，並已通過本次結構 gate；不是代理自行改寫或補題。',
+  '',
+  ...questions.map((q) => `- ${q.code}: owner_ssot_accepted`),
   '',
   `## AI 起草的解析（共 ${usedDraftExplanations.length} 題，請審閱後填回試算表）`,
   '',
@@ -469,12 +604,10 @@ console.log(
   `匯入完成：${questions.length} 題 published、1 題 draft（RLS 測試用）。`,
 );
 console.log(
-  [...chapterCounts.entries()]
-    .map(([chapterName, count]) => `${chapterName}: ${count} 題`)
-    .join('\n'),
+  `QB 小節題庫：${bankCounts.section} 題\nCR 章節總題庫：${bankCounts.chapter} 題`,
 );
 console.log(
-  `跳過 ${skipped.length} 列、改號 ${renamed.length} 筆、解析草稿 ${usedDraftExplanations.length} 題。`,
+  `跳過 ${skipped.length} 列、解析草稿 ${usedDraftExplanations.length} 題。`,
 );
 console.log(
   '輸出：supabase/seeds/content-questions.sql、tests/fixtures/question-answers.generated.ts、docs/content/import-review.md',

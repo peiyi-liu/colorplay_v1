@@ -124,6 +124,7 @@ describe('learning repository', () => {
       data: [
         {
           id: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+          quiz_template_id: '26000000-0000-0000-0000-000000003101',
           sort_order: 1,
           stable_code: 'sheet-3-1',
           subtopics: [
@@ -176,5 +177,126 @@ describe('learning repository', () => {
       ],
       title: '有彩色與無彩色',
     });
+    expect(sections[0]?.quizTemplateId).toBe(
+      '26000000-0000-0000-0000-000000003101',
+    );
+  });
+
+  it('signs a published review-card Storage object path against the connected Supabase project', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+          quiz_template_id: '26000000-0000-0000-0000-000000003101',
+          sort_order: 1,
+          stable_code: 'sheet-3-1',
+          subtopics: [
+            {
+              id: 'f929cde5-c294-46ce-5faf-c866b3cb9583',
+              review_cards: [
+                {
+                  content: '內容',
+                  group_label: '色彩的分類',
+                  id: '25400000-0000-0000-0000-000000000006',
+                  requires_recompletion: false,
+                  review_card_media: [
+                    {
+                      alt_text: 'P301 色彩三要素示意圖',
+                      asset_path: 'review-card-media/chapter-3/P301.webp',
+                      sort_order: 1,
+                    },
+                  ],
+                  sort_order: 1,
+                  title: '有彩色與無彩色',
+                  version: 1,
+                },
+              ],
+              sort_order: 1,
+              stable_code: 'sheet-3-1-all',
+              title: '3-1 色彩三要素與色名的表示',
+            },
+          ],
+          title: '3-1 色彩三要素與色名的表示',
+        },
+      ],
+      error: null,
+    });
+    const createSignedUrl = vi.fn().mockResolvedValue({
+      data: {
+        signedUrl:
+          'https://staging.supabase.test/storage/v1/object/sign/review-card-media/chapter-3/P301.webp?token=short-lived',
+      },
+      error: null,
+    });
+    const from = vi.fn().mockReturnValue({ createSignedUrl });
+    const client = {
+      rpc,
+      storage: { from },
+    } as unknown as SupabaseClient<Database>;
+
+    const sections = await createLearningRepository(client).listChapterReview(
+      '21000000-0000-0000-0000-000000000003',
+    );
+
+    expect(from).toHaveBeenCalledWith('review-card-media');
+    expect(createSignedUrl).toHaveBeenCalledWith('chapter-3/P301.webp', 3600);
+    expect(sections[0]?.subtopics[0]?.cards[0]?.media[0]?.assetPath).toBe(
+      'https://staging.supabase.test/storage/v1/object/sign/review-card-media/chapter-3/P301.webp?token=short-lived',
+    );
+  });
+
+  it('fails closed when a private review-card media URL cannot be signed', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+          quiz_template_id: null,
+          sort_order: 1,
+          stable_code: 'sheet-3-1',
+          subtopics: [
+            {
+              id: 'f929cde5-c294-46ce-5faf-c866b3cb9583',
+              review_cards: [
+                {
+                  content: '內容',
+                  group_label: '',
+                  id: '25400000-0000-0000-0000-000000000006',
+                  requires_recompletion: false,
+                  review_card_media: [
+                    {
+                      alt_text: '示意圖',
+                      asset_path: 'review-card-media/chapter-3/P301.webp',
+                      sort_order: 1,
+                    },
+                  ],
+                  sort_order: 1,
+                  title: '標題',
+                  version: 1,
+                },
+              ],
+              sort_order: 1,
+              stable_code: 'sheet-3-1-all',
+              title: '3-1',
+            },
+          ],
+          title: '3-1',
+        },
+      ],
+      error: null,
+    });
+    const createSignedUrl = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message: 'denied' },
+    });
+    const client = {
+      rpc,
+      storage: { from: vi.fn().mockReturnValue({ createSignedUrl }) },
+    } as unknown as SupabaseClient<Database>;
+
+    await expect(
+      createLearningRepository(client).listChapterReview(
+        '21000000-0000-0000-0000-000000000003',
+      ),
+    ).rejects.toMatchObject({ code: 'UNAVAILABLE' });
   });
 });

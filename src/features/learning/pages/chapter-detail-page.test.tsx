@@ -93,6 +93,7 @@ const mapResult = (entry = chapterMapEntry()) =>
 const sections = [
   {
     sectionId: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+    quizTemplateId: '26000000-0000-0000-0000-000000003101',
     sortOrder: 1,
     stableCode: 'sheet-3-1',
     subtopics: [
@@ -287,9 +288,10 @@ describe('ChapterDetailPage', () => {
       'href',
       '/app/quiz/new?template=26000000-0000-0000-0000-000000000003',
     );
-    expect(
-      screen.getByRole('button', { name: /小節挑戰.*題庫準備中/u }),
-    ).toBeDisabled();
+    expect(screen.getByRole('link', { name: '小節挑戰' })).toHaveAttribute(
+      'href',
+      '/app/quiz/new?template=26000000-0000-0000-0000-000000003101',
+    );
     expect(screen.queryByText('開始挑戰')).not.toBeInTheDocument();
     expect(
       screen.getByRole('region', {
@@ -378,10 +380,11 @@ describe('ChapterDetailPage', () => {
     expect(within(footer).queryByLabelText('章節進度')).toBeNull();
     expect(within(footer).queryByText(/挑戰/u)).not.toBeInTheDocument();
     expect(
-      within(subtopicMenu).getByRole('button', {
-        name: /小節挑戰.*題庫準備中/u,
-      }),
-    ).toBeDisabled();
+      within(subtopicMenu).getByRole('link', { name: '小節挑戰' }),
+    ).toHaveAttribute(
+      'href',
+      '/app/quiz/new?template=26000000-0000-0000-0000-000000003101',
+    );
     expect(
       within(subtopicMenu).getByRole('link', { name: '章節總挑戰' }),
     ).toHaveAttribute(
@@ -587,6 +590,7 @@ describe('ChapterDetailPage', () => {
   it('多個小節全部列在目錄，且一次只呈現選取的小節', async () => {
     const overflowSection = {
       sectionId: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+      quizTemplateId: '26000000-0000-0000-0000-000000003101',
       sortOrder: 1,
       stableCode: 'sheet-3-1',
       // 至少一張卡才不會觸發 content-readiness-error(章節整體無卡片時的

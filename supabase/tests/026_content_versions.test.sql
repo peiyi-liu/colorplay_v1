@@ -86,7 +86,7 @@ insert into public.content_versions (
 values (
   '26200000-0000-0000-0000-000000000001',
   'question',
-  (select id from public.questions where stable_code = '3-1-01'),
+  (select id from public.questions where stable_code = 'QB3101'),
   1,
   '{"prompt":"快照"}',
   'deadbeef', 'published',
@@ -99,7 +99,7 @@ insert into public.content_publication_events (
 values (
   '26300000-0000-0000-0000-000000000001',
   'question',
-  (select id from public.questions where stable_code = '3-1-01'),
+  (select id from public.questions where stable_code = 'QB3101'),
   1, 'publish',
   '26100000-0000-0000-0000-000000000001',
   '26400000-0000-0000-0000-000000000001'

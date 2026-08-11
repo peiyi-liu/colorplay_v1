@@ -1600,6 +1600,7 @@ export type Database = {
       }
       questions: {
         Row: {
+          bank_kind: string
           created_at: string
           explanation: string
           id: string
@@ -1613,6 +1614,7 @@ export type Database = {
           version: number
         }
         Insert: {
+          bank_kind?: string
           created_at?: string
           explanation: string
           id?: string
@@ -1626,6 +1628,7 @@ export type Database = {
           version?: number
         }
         Update: {
+          bank_kind?: string
           created_at?: string
           explanation?: string
           id?: string
@@ -1918,6 +1921,7 @@ export type Database = {
           created_at: string
           id: string
           question_count: number
+          section_id: string | null
           stable_code: string
           status: Database["public"]["Enums"]["content_status"]
           title: string
@@ -1928,6 +1932,7 @@ export type Database = {
           created_at?: string
           id?: string
           question_count?: number
+          section_id?: string | null
           stable_code: string
           status?: Database["public"]["Enums"]["content_status"]
           title: string
@@ -1938,6 +1943,7 @@ export type Database = {
           created_at?: string
           id?: string
           question_count?: number
+          section_id?: string | null
           stable_code?: string
           status?: Database["public"]["Enums"]["content_status"]
           title?: string
@@ -1949,6 +1955,13 @@ export type Database = {
             columns: ["chapter_id"]
             isOneToOne: false
             referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_templates_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
             referencedColumns: ["id"]
           },
         ]
@@ -3476,4 +3489,3 @@ export const Constants = {
     },
   },
 } as const
-

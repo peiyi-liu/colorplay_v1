@@ -1,23 +1,16 @@
 # 題庫匯入審閱報告
 
-產生時間：2026-08-08T08:47:17.048Z
+產生時間：2026-08-11T15:22:25.923Z
 
-已匯入 62 題（published）：chapter-1 3 題、chapter-2 4 題、chapter-3 37 題、chapter-4 12 題、chapter-5 3 題、chapter-6 3 題。
+已產生 203 題的 published 匯入資料：QB 小節題庫 139 題、CR 章節總題庫 64 題。
 
 ## 需要教師處理的項目
 
 ### 跳過的列（請在試算表修正後重跑 `pnpm content:import`）
 
-### 自動改號
-
 ### 標準答案待確認
 
-- $comment：LLM 初篩發現、待教師裁定或已裁定的項目。已裁定為『非缺失』的項目保留紀錄以避免重跑審查時重複誤報，不代表仍需修表。
-- 3-1-10：選項D「黑色」為無彩色、非純色，2026-08-08 教師確認為刻意設計（保留作為干擾選項），非缺失，不需修改。錯字「和者→何者」已修正
-- 3-2-02：題幹「某色色相環上是舉足輕重的色彩」漏字，應為「某色『在』色相環上」（2026-08-08 初篩，2026-08-08 複查仍未修，請修表）
-- 3-3-03：DIC 與 TOYO 均為印刷油墨色票，題目與標準答案（B）的分類依據建議再確認
-- 4-1-09：解析稱柱狀細胞反應速度比錐狀細胞快，與一般生理學認知（桿狀細胞時間解析度較低、反應較慢）有出入，2026-08-08 教師確認課本原文如此，非轉錄錯誤，不需修改
-- 4-1-08：正解B「柱狀細胞平均分布在視網膜上」，但解析以消去法措辭承認非完美正確，且與桿狀細胞於中心窩缺乏分布的生理事實是否一致待教師確認
+- 無。最新版 Sheet 結構 gate 為 0 error／0 warning；QB3238 與 QB3239 題幹相同但選項組不同，依 owner 裁定保留為兩題。
 
 ### 章節對應
 
@@ -27,7 +20,214 @@
 - 試算表第 4 章 → 平台 chapter-4
 - 試算表第 5 章 → 平台 chapter-5
 - 試算表第 6 章 → 平台 chapter-6
-- 試算表第 $comment 章 → 平台 試算表章節編號 → 平台章節 stable_code。改這裡後重跑 pnpm content:import 即可。
+
+## Stable code disposition ledger
+
+Disposition `owner_ssot_accepted` 表示此 stable code 來自 owner 維護的最新版 Google Sheet，並已通過本次結構 gate；不是代理自行改寫或補題。
+
+- QB1101: owner_ssot_accepted
+- QB1201: owner_ssot_accepted
+- QB1301: owner_ssot_accepted
+- QB2101: owner_ssot_accepted
+- QB2201: owner_ssot_accepted
+- QB2301: owner_ssot_accepted
+- QB2401: owner_ssot_accepted
+- QB3101: owner_ssot_accepted
+- QB3102: owner_ssot_accepted
+- QB3103: owner_ssot_accepted
+- QB3104: owner_ssot_accepted
+- QB3105: owner_ssot_accepted
+- QB3106: owner_ssot_accepted
+- QB3107: owner_ssot_accepted
+- QB3108: owner_ssot_accepted
+- QB3109: owner_ssot_accepted
+- QB3110: owner_ssot_accepted
+- QB3111: owner_ssot_accepted
+- QB3112: owner_ssot_accepted
+- QB3113: owner_ssot_accepted
+- QB3114: owner_ssot_accepted
+- QB3115: owner_ssot_accepted
+- QB3116: owner_ssot_accepted
+- QB3117: owner_ssot_accepted
+- QB3118: owner_ssot_accepted
+- QB3119: owner_ssot_accepted
+- QB3120: owner_ssot_accepted
+- QB3121: owner_ssot_accepted
+- QB3122: owner_ssot_accepted
+- QB3123: owner_ssot_accepted
+- QB3124: owner_ssot_accepted
+- QB3125: owner_ssot_accepted
+- QB3126: owner_ssot_accepted
+- QB3201: owner_ssot_accepted
+- QB3202: owner_ssot_accepted
+- QB3203: owner_ssot_accepted
+- QB3204: owner_ssot_accepted
+- QB3205: owner_ssot_accepted
+- QB3206: owner_ssot_accepted
+- QB3207: owner_ssot_accepted
+- QB3208: owner_ssot_accepted
+- QB3209: owner_ssot_accepted
+- QB3210: owner_ssot_accepted
+- QB3211: owner_ssot_accepted
+- QB3212: owner_ssot_accepted
+- QB3213: owner_ssot_accepted
+- QB3214: owner_ssot_accepted
+- QB3215: owner_ssot_accepted
+- QB3216: owner_ssot_accepted
+- QB3217: owner_ssot_accepted
+- QB3218: owner_ssot_accepted
+- QB3219: owner_ssot_accepted
+- QB3220: owner_ssot_accepted
+- QB3221: owner_ssot_accepted
+- QB3222: owner_ssot_accepted
+- QB3223: owner_ssot_accepted
+- QB3224: owner_ssot_accepted
+- QB3225: owner_ssot_accepted
+- QB3226: owner_ssot_accepted
+- QB3227: owner_ssot_accepted
+- QB3228: owner_ssot_accepted
+- QB3229: owner_ssot_accepted
+- QB3230: owner_ssot_accepted
+- QB3231: owner_ssot_accepted
+- QB3232: owner_ssot_accepted
+- QB3233: owner_ssot_accepted
+- QB3234: owner_ssot_accepted
+- QB3235: owner_ssot_accepted
+- QB3236: owner_ssot_accepted
+- QB3237: owner_ssot_accepted
+- QB3238: owner_ssot_accepted
+- QB3239: owner_ssot_accepted
+- QB3240: owner_ssot_accepted
+- QB3241: owner_ssot_accepted
+- QB3242: owner_ssot_accepted
+- QB3243: owner_ssot_accepted
+- QB3244: owner_ssot_accepted
+- QB3245: owner_ssot_accepted
+- QB3246: owner_ssot_accepted
+- QB3247: owner_ssot_accepted
+- QB3248: owner_ssot_accepted
+- QB3249: owner_ssot_accepted
+- QB3250: owner_ssot_accepted
+- QB3251: owner_ssot_accepted
+- QB3252: owner_ssot_accepted
+- QB3253: owner_ssot_accepted
+- QB3254: owner_ssot_accepted
+- QB3255: owner_ssot_accepted
+- QB3256: owner_ssot_accepted
+- QB3257: owner_ssot_accepted
+- QB3258: owner_ssot_accepted
+- QB3259: owner_ssot_accepted
+- QB3260: owner_ssot_accepted
+- QB3261: owner_ssot_accepted
+- QB3262: owner_ssot_accepted
+- QB3263: owner_ssot_accepted
+- QB3264: owner_ssot_accepted
+- QB3265: owner_ssot_accepted
+- QB3301: owner_ssot_accepted
+- QB3302: owner_ssot_accepted
+- QB3303: owner_ssot_accepted
+- QB3304: owner_ssot_accepted
+- QB3305: owner_ssot_accepted
+- QB3306: owner_ssot_accepted
+- QB3307: owner_ssot_accepted
+- QB3308: owner_ssot_accepted
+- QB3309: owner_ssot_accepted
+- QB3310: owner_ssot_accepted
+- QB3311: owner_ssot_accepted
+- QB3312: owner_ssot_accepted
+- QB3313: owner_ssot_accepted
+- QB3314: owner_ssot_accepted
+- QB3315: owner_ssot_accepted
+- QB3316: owner_ssot_accepted
+- QB3317: owner_ssot_accepted
+- QB3318: owner_ssot_accepted
+- QB3319: owner_ssot_accepted
+- QB3320: owner_ssot_accepted
+- QB3321: owner_ssot_accepted
+- QB3322: owner_ssot_accepted
+- QB3323: owner_ssot_accepted
+- QB4101: owner_ssot_accepted
+- QB4102: owner_ssot_accepted
+- QB4103: owner_ssot_accepted
+- QB4104: owner_ssot_accepted
+- QB4105: owner_ssot_accepted
+- QB4106: owner_ssot_accepted
+- QB4107: owner_ssot_accepted
+- QB4108: owner_ssot_accepted
+- QB4109: owner_ssot_accepted
+- QB4201: owner_ssot_accepted
+- QB4301: owner_ssot_accepted
+- QB4401: owner_ssot_accepted
+- QB5101: owner_ssot_accepted
+- QB5201: owner_ssot_accepted
+- QB5301: owner_ssot_accepted
+- QB6101: owner_ssot_accepted
+- QB6201: owner_ssot_accepted
+- QB6301: owner_ssot_accepted
+- CR3001: owner_ssot_accepted
+- CR3002: owner_ssot_accepted
+- CR3003: owner_ssot_accepted
+- CR3004: owner_ssot_accepted
+- CR3005: owner_ssot_accepted
+- CR3006: owner_ssot_accepted
+- CR3007: owner_ssot_accepted
+- CR3008: owner_ssot_accepted
+- CR3009: owner_ssot_accepted
+- CR3010: owner_ssot_accepted
+- CR3011: owner_ssot_accepted
+- CR3012: owner_ssot_accepted
+- CR3013: owner_ssot_accepted
+- CR3014: owner_ssot_accepted
+- CR3015: owner_ssot_accepted
+- CR3016: owner_ssot_accepted
+- CR3017: owner_ssot_accepted
+- CR3018: owner_ssot_accepted
+- CR3019: owner_ssot_accepted
+- CR3020: owner_ssot_accepted
+- CR3021: owner_ssot_accepted
+- CR3022: owner_ssot_accepted
+- CR3023: owner_ssot_accepted
+- CR3024: owner_ssot_accepted
+- CR3025: owner_ssot_accepted
+- CR3026: owner_ssot_accepted
+- CR3027: owner_ssot_accepted
+- CR3028: owner_ssot_accepted
+- CR3029: owner_ssot_accepted
+- CR3030: owner_ssot_accepted
+- CR3031: owner_ssot_accepted
+- CR3032: owner_ssot_accepted
+- CR3033: owner_ssot_accepted
+- CR3034: owner_ssot_accepted
+- CR3035: owner_ssot_accepted
+- CR3036: owner_ssot_accepted
+- CR3037: owner_ssot_accepted
+- CR3038: owner_ssot_accepted
+- CR3039: owner_ssot_accepted
+- CR3040: owner_ssot_accepted
+- CR3041: owner_ssot_accepted
+- CR3042: owner_ssot_accepted
+- CR3043: owner_ssot_accepted
+- CR3044: owner_ssot_accepted
+- CR3045: owner_ssot_accepted
+- CR3046: owner_ssot_accepted
+- CR3047: owner_ssot_accepted
+- CR3048: owner_ssot_accepted
+- CR3049: owner_ssot_accepted
+- CR3050: owner_ssot_accepted
+- CR3051: owner_ssot_accepted
+- CR3052: owner_ssot_accepted
+- CR3053: owner_ssot_accepted
+- CR3054: owner_ssot_accepted
+- CR3055: owner_ssot_accepted
+- CR3056: owner_ssot_accepted
+- CR3057: owner_ssot_accepted
+- CR3058: owner_ssot_accepted
+- CR3059: owner_ssot_accepted
+- CR3060: owner_ssot_accepted
+- CR3061: owner_ssot_accepted
+- CR3062: owner_ssot_accepted
+- CR3063: owner_ssot_accepted
+- CR3064: owner_ssot_accepted
 
 ## AI 起草的解析（共 0 題，請審閱後填回試算表）
 

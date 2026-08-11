@@ -4,7 +4,8 @@
  * 規則依 spec/06 §5（發布驗證）、§8（正解解析）。
  */
 
-export const QUESTION_CODE_PATTERN = /^[0-9]+-[0-9]+-[0-9]{2}$/u;
+export const QUESTION_CODE_PATTERN =
+  /^(?:[0-9]+-[0-9]+-[0-9]{2}|QB[1-9][1-9][0-9]{2}|CR[1-9][0-9]{3})$/u;
 
 export const TEXT_LIMITS = Object.freeze({
   explanation: 2000,
@@ -22,6 +23,44 @@ export const hasUnsafeText = (value) =>
 
 export const isValidQuestionCode = (code) =>
   typeof code === 'string' && QUESTION_CODE_PATTERN.test(code);
+
+export function parseQuestionIdentifier(code) {
+  if (typeof code !== 'string') return null;
+  const sectionMatch = /^QB([1-9])([1-9])([0-9]{2})$/u.exec(code);
+  if (sectionMatch) {
+    const [, chapter, section, order] = sectionMatch;
+    return {
+      chapter,
+      order: Number.parseInt(order, 10),
+      scope: 'section',
+      section,
+      sectionKey: `${chapter}-${section}`,
+    };
+  }
+  const chapterMatch = /^CR([1-9])([0-9]{3})$/u.exec(code);
+  if (chapterMatch) {
+    const [, chapter, order] = chapterMatch;
+    return {
+      chapter,
+      order: Number.parseInt(order, 10),
+      scope: 'chapter',
+      section: null,
+      sectionKey: `${chapter}-final`,
+    };
+  }
+  const legacyMatch = /^([0-9]+)-([0-9]+)-([0-9]{2})$/u.exec(code);
+  if (legacyMatch) {
+    const [, chapter, section, order] = legacyMatch;
+    return {
+      chapter,
+      order: Number.parseInt(order, 10),
+      scope: 'legacy',
+      section,
+      sectionKey: `${chapter}-${section}`,
+    };
+  }
+  return null;
+}
 
 const answerAliases = Object.freeze({
   1: 'A',
