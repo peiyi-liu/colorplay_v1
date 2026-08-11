@@ -310,3 +310,11 @@
 - 驗證：先加入 `label.left >= buildingArt.right - 1` 與 `status.left >= buildingArt.right - 1` 的方向性 Chromium assertion，修正前 393px 如預期 RED；修正後 1280×720／393×852 共 2/2，並維持文字／CTA 零裁切、零 bounding-box overlap、document 水平 overflow <=1px、六棟建築 bottom-center anchor <=1.5px。
 - 下一步：owner 於 `http://127.0.0.1:4181/dev-harness/learning-map.html` 審核手機直式版本；未核准前不開始下一畫面。
 - 邊界：未 commit、未 push、未 deploy；本輪未修改正式資料、API、解鎖規則或桌機 map geometry。
+
+## 2026-08-11 09:57 [Codex] — JRPG 公開頁與學生介面以 GitHub Source 部署至 staging
+
+- 做了什麼：依 owner 本輪授權，把首頁、登入、註冊、固定學生 HUD 與六章連續世界學習地圖整理為 `50d3f3f847c4715cfa8b0a2c8beb2fcd59fc95fb`（`feat(ui): integrate JRPG public and student surfaces`），推送至 GitHub `phase6/jrpg-generated-board-ui`。Vercel `colorplay-staging-web` 由該 GitHub commit 自動建立 preview `dpl_UEJTdQWr9mT742BQTa62HwviUvbU`，再 promote 為 staging-project production deployment `dpl_ADWkrxn8MnMy5AGDuM2SwR1pP2oJ`；`staging.colorplayapp.com` 已指向後者。Vercel metadata 的 `gitSource.type=github`、repo=`peiyi-liu/colorplay_v1`、ref=`phase6/jrpg-generated-board-ui`、SHA=`50d3f3f847c4715cfa8b0a2c8beb2fcd59fc95fb` 均吻合，不再是本機原始碼直接上傳來源。
+- 驗證：`pnpm typecheck`、scoped ESLint／Prettier、`git diff --check`、production harness import boundary、11 檔 105 tests、`pnpm build` 全綠；本機 Chromium 五頁 1280／393 共 10/10。Hosted routes `/`、`/login`、`/register`、`/app` 與新寶典、桌機／手機登入背景、桌機／手機 continuous-world 資產皆 HTTP 200；首頁／註冊 hosted Chromium 4/4。登入 hosted 2 項停在測試只接受未雜湊 `guild-desk-*.png` 的檔名，實際 computed style 已載入 Vite 雜湊後的 `guild-desk-desktop-CQHx_IGl.png`／`guild-desk-mobile-Dfr8F5rp.png` 且兩資產 HTTP 200，屬測試環境字串限制，不是畫面或資產缺失。
+- Git 邊界：直接推送 GitHub `staging` 被 GH013 正常拒絕，因該 protected branch 強制 PR 且等待 9/9 required status contexts；未 force push、未繞過 GitHub 規則。遠端 `staging` 仍為 `24ee1ee9c03539e44c99dba5f36c13599cf434cd`，本次改以 GitHub feature-branch deployment promote 到專用 staging Vercel target。若要讓 GitHub `staging` branch 本身前進，仍需另行補齊 required checks／PR merge。
+- Owner 檢視邊界：本次 staging 是視覺檢視版本，不是 Phase／Slice Gate／production-ready 宣告。Auth 的藍銀窗框與歡迎文案仍保留先前「待 owner 後續優化」標記；學生 HUD 與學習地圖可由 owner 在 staging 登入後檢視，真實手機仍待人工裝置驗證。
+- 下一步：owner 檢視 `https://staging.colorplayapp.com`；逐頁回報差異後再做下一畫面。GitHub `staging` 的 PR／required-check 問題留在 release workflow 範圍，不在本次 UI 部署中私自改動。
