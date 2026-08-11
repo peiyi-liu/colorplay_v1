@@ -318,3 +318,11 @@
 - Git 邊界：直接推送 GitHub `staging` 被 GH013 正常拒絕，因該 protected branch 強制 PR 且等待 9/9 required status contexts；未 force push、未繞過 GitHub 規則。遠端 `staging` 仍為 `24ee1ee9c03539e44c99dba5f36c13599cf434cd`，本次改以 GitHub feature-branch deployment promote 到專用 staging Vercel target。若要讓 GitHub `staging` branch 本身前進，仍需另行補齊 required checks／PR merge。
 - Owner 檢視邊界：本次 staging 是視覺檢視版本，不是 Phase／Slice Gate／production-ready 宣告。Auth 的藍銀窗框與歡迎文案仍保留先前「待 owner 後續優化」標記；學生 HUD 與學習地圖可由 owner 在 staging 登入後檢視，真實手機仍待人工裝置驗證。
 - 下一步：owner 檢視 `https://staging.colorplayapp.com`；逐頁回報差異後再做下一畫面。GitHub `staging` 的 PR／required-check 問題留在 release workflow 範圍，不在本次 UI 部署中私自改動。
+
+## 2026-08-11 10:22 [Owner／Codex] — Staging／Production Supabase 映射列為不可違反規則
+
+- Owner 再次明確裁定：`colorplay-staging-web`／`staging.colorplayapp.com` 一律連 `https://onkxnkzeixpezetkmocf.supabase.co`；Production 的 `colorplay-web`／`colorplayapp.com` 才連 `https://xdjumzdqyexpyndanwkp.supabase.co`。兩組 URL／public key 不得交叉混用。此規則已同步補到 `docs/roadmap-colorplay-next.md` 的 Target topology 旁。
+- 根因與修復：原 staging hosted bundle 實測為 `xdjum…` URL 搭配 `onkx…` anon key，E-mail Auth 回 `401 Invalid API key`，一般帳號的 `auth-login` 回 `net::ERR_FAILED`，分別造成「登入失敗，請使用追蹤代碼回報」與「網路連線失敗」。Vercel `colorplay-staging-web` 的 Preview／Production `VITE_SUPABASE_URL` 已明確更新為 `onkx…`，並從 GitHub SHA `9999d0dabbe19e2e7235eac769681c6d29e8e839` 建立全新 production build `dpl_3hNo5tQvWoAnbZgvk6AWn6iC2MqP`；`staging.colorplayapp.com` 已切至該 deployment。
+- 修復證據：hosted bundle `/assets/index-ZCtTZJE_.js` 讀得 host=`onkxnkzeixpezetkmocf.supabase.co`，bundle public-key SHA-256 指紋與 onkx 專案現行 anon key 相符。無效 E-mail 探針收到 `400 invalid_credentials`，無效一般帳號探針收到 `401 AUTH_INVALID_CREDENTIALS`，兩者 UI 都正確顯示「帳號或密碼不正確」，Chromium 2/2。
+- 永久防呆：每次 staging／production Vite deployment 後，驗證「實際 hosted bundle host＋public-key 指紋＋無效憑證 Auth 探針」；不以 HTTP 200、Vercel Ready 或 Dashboard env 當作資料庫連線完成證據。Preview promote 前須先證明 Preview 與目標環境 env 完全一致，否則必須從 GitHub source 建立目標環境的新 build。
+- 邊界：未修改 Supabase schema、資料、RLS、Edge Function 或登入產品碼；本次只修正 Vercel staging env／deployment。Production environment 未觸碰。

@@ -125,6 +125,14 @@ change any product rule beyond what each spec already defines.
 | Staging     | protected `staging` branch | `colorplay-staging-web` | `staging.colorplayapp.com` | existing project ref `onkxnkzeixpezetkmocf`, renamed `colorplay-staging` after the approved reset procedure | approved content plus fixture identities only   |
 | Production  | protected `main`           | `colorplay-web`         | `colorplayapp.com`         | new clean `colorplay-production` project                                                                    | approved content and authorized real users only |
 
+> **Environment invariant（owner re-confirmed 2026-08-11）：**
+> `colorplay-staging-web`／`staging.colorplayapp.com` 的 Supabase URL 與 public
+> key 必須同屬 `onkxnkzeixpezetkmocf`；只有 Production 的
+> `colorplay-web`／`colorplayapp.com` 可使用
+> `xdjumzdqyexpyndanwkp`。兩組 URL／key 禁止交叉混用。Vite deployment 完成後
+> 必須從實際 hosted bundle 驗證 Supabase host；不得只依 Vercel Dashboard
+> 設定推定已生效，也不得把未核對環境的 Preview artifact 直接 promote。
+
 ### Approved CI and deployment approval gates
 
 - A Feature branch enters Staging only through a Pull Request to the protected
