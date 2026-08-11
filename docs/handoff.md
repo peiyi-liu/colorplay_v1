@@ -492,3 +492,9 @@
 - Git 狀態：feature branch 已推到 GitHub `8beb44c`；直接快轉 `HEAD:staging` 被 branch rules 正確拒絕（需 resolved conversations＋9/9 required checks）。既有 PR #5 已自動更新至同一 SHA，`colorplay-staging-web` Git Preview build 顯示 SUCCESS，但尚未合併至 staging／更新 custom domain。
 - 三項 Copilot inline findings 均確認有效並於原 task 唯一 review round 修復：Codex stop hook 改為 repo-relative `bash .codex/hooks/review-gate.sh`；Claude allowlist 移除 `/Users/guanyucheng/...` 本機絕對路徑、保留 `$HOME` 版本；quiz 只有在 `CHAPTER_LOCKED` 建立失敗時才 enable chapter-map query，既有 quiz session 不再多打一支 RPC。
 - TDD／驗證：新增 existing-session query-disabled assertion 先收到 hook 無參數而 RED；GREEN 後 Quiz＋chapter-map hook 14/14、scoped ESLint／Prettier 通過，`.codex`／`.claude` 已無 `/Users/guanyucheng` 命中。待推 remediation commit 後回覆並 resolve 3 個 conversation；9 required contexts 的 workflow 缺口仍是 staging merge 的獨立 blocker。
+
+## 2026-08-11 18:23 [Codex] — 最新 Google Sheet 匯入前 gate 仍阻擋
+
+- 依 owner 指示嚴格採用「先檢查、通過後才匯入」。重新執行 `pnpm content:fetch`，最新版仍取得題目 140 列（其中 1 列為佔位而過濾）與複習卡 8 列。
+- `pnpm content:verify --gate --xlsx artifacts/content/question-bank.xlsx` 結果為結構錯誤 1、人工覆核提示 0：`3-2-38` 與 `3-2-39` 題幹完全重複。這屬教材內容決策，未自行猜改 Sheet SSOT、未略過 gate。
+- 本輪沒有執行 `content:import`、沒有產生或套用新 seed、沒有寫入 staging Supabase `onkxnkzeixpezetkmocf`。下一步需 owner／教師先修正兩題題幹差異，再重抓、重跑 gate；通過後才審查附件映射與執行 staging 匯入／表↔庫 audit。
