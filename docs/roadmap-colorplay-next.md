@@ -135,6 +135,18 @@ change any product rule beyond what each spec already defines.
 
 ### Approved CI and deployment approval gates
 
+> **Pre-deployment test gate (owner decision, 2026-08-11):** no Staging or
+> Production alias/promotion may proceed merely because the build is `READY`,
+> routes return HTTP 200, or invalid credentials fail correctly. Before a
+> Staging deployment is exposed at `staging.colorplayapp.com`, a valid synthetic
+> Staging student identity must complete the real hosted sign-in flow, profile
+> bootstrap, and `/app` entry. A valid synthetic teacher identity must also
+> complete sign-in and enter its real teacher landing route whenever the release
+> changes Auth, App Shell, teacher navigation, permissions, or shared data
+> bootstrap. Production keeps no synthetic login identity: its promotion must
+> use the exact Git SHA that passed the Staging gate, followed by the approved
+> read-only Production smoke. Missing valid-login evidence fails closed.
+
 - A Feature branch enters Staging only through a Pull Request to the protected
   `staging` branch. Required checks cover formatting, lint, typecheck, unit
   coverage, build, a clean Local Supabase replay, pgTAP and integration tests,

@@ -61,6 +61,30 @@ locally, Staging receives the reviewed release candidate, and Production
 requires explicit approval plus pre/post migration checks. A Vercel frontend
 deployment must never push database migrations blindly.
 
+## Pre-deployment authentication gate
+
+Before assigning or promoting `staging.colorplayapp.com`, verify the hosted
+artifact itself, not only dashboard configuration or a local build:
+
+1. Bind the deployment to the intended Git SHA and confirm its hosted bundle
+   contains the Staging Supabase URL and matching public-key fingerprint.
+2. Use a valid synthetic Staging student fixture to sign in through the public
+   login page, complete profile bootstrap, and reach `/app` without required
+   console or network errors.
+3. If the release touches Auth, shared App Shell/bootstrap, teacher navigation,
+   permissions, or teacher UI, repeat the real sign-in flow with a valid
+   synthetic teacher fixture and reach the teacher landing route.
+4. Record the deployment ID, Git SHA, Supabase project ref, fixture role (never
+   its password), route reached, and result before changing the public alias.
+
+An HTTP 200, Vercel `READY`, asset loading, or an invalid-credential probe is
+necessary diagnostic evidence but is not a successful-login test. Any missing
+or failing step blocks the Staging alias/promotion.
+
+Production must not contain synthetic test identities. Promotion instead
+requires the exact Git SHA that passed the Staging gate, explicit owner
+approval, and the approved read-only Production smoke after promotion.
+
 ## Manual setup checklist for Phase 8
 
 1. Connect the public GitHub repository to a Vercel project.

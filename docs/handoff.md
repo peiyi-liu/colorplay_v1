@@ -326,3 +326,11 @@
 - 修復證據：hosted bundle `/assets/index-ZCtTZJE_.js` 讀得 host=`onkxnkzeixpezetkmocf.supabase.co`，bundle public-key SHA-256 指紋與 onkx 專案現行 anon key 相符。無效 E-mail 探針收到 `400 invalid_credentials`，無效一般帳號探針收到 `401 AUTH_INVALID_CREDENTIALS`，兩者 UI 都正確顯示「帳號或密碼不正確」，Chromium 2/2。
 - 永久防呆：每次 staging／production Vite deployment 後，驗證「實際 hosted bundle host＋public-key 指紋＋無效憑證 Auth 探針」；不以 HTTP 200、Vercel Ready 或 Dashboard env 當作資料庫連線完成證據。Preview promote 前須先證明 Preview 與目標環境 env 完全一致，否則必須從 GitHub source 建立目標環境的新 build。
 - 邊界：未修改 Supabase schema、資料、RLS、Edge Function 或登入產品碼；本次只修正 Vercel staging env／deployment。Production environment 未觸碰。
+
+## 2026-08-11 10:29 [Owner／Codex] — 上線前真實登入測試列為硬性閘門
+
+- Owner 裁定：之後任何 Staging／Production 上線或 alias／promotion 前都必須先測試；Vercel `READY`、HTTP 200、資產載入成功、bundle host／key 正確或無效帳密能正確失敗，均不得單獨視為可上線證據。
+- Staging 必測：使用有效的合成學生帳號走公開 hosted 登入頁，完成真實 Auth、profile bootstrap 並成功進入 `/app`；若變更涉及 Auth、共用 App Shell／bootstrap、教師導覽、權限或教師 UI，另以有效合成教師帳號登入並進入正式教師 landing route。證據記錄 deployment ID、Git SHA、Supabase project ref、測試角色與到達 route，不記錄密碼。
+- Production 邊界：Production 不建立合成測試帳號；只允許 promote 已通過上述 Staging 閘門的同一 Git SHA，再執行核准的 Production 唯讀 smoke。任何有效登入證據缺失或失敗一律 fail closed，不得切換公開 alias。
+- 已同步：`docs/roadmap-colorplay-next.md` 與 `docs/deployment/vercel.md`。本筆為部署治理規則，未修改產品程式碼、Vercel alias、Supabase 或任何線上資料。
+- 下一步：目前 staging 真實有效帳號仍登入失敗，因此現況未通過此閘門；下一步繼續診斷有效 fixture／Auth bootstrap，而不是把先前無效帳密 2/2 當作修復完成。
