@@ -486,3 +486,9 @@
 - 驗證：`pnpm build`、全域 lint、AppShell／HUD／Chapter／Sheet contract 62/62 通過；首頁／地圖／HUD Chromium 8/8、章節選卡＋閱讀 15/15，認證 4 個 viewport 案例亦在較長命令被環境截斷前逐一通過。較長 27-case 命令本身沒有完成結論，未列為綠燈證據。
 - Sheet preflight：重新下載 owner 最新 Google Sheet，取得 140 題、8 張複習卡與 1 列過濾佔位。匯入器原先只認「題號」，已以 RED→GREEN contract 補上新版「題庫序號」相容（fetch-sheet 9/9）。結構 gate 仍以 1 項錯誤 BLOCK：`3-2-38` 與 `3-2-39` 題幹完全重複，但選項／答案不同；未自動跳過或猜改。
 - 附件 preflight：複習卡「附件」欄只有 `圖3-2`、`圖3-5` 圖號；XLSX 內只有 1 張 JPEG media，另有多組 Office drawing shapes，尚未形成兩張可追蹤的 web asset path＋alt text。現行 `reviewCardMedia` 仍是舊示意圖，不得冒充最新版附件。因兩項資料 blocker 未解除，本輪沒有產生新 seeds、沒有寫入 `onkxnkzeixpezetkmocf`，staging DB 維持原狀。
+
+## 2026-08-11 18:14 [Codex] — PR #5 單輪 review finding remediation
+
+- Git 狀態：feature branch 已推到 GitHub `8beb44c`；直接快轉 `HEAD:staging` 被 branch rules 正確拒絕（需 resolved conversations＋9/9 required checks）。既有 PR #5 已自動更新至同一 SHA，`colorplay-staging-web` Git Preview build 顯示 SUCCESS，但尚未合併至 staging／更新 custom domain。
+- 三項 Copilot inline findings 均確認有效並於原 task 唯一 review round 修復：Codex stop hook 改為 repo-relative `bash .codex/hooks/review-gate.sh`；Claude allowlist 移除 `/Users/guanyucheng/...` 本機絕對路徑、保留 `$HOME` 版本；quiz 只有在 `CHAPTER_LOCKED` 建立失敗時才 enable chapter-map query，既有 quiz session 不再多打一支 RPC。
+- TDD／驗證：新增 existing-session query-disabled assertion 先收到 hook 無參數而 RED；GREEN 後 Quiz＋chapter-map hook 14/14、scoped ESLint／Prettier 通過，`.codex`／`.claude` 已無 `/Users/guanyucheng` 命中。待推 remediation commit 後回覆並 resolve 3 個 conversation；9 required contexts 的 workflow 缺口仍是 staging merge 的獨立 blocker。

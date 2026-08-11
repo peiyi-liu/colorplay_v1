@@ -97,7 +97,6 @@ export function QuizSessionPage({
   );
   const isNewSession = routeSessionId === 'new';
   const templateId = searchParams.get('template');
-  const chapterMap = useStudentChapterMap();
   const [selection, setSelection] = useState<
     Readonly<{ optionId: string; questionId: string }> | undefined
   >();
@@ -140,6 +139,7 @@ export function QuizSessionPage({
     createMutation.isError &&
     createMutation.error instanceof QuizRepositoryError &&
     createMutation.error.code === 'CHAPTER_LOCKED';
+  const chapterMap = useStudentChapterMap(undefined, lockedCreation);
   const lockedChapter =
     lockedCreation && templateId
       ? chapterMap.data?.chapters.find(

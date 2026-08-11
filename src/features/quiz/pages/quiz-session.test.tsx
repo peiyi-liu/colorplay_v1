@@ -183,6 +183,15 @@ describe('QuizSessionPage', () => {
     } as never);
   });
 
+  it('does not enable the chapter-map lookup for an existing session', () => {
+    const mock = repositoryMock();
+    mock.getSession.mockResolvedValue(session([question(1)]));
+
+    renderQuiz(mock.repository);
+
+    expect(mockedChapterMap).toHaveBeenCalledWith(undefined, false);
+  });
+
   it('returns a locked direct template URL to the authoritative map panel', async () => {
     const mock = repositoryMock();
     mock.createSession.mockRejectedValue(
