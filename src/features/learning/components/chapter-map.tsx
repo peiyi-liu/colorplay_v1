@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
 import adventurerIdle from '../../../assets/learning-map/adventurer-idle.png';
-import forestVillageBase from '../../../assets/learning-map/forest-village-base.webp';
+import continuousWorldDesktop from '../../../assets/learning-map/continuous-world-desktop.webp';
+import continuousWorldMobile from '../../../assets/learning-map/continuous-world-mobile.webp';
 import { BlookArt } from '../../../components/ui/blook-art';
 import type { BlookInventoryItem } from '../../inventory/types';
 import type { StudentChapterMapEntry } from '../api/chapter-map';
@@ -73,10 +74,18 @@ export function ChapterMap({
           <img
             alt=""
             aria-hidden="true"
-            className="chapter-map__base"
+            className="chapter-map__base chapter-map__base--desktop"
             decoding="async"
             draggable={false}
-            src={forestVillageBase}
+            src={continuousWorldDesktop}
+          />
+          <img
+            alt=""
+            aria-hidden="true"
+            className="chapter-map__base chapter-map__base--mobile"
+            decoding="async"
+            draggable={false}
+            src={continuousWorldMobile}
           />
           <ol aria-label="六章學習地圖" className="chapter-map__buildings">
             {chapters.map((chapter) => (

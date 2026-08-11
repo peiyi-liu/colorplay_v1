@@ -18,7 +18,7 @@ test.describe('JRPG guild-desk login', () => {
       await expect(page.getByText('冒險者公會')).toBeAttached();
       await expect(
         page.locator('.auth-portal-brand__mark img'),
-      ).toHaveAttribute('src', '/colorplay-grimoire-design.png');
+      ).toHaveAttribute('src', '/colorplay-grimoire-pixel.png');
 
       const account = page.getByRole('textbox', { name: '帳號' });
       const password = page.locator('#login-password');
@@ -52,20 +52,42 @@ test.describe('JRPG guild-desk login', () => {
             clientWidth: element.clientWidth,
             scrollWidth: element.scrollWidth,
             selector,
+            style: {
+              borderRadius: getComputedStyle(element).borderRadius,
+            },
           };
         });
         const main = document.querySelector<HTMLElement>('#main-content');
         if (!main) throw new Error('AUTH_MAIN_MISSING');
+        const portal = document.querySelector<HTMLElement>('.auth-portal');
+        if (!portal) throw new Error('AUTH_PORTAL_MISSING');
+        const frame = document.querySelector<HTMLElement>('.auth-window');
+        if (!frame) throw new Error('AUTH_FRAME_MISSING');
         return {
           backgroundImage: getComputedStyle(main).backgroundImage,
           documentOverflow:
             document.documentElement.scrollWidth -
             document.documentElement.clientWidth,
+          documentVerticalOverflow:
+            document.documentElement.scrollHeight - window.innerHeight,
           elements,
+          frameStyle: {
+            borderRadius: getComputedStyle(frame).borderRadius,
+            borderTopWidth: getComputedStyle(frame).borderTopWidth,
+          },
+          mainOverflowY: getComputedStyle(main).overflowY,
+          mainVerticalOverflow: main.scrollHeight - main.clientHeight,
+          villageContent: getComputedStyle(portal, '::after').content,
         };
       });
 
       expect(metrics.documentOverflow).toBeLessThanOrEqual(1);
+      expect(metrics.documentVerticalOverflow).toBeLessThanOrEqual(1);
+      expect(metrics.mainVerticalOverflow).toBeLessThanOrEqual(1);
+      expect(metrics.mainOverflowY).toBe('hidden');
+      expect(metrics.villageContent).toBe('none');
+      expect(metrics.frameStyle.borderRadius).toBe('0px');
+      expect(metrics.frameStyle.borderTopWidth).toBe('3px');
       expect(
         metrics.elements.every(
           ({ clientWidth, scrollWidth }) => scrollWidth <= clientWidth + 1,
@@ -85,24 +107,73 @@ test.describe('JRPG guild-desk login', () => {
       expect(accountBox.height).toBeGreaterThanOrEqual(44);
       expect(passwordBox.height).toBeGreaterThanOrEqual(44);
       expect(submitBox.height).toBeGreaterThanOrEqual(44);
+      expect(portal.top).toBeGreaterThanOrEqual(0);
+      expect(portal.bottom).toBeLessThanOrEqual(viewport.height);
       expect(accountBox.bottom).toBeLessThanOrEqual(passwordBox.top);
       expect(passwordBox.bottom).toBeLessThanOrEqual(submitBox.top);
+      expect(
+        metrics.elements
+          .filter(({ selector }) =>
+            ['#login-account', '#login-password'].includes(selector),
+          )
+          .every(({ style }) => style.borderRadius === '0px'),
+      ).toBe(true);
 
       if (viewport.width === 1280) {
         expect(portal.left).toBeGreaterThan(viewport.width * 0.45);
         expect(metrics.backgroundImage).toContain('guild-desk-desktop.png');
+        await expect(page.getByText('歡迎回來，冒險者。')).toBeVisible();
+        const welcomeBox = await page
+          .getByText('歡迎回來，冒險者。')
+          .boundingBox();
+        expect(welcomeBox).not.toBeNull();
+        expect(welcomeBox?.x ?? viewport.width).toBeLessThan(portal.left);
       } else {
-        expect(portal.top).toBeGreaterThan(350);
+        expect(portal.top).toBeGreaterThan(250);
         expect(metrics.backgroundImage).toContain('guild-desk-mobile.png');
+        await expect(page.getByText('冒險者公會')).toBeVisible();
+        await expect(page.getByText('歡迎回來，冒險者。')).toBeHidden();
       }
 
       const screenshotDirectory = `artifacts/design-audit/jrpg-auth-guild-desk/${viewport.label}`;
       await mkdir(screenshotDirectory, { recursive: true });
       await page.screenshot({
         animations: 'disabled',
-        fullPage: true,
+        fullPage: false,
         path: `${screenshotDirectory}/login.png`,
       });
+
+      await page
+        .locator('.login-form__portal label')
+        .filter({ hasText: '教師端登入' })
+        .click();
+      await expect(page.getByLabel('班級序號')).toBeVisible();
+      const teacherMetrics = await page.evaluate(() => {
+        const portal = document.querySelector<HTMLElement>('.auth-portal');
+        const classCode =
+          document.querySelector<HTMLElement>('#login-class-code');
+        const main = document.querySelector<HTMLElement>('#main-content');
+        if (!portal || !classCode || !main) {
+          throw new Error('TEACHER_AUTH_METRIC_MISSING');
+        }
+        const portalBox = portal.getBoundingClientRect();
+        const classCodeBox = classCode.getBoundingClientRect();
+        return {
+          classCodeBottom: classCodeBox.bottom,
+          documentOverflow:
+            document.documentElement.scrollHeight - window.innerHeight,
+          mainOverflow: main.scrollHeight - main.clientHeight,
+          portalBottom: portalBox.bottom,
+          portalTop: portalBox.top,
+        };
+      });
+      expect(teacherMetrics.documentOverflow).toBeLessThanOrEqual(1);
+      expect(teacherMetrics.mainOverflow).toBeLessThanOrEqual(1);
+      expect(teacherMetrics.portalTop).toBeGreaterThanOrEqual(0);
+      expect(teacherMetrics.portalBottom).toBeLessThanOrEqual(viewport.height);
+      expect(teacherMetrics.classCodeBottom).toBeLessThanOrEqual(
+        viewport.height,
+      );
     });
   }
 });

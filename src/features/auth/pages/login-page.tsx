@@ -61,18 +61,18 @@ export function LoginPage() {
       data-portal={portal}
     >
       <div className="auth-portal-brand">
-        <span aria-hidden="true" className="auth-portal-brand__mark">
+        <span className="auth-portal-brand__mark">
           <img
-            alt=""
+            alt="ColorPlay 藍金寶典"
             height="48"
-            src="/colorplay-grimoire-design.png"
+            src="/colorplay-grimoire-pixel.png"
             width="48"
           />
         </span>
         <p className="auth-portal-brand__title">冒險者公會</p>
         <p className="auth-portal-brand__subtitle">色彩王國通行證</p>
       </div>
-      <p className="auth-portal__welcome">歡迎回來，冒險者</p>
+      <p className="auth-portal__welcome">歡迎回來，冒險者。</p>
       <h1 className="pixel-heading">登入</h1>
       <p className="route-panel__message">
         {portal === 'teacher'

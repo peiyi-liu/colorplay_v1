@@ -4,11 +4,11 @@ export function TitlePage() {
   return (
     <section className="home-world" data-interaction-group="foundation-route">
       <header className="home-world__brand-bar">
-        <span aria-hidden="true" className="home-world__crest">
+        <span className="home-world__crest">
           <img
-            alt=""
+            alt="ColorPlay 藍金寶典"
             height="60"
-            src="/colorplay-grimoire-design.png"
+            src="/colorplay-grimoire-pixel.png"
             width="52"
           />
         </span>
@@ -26,12 +26,9 @@ export function TitlePage() {
           data-acceptance-interactive="true"
           data-acceptance-target
           data-primary-action="true"
-          to="/register"
+          to="/login"
         >
           開始冒險
-        </Link>
-        <Link className="home-world__login" to="/login">
-          已有帳號？登入
         </Link>
       </div>
     </section>

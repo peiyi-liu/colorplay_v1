@@ -248,3 +248,65 @@
 - 下一步：建立 planning checkpoint commit；記錄 `feature/v2-major-update` tip 與主 checkout dirty fingerprints；建立 `.worktrees/jrpg-generated-board-ui`／`phase6/jrpg-generated-board-ui`。UI-1 依 Shell seam 一個 behavior slice 一次 RED → GREEN：先 avatar＋nickname identity，再 HUD role/geometry，再 deep-navy root／RouteWorldStage，再 reduced-motion transition。
 - Blocker／待決策：無。生成 PNG 約 40MB，只作主 checkout 的只讀視覺參考，不放入產品 bundle，也不把整張圖當 runtime background。
 - 相關檔案／commit：`docs/superpowers/plans/2026-08-10-jrpg-continuous-world-app-shell.md`、`docs/superpowers/specs/2026-08-10-jrpg-continuous-world-app-shell-design.md`、`artifacts/design-audit/jrpg-app-shell/batch-{01,02}/manifest.md`、`docs/handoff.md`（planning checkpoint commit 待建立）。
+
+## 2026-08-11 01:27 [Codex] — 首頁／登入／註冊修正版待 owner 逐頁核准
+
+- 做了什麼：依 owner 回饋只修正目前公開與認證場景，未前進學習地圖。首頁改為唯一「開始冒險」主行動並導向 `/login`，移除「已有帳號？登入」，縮小 ColorPlay 與「色彩王國的冒險旅程」並強制單行；原 64×64 裁圖 icon 已替換為 1254×1254 透明高畫質像素風藍金寶典（深藍書體、金色書角／書脊、六色色相環、金色羽筆）。登入桌機將「歡迎回來，冒險者。」置於人物上方，手機將「冒險者公會」定位於木牌，帳號／密碼改為設計圖的直角深藍框。註冊保留真實 OTP／欄位／提交流程，改為同一公會場景，桌機雙欄表單固定右側、手機單欄接續場景；匿名公開／Auth route 不再插入學生頁專用的「轉橫體驗更佳」橫幅。
+- 驗證：RTL 5 檔 72 tests 全綠；TypeScript build、scoped ESLint、Prettier、`git diff --check` 全綠；Chromium 1280×720／393×852 共 6/6，全數通過水平溢出、文字／控制內容寬度與 44px 觸控高度檢查。證據 manifest：`artifacts/design-audit/jrpg-auth-revision/manifest.md`。
+- 下一步：owner 依序審核首頁、登入、註冊；未明確核准前停止，不開始學習地圖或任何下一個畫面。核准後才建立本批 commit，再進下一頁。
+- Blocker／待決策：等待 owner 視覺核准；目前未 push、未 deploy、未修改資料／API／權威學習規則。
+- 相關檔案／commit：`src/app/router/title-page.tsx`、`src/features/auth/pages/{login-page,register-page}.tsx`、`src/styles/globals.css`、`public/colorplay-grimoire-pixel.png` 與對應 unit／Chromium tests；本批尚未 commit。
+
+## 2026-08-11 01:54 [Codex] — 登入固定視窗與註冊三步驟修正待 owner 核准
+
+- 做了什麼：依 owner 最新裁定將註冊改為固定三步驟（1 基本資料、2 E-mail 驗證、3 帳號與密碼），每次只顯示該步驟欄位，桌機與 393px 手機皆固定在畫面右側且不可捲動；保留既有真實 OTP、註冊提交與錯誤處理契約。註冊標題上方的 icon／「冒險者公會」／「建立你的冒險者通行證」已移除；登入與註冊共用藍銀雙層直角像素窗框、輸入框等高對齊；Auth 場景原本疊在表格下方的村莊房屋剪影已移除。登入桌機保留「歡迎回來，冒險者。」，手機保留木牌上的「冒險者公會」。
+- 驗證：登入＋註冊 RTL 2 檔 26 tests 全綠；`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；Chromium 1280×720／393×852 共 4/4，機械驗證 document/main 零垂直捲動、portal/frame 完整位於 viewport、控制項 ≥44px、房屋 pseudo-element 不存在，教師登入增加班級序號後亦未溢出。證據 manifest：`artifacts/design-audit/jrpg-auth-revision/manifest.md`。
+- 下一步：owner 先於本機預覽逐頁審核登入與註冊；未核准前不做學習地圖、不 commit、不 push、不 deploy。
+- Blocker／待決策：等待 owner 視覺核准。註冊第三步需完成真實 E-mail OTP 才能由 production browser 進入；第三步欄位與送出契約已由 RTL 覆蓋，未用 mock 頁面冒充瀏覽器成品。
+- 相關檔案／commit：`src/features/auth/pages/register-page.tsx`、`src/features/auth/pages/register-page.test.tsx`、`src/styles/globals.css`、`tests/e2e/auth-{guild-desk,register-guild}.visual.spec.ts`、`docs/handoff.md`；本批仍未 commit。
+
+## 2026-08-11 02:08 [Owner] — Auth 視覺未完成，下一畫面改做學生 HUD
+
+- 未完成、後續再優化：登入與註冊雖已實作共用藍銀直角像素窗框，但尚未通過 owner 視覺驗收，不得標記為核准完成。
+- 未完成、後續再優化：登入桌機「歡迎回來，冒險者。」與手機木牌「冒險者公會」雖已進入目前實作，但呈現仍未通過 owner 視覺驗收，不得標記為核准完成。
+- 下一步：暫停 Auth 視覺修正，下一個且唯一的畫面改為學生端固定 HUD；以 `artifacts/design-audit/jrpg-app-shell/batch-01/01-stable-student-hud.png` 為 owner 已核准參考，保留真實 profile／economy／inventory 與既有 navigation／MENU 行為，不把生成圖示意資料寫入 production。
+- 邊界：學生 HUD 未經 owner 視覺核准前，不前進學習地圖或其他頁面；本筆只有 handoff 狀態更新，未 commit、未 push、未 deploy。
+
+## 2026-08-11 02:15 [Codex] — 學生 HUD 修正版待 owner 視覺核准
+
+- 做了什麼：依 owner 核准的 `batch-01/01-stable-student-hud.png` 將學生 identity、Level／XP／Token、正式導覽與 MENU 收進單一穩定 HUD。桌機為一列藍黑像素介面；393px 為兩列 composition，關閉時主列收斂為 MENU，開啟後仍保留「學習大廳／Live 課堂／商店」三個正式 route。商店直接連既有 `/app/shop`，MENU 移除重複的「裝備商店」；其餘既有 route 與登出／focus trap 行為維持。生成圖的數值未帶入 production，正式 profile／economy／inventory hooks 仍是資料來源。
+- 驗證：`tsc -b`、scoped ESLint、Prettier、`git diff --check`、production harness import boundary 全綠；AppShell／HudCommandBar／EconomySummary 3 檔 44 tests 全綠；Chromium 1280×720／393×852 共 2/2，通過單一 HUD 高度、水平溢出、重要文字內容寬度、可見控制項 >=44×44、手機 MENU 內三個正式 route 等機械檢查。
+- 審核入口：本機 `http://127.0.0.1:4181/dev-harness/student-hud.html`；截圖 manifest：`artifacts/design-audit/jrpg-student-hud/manifest.md`。截圖僅供 owner 視覺比對，不是 staging／production evidence。
+- 下一步：等待 owner 對學生 HUD 核准或提出修改；未核准前不做學習地圖或其他頁面。
+- 邊界：Auth 兩項仍維持上一筆「未完成、後續再優化」；本批未 commit、未 push、未 deploy。
+
+## 2026-08-11 02:39 [Codex] — 學生 HUD 頭像／資訊排列／像素金幣修正待 owner 核准
+
+- 做了什麼：依 owner 回饋讓 equipped Blook 圖以 `width/height:100% + object-fit:cover` 貼滿圓形頭像內容區，未用 transform 製造隱性溢出；暱稱與 `Lv.` 改為相鄰排列，XP 區塊固定在其右側；通用 outline coin SVG 改為專用 8-bit 八角像素金幣，Token 數值仍使用正式 economy summary。393px 將 economy 與 MENU 分成獨立 grid 欄，避免 XP 與 MENU 盒子重疊。
+- 驗證：coin DOM 契約先 RED 後 GREEN；AppShell／HudCommandBar／EconomySummary 3 檔 44 tests 全綠；Chromium 1280×720／393×852 共 2/2，新增 avatar/name、name/level、level/XP、XP/token、token/navigation、compact XP/MENU bounding-box 零重疊檢查，並維持零水平溢出與 >=44×44 控制項；`tsc -b`、scoped ESLint、Prettier、`git diff --check`、production harness import boundary 全綠。
+- 教師端後續參考：owner 指定 `artifacts/design-audit/jrpg-app-shell/batch-02/12-teacher-table-v2.png`，但本輪明令先完成學生端，因此未修改任何教師頁。
+- 下一步：owner 於 `http://127.0.0.1:4181/dev-harness/student-hud.html` 審核學生 HUD；未核准前不開始教師端或下一頁。
+- 邊界：未 commit、未 push、未 deploy；Auth 兩項仍是未完成、後續再優化。
+
+## 2026-08-11 02:48 [Codex] — 學生 HUD 垂直身份層級與 32-bit 金幣修正待 owner 核准
+
+- 做了什麼：依 owner 最新回饋把暱稱與等級改為上下顯示，XP 在桌機與 393px 手機皆固定於兩者右側；手機最右欄維持金幣在上、MENU 在下。Token 圖示由先前 8-bit 版本升級為 24×24 CSS 32-bit 像素金幣，保留正式 economy summary 數值來源。教師端參考圖已記錄，但本輪未修改教師頁或下一個學生畫面。
+- 驗證：先新增 `XP.left >= max(暱稱.right, 等級.right)` 的 Chromium 幾何契約，修正前 393px 如預期 RED（XP left 74、需求 >=224），修正後 1280×720／393×852 共 2/2；另驗 XP／Token／MENU 零重疊、零水平溢出、HUD 固定高度與可見控制項 >=44×44。AppShell／HudCommandBar／EconomySummary 3 檔 44 tests、`pnpm typecheck`、scoped ESLint、Prettier、`git diff --check`、production harness import boundary 全綠。
+- 下一步：owner 於 `http://127.0.0.1:4181/dev-harness/student-hud.html` 審核本版學生 HUD；未核准前不開始教師端、學習地圖或下一畫面。
+- 邊界：未 commit、未 push、未 deploy；Auth 兩項仍標記未完成、後續再優化。
+
+## 2026-08-11 09:34 [Codex] — 學習大廳／六章連續世界地圖待 owner 視覺核准
+
+- 做了什麼：依 owner 指定的 `batch-01/05-student-learning-map.png`，把 `/app` 舊白天六格廣場與羊皮紙標題替換為桌機／手機各自構圖的深夜連續世界。兩張新地形只包含夜空、懸崖、森林、道路、橋、瀑布、燈火與恰好六個空地；六棟既有 chapter sprite、正式 chapter access state、chapter link、標題與 CTA 仍由 semantic DOM／正式 hook 資料提供。畫面預設顯示已完成／進行中／未解鎖，主要行動依正式選取章節顯示「開始／繼續／查看第 X 章」，未加入假 API 或假權威資料。
+- 建築對齊：桌機與手機各自保存六組 ground anchors；每個 building container 使用 bottom-center transform。Chromium 首輪抓到 `<button>` line box 造成圖片底部距 anchor 7px，已以 block／zero-line-height 修正；最後六棟建築在 1280×720 與 393×852 的圖片底部中心誤差皆 <=1.5 CSS px，未放寬 assertion。
+- 資產：`src/assets/learning-map/continuous-world-{desktop,mobile}.webp`（1672×941／941×1672，合計 611,924 bytes），由 OpenAI built-in image generation tool 建立 environment-only 32-bit pixel terrain；首版各多出第七空地而拒用，saved versions 經 targeted edit 收斂為六空地。PNG 中間檔已移至 `/private/tmp/colorplay-continuous-world-*-source.png`，未刪除且不進 repository。
+- 驗證：Learning Map 6 檔 38 tests、`pnpm typecheck`、scoped ESLint、Prettier、`git diff --check`、production harness import boundary 全綠；Chromium 1280×720／393×852 共 2/2，通過六章狀態數、唯一 CTA、desktop/mobile source、底部中心 anchor、重要文字／CTA 零裁切與零重疊、水平 overflow <=1px、控制項 >=44×44、地圖緊接固定 HUD。對應 AC-UI-008～012 的瀏覽器子集；真實手機仍待人工裝置驗證。
+- 審核入口：`http://127.0.0.1:4181/dev-harness/learning-map.html`；manifest：`artifacts/design-audit/jrpg-learning-map/manifest.md`。等待 owner 視覺核准，未核准前不開始章節頁或教師端。
+- 邊界：未 commit、未 push、未 deploy；Auth 兩項仍標記未完成、後續再優化。
+
+## 2026-08-11 09:40 [Codex] — 學習地圖手機章節文字統一移至建築右側
+
+- 做了什麼：依 owner 回饋只修改 393px 直式構圖，移除偶數章原本把 label／status 放在建築左側的規則；六章的「第 X 章」與「已完成／進行中／未解鎖」現在全部從建築圖片右緣外 4px 開始。桌機版定位未修改。
+- 驗證：先加入 `label.left >= buildingArt.right - 1` 與 `status.left >= buildingArt.right - 1` 的方向性 Chromium assertion，修正前 393px 如預期 RED；修正後 1280×720／393×852 共 2/2，並維持文字／CTA 零裁切、零 bounding-box overlap、document 水平 overflow <=1px、六棟建築 bottom-center anchor <=1.5px。
+- 下一步：owner 於 `http://127.0.0.1:4181/dev-harness/learning-map.html` 審核手機直式版本；未核准前不開始下一畫面。
+- 邊界：未 commit、未 push、未 deploy；本輪未修改正式資料、API、解鎖規則或桌機 map geometry。

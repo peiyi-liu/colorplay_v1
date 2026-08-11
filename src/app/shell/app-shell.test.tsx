@@ -241,7 +241,12 @@ describe('AppShell', () => {
   it('renders student HUD navigation before the identity header and main content', () => {
     renderStudentShell();
 
-    expectCommandBeforeHeaderAndMain();
+    const hud = screen.getByRole('banner');
+    expect(
+      within(hud).getByRole('navigation', { name: '主要導覽' }),
+    ).toBeVisible();
+    expect(within(hud).getByRole('group', { name: '學生身分' })).toBeVisible();
+    expect(hud.nextElementSibling).toBe(screen.getByRole('main'));
   });
 
   it('renders teacher HUD navigation before the identity header and main content', () => {
@@ -276,9 +281,9 @@ describe('AppShell', () => {
 
     expect(screen.queryByRole('link', { name: '教師工作區' })).toBeNull();
     expect(screen.queryByText(/教師端/u)).toBeNull();
-    // HUD 重組批：裝備商店/班級排行榜/成就徽章已移入 MENU 面板，需先開 MENU。
+    // 商店提升為主導覽；排行榜與成就仍留在 MENU。
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
-    expect(screen.getByRole('link', { name: '裝備商店' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '商店' })).toHaveAttribute(
       'href',
       '/app/shop',
     );
@@ -302,9 +307,12 @@ describe('AppShell', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('Level 2')).toBeVisible();
-    expect(screen.getByText('250 / 500 XP')).toBeVisible();
-    expect(screen.getByText('250 Token')).toBeVisible();
+    expect(screen.getByText('Lv.2')).toBeVisible();
+    expect(screen.getByText('250 / 500')).toBeVisible();
+    expect(screen.getByLabelText('250 Token')).toBeVisible();
+    const token = screen.getByLabelText('250 Token');
+    expect(token.querySelector('.hud-coin-pixel--32bit')).not.toBeNull();
+    expect(token.querySelector('svg')).toBeNull();
     expect(mockedUseEconomySummary).toHaveBeenCalledOnce();
     expect(mockedUseBlookInventory).toHaveBeenCalledOnce();
   });
@@ -315,6 +323,7 @@ describe('AppShell', () => {
     const identity = screen.getByRole('group', { name: '學生身分' });
     expect(identity.querySelector('.hud-avatar')).not.toBeNull();
     expect(within(identity).getByText('student.one')).toBeVisible();
+    expect(within(identity).getByText('Lv.2')).toBeVisible();
   });
 
   it('uses the learning-map scene only for the exact /app route, including query strings', () => {
@@ -494,12 +503,50 @@ describe('AppShell', () => {
     expect(screen.getByRole('status')).toHaveTextContent('轉橫體驗更佳');
   });
 
+  it('does not insert a rotate banner into public and auth scenes', () => {
+    vi.mocked(window.matchMedia).mockReturnValue({
+      addEventListener: vi.fn(),
+      matches: true,
+      media: '(orientation: portrait)',
+      removeEventListener: vi.fn(),
+    } as unknown as MediaQueryList);
+    mockedUseAuth.mockReturnValue({
+      session: null,
+      signIn: vi.fn(),
+      signInWithAccount: vi.fn(),
+      signOut: vi.fn(),
+      status: 'anonymous',
+    });
+    mockedUseMyProfile.mockReturnValue({
+      data: undefined,
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+    const router = createMemoryRouter(
+      [
+        {
+          children: [{ element: <div>登入內容</div>, index: true }],
+          element: (
+            <ToastProvider>
+              <AppShell />
+            </ToastProvider>
+          ),
+          path: '/login',
+        },
+      ],
+      { initialEntries: ['/login'] },
+    );
+    render(<RouterProvider router={router} />);
+
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.queryByRole('button', { name: '關閉轉向提示' })).toBeNull();
+  });
+
   it('keeps one fixed student HUD geometry across route scenes', () => {
     expect(globalStyles).toMatch(
-      /\.hud-command\s*\{[^}]*min-height:\s*var\(--journey-hud-command-height\);/u,
-    );
-    expect(globalStyles).toMatch(
-      /\.hud-top\s*\{[^}]*min-height:\s*var\(--journey-hud-status-height\);/u,
+      /\.hud-top--student\s*\{[^}]*min-height:\s*var\(--journey-student-hud-height\);/u,
     );
     expect(globalStyles).not.toMatch(/\.game-stage--learning-map/u);
   });
@@ -548,7 +595,7 @@ describe('AppShell', () => {
   it('學生頂部顯示頭像框與經濟群組', async () => {
     renderStudentShell();
 
-    expect(await screen.findByText(/Level \d+/u)).toBeInTheDocument();
+    expect(await screen.findByText(/Lv\.\d+/u)).toBeInTheDocument();
     expect(document.querySelector('.hud-economy-group')).not.toBeNull();
     const avatar = document.querySelector('.hud-avatar');
     expect(avatar).not.toBeNull();
@@ -561,7 +608,7 @@ describe('AppShell', () => {
     renderTeacherShell();
 
     expect(await screen.findByText(/歡迎，.+・教師端/u)).toBeInTheDocument();
-    expect(screen.queryByText(/Level \d+/u)).toBeNull();
+    expect(screen.queryByText(/Lv\.\d+/u)).toBeNull();
     expect(screen.queryByText(/\d+ Token/u)).toBeNull();
   });
 
@@ -695,26 +742,23 @@ describe('AppShell', () => {
     expect(screen.queryByRole('link', { name: '教師後台' })).toBeNull();
     expect(screen.queryByText('色彩原理學習平台')).toBeNull();
 
-    // 學生列上導覽收斂為 2 項（HUD 重組批 spec 2026-08-02）；完整 7 項標籤
+    // 依 owner 核准 HUD，學生列固定三個正式 route；其他入口留在 MENU。
     // 覆蓋交給 hud-command-bar.test.tsx 的面板迴圈測試承接，此處不重複維護
     // 同一份標籤清單。
     const nav = screen.getByRole('navigation', { name: '主要導覽' });
     const linkNames = within(nav)
       .getAllByRole('link')
       .map((link) => link.textContent);
-    expect(linkNames).toEqual(['學習大廳', 'Live 課堂']);
+    expect(linkNames).toEqual(['學習大廳', 'Live 課堂', '商店']);
     expect(screen.queryByRole('link', { name: '學習進度' })).toBeNull();
 
-    // 課後任務實戰/裝備商店/我的錯題已移入 MENU 面板，需先開 MENU。
+    // 課後任務實戰/我的錯題仍在 MENU；商店不重複出現。
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     expect(screen.getByRole('link', { name: '課後任務實戰' })).toHaveAttribute(
       'href',
       '/app/missions',
     );
-    expect(screen.getByRole('link', { name: '裝備商店' })).toHaveAttribute(
-      'href',
-      '/app/shop',
-    );
+    expect(screen.getAllByRole('link', { name: '商店' })).toHaveLength(1);
     expect(screen.getByRole('link', { name: '我的錯題' })).toHaveAttribute(
       'href',
       '/app/mistakes',

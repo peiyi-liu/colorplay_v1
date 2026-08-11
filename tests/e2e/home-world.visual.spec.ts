@@ -31,9 +31,10 @@ test.describe('JRPG home world entrance', () => {
       await expect(page.getByText('色彩王國的冒險旅程')).toBeVisible();
 
       const start = page.getByRole('link', { name: '開始冒險' });
-      const login = page.getByRole('link', { name: '已有帳號？登入' });
-      await expect(start).toHaveAttribute('href', '/register');
-      await expect(login).toHaveAttribute('href', '/login');
+      await expect(start).toHaveAttribute('href', '/login');
+      await expect(
+        page.getByRole('link', { name: '已有帳號？登入' }),
+      ).toHaveCount(0);
 
       const metrics = await page.evaluate(() => {
         const required = [
@@ -43,7 +44,6 @@ test.describe('JRPG home world entrance', () => {
           '.home-world__title',
           '.home-world__subtitle',
           '.home-world__start',
-          '.home-world__login',
         ].map((selector) => {
           const element = document.querySelector<HTMLElement>(selector);
           if (!element) throw new Error(`HOME_ELEMENT_MISSING:${selector}`);
@@ -56,6 +56,7 @@ test.describe('JRPG home world entrance', () => {
               top: box.top,
             },
             clientWidth: element.clientWidth,
+            whiteSpace: getComputedStyle(element).whiteSpace,
             scrollWidth: element.scrollWidth,
             selector,
           };
@@ -83,18 +84,21 @@ test.describe('JRPG home world entrance', () => {
       const story = boxes['.home-world__story'];
       const actions = boxes['.home-world__actions'];
       const startBox = boxes['.home-world__start'];
-      const loginBox = boxes['.home-world__login'];
-      if (!brand || !story || !actions || !startBox || !loginBox) {
+      if (!brand || !story || !actions || !startBox) {
         throw new Error('HOME_METRIC_MISSING');
       }
 
       expect(rectanglesOverlap(brand, story)).toBe(false);
       expect(rectanglesOverlap(story, actions)).toBe(false);
-      expect(rectanglesOverlap(startBox, loginBox)).toBe(false);
       expect(startBox.right - startBox.left).toBeGreaterThanOrEqual(44);
       expect(startBox.bottom - startBox.top).toBeGreaterThanOrEqual(44);
-      expect(loginBox.right - loginBox.left).toBeGreaterThanOrEqual(44);
-      expect(loginBox.bottom - loginBox.top).toBeGreaterThanOrEqual(44);
+      expect(
+        metrics.required
+          .filter(({ selector }) =>
+            ['.home-world__title', '.home-world__subtitle'].includes(selector),
+          )
+          .every(({ whiteSpace }) => whiteSpace === 'nowrap'),
+      ).toBe(true);
 
       if (viewport.width === 1280) {
         expect(actions.left).toBeGreaterThan(viewport.width * 0.6);

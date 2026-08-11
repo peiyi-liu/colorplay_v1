@@ -559,9 +559,11 @@ a {
   place-items: center;
 }
 
-.home-world__crest svg {
+.home-world__crest img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
 }
 
 .home-world__brand-name {
@@ -591,19 +593,20 @@ a {
   background-clip: text;
   color: transparent;
   font-family: var(--font-display);
-  font-size: clamp(4rem, 7vw, 6.4rem);
+  font-size: clamp(3.65rem, 6.25vw, 5.45rem);
   font-weight: 900;
   letter-spacing: -0.045em;
   line-height: 0.95;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
 .home-world__subtitle {
   margin: var(--space-5) 0 0;
-  font-size: clamp(1.7rem, 3.2vw, 3rem);
+  font-size: clamp(1.35rem, 2.35vw, 2.15rem);
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   line-height: 1.35;
+  white-space: nowrap;
 }
 
 .home-world__actions {
@@ -611,14 +614,13 @@ a {
   width: min(330px, calc(100% - var(--space-8)));
   align-self: end;
   justify-self: end;
-  flex-direction: column-reverse;
+  flex-direction: column;
   gap: var(--space-3);
   margin: 0 clamp(var(--space-6), 5vw, var(--space-12))
     clamp(var(--space-6), 5vh, var(--space-12)) 0;
 }
 
-.home-world__start,
-.home-world__login {
+.home-world__start {
   display: inline-flex;
   width: 100%;
   min-height: 56px;
@@ -643,13 +645,7 @@ a {
   font-size: 1.35rem;
 }
 
-.home-world__login {
-  border: 2px solid var(--pixel-window-muted);
-  background: color-mix(in srgb, var(--stage-void) 78%, transparent);
-}
-
-.home-world__start:hover,
-.home-world__login:hover {
+.home-world__start:hover {
   border-color: var(--pixel-window-frame);
 }
 
@@ -691,14 +687,14 @@ a {
   }
 
   .home-world__title {
-    font-size: clamp(2.8rem, 14vw, 4rem);
+    font-size: clamp(2.5rem, 11.75vw, 3rem);
     line-height: 1;
   }
 
   .home-world__subtitle {
     margin-top: var(--space-3);
-    font-size: clamp(1.1rem, 5vw, 1.45rem);
-    letter-spacing: 0.12em;
+    font-size: clamp(0.95rem, 4.35vw, 1.15rem);
+    letter-spacing: 0.07em;
   }
 
   .home-world__actions {
@@ -708,8 +704,7 @@ a {
     margin: 0 0 max(var(--space-6), env(safe-area-inset-bottom));
   }
 
-  .home-world__start,
-  .home-world__login {
+  .home-world__start {
     min-height: 58px;
   }
 }
@@ -7321,6 +7316,442 @@ select#dashboard-classroom {
   image-rendering: pixelated;
 }
 
+/* JRPG generated board 01：學生 HUD 是單一穩定介面，不再把指令列與
+   identity/economy 拆成上下兩條。桌機維持單列，route 切換只換主場景。 */
+.hud-top--student {
+  position: sticky;
+  z-index: 50;
+  top: 0;
+  display: grid;
+  min-height: var(--journey-student-hud-height);
+  flex: 0 0 var(--journey-student-hud-height);
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(var(--space-3), 2vw, var(--space-6));
+  border: 1px solid
+    color-mix(in srgb, var(--pixel-window-frame) 42%, transparent);
+  border-width: 0 0 1px;
+  background: color-mix(in srgb, var(--pixel-night-deep) 96%, transparent);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--stage-void) 72%, transparent);
+  padding: 10px clamp(var(--space-3), 2vw, var(--space-6));
+}
+
+.hud-top--student .hud-economy-group {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: clamp(var(--space-3), 1.6vw, var(--space-5));
+  padding: 0;
+}
+
+.hud-top--student .hud-identity {
+  display: grid;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  grid-template-columns: 62px minmax(112px, auto) minmax(150px, 220px) auto;
+  grid-template-rows: 1fr 1fr;
+  align-items: center;
+  align-self: stretch;
+  gap: 0 clamp(var(--space-3), 1.6vw, var(--space-5));
+  border: 0;
+  padding: 0;
+}
+
+.hud-top--student .hud-identity__name {
+  max-width: 12ch;
+  grid-column: 2;
+  grid-row: 1;
+  align-self: end;
+  color: var(--pixel-window-ink);
+  font-size: clamp(15px, 1.35vw, 19px);
+  overflow-wrap: anywhere;
+}
+
+.hud-top--student .hud-avatar {
+  width: 62px;
+  height: 62px;
+  border-color: var(--pixel-gold);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px var(--pixel-night-deep),
+    0 0 0 3px color-mix(in srgb, var(--pixel-window-frame) 72%, transparent);
+  overflow: hidden;
+  grid-column: 1;
+  grid-row: 1 / 3;
+}
+
+.hud-top--student .hud-avatar .blook-art {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.hud-top--student .economy-summary--hud {
+  display: contents;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--pixel-window-ink);
+  padding: 0;
+}
+
+.economy-summary__hud-level {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
+  color: var(--pixel-window-muted);
+  font-size: clamp(14px, 1.25vw, 18px);
+  white-space: nowrap;
+}
+
+.economy-summary__hud-xp {
+  display: grid;
+  min-width: 0;
+  grid-column: 3;
+  grid-row: 1 / 3;
+  grid-template-columns: auto minmax(90px, 1fr);
+  align-items: center;
+  gap: 2px var(--space-2);
+  color: var(--pixel-window-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.economy-summary__hud-xp > strong {
+  grid-row: 1 / span 2;
+  color: var(--color-info);
+  font-size: 14px;
+}
+
+.economy-summary__hud-xp progress {
+  width: 100%;
+  height: 8px;
+  accent-color: var(--color-info);
+}
+
+.economy-summary__hud-xp progress::-webkit-progress-bar {
+  background: color-mix(in srgb, var(--pixel-window-muted) 28%, transparent);
+}
+
+.economy-summary__hud-xp progress::-webkit-progress-value {
+  background: var(--color-info);
+}
+
+.economy-summary__hud-xp progress::-moz-progress-bar {
+  background: var(--color-info);
+}
+
+.economy-summary__hud-xp > span {
+  color: var(--pixel-window-muted);
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.hud-top--student .economy-summary__tokens {
+  display: inline-flex;
+  min-width: 90px;
+  align-items: center;
+  justify-content: center;
+  grid-column: 4;
+  grid-row: 1 / 3;
+  gap: var(--space-1);
+  border: 0;
+  border-left: 1px solid
+    color-mix(in srgb, var(--pixel-window-frame) 24%, transparent);
+  border-radius: 0;
+  background: transparent;
+  color: var(--pixel-window-ink);
+  font-size: clamp(15px, 1.4vw, 19px);
+  padding: var(--space-2) 0 var(--space-2)
+    clamp(var(--space-3), 1.6vw, var(--space-5));
+}
+
+.hud-coin-pixel--32bit {
+  position: relative;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0 4px,
+      #713900 4px 20px,
+      transparent 20px
+    ),
+    linear-gradient(transparent 0 4px, #713900 4px 20px, transparent 20px);
+  clip-path: polygon(
+    25% 0,
+    75% 0,
+    100% 25%,
+    100% 75%,
+    75% 100%,
+    25% 100%,
+    0 75%,
+    0 25%
+  );
+  filter: drop-shadow(2px 2px 0 var(--pixel-shadow));
+  image-rendering: pixelated;
+}
+
+.hud-coin-pixel--32bit::before {
+  position: absolute;
+  inset: 3px;
+  background:
+    linear-gradient(135deg, #fff3a3 0 18%, transparent 19%),
+    linear-gradient(315deg, #b76408 0 22%, transparent 23%), #f7bd2d;
+  clip-path: inherit;
+  content: '';
+}
+
+.hud-coin-pixel--32bit::after {
+  position: absolute;
+  top: 7px;
+  left: 9px;
+  width: 6px;
+  height: 10px;
+  background: #a85606;
+  box-shadow:
+    2px 0 0 #ffe56e,
+    -2px 2px 0 #d9860c,
+    2px 8px 0 #713900;
+  content: '';
+}
+
+.hud-top--student .hud-command {
+  position: static;
+  min-height: 0;
+  flex: 0 1 auto;
+  gap: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.hud-top--student .hud-command__nav {
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  gap: 0;
+}
+
+.hud-top--student .hud-command__spacer {
+  display: none;
+}
+
+.hud-top--student .hud-command__tab {
+  min-width: clamp(76px, 7.5vw, 104px);
+  min-height: 68px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  border: 0;
+  border-left: 1px solid
+    color-mix(in srgb, var(--pixel-window-frame) 22%, transparent);
+  border-radius: 0;
+  color: var(--pixel-window-muted);
+  font-size: 13px;
+  padding: 0 var(--space-2);
+}
+
+.hud-top--student .hud-command__tab--active {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-info) 10%, transparent),
+    transparent
+  );
+  box-shadow: inset 0 -3px 0 var(--color-info);
+  color: var(--color-info);
+}
+
+.hud-top--student .hud-command__tab:hover {
+  border-color: color-mix(in srgb, var(--pixel-window-frame) 22%, transparent);
+  color: var(--pixel-window-ink);
+}
+
+.hud-top--student .hud-menu__toggle {
+  min-width: 76px;
+  min-height: 68px;
+  flex-direction: column;
+  gap: 5px;
+  border: 0;
+  border-left: 1px solid
+    color-mix(in srgb, var(--pixel-window-frame) 22%, transparent);
+  border-radius: 0;
+  background: transparent;
+  color: var(--pixel-window-ink);
+  padding: 0 var(--space-2);
+}
+
+.hud-menu__hamburger {
+  display: grid;
+  width: 24px;
+  gap: 4px;
+}
+
+.hud-menu__hamburger > span {
+  display: block;
+  height: 2px;
+  background: currentcolor;
+}
+
+.hud-top--student .hud-menu__panel {
+  top: calc(100% + 10px);
+  min-width: 240px;
+  border-color: color-mix(in srgb, var(--pixel-window-frame) 72%, transparent);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--pixel-night-deep) 98%, transparent);
+}
+
+.hud-menu__nav--primary {
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--pixel-window-frame) 24%, transparent);
+  padding-bottom: var(--space-2);
+}
+
+.student-hud-harness__scene {
+  overflow: hidden;
+  min-height: 0;
+  background:
+    linear-gradient(to bottom, transparent 0 48%, var(--stage-void) 100%),
+    radial-gradient(circle at 24% 38%, #17365b 0 2px, transparent 3px),
+    radial-gradient(circle at 74% 24%, #c9a64d 0 1px, transparent 2px),
+    linear-gradient(155deg, #07162d 0 44%, #0a2640 72%, #07111f 100%);
+  background-size:
+    auto,
+    116px 92px,
+    174px 128px,
+    auto;
+}
+
+.student-hud-harness__landscape {
+  position: absolute;
+  right: -5%;
+  bottom: -15%;
+  left: -5%;
+  height: 62%;
+  background:
+    linear-gradient(135deg, transparent 0 42%, #31506c 43% 46%, transparent 47%)
+      52% 20% / 46% 100% no-repeat,
+    radial-gradient(ellipse at 18% 100%, #102f38 0 32%, transparent 33%),
+    radial-gradient(ellipse at 78% 100%, #0b2734 0 38%, transparent 39%),
+    linear-gradient(to top, #061019, transparent);
+  filter: saturate(0.82);
+  pointer-events: none;
+}
+
+@media (max-width: 47.99rem) {
+  .hud-top--student {
+    min-height: 146px;
+    flex-basis: 146px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 70px 58px;
+    gap: 0 var(--space-3);
+    padding: 8px 12px;
+  }
+
+  .hud-top--student .hud-economy-group {
+    display: block;
+    grid-column: 1;
+    grid-row: 1 / 3;
+  }
+
+  .hud-top--student .hud-identity {
+    display: grid;
+    height: 128px;
+    grid-template-columns: 54px minmax(0, 1fr) minmax(96px, 112px);
+    grid-template-rows: 35px 35px 58px;
+    gap: 0 var(--space-2);
+    border: 0;
+    padding: 0;
+  }
+
+  .hud-top--student .hud-identity__name {
+    max-width: min(16ch, 46vw);
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 17px;
+  }
+
+  .hud-top--student .hud-avatar {
+    width: 54px;
+    height: 54px;
+    grid-column: 1;
+    grid-row: 1 / 3;
+  }
+
+  .hud-top--student .hud-avatar .blook-art {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+  }
+
+  .hud-top--student .economy-summary--hud {
+    display: contents;
+  }
+
+  .hud-top--student .economy-summary__hud-level {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    padding: 0;
+  }
+
+  .hud-top--student .economy-summary__hud-xp {
+    width: calc(100% - var(--space-2));
+    grid-column: 3;
+    grid-row: 1 / 3;
+    grid-template-columns: auto minmax(0, 1fr);
+    padding-right: 0;
+  }
+
+  .hud-top--student .economy-summary__tokens {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    min-width: 78px;
+    border: 0;
+    font-size: 16px;
+    padding: 0;
+  }
+
+  .hud-top--student .hud-command {
+    z-index: 1;
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .hud-top--student .hud-command__nav {
+    display: none;
+  }
+
+  .hud-top--student .hud-menu__toggle {
+    min-width: 58px;
+    min-height: 58px;
+    border-left-color: color-mix(
+      in srgb,
+      var(--pixel-window-frame) 24%,
+      transparent
+    );
+    font-size: 12px;
+  }
+
+  .hud-top--student .hud-menu__panel {
+    position: fixed;
+    top: 146px;
+    right: 8px;
+    width: min(320px, calc(100vw - 16px));
+    max-height: calc(100dvh - 154px);
+    overflow-y: auto;
+  }
+}
+
 @media (orientation: landscape) and (max-height: 480px) {
   .hud-menu__panel {
     max-height: calc(100vh - 72px);
@@ -8268,9 +8699,349 @@ select#dashboard-classroom {
   transition: none;
 }
 
-/* ── 冒險者公會認證場景：board 03 桌機／手機獨立構圖 ─────── */
+/* ── Generated board 05：六章連續世界學習地圖 ────────────────── */
+#main-content:has(> .lobby--map-fullscreen) {
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+  align-items: stretch;
+  justify-items: stretch;
+  background: var(--pixel-night-deep);
+  padding: 0;
+}
+
+.lobby--map-fullscreen,
+.lobby--map-fullscreen .chapter-map-shell,
+.lobby--map-fullscreen .chapter-map,
+.lobby--map-fullscreen .chapter-map__viewport {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  inset: 0;
+}
+
+.lobby--map-fullscreen {
+  display: block;
+  background: var(--pixel-night-deep);
+  padding: 0;
+}
+
+.lobby--map-fullscreen .chapter-map-shell {
+  display: block;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.chapter-map-title {
+  position: absolute;
+  z-index: 12;
+  top: clamp(var(--space-4), 2vw, var(--space-6));
+  left: clamp(var(--space-4), 2.5vw, var(--space-8));
+  pointer-events: none;
+}
+
+.chapter-map-title h1 {
+  margin: 0;
+  color: var(--pixel-window-ink);
+  font-family: var(--font-pixel-tc);
+  font-size: clamp(1.75rem, 3.4vw, 2.75rem);
+  letter-spacing: 0.06em;
+  text-shadow: 3px 3px 0 var(--pixel-shadow);
+}
+
+.lobby--map-fullscreen .chapter-map {
+  display: block;
+}
+
+.lobby--map-fullscreen .chapter-map__viewport {
+  overflow: hidden;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+  background: var(--pixel-night-deep);
+  box-shadow: none;
+  touch-action: auto;
+}
+
+.lobby--map-fullscreen .chapter-map__world {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  min-width: 100%;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 1672 / 941;
+  container-type: size;
+  transform: translateY(-50%);
+}
+
+.lobby--map-fullscreen .chapter-map__base {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  image-rendering: pixelated;
+}
+
+.chapter-map__base--mobile {
+  display: none;
+}
+
+.lobby--map-fullscreen .chapter-map__camera-guide,
+.lobby--map-fullscreen .chapter-map__companion,
+.lobby--map-fullscreen .chapter-map__adventurer,
+.lobby--map-fullscreen .chapter-map__sign-chain {
+  display: none;
+}
+
+.lobby--map-fullscreen .chapter-map__building {
+  width: clamp(100px, 11.5%, 172px);
+  min-width: 0;
+  transform: translate(-50%, -100%);
+}
+
+.lobby--map-fullscreen .chapter-map__building-button {
+  display: block;
+  min-height: 44px;
+  overflow: visible;
+  line-height: 0;
+}
+
+.lobby--map-fullscreen .chapter-map__building-visual {
+  width: 100%;
+  aspect-ratio: 7 / 5;
+  transform: translate(
+    var(--chapter-visual-offset-x),
+    var(--chapter-visual-offset-y)
+  );
+}
+
+.lobby--map-fullscreen .chapter-map__building-art {
+  display: block;
+  image-rendering: pixelated;
+}
+
+.lobby--map-fullscreen .chapter-map__building-label {
+  top: 28%;
+  left: 92%;
+  width: max-content;
+  min-width: 7rem;
+  min-height: 0;
+  justify-items: start;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--pixel-window-ink);
+  padding: 0;
+  text-align: left;
+  transform: none;
+}
+
+.lobby--map-fullscreen .chapter-map__building-chapter {
+  color: inherit;
+  font-family: var(--font-pixel-tc);
+  font-size: clamp(1rem, 1.7vw, 1.4rem);
+  font-weight: 900;
+  text-shadow: 2px 2px 0 var(--pixel-shadow);
+}
+
+.lobby--map-fullscreen .chapter-map__building-label strong {
+  display: none;
+}
+
+.lobby--map-fullscreen .chapter-map__status-medal {
+  top: 56%;
+  left: 92%;
+  min-height: 24px;
+  justify-content: flex-start;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--pixel-window-muted);
+  font-size: clamp(0.75rem, 1.15vw, 0.95rem);
+  padding: 0;
+  transform: none;
+  text-shadow: 2px 2px 0 var(--pixel-shadow);
+}
+
+.lobby--map-fullscreen
+  .chapter-map__building[data-access-state='completed']
+  .chapter-map__status-medal {
+  background: transparent;
+  color: var(--color-info);
+}
+
+.lobby--map-fullscreen
+  .chapter-map__building[data-access-state='available']
+  .chapter-map__status-medal {
+  background: transparent;
+  color: var(--pixel-gold);
+}
+
+.lobby--map-fullscreen
+  .chapter-map__building[data-access-state='content_unavailable']
+  .chapter-map__status-medal {
+  background: transparent;
+  color: var(--pixel-window-muted);
+}
+
+.lobby--map-fullscreen
+  .chapter-map__building[data-access-state='locked']
+  .chapter-map__building-art,
+.lobby--map-fullscreen
+  .chapter-map__building[data-access-state='content_unavailable']
+  .chapter-map__building-art {
+  --chapter-art-filter: grayscale(0.86) brightness(0.48)
+    drop-shadow(
+      3px 4px 0 color-mix(in srgb, var(--stage-void) 72%, transparent)
+    );
+}
+
+.lobby--map-fullscreen .chapter-map__cloud,
+.lobby--map-fullscreen .chapter-map__construction {
+  opacity: 0.58;
+}
+
+.lobby--map-fullscreen .chapter-map__dialogue-lane {
+  position: absolute;
+  z-index: 14;
+  right: clamp(var(--space-4), 3.5vw, var(--space-10));
+  bottom: clamp(var(--space-4), 3vw, var(--space-8));
+  left: auto;
+  width: min(310px, calc(100% - var(--space-8)));
+  padding: 0;
+}
+
+.lobby--map-fullscreen .chapter-map__panel {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.lobby--map-fullscreen .chapter-map__panel-heading,
+.lobby--map-fullscreen .chapter-map__progress,
+.lobby--map-fullscreen .chapter-map__blockers {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.lobby--map-fullscreen .chapter-map__panel-outcome {
+  display: block;
+}
+
+.lobby--map-fullscreen .chapter-map__entry-action {
+  width: 100%;
+  min-height: 56px;
+  border: 2px solid var(--pixel-window-frame);
+  border-radius: 0;
+  background: linear-gradient(var(--cobalt-600), var(--cobalt-700));
+  box-shadow:
+    inset 0 -3px 0 color-mix(in srgb, var(--cobalt-700) 70%, var(--stage-void)),
+    4px 4px 0 var(--pixel-shadow);
+  color: var(--pixel-window-ink);
+  font-size: 1.2rem;
+}
+
+.lobby--map-fullscreen .chapter-map__entry-action::after {
+  margin-left: auto;
+  content: '›';
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.lobby--map-fullscreen .chapter-map__unavailable {
+  border: 1px solid
+    color-mix(in srgb, var(--pixel-window-frame) 48%, transparent);
+  background: color-mix(in srgb, var(--pixel-night-deep) 88%, transparent);
+  color: var(--pixel-window-muted);
+  padding: var(--space-3);
+}
+
+@media (max-width: 47.99rem) {
+  .chapter-map-title {
+    top: var(--space-3);
+    left: var(--space-4);
+  }
+
+  .chapter-map-title h1 {
+    font-size: 1.55rem;
+  }
+
+  .lobby--map-fullscreen .chapter-map__world {
+    top: 50%;
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 941 / 1672;
+    transform: translateY(-50%);
+  }
+
+  .chapter-map__base--desktop {
+    display: none;
+  }
+
+  .chapter-map__base--mobile {
+    display: block;
+  }
+
+  .lobby--map-fullscreen .chapter-map__building {
+    width: clamp(76px, 23%, 94px);
+    left: var(--chapter-mobile-left) !important;
+    top: var(--chapter-mobile-top) !important;
+  }
+
+  .lobby--map-fullscreen .chapter-map__building-label {
+    top: 24%;
+    left: calc(100% + 4px);
+    min-width: 5.5rem;
+  }
+
+  .lobby--map-fullscreen .chapter-map__building-chapter {
+    font-size: 1rem;
+  }
+
+  .lobby--map-fullscreen .chapter-map__status-medal {
+    top: 53%;
+    left: calc(100% + 4px);
+    font-size: 0.76rem;
+  }
+
+  .lobby--map-fullscreen .chapter-map__dialogue-lane {
+    position: absolute;
+    right: var(--space-4);
+    bottom: var(--space-4);
+    left: var(--space-4);
+    width: auto;
+  }
+
+  .lobby--map-fullscreen .chapter-map__entry-action {
+    min-height: 56px;
+    font-size: 1rem;
+  }
+}
+
+/* ── 冒險者公會認證場景：固定視窗，不讓表單或裝飾造成頁面捲動。 ── */
 .game-stage #main-content:has(> .auth-portal) {
-  min-height: 100%;
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   align-items: center;
   justify-items: stretch;
   background-color: var(--pixel-night-deep);
@@ -8278,26 +9049,34 @@ select#dashboard-classroom {
     linear-gradient(
       90deg,
       transparent 0 35%,
-      color-mix(in srgb, var(--stage-void) 30%, transparent) 52% 72%,
-      transparent 92%
+      color-mix(in srgb, var(--stage-void) 32%, transparent) 52% 74%,
+      transparent 94%
     ),
     url('../assets/auth/guild-desk-desktop.png');
   background-position: center;
   background-size: cover;
-  padding: clamp(var(--space-4), 3vw, var(--space-8));
+  padding: clamp(var(--space-4), 2.5vw, var(--space-6));
 }
 
-.game-stage #main-content:has(> .auth-portal)::before {
+.game-stage #main-content:has(> .auth-portal)::before,
+.scene-night.auth-portal::after {
   content: none;
 }
 
-.auth-portal:has(> .auth-portal__welcome) {
+.auth-portal:has(> .auth-portal__welcome),
+.auth-portal--register {
   position: relative;
-  width: min(440px, 42vw);
+  min-height: 0;
+  align-self: center;
   justify-self: end;
-  margin-right: clamp(var(--space-8), 13vw, 190px);
+  border: 0;
   background: transparent;
   padding: 0;
+}
+
+.auth-portal:has(> .auth-portal__welcome) {
+  width: min(420px, 39vw);
+  margin-right: clamp(var(--space-6), 7vw, 100px);
 }
 
 .auth-portal:has(> .auth-portal__welcome) > .auth-portal-brand,
@@ -8312,145 +9091,341 @@ select#dashboard-classroom {
 }
 
 .auth-portal:has(> .auth-portal__welcome) > .pixel-heading {
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-2);
   color: var(--pixel-window-ink);
   font-size: 1.5rem;
+  text-shadow: 2px 2px 0 var(--pixel-shadow);
 }
 
 .auth-portal__welcome {
   position: absolute;
-  top: 56px;
-  right: calc(100% + clamp(180px, 17vw, 260px));
-  width: 330px;
+  top: 92px;
+  right: calc(100% + var(--space-5));
+  width: min(390px, 34vw);
   margin: 0;
   color: var(--pixel-window-ink);
   font-family: var(--font-pixel-tc);
-  font-size: clamp(1.5rem, 2.6vw, 2.2rem);
+  font-size: clamp(1.4rem, 2.35vw, 2rem);
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
+  line-height: 1.45;
+  text-align: center;
+  text-shadow: 3px 3px 0 var(--pixel-shadow);
+  white-space: nowrap;
+}
+
+/* 登入與註冊共用設計板的藍銀雙層像素窗框。 */
+.auth-portal .auth-window {
+  width: 100%;
+  max-width: none;
+  border: 3px solid #b9c7f0;
+  border-radius: 0;
+  outline: 3px solid #080d22;
+  margin: 0;
+  background: color-mix(in srgb, var(--pixel-night) 97%, transparent);
+  box-shadow:
+    inset 0 0 0 2px #465786,
+    0 0 0 6px #7586b8,
+    7px 7px 0 rgb(2 5 17 / 82%);
+  padding: var(--space-4) var(--space-5);
+}
+
+.auth-portal .auth-window .rpg-window__body {
   line-height: 1.45;
 }
 
-.auth-portal:has(> .auth-portal__welcome) .auth-window {
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  border-color: var(--pixel-window-muted);
-  background: color-mix(in srgb, var(--pixel-night) 95%, transparent);
-  box-shadow:
-    0 0 0 3px var(--pixel-night-deep),
-    5px 5px 0 var(--pixel-shadow);
-}
-
-.auth-portal:has(> .auth-portal__welcome) .login-form__portal {
-  border-color: var(--pixel-window-muted);
+.auth-portal .login-form__portal {
+  border: 2px solid var(--pixel-window-muted);
+  border-radius: 0;
+  margin-top: 0;
   background: var(--pixel-night-deep);
 }
 
-.auth-portal:has(> .auth-portal__welcome)
-  .login-form__portal
-  label[data-active='true'] {
+.auth-portal .login-form__portal label {
+  border-radius: 0;
+}
+
+.auth-portal .login-form__portal label[data-active='true'] {
   background: var(--cobalt-600);
   color: var(--pixel-window-ink);
 }
 
-.auth-portal:has(> .auth-portal__welcome)
-  input:not([type='radio']):not([type='checkbox']) {
+.auth-portal .login-form {
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.auth-portal input:not([type='radio']):not([type='checkbox']) {
+  min-height: 46px;
   border: 2px solid var(--pixel-window-muted);
+  border-radius: 0;
   background: var(--stage-void);
+  box-shadow:
+    inset 2px 2px 0 rgb(0 0 0 / 38%),
+    inset -1px -1px 0 rgb(255 255 255 / 8%);
   color: var(--pixel-window-ink);
 }
 
-.auth-portal:has(> .auth-portal__welcome)
-  input:not([type='radio']):not([type='checkbox']):focus {
+.auth-portal input:not([type='radio']):not([type='checkbox']):focus {
   border-color: var(--cobalt-600);
 }
 
-.auth-portal:has(> .auth-portal__welcome) .primary-action {
+.auth-portal .primary-action {
+  width: 100%;
+  min-height: 48px;
   border-color: color-mix(
     in srgb,
     var(--cobalt-600) 70%,
     var(--pixel-window-frame)
   );
+  border-radius: 0;
   background: linear-gradient(var(--cobalt-600), var(--cobalt-700));
   box-shadow: 0 4px 0 var(--pixel-shadow);
   color: var(--pixel-window-ink);
-  font-size: 1.25rem;
 }
 
-.auth-portal:has(> .auth-portal__welcome) .login-form__link {
-  color: color-mix(in srgb, var(--cobalt-600) 58%, var(--pixel-window-frame));
+.auth-portal:has(> .auth-portal__welcome) .primary-action {
+  font-size: 1.15rem;
 }
 
-.auth-portal:has(> .auth-portal__welcome) .login-form__divider {
+.auth-portal .login-form__link,
+.auth-portal .login-form__field-hint,
+.auth-portal .login-form__status {
   color: var(--pixel-window-muted);
+}
+
+.auth-portal .login-form__divider {
+  color: var(--pixel-window-muted);
+}
+
+/* 註冊固定為右側三步驟；每一步只保留該階段所需欄位。 */
+.auth-portal--register {
+  width: min(480px, 44vw);
+  margin-right: clamp(var(--space-5), 6vw, 88px);
+}
+
+.auth-register-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 var(--space-3);
+}
+
+.auth-register-heading .pixel-heading {
+  margin: 0;
+  color: var(--pixel-window-ink);
+  font-size: 1.55rem;
+  text-shadow: 2px 2px 0 var(--pixel-shadow);
+}
+
+.auth-register-heading__back {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--pixel-window-muted);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.auth-register-progress {
+  display: grid;
+  margin: 0;
+  gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  padding: 0;
+}
+
+.auth-register-progress li {
+  min-width: 0;
+}
+
+.auth-register-progress span {
+  display: grid;
+  min-height: 48px;
+  align-content: center;
+  border: 1px solid #53658f;
+  background: #111a36;
+  color: var(--pixel-window-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.auth-register-progress b {
+  color: var(--pixel-gold);
+  font-family: var(--font-pixel-latin);
+  font-size: 0.7rem;
+}
+
+.auth-register-progress [aria-current='step'] {
+  border-color: var(--pixel-window-frame);
+  background: var(--cobalt-700);
+  color: var(--pixel-window-ink);
+  box-shadow: inset 0 -3px 0 var(--cobalt-600);
+}
+
+.auth-register-form {
+  display: block;
+  margin-top: var(--space-3);
+}
+
+.auth-register-step {
+  display: grid;
+  min-width: 0;
+  border: 0;
+  margin: 0;
+  gap: var(--space-3);
+  padding: 0;
+}
+
+.auth-register-step legend {
+  margin-bottom: var(--space-2);
+  color: var(--pixel-window-ink);
+  font-family: var(--font-pixel-tc);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.auth-register-step .login-form__field {
+  gap: 4px;
+}
+
+.auth-register-step .login-form__field-hint {
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.auth-register-step .login-form__field-error,
+.auth-register-step .login-form__submit-error {
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.auth-register-actions {
+  display: grid;
+  margin-top: var(--space-1);
+  gap: var(--space-3);
+}
+
+.auth-register-actions--split {
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+}
+
+.auth-register-secondary {
+  min-height: 48px;
+  border: 2px solid var(--pixel-window-muted);
+  background: var(--pixel-night-deep);
+  color: var(--pixel-window-ink);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.auth-register-verified {
+  margin: 0;
+  color: var(--jade-200, #a9f2cc);
+  font-weight: 800;
 }
 
 @media (max-width: 47.99rem) {
   .game-stage #main-content:has(> .auth-portal) {
-    min-height: 900px;
-    align-items: start;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    align-items: end;
     background-image:
       linear-gradient(
-        transparent 0 42%,
-        color-mix(in srgb, var(--stage-void) 52%, transparent) 54%,
+        transparent 0 34%,
+        color-mix(in srgb, var(--stage-void) 44%, transparent) 49%,
         var(--stage-void) 78%
       ),
       url('../assets/auth/guild-desk-mobile.png');
     background-position: top center;
-    background-size: 100% auto;
-    padding: 0 var(--space-3) var(--space-6);
+    background-size: cover;
+    padding: var(--space-3);
   }
 
-  .auth-portal:has(> .auth-portal__welcome) {
+  .auth-portal:has(> .auth-portal__welcome),
+  .auth-portal--register {
     width: 100%;
-    justify-self: stretch;
-    margin: clamp(420px, 112vw, 500px) 0 0;
+    min-height: 0;
+    max-height: calc(100dvh - var(--space-6));
+    align-self: end;
+    justify-self: end;
+    margin: 0;
   }
 
   .auth-portal:has(> .auth-portal__welcome) > .auth-portal-brand {
     position: absolute;
-    top: clamp(-405px, -103vw, -350px);
+    top: clamp(-300px, -35vh, -228px);
     left: 50%;
-    display: flex;
-    width: min(82vw, 330px);
+    display: grid;
+    width: min(62vw, 235px);
     height: auto;
     clip: auto;
     clip-path: none;
     overflow: visible;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-2);
+    place-items: center;
     transform: translateX(-50%);
     white-space: normal;
   }
 
-  .auth-portal:has(> .auth-portal__welcome) .auth-portal-brand__mark {
-    margin: 0;
-  }
-
-  .auth-portal:has(> .auth-portal__welcome) .auth-portal-brand__mark img {
-    width: 38px;
-    height: 38px;
-    image-rendering: pixelated;
+  .auth-portal:has(> .auth-portal__welcome) .auth-portal-brand__mark,
+  .auth-portal:has(> .auth-portal__welcome) .auth-portal-brand__subtitle {
+    display: none;
   }
 
   .auth-portal:has(> .auth-portal__welcome) .auth-portal-brand__title {
     color: var(--pixel-window-ink);
     font-family: var(--font-pixel-tc);
-    font-size: clamp(1.35rem, 6vw, 1.75rem);
+    font-size: clamp(1.2rem, 5.5vw, 1.5rem);
+    line-height: 1.2;
+    text-shadow: 2px 2px 0 var(--pixel-shadow);
+    white-space: nowrap;
   }
 
-  .auth-portal:has(> .auth-portal__welcome) .auth-portal-brand__subtitle,
   .auth-portal:has(> .auth-portal__welcome) > .auth-portal__welcome {
     display: none;
   }
 
-  .auth-portal:has(> .auth-portal__welcome) .auth-window {
-    padding: var(--space-5) var(--space-4);
+  .auth-portal .auth-window {
+    padding: var(--space-3) var(--space-4);
   }
 
   .auth-portal:has(> .auth-portal__welcome) .login-form__portal {
-    flex-direction: column;
+    flex-direction: row;
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) .login-form__portal label {
+    min-width: 0;
+    padding-inline: 4px;
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) .login-form {
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .auth-register-heading {
+    margin-bottom: var(--space-2);
+  }
+
+  .auth-register-heading .pixel-heading {
+    font-size: 1.3rem;
+  }
+
+  .auth-register-progress span {
+    min-height: 42px;
+    font-size: 0.7rem;
+  }
+
+  .auth-register-form,
+  .auth-register-step {
+    gap: 10px;
+  }
+
+  .auth-register-step legend {
+    margin-bottom: 6px;
   }
 }

@@ -33,7 +33,7 @@ function AuthenticatedEconomySummary() {
     );
   }
 
-  return <EconomySummaryView summary={economy.data} />;
+  return <EconomySummaryView summary={economy.data} variant="hud" />;
 }
 
 function StudentHudAvatar({
@@ -58,12 +58,16 @@ function StudentHudAvatar({
 function AuthenticatedStudentShell({
   displayName,
   isLearningMap,
+  isSigningOut,
+  onSignOut,
   reducedMotion,
   signOutError,
   transitionKey,
 }: Readonly<{
   displayName: string;
   isLearningMap: boolean;
+  isSigningOut: boolean;
+  onSignOut: () => void;
   reducedMotion: boolean;
   signOutError: boolean;
   transitionKey: string;
@@ -75,14 +79,20 @@ function AuthenticatedStudentShell({
 
   return (
     <>
-      <header className="hud-top">
+      <header className="hud-top hud-top--student">
         <div className="hud-economy-group">
           <div aria-label="學生身分" className="hud-identity" role="group">
             <StudentHudAvatar equipped={equippedBlook} />
             <strong className="hud-identity__name">{displayName}</strong>
+            <AuthenticatedEconomySummary />
           </div>
-          <AuthenticatedEconomySummary />
         </div>
+        <HudCommandBar
+          displayName={displayName}
+          isSigningOut={isSigningOut}
+          onSignOut={onSignOut}
+          variant="student"
+        />
         {signOutError ? (
           <p className="app-shell__auth-error" role="alert">
             登出失敗，請稍後重試。
@@ -170,18 +180,12 @@ export function AppShell() {
         <a className="skip-link" href="#main-content">
           跳到主要內容
         </a>
-        {isStudentLearningMap ? (
-          <RotateBanner message="轉橫可看完整森林王國村" />
-        ) : (
-          <RotateBanner />
-        )}
         {isAuthenticatedProfile && !isTeacher ? (
-          <HudCommandBar
-            displayName={profile.data?.displayName ?? ''}
-            isSigningOut={isSigningOut}
-            onSignOut={handleSignOut}
-            variant="student"
-          />
+          isStudentLearningMap ? (
+            <RotateBanner message="轉橫可看完整森林王國村" />
+          ) : (
+            <RotateBanner />
+          )
         ) : null}
         {isTeacher ? (
           <HudCommandBar
@@ -195,6 +199,8 @@ export function AppShell() {
           <AuthenticatedStudentShell
             displayName={profile.data?.displayName ?? ''}
             isLearningMap={isStudentLearningMap}
+            isSigningOut={isSigningOut}
+            onSignOut={handleSignOut}
             reducedMotion={reducedMotion}
             signOutError={signOutError}
             transitionKey={location.pathname}

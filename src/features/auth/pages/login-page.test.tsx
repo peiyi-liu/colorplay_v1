@@ -49,6 +49,20 @@ const renderLoginPage = (value: AuthContextValue) =>
   );
 
 describe('LoginPage', () => {
+  it('呈現桌機迎賓文案與手機公會木牌文案', () => {
+    renderLoginPage(createAuthValue());
+
+    expect(screen.getByText('歡迎回來，冒險者。')).toHaveClass(
+      'auth-portal__welcome',
+    );
+    expect(screen.getByText('冒險者公會')).toHaveClass(
+      'auth-portal-brand__title',
+    );
+    expect(
+      screen.getByRole('img', { name: 'ColorPlay 藍金寶典' }),
+    ).toHaveAttribute('src', '/colorplay-grimoire-pixel.png');
+  });
+
   it('groups labeled inputs and one primary submit action', async () => {
     renderLoginPage(createAuthValue());
 
@@ -365,14 +379,14 @@ describe('LoginPage', () => {
     expect(screen.getByText('冒險者公會')).toBeInTheDocument();
     expect(
       document.querySelector('.auth-portal-brand__mark img'),
-    ).toHaveAttribute('src', '/colorplay-grimoire-design.png');
+    ).toHaveAttribute('src', '/colorplay-grimoire-pixel.png');
   });
 });
 
 it('shows the ggame auth portal branding', () => {
   renderLoginPage(createAuthValue());
   expect(screen.getByText('冒險者公會')).toBeInTheDocument();
-  expect(screen.getByText('歡迎回來，冒險者')).toBeInTheDocument();
+  expect(screen.getByText('歡迎回來，冒險者。')).toBeInTheDocument();
 });
 
 it('switches the ggame portal tone and teacher note with the tabs', async () => {
