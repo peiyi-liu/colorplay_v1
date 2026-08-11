@@ -231,6 +231,7 @@
   --font-pixel-tc: 'Cubic 11', 'Noto Sans TC', sans-serif;
   --journey-hud-command-height: 58px;
   --journey-hud-status-height: 68px;
-  --journey-student-hud-height: 92px;
+  --journey-student-hud-height: 72px;
+  --journey-student-hud-peek: 0px;
   --journey-transition-duration: 360ms;
 }

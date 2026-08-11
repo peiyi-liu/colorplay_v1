@@ -86,7 +86,7 @@ test('student sees the semantic six-building chapter map', async ({ page }) => {
   await expect(
     page.getByRole('heading', { name: /^Chapter \d+：/u }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: '開始挑戰' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '章節總挑戰' })).toBeVisible();
 
   expect(consoleErrors).toEqual([]);
   expect(pageErrors).toEqual([]);

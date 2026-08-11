@@ -3,9 +3,11 @@
 // ChapterDetailPageView，完全不觸碰 Supabase／任何 hook。
 import type { StudentChapterMapEntry } from '../api/chapter-map';
 import { LearningError } from '../api/learning-repository';
+import { StudentHudHarness } from '../../../app/shell/student-hud.harness';
 import { deriveChapterDetailViewModel } from './chapter-detail-adapter';
 import { ChapterDetailPageView } from './chapter-detail-page';
 import {
+  chapterEntrySectionsFixture,
   chapterMapEntryFixture,
   chapterReviewSectionsFixture,
   learningProgressRowsFixture,
@@ -106,7 +108,7 @@ export function ChapterDetailPageHarness({
               ],
             },
           ])
-        : chapterReviewSectionsFixture();
+        : chapterEntrySectionsFixture();
 
   const viewModel = deriveChapterDetailViewModel({
     chapterMapEntry: scenario === 'loading' ? undefined : entryFor(scenario),
@@ -124,12 +126,14 @@ export function ChapterDetailPageHarness({
   });
 
   return (
-    <ChapterDetailPageView
-      completeError={undefined}
-      completePending={false}
-      onCompleteCard={() => undefined}
-      onRetry={() => undefined}
-      viewModel={viewModel}
-    />
+    <StudentHudHarness>
+      <ChapterDetailPageView
+        completeError={undefined}
+        completePending={false}
+        onCompleteCard={() => undefined}
+        onRetry={() => undefined}
+        viewModel={viewModel}
+      />
+    </StudentHudHarness>
   );
 }

@@ -7332,7 +7332,7 @@ select#dashboard-classroom {
   border-width: 0 0 1px;
   background: color-mix(in srgb, var(--pixel-night-deep) 96%, transparent);
   box-shadow: 0 4px 20px color-mix(in srgb, var(--stage-void) 72%, transparent);
-  padding: 10px clamp(var(--space-3), 2vw, var(--space-6));
+  padding: 6px clamp(var(--space-3), 2vw, var(--space-6));
 }
 
 .hud-top--student .hud-economy-group {
@@ -7353,7 +7353,7 @@ select#dashboard-classroom {
   min-width: 0;
   width: 100%;
   height: 100%;
-  grid-template-columns: 62px minmax(112px, auto) minmax(150px, 220px) auto;
+  grid-template-columns: 56px minmax(108px, auto) minmax(140px, 210px) auto;
   grid-template-rows: 1fr 1fr;
   align-items: center;
   align-self: stretch;
@@ -7373,8 +7373,8 @@ select#dashboard-classroom {
 }
 
 .hud-top--student .hud-avatar {
-  width: 62px;
-  height: 62px;
+  width: 56px;
+  height: 56px;
   border-color: var(--pixel-gold);
   border-radius: 50%;
   box-shadow:
@@ -7547,7 +7547,7 @@ select#dashboard-classroom {
 
 .hud-top--student .hud-command__tab {
   min-width: clamp(76px, 7.5vw, 104px);
-  min-height: 68px;
+  min-height: 60px;
   flex-direction: column;
   justify-content: center;
   gap: 4px;
@@ -7577,7 +7577,7 @@ select#dashboard-classroom {
 
 .hud-top--student .hud-menu__toggle {
   min-width: 76px;
-  min-height: 68px;
+  min-height: 60px;
   flex-direction: column;
   gap: 5px;
   border: 0;
@@ -7648,40 +7648,40 @@ select#dashboard-classroom {
 
 @media (max-width: 47.99rem) {
   .hud-top--student {
-    min-height: 146px;
-    flex-basis: 146px;
+    min-height: 76px;
+    flex-basis: 76px;
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: 70px 58px;
+    grid-template-rows: 64px;
     gap: 0 var(--space-3);
-    padding: 8px 12px;
+    padding: 6px 10px;
   }
 
   .hud-top--student .hud-economy-group {
     display: block;
     grid-column: 1;
-    grid-row: 1 / 3;
+    grid-row: 1;
   }
 
   .hud-top--student .hud-identity {
     display: grid;
-    height: 128px;
-    grid-template-columns: 54px minmax(0, 1fr) minmax(96px, 112px);
-    grid-template-rows: 35px 35px 58px;
+    height: 64px;
+    grid-template-columns: 48px minmax(68px, 1fr) minmax(88px, 104px) auto;
+    grid-template-rows: 32px 32px;
     gap: 0 var(--space-2);
     border: 0;
     padding: 0;
   }
 
   .hud-top--student .hud-identity__name {
-    max-width: min(16ch, 46vw);
+    max-width: 10ch;
     grid-column: 2;
     grid-row: 1;
-    font-size: 17px;
+    font-size: 14px;
   }
 
   .hud-top--student .hud-avatar {
-    width: 54px;
-    height: 54px;
+    width: 48px;
+    height: 48px;
     grid-column: 1;
     grid-row: 1 / 3;
   }
@@ -7700,11 +7700,12 @@ select#dashboard-classroom {
     grid-column: 2;
     grid-row: 2;
     align-self: start;
+    font-size: 12px;
     padding: 0;
   }
 
   .hud-top--student .economy-summary__hud-xp {
-    width: calc(100% - var(--space-2));
+    width: 100%;
     grid-column: 3;
     grid-row: 1 / 3;
     grid-template-columns: auto minmax(0, 1fr);
@@ -7712,19 +7713,19 @@ select#dashboard-classroom {
   }
 
   .hud-top--student .economy-summary__tokens {
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    min-width: 78px;
+    position: static;
+    min-width: 54px;
+    grid-column: 4;
+    grid-row: 1 / 3;
     border: 0;
-    font-size: 16px;
+    font-size: 14px;
     padding: 0;
   }
 
   .hud-top--student .hud-command {
     z-index: 1;
     grid-column: 2;
-    grid-row: 2;
+    grid-row: 1;
   }
 
   .hud-top--student .hud-command__nav {
@@ -7732,8 +7733,8 @@ select#dashboard-classroom {
   }
 
   .hud-top--student .hud-menu__toggle {
-    min-width: 58px;
-    min-height: 58px;
+    min-width: 52px;
+    min-height: 52px;
     border-left-color: color-mix(
       in srgb,
       var(--pixel-window-frame) 24%,
@@ -7744,10 +7745,10 @@ select#dashboard-classroom {
 
   .hud-top--student .hud-menu__panel {
     position: fixed;
-    top: 146px;
+    top: 76px;
     right: 8px;
     width: min(320px, calc(100vw - 16px));
-    max-height: calc(100dvh - 154px);
+    max-height: calc(100dvh - 84px);
     overflow-y: auto;
   }
 }
@@ -7757,6 +7758,63 @@ select#dashboard-classroom {
     max-height: calc(100vh - 72px);
     max-height: calc(100dvh - 72px);
     overflow-y: auto;
+  }
+}
+
+/* 桌機學生 HUD 採 macOS Dock 式完全收合。24px 頂緣負責開啟，HUD 下方
+   28px 緩衝帶負責判斷真正離開；沒有時間限制。完整 HUD 覆蓋場景而不改變
+   場景幾何，MENU 與鍵盤 focus 也留在同一互動區，避免 transform 往返震動。 */
+.student-hud-reveal-zone,
+.student-hud-dismiss-zone {
+  display: none;
+}
+
+@media (min-width: 48rem) and (hover: hover) and (pointer: fine) {
+  .student-hud-reveal-zone {
+    position: absolute;
+    z-index: 51;
+    top: 0;
+    right: 0;
+    left: 0;
+    display: block;
+    height: 24px;
+  }
+
+  .student-hud-dismiss-zone {
+    position: absolute;
+    z-index: 49;
+    top: var(--journey-student-hud-height);
+    right: 0;
+    left: 0;
+    display: block;
+    height: 28px;
+    pointer-events: none;
+  }
+
+  .student-hud-dismiss-zone[data-hud-expanded='true'] {
+    pointer-events: auto;
+  }
+
+  .hud-top--student {
+    margin-bottom: calc(
+      var(--journey-student-hud-peek) - var(--journey-student-hud-height)
+    );
+    transform: translateY(
+      calc(var(--journey-student-hud-peek) - var(--journey-student-hud-height))
+    );
+    transition: transform 180ms ease;
+    will-change: transform;
+  }
+
+  .hud-top--student[data-hud-expanded='true'],
+  .hud-top--student:focus-within {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-top--student {
+    transition: none;
   }
 }
 

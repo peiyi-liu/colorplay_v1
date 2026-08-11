@@ -9,6 +9,61 @@ const viewports = [
 const screenshotRoot = 'artifacts/design-audit/jrpg-student-hud';
 
 test.describe('JRPG stable student HUD', () => {
+  test('desktop HUD opens and closes across the enlarged pointer zone', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ height: 720, width: 1280 });
+    await page.goto('/dev-harness/student-hud.html');
+
+    const hud = page.locator('.hud-top--student');
+    await page.mouse.move(640, 20);
+    await expect
+      .poll(async () => (await hud.boundingBox())?.y ?? -1)
+      .toBeCloseTo(0, 0);
+    await expect(hud).toHaveAttribute('data-hud-expanded', 'true');
+
+    await page.mouse.move(640, 90);
+    await expect
+      .poll(async () => (await hud.boundingBox())?.y ?? -1)
+      .toBeCloseTo(0, 0);
+
+    await page.mouse.move(640, 120);
+    await expect(hud).toHaveAttribute('data-hud-expanded', 'false');
+    await expect
+      .poll(async () => {
+        const box = await hud.boundingBox();
+        return box ? box.y + box.height : -1;
+      })
+      .toBeCloseTo(0, 0);
+  });
+
+  test('opening MENU keeps the HUD and scene vertically stable', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ height: 720, width: 1280 });
+    await page.goto('/dev-harness/student-hud.html');
+
+    const hud = page.locator('.hud-top--student');
+    const scene = page.locator('#main-content');
+    await page.mouse.move(640, 20);
+    await expect
+      .poll(async () => (await hud.boundingBox())?.y ?? -1)
+      .toBeCloseTo(0, 0);
+
+    const before = {
+      hudTop: (await hud.boundingBox())?.y,
+      sceneTop: (await scene.boundingBox())?.y,
+    };
+    await page.getByRole('button', { name: 'MENU' }).click();
+    await expect(page.locator('#hud-menu-panel')).toBeVisible();
+
+    const after = {
+      hudTop: (await hud.boundingBox())?.y,
+      sceneTop: (await scene.boundingBox())?.y,
+    };
+    expect(after).toEqual(before);
+  });
+
   for (const viewport of viewports) {
     test(`matches the stable HUD contract at ${viewport.label}`, async ({
       page,
@@ -17,12 +72,41 @@ test.describe('JRPG stable student HUD', () => {
       await page.goto('/dev-harness/student-hud.html');
 
       const hud = page.locator('.hud-top--student');
+      const dismissZone = page.locator('.student-hud-dismiss-zone');
+      const revealZone = page.locator('.student-hud-reveal-zone');
       const identity = page.getByRole('group', { name: '學生身分' });
       const menu = page.getByRole('button', { name: 'MENU' });
       await expect(hud).toBeVisible();
       await expect(identity).toContainText('彩虹森林冒險家');
       await expect(page.getByLabel('1250 Token')).toBeVisible();
       await expect(menu).toBeVisible();
+
+      if (viewport.width === 1280) {
+        await expect(dismissZone).toBeVisible();
+        await expect(revealZone).toBeVisible();
+        await page.mouse.move(viewport.width / 2, viewport.height / 2);
+        await expect
+          .poll(async () => {
+            const box = await hud.boundingBox();
+            return box ? box.y + box.height : -1;
+          })
+          .toBeCloseTo(0, 0);
+        await mkdir(`${screenshotRoot}/${viewport.label}`, {
+          recursive: true,
+        });
+        await page.screenshot({
+          animations: 'disabled',
+          path: `${screenshotRoot}/${viewport.label}/hud-collapsed.png`,
+        });
+
+        await page.mouse.move(viewport.width / 2, 1);
+        await expect
+          .poll(async () => {
+            const box = await hud.boundingBox();
+            return box?.y ?? -1;
+          })
+          .toBeCloseTo(0, 0);
+      }
 
       if (viewport.width === 1280) {
         const primary = page.getByRole('navigation', { name: '主要導覽' });
@@ -32,6 +116,8 @@ test.describe('JRPG stable student HUD', () => {
           primary.getByRole('link', { name: '商店' }),
         ).toHaveAttribute('href', '/app/shop');
       } else {
+        await expect(dismissZone).toBeHidden();
+        await expect(revealZone).toBeHidden();
         await expect(
           page.getByRole('navigation', { name: '主要導覽' }),
         ).toHaveCount(0);
@@ -95,9 +181,12 @@ test.describe('JRPG stable student HUD', () => {
             selector,
           })),
       ).toEqual([]);
-      expect(metrics.mainTop).toBeCloseTo(metrics.hudHeight, 0);
+      expect(metrics.mainTop).toBeCloseTo(
+        viewport.width === 1280 ? 0 : metrics.hudHeight,
+        0,
+      );
       expect(metrics.hudHeight).toBeCloseTo(
-        viewport.width === 1280 ? 92 : 146,
+        viewport.width === 1280 ? 72 : 76,
         0,
       );
 
@@ -161,6 +250,17 @@ test.describe('JRPG stable student HUD', () => {
         animations: 'disabled',
         path: `${screenshotRoot}/${viewport.label}/hud.png`,
       });
+
+      if (viewport.width === 1280) {
+        await menu.focus();
+        await page.mouse.move(viewport.width / 2, viewport.height / 2);
+        await expect
+          .poll(async () => {
+            const box = await hud.boundingBox();
+            return box?.y ?? -1;
+          })
+          .toBeCloseTo(0, 0);
+      }
 
       await menu.click();
       const panel = page.locator('#hud-menu-panel');

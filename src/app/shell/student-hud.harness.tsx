@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { BlookArt } from '../../components/ui/blook-art';
 import { EconomySummaryView } from '../../features/rewards/components/economy-summary';
 import { HudCommandBar } from './hud-command-bar';
+import { StudentHudAutoHide } from './student-hud-auto-hide';
 
 export function StudentHudHarness({
   children,
@@ -12,7 +13,7 @@ export function StudentHudHarness({
     <MemoryRouter initialEntries={['/app']}>
       <div className="game-viewport">
         <div className="game-stage" data-shell-role="student">
-          <header className="hud-top hud-top--student">
+          <StudentHudAutoHide>
             <div className="hud-economy-group">
               <div aria-label="學生身分" className="hud-identity" role="group">
                 <span aria-hidden="true" className="hud-avatar">
@@ -38,7 +39,7 @@ export function StudentHudHarness({
               onSignOut={() => undefined}
               variant="student"
             />
-          </header>
+          </StudentHudAutoHide>
           <main
             className="game-stage__scene route-world-stage student-hud-harness__scene"
             id="main-content"

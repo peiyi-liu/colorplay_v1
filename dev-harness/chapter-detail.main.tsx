@@ -1,6 +1,5 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { MemoryRouter } from 'react-router-dom';
 
 import {
   CHAPTER_DETAIL_HARNESS_SCENARIOS,
@@ -21,10 +20,6 @@ const root = document.querySelector('#root');
 if (!root) throw new Error('dev-harness: #root missing');
 createRoot(root).render(
   <StrictMode>
-    <MemoryRouter>
-      <main id="main-content">
-        <ChapterDetailPageHarness scenario={scenario} />
-      </main>
-    </MemoryRouter>
+    <ChapterDetailPageHarness scenario={scenario} />
   </StrictMode>,
 );

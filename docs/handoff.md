@@ -334,3 +334,148 @@
 - Production 邊界：Production 不建立合成測試帳號；只允許 promote 已通過上述 Staging 閘門的同一 Git SHA，再執行核准的 Production 唯讀 smoke。任何有效登入證據缺失或失敗一律 fail closed，不得切換公開 alias。
 - 已同步：`docs/roadmap-colorplay-next.md` 與 `docs/deployment/vercel.md`。本筆為部署治理規則，未修改產品程式碼、Vercel alias、Supabase 或任何線上資料。
 - 下一步：目前 staging 真實有效帳號仍登入失敗，因此現況未通過此閘門；下一步繼續診斷有效 fixture／Auth bootstrap，而不是把先前無效帳密 2/2 當作修復完成。
+
+## 2026-08-11 10:40 [Codex] — 第三章小節複習卡入口 05a 草圖待 owner 核准
+
+- 做了什麼：依 owner 指示補上學習地圖 Board 05 與全頁書本複習 Board 06-v2 之間的中介畫面。新草圖以深夜學院書庫為連續世界場景，不使用頁面級大外框；桌機以兩條書庫路徑呈現 `3-1 色彩三要素與色名的表示` 與 `3-2 色彩體系`，各自配置三個複習卡書本節點；手機重排為縱向旅程，節點文字位於書本右側。單一「繼續複習」主行動導向下一個全頁書本閱讀畫面。
+- 資料邊界：草圖中的暱稱、等級、XP、金幣與完成進度只作構圖示意；正式實作須沿用 profile／economy／chapter review hooks。小節與卡片名稱由正式 chapter review data 帶入，不把生成圖內容寫死，不新增測驗、鎖定或進度規則。
+- 參考檔：主 checkout `artifacts/design-audit/jrpg-app-shell/batch-01/05a-chapter-review-card-entry.png`，SHA-256 `33b3f493b564bc9375100e923f564352c3ef4d14303258af9c471b151fcbd583`；batch-01 manifest 已標記為 candidate awaiting owner approval。
+- 下一步：等待 owner 核准或提出單一視覺修改。核准前不重現正式網頁；核准後只改 `/app/chapters/:chapterId` 的章節入口／複習卡選擇 surface，之後再銜接 Board 06-v2 閱讀頁。
+- 邊界：本輪只產生與保存視覺草圖、更新 manifest／handoff；未修改產品程式碼、資料、API、Supabase、Vercel 或 hosted alias。
+
+## 2026-08-11 10:46 [Codex] — 05a-v2 統一學生 HUD，待 owner 核准
+
+- 做了什麼：依 owner 回饋只修改 05a 的桌機／手機 HUD，書庫場景、章節標題、兩個小節、六個書本節點、狀態、進度與主要行動均維持原構圖。桌機 HUD 改為目前正式版的一列式結構：頭像、暱稱／等級上下排列、右側 XP、32-bit 金幣與「學習大廳／Live 課堂／商店／MENU」；手機改為目前正式版的關閉狀態單列 HUD，不再額外顯示第二排主導覽。
+- 參考檔：主 checkout `artifacts/design-audit/jrpg-app-shell/batch-01/05a-chapter-review-card-entry-v2.png`，SHA-256 `9fb68069b32a4b742c8bc9b695fa667fd06634c4d6ea7ca3ddc32c9c7bccb9f5`。v1 保留並在 manifest 標為 superseded；v2 標為 candidate awaiting owner approval。
+- 資料邊界：生成圖中的身份與數值仍只作構圖示意，正式網頁必須使用真實 profile／economy data；本輪未修改產品程式碼或部署。
+- 下一步：等待 owner 核准 05a-v2；核准後才開始重現 `/app/chapters/:chapterId` 網頁。
+
+## 2026-08-11 11:18 [Codex] — 05a-v2 章節複習旅程已實作，待 owner 本機視覺核准
+
+- 做了什麼：依 owner 授權把 `/app/chapters/:chapterId` 的 ready state 改為 05a-v2 連續世界入口，並套回正式學生 HUD。桌機以兩個小節、各三個語意化書本節點呈現；393px 改為書本在左、卡名與狀態在右的縱向路徑。完成／進行中／尚未開始由既有 review completion 資料衍生，不新增鎖定規則；「繼續複習」打開第一張未完成的真實複習卡，既有「完成複習」與「開始挑戰」行為保留，尚未實作 06-v2 全頁書本閱讀。
+- 視覺與結構：新增無 UI／無文字的 1672×941 32-bit 像素檔案館背景 `src/assets/chapter/chapter-archive-world.png`；所有標題、進度、節點、狀態與控制仍是 HTML。專屬樣式拆為 426 行 base 與 103 行 responsive／motion 檔，未繼續擴張既有 `globals.css`。Locked／content-preparing／content-readiness-error／error 等既有 typed states 維持原行為。
+- 驗證：TDD 先由缺少「第三章複習旅程」語意區域 RED，完成後 RTL 13/13；`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；Chromium 7/7，覆蓋 320／375／1024／1440 狀態回歸與 1280×720／393×852 的六節點、唯一 primary action、零文字裁切、水平 overflow <=1px、手機文字在書本右側、可見控制 >=44×44、HUD 後鍵盤可達重試。
+- 審核入口：`http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`；manifest：`artifacts/design-audit/jrpg-chapter-entry/manifest.md`。等待 owner 視覺核准或提出本頁修改；未核准前不進 06-v2。
+- 邊界：本輪未新增 API／schema／RPC／query／mutation，未修改權威進度規則，未 commit、未 push、未 deploy。Auth 既有待優化事項與 staging 真實登入 blocker 均未在本輪擴大處理。
+
+## 2026-08-11 11:42 [Codex] — 05a-v2 改為設計圖同構雙背景與 full-bleed 場景
+
+- 做了什麼：依 owner 回饋淘汰上一版泛用庭院方向，使用核准 05a-v2 board 作 style／composition reference，重新產生 desktop 1672×941 與 mobile 941×1672 兩張 environment-only 32-bit 像素背景。桌機為左側月夜森林石門、右側藍色彩繪玻璃書庫與兩排六座空石台；手機為同一世界的縱向構圖，六座空石台沿左側路徑排列、右側保留文字空間。兩圖都不含書本、HUD、文字、狀態、按鈕或大外框，等待 owner 後續提供正式書本素材。
+- Full-bleed 修正：新增 `#main-content:has(> .chapter-archive)` 零 padding 契約，並以 05a 專屬 selector 覆蓋舊 `.chapter-dungeon` 900px 寬度。Chromium 首輪實測桌機 root 左緣仍為 190px、手機 computed background 為 `none`，已分別修正舊寬度 specificity 與 mobile background shorthand／specificity；未以文字宣告冒充無外框。
+- 驗證：05a Chromium 1280×720／393×852 2/2，確認各自載入 desktop／mobile v2 asset、root 左右貼齊 viewport、四邊 border=0、零水平溢出、零文字裁切、手機文字維持書本右側、可見控制 >=44×44；Prettier、scoped ESLint、`git diff --check` 全綠。manifest：`artifacts/design-audit/jrpg-chapter-entry/manifest.md`。
+- 下一步：owner 重新整理本機 05a 預覽確認背景；待提供書本素材後再做六節點的素材替換與 pedestals anchor 校準。未開始 06-v2，未 commit、未 push、未 deploy。
+
+## 2026-08-11 12:16 [Codex] — 05a-v2 接入 batch-03／04 書本基座與可擴充背景
+
+- 做了什麼：依 owner 提供的 batch-03／04 素材，固定選用書本 02／03／04／06／08／10 與基座 01／03／04／05／07／09，形成六組不重複的 semantic review nodes；不是每次 render 真隨機，避免畫面與測試資料跳動。`01-color-wheel-book.png` 未進節點，裁成 512×512 後替換網站 `/colorplay-grimoire-pixel.png` icon。素材從原 1536×1024 各自縮為 512×341 runtime derivatives，十二張節點素材加網站 icon 合計約 2.2MB，batch 原檔未修改。
+- 背景與可擴充性：使用 imagegen 對 v2 desktop／mobile 精準編修，移除背景內固定六座石台與 cyan slot 路線，補成連續石板地面，增加少量暖金路燈與藍色水晶燈；v3 只提供 HUD 下 full-bleed 環境，卡片與基座由 CSS Grid／DOM 流動排列，未來同一小節超過三張卡會自動換列。淘汰的三張未引用背景已移至 `/private/tmp/colorplay-05a-rejected-backgrounds/`，仍可恢復。
+- 互動與木牌：`ChapterReviewNode` 從 563 行頁面拆出，頁面降至 447 行；current／展開節點及 hover／keyboard focus 時，書本＋基座整組以金藍 drop-shadow 發光。兩個小節標題改為木製告示牌，文字仍來自正式 chapter review data，沒有烤進圖片。
+- 驗證：素材 DOM 契約先 RED（0 books，預期 6）後 GREEN；Chapter Detail＋Title RTL 14/14、TypeScript、scoped ESLint、Prettier、`git diff --check` 全綠；Chromium 7/7，包含 320／375／1024／1440 typed-state 回歸及 1280×720／393×852 的 v3 asset、HUD 下緣貼齊、full-bleed、六本不同書、六個不同基座、木牌、selected／hover glow、零文字裁切與觸控區檢查。
+- 審核入口：`http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`；manifest：`artifacts/design-audit/jrpg-chapter-entry/manifest.md`。等待 owner 視覺核准；未 commit、未 push、未 deploy，未開始 06-v2。
+
+## 2026-08-11 12:34 [Codex] — 05a-v2 路徑裝飾移除與書台排版校正
+
+- 做了什麼：依 owner 回饋移除舊 `.review-accordion__summary` 滲入的黃色左線與灰色 hover 方框，也移除章節節點間的 cyan／藍色虛線；鍵盤 focus 不再畫矩形框，改由書本＋石台本體的金藍 drop-shadow 維持可見焦點。沒有修改卡片資料、完成行為、route、API 或權威進度規則。
+- 排版：桌機石台放大為 240px、書本 190px，書本定位在石台上方；兩個小節的三欄節點左右交錯至少 32px。縮短的是透明 layout 佔位，不縮小素材；Chromium 實測六組書／石台與底部操作列均落在 1280×720 內。393px 維持書本／石台在左、文字在右，修正 selector specificity 後沒有回退成上下排列。
+- 驗證：先以 Chromium RED 確認舊 hover 背景為 `rgb(242, 244, 247)`，修正後 1280／393 目標測試 2/2、完整 chapter harness 7/7；Chapter Detail RTL 13/13、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠。機械檢查涵蓋黃色 border=0、虛線 pseudo-element `content:none`、hover 背景透明／outline none、桌機 stagger、platform width >=200px、真實書本／石台／操作列 bottom <=720px、零文字裁切與手機書左文右。
+- 審核入口：`http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`；最新 capture 與 SHA 已更新於 `artifacts/design-audit/jrpg-chapter-entry/manifest.md`，截圖未回讀進代理 context。等待 owner 本機核准；未 commit、未 push、未 deploy，未開始 06-v2。
+
+## 2026-08-11 13:21 [Codex] — 05a 改為穩定選卡並接續 06-v2 閱讀
+
+- 做了什麼：依 owner 最新決策移除 05a 全部石頭基座，六本書直接成為可選節點；hover／選取／鍵盤 focus 只對書本本體加金藍光，不再使用會改變幾何的 `translateY`。未使用的縮圖衍生檔移至 `/private/tmp/colorplay-05a-removed-review-platforms/` 保留可恢復副本，batch-04 原始素材未動。
+- 桌機排版：章節學習進度與精熟程度固定於 HUD 下方左上角，章節標題移至其右側；小節告示牌、兩排書本與底部操作列重新分配間距。新增成對碰撞檢查後，首輪實測抓到進度／標題、進度／副標、第一排書／副標及跨小節書本共 10 組碰撞；調整後 1280×720 的進度、標題、副標、告示牌、六個節點與操作列碰撞清單為空，所有書本與操作列均留在 viewport 內。
+- 互動：`<details>` 展開模式已移除。點書只切換單一 `aria-pressed`／`data-selected` 狀態，不插入文章、不改節點高度；Chromium 比對選取前後六節點的 top／left／width／height 完全一致。按唯一 primary action「進入複習」後，同 route 切換到使用真實卡片內容、媒體與既有完成指令的 06-v2 全頁書本閱讀 region，並提供「返回選卡」；未新增假 route、API、schema 或進度規則。
+- 驗證：行為測試先 RED（舊節點缺少 `data-selected`）再 GREEN；Chapter Detail RTL 13/13、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；Chromium chapter harness 7/7，含 1280／393 選取不位移、零石台、遮擋檢查及進入閱讀 surface。05a capture 與 SHA 已更新於 manifest，截圖未回讀進代理 context。
+- 審核入口：`http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`。05a 與已連線的 06-v2 初版等待 owner 本機視覺確認；未 commit、未 push、未 deploy。
+
+## 2026-08-11 13:45 [Codex] — 共用學生 HUD 縮高與 05a 響應式置中
+
+- 共用 HUD：`--journey-student-hud-height` 由 92px 收斂為桌機 72px，手機由原 146px 單獨雙列改為 76px 單列；同步縮小 avatar／導航控制與內距，但所有可見連結、按鈕仍 >=44×44px。身份、等級、XP、Token 與 MENU 的 bounding boxes 在 1280／393 皆不重疊，學習地圖既有 generated-board Chromium gate 2/2 通過。
+- 05a 響應式修正：移除依賴 `margin-left:340px` 的桌機標頭偏移，章節標題與「選擇複習卡，再進入複習」提示改用內容自身 `fit-content + margin-inline:auto` 對 viewport 置中；Chromium 於 1024／1280／1440 實測中心誤差均 <=1px。章節進度／精熟程度仍固定在 HUD 下方左上角，與置中標題、提示及節點碰撞清單為空。
+- 小節與操作：兩個木製小節標示改為書本列左上對齊；底部重複的「複習 1/3」已移除，進度只保留在左上進度區及 06-v2 閱讀內容脈絡。05a「進入複習」、章節挑戰、06-v2 返回／完成控制統一為新版直角像素按鈕語彙，primary 使用與學習地圖相同的藍色漸層、白框、硬位移陰影與右箭頭。
+- TDD／驗證：RED 分別確認 HUD 仍為 92px、1024 標題偏心 160px、底部仍存在複習計數；GREEN 後 AppShell＋ChapterDetail RTL 41/41、Student HUD Chromium 2/2、Chapter Chromium 7/7、Learning Map Chromium 2/2、`tsc -b` 通過。最新 HUD／05a capture 與 SHA 已更新於各自 manifest，截圖未回讀進代理 context。
+- 審核入口：`http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`。未 commit、未 push、未 deploy。
+
+## 2026-08-11 14:10 [Codex] — 05a 小節目錄與六本分頁完成
+
+- 小節導覽：05a 新增左側「小節目錄」，一次只渲染目前選取小節的複習書本。小節編號與完整標題只在目錄顯示，書本區不再重複第二份木牌；切換小節會回到第一頁並選取該小節第一張未完成卡，避免「進入複習」指向已隱藏的書本。
+- 六本上限：每頁固定最多 6 本；超過時顯示 48×48px 上一頁／下一頁與 `第 n / m 頁`。Harness 的 3-1 提供 10 張，驗證第一頁 6 張、第二頁 4 張；3-2 提供 5 張且不顯示多餘分頁。這些數量只屬 dev/test fixture；production 元件仍使用真實 chapter-review data，可支援任意小節與卡片數。
+- 排版：桌機目錄固定在書庫左欄，內容列與提示文字增加間隔；手機目錄改為可橫向捲動的小節列，書本仍維持左圖右文。縮短桌機書本佔位並調整兩列間距後，1280×720 的進度、標題、目錄、六本書、分頁與操作列均無遮擋，選取不改變幾何。
+- TDD／驗證：先以缺少「第三章小節」navigation 的 RTL 失敗確認 RED，完成後 Chapter Detail RTL 13/13；Chromium 7/7 覆蓋 320／375／1024／1440 狀態、1280／393 構圖、小節切換、6+4 分頁、5 張免分頁、文字裁切、水平溢出、碰撞與 >=44×44px 控制。最新 captures 與 SHA 已更新於 `artifacts/design-audit/jrpg-chapter-entry/manifest.md`，未回讀截圖內容。
+- 審核入口：`http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`。未 commit、未 push、未 deploy；等待 owner 本機視覺核准。
+
+## 2026-08-11 14:14 [Owner／Codex] — 05a 書本、分頁與底部操作間距定稿
+
+- 依 owner 即時回饋加大提示文字與書庫、桌機上下兩排書本、手機逐本書之間的間距；分頁控制固定排在「進入複習」上方，兩者保留獨立留白。桌機章節 surface 改為 column layout，主操作列落在 1280×720 內容區最下方安全邊界，不與分頁或書本重疊。
+- 最終驗證：Chapter Detail RTL 13/13、Chromium 7/7、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠。1280×720 操作列 bottom <= viewport，393×852 維持無水平溢出、零文字裁切與可見控制 >=44×44px；captures SHA 已再次更新於 manifest。
+- 本機入口維持 `http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`；未 commit、未 push、未 deploy，等待 owner 視覺核准。
+
+## 2026-08-11 14:41 [Owner／Codex] — 學生 HUD 完全收合與 05a 控制位置調整
+
+- HUD：桌機 fine-pointer 模式改為完全退到 viewport 外，不再露出 10px HUD；頂端另設透明 8px 感應區，滑鼠移到頂端立即展開。滑鼠離開後延遲收合，鍵盤 focus／MENU 面板互動期間以 `:focus-within` 保持展開，展開層覆蓋場景且不改 scene 幾何，因此 route 內容不跳動。手機／觸控裝置沒有 hover，維持 76px 完整 HUD。`prefers-reduced-motion` 下取消轉場但保留收合功能。
+- 05a：依 owner 最新裁定，複習進度與精熟程度回到左上角，距場景頂端 24px；章節標題維持 viewport 置中且同樣保留至少 24px 頂端間隔。「開始挑戰」獨立固定於桌面右下角（右側 24–40px、底部 16–32px），「進入複習」維持底部中央；手機的挑戰控制在底部操作區右對齊，不做浮動遮罩。
+- 驗證：HUD Chromium 2/2（完全收合、頂端 hover 展開、focus 保持、手機固定）、Chapter Chromium 7/7、learning-map generated-board harness 2/2。正式登入型 learning-map E2E 另有既有 Auth blocker：兩個案例在 `waitForURL(/app/)` timeout，未進入 HUD／地圖斷言，第三個案例由 Codex 中止以免重複等待；不得將其算成 UI 回歸失敗或綠燈。
+- Captures 與 SHA 已更新於 `artifacts/design-audit/jrpg-student-hud/manifest.md`、`artifacts/design-audit/jrpg-chapter-entry/manifest.md`，截圖未回讀進 context。本機入口維持 `http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`；未 commit、未 push、未 deploy。
+
+## 2026-08-11 15:01 [Owner／Codex] — HUD 改為空間感應收合並消除 MENU 震動
+
+- Owner 最終裁定取消 HUD 的 10 秒／2 秒時間限制；桌機改為純空間感應。頂端開啟感應帶由 8px 加大為 24px，HUD 下方新增 28px 離開緩衝帶；游標在頂緣、HUD、MENU 或緩衝帶內維持展開，真正離開互動範圍才完全收合。手機／觸控 HUD 維持 76px 固定顯示。
+- MENU 穩定性：正式 App Shell 與 dev harness 共用 `StudentHudAutoHide` 狀態容器；MENU 面板與鍵盤 focus 納入同一互動區，不再讓 hover／收合狀態在點擊時往返。Chromium 機械量測確認 MENU 開啟前後 HUD top 與 `#main-content` top 完全一致，畫面不再上下震動。
+- TDD／驗證：新契約先在頂端 y=20 時維持收合（HUD y=-72）而 RED，實作後 Student HUD Chromium 4/4；AppShell＋HudCommandBar RTL 40/40、`tsc -b`、scoped ESLint 通過。截圖 SHA 未變，manifest 已更新為 24px／28px 空間感應契約。
+- 邊界：未修改 route、資料、API、Supabase 或 Vercel；未 commit、未 push、未 deploy。本機預覽仍由 `http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress` 檢視。
+
+## 2026-08-11 15:22 [Owner／Codex] — 06-v2 複習卡全頁書本閱讀完成
+
+- 實作：05a 選書後的 `ChapterReviewReader` 已依 owner 核准的 batch-02 `06-review-reading-v2.png` 重做。桌機為近滿版雙頁書與中央書脊；393px 為單頁直向書。背景沿用同一章節連續世界，沒有新增頁面級大外框；章名、小節名、卡片標題、卡片序位、正文與附件皆由正式 view model／repository 帶入，不寫死生成圖示意資料。
+- 長內容：正文依實際瀏覽器 column layout 流入邏輯書頁，不以縮字換取塞入；上一頁／下一頁更新 scroll position、`第 n / m 頁` 與 `本頁閱讀進度`。`完成複習` 保持唯一 primary action並沿用既有 trusted completion command；完成、pending、附件載入失敗與 completion error 行為保留。
+- RWD／可讀性：1280 實測 `column-count:2` 且 gutter 可見；393 實測 `column-count:1` 且 gutter 隱藏。兩尺寸的章節標題、頁碼與控制零裁切，返回鍵與標題零重疊，書本位於 footer 之前、footer 不超出 reader，文件水平 overflow <=1px，所有可見按鈕 >=44×44px。首輪實測抓到 pixel heading 的 2px 垂直 overflow，已透過行高修正，未用裁切掩蓋。
+- 測試／證據：RTL 13/13；Chapter 05a＋06-v2 Chromium 9/9（reader 2/2）；`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠。Reader E2E 拆至新的 161 行 `tests/e2e/chapter-review-reader.harness.spec.ts`，沒有再擴張既有 530 行 05a harness。captures／SHA 與 DEV/TEST fixture 邊界記於 `artifacts/design-audit/jrpg-review-reader/manifest.md`。
+- 邊界：未新增 API／RPC／schema／query／mutation，未改完成規則、route 或 Supabase／Vercel。未 commit、未 push、未 deploy；等待 owner 於本機預覽視覺核准。
+
+## 2026-08-11 16:08 [Owner／Codex] — 05a 挑戰入口重排與 06-v2 生成書本／背景接入
+
+- 05a 選卡頁：移除右下角「開始挑戰」，在「小節目錄」下新增「小節挑戰」與「章節總挑戰」。章節總挑戰沿用 repository 提供的真實 chapter template route；目前 production view model 沒有 subtopic template ID，依已核准 F-3 邊界將小節挑戰明確顯示為 disabled「題庫準備中」，未把章節題庫誤接成小節測驗、未用 dead control 冒充功能完成。桌機／手機挑戰入口、六本分頁及底部「進入複習」均通過零碰撞與文字裁切檢查。
+- 06-v2 閱讀頁：以核准 batch-02 06-v2 為 art direction 生成並接入四張 runtime asset：透明桌機雙頁書、透明手機單頁書、桌機森林書庫背景、手機直式森林書庫背景。生成圖片不含文字、頁碼、HUD 或控制；教材內容、媒體與控制仍全部由 DOM／正式 view model 呈現。桌機書底顯示左右頁碼，393 直式固定使用單頁書與置中頁碼；返回／上下頁改為「返回複習卡選擇」「閱讀上一頁」「閱讀下一頁」，完成按鈕套用與選卡頁相同的藍色直角像素 primary action。
+- TDD／驗證：RTL 先確認舊「開始挑戰」與缺少書內頁碼的 RED，修正後 Chapter Detail 13/13；Chromium Chapter＋Reader 9/9（320／375／1024／1440 typed states、1280×720、393×852），確認兩種背景與兩種書本實際載入、桌機 2 columns／手機 1 column、書內頁碼、正文與控制零裁切、水平 overflow <=1px、可見控制 >=44×44px。`tsc -b`、scoped ESLint、Prettier 通過；captures／素材 SHA 與 prompt 摘要已更新於 `artifacts/design-audit/jrpg-chapter-entry/manifest.md`、`artifacts/design-audit/jrpg-review-reader/manifest.md`。
+- 邊界：未新增 API／RPC／schema／query／mutation，未改進度／完成權威規則，未 commit、未 push、未 deploy。本機入口維持 `http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`；小節挑戰啟用仍屬後續 F-3 vertical slice。
+
+## 2026-08-11 16:31 [Owner／Codex] — 06-v2 固定書面座標與換頁零位移驗證
+
+- 響應式根因修正：淘汰會依容器比例拉伸書本、再靠獨立 inset 猜文字位置的做法。桌機雙頁書固定 1683:935、手機單頁書固定 931:1690；書本、正文 viewport、書脊與頁碼共用同一個比例座標系，不同比例多出的空間留在書外，因此 1024×768、1280×720、1440×900、375×812、393×852 都不會把文字推離紙面，也沒有透過縮小正文字級換取通過。
+- 換頁審查：新增 page 1 → page 2 前後 12 個關鍵區塊的 bounding-box 比對，涵蓋 header、返回鍵、標題、book stage、書本、正文、頁碼、footer、上一頁、頁數、下一頁及完成按鈕，允許差異上限 0.5 CSS px。首輪確實抓到手機「完成複習」位移 1px；根因是游標由「進入複習」留在相同座標後觸發繼承的 `hover translateY(-1px)`，點下一頁後游標移開才回落。閱讀頁現改為 hover 只換配色、不改 transform，未放寬測試容許值。
+- 視覺與控制：直立式大書、書內頁碼、藍銀返回／上下頁按鈕及亮藍完成按鈕維持；disabled 控制為不透明灰藍，文字與按鈕沒有裁切。生成圖只承載書本與環境，教材、附件、進度與操作仍是 DOM／正式 view model。
+- 驗證：Chapter Detail RTL 13/13；Reader Chromium 5/5；Chapter 05a＋Reader 整合 Chromium 12/12；`tsc -b`、scoped ESLint、`git diff --check` 通過。Prettier 僅發現 reader manifest 排版並已格式化後重查。證據與最新 capture SHA 記於 `artifacts/design-audit/jrpg-review-reader/manifest.md`。
+- 邊界：未新增 API／RPC／schema／query／mutation，未改 route、完成權威規則或 Supabase／Vercel。未 commit、未 push、未 deploy；本機入口維持 `http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`，等待 owner 視覺核准。
+
+## 2026-08-11 16:55 [Owner／Codex] — 06-v2 真正紙面分頁與翻頁動畫
+
+- 分頁機制：依 owner 核准方向移除閱讀內容的 `overflow-x:auto`／`scrollLeft` 換頁。新增 `BookPaginator` module，以單一 interface 接收語意內容區塊與實際紙面量測元素；等待字型／圖片與 ResizeObserver 尺寸穩定後，依固定 PageRect 逐頁填入，長段落只在中文字元或標點邊界拆分。桌機每個 view 渲染兩個獨立紙頁，手機渲染一頁；頁面切換直接替換 active page DOM，內部 scrollLeft 維持 0。
+- 響應式與可及性：書本比例、PageRect、書脊與頁碼仍使用同一座標系；縮放時重新分頁而非縮小正文字級，紙面外只留下 letterbox 空間。完整線性教材另外保留為螢幕閱讀器可讀來源，視覺分頁標為 presentation，避免雙重朗讀；正式教材、媒體與完成指令仍由 production view model／repository 提供。
+- 動畫：加入 340ms、以書脊為 transform-origin 的羊皮紙翻頁與墨色 settle 動畫；只有覆蓋紙張做 rotateY／opacity，書本、正文 PageRect、footer 與控制列幾何不變。`prefers-reduced-motion: reduce` 時 pseudo sheet 不建立、所有翻頁動畫為 none，內容立即切換。
+- TDD／驗證：1280 tracer test 先以找不到兩個 `.chapter-review-reader__book-page` 呈 RED，實作後五個 viewport 的固定頁數、零紙面水平／垂直 overflow、零內部橫向捲動、換頁內容確實改變、頁碼前進及 12 個區塊換頁前後差異 <=0.5px 全綠；另加 reduced-motion 測試。Reader Chromium 6/6、Chapter 05a＋Reader 整合 13/13、Chapter Detail RTL 13/13、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠。
+- 證據／邊界：最新 1280／393 captures 與 SHA、分頁 interface 和動畫契約已更新於 `artifacts/design-audit/jrpg-review-reader/manifest.md`，截圖未回讀進 context。未新增 API／RPC／schema／query／mutation，未改 route、完成權威規則或 Supabase／Vercel；未 commit、未 push、未 deploy，等待 owner 於本機預覽視覺核准。
+
+## 2026-08-11 17:01 [Codex] — 06-v2 單輪 scoped review remediation
+
+- Review 邊界：依 AGENTS.md M 級一次 review 上限，只審查本次 `BookPaginator`、Reader、reader CSS 與 E2E；code-review skill 的雙 reviewer 預設與專案單一 reviewer 規則衝突，因此採單一 scoped review，未啟動 sub-agent／第二 reviewer。Security axis 跳過，diff 未觸及信任邊界。
+- Finding／修復：唯一 Standards finding 是 `chapter-review-reader.css` 達 602 行，超過單檔 500 行門檻。將 150 行 mobile／reduced-motion 規則拆至 `chapter-review-reader-responsive.css`，主檔降為 451 行，並由 `chapter-detail-page.tsx` 在 base CSS 後匯入。首次錯把 responsive 以檔首 `@import` 載入，Chromium 立即抓到 base cascade 蓋掉手機頁碼與 reduced-motion；未用 `!important` 掩蓋，改為正確入口順序。
+- Remediation 驗證：Reader Chromium 6/6 再次全綠，涵蓋 1280×720、1024×768、1440×900、393×852、375×812 與 reduced-motion；`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠。captures SHA 未變。Review 無其餘 Standards／Spec finding；未 commit、未 push、未 deploy。
+
+## 2026-08-11 17:21 [Owner／Codex] — 06-v2 手機全頁單書與三鍵控制
+
+- 手機構圖：依 owner 決策保留桌面雙頁版不變；393／375 手機改為 HUD 下方整面單頁書，book carrier 與 PageRect 共用同一個滿版容器。左上顯示縮小的 `‹ 返回`，但保留完整 `aria-label="返回複習卡選擇"`；右上只保留章節標題與小節標題兩排小字，隱藏舊複習卡位置列。中央 14%–85% 為測量後的文字分頁區，與上方 header／下方控制沒有碰撞。
+- 底部控制：移除手機 separate progress bar、footer 頁數及書內頁碼的可見呈現；書頁下緣固定三欄 52px 控制，依序為 `上一頁`、`完成複習 n%`、`下一頁`。中央百分比由目前頁數／總頁數計算並於換頁後更新，完成按鈕仍呼叫既有 trusted completion command；按鈕可及名稱維持「閱讀上一頁／完成複習／閱讀下一頁」。
+- TDD／驗證：393 tracer 先以完成按鈕缺少百分比呈 RED；GREEN 後 Reader Chromium 6/6、Chapter 05a＋Reader 整合 13/13、Chapter Detail RTL 13/13、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠。手機機械檢查涵蓋書本四邊貼齊 reader、header／PageRect／footer 分離、三鍵左中右同列、百分比換頁更新、按鈕 >=44×44px、零文字裁切及紙面零 overflow；三個桌面 viewport 回歸全綠。
+- Review／邊界：本 task 唯一一次 scoped review 僅檢查 mobile Reader JSX、responsive CSS 與 E2E，無 Standards／Spec finding；四個相關檔案皆低於 500 行。captures／SHA 與手機契約已更新於 `artifacts/design-audit/jrpg-review-reader/manifest.md`，未回讀截圖。未新增 API／RPC／schema／query／mutation，未改 route、內容、完成權威規則或 Supabase／Vercel；未 commit、未 push、未 deploy，等待 owner 本機視覺核准。
+
+## 2026-08-11 17:28 [Owner／Codex] — 06-v2 手機移除場景背景並放大書頁
+
+- 視覺調整：只修改手機 reader；移除 `review-reader-world-mobile.png` 與夜景 gradient，書後改為不含 background image 的羊皮紙底色。單頁書 carrier 仍四邊貼齊 HUD 下方 reader，書圖本身由 100%×100% 放大為 112%×106%，讓頁面邊緣填滿小螢幕；桌面背景與 1683:935 雙頁書完全不變。
+- 文字契約：owner 指定的文字區 `inset: 14% 9% 15%` 原值未動，BookPaginator 仍依同一 PageRect 量測分頁。右上章節／小節改深褐色，書名與正文維持墨色，不使用白字；只有三顆藍色操作按鈕保留白字確保對比。
+- 驗證：Reader Chromium 6/6，涵蓋三個桌面尺寸、393×852、375×812 與 reduced-motion；機械檢查新增 mobile `background-image:none`、book `background-size:112% 106%` 及章節／小節／書名／正文 computed color 不得為白色。`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠。最新 mobile capture SHA 已更新於 reader manifest；未 commit、未 push、未 deploy。
+
+## 2026-08-11 17:40 [Owner／Codex] — 06-v2 直橫向動態文字安全區
+
+- 版面：手機單頁書的文字 PageRect 改為動態上下安全區；頂端取 `14%` 與「header 起點 + 56px」較大值，底端取 `15%` 與「footer 起點 + 64px」較大值。直式保留原本較寬鬆的紙面留白，橫式則確保文字與返回／章節標題、下排三顆按鈕各至少相隔 10 CSS px，沒有用縮字或裁切掩蓋內容。
+- 旋轉：React 分頁判定與 CSS 共用同一 breakpoint；393×852、375×812、852×393、812×375 都使用手機單頁書，1280×720、1024×768、1440×900 維持桌機雙頁，不會在旋轉後出現雙頁 DOM 套用單頁樣式。
+- TDD／驗證：新增 852×393 契約先因實際渲染 2 頁而 RED；修正後 Reader Chromium 8/8、Chapter 05a＋Reader 整合 15/15，並確認每頁零水平／垂直 overflow、文字零裁切、控制 >=44×44px、換頁幾何差 <=0.5px。`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；1280／393 capture SHA 未變。未 commit、未 push、未 deploy。

@@ -13,6 +13,7 @@ import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summ
 import { HudCommandBar } from './hud-command-bar';
 import { RouteWorldStage } from './route-world-stage';
 import { RotateBanner } from './rotate-banner';
+import { StudentHudAutoHide } from './student-hud-auto-hide';
 import { useIdleLogout } from './use-idle-logout';
 
 function AuthenticatedEconomySummary() {
@@ -79,7 +80,7 @@ function AuthenticatedStudentShell({
 
   return (
     <>
-      <header className="hud-top hud-top--student">
+      <StudentHudAutoHide>
         <div className="hud-economy-group">
           <div aria-label="學生身分" className="hud-identity" role="group">
             <StudentHudAvatar equipped={equippedBlook} />
@@ -98,7 +99,7 @@ function AuthenticatedStudentShell({
             登出失敗，請稍後重試。
           </p>
         ) : null}
-      </header>
+      </StudentHudAutoHide>
       <RouteWorldStage
         reducedMotion={reducedMotion}
         scene={isLearningMap ? 'learning-map' : 'student-route'}

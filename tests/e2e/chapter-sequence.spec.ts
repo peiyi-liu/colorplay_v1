@@ -136,7 +136,7 @@ async function openChapterDetail(
 }
 
 async function finishCurrentChallenge(page: Page): Promise<void> {
-  await page.getByRole('link', { name: '開始挑戰' }).click();
+  await page.getByRole('link', { name: '章節總挑戰' }).click();
   await page.waitForURL(/\/app\/quiz\/[0-9a-f-]{36}$/u);
 
   for (let position = 1; position <= 10; position += 1) {
@@ -311,7 +311,7 @@ async function measureMapViewport(
       actionPosition.y >= hudPosition.y + hudPosition.height);
   expect(focusVisible).toBe(true);
   await action.click();
-  await expect(page.getByRole('link', { name: '開始挑戰' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '章節總挑戰' })).toBeVisible();
   await page.goBack();
   await expect(page.getByRole('heading', { name: '學習地圖' })).toBeVisible();
 
