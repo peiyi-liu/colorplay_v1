@@ -26,4 +26,10 @@ describe('mistakes archive scene styles', () => {
       /\.mistakes-codex--archive-v2 \.mistake-list__item,[\s\S]*?border-left:\s*5px solid var\(--pixel-gold\);[\s\S]*?border-radius:\s*0;/u,
     );
   });
+
+  it('renders unresolved mistake monsters as red silhouettes', () => {
+    expect(styles).toContain('.codex-monster:not(.codex-monster--lit)');
+    expect(styles).toContain('background: var(--coral-700)');
+    expect(styles).toContain('mask: url(');
+  });
 });

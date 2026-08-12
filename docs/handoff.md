@@ -677,3 +677,8 @@
 - 我的錯題改為深夜藍、金框、飾帶與左側金色識別條的像素檔案卡；排行榜改為同語彙的公會頁首與深色名次列，保留金／銀／銅與「這是你」的非純色狀態訊號。成就卡本身未重設，只替換背景與必要的頁首文字對比；移除成就頁舊的第二顆返回箭頭，只保留全站統一返回鍵。排行資料、XP 與補救流程邏輯均未修改。
 - 驗證：受影響 Vitest 7 files／23 tests、lint、typecheck、production build、Prettier 與 `git diff --check` 全綠；Chromium 1280／393 目視確認三頁，排行榜另驗 320px，三頁 393px 與排行榜 320px 的 `scrollWidth` 均等於 viewport，無水平 overflow。唯一一輪 scoped self-review：Standards 0、Spec 0；Security 軸因未觸及 trust boundary 而略過。
 - 邊界：新增 dev/test-only 三頁預覽 harness；未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師 CSS、共享 HUD／AppShell／globals／tokens、API 或資料庫；未合併教師 branch、未 push、未 deploy。本機入口：`http://127.0.0.1:4183/dev-harness/student-collection.html?surface=mistakes`（另可切換 `leaderboard`／`achievements`）。
+
+## 2026-08-13 00:01 [Owner／Codex] — 待補救錯題剪影改為紅色
+
+- 我的錯題頁中，尚未解決題目的原黑色魔物／石頭剪影改為 `--coral-700` 紅色；已解決題目仍使用原本全彩圖示。使用 sprite mask 保留既有輪廓與尺寸，未修改補救狀態或資料邏輯。
+- 驗證：Mistakes Vitest 2 files／8 tests、Prettier 與 `git diff --check` 全綠；393px Chromium 目視確認紅色待補救圖示與藍色已解決圖示同時正確顯示。S 級單頁 CSS 調整不另啟 review。
