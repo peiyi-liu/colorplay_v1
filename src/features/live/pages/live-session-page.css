@@ -305,8 +305,8 @@
     background-image:
       linear-gradient(180deg, rgb(2 8 20 / 2%) 0%, rgb(3 10 24 / 14%) 34%, #071120 66%),
       url('../../../assets/live/live-student-arena-desktop-v1.png');
-    background-position: center;
-    background-size: cover;
+    background-position: center, center 72%;
+    background-size: cover, auto 120%;
   }
 
   .live-student-status-bar {
@@ -352,7 +352,7 @@
   }
 
   .live-student-question-phase {
-    grid-template-rows: minmax(150px, 1fr) auto auto;
+    grid-template-rows: minmax(105px, 1fr) minmax(240px, 60%) auto;
     gap: 10px;
     padding: 14px 12px 18px;
   }
@@ -366,18 +366,29 @@
 
   .live-student-arena .live-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
     gap: 8px;
+    height: 100%;
   }
 
   .live-student-arena .ui-option {
-    min-height: 58px;
+    min-height: 100px;
     padding: 9px 14px;
-    font-size: 1.05rem;
+    font-size: 1.35rem;
   }
 
   .live-student-arena .live-options--screen-only .ui-option {
-    min-height: 58px;
-    font-size: 1.05rem;
+    min-height: 100px;
+    font-size: 1.35rem;
+  }
+
+  .live-student-arena .ui-option > span:first-child {
+    font-size: 1.45em;
+    line-height: 1;
+  }
+
+  .live-student-arena .live-option-key {
+    font-size: 1.5em;
   }
 
   .live-student-arena .ui-option__state {
@@ -397,10 +408,10 @@
   }
 
   .live-student-question-phase {
-    grid-template-rows: minmax(105px, 1fr) auto auto;
+    grid-template-rows: minmax(105px, 1fr) minmax(240px, 60%) auto;
   }
 
   .live-student-arena .ui-option {
-    min-height: 52px;
+    min-height: 100px;
   }
 }

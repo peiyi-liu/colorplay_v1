@@ -633,3 +633,10 @@
 - 393px／320px 的 A／B／C／D 選項維持與桌面一致的 2×2 四宮格，不再降為單欄；保留至少 52px 高度、8px 間距與既有立即送出／鎖定行為。
 - TDD／驗證：CSS 背景契約與 Chromium 四宮格實際矩形先 RED 後 GREEN；393／320 均無水平 overflow，計算樣式確認桌面背景、`cover`、中央定位。1280／393／320 目視確認中央城門取景與四選項完整可見；最終 lint、typecheck、受影響 Vitest／Chromium 結果記於同一 checkpoint。
 - 邊界：只修改 Live feature CSS、CSS contract、Live harness E2E 與 handoff；未修改作答權威、Question Display payload、教師端或共享 HUD／AppShell／globals／tokens。
+
+## 2026-08-12 22:44 [Owner／Codex] — 放大 Live 手機四宮格與上移背景
+
+- 手機 2×2 選項區改為占用 Live 場景內容的下方約 60%，從整個 viewport 中段附近開始延伸至底部；每列等分可用高度，393px 與 320px 的單顆按鈕皆至少 100px 高。A／B／C／D 與四色符號的實際字級皆至少 30px，投影幕提示位於四宮格正上方。
+- 桌面背景圖在手機仍保持原比例，改為圖片層高度 `120%` 並以 `center 72%` 取景，使場景實際向上偏移；漸層遮罩仍獨立 `cover`，不拉伸或扭曲圖片。
+- E2E 幾何契約先 RED（舊版 393px 選項從 y=700、320px 從 y=416 才開始），修正後鎖定選項區起點不晚於 viewport 58%、底緣至少到 93%、單鍵高度至少 100px，並維持 2×2 與零水平 overflow。
+- 驗證與邊界：393／320 Chromium 目視確認四鍵完整可見、字號放大與背景上移；最終 lint、typecheck、受影響 Vitest／Chromium 結果記於同一 checkpoint。只修改 Live feature CSS、CSS contract、harness E2E 與 handoff，未觸及教師端、權威作答或共享整合檔。

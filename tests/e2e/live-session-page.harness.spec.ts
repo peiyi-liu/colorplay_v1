@@ -51,6 +51,25 @@ for (const viewport of [
     expect(boxes[1]?.x ?? 0).toBeGreaterThan(
       (boxes[0]?.x ?? 0) + (boxes[0]?.width ?? 0),
     );
+    const optionRegion = await page
+      .getByRole('group', { name: '答案選項' })
+      .boundingBox();
+    expect(optionRegion).not.toBeNull();
+    if (!optionRegion) return;
+    expect(optionRegion.y).toBeLessThanOrEqual(viewport.height * 0.58);
+    expect(optionRegion.y + optionRegion.height).toBeGreaterThanOrEqual(
+      viewport.height * 0.93,
+    );
+    expect(boxes[0]?.height ?? 0).toBeGreaterThanOrEqual(100);
+    const optionGlyphSize = await choices.nth(0).locator(':scope > span').first().evaluate(
+      (glyph) => Number.parseFloat(getComputedStyle(glyph).fontSize),
+    );
+    const optionKeySize = await choices
+      .nth(0)
+      .locator('.live-option-key')
+      .evaluate((key) => Number.parseFloat(getComputedStyle(key).fontSize));
+    expect(optionGlyphSize).toBeGreaterThanOrEqual(30);
+    expect(optionKeySize).toBeGreaterThanOrEqual(30);
     const background = await page.locator('.live-student-arena').evaluate((arena) => {
       const style = getComputedStyle(arena);
       return {
@@ -61,8 +80,8 @@ for (const viewport of [
     });
     expect(background.image).toContain('live-student-arena-desktop-v1.png');
     expect(background.image).not.toContain('live-student-arena-mobile-v1.png');
-    expect(background.position).toMatch(/50% 50%/u);
-    expect(background.size).toMatch(/cover/u);
+    expect(background.position).toContain('50% 72%');
+    expect(background.size).toContain('auto 120%');
     const overflow = await page.evaluate(() =>
       Math.max(
         document.documentElement.scrollWidth,

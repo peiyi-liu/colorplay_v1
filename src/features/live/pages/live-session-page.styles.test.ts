@@ -15,8 +15,8 @@ describe('student Live arena layout contract', () => {
     const mobileStyles = styles.slice(styles.indexOf('@media (max-width: 767px)'));
     expect(mobileStyles).toContain('live-student-arena-desktop-v1.png');
     expect(mobileStyles).not.toContain('live-student-arena-mobile-v1.png');
-    expect(mobileStyles).toContain('background-position: center;');
-    expect(mobileStyles).toContain('background-size: cover;');
+    expect(mobileStyles).toContain('background-position: center, center 72%;');
+    expect(mobileStyles).toContain('background-size: cover, auto 120%;');
   });
 
   it('fills below the HUD and keeps primary layout out of fixed positioning', () => {
