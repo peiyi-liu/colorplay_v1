@@ -47,7 +47,18 @@
 .shop-market-v2 .shop-tabs {
   border: 2px solid var(--pixel-gold-deep);
   border-radius: var(--radius-pixel);
-  background: var(--pixel-parchment-card);
+  background: var(--pixel-night);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+}
+
+.scene-day.shop-market-v2 .shop-tab {
+  background: transparent;
+  color: var(--pixel-window-ink);
+}
+
+.scene-day.shop-market-v2 .shop-tab[data-on='true'] {
+  background: var(--pixel-gold-deep);
+  color: var(--pixel-parchment);
 }
 
 .shop-market-v2 .blook-card > p,

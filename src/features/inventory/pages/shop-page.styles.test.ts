@@ -26,5 +26,11 @@ describe('shop page scene styles', () => {
     expect(css).toMatch(
       /\.shop-market-v2 \.shop-tabs\s*\{[^}]*border:\s*2px solid var\(--pixel-gold-deep\);[^}]*border-radius:\s*var\(--radius-pixel\);/u,
     );
+    expect(css).toMatch(
+      /\.shop-market-v2 \.shop-tabs\s*\{[^}]*background:\s*var\(--pixel-night\);/u,
+    );
+    expect(css).toContain(
+      ".scene-day.shop-market-v2 .shop-tab[data-on='true']",
+    );
   });
 });

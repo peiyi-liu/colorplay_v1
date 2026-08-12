@@ -653,3 +653,8 @@
 - 移除「你的角色收藏」，將「裝備商店」放大至桌機 3rem／手機 2rem；角色／外框改由單一像素直角長方形底座包住，不再使用白色橢圓底。
 - 依 owner 釐清，只移除角色名稱與操作按鈕中間的獨立金幣價格列；購買按鈕內價格、頁首餘額、購買確認與外框價格維持不變。
 - 驗證：Shop Vitest 2 files／13 tests、Chromium 1280／393／320 共 3／3、lint、typecheck、Prettier 與 `git diff --check` 全綠；本機 1280px 目視確認。S 級純 UI 微調不另啟 review；未觸及教師端、API、DB 或共享 globals／tokens。
+
+## 2026-08-12 23:28 [Owner／Codex] — 商店分類框主題底色
+
+- 角色／外框分類框由白底改為夜空深藍底、金色邊框與像素硬陰影；未選取項目使用透明深底與亮字，選取項目保留金色高亮，與夜間市集背景一致。
+- 驗證：Shop Vitest 2 files／13 tests、Chromium 1280／393／320 共 3／3、lint、typecheck、Prettier 與 `git diff --check` 全綠；本機 1280px 目視確認。S 級 CSS 微調不另啟 review。
