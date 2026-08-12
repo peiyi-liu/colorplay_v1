@@ -24,16 +24,17 @@ describe('achievement sanctuary scene styles', () => {
     );
     expect(styles).toContain('display: flex');
     expect(styles).toContain('flex-wrap: wrap');
-    expect(styles).toContain('justify-content: center');
+    expect(styles).toContain('justify-content: flex-start');
     expect(styles).toContain('aspect-ratio: 16 / 9');
     expect(styles).toContain('.achievements--sanctuary-v2 .pastel-hero');
     expect(styles).toContain('padding-left: 58px');
+    expect(styles).toContain('font-size: clamp(1.75rem, 3vw, 2rem)');
     expect(styles).toMatch(
       /\.achievements-grid \.achievement-card\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;/u,
     );
   });
 
-  it('lays out three centered cards per desktop row and one per mobile row', () => {
+  it('lays out three cards from the left per desktop row and one per mobile row', () => {
     expect(styles).toMatch(/@media\s*\(min-width:\s*1024px\)/u);
     expect(styles).toContain(
       'flex-basis: calc((100% - (var(--space-6) * 2)) / 3)',
@@ -42,5 +43,7 @@ describe('achievement sanctuary scene styles', () => {
       styles.indexOf('@media (max-width: 767px)'),
     );
     expect(mobileStyles).toContain('flex-basis: 100%');
+    expect(mobileStyles).toContain('margin-top: 28px');
+    expect(mobileStyles).toContain('padding-left: 64px');
   });
 });

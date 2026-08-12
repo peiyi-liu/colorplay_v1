@@ -80,6 +80,9 @@ describe('LeaderboardTable', () => {
     );
     expect(knownBlook).toHaveAttribute('width', '64');
     expect(knownBlook).toHaveAttribute('height', '64');
+    expect(screen.getByText('這是你').parentElement).toHaveClass(
+      'leaderboard-blook__avatar-wrap',
+    );
     expect(screen.getAllByText('0 XP')).toHaveLength(2);
     expect(document.body).not.toHaveTextContent('59999999-');
   });

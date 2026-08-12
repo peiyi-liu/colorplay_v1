@@ -26,4 +26,11 @@ describe('mistakes archive scene styles', () => {
       /\.mistakes-codex--archive-v2 \.mistake-list__item,[\s\S]*?border-left:\s*5px solid var\(--pixel-gold\);[\s\S]*?border-radius:\s*0;/u,
     );
   });
+
+  it('uses the shared student collection title size', () => {
+    expect(styles).toContain('font-size: clamp(1.75rem, 3vw, 2rem)');
+    expect(styles).toContain('line-height: 1.25');
+    expect(styles).toMatch(/@media\s*\(max-width:\s*767px\)/u);
+    expect(styles).toContain('padding-top: 36px');
+  });
 });

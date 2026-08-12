@@ -29,7 +29,10 @@ describe('leaderboard guild hall scene styles', () => {
 
   it('enlarges leaderboard avatar tiles on desktop and mobile', () => {
     expect(styles).toMatch(
-      /\.leaderboard-blook\s+\.pastel-summary__avatar\s*\{[^}]*width:\s*64px;[^}]*height:\s*64px;[^}]*border-radius:\s*0;/u,
+      /\.leaderboard-blook__avatar-wrap\s*\{[^}]*width:\s*64px;[^}]*height:\s*64px;/u,
+    );
+    expect(styles).toMatch(
+      /\.leaderboard-blook\s+\.pastel-summary__avatar\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*border-radius:\s*0;/u,
     );
     expect(styles).toMatch(
       /\.pastel-summary__avatar\s+\.blook-art\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*transform:\s*scale\(1\.9\);/u,
@@ -37,12 +40,13 @@ describe('leaderboard guild hall scene styles', () => {
     const mobileStyles = styles.slice(
       styles.indexOf('@media (max-width: 600px)'),
     );
-    expect(mobileStyles).toContain('width: 60px');
-    expect(mobileStyles).toContain('height: 60px');
+    expect(mobileStyles).toMatch(
+      /\.leaderboard-blook__avatar-wrap\s*\{[^}]*width:\s*60px;[^}]*height:\s*60px;/u,
+    );
   });
 
   it('enlarges the title and centers every table column on both axes', () => {
-    expect(styles).toContain('font-size: clamp(2rem, 4vw, 2.75rem)');
+    expect(styles).toContain('font-size: clamp(1.75rem, 3vw, 2rem)');
     expect(styles).toMatch(
       /\.leaderboard-table th:first-child,[\s\S]*?text-align:\s*center;/u,
     );
@@ -54,5 +58,21 @@ describe('leaderboard guild hall scene styles', () => {
     expect(styles).toMatch(
       /\.leaderboard-table[\s\S]*?tbody[\s\S]*?td:nth-child\(2\)[\s\S]*?padding-top:\s*0;[\s\S]*?padding-left:\s*0;/u,
     );
+  });
+
+  it('overlays the self badge on the avatar without resizing the nickname', () => {
+    expect(styles).toMatch(
+      /\.leaderboard-blook strong\s*\{[^}]*position:\s*absolute;[^}]*bottom:\s*2px;/u,
+    );
+    expect(styles).toMatch(
+      /\.leaderboard-blook__name\s*\{[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;/u,
+    );
+  });
+
+  it('keeps the mobile title below the shared back button', () => {
+    const mobileTitleStyles = styles.slice(
+      styles.indexOf('@media (max-width: 767px)'),
+    );
+    expect(mobileTitleStyles).toContain('padding-top: 36px');
   });
 });

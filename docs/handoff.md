@@ -699,3 +699,9 @@
 - 排行榜名次／暱稱／XP 的表頭與內容全部改為水平及垂直置中；角色頭像與暱稱作為同組置中，既有放大、裁切透明留白及貼齊彩色頭像框規則維持不變。
 - 成就徽章改為 flex wrap：桌機每排三張，末排不足三張時整排置中；手機 767px 以下一張一排；平板維持兩張一排。卡片仍為一致 16:9、整張可伸展，避免文字較長時互相遮擋。
 - 驗證：受影響 Vitest 6 files／23 tests、lint、typecheck、Prettier 與 `git diff --check` 全綠。Chromium 實測桌機成就前三張 x=69／458／846、第四張置中 x=458，四張皆 365×205；393px 四張皆 x=29、338×190 且單欄。排行榜 393／320px 計算樣式皆為 `text-align:center`、`vertical-align:middle`；全部 viewport 無水平 overflow。S 級版面微調不另啟第二輪 review。
+
+## 2026-08-13 00:38 [Owner／Codex] — 三頁標題對齊與手機返回鍵避讓
+
+- 我的錯題、排行榜、個人成就與徽章三頁統一標題字級與垂直位置；393px／320px 的標題皆位於 y=158、高 35px，返回鍵底緣 y=139，保留 19px 間距，三頁均無水平 overflow。桌機標題亦維持同一高度與尺寸。
+- 排行榜「這是你」改為疊在頭像右下角，不再占用暱稱欄寬；暱稱維持單行並在極窄畫面安全省略。成就卡末排改從每排第一格開始排列，桌機仍為三張一排、手機一張一排。
+- 驗證：受影響 Vitest 7 files／31 tests、lint、typecheck、Prettier、`git diff --check` 全綠；Chromium 1280／393／320 幾何與目視確認完成。依既有頁面 S 級視覺修正，不另啟第二輪 review；未修改教師端、API、DB 或共享 HUD／AppShell／globals／tokens。

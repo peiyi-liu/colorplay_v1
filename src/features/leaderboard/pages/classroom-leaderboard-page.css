@@ -72,7 +72,8 @@
 .guild-board.leaderboard-panel--guild-v2 > header h1 {
   margin: 0;
   color: var(--pixel-window-ink);
-  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-size: clamp(1.75rem, 3vw, 2rem);
+  line-height: 1.25;
 }
 
 .guild-board.leaderboard-panel--guild-v2 > header p,
@@ -186,9 +187,16 @@
   min-width: 0;
   min-height: 64px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   overflow-wrap: anywhere;
+}
+
+.guild-board.leaderboard-panel--guild-v2 .leaderboard-blook__avatar-wrap {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex: none;
 }
 
 .guild-board.leaderboard-panel--guild-v2 .leaderboard-table th,
@@ -200,8 +208,8 @@
   .leaderboard-blook
   .pastel-summary__avatar {
   align-self: stretch;
-  width: 64px;
-  height: 64px;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   border-radius: 0;
 }
@@ -217,10 +225,25 @@
 }
 
 .guild-board.leaderboard-panel--guild-v2 .leaderboard-blook strong {
+  position: absolute;
+  z-index: 1;
+  right: 2px;
+  bottom: 2px;
   border: 1px solid var(--pixel-gold);
   border-radius: 0;
+  margin: 0;
   background: var(--pixel-gold);
   color: var(--pixel-night-deep);
+  font-size: 0.625rem;
+  line-height: 1.2;
+  padding: 1px 3px;
+}
+
+.guild-board.leaderboard-panel--guild-v2 .leaderboard-blook__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .guild-board.leaderboard-panel--guild-v2 aside[aria-label='我的班級名次'] {
@@ -244,7 +267,7 @@
   }
 
   .leaderboard-panel--guild-v2 > header {
-    padding: 18px 14px;
+    padding: 20px 14px 18px;
   }
 
   .guild-board.leaderboard-panel--guild-v2 .leaderboard-table {
@@ -271,10 +294,21 @@
     min-height: 60px;
   }
 
+  .guild-board.leaderboard-panel--guild-v2 .leaderboard-blook__avatar-wrap {
+    width: 60px;
+    height: 60px;
+  }
+
   .guild-board.leaderboard-panel--guild-v2
     .leaderboard-blook
     .pastel-summary__avatar {
-    width: 60px;
-    height: 60px;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .leaderboard-panel--guild-v2 > header {
+    padding-top: 36px;
   }
 }
