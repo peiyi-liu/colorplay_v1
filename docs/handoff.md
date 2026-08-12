@@ -519,3 +519,9 @@
 - 圖片安全：`review-card-media` 確認為 private、單檔上限 2 MiB；目前學生端只會為「已發布卡片目前版本」取得短效 signed URL。圖片後補須依 `docs/content/review-card-media-import.md` 上傳檔案並走 `publish_review_card` 建立新版，不得直接 update published card／media。
 - Hosted：GitHub source preview `dpl_5js1w39f6g49s4jUmctJo6chNmVD` metadata 明確為 repo `peiyi-liu/colorplay_v1`、ref `phase6/jrpg-generated-board-ui`、SHA `94ea543…`。bundle 掃描只命中 `onkxnkzeixpezetkmocf.supabase.co`，未命中 production ref；合成學生已在 preview 完成 Auth／profile bootstrap 到 `/app`。通過後 promote 為 staging-project production deployment `dpl_F9ZiU8hYvxAXV8PDaicYcRYsN3VP`，`staging.colorplayapp.com` 已指向該 deployment；公開 alias 再次以同一學生登入到 `/app`，首頁／登入／`/app` HTTP 200。
 - 已知交付邊界：PR #5 仍因 staging branch rules 要求的 `format`、`lint`、`typecheck`、`unit-coverage`、`production-build`、`local-database`、`chromium-e2e`、`credential-scan`、`owner-approval` contexts 未由現有 workflow 產生而無法正常 merge；本輪沒有 `--admin` bypass、沒有修改 rules／CI。公開 staging 更新採既有 GitHub-source preview promotion，不是本機 source upload；PR／branch protection 缺口仍需 owner 另行授權處理。
+
+## 2026-08-12 10:18 [Owner／Codex] — Vercel staging 更新並確認 P301～P305 已上傳
+
+- Storage 唯讀盤點確認 `onkxnkzeixpezetkmocf` 的 private `review-card-media` 已有 `chapter-3/P301.webp`～`P305.webp` 五張 WebP，單檔 418,786～1,965,636 bytes，皆低於 2 MiB；目前 `review_card_media` 尚未把這五張圖綁定至 RC3101／RC3103／RC3201／RC3202，既有唯一 mapping 仍是舊卡片的 `/media/review/color-wheel.svg`，不得視為本次附件完成。
+- Vercel：最新 GitHub-source preview `dpl_At5x6JMv5CXYsbJpg67rBwPQ2PVe` 已確認 repo `peiyi-liu/colorplay_v1`、ref `phase6/jrpg-generated-board-ui`、SHA `a8845ba05bcec25e9a32458127dbf8fe4ab1df7b`，bundle 只命中 staging Supabase `onkxnkzeixpezetkmocf`；有效合成學生登入至 `/app` 通過後，promote 為 `colorplay-staging-web` production deployment `dpl_8jRnXHGyEiQNQoTdJ6dTHg9pfvEN`。`staging.colorplayapp.com` 已指向該 deployment，公開 alias 再次完成學生 Auth／bootstrap 至 `/app`。
+- 邊界：本次先完成 owner 指定的 Vercel 更新；Storage 上傳不需要重新 build，且只有物件檔不會自動顯示。下一步仍需為 P301～P305 補繁中 alt，並經 `publish_review_card` 建立新卡片版本與 media mapping；不得直接 update 已發布卡片。
