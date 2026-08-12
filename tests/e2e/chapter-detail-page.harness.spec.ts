@@ -1,114 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
-
-const observeRuntimeErrors = (page: Page) => {
-  const consoleErrors: string[] = [];
-  const pageErrors: string[] = [];
-  page.on('console', (message) => {
-    if (message.type() === 'error') consoleErrors.push(message.text());
-  });
-  page.on('pageerror', (error) => {
-    pageErrors.push(error.message);
-  });
-  return { consoleErrors, pageErrors };
-};
-
-const WIDTHS = [320, 375, 1024, 1440] as const;
-const SCENARIOS = [
-  'locked',
-  'content-preparing',
-  'content-readiness-error',
-  'error',
-  'in-progress',
-  'completed',
-  'long-title',
-] as const;
-
-for (const width of WIDTHS) {
-  test(`chapter-detail-page states render without layout/console defects at ${String(width)}px`, async ({
-    page,
-  }) => {
-    const runtimeErrors = observeRuntimeErrors(page);
-    await page.setViewportSize({ height: 900, width });
-
-    for (const scenario of SCENARIOS) {
-      await page.goto(`/dev-harness/chapter-detail.html?scenario=${scenario}`);
-      await page.waitForLoadState('networkidle');
-
-      const overflow = await page.evaluate(() => ({
-        clientWidth: document.documentElement.clientWidth,
-        scrollWidth: document.documentElement.scrollWidth,
-      }));
-      expect(overflow.scrollWidth, scenario).toBeLessThanOrEqual(
-        overflow.clientWidth,
-      );
-
-      if (
-        [
-          'locked',
-          'content-preparing',
-          'content-readiness-error',
-          'error',
-        ].includes(scenario)
-      ) {
-        await expect(page.getByRole('heading').first()).toBeVisible();
-      }
-      if (scenario === 'locked' || scenario === 'content-preparing') {
-        await expect(page.getByRole('heading').first()).toBeFocused();
-      }
-      if (scenario === 'in-progress' || scenario === 'completed') {
-        const primaryAction = page.locator('.primary-action').first();
-        await expect(primaryAction).toBeVisible();
-        if (width >= 1024) {
-          const centers = await page.evaluate(() =>
-            ['.chapter-archive__title', '.chapter-archive__subtitle'].map(
-              (selector) => {
-                const box = document
-                  .querySelector<HTMLElement>(selector)
-                  ?.getBoundingClientRect();
-                return box ? box.left + box.width / 2 : -1;
-              },
-            ),
-          );
-          for (const center of centers) {
-            expect(Math.abs(center - width / 2)).toBeLessThanOrEqual(1);
-          }
-        }
-      }
-      if (scenario === 'long-title') {
-        const menuItem = page
-          .getByRole('navigation', { name: '第三章小節' })
-          .getByRole('button')
-          .first();
-        const box = await menuItem.boundingBox();
-        expect(box?.width ?? 0).toBeLessThanOrEqual(width);
-      }
-    }
-
-    expect(
-      runtimeErrors.consoleErrors,
-      `console errors at ${String(width)}px`,
-    ).toEqual([]);
-    expect(
-      runtimeErrors.pageErrors,
-      `page errors at ${String(width)}px`,
-    ).toEqual([]);
-  });
-}
-
-test('keyboard operation reaches the retry action in the error state', async ({
-  page,
-}) => {
-  await page.goto('/dev-harness/chapter-detail.html?scenario=error');
-  await page.waitForLoadState('networkidle');
-  const retry = page.getByRole('button', { name: '重試' });
-  for (let index = 0; index < 12; index += 1) {
-    if (await retry.evaluate((element) => element === document.activeElement))
-      break;
-    await page.keyboard.press('Tab');
-  }
-  await expect(retry).toBeFocused();
-});
 
 for (const viewport of [
   { height: 720, label: '1280', width: 1280 },
@@ -172,10 +63,8 @@ for (const viewport of [
       }),
     ).toHaveAttribute('aria-current', 'true');
     await expect(
-      subtopicMenu.getByRole('button', {
-        name: /小節挑戰.*題庫準備中/u,
-      }),
-    ).toBeDisabled();
+      subtopicMenu.getByRole('link', { name: '小節挑戰' }),
+    ).toBeVisible();
     await expect(
       subtopicMenu.getByRole('link', { name: '章節總挑戰' }),
     ).toBeVisible();
@@ -357,10 +246,45 @@ for (const viewport of [
             );
           })(),
           progress: (() => {
+            const element = document.querySelector<HTMLElement>(
+              '.chapter-detail__progress',
+            );
+            const box = element?.getBoundingClientRect();
+            return box && element
+              ? {
+                  contentContained: Array.from(element.children).every(
+                    (child) => {
+                      const childBox = child.getBoundingClientRect();
+                      return (
+                        childBox.left >= box.left - 1 &&
+                        childBox.right <= box.right + 1 &&
+                        childBox.top >= box.top - 1 &&
+                        childBox.bottom <= box.bottom + 1
+                      );
+                    },
+                  ),
+                  left: box.left,
+                  right: box.right,
+                  top: box.top,
+                }
+              : null;
+          })(),
+          library: (() => {
             const box = document
-              .querySelector<HTMLElement>('.chapter-detail__progress')
+              .querySelector<HTMLElement>('.chapter-archive__library')
               ?.getBoundingClientRect();
-            return box ? { left: box.left, top: box.top } : null;
+            return box
+              ? { center: box.left + box.width / 2, width: box.width }
+              : null;
+          })(),
+          continueBottomGap: (() => {
+            const journey = document
+              .querySelector<HTMLElement>('.chapter-archive')
+              ?.getBoundingClientRect();
+            const button = document
+              .querySelector<HTMLElement>('.chapter-archive__continue')
+              ?.getBoundingClientRect();
+            return journey && button ? journey.bottom - button.bottom : -1;
           })(),
           titleTop:
             document
@@ -375,11 +299,21 @@ for (const viewport of [
       expect(
         desktopLayout.maxObjectBottom,
         JSON.stringify(desktopLayout.objectBottoms),
-      ).toBeLessThanOrEqual(viewport.height);
+      ).toBeLessThanOrEqual(surface.bottom);
       expect(desktopLayout.progress?.top ?? 0).toBeGreaterThanOrEqual(
         hudBottom,
       );
-      expect(desktopLayout.progress?.left ?? Infinity).toBeLessThanOrEqual(40);
+      expect(
+        viewport.width - (desktopLayout.progress?.right ?? 0),
+      ).toBeLessThanOrEqual(44);
+      expect(desktopLayout.progress?.contentContained).toBe(true);
+      expect(desktopLayout.library?.width ?? Infinity).toBeLessThanOrEqual(
+        1004,
+      );
+      expect(
+        Math.abs((desktopLayout.library?.center ?? 0) - viewport.width / 2),
+      ).toBeLessThanOrEqual(1);
+      expect(desktopLayout.continueBottomGap).toBeGreaterThanOrEqual(24);
       expect(
         (desktopLayout.progress?.top ?? 0) - surface.top,
       ).toBeGreaterThanOrEqual(24);

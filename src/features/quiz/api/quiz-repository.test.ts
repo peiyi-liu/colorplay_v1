@@ -152,6 +152,20 @@ describe('quiz repository', () => {
     });
   });
 
+  it('abandons a session through the server without accepting client result fields', async () => {
+    rpc.mockResolvedValue({
+      data: { session_id: sessionId, status: 'abandoned' },
+      error: null,
+    });
+
+    await expect(
+      createQuizRepository(client).abandonSession(sessionId),
+    ).resolves.toEqual({ sessionId, status: 'abandoned' });
+    expect(rpc).toHaveBeenCalledWith('abandon_quiz_session', {
+      session_id: sessionId,
+    });
+  });
+
   it('finalizes with server totals and never accepts client score fields', async () => {
     rpc.mockResolvedValue({
       data: {

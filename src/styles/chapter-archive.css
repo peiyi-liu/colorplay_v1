@@ -1,7 +1,7 @@
 /* ── 05a-v2 章節複習旅程 ──────────────────────────────────────────────
    UI 維持語意化 HTML；chapter-archive-world 只提供無文字的連續世界背景。 */
 #main-content:has(> .chapter-archive) {
-  align-items: stretch;
+  align-items: start;
   justify-items: stretch;
   padding: 0;
 }
@@ -55,7 +55,7 @@
 }
 
 .chapter-dungeon.chapter-archive > .chapter-archive__header {
-  width: min(100%, 980px);
+  width: 100%;
   margin-inline: auto;
   padding: 0;
   border: 0;
@@ -91,17 +91,33 @@
 
 .chapter-archive .chapter-detail__progress {
   display: grid;
-  grid-template-columns: auto minmax(220px, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  gap: 18px;
-  width: min(100%, 760px);
-  margin: 0 auto;
-  padding: 10px 14px;
+  gap: 12px;
+  width: min(100%, 320px);
+  margin: 10px 0 0 auto;
+  padding: 12px 14px;
   border: 1px solid rgb(141 175 229 / 34%);
   border-radius: 2px;
   background: rgb(3 14 40 / 78%);
   box-shadow: 0 6px 22px rgb(0 0 0 / 30%);
   backdrop-filter: blur(4px);
+}
+
+.chapter-detail__learning-status {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chapter-detail__progress-label {
+  color: #dbe7fa;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .chapter-archive .chapter-status-pill {
@@ -126,7 +142,7 @@
 
 .chapter-archive__library {
   display: grid;
-  width: min(100%, 1180px);
+  width: min(100%, 1004px);
   margin: 32px auto 0;
   gap: 24px;
 }
@@ -473,174 +489,4 @@
   line-height: 1.35;
   text-shadow: 0 2px 3px #000;
   text-wrap: balance;
-}
-
-.chapter-review-node__detail {
-  color: #cfd8eb;
-  font-size: 0.78rem;
-}
-
-.chapter-review-node__status {
-  display: inline-flex;
-  min-height: 24px;
-  align-items: center;
-  gap: 5px;
-  color: #aab7cd;
-  font-size: 0.82rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-}
-
-.chapter-review-node[data-completed='true'] .chapter-review-node__status {
-  color: #65c7ff;
-}
-
-.chapter-review-node[data-current='true'] .chapter-review-node__status {
-  color: #ffd45c;
-}
-
-@media (min-width: 681px) {
-  .chapter-dungeon.chapter-archive {
-    padding: 24px clamp(24px, 3vw, 44px) 16px;
-  }
-
-  .chapter-archive__subtitle {
-    margin-block: 4px 8px;
-  }
-
-  .chapter-dungeon.chapter-archive > .chapter-archive__header {
-    width: min(100%, 760px);
-    margin-inline: auto;
-  }
-
-  .chapter-archive .chapter-detail__progress {
-    position: absolute;
-    z-index: 3;
-    top: 24px;
-    left: clamp(20px, 3vw, 40px);
-    width: 286px;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 8px 12px;
-    margin: 0;
-    padding: 10px 12px;
-    text-align: left;
-  }
-
-  .chapter-archive .chapter-detail__mastery {
-    grid-column: 1 / -1;
-  }
-
-  .chapter-archive .chapter-detail__mastery-secondary {
-    display: none;
-  }
-
-  .chapter-archive__library {
-    grid-template-columns: minmax(190px, 220px) minmax(0, 1fr);
-    align-items: start;
-    margin-top: 32px;
-  }
-
-  .chapter-archive__subtopic-menu-list {
-    max-height: 352px;
-    padding: 2px;
-    overflow-y: auto;
-    scrollbar-color: #3b94d5 rgb(3 13 35 / 70%);
-  }
-
-  .chapter-dungeon .chapter-detail__subtopic.chapter-archive__subtopic {
-    display: block;
-    min-width: 0;
-    min-height: 352px;
-    margin-bottom: 0;
-    padding-top: 18px;
-  }
-
-  .chapter-archive .chapter-detail__subtopic-title {
-    margin: 0 0 8px;
-  }
-
-  .chapter-archive__nodes {
-    column-gap: clamp(12px, 2vw, 24px);
-    row-gap: 32px;
-  }
-
-  .chapter-review-node__summary {
-    min-height: 150px;
-  }
-
-  .chapter-review-node__artifact.review-accordion__badge {
-    width: 214px;
-    height: 96px;
-  }
-
-  .chapter-review-node__book-art {
-    width: 170px;
-  }
-
-  .chapter-archive__actions {
-    margin-top: auto;
-    padding-top: 17px;
-  }
-}
-
-@media (min-width: 48rem) and (hover: hover) and (pointer: fine) {
-  .chapter-dungeon.chapter-archive {
-    min-height: calc(100dvh - var(--journey-student-hud-peek));
-  }
-}
-
-.chapter-review-node .review-card {
-  width: min(100%, 820px);
-  margin: 10px auto 24px;
-  padding: clamp(18px, 3vw, 30px);
-  border: 4px solid #6d4a1e;
-  border-radius: 2px;
-  outline: 3px solid #d5ad56;
-  background: #f4e6ba;
-  color: #342713;
-  box-shadow: 8px 10px 0 rgb(0 0 0 / 35%);
-}
-
-.chapter-archive__actions {
-  display: flex;
-  width: min(100%, 820px);
-  margin: 8px auto 0;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 17px;
-}
-
-.chapter-archive__continue {
-  min-width: min(100%, 280px);
-  min-height: 56px;
-  border: 2px solid var(--pixel-window-frame);
-  border-radius: 0;
-  background: linear-gradient(var(--cobalt-600), var(--cobalt-700));
-  color: #fff;
-  font-family: var(--font-pixel-tc);
-  font-size: 1.2rem;
-  box-shadow:
-    inset 0 -3px 0 color-mix(in srgb, var(--cobalt-700) 70%, var(--stage-void)),
-    4px 4px 0 var(--pixel-shadow);
-}
-
-.chapter-archive__continue::after {
-  margin-left: auto;
-  content: '›';
-  font-size: 1.8rem;
-  line-height: 1;
-}
-
-.chapter-archive__continue:hover:not(:disabled) {
-  background: linear-gradient(180deg, #54b8ff, #247bd5);
-  transform: translateY(-1px);
-}
-
-@media (min-width: 681px) {
-  .chapter-archive__actions {
-    margin-top: auto;
-    gap: 12px;
-    padding-top: 12px;
-  }
 }

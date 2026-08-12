@@ -100,6 +100,7 @@ const incorrectResult: QuizAnswerResult = {
 };
 
 function repositoryMock() {
+  const abandonSession = vi.fn<QuizRepository['abandonSession']>();
   const activateNextQuestion = vi.fn<QuizRepository['activateNextQuestion']>();
   const createSession = vi.fn<QuizRepository['createSession']>();
   const finalizeSession = vi.fn<QuizRepository['finalizeSession']>();
@@ -111,12 +112,14 @@ function repositoryMock() {
     finalizeSession,
     getSession,
     repository: {
+      abandonSession,
       activateNextQuestion,
       createSession,
       finalizeSession,
       getSession,
       submitAnswer,
     } satisfies QuizRepository,
+    abandonSession,
     submitAnswer,
   };
 }
@@ -509,6 +512,19 @@ describe('QuizSessionPage', () => {
     expect(mock.finalizeSession.mock.invocationCallOrder[0]).toBeLessThan(
       invalidateQueries.mock.invocationCallOrder[0] ?? 0,
     );
+  });
+
+  it('returns an already abandoned attempt to the learning lobby', async () => {
+    const mock = repositoryMock();
+    mock.getSession.mockResolvedValue({
+      ...session([question(1)]),
+      status: 'abandoned',
+    });
+    const { router } = renderQuiz(mock.repository);
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/app');
+    });
   });
 
   it('renders the battle night scene while preserving load-bearing strings', async () => {

@@ -8,7 +8,7 @@ const uuidSchema = z
   .regex(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu);
 const timestampSchema = z.iso.datetime({ offset: true });
 const answerStatusSchema = z.enum(['correct', 'incorrect', 'timeout']);
-const sessionStatusSchema = z.enum(['in_progress', 'completed']);
+const sessionStatusSchema = z.enum(['in_progress', 'completed', 'abandoned']);
 const optionSchema = z.object({
   id: uuidSchema,
   key: z.string().min(1),
@@ -79,6 +79,10 @@ const finalResultSchema = z.strictObject({
   tokens_awarded: z.number().int().nonnegative(),
   total_score: z.number().int().nonnegative(),
   xp_awarded: z.number().int().nonnegative(),
+});
+const abandonResultSchema = z.strictObject({
+  session_id: uuidSchema,
+  status: z.literal('abandoned'),
 });
 const sessionStateRowSchema = z.strictObject({
   answer_status: answerStatusSchema.nullable(),
@@ -180,6 +184,11 @@ export type QuizFinalResult = Readonly<{
   tokensAwarded: number;
   totalScore: number;
   xpAwarded: number;
+}>;
+
+export type QuizAbandonResult = Readonly<{
+  sessionId: string;
+  status: 'abandoned';
 }>;
 
 export type QuizRepositoryErrorCode =
@@ -362,6 +371,7 @@ function sessionFromStateRows(value: unknown): QuizSession {
 }
 
 export type QuizRepository = Readonly<{
+  abandonSession(sessionId: string): Promise<QuizAbandonResult>;
   activateNextQuestion(sessionId: string): Promise<QuizSession>;
   createSession(
     templateId: string,
@@ -380,6 +390,19 @@ export function createQuizRepository(
   client: SupabaseClient<Database>,
 ): QuizRepository {
   return {
+    async abandonSession(sessionId) {
+      const { data, error } = await client.rpc('abandon_quiz_session', {
+        session_id: sessionId,
+      });
+      if (error) throw mapServerError(error.message);
+      const parsed = abandonResultSchema.safeParse(data);
+      if (!parsed.success) throw new QuizRepositoryError('INVALID_RESPONSE');
+      return {
+        sessionId: parsed.data.session_id,
+        status: parsed.data.status,
+      };
+    },
+
     async activateNextQuestion(sessionId) {
       const { data, error } = await client.rpc('activate_next_quiz_question', {
         session_id: sessionId,

@@ -7353,7 +7353,7 @@ select#dashboard-classroom {
   min-width: 0;
   width: 100%;
   height: 100%;
-  grid-template-columns: 56px minmax(108px, auto) minmax(140px, 210px) auto;
+  grid-template-columns: 56px minmax(300px, 1fr) auto;
   grid-template-rows: 1fr 1fr;
   align-items: center;
   align-self: stretch;
@@ -7370,6 +7370,15 @@ select#dashboard-classroom {
   color: var(--pixel-window-ink);
   font-size: clamp(15px, 1.35vw, 19px);
   overflow-wrap: anywhere;
+}
+
+.economy-summary__hud-progression {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  grid-column: 2;
+  grid-row: 2;
+  gap: clamp(8px, 1vw, 14px);
 }
 
 .hud-top--student .hud-avatar {
@@ -7403,9 +7412,7 @@ select#dashboard-classroom {
 }
 
 .economy-summary__hud-level {
-  grid-column: 2;
-  grid-row: 2;
-  align-self: start;
+  flex: 0 0 auto;
   color: var(--pixel-window-muted);
   font-size: clamp(14px, 1.25vw, 18px);
   white-space: nowrap;
@@ -7413,18 +7420,17 @@ select#dashboard-classroom {
 
 .economy-summary__hud-xp {
   display: grid;
-  min-width: 0;
-  grid-column: 3;
-  grid-row: 1 / 3;
-  grid-template-columns: auto minmax(90px, 1fr);
+  min-width: 140px;
+  max-width: 320px;
+  flex: 1 1 260px;
+  grid-template-columns: auto minmax(70px, 1fr) auto;
   align-items: center;
-  gap: 2px var(--space-2);
+  gap: var(--space-2);
   color: var(--pixel-window-ink);
   font-variant-numeric: tabular-nums;
 }
 
 .economy-summary__hud-xp > strong {
-  grid-row: 1 / span 2;
   color: var(--color-info);
   font-size: 14px;
 }
@@ -7459,7 +7465,7 @@ select#dashboard-classroom {
   min-width: 90px;
   align-items: center;
   justify-content: center;
-  grid-column: 4;
+  grid-column: 3;
   grid-row: 1 / 3;
   gap: var(--space-1);
   border: 0;
@@ -7665,7 +7671,7 @@ select#dashboard-classroom {
   .hud-top--student .hud-identity {
     display: grid;
     height: 64px;
-    grid-template-columns: 48px minmax(68px, 1fr) minmax(88px, 104px) auto;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
     grid-template-rows: 32px 32px;
     gap: 0 var(--space-2);
     border: 0;
@@ -7697,25 +7703,30 @@ select#dashboard-classroom {
   }
 
   .hud-top--student .economy-summary__hud-level {
-    grid-column: 2;
-    grid-row: 2;
-    align-self: start;
     font-size: 12px;
     padding: 0;
   }
 
+  .hud-top--student .economy-summary__hud-progression {
+    gap: 6px;
+  }
+
   .hud-top--student .economy-summary__hud-xp {
     width: 100%;
-    grid-column: 3;
-    grid-row: 1 / 3;
-    grid-template-columns: auto minmax(0, 1fr);
+    min-width: 0;
+    grid-template-columns: auto minmax(34px, 1fr) auto;
+    gap: 4px;
     padding-right: 0;
+  }
+
+  .hud-top--student .economy-summary__hud-xp > span {
+    font-size: 10px;
   }
 
   .hud-top--student .economy-summary__tokens {
     position: static;
     min-width: 54px;
-    grid-column: 4;
+    grid-column: 3;
     grid-row: 1 / 3;
     border: 0;
     font-size: 14px;

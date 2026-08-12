@@ -1839,6 +1839,7 @@ export type Database = {
       }
       quiz_sessions: {
         Row: {
+          abandoned_at: string | null
           answered_count: number
           assignment_attempt_id: string | null
           chapter_title: string
@@ -1859,6 +1860,7 @@ export type Database = {
           xp_awarded: number
         }
         Insert: {
+          abandoned_at?: string | null
           answered_count?: number
           assignment_attempt_id?: string | null
           chapter_title: string
@@ -1879,6 +1881,7 @@ export type Database = {
           xp_awarded?: number
         }
         Update: {
+          abandoned_at?: string | null
           answered_count?: number
           assignment_attempt_id?: string | null
           chapter_title?: string
@@ -2585,6 +2588,7 @@ export type Database = {
       }
     }
     Functions: {
+      abandon_quiz_session: { Args: { session_id: string }; Returns: Json }
       achievement_metric_value: {
         Args: {
           target_rule_type: Database["public"]["Enums"]["achievement_rule_type"]
@@ -3289,7 +3293,7 @@ export type Database = {
       question_type: "single_choice"
       quiz_answer_status: "correct" | "incorrect" | "timeout"
       quiz_session_purpose: "practice" | "assignment" | "remediation"
-      quiz_session_status: "in_progress" | "completed"
+      quiz_session_status: "in_progress" | "completed" | "abandoned"
       remediation_result: "resolved" | "unresolved"
       versioned_content_type: "question" | "review_card"
     }
@@ -3483,9 +3487,10 @@ export const Constants = {
       question_type: ["single_choice"],
       quiz_answer_status: ["correct", "incorrect", "timeout"],
       quiz_session_purpose: ["practice", "assignment", "remediation"],
-      quiz_session_status: ["in_progress", "completed"],
+      quiz_session_status: ["in_progress", "completed", "abandoned"],
       remediation_result: ["resolved", "unresolved"],
       versioned_content_type: ["question", "review_card"],
     },
   },
 } as const
+

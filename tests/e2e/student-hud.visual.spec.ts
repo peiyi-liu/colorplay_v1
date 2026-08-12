@@ -131,6 +131,7 @@ test.describe('JRPG stable student HUD', () => {
           '.hud-identity__name',
           '.economy-summary__hud-level',
           '.economy-summary__hud-xp',
+          '.economy-summary__hud-xp progress',
           '.economy-summary__tokens',
           '.hud-command',
           '.hud-menu__toggle',
@@ -212,11 +213,18 @@ test.describe('JRPG stable student HUD', () => {
         overlaps('.economy-summary__hud-level', '.economy-summary__hud-xp'),
       ).toBe(false);
       expect(boxes['.economy-summary__hud-xp']?.left).toBeGreaterThanOrEqual(
-        Math.max(
-          boxes['.hud-identity__name']?.right ?? 0,
-          boxes['.economy-summary__hud-level']?.right ?? 0,
-        ) - 1,
+        (boxes['.economy-summary__hud-level']?.right ?? 0) - 1,
       );
+      expect(
+        Math.abs(
+          ((boxes['.economy-summary__hud-level']?.top ?? 0) +
+            (boxes['.economy-summary__hud-level']?.bottom ?? 0)) /
+            2 -
+            ((boxes['.economy-summary__hud-xp progress']?.top ?? 0) +
+              (boxes['.economy-summary__hud-xp progress']?.bottom ?? 0)) /
+              2,
+        ),
+      ).toBeLessThanOrEqual(4);
       if (viewport.width === 1280) {
         expect(
           overlaps('.economy-summary__hud-xp', '.economy-summary__tokens'),

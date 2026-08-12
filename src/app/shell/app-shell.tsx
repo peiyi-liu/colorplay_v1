@@ -14,6 +14,7 @@ import { HudCommandBar } from './hud-command-bar';
 import { RouteWorldStage } from './route-world-stage';
 import { RotateBanner } from './rotate-banner';
 import { StudentHudAutoHide } from './student-hud-auto-hide';
+import { StudentRouteBackButton } from './student-route-back-button';
 import { useIdleLogout } from './use-idle-logout';
 
 function AuthenticatedEconomySummary() {
@@ -105,6 +106,7 @@ function AuthenticatedStudentShell({
         scene={isLearningMap ? 'learning-map' : 'student-route'}
         transitionKey={transitionKey}
       >
+        <StudentRouteBackButton />
         <Outlet context={outletContext} />
       </RouteWorldStage>
     </>

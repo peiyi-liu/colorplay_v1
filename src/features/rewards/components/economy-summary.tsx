@@ -15,19 +15,21 @@ export function EconomySummaryView({
         aria-label="學習獎勵"
         className="economy-summary economy-summary--hud"
       >
-        <strong className="economy-summary__hud-level">
-          Lv.{String(summary.level)}
-        </strong>
-        <div className="economy-summary__hud-xp">
-          <strong>XP</strong>
-          <progress
-            aria-label={`Lv.${String(summary.level)} 經驗進度`}
-            max={summary.xpPerLevel}
-            value={summary.currentLevelXp}
-          />
-          <span>
-            {String(summary.currentLevelXp)} / {String(summary.xpPerLevel)}
-          </span>
+        <div className="economy-summary__hud-progression">
+          <strong className="economy-summary__hud-level">
+            Lv.{String(summary.level)}
+          </strong>
+          <div className="economy-summary__hud-xp">
+            <strong>XP</strong>
+            <progress
+              aria-label={`Lv.${String(summary.level)} 經驗進度`}
+              max={summary.xpPerLevel}
+              value={summary.currentLevelXp}
+            />
+            <span>
+              {String(summary.currentLevelXp)} / {String(summary.xpPerLevel)}
+            </span>
+          </div>
         </div>
         <strong
           aria-label={`${String(summary.tokenBalance)} Token`}

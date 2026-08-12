@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import '../../../styles/chapter-archive.css';
+import '../../../styles/chapter-archive-controls.css';
 import '../../../styles/chapter-archive-responsive.css';
 import '../../../styles/chapter-review-reader.css';
 import '../../../styles/chapter-review-reader-responsive.css';
@@ -183,15 +184,18 @@ export function ChapterDetailPageView({
       : -1;
   const progressSummary = (
     <div aria-label="章節進度" className="chapter-detail__progress">
-      <span
-        className={`chapter-status-pill chapter-status-pill--${chapterTone}`}
-      >
+      <div className="chapter-detail__learning-status">
+        <span className="chapter-detail__progress-label">學習狀態</span>
         <span
-          aria-hidden="true"
-          className={`chapter-status-dot chapter-status-dot--${chapterTone}`}
-        />
-        {statusLabels[chapter.status]}
-      </span>
+          className={`chapter-status-pill chapter-status-pill--${chapterTone}`}
+        >
+          <span
+            aria-hidden="true"
+            className={`chapter-status-dot chapter-status-dot--${chapterTone}`}
+          />
+          {statusLabels[chapter.status]}
+        </span>
+      </div>
       <div className="chapter-detail__review-progress">
         <div className="chapter-detail__review-progress-row">
           <span className="chapter-detail__review-progress-label">

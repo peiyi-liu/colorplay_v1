@@ -22,8 +22,9 @@
   }
 
   .chapter-archive .chapter-detail__progress {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 10px;
+    margin-inline: auto;
     padding: 9px 10px;
   }
 

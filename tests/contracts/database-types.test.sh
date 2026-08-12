@@ -32,6 +32,8 @@ grep -q 'assignment_targets' src/types/database.ts
 grep -q 'assignment_attempts' src/types/database.ts
 grep -q 'assignment_status' src/types/database.ts
 grep -q 'quiz_session_purpose' src/types/database.ts
+grep -q 'abandon_quiz_session' src/types/database.ts
+grep -q 'abandoned_at' src/types/database.ts
 grep -q 'create_assignment' src/types/database.ts
 grep -q 'update_assignment_status' src/types/database.ts
 grep -q 'list_my_assignments' src/types/database.ts
