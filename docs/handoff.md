@@ -574,3 +574,9 @@
 - Owner 回報 `quiz-session` harness 只有底色。新增掛載回歸測試後穩定重現：共用 `StudentHudHarness` 使用 declarative `MemoryRouter`，但正式 Quiz 的 `QuizExitGuard` 需要 data router 才能呼叫 `useBlocker`，React 因 runtime invariant 中止整棵預覽樹；正式 App 原本已使用 data router，不受此 harness-only 問題影響。
 - 修正：將 dev/test-only `StudentHudHarness` 改為 `createMemoryRouter`＋`RouterProvider`，維持既有 HUD／返回鍵／子頁結構。新增 `quiz-session.harness.test.tsx` 鎖定預覽必須掛載章節標題與 4 個正式 radio 選項。修復後 Quiz 12 files／64 tests、HUD／AppShell 2 files／33 tests、全域 lint、typecheck、production build、Prettier 與 `git diff --check` 全綠；本機 idle 預覽已重新開啟。
 - 邊界：只修改 dev/test-only 學生 harness 與回歸測試，未改正式 Quiz 行為、教師端、共享產品 AppShell／HUD CSS、API、資料庫、push 或部署。
+
+## 2026-08-12 19:12 [Owner／Codex] — 修復 Quiz 預覽 APP_CONFIG_INVALID
+
+- Owner 截圖確認 Router 修復後改顯示 `APP_CONFIG_INVALID`；堆疊定位至 `useStudentChapterMap`。根因是 disabled query 仍在 hook render 階段立即執行 `parsePublicEnv(import.meta.env)`，使完全離線的 Quiz harness 仍要求 Supabase 設定。
+- 以回歸測試先重現 disabled query 仍解析 env 的 RED，再把 client 建立移入 TanStack Query 的 `queryFn`；disabled 時不執行，enabled 時正式行為不變。Quiz repository fixture 與 chapter map 都不再讓 harness 觸碰真實 Supabase。受影響 15 files／99 tests、全域 lint、typecheck、production build、Prettier 與 `git diff --check` 全綠；idle 預覽已重新載入。
+- 邊界：未修改權威作答／章節資料、API、DB、教師端、push 或部署。

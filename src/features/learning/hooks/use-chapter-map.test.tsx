@@ -2,10 +2,19 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { parsePublicEnv } from '../../../lib/config/public-env';
 import type { Database } from '../../../types/database';
 import { studentChapterMapKey, useStudentChapterMap } from './use-chapter-map';
+
+vi.mock('../../../lib/config/public-env', () => ({
+  parsePublicEnv: vi.fn(() => {
+    throw new Error('APP_CONFIG_INVALID');
+  }),
+}));
+
+const mockedParsePublicEnv = vi.mocked(parsePublicEnv);
 
 const clientWith = (rpc: ReturnType<typeof vi.fn>) =>
   ({ rpc }) as unknown as SupabaseClient<Database>;
@@ -18,6 +27,24 @@ const wrapper = (client: QueryClient) =>
   };
 
 describe('useStudentChapterMap', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('does not parse browser config while the query is disabled', () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    const { result } = renderHook(
+      () => useStudentChapterMap(undefined, false),
+      { wrapper: wrapper(queryClient) },
+    );
+
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(mockedParsePublicEnv).not.toHaveBeenCalled();
+  });
+
   it('stores the authoritative projection under one stable query key', async () => {
     const chapters = Array.from({ length: 6 }, (_, index) => ({
       access_state: 'available',
