@@ -658,3 +658,15 @@
 
 - 角色／外框分類框由白底改為夜空深藍底、金色邊框與像素硬陰影；未選取項目使用透明深底與亮字，選取項目保留金色高亮，與夜間市集背景一致。
 - 驗證：Shop Vitest 2 files／13 tests、Chromium 1280／393／320 共 3／3、lint、typecheck、Prettier 與 `git diff --check` 全綠；本機 1280px 目視確認。S 級 CSS 微調不另啟 review。
+
+## 2026-08-12 23:35 [Owner／Codex] — 商店頁首與商品卡重新配色
+
+- 依 owner 釐清，重新設計的是「裝備商店」頁首大框與每張角色／外框商品卡：移除奶黃色容器底，改用像素雙層框、硬陰影、主題化餘額框、深色展示槽與按鈕；購買主操作仍保留金色強調。
+- 後續依回饋將框內高彩度深藍降低彩度並提高明度：頁首、分類列及商品卡改為較亮灰藍，展示槽與次要按鈕維持深一階灰藍，保留層次與白字對比。
+- 驗證：Shop Vitest 2 files／14 tests、Chromium 1280／393／320 共 3／3、lint、typecheck、Prettier 與 `git diff --check` 全綠；本機 1280px 目視確認。S 級 CSS 配色調整不另啟 review；未觸及教師端、API、DB、globals 或 tokens。
+
+## 2026-08-12 23:38 [Owner／Codex] — 商店深夜藍夜市招牌版
+
+- 依 owner 最終選擇換回灰藍前的深夜藍配色，但更換容器設計：頁首由白色雙框改為單層金框、內側金線與頂部節奏飾帶；商品卡改為左側金色飾條、金框展示槽與硬陰影，維持夜間市集木牌感。
+- 卡片內所有 primary purchase action 改為零圓角方框；角色／外框分類、餘額框、選用／不足／已裝備狀態亦維持既有像素直角語彙。
+- 驗證：Shop Vitest 2 files／14 tests、Chromium 1280／393／320 共 3／3、lint、typecheck、Prettier 與 `git diff --check` 全綠；本機 1280px 目視確認。S 級 CSS 設計調整不另啟 review。

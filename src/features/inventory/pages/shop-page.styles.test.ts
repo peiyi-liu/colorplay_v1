@@ -33,4 +33,20 @@ describe('shop page scene styles', () => {
       ".scene-day.shop-market-v2 .shop-tab[data-on='true']",
     );
   });
+
+  it('redesigns the header and every product card as night-market windows', () => {
+    expect(css).toMatch(
+      /\.scene-day\.shop-market-v2 \.blook-shop__header\s*\{[^}]*border:\s*3px solid var\(--pixel-gold-deep\);[^}]*background:\s*var\(--pixel-night\);/u,
+    );
+    expect(css).toMatch(
+      /\.scene-day\.shop-market-v2 \.blook-card\s*\{[^}]*border-left:\s*6px solid var\(--pixel-gold\);[^}]*background:\s*var\(--pixel-night\);/u,
+    );
+    expect(css).toMatch(
+      /\.scene-day\.shop-market-v2 \.blook-card__art\s*\{[^}]*background:\s*var\(--pixel-night-deep\);/u,
+    );
+    expect(css).toContain('.scene-day.shop-market-v2 .frame-card__ring::after');
+    expect(css).toMatch(
+      /\.scene-day\.shop-market-v2 \.primary-action\s*\{[^}]*border-radius:\s*var\(--radius-pixel\);/u,
+    );
+  });
 });
