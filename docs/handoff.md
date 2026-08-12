@@ -626,3 +626,10 @@
 - 依 owner 補充改為同排：全站同一顆返回鍵仍是 Live root 的 sibling，Live 狀態列新增專用左側 grid slot，課堂標題、題數、連線、在線人數與倒數各自占欄；返回鍵與狀態列共享垂直區域，但不覆蓋任何狀態內容。桌機一排，手機狀態內容兩排並保留左側返回欄。
 - 驗證：受影響 Vitest 2 files／20 tests、Chromium 5／5（含 393px 返回鍵與 Live 狀態列同排且不覆蓋任何 child、393／320 無水平 overflow）、lint、typecheck、`git diff --check` 全綠；1280／393 目視確認同排版面。依 S 級 bug fix 規則未新增第二輪 review。
 - 邊界：只修改 Live feature CSS、Live harness E2E 與 handoff；未修改共享返回元件、HUD／AppShell／globals／tokens、教師端、API 或資料庫。
+
+## 2026-08-12 22:38 [Owner／Codex] — Live 手機背景取景與四宮格
+
+- 手機 Live 不再使用直式專用背景，改用與桌面相同的 `live-student-arena-desktop-v1.png`；CSS 使用 `cover` 保持原始長寬比放大裁切，`center` 同時鎖定水平與垂直中央取景。
+- 393px／320px 的 A／B／C／D 選項維持與桌面一致的 2×2 四宮格，不再降為單欄；保留至少 52px 高度、8px 間距與既有立即送出／鎖定行為。
+- TDD／驗證：CSS 背景契約與 Chromium 四宮格實際矩形先 RED 後 GREEN；393／320 均無水平 overflow，計算樣式確認桌面背景、`cover`、中央定位。1280／393／320 目視確認中央城門取景與四選項完整可見；最終 lint、typecheck、受影響 Vitest／Chromium 結果記於同一 checkpoint。
+- 邊界：只修改 Live feature CSS、CSS contract、Live harness E2E 與 handoff；未修改作答權威、Question Display payload、教師端或共享 HUD／AppShell／globals／tokens。

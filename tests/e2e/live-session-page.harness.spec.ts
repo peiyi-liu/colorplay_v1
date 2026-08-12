@@ -34,7 +34,35 @@ for (const viewport of [
     await page.setViewportSize(viewport);
     await page.goto(PAGE);
     await expect(page.getByText('請看投影幕作答')).toBeVisible();
-    await expect(page.getByRole('group', { name: '答案選項' }).getByRole('button')).toHaveCount(4);
+    const choices = page
+      .getByRole('group', { name: '答案選項' })
+      .getByRole('button');
+    await expect(choices).toHaveCount(4);
+    const boxes = await choices.evaluateAll((buttons) =>
+      buttons.map((button) => {
+        const rect = button.getBoundingClientRect();
+        return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+      }),
+    );
+    expect(Math.abs((boxes[0]?.y ?? 0) - (boxes[1]?.y ?? 1))).toBeLessThan(1);
+    expect(Math.abs((boxes[2]?.y ?? 0) - (boxes[3]?.y ?? 1))).toBeLessThan(1);
+    expect(Math.abs((boxes[0]?.x ?? 0) - (boxes[2]?.x ?? 1))).toBeLessThan(1);
+    expect(Math.abs((boxes[1]?.x ?? 0) - (boxes[3]?.x ?? 1))).toBeLessThan(1);
+    expect(boxes[1]?.x ?? 0).toBeGreaterThan(
+      (boxes[0]?.x ?? 0) + (boxes[0]?.width ?? 0),
+    );
+    const background = await page.locator('.live-student-arena').evaluate((arena) => {
+      const style = getComputedStyle(arena);
+      return {
+        image: style.backgroundImage,
+        position: style.backgroundPosition,
+        size: style.backgroundSize,
+      };
+    });
+    expect(background.image).toContain('live-student-arena-desktop-v1.png');
+    expect(background.image).not.toContain('live-student-arena-mobile-v1.png');
+    expect(background.position).toMatch(/50% 50%/u);
+    expect(background.size).toMatch(/cover/u);
     const overflow = await page.evaluate(() =>
       Math.max(
         document.documentElement.scrollWidth,

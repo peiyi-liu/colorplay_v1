@@ -304,9 +304,9 @@
     min-height: 100%;
     background-image:
       linear-gradient(180deg, rgb(2 8 20 / 2%) 0%, rgb(3 10 24 / 14%) 34%, #071120 66%),
-      url('../../../assets/live/live-student-arena-mobile-v1.png');
-    background-position: center top;
-    background-size: 100% auto;
+      url('../../../assets/live/live-student-arena-desktop-v1.png');
+    background-position: center;
+    background-size: cover;
   }
 
   .live-student-status-bar {
@@ -365,7 +365,7 @@
   }
 
   .live-student-arena .live-options {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
