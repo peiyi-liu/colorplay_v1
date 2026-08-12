@@ -18,9 +18,12 @@ export function StudentHudHarness({
         <div className="game-stage" data-shell-role="student">
           <StudentBackNavigationProvider>
             <StudentHud>
-              <StudentRouteBackButton />
               <div className="hud-economy-group">
-                <div aria-label="學生身分" className="hud-identity" role="group">
+                <div
+                  aria-label="學生身分"
+                  className="hud-identity"
+                  role="group"
+                >
                   <span aria-hidden="true" className="hud-avatar">
                     <BlookArt emoji="🦊" size={47} stableCode="little_fox" />
                   </span>
@@ -49,6 +52,7 @@ export function StudentHudHarness({
               className="game-stage__scene route-world-stage student-hud-harness__scene"
               id="main-content"
             >
+              <StudentRouteBackButton />
               {children ?? (
                 <span
                   aria-hidden="true"

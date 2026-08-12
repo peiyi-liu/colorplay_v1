@@ -547,3 +547,10 @@
 - 章節選卡頁桌機將置中的章節標題與右上學習狀態框排在同一列，左右採對稱欄維持標題的 viewport 真置中；窄螢幕在空間不足時安全堆疊。Reader 高度改為填滿 HUD 下方剩餘區域，修正翻頁後標題可能捲到 HUD 下方的裁切問題。
 - 驗證：受影響 Vitest 4 files／47 tests、HUD Chromium 4/4、Chapter Chromium 7/7、Reader Chromium 8/8、全域 lint、typecheck、production build 與 `git diff --check` 全綠。唯一一次 scoped self-review 檢查單一返回鍵、override cleanup、HUD／內容幾何、responsive 版面、教師端協作邊界與 500-line 規則，無未解 finding。
 - 協作邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page 或教師專屬 CSS；共享 `app-shell.tsx`、`globals.css` 只包含本輪既有學生端 HUD 整合。未合併教師 branch、未 push、未 deploy。下個動作是提交本學生端 checkpoint，保留本機 `http://127.0.0.1:4178/dev-harness/chapter-detail.html?scenario=in-progress` 供 owner 檢視。
+
+## 2026-08-12 18:20 [Owner／Codex] — 返回鍵移至 HUD 下方並修正場景背景起點
+
+- 返回鍵從 HUD DOM 移至學生 `#main-content`，所有非學習大廳學生 route 仍共用同一顆按鈕與既有站內返回／fallback 規則；章節與閱讀器頁面只保留這一顆。按鈕左緣與 HUD 角色頭像對齊，位於 HUD 下方並與章節標題列同列；HUD 恢復只包含角色／Level／XP／Token／導覽／MENU。
+- 章節與閱讀器桌機背景移除 viewport-fixed attachment，背景定位區改從 HUD 下緣開始；章節容器使用主場景的實際剩餘高度，避免以 token 高度估算造成頂部場景被吃掉。393px 章節標頭採左右對稱三欄，左欄留給返回鍵、中欄維持標題 viewport 置中、右欄保留等寬空白，學習狀態下一列顯示，返回鍵不再蓋住標題。
+- TDD／驗證：返回鍵內容層契約、背景 attachment 契約與 393px 不重疊契約均先 RED 後 GREEN。Vitest 4 files／47 tests、Chapter Chromium 7/7、Reader Chromium 8/8、HUD Chromium 4/4、全域 lint、typecheck、production build、Prettier 與 `git diff --check` 全綠。唯一一次 scoped self-review：Standards 0、Spec 0；Security 軸因未觸及 trust boundary 而略過。
+- 協作邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page、教師分析或教師 CSS；共享 `app-shell.tsx`／`globals.css` 僅收斂本輪學生返回與 HUD 版面。未合併教師 branch、未 push、未 deploy；本機預覽維持於 `http://127.0.0.1:4178/dev-harness/chapter-detail.html?scenario=in-progress`。

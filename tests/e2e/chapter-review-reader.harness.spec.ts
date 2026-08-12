@@ -70,8 +70,9 @@ for (const viewport of [
     const previous = reader.getByRole('button', { name: '閱讀上一頁' });
     const next = reader.getByRole('button', { name: '閱讀下一頁' });
     const complete = reader.getByRole('button', { name: '完成複習' });
+    const hud = page.locator('.hud-top--student');
     const back = page
-      .locator('.hud-top--student')
+      .locator('#main-content')
       .getByRole('button', { name: '返回複習卡選擇' });
     await expect(book).toBeVisible();
     await expect(visibleBookPages).toHaveCount(viewport.mobile ? 1 : 2);
@@ -97,6 +98,9 @@ for (const viewport of [
       ).toContainText('1');
     }
     await expect(back).toBeVisible();
+    await expect(
+      hud.getByRole('button', { name: '返回複習卡選擇' }),
+    ).toHaveCount(0);
     await expect(
       page.getByRole('button', { name: '返回複習卡選擇' }),
     ).toHaveCount(1);
@@ -146,6 +150,7 @@ for (const viewport of [
           : null;
       };
       return {
+        backgroundAttachment: getComputedStyle(element).backgroundAttachment,
         book: rect(bookElement),
         contentViewport: rect(contentViewport),
         internalOverflow: contentViewport
@@ -232,6 +237,10 @@ for (const viewport of [
 
     expect(metrics.reader.left).toBeLessThanOrEqual(1);
     expect(metrics.reader.right).toBeGreaterThanOrEqual(viewport.width - 1);
+    const hudBottom = await hud.evaluate(
+      (element) => element.getBoundingClientRect().bottom,
+    );
+    expect(metrics.reader.top).toBeCloseTo(hudBottom, 0);
     expect(metrics.book?.top ?? -1).toBeGreaterThanOrEqual(metrics.reader.top);
     if (viewport.mobile) {
       expect(metrics.book?.left ?? Infinity).toBeCloseTo(
@@ -282,6 +291,7 @@ for (const viewport of [
       }
     } else {
       expect(metrics.backgroundImage).toContain('review-reader-world-desktop');
+      expect(metrics.backgroundAttachment).not.toContain('fixed');
     }
     expect(metrics.bookBackgroundImage).toContain(
       viewport.mobile ? 'open-book-page-upright' : 'open-book-spread-upright',

@@ -27,7 +27,7 @@
       color-mix(in srgb, var(--stage-void) 72%, transparent)
     ),
     url('../assets/chapter/review-reader/review-reader-world-desktop.png')
-      center / cover fixed;
+      center top / cover scroll;
 }
 
 .chapter-review-reader__header {

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 
-import { expectSingleBackButtonInHud } from './helpers/chapter-detail-shell';
+import { expectSingleBackButtonBelowHud } from './helpers/chapter-detail-shell';
 
 for (const viewport of [
   { height: 720, label: '1280', width: 1280 },
@@ -16,7 +16,7 @@ for (const viewport of [
 
     const journey = page.getByRole('region', { name: '第三章複習旅程' });
     await expect(journey).toBeVisible();
-    await expectSingleBackButtonInHud(page, '返回前一頁');
+    await expectSingleBackButtonBelowHud(page, '返回前一頁');
     await expect(page.locator('.chapter-review-node')).toHaveCount(6);
     await expect(journey.locator('.primary-action')).toHaveCount(1);
 
@@ -24,6 +24,7 @@ for (const viewport of [
       const box = element.getBoundingClientRect();
       const style = getComputedStyle(element);
       return {
+        backgroundAttachment: style.backgroundAttachment,
         backgroundImage: style.backgroundImage,
         borderWidth: `${style.borderTopWidth} ${style.borderRightWidth} ${style.borderBottomWidth} ${style.borderLeftWidth}`,
         bottom: box.bottom,
@@ -44,6 +45,7 @@ for (const viewport of [
         ? 'chapter-archive-world-mobile-v3'
         : 'chapter-archive-world-desktop-v3',
     );
+    expect(surface.backgroundAttachment).not.toContain('fixed');
 
     await expect(page.locator('.chapter-review-node__book-art')).toHaveCount(6);
     await expect(
@@ -490,6 +492,6 @@ for (const viewport of [
       page.getByRole('region', { name: /複習卡閱讀：/u }),
     ).toBeVisible();
     await expect(page.getByRole('article')).toBeVisible();
-    await expectSingleBackButtonInHud(page, '返回複習卡選擇');
+    await expectSingleBackButtonBelowHud(page, '返回複習卡選擇');
   });
 }

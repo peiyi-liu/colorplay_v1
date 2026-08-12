@@ -352,6 +352,9 @@ describe('AppShell', () => {
     expect(stage).toHaveAttribute('data-shell-role', 'student');
     expect(main).toHaveAttribute('data-world-scene', 'student-route');
     expect(document.querySelector('.economy-summary--learning-map')).toBeNull();
+    const backButton = screen.getByRole('button', { name: '返回前一頁' });
+    expect(screen.getByRole('banner')).not.toContainElement(backButton);
+    expect(main).toContainElement(backButton);
   });
 
   it('marks the learning map as a scene without switching to a route-specific HUD geometry', () => {

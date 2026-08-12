@@ -1,4 +1,8 @@
-.student-route-back {
+#main-content.route-world-stage > .student-route-back {
+  position: absolute;
+  z-index: 4;
+  top: clamp(24px, 3vw, 42px);
+  left: clamp(var(--space-3), 2vw, var(--space-6));
   display: inline-flex;
   min-width: 88px;
   min-height: 44px;
@@ -16,8 +20,8 @@
   backdrop-filter: blur(4px);
 }
 
-.student-route-back:hover,
-.student-route-back:focus-visible {
+#main-content.route-world-stage > .student-route-back:hover,
+#main-content.route-world-stage > .student-route-back:focus-visible {
   border-color: var(--pixel-gold);
   background: color-mix(in srgb, var(--pixel-window-frame) 82%, transparent);
   outline: 2px solid var(--focus-ring);
@@ -30,7 +34,9 @@
 }
 
 @media (max-width: 680px) {
-  .student-route-back {
+  #main-content.route-world-stage > .student-route-back {
+    top: 22px;
+    left: 10px;
     min-width: 72px;
     min-height: 40px;
     padding-inline: 8px;

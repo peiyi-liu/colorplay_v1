@@ -7325,7 +7325,7 @@ select#dashboard-classroom {
   display: grid;
   min-height: var(--journey-student-hud-height);
   flex: 0 0 auto;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: clamp(var(--space-3), 2vw, var(--space-6));
   border: 1px solid
     color-mix(in srgb, var(--pixel-window-frame) 42%, transparent);
@@ -7333,14 +7333,6 @@ select#dashboard-classroom {
   background: color-mix(in srgb, var(--pixel-night-deep) 96%, transparent);
   box-shadow: 0 4px 20px color-mix(in srgb, var(--stage-void) 72%, transparent);
   padding: 6px clamp(var(--space-3), 2vw, var(--space-6));
-}
-
-.hud-top--student:not(:has(> .student-route-back)) {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.hud-top--student > .student-route-back {
-  grid-column: 1;
 }
 
 .hud-top--student .hud-economy-group {
@@ -7354,10 +7346,6 @@ select#dashboard-classroom {
   box-shadow: none;
   gap: clamp(var(--space-3), 1.6vw, var(--space-5));
   padding: 0;
-  grid-column: 2;
-}
-
-.hud-top--student:not(:has(> .student-route-back)) .hud-economy-group {
   grid-column: 1;
 }
 
@@ -7552,10 +7540,6 @@ select#dashboard-classroom {
   border: 0;
   background: transparent;
   padding: 0;
-  grid-column: 3;
-}
-
-.hud-top--student:not(:has(> .student-route-back)) .hud-command {
   grid-column: 2;
 }
 
@@ -7680,27 +7664,10 @@ select#dashboard-classroom {
     padding: 6px 10px;
   }
 
-  .hud-top--student:has(> .student-route-back) {
-    min-height: 118px;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-rows: 42px 64px;
-    row-gap: 4px;
-  }
-
-  .hud-top--student:has(> .student-route-back) > .student-route-back {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
   .hud-top--student .hud-economy-group {
     display: block;
     grid-column: 1;
     grid-row: 1;
-  }
-
-  .hud-top--student:has(> .student-route-back) .hud-economy-group {
-    grid-column: 1 / 4;
-    grid-row: 2;
   }
 
   .hud-top--student .hud-identity {
@@ -7771,11 +7738,6 @@ select#dashboard-classroom {
   .hud-top--student .hud-command {
     z-index: 1;
     grid-column: 2;
-    grid-row: 1;
-  }
-
-  .hud-top--student:has(> .student-route-back) .hud-command {
-    grid-column: 3;
     grid-row: 1;
   }
 

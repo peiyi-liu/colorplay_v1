@@ -1,15 +1,30 @@
 /* 05a-v2 responsive and motion preferences. */
 @media (max-width: 900px) {
   .chapter-dungeon.chapter-archive > .chapter-archive__header {
-    display: block;
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr) 88px;
+    column-gap: 8px;
+  }
+
+  .chapter-archive__title-group {
+    min-height: 44px;
+    grid-column: 2;
+    grid-row: 1;
+    place-content: center;
   }
 
   .chapter-archive .chapter-detail__progress {
+    grid-column: 1 / -1;
+    grid-row: 2;
     margin: 16px auto 0;
   }
 }
 
 @media (max-width: 680px) {
+  .chapter-dungeon.chapter-archive > .chapter-archive__header {
+    grid-template-columns: 72px minmax(0, 1fr) 72px;
+  }
+
   .chapter-dungeon.chapter-archive {
     min-height: calc(100dvh - 76px);
     padding: 22px 14px 38px;

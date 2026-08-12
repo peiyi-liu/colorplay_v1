@@ -12,7 +12,7 @@
   display: flex;
   width: 100%;
   max-width: none;
-  min-height: calc(100dvh - var(--journey-student-hud-height));
+  min-height: 100%;
   margin: 0;
   padding: clamp(24px, 3vw, 42px) clamp(18px, 4vw, 64px) 48px;
   flex-direction: column;
@@ -21,7 +21,7 @@
   background:
     linear-gradient(180deg, rgb(2 10 31 / 22%), rgb(2 8 24 / 72%)),
     url('../assets/chapter/chapter-archive-world-desktop-v3.png') center top /
-      cover fixed;
+      cover scroll;
 }
 
 .chapter-archive::before {

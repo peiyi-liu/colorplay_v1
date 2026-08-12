@@ -83,7 +83,6 @@ function AuthenticatedStudentShell({
   return (
     <StudentBackNavigationProvider>
       <StudentHud>
-        <StudentRouteBackButton />
         <div className="hud-economy-group">
           <div aria-label="學生身分" className="hud-identity" role="group">
             <StudentHudAvatar equipped={equippedBlook} />
@@ -108,6 +107,7 @@ function AuthenticatedStudentShell({
         scene={isLearningMap ? 'learning-map' : 'student-route'}
         transitionKey={transitionKey}
       >
+        <StudentRouteBackButton />
         <Outlet context={outletContext} />
       </RouteWorldStage>
     </StudentBackNavigationProvider>
