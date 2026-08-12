@@ -69,6 +69,18 @@ describe('leaderboard guild hall scene styles', () => {
     );
   });
 
+  it('uses fixed avatar and nickname tracks so every leaderboard row aligns', () => {
+    expect(styles).toMatch(
+      /\.leaderboard-table\s+\.leaderboard-blook\s*\{[^}]*display:\s*grid;[^}]*width:\s*min\(100%, 320px\);[^}]*grid-template-columns:\s*64px minmax\(0, 1fr\);[^}]*margin-inline:\s*auto;[^}]*text-align:\s*left;/u,
+    );
+    const mobileStyles = styles.slice(
+      styles.indexOf('@media (max-width: 600px)'),
+    );
+    expect(mobileStyles).toMatch(
+      /\.leaderboard-table\s+\.leaderboard-blook\s*\{[^}]*grid-template-columns:\s*60px minmax\(0, 1fr\);[^}]*column-gap:\s*8px;/u,
+    );
+  });
+
   it('keeps the mobile title below the shared back button', () => {
     const mobileTitleStyles = styles.slice(
       styles.indexOf('@media (max-width: 767px)'),

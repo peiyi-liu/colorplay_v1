@@ -192,6 +192,15 @@
   overflow-wrap: anywhere;
 }
 
+.guild-board.leaderboard-panel--guild-v2 .leaderboard-table .leaderboard-blook {
+  display: grid;
+  width: min(100%, 320px);
+  grid-template-columns: 64px minmax(0, 1fr);
+  column-gap: 12px;
+  margin-inline: auto;
+  text-align: left;
+}
+
 .guild-board.leaderboard-panel--guild-v2 .leaderboard-blook__avatar-wrap {
   position: relative;
   width: 64px;
@@ -297,6 +306,13 @@
   .guild-board.leaderboard-panel--guild-v2 .leaderboard-blook__avatar-wrap {
     width: 60px;
     height: 60px;
+  }
+
+  .guild-board.leaderboard-panel--guild-v2
+    .leaderboard-table
+    .leaderboard-blook {
+    grid-template-columns: 60px minmax(0, 1fr);
+    column-gap: 8px;
   }
 
   .guild-board.leaderboard-panel--guild-v2

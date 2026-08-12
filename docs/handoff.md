@@ -705,3 +705,8 @@
 - 我的錯題、排行榜、個人成就與徽章三頁統一標題字級與垂直位置；393px／320px 的標題皆位於 y=158、高 35px，返回鍵底緣 y=139，保留 19px 間距，三頁均無水平 overflow。桌機標題亦維持同一高度與尺寸。
 - 排行榜「這是你」改為疊在頭像右下角，不再占用暱稱欄寬；暱稱維持單行並在極窄畫面安全省略。成就卡末排改從每排第一格開始排列，桌機仍為三張一排、手機一張一排。
 - 驗證：受影響 Vitest 7 files／31 tests、lint、typecheck、Prettier、`git diff --check` 全綠；Chromium 1280／393／320 幾何與目視確認完成。依既有頁面 S 級視覺修正，不另啟第二輪 review；未修改教師端、API、DB 或共享 HUD／AppShell／globals／tokens。
+
+## 2026-08-13 00:45 [Owner／Codex] — 排行榜頭像與暱稱逐列對齊
+
+- 排行榜暱稱欄改為固定頭像軌與文字軌，整組仍置於欄位中央；所有列的頭像位置一致，暱稱也從同一水平起點開始，「這是你」維持疊在頭像內而不影響文字位置。
+- 驗證：Leaderboard Vitest 3 files／14 tests、lint、typecheck、Prettier、`git diff --check` 全綠；Chromium 1280／393／320 實測所有列的頭像與暱稱 X 座標各自完全一致，且無水平 overflow。S 級 CSS 版面修正不另啟第二輪 review。
