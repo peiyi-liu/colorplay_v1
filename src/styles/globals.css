@@ -7324,8 +7324,8 @@ select#dashboard-classroom {
   top: 0;
   display: grid;
   min-height: var(--journey-student-hud-height);
-  flex: 0 0 var(--journey-student-hud-height);
-  grid-template-columns: minmax(0, 1fr) auto;
+  flex: 0 0 auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: clamp(var(--space-3), 2vw, var(--space-6));
   border: 1px solid
     color-mix(in srgb, var(--pixel-window-frame) 42%, transparent);
@@ -7333,6 +7333,14 @@ select#dashboard-classroom {
   background: color-mix(in srgb, var(--pixel-night-deep) 96%, transparent);
   box-shadow: 0 4px 20px color-mix(in srgb, var(--stage-void) 72%, transparent);
   padding: 6px clamp(var(--space-3), 2vw, var(--space-6));
+}
+
+.hud-top--student:not(:has(> .student-route-back)) {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.hud-top--student > .student-route-back {
+  grid-column: 1;
 }
 
 .hud-top--student .hud-economy-group {
@@ -7346,6 +7354,11 @@ select#dashboard-classroom {
   box-shadow: none;
   gap: clamp(var(--space-3), 1.6vw, var(--space-5));
   padding: 0;
+  grid-column: 2;
+}
+
+.hud-top--student:not(:has(> .student-route-back)) .hud-economy-group {
+  grid-column: 1;
 }
 
 .hud-top--student .hud-identity {
@@ -7539,6 +7552,11 @@ select#dashboard-classroom {
   border: 0;
   background: transparent;
   padding: 0;
+  grid-column: 3;
+}
+
+.hud-top--student:not(:has(> .student-route-back)) .hud-command {
+  grid-column: 2;
 }
 
 .hud-top--student .hud-command__nav {
@@ -7655,17 +7673,34 @@ select#dashboard-classroom {
 @media (max-width: 47.99rem) {
   .hud-top--student {
     min-height: 76px;
-    flex-basis: 76px;
+    flex-basis: auto;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: 64px;
     gap: 0 var(--space-3);
     padding: 6px 10px;
   }
 
+  .hud-top--student:has(> .student-route-back) {
+    min-height: 118px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: 42px 64px;
+    row-gap: 4px;
+  }
+
+  .hud-top--student:has(> .student-route-back) > .student-route-back {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
   .hud-top--student .hud-economy-group {
     display: block;
     grid-column: 1;
     grid-row: 1;
+  }
+
+  .hud-top--student:has(> .student-route-back) .hud-economy-group {
+    grid-column: 1 / 4;
+    grid-row: 2;
   }
 
   .hud-top--student .hud-identity {
@@ -7739,6 +7774,11 @@ select#dashboard-classroom {
     grid-row: 1;
   }
 
+  .hud-top--student:has(> .student-route-back) .hud-command {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
   .hud-top--student .hud-command__nav {
     display: none;
   }
@@ -7769,63 +7809,6 @@ select#dashboard-classroom {
     max-height: calc(100vh - 72px);
     max-height: calc(100dvh - 72px);
     overflow-y: auto;
-  }
-}
-
-/* 桌機學生 HUD 採 macOS Dock 式完全收合。24px 頂緣負責開啟，HUD 下方
-   28px 緩衝帶負責判斷真正離開；沒有時間限制。完整 HUD 覆蓋場景而不改變
-   場景幾何，MENU 與鍵盤 focus 也留在同一互動區，避免 transform 往返震動。 */
-.student-hud-reveal-zone,
-.student-hud-dismiss-zone {
-  display: none;
-}
-
-@media (min-width: 48rem) and (hover: hover) and (pointer: fine) {
-  .student-hud-reveal-zone {
-    position: absolute;
-    z-index: 51;
-    top: 0;
-    right: 0;
-    left: 0;
-    display: block;
-    height: 24px;
-  }
-
-  .student-hud-dismiss-zone {
-    position: absolute;
-    z-index: 49;
-    top: var(--journey-student-hud-height);
-    right: 0;
-    left: 0;
-    display: block;
-    height: 28px;
-    pointer-events: none;
-  }
-
-  .student-hud-dismiss-zone[data-hud-expanded='true'] {
-    pointer-events: auto;
-  }
-
-  .hud-top--student {
-    margin-bottom: calc(
-      var(--journey-student-hud-peek) - var(--journey-student-hud-height)
-    );
-    transform: translateY(
-      calc(var(--journey-student-hud-peek) - var(--journey-student-hud-height))
-    );
-    transition: transform 180ms ease;
-    will-change: transform;
-  }
-
-  .hud-top--student[data-hud-expanded='true'],
-  .hud-top--student:focus-within {
-    transform: translateY(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hud-top--student {
-    transition: none;
   }
 }
 

@@ -13,7 +13,8 @@ import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summ
 import { HudCommandBar } from './hud-command-bar';
 import { RouteWorldStage } from './route-world-stage';
 import { RotateBanner } from './rotate-banner';
-import { StudentHudAutoHide } from './student-hud-auto-hide';
+import { StudentBackNavigationProvider } from './student-back-navigation';
+import { StudentHud } from './student-hud';
 import { StudentRouteBackButton } from './student-route-back-button';
 import { useIdleLogout } from './use-idle-logout';
 
@@ -80,8 +81,9 @@ function AuthenticatedStudentShell({
   const outletContext: StudentMapShellContext = { equippedBlook };
 
   return (
-    <>
-      <StudentHudAutoHide>
+    <StudentBackNavigationProvider>
+      <StudentHud>
+        <StudentRouteBackButton />
         <div className="hud-economy-group">
           <div aria-label="學生身分" className="hud-identity" role="group">
             <StudentHudAvatar equipped={equippedBlook} />
@@ -100,16 +102,15 @@ function AuthenticatedStudentShell({
             登出失敗，請稍後重試。
           </p>
         ) : null}
-      </StudentHudAutoHide>
+      </StudentHud>
       <RouteWorldStage
         reducedMotion={reducedMotion}
         scene={isLearningMap ? 'learning-map' : 'student-route'}
         transitionKey={transitionKey}
       >
-        <StudentRouteBackButton />
         <Outlet context={outletContext} />
       </RouteWorldStage>
-    </>
+    </StudentBackNavigationProvider>
   );
 }
 

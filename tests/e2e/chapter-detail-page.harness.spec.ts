@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 
+import { expectSingleBackButtonInHud } from './helpers/chapter-detail-shell';
+
 for (const viewport of [
   { height: 720, label: '1280', width: 1280 },
   { height: 852, label: '393', width: 393 },
@@ -14,7 +16,7 @@ for (const viewport of [
 
     const journey = page.getByRole('region', { name: '第三章複習旅程' });
     await expect(journey).toBeVisible();
-    await expect(page.locator('.hud-top--student')).toBeVisible();
+    await expectSingleBackButtonInHud(page, '返回前一頁');
     await expect(page.locator('.chapter-review-node')).toHaveCount(6);
     await expect(journey.locator('.primary-action')).toHaveCount(1);
 
@@ -264,6 +266,7 @@ for (const viewport of [
                     },
                   ),
                   left: box.left,
+                  bottom: box.bottom,
                   right: box.right,
                   top: box.top,
                 }
@@ -290,6 +293,18 @@ for (const viewport of [
             document
               .querySelector<HTMLElement>('.chapter-archive__title')
               ?.getBoundingClientRect().top ?? -1,
+          title: (() => {
+            const box = document
+              .querySelector<HTMLElement>('.chapter-archive__title-group')
+              ?.getBoundingClientRect();
+            return box
+              ? {
+                  bottom: box.bottom,
+                  center: box.left + box.width / 2,
+                  top: box.top,
+                }
+              : null;
+          })(),
         };
       });
       expect(desktopLayout.firstNodeLefts).toHaveLength(1);
@@ -307,6 +322,19 @@ for (const viewport of [
         viewport.width - (desktopLayout.progress?.right ?? 0),
       ).toBeLessThanOrEqual(44);
       expect(desktopLayout.progress?.contentContained).toBe(true);
+      expect(
+        Math.abs((desktopLayout.title?.center ?? 0) - viewport.width / 2),
+      ).toBeLessThanOrEqual(2);
+      expect(
+        Math.min(
+          desktopLayout.title?.bottom ?? 0,
+          desktopLayout.progress?.bottom ?? 0,
+        ) -
+          Math.max(
+            desktopLayout.title?.top ?? 0,
+            desktopLayout.progress?.top ?? 0,
+          ),
+      ).toBeGreaterThan(0);
       expect(desktopLayout.library?.width ?? Infinity).toBeLessThanOrEqual(
         1004,
       );
@@ -462,8 +490,6 @@ for (const viewport of [
       page.getByRole('region', { name: /複習卡閱讀：/u }),
     ).toBeVisible();
     await expect(page.getByRole('article')).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: '返回複習卡選擇' }),
-    ).toBeVisible();
+    await expectSingleBackButtonInHud(page, '返回複習卡選擇');
   });
 }

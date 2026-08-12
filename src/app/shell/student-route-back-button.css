@@ -1,11 +1,8 @@
-.route-world-stage > .student-route-back {
-  position: absolute;
-  z-index: 24;
-  top: clamp(12px, 2vw, 20px);
-  left: clamp(12px, 2vw, 24px);
+.student-route-back {
   display: inline-flex;
   min-width: 88px;
   min-height: 44px;
+  align-self: center;
   align-items: center;
   justify-content: center;
   gap: 7px;
@@ -19,8 +16,8 @@
   backdrop-filter: blur(4px);
 }
 
-.route-world-stage > .student-route-back:hover,
-.route-world-stage > .student-route-back:focus-visible {
+.student-route-back:hover,
+.student-route-back:focus-visible {
   border-color: var(--pixel-gold);
   background: color-mix(in srgb, var(--pixel-window-frame) 82%, transparent);
   outline: 2px solid var(--focus-ring);
@@ -34,7 +31,8 @@
 
 @media (max-width: 680px) {
   .student-route-back {
-    min-width: 76px;
-    padding-inline: 10px;
+    min-width: 72px;
+    min-height: 40px;
+    padding-inline: 8px;
   }
 }

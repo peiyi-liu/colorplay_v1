@@ -99,12 +99,6 @@
   }
 }
 
-@media (min-width: 48rem) and (hover: hover) and (pointer: fine) {
-  .chapter-dungeon.chapter-archive {
-    min-height: calc(100dvh - var(--journey-student-hud-peek));
-  }
-}
-
 .chapter-review-node .review-card {
   width: min(100%, 820px);
   margin: 10px auto 24px;

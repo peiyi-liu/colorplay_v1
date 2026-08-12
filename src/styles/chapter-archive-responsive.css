@@ -1,4 +1,14 @@
 /* 05a-v2 responsive and motion preferences. */
+@media (max-width: 900px) {
+  .chapter-dungeon.chapter-archive > .chapter-archive__header {
+    display: block;
+  }
+
+  .chapter-archive .chapter-detail__progress {
+    margin: 16px auto 0;
+  }
+}
+
 @media (max-width: 680px) {
   .chapter-dungeon.chapter-archive {
     min-height: calc(100dvh - 76px);

@@ -11,6 +11,8 @@ import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { StudentBackNavigationProvider } from '../../../app/shell/student-back-navigation';
+import { StudentRouteBackButton } from '../../../app/shell/student-route-back-button';
 import type { StudentChapterMapEntry } from '../api/chapter-map';
 import {
   LearningError,
@@ -188,7 +190,12 @@ const renderPage = (repository: LearningRepository) => {
   });
   const wrapper = ({ children }: Readonly<{ children: ReactNode }>) => (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>{children}</MemoryRouter>
+      <MemoryRouter initialEntries={['/app/chapters/chapter-3']}>
+        <StudentBackNavigationProvider>
+          <StudentRouteBackButton />
+          {children}
+        </StudentBackNavigationProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
   return render(
@@ -466,6 +473,12 @@ describe('ChapterDetailPage', () => {
     expect(reader).toHaveTextContent('3-2 色彩體系');
     expect(reader).toHaveTextContent('複習 3 / 5');
     expect(within(reader).getByRole('article')).toBeVisible();
+    expect(
+      within(reader).queryByRole('button', { name: '返回複習卡選擇' }),
+    ).toBeNull();
+    expect(
+      screen.getByRole('button', { name: '返回複習卡選擇' }),
+    ).toBeVisible();
     expect(
       within(reader).getByRole('progressbar', { name: '本頁閱讀進度' }),
     ).toHaveAttribute('aria-valuenow', '1');

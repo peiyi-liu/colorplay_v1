@@ -540,3 +540,10 @@
 - Staging DB：dry-run 只列出 `20260812000100_abandon_quiz_session.sql` 與 `20260812000200_abandon_quiz_session_command.sql`，已套用至 `onkxnkzeixpezetkmocf`；遠端 migration history 再查確認兩筆 local／remote 對齊。push 完成後 CLI 的 pg-delta catalog cache 曾出現本機 CA 檔 ENOENT warning，不影響遠端 migration 成功結果。
 - Hosted：GitHub-source preview `dpl_7kwu8qy2YZvDK5gxaLK5sQ8rAdCW` 經 Git metadata、bundle staging host／anon-key fingerprint 與合成學生 Auth／bootstrap 至 `/app` 通過後 promote；公開 production deployment 為 `dpl_635Hhfgs89Ebu64tiYJu7BvE5Ra8`，其 Git provenance 仍是 `dd59bd74…`，`staging.colorplayapp.com` 已指向該 deployment。公開 alias 的 `/`、`/login`、`/app` 均為 HTTP 200，bundle 只命中 `onkxnkzeixpezetkmocf`、未命中 production ref，合成學生登入至 `/app` 再次通過。
 - 邊界：本次只更新 staging，未部署 `colorplayapp.com` production；Android system Back 的實體裝置證據仍待 phase gate 人工驗證。
+
+## 2026-08-12 17:54 [Owner／Codex] — 固定學生 HUD、統一返回鍵與章節標題同列
+
+- 學生 HUD 改為固定在視窗頂端且永遠顯示，移除 hover／感應區自動收合；HUD 仍在 AppShell 正常版面流中，所有學生 route 的主內容由 HUD 下緣開始，桌機與手機都不會被遮住。返回鍵統一為 HUD 左上角的單一實例；學習大廳不顯示，其他學生頁維持「優先回站內前一頁，沒有站內歷史才回學習大廳」。複習卡閱讀頁移除原本第二顆返回鍵，改由同一 HUD 按鈕執行「返回複習卡選擇」。
+- 章節選卡頁桌機將置中的章節標題與右上學習狀態框排在同一列，左右採對稱欄維持標題的 viewport 真置中；窄螢幕在空間不足時安全堆疊。Reader 高度改為填滿 HUD 下方剩餘區域，修正翻頁後標題可能捲到 HUD 下方的裁切問題。
+- 驗證：受影響 Vitest 4 files／47 tests、HUD Chromium 4/4、Chapter Chromium 7/7、Reader Chromium 8/8、全域 lint、typecheck、production build 與 `git diff --check` 全綠。唯一一次 scoped self-review 檢查單一返回鍵、override cleanup、HUD／內容幾何、responsive 版面、教師端協作邊界與 500-line 規則，無未解 finding。
+- 協作邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page 或教師專屬 CSS；共享 `app-shell.tsx`、`globals.css` 只包含本輪既有學生端 HUD 整合。未合併教師 branch、未 push、未 deploy。下個動作是提交本學生端 checkpoint，保留本機 `http://127.0.0.1:4178/dev-harness/chapter-detail.html?scenario=in-progress` 供 owner 檢視。

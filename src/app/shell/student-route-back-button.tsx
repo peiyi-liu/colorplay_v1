@@ -6,6 +6,7 @@ import {
   useNavigationType,
 } from 'react-router-dom';
 
+import { useStudentBackNavigation } from './student-back-navigation';
 import './student-route-back-button.css';
 
 type StudentHistoryEntry = Readonly<{
@@ -17,6 +18,7 @@ export function StudentRouteBackButton() {
   const location = useLocation();
   const navigate = useNavigate();
   const navigationType = useNavigationType();
+  const activeOverride = useStudentBackNavigation();
   const history = useRef<StudentHistoryEntry[]>([
     { key: location.key, pathname: location.pathname },
   ]);
@@ -50,9 +52,13 @@ export function StudentRouteBackButton() {
 
   return (
     <button
-      aria-label="返回前一頁"
+      aria-label={activeOverride?.ariaLabel ?? '返回前一頁'}
       className="student-route-back"
       onClick={() => {
+        if (activeOverride) {
+          activeOverride.onBack();
+          return;
+        }
         if (hasPreviousStudentPage) {
           void navigate(-1);
           return;

@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react';
 
+import { useStudentBackOverride } from '../../../app/shell/student-back-navigation';
 import type { ChapterDetailCardView } from './chapter-detail-view-model';
 import {
   paginateBookBlocks,
@@ -161,6 +162,10 @@ export function ChapterReviewReader({
   pending: boolean;
   subtopicTitle: string;
 }>) {
+  useStudentBackOverride({
+    ariaLabel: '返回複習卡選擇',
+    onBack,
+  });
   const displayTitle = card.groupLabel || card.title;
   const mobileBookLayout = useMobileBookLayout();
   const pagesPerView = mobileBookLayout ? 1 : 2;
@@ -289,22 +294,6 @@ export function ChapterReviewReader({
       role="region"
     >
       <header className="chapter-review-reader__header">
-        <button
-          aria-label="返回複習卡選擇"
-          className="secondary-action chapter-review-reader__back"
-          onClick={onBack}
-          type="button"
-        >
-          <span className="chapter-review-reader__desktop-label">
-            返回複習卡選擇
-          </span>
-          <span
-            aria-hidden="true"
-            className="chapter-review-reader__mobile-label"
-          >
-            返回
-          </span>
-        </button>
         <div className="chapter-review-reader__heading-group">
           <h1>{chapterLabel}</h1>
           <p>{subtopicTitle}</p>

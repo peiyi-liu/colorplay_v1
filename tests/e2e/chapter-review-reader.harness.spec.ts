@@ -70,6 +70,9 @@ for (const viewport of [
     const previous = reader.getByRole('button', { name: '閱讀上一頁' });
     const next = reader.getByRole('button', { name: '閱讀下一頁' });
     const complete = reader.getByRole('button', { name: '完成複習' });
+    const back = page
+      .locator('.hud-top--student')
+      .getByRole('button', { name: '返回複習卡選擇' });
     await expect(book).toBeVisible();
     await expect(visibleBookPages).toHaveCount(viewport.mobile ? 1 : 2);
     const bookPageNumbers = book.locator(
@@ -77,11 +80,6 @@ for (const viewport of [
     );
     if (viewport.mobile) {
       await expect(bookPageNumbers).toBeHidden();
-      await expect(
-        reader.locator('.chapter-review-reader__mobile-label', {
-          hasText: '返回',
-        }),
-      ).toBeVisible();
       await expect(
         reader.locator('.chapter-review-reader__position'),
       ).toBeHidden();
@@ -98,9 +96,10 @@ for (const viewport of [
         book.locator('.chapter-review-reader__book-page-number--left'),
       ).toContainText('1');
     }
+    await expect(back).toBeVisible();
     await expect(
-      reader.getByRole('button', { name: '返回複習卡選擇' }),
-    ).toBeVisible();
+      page.getByRole('button', { name: '返回複習卡選擇' }),
+    ).toHaveCount(1);
     await expect(previous).toBeDisabled();
     await expect(next).toBeEnabled();
     await expect(pageCount).not.toContainText('第 1 / 1 頁');
@@ -126,9 +125,7 @@ for (const viewport of [
       const headingGroup = element.querySelector<HTMLElement>(
         '.chapter-review-reader__heading-group',
       );
-      const back = element.querySelector<HTMLElement>(
-        '.chapter-review-reader__back',
-      );
+      const back = document.querySelector<HTMLElement>('.student-route-back');
       const gutter = element.querySelector<HTMLElement>(
         '.chapter-review-reader__gutter',
       );
@@ -183,7 +180,7 @@ for (const viewport of [
         pageNumbers: rect(pageNumbers),
         controlStyles: Array.from(
           element.querySelectorAll<HTMLElement>(
-            '.chapter-review-reader__back, .chapter-review-reader__page-action, .review-card__complete-button',
+            '.chapter-review-reader__page-action, .review-card__complete-button',
           ),
         ).map((control) => {
           const style = getComputedStyle(control);
@@ -386,7 +383,6 @@ for (const viewport of [
 
     const stableSelectors = [
       '.chapter-review-reader__header',
-      '.chapter-review-reader__back',
       '.chapter-review-reader__heading-group',
       '.chapter-review-reader__book-stage',
       '.chapter-review-reader__book',

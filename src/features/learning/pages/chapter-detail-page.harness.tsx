@@ -126,7 +126,7 @@ export function ChapterDetailPageHarness({
   });
 
   return (
-    <StudentHudHarness>
+    <StudentHudHarness initialEntry="/app/chapters/chapter-3">
       <ChapterDetailPageView
         completeError={undefined}
         completePending={false}

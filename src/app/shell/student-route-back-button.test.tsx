@@ -6,17 +6,29 @@ import {
   Outlet,
   RouterProvider,
 } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
+import {
+  StudentBackNavigationProvider,
+  useStudentBackOverride,
+} from './student-back-navigation';
 import { StudentRouteBackButton } from './student-route-back-button';
 
 function StudentRouteLayout() {
   return (
-    <>
+    <StudentBackNavigationProvider>
       <StudentRouteBackButton />
       <Outlet />
-    </>
+    </StudentBackNavigationProvider>
   );
+}
+
+function ReaderBackOverride({ onBack }: Readonly<{ onBack: () => void }>) {
+  useStudentBackOverride({
+    ariaLabel: '返回複習卡選擇',
+    onBack,
+  });
+  return <h1>複習卡閱讀</h1>;
 }
 
 const routes = [
@@ -92,5 +104,35 @@ describe('StudentRouteBackButton', () => {
     expect(
       await screen.findByRole('heading', { name: '學習大廳' }),
     ).toBeInTheDocument();
+  });
+
+  it('uses the active page override without rendering a second back button', async () => {
+    const onBack = vi.fn();
+    const user = userEvent.setup();
+    const overrideRoutes = [
+      {
+        element: <StudentRouteLayout />,
+        path: '/app',
+        children: [
+          {
+            element: <ReaderBackOverride onBack={onBack} />,
+            path: 'chapters/chapter-3',
+          },
+        ],
+      },
+    ];
+    const router = createMemoryRouter(overrideRoutes, {
+      initialEntries: ['/app/chapters/chapter-3'],
+    });
+    render(<RouterProvider router={router} />);
+
+    const backButtons = await screen.findAllByRole('button', {
+      name: '返回複習卡選擇',
+    });
+    expect(backButtons).toHaveLength(1);
+    await user.click(
+      screen.getByRole('button', { name: '返回複習卡選擇' }),
+    );
+    expect(onBack).toHaveBeenCalledOnce();
   });
 });

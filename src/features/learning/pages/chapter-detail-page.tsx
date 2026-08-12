@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 
 import '../../../styles/chapter-archive.css';
 import '../../../styles/chapter-archive-controls.css';
+import '../../../styles/chapter-archive-header.css';
 import '../../../styles/chapter-archive-responsive.css';
 import '../../../styles/chapter-review-reader.css';
 import '../../../styles/chapter-review-reader-responsive.css';
@@ -252,14 +253,16 @@ export function ChapterDetailPageView({
       role="region"
     >
       <header className="chapter-archive__header">
-        <h1
-          aria-label={`Chapter ${String(chapter.sortOrder)}：${chapter.title}`}
-          className="chapter-detail__title chapter-archive__title"
-          id="chapter-detail-title"
-        >
-          第{chapterNumberText(chapter.sortOrder)}章 · {chapter.title}
-        </h1>
-        <p className="chapter-archive__subtitle">選擇複習卡，再進入複習</p>
+        <div className="chapter-archive__title-group">
+          <h1
+            aria-label={`Chapter ${String(chapter.sortOrder)}：${chapter.title}`}
+            className="chapter-detail__title chapter-archive__title"
+            id="chapter-detail-title"
+          >
+            第{chapterNumberText(chapter.sortOrder)}章 · {chapter.title}
+          </h1>
+          <p className="chapter-archive__subtitle">選擇複習卡，再進入複習</p>
+        </div>
         {progressSummary}
       </header>
 
