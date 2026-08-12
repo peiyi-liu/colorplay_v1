@@ -3,7 +3,7 @@
   padding: 0;
 }
 
-.quiz-runner--battle-v2 {
+.scene-night.quiz-runner--battle-v2 {
   display: grid;
   width: 100%;
   min-width: 0;
@@ -140,7 +140,7 @@
   margin-top: 0;
 }
 
-.quiz-runner--battle-v2 .feedback-card--correct {
+.scene-night.quiz-runner--battle-v2 .feedback-card--correct {
   border: 0;
   outline: 0;
   background: transparent;
@@ -150,8 +150,8 @@
   text-shadow: 0 2px 4px var(--stage-void);
 }
 
-.quiz-runner--battle-v2 .feedback-card--incorrect,
-.quiz-runner--battle-v2 .feedback-card--timeout {
+.scene-night.quiz-runner--battle-v2 .feedback-card--incorrect,
+.scene-night.quiz-runner--battle-v2 .feedback-card--timeout {
   border-width: 2px;
   outline: 0;
   border-radius: 0;
@@ -171,7 +171,7 @@
 }
 
 @media (max-width: 767px) {
-  .quiz-runner--battle-v2 {
+  .scene-night.quiz-runner--battle-v2 {
     gap: 12px;
     padding: 18px 10px 24px;
     background-position: 56% center;

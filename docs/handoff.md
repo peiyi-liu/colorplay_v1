@@ -587,3 +587,9 @@
 - 小精靈血條獨立放在角色上方，名稱無框放在角色下方；correct 的 server verdict 才會清空血條。答錯／逾時會顯示正確答案、解析與「我理解了，下一題」；另新增 `scenario=incorrect` 本機預覽。既有 Quiz 離開作廢、正誤／分數／XP／Token 後端權威與三拍時序均未改。
 - 新增本機 migration `20260812000300_quiz_context_labels.sql`，由 template／chapter／section 權威資料把 challenge kind、章序、小節序與小節標題加入 session payload／安全 view；未從 question stable code 猜 UI。generated database types 已同步。完整 pgTAP 51 files／1151 tests、Quiz Vitest 12 files／67 tests、lint、typecheck、production build、`git diff --check` 全綠；一次 scoped self-review 無未解 finding。內建瀏覽器沒有可連線實例，未宣稱 1280／393 目視通過；本機已開啟 idle 與 incorrect 預覽供 owner 查看。
 - 協作邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page、教師分析或共享 HUD／AppShell／globals／tokens；未合併教師 branch、未 push、未 deploy。migration 只套用本機 Supabase，未寫 staging／production。
+
+## 2026-08-12 20:05 [Owner／Codex] — 恢復 Quiz 生成背景
+
+- 修復 production CSS cascade：共用 `.scene-night` 在打包後以相同 specificity、較晚順序把 Quiz 生成背景覆蓋成純深色；Quiz 專屬 root selector 改為 `.scene-night.quiz-runner--battle-v2`，使 `quiz-battle-forest-v1.png` 與本頁 feedback 無框／方框規則穩定高於共用夜景規則。新增 CSS 契約測試鎖定高權重 selector 與生成圖片引用。
+- 驗證：受影響 Vitest 2 files／16 tests、lint、typecheck、production build、`git diff --check` 全綠；production bundle 已確認輸出高權重 selector 與 hashed forest asset。舊 4181 Vite 程序失去回應後已停止並重啟，本機 idle 預覽已重新開啟。
+- 邊界：未修改教師端、共享 HUD／AppShell／globals／tokens、API 或資料庫；未 push、未 deploy。
