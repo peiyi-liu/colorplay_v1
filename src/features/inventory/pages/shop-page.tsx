@@ -18,6 +18,16 @@ import {
   type InventoryRepository,
   InventoryRepositoryError,
 } from '../types';
+import './shop-page.css';
+
+function CoinAmount({ amount }: Readonly<{ amount: number }>) {
+  return (
+    <span aria-hidden="true" className="shop-coin-amount">
+      <span className="hud-coin-pixel hud-coin-pixel--32bit" />
+      <span>{String(amount)}</span>
+    </span>
+  );
+}
 
 const mutationErrorMessage = (error: unknown): string => {
   if (
@@ -25,7 +35,7 @@ const mutationErrorMessage = (error: unknown): string => {
     error.code === 'INSUFFICIENT_TOKENS' &&
     error.shortfall !== null
   ) {
-    return `Token 不足，還差 ${String(error.shortfall)} Token。`;
+    return '金幣不足，請確認餘額後再試。';
   }
   if (
     error instanceof InventoryRepositoryError &&
@@ -87,7 +97,9 @@ function FrameShopSection({
                     />
                   </span>
                   <h3 className="blook-card__frame-name">{item.name}</h3>
-                  <p>{String(item.costTokens)} Token</p>
+                  <p aria-label={`${String(item.costTokens)} Token`}>
+                    <CoinAmount amount={item.costTokens} />
+                  </p>
                   {item.equipped ? (
                     <strong className="blook-card__state">已裝備</strong>
                   ) : item.owned ? (
@@ -108,7 +120,7 @@ function FrameShopSection({
                       onClick={() => void run(item)}
                       type="button"
                     >
-                      購買 {String(item.costTokens)} Token
+                      購買 <CoinAmount amount={item.costTokens} />
                     </button>
                   ) : (
                     <button
@@ -117,7 +129,7 @@ function FrameShopSection({
                       disabled
                       type="button"
                     >
-                      還差 {String(shortfall)} Token
+                      還差 <CoinAmount amount={shortfall} />
                     </button>
                   )}
                 </article>
@@ -222,7 +234,7 @@ export function ShopPage({
 
   return (
     <section
-      className="blook-shop scene-day"
+      className="blook-shop scene-day shop-market-v2"
       aria-labelledby="blook-shop-title"
     >
       <header className="blook-shop__header">
@@ -230,7 +242,12 @@ export function ShopPage({
           <p className="route-panel__eyebrow">你的角色收藏</p>
           <h1 id="blook-shop-title">裝備商店</h1>
         </div>
-        <strong>{String(inventory.data.tokenBalance)} Token 可用</strong>
+        <strong
+          aria-label={`${String(inventory.data.tokenBalance)} Token 可用`}
+        >
+          <CoinAmount amount={inventory.data.tokenBalance} />
+          <span>可用</span>
+        </strong>
       </header>
 
       {/* live-v2 設計稿:商店以「角色／外框」分頁切換,不再兩區疊放。 */}
@@ -287,7 +304,9 @@ export function ShopPage({
                       />
                     </span>
                     <h2>{item.name}</h2>
-                    <p>{String(item.costTokens)} Token</p>
+                    <p aria-label={`${String(item.costTokens)} Token`}>
+                      <CoinAmount amount={item.costTokens} />
+                    </p>
                     {item.equipped ? (
                       <strong className="blook-card__state">已裝備</strong>
                     ) : item.owned ? (
@@ -311,7 +330,7 @@ export function ShopPage({
                         }}
                         type="button"
                       >
-                        購買 {String(item.costTokens)} Token
+                        購買 <CoinAmount amount={item.costTokens} />
                       </button>
                     ) : (
                       <button
@@ -320,7 +339,7 @@ export function ShopPage({
                         disabled
                         type="button"
                       >
-                        還差 {String(shortfall)} Token
+                        還差 <CoinAmount amount={shortfall} />
                       </button>
                     )}
                   </article>
@@ -351,7 +370,11 @@ export function ShopPage({
           ref={dialogRef}
         >
           <h2 id="purchase-dialog-title">購買「{selectedPurchase.name}」？</h2>
-          <p>將扣除 {String(selectedPurchase.costTokens)} Token。</p>
+          <p
+            aria-label={`將扣除 ${String(selectedPurchase.costTokens)} Token。`}
+          >
+            將扣除 <CoinAmount amount={selectedPurchase.costTokens} />。
+          </p>
           <div className="purchase-dialog__actions">
             <button
               className="secondary-action"

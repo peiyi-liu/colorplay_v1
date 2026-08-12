@@ -1,0 +1,8 @@
+.hud-top--student .hud-avatar--framed {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--pixel-night-deep), var(--pixel-night-deep))
+      padding-box,
+    linear-gradient(135deg, var(--hud-frame-start), var(--hud-frame-end))
+      border-box;
+}

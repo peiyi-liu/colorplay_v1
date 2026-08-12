@@ -13,7 +13,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { ProfileRepositoryError } from '../../features/profile/types';
-import { useBlookInventory } from '../../features/inventory/hooks/use-blook-inventory';
+import {
+  useBlookInventory,
+  useFrameInventory,
+} from '../../features/inventory/hooks/use-blook-inventory';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
 import { ToastProvider } from '../../components/ui/toast';
 import { AppShell } from './app-shell';
@@ -34,11 +37,13 @@ vi.mock('../../features/rewards/hooks/use-economy-summary', () => ({
 }));
 vi.mock('../../features/inventory/hooks/use-blook-inventory', () => ({
   useBlookInventory: vi.fn(),
+  useFrameInventory: vi.fn(),
 }));
 
 const mockedUseAuth = vi.mocked(useAuth);
 const mockedUseMyProfile = vi.mocked(useMyProfile);
 const mockedUseBlookInventory = vi.mocked(useBlookInventory);
+const mockedUseFrameInventory = vi.mocked(useFrameInventory);
 const mockedUseEconomySummary = vi.mocked(useEconomySummary);
 
 const economyResult = (
@@ -49,6 +54,10 @@ const economyResult = (
 const inventoryResult = (
   value: Partial<ReturnType<typeof useBlookInventory>>,
 ) => value as ReturnType<typeof useBlookInventory>;
+
+const frameInventoryResult = (
+  value: Partial<ReturnType<typeof useFrameInventory>>,
+) => value as ReturnType<typeof useFrameInventory>;
 
 const renderStudentShell = () =>
   render(
@@ -193,6 +202,18 @@ describe('AppShell', () => {
               stableCode: 'little_fox',
             },
           ],
+          tokenBalance: 250,
+        },
+        isError: false,
+        isPending: false,
+      }),
+    );
+    mockedUseFrameInventory.mockReset();
+    mockedUseFrameInventory.mockReturnValue(
+      frameInventoryResult({
+        data: {
+          activeFrameId: '',
+          items: [],
           tokenBalance: 250,
         },
         isError: false,
@@ -605,6 +626,40 @@ describe('AppShell', () => {
     const avatarImage = avatar?.querySelector('img');
     expect(avatarImage).toHaveAttribute('width', '47');
     expect(avatarImage).toHaveAttribute('height', '47');
+  });
+
+  it('applies the equipped frame snapshot to the student HUD avatar', () => {
+    mockedUseFrameInventory.mockReturnValue(
+      frameInventoryResult({
+        data: {
+          activeFrameId: 'deep-neon-id',
+          items: [
+            {
+              costTokens: 25,
+              equipped: true,
+              gradientEnd: '#0ea5e9',
+              gradientStart: '#6366f1',
+              id: 'deep-neon-id',
+              name: '深海霓虹',
+              owned: true,
+              stableCode: 'deep_neon',
+            },
+          ],
+          tokenBalance: 225,
+        },
+        isError: false,
+        isPending: false,
+      }),
+    );
+
+    renderShellRoute('/app/shop');
+
+    const avatar = document.querySelector('.hud-avatar');
+    expect(avatar).toHaveAttribute('data-framed', 'true');
+    expect(avatar).toHaveStyle({
+      '--hud-frame-end': '#0ea5e9',
+      '--hud-frame-start': '#6366f1',
+    });
   });
 
   it('教師頂部顯示歡迎識別且不渲染經濟數字', async () => {

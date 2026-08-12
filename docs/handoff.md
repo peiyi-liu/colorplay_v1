@@ -640,3 +640,10 @@
 - 桌面背景圖在手機仍保持原比例，改為圖片層高度 `120%` 並以 `center 72%` 取景，使場景實際向上偏移；漸層遮罩仍獨立 `cover`，不拉伸或扭曲圖片。
 - E2E 幾何契約先 RED（舊版 393px 選項從 y=700、320px 從 y=416 才開始），修正後鎖定選項區起點不晚於 viewport 58%、底緣至少到 93%、單鍵高度至少 100px，並維持 2×2 與零水平 overflow。
 - 驗證與邊界：393／320 Chromium 目視確認四鍵完整可見、字號放大與背景上移；最終 lint、typecheck、受影響 Vitest／Chromium 結果記於同一 checkpoint。只修改 Live feature CSS、CSS contract、harness E2E 與 handoff，未觸及教師端、權威作答或共享整合檔。
+
+## 2026-08-12 23:18 [Owner／Codex] — 商店夜間市集背景、HUD 金幣與頭像外框連動
+
+- 保留既有裝備商店頁首、角色／外框分頁、商品卡、購買確認與 server-authoritative snapshot 流程；以內建 imagegen 生成無人物／無文字／無 UI 的夜間 JRPG 市集 `src/assets/shop/shop-market-night-v1.png`，只替換 HUD 下方的場景背景。桌機與 393／320px 實測均無水平 overflow。
+- 商店餘額、商品價格、購買與不足差額都改用 HUD 相同的 `hud-coin-pixel--32bit` 金幣；螢幕閱讀器名稱仍保留 Token 語意。唯一一次 review 發現不足 Toast 還有可見 Token 金額，已改為不帶金額的金幣不足訊息。
+- 修復外框裝備後 HUD 不更新：根因是商店 mutation 已正確更新 `['inventory', 'frames']` 權威快取，但學生 AppShell 沒有訂閱；現在 HUD 直接讀同一 frame inventory snapshot，依 server 回傳的 equipped item 套用漸層外框，沒有把購買或餘額判定搬到前端。
+- 驗證：受影響 Vitest 4 files／45 tests、Chromium harness 1280／393／320 共 3／3、lint、typecheck、production build、Prettier 與 `git diff --check` 全綠。未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師 CSS、globals 或 tokens，未合併教師 branch、未 push、未 deploy。本機入口：`http://127.0.0.1:4183/dev-harness/shop.html`。

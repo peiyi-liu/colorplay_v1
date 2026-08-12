@@ -1,11 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { RouteLoading } from '../boundaries/route-loading';
 import { BlookArt } from '../../components/ui/blook-art';
 import { Icon } from '../../components/ui/icons';
 import { useToast } from '../../components/ui/toast';
 import { useAuth } from '../../features/auth/context/auth-context';
-import { useBlookInventory } from '../../features/inventory/hooks/use-blook-inventory';
+import {
+  useBlookInventory,
+  useFrameInventory,
+} from '../../features/inventory/hooks/use-blook-inventory';
+import type { FrameInventoryItem } from '../../features/inventory/types';
 import type { StudentMapShellContext } from '../../features/learning/context/student-map-shell-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { EconomySummaryView } from '../../features/rewards/components/economy-summary';
@@ -17,6 +21,7 @@ import { StudentBackNavigationProvider } from './student-back-navigation';
 import { StudentHud } from './student-hud';
 import { StudentRouteBackButton } from './student-route-back-button';
 import { useIdleLogout } from './use-idle-logout';
+import './student-hud-frame.css';
 
 function AuthenticatedEconomySummary() {
   const economy = useEconomySummary();
@@ -41,11 +46,24 @@ function AuthenticatedEconomySummary() {
 
 function StudentHudAvatar({
   equipped,
-}: Readonly<{ equipped: StudentMapShellContext['equippedBlook'] }>) {
+  equippedFrame,
+}: Readonly<{
+  equipped: StudentMapShellContext['equippedBlook'];
+  equippedFrame: FrameInventoryItem | null;
+}>) {
   return (
     <span
       aria-hidden="true"
-      className={`hud-avatar${equipped ? '' : ' hud-avatar--hero'}`}
+      className={`hud-avatar${equipped ? '' : ' hud-avatar--hero'}${equippedFrame ? ' hud-avatar--framed' : ''}`}
+      data-framed={equippedFrame ? 'true' : undefined}
+      style={
+        equippedFrame
+          ? ({
+              '--hud-frame-end': equippedFrame.gradientEnd,
+              '--hud-frame-start': equippedFrame.gradientStart,
+            } as CSSProperties)
+          : undefined
+      }
     >
       {equipped ? (
         <BlookArt
@@ -76,8 +94,11 @@ function AuthenticatedStudentShell({
   transitionKey: string;
 }>) {
   const inventory = useBlookInventory();
+  const frames = useFrameInventory();
   const equippedBlook =
     inventory.data?.items.find((item) => item.equipped) ?? null;
+  const equippedFrame =
+    frames.data?.items.find((item) => item.equipped) ?? null;
   const outletContext: StudentMapShellContext = { equippedBlook };
 
   return (
@@ -85,7 +106,10 @@ function AuthenticatedStudentShell({
       <StudentHud>
         <div className="hud-economy-group">
           <div aria-label="學生身分" className="hud-identity" role="group">
-            <StudentHudAvatar equipped={equippedBlook} />
+            <StudentHudAvatar
+              equipped={equippedBlook}
+              equippedFrame={equippedFrame}
+            />
             <strong className="hud-identity__name">{displayName}</strong>
             <AuthenticatedEconomySummary />
           </div>

@@ -1,0 +1,63 @@
+#main-content:has(> .shop-market-v2) {
+  align-items: start;
+  background-color: var(--pixel-night-deep);
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--pixel-night-deep) 18%, transparent),
+      color-mix(in srgb, var(--pixel-night-deep) 48%, transparent)
+    ),
+    url('../../../assets/shop/shop-market-night-v1.png');
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
+}
+
+.scene-day.blook-shop.shop-market-v2 {
+  min-height: 100%;
+  background: transparent;
+}
+
+.shop-coin-amount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.shop-coin-amount .hud-coin-pixel--32bit {
+  width: 22px;
+  height: 22px;
+  flex-basis: 22px;
+  filter: drop-shadow(1px 1px 0 var(--pixel-shadow));
+}
+
+.shop-market-v2 .blook-shop__header > strong {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.shop-market-v2 .blook-card > p,
+.shop-market-v2 .primary-action,
+.shop-market-v2 .blook-card__disabled {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+@media (max-width: 680px) {
+  #main-content:has(> .shop-market-v2) {
+    background-position: center top;
+    background-size: auto 100%;
+  }
+
+  .shop-coin-amount .hud-coin-pixel--32bit {
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+  }
+}
