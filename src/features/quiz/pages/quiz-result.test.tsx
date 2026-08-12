@@ -203,8 +203,10 @@ describe('QuizResultPage', () => {
     renderResult(repository(vi.fn().mockResolvedValue(completedSession)));
 
     expect(
-      await screen.findByRole('heading', { name: '挑戰完成 🎉' }),
+      await screen.findByRole('heading', { name: '章節總挑戰完成' }),
     ).toBeVisible();
+    expect(screen.getByText('第 3 章・色彩表示')).toBeVisible();
+    expect(screen.getByText('章節總挑戰')).toBeVisible();
     expect(screen.getByText('總分 150')).toBeVisible();
     expect(screen.getByText('+750 XP')).toBeVisible();
     expect(screen.getByText('+250 Token')).toBeVisible();
@@ -280,10 +282,15 @@ describe('QuizResultPage', () => {
     renderResult(repository(vi.fn().mockResolvedValue(completedSession)));
 
     expect(
-      await screen.findByRole('heading', { name: '挑戰完成 🎉' }),
+      await screen.findByRole('heading', { name: '章節總挑戰完成' }),
     ).toBeVisible();
     const section = document.querySelector('section.quiz-result');
-    expect(section).toHaveClass('scene-night', 'victory-scene');
+    expect(section).toHaveClass(
+      'quiz-result--victory-v2',
+      'scene-night',
+      'victory-scene',
+    );
+    expect(section).toHaveAttribute('data-challenge-kind', 'chapter');
     const banner = document.querySelector('.victory-banner');
     expect(banner).toHaveAttribute('aria-hidden', 'true');
     expect(banner).toHaveTextContent('VICTORY');
@@ -311,7 +318,7 @@ describe('QuizResultPage', () => {
       },
     });
 
-    await screen.findByRole('heading', { name: '挑戰完成 🎉' });
+    await screen.findByRole('heading', { name: '章節總挑戰完成' });
     expect(screen.queryByText(/LEVEL UP/u)).toBeNull();
   });
 
@@ -371,7 +378,30 @@ describe('QuizResultPage', () => {
       },
     });
 
-    await screen.findByRole('heading', { name: '挑戰完成 🎉' });
+    await screen.findByRole('heading', { name: '章節總挑戰完成' });
     expect(screen.queryByText('本次新解鎖成就')).toBeNull();
+  });
+
+  it('labels a completed section challenge with its chapter and section', async () => {
+    renderResult(
+      repository(
+        vi.fn().mockResolvedValue({
+          ...completedSession,
+          challengeKind: 'section',
+          sectionSortOrder: 1,
+          sectionTitle: '3-1 色彩三要素與色名的表示',
+        }),
+      ),
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: '小節挑戰完成' }),
+    ).toBeVisible();
+    expect(screen.getByText('第 3 章・色彩表示')).toBeVisible();
+    expect(screen.getByText('3-1・色彩三要素與色名的表示')).toBeVisible();
+    expect(document.querySelector('section.quiz-result')).toHaveAttribute(
+      'data-challenge-kind',
+      'section',
+    );
   });
 });

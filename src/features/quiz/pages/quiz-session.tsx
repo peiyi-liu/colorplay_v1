@@ -27,6 +27,7 @@ import { FeedbackCard } from '../components/feedback-card';
 import { QuestionCard } from '../components/question-card';
 import { QuizExitGuard } from '../components/quiz-exit-guard';
 import { comboCount } from '../lib/combo';
+import { withoutNumberPrefix } from '../lib/quiz-labels';
 import {
   feedbackFromQuestion,
   quizActionErrorMessage,
@@ -39,12 +40,6 @@ const quizSessionQueryKey = (sessionId: string) =>
   ['quiz', 'session', sessionId] as const;
 
 const requestId = () => globalThis.crypto.randomUUID();
-
-const withoutNumberPrefix = (title: string) =>
-  title.replace(
-    /^\s*(?:第\s*)?\d+(?:\s*[-–—・.]\s*\d+)?(?:\s*章|節)?\s*[-–—・.]?\s*/u,
-    '',
-  );
 
 type SubmissionAttempt = Readonly<{
   idempotencyKey: string;

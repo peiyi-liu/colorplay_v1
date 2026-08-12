@@ -33,6 +33,14 @@ h4 {
   letter-spacing: 0.005em;
 }
 
+/* 學生端每頁唯一的最大主標題統一使用繁中像素字；教師與公共頁維持各自字體。 */
+.game-stage[data-shell-role='student'] #main-content.route-world-stage h1 {
+  font-family: var(--font-pixel-tc);
+  font-synthesis: none;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
 /* Syne 的 0/o 字形相近:僅用於品牌與章節編號等裝飾性文字,
    資料數值(XP/Token/分數/加入碼)維持 Noto 以保可讀性。 */
 

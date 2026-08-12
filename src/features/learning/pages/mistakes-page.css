@@ -65,10 +65,16 @@
 }
 
 #main-content > .mistakes-codex--archive-v2 > header h1 {
-  margin-top: 0;
+  display: flex;
+  height: 40px;
+  align-items: center;
+  margin: 0;
   color: var(--pixel-window-ink);
-  font-size: clamp(1.75rem, 3vw, 2rem);
-  line-height: 1.25;
+  font-family: var(--font-pixel-tc);
+  font-size: 2rem;
+  font-synthesis: none;
+  font-weight: 400;
+  line-height: 1;
 }
 
 #main-content > .mistakes-codex--archive-v2 > header > p:last-child {
@@ -150,6 +156,10 @@
 @media (max-width: 767px) {
   #main-content > .mistakes-codex--archive-v2 > header {
     padding-top: 36px;
+  }
+
+  #main-content > .mistakes-codex--archive-v2 > header h1 {
+    font-size: 1.75rem;
   }
 }
 

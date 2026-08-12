@@ -1,0 +1,124 @@
+#main-content:has(> .quiz-result--victory-v2) {
+  align-items: start;
+  background-color: var(--pixel-night-deep);
+  background-image:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--pixel-night-deep) 12%, transparent),
+      color-mix(in srgb, var(--pixel-night-deep) 58%, transparent)
+    ),
+    url('../../../assets/quiz/quiz-victory-shrine-v1.png');
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.quiz-result--victory-v2.scene-night {
+  width: min(100%, 920px);
+  overflow: visible;
+  padding: 32px 20px 64px;
+  background: transparent;
+}
+
+.quiz-result--victory-v2.scene-night::before,
+.quiz-result--victory-v2.scene-night::after {
+  display: none;
+}
+
+.quiz-result--victory-v2 .quiz-result__summary,
+.quiz-result--victory-v2 .quiz-result__achievements {
+  background: color-mix(in srgb, var(--pixel-night) 96%, transparent);
+}
+
+.quiz-result--victory-v2 .quiz-result__context {
+  display: grid;
+  gap: 4px;
+  margin: 12px 0 8px;
+  text-align: center;
+}
+
+.quiz-result--victory-v2 .quiz-result__context p {
+  margin: 0;
+  color: var(--pixel-window-muted);
+  font-weight: 700;
+}
+
+.quiz-result--victory-v2 .quiz-result__context p:last-child {
+  color: var(--pixel-gold);
+  font-family: var(--font-pixel-tc);
+  font-synthesis: none;
+  font-weight: 400;
+}
+
+.quiz-result--victory-v2 #quiz-result-title {
+  color: var(--pixel-window-ink);
+  font-family: var(--font-pixel-tc);
+  font-synthesis: none;
+  font-weight: 400;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.quiz-result--victory-v2 .result-question {
+  border: 3px solid var(--pixel-gold-deep);
+  background: var(--pixel-parchment-card);
+  box-shadow:
+    inset 0 0 0 2px var(--pixel-parchment),
+    4px 4px 0 color-mix(in srgb, var(--pixel-night-deep) 80%, transparent);
+  color: var(--pixel-night-deep);
+}
+
+.quiz-result--victory-v2 .result-question h3,
+.quiz-result--victory-v2 .result-question dd {
+  color: var(--pixel-night-deep);
+  line-height: 1.65;
+}
+
+.quiz-result--victory-v2 .result-question dl > div {
+  border: 1px solid color-mix(in srgb, var(--pixel-gold-deep) 42%, transparent);
+  background: color-mix(in srgb, var(--pixel-parchment) 84%, var(--white));
+}
+
+.quiz-result--victory-v2 .result-question dt {
+  color: var(--pixel-gold-deep);
+}
+
+.quiz-result--victory-v2 .quiz-result__actions {
+  justify-content: center;
+}
+
+@media (max-width: 600px) {
+  #main-content:has(> .quiz-result--victory-v2) {
+    background-position: center top;
+    background-size: auto 100%;
+  }
+
+  .quiz-result--victory-v2.scene-night {
+    padding: 24px 10px 48px;
+  }
+
+  .quiz-result--victory-v2 .quiz-result__summary,
+  .quiz-result--victory-v2 .quiz-result__achievements,
+  .quiz-result--victory-v2 .result-question {
+    padding: 18px 14px;
+  }
+
+  .quiz-result--victory-v2 #quiz-result-title {
+    font-size: 1.75rem;
+  }
+
+  .quiz-result--victory-v2 .quiz-result__context {
+    height: 84px;
+    align-content: center;
+  }
+
+  .quiz-result--victory-v2 .quiz-result__totals {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quiz-result--victory-v2 .quiz-result__totals p {
+    padding: 12px 8px;
+    text-align: center;
+  }
+}

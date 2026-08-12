@@ -28,9 +28,11 @@ describe('mistakes archive scene styles', () => {
   });
 
   it('uses the shared student collection title size', () => {
-    expect(styles).toContain('font-size: clamp(1.75rem, 3vw, 2rem)');
-    expect(styles).toContain('line-height: 1.25');
+    expect(styles).toMatch(
+      /> header h1\s*\{[^}]*display:\s*flex;[^}]*height:\s*40px;[^}]*align-items:\s*center;[^}]*font-family:\s*var\(--font-pixel-tc\);[^}]*font-size:\s*2rem;[^}]*line-height:\s*1;/u,
+    );
     expect(styles).toMatch(/@media\s*\(max-width:\s*767px\)/u);
     expect(styles).toContain('padding-top: 36px');
+    expect(styles).toContain('font-size: 1.75rem');
   });
 });

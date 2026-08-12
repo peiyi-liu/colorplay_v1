@@ -710,3 +710,19 @@
 
 - 排行榜暱稱欄改為固定頭像軌與文字軌，整組仍置於欄位中央；所有列的頭像位置一致，暱稱也從同一水平起點開始，「這是你」維持疊在頭像內而不影響文字位置。
 - 驗證：Leaderboard Vitest 3 files／14 tests、lint、typecheck、Prettier、`git diff --check` 全綠；Chromium 1280／393／320 實測所有列的頭像與暱稱 X 座標各自完全一致，且無水平 overflow。S 級 CSS 版面修正不另啟第二輪 review。
+
+## 2026-08-13 01:35 [Owner／Codex] — 學生端最大標題像素化與推送前整合檢查
+
+- 登入後學生 AppShell 內每頁主要 `h1` 統一使用既有自託管繁中像素字 `Cubic 11`；selector 僅限 `data-shell-role='student'`，公共頁與教師端不受影響。整合檢查另發現 320px 成就標題會被 grid intrinsic size 裁切，已加入零寬 grid track 約束與窄螢幕安全內距，維持我的錯題／排行榜／成就徽章三頁相同的 28px 字級與 y=158 標題高度。
+- 瀏覽器驗證：學習地圖、章節、Quiz、Live 加入、Live 作答、商店、錯題、排行榜、成就共 9 個頁面 × 1280／393／320，27／27 均載入 `Cubic 11`、零水平 overflow、無 page／console error；三個收藏頁在 320px 的標題均為 28px、top=158、bottom=193。
+- 自動驗證：受影響 Vitest 3 files／39 tests、lint、typecheck、production build、Prettier、`git diff --check` 全綠。主要學生互動 Chromium E2E 25／26 通過；唯一失敗是既有 `chapter-detail-page.harness.spec.ts` 仍要求 393px 閱讀頁返回鍵與 HUD 頭像同 X 座標，但 owner 已核准返回鍵在書面與標題並排（實際 x=31.4、舊斷言 x=10），屬待更新測試契約，未回改產品設計。
+- 部署基線：前一乾淨 checkpoint `7a57614536a1689bef5ae82b02b3c82caffda0f6` 已由 GitHub-source deployment `dpl_FtekvBrwwhH8U9PkVDcVUsXanshu` promote 為 Staging `dpl_EVE5qHit72zBTs5Sc5AFD82RYiqz`；bundle 只含 `onkxnkzeixpezetkmocf.supabase.co`，公開 `staging.colorplayapp.com` 的有效學生登入／bootstrap 至 `/app` 已通過。此標題增量將於乾淨 commit 後重新走相同 SHA／bundle／登入 gate。
+- 邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師 CSS，未合併教師 branch；visual artifacts 保留在工作樹但不納入 commit。
+
+## 2026-08-13 01:49 [Owner／Codex] — Quiz 完成頁與收藏頁標題收尾
+
+- 小節挑戰與章節總挑戰共用正式 `QuizResultPage`，依 server `challengeKind` 分別顯示「小節挑戰完成」／「章節總挑戰完成」，並顯示第 3 章與 3-1 小節範圍；成績、逐題答案、XP、Token 與再玩流程仍使用既有權威 session。用內建 imagegen 依 Quiz 夜森林風格生成無人物／無文字／無 UI 的黎明勝利場景 `src/assets/quiz/quiz-victory-shrine-v1.png`；完成頁背景改用該場景，摘要維持深色 JRPG 框，題目／答案／解析改為高對比亮羊皮紙框與 Noto 長文。
+- 我的錯題、排行榜、個人成就與徽章三頁的主標題統一為桌機 32px／手機 28px、Cubic 11、固定 40px 高並垂直置中；1280／393／320 實測三頁的 font、font-size、top、bottom、height 完全相同。成就卡名稱補上 Cubic 11；分頁頁數改為亮色 `rgb(244, 241, 228)`，實測桌機 `第 1 / 2 頁`、手機 `第 1 / 3 頁` 均清楚可見且零水平 overflow。
+- 瀏覽器驗證：小節／章節完成頁 × 1280／393／320 共 6／6 通過，生成背景載入、逐題框為亮底深字、標題為 Cubic 11、零水平 overflow、無 page／console error；320px 兩種完成標題皆為 28px 單行，top=297.5、height=35。收藏三頁共 9／9 標題幾何一致；成就分頁另 3／3 通過。
+- 自動驗證：受影響 Vitest 10 files／80 tests、追加 Quiz label／session／result 4 files／33 tests、lint、typecheck、production build、Prettier、`git diff --check` 全綠。一次 scoped self-review：Standards 初見 Quiz 標題清理 regex 重複，已抽成 `quiz-labels.ts` 並補 5 cases；修正後 Standards 0、Spec 0；Security 軸略過（未觸及信任邊界）。
+- 邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師 CSS，未變更 API／DB／獎勵判定，未合併教師 branch。imagegen 最終 prompt 要點為 16:9 32-bit JRPG 黎明森林、中央遠景勝利石門、中央／下方低對比留白、無人物／文字／HUD／UI。

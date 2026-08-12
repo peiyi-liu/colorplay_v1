@@ -575,6 +575,18 @@ describe('AppShell', () => {
     expect(globalStyles).not.toMatch(/\.game-stage--learning-map/u);
   });
 
+  it('uses the Traditional Chinese pixel face for student page titles only', () => {
+    expect(globalStyles).toMatch(
+      /\.game-stage\[data-shell-role='student'\][\s\S]*?#main-content\.route-world-stage[\s\S]*?h1\s*\{[^}]*font-family:\s*var\(--font-pixel-tc\);[^}]*font-synthesis:\s*none;[^}]*font-weight:\s*400;/u,
+    );
+    expect(globalStyles).not.toMatch(
+      /data-shell-role='teacher'[^}]*font-family:\s*var\(--font-pixel-tc\)/u,
+    );
+    expect(globalStyles).not.toMatch(
+      /data-shell-role='public'[^}]*font-family:\s*var\(--font-pixel-tc\)/u,
+    );
+  });
+
   it.each([
     ['little_fox', '小狐狸', '🦊'],
     ['indigo_dragon', '東方靛龍', '🐲'],

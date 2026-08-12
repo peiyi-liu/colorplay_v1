@@ -20,15 +20,29 @@ describe('achievement sanctuary scene styles', () => {
 
   it('uses a square JRPG outer frame and equal-ratio achievement cards', () => {
     expect(styles).toMatch(
-      /\.scene-day\.hall-of-medals\.achievements--sanctuary-v2\s*\{[^}]*border:\s*3px solid var\(--pixel-gold-deep\);[^}]*border-radius:\s*0;/u,
+      /\.scene-day\.hall-of-medals\.achievements--sanctuary-v2\s*\{[^}]*border:\s*3px solid var\(--pixel-gold-deep\);[^}]*border-radius:\s*0;[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u,
     );
     expect(styles).toContain('display: flex');
     expect(styles).toContain('flex-wrap: wrap');
     expect(styles).toContain('justify-content: flex-start');
     expect(styles).toContain('aspect-ratio: 16 / 9');
     expect(styles).toContain('.achievements--sanctuary-v2 .pastel-hero');
+    expect(styles).toMatch(
+      /\.achievements--sanctuary-v2 \.pastel-hero\s*\{[^}]*box-sizing:\s*border-box;[^}]*width:\s*100%;[^}]*max-width:\s*100%;[^}]*min-width:\s*0;/u,
+    );
     expect(styles).toContain('padding-left: 58px');
-    expect(styles).toContain('font-size: clamp(1.75rem, 3vw, 2rem)');
+    expect(styles).toMatch(
+      /\.achievements--sanctuary-v2 \.pastel-hero > div\s*\{[^}]*min-width:\s*0;/u,
+    );
+    expect(styles).toMatch(
+      /\.pastel-hero__title\s*\{[^}]*display:\s*flex;[^}]*height:\s*40px;[^}]*align-items:\s*center;[^}]*font-family:\s*var\(--font-pixel-tc\);[^}]*font-size:\s*2rem;[^}]*line-height:\s*1;/u,
+    );
+    expect(styles).toMatch(
+      /\.pastel-card__title\s*\{[^}]*font-family:\s*var\(--font-pixel-tc\);[^}]*font-size:\s*1\.125rem;/u,
+    );
+    expect(styles).toMatch(
+      /\.game-pager__status\s*\{[^}]*color:\s*var\(--pixel-window-ink\);/u,
+    );
     expect(styles).toMatch(
       /\.achievements-grid \.achievement-card\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;/u,
     );
@@ -45,5 +59,8 @@ describe('achievement sanctuary scene styles', () => {
     expect(mobileStyles).toContain('flex-basis: 100%');
     expect(mobileStyles).toContain('margin-top: 28px');
     expect(mobileStyles).toContain('padding-left: 64px');
+    expect(mobileStyles).toContain('font-size: 1.75rem');
+    expect(mobileStyles).toContain('@media (max-width: 360px)');
+    expect(mobileStyles).toContain('padding-left: 48px');
   });
 });

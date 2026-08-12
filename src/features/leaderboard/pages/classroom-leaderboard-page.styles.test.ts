@@ -46,7 +46,9 @@ describe('leaderboard guild hall scene styles', () => {
   });
 
   it('enlarges the title and centers every table column on both axes', () => {
-    expect(styles).toContain('font-size: clamp(1.75rem, 3vw, 2rem)');
+    expect(styles).toMatch(
+      /> header h1\s*\{[^}]*display:\s*flex;[^}]*height:\s*40px;[^}]*align-items:\s*center;[^}]*font-family:\s*var\(--font-pixel-tc\);[^}]*font-size:\s*2rem;[^}]*line-height:\s*1;/u,
+    );
     expect(styles).toMatch(
       /\.leaderboard-table th:first-child,[\s\S]*?text-align:\s*center;/u,
     );
@@ -86,5 +88,6 @@ describe('leaderboard guild hall scene styles', () => {
       styles.indexOf('@media (max-width: 767px)'),
     );
     expect(mobileTitleStyles).toContain('padding-top: 36px');
+    expect(mobileTitleStyles).toContain('font-size: 1.75rem');
   });
 });
