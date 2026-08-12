@@ -30,10 +30,7 @@ test.describe('JRPG stable student HUD', () => {
       .toBeCloseTo(0, 0);
     const hudBox = await hud.boundingBox();
     const sceneBox = await scene.boundingBox();
-    expect(sceneBox?.y).toBeCloseTo(
-      hudBox ? hudBox.y + hudBox.height : -1,
-      0,
-    );
+    expect(sceneBox?.y).toBeCloseTo(hudBox ? hudBox.y + hudBox.height : -1, 0);
     await expect(page.locator('.student-hud-reveal-zone')).toHaveCount(0);
     await expect(page.locator('.student-hud-dismiss-zone')).toHaveCount(0);
   });
@@ -119,6 +116,7 @@ test.describe('JRPG stable student HUD', () => {
           if (!element) throw new Error(`HUD_ELEMENT_MISSING:${selector}`);
           const rect = element.getBoundingClientRect();
           return {
+            clientHeight: element.clientHeight,
             clientWidth: element.clientWidth,
             rect: {
               bottom: rect.bottom,
@@ -128,8 +126,10 @@ test.describe('JRPG stable student HUD', () => {
               top: rect.top,
               width: rect.width,
             },
+            scrollHeight: element.scrollHeight,
             scrollWidth: element.scrollWidth,
             selector,
+            whiteSpace: getComputedStyle(element).whiteSpace,
           };
         });
         return {
@@ -160,10 +160,7 @@ test.describe('JRPG stable student HUD', () => {
             selector,
           })),
       ).toEqual([]);
-      expect(metrics.mainTop).toBeCloseTo(
-        metrics.hudHeight,
-        0,
-      );
+      expect(metrics.mainTop).toBeCloseTo(metrics.hudHeight, 0);
       expect(metrics.hudHeight).toBeGreaterThanOrEqual(
         viewport.width === 1280 ? 72 : 76,
       );
@@ -213,6 +210,16 @@ test.describe('JRPG stable student HUD', () => {
           false,
         );
       } else {
+        const nickname = metrics.entries.find(
+          ({ selector }) => selector === '.hud-identity__name',
+        );
+        expect(nickname?.whiteSpace).toBe('nowrap');
+        expect(nickname?.scrollHeight ?? Infinity).toBeLessThanOrEqual(
+          (nickname?.clientHeight ?? 0) + 1,
+        );
+        expect(nickname?.scrollWidth ?? Infinity).toBeLessThanOrEqual(
+          (nickname?.clientWidth ?? 0) + 1,
+        );
         expect(
           overlaps('.economy-summary__tokens', '.hud-identity__name'),
         ).toBe(false);

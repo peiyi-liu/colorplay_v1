@@ -1,6 +1,8 @@
 import { mkdir } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
+import { expectMobileReaderHeaderOnBook } from './helpers/review-reader-header';
+
 for (const viewport of [
   { capture: true, height: 720, label: '1280', mobile: false, width: 1280 },
   {
@@ -104,6 +106,7 @@ for (const viewport of [
     await expect(
       page.getByRole('button', { name: '返回複習卡選擇' }),
     ).toHaveCount(1);
+    if (viewport.mobile) await expectMobileReaderHeaderOnBook(page);
     await expect(previous).toBeDisabled();
     await expect(next).toBeEnabled();
     await expect(pageCount).not.toContainText('第 1 / 1 頁');

@@ -554,3 +554,10 @@
 - 章節與閱讀器桌機背景移除 viewport-fixed attachment，背景定位區改從 HUD 下緣開始；章節容器使用主場景的實際剩餘高度，避免以 token 高度估算造成頂部場景被吃掉。393px 章節標頭採左右對稱三欄，左欄留給返回鍵、中欄維持標題 viewport 置中、右欄保留等寬空白，學習狀態下一列顯示，返回鍵不再蓋住標題。
 - TDD／驗證：返回鍵內容層契約、背景 attachment 契約與 393px 不重疊契約均先 RED 後 GREEN。Vitest 4 files／47 tests、Chapter Chromium 7/7、Reader Chromium 8/8、HUD Chromium 4/4、全域 lint、typecheck、production build、Prettier 與 `git diff --check` 全綠。唯一一次 scoped self-review：Standards 0、Spec 0；Security 軸因未觸及 trust boundary 而略過。
 - 協作邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page、教師分析或教師 CSS；共享 `app-shell.tsx`／`globals.css` 僅收斂本輪學生返回與 HUD 版面。未合併教師 branch、未 push、未 deploy；本機預覽維持於 `http://127.0.0.1:4178/dev-harness/chapter-detail.html?scenario=in-progress`。
+
+## 2026-08-12 18:38 [Owner／Codex] — 手機 HUD 暱稱單行與單頁書左右標頭
+
+- 手機 HUD：移除暱稱 `10ch` 人為寬度上限，暱稱使用頭像與 Token 之間的完整上排空間並固定單行；Level／XP 維持下排。只有真正超出可用寬度時才以 ellipsis 收斂，不再先折成兩行增加 HUD 高度。
+- 單頁書：手機／窄橫向閱讀器將統一返回鍵放在書面左上，章節與小節標題在右上，兩者頂緣同列且至少相隔 8px；返回鍵沿用底部閱讀控制的藍色像素按鍵視覺，並維持至少 44px 點擊高度。正文安全區與底部三鍵未移動。
+- 裁切稽核：所有學生 `/app/**` route 共用 HUD 後、`#main-content` 前的 AppShell 正常版面流；CSS 搜尋未發現章節／閱讀器以外的學生頁 fixed background 或自訂 `100dvh` 繞過 HUD。學習地圖、章節、閱讀器與 HUD 有實際 viewport 證據；Quiz、商店、成就、排行榜等受共同 shell 契約保護，但本 task 未逐頁建立瀏覽器視覺證據。
+- TDD／驗證：手機暱稱單行與單頁書標頭皆先 RED 後 GREEN。Vitest 4 files／47 tests、HUD Chromium 4/4、Reader Chromium 8/8、全域 lint、typecheck、production build、Prettier、`git diff --check` 全綠。唯一一次 scoped self-review：Standards 0、Spec 0；Security 軸不適用。未修改教師端檔案、未合併教師 branch、未 push、未 deploy。

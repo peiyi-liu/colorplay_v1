@@ -1,5 +1,22 @@
 @media (max-width: 47.99rem),
   (orientation: landscape) and (max-width: 56rem) and (max-height: 30rem) {
+  #main-content.route-world-stage:has(> .chapter-review-reader)
+    > .student-route-back {
+    top: 5.5%;
+    left: 8%;
+    min-height: 44px;
+    border: 2px solid #dcecff;
+    border-radius: 0;
+    background: linear-gradient(180deg, #285f9d, #123763);
+    box-shadow:
+      inset 0 0 0 1px #5c88b9,
+      2px 2px 0 #00142f;
+    color: #fff;
+    font-family: var(--font-pixel-tc);
+    font-weight: 900;
+    text-shadow: 0 2px 0 #00142f;
+  }
+
   .chapter-review-reader.scene-dungeon {
     position: relative;
     display: block;

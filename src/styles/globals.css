@@ -7681,10 +7681,13 @@ select#dashboard-classroom {
   }
 
   .hud-top--student .hud-identity__name {
-    max-width: 10ch;
+    max-width: none;
     grid-column: 2;
     grid-row: 1;
+    overflow: hidden;
     font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .hud-top--student .hud-avatar {
