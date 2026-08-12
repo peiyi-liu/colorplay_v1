@@ -124,7 +124,11 @@ describe('MistakesPage', () => {
         screen.getByRole('heading', { name: '已解決' }),
       ).toBeInTheDocument();
     });
-    expect(document.querySelector('.mistakes-codex.scene-day')).not.toBeNull();
+    expect(
+      document.querySelector(
+        '.mistakes-codex.mistakes-codex--archive-v2.scene-day',
+      ),
+    ).not.toBeNull();
     const monsters = document.querySelectorAll('.codex-monster');
     expect(monsters).toHaveLength(2);
     expect(document.querySelectorAll('.codex-monster--lit')).toHaveLength(1);

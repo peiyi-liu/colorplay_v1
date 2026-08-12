@@ -1,0 +1,42 @@
+#main-content:has(> .achievements--sanctuary-v2) {
+  align-items: start;
+  background-color: var(--pixel-night-deep);
+  background-image:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--pixel-night-deep) 20%, transparent),
+      color-mix(in srgb, var(--pixel-night-deep) 48%, transparent)
+    ),
+    url('../../../assets/achievements/achievements-sanctuary-v1.png');
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.scene-day.hall-of-medals.achievements--sanctuary-v2 {
+  min-height: 100%;
+  background: transparent;
+  image-rendering: pixelated;
+}
+
+.achievements--sanctuary-v2 .pastel-hero__title {
+  color: var(--pixel-window-ink);
+  text-shadow: 2px 2px 0 var(--pixel-night-deep);
+}
+
+.hall-of-medals.achievements--sanctuary-v2 .pastel-hero__description {
+  color: var(--pixel-window-ink);
+  text-shadow: 1px 1px 0 var(--pixel-night-deep);
+}
+
+@media (max-width: 600px) {
+  #main-content:has(> .achievements--sanctuary-v2) {
+    background-position: center top;
+    background-size: auto 100%;
+  }
+
+  .scene-day.hall-of-medals.achievements--sanctuary-v2 {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+}

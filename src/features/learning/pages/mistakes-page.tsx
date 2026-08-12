@@ -9,6 +9,8 @@ import type {
 } from '../api/learning-repository';
 import { useMistakes, useStartRemediation } from '../hooks/use-learning';
 
+import './mistakes-page.css';
+
 type SubtopicGroup = Readonly<{
   mistakes: readonly MistakeView[];
   subtopicId: string;
@@ -66,7 +68,7 @@ export function MistakesPage({
   return (
     <section
       aria-labelledby="mistakes-title"
-      className="mistakes-codex scene-day"
+      className="mistakes-codex mistakes-codex--archive-v2 scene-day"
     >
       <header>
         <p className="route-panel__eyebrow">補救學習</p>

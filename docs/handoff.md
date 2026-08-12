@@ -670,3 +670,10 @@
 - 依 owner 最終選擇換回灰藍前的深夜藍配色，但更換容器設計：頁首由白色雙框改為單層金框、內側金線與頂部節奏飾帶；商品卡改為左側金色飾條、金框展示槽與硬陰影，維持夜間市集木牌感。
 - 卡片內所有 primary purchase action 改為零圓角方框；角色／外框分類、餘額框、選用／不足／已裝備狀態亦維持既有像素直角語彙。
 - 驗證：Shop Vitest 2 files／14 tests、Chromium 1280／393／320 共 3／3、lint、typecheck、Prettier 與 `git diff --check` 全綠；本機 1280px 目視確認。S 級 CSS 設計調整不另啟 review。
+
+## 2026-08-12 23:57 [Owner／Codex] — 錯題檔案館、排行榜公會廳與成就聖殿背景
+
+- 使用內建 imagegen 分別生成三張無人物／無文字／無 UI 的 32-bit JRPG 場景：魔法錯題檔案館 `src/assets/mistakes/mistakes-archive-night-v1.png`、排行榜公會排名廳 `src/assets/leaderboard/leaderboard-guild-hall-v1.png`、成就徽章聖殿 `src/assets/achievements/achievements-sanctuary-v1.png`。三頁都從固定 HUD 下緣開始顯示背景，手機維持原比例中央取景。
+- 我的錯題改為深夜藍、金框、飾帶與左側金色識別條的像素檔案卡；排行榜改為同語彙的公會頁首與深色名次列，保留金／銀／銅與「這是你」的非純色狀態訊號。成就卡本身未重設，只替換背景與必要的頁首文字對比；移除成就頁舊的第二顆返回箭頭，只保留全站統一返回鍵。排行資料、XP 與補救流程邏輯均未修改。
+- 驗證：受影響 Vitest 7 files／23 tests、lint、typecheck、production build、Prettier 與 `git diff --check` 全綠；Chromium 1280／393 目視確認三頁，排行榜另驗 320px，三頁 393px 與排行榜 320px 的 `scrollWidth` 均等於 viewport，無水平 overflow。唯一一輪 scoped self-review：Standards 0、Spec 0；Security 軸因未觸及 trust boundary 而略過。
+- 邊界：新增 dev/test-only 三頁預覽 harness；未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師 CSS、共享 HUD／AppShell／globals／tokens、API 或資料庫；未合併教師 branch、未 push、未 deploy。本機入口：`http://127.0.0.1:4183/dev-harness/student-collection.html?surface=mistakes`（另可切換 `leaderboard`／`achievements`）。

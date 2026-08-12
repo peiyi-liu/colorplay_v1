@@ -109,7 +109,9 @@ describe('ClassroomLeaderboardPage', () => {
     renderPage({ getClassroomLeaderboard });
     await screen.findByRole('heading', { name: '排行榜' });
     expect(
-      document.querySelector('.leaderboard-panel.scene-day.guild-board'),
+      document.querySelector(
+        '.leaderboard-panel.leaderboard-panel--guild-v2.scene-day.guild-board',
+      ),
     ).not.toBeNull();
     expect(screen.getByRole('heading', { name: '排行榜' })).toBeInTheDocument();
   });

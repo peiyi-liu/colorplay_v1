@@ -1,0 +1,230 @@
+#main-content:has(> .leaderboard-panel--guild-v2) {
+  align-items: start;
+  background-color: var(--pixel-night-deep);
+  background-image:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--pixel-night-deep) 12%, transparent),
+      color-mix(in srgb, var(--pixel-night-deep) 52%, transparent)
+    ),
+    url('../../../assets/leaderboard/leaderboard-guild-hall-v1.png');
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.scene-day.guild-board.leaderboard-panel--guild-v2 {
+  width: min(100%, 1040px);
+  min-height: 100%;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  padding: 28px 18px 56px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--pixel-window-ink);
+  image-rendering: pixelated;
+}
+
+.leaderboard-panel--guild-v2 > header {
+  position: relative;
+  margin-bottom: 18px;
+  border: 3px solid var(--pixel-gold-deep);
+  border-radius: 0;
+  padding: 20px 24px 22px;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--pixel-gold) 18%, transparent),
+      transparent 24%,
+      transparent 76%,
+      color-mix(in srgb, var(--pixel-gold) 14%, transparent)
+    ),
+    color-mix(in srgb, var(--pixel-night) 94%, transparent);
+  box-shadow:
+    inset 0 0 0 2px var(--pixel-night-deep),
+    5px 5px 0 color-mix(in srgb, var(--pixel-night-deep) 84%, transparent);
+}
+
+.leaderboard-panel--guild-v2 > header::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  left: 6px;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--pixel-gold) 0 12px,
+    transparent 12px 20px
+  );
+  pointer-events: none;
+}
+
+.guild-board.leaderboard-panel--guild-v2 > header .route-panel__eyebrow {
+  width: fit-content;
+  border: 1px solid var(--pixel-gold);
+  border-radius: 0;
+  background: var(--pixel-night-deep);
+  color: var(--pixel-gold);
+}
+
+.guild-board.leaderboard-panel--guild-v2 > header h1 {
+  margin-top: 10px;
+  color: var(--pixel-window-ink);
+}
+
+.guild-board.leaderboard-panel--guild-v2 > header p,
+.guild-board.leaderboard-panel--guild-v2 > p {
+  color: var(--pixel-window-muted);
+}
+
+.guild-board.leaderboard-panel--guild-v2 .ui-table.leaderboard-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  background: transparent;
+}
+
+.guild-board.leaderboard-panel--guild-v2 .leaderboard-table thead th {
+  border-top: 2px solid var(--pixel-gold-deep);
+  border-bottom: 2px solid var(--pixel-gold-deep);
+  background: color-mix(in srgb, var(--pixel-night) 96%, transparent);
+  color: var(--pixel-gold);
+  font-family: var(--font-pixel-tc);
+}
+
+.guild-board.leaderboard-panel--guild-v2 .leaderboard-table th:first-child,
+.guild-board.leaderboard-panel--guild-v2 .leaderboard-table td:first-child {
+  width: 22%;
+  border-left: 2px solid var(--pixel-gold-deep);
+}
+
+.guild-board.leaderboard-panel--guild-v2 .leaderboard-table th:last-child,
+.guild-board.leaderboard-panel--guild-v2 .leaderboard-table td:last-child {
+  width: 22%;
+  border-right: 2px solid var(--pixel-gold-deep);
+  text-align: right;
+}
+
+.guild-board.leaderboard-panel--guild-v2 .leaderboard-table tbody th,
+.guild-board.leaderboard-panel--guild-v2 .leaderboard-table tbody td {
+  border-top: 2px solid
+    color-mix(in srgb, var(--pixel-gold) 62%, var(--pixel-night));
+  border-bottom: 2px solid
+    color-mix(in srgb, var(--pixel-gold) 62%, var(--pixel-night));
+  background: color-mix(in srgb, var(--pixel-night-deep) 94%, transparent);
+  color: var(--pixel-window-ink);
+}
+
+.guild-board.leaderboard-panel--guild-v2
+  .ui-table
+  .leaderboard-table__row--gold
+  th,
+.guild-board.leaderboard-panel--guild-v2
+  .ui-table
+  .leaderboard-table__row--gold
+  td {
+  border-color: var(--pixel-gold);
+  background: color-mix(
+    in srgb,
+    var(--pixel-gold) 26%,
+    var(--pixel-night-deep)
+  );
+  color: var(--pixel-window-ink);
+}
+
+.guild-board.leaderboard-panel--guild-v2
+  .ui-table
+  .leaderboard-table__row--silver
+  th,
+.guild-board.leaderboard-panel--guild-v2
+  .ui-table
+  .leaderboard-table__row--silver
+  td {
+  border-color: var(--slate-300);
+  background: color-mix(in srgb, var(--slate-300) 20%, var(--pixel-night-deep));
+  color: var(--pixel-window-ink);
+}
+
+.guild-board.leaderboard-panel--guild-v2
+  .ui-table
+  .leaderboard-table__row--bronze
+  th,
+.guild-board.leaderboard-panel--guild-v2
+  .ui-table
+  .leaderboard-table__row--bronze
+  td {
+  border-color: var(--amber-600);
+  background: color-mix(in srgb, var(--amber-600) 20%, var(--pixel-night-deep));
+  color: var(--pixel-window-ink);
+}
+
+.guild-board.leaderboard-panel--guild-v2 .leaderboard-blook {
+  min-width: 0;
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
+}
+
+.guild-board.leaderboard-panel--guild-v2 .leaderboard-blook strong {
+  border: 1px solid var(--pixel-gold);
+  border-radius: 0;
+  background: var(--pixel-gold);
+  color: var(--pixel-night-deep);
+}
+
+.guild-board.leaderboard-panel--guild-v2 aside[aria-label='我的班級名次'] {
+  border: 3px solid var(--pixel-gold);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--pixel-night) 96%, transparent);
+  box-shadow:
+    inset 0 0 0 2px var(--pixel-night-deep),
+    4px 4px 0 color-mix(in srgb, var(--pixel-night-deep) 84%, transparent);
+  color: var(--pixel-window-ink);
+}
+
+@media (max-width: 600px) {
+  #main-content:has(> .leaderboard-panel--guild-v2) {
+    background-position: center top;
+    background-size: auto 100%;
+  }
+
+  .scene-day.guild-board.leaderboard-panel--guild-v2 {
+    padding: 18px 8px 40px;
+  }
+
+  .leaderboard-panel--guild-v2 > header {
+    padding: 18px 14px;
+  }
+
+  .guild-board.leaderboard-panel--guild-v2 .leaderboard-table {
+    font-size: 0.78rem;
+  }
+
+  .guild-board.leaderboard-panel--guild-v2 .leaderboard-table th,
+  .guild-board.leaderboard-panel--guild-v2 .leaderboard-table td {
+    padding: 10px 7px;
+  }
+
+  .guild-board.leaderboard-panel--guild-v2 .leaderboard-table th:first-child,
+  .guild-board.leaderboard-panel--guild-v2 .leaderboard-table td:first-child {
+    width: 24%;
+  }
+
+  .guild-board.leaderboard-panel--guild-v2 .leaderboard-table th:last-child,
+  .guild-board.leaderboard-panel--guild-v2 .leaderboard-table td:last-child {
+    width: 25%;
+  }
+
+  .guild-board.leaderboard-panel--guild-v2 .leaderboard-blook {
+    gap: 6px;
+  }
+
+  .guild-board.leaderboard-panel--guild-v2
+    .leaderboard-blook
+    .pastel-summary__avatar {
+    width: 34px;
+    height: 34px;
+  }
+}
