@@ -1,6 +1,11 @@
 #main-content:has(> .live-student-arena) {
   align-items: stretch;
   padding: 0;
+  background: #071120;
+}
+
+#main-content.route-world-stage:has(> .live-student-arena) > .student-route-back {
+  top: 16px;
 }
 
 .scene-night.live-session-shell.live-student-arena {
@@ -26,7 +31,7 @@
 .live-student-status-bar {
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(180px, 1.35fr) minmax(138px, 1fr) minmax(122px, 0.9fr) 64px minmax(120px, 0.8fr);
+  grid-template-columns: 112px minmax(180px, 1.35fr) minmax(138px, 1fr) minmax(122px, 0.9fr) 64px minmax(120px, 0.8fr);
   gap: 14px;
   align-items: center;
   min-height: 76px;
@@ -48,7 +53,7 @@
 }
 
 .live-student-status-bar h1 {
-  margin-left: 104px;
+  grid-column: 2;
   color: #f8fbff;
   font-size: clamp(1.15rem, 2.1vw, 1.65rem);
 }
@@ -62,6 +67,22 @@
 .live-student-status-bar__online {
   color: #dbeafe;
   font-weight: 700;
+}
+
+.live-student-status-bar__question {
+  grid-column: 3;
+}
+
+.live-student-status-bar__connection {
+  grid-column: 4;
+}
+
+.live-student-countdown {
+  grid-column: 5;
+}
+
+.live-student-status-bar__online {
+  grid-column: 6;
 }
 
 .live-student-status-bar__connection {
@@ -289,20 +310,19 @@
   }
 
   .live-student-status-bar {
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: 80px minmax(0, 1fr) auto auto;
     gap: 8px 12px;
     min-height: 94px;
     padding: 9px 14px;
   }
 
   .live-student-status-bar h1 {
-    grid-column: 1;
-    margin-left: 76px;
+    grid-column: 2;
     font-size: 1.05rem;
   }
 
   .live-student-status-bar__question {
-    grid-column: 2 / 4;
+    grid-column: 3 / 5;
     justify-self: end;
     font-size: 0.83rem;
   }
@@ -312,11 +332,23 @@
     font-size: 0.78rem;
   }
 
-  .live-student-countdown {
+  .live-student-status-bar__connection {
+    grid-column: 2;
+  }
+
+  .live-student-status-bar__online {
     grid-column: 3;
+  }
+
+  .live-student-countdown {
+    grid-column: 4;
     grid-row: 2;
     width: 42px;
     height: 42px;
+  }
+
+  #main-content.route-world-stage:has(> .live-student-arena) > .student-route-back {
+    top: 32px;
   }
 
   .live-student-question-phase {

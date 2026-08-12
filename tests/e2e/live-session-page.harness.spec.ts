@@ -51,3 +51,40 @@ test('waiting room shows host wait state without a countdown', async ({ page }) 
   await expect(page.getByText('等待開始')).toBeVisible();
   await expect(page.getByRole('timer')).toHaveCount(0);
 });
+
+test('route back button shares the Live status row without covering its content', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto(PAGE);
+
+  const back = await page
+    .getByRole('button', { name: '返回前一頁' })
+    .boundingBox();
+  const statusBar = await page.locator('.live-student-status-bar').boundingBox();
+  expect(back).not.toBeNull();
+  expect(statusBar).not.toBeNull();
+  if (!back || !statusBar) return;
+
+  const sharesRow =
+    back.y < statusBar.y + statusBar.height &&
+    back.y + back.height > statusBar.y;
+  expect(sharesRow).toBe(true);
+
+  const statusItems = await page
+    .locator('.live-student-status-bar > *')
+    .evaluateAll((items) =>
+      items.map((item) => {
+        const rect = item.getBoundingClientRect();
+        return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+      }),
+    );
+  for (const item of statusItems) {
+    const coversItem =
+      back.x < item.x + item.width &&
+      back.x + back.width > item.x &&
+      back.y < item.y + item.height &&
+      back.y + back.height > item.y;
+    expect(coversItem).toBe(false);
+  }
+});

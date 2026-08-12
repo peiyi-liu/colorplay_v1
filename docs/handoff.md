@@ -619,3 +619,10 @@
 - 使用內建 imagegen 產生無人物／無文字／無 UI 的像素夜間城堡庭院桌機與手機背景；手機依 viewport 寬度 `100% auto` 鎖定 top，城門維持上方。Live 專屬 CSS 從 HUD 下緣正常排版，不使用 fixed；統一返回鍵已預留空間，不蓋住課堂標題。
 - 驗證：受影響 Vitest 4 files／27 tests、lint、typecheck、`git diff --check` 全綠；Chromium harness 互動與 393／320 無水平 overflow、等待室狀態共 4／4。1280／393 目視確認背景載入、手機城門置頂及四個選項可見。唯一一輪 read-only review：APPROVE，無 Critical／High／Medium finding。
 - 邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page、教師 CSS或共享 HUD／AppShell／globals／tokens；未合併教師 branch、未 push、未 deploy。本機預覽：`http://127.0.0.1:4182/dev-harness/live-session.html?scenario=question`（`scenario=lobby` 可看等待室）。
+
+## 2026-08-12 22:34 [Owner／Codex] — 修正 Live 返回鍵與狀態列交疊
+
+- 393px 瀏覽器幾何回歸先穩定重現：全站返回鍵以 absolute `top: 22px` 錨在 `#main-content`，實際矩形與 Live 狀態列相交；先前替標題加左邊距只能避開文字，沒有移除交疊。
+- 依 owner 補充改為同排：全站同一顆返回鍵仍是 Live root 的 sibling，Live 狀態列新增專用左側 grid slot，課堂標題、題數、連線、在線人數與倒數各自占欄；返回鍵與狀態列共享垂直區域，但不覆蓋任何狀態內容。桌機一排，手機狀態內容兩排並保留左側返回欄。
+- 驗證：受影響 Vitest 2 files／20 tests、Chromium 5／5（含 393px 返回鍵與 Live 狀態列同排且不覆蓋任何 child、393／320 無水平 overflow）、lint、typecheck、`git diff --check` 全綠；1280／393 目視確認同排版面。依 S 級 bug fix 規則未新增第二輪 review。
+- 邊界：只修改 Live feature CSS、Live harness E2E 與 handoff；未修改共享返回元件、HUD／AppShell／globals／tokens、教師端、API 或資料庫。
