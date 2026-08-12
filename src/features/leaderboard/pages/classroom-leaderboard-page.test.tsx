@@ -114,5 +114,7 @@ describe('ClassroomLeaderboardPage', () => {
       ),
     ).not.toBeNull();
     expect(screen.getByRole('heading', { name: '排行榜' })).toBeInTheDocument();
+    expect(screen.queryByText('班級 XP')).toBeNull();
+    expect(screen.queryByText(/Top 10 與你的名次/u)).toBeNull();
   });
 });

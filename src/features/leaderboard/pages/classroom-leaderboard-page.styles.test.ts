@@ -26,4 +26,31 @@ describe('leaderboard guild hall scene styles', () => {
     expect(styles).toContain('overflow-wrap: anywhere');
     expect(styles).toMatch(/@media\s*\(max-width:\s*600px\)/u);
   });
+
+  it('enlarges leaderboard avatar tiles on desktop and mobile', () => {
+    expect(styles).toMatch(
+      /\.leaderboard-blook\s+\.pastel-summary__avatar\s*\{[^}]*width:\s*64px;[^}]*height:\s*64px;[^}]*border-radius:\s*0;/u,
+    );
+    expect(styles).toMatch(
+      /\.pastel-summary__avatar\s+\.blook-art\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;[^}]*transform:\s*scale\(1\.9\);/u,
+    );
+    const mobileStyles = styles.slice(
+      styles.indexOf('@media (max-width: 600px)'),
+    );
+    expect(mobileStyles).toContain('width: 60px');
+    expect(mobileStyles).toContain('height: 60px');
+  });
+
+  it('enlarges the title and aligns headers with their data columns', () => {
+    expect(styles).toContain('font-size: clamp(2rem, 4vw, 2.75rem)');
+    expect(styles).toMatch(
+      /\.leaderboard-table th:first-child,[\s\S]*?text-align:\s*left;/u,
+    );
+    expect(styles).toMatch(
+      /\.leaderboard-table th:last-child,[\s\S]*?text-align:\s*right;/u,
+    );
+    expect(styles).toMatch(
+      /\.leaderboard-table[\s\S]*?tbody[\s\S]*?td:nth-child\(2\)[\s\S]*?padding-top:\s*0;[\s\S]*?padding-left:\s*0;/u,
+    );
+  });
 });

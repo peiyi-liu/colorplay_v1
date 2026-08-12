@@ -41,7 +41,7 @@ function FramedBlook({
             : undefined
         }
       >
-        <BlookArt emoji={blook.emoji} size={30} stableCode={blook.stableCode} />
+        <BlookArt emoji={blook.emoji} size={64} stableCode={blook.stableCode} />
       </span>
       {entry.displayName}
       {entry.isSelf ? <strong>這是你</strong> : null}

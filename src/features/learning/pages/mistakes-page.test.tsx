@@ -149,6 +149,7 @@ describe('MistakesPage', () => {
     expect(
       await screen.findByText('補救練習答對即可解決錯題並回復精熟。'),
     ).toBeVisible();
+    expect(screen.queryByText('補救學習')).toBeNull();
     expect(screen.queryByText(/不發 Token/u)).toBeNull();
   });
 

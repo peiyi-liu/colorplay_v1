@@ -14,14 +14,56 @@
 }
 
 .scene-day.hall-of-medals.achievements--sanctuary-v2 {
+  position: relative;
   min-height: 100%;
-  background: transparent;
+  border: 3px solid var(--pixel-gold-deep);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--pixel-night) 88%, transparent);
+  box-shadow:
+    inset 0 0 0 2px var(--pixel-night-deep),
+    5px 5px 0 color-mix(in srgb, var(--pixel-night-deep) 84%, transparent);
   image-rendering: pixelated;
+}
+
+.scene-day.hall-of-medals.achievements--sanctuary-v2::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  left: 6px;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--pixel-gold) 0 12px,
+    transparent 12px 20px
+  );
+  pointer-events: none;
+}
+
+.achievements--sanctuary-v2 .achievements-grid {
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+}
+
+.achievements--sanctuary-v2 .achievements-grid > .list-none {
+  display: flex;
+  min-width: 0;
+  min-height: 190px;
+  aspect-ratio: 16 / 9;
+}
+
+.achievements--sanctuary-v2 .achievements-grid .achievement-card {
+  width: 100%;
+  height: 100%;
 }
 
 .achievements--sanctuary-v2 .pastel-hero__title {
   color: var(--pixel-window-ink);
   text-shadow: 2px 2px 0 var(--pixel-night-deep);
+}
+
+.achievements--sanctuary-v2 .pastel-hero {
+  padding-left: 58px;
 }
 
 .hall-of-medals.achievements--sanctuary-v2 .pastel-hero__description {
@@ -36,7 +78,10 @@
   }
 
   .scene-day.hall-of-medals.achievements--sanctuary-v2 {
-    padding-right: 10px;
-    padding-left: 10px;
+    padding: 26px 10px 18px;
+  }
+
+  .achievements--sanctuary-v2 .pastel-hero {
+    padding-left: 64px;
   }
 }

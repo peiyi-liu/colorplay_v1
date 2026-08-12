@@ -72,7 +72,6 @@ export function MistakesPage({
       className="mistakes-codex mistakes-codex--archive-v2 scene-day"
     >
       <header>
-        <p className="route-panel__eyebrow">補救學習</p>
         <h1 id="mistakes-title">我的錯題</h1>
         <p>補救練習答對即可解決錯題並回復精熟。</p>
       </header>
