@@ -7,7 +7,11 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Database } from '../../../types/database';
-import type { LiveRepository, LiveSessionState } from '../types';
+import {
+  LiveRepositoryError,
+  type LiveRepository,
+  type LiveSessionState,
+} from '../types';
 import { LiveJoinPage } from './live-join-page';
 import { LiveSessionPage } from './live-session-page';
 import { TeacherLivePage } from './teacher-live-page';
@@ -157,7 +161,7 @@ describe('LiveJoinPage', () => {
     renderWith(<LiveJoinPage repository={repository} />);
     const user = userEvent.setup();
 
-    await user.type(screen.getByLabelText('課堂代碼'), '123456');
+    await user.type(screen.getByLabelText('輸入 6 位加入代碼'), '123456');
     await user.click(screen.getByRole('button', { name: '加入課堂' }));
 
     expect(await screen.findByText('已進入課堂頁')).toBeVisible();
@@ -174,27 +178,55 @@ describe('LiveJoinPage', () => {
     renderWith(<LiveJoinPage repository={repositoryWith({})} />);
     const user = userEvent.setup();
 
-    await user.type(screen.getByLabelText('課堂代碼'), 'nope12');
+    await user.type(screen.getByLabelText('輸入 6 位加入代碼'), 'nope12');
     await user.click(screen.getByRole('button', { name: '加入課堂' }));
 
     expect(await screen.findByText('請輸入六位數字課堂代碼')).toBeVisible();
   });
 
-  it('renders the summons scroll: night scene and six rune slots lighting per typed digit', async () => {
+  it('renders only the requested join copy and one semantic six-digit input', async () => {
     renderWith(<LiveJoinPage repository={repositoryWith({})} />);
     const user = userEvent.setup();
 
-    expect(document.querySelector('.live-join.scene-night')).not.toBeNull();
-    const slotsWrap = document.querySelector('.rune-slots');
-    expect(slotsWrap).not.toBeNull();
-    expect(slotsWrap).toHaveAttribute('aria-hidden', 'true');
-    expect(slotsWrap).toHaveTextContent('');
-    expect(document.querySelectorAll('.rune-slot')).toHaveLength(6);
-    expect(document.querySelectorAll('.rune-slot--lit')).toHaveLength(0);
+    expect(
+      screen.getByRole('heading', { name: '加入 Live 課堂' }),
+    ).toBeVisible();
+    expect(
+      screen.getByText('輸入老師公布的課堂代碼，即可進入等待室。'),
+    ).toBeVisible();
+    expect(screen.queryByText('ColorPlay Live')).not.toBeInTheDocument();
+    expect(screen.queryByText('加入課堂挑戰')).not.toBeInTheDocument();
+    expect(document.querySelector('.live-join--portal.scene-night')).not.toBeNull();
 
-    await user.type(screen.getByLabelText('課堂代碼'), '123');
+    const input = screen.getByLabelText('輸入 6 位加入代碼');
+    expect(input).toHaveAttribute('inputmode', 'numeric');
+    expect(input).toHaveAttribute('maxlength', '6');
+    expect(document.querySelectorAll('.live-join__digit')).toHaveLength(6);
+    expect(document.querySelector('.rune-slots')).toBeNull();
 
-    expect(document.querySelectorAll('.rune-slot--lit')).toHaveLength(3);
+    await user.type(input, '012');
+
+    expect(
+      Array.from(document.querySelectorAll('.live-join__digit')).map(
+        (digit) => digit.textContent,
+      ),
+    ).toEqual(['0', '1', '2', '', '', '']);
+  });
+
+  it('shows the safe server error only after a failed join', async () => {
+    const join = vi
+      .fn()
+      .mockRejectedValue(new LiveRepositoryError('JOIN_INVALID_CODE'));
+    renderWith(<LiveJoinPage repository={repositoryWith({ join })} />);
+    const user = userEvent.setup();
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText('輸入 6 位加入代碼'), '123456');
+    await user.click(screen.getByRole('button', { name: '加入課堂' }));
+
+    expect(
+      await screen.findByText('代碼無效或課堂尚未開放，請向老師確認。'),
+    ).toBeVisible();
   });
 });
 

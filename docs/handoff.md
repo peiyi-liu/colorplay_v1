@@ -599,3 +599,10 @@
 - 將補救提示、題目／選項、送出錯誤與答題解析收進 `quiz-runner__question-dock`；Quiz root 使用 `auto / minmax(180px, 1fr) / auto` 三列，讓中央戰鬥區吸收剩餘高度、作答方格保持在 HUD 下方內容視窗的正下方。刻意不使用 fixed／absolute；高度不足、縮放或解析展開時由容器自然增高並捲動，避免覆蓋小精靈與文字。
 - TDD：先新增 DOM dock 與 CSS growing-row 契約 RED，再完成 GREEN。Quiz 13 files／69 tests、lint、typecheck、production build、`git diff --check` 全綠；`quiz-session.tsx` 498 行，仍低於 500 行上限。本機 idle 預覽已由 HMR 更新並重新開啟。
 - 邊界：未修改教師端、共享 HUD／AppShell／globals／tokens、API 或資料庫；未 push、未 deploy。
+
+## 2026-08-12 20:43 [Owner／Codex] — 學生 Live 加入傳送門畫面
+
+- `/app/live/join` 改為 HUD 下方滿版傳送門場景：內建 imagegen 分別產生無人物／無文字／無 UI 的桌機與手機背景，桌機表單在左、portal 在右，手機 portal 在上、表單在下。移除 `ColorPlay Live`、「加入課堂挑戰」與符文，只保留 owner 指定標題、說明、六碼、「加入課堂」及實際錯誤。
+- 六格外觀由單一 semantic input 驅動，保留貼上、Backspace、前導 0、numeric keyboard 與 screen-reader label；原有 Zod、`useJoinLive`、request ID、safe error mapping 與成功後等待室導航未改。只有實際驗證／repository 錯誤時才渲染 alert。
+- 驗證：Live Vitest 16 files／100 tests、lint、typecheck、production build、Prettier，`git diff --check` 全綠；Chromium harness 1280／393／320 與 safe-error 為 4／4，無水平 overflow、背景起點對齊 HUD 下緣。唯一一輪 scoped review 為 Standards 0／Spec 0，Security 軸不適用。AC-UI-009／015 有 task-level 自動驗證；AC-UI-010 實體手機鍵盤證據仍依規格留待 phase gate 人工提供。
+- 邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師 CSS，也未修改共享 HUD／AppShell／globals／tokens、API 或資料庫；未合併教師 branch、未 push、未 deploy。本機預覽：`http://127.0.0.1:4181/dev-harness/live-join.html`。

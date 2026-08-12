@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { useJoinLive } from '../hooks/use-live-commands';
 import { type LiveRepository, LiveRepositoryError } from '../types';
+import './live-join-page.css';
 
 const joinSchema = z.strictObject({
   joinCode: z
@@ -43,17 +44,27 @@ export function LiveJoinPage({
     defaultValues: { joinCode: '' },
     resolver: zodResolver(joinSchema),
   });
-  // watch() only drives the purely-visual rune slots below; this form
+  // watch() only drives the purely-visual digit cells below; this form
   // re-renders on every keystroke regardless (react-hook-form's own input
   // binding), so skipping compiler memoization here has no user-facing cost.
   // eslint-disable-next-line react-hooks/incompatible-library
   const typedCode = watch('joinCode');
+  const visibleDigits = typedCode.trim().slice(0, 6).split('');
+  const joinCodeField = register('joinCode');
+  const fieldError = errors.joinCode?.message;
+  const describedBy = [fieldError ? 'live-join-code-error' : undefined, joinError ? 'live-join-server-error' : undefined]
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <section aria-labelledby="live-join-title" className="live-join scene-night">
-      <header>
-        <p className="route-panel__eyebrow">ColorPlay Live</p>
-        <h1 id="live-join-title">加入課堂挑戰</h1>
+    <section
+      aria-labelledby="live-join-title"
+      className="live-join live-join--portal scene-night"
+    >
+      <header className="live-join__header">
+        <h1 id="live-join-title">
+          加入 <span>Live</span> 課堂
+        </h1>
         <p>輸入老師公布的課堂代碼，即可進入等待室。</p>
       </header>
       <form
@@ -76,30 +87,45 @@ export function LiveJoinPage({
           })(event);
         }}
       >
-        <label htmlFor="live-join-code">課堂代碼</label>
-        <span aria-hidden="true" className="rune-slots">
-          {Array.from({ length: 6 }, (_, index) => (
-            <span
-              className={
-                index < typedCode.trim().length
-                  ? 'rune-slot rune-slot--lit'
-                  : 'rune-slot'
-              }
-              key={index}
-            />
-          ))}
-        </span>
-        <input
-          autoComplete="off"
-          id="live-join-code"
-          inputMode="numeric"
-          maxLength={6}
-          placeholder="000000"
-          type="text"
-          {...register('joinCode')}
-          aria-invalid={errors.joinCode ? true : undefined}
-        />
-        {errors.joinCode ? <p role="alert">{errors.joinCode.message}</p> : null}
+        <label htmlFor="live-join-code">輸入 6 位加入代碼</label>
+        <div className="live-join__code-control">
+          <span aria-hidden="true" className="live-join__digits">
+            {Array.from({ length: 6 }, (_, index) => (
+              <span
+                className={
+                  visibleDigits[index]
+                    ? 'live-join__digit live-join__digit--filled'
+                    : 'live-join__digit'
+                }
+                key={index}
+              >
+                {visibleDigits[index] ?? ''}
+              </span>
+            ))}
+          </span>
+          <input
+            aria-describedby={describedBy || undefined}
+            aria-invalid={fieldError || joinError ? true : undefined}
+            autoComplete="one-time-code"
+            id="live-join-code"
+            inputMode="numeric"
+            maxLength={6}
+            pattern="[0-9]*"
+            type="text"
+            {...joinCodeField}
+            onChange={(event) => {
+              event.target.value = event.target.value
+                .replace(/[^0-9]/gu, '')
+                .slice(0, 6);
+              void joinCodeField.onChange(event);
+            }}
+          />
+        </div>
+        {fieldError ? (
+          <p id="live-join-code-error" role="alert">
+            {fieldError}
+          </p>
+        ) : null}
         <button
           className="primary-action"
           data-primary-action="true"
@@ -108,7 +134,11 @@ export function LiveJoinPage({
         >
           {join.isPending ? '加入中…' : '加入課堂'}
         </button>
-        {joinError ? <p role="alert">{joinError}</p> : null}
+        {joinError ? (
+          <p id="live-join-server-error" role="alert">
+            {joinError}
+          </p>
+        ) : null}
       </form>
     </section>
   );
