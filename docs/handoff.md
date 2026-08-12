@@ -611,3 +611,11 @@
 
 - 根因為手機背景使用 `cover`，場景高度被表單撐長時圖片會重新縮放，造成傳送門往下漂移。改為依 viewport 寬度 `100% auto` 縮放並鎖定 `center top`，標題／表單的上邊距也改用 viewport 寬度推導，確保門穩定在畫面上方、內容從門下方開始。
 - 驗證：CSS contract 2／2、Chromium 1280／393／320 與 safe-error 4／4、lint、typecheck、production build 全綠。未啟動第二輪 review，遵守每 task 最多一輪 review 規則。
+
+## 2026-08-12 22:02 [Owner／Codex] — 學生 Live 等待室、四選一與等待揭曉
+
+- `/app/live/:sessionId` 學生端串接既有權威 Live state：lobby 顯示「等待主持人開始…」；教師開始後，`screen_only` 顯示投影機 icon 與「請看投影幕作答」，不把題目、選項文字或正解帶入學生畫面。頂部狀態列顯示課堂挑戰 icon、題數、Realtime 連線文字狀態、server-time 倒數圈與在線人數。
+- 四個選項桌機為 2×2、手機為單欄；點擊即沿用 `submit_live_answer` RPC 送出，以本地選取狀態和 mutation pending 立即鎖住全部選項。成功後原位置改顯示「答案已送出，等待揭曉…」，沒有第二個送出按鈕；正式答案、計分、排名與 phase transition 仍由後端決定。
+- 使用內建 imagegen 產生無人物／無文字／無 UI 的像素夜間城堡庭院桌機與手機背景；手機依 viewport 寬度 `100% auto` 鎖定 top，城門維持上方。Live 專屬 CSS 從 HUD 下緣正常排版，不使用 fixed；統一返回鍵已預留空間，不蓋住課堂標題。
+- 驗證：受影響 Vitest 4 files／27 tests、lint、typecheck、`git diff --check` 全綠；Chromium harness 互動與 393／320 無水平 overflow、等待室狀態共 4／4。1280／393 目視確認背景載入、手機城門置頂及四個選項可見。唯一一輪 read-only review：APPROVE，無 Critical／High／Medium finding。
+- 邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page、教師 CSS或共享 HUD／AppShell／globals／tokens；未合併教師 branch、未 push、未 deploy。本機預覽：`http://127.0.0.1:4182/dev-harness/live-session.html?scenario=question`（`scenario=lobby` 可看等待室）。

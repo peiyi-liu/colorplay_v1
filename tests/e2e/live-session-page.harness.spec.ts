@@ -1,0 +1,53 @@
+import { expect, test } from '@playwright/test';
+
+const PAGE = '/dev-harness/live-session.html?scenario=question';
+
+test('student Live choice locks immediately and waits for reveal', async ({ page }) => {
+  await page.goto(PAGE);
+
+  await expect(page.getByRole('heading', { name: '課堂挑戰' })).toBeVisible();
+  await expect(page.getByText('請看投影幕作答')).toBeVisible();
+  await expect(page.getByText('第 3 / 10 題')).toBeVisible();
+  await expect(page.getByText('連線正常')).toBeVisible();
+  await expect(page.getByText('24 人在線')).toBeVisible();
+  await expect(page.getByRole('timer', { name: '剩餘秒數' })).toBeVisible();
+
+  const choices = page.getByRole('group', { name: '答案選項' }).getByRole('button');
+  await expect(choices).toHaveCount(4);
+  await choices.nth(2).click();
+  const waitingReveal = page.getByText('答案已送出，等待揭曉…');
+  await expect(waitingReveal).toBeVisible();
+  await expect(waitingReveal).toBeInViewport();
+  await expect(choices.nth(2)).toHaveAccessibleName(/已選擇/u);
+  for (let index = 0; index < 4; index += 1) {
+    await expect(choices.nth(index)).toBeDisabled();
+  }
+});
+
+for (const viewport of [
+  { width: 393, height: 852 },
+  { width: 320, height: 568 },
+]) {
+  test(`student Live fits ${String(viewport.width)}px without horizontal overflow`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await page.goto(PAGE);
+    await expect(page.getByText('請看投影幕作答')).toBeVisible();
+    await expect(page.getByRole('group', { name: '答案選項' }).getByRole('button')).toHaveCount(4);
+    const overflow = await page.evaluate(() =>
+      Math.max(
+        document.documentElement.scrollWidth,
+        document.body.scrollWidth,
+      ) > window.innerWidth,
+    );
+    expect(overflow).toBe(false);
+  });
+}
+
+test('waiting room shows host wait state without a countdown', async ({ page }) => {
+  await page.goto('/dev-harness/live-session.html?scenario=lobby');
+  await expect(page.getByText('等待主持人開始…')).toBeVisible();
+  await expect(page.getByText('等待開始')).toBeVisible();
+  await expect(page.getByRole('timer')).toHaveCount(0);
+});

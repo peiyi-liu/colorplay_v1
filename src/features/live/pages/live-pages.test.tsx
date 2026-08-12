@@ -39,7 +39,10 @@ const SESSION_ID = '18400000-0000-0000-0000-000000000001';
 const stubClient = () => {
   const channel = {
     on: vi.fn().mockReturnThis(),
-    subscribe: vi.fn().mockReturnThis(),
+    subscribe: vi.fn((callback?: (status: string) => void) => {
+      callback?.('SUBSCRIBED');
+      return channel;
+    }),
   };
   return {
     channel: vi.fn(() => channel),
@@ -231,6 +234,25 @@ describe('LiveJoinPage', () => {
 });
 
 describe('LiveSessionPage (participant)', () => {
+  it('shows the waiting room with challenge, connection, question, and online status', async () => {
+    renderWith(
+      <LiveSessionPage
+        client={stubClient()}
+        repository={repositoryWith({})}
+        sessionId={SESSION_ID}
+      />,
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: '課堂挑戰' }),
+    ).toBeVisible();
+    expect(screen.getByText('等待主持人開始…')).toBeVisible();
+    expect(screen.getByText('等待開始')).toBeVisible();
+    expect(screen.getByText('連線正常')).toBeVisible();
+    expect(screen.getByText('3 人在線')).toBeVisible();
+    expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+  });
+
   it('submits one answer and locks the options', async () => {
     const submitAnswer = vi.fn().mockResolvedValue({ streak: 1 });
     const getState = vi
@@ -270,7 +292,7 @@ describe('LiveSessionPage (participant)', () => {
     );
     expect(submitArgs.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/u);
     expect(
-      await screen.findByText('已收到你的答案，等待其他同學…'),
+      await screen.findByText('答案已送出，等待揭曉…'),
     ).toBeVisible();
   });
 
@@ -287,7 +309,7 @@ describe('LiveSessionPage (participant)', () => {
     deadlineAt: new Date(Date.now() + 15000).toISOString(),
   };
 
-  it('keeps the screen_only option label off-screen behind the shared visually-hidden class (DC 1192-1195: shape-only)', async () => {
+  it('shows the projector reminder and four visible A/B/C/D response choices', async () => {
     const repository = repositoryWith({
       getState: vi.fn().mockResolvedValue({
         ...baseState,
@@ -311,12 +333,61 @@ describe('LiveSessionPage (participant)', () => {
     const firstOption = await screen.findByRole('button', {
       name: '選項 A：紅色三角形',
     });
-    // 純形狀鍵（DC 1192-1195）：色與形狀敘述只給螢幕閱讀器，畫面上只能看到
-    // 形狀符號。這個描述必須套用共用的 .visually-hidden（globals.css:1216）
-    // 而不是專案裡不存在任何 CSS 規則的 `sr-only`——後者在真實瀏覽器會直接
-    // 顯示成看得到的文字，等於在雙螢幕模式洩題。
-    expect(firstOption.querySelector('.visually-hidden')).not.toBeNull();
-    expect(firstOption.querySelector('.sr-only')).toBeNull();
+    expect(screen.getByText('請看投影幕作答')).toBeVisible();
+    expect(screen.getByRole('img', { name: '投影機' })).toBeVisible();
+    expect(screen.getByText('第 1 / 10 題')).toBeVisible();
+    expect(screen.getByRole('timer', { name: '剩餘秒數' })).toBeVisible();
+    expect(screen.getAllByRole('button')).toHaveLength(4);
+    expect(firstOption).toHaveTextContent('A');
+    expect(screen.getByRole('button', { name: '選項 B：藍色正方形' })).toHaveTextContent('B');
+    expect(screen.getByRole('button', { name: '選項 C：黃色圓形' })).toHaveTextContent('C');
+    expect(screen.getByRole('button', { name: '選項 D：綠色菱形' })).toHaveTextContent('D');
+  });
+
+  it('locks one screen-only choice immediately and then waits for reveal', async () => {
+    const submitAnswer = vi.fn().mockResolvedValue({ streak: 1 });
+    const repository = repositoryWith({
+      getState: vi.fn().mockResolvedValue({
+        ...baseState,
+        state: 'question_open',
+        stateVersion: 3,
+        currentPosition: 1,
+        questionDisplay: 'screen_only',
+        question: screenOnlyQuestion,
+        answeredCount: 0,
+        myAnswer: { answered: false },
+      }),
+      submitAnswer,
+    });
+    renderWith(
+      <LiveSessionPage
+        client={stubClient()}
+        repository={repository}
+        sessionId={SESSION_ID}
+      />,
+    );
+    const user = userEvent.setup();
+    const choice = await screen.findByRole('button', {
+      name: '選項 C：黃色圓形',
+    });
+
+    await user.click(choice);
+
+    await waitFor(() => {
+      expect(submitAnswer).toHaveBeenCalledTimes(1);
+    });
+    for (const button of screen.getAllByRole('button')) {
+      expect(button).toBeDisabled();
+    }
+    expect(
+      screen.getByRole('button', {
+        name: /選項 C：黃色圓形.*已選擇/u,
+      }),
+    ).toHaveClass('ui-option--state-selected');
+    expect(
+      await screen.findByText('答案已送出，等待揭曉…'),
+    ).toBeVisible();
+    expect(screen.queryByRole('button', { name: /送出/u })).toBeNull();
   });
 
   // device 模式（非雙螢幕）目前教師端 UI 已無法產生——10D 簡化後
