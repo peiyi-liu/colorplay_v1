@@ -40,6 +40,12 @@ const quizSessionQueryKey = (sessionId: string) =>
 
 const requestId = () => globalThis.crypto.randomUUID();
 
+const withoutNumberPrefix = (title: string) =>
+  title.replace(
+    /^\s*(?:第\s*)?\d+(?:\s*[-–—・.]\s*\d+)?(?:\s*章|節)?\s*[-–—・.]?\s*/u,
+    '',
+  );
+
 type SubmissionAttempt = Readonly<{
   idempotencyKey: string;
   questionId: string;
@@ -188,6 +194,13 @@ export function QuizSessionPage({
     : attacking
       ? 'attacking'
       : 'idle';
+  const chapterLabel = `第 ${String(session?.chapterSortOrder ?? '')} 章・${withoutNumberPrefix(session?.chapterTitle ?? '')}`;
+  const challengeLabel =
+    session?.challengeKind === 'section' &&
+    session.sectionSortOrder !== null &&
+    session.sectionTitle
+      ? `${String(session.chapterSortOrder)}-${String(session.sectionSortOrder)}・${withoutNumberPrefix(session.sectionTitle)}`
+      : '章節總挑戰';
 
   useEffect(() => {
     if (session?.status === 'completed') {
@@ -390,9 +403,9 @@ export function QuizSessionPage({
         aria-labelledby="quiz-runner-title"
       >
         <header className="quiz-runner__header">
-          <div>
-            <p className="route-panel__eyebrow">小精靈挑戰</p>
-            <h1 id="quiz-runner-title">{session.chapterTitle}</h1>
+          <div className="quiz-runner__title-group">
+            <h1 id="quiz-runner-title">{chapterLabel}</h1>
+            <p>{challengeLabel}</p>
           </div>
           <div className="quiz-runner__status" aria-label="挑戰進度">
             <p>

@@ -37,7 +37,6 @@ export function BattleStage({
     >
       <div className="battle-stage__enemy">
         <div className="battle-stage__health">
-          <span className="battle-stage__health-name">森林小精靈</span>
           <span className="battle-stage__health-track">
             <span className="battle-stage__health-fill" />
           </span>
@@ -45,6 +44,7 @@ export function BattleStage({
         <div className="battle-stage__spirit">
           <SpiritAvatar variant={spiritForSeed(questionSeed)} />
         </div>
+        <span className="battle-stage__enemy-name">森林小精靈</span>
       </div>
       {phase === 'attacking' ? <span className="battle-stage__slash" /> : null}
       {phase === 'miss' ? (

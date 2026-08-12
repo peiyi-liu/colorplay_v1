@@ -2519,6 +2519,8 @@ export type Database = {
             | Database["public"]["Enums"]["quiz_answer_status"]
             | null
           answered_count: number | null
+          challenge_kind: string | null
+          chapter_sort_order: number | null
           chapter_title: string | null
           completed_at: string | null
           correct_count: number | null
@@ -2535,6 +2537,8 @@ export type Database = {
           response_ms: number | null
           reward_rate_percent: number | null
           score_delta: number | null
+          section_sort_order: number | null
+          section_title: string | null
           selected_option_id: string | null
           session_id: string | null
           session_question_id: string | null

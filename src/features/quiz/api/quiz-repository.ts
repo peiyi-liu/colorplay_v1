@@ -32,8 +32,11 @@ const questionSchema = z.object({
 });
 const rewardRateSchema = z.union([z.literal(20), z.literal(100)]);
 const gameRulesVersionSchema = z.enum(['2026-07-mvp-1', '2026-07-progress-1']);
+const challengeKindSchema = z.enum(['section', 'chapter']);
 const sessionSchema = z.strictObject({
   answered_count: z.number().int().nonnegative(),
+  challenge_kind: challengeKindSchema,
+  chapter_sort_order: z.number().int().nonnegative(),
   chapter_title: z.string().min(1),
   completed_at: timestampSchema.nullable(),
   correct_count: z.number().int().nonnegative(),
@@ -41,6 +44,8 @@ const sessionSchema = z.strictObject({
   question_count: z.number().int().positive(),
   questions: z.array(questionSchema).min(1),
   reward_rate_percent: rewardRateSchema,
+  section_sort_order: z.number().int().nonnegative().nullable(),
+  section_title: z.string().min(1).nullable(),
   session_id: uuidSchema,
   status: sessionStatusSchema,
   template_id: uuidSchema,
@@ -87,6 +92,8 @@ const abandonResultSchema = z.strictObject({
 const sessionStateRowSchema = z.strictObject({
   answer_status: answerStatusSchema.nullable(),
   answered_count: z.number().int().nonnegative(),
+  challenge_kind: challengeKindSchema,
+  chapter_sort_order: z.number().int().nonnegative(),
   chapter_title: z.string().min(1),
   completed_at: timestampSchema.nullable(),
   correct_count: z.number().int().nonnegative(),
@@ -102,6 +109,8 @@ const sessionStateRowSchema = z.strictObject({
   question_version: z.number().int().positive(),
   response_ms: z.number().int().nonnegative().nullable(),
   reward_rate_percent: rewardRateSchema,
+  section_sort_order: z.number().int().nonnegative().nullable(),
+  section_title: z.string().min(1).nullable(),
   score_delta: z.number().int().nonnegative().nullable(),
   selected_option_id: uuidSchema.nullable(),
   session_id: uuidSchema,
@@ -138,6 +147,8 @@ export type QuizQuestion = Readonly<{
 }>;
 export type QuizSession = Readonly<{
   answeredCount: number;
+  challengeKind: z.infer<typeof challengeKindSchema>;
+  chapterSortOrder: number;
   chapterTitle: string;
   completedAt: string | null;
   correctCount: number;
@@ -150,6 +161,8 @@ export type QuizSession = Readonly<{
   tokensAwarded: number;
   totalScore: number;
   rewardRatePercent: z.infer<typeof rewardRateSchema>;
+  sectionSortOrder: number | null;
+  sectionTitle: string | null;
   xpAwarded: number;
 }>;
 export type QuizAnswerResult = Readonly<{
@@ -264,6 +277,8 @@ const mapQuestion = (
 
 const mapSession = (session: z.infer<typeof sessionSchema>): QuizSession => ({
   answeredCount: session.answered_count,
+  challengeKind: session.challenge_kind,
+  chapterSortOrder: session.chapter_sort_order,
   chapterTitle: session.chapter_title,
   completedAt: session.completed_at,
   correctCount: session.correct_count,
@@ -276,6 +291,8 @@ const mapSession = (session: z.infer<typeof sessionSchema>): QuizSession => ({
   tokensAwarded: session.tokens_awarded,
   totalScore: session.total_score,
   rewardRatePercent: session.reward_rate_percent,
+  sectionSortOrder: session.section_sort_order,
+  sectionTitle: session.section_title,
   xpAwarded: session.xp_awarded,
 });
 
@@ -354,6 +371,8 @@ function sessionFromStateRows(value: unknown): QuizSession {
   );
   return {
     answeredCount: first.answered_count,
+    challengeKind: first.challenge_kind,
+    chapterSortOrder: first.chapter_sort_order,
     chapterTitle: first.chapter_title,
     completedAt: first.completed_at,
     correctCount: first.correct_count,
@@ -366,6 +385,8 @@ function sessionFromStateRows(value: unknown): QuizSession {
     tokensAwarded: first.tokens_awarded,
     totalScore: first.total_score,
     rewardRatePercent: first.reward_rate_percent,
+    sectionSortOrder: first.section_sort_order,
+    sectionTitle: first.section_title,
     xpAwarded: first.xp_awarded,
   };
 }

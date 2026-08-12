@@ -14,6 +14,11 @@ describe('BattleStage', () => {
     expect(stage).toHaveAttribute('data-enemy-health', 'full');
     expect(container.querySelector('.spirit-avatar')).not.toBeNull();
     expect(container.querySelector('.battle-stage__slash')).toBeNull();
+    const enemy = container.querySelector('.battle-stage__enemy');
+    expect(enemy?.children[0]).toHaveClass('battle-stage__health');
+    expect(enemy?.children[1]).toHaveClass('battle-stage__spirit');
+    expect(enemy?.children[2]).toHaveClass('battle-stage__enemy-name');
+    expect(enemy?.children[2]).toHaveTextContent('森林小精靈');
   });
 
   it('drains the spirit health only after a correct server verdict', () => {

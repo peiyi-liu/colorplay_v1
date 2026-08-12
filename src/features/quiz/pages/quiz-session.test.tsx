@@ -68,6 +68,8 @@ const question = (
 const session = (questions: QuizQuestion[]): QuizSession => ({
   answeredCount: questions.filter(({ answerStatus }) => answerStatus !== null)
     .length,
+  challengeKind: 'section',
+  chapterSortOrder: 3,
   chapterTitle: '色彩表示',
   completedAt: null,
   correctCount: questions.filter(
@@ -85,6 +87,8 @@ const session = (questions: QuizQuestion[]): QuizSession => ({
     0,
   ),
   rewardRatePercent: 100,
+  sectionSortOrder: 1,
+  sectionTitle: '3-1 色彩三要素與色名的表示',
   xpAwarded: 0,
 });
 
@@ -542,13 +546,32 @@ describe('QuizSessionPage', () => {
     mocks.getSession.mockResolvedValue(session([question(1), question(2)]));
     renderQuiz(mocks.repository);
 
-    const heading = await screen.findByRole('heading', { name: '色彩表示' });
+    const heading = await screen.findByRole('heading', {
+      name: '第 3 章・色彩表示',
+    });
     const runner = heading.closest('section');
     expect(runner).toHaveClass('quiz-runner', 'scene-night', 'battle-scene');
+    expect(screen.getByText('3-1・色彩三要素與色名的表示')).toBeVisible();
+    expect(screen.queryByText('小精靈挑戰')).toBeNull();
+    expect(screen.getByLabelText('挑戰進度').children).toHaveLength(3);
     expect(
       screen.getByText((_, el) => el?.textContent === '第 1 / 2 題'),
     ).toBeVisible();
     expect(screen.getByRole('button', { name: '送出答案' })).toBeVisible();
+  });
+
+  it('labels a chapter-wide template as the chapter final challenge', async () => {
+    const mocks = repositoryMock();
+    mocks.getSession.mockResolvedValue({
+      ...session([question(1)]),
+      challengeKind: 'chapter',
+      sectionSortOrder: null,
+      sectionTitle: null,
+    });
+    renderQuiz(mocks.repository);
+
+    expect(await screen.findByText('章節總挑戰')).toBeVisible();
+    expect(screen.queryByText(/3-1・/u)).toBeNull();
   });
 
   it('keeps the verdict hidden while the strike is in flight (three-beat rule)', async () => {

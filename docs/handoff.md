@@ -580,3 +580,10 @@
 - Owner 截圖確認 Router 修復後改顯示 `APP_CONFIG_INVALID`；堆疊定位至 `useStudentChapterMap`。根因是 disabled query 仍在 hook render 階段立即執行 `parsePublicEnv(import.meta.env)`，使完全離線的 Quiz harness 仍要求 Supabase 設定。
 - 以回歸測試先重現 disabled query 仍解析 env 的 RED，再把 client 建立移入 TanStack Query 的 `queryFn`；disabled 時不執行，enabled 時正式行為不變。Quiz repository fixture 與 chapter map 都不再讓 harness 觸碰真實 Supabase。受影響 15 files／99 tests、全域 lint、typecheck、production build、Prettier 與 `git diff --check` 全綠；idle 預覽已重新載入。
 - 邊界：未修改權威作答／章節資料、API、DB、教師端、push 或部署。
+
+## 2026-08-12 19:44 [Owner／Codex] — Quiz 無框戰場、章節脈絡與答錯解析
+
+- 小節／章節 Quiz 改為整個 HUD 下方內容區共用生成夜森林背景，移除頁面與戰鬥舞台外框；只保留題目／選項、右上三排答題狀態，以及答錯／逾時解析方框。標頭中央顯示 `第 3 章・章名`，小節以 `3-1・小節標題` 顯示（不顯示「第 1 小節」），章節 template 顯示「章節總挑戰」；已移除「小精靈挑戰」。版面採正常文件流與 `minmax(0, 1fr)`／`overflow-wrap` containment，避免解析度或縮放時靠絕對定位互相覆蓋。
+- 小精靈血條獨立放在角色上方，名稱無框放在角色下方；correct 的 server verdict 才會清空血條。答錯／逾時會顯示正確答案、解析與「我理解了，下一題」；另新增 `scenario=incorrect` 本機預覽。既有 Quiz 離開作廢、正誤／分數／XP／Token 後端權威與三拍時序均未改。
+- 新增本機 migration `20260812000300_quiz_context_labels.sql`，由 template／chapter／section 權威資料把 challenge kind、章序、小節序與小節標題加入 session payload／安全 view；未從 question stable code 猜 UI。generated database types 已同步。完整 pgTAP 51 files／1151 tests、Quiz Vitest 12 files／67 tests、lint、typecheck、production build、`git diff --check` 全綠；一次 scoped self-review 無未解 finding。內建瀏覽器沒有可連線實例，未宣稱 1280／393 目視通過；本機已開啟 idle 與 incorrect 預覽供 owner 查看。
+- 協作邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page、教師分析或共享 HUD／AppShell／globals／tokens；未合併教師 branch、未 push、未 deploy。migration 只套用本機 Supabase，未寫 staging／production。

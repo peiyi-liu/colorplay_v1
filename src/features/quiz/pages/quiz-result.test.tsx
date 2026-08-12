@@ -24,6 +24,8 @@ const templateId = '26000000-0000-0000-0000-000000000003';
 
 const completedSession = {
   answeredCount: 2,
+  challengeKind: 'chapter',
+  chapterSortOrder: 3,
   chapterTitle: '色彩表示',
   completedAt: '2026-07-14T12:05:00.000Z',
   correctCount: 1,
@@ -93,6 +95,8 @@ const completedSession = {
   tokensAwarded: 250,
   totalScore: 150,
   rewardRatePercent: 100,
+  sectionSortOrder: null,
+  sectionTitle: null,
   xpAwarded: 750,
 } satisfies QuizSession;
 

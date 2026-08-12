@@ -10,7 +10,7 @@ import '../src/styles/globals.css';
 
 const requested = new URLSearchParams(window.location.search).get('scenario');
 const scenario: QuizSessionHarnessScenario =
-  requested === 'correct' ? 'correct' : 'idle';
+  requested === 'correct' || requested === 'incorrect' ? requested : 'idle';
 
 const root = document.querySelector('#root');
 if (!root) throw new Error('dev-harness: #root missing');
