@@ -11,7 +11,7 @@ const css = readFileSync(
 describe('shop page scene styles', () => {
   it('places the generated market behind the original shop content', () => {
     expect(css).toContain('#main-content:has(> .shop-market-v2)');
-    expect(css).toContain('shop-market-night-v1.png');
+    expect(css).toContain('shop-market-night-v1.webp');
     expect(css).toContain('background-size: cover');
     expect(css).not.toContain('position: fixed');
   });

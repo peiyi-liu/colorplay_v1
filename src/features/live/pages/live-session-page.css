@@ -19,7 +19,7 @@
   background-color: #071120;
   background-image:
     linear-gradient(180deg, rgb(2 8 20 / 8%) 0%, rgb(3 10 24 / 18%) 48%, rgb(3 8 19 / 78%) 100%),
-    url('../../../assets/live/live-student-arena-desktop-v1.png');
+    url('../../../assets/live/live-student-arena-desktop-v1.webp');
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
@@ -304,7 +304,7 @@
     min-height: 100%;
     background-image:
       linear-gradient(180deg, rgb(2 8 20 / 2%) 0%, rgb(3 10 24 / 14%) 34%, #071120 66%),
-      url('../../../assets/live/live-student-arena-desktop-v1.png');
+      url('../../../assets/live/live-student-arena-desktop-v1.webp');
     background-position: center, center 72%;
     background-size: cover, auto 120%;
   }

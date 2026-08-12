@@ -96,6 +96,10 @@ a {
   flex-direction: column;
 }
 
+.game-stage[data-shell-role='student'] .game-stage__scene {
+  overscroll-behavior-y: contain;
+}
+
 /* 連續世界舞台：路由內容留在同一個深夜 App Shell，僅由場景層換色。
    轉場是獨立裝飾節點，不 key／重掛 Outlet，避免閱讀與測驗狀態被重置。 */
 .route-world-stage {
@@ -523,7 +527,7 @@ a {
   overflow: hidden;
   grid-template-rows: auto 1fr auto;
   background-color: var(--pixel-night-deep);
-  background-image: url('../assets/home/night-kingdom-desktop.png');
+  background-image: url('../assets/home/night-kingdom-desktop.webp');
   background-position: center;
   background-size: cover;
   color: var(--pixel-window-ink);
@@ -610,8 +614,10 @@ a {
 
 .home-world__subtitle {
   margin: var(--space-5) 0 0;
+  font-family: var(--font-pixel-tc);
   font-size: clamp(1.35rem, 2.35vw, 2.15rem);
-  font-weight: 700;
+  font-synthesis: none;
+  font-weight: 400;
   letter-spacing: 0.1em;
   line-height: 1.35;
   white-space: nowrap;
@@ -636,8 +642,10 @@ a {
   justify-content: center;
   border-radius: var(--radius-pixel);
   color: var(--pixel-window-ink);
+  font-family: var(--font-pixel-tc);
   font-size: 1rem;
-  font-weight: 800;
+  font-synthesis: none;
+  font-weight: 400;
   padding: var(--space-3) var(--space-5);
   text-align: center;
   text-decoration: none;
@@ -660,7 +668,7 @@ a {
 @media (max-width: 47.99rem) {
   .home-world {
     min-height: max(100%, 720px);
-    background-image: url('../assets/home/night-kingdom-mobile.png');
+    background-image: url('../assets/home/night-kingdom-mobile.webp');
     background-position: center;
   }
 
@@ -7792,6 +7800,13 @@ select#dashboard-classroom {
   padding: 0;
 }
 
+.game-viewport:has(.lobby--map-fullscreen),
+.game-stage:has(.lobby--map-fullscreen) {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .lobby--map-fullscreen {
   width: 100%;
   min-width: 0;
@@ -9077,7 +9092,7 @@ select#dashboard-classroom {
       color-mix(in srgb, var(--stage-void) 32%, transparent) 52% 74%,
       transparent 94%
     ),
-    url('../assets/auth/guild-desk-desktop.png');
+    url('../assets/auth/guild-desk-desktop.webp');
   background-position: center;
   background-size: cover;
   padding: clamp(var(--space-4), 2.5vw, var(--space-6));
@@ -9365,7 +9380,7 @@ select#dashboard-classroom {
         color-mix(in srgb, var(--stage-void) 44%, transparent) 49%,
         var(--stage-void) 78%
       ),
-      url('../assets/auth/guild-desk-mobile.png');
+      url('../assets/auth/guild-desk-mobile.webp');
     background-position: top center;
     background-size: cover;
     padding: var(--space-3);

@@ -24,6 +24,16 @@ const learningRepository = {
         subtopicId: '27000000-0000-4000-8000-000000000001',
         subtopicTitle: '3-1 色彩三要素與色名的表示',
       },
+      ...Array.from({ length: 3 }, (_, index) => ({
+        correctOptionText: '色相、明度、彩度',
+        lastEventAt: `2026-08-12T08:${String(index + 10).padStart(2, '0')}:00.000Z`,
+        mistakeId: `26000000-0000-4000-8000-00000000000${String(index + 3)}`,
+        prompt: `色彩三要素練習題 ${String(index + 1)}`,
+        stableCode: `3-1-0${String(index + 3)}`,
+        status: 'open' as const,
+        subtopicId: '27000000-0000-4000-8000-000000000001',
+        subtopicTitle: '3-1 色彩三要素與色名的表示',
+      })),
       {
         correctOptionText: '清色',
         lastEventAt: '2026-08-12T08:05:00.000Z',

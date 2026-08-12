@@ -726,3 +726,10 @@
 - 瀏覽器驗證：小節／章節完成頁 × 1280／393／320 共 6／6 通過，生成背景載入、逐題框為亮底深字、標題為 Cubic 11、零水平 overflow、無 page／console error；320px 兩種完成標題皆為 28px 單行，top=297.5、height=35。收藏三頁共 9／9 標題幾何一致；成就分頁另 3／3 通過。
 - 自動驗證：受影響 Vitest 10 files／80 tests、追加 Quiz label／session／result 4 files／33 tests、lint、typecheck、production build、Prettier、`git diff --check` 全綠。一次 scoped self-review：Standards 初見 Quiz 標題清理 regex 重複，已抽成 `quiz-labels.ts` 並補 5 cases；修正後 Standards 0、Spec 0；Security 軸略過（未觸及信任邊界）。
 - 邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師 CSS，未變更 API／DB／獎勵判定，未合併教師 branch。imagegen 最終 prompt 要點為 16:9 32-bit JRPG 黎明森林、中央遠景勝利石門、中央／下方低對比留白、無人物／文字／HUD／UI。
+
+## 2026-08-13 02:40 [Owner／Codex] — 學生場景首載效能與手機版面收尾
+
+- 18 張學生／公共流程大型場景與書頁背景改由 WebP 載入，原始尺寸不變；實際被引用的圖片總量由 34,133,334 bytes 降為 3,550,716 bytes（-89.6%），production build 單張場景輸出約 44–333 KiB。原 PNG 留作原始素材，但不再進 production bundle；移除返回鍵 `backdrop-filter` 並限制學生 scene overscroll，降低大面積捲動重繪。
+- 手機學習大廳鎖定於 viewport；複習卡完成狀態改為高對比藍色像素按鈕樣式，翻頁動畫改為單頁寬。商店、錯題、排行榜返回鍵與標題框在 393／650／700px 都不重疊；錯題頁碼置於兩箭頭正中並與「再挑戰」保留 16px，補救 Quiz 的長模式說明移除。
+- 主畫面「色彩王國的冒險旅程」與「開始冒險」改用既有繁中像素字。唯一 review 初抓到 650–700px 避讓缺口、缺少 browser asset proof 與翻頁上限，均已修正；`globals.css` 既有超過 500 行技術債未在本 task 擴張為教師行為，後續應獨立拆分。
+- 驗證：lint、typecheck、production build、15 files／80 Vitest、14 個 Chromium 手機／平板／桌面回歸、既有 Chapter Reader 8／8 與 Shop 3／3 全綠；兩 viewport × 九個場景的瀏覽器資源實測均無超過 350 KiB 的 raster。未修改教師專屬頁、API／DB／權威 XP／Token，未合併教師 branch、未 push、未 deploy；既有 visual artifacts 保留在工作樹且不納入 commit。

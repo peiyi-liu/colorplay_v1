@@ -7,7 +7,7 @@
       color-mix(in srgb, var(--pixel-night-deep) 12%, transparent),
       color-mix(in srgb, var(--pixel-night-deep) 58%, transparent)
     ),
-    url('../../../assets/quiz/quiz-victory-shrine-v1.png');
+    url('../../../assets/quiz/quiz-victory-shrine-v1.webp');
   background-position: center top;
   background-repeat: no-repeat;
   background-size: cover;

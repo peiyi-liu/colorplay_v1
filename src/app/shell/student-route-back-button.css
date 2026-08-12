@@ -17,7 +17,6 @@
   color: var(--pixel-window-ink);
   cursor: pointer;
   font-weight: 800;
-  backdrop-filter: blur(4px);
 }
 
 #main-content.route-world-stage > .student-route-back:hover,

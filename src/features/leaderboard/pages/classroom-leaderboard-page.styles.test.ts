@@ -16,7 +16,7 @@ describe('leaderboard guild hall scene styles', () => {
     expect(styles).toContain(
       '#main-content:has(> .leaderboard-panel--guild-v2)',
     );
-    expect(styles).toContain('leaderboard-guild-hall-v1.png');
+    expect(styles).toContain('leaderboard-guild-hall-v1.webp');
     expect(styles).toContain('background-size: cover');
     expect(styles).not.toContain('position: fixed');
   });
@@ -87,7 +87,7 @@ describe('leaderboard guild hall scene styles', () => {
     const mobileTitleStyles = styles.slice(
       styles.indexOf('@media (max-width: 767px)'),
     );
-    expect(mobileTitleStyles).toContain('padding-top: 36px');
+    expect(styles).toContain('padding: 72px 8px 40px');
     expect(mobileTitleStyles).toContain('font-size: 1.75rem');
   });
 });

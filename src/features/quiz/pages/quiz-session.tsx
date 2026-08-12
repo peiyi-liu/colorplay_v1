@@ -427,13 +427,6 @@ export function QuizSessionPage({
         />
 
         <div className="quiz-runner__question-dock">
-          {session.gameRulesVersion === '2026-07-progress-1' ? (
-            <p role="status">
-              補救練習模式：答對可解決錯題並回復精熟；不發 Token，XP 以 20%
-              計，原始成績不變。
-            </p>
-          ) : null}
-
           <QuestionCard
             isPending={submitMutation.isPending}
             locked={

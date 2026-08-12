@@ -93,7 +93,7 @@
     height: 100%;
     max-width: none;
     aspect-ratio: auto;
-    background-image: url('../assets/chapter/review-reader/open-book-page-upright.png');
+    background-image: url('../assets/chapter/review-reader/open-book-page-upright.webp');
     background-size: 112% 106%;
     box-shadow: none;
   }
@@ -185,6 +185,27 @@
     height: 52px;
     min-height: 52px;
     margin: 0;
+  }
+
+  .chapter-review-reader .review-card__status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #dcecff;
+    background: linear-gradient(180deg, #285f9d, #123763);
+    box-shadow:
+      inset 0 0 0 1px #5c88b9,
+      2px 2px 0 #00142f;
+    color: #fff;
+    font-family: var(--font-pixel-tc);
+    font-synthesis: none;
+    font-weight: 400;
+    padding: 4px;
+    text-shadow: 0 2px 0 #00142f;
+  }
+
+  .chapter-review-reader__viewport[data-turn-direction]::after {
+    width: 100%;
   }
 
   .chapter-review-reader .review-card__complete-button {

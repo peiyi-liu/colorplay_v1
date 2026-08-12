@@ -10,11 +10,11 @@ const styles = readFileSync(
 
 describe('student Live arena layout contract', () => {
   it('reuses the proportional desktop background at the mobile center', () => {
-    expect(styles).toContain('live-student-arena-desktop-v1.png');
+    expect(styles).toContain('live-student-arena-desktop-v1.webp');
     expect(styles).toMatch(/@media\s*\(max-width:\s*767px\)/u);
     const mobileStyles = styles.slice(styles.indexOf('@media (max-width: 767px)'));
-    expect(mobileStyles).toContain('live-student-arena-desktop-v1.png');
-    expect(mobileStyles).not.toContain('live-student-arena-mobile-v1.png');
+    expect(mobileStyles).toContain('live-student-arena-desktop-v1.webp');
+    expect(mobileStyles).not.toContain('live-student-arena-mobile-v1.webp');
     expect(mobileStyles).toContain('background-position: center, center 72%;');
     expect(mobileStyles).toContain('background-size: cover, auto 120%;');
   });

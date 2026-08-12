@@ -23,7 +23,7 @@
       rgb(4 12 31 / 12%) 67%,
       transparent 100%
     ),
-    url('../../../assets/live/live-join-portal-desktop-v1.png') center / cover
+    url('../../../assets/live/live-join-portal-desktop-v1.webp') center / cover
       no-repeat;
   color: var(--pixel-window-ink);
   padding: clamp(92px, 12vh, 132px) clamp(32px, 7vw, 104px)
@@ -183,7 +183,7 @@
           rgb(4 11 29 / 96%) 100%
         )
         center top / 100% 100% no-repeat,
-      url('../../../assets/live/live-join-portal-mobile-v1.png') center top /
+      url('../../../assets/live/live-join-portal-mobile-v1.webp') center top /
         100% auto no-repeat;
     background-color: var(--pixel-night-deep);
     padding: calc(106vw + 16px) 12px 24px;

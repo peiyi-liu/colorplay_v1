@@ -121,7 +121,7 @@ test.describe('JRPG guild-desk login', () => {
 
       if (viewport.width === 1280) {
         expect(portal.left).toBeGreaterThan(viewport.width * 0.45);
-        expect(metrics.backgroundImage).toContain('guild-desk-desktop.png');
+        expect(metrics.backgroundImage).toContain('guild-desk-desktop.webp');
         await expect(page.getByText('歡迎回來，冒險者。')).toBeVisible();
         const welcomeBox = await page
           .getByText('歡迎回來，冒險者。')
@@ -130,7 +130,7 @@ test.describe('JRPG guild-desk login', () => {
         expect(welcomeBox?.x ?? viewport.width).toBeLessThan(portal.left);
       } else {
         expect(portal.top).toBeGreaterThan(250);
-        expect(metrics.backgroundImage).toContain('guild-desk-mobile.png');
+        expect(metrics.backgroundImage).toContain('guild-desk-mobile.webp');
         await expect(page.getByText('冒險者公會')).toBeVisible();
         await expect(page.getByText('歡迎回來，冒險者。')).toBeHidden();
       }

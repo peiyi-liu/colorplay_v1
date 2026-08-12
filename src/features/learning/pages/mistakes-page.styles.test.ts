@@ -13,7 +13,7 @@ describe('mistakes archive scene styles', () => {
     expect(styles).toContain(
       '#main-content:has(> .mistakes-codex--archive-v2)',
     );
-    expect(styles).toContain('mistakes-archive-night-v1.png');
+    expect(styles).toContain('mistakes-archive-night-v1.webp');
     expect(styles).toContain('background-size: cover');
     expect(styles).not.toContain('position: fixed');
   });
@@ -32,7 +32,7 @@ describe('mistakes archive scene styles', () => {
       /> header h1\s*\{[^}]*display:\s*flex;[^}]*height:\s*40px;[^}]*align-items:\s*center;[^}]*font-family:\s*var\(--font-pixel-tc\);[^}]*font-size:\s*2rem;[^}]*line-height:\s*1;/u,
     );
     expect(styles).toMatch(/@media\s*\(max-width:\s*767px\)/u);
-    expect(styles).toContain('padding-top: 36px');
+    expect(styles).toContain('padding: 72px 10px 40px');
     expect(styles).toContain('font-size: 1.75rem');
   });
 });

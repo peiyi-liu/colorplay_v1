@@ -230,7 +230,7 @@ test('Learning Experience phase gate', async ({
     'mistake-group__badge',
   );
   await studentPage.getByRole('button', { name: '再挑戰（補救練習）' }).click();
-  await expect(studentPage.getByText(/補救練習模式/u)).toBeVisible();
+  await expect(studentPage.getByText(/補救練習模式/u)).toHaveCount(0);
   for (let position = 1; position <= 2; position += 1) {
     await expect(studentPage.getByLabel('挑戰進度')).toContainText(
       `第 ${String(position)} / 2 題`,

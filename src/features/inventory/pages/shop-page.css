@@ -7,7 +7,7 @@
       color-mix(in srgb, var(--pixel-night-deep) 18%, transparent),
       color-mix(in srgb, var(--pixel-night-deep) 48%, transparent)
     ),
-    url('../../../assets/shop/shop-market-night-v1.png');
+    url('../../../assets/shop/shop-market-night-v1.webp');
   background-repeat: no-repeat;
   background-position: center top;
   background-size: cover;
@@ -164,6 +164,12 @@
   gap: 6px;
 }
 
+@media (max-width: 767px) {
+  .scene-day.blook-shop.shop-market-v2 {
+    padding-top: 72px;
+  }
+}
+
 @media (max-width: 680px) {
   #main-content:has(> .shop-market-v2) {
     background-position: center top;
@@ -179,4 +185,5 @@
   .scene-day.shop-market-v2 .blook-shop__header h1 {
     font-size: 2rem;
   }
+
 }

@@ -11,7 +11,7 @@ const styles = readFileSync(
 describe('quiz result victory scene styles', () => {
   it('uses the generated victory background below the persistent HUD', () => {
     expect(styles).toContain('#main-content:has(> .quiz-result--victory-v2)');
-    expect(styles).toContain('quiz-victory-shrine-v1.png');
+    expect(styles).toContain('quiz-victory-shrine-v1.webp');
     expect(styles).toContain('background-size: cover');
     expect(styles).not.toContain('position: fixed');
   });

@@ -78,8 +78,8 @@ for (const viewport of [
         size: style.backgroundSize,
       };
     });
-    expect(background.image).toContain('live-student-arena-desktop-v1.png');
-    expect(background.image).not.toContain('live-student-arena-mobile-v1.png');
+    expect(background.image).toContain('live-student-arena-desktop-v1.webp');
+    expect(background.image).not.toContain('live-student-arena-mobile-v1.webp');
     expect(background.position).toContain('50% 72%');
     expect(background.size).toContain('auto 120%');
     const overflow = await page.evaluate(() =>

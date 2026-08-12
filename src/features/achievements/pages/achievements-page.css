@@ -7,7 +7,7 @@
       color-mix(in srgb, var(--pixel-night-deep) 20%, transparent),
       color-mix(in srgb, var(--pixel-night-deep) 48%, transparent)
     ),
-    url('../../../assets/achievements/achievements-sanctuary-v1.png');
+    url('../../../assets/achievements/achievements-sanctuary-v1.webp');
   background-position: center top;
   background-repeat: no-repeat;
   background-size: cover;
@@ -133,7 +133,12 @@
   }
 
   .scene-day.hall-of-medals.achievements--sanctuary-v2 {
-    padding: 26px 10px 18px;
+    padding: 72px 10px 18px;
+  }
+
+  .achievements--sanctuary-v2 .pastel-hero {
+    margin-top: 0;
+    padding-left: 0;
   }
 }
 

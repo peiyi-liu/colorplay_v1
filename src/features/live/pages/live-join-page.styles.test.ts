@@ -10,11 +10,11 @@ const styles = readFileSync(
 
 describe('Live join portal layout contract', () => {
   it('uses dedicated desktop and mobile generated backgrounds', () => {
-    expect(styles).toContain('live-join-portal-desktop-v1.png');
-    expect(styles).toContain('live-join-portal-mobile-v1.png');
+    expect(styles).toContain('live-join-portal-desktop-v1.webp');
+    expect(styles).toContain('live-join-portal-mobile-v1.webp');
     expect(styles).toMatch(/@media\s*\(max-width:\s*767px\)/u);
     expect(styles).toContain(
-      "url('../../../assets/live/live-join-portal-mobile-v1.png') center top /\n        100% auto no-repeat",
+      "url('../../../assets/live/live-join-portal-mobile-v1.webp') center top /\n        100% auto no-repeat",
     );
   });
 

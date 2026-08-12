@@ -13,7 +13,7 @@
   gap: clamp(12px, 1.8vw, 20px);
   background:
     linear-gradient(180deg, rgb(2 8 18 / 16%) 0%, rgb(2 8 18 / 38%) 100%),
-    url('../../../assets/quiz/quiz-battle-forest-v1.png') center / cover
+    url('../../../assets/quiz/quiz-battle-forest-v1.webp') center / cover
       no-repeat;
   color: var(--pixel-window-ink);
   padding: clamp(20px, 3vw, 38px) clamp(12px, 3vw, 32px) 32px;

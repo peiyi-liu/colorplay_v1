@@ -7,7 +7,7 @@
       color-mix(in srgb, var(--pixel-night-deep) 12%, transparent),
       color-mix(in srgb, var(--pixel-night-deep) 52%, transparent)
     ),
-    url('../../../assets/leaderboard/leaderboard-guild-hall-v1.png');
+    url('../../../assets/leaderboard/leaderboard-guild-hall-v1.webp');
   background-position: center top;
   background-repeat: no-repeat;
   background-size: cover;
@@ -278,7 +278,7 @@
   }
 
   .scene-day.guild-board.leaderboard-panel--guild-v2 {
-    padding: 18px 8px 40px;
+    padding: 72px 8px 40px;
   }
 
   .leaderboard-panel--guild-v2 > header {
@@ -330,8 +330,8 @@
 }
 
 @media (max-width: 767px) {
-  .leaderboard-panel--guild-v2 > header {
-    padding-top: 36px;
+  .scene-day.guild-board.leaderboard-panel--guild-v2 {
+    padding-top: 72px;
   }
 
   .guild-board.leaderboard-panel--guild-v2 > header h1 {

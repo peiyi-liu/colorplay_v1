@@ -20,7 +20,7 @@
   color: var(--pixel-window-ink);
   background:
     linear-gradient(180deg, rgb(2 10 31 / 22%), rgb(2 8 24 / 72%)),
-    url('../assets/chapter/chapter-archive-world-desktop-v3.png') center top /
+    url('../assets/chapter/chapter-archive-world-desktop-v3.webp') center top /
       cover scroll;
 }
 

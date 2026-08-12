@@ -13,7 +13,7 @@ describe('achievement sanctuary scene styles', () => {
     expect(styles).toContain(
       '#main-content:has(> .achievements--sanctuary-v2)',
     );
-    expect(styles).toContain('achievements-sanctuary-v1.png');
+    expect(styles).toContain('achievements-sanctuary-v1.webp');
     expect(styles).toContain('background-size: cover');
     expect(styles).not.toContain('position: fixed');
   });

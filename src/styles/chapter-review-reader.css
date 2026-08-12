@@ -26,7 +26,7 @@
       color-mix(in srgb, var(--pixel-night-deep) 12%, transparent),
       color-mix(in srgb, var(--stage-void) 72%, transparent)
     ),
-    url('../assets/chapter/review-reader/review-reader-world-desktop.png')
+    url('../assets/chapter/review-reader/review-reader-world-desktop.webp')
       center top / cover scroll;
 }
 
@@ -89,7 +89,7 @@
   border: 0;
   border-radius: 0;
   outline: 0;
-  background: url('../assets/chapter/review-reader/open-book-spread-upright.png')
+  background: url('../assets/chapter/review-reader/open-book-spread-upright.webp')
     center / 100% 100% no-repeat;
   color: var(--stage-void);
   box-shadow: 0 24px 42px color-mix(in srgb, var(--stage-void) 72%, transparent);
