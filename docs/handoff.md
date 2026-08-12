@@ -593,3 +593,9 @@
 - 修復 production CSS cascade：共用 `.scene-night` 在打包後以相同 specificity、較晚順序把 Quiz 生成背景覆蓋成純深色；Quiz 專屬 root selector 改為 `.scene-night.quiz-runner--battle-v2`，使 `quiz-battle-forest-v1.png` 與本頁 feedback 無框／方框規則穩定高於共用夜景規則。新增 CSS 契約測試鎖定高權重 selector 與生成圖片引用。
 - 驗證：受影響 Vitest 2 files／16 tests、lint、typecheck、production build、`git diff --check` 全綠；production bundle 已確認輸出高權重 selector 與 hashed forest asset。舊 4181 Vite 程序失去回應後已停止並重啟，本機 idle 預覽已重新開啟。
 - 邊界：未修改教師端、共享 HUD／AppShell／globals／tokens、API 或資料庫；未 push、未 deploy。
+
+## 2026-08-12 20:09 [Owner／Codex] — Quiz 題目作答區固定於內容底部
+
+- 將補救提示、題目／選項、送出錯誤與答題解析收進 `quiz-runner__question-dock`；Quiz root 使用 `auto / minmax(180px, 1fr) / auto` 三列，讓中央戰鬥區吸收剩餘高度、作答方格保持在 HUD 下方內容視窗的正下方。刻意不使用 fixed／absolute；高度不足、縮放或解析展開時由容器自然增高並捲動，避免覆蓋小精靈與文字。
+- TDD：先新增 DOM dock 與 CSS growing-row 契約 RED，再完成 GREEN。Quiz 13 files／69 tests、lint、typecheck、production build、`git diff --check` 全綠；`quiz-session.tsx` 498 行，仍低於 500 行上限。本機 idle 預覽已由 HMR 更新並重新開啟。
+- 邊界：未修改教師端、共享 HUD／AppShell／globals／tokens、API 或資料庫；未 push、未 deploy。

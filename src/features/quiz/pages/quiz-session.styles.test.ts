@@ -15,4 +15,12 @@ describe('quiz battle background styles', () => {
       "url('../../../assets/quiz/quiz-battle-forest-v1.png')",
     );
   });
+
+  it('uses a growing middle row so the question dock stays at the bottom', () => {
+    expect(styles).toContain(
+      'grid-template-rows: auto minmax(180px, 1fr) auto;',
+    );
+    expect(styles).toContain('.quiz-runner__question-dock {');
+    expect(styles).not.toContain('position: fixed');
+  });
 });

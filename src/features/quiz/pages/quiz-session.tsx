@@ -431,61 +431,67 @@ export function QuizSessionPage({
           questionSeed={displayedQuestion.stableCode}
         />
 
-        {session.gameRulesVersion === '2026-07-progress-1' ? (
-          <p role="status">
-            補救練習模式：答對可解決錯題並回復精熟；不發 Token，XP 以 20%
-            計，原始成績不變。
-          </p>
-        ) : null}
+        <div className="quiz-runner__question-dock">
+          {session.gameRulesVersion === '2026-07-progress-1' ? (
+            <p role="status">
+              補救練習模式：答對可解決錯題並回復精熟；不發 Token，XP 以 20%
+              計，原始成績不變。
+            </p>
+          ) : null}
 
-        <QuestionCard
-          isPending={submitMutation.isPending}
-          locked={
-            feedbackResult !== undefined || actionError?.kind === 'submit'
-          }
-          onSelect={(optionId) => {
-            setSelection({
-              optionId,
-              questionId: displayedQuestion.sessionQuestionId,
-            });
-          }}
-          onSubmit={() => void submit(selectedOptionId)}
-          question={displayedQuestion}
-          selectedOptionId={
-            feedbackResult ? feedbackResult.selectedOptionId : selectedOptionId
-          }
-        />
-
-        {actionError ? (
-          <div className="quiz-action-error" role="alert">
-            <p>{actionError.message}</p>
-            {actionError.kind === 'submit' ? (
-              <button
-                className="primary-action"
-                data-primary-action="true"
-                disabled={submitMutation.isPending}
-                onClick={() => {
-                  const attempt = submissionAttempt.current;
-                  if (attempt) void submit(attempt.selectedId);
-                }}
-                type="button"
-              >
-                重試送出
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-
-        {feedbackResult ? (
-          <FeedbackCard
-            isLastQuestion={
-              displayedQuestion.position === session.questionCount
+          <QuestionCard
+            isPending={submitMutation.isPending}
+            locked={
+              feedbackResult !== undefined || actionError?.kind === 'submit'
             }
-            isPending={finalizeMutation.isPending || activateMutation.isPending}
-            onContinue={() => void continueAfterFeedback()}
-            result={feedbackResult}
+            onSelect={(optionId) => {
+              setSelection({
+                optionId,
+                questionId: displayedQuestion.sessionQuestionId,
+              });
+            }}
+            onSubmit={() => void submit(selectedOptionId)}
+            question={displayedQuestion}
+            selectedOptionId={
+              feedbackResult
+                ? feedbackResult.selectedOptionId
+                : selectedOptionId
+            }
           />
-        ) : null}
+
+          {actionError ? (
+            <div className="quiz-action-error" role="alert">
+              <p>{actionError.message}</p>
+              {actionError.kind === 'submit' ? (
+                <button
+                  className="primary-action"
+                  data-primary-action="true"
+                  disabled={submitMutation.isPending}
+                  onClick={() => {
+                    const attempt = submissionAttempt.current;
+                    if (attempt) void submit(attempt.selectedId);
+                  }}
+                  type="button"
+                >
+                  重試送出
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
+          {feedbackResult ? (
+            <FeedbackCard
+              isLastQuestion={
+                displayedQuestion.position === session.questionCount
+              }
+              isPending={
+                finalizeMutation.isPending || activateMutation.isPending
+              }
+              onContinue={() => void continueAfterFeedback()}
+              result={feedbackResult}
+            />
+          ) : null}
+        </div>
       </section>
     </>
   );

@@ -8,6 +8,7 @@
   width: 100%;
   min-width: 0;
   min-height: 100%;
+  grid-template-rows: auto minmax(180px, 1fr) auto;
   align-content: start;
   gap: clamp(12px, 1.8vw, 20px);
   background:
@@ -16,6 +17,18 @@
       no-repeat;
   color: var(--pixel-window-ink);
   padding: clamp(20px, 3vw, 38px) clamp(12px, 3vw, 32px) 32px;
+}
+
+.quiz-runner__question-dock {
+  display: grid;
+  min-width: 0;
+  align-self: end;
+  gap: clamp(12px, 1.8vw, 20px);
+}
+
+.quiz-runner__question-dock > p[role='status'] {
+  margin: 0;
+  color: var(--pixel-window-muted);
 }
 
 .quiz-runner--battle-v2 > * {

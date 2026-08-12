@@ -551,6 +551,10 @@ describe('QuizSessionPage', () => {
     });
     const runner = heading.closest('section');
     expect(runner).toHaveClass('quiz-runner', 'scene-night', 'battle-scene');
+    expect(runner?.lastElementChild).toHaveClass('quiz-runner__question-dock');
+    expect(
+      runner?.lastElementChild?.querySelector('.question-card'),
+    ).not.toBeNull();
     expect(screen.getByText('3-1・色彩三要素與色名的表示')).toBeVisible();
     expect(screen.queryByText('小精靈挑戰')).toBeNull();
     expect(screen.getByLabelText('挑戰進度').children).toHaveLength(3);
