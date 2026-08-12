@@ -90,15 +90,18 @@ describe('ShopPage', () => {
     expect(
       await screen.findByRole('heading', { name: '裝備商店' }),
     ).toBeVisible();
+    expect(screen.queryByText('你的角色收藏')).toBeNull();
     // 分頁批:全域 matchMedia stub matches:false → narrow 容量 4,
     // items=6 → 溢出兩頁(頁1=little_fox/lucky_cat/travel_frog/wise_owl,
     // 頁2=primary_lion/rainbow_horse)。拆頁1/頁2兩段驗證,不再單測全量。
     const page1 = items.slice(0, 4);
     const page2 = items.slice(4);
-    page1.forEach(([, , name, , cost]) => {
+    page1.forEach(([, , name]) => {
       expect(screen.getByRole('heading', { name })).toBeVisible();
-      expect(screen.getByLabelText(`${String(cost)} Token`)).toBeVisible();
     });
+    expect(
+      document.querySelectorAll('.blook-card > p[aria-label$="Token"]'),
+    ).toHaveLength(0);
     page2.forEach(([, , name]) => {
       expect(screen.queryByRole('heading', { name })).toBeNull();
     });
@@ -117,10 +120,12 @@ describe('ShopPage', () => {
 
     await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
 
-    page2.forEach(([, , name, , cost]) => {
+    page2.forEach(([, , name]) => {
       expect(screen.getByRole('heading', { name })).toBeVisible();
-      expect(screen.getByLabelText(`${String(cost)} Token`)).toBeVisible();
     });
+    expect(
+      document.querySelectorAll('.blook-card > p[aria-label$="Token"]'),
+    ).toHaveLength(0);
     page1.forEach(([, , name]) => {
       expect(screen.queryByRole('heading', { name })).toBeNull();
     });

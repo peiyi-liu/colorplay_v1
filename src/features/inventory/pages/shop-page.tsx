@@ -238,10 +238,7 @@ export function ShopPage({
       aria-labelledby="blook-shop-title"
     >
       <header className="blook-shop__header">
-        <div>
-          <p className="route-panel__eyebrow">你的角色收藏</p>
-          <h1 id="blook-shop-title">裝備商店</h1>
-        </div>
+        <h1 id="blook-shop-title">裝備商店</h1>
         <strong
           aria-label={`${String(inventory.data.tokenBalance)} Token 可用`}
         >
@@ -304,9 +301,6 @@ export function ShopPage({
                       />
                     </span>
                     <h2>{item.name}</h2>
-                    <p aria-label={`${String(item.costTokens)} Token`}>
-                      <CoinAmount amount={item.costTokens} />
-                    </p>
                     {item.equipped ? (
                       <strong className="blook-card__state">已裝備</strong>
                     ) : item.owned ? (

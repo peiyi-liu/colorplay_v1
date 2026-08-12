@@ -19,4 +19,12 @@ describe('shop page scene styles', () => {
   it('reuses the HUD 32-bit coin sprite for shop amounts', () => {
     expect(css).toContain('.shop-coin-amount .hud-coin-pixel--32bit');
   });
+
+  it('uses an enlarged title and one rectangular tab enclosure', () => {
+    expect(css).toContain('.scene-day.shop-market-v2 .blook-shop__header h1');
+    expect(css).toContain('font-size: clamp(2rem, 4vw, 3rem)');
+    expect(css).toMatch(
+      /\.shop-market-v2 \.shop-tabs\s*\{[^}]*border:\s*2px solid var\(--pixel-gold-deep\);[^}]*border-radius:\s*var\(--radius-pixel\);/u,
+    );
+  });
 });

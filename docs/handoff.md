@@ -647,3 +647,9 @@
 - 商店餘額、商品價格、購買與不足差額都改用 HUD 相同的 `hud-coin-pixel--32bit` 金幣；螢幕閱讀器名稱仍保留 Token 語意。唯一一次 review 發現不足 Toast 還有可見 Token 金額，已改為不帶金額的金幣不足訊息。
 - 修復外框裝備後 HUD 不更新：根因是商店 mutation 已正確更新 `['inventory', 'frames']` 權威快取，但學生 AppShell 沒有訂閱；現在 HUD 直接讀同一 frame inventory snapshot，依 server 回傳的 equipped item 套用漸層外框，沒有把購買或餘額判定搬到前端。
 - 驗證：受影響 Vitest 4 files／45 tests、Chromium harness 1280／393／320 共 3／3、lint、typecheck、production build、Prettier 與 `git diff --check` 全綠。未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師 CSS、globals 或 tokens，未合併教師 branch、未 push、未 deploy。本機入口：`http://127.0.0.1:4183/dev-harness/shop.html`。
+
+## 2026-08-12 23:25 [Owner／Codex] — 商店頁首與分類框微調
+
+- 移除「你的角色收藏」，將「裝備商店」放大至桌機 3rem／手機 2rem；角色／外框改由單一像素直角長方形底座包住，不再使用白色橢圓底。
+- 依 owner 釐清，只移除角色名稱與操作按鈕中間的獨立金幣價格列；購買按鈕內價格、頁首餘額、購買確認與外框價格維持不變。
+- 驗證：Shop Vitest 2 files／13 tests、Chromium 1280／393／320 共 3／3、lint、typecheck、Prettier 與 `git diff --check` 全綠；本機 1280px 目視確認。S 級純 UI 微調不另啟 review；未觸及教師端、API、DB 或共享 globals／tokens。
