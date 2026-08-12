@@ -682,3 +682,8 @@
 
 - 我的錯題頁中，尚未解決題目的原黑色魔物／石頭剪影改為 `--coral-700` 紅色；已解決題目仍使用原本全彩圖示。使用 sprite mask 保留既有輪廓與尺寸，未修改補救狀態或資料邏輯。
 - 驗證：Mistakes Vitest 2 files／8 tests、Prettier 與 `git diff --check` 全綠；393px Chromium 目視確認紅色待補救圖示與藍色已解決圖示同時正確顯示。S 級單頁 CSS 調整不另啟 review。
+
+## 2026-08-13 00:03 [Owner／Codex] — 待補救圖示改為紅色小精靈並精簡說明
+
+- 依 owner 釐清，待補救題目不是紅色石頭／剪影，而是使用既有 `SpiritAvatar` 的完整紅色小精靈 sprite；已解決題目仍保留原本藍色圖示。頁首說明精簡為「補救練習答對即可解決錯題並回復精熟。」
+- 驗證：Mistakes Vitest 2 files／8 tests、typecheck、Prettier 與 `git diff --check` 全綠；393px Chromium 目視確認紅色小精靈、精簡文案與已解決藍色圖示均正確。S 級單頁文案／圖示調整不另啟 review。

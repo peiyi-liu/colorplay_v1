@@ -112,7 +112,7 @@ describe('MistakesPage', () => {
     });
   });
 
-  it('renders codex monsters: silhouettes for open mistakes, lit for resolved', async () => {
+  it('renders a red spirit for open mistakes and a lit monster for resolved', async () => {
     const repository = {
       listMistakes: vi.fn().mockResolvedValue(mistakes),
       startRemediation: vi.fn(),
@@ -129,13 +129,27 @@ describe('MistakesPage', () => {
         '.mistakes-codex.mistakes-codex--archive-v2.scene-day',
       ),
     ).not.toBeNull();
+    expect(document.querySelector('.spirit-avatar--red')).not.toBeNull();
     const monsters = document.querySelectorAll('.codex-monster');
-    expect(monsters).toHaveLength(2);
+    expect(monsters).toHaveLength(1);
     expect(document.querySelectorAll('.codex-monster--lit')).toHaveLength(1);
     for (const monster of monsters) {
       expect(monster).toHaveAttribute('aria-hidden', 'true');
       expect(monster).toBeEmptyDOMElement();
     }
+  });
+
+  it('shows the concise remediation explanation', async () => {
+    const repository = {
+      listMistakes: vi.fn().mockResolvedValue(mistakes),
+      startRemediation: vi.fn(),
+    } as unknown as LearningRepository;
+    renderPage(repository);
+
+    expect(
+      await screen.findByText('補救練習答對即可解決錯題並回復精熟。'),
+    ).toBeVisible();
+    expect(screen.queryByText(/不發 Token/u)).toBeNull();
   });
 
   it('groups only open and reopened mistakes', () => {

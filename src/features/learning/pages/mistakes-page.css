@@ -100,17 +100,6 @@
   color: var(--pixel-window-ink);
 }
 
-#main-content
-  > .mistakes-codex--archive-v2
-  .codex-monster:not(.codex-monster--lit) {
-  background: var(--coral-700);
-  filter: none;
-  mask: url('../../../assets/sprites/monster-base.png') center bottom / 32px
-    32px no-repeat;
-  -webkit-mask: url('../../../assets/sprites/monster-base.png') center bottom /
-    32px 32px no-repeat;
-}
-
 #main-content > .mistakes-codex--archive-v2 .mistake-list__item,
 #main-content > .mistakes-codex--archive-v2 .mistake-resolved__list > li {
   border: 2px solid
