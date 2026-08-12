@@ -275,6 +275,9 @@ describe('QuizSessionPage', () => {
     renderQuiz(mock.repository);
 
     expect(await screen.findByText('第 1 題')).toBeVisible();
+    const firstSpiritClass = document.querySelector(
+      '.battle-stage .spirit-avatar',
+    )?.className;
     await userEvent.click(screen.getByRole('radio', { name: 'CMYK' }));
     await userEvent.click(screen.getByRole('button', { name: '送出答案' }));
 
@@ -296,6 +299,9 @@ describe('QuizSessionPage', () => {
     );
     expect(mock.activateNextQuestion).toHaveBeenCalledWith(sessionId);
     expect(await screen.findByText('第 2 題')).toBeVisible();
+    expect(
+      document.querySelector('.battle-stage .spirit-avatar')?.className,
+    ).not.toBe(firstSpiritClass);
     expect(screen.queryByText('RGB 使用三色光。')).toBeNull();
     expect(screen.getByRole('button', { name: '送出答案' })).toBeDisabled();
   });
@@ -340,6 +346,10 @@ describe('QuizSessionPage', () => {
     expect(
       await screen.findByRole('heading', { name: '✓ 答對了' }),
     ).toBeVisible();
+    expect(document.querySelector('.battle-stage')).toHaveAttribute(
+      'data-enemy-health',
+      'empty',
+    );
     expect(
       screen.getByRole('button', { name: '結算並查看結果' }),
     ).toBeEnabled();
@@ -582,6 +592,10 @@ describe('QuizSessionPage', () => {
     ).toBeVisible();
     expect(document.querySelector('.battle-stage--miss')).not.toBeNull();
     expect(document.querySelector('.battle-stage--attacking')).toBeNull();
+    expect(document.querySelector('.battle-stage')).toHaveAttribute(
+      'data-enemy-health',
+      'full',
+    );
   });
 
   it('plays the enemy strike, not a player slash, on timeout', async () => {

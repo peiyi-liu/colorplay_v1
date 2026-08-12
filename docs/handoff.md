@@ -561,3 +561,10 @@
 - 單頁書：手機／窄橫向閱讀器將統一返回鍵放在書面左上，章節與小節標題在右上，兩者頂緣同列且至少相隔 8px；返回鍵沿用底部閱讀控制的藍色像素按鍵視覺，並維持至少 44px 點擊高度。正文安全區與底部三鍵未移動。
 - 裁切稽核：所有學生 `/app/**` route 共用 HUD 後、`#main-content` 前的 AppShell 正常版面流；CSS 搜尋未發現章節／閱讀器以外的學生頁 fixed background 或自訂 `100dvh` 繞過 HUD。學習地圖、章節、閱讀器與 HUD 有實際 viewport 證據；Quiz、商店、成就、排行榜等受共同 shell 契約保護，但本 task 未逐頁建立瀏覽器視覺證據。
 - TDD／驗證：手機暱稱單行與單頁書標頭皆先 RED 後 GREEN。Vitest 4 files／47 tests、HUD Chromium 4/4、Reader Chromium 8/8、全域 lint、typecheck、production build、Prettier、`git diff --check` 全綠。唯一一次 scoped self-review：Standards 0、Spec 0；Security 軸不適用。未修改教師端檔案、未合併教師 branch、未 push、未 deploy。
+
+## 2026-08-12 19:04 [Owner／Codex] — 小節／章節 Quiz 小精靈戰鬥畫面
+
+- 小節挑戰與章節總挑戰共用的正式 `QuizSessionPage` 改為 v2 戰鬥構圖：桌機 A／B／C／D 兩欄四宮格、手機單欄，選項不加圖案；保留題號／總題數、Quiz Score、server deadline timer 與單一送出主操作。移除佔空間的精熟 MapStepper，返回鍵仍是 HUD 下方左上角的全站統一按鈕，Quiz 離開確認／server-authoritative abandon 行為不變。
+- 以內建 imagegen 產生純環境像素夜森林 `src/assets/quiz/quiz-battle-forest-v1.png`（1672×941，無主角、精靈、文字或 UI），由 CSS 作 battle stage 背景。戰鬥對手改用既有三色 `SpiritAvatar`；stable code 只負責每題確定性換精靈。血條只在 server feedback 對應的 `hit`／correct phase 歸零並播放 700ms 擊敗動畫；incorrect／timeout 維持滿血，未把正誤或獎勵判定搬到前端。
+- TDD／驗證：BattleStage 先以 3 個 RED 鎖定滿血精靈、correct 清血與下一題換精靈，再完成 GREEN；Quiz feature 11 files／63 tests、全域 lint、typecheck、production build、Prettier 與 `git diff --check` 全綠。唯一一次 scoped self-review：Standards 0、Spec 0；Security 軸因 diff 未觸及 trust boundary 而略過。內建瀏覽器本 session 無可用實例，故未把 1280／393 目視檢查宣稱為已通過；dev/test-only 本機入口為 `http://127.0.0.1:4181/dev-harness/quiz-session.html?scenario=idle`，另有 `scenario=correct` 可檢查血條歸零。
+- 協作邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page、教師分析或共享 HUD／AppShell／globals／tokens；未合併教師 branch、未 push、未 deploy。
