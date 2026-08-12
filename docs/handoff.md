@@ -606,3 +606,8 @@
 - 六格外觀由單一 semantic input 驅動，保留貼上、Backspace、前導 0、numeric keyboard 與 screen-reader label；原有 Zod、`useJoinLive`、request ID、safe error mapping 與成功後等待室導航未改。只有實際驗證／repository 錯誤時才渲染 alert。
 - 驗證：Live Vitest 16 files／100 tests、lint、typecheck、production build、Prettier，`git diff --check` 全綠；Chromium harness 1280／393／320 與 safe-error 為 4／4，無水平 overflow、背景起點對齊 HUD 下緣。唯一一輪 scoped review 為 Standards 0／Spec 0，Security 軸不適用。AC-UI-009／015 有 task-level 自動驗證；AC-UI-010 實體手機鍵盤證據仍依規格留待 phase gate 人工提供。
 - 邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師 CSS，也未修改共享 HUD／AppShell／globals／tokens、API 或資料庫；未合併教師 branch、未 push、未 deploy。本機預覽：`http://127.0.0.1:4181/dev-harness/live-join.html`。
+
+## 2026-08-12 20:50 [Owner／Codex] — 修正 Live 手機背景門位置
+
+- 根因為手機背景使用 `cover`，場景高度被表單撐長時圖片會重新縮放，造成傳送門往下漂移。改為依 viewport 寬度 `100% auto` 縮放並鎖定 `center top`，標題／表單的上邊距也改用 viewport 寬度推導，確保門穩定在畫面上方、內容從門下方開始。
+- 驗證：CSS contract 2／2、Chromium 1280／393／320 與 safe-error 4／4、lint、typecheck、production build 全綠。未啟動第二輪 review，遵守每 task 最多一輪 review 規則。

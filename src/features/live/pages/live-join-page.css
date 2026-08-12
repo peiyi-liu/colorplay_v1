@@ -176,15 +176,17 @@
     gap: 14px;
     background:
       linear-gradient(
-        180deg,
-        transparent 0 31%,
-        rgb(4 11 29 / 12%) 40%,
-        rgb(4 11 29 / 78%) 55%,
-        rgb(4 11 29 / 96%) 100%
-      ),
+          180deg,
+          transparent 0 31%,
+          rgb(4 11 29 / 12%) 40%,
+          rgb(4 11 29 / 78%) 55%,
+          rgb(4 11 29 / 96%) 100%
+        )
+        center top / 100% 100% no-repeat,
       url('../../../assets/live/live-join-portal-mobile-v1.png') center top /
-        cover no-repeat;
-    padding: clamp(300px, 46dvh, 430px) 12px 24px;
+        100% auto no-repeat;
+    background-color: var(--pixel-night-deep);
+    padding: calc(106vw + 16px) 12px 24px;
   }
 
   .live-join--portal > .live-join__header h1 {

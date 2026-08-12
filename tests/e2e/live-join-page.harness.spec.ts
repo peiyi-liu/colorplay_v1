@@ -16,8 +16,12 @@ for (const viewport of viewports) {
     const scene = page.locator('.live-join--portal');
     const form = page.locator('.live-join__form');
     const input = page.getByLabel('輸入 6 位加入代碼');
-    await expect(page.getByRole('heading', { name: '加入 Live 課堂' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '返回前一頁' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: '加入 Live 課堂' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: '返回前一頁' }),
+    ).toBeVisible();
     await expect(scene).toBeVisible();
 
     const metrics = await page.evaluate(() => {
@@ -32,6 +36,8 @@ for (const viewport of viewports) {
       const sceneBox = scene.getBoundingClientRect();
       return {
         backgroundImage: getComputedStyle(scene).backgroundImage,
+        backgroundPosition: getComputedStyle(scene).backgroundPosition,
+        backgroundSize: getComputedStyle(scene).backgroundSize,
         formLeft: formBox.left,
         formRight: formBox.right,
         mainClientWidth: main.clientWidth,
@@ -43,6 +49,11 @@ for (const viewport of viewports) {
       };
     });
     expect(metrics.backgroundImage).toContain(viewport.asset);
+    if (viewport.width < 768) {
+      expect(metrics.backgroundPosition).toBe('50% 0%, 50% 0%');
+      // CSSOM serializes `100% auto` as the equivalent single-value `100%`.
+      expect(metrics.backgroundSize).toBe('100% 100%, 100%');
+    }
     expect(Math.abs(metrics.sceneTop - metrics.hudBottom)).toBeLessThanOrEqual(
       1,
     );
@@ -64,12 +75,16 @@ for (const viewport of viewports) {
       '4',
       '5',
     ]);
-    await form.getByRole('button', { name: '加入課堂' }).scrollIntoViewIfNeeded();
+    await form
+      .getByRole('button', { name: '加入課堂' })
+      .scrollIntoViewIfNeeded();
     await expect(form.getByRole('button', { name: '加入課堂' })).toBeVisible();
   });
 }
 
-test('student Live join displays the safe repository error', async ({ page }) => {
+test('student Live join displays the safe repository error', async ({
+  page,
+}) => {
   await page.setViewportSize({ height: 852, width: 393 });
   await page.goto('/dev-harness/live-join.html');
 

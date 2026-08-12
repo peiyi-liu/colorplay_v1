@@ -13,6 +13,9 @@ describe('Live join portal layout contract', () => {
     expect(styles).toContain('live-join-portal-desktop-v1.png');
     expect(styles).toContain('live-join-portal-mobile-v1.png');
     expect(styles).toMatch(/@media\s*\(max-width:\s*767px\)/u);
+    expect(styles).toContain(
+      "url('../../../assets/live/live-join-portal-mobile-v1.png') center top /\n        100% auto no-repeat",
+    );
   });
 
   it('fills the HUD remaining scene without fixed positioning', () => {
