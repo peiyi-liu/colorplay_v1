@@ -100,12 +100,12 @@
 .guild-board.leaderboard-panel--guild-v2 .leaderboard-table td:first-child {
   width: 22%;
   border-left: 2px solid var(--pixel-gold-deep);
-  text-align: left;
+  text-align: center;
 }
 
 .guild-board.leaderboard-panel--guild-v2 .leaderboard-table th:nth-child(2),
 .guild-board.leaderboard-panel--guild-v2 .leaderboard-table td:nth-child(2) {
-  text-align: left;
+  text-align: center;
 }
 
 .guild-board.leaderboard-panel--guild-v2
@@ -117,6 +117,7 @@
   tbody
   td:nth-child(2) {
   padding-top: 0;
+  padding-right: 0;
   padding-bottom: 0;
   padding-left: 0;
 }
@@ -125,7 +126,7 @@
 .guild-board.leaderboard-panel--guild-v2 .leaderboard-table td:last-child {
   width: 22%;
   border-right: 2px solid var(--pixel-gold-deep);
-  text-align: right;
+  text-align: center;
 }
 
 .guild-board.leaderboard-panel--guild-v2 .leaderboard-table tbody th,
@@ -184,8 +185,15 @@
 .guild-board.leaderboard-panel--guild-v2 .leaderboard-blook {
   min-width: 0;
   min-height: 64px;
+  align-items: center;
   flex-wrap: wrap;
+  justify-content: center;
   overflow-wrap: anywhere;
+}
+
+.guild-board.leaderboard-panel--guild-v2 .leaderboard-table th,
+.guild-board.leaderboard-panel--guild-v2 .leaderboard-table td {
+  vertical-align: middle;
 }
 
 .guild-board.leaderboard-panel--guild-v2

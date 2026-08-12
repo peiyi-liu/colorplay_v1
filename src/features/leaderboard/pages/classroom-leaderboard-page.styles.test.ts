@@ -41,14 +41,16 @@ describe('leaderboard guild hall scene styles', () => {
     expect(mobileStyles).toContain('height: 60px');
   });
 
-  it('enlarges the title and aligns headers with their data columns', () => {
+  it('enlarges the title and centers every table column on both axes', () => {
     expect(styles).toContain('font-size: clamp(2rem, 4vw, 2.75rem)');
     expect(styles).toMatch(
-      /\.leaderboard-table th:first-child,[\s\S]*?text-align:\s*left;/u,
+      /\.leaderboard-table th:first-child,[\s\S]*?text-align:\s*center;/u,
     );
     expect(styles).toMatch(
-      /\.leaderboard-table th:last-child,[\s\S]*?text-align:\s*right;/u,
+      /\.leaderboard-table th:last-child,[\s\S]*?text-align:\s*center;/u,
     );
+    expect(styles).toContain('vertical-align: middle');
+    expect(styles).toContain('justify-content: center');
     expect(styles).toMatch(
       /\.leaderboard-table[\s\S]*?tbody[\s\S]*?td:nth-child\(2\)[\s\S]*?padding-top:\s*0;[\s\S]*?padding-left:\s*0;/u,
     );
