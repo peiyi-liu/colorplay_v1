@@ -533,3 +533,10 @@
 - HUD／章節：Level 與 XP progress 改為同一 progression row，1280／393 無重疊或水平 overflow。章節進度框改至右上內容區，新增獨立「學習狀態」標籤，狀態 pill、複習進度與精熟內容全部受框內 containment 測試；目錄、複習卡、小節挑戰、章節總挑戰維持原排列並以 1004px 內容寬置中。「進入複習」與頁底保留至少 24px。`chapter-archive.css` 與 chapter harness 已拆分；本次新增檔、QuizSession production 與主要 chapter CSS／harness 均低於 500 行。既有 `app-shell.test.tsx`／`quiz-session.test.tsx` 原已超過上限，本次只加入必要 mock／assertion，未在此 UI task 擴張範圍重構。
 - 驗證：完整本機 pgTAP 51 files／1149 tests 全綠；Supabase generated types 與 `src/types/database.ts` 完全一致。受影響 Vitest 8 files／87 tests、全域 lint、typecheck、production build 全綠；Chapter Chromium 7/7（320／375／393／1024／1280／1440 與鍵盤），HUD Chromium 4/4（1280／393）全綠；`git diff --check` 通過。唯一一輪 scoped self-review 檢查 trust boundary、navigation/history、Dialog、responsive containment 與 500-line 規則，無未解 finding。全域 `pnpm test` 另有既存 tokens／chapter-sequence stale contract 與 sandbox localhost EPERM 測試失敗，未改舊測試假裝全綠。
 - 邊界：migration 只套用並驗證於本機 Supabase；未寫 staging／production，未 commit、未 push、未 deploy。工作樹保留本 task 未提交變更，下一步由 owner 先做本機視覺確認，再決定是否 commit／部署。
+
+## 2026-08-12 17:04 [Owner／Codex] — 學生導覽與 Quiz 作廢整合發布至 staging
+
+- 整合來源：`a8845ba05bcec25e9a32458127dbf8fe4ab1df7b` 已確認為本次 feature commit `dd59bd74fd67464d8493a5446072babc78f84f8e` 的祖先；因此公開 staging 同時包含既有 content import 與本次學生返回、Quiz 中途作廢、HUD XP、章節狀態／置中／間距調整。branch `phase6/jrpg-generated-board-ui` 已推至 GitHub。
+- Staging DB：dry-run 只列出 `20260812000100_abandon_quiz_session.sql` 與 `20260812000200_abandon_quiz_session_command.sql`，已套用至 `onkxnkzeixpezetkmocf`；遠端 migration history 再查確認兩筆 local／remote 對齊。push 完成後 CLI 的 pg-delta catalog cache 曾出現本機 CA 檔 ENOENT warning，不影響遠端 migration 成功結果。
+- Hosted：GitHub-source preview `dpl_7kwu8qy2YZvDK5gxaLK5sQ8rAdCW` 經 Git metadata、bundle staging host／anon-key fingerprint 與合成學生 Auth／bootstrap 至 `/app` 通過後 promote；公開 production deployment 為 `dpl_635Hhfgs89Ebu64tiYJu7BvE5Ra8`，其 Git provenance 仍是 `dd59bd74…`，`staging.colorplayapp.com` 已指向該 deployment。公開 alias 的 `/`、`/login`、`/app` 均為 HTTP 200，bundle 只命中 `onkxnkzeixpezetkmocf`、未命中 production ref，合成學生登入至 `/app` 再次通過。
+- 邊界：本次只更新 staging，未部署 `colorplayapp.com` production；Android system Back 的實體裝置證據仍待 phase gate 人工驗證。
