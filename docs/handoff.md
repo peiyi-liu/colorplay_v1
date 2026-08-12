@@ -568,3 +568,9 @@
 - 以內建 imagegen 產生純環境像素夜森林 `src/assets/quiz/quiz-battle-forest-v1.png`（1672×941，無主角、精靈、文字或 UI），由 CSS 作 battle stage 背景。戰鬥對手改用既有三色 `SpiritAvatar`；stable code 只負責每題確定性換精靈。血條只在 server feedback 對應的 `hit`／correct phase 歸零並播放 700ms 擊敗動畫；incorrect／timeout 維持滿血，未把正誤或獎勵判定搬到前端。
 - TDD／驗證：BattleStage 先以 3 個 RED 鎖定滿血精靈、correct 清血與下一題換精靈，再完成 GREEN；Quiz feature 11 files／63 tests、全域 lint、typecheck、production build、Prettier 與 `git diff --check` 全綠。唯一一次 scoped self-review：Standards 0、Spec 0；Security 軸因 diff 未觸及 trust boundary 而略過。內建瀏覽器本 session 無可用實例，故未把 1280／393 目視檢查宣稱為已通過；dev/test-only 本機入口為 `http://127.0.0.1:4181/dev-harness/quiz-session.html?scenario=idle`，另有 `scenario=correct` 可檢查血條歸零。
 - 協作邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page、教師分析或共享 HUD／AppShell／globals／tokens；未合併教師 branch、未 push、未 deploy。
+
+## 2026-08-12 19:09 [Owner／Codex] — 修復 Quiz 本機預覽空白頁
+
+- Owner 回報 `quiz-session` harness 只有底色。新增掛載回歸測試後穩定重現：共用 `StudentHudHarness` 使用 declarative `MemoryRouter`，但正式 Quiz 的 `QuizExitGuard` 需要 data router 才能呼叫 `useBlocker`，React 因 runtime invariant 中止整棵預覽樹；正式 App 原本已使用 data router，不受此 harness-only 問題影響。
+- 修正：將 dev/test-only `StudentHudHarness` 改為 `createMemoryRouter`＋`RouterProvider`，維持既有 HUD／返回鍵／子頁結構。新增 `quiz-session.harness.test.tsx` 鎖定預覽必須掛載章節標題與 4 個正式 radio 選項。修復後 Quiz 12 files／64 tests、HUD／AppShell 2 files／33 tests、全域 lint、typecheck、production build、Prettier 與 `git diff --check` 全綠；本機 idle 預覽已重新開啟。
+- 邊界：只修改 dev/test-only 學生 harness 與回歸測試，未改正式 Quiz 行為、教師端、共享產品 AppShell／HUD CSS、API、資料庫、push 或部署。
