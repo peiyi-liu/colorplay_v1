@@ -626,3 +626,14 @@
 - `teacher_classroom_overview` 的 aggregate 原會在無 ownership 時產生一列空摘要；最終 aggregate 加入 `having exists (select 1 from owned_classroom)`，使 student、non-owner 與跨班級查詢零列，同時保留合法 owner 空班級的一列零摘要。四個公開 projection 的授權矩陣與 internal `teacher_assessment_facts` execute revoke 均通過。
 - Fresh 驗證：focused 教師 pgTAP 63/63、完整 local DB 54 files／1212 tests、generated types contract、repository Vitest 4 files／33 tests、typecheck、scoped ESLint 與 `git diff --check` 全綠；generated `teacher_question_detail` 維持 answer-free，未夾帶另一分支 Quiz context 欄位或 ADR 0007 projection。
 - 尚未 stage／commit；Phase B 尚未開始。下一步等待 owner 授權 Avatar 與 Analytics checkpoint commits。
+
+## 2026-08-14 04:45 [Owner／Codex] — 教師 UI 與完整 Live checkpoint
+
+- Commit A `48e8373ca7182b34fc7b919fd85419b4ab18defa`（`feat(teacher): checkpoint tactical workspace surfaces`）封裝教師工作區與六頁 UI；Commit B `5fafb79ecc9bd07cb89bdaa7ade95180f38df222`（`feat(live): checkpoint teacher host and projector experience`）封裝完整 Live Host／Projector 改版，不只是 Live report。
+- Commit B 前只移除 `teacher-live-session-page.test.tsx` 的檔尾多餘空白行，未改測試語意。C 尚未提交；`INTEGRATION.md` 已補齊 Analytics DB 與 router／harness inventory，但仍保持 unstaged。
+- Dashboard deletions、router、teacher route harness／Playwright 與本段 handoff 留待 C 原子 checkpoint。Phase B 尚未開始；下一步是 C commit owner gate。
+
+## 2026-08-14 04:50 [Owner] — 授權 C 原子 checkpoint
+
+- Owner 已授權將本段與 C router／harness／Dashboard retirement 一起提交；C commit 的完整 SHA 將定義為 Phase B product base，Phase B 仍未開始。
+- 未來 integration session 必須帶入完整 A、B、C commit chain，尤其不得漏掉 B 的完整 Live Host／Projector 改版。

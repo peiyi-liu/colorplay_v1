@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { RequireAuth } from '../../features/auth/components/require-auth';
 import { RequireRole } from '../../features/auth/components/require-role';
 import { ForgotPasswordPage } from '../../features/auth/pages/forgot-password-page';
@@ -128,16 +128,20 @@ export function createAppRouter() {
                   path: '/teacher',
                   lazy: async () => {
                     const module =
-                      await import('../../features/teacher-content/pages/teacher-dashboard-page');
-                    return { Component: module.TeacherDashboardPage };
+                      await import('../../features/teacher-content/pages/teacher-analytics-page');
+                    return { Component: module.TeacherAnalyticsPage };
                   },
                 },
                 {
                   path: '/teacher/analytics',
+                  element: <Navigate replace to="/teacher" />,
+                },
+                {
+                  path: '/teacher/questions',
                   lazy: async () => {
                     const module =
-                      await import('../../features/teacher-content/pages/teacher-analytics-page');
-                    return { Component: module.TeacherAnalyticsPage };
+                      await import('../../features/teacher-content/pages/teacher-question-analysis-page');
+                    return { Component: module.TeacherQuestionAnalysisPage };
                   },
                 },
                 {
