@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { Chip, type ChipTone } from '../../../components/ui/chip';
@@ -28,6 +28,52 @@ const chapterStatusTone = (
   if (status === 'not_started') return 'neutral';
   return 'alert';
 };
+
+function ChapterDisclosure({
+  chapter,
+}: Readonly<{ chapter: StudentChapterProgress }>) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details
+      data-testid="chapter-disclosure"
+      onToggle={(event) => {
+        setOpen(event.currentTarget.open);
+      }}
+    >
+      <summary aria-expanded={open}>
+        <span>
+          <strong>{chapter.chapterTitle}</strong>
+          <small>{formatPercent(chapter.assessmentAccuracy)}</small>
+        </span>
+        <Chip tone={chapterStatusTone(chapter.status)}>
+          {chapterStatusLabel(chapter.status)}
+        </Chip>
+      </summary>
+      <dl>
+        <div>
+          <dt>複習完成</dt>
+          <dd>
+            {chapter.reviewTotal === null
+              ? EM_DASH
+              : `${String(chapter.reviewCompleted)} / ${String(chapter.reviewTotal)}`}
+          </dd>
+        </div>
+        <div>
+          <dt>小節測驗</dt>
+          <dd>{formatPercent(chapter.sectionQuizAccuracy)}</dd>
+        </div>
+        <div>
+          <dt>章節總測驗</dt>
+          <dd>{formatPercent(chapter.chapterQuizAccuracy)}</dd>
+        </div>
+        <div>
+          <dt>Live 課堂</dt>
+          <dd>{formatPercent(chapter.liveAccuracy)}</dd>
+        </div>
+      </dl>
+    </details>
+  );
+}
 
 export function TeacherStudentProgressPage({
   classroomId: suppliedClassroomId,
@@ -92,7 +138,10 @@ export function TeacherStudentProgressPage({
       {identity.membershipStatus === 'inactive' ? (
         <p role="status">此成員已停用，資料為停用前的紀錄。</p>
       ) : null}
-      <dl className="teacher-classroom-stats teacher-classroom-stats--four">
+      <dl
+        aria-label="學生進度摘要"
+        className="teacher-classroom-stats teacher-classroom-stats--four"
+      >
         <div>
           <dt>班級名次</dt>
           <dd>
@@ -124,8 +173,9 @@ export function TeacherStudentProgressPage({
         {chapters.length === 0 ? (
           <p>目前沒有已發布的章節。</p>
         ) : (
-          <div className="ui-table-scroll">
-            <table className="ui-table">
+          <>
+            <div className="ui-table-scroll">
+              <table className="ui-table">
               <caption className="visually-hidden">各章節學習進度</caption>
               <thead>
                 <tr>
@@ -158,8 +208,14 @@ export function TeacherStudentProgressPage({
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+            <div className="teacher-chapter-disclosures">
+              {chapters.map((chapter) => (
+                <ChapterDisclosure chapter={chapter} key={chapter.chapterId} />
+              ))}
+            </div>
+          </>
         )}
       </section>
     </TeacherWorkSurface>

@@ -1,27 +1,10 @@
-import { expect, test, type Page } from '@playwright/test';
-
-const observeRuntimeErrors = (page: Page) => {
-  const consoleErrors: string[] = [];
-  const pageErrors: string[] = [];
-  page.on('console', (message) => {
-    if (message.type() === 'error') consoleErrors.push(message.text());
-  });
-  page.on('pageerror', (error) => {
-    pageErrors.push(error.message);
-  });
-  return { consoleErrors, pageErrors };
-};
-
-const WIDTHS = [320, 375, 393, 768, 1024, 1440] as const;
-const ROUTE_SCENARIOS = [
-  'analytics',
-  'questions',
-  'classes',
-  'classroom-detail',
-  'live',
-  'live-report',
-  'student-progress',
-] as const;
+import { expect, test } from '@playwright/test';
+import {
+  observeRuntimeErrors,
+  ROUTE_SCENARIOS,
+  verifyDrillDownComposition,
+  WIDTHS,
+} from './teacher-routes.harness-support';
 
 for (const viewport of [
   { height: 900, label: '1280 desktop', width: 1280 },
@@ -232,7 +215,7 @@ test('only a newly joined participant grows and floats into the avatar arena', a
 });
 
 for (const width of WIDTHS) {
-  test(`teacher routes render without layout/console defects at ${String(width)}px`, async ({
+  test(`teacher routes including classroom-detail and student-progress render without layout/console defects at ${String(width)}px`, async ({
     page,
   }) => {
     const runtimeErrors = observeRuntimeErrors(page);
@@ -255,9 +238,11 @@ for (const width of WIDTHS) {
         await expect(classroom).not.toHaveAttribute('open', '');
         await classroom.locator('summary').click();
         await expect(classroom).toHaveAttribute('open', '');
-        await expect(page.getByRole('textbox', { name: '新班級名稱' })).toBeVisible();
-        await expect(page.getByRole('button', { name: '建立班級' })).toBeVisible();
+        await expect(
+          page.getByRole('textbox', { name: '新班級名稱' }),
+        ).toBeVisible();
       }
+      await verifyDrillDownComposition(page, scenario, width);
     }
 
     expect(

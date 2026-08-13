@@ -240,6 +240,64 @@
   color: #a9c8e4;
 }
 
+.teacher-roster-disclosures,
+.teacher-chapter-disclosures {
+  display: none;
+}
+
+.teacher-roster-disclosures details,
+.teacher-chapter-disclosures details {
+  border-bottom: 1px solid #294965;
+}
+
+.teacher-roster-disclosures summary,
+.teacher-chapter-disclosures summary {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  gap: 12px;
+  list-style: none;
+  padding: 8px 0;
+}
+
+.teacher-roster-disclosures summary > span,
+.teacher-chapter-disclosures summary > span {
+  display: grid;
+  gap: 3px;
+}
+
+.teacher-roster-disclosures summary small,
+.teacher-chapter-disclosures summary small {
+  color: #9fb1c4;
+}
+
+.teacher-roster-disclosures dl,
+.teacher-chapter-disclosures dl {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.teacher-roster-disclosures dl > div,
+.teacher-chapter-disclosures dl > div {
+  border-left: 2px solid #315b7f;
+  padding-left: 10px;
+}
+
+.teacher-roster-disclosures dt,
+.teacher-chapter-disclosures dt {
+  color: #9fb1c4;
+  font-size: 0.72rem;
+}
+
+.teacher-roster-disclosures dd,
+.teacher-chapter-disclosures dd {
+  margin: 4px 0 0;
+}
+
 @media (max-width: 47.99rem) {
   .teacher-classroom-stats--four,
   .teacher-workspace-shell .classroom-list,
@@ -271,5 +329,14 @@
 
   .teacher-classroom-panel {
     padding: 14px;
+  }
+
+  .teacher-classroom-panel > .ui-table-scroll {
+    display: none;
+  }
+
+  .teacher-roster-disclosures,
+  .teacher-chapter-disclosures {
+    display: grid;
   }
 }

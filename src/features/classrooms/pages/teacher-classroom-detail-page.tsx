@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { Chip } from '../../../components/ui/chip';
@@ -11,7 +11,52 @@ import {
   useOwnedClassroomMembers,
   useOwnedClassrooms,
 } from '../hooks/use-classrooms';
-import type { ClassroomRepository } from '../types';
+import type { ClassroomMember, ClassroomRepository } from '../types';
+
+function MemberDisclosure({
+  classroomId,
+  member,
+}: Readonly<{ classroomId: string; member: ClassroomMember }>) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details
+      data-testid="member-disclosure"
+      onToggle={(event) => {
+        setOpen(event.currentTarget.open);
+      }}
+    >
+      <summary aria-expanded={open}>
+        <span>
+          <strong>{member.displayName}</strong>
+          <small>{member.loginAccount ?? '學號未提供'}</small>
+        </span>
+        {member.membershipStatus === 'inactive' ? (
+          <Chip tone="neutral">已停用</Chip>
+        ) : null}
+      </summary>
+      <dl>
+        <div>
+          <dt>學號</dt>
+          <dd>{member.loginAccount ?? '—'}</dd>
+        </div>
+        <div>
+          <dt>姓名</dt>
+          <dd>{member.fullName ?? '—'}</dd>
+        </div>
+        <div>
+          <dt>暱稱</dt>
+          <dd>{member.displayName}</dd>
+        </div>
+      </dl>
+      <Link
+        className="secondary-action"
+        to={`/teacher/classes/${classroomId}/members/${member.memberRef}`}
+      >
+        查看細節
+      </Link>
+    </details>
+  );
+}
 
 export function TeacherClassroomDetailPage({
   classroomId: suppliedClassroomId,
@@ -70,15 +115,16 @@ export function TeacherClassroomDetailPage({
         {(members.data?.length ?? 0) === 0 ? (
           <p>目前沒有學生。</p>
         ) : (
-          <div className="ui-table-scroll">
-            <table className="ui-table">
+          <>
+            <div className="ui-table-scroll">
+              <table className="ui-table">
               <caption className="visually-hidden">班級學生</caption>
               <thead>
                 <tr>
                   <th scope="col">學號</th>
                   <th scope="col">姓名</th>
                   <th scope="col">暱稱</th>
-                  <th scope="col">學習狀態</th>
+                  <th scope="col">成員資格</th>
                 </tr>
               </thead>
               <tbody>
@@ -101,8 +147,18 @@ export function TeacherClassroomDetailPage({
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+            <div className="teacher-roster-disclosures">
+              {(members.data ?? []).map((member) => (
+                <MemberDisclosure
+                  classroomId={classroomId}
+                  key={member.memberRef}
+                  member={member}
+                />
+              ))}
+            </div>
+          </>
         )}
       </section>
     </TeacherWorkSurface>

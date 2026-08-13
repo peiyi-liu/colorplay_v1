@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -115,19 +116,29 @@ describe('TeacherStudentProgressPage', () => {
   it('renders chapter rows with split assessment accuracy and no mistake list', async () => {
     renderPage(repository());
 
-    const table = await screen.findByRole('table', {
-      name: '各章節學習進度',
-    });
-    expect(table).toBeVisible();
-    expect(screen.getByText('第三章：色彩表示')).toBeVisible();
-    expect(screen.getByText('3 / 3')).toBeVisible();
-    expect(screen.getByText('已完成')).toBeVisible();
-    expect(screen.getByText('尚未開始')).toBeVisible();
+    const chapter = (await screen.findAllByTestId('chapter-disclosure'))[0];
+    expect(chapter).toBeDefined();
+    if (!chapter) throw new Error('missing chapter disclosure');
+    expect(chapter.querySelector('summary')).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    await userEvent.click(within(chapter).getByText('第三章：色彩表示'));
+    expect(chapter.querySelector('summary')).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    expect(within(chapter).getByText('3 / 3')).toBeVisible();
+    expect((screen.getAllByText('已完成')).length).toBeGreaterThan(0);
+    expect((screen.getAllByText('尚未開始')).length).toBeGreaterThan(0);
     expect(
       screen.getByText(/74.3%（小節 76.0%／章節 80.0%／Live 67.0%）/u),
     ).toBeVisible();
     expect(screen.getByText('14/30')).toBeVisible();
     expect(screen.queryByRole('heading', { name: '待補救錯題' })).toBeNull();
+    expect(
+      within(screen.getByLabelText('學生進度摘要')).getAllByRole('definition'),
+    ).toHaveLength(4);
   });
 
   it('marks deactivated members and keeps their record readable', async () => {

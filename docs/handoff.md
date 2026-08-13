@@ -662,3 +662,9 @@
 - Task 2 已封裝為 `bf7f42f5decb085ff33cbff1a344795527500c12`。Task 3 保留 `create_classroom` mutation、RHF/Zod、ambiguous-write copy、加入碼與既有 routes；建立列改成緊湊操作帶，class rows 在手機使用 disclosure，input 以 `aria-label="新班級名稱"` 提供穩定 accessible name。
 - 真正 RED 覆蓋 input name、手機 disclosure 與 clipboard rejection；複製失敗時現在保留「複製」且加入碼仍可手動選取，不再假報成功。Fresh checks：Vitest 2 files／21 tests、Chromium 6/6 widths、scoped ESLint、typecheck、`git diff --check` 全綠；首次 Playwright 因 sandbox listen EPERM 未執行，已用相同限定命令在允許環境重跑通過。
 - 唯一 scoped self-review 未發現 route／mutation drift、dead control 或 fake receipt；相關 source／test 皆低於 500 行（最大 497）。Task 3 尚未 stage／commit，Task 4 尚未開始。
+
+## 2026-08-14 06:05 [Codex] — Phase B Task 4 班級與學生下鑽完成
+
+- Task 3 已封裝為 `cd627db63c0b089b1cd2cd16ee484e2b508d801b`。Task 4 保留既有 classroom hooks、repository calls 與 routes；班級成員及章節進度在桌機維持 table，手機改為可展開 disclosure，active 成員不顯示推測狀態，inactive 只標示「已停用」，未知 `activeBlookId` 不產生假 avatar。
+- 真正 RED 為舊版缺少 member／chapter disclosure；學生摘要仍只呈現 classRank、classXp、avgAccuracy 與 unfinishedMistakeCount／totalMistakeCount，null 維持 em dash。Fresh checks：Vitest 4 files／25 tests、Chromium 7/7 widths、scoped ESLint、typecheck 與 `git diff --check` 全綠；393px disclosure 與 1280px table 均實測，320px 無整頁橫向 overflow。
+- 唯一 scoped self-review 將桌面欄名由「學習狀態」改為「成員資格」，避免把 membershipStatus 映射為 presence；所有 source／test 低於 500 行。Task 4 尚未 stage／commit，Task 5 尚未開始。
