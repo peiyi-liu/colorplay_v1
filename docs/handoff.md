@@ -668,3 +668,9 @@
 - Task 3 已封裝為 `cd627db63c0b089b1cd2cd16ee484e2b508d801b`。Task 4 保留既有 classroom hooks、repository calls 與 routes；班級成員及章節進度在桌機維持 table，手機改為可展開 disclosure，active 成員不顯示推測狀態，inactive 只標示「已停用」，未知 `activeBlookId` 不產生假 avatar。
 - 真正 RED 為舊版缺少 member／chapter disclosure；學生摘要仍只呈現 classRank、classXp、avgAccuracy 與 unfinishedMistakeCount／totalMistakeCount，null 維持 em dash。Fresh checks：Vitest 4 files／25 tests、Chromium 7/7 widths、scoped ESLint、typecheck 與 `git diff --check` 全綠；393px disclosure 與 1280px table 均實測，320px 無整頁橫向 overflow。
 - 唯一 scoped self-review 將桌面欄名由「學習狀態」改為「成員資格」，避免把 membershipStatus 映射為 presence；所有 source／test 低於 500 行。Task 4 尚未 stage／commit，Task 5 尚未開始。
+
+## 2026-08-14 06:18 [Codex] — Phase B Task 5 owner-only 正確答案投影完成
+
+- Task 4 已封裝為 `a6ce1e8aeba54d5e18d51faddac821d1817aafa5`。新增 collision-free migration `20260814000100_teacher_question_answer_detail.sql` 與 pgTAP `055`；`teacher_question_answer_options(uuid, text)` 固定 search_path，只授權 authenticated 執行，並在 server 驗證 teacher role、active classroom ownership、active student 的 completed practice／assignment session 與 published section-bank stable question 範圍。
+- ADR 0007 窄型別只回 option_key／option_text／is_correct，repository 映射到 teacher-only `options[].isCorrect`，hook 在 classroom ID 或 stable code 缺少時不查詢；denied／empty 回 null，不合成答案。既有 `QuestionDetail` 與 `teacher_question_detail` 維持 answer-free，學生 Quiz／active Live contracts 未擴張。
+- 真正 RED 是 function 不存在。Fresh checks：focused pgTAP 11/11、完整 local DB 55 files／1223 tests、generated database types contract、repository／hook 3 files／20 tests、Quiz／Live forbidden-payload regression 2 files／26 tests、scoped ESLint、typecheck 與 `git diff --check` 全綠。唯一 security-focused review 無 IDOR、grant、schema 擴散或 generated-type finding；Task 5 尚未 stage／commit，Task 6 尚未開始。

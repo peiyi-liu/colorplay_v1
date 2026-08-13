@@ -149,6 +149,22 @@ export type ChapterCompletionRow = z.infer<
   typeof chapterCompletionSchema
 >[number];
 export type QuestionDetail = z.infer<typeof questionDetailSchema>[number];
+
+export const teacherQuestionAnswerSchema = z.array(
+  z.object({
+    is_correct: z.boolean(),
+    option_key: z.string(),
+    option_text: z.string(),
+  }),
+);
+
+export type TeacherQuestionAnswer = Readonly<{
+  options: readonly Readonly<{
+    isCorrect: boolean;
+    key: string;
+    text: string;
+  }>[];
+}>;
 export type SubtopicMasteryRow = z.infer<typeof subtopicMasterySchema>[number];
 export type AssignmentSummaryRow = z.infer<
   typeof assignmentSummarySchema

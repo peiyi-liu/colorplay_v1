@@ -24,6 +24,7 @@ import {
   type PublishReceipt,
   type QuestionAnalysisRow,
   type QuestionDetail,
+  type TeacherQuestionAnswer,
   type QuestionDraftPayload,
   type ReviewCardDraftPayload,
   type SubtopicMasteryRow,
@@ -65,6 +66,8 @@ export const teacherContentKeys = {
     ['teacher-content', 'question-analysis', classroomId, filters] as const,
   questionDetail: (classroomId: string, stableCode: string) =>
     ['teacher-content', 'question-detail', classroomId, stableCode] as const,
+  questionAnswer: (classroomId: string, stableCode: string) =>
+    ['teacher-content', 'question-answer', classroomId, stableCode] as const,
   questions: ['teacher-content', 'questions'] as const,
   subtopicMastery: (classroomId: string, filters: AnalyticsFilters) =>
     ['teacher-content', 'subtopic-mastery', classroomId, filters] as const,
@@ -201,6 +204,20 @@ export function useTeacherQuestionDetail(
     enabled: classroomId.length > 0 && stableCode.length > 0,
     queryFn: () => resolved.getQuestionDetail(classroomId, stableCode),
     queryKey: teacherContentKeys.questionDetail(classroomId, stableCode),
+    retry: retryRead,
+  });
+}
+
+export function useTeacherQuestionAnswer(
+  classroomId: string,
+  stableCode: string,
+  repository?: TeacherContentRepository,
+): UseQueryResult<TeacherQuestionAnswer | null, TeacherContentError> {
+  const resolved = resolveRepository(repository);
+  return useQuery({
+    enabled: classroomId.length > 0 && stableCode.length > 0,
+    queryFn: () => resolved.getQuestionAnswer(classroomId, stableCode),
+    queryKey: teacherContentKeys.questionAnswer(classroomId, stableCode),
     retry: retryRead,
   });
 }

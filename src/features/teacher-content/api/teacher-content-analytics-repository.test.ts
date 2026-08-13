@@ -116,6 +116,60 @@ describe('teacher content repository', () => {
     expect(detail?.options[0]).not.toHaveProperty('is_correct');
   });
 
+  it('loads owner-only answer options through the dedicated projection', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: [
+        { is_correct: false, option_key: 'A', option_text: '明色' },
+        { is_correct: true, option_key: 'D', option_text: '暗色' },
+      ],
+      error: null,
+    });
+    const repository = createTeacherContentRepository(rpcClient(rpc));
+
+    await expect(
+      repository.getQuestionAnswer(
+        '29100000-0000-0000-0000-000000000001',
+        'QB3101',
+      ),
+    ).resolves.toEqual({
+      options: [
+        { isCorrect: false, key: 'A', text: '明色' },
+        { isCorrect: true, key: 'D', text: '暗色' },
+      ],
+    });
+    expect(rpc).toHaveBeenCalledWith('teacher_question_answer_options', {
+      p_classroom_id: '29100000-0000-0000-0000-000000000001',
+      p_stable_code: 'QB3101',
+    });
+  });
+
+  it('returns no synthetic answer when the dedicated projection is denied', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: [], error: null });
+    const repository = createTeacherContentRepository(rpcClient(rpc));
+
+    await expect(
+      repository.getQuestionAnswer(
+        '29100000-0000-0000-0000-000000000001',
+        'QB3101',
+      ),
+    ).resolves.toBeNull();
+  });
+
+  it('rejects malformed answer rows instead of inferring correctness', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: [{ option_key: 'A', option_text: '明色' }],
+      error: null,
+    });
+    const repository = createTeacherContentRepository(rpcClient(rpc));
+
+    await expect(
+      repository.getQuestionAnswer(
+        '29100000-0000-0000-0000-000000000001',
+        'QB3101',
+      ),
+    ).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
+  });
+
   it('returns null when the caller owns no such classroom', async () => {
     const rpc = vi.fn().mockResolvedValue({ data: [], error: null });
     const repository = createTeacherContentRepository(rpcClient(rpc));

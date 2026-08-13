@@ -13,6 +13,7 @@ import {
   liveReportSchema,
   questionAnalysisSchema,
   questionDetailSchema,
+  teacherQuestionAnswerSchema,
   subtopicMasterySchema,
   summarySchema,
   type AnalyticsFilters,
@@ -27,6 +28,7 @@ import {
   type LiveReportRow,
   type QuestionAnalysisRow,
   type QuestionDetail,
+  type TeacherQuestionAnswer,
   type SubtopicMasteryRow,
 } from './teacher-content-analytics-contracts';
 import {
@@ -65,6 +67,7 @@ export type {
   LiveReportRow,
   QuestionAnalysisRow,
   QuestionDetail,
+  TeacherQuestionAnswer,
   SubtopicMasteryRow,
 } from './teacher-content-analytics-contracts';
 export type {
@@ -143,6 +146,10 @@ export type TeacherContentRepository = Readonly<{
     classroomId: string,
     stableCode: string,
   ): Promise<QuestionDetail | null>;
+  getQuestionAnswer(
+    classroomId: string,
+    stableCode: string,
+  ): Promise<TeacherQuestionAnswer | null>;
   getSubtopicMastery(
     classroomId: string,
     filters: AnalyticsFilters,
@@ -343,6 +350,25 @@ export function createTeacherContentRepository(
       });
       if (error) throw toError(error.message);
       return parseWith(questionDetailSchema, data)[0] ?? null;
+    },
+
+    async getQuestionAnswer(classroomId, stableCode) {
+      const { data, error } = await client.rpc(
+        'teacher_question_answer_options',
+        {
+          p_classroom_id: classroomId,
+          p_stable_code: stableCode,
+        },
+      );
+      if (error) throw toError(error.message);
+      const options = parseWith(teacherQuestionAnswerSchema, data).map(
+        (option) => ({
+          isCorrect: option.is_correct,
+          key: option.option_key,
+          text: option.option_text,
+        }),
+      );
+      return options.length === 0 ? null : { options };
     },
 
     async getSubtopicMastery(classroomId, filters) {

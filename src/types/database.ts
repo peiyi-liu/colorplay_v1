@@ -3271,6 +3271,14 @@ export type Database = {
           stable_code: string
         }[]
       }
+      teacher_question_answer_options: {
+        Args: { p_classroom_id: string; p_stable_code: string }
+        Returns: {
+          is_correct: boolean
+          option_key: string
+          option_text: string
+        }[]
+      }
       teacher_question_detail: {
         Args: { p_classroom_id: string; p_stable_code: string }
         Returns: {
