@@ -1,0 +1,56 @@
+.teacher-live-report {
+  display: grid;
+  gap: 18px;
+}
+
+.teacher-live-report__panel {
+  overflow: hidden;
+  border: 1px solid #365a7e;
+  border-radius: 4px;
+  background: rgb(3 15 32 / 92%);
+  box-shadow: 0 14px 36px rgb(0 0 0 / 28%);
+  padding: 20px;
+}
+
+.teacher-live-report__panel h2 {
+  margin: 0 0 16px;
+  color: #f2f7ff;
+  font-size: 1.1rem;
+}
+
+.teacher-live-report .ui-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #eef6ff;
+}
+
+.teacher-live-report .ui-table th,
+.teacher-live-report .ui-table td {
+  border-bottom: 1px solid #284663;
+  padding: 12px;
+  text-align: left;
+}
+
+.teacher-live-report .ui-table thead {
+  background: #071d36;
+  color: #a9c8e4;
+}
+
+.teacher-live-report__panel ol {
+  display: grid;
+  gap: 8px;
+  list-style-position: inside;
+  margin: 0;
+  padding: 0;
+}
+
+.teacher-live-report__panel > .live-report__action {
+  min-height: 44px;
+  margin-top: 16px;
+}
+
+@media (max-width: 47.99rem) {
+  .teacher-live-report__panel {
+    padding: 14px;
+  }
+}

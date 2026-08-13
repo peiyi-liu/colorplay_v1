@@ -1,9 +1,14 @@
+import { type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
-import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { AuthenticatedTeacherMenu } from '../../teacher-content/components/authenticated-teacher-menu';
+import { TeacherWorkSurface } from '../../teacher-content/components/teacher-work-surface';
+import '../../teacher-content/teacher-workspace.css';
+import '../../teacher-content/teacher-workspace-mobile.css';
 import { useLiveSessionDetail } from '../hooks/use-live-commands';
 import { buildMatrixCsv, matrixCellLabel } from '../lib/report-export';
 import type { LiveRepository } from '../types';
+import './teacher-live-report-page.css';
 
 const EM_DASH = '—';
 
@@ -18,9 +23,11 @@ function downloadCsv(fileName: string, content: string) {
 }
 
 export function TeacherLiveReportPage({
+  menu,
   sessionId: suppliedSessionId,
   repository,
 }: Readonly<{
+  menu?: ReactNode;
   sessionId?: string;
   repository?: LiveRepository;
 }>) {
@@ -28,34 +35,33 @@ export function TeacherLiveReportPage({
   const sessionId = suppliedSessionId ?? params.sessionId ?? '';
   const detail = useLiveSessionDetail(sessionId, repository);
 
-  if (detail.isPending) return <RouteLoading withinMain />;
-  if (detail.isError) {
-    return (
-      <section className="route-panel">
-        <h1>場次報表</h1>
-        <p role="alert">找不到這場報表，或場次尚未結算。</p>
-        <Link className="primary-action" to="/teacher/live">
-          回 Live 活動
-        </Link>
-      </section>
-    );
-  }
-
   const report = detail.data;
+  const state = detail.isPending
+    ? ({ kind: 'loading', message: 'Live 課程報表載入中…' } as const)
+    : detail.isError
+      ? ({ kind: 'error', message: '找不到這場報表，或場次尚未結算。' } as const)
+      : ({ kind: 'content' } as const);
 
   return (
-    <section aria-labelledby="live-report-title" className="page-mid">
-      <header className="sage-page-header">
-        <p className="route-panel__eyebrow">ColorPlay Live</p>
-        <h1 id="live-report-title">場次報表</h1>
-        <p>逐題數字由伺服器從權威作答紀錄計算。</p>
-      </header>
+    <TeacherWorkSurface
+      eyebrow="ColorPlay Live"
+      menu={menu ?? <AuthenticatedTeacherMenu />}
+      state={state}
+      title="Live 課程報表"
+      toolbar={<Link className="secondary-action" to="/teacher">返回教學分析</Link>}
+      variant="live"
+      {...(report?.activity.title ? { subtitle: report.activity.title } : {})}
+    >
+      {report ? (
+        <div className="teacher-live-report">
 
       {/* 393 寬度稽核發現：6 欄無包裹容器時 document.documentElement.
           scrollWidth 撐到 398px（Task 14）。比照下方作答矩陣既有的
           .live-matrix-scroll／teacher-classroom-detail-page.tsx 的
           .ui-table-scroll 慣例，讓表格在自己框內橫向捲動。 */}
-      <div className="ui-table-scroll">
+      <section className="teacher-live-report__panel" aria-labelledby="question-report-title">
+        <h2 id="question-report-title">逐題分析</h2>
+        <div className="ui-table-scroll">
         <table className="ui-table" aria-label="逐題分析">
           <thead>
             <tr>
@@ -88,9 +94,10 @@ export function TeacherLiveReportPage({
             ))}
           </tbody>
         </table>
-      </div>
+        </div>
+      </section>
 
-      <section aria-label="作答矩陣">
+      <section aria-label="作答矩陣" className="teacher-live-report__panel">
         <h2>作答矩陣</h2>
         <div className="live-matrix-scroll">
           <table className="ui-table" aria-label="個人逐題作答">
@@ -144,7 +151,7 @@ export function TeacherLiveReportPage({
         </button>
       </section>
 
-      <section aria-label="最終排名">
+      <section aria-label="最終排名" className="teacher-live-report__panel">
         <h2>最終排名</h2>
         <ol>
           {report.ranking.map((entry) => (
@@ -165,9 +172,8 @@ export function TeacherLiveReportPage({
         </ol>
       </section>
 
-      <Link className="primary-action" to="/teacher/live">
-        回 Live 活動
-      </Link>
-    </section>
+        </div>
+      ) : null}
+    </TeacherWorkSurface>
   );
 }

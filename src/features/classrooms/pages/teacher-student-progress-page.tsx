@@ -1,8 +1,12 @@
+import { type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
-import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { Chip, type ChipTone } from '../../../components/ui/chip';
-import { ProgressBar } from '../../../components/ui/progress-bar';
+import { AuthenticatedTeacherMenu } from '../../teacher-content/components/authenticated-teacher-menu';
+import { TeacherWorkSurface } from '../../teacher-content/components/teacher-work-surface';
+import '../../teacher-content/teacher-workspace.css';
+import '../../teacher-content/teacher-workspace-mobile.css';
+import './teacher-classrooms-workspace.css';
 import { useStudentProgress } from '../hooks/use-classrooms';
 import type { ClassroomRepository, StudentChapterProgress } from '../types';
 
@@ -12,9 +16,9 @@ const formatPercent = (value: number | null): string =>
   value === null ? EM_DASH : `${value.toFixed(1)}%`;
 
 const chapterStatusLabel = (status: StudentChapterProgress['status']) => {
-  if (status === 'mastered') return '已精熟';
+  if (status === 'mastered') return '已完成';
   if (status === 'not_started') return '尚未開始';
-  return '學習中';
+  return '進行中';
 };
 
 const chapterStatusTone = (
@@ -27,10 +31,12 @@ const chapterStatusTone = (
 
 export function TeacherStudentProgressPage({
   classroomId: suppliedClassroomId,
+  menu,
   memberRef: suppliedMemberRef,
   repository,
 }: Readonly<{
   classroomId?: string;
+  menu?: ReactNode;
   memberRef?: string;
   repository?: ClassroomRepository;
 }>) {
@@ -39,58 +45,54 @@ export function TeacherStudentProgressPage({
   const memberRef = suppliedMemberRef ?? params.memberRef ?? '';
   const progress = useStudentProgress(classroomId, memberRef, repository);
 
-  if (progress.isPending) return <RouteLoading withinMain />;
-  if (progress.isError) {
-    return (
-      <section className="route-panel">
-        <h1>學生學習進度</h1>
-        <p role="alert">無法載入學生資料，或你沒有管理權限。</p>
-        <button
-          className="primary-action"
-          onClick={() => void progress.refetch()}
-          type="button"
-        >
-          重試
-        </button>
-      </section>
-    );
-  }
-
-  const { chapters, identity, mistakes, stats } = progress.data;
+  const { chapters, identity, stats } = progress.data ?? {
+    chapters: [],
+    identity: {
+      displayName: '',
+      fullName: null,
+      joinedAt: '',
+      loginAccount: null,
+      membershipStatus: 'active' as const,
+    },
+    stats: {
+      avgAccuracy: null,
+      classRank: null,
+      classXp: 0,
+      openMistakeCount: 0,
+      totalMistakeCount: 0,
+      unfinishedMistakeCount: 0,
+    },
+  };
   const studentName = identity.fullName ?? identity.displayName;
+  const state = progress.isPending
+    ? ({ kind: 'loading', message: '學生學習進度載入中…' } as const)
+    : progress.isError
+      ? ({
+          kind: 'error',
+          message: '無法載入學生資料，或你沒有管理權限。',
+          retry: () => void progress.refetch(),
+        } as const)
+      : ({ kind: 'content' } as const);
 
   return (
-    <section
-      aria-labelledby="teacher-student-progress-title"
-      className="page-wide page-stack"
+    <TeacherWorkSurface
+      menu={menu ?? <AuthenticatedTeacherMenu />}
+      state={state}
+      subtitle={`${identity.loginAccount ? `學號 ${identity.loginAccount}・` : ''}暱稱 ${identity.displayName}`}
+      title={`${studentName} 的學習進度`}
+      toolbar={
+        <Link
+          className="secondary-action"
+          to={`/teacher/classes/${classroomId}`}
+        >
+          返回班級成員
+        </Link>
+      }
     >
-      <header className="teacher-dashboard-header sage-page-header">
-        <div className="teacher-dashboard-header__intro">
-          <p className="route-panel__eyebrow">教師班級管理</p>
-          <h1 id="teacher-student-progress-title">{studentName} 的學習進度</h1>
-          <p>
-            {identity.loginAccount ? `學號 ${identity.loginAccount}・` : ''}
-            暱稱 {identity.displayName}
-            ・數字由伺服器依權威作答紀錄計算。
-          </p>
-          {identity.membershipStatus === 'inactive' ? (
-            <p role="status">此成員已停用，資料為停用前的紀錄。</p>
-          ) : null}
-        </div>
-        <div className="classroom-header-actions">
-          <Link
-            className="secondary-action"
-            to={`/teacher/classes/${classroomId}`}
-          >
-            ← 回班級成員
-          </Link>
-        </div>
-      </header>
-      <dl className="teacher-summary-cards teacher-summary-cards--accent">
-        <div>
-          <dt>累計 XP</dt>
-          <dd>{stats.classXp.toLocaleString('zh-TW')}</dd>
-        </div>
+      {identity.membershipStatus === 'inactive' ? (
+        <p role="status">此成員已停用，資料為停用前的紀錄。</p>
+      ) : null}
+      <dl className="teacher-classroom-stats teacher-classroom-stats--four">
         <div>
           <dt>班級名次</dt>
           <dd>
@@ -98,17 +100,23 @@ export function TeacherStudentProgressPage({
           </dd>
         </div>
         <div>
+          <dt>累計經驗 XP</dt>
+          <dd>{stats.classXp.toLocaleString('zh-TW')}</dd>
+        </div>
+        <div>
           <dt>平均正確率</dt>
           <dd>{formatPercent(stats.avgAccuracy)}</dd>
         </div>
         <div className="teacher-summary-cards__stat--alert">
-          <dt>待補救錯題</dt>
-          <dd>{String(stats.openMistakeCount)}</dd>
+          <dt>待補救題狀態</dt>
+          <dd>
+            {stats.unfinishedMistakeCount}/{stats.totalMistakeCount}
+          </dd>
         </div>
       </dl>
       <section
         aria-labelledby="student-chapter-progress-title"
-        className="ui-card ui-card--md"
+        className="teacher-classroom-panel"
       >
         <header className="classroom-section-header">
           <h2 id="student-chapter-progress-title">各章節學習進度</h2>
@@ -116,10 +124,6 @@ export function TeacherStudentProgressPage({
         {chapters.length === 0 ? (
           <p>目前沒有已發布的章節。</p>
         ) : (
-          // 6 欄資料表在 393 寬度放不下（Task 14 393 稽核發現：缺這層包裹
-          // 導致 document.documentElement.scrollWidth 撐到 419px），比照
-          // teacher-classroom-detail-page.tsx 既有 .ui-table-scroll 用法，
-          // 讓表格在自己的容器內橫向捲動，不再撐寬整頁。
           <div className="ui-table-scroll">
             <table className="ui-table">
               <caption className="visually-hidden">各章節學習進度</caption>
@@ -127,9 +131,7 @@ export function TeacherStudentProgressPage({
                 <tr>
                   <th scope="col">章節</th>
                   <th scope="col">複習完成</th>
-                  <th scope="col">涵蓋率</th>
                   <th scope="col">正確率</th>
-                  <th scope="col">精熟度</th>
                   <th scope="col">狀態</th>
                 </tr>
               </thead>
@@ -142,17 +144,11 @@ export function TeacherStudentProgressPage({
                         ? EM_DASH
                         : `${String(chapter.reviewCompleted)} / ${String(chapter.reviewTotal)}`}
                     </td>
-                    <td>{formatPercent(chapter.coverage)}</td>
-                    <td>{formatPercent(chapter.accuracy)}</td>
                     <td>
-                      {formatPercent(chapter.mastery)}
-                      {chapter.mastery === null ? null : (
-                        <ProgressBar
-                          label={`${chapter.chapterTitle} 精熟度`}
-                          tone="warning"
-                          value={chapter.mastery}
-                        />
-                      )}
+                      {formatPercent(chapter.assessmentAccuracy)}（小節{' '}
+                      {formatPercent(chapter.sectionQuizAccuracy)}／章節{' '}
+                      {formatPercent(chapter.chapterQuizAccuracy)}／Live{' '}
+                      {formatPercent(chapter.liveAccuracy)}）
                     </td>
                     <td>
                       <Chip tone={chapterStatusTone(chapter.status)}>
@@ -166,35 +162,6 @@ export function TeacherStudentProgressPage({
           </div>
         )}
       </section>
-      <section
-        aria-labelledby="student-open-mistakes-title"
-        className="ui-card ui-card--md"
-      >
-        <header className="classroom-section-header">
-          <h2 id="student-open-mistakes-title">待補救錯題</h2>
-          {mistakes.length > 0 ? (
-            <Chip tone="danger">{mistakes.length} 題</Chip>
-          ) : null}
-        </header>
-        {mistakes.length === 0 ? (
-          <p>目前沒有待補救錯題。</p>
-        ) : (
-          <ul className="mistake-list">
-            {mistakes.map((mistake) => (
-              <li
-                className="mistake-list__item"
-                key={`${mistake.subtopicCode}-${mistake.prompt}`}
-              >
-                <p className="mistake-list__prompt">{mistake.prompt}</p>
-                <p className="mistake-list__meta">
-                  子題 {mistake.subtopicCode} {mistake.subtopicTitle}・答錯{' '}
-                  {mistake.wrongCount} 次
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </section>
+    </TeacherWorkSurface>
   );
 }

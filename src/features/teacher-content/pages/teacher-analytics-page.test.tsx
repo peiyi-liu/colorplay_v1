@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -12,267 +12,174 @@ import type {
 import type { TeacherContentRepository } from '../api/teacher-content-repository';
 import { TeacherAnalyticsPage } from './teacher-analytics-page';
 
-vi.mock('../../learning/api/chapters', async (importOriginal) => {
-  const original =
-    await importOriginal<typeof import('../../learning/api/chapters')>();
-  return {
-    ...original,
-    usePublishedChapters: () => ({
-      data: [
-        {
-          description: '',
-          id: '21000000-0000-0000-0000-000000000003',
-          isPlayable: true,
-          sortOrder: 3,
-          stableCode: 'chapter-3',
-          template: null,
-          title: '色彩表示',
-        },
-      ],
-      error: null,
-      isError: false,
-      isPending: false,
-      refetch: vi.fn(),
-    }),
-  };
-});
+vi.mock('../../learning/api/chapters', () => ({
+  usePublishedChapters: () => ({
+    data: [
+      {
+        id: '21000000-0000-0000-0000-000000000003',
+        title: '色彩表示',
+      },
+    ],
+    isPending: false,
+  }),
+}));
 
-const ownedClassrooms: readonly OwnedClassroom[] = [
-  {
-    classroomId: '29100000-0000-0000-0000-000000000001',
-    classroomName: '七年級 A 班',
-    classroomStatus: 'active',
-    createdAt: '2026-07-01T00:00:00+00:00',
-    joinCode: null,
-    joinCodeVersion: 1,
-    memberCount: 4,
-  },
-];
+const classroom: OwnedClassroom = {
+  classroomId: '29100000-0000-0000-0000-000000000001',
+  classroomName: '七年級 A 班',
+  classroomStatus: 'active',
+  createdAt: '2026-07-01T00:00:00+00:00',
+  joinCode: null,
+  joinCodeVersion: 1,
+  memberCount: 30,
+};
+const classrooms = {
+  listOwned: vi.fn().mockResolvedValue([classroom]),
+} as unknown as ClassroomRepository;
 
-const classroomRepository = () =>
-  ({
-    listOwned: vi.fn().mockResolvedValue(ownedClassrooms),
-  }) as unknown as ClassroomRepository;
-
-const teacherRepositoryOf = (
-  overrides: Readonly<Record<string, unknown>> = {},
+const repositoryOf = (
+  overrides: Partial<TeacherContentRepository> = {},
 ): TeacherContentRepository =>
   ({
-    getAssignmentSummary: vi.fn().mockResolvedValue([
+    getAssessmentQuestions: vi.fn().mockResolvedValue([
       {
-        assignment_id: '29400000-0000-0000-0000-000000000001',
-        attempts: 1,
-        completed: 1,
-        passed: 1,
-        status: 'published',
-        targets: 1,
-        title: '分析測試作業',
+        attempts: 10,
+        chapter_id: '21000000-0000-0000-0000-000000000003',
+        chapter_sort_order: 3,
+        chapter_title: '色彩表示',
+        correct_rate: 40,
+        prompt: '色光三原色為何？',
+        section_id: '22000000-0000-0000-0000-000000000001',
+        section_sort_order: 1,
+        section_title: '色彩三要素',
+        stable_code: 'QB3101',
       },
     ]),
-    getClassroomSummary: vi.fn().mockResolvedValue({
-      attempts: 3,
-      averageAccuracy: 66.7,
-      uniqueStudents: 1,
-      worstSubtopicTitle: '3-1 色彩三要素與色名的表示',
+    getChapterCompletion: vi.fn().mockResolvedValue([
+      {
+        chapter_id: '21000000-0000-0000-0000-000000000003',
+        chapter_sort_order: 3,
+        chapter_title: '第 3 章 色彩表示',
+        completed_students: 17,
+        completion_rate: 56.7,
+        student_statuses: [],
+        total_students: 30,
+      },
+    ]),
+    getClassroomOverview: vi.fn().mockResolvedValue({
+      averageAccuracy: 76,
+      completedStudents: 17,
+      totalStudents: 30,
+      worstSubtopicCode: '3-1',
+      worstSubtopicTitle: '色彩三要素與色名的表示',
     }),
-    getLiveReport: vi.fn().mockResolvedValue([
-      {
-        activity_title: '分析 Live',
-        answers: 9,
-        completed_at: '2026-07-18T05:00:00+00:00',
-        correct_rate: 77.8,
-        participants: 3,
-        session_id: '29600000-0000-0000-0000-000000000001',
-        state: 'completed',
-      },
-    ]),
-    getQuestionAnalysis: vi.fn().mockResolvedValue([
-      {
-        attempts: 5,
-        correct_rate: 80,
-        prompt: '色相環上與紅色相對的顏色是？',
-        stable_code: '3-1-01',
-      },
-    ]),
-    getSubtopicMastery: vi.fn().mockResolvedValue([
-      {
-        accuracy: 50,
-        answers: 2,
-        students: 1,
-        subtopic_code: 'sheet-3-1-all',
-        subtopic_title: '3-1 色彩三要素與色名的表示',
-      },
-    ]),
-    listSubtopics: vi.fn().mockResolvedValue([
-      {
-        stableCode: 'sheet-3-1-all',
-        subtopicId: '23000000-0000-0000-0000-000000000001',
-        title: '3-1 色彩三要素與色名的表示',
-      },
-    ]),
+    getLiveHistory: vi.fn().mockResolvedValue({
+      rows: [
+        {
+          activity_title: '3-1 色彩三要素',
+          answers: 20,
+          classroom_name: '七年級 A 班',
+          completed_at: '2026-08-13T05:00:00+00:00',
+          correct_rate: 70,
+          participants: 10,
+          session_id: '29600000-0000-0000-0000-000000000001',
+          total_count: 6,
+        },
+      ],
+      total: 6,
+    }),
+    getQuestionDetail: vi.fn(),
     ...overrides,
   }) as unknown as TeacherContentRepository;
 
-const renderPage = (repository: TeacherContentRepository) => {
-  const queryClient = new QueryClient({
+function renderPage(repository: TeacherContentRepository) {
+  const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   const wrapper = ({ children }: Readonly<{ children: ReactNode }>) => (
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter>{children}</MemoryRouter>
+    <QueryClientProvider client={client}>
+      <MemoryRouter initialEntries={['/teacher']}>{children}</MemoryRouter>
     </QueryClientProvider>
   );
   return render(
     <TeacherAnalyticsPage
-      classroomRepository={classroomRepository()}
+      classroomRepository={classrooms}
+      menu={<nav aria-label="測試教師導覽" />}
       repository={repository}
     />,
     { wrapper },
   );
-};
+}
 
 describe('TeacherAnalyticsPage', () => {
-  // owner 0730 #14：作業總覽停做——分析頁剩四個投影區塊。
-  it('renders the four projections from the trusted analytics', async () => {
-    renderPage(teacherRepositoryOf());
+  it('renders the approved four-block home and truthful metrics', async () => {
+    renderPage(repositoryOf());
 
-    await waitFor(() => {
-      expect(
-        screen.getAllByText('色相環上與紅色相對的顏色是？').length,
-      ).toBeGreaterThan(0);
-    });
-    expect(screen.getByText('66.7%')).toBeInTheDocument();
-    expect(screen.getByText('80.0%')).toBeInTheDocument();
-    expect(screen.getByText('sheet-3-1-all')).toBeInTheDocument();
-    expect(screen.queryByText('作業總覽')).toBeNull();
-    expect(screen.getByText('分析 Live')).toBeInTheDocument();
-    expect(screen.getByText('77.8%')).toBeInTheDocument();
-  });
-
-  it('drives every projection through the shared filters', async () => {
-    const repository = teacherRepositoryOf();
-    renderPage(repository);
-
-    fireEvent.change(await screen.findByLabelText('開始日期'), {
-      target: { value: '2026-07-18' },
-    });
-    fireEvent.change(screen.getByLabelText('結束日期'), {
-      target: { value: '2026-07-18' },
-    });
-    await userEvent.selectOptions(screen.getByLabelText('章節'), '色彩表示');
-    await userEvent.selectOptions(
-      screen.getByLabelText('子題'),
-      '3-1 色彩三要素與色名的表示',
-    );
-
-    await waitFor(() => {
-      expect(repository.getQuestionAnalysis).toHaveBeenCalledWith(
-        '29100000-0000-0000-0000-000000000001',
-        {
-          chapterId: '21000000-0000-0000-0000-000000000003',
-          from: '2026-07-18',
-          subtopicId: '23000000-0000-0000-0000-000000000001',
-          to: '2026-07-18',
-        },
-      );
-    });
-    expect(repository.getSubtopicMastery).toHaveBeenCalledWith(
-      '29100000-0000-0000-0000-000000000001',
-      expect.objectContaining({
-        subtopicId: '23000000-0000-0000-0000-000000000001',
-      }),
-    );
-    expect(repository.getLiveReport).toHaveBeenCalledWith(
-      '29100000-0000-0000-0000-000000000001',
-      { from: '2026-07-18', to: '2026-07-18' },
-    );
-  });
-
-  it('renders em-dash empty states for an empty scope', async () => {
-    renderPage(
-      teacherRepositoryOf({
-        getClassroomSummary: vi.fn().mockResolvedValue({
-          attempts: 0,
-          averageAccuracy: null,
-          uniqueStudents: 0,
-          worstSubtopicTitle: null,
-        }),
-        getLiveReport: vi.fn().mockResolvedValue([]),
-        getQuestionAnalysis: vi.fn().mockResolvedValue([]),
-        getSubtopicMastery: vi.fn().mockResolvedValue([]),
-      }),
-    );
-
-    await waitFor(() => {
-      expect(screen.getAllByText('此範圍尚無資料。').length).toBe(4);
-    });
-    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2);
-  });
-
-  it('surfaces analytics read failures', async () => {
-    renderPage(
-      teacherRepositoryOf({
-        getQuestionAnalysis: vi.fn().mockRejectedValue(new Error('boom')),
-      }),
-    );
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('alert')[0]).toHaveTextContent(
-        '分析資料暫時無法取得，請稍後重試。',
-      );
-    });
-  });
-});
-
-it('derives rule-based high-frequency error cards from question analysis', async () => {
-  renderPage(teacherRepositoryOf());
-
-  await waitFor(() => {
+    expect(await screen.findByRole('form', { name: '分析篩選' })).toBeVisible();
+    expect(screen.queryByLabelText('子題')).toBeNull();
     expect(
-      screen.getByRole('heading', { name: '班級高頻錯誤概念' }),
-    ).toBeInTheDocument();
+      await screen.findByRole('region', { name: '班級總覽' }),
+    ).toHaveTextContent('17/30');
+    expect(screen.getByRole('region', { name: '班級總覽' })).toHaveTextContent(
+      '76.0%',
+    );
+    expect(screen.getByRole('link', { name: '題目分析' })).toHaveAttribute(
+      'href',
+      `/teacher/questions?classroomId=${classroom.classroomId}`,
+    );
+    expect(screen.getByRole('table', { name: 'Live 課程' })).toHaveTextContent(
+      '七年級 A 班',
+    );
   });
-  // 規則式：取正確率最低的題目為高頻錯誤 1。
-  expect(await screen.findByText('高頻錯誤 1')).toBeInTheDocument();
-  const region = screen.getByRole('region', { name: '班級高頻錯誤概念' });
-  expect(region.textContent).toContain('色相環上與紅色相對的顏色是？');
-});
 
-it('高頻錯誤概念標示嚴重度（螢幕閱讀器文字，綁定排序後的特定題目）', async () => {
-  // 故意打亂輸入順序（correct_rate 較高的那筆放前面），佐證元件真的依
-  // correct_rate 升冪排序、而非單純沿用輸入順序。
-  renderPage(
-    teacherRepositoryOf({
-      getQuestionAnalysis: vi.fn().mockResolvedValue([
-        {
-          attempts: 4,
-          correct_rate: 55,
-          prompt: '三原色混合後可得到哪一種顏色？',
-          stable_code: '3-1-02',
-        },
-        {
-          attempts: 5,
-          correct_rate: 40,
-          prompt: '色相環上與紅色相對的顏色是？',
-          stable_code: '3-1-01',
-        },
-      ]),
-    }),
-  );
+  it('switches source without fabricating chapter completion for Live', async () => {
+    const getAssessmentQuestions = vi.fn().mockResolvedValue([]);
+    renderPage(repositoryOf({ getAssessmentQuestions }));
 
-  const highSeverityLabel = await screen.findByText('嚴重度：高');
-  const highSeverityCard = highSeverityLabel.closest('.teacher-error-card');
-  expect(highSeverityCard).not.toBeNull();
-  // correct_rate 最低（40）者才是「嚴重度：高」，即使它在輸入陣列中排第二。
-  expect(highSeverityCard?.textContent).toContain(
-    '色相環上與紅色相對的顏色是？',
-  );
+    const sourceTabs = await screen.findByRole('group', { name: '題目來源' });
+    await userEvent.click(
+      within(sourceTabs).getByRole('button', { name: 'Live 課堂' }),
+    );
+    await waitFor(() => {
+      expect(getAssessmentQuestions).toHaveBeenLastCalledWith(
+        classroom.classroomId,
+        {},
+        'live',
+      );
+    });
+    expect(screen.queryByText('各章節完成人數')).toBeNull();
+    expect(screen.getByText('目前篩選範圍尚無作答資料。')).toBeVisible();
+  });
 
-  const midSeverityLabel = screen.getByText('嚴重度：中');
-  const midSeverityCard = midSeverityLabel.closest('.teacher-error-card');
-  expect(midSeverityCard).not.toBeNull();
-  // correct_rate 次低（55）者才是「嚴重度：中」，即使它在輸入陣列中排第一。
-  expect(midSeverityCard?.textContent).toContain(
-    '三原色混合後可得到哪一種顏色？',
-  );
+  it('paginates Live history in five-row server pages', async () => {
+    const getLiveHistory = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [], total: 6 })
+      .mockResolvedValueOnce({ rows: [], total: 6 });
+    renderPage(repositoryOf({ getLiveHistory }));
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: '下一頁' }),
+    );
+    await waitFor(() => {
+      expect(getLiveHistory).toHaveBeenLastCalledWith(
+        classroom.classroomId,
+        {},
+        2,
+        5,
+      );
+    });
+  });
+
+  it('shows explicit loading failure instead of fake zeroes', async () => {
+    renderPage(
+      repositoryOf({
+        getClassroomOverview: vi.fn().mockRejectedValue(new Error('offline')),
+      }),
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '班級總覽暫時無法取得',
+    );
+    expect(screen.queryByText('0%')).toBeNull();
+  });
 });

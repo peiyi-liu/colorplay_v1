@@ -61,6 +61,7 @@ const renderPage = (classroomRepository: ClassroomRepository) => {
   render(
     <TeacherClassroomDetailPage
       classroomId={classroomId}
+      menu={<nav>教師選單</nav>}
       repository={classroomRepository}
     />,
     { wrapper: Wrapper },
@@ -73,8 +74,7 @@ describe('TeacherClassroomDetailPage', () => {
     expect(await screen.findByText('學生一')).toBeVisible();
     expect(screen.getByText('陳品妍')).toBeVisible();
     expect(screen.getByText('s1130201')).toBeVisible();
-    expect(screen.getByText('已裝備 Blook')).toBeVisible();
-    expect(screen.getByText('有效成員')).toBeVisible();
+    expect(screen.getByText('學生人數 1')).toBeVisible();
     expect(screen.getByRole('link', { name: '查看細節 ›' })).toHaveAttribute(
       'href',
       `/teacher/classes/${classroomId}/members/cb000000-0000-4000-8000-000000000001`,
@@ -87,6 +87,8 @@ describe('TeacherClassroomDetailPage', () => {
 
   it('顯示加入碼摘要徽章（沿用既有 useOwnedClassrooms，非新 repository method）', async () => {
     renderPage(repository());
-    expect(await screen.findByText('加入碼 ABCD-1234-EF56-7890')).toBeVisible();
+    expect(
+      await screen.findByText('班級加入代碼 ABCD-1234-EF56-7890'),
+    ).toBeVisible();
   });
 });

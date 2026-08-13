@@ -1,384 +1,251 @@
-import { useState } from 'react';
-import type { ReactNode } from 'react';
-import type { UseQueryResult } from '@tanstack/react-query';
+import { useEffect, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
-import { ProgressBar } from '../../../components/ui/progress-bar';
 import { useOwnedClassrooms } from '../../classrooms/hooks/use-classrooms';
 import type { ClassroomRepository } from '../../classrooms/types';
 import { usePublishedChapters } from '../../learning/api/chapters';
 import type {
   AnalyticsFilters,
+  AssessmentSource,
   DateRangeFilters,
-  TeacherContentError,
   TeacherContentRepository,
 } from '../api/teacher-content-repository';
+import { AuthenticatedTeacherMenu } from '../components/authenticated-teacher-menu';
 import {
-  useTeacherClassroomSummary,
-  useTeacherLiveReport,
-  useTeacherQuestionAnalysis,
-  useTeacherSubtopicMastery,
-  useTeacherSubtopics,
+  ClassroomOverviewPanel,
+  LiveHistoryPanel,
+  QuestionInsightPanel,
+} from '../components/teacher-analytics-v2-panels';
+import { TeacherWorkSurface } from '../components/teacher-work-surface';
+import {
+  useTeacherAssessmentQuestions,
+  useTeacherChapterCompletion,
+  useTeacherClassroomOverview,
+  useTeacherLiveHistory,
 } from '../hooks/use-teacher-content';
-import { EM_DASH, formatPercent } from './teacher-dashboard-page';
+import '../teacher-workspace.css';
+import '../teacher-workspace-mobile.css';
+import '../teacher-analytics.css';
+import '../teacher-analytics-data.css';
+import '../teacher-analytics-mobile.css';
 
-const formatTaipeiDate = (iso: string | null): string =>
-  iso === null
-    ? EM_DASH
-    : new Intl.DateTimeFormat('zh-TW', {
-        dateStyle: 'medium',
-        timeZone: 'Asia/Taipei',
-      }).format(new Date(iso));
+const sourceOptions: readonly Readonly<{
+  label: string;
+  value: AssessmentSource;
+}>[] = [
+  { label: '全部', value: 'all' },
+  { label: '小節測驗', value: 'section_quiz' },
+  { label: '章節總測驗', value: 'chapter_quiz' },
+  { label: 'Live 課堂', value: 'live' },
+];
 
-function ProjectionSection<Rows>({
-  children,
-  isEmpty,
-  query,
-  title,
-}: Readonly<{
-  children(rows: Rows): ReactNode;
-  isEmpty(rows: Rows): boolean;
-  query: UseQueryResult<Rows, TeacherContentError>;
-  title: string;
-}>) {
-  return (
-    <section aria-label={title} className="teacher-analytics-section">
-      <h2>{title}</h2>
-      {query.isPending ? (
-        <p role="status">分析資料載入中…</p>
-      ) : query.isError ? (
-        <p role="alert">分析資料暫時無法取得，請稍後重試。</p>
-      ) : isEmpty(query.data) ? (
-        <p>此範圍尚無資料。</p>
-      ) : (
-        children(query.data)
-      )}
-    </section>
-  );
-}
-
-export function TeacherAnalyticsPage({
-  classroomRepository,
-  repository,
-}: Readonly<{
+type TeacherAnalyticsPageProps = Readonly<{
   classroomRepository?: ClassroomRepository;
+  menu?: ReactNode;
   repository?: TeacherContentRepository;
-}>) {
+}>;
+
+function TeacherAnalyticsPageContent({
+  classroomRepository,
+  menu,
+  repository,
+}: TeacherAnalyticsPageProps) {
   const classrooms = useOwnedClassrooms(classroomRepository);
   const chapters = usePublishedChapters();
-  const subtopics = useTeacherSubtopics(repository);
-  const [selectedClassroomId, setSelectedClassroomId] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [chapterId, setChapterId] = useState('');
-  const [subtopicId, setSubtopicId] = useState('');
+  const [source, setSource] = useState<AssessmentSource>('all');
+  const [livePage, setLivePage] = useState(1);
+  const requestedClassroomId = searchParams.get('classroomId') ?? '';
+  const classroomId = classrooms.data?.some(
+    (classroom) => classroom.classroomId === requestedClassroomId,
+  )
+    ? requestedClassroomId
+    : (classrooms.data?.[0]?.classroomId ?? '');
+  const selectedClassroomName =
+    classrooms.data?.find((classroom) => classroom.classroomId === classroomId)
+      ?.classroomName ?? '尚未選擇班級';
 
-  const classroomId =
-    selectedClassroomId || (classrooms.data?.[0]?.classroomId ?? '');
+  useEffect(() => {
+    if (!classroomId || requestedClassroomId === classroomId) return;
+    setSearchParams({ classroomId }, { replace: true });
+  }, [classroomId, requestedClassroomId, setSearchParams]);
+
   const dateFilters: DateRangeFilters = {
     ...(fromDate ? { from: fromDate } : {}),
     ...(toDate ? { to: toDate } : {}),
   };
   const filters: AnalyticsFilters = {
     ...(chapterId ? { chapterId } : {}),
-    ...(subtopicId ? { subtopicId } : {}),
     ...dateFilters,
   };
+  const overview = useTeacherClassroomOverview(
+    classroomId,
+    filters,
+    repository,
+  );
+  const completion = useTeacherChapterCompletion(
+    classroomId,
+    chapterId || null,
+    repository,
+  );
+  const questions = useTeacherAssessmentQuestions(
+    classroomId,
+    filters,
+    source,
+    repository,
+  );
+  const liveHistory = useTeacherLiveHistory(
+    classroomId,
+    dateFilters,
+    livePage,
+    repository,
+  );
 
-  const summary = useTeacherClassroomSummary(classroomId, filters, repository);
-  const questionAnalysis = useTeacherQuestionAnalysis(
-    classroomId,
-    filters,
-    repository,
-  );
-  const subtopicMastery = useTeacherSubtopicMastery(
-    classroomId,
-    filters,
-    repository,
-  );
-  const liveReport = useTeacherLiveReport(classroomId, dateFilters, repository);
+  const workSurfaceState = classrooms.isPending
+    ? ({ kind: 'loading', message: '班級資料載入中…' } as const)
+    : classrooms.isError
+      ? ({ kind: 'error', message: '班級資料暫時無法取得。' } as const)
+      : classrooms.data.length === 0
+        ? ({ kind: 'empty', message: '尚未建立班級。' } as const)
+        : ({ kind: 'content' } as const);
 
   return (
-    <section aria-labelledby="teacher-analytics-title" className="page-wide">
-      <header className="sage-page-header">
-        <p className="route-panel__eyebrow">教師功能</p>
-        <h1 id="teacher-analytics-title">教學分析</h1>
-        <p>
-          所有數字由伺服器以台北時區日期範圍計算，空白範圍顯示 {EM_DASH}
-          ，不以 0 誤導判讀。
-        </p>
-      </header>
-      {classrooms.isPending ? (
-        <p role="status">班級資料載入中…</p>
-      ) : classrooms.isError ? (
-        <p role="alert">班級資料暫時無法取得，請稍後重試。</p>
-      ) : classrooms.data.length === 0 ? (
-        <p>尚未建立班級，先到班級管理建立第一個班級。</p>
+    <TeacherWorkSurface
+      menu={menu ?? <AuthenticatedTeacherMenu />}
+      state={workSurfaceState}
+      title="教學分析"
+      variant="analytics"
+    >
+      <details className="teacher-analytics-filter-deck" open>
+        <summary>
+          <span>分析篩選</span>
+          <small>班級、日期與章節</small>
+        </summary>
+        <form aria-label="分析篩選" className="teacher-analytics-filters">
+          <div data-active={requestedClassroomId.length > 0}>
+            <label htmlFor="analytics-classroom">選擇班級</label>
+            <select
+              id="analytics-classroom"
+              onChange={(event) => {
+                setLivePage(1);
+                setSearchParams({ classroomId: event.target.value });
+              }}
+              value={classroomId}
+            >
+              {classrooms.data?.map((classroom) => (
+                <option
+                  key={classroom.classroomId}
+                  value={classroom.classroomId}
+                >
+                  {classroom.classroomName}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div data-active={fromDate.length > 0}>
+            <label htmlFor="analytics-from">開始日期</label>
+            <input
+              id="analytics-from"
+              onChange={(event) => {
+                setLivePage(1);
+                setFromDate(event.target.value);
+              }}
+              type="date"
+              value={fromDate}
+            />
+          </div>
+          <div data-active={toDate.length > 0}>
+            <label htmlFor="analytics-to">結束日期</label>
+            <input
+              id="analytics-to"
+              onChange={(event) => {
+                setLivePage(1);
+                setToDate(event.target.value);
+              }}
+              type="date"
+              value={toDate}
+            />
+          </div>
+          <div data-active={chapterId.length > 0}>
+            <label htmlFor="analytics-chapter">章節</label>
+            <select
+              id="analytics-chapter"
+              onChange={(event) => {
+                setChapterId(event.target.value);
+              }}
+              value={chapterId}
+            >
+              <option value="">全部章節</option>
+              {(chapters.data ?? []).map((chapter) => (
+                <option key={chapter.id} value={chapter.id}>
+                  {chapter.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        </form>
+      </details>
+
+      {overview.isPending ? (
+        <p role="status">班級總覽載入中…</p>
+      ) : overview.isError ? (
+        <p role="alert">班級總覽暫時無法取得。</p>
       ) : (
-        <>
-          <form aria-label="分析篩選" className="teacher-analytics-filters">
-            <div>
-              <label htmlFor="analytics-classroom">選擇班級</label>
-              <select
-                id="analytics-classroom"
-                onChange={(event) => {
-                  setSelectedClassroomId(event.target.value);
-                }}
-                value={classroomId}
-              >
-                {classrooms.data.map((classroom) => (
-                  <option
-                    key={classroom.classroomId}
-                    value={classroom.classroomId}
-                  >
-                    {classroom.classroomName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div data-active={fromDate.length > 0}>
-              <label htmlFor="analytics-from">開始日期</label>
-              <input
-                id="analytics-from"
-                onChange={(event) => {
-                  setFromDate(event.target.value);
-                }}
-                type="date"
-                value={fromDate}
-              />
-            </div>
-            <div data-active={toDate.length > 0}>
-              <label htmlFor="analytics-to">結束日期</label>
-              <input
-                id="analytics-to"
-                onChange={(event) => {
-                  setToDate(event.target.value);
-                }}
-                type="date"
-                value={toDate}
-              />
-            </div>
-            <div data-active={chapterId.length > 0}>
-              <label htmlFor="analytics-chapter">章節</label>
-              <select
-                id="analytics-chapter"
-                onChange={(event) => {
-                  setChapterId(event.target.value);
-                }}
-                value={chapterId}
-              >
-                <option value="">全部章節</option>
-                {(chapters.data ?? []).map((chapter) => (
-                  <option key={chapter.id} value={chapter.id}>
-                    {chapter.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div data-active={subtopicId.length > 0}>
-              <label htmlFor="analytics-subtopic">子題</label>
-              <select
-                id="analytics-subtopic"
-                onChange={(event) => {
-                  setSubtopicId(event.target.value);
-                }}
-                value={subtopicId}
-              >
-                <option value="">全部子題</option>
-                {(subtopics.data ?? []).map((subtopic) => (
-                  <option key={subtopic.subtopicId} value={subtopic.subtopicId}>
-                    {subtopic.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </form>
-
-          <section aria-label="班級總覽" className="teacher-analytics-section">
-            <h2>班級總覽</h2>
-            {summary.isPending ? (
-              <p role="status">分析資料載入中…</p>
-            ) : summary.isError ? (
-              <p role="alert">分析資料暫時無法取得，請稍後重試。</p>
-            ) : (
-              <dl className="teacher-summary-cards">
-                <div>
-                  <dt>完成挑戰次數</dt>
-                  <dd>
-                    {summary.data ? String(summary.data.attempts) : EM_DASH}
-                  </dd>
-                </div>
-                <div>
-                  <dt>參與學生</dt>
-                  <dd>
-                    {summary.data
-                      ? String(summary.data.uniqueStudents)
-                      : EM_DASH}
-                  </dd>
-                </div>
-                <div>
-                  <dt>平均正確率</dt>
-                  <dd>
-                    {formatPercent(summary.data?.averageAccuracy ?? null)}
-                    {typeof summary.data?.averageAccuracy === 'number' ? (
-                      <ProgressBar
-                        label="平均正確率"
-                        tone="warning"
-                        value={summary.data.averageAccuracy * 100}
-                      />
-                    ) : null}
-                  </dd>
-                </div>
-                <div>
-                  <dt>最弱子題</dt>
-                  <dd>{summary.data?.worstSubtopicTitle ?? EM_DASH}</dd>
-                </div>
-              </dl>
-            )}
-          </section>
-
-          <ProjectionSection
-            isEmpty={(rows) => rows.length === 0}
-            query={questionAnalysis}
-            title="班級高頻錯誤概念"
-          >
-            {(rows) => {
-              // 規則式：以正確率最低（有作答）之題目為高頻錯誤，取前兩名。
-              const worst = rows
-                .filter((row) => row.attempts > 0 && row.correct_rate !== null)
-                .sort((a, b) => (a.correct_rate ?? 0) - (b.correct_rate ?? 0))
-                .slice(0, 2);
-              if (worst.length === 0) return <p>此範圍尚無資料。</p>;
-              return (
-                <div className="teacher-error-cards">
-                  {worst.map((row, index) => (
-                    <article
-                      className="teacher-error-card"
-                      key={row.stable_code}
-                    >
-                      <span className="teacher-error-card__badge">
-                        高頻錯誤 {index + 1}
-                      </span>
-                      <span
-                        aria-hidden="true"
-                        className="teacher-error-card__severity"
-                      >
-                        {index === 0 ? '▲▲▲' : '▲▲'}
-                      </span>
-                      <span className="visually-hidden">
-                        {index === 0 ? '嚴重度：高' : '嚴重度：中'}
-                      </span>
-                      <strong>{row.prompt}</strong>
-                      <p>
-                        正確率 {formatPercent(row.correct_rate)}（作答{' '}
-                        {row.attempts} 次）——建議課堂補充此概念的對照示例。
-                      </p>
-                    </article>
-                  ))}
-                </div>
-              );
-            }}
-          </ProjectionSection>
-
-          <ProjectionSection
-            isEmpty={(rows) => rows.length === 0}
-            query={questionAnalysis}
-            title="題目分析"
-          >
-            {(rows) => (
-              <div className="teacher-table-frame">
-                <table className="ui-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">題號</th>
-                      <th scope="col">題目</th>
-                      <th scope="col">作答數</th>
-                      <th scope="col">正確率</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <tr key={row.stable_code}>
-                        <td>{row.stable_code}</td>
-                        <td>{row.prompt}</td>
-                        <td>{row.attempts}</td>
-                        <td>{formatPercent(row.correct_rate)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </ProjectionSection>
-
-          <ProjectionSection
-            isEmpty={(rows) => rows.length === 0}
-            query={subtopicMastery}
-            title="子題精熟"
-          >
-            {(rows) => (
-              <div className="teacher-table-frame">
-                <table className="ui-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">子題代碼</th>
-                      <th scope="col">子題</th>
-                      <th scope="col">作答數</th>
-                      <th scope="col">正確率</th>
-                      <th scope="col">學生數</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <tr key={row.subtopic_code}>
-                        <td>{row.subtopic_code}</td>
-                        <td>{row.subtopic_title}</td>
-                        <td>{row.answers}</td>
-                        <td>{formatPercent(row.accuracy)}</td>
-                        <td>{row.students}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </ProjectionSection>
-
-          <ProjectionSection
-            isEmpty={(rows) => rows.length === 0}
-            query={liveReport}
-            title="Live 報表"
-          >
-            {(rows) => (
-              <div className="teacher-table-frame">
-                <table className="ui-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">活動</th>
-                      <th scope="col">狀態</th>
-                      <th scope="col">參與人數</th>
-                      <th scope="col">作答數</th>
-                      <th scope="col">正確率</th>
-                      <th scope="col">完成日期</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <tr key={row.session_id}>
-                        <td>{row.activity_title}</td>
-                        <td>{row.state}</td>
-                        <td>{row.participants}</td>
-                        <td>{row.answers}</td>
-                        <td>{formatPercent(row.correct_rate)}</td>
-                        <td>{formatTaipeiDate(row.completed_at)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </ProjectionSection>
-        </>
+        <ClassroomOverviewPanel
+          classroomName={selectedClassroomName}
+          overview={overview.data ?? null}
+        />
       )}
-    </section>
+
+      <div
+        aria-label="題目來源"
+        className="teacher-assessment-source-tabs"
+        role="group"
+      >
+        {sourceOptions.map((option) => (
+          <button
+            aria-pressed={source === option.value}
+            key={option.value}
+            onClick={() => {
+              setSource(option.value);
+            }}
+            type="button"
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+      {questions.isPending || completion.isPending ? (
+        <p role="status">題目分析載入中…</p>
+      ) : questions.isError || completion.isError ? (
+        <p role="alert">題目分析暫時無法取得。</p>
+      ) : (
+        <QuestionInsightPanel
+          chapterCompletion={completion.data}
+          questionHref={`/teacher/questions?classroomId=${classroomId}`}
+          questions={questions.data}
+          showCompletion={source !== 'live'}
+        />
+      )}
+
+      {liveHistory.isPending ? (
+        <p role="status">Live 課程載入中…</p>
+      ) : liveHistory.isError ? (
+        <p role="alert">Live 課程暫時無法取得。</p>
+      ) : (
+        <LiveHistoryPanel
+          history={liveHistory.data}
+          onPageChange={setLivePage}
+          page={livePage}
+        />
+      )}
+    </TeacherWorkSurface>
   );
+}
+
+export function TeacherAnalyticsPage(props: TeacherAnalyticsPageProps) {
+  return <TeacherAnalyticsPageContent {...props} />;
 }

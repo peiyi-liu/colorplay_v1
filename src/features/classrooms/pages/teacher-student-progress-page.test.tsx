@@ -14,22 +14,30 @@ const snapshot: StudentProgressSnapshot = {
   chapters: [
     {
       accuracy: 88,
+      assessmentAccuracy: 74.3,
+      chapterQuizAccuracy: 80,
       chapterId: 'cc000000-0000-4000-8000-000000000001',
       chapterTitle: '第三章：色彩表示',
       coverage: 92,
       mastery: 86,
+      liveAccuracy: 67,
       reviewCompleted: 3,
       reviewTotal: 3,
+      sectionQuizAccuracy: 76,
       status: 'mastered',
     },
     {
       accuracy: null,
+      assessmentAccuracy: null,
+      chapterQuizAccuracy: null,
       chapterId: 'cc000000-0000-4000-8000-000000000002',
       chapterTitle: '第一章：色彩與光源',
       coverage: null,
       mastery: null,
+      liveAccuracy: null,
       reviewCompleted: 0,
       reviewTotal: null,
+      sectionQuizAccuracy: null,
       status: 'not_started',
     },
   ],
@@ -40,19 +48,13 @@ const snapshot: StudentProgressSnapshot = {
     loginAccount: 's1130201',
     membershipStatus: 'active',
   },
-  mistakes: [
-    {
-      prompt: '關於色立體的敘述，下列何者不正確?',
-      subtopicCode: '3-2',
-      subtopicTitle: '色彩體系與數值符號的表示',
-      wrongCount: 2,
-    },
-  ],
   stats: {
     avgAccuracy: 86,
     classRank: 1,
     classXp: 2140,
     openMistakeCount: 2,
+    totalMistakeCount: 30,
+    unfinishedMistakeCount: 14,
   },
 };
 
@@ -83,6 +85,7 @@ const renderPage = (classroomRepository: ClassroomRepository) => {
   render(
     <TeacherStudentProgressPage
       classroomId={classroomId}
+      menu={<nav>教師選單</nav>}
       memberRef={memberRef}
       repository={classroomRepository}
     />,
@@ -109,7 +112,7 @@ describe('TeacherStudentProgressPage', () => {
     );
   });
 
-  it('renders chapter rows with status pills and the open mistakes', async () => {
+  it('renders chapter rows with split assessment accuracy and no mistake list', async () => {
     renderPage(repository());
 
     const table = await screen.findByRole('table', {
@@ -118,12 +121,13 @@ describe('TeacherStudentProgressPage', () => {
     expect(table).toBeVisible();
     expect(screen.getByText('第三章：色彩表示')).toBeVisible();
     expect(screen.getByText('3 / 3')).toBeVisible();
-    expect(screen.getByText('已精熟')).toBeVisible();
+    expect(screen.getByText('已完成')).toBeVisible();
     expect(screen.getByText('尚未開始')).toBeVisible();
-    expect(screen.getByText('關於色立體的敘述，下列何者不正確?')).toBeVisible();
     expect(
-      screen.getByText(/子題 3-2 色彩體系與數值符號的表示・答錯 2 次/u),
+      screen.getByText(/74.3%（小節 76.0%／章節 80.0%／Live 67.0%）/u),
     ).toBeVisible();
+    expect(screen.getByText('14/30')).toBeVisible();
+    expect(screen.queryByRole('heading', { name: '待補救錯題' })).toBeNull();
   });
 
   it('marks deactivated members and keeps their record readable', async () => {
@@ -155,6 +159,6 @@ describe('TeacherStudentProgressPage', () => {
     expect(
       await screen.findByText('無法載入學生資料，或你沒有管理權限。'),
     ).toBeVisible();
-    expect(screen.getByRole('button', { name: '重試' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '重新載入' })).toBeVisible();
   });
 });

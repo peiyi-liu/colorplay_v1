@@ -74,7 +74,11 @@ const renderPage = (repository: LiveRepository) => {
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <TeacherLiveReportPage repository={repository} sessionId={SESSION_ID} />
+        <TeacherLiveReportPage
+          menu={<nav>教師選單</nav>}
+          repository={repository}
+          sessionId={SESSION_ID}
+        />
       </MemoryRouter>
     </QueryClientProvider>,
   );
