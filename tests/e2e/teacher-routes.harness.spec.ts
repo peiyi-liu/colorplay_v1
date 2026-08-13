@@ -24,8 +24,11 @@ const ROUTE_SCENARIOS = [
 ] as const;
 
 for (const viewport of [
-  { height: 720, label: 'desktop', width: 1280 },
-  { height: 852, label: 'mobile', width: 393 },
+  { height: 900, label: '1280 desktop', width: 1280 },
+  { height: 900, label: '1440 desktop', width: 1440 },
+  { height: 852, label: '320 mobile', width: 320 },
+  { height: 852, label: '375 mobile', width: 375 },
+  { height: 852, label: '393 mobile', width: 393 },
 ] as const) {
   test(`JRPG teacher workspace is consistent at ${viewport.label} viewport`, async ({
     page,
@@ -68,6 +71,70 @@ for (const viewport of [
           .filter(({ height, width }) => height < 44 || width < 44),
       );
     expect(undersizedTargets).toEqual([]);
+
+    await page.goto('/dev-harness/teacher-routes.html?scenario=classroom-detail');
+    await page.waitForLoadState('networkidle');
+    const composition = await page.evaluate(() => {
+      const menu = document.querySelector<HTMLElement>('.teacher-menu');
+      const surface = document.querySelector<HTMLElement>('.teacher-work-surface');
+      const header = document.querySelector<HTMLElement>(
+        '.teacher-work-surface__header',
+      );
+      const toolbar = document.querySelector<HTMLElement>(
+        '.teacher-work-surface__toolbar',
+      );
+      const title = document.querySelector<HTMLElement>(
+        '.teacher-work-surface__header h1',
+      );
+      const navigation = document.querySelector<HTMLElement>(
+        '.teacher-menu__navigation',
+      );
+      if (!menu || !surface || !header || !title || !navigation) {
+        throw new Error('missing teacher workspace composition');
+      }
+      const menuBounds = menu.getBoundingClientRect();
+      const surfaceBounds = surface.getBoundingClientRect();
+      const headerBounds = header.getBoundingClientRect();
+      const toolbarBounds = toolbar?.getBoundingClientRect();
+      const titleBounds = title.getBoundingClientRect();
+      const navigationBounds = navigation.getBoundingClientRect();
+      return {
+        headerHeight: headerBounds.height,
+        menuBottom: menuBounds.bottom,
+        menuPosition: getComputedStyle(menu).position,
+        menuTop: menuBounds.top,
+        menuWidth: menuBounds.width,
+        navigationBottom: navigationBounds.bottom,
+        navigationHeight: navigationBounds.height,
+        surfaceLeft: surfaceBounds.left,
+        toolbarBelowTitle:
+          toolbarBounds === undefined || toolbarBounds.top >= titleBounds.bottom,
+        toolbarTargetsSized:
+          toolbar === null ||
+          Array.from(toolbar.querySelectorAll<HTMLElement>('a, button')).every(
+            (control) => {
+              const bounds = control.getBoundingClientRect();
+              return bounds.width >= 44 && bounds.height >= 44;
+            },
+          ),
+      };
+    });
+    expect(composition.menuPosition).toBe('fixed');
+    expect(composition.toolbarTargetsSized).toBe(true);
+    if (viewport.width >= 768) {
+      expect(composition.menuWidth).toBe(240);
+      expect(composition.surfaceLeft).toBe(240);
+      expect(composition.headerHeight).toBeGreaterThanOrEqual(164);
+      expect(composition.headerHeight).toBeLessThanOrEqual(200);
+    } else {
+      expect(composition.menuTop).toBe(0);
+      expect(composition.menuBottom).toBe(72);
+      expect(composition.navigationBottom).toBe(viewport.height);
+      expect(composition.navigationHeight).toBe(72);
+      expect(composition.headerHeight).toBeGreaterThanOrEqual(116);
+      expect(composition.headerHeight).toBeLessThanOrEqual(180);
+      expect(composition.toolbarBelowTitle).toBe(true);
+    }
     expect(runtimeErrors.consoleErrors).toEqual([]);
     expect(runtimeErrors.pageErrors).toEqual([]);
   });

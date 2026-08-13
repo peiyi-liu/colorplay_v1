@@ -45,6 +45,7 @@ export type TeacherRoutesHarnessScenario =
   | 'live-lobby'
   | 'live-round'
   | 'live-report'
+  | 'menu-errors'
   | 'questions'
   | 'student-progress'
   | 'hud';
@@ -58,6 +59,7 @@ export const TEACHER_ROUTES_HARNESS_SCENARIOS: readonly TeacherRoutesHarnessScen
     'live-lobby',
     'live-round',
     'live-report',
+    'menu-errors',
     'questions',
     'student-progress',
     'hud',
@@ -68,7 +70,10 @@ const MEMBER_REF = 'cb000000-0000-4000-8000-000000000001';
 
 const routeForScenario: Readonly<
   Record<
-    Exclude<TeacherRoutesHarnessScenario, 'hud' | 'live-lobby' | 'live-round'>,
+    Exclude<
+      TeacherRoutesHarnessScenario,
+      'hud' | 'live-lobby' | 'live-round' | 'menu-errors'
+    >,
     string
   >
 > = {
@@ -304,6 +309,23 @@ export function TeacherRoutesHarness({
           isSigningOut={false}
           onSignOut={() => undefined}
           variant="teacher"
+        />
+      </MemoryRouter>
+    );
+  }
+
+  if (scenario === 'menu-errors') {
+    return (
+      <MemoryRouter initialEntries={['/teacher']}>
+        <TeacherMenu
+          avatarError="頭像上傳失敗。"
+          avatarPending={false}
+          avatarUrl={null}
+          displayName="林老師"
+          isSigningOut={false}
+          onAvatarUpload={() => undefined}
+          onSignOut={() => undefined}
+          signOutError
         />
       </MemoryRouter>
     );

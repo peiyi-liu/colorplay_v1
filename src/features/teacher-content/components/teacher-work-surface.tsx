@@ -33,10 +33,14 @@ export function TeacherWorkSurface({
         className={`teacher-work-surface teacher-work-surface--${variant}`}
       >
         <header className="teacher-work-surface__header">
-          <div>
-            {eyebrow ? <p>{eyebrow}</p> : null}
+          <div className="teacher-work-surface__heading">
+            {eyebrow ? (
+              <p className="teacher-work-surface__eyebrow">{eyebrow}</p>
+            ) : null}
             <h1 id="teacher-work-surface-title">{title}</h1>
-            {subtitle ? <span>{subtitle}</span> : null}
+            {subtitle ? (
+              <span className="teacher-work-surface__subtitle">{subtitle}</span>
+            ) : null}
           </div>
           {toolbar ? (
             <div className="teacher-work-surface__toolbar">{toolbar}</div>
@@ -44,14 +48,28 @@ export function TeacherWorkSurface({
         </header>
         <div className="teacher-work-surface__content">
           {state.kind === 'loading' ? (
-            <p role="status">{state.message}</p>
+            <p
+              className="teacher-work-surface__state teacher-work-surface__state--loading"
+              role="status"
+            >
+              {state.message}
+            </p>
           ) : state.kind === 'empty' ? (
-            <p>{state.message}</p>
+            <p className="teacher-work-surface__state teacher-work-surface__state--empty">
+              {state.message}
+            </p>
           ) : state.kind === 'error' ? (
-            <div role="alert">
+            <div
+              className="teacher-work-surface__state teacher-work-surface__state--error"
+              role="alert"
+            >
               <p>{state.message}</p>
               {state.retry ? (
-                <button onClick={state.retry} type="button">
+                <button
+                  className="teacher-work-surface__retry"
+                  onClick={state.retry}
+                  type="button"
+                >
                   重新載入
                 </button>
               ) : null}

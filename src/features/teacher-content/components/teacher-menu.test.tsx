@@ -96,4 +96,36 @@ describe('TeacherMenu', () => {
     );
     expect(screen.getByRole('navigation', { name: '教師導覽' })).toBeVisible();
   });
+
+  it('renders avatar and sign-out failures as two independent alerts', () => {
+    renderMenu({ avatarError: '頭像上傳失敗。', signOutError: true });
+
+    const alerts = screen.getAllByRole('alert');
+    expect(alerts).toHaveLength(2);
+    expect(alerts[0]).toHaveTextContent('頭像上傳失敗。');
+    expect(alerts[1]).toHaveTextContent('登出失敗，請稍後重試。');
+  });
+
+  it('keeps avatar pending and error states explicit', () => {
+    const { rerender } = renderMenu({ avatarPending: true });
+
+    expect(screen.getByText('上傳中…')).toBeVisible();
+    expect(screen.getByLabelText('上傳教師頭像')).toBeDisabled();
+
+    rerender(
+      <MemoryRouter initialEntries={['/teacher']}>
+        <TeacherMenu
+          avatarError="頭像上傳失敗。"
+          avatarPending={false}
+          avatarUrl={null}
+          displayName="林老師"
+          isSigningOut={false}
+          onAvatarUpload={vi.fn()}
+          onSignOut={vi.fn()}
+          signOutError={false}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent('頭像上傳失敗。');
+  });
 });

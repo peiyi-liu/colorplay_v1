@@ -637,3 +637,16 @@
 
 - Owner 已授權將本段與 C router／harness／Dashboard retirement 一起提交；C commit 的完整 SHA 將定義為 Phase B product base，Phase B 仍未開始。
 - 未來 integration session 必須帶入完整 A、B、C commit chain，尤其不得漏掉 B 的完整 Live Host／Projector 改版。
+
+## 2026-08-14 05:15 [Owner／Codex] — Phase B Task 1 共用教師工作面完成
+
+- Phase B base 為 `ff14759effbd7244b5588752735c3419425d1e59`。Design Read 是 accessibility-critical 教師資料工作區的 targeted evolution，沿用深藍 JRPG 戰術觀測台；dials 為 variance 4、motion 2、density 8。Taste skill 只用於層級、密度、間距、材質、狀態完整性與 anti-slop。
+- `TeacherWorkSurface` props／state union 未變；新增直接 RTL 覆蓋 loading／empty／error／retry、單一 h1、DOM／focus 順序與 content state。教師 tokens 保持在 `.teacher-workspace-shell`，scene header 收斂為桌機 184px、手機 156px，固定 240px TeacherMenu、72px mobile identity／bottom navigation、44px 控制項、清楚 focus 與 reduced-motion 均由 browser／CSS 契約覆蓋。已移除零產品引用的舊 Dashboard selector。
+- Fresh checks：Vitest 2 files／11 tests、scoped ESLint 零 warning、typecheck、Chromium 5 viewports、production build、`git diff --check` 全綠。唯一一輪 scoped self-review 修正 mobile toolbar assertion 原先沒有真正 toolbar 的假綠，改以 classroom-detail 實測後 5/5 通過，無剩餘 finding。
+- Task 1 仍未 stage／commit，Task 2 尚未開始；下一步等待 owner review 與 Task 1 commit gate。
+
+## 2026-08-14 05:30 [Owner／Codex] — Task 1 手機雙錯誤提示定位補正
+
+- Owner gate 發現手機版 avatar error 與 sign-out error 原本都固定在 `top: 72px`，同時出現時會重疊。RTL 確認兩段訊息原已是兩個獨立 alert；CSS 將 avatar alert 保留於頂部 identity bar 下方，sign-out alert 改至 bottom navigation 上方並設 `top: auto`。
+- Chromium bounding boxes 於 320／375／393×852 均不相交：avatar `top 72, bottom 108`，sign-out `top 736, bottom 772`；三個 viewport 的 `scrollWidth` 均等於 `clientWidth`。Correction checks 為 RTL 2 files／12 tests、雙 alert browser 3/3、原 workspace composition 5/5、scoped ESLint、typecheck 與 `git diff --check` 全綠。
+- Task 1 仍未 stage／commit，Task 2 尚未開始；本次只修正 owner 指出的 finding，未開第二輪廣泛 review。

@@ -49,7 +49,11 @@ export function TeacherMenu({
   return (
     <aside aria-label="教師選單" className="teacher-menu">
       <div className="teacher-menu__identity">
-        <label className="teacher-menu__avatar" htmlFor="teacher-avatar-input">
+        <label
+          aria-busy={avatarPending}
+          className="teacher-menu__avatar"
+          htmlFor="teacher-avatar-input"
+        >
           {avatarUrl ? (
             <img alt={`${displayName}的教師頭像`} src={avatarUrl} />
           ) : (

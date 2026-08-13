@@ -1,6 +1,6 @@
 # Teacher Tactical Observatory UI Optimization — Phase B Implementation Plan
 
-Status: awaiting owner approval; implementation not started
+Status: Phase B approved; Task 1 in progress
 
 Date: 2026-08-14
 
@@ -8,7 +8,7 @@ Design source: `docs/superpowers/specs/2026-08-14-teacher-tactical-observatory-u
 
 Governance: `docs/adr/0007-teacher-owner-question-answer-projection.md` and the revised `AC-QUIZ-002`
 
-Baseline: branch `ui/jrpg-teacher-ui`, HEAD `9cad323e6ca7c55fd7e44e0782a9020a8be5015f`, with pre-existing dirty teacher WIP that must be preserved
+Baseline: branch `ui/jrpg-teacher-ui`, HEAD `ff14759effbd7244b5588752735c3419425d1e59`
 
 Single-file retention: this plan intentionally exceeds 500 lines because the dependency graph, protected-path/owner gates, Task 5 → Task 6 security ordering, and eight bounded task contracts must remain in one atomic review surface. Splitting them would allow the server exception, UI dependency or stop gates to drift independently. Product source files remain subject to the normal 500-line split rule.
 
