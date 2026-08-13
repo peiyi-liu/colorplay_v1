@@ -94,6 +94,63 @@
   display: none;
 }
 
+.teacher-analytics-decision-layout .teacher-table-frame--desktop {
+  display: none;
+}
+
+.teacher-analytics-decision-layout .teacher-analytics-disclosures {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.teacher-analytics-decision-layout .teacher-analytics-disclosures details {
+  border: 1px solid #294d70;
+  border-radius: 6px;
+  background: #061a32;
+}
+
+.teacher-analytics-decision-layout .teacher-analytics-disclosures summary {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  color: #dcecff;
+  cursor: pointer;
+  gap: 12px;
+  padding: 0 12px;
+}
+
+.teacher-analytics-decision-layout .teacher-analytics-disclosures dl {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0 12px 12px;
+}
+
+.teacher-analytics-decision-layout .teacher-analytics-disclosures dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.teacher-analytics-decision-layout .teacher-analytics-disclosures dt {
+  color: #91a4b8;
+}
+
+.teacher-analytics-decision-layout .teacher-analytics-disclosures dd {
+  margin: 0;
+  color: #f2f7ff;
+  font-weight: 800;
+}
+
+.teacher-analytics-decision-layout
+  .teacher-analytics-disclosures
+  .teacher-analytics-table-action {
+  width: calc(100% - 24px);
+  margin: 0 12px 12px;
+}
+
 .teacher-chapter-completion {
   display: grid;
   gap: 12px;
@@ -264,7 +321,7 @@
 
 .teacher-question-insight-completion,
 .teacher-question-insight-errors {
-  border: 1px solid #294c6d;
+  border-top: 1px solid #294c6d;
   background: #04172c;
   padding: 16px;
 }

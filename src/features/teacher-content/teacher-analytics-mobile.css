@@ -27,7 +27,7 @@
   }
 
   .teacher-work-surface--analytics .teacher-work-surface__header {
-    min-height: 210px;
+    min-height: 156px;
   }
 
   .teacher-work-surface--analytics .teacher-work-surface__content {
@@ -187,8 +187,14 @@
   }
 
   .teacher-analytics-overview--compact,
-  .teacher-question-insight-grid {
+  .teacher-question-insight-grid,
+  .teacher-analytics-decision-layout {
     grid-template-columns: 1fr;
+  }
+
+  .teacher-analytics-region-error {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .teacher-assessment-source-tabs {

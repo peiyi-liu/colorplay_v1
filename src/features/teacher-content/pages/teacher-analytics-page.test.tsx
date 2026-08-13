@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type {
   ClassroomRepository,
@@ -112,10 +112,24 @@ function renderPage(repository: TeacherContentRepository) {
 }
 
 describe('TeacherAnalyticsPage', () => {
+  beforeEach(() => {
+    vi.spyOn(window, 'matchMedia').mockReturnValue({
+      addEventListener: vi.fn(),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      matches: true,
+      media: '(min-width: 768px) and (orientation: landscape)',
+      onchange: null,
+      removeEventListener: vi.fn(),
+      removeListener: vi.fn(),
+    });
+  });
+
   it('renders the approved four-block home and truthful metrics', async () => {
     renderPage(repositoryOf());
 
     expect(await screen.findByRole('form', { name: '分析篩選' })).toBeVisible();
+    expect(screen.getByText('七年級 A 班 · 全部章節')).toBeVisible();
     expect(screen.queryByLabelText('子題')).toBeNull();
     expect(
       await screen.findByRole('region', { name: '班級總覽' }),
@@ -127,7 +141,7 @@ describe('TeacherAnalyticsPage', () => {
       'href',
       `/teacher/questions?classroomId=${classroom.classroomId}`,
     );
-    expect(screen.getByRole('table', { name: 'Live 課程' })).toHaveTextContent(
+    expect(screen.getByRole('region', { name: 'Live 課程' })).toHaveTextContent(
       '七年級 A 班',
     );
   });
@@ -172,14 +186,52 @@ describe('TeacherAnalyticsPage', () => {
   });
 
   it('shows explicit loading failure instead of fake zeroes', async () => {
+    const getClassroomOverview = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({
+        averageAccuracy: null,
+        completedStudents: 0,
+        totalStudents: 0,
+        worstSubtopicCode: null,
+        worstSubtopicTitle: null,
+      });
     renderPage(
       repositoryOf({
-        getClassroomOverview: vi.fn().mockRejectedValue(new Error('offline')),
+        getClassroomOverview,
       }),
     );
-    expect(await screen.findByRole('alert')).toHaveTextContent(
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(
       '班級總覽暫時無法取得',
     );
     expect(screen.queryByText('0%')).toBeNull();
+    await userEvent.click(
+      within(alert).getByRole('button', { name: '重新載入班級總覽' }),
+    );
+    expect((await screen.findAllByText('—')).length).toBeGreaterThan(0);
+    expect(getClassroomOverview).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the conclusion and detail regions in decision order', async () => {
+    renderPage(repositoryOf());
+
+    const filters = await screen.findByRole('form', { name: '分析篩選' });
+    const overview = screen.getByRole('region', { name: '班級總覽' });
+    const sources = screen.getByRole('group', { name: '題目來源' });
+    const questions = screen.getByRole('region', { name: '題目分析' });
+    const live = screen.getByRole('region', { name: 'Live 課程' });
+    expect(filters.compareDocumentPosition(overview)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(overview.compareDocumentPosition(sources)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(sources.compareDocumentPosition(questions)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(questions.compareDocumentPosition(live)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
   });
 });

@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { useStageWide } from '../../../components/ui/game-pager';
 import { useOwnedClassrooms } from '../../classrooms/hooks/use-classrooms';
 import type { ClassroomRepository } from '../../classrooms/types';
 import { usePublishedChapters } from '../../learning/api/chapters';
@@ -45,6 +46,30 @@ type TeacherAnalyticsPageProps = Readonly<{
   repository?: TeacherContentRepository;
 }>;
 
+function AnalyticsRegionState({
+  kind,
+  label,
+  onRetry,
+}: Readonly<{
+  kind: 'error' | 'loading';
+  label: string;
+  onRetry?: () => void;
+}>) {
+  if (kind === 'loading') {
+    return <p role="status">{label}載入中…</p>;
+  }
+  return (
+    <div className="teacher-analytics-region-error" role="alert">
+      <p>{label}暫時無法取得。</p>
+      {onRetry ? (
+        <button onClick={onRetry} type="button">
+          重新載入{label}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function TeacherAnalyticsPageContent({
   classroomRepository,
   menu,
@@ -58,6 +83,7 @@ function TeacherAnalyticsPageContent({
   const [chapterId, setChapterId] = useState('');
   const [source, setSource] = useState<AssessmentSource>('all');
   const [livePage, setLivePage] = useState(1);
+  const wide = useStageWide();
   const requestedClassroomId = searchParams.get('classroomId') ?? '';
   const classroomId = classrooms.data?.some(
     (classroom) => classroom.classroomId === requestedClassroomId,
@@ -67,6 +93,9 @@ function TeacherAnalyticsPageContent({
   const selectedClassroomName =
     classrooms.data?.find((classroom) => classroom.classroomId === classroomId)
       ?.classroomName ?? '尚未選擇班級';
+  const selectedChapterName =
+    (chapters.data ?? []).find((chapter) => chapter.id === chapterId)?.title ??
+    '全部章節';
 
   useEffect(() => {
     if (!classroomId || requestedClassroomId === classroomId) return;
@@ -119,10 +148,12 @@ function TeacherAnalyticsPageContent({
       title="教學分析"
       variant="analytics"
     >
-      <details className="teacher-analytics-filter-deck" open>
+      <details className="teacher-analytics-filter-deck" open={wide || undefined}>
         <summary>
           <span>分析篩選</span>
-          <small>班級、日期與章節</small>
+          <small>
+            {selectedClassroomName} · {selectedChapterName}
+          </small>
         </summary>
         <form aria-label="分析篩選" className="teacher-analytics-filters">
           <div data-active={requestedClassroomId.length > 0}>
@@ -190,9 +221,15 @@ function TeacherAnalyticsPageContent({
       </details>
 
       {overview.isPending ? (
-        <p role="status">班級總覽載入中…</p>
+        <AnalyticsRegionState kind="loading" label="班級總覽" />
       ) : overview.isError ? (
-        <p role="alert">班級總覽暫時無法取得。</p>
+        <AnalyticsRegionState
+          kind="error"
+          label="班級總覽"
+          onRetry={() => {
+            void overview.refetch();
+          }}
+        />
       ) : (
         <ClassroomOverviewPanel
           classroomName={selectedClassroomName}
@@ -200,48 +237,64 @@ function TeacherAnalyticsPageContent({
         />
       )}
 
-      <div
-        aria-label="題目來源"
-        className="teacher-assessment-source-tabs"
-        role="group"
-      >
-        {sourceOptions.map((option) => (
-          <button
-            aria-pressed={source === option.value}
-            key={option.value}
-            onClick={() => {
-              setSource(option.value);
-            }}
-            type="button"
+      <div className="teacher-analytics-decision-layout">
+        <div className="teacher-analytics-decision-layout__primary">
+          <div
+            aria-label="題目來源"
+            className="teacher-assessment-source-tabs"
+            role="group"
           >
-            {option.label}
-          </button>
-        ))}
-      </div>
-      {questions.isPending || completion.isPending ? (
-        <p role="status">題目分析載入中…</p>
-      ) : questions.isError || completion.isError ? (
-        <p role="alert">題目分析暫時無法取得。</p>
-      ) : (
-        <QuestionInsightPanel
-          chapterCompletion={completion.data}
-          questionHref={`/teacher/questions?classroomId=${classroomId}`}
-          questions={questions.data}
-          showCompletion={source !== 'live'}
-        />
-      )}
+            {sourceOptions.map((option) => (
+              <button
+                aria-pressed={source === option.value}
+                key={option.value}
+                onClick={() => {
+                  setSource(option.value);
+                }}
+                type="button"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {questions.isPending || completion.isPending ? (
+            <AnalyticsRegionState kind="loading" label="題目分析" />
+          ) : questions.isError || completion.isError ? (
+            <AnalyticsRegionState
+              kind="error"
+              label="題目分析"
+              onRetry={() => {
+                void Promise.all([questions.refetch(), completion.refetch()]);
+              }}
+            />
+          ) : (
+            <QuestionInsightPanel
+              chapterCompletion={completion.data}
+              questionHref={`/teacher/questions?classroomId=${classroomId}`}
+              questions={questions.data}
+              showCompletion={source !== 'live'}
+            />
+          )}
+        </div>
 
-      {liveHistory.isPending ? (
-        <p role="status">Live 課程載入中…</p>
-      ) : liveHistory.isError ? (
-        <p role="alert">Live 課程暫時無法取得。</p>
-      ) : (
-        <LiveHistoryPanel
-          history={liveHistory.data}
-          onPageChange={setLivePage}
-          page={livePage}
-        />
-      )}
+        {liveHistory.isPending ? (
+          <AnalyticsRegionState kind="loading" label="Live 課程" />
+        ) : liveHistory.isError ? (
+          <AnalyticsRegionState
+            kind="error"
+            label="Live 課程"
+            onRetry={() => {
+              void liveHistory.refetch();
+            }}
+          />
+        ) : (
+          <LiveHistoryPanel
+            history={liveHistory.data}
+            onPageChange={setLivePage}
+            page={livePage}
+          />
+        )}
+      </div>
     </TeacherWorkSurface>
   );
 }

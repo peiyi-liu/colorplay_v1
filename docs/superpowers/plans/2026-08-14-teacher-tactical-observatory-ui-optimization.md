@@ -1,6 +1,6 @@
 # Teacher Tactical Observatory UI Optimization — Phase B Implementation Plan
 
-Status: Phase B approved; Task 1 in progress
+Status: Phase B approved; Tasks 1–2 complete; Task 3 not started
 
 Date: 2026-08-14
 

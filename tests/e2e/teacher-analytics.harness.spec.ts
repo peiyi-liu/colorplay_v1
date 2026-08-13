@@ -14,6 +14,7 @@ const observeRuntimeErrors = (page: Page) => {
 
 for (const viewport of [
   { height: 720, label: 'desktop', width: 1280 },
+  { height: 852, label: 'compact-mobile', width: 320 },
   { height: 852, label: 'mobile', width: 393 },
 ] as const) {
   test(`teacher analytics home is readable at ${viewport.label}`, async ({
@@ -27,19 +28,49 @@ for (const viewport of [
     await expect(
       page.getByRole('heading', { level: 1, name: '教學分析' }),
     ).toBeVisible();
-    await expect(page.getByRole('form', { name: '分析篩選' })).toBeVisible();
+    const filterDeck = page.locator('.teacher-analytics-filter-deck');
+    if (viewport.width >= 768) {
+      await expect(page.getByRole('form', { name: '分析篩選' })).toBeVisible();
+    } else {
+      await expect(filterDeck).not.toHaveAttribute('open', '');
+      await expect(filterDeck.locator('summary')).toContainText('色彩一班');
+      await filterDeck.locator('summary').click();
+      await expect(page.getByRole('form', { name: '分析篩選' })).toBeVisible();
+    }
     await expect(page.getByRole('region', { name: '班級總覽' })).toContainText(
       '3/4',
     );
     await expect(page.getByRole('region', { name: '題目分析' })).toBeVisible();
+    await expect(
+      page.locator('.teacher-analytics-disclosures details').first(),
+    ).toBeVisible();
+
+    const hierarchy = await page.evaluate(() => {
+      const question = document
+        .querySelector<HTMLElement>('[aria-label="題目分析"]')
+        ?.getBoundingClientRect();
+      const live = document
+        .querySelector<HTMLElement>('[aria-label="Live 課程"]')
+        ?.getBoundingClientRect();
+      return question && live
+        ? {
+            liveLeft: live.left,
+            liveTop: live.top,
+            questionLeft: question.left,
+            questionTop: question.top,
+            questionWidth: question.width,
+            liveWidth: live.width,
+          }
+        : null;
+    });
+    expect(hierarchy).not.toBeNull();
     if (viewport.width >= 768) {
-      await expect(
-        page.getByRole('table', { name: 'Live 課程' }),
-      ).toBeVisible();
+      expect(hierarchy?.questionLeft).toBeLessThan(hierarchy?.liveLeft ?? 0);
+      expect(hierarchy?.questionWidth).toBeGreaterThan(
+        hierarchy?.liveWidth ?? Number.POSITIVE_INFINITY,
+      );
     } else {
-      await expect(
-        page.locator('.teacher-analytics-disclosures details').first(),
-      ).toBeVisible();
+      expect(hierarchy?.questionTop).toBeLessThan(hierarchy?.liveTop ?? 0);
     }
 
     const geometry = await page.evaluate(() => ({

@@ -15,7 +15,7 @@
 }
 
 .teacher-work-surface--analytics .teacher-work-surface__content {
-  gap: 22px;
+  gap: 18px;
   background: linear-gradient(180deg, rgb(2 8 20 / 54%), rgb(2 8 20 / 94%) 30%);
 }
 
@@ -23,11 +23,9 @@
 .teacher-analytics-section {
   overflow: hidden;
   border: 1px solid #3b6389;
-  border-radius: 3px;
-  background: rgb(2 14 31 / 94%);
-  box-shadow:
-    inset 0 0 0 2px rgb(142 197 255 / 4%),
-    0 14px 38px rgb(0 0 0 / 36%);
+  border-radius: 8px;
+  background: rgb(3 17 35 / 96%);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 24%);
 }
 
 .teacher-analytics-filter-deck > summary {
@@ -103,7 +101,7 @@
   min-width: 0;
   min-height: 44px;
   border: 1px solid #54789d;
-  border-radius: 2px;
+  border-radius: 6px;
   background: #04152b;
   color: #f5f9ff;
   font: inherit;
@@ -130,13 +128,7 @@
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid #2c4d70;
-  background:
-    linear-gradient(90deg, rgb(10 41 72 / 84%), rgb(3 19 40 / 84%)),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0 22px,
-      rgb(107 183 255 / 5%) 23px 24px
-    );
+  background: rgb(7 30 56 / 82%);
   gap: 18px;
   padding: 13px 20px;
 }
@@ -418,6 +410,49 @@
   margin: 0;
   padding: 18px;
   text-align: center;
+}
+
+.teacher-analytics-decision-layout {
+  display: grid;
+  min-width: 0;
+  align-items: start;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 0.72fr);
+}
+
+.teacher-analytics-decision-layout__primary {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+
+.teacher-analytics-region-error {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #a25752;
+  border-radius: 8px;
+  background: #261621;
+  color: #ffd7d2;
+  gap: 16px;
+  padding: 10px 14px;
+}
+
+.teacher-analytics-region-error p {
+  margin: 0;
+}
+
+.teacher-analytics-region-error button {
+  min-height: 44px;
+  border: 1px solid #df8580;
+  border-radius: 6px;
+  background: #4a2228;
+  color: #fff4f2;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 8px 14px;
 }
 
 .teacher-analytics-skeleton {

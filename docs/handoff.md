@@ -650,3 +650,9 @@
 - Owner gate 發現手機版 avatar error 與 sign-out error 原本都固定在 `top: 72px`，同時出現時會重疊。RTL 確認兩段訊息原已是兩個獨立 alert；CSS 將 avatar alert 保留於頂部 identity bar 下方，sign-out alert 改至 bottom navigation 上方並設 `top: auto`。
 - Chromium bounding boxes 於 320／375／393×852 均不相交：avatar `top 72, bottom 108`，sign-out `top 736, bottom 772`；三個 viewport 的 `scrollWidth` 均等於 `clientWidth`。Correction checks 為 RTL 2 files／12 tests、雙 alert browser 3/3、原 workspace composition 5/5、scoped ESLint、typecheck 與 `git diff --check` 全綠。
 - Task 1 仍未 stage／commit，Task 2 尚未開始；本次只修正 owner 指出的 finding，未開第二輪廣泛 review。
+
+## 2026-08-14 05:45 [Codex] — Phase B Task 2 教學分析 pilot 完成
+
+- Task 1 已封裝為 `4b4218df340fbff6bbed5d54a3232e52562342ce`。Task 2 保留既有 hooks、query inputs、server pagination 與正式指標，將 `/teacher` 重排為可折疊的篩選摘要、結論優先班級總覽、主要題目分析與次要 Live 場次復盤；各 query region 新增獨立 retry，null 仍以 em dash 呈現。
+- TDD 真正 RED 為缺少「班級／章節」篩選摘要及班級總覽 retry；第一屏 DOM 順序是 baseline coverage。Fresh checks：Vitest 2 files／12 tests、Chromium 5/5、scoped ESLint、typecheck、build、`git diff --check` 全綠；320／393 無整頁橫向 overflow，手機篩選預設收合、桌機題目分析寬於 Live 支援欄。
+- 唯一 scoped self-review 未發現 fake metric、query drift、shared CSS 洩漏或超過 500 行；Task 2 尚未 stage／commit，Task 3 尚未開始。
