@@ -39,13 +39,15 @@ describe('actionCopy', () => {
     });
   });
 
-  it('keeps projector copy aligned with the host console today', () => {
-    expect(actionCopy('closeQuestion', 'projector')).toEqual(
-      actionCopy('closeQuestion', 'hostConsole'),
-    );
-    expect(actionCopy('pauseSession', 'projector')).toEqual(
-      actionCopy('pauseSession', 'hostConsole'),
-    );
+  it('uses concise labels for the immersive projector controls', () => {
+    expect(actionCopy('closeQuestion', 'projector')).toEqual({
+      emphasis: 'primary',
+      label: '結束作答',
+    });
+    expect(actionCopy('pauseSession', 'projector')).toEqual({
+      emphasis: 'secondary',
+      label: '暫停時間',
+    });
   });
 });
 

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -7,7 +7,11 @@ import type { LiveRepository, LiveSessionState } from '../types';
 import { actionCopy } from '../lib/live-action-copy';
 import { hostConsoleView } from '../lib/live-phase-view';
 import type { PresenterAudio } from '../lib/presenter-audio';
-import { LivePresenter, presenterJoinCodeKey } from './live-presenter';
+import {
+  LivePresenter,
+  presenterJoinCodeKey,
+  type ProjectorFooterAction,
+} from './live-presenter';
 
 const SESSION_ID = '18400000-0000-0000-0000-000000000001';
 
@@ -69,6 +73,7 @@ const feedbackState: LiveSessionState = {
   state: 'question_feedback',
   stateVersion: 4,
   correctOptionId: '18700000-0000-0000-0000-000000000001',
+  explanation: '色相是色彩的相貌，也是辨識色彩種類的主要屬性。',
   optionCounts: [
     { optionId: '18700000-0000-0000-0000-000000000001', count: 1 },
     { optionId: '18700000-0000-0000-0000-000000000002', count: 1 },
@@ -106,7 +111,9 @@ const renderPresenter = (
   state: LiveSessionState,
   options?: Readonly<{
     audio?: PresenterAudio;
+    footerActions?: readonly ProjectorFooterAction[];
     repository?: LiveRepository;
+    onCancel?: () => void;
     onExit?: () => void;
   }>,
 ) => {
@@ -118,7 +125,8 @@ const renderPresenter = (
     <QueryClientProvider client={queryClient}>
       <LivePresenter
         audio={audio}
-        footerActions={footerActionsFor(nextState)}
+        footerActions={options?.footerActions ?? footerActionsFor(nextState)}
+        onCancel={options?.onCancel ?? vi.fn()}
         onExit={options?.onExit ?? vi.fn()}
         sessionId={SESSION_ID}
         state={nextState}
@@ -133,11 +141,12 @@ const renderPresenter = (
 
 describe('LivePresenter', () => {
   beforeEach(() => {
+    vi.useRealTimers();
     window.sessionStorage.clear();
     window.localStorage.clear();
   });
 
-  it('shows the six-digit code and the nickname wall in the lobby', () => {
+  it('shows the six-digit code and circular participant portraits without visible names', () => {
     window.sessionStorage.setItem(presenterJoinCodeKey(SESSION_ID), '123456');
     const audio = stubAudio();
     renderPresenter(lobbyState, { audio });
@@ -145,9 +154,106 @@ describe('LivePresenter', () => {
     expect(screen.getByLabelText('課堂代碼')).toHaveTextContent('123456');
     expect(screen.getByText('2 位同學已加入')).toBeVisible();
     const wall = screen.getByLabelText('已加入同學');
-    expect(wall).toHaveTextContent('小艾');
-    expect(wall).toHaveTextContent('小畢');
+    expect(wall).not.toHaveTextContent('小艾');
+    expect(wall).not.toHaveTextContent('小畢');
+    expect(screen.getByLabelText('小艾已加入').querySelector('img')).not.toBeNull();
+    expect(screen.getByLabelText('小畢已加入').querySelector('img')).not.toBeNull();
     expect(audio.startLobbyLoop).toHaveBeenCalled();
+  });
+
+  it('marks only participants added after the lobby renders as newly joining', () => {
+    window.sessionStorage.setItem(presenterJoinCodeKey(SESSION_ID), '123456');
+    const { rerenderWith } = renderPresenter(lobbyState);
+
+    rerenderWith({
+      ...lobbyState,
+      participantCount: 3,
+      participants: [
+        ...(lobbyState.participants ?? []),
+        { displayName: '小新' },
+      ],
+    });
+
+    expect(screen.getByLabelText('小新已加入')).toHaveAttribute(
+      'data-joining',
+      'true',
+    );
+    expect(screen.getByLabelText('小艾已加入')).not.toHaveAttribute(
+      'data-joining',
+    );
+    expect(screen.getByLabelText('小畢已加入')).not.toHaveAttribute(
+      'data-joining',
+    );
+  });
+
+  it('uses the immersive Live HUD with honest waiting-state values', () => {
+    window.sessionStorage.setItem(presenterJoinCodeKey(SESSION_ID), '123456');
+    renderPresenter(lobbyState);
+
+    expect(
+      screen.getByRole('region', { name: 'Live 投影模式' }),
+    ).toBeVisible();
+    expect(screen.getByText('目前題目')).toBeVisible();
+    expect(screen.getByText('等待開始')).toBeVisible();
+    expect(screen.getByText('共 10 題')).toBeVisible();
+    expect(screen.getByText('作答倒數環')).toBeVisible();
+    expect(screen.getByText('待開始')).toBeVisible();
+    expect(screen.getByText('即時排名')).toBeVisible();
+    expect(screen.getByText('尚未產生')).toBeVisible();
+    expect(screen.getByText('參與狀況')).toBeVisible();
+    expect(screen.getByText('2 人已加入')).toBeVisible();
+
+    expect(screen.getByRole('button', { name: '開始遊戲' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '音效' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '退出' })).toBeVisible();
+    expect(screen.getAllByRole('button')).toHaveLength(3);
+  });
+
+  it('starts the lobby through the existing Host action', async () => {
+    const start = vi.fn();
+    renderPresenter(lobbyState, {
+      footerActions: [
+        {
+          id: 'openQuestion',
+          label: '開始第一題',
+          precedence: 'primary',
+          run: start,
+        },
+      ],
+    });
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: '開始遊戲' }));
+
+    expect(start).toHaveBeenCalledTimes(1);
+  });
+
+  it('confirms before exiting and uses the existing cancel callback', async () => {
+    const onCancel = vi.fn();
+    renderPresenter(lobbyState, { onCancel });
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: '退出' }));
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('alertdialog', { name: '確定退出 Live 課堂？' }),
+    ).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: '確定退出' }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('dismisses the exit confirmation with Escape and restores focus', async () => {
+    renderPresenter(lobbyState);
+    const user = userEvent.setup();
+    const exit = screen.getByRole('button', { name: '退出' });
+
+    await user.click(exit);
+    expect(screen.getByRole('alertdialog')).toBeVisible();
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(exit).toHaveFocus();
   });
 
   it('falls back to a regenerate hint without a stored code', () => {
@@ -157,22 +263,107 @@ describe('LivePresenter', () => {
     );
   });
 
-  it('projects the question with shaped options, the ring and the counter', () => {
-    renderPresenter(openState);
+  it('projects a question through the shared Live HUD and locks Next until ranking', async () => {
+    const pause = vi.fn();
+    const close = vi.fn();
+    renderPresenter(openState, {
+      footerActions: [
+        {
+          id: 'closeQuestion',
+          label: '結束作答',
+          precedence: 'primary',
+          run: close,
+        },
+        {
+          id: 'pauseSession',
+          label: '暫停時間',
+          precedence: 'secondary',
+          run: pause,
+        },
+      ],
+    });
 
     expect(
       screen.getByRole('heading', { name: '色彩三要素是？' }),
     ).toBeVisible();
+    expect(screen.getByText('目前題目')).toBeVisible();
+    expect(screen.getAllByText('第 1 / 10 題')).toHaveLength(2);
+    expect(screen.getByText('作答倒數環')).toBeVisible();
+    expect(screen.getByText('即時排名')).toBeVisible();
+    expect(screen.getByText('本題結束後更新')).toBeVisible();
+    expect(screen.getByText('參與狀況')).toBeVisible();
     expect(screen.getByRole('timer', { name: '剩餘秒數' })).toBeVisible();
     expect(screen.getByText('已作答 1 / 2')).toBeVisible();
     const options = screen.getByLabelText('答案選項');
     expect(options).toHaveTextContent('▲');
-    expect(options).toHaveTextContent('A. 色相');
-    expect(screen.getByRole('button', { name: '暫停' })).toBeVisible();
+    expect(screen.getByLabelText('A. 色相')).toBeVisible();
+    expect(screen.getByRole('button', { name: '暫停時間' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '結束作答' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '下一題' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '音效' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '退出' })).toBeVisible();
+    expect(screen.getAllByRole('button')).toHaveLength(5);
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: '暫停時間' }));
+    await user.click(screen.getByRole('button', { name: '結束作答' }));
+    expect(pause).toHaveBeenCalledTimes(1);
+    expect(close).toHaveBeenCalledTimes(1);
   });
 
-  it('reveals the correct option and the Top 5 at feedback', async () => {
+  it('keeps keyboard focus inside the round exit confirmation and restores it on Escape', async () => {
+    renderPresenter(openState);
+    const user = userEvent.setup();
+    const exit = screen.getByRole('button', { name: '退出' });
+
+    await user.click(exit);
+    const continueButton = screen.getByRole('button', { name: '繼續課堂' });
+    const confirmButton = screen.getByRole('button', { name: '確定退出' });
+    expect(continueButton).toHaveFocus();
+
+    confirmButton.focus();
+    await user.tab();
+    expect(continueButton).toHaveFocus();
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(exit).toHaveFocus();
+  });
+
+  it('closes an expired question exactly once through the existing Host action', async () => {
+    const close = vi.fn();
+    if (!openState.question) throw new Error('missing open question fixture');
+    const expiredState: LiveSessionState = {
+      ...openState,
+      serverTime: '2026-08-12T12:00:20.000Z',
+      question: {
+        ...openState.question,
+        deadlineAt: '2026-08-12T12:00:20.000Z',
+        openedAt: '2026-08-12T12:00:00.000Z',
+      },
+    };
+    const { rerenderWith } = renderPresenter(expiredState, {
+      footerActions: [
+        {
+          id: 'closeQuestion',
+          label: '結束作答',
+          precedence: 'primary',
+          run: close,
+        },
+      ],
+    });
+
+    await waitFor(() => {
+      expect(close).toHaveBeenCalledTimes(1);
+    });
+    rerenderWith(expiredState);
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows statistics for five seconds, then explanation, then ranking on request', async () => {
+    vi.useFakeTimers();
     const audio = stubAudio();
+    const next = vi.fn();
     const repository = repositoryWith({
       getStandings: vi.fn().mockResolvedValue({
         participantCount: 2,
@@ -182,14 +373,50 @@ describe('LivePresenter', () => {
         ],
       }),
     });
-    renderPresenter(feedbackState, { audio, repository });
+    renderPresenter(feedbackState, {
+      audio,
+      footerActions: [
+        {
+          id: 'advance',
+          label: '下一題',
+          precedence: 'primary',
+          run: next,
+        },
+      ],
+      repository,
+    });
 
-    const chart = screen.getByLabelText('作答分布長條圖');
-    expect(chart).toHaveTextContent('✓ A. 色相');
-    expect(chart).toHaveTextContent('1 人');
-    expect(await screen.findByText(/第 1 名 小艾（150 分）/u)).toBeVisible();
+    const chart = screen.getByLabelText('作答分布文字圖表');
+    expect(chart).toHaveTextContent('✓ 正確答案：A. 色相');
+    expect(chart).toHaveTextContent('1 人／50%');
+    expect(screen.queryByRole('heading', { name: '本題解析' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '下一題' })).toBeDisabled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(4_999);
+    });
+    expect(screen.getByRole('heading', { name: '作答統計' })).toBeVisible();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    expect(screen.getByRole('heading', { name: '本題解析' })).toBeVisible();
+    expect(screen.getByText(feedbackState.explanation ?? '')).toBeVisible();
+    expect(screen.getByRole('button', { name: '下一題' })).toBeDisabled();
+
+    await act(async () => {
+      screen.getByRole('button', { name: '即時排名' }).click();
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('heading', { name: '即時排名' })).toBeVisible();
+    expect(screen.getByText('小艾')).toBeVisible();
+    expect(screen.getByText('150 分')).toBeVisible();
+    expect(screen.getByRole('button', { name: '下一題' })).toBeEnabled();
+    screen.getByRole('button', { name: '下一題' }).click();
+    expect(next).toHaveBeenCalledTimes(1);
     // 重連（初次掛載）進入 reveal：Cue 不發（一次性音效屬於轉場）。
     expect(audio.playReveal).not.toHaveBeenCalled();
+    vi.useRealTimers();
   });
 
   it('stages the podium reveal on completion', () => {
@@ -240,9 +467,11 @@ describe('LivePresenter', () => {
     renderPresenter(lobbyState, { audio });
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole('button', { name: '音效開啟' }));
+    const sound = screen.getByRole('button', { name: '音效' });
+    await user.click(sound);
 
-    expect(screen.getByRole('button', { name: '已靜音' })).toBeVisible();
+    expect(sound).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('靜音')).toBeVisible();
     expect(window.localStorage.getItem('live-presenter-muted')).toBe('1');
     expect(audio.setMuted).toHaveBeenLastCalledWith(true);
   });

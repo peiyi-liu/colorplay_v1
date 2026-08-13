@@ -21,10 +21,15 @@ const BASE_COPY: Record<LiveTransitionName, ActionCopy> = {
   startSession: { emphasis: 'primary', label: '開啟等待室' },
 };
 
-// 兩個 audience 目前文案一致；日後投影端分化時只改這張表。
+const PROJECTOR_COPY: Record<LiveTransitionName, ActionCopy> = {
+  ...BASE_COPY,
+  closeQuestion: { emphasis: 'primary', label: '結束作答' },
+  pauseSession: { emphasis: 'secondary', label: '暫停時間' },
+};
+
 const COPY: Record<ActionAudience, Record<LiveTransitionName, ActionCopy>> = {
   hostConsole: BASE_COPY,
-  projector: BASE_COPY,
+  projector: PROJECTOR_COPY,
 };
 
 export const actionCopy = (
