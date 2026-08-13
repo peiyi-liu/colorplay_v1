@@ -733,3 +733,10 @@
 - 手機學習大廳鎖定於 viewport；複習卡完成狀態改為高對比藍色像素按鈕樣式，翻頁動畫改為單頁寬。商店、錯題、排行榜返回鍵與標題框在 393／650／700px 都不重疊；錯題頁碼置於兩箭頭正中並與「再挑戰」保留 16px，補救 Quiz 的長模式說明移除。
 - 主畫面「色彩王國的冒險旅程」與「開始冒險」改用既有繁中像素字。唯一 review 初抓到 650–700px 避讓缺口、缺少 browser asset proof 與翻頁上限，均已修正；`globals.css` 既有超過 500 行技術債未在本 task 擴張為教師行為，後續應獨立拆分。
 - 驗證：lint、typecheck、production build、15 files／80 Vitest、14 個 Chromium 手機／平板／桌面回歸、既有 Chapter Reader 8／8 與 Shop 3／3 全綠；兩 viewport × 九個場景的瀏覽器資源實測均無超過 350 KiB 的 raster。未修改教師專屬頁、API／DB／權威 XP／Token，未合併教師 branch、未 push、未 deploy；既有 visual artifacts 保留在工作樹且不納入 commit。
+
+## 2026-08-13 03:35 [Owner／Codex] — 複習卡附件壓縮、版本化發布與 staging 部署
+
+- staging private `review-card-media` 的 P301～P305 以不裁切、原尺寸 WebP 重新壓縮並改用 `P301-v2.webp`～`P305-v2.webp`；單檔由 418,786～1,965,636 bytes 降為 47,286～173,408 bytes。原檔未覆蓋或刪除。這五張仍是教材掃描過渡版，不宣稱已完成 AI 統一風格再製。
+- 依正式 mapping 將 P301→RC3101、P302→RC3103、P303／P304→RC3201、P305→RC3202，補上繁中 alt，透過 `publish_review_card` 將四張卡由 version 1 升至 version 2；`requires_recompletion` 保持原值。閱讀器既有 block 順序為標題／全部文字／media，hosted RC3101 在 393×852 與 1280×900 均驗證圖片位於文字後方並成功載入。
+- 學生端 commit `776641554725453e9a3247d2b556b4e44e310c9d` 已推至 `origin/phase6/jrpg-generated-board-ui`；GitHub-source Preview `dpl_Fa2VuTWXFqFhZUWGg2t2ZmaL6uXC` 通過 bundle staging project-ref、真實學生登入／bootstrap、複習附件順序與載入 gate後，promote 為 Staging deployment `dpl_2mYHsqXARmLjxJmMT5t6CkNUBbxo`，alias `staging.colorplayapp.com`。公開 alias bundle 只含 `onkxnkzeixpezetkmocf`，近一小時無 Vercel runtime error。
+- 自動驗證：lint、typecheck、production build、相關 Vitest 10 files／45 tests、`git diff --check` 全綠。未修改或合併 `ui/jrpg-teacher-ui`，既有 visual artifact dirty paths 仍保留且未納入部署 commit。Vercel CLI 58.9.4 可完成本次部署，但目前最新為 58.9.5，建議另開維護動作升級，不與產品 release 混做。
