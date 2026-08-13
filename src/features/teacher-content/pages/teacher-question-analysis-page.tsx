@@ -11,6 +11,7 @@ import { AuthenticatedTeacherMenu } from '../components/authenticated-teacher-me
 import { TeacherWorkSurface } from '../components/teacher-work-surface';
 import {
   useTeacherAssessmentQuestions,
+  useTeacherQuestionAnswer,
   useTeacherQuestionDetail,
 } from '../hooks/use-teacher-content';
 import { formatPercent } from '../lib/teacher-analytics-format';
@@ -81,6 +82,33 @@ export function TeacherQuestionAnalysisPage({
     selectedCode,
     repository,
   );
+  const answer = useTeacherQuestionAnswer(classroomId, selectedCode, repository);
+
+  const renderOptions = () => {
+    if (!detail.data) return null;
+    const authoritative = new Map(
+      (answer.data?.options ?? []).map((option) => [option.key, option]),
+    );
+    return (
+      <ol className="teacher-question-options">
+        {detail.data.options.map((option) => {
+          const ownerOption = authoritative.get(option.option_key);
+          const isCorrect = ownerOption?.isCorrect === true;
+          return (
+            <li
+              className={isCorrect ? 'teacher-question-options__correct' : undefined}
+              key={option.option_key}
+            >
+              <span>
+                {option.option_key}．{option.option_text}
+              </span>
+              {isCorrect ? <strong>✓ 正確答案</strong> : null}
+            </li>
+          );
+        })}
+      </ol>
+    );
+  };
 
   const state =
     classrooms.isPending || questions.isPending
@@ -166,16 +194,7 @@ export function TeacherQuestionAnalysisPage({
                                   <p role="status">題目內容載入中…</p>
                                 ) : detail.isError ? (
                                   <p role="alert">題目內容暫時無法取得。</p>
-                                ) : detail.data ? (
-                                  <ol className="teacher-question-options">
-                                    {detail.data.options.map((option) => (
-                                      <li key={option.option_key}>
-                                        {option.option_key}．
-                                        {option.option_text}
-                                      </li>
-                                    ))}
-                                  </ol>
-                                ) : null}
+                                ) : detail.data ? renderOptions() : null}
                               </td>
                             </tr>
                           ) : null}
@@ -213,15 +232,7 @@ export function TeacherQuestionAnalysisPage({
                           <p role="status">題目內容載入中…</p>
                         ) : detail.isError ? (
                           <p role="alert">題目內容暫時無法取得。</p>
-                        ) : detail.data ? (
-                          <ol className="teacher-question-options">
-                            {detail.data.options.map((option) => (
-                              <li key={option.option_key}>
-                                {option.option_key}．{option.option_text}
-                              </li>
-                            ))}
-                          </ol>
-                        ) : null
+                        ) : detail.data ? renderOptions() : null
                       ) : null}
                     </article>
                   ))}

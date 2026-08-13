@@ -674,3 +674,9 @@
 - Task 4 已封裝為 `a6ce1e8aeba54d5e18d51faddac821d1817aafa5`。新增 collision-free migration `20260814000100_teacher_question_answer_detail.sql` 與 pgTAP `055`；`teacher_question_answer_options(uuid, text)` 固定 search_path，只授權 authenticated 執行，並在 server 驗證 teacher role、active classroom ownership、active student 的 completed practice／assignment session 與 published section-bank stable question 範圍。
 - ADR 0007 窄型別只回 option_key／option_text／is_correct，repository 映射到 teacher-only `options[].isCorrect`，hook 在 classroom ID 或 stable code 缺少時不查詢；denied／empty 回 null，不合成答案。既有 `QuestionDetail` 與 `teacher_question_detail` 維持 answer-free，學生 Quiz／active Live contracts 未擴張。
 - 真正 RED 是 function 不存在。Fresh checks：focused pgTAP 11/11、完整 local DB 55 files／1223 tests、generated database types contract、repository／hook 3 files／20 tests、Quiz／Live forbidden-payload regression 2 files／26 tests、scoped ESLint、typecheck 與 `git diff --check` 全綠。唯一 security-focused review 無 IDOR、grant、schema 擴散或 generated-type finding；Task 5 尚未 stage／commit，Task 6 尚未開始。
+
+## 2026-08-14 06:22 [Codex] — Phase B Task 6 權威正確答案呈現完成
+
+- Task 5 已封裝為 `b7293023582695aadfca2b2b805c6a7acf3a6b6e`。題目分析頁維持既有 answer-free detail 與排序，只由 Task 5 `useTeacherQuestionAnswer` 的成功結果依 option key 標示 `✓ 正確答案`；pending、error、empty 或 denied 時不標示、不重排也不推測答案。
+- 真正 RED 是既有 expanded detail 找不到明確正確答案標示。Fresh checks：Vitest 2 files／9 tests、Chromium desktop／mobile 2/2、scoped ESLint、typecheck 與 `git diff --check` 全綠；393px disclosure 可用鍵盤展開、focus 留在按鈕、控制高度至少 44px且無整頁 overflow，1280px 維持題目 table。
+- 唯一 scoped self-review 無 answer inference、answer-free interface drift、mobile composition 或 accessibility finding；相關檔案皆低於 500 行。Task 6 尚未 stage／commit，Task 7 尚未開始。

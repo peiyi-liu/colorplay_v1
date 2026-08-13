@@ -41,6 +41,12 @@ const repository = {
     prompt: '題目甲',
     stable_code: 'QB3101',
   }),
+  getQuestionAnswer: vi.fn().mockResolvedValue({
+    options: [
+      { isCorrect: false, key: 'B', text: '紅、黃、藍' },
+      { isCorrect: true, key: 'A', text: '紅、綠、藍' },
+    ],
+  }),
 } as unknown as TeacherContentRepository;
 const classrooms = {
   listOwned: vi.fn().mockResolvedValue([
@@ -86,5 +92,43 @@ describe('TeacherQuestionAnalysisPage', () => {
       within(table).getByRole('button', { name: '查看 QB3101 題目內容' }),
     );
     expect(await within(table).findByText('A．紅、綠、藍')).toBeVisible();
+    const correct = (await within(table).findByText(/正確答案/u)).closest('li');
+    expect(correct).toHaveTextContent('A．紅、綠、藍');
+    expect(repository.getQuestionAnswer).toHaveBeenCalledWith(
+      classroomId,
+      'QB3101',
+    );
+    expect(within(table).getAllByRole('listitem')[0]).toHaveTextContent(
+      'A．紅、綠、藍',
+    );
+  });
+
+  it('keeps answer-free options unmarked when owner projection is denied', async () => {
+    const deniedRepository = {
+      ...repository,
+      getQuestionAnswer: vi.fn().mockResolvedValue(null),
+    } as unknown as TeacherContentRepository;
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <TeacherQuestionAnalysisPage
+            classroomRepository={classrooms}
+            menu={<nav aria-label="測試教師導覽" />}
+            repository={deniedRepository}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await userEvent.click(await screen.findByText('3-1 色彩三要素'));
+    const table = screen.getByRole('table', { name: '3-1 色彩三要素題目分析' });
+    await userEvent.click(
+      within(table).getByRole('button', { name: '查看 QB3101 題目內容' }),
+    );
+    expect(await within(table).findByText('A．紅、綠、藍')).toBeVisible();
+    expect(within(table).queryByText(/正確答案/u)).toBeNull();
   });
 });

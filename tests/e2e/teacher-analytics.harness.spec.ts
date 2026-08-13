@@ -98,7 +98,7 @@ for (const viewport of [
   });
 }
 
-test('Live source hides chapter completion and question analysis uses disclosures', async ({
+test('Live source hides chapter completion and question analysis shows authoritative answers in disclosures', async ({
   page,
 }) => {
   await page.setViewportSize({ height: 852, width: 393 });
@@ -118,9 +118,35 @@ test('Live source hides chapter completion and question analysis uses disclosure
   await expect(disclosure).not.toHaveAttribute('open', '');
   await disclosure.locator('summary').click();
   await expect(disclosure).toHaveAttribute('open', '');
-  await expect(
-    page.getByRole('button', { name: /查看 QB3101 題目內容（手機）/u }),
-  ).toBeVisible();
+  const button = page.getByRole('button', {
+    name: /查看 QB3101 題目內容（手機）/u,
+  });
+  await expect(button).toBeVisible();
+  expect(await button.evaluate((el) => el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+  await button.focus();
+  await page.keyboard.press('Enter');
+  await expect(button).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByText('✓ 正確答案').last()).toBeVisible();
+  await expect(button).toBeFocused();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    ),
+  ).toBe(true);
+});
+
+test('question analysis desktop keeps the table and authoritative answer label', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 900, width: 1280 });
+  await page.goto('/dev-harness/teacher-routes.html?scenario=questions');
+  await page.getByText('3-1 色彩三要素與色名的表示').click();
+  const table = page.getByRole('table', {
+    name: '3-1 色彩三要素與色名的表示題目分析',
+  });
+  await expect(table).toBeVisible();
+  await table.getByRole('button', { name: '查看 QB3101 題目內容' }).click();
+  await expect(table.getByText('✓ 正確答案')).toBeVisible();
 });
 
 test('teacher HUD remains fixed while analytics scrolls', async ({ page }) => {

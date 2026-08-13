@@ -254,6 +254,13 @@ const teacherContentRepositoryFixture = (
         prompt: '色彩三要素是？',
         stable_code: stableCode,
       }),
+    getQuestionAnswer: () =>
+      Promise.resolve({
+        options: [
+          { isCorrect: true, key: 'A', text: '色相、明度、彩度' },
+          { isCorrect: false, key: 'B', text: '紅色、黃色、藍色' },
+        ],
+      }),
     getSubtopicMastery: () =>
       Promise.resolve([
         {

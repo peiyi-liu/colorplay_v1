@@ -216,6 +216,23 @@
   padding: 8px 12px;
 }
 
+.teacher-question-options li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.teacher-question-options__correct {
+  border-color: #e7b94d;
+  background: #2b240f;
+}
+
+.teacher-question-options__correct strong {
+  color: #ffd66d;
+  white-space: nowrap;
+}
+
 .teacher-chapter-completion li strong[data-complete='true'] {
   color: #6fe2a1;
 }
