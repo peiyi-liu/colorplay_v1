@@ -251,17 +251,20 @@ UI 與流程 criterion 至少包含 S 或 Q/V，不能只有 L。安全／資料
 
 **證據**：Q、D、N、T。
 
-## AC-QUIZ-002：題目 payload 不含正解 — Blocking
+## AC-QUIZ-002：學生／公開題目 payload 在提交前不含正解 — Blocking
 
 **要求**
 
-- 建立／讀取題目的 response body、Playwright trace network、React query cache dump 均不含：`is_correct`, `correct_option_id`, `correct`, 正確索引或 explanation before submit。
+- Student／public 建立或讀取題目的 response body、提交前 Playwright network 與學生 React Query cache 均不得包含：`is_correct`、`correct_option_id`、`correct`、正確索引或提交前 explanation。
 - JS bundle／static JSON 不含 production 題庫正解。
+- 唯一例外是 ADR 0007 定義的專用 classroom-owner-only 正確答案 projection；只有 server 驗證同班 owner 後，該 projection 可以回傳 `is_correct`。
+- 教師例外不適用於現有 shared `QuestionDetail`、student Quiz、進行中 Live 或一般分析 payload。
+- 教師例外必須通過同班 owner 正向案例，以及 anonymous、學生、非 owner 教師、跨班級教師與越界題目負向矩陣；拒絕結果不得洩漏題目或班級是否存在。
 
 **判定方法**
 
 - 自動 schema assertion。
-- Network artifact 搜尋 forbidden fields。
+- Network artifact 依 endpoint、authenticated role、classroom ownership 與作答階段搜尋 forbidden fields；不得因 ADR 0007 的教師例外而全域忽略 `is_correct`。
 
 **證據**：N、L。
 
