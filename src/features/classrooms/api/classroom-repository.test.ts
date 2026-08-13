@@ -103,12 +103,16 @@ describe('ClassroomRepository', () => {
           chapters: [
             {
               accuracy: 88,
+              assessment_accuracy: 74.3,
               chapter_id: 'cc000000-0000-4000-8000-000000000001',
+              chapter_quiz_accuracy: 80,
               chapter_title: '第三章：色彩表示',
               coverage: 92,
+              live_accuracy: 67,
               mastery: 86,
               review_completed: 3,
               review_total: 3,
+              section_quiz_accuracy: 76,
               status: 'mastered',
             },
           ],
@@ -119,19 +123,13 @@ describe('ClassroomRepository', () => {
             login_account: 's1130201',
             membership_status: 'active',
           },
-          mistakes: [
-            {
-              prompt: '關於色立體的敘述，下列何者不正確?',
-              subtopic_code: '3-2',
-              subtopic_title: '色彩體系與數值符號的表示',
-              wrong_count: 2,
-            },
-          ],
           stats: {
             avg_accuracy: 86,
             class_rank: 1,
             class_xp: 2140,
             open_mistake_count: 2,
+            total_mistake_count: 30,
+            unfinished_mistake_count: 14,
           },
         },
         error: null,
@@ -147,12 +145,16 @@ describe('ClassroomRepository', () => {
       chapters: [
         {
           accuracy: 88,
+          assessmentAccuracy: 74.3,
           chapterId: 'cc000000-0000-4000-8000-000000000001',
+          chapterQuizAccuracy: 80,
           chapterTitle: '第三章：色彩表示',
           coverage: 92,
+          liveAccuracy: 67,
           mastery: 86,
           reviewCompleted: 3,
           reviewTotal: 3,
+          sectionQuizAccuracy: 76,
           status: 'mastered',
         },
       ],
@@ -163,22 +165,16 @@ describe('ClassroomRepository', () => {
         loginAccount: 's1130201',
         membershipStatus: 'active',
       },
-      mistakes: [
-        {
-          prompt: '關於色立體的敘述，下列何者不正確?',
-          subtopicCode: '3-2',
-          subtopicTitle: '色彩體系與數值符號的表示',
-          wrongCount: 2,
-        },
-      ],
       stats: {
         avgAccuracy: 86,
         classRank: 1,
         classXp: 2140,
         openMistakeCount: 2,
+        totalMistakeCount: 30,
+        unfinishedMistakeCount: 14,
       },
     });
-    expect(rpc).toHaveBeenCalledWith('teacher_student_progress', {
+    expect(rpc).toHaveBeenCalledWith('teacher_student_progress_v2', {
       p_classroom_id: 'ca000000-0000-4000-8000-000000000001',
       p_member_ref: 'cb000000-0000-4000-8000-000000000001',
     });

@@ -9,15 +9,21 @@ import {
 import { parsePublicEnv } from '../../../lib/config/public-env';
 import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
 import {
+  type AssessmentQuestionRow,
+  type AssessmentSource,
   type AnalyticsFilters,
   type AssignmentSummaryRow,
+  type ChapterCompletionRow,
   type ClassroomSummary,
+  type ClassroomOverview,
   createTeacherContentRepository,
   type DateRangeFilters,
   type ImportCommitReport,
   type LiveReportRow,
+  type LiveHistoryPage,
   type PublishReceipt,
   type QuestionAnalysisRow,
+  type QuestionDetail,
   type QuestionDraftPayload,
   type ReviewCardDraftPayload,
   type SubtopicMasteryRow,
@@ -30,15 +36,35 @@ import {
 import type { ImportQuestionRow, ImportReviewCardRow } from '../api/xlsx-codec';
 
 export const teacherContentKeys = {
+  assessmentQuestions: (
+    classroomId: string,
+    filters: AnalyticsFilters,
+    source: AssessmentSource,
+  ) =>
+    [
+      'teacher-content',
+      'assessment-questions',
+      classroomId,
+      filters,
+      source,
+    ] as const,
   assignmentSummary: (classroomId: string, filters: DateRangeFilters) =>
     ['teacher-content', 'assignment-summary', classroomId, filters] as const,
   cards: ['teacher-content', 'cards'] as const,
+  chapterCompletion: (classroomId: string, chapterId?: string | null) =>
+    ['teacher-content', 'chapter-completion', classroomId, chapterId] as const,
   classroomSummary: (classroomId: string, filters: AnalyticsFilters) =>
     ['teacher-content', 'classroom-summary', classroomId, filters] as const,
+  classroomOverview: (classroomId: string, filters: AnalyticsFilters) =>
+    ['teacher-content', 'classroom-overview', classroomId, filters] as const,
+  liveHistory: (classroomId: string, filters: DateRangeFilters, page: number) =>
+    ['teacher-content', 'live-history', classroomId, filters, page] as const,
   liveReport: (classroomId: string, filters: DateRangeFilters) =>
     ['teacher-content', 'live-report', classroomId, filters] as const,
   questionAnalysis: (classroomId: string, filters: AnalyticsFilters) =>
     ['teacher-content', 'question-analysis', classroomId, filters] as const,
+  questionDetail: (classroomId: string, stableCode: string) =>
+    ['teacher-content', 'question-detail', classroomId, stableCode] as const,
   questions: ['teacher-content', 'questions'] as const,
   subtopicMastery: (classroomId: string, filters: AnalyticsFilters) =>
     ['teacher-content', 'subtopic-mastery', classroomId, filters] as const,
@@ -103,6 +129,54 @@ export function useTeacherClassroomSummary(
   });
 }
 
+export function useTeacherClassroomOverview(
+  classroomId: string,
+  filters: AnalyticsFilters,
+  repository?: TeacherContentRepository,
+): UseQueryResult<ClassroomOverview | null, TeacherContentError> {
+  const resolved = resolveRepository(repository);
+  return useQuery({
+    enabled: classroomId.length > 0,
+    queryFn: () => resolved.getClassroomOverview(classroomId, filters),
+    queryKey: teacherContentKeys.classroomOverview(classroomId, filters),
+    retry: retryRead,
+  });
+}
+
+export function useTeacherAssessmentQuestions(
+  classroomId: string,
+  filters: AnalyticsFilters,
+  source: AssessmentSource,
+  repository?: TeacherContentRepository,
+): UseQueryResult<readonly AssessmentQuestionRow[], TeacherContentError> {
+  const resolved = resolveRepository(repository);
+  return useQuery({
+    enabled: classroomId.length > 0,
+    queryFn: () =>
+      resolved.getAssessmentQuestions(classroomId, filters, source),
+    queryKey: teacherContentKeys.assessmentQuestions(
+      classroomId,
+      filters,
+      source,
+    ),
+    retry: retryRead,
+  });
+}
+
+export function useTeacherChapterCompletion(
+  classroomId: string,
+  chapterId: string | null,
+  repository?: TeacherContentRepository,
+): UseQueryResult<readonly ChapterCompletionRow[], TeacherContentError> {
+  const resolved = resolveRepository(repository);
+  return useQuery({
+    enabled: classroomId.length > 0,
+    queryFn: () => resolved.getChapterCompletion(classroomId, chapterId),
+    queryKey: teacherContentKeys.chapterCompletion(classroomId, chapterId),
+    retry: retryRead,
+  });
+}
+
 export function useTeacherQuestionAnalysis(
   classroomId: string,
   filters: AnalyticsFilters,
@@ -113,6 +187,20 @@ export function useTeacherQuestionAnalysis(
     enabled: classroomId.length > 0,
     queryFn: () => resolved.getQuestionAnalysis(classroomId, filters),
     queryKey: teacherContentKeys.questionAnalysis(classroomId, filters),
+    retry: retryRead,
+  });
+}
+
+export function useTeacherQuestionDetail(
+  classroomId: string,
+  stableCode: string,
+  repository?: TeacherContentRepository,
+): UseQueryResult<QuestionDetail | null, TeacherContentError> {
+  const resolved = resolveRepository(repository);
+  return useQuery({
+    enabled: classroomId.length > 0 && stableCode.length > 0,
+    queryFn: () => resolved.getQuestionDetail(classroomId, stableCode),
+    queryKey: teacherContentKeys.questionDetail(classroomId, stableCode),
     retry: retryRead,
   });
 }
@@ -155,6 +243,21 @@ export function useTeacherLiveReport(
     enabled: classroomId.length > 0,
     queryFn: () => resolved.getLiveReport(classroomId, filters),
     queryKey: teacherContentKeys.liveReport(classroomId, filters),
+    retry: retryRead,
+  });
+}
+
+export function useTeacherLiveHistory(
+  classroomId: string,
+  filters: DateRangeFilters,
+  page: number,
+  repository?: TeacherContentRepository,
+): UseQueryResult<LiveHistoryPage, TeacherContentError> {
+  const resolved = resolveRepository(repository);
+  return useQuery({
+    enabled: classroomId.length > 0,
+    queryFn: () => resolved.getLiveHistory(classroomId, filters, page, 5),
+    queryKey: teacherContentKeys.liveHistory(classroomId, filters, page),
     retry: retryRead,
   });
 }

@@ -619,3 +619,10 @@
 
 - Owner 已授權治理文件與 30 個核准 artifacts 建立獨立本機 commit；本 commit 不包含產品程式碼、測試、migration 或 generated DB types。
 - Phase B 尚未開始；Router、LivePresenter、DB projection 與教師產品 WIP 留待後續各自 owner gate。Commit SHA 待建立。
+
+## 2026-08-14 04:18 [Owner／Codex] — 教師資料基線授權補強
+
+- 教師 avatar migration 已避開既有編號衝突，改為 `20260812000400_teacher_avatar_storage.sql`；教師 pgTAP 依序改為 052／053／054。Avatar 測試以 authenticated JWT 實際驗證 owner teacher 的 insert／select／update 與 student、其他 teacher、跨路徑／跨物件拒絕，共 21/21 通過。
+- `teacher_classroom_overview` 的 aggregate 原會在無 ownership 時產生一列空摘要；最終 aggregate 加入 `having exists (select 1 from owned_classroom)`，使 student、non-owner 與跨班級查詢零列，同時保留合法 owner 空班級的一列零摘要。四個公開 projection 的授權矩陣與 internal `teacher_assessment_facts` execute revoke 均通過。
+- Fresh 驗證：focused 教師 pgTAP 63/63、完整 local DB 54 files／1212 tests、generated types contract、repository Vitest 4 files／33 tests、typecheck、scoped ESLint 與 `git diff --check` 全綠；generated `teacher_question_detail` 維持 answer-free，未夾帶另一分支 Quiz context 欄位或 ADR 0007 projection。
+- 尚未 stage／commit；Phase B 尚未開始。下一步等待 owner 授權 Avatar 與 Analytics checkpoint commits。

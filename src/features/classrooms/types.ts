@@ -28,20 +28,17 @@ export type ClassroomMember = Readonly<{
 
 export type StudentChapterProgress = Readonly<{
   accuracy: number | null;
+  assessmentAccuracy: number | null;
+  chapterQuizAccuracy: number | null;
   chapterId: string;
   chapterTitle: string;
   coverage: number | null;
   mastery: number | null;
   reviewCompleted: number;
   reviewTotal: number | null;
+  liveAccuracy: number | null;
+  sectionQuizAccuracy: number | null;
   status: 'developing' | 'learning' | 'mastered' | 'not_started';
-}>;
-
-export type StudentOpenMistake = Readonly<{
-  prompt: string;
-  subtopicCode: string;
-  subtopicTitle: string;
-  wrongCount: number;
 }>;
 
 export type StudentProgressSnapshot = Readonly<{
@@ -53,12 +50,13 @@ export type StudentProgressSnapshot = Readonly<{
     loginAccount: string | null;
     membershipStatus: 'active' | 'inactive';
   }>;
-  mistakes: readonly StudentOpenMistake[];
   stats: Readonly<{
     avgAccuracy: number | null;
     classRank: number | null;
     classXp: number;
     openMistakeCount: number;
+    totalMistakeCount: number;
+    unfinishedMistakeCount: number;
   }>;
 }>;
 
