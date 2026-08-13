@@ -49,3 +49,36 @@ export const verifyDrillDownComposition = async (
   if (scenario === 'student-progress' && width === 1280)
     await expect(page.getByRole('table', { name: '各章節學習進度' })).toBeVisible();
 };
+
+export const verifyLiveReportComposition = async (
+  page: Page,
+  scenario: (typeof ROUTE_SCENARIOS)[number],
+  width: number,
+) => {
+  if (scenario !== 'live-report' || (width !== 320 && width !== 393 && width !== 1280)) return;
+  const matrix = page.getByRole('region', { name: '作答矩陣' });
+  await expect(matrix).toBeVisible();
+  const matrixBounds = await matrix.locator('.live-matrix-scroll').evaluate((el) => ({
+    clientWidth: el.clientWidth,
+    scrollWidth: el.scrollWidth,
+  }));
+  expect(matrixBounds.clientWidth).toBeLessThanOrEqual(matrixBounds.scrollWidth);
+  if (width === 393) {
+    const summary = page.getByText('第 1 題．色彩三要素是？');
+    await expect(summary).toHaveAttribute('aria-expanded', 'false');
+    await summary.click();
+    await expect(summary).toHaveAttribute('aria-expanded', 'true');
+    const podium = page.getByRole('list', { name: '前三名' });
+    const ranks = await podium.locator('li').evaluateAll((items) =>
+      items.map((item) => ({
+        bottom: item.getBoundingClientRect().bottom,
+        height: item.getBoundingClientRect().height,
+        rank: item.getAttribute('data-rank'),
+      })),
+    );
+    expect(ranks.find((entry) => entry.rank === '1')?.height).toBeGreaterThan(
+      ranks.find((entry) => entry.rank === '2')?.height ?? 0,
+    );
+    expect(new Set(ranks.map((entry) => Math.round(entry.bottom))).size).toBe(1);
+  }
+};

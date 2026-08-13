@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { AuthenticatedTeacherMenu } from '../../teacher-content/components/authenticated-teacher-menu';
@@ -7,7 +7,8 @@ import '../../teacher-content/teacher-workspace.css';
 import '../../teacher-content/teacher-workspace-mobile.css';
 import { useLiveSessionDetail } from '../hooks/use-live-commands';
 import { buildMatrixCsv, matrixCellLabel } from '../lib/report-export';
-import type { LiveRepository } from '../types';
+import { deriveTeacherLiveReportSummary } from '../lib/teacher-live-report-summary';
+import type { LiveRepository, LiveSessionDetail } from '../types';
 import './teacher-live-report-page.css';
 
 const EM_DASH = '—';
@@ -36,6 +37,7 @@ export function TeacherLiveReportPage({
   const detail = useLiveSessionDetail(sessionId, repository);
 
   const report = detail.data;
+  const summary = report ? deriveTeacherLiveReportSummary(report) : null;
   const state = detail.isPending
     ? ({ kind: 'loading', message: 'Live 課程報表載入中…' } as const)
     : detail.isError
@@ -55,6 +57,33 @@ export function TeacherLiveReportPage({
       {report ? (
         <div className="teacher-live-report">
 
+      {summary && (summary.participantCount > 0 || summary.overallAccuracy !== null || summary.hardestQuestion !== null || summary.topThree.length > 0) ? (
+        <section aria-label="場次重點" className="live-report-summary">
+          <dl>
+            {summary.participantCount > 0 ? (
+              <div><dt>參與人數</dt><dd>{summary.participantCount} 人</dd></div>
+            ) : null}
+            {summary.overallAccuracy === null ? null : (
+              <div><dt>整體正確率</dt><dd>{summary.overallAccuracy.toFixed(1)}%</dd></div>
+            )}
+            {summary.hardestQuestion === null ? null : (
+              <div><dt>最難題</dt><dd>第 {summary.hardestQuestion.position} 題</dd><small>{summary.hardestQuestion.prompt}</small></div>
+            )}
+          </dl>
+          {summary.topThree.length === 0 ? null : (
+            <ol aria-label="前三名" className="live-report-podium">
+              {summary.topThree.map((entry) => (
+                <li data-rank={entry.rank} key={entry.rank}>
+                  <strong>第 {entry.rank} 名</strong>
+                  <span>{entry.displayName}</span>
+                  <small>{entry.score} 分</small>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      ) : null}
+
       {/* 393 寬度稽核發現：6 欄無包裹容器時 document.documentElement.
           scrollWidth 撐到 398px（Task 14）。比照下方作答矩陣既有的
           .live-matrix-scroll／teacher-classroom-detail-page.tsx 的
@@ -62,7 +91,7 @@ export function TeacherLiveReportPage({
       <section className="teacher-live-report__panel" aria-labelledby="question-report-title">
         <h2 id="question-report-title">逐題分析</h2>
         <div className="ui-table-scroll">
-        <table className="ui-table" aria-label="逐題分析">
+        <table className="ui-table teacher-live-report__question-table" aria-label="逐題分析">
           <thead>
             <tr>
               <th scope="col">題號</th>
@@ -80,20 +109,17 @@ export function TeacherLiveReportPage({
                 <td>{question.prompt}</td>
                 <td>{question.answered}</td>
                 <td>{question.correct}</td>
-                <td>
-                  {question.correctRate === null
-                    ? EM_DASH
-                    : `${question.correctRate.toFixed(1)}%`}
-                </td>
-                <td>
-                  {question.averageResponseMs === null
-                    ? EM_DASH
-                    : `${String(question.averageResponseMs)} ms`}
-                </td>
+                <td>{question.correctRate === null ? EM_DASH : `${question.correctRate.toFixed(1)}%`}</td>
+                <td>{question.averageResponseMs === null ? EM_DASH : `${String(question.averageResponseMs)} ms`}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
+        <div className="teacher-live-report__question-disclosures">
+          {report.questions.map((question) => (
+            <QuestionDisclosure key={question.position} question={question} />
+          ))}
         </div>
       </section>
 
@@ -175,5 +201,22 @@ export function TeacherLiveReportPage({
         </div>
       ) : null}
     </TeacherWorkSurface>
+  );
+}
+
+function QuestionDisclosure({
+  question,
+}: Readonly<{ question: LiveSessionDetail['questions'][number] }>) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details onToggle={(event) => { setOpen(event.currentTarget.open); }}>
+      <summary aria-expanded={open}>第 {question.position} 題．{question.prompt}</summary>
+      <dl>
+        <div><dt>作答數</dt><dd>{question.answered}</dd></div>
+        <div><dt>答對數</dt><dd>{question.correct}</dd></div>
+        <div><dt>正確率</dt><dd>{question.correctRate === null ? EM_DASH : `${question.correctRate.toFixed(1)}%`}</dd></div>
+        <div><dt>平均反應</dt><dd>{question.averageResponseMs === null ? EM_DASH : `${String(question.averageResponseMs)} ms`}</dd></div>
+      </dl>
+    </details>
   );
 }

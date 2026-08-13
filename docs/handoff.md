@@ -680,3 +680,9 @@
 - Task 5 已封裝為 `b7293023582695aadfca2b2b805c6a7acf3a6b6e`。題目分析頁維持既有 answer-free detail 與排序，只由 Task 5 `useTeacherQuestionAnswer` 的成功結果依 option key 標示 `✓ 正確答案`；pending、error、empty 或 denied 時不標示、不重排也不推測答案。
 - 真正 RED 是既有 expanded detail 找不到明確正確答案標示。Fresh checks：Vitest 2 files／9 tests、Chromium desktop／mobile 2/2、scoped ESLint、typecheck 與 `git diff --check` 全綠；393px disclosure 可用鍵盤展開、focus 留在按鈕、控制高度至少 44px且無整頁 overflow，1280px 維持題目 table。
 - 唯一 scoped self-review 無 answer inference、answer-free interface drift、mobile composition 或 accessibility finding；相關檔案皆低於 500 行。Task 6 尚未 stage／commit，Task 7 尚未開始。
+
+## 2026-08-14 06:30 [Codex] — Phase B Task 7 Live 場次復盤完成
+
+- Task 6 已封裝為 `fc17afd6d023bb3e8b69aea922d909b894c3ecc8`。新增 page-local pure summary：參與人數只取 participants.length、整體正確率只聚合 answered／correct、最難題只從非 null correctRate 依 report order 選最低、前三名只按 authoritative rank 1–3 排序；不可用摘要會整段省略，不顯示假 0。
+- 第一屏先呈現場次重點與前三名；桌機保留逐題 table，手機使用 disclosure。作答矩陣及 CSV semantics 完整保留，且只有矩陣維持 bounded horizontal scroll；既有最終排名仍保留。
+- 真正 RED 是 summary module 不存在。Fresh checks：Vitest 3 files／14 tests、Chromium 7/7 widths、scoped ESLint、typecheck 與 `git diff --check` 全綠；393px podium 共用底線且一／二／三名高度遞減，320px 無整頁 overflow。唯一 scoped self-review 修正零參與摘要原可能顯示 `0 人`，改為誠實省略；所有檔案低於 500 行。Task 7 尚未 stage／commit，Task 8 尚未開始。

@@ -3,6 +3,7 @@ import {
   observeRuntimeErrors,
   ROUTE_SCENARIOS,
   verifyDrillDownComposition,
+  verifyLiveReportComposition,
   WIDTHS,
 } from './teacher-routes.harness-support';
 
@@ -215,7 +216,7 @@ test('only a newly joined participant grows and floats into the avatar arena', a
 });
 
 for (const width of WIDTHS) {
-  test(`teacher routes including classroom-detail and student-progress render without layout/console defects at ${String(width)}px`, async ({
+  test(`teacher routes including classroom-detail, student-progress, and live-report render without layout/console defects at ${String(width)}px`, async ({
     page,
   }) => {
     const runtimeErrors = observeRuntimeErrors(page);
@@ -243,6 +244,7 @@ for (const width of WIDTHS) {
         ).toBeVisible();
       }
       await verifyDrillDownComposition(page, scenario, width);
+      await verifyLiveReportComposition(page, scenario, width);
     }
 
     expect(

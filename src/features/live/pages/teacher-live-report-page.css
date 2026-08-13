@@ -18,6 +18,74 @@
   font-size: 1.1rem;
 }
 
+.live-report-summary {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+}
+
+.live-report-summary > dl {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.live-report-summary > dl > div {
+  border-left: 2px solid #326e9d;
+  background: #071b31;
+  padding: 14px;
+}
+
+.live-report-summary dt,
+.live-report-summary small {
+  color: #a9c8e4;
+}
+
+.live-report-summary dd {
+  margin: 6px 0;
+  color: #f3f8ff;
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.live-report-podium {
+  display: flex;
+  min-height: 150px;
+  align-items: end;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.live-report-podium li {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  align-content: start;
+  border: 1px solid #3b6285;
+  background: #071b31;
+  gap: 6px;
+  padding: 14px;
+}
+
+.live-report-podium li[data-rank='1'] {
+  min-height: 150px;
+  border-color: #e7b94d;
+  order: 2;
+}
+
+.live-report-podium li[data-rank='2'] {
+  min-height: 130px;
+  order: 1;
+}
+
+.live-report-podium li[data-rank='3'] {
+  min-height: 112px;
+  order: 3;
+}
+
 .teacher-live-report .ui-table {
   width: 100%;
   border-collapse: collapse;
@@ -49,8 +117,61 @@
   margin-top: 16px;
 }
 
+.teacher-live-report__question-disclosures {
+  display: none;
+}
+
 @media (max-width: 47.99rem) {
   .teacher-live-report__panel {
     padding: 14px;
+  }
+
+  .live-report-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .live-report-summary > dl {
+    grid-template-columns: 1fr;
+  }
+
+  .live-report-podium {
+    min-height: 168px;
+  }
+
+  .live-report-podium li {
+    padding: 10px 8px;
+  }
+
+  .teacher-live-report__panel > .ui-table-scroll {
+    display: none;
+  }
+
+  .teacher-live-report__question-disclosures {
+    display: grid;
+  }
+
+  .teacher-live-report__question-disclosures details {
+    border-bottom: 1px solid #294963;
+  }
+
+  .teacher-live-report__question-disclosures summary {
+    min-height: 48px;
+    cursor: pointer;
+    padding: 10px 0;
+  }
+
+  .teacher-live-report__question-disclosures dl {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .teacher-live-report__question-disclosures dt {
+    color: #a9c8e4;
+    font-size: 0.75rem;
+  }
+
+  .teacher-live-report__question-disclosures dd {
+    margin: 3px 0 0;
   }
 }
