@@ -38,23 +38,17 @@
 .teacher-classroom-panel,
 .teacher-workspace-shell .classroom-card {
   border: 1px solid #35587b;
-  border-radius: 4px;
-  background:
-    linear-gradient(135deg, rgb(12 36 62 / 90%), rgb(2 15 32 / 96%)),
-    repeating-linear-gradient(
-      0deg,
-      transparent 0 3px,
-      rgb(255 255 255 / 2%) 4px
-    );
-  box-shadow: 0 14px 36px rgb(0 0 0 / 28%);
+  border-radius: 8px;
+  background: rgb(3 17 35 / 96%);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 22%);
 }
 
 .teacher-classroom-create {
   display: grid;
-  align-items: end;
-  gap: 24px;
-  grid-template-columns: minmax(220px, 0.8fr) minmax(300px, 1.2fr);
-  padding: 22px;
+  align-items: center;
+  gap: 18px;
+  grid-template-columns: minmax(220px, 0.72fr) minmax(360px, 1.28fr);
+  padding: 16px 18px;
 }
 
 .teacher-classroom-create p,
@@ -116,21 +110,18 @@
 
 .teacher-workspace-shell .classroom-list {
   display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  grid-template-columns: 1fr;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
 .teacher-workspace-shell .classroom-card {
-  display: grid;
-  height: 100%;
-  gap: 16px;
-  padding: 20px;
+  overflow: hidden;
 }
 
-.teacher-workspace-shell .classroom-card__head,
+.teacher-workspace-shell .classroom-card summary,
 .teacher-workspace-shell .classroom-card__actions,
 .classroom-section-header,
 .classroom-section-header__badges {
@@ -138,6 +129,41 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.teacher-workspace-shell .classroom-card details,
+.teacher-workspace-shell .classroom-card summary {
+  width: 100%;
+}
+
+.teacher-workspace-shell .classroom-card summary {
+  min-height: 68px;
+  cursor: pointer;
+  list-style: none;
+  padding: 10px 16px;
+}
+
+.teacher-workspace-shell .classroom-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.teacher-workspace-shell .classroom-card summary > span {
+  display: grid;
+  gap: 3px;
+}
+
+.teacher-workspace-shell .classroom-card summary small {
+  color: #9fb1c4;
+  font-size: 0.75rem;
+}
+
+.teacher-workspace-shell .classroom-card__detail {
+  display: grid;
+  align-items: center;
+  border-top: 1px solid #294965;
+  gap: 12px;
+  grid-template-columns: minmax(250px, 1fr) auto minmax(260px, auto);
+  padding: 14px 16px;
 }
 
 .teacher-workspace-shell .classroom-card h2,
@@ -166,7 +192,7 @@
 .teacher-workspace-shell .classroom-card__analytics {
   min-height: 44px;
   border: 1px solid #3c78ae;
-  border-radius: 3px;
+  border-radius: 6px;
   background: #092644;
   color: #e9f5ff;
   cursor: pointer;
@@ -233,10 +259,14 @@
     grid-template-columns: 1fr;
   }
 
-  .teacher-workspace-shell .classroom-card__head,
+  .teacher-workspace-shell .classroom-card summary,
   .classroom-section-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .teacher-workspace-shell .classroom-card__detail {
+    grid-template-columns: 1fr;
   }
 
   .teacher-classroom-panel {

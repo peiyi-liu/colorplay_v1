@@ -656,3 +656,9 @@
 - Task 1 已封裝為 `4b4218df340fbff6bbed5d54a3232e52562342ce`。Task 2 保留既有 hooks、query inputs、server pagination 與正式指標，將 `/teacher` 重排為可折疊的篩選摘要、結論優先班級總覽、主要題目分析與次要 Live 場次復盤；各 query region 新增獨立 retry，null 仍以 em dash 呈現。
 - TDD 真正 RED 為缺少「班級／章節」篩選摘要及班級總覽 retry；第一屏 DOM 順序是 baseline coverage。Fresh checks：Vitest 2 files／12 tests、Chromium 5/5、scoped ESLint、typecheck、build、`git diff --check` 全綠；320／393 無整頁橫向 overflow，手機篩選預設收合、桌機題目分析寬於 Live 支援欄。
 - 唯一 scoped self-review 未發現 fake metric、query drift、shared CSS 洩漏或超過 500 行；Task 2 尚未 stage／commit，Task 3 尚未開始。
+
+## 2026-08-14 05:50 [Codex] — Phase B Task 3 班級管理 pilot 完成
+
+- Task 2 已封裝為 `bf7f42f5decb085ff33cbff1a344795527500c12`。Task 3 保留 `create_classroom` mutation、RHF/Zod、ambiguous-write copy、加入碼與既有 routes；建立列改成緊湊操作帶，class rows 在手機使用 disclosure，input 以 `aria-label="新班級名稱"` 提供穩定 accessible name。
+- 真正 RED 覆蓋 input name、手機 disclosure 與 clipboard rejection；複製失敗時現在保留「複製」且加入碼仍可手動選取，不再假報成功。Fresh checks：Vitest 2 files／21 tests、Chromium 6/6 widths、scoped ESLint、typecheck、`git diff --check` 全綠；首次 Playwright 因 sandbox listen EPERM 未執行，已用相同限定命令在允許環境重跑通過。
+- 唯一 scoped self-review 未發現 route／mutation drift、dead control 或 fake receipt；相關 source／test 皆低於 500 行（最大 497）。Task 3 尚未 stage／commit，Task 4 尚未開始。

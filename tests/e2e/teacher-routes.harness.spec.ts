@@ -12,7 +12,7 @@ const observeRuntimeErrors = (page: Page) => {
   return { consoleErrors, pageErrors };
 };
 
-const WIDTHS = [320, 375, 768, 1024, 1440] as const;
+const WIDTHS = [320, 375, 393, 768, 1024, 1440] as const;
 const ROUTE_SCENARIOS = [
   'analytics',
   'questions',
@@ -250,6 +250,14 @@ for (const width of WIDTHS) {
         overflow.clientWidth,
       );
       await expect(page.getByRole('heading').first()).toBeVisible();
+      if (scenario === 'classes' && width === 393) {
+        const classroom = page.getByTestId('classroom-disclosure').first();
+        await expect(classroom).not.toHaveAttribute('open', '');
+        await classroom.locator('summary').click();
+        await expect(classroom).toHaveAttribute('open', '');
+        await expect(page.getByRole('textbox', { name: '新班級名稱' })).toBeVisible();
+        await expect(page.getByRole('button', { name: '建立班級' })).toBeVisible();
+      }
     }
 
     expect(

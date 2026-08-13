@@ -34,23 +34,80 @@ function ClassroomJoinCode({
         aria-label={`複製 ${classroomName} 的班級序號`}
         className="classroom-card__copy"
         onClick={() => {
-          try {
-            void navigator.clipboard
-              .writeText(joinCodeClipboardText(classroomName, joinCode))
-              .catch(() => undefined);
-          } catch {
-            /* clipboard 不可用時靜默；碼仍在畫面上可手動複製 */
-          }
-          setCopied(true);
-          window.setTimeout(() => {
-            setCopied(false);
-          }, 2000);
+          void (async () => {
+            try {
+              await navigator.clipboard.writeText(
+                joinCodeClipboardText(classroomName, joinCode),
+              );
+              setCopied(true);
+              window.setTimeout(() => {
+                setCopied(false);
+              }, 2000);
+            } catch {
+              /* clipboard 不可用時靜默；碼仍在畫面上可手動複製 */
+            }
+          })();
         }}
         type="button"
       >
         {copied ? '已複製' : '複製'}
       </button>
     </div>
+  );
+}
+
+function ClassroomCard({
+  classroom,
+  wide,
+}: Readonly<{
+  classroom: Awaited<ReturnType<ClassroomRepository['listOwned']>>[number];
+  wide: boolean;
+}>) {
+  const [open, setOpen] = useState(wide);
+  return (
+    <article className="classroom-card">
+      <details
+        data-testid="classroom-disclosure"
+        onToggle={(event) => {
+          setOpen(event.currentTarget.open);
+        }}
+        open={wide || open}
+      >
+        <summary aria-expanded={wide || open}>
+          <span>
+            <h2>{classroom.classroomName}</h2>
+            <small>{String(classroom.memberCount)} 位有效學生</small>
+          </span>
+          <Chip tone="success">有效</Chip>
+        </summary>
+        <div className="classroom-card__detail">
+          <ClassroomJoinCode
+            classroomName={classroom.classroomName}
+            joinCode={classroom.joinCode}
+          />
+          <dl className="classroom-card__meta">
+            <div>
+              <dt>建立日期</dt>
+              <dd>{new Date(classroom.createdAt).toLocaleDateString('zh-TW')}</dd>
+            </div>
+          </dl>
+          <div className="classroom-card__actions">
+            <Link
+              className="classroom-card__manage"
+              to={`/teacher/classes/${classroom.classroomId}`}
+            >
+              進入班級
+            </Link>
+            <Link
+              className="classroom-card__analytics"
+              to={`/teacher?classroomId=${classroom.classroomId}`}
+            >
+              教學分析
+            </Link>
+          </div>
+        </div>
+      </details>
+    </article>
   );
 }
 
@@ -109,16 +166,18 @@ export function TeacherClassroomsPage({
       subtitle="建立班級、分享加入碼並查看學生學習狀態"
       title="班級管理"
     >
-      <dl className="teacher-classroom-stats">
-        <div>
-          <dt>班級數</dt>
-          <dd>{String(classrooms.data?.length ?? 0)}</dd>
-        </div>
-        <div>
-          <dt>學生人數</dt>
-          <dd>{String(totalMembers)}</dd>
-        </div>
-      </dl>
+      {(classrooms.data?.length ?? 0) > 0 ? (
+        <dl className="teacher-classroom-stats">
+          <div>
+            <dt>班級數</dt>
+            <dd>{String(classrooms.data?.length ?? 0)}</dd>
+          </div>
+          <div>
+            <dt>學生人數</dt>
+            <dd>{String(totalMembers)}</dd>
+          </div>
+        </dl>
+      ) : null}
       <section
         className="teacher-classroom-create"
         aria-labelledby="create-classroom-title"
@@ -152,6 +211,7 @@ export function TeacherClassroomsPage({
             <label htmlFor="classroom-name">班級名稱</label>
             <input
               {...register('name')}
+              aria-label="新班級名稱"
               aria-describedby={
                 errors.name ? 'classroom-name-error' : undefined
               }
@@ -196,46 +256,7 @@ export function TeacherClassroomsPage({
             <ul aria-label="教師班級列表" className="classroom-list">
               {pageItems.map((classroom) => (
                 <li key={classroom.classroomId}>
-                  <article className="classroom-card">
-                    <div className="classroom-card__head">
-                      <h2>{classroom.classroomName}</h2>
-                      <Chip tone="success">
-                        <span
-                          aria-hidden="true"
-                          className="status-dot status-dot--active"
-                        />
-                        {String(classroom.memberCount)} 位有效學生
-                      </Chip>
-                    </div>
-                    <ClassroomJoinCode
-                      classroomName={classroom.classroomName}
-                      joinCode={classroom.joinCode}
-                    />
-                    <dl className="classroom-card__meta">
-                      <div>
-                        <dt>建立日期</dt>
-                        <dd>
-                          {new Date(classroom.createdAt).toLocaleDateString(
-                            'zh-TW',
-                          )}
-                        </dd>
-                      </div>
-                    </dl>
-                    <div className="classroom-card__actions">
-                      <Link
-                        className="classroom-card__manage"
-                        to={`/teacher/classes/${classroom.classroomId}`}
-                      >
-                        進入班級
-                      </Link>
-                      <Link
-                        className="classroom-card__analytics"
-                        to={`/teacher?classroomId=${classroom.classroomId}`}
-                      >
-                        教學分析
-                      </Link>
-                    </div>
-                  </article>
+                  <ClassroomCard classroom={classroom} wide={wide} />
                 </li>
               ))}
             </ul>
