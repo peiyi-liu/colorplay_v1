@@ -7,6 +7,7 @@ import { TeacherWorkSurface } from '../../teacher-content/components/teacher-wor
 import '../../teacher-content/teacher-workspace.css';
 import '../../teacher-content/teacher-workspace-mobile.css';
 import './teacher-classrooms-workspace.css';
+import './teacher-classrooms-reimplementation.css';
 import {
   useOwnedClassroomMembers,
   useOwnedClassrooms,
@@ -80,6 +81,7 @@ export function TeacherClassroomDetailPage({
   const activeMemberCount = (members.data ?? []).filter(
     (member) => member.membershipStatus === 'active',
   ).length;
+  const [copied, setCopied] = useState(false);
   const state = members.isPending
     ? ({ kind: 'loading', message: '班級成員載入中…' } as const)
     : members.isError
@@ -108,7 +110,30 @@ export function TeacherClassroomDetailPage({
           <div className="classroom-section-header__badges">
             <Chip tone="success">學生人數 {String(activeMemberCount)}</Chip>
             {classroom?.joinCode ? (
-              <Chip tone="neutral">班級加入代碼 {classroom.joinCode}</Chip>
+              <div className="teacher-classroom-identity__code">
+                <span className="visually-hidden">
+                  班級加入代碼 {classroom.joinCode}
+                </span>
+                <span aria-hidden="true">班級加入代碼</span>
+                <strong aria-hidden="true">{classroom.joinCode}</strong>
+                <button
+                  aria-label={`複製 ${classroom.classroomName} 的班級加入代碼`}
+                  onClick={() => {
+                    void navigator.clipboard
+                      .writeText(classroom.joinCode ?? '')
+                      .then(() => {
+                        setCopied(true);
+                        window.setTimeout(() => {
+                          setCopied(false);
+                        }, 2000);
+                      })
+                      .catch(() => undefined);
+                  }}
+                  type="button"
+                >
+                  {copied ? '已複製' : '複製'}
+                </button>
+              </div>
             ) : null}
           </div>
         </header>
