@@ -4,7 +4,7 @@
 
 begin;
 
-select plan(9);
+select plan(13);
 
 select has_function(
   'public', 'list_live_section_options', 'section options listing exists'
@@ -26,6 +26,14 @@ values
   ),
   (
     '00000000-0000-0000-0000-000000000000',
+    '44000000-0000-0000-0000-000000000002',
+    'authenticated', 'authenticated', 'section.live.other@colorplay.test',
+    crypt('LocalOnly-Sec2!', gen_salt('bf')), now(),
+    '{"provider":"email","providers":["email"]}', '{}', now(), now(),
+    '', '', '', ''
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
     '44000000-0000-0000-0000-000000000003',
     'authenticated', 'authenticated', 'section.live.student@colorplay.test',
     crypt('LocalOnly-Sec3!', gen_salt('bf')), now(),
@@ -35,7 +43,10 @@ values
 
 update public.profiles
 set role = 'teacher'
-where id = '44000000-0000-0000-0000-000000000001';
+where id in (
+  '44000000-0000-0000-0000-000000000001',
+  '44000000-0000-0000-0000-000000000002'
+);
 
 insert into public.classrooms (
   id, owner_teacher_id, name, join_code_hash, join_code_version,
@@ -141,6 +152,75 @@ select set_config(
   )::text,
   true
 );
+
+reset role;
+update public.profiles
+set role = 'student'
+where id = '44000000-0000-0000-0000-000000000001';
+set local role authenticated;
+select throws_ok(
+  format(
+    'select public.start_live_session(%L::uuid, 1)',
+    current_setting('test.session')::jsonb ->> 'session_id'
+  ),
+  'P0001', 'LIVE_SESSION_NOT_FOUND',
+  'a demoted host cannot start a previously created Live session'
+);
+
+reset role;
+update public.profiles
+set role = 'teacher'
+where id = '44000000-0000-0000-0000-000000000001';
+update public.classrooms
+set owner_teacher_id = '44000000-0000-0000-0000-000000000002'
+where id = '44100000-0000-0000-0000-000000000001';
+set local role authenticated;
+select throws_ok(
+  format(
+    'select public.start_live_session(%L::uuid, 1)',
+    current_setting('test.session')::jsonb ->> 'session_id'
+  ),
+  'P0001', 'LIVE_SESSION_NOT_FOUND',
+  'a stale host cannot start Live after classroom ownership changes'
+);
+
+reset role;
+update public.classrooms
+set owner_teacher_id = '44000000-0000-0000-0000-000000000001',
+    status = 'archived'
+where id = '44100000-0000-0000-0000-000000000001';
+set local role authenticated;
+select throws_ok(
+  format(
+    'select public.start_live_session(%L::uuid, 1)',
+    current_setting('test.session')::jsonb ->> 'session_id'
+  ),
+  'P0001', 'LIVE_SESSION_NOT_FOUND',
+  'a host cannot start Live for an archived classroom'
+);
+
+reset role;
+update public.classrooms
+set status = 'active'
+where id = '44100000-0000-0000-0000-000000000001';
+update public.live_activities
+set status = 'archived'
+where id = (current_setting('test.activity')::jsonb ->> 'activity_id')::uuid;
+set local role authenticated;
+select throws_ok(
+  format(
+    'select public.start_live_session(%L::uuid, 1)',
+    current_setting('test.session')::jsonb ->> 'session_id'
+  ),
+  'P0001', 'LIVE_SESSION_NOT_FOUND',
+  'a host cannot start Live from an archived activity'
+);
+
+reset role;
+update public.live_activities
+set status = 'active'
+where id = (current_setting('test.activity')::jsonb ->> 'activity_id')::uuid;
+set local role authenticated;
 select public.start_live_session(
   (current_setting('test.session')::jsonb ->> 'session_id')::uuid, 1
 );

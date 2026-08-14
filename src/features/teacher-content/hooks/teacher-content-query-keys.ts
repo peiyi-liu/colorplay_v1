@@ -1,4 +1,5 @@
 import type {
+  AnswerAssessmentSource,
   AnalyticsFilters,
   AssessmentSource,
   DateRangeFilters,
@@ -108,13 +109,21 @@ export const teacherContentKeys = {
       classroomId,
       stableCode,
     ] as const,
-  questionAnswer: (actorId: string, classroomId: string, stableCode: string) =>
+  questionAnswer: (
+    actorId: string,
+    classroomId: string,
+    stableCode: string,
+    source: AnswerAssessmentSource,
+    liveSessionId?: string | null,
+  ) =>
     [
       'teacher-content',
       actorId,
       'question-answer',
       classroomId,
       stableCode,
+      source,
+      liveSessionId ?? null,
     ] as const,
   questions: ['teacher-content', 'questions'] as const,
   subtopicMastery: (

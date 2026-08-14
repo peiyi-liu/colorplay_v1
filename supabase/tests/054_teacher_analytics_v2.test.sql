@@ -178,13 +178,15 @@ values (
 
 insert into public.live_session_questions (
   id, session_id, position, question_stable_code, question_version,
-  prompt, public_options, correct_option_id, closed_at
+  prompt, public_options, correct_option_id, closed_at, chapter_id, section_id
 )
 select
   '2ad00000-0000-0000-0000-000000000001',
   '2ab00000-0000-0000-0000-000000000001', 1,
   question.stable_code, question.version, question.prompt, '[]'::jsonb,
-  option.id, '2026-08-13T05:00:00+00:00'
+  option.id, '2026-08-13T05:00:00+00:00',
+  '21000000-0000-0000-0000-000000000003',
+  'cd732278-0bfe-1293-19e1-338db3fe6a3c'
 from public.questions question
 join public.question_options option
   on option.question_id = question.id and option.is_correct

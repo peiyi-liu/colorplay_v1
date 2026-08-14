@@ -78,15 +78,21 @@ export function TeacherQuestionAnalysisPage({
     repository,
   );
   const [selectedCode, setSelectedCode] = useState('');
-  const [sectionOpen, setSectionOpen] = useState<Readonly<Record<string, boolean>>>(
-    {},
-  );
+  const [sectionOpen, setSectionOpen] = useState<
+    Readonly<Record<string, boolean>>
+  >({});
   const detail = useTeacherQuestionDetail(
     classroomId,
     selectedCode,
     repository,
   );
-  const answer = useTeacherQuestionAnswer(classroomId, selectedCode, repository);
+  const answer = useTeacherQuestionAnswer(
+    classroomId,
+    selectedCode,
+    'section_quiz',
+    null,
+    repository,
+  );
 
   const renderOptions = () => {
     if (!detail.data) return null;
@@ -100,7 +106,9 @@ export function TeacherQuestionAnalysisPage({
           const isCorrect = ownerOption?.isCorrect === true;
           return (
             <li
-              className={isCorrect ? 'teacher-question-options__correct' : undefined}
+              className={
+                isCorrect ? 'teacher-question-options__correct' : undefined
+              }
               key={option.option_key}
             >
               <span>
@@ -209,7 +217,9 @@ export function TeacherQuestionAnalysisPage({
                                   <p role="status">題目內容載入中…</p>
                                 ) : detail.isError ? (
                                   <p role="alert">題目內容暫時無法取得。</p>
-                                ) : detail.data ? renderOptions() : null}
+                                ) : detail.data ? (
+                                  renderOptions()
+                                ) : null}
                               </td>
                             </tr>
                           ) : null}
@@ -247,7 +257,9 @@ export function TeacherQuestionAnalysisPage({
                           <p role="status">題目內容載入中…</p>
                         ) : detail.isError ? (
                           <p role="alert">題目內容暫時無法取得。</p>
-                        ) : detail.data ? renderOptions() : null
+                        ) : detail.data ? (
+                          renderOptions()
+                        ) : null
                       ) : null}
                     </article>
                   ))}

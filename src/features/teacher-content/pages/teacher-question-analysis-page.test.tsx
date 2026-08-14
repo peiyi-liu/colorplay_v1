@@ -102,6 +102,8 @@ describe('TeacherQuestionAnalysisPage', () => {
     expect(repository.getQuestionAnswer).toHaveBeenCalledWith(
       classroomId,
       'QB3101',
+      'section_quiz',
+      null,
     );
     expect(within(table).getAllByRole('listitem')[0]).toHaveTextContent(
       'A．紅、綠、藍',

@@ -1105,6 +1105,7 @@ export type Database = {
       }
       live_session_questions: {
         Row: {
+          chapter_id: string | null
           closed_at: string | null
           correct_option_id: string
           deadline_at: string | null
@@ -1116,9 +1117,11 @@ export type Database = {
           public_options: Json
           question_stable_code: string
           question_version: number
+          section_id: string | null
           session_id: string
         }
         Insert: {
+          chapter_id?: string | null
           closed_at?: string | null
           correct_option_id: string
           deadline_at?: string | null
@@ -1130,9 +1133,11 @@ export type Database = {
           public_options: Json
           question_stable_code: string
           question_version: number
+          section_id?: string | null
           session_id: string
         }
         Update: {
+          chapter_id?: string | null
           closed_at?: string | null
           correct_option_id?: string
           deadline_at?: string | null
@@ -1144,9 +1149,24 @@ export type Database = {
           public_options?: Json
           question_stable_code?: string
           question_version?: number
+          section_id?: string | null
           session_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "live_session_questions_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_session_questions_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "live_session_questions_session_id_fkey"
             columns: ["session_id"]
@@ -3286,7 +3306,12 @@ export type Database = {
         }[]
       }
       teacher_question_answer_options: {
-        Args: { p_classroom_id: string; p_stable_code: string }
+        Args: {
+          p_classroom_id: string
+          p_live_session_id?: string
+          p_source: string
+          p_stable_code: string
+        }
         Returns: {
           is_correct: boolean
           option_key: string
@@ -3617,4 +3642,3 @@ export const Constants = {
     },
   },
 } as const
-

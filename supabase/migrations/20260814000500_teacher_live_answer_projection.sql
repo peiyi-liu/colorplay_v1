@@ -1,8 +1,12 @@
 -- Extend ADR 0007's narrow owner-only answer projection to questions frozen in
 -- a completed classroom Live session. Active Live payloads remain answer-free.
-create or replace function public.teacher_question_answer_options(
+drop function public.teacher_question_answer_options(uuid, text);
+
+create function public.teacher_question_answer_options(
   p_classroom_id uuid,
-  p_stable_code text
+  p_stable_code text,
+  p_source text,
+  p_live_session_id uuid default null
 )
 returns table (
   option_key text,
@@ -48,14 +52,19 @@ as $$
      and question.stable_code = p_stable_code
      and question.bank_kind = 'section'
      and question.status = 'published'
-    where session.purpose = 'practice'
-      or exists (
-        select 1
-        from public.assignment_attempts as attempt
-        join public.assignments as assignment on assignment.id = attempt.assignment_id
-        where attempt.id = session.assignment_attempt_id
-          and attempt.user_id = session.user_id
-          and assignment.classroom_id = owned_classroom.id
+    where p_source = 'section_quiz'
+      and p_live_session_id is null
+      and (
+        session.purpose = 'practice'
+        or exists (
+          select 1
+          from public.assignment_attempts as attempt
+          join public.assignments as assignment
+            on assignment.id = attempt.assignment_id
+          where attempt.id = session.assignment_attempt_id
+            and attempt.user_id = session.user_id
+            and assignment.classroom_id = owned_classroom.id
+        )
       )
     limit 1
   ),
@@ -72,9 +81,12 @@ as $$
     join public.live_sessions as session
       on session.classroom_id = owned_classroom.id
      and session.state = 'completed'
+     and session.id = p_live_session_id
     join public.live_session_questions as session_question
       on session_question.session_id = session.id
      and session_question.question_stable_code = p_stable_code
+    where p_source = 'live'
+      and p_live_session_id is not null
     order by session.completed_at desc nulls last, session.created_at desc
     limit 1
   ),
@@ -100,7 +112,11 @@ as $$
   order by answer.sort_order
 $$;
 
-revoke all on function public.teacher_question_answer_options(uuid, text)
+revoke all on function public.teacher_question_answer_options(
+  uuid, text, text, uuid
+)
 from public, anon;
-grant execute on function public.teacher_question_answer_options(uuid, text)
+grant execute on function public.teacher_question_answer_options(
+  uuid, text, text, uuid
+)
 to authenticated;

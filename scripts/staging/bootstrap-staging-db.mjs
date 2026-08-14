@@ -142,6 +142,6 @@ const seedAuth = spawnSync(
 if (seedAuth.status !== 0) throw new Error('seed-auth 失敗');
 
 console.log('');
-console.log('Staging 資料庫就緒。前端環境變數：');
-console.log(`  VITE_SUPABASE_URL=https://${ref}.supabase.co`);
-console.log(`  VITE_SUPABASE_ANON_KEY=${publishableKey}`);
+console.log('Staging 資料庫就緒。前端環境變數名稱：');
+console.log('  VITE_SUPABASE_URL');
+console.log('  VITE_SUPABASE_ANON_KEY（值已隱藏，請由安全的環境設定流程注入）');

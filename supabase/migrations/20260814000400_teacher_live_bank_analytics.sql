@@ -29,9 +29,12 @@ set search_path = pg_catalog, public
 as $$
   with owned_classroom as (
     select classroom.id
-    from public.classrooms as classroom
-    where classroom.id = p_classroom_id
-      and classroom.owner_teacher_id = (select auth.uid())
+    from public.profiles as profile
+    join public.classrooms as classroom
+      on classroom.owner_teacher_id = profile.id
+    where profile.id = (select auth.uid())
+      and profile.role = 'teacher'
+      and classroom.id = p_classroom_id
       and classroom.status = 'active'
   ),
   active_students as (
@@ -110,12 +113,11 @@ as $$
     join public.live_participants as participant
       on participant.id = answer.participant_id
     join active_students as student on student.user_id = participant.user_id
-    join public.questions as question
-      on question.stable_code = session_question.question_stable_code
-      and question.bank_kind in ('section', 'live')
-    join public.subtopics as subtopic on subtopic.id = question.subtopic_id
-    join public.sections as section on section.id = subtopic.section_id
-    join public.chapters as chapter on chapter.id = section.chapter_id
+    join public.sections as section
+      on section.id = session_question.section_id
+    join public.chapters as chapter
+      on chapter.id = session_question.chapter_id
+      and section.chapter_id = chapter.id
   ),
   facts as (
     select * from quiz_facts

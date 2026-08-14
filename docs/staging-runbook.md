@@ -13,18 +13,18 @@ node scripts/staging/bootstrap-staging-db.mjs --confirm-wipe
 
 腳本會：清空 public schema 與全部使用者 → 依序套用全部 migrations（含歷史記錄）→
 套用內容種子（題庫、複習卡、提示）→ 重載 PostgREST → 建立測試帳號。
-結尾會印出前端需要的 `VITE_SUPABASE_URL` 與
-`VITE_SUPABASE_ANON_KEY`；後者的值是新 `sb_publishable_…` key，變數名稱僅
-為前端相容性保留。新 secret key 只傳入子程序，不輸出。
+結尾只確認前端需要的環境變數名稱，不輸出任何 deployed value。由操作者在本機
+安全地取得新 `sb_publishable_…` key，直接注入 Vercel；變數名稱
+`VITE_SUPABASE_ANON_KEY` 僅為前端相容性保留。新 secret key 只傳入子程序，不輸出。
 
 ## 2. Vercel 建立專案、環境變數、部署
 
 ```bash
 export VERCEL_TOKEN=vcp_（你的 token）
-pnpm dlx vercel link --yes --project colorplay-staging --token "$VERCEL_TOKEN"
+pnpm dlx vercel link --yes --project colorplay-staging-web --token "$VERCEL_TOKEN"
 printf 'https://onkxnkzeixpezetkmocf.supabase.co' \
   | pnpm dlx vercel env add VITE_SUPABASE_URL production --token "$VERCEL_TOKEN"
-printf '（步驟 1 印出的 publishable key）' \
+printf '（從 Supabase 安全環境取得但不寫入 log 的 publishable key）' \
   | pnpm dlx vercel env add VITE_SUPABASE_ANON_KEY production --token "$VERCEL_TOKEN"
 pnpm dlx vercel deploy --prod --token "$VERCEL_TOKEN"
 ```

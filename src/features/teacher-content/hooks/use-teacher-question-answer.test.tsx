@@ -43,6 +43,8 @@ describe('useTeacherQuestionAnswer', () => {
         useTeacherQuestionAnswer(
           classroomId,
           stableCode,
+          'section_quiz',
+          null,
           repository(getQuestionAnswer),
         ),
       {
@@ -63,6 +65,8 @@ describe('useTeacherQuestionAnswer', () => {
         useTeacherQuestionAnswer(
           'classroom-id',
           'QB3101',
+          'section_quiz',
+          null,
           repository(getQuestionAnswer),
         ),
       { wrapper },
@@ -72,15 +76,28 @@ describe('useTeacherQuestionAnswer', () => {
       expect(result.current.isSuccess).toBe(true);
     });
     expect(result.current.data).toBeNull();
-    expect(getQuestionAnswer).toHaveBeenCalledWith('classroom-id', 'QB3101');
+    expect(getQuestionAnswer).toHaveBeenCalledWith(
+      'classroom-id',
+      'QB3101',
+      'section_quiz',
+      null,
+    );
     expect(
-      teacherContentKeys.questionAnswer('teacher-id', 'classroom-id', 'QB3101'),
+      teacherContentKeys.questionAnswer(
+        'teacher-id',
+        'classroom-id',
+        'QB3101',
+        'section_quiz',
+        null,
+      ),
     ).toEqual([
       'teacher-content',
       'teacher-id',
       'question-answer',
       'classroom-id',
       'QB3101',
+      'section_quiz',
+      null,
     ]);
   });
 

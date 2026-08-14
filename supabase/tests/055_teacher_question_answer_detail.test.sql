@@ -5,7 +5,7 @@ select plan(11);
 select ok(
   has_function_privilege(
     'authenticated',
-    'public.teacher_question_answer_options(uuid, text)',
+    'public.teacher_question_answer_options(uuid, text, text, uuid)',
     'EXECUTE'
   ),
   'authenticated callers may invoke the teacher-only answer projection'
@@ -13,14 +13,14 @@ select ok(
 select ok(
   not has_function_privilege(
     'anon',
-    'public.teacher_question_answer_options(uuid, text)',
+    'public.teacher_question_answer_options(uuid, text, text, uuid)',
     'EXECUTE'
   ),
   'anonymous callers cannot invoke the teacher-only answer projection'
 );
 select is(
   pg_get_function_result(
-    'public.teacher_question_answer_options(uuid, text)'::regprocedure
+    'public.teacher_question_answer_options(uuid, text, text, uuid)'::regprocedure
   ),
   'TABLE(option_key text, option_text text, is_correct boolean)',
   'projection exposes only the three ADR 0007 option fields'
@@ -97,27 +97,30 @@ from target;
 
 set local role anon;
 select throws_ok(
-  $$select * from public.teacher_question_answer_options('55800000-0000-0000-0000-000000000001', 'QB3101')$$,
+  $$select * from public.teacher_question_answer_options(
+    '55800000-0000-0000-0000-000000000001', 'QB3101',
+    'section_quiz', null
+  )$$,
   '42501', null, 'anonymous invocation is denied without existence leakage'
 );
 reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '55700000-0000-0000-0000-000000000001', true);
-select is((select count(*)::integer from public.teacher_question_answer_options('55800000-0000-0000-0000-000000000001', 'QB3101')), 4, 'classroom owner reads all authorized options');
+select is((select count(*)::integer from public.teacher_question_answer_options('55800000-0000-0000-0000-000000000001', 'QB3101', 'section_quiz', null)), 4, 'classroom owner reads all authorized options');
 select results_eq(
-  $$select option_key, option_text from public.teacher_question_answer_options('55800000-0000-0000-0000-000000000001', 'QB3101') where is_correct$$,
+  $$select option_key, option_text from public.teacher_question_answer_options('55800000-0000-0000-0000-000000000001', 'QB3101', 'section_quiz', null) where is_correct$$,
   $$values ('D'::text, '暗色'::text)$$,
   'classroom owner receives the server-authoritative correct option'
 );
-select is((select count(*)::integer from public.teacher_question_answer_options('55800000-0000-0000-0000-000000000002', 'QB3101')), 0, 'owner querying another teacher classroom fails closed');
-select is((select count(*)::integer from public.teacher_question_answer_options('55800000-0000-0000-0000-000000000001', 'QB3102')), 0, 'question outside classroom analysis scope fails closed');
+select is((select count(*)::integer from public.teacher_question_answer_options('55800000-0000-0000-0000-000000000002', 'QB3101', 'section_quiz', null)), 0, 'owner querying another teacher classroom fails closed');
+select is((select count(*)::integer from public.teacher_question_answer_options('55800000-0000-0000-0000-000000000001', 'QB3102', 'section_quiz', null)), 0, 'question outside classroom analysis scope fails closed');
 
 select set_config('request.jwt.claim.sub', '55700000-0000-0000-0000-000000000003', true);
-select is((select count(*)::integer from public.teacher_question_answer_options('55800000-0000-0000-0000-000000000001', 'QB3101')), 0, 'non-owner teacher fails closed across classrooms');
+select is((select count(*)::integer from public.teacher_question_answer_options('55800000-0000-0000-0000-000000000001', 'QB3101', 'section_quiz', null)), 0, 'non-owner teacher fails closed across classrooms');
 
 select set_config('request.jwt.claim.sub', '55700000-0000-0000-0000-000000000002', true);
-select is((select count(*)::integer from public.teacher_question_answer_options('55800000-0000-0000-0000-000000000001', 'QB3101')), 0, 'student fails closed in their classroom');
+select is((select count(*)::integer from public.teacher_question_answer_options('55800000-0000-0000-0000-000000000001', 'QB3101', 'section_quiz', null)), 0, 'student fails closed in their classroom');
 
 select set_config('request.jwt.claim.sub', '55700000-0000-0000-0000-000000000001', true);
 select is(

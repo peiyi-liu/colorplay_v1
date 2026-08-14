@@ -86,6 +86,11 @@ export {
   type TeacherContentErrorCode,
 } from './teacher-content-errors';
 
+export type AnswerAssessmentSource = Extract<
+  AssessmentSource,
+  'live' | 'section_quiz'
+>;
+
 const parseWith = <Output>(
   schema: z.ZodType<Output>,
   value: unknown,
@@ -149,6 +154,8 @@ export type TeacherContentRepository = Readonly<{
   getQuestionAnswer(
     classroomId: string,
     stableCode: string,
+    source: AnswerAssessmentSource,
+    liveSessionId?: string | null,
   ): Promise<TeacherQuestionAnswer | null>;
   getSubtopicMastery(
     classroomId: string,
@@ -352,11 +359,13 @@ export function createTeacherContentRepository(
       return parseWith(questionDetailSchema, data)[0] ?? null;
     },
 
-    async getQuestionAnswer(classroomId, stableCode) {
+    async getQuestionAnswer(classroomId, stableCode, source, liveSessionId) {
       const { data, error } = await client.rpc(
         'teacher_question_answer_options',
         {
           p_classroom_id: classroomId,
+          ...(liveSessionId ? { p_live_session_id: liveSessionId } : {}),
+          p_source: source,
           p_stable_code: stableCode,
         },
       );

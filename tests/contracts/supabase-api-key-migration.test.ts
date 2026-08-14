@@ -34,6 +34,15 @@ describe('Supabase API key migration', () => {
     ).toBe('legacy-service-role-key');
   });
 
+  it('fails closed when a new key set is explicitly present but empty', () => {
+    expect(
+      resolveNamedSupabaseKey({
+        keySet: '',
+        legacyKey: 'legacy-service-role-key',
+      }),
+    ).toBe('');
+  });
+
   it.each(['auth-login', 'auth-recover', 'student-register'])(
     '%s consumes the shared new-key resolver',
     (functionName) => {
@@ -69,5 +78,6 @@ describe('Supabase API key migration', () => {
     expect(source).toContain('SUPABASE_SECRET_KEY: secretKey');
     expect(source).not.toContain('SUPABASE_SERVICE_ROLE_KEY:');
     expect(source).not.toContain("key.name === 'service_role'");
+    expect(source).not.toContain('VITE_SUPABASE_ANON_KEY=${publishableKey}');
   });
 });

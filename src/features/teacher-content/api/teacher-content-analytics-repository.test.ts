@@ -130,6 +130,8 @@ describe('teacher content repository', () => {
       repository.getQuestionAnswer(
         '29100000-0000-0000-0000-000000000001',
         'QB3101',
+        'section_quiz',
+        null,
       ),
     ).resolves.toEqual({
       options: [
@@ -139,6 +141,7 @@ describe('teacher content repository', () => {
     });
     expect(rpc).toHaveBeenCalledWith('teacher_question_answer_options', {
       p_classroom_id: '29100000-0000-0000-0000-000000000001',
+      p_source: 'section_quiz',
       p_stable_code: 'QB3101',
     });
   });
@@ -151,6 +154,8 @@ describe('teacher content repository', () => {
       repository.getQuestionAnswer(
         '29100000-0000-0000-0000-000000000001',
         'QB3101',
+        'section_quiz',
+        null,
       ),
     ).resolves.toBeNull();
   });
@@ -166,6 +171,8 @@ describe('teacher content repository', () => {
       repository.getQuestionAnswer(
         '29100000-0000-0000-0000-000000000001',
         'QB3101',
+        'section_quiz',
+        null,
       ),
     ).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
   });

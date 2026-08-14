@@ -19,6 +19,38 @@ add constraint questions_stable_code_check check (
   or stable_code ~ '^LT[1-9][1-9][0-9]{2}$'
 );
 
+-- Freeze taxonomy attribution alongside every Live question. The current
+-- question row may later move to another section or version, but completed
+-- classroom analytics must continue to report the section presented at play
+-- time. Existing hosted rows are snapshotted during this migration.
+alter table public.live_session_questions
+add column chapter_id uuid references public.chapters(id),
+add column section_id uuid references public.sections(id),
+add constraint live_session_questions_taxonomy_shape_check check (
+  (chapter_id is null and section_id is null)
+  or (chapter_id is not null and section_id is not null)
+);
+
+update public.live_session_questions as session_question
+set chapter_id = template.chapter_id,
+    section_id = activity.section_id
+from public.live_sessions as session
+join public.live_activities as activity
+  on activity.id = session.live_activity_id
+join public.quiz_templates as template
+  on template.id = activity.quiz_template_id
+where session_question.session_id = session.id
+  and activity.section_id is not null;
+
+update public.live_session_questions as session_question
+set chapter_id = section.chapter_id,
+    section_id = section.id
+from public.questions as question
+join public.subtopics as subtopic on subtopic.id = question.subtopic_id
+join public.sections as section on section.id = subtopic.section_id
+where session_question.chapter_id is null
+  and session_question.question_stable_code = question.stable_code;
+
 create or replace function public.start_live_session(
   p_session_id uuid,
   p_expected_version integer
@@ -41,9 +73,20 @@ begin
   end if;
   select live_session.* into session_record
   from public.live_sessions live_session
+  join public.profiles profile
+    on profile.id = current_user_id
+    and profile.role = 'teacher'
+  join public.classrooms classroom
+    on classroom.id = live_session.classroom_id
+    and classroom.owner_teacher_id = current_user_id
+    and classroom.status = 'active'
+  join public.live_activities activity
+    on activity.id = live_session.live_activity_id
+    and activity.owner_teacher_id = current_user_id
+    and activity.status = 'active'
   where live_session.id = p_session_id
     and live_session.host_teacher_id = current_user_id
-  for update;
+  for update of live_session;
   if session_record.id is null then
     raise exception using errcode = 'P0001', message = 'LIVE_SESSION_NOT_FOUND';
   end if;
@@ -98,12 +141,13 @@ begin
   )
   insert into public.live_session_questions (
     session_id, "position", question_stable_code, question_version, prompt,
-    public_options, correct_option_id, explanation
+    public_options, correct_option_id, explanation, chapter_id, section_id
   )
   select session_record.id,
     row_number() over (order by random_order)::integer,
     selected.stable_code, selected.version, selected.prompt,
-    selected.public_options, selected.correct_option_id, selected.explanation
+    selected.public_options, selected.correct_option_id, selected.explanation,
+    template_record.chapter_id, activity_record.section_id
   from selected_questions selected;
 
   get diagnostics frozen_count = row_count;

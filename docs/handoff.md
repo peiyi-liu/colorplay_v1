@@ -969,3 +969,10 @@
 - 第一次完整 DB gate 正確找出三個 stale fixture：舊總題數、舊 QB／CR bank counts，以及已刪除 `QB3219` 導致的 sequential-code 假設。測試已改為目前權威題數，學習進度 fixture 改從實際 published rows 取 46 題，不再假設 stable code 連號；未改產品或題庫內容。
 - Fresh local gate：lint、typecheck、production build、Vitest 168 files／1153 tests、Supabase 60 files／1246 pgTAP、runtime 3、integration 12 files／25 tests、教師 Chromium 46／46、學生短高度／橫向／翻頁 Chromium 15／15、`git diff --check` 全綠。一次誤用 production preview 跑 dev-only harness 的 15 個失敗不代表產品結果，已以相同測試在正確 Vite dev harness 重跑 15／15。
 - 尚未 push、未操作 hosted Supabase／Vercel、未停用 legacy keys。下一步是 secret scan、integration checkpoint、唯一一次 Standards／Spec／Security review；無新 Critical／High 才進 staging 發布。
+
+## 2026-08-14 16:44 [Integration owner／Codex] — 唯一 release review blocker 修正完成
+
+- 唯一一輪 Standards／Spec／Security review 發現並修正：Live 啟動時重新驗證教師角色、班級 owner 與 active activity；教師分析重新驗證 owner 的 teacher role；Live 場次凍結 chapter／section attribution；教師正解 RPC 以 assessment source 與 completed Live session ID 定位唯一 snapshot，避免同 stable code 的 Quiz／Live 選項混合。
+- 新 API key resolver 僅在新 key set 未設定時才 fallback legacy，顯式空值 fail closed；staging bootstrap 不再輸出 publishable key 值；runbook 改用 `colorplay-staging-web`，題庫規格同步目前 QB 136／CR 62／LT 60／RC 8 與 disposable staging snapshot 例外。
+- RED 證據涵蓋：被降權 Live host 原可啟動、凍結 taxonomy／source-session projection 尚不存在、顯式空 key set 原會 fallback。GREEN 後完整 gate：lint、typecheck、production build、Vitest 168 files／1154 tests、Supabase 60 files／1254 pgTAP、runtime 3、integration 12 files／25 tests、教師 Chromium 46／46、scoped Prettier 與 `git diff --check` 全綠。
+- Git ancestor 檢查確認教師 tip `8f0eeee853a929cfd360f70f31b8eaff8305ee51` 完整包含於 integration；六頁、Live Host／Projector／report、教師專用 `TeacherMenu` 均已接入，所有 `/teacher*` route 不渲染學生或 legacy HUD。本輪仍未操作 hosted Supabase／Vercel；下一步建立 follow-up checkpoint，再核對 staging ref／project 後發布。

@@ -12,6 +12,7 @@ import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
 import { AuthContext } from '../../auth/context/auth-context';
 import {
   type AssessmentQuestionRow,
+  type AnswerAssessmentSource,
   type AssessmentSource,
   type AnalyticsFilters,
   type AssignmentSummaryRow,
@@ -209,17 +210,27 @@ export function useTeacherQuestionDetail(
 export function useTeacherQuestionAnswer(
   classroomId: string,
   stableCode: string,
+  source: AnswerAssessmentSource,
+  liveSessionId: string | null,
   repository?: TeacherContentRepository,
 ): UseQueryResult<TeacherQuestionAnswer | null, TeacherContentError> {
   const actorId = useTeacherActorId(repository);
   const resolved = resolveRepository(repository);
   return useQuery({
     enabled: classroomId.length > 0 && stableCode.length > 0,
-    queryFn: () => resolved.getQuestionAnswer(classroomId, stableCode),
+    queryFn: () =>
+      resolved.getQuestionAnswer(
+        classroomId,
+        stableCode,
+        source,
+        liveSessionId,
+      ),
     queryKey: teacherContentKeys.questionAnswer(
       actorId,
       classroomId,
       stableCode,
+      source,
+      liveSessionId,
     ),
     retry: retryRead,
   });

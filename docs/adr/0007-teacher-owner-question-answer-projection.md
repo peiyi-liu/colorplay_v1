@@ -14,7 +14,9 @@
 建立一個獨立、按需載入、classroom-owner-only 的正確答案投影。此投影是一個窄的專用 seam，不是共用題目讀取介面的擴充。
 
 - 現有 answer-free `QuestionDetail` 與 `teacher_question_detail` 維持不變。
-- 專用 interface 只接收 classroom identity 與 stable question identity。
+- 專用 interface 接收 classroom identity、stable question identity 與 assessment
+  source；Live 另要求 completed Live session identity，避免同一 stable code 的 Quiz
+  與歷史 Live snapshot 被混合，或誤讀另一場 Live 的 frozen options。
 - Server 回傳窄型別 `options[]`，每個 option 只包含：
   - `option_key`
   - `option_text`

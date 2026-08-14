@@ -9,7 +9,7 @@ export function resolveNamedSupabaseKey({
   legacyKey,
   name = 'default',
 }: NamedKeyInput): string {
-  if (keySet === undefined || keySet === '') return legacyKey ?? '';
+  if (keySet === undefined) return legacyKey ?? '';
 
   try {
     const parsed: unknown = JSON.parse(keySet);

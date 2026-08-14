@@ -183,6 +183,10 @@ Published question 若修改以下任一欄位，必須建立新 version：
   published → 依 §4 建立新 version；目標為 draft → 就地更新草稿；不存在 → 新增。
 - 匯入永不刪除內容；下架僅能經由明確的 archive 指令。已驗證的 RC／QB／CR／LT stable codes
   不得因任何匯入而消失（`AC-MIG-003`）。
+- 上述規則適用於保留使用者與作答歷史的增量匯入及 Production。明確執行
+  `bootstrap-staging-db.mjs --confirm-wipe` 的 disposable Staging snapshot 會先清除
+  Auth、學習歷史與 public schema，之後可完全依當次教師核准的 Sheet 重建；Sheet
+  已刪除的列不必在該 snapshot 補回。這項例外不得用於 Production 或保留歷史的環境。
 - 伺服器端對每列重跑與 §5 相同的驗證；client 的驗證結果僅供預覽，不被信任。
 
 ## 8. 正解解析
@@ -232,7 +236,7 @@ Published question 若修改以下任一欄位，必須建立新 version：
 
 ## 13. Verified content baseline and legacy boundary
 
-- 2026-08-14 Sheet baseline：QB 139 題、CR 64 題、LT 60 題、RC 8 張；結構 gate 為 0 error／0 warning。數量只描述該次已驗證快照，後續仍以重新抓取並通過 gate 的 Sheet 為準。
+- 2026-08-14 16:00（Asia/Taipei）教師核准 Sheet baseline：QB 136 題、CR 62 題、LT 60 題、RC 8 張；結構 gate 為 0 error／0 warning。數量只描述該次 Staging snapshot，後續仍以重新抓取並通過 gate 的 Sheet 為準。
 - 教師持續在同一份公開試算表擴充內容；重新匯入以 RC／QB／CR／LT stable code 做 deterministic upsert，不刪除或改寫歷史 frozen session reference。
 - 複習卡來源分頁為 `(RC)各單元複習大廳`。匯入器 `scripts/content/import-review-cards.mjs` 產出 `supabase/seeds/content-review-cards.sql`、`tests/fixtures/review-manifest.generated.ts` 與 `docs/content/review-import-report.md`；UUID 決定性（stable key 派生），初版 version 1、status published。同一小節可有多張卡。
 - Hint content 在試算表尚無欄位前，由 `scripts/content/import-fixes.json` 以 level 1–3 草稿補充（AI 草稿，匯入報告標示「待教師審閱」，與解析草稿同一政策）；hint 不得等價揭露正解。試算表未來新增提示欄位後以試算表為準。

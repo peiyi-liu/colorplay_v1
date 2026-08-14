@@ -221,7 +221,7 @@ select is(
     select count(*)::integer
     from public.teacher_question_answer_options(
       '57800000-0000-0000-0000-000000000001',
-      'QB3101'
+      'QB3101', 'section_quiz', null
     )
   ),
   0,
@@ -246,7 +246,7 @@ select is(
     select count(*)::integer
     from public.teacher_question_answer_options(
       '57800000-0000-0000-0000-000000000001',
-      'QB3102'
+      'QB3102', 'section_quiz', null
     )
   ),
   4,
