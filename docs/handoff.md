@@ -748,3 +748,10 @@
 - 學生 MENU 移除已停用的「課後任務實戰」入口；路由與舊頁面未擴張修改。商店已裝備外框改為 HUD 頭像外層的實體 4px 漸層環，內層 portrait 裁切角色圖，讓 server 回傳的 equipped frame 在 HUD 可見。
 - 驗證：相關 Vitest 6 files／112 tests、lint、typecheck、production build、`git diff --check` 全綠；Chromium 1280／393 共 2／2 驗證教師登入欄位、像素字、MENU 入口與無水平 overflow。一次 scoped self-review 已撤回不相關的登入導頁測試改動，最終 Standards／Spec／Security 無未解 finding。
 - 邊界：在乾淨 worktree `codex/login-hud-menu-logout-20260814` 基於 `3fddcdca7d437879e1be59b304c01f425b91a6af` 完成；未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師專屬 CSS，未合併教師 branch。待 commit 後部署指定 `auth-login` 至 staging Supabase `onkxnkzeixpezetkmocf`，並驗證 GitHub-source Vercel 候選後 promote staging。
+
+## 2026-08-14 09:43 [Owner／Codex] — 教師登入／HUD／MENU／登出 staging 發布完成
+
+- 產品 commit `fffc61c7d5ef00c9462032c1625863058320fc89` 已 fast-forward 推至 `origin/phase6/jrpg-generated-board-ui`。Supabase CLI 2.109.1 僅部署 `auth-login` 到 staging project `onkxnkzeixpezetkmocf`；live invoke 以 `teacher01`、密碼、teacher portal 且不含班級序號取得 session，輸出未暴露 token。
+- GitHub-source Preview `dpl_FYPbDRgvi32a38d6fb3CCcGrHBMY` 的 branch／SHA／bundle gate 通過後 promote；staging Production deployment 為 `dpl_71iCbciS3WJK7Erp1nSjAAUpVTgA`，alias `staging.colorplayapp.com`，metadata 仍精確指向 `fffc61c`。公開 bundle 僅含 staging Supabase ref，未含 production ref `xdjumzdqyexpyndanwkp`，並包含登出 dialog 與 HUD frame CSS。
+- Hosted Chromium 1280×720／393×852 共 2／2 通過：教師帳號無班級序號登入、登入／登出像素字、登出確認／取消、學生 MENU 無課後任務入口，水平 overflow 均為 0；部署後 15 分鐘內無 Vercel error-level request log。
+- 已知非阻擋風險：Vercel build log 仍有既存 `pnpm-lock.yaml` parse warning，平台改用 npm 後 `tsc -b && vite build` 成功；本 task 未改 dependency，未把 release 擴張成 package-manager 維護。Vercel CLI 58.9.4 可完成發布，但最新為 59.0.0，應另開維護更新。
