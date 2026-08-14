@@ -40,4 +40,10 @@ describe('quiz result victory scene styles', () => {
       /\.quiz-result__totals\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/u,
     );
   });
+
+  it('allows the result content to scroll at every viewport height', () => {
+    expect(styles).toMatch(
+      /#main-content:has\(> \.quiz-result--victory-v2\)\s*\{[^}]*overflow-y:\s*auto;/u,
+    );
+  });
 });

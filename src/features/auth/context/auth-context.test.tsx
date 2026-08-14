@@ -536,7 +536,7 @@ describe('AuthBootstrap', () => {
     );
   });
 
-  it('reconciles a buffered null event to the confirmed session and rejects without clearing cache', async () => {
+  it('clears the previous actor cache before exposing a recovered replacement session', async () => {
     const harness = createRepositoryHarness(
       Promise.resolve(authenticatedSession),
     );
@@ -553,6 +553,16 @@ describe('AuthBootstrap', () => {
     view.queryClient.setQueryData(['profile', 'me'], {
       displayName: 'student.one',
     });
+    view.queryClient.setQueryData(
+      [
+        'teacher-content',
+        'teacher-a',
+        'question-answer',
+        'classroom-a',
+        'QB3101',
+      ],
+      { options: ['private-answer'] },
+    );
     screen.getByRole('button', { name: 'sign out' }).click();
 
     expect(await screen.findByText('rejected')).toBeVisible();
@@ -563,9 +573,16 @@ describe('AuthBootstrap', () => {
       replacementSession.email,
     );
     expect(harness.getSession).toHaveBeenCalledTimes(2);
-    expect(view.queryClient.getQueryData(['profile', 'me'])).toEqual({
-      displayName: 'student.one',
-    });
+    expect(view.queryClient.getQueryData(['profile', 'me'])).toBeUndefined();
+    expect(
+      view.queryClient.getQueryData([
+        'teacher-content',
+        'teacher-a',
+        'question-answer',
+        'classroom-a',
+        'QB3101',
+      ]),
+    ).toBeUndefined();
   });
 
   it('settles safely as anonymous when subscription setup rejects', async () => {

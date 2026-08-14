@@ -12,7 +12,8 @@ const overlap = async (page: Page, first: string, second: string) =>
     ([firstSelector, secondSelector]) => {
       const firstElement = document.querySelector<HTMLElement>(firstSelector);
       const secondElement = document.querySelector<HTMLElement>(secondSelector);
-      if (!firstElement || !secondElement) throw new Error('LAYOUT_TARGET_MISSING');
+      if (!firstElement || !secondElement)
+        throw new Error('LAYOUT_TARGET_MISSING');
       const firstRect = firstElement.getBoundingClientRect();
       const secondRect = secondElement.getBoundingClientRect();
       return !(
@@ -57,11 +58,21 @@ test('mobile mistakes centers the page count and separates pagination from retry
   await expect(retry).toBeVisible();
 
   const metrics = await page.evaluate(() => {
-    const nav = document.querySelector<HTMLElement>('.mistake-group .game-pager__nav');
-    const status = document.querySelector<HTMLElement>('.mistake-group .game-pager__status');
-    const previous = document.querySelector<HTMLElement>('.mistake-group [aria-label="上一頁"]');
-    const next = document.querySelector<HTMLElement>('.mistake-group [aria-label="下一頁"]');
-    const action = document.querySelector<HTMLElement>('.mistake-group__actions');
+    const nav = document.querySelector<HTMLElement>(
+      '.mistake-group .game-pager__nav',
+    );
+    const status = document.querySelector<HTMLElement>(
+      '.mistake-group .game-pager__status',
+    );
+    const previous = document.querySelector<HTMLElement>(
+      '.mistake-group [aria-label="上一頁"]',
+    );
+    const next = document.querySelector<HTMLElement>(
+      '.mistake-group [aria-label="下一頁"]',
+    );
+    const action = document.querySelector<HTMLElement>(
+      '.mistake-group__actions',
+    );
     if (!nav || !status || !previous || !next || !action) {
       throw new Error('MISTAKE_PAGER_TARGET_MISSING');
     }
@@ -72,7 +83,8 @@ test('mobile mistakes centers the page count and separates pagination from retry
     const actionRect = action.getBoundingClientRect();
     return {
       centerError: Math.abs(
-        statusRect.left + statusRect.width / 2 -
+        statusRect.left +
+          statusRect.width / 2 -
           (previousRect.right + nextRect.left) / 2,
       ),
       verticalGap: actionRect.top - navRect.bottom,
@@ -109,6 +121,62 @@ test('mobile learning lobby stays locked to the viewport', async ({ page }) => {
   expect(scroll).toEqual({ body: 0, document: 0, main: 0, window: 0 });
 });
 
+test('landscape learning lobby exposes a vertical escape hatch at short heights', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 393, width: 852 });
+  await page.goto('/dev-harness/learning-map.html');
+  const main = page.locator('#main-content');
+  await expect(page.getByRole('heading', { name: '學習地圖' })).toBeVisible();
+  await expect
+    .poll(() =>
+      main.evaluate((element) => element.scrollHeight > element.clientHeight),
+    )
+    .toBe(true);
+  await main.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  await expect
+    .poll(() => main.evaluate((element) => element.scrollTop > 0))
+    .toBe(true);
+});
+
+for (const viewport of [
+  { height: 480, width: 1280 },
+  { height: 500, width: 393 },
+] as const) {
+  test(`${String(viewport.width)}px short quiz and result keep their bottom controls reachable`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    for (const { action, route } of [
+      {
+        action: '.question-card__action button',
+        route: '/dev-harness/quiz-session.html?scenario=idle',
+      },
+      {
+        action: '.quiz-result__actions a',
+        route: '/dev-harness/quiz-result.html?scenario=section',
+      },
+    ]) {
+      await page.goto(route);
+      const main = page.locator('#main-content');
+      await expect
+        .poll(() =>
+          main.evaluate(
+            (element) =>
+              element.scrollHeight > element.clientHeight ||
+              document.documentElement.scrollHeight > window.innerHeight,
+          ),
+        )
+        .toBe(true);
+      const lastAction = page.locator(action).last();
+      await lastAction.scrollIntoViewIfNeeded();
+      await expect(lastAction).toBeVisible();
+    }
+  });
+}
+
 test('mobile completed review status is readable and page turn uses one page', async ({
   page,
 }) => {
@@ -120,7 +188,9 @@ test('mobile completed review status is readable and page turn uses one page', a
   await completedCard.click();
   await expect(completedCard).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: '進入複習' }).click();
-  const status = page.locator('.review-card__status', { hasText: '已完成複習' });
+  const status = page.locator('.review-card__status', {
+    hasText: '已完成複習',
+  });
   await expect(status).toBeVisible();
   const statusStyle = await status.evaluate((element) => {
     const style = getComputedStyle(element);
@@ -130,9 +200,7 @@ test('mobile completed review status is readable and page turn uses one page', a
   expect(statusStyle.color).toBe('rgb(255, 255, 255)');
 
   await page.getByRole('button', { name: '返回複習卡選擇' }).click();
-  await page
-    .getByRole('button', { name: '選擇複習卡：色彩三要素' })
-    .click();
+  await page.getByRole('button', { name: '選擇複習卡：色彩三要素' }).click();
   await page.getByRole('button', { name: '進入複習' }).click();
 
   const next = page.getByRole('button', { name: '閱讀下一頁' });
@@ -141,7 +209,9 @@ test('mobile completed review status is readable and page turn uses one page', a
     .locator('.chapter-review-reader__viewport')
     .evaluate((element) => {
       const width = element.getBoundingClientRect().width;
-      const turnWidth = Number.parseFloat(getComputedStyle(element, '::after').width);
+      const turnWidth = Number.parseFloat(
+        getComputedStyle(element, '::after').width,
+      );
       return turnWidth / width;
     });
   expect(turnRatio).toBeGreaterThanOrEqual(0.9);

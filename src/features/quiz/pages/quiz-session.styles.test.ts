@@ -23,4 +23,13 @@ describe('quiz battle background styles', () => {
     expect(styles).toContain('.quiz-runner__question-dock {');
     expect(styles).not.toContain('position: fixed');
   });
+
+  it('keeps the battle scene vertically operable in a constrained viewport', () => {
+    expect(styles).toMatch(
+      /#main-content:has\(> \.quiz-runner--battle-v2\)\s*\{[^}]*overflow-y:\s*auto;/u,
+    );
+    expect(styles).toMatch(
+      /@media\s*\(max-height:\s*620px\)[\s\S]*?\.scene-night\.quiz-runner--battle-v2\s*\{[^}]*min-height:\s*620px;/u,
+    );
+  });
 });

@@ -1843,6 +1843,7 @@ export type Database = {
           answered_count: number
           assignment_attempt_id: string | null
           chapter_title: string
+          classroom_id: string | null
           client_request_id: string
           completed_at: string | null
           correct_count: number
@@ -1864,6 +1865,7 @@ export type Database = {
           answered_count?: number
           assignment_attempt_id?: string | null
           chapter_title: string
+          classroom_id?: string | null
           client_request_id: string
           completed_at?: string | null
           correct_count?: number
@@ -1885,6 +1887,7 @@ export type Database = {
           answered_count?: number
           assignment_attempt_id?: string | null
           chapter_title?: string
+          classroom_id?: string | null
           client_request_id?: string
           completed_at?: string | null
           correct_count?: number
@@ -1907,6 +1910,13 @@ export type Database = {
             columns: ["assignment_attempt_id"]
             isOneToOne: false
             referencedRelation: "assignment_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_sessions_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
             referencedColumns: ["id"]
           },
           {
@@ -3113,6 +3123,50 @@ export type Database = {
           user_id: string
         }[]
       }
+      teacher_assessment_facts: {
+        Args: {
+          p_chapter_id: string
+          p_classroom_id: string
+          p_from: string
+          p_source: string
+          p_to: string
+        }
+        Returns: {
+          answered_at: string
+          chapter_id: string
+          chapter_sort_order: number
+          chapter_title: string
+          is_correct: boolean
+          prompt: string
+          section_id: string
+          section_sort_order: number
+          section_title: string
+          source_kind: string
+          stable_code: string
+          user_id: string
+        }[]
+      }
+      teacher_assessment_question_analysis: {
+        Args: {
+          p_chapter_id?: string
+          p_classroom_id: string
+          p_from?: string
+          p_source?: string
+          p_to?: string
+        }
+        Returns: {
+          attempts: number
+          chapter_id: string
+          chapter_sort_order: number
+          chapter_title: string
+          correct_rate: number
+          prompt: string
+          section_id: string
+          section_sort_order: number
+          section_title: string
+          stable_code: string
+        }[]
+      }
       teacher_assignment_summary: {
         Args: { p_classroom_id: string; p_from?: string; p_to?: string }
         Returns: {
@@ -3123,6 +3177,33 @@ export type Database = {
           status: string
           targets: number
           title: string
+        }[]
+      }
+      teacher_chapter_completion_summary: {
+        Args: { p_chapter_id?: string; p_classroom_id: string }
+        Returns: {
+          chapter_id: string
+          chapter_sort_order: number
+          chapter_title: string
+          completed_students: number
+          completion_rate: number
+          student_statuses: Json
+          total_students: number
+        }[]
+      }
+      teacher_classroom_overview: {
+        Args: {
+          p_chapter_id?: string
+          p_classroom_id: string
+          p_from?: string
+          p_to?: string
+        }
+        Returns: {
+          average_accuracy: number
+          completed_students: number
+          total_students: number
+          worst_subtopic_code: string
+          worst_subtopic_title: string
         }[]
       }
       teacher_classroom_summary: {
@@ -3170,6 +3251,25 @@ export type Database = {
           state: string
         }[]
       }
+      teacher_live_session_report_v2: {
+        Args: {
+          p_classroom_id: string
+          p_from?: string
+          p_limit?: number
+          p_offset?: number
+          p_to?: string
+        }
+        Returns: {
+          activity_title: string
+          answers: number
+          classroom_name: string
+          completed_at: string
+          correct_rate: number
+          participants: number
+          session_id: string
+          total_count: number
+        }[]
+      }
       teacher_question_analysis: {
         Args: {
           p_chapter_id?: string
@@ -3185,7 +3285,27 @@ export type Database = {
           stable_code: string
         }[]
       }
+      teacher_question_answer_options: {
+        Args: { p_classroom_id: string; p_stable_code: string }
+        Returns: {
+          is_correct: boolean
+          option_key: string
+          option_text: string
+        }[]
+      }
+      teacher_question_detail: {
+        Args: { p_classroom_id: string; p_stable_code: string }
+        Returns: {
+          options: Json
+          prompt: string
+          stable_code: string
+        }[]
+      }
       teacher_student_progress: {
+        Args: { p_classroom_id: string; p_member_ref: string }
+        Returns: Json
+      }
+      teacher_student_progress_v2: {
         Args: { p_classroom_id: string; p_member_ref: string }
         Returns: Json
       }

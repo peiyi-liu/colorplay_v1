@@ -1,5 +1,6 @@
 #main-content:has(> .quiz-result--victory-v2) {
   align-items: start;
+  overflow-y: auto;
   background-color: var(--pixel-night-deep);
   background-image:
     linear-gradient(

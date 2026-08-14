@@ -25,41 +25,66 @@ import type {
 } from '../../classrooms/types';
 import { TeacherLivePage } from '../../live/pages/teacher-live-page';
 import { TeacherLiveReportPage } from '../../live/pages/teacher-live-report-page';
-import type {
-  LiveActivity,
-  LiveRepository,
-  LiveSectionOption,
-  LiveSessionDetail,
-} from '../../live/types';
 import type { TeacherContentRepository } from '../api/teacher-content-repository';
+import { TeacherMenu } from '../components/teacher-menu';
 import { TeacherAnalyticsPage } from './teacher-analytics-page';
-import { TeacherDashboardPage } from './teacher-dashboard-page';
+import { TeacherQuestionAnalysisPage } from './teacher-question-analysis-page';
+import {
+  LiveLobbyHarness,
+  LiveRoundHarness,
+  liveRepositoryFixture,
+  setTeacherHarnessJoinCode,
+  TEACHER_HARNESS_SESSION_ID,
+} from './teacher-routes-live.harness';
 
 export type TeacherRoutesHarnessScenario =
-  | 'dashboard'
   | 'analytics'
   | 'classes'
   | 'classroom-detail'
   | 'live'
+  | 'live-lobby'
+  | 'live-round'
   | 'live-report'
+  | 'menu-errors'
+  | 'questions'
   | 'student-progress'
   | 'hud';
 
 export const TEACHER_ROUTES_HARNESS_SCENARIOS: readonly TeacherRoutesHarnessScenario[] =
   [
-    'dashboard',
     'analytics',
     'classes',
     'classroom-detail',
     'live',
+    'live-lobby',
+    'live-round',
     'live-report',
+    'menu-errors',
+    'questions',
     'student-progress',
     'hud',
   ];
 
 const CLASSROOM_ID = '18100000-0000-0000-0000-000000000001';
 const MEMBER_REF = 'cb000000-0000-4000-8000-000000000001';
-const SESSION_ID = '28000000-0000-0000-0000-000000000001';
+
+const routeForScenario: Readonly<
+  Record<
+    Exclude<
+      TeacherRoutesHarnessScenario,
+      'hud' | 'live-lobby' | 'live-round' | 'menu-errors'
+    >,
+    string
+  >
+> = {
+  analytics: '/teacher',
+  classes: '/teacher/classes',
+  'classroom-detail': `/teacher/classes/${CLASSROOM_ID}`,
+  live: '/teacher/live',
+  'live-report': `/teacher/live/${TEACHER_HARNESS_SESSION_ID}/report`,
+  questions: `/teacher/questions?classroomId=${CLASSROOM_ID}`,
+  'student-progress': `/teacher/classes/${CLASSROOM_ID}/members/${MEMBER_REF}`,
+};
 
 const classroomFixture: OwnedClassroom = {
   classroomId: CLASSROOM_ID,
@@ -92,12 +117,16 @@ const progressSnapshotFixture: StudentProgressSnapshot = {
   chapters: [
     {
       accuracy: 80,
+      assessmentAccuracy: 72.5,
+      chapterQuizAccuracy: 75,
       chapterId: 'c1',
       chapterTitle: '第一章 色彩三要素',
       coverage: 90,
       mastery: 75,
+      liveAccuracy: 65,
       reviewCompleted: 9,
       reviewTotal: 10,
+      sectionQuizAccuracy: 78,
       status: 'learning',
     },
   ],
@@ -108,70 +137,14 @@ const progressSnapshotFixture: StudentProgressSnapshot = {
     loginAccount: 's1130201',
     membershipStatus: 'active',
   },
-  mistakes: [
-    {
-      prompt: '互補色是？',
-      subtopicCode: '3-2',
-      subtopicTitle: '色彩對比',
-      wrongCount: 2,
-    },
-  ],
   stats: {
     avgAccuracy: 72.5,
     classRank: 2,
     classXp: 1280,
     openMistakeCount: 1,
+    totalMistakeCount: 7,
+    unfinishedMistakeCount: 1,
   },
-};
-
-const sectionFixture: LiveSectionOption = {
-  sectionId: '26000000-0000-0000-0000-000000000010',
-  title: '3-1 色彩三要素',
-  quizTemplateId: '26000000-0000-0000-0000-000000000003',
-};
-
-const liveActivityFixture: LiveActivity = {
-  activityId: '27000000-0000-0000-0000-000000000001',
-  title: sectionFixture.title,
-  quizTemplateId: sectionFixture.quizTemplateId,
-  questionTimeLimitSeconds: 20,
-  status: 'active',
-  rulesVersion: 'v1',
-  questionDisplay: 'screen_only',
-  sectionId: sectionFixture.sectionId,
-};
-
-const liveSessionDetailFixture: LiveSessionDetail = {
-  sessionId: SESSION_ID,
-  completedAt: '2026-07-20T05:00:00+00:00',
-  classroomId: CLASSROOM_ID,
-  activity: {
-    title: '色彩快問快答',
-    quizTemplateId: sectionFixture.quizTemplateId,
-  },
-  questions: [
-    {
-      position: 1,
-      prompt: '色彩三要素是？',
-      answered: 3,
-      correct: 2,
-      correctRate: 66.7,
-      averageResponseMs: 1800,
-    },
-  ],
-  participants: [
-    {
-      displayName: '學生一',
-      rank: 1,
-      score: 300,
-      answers: [{ position: 1, status: 'correct', responseMs: 900 }],
-    },
-  ],
-  ranking: [
-    { rank: 1, displayName: '學生一', score: 300 },
-    { rank: 2, displayName: '學生二', score: 220 },
-    { rank: 3, displayName: '學生三', score: 150 },
-  ],
 };
 
 const classroomRepositoryFixture = (
@@ -188,7 +161,69 @@ const teacherContentRepositoryFixture = (
   overrides: Partial<TeacherContentRepository> = {},
 ): TeacherContentRepository =>
   ({
+    getAssessmentQuestions: () =>
+      Promise.resolve([
+        {
+          attempts: 8,
+          chapter_id: '21000000-0000-0000-0000-000000000003',
+          chapter_sort_order: 3,
+          chapter_title: '色彩表示',
+          correct_rate: 50,
+          prompt: '色彩三要素是？',
+          section_id: '22000000-0000-0000-0000-000000000001',
+          section_sort_order: 1,
+          section_title: '3-1 色彩三要素',
+          stable_code: 'QB3101',
+        },
+      ]),
+    getChapterCompletion: () =>
+      Promise.resolve([
+        {
+          chapter_id: '21000000-0000-0000-0000-000000000003',
+          chapter_sort_order: 3,
+          chapter_title: '第 3 章 色彩表示',
+          completed_students: 3,
+          completion_rate: 75,
+          student_statuses: [
+            {
+              display_name: '晨星',
+              is_complete: true,
+              member_ref: '29200000-0000-0000-0000-000000000001',
+            },
+            {
+              display_name: '夜光',
+              is_complete: false,
+              member_ref: '29200000-0000-0000-0000-000000000002',
+            },
+          ],
+          total_students: 4,
+        },
+      ]),
     getClassroomSummary: () => Promise.resolve(classroomSummaryFixture),
+    getClassroomOverview: () =>
+      Promise.resolve({
+        averageAccuracy: 66.7,
+        completedStudents: 3,
+        totalStudents: 4,
+        worstSubtopicCode: '3-1',
+        worstSubtopicTitle: '色彩三要素與色名的表示',
+      }),
+    getLiveHistory: () =>
+      Promise.resolve({
+        rows: [
+          {
+            activity_title: '色彩快問快答',
+            answers: 12,
+            classroom_name: '色彩一班',
+            completed_at: '2026-07-20T05:00:00+00:00',
+            correct_rate: 66.7,
+            participants: 4,
+            session_id: TEACHER_HARNESS_SESSION_ID,
+            total_count: 1,
+          },
+        ],
+        total: 1,
+      }),
     getLiveReport: () =>
       Promise.resolve([
         {
@@ -197,7 +232,7 @@ const teacherContentRepositoryFixture = (
           completed_at: '2026-07-20T05:00:00+00:00',
           correct_rate: 66.7,
           participants: 4,
-          session_id: SESSION_ID,
+          session_id: TEACHER_HARNESS_SESSION_ID,
           state: 'completed',
         },
       ]),
@@ -210,6 +245,22 @@ const teacherContentRepositoryFixture = (
           stable_code: 'q-3-1-01',
         },
       ]),
+    getQuestionDetail: (_classroomId: string, stableCode: string) =>
+      Promise.resolve({
+        options: [
+          { option_key: 'A', option_text: '色相、明度、彩度' },
+          { option_key: 'B', option_text: '紅色、黃色、藍色' },
+        ],
+        prompt: '色彩三要素是？',
+        stable_code: stableCode,
+      }),
+    getQuestionAnswer: () =>
+      Promise.resolve({
+        options: [
+          { isCorrect: true, key: 'A', text: '色相、明度、彩度' },
+          { isCorrect: false, key: 'B', text: '紅色、黃色、藍色' },
+        ],
+      }),
     getSubtopicMastery: () =>
       Promise.resolve([
         {
@@ -227,15 +278,18 @@ const teacherContentRepositoryFixture = (
     ...overrides,
   }) as unknown as TeacherContentRepository;
 
-const liveRepositoryFixture = (
-  overrides: Partial<LiveRepository> = {},
-): LiveRepository =>
-  ({
-    getSessionDetail: () => Promise.resolve(liveSessionDetailFixture),
-    listMyActivities: () => Promise.resolve([liveActivityFixture]),
-    listSectionOptions: () => Promise.resolve([sectionFixture]),
-    ...overrides,
-  }) as unknown as LiveRepository;
+const teacherMenuFixture = (
+  <TeacherMenu
+    avatarError={null}
+    avatarPending={false}
+    avatarUrl={null}
+    displayName="林老師"
+    isSigningOut={false}
+    onAvatarUpload={() => undefined}
+    onSignOut={() => undefined}
+    signOutError={false}
+  />
+);
 
 export function TeacherRoutesHarness({
   hudInitialRoute = '/teacher',
@@ -267,39 +321,90 @@ export function TeacherRoutesHarness({
     );
   }
 
+  if (scenario === 'menu-errors') {
+    return (
+      <MemoryRouter initialEntries={['/teacher']}>
+        <TeacherMenu
+          avatarError="頭像上傳失敗。"
+          avatarPending={false}
+          avatarUrl={null}
+          displayName="林老師"
+          isSigningOut={false}
+          onAvatarUpload={() => undefined}
+          onSignOut={() => undefined}
+          signOutError
+        />
+      </MemoryRouter>
+    );
+  }
+
+  if (scenario === 'live-lobby') {
+    setTeacherHarnessJoinCode();
+    return (
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter
+          initialEntries={[`/teacher/live/${TEACHER_HARNESS_SESSION_ID}`]}
+        >
+          <LiveLobbyHarness />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+  }
+
+  if (scenario === 'live-round') {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter
+          initialEntries={[`/teacher/live/${TEACHER_HARNESS_SESSION_ID}`]}
+        >
+          <LiveRoundHarness />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        {scenario === 'dashboard' ? (
-          <TeacherDashboardPage
-            classroomRepository={classroomRepositoryFixture()}
-            repository={teacherContentRepositoryFixture()}
-          />
-        ) : scenario === 'analytics' ? (
+      <MemoryRouter initialEntries={[routeForScenario[scenario]]}>
+        {scenario === 'analytics' ? (
           <TeacherAnalyticsPage
             classroomRepository={classroomRepositoryFixture()}
+            menu={teacherMenuFixture}
             repository={teacherContentRepositoryFixture()}
           />
         ) : scenario === 'classes' ? (
-          <TeacherClassroomsPage repository={classroomRepositoryFixture()} />
+          <TeacherClassroomsPage
+            menu={teacherMenuFixture}
+            repository={classroomRepositoryFixture()}
+          />
         ) : scenario === 'classroom-detail' ? (
           <TeacherClassroomDetailPage
             classroomId={CLASSROOM_ID}
+            menu={teacherMenuFixture}
             repository={classroomRepositoryFixture()}
           />
         ) : scenario === 'live' ? (
           <TeacherLivePage
             classroomRepository={classroomRepositoryFixture()}
+            menu={teacherMenuFixture}
             repository={liveRepositoryFixture()}
           />
         ) : scenario === 'live-report' ? (
           <TeacherLiveReportPage
+            menu={teacherMenuFixture}
             repository={liveRepositoryFixture()}
-            sessionId={SESSION_ID}
+            sessionId={TEACHER_HARNESS_SESSION_ID}
+          />
+        ) : scenario === 'questions' ? (
+          <TeacherQuestionAnalysisPage
+            classroomRepository={classroomRepositoryFixture()}
+            menu={teacherMenuFixture}
+            repository={teacherContentRepositoryFixture()}
           />
         ) : (
           <TeacherStudentProgressPage
             classroomId={CLASSROOM_ID}
+            menu={teacherMenuFixture}
             memberRef={MEMBER_REF}
             repository={classroomRepositoryFixture()}
           />

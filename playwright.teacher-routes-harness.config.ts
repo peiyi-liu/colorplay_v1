@@ -2,14 +2,16 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testMatch: /teacher-routes\.harness\.spec\.ts$/u,
+  testMatch:
+    /teacher-(?:analytics|routes|live-round|workspace-states)\.harness\.spec\.ts$/u,
   workers: 1,
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  use: { baseURL: 'http://localhost:4177' },
+  use: { baseURL: 'http://127.0.0.1:4177' },
   webServer: {
-    command: 'npx vite --host localhost --port 4177 --strictPort',
-    url: 'http://localhost:4177/dev-harness/teacher-routes.html?scenario=dashboard',
-    reuseExistingServer: false,
+    command:
+      '../../node_modules/.bin/vite --host 127.0.0.1 --port 4177 --strictPort',
+    url: 'http://127.0.0.1:4177/dev-harness/teacher-routes.html?scenario=analytics',
+    reuseExistingServer: !process.env.CI,
     timeout: 60_000,
   },
 });

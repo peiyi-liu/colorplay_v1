@@ -1,0 +1,192 @@
+.teacher-work-surface--analytics {
+  background: var(--teacher-canvas);
+}
+
+.teacher-work-surface--analytics .teacher-work-surface__header {
+  min-height: 184px;
+  background:
+    linear-gradient(90deg, rgb(2 10 22 / 94%), rgb(2 10 22 / 36%) 62%, rgb(2 10 22 / 74%)),
+    url('./assets/teacher-analytics-observatory.png') center 45% / cover no-repeat;
+}
+
+.teacher-work-surface--analytics .teacher-work-surface__content {
+  gap: 24px;
+  background: linear-gradient(180deg, #061321, #071827);
+}
+
+.teacher-analytics-filter-deck {
+  border: 1px solid #426b8e;
+  border-radius: 8px;
+  background: #081d32;
+  box-shadow: none;
+}
+
+.teacher-workspace-shell .teacher-analytics-filters {
+  background: #06172a;
+}
+
+.teacher-analytics-section {
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.teacher-analytics-section__header {
+  min-height: 52px;
+  border-bottom: 1px solid #315371;
+  background: transparent;
+  padding: 0 0 10px;
+}
+
+.teacher-analytics-section__header h2 {
+  font-size: 1.35rem;
+}
+
+.teacher-analytics-section > :not(.teacher-analytics-section__header) {
+  margin-top: 14px;
+}
+
+.teacher-analytics-overview--compact {
+  overflow: hidden;
+  border: 1px solid #345d80;
+  border-radius: 8px;
+  background: #071b30;
+  grid-template-columns: minmax(160px, 0.7fr) minmax(180px, 0.8fr) minmax(300px, 1.5fr);
+}
+
+.teacher-analytics-overview--compact > div {
+  min-height: 118px;
+  justify-content: center;
+  border-right: 1px solid #294a68;
+  background: transparent;
+  padding: 20px 24px;
+}
+
+.teacher-analytics-overview--compact > div:last-child {
+  border-right: 0;
+  background: #0a243d;
+}
+
+.teacher-analytics-overview--compact dd:not(.teacher-analytics-overview__topic) {
+  color: #58baff;
+  font-size: clamp(1.8rem, 3vw, 2.45rem);
+}
+
+.teacher-analytics-overview__topic {
+  max-width: 28ch;
+  color: #f2f7ff;
+  font-size: 1.05rem;
+}
+
+.teacher-analytics-decision-layout {
+  gap: 28px;
+  grid-template-columns: minmax(0, 1.75fr) minmax(280px, 0.68fr);
+}
+
+.teacher-analytics-decision-layout__primary {
+  gap: 16px;
+}
+
+.teacher-assessment-source-tabs {
+  justify-self: start;
+  border-color: #345e82;
+  background: #06172a;
+}
+
+.teacher-analytics-decision-layout__primary .teacher-analytics-section {
+  border-top: 3px solid #168fe8;
+  border-radius: 8px;
+  background: #071a2e;
+  padding: 20px;
+}
+
+.teacher-analytics-decision-layout__primary .teacher-analytics-section__header {
+  padding-top: 0;
+}
+
+.teacher-analytics-decision-layout > .teacher-analytics-section {
+  border-left: 1px solid #2c4d6b;
+  padding-left: 22px;
+}
+
+.teacher-question-insight-grid {
+  gap: 0;
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+}
+
+.teacher-question-insight-grid > div {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 4px 18px 4px 0;
+}
+
+.teacher-question-insight-grid > div + div {
+  border-left: 1px solid #2d4f6d;
+  padding-right: 0;
+  padding-left: 20px;
+}
+
+.teacher-question-insight-grid li,
+.teacher-live-analysis__grid article,
+.teacher-chapter-completion article {
+  border: 0;
+  border-bottom: 1px solid #284966;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.teacher-table-frame {
+  border: 1px solid #294a68;
+  border-radius: 8px;
+  background: #06182a;
+}
+
+@media (max-width: 47.99rem) {
+  .teacher-work-surface--analytics .teacher-work-surface__header {
+    min-height: 156px;
+  }
+
+  .teacher-analytics-overview--compact,
+  .teacher-analytics-decision-layout,
+  .teacher-question-insight-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-analytics-overview--compact > div {
+    min-height: 92px;
+    border-right: 0;
+    border-bottom: 1px solid #294a68;
+  }
+
+  .teacher-analytics-overview--compact > div:last-child {
+    border-bottom: 0;
+  }
+
+  .teacher-analytics-decision-layout__primary .teacher-analytics-section {
+    padding: 16px;
+  }
+
+  .teacher-analytics-decision-layout > .teacher-analytics-section {
+    border-top: 1px solid #2c4d6b;
+    border-left: 0;
+    padding-top: 20px;
+    padding-left: 0;
+  }
+
+  .teacher-question-insight-grid > div,
+  .teacher-question-insight-grid > div + div {
+    border-left: 0;
+    padding: 4px 0;
+  }
+
+  .teacher-question-insight-grid > div + div {
+    border-top: 1px solid #2d4f6d;
+    margin-top: 16px;
+    padding-top: 16px;
+  }
+}

@@ -57,12 +57,16 @@ const studentProgressSchema = z.strictObject({
   chapters: z.array(
     z.strictObject({
       accuracy: z.number().nullable(),
+      assessment_accuracy: z.number().nullable(),
+      chapter_quiz_accuracy: z.number().nullable(),
       chapter_id: databaseUuid,
       chapter_title: z.string().min(1),
       coverage: z.number().nullable(),
       mastery: z.number().nullable(),
+      live_accuracy: z.number().nullable(),
       review_completed: z.number().int().nonnegative(),
       review_total: z.number().int().positive().nullable(),
+      section_quiz_accuracy: z.number().nullable(),
       status: z.enum(['developing', 'learning', 'mastered', 'not_started']),
     }),
   ),
@@ -73,19 +77,13 @@ const studentProgressSchema = z.strictObject({
     login_account: z.string().min(1).nullable(),
     membership_status: z.enum(['active', 'inactive']),
   }),
-  mistakes: z.array(
-    z.strictObject({
-      prompt: z.string().min(1),
-      subtopic_code: z.string().min(1),
-      subtopic_title: z.string().min(1),
-      wrong_count: z.number().int().nonnegative(),
-    }),
-  ),
   stats: z.strictObject({
     avg_accuracy: z.number().nullable(),
     class_rank: z.number().int().positive().nullable(),
     class_xp: z.number().int().nonnegative(),
     open_mistake_count: z.number().int().nonnegative(),
+    total_mistake_count: z.number().int().nonnegative(),
+    unfinished_mistake_count: z.number().int().nonnegative(),
   }),
 });
 const createdClassroomSchema = z.strictObject({
@@ -185,12 +183,16 @@ const mapStudentProgress = (
 ): StudentProgressSnapshot => ({
   chapters: payload.chapters.map((chapter) => ({
     accuracy: chapter.accuracy,
+    assessmentAccuracy: chapter.assessment_accuracy,
+    chapterQuizAccuracy: chapter.chapter_quiz_accuracy,
     chapterId: chapter.chapter_id,
     chapterTitle: chapter.chapter_title,
     coverage: chapter.coverage,
     mastery: chapter.mastery,
+    liveAccuracy: chapter.live_accuracy,
     reviewCompleted: chapter.review_completed,
     reviewTotal: chapter.review_total,
+    sectionQuizAccuracy: chapter.section_quiz_accuracy,
     status: chapter.status,
   })),
   identity: {
@@ -200,17 +202,13 @@ const mapStudentProgress = (
     loginAccount: payload.identity.login_account,
     membershipStatus: payload.identity.membership_status,
   },
-  mistakes: payload.mistakes.map((mistake) => ({
-    prompt: mistake.prompt,
-    subtopicCode: mistake.subtopic_code,
-    subtopicTitle: mistake.subtopic_title,
-    wrongCount: mistake.wrong_count,
-  })),
   stats: {
     avgAccuracy: payload.stats.avg_accuracy,
     classRank: payload.stats.class_rank,
     classXp: payload.stats.class_xp,
     openMistakeCount: payload.stats.open_mistake_count,
+    totalMistakeCount: payload.stats.total_mistake_count,
+    unfinishedMistakeCount: payload.stats.unfinished_mistake_count,
   },
 });
 const mapJoined = (
@@ -257,7 +255,7 @@ export function createClassroomRepository(
       const parsedRef = databaseUuid.safeParse(requestedMemberRef);
       if (!parsedId.success || !parsedRef.success)
         throw new ClassroomRepositoryError('INVALID_INPUT');
-      const { data, error } = await client.rpc('teacher_student_progress', {
+      const { data, error } = await client.rpc('teacher_student_progress_v2', {
         p_classroom_id: parsedId.data,
         p_member_ref: parsedRef.data,
       });

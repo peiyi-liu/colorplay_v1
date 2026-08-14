@@ -755,3 +755,189 @@
 - GitHub-source Preview `dpl_FYPbDRgvi32a38d6fb3CCcGrHBMY` 的 branch／SHA／bundle gate 通過後 promote；staging Production deployment 為 `dpl_71iCbciS3WJK7Erp1nSjAAUpVTgA`，alias `staging.colorplayapp.com`，metadata 仍精確指向 `fffc61c`。公開 bundle 僅含 staging Supabase ref，未含 production ref `xdjumzdqyexpyndanwkp`，並包含登出 dialog 與 HUD frame CSS。
 - Hosted Chromium 1280×720／393×852 共 2／2 通過：教師帳號無班級序號登入、登入／登出像素字、登出確認／取消、學生 MENU 無課後任務入口，水平 overflow 均為 0；部署後 15 分鐘內無 Vercel error-level request log。
 - 已知非阻擋風險：Vercel build log 仍有既存 `pnpm-lock.yaml` parse warning，平台改用 npm 後 `tsc -b && vite build` 成功；本 task 未改 dependency，未把 release 擴張成 package-manager 維護。Vercel CLI 58.9.4 可完成發布，但最新為 59.0.0，應另開維護更新。
+
+## 2026-08-13 03:24 [Owner／Codex] — 教師端教學分析 JRPG 工作區完成
+
+- 視覺／編排：`/teacher/analytics` 已接上教師 `TeacherMenu` 與 `TeacherWorkSurface`，使用新生成且不含文字／假數值的像素風分析觀測室背景。班級／日期／章節／子題 filters、既有 hooks、repository calls 與各 projection 的 loading／empty／error 行為維持；新頁面依序呈現班級總覽、高錯誤題 Top 5、子題掌握概況、題目分析與 Live 團體賽結果。CSS 全部隔離於 teacher-content module，未修改 `globals.css`／tokens／router／AppShell。
+- 資料誠實性：修正平均正確率 0–100 值被再乘 100 的既有錯誤；Top 5 只排序現有 server `correct_rate` 且每列顯示實際作答分母。子題區明示現有投影只有正確率，Live 區明示缺歷史班級分母與選項分布，不建立假參與率／假精熟度。Owner 選擇章節完成定義 A：複習全完成且 chapter mastery ≥80，與 `student_chapter_completion` 既有正式 progression 規則一致；教師批次章節完成率、各學生正確率、Live 參與率／選項分布仍需 integration owner 核准的 server projection，本 branch 未越權修改 Supabase／database types。
+- 可及性／RWD：百分比長條附精確文字與桌面 table alternative；393px 題目表格改 native disclosure rows，鍵盤 Enter 可展開；所有 filter／summary controls ≥44×44、無水平 overflow、圖表不只靠顏色。受影響檔案皆低於 500 行；analytics CSS 已拆為 surface／data／mobile 三檔。
+- 驗證／review：analytics＋dashboard Vitest 16/16（最終 analytics 8/8 於移除主觀 severity 後重跑）、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；analytics Chromium 1280×720／393×852 4/4，包含背景、overflow、target size、手機 disclosure、文字替代及 console/page error。唯一一次 scoped self-review 因本工作流禁止 sub-agent，修正 component→page 反向依賴、CSS 500 行超限與未有正式 threshold 的主觀 severity 標籤；無剩餘 finding。未 commit、未 push、未 deploy。
+
+## 2026-08-13 16:09 [Owner／Codex] — 教師 HUD 固定與教學分析 drill-down
+
+- 教師 HUD 改為桌機固定左欄、手機固定頂部身份列與底部導覽，內容保留對應安全區；完整 teacher route browser regression 未發現 Dashboard／Live 版面回歸。教學分析總覽移除獨立「題目分析」與子題顯示條；班級總覽標題連既有班級管理 route，高錯誤題、子題掌握、Live 團體賽標題開啟對應詳細表格。
+- 全部錯題排除無作答／無正確率／100% 正確項目，依 server-backed 錯誤率高至低排列。子題表格以正式 stable code 對應 typed subtopic ID，點擊後才查該小節個題資料；找不到正式 ID 時 disabled，不猜字串關聯。Live 表格顯示參與人數、作答數、正確率、完成日期，並連既有 `/teacher/live/:sessionId/report`。
+- 驗證：analytics Vitest 12/12、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；analytics＋teacher routes Chromium 31/31，涵蓋 1280×720、393×852、320／375／768／1024／1440、固定 HUD、手機 disclosure、正式 route 與 console/page error。唯一一次 scoped self-review 無未解 finding；未 commit、未 push、未 deploy。
+
+## 2026-08-13 16:22 [Owner／Codex] — 教學分析文案精簡與 HUD 返回總覽
+
+- 依 owner 指示移除教學分析頁列出的輔助／資料界線說明文字，保留正式數值、標題、篩選、loading／empty／error 與 drill-down 行為。HUD「教學分析」即使在相同 `/teacher/analytics` route 再次點擊，也會透過 router navigation key 重建分析內容並回到總覽，不保留錯題／子題／Live 詳細視圖。
+- 驗證：analytics Vitest 13/13、Chromium 6/6、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；未 commit、未 push、未 deploy。
+
+## 2026-08-13 16:28 [Owner／Codex] — 分析詳細頁再精簡與子題收合
+
+- 移除錯題詳細頁排序說明、子題頁流程導引與投影說明，以及 completed Live 場次的「已完成」文字；取消／草稿等非完成狀態仍保留。子題掌握表格的查看按鈕改為可切換的「查看／收合」，同步 `aria-expanded`；切換其他小節時改顯示該小節個題資料。
+- 驗證：analytics Vitest 13/13、Chromium 6/6、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；未 commit、未 push、未 deploy。
+
+## 2026-08-13 17:26 [Owner／Codex] — 錯題欄位／Live 名稱與章節完成率 blocker
+
+- 高錯誤題總覽與詳細表格只顯示現有 projection 真正提供的「作答數」與「錯誤率」，移除正確率；`attempts` 不是 unique respondents，因此未改標成作答人數。「Live 團體賽結果」已統一改為「Live 課程」。
+- 章節完成率尚未實作：資料庫已有單一學生的 `student_chapter_completion(user_id, chapter_id)`，完成定義為複習全完成且 mastery ≥80，但沒有教師班級批次 typed projection 可提供章節 numerator／denominator、completion rate 與完成／未完成學生名單。不得以每位學生一支前端 RPC 的 N+1 查詢拼裝正式指標；需 owner 核准 integration owner 新增教師授權、server-calculated projection 與 generated DB types 後再接 UI。
+- 已完成部分驗證：analytics Vitest 13/13、Chromium 6/6、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；未 commit、未 push、未 deploy。
+
+## 2026-08-13 18:45 [Owner／Codex] — 章節完成率與錯題內容正式投影
+
+- 新增 owner-scoped `teacher_chapter_completion_summary`，批次回傳各 published chapter 的完成學生數、active student 分母、完成率與以 `member_ref` 表示的完成／未完成名單；完成判定直接沿用 `student_chapter_completion`（複習全完成且 mastery ≥80），前端不重算。教學分析總覽「子題掌握概況」改為直接顯示每章 `完成數/總數`、百分比及學生狀態；點標題後仍進既有子題／個題分析表格。
+- 新增按需 `teacher_question_detail`；所有錯題表格加入「查看／收合」，展開正式題目與選項。投影不回傳 `is_correct`，且兩支 RPC 對 anonymous、非 owner 教師與學生皆 fail closed；沒有 N+1 學生 RPC，也沒有 auth user id 或答案旗標進入前端。
+- 驗證：新增 pgTAP 12/12，既有章節完成規則＋新投影 39/39；repository／analytics／dashboard Vitest 36/36，`tsc -b`、scoped ESLint、generated DB types 比對、Prettier、`git diff --check` 全綠；analytics Chromium 1280×720／393×852 6/6，涵蓋固定 HUD、無水平 overflow、章節完成名單、錯題選項與 keyboard disclosure。唯一一輪 scoped review 補齊兩支 RPC 的非 owner／學生交叉越權測試，無剩餘 finding。migration 只套用本機，未 commit、未 push、未 deploy。
+
+## 2026-08-14 00:06 [Owner／Codex] — 教學分析首頁與剩餘教師頁完成改版
+
+- `/teacher` 改為教學分析首頁，移除原總覽頁與教師 HUD「總覽」項目；`/teacher/analytics` 保留 replace redirect，新增 `/teacher/questions` 小節題目分析。首頁整合班級／日期／章節篩選、班級總覽、四來源題目分析與最近五筆 Live 課程報表分頁；手機 Live 與題目資料改 disclosure rows。
+- 班級列表、班級成員、學生學習進度與 Live 報表均套用固定 `TeacherMenu`／`TeacherWorkSurface`。學生頁顯示班級名次、XP、Quiz＋Live 正確率拆分、未完成補救題數／總數與章節狀態；待補救錯題清單依 owner 指示移除。
+- 新增 `teacher_assessment_question_analysis`、`teacher_classroom_overview`、`teacher_live_session_report_v2`、`teacher_student_progress_v2`。Quiz 與 Live 只在分析指標合併；章節完成與「已完成」狀態仍只委派 `student_chapter_completion`（閱讀完成＋mastery ≥80），Live 不影響完成。唯一 scoped self-review 修正章節狀態曾只看 mastery 的缺口，並補 pgTAP。
+- 驗證：乾淨 local DB reset 完整套用 migrations；教師分析 pgTAP 24/24、受影響 Vitest 58/58、scoped ESLint、TypeScript、generated DB types、Prettier、`git diff --check` 全綠；教師 route browser 其餘 28 tests 與最終 analytics 1280×720／393×852 4/4 通過。未 commit、未 push、未 deploy；共享 `app-shell.tsx`／`hud-command-bar.tsx` 未修改，integration owner 仍需隱藏 legacy teacher HUD 並把其教學分析連結改到 `/teacher`。
+
+## 2026-08-14 01:35 [Owner／Codex] — 教師戰術觀測台 Phase A 設計交付
+
+- 完成六個教師頁的現況審計、共用視覺契約、六張 desktop/mobile wireframe board 與十二張視覺方向圖；設計規格在 `docs/superpowers/specs/2026-08-14-teacher-tactical-observatory-ui-optimization.md`，artifact registry 在 `artifacts/design-audit/teacher-tactical-observatory/manifest.md`。
+- 方向採頁首 JRPG 場景加安靜深藍工作面；一般手機表格改 disclosure rows，只有 Live 作答矩陣保留有界橫向捲動。生成圖文字、姓名、數值與額外細節均不具產品權威性。
+- 本 checkpoint 未修改產品程式碼或測試，未 stage／commit，未進入 Phase B。六頁方案全部等待 owner 逐頁核准。
+
+## 2026-08-14 02:07 [Owner／Codex] — 教師 Phase A owner decisions 與可信邊界
+
+- Owner 核准教學分析、班級管理、題目分析與 Live 報表視覺方向；進入班級補上 `activeBlookId` 正式資產映射護欄，學生細節方向圖移除百分位／主觀評級，只保留班級名次、XP、平均正確率與未完成／全部待補救題數，兩頁更新後仍待核准。
+- 題目分析 Phase B 新增專用 classroom-owner-only 正確答案 RPC／projection 範圍：server 驗證 owner、typed answer field、anonymous／學生／非 owner／跨班級 fail closed，且答案不得進入學生、Live 作答或其他非教師報表 payload；server slice 未完成前 UI 不顯示或推測答案。
+- Live 摘要推導已鎖定 participants length、answered／correct 聚合、非 null correctRate 最難題與 report ranking；無資料省略而非假 0。此 checkpoint 只更新 Phase A spec、artifacts／manifest 與 handoff，未修改產品程式碼或測試，未 stage／commit，未進入 Phase B。
+
+## 2026-08-14 02:24 [Owner／Codex] — 教師戰術觀測台 Phase A 全數核准
+
+- Owner 已核准六頁全部視覺方向；`classroom-detail-393x852-v2.png` 與兩張 `student-progress-*-v2.png` 成為正式核准方向，舊圖繼續隔離在 manifest superseded 區。`membershipStatus` 僅表示 active／inactive 成員資格，不得推測學習中、離線、presence 或 online 狀態。
+- Phase B 尚未開始。正確答案仍須先完成 classroom-owner-only、server-authoritative typed RPC／projection，對 anonymous、學生、非 owner 教師與跨班級存取 fail closed，且不得污染既有 answer-free `QuestionDetail`、學生 Quiz、進行中 Live 或其他非教師 payload。
+- 目前 worktree 的大量教師端產品／DB／測試 dirty WIP 均為進入 closeout 前既有內容；本 checkpoint 只改 Phase A 規格、manifest、implementation plan 與 handoff，不 stage、不 commit、不清理或覆寫既有 WIP。
+
+## 2026-08-14 02:43 [Owner／Codex] — 教師正確答案治理契約修訂
+
+- Owner 選擇以 ADR 0007 與修訂 `AC-QUIZ-002` 保留 classroom-owner 教師按需查看正確答案：專用 projection 必須由 server 驗證 teacher role、classroom ownership 與題目分析範圍；既有 shared `QuestionDetail`、學生／公開提交前 payload、進行中 Live 與一般分析維持 answer-free。
+- Phase B implementation plan 已改為引用 ADR 0007，並把 task-level RTL／pgTAP／harness 結果限定為相關契約與未來 phase-gate traceability，不宣稱 acceptance 通過；plan 尚待 owner 重新核准，implementation 尚未開始。
+- 下一個 gate 是建立可追蹤的 Git baseline。本輪只修改治理與規劃文件，不 stage、不 commit，並保留既有 dirty WIP。
+
+## 2026-08-14 03:35 [Owner／Codex] — 教師 WIP baseline stabilization
+
+- 修正兩個既有 typecheck blocker：teacher routes harness 的缺省 scenario 改為現存 `analytics`；Live report 只在正式 title 存在時才傳入 optional subtitle，未放寬 `TeacherWorkSurface` interface。
+- 五個超過 500 行的 WIP 已完成 mechanical extraction：teacher content repository 拆為 core／analytics contracts 與 error module，analytics tests 移至 focused file；teacher route harness 抽出 Live fixtures／adapter；Playwright Live round 抽為獨立 spec；Live pages tests 抽出 test-local fixtures、host console 與 advanced create cases。拆分後相關檔案皆低於 500 行，repository 15、Live pages 16、Playwright 14 組 test title 一一對應，無 skip／only。
+- Phase A artifact registry 已排除三張 superseded PNG entries，核准 package 為 30 entries，SHA-256 30/30；三張舊 PNG 仍保留在本機且不納入 checkpoint package。
+- Fresh checks：typecheck、scoped ESLint（零 warning）、Vitest 16 files／95 tests、Chromium Playwright 29 tests、production build、`git diff --check` 全綠；唯一一輪唯讀 review 無 finding。
+- 尚未 stage／commit，也未 stash／reset／刪除既有 WIP；未執行 DB reset／DB tests／acceptance。Phase B 尚未開始；下一步由 owner 決定 checkpoint commit grouping。
+
+## 2026-08-14 03:46 [Owner] — 授權治理與設計 checkpoint commit
+
+- Owner 已授權治理文件與 30 個核准 artifacts 建立獨立本機 commit；本 commit 不包含產品程式碼、測試、migration 或 generated DB types。
+- Phase B 尚未開始；Router、LivePresenter、DB projection 與教師產品 WIP 留待後續各自 owner gate。Commit SHA 待建立。
+
+## 2026-08-14 04:18 [Owner／Codex] — 教師資料基線授權補強
+
+- 教師 avatar migration 已避開既有編號衝突，改為 `20260812000400_teacher_avatar_storage.sql`；教師 pgTAP 依序改為 052／053／054。Avatar 測試以 authenticated JWT 實際驗證 owner teacher 的 insert／select／update 與 student、其他 teacher、跨路徑／跨物件拒絕，共 21/21 通過。
+- `teacher_classroom_overview` 的 aggregate 原會在無 ownership 時產生一列空摘要；最終 aggregate 加入 `having exists (select 1 from owned_classroom)`，使 student、non-owner 與跨班級查詢零列，同時保留合法 owner 空班級的一列零摘要。四個公開 projection 的授權矩陣與 internal `teacher_assessment_facts` execute revoke 均通過。
+- Fresh 驗證：focused 教師 pgTAP 63/63、完整 local DB 54 files／1212 tests、generated types contract、repository Vitest 4 files／33 tests、typecheck、scoped ESLint 與 `git diff --check` 全綠；generated `teacher_question_detail` 維持 answer-free，未夾帶另一分支 Quiz context 欄位或 ADR 0007 projection。
+- 尚未 stage／commit；Phase B 尚未開始。下一步等待 owner 授權 Avatar 與 Analytics checkpoint commits。
+
+## 2026-08-14 04:45 [Owner／Codex] — 教師 UI 與完整 Live checkpoint
+
+- Commit A `48e8373ca7182b34fc7b919fd85419b4ab18defa`（`feat(teacher): checkpoint tactical workspace surfaces`）封裝教師工作區與六頁 UI；Commit B `5fafb79ecc9bd07cb89bdaa7ade95180f38df222`（`feat(live): checkpoint teacher host and projector experience`）封裝完整 Live Host／Projector 改版，不只是 Live report。
+- Commit B 前只移除 `teacher-live-session-page.test.tsx` 的檔尾多餘空白行，未改測試語意。C 尚未提交；`INTEGRATION.md` 已補齊 Analytics DB 與 router／harness inventory，但仍保持 unstaged。
+- Dashboard deletions、router、teacher route harness／Playwright 與本段 handoff 留待 C 原子 checkpoint。Phase B 尚未開始；下一步是 C commit owner gate。
+
+## 2026-08-14 04:50 [Owner] — 授權 C 原子 checkpoint
+
+- Owner 已授權將本段與 C router／harness／Dashboard retirement 一起提交；C commit 的完整 SHA 將定義為 Phase B product base，Phase B 仍未開始。
+- 未來 integration session 必須帶入完整 A、B、C commit chain，尤其不得漏掉 B 的完整 Live Host／Projector 改版。
+
+## 2026-08-14 05:15 [Owner／Codex] — Phase B Task 1 共用教師工作面完成
+
+- Phase B base 為 `ff14759effbd7244b5588752735c3419425d1e59`。Design Read 是 accessibility-critical 教師資料工作區的 targeted evolution，沿用深藍 JRPG 戰術觀測台；dials 為 variance 4、motion 2、density 8。Taste skill 只用於層級、密度、間距、材質、狀態完整性與 anti-slop。
+- `TeacherWorkSurface` props／state union 未變；新增直接 RTL 覆蓋 loading／empty／error／retry、單一 h1、DOM／focus 順序與 content state。教師 tokens 保持在 `.teacher-workspace-shell`，scene header 收斂為桌機 184px、手機 156px，固定 240px TeacherMenu、72px mobile identity／bottom navigation、44px 控制項、清楚 focus 與 reduced-motion 均由 browser／CSS 契約覆蓋。已移除零產品引用的舊 Dashboard selector。
+- Fresh checks：Vitest 2 files／11 tests、scoped ESLint 零 warning、typecheck、Chromium 5 viewports、production build、`git diff --check` 全綠。唯一一輪 scoped self-review 修正 mobile toolbar assertion 原先沒有真正 toolbar 的假綠，改以 classroom-detail 實測後 5/5 通過，無剩餘 finding。
+- Task 1 仍未 stage／commit，Task 2 尚未開始；下一步等待 owner review 與 Task 1 commit gate。
+
+## 2026-08-14 05:30 [Owner／Codex] — Task 1 手機雙錯誤提示定位補正
+
+- Owner gate 發現手機版 avatar error 與 sign-out error 原本都固定在 `top: 72px`，同時出現時會重疊。RTL 確認兩段訊息原已是兩個獨立 alert；CSS 將 avatar alert 保留於頂部 identity bar 下方，sign-out alert 改至 bottom navigation 上方並設 `top: auto`。
+- Chromium bounding boxes 於 320／375／393×852 均不相交：avatar `top 72, bottom 108`，sign-out `top 736, bottom 772`；三個 viewport 的 `scrollWidth` 均等於 `clientWidth`。Correction checks 為 RTL 2 files／12 tests、雙 alert browser 3/3、原 workspace composition 5/5、scoped ESLint、typecheck 與 `git diff --check` 全綠。
+- Task 1 仍未 stage／commit，Task 2 尚未開始；本次只修正 owner 指出的 finding，未開第二輪廣泛 review。
+
+## 2026-08-14 05:45 [Codex] — Phase B Task 2 教學分析 pilot 完成
+
+- Task 1 已封裝為 `4b4218df340fbff6bbed5d54a3232e52562342ce`。Task 2 保留既有 hooks、query inputs、server pagination 與正式指標，將 `/teacher` 重排為可折疊的篩選摘要、結論優先班級總覽、主要題目分析與次要 Live 場次復盤；各 query region 新增獨立 retry，null 仍以 em dash 呈現。
+- TDD 真正 RED 為缺少「班級／章節」篩選摘要及班級總覽 retry；第一屏 DOM 順序是 baseline coverage。Fresh checks：Vitest 2 files／12 tests、Chromium 5/5、scoped ESLint、typecheck、build、`git diff --check` 全綠；320／393 無整頁橫向 overflow，手機篩選預設收合、桌機題目分析寬於 Live 支援欄。
+- 唯一 scoped self-review 未發現 fake metric、query drift、shared CSS 洩漏或超過 500 行；Task 2 尚未 stage／commit，Task 3 尚未開始。
+
+## 2026-08-14 05:50 [Codex] — Phase B Task 3 班級管理 pilot 完成
+
+- Task 2 已封裝為 `bf7f42f5decb085ff33cbff1a344795527500c12`。Task 3 保留 `create_classroom` mutation、RHF/Zod、ambiguous-write copy、加入碼與既有 routes；建立列改成緊湊操作帶，class rows 在手機使用 disclosure，input 以 `aria-label="新班級名稱"` 提供穩定 accessible name。
+- 真正 RED 覆蓋 input name、手機 disclosure 與 clipboard rejection；複製失敗時現在保留「複製」且加入碼仍可手動選取，不再假報成功。Fresh checks：Vitest 2 files／21 tests、Chromium 6/6 widths、scoped ESLint、typecheck、`git diff --check` 全綠；首次 Playwright 因 sandbox listen EPERM 未執行，已用相同限定命令在允許環境重跑通過。
+- 唯一 scoped self-review 未發現 route／mutation drift、dead control 或 fake receipt；相關 source／test 皆低於 500 行（最大 497）。Task 3 尚未 stage／commit，Task 4 尚未開始。
+
+## 2026-08-14 06:05 [Codex] — Phase B Task 4 班級與學生下鑽完成
+
+- Task 3 已封裝為 `cd627db63c0b089b1cd2cd16ee484e2b508d801b`。Task 4 保留既有 classroom hooks、repository calls 與 routes；班級成員及章節進度在桌機維持 table，手機改為可展開 disclosure，active 成員不顯示推測狀態，inactive 只標示「已停用」，未知 `activeBlookId` 不產生假 avatar。
+- 真正 RED 為舊版缺少 member／chapter disclosure；學生摘要仍只呈現 classRank、classXp、avgAccuracy 與 unfinishedMistakeCount／totalMistakeCount，null 維持 em dash。Fresh checks：Vitest 4 files／25 tests、Chromium 7/7 widths、scoped ESLint、typecheck 與 `git diff --check` 全綠；393px disclosure 與 1280px table 均實測，320px 無整頁橫向 overflow。
+- 唯一 scoped self-review 將桌面欄名由「學習狀態」改為「成員資格」，避免把 membershipStatus 映射為 presence；所有 source／test 低於 500 行。Task 4 尚未 stage／commit，Task 5 尚未開始。
+
+## 2026-08-14 06:18 [Codex] — Phase B Task 5 owner-only 正確答案投影完成
+
+- Task 4 已封裝為 `a6ce1e8aeba54d5e18d51faddac821d1817aafa5`。新增 collision-free migration `20260814000100_teacher_question_answer_detail.sql` 與 pgTAP `055`；`teacher_question_answer_options(uuid, text)` 固定 search_path，只授權 authenticated 執行，並在 server 驗證 teacher role、active classroom ownership、active student 的 completed practice／assignment session 與 published section-bank stable question 範圍。
+- ADR 0007 窄型別只回 option_key／option_text／is_correct，repository 映射到 teacher-only `options[].isCorrect`，hook 在 classroom ID 或 stable code 缺少時不查詢；denied／empty 回 null，不合成答案。既有 `QuestionDetail` 與 `teacher_question_detail` 維持 answer-free，學生 Quiz／active Live contracts 未擴張。
+- 真正 RED 是 function 不存在。Fresh checks：focused pgTAP 11/11、完整 local DB 55 files／1223 tests、generated database types contract、repository／hook 3 files／20 tests、Quiz／Live forbidden-payload regression 2 files／26 tests、scoped ESLint、typecheck 與 `git diff --check` 全綠。唯一 security-focused review 無 IDOR、grant、schema 擴散或 generated-type finding；Task 5 尚未 stage／commit，Task 6 尚未開始。
+
+## 2026-08-14 06:22 [Codex] — Phase B Task 6 權威正確答案呈現完成
+
+- Task 5 已封裝為 `b7293023582695aadfca2b2b805c6a7acf3a6b6e`。題目分析頁維持既有 answer-free detail 與排序，只由 Task 5 `useTeacherQuestionAnswer` 的成功結果依 option key 標示 `✓ 正確答案`；pending、error、empty 或 denied 時不標示、不重排也不推測答案。
+- 真正 RED 是既有 expanded detail 找不到明確正確答案標示。Fresh checks：Vitest 2 files／9 tests、Chromium desktop／mobile 2/2、scoped ESLint、typecheck 與 `git diff --check` 全綠；393px disclosure 可用鍵盤展開、focus 留在按鈕、控制高度至少 44px且無整頁 overflow，1280px 維持題目 table。
+- 唯一 scoped self-review 無 answer inference、answer-free interface drift、mobile composition 或 accessibility finding；相關檔案皆低於 500 行。Task 6 尚未 stage／commit，Task 7 尚未開始。
+
+## 2026-08-14 06:30 [Codex] — Phase B Task 7 Live 場次復盤完成
+
+- Task 6 已封裝為 `fc17afd6d023bb3e8b69aea922d909b894c3ecc8`。新增 page-local pure summary：參與人數只取 participants.length、整體正確率只聚合 answered／correct、最難題只從非 null correctRate 依 report order 選最低、前三名只按 authoritative rank 1–3 排序；不可用摘要會整段省略，不顯示假 0。
+- 第一屏先呈現場次重點與前三名；桌機保留逐題 table，手機使用 disclosure。作答矩陣及 CSV semantics 完整保留，且只有矩陣維持 bounded horizontal scroll；既有最終排名仍保留。
+- 真正 RED 是 summary module 不存在。Fresh checks：Vitest 3 files／14 tests、Chromium 7/7 widths、scoped ESLint、typecheck 與 `git diff --check` 全綠；393px podium 共用底線且一／二／三名高度遞減，320px 無整頁 overflow。唯一 scoped self-review 修正零參與摘要原可能顯示 `0 人`，改為誠實省略；所有檔案低於 500 行。Task 7 尚未 stage／commit，Task 8 尚未開始。
+
+## 2026-08-14 08:12 [Codex] — Phase B Task 8 scoped regression 完成
+
+- Task 7 已封裝為 `6257eec6ef3255c1e656552a8663a75b2989029d`。Task 8 未修改產品行為；補齊六頁 1280×900／393×852 跨 route browser matrix、既有 workspace state spec 的 config 收錄，並把兩個 stale／timing-sensitive 測試對齊目前正式 harness 與非同步資料載入。
+- Fresh checks：整合 Vitest 22 files／145 tests、Chromium 39/39、focused owner-answer pgTAP 11/11、完整 local DB 55 files／1223 tests、database-types contract、scoped ESLint、typecheck、production build 與 `git diff --check` 全綠。六頁另輸出 12 張 repo 外視覺檢查圖至 `/private/tmp/colorplay-teacher-phase-b-final/manifest.json`；fixture 只供版面檢查，不是 production truth 或 phase acceptance evidence。
+- 唯一 integrated review 確認資料誠實性、owner-only answer isolation、mobile disclosure、Live matrix bounded scroll、44px／focus／reduced-motion、protected-path 與 500 行邊界；未發現需修改產品碼的 finding。完整 Live Host／Projector checkpoint `5fafb79ecc9bd07cb89bdaa7ade95180f38df222` 仍在提交鏈中。未 push／merge／deploy、未操作 hosted 服務、未執行 `pnpm acceptance`；結果只代表 scoped Phase B regression，等待 owner 檢視最終畫面。
+
+## 2026-08-14 10:20 [Codex] — Teacher visual reimplementation pass 待 owner 視覺核准
+
+- Owner 拒絕上一版視覺完成宣告後，以核准 Phase A directions 為 SSOT 重新實作六頁 composition；保留既有 route、正式資料、安全邊界、ADR 0007 與完整 Live Host／Projector。場景限制於 header，工作面改為安靜深藍，並分別重作 analytics 決策層級、班級操作列／roster rows、班級與學生下鑽、三層題目 disclosure、Live 首屏摘要與 podium。
+- CSS cascade audit 在 teacher-local scope 中和 global `.secondary-action`、`.classroom-create-form`、`.classroom-card` 與資料表材質；Live shared surface 已抽至 `teacher-live-workspace.css`，create／report 直接 import。Production manifest 顯示 report lazy entry 同時載入 report CSS 與 shared live workspace CSS，不依賴先造訪 TeacherLivePage。
+- Fresh checks：Vitest 17 files／92 tests、Chromium 39/39、scoped ESLint、typecheck、production build、`git diff --check` 全綠；六頁 after 12 圖與 before／approved 對照 manifest 在 `/private/tmp/colorplay-teacher-visual-after/manifest.json`，全部 scrollY=0、無 console／page error、無 document overflow。未執行 acceptance、hosted operation、push／merge／deploy。狀態：Awaiting owner visual approval。
+
+## 2026-08-14 11:18 [Owner／Codex] — Owner visual approval correction 完成
+
+- 限定修正三項 owner finding：1280px 班級加入碼改為不可斷行並重新分配 roster row；題目分析每章第一小節預設展開但仍可自由收合，且初始不選題、不請求或推測正解；393px 班級成員與學生章節 disclosure 新增隨 open／closed 轉向的明確 chevron，membershipStatus 語意不變。
+- Browser 實測：加入碼 `ABCD-1234-EF56-7890` 為 `230.31×24.70px`、`white-space: nowrap`；題目頁 1280／393 初始各有 1 個 open details；兩種 mobile summary 均為 `341×66.66px`、chevron `24×24px`，`aria-expanded` false／true 與方向矩陣同步切換，且無 document overflow。
+- Fresh checks：相關 Vitest 4 files／16 tests、owner visual Chromium 5/5、既有六頁 Chromium regression 39/39、scoped ESLint、typecheck、build、`git diff --check` 全綠。全新 12 張 after 截圖與 manifest 位於 `/private/tmp/colorplay-teacher-visual-correction-after/`，全部 scrollY=0、console／page error=0、document overflow=0。
+- 本輪未執行 acceptance、DB 或 hosted operation；只做三項 finding 的限定 review，未展開第二輪 broad review。等待 owner 最終視覺核准。
+
+## 2026-08-14 11:33 [Owner／Codex] — 班級操作按鈕最終微修正
+
+- 僅補正班級 roster actions：`進入班級`／`教學分析` 設定 112px 最小寬度與 `white-space: nowrap`；未改文案、route、handler、資料或其他頁面，既有 mobile flex／full-width composition 由原六頁 regression 保持全綠。
+- 1024／1280×900 實測兩按鈕各只有 1 個文字 line rect：`進入班級` 為 `112×48px`、`教學分析` 為 `112×44px`，兩者 computed white-space 均為 nowrap，兩個 viewport 均無 document overflow、console／page error。
+- Fresh checks：相關 Vitest 1 file／7 tests、focused Chromium 2/2、既有六頁 Chromium regression 39/39、scoped ESLint、typecheck、build、`git diff --check` 全綠。只重拍 `/private/tmp/colorplay-teacher-class-actions-final/classes-1280x900.png`；未執行 acceptance、DB 或 hosted operation，等待 owner 依新截圖與量測決定交接整合。
+
+## 2026-08-14 11:47 [Owner／Codex] — 班級 roster action typography 統一
+
+- 僅在 teacher-local classroom CSS 中和舊 global selector：`複製`、`進入班級`、`教學分析` 統一為繼承字型、14px／800／16.8px、normal letter-spacing、nowrap 與 44px 高度；desktop 兩個 row actions 維持 112px，`建立班級` 保留 16px／800／52px。
+- Chromium 393／1024／1280 實測三個 roster actions 均只有 1 個文字 line rect，無 document overflow、console 或 page error；mobile disclosure 展開後仍是原 full-width flex composition。
+- Fresh checks：相關 Vitest 1 file／7 tests、focused Chromium 3/3、既有六頁 Chromium regression 39/39、scoped ESLint、typecheck、build、`git diff --check` 全綠。新 desktop／mobile 截圖與 evidence 位於 `/private/tmp/colorplay-teacher-class-actions-typography-final/`；未執行 acceptance、DB 或 hosted operation。
+
+## 2026-08-14 14:37 [Integration owner／Codex] — 學生／教師整合 blocker 修正完成
+
+- 在乾淨 integration worktree 合併教師 tip `8f0eeee853a929cfd360f70f31b8eaff8305ee51`；所有 `/teacher*` route 只保留教師 `TeacherMenu`／Live projector HUD，不再渲染學生／legacy `HudCommandBar` 或 `hud-top`。完整教師 Chromium harness 46/46 通過，涵蓋六頁、Live、320–1440px、鍵盤選單與 reduced motion。
+- 新增 Quiz server-side `classroom_id` provenance、單一 active student classroom constraint 與不可竄改 guard；教師分析及 owner-only 正解 projection 只讀同班 completed session。跨班負向、重複班級與 provenance mutation 測試納入完整 DB gate：59 files／1240 pgTAP、runtime smoke 3、integration 12 files／25 tests 全綠。
+- 教師敏感 query keys 納入 actor，登出、換帳號及失敗登出後身份切換會清除 Query cache。Email OTP 後 `/register` 保持 mounted，未完成註冊學生不能進 `/app*`；Edge registration 對同一完成請求 idempotent，跨班／重複完成 fail closed。相關 auth／router／profile 測試已納入完整 Vitest 167 files／1130 tests 全綠。
+- Auth、學習大廳橫向、Quiz 與結果頁在受限高度改由主內容區垂直捲動；專項 Chromium 1280×480、393×500、852×393 landscape 3/3 通過。複習卡翻頁在 owner 關閉系統 reduced-motion 後恢復，保留原有無障礙降動效規則，未強制覆寫。
+- Fresh static gates：lint、typecheck、production build、scoped Prettier、working tree／cached `git diff --check` 全綠。既有教師 CSS 使用 module-local raw colors 與全域 `spec/07`「色彩僅定義於 tokens.css」仍有 Medium 規範衝突；不影響本次功能／安全 blocker，但 staging 前應另立 ADR 或安排 token consolidation，避免在 integration merge 中重做已核准視覺。
+- 本 checkpoint 未 push、未 deploy、未操作 hosted Supabase／Vercel，也未執行 `pnpm acceptance`；真實手機裝置仍依規格留待 owner 驗證。

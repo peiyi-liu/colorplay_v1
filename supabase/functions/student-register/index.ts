@@ -76,6 +76,13 @@ Deno.serve(async (request) => {
     auth: { persistSession: false },
   });
 
+  const { data: currentProfile, error: currentProfileError } = await admin
+    .from('profiles')
+    .select('login_account')
+    .eq('id', user.id)
+    .single();
+  if (currentProfileError) return failure(500, 'REGISTER_FAILED');
+
   // 帳號唯一（自己重複送出視為同帳號覆寫）。
   const { data: existingAccount, error: accountError } = await admin
     .from('profiles')
@@ -100,11 +107,21 @@ Deno.serve(async (request) => {
 
   const { data: membership, error: membershipError } = await admin
     .from('classroom_members')
-    .select('classroom_id')
+    .select('classroom_id,member_role,status')
     .eq('classroom_id', classroom.id)
     .eq('user_id', user.id)
     .maybeSingle();
   if (membershipError) return failure(500, 'REGISTER_FAILED');
+
+  if (currentProfile.login_account !== null) {
+    const sameCompletedRegistration =
+      currentProfile.login_account === normalizedAccount &&
+      membership?.member_role === 'student' &&
+      membership.status === 'active';
+    return sameCompletedRegistration
+      ? jsonResponse(200, { ok: true })
+      : failure(409, 'ALREADY_REGISTERED');
+  }
 
   if (!membership) {
     // 以學生本人身分走既有 RPC，保留角色檢查與審計語意。
@@ -113,9 +130,13 @@ Deno.serve(async (request) => {
       p_request_id: crypto.randomUUID(),
     });
     if (joinError) {
-      return joinError.message.includes('INVALID_CLASSROOM_CODE')
-        ? failure(400, 'INVALID_CLASSROOM_CODE')
-        : failure(500, 'REGISTER_FAILED');
+      if (joinError.message.includes('INVALID_CLASSROOM_CODE')) {
+        return failure(400, 'INVALID_CLASSROOM_CODE');
+      }
+      if (joinError.message.includes('ALREADY_IN_ACTIVE_CLASSROOM')) {
+        return failure(409, 'ALREADY_IN_ACTIVE_CLASSROOM');
+      }
+      return failure(500, 'REGISTER_FAILED');
     }
   }
 
@@ -125,18 +146,23 @@ Deno.serve(async (request) => {
   );
   if (passwordError) return failure(500, 'REGISTER_FAILED');
 
-  const { error: profileError } = await admin
+  const { data: updatedProfile, error: profileError } = await admin
     .from('profiles')
     .update({
       display_name: nicknameVerdict.nickname,
       full_name: trimmedFullName,
       login_account: normalizedAccount,
     })
-    .eq('id', user.id);
+    .eq('id', user.id)
+    .is('login_account', null)
+    .select('id');
   if (profileError) {
     return profileError.code === '23505'
       ? failure(409, 'ACCOUNT_TAKEN')
       : failure(500, 'REGISTER_FAILED');
+  }
+  if (!updatedProfile || updatedProfile.length !== 1) {
+    return failure(409, 'ALREADY_REGISTERED');
   }
 
   return jsonResponse(200, { ok: true });

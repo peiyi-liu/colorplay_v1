@@ -7,7 +7,7 @@ import { createClassroomRepository } from '../../classrooms/api/classroom-reposi
 import { LiveRepositoryError } from '../types';
 import { createLiveRepository } from './live-repository';
 
-const QUIZ_TEMPLATE_ID = '26000000-0000-0000-0000-000000000003';
+const QUIZ_TEMPLATE_ID = '4f208855-dfc8-6cc5-7671-02dfacba85d1';
 
 describe('LiveRepository with local Supabase', () => {
   const clients: Awaited<ReturnType<typeof signedInClient>>[] = [];

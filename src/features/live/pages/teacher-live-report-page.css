@@ -1,0 +1,315 @@
+.teacher-live-report {
+  display: grid;
+  gap: 28px;
+}
+
+.live-report-summary {
+  display: grid;
+  min-height: 250px;
+  overflow: hidden;
+  border: 1px solid #3c6789;
+  border-radius: 8px;
+  background: #06192c;
+  grid-template-columns: minmax(270px, 0.72fr) minmax(430px, 1.28fr);
+}
+
+.live-report-summary > dl {
+  display: grid;
+  align-content: center;
+  gap: 0;
+  margin: 0;
+  padding: 18px 24px;
+}
+
+.live-report-summary > dl > div {
+  position: relative;
+  min-height: 66px;
+  border: 0;
+  border-bottom: 1px solid #294b65;
+  background: transparent;
+  padding: 12px 0 10px 16px;
+}
+
+.live-report-summary > dl > div::before {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 0;
+  width: 3px;
+  background: #238ccd;
+  content: '';
+}
+
+.live-report-summary > dl > div:last-child {
+  border-bottom: 0;
+}
+
+.live-report-summary dt,
+.live-report-summary small {
+  color: #9fc0d9;
+}
+
+.live-report-summary dt {
+  font-size: 0.75rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+}
+
+.live-report-summary dd {
+  margin: 3px 0;
+  color: #f5f9ff;
+  font-size: 1.45rem;
+  font-weight: 900;
+}
+
+.live-report-summary small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-report-podium-stage {
+  display: grid;
+  align-content: end;
+  border-left: 1px solid #355b78;
+  background:
+    linear-gradient(180deg, rgb(8 36 61 / 20%), rgb(2 12 25 / 70%)),
+    radial-gradient(circle at 50% 0%, rgb(48 140 199 / 22%), transparent 62%);
+  padding: 18px 22px 0;
+}
+
+.live-report-podium-stage > p {
+  margin: 0 0 12px;
+  color: #c4d9e8;
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+.live-report-podium {
+  display: grid;
+  min-height: 194px;
+  align-items: end;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.live-report-podium li {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  border: 0;
+  border-top: 3px solid #6f91ab;
+  background: linear-gradient(180deg, #0e3453, #07192b);
+  gap: 7px;
+  padding: 16px 10px;
+  text-align: center;
+}
+
+.live-report-podium li[data-rank='1'] {
+  min-height: 184px;
+  border-top-color: #f1bd4b;
+  background: linear-gradient(180deg, #5c4414, #172138);
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.live-report-podium li[data-rank='2'] {
+  min-height: 154px;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.live-report-podium li[data-rank='3'] {
+  min-height: 126px;
+  border-top-color: #bc7c46;
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.live-report-podium li strong {
+  color: #ffd467;
+  font-size: 0.78rem;
+}
+
+.live-report-podium li span {
+  overflow: hidden;
+  color: #f5f9ff;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-report-podium li small {
+  color: #b9cede;
+}
+
+.teacher-live-report__panel {
+  overflow: hidden;
+  border: 0;
+  border-top: 1px solid #355b78;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 22px 0 0;
+}
+
+.teacher-live-report__panel h2 {
+  margin: 0 0 14px;
+  color: #f2f7ff;
+  font-size: 1.08rem;
+}
+
+.teacher-live-report .ui-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #eef6ff;
+}
+
+.teacher-live-report .ui-table th,
+.teacher-live-report .ui-table td {
+  border-bottom: 1px solid #284663;
+  padding: 12px;
+  text-align: left;
+}
+
+.teacher-live-report .ui-table thead {
+  background: #071d36;
+  color: #a9c8e4;
+}
+
+.teacher-live-report__question-table-frame {
+  overflow: visible;
+}
+
+.teacher-live-report__panel ol:not(.live-report-podium) {
+  display: grid;
+  gap: 0;
+  list-style-position: inside;
+  margin: 0;
+  padding: 0;
+}
+
+.teacher-live-report__panel ol:not(.live-report-podium) li {
+  border-bottom: 1px solid #284663;
+  padding: 12px 8px;
+}
+
+.teacher-live-report__panel > .live-report__action {
+  min-height: 44px;
+  margin-top: 16px;
+  border: 1px solid #d8aa4e;
+  border-radius: 6px;
+  background: #7a5618;
+  color: #fff7e3;
+  font-weight: 900;
+}
+
+.teacher-live-report__question-disclosures {
+  display: none;
+}
+
+@media (max-width: 47.99rem) {
+  .teacher-live-report {
+    gap: 22px;
+  }
+
+  .live-report-summary {
+    min-height: 0;
+    grid-template-columns: 1fr;
+  }
+
+  .live-report-summary > dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 10px 14px;
+  }
+
+  .live-report-summary > dl > div {
+    min-height: 76px;
+    padding-inline: 12px 6px;
+  }
+
+  .live-report-summary > dl > div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .live-report-summary dd {
+    font-size: 1.18rem;
+  }
+
+  .live-report-podium-stage {
+    border-top: 1px solid #355b78;
+    border-left: 0;
+    padding: 14px 10px 0;
+  }
+
+  .live-report-podium {
+    min-height: 166px;
+    gap: 5px;
+  }
+
+  .live-report-podium li {
+    padding: 10px 5px;
+  }
+
+  .live-report-podium li[data-rank='1'] {
+    min-height: 158px;
+  }
+
+  .live-report-podium li[data-rank='2'] {
+    min-height: 132px;
+  }
+
+  .live-report-podium li[data-rank='3'] {
+    min-height: 110px;
+  }
+
+  .teacher-live-report__panel {
+    padding-top: 18px;
+  }
+
+  .teacher-live-report__question-table-frame {
+    display: none;
+  }
+
+  .teacher-live-report__question-disclosures {
+    display: grid;
+  }
+
+  .teacher-live-report__question-disclosures details {
+    border-bottom: 1px solid #294963;
+  }
+
+  .teacher-live-report__question-disclosures summary {
+    min-height: 52px;
+    cursor: pointer;
+    padding: 12px 4px;
+  }
+
+  .teacher-live-report__question-disclosures dl {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0 0 12px;
+  }
+
+  .teacher-live-report__question-disclosures dt {
+    color: #a9c8e4;
+    font-size: 0.75rem;
+  }
+
+  .teacher-live-report__question-disclosures dd {
+    margin: 3px 0 0;
+  }
+
+  .teacher-live-report .live-matrix-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+}

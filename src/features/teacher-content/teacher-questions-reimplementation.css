@@ -1,0 +1,160 @@
+.teacher-work-surface--analytics .teacher-question-drilldown {
+  gap: 28px;
+}
+
+.teacher-work-surface--analytics .teacher-question-drilldown > section {
+  border: 0;
+  background: transparent;
+}
+
+.teacher-work-surface--analytics .teacher-question-drilldown > section > h2 {
+  position: relative;
+  margin: 0 0 12px;
+  border: 0;
+  border-bottom: 1px solid #355c7b;
+  background: transparent;
+  color: #f1f7ff;
+  font-size: 1.2rem;
+  padding: 0 0 12px 18px;
+}
+
+.teacher-work-surface--analytics .teacher-question-drilldown > section > h2::before {
+  position: absolute;
+  top: 2px;
+  bottom: 12px;
+  left: 0;
+  width: 4px;
+  background: #258bd0;
+  content: '';
+}
+
+.teacher-work-surface--analytics .teacher-question-drilldown details {
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid #294b67;
+  background: #071a2d;
+}
+
+.teacher-work-surface--analytics .teacher-question-drilldown summary {
+  min-height: 56px;
+  border-left: 3px solid transparent;
+  color: #dceaf6;
+  list-style-position: inside;
+  padding: 17px 18px;
+}
+
+.teacher-work-surface--analytics .teacher-question-drilldown details[open] > summary {
+  border-left-color: #33a3e8;
+  background: #0a2843;
+  color: #fff;
+}
+
+.teacher-work-surface--analytics .teacher-question-drilldown .teacher-table-frame {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid #294b67;
+  background: #041526;
+}
+
+.teacher-work-surface--analytics .teacher-question-drilldown .ui-table {
+  border-collapse: collapse;
+  background: transparent;
+}
+
+.teacher-work-surface--analytics .teacher-question-drilldown .ui-table th {
+  background: #0a2137;
+  color: #9fc1dc;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.teacher-work-surface--analytics .teacher-question-drilldown .ui-table td {
+  border-color: #203f59;
+  background: transparent;
+}
+
+.teacher-work-surface--analytics .teacher-question-drilldown .ui-table td:nth-child(1),
+.teacher-work-surface--analytics .teacher-question-drilldown .ui-table td:nth-child(2),
+.teacher-work-surface--analytics .teacher-question-drilldown .ui-table td:nth-child(4) {
+  white-space: nowrap;
+}
+
+.teacher-work-surface--analytics .teacher-question-drilldown button {
+  min-width: 72px;
+  min-height: 44px;
+  border: 1px solid #4e83aa;
+  border-radius: 6px;
+  background: #0b3153;
+  color: #f0f8ff;
+  font-weight: 850;
+}
+
+.teacher-work-surface--analytics .teacher-question-options {
+  margin: 0;
+  gap: 6px;
+  padding: 12px 0;
+}
+
+.teacher-work-surface--analytics .teacher-question-options li {
+  min-height: 46px;
+  border: 1px solid #315572;
+  border-radius: 6px;
+  background: #061a2d;
+  padding: 10px 12px;
+}
+
+.teacher-work-surface--analytics .teacher-question-options__correct {
+  border-color: #e0aa3f;
+  background: #302610;
+  color: #fff7df;
+}
+
+.teacher-work-surface--analytics .teacher-question-options__correct strong {
+  color: #ffd66b;
+}
+
+@media (max-width: 47.99rem) {
+  .teacher-work-surface--analytics .teacher-question-drilldown {
+    gap: 22px;
+  }
+
+  .teacher-work-surface--analytics .teacher-question-drilldown > section > h2 {
+    font-size: 1.05rem;
+  }
+
+  .teacher-work-surface--analytics .teacher-question-drilldown summary {
+    min-height: 52px;
+    padding: 15px 12px;
+  }
+
+  .teacher-work-surface--analytics .teacher-question-mobile-rows {
+    gap: 0;
+    padding: 0;
+  }
+
+  .teacher-work-surface--analytics .teacher-question-mobile-rows article {
+    border: 0;
+    border-top: 1px solid #294b67;
+    background: #041526;
+    padding: 14px 12px;
+  }
+
+  .teacher-work-surface--analytics .teacher-question-mobile-rows article > div {
+    align-items: center;
+  }
+
+  .teacher-work-surface--analytics .teacher-question-mobile-rows article > div span {
+    color: #ffcb62;
+    font-weight: 850;
+  }
+
+  .teacher-work-surface--analytics .teacher-question-mobile-rows article > p {
+    color: #d7e4ef;
+  }
+
+  .teacher-work-surface--analytics .teacher-question-mobile-rows article > button {
+    width: auto;
+    padding-inline: 18px;
+  }
+}

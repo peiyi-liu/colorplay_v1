@@ -15,7 +15,7 @@ const scenario: TeacherRoutesHarnessScenario = (
   TEACHER_ROUTES_HARNESS_SCENARIOS as readonly string[]
 ).includes(requested ?? '')
   ? (requested as TeacherRoutesHarnessScenario)
-  : 'dashboard';
+  : 'analytics';
 const hudInitialRoute = params.get('route') ?? '/teacher';
 
 const root = document.querySelector('#root');

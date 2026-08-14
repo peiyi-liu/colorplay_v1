@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { RouteLoading } from '../boundaries/route-loading';
 import { BlookArt } from '../../components/ui/blook-art';
-import { Icon } from '../../components/ui/icons';
 import { useToast } from '../../components/ui/toast';
 import { useAuth } from '../../features/auth/context/auth-context';
 import {
@@ -220,13 +219,18 @@ export function AppShell() {
     auth.session !== null &&
     profile.data?.id === auth.session.userId;
   const isTeacher = isAuthenticatedProfile && profile.data?.role === 'teacher';
-  const shellRole = isAuthenticatedProfile
-    ? isTeacher
-      ? 'teacher'
-      : 'student'
-    : 'public';
+  const isCompletedStudent =
+    isAuthenticatedProfile &&
+    profile.data?.role === 'student' &&
+    profile.data.registrationComplete;
+  const shellRole = isTeacher
+    ? 'teacher'
+    : isCompletedStudent
+      ? 'student'
+      : 'public';
   const isStudentLearningMap =
-    isAuthenticatedProfile && !isTeacher && location.pathname === '/app';
+    isCompletedStudent && location.pathname === '/app';
+  const isRegistrationRoute = location.pathname === '/register';
   const reducedMotion = profile.data?.reducedMotion === true;
 
   // 閒置 30 分鐘強制登出（UAT 0727 #5）：走與登出鍵相同的安全流程。
@@ -286,22 +290,14 @@ export function AppShell() {
         <a className="skip-link" href="#main-content">
           跳到主要內容
         </a>
-        {isAuthenticatedProfile && !isTeacher ? (
+        {isCompletedStudent ? (
           isStudentLearningMap ? (
             <RotateBanner message="轉橫可看完整森林王國村" />
           ) : (
             <RotateBanner />
           )
         ) : null}
-        {isTeacher ? (
-          <HudCommandBar
-            displayName={profile.data?.displayName ?? ''}
-            isSigningOut={isSigningOut}
-            onSignOut={requestSignOut}
-            variant="teacher"
-          />
-        ) : null}
-        {isAuthenticatedProfile && !isTeacher ? (
+        {isCompletedStudent ? (
           <AuthenticatedStudentShell
             displayName={profile.data?.displayName ?? ''}
             isLearningMap={isStudentLearningMap}
@@ -311,18 +307,6 @@ export function AppShell() {
             signOutError={signOutError}
             transitionKey={location.pathname}
           />
-        ) : isTeacher ? (
-          <header className="hud-top">
-            <span className="hud-top__identity">
-              <Icon name="lock-open" size={14} />
-              歡迎，{profile.data?.displayName}・教師端
-            </span>
-            {signOutError ? (
-              <p className="app-shell__auth-error" role="alert">
-                登出失敗，請稍後重試。
-              </p>
-            ) : null}
-          </header>
         ) : null}
         {auth.status === 'authenticated' && !isAuthenticatedProfile ? (
           <>
@@ -353,13 +337,15 @@ export function AppShell() {
             returnFocus={signOutTrigger}
           />
         ) : null}
-        {isAuthenticatedProfile && !isTeacher ? null : (
+        {isCompletedStudent ? null : (
           <RouteWorldStage
             reducedMotion={reducedMotion}
             scene={isTeacher ? 'teacher-route' : 'public-route'}
             transitionKey={location.pathname}
           >
-            {auth.status === 'authenticated' && !isAuthenticatedProfile ? (
+            {auth.status === 'authenticated' &&
+            !isAuthenticatedProfile &&
+            !isRegistrationRoute ? (
               profile.isPending ? (
                 <RouteLoading withinMain />
               ) : profile.isError ? (

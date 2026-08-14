@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
@@ -6,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Chip } from '../../../components/ui/chip';
 import { RpgWindow } from '../../../components/ui/rpg-window';
 import { useToast } from '../../../components/ui/toast';
+import { myProfileQueryKey } from '../../profile/hooks/use-my-profile';
 import {
   AccountFlowError,
   completeStudentRegistration,
@@ -19,6 +21,8 @@ import {
 
 const registerErrorMessages: Readonly<Record<string, string>> = {
   ACCOUNT_TAKEN: '這個帳號（學號）已被使用',
+  ALREADY_IN_ACTIVE_CLASSROOM: '此帳號已加入其他班級，請聯絡老師辦理轉班',
+  ALREADY_REGISTERED: '此 E-mail 已完成註冊，請返回登入',
   EMAIL_NOT_VERIFIED: '請先完成 E-mail 認證',
   INVALID_CLASSROOM_CODE: '班級序號無效，請向老師確認',
   NICKNAME_BANNED: '暱稱包含不適當字詞，請重新命名',
@@ -49,6 +53,7 @@ const stepItems = [
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const toast = useToast();
   const pendingSubmission = useRef(false);
   const [step, setStep] = useState<RegisterStep>('basic');
@@ -177,6 +182,9 @@ export function RegisterPage() {
                   fullName: values.fullName.trim(),
                   nickname: values.nickname.trim(),
                   password: values.password,
+                });
+                await queryClient.invalidateQueries({
+                  queryKey: myProfileQueryKey,
                 });
                 toast({
                   message: '註冊成功，歡迎加入 ColorPlay！',

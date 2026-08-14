@@ -1,6 +1,8 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { RequireAuth } from '../../features/auth/components/require-auth';
+import { RequireCompletedRegistration } from '../../features/auth/components/require-completed-registration';
 import { RequireRole } from '../../features/auth/components/require-role';
+import { RegistrationRoute } from '../../features/auth/components/registration-route';
 import { ForgotPasswordPage } from '../../features/auth/pages/forgot-password-page';
 import { LoginPage } from '../../features/auth/pages/login-page';
 import { RegisterPage } from '../../features/auth/pages/register-page';
@@ -35,8 +37,8 @@ export function createAppRouter() {
           element: <LoginPage />,
         },
         {
-          path: '/register',
-          element: <RegisterPage />,
+          element: <RegistrationRoute />,
+          children: [{ path: '/register', element: <RegisterPage /> }],
         },
         {
           path: '/forgot-password',
@@ -50,76 +52,68 @@ export function createAppRouter() {
           element: <RequireAuth />,
           children: [
             {
-              path: '/app',
-              element: <LobbyPage />,
-            },
-            {
-              path: '/app/missions',
-              element: <MissionSelectPage />,
-            },
-            {
-              path: '/app/missions/:sessionId',
-              element: <MissionPage />,
-            },
-            {
-              path: '/app/chapters/:chapterId',
-              lazy: async () => {
-                const module =
-                  await import('../../features/learning/pages/chapter-detail-page');
-                return { Component: module.ChapterDetailPage };
-              },
-            },
-            {
-              path: '/app/mistakes',
-              lazy: async () => {
-                const module =
-                  await import('../../features/learning/pages/mistakes-page');
-                return { Component: module.MistakesPage };
-              },
-            },
-            {
-              path: '/app/leaderboard',
-              // UAT 0727 R2 #1：導覽點擊直達自己班級的排行榜。
-              lazy: () =>
-                import('../../features/leaderboard/pages/student-leaderboard-route'),
-            },
-            {
-              path: '/app/leaderboard/:classroomId',
-              lazy: () =>
-                import('../../features/leaderboard/pages/classroom-leaderboard-route'),
-            },
-            {
-              path: '/app/shop',
-              element: <ShopPage />,
-            },
-            {
-              path: '/app/achievements',
-              lazy: () =>
-                import('../../features/achievements/pages/achievements-route'),
-            },
-            {
-              path: '/app/live/join',
-              lazy: async () => {
-                const module =
-                  await import('../../features/live/pages/live-join-page');
-                return { Component: module.LiveJoinPage };
-              },
-            },
-            {
-              path: '/app/live/:sessionId',
-              lazy: async () => {
-                const module =
-                  await import('../../features/live/pages/live-session-page');
-                return { Component: module.LiveSessionPage };
-              },
-            },
-            {
-              path: '/app/quiz/:sessionId/result',
-              element: <QuizResultPage />,
-            },
-            {
-              path: '/app/quiz/:sessionId',
-              element: <QuizSessionPage />,
+              element: <RequireCompletedRegistration />,
+              children: [
+                { path: '/app', element: <LobbyPage /> },
+                { path: '/app/missions', element: <MissionSelectPage /> },
+                { path: '/app/missions/:sessionId', element: <MissionPage /> },
+                {
+                  path: '/app/chapters/:chapterId',
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/learning/pages/chapter-detail-page');
+                    return { Component: module.ChapterDetailPage };
+                  },
+                },
+                {
+                  path: '/app/mistakes',
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/learning/pages/mistakes-page');
+                    return { Component: module.MistakesPage };
+                  },
+                },
+                {
+                  path: '/app/leaderboard',
+                  lazy: () =>
+                    import('../../features/leaderboard/pages/student-leaderboard-route'),
+                },
+                {
+                  path: '/app/leaderboard/:classroomId',
+                  lazy: () =>
+                    import('../../features/leaderboard/pages/classroom-leaderboard-route'),
+                },
+                { path: '/app/shop', element: <ShopPage /> },
+                {
+                  path: '/app/achievements',
+                  lazy: () =>
+                    import('../../features/achievements/pages/achievements-route'),
+                },
+                {
+                  path: '/app/live/join',
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/live/pages/live-join-page');
+                    return { Component: module.LiveJoinPage };
+                  },
+                },
+                {
+                  path: '/app/live/:sessionId',
+                  lazy: async () => {
+                    const module =
+                      await import('../../features/live/pages/live-session-page');
+                    return { Component: module.LiveSessionPage };
+                  },
+                },
+                {
+                  path: '/app/quiz/:sessionId/result',
+                  element: <QuizResultPage />,
+                },
+                {
+                  path: '/app/quiz/:sessionId',
+                  element: <QuizSessionPage />,
+                },
+              ],
             },
             {
               element: <RequireRole allowed={['teacher']} />,
@@ -128,16 +122,20 @@ export function createAppRouter() {
                   path: '/teacher',
                   lazy: async () => {
                     const module =
-                      await import('../../features/teacher-content/pages/teacher-dashboard-page');
-                    return { Component: module.TeacherDashboardPage };
+                      await import('../../features/teacher-content/pages/teacher-analytics-page');
+                    return { Component: module.TeacherAnalyticsPage };
                   },
                 },
                 {
                   path: '/teacher/analytics',
+                  element: <Navigate replace to="/teacher" />,
+                },
+                {
+                  path: '/teacher/questions',
                   lazy: async () => {
                     const module =
-                      await import('../../features/teacher-content/pages/teacher-analytics-page');
-                    return { Component: module.TeacherAnalyticsPage };
+                      await import('../../features/teacher-content/pages/teacher-question-analysis-page');
+                    return { Component: module.TeacherQuestionAnalysisPage };
                   },
                 },
                 {

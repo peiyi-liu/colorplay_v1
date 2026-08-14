@@ -37,9 +37,15 @@ const renderPage = (repository: ClassroomRepository) => {
       </MemoryRouter>
     );
   }
-  return render(<TeacherClassroomsPage repository={repository} />, {
-    wrapper: Wrapper,
-  });
+  return render(
+    <TeacherClassroomsPage
+      menu={<nav>教師選單</nav>}
+      repository={repository}
+    />,
+    {
+      wrapper: Wrapper,
+    },
+  );
 };
 
 describe('TeacherClassroomsPage', () => {
@@ -50,7 +56,7 @@ describe('TeacherClassroomsPage', () => {
         listOwned: () => new Promise((done) => (resolve = done)),
       }),
     );
-    expect(screen.getByRole('status', { name: '頁面載入中' })).toBeVisible();
+    expect(screen.getByRole('status')).toHaveTextContent('班級資料載入中');
     resolve([]);
     expect(await screen.findByText('尚未建立班級。')).toBeVisible();
   });
@@ -61,11 +67,12 @@ describe('TeacherClassroomsPage', () => {
       () => new Promise<ClassroomCodeReceipt>((done) => (resolve = done)),
     );
     renderPage(createRepository({ createClassroom }));
-    await screen.findByRole('heading', { name: '班級管理' });
-    await userEvent.click(screen.getByRole('button', { name: '建立班級' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: '建立班級' }),
+    );
     expect(await screen.findByText('班級名稱為 1 至 80 個字元')).toBeVisible();
     await userEvent.type(
-      screen.getByRole('textbox', { name: '班級名稱' }),
+      screen.getByRole('textbox', { name: '新班級名稱' }),
       '色彩一班',
     );
     await userEvent.click(screen.getByRole('button', { name: '建立班級' }));
@@ -110,14 +117,19 @@ describe('TeacherClassroomsPage', () => {
         ]),
       }),
     );
-    await screen.findByRole('heading', { name: '班級管理' });
+    await screen.findByText('25 位有效學生');
     expect(screen.getByText('班級數').nextElementSibling).toHaveTextContent(
       '2',
     );
-    expect(screen.getByText('有效學生').nextElementSibling).toHaveTextContent(
+    expect(screen.getByText('學生人數').nextElementSibling).toHaveTextContent(
       '48',
     );
     expect(screen.getByText('25 位有效學生')).toBeVisible();
+    const classroomSummary = screen
+      .getByRole('heading', { name: '設計群 甲班' })
+      .closest('summary');
+    expect(classroomSummary).not.toBeNull();
+    if (classroomSummary) await userEvent.click(classroomSummary);
     expect(screen.getAllByText('ABCD-1234-EF56-7890')[0]).toBeVisible();
     expect(
       screen.getByRole('button', { name: '複製 設計群 甲班 的班級序號' }),
@@ -138,9 +150,9 @@ describe('TeacherClassroomsPage', () => {
         }),
     });
     renderPage(repository);
-    await screen.findByRole('heading', { name: '班級管理' });
+    await screen.findByRole('textbox', { name: '新班級名稱' });
     await userEvent.type(
-      screen.getByRole('textbox', { name: '班級名稱' }),
+      screen.getByRole('textbox', { name: '新班級名稱' }),
       '色彩一班',
     );
     await userEvent.click(screen.getByRole('button', { name: '建立班級' }));
@@ -188,7 +200,7 @@ describe('TeacherClassroomsPage', () => {
           listOwned: vi.fn().mockResolvedValue(sevenClassrooms),
         }),
       );
-      await screen.findByRole('heading', { name: '班級管理' });
+      await screen.findByText('第 1 / 2 頁');
       expect(
         screen.getByRole('button', { name: '下一頁' }),
       ).toBeInTheDocument();
@@ -227,10 +239,9 @@ describe('TeacherClassroomsPage', () => {
         ]);
       const createClassroom = vi.fn().mockResolvedValue(eighthClassroom);
       renderPage(createRepository({ createClassroom, listOwned }));
-      await screen.findByRole('heading', { name: '班級管理' });
-      expect(screen.getByText('第 1 / 2 頁')).toBeVisible();
+      expect(await screen.findByText('第 1 / 2 頁')).toBeVisible();
       await userEvent.type(
-        screen.getByRole('textbox', { name: '班級名稱' }),
+        screen.getByRole('textbox', { name: '新班級名稱' }),
         '分頁班 8',
       );
       await userEvent.click(screen.getByRole('button', { name: '建立班級' }));
@@ -241,5 +252,41 @@ describe('TeacherClassroomsPage', () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+
+  it('uses mobile disclosures and never claims a failed copy succeeded', async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error('denied'));
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    renderPage(
+      createRepository({
+        listOwned: vi.fn().mockResolvedValue([sevenClassrooms[0]]),
+      }),
+    );
+
+    const disclosure = await screen.findByTestId('classroom-disclosure');
+    expect(disclosure).not.toHaveAttribute('open');
+    expect(
+      disclosure.querySelector('summary'),
+    ).toHaveAttribute('aria-expanded', 'false');
+    const summary = disclosure.querySelector('summary');
+    expect(summary).not.toBeNull();
+    if (summary) await userEvent.click(summary);
+    expect(disclosure).toHaveAttribute('open');
+    expect(disclosure.querySelector('summary')).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /複製 分頁班 1 的班級序號/u }),
+    );
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledOnce();
+    });
+    expect(screen.getByRole('button', { name: /複製 分頁班 1/u })).toHaveTextContent(
+      '複製',
+    );
   });
 });
