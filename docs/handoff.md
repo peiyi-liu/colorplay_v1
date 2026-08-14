@@ -988,3 +988,11 @@
 - 遠端只讀盤點確認舊快照為 QB 139／CR 64／LT 0；直接執行 generated seed 只會 `on conflict do nothing`，不能套用修文或 archive 刪題。完整 staging reset 會刪除 Auth 使用者與複習卡 media mapping，故本輪排除。
 - 新增 migration 20260814000600：既有 versioned teacher content command 現在接受 QB／CR／LT／legacy stable code，並由 server 依 namespace 強制推導 `section`／`chapter`／`live`／`legacy` bank，caller 不能竄改題池。後續發布使用既有 `publish_question`／`archive_question`，保留版本、事件與歷史 session。
 - TDD 先暴露 content command 無法處理 LT namespace；修正後 focused 049 為 12／12，完整 DB gate 為 60 files／1255 pgTAP、runtime 3、integration 12 files／25 tests 全綠。下一步套用 migration 後，使用教師權限進行 current Sheet snapshot 的 publish／archive；不重置帳號、作答或 media。
+
+## 2026-08-14 20:15 [Integration owner／Codex] — 學生／教師整合候選發布至 staging
+
+- 已將 integration commit `351b7b711323826bf8f72e1aae8ce07f95a8d7f4` 發布至 Vercel `colorplay-staging-web`，Production-target deployment 為 `dpl_APxt99Gvb2N4BNtLiPmgu3ehaBpG`；`staging.colorplayapp.com` 已指向該 deployment。
+- Hosted bundle 驗證使用 Supabase `onkxnkzeixpezetkmocf`、不含 production ref `xdjumzdqyexpyndanwkp`，公開 key 對 staging Auth settings 回應 200；bundle manifest 包含 `teacher-live-page`、`teacher-live-session-page` 與 `live-presenter` chunks。
+- 真實 hosted smoke 通過：教師登入後到 `/teacher/live`，只有一份教師導覽、學生 legacy HUD 為 0，建立 Live 課堂頁可載入；學生登入後到 `/app` 學習大廳。部署前專項 Vitest 4 files／16 tests與 production build 亦通過。
+- 已確認完整教師 Live 建立／Host／Projector checkpoint `5fafb79ecc9bd07cb89bdaa7ade95180f38df222` 是目前 integration HEAD 的祖先；本次整合不只包含教師六頁與 Live report。
+- 待處理的產品差異：目前註冊仍為基本資料（自訂暱稱／班級序號）→ Email OTP → 帳號密碼 → `/app`；尚未實作 owner 新提出的「OTP 驗證後直接完成註冊並進學習地圖、暱稱預設為 Email `@` 前字串」。需先確認帳號、密碼、真實姓名與班級綁定的新資料契約，再以獨立 Auth task 修改與驗證。
