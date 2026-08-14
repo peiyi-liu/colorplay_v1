@@ -1,0 +1,37 @@
+.teacher-work-surface--live {
+  background: var(--teacher-canvas);
+}
+
+.teacher-work-surface--live .teacher-work-surface__header {
+  min-height: 184px;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--teacher-line);
+  background:
+    linear-gradient(90deg, rgb(2 10 22 / 95%), rgb(2 10 22 / 44%) 65%, rgb(2 10 22 / 76%)),
+    url('../../teacher-content/assets/teacher-workspace-command-room.png') center 48% / cover no-repeat;
+  box-shadow: 0 12px 28px rgb(0 7 18 / 28%);
+  padding: 28px 32px 24px;
+}
+
+.teacher-work-surface--live .teacher-work-surface__header h1 {
+  font-size: clamp(2rem, 3.6vw, 2.75rem);
+}
+
+.teacher-work-surface--live .teacher-work-surface__content {
+  padding: 28px 32px 40px;
+}
+
+@media (max-width: 47.99rem) {
+  .teacher-work-surface--live .teacher-work-surface__header {
+    min-height: 156px;
+    padding: 22px 18px 18px;
+  }
+
+  .teacher-work-surface--live .teacher-work-surface__header h1 {
+    font-size: 1.85rem;
+  }
+
+  .teacher-work-surface--live .teacher-work-surface__content {
+    padding: 18px 14px 32px;
+  }
+}

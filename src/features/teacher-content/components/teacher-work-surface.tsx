@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import '../teacher-materials.css';
+
 export type TeacherWorkSurfaceState =
   | { kind: 'content' }
   | { kind: 'empty'; message: string }

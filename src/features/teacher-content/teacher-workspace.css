@@ -216,31 +216,11 @@
   isolation: isolate;
   min-width: 0;
   min-height: 100dvh;
-  background-color: var(--teacher-canvas);
-  background-image:
-    linear-gradient(
-      180deg,
-      rgb(1 7 18 / 22%) 0%,
-      rgb(1 8 20 / 68%) 38%,
-      var(--teacher-canvas) 100%
-    ),
-    url('./assets/teacher-workspace-command-room.png');
-  background-position: center top;
-  background-repeat: no-repeat;
-  background-size: cover;
+  background: var(--teacher-canvas);
 }
 
 .teacher-work-surface::before {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background: radial-gradient(
-    circle at 60% 16%,
-    transparent,
-    rgb(0 5 14 / 34%) 64%
-  );
-  content: '';
-  pointer-events: none;
+  content: none;
 }
 
 .teacher-workspace-shell
@@ -251,6 +231,10 @@
   align-items: flex-end;
   justify-content: space-between;
   border-bottom: 1px solid var(--teacher-line);
+  background:
+    linear-gradient(90deg, rgb(2 10 22 / 94%) 0%, rgb(2 10 22 / 48%) 58%, rgb(2 10 22 / 78%) 100%),
+    url('./assets/teacher-workspace-command-room.png') center 48% / cover no-repeat;
+  box-shadow: 0 12px 28px rgb(0 7 18 / 28%);
   gap: 28px;
   padding: 28px 32px 24px;
 }
@@ -306,7 +290,7 @@
   min-width: 0;
   gap: 18px;
   padding: 28px 32px 40px;
-  background: var(--teacher-canvas);
+  background: linear-gradient(180deg, #061321 0%, #071827 100%);
 }
 
 .teacher-work-surface__state {

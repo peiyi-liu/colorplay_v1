@@ -1,24 +1,3 @@
-.teacher-work-surface--live {
-  background:
-    radial-gradient(circle at 70% 16%, rgb(17 75 126 / 22%), transparent 35%),
-    linear-gradient(135deg, #061225, #020a17 72%);
-}
-
-.teacher-work-surface--live .teacher-work-surface__header {
-  min-height: 0;
-  align-items: center;
-  border-bottom: 0;
-  padding: 30px 34px 12px;
-}
-
-.teacher-work-surface--live .teacher-work-surface__header h1 {
-  font-size: clamp(1.8rem, 3vw, 2.35rem);
-}
-
-.teacher-work-surface--live .teacher-work-surface__content {
-  padding: 0 34px 36px;
-}
-
 .teacher-live-create {
   display: grid;
   border: 1px solid rgb(102 135 172 / 32%);
@@ -238,19 +217,6 @@
 }
 
 @media (max-width: 47.99rem) {
-  .teacher-work-surface--live .teacher-work-surface__header {
-    min-height: 0;
-    padding: 24px 18px 12px;
-  }
-
-  .teacher-work-surface--live .teacher-work-surface__header h1 {
-    font-size: 1.7rem;
-  }
-
-  .teacher-work-surface--live .teacher-work-surface__content {
-    padding: 0 10px 22px;
-  }
-
   .teacher-live-create {
     padding: 0 16px 18px;
   }

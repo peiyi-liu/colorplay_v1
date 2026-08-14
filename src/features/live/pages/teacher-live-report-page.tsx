@@ -10,6 +10,7 @@ import { buildMatrixCsv, matrixCellLabel } from '../lib/report-export';
 import { deriveTeacherLiveReportSummary } from '../lib/teacher-live-report-summary';
 import type { LiveRepository, LiveSessionDetail } from '../types';
 import './teacher-live-report-page.css';
+import './teacher-live-workspace.css';
 
 const EM_DASH = '—';
 

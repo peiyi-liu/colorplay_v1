@@ -20,6 +20,7 @@ import {
 } from '../hooks/use-live-commands';
 import type { LiveRepository } from '../types';
 import './teacher-live-page.css';
+import './teacher-live-workspace.css';
 
 const createSchema = z.strictObject({
   classroomId: z.string().min(1, '請選擇班級'),
