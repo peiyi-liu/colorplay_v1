@@ -190,14 +190,21 @@
 .teacher-workspace-shell .classroom-card__copy,
 .teacher-workspace-shell .classroom-card__manage,
 .teacher-workspace-shell .classroom-card__analytics {
+  height: 44px;
   min-height: 44px;
   border: 1px solid #3c78ae;
   border-radius: 6px;
   background: #092644;
   color: #e9f5ff;
   cursor: pointer;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 800;
+  letter-spacing: normal;
+  line-height: 1.2;
   padding: 10px 14px;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .teacher-workspace-shell .classroom-card__manage,

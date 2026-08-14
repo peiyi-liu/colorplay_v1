@@ -57,14 +57,18 @@ for (const width of [320, 375, 393] as const) {
   });
 }
 
-for (const width of [1024, 1280] as const) {
-  test(`owner visual: desktop classroom actions remain single-line at ${String(width)}px`, async ({
+for (const width of [393, 1024, 1280] as const) {
+  test(`owner visual: classroom roster actions share typography at ${String(width)}px`, async ({
     page,
   }) => {
     const runtimeErrors = observeRuntimeErrors(page);
-    await page.setViewportSize({ height: 900, width });
+    await page.setViewportSize({ height: width === 393 ? 852 : 900, width });
     await page.goto('/dev-harness/teacher-routes.html?scenario=classes');
     await page.waitForLoadState('networkidle');
+
+    if (width === 393) {
+      await page.locator('.classroom-card summary').first().click();
+    }
 
     const code = page.locator('.classroom-card__code-value').first();
     const codeBox = await code.evaluate((element) => {
@@ -81,32 +85,58 @@ for (const width of [1024, 1280] as const) {
     expect(codeBox.overflowWrap).not.toBe('anywhere');
     expect(codeBox.height).toBeLessThanOrEqual(28);
     expect(codeBox.width).toBeGreaterThan(150);
-    await expect(
-      page.getByRole('button', { name: /複製 .* 的班級序號/u }).first(),
-    ).toBeVisible();
-
     const actions = page.locator('.classroom-card__actions').first();
-    for (const name of ['進入班級', '教學分析']) {
-      const action = actions.getByRole('link', { name });
+    const rosterActions = [
+      page.getByRole('button', { name: /複製 .* 的班級序號/u }).first(),
+      actions.getByRole('link', { name: '進入班級' }),
+      actions.getByRole('link', { name: '教學分析' }),
+    ];
+    for (const action of rosterActions) {
       const geometry = await action.evaluate((element) => {
         const bounds = element.getBoundingClientRect();
         const range = document.createRange();
         range.selectNodeContents(element);
+        const style = getComputedStyle(element);
         return {
+          fontFamily: style.fontFamily,
+          fontSize: style.fontSize,
+          fontWeight: style.fontWeight,
           height: bounds.height,
+          letterSpacing: style.letterSpacing,
+          lineHeight: style.lineHeight,
           lineRects: Array.from(range.getClientRects(), (rect) => ({
             height: rect.height,
             width: rect.width,
           })),
-          whiteSpace: getComputedStyle(element).whiteSpace,
+          whiteSpace: style.whiteSpace,
           width: bounds.width,
         };
       });
+      expect(geometry.fontFamily).toContain('Noto Sans TC');
+      expect(geometry.fontSize).toBe('14px');
+      expect(geometry.fontWeight).toBe('800');
+      expect(geometry.lineHeight).toBe('16.8px');
+      expect(geometry.letterSpacing).toBe('normal');
       expect(geometry.whiteSpace).toBe('nowrap');
-      expect(geometry.height).toBeGreaterThanOrEqual(44);
-      expect(geometry.height).toBeLessThanOrEqual(48);
+      expect(geometry.height).toBe(44);
       expect(geometry.lineRects).toHaveLength(1);
     }
+
+    const create = page.getByRole('button', { name: '建立班級' });
+    const createTypography = await create.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return {
+        fontSize: style.fontSize,
+        fontWeight: style.fontWeight,
+        height: bounds.height,
+      };
+    });
+    expect(createTypography).toEqual({
+      fontSize: '16px',
+      fontWeight: '800',
+      height: 52,
+    });
     expect(
       await page.evaluate(
         () =>

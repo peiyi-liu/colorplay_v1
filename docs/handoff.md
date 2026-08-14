@@ -711,3 +711,9 @@
 - 僅補正班級 roster actions：`進入班級`／`教學分析` 設定 112px 最小寬度與 `white-space: nowrap`；未改文案、route、handler、資料或其他頁面，既有 mobile flex／full-width composition 由原六頁 regression 保持全綠。
 - 1024／1280×900 實測兩按鈕各只有 1 個文字 line rect：`進入班級` 為 `112×48px`、`教學分析` 為 `112×44px`，兩者 computed white-space 均為 nowrap，兩個 viewport 均無 document overflow、console／page error。
 - Fresh checks：相關 Vitest 1 file／7 tests、focused Chromium 2/2、既有六頁 Chromium regression 39/39、scoped ESLint、typecheck、build、`git diff --check` 全綠。只重拍 `/private/tmp/colorplay-teacher-class-actions-final/classes-1280x900.png`；未執行 acceptance、DB 或 hosted operation，等待 owner 依新截圖與量測決定交接整合。
+
+## 2026-08-14 11:47 [Owner／Codex] — 班級 roster action typography 統一
+
+- 僅在 teacher-local classroom CSS 中和舊 global selector：`複製`、`進入班級`、`教學分析` 統一為繼承字型、14px／800／16.8px、normal letter-spacing、nowrap 與 44px 高度；desktop 兩個 row actions 維持 112px，`建立班級` 保留 16px／800／52px。
+- Chromium 393／1024／1280 實測三個 roster actions 均只有 1 個文字 line rect，無 document overflow、console 或 page error；mobile disclosure 展開後仍是原 full-width flex composition。
+- Fresh checks：相關 Vitest 1 file／7 tests、focused Chromium 3/3、既有六頁 Chromium regression 39/39、scoped ESLint、typecheck、build、`git diff --check` 全綠。新 desktop／mobile 截圖與 evidence 位於 `/private/tmp/colorplay-teacher-class-actions-typography-final/`；未執行 acceptance、DB 或 hosted operation。
