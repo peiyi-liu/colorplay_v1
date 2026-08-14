@@ -692,3 +692,9 @@
 - Task 7 已封裝為 `6257eec6ef3255c1e656552a8663a75b2989029d`。Task 8 未修改產品行為；補齊六頁 1280×900／393×852 跨 route browser matrix、既有 workspace state spec 的 config 收錄，並把兩個 stale／timing-sensitive 測試對齊目前正式 harness 與非同步資料載入。
 - Fresh checks：整合 Vitest 22 files／145 tests、Chromium 39/39、focused owner-answer pgTAP 11/11、完整 local DB 55 files／1223 tests、database-types contract、scoped ESLint、typecheck、production build 與 `git diff --check` 全綠。六頁另輸出 12 張 repo 外視覺檢查圖至 `/private/tmp/colorplay-teacher-phase-b-final/manifest.json`；fixture 只供版面檢查，不是 production truth 或 phase acceptance evidence。
 - 唯一 integrated review 確認資料誠實性、owner-only answer isolation、mobile disclosure、Live matrix bounded scroll、44px／focus／reduced-motion、protected-path 與 500 行邊界；未發現需修改產品碼的 finding。完整 Live Host／Projector checkpoint `5fafb79ecc9bd07cb89bdaa7ade95180f38df222` 仍在提交鏈中。未 push／merge／deploy、未操作 hosted 服務、未執行 `pnpm acceptance`；結果只代表 scoped Phase B regression，等待 owner 檢視最終畫面。
+
+## 2026-08-14 10:20 [Codex] — Teacher visual reimplementation pass 待 owner 視覺核准
+
+- Owner 拒絕上一版視覺完成宣告後，以核准 Phase A directions 為 SSOT 重新實作六頁 composition；保留既有 route、正式資料、安全邊界、ADR 0007 與完整 Live Host／Projector。場景限制於 header，工作面改為安靜深藍，並分別重作 analytics 決策層級、班級操作列／roster rows、班級與學生下鑽、三層題目 disclosure、Live 首屏摘要與 podium。
+- CSS cascade audit 在 teacher-local scope 中和 global `.secondary-action`、`.classroom-create-form`、`.classroom-card` 與資料表材質；Live shared surface 已抽至 `teacher-live-workspace.css`，create／report 直接 import。Production manifest 顯示 report lazy entry 同時載入 report CSS 與 shared live workspace CSS，不依賴先造訪 TeacherLivePage。
+- Fresh checks：Vitest 17 files／92 tests、Chromium 39/39、scoped ESLint、typecheck、production build、`git diff --check` 全綠；六頁 after 12 圖與 before／approved 對照 manifest 在 `/private/tmp/colorplay-teacher-visual-after/manifest.json`，全部 scrollY=0、無 console／page error、無 document overflow。未執行 acceptance、hosted operation、push／merge／deploy。狀態：Awaiting owner visual approval。
