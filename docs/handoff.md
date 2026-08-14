@@ -976,3 +976,9 @@
 - 新 API key resolver 僅在新 key set 未設定時才 fallback legacy，顯式空值 fail closed；staging bootstrap 不再輸出 publishable key 值；runbook 改用 `colorplay-staging-web`，題庫規格同步目前 QB 136／CR 62／LT 60／RC 8 與 disposable staging snapshot 例外。
 - RED 證據涵蓋：被降權 Live host 原可啟動、凍結 taxonomy／source-session projection 尚不存在、顯式空 key set 原會 fallback。GREEN 後完整 gate：lint、typecheck、production build、Vitest 168 files／1154 tests、Supabase 60 files／1254 pgTAP、runtime 3、integration 12 files／25 tests、教師 Chromium 46／46、scoped Prettier 與 `git diff --check` 全綠。
 - Git ancestor 檢查確認教師 tip `8f0eeee853a929cfd360f70f31b8eaff8305ee51` 完整包含於 integration；六頁、Live Host／Projector／report、教師專用 `TeacherMenu` 均已接入，所有 `/teacher*` route 不渲染學生或 legacy HUD。本輪仍未操作 hosted Supabase／Vercel；下一步建立 follow-up checkpoint，再核對 staging ref／project 後發布。
+
+## 2026-08-14 16:54 [Integration owner／Codex] — Staging 單一班級資料 reconciliation
+
+- `supabase db push` 已在正確 staging ref `onkxnkzeixpezetkmocf` 套用 20260812000400～20260814000100，並於 20260814000200 fail closed：同一名學生在 7/22 `Fixture Classroom One` 與 7/28 `配老師專班` 均為 active；後四支 migration 當下未套用。
+- 只讀 dump 確認衝突僅一名學生。依 owner 的單一 active classroom 決策，migration 改為保留最近 activated membership，把較舊 membership 標為 inactive 並保留歷史，不刪學生、班級、成績、複習卡 media 或 storage object；其後仍以 unique index／trigger 阻止再次重複。
+- Fresh local reset 與完整 DB gate：60 files／1254 pgTAP、runtime 3、integration 12 files／25 tests 全綠。下一步先提交並 push 此 deterministic reconciliation，再重跑 staging migration；尚未部署 Vercel 或匯入最新題庫。

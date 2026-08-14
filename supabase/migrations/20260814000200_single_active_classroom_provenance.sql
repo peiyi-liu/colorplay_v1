@@ -1,6 +1,34 @@
 -- Owner decision 2026-08-14: a student may have only one active classroom.
--- Quiz classroom provenance is captured server-side so teacher projections do
--- not infer a classroom from a student's current membership after the fact.
+-- Preserve historical memberships while reconciling pre-constraint staging
+-- data: the most recently activated classroom remains active and older rows
+-- become inactive. Quiz classroom provenance is then captured server-side so
+-- teacher projections do not infer a classroom from a student's current
+-- membership after the fact.
+
+with ranked_active_students as (
+  select
+    membership.classroom_id,
+    membership.user_id,
+    row_number() over (
+      partition by membership.user_id
+      order by
+        membership.activated_at desc,
+        membership.joined_at desc,
+        membership.updated_at desc,
+        membership.classroom_id desc
+    ) as active_rank
+  from public.classroom_members as membership
+  where membership.member_role = 'student'
+    and membership.status = 'active'
+)
+update public.classroom_members as membership
+set status = 'inactive',
+    deactivated_at = now(),
+    updated_at = now()
+from ranked_active_students as ranked
+where ranked.classroom_id = membership.classroom_id
+  and ranked.user_id = membership.user_id
+  and ranked.active_rank > 1;
 
 do $$
 begin
