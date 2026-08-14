@@ -982,3 +982,9 @@
 - `supabase db push` 已在正確 staging ref `onkxnkzeixpezetkmocf` 套用 20260812000400～20260814000100，並於 20260814000200 fail closed：同一名學生在 7/22 `Fixture Classroom One` 與 7/28 `配老師專班` 均為 active；後四支 migration 當下未套用。
 - 只讀 dump 確認衝突僅一名學生。依 owner 的單一 active classroom 決策，migration 改為保留最近 activated membership，把較舊 membership 標為 inactive 並保留歷史，不刪學生、班級、成績、複習卡 media 或 storage object；其後仍以 unique index／trigger 阻止再次重複。
 - Fresh local reset 與完整 DB gate：60 files／1254 pgTAP、runtime 3、integration 12 files／25 tests 全綠。下一步先提交並 push 此 deterministic reconciliation，再重跑 staging migration；尚未部署 Vercel 或匯入最新題庫。
+
+## 2026-08-14 17:14 [Integration owner／Codex] — 非破壞式 Sheet 發布路徑補齊
+
+- 遠端只讀盤點確認舊快照為 QB 139／CR 64／LT 0；直接執行 generated seed 只會 `on conflict do nothing`，不能套用修文或 archive 刪題。完整 staging reset 會刪除 Auth 使用者與複習卡 media mapping，故本輪排除。
+- 新增 migration 20260814000600：既有 versioned teacher content command 現在接受 QB／CR／LT／legacy stable code，並由 server 依 namespace 強制推導 `section`／`chapter`／`live`／`legacy` bank，caller 不能竄改題池。後續發布使用既有 `publish_question`／`archive_question`，保留版本、事件與歷史 session。
+- TDD 先暴露 content command 無法處理 LT namespace；修正後 focused 049 為 12／12，完整 DB gate 為 60 files／1255 pgTAP、runtime 3、integration 12 files／25 tests 全綠。下一步套用 migration 後，使用教師權限進行 current Sheet snapshot 的 publish／archive；不重置帳號、作答或 media。
