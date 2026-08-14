@@ -5,7 +5,6 @@ export type SignInInput = Readonly<{
 
 export type AccountSignInInput = Readonly<{
   account: string;
-  classCode?: string;
   password: string;
   portal: 'student' | 'teacher';
 }>;

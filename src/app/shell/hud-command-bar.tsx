@@ -192,13 +192,6 @@ export function HudCommandBar({
                 <NavLink
                   className={menuLinkClassName}
                   onClick={closeMenu}
-                  to="/app/missions"
-                >
-                  課後任務實戰
-                </NavLink>
-                <NavLink
-                  className={menuLinkClassName}
-                  onClick={closeMenu}
                   to="/app/mistakes"
                 >
                   我的錯題
@@ -240,7 +233,7 @@ export function HudCommandBar({
           <span aria-hidden="true" className="hud-menu__divider" />
           <p className="hud-menu__user">{displayName}</p>
           <button
-            className="hud-menu__logout"
+            className="hud-menu__logout hud-menu__logout--pixel"
             disabled={isSigningOut}
             onClick={onSignOut}
             type="button"

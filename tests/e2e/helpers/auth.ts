@@ -50,4 +50,6 @@ export async function openHudMenu(page: Page): Promise<void> {
 export async function signOutViaHud(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'MENU' }).click();
   await page.getByRole('button', { name: '登出' }).click();
+  await expect(page.getByRole('dialog', { name: '確認登出' })).toBeVisible();
+  await page.getByRole('button', { name: '確認登出' }).click();
 }

@@ -621,7 +621,8 @@ describe('AppShell', () => {
         '.hud-avatar .blook-art',
       );
       expect(image).toHaveAttribute('src', `/assets/blooks/${stableCode}.png`);
-      expect(image?.parentElement).toHaveClass('hud-avatar');
+      expect(image?.parentElement).toHaveClass('hud-avatar__portrait');
+      expect(image?.parentElement?.parentElement).toHaveClass('hud-avatar');
       expect(globalStyles).toMatch(
         /\.hud-avatar \.blook-art\s*\{[^}]*max-width:\s*100%;[^}]*height:\s*auto;/u,
       );
@@ -822,12 +823,9 @@ describe('AppShell', () => {
     expect(linkNames).toEqual(['學習大廳', 'Live 課堂', '商店']);
     expect(screen.queryByRole('link', { name: '學習進度' })).toBeNull();
 
-    // 課後任務實戰/我的錯題仍在 MENU；商店不重複出現。
+    // 已停用的課後任務不再提供入口；我的錯題仍在 MENU，商店不重複出現。
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
-    expect(screen.getByRole('link', { name: '課後任務實戰' })).toHaveAttribute(
-      'href',
-      '/app/missions',
-    );
+    expect(screen.queryByRole('link', { name: '課後任務實戰' })).toBeNull();
     expect(screen.getAllByRole('link', { name: '商店' })).toHaveLength(1);
     expect(screen.getByRole('link', { name: '我的錯題' })).toHaveAttribute(
       'href',
@@ -894,7 +892,7 @@ describe('AppShell', () => {
     );
   });
 
-  it('awaits signOut and replaces protected history with login', async () => {
+  it('confirms before signOut and replaces protected history with login', async () => {
     const signOut = vi.fn(() => Promise.resolve());
     mockedUseAuth.mockReturnValue({
       session: {
@@ -922,6 +920,15 @@ describe('AppShell', () => {
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     await userEvent.click(screen.getByRole('button', { name: '登出' }));
 
+    expect(signOut).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: '確認登出' })).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: '取消' }));
+    expect(screen.queryByRole('dialog', { name: '確認登出' })).toBeNull();
+    expect(signOut).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
+    await userEvent.click(screen.getByRole('button', { name: '登出' }));
+    await userEvent.click(screen.getByRole('button', { name: '確認登出' }));
     expect(signOut).toHaveBeenCalledOnce();
     expect(await screen.findByRole('heading', { name: '登入' })).toBeVisible();
     expect(router.state.historyAction).toBe('REPLACE');
@@ -949,10 +956,12 @@ describe('AppShell', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     await userEvent.click(screen.getByRole('button', { name: '登出' }));
+    await userEvent.click(screen.getByRole('button', { name: '確認登出' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       '登出失敗，請稍後重試。',
     );
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     expect(screen.getByRole('button', { name: '登出' })).toBeVisible();
     expect(screen.getByRole('alert')).not.toHaveTextContent('provider detail');
   });
@@ -1028,6 +1037,7 @@ describe('AppShell', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     await userEvent.click(screen.getByRole('button', { name: '登出' }));
+    await userEvent.click(screen.getByRole('button', { name: '確認登出' }));
     await userEvent.click(
       await screen.findByRole('button', { name: '以 B 登入' }),
     );
@@ -1038,6 +1048,7 @@ describe('AppShell', () => {
     const accountBLogout = await screen.findByRole('button', { name: '登出' });
     expect(accountBLogout).toBeEnabled();
     await userEvent.click(accountBLogout);
+    await userEvent.click(screen.getByRole('button', { name: '確認登出' }));
 
     expect(signOut).toHaveBeenCalledTimes(2);
     expect(

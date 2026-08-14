@@ -18,7 +18,6 @@ const classCodeInput = z
 
 export const accountSignInSchema = z.object({
   account: z.string().trim().min(1, '請輸入帳號'),
-  classCode: z.string().trim().optional(),
   password: z.string().min(1, '請輸入密碼').max(128, '請輸入密碼'),
 });
 

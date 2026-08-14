@@ -65,6 +65,21 @@ describe('shop and HUD Blook sizing contract', () => {
     expect(getComputedStyle(art).height).toBe('auto');
     expect(getComputedStyle(fallback).backgroundSize).toContain('32px 32px');
   });
+
+  it('keeps an equipped frame visible as a real ring around the portrait', () => {
+    const frameCss = readFileSync(
+      resolve(process.cwd(), 'src/app/shell/student-hud-frame.css'),
+      'utf8',
+    );
+
+    expect(frameCss).toMatch(/\.hud-avatar--framed\s*\{[^}]*padding:\s*4px;/u);
+    expect(frameCss).toMatch(
+      /\.hud-avatar--framed\s*\{[^}]*linear-gradient\(\s*135deg,\s*var\(--hud-frame-start\),\s*var\(--hud-frame-end\)\s*\)/u,
+    );
+    expect(frameCss).toMatch(
+      /\.hud-avatar--framed \.hud-avatar__portrait\s*\{[^}]*overflow:\s*hidden;/u,
+    );
+  });
 });
 
 describe('top HUD navigation positioning contract', () => {

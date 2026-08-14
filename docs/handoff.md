@@ -740,3 +740,11 @@
 - 依正式 mapping 將 P301→RC3101、P302→RC3103、P303／P304→RC3201、P305→RC3202，補上繁中 alt，透過 `publish_review_card` 將四張卡由 version 1 升至 version 2；`requires_recompletion` 保持原值。閱讀器既有 block 順序為標題／全部文字／media，hosted RC3101 在 393×852 與 1280×900 均驗證圖片位於文字後方並成功載入。
 - 學生端 commit `776641554725453e9a3247d2b556b4e44e310c9d` 已推至 `origin/phase6/jrpg-generated-board-ui`；GitHub-source Preview `dpl_Fa2VuTWXFqFhZUWGg2t2ZmaL6uXC` 通過 bundle staging project-ref、真實學生登入／bootstrap、複習附件順序與載入 gate後，promote 為 Staging deployment `dpl_2mYHsqXARmLjxJmMT5t6CkNUBbxo`，alias `staging.colorplayapp.com`。公開 alias bundle 只含 `onkxnkzeixpezetkmocf`，近一小時無 Vercel runtime error。
 - 自動驗證：lint、typecheck、production build、相關 Vitest 10 files／45 tests、`git diff --check` 全綠。未修改或合併 `ui/jrpg-teacher-ui`，既有 visual artifact dirty paths 仍保留且未納入部署 commit。Vercel CLI 58.9.4 可完成本次部署，但目前最新為 58.9.5，建議另開維護動作升級，不與產品 release 混做。
+
+## 2026-08-14 09:30 [Owner／Codex] — 教師登入、HUD 外框、學生 MENU 與登出確認
+
+- 教師端帳號登入移除班級序號文案、欄位、前端 payload 與 `auth-login` 的班級 ownership 檢查；後端仍以帳號、密碼及 server-owned profile role 驗證，錯誤維持泛用憑證回應。學生註冊使用的班級序號流程未變更。
+- 「登入／登入中…」與 MENU 登出按鈕改用既有繁中像素字；所有手動登出入口先顯示「確認登出」dialog，預設焦點在取消，確認後才呼叫 local-scope sign-out。30 分鐘閒置自動登出維持既有規則。
+- 學生 MENU 移除已停用的「課後任務實戰」入口；路由與舊頁面未擴張修改。商店已裝備外框改為 HUD 頭像外層的實體 4px 漸層環，內層 portrait 裁切角色圖，讓 server 回傳的 equipped frame 在 HUD 可見。
+- 驗證：相關 Vitest 6 files／112 tests、lint、typecheck、production build、`git diff --check` 全綠；Chromium 1280／393 共 2／2 驗證教師登入欄位、像素字、MENU 入口與無水平 overflow。一次 scoped self-review 已撤回不相關的登入導頁測試改動，最終 Standards／Spec／Security 無未解 finding。
+- 邊界：在乾淨 worktree `codex/login-hud-menu-logout-20260814` 基於 `3fddcdca7d437879e1be59b304c01f425b91a6af` 完成；未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師專屬 CSS，未合併教師 branch。待 commit 後部署指定 `auth-login` 至 staging Supabase `onkxnkzeixpezetkmocf`，並驗證 GitHub-source Vercel 候選後 promote staging。

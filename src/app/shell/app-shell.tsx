@@ -66,13 +66,76 @@ function StudentHudAvatar({
       }
     >
       {equipped ? (
-        <BlookArt
-          emoji={equipped.emoji}
-          size={47}
-          stableCode={equipped.stableCode}
-        />
+        <span className="hud-avatar__portrait">
+          <BlookArt
+            emoji={equipped.emoji}
+            size={47}
+            stableCode={equipped.stableCode}
+          />
+        </span>
       ) : null}
     </span>
+  );
+}
+
+function LogoutConfirmationDialog({
+  onCancel,
+  onConfirm,
+  returnFocus,
+}: Readonly<{
+  onCancel: () => void;
+  onConfirm: () => void;
+  returnFocus: HTMLElement | null;
+}>) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute('open', '');
+    }
+    cancelButtonRef.current?.focus();
+    return () => {
+      if (dialog.open && typeof dialog.close === 'function') {
+        dialog.close();
+      } else {
+        dialog.removeAttribute('open');
+      }
+      returnFocus?.focus();
+    };
+  }, [returnFocus]);
+
+  return (
+    <dialog
+      aria-labelledby="logout-confirmation-title"
+      aria-modal="true"
+      className="purchase-dialog logout-confirmation"
+      onCancel={(event) => {
+        event.preventDefault();
+        onCancel();
+      }}
+      ref={dialogRef}
+    >
+      <h2 id="logout-confirmation-title">確認登出</h2>
+      <p>確定要離開色彩王國並登出帳號嗎？</p>
+      <div className="purchase-dialog__actions">
+        <button
+          className="secondary-action"
+          onClick={onCancel}
+          ref={cancelButtonRef}
+          type="button"
+        >
+          取消
+        </button>
+        <button className="primary-action" onClick={onConfirm} type="button">
+          確認登出
+        </button>
+      </div>
+    </dialog>
   );
 }
 
@@ -146,6 +209,11 @@ export function AppShell() {
   const toast = useToast();
   const signOutPending = useRef(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isSignOutConfirmationOpen, setIsSignOutConfirmationOpen] =
+    useState(false);
+  const [signOutTrigger, setSignOutTrigger] = useState<HTMLElement | null>(
+    null,
+  );
   const [signOutError, setSignOutError] = useState(false);
   const isAuthenticatedProfile =
     auth.status === 'authenticated' &&
@@ -192,6 +260,16 @@ export function AppShell() {
     );
   };
 
+  const requestSignOut = () => {
+    if (signOutPending.current || isSigningOut) return;
+    setSignOutTrigger(
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null,
+    );
+    setIsSignOutConfirmationOpen(true);
+  };
+
   // The server-backed preference lands on the root element so CSS can turn
   // every celebration animation off; prefers-reduced-motion works in parallel.
   useEffect(() => {
@@ -219,7 +297,7 @@ export function AppShell() {
           <HudCommandBar
             displayName={profile.data?.displayName ?? ''}
             isSigningOut={isSigningOut}
-            onSignOut={handleSignOut}
+            onSignOut={requestSignOut}
             variant="teacher"
           />
         ) : null}
@@ -228,7 +306,7 @@ export function AppShell() {
             displayName={profile.data?.displayName ?? ''}
             isLearningMap={isStudentLearningMap}
             isSigningOut={isSigningOut}
-            onSignOut={handleSignOut}
+            onSignOut={requestSignOut}
             reducedMotion={reducedMotion}
             signOutError={signOutError}
             transitionKey={location.pathname}
@@ -249,9 +327,9 @@ export function AppShell() {
         {auth.status === 'authenticated' && !isAuthenticatedProfile ? (
           <>
             <button
-              className="hud-menu__logout hud-menu__logout--fallback"
+              className="hud-menu__logout hud-menu__logout--pixel hud-menu__logout--fallback"
               disabled={isSigningOut}
-              onClick={handleSignOut}
+              onClick={requestSignOut}
               type="button"
             >
               {isSigningOut ? '登出中…' : '登出'}
@@ -262,6 +340,18 @@ export function AppShell() {
               </p>
             ) : null}
           </>
+        ) : null}
+        {isSignOutConfirmationOpen ? (
+          <LogoutConfirmationDialog
+            onCancel={() => {
+              setIsSignOutConfirmationOpen(false);
+            }}
+            onConfirm={() => {
+              setIsSignOutConfirmationOpen(false);
+              handleSignOut();
+            }}
+            returnFocus={signOutTrigger}
+          />
         ) : null}
         {isAuthenticatedProfile && !isTeacher ? null : (
           <RouteWorldStage

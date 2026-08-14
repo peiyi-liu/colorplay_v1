@@ -1,19 +1,13 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-import {
-  ACCOUNT_PATTERN,
-  CLASS_CODE_PATTERN,
-  normalizeAccount,
-  normalizeClassCode,
-  sha256Hex,
-} from '../_shared/account.ts';
+import { ACCOUNT_PATTERN, normalizeAccount } from '../_shared/account.ts';
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
-// 防列舉：帳號不存在、角色不符、班級不符、密碼錯誤一律同一回應。
+// 防列舉：帳號不存在、角色不符、密碼錯誤一律同一回應。
 const invalidCredentials = () =>
   jsonResponse(401, { error: 'AUTH_INVALID_CREDENTIALS' });
 
@@ -32,7 +26,7 @@ Deno.serve(async (request) => {
     return jsonResponse(400, { error: 'INVALID_JSON' });
   }
 
-  const { account, password, portal, classCode } = payload;
+  const { account, password, portal } = payload;
   if (
     typeof account !== 'string' ||
     typeof password !== 'string' ||
@@ -58,24 +52,6 @@ Deno.serve(async (request) => {
     .maybeSingle();
   if (profileError || !profile) return invalidCredentials();
   if (profile.role !== portalValue) return invalidCredentials();
-
-  if (portalValue === 'teacher') {
-    if (typeof classCode !== 'string') return invalidCredentials();
-    const normalizedCode = normalizeClassCode(classCode);
-    if (!CLASS_CODE_PATTERN.test(normalizedCode)) return invalidCredentials();
-
-    const codeHash = `\\x${await sha256Hex(normalizedCode)}`;
-    const { data: classrooms, error: classroomError } = await admin
-      .from('classrooms')
-      .select('id, join_code_hash')
-      .eq('owner_teacher_id', profile.id)
-      .eq('status', 'active');
-    if (classroomError) return invalidCredentials();
-    const ownsClassroom = (classrooms ?? []).some(
-      (row) => row.join_code_hash === codeHash,
-    );
-    if (!ownsClassroom) return invalidCredentials();
-  }
 
   const { data: userData, error: userError } =
     await admin.auth.admin.getUserById(profile.id);

@@ -147,21 +147,22 @@ test.describe('JRPG guild-desk login', () => {
         .locator('.login-form__portal label')
         .filter({ hasText: '教師端登入' })
         .click();
-      await expect(page.getByLabel('班級序號')).toBeVisible();
+      await expect(page.getByLabel('班級序號')).toHaveCount(0);
+      await expect(page.getByText(/班級序號/u)).toHaveCount(0);
       const teacherMetrics = await page.evaluate(() => {
         const portal = document.querySelector<HTMLElement>('.auth-portal');
-        const classCode =
-          document.querySelector<HTMLElement>('#login-class-code');
         const main = document.querySelector<HTMLElement>('#main-content');
-        if (!portal || !classCode || !main) {
+        const submit = document.querySelector<HTMLElement>(
+          '.login-form__submit--pixel',
+        );
+        if (!portal || !main || !submit) {
           throw new Error('TEACHER_AUTH_METRIC_MISSING');
         }
         const portalBox = portal.getBoundingClientRect();
-        const classCodeBox = classCode.getBoundingClientRect();
         return {
-          classCodeBottom: classCodeBox.bottom,
           documentOverflow:
             document.documentElement.scrollHeight - window.innerHeight,
+          fontFamily: getComputedStyle(submit).fontFamily,
           mainOverflow: main.scrollHeight - main.clientHeight,
           portalBottom: portalBox.bottom,
           portalTop: portalBox.top,
@@ -171,9 +172,7 @@ test.describe('JRPG guild-desk login', () => {
       expect(teacherMetrics.mainOverflow).toBeLessThanOrEqual(1);
       expect(teacherMetrics.portalTop).toBeGreaterThanOrEqual(0);
       expect(teacherMetrics.portalBottom).toBeLessThanOrEqual(viewport.height);
-      expect(teacherMetrics.classCodeBottom).toBeLessThanOrEqual(
-        viewport.height,
-      );
+      expect(teacherMetrics.fontFamily).toContain('Cubic 11');
     });
   }
 });

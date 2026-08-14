@@ -119,26 +119,21 @@ describe('LoginPage', () => {
     expect(signInWithAccount).not.toHaveBeenCalled();
   });
 
-  it('requires the class code for teacher account logins', async () => {
+  it('lets teacher accounts sign in without a class code field', async () => {
     const user = userEvent.setup();
     const signInWithAccount = vi.fn(() => Promise.resolve());
     renderLoginPage(createAuthValue(undefined, signInWithAccount));
 
     await user.click(screen.getByRole('radio', { name: '教師端登入' }));
+    expect(screen.queryByLabelText('班級序號')).toBeNull();
+    expect(screen.queryByText(/班級序號/u)).toBeNull();
     await user.type(screen.getByLabelText('帳號'), 'teacher01');
     await user.type(screen.getByLabelText('密碼'), validCredentials.password);
-    await user.click(screen.getByRole('button', { name: '登入' }));
-
-    expect(await screen.findByText('請輸入班級序號')).toBeVisible();
-    expect(signInWithAccount).not.toHaveBeenCalled();
-
-    await user.type(screen.getByLabelText('班級序號'), 'ABCD-1234-EF56-7890');
     await user.click(screen.getByRole('button', { name: '登入' }));
 
     await waitFor(() => {
       expect(signInWithAccount).toHaveBeenCalledWith({
         account: 'teacher01',
-        classCode: 'ABCD-1234-EF56-7890',
         password: validCredentials.password,
         portal: 'teacher',
       });
@@ -416,6 +411,28 @@ it('gives the teacher-portal submit button the purple teacher variant class', as
   expect(screen.getByRole('button', { name: '登入' })).not.toHaveClass(
     'login-form__submit--teacher',
   );
+});
+
+it('uses the pixel action typeface for both login button states', async () => {
+  let resolveSignIn!: () => void;
+  const signIn = vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        resolveSignIn = resolve;
+      }),
+  );
+  const user = userEvent.setup();
+  renderLoginPage(createAuthValue(signIn));
+  const submit = screen.getByRole('button', { name: '登入' });
+
+  expect(submit).toHaveClass('login-form__submit--pixel');
+  await fillEmailBridgeCredentials(user);
+  await user.click(submit);
+  expect(screen.getByRole('button', { name: '登入中…' })).toHaveClass(
+    'login-form__submit--pixel',
+  );
+
+  resolveSignIn();
 });
 
 it('offers register and forgot-password entries on the student portal only', async () => {

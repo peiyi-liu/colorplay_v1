@@ -124,7 +124,6 @@ export const createAuthRepository = (
       const response = (await client.functions.invoke('auth-login', {
         body: {
           account: input.account,
-          classCode: input.classCode,
           password: input.password,
           portal: input.portal,
         },

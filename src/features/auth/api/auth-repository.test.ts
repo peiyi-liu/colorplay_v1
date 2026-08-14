@@ -9,8 +9,11 @@ import type { Database } from '../../../types/database';
 import { AuthRepositoryError } from '../types';
 import { createAuthRepository } from './auth-repository';
 
-const createClientForAuth = (auth: object): SupabaseClient<Database> =>
-  ({ auth }) as unknown as SupabaseClient<Database>;
+const createClientForAuth = (
+  auth: object,
+  functions?: object,
+): SupabaseClient<Database> =>
+  ({ auth, functions }) as unknown as SupabaseClient<Database>;
 
 const unknownProviderError = new AuthApiError(
   'provider detail must not escape',
@@ -136,6 +139,58 @@ describe('AuthRepository error boundary', () => {
     expect(signInWithPassword).toHaveBeenCalledWith({
       email: 'fixture@colorplay.invalid',
       password: 'fixture-value',
+    });
+  });
+
+  it('sends teacher account login without a class code', async () => {
+    const invoke = vi.fn(() =>
+      Promise.resolve({
+        data: {
+          session: {
+            access_token: 'fixture-access-token',
+            refresh_token: 'fixture-refresh-token',
+          },
+        },
+        error: null,
+      }),
+    );
+    const setSession = vi.fn(() =>
+      Promise.resolve({
+        data: {
+          session: {
+            user: {
+              email: 'teacher@colorplay.invalid',
+              id: 'teacher-id',
+            },
+          },
+        },
+        error: null,
+      }),
+    );
+    const repository = createAuthRepository(
+      createClientForAuth({ setSession }, { invoke }),
+    );
+
+    await expect(
+      repository.signInWithAccount({
+        account: 'teacher01',
+        password: 'fixture-value',
+        portal: 'teacher',
+      }),
+    ).resolves.toEqual({
+      email: 'teacher@colorplay.invalid',
+      userId: 'teacher-id',
+    });
+    expect(invoke).toHaveBeenCalledWith('auth-login', {
+      body: {
+        account: 'teacher01',
+        password: 'fixture-value',
+        portal: 'teacher',
+      },
+    });
+    expect(setSession).toHaveBeenCalledWith({
+      access_token: 'fixture-access-token',
+      refresh_token: 'fixture-refresh-token',
     });
   });
 

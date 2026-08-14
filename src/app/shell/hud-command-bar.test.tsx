@@ -100,14 +100,11 @@ describe('HudCommandBar', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     const panelNav = screen.getByRole('navigation', { name: '更多導覽' });
-    for (const label of [
-      '課後任務實戰',
-      '我的錯題',
-      '班級排行榜',
-      '成就徽章',
-    ]) {
-      expect(within(panelNav).getByRole('link', { name: label })).toBeVisible();
-    }
+    expect(
+      within(panelNav)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['我的錯題', '班級排行榜', '成就徽章']);
     expect(
       within(panelNav).queryByRole('link', { name: '裝備商店' }),
     ).toBeNull();
@@ -145,7 +142,9 @@ describe('HudCommandBar', () => {
     await userEvent.click(menu);
     expect(menu).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('student.one')).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: '登出' }));
+    const logout = screen.getByRole('button', { name: '登出' });
+    expect(logout).toHaveClass('hud-menu__logout--pixel');
+    await userEvent.click(logout);
     expect(onSignOut).toHaveBeenCalledTimes(1);
   });
 

@@ -1709,6 +1709,13 @@ a {
   font-weight: 800;
 }
 
+.hud-menu__logout--pixel,
+.login-form__submit--pixel,
+.logout-confirmation h2,
+.logout-confirmation button {
+  font-family: var(--font-pixel-tc);
+}
+
 /* 舞台模式：指令列是舞台頂列，sticky 還原為普通列。 */
 @media (min-width: 768px) and (orientation: landscape) {
   .hud-command {
@@ -7320,6 +7327,13 @@ select#dashboard-classroom {
 .hud-avatar .blook-art {
   max-width: 100%;
   height: auto;
+}
+
+.hud-avatar__portrait {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
 }
 
 .hud-avatar--hero {

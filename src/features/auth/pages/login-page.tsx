@@ -20,7 +20,7 @@ const safeErrorMessages = {
     AUTH_UNKNOWN: '登入失敗，請使用追蹤代碼回報',
   },
   teacher: {
-    AUTH_INVALID_CREDENTIALS: '帳號、密碼或班級序號不正確',
+    AUTH_INVALID_CREDENTIALS: '帳號或密碼不正確',
     AUTH_NETWORK: '網路連線失敗，請稍後重試',
     AUTH_UNKNOWN: '登入失敗，請使用追蹤代碼回報',
   },
@@ -49,9 +49,8 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
     handleSubmit,
     register,
-    setError,
   } = useForm<AccountSignInValues>({
-    defaultValues: { account: '', classCode: '', password: '' },
+    defaultValues: { account: '', password: '' },
     resolver: zodResolver(accountSignInSchema),
   });
 
@@ -76,7 +75,7 @@ export function LoginPage() {
       <h1 className="pixel-heading">登入</h1>
       <p className="route-panel__message">
         {portal === 'teacher'
-          ? '使用教師帳號與班級序號登入，進入教師工作區管理班級與課程。'
+          ? '使用教師帳號登入，進入教師工作區管理班級與課程。'
           : '使用帳號登入，繼續你的色彩原理學習進度。'}
       </p>
 
@@ -123,11 +122,6 @@ export function LoginPage() {
 
               const identifier = values.account.trim();
               const usesEmailBridge = identifier.includes('@');
-              const classCode = values.classCode?.trim() ?? '';
-              if (portal === 'teacher' && !usesEmailBridge && !classCode) {
-                setError('classCode', { message: '請輸入班級序號' });
-                return;
-              }
 
               pendingSubmission.current = true;
               setSubmitError(null);
@@ -142,7 +136,6 @@ export function LoginPage() {
                     account: identifier,
                     password: values.password,
                     portal,
-                    ...(classCode ? { classCode } : {}),
                   });
                 }
                 toast({
@@ -203,30 +196,6 @@ export function LoginPage() {
             ) : null}
           </div>
 
-          {portal === 'teacher' ? (
-            <div className="login-form__field">
-              <label htmlFor="login-class-code">班級序號</label>
-              <input
-                {...register('classCode')}
-                aria-describedby={
-                  errors.classCode ? 'login-class-code-error' : undefined
-                }
-                aria-invalid={errors.classCode ? 'true' : 'false'}
-                autoComplete="off"
-                id="login-class-code"
-                type="text"
-              />
-              {errors.classCode ? (
-                <p
-                  className="login-form__field-error"
-                  id="login-class-code-error"
-                >
-                  {errors.classCode.message}
-                </p>
-              ) : null}
-            </div>
-          ) : null}
-
           {submitError ? (
             <p className="login-form__submit-error" role="alert">
               {submitError}
@@ -239,8 +208,8 @@ export function LoginPage() {
             <button
               className={
                 portal === 'teacher'
-                  ? 'primary-action login-form__submit--teacher'
-                  : 'primary-action'
+                  ? 'primary-action login-form__submit--pixel login-form__submit--teacher'
+                  : 'primary-action login-form__submit--pixel'
               }
               data-acceptance-interactive="true"
               data-acceptance-target
