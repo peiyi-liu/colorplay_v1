@@ -217,10 +217,10 @@ describe('TeacherAnalyticsPage', () => {
     renderPage(repositoryOf());
 
     const filters = await screen.findByRole('form', { name: '分析篩選' });
-    const overview = screen.getByRole('region', { name: '班級總覽' });
-    const sources = screen.getByRole('group', { name: '題目來源' });
-    const questions = screen.getByRole('region', { name: '題目分析' });
-    const live = screen.getByRole('region', { name: 'Live 課程' });
+    const overview = await screen.findByRole('region', { name: '班級總覽' });
+    const sources = await screen.findByRole('group', { name: '題目來源' });
+    const questions = await screen.findByRole('region', { name: '題目分析' });
+    const live = await screen.findByRole('region', { name: 'Live 課程' });
     expect(filters.compareDocumentPosition(overview)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );

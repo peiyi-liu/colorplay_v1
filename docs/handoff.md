@@ -686,3 +686,9 @@
 - Task 6 已封裝為 `fc17afd6d023bb3e8b69aea922d909b894c3ecc8`。新增 page-local pure summary：參與人數只取 participants.length、整體正確率只聚合 answered／correct、最難題只從非 null correctRate 依 report order 選最低、前三名只按 authoritative rank 1–3 排序；不可用摘要會整段省略，不顯示假 0。
 - 第一屏先呈現場次重點與前三名；桌機保留逐題 table，手機使用 disclosure。作答矩陣及 CSV semantics 完整保留，且只有矩陣維持 bounded horizontal scroll；既有最終排名仍保留。
 - 真正 RED 是 summary module 不存在。Fresh checks：Vitest 3 files／14 tests、Chromium 7/7 widths、scoped ESLint、typecheck 與 `git diff --check` 全綠；393px podium 共用底線且一／二／三名高度遞減，320px 無整頁 overflow。唯一 scoped self-review 修正零參與摘要原可能顯示 `0 人`，改為誠實省略；所有檔案低於 500 行。Task 7 尚未 stage／commit，Task 8 尚未開始。
+
+## 2026-08-14 08:12 [Codex] — Phase B Task 8 scoped regression 完成
+
+- Task 7 已封裝為 `6257eec6ef3255c1e656552a8663a75b2989029d`。Task 8 未修改產品行為；補齊六頁 1280×900／393×852 跨 route browser matrix、既有 workspace state spec 的 config 收錄，並把兩個 stale／timing-sensitive 測試對齊目前正式 harness 與非同步資料載入。
+- Fresh checks：整合 Vitest 22 files／145 tests、Chromium 39/39、focused owner-answer pgTAP 11/11、完整 local DB 55 files／1223 tests、database-types contract、scoped ESLint、typecheck、production build 與 `git diff --check` 全綠。六頁另輸出 12 張 repo 外視覺檢查圖至 `/private/tmp/colorplay-teacher-phase-b-final/manifest.json`；fixture 只供版面檢查，不是 production truth 或 phase acceptance evidence。
+- 唯一 integrated review 確認資料誠實性、owner-only answer isolation、mobile disclosure、Live matrix bounded scroll、44px／focus／reduced-motion、protected-path 與 500 行邊界；未發現需修改產品碼的 finding。完整 Live Host／Projector checkpoint `5fafb79ecc9bd07cb89bdaa7ade95180f38df222` 仍在提交鏈中。未 push／merge／deploy、未操作 hosted 服務、未執行 `pnpm acceptance`；結果只代表 scoped Phase B regression，等待 owner 檢視最終畫面。

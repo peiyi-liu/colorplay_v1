@@ -140,9 +140,9 @@ test('question analysis desktop keeps the table and authoritative answer label',
 }) => {
   await page.setViewportSize({ height: 900, width: 1280 });
   await page.goto('/dev-harness/teacher-routes.html?scenario=questions');
-  await page.getByText('3-1 色彩三要素與色名的表示').click();
+  await page.getByText('3-1 色彩三要素', { exact: true }).click();
   const table = page.getByRole('table', {
-    name: '3-1 色彩三要素與色名的表示題目分析',
+    name: '3-1 色彩三要素題目分析',
   });
   await expect(table).toBeVisible();
   await table.getByRole('button', { name: '查看 QB3101 題目內容' }).click();

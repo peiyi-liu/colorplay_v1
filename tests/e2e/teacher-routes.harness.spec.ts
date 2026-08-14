@@ -220,7 +220,7 @@ for (const width of WIDTHS) {
     page,
   }) => {
     const runtimeErrors = observeRuntimeErrors(page);
-    await page.setViewportSize({ height: 900, width });
+    await page.setViewportSize({ height: width <= 393 ? 852 : 900, width });
 
     for (const scenario of ROUTE_SCENARIOS) {
       await page.goto(`/dev-harness/teacher-routes.html?scenario=${scenario}`);
