@@ -57,6 +57,7 @@
 
 - `id`
 - `stable_code`，例如 `3-1-01`
+- `bank_kind`：`section`（QB 小節測驗）、`chapter`（CR 章節總測驗）、`live`（LT Live 專用）或歷史 `legacy`；新 Session 必須依產品 surface 由 server 選定題池。
 - `version`
 - `subtopic_id`
 - `question_type`

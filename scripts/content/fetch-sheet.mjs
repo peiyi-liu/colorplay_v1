@@ -5,6 +5,7 @@
  *   artifacts/content/question-bank.xlsx — 原始快照（不進 git）
  *   artifacts/content/questions.csv      — 「各單元隨機測驗題庫」→ import-questions.mjs 10 欄格式
  *   artifacts/content/review-cards.csv   — 「各單元複習大廳」→ import-review-cards.mjs 5 欄格式
+ * questions.csv 合併 QB／CR／LT；stable code 由 importer 分流為 section／chapter／live。
  *
  * 表頭以「去除所有空白」後比對，容忍欄名尾空格（如「選項 A 」「正確答案 」）。
  * 佔位列（題目／選項／正解全空、僅有解析）在此層過濾，不進 CSV；
@@ -30,6 +31,7 @@ export const SHEET_XLSX_URL =
 export const QUESTION_TAB_NAME = '(QB)各單元隨機測驗題庫';
 export const CHAPTER_REVIEW_TAB_NAME = '(CR)章節總複習';
 export const REVIEW_TAB_NAME = '(RC)各單元複習大廳';
+export const LIVE_TAB_NAME = '(LT)LIVE 題目';
 export const OUTPUT_DIR = 'artifacts/content';
 
 const QUESTION_CSV_HEADER = [
@@ -114,30 +116,28 @@ function headerIndex(headerRow, names) {
   return -1;
 }
 
-/**
- * 解析「各單元隨機測驗題庫」分頁。
- * 回傳 { placeholders, problems, rows }；rows 為題目列（含缺正解等待防呆列），
- * placeholders 為僅有解析的佔位列（第 1/2/5/6 章與 4-1-10 型），不進匯入。
- */
-export function extractQuestionRows(workbook) {
-  const aoa = sheetRows(workbook, QUESTION_TAB_NAME, ['各單元隨機測驗題庫']);
+function extractSectionQuestionRows(
+  workbook,
+  { aliases, label, source, tabName },
+) {
+  const aoa = sheetRows(workbook, tabName, aliases);
   if (!aoa || aoa.length === 0) {
     return {
       placeholders: [],
-      problems: [`找不到分頁「${QUESTION_TAB_NAME}」`],
+      problems: [`找不到分頁「${tabName}」`],
       rows: [],
     };
   }
   const headerRow = aoa[0];
   const columns = {
-    answer: headerIndex(headerRow, ['正確答案', '正解']),
+    answer: headerIndex(headerRow, ['正確答案', '正解', '解答']),
     chapter: headerIndex(headerRow, ['章節', '章節編號']),
     code: headerIndex(headerRow, ['題庫序號', '題號']),
     explanation: headerIndex(headerRow, ['答錯觀念解析', '解析']),
-    optionA: headerIndex(headerRow, ['選項A']),
-    optionB: headerIndex(headerRow, ['選項B']),
-    optionC: headerIndex(headerRow, ['選項C']),
-    optionD: headerIndex(headerRow, ['選項D']),
+    optionA: headerIndex(headerRow, ['選項A', 'A']),
+    optionB: headerIndex(headerRow, ['選項B', 'B']),
+    optionC: headerIndex(headerRow, ['選項C', 'C']),
+    optionD: headerIndex(headerRow, ['選項D', 'D']),
     prompt: headerIndex(headerRow, ['題目']),
     section: headerIndex(headerRow, ['小節']),
     sectionTitle: headerIndex(headerRow, ['小節標題']),
@@ -148,7 +148,7 @@ export function extractQuestionRows(workbook) {
   if (missing.length > 0) {
     return {
       placeholders: [],
-      problems: [`題庫分頁缺少必要欄位：${missing.join('、')}`],
+      problems: [`${label}分頁缺少必要欄位：${missing.join('、')}`],
       rows: [],
     };
   }
@@ -176,7 +176,7 @@ export function extractQuestionRows(workbook) {
         raw[columns.section],
       ),
       sectionTitle: cellText(raw[columns.sectionTitle]),
-      source: 'section',
+      source,
     };
     const hasQuestionContent =
       record.prompt !== '' ||
@@ -193,6 +193,30 @@ export function extractQuestionRows(workbook) {
     rows.push(record);
   });
   return { placeholders, problems: [], rows };
+}
+
+/**
+ * 解析「各單元隨機測驗題庫」分頁。
+ * 回傳 { placeholders, problems, rows }；rows 為題目列（含缺正解等待防呆列），
+ * placeholders 為僅有解析的佔位列，不進匯入。
+ */
+export function extractQuestionRows(workbook) {
+  return extractSectionQuestionRows(workbook, {
+    aliases: ['各單元隨機測驗題庫'],
+    label: '題庫',
+    source: 'section',
+    tabName: QUESTION_TAB_NAME,
+  });
+}
+
+/** 解析「(LT)LIVE 題目」分頁，標記為獨立 Live 題池。 */
+export function extractLiveRows(workbook) {
+  return extractSectionQuestionRows(workbook, {
+    aliases: ['LIVE 題目', 'Live 題目'],
+    label: 'Live 題目',
+    source: 'live',
+    tabName: LIVE_TAB_NAME,
+  });
 }
 
 /** 解析「(CR)章節總複習」分頁，保留 CR 系統序號並標記章節題池。 */
@@ -327,9 +351,9 @@ export function toQuestionsCsv(rows) {
     ...rows.map((row) => [
       row.code,
       row.chapter,
-      row.source === 'section'
-        ? `${row.chapter}-${row.section} ${row.sectionTitle}`
-        : row.sectionTitle,
+      row.source === 'chapter'
+        ? row.sectionTitle
+        : `${row.chapter}-${row.section} ${row.sectionTitle}`,
       row.prompt,
       row.options.A,
       row.options.B,
@@ -378,10 +402,12 @@ async function main() {
 
   const questionResult = extractQuestionRows(workbook);
   const chapterReviewResult = extractChapterReviewRows(workbook);
+  const liveResult = extractLiveRows(workbook);
   const reviewResult = extractReviewRows(workbook);
   const problems = [
     ...questionResult.problems,
     ...chapterReviewResult.problems,
+    ...liveResult.problems,
     ...reviewResult.problems,
   ];
   if (problems.length > 0) {
@@ -392,7 +418,11 @@ async function main() {
 
   writeFileSync(
     join(outputDir, 'questions.csv'),
-    toQuestionsCsv([...questionResult.rows, ...chapterReviewResult.rows]),
+    toQuestionsCsv([
+      ...questionResult.rows,
+      ...chapterReviewResult.rows,
+      ...liveResult.rows,
+    ]),
   );
   writeFileSync(
     join(outputDir, 'review-cards.csv'),
@@ -400,7 +430,7 @@ async function main() {
   );
 
   console.log(
-    `SSOT 下載完成：QB ${questionResult.rows.length} 題、CR ${chapterReviewResult.rows.length} 題（另過濾佔位列 ${questionResult.placeholders.length + chapterReviewResult.placeholders.length} 列）、RC ${reviewResult.rows.length} 張。`,
+    `SSOT 下載完成：QB ${questionResult.rows.length} 題、CR ${chapterReviewResult.rows.length} 題、LT ${liveResult.rows.length} 題（另過濾佔位列 ${questionResult.placeholders.length + chapterReviewResult.placeholders.length + liveResult.placeholders.length} 列）、RC ${reviewResult.rows.length} 張。`,
   );
   console.log(
     `輸出：${OUTPUT_DIR}/questions.csv、${OUTPUT_DIR}/review-cards.csv${xlsxPath ? '' : `、${OUTPUT_DIR}/question-bank.xlsx`}`,

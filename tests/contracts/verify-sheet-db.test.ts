@@ -3,6 +3,7 @@ import XLSX from 'xlsx';
 
 import {
   CHAPTER_REVIEW_TAB_NAME,
+  LIVE_TAB_NAME,
   QUESTION_TAB_NAME,
   REVIEW_TAB_NAME,
 } from '../../scripts/content/fetch-sheet.mjs';
@@ -51,6 +52,7 @@ const question = (
 function makeWorkbook(
   questionRows: readonly (readonly string[])[],
   reviewRows: readonly (readonly string[])[] = [],
+  liveRows: readonly (readonly string[])[] = [],
 ) {
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(
@@ -87,6 +89,27 @@ function makeWorkbook(
     ]),
     CHAPTER_REVIEW_TAB_NAME,
   );
+  XLSX.utils.book_append_sheet(
+    workbook,
+    XLSX.utils.aoa_to_sheet([
+      [
+        '題庫序號',
+        '章節',
+        '章節標題',
+        '小節',
+        '小節標題',
+        '題目',
+        'A',
+        'B',
+        'C',
+        'D',
+        '解答',
+        '答錯觀念解析',
+      ],
+      ...liveRows.map((row) => [...row]),
+    ]),
+    LIVE_TAB_NAME,
+  );
   return workbook;
 }
 
@@ -108,7 +131,14 @@ const dbQuestionOf = (
     Partial<Record<'answer' | 'explanation' | 'prompt', string>>
   > = {},
   optionTexts: readonly string[] = ['明色', '中間色', '濁色', '暗色'],
-) => ({
+): DbSnapshot['questions'][number] => ({
+  bankKind: code.startsWith('CR')
+    ? 'chapter'
+    : code.startsWith('LT')
+      ? 'live'
+      : code.startsWith('QB')
+        ? 'section'
+        : 'legacy',
   code,
   explanation: overrides.explanation ?? `${code} 的解析。`,
   options: optionTexts.map((text, index) => ({
@@ -185,6 +215,33 @@ describe('detectAnswerConflict 啟發式', () => {
 });
 
 describe('buildSheetSnapshot 防呆', () => {
+  it('將 LT 列納入同一結構 gate，但保留 live scope', () => {
+    const liveRow = [
+      'LT3101',
+      '3',
+      '章名',
+      '1',
+      '小節名',
+      'Live 題目？',
+      '甲',
+      '乙',
+      '丙',
+      '丁',
+      'A',
+      'Live 解析。',
+    ];
+    const snapshot = buildSheetSnapshot({
+      fixes,
+      workbook: makeWorkbook([question('3-1-01')], [], [liveRow]),
+    });
+
+    expect(snapshot.errors).toEqual([]);
+    expect(snapshot.questions.map((entry) => entry.code)).toEqual([
+      '3-1-01',
+      'LT3101',
+    ]);
+  });
+
   it('QB 系統序號的小節必須與 Sheet 小節欄一致', () => {
     const mismatched = [
       'QB3201',
@@ -298,6 +355,51 @@ describe('compareSnapshots', () => {
     expect(result.diffs).toEqual([]);
     expect(result.matchedQuestions).toBe(1);
     expect(result.matchedCards).toBe(1);
+  });
+
+  it('LT 題目若被放進非 live bank，audit 會明確列為差異', () => {
+    const liveRow = [
+      'LT3101',
+      '3',
+      '章名',
+      '1',
+      '小節名',
+      'Live 題目？',
+      '甲',
+      '乙',
+      '丙',
+      '丁',
+      'A',
+      'Live 解析。',
+    ];
+    const liveSheet = buildSheetSnapshot({
+      fixes,
+      workbook: makeWorkbook([], [], [liveRow]),
+    });
+    const db: DbSnapshot = {
+      questions: [
+        {
+          ...dbQuestionOf(
+            'LT3101',
+            {
+              answer: 'A',
+              explanation: 'Live 解析。',
+              prompt: 'Live 題目？',
+            },
+            ['甲', '乙', '丙', '丁'],
+          ),
+          bankKind: 'section',
+        },
+      ],
+      reviewCards: [],
+    };
+
+    expect(compareSnapshots({ db, sheet: liveSheet }).diffs).toContainEqual({
+      code: 'LT3101',
+      detail: '表 live vs 庫 section',
+      field: '題池',
+      kind: 'field_mismatch',
+    });
   });
 
   it('解析不同 → 差異；列入 verifyKnownDivergences → 歸入已知', () => {

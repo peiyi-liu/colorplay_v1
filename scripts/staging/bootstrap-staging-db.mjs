@@ -106,18 +106,23 @@ await runSql(
   `notify pgrst, 'reload schema';`,
 );
 
-// 以 service key 建立測試帳號（沿用本機 seed-auth 流程）。
-const keysResponse = await globalThis.fetch(`${api}/api-keys`, {
+// 以可獨立輪替的新 secret key 建立測試帳號；legacy service_role 不落 log。
+const keysResponse = await globalThis.fetch(`${api}/api-keys?reveal=true`, {
   headers: { Authorization: `Bearer ${token}` },
 });
 if (!keysResponse.ok) {
   throw new Error(`無法取得 API keys（HTTP ${keysResponse.status}）`);
 }
 const keys = await keysResponse.json();
-const serviceKey = keys.find((key) => key.name === 'service_role')?.api_key;
-const anonKey = keys.find((key) => key.name === 'anon')?.api_key;
-if (!serviceKey || !anonKey)
-  throw new Error('API keys 回應缺少 anon/service_role');
+const secretKey = keys.find(
+  (key) => key.type === 'secret' && key.name === 'default',
+)?.api_key;
+const publishableKey = keys.find(
+  (key) => key.type === 'publishable' && key.name === 'default',
+)?.api_key;
+if (!secretKey || !publishableKey) {
+  throw new Error('API keys 回應缺少 default publishable/secret key');
+}
 
 const { spawnSync } = await import('node:child_process');
 const seedAuth = spawnSync(
@@ -128,7 +133,7 @@ const seedAuth = spawnSync(
     env: {
       ...process.env,
       SUPABASE_URL: `https://${ref}.supabase.co`,
-      SUPABASE_SERVICE_ROLE_KEY: serviceKey,
+      SUPABASE_SECRET_KEY: secretKey,
       SEED_REMOTE_CONFIRM: ref,
     },
     stdio: 'inherit',
@@ -139,4 +144,4 @@ if (seedAuth.status !== 0) throw new Error('seed-auth 失敗');
 console.log('');
 console.log('Staging 資料庫就緒。前端環境變數：');
 console.log(`  VITE_SUPABASE_URL=https://${ref}.supabase.co`);
-console.log(`  VITE_SUPABASE_ANON_KEY=${anonKey}`);
+console.log(`  VITE_SUPABASE_ANON_KEY=${publishableKey}`);

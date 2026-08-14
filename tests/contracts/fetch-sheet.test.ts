@@ -4,8 +4,10 @@ import XLSX from 'xlsx';
 import {
   CHAPTER_REVIEW_TAB_NAME,
   extractChapterReviewRows,
+  extractLiveRows,
   extractQuestionRows,
   extractReviewRows,
+  LIVE_TAB_NAME,
   QUESTION_TAB_NAME,
   REVIEW_TAB_NAME,
   toCsv,
@@ -104,6 +106,61 @@ const missingAnswerRow = [
 ];
 
 describe('fetch-sheet 題庫分頁解析', () => {
+  it('將 LT 工作表轉成獨立 Live 題池列', () => {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        [
+          '題庫序號',
+          '章節',
+          '章節標題',
+          '小節',
+          '小節標題',
+          '題目',
+          'A',
+          'B',
+          'C',
+          'D',
+          '解答',
+          '答錯觀念解析',
+        ],
+        [
+          'LT3101',
+          '3',
+          '色彩表示',
+          '1',
+          '色彩三要素',
+          'Live 題目？',
+          '甲',
+          '乙',
+          '丙',
+          '丁',
+          'B',
+          'Live 解析。',
+        ],
+      ]),
+      LIVE_TAB_NAME,
+    );
+
+    const result = extractLiveRows(workbook);
+    expect(result).toEqual({
+      placeholders: [],
+      problems: [],
+      rows: [
+        expect.objectContaining({
+          code: 'LT3101',
+          section: '1',
+          sectionTitle: '色彩三要素',
+          source: 'live',
+        }),
+      ],
+    });
+    expect(parseCsv(toQuestionsCsv(result.rows))[1]?.[2]).toBe(
+      '3-1 色彩三要素',
+    );
+  });
+
   it('依新版 QB／CR 工作表與系統序號分流兩種題庫', () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(

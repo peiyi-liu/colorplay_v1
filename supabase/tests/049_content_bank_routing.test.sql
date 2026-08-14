@@ -1,6 +1,6 @@
 begin;
 
-select plan(10);
+select plan(11);
 
 select has_column(
   'public', 'questions', 'bank_kind', 'questions expose a bank discriminator'
@@ -13,14 +13,20 @@ select has_column(
 select is(
   (select count(*)::integer from public.questions
    where stable_code like 'QB%' and bank_kind = 'section'),
-  139,
+  136,
   'all QB rows are stored in the section bank'
 );
 select is(
   (select count(*)::integer from public.questions
    where stable_code like 'CR%' and bank_kind = 'chapter'),
-  64,
+  62,
   'all CR rows are stored in the chapter bank'
+);
+select is(
+  (select count(*)::integer from public.questions
+   where stable_code like 'LT%' and bank_kind = 'live'),
+  60,
+  'all LT rows are stored in the Live-only bank'
 );
 select is(
   (select count(*)::integer from public.review_cards

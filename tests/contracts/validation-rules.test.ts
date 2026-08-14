@@ -64,7 +64,7 @@ describe('shared content validation rules', () => {
     expect(isValidQuestionCode('7-1-1')).toBe(false);
   });
 
-  it('接受 QB 小節題庫與 CR 章節總題庫的系統序號並解析 scope', () => {
+  it('接受 QB／CR／LT 系統序號並解析各自 scope', () => {
     expect(parseQuestionIdentifier('QB3126')).toEqual({
       chapter: '3',
       order: 26,
@@ -79,7 +79,15 @@ describe('shared content validation rules', () => {
       section: null,
       sectionKey: '3-final',
     });
+    expect(parseQuestionIdentifier('LT3120')).toEqual({
+      chapter: '3',
+      order: 20,
+      scope: 'live',
+      section: '1',
+      sectionKey: '3-1',
+    });
     expect(isValidQuestionCode('QB3126')).toBe(true);
     expect(isValidQuestionCode('CR3064')).toBe(true);
+    expect(isValidQuestionCode('LT3120')).toBe(true);
   });
 });

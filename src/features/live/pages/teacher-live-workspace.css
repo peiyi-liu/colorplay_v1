@@ -7,9 +7,9 @@
   align-items: flex-end;
   border-bottom: 1px solid var(--teacher-line);
   background:
-    linear-gradient(90deg, rgb(2 10 22 / 95%), rgb(2 10 22 / 44%) 65%, rgb(2 10 22 / 76%)),
+    linear-gradient(90deg, var(--teacher-palette-rgb-41ecfea6), var(--teacher-palette-rgb-56187b42) 65%, var(--teacher-palette-rgb-f601f9c8)),
     url('../../teacher-content/assets/teacher-workspace-command-room.png') center 48% / cover no-repeat;
-  box-shadow: 0 12px 28px rgb(0 7 18 / 28%);
+  box-shadow: 0 12px 28px var(--teacher-palette-rgb-e76a9199);
   padding: 28px 32px 24px;
 }
 

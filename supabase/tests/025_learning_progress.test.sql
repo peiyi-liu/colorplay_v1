@@ -232,13 +232,19 @@ select pg_temp.drill(
   '25000000-0000-0000-0000-000000000001', 'QB3105', 'correct', 'remediation'
 );
 
--- Subtopic 3-2: 46 of 65 correct -> developing.
+-- Subtopic 3-2: 46 of 62 current published questions correct -> developing.
+-- Select real rows rather than synthesizing sequential stable codes because
+-- source-authorized deletions may intentionally leave stable-code gaps.
 select pg_temp.drill(
   '25000000-0000-0000-0000-000000000001', code, 'correct', 'practice'
 )
 from (
-  select format('QB32%s', lpad(index::text, 2, '0')) as code
-  from generate_series(1, 46) as index
+  select stable_code as code
+  from public.questions
+  where stable_code like 'QB32%'
+    and status = 'published'
+  order by sort_order, stable_code
+  limit 46
 ) codes;
 
 -- Subtopic 3-3: all 23 correct -> mastered.
@@ -290,10 +296,10 @@ select results_eq(
         where st.stable_code = 'sheet-3-2-all'
       )$$,
   $$values (
-    round(46 * 100.0 / 65, 1), 100.0::numeric, round(46 * 100.0 / 65, 1),
+    round(46 * 100.0 / 62, 1), 100.0::numeric, round(46 * 100.0 / 62, 1),
     'developing'
   )$$,
-  '46 of 65 correct lands in developing'
+  '46 of 62 correct lands in developing'
 );
 select results_eq(
   $$select coverage, accuracy, mastery, status
@@ -323,8 +329,8 @@ select results_eq(
     from public.get_learning_progress('21000000-0000-0000-0000-000000000003')
     where scope = 'chapter'$$,
   $$values (
-    1, 8, round(2 * 100.0 / 64, 1), 50.0::numeric,
-    round(1 * 100.0 / 64, 1), 'learning'
+    1, 8, round(2 * 100.0 / 62, 1), 50.0::numeric,
+    round(1 * 100.0 / 62, 1), 'learning'
   )$$,
   'the chapter aggregates the CR bank independently from QB subtopics'
 );

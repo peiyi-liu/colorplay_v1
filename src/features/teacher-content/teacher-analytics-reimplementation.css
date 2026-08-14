@@ -5,24 +5,34 @@
 .teacher-work-surface--analytics .teacher-work-surface__header {
   min-height: 184px;
   background:
-    linear-gradient(90deg, rgb(2 10 22 / 94%), rgb(2 10 22 / 36%) 62%, rgb(2 10 22 / 74%)),
-    url('./assets/teacher-analytics-observatory.png') center 45% / cover no-repeat;
+    linear-gradient(
+      90deg,
+      var(--teacher-palette-rgb-684d97a2),
+      var(--teacher-palette-rgb-e3aefd08) 62%,
+      var(--teacher-palette-rgb-514f5b80)
+    ),
+    url('./assets/teacher-analytics-observatory.png') center 45% / cover
+      no-repeat;
 }
 
 .teacher-work-surface--analytics .teacher-work-surface__content {
   gap: 24px;
-  background: linear-gradient(180deg, #061321, #071827);
+  background: linear-gradient(
+    180deg,
+    var(--teacher-palette-hex-061321-da277862),
+    var(--teacher-palette-hex-071827-9d7f779d)
+  );
 }
 
 .teacher-analytics-filter-deck {
-  border: 1px solid #426b8e;
+  border: 1px solid var(--teacher-palette-hex-426b8e-5be032d3);
   border-radius: 8px;
-  background: #081d32;
+  background: var(--teacher-palette-hex-081d32-9cf2d62d);
   box-shadow: none;
 }
 
 .teacher-workspace-shell .teacher-analytics-filters {
-  background: #06172a;
+  background: var(--teacher-palette-hex-06172a-71ac9525);
 }
 
 .teacher-analytics-section {
@@ -35,7 +45,7 @@
 
 .teacher-analytics-section__header {
   min-height: 52px;
-  border-bottom: 1px solid #315371;
+  border-bottom: 1px solid var(--teacher-palette-hex-315371-9166fa90);
   background: transparent;
   padding: 0 0 10px;
 }
@@ -50,33 +60,37 @@
 
 .teacher-analytics-overview--compact {
   overflow: hidden;
-  border: 1px solid #345d80;
+  border: 1px solid var(--teacher-palette-hex-345d80-7b024690);
   border-radius: 8px;
-  background: #071b30;
-  grid-template-columns: minmax(160px, 0.7fr) minmax(180px, 0.8fr) minmax(300px, 1.5fr);
+  background: var(--teacher-palette-hex-071b30-ffd8ad56);
+  grid-template-columns: minmax(160px, 0.7fr) minmax(180px, 0.8fr) minmax(
+      300px,
+      1.5fr
+    );
 }
 
 .teacher-analytics-overview--compact > div {
   min-height: 118px;
   justify-content: center;
-  border-right: 1px solid #294a68;
+  border-right: 1px solid var(--teacher-palette-hex-294a68-19acfbe7);
   background: transparent;
   padding: 20px 24px;
 }
 
 .teacher-analytics-overview--compact > div:last-child {
   border-right: 0;
-  background: #0a243d;
+  background: var(--teacher-palette-hex-0a243d-083f0246);
 }
 
-.teacher-analytics-overview--compact dd:not(.teacher-analytics-overview__topic) {
-  color: #58baff;
+.teacher-analytics-overview--compact
+  dd:not(.teacher-analytics-overview__topic) {
+  color: var(--teacher-palette-hex-58baff-84b484b2);
   font-size: clamp(1.8rem, 3vw, 2.45rem);
 }
 
 .teacher-analytics-overview__topic {
   max-width: 28ch;
-  color: #f2f7ff;
+  color: var(--teacher-palette-hex-f2f7ff-819fc549);
   font-size: 1.05rem;
 }
 
@@ -91,14 +105,14 @@
 
 .teacher-assessment-source-tabs {
   justify-self: start;
-  border-color: #345e82;
-  background: #06172a;
+  border-color: var(--teacher-palette-hex-345e82-7d801029);
+  background: var(--teacher-palette-hex-06172a-71ac9525);
 }
 
 .teacher-analytics-decision-layout__primary .teacher-analytics-section {
-  border-top: 3px solid #168fe8;
+  border-top: 3px solid var(--teacher-palette-hex-168fe8-479ee2ce);
   border-radius: 8px;
-  background: #071a2e;
+  background: var(--teacher-palette-hex-071a2e-25046b49);
   padding: 20px;
 }
 
@@ -107,7 +121,7 @@
 }
 
 .teacher-analytics-decision-layout > .teacher-analytics-section {
-  border-left: 1px solid #2c4d6b;
+  border-left: 1px solid var(--teacher-palette-hex-2c4d6b-40d589e6);
   padding-left: 22px;
 }
 
@@ -125,7 +139,7 @@
 }
 
 .teacher-question-insight-grid > div + div {
-  border-left: 1px solid #2d4f6d;
+  border-left: 1px solid var(--teacher-palette-hex-2d4f6d-6bfc65c3);
   padding-right: 0;
   padding-left: 20px;
 }
@@ -134,16 +148,16 @@
 .teacher-live-analysis__grid article,
 .teacher-chapter-completion article {
   border: 0;
-  border-bottom: 1px solid #284966;
+  border-bottom: 1px solid var(--teacher-palette-hex-284966-8f443e57);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
 }
 
 .teacher-table-frame {
-  border: 1px solid #294a68;
+  border: 1px solid var(--teacher-palette-hex-294a68-19acfbe7);
   border-radius: 8px;
-  background: #06182a;
+  background: var(--teacher-palette-hex-06182a-611a4569);
 }
 
 @media (max-width: 47.99rem) {
@@ -160,7 +174,7 @@
   .teacher-analytics-overview--compact > div {
     min-height: 92px;
     border-right: 0;
-    border-bottom: 1px solid #294a68;
+    border-bottom: 1px solid var(--teacher-palette-hex-294a68-19acfbe7);
   }
 
   .teacher-analytics-overview--compact > div:last-child {
@@ -172,7 +186,7 @@
   }
 
   .teacher-analytics-decision-layout > .teacher-analytics-section {
-    border-top: 1px solid #2c4d6b;
+    border-top: 1px solid var(--teacher-palette-hex-2c4d6b-40d589e6);
     border-left: 0;
     padding-top: 20px;
     padding-left: 0;
@@ -185,7 +199,7 @@
   }
 
   .teacher-question-insight-grid > div + div {
-    border-top: 1px solid #2d4f6d;
+    border-top: 1px solid var(--teacher-palette-hex-2d4f6d-6bfc65c3);
     margin-top: 16px;
     padding-top: 16px;
   }

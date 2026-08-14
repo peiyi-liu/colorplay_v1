@@ -22,6 +22,7 @@ export type VerifyFixes = Readonly<{
 
 export type SheetSnapshotQuestion = Readonly<{
   answer: string;
+  bankKind: 'chapter' | 'legacy' | 'live' | 'section';
   code: string;
   explanation: string;
   options: readonly Readonly<{ key: string; text: string }>[];
@@ -44,6 +45,7 @@ export type SheetSnapshot = Readonly<{
 
 export type DbSnapshot = Readonly<{
   questions: readonly Readonly<{
+    bankKind: 'chapter' | 'legacy' | 'live' | 'section';
     code: string;
     explanation: string;
     options: readonly Readonly<{

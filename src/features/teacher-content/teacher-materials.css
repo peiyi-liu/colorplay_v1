@@ -12,27 +12,27 @@
 }
 
 .teacher-workspace-shell .primary-action {
-  border: 1px solid #f0c767;
-  background: #b77a13;
-  box-shadow: inset 0 1px rgb(255 255 255 / 22%);
-  color: #fff8e5;
+  border: 1px solid var(--teacher-palette-hex-f0c767-c7c383b8);
+  background: var(--teacher-palette-hex-b77a13-9ff90d44);
+  box-shadow: inset 0 1px var(--teacher-palette-rgb-8ebd3c07);
+  color: var(--teacher-palette-hex-fff8e5-1bc6c63b);
 }
 
 .teacher-workspace-shell .primary-action:hover:enabled {
-  background: #d28d16;
+  background: var(--teacher-palette-hex-d28d16-2102e363);
 }
 
 .teacher-workspace-shell .secondary-action {
-  border: 1px solid #4c7ca7;
-  background: #0a2946;
+  border: 1px solid var(--teacher-palette-hex-4c7ca7-ab8c6019);
+  background: var(--teacher-palette-hex-0a2946-65134172);
   box-shadow: none;
-  color: #eff7ff;
+  color: var(--teacher-palette-hex-eff7ff-3c611667);
 }
 
 .teacher-workspace-shell .secondary-action:hover {
-  border-color: #72b8ed;
-  background: #103a60;
-  color: #fff;
+  border-color: var(--teacher-palette-hex-72b8ed-67354c7d);
+  background: var(--teacher-palette-hex-103a60-892a2afc);
+  color: var(--teacher-palette-hex-fff-e08de713);
 }
 
 .teacher-workspace-shell :where(.primary-action, .secondary-action):active {
@@ -47,9 +47,9 @@
 .teacher-workspace-shell .ui-table-scroll {
   max-width: 100%;
   overflow: auto;
-  border: 1px solid #294866;
+  border: 1px solid var(--teacher-palette-hex-294866-b494b925);
   border-radius: var(--teacher-radius-group);
-  background: #06182a;
+  background: var(--teacher-palette-hex-06182a-611a4569);
 }
 
 .teacher-workspace-shell .ui-table {
@@ -61,12 +61,12 @@
 }
 
 .teacher-workspace-shell .ui-table thead {
-  background: #0b2b47;
+  background: var(--teacher-palette-hex-0b2b47-d43ffe5f);
 }
 
 .teacher-workspace-shell .ui-table :where(th, td) {
   border: 0;
-  border-bottom: 1px solid #24445f;
+  border-bottom: 1px solid var(--teacher-palette-hex-24445f-4490464e);
   padding: 13px 15px;
   text-align: left;
   vertical-align: middle;
@@ -77,7 +77,7 @@
 }
 
 .teacher-workspace-shell .ui-table tbody tr:hover {
-  background: rgb(20 92 145 / 16%);
+  background: var(--teacher-palette-rgb-00d5a756);
 }
 
 @media (prefers-reduced-motion: reduce) {

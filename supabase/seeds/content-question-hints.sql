@@ -1,5 +1,5 @@
 -- 由 scripts/content/import-questions.mjs 產生，請勿手動編輯。
--- 提示為 AI 草稿（import-fixes.json hintDrafts），待教師審閱；產生時間 2026-08-11T15:22:25.870Z
+-- 提示為 AI 草稿（import-fixes.json hintDrafts），待教師審閱；產生時間 2026-08-14T08:02:38.049Z
 begin;
 
 insert into public.question_hints (question_id, question_version, hint_level, content)

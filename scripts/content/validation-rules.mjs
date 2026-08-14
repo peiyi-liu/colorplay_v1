@@ -5,7 +5,7 @@
  */
 
 export const QUESTION_CODE_PATTERN =
-  /^(?:[0-9]+-[0-9]+-[0-9]{2}|QB[1-9][1-9][0-9]{2}|CR[1-9][0-9]{3})$/u;
+  /^(?:[0-9]+-[0-9]+-[0-9]{2}|(?:QB|LT)[1-9][1-9][0-9]{2}|CR[1-9][0-9]{3})$/u;
 
 export const TEXT_LIMITS = Object.freeze({
   explanation: 2000,
@@ -26,6 +26,17 @@ export const isValidQuestionCode = (code) =>
 
 export function parseQuestionIdentifier(code) {
   if (typeof code !== 'string') return null;
+  const liveMatch = /^LT([1-9])([1-9])([0-9]{2})$/u.exec(code);
+  if (liveMatch) {
+    const [, chapter, section, order] = liveMatch;
+    return {
+      chapter,
+      order: Number.parseInt(order, 10),
+      scope: 'live',
+      section,
+      sectionKey: `${chapter}-${section}`,
+    };
+  }
   const sectionMatch = /^QB([1-9])([1-9])([0-9]{2})$/u.exec(code);
   if (sectionMatch) {
     const [, chapter, section, order] = sectionMatch;

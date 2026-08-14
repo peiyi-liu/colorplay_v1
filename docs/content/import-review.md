@@ -1,8 +1,8 @@
 # 題庫匯入審閱報告
 
-產生時間：2026-08-11T15:22:25.923Z
+產生時間：2026-08-14T08:02:38.106Z
 
-已產生 203 題的 published 匯入資料：QB 小節題庫 139 題、CR 章節總題庫 64 題。
+已產生 258 題的 published 匯入資料：QB 小節題庫 136 題、CR 章節總題庫 62 題、LT Live 題庫 60 題。
 
 ## 需要教師處理的項目
 
@@ -76,7 +76,6 @@ Disposition `owner_ssot_accepted` 表示此 stable code 來自 owner 維護的�
 - QB3216: owner_ssot_accepted
 - QB3217: owner_ssot_accepted
 - QB3218: owner_ssot_accepted
-- QB3219: owner_ssot_accepted
 - QB3220: owner_ssot_accepted
 - QB3221: owner_ssot_accepted
 - QB3222: owner_ssot_accepted
@@ -121,8 +120,6 @@ Disposition `owner_ssot_accepted` 表示此 stable code 來自 owner 維護的�
 - QB3261: owner_ssot_accepted
 - QB3262: owner_ssot_accepted
 - QB3263: owner_ssot_accepted
-- QB3264: owner_ssot_accepted
-- QB3265: owner_ssot_accepted
 - QB3301: owner_ssot_accepted
 - QB3302: owner_ssot_accepted
 - QB3303: owner_ssot_accepted
@@ -195,7 +192,6 @@ Disposition `owner_ssot_accepted` 表示此 stable code 來自 owner 維護的�
 - CR3029: owner_ssot_accepted
 - CR3030: owner_ssot_accepted
 - CR3031: owner_ssot_accepted
-- CR3032: owner_ssot_accepted
 - CR3033: owner_ssot_accepted
 - CR3034: owner_ssot_accepted
 - CR3035: owner_ssot_accepted
@@ -227,7 +223,66 @@ Disposition `owner_ssot_accepted` 表示此 stable code 來自 owner 維護的�
 - CR3061: owner_ssot_accepted
 - CR3062: owner_ssot_accepted
 - CR3063: owner_ssot_accepted
-- CR3064: owner_ssot_accepted
+- LT3101: owner_ssot_accepted
+- LT3102: owner_ssot_accepted
+- LT3103: owner_ssot_accepted
+- LT3104: owner_ssot_accepted
+- LT3105: owner_ssot_accepted
+- LT3106: owner_ssot_accepted
+- LT3107: owner_ssot_accepted
+- LT3108: owner_ssot_accepted
+- LT3109: owner_ssot_accepted
+- LT3110: owner_ssot_accepted
+- LT3111: owner_ssot_accepted
+- LT3112: owner_ssot_accepted
+- LT3113: owner_ssot_accepted
+- LT3114: owner_ssot_accepted
+- LT3115: owner_ssot_accepted
+- LT3116: owner_ssot_accepted
+- LT3117: owner_ssot_accepted
+- LT3118: owner_ssot_accepted
+- LT3119: owner_ssot_accepted
+- LT3120: owner_ssot_accepted
+- LT3201: owner_ssot_accepted
+- LT3202: owner_ssot_accepted
+- LT3203: owner_ssot_accepted
+- LT3204: owner_ssot_accepted
+- LT3205: owner_ssot_accepted
+- LT3206: owner_ssot_accepted
+- LT3207: owner_ssot_accepted
+- LT3208: owner_ssot_accepted
+- LT3209: owner_ssot_accepted
+- LT3210: owner_ssot_accepted
+- LT3211: owner_ssot_accepted
+- LT3212: owner_ssot_accepted
+- LT3213: owner_ssot_accepted
+- LT3214: owner_ssot_accepted
+- LT3215: owner_ssot_accepted
+- LT3216: owner_ssot_accepted
+- LT3217: owner_ssot_accepted
+- LT3218: owner_ssot_accepted
+- LT3219: owner_ssot_accepted
+- LT3220: owner_ssot_accepted
+- LT3301: owner_ssot_accepted
+- LT3302: owner_ssot_accepted
+- LT3303: owner_ssot_accepted
+- LT3304: owner_ssot_accepted
+- LT3305: owner_ssot_accepted
+- LT3306: owner_ssot_accepted
+- LT3307: owner_ssot_accepted
+- LT3308: owner_ssot_accepted
+- LT3309: owner_ssot_accepted
+- LT3310: owner_ssot_accepted
+- LT3311: owner_ssot_accepted
+- LT3312: owner_ssot_accepted
+- LT3313: owner_ssot_accepted
+- LT3314: owner_ssot_accepted
+- LT3315: owner_ssot_accepted
+- LT3316: owner_ssot_accepted
+- LT3317: owner_ssot_accepted
+- LT3318: owner_ssot_accepted
+- LT3319: owner_ssot_accepted
+- LT3320: owner_ssot_accepted
 
 ## AI 起草的解析（共 0 題，請審閱後填回試算表）
 

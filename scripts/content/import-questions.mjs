@@ -107,7 +107,7 @@ for (const raw of rows) {
 
   if (!isValidQuestionCode(code)) {
     problems.push(
-      `題號 ${code} 格式不符（需為 QB章小節兩位題號或 CR章三位題號）`,
+      `題號 ${code} 格式不符（需為 QB／LT章小節兩位題號或 CR章三位題號）`,
     );
     continue;
   }
@@ -122,7 +122,7 @@ for (const raw of rows) {
     );
     continue;
   }
-  if (identifier.scope === 'section') {
+  if (identifier.scope === 'section' || identifier.scope === 'live') {
     const sectionMatch = /^([0-9]+)-([0-9]+)(?:\s|$)/u.exec(section0);
     if (!sectionMatch || sectionMatch[2] !== identifier.section) {
       problems.push(
@@ -183,7 +183,9 @@ for (const raw of rows) {
         ? 'chapter'
         : identifier.scope === 'section'
           ? 'section'
-          : 'legacy',
+          : identifier.scope === 'live'
+            ? 'live'
+            : 'legacy',
     code,
     chapterCode,
     order: identifier.order,
@@ -485,9 +487,13 @@ await writeFormattedOutput({
 });
 
 const chapterCounts = new Map();
-const bankCounts = { chapter: 0, section: 0 };
+const bankCounts = { chapter: 0, live: 0, section: 0 };
 for (const q of questions) {
-  if (q.bankKind === 'chapter' || q.bankKind === 'section') {
+  if (
+    q.bankKind === 'chapter' ||
+    q.bankKind === 'live' ||
+    q.bankKind === 'section'
+  ) {
     bankCounts[q.bankKind] += 1;
   }
   if (q.bankKind === 'chapter') {
@@ -550,7 +556,7 @@ const reviewLines = [
   '',
   `產生時間：${new Date().toISOString()}`,
   '',
-  `已產生 ${questions.length} 題的 published 匯入資料：QB 小節題庫 ${bankCounts.section} 題、CR 章節總題庫 ${bankCounts.chapter} 題。`,
+  `已產生 ${questions.length} 題的 published 匯入資料：QB 小節題庫 ${bankCounts.section} 題、CR 章節總題庫 ${bankCounts.chapter} 題、LT Live 題庫 ${bankCounts.live} 題。`,
   '',
   '## 需要教師處理的項目',
   '',
@@ -604,7 +610,7 @@ console.log(
   `匯入完成：${questions.length} 題 published、1 題 draft（RLS 測試用）。`,
 );
 console.log(
-  `QB 小節題庫：${bankCounts.section} 題\nCR 章節總題庫：${bankCounts.chapter} 題`,
+  `QB 小節題庫：${bankCounts.section} 題\nCR 章節總題庫：${bankCounts.chapter} 題\nLT Live 題庫：${bankCounts.live} 題`,
 );
 console.log(
   `跳過 ${skipped.length} 列、解析草稿 ${usedDraftExplanations.length} 題。`,

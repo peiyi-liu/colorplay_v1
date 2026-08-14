@@ -1,18 +1,4 @@
 .teacher-workspace-shell {
-  --teacher-page: #030a14;
-  --teacher-canvas: #061321;
-  --teacher-surface: #0a2035;
-  --teacher-surface-strong: #0c2944;
-  --teacher-ink: #eff6ff;
-  --teacher-muted: #adbbcf;
-  --teacher-line: rgb(124 163 204 / 42%);
-  --teacher-blue: #1597ff;
-  --teacher-blue-strong: #0877d1;
-  --teacher-gold: #e9b94f;
-  --teacher-danger: #ffb6b6;
-  --teacher-radius-control: 6px;
-  --teacher-radius-group: 8px;
-  --teacher-shadow-menu: 12px 0 32px rgb(0 5 14 / 36%);
   box-sizing: border-box;
   min-width: 0;
   min-height: 100dvh;
@@ -45,11 +31,14 @@
   min-height: 100dvh;
   border-right: 1px solid var(--teacher-line);
   background:
-    linear-gradient(rgb(3 12 26 / 96%), rgb(3 16 33 / 99%)),
+    linear-gradient(
+      var(--teacher-palette-rgb-3feb9844),
+      var(--teacher-palette-rgb-3470e2d7)
+    ),
     repeating-linear-gradient(
       0deg,
       transparent 0 3px,
-      rgb(255 255 255 / 2%) 4px
+      var(--teacher-palette-rgb-7443162a) 4px
     );
   box-shadow: var(--teacher-shadow-menu);
   grid-template-rows: auto 1fr auto;
@@ -70,13 +59,17 @@
   height: 92px;
   overflow: hidden;
   align-items: center;
-  border: 2px solid #5aa9e8;
+  border: 2px solid var(--teacher-palette-hex-5aa9e8-0f3a3ffd);
   border-radius: 50%;
-  outline: 1px solid rgb(164 210 247 / 28%);
+  outline: 1px solid var(--teacher-palette-rgb-c645d27b);
   background:
-    radial-gradient(circle at 50% 35%, rgb(32 99 158 / 55%), transparent 52%),
-    #061a31;
-  color: #d9eaff;
+    radial-gradient(
+      circle at 50% 35%,
+      var(--teacher-palette-rgb-4de84a12),
+      transparent 52%
+    ),
+    var(--teacher-palette-hex-061a31-e8a31247);
+  color: var(--teacher-palette-hex-d9eaff-66589366);
   cursor: pointer;
   font-size: 0.75rem;
   font-weight: 900;
@@ -93,7 +86,7 @@
 
 .teacher-menu__avatar:hover,
 .teacher-menu__avatar:focus-within {
-  border-color: #9ad5ff;
+  border-color: var(--teacher-palette-hex-9ad5ff-3ec4fe35);
   outline: 3px solid var(--teacher-blue);
   outline-offset: 3px;
 }
@@ -141,7 +134,7 @@
   border: 0;
   border-left: 3px solid transparent;
   background: transparent;
-  color: #b7c3d5;
+  color: var(--teacher-palette-hex-b7c3d5-50d4dbf4);
   gap: 14px;
   padding: 0 24px;
   text-decoration: none;
@@ -153,14 +146,15 @@
 
 .teacher-menu__link:hover,
 .teacher-menu__logout:hover {
-  background: rgb(23 111 187 / 22%);
-  color: #f7fbff;
+  background: var(--teacher-palette-rgb-4143fc0c);
+  color: var(--teacher-palette-hex-f7fbff-0ee823eb);
 }
 
 .teacher-menu__link:focus-visible,
 .teacher-menu__logout:focus-visible,
-.teacher-workspace-shell :where(button, a, input, select, summary):focus-visible {
-  outline: 3px solid #63baff;
+.teacher-workspace-shell
+  :where(button, a, input, select, summary):focus-visible {
+  outline: 3px solid var(--teacher-palette-hex-63baff-5176e0a1);
   outline-offset: -3px;
 }
 
@@ -168,10 +162,10 @@
   border-left-color: var(--teacher-blue);
   background: linear-gradient(
     90deg,
-    rgb(16 104 180 / 68%),
-    rgb(11 51 92 / 54%)
+    var(--teacher-palette-rgb-3e2a0775),
+    var(--teacher-palette-rgb-ff069fe2)
   );
-  color: #fff;
+  color: var(--teacher-palette-hex-fff-e08de713);
 }
 
 .teacher-menu__logout {
@@ -205,9 +199,9 @@
   bottom: 64px;
   left: 12px;
   padding: 8px;
-  border: 1px solid rgb(255 182 182 / 46%);
+  border: 1px solid var(--teacher-palette-rgb-cd49c155);
   border-radius: var(--teacher-radius-control);
-  background: #26121c;
+  background: var(--teacher-palette-hex-26121c-90c58a37);
   text-align: center;
 }
 
@@ -232,9 +226,15 @@
   justify-content: space-between;
   border-bottom: 1px solid var(--teacher-line);
   background:
-    linear-gradient(90deg, rgb(2 10 22 / 94%) 0%, rgb(2 10 22 / 48%) 58%, rgb(2 10 22 / 78%) 100%),
-    url('./assets/teacher-workspace-command-room.png') center 48% / cover no-repeat;
-  box-shadow: 0 12px 28px rgb(0 7 18 / 28%);
+    linear-gradient(
+      90deg,
+      var(--teacher-palette-rgb-684d97a2) 0%,
+      var(--teacher-palette-rgb-dcc6c5a5) 58%,
+      var(--teacher-palette-rgb-0521ffc7) 100%
+    ),
+    url('./assets/teacher-workspace-command-room.png') center 48% / cover
+      no-repeat;
+  box-shadow: 0 12px 28px var(--teacher-palette-rgb-e76a9199);
   gap: 28px;
   padding: 28px 32px 24px;
 }
@@ -245,7 +245,7 @@
 
 .teacher-work-surface__eyebrow {
   margin: 0 0 8px;
-  color: #70c2ff;
+  color: var(--teacher-palette-hex-70c2ff-12e3ba29);
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -253,17 +253,17 @@
 
 .teacher-work-surface__header h1 {
   margin: 0;
-  color: #f8fbff;
+  color: var(--teacher-palette-hex-f8fbff-2c1d5544);
   font-size: clamp(2rem, 3.6vw, 2.75rem);
   line-height: 1.12;
-  text-shadow: 0 3px 16px rgb(0 0 0 / 72%);
+  text-shadow: 0 3px 16px var(--teacher-palette-rgb-d45339af);
 }
 
 .teacher-work-surface__subtitle {
   display: block;
   max-width: 64ch;
   margin-top: 8px;
-  color: #c1cede;
+  color: var(--teacher-palette-hex-c1cede-bf1a4978);
   line-height: 1.5;
 }
 
@@ -290,7 +290,11 @@
   min-width: 0;
   gap: 18px;
   padding: 28px 32px 40px;
-  background: linear-gradient(180deg, #061321 0%, #071827 100%);
+  background: linear-gradient(
+    180deg,
+    var(--teacher-palette-hex-061321-da277862) 0%,
+    var(--teacher-palette-hex-071827-9d7f779d) 100%
+  );
 }
 
 .teacher-work-surface__state {
@@ -301,7 +305,7 @@
   margin: 0;
   border-top: 1px solid var(--teacher-line);
   border-bottom: 1px solid var(--teacher-line);
-  background: rgb(10 32 53 / 52%);
+  background: var(--teacher-palette-rgb-016347c1);
   color: var(--teacher-muted);
   gap: 12px;
   padding: 20px 24px;
@@ -312,18 +316,18 @@
 }
 
 .teacher-work-surface__state--loading {
-  border-top-color: #3d8dca;
+  border-top-color: var(--teacher-palette-hex-3d8dca-ebe638b0);
 }
 
 .teacher-work-surface__state--error {
-  border-top-color: #d16e72;
-  color: #ffd2d2;
+  border-top-color: var(--teacher-palette-hex-d16e72-84062b30);
+  color: var(--teacher-palette-hex-ffd2d2-b3fe3153);
 }
 
 .teacher-work-surface__retry {
   min-width: 44px;
   min-height: 44px;
-  border: 1px solid #5eb8fb;
+  border: 1px solid var(--teacher-palette-hex-5eb8fb-1890dfd8);
   border-radius: var(--teacher-radius-control);
   background: var(--teacher-surface-strong);
   color: var(--teacher-ink);
@@ -334,7 +338,7 @@
 }
 
 .teacher-work-surface__retry:hover {
-  background: #0e3a60;
+  background: var(--teacher-palette-hex-0e3a60-469fa368);
 }
 
 @media (prefers-reduced-motion: reduce) {

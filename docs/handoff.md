@@ -941,3 +941,31 @@
 - Auth、學習大廳橫向、Quiz 與結果頁在受限高度改由主內容區垂直捲動；專項 Chromium 1280×480、393×500、852×393 landscape 3/3 通過。複習卡翻頁在 owner 關閉系統 reduced-motion 後恢復，保留原有無障礙降動效規則，未強制覆寫。
 - Fresh static gates：lint、typecheck、production build、scoped Prettier、working tree／cached `git diff --check` 全綠。既有教師 CSS 使用 module-local raw colors 與全域 `spec/07`「色彩僅定義於 tokens.css」仍有 Medium 規範衝突；不影響本次功能／安全 blocker，但 staging 前應另立 ADR 或安排 token consolidation，避免在 integration merge 中重做已核准視覺。
 - 本 checkpoint 未 push、未 deploy、未操作 hosted Supabase／Vercel，也未執行 `pnpm acceptance`；真實手機裝置仍依規格留待 owner 驗證。
+
+## 2026-08-14 15:18 [Integration owner／Codex] — Google Sheet 內容 gate 失敗，staging 發布停止
+
+- 最新 Sheet 結構已解析為 QB 139、CR 64、LT 60、RC 8；結構 gate 0 error／0 warning。LT 不得沿用 QB 題池，故本機以 TDD 新增 `live` bank、`LT` stable code、Live-only 選題／教師分析與 completed-only owner answer projection；local reset 與 focused pgTAP 目前通過，尚未建立 commit。
+- 依 `docs/content/question-review-rubric.md` 對 263 題執行唯一一輪內容審查，結果 `VERDICT: FAIL`：37 個 BLOCKING、20 個 NON-BLOCKING、9 個 UNSURE。主要 blocker 是單選題有多個合理答案、正解與解析互相否定、專名／術語錯字、缺圖題無法判定；BLOCKING 涉及 QB3106、QB3112、QB3209、QB3223、QB3239、QB3247、QB3249、QB3251、QB3306、QB3307、QB3323、QB4108、QB4109、CR3003、CR3008、CR3009、CR3052、CR3063、LT3201、LT3202。
+- RC 8 張的文字／順序與既有 seed 無內容差異；重新產生只改 timestamp。P301–P305 的 Sheet 代號仍不是可匯入 media，hosted staging 既有圖片版本與綁定不得用 reset／seed 覆蓋。
+- 依 fail-closed gate，本輪未匯入 hosted Supabase、未 push、未 deploy Vercel。下一個安全動作是 owner／教師先在 Google Sheet SSOT 修正 BLOCKING 與裁決 UNSURE，再重新 fetch、內容審查與 Sheet↔staging audit；通過後才可套 migration、交易式發布內容與部署 `colorplay-staging-web`。
+
+## 2026-08-14 15:55 [Owner／Integration owner] — 最新 Sheet 再審仍 FAIL，未上傳 staging
+
+- Owner 裁決目前 Google Sheet 為內容 SSOT，接受已刪除題目與現有 stable codes；重新執行 `pnpm content:fetch`，取得 QB 136、CR 62、LT 60、RC 8，`content:verify --gate` 為結構錯誤 0／覆核提示 0。
+- 同一位 content reviewer 依最新 258 題重新完整審查，結果仍為 `VERDICT: FAIL`：38 個 BLOCKING、20 個 NON-BLOCKING、6 個 UNSURE。QB4109 的 answer／解析開頭雖已統一為 C，但選項 D 仍把頭部創傷後色覺喪失歸因於錐狀細胞受創，解析卻歸因於大腦視覺皮層受損，因此仍形成兩個錯項與內部矛盾。
+- 其他主要 blocker 仍包含 QB3106、QB3112、QB3208、QB3209、QB3221、QB3237、QB3245、QB3247、QB3249、QB3306、QB3307、QB3323、QB4108、CR3003、CR3008、CR3009、CR3051、CR3062、LT3201、LT3202。未對 generated content 做人工繞過，也未上傳 `onkxnkzeixpezetkmocf`、未 push、未 deploy 或停用 legacy keys。
+- 下一個安全動作：在 Google Sheet 修正全部 BLOCKING、由教師裁決 6 個 UNSURE，再重新 fetch／review；內容 gate 通過後才執行本機 DB regression、staging 交易式匯入與 Sheet↔DB audit。
+
+## 2026-08-14 16:02 [Owner] — QB4109 內容風險由教師裁決接受
+
+- Owner 明確裁決 QB4109 本輪先通過，故從 staging 發布 blocker 移除；其 answer=C 與解析開頭已一致。
+- 已知風險仍保留：選項 D 將頭部創傷後色覺喪失歸因於錐狀細胞受創，解析則歸因於大腦視覺皮層受損，兩者語意互斥。此裁決只解除該題發布 gate，不宣稱內容審查判定無誤。
+- 其餘 20 個 blocking stable codes 仍須修正或由教師逐題明確裁決，尚未操作 hosted Supabase／Vercel。
+
+## 2026-08-14 16:14 [Owner／Integration owner] — 本輪題庫 finding 全數由教師裁決接受，本機發布 gate 通過
+
+- Owner 明確要求本輪內容先通過並完成部署；因此前一輪 38 個 BLOCKING、20 個 NON-BLOCKING、6 個 UNSURE 全部視為教師內容裁決接受。已知內容風險保留於 handoff，不宣稱 reviewer 改判為無誤，也未人工修改 Sheet 或 generated seed。
+- 重新執行 `pnpm content:import`：Google Sheet SSOT 為 QB 136、CR 62、LT 60、RC 8；產生 258 題 published、1 題 draft（RLS fixture）、8 張 published review cards，結構 gate 0 error／0 warning。
+- 第一次完整 DB gate 正確找出三個 stale fixture：舊總題數、舊 QB／CR bank counts，以及已刪除 `QB3219` 導致的 sequential-code 假設。測試已改為目前權威題數，學習進度 fixture 改從實際 published rows 取 46 題，不再假設 stable code 連號；未改產品或題庫內容。
+- Fresh local gate：lint、typecheck、production build、Vitest 168 files／1153 tests、Supabase 60 files／1246 pgTAP、runtime 3、integration 12 files／25 tests、教師 Chromium 46／46、學生短高度／橫向／翻頁 Chromium 15／15、`git diff --check` 全綠。一次誤用 production preview 跑 dev-only harness 的 15 個失敗不代表產品結果，已以相同測試在正確 Vite dev harness 重跑 15／15。
+- 尚未 push、未操作 hosted Supabase／Vercel、未停用 legacy keys。下一步是 secret scan、integration checkpoint、唯一一次 Standards／Spec／Security review；無新 Critical／High 才進 staging 發布。

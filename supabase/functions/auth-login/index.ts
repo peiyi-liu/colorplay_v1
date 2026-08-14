@@ -1,11 +1,13 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { ACCOUNT_PATTERN, normalizeAccount } from '../_shared/account.ts';
+import { readRuntimeSupabaseApiKeys } from '../_shared/api-keys.ts';
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const { publishableKey, secretKey } = readRuntimeSupabaseApiKeys((name) =>
+  Deno.env.get(name),
+);
 
 // 防列舉：帳號不存在、角色不符、密碼錯誤一律同一回應。
 const invalidCredentials = () =>
@@ -41,7 +43,7 @@ Deno.serve(async (request) => {
     return invalidCredentials();
   }
 
-  const admin = createClient(supabaseUrl, serviceRoleKey, {
+  const admin = createClient(supabaseUrl, secretKey, {
     auth: { persistSession: false },
   });
 
@@ -62,7 +64,10 @@ Deno.serve(async (request) => {
     `${supabaseUrl}/auth/v1/token?grant_type=password`,
     {
       method: 'POST',
-      headers: { apikey: anonKey, 'Content-Type': 'application/json' },
+      headers: {
+        apikey: publishableKey,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ email, password }),
     },
   );

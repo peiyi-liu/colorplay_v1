@@ -4,7 +4,7 @@
 
 begin;
 
-select plan(8);
+select plan(9);
 
 select has_function(
   'public', 'list_live_section_options', 'section options listing exists'
@@ -89,7 +89,13 @@ select is(
     from jsonb_array_elements(public.list_live_section_options()) entry
   ),
   true,
-  'the listing pairs the imported 3-1 section with its QB template'
+  'the listing pairs the imported 3-1 section with its section template'
+);
+
+select is(
+  jsonb_array_length(public.list_live_section_options()),
+  3,
+  'only sections with a published LT question bank are listed for Live'
 );
 
 select throws_ok(
@@ -141,13 +147,13 @@ select public.start_live_session(
 
 select is(
   (
-    select bool_and(question.question_stable_code like 'QB31%')
+    select bool_and(question.question_stable_code like 'LT31%')
     from public.live_session_questions question
     where question.session_id
       = (current_setting('test.session')::jsonb ->> 'session_id')::uuid
   ),
   true,
-  'the freeze samples questions from the chosen section only'
+  'the freeze samples LT questions from the chosen section only'
 );
 select cmp_ok(
   (

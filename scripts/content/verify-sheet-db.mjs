@@ -30,6 +30,7 @@ import XLSX from 'xlsx';
 
 import {
   extractChapterReviewRows,
+  extractLiveRows,
   extractQuestionRows,
   extractReviewRows,
   loadRemoteWorkbook,
@@ -107,6 +108,7 @@ export function buildSheetSnapshot({ fixes, workbook }) {
   const extractions = [
     extractQuestionRows(workbook),
     extractChapterReviewRows(workbook),
+    extractLiveRows(workbook),
   ];
   const errors = extractions.flatMap((extraction) => extraction.problems);
   const warnings = [];
@@ -136,7 +138,7 @@ export function buildSheetSnapshot({ fixes, workbook }) {
     }
     const identifier = parseQuestionIdentifier(code);
     if (
-      identifier?.scope === 'section' &&
+      (identifier?.scope === 'section' || identifier?.scope === 'live') &&
       identifier.section !== String(row.section ?? '')
     ) {
       errors.push(
@@ -207,6 +209,14 @@ export function buildSheetSnapshot({ fixes, workbook }) {
 
     questions.push({
       answer: resolved.key,
+      bankKind:
+        identifier.scope === 'chapter'
+          ? 'chapter'
+          : identifier.scope === 'live'
+            ? 'live'
+            : identifier.scope === 'section'
+              ? 'section'
+              : 'legacy',
       code,
       explanation: row.explanation,
       options,
@@ -234,7 +244,7 @@ export function buildSheetSnapshot({ fixes, workbook }) {
 }
 
 const QUESTIONS_SQL = `
-select q.stable_code as code, q.prompt, q.explanation,
+select q.stable_code as code, q.bank_kind as "bankKind", q.prompt, q.explanation,
        coalesce(
          json_agg(
            json_build_object('key', o.option_key, 'text', o.option_text, 'correct', o.is_correct)
@@ -319,6 +329,15 @@ export function compareSnapshots({ db, knownDivergences, sheet }) {
     }
     dbByCode.delete(question.code);
     let clean = true;
+    if (question.bankKind !== dbQuestion.bankKind) {
+      classify(
+        question.code,
+        'bankKind',
+        '題池',
+        `表 ${question.bankKind} vs 庫 ${dbQuestion.bankKind ?? '(無)'}`,
+      );
+      clean = false;
+    }
     if (fingerprint(question.prompt) !== fingerprint(dbQuestion.prompt)) {
       classify(question.code, 'prompt', '題幹');
       clean = false;

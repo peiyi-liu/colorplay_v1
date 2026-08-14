@@ -47,14 +47,23 @@ Only these Supabase variable names are allowed in browser configuration:
 - `VITE_SUPABASE_ANON_KEY`
 
 Documentation, source control, logs, and evidence contain names only—never
-their deployed values. The anon key is browser-publishable but remains
-low-privilege and depends on Row Level Security.
+their deployed values. `VITE_SUPABASE_ANON_KEY` is retained as the application
+contract name, but hosted environments must store the current
+`sb_publishable_…` key in it. The key remains low-privilege and depends on Row
+Level Security.
 
 Never place a Supabase `service_role` key, database URL or password, JWT
 secret, access token, SMTP password, or any other server credential in a
 `VITE_*` variable or client bundle. Server-only credentials belong in
 Supabase or another server-only secret store and must not be exposed to this
 static frontend.
+
+Supabase Edge Functions consume `SUPABASE_PUBLISHABLE_KEYS` and
+`SUPABASE_SECRET_KEYS` from the hosted secret store. During a zero-downtime
+migration they may fall back to the legacy variables only when the new key set
+is absent. After browser, Edge Function, CI and script smoke checks pass,
+deactivate the legacy `anon`／`service_role` keys; never rotate the shared
+legacy JWT secret as the first response to a service credential exposure.
 
 Database deployment is a separate protected gate: feature CI proves migrations
 locally, Staging receives the reviewed release candidate, and Production

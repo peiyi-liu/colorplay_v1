@@ -1,5 +1,5 @@
 -- 由 scripts/content/import-review-cards.mjs 產生，請勿手動編輯。
--- 內容來源：教師試算表「各單元複習大廳」；產生時間 2026-08-11T15:22:26.011Z
+-- 內容來源：教師試算表「各單元複習大廳」；產生時間 2026-08-14T08:02:38.206Z
 begin;
 
 update public.review_cards set status = 'archived', updated_at = now() where stable_code like 'sheet-card-%';

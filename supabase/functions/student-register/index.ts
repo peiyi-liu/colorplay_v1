@@ -9,11 +9,13 @@ import {
   sha256Hex,
   validateNickname,
 } from '../_shared/account.ts';
+import { readRuntimeSupabaseApiKeys } from '../_shared/api-keys.ts';
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const { publishableKey, secretKey } = readRuntimeSupabaseApiKeys((name) =>
+  Deno.env.get(name),
+);
 
 const failure = (status: number, error: string) =>
   jsonResponse(status, { error });
@@ -62,7 +64,7 @@ Deno.serve(async (request) => {
 
   // 必須帶 OTP 驗證後的使用者 session。
   const authHeader = request.headers.get('Authorization') ?? '';
-  const userClient = createClient(supabaseUrl, anonKey, {
+  const userClient = createClient(supabaseUrl, publishableKey, {
     auth: { persistSession: false },
     global: { headers: { Authorization: authHeader } },
   });
@@ -72,7 +74,7 @@ Deno.serve(async (request) => {
   if (userError || !user) return failure(401, 'AUTH_REQUIRED');
   if (!user.email_confirmed_at) return failure(403, 'EMAIL_NOT_VERIFIED');
 
-  const admin = createClient(supabaseUrl, serviceRoleKey, {
+  const admin = createClient(supabaseUrl, secretKey, {
     auth: { persistSession: false },
   });
 

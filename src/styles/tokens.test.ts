@@ -10,6 +10,22 @@ const tokensCss = readFileSync(
   'utf8',
 );
 
+const teacherStylePaths = [
+  'src/features/teacher-content/teacher-analytics-data.css',
+  'src/features/teacher-content/teacher-analytics-mobile.css',
+  'src/features/teacher-content/teacher-analytics-reimplementation.css',
+  'src/features/teacher-content/teacher-analytics.css',
+  'src/features/teacher-content/teacher-materials.css',
+  'src/features/teacher-content/teacher-questions-reimplementation.css',
+  'src/features/teacher-content/teacher-workspace-mobile.css',
+  'src/features/teacher-content/teacher-workspace.css',
+  'src/features/live/pages/teacher-live-page.css',
+  'src/features/live/pages/teacher-live-report-page.css',
+  'src/features/live/pages/teacher-live-workspace.css',
+];
+
+const rawColorPattern = /#[0-9a-f]{3,8}\b|\brgba?\([^)]*\)|\bhsla?\([^)]*\)/giu;
+
 describe('ColorPlay flat design tokens', () => {
   // owner 0728 深夜裁定:淡彩系統擴大全站——墨色改冷灰階、紙張改白。
   it.each([
@@ -78,6 +94,17 @@ describe('ColorPlay flat design tokens', () => {
       '--avatar-frame-bg: color-mix(in srgb, var(--amber-avatar) 30%, white)',
     );
   });
+
+  it.each(teacherStylePaths)(
+    'keeps teacher colors centralized in tokens.css: %s',
+    (stylePath) => {
+      const stylesheet = readFileSync(
+        resolve(process.cwd(), stylePath),
+        'utf8',
+      );
+      expect(stylesheet.match(rawColorPattern)).toBeNull();
+    },
+  );
 
   // owner 0728 晚間淡彩批:大廳/成就頁專用淡彩系統(hex 依規格逐字釘住)。
   it.each([

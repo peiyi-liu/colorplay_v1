@@ -17,7 +17,7 @@
     height: 72px;
     min-height: 72px;
     border: 0;
-    box-shadow: 0 10px 28px rgb(0 5 14 / 40%);
+    box-shadow: 0 10px 28px var(--teacher-palette-rgb-112effe7);
     grid-template-columns: minmax(0, 1fr) 72px;
     grid-template-rows: 72px;
   }
@@ -60,9 +60,9 @@
     left: 8px;
     margin: 0;
     padding: 8px 12px;
-    border: 1px solid rgb(255 182 182 / 46%);
+    border: 1px solid var(--teacher-palette-rgb-cd49c155);
     border-radius: var(--teacher-radius-control);
-    background: #26121c;
+    background: var(--teacher-palette-hex-26121c-90c58a37);
     text-align: center;
   }
 
@@ -80,8 +80,8 @@
     display: grid;
     height: calc(72px + env(safe-area-inset-bottom));
     border-top: 1px solid var(--teacher-line);
-    background: #04101f;
-    box-shadow: 0 -10px 28px rgb(0 5 14 / 34%);
+    background: var(--teacher-palette-hex-04101f-b0d4355f);
+    box-shadow: 0 -10px 28px var(--teacher-palette-rgb-bfb055f1);
     grid-template-columns: repeat(3, minmax(0, 1fr));
     padding: 0 0 env(safe-area-inset-bottom);
   }

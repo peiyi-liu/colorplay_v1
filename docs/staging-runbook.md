@@ -13,7 +13,9 @@ node scripts/staging/bootstrap-staging-db.mjs --confirm-wipe
 
 腳本會：清空 public schema 與全部使用者 → 依序套用全部 migrations（含歷史記錄）→
 套用內容種子（題庫、複習卡、提示）→ 重載 PostgREST → 建立測試帳號。
-結尾會印出前端需要的 `VITE_SUPABASE_URL` 與 `VITE_SUPABASE_ANON_KEY`。
+結尾會印出前端需要的 `VITE_SUPABASE_URL` 與
+`VITE_SUPABASE_ANON_KEY`；後者的值是新 `sb_publishable_…` key，變數名稱僅
+為前端相容性保留。新 secret key 只傳入子程序，不輸出。
 
 ## 2. Vercel 建立專案、環境變數、部署
 
@@ -22,7 +24,7 @@ export VERCEL_TOKEN=vcp_（你的 token）
 pnpm dlx vercel link --yes --project colorplay-staging --token "$VERCEL_TOKEN"
 printf 'https://onkxnkzeixpezetkmocf.supabase.co' \
   | pnpm dlx vercel env add VITE_SUPABASE_URL production --token "$VERCEL_TOKEN"
-printf '（步驟 1 印出的 anon key）' \
+printf '（步驟 1 印出的 publishable key）' \
   | pnpm dlx vercel env add VITE_SUPABASE_ANON_KEY production --token "$VERCEL_TOKEN"
 pnpm dlx vercel deploy --prod --token "$VERCEL_TOKEN"
 ```
@@ -69,11 +71,17 @@ supabase functions deploy auth-login student-register auth-recover --no-verify-j
 
 # 4) 測試帳號補值（teacher01/student01/student02 + 班級 fixtures；冪等）
 SUPABASE_URL=https://onkxnkzeixpezetkmocf.supabase.co \
-SUPABASE_ANON_KEY=（staging anon key） \
-SUPABASE_SERVICE_ROLE_KEY=（staging service key） \
+SUPABASE_ANON_KEY=（staging publishable key） \
+SUPABASE_SECRET_KEY=（staging secret key） \
 SEED_REMOTE_CONFIRM=onkxnkzeixpezetkmocf \
 pnpm exec tsx scripts/supabase/seed-auth.ts
 ```
+
+Edge Functions 會優先讀取 Supabase 自動注入的
+`SUPABASE_PUBLISHABLE_KEYS`／`SUPABASE_SECRET_KEYS`；三個 Auth 函式與前端
+使用新 key 完成 smoke 後，才在 Dashboard 停用 legacy `anon`／`service_role`。
+停用前須盤點 CI、第三方整合、webhook 與舊腳本；停用可回復，但不得把
+legacy service credential 寫入命令輸出或 artifact。
 
 ### Dashboard 一次性設定（無 API 可代做，需人工）
 

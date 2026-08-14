@@ -12,7 +12,7 @@
   }
 
   .teacher-analytics-overview > div:nth-child(-n + 2) {
-    border-bottom: 1px solid #2a4969;
+    border-bottom: 1px solid var(--teacher-palette-hex-2a4969-749c110d);
   }
 
   .teacher-analytics-grid {
@@ -76,7 +76,7 @@
   .teacher-analytics-overview > div,
   .teacher-analytics-overview > div:nth-child(2) {
     border-right: 0;
-    border-bottom: 1px solid #2a4969;
+    border-bottom: 1px solid var(--teacher-palette-hex-2a4969-749c110d);
     padding: 13px 4px;
   }
 
@@ -112,8 +112,8 @@
   }
 
   .teacher-analytics-disclosures details {
-    border: 1px solid #294d70;
-    background: #061a32;
+    border: 1px solid var(--teacher-palette-hex-294d70-dae01575);
+    background: var(--teacher-palette-hex-061a32-edab6f53);
   }
 
   .teacher-analytics-disclosures summary {
@@ -121,14 +121,14 @@
     min-height: 48px;
     align-items: center;
     justify-content: space-between;
-    color: #dcecff;
+    color: var(--teacher-palette-hex-dcecff-6cff151f);
     cursor: pointer;
     gap: 14px;
     padding: 0 12px;
   }
 
   .teacher-analytics-disclosures summary strong {
-    color: #5cbcff;
+    color: var(--teacher-palette-hex-5cbcff-e156b6a2);
   }
 
   .teacher-analytics-disclosures details > p,
@@ -139,7 +139,7 @@
   }
 
   .teacher-analytics-disclosures details > p {
-    color: #e6effa;
+    color: var(--teacher-palette-hex-e6effa-6b7d4536);
     line-height: 1.5;
   }
 
@@ -162,17 +162,17 @@
   }
 
   .teacher-analytics-disclosures dl > div {
-    border: 1px solid #284965;
+    border: 1px solid var(--teacher-palette-hex-284965-4bcab646);
     padding: 8px;
   }
 
   .teacher-analytics-disclosures dt {
-    color: #91a4b8;
+    color: var(--teacher-palette-hex-91a4b8-ae619755);
     font-size: 0.65rem;
   }
 
   .teacher-analytics-disclosures dd {
-    color: #f2f7ff;
+    color: var(--teacher-palette-hex-f2f7ff-819fc549);
     font-weight: 900;
     margin: 4px 0 0;
   }
@@ -225,8 +225,8 @@
   }
 
   .teacher-question-mobile-rows article {
-    border: 1px solid #294e70;
-    background: #061a32;
+    border: 1px solid var(--teacher-palette-hex-294e70-19b465d3);
+    background: var(--teacher-palette-hex-061a32-edab6f53);
     padding: 12px;
   }
 
@@ -244,7 +244,7 @@
 
   .teacher-question-mobile-rows button {
     width: 100%;
-    border: 1px solid #3a77a9;
+    border: 1px solid var(--teacher-palette-hex-3a77a9-b199225d);
   }
 
   .teacher-question-options li {

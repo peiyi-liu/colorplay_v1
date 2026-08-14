@@ -32,6 +32,8 @@
 3. 呼叫者是指定 classroom 的 owner。
 4. stable question identity 位於該班級允許的正式分析範圍。
 
+正式分析範圍包含該班已完成的 Quiz，以及該班已完成 Live session 當下凍結的題目。Live 投影必須使用 session 已凍結的公開選項與正解 ID，不得使用日後改版的現行選項；進行中、暫停中、已取消或只存在題庫但未出現在該班已完成 Live 的題目一律不得解鎖正解。
+
 Anonymous、學生、非 owner 教師、跨班級教師，以及超出該班級分析範圍的題目全部 fail closed。Denied response 使用一致的無資料或一般權限拒絕，不洩漏題目、班級或關聯是否存在。
 
 若 function 使用 `security definer`，必須固定安全的 `search_path`，並在 function 內明確執行 teacher role 與 classroom ownership 驗證；不能把 grant、前端 route guard 或隱藏控制項當成授權。
@@ -52,7 +54,9 @@ Anonymous、學生、非 owner 教師、跨班級教師，以及超出該班級�
 ## 後果與驗證
 
 - 正向測試：同班 classroom owner 可以取得窄型別答案投影。
+- Live 正向測試：同班已完成 Live 的 frozen options 可以取得正解投影，且歷史 QB Live 與新 LT Live 都維持相容。
 - 負向測試：anonymous、學生、非 owner 教師、跨班級教師與越界題目全部無法取得答案，且不洩漏存在性。
+- Live 負向測試：進行中或未出現在該班已完成 Live 的題目不得取得正解。
 - Schema contract 驗證 shared `QuestionDetail`、學生 Quiz、進行中 Live、一般分析與 static artifacts 仍不含答案欄位。
 - Network／schema scanner 必須依 endpoint、authenticated role、classroom ownership 與作答階段分類。
 - ADR 0007 的教師例外只允許專用 endpoint；不得把 `is_correct` 加入全域 allowlist 或讓 scanner 全域忽略。

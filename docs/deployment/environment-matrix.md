@@ -28,7 +28,7 @@ The browser allowlist contains exactly:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 
-These names hold public connection configuration, not authorization bypasses. RLS remains mandatory. Database URLs/passwords, JWT secrets, service credentials, SMTP passwords, access tokens, backup keys, and monitoring write keys never use a `VITE_` prefix and never enter source, logs, artifacts, or the browser bundle.
+These names hold public connection configuration, not authorization bypasses. In hosted environments `VITE_SUPABASE_ANON_KEY` contains the current Supabase publishable key (`sb_publishable_…`); the legacy name is retained only for application compatibility. RLS remains mandatory. Database URLs/passwords, JWT secrets, service credentials, SMTP passwords, access tokens, backup keys, and monitoring write keys never use a `VITE_` prefix and never enter source, logs, artifacts, or the browser bundle.
 
 ## Auth URL lifecycle
 

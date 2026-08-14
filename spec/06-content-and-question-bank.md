@@ -46,7 +46,7 @@ Course
 - 恰一個正確選項。
 - prompt 1–1,000 字元。
 - explanation 1–2,000 字元。
-- stable code 唯一於 course。正式 Sheet 題池採 `QB章小節兩位題號`（例如 `QB3101`）或 `CR章三位題號`（例如 `CR3001`）；legacy stable code 只為歷史相容保留。
+- stable code 唯一於 course。正式 Sheet 題池採 `QB章小節兩位題號`（例如 `QB3101`）、`CR章三位題號`（例如 `CR3001`）或 `LT章小節兩位題號`（例如 `LT3101`）；legacy stable code 只為歷史相容保留。
 - duration 5–120 秒，MVP UI 預設 20。
 
 ### 後續：
@@ -97,7 +97,7 @@ Published question 若修改以下任一欄位，必須建立新 version：
 
 ## 6. XLSX 範本
 
-必須提供可真實下載的 `.xlsx`；正式內容來源至少包含 RC／QB／CR 三個工作表，匯入範本可另含章節 metadata 工作表：
+必須提供可真實下載的 `.xlsx`；正式內容來源至少包含 RC／QB／CR／LT 四個工作表，匯入範本可另含章節 metadata 工作表：
 
 ### `章節`
 
@@ -139,6 +139,13 @@ Published question 若修改以下任一欄位，必須建立新 version：
 - 總章節題庫序號（`CR章三位題號`）
 - 題目／選項A-D／正解／解析
 
+### `(LT)LIVE 題目`
+
+- 章節、章節標題
+- 小節、小節標題
+- 題庫序號（`LT章小節兩位題號`）
+- 題目／選項A-D／正解／解析
+
 範本包含說明列與至少 2 筆合法示例，但匯入時可選擇忽略示例列。
 
 ## 7. 匯入流程
@@ -174,7 +181,7 @@ Published question 若修改以下任一欄位，必須建立新 version：
 
 - 每列以 stable code 對既有內容比對：內容完全相同 → no-op；語意欄位變更且目標已
   published → 依 §4 建立新 version；目標為 draft → 就地更新草稿；不存在 → 新增。
-- 匯入永不刪除內容；下架僅能經由明確的 archive 指令。已驗證的 RC／QB／CR stable codes
+- 匯入永不刪除內容；下架僅能經由明確的 archive 指令。已驗證的 RC／QB／CR／LT stable codes
   不得因任何匯入而消失（`AC-MIG-003`）。
 - 伺服器端對每列重跑與 §5 相同的驗證；client 的驗證結果僅供預覽，不被信任。
 
@@ -193,7 +200,7 @@ Published question 若修改以下任一欄位，必須建立新 version：
 - 不抽 archived／draft。
 - 隨機化在後端執行。
 - Session 建立後 frozen。
-- 小節測驗與 Live 只抽對應小節的 QB 題池；章節總測驗只抽該章 CR 題池，兩者不得混抽。
+- 小節測驗只抽對應小節的 QB 題池；章節總測驗只抽該章 CR 題池；Live 只抽教師所選小節的 LT 題池，三者不得混抽。既有已凍結的 QB Live Session 保留歷史讀取與分析相容，但新 Session 不再從 QB 抽題。
 - 若題數不足，回傳實際題數與明確 reason；UI 顯示真實數量。
 - Practice／assignment／remediation 只抽 current published versions；Live session 建立時另凍結自己的 question/version/options/deadline projection。
 
@@ -225,8 +232,8 @@ Published question 若修改以下任一欄位，必須建立新 version：
 
 ## 13. Verified content baseline and legacy boundary
 
-- 2026-08-11 Sheet baseline：QB 139 題、CR 64 題、RC 8 張；結構 gate 為 0 error／0 warning。數量只描述該次已驗證快照，後續仍以重新抓取並通過 gate 的 Sheet 為準。
-- 教師持續在同一份公開試算表擴充內容；重新匯入以 RC／QB／CR stable code 做 deterministic upsert，不刪除或改寫歷史 frozen session reference。
+- 2026-08-14 Sheet baseline：QB 139 題、CR 64 題、LT 60 題、RC 8 張；結構 gate 為 0 error／0 warning。數量只描述該次已驗證快照，後續仍以重新抓取並通過 gate 的 Sheet 為準。
+- 教師持續在同一份公開試算表擴充內容；重新匯入以 RC／QB／CR／LT stable code 做 deterministic upsert，不刪除或改寫歷史 frozen session reference。
 - 複習卡來源分頁為 `(RC)各單元複習大廳`。匯入器 `scripts/content/import-review-cards.mjs` 產出 `supabase/seeds/content-review-cards.sql`、`tests/fixtures/review-manifest.generated.ts` 與 `docs/content/review-import-report.md`；UUID 決定性（stable key 派生），初版 version 1、status published。同一小節可有多張卡。
 - Hint content 在試算表尚無欄位前，由 `scripts/content/import-fixes.json` 以 level 1–3 草稿補充（AI 草稿，匯入報告標示「待教師審閱」，與解析草稿同一政策）；hint 不得等價揭露正解。試算表未來新增提示欄位後以試算表為準。
 - Legacy hosted 46 題沒有 unique valid content：44 prompts matching，2 remote-only rows invalid；不得覆蓋 verified baseline。
