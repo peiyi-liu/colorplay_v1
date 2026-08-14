@@ -705,3 +705,9 @@
 - Browser 實測：加入碼 `ABCD-1234-EF56-7890` 為 `230.31×24.70px`、`white-space: nowrap`；題目頁 1280／393 初始各有 1 個 open details；兩種 mobile summary 均為 `341×66.66px`、chevron `24×24px`，`aria-expanded` false／true 與方向矩陣同步切換，且無 document overflow。
 - Fresh checks：相關 Vitest 4 files／16 tests、owner visual Chromium 5/5、既有六頁 Chromium regression 39/39、scoped ESLint、typecheck、build、`git diff --check` 全綠。全新 12 張 after 截圖與 manifest 位於 `/private/tmp/colorplay-teacher-visual-correction-after/`，全部 scrollY=0、console／page error=0、document overflow=0。
 - 本輪未執行 acceptance、DB 或 hosted operation；只做三項 finding 的限定 review，未展開第二輪 broad review。等待 owner 最終視覺核准。
+
+## 2026-08-14 11:33 [Owner／Codex] — 班級操作按鈕最終微修正
+
+- 僅補正班級 roster actions：`進入班級`／`教學分析` 設定 112px 最小寬度與 `white-space: nowrap`；未改文案、route、handler、資料或其他頁面，既有 mobile flex／full-width composition 由原六頁 regression 保持全綠。
+- 1024／1280×900 實測兩按鈕各只有 1 個文字 line rect：`進入班級` 為 `112×48px`、`教學分析` 為 `112×44px`，兩者 computed white-space 均為 nowrap，兩個 viewport 均無 document overflow、console／page error。
+- Fresh checks：相關 Vitest 1 file／7 tests、focused Chromium 2/2、既有六頁 Chromium regression 39/39、scoped ESLint、typecheck、build、`git diff --check` 全綠。只重拍 `/private/tmp/colorplay-teacher-class-actions-final/classes-1280x900.png`；未執行 acceptance、DB 或 hosted operation，等待 owner 依新截圖與量測決定交接整合。

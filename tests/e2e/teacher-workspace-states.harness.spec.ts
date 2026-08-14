@@ -57,34 +57,66 @@ for (const width of [320, 375, 393] as const) {
   });
 }
 
-test('owner visual: desktop classroom join code remains one readable line', async ({
-  page,
-}) => {
-  const runtimeErrors = observeRuntimeErrors(page);
-  await page.setViewportSize({ height: 900, width: 1280 });
-  await page.goto('/dev-harness/teacher-routes.html?scenario=classes');
-  await page.waitForLoadState('networkidle');
+for (const width of [1024, 1280] as const) {
+  test(`owner visual: desktop classroom actions remain single-line at ${String(width)}px`, async ({
+    page,
+  }) => {
+    const runtimeErrors = observeRuntimeErrors(page);
+    await page.setViewportSize({ height: 900, width });
+    await page.goto('/dev-harness/teacher-routes.html?scenario=classes');
+    await page.waitForLoadState('networkidle');
 
-  const code = page.locator('.classroom-card__code-value').first();
-  const codeBox = await code.evaluate((element) => {
-    const style = getComputedStyle(element);
-    const bounds = element.getBoundingClientRect();
-    return {
-      height: bounds.height,
-      overflowWrap: style.overflowWrap,
-      whiteSpace: style.whiteSpace,
-      width: bounds.width,
-    };
+    const code = page.locator('.classroom-card__code-value').first();
+    const codeBox = await code.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const bounds = element.getBoundingClientRect();
+      return {
+        height: bounds.height,
+        overflowWrap: style.overflowWrap,
+        whiteSpace: style.whiteSpace,
+        width: bounds.width,
+      };
+    });
+    expect(codeBox.whiteSpace).toBe('nowrap');
+    expect(codeBox.overflowWrap).not.toBe('anywhere');
+    expect(codeBox.height).toBeLessThanOrEqual(28);
+    expect(codeBox.width).toBeGreaterThan(150);
+    await expect(
+      page.getByRole('button', { name: /複製 .* 的班級序號/u }).first(),
+    ).toBeVisible();
+
+    const actions = page.locator('.classroom-card__actions').first();
+    for (const name of ['進入班級', '教學分析']) {
+      const action = actions.getByRole('link', { name });
+      const geometry = await action.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        return {
+          height: bounds.height,
+          lineRects: Array.from(range.getClientRects(), (rect) => ({
+            height: rect.height,
+            width: rect.width,
+          })),
+          whiteSpace: getComputedStyle(element).whiteSpace,
+          width: bounds.width,
+        };
+      });
+      expect(geometry.whiteSpace).toBe('nowrap');
+      expect(geometry.height).toBeGreaterThanOrEqual(44);
+      expect(geometry.height).toBeLessThanOrEqual(48);
+      expect(geometry.lineRects).toHaveLength(1);
+    }
+    expect(
+      await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+    expect(runtimeErrors).toEqual({ consoleErrors: [], pageErrors: [] });
   });
-  expect(codeBox.whiteSpace).toBe('nowrap');
-  expect(codeBox.overflowWrap).not.toBe('anywhere');
-  expect(codeBox.height).toBeLessThanOrEqual(28);
-  expect(codeBox.width).toBeGreaterThan(150);
-  await expect(
-    page.getByRole('button', { name: /複製 .* 的班級序號/u }).first(),
-  ).toBeVisible();
-  expect(runtimeErrors).toEqual({ consoleErrors: [], pageErrors: [] });
-});
+}
 
 for (const width of [393, 1280] as const) {
   test(`owner visual: question chapters expose their first section at ${String(width)}px`, async ({
