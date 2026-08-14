@@ -20,6 +20,7 @@ import '../teacher-workspace-mobile.css';
 import '../teacher-analytics.css';
 import '../teacher-analytics-data.css';
 import '../teacher-analytics-mobile.css';
+import '../teacher-questions-reimplementation.css';
 
 type SectionGroup = Readonly<{
   chapterId: string;
