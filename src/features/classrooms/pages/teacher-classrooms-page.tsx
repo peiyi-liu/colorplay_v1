@@ -11,6 +11,7 @@ import { TeacherWorkSurface } from '../../teacher-content/components/teacher-wor
 import '../../teacher-content/teacher-workspace.css';
 import '../../teacher-content/teacher-workspace-mobile.css';
 import './teacher-classrooms-workspace.css';
+import './teacher-classrooms-reimplementation.css';
 import {
   useCreateClassroom,
   useOwnedClassrooms,
