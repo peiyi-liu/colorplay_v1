@@ -46,9 +46,18 @@ function ChapterDisclosure({
           <strong>{chapter.chapterTitle}</strong>
           <small>{formatPercent(chapter.assessmentAccuracy)}</small>
         </span>
-        <Chip tone={chapterStatusTone(chapter.status)}>
-          {chapterStatusLabel(chapter.status)}
-        </Chip>
+        <span className="teacher-disclosure-summary__aside">
+          <Chip tone={chapterStatusTone(chapter.status)}>
+            {chapterStatusLabel(chapter.status)}
+          </Chip>
+          <span
+            aria-hidden="true"
+            className="teacher-disclosure-chevron"
+            data-testid="chapter-disclosure-chevron"
+          >
+            ›
+          </span>
+        </span>
       </summary>
       <dl>
         <div>

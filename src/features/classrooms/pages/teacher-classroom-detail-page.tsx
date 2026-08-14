@@ -31,9 +31,18 @@ function MemberDisclosure({
           <strong>{member.displayName}</strong>
           <small>{member.loginAccount ?? '學號未提供'}</small>
         </span>
-        {member.membershipStatus === 'inactive' ? (
-          <Chip tone="neutral">已停用</Chip>
-        ) : null}
+        <span className="teacher-disclosure-summary__aside">
+          {member.membershipStatus === 'inactive' ? (
+            <Chip tone="neutral">已停用</Chip>
+          ) : null}
+          <span
+            aria-hidden="true"
+            className="teacher-disclosure-chevron"
+            data-testid="member-disclosure-chevron"
+          >
+            ›
+          </span>
+        </span>
       </summary>
       <dl>
         <div>

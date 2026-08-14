@@ -698,3 +698,10 @@
 - Owner 拒絕上一版視覺完成宣告後，以核准 Phase A directions 為 SSOT 重新實作六頁 composition；保留既有 route、正式資料、安全邊界、ADR 0007 與完整 Live Host／Projector。場景限制於 header，工作面改為安靜深藍，並分別重作 analytics 決策層級、班級操作列／roster rows、班級與學生下鑽、三層題目 disclosure、Live 首屏摘要與 podium。
 - CSS cascade audit 在 teacher-local scope 中和 global `.secondary-action`、`.classroom-create-form`、`.classroom-card` 與資料表材質；Live shared surface 已抽至 `teacher-live-workspace.css`，create／report 直接 import。Production manifest 顯示 report lazy entry 同時載入 report CSS 與 shared live workspace CSS，不依賴先造訪 TeacherLivePage。
 - Fresh checks：Vitest 17 files／92 tests、Chromium 39/39、scoped ESLint、typecheck、production build、`git diff --check` 全綠；六頁 after 12 圖與 before／approved 對照 manifest 在 `/private/tmp/colorplay-teacher-visual-after/manifest.json`，全部 scrollY=0、無 console／page error、無 document overflow。未執行 acceptance、hosted operation、push／merge／deploy。狀態：Awaiting owner visual approval。
+
+## 2026-08-14 11:18 [Owner／Codex] — Owner visual approval correction 完成
+
+- 限定修正三項 owner finding：1280px 班級加入碼改為不可斷行並重新分配 roster row；題目分析每章第一小節預設展開但仍可自由收合，且初始不選題、不請求或推測正解；393px 班級成員與學生章節 disclosure 新增隨 open／closed 轉向的明確 chevron，membershipStatus 語意不變。
+- Browser 實測：加入碼 `ABCD-1234-EF56-7890` 為 `230.31×24.70px`、`white-space: nowrap`；題目頁 1280／393 初始各有 1 個 open details；兩種 mobile summary 均為 `341×66.66px`、chevron `24×24px`，`aria-expanded` false／true 與方向矩陣同步切換，且無 document overflow。
+- Fresh checks：相關 Vitest 4 files／16 tests、owner visual Chromium 5/5、既有六頁 Chromium regression 39/39、scoped ESLint、typecheck、build、`git diff --check` 全綠。全新 12 張 after 截圖與 manifest 位於 `/private/tmp/colorplay-teacher-visual-correction-after/`，全部 scrollY=0、console／page error=0、document overflow=0。
+- 本輪未執行 acceptance、DB 或 hosted operation；只做三項 finding 的限定 review，未展開第二輪 broad review。等待 owner 最終視覺核准。

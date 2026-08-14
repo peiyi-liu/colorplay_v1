@@ -115,8 +115,6 @@ test('Live source hides chapter completion and question analysis shows authorita
   const disclosure = page
     .locator('.teacher-question-drilldown details')
     .first();
-  await expect(disclosure).not.toHaveAttribute('open', '');
-  await disclosure.locator('summary').click();
   await expect(disclosure).toHaveAttribute('open', '');
   const button = page.getByRole('button', {
     name: /查看 QB3101 題目內容（手機）/u,
@@ -140,7 +138,9 @@ test('question analysis desktop keeps the table and authoritative answer label',
 }) => {
   await page.setViewportSize({ height: 900, width: 1280 });
   await page.goto('/dev-harness/teacher-routes.html?scenario=questions');
-  await page.getByText('3-1 色彩三要素', { exact: true }).click();
+  await expect(
+    page.locator('.teacher-question-drilldown details').first(),
+  ).toHaveAttribute('open', '');
   const table = page.getByRole('table', {
     name: '3-1 色彩三要素題目分析',
   });

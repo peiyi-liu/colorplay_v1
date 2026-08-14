@@ -63,7 +63,7 @@ const classrooms = {
 } as unknown as ClassroomRepository;
 
 describe('TeacherQuestionAnalysisPage', () => {
-  it('starts collapsed, sorts errors, and loads choices on demand', async () => {
+  it('opens the first section, remains collapsible, and loads choices on demand', async () => {
     const client = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
@@ -83,8 +83,13 @@ describe('TeacherQuestionAnalysisPage', () => {
 
     const section = await screen.findByText('3-1 色彩三要素');
     const disclosure = section.closest('details');
+    expect(disclosure).toHaveAttribute('open');
+    expect(repository.getQuestionDetail).not.toHaveBeenCalled();
+    expect(repository.getQuestionAnswer).not.toHaveBeenCalled();
+    await userEvent.click(section);
     expect(disclosure).not.toHaveAttribute('open');
     await userEvent.click(section);
+    expect(disclosure).toHaveAttribute('open');
     const table = screen.getByRole('table', { name: '3-1 色彩三要素題目分析' });
     expect(within(table).getAllByRole('row')[1]).toHaveTextContent('題目甲');
     expect(repository.getQuestionDetail).not.toHaveBeenCalled();
@@ -123,7 +128,7 @@ describe('TeacherQuestionAnalysisPage', () => {
       </QueryClientProvider>,
     );
 
-    await userEvent.click(await screen.findByText('3-1 色彩三要素'));
+    await screen.findByText('3-1 色彩三要素');
     const table = screen.getByRole('table', { name: '3-1 色彩三要素題目分析' });
     await userEvent.click(
       within(table).getByRole('button', { name: '查看 QB3101 題目內容' }),

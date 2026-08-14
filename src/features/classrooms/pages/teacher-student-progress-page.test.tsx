@@ -119,6 +119,9 @@ describe('TeacherStudentProgressPage', () => {
     const chapter = (await screen.findAllByTestId('chapter-disclosure'))[0];
     expect(chapter).toBeDefined();
     if (!chapter) throw new Error('missing chapter disclosure');
+    expect(
+      within(chapter).getByTestId('chapter-disclosure-chevron'),
+    ).toBeVisible();
     expect(chapter.querySelector('summary')).toHaveAttribute(
       'aria-expanded',
       'false',

@@ -78,6 +78,9 @@ export function TeacherQuestionAnalysisPage({
     repository,
   );
   const [selectedCode, setSelectedCode] = useState('');
+  const [sectionOpen, setSectionOpen] = useState<Readonly<Record<string, boolean>>>(
+    {},
+  );
   const detail = useTeacherQuestionDetail(
     classroomId,
     selectedCode,
@@ -142,8 +145,19 @@ export function TeacherQuestionAnalysisPage({
             <h2>
               第 {sections[0]?.chapterSortOrder} 章 {sections[0]?.chapterTitle}
             </h2>
-            {sections.map((section) => (
-              <details key={section.sectionId}>
+            {sections.map((section, sectionIndex) => (
+              <details
+                key={section.sectionId}
+                onToggle={(event) => {
+                  const nextOpen = event.currentTarget.open;
+                  setSectionOpen((current) =>
+                    current[section.sectionId] === nextOpen
+                      ? current
+                      : { ...current, [section.sectionId]: nextOpen },
+                  );
+                }}
+                open={sectionOpen[section.sectionId] ?? sectionIndex === 0}
+              >
                 <summary>{section.sectionTitle}</summary>
                 <div className="teacher-table-frame">
                   <table

@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { observeRuntimeErrors } from './teacher-routes.harness-support';
+
 for (const width of [320, 375, 393] as const) {
   test(`teacher menu alerts do not overlap at ${String(width)}px`, async ({
     page,
@@ -52,5 +54,111 @@ for (const width of [320, 375, 393] as const) {
     expect(bounds.documentScrollWidth).toBeLessThanOrEqual(
       bounds.documentClientWidth,
     );
+  });
+}
+
+test('owner visual: desktop classroom join code remains one readable line', async ({
+  page,
+}) => {
+  const runtimeErrors = observeRuntimeErrors(page);
+  await page.setViewportSize({ height: 900, width: 1280 });
+  await page.goto('/dev-harness/teacher-routes.html?scenario=classes');
+  await page.waitForLoadState('networkidle');
+
+  const code = page.locator('.classroom-card__code-value').first();
+  const codeBox = await code.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const bounds = element.getBoundingClientRect();
+    return {
+      height: bounds.height,
+      overflowWrap: style.overflowWrap,
+      whiteSpace: style.whiteSpace,
+      width: bounds.width,
+    };
+  });
+  expect(codeBox.whiteSpace).toBe('nowrap');
+  expect(codeBox.overflowWrap).not.toBe('anywhere');
+  expect(codeBox.height).toBeLessThanOrEqual(28);
+  expect(codeBox.width).toBeGreaterThan(150);
+  await expect(
+    page.getByRole('button', { name: /複製 .* 的班級序號/u }).first(),
+  ).toBeVisible();
+  expect(runtimeErrors).toEqual({ consoleErrors: [], pageErrors: [] });
+});
+
+for (const width of [393, 1280] as const) {
+  test(`owner visual: question chapters expose their first section at ${String(width)}px`, async ({
+    page,
+  }) => {
+    const runtimeErrors = observeRuntimeErrors(page);
+    await page.setViewportSize({ height: width === 393 ? 852 : 900, width });
+    await page.goto('/dev-harness/teacher-routes.html?scenario=questions');
+    await page.waitForLoadState('networkidle');
+
+    const chapterState = await page
+      .locator('.teacher-question-drilldown > section')
+      .evaluateAll((chapters) =>
+        chapters.map((chapter) => ({
+          firstOpen:
+            chapter
+              .querySelector(':scope > details:first-of-type')
+              ?.hasAttribute('open') ?? false,
+          openCount: chapter.querySelectorAll(':scope > details[open]').length,
+        })),
+      );
+    expect(chapterState.length).toBeGreaterThan(0);
+    expect(chapterState.every((chapter) => chapter.firstOpen)).toBe(true);
+    expect(chapterState.every((chapter) => chapter.openCount >= 1)).toBe(true);
+    expect(runtimeErrors).toEqual({ consoleErrors: [], pageErrors: [] });
+  });
+}
+
+for (const scenario of ['classroom-detail', 'student-progress'] as const) {
+  test(`owner visual: mobile ${scenario} disclosure has a directional chevron`, async ({
+    page,
+  }) => {
+    const runtimeErrors = observeRuntimeErrors(page);
+    await page.setViewportSize({ height: 852, width: 393 });
+    await page.goto(`/dev-harness/teacher-routes.html?scenario=${scenario}`);
+    await page.waitForLoadState('networkidle');
+
+    const disclosure = page
+      .getByTestId(
+        scenario === 'classroom-detail'
+          ? 'member-disclosure'
+          : 'chapter-disclosure',
+      )
+      .first();
+    const summary = disclosure.locator('summary');
+    const chevron = disclosure.getByTestId(
+      scenario === 'classroom-detail'
+        ? 'member-disclosure-chevron'
+        : 'chapter-disclosure-chevron',
+    );
+    await expect(summary).toHaveAttribute('aria-expanded', 'false');
+    const closed = await chevron.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      return {
+        height: bounds.height,
+        transform: getComputedStyle(element).transform,
+        width: bounds.width,
+      };
+    });
+    expect(closed.width).toBeGreaterThan(0);
+    expect(closed.height).toBeGreaterThan(0);
+    expect(
+      await summary.evaluate(
+        (element) => element.getBoundingClientRect().height,
+      ),
+    ).toBeGreaterThanOrEqual(44);
+
+    await summary.click();
+    await expect(summary).toHaveAttribute('aria-expanded', 'true');
+    await expect
+      .poll(() =>
+        chevron.evaluate((element) => getComputedStyle(element).transform),
+      )
+      .not.toBe(closed.transform);
+    expect(runtimeErrors).toEqual({ consoleErrors: [], pageErrors: [] });
   });
 }

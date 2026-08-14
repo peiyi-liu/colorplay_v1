@@ -268,6 +268,47 @@
   gap: 3px;
 }
 
+.teacher-roster-disclosures summary,
+.teacher-chapter-disclosures summary {
+  list-style: none;
+}
+
+.teacher-roster-disclosures summary::-webkit-details-marker,
+.teacher-chapter-disclosures summary::-webkit-details-marker {
+  display: none;
+}
+
+.teacher-roster-disclosures .teacher-disclosure-summary__aside,
+.teacher-chapter-disclosures .teacher-disclosure-summary__aside {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.teacher-disclosure-chevron {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  place-items: center;
+  color: #8fd1ff;
+  font-size: 1.35rem;
+  line-height: 1;
+  transform: rotate(90deg);
+  transition: transform 140ms ease;
+}
+
+details[open] > summary .teacher-disclosure-chevron {
+  transform: rotate(-90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .teacher-disclosure-chevron {
+    transition: none;
+  }
+}
+
 .teacher-roster-disclosures summary small,
 .teacher-chapter-disclosures summary small {
   color: #9fb1c4;
