@@ -2288,6 +2288,41 @@ export type Database = {
           },
         ]
       }
+      student_registration_claims: {
+        Row: {
+          created_at: string
+          lease_expires_at: string | null
+          lease_token: string | null
+          state: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          state?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          state?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_registration_claims_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subtopics: {
         Row: {
           created_at: string
@@ -2688,6 +2723,10 @@ export type Database = {
         Args: { p_chapter_id: string }
         Returns: boolean
       }
+      claim_student_registration: {
+        Args: { p_attempt_id: string }
+        Returns: string
+      }
       close_live_question: {
         Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
@@ -2704,6 +2743,10 @@ export type Database = {
       complete_review_card: {
         Args: { p_request_id: string; p_review_card_id: string }
         Returns: Json
+      }
+      complete_student_registration_claim: {
+        Args: { p_attempt_id: string }
+        Returns: undefined
       }
       create_assignment: {
         Args: {
@@ -3037,6 +3080,10 @@ export type Database = {
           p_version: number
         }
         Returns: undefined
+      }
+      release_student_registration_claim: {
+        Args: { p_attempt_id: string }
+        Returns: boolean
       }
       reopen_course_progression: {
         Args: { p_course_id: string }

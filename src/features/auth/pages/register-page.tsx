@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
@@ -7,9 +6,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Chip } from '../../../components/ui/chip';
 import { RpgWindow } from '../../../components/ui/rpg-window';
 import { useToast } from '../../../components/ui/toast';
-import { myProfileQueryKey } from '../../profile/hooks/use-my-profile';
+import { useAuth } from '../context/auth-context';
 import {
-  AccountFlowError,
   completeStudentRegistration,
   sendRegistrationOtp,
   verifyRegistrationOtp,
@@ -18,45 +16,23 @@ import {
   registerSchema,
   type RegisterValues,
 } from '../schemas/account-auth-schemas';
-
-const registerErrorMessages: Readonly<Record<string, string>> = {
-  ACCOUNT_TAKEN: '這個帳號（學號）已被使用',
-  ALREADY_IN_ACTIVE_CLASSROOM: '此帳號已加入其他班級，請聯絡老師辦理轉班',
-  ALREADY_REGISTERED: '此 E-mail 已完成註冊，請返回登入',
-  EMAIL_NOT_VERIFIED: '請先完成 E-mail 認證',
-  INVALID_CLASSROOM_CODE: '班級序號無效，請向老師確認',
-  NICKNAME_BANNED: '暱稱包含不適當字詞，請重新命名',
-  NICKNAME_EMOJI: '暱稱不能使用表情符號',
-  NICKNAME_LENGTH: '暱稱需為 2 至 16 個字',
-  WEAK_PASSWORD: '密碼需為 6 至 12 碼並包含大小寫英文字母',
-};
-
-const messageForRegisterError = (error: unknown) =>
-  error instanceof AccountFlowError
-    ? (registerErrorMessages[error.code] ?? '註冊失敗，請稍後重試')
-    : '註冊失敗，請稍後重試';
-
-type EmailVerification = 'idle' | 'sending' | 'sent' | 'verifying' | 'verified';
-type RegisterStep = 'basic' | 'email' | 'credentials';
+import { RegisterBasicStep } from './register-basic-step';
+import {
+  type EmailVerification,
+  messageForRegisterError,
+  RegisterProgress,
+  type RegisterStep,
+} from './register-page-support';
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
-const stepItems = [
-  { id: 'basic', label: '基本資料', number: 1 },
-  { id: 'email', label: 'E-mail 驗證', number: 2 },
-  { id: 'credentials', label: '帳號與密碼', number: 3 },
-] as const satisfies readonly {
-  id: RegisterStep;
-  label: string;
-  number: number;
-}[];
-
 export function RegisterPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const auth = useAuth();
   const toast = useToast();
   const pendingSubmission = useRef(false);
   const [step, setStep] = useState<RegisterStep>('basic');
+  const [furthestStep, setFurthestStep] = useState<RegisterStep>('basic');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [verification, setVerification] = useState<EmailVerification>('idle');
   const [verificationError, setVerificationError] = useState<string | null>(
@@ -98,7 +74,37 @@ export function RegisterPage() {
 
   const goToEmailStep = async () => {
     const valid = await trigger(['fullName', 'nickname', 'classCode']);
-    if (valid) setStep('email');
+    if (valid) {
+      setFurthestStep((reached) => (reached === 'basic' ? 'email' : reached));
+      setStep('email');
+    }
+  };
+
+  const selectReachedStep = async (selectedStep: RegisterStep) => {
+    if (selectedStep === 'basic' || selectedStep === 'email') {
+      setStep(selectedStep);
+      return;
+    }
+
+    const basicValid = await trigger(['fullName', 'nickname', 'classCode']);
+    if (!basicValid) {
+      setStep('basic');
+      return;
+    }
+    const emailValid = await trigger('email');
+    if (!emailValid || verification !== 'verified') {
+      setStep('email');
+      return;
+    }
+    setStep('credentials');
+  };
+
+  const editVerifiedEmail = () => {
+    setVerification('idle');
+    setVerificationError(null);
+    setOtpCode('');
+    setCooldownRemaining(0);
+    setFurthestStep('email');
   };
 
   const sendOtp = async () => {
@@ -146,16 +152,13 @@ export function RegisterPage() {
       </header>
 
       <RpgWindow className="auth-window auth-window--register">
-        <ol aria-label="註冊步驟" className="auth-register-progress">
-          {stepItems.map((item) => (
-            <li data-active={step === item.id} key={item.id}>
-              <span aria-current={step === item.id ? 'step' : undefined}>
-                <b aria-hidden="true">{String(item.number)}</b>
-                {item.label}
-              </span>
-            </li>
-          ))}
-        </ol>
+        <RegisterProgress
+          currentStep={step}
+          furthestStep={furthestStep}
+          onSelect={(selectedStep) => {
+            void selectReachedStep(selectedStep);
+          }}
+        />
 
         <form
           className="login-form auth-register-form"
@@ -166,128 +169,60 @@ export function RegisterPage() {
               event.preventDefault();
               return;
             }
-            void handleSubmit(async (values) => {
-              if (pendingSubmission.current) return;
-              if (verification !== 'verified') {
-                setStep('email');
-                setSubmitError('請先完成 E-mail 認證');
-                return;
-              }
-              pendingSubmission.current = true;
-              setSubmitError(null);
-              try {
-                await completeStudentRegistration({
-                  account: values.account.trim(),
-                  classCode: values.classCode.trim(),
-                  fullName: values.fullName.trim(),
-                  nickname: values.nickname.trim(),
-                  password: values.password,
-                });
-                await queryClient.invalidateQueries({
-                  queryKey: myProfileQueryKey,
-                });
-                toast({
-                  message: '註冊成功，歡迎加入 ColorPlay！',
-                  tone: 'success',
-                });
-                await navigate('/app', { replace: true });
-              } catch (error) {
-                setSubmitError(messageForRegisterError(error));
-              } finally {
-                pendingSubmission.current = false;
-              }
-            })(event);
+            void handleSubmit(
+              async (values) => {
+                if (pendingSubmission.current) return;
+                if (verification !== 'verified') {
+                  setStep('email');
+                  setSubmitError('請先完成 E-mail 認證');
+                  return;
+                }
+                pendingSubmission.current = true;
+                setSubmitError(null);
+                try {
+                  await completeStudentRegistration({
+                    account: values.account.trim(),
+                    classCode: values.classCode.trim(),
+                    fullName: values.fullName.trim(),
+                    nickname: values.nickname.trim(),
+                    password: values.password,
+                  });
+                  await auth.signOut();
+                  toast({
+                    message: '註冊成功，請使用剛設定的帳號與密碼登入。',
+                    tone: 'success',
+                  });
+                  await navigate('/login', { replace: true });
+                } catch (error) {
+                  setSubmitError(messageForRegisterError(error));
+                } finally {
+                  pendingSubmission.current = false;
+                }
+              },
+              (invalidFields) => {
+                if (
+                  invalidFields.fullName ||
+                  invalidFields.nickname ||
+                  invalidFields.classCode
+                ) {
+                  setStep('basic');
+                } else if (invalidFields.email || verification !== 'verified') {
+                  setStep('email');
+                } else {
+                  setStep('credentials');
+                }
+              },
+            )(event);
           }}
         >
           {step === 'basic' ? (
-            <fieldset className="auth-register-step">
-              <legend>填寫基本資料</legend>
-              <div className="login-form__field">
-                <label htmlFor="register-full-name">名字</label>
-                <input
-                  {...register('fullName')}
-                  aria-describedby={
-                    errors.fullName ? 'register-full-name-error' : undefined
-                  }
-                  aria-invalid={errors.fullName ? 'true' : 'false'}
-                  autoComplete="name"
-                  id="register-full-name"
-                  type="text"
-                />
-                {errors.fullName ? (
-                  <p
-                    className="login-form__field-error"
-                    id="register-full-name-error"
-                  >
-                    {errors.fullName.message}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="login-form__field">
-                <label htmlFor="register-nickname">暱稱</label>
-                <input
-                  {...register('nickname')}
-                  aria-describedby="register-nickname-hint register-nickname-error"
-                  aria-invalid={errors.nickname ? 'true' : 'false'}
-                  autoComplete="off"
-                  id="register-nickname"
-                  type="text"
-                />
-                <p
-                  className="login-form__field-hint"
-                  id="register-nickname-hint"
-                >
-                  2～16 個字，將顯示於遊戲與排行榜。
-                </p>
-                {errors.nickname ? (
-                  <p
-                    className="login-form__field-error"
-                    id="register-nickname-error"
-                  >
-                    {errors.nickname.message}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="login-form__field">
-                <label htmlFor="register-class-code">班級序號</label>
-                <input
-                  {...register('classCode')}
-                  aria-describedby="register-class-code-hint register-class-code-error"
-                  aria-invalid={errors.classCode ? 'true' : 'false'}
-                  autoComplete="off"
-                  id="register-class-code"
-                  type="text"
-                />
-                <p
-                  className="login-form__field-hint"
-                  id="register-class-code-hint"
-                >
-                  輸入老師提供的 16 碼班級序號。
-                </p>
-                {errors.classCode ? (
-                  <p
-                    className="login-form__field-error"
-                    id="register-class-code-error"
-                  >
-                    {errors.classCode.message}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="auth-register-actions">
-                <button
-                  className="primary-action"
-                  onClick={() => {
-                    void goToEmailStep();
-                  }}
-                  type="button"
-                >
-                  下一步
-                </button>
-              </div>
-            </fieldset>
+            <RegisterBasicStep
+              errors={errors}
+              onNext={() => {
+                void goToEmailStep();
+              }}
+              register={register}
+            />
           ) : null}
 
           {step === 'email' ? (
@@ -309,7 +244,16 @@ export function RegisterPage() {
                     type="email"
                   />
                   {emailLocked ? (
-                    <Chip tone="success">✓ 已認證</Chip>
+                    <div className="auth-register-email-status">
+                      <Chip tone="success">✓ 已認證</Chip>
+                      <button
+                        className="login-form__secondary-action"
+                        onClick={editVerifiedEmail}
+                        type="button"
+                      >
+                        更改 E-mail
+                      </button>
+                    </div>
                   ) : (
                     <button
                       className="login-form__secondary-action"
@@ -395,6 +339,7 @@ export function RegisterPage() {
                   className="primary-action"
                   disabled={!emailLocked}
                   onClick={() => {
+                    setFurthestStep('credentials');
                     setStep('credentials');
                   }}
                   type="button"

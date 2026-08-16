@@ -996,3 +996,11 @@
 - 真實 hosted smoke 通過：教師登入後到 `/teacher/live`，只有一份教師導覽、學生 legacy HUD 為 0，建立 Live 課堂頁可載入；學生登入後到 `/app` 學習大廳。部署前專項 Vitest 4 files／16 tests與 production build 亦通過。
 - 已確認完整教師 Live 建立／Host／Projector checkpoint `5fafb79ecc9bd07cb89bdaa7ade95180f38df222` 是目前 integration HEAD 的祖先；本次整合不只包含教師六頁與 Live report。
 - 待處理的產品差異：目前註冊仍為基本資料（自訂暱稱／班級序號）→ Email OTP → 帳號密碼 → `/app`；尚未實作 owner 新提出的「OTP 驗證後直接完成註冊並進學習地圖、暱稱預設為 Email `@` 前字串」。需先確認帳號、密碼、真實姓名與班級綁定的新資料契約，再以獨立 Auth task 修改與驗證。
+
+## 2026-08-16 21:00 [Owner／Integration owner] — 三步學生註冊流程修復完成
+
+- Owner 定案維持三步流程：基本資料 → E-mail OTP → 帳號與密碼；完成後清除 OTP 暫時 session 並回 `/login`，由學生使用新帳號密碼重新登入。暱稱以第一步輸入值寫入 `profiles.display_name`，不得改成 E-mail `@` 前綴。
+- 真實阻塞原因為 `student-register` 直接讀取未授權的 `classroom_members.member_role/status`，本機 Edge 回 42501／`REGISTER_FAILED`。修正後改走既有 user-scoped `list_my_classrooms` RPC，不擴張 service-role table grant；新增本人限定、RLS deny-by-default 的短期 registration claim，序列化跨 Auth／profile 的註冊 saga，避免同一 OTP session 並行請求互相覆寫密碼。
+- 已到達的 1／2／3 步可直接回點；往前切換與最終提交會自動導向最早錯誤步驟。已驗證 E-mail 可按「更改 E-mail」後重新驗證，第三步在重新驗證前保持鎖定。
+- Fresh checks：auth Vitest 7 files／100 tests、lint、typecheck、production build、focused registration-claim pgTAP 15／15、Chromium 真實 Email OTP → Edge 200 → `/login` → 帳號密碼登入 → HUD 顯示輸入暱稱全綠；generated database types 與 local schema 僅差末尾空行。完整 pgTAP 1267 assertions 中，新 059 全綠；既有 018 Live 測試仍固定失敗 1 項（seed 已有 Live session 卻斷言絕對數量 0），隔離重跑相同，未修改該無關範圍。
+- 唯一 review 的兩個 High（隱藏步驟錯誤、並行密碼覆寫）與一個 Medium（已驗證 E-mail 無法重編）皆已修正。本 checkpoint 尚未 push、未 deploy、未操作 hosted Supabase／Vercel；staging 發布前必須先套用 `20260814000700_student_registration_claim.sql`，再發布更新後的 `student-register` Edge Function 與前端。

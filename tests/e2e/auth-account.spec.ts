@@ -79,14 +79,16 @@ test('student registers with OTP, signs in by account, and resets the password',
   const unique = Date.now().toString(36);
   const email = `register.${unique}@colorplay.test`;
   const account = `reg${unique}`;
+  const nickname = `旅程${unique.slice(-4)}`;
   const password = 'ColorP1x';
   const newPassword = 'ColorP2y';
 
-  // 註冊：表單內 Email OTP 認證 → 綠色已認證 → 完成註冊直達大廳。
+  // 註冊：表單內 Email OTP 認證 → 完成註冊 → 回登入頁重新登入。
   await page.goto('/register');
   await page.getByLabel('名字').fill('端對端 學生');
-  await page.getByLabel('暱稱').fill(`旅程${unique.slice(-4)}`);
+  await page.getByLabel('暱稱').fill(nickname);
   await page.getByLabel('班級序號').fill(joinCode);
+  await page.getByRole('button', { name: '下一步' }).click();
   await page.getByLabel('E-mail', { exact: true }).fill(email);
   await page.getByRole('button', { name: '傳送驗證碼' }).click();
 
@@ -94,23 +96,28 @@ test('student registers with OTP, signs in by account, and resets the password',
   await page.getByLabel('E-mail 驗證碼').fill(otp);
   await page.getByRole('button', { name: '確認驗證' }).click();
   await expect(page.getByText('✓ 已認證')).toBeVisible();
+  await page.getByRole('button', { name: '下一步' }).click();
 
   await page.getByLabel('帳號（學號）').fill(account);
   await page.getByLabel('密碼', { exact: true }).fill(password);
   await page.getByLabel('密碼確認').fill(password);
+  const registrationResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith('/functions/v1/student-register'),
+  );
   await page.getByRole('button', { name: '完成註冊' }).click();
-  await expect(page).toHaveURL(/\/app$/u, { timeout: 20_000 });
-  await expect(page.getByText('色彩任務選擇大廳')).toBeVisible({
-    timeout: 20_000,
-  });
-
-  // 登出後以帳號（學號）登入。
-  await signOutViaHud(page);
+  const registrationResponse = await registrationResponsePromise;
+  expect({
+    body: (await registrationResponse.json()) as unknown,
+    status: registrationResponse.status(),
+  }).toEqual({ body: { ok: true }, status: 200 });
   await expect(page).toHaveURL(/\/login$/u, { timeout: 15_000 });
   await page.getByRole('textbox', { name: '帳號' }).fill(account);
   await page.getByLabel('密碼').fill(password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u, { timeout: 20_000 });
+  await expect(page.getByText(nickname, { exact: true }).first()).toBeVisible({
+    timeout: 20_000,
+  });
 
   // 忘記密碼：帳號＋Email → 信中連結 → 重設 → 跳回登入頁。
   await signOutViaHud(page);
@@ -124,6 +131,10 @@ test('student registers with OTP, signs in by account, and resets the password',
   const recoveryLink = await waitForEmailMatch(email, extractRecoveryLink);
   await page.goto(recoveryLink);
   await expect(page).toHaveURL(/\/reset-password/u, { timeout: 20_000 });
+  // 等 AuthBootstrap 接住 recovery session，避免 session 事件重掛頁面時清空輸入。
+  await expect(page.getByText(nickname, { exact: true }).first()).toBeVisible({
+    timeout: 20_000,
+  });
   await expect(page.getByRole('button', { name: '更新密碼' })).toBeEnabled({
     timeout: 20_000,
   });

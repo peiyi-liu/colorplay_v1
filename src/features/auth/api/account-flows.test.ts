@@ -29,12 +29,13 @@ const clientRejectingWith = (code: string) =>
   }) as unknown as SupabaseClient<Database>;
 
 describe('completeStudentRegistration', () => {
-  it.each(['ALREADY_IN_ACTIVE_CLASSROOM', 'ALREADY_REGISTERED'] as const)(
-    'preserves the safe server error code %s',
-    async (code) => {
-      await expect(
-        completeStudentRegistration(registration, clientRejectingWith(code)),
-      ).rejects.toMatchObject({ code });
-    },
-  );
+  it.each([
+    'ALREADY_IN_ACTIVE_CLASSROOM',
+    'ALREADY_REGISTERED',
+    'REGISTER_IN_PROGRESS',
+  ] as const)('preserves the safe server error code %s', async (code) => {
+    await expect(
+      completeStudentRegistration(registration, clientRejectingWith(code)),
+    ).rejects.toMatchObject({ code });
+  });
 });

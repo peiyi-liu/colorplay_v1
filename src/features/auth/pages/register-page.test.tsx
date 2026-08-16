@@ -1,10 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ToastProvider } from '../../../components/ui/toast';
+import { AuthContext } from '../context/auth-context';
 import {
   completeStudentRegistration,
   sendRegistrationOtp,
@@ -27,14 +28,31 @@ const mockedCompleteStudentRegistration = vi.mocked(
 );
 const mockedSendRegistrationOtp = vi.mocked(sendRegistrationOtp);
 const mockedVerifyRegistrationOtp = vi.mocked(verifyRegistrationOtp);
+const mockedSignOut = vi.fn(() => Promise.resolve());
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location-path">{location.pathname}</output>;
+}
 
 const renderRegisterPage = () =>
   render(
     <MemoryRouter>
       <QueryClientProvider client={new QueryClient()}>
-        <ToastProvider>
-          <RegisterPage />
-        </ToastProvider>
+        <AuthContext.Provider
+          value={{
+            session: null,
+            signIn: vi.fn(),
+            signInWithAccount: vi.fn(),
+            signOut: mockedSignOut,
+            status: 'anonymous',
+          }}
+        >
+          <ToastProvider>
+            <RegisterPage />
+            <LocationProbe />
+          </ToastProvider>
+        </AuthContext.Provider>
       </QueryClientProvider>
     </MemoryRouter>,
   );
@@ -65,6 +83,7 @@ describe('RegisterPage', () => {
     mockedCompleteStudentRegistration.mockClear();
     mockedSendRegistrationOtp.mockClear();
     mockedVerifyRegistrationOtp.mockClear();
+    mockedSignOut.mockClear();
   });
 
   it('starts on a fixed basic-details step without the removed guild branding', () => {
@@ -132,6 +151,63 @@ describe('RegisterPage', () => {
     expect(screen.getByRole('button', { name: '完成註冊' })).toBeEnabled();
   });
 
+  it('lets the student revisit every reached step without losing entered values', async () => {
+    const user = userEvent.setup();
+    renderRegisterPage();
+
+    await reachCredentialsStep(user);
+
+    await user.click(screen.getByRole('button', { name: '基本資料' }));
+    expect(screen.getByText('基本資料')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    expect(screen.getByLabelText('暱稱')).toHaveValue('彩彩');
+
+    await user.click(screen.getByRole('button', { name: 'E-mail 驗證' }));
+    expect(screen.getByText('E-mail 驗證')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    expect(screen.getByLabelText('E-mail')).toHaveValue('student@example.com');
+    expect(screen.getByText('✓ 已認證')).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: '帳號與密碼' }));
+    expect(screen.getByText('帳號與密碼')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+  });
+
+  it('returns to the earliest invalid step before moving forward again', async () => {
+    const user = userEvent.setup();
+    renderRegisterPage();
+    await reachCredentialsStep(user);
+
+    await user.click(screen.getByRole('button', { name: '基本資料' }));
+    await user.clear(screen.getByLabelText('暱稱'));
+    await user.click(screen.getByRole('button', { name: '帳號與密碼' }));
+
+    expect(screen.getByText('基本資料')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    expect(await screen.findByText('暱稱需為 2 至 16 個字')).toBeVisible();
+  });
+
+  it('lets the student change and reverify the email after reaching step three', async () => {
+    const user = userEvent.setup();
+    renderRegisterPage();
+    await reachCredentialsStep(user);
+
+    await user.click(screen.getByRole('button', { name: 'E-mail 驗證' }));
+    await user.click(screen.getByRole('button', { name: '更改 E-mail' }));
+
+    expect(screen.getByLabelText('E-mail')).toBeEnabled();
+    expect(screen.getByRole('button', { name: '帳號與密碼' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '傳送驗證碼' })).toBeEnabled();
+  });
+
   it('keeps the existing registration submit contract on the third step', async () => {
     const user = userEvent.setup();
     renderRegisterPage();
@@ -151,6 +227,8 @@ describe('RegisterPage', () => {
         password: 'SecretA',
       });
     });
+    expect(screen.getByTestId('location-path')).toHaveTextContent('/login');
+    expect(mockedSignOut).toHaveBeenCalledOnce();
   });
 
   it('links back to login from every registration step', () => {

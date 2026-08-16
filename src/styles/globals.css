@@ -9295,17 +9295,26 @@ select#dashboard-classroom {
   min-width: 0;
 }
 
-.auth-register-progress span {
+.auth-register-progress button {
   display: grid;
+  width: 100%;
   min-height: 48px;
   align-content: center;
   border: 1px solid #53658f;
   background: #111a36;
   color: var(--pixel-window-muted);
   font-size: 0.75rem;
+  font-family: inherit;
   font-weight: 800;
   line-height: 1.15;
+  padding: 0;
   text-align: center;
+  cursor: pointer;
+}
+
+.auth-register-progress button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .auth-register-progress b {
@@ -9324,6 +9333,12 @@ select#dashboard-classroom {
 .auth-register-form {
   display: block;
   margin-top: var(--space-3);
+}
+
+.auth-register-email-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .auth-register-step {
@@ -9471,7 +9486,7 @@ select#dashboard-classroom {
     font-size: 1.3rem;
   }
 
-  .auth-register-progress span {
+  .auth-register-progress button {
     min-height: 42px;
     font-size: 0.7rem;
   }

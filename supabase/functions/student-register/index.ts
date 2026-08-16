@@ -83,7 +83,9 @@ Deno.serve(async (request) => {
     .select('login_account')
     .eq('id', user.id)
     .single();
-  if (currentProfileError) return failure(500, 'REGISTER_FAILED');
+  if (currentProfileError) {
+    return failure(500, 'REGISTER_FAILED');
+  }
 
   // 帳號唯一（自己重複送出視為同帳號覆寫）。
   const { data: existingAccount, error: accountError } = await admin
@@ -91,7 +93,9 @@ Deno.serve(async (request) => {
     .select('id')
     .eq('login_account', normalizedAccount)
     .maybeSingle();
-  if (accountError) return failure(500, 'REGISTER_FAILED');
+  if (accountError) {
+    return failure(500, 'REGISTER_FAILED');
+  }
   if (existingAccount && existingAccount.id !== user.id) {
     return failure(409, 'ACCOUNT_TAKEN');
   }
@@ -104,26 +108,49 @@ Deno.serve(async (request) => {
     .eq('status', 'active')
     .eq('join_code_hash', codeHash)
     .maybeSingle();
-  if (classroomError) return failure(500, 'REGISTER_FAILED');
+  if (classroomError) {
+    return failure(500, 'REGISTER_FAILED');
+  }
   if (!classroom) return failure(400, 'INVALID_CLASSROOM_CODE');
 
-  const { data: membership, error: membershipError } = await admin
-    .from('classroom_members')
-    .select('classroom_id,member_role,status')
-    .eq('classroom_id', classroom.id)
-    .eq('user_id', user.id)
-    .maybeSingle();
-  if (membershipError) return failure(500, 'REGISTER_FAILED');
+  // 只透過 user-scoped SECURITY DEFINER RPC 讀取本人的 active membership，
+  // 避免 Edge service role 直接擴張 classroom_members 欄位權限。
+  const { data: memberships, error: membershipError } =
+    await userClient.rpc('list_my_classrooms');
+  if (membershipError) {
+    return failure(500, 'REGISTER_FAILED');
+  }
+  const membership = memberships?.find(
+    (entry) => entry.classroom_id === classroom.id,
+  );
 
   if (currentProfile.login_account !== null) {
     const sameCompletedRegistration =
       currentProfile.login_account === normalizedAccount &&
-      membership?.member_role === 'student' &&
-      membership.status === 'active';
+      membership?.membership_status === 'active';
     return sameCompletedRegistration
       ? jsonResponse(200, { ok: true })
       : failure(409, 'ALREADY_REGISTERED');
   }
+
+  const attemptId = crypto.randomUUID();
+  const { data: claimDisposition, error: claimError } = await userClient.rpc(
+    'claim_student_registration',
+    { p_attempt_id: attemptId },
+  );
+  if (claimError) return failure(500, 'REGISTER_FAILED');
+  if (claimDisposition !== 'ACQUIRED') {
+    return claimDisposition === 'IN_PROGRESS'
+      ? failure(409, 'REGISTER_IN_PROGRESS')
+      : failure(409, 'ALREADY_REGISTERED');
+  }
+
+  const failAfterClaim = async (status: number, error: string) => {
+    await userClient.rpc('release_student_registration_claim', {
+      p_attempt_id: attemptId,
+    });
+    return failure(status, error);
+  };
 
   if (!membership) {
     // 以學生本人身分走既有 RPC，保留角色檢查與審計語意。
@@ -133,12 +160,12 @@ Deno.serve(async (request) => {
     });
     if (joinError) {
       if (joinError.message.includes('INVALID_CLASSROOM_CODE')) {
-        return failure(400, 'INVALID_CLASSROOM_CODE');
+        return await failAfterClaim(400, 'INVALID_CLASSROOM_CODE');
       }
       if (joinError.message.includes('ALREADY_IN_ACTIVE_CLASSROOM')) {
-        return failure(409, 'ALREADY_IN_ACTIVE_CLASSROOM');
+        return await failAfterClaim(409, 'ALREADY_IN_ACTIVE_CLASSROOM');
       }
-      return failure(500, 'REGISTER_FAILED');
+      return await failAfterClaim(500, 'REGISTER_FAILED');
     }
   }
 
@@ -146,7 +173,9 @@ Deno.serve(async (request) => {
     user.id,
     { password },
   );
-  if (passwordError) return failure(500, 'REGISTER_FAILED');
+  if (passwordError) {
+    return await failAfterClaim(500, 'REGISTER_FAILED');
+  }
 
   const { data: updatedProfile, error: profileError } = await admin
     .from('profiles')
@@ -159,13 +188,20 @@ Deno.serve(async (request) => {
     .is('login_account', null)
     .select('id');
   if (profileError) {
-    return profileError.code === '23505'
-      ? failure(409, 'ACCOUNT_TAKEN')
-      : failure(500, 'REGISTER_FAILED');
+    return await failAfterClaim(
+      profileError.code === '23505' ? 409 : 500,
+      profileError.code === '23505' ? 'ACCOUNT_TAKEN' : 'REGISTER_FAILED',
+    );
   }
   if (!updatedProfile || updatedProfile.length !== 1) {
-    return failure(409, 'ALREADY_REGISTERED');
+    return await failAfterClaim(409, 'ALREADY_REGISTERED');
   }
+
+  const { error: completeClaimError } = await userClient.rpc(
+    'complete_student_registration_claim',
+    { p_attempt_id: attemptId },
+  );
+  if (completeClaimError) return failure(500, 'REGISTER_FAILED');
 
   return jsonResponse(200, { ok: true });
 });
