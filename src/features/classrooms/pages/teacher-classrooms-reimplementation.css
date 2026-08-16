@@ -114,6 +114,15 @@
   padding: 14px 18px;
 }
 
+.teacher-workspace-shell .classroom-card summary > span:first-child {
+  min-width: 0;
+}
+
+.teacher-workspace-shell .classroom-card summary .ui-chip {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .teacher-workspace-shell .classroom-card__detail {
   display: grid;
   min-width: 0;

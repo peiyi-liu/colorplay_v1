@@ -183,6 +183,20 @@
   color: var(--teacher-palette-hex-a9c8e4-91de073e);
 }
 
+.teacher-live-report .ui-table thead th {
+  background: var(--teacher-palette-hex-071d36-fb63863b);
+  color: var(--teacher-palette-hex-a9c8e4-91de073e);
+}
+
+.teacher-live-report .ui-table tbody :where(th, td) {
+  background: var(--teacher-surface);
+  color: var(--teacher-ink);
+}
+
+.teacher-live-report .ui-table tbody tr:nth-child(even) :where(th, td) {
+  background: var(--teacher-surface-strong);
+}
+
 .teacher-live-report__question-table-frame {
   overflow: visible;
 }

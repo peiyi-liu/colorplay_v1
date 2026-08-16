@@ -1027,3 +1027,11 @@
 - Hosted HTML、`/login`、`/teacher/live` 均回 200；主 bundle `/assets/index-DA8EyPp-.js` 只包含 staging Supabase `onkxnkzeixpezetkmocf`，未包含 production ref `xdjumzdqyexpyndanwkp`。教師 Live create／session／presenter chunks 均可直接取得 200。
 - 真實 hosted smoke：教師 fixture 在 1366×900 與 393×852 登入，只有教師導覽、legacy HUD 為 0，`/teacher/live` 可載入且小節選擇有明確卡框；1366px 班級碼／日期／操作鍵幾何無碰撞。學生 fixture 可登入 `/app`。未建立正式 Live session，故教師 projector／學生答題回饋的 staging 實際回合仍待 owner 以雙帳號人工驗證；本機同範圍 Chromium 52／52 已通過。
 - Vercel remote build 使用 CLI 58.1.0 並完成；本機 CLI 58.9.4 低於目前 59.1.3，這次未造成部署失敗，但後續維護可另行升級，不屬本次產品 diff。
+
+## 2026-08-16 23:27 [Integration owner／Codex] — 教師 follow-up 修正完成，待 staging 發布
+
+- Live 報表表格補上教師端深色 surface／亮色 ink 與交錯列底色，Chromium 實測首欄文字對比至少 4.5:1；班級管理長班名會讓名稱縮排但「有效」狀態固定單行且留在摘要列內。
+- Live 建立頁第 2 步改用隱藏的 fieldset legend 保留語意、另以正常標題排版，標題與上方邊界、下方小節格線皆有明確間距。
+- 已有教師頭像改為開啟原生 modal：可查看目前圖像或重新上傳，既有 repository 的 user-scoped path 與 `upsert: true` 會覆蓋舊圖；視窗提供可見關閉鍵、Escape、鍵盤焦點隔離及所有關閉路徑復焦。未上傳頭像時仍維持點擊頭像框直接選檔。
+- 唯一 review 的 Medium finding 為原 dialog 未隔離背景焦點且選檔關閉未保證復焦；已改用 `showModal()` 並以 Chromium 覆蓋 Tab、Shift+Tab、Escape 與成功選檔關閉。
+- Fresh checks：相關 Vitest 4 files／28 tests、Chromium layout／contrast／avatar 11／11、lint、typecheck、production build、scoped Prettier、`git diff --check` 全綠。尚未 push／deploy；下一步建立 checkpoint，確認 linked Vercel project 與 staging Supabase ref 後發布。

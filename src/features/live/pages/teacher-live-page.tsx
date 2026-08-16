@@ -207,10 +207,11 @@ export function TeacherLivePage({
         </section>
 
         <fieldset className="teacher-live-create__step">
-          <legend className="teacher-live-create__step-title">
+          <legend className="visually-hidden">選擇小節</legend>
+          <h2 className="teacher-live-create__step-title">
             <span aria-hidden="true">2</span>
             選擇小節
-          </legend>
+          </h2>
           <div className="teacher-live-create__section-list">
             {sectionOptions.map((section) => (
               <label key={section.sectionId}>

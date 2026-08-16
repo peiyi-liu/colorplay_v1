@@ -88,6 +88,49 @@ describe('TeacherMenu', () => {
     expect(screen.queryByText(/XP|Token|金幣/u)).not.toBeInTheDocument();
   });
 
+  it('lets a teacher view or replace an existing avatar from a dialog', async () => {
+    const onAvatarUpload = vi.fn().mockResolvedValue(undefined);
+    renderMenu({
+      avatarUrl: 'https://example.test/teacher-avatar',
+      onAvatarUpload,
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: '管理林老師的教師頭像' }),
+    );
+
+    const dialog = screen.getByRole('dialog', { name: '教師頭像' });
+    expect(dialog).toBeVisible();
+    expect(screen.getByRole('link', { name: '查看圖像' })).toHaveAttribute(
+      'href',
+      'https://example.test/teacher-avatar',
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: '上傳圖像' }));
+    const file = new File(['replacement'], 'replacement.webp', {
+      type: 'image/webp',
+    });
+    await userEvent.upload(screen.getByLabelText('上傳教師頭像'), file);
+
+    expect(onAvatarUpload).toHaveBeenCalledWith(file);
+    expect(screen.queryByRole('dialog', { name: '教師頭像' })).toBeNull();
+  });
+
+  it('provides a visible close action for the existing-avatar dialog', async () => {
+    renderMenu({ avatarUrl: 'https://example.test/teacher-avatar' });
+
+    const manageAvatar = screen.getByRole('button', {
+      name: '管理林老師的教師頭像',
+    });
+    await userEvent.click(manageAvatar);
+    const close = screen.getByRole('button', { name: '關閉' });
+    expect(close).toHaveFocus();
+    await userEvent.click(close);
+
+    expect(screen.queryByRole('dialog', { name: '教師頭像' })).toBeNull();
+    expect(manageAvatar).toHaveFocus();
+  });
+
   it('surfaces a failed sign-out without replacing the navigation', () => {
     renderMenu({ signOutError: true });
 

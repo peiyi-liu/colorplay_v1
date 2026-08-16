@@ -47,6 +47,7 @@ export type TeacherRoutesHarnessScenario =
   | 'live-podium'
   | 'live-round'
   | 'live-report'
+  | 'menu-avatar'
   | 'menu-errors'
   | 'questions'
   | 'student-progress'
@@ -62,6 +63,7 @@ export const TEACHER_ROUTES_HARNESS_SCENARIOS: readonly TeacherRoutesHarnessScen
     'live-podium',
     'live-round',
     'live-report',
+    'menu-avatar',
     'menu-errors',
     'questions',
     'student-progress',
@@ -75,7 +77,12 @@ const routeForScenario: Readonly<
   Record<
     Exclude<
       TeacherRoutesHarnessScenario,
-      'hud' | 'live-lobby' | 'live-podium' | 'live-round' | 'menu-errors'
+      | 'hud'
+      | 'live-lobby'
+      | 'live-podium'
+      | 'live-round'
+      | 'menu-avatar'
+      | 'menu-errors'
     >,
     string
   >
@@ -341,6 +348,23 @@ export function TeacherRoutesHarness({
     );
   }
 
+  if (scenario === 'menu-avatar') {
+    return (
+      <MemoryRouter initialEntries={['/teacher']}>
+        <TeacherMenu
+          avatarError={null}
+          avatarPending={false}
+          avatarUrl="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+          displayName="林老師"
+          isSigningOut={false}
+          onAvatarUpload={() => undefined}
+          onSignOut={() => undefined}
+          signOutError={false}
+        />
+      </MemoryRouter>
+    );
+  }
+
   if (scenario === 'live-lobby') {
     setTeacherHarnessJoinCode();
     return (
@@ -390,7 +414,15 @@ export function TeacherRoutesHarness({
         ) : scenario === 'classes' ? (
           <TeacherClassroomsPage
             menu={teacherMenuFixture}
-            repository={classroomRepositoryFixture()}
+            repository={classroomRepositoryFixture({
+              listOwned: () =>
+                Promise.resolve([
+                  {
+                    ...classroomFixture,
+                    classroomName: '臺北市立色彩設計高級中等學校三年級甲班',
+                  },
+                ]),
+            })}
           />
         ) : scenario === 'classroom-detail' ? (
           <TeacherClassroomDetailPage

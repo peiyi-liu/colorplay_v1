@@ -1,4 +1,4 @@
-import { useRef, type ChangeEvent } from 'react';
+import { useEffect, useId, useRef, useState, type ChangeEvent } from 'react';
 import { NavLink } from 'react-router-dom';
 
 import { Icon, type IconName } from '../../../components/ui/icons';
@@ -36,10 +36,44 @@ export function TeacherMenu({
   onSignOut: () => void;
   signOutError: boolean;
 }>) {
+  const avatarDialogTitleId = useId();
+  const avatarButtonRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!avatarDialogOpen) return;
+    const dialog = dialogRef.current;
+    const returnFocus = avatarButtonRef.current;
+    if (!dialog) return;
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute('open', '');
+    }
+    closeButtonRef.current?.focus();
+    return () => {
+      if (dialog.open && typeof dialog.close === 'function') {
+        dialog.close();
+      } else {
+        dialog.removeAttribute('open');
+      }
+      returnFocus?.focus();
+    };
+  }, [avatarDialogOpen]);
+
+  const closeAvatarDialog = () => {
+    setAvatarDialogOpen(false);
+  };
+
   const handleUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) void onAvatarUpload(file);
+    if (file) {
+      setAvatarDialogOpen(false);
+      void onAvatarUpload(file);
+    }
     event.target.value = '';
   };
   const handleSignOut = () => {
@@ -49,26 +83,42 @@ export function TeacherMenu({
   return (
     <aside aria-label="教師選單" className="teacher-menu">
       <div className="teacher-menu__identity">
-        <label
-          aria-busy={avatarPending}
-          className="teacher-menu__avatar"
-          htmlFor="teacher-avatar-input"
-        >
-          {avatarUrl ? (
+        {avatarUrl ? (
+          <button
+            aria-busy={avatarPending}
+            aria-label={`管理${displayName}的教師頭像`}
+            className="teacher-menu__avatar"
+            disabled={avatarPending}
+            onClick={() => {
+              setAvatarDialogOpen(true);
+            }}
+            ref={avatarButtonRef}
+            type="button"
+          >
             <img alt={`${displayName}的教師頭像`} src={avatarUrl} />
-          ) : (
+          </button>
+        ) : (
+          <label
+            aria-busy={avatarPending}
+            className="teacher-menu__avatar"
+            htmlFor="teacher-avatar-input"
+          >
             <span>{avatarPending ? '上傳中…' : '點此上傳'}</span>
-          )}
+          </label>
+        )}
+        {!avatarUrl ? (
           <input
             accept="image/png,image/jpeg,image/webp"
             aria-label="上傳教師頭像"
+            className="teacher-menu__avatar-input"
             disabled={avatarPending}
             id="teacher-avatar-input"
             onChange={handleUpload}
             ref={inputRef}
+            tabIndex={-1}
             type="file"
           />
-        </label>
+        ) : null}
         <strong>{displayName}・教師端</strong>
         {avatarError ? (
           <p className="teacher-menu__avatar-error" role="alert">
@@ -76,6 +126,61 @@ export function TeacherMenu({
           </p>
         ) : null}
       </div>
+
+      {avatarUrl && avatarDialogOpen ? (
+        <dialog
+          aria-labelledby={avatarDialogTitleId}
+          aria-modal="true"
+          className="teacher-avatar-dialog"
+          onCancel={(event) => {
+            event.preventDefault();
+            closeAvatarDialog();
+          }}
+          ref={dialogRef}
+        >
+          <header className="teacher-avatar-dialog__header">
+            <h2 id={avatarDialogTitleId}>教師頭像</h2>
+            <button
+              aria-label="關閉"
+              className="teacher-avatar-dialog__close"
+              onClick={closeAvatarDialog}
+              ref={closeButtonRef}
+              type="button"
+            >
+              ×
+            </button>
+          </header>
+          <img
+            alt={`${displayName}的教師頭像預覽`}
+            className="teacher-avatar-dialog__preview"
+            src={avatarUrl}
+          />
+          <div className="teacher-avatar-dialog__actions">
+            <a href={avatarUrl} rel="noreferrer" target="_blank">
+              查看圖像
+            </a>
+            <button
+              disabled={avatarPending}
+              onClick={() => {
+                inputRef.current?.click();
+              }}
+              type="button"
+            >
+              上傳圖像
+            </button>
+          </div>
+          <input
+            accept="image/png,image/jpeg,image/webp"
+            aria-label="上傳教師頭像"
+            className="teacher-menu__avatar-input"
+            disabled={avatarPending}
+            onChange={handleUpload}
+            ref={inputRef}
+            type="file"
+          />
+          <p>重新上傳後會取代目前的教師頭像。</p>
+        </dialog>
+      ) : null}
 
       <nav aria-label="教師導覽" className="teacher-menu__navigation">
         {navigation.map((item) => (

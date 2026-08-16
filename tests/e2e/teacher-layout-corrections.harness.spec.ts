@@ -115,16 +115,26 @@ test('Live section choices are separated responsive cards', async ({
   await expect(choices).toHaveCount(1);
   const desktop = await list.evaluate((element) => {
     const choice = element.querySelector('label');
+    const fieldset = element.parentElement;
+    const title = fieldset?.querySelector('.teacher-live-create__step-title');
     if (!choice) throw new Error('missing section choice');
     return {
       borderWidth: Number.parseFloat(getComputedStyle(choice).borderTopWidth),
       columns: getComputedStyle(element).gridTemplateColumns.split(' ').length,
       gap: Number.parseFloat(getComputedStyle(element).gap),
+      titleGap:
+        element.getBoundingClientRect().top -
+        (title?.getBoundingClientRect().bottom ?? 0),
+      titleTopGap:
+        (title?.getBoundingClientRect().top ?? 0) -
+        (fieldset?.getBoundingClientRect().top ?? 0),
     };
   });
   expect(desktop.borderWidth).toBeGreaterThan(0);
   expect(desktop.columns).toBe(2);
   expect(desktop.gap).toBeGreaterThanOrEqual(10);
+  expect(desktop.titleGap).toBeGreaterThanOrEqual(12);
+  expect(desktop.titleTopGap).toBeGreaterThanOrEqual(18);
 
   await page.setViewportSize({ height: 852, width: 393 });
   expect(
@@ -133,6 +143,31 @@ test('Live section choices are separated responsive cards', async ({
         getComputedStyle(element).gridTemplateColumns.split(' ').length,
     ),
   ).toBe(1);
+});
+
+test('long classroom names do not wrap the active status chip', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 900, width: 1366 });
+  await page.goto('/dev-harness/teacher-routes.html?scenario=classes');
+  const summary = page.locator('.classroom-card summary').first();
+  const status = summary.locator('.ui-chip');
+  await expect(status).toHaveText('有效');
+  const geometry = await status.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const summaryBounds = element.parentElement?.getBoundingClientRect();
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    return {
+      insideSummary:
+        summaryBounds !== undefined && bounds.right <= summaryBounds.right + 1,
+      lineCount: range.getClientRects().length,
+      whiteSpace: getComputedStyle(element).whiteSpace,
+    };
+  });
+  expect(geometry.insideSummary).toBe(true);
+  expect(geometry.lineCount).toBe(1);
+  expect(geometry.whiteSpace).toBe('nowrap');
 });
 
 for (const width of [1024, 1280, 1366, 1440] as const) {
@@ -168,3 +203,62 @@ for (const scenario of ['classroom-detail', 'student-progress'] as const) {
     ).toBeGreaterThanOrEqual(4.5);
   });
 }
+
+test('Live report table text has readable contrast', async ({ page }) => {
+  await page.setViewportSize({ height: 900, width: 1280 });
+  await page.goto('/dev-harness/teacher-routes.html?scenario=live-report');
+  const firstCell = page
+    .getByRole('table', { name: '個人逐題作答' })
+    .locator('tbody td')
+    .first();
+  await expect(firstCell).toBeVisible();
+  const colors = await firstCell.evaluate((element) => ({
+    background: getComputedStyle(element).backgroundColor,
+    color: getComputedStyle(element).color,
+  }));
+  expect(colors.background).not.toBe('rgba(0, 0, 0, 0)');
+  expect(contrastRatio(colors.color, colors.background)).toBeGreaterThanOrEqual(
+    4.5,
+  );
+});
+
+test('existing teacher avatar opens a modal view and replacement flow', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 852, width: 393 });
+  await page.goto('/dev-harness/teacher-routes.html?scenario=menu-avatar');
+  const manageAvatar = page.getByRole('button', {
+    name: '管理林老師的教師頭像',
+  });
+  await manageAvatar.click();
+
+  const dialog = page.getByRole('dialog', { name: '教師頭像' });
+  await expect(dialog).toBeVisible();
+  await expect(page.getByRole('button', { name: '關閉' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: '查看圖像' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: '上傳圖像' })).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.getByRole('link', { name: '查看圖像' })).toBeFocused();
+  expect(
+    await page
+      .locator('.teacher-menu__navigation')
+      .evaluate((element) => element.matches(':focus-within')),
+  ).toBe(false);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(manageAvatar).toBeFocused();
+
+  await manageAvatar.click();
+  const fileChooserPromise = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: '上傳圖像' }).click();
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles({
+    buffer: Buffer.from('replacement'),
+    mimeType: 'image/webp',
+    name: 'replacement.webp',
+  });
+  await expect(dialog).toBeHidden();
+  await expect(manageAvatar).toBeFocused();
+});
