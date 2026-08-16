@@ -1035,3 +1035,10 @@
 - 已有教師頭像改為開啟原生 modal：可查看目前圖像或重新上傳，既有 repository 的 user-scoped path 與 `upsert: true` 會覆蓋舊圖；視窗提供可見關閉鍵、Escape、鍵盤焦點隔離及所有關閉路徑復焦。未上傳頭像時仍維持點擊頭像框直接選檔。
 - 唯一 review 的 Medium finding 為原 dialog 未隔離背景焦點且選檔關閉未保證復焦；已改用 `showModal()` 並以 Chromium 覆蓋 Tab、Shift+Tab、Escape 與成功選檔關閉。
 - Fresh checks：相關 Vitest 4 files／28 tests、Chromium layout／contrast／avatar 11／11、lint、typecheck、production build、scoped Prettier、`git diff --check` 全綠。尚未 push／deploy；下一步建立 checkpoint，確認 linked Vercel project 與 staging Supabase ref 後發布。
+
+## 2026-08-16 23:33 [Integration owner／Codex] — 教師 follow-up 發布至 staging
+
+- 產品 checkpoint `52d72b3` 已推至 `origin/integration/jrpg-student-teacher-20260814`，並發布至 Vercel `colorplay-staging-web`；deployment `dpl_9MNycfRub7nNbg7PdQi9BrE1K25M` 為 READY，`staging.colorplayapp.com` 已指向該版本。
+- Hosted `/` 與 `/teacher/live` 回 200；公開 bundles 只包含 staging Supabase `onkxnkzeixpezetkmocf`，未包含 production ref `xdjumzdqyexpyndanwkp`。新頭像 modal 文案存在於 `teacher-workspace-mobile-BY1VEsu4.js`。
+- 真實 hosted smoke：教師 fixture 在 1366×900 與 393×852 登入後，只有教師導覽、Live 建立頁可載入、小節卡有邊框、無水平 overflow／page error／失敗 request；桌面班級卡幾何亦無碰撞。fixture 尚無已上傳頭像，因此未為 smoke 改寫 hosted 資料；查看／覆蓋 modal 的完整鍵盤與選檔流程由本機 Chromium 11／11 覆蓋。
+- 本輪未修改或部署 Supabase schema／Edge Function／資料內容。Vercel 本機 CLI 58.9.4 仍低於 59.1.3，未影響本次成功發布；升級留作獨立工具維護。
