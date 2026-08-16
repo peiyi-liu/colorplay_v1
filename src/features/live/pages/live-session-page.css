@@ -4,6 +4,13 @@
   background: #071120;
 }
 
+#main-content.route-world-stage > .live-result-screen {
+  position: fixed;
+  width: 100vw;
+  height: 100dvh;
+  inset: 0;
+}
+
 #main-content.route-world-stage:has(> .live-student-arena) > .student-route-back {
   top: 16px;
 }

@@ -1,3 +1,10 @@
+#main-content.route-world-stage > .live-presenter {
+  position: fixed;
+  width: 100vw;
+  height: 100dvh;
+  inset: 0;
+}
+
 .live-presenter[data-projector-phase='lobby'] {
   min-width: 0;
   min-height: 100dvh;

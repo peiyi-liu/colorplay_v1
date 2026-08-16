@@ -159,4 +159,51 @@ describe('useLiveSession', () => {
 
     unmount();
   });
+
+  it('refetches the authoritative participant roster on a same-version join event', async () => {
+    const { channel, handlers } = stubChannel();
+    const client = {
+      channel: vi.fn(() => channel),
+      removeChannel: vi.fn(),
+    } as unknown as SupabaseClient<Database>;
+    const joinedState: LiveSessionState = {
+      ...lobbyState,
+      participantCount: 2,
+      participants: [{ displayName: '小彩' }, { displayName: '新同學' }],
+    };
+    const getState = vi
+      .fn()
+      .mockResolvedValueOnce(lobbyState)
+      .mockResolvedValue(joinedState);
+    const repository = { getState } as unknown as LiveRepository;
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const wrapper = ({ children }: Readonly<{ children: ReactNode }>) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(
+      () => useLiveSession(SESSION_ID, { client, repository }),
+      { wrapper },
+    );
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    handlers[0]?.({
+      payload: {
+        joined_display_name: '新同學',
+        participant_count: 2,
+        state_version: 2,
+      },
+    });
+
+    await waitFor(() => {
+      expect(result.current.data?.participants).toEqual([
+        { displayName: '小彩' },
+        { displayName: '新同學' },
+      ]);
+    });
+    expect(getState).toHaveBeenCalledTimes(2);
+  });
 });

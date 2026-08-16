@@ -14,7 +14,10 @@ import {
   useTeacherQuestionAnswer,
   useTeacherQuestionDetail,
 } from '../hooks/use-teacher-content';
-import { formatPercent } from '../lib/teacher-analytics-format';
+import {
+  formatChapterLabel,
+  formatPercent,
+} from '../lib/teacher-analytics-format';
 import '../teacher-workspace.css';
 import '../teacher-workspace-mobile.css';
 import '../teacher-analytics.css';
@@ -151,7 +154,12 @@ export function TeacherQuestionAnalysisPage({
         {[...chapters.entries()].map(([chapterId, sections]) => (
           <section key={chapterId}>
             <h2>
-              第 {sections[0]?.chapterSortOrder} 章 {sections[0]?.chapterTitle}
+              {sections[0]
+                ? formatChapterLabel(
+                    sections[0].chapterSortOrder,
+                    sections[0].chapterTitle,
+                  )
+                : null}
             </h2>
             {sections.map((section, sectionIndex) => (
               <details

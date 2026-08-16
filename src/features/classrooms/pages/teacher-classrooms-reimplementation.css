@@ -116,13 +116,18 @@
 
 .teacher-workspace-shell .classroom-card__detail {
   display: grid;
+  min-width: 0;
   align-items: center;
   gap: 14px;
-  grid-template-columns: minmax(270px, 1fr) minmax(110px, auto) minmax(250px, auto);
+  grid-template-columns: minmax(260px, 1fr) minmax(96px, auto) minmax(
+      232px,
+      auto
+    );
   padding: 12px 16px;
 }
 
 .teacher-workspace-shell .classroom-card__code {
+  min-width: 0;
   border: 0;
   background: #0b2943;
   white-space: nowrap;
@@ -141,6 +146,7 @@
 
 .teacher-workspace-shell .classroom-card__actions {
   display: flex;
+  min-width: 0;
   flex-wrap: nowrap;
   gap: 8px;
 }
@@ -164,7 +170,11 @@
 }
 
 .teacher-workspace-shell
-  :where(.classroom-card__manage, .classroom-card__analytics, .classroom-card__copy) {
+  :where(
+    .classroom-card__manage,
+    .classroom-card__analytics,
+    .classroom-card__copy
+  ) {
   min-height: 44px;
   border: 1px solid #4f7da3;
   border-radius: 6px;
@@ -225,6 +235,30 @@
 
 .teacher-classroom-panel > .ui-table-scroll {
   margin-top: 16px;
+}
+
+.teacher-workspace-shell
+  .teacher-classroom-panel
+  .ui-table
+  tbody
+  :where(th, td) {
+  background: var(--teacher-surface);
+  color: var(--teacher-ink);
+}
+
+.teacher-workspace-shell
+  .teacher-classroom-panel
+  .ui-table
+  tbody
+  tr:nth-child(even)
+  :where(th, td) {
+  background: var(--teacher-surface-strong);
+}
+
+.teacher-workspace-shell .teacher-classroom-panel .ui-table .secondary-action {
+  border-color: var(--teacher-blue);
+  background: var(--teacher-surface-strong);
+  color: var(--teacher-ink);
 }
 
 @media (max-width: 47.99rem) {

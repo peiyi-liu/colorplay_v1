@@ -19,9 +19,11 @@ describe('student Live arena layout contract', () => {
     expect(mobileStyles).toContain('background-size: cover, auto 120%;');
   });
 
-  it('fills below the HUD and keeps primary layout out of fixed positioning', () => {
+  it('keeps the arena below the HUD while the feedback result owns the viewport', () => {
     expect(styles).toContain('#main-content:has(> .live-student-arena)');
     expect(styles).toContain('repeat(2, minmax(0, 1fr))');
-    expect(styles).not.toMatch(/position:\s*fixed/u);
+    expect(styles).toMatch(
+      /#main-content\.route-world-stage\s*>\s*\.live-result-screen\s*\{[^}]*position:\s*fixed/isu,
+    );
   });
 });

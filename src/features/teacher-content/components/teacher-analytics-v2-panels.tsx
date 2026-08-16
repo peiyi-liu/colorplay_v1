@@ -6,7 +6,12 @@ import type {
   ClassroomOverview,
   LiveHistoryPage,
 } from '../api/teacher-content-repository';
-import { EM_DASH, formatPercent } from '../lib/teacher-analytics-format';
+import {
+  EM_DASH,
+  formatChapterLabel,
+  formatPercent,
+  formatSubtopicLabel,
+} from '../lib/teacher-analytics-format';
 
 const highErrorQuestions = (rows: readonly AssessmentQuestionRow[]) =>
   [...rows]
@@ -59,7 +64,10 @@ export function ClassroomOverviewPanel({
           <dt>待加強的子題</dt>
           <dd className="teacher-analytics-overview__topic">
             {overview?.worstSubtopicCode
-              ? `${overview.worstSubtopicCode} ${overview.worstSubtopicTitle ?? ''}`
+              ? formatSubtopicLabel(
+                  overview.worstSubtopicCode,
+                  overview.worstSubtopicTitle,
+                )
               : EM_DASH}
           </dd>
         </div>
@@ -97,7 +105,12 @@ export function QuestionInsightPanel({
               <ul>
                 {chapterCompletion.map((row) => (
                   <li key={row.chapter_id}>
-                    <span>{row.chapter_title}</span>
+                    <span>
+                      {formatChapterLabel(
+                        row.chapter_sort_order,
+                        row.chapter_title,
+                      )}
+                    </span>
                     <strong>
                       {row.completed_students}/{row.total_students}
                     </strong>

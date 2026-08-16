@@ -17,6 +17,7 @@ vi.mock('../../learning/api/chapters', () => ({
     data: [
       {
         id: '21000000-0000-0000-0000-000000000003',
+        sortOrder: 3,
         title: '色彩表示',
       },
     ],
@@ -70,8 +71,8 @@ const repositoryOf = (
       averageAccuracy: 76,
       completedStudents: 17,
       totalStudents: 30,
-      worstSubtopicCode: '3-1',
-      worstSubtopicTitle: '色彩三要素與色名的表示',
+      worstSubtopicCode: 'sheet-3-1-all',
+      worstSubtopicTitle: '3-1 色彩三要素與色名的表示',
     }),
     getLiveHistory: vi.fn().mockResolvedValue({
       rows: [
@@ -130,12 +131,22 @@ describe('TeacherAnalyticsPage', () => {
 
     expect(await screen.findByRole('form', { name: '分析篩選' })).toBeVisible();
     expect(screen.getByText('七年級 A 班 · 全部章節')).toBeVisible();
+    expect(
+      screen.getByRole('option', { name: '第三章 色彩表示' }),
+    ).toBeVisible();
     expect(screen.queryByLabelText('子題')).toBeNull();
     expect(
       await screen.findByRole('region', { name: '班級總覽' }),
     ).toHaveTextContent('17/30');
     expect(screen.getByRole('region', { name: '班級總覽' })).toHaveTextContent(
       '76.0%',
+    );
+    expect(screen.getByRole('region', { name: '班級總覽' })).toHaveTextContent(
+      '3-1 色彩三要素與色名的表示',
+    );
+    expect(screen.queryByText(/sheet-3-1-all/u)).toBeNull();
+    expect(screen.getByRole('region', { name: '題目分析' })).toHaveTextContent(
+      '第三章 色彩表示',
     );
     expect(screen.getByRole('link', { name: '題目分析' })).toHaveAttribute(
       'href',
@@ -202,9 +213,7 @@ describe('TeacherAnalyticsPage', () => {
       }),
     );
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent(
-      '班級總覽暫時無法取得',
-    );
+    expect(alert).toHaveTextContent('班級總覽暫時無法取得');
     expect(screen.queryByText('0%')).toBeNull();
     await userEvent.click(
       within(alert).getByRole('button', { name: '重新載入班級總覽' }),

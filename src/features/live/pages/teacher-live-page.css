@@ -53,18 +53,33 @@
 
 .teacher-live-create__section-list {
   display: grid;
-  width: min(100%, 720px);
-  gap: 4px;
+  width: min(100%, 860px);
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .teacher-live-create__section-list label {
   display: flex;
-  min-height: 44px;
+  min-width: 0;
+  min-height: 56px;
   align-items: center;
+  border: 1px solid var(--teacher-palette-hex-536b88-76a1327d);
+  border-radius: 6px;
+  background: var(--teacher-palette-hex-07162b-0c1f246c);
   color: var(--teacher-palette-hex-e6edf8-b6712e6a);
   cursor: pointer;
   gap: 12px;
-  padding: 7px 2px;
+  overflow-wrap: anywhere;
+  padding: 10px 14px;
+}
+
+.teacher-live-create__section-list label:has(input:checked) {
+  border-color: var(--teacher-palette-hex-58b9ff-bceb204b);
+  background: linear-gradient(
+    135deg,
+    var(--teacher-palette-hex-0b1b31-f0aeeeee),
+    var(--teacher-palette-hex-07162b-0c1f246c)
+  );
 }
 
 .teacher-live-create__section-list input {
@@ -223,6 +238,10 @@
 
   .teacher-live-create__step {
     padding: 20px 0;
+  }
+
+  .teacher-live-create__section-list {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .teacher-live-create__summary {

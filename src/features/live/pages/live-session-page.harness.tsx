@@ -40,6 +40,30 @@ function stateFor(scenario: string): LiveSessionState {
     stateVersion: 2,
   };
   if (scenario === 'lobby') return base;
+  if (scenario === 'correct' || scenario === 'wrong' || scenario === 'timeout') {
+    const answerStatus =
+      scenario === 'correct'
+        ? ('correct' as const)
+        : scenario === 'timeout'
+          ? ('timeout' as const)
+          : ('incorrect' as const);
+    return {
+      ...base,
+      answeredCount: 24,
+      correctOptionId: 'option-a',
+      currentPosition: 3,
+      explanation: null,
+      myFeedback: {
+        answerStatus,
+        scoreDelta: scenario === 'correct' ? 150 : 0,
+        selectedOptionId: scenario === 'timeout' ? null : 'option-b',
+      },
+      optionCounts: [],
+      question,
+      state: 'question_feedback',
+      stateVersion: 4,
+    };
+  }
   return {
     ...base,
     answeredCount: scenario === 'answered' ? 18 : 9,

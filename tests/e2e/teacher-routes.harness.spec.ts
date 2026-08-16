@@ -56,11 +56,15 @@ for (const viewport of [
       );
     expect(undersizedTargets).toEqual([]);
 
-    await page.goto('/dev-harness/teacher-routes.html?scenario=classroom-detail');
+    await page.goto(
+      '/dev-harness/teacher-routes.html?scenario=classroom-detail',
+    );
     await page.waitForLoadState('networkidle');
     const composition = await page.evaluate(() => {
       const menu = document.querySelector<HTMLElement>('.teacher-menu');
-      const surface = document.querySelector<HTMLElement>('.teacher-work-surface');
+      const surface = document.querySelector<HTMLElement>(
+        '.teacher-work-surface',
+      );
       const header = document.querySelector<HTMLElement>(
         '.teacher-work-surface__header',
       );
@@ -92,7 +96,8 @@ for (const viewport of [
         navigationHeight: navigationBounds.height,
         surfaceLeft: surfaceBounds.left,
         toolbarBelowTitle:
-          toolbarBounds === undefined || toolbarBounds.top >= titleBounds.bottom,
+          toolbarBounds === undefined ||
+          toolbarBounds.top >= titleBounds.bottom,
         toolbarTargetsSized:
           toolbar === null ||
           Array.from(toolbar.querySelectorAll<HTMLElement>('a, button')).every(
@@ -286,6 +291,87 @@ test('Live create scenario marks Live 課堂 as the active teacher destination',
   ).not.toHaveAttribute('aria-current', 'page');
 });
 
+test('Live section choices are separated responsive cards', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 900, width: 1280 });
+  await page.goto('/dev-harness/teacher-routes.html?scenario=live');
+  const list = page.locator('.teacher-live-create__section-list');
+  const choices = list.locator('label');
+  await expect(choices).toHaveCount(1);
+  const desktop = await list.evaluate((element) => {
+    const choice = element.querySelector('label');
+    if (!choice) throw new Error('missing section choice');
+    return {
+      borderWidth: Number.parseFloat(getComputedStyle(choice).borderTopWidth),
+      columns: getComputedStyle(element).gridTemplateColumns.split(' ').length,
+      gap: Number.parseFloat(getComputedStyle(element).gap),
+    };
+  });
+  expect(desktop.borderWidth).toBeGreaterThan(0);
+  expect(desktop.columns).toBe(2);
+  expect(desktop.gap).toBeGreaterThanOrEqual(10);
+
+  await page.setViewportSize({ height: 852, width: 393 });
+  expect(
+    await list.evaluate(
+      (element) =>
+        getComputedStyle(element).gridTemplateColumns.split(' ').length,
+    ),
+  ).toBe(1);
+});
+
+test('desktop classroom metadata and actions do not overlap and tables use explicit teacher colors', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 900, width: 1280 });
+  await page.goto('/dev-harness/teacher-routes.html?scenario=classes');
+  const parts = page.locator(
+    '.classroom-card__code, .classroom-card__meta, .classroom-card__actions',
+  );
+  await expect(parts).toHaveCount(3);
+  const boxes = await parts.evaluateAll((elements) =>
+    elements.map((element) => {
+      const bounds = element.getBoundingClientRect();
+      return {
+        bottom: bounds.bottom,
+        left: bounds.left,
+        right: bounds.right,
+        top: bounds.top,
+      };
+    }),
+  );
+  for (let leftIndex = 0; leftIndex < boxes.length; leftIndex += 1) {
+    for (
+      let rightIndex = leftIndex + 1;
+      rightIndex < boxes.length;
+      rightIndex += 1
+    ) {
+      const left = boxes[leftIndex];
+      const right = boxes[rightIndex];
+      if (!left || !right) continue;
+      const overlaps =
+        left.left < right.right &&
+        left.right > right.left &&
+        left.top < right.bottom &&
+        left.bottom > right.top;
+      expect(overlaps).toBe(false);
+    }
+  }
+
+  await page.goto('/dev-harness/teacher-routes.html?scenario=classroom-detail');
+  const firstCell = page
+    .locator('.teacher-classroom-panel .ui-table tbody td')
+    .first();
+  await expect(firstCell).toBeVisible();
+  const colors = await firstCell.evaluate((element) => ({
+    background: getComputedStyle(element).backgroundColor,
+    color: getComputedStyle(element).color,
+  }));
+  expect(colors.background).not.toBe('rgba(0, 0, 0, 0)');
+  expect(colors.color).not.toBe('rgb(0, 0, 0)');
+});
+
 for (const viewport of [
   { height: 768, width: 1024 },
   { height: 720, width: 1280 },
@@ -366,6 +452,7 @@ for (const viewport of [
       if (!root || !arena || !footer) throw new Error('missing Live projector');
       const arenaBounds = arena.getBoundingClientRect();
       const footerBounds = footer.getBoundingClientRect();
+      const rootBounds = root.getBoundingClientRect();
       return {
         arenaDoesNotScroll:
           arena.scrollHeight <= arena.clientHeight &&
@@ -374,6 +461,12 @@ for (const viewport of [
         documentHeight: document.documentElement.scrollHeight,
         documentWidth: document.documentElement.scrollWidth,
         rootHeight: root.scrollHeight,
+        rootBounds: {
+          bottom: rootBounds.bottom,
+          left: rootBounds.left,
+          right: rootBounds.right,
+          top: rootBounds.top,
+        },
         rootWidth: root.scrollWidth,
         portraitsFit: portraits.every((portrait) => {
           const bounds = portrait.getBoundingClientRect();
@@ -395,6 +488,12 @@ for (const viewport of [
     );
     expect(geometry.rootWidth).toBeLessThanOrEqual(geometry.viewportWidth);
     expect(geometry.rootHeight).toBeLessThanOrEqual(geometry.viewportHeight);
+    expect(geometry.rootBounds).toEqual({
+      bottom: geometry.viewportHeight,
+      left: 0,
+      right: geometry.viewportWidth,
+      top: 0,
+    });
     expect(geometry.arenaDoesNotScroll).toBe(true);
     expect(geometry.portraitsFit).toBe(true);
     expect(

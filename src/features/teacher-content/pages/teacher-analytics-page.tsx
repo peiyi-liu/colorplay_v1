@@ -24,6 +24,7 @@ import {
   useTeacherClassroomOverview,
   useTeacherLiveHistory,
 } from '../hooks/use-teacher-content';
+import { formatChapterLabel } from '../lib/teacher-analytics-format';
 import '../teacher-workspace.css';
 import '../teacher-workspace-mobile.css';
 import '../teacher-analytics.css';
@@ -94,9 +95,12 @@ function TeacherAnalyticsPageContent({
   const selectedClassroomName =
     classrooms.data?.find((classroom) => classroom.classroomId === classroomId)
       ?.classroomName ?? '尚未選擇班級';
-  const selectedChapterName =
-    (chapters.data ?? []).find((chapter) => chapter.id === chapterId)?.title ??
-    '全部章節';
+  const selectedChapter = (chapters.data ?? []).find(
+    (chapter) => chapter.id === chapterId,
+  );
+  const selectedChapterName = selectedChapter
+    ? formatChapterLabel(selectedChapter.sortOrder, selectedChapter.title)
+    : '全部章節';
 
   useEffect(() => {
     if (!classroomId || requestedClassroomId === classroomId) return;
@@ -149,7 +153,10 @@ function TeacherAnalyticsPageContent({
       title="教學分析"
       variant="analytics"
     >
-      <details className="teacher-analytics-filter-deck" open={wide || undefined}>
+      <details
+        className="teacher-analytics-filter-deck"
+        open={wide || undefined}
+      >
         <summary>
           <span>分析篩選</span>
           <small>
@@ -213,7 +220,7 @@ function TeacherAnalyticsPageContent({
               <option value="">全部章節</option>
               {(chapters.data ?? []).map((chapter) => (
                 <option key={chapter.id} value={chapter.id}>
-                  {chapter.title}
+                  {formatChapterLabel(chapter.sortOrder, chapter.title)}
                 </option>
               ))}
             </select>

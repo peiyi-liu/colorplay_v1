@@ -82,6 +82,9 @@ describe('TeacherQuestionAnalysisPage', () => {
     );
 
     const section = await screen.findByText('3-1 色彩三要素');
+    expect(
+      screen.getByRole('heading', { name: '第三章 色彩表示', level: 2 }),
+    ).toBeVisible();
     const disclosure = section.closest('details');
     expect(disclosure).toHaveAttribute('open');
     expect(repository.getQuestionDetail).not.toHaveBeenCalled();
