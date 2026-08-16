@@ -1020,3 +1020,10 @@
 - Live 建立的小節選擇改為有間距的 responsive 卡片；教師投影 lobby／題目／暫停／統計／解析／即時排名／最終頒獎台均固定覆蓋精確 viewport，不再露出深藍外圍。學生答對／答錯／逾時結果頁亦以 route-local 高 specificity 修正 AppShell direct-child 規則造成的縮框。既有 Realtime 同版本 roster event 會 refetch 權威參與者名單與人數。
 - 唯一 review 找到的 1366px 子元件交疊、E2E 檔超過 500 行、資料表對比度 assertion 過弱、投影只驗 lobby 四項均已修正；Security axis 跳過，因 diff 未修改 auth、RLS、RPC、分數或其他 trust boundary。
 - Fresh checks：相關 Vitest 8 files／42 tests、Chromium 教師 layout／route／Live 38 tests與學生 Live 14 tests（合計 52／52）、lint、typecheck、production build、scoped Prettier 與 `git diff --check` 全綠。尚未 push／deploy；下一步建立 checkpoint，核對 Vercel linked project 為 `colorplay-staging-web` 後才發布至 `staging.colorplayapp.com`。
+
+## 2026-08-16 22:42 [Integration owner／Codex] — 教師版面與 Live 修正發布至 staging
+
+- 產品 checkpoint `2f9623569e5314a0f3aa749edf9b04f1f5b76ad8` 已推至 `origin/integration/jrpg-student-teacher-20260814`，並發布至 Vercel `colorplay-staging-web`；deployment `dpl_4zFyBzDtbTTyC3A6BQRGgX8Re4FS` 為 READY，`staging.colorplayapp.com` 已指向該 deployment。
+- Hosted HTML、`/login`、`/teacher/live` 均回 200；主 bundle `/assets/index-DA8EyPp-.js` 只包含 staging Supabase `onkxnkzeixpezetkmocf`，未包含 production ref `xdjumzdqyexpyndanwkp`。教師 Live create／session／presenter chunks 均可直接取得 200。
+- 真實 hosted smoke：教師 fixture 在 1366×900 與 393×852 登入，只有教師導覽、legacy HUD 為 0，`/teacher/live` 可載入且小節選擇有明確卡框；1366px 班級碼／日期／操作鍵幾何無碰撞。學生 fixture 可登入 `/app`。未建立正式 Live session，故教師 projector／學生答題回饋的 staging 實際回合仍待 owner 以雙帳號人工驗證；本機同範圍 Chromium 52／52 已通過。
+- Vercel remote build 使用 CLI 58.1.0 並完成；本機 CLI 58.9.4 低於目前 59.1.3，這次未造成部署失敗，但後續維護可另行升級，不屬本次產品 diff。
