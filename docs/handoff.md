@@ -1004,3 +1004,11 @@
 - 已到達的 1／2／3 步可直接回點；往前切換與最終提交會自動導向最早錯誤步驟。已驗證 E-mail 可按「更改 E-mail」後重新驗證，第三步在重新驗證前保持鎖定。
 - Fresh checks：auth Vitest 7 files／100 tests、lint、typecheck、production build、focused registration-claim pgTAP 15／15、Chromium 真實 Email OTP → Edge 200 → `/login` → 帳號密碼登入 → HUD 顯示輸入暱稱全綠；generated database types 與 local schema 僅差末尾空行。完整 pgTAP 1267 assertions 中，新 059 全綠；既有 018 Live 測試仍固定失敗 1 項（seed 已有 Live session 卻斷言絕對數量 0），隔離重跑相同，未修改該無關範圍。
 - 唯一 review 的兩個 High（隱藏步驟錯誤、並行密碼覆寫）與一個 Medium（已驗證 E-mail 無法重編）皆已修正。本 checkpoint 尚未 push、未 deploy、未操作 hosted Supabase／Vercel；staging 發布前必須先套用 `20260814000700_student_registration_claim.sql`，再發布更新後的 `student-register` Edge Function 與前端。
+
+## 2026-08-16 21:27 [Integration owner／Codex] — 三步學生註冊修復發布至 staging
+
+- 註冊流程產品修正為 commit `6ab6877ffbf7885fc1b8ac6a5bdf34ac0f4f1b62`；後續 commit `282e399e44b30921e1c496ad9f40af60aedf17d2` 將 Edge 各失敗階段映射為安全且可操作的繁中原因，不再顯示舊的泛用「註冊失敗，請稍後重試」，亦不洩漏 SQL／內部錯誤細節。兩個 commit 均已推至 `origin/integration/jrpg-student-teacher-20260814`。
+- Staging Supabase `onkxnkzeixpezetkmocf` 已套用 `20260814000700_student_registration_claim.sql`，local／remote migration 對齊；更新後的 `student-register` Edge Function 已部署。合法格式但無 session 的請求回 `401 AUTH_REQUIRED`。
+- Vercel `colorplay-staging-web` deployment `dpl_AzFq59jCk7fENVbrg15gdRdJameD` 為 READY，`staging.colorplayapp.com` 已指向該 deployment。Hosted bundle 為 `/assets/index-Bvj-hrnW.js`，只綁定 staging project ref、不含 production ref；註冊 route bundle 含新的分段錯誤文案且不含舊泛用文案。
+- Hosted smoke：既有 fixture `student01` 登入到 `/app`、`teacher01` 登入到 `/teacher`，API 均 200、無 page error／失敗 request。一次性已驗證 synthetic identity 走正式 `student-register` 回 200，再以新帳密登入回 200；手機 viewport 到 `/app`，暱稱完整保留、active membership 存在、browser error 0。一次性 Auth user 與測試班級均已刪除，`註冊 Smoke %` 班級殘留數為 0。
+- Hosted synthetic smoke 以已確認 E-mail identity 驗證 OTP 後半段，不消耗 staging SMTP 配額；實際 OTP 寄送／輸入仍以本機真實 Mailpit E2E 證據為準，staging 真實信箱收信需 owner 手動驗證。操作發現 server key 直接查 `classrooms` 仍回 42501，故測試資料清理改走已連結專案的 Management API SQL；未擴張 table grant 或產品權限。
