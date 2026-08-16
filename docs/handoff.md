@@ -1012,3 +1012,11 @@
 - Vercel `colorplay-staging-web` deployment `dpl_AzFq59jCk7fENVbrg15gdRdJameD` 為 READY，`staging.colorplayapp.com` 已指向該 deployment。Hosted bundle 為 `/assets/index-Bvj-hrnW.js`，只綁定 staging project ref、不含 production ref；註冊 route bundle 含新的分段錯誤文案且不含舊泛用文案。
 - Hosted smoke：既有 fixture `student01` 登入到 `/app`、`teacher01` 登入到 `/teacher`，API 均 200、無 page error／失敗 request。一次性已驗證 synthetic identity 走正式 `student-register` 回 200，再以新帳密登入回 200；手機 viewport 到 `/app`，暱稱完整保留、active membership 存在、browser error 0。一次性 Auth user 與測試班級均已刪除，`註冊 Smoke %` 班級殘留數為 0。
 - Hosted synthetic smoke 以已確認 E-mail identity 驗證 OTP 後半段，不消耗 staging SMTP 配額；實際 OTP 寄送／輸入仍以本機真實 Mailpit E2E 證據為準，staging 真實信箱收信需 owner 手動驗證。操作發現 server key 直接查 `classrooms` 仍回 42501，故測試資料清理改走已連結專案的 Management API SQL；未擴張 table grant 或產品權限。
+
+## 2026-08-16 22:33 [Integration owner／Codex] — 教師版面與 Live 滿版修正完成
+
+- 教學分析與題目分析改用可讀章節／小節標示：顯示「第三章 色彩表示」與「3-1 色彩三要素與色名的表示」，不再曝露 `sheet-3-1-all` 等內部 stable key。
+- 班級管理桌面卡片在 1024／1280／1366／1440px 逐一驗證班級碼、複製鍵、建立日期與兩個操作鍵均位於卡片內且彼此不交疊；1366px 的實際碰撞以延長兩列 composition 至 1536px 修正。班級明細與學生進度資料表使用明確教師端 surface／ink，實測文字對比度至少 4.5:1。
+- Live 建立的小節選擇改為有間距的 responsive 卡片；教師投影 lobby／題目／暫停／統計／解析／即時排名／最終頒獎台均固定覆蓋精確 viewport，不再露出深藍外圍。學生答對／答錯／逾時結果頁亦以 route-local 高 specificity 修正 AppShell direct-child 規則造成的縮框。既有 Realtime 同版本 roster event 會 refetch 權威參與者名單與人數。
+- 唯一 review 找到的 1366px 子元件交疊、E2E 檔超過 500 行、資料表對比度 assertion 過弱、投影只驗 lobby 四項均已修正；Security axis 跳過，因 diff 未修改 auth、RLS、RPC、分數或其他 trust boundary。
+- Fresh checks：相關 Vitest 8 files／42 tests、Chromium 教師 layout／route／Live 38 tests與學生 Live 14 tests（合計 52／52）、lint、typecheck、production build、scoped Prettier 與 `git diff --check` 全綠。尚未 push／deploy；下一步建立 checkpoint，核對 Vercel linked project 為 `colorplay-staging-web` 後才發布至 `staging.colorplayapp.com`。

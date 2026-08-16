@@ -12,6 +12,26 @@ const observeRuntimeErrors = (page: Page) => {
   return { consoleErrors, pageErrors };
 };
 
+const expectPresenterOwnsViewport = async (page: Page) => {
+  const geometry = await page.locator('.live-presenter').evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      bottom: bounds.bottom,
+      left: bounds.left,
+      position: getComputedStyle(element).position,
+      right: bounds.right,
+      top: bounds.top,
+      viewportHeight: window.innerHeight,
+      viewportWidth: window.innerWidth,
+    };
+  });
+  expect(geometry.position).toBe('fixed');
+  expect(geometry.left).toBeCloseTo(0, 0);
+  expect(geometry.top).toBeCloseTo(0, 0);
+  expect(geometry.right).toBeCloseTo(geometry.viewportWidth, 0);
+  expect(geometry.bottom).toBeCloseTo(geometry.viewportHeight, 0);
+};
+
 test('Live round follows question, statistics, explanation, ranking, and next-question order', async ({
   page,
 }) => {
@@ -37,16 +57,20 @@ test('Live round follows question, statistics, explanation, ranking, and next-qu
   await expect(page.getByRole('button')).toHaveCount(5);
   await expect(page.locator('.teacher-menu')).toHaveCount(0);
   await expect(page.locator('.hud-command')).toHaveCount(0);
+  await expectPresenterOwnsViewport(page);
 
   await page.getByRole('button', { name: '暫停時間' }).click();
   await expect(page.getByText('作答時間已暫停')).toBeVisible();
   await expect(page.getByRole('button', { name: '繼續作答' })).toBeVisible();
+  await expectPresenterOwnsViewport(page);
   await page.getByRole('button', { name: '繼續作答' }).click();
+  await expectPresenterOwnsViewport(page);
 
   await page.getByRole('button', { name: '結束作答' }).click();
   await expect(page.getByRole('heading', { name: '作答統計' })).toBeVisible();
   await expect(page.getByText('逾時／未選擇')).toBeVisible();
   await expect(page.getByText('18 人／45%')).toBeVisible();
+  await expectPresenterOwnsViewport(page);
   const answerEmphasis = await page.evaluate(
     ({ correct, incorrect }) => {
       const correctElement = document.querySelector<HTMLElement>(correct);
@@ -77,6 +101,7 @@ test('Live round follows question, statistics, explanation, ranking, and next-qu
   await expect(page.getByRole('heading', { name: '作答統計' })).toBeVisible();
   await page.clock.fastForward(1);
   await expect(page.getByRole('heading', { name: '本題解析' })).toBeVisible();
+  await expectPresenterOwnsViewport(page);
   await expect(
     page.getByText(/加法混色以紅光、綠光、藍光為三原色/u),
   ).toBeVisible();
@@ -86,6 +111,7 @@ test('Live round follows question, statistics, explanation, ranking, and next-qu
   await expect(page.getByRole('heading', { name: '即時排名' })).toBeVisible();
   await expect(page.getByText('晨星')).toBeVisible();
   await expect(page.getByText('880 分')).toBeVisible();
+  await expectPresenterOwnsViewport(page);
   const podiumGeometry = await page
     .getByRole('list', { name: '即時排名前三名' })
     .locator('li')
@@ -118,8 +144,19 @@ test('Live round follows question, statistics, explanation, ranking, and next-qu
   await page.getByRole('button', { name: '下一題' }).click();
   await expect(page.getByText('第 2 / 10 題').first()).toBeVisible();
   await expect(page.getByRole('button', { name: '下一題' })).toBeDisabled();
+  await expectPresenterOwnsViewport(page);
   expect(runtimeErrors.consoleErrors).toEqual([]);
   expect(runtimeErrors.pageErrors).toEqual([]);
+});
+
+test('Live final podium owns the whole projector viewport', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 768, width: 1366 });
+  await page.goto('/dev-harness/teacher-routes.html?scenario=live-podium');
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByRole('heading', { name: '最終頒獎台' })).toBeVisible();
+  await expectPresenterOwnsViewport(page);
 });
 
 for (const viewport of [

@@ -288,6 +288,29 @@ export function LiveRoundHarness() {
   );
 }
 
+export function LivePodiumHarness() {
+  return (
+    <LivePresenter
+      audio={silentPresenterAudio}
+      footerActions={[]}
+      onExit={() => undefined}
+      sessionId={TEACHER_HARNESS_SESSION_ID}
+      state={{
+        ...liveLobbyFixture,
+        currentPosition: 10,
+        podium: [
+          { displayName: '晨星', rank: 1, score: 1_480 },
+          { displayName: '青鳥', rank: 2, score: 1_210 },
+          { displayName: '小樹', rank: 3, score: 980 },
+        ],
+        state: 'completed',
+        stateVersion: 32,
+      }}
+      transitionPending={false}
+    />
+  );
+}
+
 export const setTeacherHarnessJoinCode = () => {
   window.sessionStorage.setItem(
     presenterJoinCodeKey(TEACHER_HARNESS_SESSION_ID),

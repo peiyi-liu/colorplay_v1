@@ -151,7 +151,7 @@
   gap: 8px;
 }
 
-@media (min-width: 48rem) and (max-width: 80rem) {
+@media (min-width: 48rem) and (max-width: 96rem) {
   .teacher-workspace-shell .classroom-card__detail {
     grid-template-columns: minmax(270px, 1fr) minmax(110px, auto);
     row-gap: 8px;

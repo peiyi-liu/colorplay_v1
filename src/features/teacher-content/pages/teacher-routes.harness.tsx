@@ -31,6 +31,7 @@ import { TeacherAnalyticsPage } from './teacher-analytics-page';
 import { TeacherQuestionAnalysisPage } from './teacher-question-analysis-page';
 import {
   LiveLobbyHarness,
+  LivePodiumHarness,
   LiveRoundHarness,
   liveRepositoryFixture,
   setTeacherHarnessJoinCode,
@@ -43,6 +44,7 @@ export type TeacherRoutesHarnessScenario =
   | 'classroom-detail'
   | 'live'
   | 'live-lobby'
+  | 'live-podium'
   | 'live-round'
   | 'live-report'
   | 'menu-errors'
@@ -57,6 +59,7 @@ export const TEACHER_ROUTES_HARNESS_SCENARIOS: readonly TeacherRoutesHarnessScen
     'classroom-detail',
     'live',
     'live-lobby',
+    'live-podium',
     'live-round',
     'live-report',
     'menu-errors',
@@ -72,7 +75,7 @@ const routeForScenario: Readonly<
   Record<
     Exclude<
       TeacherRoutesHarnessScenario,
-      'hud' | 'live-lobby' | 'live-round' | 'menu-errors'
+      'hud' | 'live-lobby' | 'live-podium' | 'live-round' | 'menu-errors'
     >,
     string
   >
@@ -358,6 +361,18 @@ export function TeacherRoutesHarness({
           initialEntries={[`/teacher/live/${TEACHER_HARNESS_SESSION_ID}`]}
         >
           <LiveRoundHarness />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+  }
+
+  if (scenario === 'live-podium') {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter
+          initialEntries={[`/teacher/live/${TEACHER_HARNESS_SESSION_ID}`]}
+        >
+          <LivePodiumHarness />
         </MemoryRouter>
       </QueryClientProvider>
     );
