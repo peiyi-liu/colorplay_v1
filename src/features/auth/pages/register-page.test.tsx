@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '../../../components/ui/toast';
 import { AuthContext } from '../context/auth-context';
 import {
+  AccountFlowError,
   completeStudentRegistration,
   sendRegistrationOtp,
   verifyRegistrationOtp,
@@ -229,6 +230,24 @@ describe('RegisterPage', () => {
     });
     expect(screen.getByTestId('location-path')).toHaveTextContent('/login');
     expect(mockedSignOut).toHaveBeenCalledOnce();
+  });
+
+  it('shows the safe registration stage that failed instead of a generic error', async () => {
+    const user = userEvent.setup();
+    mockedCompleteStudentRegistration.mockRejectedValueOnce(
+      new AccountFlowError('MEMBERSHIP_LOOKUP_FAILED'),
+    );
+    renderRegisterPage();
+    await reachCredentialsStep(user);
+
+    await user.type(screen.getByLabelText('帳號（學號）'), 'cp045002');
+    await user.type(screen.getByLabelText('密碼'), 'SecretA');
+    await user.type(screen.getByLabelText('密碼確認'), 'SecretA');
+    await user.click(screen.getByRole('button', { name: '完成註冊' }));
+
+    expect(
+      await screen.findByText('無法確認班級加入狀態，請稍後再試。'),
+    ).toBeVisible();
   });
 
   it('links back to login from every registration step', () => {

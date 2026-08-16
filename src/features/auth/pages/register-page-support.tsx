@@ -7,9 +7,18 @@ export type RegisterStep = 'basic' | 'email' | 'credentials';
 
 const registerErrorMessages: Readonly<Record<string, string>> = {
   ACCOUNT_TAKEN: '這個帳號（學號）已被使用',
+  ACCOUNT_LOOKUP_FAILED: '無法確認帳號是否可用，請稍後再試。',
   ALREADY_IN_ACTIVE_CLASSROOM: '此帳號已加入其他班級，請聯絡老師辦理轉班',
   ALREADY_REGISTERED: '此 E-mail 已完成註冊，請返回登入',
+  CLASSROOM_JOIN_FAILED: '加入班級失敗，請確認班級序號後再試。',
+  CLASSROOM_LOOKUP_FAILED: '無法確認班級資料，請稍後再試。',
+  MEMBERSHIP_LOOKUP_FAILED: '無法確認班級加入狀態，請稍後再試。',
+  PASSWORD_SETUP_FAILED: '密碼設定失敗，請重新輸入後再試。',
+  PROFILE_LOOKUP_FAILED: '無法確認 E-mail 的註冊狀態，請稍後再試。',
+  PROFILE_SETUP_FAILED: '基本資料儲存失敗，請檢查內容後再試。',
+  REGISTRATION_FINALIZE_FAILED: '註冊尚未完成，請再按一次「完成註冊」。',
   REGISTER_IN_PROGRESS: '註冊正在處理中，請稍候再試',
+  REGISTRATION_STATE_FAILED: '無法建立註冊作業，請稍後再試。',
   EMAIL_NOT_VERIFIED: '請先完成 E-mail 認證',
   INVALID_CLASSROOM_CODE: '班級序號無效，請向老師確認',
   NICKNAME_BANNED: '暱稱包含不適當字詞，請重新命名',
@@ -20,8 +29,9 @@ const registerErrorMessages: Readonly<Record<string, string>> = {
 
 export const messageForRegisterError = (error: unknown) =>
   error instanceof AccountFlowError
-    ? (registerErrorMessages[error.code] ?? '註冊失敗，請稍後重試')
-    : '註冊失敗，請稍後重試';
+    ? (registerErrorMessages[error.code] ??
+      '系統暫時無法完成註冊，請稍後再試。')
+    : '系統暫時無法完成註冊，請稍後再試。';
 
 const stepItems = [
   { id: 'basic', label: '基本資料', number: 1 },

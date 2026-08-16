@@ -30,9 +30,18 @@ const clientRejectingWith = (code: string) =>
 
 describe('completeStudentRegistration', () => {
   it.each([
+    'ACCOUNT_LOOKUP_FAILED',
     'ALREADY_IN_ACTIVE_CLASSROOM',
     'ALREADY_REGISTERED',
+    'CLASSROOM_JOIN_FAILED',
+    'CLASSROOM_LOOKUP_FAILED',
+    'MEMBERSHIP_LOOKUP_FAILED',
+    'PASSWORD_SETUP_FAILED',
+    'PROFILE_LOOKUP_FAILED',
+    'PROFILE_SETUP_FAILED',
+    'REGISTRATION_FINALIZE_FAILED',
     'REGISTER_IN_PROGRESS',
+    'REGISTRATION_STATE_FAILED',
   ] as const)('preserves the safe server error code %s', async (code) => {
     await expect(
       completeStudentRegistration(registration, clientRejectingWith(code)),

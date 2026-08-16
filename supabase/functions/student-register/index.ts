@@ -84,7 +84,7 @@ Deno.serve(async (request) => {
     .eq('id', user.id)
     .single();
   if (currentProfileError) {
-    return failure(500, 'REGISTER_FAILED');
+    return failure(503, 'PROFILE_LOOKUP_FAILED');
   }
 
   // 帳號唯一（自己重複送出視為同帳號覆寫）。
@@ -94,7 +94,7 @@ Deno.serve(async (request) => {
     .eq('login_account', normalizedAccount)
     .maybeSingle();
   if (accountError) {
-    return failure(500, 'REGISTER_FAILED');
+    return failure(503, 'ACCOUNT_LOOKUP_FAILED');
   }
   if (existingAccount && existingAccount.id !== user.id) {
     return failure(409, 'ACCOUNT_TAKEN');
@@ -109,7 +109,7 @@ Deno.serve(async (request) => {
     .eq('join_code_hash', codeHash)
     .maybeSingle();
   if (classroomError) {
-    return failure(500, 'REGISTER_FAILED');
+    return failure(503, 'CLASSROOM_LOOKUP_FAILED');
   }
   if (!classroom) return failure(400, 'INVALID_CLASSROOM_CODE');
 
@@ -118,7 +118,7 @@ Deno.serve(async (request) => {
   const { data: memberships, error: membershipError } =
     await userClient.rpc('list_my_classrooms');
   if (membershipError) {
-    return failure(500, 'REGISTER_FAILED');
+    return failure(503, 'MEMBERSHIP_LOOKUP_FAILED');
   }
   const membership = memberships?.find(
     (entry) => entry.classroom_id === classroom.id,
@@ -138,7 +138,7 @@ Deno.serve(async (request) => {
     'claim_student_registration',
     { p_attempt_id: attemptId },
   );
-  if (claimError) return failure(500, 'REGISTER_FAILED');
+  if (claimError) return failure(503, 'REGISTRATION_STATE_FAILED');
   if (claimDisposition !== 'ACQUIRED') {
     return claimDisposition === 'IN_PROGRESS'
       ? failure(409, 'REGISTER_IN_PROGRESS')
@@ -165,7 +165,7 @@ Deno.serve(async (request) => {
       if (joinError.message.includes('ALREADY_IN_ACTIVE_CLASSROOM')) {
         return await failAfterClaim(409, 'ALREADY_IN_ACTIVE_CLASSROOM');
       }
-      return await failAfterClaim(500, 'REGISTER_FAILED');
+      return await failAfterClaim(503, 'CLASSROOM_JOIN_FAILED');
     }
   }
 
@@ -174,7 +174,7 @@ Deno.serve(async (request) => {
     { password },
   );
   if (passwordError) {
-    return await failAfterClaim(500, 'REGISTER_FAILED');
+    return await failAfterClaim(503, 'PASSWORD_SETUP_FAILED');
   }
 
   const { data: updatedProfile, error: profileError } = await admin
@@ -189,8 +189,8 @@ Deno.serve(async (request) => {
     .select('id');
   if (profileError) {
     return await failAfterClaim(
-      profileError.code === '23505' ? 409 : 500,
-      profileError.code === '23505' ? 'ACCOUNT_TAKEN' : 'REGISTER_FAILED',
+      profileError.code === '23505' ? 409 : 503,
+      profileError.code === '23505' ? 'ACCOUNT_TAKEN' : 'PROFILE_SETUP_FAILED',
     );
   }
   if (!updatedProfile || updatedProfile.length !== 1) {
@@ -201,7 +201,9 @@ Deno.serve(async (request) => {
     'complete_student_registration_claim',
     { p_attempt_id: attemptId },
   );
-  if (completeClaimError) return failure(500, 'REGISTER_FAILED');
+  if (completeClaimError) {
+    return failure(503, 'REGISTRATION_FINALIZE_FAILED');
+  }
 
   return jsonResponse(200, { ok: true });
 });
