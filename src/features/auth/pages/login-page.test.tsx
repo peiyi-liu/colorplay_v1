@@ -81,6 +81,34 @@ describe('LoginPage', () => {
     );
   });
 
+  it('keeps the password hidden by default and preserves it while toggling visibility', async () => {
+    const user = userEvent.setup();
+    renderLoginPage(createAuthValue());
+
+    const password = screen.getByLabelText('密碼');
+    await user.type(password, validCredentials.password);
+
+    expect(password).toHaveAttribute('type', 'password');
+    expect(screen.getByRole('button', { name: '顯示密碼' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+
+    await user.click(screen.getByRole('button', { name: '顯示密碼' }));
+
+    expect(password).toHaveAttribute('type', 'text');
+    expect(password).toHaveValue(validCredentials.password);
+    expect(screen.getByRole('button', { name: '隱藏密碼' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    await user.click(screen.getByRole('button', { name: '隱藏密碼' }));
+
+    expect(password).toHaveAttribute('type', 'password');
+    expect(password).toHaveValue(validCredentials.password);
+  });
+
   it('sends a student account through the account sign-in path', async () => {
     const user = userEvent.setup();
     const signIn = vi.fn(() => Promise.resolve());

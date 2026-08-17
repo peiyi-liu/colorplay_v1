@@ -749,6 +749,62 @@ a {
   padding: var(--space-2) var(--space-3);
 }
 
+.login-form__password-control {
+  position: relative;
+}
+
+.login-form__password-control input {
+  padding-right: 56px;
+}
+
+.login-form__password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  display: grid;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-pixel);
+  background: transparent;
+  color: var(--ink-700);
+  cursor: pointer;
+  padding: 0;
+  transform: translateY(-50%);
+}
+
+.login-form__password-toggle::after {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 2;
+  display: none;
+  width: max-content;
+  max-width: 160px;
+  border: 1px solid var(--pixel-window-frame);
+  background: var(--pixel-night-deep);
+  color: var(--pixel-window-ink);
+  content: attr(data-tooltip);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 5px 8px;
+  pointer-events: none;
+}
+
+.login-form__password-toggle:hover::after,
+.login-form__password-toggle:focus-visible::after {
+  display: block;
+}
+
+.login-form__password-toggle:hover {
+  background: color-mix(in srgb, var(--cobalt-600) 12%, transparent);
+  color: var(--cobalt-700);
+}
+
 .login-form__field input[aria-invalid='true'] {
   border-color: var(--color-danger);
 }

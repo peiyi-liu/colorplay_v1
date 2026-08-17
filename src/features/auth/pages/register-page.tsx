@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Chip } from '../../../components/ui/chip';
 import { RpgWindow } from '../../../components/ui/rpg-window';
 import { useToast } from '../../../components/ui/toast';
+import { PasswordVisibilityToggle } from '../components/password-visibility-toggle';
 import { useAuth } from '../context/auth-context';
 import {
   completeStudentRegistration,
@@ -40,6 +41,8 @@ export function RegisterPage() {
   );
   const [otpCode, setOtpCode] = useState('');
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [passwordConfirmVisible, setPasswordConfirmVisible] = useState(false);
 
   useEffect(() => {
     if (cooldownRemaining <= 0) return undefined;
@@ -377,14 +380,24 @@ export function RegisterPage() {
 
               <div className="login-form__field">
                 <label htmlFor="register-password">密碼</label>
-                <input
-                  {...register('password')}
-                  aria-describedby="register-password-hint register-password-error"
-                  aria-invalid={errors.password ? 'true' : 'false'}
-                  autoComplete="new-password"
-                  id="register-password"
-                  type="password"
-                />
+                <div className="login-form__password-control">
+                  <input
+                    {...register('password')}
+                    aria-describedby="register-password-hint register-password-error"
+                    aria-invalid={errors.password ? 'true' : 'false'}
+                    autoComplete="new-password"
+                    id="register-password"
+                    type={passwordVisible ? 'text' : 'password'}
+                  />
+                  <PasswordVisibilityToggle
+                    controlId="register-password"
+                    fieldLabel="密碼"
+                    onToggle={() => {
+                      setPasswordVisible((visible) => !visible);
+                    }}
+                    visible={passwordVisible}
+                  />
+                </div>
                 <p
                   className="login-form__field-hint"
                   id="register-password-hint"
@@ -403,18 +416,28 @@ export function RegisterPage() {
 
               <div className="login-form__field">
                 <label htmlFor="register-password-confirm">密碼確認</label>
-                <input
-                  {...register('passwordConfirm')}
-                  aria-describedby={
-                    errors.passwordConfirm
-                      ? 'register-password-confirm-error'
-                      : undefined
-                  }
-                  aria-invalid={errors.passwordConfirm ? 'true' : 'false'}
-                  autoComplete="new-password"
-                  id="register-password-confirm"
-                  type="password"
-                />
+                <div className="login-form__password-control">
+                  <input
+                    {...register('passwordConfirm')}
+                    aria-describedby={
+                      errors.passwordConfirm
+                        ? 'register-password-confirm-error'
+                        : undefined
+                    }
+                    aria-invalid={errors.passwordConfirm ? 'true' : 'false'}
+                    autoComplete="new-password"
+                    id="register-password-confirm"
+                    type={passwordConfirmVisible ? 'text' : 'password'}
+                  />
+                  <PasswordVisibilityToggle
+                    controlId="register-password-confirm"
+                    fieldLabel="密碼確認"
+                    onToggle={() => {
+                      setPasswordConfirmVisible((visible) => !visible);
+                    }}
+                    visible={passwordConfirmVisible}
+                  />
+                </div>
                 {errors.passwordConfirm ? (
                   <p
                     className="login-form__field-error"

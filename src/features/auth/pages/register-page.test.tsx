@@ -152,6 +152,41 @@ describe('RegisterPage', () => {
     expect(screen.getByRole('button', { name: '完成註冊' })).toBeEnabled();
   });
 
+  it('toggles the two registration passwords independently without clearing either value', async () => {
+    const user = userEvent.setup();
+    renderRegisterPage();
+    await reachCredentialsStep(user);
+
+    const password = screen.getByLabelText('密碼');
+    const confirmation = screen.getByLabelText('密碼確認');
+    await user.type(password, 'SecretA');
+    await user.type(confirmation, 'SecretA');
+
+    expect(password).toHaveAttribute('type', 'password');
+    expect(confirmation).toHaveAttribute('type', 'password');
+
+    await user.click(screen.getByRole('button', { name: '顯示密碼' }));
+
+    expect(password).toHaveAttribute('type', 'text');
+    expect(password).toHaveValue('SecretA');
+    expect(confirmation).toHaveAttribute('type', 'password');
+    expect(confirmation).toHaveValue('SecretA');
+
+    await user.click(
+      screen.getByRole('button', { name: '顯示密碼確認' }),
+    );
+
+    expect(password).toHaveAttribute('type', 'text');
+    expect(confirmation).toHaveAttribute('type', 'text');
+    expect(screen.getByRole('button', { name: '隱藏密碼' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(
+      screen.getByRole('button', { name: '隱藏密碼確認' }),
+    ).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('lets the student revisit every reached step without losing entered values', async () => {
     const user = userEvent.setup();
     renderRegisterPage();

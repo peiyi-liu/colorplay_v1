@@ -1051,3 +1051,10 @@
 - 登入錯誤安全區分為帳密錯誤、網路、逾時、429 限流、服務不可用與未知，不顯示 provider 內部內容或帳號存在狀態。A6 的 `sessionStorage` 關分頁登出決策未改。
 - 唯一 review 找到「deadline 只包 headers」High 與「timeout 被重試」Medium，均於同一輪修正；新增 stalled body、Request signal、timeout no-retry、429 與 5xx regression tests。
 - Fresh checks：lint、typecheck、production build、Vitest 168 files／1185 tests、`git diff --check` 全綠。C1–C4、D 與 E 的證據門檻／下次事故取證已寫入 `docs/superpowers/plans/2026-08-18-staging-concurrency-follow-up.md`；未查 Auth logs、未調 rate limit、未升級 Supabase tier、未 push 或 deploy。
+
+## 2026-08-18 01:12 [Integration owner／Codex] — 登入／註冊密碼顯示切換完成，待 staging 發布
+
+- 登入密碼、註冊密碼與密碼確認新增一致的開眼／閉眼切換；三個欄位預設皆隱藏，切換不清除已輸入內容，註冊兩欄可獨立控制，按鈕不會觸發表單提交。
+- Icon-only button 具動態 `aria-label`／`aria-pressed`／`aria-controls`、鍵盤操作與 hover／focus tooltip；唯一 review 指出的 40px 觸控區與缺少可見說明已於同一輪修成 44×44px 與 tooltip。未新增密碼儲存、log、傳輸或 auth trust-boundary 變更。
+- Fresh checks：登入／註冊 Vitest 2 files／36 tests、完整 Vitest 367 suites／1187 tests、lint、typecheck、production build、`git diff --check` 全綠。測試曾因 sandbox 禁止 `127.0.0.1` listen 而出現 `EPERM`；允許本機暫時連接埠後完整 gate 全綠。
+- 既有未追蹤 `docs/research/` 仍保持原狀、未 stage／未納入本 task。下一步只 stage 本輪產品檔與本段 handoff，建立 checkpoint、push，再確認 Vercel linked project 為 `colorplay-staging-web` 後部署並驗證 hosted bundle 與 staging Supabase ref。

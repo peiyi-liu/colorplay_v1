@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useToast } from '../../../components/ui/toast';
+import { PasswordVisibilityToggle } from '../components/password-visibility-toggle';
 import { useAuth } from '../context/auth-context';
 import {
   accountSignInSchema,
@@ -51,6 +52,7 @@ export function LoginPage() {
   const pendingSubmission = useRef(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [portal, setPortal] = useState<'student' | 'teacher'>('student');
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -185,16 +187,26 @@ export function LoginPage() {
 
           <div className="login-form__field">
             <label htmlFor="login-password">密碼</label>
-            <input
-              {...register('password')}
-              aria-describedby={
-                errors.password ? 'login-password-error' : undefined
-              }
-              aria-invalid={errors.password ? 'true' : 'false'}
-              autoComplete="current-password"
-              id="login-password"
-              type="password"
-            />
+            <div className="login-form__password-control">
+              <input
+                {...register('password')}
+                aria-describedby={
+                  errors.password ? 'login-password-error' : undefined
+                }
+                aria-invalid={errors.password ? 'true' : 'false'}
+                autoComplete="current-password"
+                id="login-password"
+                type={passwordVisible ? 'text' : 'password'}
+              />
+              <PasswordVisibilityToggle
+                controlId="login-password"
+                fieldLabel="密碼"
+                onToggle={() => {
+                  setPasswordVisible((visible) => !visible);
+                }}
+                visible={passwordVisible}
+              />
+            </div>
             {errors.password ? (
               <p className="login-form__field-error" id="login-password-error">
                 {errors.password.message}
