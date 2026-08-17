@@ -1057,4 +1057,5 @@
 - 登入密碼、註冊密碼與密碼確認新增一致的開眼／閉眼切換；三個欄位預設皆隱藏，切換不清除已輸入內容，註冊兩欄可獨立控制，按鈕不會觸發表單提交。
 - Icon-only button 具動態 `aria-label`／`aria-pressed`／`aria-controls`、鍵盤操作與 hover／focus tooltip；唯一 review 指出的 40px 觸控區與缺少可見說明已於同一輪修成 44×44px 與 tooltip。未新增密碼儲存、log、傳輸或 auth trust-boundary 變更。
 - Fresh checks：登入／註冊 Vitest 2 files／36 tests、完整 Vitest 367 suites／1187 tests、lint、typecheck、production build、`git diff --check` 全綠。測試曾因 sandbox 禁止 `127.0.0.1` listen 而出現 `EPERM`；允許本機暫時連接埠後完整 gate 全綠。
-- 既有未追蹤 `docs/research/` 仍保持原狀、未 stage／未納入本 task。下一步只 stage 本輪產品檔與本段 handoff，建立 checkpoint、push，再確認 Vercel linked project 為 `colorplay-staging-web` 後部署並驗證 hosted bundle 與 staging Supabase ref。
+- Hosted smoke 首次找出 Playwright 的模糊 `getByLabel('密碼')` 會同時匹配輸入框與新按鈕；正式 E2E／acceptance selectors 已機械式收斂為 `exact: true`，登入鍵盤路徑亦新增眼睛按鈕的 Tab／Enter 開關斷言。產品 accessible name 不降級。
+- 既有未追蹤 `docs/research/` 仍保持原狀、未 stage／未納入本 task。產品 checkpoint 已建立；下一步只 stage selector hardening 與本段 handoff，建立 follow-up checkpoint、push，再讓 Vercel staging 精確對應最新 HEAD。

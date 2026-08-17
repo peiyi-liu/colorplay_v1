@@ -112,7 +112,7 @@ test('student registers with OTP, signs in by account, and resets the password',
   }).toEqual({ body: { ok: true }, status: 200 });
   await expect(page).toHaveURL(/\/login$/u, { timeout: 15_000 });
   await page.getByRole('textbox', { name: '帳號' }).fill(account);
-  await page.getByLabel('密碼').fill(password);
+  await page.getByLabel('密碼', { exact: true }).fill(password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u, { timeout: 20_000 });
   await expect(page.getByText(nickname, { exact: true }).first()).toBeVisible({
@@ -158,7 +158,7 @@ test('student registers with OTP, signs in by account, and resets the password',
   );
 
   await page.getByRole('textbox', { name: '帳號' }).fill(account);
-  await page.getByLabel('密碼').fill(newPassword);
+  await page.getByLabel('密碼', { exact: true }).fill(newPassword);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u, { timeout: 20_000 });
 });
