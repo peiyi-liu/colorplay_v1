@@ -15,7 +15,12 @@ export type AuthSession = Readonly<{
 }>;
 
 export type AuthErrorCode =
-  'AUTH_INVALID_CREDENTIALS' | 'AUTH_NETWORK' | 'AUTH_UNKNOWN';
+  | 'AUTH_INVALID_CREDENTIALS'
+  | 'AUTH_NETWORK'
+  | 'AUTH_RATE_LIMITED'
+  | 'AUTH_TIMEOUT'
+  | 'AUTH_UNAVAILABLE'
+  | 'AUTH_UNKNOWN';
 
 export class AuthRepositoryError extends Error {
   constructor(public readonly code: AuthErrorCode) {

@@ -17,11 +17,17 @@ const safeErrorMessages = {
   student: {
     AUTH_INVALID_CREDENTIALS: '帳號或密碼不正確',
     AUTH_NETWORK: '網路連線失敗，請稍後重試',
+    AUTH_RATE_LIMITED: '登入嘗試過於頻繁，請稍後再試',
+    AUTH_TIMEOUT: '登入服務回應逾時，請再試一次',
+    AUTH_UNAVAILABLE: '登入服務暫時無法使用，請稍後再試',
     AUTH_UNKNOWN: '登入失敗，請使用追蹤代碼回報',
   },
   teacher: {
     AUTH_INVALID_CREDENTIALS: '帳號或密碼不正確',
     AUTH_NETWORK: '網路連線失敗，請稍後重試',
+    AUTH_RATE_LIMITED: '登入嘗試過於頻繁，請稍後再試',
+    AUTH_TIMEOUT: '登入服務回應逾時，請再試一次',
+    AUTH_UNAVAILABLE: '登入服務暫時無法使用，請稍後再試',
     AUTH_UNKNOWN: '登入失敗，請使用追蹤代碼回報',
   },
 } as const satisfies Readonly<

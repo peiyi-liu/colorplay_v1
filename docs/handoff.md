@@ -1042,3 +1042,12 @@
 - Hosted `/` 與 `/teacher/live` 回 200；公開 bundles 只包含 staging Supabase `onkxnkzeixpezetkmocf`，未包含 production ref `xdjumzdqyexpyndanwkp`。新頭像 modal 文案存在於 `teacher-workspace-mobile-BY1VEsu4.js`。
 - 真實 hosted smoke：教師 fixture 在 1366×900 與 393×852 登入後，只有教師導覽、Live 建立頁可載入、小節卡有邊框、無水平 overflow／page error／失敗 request；桌面班級卡幾何亦無碰撞。fixture 尚無已上傳頭像，因此未為 smoke 改寫 hosted 資料；查看／覆蓋 modal 的完整鍵盤與選檔流程由本機 Chromium 11／11 覆蓋。
 - 本輪未修改或部署 Supabase schema／Edge Function／資料內容。Vercel 本機 CLI 58.9.4 仍低於 59.1.3，未影響本次成功發布；升級留作獨立工具維護。
+
+## 2026-08-18 00:48 [Integration owner／Codex] — Staging 連線可恢復性修復完成
+
+- Vercel hashed `/assets/*` 新增一年 immutable cache；外部 Google Fonts 已移除，自架 Noto Sans TC 收斂為 400／700。production build 的主 CSS 由事故盤點約 863 KB／gzip 320 KB 降至 477.37 KB／gzip 161.86 KB。
+- Supabase browser client 的所有 HTTP request 採 15 秒總 deadline，涵蓋 response headers 與 body consumption，並尊重 `Request`／`RequestInit` AbortSignal；可將原本無界等待收斂為 `AUTH_TIMEOUT`。這是對殭屍連線假說的必要防護，不代表已證實 8/17 事故根因。
+- 全域 QueryClient 改為 30 秒 stale、取消 focus refetch、query／mutation 預設不重試；各 feature 已明確宣告的 read retry 仍可覆寫。登入只對非 timeout、非 429 的 transport failure 重試一次；timeout 不重試，避免最壞等待延長至 30 秒與新增 session。
+- 登入錯誤安全區分為帳密錯誤、網路、逾時、429 限流、服務不可用與未知，不顯示 provider 內部內容或帳號存在狀態。A6 的 `sessionStorage` 關分頁登出決策未改。
+- 唯一 review 找到「deadline 只包 headers」High 與「timeout 被重試」Medium，均於同一輪修正；新增 stalled body、Request signal、timeout no-retry、429 與 5xx regression tests。
+- Fresh checks：lint、typecheck、production build、Vitest 168 files／1185 tests、`git diff --check` 全綠。C1–C4、D 與 E 的證據門檻／下次事故取證已寫入 `docs/superpowers/plans/2026-08-18-staging-concurrency-follow-up.md`；未查 Auth logs、未調 rate limit、未升級 Supabase tier、未 push 或 deploy。

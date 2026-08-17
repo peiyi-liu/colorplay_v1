@@ -21,8 +21,32 @@ describe('delivery configuration', () => {
       framework: 'vite',
       buildCommand: 'npm run build',
       outputDirectory: 'dist',
+      headers: [
+        {
+          source: '/assets/(.*)',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=31536000, immutable',
+            },
+          ],
+        },
+      ],
       rewrites: [{ source: '/(.*)', destination: '/index.html' }],
     });
+  });
+
+  it('self-hosts only the two required Noto Sans TC weights', async () => {
+    const [indexHtml, mainSource] = await Promise.all([
+      readFile('index.html', 'utf8'),
+      readFile('src/main.tsx', 'utf8'),
+    ]);
+    const weights = [...mainSource.matchAll(/noto-sans-tc\/(\d+)\.css/gu)].map(
+      ([, weight]) => weight,
+    );
+
+    expect(indexHtml).not.toMatch(/fonts\.(?:googleapis|gstatic)\.com/u);
+    expect(weights).toEqual(['400', '700']);
   });
 
   it('exposes the required foundation-ci check and full clean-install gates', async () => {
