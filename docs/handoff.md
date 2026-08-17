@@ -1059,3 +1059,10 @@
 - Fresh checks：登入／註冊 Vitest 2 files／36 tests、完整 Vitest 367 suites／1187 tests、lint、typecheck、production build、`git diff --check` 全綠。測試曾因 sandbox 禁止 `127.0.0.1` listen 而出現 `EPERM`；允許本機暫時連接埠後完整 gate 全綠。
 - Hosted smoke 首次找出 Playwright 的模糊 `getByLabel('密碼')` 會同時匹配輸入框與新按鈕；正式 E2E／acceptance selectors 已機械式收斂為 `exact: true`，登入鍵盤路徑亦新增眼睛按鈕的 Tab／Enter 開關斷言。產品 accessible name 不降級。
 - 既有未追蹤 `docs/research/` 仍保持原狀、未 stage／未納入本 task。產品 checkpoint 已建立；下一步只 stage selector hardening 與本段 handoff，建立 follow-up checkpoint、push，再讓 Vercel staging 精確對應最新 HEAD。
+
+## 2026-08-18 01:24 [Integration owner／Codex] — 連線修復與密碼顯示控制發布至 staging
+
+- 產品 commit `c61dae8742d2dea6dd8621d46534b18ca1e0ee30` 與 E2E selector checkpoint `c68677c` 已推至 `origin/integration/jrpg-student-teacher-20260814`；Vercel `colorplay-staging-web` deployment `dpl_8WmcxqWtsTYXsrLJ1qfrQ2NVvNuP` 為 READY，`staging.colorplayapp.com` 已指向該版本。
+- Hosted HTML 實際引用 `/assets/index-mGj9qRj3.js` 與 `/assets/index-DrMD7Y3y.css`，兩者皆回 200、正確 MIME、`public, max-age=31536000, immutable`；bundle 只包含 staging Supabase `onkxnkzeixpezetkmocf`，未包含 production ref，且密碼 toggle／tooltip 特徵存在、Google Fonts 外部依賴不存在。
+- 真實 hosted smoke 在 393×852 對教師與學生 fixture 各驗證一次：密碼預設隱藏、44×44 眼睛按鈕可顯示／再隱藏且不改值，分別成功進入 `/teacher` 與 `/app`，page error／failed request 為 0。
+- 本輪未修改或部署 Supabase schema／Edge Function／資料。既有未追蹤 `docs/research/` 仍未納入 commit。Vercel 本機 CLI 58.9.4 低於目前 59.1.3，但本次部署成功；升級 CLI 留作獨立工具維護。
