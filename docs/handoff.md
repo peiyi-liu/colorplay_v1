@@ -1074,3 +1074,11 @@
 - 新 migration `20260818000100_learning_read_path_performance.sql` 新增 frozen question-version lookup index，讓 `get_learning_progress` 委派共用 core，並把 chapter map 的每章 progress 重算改為單一 materialized snapshot。本機 EXPLAIN 為 learning progress 10.7ms、chapter map 18.8ms；這不是 hosted p95 證據。
 - 唯一 review：Standards 3 個標準 finding＋2 個 smell、Spec 2 個 Medium、Security 0。10 秒操作、jitter、500 行拆分與媒體路徑重複已修；migration 規則重複屬刻意的 bulk snapshot 等價實作，現由既有 access tests 守住。Staging published-read p95 必須在 migration 部署後才量測，尚未宣稱 ≤500ms。
 - Fresh checks：學習 Vitest 3 files／27 tests、相關 pgTAP 5 files／108 tests、lint、typecheck、production build、scoped Prettier、`git diff --check` 全綠。既有未追蹤 `docs/research/` 保持原狀且不得 stage；下一步精確 stage 本 task、checkpoint/push，套用 staging migration，部署 Vercel 後跑 hosted chapter/review timing 與基本學生 smoke。
+
+## 2026-08-18 12:06 [Integration owner／Codex] — 章節讀取與複習卡媒體修復發布至 staging
+
+- 產品 commit `b74a5006969b2c80caf5726f945ff4bb114ac169` 已推至 `origin/integration/jrpg-student-teacher-20260814`；Supabase staging `onkxnkzeixpezetkmocf` 已套用 migration `20260818000100_learning_read_path_performance.sql`，local／remote migration list 對齊。
+- Vercel `colorplay-staging-web` production-target deployment `dpl_Escqmhbarxg1SnQDus9eTbA6gwHG` 為 READY，`staging.colorplayapp.com` 已指向該版本。舊 CLI 58.9.4 的 production deploy 回 `Not authorized`；改用一次性 CLI 59.1.4 後成功，未修改 package dependency。Hosted hashed JS 回 `public, max-age=31536000, immutable`，chapter chunk 含新版圖片等待／重試／略過流程。
+- Hosted 393×852 真實登入後，單次章節完整顯示 939ms；20 次刻意繞過 query cache 的重載結果：章節 render p95 1164ms，`get_student_chapter_map` p95 151ms、`get_learning_progress` p95 183ms、`get_accessible_chapter_review` p95 178ms，三個 published-read RPC 均低於 500ms 且全回 200。
+- 複習卡閱讀器在手機／桌面分別 43ms／44ms 即呈現文字與完成控制，不再等待 Storage。附件由 staging Storage 回正確 `image/webp` 200、自然寬 1654，無 request failure／fallback；桌面 headless 完整載入。手機 headless 在 lazy image／翻頁副本下 `complete` flag 未於 15 秒內穩定，但已取得自然尺寸，仍列為 owner 真機確認項，不影響文字、翻頁或完成複習。
+- 既有未追蹤 `docs/research/` 保持原狀、未 stage；除本段 append-only handoff 外工作樹無新增產品變更。
