@@ -111,6 +111,7 @@ export function ChapterDetailPageView({
   completePending,
   onCompleteCard,
   onRetry,
+  repository,
   viewModel,
 }: Readonly<{
   completeError: string | undefined;
@@ -119,6 +120,7 @@ export function ChapterDetailPageView({
     input: Readonly<{ requestId: string; reviewCardId: string }>,
   ) => void;
   onRetry: (target: ChapterDetailRetryTarget) => void;
+  repository?: LearningRepository;
   viewModel: ChapterDetailViewModel;
 }>) {
   const [readingCardId, setReadingCardId] = useState<string | null>(null);
@@ -241,6 +243,7 @@ export function ChapterDetailPageView({
           });
         }}
         pending={completePending}
+        {...(repository ? { repository } : {})}
         subtopicTitle={readingSubtopic?.title ?? ''}
       />
     );
@@ -355,6 +358,7 @@ export function ChapterDetailPage({
       onRetry={(target) => {
         retryActions[target]();
       }}
+      {...(repository ? { repository } : {})}
       viewModel={viewModel}
     />
   );

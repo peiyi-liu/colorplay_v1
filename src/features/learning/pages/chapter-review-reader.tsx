@@ -8,114 +8,21 @@ import {
 } from 'react';
 
 import { useStudentBackOverride } from '../../../app/shell/student-back-navigation';
+import {
+  isDirectReviewMediaAssetPath,
+  type LearningRepository,
+} from '../api/learning-repository';
+import { useReviewMedia } from '../hooks/use-learning';
 import type { ChapterDetailCardView } from './chapter-detail-view-model';
 import {
   paginateBookBlocks,
   type BookPageItem,
   type BookPaginationBlock,
 } from './book-paginator';
-
-function CardMedia({
-  altText,
-  assetPath,
-  blockKey,
-  onLoad,
-}: Readonly<{
-  altText: string;
-  assetPath: string;
-  blockKey: string;
-  onLoad: () => void;
-}>) {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return (
-      <p
-        aria-label={altText}
-        className="review-card__media-fallback"
-        data-book-block-key={blockKey}
-        role="img"
-      >
-        圖片載入失敗：{altText}
-      </p>
-    );
-  }
-  return (
-    <img
-      alt={altText}
-      className="review-card__media"
-      data-book-block-key={blockKey}
-      onError={() => {
-        setFailed(true);
-      }}
-      onLoad={onLoad}
-      src={assetPath}
-    />
-  );
-}
-
-type ReaderBookBlock =
-  | Readonly<{
-      displayTitle: string;
-      key: string;
-      kind: 'intro';
-      title: string;
-    }>
-  | Readonly<{
-      key: string;
-      kind: 'paragraph';
-      text: string;
-    }>
-  | Readonly<{
-      altText: string;
-      assetPath: string;
-      key: string;
-      kind: 'media';
-    }>;
-
-function ReaderBookBlockContent({
-  block,
-  onMediaLoad,
-  text,
-}: Readonly<{
-  block: ReaderBookBlock;
-  onMediaLoad: () => void;
-  text?: string;
-}>) {
-  if (block.kind === 'intro') {
-    return (
-      <div
-        className="chapter-review-reader__intro"
-        data-book-block-key={block.key}
-      >
-        <p className="chapter-review-reader__eyebrow">REVIEW ARCHIVE</p>
-        <h2 className="chapter-review-reader__book-title">
-          {block.displayTitle}
-        </h2>
-        {block.displayTitle !== block.title ? (
-          <p className="chapter-review-reader__subtitle">{block.title}</p>
-        ) : null}
-      </div>
-    );
-  }
-  if (block.kind === 'paragraph') {
-    return (
-      <p
-        className="chapter-review-reader__content"
-        data-book-block-key={block.key}
-      >
-        {text ?? block.text}
-      </p>
-    );
-  }
-  return (
-    <CardMedia
-      altText={block.altText}
-      assetPath={block.assetPath}
-      blockKey={block.key}
-      onLoad={onMediaLoad}
-    />
-  );
-}
+import {
+  ReaderBookBlockContent,
+  type ReaderBookBlock,
+} from './review-book-block';
 
 function useMobileBookLayout() {
   const query =
@@ -149,6 +56,7 @@ export function ChapterReviewReader({
   onBack,
   onComplete,
   pending,
+  repository,
   subtopicTitle,
 }: Readonly<{
   card: ChapterDetailCardView;
@@ -160,6 +68,7 @@ export function ChapterReviewReader({
   onBack: () => void;
   onComplete: () => void;
   pending: boolean;
+  repository?: LearningRepository;
   subtopicTitle: string;
 }>) {
   useStudentBackOverride({
@@ -176,9 +85,47 @@ export function ChapterReviewReader({
   const [layoutRevision, setLayoutRevision] = useState(0);
   const [pages, setPages] = useState<readonly (readonly BookPageItem[])[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
+  const [mediaWaitCycle, setMediaWaitCycle] = useState(0);
+  const [showLongMediaWait, setShowLongMediaWait] = useState(false);
+  const [skipPrivateMedia, setSkipPrivateMedia] = useState(false);
   const [turnDirection, setTurnDirection] = useState<
     'next' | 'previous' | null
   >(null);
+  const privateMediaAssetPaths = useMemo(
+    () =>
+      card.media
+        .map((item) => item.assetPath)
+        .filter((assetPath) => !isDirectReviewMediaAssetPath(assetPath)),
+    [card.media],
+  );
+  const mediaQuery = useReviewMedia(privateMediaAssetPaths, repository);
+  const mediaLoading =
+    privateMediaAssetPaths.length > 0 &&
+    mediaQuery.data === undefined &&
+    !mediaQuery.isError &&
+    !skipPrivateMedia;
+
+  useEffect(() => {
+    if (!mediaLoading) return undefined;
+    const timer = window.setTimeout(() => {
+      setShowLongMediaWait(true);
+    }, 10_000);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [mediaLoading, mediaWaitCycle]);
+
+  const resolvedMediaByAssetPath = useMemo(() => {
+    const resolved = new Map(
+      (mediaQuery.data ?? []).map((item) => [item.assetPath, item.resolvedUrl]),
+    );
+    for (const item of card.media) {
+      if (isDirectReviewMediaAssetPath(item.assetPath)) {
+        resolved.set(item.assetPath, item.assetPath);
+      }
+    }
+    return resolved;
+  }, [card.media, mediaQuery.data]);
   const blocks = useMemo<readonly ReaderBookBlock[]>(() => {
     const contentParagraphs = card.content
       .split(/\n{2,}/u)
@@ -198,12 +145,22 @@ export function ChapterReviewReader({
       })),
       ...card.media.map((media, index) => ({
         altText: media.altText,
-        assetPath: media.assetPath,
+        assetPath: resolvedMediaByAssetPath.get(media.assetPath) ?? null,
         key: `media-${String(index)}`,
         kind: 'media' as const,
+        loading:
+          privateMediaAssetPaths.includes(media.assetPath) && mediaLoading,
       })),
     ];
-  }, [card.content, card.media, card.title, displayTitle]);
+  }, [
+    card.content,
+    card.media,
+    card.title,
+    displayTitle,
+    mediaLoading,
+    privateMediaAssetPaths,
+    resolvedMediaByAssetPath,
+  ]);
   const paginationBlocks = useMemo<readonly BookPaginationBlock[]>(
     () =>
       blocks.map((block) =>
@@ -383,6 +340,33 @@ export function ChapterReviewReader({
           />
           <strong>{readingPercent}%</strong>
         </div>
+        {showLongMediaWait && mediaLoading ? (
+          <div className="chapter-review-reader__media-wait" role="status">
+            <p>圖片連線時間較長；文字與翻頁仍可正常使用。</p>
+            <div className="chapter-review-reader__media-wait-actions">
+              <button
+                className="secondary-action"
+                onClick={() => {
+                  setShowLongMediaWait(false);
+                  setMediaWaitCycle((current) => current + 1);
+                  void mediaQuery.refetch();
+                }}
+                type="button"
+              >
+                重新載入圖片
+              </button>
+              <button
+                className="secondary-action"
+                onClick={() => {
+                  setSkipPrivateMedia(true);
+                }}
+                type="button"
+              >
+                略過圖片
+              </button>
+            </div>
+          </div>
+        ) : null}
         <div className="chapter-review-reader__controls">
           <button
             aria-label="閱讀上一頁"

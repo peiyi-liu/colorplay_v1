@@ -1066,3 +1066,11 @@
 - Hosted HTML 實際引用 `/assets/index-mGj9qRj3.js` 與 `/assets/index-DrMD7Y3y.css`，兩者皆回 200、正確 MIME、`public, max-age=31536000, immutable`；bundle 只包含 staging Supabase `onkxnkzeixpezetkmocf`，未包含 production ref，且密碼 toggle／tooltip 特徵存在、Google Fonts 外部依賴不存在。
 - 真實 hosted smoke 在 393×852 對教師與學生 fixture 各驗證一次：密碼預設隱藏、44×44 眼睛按鈕可顯示／再隱藏且不改值，分別成功進入 `/teacher` 與 `/app`，page error／failed request 為 0。
 - 本輪未修改或部署 Supabase schema／Edge Function／資料。既有未追蹤 `docs/research/` 仍未納入 commit。Vercel 本機 CLI 58.9.4 低於目前 59.1.3，但本次部署成功；升級 CLI 留作獨立工具維護。
+
+## 2026-08-18 11:45 [Integration owner／Codex] — 章節讀取與複習卡媒體韌性修復完成，待 staging 發布
+
+- Staging 診斷確認 Vercel 靜態資源回應正常；實際長等待集中在 Supabase 學習進度 RPC 與 Storage signed URL。複習卡內容現在先回文字，進入閱讀器後才按 bucket 批次簽署私有圖片，不再以逐圖 `Promise.all` 阻塞整頁；公開圖片直接顯示，signed URL 快取 50 分鐘。
+- 私有複習卡媒體依 owner 核准使用最多三次 retry，配 bounded exponential backoff + jitter；此例外已同步至 `spec/02`。等待超過 10 秒顯示可操作的「重新載入圖片／略過圖片」，文字、翻頁與完成複習始終可用。
+- 新 migration `20260818000100_learning_read_path_performance.sql` 新增 frozen question-version lookup index，讓 `get_learning_progress` 委派共用 core，並把 chapter map 的每章 progress 重算改為單一 materialized snapshot。本機 EXPLAIN 為 learning progress 10.7ms、chapter map 18.8ms；這不是 hosted p95 證據。
+- 唯一 review：Standards 3 個標準 finding＋2 個 smell、Spec 2 個 Medium、Security 0。10 秒操作、jitter、500 行拆分與媒體路徑重複已修；migration 規則重複屬刻意的 bulk snapshot 等價實作，現由既有 access tests 守住。Staging published-read p95 必須在 migration 部署後才量測，尚未宣稱 ≤500ms。
+- Fresh checks：學習 Vitest 3 files／27 tests、相關 pgTAP 5 files／108 tests、lint、typecheck、production build、scoped Prettier、`git diff --check` 全綠。既有未追蹤 `docs/research/` 保持原狀且不得 stage；下一步精確 stage 本 task、checkpoint/push，套用 staging migration，部署 Vercel 後跑 hosted chapter/review timing 與基本學生 smoke。

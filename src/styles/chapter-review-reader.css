@@ -325,6 +325,31 @@
   accent-color: var(--color-info);
 }
 
+.chapter-review-reader__media-wait {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 2px solid var(--pixel-gold);
+  background: var(--pixel-night-deep);
+  color: var(--pixel-window-ink);
+  padding: 10px 12px;
+}
+
+.chapter-review-reader__media-wait p {
+  margin: 0;
+}
+
+.chapter-review-reader__media-wait-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.chapter-review-reader__media-wait-actions button {
+  min-height: 44px;
+}
+
 .chapter-review-reader__controls {
   display: grid;
   grid-template-columns: minmax(148px, 1fr) auto minmax(148px, 1fr) minmax(

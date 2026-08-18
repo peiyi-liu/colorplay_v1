@@ -180,6 +180,12 @@ const repositoryWith = (
       },
     ]),
     requestHint: vi.fn(),
+    resolveReviewMedia: vi.fn().mockResolvedValue([
+      {
+        assetPath: '/media/review/color-wheel.svg',
+        resolvedUrl: '/media/review/color-wheel.svg',
+      },
+    ]),
     startRemediation: vi.fn(),
     ...overrides,
   }) satisfies LearningRepository;
@@ -283,7 +289,8 @@ describe('ChapterDetailPage', () => {
   });
 
   it('renders subtopic progress, cards, media, and completion states', async () => {
-    renderPage(repositoryWith());
+    const repository = repositoryWith();
+    renderPage(repository);
 
     await waitFor(() => {
       // owner 0730 #4:章節標題表示完整(Chapter n：標題)。
@@ -331,7 +338,7 @@ describe('ChapterDetailPage', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: '進入複習' }));
     expect(
-      screen.getByRole('img', { name: '十二色相環示意圖' }),
+      await screen.findByRole('img', { name: '十二色相環示意圖' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('已完成複習');
 
@@ -526,6 +533,77 @@ describe('ChapterDetailPage', () => {
     expect(
       screen.getByText(/圖片載入失敗：十二色相環示意圖/u),
     ).toBeInTheDocument();
+  });
+
+  it('keeps review text and controls usable while private media signing is pending', async () => {
+    const nativeSetTimeout = window.setTimeout;
+    const timeoutSpy = vi
+      .spyOn(window, 'setTimeout')
+      .mockImplementation((handler, timeout) =>
+        nativeSetTimeout.call(
+          window,
+          handler,
+          timeout === 10_000 ? 0 : timeout,
+        ),
+      );
+    const repository = repositoryWith({
+      listChapterReview: vi.fn().mockResolvedValue([
+        {
+          ...sections[0],
+          subtopics: [
+            {
+              ...sections[0].subtopics[0],
+              cards: [
+                {
+                  ...sections[0].subtopics[0].cards[0],
+                  media: [
+                    {
+                      altText: '十二色相環示意圖',
+                      assetPath: 'review-card-media/chapter-3/color-wheel.webp',
+                    },
+                  ],
+                },
+                ...sections[0].subtopics[0].cards.slice(1),
+              ],
+            },
+          ],
+        },
+      ]),
+      listReviewProgress: vi.fn().mockResolvedValue([]),
+      resolveReviewMedia: vi.fn().mockReturnValue(new Promise(() => undefined)),
+    });
+    try {
+      renderPage(repository);
+
+      await userEvent.click(
+        await screen.findByRole('button', {
+          name: '選擇複習卡：色彩的分類',
+        }),
+      );
+      await userEvent.click(screen.getByRole('button', { name: '進入複習' }));
+
+      const reader = await screen.findByRole('region', {
+        name: /複習卡閱讀：色彩的分類/u,
+      });
+      expect(reader).toHaveTextContent('第一行');
+      expect(
+        within(reader).getByRole('button', { name: '完成複習' }),
+      ).toBeEnabled();
+      expect(
+        within(reader).getByRole('status', {
+          name: '圖片載入中：十二色相環示意圖',
+        }),
+      ).toBeInTheDocument();
+
+      await userEvent.click(
+        await within(reader).findByRole('button', { name: '略過圖片' }),
+      );
+      expect(
+        within(reader).getByRole('img', { name: '十二色相環示意圖' }),
+      ).toHaveTextContent('圖片載入失敗');
+    } finally {
+      timeoutSpy.mockRestore();
+    }
   });
 
   it('surfaces a retryable error state', async () => {

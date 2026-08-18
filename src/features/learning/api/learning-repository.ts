@@ -60,26 +60,21 @@ const parseWith = <Output>(
   return parsed.data;
 };
 
-const resolveReviewMediaAssetPath = async (
-  client: SupabaseClient<Database>,
+const parsePrivateReviewMediaAssetPath = (
   assetPath: string,
-): Promise<string> => {
-  if (assetPath.startsWith('/') || assetPath.startsWith('https://')) {
-    return assetPath;
-  }
-
+): Readonly<{ bucket: string; objectPath: string }> => {
   const separator = assetPath.indexOf('/');
   if (separator <= 0 || separator === assetPath.length - 1) {
     throw new LearningError('INVALID_RESPONSE');
   }
-  const bucket = assetPath.slice(0, separator);
-  const objectPath = assetPath.slice(separator + 1);
-  const { data, error } = await client.storage
-    .from(bucket)
-    .createSignedUrl(objectPath, 3600);
-  if (error || !data.signedUrl) throw new LearningError('UNAVAILABLE');
-  return data.signedUrl;
+  return {
+    bucket: assetPath.slice(0, separator),
+    objectPath: assetPath.slice(separator + 1),
+  };
 };
+
+export const isDirectReviewMediaAssetPath = (assetPath: string): boolean =>
+  assetPath.startsWith('/') || assetPath.startsWith('https://');
 
 const chapterReviewSchema = z.array(
   z.object({
@@ -182,6 +177,11 @@ export type ReviewCardView = Readonly<{
   version: number;
 }>;
 
+export type ReviewMediaResolution = Readonly<{
+  assetPath: string;
+  resolvedUrl: string | null;
+}>;
+
 export type ChapterReviewSubtopic = Readonly<{
   cards: readonly ReviewCardView[];
   sortOrder: number;
@@ -266,6 +266,9 @@ export type LearningRepository = Readonly<{
       sessionQuestionId: string;
     }>,
   ): Promise<QuestionHintView>;
+  resolveReviewMedia(
+    assetPaths: readonly string[],
+  ): Promise<readonly ReviewMediaResolution[]>;
   startRemediation(
     input: Readonly<{
       requestId: string;
@@ -327,51 +330,38 @@ export function createLearningRepository(
       );
       if (error) throw toLearningError(error.message);
       const sections = parseWith(chapterReviewSchema, data);
-      return Promise.all(
-        sections.map(async (section) => ({
-          quizTemplateId: section.quiz_template_id,
-          sectionId: section.id,
-          sortOrder: section.sort_order,
-          stableCode: section.stable_code,
-          subtopics: await Promise.all(
-            [...section.subtopics]
+      return sections.map((section) => ({
+        quizTemplateId: section.quiz_template_id,
+        sectionId: section.id,
+        sortOrder: section.sort_order,
+        stableCode: section.stable_code,
+        subtopics: [...section.subtopics]
+          .sort((left, right) => left.sort_order - right.sort_order)
+          .map((subtopic) => ({
+            cards: [...subtopic.review_cards]
               .sort((left, right) => left.sort_order - right.sort_order)
-              .map(async (subtopic) => ({
-                cards: await Promise.all(
-                  [...subtopic.review_cards]
-                    .sort((left, right) => left.sort_order - right.sort_order)
-                    .map(async (card) => ({
-                      cardId: card.id,
-                      content: card.content,
-                      groupLabel: card.group_label,
-                      media: await Promise.all(
-                        [...card.review_card_media]
-                          .sort(
-                            (left, right) => left.sort_order - right.sort_order,
-                          )
-                          .map(async (media) => ({
-                            altText: media.alt_text,
-                            assetPath: await resolveReviewMediaAssetPath(
-                              client,
-                              media.asset_path,
-                            ),
-                          })),
-                      ),
-                      requiresRecompletion: card.requires_recompletion,
-                      sortOrder: card.sort_order,
-                      title: card.title,
-                      version: card.version,
-                    })),
-                ),
-                sortOrder: subtopic.sort_order,
-                stableCode: subtopic.stable_code,
-                subtopicId: subtopic.id,
-                title: subtopic.title,
+              .map((card) => ({
+                cardId: card.id,
+                content: card.content,
+                groupLabel: card.group_label,
+                media: [...card.review_card_media]
+                  .sort((left, right) => left.sort_order - right.sort_order)
+                  .map((media) => ({
+                    altText: media.alt_text,
+                    assetPath: media.asset_path,
+                  })),
+                requiresRecompletion: card.requires_recompletion,
+                sortOrder: card.sort_order,
+                title: card.title,
+                version: card.version,
               })),
-          ),
-          title: section.title,
-        })),
-      );
+            sortOrder: subtopic.sort_order,
+            stableCode: subtopic.stable_code,
+            subtopicId: subtopic.id,
+            title: subtopic.title,
+          })),
+        title: section.title,
+      }));
     },
 
     async listMistakes() {
@@ -412,6 +402,48 @@ export function createLearningRepository(
         hintLevel: hint.hint_level,
         questionVersion: hint.question_version,
       };
+    },
+
+    async resolveReviewMedia(assetPaths) {
+      const resolvedUrls = new Map<string, string | null>();
+      const pathsByBucket = new Map<string, Set<string>>();
+
+      for (const assetPath of assetPaths) {
+        if (isDirectReviewMediaAssetPath(assetPath)) {
+          resolvedUrls.set(assetPath, assetPath);
+          continue;
+        }
+        const { bucket, objectPath } =
+          parsePrivateReviewMediaAssetPath(assetPath);
+        const bucketPaths = pathsByBucket.get(bucket) ?? new Set<string>();
+        bucketPaths.add(objectPath);
+        pathsByBucket.set(bucket, bucketPaths);
+      }
+
+      await Promise.all(
+        [...pathsByBucket].map(async ([bucket, objectPaths]) => {
+          const paths = [...objectPaths];
+          const { data, error } = await client.storage
+            .from(bucket)
+            .createSignedUrls(paths, 3600);
+          if (error) throw new LearningError('UNAVAILABLE');
+
+          const signedUrlByPath = new Map(
+            data.map((item) => [item.path, item.error ? null : item.signedUrl]),
+          );
+          for (const objectPath of paths) {
+            resolvedUrls.set(
+              `${bucket}/${objectPath}`,
+              signedUrlByPath.get(objectPath) ?? null,
+            );
+          }
+        }),
+      );
+
+      return assetPaths.map((assetPath) => ({
+        assetPath,
+        resolvedUrl: resolvedUrls.get(assetPath) ?? null,
+      }));
     },
 
     async startRemediation(input) {
