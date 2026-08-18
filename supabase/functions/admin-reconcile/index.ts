@@ -1,6 +1,13 @@
 // supabase/functions/admin-reconcile/index.ts
 // 受保護排程 path(spec §8.3):非瀏覽器入口,以部署 secret 驗證;
 // 掃描逾時 operations,依 type 重跑剩餘 idempotent steps。
+//
+// Task 13A-5:額外處理「已被 active Admin 授權一次人工重試」的 stuck 作業。
+// 這條路徑不經 svc_admin_touch_security_operation(那是自動退避迴圈的記帳,
+// stuck 作業已經離開該迴圈),而是以 svc_admin_claim_manual_retry 原子取得
+// 一次性執行權與憑證,再拿憑證兌現 step。授權由 Admin 在
+// reconcile_admin_security_operation 走完整 privileged-session／fresh-MFA
+// 驗證後才會寫入,本函式不放寬任何權限。
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { jsonResponse } from '../_shared/cors.ts';
 import { auditUnavailableEnvelope } from '../_shared/denial-envelope.ts';
@@ -8,6 +15,55 @@ import { auditUnavailableEnvelope } from '../_shared/denial-envelope.ts';
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const reconcileKey = Deno.env.get('ADMIN_RECONCILE_KEY') ?? '';
+
+type ServiceClient = ReturnType<typeof createClient>;
+
+const asStr = (value: unknown): string =>
+  typeof value === 'string' ? value : '';
+
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+/** principal → auth user;查不到就不推進(不得猜測目標) */
+async function resolveTargetUserId(
+  service: ServiceClient,
+  principalId: unknown,
+): Promise<string> {
+  const principal = await service
+    .from('admin_audit_principals')
+    .select('user_id')
+    .eq('id', principalId)
+    .single();
+  if (principal.error !== null) return '';
+  return asStr(asRecord(principal.data)?.user_id);
+}
+
+/**
+ * 刪光目標的全部 TOTP factor(step2 的前置)。任何一次刪除失敗都回 false ——
+ * 因子還在就推進 saga 等於謊報「MFA 已重設」。
+ */
+async function deleteAllFactors(
+  service: ServiceClient,
+  targetUserId: string,
+): Promise<boolean> {
+  const factors = await service.auth.admin.mfa.listFactors({
+    userId: targetUserId,
+  });
+  if (factors.error !== null) return false;
+  for (const factor of factors.data?.factors ?? []) {
+    const removal = await service.auth.admin.mfa.deleteFactor({
+      userId: targetUserId,
+      id: factor.id,
+    });
+    if (removal.error !== null) return false;
+  }
+  return true;
+}
+
+const rpcSucceeded = (result: { data: unknown; error: unknown }): boolean =>
+  result.error === null && asRecord(result.data)?.outcome === 'ok';
 
 Deno.serve(async (request) => {
   if (request.method !== 'POST')
@@ -37,19 +93,17 @@ Deno.serve(async (request) => {
     return jsonResponse(503, auditUnavailableEnvelope());
   }
 
-  const asStr = (value: unknown): string =>
-    typeof value === 'string' ? value : '';
-
   const results: Array<{ id: string; state: string }> = [];
   for (const operation of due.data ?? []) {
+    const operationId = asStr(operation.id);
     // 每輪嘗試先記帳(遞增 attempt_count+5 分鐘退避):stuck 門檻在失敗
     // 迴圈下才可達,且不會無限即時重試
     const touched = await service.rpc('svc_admin_touch_security_operation', {
-      p_operation_id: operation.id,
+      p_operation_id: operationId,
     });
-    const touchData = touched.data as Record<string, unknown> | null;
+    const touchData = asRecord(touched.data);
     if (touched.error !== null || touchData?.outcome !== 'ok') {
-      results.push({ id: operation.id, state: 'skipped' });
+      results.push({ id: operationId, state: 'skipped' });
       continue;
     }
     const attempts =
@@ -57,66 +111,121 @@ Deno.serve(async (request) => {
     if (attempts >= 10) {
       // 卡住門檻:標 stuck + incident audit;不得放寬權限(spec §8.3)
       await service.rpc('svc_admin_mark_operation_stuck', {
-        p_operation_id: operation.id,
+        p_operation_id: operationId,
       });
-      results.push({ id: operation.id, state: 'stuck' });
+      results.push({ id: operationId, state: 'stuck' });
       continue;
     }
-    const principal = await service
-      .from('admin_audit_principals')
-      .select('user_id')
-      .eq('id', operation.target_principal_id)
-      .single();
-    const targetUserId = asStr(
-      (principal.data as Record<string, unknown> | null)?.user_id,
+    const targetUserId = await resolveTargetUserId(
+      service,
+      operation.target_principal_id,
     );
-    if (principal.error !== null || targetUserId === '') {
-      results.push({ id: operation.id, state: 'retrying' });
+    if (targetUserId === '') {
+      results.push({ id: operationId, state: 'retrying' });
       continue;
     }
     // 每一步的結果都必須確認:GoTrue 失敗或 step RPC 非 ok 一律不推進,
     // 回報 retrying(下一輪退避後重試),不得把未完成標成 advanced
     if (operation.state === 'step1_complete') {
-      const factors = await service.auth.admin.mfa.listFactors({
-        userId: targetUserId,
-      });
-      if (factors.error !== null) {
-        results.push({ id: operation.id, state: 'retrying' });
-        continue;
-      }
-      let deletionsOk = true;
-      for (const factor of factors.data?.factors ?? []) {
-        const removal = await service.auth.admin.mfa.deleteFactor({
-          userId: targetUserId,
-          id: factor.id,
-        });
-        if (removal.error !== null) {
-          deletionsOk = false;
-          break;
-        }
-      }
-      if (!deletionsOk) {
-        results.push({ id: operation.id, state: 'retrying' });
+      if (!(await deleteAllFactors(service, targetUserId))) {
+        results.push({ id: operationId, state: 'retrying' });
         continue;
       }
       const step2 = await service.rpc('svc_admin_complete_reset_step2', {
-        p_operation_id: operation.id,
+        p_operation_id: operationId,
       });
-      const step2Data = step2.data as Record<string, unknown> | null;
-      if (step2.error !== null || step2Data?.outcome !== 'ok') {
-        results.push({ id: operation.id, state: 'retrying' });
+      if (!rpcSucceeded(step2)) {
+        results.push({ id: operationId, state: 'retrying' });
         continue;
       }
     }
     const step3 = await service.rpc('svc_admin_complete_reset_step3', {
-      p_operation_id: operation.id,
+      p_operation_id: operationId,
     });
-    const step3Data = step3.data as Record<string, unknown> | null;
-    if (step3.error !== null || step3Data?.outcome !== 'ok') {
-      results.push({ id: operation.id, state: 'retrying' });
+    if (!rpcSucceeded(step3)) {
+      results.push({ id: operationId, state: 'retrying' });
       continue;
     }
-    results.push({ id: operation.id, state: 'advanced' });
+    results.push({ id: operationId, state: 'advanced' });
   }
+
+  // ── 已授權的一次性人工重試(spec §8.3、Task 13A-5) ──────────────────
+  // next_retry_at 在 stuck 狀態下只有一個意義:「Admin 授權了一次重試」。
+  // 授權本身已經過 privileged session + fresh TOTP + receipt;這裡只負責
+  // 取得執行權並兌現,不重新判斷授權。
+  const authorized = await service
+    .from('admin_security_operations')
+    .select('id, operation_type, state, target_principal_id, current_step')
+    .eq('operation_type', 'reset_admin_mfa')
+    .eq('state', 'stuck')
+    .not('next_retry_at', 'is', null)
+    .limit(20);
+  if (authorized.error !== null) {
+    return jsonResponse(503, auditUnavailableEnvelope());
+  }
+
+  for (const operation of authorized.data ?? []) {
+    const operationId = asStr(operation.id);
+    // claim 是唯一的併發閘門:兩個 worker 同時掃到同一筆時,只有一個拿得到
+    // 憑證,另一個得到 skipped。claim 消耗授權,所以中途失敗需要 Admin
+    // 重新授權 —— 這正是一次性語意,不是可以自動重試的迴圈。
+    const claim = await service.rpc('svc_admin_claim_manual_retry', {
+      p_operation_id: operationId,
+    });
+    const claimData = asRecord(claim.data);
+    if (claim.error !== null || claimData?.outcome !== 'ok') {
+      results.push({ id: operationId, state: 'claim_lost' });
+      continue;
+    }
+    const claimToken = asStr(claimData.claim_token);
+    const currentStep =
+      typeof claimData.current_step === 'number' ? claimData.current_step : 0;
+    const targetUserId = await resolveTargetUserId(
+      service,
+      claimData.target_principal_id,
+    );
+    if (claimToken === '' || targetUserId === '') {
+      results.push({ id: operationId, state: 'manual_retry_failed' });
+      continue;
+    }
+
+    // current_step < 2 代表 step2 還沒完成:先確認因子真的刪光,再用憑證
+    // 兌現 step2;成功後 state 已是 step2_complete,step3 走一般排程形態。
+    if (currentStep < 2) {
+      if (!(await deleteAllFactors(service, targetUserId))) {
+        results.push({ id: operationId, state: 'manual_retry_failed' });
+        continue;
+      }
+      const step2 = await service.rpc('svc_admin_complete_reset_step2', {
+        p_operation_id: operationId,
+        p_claim_token: claimToken,
+      });
+      if (!rpcSucceeded(step2)) {
+        results.push({ id: operationId, state: 'manual_retry_failed' });
+        continue;
+      }
+      const step3 = await service.rpc('svc_admin_complete_reset_step3', {
+        p_operation_id: operationId,
+      });
+      results.push({
+        id: operationId,
+        state: rpcSucceeded(step3) ? 'manual_retry_advanced' : 'retrying',
+      });
+      continue;
+    }
+
+    // current_step >= 2:只差 step3,直接以憑證兌現
+    const step3 = await service.rpc('svc_admin_complete_reset_step3', {
+      p_operation_id: operationId,
+      p_claim_token: claimToken,
+    });
+    results.push({
+      id: operationId,
+      state: rpcSucceeded(step3)
+        ? 'manual_retry_advanced'
+        : 'manual_retry_failed',
+    });
+  }
+
   return jsonResponse(200, { outcome: 'ok', operations: results });
 });

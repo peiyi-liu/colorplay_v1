@@ -5048,6 +5048,14 @@ Task 13 的前端在 review 波中暴露三個**已核准規格與實作之間�
   receipt 不得跨形態重用;無法解碼的 token 在 receipt 消耗前 typed deny。
   重構以共用內部函式承載 post-gate 邏輯,jsonb 形態的對外契約(hash、denial
   碼與順序、audit 形狀)不得改變。
+- **13A-5 人工重試的一次性憑證(2026-08-18 owner 裁定,選項 c)**:13A-2 的
+  claim 能原子取得執行權,但 step2／step3 以 `state` 判斷可否推進,而標 stuck
+  已覆寫 `state` —— 授權被消耗卻推不動 saga(已實測)。改為 claim 成功時由 DB
+  簽發一次性 claim token;step2／step3 增加接受憑證的形態,只有
+  `state='stuck'` 且憑證相符才接受 stuck,成功即作廢。無憑證的排程形態語意
+  不變。claim 另要求 `operation_type='reset_admin_mfa'`(縱深防禦)。
+  claim token 登記為 `forbidden`,永不進 projection。併發保證必須以**兩個真實
+  並行 client** 驗證,不得以單連線 pgTAP 或依序呼叫充數。
 
 **Files:**
 - Create(forward migrations,順序即依賴序;**不修改**已提交的
@@ -5056,9 +5064,16 @@ Task 13 的前端在 review 波中暴露三個**已核准規格與實作之間�
   `supabase/migrations/20260809000100_admin_denial_envelope.sql`、
   `20260809000200_admin_pagination_row_key.sql`、
   `20260809000300_admin_stuck_manual_retry.sql`、
-  `20260809000400_admin_reveal_row_token.sql`
+  `20260809000400_admin_reveal_row_token.sql`、
+  `20260809000500_admin_manual_retry_claim_token.sql`
 - Create: `supabase/tests/054_admin_contract_completion.test.sql`、
-  `supabase/tests/055_admin_reveal_row_token.test.sql`(pgTAP)
+  `supabase/tests/055_admin_reveal_row_token.test.sql`、
+  `supabase/tests/056_admin_manual_retry_claim_token.test.sql`(pgTAP)
+- Create: `tests/integration/admin-manual-retry-claim.integration.test.ts`
+  (兩個真實並行 client 競爭 claim);`scripts/test-db.sh` 加入該檔
+- Regenerate: `supabase/catalog/admin-sensitivity-catalog.json` 與
+  `supabase/migrations/20260808000500_admin_sensitivity_catalog.sql`
+  (generator 產物;新增欄位必須登記,否則 §9.2 inventory gate 失敗)
 - Modify: `supabase/functions/admin-command/index.ts`、
   `supabase/functions/admin-reconcile/index.ts`、`supabase/functions/_shared/*`
 - Modify: Task 13 前端(`admin-data-table`、`admin-data-browser-page`、

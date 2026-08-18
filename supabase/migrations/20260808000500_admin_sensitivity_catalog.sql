@@ -125,6 +125,7 @@ values
   ('admin_security_operations', 'security', 'health', 'attempt_count', 'internal', null, false, false, false),
   ('admin_security_operations', 'security', 'health', 'last_safe_error_code', 'internal', null, false, false, false),
   ('admin_security_operations', 'security', 'health', 'correlation_id', 'internal', null, false, false, false),
+  ('admin_security_operations', 'security', 'health', 'manual_retry_claim_token', 'forbidden', null, false, false, false),
   ('admin_sessions', 'security', 'access', 'created_at', 'open', null, false, false, false),
   ('admin_sessions', 'security', 'access', 'last_activity_at', 'open', null, false, false, false),
   ('admin_sessions', 'security', 'access', 'absolute_expires_at', 'open', null, false, false, false),

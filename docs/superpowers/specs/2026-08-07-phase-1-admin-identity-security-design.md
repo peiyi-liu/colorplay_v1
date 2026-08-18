@@ -309,6 +309,17 @@ Auth verify 已成功但 PostgreSQL finalize 失敗時，client 直接重試 con
 - `attempt_count` 已達 stuck 門檻（≥10）不得讓 manual retry 在真正執行前又立刻被 mark stuck；失敗後不得留下可被 scheduler 無限重試的 due marker。
 - `factor_incident_isolation` 仍只能走 owner OOB（§4.2），不得藉本路徑進入一般 reconcile。
 
+**2026-08-18 owner 裁定（Task 13A-5）：人工重試以一次性憑證兌現。**
+13A 的 claim 能原子取得執行權，但 `svc_admin_complete_reset_step2`／`step3` 是以 `state` 判斷可否推進（分別要求 `step1_complete`／`step2_complete`），而標 stuck 已把 `state` 覆寫 —— 於是 claim 拿得到、卻沒有任何函式肯接手，一次性授權被消耗掉卻推不動 saga。修訂後：
+
+- `svc_admin_claim_manual_retry` 成功時由 DB 產生一次性 claim token 並回傳；同一時刻每筆 operation 最多只有一張有效憑證，重新授權會覆寫舊憑證。
+- `svc_admin_complete_reset_step2`／`step3` 增加接受 claim token 的形態：**只有** `state='stuck'` 且憑證完全相符時才接受 stuck，成功即作廢憑證。無憑證的排程形態語意完全不變（stuck 依然推不動）。
+- 不採「claim 時把 state 還原」：續跑中途失敗會留下「可推進狀態 + 無退避時間戳」的資料，正好符合排程掃描條件而被自動重試迴圈撿回去，stuck 的用意即失效。
+- 不採「step RPC 直接接受 stuck」：claim 已在前一步被消耗且不留痕跡，DB 無從分辨呼叫者是否正當取得執行權，等於把一次性保證交給 Edge 自律（違反 §5 可信邊界）。
+- claim 另要求 `operation_type='reset_admin_mfa'`（縱深防禦）：`factor_incident_isolation` 連憑證都拿不到。
+- claim token 屬 `forbidden`：永不進任何 surface 的 projection 或 response。
+- 併發保證由 `UPDATE … WHERE next_retry_at is not null` 的 row lock ＋ 謂詞承擔，必須以**兩個真實並行 client** 驗證，不得以單連線 pgTAP 或依序呼叫充數。
+
 ## 9. Per-table／per-column sensitivity catalog
 
 ### 9.1 Schema inventory 與 drift
@@ -385,7 +396,7 @@ Auth verify 已成功但 PostgreSQL finalize 失敗時，client 直接重試 con
 | `admin_security_identities`／access screens | `state`,`created_at`,`updated_at` | `admin_user_id`,`audit_principal_id`,`failed_totp_attempts`,`locked_until`,`lifecycle_version` | — | `bound_factor_id` |
 | `admin_sessions`／sessions screen | `created_at`,`last_activity_at`,`absolute_expires_at`,`revoked_at`,`revoke_reason` | `id`,`admin_user_id`,`audit_principal_id`,`last_totp_verified_at`,`correlation_id` | `device_summary`（固定截斷） | `auth_session_id`,`bound_factor_id_snapshot` |
 | `admin_invitations`／invitations screen | `status`,`expires_at`,`accepted_at`,`revoked_at`,`created_at` | `id`,`issuer_principal_id`,`accepted_principal_id` | `invited_email`（`a****@domain`） | `token_hash` |
-| `admin_security_operations`／health only | `state`,`current_step`,`created_at`,`updated_at`,`next_retry_at` | `id`,`operation_type`,`target_principal_id`,`attempt_count`,`last_safe_error_code`,`correlation_id` | — | provider request／secret material（不得存在） |
+| `admin_security_operations`／health only | `state`,`current_step`,`created_at`,`updated_at`,`next_retry_at` | `id`,`operation_type`,`target_principal_id`,`attempt_count`,`last_safe_error_code`,`correlation_id` | — | `manual_retry_claim_token`；provider request／secret material（不得存在） |
 | `admin_command_authorizations`／none | `issued_at`,`expires_at`,`consumed_at` | `id`,`actor_principal_id`,`command_name` | — | `auth_session_id`,`idempotency_key`,`request_hash`,`bound_factor_id_snapshot` |
 | `admin_command_executions`／none | `created_at`,`completed_at`,`result_code` | `id`,`actor_principal_id`,`command_name`,`receipt_id`,`audit_event_id`,`request_id`,`redacted_result_receipt` | — | `idempotency_key`,`request_hash`,reveal plaintext |
 | `admin_audit_principals`／none | `created_at`,`tombstoned_at` | `id` | `user_id`（mapping service only） | direct browser projection |

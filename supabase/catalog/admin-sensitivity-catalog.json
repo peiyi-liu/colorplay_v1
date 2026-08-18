@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "source_sha256": "3fdb53e5c0af936480010b944cf42706cabe8b663e8e505c64f5de92a16647a9",
+  "source_sha256": "f7944d936398371f75506487eb6b410a6c41dc5594adab8cc445a7613d1ad0de",
   "resources": [
     {
       "resource": "achievement_definitions",
@@ -939,6 +939,14 @@
         {
           "name": "correlation_id",
           "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "manual_retry_claim_token",
+          "class": "forbidden",
           "mask_strategy": null,
           "searchable": false,
           "filterable": false,
