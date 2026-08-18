@@ -5039,11 +5039,26 @@ Task 13 的前端在 review 波中暴露三個**已核准規格與實作之間�
   request ID,但不得偽稱已寫入 durable audit。retryable mapping 集中、由
   stable-code union 驗證,未明列者一律 `false`(未知碼 fail closed)。
 
+- **13A-4 reveal 的 opaque row token 形態(2026-08-18 owner 裁定)**:
+  `admin_reveal_field` 只有 `row_id uuid` 與 `row_key jsonb` 兩形態,而 jsonb
+  形態的 request hash 綁「解碼後物件的 canonical 文字」,Edge 要對上就得解碼
+  token 並複製 DB 的 `collate "C"` 正規化 —— 違反可信邊界且是 hash drift 來源。
+  新增 `row_token text` 形態:內部解碼後沿用既有 row_key 形態的全部驗證,
+  canonical hash 綁**逐字 token**(欄位名 `row_token`);**兩形態 hash 不互通**,
+  receipt 不得跨形態重用;無法解碼的 token 在 receipt 消耗前 typed deny。
+  重構以共用內部函式承載 post-gate 邏輯,jsonb 形態的對外契約(hash、denial
+  碼與順序、audit 形狀)不得改變。
+
 **Files:**
-- Create: `supabase/migrations/20260809000100_admin_contract_completion.sql`
-  (forward migration;**不修改** `20260808000700_admin_read_rpcs.sql` 與
-  `20260808000800_admin_lifecycle_commands.sql`)
-- Create: `supabase/tests/053_admin_contract_completion.sql`(pgTAP)
+- Create(forward migrations,順序即依賴序;**不修改**已提交的
+  `20260808000700_admin_read_rpcs.sql` 與
+  `20260808000800_admin_lifecycle_commands.sql`):
+  `supabase/migrations/20260809000100_admin_denial_envelope.sql`、
+  `20260809000200_admin_pagination_row_key.sql`、
+  `20260809000300_admin_stuck_manual_retry.sql`、
+  `20260809000400_admin_reveal_row_token.sql`
+- Create: `supabase/tests/054_admin_contract_completion.test.sql`、
+  `supabase/tests/055_admin_reveal_row_token.test.sql`(pgTAP)
 - Modify: `supabase/functions/admin-command/index.ts`、
   `supabase/functions/admin-reconcile/index.ts`、`supabase/functions/_shared/*`
 - Modify: Task 13 前端(`admin-data-table`、`admin-data-browser-page`、

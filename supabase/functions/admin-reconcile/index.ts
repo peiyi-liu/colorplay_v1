@@ -3,6 +3,7 @@
 // 掃描逾時 operations,依 type 重跑剩餘 idempotent steps。
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { jsonResponse } from '../_shared/cors.ts';
+import { auditUnavailableEnvelope } from '../_shared/denial-envelope.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -33,7 +34,7 @@ Deno.serve(async (request) => {
     .or(`next_retry_at.is.null,next_retry_at.lte.${nowIso}`)
     .limit(20);
   if (due.error !== null) {
-    return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
+    return jsonResponse(503, auditUnavailableEnvelope());
   }
 
   const asStr = (value: unknown): string =>

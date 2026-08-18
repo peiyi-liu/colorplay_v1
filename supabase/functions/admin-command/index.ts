@@ -6,70 +6,34 @@
 // 輸出)→ 503 SECURITY_AUDIT_UNAVAILABLE(Task 8 edge-denial 契約)。
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { canonicalCommandHashHex } from '../_shared/canonical.ts';
+import {
+  buildHashFields,
+  buildRpcArgs,
+  COMMAND_POLICIES,
+  resolveLocator,
+} from '../_shared/command-policies.ts';
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
+import {
+  auditUnavailableEnvelope,
+  readDenialEnvelope,
+} from '../_shared/denial-envelope.ts';
 import { makeRecordAndDeny } from '../_shared/edge-denial.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
-// 完整命令政策表(spec §8.1)。args 鍵名即 RPC 參數去 p_ 前綴;
-// hashFields 與 Task 7 各 RPC 的 canonical hash 欄位集合完全一致
-// (reason/purpose 也綁進 hash;Codex 修訂 8)。reveal 目前僅接 uuid 形態,
-// row_key 複合定址的 Edge 接線留待前端 Task 13 需要時擴充。
-const COMMAND_POLICIES: Record<
-  string,
-  { rpc: string; freshTotp: boolean; hashFields: string[] }
-> = {
-  issue_admin_invitation: {
-    rpc: 'issue_admin_invitation',
-    freshTotp: true,
-    hashFields: ['invited_email', 'reason'],
-  },
-  revoke_admin_invitation: {
-    rpc: 'revoke_admin_invitation',
-    freshTotp: true,
-    hashFields: ['invitation_id', 'reason'],
-  },
-  deactivate_admin: {
-    rpc: 'deactivate_admin',
-    freshTotp: true,
-    hashFields: ['target_principal_id', 'reason'],
-  },
-  reactivate_admin: {
-    rpc: 'reactivate_admin',
-    freshTotp: true,
-    hashFields: ['target_principal_id', 'reason'],
-  },
-  reset_admin_mfa: {
-    rpc: 'reset_admin_mfa',
-    freshTotp: true,
-    hashFields: ['target_principal_id', 'reason'],
-  },
-  revoke_admin_session: {
-    rpc: 'revoke_admin_session',
-    freshTotp: true,
-    hashFields: ['session_id', 'reason'],
-  },
-  admin_reveal_field: {
-    rpc: 'admin_reveal_field',
-    freshTotp: true,
-    hashFields: ['column', 'domain', 'purpose', 'resource', 'row_id'],
-  },
-  reconcile_admin_security_operation: {
-    rpc: 'reconcile_admin_security_operation',
-    freshTotp: true,
-    hashFields: ['operation_id', 'reason'],
-  },
-};
+const auditUnavailable = () => jsonResponse(503, auditUnavailableEnvelope());
 
 // mint/RPC 已入帳的 typed denial 用 denied() 原樣回傳,不重複記錄;
 // Edge 自身判定的 denial 用 recordAndDeny(fail-closed)。
-const denied = (code: string, status = 403) =>
-  jsonResponse(status, { outcome: 'denied', code });
-
-const auditUnavailable = () =>
-  jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
+// Task 13A-3:envelope 必須完整轉送 —— 半截或畸形的 denial 不得被當成
+// 「已入帳」交給 client,一律 fail closed。
+const denied = (payload: unknown, status = 403): Response => {
+  const envelope = readDenialEnvelope(payload);
+  if (envelope === null) return auditUnavailable();
+  return jsonResponse(status, envelope);
+};
 
 function decodeJwtPayload(jwt: string): Record<string, unknown> {
   try {
@@ -151,6 +115,15 @@ Deno.serve(async (request) => {
       ? (body.args as Record<string, unknown>)
       : {};
 
+  // exactly one-of 定址(spec §7 修訂):零個或兩個以上都無法決定該綁哪一
+  // 種 canonical hash;放行等於讓 client 自選授權語意。與 DB 對畸形 row_key
+  // 的處置同碼,且同交易寫入 denial audit + counter。
+  const locatorResolution = resolveLocator(policy, args);
+  if (!locatorResolution.ok) {
+    return recordAndDeny(command, userId, 'COLUMN_NOT_ALLOWED', 403);
+  }
+  const locator = locatorResolution.locator;
+
   // server-only factor binding 確認(spec §6.2 步驟 2);不符即獨立隔離操作。
   // 隔離只由這個技術檢查觸發,絕不解析 reason/purpose 文字(硬性修正 #2)。
   // service 讀取失敗與 GoTrue listFactors 失敗一律 fail closed:讀不到
@@ -193,11 +166,8 @@ Deno.serve(async (request) => {
         operationId ? { operationId } : undefined,
       );
     }
-    if (
-      isolate.data.outcome === 'denied' &&
-      typeof isolate.data.code === 'string'
-    ) {
-      return denied(isolate.data.code);
+    if (isolate.data.outcome === 'denied') {
+      return denied(isolate.data);
     }
     return auditUnavailable();
   }
@@ -206,36 +176,12 @@ Deno.serve(async (request) => {
   // svc_admin_issue_command_receipt 成功簽發的同一交易;被拒的命令
   // 不得延長 idle 窗。
 
-  // canonical request hash(修訂 8):正規化規則與 RPC 端逐字一致 ——
-  // DB 端 btrim(單參數)僅剝 0x20,不可用 JS trim()(會多剝 \n/\t 等,
-  // 尾端含換行的 reason 會 hash mismatch 使命令永久失敗);uuid 經
-  // ::text 一律輸出小寫連字號,Edge 端先行小寫對齊。
-  const trimAsciiSpaces = (value: string): string =>
-    value.replace(/^ +/, '').replace(/ +$/, '');
-  const UUID_HASH_FIELDS = new Set([
-    'target_principal_id',
-    'session_id',
-    'invitation_id',
-    'operation_id',
-    'row_id',
-  ]);
-  const fields: Record<string, string | null> = {};
-  for (const field of policy.hashFields) {
-    const raw = args[field];
-    if (raw === null || raw === undefined) {
-      fields[field] = null;
-      continue;
-    }
-    let value = String(raw);
-    if (field === 'reason' || field === 'purpose')
-      value = trimAsciiSpaces(value);
-    if (field === 'invited_email') {
-      value = trimAsciiSpaces(value).toLowerCase();
-    }
-    if (UUID_HASH_FIELDS.has(field)) value = value.toLowerCase();
-    fields[field] = value;
-  }
-  const hashHex = await canonicalCommandHashHex(fields);
+  // canonical request hash(修訂 8):正規化規則住在 command-policies.ts,
+  // 與 RPC 端逐字一致。opaque row token 刻意不做任何正規化 —— 它的大小寫
+  // 有意義,而且 Edge 一旦「整理」它就等於在重建 server 的定址編碼。
+  const hashHex = await canonicalCommandHashHex(
+    buildHashFields(policy, locator, args),
+  );
 
   const receipt = await service.rpc('svc_admin_issue_command_receipt', {
     p_actor_user_id: userId,
@@ -253,25 +199,25 @@ Deno.serve(async (request) => {
   if (mint.outcome === 'replayed') {
     return jsonResponse(200, { outcome: 'replayed', result: mint.result });
   }
-  if (mint.outcome === 'denied' && typeof mint.code === 'string') {
-    return denied(mint.code);
+  if (mint.outcome === 'denied') {
+    return denied(mint);
   }
   if (mint.outcome !== 'issued' || typeof mint.receipt_id !== 'string') {
     return auditUnavailable();
   }
 
   // 命令本體:caller JWT 的 user-scoped client(spec §6.2 步驟 4)。
-  // orchestration 受控參數最後覆寫:args 挾帶 receipt_id/idempotency_key
-  // 不得覆蓋剛鑄的 receipt 綁定。
-  const rpcArgs: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(args)) rpcArgs[`p_${key}`] = value;
+  // buildRpcArgs 只放行進過 hash 的欄位,因此 args 挾帶的任何額外鍵
+  // (含 receipt_id/idempotency_key)都到不了 RPC;orchestration 受控參數
+  // 仍最後覆寫,雙重確保 receipt 綁定不被覆蓋。
+  const rpcArgs = buildRpcArgs(policy, locator, args);
   rpcArgs.p_receipt_id = mint.receipt_id;
   rpcArgs.p_idempotency_key = idempotencyKey;
   const result = await user.rpc(policy.rpc, rpcArgs);
   if (result.error !== null || !result.data) return auditUnavailable();
   const outcome = result.data as Record<string, unknown>;
-  if (outcome.outcome === 'denied' && typeof outcome.code === 'string') {
-    return denied(outcome.code);
+  if (outcome.outcome === 'denied') {
+    return denied(outcome);
   }
   if (outcome.outcome !== 'ok') return auditUnavailable();
 

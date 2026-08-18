@@ -51,6 +51,16 @@ const VECTORS: Record<string, string | null>[] = [
     row_id: '22222222-2222-2222-2222-222222222222',
   },
   { operation_id: '33333333-3333-3333-3333-333333333333', reason: null },
+  // Task 13A-4:opaque row token 形態。token 是 base64url,大小寫與
+  // `-`/`_` 都有意義,任何一端「整理」過就會在這裡失敗。
+  {
+    column: 'token_balance',
+    domain: 'rewards',
+    purpose: '稽核需要核對錢包餘額明細',
+    resource: 'wallets',
+    row_token:
+      'eyJ1c2VyX2lkIjoiY2MwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAxIn0',
+  },
 ];
 
 describe('canonical request hash parity (Edge <-> DB)', () => {

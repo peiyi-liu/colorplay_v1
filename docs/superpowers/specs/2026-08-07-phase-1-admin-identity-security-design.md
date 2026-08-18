@@ -255,6 +255,14 @@ Auth verify 已成功但 PostgreSQL finalize 失敗時，client 直接重試 con
 - List 回應為**每一筆**附 server-issued row-key token（§1.3.5 的 base64url canonical JSON）。client 只當作 opaque navigation token：不得推測 PK 欄名、不得把它當成可顯示或可查詢的資料欄位、不得與真實 catalog column 混淆。
 - Detail 與 **reveal** 都必須支援 row_key 形態；`row_id` 與 `row_key` **exactly one-of**；receipt 的 canonical request hash 必須與實際使用的定址形態一致；Edge 不得把 row_key 改寫成 row_id。
 
+**2026-08-18 owner 裁定（Task 13A-4）：reveal 的 opaque token 形態。**
+`admin_reveal_field` 原本只有 `row_id uuid` 與 `row_key jsonb` 兩形態，而 jsonb 形態的 canonical request hash 綁的是「解碼後物件的 canonical 文字」。Edge 若要湊出相同 hash，就必須解碼 server 簽發的 token 並複製 DB 的 `collate "C"` 正規化規則——那正是 §5 可信邊界禁止的「Edge 自行重建 row_key」，也是 hash drift 的來源。修訂後：
+
+- `admin_reveal_field` 增加 `row_token text` 形態，內部以 `admin_internal_decode_row_key` 解碼後沿用既有 `row_key` 形態的全部驗證（PK 欄集合必須完全相符、null 值拒絕、catalog 資格、personal 欄 surface 雙重謂詞）。
+- 該形態的 canonical request hash 綁**逐字的 token**（欄位名 `row_token`）。Edge 只把收到的字串原樣入 hash：不解析、不重建、不改寫。同一列重試時 server 簽發的 token 逐字相同，冪等成立。
+- **兩形態的 hash 不互通**：即使指向同一列，`row_token` 與 `row_key` 形態的 hash 必須不同，receipt 不得跨形態重用；手工變造的 token 得到不同 hash 而 fail closed。
+- 無法解碼的 token 視同「非 object 的 row_key」：在 receipt 消耗前回 `COLUMN_NOT_ALLOWED` typed denial，且順序仍排在 purpose 檢查之後（既有 jsonb 形態的 denial 順序不得因重構而改變）。
+
 ## 8. Named operations、idempotency 與 reconciliation
 
 ### 8.1 Product operations
