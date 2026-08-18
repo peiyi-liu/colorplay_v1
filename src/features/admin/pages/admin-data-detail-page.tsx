@@ -9,7 +9,10 @@ import {
   personalColumnNames,
 } from '../api/admin-catalog';
 import { adminRpc, extractErrorCode } from '../api/admin-client';
-import { AdminRevealDialog } from '../components/admin-reveal-dialog';
+import {
+  AdminRevealDialog,
+  type AdminRevealLocator,
+} from '../components/admin-reveal-dialog';
 import { AdminStatusBanner } from '../components/admin-status-banner';
 import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
 
@@ -22,6 +25,8 @@ interface AdminDetailOk {
 interface AdminOutcomeDenied {
   code?: string;
   outcome: 'denied';
+  request_id?: string;
+  retryable?: boolean;
 }
 
 type AdminDetailResponse = AdminDetailOk | AdminOutcomeDenied;
@@ -30,32 +35,12 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 
 /**
- * spec §1.3.5:`rowKey`＝base64url(canonical JSON,鍵依字母序);具 `id` 欄的
- * 表允許裸 uuid 簡寫(視為 `{"id": value}`)。前端只負責挑對 overload 並透傳,
- * 驗證(PK 欄集合、資格、存在性)一律在 server。
+ * base64url 的**字元集**檢查,不是解碼(spec §1.3.6:前端不得解析 token)。
+ * 這裡只擋掉根本不可能是 token 的網址片段(空字串、含 `/`、`=`、空白…),
+ * 讓明顯打錯的網址得到「位址無效」而不是一句語意不符的欄位拒絕。token 的
+ * 內容是否有效——PK 欄集合、資格、存在性——一律由 server 判定。
  */
-function decodeRowKey(rowKey: string): Record<string, string> | null {
-  try {
-    const base64 = rowKey.replace(/-/gu, '+').replace(/_/gu, '/');
-    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-    const binary = atob(padded);
-    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-    const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
-    if (
-      typeof parsed !== 'object' ||
-      parsed === null ||
-      Array.isArray(parsed)
-    ) {
-      return null;
-    }
-    const entries = Object.entries(parsed);
-    if (entries.length === 0) return null;
-    if (!entries.every(([, value]) => typeof value === 'string')) return null;
-    return Object.fromEntries(entries);
-  } catch {
-    return null;
-  }
-}
+const ROW_TOKEN_CHARSET = /^[A-Za-z0-9_-]+$/u;
 
 function cellText(value: unknown): string {
   if (value === null || value === undefined || value === '') return '—';
@@ -94,15 +79,14 @@ export function AdminDataDetailPage() {
     setRevealColumn(null);
   }
 
-  // spec §1.3.5 只承認兩種位址:裸 uuid 簡寫、或 base64url(canonical JSON)。
-  // 兩者都不是就是壞位址 —— 硬塞給 uuid overload 只會讓 Postgres 丟型別轉換
-  // 錯誤(不是 typed denial),使用者卡在一個永遠失敗的「重試」。
+  // 兩種位址(spec §1.3.6):server 簽發的 opaque row token(涵蓋複合主鍵),
+  // 以及具 `id` 欄資源的既有裸 uuid 路徑。挑 overload 只看**外形**,不看
+  // 內容 —— token 原樣送進 `p_row_token`,由 DB 解碼與驗證。
   const isUuidKey = UUID_PATTERN.test(rowKey);
-  const compositeKey = isUuidKey ? null : decodeRowKey(rowKey);
-  const malformedRowKey = !isUuidKey && compositeKey === null;
-  const detailArgs = compositeKey
-    ? { p_domain: domain, p_resource: resource, p_row_key: compositeKey }
-    : { p_domain: domain, p_resource: resource, p_row_id: rowKey };
+  const malformedRowKey = !isUuidKey && !ROW_TOKEN_CHARSET.test(rowKey);
+  const detailArgs = isUuidKey
+    ? { p_domain: domain, p_resource: resource, p_row_id: rowKey }
+    : { p_domain: domain, p_resource: resource, p_row_token: rowKey };
 
   const detail = useQuery({
     enabled: !malformedRowKey,
@@ -147,6 +131,12 @@ export function AdminDataDetailPage() {
   }
 
   if (detail.isError || detail.data.outcome === 'denied') {
+    // 網路層失敗時 data 可能根本不存在,不能無條件讀 outcome
+    const response: AdminDetailResponse | undefined = detail.data;
+    const denied = response?.outcome === 'denied' ? response : undefined;
+    // 網路層失敗沒有 envelope,重試是唯一出路;已入帳的 denial 依 §11 的
+    // retryable 決定 —— 重送同一個位址只會再被拒一次。
+    const canRetry = !denied || denied.retryable === true;
     return (
       <section
         aria-labelledby="admin-data-detail-page-heading"
@@ -158,15 +148,23 @@ export function AdminDataDetailPage() {
         ) : (
           <p role="alert">資料載入失敗，請稍後重試。</p>
         )}
-        <button
-          className="secondary-action"
-          onClick={() => {
-            void detail.refetch();
-          }}
-          type="button"
-        >
-          重試
-        </button>
+        {typeof denied?.request_id === 'string' ? (
+          <p>
+            追蹤代碼：
+            <span data-testid="admin-request-id">{denied.request_id}</span>
+          </p>
+        ) : null}
+        {canRetry ? (
+          <button
+            className="secondary-action"
+            onClick={() => {
+              void detail.refetch();
+            }}
+            type="button"
+          >
+            重試
+          </button>
+        ) : null}
         {backLink}
       </section>
     );
@@ -196,8 +194,11 @@ export function AdminDataDetailPage() {
     ...catalogNames.filter((name) => rowKeys.includes(name)),
     ...rowKeys.filter((name) => !catalogNames.includes(name)),
   ];
-  const rowId = row.id;
-  const canReveal = typeof rowId === 'string';
+  // reveal 沿用**本頁載入這筆資料時用的同一個定址**,不從 row 內容再推一次:
+  // 複合主鍵資源的 PK 欄未必在投影裡,而且再推一次就等於前端自行組定址。
+  const revealLocator: AdminRevealLocator = isUuidKey
+    ? { kind: 'row_id', value: rowKey }
+    : { kind: 'row_token', value: rowKey };
 
   return (
     <section
@@ -214,7 +215,7 @@ export function AdminDataDetailPage() {
             <dt>{name}</dt>
             <dd>
               {cellText(row[name])}
-              {personalColumns.includes(name) && canReveal ? (
+              {personalColumns.includes(name) ? (
                 <button
                   className="admin-data-table__reveal"
                   onClick={() => {
@@ -230,15 +231,15 @@ export function AdminDataDetailPage() {
         ))}
       </dl>
 
-      {revealColumn !== null && typeof rowId === 'string' ? (
+      {revealColumn !== null ? (
         <AdminRevealDialog
           column={revealColumn}
           domain={domain}
+          locator={revealLocator}
           onClose={() => {
             setRevealColumn(null);
           }}
           resource={resource}
-          rowId={rowId}
         />
       ) : null}
     </section>

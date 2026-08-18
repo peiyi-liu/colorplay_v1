@@ -32,7 +32,7 @@ function Harness() {
         setOpen(false);
       }}
       resource="profiles"
-      rowId="row-1"
+      locator={{ kind: 'row_token', value: 'tok-row-1' }}
     />
   );
 }
@@ -109,7 +109,7 @@ describe('AdminRevealDialog', () => {
         domain: 'users',
         purpose: '家長來電確認學生身分需要核對',
         resource: 'profiles',
-        row_id: 'row-1',
+        row_token: 'tok-row-1',
       },
     );
   });
@@ -316,7 +316,7 @@ describe('AdminRevealDialog', () => {
                   setOpen(false);
                 }}
                 resource="profiles"
-                rowId="row-1"
+                locator={{ kind: 'row_token', value: 'tok-row-1' }}
               />
             ) : null}
           </>

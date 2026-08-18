@@ -20,12 +20,22 @@ type PurposeFormValues = z.infer<typeof purposeSchema>;
 const FOCUSABLE_SELECTOR =
   'textarea, button:not(:disabled), input, [tabindex]:not([tabindex="-1"])';
 
+/**
+ * 定址形態(spec §1.3.6、§7 的 2026-08-18 修訂):`row_token` 是 server 為
+ * 每一列簽發的 opaque token,前端**只原樣帶回**——不解碼、不重建、不改寫成
+ * `row_id`。`row_id` 只保留給具 `id` 欄的既有裸 UUID 路徑。兩者是 server 端
+ * exactly one-of,且 canonical request hash 綁的欄位名不同,receipt 不可跨
+ * 形態重用,所以這裡用 discriminated union 讓呼叫端不可能同時給兩個。
+ */
+export type AdminRevealLocator =
+  { kind: 'row_id'; value: string } | { kind: 'row_token'; value: string };
+
 export interface AdminRevealDialogProps {
   column: string;
   domain: string;
+  locator: AdminRevealLocator;
   onClose: () => void;
   resource: string;
-  rowId: string;
 }
 
 /**
@@ -41,9 +51,9 @@ export interface AdminRevealDialogProps {
 export function AdminRevealDialog({
   column,
   domain,
+  locator,
   onClose,
   resource,
-  rowId,
 }: Readonly<AdminRevealDialogProps>) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -122,7 +132,10 @@ export function AdminRevealDialog({
           domain,
           purpose: values.purpose,
           resource,
-          row_id: rowId,
+          // 只送出這次選定的那一個定址欄位;Edge 會拒絕同時帶兩個
+          ...(locator.kind === 'row_token'
+            ? { row_token: locator.value }
+            : { row_id: locator.value }),
         },
       );
       if (response.outcome === 'ok') {

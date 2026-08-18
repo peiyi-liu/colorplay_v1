@@ -1,6 +1,6 @@
 -- supabase/tests/051_admin_safe_browser.test.sql
 begin;
-select plan(28);
+select plan(30);
 
 \ir helpers/admin_test_seed.psql
 select pg_temp.admin_test_seed();
@@ -40,8 +40,25 @@ select is((select count(*)::int from public.admin_audit_events
 -- 遮罩、排除與查詢限制
 select ok(((public.admin_list_resource('users', 'profiles', null, '{}', null))
   -> 'rows' -> 0) ? 'display_name', 'open column projected');
+-- 這條斷言原本看的是空箱子:seed 從未建立任何 classroom,`rows -> 0` 是 NULL,
+-- `?` 對 NULL 回 NULL,ok(NULL) 判失敗 —— 它從來沒有真正檢查過投影內容,
+-- 就算 join_code 真的洩漏也抓不到。先建一筆真的班級,讓斷言有東西可查。
+update public.profiles set role = 'teacher'
+  where id = 'cc000000-0000-0000-0000-000000000001';
+insert into public.classrooms
+  (id, owner_teacher_id, name, join_code_hash, join_code)
+values ('0cc00000-0000-0000-0000-0000000000c1',
+  'cc000000-0000-0000-0000-000000000001', 'pgTAP 投影檢查用班級',
+  decode(repeat('ab', 32), 'hex'), 'ABCD-1234-EF56-7890');
+
+select is((select jsonb_array_length((public.admin_list_resource(
+    'classrooms', 'classrooms', null, '{}', null)) -> 'rows')), 1,
+  'the classrooms fixture is actually visible to the browser');
 select ok(not (((public.admin_list_resource('classrooms', 'classrooms', null, '{}', null))
   -> 'rows' -> 0) ? 'join_code'), 'forbidden column never in projection');
+select ok(not (((public.admin_list_resource('classrooms', 'classrooms', null, '{}', null))
+  -> 'rows' -> 0) ? 'join_code_hash'),
+  'the forbidden hash column is excluded as well');
 update public.profiles set full_name = '王小明'
   where id = 'cc000000-0000-0000-0000-000000000001';
 select is((select count(*)::int

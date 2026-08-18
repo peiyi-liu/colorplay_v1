@@ -17,7 +17,7 @@ import { AdminStatusBanner } from '../components/admin-status-banner';
 import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
 
 interface AdminListResourceOk {
-  /** server 簽發的 keyset cursor;目前的 RPC 尚未簽發(見 checkpoint 記錄)。 */
+  /** server 簽發的 keyset cursor(Task 13A-1);沒有下一頁時為 null。 */
   next_cursor?: string | null;
   outcome: 'ok';
   page_size_limit?: number;
@@ -29,13 +29,25 @@ interface AdminOutcomeDenied {
   outcome: 'denied';
   request_id?: string;
   /**
-   * spec §11 的 response 契約欄位。目前 `admin_internal_deny` 尚未回傳,
-   * 因此實務上會是 undefined —— 這時一律當作**不可重試**:refetch 會原樣
-   * 重送同一個 cursor/filter,對 COLUMN_NOT_ALLOWED 這類決定性的拒絕只會
-   * 再被拒一次,變成永遠點不出結果的無效重試迴圈。
+   * spec §11 envelope 的 retryable flag(Task 13A-3)。缺漏時一律當作
+   * **不可重試**:refetch 會原樣重送同一個 cursor/filter,對
+   * COLUMN_NOT_ALLOWED 這類決定性的拒絕只會再被拒一次,變成永遠點不出
+   * 結果的無效重試迴圈。
    */
   retryable?: boolean;
 }
+
+/**
+ * server 為每一列簽發的 opaque navigation token(spec §1.3.6)。它不是
+ * catalog 欄位,也不是資料 —— 不得渲染成表格欄、不得拿來篩選或排序,
+ * 前端只把它原樣帶進 detail route 與 reveal 命令。
+ */
+const ROW_KEY_FIELD = 'row_key';
+
+const rowToken = (row: Record<string, unknown> | undefined): string | null => {
+  const value = row?.[ROW_KEY_FIELD];
+  return typeof value === 'string' && value !== '' ? value : null;
+};
 
 type AdminListResourceResponse = AdminListResourceOk | AdminOutcomeDenied;
 
@@ -53,7 +65,7 @@ const EMPTY_QUERY: AppliedQuery = {
 
 interface RevealTarget {
   column: string;
-  rowId: string;
+  rowToken: string;
 }
 
 /**
@@ -100,8 +112,8 @@ export function AdminDataBrowserPage() {
     applied.sortColumn !== '' ? { column: applied.sortColumn } : null;
 
   // keyset 分頁(spec §7):cursor 一律是 server 簽發的 opaque 值,前端只負責
-  // 原樣帶回。今天的 admin_list_resource 尚未簽發 cursor,所以實務上只會有
-  // 第一頁;等 server 開始回 next_cursor,這裡不必再改就能翻頁。
+  // 原樣帶回。cursor 綁 resource/filter/sort,所以 queryKey 帶上 applied ——
+  // 換條件就是另一條分頁鏈,不得沿用舊 cursor(server 會 typed deny)。
   const list = useInfiniteQuery({
     getNextPageParam: (lastPage: AdminListResourceResponse) =>
       lastPage.outcome === 'ok' &&
@@ -160,6 +172,11 @@ export function AdminDataBrowserPage() {
   }
 
   if (list.isError || !firstPage || firstPage.outcome === 'denied') {
+    const deniedFirstPage =
+      firstPage?.outcome === 'denied' ? firstPage : undefined;
+    // 網路層失敗沒有 envelope,重試是唯一出路;已入帳的 denial 則依 §11 的
+    // retryable 決定 —— 對決定性的拒絕重送同一個查詢只會再被拒一次。
+    const canRetry = !deniedFirstPage || deniedFirstPage.retryable === true;
     return (
       <section
         aria-labelledby="admin-data-browser-page-heading"
@@ -171,15 +188,27 @@ export function AdminDataBrowserPage() {
         ) : (
           <p role="alert">資料載入失敗，請稍後重試。</p>
         )}
-        <button
-          className="secondary-action"
-          onClick={() => {
-            void list.refetch();
-          }}
-          type="button"
-        >
-          重試
-        </button>
+        {typeof deniedFirstPage?.request_id === 'string' ? (
+          <p>
+            追蹤代碼：
+            <span data-testid="admin-request-id">
+              {deniedFirstPage.request_id}
+            </span>
+          </p>
+        ) : null}
+        {canRetry ? (
+          <button
+            className="secondary-action"
+            onClick={() => {
+              void list.refetch();
+            }}
+            type="button"
+          >
+            重試
+          </button>
+        ) : (
+          <p>請調整篩選或排序條件後重新查詢。</p>
+        )}
       </section>
     );
   }
@@ -197,6 +226,9 @@ export function AdminDataBrowserPage() {
     (column) => column.name,
   );
   const responseKeys = new Set(rows.flatMap((row) => Object.keys(row)));
+  // row_key 是導覽 token,不是資料欄:它永遠不在 catalog 裡,所以會落進
+  // 下面的 drift 分支被當成「server 多回的欄」顯示出來。明確排除。
+  responseKeys.delete(ROW_KEY_FIELD);
   const orderedKeys = [
     ...catalogNames.filter((name) => responseKeys.has(name)),
     ...[...responseKeys].filter((name) => !catalogNames.includes(name)),
@@ -333,14 +365,14 @@ export function AdminDataBrowserPage() {
         }}
         pageSizeLimit={firstPage.page_size_limit ?? 50}
         rowActions={(rowIndex) => {
-          // spec §1.3.5:具 id 欄的表允許裸 uuid 簡寫作為 rowKey。複合主鍵表
-          // 的 PK 欄名權威在 DB schema(執行期由 pg_catalog 解析),沒有匯出到
-          // 前端 catalog,因此前端無法自行組出 canonical row key —— 這些表
-          // 不提供自動連結(見 checkpoint 記錄待決),而不是產生錯的連結。
-          const rowId = rows[rowIndex]?.id;
-          if (typeof rowId !== 'string') return null;
+          // 定址一律用 server 簽發的 row token(spec §1.3.6)。它同時涵蓋
+          // 單一 id 與複合主鍵資源,所以複合主鍵表也能正常進明細 —— 前端
+          // 不需要、也不允許知道 PK 欄名。token 是 base64url,可直接當作
+          // 路徑片段。
+          const token = rowToken(rows[rowIndex]);
+          if (token === null) return null;
           return (
-            <Link to={`/admin/data/${domain}/${resource}/${rowId}`}>明細</Link>
+            <Link to={`/admin/data/${domain}/${resource}/${token}`}>明細</Link>
           );
         }}
         rowActionsHeader="明細"
@@ -348,11 +380,10 @@ export function AdminDataBrowserPage() {
         {...(personalColumns.length > 0
           ? {
               onReveal: (rowIndex: number, column: string) => {
-                const rowId = rows[rowIndex]?.id;
-                // uuid 定址是目前 Edge 唯一接線的 reveal 形態;沒有可用的
-                // id 就不開框,不送一個註定被拒的請求。
-                if (typeof rowId !== 'string') return;
-                setRevealTarget({ column, rowId });
+                const token = rowToken(rows[rowIndex]);
+                // 沒有 server 簽發的 token 就不開框,不送一個註定被拒的請求
+                if (token === null) return;
+                setRevealTarget({ column, rowToken: token });
               },
             }
           : {})}
@@ -362,11 +393,11 @@ export function AdminDataBrowserPage() {
         <AdminRevealDialog
           column={revealTarget.column}
           domain={domain}
+          locator={{ kind: 'row_token', value: revealTarget.rowToken }}
           onClose={() => {
             setRevealTarget(null);
           }}
           resource={resource}
-          rowId={revealTarget.rowId}
         />
       ) : null}
     </section>

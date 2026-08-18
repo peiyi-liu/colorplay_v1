@@ -4,17 +4,28 @@
 // privileged session(DB 層由 Task 5 保證)。
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
+import {
+  auditUnavailableEnvelope,
+  readDenialEnvelope,
+} from '../_shared/denial-envelope.ts';
 import { makeRecordAndDeny } from '../_shared/edge-denial.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
+const auditUnavailable = () => jsonResponse(503, auditUnavailableEnvelope());
+
 // DB path 已入帳的 denial(totp lock、confirm/create session 的 typed denial)
 // 一律用 denied() 原樣回傳,不重複記錄;Edge 自身判定的 denial 用
 // recordAndDeny(fail-closed,記錄失敗回 503)。
-const denied = (code: string, status = 403) =>
-  jsonResponse(status, { outcome: 'denied', code });
+// Task 13A-3:§11 envelope 必須完整轉送 —— 壓成 {outcome, code} 會讓前端
+// 失去可追蹤的 request_id 與 retryable 判斷依據;半截或畸形一律 fail closed。
+const denied = (payload: unknown, status = 403): Response => {
+  const envelope = readDenialEnvelope(payload);
+  if (envelope === null) return auditUnavailable();
+  return jsonResponse(status, envelope);
+};
 
 function decodeJwtPayload(jwt: string): Record<string, unknown> {
   try {
@@ -82,10 +93,10 @@ Deno.serve(async (request) => {
   // probe 失敗或輸出畸形一律 fail closed(同 edge-denial 契約):
   // 鎖定狀態不明時不得放行
   if (lockState.error !== null || !lockState.data) {
-    return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
+    return auditUnavailable();
   }
   // MFA_LOCKED 已由 svc_admin_record_totp_outcome 入帳,原樣回傳不重複記錄
-  if (lockState.data.code === 'MFA_LOCKED') return denied('MFA_LOCKED', 429);
+  if (lockState.data.code === 'MFA_LOCKED') return denied(lockState.data, 429);
 
   if (action === 'begin-enrollment') {
     // primary re-auth ≤ 5 分鐘:GoTrue amr password timestamp,不用 JWT iat(spec §4.4-1)
@@ -164,10 +175,10 @@ Deno.serve(async (request) => {
       // 失敗嘗試未能入帳(RPC error/畸形輸出)→ fail closed,
       // 不得偽裝成已入帳的 denial
       if (attempt.error !== null || !attempt.data) {
-        return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
+        return auditUnavailable();
       }
       // 第 5 次失敗:MFA_LOCKED 已由 DB 入帳,原樣回傳;其餘失敗在此入帳
-      if (attempt.data.code === 'MFA_LOCKED') return denied('MFA_LOCKED', 429);
+      if (attempt.data.code === 'MFA_LOCKED') return denied(attempt.data, 429);
       return recordAndDeny(action, userId, 'INSUFFICIENT_MFA', 401);
     }
     const cleared = await service.rpc('svc_admin_record_totp_outcome', {
@@ -175,11 +186,11 @@ Deno.serve(async (request) => {
       p_success: true,
     });
     if (cleared.error !== null || !cleared.data) {
-      return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
+      return auditUnavailable();
     }
     // probe 之後、verify 期間被並發第 5 敗鎖定(TOCTOU 窗):此回傳是鎖定
     // 的 DB 兜底,MFA_LOCKED 不得丟棄
-    if (cleared.data.code === 'MFA_LOCKED') return denied('MFA_LOCKED', 429);
+    if (cleared.data.code === 'MFA_LOCKED') return denied(cleared.data, 429);
 
     // server-only factor binding 確認:恰一個 verified factor(spec §5.3)
     const factors = await service.auth.admin.mfa.listFactors({ userId });
@@ -196,7 +207,7 @@ Deno.serve(async (request) => {
       // 卻告訴呼叫端已經安全(spec §4.1)。已確認的 typed denial(如
       // identity 競態消失)原樣 passthrough,不重複記錄。
       if (isolate.error !== null || !isolate.data) {
-        return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
+        return auditUnavailable();
       }
       if (isolate.data.outcome === 'ok') {
         const operationId =
@@ -211,13 +222,10 @@ Deno.serve(async (request) => {
           operationId ? { operationId } : undefined,
         );
       }
-      if (
-        isolate.data.outcome === 'denied' &&
-        typeof isolate.data.code === 'string'
-      ) {
-        return denied(isolate.data.code);
+      if (isolate.data.outcome === 'denied') {
+        return denied(isolate.data);
       }
-      return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
+      return auditUnavailable();
     }
 
     if (action === 'confirm-enrollment') {
@@ -232,14 +240,10 @@ Deno.serve(async (request) => {
       }
       // typed denial 已由 svc_admin_confirm_enrollment 入帳,原樣回傳;
       // RPC error/畸形輸出未入帳,不得偽裝成 typed denial → fail closed
-      if (
-        confirm.error === null &&
-        confirm.data?.outcome === 'denied' &&
-        typeof confirm.data.code === 'string'
-      ) {
-        return denied(confirm.data.code);
+      if (confirm.error === null && confirm.data?.outcome === 'denied') {
+        return denied(confirm.data);
       }
-      return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
+      return auditUnavailable();
     }
 
     // challenge:既有 session 相同 auth_session_id → refresh fresh-MFA;否則建新 session
@@ -266,14 +270,10 @@ Deno.serve(async (request) => {
     }
     // typed denial 已由 svc_admin_create_session 入帳,原樣回傳;
     // RPC error/畸形輸出未入帳,不得偽裝成 typed denial → fail closed
-    if (
-      created.error === null &&
-      created.data?.outcome === 'denied' &&
-      typeof created.data.code === 'string'
-    ) {
-      return denied(created.data.code);
+    if (created.error === null && created.data?.outcome === 'denied') {
+      return denied(created.data);
     }
-    return jsonResponse(503, { error: 'SECURITY_AUDIT_UNAVAILABLE' });
+    return auditUnavailable();
   }
 
   return jsonResponse(400, { error: 'INVALID_JSON' });

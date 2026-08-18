@@ -107,22 +107,63 @@ describe('AdminDataDetailPage', () => {
     });
   });
 
-  it('addresses a composite rowKey through the jsonb overload', async () => {
+  it('passes a composite-key row token through verbatim without decoding it', async () => {
+    // spec §1.3.6:token 是 server 簽發的 opaque 值。前端解碼它、或把它
+    // 重建成 jsonb 物件,就等於在前端複製 server 的定址編碼規則 ——
+    // 那是可信邊界禁止的,也是 hash drift 的來源。
     vi.mocked(adminRpc).mockResolvedValue({
       outcome: 'ok',
       relations: [],
       row: { created_at: '2026-08-01T00:00:00Z', user_id: 'u1' },
     });
-    const rowKey = encodeRowKey({ classroom_id: 'c1', user_id: 'u1' });
-    renderPage(`/admin/data/classrooms/classroom_members/${rowKey}`);
+    const rowToken = encodeRowKey({ classroom_id: 'c1', user_id: 'u1' });
+    renderPage(`/admin/data/classrooms/classroom_members/${rowToken}`);
 
     await waitFor(() => {
       expect(adminRpc).toHaveBeenCalledWith('admin_get_resource_detail', {
         p_domain: 'classrooms',
         p_resource: 'classroom_members',
-        p_row_key: { classroom_id: 'c1', user_id: 'u1' },
+        p_row_token: rowToken,
       });
     });
+    const call = vi.mocked(adminRpc).mock.calls.at(-1);
+    expect(call?.[1]).not.toHaveProperty('p_row_key');
+    expect(call?.[1]).not.toHaveProperty('p_row_id');
+  });
+
+  it('reveals a composite-key row through the same token it was loaded with', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc).mockResolvedValue({
+      outcome: 'ok',
+      relations: [],
+      row: { full_name: '林＊＊', user_id: 'u1' },
+    });
+    vi.mocked(invokeAdminCommand).mockResolvedValue({
+      outcome: 'ok',
+      value: '林小華',
+    });
+    const rowToken = encodeRowKey({ classroom_id: 'c1', user_id: 'u1' });
+    renderPage(`/admin/data/users/profiles/${rowToken}`);
+    await screen.findByText('林＊＊');
+
+    await user.click(screen.getByRole('button', { name: '揭露 full_name' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.type(
+      within(dialog).getByLabelText('揭露目的'),
+      '家長來電確認學生身分需要核對',
+    );
+    await user.click(within(dialog).getByRole('button', { name: '揭露' }));
+
+    await waitFor(() => {
+      expect(invokeAdminCommand).toHaveBeenCalledWith(
+        'admin_reveal_field',
+        expect.any(String),
+        expect.objectContaining({ row_token: rowToken }),
+      );
+    });
+    // 沒有 id 欄的資源以前根本開不了 reveal;定址一律沿用本頁的 token
+    const call = vi.mocked(invokeAdminCommand).mock.calls.at(-1);
+    expect(call?.[2]).not.toHaveProperty('row_id');
   });
 
   it('keeps personal fields masked and offers reveal for them only', async () => {
@@ -194,15 +235,42 @@ describe('AdminDataDetailPage', () => {
     expect(screen.queryByText(/已刪除|不存在於|曾經/u)).toBeNull();
   });
 
-  it('refuses a malformed rowKey instead of sending it to the uuid overload', async () => {
-    // 既不是 uuid、也不是可解碼的 base64url canonical JSON。送去 p_row_id
-    // 只會讓 Postgres 丟型別轉換錯誤(不是 typed denial),使用者卡在
-    // 「重試」而重試永遠一樣失敗。
-    renderPage('/admin/data/users/profiles/not-a-valid-key');
+  it('refuses a row key whose characters cannot belong to a token at all', async () => {
+    // 只檢查字元集,不解碼(spec §1.3.6)。明顯打錯的網址得到「位址無效」,
+    // 而不是一句語意不符的欄位拒絕。
+    renderPage('/admin/data/users/profiles/not a valid key');
 
     expect(await screen.findByText('此筆資料位址無效')).toBeInTheDocument();
     expect(adminRpc).not.toHaveBeenCalled();
     expect(screen.getByRole('link', { name: '返回列表' })).toBeInTheDocument();
+  });
+
+  it('lets the server judge a well-formed token it cannot decode', async () => {
+    // 字元集合法但內容無效的 token 不由前端判斷 —— 前端沒有、也不該有
+    // 解碼能力;server 會回 typed denial。
+    vi.mocked(adminRpc).mockResolvedValue({
+      code: 'COLUMN_NOT_ALLOWED',
+      message: '此欄位不允許這項操作。',
+      outcome: 'denied',
+      request_id: 'req-bad-token',
+      retryable: false,
+    });
+    renderPage('/admin/data/users/profiles/not-a-valid-key');
+
+    await waitFor(() => {
+      expect(adminRpc).toHaveBeenCalledWith('admin_get_resource_detail', {
+        p_domain: 'users',
+        p_resource: 'profiles',
+        p_row_token: 'not-a-valid-key',
+      });
+    });
+    expect(await screen.findByTestId('admin-request-id')).toHaveTextContent(
+      'req-bad-token',
+    );
+    // 非可重試的拒絕不留假的重試入口
+    expect(
+      screen.queryByRole('button', { name: '重試' }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows the unbrowsable message on RESOURCE_NOT_ALLOWED', async () => {

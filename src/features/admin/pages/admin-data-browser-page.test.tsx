@@ -26,6 +26,7 @@ const okRows = [
     full_name: '王＊＊',
     id: 'row-1',
     login_account: '＊＊＊123',
+    row_key: 'tok-row-1',
     role: 'student',
     updated_at: '2026-08-02T00:00:00Z',
   },
@@ -35,6 +36,7 @@ const okRows = [
     full_name: '陳＊＊',
     id: 'row-2',
     login_account: '＊＊＊456',
+    row_key: 'tok-row-2',
     role: 'teacher',
     updated_at: '2026-08-02T00:00:00Z',
   },
@@ -190,10 +192,15 @@ describe('AdminDataBrowserPage', () => {
     expect(screen.queryByTestId('admin-request-id')).not.toBeInTheDocument();
   });
 
-  it('translates other typed denials through the shared banner and allows retry', async () => {
+  it('offers no retry for a denial the server marked non-retryable', async () => {
+    // §11 envelope:對決定性的拒絕重送同一個查詢只會再被拒一次,
+    // 真正的出路是改條件重查,所以這裡不得留一個假的重試入口。
     vi.mocked(adminRpc).mockResolvedValue({
       code: 'COLUMN_NOT_ALLOWED',
+      message: '此欄位不允許這項操作。',
       outcome: 'denied',
+      request_id: 'req-first-page',
+      retryable: false,
     });
     renderPage();
 
@@ -201,6 +208,30 @@ describe('AdminDataBrowserPage', () => {
       expect(screen.getByRole('status')).toHaveTextContent(
         '此欄位不允許這項操作',
       );
+    });
+    expect(screen.getByTestId('admin-request-id')).toHaveTextContent(
+      'req-first-page',
+    );
+    expect(
+      screen.queryByRole('button', { name: '重試' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText('請調整篩選或排序條件後重新查詢。'),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the retry entry for a denial the server marked retryable', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({
+      code: 'SECURITY_AUDIT_UNAVAILABLE',
+      message: '安全稽核暫時無法使用，操作已中止，請稍後再試。',
+      outcome: 'denied',
+      request_id: 'req-audit-down',
+      retryable: true,
+    });
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('安全稽核暫時無法');
     });
     expect(screen.getByRole('button', { name: '重試' })).toBeInTheDocument();
   });
@@ -258,7 +289,7 @@ describe('AdminDataBrowserPage', () => {
           column: 'full_name',
           domain: 'users',
           resource: 'profiles',
-          row_id: 'row-2',
+          row_token: 'tok-row-2',
         }),
       );
     });
@@ -651,7 +682,7 @@ describe('AdminDataBrowserPage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('links each row to its detail route using the bare uuid shorthand', async () => {
+  it('links each row to its detail route using the server-issued row token', async () => {
     vi.mocked(adminRpc).mockResolvedValue(okResponse);
     renderPage();
     await screen.findByText('小明');
@@ -659,7 +690,71 @@ describe('AdminDataBrowserPage', () => {
     const firstRow = screen.getByText('小明').closest('tr') as HTMLElement;
     expect(
       within(firstRow).getByRole('link', { name: '明細' }),
-    ).toHaveAttribute('href', '/admin/data/users/profiles/row-1');
+    ).toHaveAttribute('href', '/admin/data/users/profiles/tok-row-1');
+  });
+
+  it('never renders the navigation token as a data column', async () => {
+    // row_key 是 opaque 導覽 token,不是資料:它不在 catalog 裡,若不明確
+    // 排除就會被當成「server 多回的欄」顯示出來(spec §1.3.6)。
+    vi.mocked(adminRpc).mockResolvedValue(okResponse);
+    renderPage();
+    await screen.findByText('小明');
+
+    expect(
+      screen.queryByRole('columnheader', { name: 'row_key' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('tok-row-1')).not.toBeInTheDocument();
+  });
+
+  it('reaches detail and reveal for a composite-key row that has no id column', async () => {
+    // 複合主鍵資源(如 classroom_members)投影裡根本沒有 id 欄;定址完全
+    // 依賴 server 簽發的 token,這正是 Task 13A 要補上的能力。
+    const user = userEvent.setup();
+    vi.mocked(adminRpc).mockResolvedValue({
+      outcome: 'ok',
+      page_size_limit: 50,
+      rows: [
+        {
+          created_at: '2026-08-01T00:00:00Z',
+          display_name: '小華',
+          full_name: '林＊＊',
+          login_account: '＊＊＊789',
+          role: 'student',
+          row_key: 'tok-composite-1',
+          updated_at: '2026-08-02T00:00:00Z',
+        },
+      ],
+    });
+    vi.mocked(invokeAdminCommand).mockResolvedValue({
+      outcome: 'ok',
+      value: '林小華',
+    });
+    renderPage();
+    await screen.findByText('小華');
+
+    expect(screen.getByRole('link', { name: '明細' })).toHaveAttribute(
+      'href',
+      '/admin/data/users/profiles/tok-composite-1',
+    );
+
+    await user.click(screen.getByRole('button', { name: '揭露 full_name' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.type(
+      within(dialog).getByLabelText('揭露目的'),
+      '家長來電確認學生身分需要核對',
+    );
+    await user.click(within(dialog).getByRole('button', { name: '揭露' }));
+
+    await waitFor(() => {
+      expect(invokeAdminCommand).toHaveBeenCalledWith(
+        'admin_reveal_field',
+        expect.any(String),
+        expect.objectContaining({ row_token: 'tok-composite-1' }),
+      );
+    });
+    // 定址一律走 token,絕不改寫成 row_id(Edge 是 exactly one-of)
+    const call = vi.mocked(invokeAdminCommand).mock.calls.at(-1);
+    expect(call?.[2]).not.toHaveProperty('row_id');
   });
 
   it('exposes no export or download control (spec §7)', async () => {
