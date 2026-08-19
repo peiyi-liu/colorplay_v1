@@ -41,15 +41,15 @@ are replaced by credentials that meet the create-only and read-only contracts.
 The owner approved seven independent design, plan, implementation, and release
 batches. Each batch must pass its own Staging gate before Production promotion.
 
-| Phase | Scope                                         | Status                                                                                                                                                                                          |
-| ----- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0     | Environment and release foundation            | Foundation CI passed; PR #1 awaits owner approval                                                                                                                                               |
-| 1     | Admin identity and security core              | In progress on isolated worktree; Tasks 0-15 implemented and locally verified (`.worktrees/phase1-admin-security-impl`, see below); local gate green, Staging/Production gates not yet executed |
-| 2     | Content SSOT and version publishing           | Decisions captured; spec not started                                                                                                                                                            |
-| 3     | Learning progression and assessment authority | Decisions captured; spec not started                                                                                                                                                            |
-| 4     | Learning Hall and chapter experience          | Visual/product decisions captured; spec not started                                                                                                                                             |
-| 5     | Live and teacher reporting                    | Product rules captured; spec not started                                                                                                                                                        |
-| 6     | Full-site JRPG visual unification             | Direction captured; spec not started                                                                                                                                                            |
+| Phase | Scope                                         | Status                                                                                                                                                                                                                                                    |
+| ----- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0     | Environment and release foundation            | Foundation CI passed; PR #1 awaits owner approval                                                                                                                                                                                                         |
+| 1     | Admin identity and security core              | **Local gate PASSED** on isolated worktree; Tasks 0-15 implemented and reviewed (`.worktrees/phase1-admin-security-impl`, see below); Staging and Production gates blocked on Phase 0 hosted readiness and explicit owner authorization, not yet executed |
+| 2     | Content SSOT and version publishing           | Decisions captured; spec not started                                                                                                                                                                                                                      |
+| 3     | Learning progression and assessment authority | Decisions captured; spec not started                                                                                                                                                                                                                      |
+| 4     | Learning Hall and chapter experience          | Visual/product decisions captured; spec not started                                                                                                                                                                                                       |
+| 5     | Live and teacher reporting                    | Product rules captured; spec not started                                                                                                                                                                                                                  |
+| 6     | Full-site JRPG visual unification             | Direction captured; spec not started                                                                                                                                                                                                                      |
 
 The required workflow for every phase is:
 
@@ -739,21 +739,50 @@ stash, or branch switching in a dirty shared worktree.
 - Path: `.worktrees/phase1-admin-security-impl`
 - Branch: `phase1/admin-security-impl` (purely local; no remote/upstream)
 - Plan: `docs/superpowers/plans/2026-08-07-phase-1-admin-identity-security.md`
-- HEAD at verification: `693587b`
+- HEAD at verification: `0e6c4e6`
 - State: Tasks 0 through 15 of the approved plan are implemented and
   reviewed under the plan's own graded workflow (AGENTS.md §7-§8 — each M-task
   through a single review round, Task 13A and Task 14 additionally through
   their own dedicated Codex review passes with all confirmed findings
   remediated and re-verified). Task 15 added the OOB recovery runbook, the
   Production smoke manifest, and their phase-gate contract test.
-- Local gate (this plan's own Step 5, not the global `pnpm acceptance`
-  Phase 8 gate — see AGENTS.md §9): lint/typecheck/unit/db/integration/E2E all
-  green as of the Task 15 commit; see `docs/handoff.md` for the exact command
-  results.
-- Hosted scope not executed: no Staging deployment, no Production smoke, no
-  OOB runbook procedure has been run against a hosted project. Both `docs/deployment/phase1-production-smoke-manifest.md`
-  and `docs/runbooks/phase1-admin-oob-recovery.md` are documentation and local
-  verification only, per this task's own scope note.
+- **Local gate: PASSED** (this plan's own Task 15 Step 4/5 definition, not
+  the global `pnpm acceptance` Phase 8 gate — see AGENTS.md §9). Evidence,
+  all re-run in a single consolidated pass at `0e6c4e6`:
+  - `pnpm lint` / `pnpm typecheck` / `pnpm test` — clean; 161 files / 1185
+    tests.
+  - Fresh `supabase db reset` + `pnpm test:db` — clean; 58 pgTAP files /
+    1455 assertions (includes the admin-domain RLS negative-privilege
+    matrix — every `admin_*` table now has the full anon/authenticated ×
+    SELECT/INSERT/UPDATE/DELETE default-deny coverage, 92+ assertions,
+    after closing a gap found during this gate pass in
+    `admin_sensitivity_catalog`), plus both integration test groups (the
+    MFA-capability suite requiring `service_role`, and the general suite
+    without it).
+  - `pnpm admin:catalog:check` / `admin:catalog:inventory` — clean.
+  - Full local E2E (`scripts/test-e2e-local.sh`, all three browsers) —
+    zero admin-related failures across two independent clean runs; the
+    only remaining failures are pre-existing, unrelated webkit-only
+    network-timing flakes in `playable-slice.spec.ts`/`quiz-runner.spec.ts`
+    (quiz domain, untouched by any Phase 1 work). Firefox/WebKit
+    acceptance is this project's own documented Staging-gate concern, not
+    a Local-gate blocker (see "Approved CI and deployment approval gates"
+    above).
+  - No unresolved Critical/High finding: every review round across Task
+    13A, Task 14 (two rounds), and Task 15 confirmed its findings against
+    real code/behavior before fixing (never accepted on faith), and every
+    Critical/High finding across all rounds was fixed and re-verified —
+    see `docs/handoff.md` for each round's findings and fixes.
+- **Staging and Production gates: blocked, not executed.** Per this
+  plan's own Task 15 Step 4, both require Phase 0 hosted readiness (Phase 0
+  itself is still at "PR #1 awaits owner approval" — no Staging merge has
+  happened) plus explicit owner authorization for any hosted mutation. No
+  Staging deployment, no Production smoke, no OOB runbook procedure has
+  been run against a hosted project. Both
+  `docs/deployment/phase1-production-smoke-manifest.md` and
+  `docs/runbooks/phase1-admin-oob-recovery.md` are documentation and local
+  verification only, per Task 15's own scope note — they describe what
+  those gates require, they do not themselves clear them.
 
 ## Remaining decisions
 
