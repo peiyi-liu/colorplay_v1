@@ -89,3 +89,10 @@
 - 下一步：Phase 1 全部 15 個 task 的實作與(適用的)review 都已完成收斂。**下一步是 Phase 1 gate 驗收**(AGENTS.md 第 12 節定義的里程碑層級:RLS 負向測試、完整證據 manifest、真實 browser/viewport 證據,尚未執行),等 owner 指示時機與範圍。
 - Blocker／待決策：無。
 - 相關檔案／commit：`693587b`(review 修復)、`b78522c`(roadmap SHA 修正)。驗證:`pnpm lint`/`pnpm typecheck`/`pnpm test`(161 檔/1185 條,新增 2 條)全綠;`supabase db reset` + `pnpm test:db`(58 個 pgTAP 檔/1448 assertions,兩組 integration 測試)全綠;`admin:catalog:check`/`admin:catalog:inventory` 綠;051 的竄改測試確認新斷言是真守門員(拿掉修復 → 轉紅 → 還原)。分支 `phase1/admin-security-impl` 仍為純本地（無 upstream）。
+
+## 2026-08-19 23:31 [Claude Code] — Phase 1 Local gate 通過並記錄;Staging/Production gate 明確標記為卡在 Phase 0、非本次範圍
+
+- 做了什麼：owner 裁定「Phase 1 gate 驗收」的範圍是 Local gate(計畫書 Task 15 Step 4 自己定義的三層 gate 之一;Staging/Production 兩層依計畫書原文卡在「Phase 0 hosted readiness + owner 授權」,非 Phase 1 本身能推進)。查核 RLS 負向測試涵蓋率時發現 `admin_sensitivity_catalog` 只驗過 `authenticated` SELECT 一格(其餘 9 張 admin 表都有完整 anon/authenticated × SELECT/INSERT/UPDATE/DELETE 8 格 default-deny 矩陣,獨獨這張只有 1/8),補齊剩下 7 格,plan(6)→plan(13)。跑一次乾淨、單一時間點的完整驗證(取代散落在整個 session 各階段的個別驗證數字,作為 gate 記錄的單一證據來源):`pnpm lint`/`typecheck`/`test`(161 檔/1185 條)、`supabase db reset` + `pnpm test:db`(58 pgTAP 檔/**1455** assertions,含新補的 7 格、兩組 integration 測試)、`admin:catalog:check`/`inventory`、`scripts/test-e2e-local.sh` 三瀏覽器全套(61 passed/4 skipped/**2 unexpected**,僅剩已知、與 admin 完全無關的 webkit quiz 網路請求次數 flake,admin 相關 spec 0 失敗)全部綠燈。彙整整個 Phase 1 session 裡所有 review 輪次(13A、14 兩輪、15)的 Critical/High 發現,確認全部已修復並重新驗證過,無未解項目。`docs/roadmap-colorplay-next.md` 的 Phase 1 狀態列改成「**Local gate PASSED**」,worktree 條目補上完整證據清單與明確的 Staging/Production 卡關說明(不是「還沒做」,是「依計畫書自己的定義,現在做不了」)。
+- 下一步：Phase 1 **Local gate 已通過**。Staging/Production gate 需要 Phase 0 先過 owner 對 PR #1 的核准、staging 分支合併,以及對 hosted 環境操作的明確授權才能推進——這不是 Phase 1 worktree 能單獨解決的,等 owner 對 Phase 0 的下一步裁定。
+- Blocker／待決策：Staging/Production gate 卡在 Phase 0(PR #1 仍待 owner 核准)+ 任何 hosted 操作都需要明確授權,非本次工作範圍。
+- 相關檔案／commit：`0e6c4e6`(RLS 矩陣補齊)、`f16312e`(roadmap gate 記錄)。驗證細節見上方。分支 `phase1/admin-security-impl` 仍為純本地（無 upstream）。
