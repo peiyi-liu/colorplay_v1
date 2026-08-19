@@ -6,10 +6,16 @@
 
 ---
 
-## KI-001：Task 4 遺留的 21 條 ESLint 錯誤
+## KI-001：Task 4 遺留的 21 條 ESLint 錯誤（已解除，2026-08-19）
 
-- **狀態**：已登記，暫不修復（owner 裁定，2026-08-18）
-- **影響指令**：`pnpm lint`（`eslint . --max-warnings 0`）exit 1
+- **狀態**：**已解除**。Task 15 phase gate 時 owner 裁定選項 1（獨立 S 級任務修掉），
+  已於同一輪修復並驗證：`.mjs` 兩支各自補 `import process from 'node:process'`／
+  `import console from 'node:console'`（比照 repo 其餘 `.mjs` 腳本既有寫法，不是新
+  發明的例外）；contract test 把 `JSON.parse(...)` 的結果標成 `Catalog` 型別、
+  `r.export === false` 改 `!r.export`。三個檔案的行為未變——`admin:catalog:check`／
+  `admin:catalog:inventory` 兩道指令重跑皆綠，對應 vitest 皆過。`pnpm lint` 現在
+  真的全綠，不再需要本條目豁免。
+- **影響指令**（歷史）：`pnpm lint`（`eslint . --max-warnings 0`）exit 1
 
 ### 內容
 
