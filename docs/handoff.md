@@ -1090,3 +1090,10 @@
 - `spec/09` 新增同步班級尖峰規則：關鍵路徑需交代 request fan-out、cache／timeout／retry，讀取採 bounded jitter、mutation 須 idempotent、Realtime 禁止 polling 替代；phase gate 需使用 30+ 個獨立 Staging 帳號。Owner 目前不在校園網路／實機環境，因此同 NAT、分散 IP、token refresh soak 與真手機複習卡驗證明確延期，不得宣稱多人容量已通過。
 - Fresh checks：scoped lint、typecheck、Prettier、production build、圖片預算、相關 Vitest 6 files／60 tests、教師／Live Chromium 47／47、章節狀態 Chromium 5／5 全綠。章節完整旅程另有既有 harness 缺少 `QueryClientProvider`，2 個 case 在進入閱讀器前失敗；未修改舊測試掩蓋。唯一整合 review 找到頭像處理器未知錯誤被誤報成格式錯誤，已修正並以 repository／preparer 9 tests 重跑全綠。
 - 本輪未操作 hosted Supabase／Vercel、未建立測試帳號、未 push／deploy。下一個可用測試時段依 `docs/superpowers/plans/2026-08-18-staging-concurrency-follow-up.md` 執行 30+ 同 NAT、分散 IP 對照、refresh soak 與真實手機驗證；hosted mutation 與測試時段需先取得 owner 當次授權。
+
+## 2026-08-19 15:43 [Owner／Codex] — 圖片效能 checkpoint 發布至 Staging
+
+- Product commit `7959266c5e770f8b6036dde2f2bad889307b1faa` 已推至 `origin/codex/image-performance-hardening-20260819`，並以 Vercel CLI 59.1.4 發布至既有 `colorplay-staging-web`；deployment `dpl_5wLe9SyyFsxJKE3oVQ8tFsKozxiV` 為 READY，`staging.colorplayapp.com` 已指向該版本。
+- Hosted HTML 與 26 個遞迴 bundle assets 驗證只包含 Staging Supabase ref `onkxnkzeixpezetkmocf`，不含 Production ref `xdjumzdqyexpyndanwkp`；偵測到唯一 public-key fingerprint `f1c0eb72e196`。公開 Blook 128／256 WebP 分別為 3,286／8,260 bytes，favicon 為 29,589 bytes，皆回 200 與正確 MIME。
+- 真實 hosted smoke 以既有 synthetic fixture 在 1280×720 與 393×852 各完成教師帳號登入至 `/teacher`、學生帳號登入至 `/app`；page error／failed request 均為 0，水平 overflow 為 0。舊 smoke 的教師 `MENU` selector 已只在 `/private/tmp` 配合目前固定側欄更新，未修改產品或測試檔。
+- 本次只部署靜態前端，未修改 hosted Supabase schema、Storage、Edge Function 或資料。30+ 同 NAT／分散 IP／refresh soak／真機測試仍依前段 owner deferred gate 保持未驗證，不因本次發布改稱多人容量通過。
