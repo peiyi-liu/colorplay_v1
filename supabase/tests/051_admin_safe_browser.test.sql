@@ -65,17 +65,22 @@ select ok(exists (
         -> 'rows') elem
     where elem ->> 'name' = 'pgTAP 投影檢查用班級'),
   'the classrooms fixture is actually visible to the browser');
-select ok(not exists (
+-- 兩條 forbidden-column 斷言各自把「這筆班級真的存在」併進同一個
+-- exists(...) 裡,不是分開靠上面那條斷言去擋——如果投影裡根本沒有這筆
+-- 班級,`exists(where name=X and not (elem ? key))` 會是 false(斷言失敗),
+-- 而不是原本 `not exists(where name=X and elem ? key)` 那種「找不到列就
+-- vacuously true」的假陽性(Task 15 review Finding 7)。
+select ok(exists (
     select 1 from jsonb_array_elements(
       (public.admin_list_resource('classrooms', 'classrooms', null, '{}', null))
         -> 'rows') elem
-    where elem ->> 'name' = 'pgTAP 投影檢查用班級' and elem ? 'join_code'),
+    where elem ->> 'name' = 'pgTAP 投影檢查用班級' and not (elem ? 'join_code')),
   'forbidden column never in projection');
-select ok(not exists (
+select ok(exists (
     select 1 from jsonb_array_elements(
       (public.admin_list_resource('classrooms', 'classrooms', null, '{}', null))
         -> 'rows') elem
-    where elem ->> 'name' = 'pgTAP 投影檢查用班級' and elem ? 'join_code_hash'),
+    where elem ->> 'name' = 'pgTAP 投影檢查用班級' and not (elem ? 'join_code_hash')),
   'the forbidden hash column is excluded as well');
 update public.profiles set full_name = '王小明'
   where id = 'cc000000-0000-0000-0000-000000000001';

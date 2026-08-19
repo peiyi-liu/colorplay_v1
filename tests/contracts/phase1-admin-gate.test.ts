@@ -43,6 +43,38 @@ describe('phase 1 admin release gate documents', () => {
     }
   });
 
+  // Task 15 review Finding 1(High)：一次成功 challenge 必然觸發
+  // svc_admin_record_totp_outcome 更新 admin_security_identities(失敗計數／
+  // 鎖定欄位),原本的允許清單漏列這張表——任何 smoke run 只要走過 challenge
+  // 就會踩到「manifest 外寫入」而被自己的 gate failure 定義誤判。
+  it('smoke manifest lists admin_security_identities as an allowed write', async () => {
+    const manifest = await readFile(
+      'docs/deployment/phase1-production-smoke-manifest.md',
+      'utf8',
+    );
+    const allowedSection = (
+      manifest.split('## Allowed control-plane writes')[1] ?? ''
+    ).split('\n## ')[0];
+    expect(allowedSection).toContain('admin_security_identities');
+  });
+
+  // Task 15 review Finding 2(High)：prohibited 段落原本用「除了…之外」
+  // 「smoke run 自己的 session/identity 除外」這類但書語言,反而授權了
+  // plan 明禁的行為(揭露真人個資、改動自己的 lifecycle state)。這裡鎖定
+  // 修復後「無例外」的明確用語,而不是只檢查關鍵字有沒有出現——關鍵字光是
+  // 出現在舊的但書句子裡也會通過,抓不到這種語意漏洞。
+  it('smoke manifest bans real reveals and any admin lifecycle-state change without exception', async () => {
+    const manifest = await readFile(
+      'docs/deployment/phase1-production-smoke-manifest.md',
+      'utf8',
+    );
+    const prohibitedSection = (
+      manifest.split('## Explicitly prohibited')[1] ?? ''
+    ).split('\n## ')[0];
+    expect(prohibitedSection).toContain('no exception for this');
+    expect(prohibitedSection).toContain("including the smoke run's own");
+  });
+
   it('oob runbook covers bootstrap, incident recovery and tombstone', async () => {
     const runbook = await readFile(
       'docs/runbooks/phase1-admin-oob-recovery.md',

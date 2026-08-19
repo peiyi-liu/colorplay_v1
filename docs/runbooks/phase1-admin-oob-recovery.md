@@ -28,11 +28,19 @@ enrollment/challenge/reset flows cannot reach these states on their own.
 - Every function below is `service_role`-only (`revoke ... from public, anon,
 authenticated`); it cannot be called from the browser or from any
   `anon`/`authenticated` session no matter what UI state a user reaches.
-- After every procedure, confirm the resulting `admin_audit_events` row has
+- After a call whose response is `{"outcome":"ok"}` **without**
+  `"idempotent":true`, confirm the resulting `admin_audit_events` row has
   `actor_type = 'owner_out_of_band'` and `runbook_operation_id` equal to the
   operation ID just used. If it does not, stop and investigate before
   treating the procedure as complete — the absence of that row means the
-  change did not go through the OOB path this runbook assumes.
+  change did not go through the OOB path this runbook assumes. **This check
+  does not apply when the response includes `"idempotent":true`**: every
+  function in this runbook short-circuits before writing any audit row when
+  the target state already matches what the call would have produced — a
+  retry with a fresh operation ID against an already-settled state will
+  correctly return `{"outcome":"ok","idempotent":true}` with no audit row
+  bearing that new operation ID. That is expected, not a sign the OOB path
+  was skipped.
 
 ## Procedure 1 — First Admin bootstrap
 
@@ -171,11 +179,20 @@ happened atomically.
 This moves the identity from `recovery_pending` straight to
 `active_pending_mfa` — **never directly to `active`**. The affected Admin
 must re-enroll a TOTP factor through the normal `/admin/mfa/enroll` flow
-before they can do anything privileged again. If the identity is not
-currently in `recovery_pending` (e.g. step 2a was never run, or a different
-recovery already completed), the call denies with `SECURITY_OPERATION_PENDING`
-instead of silently doing nothing — treat that denial as a signal to stop
-and re-read the identity's actual current state before retrying.
+before they can do anything privileged again. Two distinct non-success
+cases, not one:
+
+- If the identity is **already** `active_pending_mfa` (this exact recovery
+  already completed, e.g. a retried call after a lost response), the call
+  returns `{"outcome":"ok","idempotent":true}` — safe to treat as success,
+  no audit row for this operation ID (see the Ground rules note above).
+- If the identity is in any **other** state — still `recovery_pending`
+  never happened, `active`, or `deactivated` (step 2a was never run, the
+  wrong `user_id` was used, or some other recovery already moved it
+  elsewhere) — the call denies with `SECURITY_OPERATION_PENDING`. Treat
+  that denial as a signal to stop and re-read the identity's actual current
+  state before retrying; it does not mean "try again with a new operation
+  ID" by itself.
 
 **Post-check for 2b**:
 
