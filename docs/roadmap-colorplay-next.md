@@ -739,7 +739,7 @@ stash, or branch switching in a dirty shared worktree.
 - Path: `.worktrees/phase1-admin-security-impl`
 - Branch: `phase1/admin-security-impl` (purely local; no remote/upstream)
 - Plan: `docs/superpowers/plans/2026-08-07-phase-1-admin-identity-security.md`
-- HEAD at verification: `096f795`
+- HEAD at verification: `693587b`
 - State: Tasks 0 through 15 of the approved plan are implemented and
   reviewed under the plan's own graded workflow (AGENTS.md §7-§8 — each M-task
   through a single review round, Task 13A and Task 14 additionally through
