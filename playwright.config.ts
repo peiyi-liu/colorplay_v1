@@ -20,6 +20,10 @@ const realAuthAvailable = Boolean(
 );
 const authGuardSpec = /auth-guards\.spec\.ts$/u;
 const chromiumOnlyLoginSpec = /login\.spec\.ts$/u;
+// Task 14：admin TOTP enrollment 是一次性動作（同一 factor 綁定後無法
+// 重綁），跨瀏覽器 project 重跑會在第二個 project 卡在已綁定狀態；
+// 比照 chromiumOnlyLoginSpec 只在 chromium 執行一次。
+const chromiumOnlyAdminSpec = /admin-(security|viewports)\.spec\.ts$/u;
 const video = precheckMode
   ? 'off'
   : process.env.PLAYWRIGHT_VIDEO === 'on' || acceptanceEvidence
@@ -41,7 +45,9 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      ...(realAuthAvailable ? {} : { testIgnore: authGuardSpec }),
+      ...(realAuthAvailable
+        ? {}
+        : { testIgnore: [authGuardSpec, chromiumOnlyAdminSpec] }),
       use: { ...devices['Desktop Chrome'] },
     },
     {
@@ -50,6 +56,7 @@ export default defineConfig({
         /\.visual\.spec\.ts$/u,
         authGuardSpec,
         chromiumOnlyLoginSpec,
+        chromiumOnlyAdminSpec,
       ],
       use: { ...devices['Desktop Firefox'] },
     },
@@ -59,6 +66,7 @@ export default defineConfig({
         /\.visual\.spec\.ts$/u,
         authGuardSpec,
         chromiumOnlyLoginSpec,
+        chromiumOnlyAdminSpec,
       ],
       use: { ...devices['Desktop Safari'] },
     },

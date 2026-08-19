@@ -881,6 +881,10 @@ describe('acceptance metadata', () => {
         /\.visual\.spec\.ts$/u,
         /auth-guards\.spec\.ts$/u,
         /login\.spec\.ts$/u,
+        // Task 14：admin TOTP enrollment 是一次性動作，跨瀏覽器 project
+        // 重跑會在第二個 project 卡在已綁定狀態，比照 login.spec.ts
+        // 只在 chromium 執行一次。
+        /admin-(security|viewports)\.spec\.ts$/u,
       ]);
     }
     expect(foundationSpec).not.toContain('chromium.launch');

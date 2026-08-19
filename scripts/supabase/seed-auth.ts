@@ -40,6 +40,15 @@ const fixtureLabels = [
   'contentTeacher',
   'contentStudent',
   'outsider',
+  'adminPrimary',
+  'adminSecondary',
+] as const satisfies readonly TestUserLabel[];
+// Task 14:role='admin' 只能由 svc_admin_bootstrap_identity 提升(spec §12、
+// Task 15 runbook 前置條件一致)——reconcileProfileRole 只把這兩個 fixture
+// 暫時設成 'teacher',真正的提升在 reconcileAdminBootstrapFixtures 補上。
+const adminBootstrapLabels = [
+  'adminPrimary',
+  'adminSecondary',
 ] as const satisfies readonly TestUserLabel[];
 const usersPerPage = 100;
 const maximumUserPages = 100;
@@ -278,6 +287,29 @@ const reconcileClassroomFixtures = async (
   }
 };
 
+// Task 14:svc_admin_bootstrap_identity 是 role='admin' 提升的唯一入口
+// (spec §4.2、§12)——它自己會覆寫 profiles.role、建 admin_audit_principals／
+// admin_security_identities 列、寫 owner_bootstrap audit。若改由
+// reconcileProfileRole 直接把 role 設成 'admin'，會漏建這些列，
+// /admin/mfa/enroll 之後的每個授權查詢都會落空。函式本身是 idempotent
+// (已有 identity 時直接回 outcome:'ok', idempotent:true)，可安全重跑。
+const reconcileAdminBootstrapFixtures = async (
+  admin: SupabaseClient<Database>,
+  usersByLabel: ReadonlyMap<TestUserLabel, User>,
+) => {
+  for (const label of adminBootstrapLabels) {
+    const user = usersByLabel.get(label);
+    if (!user) throw new Error('ADMIN_FIXTURE_BOOTSTRAP_USER_MISSING');
+    const { data, error } = await admin.rpc('svc_admin_bootstrap_identity', {
+      p_runbook_operation_id: randomUUID(),
+      p_user_id: user.id,
+    });
+    failIfError(error, 'ADMIN_FIXTURE_BOOTSTRAP_FAILED');
+    const outcome = (data as { outcome?: string } | null)?.outcome;
+    if (outcome !== 'ok') throw new Error('ADMIN_FIXTURE_BOOTSTRAP_FAILED');
+  }
+};
+
 export const seedAuthUsers = async (): Promise<void> => {
   const { serviceRoleKey, url } = readLocalAdminEnvironment(process.env);
   const admin = createClient<Database>(url, serviceRoleKey, {
@@ -289,10 +321,13 @@ export const seedAuthUsers = async (): Promise<void> => {
       user.email ? ([[user.email, user]] as const) : [],
     ),
   );
+  const usersByLabel = new Map<TestUserLabel, User>();
   for (const label of fixtureLabels) {
     const user = await reconcileAuthUser(admin, existingUsersByEmail, label);
     await reconcileProfileRole(admin, user, label);
+    usersByLabel.set(label, user);
   }
+  await reconcileAdminBootstrapFixtures(admin, usersByLabel);
 
   await reconcileClassroomFixtures(url, serviceRoleKey);
 };

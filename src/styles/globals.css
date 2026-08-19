@@ -5541,6 +5541,15 @@ select#dashboard-classroom {
   padding: var(--space-4);
 }
 
+/* AdminShell 在窄視口用 `hidden` attribute 收起 MENU drawer（見
+   admin-shell.tsx 的 navVisible）。沒有這條規則的話，上面那條純 class
+   的 display:flex 具體度不輸給 [hidden] 這個 attribute selector，
+   會蓋掉瀏覽器對 hidden 屬性的預設隱藏——nav 元素的 hidden 屬性明明有設，
+   畫面上卻一直顯示，drawer 實際上從未真正收合過。 */
+.admin-shell__nav[hidden] {
+  display: none;
+}
+
 .admin-shell__group-label {
   color: var(--color-muted);
   font-size: var(--font-size-metadata);
