@@ -15,7 +15,7 @@ This module is intentionally discoverable by searching for
 - Database: `supabase/migrations/20260812000400_teacher_avatar_storage.sql`
   and `supabase/tests/052_teacher_avatar_storage.test.sql` must travel with the
   UI. Do not integrate the upload control without its bucket and RLS policies.
-- Asset: `assets/teacher-workspace-command-room.png` is generated specifically
+- Asset: `assets/teacher-workspace-command-room.webp` is generated specifically
   for the teacher work surface and contains no embedded UI or fake data.
 - Teacher analytics home: `/teacher` is now `TeacherAnalyticsPage`; the former
   overview page and HUD destination are removed. `/teacher/analytics` only
@@ -45,7 +45,7 @@ This module is intentionally discoverable by searching for
   present because `createActivity` accepts one `sectionId` and one
   `quizTemplateId`.
 - Live waiting lobby: `src/features/live/components/live-projector-hud.tsx`,
-  `live-projector.css`, and `../assets/live-projector-night-village.png` form
+  `live-projector.css`, and `../assets/live-projector-night-village.webp` form
   one presentation unit consumed by the existing production-wired
   `LivePresenter`. The lobby reads only `LiveSessionState`, keeps
   `openQuestion`/mute/cancel handlers intact, and never queries or fabricates a
@@ -59,7 +59,7 @@ This module is intentionally discoverable by searching for
   teacher harness scenario.
 - Live question flow: `src/features/live/components/live-projector-round.tsx`,
   `live-projector-round.css`, and
-  `../assets/live-explanation-scroll-pixel.png` are the question/feedback unit
+  `../assets/live-explanation-scroll-pixel.webp` are the question/feedback unit
   consumed by the same production-wired `LivePresenter`. Preserve this exact
   presentation order when integrating: question or paused state → answer
   statistics for 5 seconds → automatic explanation → teacher-triggered live

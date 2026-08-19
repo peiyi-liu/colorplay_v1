@@ -1082,3 +1082,11 @@
 - Hosted 393×852 真實登入後，單次章節完整顯示 939ms；20 次刻意繞過 query cache 的重載結果：章節 render p95 1164ms，`get_student_chapter_map` p95 151ms、`get_learning_progress` p95 183ms、`get_accessible_chapter_review` p95 178ms，三個 published-read RPC 均低於 500ms 且全回 200。
 - 複習卡閱讀器在手機／桌面分別 43ms／44ms 即呈現文字與完成控制，不再等待 Storage。附件由 staging Storage 回正確 `image/webp` 200、自然寬 1654，無 request failure／fallback；桌面 headless 完整載入。手機 headless 在 lazy image／翻頁副本下 `complete` flag 未於 15 秒內穩定，但已取得自然尺寸，仍列為 owner 真機確認項，不影響文字、翻頁或完成複習。
 - 既有未追蹤 `docs/research/` 保持原狀、未 stage；除本段 append-only handoff 外工作樹無新增產品變更。
+
+## 2026-08-19 15:35 [Owner／Codex] — 圖片負載與同步尖峰開發 gate 完成，真實多人驗證延期
+
+- 在獨立 worktree `.worktrees/image-performance-hardening-20260819`、branch `codex/image-performance-hardening-20260819` 完成圖片 hardening；base 為 `c98a06a275da38a45950435c29db5e432524b090`。教師／Live 大圖與章節複習書封改為 WebP，favicon 縮至 128px，20 個 Blook 改供應 128／256px responsive WebP；production build 圖片總量由先前盤點 13.96 MiB 降至 5.39 MiB，最大單張 336,794 bytes，沒有超過 512 KiB。
+- 教師頭像仍先限制來源為 PNG／JPEG／WebP、2 MiB，再於瀏覽器解碼、等比例縮至最多 512px、轉 WebP 並限制輸出 256 KiB 才上傳；錯誤分類分開處理格式、輸出過大與處理器不可用。複習卡新發布契約改為 WebP、512 KiB、2400px，並提供 `assets:check:review-media`；CI production build 後會執行 `assets:check` 阻擋單檔與總量超標。
+- `spec/09` 新增同步班級尖峰規則：關鍵路徑需交代 request fan-out、cache／timeout／retry，讀取採 bounded jitter、mutation 須 idempotent、Realtime 禁止 polling 替代；phase gate 需使用 30+ 個獨立 Staging 帳號。Owner 目前不在校園網路／實機環境，因此同 NAT、分散 IP、token refresh soak 與真手機複習卡驗證明確延期，不得宣稱多人容量已通過。
+- Fresh checks：scoped lint、typecheck、Prettier、production build、圖片預算、相關 Vitest 6 files／60 tests、教師／Live Chromium 47／47、章節狀態 Chromium 5／5 全綠。章節完整旅程另有既有 harness 缺少 `QueryClientProvider`，2 個 case 在進入閱讀器前失敗；未修改舊測試掩蓋。唯一整合 review 找到頭像處理器未知錯誤被誤報成格式錯誤，已修正並以 repository／preparer 9 tests 重跑全綠。
+- 本輪未操作 hosted Supabase／Vercel、未建立測試帳號、未 push／deploy。下一個可用測試時段依 `docs/superpowers/plans/2026-08-18-staging-concurrency-follow-up.md` 執行 30+ 同 NAT、分散 IP 對照、refresh soak 與真實手機驗證；hosted mutation 與測試時段需先取得 owner 當次授權。

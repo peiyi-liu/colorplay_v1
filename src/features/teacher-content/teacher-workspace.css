@@ -331,7 +331,7 @@
       var(--teacher-palette-rgb-dcc6c5a5) 58%,
       var(--teacher-palette-rgb-0521ffc7) 100%
     ),
-    url('./assets/teacher-workspace-command-room.png') center 48% / cover
+    url('./assets/teacher-workspace-command-room.webp') center 48% / cover
       no-repeat;
   box-shadow: 0 12px 28px var(--teacher-palette-rgb-e76a9199);
   gap: 28px;

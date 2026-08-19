@@ -15,11 +15,17 @@
 
 ## 1. 準備圖片
 
-- 格式只用 PNG、JPEG 或 WebP；不接受 SVG。
-- 單檔不超過 2 MiB，長寬各不超過 4096px。
+- 新上傳檔案只用 WebP；不接受 PNG、JPEG 或 SVG 直接進入發布流程。
+- 單檔不超過 512 KiB，長寬各不超過 2400px。
 - 檔名只用英數、`-`、`_`，例如 `P301.webp`。
 - 每張圖準備一段能說明教學資訊的繁體中文替代文字；不可只寫「圖片」或檔名。
 - 同一代號改版時建議用版本檔名（例如 `P301-v2.webp`），避免 CDN 舊快取。
+
+上傳前先在 repository root 執行；未通過不得上傳：
+
+```bash
+pnpm assets:check:review-media -- /absolute/path/P301-v3.webp
+```
 
 ## 2. 上傳至 staging Storage
 
@@ -29,7 +35,7 @@
 4. 上傳圖片，例如 `chapter-3/P301.webp`。
 5. 保持 bucket 為 private；不要切換成 public。
 
-`review-card-media` bucket 由 migration 建立為 private，並限制 2 MiB 與 PNG／JPEG／WebP。學生登入後，前端只會對「目前已發布卡片版本所綁定的物件」取得 1 小時 signed URL；未綁定、舊版本、草稿物件都不能直接讀。瀏覽器沒有上傳、覆寫或刪除 policy。
+`review-card-media` bucket 由 migration 建立為 private。Storage 的 2 MiB／PNG／JPEG／WebP 設定是既有物件的相容上限，不是新發布品質門檻；新上傳必須先通過上述 512 KiB WebP gate。學生登入後，前端只會對「目前已發布卡片版本所綁定的物件」取得 1 小時 signed URL；未綁定、舊版本、草稿物件都不能直接讀。瀏覽器沒有上傳、覆寫或刪除 policy。
 
 請勿把檔案直接 insert 到 `storage.objects`，也不要把圖片二進位或 base64 寫入 Postgres。
 
@@ -87,7 +93,7 @@
 
 可直接使用的後續提示詞：
 
-> 將以下複習卡圖片上傳到 staging Supabase `onkxnkzeixpezetkmocf` 的 private `review-card-media` bucket，依表格附件代號與 alt 綁定，使用 `publish_review_card` 建立新版本並保留舊 media；先跑圖片格式／大小／mapping gate，完成後驗證學生登入可取得 signed URL，未綁定物件不可讀。不得碰 production。
+> 將以下複習卡 WebP 圖片上傳到 staging Supabase `onkxnkzeixpezetkmocf` 的 private `review-card-media` bucket，依表格附件代號與 alt 綁定，使用 `publish_review_card` 建立新版本並保留舊 media；先跑 `pnpm assets:check:review-media -- <files...>` 與 mapping gate，完成後驗證學生登入可取得 signed URL，未綁定物件不可讀。不得碰 production。
 
 ## 5. 重新抓 Sheet、檢查、產生首次匯入資料
 

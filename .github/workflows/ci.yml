@@ -79,6 +79,9 @@ jobs:
       - name: Build production application
         run: npm run build
 
+      - name: Enforce production image budgets
+        run: pnpm assets:check
+
       - name: Test seeded local database and real-stack integration
         shell: bash
         run: |

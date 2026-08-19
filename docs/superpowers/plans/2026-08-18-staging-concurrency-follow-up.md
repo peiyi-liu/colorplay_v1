@@ -50,3 +50,9 @@
 - C1–C4 每項標為「證實／排除／資料不足」，不得把推測寫成結論。
 - 任何 rate limit、tier、登入鏈路或 token refresh 變更另開核准 design／ADR，包含成本、回滾與 30+ 人 Staging 驗證。
 - Staging 驗證須使用 `colorplay-staging-web` 與 Supabase `onkxnkzeixpezetkmocf`，不得碰 production。
+
+## 2026-08-19 Owner deferred gate
+
+Owner 目前不在真實校園網路／實體裝置環境，因此本輪不執行同 NAT、分散 IP 或真機驗證。現有 Staging deployment `dpl_Escqmhbarxg1SnQDus9eTbA6gwHG` 保留為優化前基準；圖片與自動化 gate 可先實作，但不得藉此宣稱 C1–C4 或多人容量已通過。
+
+下一個可用測試時段依序執行：30+ 個獨立 synthetic accounts 同 NAT spike、分散 IP 對照、token refresh soak、真實手機複習卡翻頁，並將 Network／Auth／Edge／DB／Realtime 指標對時。測試帳號只能建立於 Staging，操作前另取 owner 對 hosted mutation 與測試時段的授權，完成後自動清理。

@@ -6,7 +6,7 @@
       var(--teacher-palette-rgb-b1769aa9) 42%,
       var(--teacher-palette-hex-020817-ee5bd95b) 100%
     ),
-    url('./assets/teacher-analytics-observatory.png');
+    url('./assets/teacher-analytics-observatory.webp');
   background-attachment: local;
 }
 

@@ -11,7 +11,7 @@
       var(--teacher-palette-rgb-e3aefd08) 62%,
       var(--teacher-palette-rgb-514f5b80)
     ),
-    url('./assets/teacher-analytics-observatory.png') center 45% / cover
+    url('./assets/teacher-analytics-observatory.webp') center 45% / cover
       no-repeat;
 }
 

@@ -1,21 +1,19 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { Database } from '../../../types/database';
+import {
+  AvatarImagePreparationError,
+  prepareTeacherAvatar,
+  TEACHER_AVATAR_OUTPUT_MAX_BYTES,
+} from './prepare-teacher-avatar';
 
 const AVATAR_BUCKET = 'teacher-avatars';
 const AVATAR_FILE_NAME = 'avatar';
 const AVATAR_MAX_BYTES = 2_097_152;
-const AVATAR_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-]);
+const AVATAR_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 export type TeacherAvatarRepositoryErrorCode =
-  | 'AVATAR_AUTHORIZATION'
-  | 'AVATAR_SIZE'
-  | 'AVATAR_TYPE'
-  | 'AVATAR_UNAVAILABLE';
+  'AVATAR_AUTHORIZATION' | 'AVATAR_SIZE' | 'AVATAR_TYPE' | 'AVATAR_UNAVAILABLE';
 
 export class TeacherAvatarRepositoryError extends Error {
   constructor(public readonly code: TeacherAvatarRepositoryErrorCode) {
@@ -55,6 +53,7 @@ async function signedAvatarUrl(
 
 export function createTeacherAvatarRepository(
   client: SupabaseClient<Database>,
+  prepareAvatar: (file: File) => Promise<File> = prepareTeacherAvatar,
 ): TeacherAvatarRepository {
   return {
     async getAvatarUrl() {
@@ -80,12 +79,29 @@ export function createTeacherAvatarRepository(
       if (file.size > AVATAR_MAX_BYTES) {
         throw new TeacherAvatarRepositoryError('AVATAR_SIZE');
       }
+      let optimizedFile: File;
+      try {
+        optimizedFile = await prepareAvatar(file);
+      } catch (error) {
+        if (error instanceof AvatarImagePreparationError) {
+          throw new TeacherAvatarRepositoryError(
+            error.code === 'OUTPUT_TOO_LARGE' ? 'AVATAR_SIZE' : 'AVATAR_TYPE',
+          );
+        }
+        throw new TeacherAvatarRepositoryError('AVATAR_UNAVAILABLE');
+      }
+      if (optimizedFile.type !== 'image/webp') {
+        throw new TeacherAvatarRepositoryError('AVATAR_TYPE');
+      }
+      if (optimizedFile.size > TEACHER_AVATAR_OUTPUT_MAX_BYTES) {
+        throw new TeacherAvatarRepositoryError('AVATAR_SIZE');
+      }
       const userId = await authenticatedUserId(client);
       const { error } = await client.storage
         .from(AVATAR_BUCKET)
-        .upload(`${userId}/${AVATAR_FILE_NAME}`, file, {
+        .upload(`${userId}/${AVATAR_FILE_NAME}`, optimizedFile, {
           cacheControl: '3600',
-          contentType: file.type,
+          contentType: optimizedFile.type,
           upsert: true,
         });
       if (error) {

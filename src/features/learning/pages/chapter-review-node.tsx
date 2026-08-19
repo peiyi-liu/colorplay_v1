@@ -1,9 +1,9 @@
-import colorNetworkBook from '../../../assets/chapter/review-books/color-network.png';
-import colorPyramidBook from '../../../assets/chapter/review-books/color-pyramid.png';
-import colorSwatchesBook from '../../../assets/chapter/review-books/color-swatches.png';
-import fourColorGridBook from '../../../assets/chapter/review-books/four-color-grid.png';
-import primaryColorsBook from '../../../assets/chapter/review-books/primary-colors.png';
-import prismSpectrumBook from '../../../assets/chapter/review-books/prism-spectrum.png';
+import colorNetworkBook from '../../../assets/chapter/review-books/color-network.webp';
+import colorPyramidBook from '../../../assets/chapter/review-books/color-pyramid.webp';
+import colorSwatchesBook from '../../../assets/chapter/review-books/color-swatches.webp';
+import fourColorGridBook from '../../../assets/chapter/review-books/four-color-grid.webp';
+import primaryColorsBook from '../../../assets/chapter/review-books/primary-colors.webp';
+import prismSpectrumBook from '../../../assets/chapter/review-books/prism-spectrum.webp';
 import type { ChapterDetailCardView } from './chapter-detail-view-model';
 
 const REVIEW_BOOKS = [
@@ -64,6 +64,7 @@ export function ChapterReviewNode({
             className="chapter-review-node__book-art"
             decoding="async"
             draggable={false}
+            loading="lazy"
             src={artAt(REVIEW_BOOKS, artIndex)}
           />
         </span>

@@ -665,7 +665,10 @@ describe('AppShell', () => {
       const image = document.querySelector<HTMLImageElement>(
         '.hud-avatar .blook-art',
       );
-      expect(image).toHaveAttribute('src', `/assets/blooks/${stableCode}.png`);
+      expect(image).toHaveAttribute(
+        'src',
+        `/assets/blooks/${stableCode}-128.webp`,
+      );
       expect(image?.parentElement).toHaveClass('hud-avatar__portrait');
       expect(image?.parentElement?.parentElement).toHaveClass('hud-avatar');
       expect(globalStyles).toMatch(
