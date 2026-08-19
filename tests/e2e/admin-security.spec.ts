@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { expect, test, type Page } from '@playwright/test';
 
 import { TEST_USERS } from '../fixtures/users';
@@ -43,8 +45,12 @@ const PRIMARY_USER_AGENT = 'ColorPlayE2E-AdminPrimary';
 const SECONDARY_USER_AGENT = 'ColorPlayE2E-AdminSecondary';
 
 // step 5 用同一個字串把稽核斷言鎖定到這次揭露產生的那一列（見 step 5
-// 的說明），不能只認 action 名稱。
-const REVEAL_PURPOSE = 'E2E 測試驗證揭露流程是否正確運作';
+// 的說明），不能只認 action 名稱。admin_query_audit 預設查最近 7 天、最新
+// 50 筆——本地開發常常不 db reset 就重跑，固定字串會撞上前一次執行留下
+// 的同 purpose 舊列，讓斷言在「這次真的沒寫稽核」時照樣通過；用
+// randomUUID() 讓每次執行都是不同字串，同時仍在 200 字欄位長度限制內
+// (Task 14 review round 2 Finding 2)。
+const REVEAL_PURPOSE = `E2E 測試驗證揭露流程是否正確運作-${randomUUID()}`;
 
 // spec §14.4 旅程斷言逐條（步驟 1-6 共用同一個 privileged session，拆成
 // 獨立 test() 只會強迫每步重建前置狀態——TOTP enrollment 甚至做不到

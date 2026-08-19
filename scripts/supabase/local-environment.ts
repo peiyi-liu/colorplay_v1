@@ -38,3 +38,13 @@ export const readLocalAdminEnvironment = (
 // the rest of the demo dataset and must never extend to Admin provisioning.
 export const isStrictlyLocalAdminUrl = (url: string): boolean =>
   url === localApiUrl;
+
+// Excluding Admin labels from a non-local seed run only stops *this* run
+// from creating/promoting them — it says nothing about whether an earlier
+// (pre-fix) run already left known-password Admin accounts live on that
+// project. The caller must fail closed rather than silently reporting
+// success when any of these emails is already present.
+export const findPresentAdminFixtureEmails = (
+  existingEmails: ReadonlyMap<string, unknown>,
+  adminFixtureEmails: readonly string[],
+): string[] => adminFixtureEmails.filter((email) => existingEmails.has(email));

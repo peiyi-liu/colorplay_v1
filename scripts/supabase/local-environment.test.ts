@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  findPresentAdminFixtureEmails,
   isStrictlyLocalAdminUrl,
   readLocalAdminEnvironment,
 } from './local-environment';
@@ -79,5 +80,38 @@ describe('isStrictlyLocalAdminUrl', () => {
   it('rejects a malformed or unrelated URL', () => {
     expect(isStrictlyLocalAdminUrl('http://127.0.0.1:54321/')).toBe(false);
     expect(isStrictlyLocalAdminUrl('')).toBe(false);
+  });
+});
+
+// Task 14 review round 2 Finding 1(Critical)：光是「這次不建立/提升」不夠——
+// 如果 hosted project 曾被舊版腳本 seed 過，已知密碼的 Admin 帳號還在，
+// 新版腳本必須偵測到並 fail closed，不能只印一句 warning 就success結束。
+describe('findPresentAdminFixtureEmails', () => {
+  const adminEmails = [
+    'admin.primary@colorplay.test',
+    'admin.secondary@colorplay.test',
+  ];
+
+  it('returns no emails when none of the admin fixtures exist yet', () => {
+    const existing = new Map([['teacher@colorplay.test', {}]]);
+    expect(findPresentAdminFixtureEmails(existing, adminEmails)).toEqual([]);
+  });
+
+  it('flags every admin fixture email that already exists', () => {
+    const existing = new Map([
+      ['admin.primary@colorplay.test', {}],
+      ['admin.secondary@colorplay.test', {}],
+      ['teacher@colorplay.test', {}],
+    ]);
+    expect(findPresentAdminFixtureEmails(existing, adminEmails)).toEqual(
+      adminEmails,
+    );
+  });
+
+  it('flags only the admin fixture email that is actually present', () => {
+    const existing = new Map([['admin.primary@colorplay.test', {}]]);
+    expect(findPresentAdminFixtureEmails(existing, adminEmails)).toEqual([
+      'admin.primary@colorplay.test',
+    ]);
   });
 });

@@ -15,6 +15,7 @@ import {
   type TestUserLabel,
 } from '../../tests/fixtures/users';
 import {
+  findPresentAdminFixtureEmails,
   isStrictlyLocalAdminUrl,
   readLocalAdminEnvironment,
 } from './local-environment';
@@ -349,6 +350,23 @@ export const seedAuthUsers = async (): Promise<void> => {
   // 建立/提升這兩個帳號,同時仍讓其餘 fixture 正常跑完。
   const strictlyLocal = isStrictlyLocalAdminUrl(url);
   if (!strictlyLocal) {
+    // Task 14 review round 2 Finding 1(Critical):只排除「這次執行」不建立
+    // /提升 admin fixture 還不夠——如果這個 hosted project 曾經被舊版腳本
+    // (或任何行為相同的變體)seed 過,已知密碼的 admin 帳號、role='admin'、
+    // 可自助 enroll 的 TOTP 都還在,新版腳本卻只印一句 warning 就成功結束,
+    // 讓操作者誤以為環境已經安全。這裡改成 fail closed:偵測到既有 fixture
+    // 就整支腳本中止,不靜默繼續、也不自動刪除——清除已污染的帳號需要
+    // owner-approved 的 OOB runbook(撤銷 session/factor、移除
+    // identity/account),不是一般 seed 腳本該做的事。
+    const presentAdminFixtureEmails = findPresentAdminFixtureEmails(
+      existingUsersByEmail,
+      adminBootstrapLabels.map((label) => TEST_USERS[label].email),
+    );
+    if (presentAdminFixtureEmails.length > 0) {
+      throw new Error(
+        `ADMIN_FIXTURE_PRESENT_ON_NON_LOCAL_URL: ${presentAdminFixtureEmails.join(', ')} already exist on this non-local project — a prior seed run may have left known-password Admin fixtures live. Revoke their sessions/factors and remove the identity/account through the owner-approved OOB runbook before re-seeding.`,
+      );
+    }
     console.warn(
       'ADMIN_FIXTURE_SKIPPED_NON_LOCAL_URL: seeding against a confirmed remote URL — adminPrimary/adminSecondary are excluded (spec §12 local-only boundary).',
     );
