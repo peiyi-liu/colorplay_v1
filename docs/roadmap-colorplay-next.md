@@ -41,15 +41,15 @@ are replaced by credentials that meet the create-only and read-only contracts.
 The owner approved seven independent design, plan, implementation, and release
 batches. Each batch must pass its own Staging gate before Production promotion.
 
-| Phase | Scope                                         | Status                                              |
-| ----- | --------------------------------------------- | --------------------------------------------------- |
-| 0     | Environment and release foundation            | Foundation CI passed; PR #1 awaits owner approval   |
-| 1     | Admin identity and security core              | Revised design approved 2026-08-07; writing-plans next |
-| 2     | Content SSOT and version publishing           | Decisions captured; spec not started                |
-| 3     | Learning progression and assessment authority | Decisions captured; spec not started                |
-| 4     | Learning Hall and chapter experience          | Visual/product decisions captured; spec not started |
-| 5     | Live and teacher reporting                    | Product rules captured; spec not started            |
-| 6     | Full-site JRPG visual unification             | Direction captured; spec not started                |
+| Phase | Scope                                         | Status                                                                                                                                                                                          |
+| ----- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0     | Environment and release foundation            | Foundation CI passed; PR #1 awaits owner approval                                                                                                                                               |
+| 1     | Admin identity and security core              | In progress on isolated worktree; Tasks 0-15 implemented and locally verified (`.worktrees/phase1-admin-security-impl`, see below); local gate green, Staging/Production gates not yet executed |
+| 2     | Content SSOT and version publishing           | Decisions captured; spec not started                                                                                                                                                            |
+| 3     | Learning progression and assessment authority | Decisions captured; spec not started                                                                                                                                                            |
+| 4     | Learning Hall and chapter experience          | Visual/product decisions captured; spec not started                                                                                                                                             |
+| 5     | Live and teacher reporting                    | Product rules captured; spec not started                                                                                                                                                        |
+| 6     | Full-site JRPG visual unification             | Direction captured; spec not started                                                                                                                                                            |
 
 The required workflow for every phase is:
 
@@ -733,6 +733,27 @@ Do not overwrite, stash, reset, or accidentally stage unrelated changes.
 
 Use exact-path staging. Never use `git add -A`, destructive reset, broad restore,
 stash, or branch switching in a dirty shared worktree.
+
+### Phase 1 admin-security-impl worktree
+
+- Path: `.worktrees/phase1-admin-security-impl`
+- Branch: `phase1/admin-security-impl` (purely local; no remote/upstream)
+- Plan: `docs/superpowers/plans/2026-08-07-phase-1-admin-identity-security.md`
+- HEAD at verification: `096f795`
+- State: Tasks 0 through 15 of the approved plan are implemented and
+  reviewed under the plan's own graded workflow (AGENTS.md §7-§8 — each M-task
+  through a single review round, Task 13A and Task 14 additionally through
+  their own dedicated Codex review passes with all confirmed findings
+  remediated and re-verified). Task 15 added the OOB recovery runbook, the
+  Production smoke manifest, and their phase-gate contract test.
+- Local gate (this plan's own Step 5, not the global `pnpm acceptance`
+  Phase 8 gate — see AGENTS.md §9): lint/typecheck/unit/db/integration/E2E all
+  green as of the Task 15 commit; see `docs/handoff.md` for the exact command
+  results.
+- Hosted scope not executed: no Staging deployment, no Production smoke, no
+  OOB runbook procedure has been run against a hosted project. Both `docs/deployment/phase1-production-smoke-manifest.md`
+  and `docs/runbooks/phase1-admin-oob-recovery.md` are documentation and local
+  verification only, per this task's own scope note.
 
 ## Remaining decisions
 

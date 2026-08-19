@@ -51,13 +51,31 @@ values ('0cc00000-0000-0000-0000-0000000000c1',
   'cc000000-0000-0000-0000-000000000001', 'pgTAP 投影檢查用班級',
   decode(repeat('ab', 32), 'hex'), 'ABCD-1234-EF56-7890');
 
-select is((select jsonb_array_length((public.admin_list_resource(
-    'classrooms', 'classrooms', null, '{}', null)) -> 'rows')), 1,
+-- scripts/supabase/seed-auth.ts 的 reconcileClassroomFixtures 也會在
+-- test-db.sh 的 setup 階段建立自己的 classroom fixture(獨立、已提交的
+-- transaction,對這裡可見)——`rows -> 0` 不再保證是這個測試剛插入的那一筆
+-- (排序欄是 updated_at,新插入的常常排到最後)。`classrooms.id` 在 catalog
+-- 裡是 filterable=false(過濾會直接被 admin_list_resource 拒絕、回
+-- COLUMN_NOT_ALLOWED,rows 鍵根本不存在),不能拿來當 p_filters 用;改成
+-- 用這筆班級唯一的 name 在回傳陣列裡找出它自己,斷言只針對這一筆,
+-- 不受環境裡還有幾個其他班級影響(同 057 的 pollution-agnostic 作法)。
+select ok(exists (
+    select 1 from jsonb_array_elements(
+      (public.admin_list_resource('classrooms', 'classrooms', null, '{}', null))
+        -> 'rows') elem
+    where elem ->> 'name' = 'pgTAP 投影檢查用班級'),
   'the classrooms fixture is actually visible to the browser');
-select ok(not (((public.admin_list_resource('classrooms', 'classrooms', null, '{}', null))
-  -> 'rows' -> 0) ? 'join_code'), 'forbidden column never in projection');
-select ok(not (((public.admin_list_resource('classrooms', 'classrooms', null, '{}', null))
-  -> 'rows' -> 0) ? 'join_code_hash'),
+select ok(not exists (
+    select 1 from jsonb_array_elements(
+      (public.admin_list_resource('classrooms', 'classrooms', null, '{}', null))
+        -> 'rows') elem
+    where elem ->> 'name' = 'pgTAP 投影檢查用班級' and elem ? 'join_code'),
+  'forbidden column never in projection');
+select ok(not exists (
+    select 1 from jsonb_array_elements(
+      (public.admin_list_resource('classrooms', 'classrooms', null, '{}', null))
+        -> 'rows') elem
+    where elem ->> 'name' = 'pgTAP 投影檢查用班級' and elem ? 'join_code_hash'),
   'the forbidden hash column is excluded as well');
 update public.profiles set full_name = '王小明'
   where id = 'cc000000-0000-0000-0000-000000000001';
