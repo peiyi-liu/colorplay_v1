@@ -23,6 +23,8 @@ const chromiumOnlyLoginSpec = /login\.spec\.ts$/u;
 // Task 14：admin TOTP enrollment 是一次性動作（同一 factor 綁定後無法
 // 重綁），跨瀏覽器 project 重跑會在第二個 project 卡在已綁定狀態；
 // 比照 chromiumOnlyLoginSpec 只在 chromium 執行一次。
+const adminSecuritySpec = /admin-security\.spec\.ts$/u;
+const adminViewportsSpec = /admin-viewports\.spec\.ts$/u;
 const chromiumOnlyAdminSpec = /admin-(security|viewports)\.spec\.ts$/u;
 const video = precheckMode
   ? 'off'
@@ -45,9 +47,30 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      ...(realAuthAvailable
-        ? {}
-        : { testIgnore: [authGuardSpec, chromiumOnlyAdminSpec] }),
+      // admin-security／admin-viewports 搬進下面兩個獨立 project：它們
+      // 之間有真正的執行順序依賴（viewports 要重用 security 留下的 TOTP
+      // secret），這裡一律排除，順序改由 Playwright 的 `dependencies` 保證，
+      // 不再依賴檔名字母序這種未言明的假設（Task 14 review Finding 3）。
+      testIgnore: realAuthAvailable
+        ? [chromiumOnlyAdminSpec]
+        : [authGuardSpec, chromiumOnlyAdminSpec],
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'chromium-admin-security',
+      testMatch: adminSecuritySpec,
+      // realAuthAvailable 為 false 時（無真實 Supabase 可用）整個排除，
+      // 跟原本 chromium project 對 chromiumOnlyAdminSpec 的處理一致。
+      ...(realAuthAvailable ? {} : { testIgnore: [adminSecuritySpec] }),
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'chromium-admin-viewports',
+      testMatch: adminViewportsSpec,
+      // dependencies 保證這個 project 的測試永遠在 chromium-admin-security
+      // 全部跑完（且成功）之後才開始——沒有它就沒有可用的 TOTP secret。
+      dependencies: ['chromium-admin-security'],
+      ...(realAuthAvailable ? {} : { testIgnore: [adminViewportsSpec] }),
       use: { ...devices['Desktop Chrome'] },
     },
     {

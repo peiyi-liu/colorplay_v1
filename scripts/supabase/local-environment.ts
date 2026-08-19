@@ -30,3 +30,11 @@ export const readLocalAdminEnvironment = (
 
   return { serviceRoleKey, url };
 };
+
+// Admin identities are a materially different risk class from the demo
+// teacher/student fixtures: bootstrapping one grants role='admin' plus a
+// self-service-enrollable TOTP factor. spec §12 restricts Admin fixtures to
+// genuinely local seeding — the SEED_REMOTE_CONFIRM opt-in above exists for
+// the rest of the demo dataset and must never extend to Admin provisioning.
+export const isStrictlyLocalAdminUrl = (url: string): boolean =>
+  url === localApiUrl;

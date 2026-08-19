@@ -42,6 +42,10 @@ test.describe.configure({ mode: 'serial' });
 const PRIMARY_USER_AGENT = 'ColorPlayE2E-AdminPrimary';
 const SECONDARY_USER_AGENT = 'ColorPlayE2E-AdminSecondary';
 
+// step 5 用同一個字串把稽核斷言鎖定到這次揭露產生的那一列（見 step 5
+// 的說明），不能只認 action 名稱。
+const REVEAL_PURPOSE = 'E2E 測試驗證揭露流程是否正確運作';
+
 // spec §14.4 旅程斷言逐條（步驟 1-6 共用同一個 privileged session，拆成
 // 獨立 test() 只會強迫每步重建前置狀態——TOTP enrollment 甚至做不到
 // 「重建」，一個 factor 只能綁一次——所以寫成一個 test() 內的 test.step()）。
@@ -87,9 +91,7 @@ test('admin security journey: enroll, challenge, browse, reveal, audit, and sess
 
       const dialog = primaryPage.getByRole('dialog');
       await expect(dialog).toBeVisible();
-      await dialog
-        .getByLabel('揭露目的')
-        .fill('E2E 測試驗證揭露流程是否正確運作');
+      await dialog.getByLabel('揭露目的').fill(REVEAL_PURPOSE);
       await dialog.getByRole('button', { name: '揭露' }).click();
 
       const plaintext = dialog.getByTestId('reveal-plaintext');
@@ -109,10 +111,20 @@ test('admin security journey: enroll, challenge, browse, reveal, audit, and sess
       await expect(adminFullNameCell(primaryPage)).toContainText('＊');
     });
 
-    await test.step('5. Audit：出現 admin_reveal_field 事件列，頁面無「匯出」文字', async () => {
+    await test.step('5. Audit：出現本次揭露對應的 admin_reveal_field 事件列，頁面無「匯出」文字', async () => {
       await primaryPage.goto('/admin/audit');
+      // 不能只認 action='admin_reveal_field' 就算過——舊資料庫狀態裡可能
+      // 已經有別次揭露留下的同名事件，那樣就算這次揭露沒寫稽核，斷言也會
+      // 假綠燈。REVEAL_PURPOSE 是這次揭露輸入的明文理由，會原封不動存進
+      // reason_or_purpose_redacted 欄（≤200 字，不做內容遮蔽，只是分類為
+      // internal 敏感度）並和 action 同一列渲染，用它把斷言鎖定到「這次」
+      // 產生的那一列。
       await expect(
-        primaryPage.getByRole('cell', { name: 'admin_reveal_field' }).first(),
+        primaryPage
+          .locator('table[aria-label="稽核事件"] tbody tr')
+          .filter({ hasText: 'admin_reveal_field' })
+          .filter({ hasText: REVEAL_PURPOSE })
+          .first(),
       ).toBeVisible();
       // spec §7、§10：Phase 1 全表 export=false，稽核頁不得有匯出/下載
       // 控制項；連文字都不該出現（避免將來加了功能卻忘了同步刪掉本測試）。

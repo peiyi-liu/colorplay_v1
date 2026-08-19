@@ -14,7 +14,10 @@ import {
   CLASSROOM_FIXTURES,
   type TestUserLabel,
 } from '../../tests/fixtures/users';
-import { readLocalAdminEnvironment } from './local-environment';
+import {
+  isStrictlyLocalAdminUrl,
+  readLocalAdminEnvironment,
+} from './local-environment';
 
 const fixtureLabels = [
   'authLifecycleOne',
@@ -44,8 +47,8 @@ const fixtureLabels = [
   'adminSecondary',
 ] as const satisfies readonly TestUserLabel[];
 // Task 14:role='admin' 只能由 svc_admin_bootstrap_identity 提升(spec §12、
-// Task 15 runbook 前置條件一致)——reconcileProfileRole 只把這兩個 fixture
-// 暫時設成 'teacher',真正的提升在 reconcileAdminBootstrapFixtures 補上。
+// Task 15 runbook 前置條件一致)——reconcileProfileRole 對這兩個 fixture
+// 完全跳過 role 欄位,role 由 reconcileAdminBootstrapFixtures 獨佔提升。
 const adminBootstrapLabels = [
   'adminPrimary',
   'adminSecondary',
@@ -110,11 +113,22 @@ const reconcileAuthUser = async (
   return data.user;
 };
 
+// role='admin' 只能由 svc_admin_bootstrap_identity 提升(spec §12、Task 15
+// runbook 前置條件一致)，且它是冪等的:已有 identity 時直接短路回
+// {outcome:'ok', idempotent:true},不會重跑 `update profiles set role='admin'`。
+// 若這裡照樣把 adminBootstrapLabels 的 role 寫回 TEST_USER_ROLES 的值(僅供
+// 型別使用的佔位 'teacher'),第二次執行 seed-auth.ts 就會把已提升的 admin
+// 覆寫回 teacher、且 bootstrap 的冪等短路不會補救——因此這兩個 label 完全
+// 跳過 role 欄位,把它交給 reconcileAdminBootstrapFixtures 獨佔。
+const isAdminBootstrapLabel = (label: TestUserLabel): boolean =>
+  (adminBootstrapLabels as readonly TestUserLabel[]).includes(label);
+
 const reconcileProfileRole = async (
   admin: SupabaseClient<Database>,
   user: User,
   label: TestUserLabel,
 ) => {
+  const skipRole = isAdminBootstrapLabel(label);
   const expectedRole = TEST_USER_ROLES[label];
   const accountFixture =
     label in TEST_USER_ACCOUNTS
@@ -127,7 +141,7 @@ const reconcileProfileRole = async (
     const { data, error } = await admin
       .from('profiles')
       .update({
-        role: expectedRole,
+        ...(skipRole ? {} : { role: expectedRole }),
         ...(accountFixture
           ? {
               full_name: accountFixture.fullName,
@@ -138,7 +152,13 @@ const reconcileProfileRole = async (
       .eq('id', user.id)
       .select('id, role')
       .single();
-    if (!error && data.id === user.id && data.role === expectedRole) return;
+    if (
+      !error &&
+      data.id === user.id &&
+      (skipRole || data.role === expectedRole)
+    ) {
+      return;
+    }
     lastError = error;
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
@@ -321,13 +341,30 @@ export const seedAuthUsers = async (): Promise<void> => {
       user.email ? ([[user.email, user]] as const) : [],
     ),
   );
+  // Admin fixtures 的風險等級跟其餘 demo teacher/student fixture 不同:
+  // 提升後即持有 role='admin' 且能自行完成 TOTP enrollment。上面的
+  // readLocalAdminEnvironment 對其餘 fixture 開放 SEED_REMOTE_CONFIRM
+  // 例外(供 hosted rebuild 用),但 spec §12 明確排除 Admin fixture——這裡
+  // 用嚴格的 loopback URL 檢查,不吃那個例外,確保 hosted rebuild 永遠不會
+  // 建立/提升這兩個帳號,同時仍讓其餘 fixture 正常跑完。
+  const strictlyLocal = isStrictlyLocalAdminUrl(url);
+  if (!strictlyLocal) {
+    console.warn(
+      'ADMIN_FIXTURE_SKIPPED_NON_LOCAL_URL: seeding against a confirmed remote URL — adminPrimary/adminSecondary are excluded (spec §12 local-only boundary).',
+    );
+  }
+  const activeFixtureLabels = strictlyLocal
+    ? fixtureLabels
+    : fixtureLabels.filter((label) => !isAdminBootstrapLabel(label));
   const usersByLabel = new Map<TestUserLabel, User>();
-  for (const label of fixtureLabels) {
+  for (const label of activeFixtureLabels) {
     const user = await reconcileAuthUser(admin, existingUsersByEmail, label);
     await reconcileProfileRole(admin, user, label);
     usersByLabel.set(label, user);
   }
-  await reconcileAdminBootstrapFixtures(admin, usersByLabel);
+  if (strictlyLocal) {
+    await reconcileAdminBootstrapFixtures(admin, usersByLabel);
+  }
 
   await reconcileClassroomFixtures(url, serviceRoleKey);
 };

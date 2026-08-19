@@ -77,6 +77,30 @@ for (const viewport of VIEWPORTS) {
       await expect(nav).toBeHidden();
     }
 
+    // sessions 頁：command control（非 reveal 類，AdminCommandDialog 走
+    // §3.1/§8.2 的共用命令確認框）的觸發鈕與框內「確認」鈕都要達 44px。
+    // 只測尺寸/可達性，不真的送出撤銷——真的撤銷會讓當前 session 立刻被
+    // RequirePrivilegedSession 導去 challenge，打斷同一個 test 剩下的步驟，
+    // 也沒必要（reveal 那組已經驗證過送出/成功路徑）；改用「取消」關閉。
+    await page.goto('/admin/access/sessions');
+    const revokeButton = page.getByRole('button', { name: '撤銷' }).first();
+    await expect(revokeButton).toBeVisible();
+    const revokeBox = await revokeButton.boundingBox();
+    expect(revokeBox?.width).toBeGreaterThanOrEqual(44);
+    expect(revokeBox?.height).toBeGreaterThanOrEqual(44);
+
+    await revokeButton.click();
+    const revokeDialog = page.getByRole('dialog');
+    await expect(revokeDialog).toBeVisible();
+    const revokeConfirmButton = revokeDialog.getByRole('button', {
+      name: '確認',
+    });
+    const revokeConfirmBox = await revokeConfirmButton.boundingBox();
+    expect(revokeConfirmBox?.width).toBeGreaterThanOrEqual(44);
+    expect(revokeConfirmBox?.height).toBeGreaterThanOrEqual(44);
+    await revokeDialog.getByRole('button', { name: '取消' }).click();
+    await expect(revokeDialog).toBeHidden();
+
     // browser 頁：不水平捲動、揭露按鈕 44px 觸控目標、reveal dialog 的
     // aria-live 狀態區存在、dialog 關閉後 focus 回到觸發鈕
     await page.goto('/admin/data/users/profiles');
