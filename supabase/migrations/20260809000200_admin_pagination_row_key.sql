@@ -7,6 +7,30 @@
 -- 13A-1:server-issued cursor 與 row key
 -- ════════════════════════════════════════════════════════════════════
 
+-- 2026-08-19 review 修正(Critical):Postgres 的 encode(bytea,'base64')
+-- 每 76 字元插入一個換行(RFC 2045 MIME 慣例)。opaque token 的簽發端
+-- (本函式與下方 admin_list_resource／admin_query_audit 的 cursor 簽發)
+-- 原本只做 +/→-_ 與去尾端 =,從未移除這個換行;解碼端
+-- admin_internal_decode_row_key 重算 padding 時會把換行也算進
+-- length(),導致 padding 位數算錯、base64 解碼失敗。任何 payload 超過
+-- 76 base64 字元(binding 欄位本身就是 64 hex 字元,幾乎所有 cursor
+-- 與雙欄以上的複合主鍵 row key 都會超過)都會中招 —— 意即 13A-1 的
+-- keyset 分頁與 13A-4 的複合主鍵定址在此修正前實質上完全不可用
+-- (以真實 60 筆資料與真實兩欄 UUID 主鍵各自實測驗證過)。
+-- 集中在這裡一次去除,三處簽發端共用,避免各自重造又各自漏改。
+create function public.admin_internal_base64url_encode(p_bytes bytea)
+returns text
+language sql immutable
+set search_path = public, pg_temp
+as $$
+  select rtrim(
+    translate(regexp_replace(encode(p_bytes, 'base64'), '\s+', '', 'g'),
+      '+/', '-_'),
+    '=');
+$$;
+revoke execute on function public.admin_internal_base64url_encode(bytea)
+  from public, anon, authenticated;
+
 -- base64url(canonical JSON,鍵依字母序;值一律 JSON string)。與
 -- admin_internal_canonical_hash 採同一 "C" collation 排序慣例,確保
 -- server 自身在簽發/驗證兩端逐字一致。
@@ -16,19 +40,13 @@ create function public.admin_internal_encode_row_key(
 language sql immutable
 set search_path = public, pg_temp
 as $$
-  select rtrim(
-    translate(
-      encode(
-        convert_to(
-          '{' || coalesce((
-            select string_agg(
-              to_json(k)::text || ':' || to_json(p_row ->> k)::text,
-              ',' order by k collate "C")
-            from unnest(p_key_columns) k), '') || '}',
-          'utf8'),
-        'base64'),
-      '+/', '-_'),
-    '=');
+  select public.admin_internal_base64url_encode(convert_to(
+    '{' || coalesce((
+      select string_agg(
+        to_json(k)::text || ':' || to_json(p_row ->> k)::text,
+        ',' order by k collate "C")
+      from unnest(p_key_columns) k), '') || '}',
+    'utf8'));
 $$;
 revoke execute on function public.admin_internal_encode_row_key(jsonb, text[])
   from public, anon, authenticated;
@@ -61,6 +79,15 @@ revoke execute on function public.admin_internal_decode_row_key(text)
 
 -- cursor binding:綁 domain、resource、normalized filters、sort。跨 resource／
 -- 跨 filter／跨 sort 重用 cursor 會因 binding 不符而 fail closed。
+--
+-- 2026-08-19 review 修正(Medium):原本用 `k=v,k=v` 裸串接,分隔字元本身
+-- 可以出現在 filter 值裡:{group_label:foo, status:draft} 與單一 filter
+-- {group_label:"foo,status=draft"} 會正規化成同一個字串,binding 因而
+-- 相撞,一個查詢簽出的 cursor 能被另一個語意不同的查詢接受(已實測驗證
+-- collision=true)。改為每個欄位／值各自用 to_json()::text 包成獨立的
+-- JSON string(帶轉義的雙引號邊界),不同結構不可能序列化成同一個字串
+-- (與 admin_internal_canonical_hash 同一原理,但保留本函式 immutable
+-- 宣告,不跨呼叫非 immutable 函式)。
 create function public.admin_internal_list_binding(
   p_domain text, p_resource text, p_filters jsonb, p_sort_column text
 ) returns text
@@ -68,12 +95,14 @@ language sql immutable
 set search_path = public, pg_temp
 as $$
   select encode(pg_catalog.sha256(pg_catalog.convert_to(
-    p_domain || '|' || p_resource || '|'
+    to_json(p_domain)::text || '|' || to_json(p_resource)::text || '|'
       || coalesce((
-        select string_agg(k || '=' || coalesce(p_filters -> k ->> 'eq', ''),
+        select string_agg(
+          to_json(k)::text || ':'
+            || to_json(coalesce(p_filters -> k ->> 'eq', ''))::text,
           ',' order by k collate "C")
         from jsonb_object_keys(coalesce(p_filters, '{}'::jsonb)) k), '')
-      || '|' || coalesce(p_sort_column, ''), 'utf8')), 'hex');
+      || '|' || to_json(coalesce(p_sort_column, ''))::text, 'utf8')), 'hex');
 $$;
 revoke execute on function public.admin_internal_list_binding(
   text, text, jsonb, text) from public, anon, authenticated;
@@ -99,6 +128,7 @@ declare
   v_rows jsonb;
   v_key text;
   v_sort_column text;
+  v_sort_type text;
   v_cursor jsonb;
   v_key_columns text[];
   v_pk_order text;
@@ -149,6 +179,21 @@ begin
 
   v_select := public.admin_internal_catalog_projection(p_resource, 'browser');
 
+  -- 2026-08-19 review 修正(Medium):`jsonb_object_keys` 只接受 object,
+  -- 傳入合法但非 object 的 jsonb(如 `[]`、`"x"`、數字)會直接丟出裸例外,
+  -- 繞過下面每個 denial 分支都會做的「typed outcome + audit + counter」
+  -- 交易(已實測驗證:`p_filters => '[]'::jsonb` 讓整支函式以未捕捉例外
+  -- 中止,沒有寫入任何 audit 或 denial counter,且把內部函式名/行號洩漏
+  -- 給呼叫端)。在進迴圈前先擋掉形狀不對的 filters。
+  if jsonb_typeof(coalesce(p_filters, '{}'::jsonb)) is distinct from 'object' then
+    return public.admin_internal_deny(
+      p_domain || '/' || p_resource, 'COLUMN_NOT_ALLOWED',
+      'admin_list_resource', 'browser_resource', 'admin',
+      (v_auth ->> 'principal_id')::uuid, (v_auth ->> 'session_id')::uuid,
+      (v_auth ->> 'auth_session_id')::uuid, null, null,
+      (v_auth ->> 'mfa_age_seconds')::int);
+  end if;
+
   for v_key in select jsonb_object_keys(coalesce(p_filters, '{}'::jsonb)) loop
     if not exists (select 1 from public.admin_sensitivity_catalog
         where resource = p_resource and column_name = v_key and filterable
@@ -180,15 +225,37 @@ begin
       (v_auth ->> 'mfa_age_seconds')::int);
   end if;
 
+  -- 2026-08-19 review 修正(High):keyset 比較鍵需要排序欄的原生型別,
+  -- 不能一律當文字比(見下方 WHERE 組裝的說明)。排序欄已通過上面的
+  -- catalog／schema 雙重驗證,理論上一定查得到型別;查不到就 fail
+  -- closed,不帶著 null 型別繼續組出畸形的 cast 表達式。
+  select format_type(a.atttypid, a.atttypmod) into v_sort_type
+    from pg_catalog.pg_attribute a
+    join pg_catalog.pg_class c on c.oid = a.attrelid
+    where c.relnamespace = 'public'::regnamespace and c.relname = p_resource
+      and a.attname = v_sort_column and not a.attisdropped;
+  if v_sort_type is null then
+    return public.admin_internal_deny(
+      p_domain || '/' || p_resource, 'COLUMN_NOT_ALLOWED',
+      'admin_list_resource', 'browser_resource', 'admin',
+      (v_auth ->> 'principal_id')::uuid, (v_auth ->> 'session_id')::uuid,
+      (v_auth ->> 'auth_session_id')::uuid, null, null,
+      (v_auth ->> 'mfa_age_seconds')::int);
+  end if;
+
   v_binding := public.admin_internal_list_binding(
     p_domain, p_resource, p_filters, v_sort_column);
 
   if p_cursor is not null then
     v_cursor := public.admin_internal_decode_row_key(p_cursor);
-    -- 毀損 / 跨 resource / 跨 filter / 跨 sort 的 cursor 一律 typed deny
+    -- 毀損 / 跨 resource / 跨 filter / 跨 sort 的 cursor 一律 typed deny。
+    -- 2026-08-19 review 修正:'k' 改用 `?`(欄位是否存在)而非
+    -- `->>'k' is null`(值是否為 null)——排序欄本身可為 NULL(如
+    -- completed_at、deadline_at,已用 schema 驗證確實存在可空的排序欄),
+    -- cursor 停在該值時 k 合法地是 JSON null,不得被誤判成毀損 cursor。
     if v_cursor is null
        or (v_cursor ->> 'binding') is distinct from v_binding
-       or (v_cursor ->> 'k') is null
+       or not (v_cursor ? 'k')
        or jsonb_typeof(v_cursor -> 'key') is distinct from 'object'
        or exists (select 1 from unnest(v_key_columns) kc
             where v_cursor -> 'key' ->> kc is null) then
@@ -203,8 +270,27 @@ begin
       into v_pk_list from unnest(v_key_columns) with ordinality as t(kc, ord);
     select string_agg(format('%L', v_cursor -> 'key' ->> kc), ', ' order by ord)
       into v_pk_vals from unnest(v_key_columns) with ordinality as t(kc, ord);
-    v_where := v_where || format(' and (%I::text, %s) > (%L, %s)',
-      v_sort_column, v_pk_list, v_cursor ->> 'k', v_pk_vals);
+    -- 2026-08-19 review 修正(High):keyset 比較鍵原本一律 `::text`,但
+    -- ORDER BY 走排序欄的原生型別 —— 對 integer 等欄位,文字序與數值序
+    -- 不一致(如 1..100 文字序把 10..19 排到 2 之前),cursor 邊界會靜默
+    -- 漏掉或重複列(已用 60 筆整數 sort_order 實測驗證跨頁遺漏)。改用
+    -- 排序欄自己的原生型別做比較。排序預設是 asc 的 Postgres 預設
+    -- NULLS LAST,故:
+    --   * cursor 的 k 非 NULL:下一批 = 排序值更大者,或排序值相等但
+    --     主鍵更大者,或排序值本身是 NULL(NULL 一定排在任何非 NULL
+    --     值之後)。
+    --   * cursor 的 k 本身是 NULL(游標已停在「NULL 尾端」):下一批
+    --     只能是同樣 NULL、但主鍵更大的列。
+    if jsonb_typeof(v_cursor -> 'k') = 'null' then
+      v_where := v_where || format(' and %I is null and (%s) > (%s)',
+        v_sort_column, v_pk_list, v_pk_vals);
+    else
+      v_where := v_where || format(
+        ' and (%I > %L::%s or (%I = %L::%s and (%s) > (%s)) or %I is null)',
+        v_sort_column, v_cursor ->> 'k', v_sort_type,
+        v_sort_column, v_cursor ->> 'k', v_sort_type,
+        v_pk_list, v_pk_vals, v_sort_column);
+    end if;
   end if;
 
   -- page size + 1
@@ -231,13 +317,16 @@ begin
 
   if v_has_more and jsonb_array_length(v_rows) > 0 then
     v_last := v_rows -> (jsonb_array_length(v_rows) - 1);
-    v_next_cursor := rtrim(translate(encode(convert_to(
+    -- 'k' 一律以文字存(->>),不管排序欄原始型別為何:解碼端只需要能
+    -- cast 回排序欄的原生型別即可,不必在 token 裡保留 JSON 型別資訊。
+    -- JSON null 與「值是文字 'null'」用 jsonb_typeof 區分(見解碼端)。
+    v_next_cursor := public.admin_internal_base64url_encode(convert_to(
       jsonb_build_object(
         'binding', v_binding,
         'k', v_last ->> v_sort_column,
         'key', (select jsonb_object_agg(kc, v_last ->> kc)
                   from unnest(v_key_columns) kc))::text,
-      'utf8'), 'base64'), '+/', '-_'), '=');
+      'utf8'));
   end if;
 
   return jsonb_build_object('outcome', 'ok', 'rows', v_rows,
@@ -331,10 +420,10 @@ begin
       from jsonb_array_elements(v_rows) with ordinality as t(elem, ord)
       where ord <= 50;
     v_last := v_rows -> (jsonb_array_length(v_rows) - 1);
-    v_next_cursor := rtrim(translate(encode(convert_to(
+    v_next_cursor := public.admin_internal_base64url_encode(convert_to(
       jsonb_build_object('binding', v_binding,
         'k', v_last ->> 'occurred_at', 'id', v_last ->> 'id')::text,
-      'utf8'), 'base64'), '+/', '-_'), '=');
+      'utf8'));
   end if;
 
   return jsonb_build_object('outcome', 'ok', 'rows', v_rows,

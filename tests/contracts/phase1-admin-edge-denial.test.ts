@@ -180,4 +180,25 @@ describe('edge denial recorder fail-closed contract', () => {
     );
     expect(first.request_id).not.toBe(second.request_id);
   });
+
+  it('fails closed on a code the Edge does not recognise (2026-08-19 review)', async () => {
+    // 版本漂移防線:DB 若因 bug 或部署順序回了一個 Edge 尚未認得的碼,
+    // 不得讓任意 message/retryable 原樣穿透給前端 —— 未知碼一律當畸形
+    // envelope 處理,fail closed。
+    const recordAndDeny = makeRecordAndDeny(
+      recorderReturning({
+        outcome: 'denied',
+        code: 'NOT_A_REAL_STABLE_CODE',
+        message: 'raw internal detail that should never reach the client',
+        request_id: '3f1d0f5a-1c2b-4d3e-8f90-0a1b2c3d4e5f',
+        retryable: true,
+      }),
+      'edge/test',
+      jsonResponse,
+    );
+    const body = await failClosed(
+      await recordAndDeny('challenge', 'user-1', 'NOT_A_REAL_STABLE_CODE', 403),
+    );
+    expect(body.message).not.toContain('raw internal detail');
+  });
 });

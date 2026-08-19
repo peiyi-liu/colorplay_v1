@@ -2,9 +2,10 @@
 -- Task 13A-5:一次性人工重試憑證。claim 簽發、step 閘門兌現、成功即作廢,
 -- 且排程路徑(無憑證)的語意完全不變。
 begin;
--- 15 = 7(憑證閘門)+ 3(一次性與作廢)+ 3(排程路徑未因重構而改變)
---    + 2(非 reset saga 與 factor incident)
-select plan(15);
+-- 18 = 7(憑證閘門)+ 3(一次性與作廢)+ 3(排程路徑未因重構而改變)
+--    + 2(非 reset saga 與 factor incident)+ 3(2026-08-19 review:
+--    憑證不得讓 step3 跳過 step2)
+select plan(18);
 
 \ir helpers/admin_test_seed.psql
 select pg_temp.admin_test_seed();
@@ -124,6 +125,31 @@ select is((select manual_retry_claim_token
     from public.admin_security_operations
     where id = '0db00000-0000-0000-0000-0000000000a5'), null,
   'and no token is written to it either');
+
+-- ── 2026-08-19 review(Critical):憑證不得讓 step3 跳過 step2 ─────────
+-- 憑證只證明「這次人工重試被授權」,不證明 step2(刪除舊 TOTP factor)
+-- 真的跑過。stuck 時 current_step 停在上一次真正完成的進度;若 step3
+-- 只看 state='stuck' + token 相符,拿到憑證的呼叫者可以直接跳過 step2、
+-- 把 operation 標 completed、把 identity 推進 active_pending_mfa —— 而
+-- 舊 TOTP factor 從未在 GoTrue 被刪除,等於讓已核准的 MFA 重設悄悄失效
+-- (曾經用真實呼叫序列驗證過這個繞過確實會成功)。
+select pg_temp.seed_stuck_operation(
+  '0db00000-0000-0000-0000-0000000000a6', 1);
+update public.admin_security_operations set next_retry_at = now()
+  where id = '0db00000-0000-0000-0000-0000000000a6';
+select (public.svc_admin_claim_manual_retry(
+  '0db00000-0000-0000-0000-0000000000a6')) ->> 'claim_token' as tok_a6 \gset
+select is((public.svc_admin_complete_reset_step3(
+    '0db00000-0000-0000-0000-0000000000a6', :'tok_a6'::uuid))::jsonb ->> 'code',
+  'SECURITY_OPERATION_PENDING',
+  'a valid claim token cannot redeem step3 while current_step is still 1');
+select is((select state::text from public.admin_security_operations
+    where id = '0db00000-0000-0000-0000-0000000000a6'), 'stuck',
+  'the operation stays stuck instead of being marked completed');
+select is((select manual_retry_claim_token
+    from public.admin_security_operations
+    where id = '0db00000-0000-0000-0000-0000000000a6'), :'tok_a6'::uuid,
+  'the rejected attempt does not burn the still-valid claim token');
 
 select * from finish();
 rollback;

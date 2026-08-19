@@ -2,7 +2,10 @@
 -- Task 13A:server-issued cursor／row key、stuck 一次性人工重試、§11 envelope。
 begin;
 -- 33 = 14(§11 envelope)+ 10(cursor／row key)+ 9(stuck one-shot 與其不變式)
-select plan(33);
+-- 39 = 33(原有)+ 3(真實長度複合主鍵 round trip,取代原本測不到
+-- 76-字元換行邊界的短假值測試)+ 3(2026-08-19 review:binding 碰撞、
+-- 畸形 filter typed deny 與其 denial counter)
+select plan(39);
 
 \ir helpers/admin_test_seed.psql
 select pg_temp.admin_test_seed();
@@ -47,9 +50,18 @@ select is(current_setting('pgtap.denial')::jsonb ->> 'retryable', 'false',
   'denial envelope carries the retryable flag');
 select isnt(current_setting('pgtap.denial')::jsonb ->> 'request_id', null,
   'denial envelope carries a request_id');
+-- 2026-08-19 review 修正:原斷言比對 admin_audit_events.id,把「envelope
+-- 回傳的其實是稽核列主鍵,而不是獨立的 request_id 欄位」這個錯誤實作當
+-- 正確在測。admin_audit_events 另有一個獨立生成的 request_id 欄位(
+-- admin_query_audit 稽核頁就是靠它查詢/對帳),兩者是不同的值 —— 修正後
+-- 比對真正的欄位,並額外斷言它不等於 id,防止同一個錯誤悄悄回歸。
 select ok(exists(select 1 from public.admin_audit_events
-    where id = (current_setting('pgtap.denial')::jsonb ->> 'request_id')::uuid),
-  'request_id resolves to the durable denial audit event');
+    where request_id = (current_setting('pgtap.denial')::jsonb ->> 'request_id')::uuid),
+  'request_id resolves to the durable denial audit event''s request_id column');
+-- 若曾經回歸成回傳 id(舊 bug):envelope 的值會變成某一列的「主鍵」,
+-- 但幾乎不可能同時也是任何一列獨立生成的 request_id,上面那條 exists()
+-- 斷言本身就會轉紅,不需要另外斷言「不等於 id」——那條反而會因為
+-- id/request_id 本來就互相獨立隨機而恆真,測不出任何東西。
 
 -- ── 13A-1:row key round trip ─────────────────────────────────────────
 select is(
@@ -64,6 +76,38 @@ select is(public.admin_internal_decode_row_key('!!!not-base64!!!'), null,
 select is(public.admin_internal_decode_row_key(
     rtrim(translate(encode(convert_to('[1,2]', 'utf8'), 'base64'), '+/', '-_'), '=')),
   null, 'non-object row key token is rejected');
+
+-- 2026-08-19 review 新增:上面的 round trip 用 'u1'/'c1' 這種極短假值,
+-- 編碼後遠低於 76 base64 字元,測不到 Postgres encode(...,'base64') 每
+-- 76 字元插入換行的問題(admin_internal_decode_row_key 重算 padding 時
+-- 會把換行算進 length,導致 padding 位數算錯而解碼失敗)。真實複合主鍵
+-- 一律是兩個 36 字元 UUID,編碼後必然超過 76 字元,必須用真實長度的值
+-- 測,否則這條斷言只是看起來在守門。
+select ok(
+  length(public.admin_internal_encode_row_key(
+    jsonb_build_object(
+      'classroom_id', '11111111-1111-4111-8111-111111111111',
+      'user_id', '22222222-2222-4222-8222-222222222222'),
+    array['classroom_id', 'user_id'])) > 76,
+  'a realistic two-uuid composite key exceeds the base64 line-wrap threshold');
+select is(
+  public.admin_internal_decode_row_key(
+    public.admin_internal_encode_row_key(
+      jsonb_build_object(
+        'classroom_id', '11111111-1111-4111-8111-111111111111',
+        'user_id', '22222222-2222-4222-8222-222222222222'),
+      array['classroom_id', 'user_id'])),
+  jsonb_build_object(
+    'classroom_id', '11111111-1111-4111-8111-111111111111',
+    'user_id', '22222222-2222-4222-8222-222222222222'),
+  'a realistic two-uuid composite key round trips past the 76-char boundary');
+select ok(
+  position(E'\n' in public.admin_internal_encode_row_key(
+    jsonb_build_object(
+      'classroom_id', '11111111-1111-4111-8111-111111111111',
+      'user_id', '22222222-2222-4222-8222-222222222222'),
+    array['classroom_id', 'user_id'])) = 0,
+  'the encoded token never carries an embedded newline');
 
 -- cursor binding 綁 domain/resource/filters/sort
 select isnt(
@@ -160,6 +204,32 @@ select public.svc_admin_mark_operation_stuck(
 select is((select next_retry_at from public.admin_security_operations
     where id = '0da00000-0000-0000-0000-0000000000a2'), null,
   'marking an operation stuck clears any leftover backoff marker');
+
+-- ── 2026-08-19 review:list binding 不得因分隔字元碰撞而跨 filter 誤用 ──
+-- 兩個結構不同的 filter 物件,若序列化時用裸 `,`/`=` 串接,可能正規化成
+-- 同一個字串:{group_label:foo, status:draft} 與單一 filter
+-- {group_label:"foo,status=draft"}。binding 相撞代表前者簽出的 cursor
+-- 能被後者接受,分頁邊界會用錯查詢條件重跑。
+select isnt(
+  public.admin_internal_list_binding('content', 'review_cards',
+    '{"group_label": {"eq": "foo"}, "status": {"eq": "draft"}}'::jsonb,
+    'created_at'),
+  public.admin_internal_list_binding('content', 'review_cards',
+    '{"group_label": {"eq": "foo,status=draft"}}'::jsonb, 'created_at'),
+  'differently-shaped filters never collide onto the same cursor binding');
+
+-- ── 2026-08-19 review:畸形 p_filters 必須 typed deny,不得裸例外 ──────
+-- `jsonb_object_keys` 只接受 object;傳入合法但非 object 的 jsonb(如
+-- `[]`)過去會讓整支函式以未捕捉例外中止,略過 denial 交易(沒有 typed
+-- outcome、沒有 audit、沒有 denial counter),還把內部函式名/行號洩漏
+-- 給呼叫端。
+select is((public.admin_list_resource('users', 'profiles', null,
+    '[]'::jsonb, null))->>'code', 'COLUMN_NOT_ALLOWED',
+  'a non-object p_filters container is a typed denial, not a raw exception');
+select is((select count(*)::int from public.admin_denial_counters
+    where safe_reason_code = 'COLUMN_NOT_ALLOWED'
+      and resource_key = 'users/profiles'), 1,
+  'the malformed-filters denial is still recorded in the denial counter');
 
 select * from finish();
 rollback;

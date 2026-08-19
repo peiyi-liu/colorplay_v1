@@ -198,7 +198,14 @@ begin
   if v_operation.state = 'completed' then
     return jsonb_build_object('outcome', 'ok', 'idempotent', true);
   end if;
+  -- 2026-08-19 review 修正(Critical):憑證只證明「這次人工重試被授權」,
+  -- 不證明 step2(刪除因子)真的跑過。stuck 時 current_step 停在上一次真正
+  -- 完成的進度,若沒先要求 current_step >= 2,持有憑證的呼叫者可以直接跳過
+  -- step2、把 operation 標 completed、把 identity 推進 active_pending_mfa,
+  -- 而舊 TOTP factor 從未在 GoTrue 被刪除 —— 等同讓已核准的重設悄悄失效
+  -- (實測驗證:current_step=1 時直接帶憑證打本函式會成功)。
   v_manual := v_operation.state = 'stuck'
+    and v_operation.current_step >= 2
     and p_claim_token is not null
     and v_operation.manual_retry_claim_token is not null
     and v_operation.manual_retry_claim_token = p_claim_token;

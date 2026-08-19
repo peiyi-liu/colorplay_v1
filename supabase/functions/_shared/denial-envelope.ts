@@ -11,6 +11,28 @@ export interface DenialEnvelope {
   retryable: boolean;
 }
 
+// spec §11 全部穩定碼(含 Edge protocol-level 的 SECURITY_AUDIT_UNAVAILABLE)。
+// 與 DB 的 admin_internal_denial_message 及前端 admin-client.ts 的
+// ADMIN_ERROR_CODES 各自獨立維護同一份清單 —— 三層互不信任是這個系統的
+// 設計原則,不是重複。Edge 若不做這道檢查,DB／Edge 版本不同步時(例如
+// DB 新增了一個 Edge 尚未認得的碼,或 DB 端 bug)可能讓未知碼夾帶任意
+// message／retryable 直接穿透給前端(2026-08-19 review 修正,Medium)。
+const KNOWN_DENIAL_CODES = new Set([
+  'STALE_PRIVILEGED_SESSION',
+  'INSUFFICIENT_MFA',
+  'INVITATION_INVALID',
+  'LAST_ADMIN_PROTECTED',
+  'RESOURCE_NOT_ALLOWED',
+  'COLUMN_NOT_ALLOWED',
+  'MFA_LOCKED',
+  'FACTOR_BINDING_MISMATCH',
+  'AUTHORIZATION_RECEIPT_INVALID',
+  'IDEMPOTENCY_CONFLICT',
+  'SECURITY_OPERATION_PENDING',
+  'TARGET_STATE_INVALID',
+  'SECURITY_AUDIT_UNAVAILABLE',
+]);
+
 // 與 DB admin_internal_denial_message('SECURITY_AUDIT_UNAVAILABLE') 逐字
 // 相同:同一個碼不得因為來源不同而出現兩種文案。
 const AUDIT_UNAVAILABLE_MESSAGE =
@@ -31,6 +53,7 @@ export function readDenialEnvelope(
   const payload = value as Record<string, unknown>;
   if (payload.outcome !== 'denied') return null;
   if (typeof payload.code !== 'string' || payload.code === '') return null;
+  if (!KNOWN_DENIAL_CODES.has(payload.code)) return null;
   if (expectedCode !== undefined && payload.code !== expectedCode) return null;
   if (typeof payload.message !== 'string' || payload.message === '')
     return null;

@@ -94,12 +94,22 @@ security definer
 set search_path = public, pg_temp
 as $$
 declare
+  v_audit_id uuid;
   v_request_id uuid;
 begin
-  v_request_id := public.admin_internal_append_audit(
+  v_audit_id := public.admin_internal_append_audit(
     p_actor_type, p_actor_principal_id, p_admin_session_id, p_auth_session_id,
     p_action, p_target_type, p_target_principal_id, p_code,
     p_reason_or_purpose, p_mfa_age_seconds, null, null);
+  -- 2026-08-19 review 修正(Medium):admin_internal_append_audit 回傳的
+  -- 是稽核列的 id(主鍵),而 admin_audit_events 另有獨立生成的
+  -- request_id 欄位(admin_query_audit 就是靠這欄給稽核頁顯示/查詢)。
+  -- 兩者是不同值 —— 之前把 id 當 request_id 回給 client,client 拿著這個
+  -- 「追蹤代碼」去稽核頁查詢，永遠對不上任何一筆記錄。這裡改成插入後
+  -- 立刻查回真正的 request_id 欄位;append_audit 本身不改(供 20 個既有
+  -- 呼叫端使用,部分依賴它回傳真正的 id 作 FK)。
+  select request_id into v_request_id
+    from public.admin_audit_events where id = v_audit_id;
   perform public.admin_internal_record_denial(p_resource_key, p_code);
   return public.admin_internal_denial_envelope(p_code, v_request_id);
 end;
@@ -150,12 +160,16 @@ security definer
 set search_path = public, pg_temp
 as $$
 declare
+  v_audit_id uuid;
   v_request_id uuid;
 begin
-  v_request_id := public.admin_internal_append_audit(
+  v_audit_id := public.admin_internal_append_audit(
     p_actor_type, p_actor_principal_id, null, null,
     p_action, p_target_type, p_target_principal_id, p_code,
     null, null, null, p_correlation_id, null, p_runbook_operation_id);
+  -- 同 admin_internal_deny:回傳真正的 request_id 欄位,不是稽核列 id
+  select request_id into v_request_id
+    from public.admin_audit_events where id = v_audit_id;
   perform public.admin_internal_record_denial(p_resource_key, p_code);
   return public.admin_internal_denial_envelope(p_code, v_request_id);
 end;
