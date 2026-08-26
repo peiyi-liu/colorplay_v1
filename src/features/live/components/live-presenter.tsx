@@ -1,5 +1,5 @@
 import { Icon } from '../../../components/ui/icons';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 
 import {
   createPresenterAudio,
@@ -102,6 +102,44 @@ export function LivePresenter({
 
   const joinCode = readStoredJoinCode(sessionId);
 
+  // Draft 是唯一由本檔直接渲染取消動作的階段（lobby／question 系列各自
+  // 委派給 Hud／Round，兩者都已有自己的退出確認對話框）；沿用同一套
+  // alertdialog 焦點循環，讓「取消挑戰」與其他階段的退出行為一致。
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const cancelWasOpenRef = useRef(false);
+  useEffect(() => {
+    if (confirmingCancel) {
+      cancelWasOpenRef.current = true;
+      return;
+    }
+    if (cancelWasOpenRef.current) {
+      cancelWasOpenRef.current = false;
+      cancelButtonRef.current?.focus();
+    }
+  }, [confirmingCancel]);
+  const handleCancelDialogKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setConfirmingCancel(false);
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const buttons = Array.from(
+      event.currentTarget.querySelectorAll<HTMLButtonElement>('button'),
+    );
+    const first = buttons[0];
+    const last = buttons.at(-1);
+    if (!first || !last) return;
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   return (
     <div
       aria-label="Live 投影模式"
@@ -146,12 +184,30 @@ export function LivePresenter({
         <>
           <header className="live-presenter__bar">
             <p>
-              第 {String(state.currentPosition)} / {String(state.questionCount)} 題
+              {phase === 'draft'
+                ? '尚未開始'
+                : phase === 'cancelled'
+                  ? '已取消'
+                  : `第 ${String(state.currentPosition)} / ${String(state.questionCount)} 題`}
             </p>
             <button onClick={onExit} type="button">
               離開投影
             </button>
           </header>
+
+          {phase === 'draft' ? (
+            <div className="live-presenter__status">
+              <h2>場次準備中</h2>
+              <p>尚未開放學生加入，請稍候或開啟等待室。</p>
+            </div>
+          ) : null}
+
+          {phase === 'cancelled' ? (
+            <div className="live-presenter__status">
+              <h2>本場已取消</h2>
+              <p>這場挑戰已取消，不會產生正式名次或完整正確率。</p>
+            </div>
+          ) : null}
 
           {phase === 'podium' ? (
         <div className="live-presenter__podium-stage">
@@ -186,11 +242,7 @@ export function LivePresenter({
             ))}
           </ol>
         </div>
-          ) : (
-            <div className="live-presenter__cancelled">
-              <h2>Live 課堂已結束</h2>
-            </div>
-          )}
+          ) : null}
 
           <footer className="live-presenter__controls">
             {footerActions.map((entry) => (
@@ -204,7 +256,57 @@ export function LivePresenter({
                 {transitionPending ? '處理中…' : entry.label}
               </button>
             ))}
+            {phase === 'draft' && onCancel ? (
+              <button
+                className="live-presenter__cancel"
+                disabled={transitionPending}
+                onClick={() => {
+                  setConfirmingCancel(true);
+                }}
+                ref={cancelButtonRef}
+                type="button"
+              >
+                取消挑戰
+              </button>
+            ) : null}
           </footer>
+
+          {confirmingCancel ? (
+            <div
+              aria-labelledby="live-presenter-cancel-title"
+              aria-modal="true"
+              className="live-projector__exit-backdrop"
+              onKeyDown={handleCancelDialogKeyDown}
+              role="alertdialog"
+            >
+              <div className="live-projector__exit-dialog">
+                <Icon name="alert" size={32} />
+                <h2 id="live-presenter-cancel-title">確定取消這場挑戰？</h2>
+                <p>取消後不會產生正式名次或完整正確率。</p>
+                <div>
+                  <button
+                    autoFocus
+                    onClick={() => {
+                      setConfirmingCancel(false);
+                    }}
+                    type="button"
+                  >
+                    返回
+                  </button>
+                  <button
+                    className="live-projector__confirm-exit"
+                    onClick={() => {
+                      setConfirmingCancel(false);
+                      onCancel?.();
+                    }}
+                    type="button"
+                  >
+                    確認取消挑戰
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </>
       )}
     </div>

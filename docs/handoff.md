@@ -207,6 +207,32 @@
 - Blocker／待決策：無。Owner 已裁定採用 Live 專用內容上限；具體數值由 Task 2 Chromium 實測定案。若無合理組合能在 1024×768 通過，依停止條件回報。
 - 相關檔案／commit：`docs/superpowers/plans/2026-08-10-phase-5f-u1-teacher-live-presenter-ui.md`、`docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`、`docs/handoff.md`（planning remediation commit 待建立；無產品碼）。
 
+## 2026-08-10 18:28 [Codex] — 5F-U1 LivePresenter UI surface implementation 完成，待 Claude Code 唯一一次 implementation review
+
+- 做了什麼：先完成 Claude Code 唯一一次 plan review 的 4 High／4 Medium／1 Low remediation，並回寫核准 spec：第 8.4 節更正全域 `prefers-reduced-motion` 與 podium fireworks 既有覆寫的事實；第 6 節收旂 too-small 只在 podium／cancelled 沿用既有 exit，進行中 phase 不新增離開路徑；Task 3 補齊四 viewport 控制項 `>=44×44px`；內容強制邊界保持 U1 零新 API／RPC／schema／query／mutation，真正 import／server guard 移交 2A 或 5F-F2且不阻塞 U1。專用 worktree 為 `.worktrees/phase5f-u1-live-presenter-ui`，branch `phase5f/u1-live-presenter-ui`，base `e559a5c32d7c685fb950033f97405680292cb1e5`。
+- 內容上限實測：真實最長題幹 74 字／選項 50 字在 1024×768 的初始 baseline 為 presenter `scrollHeight 1411px / clientHeight 768px`。Chromium 最終定案**題幹 36 字／每個選項 21 字／4 個選項**，四個正式 viewport 均保留題幹 `51.2px`／`52px`與選項 `32px`、全文可見、無 document／presenter root 捲動；最緊的 1280×720 主體高 `581px`，與 header／footer 各留約 `6.25px`，37／21 與 36／22 均越界。已回寫 spec 第 5／7 節與 plan Task 2；重算 `artifacts/content/questions.csv` 得 11／62 題題幹與 22／248 個選項需改寫。
+- 三個 task commits：`bdc0e21` 補齊 draft／cancelled 主體、named route region 與既有 pending／handler 契約；`774dbaf` 建立 dev/test-only Chromium harness、七態×四 viewport 有界版面、too-small cancelled exit、wall／standings 唯二 scroll regions 與 36／21 邊界；`b0ac1f2` 補齊 keyboard order、品牌黃 3px focus ring（對夜底 `>=3:1`）、pending disabled 可辨識、四尺寸 44px 觸控區與 reduced-motion `animation-name:none`。`projectorView()`／`hostConsoleView()`／route transition payload 均零修改；LivePresenter JSX 相對 base 為 30 insertions／5 deletions，未觸發「新增超過約 50 行 JSX」停止條件。
+- Scoped validation：Task 1 的 TypeScript／ESLint／Prettier／diff-check 全綠，4 個 Vitest 檔共 51 tests 通過；Task 2 的 TypeScript／ESLint／Prettier／diff-check／production harness-import 機械檢查全綠，Chromium 32／32 通過；Task 3 的 TypeScript／ESLint／Prettier／diff-check 全綠，7 個 Vitest 檔共 65 tests 與 Chromium 39／39 通過。`pnpm typecheck` wrapper 在獨立 worktree 因 `node_modules` metadata 觸發自動安裝，sandbox 無網路而中止；實際 typecheck 使用同版本 root `node_modules/.bin/tsc -b --pretty false` 通過，兩次工具產生的 partial modules 皆已移到 `/private/tmp`，未納入 git。Phase 1 tip 仍為 `def3fc96`，無新 `.live-presenter*` selector overlap。
+- 下一步：交 Claude Code 做本 artifact 的唯一一次 implementation review（只 review，不直接改 Codex worktree）。本輪只宣稱**「5F-U1 LivePresenter UI surface complete」**；不宣稱 5F／Phase 5／Slice Gate／production-ready。merge／push／hosted 操作仍需 owner 另行授權。
+- Blocker／待決策：無實作 blocker；待 Claude Code implementation review 結果。
+- 相關檔案／commit：`phase5f/u1-live-presenter-ui` branch，base `e559a5c`，implementation tip `b0ac1f2`（handoff append commit 待建立）。
+
+## 2026-08-10 18:48 [Codex] — 5F-U1 implementation review remediation 完成，交 owner 核准
+
+- Review 結論：Claude Code 作為唯一 reviewer 對 `e559a5c..180c573` 給出 `BLOCK`（1 High／1 Medium／2 Low）；本輪未啟動第二位 reviewer，也未進行第二輪完整 review。
+- Findings remediation：H1 先在既有 draft／cancelled RTL 測試加入題號負向斷言，兩態皆精準 RED，再把 header 映射收斂為 draft「尚未開始」／cancelled「已取消」／lobby 沿用「等待室」／其餘 phase 沿用既有題號；M2 採首選方案，移除無條件覆蓋正解列 `scale(1.06)` 的高 specificity 規則，改以 chart `width:100%`＋`padding-right:6%` 容納右緣外擴，保留既有正解放大強調與 reduced-motion `transform:none`；L3 把 too-small 警示改為 `role="alert"`；L4 不改程式碼，只在 spec 第 6 節記錄 header／footer 刻意保留、主體隱藏，footer transition 是否停用待 owner 裁定。Spec 第 9 節亦補記 M2 視覺決策與原因。
+- Scoped validation：H1 RED 為 2 failed／13 passed，GREEN 後 `live-presenter.test.tsx` 15／15；Chromium harness 維持 39／39，並在四個正式 viewport 驗證 reveal 正解列仍為 `scale(1.06)` 且位於主體範圍內，1280×720 最緊尺寸仍通過；`npx tsc -b --pretty false`、scoped ESLint、5 個 affected files Prettier、`git diff --check`、production harness-import 機械檢查皆 exit 0。Forbidden paths 相對 base 維持零 diff；Phase 1 tip 仍為 `def3fc96`，無新增 `.live-presenter*` overlap。
+- Remediation commit：`0bcd53a9a6c77ce711be275ea5ba3f5e48f0ec51`（`fix(live): remediate H1 M2 L3 and document L4`，5 paths，22 insertions／7 deletions）。
+- 下一步：本 checkpoint 直接交 owner 依 findings、remediation 與 validation 核准，不再交第二輪 review。只可宣稱「5F-U1 LivePresenter UI surface complete」；不是 5F／Phase 5／Slice Gate／production-ready。Merge／push／hosted 操作仍分別以 owner 授權與 staging runbook 為準。
+
+## 2026-08-10 18:59 [Codex] — Current UI 已可在公開 staging 檢視；Git staging branch 受必要 checks 阻擋
+
+- Owner 授權先把目前 UI 放上 staging 檢視學生端；鎖定的應用程式來源是 clean `phase5f/u1-live-presenter-ui` SHA `2423c0955fb1305f6fd4cbc5634c206eb6f04507`。在 owner 隨後指定 GitHub staging branch 通道前，Vercel CLI deployment 已完成：project `colorplay-staging-web`、deployment `dpl_9toTbRS3VR5BBSQ6cMBgqfAonTfi`、狀態 `READY`，並 alias 至 `https://staging.colorplayapp.com`；根路徑與 `/login` deep link 均實測 HTTP 200。這是 runbook 第 5 節的 interim visibility deployment，不是正式 Staging gate。
+- GitHub 通道：`git push --dry-run origin HEAD:staging` 確認可由 `24ee1ee` fast-forward 到 `2423c095`；實際 direct push 被 GitHub `GH013` 拒絕，原因是受保護 `staging` 必須經 PR 且 9/9 required status contexts 必須存在。未 force、未 admin bypass。
+- 已把 feature branch 推至 `origin/phase5f/u1-live-presenter-ui` 並建立 [PR #4](https://github.com/peiyi-liu/colorplay_v1/pull/4)（base `staging`、初始 head `2423c095`）。兩個 Vercel project checks 與 Vercel Preview Comments 均通過，但 PR 仍為 `BLOCKED`；缺少的 contexts 是 `format`／`lint`／`typecheck`／`unit-coverage`／`production-build`／`local-database`／`chromium-e2e`／`credential-scan`／`owner-approval`。
+- Root cause：目前 branch 的 `.github/workflows/ci.yml` 只監聽 PR→`main` 且只有 `foundation-ci` job；可產生前八個 staging-required contexts 的 Feature CI 仍只存在 `phase0/release-foundation`，尚未整合進本線。這是既有 delivery wiring 缺口，不是本次 U1 測試失敗；本輪未擴大 scope 搬入 CI／staging-deploy workflows，也未偽造 status context。Remote `staging` 因此仍為 `24ee1ee9c03539e44c99dba5f36c13599cf434cd`。
+- 下一步／待 owner 裁定：若目前只需 UI 檢視，可直接使用公開 staging URL；若要求 Git `staging` 與部署 SHA 正式對齊，需另行授權整合 Phase 0 Feature CI／owner-approval wiring，再讓 PR #4 跑完 required checks。此 checkpoint 不宣稱正式 Staging gate、5F、Phase 5、Slice Gate 或 production-ready。
+
 ## 2026-08-10 22:26 [Codex] — Owner 選定 JRPG App Shell「C：連續世界旅程」
 
 - 做了什麼：Owner 從三個 JRPG App Shell 草圖中選定 C「連續世界旅程」作為全站改版方向。固定決策包含：深藍夜空 App Shell 與 HUD 跨 route 穩定、內容以道路／橋樑／霧帶／階梯／光線連成世界段落、不再使用包住主要內容的頁面級大外框、手機版重新構圖、閱讀→小節測驗→複習→章節總測驗以可見旅程節點呈現，並要求每個 route-level 畫面在實作前產生桌機與 393px 草圖供 owner 確認；畫面與場景之間需有轉場。

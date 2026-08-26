@@ -5151,13 +5151,13 @@ a {
   /* Task 8：保留 fixed——投影＝全螢幕接管例外（ledger「Live 投影墨色舞台例外」慣例），不隨舞台改動。 */
   position: fixed;
   z-index: 80;
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
-  padding: var(--space-6);
+  display: grid;
+  overflow: hidden;
+  padding: var(--space-3) var(--space-6);
   background: var(--pixel-night-deep);
   color: var(--white);
-  gap: var(--space-5);
+  gap: var(--space-1);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   inset: 0;
 }
 
@@ -5166,6 +5166,10 @@ a {
   align-items: center;
   justify-content: space-between;
   font-size: 1.25rem;
+}
+
+.live-presenter__bar > p {
+  margin: 0;
 }
 
 .live-presenter__bar > div {
@@ -5182,12 +5186,20 @@ a {
   padding: var(--space-2) var(--space-4);
 }
 
+.live-presenter :focus-visible {
+  outline: 3px solid var(--yellow-brand);
+  outline-offset: 2px;
+}
+
 .live-presenter__lobby,
 .live-presenter__question,
 .live-presenter__feedback,
-.live-presenter__podium-stage {
+.live-presenter__podium-stage,
+.live-presenter__status {
   display: flex;
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -5195,14 +5207,36 @@ a {
   text-align: center;
 }
 
+.live-presenter__feedback {
+  width: min(100%, 60rem);
+  height: 100%;
+  align-self: center;
+  justify-content: flex-start;
+}
+
+.live-presenter__feedback .live-presenter__chart {
+  width: 100%;
+  padding-right: 6%;
+}
+
 /* Neutralize inherited paragraph margins and accidental growth so the
    projector cluster stays tight on any viewport. */
 .live-presenter__lobby > *,
 .live-presenter__question > *,
 .live-presenter__feedback > *,
-.live-presenter__podium-stage > * {
+.live-presenter__podium-stage > *,
+.live-presenter__status > * {
   flex: 0 0 auto;
   margin: 0;
+}
+
+.live-presenter__viewport-warning {
+  display: none;
+  align-self: center;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
 }
 
 .live-presenter__hint {
@@ -5222,9 +5256,12 @@ a {
   font-size: 1.75rem;
 }
 
-.live-presenter__wall {
+.live-presenter__lobby > .live-presenter__wall {
   display: flex;
+  flex: 1 1 auto;
+  overflow: auto;
   max-width: 60rem;
+  min-height: 0;
   flex-wrap: wrap;
   justify-content: center;
   padding: 0;
@@ -5256,6 +5293,40 @@ a {
 .live-presenter__feedback h2 {
   max-width: 60rem;
   font-size: clamp(2rem, 5vw, 3.25rem);
+}
+
+.live-presenter__question {
+  display: grid;
+  width: min(100%, 60rem);
+  align-self: center;
+  gap: var(--space-2);
+  grid-template-areas:
+    'prompt prompt'
+    'timer answered'
+    'options options';
+  grid-template-columns: 120px minmax(0, 1fr);
+  grid-template-rows: auto 120px auto;
+}
+
+.live-presenter__question h2 {
+  grid-area: prompt;
+}
+
+.live-presenter__question .live-presenter__ring,
+.live-presenter__question .live-presenter__paused {
+  align-self: center;
+  grid-area: timer;
+  justify-self: center;
+}
+
+.live-presenter__question .live-presenter__answered {
+  align-self: center;
+  grid-area: answered;
+  justify-self: center;
+}
+
+.live-presenter__question .live-presenter__options {
+  grid-area: options;
 }
 
 .live-presenter__ring {
@@ -5313,7 +5384,7 @@ a {
   font-size: 2rem;
   font-weight: 700;
   gap: var(--space-3);
-  padding: 28px 32px;
+  padding: 12px 24px;
   text-align: left;
 }
 
@@ -5346,6 +5417,12 @@ a {
   padding: 0;
   font-size: 1.5rem;
   list-style: none;
+}
+
+.live-presenter__feedback > .live-presenter__standings {
+  flex: 1 1 auto;
+  overflow: auto;
+  min-height: 0;
 }
 
 .live-presenter__standings li {
@@ -5420,6 +5497,24 @@ a {
   gap: var(--space-3);
 }
 
+@media (width < 1024px), (height < 720px) {
+  .live-presenter {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+
+  .live-presenter__viewport-warning {
+    display: block;
+  }
+
+  .live-presenter__status,
+  .live-presenter__lobby,
+  .live-presenter__question,
+  .live-presenter__feedback,
+  .live-presenter__podium-stage {
+    display: none;
+  }
+}
+
 .live-presenter__controls button {
   border: 1px solid rgb(255 255 255 / 35%);
   border-radius: var(--radius-control);
@@ -5428,6 +5523,11 @@ a {
   cursor: pointer;
   font-size: 1rem;
   padding: var(--space-2) var(--space-5);
+}
+
+.live-presenter__controls button:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 
 .live-presenter__controls .primary-action {
@@ -5440,6 +5540,13 @@ a {
 [data-reduced-motion='true'] .live-presenter__wall-chip,
 [data-reduced-motion='true'] .live-presenter__podium-step {
   animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-presenter__wall-chip,
+  .live-presenter__podium-step {
+    animation-name: none;
+  }
 }
 
 [data-reduced-motion='true'] .live-presenter__ring svg {
@@ -7385,11 +7492,11 @@ select#dashboard-classroom {
 }
 
 .live-presenter__podium::before {
-  left: -44px;
+  left: 0;
 }
 
 .live-presenter__podium::after {
-  right: -44px;
+  right: 0;
   animation-delay: 0.6s;
 }
 
