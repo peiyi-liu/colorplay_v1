@@ -49,18 +49,24 @@ successful. Production remains a separate Candidate/Promotion workflow using
 `vercel deploy --prebuilt --prod --skip-domain` followed by owner-approved
 `vercel promote`; `main` does not automatically deploy Production.
 
-- 開啟部署 URL → 登入 `student.one@colorplay.test` / `LocalOnly-Student1!`
-  或 `teacher@colorplay.test` / `LocalOnly-Teacher1!`。
+- 開啟部署 URL → 使用 `tests/fixtures/users.ts`（`TEST_USERS` registry）裡登記的
+  學生／教師測試帳號登入，密碼一律查該檔案，不在文件中重複列出明文。
 - 章節挑戰、複習卡、Live 對戰（Realtime）皆應可用。
-- `AC-LIVE-012` 的真實網路延遲取樣在此環境補驗（Phase 8 前）。
+- `AC-LIVE-012` 的真實網路延遲取樣在此環境補驗（正式 Production 上線前）。
 
 ## 注意
 
-- Staging 測試帳號密碼為 LocalOnly-* 系列，僅供內部驗證；Production（Phase 8）
-  將是全新專案、不帶任何種子使用者。
+- Staging 測試帳號密碼統一登記在 `tests/fixtures/users.ts`，僅供內部驗證；
+  正式 Production 環境將是全新專案、不帶任何種子使用者。
 - token 用完建議到各平台輪替（已在對話中出現過）。
 
-## 4. Phase 9-AUTH（帳號制認證）增量部署（2026-07-20）
+## 4. Phase 9-AUTH（帳號制認證）增量部署（2026-07-20，已停用的舊管道）
+
+> ⚠️ **歷史記錄，不是現行操作程序**：下方步驟直接 `git push` 到 `main`、對
+> Auth redirect 加寬版萬用字元，且以明文環境變數傳遞金鑰——三者皆與本文件
+> 開頭「Rebuild sequence」明列的禁止事項牴觸。保留本節僅為記錄 2026-07-20
+> 當時實際執行過什麼；現行管道一律走「Deployment and acceptance」一節描述
+> 的 PR → 受保護 `staging` 分支 → CI 閘門流程。
 
 > **狀態：已於 2026-07-20 執行完成**（migrations ×4、functions ×3、remote seed、
 > Site URL／redirect 白名單／OTP 長度 6 已由 Management API 設定；Vercel 部署 READY）。
@@ -73,11 +79,11 @@ successful. Production remains a separate Candidate/Promotion workflow using
 與 3 個 Edge Functions。依序執行：
 
 ```bash
-# 1) 前端：push 到 Vercel 連結的部署鏡像（colorplay_v1@main 自動建置上線）
-git push https://github.com/peiyi-liu/colorplay_v1.git HEAD:main
+# 1) 前端：（已停用——原步驟直接 push 到 Vercel 連結的 main 分支部署鏡像，
+#    牴觸本文件禁止事項，現行管道見「Deployment and acceptance」一節）
 
 # 2) 資料庫增量（不重置、保留既有資料）
-export SUPABASE_ACCESS_TOKEN=sbp_（你的 token）
+export SUPABASE_ACCESS_TOKEN=<你的 Supabase access token>
 supabase link --project-ref onkxnkzeixpezetkmocf
 supabase db push
 
@@ -94,9 +100,11 @@ pnpm exec tsx scripts/supabase/seed-auth.ts
 
 ### Dashboard 一次性設定（無 API 可代做，需人工）
 
-1. Auth → URL Configuration：
+1. Auth → URL Configuration（已停用——同樣牴觸本文件禁止的「加寬版 Auth
+   redirect 萬用字元」；正式管道的 Site URL／redirect 規則見「Approved Auth
+   URL and SMTP isolation contract」一節，僅允許精確的 Staging callback 路徑）：
    - Site URL：`https://colorplay-staging.vercel.app`
-   - Redirect URLs 加入：`https://colorplay-staging.vercel.app/**`
+   - Redirect URLs 加入：僅該網域下的精確回呼路徑，不加寬版萬用字元
 2. Auth → Email Templates：`Magic Link` 與 `Confirm signup` 兩個模板
    - 主旨：`ColorPlay 電子郵件驗證碼`
    - 內容：貼上 `supabase/templates/email-otp.html`（重點：必須含 `{{ .Token }}`

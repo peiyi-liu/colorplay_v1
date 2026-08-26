@@ -48,14 +48,6 @@ values
     '', '', '', ''
   );
 
--- Make Chapters 1 and 2 minimally complete published content fixtures.
-update public.quiz_templates
-set question_count = 1
-where chapter_id in (
-  '21000000-0000-0000-0000-000000000001',
-  '21000000-0000-0000-0000-000000000002'
-);
-
 insert into public.sections (
   id, chapter_id, stable_code, title, description, status, sort_order
 )
@@ -93,13 +85,34 @@ values
   (
     '47300000-0000-0000-0000-000000000001',
     '47200000-0000-0000-0000-000000000001',
-    '1-1-01', 'Sequence question 1?', 'Sequence explanation 1.', 'published', 1
+    '99-1-01', 'Sequence question 1?', 'Sequence explanation 1.', 'published', 1
   ),
   (
     '47300000-0000-0000-0000-000000000002',
     '47200000-0000-0000-0000-000000000002',
-    '2-1-01', 'Sequence question 2?', 'Sequence explanation 2.', 'published', 1
+    '99-2-01', 'Sequence question 2?', 'Sequence explanation 2.', 'published', 1
   );
+
+-- Chapters 1 and 2 already carry real published content in addition to
+-- this fixture's own question, and chapter mastery is computed across a
+-- chapter's whole published question pool. Size each quiz template to
+-- cover every published question so a fully-correct run reaches 100%
+-- mastery instead of a stale hardcoded count going stale as content grows.
+update public.quiz_templates t
+set question_count = (
+  select count(*)
+  from public.questions q
+  join public.subtopics st on st.id = q.subtopic_id
+  join public.sections se on se.id = st.section_id
+  where se.chapter_id = t.chapter_id
+    and q.status = 'published'
+    and st.status = 'published'
+    and se.status = 'published'
+)
+where t.chapter_id in (
+  '21000000-0000-0000-0000-000000000001',
+  '21000000-0000-0000-0000-000000000002'
+);
 
 insert into public.question_options (
   id, question_id, option_key, option_text, is_correct, sort_order
@@ -290,30 +303,37 @@ select set_config(
   current_setting('test.sequence_a_quiz')::jsonb ->> 'session_id',
   true
 );
-select set_config(
-  'test.sequence_a_question',
-  current_setting('test.sequence_a_quiz')::jsonb
-    #>> '{questions,0,session_question_id}',
-  true
-);
-select set_config(
-  'test.sequence_a_correct',
-  (
-    select question.correct_option_id::text
-    from public.quiz_session_questions question
-    where question.id = current_setting('test.sequence_a_question')::uuid
-  ),
-  true
-);
-select set_config(
-  'test.sequence_a_answer',
-  public.submit_quiz_answer(
-    current_setting('test.sequence_a_question')::uuid,
-    '47600000-0000-0000-0000-000000000006',
-    current_setting('test.sequence_a_correct')::uuid
-  )::text,
-  true
-);
+-- Answer every returned question correctly, not just the first, since the
+-- chapter's real content means more than one question is now drawn.
+-- Questions activate one at a time (activate_next_quiz_question), so each
+-- iteration activates, then answers, the current lowest unanswered position.
+do $answer_all_sequence_a$
+declare
+  session_uuid uuid := current_setting('test.sequence_a_session')::uuid;
+  total_questions integer := jsonb_array_length(
+    current_setting('test.sequence_a_quiz')::jsonb -> 'questions'
+  );
+  session_question_id uuid;
+  correct_option_id uuid;
+begin
+  for i in 1..total_questions loop
+    perform public.activate_next_quiz_question(session_uuid);
+    select sq.id, sq.correct_option_id
+    into session_question_id, correct_option_id
+    from public.quiz_session_questions sq
+    left join public.quiz_answers a on a.session_question_id = sq.id
+    where sq.session_id = session_uuid
+      and a.id is null
+    order by sq.position
+    limit 1;
+    perform public.submit_quiz_answer(
+      session_question_id,
+      gen_random_uuid(),
+      correct_option_id
+    );
+  end loop;
+end;
+$answer_all_sequence_a$;
 select lives_ok(
   $$select public.finalize_quiz_session(
     current_setting('test.sequence_a_session')::uuid
@@ -349,7 +369,7 @@ select is(
       '21000000-0000-0000-0000-000000000002'
     )
   ),
-  1,
+  5,
   'an unlocked chapter returns its published review tree'
 );
 
@@ -371,30 +391,33 @@ select set_config(
   current_setting('test.sequence_b_quiz')::jsonb ->> 'session_id',
   true
 );
-select set_config(
-  'test.sequence_b_question',
-  current_setting('test.sequence_b_quiz')::jsonb
-    #>> '{questions,0,session_question_id}',
-  true
-);
-select set_config(
-  'test.sequence_b_correct',
-  (
-    select question.correct_option_id::text
-    from public.quiz_session_questions question
-    where question.id = current_setting('test.sequence_b_question')::uuid
-  ),
-  true
-);
-select set_config(
-  'test.sequence_b_answer',
-  public.submit_quiz_answer(
-    current_setting('test.sequence_b_question')::uuid,
-    '47600000-0000-0000-0000-000000000008',
-    current_setting('test.sequence_b_correct')::uuid
-  )::text,
-  true
-);
+do $answer_all_sequence_b$
+declare
+  session_uuid uuid := current_setting('test.sequence_b_session')::uuid;
+  total_questions integer := jsonb_array_length(
+    current_setting('test.sequence_b_quiz')::jsonb -> 'questions'
+  );
+  session_question_id uuid;
+  correct_option_id uuid;
+begin
+  for i in 1..total_questions loop
+    perform public.activate_next_quiz_question(session_uuid);
+    select sq.id, sq.correct_option_id
+    into session_question_id, correct_option_id
+    from public.quiz_session_questions sq
+    left join public.quiz_answers a on a.session_question_id = sq.id
+    where sq.session_id = session_uuid
+      and a.id is null
+    order by sq.position
+    limit 1;
+    perform public.submit_quiz_answer(
+      session_question_id,
+      gen_random_uuid(),
+      correct_option_id
+    );
+  end loop;
+end;
+$answer_all_sequence_b$;
 select lives_ok(
   $$select public.finalize_quiz_session(
     current_setting('test.sequence_b_session')::uuid

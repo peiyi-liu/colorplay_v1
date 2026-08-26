@@ -68,18 +68,12 @@ values
     '', '', '', ''
   );
 
--- 取一個已發布章節（含已發布題目）
+-- 取一個已發布且內容量達標（sequential chapter access 允許進入）的章節
 create temporary table mastery_fixture on commit drop as
 select c.id as chapter_id
 from public.chapters c
 where c.status = 'published'
-  and exists (
-    select 1
-    from public.questions q
-    join public.subtopics st on st.id = q.subtopic_id
-    join public.sections se on se.id = st.section_id
-    where se.chapter_id = c.id and q.status = 'published'
-  )
+  and public.chapter_content_is_available(c.id)
 order by c.sort_order
 limit 1;
 

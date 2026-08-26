@@ -302,8 +302,12 @@ select results_eq(
   $$select review_completed, review_total, coverage, accuracy, mastery, status
     from public.get_learning_progress('21000000-0000-0000-0000-000000000004')
     where scope = 'subtopic'$$,
-  $$values (0, null::integer, 0.0::numeric, null::numeric, 0.0::numeric,
-    'not_started')$$,
+  $$values
+    (0, null::integer, 0.0::numeric, null::numeric, 0.0::numeric, 'not_started'),
+    (0, null::integer, 0.0::numeric, null::numeric, 0.0::numeric, 'not_started'),
+    (0, null::integer, 0.0::numeric, null::numeric, 0.0::numeric, 'not_started'),
+    (0, null::integer, 0.0::numeric, null::numeric, 0.0::numeric, 'not_started')
+  $$,
   'an untouched subtopic reports not started with dash denominators'
 );
 select results_eq(
@@ -311,7 +315,7 @@ select results_eq(
     from public.get_learning_progress('21000000-0000-0000-0000-000000000003')
     where scope = 'chapter'$$,
   $$values (
-    1, 3, round(23 * 100.0 / 37, 1), round(22 * 100.0 / 23, 1),
+    1, 6, round(23 * 100.0 / 37, 1), round(22 * 100.0 / 23, 1),
     round(22 * 100.0 / 37, 1), 'learning'
   )$$,
   'the chapter aggregates over all current versions, not subtopic averages'

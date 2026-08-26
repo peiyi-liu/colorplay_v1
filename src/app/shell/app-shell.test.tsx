@@ -543,12 +543,12 @@ describe('AppShell', () => {
     } as unknown as MediaQueryList);
     renderShellRoute('/app');
 
-    expect(screen.getByRole('status')).toHaveTextContent(
+    expect(document.querySelector('.rotate-banner')).toHaveTextContent(
       '轉橫可看完整森林王國村',
     );
     expect(screen.queryByRole('dialog')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: '關閉轉向提示' }));
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(document.querySelector('.rotate-banner')).toBeNull();
     expect(screen.getByRole('button', { name: '地圖操作' })).toBeVisible();
   });
 
@@ -561,7 +561,9 @@ describe('AppShell', () => {
     } as unknown as MediaQueryList);
     renderShellRoute('/app/shop');
 
-    expect(screen.getByRole('status')).toHaveTextContent('轉橫體驗更佳');
+    expect(document.querySelector('.rotate-banner')).toHaveTextContent(
+      '轉橫體驗更佳',
+    );
   });
 
   it('keeps compact map HUD contents within the 58px minimum outer height', () => {

@@ -167,7 +167,21 @@ select is(
 );
 update public.quiz_templates set status = 'published' where chapter_id = '21000000-0000-0000-0000-000000000003';
 
-update public.quiz_templates set question_count = 2 where chapter_id = '21000000-0000-0000-0000-000000000001';
+-- Chapter 1 now also carries real published content beyond this fixture's
+-- own question, so require one more than whatever is actually published
+-- to reliably force the insufficient-question-count path.
+update public.quiz_templates t
+set question_count = (
+  select count(*) + 1
+  from public.questions q
+  join public.subtopics st on st.id = q.subtopic_id
+  join public.sections se on se.id = st.section_id
+  where se.chapter_id = t.chapter_id
+    and q.status = 'published'
+    and st.status = 'published'
+    and se.status = 'published'
+)
+where t.chapter_id = '21000000-0000-0000-0000-000000000001';
 select throws_ok(
   $$select public.activate_course_sequential(
     '20000000-0000-0000-0000-000000000001'
