@@ -1,3 +1,10 @@
+import {
+  SpiritAvatar,
+  spiritForSeed,
+} from '../../../components/ui/spirit-avatar';
+
+import './battle-stage.css';
+
 export type BattlePhase = 'idle' | 'attacking' | 'hit' | 'miss' | 'enemyStrike';
 
 const phaseClass: Record<BattlePhase, string> = {
@@ -9,18 +16,35 @@ const phaseClass: Record<BattlePhase, string> = {
 };
 
 /** 戰鬥舞台:純裝飾演出。三拍時序由 phase 驅動,verdict 只能來自伺服器回應後的
-    feedbackResult——此元件不含任何判定邏輯(spec §4.4)。幾何魔物為 CSS-first
-    佔位,素材批換裝(spec §4.5)。 */
+    feedbackResult——此元件不含任何判定邏輯(spec §4.4)。題目 stable code 只用來
+    確定性輪替既有三色精靈，不參與出題、正誤或獎勵判定。 */
 export function BattleStage({
   comboCount,
   phase,
-}: Readonly<{ comboCount: number; phase: BattlePhase }>) {
+  questionSeed,
+}: Readonly<{
+  comboCount: number;
+  phase: BattlePhase;
+  questionSeed: string;
+}>) {
+  const health = phase === 'hit' ? 'empty' : 'full';
+
   return (
-    <div aria-hidden="true" className={`battle-stage ${phaseClass[phase]}`}>
-      <div className="battle-stage__monster">
-        <span className="battle-monster__body" />
-        <span className="battle-monster__eye battle-monster__eye--left" />
-        <span className="battle-monster__eye battle-monster__eye--right" />
+    <div
+      aria-hidden="true"
+      className={`battle-stage ${phaseClass[phase]}`}
+      data-enemy-health={health}
+    >
+      <div className="battle-stage__enemy">
+        <div className="battle-stage__health">
+          <span className="battle-stage__health-track">
+            <span className="battle-stage__health-fill" />
+          </span>
+        </div>
+        <div className="battle-stage__spirit">
+          <SpiritAvatar variant={spiritForSeed(questionSeed)} />
+        </div>
+        <span className="battle-stage__enemy-name">森林小精靈</span>
       </div>
       {phase === 'attacking' ? <span className="battle-stage__slash" /> : null}
       {phase === 'miss' ? (

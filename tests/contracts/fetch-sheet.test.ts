@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest';
 import XLSX from 'xlsx';
 
 import {
+  CHAPTER_REVIEW_TAB_NAME,
+  extractChapterReviewRows,
+  extractLiveRows,
   extractQuestionRows,
   extractReviewRows,
+  LIVE_TAB_NAME,
   QUESTION_TAB_NAME,
   REVIEW_TAB_NAME,
   toCsv,
@@ -39,8 +43,11 @@ function makeWorkbook({
   XLSX.utils.book_append_sheet(
     workbook,
     XLSX.utils.aoa_to_sheet([
-      [' ', '小節', '子主題', '卡片標題', '卡片內容'],
-      ...reviewRows.map((row) => [...row]),
+      ['複習卡序號', ' ', '小節', '子主題', '卡片標題', '卡片內容'],
+      ...reviewRows.map((row, index) => [
+        `RC31${String(index + 1).padStart(2, '0')}`,
+        ...row,
+      ]),
     ]),
     REVIEW_TAB_NAME,
   );
@@ -99,6 +106,140 @@ const missingAnswerRow = [
 ];
 
 describe('fetch-sheet 題庫分頁解析', () => {
+  it('將 LT 工作表轉成獨立 Live 題池列', () => {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        [
+          '題庫序號',
+          '章節',
+          '章節標題',
+          '小節',
+          '小節標題',
+          '題目',
+          'A',
+          'B',
+          'C',
+          'D',
+          '解答',
+          '答錯觀念解析',
+        ],
+        [
+          'LT3101',
+          '3',
+          '色彩表示',
+          '1',
+          '色彩三要素',
+          'Live 題目？',
+          '甲',
+          '乙',
+          '丙',
+          '丁',
+          'B',
+          'Live 解析。',
+        ],
+      ]),
+      LIVE_TAB_NAME,
+    );
+
+    const result = extractLiveRows(workbook);
+    expect(result).toEqual({
+      placeholders: [],
+      problems: [],
+      rows: [
+        expect.objectContaining({
+          code: 'LT3101',
+          section: '1',
+          sectionTitle: '色彩三要素',
+          source: 'live',
+        }),
+      ],
+    });
+    expect(parseCsv(toQuestionsCsv(result.rows))[1]?.[2]).toBe(
+      '3-1 色彩三要素',
+    );
+  });
+
+  it('依新版 QB／CR 工作表與系統序號分流兩種題庫', () => {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        [
+          '題庫序號',
+          '章節',
+          '章節標題',
+          '小節',
+          '小節標題',
+          '題目',
+          '選項 A ',
+          '選項 B ',
+          '選項 C',
+          '選項 D',
+          '正確答案 ',
+          '答錯觀念解析',
+        ],
+        [
+          'QB3101',
+          '3',
+          '色彩表示',
+          '1',
+          '色彩三要素',
+          '小節題目？',
+          '甲',
+          '乙',
+          '丙',
+          '丁',
+          'A',
+          '小節解析。',
+        ],
+      ]),
+      QUESTION_TAB_NAME,
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        [
+          '總章節題庫序號',
+          '章節',
+          '章節標題',
+          '題目',
+          '選項 A ',
+          '選項 B ',
+          '選項 C',
+          '選項 D',
+          '正確答案 ',
+          '答錯觀念解析',
+        ],
+        [
+          'CR3001',
+          '3',
+          '色彩表示',
+          '章節題目？',
+          '甲',
+          '乙',
+          '丙',
+          '丁',
+          'B',
+          '章節解析。',
+        ],
+      ]),
+      CHAPTER_REVIEW_TAB_NAME,
+    );
+
+    expect(extractQuestionRows(workbook).rows[0]).toMatchObject({
+      code: 'QB3101',
+      sectionTitle: '色彩三要素',
+      source: 'section',
+    });
+    expect(extractChapterReviewRows(workbook).rows[0]).toMatchObject({
+      code: 'CR3001',
+      sectionTitle: '章節總複習',
+      source: 'chapter',
+    });
+  });
+
   it('容忍表頭尾空格並依欄名對應欄位', () => {
     const result = extractQuestionRows(
       makeWorkbook({ questionRows: [fullRow] }),
@@ -160,6 +301,21 @@ describe('fetch-sheet 題庫分頁解析', () => {
     expect(result.rows[0]?.code).toBe('3-1-01');
   });
 
+  it('接受新版 Sheet 的題庫序號欄名', () => {
+    const workbook = makeWorkbook({ questionRows: [fullRow] });
+    const questionSheet = workbook.Sheets[QUESTION_TAB_NAME];
+    if (!questionSheet) throw new Error('測試題庫工作表不存在');
+    questionSheet.A1 = {
+      t: 's',
+      v: '題庫序號',
+    };
+
+    const result = extractQuestionRows(workbook);
+
+    expect(result.problems).toEqual([]);
+    expect(result.rows[0]?.code).toBe('3-1-01');
+  });
+
   it('缺少必要欄位時回報 problems', () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(
@@ -181,7 +337,7 @@ describe('fetch-sheet 題庫分頁解析', () => {
     expect(parsed[1]).toEqual([
       '3-1-01',
       '3',
-      '色彩三要素與色名的表示',
+      '3-1 色彩三要素與色名的表示',
       '純色加入黑色所得的色彩稱為？',
       '明色',
       '中間色',
@@ -194,6 +350,43 @@ describe('fetch-sheet 題庫分頁解析', () => {
 });
 
 describe('fetch-sheet 複習大廳解析', () => {
+  it('保留 RC 系統序號供複習卡作正式 stable identifier', () => {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        [
+          '複習卡序號',
+          '章節',
+          '章節標題',
+          '小節',
+          '小節標題',
+          '子主題',
+          '子主題標題',
+          '卡片內容',
+          '附件',
+        ],
+        [
+          'RC3101',
+          '3',
+          '色彩表示',
+          '1',
+          '色彩三要素',
+          '1',
+          '色彩的分類',
+          '卡片內容',
+          '',
+        ],
+      ]),
+      REVIEW_TAB_NAME,
+    );
+
+    const result = extractReviewRows(workbook);
+
+    expect(result.problems).toEqual([]);
+    expect(parseCsv(toReviewCardsCsv(result.rows))[1]?.[0]).toBe('RC3101');
+  });
+
   it('容忍空白章欄表頭，輸出可被 buildReviewCardImport 使用', () => {
     const result = extractReviewRows(
       makeWorkbook({

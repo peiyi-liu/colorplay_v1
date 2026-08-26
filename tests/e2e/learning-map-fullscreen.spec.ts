@@ -478,7 +478,7 @@ test('keeps the learning map presentable when only the inventory snapshot fails'
   const fallbackArt = page.locator('.chapter-map__companion .blook-art');
   await expect(fallbackArt).toHaveAttribute(
     'src',
-    '/assets/blooks/little_fox.png',
+    '/assets/blooks/little_fox-128.webp',
   );
   const resilience = await fallbackArt.evaluate((element) => {
     const container = element.parentElement;

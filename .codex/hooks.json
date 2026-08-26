@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "'/Users/guanyucheng/Desktop/pei-game/colorplay/.codex/hooks/review-gate.sh'"
+            "command": "bash .codex/hooks/review-gate.sh"
           }
         ]
       }

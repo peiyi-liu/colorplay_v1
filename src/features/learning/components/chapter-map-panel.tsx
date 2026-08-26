@@ -16,6 +16,11 @@ const accessLabels: Readonly<Record<ChapterAccessState, string>> = {
 const progressValue = (value: number | null, suffix = ''): string =>
   value === null ? '—' : `${String(value)}${suffix}`;
 
+const chapterOrdinals = ['一', '二', '三', '四', '五', '六'] as const;
+
+const chapterOrdinal = (sortOrder: number): string =>
+  `第${chapterOrdinals[sortOrder - 1] ?? String(sortOrder)}章`;
+
 function blockerText(blocker: ChapterAccessBlocker): string {
   if (blocker.code === 'CONTENT_UNAVAILABLE') return '本章內容仍在準備中';
   if (blocker.code === 'PREREQUISITE_REVIEW') {
@@ -30,6 +35,12 @@ export function ChapterMapPanel({
   const actionable =
     chapter.accessState === 'available' || chapter.accessState === 'completed';
   const titleId = `chapter-map-panel-${chapter.chapterId}`;
+  const actionLabel =
+    chapter.accessState === 'completed'
+      ? `查看${chapterOrdinal(chapter.sortOrder)}`
+      : chapter.reviewCompleted > 0
+        ? `繼續${chapterOrdinal(chapter.sortOrder)}`
+        : `開始${chapterOrdinal(chapter.sortOrder)}`;
 
   return (
     <aside
@@ -79,7 +90,7 @@ export function ChapterMapPanel({
             data-primary-action="true"
             to={`/app/chapters/${chapter.chapterId}`}
           >
-            進入複習與進度
+            {actionLabel}
           </Link>
         ) : (
           <p className="chapter-map__unavailable">

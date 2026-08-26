@@ -55,4 +55,26 @@ describe('EconomySummaryView', () => {
     expect(screen.getByText('250 / 500 XP')).toBeVisible();
     expect(screen.getByText('250 Token')).toBeVisible();
   });
+
+  it('groups the HUD level and experience bar as one progression row', () => {
+    const summary: EconomySummary = {
+      currentLevelXp: 250,
+      level: 2,
+      tokenBalance: 1250,
+      totalXp: 750,
+      walletReconciled: true,
+      xpPerLevel: 500,
+    };
+
+    render(<EconomySummaryView summary={summary} variant="hud" />);
+
+    const progress = screen.getByRole('progressbar', {
+      name: 'Lv.2 經驗進度',
+    });
+    expect(
+      progress.closest('.economy-summary__hud-progression'),
+    ).toContainElement(screen.getByText('Lv.2'));
+    expect(progress).toHaveAttribute('value', '250');
+    expect(screen.getByLabelText('1250 Token')).toBeVisible();
+  });
 });

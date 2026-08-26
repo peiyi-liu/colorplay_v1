@@ -13,7 +13,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from '../../features/auth/context/auth-context';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { ProfileRepositoryError } from '../../features/profile/types';
-import { useBlookInventory } from '../../features/inventory/hooks/use-blook-inventory';
+import {
+  useBlookInventory,
+  useFrameInventory,
+} from '../../features/inventory/hooks/use-blook-inventory';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
 import { ToastProvider } from '../../components/ui/toast';
 import { AppShell } from './app-shell';
@@ -43,11 +46,13 @@ vi.mock('../../features/rewards/hooks/use-economy-summary', () => ({
 }));
 vi.mock('../../features/inventory/hooks/use-blook-inventory', () => ({
   useBlookInventory: vi.fn(),
+  useFrameInventory: vi.fn(),
 }));
 
 const mockedUseAuth = vi.mocked(useAuth);
 const mockedUseMyProfile = vi.mocked(useMyProfile);
 const mockedUseBlookInventory = vi.mocked(useBlookInventory);
+const mockedUseFrameInventory = vi.mocked(useFrameInventory);
 const mockedUseEconomySummary = vi.mocked(useEconomySummary);
 
 const economyResult = (
@@ -58,6 +63,10 @@ const economyResult = (
 const inventoryResult = (
   value: Partial<ReturnType<typeof useBlookInventory>>,
 ) => value as ReturnType<typeof useBlookInventory>;
+
+const frameInventoryResult = (
+  value: Partial<ReturnType<typeof useFrameInventory>>,
+) => value as ReturnType<typeof useFrameInventory>;
 
 const renderStudentShell = () =>
   render(
@@ -111,6 +120,7 @@ const renderTeacherShell = () => {
       role: 'teacher',
       timezone: 'Asia/Taipei',
       reducedMotion: false,
+      registrationComplete: true,
     },
     error: null,
     isError: false,
@@ -118,7 +128,21 @@ const renderTeacherShell = () => {
     refetch: vi.fn(),
   });
 
-  return renderStudentShell();
+  const router = createMemoryRouter(
+    [
+      {
+        children: [{ element: <div>教師頁內容</div>, path: '/teacher' }],
+        element: (
+          <ToastProvider>
+            <AppShell />
+          </ToastProvider>
+        ),
+      },
+    ],
+    { initialEntries: ['/teacher'] },
+  );
+
+  return render(<RouterProvider router={router} />);
 };
 
 const renderAdminShell = () => {
@@ -139,6 +163,7 @@ const renderAdminShell = () => {
       role: 'admin',
       timezone: 'Asia/Taipei',
       reducedMotion: false,
+      registrationComplete: true,
     },
     error: null,
     isError: false,
@@ -147,21 +172,6 @@ const renderAdminShell = () => {
   });
 
   return renderStudentShell();
-};
-
-const expectCommandBeforeHeaderAndMain = () => {
-  const main = screen.getByRole('main');
-  const stage = main.parentElement;
-  const command = stage?.querySelector('.hud-command');
-  const header = stage?.querySelector('.hud-top');
-
-  if (!stage || !command || !header) {
-    throw new Error('authenticated HUD shell is incomplete');
-  }
-
-  const children = [...stage.children];
-  expect(children.indexOf(command)).toBeLessThan(children.indexOf(header));
-  expect(children.indexOf(command)).toBeLessThan(children.indexOf(main));
 };
 
 describe('AppShell', () => {
@@ -194,6 +204,7 @@ describe('AppShell', () => {
         role: 'student',
         timezone: 'Asia/Taipei',
         reducedMotion: false,
+        registrationComplete: true,
       },
       error: null,
       isError: false,
@@ -230,6 +241,18 @@ describe('AppShell', () => {
               stableCode: 'little_fox',
             },
           ],
+          tokenBalance: 250,
+        },
+        isError: false,
+        isPending: false,
+      }),
+    );
+    mockedUseFrameInventory.mockReset();
+    mockedUseFrameInventory.mockReturnValue(
+      frameInventoryResult({
+        data: {
+          activeFrameId: '',
+          items: [],
           tokenBalance: 250,
         },
         isError: false,
@@ -286,13 +309,61 @@ describe('AppShell', () => {
   it('renders student HUD navigation before the identity header and main content', () => {
     renderStudentShell();
 
-    expectCommandBeforeHeaderAndMain();
+    const hud = screen.getByRole('banner');
+    expect(
+      within(hud).getByRole('navigation', { name: '主要導覽' }),
+    ).toBeVisible();
+    expect(within(hud).getByRole('group', { name: '學生身分' })).toBeVisible();
+    expect(hud.nextElementSibling).toBe(screen.getByRole('main'));
   });
 
-  it('renders teacher HUD navigation before the identity header and main content', () => {
+  it('does not render legacy HUD chrome around teacher routes', () => {
     renderTeacherShell();
 
-    expectCommandBeforeHeaderAndMain();
+    expect(screen.getByText('教師頁內容')).toBeVisible();
+    expect(document.querySelector('.hud-command')).toBeNull();
+    expect(document.querySelector('.hud-top')).toBeNull();
+    expect(screen.queryByRole('navigation', { name: '主要導覽' })).toBeNull();
+  });
+
+  it('keeps an OTP-authenticated but incomplete student on the public registration shell', () => {
+    mockedUseMyProfile.mockReturnValue({
+      data: {
+        displayName: '待完成註冊',
+        id: 'student-one-id',
+        reducedMotion: false,
+        registrationComplete: false,
+        role: 'student',
+        timezone: 'Asia/Taipei',
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+
+    const router = createMemoryRouter(
+      [
+        {
+          children: [{ element: <div>繼續完成註冊</div>, path: '/register' }],
+          element: (
+            <ToastProvider>
+              <AppShell />
+            </ToastProvider>
+          ),
+        },
+      ],
+      { initialEntries: ['/register'] },
+    );
+
+    render(<RouterProvider router={router} />);
+
+    expect(screen.getByText('繼續完成註冊')).toBeVisible();
+    expect(document.querySelector('.student-hud')).toBeNull();
+    expect(document.querySelector('.game-stage')).toHaveAttribute(
+      'data-shell-role',
+      'public',
+    );
   });
 
   it('renders no game HUD chrome for an admin profile, only an identity/sign-out strip', () => {
@@ -323,6 +394,7 @@ describe('AppShell', () => {
         role: 'admin',
         timezone: 'Asia/Taipei',
         reducedMotion: false,
+        registrationComplete: true,
       },
       error: null,
       isError: false,
@@ -375,9 +447,9 @@ describe('AppShell', () => {
 
     expect(screen.queryByRole('link', { name: '教師工作區' })).toBeNull();
     expect(screen.queryByText(/教師端/u)).toBeNull();
-    // HUD 重組批：裝備商店/班級排行榜/成就徽章已移入 MENU 面板，需先開 MENU。
+    // 商店提升為主導覽；排行榜與成就仍留在 MENU。
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
-    expect(screen.getByRole('link', { name: '裝備商店' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '商店' })).toHaveAttribute(
       'href',
       '/app/shop',
     );
@@ -401,20 +473,37 @@ describe('AppShell', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('Level 2')).toBeVisible();
-    expect(screen.getByText('250 / 500 XP')).toBeVisible();
-    expect(screen.getByText('250 Token')).toBeVisible();
+    expect(screen.getByText('Lv.2')).toBeVisible();
+    expect(screen.getByText('250 / 500')).toBeVisible();
+    expect(screen.getByLabelText('250 Token')).toBeVisible();
+    const token = screen.getByLabelText('250 Token');
+    expect(token.querySelector('.hud-coin-pixel--32bit')).not.toBeNull();
+    expect(token.querySelector('svg')).toBeNull();
     expect(mockedUseEconomySummary).toHaveBeenCalledOnce();
     expect(mockedUseBlookInventory).toHaveBeenCalledOnce();
   });
 
-  it('uses the learning-map HUD only for the exact /app route, including query strings', () => {
+  it('groups the equipped avatar and profile nickname in the visible student HUD identity', () => {
+    renderStudentShell();
+
+    const identity = screen.getByRole('group', { name: '學生身分' });
+    expect(identity.querySelector('.hud-avatar')).not.toBeNull();
+    expect(within(identity).getByText('student.one')).toBeVisible();
+    expect(within(identity).getByText('Lv.2')).toBeVisible();
+  });
+
+  it('uses the learning-map scene only for the exact /app route, including query strings', () => {
     renderShellRoute('/app?chapter=21000000-0000-0000-0000-000000000002');
 
-    const stage = screen.getByRole('main').closest('.game-stage');
-    expect(stage).toHaveClass('game-stage--learning-map');
+    const main = screen.getByRole('main');
+    const stage = main.closest('.game-stage');
+    expect(stage).toHaveAttribute('data-shell-role', 'student');
+    expect(main).toHaveAttribute('data-world-scene', 'learning-map');
     expect(screen.getByRole('banner')).toContainElement(
-      document.querySelector('.economy-summary--learning-map'),
+      document.querySelector('.economy-summary'),
+    );
+    expect(document.querySelector('.economy-summary')).not.toHaveClass(
+      'economy-summary--learning-map',
     );
     expect(mockedUseEconomySummary).toHaveBeenCalledOnce();
     expect(mockedUseBlookInventory).toHaveBeenCalledOnce();
@@ -423,9 +512,28 @@ describe('AppShell', () => {
   it('does not use the learning-map HUD for child student routes', () => {
     renderShellRoute('/app/shop');
 
-    const stage = screen.getByRole('main').closest('.game-stage');
+    const main = screen.getByRole('main');
+    const stage = main.closest('.game-stage');
     expect(stage).not.toHaveClass('game-stage--learning-map');
+    expect(stage).toHaveAttribute('data-shell-role', 'student');
+    expect(main).toHaveAttribute('data-world-scene', 'student-route');
     expect(document.querySelector('.economy-summary--learning-map')).toBeNull();
+    const backButton = screen.getByRole('button', { name: '返回前一頁' });
+    expect(screen.getByRole('banner')).not.toContainElement(backButton);
+    expect(main).toContainElement(backButton);
+  });
+
+  it('marks the learning map as a scene without switching to a route-specific HUD geometry', () => {
+    renderShellRoute('/app');
+
+    const main = screen.getByRole('main');
+    const stage = main.closest('.game-stage');
+    expect(stage).toHaveAttribute('data-shell-role', 'student');
+    expect(stage).not.toHaveClass('game-stage--learning-map');
+    expect(main).toHaveAttribute('data-world-scene', 'learning-map');
+    expect(document.querySelector('.economy-summary')).not.toHaveClass(
+      'economy-summary--learning-map',
+    );
   });
 
   it('shows recoverable profile resolution states and mounts the route subtree once', async () => {
@@ -443,6 +551,7 @@ describe('AppShell', () => {
               role: 'student',
               timezone: 'Asia/Taipei',
               reducedMotion: false,
+              registrationComplete: true,
             },
             error: null,
             isError: false,
@@ -566,21 +675,63 @@ describe('AppShell', () => {
     );
   });
 
-  it('keeps compact map HUD contents within the 58px minimum outer height', () => {
-    expect(globalStyles).toMatch(
-      /\.game-stage--learning-map \.hud-economy-group\s*\{[^}]*height:\s*clamp\(58px, 6vw, 66px\);[^}]*padding:\s*4px;/u,
+  it('does not insert a rotate banner into public and auth scenes', () => {
+    vi.mocked(window.matchMedia).mockReturnValue({
+      addEventListener: vi.fn(),
+      matches: true,
+      media: '(orientation: portrait)',
+      removeEventListener: vi.fn(),
+    } as unknown as MediaQueryList);
+    mockedUseAuth.mockReturnValue({
+      session: null,
+      signIn: vi.fn(),
+      signInWithAccount: vi.fn(),
+      signOut: vi.fn(),
+      status: 'anonymous',
+    });
+    mockedUseMyProfile.mockReturnValue({
+      data: undefined,
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+    const router = createMemoryRouter(
+      [
+        {
+          children: [{ element: <div>登入內容</div>, index: true }],
+          element: (
+            <ToastProvider>
+              <AppShell />
+            </ToastProvider>
+          ),
+          path: '/login',
+        },
+      ],
+      { initialEntries: ['/login'] },
     );
+    render(<RouterProvider router={router} />);
+
+    expect(document.querySelector('.rotate-banner')).toBeNull();
+    expect(screen.queryByRole('button', { name: '關閉轉向提示' })).toBeNull();
+  });
+
+  it('keeps one fixed student HUD geometry across route scenes', () => {
     expect(globalStyles).toMatch(
-      /\.game-stage--learning-map \.hud-avatar\s*\{[^}]*width:\s*calc\(clamp\(58px, 6vw, 66px\) - 12px\);[^}]*height:\s*calc\(clamp\(58px, 6vw, 66px\) - 12px\);/u,
+      /\.hud-top--student\s*\{[^}]*min-height:\s*var\(--journey-student-hud-height\);/u,
     );
+    expect(globalStyles).not.toMatch(/\.game-stage--learning-map/u);
+  });
+
+  it('uses the Traditional Chinese pixel face for student page titles only', () => {
     expect(globalStyles).toMatch(
-      /\.economy-summary--learning-map\s+\.economy-summary__level\s*\{[^}]*gap:\s*1px;[^}]*border-width:\s*1px;[^}]*font-size:\s*11px;[^}]*line-height:\s*12px;[^}]*padding:\s*0 4px;/u,
+      /\.game-stage\[data-shell-role='student'\][\s\S]*?#main-content\.route-world-stage[\s\S]*?h1\s*\{[^}]*font-family:\s*var\(--font-pixel-tc\);[^}]*font-synthesis:\s*none;[^}]*font-weight:\s*400;/u,
     );
-    expect(globalStyles).toMatch(
-      /\.economy-summary--learning-map\s+\.economy-summary__level\s+progress\s*\{[^}]*height:\s*5px;/u,
+    expect(globalStyles).not.toMatch(
+      /data-shell-role='teacher'[^}]*font-family:\s*var\(--font-pixel-tc\)/u,
     );
-    expect(globalStyles).toMatch(
-      /\.economy-summary--learning-map\s+\.economy-summary__tokens\s*\{[^}]*border-width:\s*1px;[^}]*font-size:\s*11px;[^}]*line-height:\s*12px;[^}]*padding:\s*1px 4px;/u,
+    expect(globalStyles).not.toMatch(
+      /data-shell-role='public'[^}]*font-family:\s*var\(--font-pixel-tc\)/u,
     );
   });
 
@@ -588,7 +739,7 @@ describe('AppShell', () => {
     ['little_fox', '小狐狸', '🦊'],
     ['indigo_dragon', '東方靛龍', '🐲'],
   ] as const)(
-    'centers the 3:2 %s art through the same learning-map HUD container',
+    'centers the 3:2 %s art through the shared student HUD container',
     (stableCode, name, emoji) => {
       mockedUseBlookInventory.mockReturnValue(
         inventoryResult({
@@ -617,10 +768,14 @@ describe('AppShell', () => {
       const image = document.querySelector<HTMLImageElement>(
         '.hud-avatar .blook-art',
       );
-      expect(image).toHaveAttribute('src', `/assets/blooks/${stableCode}.png`);
-      expect(image?.parentElement).toHaveClass('hud-avatar');
+      expect(image).toHaveAttribute(
+        'src',
+        `/assets/blooks/${stableCode}-128.webp`,
+      );
+      expect(image?.parentElement).toHaveClass('hud-avatar__portrait');
+      expect(image?.parentElement?.parentElement).toHaveClass('hud-avatar');
       expect(globalStyles).toMatch(
-        /\.game-stage--learning-map \.hud-avatar \.blook-art\s*\{[^}]*position:\s*absolute;[^}]*height:\s*100%;[^}]*left:\s*50%;[^}]*transform:\s*translateX\(-50%\);[^}]*width:\s*auto;/u,
+        /\.hud-avatar \.blook-art\s*\{[^}]*max-width:\s*100%;[^}]*height:\s*auto;/u,
       );
     },
   );
@@ -628,7 +783,7 @@ describe('AppShell', () => {
   it('學生頂部顯示頭像框與經濟群組', async () => {
     renderStudentShell();
 
-    expect(await screen.findByText(/Level \d+/u)).toBeInTheDocument();
+    expect(await screen.findByText(/Lv\.\d+/u)).toBeInTheDocument();
     expect(document.querySelector('.hud-economy-group')).not.toBeNull();
     const avatar = document.querySelector('.hud-avatar');
     expect(avatar).not.toBeNull();
@@ -637,11 +792,45 @@ describe('AppShell', () => {
     expect(avatarImage).toHaveAttribute('height', '47');
   });
 
-  it('教師頂部顯示歡迎識別且不渲染經濟數字', async () => {
+  it('applies the equipped frame snapshot to the student HUD avatar', () => {
+    mockedUseFrameInventory.mockReturnValue(
+      frameInventoryResult({
+        data: {
+          activeFrameId: 'deep-neon-id',
+          items: [
+            {
+              costTokens: 25,
+              equipped: true,
+              gradientEnd: '#0ea5e9',
+              gradientStart: '#6366f1',
+              id: 'deep-neon-id',
+              name: '深海霓虹',
+              owned: true,
+              stableCode: 'deep_neon',
+            },
+          ],
+          tokenBalance: 225,
+        },
+        isError: false,
+        isPending: false,
+      }),
+    );
+
+    renderShellRoute('/app/shop');
+
+    const avatar = document.querySelector('.hud-avatar');
+    expect(avatar).toHaveAttribute('data-framed', 'true');
+    expect(avatar).toHaveStyle({
+      '--hud-frame-end': '#0ea5e9',
+      '--hud-frame-start': '#6366f1',
+    });
+  });
+
+  it('教師 route 不渲染舊歡迎列或學生經濟數字', () => {
     renderTeacherShell();
 
-    expect(await screen.findByText(/歡迎，.+・教師端/u)).toBeInTheDocument();
-    expect(screen.queryByText(/Level \d+/u)).toBeNull();
+    expect(screen.queryByText(/歡迎，.+・教師端/u)).toBeNull();
+    expect(screen.queryByText(/Lv\.\d+/u)).toBeNull();
     expect(screen.queryByText(/\d+ Token/u)).toBeNull();
   });
 
@@ -710,7 +899,7 @@ describe('AppShell', () => {
     expect(mockedUseBlookInventory).toHaveBeenCalledTimes(2);
   });
 
-  it('shows teacher navigation only for an authoritative teacher profile', async () => {
+  it('leaves teacher navigation ownership to the teacher page', () => {
     mockedUseAuth.mockReturnValue({
       session: {
         email: 'teacher@colorplay.test',
@@ -728,6 +917,7 @@ describe('AppShell', () => {
         role: 'teacher',
         timezone: 'Asia/Taipei',
         reducedMotion: false,
+        registrationComplete: true,
       },
       error: null,
       isError: false,
@@ -735,28 +925,12 @@ describe('AppShell', () => {
       refetch: vi.fn(),
     });
 
-    render(
-      <MemoryRouter>
-        <ToastProvider>
-          <AppShell />
-        </ToastProvider>
-      </MemoryRouter>,
-    );
+    renderTeacherShell();
 
-    expect(screen.getByRole('link', { name: '教師工作區' })).toHaveAttribute(
-      'href',
-      '/teacher',
-    );
-    // HUD 重組批：班級管理已移入 MENU 面板，需先開 MENU。
-    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
-    expect(screen.getByRole('link', { name: '班級管理' })).toHaveAttribute(
-      'href',
-      '/teacher/classes',
-    );
-    // header 右側教師徽章:姓名用 profile 的 displayName,不寫死「劉老師」。
-    expect(
-      within(screen.getByRole('banner')).getByText('歡迎，teacher・教師端'),
-    ).toBeVisible();
+    expect(screen.getByText('教師頁內容')).toBeVisible();
+    expect(screen.queryByRole('link', { name: '教師工作區' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'MENU' })).toBeNull();
+    expect(screen.queryByText('歡迎，teacher・教師端')).toBeNull();
   });
 
   it('renders the simplified primary rail for students', async () => {
@@ -778,33 +952,27 @@ describe('AppShell', () => {
     expect(screen.queryByRole('link', { name: '教師後台' })).toBeNull();
     expect(screen.queryByText('色彩原理學習平台')).toBeNull();
 
-    // 學生列上導覽收斂為 2 項（HUD 重組批 spec 2026-08-02）；完整 7 項標籤
+    // 依 owner 核准 HUD，學生列固定三個正式 route；其他入口留在 MENU。
     // 覆蓋交給 hud-command-bar.test.tsx 的面板迴圈測試承接，此處不重複維護
     // 同一份標籤清單。
     const nav = screen.getByRole('navigation', { name: '主要導覽' });
     const linkNames = within(nav)
       .getAllByRole('link')
       .map((link) => link.textContent);
-    expect(linkNames).toEqual(['學習大廳', 'Live 課堂']);
+    expect(linkNames).toEqual(['學習大廳', 'Live 課堂', '商店']);
     expect(screen.queryByRole('link', { name: '學習進度' })).toBeNull();
 
-    // 課後任務實戰/裝備商店/我的錯題已移入 MENU 面板，需先開 MENU。
+    // 已停用的課後任務不再提供入口；我的錯題仍在 MENU，商店不重複出現。
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
-    expect(screen.getByRole('link', { name: '課後任務實戰' })).toHaveAttribute(
-      'href',
-      '/app/missions',
-    );
-    expect(screen.getByRole('link', { name: '裝備商店' })).toHaveAttribute(
-      'href',
-      '/app/shop',
-    );
+    expect(screen.queryByRole('link', { name: '課後任務實戰' })).toBeNull();
+    expect(screen.getAllByRole('link', { name: '商店' })).toHaveLength(1);
     expect(screen.getByRole('link', { name: '我的錯題' })).toHaveAttribute(
       'href',
       '/app/mistakes',
     );
   });
 
-  it('gives teachers the indigo rail with full workspace links', async () => {
+  it('does not recreate the retired teacher indigo rail', () => {
     mockedUseAuth.mockReturnValue({
       session: {
         email: 'teacher@colorplay.test',
@@ -822,6 +990,7 @@ describe('AppShell', () => {
         role: 'teacher',
         timezone: 'Asia/Taipei',
         reducedMotion: false,
+        registrationComplete: true,
       },
       error: null,
       isError: false,
@@ -829,41 +998,18 @@ describe('AppShell', () => {
       refetch: vi.fn(),
     });
 
-    render(
-      <MemoryRouter>
-        <ToastProvider>
-          <AppShell />
-        </ToastProvider>
-      </MemoryRouter>,
-    );
+    renderTeacherShell();
 
     expect(screen.queryByRole('link', { name: '題庫管理' })).toBeNull();
-    expect(screen.getByRole('link', { name: 'Live 主持' })).toHaveAttribute(
-      'href',
-      '/teacher/live',
-    );
-    expect(screen.getByRole('link', { name: '教師工作區' })).toHaveAttribute(
-      'href',
-      '/teacher',
-    );
-    // UAT 0727 #6：教師不顯示授權 chip，也不顯示學生導覽列。
+    expect(screen.queryByRole('link', { name: 'Live 主持' })).toBeNull();
+    expect(screen.queryByRole('link', { name: '教師工作區' })).toBeNull();
     expect(screen.queryByText('教師管理權限已授權')).toBeNull();
     expect(screen.queryByRole('link', { name: '學習大廳' })).toBeNull();
     expect(screen.queryByRole('link', { name: '裝備商店' })).toBeNull();
-
-    // 班級管理/教學分析已移入 MENU 面板，需先開 MENU。
-    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
-    expect(screen.getByRole('link', { name: '班級管理' })).toHaveAttribute(
-      'href',
-      '/teacher/classes',
-    );
-    expect(screen.getByRole('link', { name: '教學分析' })).toHaveAttribute(
-      'href',
-      '/teacher/analytics',
-    );
+    expect(screen.queryByRole('button', { name: 'MENU' })).toBeNull();
   });
 
-  it('awaits signOut and replaces protected history with login', async () => {
+  it('confirms before signOut and replaces protected history with login', async () => {
     const signOut = vi.fn(() => Promise.resolve());
     mockedUseAuth.mockReturnValue({
       session: {
@@ -891,6 +1037,15 @@ describe('AppShell', () => {
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     await userEvent.click(screen.getByRole('button', { name: '登出' }));
 
+    expect(signOut).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: '確認登出' })).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: '取消' }));
+    expect(screen.queryByRole('dialog', { name: '確認登出' })).toBeNull();
+    expect(signOut).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
+    await userEvent.click(screen.getByRole('button', { name: '登出' }));
+    await userEvent.click(screen.getByRole('button', { name: '確認登出' }));
     expect(signOut).toHaveBeenCalledOnce();
     expect(await screen.findByRole('heading', { name: '登入' })).toBeVisible();
     expect(router.state.historyAction).toBe('REPLACE');
@@ -918,10 +1073,12 @@ describe('AppShell', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     await userEvent.click(screen.getByRole('button', { name: '登出' }));
+    await userEvent.click(screen.getByRole('button', { name: '確認登出' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       '登出失敗，請稍後重試。',
     );
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     expect(screen.getByRole('button', { name: '登出' })).toBeVisible();
     expect(screen.getByRole('alert')).not.toHaveTextContent('provider detail');
   });
@@ -997,6 +1154,7 @@ describe('AppShell', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     await userEvent.click(screen.getByRole('button', { name: '登出' }));
+    await userEvent.click(screen.getByRole('button', { name: '確認登出' }));
     await userEvent.click(
       await screen.findByRole('button', { name: '以 B 登入' }),
     );
@@ -1007,6 +1165,7 @@ describe('AppShell', () => {
     const accountBLogout = await screen.findByRole('button', { name: '登出' });
     expect(accountBLogout).toBeEnabled();
     await userEvent.click(accountBLogout);
+    await userEvent.click(screen.getByRole('button', { name: '確認登出' }));
 
     expect(signOut).toHaveBeenCalledTimes(2);
     expect(

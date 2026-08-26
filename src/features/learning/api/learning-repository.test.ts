@@ -124,6 +124,7 @@ describe('learning repository', () => {
       data: [
         {
           id: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+          quiz_template_id: '26000000-0000-0000-0000-000000003101',
           sort_order: 1,
           stable_code: 'sheet-3-1',
           subtopics: [
@@ -176,5 +177,134 @@ describe('learning repository', () => {
       ],
       title: '有彩色與無彩色',
     });
+    expect(sections[0]?.quizTemplateId).toBe(
+      '26000000-0000-0000-0000-000000003101',
+    );
+  });
+
+  it('returns review-card content without waiting for private media signing', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+          quiz_template_id: '26000000-0000-0000-0000-000000003101',
+          sort_order: 1,
+          stable_code: 'sheet-3-1',
+          subtopics: [
+            {
+              id: 'f929cde5-c294-46ce-5faf-c866b3cb9583',
+              review_cards: [
+                {
+                  content: '內容',
+                  group_label: '色彩的分類',
+                  id: '25400000-0000-0000-0000-000000000006',
+                  requires_recompletion: false,
+                  review_card_media: [
+                    {
+                      alt_text: 'P301 色彩三要素示意圖',
+                      asset_path: 'review-card-media/chapter-3/P301.webp',
+                      sort_order: 1,
+                    },
+                  ],
+                  sort_order: 1,
+                  title: '有彩色與無彩色',
+                  version: 1,
+                },
+              ],
+              sort_order: 1,
+              stable_code: 'sheet-3-1-all',
+              title: '3-1 色彩三要素與色名的表示',
+            },
+          ],
+          title: '3-1 色彩三要素與色名的表示',
+        },
+      ],
+      error: null,
+    });
+    const createSignedUrl = vi
+      .fn()
+      .mockRejectedValue(new Error('storage signing stalled'));
+    const from = vi.fn().mockReturnValue({ createSignedUrl });
+    const client = {
+      rpc,
+      storage: { from },
+    } as unknown as SupabaseClient<Database>;
+
+    const sections = await createLearningRepository(client).listChapterReview(
+      '21000000-0000-0000-0000-000000000003',
+    );
+
+    expect(from).not.toHaveBeenCalled();
+    expect(createSignedUrl).not.toHaveBeenCalled();
+    expect(sections[0]?.subtopics[0]?.cards[0]?.media[0]?.assetPath).toBe(
+      'review-card-media/chapter-3/P301.webp',
+    );
+  });
+
+  it('signs all private media from the same bucket in one request while preserving direct URLs', async () => {
+    const createSignedUrls = vi.fn().mockResolvedValue({
+      data: [
+        {
+          error: null,
+          path: 'chapter-3/P301.webp',
+          signedUrl: 'https://staging.supabase.test/storage/P301-signed',
+        },
+        {
+          error: null,
+          path: 'chapter-3/P302.webp',
+          signedUrl: 'https://staging.supabase.test/storage/P302-signed',
+        },
+      ],
+      error: null,
+    });
+    const from = vi.fn().mockReturnValue({ createSignedUrls });
+    const client = {
+      rpc: vi.fn(),
+      storage: { from },
+    } as unknown as SupabaseClient<Database>;
+
+    const resolved = await createLearningRepository(client).resolveReviewMedia([
+      'review-card-media/chapter-3/P301.webp',
+      '/media/review/local.svg',
+      'review-card-media/chapter-3/P302.webp',
+    ]);
+
+    expect(from).toHaveBeenCalledOnce();
+    expect(from).toHaveBeenCalledWith('review-card-media');
+    expect(createSignedUrls).toHaveBeenCalledWith(
+      ['chapter-3/P301.webp', 'chapter-3/P302.webp'],
+      3600,
+    );
+    expect(resolved).toEqual([
+      {
+        assetPath: 'review-card-media/chapter-3/P301.webp',
+        resolvedUrl: 'https://staging.supabase.test/storage/P301-signed',
+      },
+      {
+        assetPath: '/media/review/local.svg',
+        resolvedUrl: '/media/review/local.svg',
+      },
+      {
+        assetPath: 'review-card-media/chapter-3/P302.webp',
+        resolvedUrl: 'https://staging.supabase.test/storage/P302-signed',
+      },
+    ]);
+  });
+
+  it('fails closed when a private review-card media URL cannot be signed', async () => {
+    const createSignedUrls = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message: 'denied' },
+    });
+    const client = {
+      rpc: vi.fn(),
+      storage: { from: vi.fn().mockReturnValue({ createSignedUrls }) },
+    } as unknown as SupabaseClient<Database>;
+
+    await expect(
+      createLearningRepository(client).resolveReviewMedia([
+        'review-card-media/chapter-3/P301.webp',
+      ]),
+    ).rejects.toMatchObject({ code: 'UNAVAILABLE' });
   });
 });

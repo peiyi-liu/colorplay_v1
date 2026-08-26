@@ -140,6 +140,7 @@ export async function fetchPublishedChapters(
       `,
     )
     .eq('status', 'published')
+    .is('section_id', null)
     .order('sort_order', { referencedTable: 'chapters' });
 
   if (error) throw new LearningRepositoryError('CHAPTERS_UNAVAILABLE');

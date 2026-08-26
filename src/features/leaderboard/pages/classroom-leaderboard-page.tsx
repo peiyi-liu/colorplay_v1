@@ -7,6 +7,8 @@ import { LeaderboardTable } from '../components/leaderboard-table';
 import { useClassroomLeaderboard } from '../hooks/use-classroom-leaderboard';
 import type { LeaderboardRepository } from '../types';
 
+import './classroom-leaderboard-page.css';
+
 export function ClassroomLeaderboardPage({
   classroomId: suppliedClassroomId,
   inventoryRepository,
@@ -46,13 +48,11 @@ export function ClassroomLeaderboardPage({
   return (
     <section
       aria-labelledby="classroom-leaderboard-title"
-      className="page-wide leaderboard-panel scene-day guild-board"
+      className="page-wide leaderboard-panel leaderboard-panel--guild-v2 scene-day guild-board"
     >
       <header>
-        <p className="route-panel__eyebrow">班級 XP</p>
         {/* owner 0728:標題不帶班名,學生本來就只看得到自己班。 */}
         <h1 id="classroom-leaderboard-title">排行榜</h1>
-        <p>Top 10 與你的名次都由伺服器依正式 XP 紀錄計算。</p>
       </header>
       <LeaderboardTable
         blooks={inventory.isError ? [] : inventory.data.items}

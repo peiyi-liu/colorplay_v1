@@ -111,12 +111,12 @@ values (
   'progress-template-021', 'Progress 測試挑戰', 1, 'published'
 );
 insert into public.questions (
-  id, subtopic_id, stable_code, prompt, explanation, status, sort_order
+  id, subtopic_id, stable_code, bank_kind, prompt, explanation, status, sort_order
 )
 values (
   '21900000-0000-0000-0000-000000000001',
   '21500000-0000-0000-0000-000000000001',
-  '91-1-01', 'Progress 測試題？', 'Progress 測試解說。',
+  '91-1-01', 'chapter', 'Progress 測試題？', 'Progress 測試解說。',
   'published', 1
 );
 insert into public.question_options (

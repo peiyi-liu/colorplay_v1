@@ -66,6 +66,7 @@ describe('useMyProfile', () => {
       role: 'student',
       timezone: 'Asia/Taipei',
       reducedMotion: false,
+      registrationComplete: true,
     };
     repositoryMocks.getMyProfile.mockResolvedValue(profile);
     const client = new QueryClient({
@@ -105,6 +106,7 @@ describe('useMyProfile', () => {
       role: 'student',
       timezone: 'Asia/Taipei',
       reducedMotion: false,
+      registrationComplete: true,
     };
     const studentTwo: SafeProfile = {
       displayName: 'student.two',
@@ -112,6 +114,7 @@ describe('useMyProfile', () => {
       role: 'student',
       timezone: 'Asia/Taipei',
       reducedMotion: false,
+      registrationComplete: true,
     };
     repositoryMocks.getMyProfile
       .mockResolvedValueOnce(studentOne)

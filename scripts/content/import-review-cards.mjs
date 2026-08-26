@@ -18,12 +18,7 @@ import { dirname, join } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import {
-  deterministicUuid,
-  parseCsv,
-  sqlText,
-  stableHash,
-} from './import-shared.mjs';
+import { deterministicUuid, parseCsv, sqlText } from './import-shared.mjs';
 import { TEXT_LIMITS } from './validation-rules.mjs';
 import { writeFormattedOutput } from './write-formatted-output.mjs';
 
@@ -63,7 +58,7 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
   const problems = [];
   const skipped = [];
   const cards = [];
-  const seenKeys = new Set();
+  const seenIdentifiers = new Set();
   let carriedChapter = '';
   let carriedSection = '';
   // 子主題／卡片標題皆空白的列＝上一張卡的延續內容（合併儲存格語意），
@@ -73,11 +68,13 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
 
   rows.forEach((raw, index) => {
     const rowNumber = index + 2;
-    const chapterCell = compactWhitespace(raw[0]);
-    const sectionCell = compactWhitespace(raw[1]);
-    const groupLabel = compactWhitespace(raw[2]);
-    const title = compactWhitespace(raw[3]);
-    const content = normalizeContent(raw[4]);
+    const identifier = compactWhitespace(raw[0]);
+    const chapterCell = compactWhitespace(raw[1]);
+    const sectionCell = compactWhitespace(raw[2]);
+    const groupLabel = compactWhitespace(raw[3]);
+    const title = compactWhitespace(raw[4]);
+    const content = normalizeContent(raw[5]);
+    const attachmentRef = compactWhitespace(raw[6]);
 
     if (chapterCell !== '') carriedChapter = chapterCell;
     if (sectionCell !== '') carriedSection = sectionCell;
@@ -99,6 +96,7 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
     }
 
     const missing = [];
+    if (identifier === '') missing.push('複習卡序號');
     if (chapter === '') missing.push('章節編號');
     if (sectionLabel === '') missing.push('小節');
     if (title === '') missing.push('卡片標題');
@@ -134,17 +132,37 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
     }
     const sectionKey = sectionKeyMatch[1];
 
-    const identity = `${sectionKey}:${groupLabel}:${title}`;
-    if (seenKeys.has(identity)) {
-      problems.push(`第 ${rowNumber} 列：卡片「${identity}」重複`);
+    const identifierMatch = /^RC([1-9])([1-9])([0-9]{2})$/u.exec(identifier);
+    if (!identifierMatch) {
+      problems.push(
+        `第 ${rowNumber} 列：複習卡序號「${identifier}」格式不符 RC＋章＋小節＋兩位數題號`,
+      );
       currentCard = null;
       return;
     }
-    seenKeys.add(identity);
+    const [, identifierChapter, identifierSection] = identifierMatch;
+    if (
+      identifierChapter !== chapter ||
+      `${identifierChapter}-${identifierSection}` !== sectionKey
+    ) {
+      problems.push(
+        `第 ${rowNumber} 列：複習卡序號「${identifier}」與章節／小節 ${sectionKey} 不一致`,
+      );
+      currentCard = null;
+      return;
+    }
+
+    const identity = `${sectionKey}:${groupLabel}:${title}`;
+    if (seenIdentifiers.has(identifier)) {
+      problems.push(`第 ${rowNumber} 列：複習卡序號「${identifier}」重複`);
+      currentCard = null;
+      return;
+    }
+    seenIdentifiers.add(identifier);
 
     const card = {
-      id: deterministicUuid('review-card', identity),
-      stableCode: `sheet-card-${sectionKey}-${stableHash(identity)}`,
+      id: deterministicUuid('review-card', identifier),
+      stableCode: identifier,
       identity,
       chapterCode,
       sectionKey,
@@ -152,6 +170,7 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
       groupLabel,
       title,
       content,
+      attachmentRef,
       sortOrder: 0,
     };
     cards.push(card);
@@ -167,13 +186,47 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
     }
   }
 
-  const mediaEntries = Object.entries(fixes.reviewCardMedia ?? {}).filter(
-    ([key]) => key !== '$comment',
-  );
-  for (const [identity] of mediaEntries) {
-    if (!cards.some((card) => card.identity === identity)) {
+  const mediaEntries = Object.entries(fixes.reviewCardMedia ?? {})
+    .filter(([key]) => key !== '$comment')
+    .flatMap(([stableCode, rawMedia]) =>
+      (Array.isArray(rawMedia) ? rawMedia : [rawMedia]).map((media, index) => ({
+        media,
+        sortOrder: index + 1,
+        stableCode,
+      })),
+    );
+  for (const { media, stableCode } of mediaEntries) {
+    const card = cards.find((entry) => entry.stableCode === stableCode);
+    if (!card) {
       problems.push(
-        `reviewCardMedia 的「${identity}」找不到對應的匯入卡片（請確認試算表與 import-fixes.json 一致）`,
+        `reviewCardMedia 的「${stableCode}」找不到對應的匯入卡片（請確認試算表與 import-fixes.json 一致）`,
+      );
+      continue;
+    }
+    const attachmentAliases = card.attachmentRef
+      .split(/[\s,，、/]+/u)
+      .filter(Boolean);
+    if (
+      media.attachmentRef &&
+      !attachmentAliases.includes(media.attachmentRef)
+    ) {
+      problems.push(
+        `reviewCardMedia 的「${stableCode}」附件代號「${media.attachmentRef}」與 Sheet「${card.attachmentRef}」不一致`,
+      );
+    }
+    if (!media.asset?.trim() || !media.alt?.trim()) {
+      problems.push(
+        `reviewCardMedia 的「${stableCode}」必須同時提供 asset 與 alt`,
+      );
+    }
+    if (
+      media.asset?.trim() &&
+      !/^review-card-media\/[A-Za-z0-9/_-]+\.(?:png|jpe?g|webp)$/u.test(
+        media.asset.trim(),
+      )
+    ) {
+      problems.push(
+        `reviewCardMedia 的「${stableCode}」asset 必須是 review-card-media bucket 的物件路徑`,
       );
     }
   }
@@ -205,6 +258,8 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
     `-- 內容來源：教師試算表「各單元複習大廳」；產生時間 ${stamp}`,
     'begin;',
     '',
+    "update public.review_cards set status = 'archived', updated_at = now() where stable_code like 'sheet-card-%';",
+    '',
   ];
   if (sections.size > 0) {
     lines.push(
@@ -235,6 +290,46 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
     const section = sections.get(card.sectionKey);
     return `  (${sqlText(card.id)}, ${sqlText(section.subtopicId)}, ${sqlText(card.stableCode)}, ${sqlText(card.groupLabel)}, ${sqlText(card.title)}, ${sqlText(card.content)}, 1, 'published', false, ${card.sortOrder})`;
   });
+  const cardGuardValues = cards.map((card) => {
+    const section = sections.get(card.sectionKey);
+    const media = mediaEntries
+      .filter((entry) => entry.stableCode === card.stableCode)
+      .map((entry) => ({
+        alt_text: entry.media.alt,
+        asset_path: entry.media.asset,
+        sort_order: entry.sortOrder,
+      }));
+    return `  (${sqlText(card.id)}, ${sqlText(section.subtopicId)}, ${sqlText(card.stableCode)}, ${sqlText(card.groupLabel)}, ${sqlText(card.title)}, ${sqlText(card.content)}, ${card.sortOrder}, ${sqlText(JSON.stringify(media))}::jsonb)`;
+  });
+  if (cardGuardValues.length > 0) {
+    lines.push(
+      'do $$',
+      'begin',
+      '  if exists (',
+      '    with incoming (id, subtopic_id, stable_code, group_label, title, content, sort_order, media) as (',
+      '      values',
+      cardGuardValues.join(',\n'),
+      '    )',
+      '    select 1',
+      '    from incoming',
+      '    join public.review_cards existing',
+      '      on existing.id = incoming.id::uuid or existing.stable_code = incoming.stable_code',
+      "    where existing.status <> 'published' or existing.version <> 1",
+      '      or row(existing.subtopic_id, existing.stable_code, existing.group_label, existing.title, existing.content, existing.sort_order)',
+      '        is distinct from row(incoming.subtopic_id::uuid, incoming.stable_code, incoming.group_label, incoming.title, incoming.content, incoming.sort_order)',
+      '      or coalesce((',
+      "        select jsonb_agg(jsonb_build_object('asset_path', media.asset_path, 'alt_text', media.alt_text, 'sort_order', media.sort_order) order by media.sort_order)",
+      '        from public.review_card_media media',
+      '        where media.review_card_id = existing.id and media.card_version = existing.version',
+      "      ), '[]'::jsonb) is distinct from incoming.media",
+      '  ) then',
+      "    raise exception using errcode = 'P0001', message = 'CONTENT_VERSION_REQUIRED';",
+      '  end if;',
+      'end',
+      '$$;',
+      '',
+    );
+  }
   const firstSection = [...sections.values()][0];
   if (firstSection) {
     cardValues.push(
@@ -245,24 +340,26 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
     lines.push(
       'insert into public.review_cards (id, subtopic_id, stable_code, group_label, title, content, version, status, requires_recompletion, sort_order)',
       'values',
-      `${cardValues.join(',\n')};`,
+      `${cardValues.join(',\n')}`,
+      'on conflict do nothing;',
       '',
     );
   }
 
   const mediaValues = [];
-  for (const [identity, media] of mediaEntries) {
-    const card = cards.find((entry) => entry.identity === identity);
+  for (const { media, sortOrder, stableCode } of mediaEntries) {
+    const card = cards.find((entry) => entry.stableCode === stableCode);
     if (!card) continue;
     mediaValues.push(
-      `  (${sqlText(card.id)}, 1, ${sqlText(media.asset)}, ${sqlText(media.alt)}, 1)`,
+      `  (${sqlText(card.id)}, 1, ${sqlText(media.asset)}, ${sqlText(media.alt)}, ${String(sortOrder)})`,
     );
   }
   if (mediaValues.length > 0) {
     lines.push(
       'insert into public.review_card_media (review_card_id, card_version, asset_path, alt_text, sort_order)',
       'values',
-      `${mediaValues.join(',\n')};`,
+      `${mediaValues.join(',\n')}`,
+      'on conflict do nothing;',
       '',
     );
   }
@@ -283,10 +380,10 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
     mediaEntries.length > 0
       ? (() => {
           const card = cards.find(
-            (entry) => entry.identity === mediaEntries[0][0],
+            (entry) => entry.stableCode === mediaEntries[0].stableCode,
           );
           return card
-            ? { alt: mediaEntries[0][1].alt, title: card.title }
+            ? { alt: mediaEntries[0].media.alt, title: card.title }
             : null;
         })()
       : null;
@@ -314,7 +411,9 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
     '',
     `產生時間：${stamp}`,
     '',
-    `已匯入 ${cards.length} 張卡片（published）：${[...sections.values()]
+    `已產生 ${cards.length} 張卡片的 published 匯入資料：${[
+      ...sections.values(),
+    ]
       .map((s) => `${s.key} ${bySubtopic.get(s.key)?.length ?? 0} 張`)
       .join('、')}。`,
     '',
@@ -326,11 +425,27 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
         `- 第 ${entry.rowNumber} 列（${entry.preview}）：${entry.reason}`,
     ),
     '',
-    '### 媒體附件（平台示意圖，待教師確認）',
+    '### 媒體附件與待補素材代號',
     ...mediaEntries.map(
-      ([identity, media]) =>
-        `- ${identity}：${media.asset}（alt：${media.alt}）`,
+      ({ media, stableCode }) =>
+        `- ${stableCode}（Sheet 代號：${media.attachmentRef ?? '未填'}）：${media.asset}（alt：${media.alt}）`,
     ),
+    ...cards
+      .filter(
+        (card) =>
+          card.attachmentRef !== '' &&
+          !mediaEntries.some((media) => media.stableCode === card.stableCode),
+      )
+      .map(
+        (card) =>
+          `- ${card.stableCode}：Sheet 僅提供附件標示「${card.attachmentRef}」，未提供可匯入的圖片網址與替代文字，故未建立媒體列`,
+      ),
+    '',
+    '## Stable code disposition ledger',
+    '',
+    'Disposition `owner_ssot_accepted` 表示此 stable code 來自 owner 維護的最新版 Google Sheet，並已通過本次結構 gate；圖片代號不等於圖片已入庫。',
+    '',
+    ...cards.map((card) => `- ${card.stableCode}: owner_ssot_accepted`),
     '',
   ].join('\n');
 

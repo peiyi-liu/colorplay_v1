@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HudCommandBar } from './hud-command-bar';
 
 function renderBar(variant: 'student' | 'teacher', onSignOut = vi.fn()) {
@@ -47,22 +47,67 @@ function renderTeacherAt(initialPath: string, onSignOut = vi.fn()) {
 }
 
 describe('HudCommandBar', () => {
-  it('學生列上只剩學習大廳與 Live 課堂，其餘導覽收進 MENU 面板', async () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockReturnValue({
+        addEventListener: vi.fn(),
+        matches: false,
+        media: '(max-width: 47.99rem)',
+        removeEventListener: vi.fn(),
+      }),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('手機收合主列但在 MENU 內保留三個正式 route', async () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockReturnValue({
+        addEventListener: vi.fn(),
+        matches: true,
+        media: '(max-width: 47.99rem)',
+        removeEventListener: vi.fn(),
+      }),
+    );
+
+    renderStudentAt('/app');
+    expect(screen.queryByRole('navigation', { name: '主要導覽' })).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
+    const primary = screen.getByRole('navigation', { name: '主要導覽' });
+    expect(
+      within(primary)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['學習大廳', 'Live 課堂', '商店']);
+  });
+
+  it('學生列固定顯示學習大廳、Live 課堂與商店，其餘導覽收進 MENU 面板', async () => {
     renderStudentAt('/app');
     const bar = screen.getByRole('navigation', { name: '主要導覽' });
-    expect(within(bar).getAllByRole('link')).toHaveLength(2);
-    expect(screen.queryByRole('link', { name: '裝備商店' })).toBeNull(); // 面板 hidden
+    expect(
+      within(bar)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['學習大廳', 'Live 課堂', '商店']);
+    expect(within(bar).getByRole('link', { name: '商店' })).toHaveAttribute(
+      'href',
+      '/app/shop',
+    );
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     const panelNav = screen.getByRole('navigation', { name: '更多導覽' });
-    for (const label of [
-      '課後任務實戰',
-      '我的錯題',
-      '班級排行榜',
-      '成就徽章',
-      '裝備商店',
-    ]) {
-      expect(within(panelNav).getByRole('link', { name: label })).toBeVisible();
-    }
+    expect(
+      within(panelNav)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['我的錯題', '班級排行榜', '成就徽章']);
+    expect(
+      within(panelNav).queryByRole('link', { name: '裝備商店' }),
+    ).toBeNull();
   });
 
   it('點擊面板導覽項後 MENU 自動關閉', async () => {
@@ -70,7 +115,7 @@ describe('HudCommandBar', () => {
     await userEvent.click(screen.getByRole('button', { name: 'MENU' }));
     const panelNav = screen.getByRole('navigation', { name: '更多導覽' });
     await userEvent.click(
-      within(panelNav).getByRole('link', { name: '裝備商店' }),
+      within(panelNav).getByRole('link', { name: '我的錯題' }),
     );
     expect(document.getElementById('hud-menu-panel')).toHaveAttribute('hidden');
   });
@@ -97,7 +142,9 @@ describe('HudCommandBar', () => {
     await userEvent.click(menu);
     expect(menu).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('student.one')).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: '登出' }));
+    const logout = screen.getByRole('button', { name: '登出' });
+    expect(logout).toHaveClass('hud-menu__logout--pixel');
+    await userEvent.click(logout);
     expect(onSignOut).toHaveBeenCalledTimes(1);
   });
 

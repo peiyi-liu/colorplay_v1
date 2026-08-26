@@ -4,7 +4,7 @@ import { Icon } from './icons';
 
 export type OptionVariant = 'rose' | 'sky' | 'amber' | 'emerald';
 export type OptionShape = 'triangle' | 'square' | 'circle' | 'diamond';
-export type OptionState = 'idle' | 'locked' | 'correct' | 'wrong';
+export type OptionState = 'idle' | 'selected' | 'locked' | 'correct' | 'wrong';
 
 // GGAME 四選項的固定順序：index → 色與形狀的唯一來源。投影幕與學生
 // 裝置都由此導出——順序若在任一側獨立改動，課堂上會出現「投影與手機
@@ -30,6 +30,7 @@ type OptionButtonProps = Readonly<{
   variant: OptionVariant;
   shape: OptionShape;
   state?: OptionState;
+  ariaLabel?: string;
   disabled?: boolean;
   onClick: () => void;
   children: ReactNode;
@@ -40,6 +41,7 @@ export function OptionButton({
   variant,
   shape,
   state = 'idle',
+  ariaLabel,
   disabled = false,
   onClick,
   children,
@@ -47,6 +49,11 @@ export function OptionButton({
   const isLocked = state === 'locked';
   return (
     <button
+      aria-label={
+        ariaLabel
+          ? `${ariaLabel}${state === 'selected' ? '，已選擇' : ''}`
+          : undefined
+      }
       type="button"
       className={`ui-option ui-option--${variant} ui-option--state-${state}`}
       disabled={disabled || isLocked}
@@ -57,6 +64,11 @@ export function OptionButton({
       {isLocked ? (
         <span aria-hidden="true">
           <Icon name="lock" size={16} />
+        </span>
+      ) : null}
+      {state === 'selected' ? (
+        <span className="ui-option__state">
+          <Icon name="check" size={16} /> 已選擇
         </span>
       ) : null}
       {state === 'correct' ? <span aria-hidden="true">✓</span> : null}

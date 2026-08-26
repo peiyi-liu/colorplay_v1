@@ -1,6 +1,6 @@
 import { Icon } from '../../../components/ui/icons';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
@@ -9,6 +9,7 @@ import {
   OptionButton,
 } from '../../../components/ui/option-button';
 import type { Database } from '../../../types/database';
+import { StudentLiveStatusBar } from '../components/student-live-status-bar';
 import {
   useLiveMyStanding,
   useSubmitLiveAnswer,
@@ -18,42 +19,9 @@ import {
   encouragementFor,
   optionAccessibleName,
 } from '../lib/standing-feedback';
-import { remainingSeconds } from '../lib/live-clock';
 import { participantView } from '../lib/live-phase-view';
 import type { LiveRepository, LiveSessionState } from '../types';
-
-function Countdown({
-  deadlineAt,
-  serverTime,
-}: Readonly<{ deadlineAt: string | null; serverTime: string }>) {
-  const [clock, setClock] = useState<Readonly<{
-    anchor: string;
-    fetchedAt: number;
-    now: number;
-  }> | null>(null);
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setClock((previous) =>
-        previous?.anchor === serverTime
-          ? { ...previous, now: Date.now() }
-          : { anchor: serverTime, fetchedAt: Date.now(), now: Date.now() },
-      );
-    }, 250);
-    return () => {
-      clearInterval(timer);
-    };
-  }, [serverTime]);
-  const remaining =
-    clock?.anchor === serverTime
-      ? remainingSeconds(deadlineAt, serverTime, clock.now, clock.fetchedAt)
-      : null;
-  if (remaining === null) return null;
-  return (
-    <p aria-live="polite">
-      剩餘 <strong>{remaining}</strong> 秒（以伺服器時間為準）
-    </p>
-  );
-}
+import './live-session-page.css';
 
 function QuestionPhase({
   sessionId,
@@ -66,12 +34,22 @@ function QuestionPhase({
 }>) {
   const submit = useSubmitLiveAnswer(sessionId, repository);
   const keysRef = useRef(new Map<string, string>());
-  const [submitError, setSubmitError] = useState<string>();
+  const [submission, setSubmission] = useState<Readonly<{
+    questionId: string;
+    selectedOptionId?: string;
+    error?: string;
+  }>>();
   const [streak, setStreak] = useState(0);
   const question = state.question;
   if (!question) return null;
+  const currentSubmission =
+    submission?.questionId === question.questionId ? submission : undefined;
+  const selectedOptionId = currentSubmission?.selectedOptionId;
+  const submitError = currentSubmission?.error;
   const answered = state.myAnswer?.answered === true;
   const screenOnly = state.questionDisplay === 'screen_only';
+  const selectionLocked =
+    answered || submit.isPending || selectedOptionId !== undefined;
 
   const idempotencyKeyFor = (questionId: string): string => {
     const existing = keysRef.current.get(questionId);
@@ -82,20 +60,24 @@ function QuestionPhase({
   };
 
   return (
-    <div>
-      <p>
-        第 {question.position} / {state.questionCount} 題
-      </p>
-      <Countdown
-        deadlineAt={question.deadlineAt}
-        serverTime={state.serverTime}
-      />
+    <div className="live-student-question-phase">
       <fieldset
-        className="question-card"
-        disabled={answered || submit.isPending}
+        className="live-student-question-card"
+        disabled={selectionLocked}
       >
         <legend>
-          {screenOnly ? '題目在投影幕上，選出你的答案！' : question.prompt}
+          {selectedOptionId || answered ? (
+            <span role="status">
+              {submit.isPending ? '答案送出中…' : '答案已送出，等待揭曉…'}
+            </span>
+          ) : screenOnly ? (
+            <>
+              <Icon label="投影機" name="projector" size={32} />
+              <span>請看投影幕作答</span>
+            </>
+          ) : (
+            question.prompt
+          )}
         </legend>
         <div
           className={`live-options${screenOnly ? ' live-options--screen-only' : ''}`}
@@ -107,8 +89,16 @@ function QuestionPhase({
               key={option.id}
               variant={(OPTION_ORDER[index % 4] ?? OPTION_ORDER[0]).variant}
               shape={(OPTION_ORDER[index % 4] ?? OPTION_ORDER[0]).shape}
+              state={selectedOptionId === option.id ? 'selected' : 'idle'}
+              disabled={selectionLocked}
+              {...(screenOnly
+                ? { ariaLabel: optionAccessibleName(index, option.key) }
+                : {})}
               onClick={() => {
-                setSubmitError(undefined);
+                setSubmission({
+                  questionId: question.questionId,
+                  selectedOptionId: option.id,
+                });
                 submit.mutate(
                   {
                     idempotencyKey: idempotencyKeyFor(question.questionId),
@@ -117,7 +107,10 @@ function QuestionPhase({
                   },
                   {
                     onError: () => {
-                      setSubmitError('作答未送出，請再試一次。');
+                      setSubmission({
+                        error: '作答未送出，請再試一次。',
+                        questionId: question.questionId,
+                      });
                     },
                     onSuccess: (receipt) => {
                       setStreak(receipt.streak);
@@ -127,10 +120,8 @@ function QuestionPhase({
               }}
             >
               {screenOnly ? (
-                // 純形狀置中：格子上只有 OptionButton 的形狀符號，文字僅供
-                // 螢幕閱讀器。
-                <span className="visually-hidden">
-                  {optionAccessibleName(index, option.key)}
+                <span aria-hidden="true" className="live-option-key">
+                  {option.key}
                 </span>
               ) : (
                 `${option.key}. ${option.text ?? ''}`
@@ -139,13 +130,16 @@ function QuestionPhase({
           ))}
         </div>
       </fieldset>
-      {answered ? <p role="status">已收到你的答案，等待其他同學…</p> : null}
       {streak >= 2 ? (
         <p className="live-streak-badge" role="status">
           <Icon name="flame" size={16} /> 連擊 x{streak}!
         </p>
       ) : null}
-      {submitError ? <p role="alert">{submitError}</p> : null}
+      {submitError ? (
+        <p className="live-student-submit-error" role="alert">
+          {submitError}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -349,20 +343,20 @@ export function LiveSessionPage({
   return (
     <section
       aria-labelledby="live-session-title"
-      className="live-session-shell page-mid scene-night live-guild-raid"
+      className="live-session-shell scene-night live-guild-raid live-student-arena"
     >
-      <header>
-        <p className="route-panel__eyebrow">ColorPlay Live</p>
-        <h1 id="live-session-title">課堂挑戰</h1>
-      </header>
+      <StudentLiveStatusBar
+        connectionStatus={session.connectionStatus}
+        state={state}
+      />
 
       {(() => {
         switch (view.kind) {
           case 'lobby':
             return (
-              <div role="status">
+              <div className="live-student-lobby" role="status">
                 <h2>等待主持人開始…</h2>
-                <p>目前 {view.participantCount} 位同學在等待室。</p>
+                <p>已進入等待室，主持人開始後將自動進入作答。</p>
               </div>
             );
           case 'waiting-for-next':

@@ -28,6 +28,7 @@ describe('ProfileRepository with RLS', () => {
 
     expect(profile).toMatchObject({
       displayName: 'student.one',
+      registrationComplete: true,
       role: 'student',
       timezone: 'Asia/Taipei',
     });
@@ -35,6 +36,7 @@ describe('ProfileRepository with RLS', () => {
       'displayName',
       'id',
       'reducedMotion',
+      'registrationComplete',
       'role',
       'timezone',
     ]);

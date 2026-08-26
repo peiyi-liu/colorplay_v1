@@ -79,18 +79,18 @@ values
   );
 
 insert into public.questions (
-  id, subtopic_id, stable_code, prompt, explanation, status, sort_order
+  id, subtopic_id, stable_code, bank_kind, prompt, explanation, status, sort_order
 )
 values
   (
     '47300000-0000-0000-0000-000000000001',
     '47200000-0000-0000-0000-000000000001',
-    '99-1-01', 'Sequence question 1?', 'Sequence explanation 1.', 'published', 1
+    '99-1-01', 'chapter', 'Sequence question 1?', 'Sequence explanation 1.', 'published', 1
   ),
   (
     '47300000-0000-0000-0000-000000000002',
     '47200000-0000-0000-0000-000000000002',
-    '99-2-01', 'Sequence question 2?', 'Sequence explanation 2.', 'published', 1
+    '99-2-01', 'chapter', 'Sequence question 2?', 'Sequence explanation 2.', 'published', 1
   );
 
 -- Chapters 1 and 2 already carry real published content in addition to

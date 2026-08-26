@@ -192,6 +192,7 @@ export function deriveChapterDetailViewModel(
     reviewCompleted: entry.reviewCompleted,
     reviewTotal: entry.reviewTotal,
     sections: sections.map((section) => ({
+      quizTemplateId: section.quizTemplateId,
       sectionId: section.sectionId,
       subtopics: section.subtopics.map((subtopic) => {
         const row = progressRows.find(
@@ -209,6 +210,7 @@ export function deriveChapterDetailViewModel(
             title: card.title,
           })),
           mastery: row?.mastery ?? null,
+          quizTemplateId: section.quizTemplateId,
           reviewCompleted: row?.reviewCompleted ?? 0,
           reviewTotal: row?.reviewTotal ?? null,
           subtopicId: subtopic.subtopicId,

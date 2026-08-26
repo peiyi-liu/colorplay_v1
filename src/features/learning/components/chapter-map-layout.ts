@@ -1,10 +1,13 @@
 import type { CSSProperties } from 'react';
 
-export const CHAPTER_MAP_WORLD = { height: 800, width: 1200 } as const;
+export const CHAPTER_MAP_WORLD = { height: 941, width: 1672 } as const;
+export const CHAPTER_MAP_MOBILE_WORLD = { height: 1672, width: 941 } as const;
 
 export type ChapterGroundAnchor = Readonly<{
   x: number;
   y: number;
+  mobileX: number;
+  mobileY: number;
   visualOffsetX: number;
   visualOffsetY: number;
 }>;
@@ -12,15 +15,59 @@ export type ChapterGroundAnchor = Readonly<{
 export const CHAPTER_GROUND_ANCHORS: Readonly<
   Record<number, ChapterGroundAnchor>
 > = {
-  1: { x: 290, y: 298, visualOffsetX: 0, visualOffsetY: 8 },
-  2: { x: 582, y: 282, visualOffsetX: 0, visualOffsetY: 8 },
-  3: { x: 896, y: 298, visualOffsetX: 0, visualOffsetY: 8 },
-  4: { x: 300, y: 575, visualOffsetX: 0, visualOffsetY: 8 },
-  5: { x: 586, y: 620, visualOffsetX: 0, visualOffsetY: 8 },
-  6: { x: 888, y: 575, visualOffsetX: 0, visualOffsetY: 8 },
+  1: {
+    mobileX: 500,
+    mobileY: 270,
+    visualOffsetX: 0,
+    visualOffsetY: 0,
+    x: 480,
+    y: 220,
+  },
+  2: {
+    mobileX: 515,
+    mobileY: 540,
+    visualOffsetX: 0,
+    visualOffsetY: 0,
+    x: 1000,
+    y: 210,
+  },
+  3: {
+    mobileX: 320,
+    mobileY: 735,
+    visualOffsetX: 0,
+    visualOffsetY: 0,
+    x: 815,
+    y: 500,
+  },
+  4: {
+    mobileX: 585,
+    mobileY: 900,
+    visualOffsetX: 0,
+    visualOffsetY: 0,
+    x: 330,
+    y: 515,
+  },
+  5: {
+    mobileX: 335,
+    mobileY: 1085,
+    visualOffsetX: 0,
+    visualOffsetY: 0,
+    x: 1100,
+    y: 735,
+  },
+  6: {
+    mobileX: 540,
+    mobileY: 1270,
+    visualOffsetX: 0,
+    visualOffsetY: 0,
+    x: 480,
+    y: 760,
+  },
 };
 
 export const ADVENTURER_GROUND_ANCHOR: ChapterGroundAnchor = {
+  mobileX: 470,
+  mobileY: 1410,
   x: 496,
   y: 456,
   visualOffsetX: 0,
@@ -31,6 +78,8 @@ type ChapterAnchorStyle = CSSProperties &
   Readonly<{
     '--chapter-anchor-x': string;
     '--chapter-anchor-y': string;
+    '--chapter-mobile-left': string;
+    '--chapter-mobile-top': string;
     '--chapter-visual-offset-x': string;
     '--chapter-visual-offset-y': string;
   }>;
@@ -44,6 +93,12 @@ const assertVisualOffsetIsSafe = (anchor: ChapterGroundAnchor): void => {
   }
 };
 
+const percentage = (value: number, total: number): string =>
+  `${((value / total) * 100).toFixed(3)}%`;
+
+const containerOffset = (value: number, total: number, unit: 'cqh' | 'cqw') =>
+  `${((value / total) * 100).toFixed(3)}${unit}`;
+
 export const anchorStyle = (
   anchor: ChapterGroundAnchor,
 ): ChapterAnchorStyle => {
@@ -52,14 +107,26 @@ export const anchorStyle = (
   return {
     '--chapter-anchor-x': String(anchor.x),
     '--chapter-anchor-y': String(anchor.y),
-    '--chapter-visual-offset-x': `${String(
-      (anchor.visualOffsetX / CHAPTER_MAP_WORLD.width) * 100,
-    )}cqw`,
-    '--chapter-visual-offset-y': `${String(
-      (anchor.visualOffsetY / CHAPTER_MAP_WORLD.height) * 100,
-    )}cqh`,
-    left: `${String((anchor.x / CHAPTER_MAP_WORLD.width) * 100)}%`,
-    top: `${String((anchor.y / CHAPTER_MAP_WORLD.height) * 100)}%`,
+    '--chapter-mobile-left': percentage(
+      anchor.mobileX,
+      CHAPTER_MAP_MOBILE_WORLD.width,
+    ),
+    '--chapter-mobile-top': percentage(
+      anchor.mobileY,
+      CHAPTER_MAP_MOBILE_WORLD.height,
+    ),
+    '--chapter-visual-offset-x': containerOffset(
+      anchor.visualOffsetX,
+      CHAPTER_MAP_WORLD.width,
+      'cqw',
+    ),
+    '--chapter-visual-offset-y': containerOffset(
+      anchor.visualOffsetY,
+      CHAPTER_MAP_WORLD.height,
+      'cqh',
+    ),
+    left: percentage(anchor.x, CHAPTER_MAP_WORLD.width),
+    top: percentage(anchor.y, CHAPTER_MAP_WORLD.height),
   };
 };
 

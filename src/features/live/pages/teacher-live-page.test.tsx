@@ -94,6 +94,7 @@ const renderPage = (
   return render(
     <TeacherLivePage
       classroomRepository={classroomRepository}
+      menu={<div data-testid="teacher-menu" />}
       repository={repository}
     />,
     { wrapper: Wrapper },
@@ -101,22 +102,34 @@ const renderPage = (
 };
 
 const selectSection = async () => {
-  await userEvent.selectOptions(
-    await screen.findByLabelText('1・選擇對戰單元'),
-    sectionFixture.sectionId,
+  await userEvent.click(
+    await screen.findByRole('radio', { name: sectionFixture.title }),
   );
 };
 
 describe('TeacherLivePage', () => {
-  it('renders the muster-order hero and the section options', async () => {
+  it('renders the server-backed four-step Live classroom setup', async () => {
     renderPage(repositoryWith(), classroomRepositoryOf([classroomFixture]));
 
     expect(
-      await screen.findByRole('heading', { name: 'Live 課堂主持' }),
+      await screen.findByRole('heading', { name: '建立 Live 課堂' }),
+    ).toBeVisible();
+    expect(await screen.findByLabelText('1・選擇班級')).toHaveValue(
+      classroomFixture.classroomId,
+    );
+    expect(
+      screen.getByRole('group', { name: '選擇小節' }),
     ).toBeVisible();
     expect(
-      screen.getByRole('option', { name: sectionFixture.title }),
+      screen.getByRole('heading', { name: '每題作答時間' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('heading', { name: '4・建立課堂摘要' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('radio', { name: sectionFixture.title }),
     ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '建立課堂' })).toBeDisabled();
   });
 
   it('creates the activity then launches the session with the selected section payload', async () => {
@@ -130,7 +143,7 @@ describe('TeacherLivePage', () => {
 
     await selectSection();
     await userEvent.click(
-      screen.getByRole('button', { name: '建立活動並開場' }),
+      screen.getByRole('button', { name: '建立課堂' }),
     );
 
     await waitFor(() => {
@@ -172,11 +185,11 @@ describe('TeacherLivePage', () => {
 
     await selectSection();
     await userEvent.click(
-      screen.getByRole('button', { name: '建立活動並開場' }),
+      screen.getByRole('button', { name: '建立課堂' }),
     );
 
     const pendingButton = await screen.findByRole('button', {
-      name: '開場中…',
+      name: '建立中…',
     });
     expect(pendingButton).toBeDisabled();
     // A disabled button ignores pointer events, so this click is the

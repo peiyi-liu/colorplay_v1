@@ -1,0 +1,22 @@
+.hud-top--student .hud-avatar--framed {
+  border: 0;
+  background: linear-gradient(
+    135deg,
+    var(--hud-frame-start),
+    var(--hud-frame-end)
+  );
+  box-shadow:
+    0 0 0 2px var(--pixel-night-deep),
+    0 0 0 4px var(--hud-frame-start);
+  overflow: visible;
+  padding: 4px;
+}
+
+.hud-top--student .hud-avatar--framed .hud-avatar__portrait {
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--pixel-night-deep);
+  border-radius: 50%;
+  background: var(--pixel-night-deep);
+  overflow: hidden;
+}

@@ -112,8 +112,20 @@ describe('ChapterMap', () => {
     ).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('keeps every decorative world image out of the accessibility tree', () => {
+  it('uses separate desktop and mobile continuous-world terrain layers outside the accessibility tree', () => {
     const { container } = renderMap();
+    expect(
+      container.querySelector('.chapter-map__base--desktop'),
+    ).toHaveAttribute(
+      'src',
+      expect.stringContaining('continuous-world-desktop'),
+    );
+    expect(
+      container.querySelector('.chapter-map__base--mobile'),
+    ).toHaveAttribute(
+      'src',
+      expect.stringContaining('continuous-world-mobile'),
+    );
     const decorations = container.querySelectorAll(
       '.chapter-map__base, .chapter-map__building-art, .chapter-map__cloud, .chapter-map__adventurer',
     );
@@ -121,29 +133,28 @@ describe('ChapterMap', () => {
     for (const decoration of decorations) {
       expect(decoration).toHaveAttribute('aria-hidden', 'true');
     }
-    expect(container.querySelector('.chapter-map__base')).toHaveAttribute(
-      'draggable',
-      'false',
-    );
+    for (const base of container.querySelectorAll('.chapter-map__base')) {
+      expect(base).toHaveAttribute('draggable', 'false');
+    }
   });
 
   it('places the village art, buildings, and characters in one labelled logical world', () => {
     const { container } = renderMap();
     const world = container.querySelector('.chapter-map__world');
 
-    expect(world).toHaveAttribute('data-world-width', '1200');
-    expect(world).toHaveAttribute('data-world-height', '800');
+    expect(world).toHaveAttribute('data-world-width', '1672');
+    expect(world).toHaveAttribute('data-world-height', '941');
     expect(container.querySelector('.chapter-map__base')?.parentElement).toBe(
       world,
     );
 
     const expectedGroundPoints = [
-      ['290', '298'],
-      ['582', '282'],
-      ['896', '298'],
-      ['300', '575'],
-      ['586', '620'],
-      ['888', '575'],
+      ['480', '220'],
+      ['1000', '210'],
+      ['815', '500'],
+      ['330', '515'],
+      ['1100', '735'],
+      ['480', '760'],
     ];
     const buildings = Array.from(
       container.querySelectorAll('.chapter-map__building'),
@@ -205,7 +216,7 @@ describe('ChapterMap', () => {
 
     expect(sixth).toHaveFocus();
     expect(viewport).not.toHaveFocus();
-    expect(viewport.scrollLeft).toBe(490);
+    expect(viewport.scrollLeft).toBeCloseTo(37.081, 3);
     expect(screen.getByText('拖曳探索村莊')).toBeVisible();
     expect(
       container.querySelector('.chapter-map__dialogue-lane'),

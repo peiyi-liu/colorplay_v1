@@ -23,6 +23,13 @@ export const REVIEW_MANIFEST: readonly ReviewSubtopicContent[] = [
     cardCount: 3,
     cardTitles: ['色彩體系的基本結構', '色彩體系的分類', '常用的色彩體系'],
   },
+  {
+    chapterCode: 'chapter-3',
+    sectionKey: '3-3',
+    subtopicId: '776c7d9d-fa82-bd21-24e0-15f0b14aaa31',
+    cardCount: 2,
+    cardTitles: ['色光表示法', '色票表示法'],
+  },
 ];
 
 export const REVIEW_DRAFT_CARD_ID = '0253e291-1308-1dce-26c7-16750cd3e967';
@@ -30,4 +37,4 @@ export const REVIEW_DRAFT_CARD_ID = '0253e291-1308-1dce-26c7-16750cd3e967';
 export const REVIEW_MEDIA_CARD: Readonly<{
   alt: string;
   title: string;
-}> | null = { alt: '十二色相環示意圖', title: '色彩的分類' };
+}> | null = null;

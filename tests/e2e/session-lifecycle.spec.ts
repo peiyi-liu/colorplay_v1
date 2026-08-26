@@ -10,7 +10,7 @@ const signIn = async (page: Page) => {
   await page
     .getByRole('textbox', { name: '帳號' })
     .fill(TEST_USERS.studentOne.email);
-  await page.getByLabel('密碼').fill(TEST_USERS.studentOne.password);
+  await page.getByLabel('密碼', { exact: true }).fill(TEST_USERS.studentOne.password);
   await page.getByRole('button', { name: '登入' }).click();
 };
 
@@ -36,7 +36,7 @@ test('restores the session at the fixed post-login route, then protects it after
   ).toBeVisible();
 
   // GameStage Shell（2026-08-01）：登出鈕收進底部 HUD 的 MENU 面板，鍵盤路
-  // 徑改兩段——先聚焦 MENU 鈕開面板，面板內再聚焦目前可用的入口與登出鈕送出。
+  // 徑改三段——先聚焦 MENU 鈕開面板，再聚焦登出鈕，最後於確認框送出。
   const focusViaKeyboard = async (target: Locator) => {
     if (browserName === 'firefox') {
       // macOS Firefox 預設 Tab 僅在表單控制間移動（按鈕/連結不入焦點環，
@@ -84,6 +84,12 @@ test('restores the session at the fixed post-login route, then protects it after
       new URL(response.url()).pathname === '/auth/v1/logout' &&
       response.request().method() === 'POST',
   );
+  await page.keyboard.press('Enter');
+  const confirmLogout = page.getByRole('button', { name: '確認登出' });
+  await expect(page.getByRole('dialog', { name: '確認登出' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '取消' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(confirmLogout).toBeFocused();
   await page.keyboard.press('Enter');
   expect((await logoutResponsePromise).status()).toBeLessThan(400);
 

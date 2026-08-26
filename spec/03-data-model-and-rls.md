@@ -31,7 +31,9 @@
 
 - `classroom_id`, `user_id`, `member_role`, `joined_at`, `status`。
 - Unique：`(classroom_id, user_id)`；同一 classroom 只有一筆 active membership。
-- Student 可同時屬於多個 classrooms；join／leave／rejoin 必須 idempotent 並保留稽核。
+- Student 同一時間最多只能有一筆 active classroom membership；相同班級的
+  join／rejoin 必須 idempotent，另一 active 班級的 join 必須 fail closed。
+- 轉班需使用另行核准、保留歷史與稽核的 workflow，不得由 join 自動停用舊班級。
 
 ### Content taxonomy
 
@@ -55,6 +57,7 @@
 
 - `id`
 - `stable_code`，例如 `3-1-01`
+- `bank_kind`：`section`（QB 小節測驗）、`chapter`（CR 章節總測驗）、`live`（LT Live 專用）或歷史 `legacy`；新 Session 必須依產品 surface 由 server 選定題池。
 - `version`
 - `subtopic_id`
 - `question_type`
@@ -77,7 +80,8 @@
 
 `quiz_sessions`：
 
-- `id`, `user_id`, `classroom_id`, `template_id`
+- `id`, `user_id`, `classroom_id`, `template_id`；`classroom_id` 由後端在建立
+  session 時保存，不得由前端指定或事後依目前 membership 推測。
 - `status`: `in_progress`, `completed`, `abandoned`, `expired`
 - `started_at`, `completed_at`
 - `question_count`

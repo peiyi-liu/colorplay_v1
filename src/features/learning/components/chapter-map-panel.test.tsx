@@ -67,7 +67,9 @@ describe('ChapterMapPanel', () => {
         ),
       ).toBeVisible();
       expect(
-        screen.getByRole('link', { name: '進入複習與進度' }),
+        screen.getByRole('link', {
+          name: state === 'completed' ? '查看第二章' : '繼續第二章',
+        }),
       ).toHaveAttribute(
         'href',
         '/app/chapters/21000000-0000-0000-0000-000000000002',

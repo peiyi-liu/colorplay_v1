@@ -6,7 +6,6 @@
       "Bash(pnpm vitest run *)",
       "Bash(pnpm typecheck *)",
       "Bash(node \"$HOME/.claude/plugins/cache/openai-codex/codex/1.0.6/scripts/codex-companion.mjs\" setup --json*)",
-      "Bash(node \"/Users/guanyucheng/.claude/plugins/cache/openai-codex/codex/1.0.6/scripts/codex-companion.mjs\" setup --json*)",
       "Bash(npx vitest run *)",
       "Bash(pnpm lint *)",
       "Bash(pnpm test *)",

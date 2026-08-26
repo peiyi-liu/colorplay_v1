@@ -16,7 +16,7 @@ export async function signInStudent(
 ): Promise<void> {
   await page.goto('/login');
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
-  await page.getByLabel('密碼').fill(credentials.password);
+  await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   await page.waitForURL(/\/app$/u);
 }
@@ -29,7 +29,7 @@ export async function signInTeacher(
   // 原生 radio 被樣式裁切成 tab，check() 會等到可見狀態逾時；改點 label 文字。
   await page.getByText('教師端登入').click();
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
-  await page.getByLabel('密碼').fill(credentials.password);
+  await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   await page.waitForURL(/\/teacher$/u);
 }
@@ -50,4 +50,6 @@ export async function openHudMenu(page: Page): Promise<void> {
 export async function signOutViaHud(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'MENU' }).click();
   await page.getByRole('button', { name: '登出' }).click();
+  await expect(page.getByRole('dialog', { name: '確認登出' })).toBeVisible();
+  await page.getByRole('button', { name: '確認登出' }).click();
 }

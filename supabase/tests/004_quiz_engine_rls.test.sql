@@ -1,6 +1,6 @@
 begin;
 
-select plan(44);
+select plan(46);
 
 select has_table('public', 'quiz_sessions', 'quiz sessions exists');
 select has_table(
@@ -222,6 +222,16 @@ select is(
 select ok(
   current_setting('test.quiz_payload') !~ 'is_correct',
   'session payload contains no correctness field'
+);
+select is(
+  current_setting('test.quiz_payload')::jsonb ->> 'challenge_kind',
+  'chapter',
+  'chapter challenge payload identifies its authoritative context'
+);
+select is(
+  (current_setting('test.quiz_payload')::jsonb ->> 'chapter_sort_order')::integer,
+  3,
+  'session payload exposes the authoritative chapter display order'
 );
 
 select set_config(

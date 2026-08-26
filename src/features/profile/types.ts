@@ -6,6 +6,7 @@ export type SafeProfile = Readonly<{
   role: Database['public']['Enums']['app_role'];
   timezone: string;
   reducedMotion: boolean;
+  registrationComplete: boolean;
 }>;
 
 export type ProfileRepositoryErrorCode =

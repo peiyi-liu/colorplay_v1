@@ -21,7 +21,7 @@ const signInStudent = async (
 ) => {
   await page.goto('/login');
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
-  await page.getByLabel('密碼').fill(credentials.password);
+  await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u);
   await expect(
@@ -38,7 +38,7 @@ const signInTeacher = async (
   // for visibility forever — click the label instead.
   await page.getByText('教師端登入').click();
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
-  await page.getByLabel('密碼').fill(credentials.password);
+  await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/teacher$/u);
   await expect(page.getByRole('heading', { name: '教師工作區' })).toBeVisible();

@@ -1,15 +1,19 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const port = process.env.COLORPLAY_TEACHER_HARNESS_PORT ?? '4177';
+const baseURL = `http://127.0.0.1:${port}`;
+
 export default defineConfig({
   testDir: './tests/e2e',
-  testMatch: /teacher-routes\.harness\.spec\.ts$/u,
+  testMatch:
+    /teacher-(?:analytics|avatar-optimizer|routes|live-round|workspace-states)\.harness\.spec\.ts$/u,
   workers: 1,
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  use: { baseURL: 'http://localhost:4177' },
+  use: { baseURL },
   webServer: {
-    command: 'npx vite --host localhost --port 4177 --strictPort',
-    url: 'http://localhost:4177/dev-harness/teacher-routes.html?scenario=dashboard',
-    reuseExistingServer: false,
+    command: `../../node_modules/.bin/vite --host 127.0.0.1 --port ${port} --strictPort`,
+    url: `${baseURL}/dev-harness/teacher-routes.html?scenario=analytics`,
+    reuseExistingServer: !process.env.CI,
     timeout: 60_000,
   },
 });

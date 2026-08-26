@@ -14,7 +14,8 @@ export const readLocalAdminEnvironment = (
   environment: NodeJS.ProcessEnv,
 ): LocalAdminEnvironment => {
   const url = environment.SUPABASE_URL;
-  const serviceRoleKey = environment.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey =
+    environment.SUPABASE_SECRET_KEY ?? environment.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !serviceRoleKey) throw new Error('LOCAL_ADMIN_ENV_MISSING');
   if (!localKeyPattern.test(serviceRoleKey)) {

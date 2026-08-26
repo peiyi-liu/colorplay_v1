@@ -69,7 +69,7 @@ describe('chapter sequence phase gate contract', () => {
     expect(spec).toContain('TEST_USERS.learningTeacher');
     expect(spec).toContain('GENERATED_CORRECT_ANSWERS');
     expect(spec).toContain('進入複習與進度');
-    expect(spec).toContain('開始挑戰');
+    expect(spec).toContain('章節總挑戰');
     expect(spec).toContain('CHAPTER_LOCKED');
     expect(spec).toContain('1280');
     expect(spec).toContain('812');

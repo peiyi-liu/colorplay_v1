@@ -34,6 +34,8 @@ as Staging, remove fixtures and rebuild it as Production, promote the exact web
 artifact, then rebuild the former project as permanent Staging. At no time may
 two public sites write to one Supabase project.
 
+These names hold public connection configuration, not authorization bypasses. In hosted environments `VITE_SUPABASE_ANON_KEY` contains the current Supabase publishable key (`sb_publishable_…`); the legacy name is retained only for application compatibility. RLS remains mandatory. Database URLs/passwords, JWT secrets, service credentials, SMTP passwords, access tokens, backup keys, and monitoring write keys never use a `VITE_` prefix and never enter source, logs, artifacts, or the browser bundle.
+
 ## Release boundary
 
 A protected Staging merge runs hosted acceptance. The accepted SHA is built in

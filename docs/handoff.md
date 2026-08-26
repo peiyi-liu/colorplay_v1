@@ -249,6 +249,860 @@
 - Blocker／待決策：無。生成 PNG 約 40MB，只作主 checkout 的只讀視覺參考，不放入產品 bundle，也不把整張圖當 runtime background。
 - 相關檔案／commit：`docs/superpowers/plans/2026-08-10-jrpg-continuous-world-app-shell.md`、`docs/superpowers/specs/2026-08-10-jrpg-continuous-world-app-shell-design.md`、`artifacts/design-audit/jrpg-app-shell/batch-{01,02}/manifest.md`、`docs/handoff.md`（planning checkpoint commit 待建立）。
 
+
+## 2026-08-11 01:27 [Codex] — 首頁／登入／註冊修正版待 owner 逐頁核准
+
+- 做了什麼：依 owner 回饋只修正目前公開與認證場景，未前進學習地圖。首頁改為唯一「開始冒險」主行動並導向 `/login`，移除「已有帳號？登入」，縮小 ColorPlay 與「色彩王國的冒險旅程」並強制單行；原 64×64 裁圖 icon 已替換為 1254×1254 透明高畫質像素風藍金寶典（深藍書體、金色書角／書脊、六色色相環、金色羽筆）。登入桌機將「歡迎回來，冒險者。」置於人物上方，手機將「冒險者公會」定位於木牌，帳號／密碼改為設計圖的直角深藍框。註冊保留真實 OTP／欄位／提交流程，改為同一公會場景，桌機雙欄表單固定右側、手機單欄接續場景；匿名公開／Auth route 不再插入學生頁專用的「轉橫體驗更佳」橫幅。
+- 驗證：RTL 5 檔 72 tests 全綠；TypeScript build、scoped ESLint、Prettier、`git diff --check` 全綠；Chromium 1280×720／393×852 共 6/6，全數通過水平溢出、文字／控制內容寬度與 44px 觸控高度檢查。證據 manifest：`artifacts/design-audit/jrpg-auth-revision/manifest.md`。
+- 下一步：owner 依序審核首頁、登入、註冊；未明確核准前停止，不開始學習地圖或任何下一個畫面。核准後才建立本批 commit，再進下一頁。
+- Blocker／待決策：等待 owner 視覺核准；目前未 push、未 deploy、未修改資料／API／權威學習規則。
+- 相關檔案／commit：`src/app/router/title-page.tsx`、`src/features/auth/pages/{login-page,register-page}.tsx`、`src/styles/globals.css`、`public/colorplay-grimoire-pixel.png` 與對應 unit／Chromium tests；本批尚未 commit。
+
+## 2026-08-11 01:54 [Codex] — 登入固定視窗與註冊三步驟修正待 owner 核准
+
+- 做了什麼：依 owner 最新裁定將註冊改為固定三步驟（1 基本資料、2 E-mail 驗證、3 帳號與密碼），每次只顯示該步驟欄位，桌機與 393px 手機皆固定在畫面右側且不可捲動；保留既有真實 OTP、註冊提交與錯誤處理契約。註冊標題上方的 icon／「冒險者公會」／「建立你的冒險者通行證」已移除；登入與註冊共用藍銀雙層直角像素窗框、輸入框等高對齊；Auth 場景原本疊在表格下方的村莊房屋剪影已移除。登入桌機保留「歡迎回來，冒險者。」，手機保留木牌上的「冒險者公會」。
+- 驗證：登入＋註冊 RTL 2 檔 26 tests 全綠；`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；Chromium 1280×720／393×852 共 4/4，機械驗證 document/main 零垂直捲動、portal/frame 完整位於 viewport、控制項 ≥44px、房屋 pseudo-element 不存在，教師登入增加班級序號後亦未溢出。證據 manifest：`artifacts/design-audit/jrpg-auth-revision/manifest.md`。
+- 下一步：owner 先於本機預覽逐頁審核登入與註冊；未核准前不做學習地圖、不 commit、不 push、不 deploy。
+- Blocker／待決策：等待 owner 視覺核准。註冊第三步需完成真實 E-mail OTP 才能由 production browser 進入；第三步欄位與送出契約已由 RTL 覆蓋，未用 mock 頁面冒充瀏覽器成品。
+- 相關檔案／commit：`src/features/auth/pages/register-page.tsx`、`src/features/auth/pages/register-page.test.tsx`、`src/styles/globals.css`、`tests/e2e/auth-{guild-desk,register-guild}.visual.spec.ts`、`docs/handoff.md`；本批仍未 commit。
+
+## 2026-08-11 02:08 [Owner] — Auth 視覺未完成，下一畫面改做學生 HUD
+
+- 未完成、後續再優化：登入與註冊雖已實作共用藍銀直角像素窗框，但尚未通過 owner 視覺驗收，不得標記為核准完成。
+- 未完成、後續再優化：登入桌機「歡迎回來，冒險者。」與手機木牌「冒險者公會」雖已進入目前實作，但呈現仍未通過 owner 視覺驗收，不得標記為核准完成。
+- 下一步：暫停 Auth 視覺修正，下一個且唯一的畫面改為學生端固定 HUD；以 `artifacts/design-audit/jrpg-app-shell/batch-01/01-stable-student-hud.png` 為 owner 已核准參考，保留真實 profile／economy／inventory 與既有 navigation／MENU 行為，不把生成圖示意資料寫入 production。
+- 邊界：學生 HUD 未經 owner 視覺核准前，不前進學習地圖或其他頁面；本筆只有 handoff 狀態更新，未 commit、未 push、未 deploy。
+
+## 2026-08-11 02:15 [Codex] — 學生 HUD 修正版待 owner 視覺核准
+
+- 做了什麼：依 owner 核准的 `batch-01/01-stable-student-hud.png` 將學生 identity、Level／XP／Token、正式導覽與 MENU 收進單一穩定 HUD。桌機為一列藍黑像素介面；393px 為兩列 composition，關閉時主列收斂為 MENU，開啟後仍保留「學習大廳／Live 課堂／商店」三個正式 route。商店直接連既有 `/app/shop`，MENU 移除重複的「裝備商店」；其餘既有 route 與登出／focus trap 行為維持。生成圖的數值未帶入 production，正式 profile／economy／inventory hooks 仍是資料來源。
+- 驗證：`tsc -b`、scoped ESLint、Prettier、`git diff --check`、production harness import boundary 全綠；AppShell／HudCommandBar／EconomySummary 3 檔 44 tests 全綠；Chromium 1280×720／393×852 共 2/2，通過單一 HUD 高度、水平溢出、重要文字內容寬度、可見控制項 >=44×44、手機 MENU 內三個正式 route 等機械檢查。
+- 審核入口：本機 `http://127.0.0.1:4181/dev-harness/student-hud.html`；截圖 manifest：`artifacts/design-audit/jrpg-student-hud/manifest.md`。截圖僅供 owner 視覺比對，不是 staging／production evidence。
+- 下一步：等待 owner 對學生 HUD 核准或提出修改；未核准前不做學習地圖或其他頁面。
+- 邊界：Auth 兩項仍維持上一筆「未完成、後續再優化」；本批未 commit、未 push、未 deploy。
+
+## 2026-08-11 02:39 [Codex] — 學生 HUD 頭像／資訊排列／像素金幣修正待 owner 核准
+
+- 做了什麼：依 owner 回饋讓 equipped Blook 圖以 `width/height:100% + object-fit:cover` 貼滿圓形頭像內容區，未用 transform 製造隱性溢出；暱稱與 `Lv.` 改為相鄰排列，XP 區塊固定在其右側；通用 outline coin SVG 改為專用 8-bit 八角像素金幣，Token 數值仍使用正式 economy summary。393px 將 economy 與 MENU 分成獨立 grid 欄，避免 XP 與 MENU 盒子重疊。
+- 驗證：coin DOM 契約先 RED 後 GREEN；AppShell／HudCommandBar／EconomySummary 3 檔 44 tests 全綠；Chromium 1280×720／393×852 共 2/2，新增 avatar/name、name/level、level/XP、XP/token、token/navigation、compact XP/MENU bounding-box 零重疊檢查，並維持零水平溢出與 >=44×44 控制項；`tsc -b`、scoped ESLint、Prettier、`git diff --check`、production harness import boundary 全綠。
+- 教師端後續參考：owner 指定 `artifacts/design-audit/jrpg-app-shell/batch-02/12-teacher-table-v2.png`，但本輪明令先完成學生端，因此未修改任何教師頁。
+- 下一步：owner 於 `http://127.0.0.1:4181/dev-harness/student-hud.html` 審核學生 HUD；未核准前不開始教師端或下一頁。
+- 邊界：未 commit、未 push、未 deploy；Auth 兩項仍是未完成、後續再優化。
+
+## 2026-08-11 02:48 [Codex] — 學生 HUD 垂直身份層級與 32-bit 金幣修正待 owner 核准
+
+- 做了什麼：依 owner 最新回饋把暱稱與等級改為上下顯示，XP 在桌機與 393px 手機皆固定於兩者右側；手機最右欄維持金幣在上、MENU 在下。Token 圖示由先前 8-bit 版本升級為 24×24 CSS 32-bit 像素金幣，保留正式 economy summary 數值來源。教師端參考圖已記錄，但本輪未修改教師頁或下一個學生畫面。
+- 驗證：先新增 `XP.left >= max(暱稱.right, 等級.right)` 的 Chromium 幾何契約，修正前 393px 如預期 RED（XP left 74、需求 >=224），修正後 1280×720／393×852 共 2/2；另驗 XP／Token／MENU 零重疊、零水平溢出、HUD 固定高度與可見控制項 >=44×44。AppShell／HudCommandBar／EconomySummary 3 檔 44 tests、`pnpm typecheck`、scoped ESLint、Prettier、`git diff --check`、production harness import boundary 全綠。
+- 下一步：owner 於 `http://127.0.0.1:4181/dev-harness/student-hud.html` 審核本版學生 HUD；未核准前不開始教師端、學習地圖或下一畫面。
+- 邊界：未 commit、未 push、未 deploy；Auth 兩項仍標記未完成、後續再優化。
+
+## 2026-08-11 09:34 [Codex] — 學習大廳／六章連續世界地圖待 owner 視覺核准
+
+- 做了什麼：依 owner 指定的 `batch-01/05-student-learning-map.png`，把 `/app` 舊白天六格廣場與羊皮紙標題替換為桌機／手機各自構圖的深夜連續世界。兩張新地形只包含夜空、懸崖、森林、道路、橋、瀑布、燈火與恰好六個空地；六棟既有 chapter sprite、正式 chapter access state、chapter link、標題與 CTA 仍由 semantic DOM／正式 hook 資料提供。畫面預設顯示已完成／進行中／未解鎖，主要行動依正式選取章節顯示「開始／繼續／查看第 X 章」，未加入假 API 或假權威資料。
+- 建築對齊：桌機與手機各自保存六組 ground anchors；每個 building container 使用 bottom-center transform。Chromium 首輪抓到 `<button>` line box 造成圖片底部距 anchor 7px，已以 block／zero-line-height 修正；最後六棟建築在 1280×720 與 393×852 的圖片底部中心誤差皆 <=1.5 CSS px，未放寬 assertion。
+- 資產：`src/assets/learning-map/continuous-world-{desktop,mobile}.webp`（1672×941／941×1672，合計 611,924 bytes），由 OpenAI built-in image generation tool 建立 environment-only 32-bit pixel terrain；首版各多出第七空地而拒用，saved versions 經 targeted edit 收斂為六空地。PNG 中間檔已移至 `/private/tmp/colorplay-continuous-world-*-source.png`，未刪除且不進 repository。
+- 驗證：Learning Map 6 檔 38 tests、`pnpm typecheck`、scoped ESLint、Prettier、`git diff --check`、production harness import boundary 全綠；Chromium 1280×720／393×852 共 2/2，通過六章狀態數、唯一 CTA、desktop/mobile source、底部中心 anchor、重要文字／CTA 零裁切與零重疊、水平 overflow <=1px、控制項 >=44×44、地圖緊接固定 HUD。對應 AC-UI-008～012 的瀏覽器子集；真實手機仍待人工裝置驗證。
+- 審核入口：`http://127.0.0.1:4181/dev-harness/learning-map.html`；manifest：`artifacts/design-audit/jrpg-learning-map/manifest.md`。等待 owner 視覺核准，未核准前不開始章節頁或教師端。
+- 邊界：未 commit、未 push、未 deploy；Auth 兩項仍標記未完成、後續再優化。
+
+## 2026-08-11 09:40 [Codex] — 學習地圖手機章節文字統一移至建築右側
+
+- 做了什麼：依 owner 回饋只修改 393px 直式構圖，移除偶數章原本把 label／status 放在建築左側的規則；六章的「第 X 章」與「已完成／進行中／未解鎖」現在全部從建築圖片右緣外 4px 開始。桌機版定位未修改。
+- 驗證：先加入 `label.left >= buildingArt.right - 1` 與 `status.left >= buildingArt.right - 1` 的方向性 Chromium assertion，修正前 393px 如預期 RED；修正後 1280×720／393×852 共 2/2，並維持文字／CTA 零裁切、零 bounding-box overlap、document 水平 overflow <=1px、六棟建築 bottom-center anchor <=1.5px。
+- 下一步：owner 於 `http://127.0.0.1:4181/dev-harness/learning-map.html` 審核手機直式版本；未核准前不開始下一畫面。
+- 邊界：未 commit、未 push、未 deploy；本輪未修改正式資料、API、解鎖規則或桌機 map geometry。
+
+## 2026-08-11 09:57 [Codex] — JRPG 公開頁與學生介面以 GitHub Source 部署至 staging
+
+- 做了什麼：依 owner 本輪授權，把首頁、登入、註冊、固定學生 HUD 與六章連續世界學習地圖整理為 `50d3f3f847c4715cfa8b0a2c8beb2fcd59fc95fb`（`feat(ui): integrate JRPG public and student surfaces`），推送至 GitHub `phase6/jrpg-generated-board-ui`。Vercel `colorplay-staging-web` 由該 GitHub commit 自動建立 preview `dpl_UEJTdQWr9mT742BQTa62HwviUvbU`，再 promote 為 staging-project production deployment `dpl_ADWkrxn8MnMy5AGDuM2SwR1pP2oJ`；`staging.colorplayapp.com` 已指向後者。Vercel metadata 的 `gitSource.type=github`、repo=`peiyi-liu/colorplay_v1`、ref=`phase6/jrpg-generated-board-ui`、SHA=`50d3f3f847c4715cfa8b0a2c8beb2fcd59fc95fb` 均吻合，不再是本機原始碼直接上傳來源。
+- 驗證：`pnpm typecheck`、scoped ESLint／Prettier、`git diff --check`、production harness import boundary、11 檔 105 tests、`pnpm build` 全綠；本機 Chromium 五頁 1280／393 共 10/10。Hosted routes `/`、`/login`、`/register`、`/app` 與新寶典、桌機／手機登入背景、桌機／手機 continuous-world 資產皆 HTTP 200；首頁／註冊 hosted Chromium 4/4。登入 hosted 2 項停在測試只接受未雜湊 `guild-desk-*.png` 的檔名，實際 computed style 已載入 Vite 雜湊後的 `guild-desk-desktop-CQHx_IGl.png`／`guild-desk-mobile-Dfr8F5rp.png` 且兩資產 HTTP 200，屬測試環境字串限制，不是畫面或資產缺失。
+- Git 邊界：直接推送 GitHub `staging` 被 GH013 正常拒絕，因該 protected branch 強制 PR 且等待 9/9 required status contexts；未 force push、未繞過 GitHub 規則。遠端 `staging` 仍為 `24ee1ee9c03539e44c99dba5f36c13599cf434cd`，本次改以 GitHub feature-branch deployment promote 到專用 staging Vercel target。若要讓 GitHub `staging` branch 本身前進，仍需另行補齊 required checks／PR merge。
+- Owner 檢視邊界：本次 staging 是視覺檢視版本，不是 Phase／Slice Gate／production-ready 宣告。Auth 的藍銀窗框與歡迎文案仍保留先前「待 owner 後續優化」標記；學生 HUD 與學習地圖可由 owner 在 staging 登入後檢視，真實手機仍待人工裝置驗證。
+- 下一步：owner 檢視 `https://staging.colorplayapp.com`；逐頁回報差異後再做下一畫面。GitHub `staging` 的 PR／required-check 問題留在 release workflow 範圍，不在本次 UI 部署中私自改動。
+
+## 2026-08-11 10:22 [Owner／Codex] — Staging／Production Supabase 映射列為不可違反規則
+
+- Owner 再次明確裁定：`colorplay-staging-web`／`staging.colorplayapp.com` 一律連 `https://onkxnkzeixpezetkmocf.supabase.co`；Production 的 `colorplay-web`／`colorplayapp.com` 才連 `https://xdjumzdqyexpyndanwkp.supabase.co`。兩組 URL／public key 不得交叉混用。此規則已同步補到 `docs/roadmap-colorplay-next.md` 的 Target topology 旁。
+- 根因與修復：原 staging hosted bundle 實測為 `xdjum…` URL 搭配 `onkx…` anon key，E-mail Auth 回 `401 Invalid API key`，一般帳號的 `auth-login` 回 `net::ERR_FAILED`，分別造成「登入失敗，請使用追蹤代碼回報」與「網路連線失敗」。Vercel `colorplay-staging-web` 的 Preview／Production `VITE_SUPABASE_URL` 已明確更新為 `onkx…`，並從 GitHub SHA `9999d0dabbe19e2e7235eac769681c6d29e8e839` 建立全新 production build `dpl_3hNo5tQvWoAnbZgvk6AWn6iC2MqP`；`staging.colorplayapp.com` 已切至該 deployment。
+- 修復證據：hosted bundle `/assets/index-ZCtTZJE_.js` 讀得 host=`onkxnkzeixpezetkmocf.supabase.co`，bundle public-key SHA-256 指紋與 onkx 專案現行 anon key 相符。無效 E-mail 探針收到 `400 invalid_credentials`，無效一般帳號探針收到 `401 AUTH_INVALID_CREDENTIALS`，兩者 UI 都正確顯示「帳號或密碼不正確」，Chromium 2/2。
+- 永久防呆：每次 staging／production Vite deployment 後，驗證「實際 hosted bundle host＋public-key 指紋＋無效憑證 Auth 探針」；不以 HTTP 200、Vercel Ready 或 Dashboard env 當作資料庫連線完成證據。Preview promote 前須先證明 Preview 與目標環境 env 完全一致，否則必須從 GitHub source 建立目標環境的新 build。
+- 邊界：未修改 Supabase schema、資料、RLS、Edge Function 或登入產品碼；本次只修正 Vercel staging env／deployment。Production environment 未觸碰。
+
+## 2026-08-11 10:29 [Owner／Codex] — 上線前真實登入測試列為硬性閘門
+
+- Owner 裁定：之後任何 Staging／Production 上線或 alias／promotion 前都必須先測試；Vercel `READY`、HTTP 200、資產載入成功、bundle host／key 正確或無效帳密能正確失敗，均不得單獨視為可上線證據。
+- Staging 必測：使用有效的合成學生帳號走公開 hosted 登入頁，完成真實 Auth、profile bootstrap 並成功進入 `/app`；若變更涉及 Auth、共用 App Shell／bootstrap、教師導覽、權限或教師 UI，另以有效合成教師帳號登入並進入正式教師 landing route。證據記錄 deployment ID、Git SHA、Supabase project ref、測試角色與到達 route，不記錄密碼。
+- Production 邊界：Production 不建立合成測試帳號；只允許 promote 已通過上述 Staging 閘門的同一 Git SHA，再執行核准的 Production 唯讀 smoke。任何有效登入證據缺失或失敗一律 fail closed，不得切換公開 alias。
+- 已同步：`docs/roadmap-colorplay-next.md` 與 `docs/deployment/vercel.md`。本筆為部署治理規則，未修改產品程式碼、Vercel alias、Supabase 或任何線上資料。
+- 下一步：目前 staging 真實有效帳號仍登入失敗，因此現況未通過此閘門；下一步繼續診斷有效 fixture／Auth bootstrap，而不是把先前無效帳密 2/2 當作修復完成。
+
+## 2026-08-11 10:40 [Codex] — 第三章小節複習卡入口 05a 草圖待 owner 核准
+
+- 做了什麼：依 owner 指示補上學習地圖 Board 05 與全頁書本複習 Board 06-v2 之間的中介畫面。新草圖以深夜學院書庫為連續世界場景，不使用頁面級大外框；桌機以兩條書庫路徑呈現 `3-1 色彩三要素與色名的表示` 與 `3-2 色彩體系`，各自配置三個複習卡書本節點；手機重排為縱向旅程，節點文字位於書本右側。單一「繼續複習」主行動導向下一個全頁書本閱讀畫面。
+- 資料邊界：草圖中的暱稱、等級、XP、金幣與完成進度只作構圖示意；正式實作須沿用 profile／economy／chapter review hooks。小節與卡片名稱由正式 chapter review data 帶入，不把生成圖內容寫死，不新增測驗、鎖定或進度規則。
+- 參考檔：主 checkout `artifacts/design-audit/jrpg-app-shell/batch-01/05a-chapter-review-card-entry.png`，SHA-256 `33b3f493b564bc9375100e923f564352c3ef4d14303258af9c471b151fcbd583`；batch-01 manifest 已標記為 candidate awaiting owner approval。
+- 下一步：等待 owner 核准或提出單一視覺修改。核准前不重現正式網頁；核准後只改 `/app/chapters/:chapterId` 的章節入口／複習卡選擇 surface，之後再銜接 Board 06-v2 閱讀頁。
+- 邊界：本輪只產生與保存視覺草圖、更新 manifest／handoff；未修改產品程式碼、資料、API、Supabase、Vercel 或 hosted alias。
+
+## 2026-08-11 10:46 [Codex] — 05a-v2 統一學生 HUD，待 owner 核准
+
+- 做了什麼：依 owner 回饋只修改 05a 的桌機／手機 HUD，書庫場景、章節標題、兩個小節、六個書本節點、狀態、進度與主要行動均維持原構圖。桌機 HUD 改為目前正式版的一列式結構：頭像、暱稱／等級上下排列、右側 XP、32-bit 金幣與「學習大廳／Live 課堂／商店／MENU」；手機改為目前正式版的關閉狀態單列 HUD，不再額外顯示第二排主導覽。
+- 參考檔：主 checkout `artifacts/design-audit/jrpg-app-shell/batch-01/05a-chapter-review-card-entry-v2.png`，SHA-256 `9fb68069b32a4b742c8bc9b695fa667fd06634c4d6ea7ca3ddc32c9c7bccb9f5`。v1 保留並在 manifest 標為 superseded；v2 標為 candidate awaiting owner approval。
+- 資料邊界：生成圖中的身份與數值仍只作構圖示意，正式網頁必須使用真實 profile／economy data；本輪未修改產品程式碼或部署。
+- 下一步：等待 owner 核准 05a-v2；核准後才開始重現 `/app/chapters/:chapterId` 網頁。
+
+## 2026-08-11 11:18 [Codex] — 05a-v2 章節複習旅程已實作，待 owner 本機視覺核准
+
+- 做了什麼：依 owner 授權把 `/app/chapters/:chapterId` 的 ready state 改為 05a-v2 連續世界入口，並套回正式學生 HUD。桌機以兩個小節、各三個語意化書本節點呈現；393px 改為書本在左、卡名與狀態在右的縱向路徑。完成／進行中／尚未開始由既有 review completion 資料衍生，不新增鎖定規則；「繼續複習」打開第一張未完成的真實複習卡，既有「完成複習」與「開始挑戰」行為保留，尚未實作 06-v2 全頁書本閱讀。
+- 視覺與結構：新增無 UI／無文字的 1672×941 32-bit 像素檔案館背景 `src/assets/chapter/chapter-archive-world.png`；所有標題、進度、節點、狀態與控制仍是 HTML。專屬樣式拆為 426 行 base 與 103 行 responsive／motion 檔，未繼續擴張既有 `globals.css`。Locked／content-preparing／content-readiness-error／error 等既有 typed states 維持原行為。
+- 驗證：TDD 先由缺少「第三章複習旅程」語意區域 RED，完成後 RTL 13/13；`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；Chromium 7/7，覆蓋 320／375／1024／1440 狀態回歸與 1280×720／393×852 的六節點、唯一 primary action、零文字裁切、水平 overflow <=1px、手機文字在書本右側、可見控制 >=44×44、HUD 後鍵盤可達重試。
+- 審核入口：`http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`；manifest：`artifacts/design-audit/jrpg-chapter-entry/manifest.md`。等待 owner 視覺核准或提出本頁修改；未核准前不進 06-v2。
+- 邊界：本輪未新增 API／schema／RPC／query／mutation，未修改權威進度規則，未 commit、未 push、未 deploy。Auth 既有待優化事項與 staging 真實登入 blocker 均未在本輪擴大處理。
+
+## 2026-08-11 11:42 [Codex] — 05a-v2 改為設計圖同構雙背景與 full-bleed 場景
+
+- 做了什麼：依 owner 回饋淘汰上一版泛用庭院方向，使用核准 05a-v2 board 作 style／composition reference，重新產生 desktop 1672×941 與 mobile 941×1672 兩張 environment-only 32-bit 像素背景。桌機為左側月夜森林石門、右側藍色彩繪玻璃書庫與兩排六座空石台；手機為同一世界的縱向構圖，六座空石台沿左側路徑排列、右側保留文字空間。兩圖都不含書本、HUD、文字、狀態、按鈕或大外框，等待 owner 後續提供正式書本素材。
+- Full-bleed 修正：新增 `#main-content:has(> .chapter-archive)` 零 padding 契約，並以 05a 專屬 selector 覆蓋舊 `.chapter-dungeon` 900px 寬度。Chromium 首輪實測桌機 root 左緣仍為 190px、手機 computed background 為 `none`，已分別修正舊寬度 specificity 與 mobile background shorthand／specificity；未以文字宣告冒充無外框。
+- 驗證：05a Chromium 1280×720／393×852 2/2，確認各自載入 desktop／mobile v2 asset、root 左右貼齊 viewport、四邊 border=0、零水平溢出、零文字裁切、手機文字維持書本右側、可見控制 >=44×44；Prettier、scoped ESLint、`git diff --check` 全綠。manifest：`artifacts/design-audit/jrpg-chapter-entry/manifest.md`。
+- 下一步：owner 重新整理本機 05a 預覽確認背景；待提供書本素材後再做六節點的素材替換與 pedestals anchor 校準。未開始 06-v2，未 commit、未 push、未 deploy。
+
+## 2026-08-11 12:16 [Codex] — 05a-v2 接入 batch-03／04 書本基座與可擴充背景
+
+- 做了什麼：依 owner 提供的 batch-03／04 素材，固定選用書本 02／03／04／06／08／10 與基座 01／03／04／05／07／09，形成六組不重複的 semantic review nodes；不是每次 render 真隨機，避免畫面與測試資料跳動。`01-color-wheel-book.png` 未進節點，裁成 512×512 後替換網站 `/colorplay-grimoire-pixel.png` icon。素材從原 1536×1024 各自縮為 512×341 runtime derivatives，十二張節點素材加網站 icon 合計約 2.2MB，batch 原檔未修改。
+- 背景與可擴充性：使用 imagegen 對 v2 desktop／mobile 精準編修，移除背景內固定六座石台與 cyan slot 路線，補成連續石板地面，增加少量暖金路燈與藍色水晶燈；v3 只提供 HUD 下 full-bleed 環境，卡片與基座由 CSS Grid／DOM 流動排列，未來同一小節超過三張卡會自動換列。淘汰的三張未引用背景已移至 `/private/tmp/colorplay-05a-rejected-backgrounds/`，仍可恢復。
+- 互動與木牌：`ChapterReviewNode` 從 563 行頁面拆出，頁面降至 447 行；current／展開節點及 hover／keyboard focus 時，書本＋基座整組以金藍 drop-shadow 發光。兩個小節標題改為木製告示牌，文字仍來自正式 chapter review data，沒有烤進圖片。
+- 驗證：素材 DOM 契約先 RED（0 books，預期 6）後 GREEN；Chapter Detail＋Title RTL 14/14、TypeScript、scoped ESLint、Prettier、`git diff --check` 全綠；Chromium 7/7，包含 320／375／1024／1440 typed-state 回歸及 1280×720／393×852 的 v3 asset、HUD 下緣貼齊、full-bleed、六本不同書、六個不同基座、木牌、selected／hover glow、零文字裁切與觸控區檢查。
+- 審核入口：`http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`；manifest：`artifacts/design-audit/jrpg-chapter-entry/manifest.md`。等待 owner 視覺核准；未 commit、未 push、未 deploy，未開始 06-v2。
+
+## 2026-08-11 12:34 [Codex] — 05a-v2 路徑裝飾移除與書台排版校正
+
+- 做了什麼：依 owner 回饋移除舊 `.review-accordion__summary` 滲入的黃色左線與灰色 hover 方框，也移除章節節點間的 cyan／藍色虛線；鍵盤 focus 不再畫矩形框，改由書本＋石台本體的金藍 drop-shadow 維持可見焦點。沒有修改卡片資料、完成行為、route、API 或權威進度規則。
+- 排版：桌機石台放大為 240px、書本 190px，書本定位在石台上方；兩個小節的三欄節點左右交錯至少 32px。縮短的是透明 layout 佔位，不縮小素材；Chromium 實測六組書／石台與底部操作列均落在 1280×720 內。393px 維持書本／石台在左、文字在右，修正 selector specificity 後沒有回退成上下排列。
+- 驗證：先以 Chromium RED 確認舊 hover 背景為 `rgb(242, 244, 247)`，修正後 1280／393 目標測試 2/2、完整 chapter harness 7/7；Chapter Detail RTL 13/13、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠。機械檢查涵蓋黃色 border=0、虛線 pseudo-element `content:none`、hover 背景透明／outline none、桌機 stagger、platform width >=200px、真實書本／石台／操作列 bottom <=720px、零文字裁切與手機書左文右。
+- 審核入口：`http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`；最新 capture 與 SHA 已更新於 `artifacts/design-audit/jrpg-chapter-entry/manifest.md`，截圖未回讀進代理 context。等待 owner 本機核准；未 commit、未 push、未 deploy，未開始 06-v2。
+
+## 2026-08-11 13:21 [Codex] — 05a 改為穩定選卡並接續 06-v2 閱讀
+
+- 做了什麼：依 owner 最新決策移除 05a 全部石頭基座，六本書直接成為可選節點；hover／選取／鍵盤 focus 只對書本本體加金藍光，不再使用會改變幾何的 `translateY`。未使用的縮圖衍生檔移至 `/private/tmp/colorplay-05a-removed-review-platforms/` 保留可恢復副本，batch-04 原始素材未動。
+- 桌機排版：章節學習進度與精熟程度固定於 HUD 下方左上角，章節標題移至其右側；小節告示牌、兩排書本與底部操作列重新分配間距。新增成對碰撞檢查後，首輪實測抓到進度／標題、進度／副標、第一排書／副標及跨小節書本共 10 組碰撞；調整後 1280×720 的進度、標題、副標、告示牌、六個節點與操作列碰撞清單為空，所有書本與操作列均留在 viewport 內。
+- 互動：`<details>` 展開模式已移除。點書只切換單一 `aria-pressed`／`data-selected` 狀態，不插入文章、不改節點高度；Chromium 比對選取前後六節點的 top／left／width／height 完全一致。按唯一 primary action「進入複習」後，同 route 切換到使用真實卡片內容、媒體與既有完成指令的 06-v2 全頁書本閱讀 region，並提供「返回選卡」；未新增假 route、API、schema 或進度規則。
+- 驗證：行為測試先 RED（舊節點缺少 `data-selected`）再 GREEN；Chapter Detail RTL 13/13、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；Chromium chapter harness 7/7，含 1280／393 選取不位移、零石台、遮擋檢查及進入閱讀 surface。05a capture 與 SHA 已更新於 manifest，截圖未回讀進代理 context。
+- 審核入口：`http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`。05a 與已連線的 06-v2 初版等待 owner 本機視覺確認；未 commit、未 push、未 deploy。
+
+## 2026-08-11 13:45 [Codex] — 共用學生 HUD 縮高與 05a 響應式置中
+
+- 共用 HUD：`--journey-student-hud-height` 由 92px 收斂為桌機 72px，手機由原 146px 單獨雙列改為 76px 單列；同步縮小 avatar／導航控制與內距，但所有可見連結、按鈕仍 >=44×44px。身份、等級、XP、Token 與 MENU 的 bounding boxes 在 1280／393 皆不重疊，學習地圖既有 generated-board Chromium gate 2/2 通過。
+- 05a 響應式修正：移除依賴 `margin-left:340px` 的桌機標頭偏移，章節標題與「選擇複習卡，再進入複習」提示改用內容自身 `fit-content + margin-inline:auto` 對 viewport 置中；Chromium 於 1024／1280／1440 實測中心誤差均 <=1px。章節進度／精熟程度仍固定在 HUD 下方左上角，與置中標題、提示及節點碰撞清單為空。
+- 小節與操作：兩個木製小節標示改為書本列左上對齊；底部重複的「複習 1/3」已移除，進度只保留在左上進度區及 06-v2 閱讀內容脈絡。05a「進入複習」、章節挑戰、06-v2 返回／完成控制統一為新版直角像素按鈕語彙，primary 使用與學習地圖相同的藍色漸層、白框、硬位移陰影與右箭頭。
+- TDD／驗證：RED 分別確認 HUD 仍為 92px、1024 標題偏心 160px、底部仍存在複習計數；GREEN 後 AppShell＋ChapterDetail RTL 41/41、Student HUD Chromium 2/2、Chapter Chromium 7/7、Learning Map Chromium 2/2、`tsc -b` 通過。最新 HUD／05a capture 與 SHA 已更新於各自 manifest，截圖未回讀進代理 context。
+- 審核入口：`http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`。未 commit、未 push、未 deploy。
+
+## 2026-08-11 14:10 [Codex] — 05a 小節目錄與六本分頁完成
+
+- 小節導覽：05a 新增左側「小節目錄」，一次只渲染目前選取小節的複習書本。小節編號與完整標題只在目錄顯示，書本區不再重複第二份木牌；切換小節會回到第一頁並選取該小節第一張未完成卡，避免「進入複習」指向已隱藏的書本。
+- 六本上限：每頁固定最多 6 本；超過時顯示 48×48px 上一頁／下一頁與 `第 n / m 頁`。Harness 的 3-1 提供 10 張，驗證第一頁 6 張、第二頁 4 張；3-2 提供 5 張且不顯示多餘分頁。這些數量只屬 dev/test fixture；production 元件仍使用真實 chapter-review data，可支援任意小節與卡片數。
+- 排版：桌機目錄固定在書庫左欄，內容列與提示文字增加間隔；手機目錄改為可橫向捲動的小節列，書本仍維持左圖右文。縮短桌機書本佔位並調整兩列間距後，1280×720 的進度、標題、目錄、六本書、分頁與操作列均無遮擋，選取不改變幾何。
+- TDD／驗證：先以缺少「第三章小節」navigation 的 RTL 失敗確認 RED，完成後 Chapter Detail RTL 13/13；Chromium 7/7 覆蓋 320／375／1024／1440 狀態、1280／393 構圖、小節切換、6+4 分頁、5 張免分頁、文字裁切、水平溢出、碰撞與 >=44×44px 控制。最新 captures 與 SHA 已更新於 `artifacts/design-audit/jrpg-chapter-entry/manifest.md`，未回讀截圖內容。
+- 審核入口：`http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`。未 commit、未 push、未 deploy；等待 owner 本機視覺核准。
+
+## 2026-08-11 14:14 [Owner／Codex] — 05a 書本、分頁與底部操作間距定稿
+
+- 依 owner 即時回饋加大提示文字與書庫、桌機上下兩排書本、手機逐本書之間的間距；分頁控制固定排在「進入複習」上方，兩者保留獨立留白。桌機章節 surface 改為 column layout，主操作列落在 1280×720 內容區最下方安全邊界，不與分頁或書本重疊。
+- 最終驗證：Chapter Detail RTL 13/13、Chromium 7/7、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠。1280×720 操作列 bottom <= viewport，393×852 維持無水平溢出、零文字裁切與可見控制 >=44×44px；captures SHA 已再次更新於 manifest。
+- 本機入口維持 `http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`；未 commit、未 push、未 deploy，等待 owner 視覺核准。
+
+## 2026-08-11 14:41 [Owner／Codex] — 學生 HUD 完全收合與 05a 控制位置調整
+
+- HUD：桌機 fine-pointer 模式改為完全退到 viewport 外，不再露出 10px HUD；頂端另設透明 8px 感應區，滑鼠移到頂端立即展開。滑鼠離開後延遲收合，鍵盤 focus／MENU 面板互動期間以 `:focus-within` 保持展開，展開層覆蓋場景且不改 scene 幾何，因此 route 內容不跳動。手機／觸控裝置沒有 hover，維持 76px 完整 HUD。`prefers-reduced-motion` 下取消轉場但保留收合功能。
+- 05a：依 owner 最新裁定，複習進度與精熟程度回到左上角，距場景頂端 24px；章節標題維持 viewport 置中且同樣保留至少 24px 頂端間隔。「開始挑戰」獨立固定於桌面右下角（右側 24–40px、底部 16–32px），「進入複習」維持底部中央；手機的挑戰控制在底部操作區右對齊，不做浮動遮罩。
+- 驗證：HUD Chromium 2/2（完全收合、頂端 hover 展開、focus 保持、手機固定）、Chapter Chromium 7/7、learning-map generated-board harness 2/2。正式登入型 learning-map E2E 另有既有 Auth blocker：兩個案例在 `waitForURL(/app/)` timeout，未進入 HUD／地圖斷言，第三個案例由 Codex 中止以免重複等待；不得將其算成 UI 回歸失敗或綠燈。
+- Captures 與 SHA 已更新於 `artifacts/design-audit/jrpg-student-hud/manifest.md`、`artifacts/design-audit/jrpg-chapter-entry/manifest.md`，截圖未回讀進 context。本機入口維持 `http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`；未 commit、未 push、未 deploy。
+
+## 2026-08-11 15:01 [Owner／Codex] — HUD 改為空間感應收合並消除 MENU 震動
+
+- Owner 最終裁定取消 HUD 的 10 秒／2 秒時間限制；桌機改為純空間感應。頂端開啟感應帶由 8px 加大為 24px，HUD 下方新增 28px 離開緩衝帶；游標在頂緣、HUD、MENU 或緩衝帶內維持展開，真正離開互動範圍才完全收合。手機／觸控 HUD 維持 76px 固定顯示。
+- MENU 穩定性：正式 App Shell 與 dev harness 共用 `StudentHudAutoHide` 狀態容器；MENU 面板與鍵盤 focus 納入同一互動區，不再讓 hover／收合狀態在點擊時往返。Chromium 機械量測確認 MENU 開啟前後 HUD top 與 `#main-content` top 完全一致，畫面不再上下震動。
+- TDD／驗證：新契約先在頂端 y=20 時維持收合（HUD y=-72）而 RED，實作後 Student HUD Chromium 4/4；AppShell＋HudCommandBar RTL 40/40、`tsc -b`、scoped ESLint 通過。截圖 SHA 未變，manifest 已更新為 24px／28px 空間感應契約。
+- 邊界：未修改 route、資料、API、Supabase 或 Vercel；未 commit、未 push、未 deploy。本機預覽仍由 `http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress` 檢視。
+
+## 2026-08-11 15:22 [Owner／Codex] — 06-v2 複習卡全頁書本閱讀完成
+
+- 實作：05a 選書後的 `ChapterReviewReader` 已依 owner 核准的 batch-02 `06-review-reading-v2.png` 重做。桌機為近滿版雙頁書與中央書脊；393px 為單頁直向書。背景沿用同一章節連續世界，沒有新增頁面級大外框；章名、小節名、卡片標題、卡片序位、正文與附件皆由正式 view model／repository 帶入，不寫死生成圖示意資料。
+- 長內容：正文依實際瀏覽器 column layout 流入邏輯書頁，不以縮字換取塞入；上一頁／下一頁更新 scroll position、`第 n / m 頁` 與 `本頁閱讀進度`。`完成複習` 保持唯一 primary action並沿用既有 trusted completion command；完成、pending、附件載入失敗與 completion error 行為保留。
+- RWD／可讀性：1280 實測 `column-count:2` 且 gutter 可見；393 實測 `column-count:1` 且 gutter 隱藏。兩尺寸的章節標題、頁碼與控制零裁切，返回鍵與標題零重疊，書本位於 footer 之前、footer 不超出 reader，文件水平 overflow <=1px，所有可見按鈕 >=44×44px。首輪實測抓到 pixel heading 的 2px 垂直 overflow，已透過行高修正，未用裁切掩蓋。
+- 測試／證據：RTL 13/13；Chapter 05a＋06-v2 Chromium 9/9（reader 2/2）；`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠。Reader E2E 拆至新的 161 行 `tests/e2e/chapter-review-reader.harness.spec.ts`，沒有再擴張既有 530 行 05a harness。captures／SHA 與 DEV/TEST fixture 邊界記於 `artifacts/design-audit/jrpg-review-reader/manifest.md`。
+- 邊界：未新增 API／RPC／schema／query／mutation，未改完成規則、route 或 Supabase／Vercel。未 commit、未 push、未 deploy；等待 owner 於本機預覽視覺核准。
+
+## 2026-08-11 16:08 [Owner／Codex] — 05a 挑戰入口重排與 06-v2 生成書本／背景接入
+
+- 05a 選卡頁：移除右下角「開始挑戰」，在「小節目錄」下新增「小節挑戰」與「章節總挑戰」。章節總挑戰沿用 repository 提供的真實 chapter template route；目前 production view model 沒有 subtopic template ID，依已核准 F-3 邊界將小節挑戰明確顯示為 disabled「題庫準備中」，未把章節題庫誤接成小節測驗、未用 dead control 冒充功能完成。桌機／手機挑戰入口、六本分頁及底部「進入複習」均通過零碰撞與文字裁切檢查。
+- 06-v2 閱讀頁：以核准 batch-02 06-v2 為 art direction 生成並接入四張 runtime asset：透明桌機雙頁書、透明手機單頁書、桌機森林書庫背景、手機直式森林書庫背景。生成圖片不含文字、頁碼、HUD 或控制；教材內容、媒體與控制仍全部由 DOM／正式 view model 呈現。桌機書底顯示左右頁碼，393 直式固定使用單頁書與置中頁碼；返回／上下頁改為「返回複習卡選擇」「閱讀上一頁」「閱讀下一頁」，完成按鈕套用與選卡頁相同的藍色直角像素 primary action。
+- TDD／驗證：RTL 先確認舊「開始挑戰」與缺少書內頁碼的 RED，修正後 Chapter Detail 13/13；Chromium Chapter＋Reader 9/9（320／375／1024／1440 typed states、1280×720、393×852），確認兩種背景與兩種書本實際載入、桌機 2 columns／手機 1 column、書內頁碼、正文與控制零裁切、水平 overflow <=1px、可見控制 >=44×44px。`tsc -b`、scoped ESLint、Prettier 通過；captures／素材 SHA 與 prompt 摘要已更新於 `artifacts/design-audit/jrpg-chapter-entry/manifest.md`、`artifacts/design-audit/jrpg-review-reader/manifest.md`。
+- 邊界：未新增 API／RPC／schema／query／mutation，未改進度／完成權威規則，未 commit、未 push、未 deploy。本機入口維持 `http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`；小節挑戰啟用仍屬後續 F-3 vertical slice。
+
+## 2026-08-11 16:31 [Owner／Codex] — 06-v2 固定書面座標與換頁零位移驗證
+
+- 響應式根因修正：淘汰會依容器比例拉伸書本、再靠獨立 inset 猜文字位置的做法。桌機雙頁書固定 1683:935、手機單頁書固定 931:1690；書本、正文 viewport、書脊與頁碼共用同一個比例座標系，不同比例多出的空間留在書外，因此 1024×768、1280×720、1440×900、375×812、393×852 都不會把文字推離紙面，也沒有透過縮小正文字級換取通過。
+- 換頁審查：新增 page 1 → page 2 前後 12 個關鍵區塊的 bounding-box 比對，涵蓋 header、返回鍵、標題、book stage、書本、正文、頁碼、footer、上一頁、頁數、下一頁及完成按鈕，允許差異上限 0.5 CSS px。首輪確實抓到手機「完成複習」位移 1px；根因是游標由「進入複習」留在相同座標後觸發繼承的 `hover translateY(-1px)`，點下一頁後游標移開才回落。閱讀頁現改為 hover 只換配色、不改 transform，未放寬測試容許值。
+- 視覺與控制：直立式大書、書內頁碼、藍銀返回／上下頁按鈕及亮藍完成按鈕維持；disabled 控制為不透明灰藍，文字與按鈕沒有裁切。生成圖只承載書本與環境，教材、附件、進度與操作仍是 DOM／正式 view model。
+- 驗證：Chapter Detail RTL 13/13；Reader Chromium 5/5；Chapter 05a＋Reader 整合 Chromium 12/12；`tsc -b`、scoped ESLint、`git diff --check` 通過。Prettier 僅發現 reader manifest 排版並已格式化後重查。證據與最新 capture SHA 記於 `artifacts/design-audit/jrpg-review-reader/manifest.md`。
+- 邊界：未新增 API／RPC／schema／query／mutation，未改 route、完成權威規則或 Supabase／Vercel。未 commit、未 push、未 deploy；本機入口維持 `http://127.0.0.1:4181/dev-harness/chapter-detail.html?scenario=in-progress`，等待 owner 視覺核准。
+
+## 2026-08-11 16:55 [Owner／Codex] — 06-v2 真正紙面分頁與翻頁動畫
+
+- 分頁機制：依 owner 核准方向移除閱讀內容的 `overflow-x:auto`／`scrollLeft` 換頁。新增 `BookPaginator` module，以單一 interface 接收語意內容區塊與實際紙面量測元素；等待字型／圖片與 ResizeObserver 尺寸穩定後，依固定 PageRect 逐頁填入，長段落只在中文字元或標點邊界拆分。桌機每個 view 渲染兩個獨立紙頁，手機渲染一頁；頁面切換直接替換 active page DOM，內部 scrollLeft 維持 0。
+- 響應式與可及性：書本比例、PageRect、書脊與頁碼仍使用同一座標系；縮放時重新分頁而非縮小正文字級，紙面外只留下 letterbox 空間。完整線性教材另外保留為螢幕閱讀器可讀來源，視覺分頁標為 presentation，避免雙重朗讀；正式教材、媒體與完成指令仍由 production view model／repository 提供。
+- 動畫：加入 340ms、以書脊為 transform-origin 的羊皮紙翻頁與墨色 settle 動畫；只有覆蓋紙張做 rotateY／opacity，書本、正文 PageRect、footer 與控制列幾何不變。`prefers-reduced-motion: reduce` 時 pseudo sheet 不建立、所有翻頁動畫為 none，內容立即切換。
+- TDD／驗證：1280 tracer test 先以找不到兩個 `.chapter-review-reader__book-page` 呈 RED，實作後五個 viewport 的固定頁數、零紙面水平／垂直 overflow、零內部橫向捲動、換頁內容確實改變、頁碼前進及 12 個區塊換頁前後差異 <=0.5px 全綠；另加 reduced-motion 測試。Reader Chromium 6/6、Chapter 05a＋Reader 整合 13/13、Chapter Detail RTL 13/13、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠。
+- 證據／邊界：最新 1280／393 captures 與 SHA、分頁 interface 和動畫契約已更新於 `artifacts/design-audit/jrpg-review-reader/manifest.md`，截圖未回讀進 context。未新增 API／RPC／schema／query／mutation，未改 route、完成權威規則或 Supabase／Vercel；未 commit、未 push、未 deploy，等待 owner 於本機預覽視覺核准。
+
+## 2026-08-11 17:01 [Codex] — 06-v2 單輪 scoped review remediation
+
+- Review 邊界：依 AGENTS.md M 級一次 review 上限，只審查本次 `BookPaginator`、Reader、reader CSS 與 E2E；code-review skill 的雙 reviewer 預設與專案單一 reviewer 規則衝突，因此採單一 scoped review，未啟動 sub-agent／第二 reviewer。Security axis 跳過，diff 未觸及信任邊界。
+- Finding／修復：唯一 Standards finding 是 `chapter-review-reader.css` 達 602 行，超過單檔 500 行門檻。將 150 行 mobile／reduced-motion 規則拆至 `chapter-review-reader-responsive.css`，主檔降為 451 行，並由 `chapter-detail-page.tsx` 在 base CSS 後匯入。首次錯把 responsive 以檔首 `@import` 載入，Chromium 立即抓到 base cascade 蓋掉手機頁碼與 reduced-motion；未用 `!important` 掩蓋，改為正確入口順序。
+- Remediation 驗證：Reader Chromium 6/6 再次全綠，涵蓋 1280×720、1024×768、1440×900、393×852、375×812 與 reduced-motion；`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠。captures SHA 未變。Review 無其餘 Standards／Spec finding；未 commit、未 push、未 deploy。
+
+## 2026-08-11 17:21 [Owner／Codex] — 06-v2 手機全頁單書與三鍵控制
+
+- 手機構圖：依 owner 決策保留桌面雙頁版不變；393／375 手機改為 HUD 下方整面單頁書，book carrier 與 PageRect 共用同一個滿版容器。左上顯示縮小的 `‹ 返回`，但保留完整 `aria-label="返回複習卡選擇"`；右上只保留章節標題與小節標題兩排小字，隱藏舊複習卡位置列。中央 14%–85% 為測量後的文字分頁區，與上方 header／下方控制沒有碰撞。
+- 底部控制：移除手機 separate progress bar、footer 頁數及書內頁碼的可見呈現；書頁下緣固定三欄 52px 控制，依序為 `上一頁`、`完成複習 n%`、`下一頁`。中央百分比由目前頁數／總頁數計算並於換頁後更新，完成按鈕仍呼叫既有 trusted completion command；按鈕可及名稱維持「閱讀上一頁／完成複習／閱讀下一頁」。
+- TDD／驗證：393 tracer 先以完成按鈕缺少百分比呈 RED；GREEN 後 Reader Chromium 6/6、Chapter 05a＋Reader 整合 13/13、Chapter Detail RTL 13/13、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠。手機機械檢查涵蓋書本四邊貼齊 reader、header／PageRect／footer 分離、三鍵左中右同列、百分比換頁更新、按鈕 >=44×44px、零文字裁切及紙面零 overflow；三個桌面 viewport 回歸全綠。
+- Review／邊界：本 task 唯一一次 scoped review 僅檢查 mobile Reader JSX、responsive CSS 與 E2E，無 Standards／Spec finding；四個相關檔案皆低於 500 行。captures／SHA 與手機契約已更新於 `artifacts/design-audit/jrpg-review-reader/manifest.md`，未回讀截圖。未新增 API／RPC／schema／query／mutation，未改 route、內容、完成權威規則或 Supabase／Vercel；未 commit、未 push、未 deploy，等待 owner 本機視覺核准。
+
+## 2026-08-11 17:28 [Owner／Codex] — 06-v2 手機移除場景背景並放大書頁
+
+- 視覺調整：只修改手機 reader；移除 `review-reader-world-mobile.png` 與夜景 gradient，書後改為不含 background image 的羊皮紙底色。單頁書 carrier 仍四邊貼齊 HUD 下方 reader，書圖本身由 100%×100% 放大為 112%×106%，讓頁面邊緣填滿小螢幕；桌面背景與 1683:935 雙頁書完全不變。
+- 文字契約：owner 指定的文字區 `inset: 14% 9% 15%` 原值未動，BookPaginator 仍依同一 PageRect 量測分頁。右上章節／小節改深褐色，書名與正文維持墨色，不使用白字；只有三顆藍色操作按鈕保留白字確保對比。
+- 驗證：Reader Chromium 6/6，涵蓋三個桌面尺寸、393×852、375×812 與 reduced-motion；機械檢查新增 mobile `background-image:none`、book `background-size:112% 106%` 及章節／小節／書名／正文 computed color 不得為白色。`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠。最新 mobile capture SHA 已更新於 reader manifest；未 commit、未 push、未 deploy。
+
+## 2026-08-11 17:40 [Owner／Codex] — 06-v2 直橫向動態文字安全區
+
+- 版面：手機單頁書的文字 PageRect 改為動態上下安全區；頂端取 `14%` 與「header 起點 + 56px」較大值，底端取 `15%` 與「footer 起點 + 64px」較大值。直式保留原本較寬鬆的紙面留白，橫式則確保文字與返回／章節標題、下排三顆按鈕各至少相隔 10 CSS px，沒有用縮字或裁切掩蓋內容。
+- 旋轉：React 分頁判定與 CSS 共用同一 breakpoint；393×852、375×812、852×393、812×375 都使用手機單頁書，1280×720、1024×768、1440×900 維持桌機雙頁，不會在旋轉後出現雙頁 DOM 套用單頁樣式。
+- TDD／驗證：新增 852×393 契約先因實際渲染 2 頁而 RED；修正後 Reader Chromium 8/8、Chapter 05a＋Reader 整合 15/15，並確認每頁零水平／垂直 overflow、文字零裁切、控制 >=44×44px、換頁幾何差 <=0.5px。`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；1280／393 capture SHA 未變。未 commit、未 push、未 deploy。
+
+## 2026-08-11 18:06 [Codex] — JRPG UI Git checkpoint 與 Sheet 匯入前 gate
+
+- UI checkpoint：`fb9a0cd` 收錄 05a 選卡、06-v2 閱讀、HUD 空間感應收合、runtime assets、1280／393 實作 captures，以及 batch-01／batch-02／selected 核准參考圖。新增 `docs/jrpg-ui-development-workflow.md`，把多 session 改為「共同 staging baseline＋每個 session 擁有不重疊畫面／檔案＋每 task 一輪 review」，避免多人重複 review 同一 diff 或同時修改全站 CSS。
+- 驗證：`pnpm build`、全域 lint、AppShell／HUD／Chapter／Sheet contract 62/62 通過；首頁／地圖／HUD Chromium 8/8、章節選卡＋閱讀 15/15，認證 4 個 viewport 案例亦在較長命令被環境截斷前逐一通過。較長 27-case 命令本身沒有完成結論，未列為綠燈證據。
+- Sheet preflight：重新下載 owner 最新 Google Sheet，取得 140 題、8 張複習卡與 1 列過濾佔位。匯入器原先只認「題號」，已以 RED→GREEN contract 補上新版「題庫序號」相容（fetch-sheet 9/9）。結構 gate 仍以 1 項錯誤 BLOCK：`3-2-38` 與 `3-2-39` 題幹完全重複，但選項／答案不同；未自動跳過或猜改。
+- 附件 preflight：複習卡「附件」欄只有 `圖3-2`、`圖3-5` 圖號；XLSX 內只有 1 張 JPEG media，另有多組 Office drawing shapes，尚未形成兩張可追蹤的 web asset path＋alt text。現行 `reviewCardMedia` 仍是舊示意圖，不得冒充最新版附件。因兩項資料 blocker 未解除，本輪沒有產生新 seeds、沒有寫入 `onkxnkzeixpezetkmocf`，staging DB 維持原狀。
+
+## 2026-08-11 18:14 [Codex] — PR #5 單輪 review finding remediation
+
+- Git 狀態：feature branch 已推到 GitHub `8beb44c`；直接快轉 `HEAD:staging` 被 branch rules 正確拒絕（需 resolved conversations＋9/9 required checks）。既有 PR #5 已自動更新至同一 SHA，`colorplay-staging-web` Git Preview build 顯示 SUCCESS，但尚未合併至 staging／更新 custom domain。
+- 三項 Copilot inline findings 均確認有效並於原 task 唯一 review round 修復：Codex stop hook 改為 repo-relative `bash .codex/hooks/review-gate.sh`；Claude allowlist 移除 `/Users/guanyucheng/...` 本機絕對路徑、保留 `$HOME` 版本；quiz 只有在 `CHAPTER_LOCKED` 建立失敗時才 enable chapter-map query，既有 quiz session 不再多打一支 RPC。
+- TDD／驗證：新增 existing-session query-disabled assertion 先收到 hook 無參數而 RED；GREEN 後 Quiz＋chapter-map hook 14/14、scoped ESLint／Prettier 通過，`.codex`／`.claude` 已無 `/Users/guanyucheng` 命中。待推 remediation commit 後回覆並 resolve 3 個 conversation；9 required contexts 的 workflow 缺口仍是 staging merge 的獨立 blocker。
+
+## 2026-08-11 18:23 [Codex] — 最新 Google Sheet 匯入前 gate 仍阻擋
+
+- 依 owner 指示嚴格採用「先檢查、通過後才匯入」。重新執行 `pnpm content:fetch`，最新版仍取得題目 140 列（其中 1 列為佔位而過濾）與複習卡 8 列。
+- `pnpm content:verify --gate --xlsx artifacts/content/question-bank.xlsx` 結果為結構錯誤 1、人工覆核提示 0：`3-2-38` 與 `3-2-39` 題幹完全重複。這屬教材內容決策，未自行猜改 Sheet SSOT、未略過 gate。
+- 本輪沒有執行 `content:import`、沒有產生或套用新 seed、沒有寫入 staging Supabase `onkxnkzeixpezetkmocf`。下一步需 owner／教師先修正兩題題幹差異，再重抓、重跑 gate；通過後才審查附件映射與執行 staging 匯入／表↔庫 audit。
+
+## 2026-08-11 21:25 [Owner／Codex] — RC／QB／CR 新序號契約通過結構 gate，兩題內容矛盾待裁定
+
+- Owner 裁定題幹相同但選項組不同可視為不同題目，並以 Apps Script 產生 `RC＋章＋小節＋兩位題號`、`QB＋章＋小節＋兩位題號`、`CR＋章＋三位題號`。重新抓取最新版 Sheet，確認三個正式分頁為 `(RC)各單元複習大廳`、`(QB)各單元隨機測驗題庫`、`(CR)章節總複習`；取得 RC 8 張、QB 139 題、CR 64 題，203 個題目序號與 8 個複習卡序號皆無缺漏、重複或格式／章節歸屬錯誤。
+- TDD 已讓 fetch／verify／review-card importer 接受新版分頁與序號，重複內容判定改為「題幹＋選項組」；負向題的「故選項 X 正確」不再被誤判。結構 gate 現為 0，人工提示由 7 降為 2，兩項皆為真實答案／解析矛盾：`QB3226` 正解 D 但解析稱 D 錯誤；`QB3311` 正解 C 但解析稱 C 錯誤。
+- RC 附件欄仍只有 `圖3-2`／`圖3-5` 圖號，沒有 web asset path 與 alt；已移除舊 `/media/review/color-wheel.svg` 示意映射，避免錯圖再上線，並在 review report 明列未建立媒體列。
+- 因內容矛盾尚未獲 owner 裁定，本輪尚未把任何 seed 套用至 staging Supabase `onkxnkzeixpezetkmocf`，也尚未更新 `staging`／custom domain。工作樹保留未提交的管線 WIP；下一步先由 owner 決定兩題應修改正解、解析或題幹，再完成題池 migration／小節挑戰與 Live／章節總挑戰串接、staging audit 與 GitHub-source 部署。
+
+## 2026-08-12 01:12 [Owner／Codex] — RC／QB／CR 路由與圖片私有化完成，待 staging 套用
+
+- 最新 SSOT 再抓為 QB 139、CR 64、RC 8；`QB3238`／`QB3239` 依 owner 裁定保留為題幹相同、選項組不同的兩題。結構 gate 為 0 error／0 warning，stable code disposition 已逐筆記入匯入報告。RC 附件只保留 P301～P305 代號，沒有實體檔與 alt，因此本批刻意產生 0 筆媒體 mapping。
+- 路由完成：RC 供複習閱讀、QB 供小節挑戰／Live／mastery、CR 只供章節總挑戰；小節 template 由 `section_id` 鎖定。Live 拒絕 chapter-wide／null section，mastery 只抽 QB 且保留既有 chapter access guard，所有受影響 consumer 與 progress denominator 同步更新。
+- 唯一一輪 implementation review 的 findings 已處理：重複 ID 與 QB 小節不一致改為 fail-closed；published seed 不再原地改寫 question/options/card/media，語意差異回 `CONTENT_VERSION_REQUIRED`；移除 mastery 動態 hint 測試遮罩；圖片 bucket 改 private，只允許已發布目前卡片版本的 authenticated SELECT，前端使用 1 小時 signed URL；P301～P305 後補須走 `publish_review_card` 新版本流程。`import-questions.mjs` 超過 500 行的理由已寫於檔頭：同一 validated dataset 必須原子產生 seed／fixtures／report，共用解析與驗證已拆模組。
+- 驗證：本機 clean reset 完整套用 5 migrations 與三份 seeds；首次 23 檔 pgTAP 為 473/474，抓到 mastery chapter lock 被覆寫，補回後代表性 7 檔 152/152 全綠；Vitest 8 檔 92/92、`pnpm typecheck`、`pnpm lint`、`pnpm build`、scoped Prettier、`git diff --check` 全綠。remote migration preflight 確認 linked project ref 為 `onkxnkzeixpezetkmocf`，遠端只缺 `20260811000100`～`00500`；本筆記錄時尚未執行 remote write／push／Vercel 更新。
+
+## 2026-08-12 09:08 [Owner／Codex] — RC／QB／CR 已匯入 staging，GitHub-source UI 已更新公開 alias
+
+- Git／資料：`94ea5437f86ca7ec02928609490c88f31af725e5`（`feat(content): route RC QB CR content pools`）已推至 GitHub `phase6/jrpg-generated-board-ui`。已先 dry-run，再把 `20260811000100`～`00500` 套用至 staging Supabase `onkxnkzeixpezetkmocf`，migration history local／remote 對齊；依序執行 questions、review cards、hints seeds。遠端唯讀 audit 為 QB 139、CR 64、RC 8、section templates 20；P301～P305 尚無圖片檔與繁中 alt，因此 media 0，沒有建立假附件資料。
+- 圖片安全：`review-card-media` 確認為 private、單檔上限 2 MiB；目前學生端只會為「已發布卡片目前版本」取得短效 signed URL。圖片後補須依 `docs/content/review-card-media-import.md` 上傳檔案並走 `publish_review_card` 建立新版，不得直接 update published card／media。
+- Hosted：GitHub source preview `dpl_5js1w39f6g49s4jUmctJo6chNmVD` metadata 明確為 repo `peiyi-liu/colorplay_v1`、ref `phase6/jrpg-generated-board-ui`、SHA `94ea543…`。bundle 掃描只命中 `onkxnkzeixpezetkmocf.supabase.co`，未命中 production ref；合成學生已在 preview 完成 Auth／profile bootstrap 到 `/app`。通過後 promote 為 staging-project production deployment `dpl_F9ZiU8hYvxAXV8PDaicYcRYsN3VP`，`staging.colorplayapp.com` 已指向該 deployment；公開 alias 再次以同一學生登入到 `/app`，首頁／登入／`/app` HTTP 200。
+- 已知交付邊界：PR #5 仍因 staging branch rules 要求的 `format`、`lint`、`typecheck`、`unit-coverage`、`production-build`、`local-database`、`chromium-e2e`、`credential-scan`、`owner-approval` contexts 未由現有 workflow 產生而無法正常 merge；本輪沒有 `--admin` bypass、沒有修改 rules／CI。公開 staging 更新採既有 GitHub-source preview promotion，不是本機 source upload；PR／branch protection 缺口仍需 owner 另行授權處理。
+
+## 2026-08-12 10:18 [Owner／Codex] — Vercel staging 更新並確認 P301～P305 已上傳
+
+- Storage 唯讀盤點確認 `onkxnkzeixpezetkmocf` 的 private `review-card-media` 已有 `chapter-3/P301.webp`～`P305.webp` 五張 WebP，單檔 418,786～1,965,636 bytes，皆低於 2 MiB；目前 `review_card_media` 尚未把這五張圖綁定至 RC3101／RC3103／RC3201／RC3202，既有唯一 mapping 仍是舊卡片的 `/media/review/color-wheel.svg`，不得視為本次附件完成。
+- Vercel：最新 GitHub-source preview `dpl_At5x6JMv5CXYsbJpg67rBwPQ2PVe` 已確認 repo `peiyi-liu/colorplay_v1`、ref `phase6/jrpg-generated-board-ui`、SHA `a8845ba05bcec25e9a32458127dbf8fe4ab1df7b`，bundle 只命中 staging Supabase `onkxnkzeixpezetkmocf`；有效合成學生登入至 `/app` 通過後，promote 為 `colorplay-staging-web` production deployment `dpl_8jRnXHGyEiQNQoTdJ6dTHg9pfvEN`。`staging.colorplayapp.com` 已指向該 deployment，公開 alias 再次完成學生 Auth／bootstrap 至 `/app`。
+- 邊界：本次先完成 owner 指定的 Vercel 更新；Storage 上傳不需要重新 build，且只有物件檔不會自動顯示。下一步仍需為 P301～P305 補繁中 alt，並經 `publish_review_card` 建立新卡片版本與 media mapping；不得直接 update 已發布卡片。
+
+## 2026-08-12 16:02 [Owner／Codex] — 學生返回、Quiz 作廢與章節／HUD 版面調整
+
+- 學生返回：`/app` 維持學習大廳且不顯示返回鍵；其他學生 route 左上顯示具文字的「返回」。同一 AppShell 內已知的上一頁優先 `navigate(-1)`，直接開啟子頁或沒有站內 history 時回 `/app`；replace navigation 不會被誤算成新的站內上一頁。
+- Quiz 離開：進行中 session 的站內連結、左上返回與 browser Back 統一先顯示「要離開挑戰嗎？」；繼續作答會保留 route/session，確認離開則先呼叫 server-authoritative `abandon_quiz_session`，成功才離頁，失敗留在原頁。新增 `quiz_session_status.abandoned`、`abandoned_at`、terminal-state trigger 與 idempotent RPC；作廢不發 XP／Token，assignment attempt 若存在也同步 abandoned，再開挑戰會建立新 session。已作廢 session 深連結回 `/app`。對應 AC-UI-011／012／013／014 的 task-level 自動契約已覆蓋；AC-UI-012 Android system Back 依規格仍為 `NOT VERIFIED`，留待 phase gate 人工裝置證據。
+- HUD／章節：Level 與 XP progress 改為同一 progression row，1280／393 無重疊或水平 overflow。章節進度框改至右上內容區，新增獨立「學習狀態」標籤，狀態 pill、複習進度與精熟內容全部受框內 containment 測試；目錄、複習卡、小節挑戰、章節總挑戰維持原排列並以 1004px 內容寬置中。「進入複習」與頁底保留至少 24px。`chapter-archive.css` 與 chapter harness 已拆分；本次新增檔、QuizSession production 與主要 chapter CSS／harness 均低於 500 行。既有 `app-shell.test.tsx`／`quiz-session.test.tsx` 原已超過上限，本次只加入必要 mock／assertion，未在此 UI task 擴張範圍重構。
+- 驗證：完整本機 pgTAP 51 files／1149 tests 全綠；Supabase generated types 與 `src/types/database.ts` 完全一致。受影響 Vitest 8 files／87 tests、全域 lint、typecheck、production build 全綠；Chapter Chromium 7/7（320／375／393／1024／1280／1440 與鍵盤），HUD Chromium 4/4（1280／393）全綠；`git diff --check` 通過。唯一一輪 scoped self-review 檢查 trust boundary、navigation/history、Dialog、responsive containment 與 500-line 規則，無未解 finding。全域 `pnpm test` 另有既存 tokens／chapter-sequence stale contract 與 sandbox localhost EPERM 測試失敗，未改舊測試假裝全綠。
+- 邊界：migration 只套用並驗證於本機 Supabase；未寫 staging／production，未 commit、未 push、未 deploy。工作樹保留本 task 未提交變更，下一步由 owner 先做本機視覺確認，再決定是否 commit／部署。
+
+## 2026-08-12 17:04 [Owner／Codex] — 學生導覽與 Quiz 作廢整合發布至 staging
+
+- 整合來源：`a8845ba05bcec25e9a32458127dbf8fe4ab1df7b` 已確認為本次 feature commit `dd59bd74fd67464d8493a5446072babc78f84f8e` 的祖先；因此公開 staging 同時包含既有 content import 與本次學生返回、Quiz 中途作廢、HUD XP、章節狀態／置中／間距調整。branch `phase6/jrpg-generated-board-ui` 已推至 GitHub。
+- Staging DB：dry-run 只列出 `20260812000100_abandon_quiz_session.sql` 與 `20260812000200_abandon_quiz_session_command.sql`，已套用至 `onkxnkzeixpezetkmocf`；遠端 migration history 再查確認兩筆 local／remote 對齊。push 完成後 CLI 的 pg-delta catalog cache 曾出現本機 CA 檔 ENOENT warning，不影響遠端 migration 成功結果。
+- Hosted：GitHub-source preview `dpl_7kwu8qy2YZvDK5gxaLK5sQ8rAdCW` 經 Git metadata、bundle staging host／anon-key fingerprint 與合成學生 Auth／bootstrap 至 `/app` 通過後 promote；公開 production deployment 為 `dpl_635Hhfgs89Ebu64tiYJu7BvE5Ra8`，其 Git provenance 仍是 `dd59bd74…`，`staging.colorplayapp.com` 已指向該 deployment。公開 alias 的 `/`、`/login`、`/app` 均為 HTTP 200，bundle 只命中 `onkxnkzeixpezetkmocf`、未命中 production ref，合成學生登入至 `/app` 再次通過。
+- 邊界：本次只更新 staging，未部署 `colorplayapp.com` production；Android system Back 的實體裝置證據仍待 phase gate 人工驗證。
+
+## 2026-08-12 17:54 [Owner／Codex] — 固定學生 HUD、統一返回鍵與章節標題同列
+
+- 學生 HUD 改為固定在視窗頂端且永遠顯示，移除 hover／感應區自動收合；HUD 仍在 AppShell 正常版面流中，所有學生 route 的主內容由 HUD 下緣開始，桌機與手機都不會被遮住。返回鍵統一為 HUD 左上角的單一實例；學習大廳不顯示，其他學生頁維持「優先回站內前一頁，沒有站內歷史才回學習大廳」。複習卡閱讀頁移除原本第二顆返回鍵，改由同一 HUD 按鈕執行「返回複習卡選擇」。
+- 章節選卡頁桌機將置中的章節標題與右上學習狀態框排在同一列，左右採對稱欄維持標題的 viewport 真置中；窄螢幕在空間不足時安全堆疊。Reader 高度改為填滿 HUD 下方剩餘區域，修正翻頁後標題可能捲到 HUD 下方的裁切問題。
+- 驗證：受影響 Vitest 4 files／47 tests、HUD Chromium 4/4、Chapter Chromium 7/7、Reader Chromium 8/8、全域 lint、typecheck、production build 與 `git diff --check` 全綠。唯一一次 scoped self-review 檢查單一返回鍵、override cleanup、HUD／內容幾何、responsive 版面、教師端協作邊界與 500-line 規則，無未解 finding。
+- 協作邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page 或教師專屬 CSS；共享 `app-shell.tsx`、`globals.css` 只包含本輪既有學生端 HUD 整合。未合併教師 branch、未 push、未 deploy。下個動作是提交本學生端 checkpoint，保留本機 `http://127.0.0.1:4178/dev-harness/chapter-detail.html?scenario=in-progress` 供 owner 檢視。
+
+## 2026-08-12 18:20 [Owner／Codex] — 返回鍵移至 HUD 下方並修正場景背景起點
+
+- 返回鍵從 HUD DOM 移至學生 `#main-content`，所有非學習大廳學生 route 仍共用同一顆按鈕與既有站內返回／fallback 規則；章節與閱讀器頁面只保留這一顆。按鈕左緣與 HUD 角色頭像對齊，位於 HUD 下方並與章節標題列同列；HUD 恢復只包含角色／Level／XP／Token／導覽／MENU。
+- 章節與閱讀器桌機背景移除 viewport-fixed attachment，背景定位區改從 HUD 下緣開始；章節容器使用主場景的實際剩餘高度，避免以 token 高度估算造成頂部場景被吃掉。393px 章節標頭採左右對稱三欄，左欄留給返回鍵、中欄維持標題 viewport 置中、右欄保留等寬空白，學習狀態下一列顯示，返回鍵不再蓋住標題。
+- TDD／驗證：返回鍵內容層契約、背景 attachment 契約與 393px 不重疊契約均先 RED 後 GREEN。Vitest 4 files／47 tests、Chapter Chromium 7/7、Reader Chromium 8/8、HUD Chromium 4/4、全域 lint、typecheck、production build、Prettier 與 `git diff --check` 全綠。唯一一次 scoped self-review：Standards 0、Spec 0；Security 軸因未觸及 trust boundary 而略過。
+- 協作邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page、教師分析或教師 CSS；共享 `app-shell.tsx`／`globals.css` 僅收斂本輪學生返回與 HUD 版面。未合併教師 branch、未 push、未 deploy；本機預覽維持於 `http://127.0.0.1:4178/dev-harness/chapter-detail.html?scenario=in-progress`。
+
+## 2026-08-12 18:38 [Owner／Codex] — 手機 HUD 暱稱單行與單頁書左右標頭
+
+- 手機 HUD：移除暱稱 `10ch` 人為寬度上限，暱稱使用頭像與 Token 之間的完整上排空間並固定單行；Level／XP 維持下排。只有真正超出可用寬度時才以 ellipsis 收斂，不再先折成兩行增加 HUD 高度。
+- 單頁書：手機／窄橫向閱讀器將統一返回鍵放在書面左上，章節與小節標題在右上，兩者頂緣同列且至少相隔 8px；返回鍵沿用底部閱讀控制的藍色像素按鍵視覺，並維持至少 44px 點擊高度。正文安全區與底部三鍵未移動。
+- 裁切稽核：所有學生 `/app/**` route 共用 HUD 後、`#main-content` 前的 AppShell 正常版面流；CSS 搜尋未發現章節／閱讀器以外的學生頁 fixed background 或自訂 `100dvh` 繞過 HUD。學習地圖、章節、閱讀器與 HUD 有實際 viewport 證據；Quiz、商店、成就、排行榜等受共同 shell 契約保護，但本 task 未逐頁建立瀏覽器視覺證據。
+- TDD／驗證：手機暱稱單行與單頁書標頭皆先 RED 後 GREEN。Vitest 4 files／47 tests、HUD Chromium 4/4、Reader Chromium 8/8、全域 lint、typecheck、production build、Prettier、`git diff --check` 全綠。唯一一次 scoped self-review：Standards 0、Spec 0；Security 軸不適用。未修改教師端檔案、未合併教師 branch、未 push、未 deploy。
+
+## 2026-08-12 19:04 [Owner／Codex] — 小節／章節 Quiz 小精靈戰鬥畫面
+
+- 小節挑戰與章節總挑戰共用的正式 `QuizSessionPage` 改為 v2 戰鬥構圖：桌機 A／B／C／D 兩欄四宮格、手機單欄，選項不加圖案；保留題號／總題數、Quiz Score、server deadline timer 與單一送出主操作。移除佔空間的精熟 MapStepper，返回鍵仍是 HUD 下方左上角的全站統一按鈕，Quiz 離開確認／server-authoritative abandon 行為不變。
+- 以內建 imagegen 產生純環境像素夜森林 `src/assets/quiz/quiz-battle-forest-v1.png`（1672×941，無主角、精靈、文字或 UI），由 CSS 作 battle stage 背景。戰鬥對手改用既有三色 `SpiritAvatar`；stable code 只負責每題確定性換精靈。血條只在 server feedback 對應的 `hit`／correct phase 歸零並播放 700ms 擊敗動畫；incorrect／timeout 維持滿血，未把正誤或獎勵判定搬到前端。
+- TDD／驗證：BattleStage 先以 3 個 RED 鎖定滿血精靈、correct 清血與下一題換精靈，再完成 GREEN；Quiz feature 11 files／63 tests、全域 lint、typecheck、production build、Prettier 與 `git diff --check` 全綠。唯一一次 scoped self-review：Standards 0、Spec 0；Security 軸因 diff 未觸及 trust boundary 而略過。內建瀏覽器本 session 無可用實例，故未把 1280／393 目視檢查宣稱為已通過；dev/test-only 本機入口為 `http://127.0.0.1:4181/dev-harness/quiz-session.html?scenario=idle`，另有 `scenario=correct` 可檢查血條歸零。
+- 協作邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page、教師分析或共享 HUD／AppShell／globals／tokens；未合併教師 branch、未 push、未 deploy。
+
+## 2026-08-12 19:09 [Owner／Codex] — 修復 Quiz 本機預覽空白頁
+
+- Owner 回報 `quiz-session` harness 只有底色。新增掛載回歸測試後穩定重現：共用 `StudentHudHarness` 使用 declarative `MemoryRouter`，但正式 Quiz 的 `QuizExitGuard` 需要 data router 才能呼叫 `useBlocker`，React 因 runtime invariant 中止整棵預覽樹；正式 App 原本已使用 data router，不受此 harness-only 問題影響。
+- 修正：將 dev/test-only `StudentHudHarness` 改為 `createMemoryRouter`＋`RouterProvider`，維持既有 HUD／返回鍵／子頁結構。新增 `quiz-session.harness.test.tsx` 鎖定預覽必須掛載章節標題與 4 個正式 radio 選項。修復後 Quiz 12 files／64 tests、HUD／AppShell 2 files／33 tests、全域 lint、typecheck、production build、Prettier 與 `git diff --check` 全綠；本機 idle 預覽已重新開啟。
+- 邊界：只修改 dev/test-only 學生 harness 與回歸測試，未改正式 Quiz 行為、教師端、共享產品 AppShell／HUD CSS、API、資料庫、push 或部署。
+
+## 2026-08-12 19:12 [Owner／Codex] — 修復 Quiz 預覽 APP_CONFIG_INVALID
+
+- Owner 截圖確認 Router 修復後改顯示 `APP_CONFIG_INVALID`；堆疊定位至 `useStudentChapterMap`。根因是 disabled query 仍在 hook render 階段立即執行 `parsePublicEnv(import.meta.env)`，使完全離線的 Quiz harness 仍要求 Supabase 設定。
+- 以回歸測試先重現 disabled query 仍解析 env 的 RED，再把 client 建立移入 TanStack Query 的 `queryFn`；disabled 時不執行，enabled 時正式行為不變。Quiz repository fixture 與 chapter map 都不再讓 harness 觸碰真實 Supabase。受影響 15 files／99 tests、全域 lint、typecheck、production build、Prettier 與 `git diff --check` 全綠；idle 預覽已重新載入。
+- 邊界：未修改權威作答／章節資料、API、DB、教師端、push 或部署。
+
+## 2026-08-12 19:44 [Owner／Codex] — Quiz 無框戰場、章節脈絡與答錯解析
+
+- 小節／章節 Quiz 改為整個 HUD 下方內容區共用生成夜森林背景，移除頁面與戰鬥舞台外框；只保留題目／選項、右上三排答題狀態，以及答錯／逾時解析方框。標頭中央顯示 `第 3 章・章名`，小節以 `3-1・小節標題` 顯示（不顯示「第 1 小節」），章節 template 顯示「章節總挑戰」；已移除「小精靈挑戰」。版面採正常文件流與 `minmax(0, 1fr)`／`overflow-wrap` containment，避免解析度或縮放時靠絕對定位互相覆蓋。
+- 小精靈血條獨立放在角色上方，名稱無框放在角色下方；correct 的 server verdict 才會清空血條。答錯／逾時會顯示正確答案、解析與「我理解了，下一題」；另新增 `scenario=incorrect` 本機預覽。既有 Quiz 離開作廢、正誤／分數／XP／Token 後端權威與三拍時序均未改。
+- 新增本機 migration `20260812000300_quiz_context_labels.sql`，由 template／chapter／section 權威資料把 challenge kind、章序、小節序與小節標題加入 session payload／安全 view；未從 question stable code 猜 UI。generated database types 已同步。完整 pgTAP 51 files／1151 tests、Quiz Vitest 12 files／67 tests、lint、typecheck、production build、`git diff --check` 全綠；一次 scoped self-review 無未解 finding。內建瀏覽器沒有可連線實例，未宣稱 1280／393 目視通過；本機已開啟 idle 與 incorrect 預覽供 owner 查看。
+- 協作邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page、教師分析或共享 HUD／AppShell／globals／tokens；未合併教師 branch、未 push、未 deploy。migration 只套用本機 Supabase，未寫 staging／production。
+
+## 2026-08-12 20:05 [Owner／Codex] — 恢復 Quiz 生成背景
+
+- 修復 production CSS cascade：共用 `.scene-night` 在打包後以相同 specificity、較晚順序把 Quiz 生成背景覆蓋成純深色；Quiz 專屬 root selector 改為 `.scene-night.quiz-runner--battle-v2`，使 `quiz-battle-forest-v1.png` 與本頁 feedback 無框／方框規則穩定高於共用夜景規則。新增 CSS 契約測試鎖定高權重 selector 與生成圖片引用。
+- 驗證：受影響 Vitest 2 files／16 tests、lint、typecheck、production build、`git diff --check` 全綠；production bundle 已確認輸出高權重 selector 與 hashed forest asset。舊 4181 Vite 程序失去回應後已停止並重啟，本機 idle 預覽已重新開啟。
+- 邊界：未修改教師端、共享 HUD／AppShell／globals／tokens、API 或資料庫；未 push、未 deploy。
+
+## 2026-08-12 20:09 [Owner／Codex] — Quiz 題目作答區固定於內容底部
+
+- 將補救提示、題目／選項、送出錯誤與答題解析收進 `quiz-runner__question-dock`；Quiz root 使用 `auto / minmax(180px, 1fr) / auto` 三列，讓中央戰鬥區吸收剩餘高度、作答方格保持在 HUD 下方內容視窗的正下方。刻意不使用 fixed／absolute；高度不足、縮放或解析展開時由容器自然增高並捲動，避免覆蓋小精靈與文字。
+- TDD：先新增 DOM dock 與 CSS growing-row 契約 RED，再完成 GREEN。Quiz 13 files／69 tests、lint、typecheck、production build、`git diff --check` 全綠；`quiz-session.tsx` 498 行，仍低於 500 行上限。本機 idle 預覽已由 HMR 更新並重新開啟。
+- 邊界：未修改教師端、共享 HUD／AppShell／globals／tokens、API 或資料庫；未 push、未 deploy。
+
+## 2026-08-12 20:43 [Owner／Codex] — 學生 Live 加入傳送門畫面
+
+- `/app/live/join` 改為 HUD 下方滿版傳送門場景：內建 imagegen 分別產生無人物／無文字／無 UI 的桌機與手機背景，桌機表單在左、portal 在右，手機 portal 在上、表單在下。移除 `ColorPlay Live`、「加入課堂挑戰」與符文，只保留 owner 指定標題、說明、六碼、「加入課堂」及實際錯誤。
+- 六格外觀由單一 semantic input 驅動，保留貼上、Backspace、前導 0、numeric keyboard 與 screen-reader label；原有 Zod、`useJoinLive`、request ID、safe error mapping 與成功後等待室導航未改。只有實際驗證／repository 錯誤時才渲染 alert。
+- 驗證：Live Vitest 16 files／100 tests、lint、typecheck、production build、Prettier，`git diff --check` 全綠；Chromium harness 1280／393／320 與 safe-error 為 4／4，無水平 overflow、背景起點對齊 HUD 下緣。唯一一輪 scoped review 為 Standards 0／Spec 0，Security 軸不適用。AC-UI-009／015 有 task-level 自動驗證；AC-UI-010 實體手機鍵盤證據仍依規格留待 phase gate 人工提供。
+- 邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師 CSS，也未修改共享 HUD／AppShell／globals／tokens、API 或資料庫；未合併教師 branch、未 push、未 deploy。本機預覽：`http://127.0.0.1:4181/dev-harness/live-join.html`。
+
+## 2026-08-12 20:50 [Owner／Codex] — 修正 Live 手機背景門位置
+
+- 根因為手機背景使用 `cover`，場景高度被表單撐長時圖片會重新縮放，造成傳送門往下漂移。改為依 viewport 寬度 `100% auto` 縮放並鎖定 `center top`，標題／表單的上邊距也改用 viewport 寬度推導，確保門穩定在畫面上方、內容從門下方開始。
+- 驗證：CSS contract 2／2、Chromium 1280／393／320 與 safe-error 4／4、lint、typecheck、production build 全綠。未啟動第二輪 review，遵守每 task 最多一輪 review 規則。
+
+## 2026-08-12 22:02 [Owner／Codex] — 學生 Live 等待室、四選一與等待揭曉
+
+- `/app/live/:sessionId` 學生端串接既有權威 Live state：lobby 顯示「等待主持人開始…」；教師開始後，`screen_only` 顯示投影機 icon 與「請看投影幕作答」，不把題目、選項文字或正解帶入學生畫面。頂部狀態列顯示課堂挑戰 icon、題數、Realtime 連線文字狀態、server-time 倒數圈與在線人數。
+- 四個選項桌機為 2×2、手機為單欄；點擊即沿用 `submit_live_answer` RPC 送出，以本地選取狀態和 mutation pending 立即鎖住全部選項。成功後原位置改顯示「答案已送出，等待揭曉…」，沒有第二個送出按鈕；正式答案、計分、排名與 phase transition 仍由後端決定。
+- 使用內建 imagegen 產生無人物／無文字／無 UI 的像素夜間城堡庭院桌機與手機背景；手機依 viewport 寬度 `100% auto` 鎖定 top，城門維持上方。Live 專屬 CSS 從 HUD 下緣正常排版，不使用 fixed；統一返回鍵已預留空間，不蓋住課堂標題。
+- 驗證：受影響 Vitest 4 files／27 tests、lint、typecheck、`git diff --check` 全綠；Chromium harness 互動與 393／320 無水平 overflow、等待室狀態共 4／4。1280／393 目視確認背景載入、手機城門置頂及四個選項可見。唯一一輪 read-only review：APPROVE，無 Critical／High／Medium finding。
+- 邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live page、教師 CSS或共享 HUD／AppShell／globals／tokens；未合併教師 branch、未 push、未 deploy。本機預覽：`http://127.0.0.1:4182/dev-harness/live-session.html?scenario=question`（`scenario=lobby` 可看等待室）。
+
+## 2026-08-12 22:34 [Owner／Codex] — 修正 Live 返回鍵與狀態列交疊
+
+- 393px 瀏覽器幾何回歸先穩定重現：全站返回鍵以 absolute `top: 22px` 錨在 `#main-content`，實際矩形與 Live 狀態列相交；先前替標題加左邊距只能避開文字，沒有移除交疊。
+- 依 owner 補充改為同排：全站同一顆返回鍵仍是 Live root 的 sibling，Live 狀態列新增專用左側 grid slot，課堂標題、題數、連線、在線人數與倒數各自占欄；返回鍵與狀態列共享垂直區域，但不覆蓋任何狀態內容。桌機一排，手機狀態內容兩排並保留左側返回欄。
+- 驗證：受影響 Vitest 2 files／20 tests、Chromium 5／5（含 393px 返回鍵與 Live 狀態列同排且不覆蓋任何 child、393／320 無水平 overflow）、lint、typecheck、`git diff --check` 全綠；1280／393 目視確認同排版面。依 S 級 bug fix 規則未新增第二輪 review。
+- 邊界：只修改 Live feature CSS、Live harness E2E 與 handoff；未修改共享返回元件、HUD／AppShell／globals／tokens、教師端、API 或資料庫。
+
+## 2026-08-12 22:38 [Owner／Codex] — Live 手機背景取景與四宮格
+
+- 手機 Live 不再使用直式專用背景，改用與桌面相同的 `live-student-arena-desktop-v1.png`；CSS 使用 `cover` 保持原始長寬比放大裁切，`center` 同時鎖定水平與垂直中央取景。
+- 393px／320px 的 A／B／C／D 選項維持與桌面一致的 2×2 四宮格，不再降為單欄；保留至少 52px 高度、8px 間距與既有立即送出／鎖定行為。
+- TDD／驗證：CSS 背景契約與 Chromium 四宮格實際矩形先 RED 後 GREEN；393／320 均無水平 overflow，計算樣式確認桌面背景、`cover`、中央定位。1280／393／320 目視確認中央城門取景與四選項完整可見；最終 lint、typecheck、受影響 Vitest／Chromium 結果記於同一 checkpoint。
+- 邊界：只修改 Live feature CSS、CSS contract、Live harness E2E 與 handoff；未修改作答權威、Question Display payload、教師端或共享 HUD／AppShell／globals／tokens。
+
+## 2026-08-12 22:44 [Owner／Codex] — 放大 Live 手機四宮格與上移背景
+
+- 手機 2×2 選項區改為占用 Live 場景內容的下方約 60%，從整個 viewport 中段附近開始延伸至底部；每列等分可用高度，393px 與 320px 的單顆按鈕皆至少 100px 高。A／B／C／D 與四色符號的實際字級皆至少 30px，投影幕提示位於四宮格正上方。
+- 桌面背景圖在手機仍保持原比例，改為圖片層高度 `120%` 並以 `center 72%` 取景，使場景實際向上偏移；漸層遮罩仍獨立 `cover`，不拉伸或扭曲圖片。
+- E2E 幾何契約先 RED（舊版 393px 選項從 y=700、320px 從 y=416 才開始），修正後鎖定選項區起點不晚於 viewport 58%、底緣至少到 93%、單鍵高度至少 100px，並維持 2×2 與零水平 overflow。
+- 驗證與邊界：393／320 Chromium 目視確認四鍵完整可見、字號放大與背景上移；最終 lint、typecheck、受影響 Vitest／Chromium 結果記於同一 checkpoint。只修改 Live feature CSS、CSS contract、harness E2E 與 handoff，未觸及教師端、權威作答或共享整合檔。
+
+## 2026-08-12 23:18 [Owner／Codex] — 商店夜間市集背景、HUD 金幣與頭像外框連動
+
+- 保留既有裝備商店頁首、角色／外框分頁、商品卡、購買確認與 server-authoritative snapshot 流程；以內建 imagegen 生成無人物／無文字／無 UI 的夜間 JRPG 市集 `src/assets/shop/shop-market-night-v1.png`，只替換 HUD 下方的場景背景。桌機與 393／320px 實測均無水平 overflow。
+- 商店餘額、商品價格、購買與不足差額都改用 HUD 相同的 `hud-coin-pixel--32bit` 金幣；螢幕閱讀器名稱仍保留 Token 語意。唯一一次 review 發現不足 Toast 還有可見 Token 金額，已改為不帶金額的金幣不足訊息。
+- 修復外框裝備後 HUD 不更新：根因是商店 mutation 已正確更新 `['inventory', 'frames']` 權威快取，但學生 AppShell 沒有訂閱；現在 HUD 直接讀同一 frame inventory snapshot，依 server 回傳的 equipped item 套用漸層外框，沒有把購買或餘額判定搬到前端。
+- 驗證：受影響 Vitest 4 files／45 tests、Chromium harness 1280／393／320 共 3／3、lint、typecheck、production build、Prettier 與 `git diff --check` 全綠。未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師 CSS、globals 或 tokens，未合併教師 branch、未 push、未 deploy。本機入口：`http://127.0.0.1:4183/dev-harness/shop.html`。
+
+## 2026-08-12 23:25 [Owner／Codex] — 商店頁首與分類框微調
+
+- 移除「你的角色收藏」，將「裝備商店」放大至桌機 3rem／手機 2rem；角色／外框改由單一像素直角長方形底座包住，不再使用白色橢圓底。
+- 依 owner 釐清，只移除角色名稱與操作按鈕中間的獨立金幣價格列；購買按鈕內價格、頁首餘額、購買確認與外框價格維持不變。
+- 驗證：Shop Vitest 2 files／13 tests、Chromium 1280／393／320 共 3／3、lint、typecheck、Prettier 與 `git diff --check` 全綠；本機 1280px 目視確認。S 級純 UI 微調不另啟 review；未觸及教師端、API、DB 或共享 globals／tokens。
+
+## 2026-08-12 23:28 [Owner／Codex] — 商店分類框主題底色
+
+- 角色／外框分類框由白底改為夜空深藍底、金色邊框與像素硬陰影；未選取項目使用透明深底與亮字，選取項目保留金色高亮，與夜間市集背景一致。
+- 驗證：Shop Vitest 2 files／13 tests、Chromium 1280／393／320 共 3／3、lint、typecheck、Prettier 與 `git diff --check` 全綠；本機 1280px 目視確認。S 級 CSS 微調不另啟 review。
+
+## 2026-08-12 23:35 [Owner／Codex] — 商店頁首與商品卡重新配色
+
+- 依 owner 釐清，重新設計的是「裝備商店」頁首大框與每張角色／外框商品卡：移除奶黃色容器底，改用像素雙層框、硬陰影、主題化餘額框、深色展示槽與按鈕；購買主操作仍保留金色強調。
+- 後續依回饋將框內高彩度深藍降低彩度並提高明度：頁首、分類列及商品卡改為較亮灰藍，展示槽與次要按鈕維持深一階灰藍，保留層次與白字對比。
+- 驗證：Shop Vitest 2 files／14 tests、Chromium 1280／393／320 共 3／3、lint、typecheck、Prettier 與 `git diff --check` 全綠；本機 1280px 目視確認。S 級 CSS 配色調整不另啟 review；未觸及教師端、API、DB、globals 或 tokens。
+
+## 2026-08-12 23:38 [Owner／Codex] — 商店深夜藍夜市招牌版
+
+- 依 owner 最終選擇換回灰藍前的深夜藍配色，但更換容器設計：頁首由白色雙框改為單層金框、內側金線與頂部節奏飾帶；商品卡改為左側金色飾條、金框展示槽與硬陰影，維持夜間市集木牌感。
+- 卡片內所有 primary purchase action 改為零圓角方框；角色／外框分類、餘額框、選用／不足／已裝備狀態亦維持既有像素直角語彙。
+- 驗證：Shop Vitest 2 files／14 tests、Chromium 1280／393／320 共 3／3、lint、typecheck、Prettier 與 `git diff --check` 全綠；本機 1280px 目視確認。S 級 CSS 設計調整不另啟 review。
+
+## 2026-08-12 23:57 [Owner／Codex] — 錯題檔案館、排行榜公會廳與成就聖殿背景
+
+- 使用內建 imagegen 分別生成三張無人物／無文字／無 UI 的 32-bit JRPG 場景：魔法錯題檔案館 `src/assets/mistakes/mistakes-archive-night-v1.png`、排行榜公會排名廳 `src/assets/leaderboard/leaderboard-guild-hall-v1.png`、成就徽章聖殿 `src/assets/achievements/achievements-sanctuary-v1.png`。三頁都從固定 HUD 下緣開始顯示背景，手機維持原比例中央取景。
+- 我的錯題改為深夜藍、金框、飾帶與左側金色識別條的像素檔案卡；排行榜改為同語彙的公會頁首與深色名次列，保留金／銀／銅與「這是你」的非純色狀態訊號。成就卡本身未重設，只替換背景與必要的頁首文字對比；移除成就頁舊的第二顆返回箭頭，只保留全站統一返回鍵。排行資料、XP 與補救流程邏輯均未修改。
+- 驗證：受影響 Vitest 7 files／23 tests、lint、typecheck、production build、Prettier 與 `git diff --check` 全綠；Chromium 1280／393 目視確認三頁，排行榜另驗 320px，三頁 393px 與排行榜 320px 的 `scrollWidth` 均等於 viewport，無水平 overflow。唯一一輪 scoped self-review：Standards 0、Spec 0；Security 軸因未觸及 trust boundary 而略過。
+- 邊界：新增 dev/test-only 三頁預覽 harness；未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師 CSS、共享 HUD／AppShell／globals／tokens、API 或資料庫；未合併教師 branch、未 push、未 deploy。本機入口：`http://127.0.0.1:4183/dev-harness/student-collection.html?surface=mistakes`（另可切換 `leaderboard`／`achievements`）。
+
+## 2026-08-13 00:01 [Owner／Codex] — 待補救錯題剪影改為紅色
+
+- 我的錯題頁中，尚未解決題目的原黑色魔物／石頭剪影改為 `--coral-700` 紅色；已解決題目仍使用原本全彩圖示。使用 sprite mask 保留既有輪廓與尺寸，未修改補救狀態或資料邏輯。
+- 驗證：Mistakes Vitest 2 files／8 tests、Prettier 與 `git diff --check` 全綠；393px Chromium 目視確認紅色待補救圖示與藍色已解決圖示同時正確顯示。S 級單頁 CSS 調整不另啟 review。
+
+## 2026-08-13 00:03 [Owner／Codex] — 待補救圖示改為紅色小精靈並精簡說明
+
+- 依 owner 釐清，待補救題目不是紅色石頭／剪影，而是使用既有 `SpiritAvatar` 的完整紅色小精靈 sprite；已解決題目仍保留原本藍色圖示。頁首說明精簡為「補救練習答對即可解決錯題並回復精熟。」
+- 驗證：Mistakes Vitest 2 files／8 tests、typecheck、Prettier 與 `git diff --check` 全綠；393px Chromium 目視確認紅色小精靈、精簡文案與已解決藍色圖示均正確。S 級單頁文案／圖示調整不另啟 review。
+
+## 2026-08-13 00:15 [Owner／Codex] — 成就外框等高、排行榜放大頭像與文案收斂
+
+- 成就頁最外層由圓角淡彩卡改為直角金框、深夜藍底與頂部像素飾帶；成就格固定 16:9 並以等高 grid 排列。統一返回鍵旁的頁首加入安全內距，桌機與手機不再壓住標題。
+- 排行榜移除「班級 XP」及「Top 10 與你的名次都由伺服器依正式 XP 紀錄計算。」；「排行榜」放大。表頭與內容統一為名次靠左、暱稱靠左、XP 靠右。角色圖片放大並裁切掉原素材透明留白，填滿 64px（手機 60px）彩色頭像格；暱稱欄頭像格貼齊列邊框，文字欄仍保留必要內距。錯題頁另移除頁首「補救學習」標籤。
+- 驗證：受影響 Vitest 6 files／25 tests、lint、typecheck、Prettier 與 `git diff --check` 全綠；Chromium 1280／393／320 目視確認。成就卡實測桌機四張皆 205px、手機四張皆 190px；成就／排行榜／錯題在 393px，以及排行榜在 320px，均無水平 overflow。屬既有頁面 S 級視覺微調，不另啟第二輪 review。
+
+## 2026-08-13 00:28 [Owner／Codex] — 排行榜雙向置中與成就三欄置中排列
+
+- 排行榜名次／暱稱／XP 的表頭與內容全部改為水平及垂直置中；角色頭像與暱稱作為同組置中，既有放大、裁切透明留白及貼齊彩色頭像框規則維持不變。
+- 成就徽章改為 flex wrap：桌機每排三張，末排不足三張時整排置中；手機 767px 以下一張一排；平板維持兩張一排。卡片仍為一致 16:9、整張可伸展，避免文字較長時互相遮擋。
+- 驗證：受影響 Vitest 6 files／23 tests、lint、typecheck、Prettier 與 `git diff --check` 全綠。Chromium 實測桌機成就前三張 x=69／458／846、第四張置中 x=458，四張皆 365×205；393px 四張皆 x=29、338×190 且單欄。排行榜 393／320px 計算樣式皆為 `text-align:center`、`vertical-align:middle`；全部 viewport 無水平 overflow。S 級版面微調不另啟第二輪 review。
+
+## 2026-08-13 00:38 [Owner／Codex] — 三頁標題對齊與手機返回鍵避讓
+
+- 我的錯題、排行榜、個人成就與徽章三頁統一標題字級與垂直位置；393px／320px 的標題皆位於 y=158、高 35px，返回鍵底緣 y=139，保留 19px 間距，三頁均無水平 overflow。桌機標題亦維持同一高度與尺寸。
+- 排行榜「這是你」改為疊在頭像右下角，不再占用暱稱欄寬；暱稱維持單行並在極窄畫面安全省略。成就卡末排改從每排第一格開始排列，桌機仍為三張一排、手機一張一排。
+- 驗證：受影響 Vitest 7 files／31 tests、lint、typecheck、Prettier、`git diff --check` 全綠；Chromium 1280／393／320 幾何與目視確認完成。依既有頁面 S 級視覺修正，不另啟第二輪 review；未修改教師端、API、DB 或共享 HUD／AppShell／globals／tokens。
+
+## 2026-08-13 00:45 [Owner／Codex] — 排行榜頭像與暱稱逐列對齊
+
+- 排行榜暱稱欄改為固定頭像軌與文字軌，整組仍置於欄位中央；所有列的頭像位置一致，暱稱也從同一水平起點開始，「這是你」維持疊在頭像內而不影響文字位置。
+- 驗證：Leaderboard Vitest 3 files／14 tests、lint、typecheck、Prettier、`git diff --check` 全綠；Chromium 1280／393／320 實測所有列的頭像與暱稱 X 座標各自完全一致，且無水平 overflow。S 級 CSS 版面修正不另啟第二輪 review。
+
+## 2026-08-13 01:35 [Owner／Codex] — 學生端最大標題像素化與推送前整合檢查
+
+- 登入後學生 AppShell 內每頁主要 `h1` 統一使用既有自託管繁中像素字 `Cubic 11`；selector 僅限 `data-shell-role='student'`，公共頁與教師端不受影響。整合檢查另發現 320px 成就標題會被 grid intrinsic size 裁切，已加入零寬 grid track 約束與窄螢幕安全內距，維持我的錯題／排行榜／成就徽章三頁相同的 28px 字級與 y=158 標題高度。
+- 瀏覽器驗證：學習地圖、章節、Quiz、Live 加入、Live 作答、商店、錯題、排行榜、成就共 9 個頁面 × 1280／393／320，27／27 均載入 `Cubic 11`、零水平 overflow、無 page／console error；三個收藏頁在 320px 的標題均為 28px、top=158、bottom=193。
+- 自動驗證：受影響 Vitest 3 files／39 tests、lint、typecheck、production build、Prettier、`git diff --check` 全綠。主要學生互動 Chromium E2E 25／26 通過；唯一失敗是既有 `chapter-detail-page.harness.spec.ts` 仍要求 393px 閱讀頁返回鍵與 HUD 頭像同 X 座標，但 owner 已核准返回鍵在書面與標題並排（實際 x=31.4、舊斷言 x=10），屬待更新測試契約，未回改產品設計。
+- 部署基線：前一乾淨 checkpoint `7a57614536a1689bef5ae82b02b3c82caffda0f6` 已由 GitHub-source deployment `dpl_FtekvBrwwhH8U9PkVDcVUsXanshu` promote 為 Staging `dpl_EVE5qHit72zBTs5Sc5AFD82RYiqz`；bundle 只含 `onkxnkzeixpezetkmocf.supabase.co`，公開 `staging.colorplayapp.com` 的有效學生登入／bootstrap 至 `/app` 已通過。此標題增量將於乾淨 commit 後重新走相同 SHA／bundle／登入 gate。
+- 邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師 CSS，未合併教師 branch；visual artifacts 保留在工作樹但不納入 commit。
+
+## 2026-08-13 01:49 [Owner／Codex] — Quiz 完成頁與收藏頁標題收尾
+
+- 小節挑戰與章節總挑戰共用正式 `QuizResultPage`，依 server `challengeKind` 分別顯示「小節挑戰完成」／「章節總挑戰完成」，並顯示第 3 章與 3-1 小節範圍；成績、逐題答案、XP、Token 與再玩流程仍使用既有權威 session。用內建 imagegen 依 Quiz 夜森林風格生成無人物／無文字／無 UI 的黎明勝利場景 `src/assets/quiz/quiz-victory-shrine-v1.png`；完成頁背景改用該場景，摘要維持深色 JRPG 框，題目／答案／解析改為高對比亮羊皮紙框與 Noto 長文。
+- 我的錯題、排行榜、個人成就與徽章三頁的主標題統一為桌機 32px／手機 28px、Cubic 11、固定 40px 高並垂直置中；1280／393／320 實測三頁的 font、font-size、top、bottom、height 完全相同。成就卡名稱補上 Cubic 11；分頁頁數改為亮色 `rgb(244, 241, 228)`，實測桌機 `第 1 / 2 頁`、手機 `第 1 / 3 頁` 均清楚可見且零水平 overflow。
+- 瀏覽器驗證：小節／章節完成頁 × 1280／393／320 共 6／6 通過，生成背景載入、逐題框為亮底深字、標題為 Cubic 11、零水平 overflow、無 page／console error；320px 兩種完成標題皆為 28px 單行，top=297.5、height=35。收藏三頁共 9／9 標題幾何一致；成就分頁另 3／3 通過。
+- 自動驗證：受影響 Vitest 10 files／80 tests、追加 Quiz label／session／result 4 files／33 tests、lint、typecheck、production build、Prettier、`git diff --check` 全綠。一次 scoped self-review：Standards 初見 Quiz 標題清理 regex 重複，已抽成 `quiz-labels.ts` 並補 5 cases；修正後 Standards 0、Spec 0；Security 軸略過（未觸及信任邊界）。
+- 邊界：未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師 CSS，未變更 API／DB／獎勵判定，未合併教師 branch。imagegen 最終 prompt 要點為 16:9 32-bit JRPG 黎明森林、中央遠景勝利石門、中央／下方低對比留白、無人物／文字／HUD／UI。
+
+## 2026-08-13 02:40 [Owner／Codex] — 學生場景首載效能與手機版面收尾
+
+- 18 張學生／公共流程大型場景與書頁背景改由 WebP 載入，原始尺寸不變；實際被引用的圖片總量由 34,133,334 bytes 降為 3,550,716 bytes（-89.6%），production build 單張場景輸出約 44–333 KiB。原 PNG 留作原始素材，但不再進 production bundle；移除返回鍵 `backdrop-filter` 並限制學生 scene overscroll，降低大面積捲動重繪。
+- 手機學習大廳鎖定於 viewport；複習卡完成狀態改為高對比藍色像素按鈕樣式，翻頁動畫改為單頁寬。商店、錯題、排行榜返回鍵與標題框在 393／650／700px 都不重疊；錯題頁碼置於兩箭頭正中並與「再挑戰」保留 16px，補救 Quiz 的長模式說明移除。
+- 主畫面「色彩王國的冒險旅程」與「開始冒險」改用既有繁中像素字。唯一 review 初抓到 650–700px 避讓缺口、缺少 browser asset proof 與翻頁上限，均已修正；`globals.css` 既有超過 500 行技術債未在本 task 擴張為教師行為，後續應獨立拆分。
+- 驗證：lint、typecheck、production build、15 files／80 Vitest、14 個 Chromium 手機／平板／桌面回歸、既有 Chapter Reader 8／8 與 Shop 3／3 全綠；兩 viewport × 九個場景的瀏覽器資源實測均無超過 350 KiB 的 raster。未修改教師專屬頁、API／DB／權威 XP／Token，未合併教師 branch、未 push、未 deploy；既有 visual artifacts 保留在工作樹且不納入 commit。
+
+## 2026-08-13 03:35 [Owner／Codex] — 複習卡附件壓縮、版本化發布與 staging 部署
+
+- staging private `review-card-media` 的 P301～P305 以不裁切、原尺寸 WebP 重新壓縮並改用 `P301-v2.webp`～`P305-v2.webp`；單檔由 418,786～1,965,636 bytes 降為 47,286～173,408 bytes。原檔未覆蓋或刪除。這五張仍是教材掃描過渡版，不宣稱已完成 AI 統一風格再製。
+- 依正式 mapping 將 P301→RC3101、P302→RC3103、P303／P304→RC3201、P305→RC3202，補上繁中 alt，透過 `publish_review_card` 將四張卡由 version 1 升至 version 2；`requires_recompletion` 保持原值。閱讀器既有 block 順序為標題／全部文字／media，hosted RC3101 在 393×852 與 1280×900 均驗證圖片位於文字後方並成功載入。
+- 學生端 commit `776641554725453e9a3247d2b556b4e44e310c9d` 已推至 `origin/phase6/jrpg-generated-board-ui`；GitHub-source Preview `dpl_Fa2VuTWXFqFhZUWGg2t2ZmaL6uXC` 通過 bundle staging project-ref、真實學生登入／bootstrap、複習附件順序與載入 gate後，promote 為 Staging deployment `dpl_2mYHsqXARmLjxJmMT5t6CkNUBbxo`，alias `staging.colorplayapp.com`。公開 alias bundle 只含 `onkxnkzeixpezetkmocf`，近一小時無 Vercel runtime error。
+- 自動驗證：lint、typecheck、production build、相關 Vitest 10 files／45 tests、`git diff --check` 全綠。未修改或合併 `ui/jrpg-teacher-ui`，既有 visual artifact dirty paths 仍保留且未納入部署 commit。Vercel CLI 58.9.4 可完成本次部署，但目前最新為 58.9.5，建議另開維護動作升級，不與產品 release 混做。
+
+## 2026-08-14 09:30 [Owner／Codex] — 教師登入、HUD 外框、學生 MENU 與登出確認
+
+- 教師端帳號登入移除班級序號文案、欄位、前端 payload 與 `auth-login` 的班級 ownership 檢查；後端仍以帳號、密碼及 server-owned profile role 驗證，錯誤維持泛用憑證回應。學生註冊使用的班級序號流程未變更。
+- 「登入／登入中…」與 MENU 登出按鈕改用既有繁中像素字；所有手動登出入口先顯示「確認登出」dialog，預設焦點在取消，確認後才呼叫 local-scope sign-out。30 分鐘閒置自動登出維持既有規則。
+- 學生 MENU 移除已停用的「課後任務實戰」入口；路由與舊頁面未擴張修改。商店已裝備外框改為 HUD 頭像外層的實體 4px 漸層環，內層 portrait 裁切角色圖，讓 server 回傳的 equipped frame 在 HUD 可見。
+- 驗證：相關 Vitest 6 files／112 tests、lint、typecheck、production build、`git diff --check` 全綠；Chromium 1280／393 共 2／2 驗證教師登入欄位、像素字、MENU 入口與無水平 overflow。一次 scoped self-review 已撤回不相關的登入導頁測試改動，最終 Standards／Spec／Security 無未解 finding。
+- 邊界：在乾淨 worktree `codex/login-hud-menu-logout-20260814` 基於 `3fddcdca7d437879e1be59b304c01f425b91a6af` 完成；未修改 `src/features/teacher-content/**`、教師專屬 classroom／Live、教師專屬 CSS，未合併教師 branch。待 commit 後部署指定 `auth-login` 至 staging Supabase `onkxnkzeixpezetkmocf`，並驗證 GitHub-source Vercel 候選後 promote staging。
+
+## 2026-08-14 09:43 [Owner／Codex] — 教師登入／HUD／MENU／登出 staging 發布完成
+
+- 產品 commit `fffc61c7d5ef00c9462032c1625863058320fc89` 已 fast-forward 推至 `origin/phase6/jrpg-generated-board-ui`。Supabase CLI 2.109.1 僅部署 `auth-login` 到 staging project `onkxnkzeixpezetkmocf`；live invoke 以 `teacher01`、密碼、teacher portal 且不含班級序號取得 session，輸出未暴露 token。
+- GitHub-source Preview `dpl_FYPbDRgvi32a38d6fb3CCcGrHBMY` 的 branch／SHA／bundle gate 通過後 promote；staging Production deployment 為 `dpl_71iCbciS3WJK7Erp1nSjAAUpVTgA`，alias `staging.colorplayapp.com`，metadata 仍精確指向 `fffc61c`。公開 bundle 僅含 staging Supabase ref，未含 production ref `xdjumzdqyexpyndanwkp`，並包含登出 dialog 與 HUD frame CSS。
+- Hosted Chromium 1280×720／393×852 共 2／2 通過：教師帳號無班級序號登入、登入／登出像素字、登出確認／取消、學生 MENU 無課後任務入口，水平 overflow 均為 0；部署後 15 分鐘內無 Vercel error-level request log。
+- 已知非阻擋風險：Vercel build log 仍有既存 `pnpm-lock.yaml` parse warning，平台改用 npm 後 `tsc -b && vite build` 成功；本 task 未改 dependency，未把 release 擴張成 package-manager 維護。Vercel CLI 58.9.4 可完成發布，但最新為 59.0.0，應另開維護更新。
+
+## 2026-08-13 03:24 [Owner／Codex] — 教師端教學分析 JRPG 工作區完成
+
+- 視覺／編排：`/teacher/analytics` 已接上教師 `TeacherMenu` 與 `TeacherWorkSurface`，使用新生成且不含文字／假數值的像素風分析觀測室背景。班級／日期／章節／子題 filters、既有 hooks、repository calls 與各 projection 的 loading／empty／error 行為維持；新頁面依序呈現班級總覽、高錯誤題 Top 5、子題掌握概況、題目分析與 Live 團體賽結果。CSS 全部隔離於 teacher-content module，未修改 `globals.css`／tokens／router／AppShell。
+- 資料誠實性：修正平均正確率 0–100 值被再乘 100 的既有錯誤；Top 5 只排序現有 server `correct_rate` 且每列顯示實際作答分母。子題區明示現有投影只有正確率，Live 區明示缺歷史班級分母與選項分布，不建立假參與率／假精熟度。Owner 選擇章節完成定義 A：複習全完成且 chapter mastery ≥80，與 `student_chapter_completion` 既有正式 progression 規則一致；教師批次章節完成率、各學生正確率、Live 參與率／選項分布仍需 integration owner 核准的 server projection，本 branch 未越權修改 Supabase／database types。
+- 可及性／RWD：百分比長條附精確文字與桌面 table alternative；393px 題目表格改 native disclosure rows，鍵盤 Enter 可展開；所有 filter／summary controls ≥44×44、無水平 overflow、圖表不只靠顏色。受影響檔案皆低於 500 行；analytics CSS 已拆為 surface／data／mobile 三檔。
+- 驗證／review：analytics＋dashboard Vitest 16/16（最終 analytics 8/8 於移除主觀 severity 後重跑）、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；analytics Chromium 1280×720／393×852 4/4，包含背景、overflow、target size、手機 disclosure、文字替代及 console/page error。唯一一次 scoped self-review 因本工作流禁止 sub-agent，修正 component→page 反向依賴、CSS 500 行超限與未有正式 threshold 的主觀 severity 標籤；無剩餘 finding。未 commit、未 push、未 deploy。
+
+## 2026-08-13 16:09 [Owner／Codex] — 教師 HUD 固定與教學分析 drill-down
+
+- 教師 HUD 改為桌機固定左欄、手機固定頂部身份列與底部導覽，內容保留對應安全區；完整 teacher route browser regression 未發現 Dashboard／Live 版面回歸。教學分析總覽移除獨立「題目分析」與子題顯示條；班級總覽標題連既有班級管理 route，高錯誤題、子題掌握、Live 團體賽標題開啟對應詳細表格。
+- 全部錯題排除無作答／無正確率／100% 正確項目，依 server-backed 錯誤率高至低排列。子題表格以正式 stable code 對應 typed subtopic ID，點擊後才查該小節個題資料；找不到正式 ID 時 disabled，不猜字串關聯。Live 表格顯示參與人數、作答數、正確率、完成日期，並連既有 `/teacher/live/:sessionId/report`。
+- 驗證：analytics Vitest 12/12、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；analytics＋teacher routes Chromium 31/31，涵蓋 1280×720、393×852、320／375／768／1024／1440、固定 HUD、手機 disclosure、正式 route 與 console/page error。唯一一次 scoped self-review 無未解 finding；未 commit、未 push、未 deploy。
+
+## 2026-08-13 16:22 [Owner／Codex] — 教學分析文案精簡與 HUD 返回總覽
+
+- 依 owner 指示移除教學分析頁列出的輔助／資料界線說明文字，保留正式數值、標題、篩選、loading／empty／error 與 drill-down 行為。HUD「教學分析」即使在相同 `/teacher/analytics` route 再次點擊，也會透過 router navigation key 重建分析內容並回到總覽，不保留錯題／子題／Live 詳細視圖。
+- 驗證：analytics Vitest 13/13、Chromium 6/6、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；未 commit、未 push、未 deploy。
+
+## 2026-08-13 16:28 [Owner／Codex] — 分析詳細頁再精簡與子題收合
+
+- 移除錯題詳細頁排序說明、子題頁流程導引與投影說明，以及 completed Live 場次的「已完成」文字；取消／草稿等非完成狀態仍保留。子題掌握表格的查看按鈕改為可切換的「查看／收合」，同步 `aria-expanded`；切換其他小節時改顯示該小節個題資料。
+- 驗證：analytics Vitest 13/13、Chromium 6/6、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；未 commit、未 push、未 deploy。
+
+## 2026-08-13 17:26 [Owner／Codex] — 錯題欄位／Live 名稱與章節完成率 blocker
+
+- 高錯誤題總覽與詳細表格只顯示現有 projection 真正提供的「作答數」與「錯誤率」，移除正確率；`attempts` 不是 unique respondents，因此未改標成作答人數。「Live 團體賽結果」已統一改為「Live 課程」。
+- 章節完成率尚未實作：資料庫已有單一學生的 `student_chapter_completion(user_id, chapter_id)`，完成定義為複習全完成且 mastery ≥80，但沒有教師班級批次 typed projection 可提供章節 numerator／denominator、completion rate 與完成／未完成學生名單。不得以每位學生一支前端 RPC 的 N+1 查詢拼裝正式指標；需 owner 核准 integration owner 新增教師授權、server-calculated projection 與 generated DB types 後再接 UI。
+- 已完成部分驗證：analytics Vitest 13/13、Chromium 6/6、`tsc -b`、scoped ESLint、Prettier、`git diff --check` 全綠；未 commit、未 push、未 deploy。
+
+## 2026-08-13 18:45 [Owner／Codex] — 章節完成率與錯題內容正式投影
+
+- 新增 owner-scoped `teacher_chapter_completion_summary`，批次回傳各 published chapter 的完成學生數、active student 分母、完成率與以 `member_ref` 表示的完成／未完成名單；完成判定直接沿用 `student_chapter_completion`（複習全完成且 mastery ≥80），前端不重算。教學分析總覽「子題掌握概況」改為直接顯示每章 `完成數/總數`、百分比及學生狀態；點標題後仍進既有子題／個題分析表格。
+- 新增按需 `teacher_question_detail`；所有錯題表格加入「查看／收合」，展開正式題目與選項。投影不回傳 `is_correct`，且兩支 RPC 對 anonymous、非 owner 教師與學生皆 fail closed；沒有 N+1 學生 RPC，也沒有 auth user id 或答案旗標進入前端。
+- 驗證：新增 pgTAP 12/12，既有章節完成規則＋新投影 39/39；repository／analytics／dashboard Vitest 36/36，`tsc -b`、scoped ESLint、generated DB types 比對、Prettier、`git diff --check` 全綠；analytics Chromium 1280×720／393×852 6/6，涵蓋固定 HUD、無水平 overflow、章節完成名單、錯題選項與 keyboard disclosure。唯一一輪 scoped review 補齊兩支 RPC 的非 owner／學生交叉越權測試，無剩餘 finding。migration 只套用本機，未 commit、未 push、未 deploy。
+
+## 2026-08-14 00:06 [Owner／Codex] — 教學分析首頁與剩餘教師頁完成改版
+
+- `/teacher` 改為教學分析首頁，移除原總覽頁與教師 HUD「總覽」項目；`/teacher/analytics` 保留 replace redirect，新增 `/teacher/questions` 小節題目分析。首頁整合班級／日期／章節篩選、班級總覽、四來源題目分析與最近五筆 Live 課程報表分頁；手機 Live 與題目資料改 disclosure rows。
+- 班級列表、班級成員、學生學習進度與 Live 報表均套用固定 `TeacherMenu`／`TeacherWorkSurface`。學生頁顯示班級名次、XP、Quiz＋Live 正確率拆分、未完成補救題數／總數與章節狀態；待補救錯題清單依 owner 指示移除。
+- 新增 `teacher_assessment_question_analysis`、`teacher_classroom_overview`、`teacher_live_session_report_v2`、`teacher_student_progress_v2`。Quiz 與 Live 只在分析指標合併；章節完成與「已完成」狀態仍只委派 `student_chapter_completion`（閱讀完成＋mastery ≥80），Live 不影響完成。唯一 scoped self-review 修正章節狀態曾只看 mastery 的缺口，並補 pgTAP。
+- 驗證：乾淨 local DB reset 完整套用 migrations；教師分析 pgTAP 24/24、受影響 Vitest 58/58、scoped ESLint、TypeScript、generated DB types、Prettier、`git diff --check` 全綠；教師 route browser 其餘 28 tests 與最終 analytics 1280×720／393×852 4/4 通過。未 commit、未 push、未 deploy；共享 `app-shell.tsx`／`hud-command-bar.tsx` 未修改，integration owner 仍需隱藏 legacy teacher HUD 並把其教學分析連結改到 `/teacher`。
+
+## 2026-08-14 01:35 [Owner／Codex] — 教師戰術觀測台 Phase A 設計交付
+
+- 完成六個教師頁的現況審計、共用視覺契約、六張 desktop/mobile wireframe board 與十二張視覺方向圖；設計規格在 `docs/superpowers/specs/2026-08-14-teacher-tactical-observatory-ui-optimization.md`，artifact registry 在 `artifacts/design-audit/teacher-tactical-observatory/manifest.md`。
+- 方向採頁首 JRPG 場景加安靜深藍工作面；一般手機表格改 disclosure rows，只有 Live 作答矩陣保留有界橫向捲動。生成圖文字、姓名、數值與額外細節均不具產品權威性。
+- 本 checkpoint 未修改產品程式碼或測試，未 stage／commit，未進入 Phase B。六頁方案全部等待 owner 逐頁核准。
+
+## 2026-08-14 02:07 [Owner／Codex] — 教師 Phase A owner decisions 與可信邊界
+
+- Owner 核准教學分析、班級管理、題目分析與 Live 報表視覺方向；進入班級補上 `activeBlookId` 正式資產映射護欄，學生細節方向圖移除百分位／主觀評級，只保留班級名次、XP、平均正確率與未完成／全部待補救題數，兩頁更新後仍待核准。
+- 題目分析 Phase B 新增專用 classroom-owner-only 正確答案 RPC／projection 範圍：server 驗證 owner、typed answer field、anonymous／學生／非 owner／跨班級 fail closed，且答案不得進入學生、Live 作答或其他非教師報表 payload；server slice 未完成前 UI 不顯示或推測答案。
+- Live 摘要推導已鎖定 participants length、answered／correct 聚合、非 null correctRate 最難題與 report ranking；無資料省略而非假 0。此 checkpoint 只更新 Phase A spec、artifacts／manifest 與 handoff，未修改產品程式碼或測試，未 stage／commit，未進入 Phase B。
+
+## 2026-08-14 02:24 [Owner／Codex] — 教師戰術觀測台 Phase A 全數核准
+
+- Owner 已核准六頁全部視覺方向；`classroom-detail-393x852-v2.png` 與兩張 `student-progress-*-v2.png` 成為正式核准方向，舊圖繼續隔離在 manifest superseded 區。`membershipStatus` 僅表示 active／inactive 成員資格，不得推測學習中、離線、presence 或 online 狀態。
+- Phase B 尚未開始。正確答案仍須先完成 classroom-owner-only、server-authoritative typed RPC／projection，對 anonymous、學生、非 owner 教師與跨班級存取 fail closed，且不得污染既有 answer-free `QuestionDetail`、學生 Quiz、進行中 Live 或其他非教師 payload。
+- 目前 worktree 的大量教師端產品／DB／測試 dirty WIP 均為進入 closeout 前既有內容；本 checkpoint 只改 Phase A 規格、manifest、implementation plan 與 handoff，不 stage、不 commit、不清理或覆寫既有 WIP。
+
+## 2026-08-14 02:43 [Owner／Codex] — 教師正確答案治理契約修訂
+
+- Owner 選擇以 ADR 0007 與修訂 `AC-QUIZ-002` 保留 classroom-owner 教師按需查看正確答案：專用 projection 必須由 server 驗證 teacher role、classroom ownership 與題目分析範圍；既有 shared `QuestionDetail`、學生／公開提交前 payload、進行中 Live 與一般分析維持 answer-free。
+- Phase B implementation plan 已改為引用 ADR 0007，並把 task-level RTL／pgTAP／harness 結果限定為相關契約與未來 phase-gate traceability，不宣稱 acceptance 通過；plan 尚待 owner 重新核准，implementation 尚未開始。
+- 下一個 gate 是建立可追蹤的 Git baseline。本輪只修改治理與規劃文件，不 stage、不 commit，並保留既有 dirty WIP。
+
+## 2026-08-14 03:35 [Owner／Codex] — 教師 WIP baseline stabilization
+
+- 修正兩個既有 typecheck blocker：teacher routes harness 的缺省 scenario 改為現存 `analytics`；Live report 只在正式 title 存在時才傳入 optional subtitle，未放寬 `TeacherWorkSurface` interface。
+- 五個超過 500 行的 WIP 已完成 mechanical extraction：teacher content repository 拆為 core／analytics contracts 與 error module，analytics tests 移至 focused file；teacher route harness 抽出 Live fixtures／adapter；Playwright Live round 抽為獨立 spec；Live pages tests 抽出 test-local fixtures、host console 與 advanced create cases。拆分後相關檔案皆低於 500 行，repository 15、Live pages 16、Playwright 14 組 test title 一一對應，無 skip／only。
+- Phase A artifact registry 已排除三張 superseded PNG entries，核准 package 為 30 entries，SHA-256 30/30；三張舊 PNG 仍保留在本機且不納入 checkpoint package。
+- Fresh checks：typecheck、scoped ESLint（零 warning）、Vitest 16 files／95 tests、Chromium Playwright 29 tests、production build、`git diff --check` 全綠；唯一一輪唯讀 review 無 finding。
+- 尚未 stage／commit，也未 stash／reset／刪除既有 WIP；未執行 DB reset／DB tests／acceptance。Phase B 尚未開始；下一步由 owner 決定 checkpoint commit grouping。
+
+## 2026-08-14 03:46 [Owner] — 授權治理與設計 checkpoint commit
+
+- Owner 已授權治理文件與 30 個核准 artifacts 建立獨立本機 commit；本 commit 不包含產品程式碼、測試、migration 或 generated DB types。
+- Phase B 尚未開始；Router、LivePresenter、DB projection 與教師產品 WIP 留待後續各自 owner gate。Commit SHA 待建立。
+
+## 2026-08-14 04:18 [Owner／Codex] — 教師資料基線授權補強
+
+- 教師 avatar migration 已避開既有編號衝突，改為 `20260812000400_teacher_avatar_storage.sql`；教師 pgTAP 依序改為 052／053／054。Avatar 測試以 authenticated JWT 實際驗證 owner teacher 的 insert／select／update 與 student、其他 teacher、跨路徑／跨物件拒絕，共 21/21 通過。
+- `teacher_classroom_overview` 的 aggregate 原會在無 ownership 時產生一列空摘要；最終 aggregate 加入 `having exists (select 1 from owned_classroom)`，使 student、non-owner 與跨班級查詢零列，同時保留合法 owner 空班級的一列零摘要。四個公開 projection 的授權矩陣與 internal `teacher_assessment_facts` execute revoke 均通過。
+- Fresh 驗證：focused 教師 pgTAP 63/63、完整 local DB 54 files／1212 tests、generated types contract、repository Vitest 4 files／33 tests、typecheck、scoped ESLint 與 `git diff --check` 全綠；generated `teacher_question_detail` 維持 answer-free，未夾帶另一分支 Quiz context 欄位或 ADR 0007 projection。
+- 尚未 stage／commit；Phase B 尚未開始。下一步等待 owner 授權 Avatar 與 Analytics checkpoint commits。
+
+## 2026-08-14 04:45 [Owner／Codex] — 教師 UI 與完整 Live checkpoint
+
+- Commit A `48e8373ca7182b34fc7b919fd85419b4ab18defa`（`feat(teacher): checkpoint tactical workspace surfaces`）封裝教師工作區與六頁 UI；Commit B `5fafb79ecc9bd07cb89bdaa7ade95180f38df222`（`feat(live): checkpoint teacher host and projector experience`）封裝完整 Live Host／Projector 改版，不只是 Live report。
+- Commit B 前只移除 `teacher-live-session-page.test.tsx` 的檔尾多餘空白行，未改測試語意。C 尚未提交；`INTEGRATION.md` 已補齊 Analytics DB 與 router／harness inventory，但仍保持 unstaged。
+- Dashboard deletions、router、teacher route harness／Playwright 與本段 handoff 留待 C 原子 checkpoint。Phase B 尚未開始；下一步是 C commit owner gate。
+
+## 2026-08-14 04:50 [Owner] — 授權 C 原子 checkpoint
+
+- Owner 已授權將本段與 C router／harness／Dashboard retirement 一起提交；C commit 的完整 SHA 將定義為 Phase B product base，Phase B 仍未開始。
+- 未來 integration session 必須帶入完整 A、B、C commit chain，尤其不得漏掉 B 的完整 Live Host／Projector 改版。
+
+## 2026-08-14 05:15 [Owner／Codex] — Phase B Task 1 共用教師工作面完成
+
+- Phase B base 為 `ff14759effbd7244b5588752735c3419425d1e59`。Design Read 是 accessibility-critical 教師資料工作區的 targeted evolution，沿用深藍 JRPG 戰術觀測台；dials 為 variance 4、motion 2、density 8。Taste skill 只用於層級、密度、間距、材質、狀態完整性與 anti-slop。
+- `TeacherWorkSurface` props／state union 未變；新增直接 RTL 覆蓋 loading／empty／error／retry、單一 h1、DOM／focus 順序與 content state。教師 tokens 保持在 `.teacher-workspace-shell`，scene header 收斂為桌機 184px、手機 156px，固定 240px TeacherMenu、72px mobile identity／bottom navigation、44px 控制項、清楚 focus 與 reduced-motion 均由 browser／CSS 契約覆蓋。已移除零產品引用的舊 Dashboard selector。
+- Fresh checks：Vitest 2 files／11 tests、scoped ESLint 零 warning、typecheck、Chromium 5 viewports、production build、`git diff --check` 全綠。唯一一輪 scoped self-review 修正 mobile toolbar assertion 原先沒有真正 toolbar 的假綠，改以 classroom-detail 實測後 5/5 通過，無剩餘 finding。
+- Task 1 仍未 stage／commit，Task 2 尚未開始；下一步等待 owner review 與 Task 1 commit gate。
+
+## 2026-08-14 05:30 [Owner／Codex] — Task 1 手機雙錯誤提示定位補正
+
+- Owner gate 發現手機版 avatar error 與 sign-out error 原本都固定在 `top: 72px`，同時出現時會重疊。RTL 確認兩段訊息原已是兩個獨立 alert；CSS 將 avatar alert 保留於頂部 identity bar 下方，sign-out alert 改至 bottom navigation 上方並設 `top: auto`。
+- Chromium bounding boxes 於 320／375／393×852 均不相交：avatar `top 72, bottom 108`，sign-out `top 736, bottom 772`；三個 viewport 的 `scrollWidth` 均等於 `clientWidth`。Correction checks 為 RTL 2 files／12 tests、雙 alert browser 3/3、原 workspace composition 5/5、scoped ESLint、typecheck 與 `git diff --check` 全綠。
+- Task 1 仍未 stage／commit，Task 2 尚未開始；本次只修正 owner 指出的 finding，未開第二輪廣泛 review。
+
+## 2026-08-14 05:45 [Codex] — Phase B Task 2 教學分析 pilot 完成
+
+- Task 1 已封裝為 `4b4218df340fbff6bbed5d54a3232e52562342ce`。Task 2 保留既有 hooks、query inputs、server pagination 與正式指標，將 `/teacher` 重排為可折疊的篩選摘要、結論優先班級總覽、主要題目分析與次要 Live 場次復盤；各 query region 新增獨立 retry，null 仍以 em dash 呈現。
+- TDD 真正 RED 為缺少「班級／章節」篩選摘要及班級總覽 retry；第一屏 DOM 順序是 baseline coverage。Fresh checks：Vitest 2 files／12 tests、Chromium 5/5、scoped ESLint、typecheck、build、`git diff --check` 全綠；320／393 無整頁橫向 overflow，手機篩選預設收合、桌機題目分析寬於 Live 支援欄。
+- 唯一 scoped self-review 未發現 fake metric、query drift、shared CSS 洩漏或超過 500 行；Task 2 尚未 stage／commit，Task 3 尚未開始。
+
+## 2026-08-14 05:50 [Codex] — Phase B Task 3 班級管理 pilot 完成
+
+- Task 2 已封裝為 `bf7f42f5decb085ff33cbff1a344795527500c12`。Task 3 保留 `create_classroom` mutation、RHF/Zod、ambiguous-write copy、加入碼與既有 routes；建立列改成緊湊操作帶，class rows 在手機使用 disclosure，input 以 `aria-label="新班級名稱"` 提供穩定 accessible name。
+- 真正 RED 覆蓋 input name、手機 disclosure 與 clipboard rejection；複製失敗時現在保留「複製」且加入碼仍可手動選取，不再假報成功。Fresh checks：Vitest 2 files／21 tests、Chromium 6/6 widths、scoped ESLint、typecheck、`git diff --check` 全綠；首次 Playwright 因 sandbox listen EPERM 未執行，已用相同限定命令在允許環境重跑通過。
+- 唯一 scoped self-review 未發現 route／mutation drift、dead control 或 fake receipt；相關 source／test 皆低於 500 行（最大 497）。Task 3 尚未 stage／commit，Task 4 尚未開始。
+
+## 2026-08-14 06:05 [Codex] — Phase B Task 4 班級與學生下鑽完成
+
+- Task 3 已封裝為 `cd627db63c0b089b1cd2cd16ee484e2b508d801b`。Task 4 保留既有 classroom hooks、repository calls 與 routes；班級成員及章節進度在桌機維持 table，手機改為可展開 disclosure，active 成員不顯示推測狀態，inactive 只標示「已停用」，未知 `activeBlookId` 不產生假 avatar。
+- 真正 RED 為舊版缺少 member／chapter disclosure；學生摘要仍只呈現 classRank、classXp、avgAccuracy 與 unfinishedMistakeCount／totalMistakeCount，null 維持 em dash。Fresh checks：Vitest 4 files／25 tests、Chromium 7/7 widths、scoped ESLint、typecheck 與 `git diff --check` 全綠；393px disclosure 與 1280px table 均實測，320px 無整頁橫向 overflow。
+- 唯一 scoped self-review 將桌面欄名由「學習狀態」改為「成員資格」，避免把 membershipStatus 映射為 presence；所有 source／test 低於 500 行。Task 4 尚未 stage／commit，Task 5 尚未開始。
+
+## 2026-08-14 06:18 [Codex] — Phase B Task 5 owner-only 正確答案投影完成
+
+- Task 4 已封裝為 `a6ce1e8aeba54d5e18d51faddac821d1817aafa5`。新增 collision-free migration `20260814000100_teacher_question_answer_detail.sql` 與 pgTAP `055`；`teacher_question_answer_options(uuid, text)` 固定 search_path，只授權 authenticated 執行，並在 server 驗證 teacher role、active classroom ownership、active student 的 completed practice／assignment session 與 published section-bank stable question 範圍。
+- ADR 0007 窄型別只回 option_key／option_text／is_correct，repository 映射到 teacher-only `options[].isCorrect`，hook 在 classroom ID 或 stable code 缺少時不查詢；denied／empty 回 null，不合成答案。既有 `QuestionDetail` 與 `teacher_question_detail` 維持 answer-free，學生 Quiz／active Live contracts 未擴張。
+- 真正 RED 是 function 不存在。Fresh checks：focused pgTAP 11/11、完整 local DB 55 files／1223 tests、generated database types contract、repository／hook 3 files／20 tests、Quiz／Live forbidden-payload regression 2 files／26 tests、scoped ESLint、typecheck 與 `git diff --check` 全綠。唯一 security-focused review 無 IDOR、grant、schema 擴散或 generated-type finding；Task 5 尚未 stage／commit，Task 6 尚未開始。
+
+## 2026-08-14 06:22 [Codex] — Phase B Task 6 權威正確答案呈現完成
+
+- Task 5 已封裝為 `b7293023582695aadfca2b2b805c6a7acf3a6b6e`。題目分析頁維持既有 answer-free detail 與排序，只由 Task 5 `useTeacherQuestionAnswer` 的成功結果依 option key 標示 `✓ 正確答案`；pending、error、empty 或 denied 時不標示、不重排也不推測答案。
+- 真正 RED 是既有 expanded detail 找不到明確正確答案標示。Fresh checks：Vitest 2 files／9 tests、Chromium desktop／mobile 2/2、scoped ESLint、typecheck 與 `git diff --check` 全綠；393px disclosure 可用鍵盤展開、focus 留在按鈕、控制高度至少 44px且無整頁 overflow，1280px 維持題目 table。
+- 唯一 scoped self-review 無 answer inference、answer-free interface drift、mobile composition 或 accessibility finding；相關檔案皆低於 500 行。Task 6 尚未 stage／commit，Task 7 尚未開始。
+
+## 2026-08-14 06:30 [Codex] — Phase B Task 7 Live 場次復盤完成
+
+- Task 6 已封裝為 `fc17afd6d023bb3e8b69aea922d909b894c3ecc8`。新增 page-local pure summary：參與人數只取 participants.length、整體正確率只聚合 answered／correct、最難題只從非 null correctRate 依 report order 選最低、前三名只按 authoritative rank 1–3 排序；不可用摘要會整段省略，不顯示假 0。
+- 第一屏先呈現場次重點與前三名；桌機保留逐題 table，手機使用 disclosure。作答矩陣及 CSV semantics 完整保留，且只有矩陣維持 bounded horizontal scroll；既有最終排名仍保留。
+- 真正 RED 是 summary module 不存在。Fresh checks：Vitest 3 files／14 tests、Chromium 7/7 widths、scoped ESLint、typecheck 與 `git diff --check` 全綠；393px podium 共用底線且一／二／三名高度遞減，320px 無整頁 overflow。唯一 scoped self-review 修正零參與摘要原可能顯示 `0 人`，改為誠實省略；所有檔案低於 500 行。Task 7 尚未 stage／commit，Task 8 尚未開始。
+
+## 2026-08-14 08:12 [Codex] — Phase B Task 8 scoped regression 完成
+
+- Task 7 已封裝為 `6257eec6ef3255c1e656552a8663a75b2989029d`。Task 8 未修改產品行為；補齊六頁 1280×900／393×852 跨 route browser matrix、既有 workspace state spec 的 config 收錄，並把兩個 stale／timing-sensitive 測試對齊目前正式 harness 與非同步資料載入。
+- Fresh checks：整合 Vitest 22 files／145 tests、Chromium 39/39、focused owner-answer pgTAP 11/11、完整 local DB 55 files／1223 tests、database-types contract、scoped ESLint、typecheck、production build 與 `git diff --check` 全綠。六頁另輸出 12 張 repo 外視覺檢查圖至 `/private/tmp/colorplay-teacher-phase-b-final/manifest.json`；fixture 只供版面檢查，不是 production truth 或 phase acceptance evidence。
+- 唯一 integrated review 確認資料誠實性、owner-only answer isolation、mobile disclosure、Live matrix bounded scroll、44px／focus／reduced-motion、protected-path 與 500 行邊界；未發現需修改產品碼的 finding。完整 Live Host／Projector checkpoint `5fafb79ecc9bd07cb89bdaa7ade95180f38df222` 仍在提交鏈中。未 push／merge／deploy、未操作 hosted 服務、未執行 `pnpm acceptance`；結果只代表 scoped Phase B regression，等待 owner 檢視最終畫面。
+
+## 2026-08-14 10:20 [Codex] — Teacher visual reimplementation pass 待 owner 視覺核准
+
+- Owner 拒絕上一版視覺完成宣告後，以核准 Phase A directions 為 SSOT 重新實作六頁 composition；保留既有 route、正式資料、安全邊界、ADR 0007 與完整 Live Host／Projector。場景限制於 header，工作面改為安靜深藍，並分別重作 analytics 決策層級、班級操作列／roster rows、班級與學生下鑽、三層題目 disclosure、Live 首屏摘要與 podium。
+- CSS cascade audit 在 teacher-local scope 中和 global `.secondary-action`、`.classroom-create-form`、`.classroom-card` 與資料表材質；Live shared surface 已抽至 `teacher-live-workspace.css`，create／report 直接 import。Production manifest 顯示 report lazy entry 同時載入 report CSS 與 shared live workspace CSS，不依賴先造訪 TeacherLivePage。
+- Fresh checks：Vitest 17 files／92 tests、Chromium 39/39、scoped ESLint、typecheck、production build、`git diff --check` 全綠；六頁 after 12 圖與 before／approved 對照 manifest 在 `/private/tmp/colorplay-teacher-visual-after/manifest.json`，全部 scrollY=0、無 console／page error、無 document overflow。未執行 acceptance、hosted operation、push／merge／deploy。狀態：Awaiting owner visual approval。
+
+## 2026-08-14 11:18 [Owner／Codex] — Owner visual approval correction 完成
+
+- 限定修正三項 owner finding：1280px 班級加入碼改為不可斷行並重新分配 roster row；題目分析每章第一小節預設展開但仍可自由收合，且初始不選題、不請求或推測正解；393px 班級成員與學生章節 disclosure 新增隨 open／closed 轉向的明確 chevron，membershipStatus 語意不變。
+- Browser 實測：加入碼 `ABCD-1234-EF56-7890` 為 `230.31×24.70px`、`white-space: nowrap`；題目頁 1280／393 初始各有 1 個 open details；兩種 mobile summary 均為 `341×66.66px`、chevron `24×24px`，`aria-expanded` false／true 與方向矩陣同步切換，且無 document overflow。
+- Fresh checks：相關 Vitest 4 files／16 tests、owner visual Chromium 5/5、既有六頁 Chromium regression 39/39、scoped ESLint、typecheck、build、`git diff --check` 全綠。全新 12 張 after 截圖與 manifest 位於 `/private/tmp/colorplay-teacher-visual-correction-after/`，全部 scrollY=0、console／page error=0、document overflow=0。
+- 本輪未執行 acceptance、DB 或 hosted operation；只做三項 finding 的限定 review，未展開第二輪 broad review。等待 owner 最終視覺核准。
+
+## 2026-08-14 11:33 [Owner／Codex] — 班級操作按鈕最終微修正
+
+- 僅補正班級 roster actions：`進入班級`／`教學分析` 設定 112px 最小寬度與 `white-space: nowrap`；未改文案、route、handler、資料或其他頁面，既有 mobile flex／full-width composition 由原六頁 regression 保持全綠。
+- 1024／1280×900 實測兩按鈕各只有 1 個文字 line rect：`進入班級` 為 `112×48px`、`教學分析` 為 `112×44px`，兩者 computed white-space 均為 nowrap，兩個 viewport 均無 document overflow、console／page error。
+- Fresh checks：相關 Vitest 1 file／7 tests、focused Chromium 2/2、既有六頁 Chromium regression 39/39、scoped ESLint、typecheck、build、`git diff --check` 全綠。只重拍 `/private/tmp/colorplay-teacher-class-actions-final/classes-1280x900.png`；未執行 acceptance、DB 或 hosted operation，等待 owner 依新截圖與量測決定交接整合。
+
+## 2026-08-14 11:47 [Owner／Codex] — 班級 roster action typography 統一
+
+- 僅在 teacher-local classroom CSS 中和舊 global selector：`複製`、`進入班級`、`教學分析` 統一為繼承字型、14px／800／16.8px、normal letter-spacing、nowrap 與 44px 高度；desktop 兩個 row actions 維持 112px，`建立班級` 保留 16px／800／52px。
+- Chromium 393／1024／1280 實測三個 roster actions 均只有 1 個文字 line rect，無 document overflow、console 或 page error；mobile disclosure 展開後仍是原 full-width flex composition。
+- Fresh checks：相關 Vitest 1 file／7 tests、focused Chromium 3/3、既有六頁 Chromium regression 39/39、scoped ESLint、typecheck、build、`git diff --check` 全綠。新 desktop／mobile 截圖與 evidence 位於 `/private/tmp/colorplay-teacher-class-actions-typography-final/`；未執行 acceptance、DB 或 hosted operation。
+
+## 2026-08-14 14:37 [Integration owner／Codex] — 學生／教師整合 blocker 修正完成
+
+- 在乾淨 integration worktree 合併教師 tip `8f0eeee853a929cfd360f70f31b8eaff8305ee51`；所有 `/teacher*` route 只保留教師 `TeacherMenu`／Live projector HUD，不再渲染學生／legacy `HudCommandBar` 或 `hud-top`。完整教師 Chromium harness 46/46 通過，涵蓋六頁、Live、320–1440px、鍵盤選單與 reduced motion。
+- 新增 Quiz server-side `classroom_id` provenance、單一 active student classroom constraint 與不可竄改 guard；教師分析及 owner-only 正解 projection 只讀同班 completed session。跨班負向、重複班級與 provenance mutation 測試納入完整 DB gate：59 files／1240 pgTAP、runtime smoke 3、integration 12 files／25 tests 全綠。
+- 教師敏感 query keys 納入 actor，登出、換帳號及失敗登出後身份切換會清除 Query cache。Email OTP 後 `/register` 保持 mounted，未完成註冊學生不能進 `/app*`；Edge registration 對同一完成請求 idempotent，跨班／重複完成 fail closed。相關 auth／router／profile 測試已納入完整 Vitest 167 files／1130 tests 全綠。
+- Auth、學習大廳橫向、Quiz 與結果頁在受限高度改由主內容區垂直捲動；專項 Chromium 1280×480、393×500、852×393 landscape 3/3 通過。複習卡翻頁在 owner 關閉系統 reduced-motion 後恢復，保留原有無障礙降動效規則，未強制覆寫。
+- Fresh static gates：lint、typecheck、production build、scoped Prettier、working tree／cached `git diff --check` 全綠。既有教師 CSS 使用 module-local raw colors 與全域 `spec/07`「色彩僅定義於 tokens.css」仍有 Medium 規範衝突；不影響本次功能／安全 blocker，但 staging 前應另立 ADR 或安排 token consolidation，避免在 integration merge 中重做已核准視覺。
+- 本 checkpoint 未 push、未 deploy、未操作 hosted Supabase／Vercel，也未執行 `pnpm acceptance`；真實手機裝置仍依規格留待 owner 驗證。
+
+## 2026-08-14 15:18 [Integration owner／Codex] — Google Sheet 內容 gate 失敗，staging 發布停止
+
+- 最新 Sheet 結構已解析為 QB 139、CR 64、LT 60、RC 8；結構 gate 0 error／0 warning。LT 不得沿用 QB 題池，故本機以 TDD 新增 `live` bank、`LT` stable code、Live-only 選題／教師分析與 completed-only owner answer projection；local reset 與 focused pgTAP 目前通過，尚未建立 commit。
+- 依 `docs/content/question-review-rubric.md` 對 263 題執行唯一一輪內容審查，結果 `VERDICT: FAIL`：37 個 BLOCKING、20 個 NON-BLOCKING、9 個 UNSURE。主要 blocker 是單選題有多個合理答案、正解與解析互相否定、專名／術語錯字、缺圖題無法判定；BLOCKING 涉及 QB3106、QB3112、QB3209、QB3223、QB3239、QB3247、QB3249、QB3251、QB3306、QB3307、QB3323、QB4108、QB4109、CR3003、CR3008、CR3009、CR3052、CR3063、LT3201、LT3202。
+- RC 8 張的文字／順序與既有 seed 無內容差異；重新產生只改 timestamp。P301–P305 的 Sheet 代號仍不是可匯入 media，hosted staging 既有圖片版本與綁定不得用 reset／seed 覆蓋。
+- 依 fail-closed gate，本輪未匯入 hosted Supabase、未 push、未 deploy Vercel。下一個安全動作是 owner／教師先在 Google Sheet SSOT 修正 BLOCKING 與裁決 UNSURE，再重新 fetch、內容審查與 Sheet↔staging audit；通過後才可套 migration、交易式發布內容與部署 `colorplay-staging-web`。
+
+## 2026-08-14 15:55 [Owner／Integration owner] — 最新 Sheet 再審仍 FAIL，未上傳 staging
+
+- Owner 裁決目前 Google Sheet 為內容 SSOT，接受已刪除題目與現有 stable codes；重新執行 `pnpm content:fetch`，取得 QB 136、CR 62、LT 60、RC 8，`content:verify --gate` 為結構錯誤 0／覆核提示 0。
+- 同一位 content reviewer 依最新 258 題重新完整審查，結果仍為 `VERDICT: FAIL`：38 個 BLOCKING、20 個 NON-BLOCKING、6 個 UNSURE。QB4109 的 answer／解析開頭雖已統一為 C，但選項 D 仍把頭部創傷後色覺喪失歸因於錐狀細胞受創，解析卻歸因於大腦視覺皮層受損，因此仍形成兩個錯項與內部矛盾。
+- 其他主要 blocker 仍包含 QB3106、QB3112、QB3208、QB3209、QB3221、QB3237、QB3245、QB3247、QB3249、QB3306、QB3307、QB3323、QB4108、CR3003、CR3008、CR3009、CR3051、CR3062、LT3201、LT3202。未對 generated content 做人工繞過，也未上傳 `onkxnkzeixpezetkmocf`、未 push、未 deploy 或停用 legacy keys。
+- 下一個安全動作：在 Google Sheet 修正全部 BLOCKING、由教師裁決 6 個 UNSURE，再重新 fetch／review；內容 gate 通過後才執行本機 DB regression、staging 交易式匯入與 Sheet↔DB audit。
+
+## 2026-08-14 16:02 [Owner] — QB4109 內容風險由教師裁決接受
+
+- Owner 明確裁決 QB4109 本輪先通過，故從 staging 發布 blocker 移除；其 answer=C 與解析開頭已一致。
+- 已知風險仍保留：選項 D 將頭部創傷後色覺喪失歸因於錐狀細胞受創，解析則歸因於大腦視覺皮層受損，兩者語意互斥。此裁決只解除該題發布 gate，不宣稱內容審查判定無誤。
+- 其餘 20 個 blocking stable codes 仍須修正或由教師逐題明確裁決，尚未操作 hosted Supabase／Vercel。
+
+## 2026-08-14 16:14 [Owner／Integration owner] — 本輪題庫 finding 全數由教師裁決接受，本機發布 gate 通過
+
+- Owner 明確要求本輪內容先通過並完成部署；因此前一輪 38 個 BLOCKING、20 個 NON-BLOCKING、6 個 UNSURE 全部視為教師內容裁決接受。已知內容風險保留於 handoff，不宣稱 reviewer 改判為無誤，也未人工修改 Sheet 或 generated seed。
+- 重新執行 `pnpm content:import`：Google Sheet SSOT 為 QB 136、CR 62、LT 60、RC 8；產生 258 題 published、1 題 draft（RLS fixture）、8 張 published review cards，結構 gate 0 error／0 warning。
+- 第一次完整 DB gate 正確找出三個 stale fixture：舊總題數、舊 QB／CR bank counts，以及已刪除 `QB3219` 導致的 sequential-code 假設。測試已改為目前權威題數，學習進度 fixture 改從實際 published rows 取 46 題，不再假設 stable code 連號；未改產品或題庫內容。
+- Fresh local gate：lint、typecheck、production build、Vitest 168 files／1153 tests、Supabase 60 files／1246 pgTAP、runtime 3、integration 12 files／25 tests、教師 Chromium 46／46、學生短高度／橫向／翻頁 Chromium 15／15、`git diff --check` 全綠。一次誤用 production preview 跑 dev-only harness 的 15 個失敗不代表產品結果，已以相同測試在正確 Vite dev harness 重跑 15／15。
+- 尚未 push、未操作 hosted Supabase／Vercel、未停用 legacy keys。下一步是 secret scan、integration checkpoint、唯一一次 Standards／Spec／Security review；無新 Critical／High 才進 staging 發布。
+
+## 2026-08-14 16:44 [Integration owner／Codex] — 唯一 release review blocker 修正完成
+
+- 唯一一輪 Standards／Spec／Security review 發現並修正：Live 啟動時重新驗證教師角色、班級 owner 與 active activity；教師分析重新驗證 owner 的 teacher role；Live 場次凍結 chapter／section attribution；教師正解 RPC 以 assessment source 與 completed Live session ID 定位唯一 snapshot，避免同 stable code 的 Quiz／Live 選項混合。
+- 新 API key resolver 僅在新 key set 未設定時才 fallback legacy，顯式空值 fail closed；staging bootstrap 不再輸出 publishable key 值；runbook 改用 `colorplay-staging-web`，題庫規格同步目前 QB 136／CR 62／LT 60／RC 8 與 disposable staging snapshot 例外。
+- RED 證據涵蓋：被降權 Live host 原可啟動、凍結 taxonomy／source-session projection 尚不存在、顯式空 key set 原會 fallback。GREEN 後完整 gate：lint、typecheck、production build、Vitest 168 files／1154 tests、Supabase 60 files／1254 pgTAP、runtime 3、integration 12 files／25 tests、教師 Chromium 46／46、scoped Prettier 與 `git diff --check` 全綠。
+- Git ancestor 檢查確認教師 tip `8f0eeee853a929cfd360f70f31b8eaff8305ee51` 完整包含於 integration；六頁、Live Host／Projector／report、教師專用 `TeacherMenu` 均已接入，所有 `/teacher*` route 不渲染學生或 legacy HUD。本輪仍未操作 hosted Supabase／Vercel；下一步建立 follow-up checkpoint，再核對 staging ref／project 後發布。
+
+## 2026-08-14 16:54 [Integration owner／Codex] — Staging 單一班級資料 reconciliation
+
+- `supabase db push` 已在正確 staging ref `onkxnkzeixpezetkmocf` 套用 20260812000400～20260814000100，並於 20260814000200 fail closed：同一名學生在 7/22 `Fixture Classroom One` 與 7/28 `配老師專班` 均為 active；後四支 migration 當下未套用。
+- 只讀 dump 確認衝突僅一名學生。依 owner 的單一 active classroom 決策，migration 改為保留最近 activated membership，把較舊 membership 標為 inactive 並保留歷史，不刪學生、班級、成績、複習卡 media 或 storage object；其後仍以 unique index／trigger 阻止再次重複。
+- Fresh local reset 與完整 DB gate：60 files／1254 pgTAP、runtime 3、integration 12 files／25 tests 全綠。下一步先提交並 push 此 deterministic reconciliation，再重跑 staging migration；尚未部署 Vercel 或匯入最新題庫。
+
+## 2026-08-14 17:14 [Integration owner／Codex] — 非破壞式 Sheet 發布路徑補齊
+
+- 遠端只讀盤點確認舊快照為 QB 139／CR 64／LT 0；直接執行 generated seed 只會 `on conflict do nothing`，不能套用修文或 archive 刪題。完整 staging reset 會刪除 Auth 使用者與複習卡 media mapping，故本輪排除。
+- 新增 migration 20260814000600：既有 versioned teacher content command 現在接受 QB／CR／LT／legacy stable code，並由 server 依 namespace 強制推導 `section`／`chapter`／`live`／`legacy` bank，caller 不能竄改題池。後續發布使用既有 `publish_question`／`archive_question`，保留版本、事件與歷史 session。
+- TDD 先暴露 content command 無法處理 LT namespace；修正後 focused 049 為 12／12，完整 DB gate 為 60 files／1255 pgTAP、runtime 3、integration 12 files／25 tests 全綠。下一步套用 migration 後，使用教師權限進行 current Sheet snapshot 的 publish／archive；不重置帳號、作答或 media。
+
+## 2026-08-14 20:15 [Integration owner／Codex] — 學生／教師整合候選發布至 staging
+
+- 已將 integration commit `351b7b711323826bf8f72e1aae8ce07f95a8d7f4` 發布至 Vercel `colorplay-staging-web`，Production-target deployment 為 `dpl_APxt99Gvb2N4BNtLiPmgu3ehaBpG`；`staging.colorplayapp.com` 已指向該 deployment。
+- Hosted bundle 驗證使用 Supabase `onkxnkzeixpezetkmocf`、不含 production ref `xdjumzdqyexpyndanwkp`，公開 key 對 staging Auth settings 回應 200；bundle manifest 包含 `teacher-live-page`、`teacher-live-session-page` 與 `live-presenter` chunks。
+- 真實 hosted smoke 通過：教師登入後到 `/teacher/live`，只有一份教師導覽、學生 legacy HUD 為 0，建立 Live 課堂頁可載入；學生登入後到 `/app` 學習大廳。部署前專項 Vitest 4 files／16 tests與 production build 亦通過。
+- 已確認完整教師 Live 建立／Host／Projector checkpoint `5fafb79ecc9bd07cb89bdaa7ade95180f38df222` 是目前 integration HEAD 的祖先；本次整合不只包含教師六頁與 Live report。
+- 待處理的產品差異：目前註冊仍為基本資料（自訂暱稱／班級序號）→ Email OTP → 帳號密碼 → `/app`；尚未實作 owner 新提出的「OTP 驗證後直接完成註冊並進學習地圖、暱稱預設為 Email `@` 前字串」。需先確認帳號、密碼、真實姓名與班級綁定的新資料契約，再以獨立 Auth task 修改與驗證。
+
+## 2026-08-16 21:00 [Owner／Integration owner] — 三步學生註冊流程修復完成
+
+- Owner 定案維持三步流程：基本資料 → E-mail OTP → 帳號與密碼；完成後清除 OTP 暫時 session 並回 `/login`，由學生使用新帳號密碼重新登入。暱稱以第一步輸入值寫入 `profiles.display_name`，不得改成 E-mail `@` 前綴。
+- 真實阻塞原因為 `student-register` 直接讀取未授權的 `classroom_members.member_role/status`，本機 Edge 回 42501／`REGISTER_FAILED`。修正後改走既有 user-scoped `list_my_classrooms` RPC，不擴張 service-role table grant；新增本人限定、RLS deny-by-default 的短期 registration claim，序列化跨 Auth／profile 的註冊 saga，避免同一 OTP session 並行請求互相覆寫密碼。
+- 已到達的 1／2／3 步可直接回點；往前切換與最終提交會自動導向最早錯誤步驟。已驗證 E-mail 可按「更改 E-mail」後重新驗證，第三步在重新驗證前保持鎖定。
+- Fresh checks：auth Vitest 7 files／100 tests、lint、typecheck、production build、focused registration-claim pgTAP 15／15、Chromium 真實 Email OTP → Edge 200 → `/login` → 帳號密碼登入 → HUD 顯示輸入暱稱全綠；generated database types 與 local schema 僅差末尾空行。完整 pgTAP 1267 assertions 中，新 059 全綠；既有 018 Live 測試仍固定失敗 1 項（seed 已有 Live session 卻斷言絕對數量 0），隔離重跑相同，未修改該無關範圍。
+- 唯一 review 的兩個 High（隱藏步驟錯誤、並行密碼覆寫）與一個 Medium（已驗證 E-mail 無法重編）皆已修正。本 checkpoint 尚未 push、未 deploy、未操作 hosted Supabase／Vercel；staging 發布前必須先套用 `20260814000700_student_registration_claim.sql`，再發布更新後的 `student-register` Edge Function 與前端。
+
+## 2026-08-16 21:27 [Integration owner／Codex] — 三步學生註冊修復發布至 staging
+
+- 註冊流程產品修正為 commit `6ab6877ffbf7885fc1b8ac6a5bdf34ac0f4f1b62`；後續 commit `282e399e44b30921e1c496ad9f40af60aedf17d2` 將 Edge 各失敗階段映射為安全且可操作的繁中原因，不再顯示舊的泛用「註冊失敗，請稍後重試」，亦不洩漏 SQL／內部錯誤細節。兩個 commit 均已推至 `origin/integration/jrpg-student-teacher-20260814`。
+- Staging Supabase `onkxnkzeixpezetkmocf` 已套用 `20260814000700_student_registration_claim.sql`，local／remote migration 對齊；更新後的 `student-register` Edge Function 已部署。合法格式但無 session 的請求回 `401 AUTH_REQUIRED`。
+- Vercel `colorplay-staging-web` deployment `dpl_AzFq59jCk7fENVbrg15gdRdJameD` 為 READY，`staging.colorplayapp.com` 已指向該 deployment。Hosted bundle 為 `/assets/index-Bvj-hrnW.js`，只綁定 staging project ref、不含 production ref；註冊 route bundle 含新的分段錯誤文案且不含舊泛用文案。
+- Hosted smoke：既有 fixture `student01` 登入到 `/app`、`teacher01` 登入到 `/teacher`，API 均 200、無 page error／失敗 request。一次性已驗證 synthetic identity 走正式 `student-register` 回 200，再以新帳密登入回 200；手機 viewport 到 `/app`，暱稱完整保留、active membership 存在、browser error 0。一次性 Auth user 與測試班級均已刪除，`註冊 Smoke %` 班級殘留數為 0。
+- Hosted synthetic smoke 以已確認 E-mail identity 驗證 OTP 後半段，不消耗 staging SMTP 配額；實際 OTP 寄送／輸入仍以本機真實 Mailpit E2E 證據為準，staging 真實信箱收信需 owner 手動驗證。操作發現 server key 直接查 `classrooms` 仍回 42501，故測試資料清理改走已連結專案的 Management API SQL；未擴張 table grant 或產品權限。
+
+## 2026-08-16 22:33 [Integration owner／Codex] — 教師版面與 Live 滿版修正完成
+
+- 教學分析與題目分析改用可讀章節／小節標示：顯示「第三章 色彩表示」與「3-1 色彩三要素與色名的表示」，不再曝露 `sheet-3-1-all` 等內部 stable key。
+- 班級管理桌面卡片在 1024／1280／1366／1440px 逐一驗證班級碼、複製鍵、建立日期與兩個操作鍵均位於卡片內且彼此不交疊；1366px 的實際碰撞以延長兩列 composition 至 1536px 修正。班級明細與學生進度資料表使用明確教師端 surface／ink，實測文字對比度至少 4.5:1。
+- Live 建立的小節選擇改為有間距的 responsive 卡片；教師投影 lobby／題目／暫停／統計／解析／即時排名／最終頒獎台均固定覆蓋精確 viewport，不再露出深藍外圍。學生答對／答錯／逾時結果頁亦以 route-local 高 specificity 修正 AppShell direct-child 規則造成的縮框。既有 Realtime 同版本 roster event 會 refetch 權威參與者名單與人數。
+- 唯一 review 找到的 1366px 子元件交疊、E2E 檔超過 500 行、資料表對比度 assertion 過弱、投影只驗 lobby 四項均已修正；Security axis 跳過，因 diff 未修改 auth、RLS、RPC、分數或其他 trust boundary。
+- Fresh checks：相關 Vitest 8 files／42 tests、Chromium 教師 layout／route／Live 38 tests與學生 Live 14 tests（合計 52／52）、lint、typecheck、production build、scoped Prettier 與 `git diff --check` 全綠。尚未 push／deploy；下一步建立 checkpoint，核對 Vercel linked project 為 `colorplay-staging-web` 後才發布至 `staging.colorplayapp.com`。
+
+## 2026-08-16 22:42 [Integration owner／Codex] — 教師版面與 Live 修正發布至 staging
+
+- 產品 checkpoint `2f9623569e5314a0f3aa749edf9b04f1f5b76ad8` 已推至 `origin/integration/jrpg-student-teacher-20260814`，並發布至 Vercel `colorplay-staging-web`；deployment `dpl_4zFyBzDtbTTyC3A6BQRGgX8Re4FS` 為 READY，`staging.colorplayapp.com` 已指向該 deployment。
+- Hosted HTML、`/login`、`/teacher/live` 均回 200；主 bundle `/assets/index-DA8EyPp-.js` 只包含 staging Supabase `onkxnkzeixpezetkmocf`，未包含 production ref `xdjumzdqyexpyndanwkp`。教師 Live create／session／presenter chunks 均可直接取得 200。
+- 真實 hosted smoke：教師 fixture 在 1366×900 與 393×852 登入，只有教師導覽、legacy HUD 為 0，`/teacher/live` 可載入且小節選擇有明確卡框；1366px 班級碼／日期／操作鍵幾何無碰撞。學生 fixture 可登入 `/app`。未建立正式 Live session，故教師 projector／學生答題回饋的 staging 實際回合仍待 owner 以雙帳號人工驗證；本機同範圍 Chromium 52／52 已通過。
+- Vercel remote build 使用 CLI 58.1.0 並完成；本機 CLI 58.9.4 低於目前 59.1.3，這次未造成部署失敗，但後續維護可另行升級，不屬本次產品 diff。
+
+## 2026-08-16 23:27 [Integration owner／Codex] — 教師 follow-up 修正完成，待 staging 發布
+
+- Live 報表表格補上教師端深色 surface／亮色 ink 與交錯列底色，Chromium 實測首欄文字對比至少 4.5:1；班級管理長班名會讓名稱縮排但「有效」狀態固定單行且留在摘要列內。
+- Live 建立頁第 2 步改用隱藏的 fieldset legend 保留語意、另以正常標題排版，標題與上方邊界、下方小節格線皆有明確間距。
+- 已有教師頭像改為開啟原生 modal：可查看目前圖像或重新上傳，既有 repository 的 user-scoped path 與 `upsert: true` 會覆蓋舊圖；視窗提供可見關閉鍵、Escape、鍵盤焦點隔離及所有關閉路徑復焦。未上傳頭像時仍維持點擊頭像框直接選檔。
+- 唯一 review 的 Medium finding 為原 dialog 未隔離背景焦點且選檔關閉未保證復焦；已改用 `showModal()` 並以 Chromium 覆蓋 Tab、Shift+Tab、Escape 與成功選檔關閉。
+- Fresh checks：相關 Vitest 4 files／28 tests、Chromium layout／contrast／avatar 11／11、lint、typecheck、production build、scoped Prettier、`git diff --check` 全綠。尚未 push／deploy；下一步建立 checkpoint，確認 linked Vercel project 與 staging Supabase ref 後發布。
+
+## 2026-08-16 23:33 [Integration owner／Codex] — 教師 follow-up 發布至 staging
+
+- 產品 checkpoint `52d72b3` 已推至 `origin/integration/jrpg-student-teacher-20260814`，並發布至 Vercel `colorplay-staging-web`；deployment `dpl_9MNycfRub7nNbg7PdQi9BrE1K25M` 為 READY，`staging.colorplayapp.com` 已指向該版本。
+- Hosted `/` 與 `/teacher/live` 回 200；公開 bundles 只包含 staging Supabase `onkxnkzeixpezetkmocf`，未包含 production ref `xdjumzdqyexpyndanwkp`。新頭像 modal 文案存在於 `teacher-workspace-mobile-BY1VEsu4.js`。
+- 真實 hosted smoke：教師 fixture 在 1366×900 與 393×852 登入後，只有教師導覽、Live 建立頁可載入、小節卡有邊框、無水平 overflow／page error／失敗 request；桌面班級卡幾何亦無碰撞。fixture 尚無已上傳頭像，因此未為 smoke 改寫 hosted 資料；查看／覆蓋 modal 的完整鍵盤與選檔流程由本機 Chromium 11／11 覆蓋。
+- 本輪未修改或部署 Supabase schema／Edge Function／資料內容。Vercel 本機 CLI 58.9.4 仍低於 59.1.3，未影響本次成功發布；升級留作獨立工具維護。
+
+## 2026-08-18 00:48 [Integration owner／Codex] — Staging 連線可恢復性修復完成
+
+- Vercel hashed `/assets/*` 新增一年 immutable cache；外部 Google Fonts 已移除，自架 Noto Sans TC 收斂為 400／700。production build 的主 CSS 由事故盤點約 863 KB／gzip 320 KB 降至 477.37 KB／gzip 161.86 KB。
+- Supabase browser client 的所有 HTTP request 採 15 秒總 deadline，涵蓋 response headers 與 body consumption，並尊重 `Request`／`RequestInit` AbortSignal；可將原本無界等待收斂為 `AUTH_TIMEOUT`。這是對殭屍連線假說的必要防護，不代表已證實 8/17 事故根因。
+- 全域 QueryClient 改為 30 秒 stale、取消 focus refetch、query／mutation 預設不重試；各 feature 已明確宣告的 read retry 仍可覆寫。登入只對非 timeout、非 429 的 transport failure 重試一次；timeout 不重試，避免最壞等待延長至 30 秒與新增 session。
+- 登入錯誤安全區分為帳密錯誤、網路、逾時、429 限流、服務不可用與未知，不顯示 provider 內部內容或帳號存在狀態。A6 的 `sessionStorage` 關分頁登出決策未改。
+- 唯一 review 找到「deadline 只包 headers」High 與「timeout 被重試」Medium，均於同一輪修正；新增 stalled body、Request signal、timeout no-retry、429 與 5xx regression tests。
+- Fresh checks：lint、typecheck、production build、Vitest 168 files／1185 tests、`git diff --check` 全綠。C1–C4、D 與 E 的證據門檻／下次事故取證已寫入 `docs/superpowers/plans/2026-08-18-staging-concurrency-follow-up.md`；未查 Auth logs、未調 rate limit、未升級 Supabase tier、未 push 或 deploy。
+
+## 2026-08-18 01:12 [Integration owner／Codex] — 登入／註冊密碼顯示切換完成，待 staging 發布
+
+- 登入密碼、註冊密碼與密碼確認新增一致的開眼／閉眼切換；三個欄位預設皆隱藏，切換不清除已輸入內容，註冊兩欄可獨立控制，按鈕不會觸發表單提交。
+- Icon-only button 具動態 `aria-label`／`aria-pressed`／`aria-controls`、鍵盤操作與 hover／focus tooltip；唯一 review 指出的 40px 觸控區與缺少可見說明已於同一輪修成 44×44px 與 tooltip。未新增密碼儲存、log、傳輸或 auth trust-boundary 變更。
+- Fresh checks：登入／註冊 Vitest 2 files／36 tests、完整 Vitest 367 suites／1187 tests、lint、typecheck、production build、`git diff --check` 全綠。測試曾因 sandbox 禁止 `127.0.0.1` listen 而出現 `EPERM`；允許本機暫時連接埠後完整 gate 全綠。
+- Hosted smoke 首次找出 Playwright 的模糊 `getByLabel('密碼')` 會同時匹配輸入框與新按鈕；正式 E2E／acceptance selectors 已機械式收斂為 `exact: true`，登入鍵盤路徑亦新增眼睛按鈕的 Tab／Enter 開關斷言。產品 accessible name 不降級。
+- 既有未追蹤 `docs/research/` 仍保持原狀、未 stage／未納入本 task。產品 checkpoint 已建立；下一步只 stage selector hardening 與本段 handoff，建立 follow-up checkpoint、push，再讓 Vercel staging 精確對應最新 HEAD。
+
+## 2026-08-18 01:24 [Integration owner／Codex] — 連線修復與密碼顯示控制發布至 staging
+
+- 產品 commit `c61dae8742d2dea6dd8621d46534b18ca1e0ee30` 與 E2E selector checkpoint `c68677c` 已推至 `origin/integration/jrpg-student-teacher-20260814`；Vercel `colorplay-staging-web` deployment `dpl_8WmcxqWtsTYXsrLJ1qfrQ2NVvNuP` 為 READY，`staging.colorplayapp.com` 已指向該版本。
+- Hosted HTML 實際引用 `/assets/index-mGj9qRj3.js` 與 `/assets/index-DrMD7Y3y.css`，兩者皆回 200、正確 MIME、`public, max-age=31536000, immutable`；bundle 只包含 staging Supabase `onkxnkzeixpezetkmocf`，未包含 production ref，且密碼 toggle／tooltip 特徵存在、Google Fonts 外部依賴不存在。
+- 真實 hosted smoke 在 393×852 對教師與學生 fixture 各驗證一次：密碼預設隱藏、44×44 眼睛按鈕可顯示／再隱藏且不改值，分別成功進入 `/teacher` 與 `/app`，page error／failed request 為 0。
+- 本輪未修改或部署 Supabase schema／Edge Function／資料。既有未追蹤 `docs/research/` 仍未納入 commit。Vercel 本機 CLI 58.9.4 低於目前 59.1.3，但本次部署成功；升級 CLI 留作獨立工具維護。
+
+## 2026-08-18 11:45 [Integration owner／Codex] — 章節讀取與複習卡媒體韌性修復完成，待 staging 發布
+
+- Staging 診斷確認 Vercel 靜態資源回應正常；實際長等待集中在 Supabase 學習進度 RPC 與 Storage signed URL。複習卡內容現在先回文字，進入閱讀器後才按 bucket 批次簽署私有圖片，不再以逐圖 `Promise.all` 阻塞整頁；公開圖片直接顯示，signed URL 快取 50 分鐘。
+- 私有複習卡媒體依 owner 核准使用最多三次 retry，配 bounded exponential backoff + jitter；此例外已同步至 `spec/02`。等待超過 10 秒顯示可操作的「重新載入圖片／略過圖片」，文字、翻頁與完成複習始終可用。
+- 新 migration `20260818000100_learning_read_path_performance.sql` 新增 frozen question-version lookup index，讓 `get_learning_progress` 委派共用 core，並把 chapter map 的每章 progress 重算改為單一 materialized snapshot。本機 EXPLAIN 為 learning progress 10.7ms、chapter map 18.8ms；這不是 hosted p95 證據。
+- 唯一 review：Standards 3 個標準 finding＋2 個 smell、Spec 2 個 Medium、Security 0。10 秒操作、jitter、500 行拆分與媒體路徑重複已修；migration 規則重複屬刻意的 bulk snapshot 等價實作，現由既有 access tests 守住。Staging published-read p95 必須在 migration 部署後才量測，尚未宣稱 ≤500ms。
+- Fresh checks：學習 Vitest 3 files／27 tests、相關 pgTAP 5 files／108 tests、lint、typecheck、production build、scoped Prettier、`git diff --check` 全綠。既有未追蹤 `docs/research/` 保持原狀且不得 stage；下一步精確 stage 本 task、checkpoint/push，套用 staging migration，部署 Vercel 後跑 hosted chapter/review timing 與基本學生 smoke。
+
+## 2026-08-18 12:06 [Integration owner／Codex] — 章節讀取與複習卡媒體修復發布至 staging
+
+- 產品 commit `b74a5006969b2c80caf5726f945ff4bb114ac169` 已推至 `origin/integration/jrpg-student-teacher-20260814`；Supabase staging `onkxnkzeixpezetkmocf` 已套用 migration `20260818000100_learning_read_path_performance.sql`，local／remote migration list 對齊。
+- Vercel `colorplay-staging-web` production-target deployment `dpl_Escqmhbarxg1SnQDus9eTbA6gwHG` 為 READY，`staging.colorplayapp.com` 已指向該版本。舊 CLI 58.9.4 的 production deploy 回 `Not authorized`；改用一次性 CLI 59.1.4 後成功，未修改 package dependency。Hosted hashed JS 回 `public, max-age=31536000, immutable`，chapter chunk 含新版圖片等待／重試／略過流程。
+- Hosted 393×852 真實登入後，單次章節完整顯示 939ms；20 次刻意繞過 query cache 的重載結果：章節 render p95 1164ms，`get_student_chapter_map` p95 151ms、`get_learning_progress` p95 183ms、`get_accessible_chapter_review` p95 178ms，三個 published-read RPC 均低於 500ms 且全回 200。
+- 複習卡閱讀器在手機／桌面分別 43ms／44ms 即呈現文字與完成控制，不再等待 Storage。附件由 staging Storage 回正確 `image/webp` 200、自然寬 1654，無 request failure／fallback；桌面 headless 完整載入。手機 headless 在 lazy image／翻頁副本下 `complete` flag 未於 15 秒內穩定，但已取得自然尺寸，仍列為 owner 真機確認項，不影響文字、翻頁或完成複習。
+- 既有未追蹤 `docs/research/` 保持原狀、未 stage；除本段 append-only handoff 外工作樹無新增產品變更。
+
+## 2026-08-19 15:35 [Owner／Codex] — 圖片負載與同步尖峰開發 gate 完成，真實多人驗證延期
+
+- 在獨立 worktree `.worktrees/image-performance-hardening-20260819`、branch `codex/image-performance-hardening-20260819` 完成圖片 hardening；base 為 `c98a06a275da38a45950435c29db5e432524b090`。教師／Live 大圖與章節複習書封改為 WebP，favicon 縮至 128px，20 個 Blook 改供應 128／256px responsive WebP；production build 圖片總量由先前盤點 13.96 MiB 降至 5.39 MiB，最大單張 336,794 bytes，沒有超過 512 KiB。
+- 教師頭像仍先限制來源為 PNG／JPEG／WebP、2 MiB，再於瀏覽器解碼、等比例縮至最多 512px、轉 WebP 並限制輸出 256 KiB 才上傳；錯誤分類分開處理格式、輸出過大與處理器不可用。複習卡新發布契約改為 WebP、512 KiB、2400px，並提供 `assets:check:review-media`；CI production build 後會執行 `assets:check` 阻擋單檔與總量超標。
+- `spec/09` 新增同步班級尖峰規則：關鍵路徑需交代 request fan-out、cache／timeout／retry，讀取採 bounded jitter、mutation 須 idempotent、Realtime 禁止 polling 替代；phase gate 需使用 30+ 個獨立 Staging 帳號。Owner 目前不在校園網路／實機環境，因此同 NAT、分散 IP、token refresh soak 與真手機複習卡驗證明確延期，不得宣稱多人容量已通過。
+- Fresh checks：scoped lint、typecheck、Prettier、production build、圖片預算、相關 Vitest 6 files／60 tests、教師／Live Chromium 47／47、章節狀態 Chromium 5／5 全綠。章節完整旅程另有既有 harness 缺少 `QueryClientProvider`，2 個 case 在進入閱讀器前失敗；未修改舊測試掩蓋。唯一整合 review 找到頭像處理器未知錯誤被誤報成格式錯誤，已修正並以 repository／preparer 9 tests 重跑全綠。
+- 本輪未操作 hosted Supabase／Vercel、未建立測試帳號、未 push／deploy。下一個可用測試時段依 `docs/superpowers/plans/2026-08-18-staging-concurrency-follow-up.md` 執行 30+ 同 NAT、分散 IP 對照、refresh soak 與真實手機驗證；hosted mutation 與測試時段需先取得 owner 當次授權。
+
+## 2026-08-19 15:43 [Owner／Codex] — 圖片效能 checkpoint 發布至 Staging
+
+- Product commit `7959266c5e770f8b6036dde2f2bad889307b1faa` 已推至 `origin/codex/image-performance-hardening-20260819`，並以 Vercel CLI 59.1.4 發布至既有 `colorplay-staging-web`；deployment `dpl_5wLe9SyyFsxJKE3oVQ8tFsKozxiV` 為 READY，`staging.colorplayapp.com` 已指向該版本。
+- Hosted HTML 與 26 個遞迴 bundle assets 驗證只包含 Staging Supabase ref `onkxnkzeixpezetkmocf`，不含 Production ref `xdjumzdqyexpyndanwkp`；偵測到唯一 public-key fingerprint `f1c0eb72e196`。公開 Blook 128／256 WebP 分別為 3,286／8,260 bytes，favicon 為 29,589 bytes，皆回 200 與正確 MIME。
+- 真實 hosted smoke 以既有 synthetic fixture 在 1280×720 與 393×852 各完成教師帳號登入至 `/teacher`、學生帳號登入至 `/app`；page error／failed request 均為 0，水平 overflow 為 0。舊 smoke 的教師 `MENU` selector 已只在 `/private/tmp` 配合目前固定側欄更新，未修改產品或測試檔。
+- 本次只部署靜態前端，未修改 hosted Supabase schema、Storage、Edge Function 或資料。30+ 同 NAT／分散 IP／refresh soak／真機測試仍依前段 owner deferred gate 保持未驗證，不因本次發布改稱多人容量通過。
+
+> 📌 以下接續 `phase1/admin-security-impl` 分支（8/18 起）與本次合併作業自身的紀錄；與上方
+> `codex/image-performance-hardening-20260819` 分支的紀錄是兩條平行時間軸合併進同一份檔案，
+> 日期不連續屬預期，各筆條目本身的日期為準。
+
 ## 2026-08-18 19:05 [Claude Code] — Phase 1 Task 13A：reveal token 形態落地、Edge envelope 接線；stuck 人工重試卡住待裁定
 
 - 做了什麼：owner 裁定後新增 `20260809000400`（`admin_reveal_field` 的 opaque `row_token` 形態，canonical hash 綁逐字 token；**兩形態 hash 刻意不互通**，receipt 不得跨形態重用），post-gate 邏輯抽成 `admin_internal_reveal_field_with_key` 共用，jsonb 形態對外契約（hash／denial 碼與順序／audit 形狀）不變；新增 pgTAP `055`（14 assertions，並以竄改 hash 欄位名實測確認斷言會轉紅）。Edge 側 `admin-command` 改為 exactly one-of 定址、只轉送進過 canonical hash 的欄位（未 hash 的 args 到不了 RPC）、DB denial envelope 原樣轉送（code／message／request_id／retryable），畸形或半截 envelope 一律 fail closed；`SECURITY_AUDIT_UNAVAILABLE` 改為完整 envelope 並帶 correlation-only 的 request_id。政策與正規化抽到 `_shared/command-policies.ts`（`Deno.serve` 讓 index.ts 無法被單元測試 import）。

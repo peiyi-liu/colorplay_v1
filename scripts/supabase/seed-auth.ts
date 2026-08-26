@@ -267,18 +267,9 @@ const reconcileClassroomFixtures = async (
     serviceRoleKey,
     'studentTwo',
   );
-  const repositoryStudent = await signedInFixtureClient(
-    url,
-    serviceRoleKey,
-    'classroomRepositoryStudent',
-  );
-  const clients = [
-    teacherOne,
-    teacherTwo,
-    studentOne,
-    studentTwo,
-    repositoryStudent,
-  ];
+  // classroomRepositoryStudent stays unassigned so the repository integration
+  // can exercise a first join without violating ADR 0008's one-active-class rule.
+  const clients = [teacherOne, teacherTwo, studentOne, studentTwo];
 
   try {
     const first = await ensureOwnedClassroom(
@@ -292,15 +283,9 @@ const reconcileClassroomFixtures = async (
       [studentOne, studentTwo],
     );
 
-    const second = await ensureOwnedClassroom(
+    await ensureOwnedClassroom(
       teacherTwo,
       CLASSROOM_FIXTURES.teacherTwoClassroom.name,
-    );
-    await ensureStudentMemberships(
-      teacherTwo,
-      second.classroomId,
-      second.joinCode,
-      [repositoryStudent],
     );
   } finally {
     await Promise.all(

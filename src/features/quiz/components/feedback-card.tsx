@@ -58,9 +58,12 @@ export function FeedbackCard({
         </p>
       ) : null}
       {result.answerStatus === 'correct' ? null : (
-        <p>
-          <strong>正確答案：{result.correctOptionText}</strong>
-        </p>
+        <div className="feedback-card__explanation">
+          <p>
+            <strong>正確答案：{result.correctOptionText}</strong>
+          </p>
+          <p>{result.explanation}</p>
+        </div>
       )}
       {mentor ? (
         <div className="feedback-card__mentor">
@@ -72,7 +75,6 @@ export function FeedbackCard({
           </span>
         </div>
       ) : null}
-      <p>{result.explanation}</p>
       <button
         className="primary-action"
         data-primary-action="true"
@@ -80,7 +82,11 @@ export function FeedbackCard({
         onClick={onContinue}
         type="button"
       >
-        {isLastQuestion ? '結算並查看結果' : '我理解了，下一題'}
+        {isLastQuestion
+          ? '結算並查看結果'
+          : result.answerStatus === 'correct'
+            ? '下一題'
+            : '我理解了，下一題'}
       </button>
     </aside>
   );

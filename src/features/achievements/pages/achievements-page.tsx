@@ -1,12 +1,11 @@
-import { Link } from 'react-router-dom';
-
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { GamePager, useStageWide } from '../../../components/ui/game-pager';
-import { Icon } from '../../../components/ui/icons';
 import { PageHeader } from '../../../components/ui/page-header';
 import { AchievementCard } from '../components/achievement-card';
 import { useAchievements } from '../hooks/use-achievements';
 import type { AchievementRepository } from '../types';
+
+import './achievements-page.css';
 
 export function AchievementsPage({
   repository,
@@ -37,15 +36,10 @@ export function AchievementsPage({
   return (
     <section
       aria-labelledby="achievements-title"
-      className="achievements scene-day hall-of-medals"
+      className="achievements achievements--sanctuary-v2 scene-day hall-of-medals"
     >
       <PageHeader
         description="完成學習任務、累積挑戰紀錄，解鎖你的專屬色彩成就。"
-        leading={
-          <Link aria-label="回課後學習大廳" className="pastel-back" to="/app">
-            <Icon name="arrow-left" size={18} />
-          </Link>
-        }
         title="個人成就與徽章"
         titleId="achievements-title"
       />

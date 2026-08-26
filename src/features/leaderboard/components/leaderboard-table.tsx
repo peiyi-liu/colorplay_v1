@@ -30,21 +30,27 @@ function FramedBlook({
   const hasFrame = Boolean(entry.frameGradientStart && entry.frameGradientEnd);
   return (
     <span className="leaderboard-blook" data-framed={hasFrame || undefined}>
-      <span
-        aria-hidden="true"
-        className="pastel-summary__avatar leaderboard-blook__avatar"
-        style={
-          hasFrame
-            ? {
-                background: `linear-gradient(to top right, ${entry.frameGradientStart ?? ''}, ${entry.frameGradientEnd ?? ''})`,
-              }
-            : undefined
-        }
-      >
-        <BlookArt emoji={blook.emoji} size={30} stableCode={blook.stableCode} />
+      <span className="leaderboard-blook__avatar-wrap">
+        <span
+          aria-hidden="true"
+          className="pastel-summary__avatar leaderboard-blook__avatar"
+          style={
+            hasFrame
+              ? {
+                  background: `linear-gradient(to top right, ${entry.frameGradientStart ?? ''}, ${entry.frameGradientEnd ?? ''})`,
+                }
+              : undefined
+          }
+        >
+          <BlookArt
+            emoji={blook.emoji}
+            size={64}
+            stableCode={blook.stableCode}
+          />
+        </span>
+        {entry.isSelf ? <strong>這是你</strong> : null}
       </span>
-      {entry.displayName}
-      {entry.isSelf ? <strong>這是你</strong> : null}
+      <span className="leaderboard-blook__name">{entry.displayName}</span>
     </span>
   );
 }

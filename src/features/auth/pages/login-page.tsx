@@ -9,6 +9,7 @@ import { useToast } from '../../../components/ui/toast';
 import { parsePublicEnv } from '../../../lib/config/public-env';
 import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
 import { createProfileRepository } from '../../profile/api/profile-repository';
+import { PasswordVisibilityToggle } from '../components/password-visibility-toggle';
 import { useAuth } from '../context/auth-context';
 import {
   accountSignInSchema,
@@ -20,11 +21,17 @@ const safeErrorMessages = {
   student: {
     AUTH_INVALID_CREDENTIALS: '帳號或密碼不正確',
     AUTH_NETWORK: '網路連線失敗，請稍後重試',
+    AUTH_RATE_LIMITED: '登入嘗試過於頻繁，請稍後再試',
+    AUTH_TIMEOUT: '登入服務回應逾時，請再試一次',
+    AUTH_UNAVAILABLE: '登入服務暫時無法使用，請稍後再試',
     AUTH_UNKNOWN: '登入失敗，請使用追蹤代碼回報',
   },
   teacher: {
-    AUTH_INVALID_CREDENTIALS: '帳號、密碼或班級序號不正確',
+    AUTH_INVALID_CREDENTIALS: '帳號或密碼不正確',
     AUTH_NETWORK: '網路連線失敗，請稍後重試',
+    AUTH_RATE_LIMITED: '登入嘗試過於頻繁，請稍後再試',
+    AUTH_TIMEOUT: '登入服務回應逾時，請再試一次',
+    AUTH_UNAVAILABLE: '登入服務暫時無法使用，請稍後再試',
     AUTH_UNKNOWN: '登入失敗，請使用追蹤代碼回報',
   },
 } as const satisfies Readonly<
@@ -62,12 +69,13 @@ export function LoginPage() {
   const pendingSubmission = useRef(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [portal, setPortal] = useState<'student' | 'teacher'>('student');
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
     register,
   } = useForm<AccountSignInValues>({
-    defaultValues: { account: '', classCode: '', password: '' },
+    defaultValues: { account: '', password: '' },
     resolver: zodResolver(accountSignInSchema),
   });
 
@@ -77,35 +85,22 @@ export function LoginPage() {
       data-portal={portal}
     >
       <div className="auth-portal-brand">
-        <span aria-hidden="true" className="auth-portal-brand__mark">
-          <svg fill="none" height="40" viewBox="0 0 32 32" width="40">
-            <circle cx="11" cy="12" fill="var(--coral-700)" r="7" />
-            <circle
-              cx="21"
-              cy="12"
-              fill="var(--cobalt-600)"
-              fillOpacity="0.92"
-              r="7"
-            />
-            <circle
-              cx="16"
-              cy="20"
-              fill="var(--jade-600)"
-              fillOpacity="0.92"
-              r="7"
-            />
-          </svg>
+        <span className="auth-portal-brand__mark">
+          <img
+            alt="ColorPlay 藍金寶典"
+            height="48"
+            src="/colorplay-grimoire-pixel.png"
+            width="48"
+          />
         </span>
-        <p className="auth-portal-brand__title">ColorPlay</p>
-        <p className="auth-portal-brand__subtitle">色彩原理遊戲式學習平台</p>
-        <p className="press-start" aria-hidden="true">
-          PRESS START
-        </p>
+        <p className="auth-portal-brand__title">冒險者公會</p>
+        <p className="auth-portal-brand__subtitle">色彩王國通行證</p>
       </div>
+      <p className="auth-portal__welcome">歡迎回來，冒險者。</p>
       <h1 className="pixel-heading">登入</h1>
       <p className="route-panel__message">
         {portal === 'teacher'
-          ? '使用教師帳號與班級序號登入，進入教師工作區管理班級與課程。'
+          ? '使用教師帳號登入，進入教師工作區管理班級與課程。'
           : '使用帳號登入，繼續你的色彩原理學習進度。'}
       </p>
 
@@ -152,10 +147,6 @@ export function LoginPage() {
 
               const identifier = values.account.trim();
               const usesEmailBridge = identifier.includes('@');
-              // 班級序號:教師必填、管理員免填。角色在登入前不可知,
-              // 由 auth-login 伺服端強制(教師缺碼一律
-              // AUTH_INVALID_CREDENTIALS),client 不做角色判斷。
-              const classCode = values.classCode?.trim() ?? '';
 
               pendingSubmission.current = true;
               setSubmitError(null);
@@ -170,7 +161,6 @@ export function LoginPage() {
                     account: identifier,
                     password: values.password,
                     portal,
-                    ...(classCode ? { classCode } : {}),
                   });
                 }
                 toast({
@@ -214,46 +204,32 @@ export function LoginPage() {
 
           <div className="login-form__field">
             <label htmlFor="login-password">密碼</label>
-            <input
-              {...register('password')}
-              aria-describedby={
-                errors.password ? 'login-password-error' : undefined
-              }
-              aria-invalid={errors.password ? 'true' : 'false'}
-              autoComplete="current-password"
-              id="login-password"
-              type="password"
-            />
+            <div className="login-form__password-control">
+              <input
+                {...register('password')}
+                aria-describedby={
+                  errors.password ? 'login-password-error' : undefined
+                }
+                aria-invalid={errors.password ? 'true' : 'false'}
+                autoComplete="current-password"
+                id="login-password"
+                type={passwordVisible ? 'text' : 'password'}
+              />
+              <PasswordVisibilityToggle
+                controlId="login-password"
+                fieldLabel="密碼"
+                onToggle={() => {
+                  setPasswordVisible((visible) => !visible);
+                }}
+                visible={passwordVisible}
+              />
+            </div>
             {errors.password ? (
               <p className="login-form__field-error" id="login-password-error">
                 {errors.password.message}
               </p>
             ) : null}
           </div>
-
-          {portal === 'teacher' ? (
-            <div className="login-form__field">
-              <label htmlFor="login-class-code">班級序號（管理員免填）</label>
-              <input
-                {...register('classCode')}
-                aria-describedby={
-                  errors.classCode ? 'login-class-code-error' : undefined
-                }
-                aria-invalid={errors.classCode ? 'true' : 'false'}
-                autoComplete="off"
-                id="login-class-code"
-                type="text"
-              />
-              {errors.classCode ? (
-                <p
-                  className="login-form__field-error"
-                  id="login-class-code-error"
-                >
-                  {errors.classCode.message}
-                </p>
-              ) : null}
-            </div>
-          ) : null}
 
           {submitError ? (
             <p className="login-form__submit-error" role="alert">
@@ -267,16 +243,17 @@ export function LoginPage() {
             <button
               className={
                 portal === 'teacher'
-                  ? 'primary-action login-form__submit--teacher'
-                  : 'primary-action'
+                  ? 'primary-action login-form__submit--pixel login-form__submit--teacher'
+                  : 'primary-action login-form__submit--pixel'
               }
               data-acceptance-interactive="true"
               data-acceptance-target
               data-primary-action="true"
               disabled={isSubmitting}
+              aria-label={isSubmitting ? '登入中…' : '登入'}
               type="submit"
             >
-              {isSubmitting ? '登入中…' : '登入'}
+              {isSubmitting ? '進入中…' : '進入王國'}
             </button>
           </div>
           <div className="login-form__links">

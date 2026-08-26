@@ -68,6 +68,8 @@ const question = (
 const session = (questions: QuizQuestion[]): QuizSession => ({
   answeredCount: questions.filter(({ answerStatus }) => answerStatus !== null)
     .length,
+  challengeKind: 'section',
+  chapterSortOrder: 3,
   chapterTitle: '色彩表示',
   completedAt: null,
   correctCount: questions.filter(
@@ -85,6 +87,8 @@ const session = (questions: QuizQuestion[]): QuizSession => ({
     0,
   ),
   rewardRatePercent: 100,
+  sectionSortOrder: 1,
+  sectionTitle: '3-1 色彩三要素與色名的表示',
   xpAwarded: 0,
 });
 
@@ -100,6 +104,7 @@ const incorrectResult: QuizAnswerResult = {
 };
 
 function repositoryMock() {
+  const abandonSession = vi.fn<QuizRepository['abandonSession']>();
   const activateNextQuestion = vi.fn<QuizRepository['activateNextQuestion']>();
   const createSession = vi.fn<QuizRepository['createSession']>();
   const finalizeSession = vi.fn<QuizRepository['finalizeSession']>();
@@ -111,12 +116,14 @@ function repositoryMock() {
     finalizeSession,
     getSession,
     repository: {
+      abandonSession,
       activateNextQuestion,
       createSession,
       finalizeSession,
       getSession,
       submitAnswer,
     } satisfies QuizRepository,
+    abandonSession,
     submitAnswer,
   };
 }
@@ -181,6 +188,15 @@ describe('QuizSessionPage', () => {
       isPending: false,
       refetch: vi.fn(),
     } as never);
+  });
+
+  it('does not enable the chapter-map lookup for an existing session', () => {
+    const mock = repositoryMock();
+    mock.getSession.mockResolvedValue(session([question(1)]));
+
+    renderQuiz(mock.repository);
+
+    expect(mockedChapterMap).toHaveBeenCalledWith(undefined, false);
   });
 
   it('returns a locked direct template URL to the authoritative map panel', async () => {
@@ -263,6 +279,9 @@ describe('QuizSessionPage', () => {
     renderQuiz(mock.repository);
 
     expect(await screen.findByText('第 1 題')).toBeVisible();
+    const firstSpiritClass = document.querySelector(
+      '.battle-stage .spirit-avatar',
+    )?.className;
     await userEvent.click(screen.getByRole('radio', { name: 'CMYK' }));
     await userEvent.click(screen.getByRole('button', { name: '送出答案' }));
 
@@ -284,6 +303,9 @@ describe('QuizSessionPage', () => {
     );
     expect(mock.activateNextQuestion).toHaveBeenCalledWith(sessionId);
     expect(await screen.findByText('第 2 題')).toBeVisible();
+    expect(
+      document.querySelector('.battle-stage .spirit-avatar')?.className,
+    ).not.toBe(firstSpiritClass);
     expect(screen.queryByText('RGB 使用三色光。')).toBeNull();
     expect(screen.getByRole('button', { name: '送出答案' })).toBeDisabled();
   });
@@ -328,6 +350,10 @@ describe('QuizSessionPage', () => {
     expect(
       await screen.findByRole('heading', { name: '✓ 答對了' }),
     ).toBeVisible();
+    expect(document.querySelector('.battle-stage')).toHaveAttribute(
+      'data-enemy-health',
+      'empty',
+    );
     expect(
       screen.getByRole('button', { name: '結算並查看結果' }),
     ).toBeEnabled();
@@ -502,18 +528,54 @@ describe('QuizSessionPage', () => {
     );
   });
 
+  it('returns an already abandoned attempt to the learning lobby', async () => {
+    const mock = repositoryMock();
+    mock.getSession.mockResolvedValue({
+      ...session([question(1)]),
+      status: 'abandoned',
+    });
+    const { router } = renderQuiz(mock.repository);
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/app');
+    });
+  });
+
   it('renders the battle night scene while preserving load-bearing strings', async () => {
     const mocks = repositoryMock();
     mocks.getSession.mockResolvedValue(session([question(1), question(2)]));
     renderQuiz(mocks.repository);
 
-    const heading = await screen.findByRole('heading', { name: '色彩表示' });
+    const heading = await screen.findByRole('heading', {
+      name: '第 3 章・色彩表示',
+    });
     const runner = heading.closest('section');
     expect(runner).toHaveClass('quiz-runner', 'scene-night', 'battle-scene');
+    expect(runner?.lastElementChild).toHaveClass('quiz-runner__question-dock');
+    expect(
+      runner?.lastElementChild?.querySelector('.question-card'),
+    ).not.toBeNull();
+    expect(screen.getByText('3-1・色彩三要素與色名的表示')).toBeVisible();
+    expect(screen.queryByText('小精靈挑戰')).toBeNull();
+    expect(screen.getByLabelText('挑戰進度').children).toHaveLength(3);
     expect(
       screen.getByText((_, el) => el?.textContent === '第 1 / 2 題'),
     ).toBeVisible();
     expect(screen.getByRole('button', { name: '送出答案' })).toBeVisible();
+  });
+
+  it('labels a chapter-wide template as the chapter final challenge', async () => {
+    const mocks = repositoryMock();
+    mocks.getSession.mockResolvedValue({
+      ...session([question(1)]),
+      challengeKind: 'chapter',
+      sectionSortOrder: null,
+      sectionTitle: null,
+    });
+    renderQuiz(mocks.repository);
+
+    expect(await screen.findByText('章節總挑戰')).toBeVisible();
+    expect(screen.queryByText(/3-1・/u)).toBeNull();
   });
 
   it('keeps the verdict hidden while the strike is in flight (three-beat rule)', async () => {
@@ -557,6 +619,10 @@ describe('QuizSessionPage', () => {
     ).toBeVisible();
     expect(document.querySelector('.battle-stage--miss')).not.toBeNull();
     expect(document.querySelector('.battle-stage--attacking')).toBeNull();
+    expect(document.querySelector('.battle-stage')).toHaveAttribute(
+      'data-enemy-health',
+      'full',
+    );
   });
 
   it('plays the enemy strike, not a player slash, on timeout', async () => {

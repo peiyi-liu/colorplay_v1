@@ -19,7 +19,7 @@ export const GENERATED_QUESTION_HINTS: ReadonlyMap<string, readonly string[]> =
       ],
     ],
     [
-      '中國水墨畫「墨分五色」是利用色彩何種屬性的變化？',
+      '中國水墨畫的「墨分五色」是利用色彩何種屬性的變化？',
       [
         '水墨畫只用黑墨，靠什麼變化畫出濃淡層次？',
         '墨加水變淡、少水變濃——這改變的是色彩三要素中的哪一個？',

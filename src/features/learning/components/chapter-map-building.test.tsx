@@ -25,6 +25,8 @@ const chapter = (
 });
 
 const anchor: ChapterGroundAnchor = {
+  mobileX: 500,
+  mobileY: 270,
   visualOffsetX: 0,
   visualOffsetY: 0,
   x: 290,
@@ -63,7 +65,7 @@ describe('ChapterMapBuilding', () => {
 
     const sign = container.querySelector('.chapter-map__building-label');
     const medal = container.querySelector('.chapter-map__status-medal');
-    expect(sign).toHaveTextContent('Chapter 1');
+    expect(sign).toHaveTextContent('第一章');
     expect(sign).toHaveTextContent('認識色彩');
     expect(sign).not.toHaveTextContent(label);
     expect(medal).toHaveTextContent(label);
@@ -71,7 +73,7 @@ describe('ChapterMapBuilding', () => {
     expect(medal?.querySelector('svg')).toHaveAttribute(
       'data-icon',
       {
-        available: 'star',
+        available: 'book',
         completed: 'check',
         content_unavailable: 'alert',
         locked: 'lock',
@@ -83,6 +85,30 @@ describe('ChapterMapBuilding', () => {
     for (const chain of chains) {
       expect(chain).toHaveAttribute('aria-hidden', 'true');
     }
+  });
+
+  it('labels an accessible chapter with existing progress as in progress', () => {
+    render(
+      <ol>
+        <ChapterMapBuilding
+          anchor={anchor}
+          chapter={{
+            ...chapter('available'),
+            progressStatus: 'developing',
+            reviewCompleted: 1,
+          }}
+          onSelect={vi.fn()}
+          selected
+        />
+      </ol>,
+    );
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Chapter 1 認識色彩 進行中',
+      }),
+    ).toBeVisible();
+    expect(screen.getByText('進行中')).toBeVisible();
   });
 
   it.each([
@@ -187,11 +213,13 @@ describe('ChapterMapBuilding', () => {
     const building = container.querySelector('.chapter-map__building');
     expect(building).toHaveAttribute('data-ground-x', '290');
     expect(building).toHaveAttribute('data-ground-y', '298');
+    expect(building).toHaveAttribute('data-mobile-ground-x', '500');
+    expect(building).toHaveAttribute('data-mobile-ground-y', '270');
     expect(building).toHaveStyle({
       '--chapter-anchor-x': '290',
       '--chapter-anchor-y': '298',
-      left: '24.166666666666668%',
-      top: '37.25%',
+      left: '17.344%',
+      top: '31.668%',
     });
   });
 });

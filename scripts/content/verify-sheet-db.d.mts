@@ -10,7 +10,6 @@ export const REPORT_PATH: string;
 
 export type VerifyFixes = Readonly<{
   chapterMap?: Readonly<Record<string, string>>;
-  duplicateRenames?: Readonly<Record<string, string>>;
   reviewCardMedia?: Readonly<
     Record<string, Readonly<{ asset: string; alt: string }>>
   >;
@@ -23,6 +22,7 @@ export type VerifyFixes = Readonly<{
 
 export type SheetSnapshotQuestion = Readonly<{
   answer: string;
+  bankKind: 'chapter' | 'legacy' | 'live' | 'section';
   code: string;
   explanation: string;
   options: readonly Readonly<{ key: string; text: string }>[];
@@ -45,6 +45,7 @@ export type SheetSnapshot = Readonly<{
 
 export type DbSnapshot = Readonly<{
   questions: readonly Readonly<{
+    bankKind: 'chapter' | 'legacy' | 'live' | 'section';
     code: string;
     explanation: string;
     options: readonly Readonly<{

@@ -92,26 +92,19 @@ describe('LobbyPage', () => {
     expect(screen.queryByRole('link', { name: /quiz/u })).toBeNull();
   });
 
-  it('renders the approved map copy in one semantic parchment scroll', () => {
+  it('renders the approved continuous-world heading without the old parchment scroll', () => {
     const { container } = renderPage();
     const headings = screen.getAllByRole('heading', { level: 1 });
-    const scroll = container.querySelector('.chapter-map-scroll');
+    const scene = container.querySelector('.lobby--map-fullscreen');
 
     expect(headings).toHaveLength(1);
     expect(headings[0]).toHaveTextContent('學習地圖');
-    expect(screen.getByText('學生端 · 森林王國村')).toBeVisible();
-    expect(
-      screen.getByText('選擇一棟建築，查看章節的複習、精熟度與解鎖條件。'),
-    ).toBeVisible();
-    expect(scroll).toContainElement(headings[0] ?? null);
-
-    const decorations = container.querySelectorAll(
-      '.chapter-map-scroll__roller, .chapter-map-scroll__crest',
+    expect(scene).toHaveClass('scene-night');
+    expect(container.querySelector('.chapter-map-title')).toContainElement(
+      headings[0] ?? null,
     );
-    expect(decorations).toHaveLength(3);
-    for (const decoration of decorations) {
-      expect(decoration).toHaveAttribute('aria-hidden', 'true');
-    }
+    expect(container.querySelector('.chapter-map-scroll')).toBeNull();
+    expect(screen.queryByText('學生端 · 森林王國村')).toBeNull();
   });
 
   it('selects the requested locked chapter from the exact map query', () => {

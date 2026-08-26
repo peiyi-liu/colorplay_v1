@@ -27,11 +27,16 @@ const buildingArt: Readonly<Record<string, string>> = {
 const accessPresentation: Readonly<
   Record<ChapterAccessState, { icon: IconName; label: string }>
 > = {
-  available: { icon: 'star', label: '可進入' },
+  available: { icon: 'book', label: '可進入' },
   completed: { icon: 'check', label: '已完成' },
   content_unavailable: { icon: 'alert', label: '內容準備中' },
   locked: { icon: 'lock', label: '未解鎖' },
 };
+
+const chapterOrdinals = ['一', '二', '三', '四', '五', '六'] as const;
+
+const chapterOrdinal = (sortOrder: number): string =>
+  `第${chapterOrdinals[sortOrder - 1] ?? String(sortOrder)}章`;
 
 type ChapterMapBuildingProps = Readonly<{
   anchor: ChapterGroundAnchor;
@@ -48,7 +53,11 @@ export function ChapterMapBuilding({
 }: ChapterMapBuildingProps) {
   const [imageFailed, setImageFailed] = useState(false);
   const art = buildingArt[chapter.stableCode];
-  const state = accessPresentation[chapter.accessState];
+  const state =
+    chapter.accessState === 'available' &&
+    chapter.progressStatus !== 'not_started'
+      ? { icon: 'book' as const, label: '進行中' }
+      : accessPresentation[chapter.accessState];
 
   return (
     <li
@@ -56,6 +65,8 @@ export function ChapterMapBuilding({
       data-access-state={chapter.accessState}
       data-ground-x={anchor.x}
       data-ground-y={anchor.y}
+      data-mobile-ground-x={anchor.mobileX}
+      data-mobile-ground-y={anchor.mobileY}
       data-selected={selected ? 'true' : 'false'}
       style={anchorStyle(anchor)}
     >
@@ -114,7 +125,7 @@ export function ChapterMapBuilding({
         />
         <span className="chapter-map__building-label">
           <span className="chapter-map__building-chapter">
-            Chapter {chapter.sortOrder}
+            {chapterOrdinal(chapter.sortOrder)}
           </span>
           <strong>{chapter.title}</strong>
         </span>

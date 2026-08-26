@@ -14,12 +14,15 @@ export const studentChapterMapKey = ['learning', 'chapter-map'] as const;
 
 export function useStudentChapterMap(
   suppliedClient?: SupabaseClient<Database>,
+  enabled = true,
 ): UseQueryResult<StudentChapterMap, LearningError> {
-  const client =
-    suppliedClient ?? getBrowserSupabaseClient(parsePublicEnv(import.meta.env));
-
   return useQuery<StudentChapterMap, LearningError>({
-    queryFn: () => fetchStudentChapterMap(client),
+    enabled,
+    queryFn: () =>
+      fetchStudentChapterMap(
+        suppliedClient ??
+          getBrowserSupabaseClient(parsePublicEnv(import.meta.env)),
+      ),
     queryKey: studentChapterMapKey,
     retry: (failureCount, error) =>
       error.code === 'UNAVAILABLE' && failureCount < 2,

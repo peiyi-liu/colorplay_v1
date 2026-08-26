@@ -111,11 +111,11 @@ test('invalid credentials stay anonymous and keyboard-only valid login lands on 
   await page.goto(intendedUrl);
   await expect(page).toHaveURL(/\/login$/u);
   await expect(page.getByRole('textbox', { name: '帳號' })).toBeVisible();
-  await expect(page.getByLabel('密碼')).toBeVisible();
+  await expect(page.getByLabel('密碼', { exact: true })).toBeVisible();
   await expect(page.locator('[data-primary-action="true"]')).toHaveCount(1);
 
   const emailControl = page.getByRole('textbox', { name: '帳號' });
-  const passwordControl = page.getByLabel('密碼');
+  const passwordControl = page.getByLabel('密碼', { exact: true });
   await expect(emailControl).toHaveAttribute('aria-invalid', 'false');
   expect((await emailControl.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   expect((await passwordControl.boundingBox())?.height).toBeGreaterThanOrEqual(
@@ -155,8 +155,22 @@ test('invalid credentials stay anonymous and keyboard-only valid login lands on 
   expect(emailFocused).toBe(true);
   await page.keyboard.type(TEST_USERS.studentOne.email);
   await page.keyboard.press('Tab');
-  await expect(page.getByLabel('密碼')).toBeFocused();
+  await expect(page.getByLabel('密碼', { exact: true })).toBeFocused();
   await page.keyboard.type(TEST_USERS.studentOne.password);
+  await page.keyboard.press('Tab');
+  await expect(
+    page.getByRole('button', { name: '顯示密碼' }),
+  ).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByLabel('密碼', { exact: true })).toHaveAttribute(
+    'type',
+    'text',
+  );
+  await page.keyboard.press('Enter');
+  await expect(page.getByLabel('密碼', { exact: true })).toHaveAttribute(
+    'type',
+    'password',
+  );
   await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: '登入' })).toBeFocused();
 

@@ -4,7 +4,7 @@
  * 逐題比對題幹／選項／正解／解析與複習卡內容，一律用
  * md5(去除全形半形空白) 指紋，排版差異不算差異。
  *
- * 內建防呆：題號重複（依 import-fixes.json duplicateRenames 自動改號）、
+ * 內建防呆：題號重複即中止、
  * 缺正解、選項文字重複、卡片缺標題、佔位列自動略過、
  * 「解析與正解疑似矛盾」啟發式提示（僅供人工覆核，不自動修正）。
  * import-fixes.json 的 verifyKnownDivergences 列管「已知差異」，不視為失敗。
@@ -29,6 +29,8 @@ import { fileURLToPath } from 'node:url';
 import XLSX from 'xlsx';
 
 import {
+  extractChapterReviewRows,
+  extractLiveRows,
   extractQuestionRows,
   extractReviewRows,
   loadRemoteWorkbook,
@@ -37,6 +39,7 @@ import {
 import { buildReviewCardImport } from './import-review-cards.mjs';
 import {
   isValidQuestionCode,
+  parseQuestionIdentifier,
   resolveCorrectAnswer,
 } from './validation-rules.mjs';
 import { writeFormattedOutput } from './write-formatted-output.mjs';
@@ -63,7 +66,7 @@ const EXPLICIT_ANSWER_PATTERNS = [
   /[故應]選\s*[（(]?([A-D])[）)]?/u,
 ];
 const VERDICT_PATTERN =
-  /(?<![A-Za-z0-9])(?:選項\s*)?([A-D])(?![A-Za-z0-9])(?:\s*的敘述)?[^。，、；,;]{0,40}?(不正確|有誤|錯誤|是正確|正確)/gu;
+  /(?<![A-Za-z0-9])(?:選項\s*)?([A-D])(?![A-Za-z0-9])(?:\s*(的敘述))?[^。，、；,;]{0,40}?(不正確|有誤|錯誤|是正確|正確)/gu;
 
 /**
  * 「解析與正解疑似矛盾」啟發式（如 4-1-09：何者不正確型、正解 C，
@@ -80,11 +83,11 @@ export function detectAnswerConflict({ answer, explanation, prompt }) {
   }
   const negativePrompt = NEGATIVE_PROMPT_PATTERN.test(String(prompt ?? ''));
   for (const match of text.matchAll(VERDICT_PATTERN)) {
-    const [, letter, verdict] = match;
+    const [, letter, statementMarker, verdict] = match;
     const negativeVerdict =
       verdict === '不正確' || verdict === '有誤' || verdict === '錯誤';
     if (negativePrompt) {
-      if (letter === answer && !negativeVerdict) {
+      if (letter === answer && statementMarker && !negativeVerdict) {
         return `題目為「何者不正確」型、正解 ${answer}，解析卻稱選項 ${letter} 的敘述正確`;
       }
       if (letter !== answer && negativeVerdict) {
@@ -102,38 +105,45 @@ export function detectAnswerConflict({ answer, explanation, prompt }) {
  * errors 為擋匯入的結構錯誤；warnings 為需人工覆核的提示。
  */
 export function buildSheetSnapshot({ fixes, workbook }) {
-  const extraction = extractQuestionRows(workbook);
-  const errors = [...extraction.problems];
+  const extractions = [
+    extractQuestionRows(workbook),
+    extractChapterReviewRows(workbook),
+    extractLiveRows(workbook),
+  ];
+  const errors = extractions.flatMap((extraction) => extraction.problems);
   const warnings = [];
   const skippedCodes = [];
   const questions = [];
   const seenCodes = new Set();
-  const promptSeen = new Map();
+  const contentSeen = new Map();
 
-  for (const row of extraction.rows) {
-    let code = row.code;
+  for (const row of extractions.flatMap((extraction) => extraction.rows)) {
+    const code = row.code;
     const skipReason = (fixes.skipCodes ?? {})[code];
     if (skipReason) {
       skippedCodes.push({ code, reason: skipReason });
       continue;
     }
     if (seenCodes.has(code)) {
-      const renameTo = (fixes.duplicateRenames ?? {})[code];
-      if (!renameTo || seenCodes.has(renameTo)) {
-        errors.push(
-          `題號 ${code} 重複（列 ${row.rowNumber}）且沒有可用的 duplicateRenames 改號設定`,
-        );
-        continue;
-      }
-      warnings.push(
-        `題號 ${code} 第二次出現（列 ${row.rowNumber}）→ 依設定改號為 ${renameTo}，請教師同步修正試算表`,
+      errors.push(
+        `題號 ${code} 重複（列 ${row.rowNumber}）；系統序號必須由 Google Sheet 修正`,
       );
-      code = renameTo;
+      continue;
     }
     seenCodes.add(code);
 
     if (!isValidQuestionCode(code)) {
       errors.push(`題號「${code}」格式不符 n-n-nn（列 ${row.rowNumber}）`);
+      continue;
+    }
+    const identifier = parseQuestionIdentifier(code);
+    if (
+      (identifier?.scope === 'section' || identifier?.scope === 'live') &&
+      identifier.section !== String(row.section ?? '')
+    ) {
+      errors.push(
+        `題號 ${code} 的小節 ${identifier.section} 與小節欄「${row.section ?? ''}」不一致（列 ${row.rowNumber}）`,
+      );
       continue;
     }
     if (!(fixes.chapterMap ?? {})[row.chapter]) {
@@ -146,12 +156,6 @@ export function buildSheetSnapshot({ fixes, workbook }) {
       errors.push(`題號 ${code}：題目空白`);
       continue;
     }
-    if (promptSeen.has(row.prompt)) {
-      errors.push(`題目文字重複：${promptSeen.get(row.prompt)} 與 ${code}`);
-      continue;
-    }
-    promptSeen.set(row.prompt, code);
-
     const options = ['A', 'B', 'C', 'D']
       .map((key) => ({ key, text: row.options[key] }))
       .filter((option) => option.text !== '');
@@ -175,6 +179,17 @@ export function buildSheetSnapshot({ fixes, workbook }) {
       );
       continue;
     }
+    const contentFingerprint = [
+      fingerprint(row.prompt),
+      ...options.map((option) => fingerprint(option.text)).sort(),
+    ].join(':');
+    if (contentSeen.has(contentFingerprint)) {
+      errors.push(
+        `題目內容重複（題幹與選項組相同）：${contentSeen.get(contentFingerprint)} 與 ${code}`,
+      );
+      continue;
+    }
+    contentSeen.set(contentFingerprint, code);
     const resolved = resolveCorrectAnswer(row.answer, options);
     if (resolved.error) {
       errors.push(
@@ -194,6 +209,14 @@ export function buildSheetSnapshot({ fixes, workbook }) {
 
     questions.push({
       answer: resolved.key,
+      bankKind:
+        identifier.scope === 'chapter'
+          ? 'chapter'
+          : identifier.scope === 'live'
+            ? 'live'
+            : identifier.scope === 'section'
+              ? 'section'
+              : 'legacy',
       code,
       explanation: row.explanation,
       options,
@@ -212,7 +235,7 @@ export function buildSheetSnapshot({ fixes, workbook }) {
   return {
     cardSkipped: reviewImport.skipped,
     errors,
-    placeholders: extraction.placeholders,
+    placeholders: extractions.flatMap((extraction) => extraction.placeholders),
     questions,
     reviewCards: reviewImport.cards,
     skippedCodes,
@@ -221,7 +244,7 @@ export function buildSheetSnapshot({ fixes, workbook }) {
 }
 
 const QUESTIONS_SQL = `
-select q.stable_code as code, q.prompt, q.explanation,
+select q.stable_code as code, q.bank_kind as "bankKind", q.prompt, q.explanation,
        coalesce(
          json_agg(
            json_build_object('key', o.option_key, 'text', o.option_text, 'correct', o.is_correct)
@@ -306,6 +329,15 @@ export function compareSnapshots({ db, knownDivergences, sheet }) {
     }
     dbByCode.delete(question.code);
     let clean = true;
+    if (question.bankKind !== dbQuestion.bankKind) {
+      classify(
+        question.code,
+        'bankKind',
+        '題池',
+        `表 ${question.bankKind} vs 庫 ${dbQuestion.bankKind ?? '(無)'}`,
+      );
+      clean = false;
+    }
     if (fingerprint(question.prompt) !== fingerprint(dbQuestion.prompt)) {
       classify(question.code, 'prompt', '題幹');
       clean = false;
@@ -456,13 +488,13 @@ export function buildVerifyReport({
     ...(sheet.warnings.length > 0
       ? sheet.warnings.map((warning) => `- ${warning}`)
       : ['（無）']),
-    ...(Object.keys(reviewFlags ?? {}).length > 0
+    ...(Object.keys(reviewFlags ?? {}).some((code) => code !== '$comment')
       ? [
           '',
           '既有列管（import-fixes.json reviewFlags）：',
-          ...Object.entries(reviewFlags).map(
-            ([code, note]) => `- ${code}：${note}`,
-          ),
+          ...Object.entries(reviewFlags)
+            .filter(([code]) => code !== '$comment')
+            .map(([code, note]) => `- ${code}：${note}`),
         ]
       : []),
     '',

@@ -1581,6 +1581,7 @@ export type Database = {
       }
       live_session_questions: {
         Row: {
+          chapter_id: string | null
           closed_at: string | null
           correct_option_id: string
           deadline_at: string | null
@@ -1592,9 +1593,11 @@ export type Database = {
           public_options: Json
           question_stable_code: string
           question_version: number
+          section_id: string | null
           session_id: string
         }
         Insert: {
+          chapter_id?: string | null
           closed_at?: string | null
           correct_option_id: string
           deadline_at?: string | null
@@ -1606,9 +1609,11 @@ export type Database = {
           public_options: Json
           question_stable_code: string
           question_version: number
+          section_id?: string | null
           session_id: string
         }
         Update: {
+          chapter_id?: string | null
           closed_at?: string | null
           correct_option_id?: string
           deadline_at?: string | null
@@ -1620,9 +1625,24 @@ export type Database = {
           public_options?: Json
           question_stable_code?: string
           question_version?: number
+          section_id?: string | null
           session_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "live_session_questions_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_session_questions_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "live_session_questions_session_id_fkey"
             columns: ["session_id"]
@@ -2076,6 +2096,7 @@ export type Database = {
       }
       questions: {
         Row: {
+          bank_kind: string
           created_at: string
           explanation: string
           id: string
@@ -2089,6 +2110,7 @@ export type Database = {
           version: number
         }
         Insert: {
+          bank_kind?: string
           created_at?: string
           explanation: string
           id?: string
@@ -2102,6 +2124,7 @@ export type Database = {
           version?: number
         }
         Update: {
+          bank_kind?: string
           created_at?: string
           explanation?: string
           id?: string
@@ -2312,9 +2335,11 @@ export type Database = {
       }
       quiz_sessions: {
         Row: {
+          abandoned_at: string | null
           answered_count: number
           assignment_attempt_id: string | null
           chapter_title: string
+          classroom_id: string | null
           client_request_id: string
           completed_at: string | null
           correct_count: number
@@ -2332,9 +2357,11 @@ export type Database = {
           xp_awarded: number
         }
         Insert: {
+          abandoned_at?: string | null
           answered_count?: number
           assignment_attempt_id?: string | null
           chapter_title: string
+          classroom_id?: string | null
           client_request_id: string
           completed_at?: string | null
           correct_count?: number
@@ -2352,9 +2379,11 @@ export type Database = {
           xp_awarded?: number
         }
         Update: {
+          abandoned_at?: string | null
           answered_count?: number
           assignment_attempt_id?: string | null
           chapter_title?: string
+          classroom_id?: string | null
           client_request_id?: string
           completed_at?: string | null
           correct_count?: number
@@ -2380,6 +2409,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "quiz_sessions_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "quiz_sessions_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -2394,6 +2430,7 @@ export type Database = {
           created_at: string
           id: string
           question_count: number
+          section_id: string | null
           stable_code: string
           status: Database["public"]["Enums"]["content_status"]
           title: string
@@ -2404,6 +2441,7 @@ export type Database = {
           created_at?: string
           id?: string
           question_count?: number
+          section_id?: string | null
           stable_code: string
           status?: Database["public"]["Enums"]["content_status"]
           title: string
@@ -2414,6 +2452,7 @@ export type Database = {
           created_at?: string
           id?: string
           question_count?: number
+          section_id?: string | null
           stable_code?: string
           status?: Database["public"]["Enums"]["content_status"]
           title?: string
@@ -2425,6 +2464,13 @@ export type Database = {
             columns: ["chapter_id"]
             isOneToOne: false
             referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_templates_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
             referencedColumns: ["id"]
           },
         ]
@@ -2718,6 +2764,41 @@ export type Database = {
           },
         ]
       }
+      student_registration_claims: {
+        Row: {
+          created_at: string
+          lease_expires_at: string | null
+          lease_token: string | null
+          state: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          state?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          state?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_registration_claims_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subtopics: {
         Row: {
           created_at: string
@@ -2979,6 +3060,8 @@ export type Database = {
             | Database["public"]["Enums"]["quiz_answer_status"]
             | null
           answered_count: number | null
+          challenge_kind: string | null
+          chapter_sort_order: number | null
           chapter_title: string | null
           completed_at: string | null
           correct_count: number | null
@@ -2995,6 +3078,8 @@ export type Database = {
           response_ms: number | null
           reward_rate_percent: number | null
           score_delta: number | null
+          section_sort_order: number | null
+          section_title: string | null
           selected_option_id: string | null
           session_id: string | null
           session_question_id: string | null
@@ -3048,6 +3133,7 @@ export type Database = {
       }
     }
     Functions: {
+      abandon_quiz_session: { Args: { session_id: string }; Returns: Json }
       accept_admin_invitation: { Args: { p_token: string }; Returns: Json }
       achievement_metric_value: {
         Args: {
@@ -3288,6 +3374,10 @@ export type Database = {
         Args: { p_chapter_id: string }
         Returns: boolean
       }
+      claim_student_registration: {
+        Args: { p_attempt_id: string }
+        Returns: string
+      }
       close_admin_identity_session: {
         Args: { p_revoke_reason: string; p_session_id: string }
         Returns: boolean
@@ -3308,6 +3398,10 @@ export type Database = {
       complete_review_card: {
         Args: { p_request_id: string; p_review_card_id: string }
         Returns: Json
+      }
+      complete_student_registration_claim: {
+        Args: { p_attempt_id: string }
+        Returns: undefined
       }
       create_admin_identity_session: {
         Args: {
@@ -3689,6 +3783,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      release_student_registration_claim: {
+        Args: { p_attempt_id: string }
+        Returns: boolean
+      }
       reopen_course_progression: {
         Args: { p_course_id: string }
         Returns: Json
@@ -3908,6 +4006,50 @@ export type Database = {
           user_id: string
         }[]
       }
+      teacher_assessment_facts: {
+        Args: {
+          p_chapter_id: string
+          p_classroom_id: string
+          p_from: string
+          p_source: string
+          p_to: string
+        }
+        Returns: {
+          answered_at: string
+          chapter_id: string
+          chapter_sort_order: number
+          chapter_title: string
+          is_correct: boolean
+          prompt: string
+          section_id: string
+          section_sort_order: number
+          section_title: string
+          source_kind: string
+          stable_code: string
+          user_id: string
+        }[]
+      }
+      teacher_assessment_question_analysis: {
+        Args: {
+          p_chapter_id?: string
+          p_classroom_id: string
+          p_from?: string
+          p_source?: string
+          p_to?: string
+        }
+        Returns: {
+          attempts: number
+          chapter_id: string
+          chapter_sort_order: number
+          chapter_title: string
+          correct_rate: number
+          prompt: string
+          section_id: string
+          section_sort_order: number
+          section_title: string
+          stable_code: string
+        }[]
+      }
       teacher_assignment_summary: {
         Args: { p_classroom_id: string; p_from?: string; p_to?: string }
         Returns: {
@@ -3918,6 +4060,33 @@ export type Database = {
           status: string
           targets: number
           title: string
+        }[]
+      }
+      teacher_chapter_completion_summary: {
+        Args: { p_chapter_id?: string; p_classroom_id: string }
+        Returns: {
+          chapter_id: string
+          chapter_sort_order: number
+          chapter_title: string
+          completed_students: number
+          completion_rate: number
+          student_statuses: Json
+          total_students: number
+        }[]
+      }
+      teacher_classroom_overview: {
+        Args: {
+          p_chapter_id?: string
+          p_classroom_id: string
+          p_from?: string
+          p_to?: string
+        }
+        Returns: {
+          average_accuracy: number
+          completed_students: number
+          total_students: number
+          worst_subtopic_code: string
+          worst_subtopic_title: string
         }[]
       }
       teacher_classroom_summary: {
@@ -3965,6 +4134,25 @@ export type Database = {
           state: string
         }[]
       }
+      teacher_live_session_report_v2: {
+        Args: {
+          p_classroom_id: string
+          p_from?: string
+          p_limit?: number
+          p_offset?: number
+          p_to?: string
+        }
+        Returns: {
+          activity_title: string
+          answers: number
+          classroom_name: string
+          completed_at: string
+          correct_rate: number
+          participants: number
+          session_id: string
+          total_count: number
+        }[]
+      }
       teacher_question_analysis: {
         Args: {
           p_chapter_id?: string
@@ -3980,7 +4168,32 @@ export type Database = {
           stable_code: string
         }[]
       }
+      teacher_question_answer_options: {
+        Args: {
+          p_classroom_id: string
+          p_live_session_id?: string
+          p_source: string
+          p_stable_code: string
+        }
+        Returns: {
+          is_correct: boolean
+          option_key: string
+          option_text: string
+        }[]
+      }
+      teacher_question_detail: {
+        Args: { p_classroom_id: string; p_stable_code: string }
+        Returns: {
+          options: Json
+          prompt: string
+          stable_code: string
+        }[]
+      }
       teacher_student_progress: {
+        Args: { p_classroom_id: string; p_member_ref: string }
+        Returns: Json
+      }
+      teacher_student_progress_v2: {
         Args: { p_classroom_id: string; p_member_ref: string }
         Returns: Json
       }
@@ -4115,7 +4328,7 @@ export type Database = {
       question_type: "single_choice"
       quiz_answer_status: "correct" | "incorrect" | "timeout"
       quiz_session_purpose: "practice" | "assignment" | "remediation"
-      quiz_session_status: "in_progress" | "completed"
+      quiz_session_status: "in_progress" | "completed" | "abandoned"
       remediation_result: "resolved" | "unresolved"
       versioned_content_type: "question" | "review_card"
     }
@@ -4336,10 +4549,9 @@ export const Constants = {
       question_type: ["single_choice"],
       quiz_answer_status: ["correct", "incorrect", "timeout"],
       quiz_session_purpose: ["practice", "assignment", "remediation"],
-      quiz_session_status: ["in_progress", "completed"],
+      quiz_session_status: ["in_progress", "completed", "abandoned"],
       remediation_result: ["resolved", "unresolved"],
       versioned_content_type: ["question", "review_card"],
     },
   },
 } as const
-

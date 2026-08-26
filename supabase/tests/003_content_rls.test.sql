@@ -67,12 +67,12 @@ select is(
 );
 select is(
   (select count(*)::integer from public.questions),
-  62,
+  258,
   'student reads all published questions but not the draft question'
 );
 select is(
   (select count(*)::integer from public.question_options_public),
-  248,
+  1032,
   'student reads safe options for published questions'
 );
 select throws_ok(

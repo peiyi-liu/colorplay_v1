@@ -118,6 +118,9 @@ jobs:
       - name: Build production application
         run: npm run build
 
+      - name: Enforce production image budgets
+        run: pnpm assets:check
+
   local-database:
     name: local-database
     runs-on: ubuntu-24.04

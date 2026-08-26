@@ -58,12 +58,13 @@ select
 from generate_series(1, 6) number;
 
 insert into public.questions (
-  id, subtopic_id, stable_code, prompt, explanation, status, sort_order
+  id, subtopic_id, stable_code, bank_kind, prompt, explanation, status, sort_order
 )
 select
   ('48300000-0000-0000-0000-' || lpad(number::text, 12, '0'))::uuid,
   ('48200000-0000-0000-0000-' || lpad(number::text, 12, '0'))::uuid,
   number::text || '-99-01',
+  'chapter',
   'Activation question ' || number::text || '?',
   'Activation explanation ' || number::text || '.',
   'published'::public.content_status,

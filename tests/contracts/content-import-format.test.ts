@@ -21,6 +21,15 @@ afterEach(async () => {
 });
 
 describe('content import formatting boundary', () => {
+  it('emits every LT stable code into the dedicated live bank', async () => {
+    const sql = await readFile('supabase/seeds/content-questions.sql', 'utf8');
+    const liveCodes = [...sql.matchAll(/'(LT[0-9]{4})', 'live'/gu)].map(
+      (match) => match[1],
+    );
+    expect(new Set(liveCodes).size).toBe(60);
+    expect(sql).not.toMatch(/'LT[0-9]{4}', 'legacy'/u);
+  });
+
   it('writes generated TypeScript and Markdown with the resolved Prettier configuration', async () => {
     const root = await mkdtemp(join(tmpdir(), 'colorplay-content-format-'));
     temporaryDirectories.push(root);

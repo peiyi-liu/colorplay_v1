@@ -90,15 +90,18 @@ describe('ShopPage', () => {
     expect(
       await screen.findByRole('heading', { name: '裝備商店' }),
     ).toBeVisible();
+    expect(screen.queryByText('你的角色收藏')).toBeNull();
     // 分頁批:全域 matchMedia stub matches:false → narrow 容量 4,
     // items=6 → 溢出兩頁(頁1=little_fox/lucky_cat/travel_frog/wise_owl,
     // 頁2=primary_lion/rainbow_horse)。拆頁1/頁2兩段驗證,不再單測全量。
     const page1 = items.slice(0, 4);
     const page2 = items.slice(4);
-    page1.forEach(([, , name, , cost]) => {
+    page1.forEach(([, , name]) => {
       expect(screen.getByRole('heading', { name })).toBeVisible();
-      expect(screen.getByText(`${String(cost)} Token`)).toBeVisible();
     });
+    expect(
+      document.querySelectorAll('.blook-card > p[aria-label$="Token"]'),
+    ).toHaveLength(0);
     page2.forEach(([, , name]) => {
       expect(screen.queryByRole('heading', { name })).toBeNull();
     });
@@ -117,10 +120,12 @@ describe('ShopPage', () => {
 
     await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
 
-    page2.forEach(([, , name, , cost]) => {
+    page2.forEach(([, , name]) => {
       expect(screen.getByRole('heading', { name })).toBeVisible();
-      expect(screen.getByText(`${String(cost)} Token`)).toBeVisible();
     });
+    expect(
+      document.querySelectorAll('.blook-card > p[aria-label$="Token"]'),
+    ).toHaveLength(0);
     page1.forEach(([, , name]) => {
       expect(screen.queryByRole('heading', { name })).toBeNull();
     });
@@ -154,7 +159,7 @@ describe('ShopPage', () => {
     expect(dialog).toBeVisible();
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     expect(screen.getByRole('button', { name: '取消' })).toHaveFocus();
-    expect(screen.getByText('將扣除 250 Token。')).toBeVisible();
+    expect(screen.getByLabelText('將扣除 250 Token。')).toBeVisible();
     await user.click(screen.getByRole('button', { name: '取消' }));
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(purchase).toHaveFocus();
@@ -170,7 +175,7 @@ describe('ShopPage', () => {
     );
     expect(purchaseBlook).toHaveBeenCalledWith(items[2][0]);
     expect(screen.getByRole('button', { name: '選用 旅行蛙' })).toBeEnabled();
-    expect(screen.getByText('0 Token 可用')).toBeVisible();
+    expect(screen.getByLabelText('0 Token 可用')).toBeVisible();
   });
 
   it('equips an owned Blook from the returned server snapshot without a charge', async () => {
@@ -193,7 +198,7 @@ describe('ShopPage', () => {
     );
     expect(equipBlook).toHaveBeenCalledWith(items[1][0]);
     expect(screen.getAllByText('已裝備')).toHaveLength(1);
-    expect(screen.getByText('250 Token 可用')).toBeVisible();
+    expect(screen.getByLabelText('250 Token 可用')).toBeVisible();
   });
 
   it('retains the snapshot and reports the exact server shortfall after a rejected purchase', async () => {
@@ -212,9 +217,9 @@ describe('ShopPage', () => {
     await user.click(screen.getByRole('button', { name: '確認購買' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Token 不足，還差 100 Token。',
+      '金幣不足，請確認餘額後再試。',
     );
-    expect(screen.getByText('250 Token 可用')).toBeVisible();
+    expect(screen.getByLabelText('250 Token 可用')).toBeVisible();
     expect(
       screen.getByRole('button', { name: '購買 旅行蛙，250 Token' }),
     ).toBeEnabled();
@@ -266,16 +271,18 @@ describe('ShopPage', () => {
       '無法載入裝備商店，請稍後重試。',
     );
     expect(screen.getByRole('button', { name: '重試' })).toBeEnabled();
-    expect(screen.queryByText('0 Token 可用')).toBeNull();
+    expect(screen.queryByLabelText('0 Token 可用')).toBeNull();
   });
 
-  it('dresses the shop as a day-scene village facility', async () => {
+  it('keeps the original shop furniture over the generated market scene', async () => {
     renderShop(repository());
     expect(
       await screen.findByRole('heading', { name: '裝備商店' }),
     ).toBeVisible();
 
-    expect(document.querySelector('.blook-shop.scene-day')).not.toBeNull();
+    expect(
+      document.querySelector('.blook-shop.scene-day.shop-market-v2'),
+    ).not.toBeNull();
     expect(document.querySelectorAll('.shop-keeper')).toHaveLength(2);
     for (const keeper of document.querySelectorAll('.shop-keeper')) {
       expect(keeper).toHaveAttribute('aria-hidden', 'true');
@@ -284,6 +291,11 @@ describe('ShopPage', () => {
     // 載重：分頁按鈕 accessible name 不受裝飾影響
     expect(screen.getByRole('button', { name: '角色' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '外框' })).toBeInTheDocument();
+    expect(
+      screen
+        .getByLabelText('250 Token 可用')
+        .querySelector('.hud-coin-pixel--32bit'),
+    ).not.toBeNull();
   });
 
   it('角色超過單頁容量時分頁且跨頁角色仍可透過下一頁抵達', async () => {

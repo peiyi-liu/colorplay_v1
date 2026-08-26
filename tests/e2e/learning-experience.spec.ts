@@ -63,7 +63,7 @@ const signIn = async (
 ) => {
   await page.goto('/login');
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
-  await page.getByLabel('密碼').fill(credentials.password);
+  await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u);
   await expect(
@@ -230,7 +230,7 @@ test('Learning Experience phase gate', async ({
     'mistake-group__badge',
   );
   await studentPage.getByRole('button', { name: '再挑戰（補救練習）' }).click();
-  await expect(studentPage.getByText(/補救練習模式/u)).toBeVisible();
+  await expect(studentPage.getByText(/補救練習模式/u)).toHaveCount(0);
   for (let position = 1; position <= 2; position += 1) {
     await expect(studentPage.getByLabel('挑戰進度')).toContainText(
       `第 ${String(position)} / 2 題`,

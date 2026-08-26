@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testMatch: /chapter-detail-page\.harness\.spec\.ts$/u,
+  testMatch: /chapter-detail-(?:page|states)\.harness\.spec\.ts$/u,
   workers: 1,
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   use: { baseURL: 'http://localhost:4176' },

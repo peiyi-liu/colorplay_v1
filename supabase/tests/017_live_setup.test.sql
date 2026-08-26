@@ -99,7 +99,7 @@ select set_config(
 select set_config(
   'test.activity',
   public.create_live_activity(
-    'Live 色彩對戰', '26000000-0000-0000-0000-000000000003', 20
+    'Live 色彩對戰', '4f208855-dfc8-6cc5-7671-02dfacba85d1', 20
   )::text,
   true
 );
@@ -243,7 +243,7 @@ select set_config(
 );
 select throws_ok(
   $$select public.create_live_activity(
-    '學生活動', '26000000-0000-0000-0000-000000000003', 20
+    '學生活動', '4f208855-dfc8-6cc5-7671-02dfacba85d1', 20
   )$$,
   'P0001',
   'LIVE_TEACHER_ROLE_REQUIRED',

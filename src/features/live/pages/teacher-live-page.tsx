@@ -1,13 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { Icon } from '../../../components/ui/icons';
-import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { useOwnedClassrooms } from '../../classrooms/hooks/use-classrooms';
 import type { ClassroomRepository } from '../../classrooms/types';
+import { AuthenticatedTeacherMenu } from '../../teacher-content/components/authenticated-teacher-menu';
+import { TeacherWorkSurface } from '../../teacher-content/components/teacher-work-surface';
+import '../../teacher-content/teacher-workspace.css';
+import '../../teacher-content/teacher-workspace-mobile.css';
 import { presenterJoinCodeKey } from '../components/live-presenter';
 import {
   useCreateLiveActivity,
@@ -16,8 +19,11 @@ import {
   useLiveSectionOptions,
 } from '../hooks/use-live-commands';
 import type { LiveRepository } from '../types';
+import './teacher-live-page.css';
+import './teacher-live-workspace.css';
 
 const createSchema = z.strictObject({
+  classroomId: z.string().min(1, '請選擇班級'),
   sectionId: z.string().min(1, '請選擇要對戰的單元'),
   timeLimit: z
     .string()
@@ -30,11 +36,15 @@ const createSchema = z.strictObject({
 });
 type CreateValues = z.infer<typeof createSchema>;
 
+const TIME_LIMIT_OPTIONS = ['5', '10', '15', '20', '30', '45', '60'] as const;
+
 export function TeacherLivePage({
   classroomRepository,
+  menu,
   repository,
 }: Readonly<{
   classroomRepository?: ClassroomRepository;
+  menu?: ReactNode;
   repository?: LiveRepository;
 }>) {
   const navigate = useNavigate();
@@ -45,40 +55,53 @@ export function TeacherLivePage({
   const launchSession = useLaunchLiveSession(repository);
   const [actionError, setActionError] = useState<string>();
   const {
+    control,
     formState: { errors, isSubmitting },
     handleSubmit,
     register,
+    setValue,
   } = useForm<CreateValues>({
-    defaultValues: { sectionId: '', timeLimit: '20' },
+    defaultValues: { classroomId: '', sectionId: '', timeLimit: '20' },
     resolver: zodResolver(createSchema),
   });
+  const classroomOptions = useMemo(
+    () => classrooms.data ?? [],
+    [classrooms.data],
+  );
+  const sectionOptions = useMemo(
+    () => sections.data ?? [],
+    [sections.data],
+  );
+  const selectedClassroomId = useWatch({ control, name: 'classroomId' });
+  const selectedSectionId = useWatch({ control, name: 'sectionId' });
+  const timeLimit = useWatch({ control, name: 'timeLimit' });
+  const selectedClassroom = classroomOptions.find(
+    (classroom) => classroom.classroomId === selectedClassroomId,
+  );
+  const selectedSection = sectionOptions.find(
+    (section) => section.sectionId === selectedSectionId,
+  );
 
-  if (activities.isPending || classrooms.isPending || sections.isPending) {
-    return <RouteLoading withinMain />;
-  }
-  if (activities.isError || sections.isError) {
-    return (
-      <section className="route-panel">
-        <h1>Live 課堂主持</h1>
-        <p role="alert">無法載入 Live 活動，請稍後重試。</p>
-        <button
-          className="primary-action"
-          onClick={() => {
-            void activities.refetch();
-            void sections.refetch();
-          }}
-          type="button"
-        >
-          重試
-        </button>
-      </section>
+  useEffect(() => {
+    const firstClassroomId = classroomOptions[0]?.classroomId;
+    if (!selectedClassroomId && firstClassroomId) {
+      setValue('classroomId', firstClassroomId, { shouldValidate: true });
+    }
+  }, [classroomOptions, selectedClassroomId, setValue]);
+
+  const stepTimeLimit = (direction: -1 | 1) => {
+    const currentIndex = TIME_LIMIT_OPTIONS.indexOf(
+      timeLimit as (typeof TIME_LIMIT_OPTIONS)[number],
     );
-  }
+    const nextIndex = Math.min(
+      TIME_LIMIT_OPTIONS.length - 1,
+      Math.max(0, currentIndex + direction),
+    );
+    const next = TIME_LIMIT_OPTIONS[nextIndex];
+    if (next) setValue('timeLimit', next, { shouldValidate: true });
+  };
 
-  // 開場班級選單已移除：場次自動掛在教師的第一個班級。
-  const classroomId = (classrooms.data ?? [])[0]?.classroomId ?? '';
-
-  const launchFor = async (activityId: string) => {
+  const launchFor = async (activityId: string, classroomId: string) => {
     if (!classroomId) {
       setActionError('尚未建立班級，請先到班級管理建立班級。');
       return;
@@ -100,26 +123,39 @@ export function TeacherLivePage({
     await navigate(`/teacher/live/${launched.sessionId}?presenter=1`);
   };
 
-  return (
-    <section
-      aria-labelledby="teacher-live-title"
-      className="page-mid live-launch"
-    >
-      <header className="live-launch__hero">
-        <span aria-hidden="true" className="live-launch__bolt">
-          <Icon name="bolt" size={44} />
-        </span>
-        <h1 id="teacher-live-title">Live 課堂主持</h1>
-        <p>選擇單元、設定節奏,一鍵開場 — 六碼投影給全班輸入。</p>
-      </header>
+  const isLoading =
+    activities.isPending || classrooms.isPending || sections.isPending;
+  const hasLoadError =
+    activities.isError || classrooms.isError || sections.isError;
+  const surfaceState = isLoading
+    ? ({ kind: 'loading', message: 'Live 課堂資料載入中…' } as const)
+    : hasLoadError
+      ? ({
+          kind: 'error',
+          message: '無法載入 Live 課堂資料，請稍後重試。',
+          retry: () => {
+            void activities.refetch();
+            void classrooms.refetch();
+            void sections.refetch();
+          },
+        } as const)
+      : ({ kind: 'content' } as const);
 
+  return (
+    <TeacherWorkSurface
+      menu={menu ?? <AuthenticatedTeacherMenu />}
+      state={surfaceState}
+      title="建立 Live 課堂"
+      variant="live"
+    >
       <form
-        aria-label="建立 Live 活動"
+        aria-label="建立 Live 課堂"
+        className="teacher-live-create"
         data-interaction-group="create-live-activity"
         onSubmit={(event) => {
           void handleSubmit(async (values) => {
             setActionError(undefined);
-            const section = sections.data.find(
+            const section = sectionOptions.find(
               (entry) => entry.sectionId === values.sectionId,
             );
             if (!section) {
@@ -133,63 +169,146 @@ export function TeacherLivePage({
                 sectionId: section.sectionId,
                 title: section.title,
               });
-              await launchFor(activity.activityId);
+              await launchFor(activity.activityId, values.classroomId);
             } catch {
               setActionError('目前無法建立活動，請稍後重試。');
             }
           })(event);
         }}
       >
-        <h2 className="visually-hidden">建立新活動</h2>
-        <div className="live-launch__field">
-          <label htmlFor="live-activity-section">1・選擇對戰單元</label>
+        <section className="teacher-live-create__step">
+          <label className="teacher-live-create__step-title" htmlFor="live-classroom">
+            <span aria-hidden="true">1</span>
+            選擇班級
+          </label>
           <select
-            id="live-activity-section"
-            {...register('sectionId')}
-            aria-invalid={errors.sectionId ? true : undefined}
+            aria-label="1・選擇班級"
+            id="live-classroom"
+            {...register('classroomId')}
+            aria-invalid={errors.classroomId ? true : undefined}
           >
-            <option value="">請選擇小節</option>
-            {sections.data.map((section) => (
-              <option key={section.sectionId} value={section.sectionId}>
-                {section.title}
+            {classroomOptions.length === 0 ? (
+              <option value="">尚未建立班級</option>
+            ) : null}
+            {classroomOptions.map((classroom) => (
+              <option key={classroom.classroomId} value={classroom.classroomId}>
+                {classroom.classroomName}
               </option>
             ))}
           </select>
+          {errors.classroomId ? (
+            <p role="alert">{errors.classroomId.message}</p>
+          ) : null}
+          {classroomOptions.length === 0 ? (
+            <p className="teacher-live-create__hint">
+              尚未建立班級，請先到班級管理建立班級。
+            </p>
+          ) : null}
+        </section>
+
+        <fieldset className="teacher-live-create__step">
+          <legend className="visually-hidden">選擇小節</legend>
+          <h2 className="teacher-live-create__step-title">
+            <span aria-hidden="true">2</span>
+            選擇小節
+          </h2>
+          <div className="teacher-live-create__section-list">
+            {sectionOptions.map((section) => (
+              <label key={section.sectionId}>
+                <input
+                  {...register('sectionId')}
+                  type="radio"
+                  value={section.sectionId}
+                />
+                <span aria-hidden="true" className="teacher-live-create__radio" />
+                <span>{section.title}</span>
+              </label>
+            ))}
+          </div>
           {errors.sectionId ? (
             <p role="alert">{errors.sectionId.message}</p>
           ) : null}
-        </div>
-        <div className="live-launch__field live-launch__field--time">
-          <label htmlFor="live-activity-time-limit">2・每題秒數</label>
-          <select
-            id="live-activity-time-limit"
-            {...register('timeLimit')}
-            aria-invalid={errors.timeLimit ? true : undefined}
+        </fieldset>
+
+        <section className="teacher-live-create__step">
+          <h2 className="teacher-live-create__step-title">
+            <span aria-hidden="true">3</span>
+            每題作答時間
+          </h2>
+          <input {...register('timeLimit')} type="hidden" />
+          <div
+            aria-label="每題作答時間"
+            className="teacher-live-create__time-stepper"
+            role="group"
           >
-            {['5', '10', '15', '20', '30', '45', '60'].map((seconds) => (
-              <option key={seconds} value={seconds}>
-                {seconds} 秒
-              </option>
-            ))}
-          </select>
+            <button
+              aria-label="減少每題作答時間"
+              disabled={timeLimit === TIME_LIMIT_OPTIONS[0]}
+              onClick={() => {
+                stepTimeLimit(-1);
+              }}
+              type="button"
+            >
+              −
+            </button>
+            <output aria-live="polite">{timeLimit} 秒</output>
+            <button
+              aria-label="增加每題作答時間"
+              disabled={timeLimit === TIME_LIMIT_OPTIONS.at(-1)}
+              onClick={() => {
+                stepTimeLimit(1);
+              }}
+              type="button"
+            >
+              ＋
+            </button>
+          </div>
+          <p className="teacher-live-create__hint">預設 20 秒</p>
           {errors.timeLimit ? (
             <p role="alert">{errors.timeLimit.message}</p>
           ) : null}
-        </div>
-        <button
-          className="primary-action"
-          disabled={
-            isSubmitting || createActivity.isPending || launchSession.isPending
-          }
-          type="submit"
-        >
-          {createActivity.isPending || launchSession.isPending
-            ? '開場中…'
-            : '建立活動並開場'}
-        </button>
+        </section>
+
+        <section className="teacher-live-create__summary">
+          <h2 aria-label="4・建立課堂摘要">
+            <span aria-hidden="true" className="teacher-live-create__step-number">
+              4
+            </span>
+            建立課堂摘要
+          </h2>
+          <dl>
+            <div>
+              <dt><Icon aria-hidden="true" name="users" size={18} />班級</dt>
+              <dd>{selectedClassroom?.classroomName ?? '尚未選擇'}</dd>
+            </div>
+            <div>
+              <dt><Icon aria-hidden="true" name="book" size={18} />小節</dt>
+              <dd>{selectedSection?.title ?? '尚未選擇'}</dd>
+            </div>
+            <div>
+              <dt><Icon aria-hidden="true" name="clock" size={18} />每題作答時間</dt>
+              <dd>{timeLimit} 秒</dd>
+            </div>
+          </dl>
+          <button
+            className="teacher-live-create__submit"
+            disabled={
+              !selectedClassroom ||
+              !selectedSection ||
+              isSubmitting ||
+              createActivity.isPending ||
+              launchSession.isPending
+            }
+            type="submit"
+          >
+            {createActivity.isPending || launchSession.isPending
+              ? '建立中…'
+              : '建立課堂'}
+          </button>
+        </section>
       </form>
 
       {actionError ? <p role="alert">{actionError}</p> : null}
-    </section>
+    </TeacherWorkSurface>
   );
 }

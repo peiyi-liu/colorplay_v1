@@ -13,6 +13,8 @@ const requestId = '34000000-0000-0000-0000-000000000001';
 
 const sessionPayload = {
   answered_count: 0,
+  challenge_kind: 'section',
+  chapter_sort_order: 3,
   chapter_title: '色彩表示',
   completed_at: null,
   correct_count: 0,
@@ -44,6 +46,8 @@ const sessionPayload = {
   tokens_awarded: 0,
   total_score: 0,
   reward_rate_percent: 100,
+  section_sort_order: 1,
+  section_title: '3-1 色彩三要素與色名的表示',
   xp_awarded: 0,
 };
 
@@ -70,6 +74,8 @@ describe('quiz repository', () => {
       createQuizRepository(client).createSession(templateId, requestId),
     ).resolves.toEqual({
       answeredCount: 0,
+      challengeKind: 'section',
+      chapterSortOrder: 3,
       chapterTitle: '色彩表示',
       completedAt: null,
       correctCount: 0,
@@ -106,6 +112,8 @@ describe('quiz repository', () => {
       tokensAwarded: 0,
       totalScore: 0,
       rewardRatePercent: 100,
+      sectionSortOrder: 1,
+      sectionTitle: '3-1 色彩三要素與色名的表示',
       xpAwarded: 0,
     });
     expect(rpc).toHaveBeenCalledWith('create_quiz_session', {
@@ -152,6 +160,20 @@ describe('quiz repository', () => {
     });
   });
 
+  it('abandons a session through the server without accepting client result fields', async () => {
+    rpc.mockResolvedValue({
+      data: { session_id: sessionId, status: 'abandoned' },
+      error: null,
+    });
+
+    await expect(
+      createQuizRepository(client).abandonSession(sessionId),
+    ).resolves.toEqual({ sessionId, status: 'abandoned' });
+    expect(rpc).toHaveBeenCalledWith('abandon_quiz_session', {
+      session_id: sessionId,
+    });
+  });
+
   it('finalizes with server totals and never accepts client score fields', async () => {
     rpc.mockResolvedValue({
       data: {
@@ -193,6 +215,8 @@ describe('quiz repository', () => {
         {
           answer_status: null,
           answered_count: 0,
+          challenge_kind: 'section',
+          chapter_sort_order: 3,
           chapter_title: '色彩表示',
           completed_at: null,
           correct_count: 0,
@@ -216,6 +240,8 @@ describe('quiz repository', () => {
           question_version: 1,
           response_ms: null,
           reward_rate_percent: 100,
+          section_sort_order: 1,
+          section_title: '3-1 色彩三要素與色名的表示',
           score_delta: null,
           selected_option_id: null,
           session_id: sessionId,
@@ -240,8 +266,12 @@ describe('quiz repository', () => {
       sessionQuestionId,
     });
     expect(result).toMatchObject({
+      challengeKind: 'section',
+      chapterSortOrder: 3,
       gameRulesVersion: '2026-07-mvp-1',
       rewardRatePercent: 100,
+      sectionSortOrder: 1,
+      sectionTitle: '3-1 色彩三要素與色名的表示',
       tokensAwarded: 0,
       xpAwarded: 0,
     });

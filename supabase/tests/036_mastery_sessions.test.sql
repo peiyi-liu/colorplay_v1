@@ -1,6 +1,6 @@
 begin;
 
-select plan(28);
+select plan(29);
 
 -- 結構
 select has_table('public', 'mastery_sessions', 'mastery sessions exist');
@@ -68,13 +68,14 @@ values
     '', '', '', ''
   );
 
--- 取一個已發布且內容量達標（sequential chapter access 允許進入）的章節
+-- 取已匯入 QB 且有核准提示的第三章；同時要求內容量達標
+-- （sequential chapter access 才會放行，見 chapter_content_is_available）。
 create temporary table mastery_fixture on commit drop as
 select c.id as chapter_id
 from public.chapters c
-where c.status = 'published'
+where c.id = '21000000-0000-0000-0000-000000000003'
+  and c.status = 'published'
   and public.chapter_content_is_available(c.id)
-order by c.sort_order
 limit 1;
 
 select isnt(
@@ -89,6 +90,18 @@ select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000041
 
 create temporary table mastery_run on commit drop as
 select public.start_mastery_session((select chapter_id from mastery_fixture)) as session_id;
+
+select is(
+  (
+    select bool_and(question.bank_kind = 'section')
+    from public.mastery_sessions session
+    cross join unnest(session.question_ids) as picked(question_id)
+    join public.questions question on question.id = picked.question_id
+    where session.id = (select session_id from mastery_run)
+  ),
+  true,
+  'mastery samples QB section questions and never CR chapter-final questions'
+);
 
 select is(
   (select public.start_mastery_session((select chapter_id from mastery_fixture))),

@@ -11,6 +11,8 @@ import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { StudentBackNavigationProvider } from '../../../app/shell/student-back-navigation';
+import { StudentRouteBackButton } from '../../../app/shell/student-route-back-button';
 import type { StudentChapterMapEntry } from '../api/chapter-map';
 import {
   LearningError,
@@ -22,7 +24,10 @@ import {
   percentText,
   reviewText,
 } from './chapter-detail-page';
-import { chapterReviewSectionsFixture } from './chapter-detail-page.test-fixtures';
+import {
+  chapterEntrySectionsFixture,
+  chapterReviewSectionsFixture,
+} from './chapter-detail-page.test-fixtures';
 
 vi.mock('../api/chapters', async (importOriginal) => {
   const original = await importOriginal<typeof import('../api/chapters')>();
@@ -90,6 +95,7 @@ const mapResult = (entry = chapterMapEntry()) =>
 const sections = [
   {
     sectionId: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+    quizTemplateId: '26000000-0000-0000-0000-000000003101',
     sortOrder: 1,
     stableCode: 'sheet-3-1',
     subtopics: [
@@ -174,6 +180,12 @@ const repositoryWith = (
       },
     ]),
     requestHint: vi.fn(),
+    resolveReviewMedia: vi.fn().mockResolvedValue([
+      {
+        assetPath: '/media/review/color-wheel.svg',
+        resolvedUrl: '/media/review/color-wheel.svg',
+      },
+    ]),
     startRemediation: vi.fn(),
     ...overrides,
   }) satisfies LearningRepository;
@@ -184,7 +196,12 @@ const renderPage = (repository: LearningRepository) => {
   });
   const wrapper = ({ children }: Readonly<{ children: ReactNode }>) => (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>{children}</MemoryRouter>
+      <MemoryRouter initialEntries={['/app/chapters/chapter-3']}>
+        <StudentBackNavigationProvider>
+          <StudentRouteBackButton />
+          {children}
+        </StudentBackNavigationProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
   return render(
@@ -272,7 +289,8 @@ describe('ChapterDetailPage', () => {
   });
 
   it('renders subtopic progress, cards, media, and completion states', async () => {
-    renderPage(repositoryWith());
+    const repository = repositoryWith();
+    renderPage(repository);
 
     await waitFor(() => {
       // owner 0730 #4:章節標題表示完整(Chapter n：標題)。
@@ -280,13 +298,18 @@ describe('ChapterDetailPage', () => {
         screen.getByRole('heading', { name: 'Chapter 3：色彩體系與應用' }),
       ).toBeInTheDocument();
     });
-    expect(screen.getByRole('link', { name: '開始挑戰' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '章節總挑戰' })).toHaveAttribute(
       'href',
       '/app/quiz/new?template=26000000-0000-0000-0000-000000000003',
     );
+    expect(screen.getByRole('link', { name: '小節挑戰' })).toHaveAttribute(
+      'href',
+      '/app/quiz/new?template=26000000-0000-0000-0000-000000003101',
+    );
+    expect(screen.queryByText('開始挑戰')).not.toBeInTheDocument();
     expect(
-      screen.getByRole('heading', {
-        name: '小節 3-1 色彩三要素與色名的表示',
+      screen.getByRole('region', {
+        name: '3-1 色彩三要素與色名的表示',
       }),
     ).toBeInTheDocument();
 
@@ -305,24 +328,182 @@ describe('ChapterDetailPage', () => {
     expect(masteryRing).toHaveAttribute('aria-valuemin', '0');
     expect(masteryRing).toHaveAttribute('aria-valuemax', '100');
 
-    expect(
-      screen.getByRole('img', { name: '十二色相環示意圖' }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('已完成複習');
-    expect(
-      screen.getByRole('button', { name: '完成複習' }),
-    ).toBeInTheDocument();
-
     // 序號方塊漸層三種循環(DC 594/608/623):兩張卡分屬循環的第 0/1 式樣。
     const badges = document.querySelectorAll('.review-accordion__badge');
     expect(badges[0]).toHaveClass('review-accordion__badge--0');
     expect(badges[1]).toHaveClass('review-accordion__badge--1');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: '選擇複習卡：色彩的分類' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: '進入複習' }));
+    expect(
+      await screen.findByRole('img', { name: '十二色相環示意圖' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('已完成複習');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: '返回複習卡選擇' }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: '選擇複習卡：色彩三要素' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: '進入複習' }));
+    expect(
+      screen.getByRole('button', { name: '完成複習' }),
+    ).toBeInTheDocument();
+  });
+
+  it('selects a 05a review book without expanding it, then enters the 06-v2 reading surface', async () => {
+    renderPage(
+      repositoryWith({
+        listChapterReview: vi
+          .fn()
+          .mockResolvedValue(chapterEntrySectionsFixture()),
+      }),
+    );
+
+    const journey = await screen.findByRole('region', {
+      name: '第三章複習旅程',
+    });
+    const subtopicMenu = within(journey).getByRole('navigation', {
+      name: '第三章小節',
+    });
+    const firstSubtopic = within(subtopicMenu).getByRole('button', {
+      name: '3-1 色彩三要素與色名的表示',
+    });
+    const secondSubtopic = within(subtopicMenu).getByRole('button', {
+      name: '3-2 色彩體系',
+    });
+    expect(firstSubtopic).toHaveAttribute('aria-current', 'true');
+    expect(secondSubtopic).not.toHaveAttribute('aria-current');
+    expect(
+      within(journey).getByRole('region', {
+        name: '3-1 色彩三要素與色名的表示',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(journey).queryByRole('region', { name: '3-2 色彩體系' }),
+    ).not.toBeInTheDocument();
+    expect(journey.querySelectorAll('.chapter-review-node')).toHaveLength(6);
+    expect(within(journey).getByText('第 1 / 2 頁')).toBeInTheDocument();
+    expect(journey.querySelectorAll('.primary-action')).toHaveLength(1);
+    const footer = journey.querySelector('footer');
+    expect(footer).not.toBeNull();
+    if (!footer) throw new Error('CHAPTER_ARCHIVE_FOOTER_MISSING');
+    expect(within(footer).queryByLabelText('章節進度')).toBeNull();
+    expect(within(footer).queryByText(/挑戰/u)).not.toBeInTheDocument();
+    expect(
+      within(subtopicMenu).getByRole('link', { name: '小節挑戰' }),
+    ).toHaveAttribute(
+      'href',
+      '/app/quiz/new?template=26000000-0000-0000-0000-000000003101',
+    );
+    expect(
+      within(subtopicMenu).getByRole('link', { name: '章節總挑戰' }),
+    ).toHaveAttribute(
+      'href',
+      '/app/quiz/new?template=26000000-0000-0000-0000-000000000003',
+    );
+    const header = journey.querySelector('header');
+    expect(header).not.toBeNull();
+    if (!header) throw new Error('CHAPTER_ARCHIVE_HEADER_MISSING');
+    expect(within(header).getByLabelText('章節進度')).toBeInTheDocument();
+    expect(within(footer).queryByText(/^複習\s+\d+\s*\/\s*\d+$/u)).toBeNull();
+
+    const bookSources = Array.from(
+      journey.querySelectorAll<HTMLImageElement>(
+        '.chapter-review-node__book-art',
+      ),
+      (image) => image.getAttribute('src'),
+    );
+    expect(bookSources).toHaveLength(6);
+    expect(new Set(bookSources)).toHaveProperty('size', 6);
+    expect(bookSources.join(' ')).not.toContain('01-color-wheel-book');
+    expect(
+      journey.querySelectorAll('.chapter-review-node__platform-art'),
+    ).toHaveLength(0);
+
+    const current = journey.querySelector<HTMLElement>(
+      '.chapter-review-node[data-current="true"]',
+    );
+    expect(current).not.toBeNull();
+    expect(current).toHaveAttribute('data-selected', 'true');
+    expect(within(journey).queryByRole('article')).not.toBeInTheDocument();
+
+    await userEvent.click(
+      within(journey).getByRole('button', { name: '下一頁' }),
+    );
+    expect(journey.querySelectorAll('.chapter-review-node')).toHaveLength(4);
+    expect(within(journey).getByText('第 2 / 2 頁')).toBeInTheDocument();
+    expect(
+      within(journey).getByRole('button', {
+        name: '選擇複習卡：彩度的變化',
+      }),
+    ).toBeInTheDocument();
+
+    await userEvent.click(secondSubtopic);
+    expect(firstSubtopic).not.toHaveAttribute('aria-current');
+    expect(secondSubtopic).toHaveAttribute('aria-current', 'true');
+    expect(journey.querySelectorAll('.chapter-review-node')).toHaveLength(5);
+    expect(within(journey).queryByText(/第 \d+ \/ \d+ 頁/u)).toBeNull();
+    expect(
+      within(journey).getByRole('region', { name: '3-2 色彩體系' }),
+    ).toBeInTheDocument();
+
+    const nextBook = within(journey).getByRole('button', {
+      name: /選擇複習卡：常用的色彩體系/u,
+    });
+    await userEvent.click(nextBook);
+
+    expect(nextBook.closest('.chapter-review-node')).toHaveAttribute(
+      'data-selected',
+      'true',
+    );
+    expect(within(journey).queryByRole('article')).not.toBeInTheDocument();
+
+    await userEvent.click(
+      within(journey).getByRole('button', { name: '進入複習' }),
+    );
+
+    expect(
+      screen.getByRole('region', { name: /複習卡閱讀：常用的色彩體系/u }),
+    ).toBeInTheDocument();
+    const reader = screen.getByRole('region', {
+      name: /複習卡閱讀：常用的色彩體系/u,
+    });
+    expect(
+      within(reader).getByRole('heading', {
+        name: '第三章 · 色彩體系與應用',
+      }),
+    ).toBeVisible();
+    expect(reader).toHaveTextContent('3-2 色彩體系');
+    expect(reader).toHaveTextContent('複習 3 / 5');
+    expect(within(reader).getByRole('article')).toBeVisible();
+    expect(
+      within(reader).queryByRole('button', { name: '返回複習卡選擇' }),
+    ).toBeNull();
+    expect(
+      screen.getByRole('button', { name: '返回複習卡選擇' }),
+    ).toBeVisible();
+    expect(
+      within(reader).getByRole('progressbar', { name: '本頁閱讀進度' }),
+    ).toHaveAttribute('aria-valuenow', '1');
+    expect(
+      within(reader).getByRole('button', { name: '閱讀上一頁' }),
+    ).toBeDisabled();
+    expect(
+      within(reader).getByRole('button', { name: '閱讀下一頁' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '第三章複習旅程' })).toBeNull();
   });
 
   it('completes a card through the trusted command', async () => {
     const repository = repositoryWith();
     renderPage(repository);
 
+    await screen.findByRole('button', { name: '進入複習' });
+    await userEvent.click(screen.getByRole('button', { name: '進入複習' }));
     const button = await screen.findByRole('button', { name: '完成複習' });
     fireEvent.click(button);
 
@@ -338,6 +519,12 @@ describe('ChapterDetailPage', () => {
   it('shows a fallback when card media fails to load', async () => {
     renderPage(repositoryWith());
 
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: '選擇複習卡：色彩的分類',
+      }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: '進入複習' }));
     const image = await screen.findByRole('img', {
       name: '十二色相環示意圖',
     });
@@ -346,6 +533,77 @@ describe('ChapterDetailPage', () => {
     expect(
       screen.getByText(/圖片載入失敗：十二色相環示意圖/u),
     ).toBeInTheDocument();
+  });
+
+  it('keeps review text and controls usable while private media signing is pending', async () => {
+    const nativeSetTimeout = window.setTimeout;
+    const timeoutSpy = vi
+      .spyOn(window, 'setTimeout')
+      .mockImplementation((handler, timeout) =>
+        nativeSetTimeout.call(
+          window,
+          handler,
+          timeout === 10_000 ? 0 : timeout,
+        ),
+      );
+    const repository = repositoryWith({
+      listChapterReview: vi.fn().mockResolvedValue([
+        {
+          ...sections[0],
+          subtopics: [
+            {
+              ...sections[0].subtopics[0],
+              cards: [
+                {
+                  ...sections[0].subtopics[0].cards[0],
+                  media: [
+                    {
+                      altText: '十二色相環示意圖',
+                      assetPath: 'review-card-media/chapter-3/color-wheel.webp',
+                    },
+                  ],
+                },
+                ...sections[0].subtopics[0].cards.slice(1),
+              ],
+            },
+          ],
+        },
+      ]),
+      listReviewProgress: vi.fn().mockResolvedValue([]),
+      resolveReviewMedia: vi.fn().mockReturnValue(new Promise(() => undefined)),
+    });
+    try {
+      renderPage(repository);
+
+      await userEvent.click(
+        await screen.findByRole('button', {
+          name: '選擇複習卡：色彩的分類',
+        }),
+      );
+      await userEvent.click(screen.getByRole('button', { name: '進入複習' }));
+
+      const reader = await screen.findByRole('region', {
+        name: /複習卡閱讀：色彩的分類/u,
+      });
+      expect(reader).toHaveTextContent('第一行');
+      expect(
+        within(reader).getByRole('button', { name: '完成複習' }),
+      ).toBeEnabled();
+      expect(
+        within(reader).getByRole('status', {
+          name: '圖片載入中：十二色相環示意圖',
+        }),
+      ).toBeInTheDocument();
+
+      await userEvent.click(
+        await within(reader).findByRole('button', { name: '略過圖片' }),
+      );
+      expect(
+        within(reader).getByRole('img', { name: '十二色相環示意圖' }),
+      ).toHaveTextContent('圖片載入失敗');
+    } finally {
+      timeoutSpy.mockRestore();
+    }
   });
 
   it('surfaces a retryable error state', async () => {
@@ -420,9 +678,10 @@ describe('ChapterDetailPage', () => {
     );
   });
 
-  it('單一 section 樓層數超過單頁容量時分頁,跨頁樓層仍可透過下一頁抵達', async () => {
+  it('多個小節全部列在目錄，且一次只呈現選取的小節', async () => {
     const overflowSection = {
       sectionId: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
+      quizTemplateId: '26000000-0000-0000-0000-000000003101',
       sortOrder: 1,
       stableCode: 'sheet-3-1',
       // 至少一張卡才不會觸發 content-readiness-error(章節整體無卡片時的
@@ -462,23 +721,18 @@ describe('ChapterDetailPage', () => {
       ).toBeInTheDocument();
     });
 
-    // 全域 matchMedia stub matches:false → narrow 容量 2 → 3 頁。
-    expect(screen.getByText('第 1 / 3 頁')).toBeVisible();
+    const menu = screen.getByRole('navigation', { name: '第三章小節' });
     expect(
-      screen.getByRole('heading', { name: '小節 3-1-1 樓層' }),
-    ).toBeVisible();
-    expect(
-      screen.queryByRole('heading', { name: '小節 3-1-3 樓層' }),
-    ).toBeNull();
+      menu.querySelectorAll('.chapter-archive__subtopic-menu-item'),
+    ).toHaveLength(6);
+    expect(screen.getByRole('region', { name: '3-1-1 樓層' })).toBeVisible();
+    expect(screen.queryByRole('region', { name: '3-1-3 樓層' })).toBeNull();
 
-    await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
+    await userEvent.click(
+      within(menu).getByRole('button', { name: '3-1-3 樓層' }),
+    );
 
-    expect(screen.getByText('第 2 / 3 頁')).toBeVisible();
-    expect(
-      screen.getByRole('heading', { name: '小節 3-1-3 樓層' }),
-    ).toBeVisible();
-    expect(
-      screen.queryByRole('heading', { name: '小節 3-1-1 樓層' }),
-    ).toBeNull();
+    expect(screen.getByRole('region', { name: '3-1-3 樓層' })).toBeVisible();
+    expect(screen.queryByRole('region', { name: '3-1-1 樓層' })).toBeNull();
   });
 });
