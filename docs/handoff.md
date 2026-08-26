@@ -311,3 +311,17 @@
 - 下一步：Phase 1 **Local gate 已通過**。Staging/Production gate 需要 Phase 0 先過 owner 對 PR #1 的核准、staging 分支合併,以及對 hosted 環境操作的明確授權才能推進——這不是 Phase 1 worktree 能單獨解決的,等 owner 對 Phase 0 的下一步裁定。
 - Blocker／待決策：Staging/Production gate 卡在 Phase 0(PR #1 仍待 owner 核准)+ 任何 hosted 操作都需要明確授權,非本次工作範圍。
 - 相關檔案／commit：`0e6c4e6`(RLS 矩陣補齊)、`f16312e`(roadmap gate 記錄)。驗證細節見上方。分支 `phase1/admin-security-impl` 仍為純本地（無 upstream）。
+
+## 2026-08-26 20:25 [Claude Code] — 文件/規格現況稽核 + Phase 1 合併進 feature/v2-major-update
+
+- 做了什麼：Owner 要求先整理散亂的文件/規格現況（超過一週的多分支平行開發，docs 與實際分支狀態脫節），稽核後發現：`docs/handoff.md` 停在 8/11 未更新（8/19 前的 Phase 1 完工紀錄只存在 `phase1-admin-security-impl` worktree 自己的副本）、`docs/roadmap-colorplay-next.md` 有兩份互相矛盾的分岔版本、ADR-0002 與實際手動 Staging 部署不符、Phase 5F-U1／Phase 6 的 roadmap 文字落後於實際分支狀態。Owner 裁定先合併已完工的 Phase 1（Local gate 已通過、15/15 task 完成，晾了一週未合併），再處理 PR #1（Phase 0）。
+  在 `.claude/worktrees/integration-phase1-merge`（新建 worktree，base 為 `feature/v2-major-update` tip `8da1abb`）合併 `phase1/admin-security-impl`（tip `3f0f16d`，與 trunk 分岔點 `2295fd6`，trunk 一側已領先 93 個 commit）。Git 自動合併之外，手動解決 4 個需要理解語意才能正確合併的衝突：
+  - `src/app/shell/app-shell.tsx`：Phase 1 加的 `isAdmin` 判斷（避免管理員落入學生 HUD 分支）與 trunk 後續的 `AuthenticatedStudentShell`／learning-map 改版互相不知道對方存在。除了 git 標記的衝突區塊，另外修正兩處 **git 沒標記成衝突、但邏輯上必須一起改**的外層路由條件（學生分支排除 admin、共用 `<main>` 區塊要讓 admin 也能用到），否則管理員登入仍會被誤導向學生介面。
+  - `src/types/database.ts`（Supabase 產生的型別檔）：兩側各自新增的 RPC 型別因為字母排序緊鄰而衝突，合併時逐一比對 `git show <branch>:...` 確認雙方簽章後聯集保留。
+  - `src/features/learning/api/mastery-repository.test.ts`：add/add 衝突，確認兩份測試檢查同一支已存在的 `MasteryError` 實作（非二選一），合併成兩個 `describe` 區塊並存。
+  - `docs/staging-runbook.md`、`docs/roadmap-colorplay-next.md`、`docs/handoff.md`：三份文件各自分岔，逐段比對後合併（roadmap 的 Phase 0/1 狀態列改用較新且與內文一致的版本；handoff 純接續，因為 trunk 段落在 8/11 結束、phase1 段落從 8/18 開始，時間軸本來就不重疊）。
+  合併提交 `5932ef4`。
+- 驗證發現的真實問題（非猜測，皆已查證根因）：`pnpm test` 首次跑出 3 個失敗（`app-shell.test.tsx` 兩處 `role="status"` 查詢因為 Phase 1 新增的 `EnvironmentMarker` 在測試檔內被強制 mock 成常駐顯示而變得模糊；`tests/contracts/phase0-documentation.test.ts`——Phase 1 新增的文件治理測試——揪出 `docs/staging-runbook.md` 裡「Phase 9-AUTH」歷史段落本身違反同一份文件開頭就寫明的禁止事項：明文 `git push HEAD:main`、寫死的 `LocalOnly-*` 測試密碼、`sbp_` token 佔位字串、加寬版 Auth redirect 萬用字元）。`pnpm test:db` 跑出 5 個 pgTAP 檔失敗（`003`／`025`／`036`／`047`／`048`），逐一查證後全部是同一類根因：兩條分支各自成長了數週的真實內容（章節、題目、複習卡）疊在一起後，讓舊測試裡寫死的數量假設（如「45 題」「180 個選項」「章節 1 只有 1 題」）或命名空間假設（`stable_code = '1-1-01'` 撞到真實種子內容）失真或互撞——不是我這次合併邏輯寫錯，是兩條線各自往前跑太久、互不知道對方進度的必然結果（跟 owner 稍早裁定要收斂的「文件與現況脫節」是同一類問題）。`047`／`048` 兩檔另外牽涉到新的 sequential chapter access 功能對「章節內容量門檻」「章節整體 mastery 而非單題正確率」的真實業務規則，修法時改成動態查詢當下真實內容量（而非重新硬編一個新的固定數字），比照這次其他修正的原則，讓測試不會在下次內容量再變動時又假紅。修復後全部驗證：`pnpm lint`／`pnpm typecheck` 全綠；`pnpm test` 1335/1336（唯一剩餘失敗 `tests/contracts/phase0-restore.test.ts` 查證為本機 Docker 資源競爭——這台機器同時有多組 Supabase 容器在跑，與本次修改內容無關，非本次程式或測試邏輯問題）；`pnpm test:db` 全綠（60 檔／1506 pgTAP assertions + 2 組 integration 測試全過）。修復提交 `02cb875`。
+- 下一步：push `worktree-integration-phase1-merge` 分支到 `origin/feature/v2-major-update`，讓遠端反映合併後狀態。接著依 owner 裁定順序進入下一階段：處理 PR #1（Phase 0 環境基礎，已卡 20 天待 owner 核准），以及後續環境重新基準化（ADR、environment registry）。
+- Blocker／待決策：`tests/contracts/phase0-restore.test.ts` 因本機多組 Supabase Docker 容器並存而無法在此環境穩定驗證，需要在乾淨、單一 Supabase 實例的環境重跑確認；不屬於本次合併範圍，未動測試邏輯本身。
+- 相關檔案／commit：`5932ef4`（Phase 1 合併）、`02cb875`（pgTAP／文件治理修復）。
