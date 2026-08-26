@@ -5507,10 +5507,8 @@ a {
   }
 
   .live-presenter__status,
-  .live-presenter__lobby,
-  .live-presenter__question,
-  .live-presenter__feedback,
-  .live-presenter__podium-stage {
+  .live-presenter__podium-stage,
+  .live-presenter > .live-projector {
     display: none;
   }
 }

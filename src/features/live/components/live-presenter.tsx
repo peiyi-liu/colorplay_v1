@@ -147,6 +147,9 @@ export function LivePresenter({
       data-projector-phase={phase}
       role="region"
     >
+      <p className="live-presenter__viewport-warning" role="alert">
+        投影視窗過小
+      </p>
       {phase === 'lobby' ? (
         <LiveProjectorHud
           joinCode={joinCode}
