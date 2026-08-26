@@ -1,12 +1,16 @@
 # ColorPlay Current Program
 
-- Status: PHASE 0 SPEC APPROVED — implementation plan awaiting owner review;
-  only the owner-authorized B2 backup-target setup has changed hosted state
-- Last updated: 2026-08-09 (Asia/Taipei) — added a dated Phase 1 status
-  correction and a 2026-08-09 hosted-state update below; the rest of this
-  tracker was not re-verified end-to-end in that pass
+- Status: FOUNDATION CI GATE PASSED — PR #1 awaits owner approval; no Staging
+  merge, data-plane mutation, Candidate, or Production release has occurred
+- Last updated: 2026-08-26 (Asia/Taipei) — merged `phase1/admin-security-impl`
+  (Tasks 0-15, Local gate PASSED) into `feature/v2-major-update`; reconciled
+  this tracker with the divergent copy that had been living only on that
+  worktree since 2026-08-19
 - Last full review: 2026-08-06 (Asia/Taipei)
-- Current phase: Phase 0, implementation-plan review
+- Current phase: Phase 0, local Tasks 1–12 and the GitHub control/CI portion of
+  Task 13 verified; the exact next human action is PR #1 review and approval.
+  Phase 1 implementation is now merged and Local-gate-complete but still
+  blocked on Phase 0 hosted readiness for its own Staging/Production gates.
 - Canonical entry point: this file
 - Historical task ledger: `.superpowers/sdd/progress.md`
 
@@ -24,13 +28,19 @@ as a completed production release.
 
 ## Immediate next action
 
-Owner reviews
-`docs/superpowers/plans/2026-08-06-phase-0-environment-release-foundation.md`.
-After approval, first complete its Human Readiness checklist, then execute local
-Tasks 1–12 in an isolated worktree. Hosted Tasks 13–18 remain separately gated;
-do not create Vercel or Supabase projects, change DNS, upload application
-environment variables, link Supabase, reset data, deploy, or modify product code
-before the implementation plan is approved.
+Owner reviews and approves PR #1. The latest functional SHA
+`5cb1ed35aec0ae8a99712a41143b5f6c7067e495` passed Foundation CI run
+[`31093226087`](https://github.com/peiyi-liu/colorplay_v1/actions/runs/31093226087):
+format, lint, typecheck, unit coverage, Production build, Local database,
+Chromium E2E, and credential scan all passed. The PR is intentionally `BLOCKED`
+until owner approval; no agent should merge it.
+
+After an approved merge to protected `staging`, collect a fresh read-only
+preflight before any further hosted mutation. DNS, hosted Supabase reset,
+Staging acceptance, Production Candidate creation, Production promotion, and
+all data-plane changes remain explicitly unexecuted. Real B2 backup automation
+also remains blocked until the existing over-privileged B2 writer/recovery keys
+are replaced by credentials that meet the create-only and read-only contracts.
 
 ## Approved program structure
 
@@ -39,8 +49,8 @@ batches. Each batch must pass its own Staging gate before Production promotion.
 
 | Phase | Scope                                         | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | ----- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 0     | Environment and release foundation            | Spec approved; implementation plan awaiting review                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| 1     | Admin identity and security core              | Spec and implementation plan approved; implementation in progress on `phase1/admin-security-impl` (not yet merged to this branch). See `docs/superpowers/plans/2026-08-07-phase-1-admin-identity-security.md` on that branch. Confirmed 2026-08-09                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 0     | Environment and release foundation            | Foundation CI passed; PR #1 awaits owner approval                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 1     | Admin identity and security core              | **MERGED into `feature/v2-major-update` 2026-08-26.** Tasks 0-15 implemented and reviewed on `phase1/admin-security-impl` before merge; Local gate PASSED (see "Phase 1 admin-security-impl worktree" below for evidence). Staging and Production gates remain blocked on Phase 0 hosted readiness and explicit owner authorization, not yet executed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | 2     | Content SSOT and version publishing           | Decisions captured; a chapter-3-scoped subset (Phase 2A, not the full Phase 2 spec) -- see docs/superpowers/specs/2026-08-10-phase-2a-chapter-three-content-import-design.md. Status: owner approved 2026-08-10 (scope boundary only) / Codex design review completed / implementation planning not yet authorized. Completing this slice does not mean the full Phase is complete.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | 3     | Learning progression and assessment authority | Decisions captured; a chapter-3-scoped subset (Phase 3A, not the full Phase 3 spec) -- see docs/superpowers/specs/2026-08-10-phase-3a-chapter-three-progression-design.md. Status: owner approved 2026-08-10 (scope boundary only) / Codex design review completed / implementation planning not yet authorized. Completing this slice does not mean the full Phase is complete.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 4     | Learning Hall and chapter experience          | Visual/product decisions captured; a chapter-detail-page-scoped subset (Phase 4A, not the full Phase 4 spec) -- see docs/superpowers/specs/2026-08-10-phase-4a-student-chapter-detail-ui-design.md. Status: owner approved 2026-08-10 / Codex design review completed / implementation planning authorized -- see docs/superpowers/plans/2026-08-10-phase-4a-student-chapter-detail-ui.md. Completing this slice does not mean the full Phase is complete.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -791,20 +801,97 @@ Do not overwrite, stash, reset, or accidentally stage unrelated changes.
   - `tests/e2e/helpers/quiz.ts`
   - `tests/e2e/learning-experience.spec.ts`
 
+### Phase 0 release-foundation worktree
+
+- Path: `.worktrees/phase0-release-foundation`
+- Branch: `phase0/release-foundation`
+- Plan base: `2295fd6c430fc4a843d2da3e391fd0d48b902704`
+- Latest functional PR SHA: `5cb1ed35aec0ae8a99712a41143b5f6c7067e495` (PR #1
+  to protected `staging`); its complete CI evidence is run `31093226087`
+- State: GitHub protective controls were configured; Foundation CI passed all
+  eight required checks. The short-viewport login defect, formatting debt,
+  coverage threshold, stale E2E assertions, and cold-runner restore-test
+  timeout were repaired without weakening gates. PR #1 remains blocked for
+  owner approval.
+- Hosted scope still not executed: no Staging merge/deployment acceptance, DNS
+  change, Supabase reset/migration, Candidate creation, Production promotion,
+  or hosted backup/restore. A Vercel Preview is not a Staging or Production
+  release.
+
 Use exact-path staging. Never use `git add -A`, destructive reset, broad restore,
 stash, or branch switching in a dirty shared worktree.
+
+### Phase 1 admin-security-impl worktree
+
+- **MERGED into `feature/v2-major-update` on 2026-08-26** (merge commit created
+  in this pass). This section is retained as the historical evidence record for
+  the Local gate; the worktree itself may still exist on disk but is no longer
+  the authoritative copy of this work.
+- Path: `.worktrees/phase1-admin-security-impl`
+- Branch: `phase1/admin-security-impl` (purely local; no remote/upstream)
+- Plan: `docs/superpowers/plans/2026-08-07-phase-1-admin-identity-security.md`
+- HEAD at verification: `0e6c4e6`
+- State: Tasks 0 through 15 of the approved plan are implemented and
+  reviewed under the plan's own graded workflow (AGENTS.md §7-§8 — each M-task
+  through a single review round, Task 13A and Task 14 additionally through
+  their own dedicated Codex review passes with all confirmed findings
+  remediated and re-verified). Task 15 added the OOB recovery runbook, the
+  Production smoke manifest, and their phase-gate contract test.
+- **Local gate: PASSED** (this plan's own Task 15 Step 4/5 definition, not
+  the global `pnpm acceptance` Phase 8 gate — see AGENTS.md §9). Evidence,
+  all re-run in a single consolidated pass at `0e6c4e6`:
+  - `pnpm lint` / `pnpm typecheck` / `pnpm test` — clean; 161 files / 1185
+    tests.
+  - Fresh `supabase db reset` + `pnpm test:db` — clean; 58 pgTAP files /
+    1455 assertions (includes the admin-domain RLS negative-privilege
+    matrix — every `admin_*` table now has the full anon/authenticated ×
+    SELECT/INSERT/UPDATE/DELETE default-deny coverage, 92+ assertions,
+    after closing a gap found during this gate pass in
+    `admin_sensitivity_catalog`), plus both integration test groups (the
+    MFA-capability suite requiring `service_role`, and the general suite
+    without it).
+  - `pnpm admin:catalog:check` / `admin:catalog:inventory` — clean.
+  - Full local E2E (`scripts/test-e2e-local.sh`, all three browsers) —
+    zero admin-related failures across two independent clean runs; the
+    only remaining failures are pre-existing, unrelated webkit-only
+    network-timing flakes in `playable-slice.spec.ts`/`quiz-runner.spec.ts`
+    (quiz domain, untouched by any Phase 1 work). Firefox/WebKit
+    acceptance is this project's own documented Staging-gate concern, not
+    a Local-gate blocker (see "Approved CI and deployment approval gates"
+    above).
+  - No unresolved Critical/High finding: every review round across Task
+    13A, Task 14 (two rounds), and Task 15 confirmed its findings against
+    real code/behavior before fixing (never accepted on faith), and every
+    Critical/High finding across all rounds was fixed and re-verified —
+    see `docs/handoff.md` for each round's findings and fixes.
+- **Staging and Production gates: blocked, not executed.** Per this
+  plan's own Task 15 Step 4, both require Phase 0 hosted readiness (Phase 0
+  itself is still at "PR #1 awaits owner approval" — no Staging merge has
+  happened) plus explicit owner authorization for any hosted mutation. No
+  Staging deployment, no Production smoke, no OOB runbook procedure has
+  been run against a hosted project. Both
+  `docs/deployment/phase1-production-smoke-manifest.md` and
+  `docs/runbooks/phase1-admin-oob-recovery.md` are documentation and local
+  verification only, per Task 15's own scope note — they describe what
+  those gates require, they do not themselves clear them.
 
 ## Remaining decisions
 
 ### Phase 0
 
-- No unresolved design choice; implementation-plan review and the plan's
-  human-readiness checklist remain before implementation.
+- PR #1 needs owner review and approval before it may merge to `staging`.
+  Passing CI does not authorize a merge, a deploy, or any data-plane action.
+- A fresh provider preflight is required on the day of each later hosted action;
+  previously observed project/domain state is not durable evidence.
+- Real B2 backup automation is blocked by the currently over-privileged writer
+  and recovery keys. Rotate to the plan's least-privilege pair before a hosted
+  backup or restore drill. This is a safety prerequisite, not a reason to weaken
+  Object Lock or fall back to an unencrypted local-only backup.
 
 ### Later phases
 
 - Teacher report calculations and privacy-preserving exports.
-- Admin information architecture and per-table sensitivity catalog.
+- Phase 1 implementation plan review, implementation, and hosted acceptance remain separate gated work; the Admin IA and 46-table per-column sensitivity catalog are approved in the Phase 1 design spec.
 - Detailed map motion, transitions, guide dialogue, and chapter-interior layouts.
 - Real-device acceptance supplied by a human before formal release.
 

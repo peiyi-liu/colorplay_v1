@@ -1,47 +1,47 @@
 # ColorPlay environment matrix
 
-## Isolation contract
+Authority: the approved
+[Phase 0 design](../superpowers/specs/2026-08-05-phase-0-environment-release-foundation-design.md)
+and
+[implementation plan](../superpowers/plans/2026-08-06-phase-0-environment-release-foundation.md).
+Status: **LOCAL IMPLEMENTATION ONLY — HOSTED CONFIGURATION NOT EXECUTED**.
 
-| Control                  | Local                                                 | Staging                                                         | Production                                                         |
-| ------------------------ | ----------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Frontend target          | Vite dev server or built preview                      | Vercel Preview                                                  | Vercel Production                                                  |
-| Git source               | Developer worktree                                    | Pull request/non-`main` commit                                  | Protected `main` commit                                            |
-| Supabase target          | Supabase CLI local stack                              | Destructively rebuilt legacy hosted project                     | New clean hosted project                                           |
-| Data                     | Deterministic synthetic seeds                         | Synthetic test/acceptance data only                             | Approved formal content and real authorized users only             |
-| Browser variables        | Local public values loaded by reviewed helper         | Preview-scoped `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` | Production-scoped `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` |
-| Auth Site URL            | Local application URL                                 | Stable Staging/Preview URL selected for Auth                    | Canonical Production domain                                        |
-| Auth redirects           | Exact local routes used by tests                      | Staging Preview wildcard only where required                    | Exact Production routes; no Preview wildcard                       |
-| Server secrets           | Local CLI output consumed without logging, then unset | Supabase/Vercel server-only stores owned by release operator    | Supabase/Vercel server-only stores owned by production operator    |
-| Schema authority         | Repository migrations and local reset                 | Same migrations after protected Staging deploy                  | Same migrations from zero after Production approval                |
-| Automated mutation tests | Allowed after local reset                             | Allowed against synthetic Staging data                          | Forbidden                                                          |
-| Acceptance evidence      | May identify `local`                                  | May identify `staging`                                          | Release smoke only; no automated destructive acceptance            |
-| Storage                  | Synthetic reviewed fixtures                           | Synthetic reviewed assets                                       | Approved assets with independent backup                            |
-| Deployment authority     | Developer                                             | CI plus release operator                                        | Protected environment approver plus production operator            |
-| Current Phase 0 state    | Existing                                              | Reset/linking `NOT EXECUTED`                                    | Project creation/linking `NOT EXECUTED`                            |
+| Control           | Local                   | Staging                        | Production                                 |
+| ----------------- | ----------------------- | ------------------------------ | ------------------------------------------ |
+| Git               | worktree                | protected `staging`            | protected `main`, updated only after smoke |
+| Vercel            | Vite/preview            | `colorplay-staging-web`        | `colorplay-web`                            |
+| Domain            | loopback                | `staging.colorplayapp.com`     | `colorplayapp.com`                         |
+| Supabase          | CLI stack               | permanent Staging project      | clean Production project                   |
+| Data              | deterministic fixtures  | approved content plus fixtures | formal content and authorized users only   |
+| Mutation tests    | after clean Local reset | allowed with fixture accounts  | forbidden                                  |
+| Release authority | developer               | CI plus real-device approval   | GitHub `production` Environment            |
 
-No environment may reuse another environment's Supabase URL, public key, Auth users, database password, service credential, SMTP credential, or formal data. Preview maps only to Staging. Production from `main` maps only to the new clean Production project.
+No environment shares Supabase projects, Auth users, SMTP credentials, service
+credentials, database passwords, student records, or backup credentials. The
+browser allowlist is exactly `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY`; no other `VITE_*` credential is permitted.
 
-## Browser configuration boundary
+Auth redirects are exact: Local uses the approved loopback ports, Staging uses
+only `https://staging.colorplayapp.com` application routes, and Production uses
+only `https://colorplayapp.com` application routes. Vercel candidate URLs do
+not receive Auth callback or recovery permission.
 
-The browser allowlist contains exactly:
+## Free-plan two-slot order
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+The approved two-slot rotation keeps the current service available while a
+clean Candidate is verified: create the second project, temporarily exercise it
+as Staging, remove fixtures and rebuild it as Production, promote the exact web
+artifact, then rebuild the former project as permanent Staging. At no time may
+two public sites write to one Supabase project.
 
-These names hold public connection configuration, not authorization bypasses. RLS remains mandatory. Database URLs/passwords, JWT secrets, service credentials, SMTP passwords, access tokens, backup keys, and monitoring write keys never use a `VITE_` prefix and never enter source, logs, artifacts, or the browser bundle.
+## Release boundary
 
-## Auth URL lifecycle
+A protected Staging merge runs hosted acceptance. The accepted SHA is built in
+the Production project with `vercel deploy --prebuilt --prod --skip-domain`.
+`main` does not automatically deploy Production. After owner approval, the
+Promotion workflow calls `vercel promote` on the checksummed deployment, runs
+three read-only smoke samples, then fast-forwards `main` to the same SHA.
 
-1. Local uses the tracked CLI Site URL and redirect configuration.
-2. Staging receives its own Site URL and Preview redirect policy after the legacy project reset.
-3. Production initially uses the canonical Vercel Production URL.
-4. When the formal custom domain is selected, the account owner updates DNS, Supabase Site URL, exact redirect URLs, email links, and monitoring checks as one reviewed change.
-5. A deployment using mismatched frontend and Supabase environments fails the release gate; it is never repaired by adding broad Production redirects.
-
-## Database release boundary
-
-- Feature CI proves migrations against Local.
-- A release candidate applies the same tracked migrations to Staging and completes the applicable phase gate.
-- Production migration requires a protected-environment approval, recorded migration range, preflight backup status, backward-compatible application check, and post-migration smoke result.
-- A failed frontend deploy rolls back to a known Git SHA. A failed database change uses the reviewed forward-fix/expand-contract path; no untracked Dashboard edit is accepted as recovery.
-- Every deployment record binds frontend SHA, migration version, environment, operator, start/end UTC time, and outcome.
+Production backups use encrypted Backblaze B2 objects with Compliance-mode
+Object Lock and 30-day retention. The operating objective is RPO 24 hours and
+RTO 8 hours; these are team targets, not a Free Plan SLA.

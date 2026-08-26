@@ -95,6 +95,17 @@ export const TEST_USERS = {
     email: 'outsider@colorplay.test',
     password: 'LocalOnly-Outsider1!',
   },
+  // Phase 1 admin security E2E(Task 14)。role 提升唯一經
+  // svc_admin_bootstrap_identity,不在這裡或 seed-auth.ts 的一般路徑直接
+  // 改 role——見 scripts/supabase/seed-auth.ts 的 reconcileAdminBootstrapFixtures。
+  adminPrimary: {
+    email: 'admin.primary@colorplay.test',
+    password: 'LocalOnly-AdminPrimary1!',
+  },
+  adminSecondary: {
+    email: 'admin.secondary@colorplay.test',
+    password: 'LocalOnly-AdminSecondary1!',
+  },
 } as const;
 
 export type TestUserLabel = keyof typeof TEST_USERS;
@@ -124,6 +135,10 @@ export const TEST_USER_ROLES = {
   contentTeacher: 'teacher',
   contentStudent: 'student',
   outsider: 'student',
+  // 'admin' 不在這個型別的值域裡:seed-auth.ts 只用 'teacher' 當中繼值,
+  // 真正的 role='admin' 提升由 svc_admin_bootstrap_identity 覆寫。
+  adminPrimary: 'teacher',
+  adminSecondary: 'teacher',
 } as const satisfies Readonly<Record<TestUserLabel, 'student' | 'teacher'>>;
 
 export const CLASSROOM_FIXTURES = {
@@ -141,6 +156,10 @@ export const TEST_USER_ACCOUNTS = {
   studentOne: { account: 'student01', fullName: '學生 一號' },
   studentTwo: { account: 'student02', fullName: '學生 二號' },
   teacher: { account: 'teacher01', fullName: '教師 一號' },
+  // Task 14:給一個已知、非空的 full_name,讓 admin browser 的 reveal E2E
+  // 能斷言明文內容,而不只是「非遮罩格式」這種弱斷言。
+  adminPrimary: { account: 'admin01', fullName: '管理員 一號' },
+  adminSecondary: { account: 'admin02', fullName: '管理員 二號' },
 } as const satisfies Partial<
   Readonly<
     Record<TestUserLabel, Readonly<{ account: string; fullName: string }>>

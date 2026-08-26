@@ -309,15 +309,15 @@ message_service_sid = ""
 # DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
 auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 
-# Multi-factor-authentication is available to Supabase Pro plan.
+# TOTP MFA is available on all Supabase plans; phone MFA has separate plan requirements.
 [auth.mfa]
 # Control how many MFA factors can be enrolled at once per user.
 max_enrolled_factors = 10
 
 # Control MFA via App Authenticator (TOTP)
 [auth.mfa.totp]
-enroll_enabled = false
-verify_enabled = false
+enroll_enabled = true
+verify_enabled = true
 
 # Configure MFA via Phone Messaging
 [auth.mfa.phone]
@@ -410,6 +410,19 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.auth-recover]
+verify_jwt = false
+
+# admin-mfa 自行驗證 JWT(getUser)並對缺失/無效 JWT 做 fail-closed denial
+# 入帳;runtime 層先擋會讓這些 denial 永不入帳,故關閉 verify_jwt。
+[functions.admin-mfa]
+verify_jwt = false
+
+# admin-command 同 admin-mfa:自行驗 JWT 並入帳 denial。
+[functions.admin-command]
+verify_jwt = false
+
+# admin-reconcile 為排程入口,以 x-reconcile-key 部署 secret 驗證,無 JWT。
+[functions.admin-reconcile]
 verify_jwt = false
 
 [analytics]

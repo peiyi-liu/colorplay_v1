@@ -1,36 +1,53 @@
-# Staging 部署 Runbook
+# Staging operations entry point
 
-Staging = 重置後的舊 Supabase 專案（`onkxnkzeixpezetkmocf`，已於 Phase 0 盤點）+ Vercel。
-所有指令都在 repo 根目錄執行；token 一律走環境變數，**不要**寫進任何檔案。
+Authority: the approved
+[Phase 0 design](superpowers/specs/2026-08-05-phase-0-environment-release-foundation-design.md)
+and
+[implementation plan](superpowers/plans/2026-08-06-phase-0-environment-release-foundation.md).
+Current status: **LOCAL IMPLEMENTATION ONLY — HOSTED CONFIGURATION NOT
+EXECUTED**. OWNER GATE 0 and a fresh hosted-mutation record are required.
 
-## 1. 重置並引導 Staging 資料庫（破壞性、可重複執行）
+The old bootstrap is retired and always fails. Never restore its Management API
+path, manually insert migration ledger rows, push directly to `main`, paste
+credentials into a command, or add broad Auth redirect wildcards.
 
-```bash
-export SUPABASE_ACCESS_TOKEN=sbp_（你的 token）
-export STAGING_PROJECT_REF=onkxnkzeixpezetkmocf
-node scripts/staging/bootstrap-staging-db.mjs --confirm-wipe
-```
+## Rebuild sequence
 
-腳本會：清空 public schema 與全部使用者 → 依序套用全部 migrations（含歷史記錄）→
-套用內容種子（題庫、複習卡、提示）→ 重載 PostgREST → 建立測試帳號。
-結尾會印出前端需要的 `VITE_SUPABASE_URL` 與 `VITE_SUPABASE_ANON_KEY`。
+1. Follow [manual readiness](deployment/manual-readiness.md) and verify the
+   target/ref/SHA immediately before mutation.
+2. Complete [migration reconciliation](deployment/runbooks/migration-reconciliation.md).
+3. Verify the newest encrypted B2 backup, Compliance-mode Object Lock, and
+   30-day retention. RPO 24 hours and RTO 8 hours are operating objectives.
+4. Obtain owner authorization for the exact destructive record.
+5. Run `scripts/staging/rebuild-staging.sh --preflight-only`; only a fully green
+   preflight may be rerun with the separately protected execution confirmation.
+6. Require database reset, Auth cleanup, Storage cleanup, migration parity,
+   approved content import, and fixture creation checkpoints. Auth and Storage
+   counts must both be zero before fixtures are created.
 
-## 2. Vercel 建立專案、環境變數、部署
+See [the guarded rebuild runbook](deployment/runbooks/staging-rebuild.md) for
+the protected variable names and evidence contract. It intentionally contains
+no credential value or fixture password.
 
-```bash
-export VERCEL_TOKEN=vcp_（你的 token）
-pnpm dlx vercel link --yes --project colorplay-staging --token "$VERCEL_TOKEN"
-printf 'https://onkxnkzeixpezetkmocf.supabase.co' \
-  | pnpm dlx vercel env add VITE_SUPABASE_URL production --token "$VERCEL_TOKEN"
-printf '（步驟 1 印出的 anon key）' \
-  | pnpm dlx vercel env add VITE_SUPABASE_ANON_KEY production --token "$VERCEL_TOKEN"
-pnpm dlx vercel deploy --prod --token "$VERCEL_TOKEN"
-```
+## Deployment and acceptance
 
-（選用）讓 GitHub push 自動部署：到 Vercel dashboard → 專案 → Settings → Git，
-連接 `peiyi-liu/colorplay_v1`。
+A merge to protected `staging` triggers `.github/workflows/staging-deploy.yml`.
+It may target only `colorplay-staging-web`, the exact Staging Supabase ref, and
+`staging.colorplayapp.com`. The gate checks the Staging marker, hosted smoke,
+affected Phase acceptance, RLS cross-account denials, Chromium/Firefox/WebKit,
+1280×720, 812×375, 375×812, console/network health, and a protected real-device
+result.
 
-## 3. 驗收
+The Site URL and callback/recovery routes must use only the exact stable Staging
+domain. Preview URLs receive no Auth email links. Staging and Production SMTP
+credentials are separate, tracking is disabled, and no credential enters the
+browser bundle.
+
+HTTP 200 or Vercel READY is insufficient. Only the recorded deployment ID, SHA,
+Edge Function list, hosted evidence, and human gate may set `staging-gate`
+successful. Production remains a separate Candidate/Promotion workflow using
+`vercel deploy --prebuilt --prod --skip-domain` followed by owner-approved
+`vercel promote`; `main` does not automatically deploy Production.
 
 - 開啟部署 URL → 登入 `student.one@colorplay.test` / `LocalOnly-Student1!`
   或 `teacher@colorplay.test` / `LocalOnly-Teacher1!`。

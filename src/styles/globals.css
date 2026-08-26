@@ -73,6 +73,25 @@ a {
   background: var(--surface-page);
 }
 
+.environment-marker {
+  position: absolute;
+  z-index: 39;
+  top: 0;
+  left: 50%;
+  max-width: calc(100% - var(--space-4));
+  border: 2px solid var(--pixel-gold);
+  background: var(--pixel-night-deep);
+  color: var(--pixel-parchment);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  padding: var(--space-1) var(--space-2);
+  pointer-events: none;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
 /* F7 final-review 修正：這條規則掛在同一個 <main class="game-stage__scene"
    id="main-content"> 元素上，#main-content（ID，特異度較高）另外設了
    display:grid，實際算出來的 display 是 grid，不是這裡寫的 flex——
@@ -1256,11 +1275,11 @@ a {
 
 @media (max-width: 479px) and (max-height: 600px) {
   #main-content {
-    padding-block: var(--space-2);
+    padding-block: 2px;
   }
 
   .route-panel {
-    padding: var(--space-4);
+    padding-block: var(--space-3);
   }
 
   .route-panel__eyebrow,
@@ -1269,12 +1288,16 @@ a {
   }
 
   .route-panel h1 {
-    font-size: 2rem;
+    font-size: 1.5rem;
+  }
+
+  .login-form__portal {
+    margin-top: var(--space-2);
   }
 
   .login-form {
-    gap: var(--space-3);
-    margin-top: var(--space-3);
+    gap: var(--space-2);
+    margin-top: var(--space-2);
   }
 
   .login-form__status:empty {
@@ -5544,6 +5567,309 @@ select#dashboard-classroom {
   border-radius: var(--radius-control);
   margin-right: var(--space-3);
   padding: var(--space-2) var(--space-3);
+}
+
+/* Admin MFA enroll/challenge 表單(spec §3.4 44px target) */
+.admin-mfa-form input {
+  min-height: 48px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-2) var(--space-3);
+}
+
+/* ── Admin 命令 UI 外殼(Task 12;spec §3.1、§3.4)────────────────── */
+
+.admin-shell {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  background: var(--surface-page);
+  color: var(--color-text);
+}
+
+.admin-shell__menu-toggle {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--color-text);
+  font-weight: 800;
+  margin: var(--space-3);
+}
+
+.admin-shell__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  padding: var(--space-4);
+}
+
+/* AdminShell 在窄視口用 `hidden` attribute 收起 MENU drawer（見
+   admin-shell.tsx 的 navVisible）。沒有這條規則的話，上面那條純 class
+   的 display:flex 具體度不輸給 [hidden] 這個 attribute selector，
+   會蓋掉瀏覽器對 hidden 屬性的預設隱藏——nav 元素的 hidden 屬性明明有設，
+   畫面上卻一直顯示，drawer 實際上從未真正收合過。 */
+.admin-shell__nav[hidden] {
+  display: none;
+}
+
+.admin-shell__group-label {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 var(--space-2);
+}
+
+.admin-shell__group ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-shell__link {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+  font-weight: 700;
+  text-decoration: none;
+  padding: 0 var(--space-3);
+}
+
+.admin-shell__link:hover {
+  background: var(--ink-100);
+}
+
+.admin-shell__link--active {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+.admin-shell__main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-6);
+}
+
+@media (min-width: 1024px) {
+  .admin-shell--wide {
+    flex-direction: row;
+  }
+
+  .admin-shell--wide .admin-shell__nav {
+    flex: 0 0 260px;
+    overflow-y: auto;
+    border-right: 1px solid var(--border-subtle);
+    border-bottom: none;
+  }
+
+  .admin-shell--wide .admin-shell__main {
+    overflow-y: auto;
+  }
+}
+
+/* ── Admin 命令確認框(Task 12;spec §3.1、§3.4、§8.2)──────────── */
+
+.admin-command-dialog__backdrop {
+  position: fixed;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 55%);
+  inset: 0;
+  padding: var(--space-4);
+}
+
+.admin-command-dialog {
+  width: min(100%, 480px);
+  max-height: calc(100vh - var(--space-8));
+  max-height: calc(100dvh - var(--space-8));
+  overflow-y: auto;
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  padding: var(--space-6);
+}
+
+.admin-command-dialog__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+
+.admin-command-dialog__field textarea {
+  min-height: 96px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font: inherit;
+  padding: var(--space-3);
+  resize: vertical;
+}
+
+.admin-command-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+/* ── Admin 安全總覽(Task 12;spec §3.1、§8.3)──────────────────── */
+
+.admin-overview__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.admin-overview__incidents {
+  border: 2px solid var(--color-alert);
+  border-radius: var(--radius-card);
+  background: var(--amber-tint-card);
+  padding: var(--space-4);
+}
+
+.admin-overview__incidents ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+/* ── Admin 身分與存取頁(Task 12;spec §3.1、§8.1)──────────────── */
+
+.admin-access-admins__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.admin-access-invitations__issue-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.admin-access-invitations__issue-form input {
+  min-height: 44px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font: inherit;
+  padding: 0 var(--space-3);
+}
+
+.admin-access-invitations__token-box {
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  padding: var(--space-4);
+}
+
+.admin-access-invitations__token-box code {
+  display: block;
+  overflow-wrap: anywhere;
+  border-radius: var(--radius-control);
+  background: var(--ink-100);
+  margin: var(--space-2) 0;
+  padding: var(--space-3);
+  font-family: monospace;
+}
+
+/* ── Admin 資料瀏覽器／稽核／健康頁(Task 13;spec §3.4、§7、§10)────── */
+
+/* .ui-table 是 width:100%,寬表會被壓縮而不是溢出,容器的 overflow-x 就永遠
+   不會觸發。min-width:max-content 讓表格照內容撐開 → 由 .ui-table-scroll
+   自己橫向捲動,頁面本體不水平捲動(spec §3.4)。同 .live-matrix-scroll 慣例。 */
+.admin-data-table__scroll .ui-table {
+  min-width: max-content;
+}
+
+/* 揭露鈕:44px 觸控目標下限(spec §3.4);與遮罩值同格並排。 */
+.admin-data-table__reveal {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--ink-700);
+  cursor: pointer;
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+  margin-left: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+}
+
+.admin-data-table__reveal:hover {
+  border-color: var(--ink-900);
+}
+
+/* 後續頁載入失敗:與表格區隔開,確保重試入口明顯可見。 */
+.admin-data-browser__page-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  border: 2px solid var(--color-alert);
+  border-radius: var(--radius-card);
+  background: var(--amber-tint-card);
+  padding: var(--space-3) var(--space-4);
+}
+
+.admin-data-browser__query,
+.admin-audit__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.admin-data-browser__query label,
+.admin-audit__filters label {
+  display: block;
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+
+.admin-data-browser__query input,
+.admin-data-browser__query select,
+.admin-audit__filters input,
+.admin-audit__filters select {
+  min-height: 44px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  font: inherit;
+  padding: 0 var(--space-3);
+}
+
+/* 揭露結果:明文只在這個框裡短暫出現,關閉即消失(spec §7)。 */
+.admin-reveal-dialog__result code {
+  display: block;
+  overflow-wrap: anywhere;
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--ink-100);
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  font-family: monospace;
+  font-size: 1.1rem;
 }
 
 /* ── JRPG 對話窗(ADR 0005;元件 src/components/ui/rpg-window.tsx) ── */

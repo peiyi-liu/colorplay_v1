@@ -1,97 +1,50 @@
 # Vercel delivery contract
 
-ColorPlay is a static Vite single-page application. The tracked `vercel.json`
-is authoritative for the Vercel framework, build command, output directory,
-and SPA fallback. Vercel must run `npm run build`, publish `dist`, and rewrite
-`/(.*)` to `/index.html` so React Router can restore deep links.
+Authority: the approved
+[Phase 0 design](../superpowers/specs/2026-08-05-phase-0-environment-release-foundation-design.md)
+and
+[implementation plan](../superpowers/plans/2026-08-06-phase-0-environment-release-foundation.md).
+Status: **LOCAL IMPLEMENTATION ONLY — HOSTED CONFIGURATION NOT EXECUTED**.
 
-## Git-based deployment flow
+The tracked `vercel.json` defines the Vite build, `dist` output, and SPA
+fallback. Git integration must not auto-assign the Production domain. `main`
+does not automatically deploy Production.
 
-After the repository is connected to Vercel in the Phase 8 release gate, GitHub and Vercel run
-their automatic flows independently:
+## Staging
 
-- GitHub Actions exposes the required `foundation-ci` check for pushes and
-  pull requests targeting `main`.
-- Vercel creates Preview deployments for pull requests and non-`main`
-  branches.
-- `main` is the documented Vercel Production Branch. A merge or push to
-  `main` creates a Production deployment.
+A protected push to `staging` checks out the exact SHA, builds with
+`COLORPLAY_DEPLOYMENT_ENVIRONMENT=staging`, deploys to
+`colorplay-staging-web`, deploys Edge Functions from the same checkout, and may
+alias only `staging.colorplayapp.com`. The gate requires the visible Staging
+marker, read-only health, Phase acceptance, Chromium/Firefox/WebKit, the three
+approved responsive sizes, RLS negatives, and protected real-device approval.
 
-Phase 0 does not connect GitHub, create or link a Vercel project, configure
-branch protection, upload environment values, or deploy. The account owner
-performs those manual dashboard/CLI steps in the reviewed Phase 8 runbook, then verifies the
-GitHub check, commit SHA, automatic deployments, production security headers,
-and deployed deep-link refreshes.
+## Production Candidate and Promotion
 
-## Environment separation
+Candidate uses Production public configuration and the separate Candidate
+credential:
 
-The three application environments must never share Supabase projects or
-configuration values:
+```text
+vercel deploy --prebuilt --prod --skip-domain
+```
 
-| Application environment | Frontend target                          | Supabase target               | Data policy                                       |
-| ----------------------- | ---------------------------------------- | ----------------------------- | ------------------------------------------------- |
-| Local                   | Vite development server or built preview | Supabase CLI local stack      | Deterministic synthetic test data                 |
-| Staging                 | Vercel Preview deployment                | Rebuilt legacy hosted project | Synthetic acceptance data only                    |
-| Production              | Vercel Production deployment from `main` | New clean project             | Approved formal data; no automated mutation tests |
+It must remain protected at an isolated Vercel URL and cannot change a domain.
+The GitHub `production` Environment exposes the distinct Promotion credential
+only after human approval. Promotion executes:
 
-Vercel's Preview scope supplies staging configuration to pull requests and
-non-production branches. Its Production scope supplies the distinct
-production configuration to `main`. An acceptance manifest must identify
-`local` or `staging`; automated acceptance must never write to Production.
+```text
+vercel promote <checksummed-candidate-url>
+```
 
-## Browser configuration allowlist
+It performs no build and no second deployment. Three read-only smoke samples
+must pass before `main` is fast-forwarded to the approved SHA. Vercel source,
+`main`, and the UTC Production tag must match before the tag and Release exist.
 
-Only these Supabase variable names are allowed in browser configuration:
+Only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` may enter the browser
+bundle. Database URLs, service credentials, SMTP credentials, provider access
+credentials, backup keys, and MFA recovery material remain server-only and are
+never included in source, logs, or artifacts.
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-
-Documentation, source control, logs, and evidence contain names only—never
-their deployed values. The anon key is browser-publishable but remains
-low-privilege and depends on Row Level Security.
-
-Never place a Supabase `service_role` key, database URL or password, JWT
-secret, access token, SMTP password, or any other server credential in a
-`VITE_*` variable or client bundle. Server-only credentials belong in
-Supabase or another server-only secret store and must not be exposed to this
-static frontend.
-
-Database deployment is a separate protected gate: feature CI proves migrations
-locally, Staging receives the reviewed release candidate, and Production
-requires explicit approval plus pre/post migration checks. A Vercel frontend
-deployment must never push database migrations blindly.
-
-## Manual setup checklist for Phase 8
-
-1. Connect the public GitHub repository to a Vercel project.
-2. Confirm the project root and Vite framework detection.
-3. Set the Production Branch to `main`.
-4. Add the two allowlisted browser variable names separately to Preview and
-   Production, using distinct staging and production values.
-5. Require `foundation-ci` before merging to protected `main`.
-6. Verify each deployment is bound to the expected Git commit SHA.
-7. Verify HTTPS and the production CSP, HSTS, `nosniff`, and Referrer-Policy.
-8. Run headed deep-link checks against the deployed Preview and Production
-   URLs before making a production-candidate claim.
-
-## Phase 8 authentication boundary
-
-Local Steps 1–4 are implemented by `pnpm acceptance` and do not mutate any
-remote system. Hosted setup remains an account-owner operation and is
-blocked until GitHub, Supabase, and Vercel authentication is available. An
-automation agent must not push a branch, log in, create or link projects,
-upload environment values, seed a remote project, update `main`, or fabricate
-deployment evidence without that explicit authenticated session.
-
-The local manifest therefore records remote environment isolation, production
-headers, automatic deployment, public CI, and deployed deep-link evidence as
-`NOT VERIFIED`. After authentication is provided, execute the reviewed Phase 8
-runbook in order: feature-branch CI first, rebuilt Staging and new clean Production Supabase
-projects second, Vercel Git/environment linkage third, then Preview and
-Production headed deep-link verification. Never write synthetic acceptance
-data to Production and never print DB passwords, status keys, service-role
-values, or access tokens into logs or evidence.
-
-Official references: [Vercel project configuration](https://vercel.com/docs/project-configuration/vercel-json),
-[Vercel Git deployments](https://vercel.com/docs/git), and
-[Vercel deployment environments](https://vercel.com/docs/deployments/overview).
+HTTP 200 or Vercel READY is insufficient release evidence. A failed web release
+must fail three consecutive samples before the checksum-bound web-only rollback
+may restore the previous deployment. Data/security failures stop automation.

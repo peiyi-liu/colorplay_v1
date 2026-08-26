@@ -1,5 +1,15 @@
 # ColorPlay
 
+> Current work: **Phase 0 local implementation** on isolated branch
+> `phase0/release-foundation`. Read
+> [`docs/roadmap-colorplay-next.md`](docs/roadmap-colorplay-next.md), the
+> [approved spec](docs/superpowers/specs/2026-08-05-phase-0-environment-release-foundation-design.md),
+> and the
+> [implementation plan](docs/superpowers/plans/2026-08-06-phase-0-environment-release-foundation.md)
+> before acting. Status: **LOCAL IMPLEMENTATION ONLY — HOSTED CONFIGURATION NOT
+> EXECUTED**. Tasks 1–11 are repository work; OWNER GATE 0 and per-operation
+> authorization still block hosted Tasks 13–18.
+
 A classroom quiz platform. Teachers publish question content and open a Live Session from a Live Activity; during that session the teacher is its Host, Participants answer on their own devices, and the Projector carries the shared screen.
 
 ## Current program

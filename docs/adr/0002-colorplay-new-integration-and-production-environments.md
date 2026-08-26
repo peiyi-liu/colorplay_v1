@@ -1,6 +1,6 @@
 # ADR 0002: `colorplay-new` integration and Production environments
 
-- Status: Accepted
+- Status: Accepted; delivery item 6 superseded on 2026-08-06
 - Decision date: 2026-07-16
 - Implementation baseline: `feat/playable-vertical-slice` at `394c58f`
 - Supersedes: any assumption that the legacy hosted Supabase project is Production-ready
@@ -18,8 +18,24 @@ The legacy hosted project also contains malformed imported identifiers, invalid 
 3. The legacy hosted project may become Staging only after its sanitized inventory is committed, its unsafe schema/data is destructively reset, all repository migrations are replayed, and it is seeded with synthetic test identities and approved content only.
 4. Production never receives Staging Auth users, synthetic acceptance records, invalid remote rows, Dashboard-only schema edits, or legacy RLS policies.
 5. Repository migrations, generated database types, reviewed seed/import inputs, and acceptance evidence are the deployment authority. Hosted Dashboard edits cannot replace tracked changes.
-6. Vercel Preview maps to Staging. Vercel Production from `main` maps to the new Production project. Browser configuration contains only the two approved public variable names; server credentials remain outside the Vite/browser boundary.
+6. Historical delivery assumption, now superseded: Vercel Preview mapped to
+   Staging and Vercel Production followed `main`. This preserved the original
+   rationale but is not current operating guidance.
 7. Existing credentials are not migration inputs. Rotation, hosted project creation, project linking, environment-value upload, reset, and deployment are `NOT EXECUTED` in Phase 0.
+
+## 2026-08-06 amendment
+
+The approved
+[`Phase 0 design`](../superpowers/specs/2026-08-05-phase-0-environment-release-foundation-design.md)
+and
+[`implementation plan`](../superpowers/plans/2026-08-06-phase-0-environment-release-foundation.md)
+supersede item 6 only. A protected push to `staging` may deploy the separately
+bound Staging project after its gates. `main` does not automatically deploy
+Production. An exact Staging-gated SHA becomes a protected Production Candidate
+through `vercel deploy --prebuilt --prod --skip-domain`; the GitHub `production`
+Environment must approve `vercel promote` of that same artifact. The original
+clean-Production, repo-migration-authority, and no-legacy-data decisions remain
+unchanged.
 
 ## Migration gates
 

@@ -14,7 +14,11 @@ import {
   CLASSROOM_FIXTURES,
   type TestUserLabel,
 } from '../../tests/fixtures/users';
-import { readLocalAdminEnvironment } from './local-environment';
+import {
+  findPresentAdminFixtureEmails,
+  isStrictlyLocalAdminUrl,
+  readLocalAdminEnvironment,
+} from './local-environment';
 
 const fixtureLabels = [
   'authLifecycleOne',
@@ -41,6 +45,15 @@ const fixtureLabels = [
   'contentTeacher',
   'contentStudent',
   'outsider',
+  'adminPrimary',
+  'adminSecondary',
+] as const satisfies readonly TestUserLabel[];
+// Task 14:role='admin' 只能由 svc_admin_bootstrap_identity 提升(spec §12、
+// Task 15 runbook 前置條件一致)——reconcileProfileRole 對這兩個 fixture
+// 完全跳過 role 欄位,role 由 reconcileAdminBootstrapFixtures 獨佔提升。
+const adminBootstrapLabels = [
+  'adminPrimary',
+  'adminSecondary',
 ] as const satisfies readonly TestUserLabel[];
 const usersPerPage = 100;
 const maximumUserPages = 100;
@@ -102,11 +115,22 @@ const reconcileAuthUser = async (
   return data.user;
 };
 
+// role='admin' 只能由 svc_admin_bootstrap_identity 提升(spec §12、Task 15
+// runbook 前置條件一致)，且它是冪等的:已有 identity 時直接短路回
+// {outcome:'ok', idempotent:true},不會重跑 `update profiles set role='admin'`。
+// 若這裡照樣把 adminBootstrapLabels 的 role 寫回 TEST_USER_ROLES 的值(僅供
+// 型別使用的佔位 'teacher'),第二次執行 seed-auth.ts 就會把已提升的 admin
+// 覆寫回 teacher、且 bootstrap 的冪等短路不會補救——因此這兩個 label 完全
+// 跳過 role 欄位,把它交給 reconcileAdminBootstrapFixtures 獨佔。
+const isAdminBootstrapLabel = (label: TestUserLabel): boolean =>
+  (adminBootstrapLabels as readonly TestUserLabel[]).includes(label);
+
 const reconcileProfileRole = async (
   admin: SupabaseClient<Database>,
   user: User,
   label: TestUserLabel,
 ) => {
+  const skipRole = isAdminBootstrapLabel(label);
   const expectedRole = TEST_USER_ROLES[label];
   const accountFixture =
     label in TEST_USER_ACCOUNTS
@@ -119,7 +143,7 @@ const reconcileProfileRole = async (
     const { data, error } = await admin
       .from('profiles')
       .update({
-        role: expectedRole,
+        ...(skipRole ? {} : { role: expectedRole }),
         ...(accountFixture
           ? {
               full_name: accountFixture.fullName,
@@ -130,7 +154,13 @@ const reconcileProfileRole = async (
       .eq('id', user.id)
       .select('id, role')
       .single();
-    if (!error && data.id === user.id && data.role === expectedRole) return;
+    if (
+      !error &&
+      data.id === user.id &&
+      (skipRole || data.role === expectedRole)
+    ) {
+      return;
+    }
     lastError = error;
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
@@ -279,6 +309,29 @@ const reconcileClassroomFixtures = async (
   }
 };
 
+// Task 14:svc_admin_bootstrap_identity 是 role='admin' 提升的唯一入口
+// (spec §4.2、§12)——它自己會覆寫 profiles.role、建 admin_audit_principals／
+// admin_security_identities 列、寫 owner_bootstrap audit。若改由
+// reconcileProfileRole 直接把 role 設成 'admin'，會漏建這些列，
+// /admin/mfa/enroll 之後的每個授權查詢都會落空。函式本身是 idempotent
+// (已有 identity 時直接回 outcome:'ok', idempotent:true)，可安全重跑。
+const reconcileAdminBootstrapFixtures = async (
+  admin: SupabaseClient<Database>,
+  usersByLabel: ReadonlyMap<TestUserLabel, User>,
+) => {
+  for (const label of adminBootstrapLabels) {
+    const user = usersByLabel.get(label);
+    if (!user) throw new Error('ADMIN_FIXTURE_BOOTSTRAP_USER_MISSING');
+    const { data, error } = await admin.rpc('svc_admin_bootstrap_identity', {
+      p_runbook_operation_id: randomUUID(),
+      p_user_id: user.id,
+    });
+    failIfError(error, 'ADMIN_FIXTURE_BOOTSTRAP_FAILED');
+    const outcome = (data as { outcome?: string } | null)?.outcome;
+    if (outcome !== 'ok') throw new Error('ADMIN_FIXTURE_BOOTSTRAP_FAILED');
+  }
+};
+
 export const seedAuthUsers = async (): Promise<void> => {
   const { serviceRoleKey, url } = readLocalAdminEnvironment(process.env);
   const admin = createClient<Database>(url, serviceRoleKey, {
@@ -290,9 +343,46 @@ export const seedAuthUsers = async (): Promise<void> => {
       user.email ? ([[user.email, user]] as const) : [],
     ),
   );
-  for (const label of fixtureLabels) {
+  // Admin fixtures 的風險等級跟其餘 demo teacher/student fixture 不同:
+  // 提升後即持有 role='admin' 且能自行完成 TOTP enrollment。上面的
+  // readLocalAdminEnvironment 對其餘 fixture 開放 SEED_REMOTE_CONFIRM
+  // 例外(供 hosted rebuild 用),但 spec §12 明確排除 Admin fixture——這裡
+  // 用嚴格的 loopback URL 檢查,不吃那個例外,確保 hosted rebuild 永遠不會
+  // 建立/提升這兩個帳號,同時仍讓其餘 fixture 正常跑完。
+  const strictlyLocal = isStrictlyLocalAdminUrl(url);
+  if (!strictlyLocal) {
+    // Task 14 review round 2 Finding 1(Critical):只排除「這次執行」不建立
+    // /提升 admin fixture 還不夠——如果這個 hosted project 曾經被舊版腳本
+    // (或任何行為相同的變體)seed 過,已知密碼的 admin 帳號、role='admin'、
+    // 可自助 enroll 的 TOTP 都還在,新版腳本卻只印一句 warning 就成功結束,
+    // 讓操作者誤以為環境已經安全。這裡改成 fail closed:偵測到既有 fixture
+    // 就整支腳本中止,不靜默繼續、也不自動刪除——清除已污染的帳號需要
+    // owner-approved 的 OOB runbook(撤銷 session/factor、移除
+    // identity/account),不是一般 seed 腳本該做的事。
+    const presentAdminFixtureEmails = findPresentAdminFixtureEmails(
+      existingUsersByEmail,
+      adminBootstrapLabels.map((label) => TEST_USERS[label].email),
+    );
+    if (presentAdminFixtureEmails.length > 0) {
+      throw new Error(
+        `ADMIN_FIXTURE_PRESENT_ON_NON_LOCAL_URL: ${presentAdminFixtureEmails.join(', ')} already exist on this non-local project — a prior seed run may have left known-password Admin fixtures live. Revoke their sessions/factors and remove the identity/account through the owner-approved OOB runbook before re-seeding.`,
+      );
+    }
+    console.warn(
+      'ADMIN_FIXTURE_SKIPPED_NON_LOCAL_URL: seeding against a confirmed remote URL — adminPrimary/adminSecondary are excluded (spec §12 local-only boundary).',
+    );
+  }
+  const activeFixtureLabels = strictlyLocal
+    ? fixtureLabels
+    : fixtureLabels.filter((label) => !isAdminBootstrapLabel(label));
+  const usersByLabel = new Map<TestUserLabel, User>();
+  for (const label of activeFixtureLabels) {
     const user = await reconcileAuthUser(admin, existingUsersByEmail, label);
     await reconcileProfileRole(admin, user, label);
+    usersByLabel.set(label, user);
+  }
+  if (strictlyLocal) {
+    await reconcileAdminBootstrapFixtures(admin, usersByLabel);
   }
 
   await reconcileClassroomFixtures(url, serviceRoleKey);

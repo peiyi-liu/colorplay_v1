@@ -10,6 +10,7 @@ import type { StudentMapShellContext } from '../../features/learning/context/stu
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { EconomySummaryView } from '../../features/rewards/components/economy-summary';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
+import { EnvironmentMarker } from './environment-marker';
 import { HudCommandBar } from './hud-command-bar';
 import { RotateBanner } from './rotate-banner';
 import { useIdleLogout } from './use-idle-logout';
@@ -106,6 +107,11 @@ export function AppShell() {
   const isTeacher = isAuthenticatedProfile && profile.data?.role === 'teacher';
   const isStudentLearningMap =
     isAuthenticatedProfile && !isTeacher && location.pathname === '/app';
+  // Admin 走專屬 admin-shell 命令 UI(spec 2026-08-07 phase 1 §3.1),不是
+  // 遊戲 HUD 的第三個 variant:學生導覽列/blook 頭像/經濟數字對管理主控台
+  // 無意義,且 HudCommandBar 目前只認 student/teacher 兩種 variant——
+  // isTeacher 為 false 會落入 student 分支,把遊戲 HUD 疊在 admin 頁面上。
+  const isAdmin = isAuthenticatedProfile && profile.data?.role === 'admin';
   const reducedMotion = profile.data?.reducedMotion === true;
 
   // 閒置 30 分鐘強制登出（UAT 0727 #5）：走與登出鍵相同的安全流程。
@@ -154,6 +160,7 @@ export function AppShell() {
       <div
         className={`game-stage${isStudentLearningMap ? ' game-stage--learning-map' : ''}`}
       >
+        <EnvironmentMarker />
         <a className="skip-link" href="#main-content">
           跳到主要內容
         </a>
@@ -162,7 +169,7 @@ export function AppShell() {
         ) : (
           <RotateBanner />
         )}
-        {isAuthenticatedProfile && !isTeacher ? (
+        {isAuthenticatedProfile && !isTeacher && !isAdmin ? (
           <HudCommandBar
             displayName={profile.data?.displayName ?? ''}
             isSigningOut={isSigningOut}
@@ -178,17 +185,34 @@ export function AppShell() {
             variant="teacher"
           />
         ) : null}
-        {isAuthenticatedProfile && !isTeacher ? (
+        {isAuthenticatedProfile && !isTeacher && !isAdmin ? (
           <AuthenticatedStudentShell
             isLearningMap={isStudentLearningMap}
             signOutError={signOutError}
           />
-        ) : isTeacher ? (
+        ) : isTeacher || isAdmin ? (
           <header className="hud-top">
-            <span className="hud-top__identity">
-              <Icon name="lock-open" size={14} />
-              歡迎，{profile.data?.displayName}・教師端
-            </span>
+            {isTeacher ? (
+              <span className="hud-top__identity">
+                <Icon name="lock-open" size={14} />
+                歡迎，{profile.data?.displayName}・教師端
+              </span>
+            ) : (
+              <>
+                <span className="hud-top__identity">
+                  <Icon name="lock-open" size={14} />
+                  歡迎，{profile.data?.displayName}・管理主控台
+                </span>
+                <button
+                  className="hud-menu__logout hud-menu__logout--fallback"
+                  disabled={isSigningOut}
+                  onClick={handleSignOut}
+                  type="button"
+                >
+                  {isSigningOut ? '登出中…' : '登出'}
+                </button>
+              </>
+            )}
             {signOutError ? (
               <p className="app-shell__auth-error" role="alert">
                 登出失敗，請稍後重試。
@@ -213,7 +237,7 @@ export function AppShell() {
             ) : null}
           </>
         ) : null}
-        {isAuthenticatedProfile && !isTeacher ? null : (
+        {isAuthenticatedProfile && !isTeacher && !isAdmin ? null : (
           <main className="game-stage__scene" id="main-content" tabIndex={-1}>
             {auth.status === 'authenticated' && !isAuthenticatedProfile ? (
               profile.isPending ? (

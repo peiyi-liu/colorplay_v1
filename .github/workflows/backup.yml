@@ -1,0 +1,265 @@
+name: Production backup
+
+on:
+  schedule:
+    - cron: '17 18 * * *'
+  workflow_dispatch:
+
+concurrency: production-backup
+
+permissions:
+  contents: read
+
+jobs:
+  create-backup:
+    name: create-production-backup
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: production-backup
+    permissions:
+      contents: read
+    outputs:
+      object_prefix: ${{ steps.create.outputs.object_prefix }}
+    env:
+      AGE_RECIPIENT: ${{ vars.AGE_RECIPIENT }}
+      B2_ENDPOINT: ${{ vars.B2_ENDPOINT }}
+      B2_BUCKET: ${{ vars.B2_BUCKET }}
+      B2_REGION: ${{ vars.B2_REGION }}
+      B2_CAPACITY_BUDGET_BYTES: ${{ vars.B2_CAPACITY_BUDGET_BYTES }}
+      B2_CURRENT_USAGE_BYTES: ${{ vars.B2_CURRENT_USAGE_BYTES }}
+      B2_WRITER_KEY_ID: ${{ secrets.B2_WRITER_KEY_ID }}
+      B2_WRITER_APPLICATION_KEY: ${{ secrets.B2_WRITER_APPLICATION_KEY }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SUPABASE_STORAGE_S3_ENDPOINT: ${{ vars.SUPABASE_STORAGE_S3_ENDPOINT }}
+      SUPABASE_STORAGE_ACCESS_KEY_ID: ${{ secrets.SUPABASE_STORAGE_ACCESS_KEY_ID }}
+      SUPABASE_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.SUPABASE_STORAGE_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v6
+      - name: Set up pnpm from packageManager
+        run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install encryption and database clients
+        run: sudo apt-get update && sudo apt-get install --yes age postgresql-client
+      - name: Create and upload encrypted immutable backup
+        id: create
+        shell: bash
+        run: |
+          set -euo pipefail
+          output_root="$RUNNER_TEMP/colorplay-backup"
+          bash scripts/backup/create-backup.sh \
+            --environment production \
+            --project-ref "${{ vars.PRODUCTION_SUPABASE_REF }}" \
+            --output-root "$output_root" | tee "$RUNNER_TEMP/backup-command.log"
+          object_prefix="$(sed -n 's/^OBJECT_PREFIX=//p' "$RUNNER_TEMP/backup-command.log")"
+          [[ "$object_prefix" == production/*/ ]] || exit 1
+          printf 'object_prefix=%s\n' "$object_prefix" >> "$GITHUB_OUTPUT"
+      - name: Secret-scan sanitized handoff evidence
+        id: evidence-scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          credential_pattern='(?i)(eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|sb_secret_[A-Za-z0-9_-]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|postgres(?:ql)?://[^[:space:]]+)'
+          ! rg --pcre2 -q "$credential_pattern" \
+            "$RUNNER_TEMP/colorplay-backup/verification-metadata.json" \
+            "$RUNNER_TEMP/backup-command.log"
+      - name: Upload sanitized verification handoff
+        if: ${{ success() && steps.evidence-scan.outcome == 'success' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: production-backup-verification-metadata
+          path: ${{ runner.temp }}/colorplay-backup/verification-metadata.json
+          if-no-files-found: error
+          retention-days: 2
+
+  verify-backup:
+    name: verify-production-backup
+    needs: create-backup
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: production-recovery
+    permissions:
+      contents: read
+      statuses: write
+    env:
+      B2_ENDPOINT: ${{ vars.B2_ENDPOINT }}
+      B2_BUCKET: ${{ vars.B2_BUCKET }}
+      B2_REGION: ${{ vars.B2_REGION }}
+      B2_RECOVERY_KEY_ID: ${{ secrets.B2_RECOVERY_KEY_ID }}
+      B2_RECOVERY_APPLICATION_KEY: ${{ secrets.B2_RECOVERY_APPLICATION_KEY }}
+      AGE_IDENTITY: ${{ secrets.AGE_IDENTITY }}
+    steps:
+      - name: Check out verifier only
+        uses: actions/checkout@v6
+      - name: Set up pnpm from packageManager
+        run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install age
+        run: sudo apt-get update && sudo apt-get install --yes age
+      - name: Download sanitized metadata
+        uses: actions/download-artifact@v6
+        with:
+          name: production-backup-verification-metadata
+          path: ${{ runner.temp }}/verification
+      - name: Download one encrypted manifest with recovery-only credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s' "$AGE_IDENTITY" > "$RUNNER_TEMP/age-identity.txt"
+          AWS_ACCESS_KEY_ID="$B2_RECOVERY_KEY_ID" \
+            AWS_SECRET_ACCESS_KEY="$B2_RECOVERY_APPLICATION_KEY" \
+            AWS_DEFAULT_REGION="$B2_REGION" \
+            aws s3api get-object \
+              --endpoint-url "$B2_ENDPOINT" \
+              --bucket "$B2_BUCKET" \
+            --key "${{ needs.create-backup.outputs.object_prefix }}backup-manifest.json.age" \
+            "$RUNNER_TEMP/verification/backup-manifest.json.age" >/dev/null
+          AWS_ACCESS_KEY_ID="$B2_RECOVERY_KEY_ID" \
+            AWS_SECRET_ACCESS_KEY="$B2_RECOVERY_APPLICATION_KEY" \
+            AWS_DEFAULT_REGION="$B2_REGION" \
+            aws s3api head-object \
+              --endpoint-url "$B2_ENDPOINT" \
+              --bucket "$B2_BUCKET" \
+              --key "${{ needs.create-backup.outputs.object_prefix }}backup-manifest.json.age" \
+              > "$RUNNER_TEMP/verification/b2-head.json"
+          AWS_ACCESS_KEY_ID="$B2_RECOVERY_KEY_ID" \
+            AWS_SECRET_ACCESS_KEY="$B2_RECOVERY_APPLICATION_KEY" \
+            AWS_DEFAULT_REGION="$B2_REGION" \
+            aws s3api get-object-retention \
+              --endpoint-url "$B2_ENDPOINT" \
+              --bucket "$B2_BUCKET" \
+              --key "${{ needs.create-backup.outputs.object_prefix }}backup-manifest.json.age" \
+              > "$RUNNER_TEMP/verification/b2-retention.json"
+          AWS_ACCESS_KEY_ID="$B2_RECOVERY_KEY_ID" \
+            AWS_SECRET_ACCESS_KEY="$B2_RECOVERY_APPLICATION_KEY" \
+            AWS_DEFAULT_REGION="$B2_REGION" \
+            aws s3api list-objects-v2 \
+              --endpoint-url "$B2_ENDPOINT" \
+              --bucket "$B2_BUCKET" \
+              --prefix production/ \
+              > "$RUNNER_TEMP/verification/b2-list.json"
+      - name: Bind actual B2 lock, freshness and capacity metadata
+        shell: bash
+        run: |
+          node --input-type=module - <<'NODE'
+          import { readFile, writeFile } from 'node:fs/promises';
+          const root = `${process.env.RUNNER_TEMP}/verification`;
+          const metadata = JSON.parse(await readFile(`${root}/verification-metadata.json`, 'utf8'));
+          const head = JSON.parse(await readFile(`${root}/b2-head.json`, 'utf8'));
+          const retention = JSON.parse(await readFile(`${root}/b2-retention.json`, 'utf8'));
+          const listing = JSON.parse(await readFile(`${root}/b2-list.json`, 'utf8'));
+          const lastModified = Date.parse(head.LastModified);
+          metadata.lock_mode = retention.Retention.Mode;
+          metadata.object_lock_expires_at_utc = new Date(
+            retention.Retention.RetainUntilDate,
+          ).toISOString();
+          metadata.newest_object_age_hours = (Date.now() - lastModified) / 3_600_000;
+          metadata.used_bytes = (listing.Contents ?? []).reduce(
+            (total, object) => total + Number(object.Size ?? 0),
+            0,
+          );
+          await writeFile(
+            `${root}/verification-metadata.json`,
+            `${JSON.stringify(metadata, null, 2)}\n`,
+            { mode: 0o600 },
+          );
+          NODE
+      - name: Verify checksum, decryptability, inventory, lock, freshness and budget
+        env:
+          AGE_IDENTITY_FILE: ${{ runner.temp }}/age-identity.txt
+        run: |
+          node scripts/backup/verify-backup.mjs \
+            --metadata "$RUNNER_TEMP/verification/verification-metadata.json" \
+            --encrypted-sample "$RUNNER_TEMP/verification/backup-manifest.json.age" \
+            --output "$RUNNER_TEMP/verification/result.json" \
+            --evidence-root "$RUNNER_TEMP/verification"
+      - name: Secret-scan verification evidence
+        id: evidence-scan
+        run: |
+          credential_pattern='(?i)(eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|sb_secret_[A-Za-z0-9_-]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|postgres(?:ql)?://[^[:space:]]+)'
+          ! rg --pcre2 -q "$credential_pattern" "$RUNNER_TEMP/verification/result.json"
+      - name: Upload sanitized verification result
+        if: ${{ success() && steps.evidence-scan.outcome == 'success' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: production-backup-verification-result
+          path: ${{ runner.temp }}/verification/result.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Mark backup freshness passed
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'success',
+              context: 'backup-freshness',
+              description: 'Latest immutable backup verified within RPO',
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });
+
+  report-failure:
+    name: report-production-backup-failure
+    if: ${{ failure() }}
+    needs: [create-backup, verify-backup]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      issues: write
+      statuses: write
+    steps:
+      - name: Freeze backup freshness and deduplicate incident issue
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'failure',
+              context: 'backup-freshness',
+              description: 'Backup failed; Production promotion is frozen',
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });
+            const title = '[dedupe] Production backup failure';
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'backup-incident',
+            });
+            const existing = issues.find((issue) => issue.title === title);
+            const body = `Backup workflow failed. Promotion remains frozen. Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '[dedupe] Production backup failure',
+                body,
+                labels: ['backup-incident'],
+              });
+            }

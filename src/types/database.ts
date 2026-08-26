@@ -181,6 +181,482 @@ export type Database = {
           },
         ]
       }
+      admin_audit_events: {
+        Row: {
+          action: string
+          actor_principal_id: string | null
+          actor_type: Database["public"]["Enums"]["admin_actor_type"]
+          admin_session_id: string | null
+          auth_session_id: string | null
+          before_after_redacted: Json | null
+          compensates_event_id: string | null
+          correlation_id: string | null
+          id: string
+          mfa_age_seconds: number | null
+          occurred_at: string
+          reason_or_purpose_redacted: string | null
+          request_id: string
+          result: string
+          runbook_operation_id: string | null
+          source_summary_redacted: string | null
+          target_principal_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action: string
+          actor_principal_id?: string | null
+          actor_type: Database["public"]["Enums"]["admin_actor_type"]
+          admin_session_id?: string | null
+          auth_session_id?: string | null
+          before_after_redacted?: Json | null
+          compensates_event_id?: string | null
+          correlation_id?: string | null
+          id?: string
+          mfa_age_seconds?: number | null
+          occurred_at?: string
+          reason_or_purpose_redacted?: string | null
+          request_id?: string
+          result: string
+          runbook_operation_id?: string | null
+          source_summary_redacted?: string | null
+          target_principal_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action?: string
+          actor_principal_id?: string | null
+          actor_type?: Database["public"]["Enums"]["admin_actor_type"]
+          admin_session_id?: string | null
+          auth_session_id?: string | null
+          before_after_redacted?: Json | null
+          compensates_event_id?: string | null
+          correlation_id?: string | null
+          id?: string
+          mfa_age_seconds?: number | null
+          occurred_at?: string
+          reason_or_purpose_redacted?: string | null
+          request_id?: string
+          result?: string
+          runbook_operation_id?: string | null
+          source_summary_redacted?: string | null
+          target_principal_id?: string | null
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_events_actor_principal_id_fkey"
+            columns: ["actor_principal_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_audit_events_compensates_event_id_fkey"
+            columns: ["compensates_event_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_audit_events_target_principal_id_fkey"
+            columns: ["target_principal_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_audit_principals: {
+        Row: {
+          created_at: string
+          id: string
+          tombstoned_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tombstoned_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tombstoned_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      admin_command_authorizations: {
+        Row: {
+          actor_principal_id: string
+          auth_session_id: string
+          bound_factor_id_snapshot: string
+          command_name: string
+          consumed_at: string | null
+          expires_at: string
+          id: string
+          idempotency_key: string
+          issued_at: string
+          request_hash: string
+        }
+        Insert: {
+          actor_principal_id: string
+          auth_session_id: string
+          bound_factor_id_snapshot: string
+          command_name: string
+          consumed_at?: string | null
+          expires_at: string
+          id?: string
+          idempotency_key: string
+          issued_at?: string
+          request_hash: string
+        }
+        Update: {
+          actor_principal_id?: string
+          auth_session_id?: string
+          bound_factor_id_snapshot?: string
+          command_name?: string
+          consumed_at?: string | null
+          expires_at?: string
+          id?: string
+          idempotency_key?: string
+          issued_at?: string
+          request_hash?: string
+        }
+        Relationships: []
+      }
+      admin_command_executions: {
+        Row: {
+          actor_principal_id: string
+          audit_event_id: string | null
+          command_name: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          idempotency_key: string
+          receipt_id: string | null
+          redacted_result_receipt: Json | null
+          request_hash: string
+          request_id: string
+          result_code: string | null
+        }
+        Insert: {
+          actor_principal_id: string
+          audit_event_id?: string | null
+          command_name: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          receipt_id?: string | null
+          redacted_result_receipt?: Json | null
+          request_hash: string
+          request_id?: string
+          result_code?: string | null
+        }
+        Update: {
+          actor_principal_id?: string
+          audit_event_id?: string | null
+          command_name?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          receipt_id?: string | null
+          redacted_result_receipt?: Json | null
+          request_hash?: string
+          request_id?: string
+          result_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_command_executions_actor_principal_id_fkey"
+            columns: ["actor_principal_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_command_executions_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "admin_command_authorizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_denial_counters: {
+        Row: {
+          count: number
+          resource_key: string
+          safe_reason_code: string
+          window_ends_at: string
+          window_started_at: string
+        }
+        Insert: {
+          count?: number
+          resource_key: string
+          safe_reason_code: string
+          window_ends_at?: string
+          window_started_at?: string
+        }
+        Update: {
+          count?: number
+          resource_key?: string
+          safe_reason_code?: string
+          window_ends_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
+      }
+      admin_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_principal_id: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          invited_email: string
+          issuer_principal_id: string
+          revoked_at: string | null
+          status: Database["public"]["Enums"]["admin_invitation_status"]
+          token_hash: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_principal_id?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          invited_email: string
+          issuer_principal_id: string
+          revoked_at?: string | null
+          status?: Database["public"]["Enums"]["admin_invitation_status"]
+          token_hash: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_principal_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invited_email?: string
+          issuer_principal_id?: string
+          revoked_at?: string | null
+          status?: Database["public"]["Enums"]["admin_invitation_status"]
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_invitations_accepted_principal_id_fkey"
+            columns: ["accepted_principal_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_invitations_issuer_principal_id_fkey"
+            columns: ["issuer_principal_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_security_identities: {
+        Row: {
+          admin_user_id: string
+          audit_principal_id: string
+          bound_factor_id: string | null
+          created_at: string
+          failed_totp_attempts: number
+          lifecycle_version: number
+          locked_until: string | null
+          state: Database["public"]["Enums"]["admin_identity_state"]
+          updated_at: string
+        }
+        Insert: {
+          admin_user_id: string
+          audit_principal_id: string
+          bound_factor_id?: string | null
+          created_at?: string
+          failed_totp_attempts?: number
+          lifecycle_version?: number
+          locked_until?: string | null
+          state?: Database["public"]["Enums"]["admin_identity_state"]
+          updated_at?: string
+        }
+        Update: {
+          admin_user_id?: string
+          audit_principal_id?: string
+          bound_factor_id?: string | null
+          created_at?: string
+          failed_totp_attempts?: number
+          lifecycle_version?: number
+          locked_until?: string | null
+          state?: Database["public"]["Enums"]["admin_identity_state"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_security_identities_audit_principal_id_fkey"
+            columns: ["audit_principal_id"]
+            isOneToOne: true
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_security_operations: {
+        Row: {
+          attempt_count: number
+          correlation_id: string | null
+          created_at: string
+          current_step: number
+          id: string
+          last_safe_error_code: string | null
+          next_retry_at: string | null
+          operation_type: Database["public"]["Enums"]["admin_operation_type"]
+          state: Database["public"]["Enums"]["admin_operation_state"]
+          target_principal_id: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          correlation_id?: string | null
+          created_at?: string
+          current_step?: number
+          id?: string
+          last_safe_error_code?: string | null
+          next_retry_at?: string | null
+          operation_type: Database["public"]["Enums"]["admin_operation_type"]
+          state?: Database["public"]["Enums"]["admin_operation_state"]
+          target_principal_id: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          correlation_id?: string | null
+          created_at?: string
+          current_step?: number
+          id?: string
+          last_safe_error_code?: string | null
+          next_retry_at?: string | null
+          operation_type?: Database["public"]["Enums"]["admin_operation_type"]
+          state?: Database["public"]["Enums"]["admin_operation_state"]
+          target_principal_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_security_operations_target_principal_id_fkey"
+            columns: ["target_principal_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_sensitivity_catalog: {
+        Row: {
+          class: string
+          column_name: string
+          domain: string
+          filterable: boolean
+          mask_strategy: string | null
+          resource: string
+          searchable: boolean
+          sortable: boolean
+          surface: string
+        }
+        Insert: {
+          class: string
+          column_name: string
+          domain: string
+          filterable: boolean
+          mask_strategy?: string | null
+          resource: string
+          searchable: boolean
+          sortable: boolean
+          surface: string
+        }
+        Update: {
+          class?: string
+          column_name?: string
+          domain?: string
+          filterable?: boolean
+          mask_strategy?: string | null
+          resource?: string
+          searchable?: boolean
+          sortable?: boolean
+          surface?: string
+        }
+        Relationships: []
+      }
+      admin_sessions: {
+        Row: {
+          absolute_expires_at: string
+          admin_user_id: string
+          audit_principal_id: string
+          auth_session_id: string
+          bound_factor_id_snapshot: string
+          correlation_id: string | null
+          created_at: string
+          device_summary: string | null
+          id: string
+          last_activity_at: string
+          last_totp_verified_at: string
+          revoke_reason: string | null
+          revoked_at: string | null
+        }
+        Insert: {
+          absolute_expires_at: string
+          admin_user_id: string
+          audit_principal_id: string
+          auth_session_id: string
+          bound_factor_id_snapshot: string
+          correlation_id?: string | null
+          created_at?: string
+          device_summary?: string | null
+          id?: string
+          last_activity_at?: string
+          last_totp_verified_at?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+        }
+        Update: {
+          absolute_expires_at?: string
+          admin_user_id?: string
+          audit_principal_id?: string
+          auth_session_id?: string
+          bound_factor_id_snapshot?: string
+          correlation_id?: string | null
+          created_at?: string
+          device_summary?: string | null
+          id?: string
+          last_activity_at?: string
+          last_totp_verified_at?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_sessions_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_security_identities"
+            referencedColumns: ["admin_user_id"]
+          },
+          {
+            foreignKeyName: "admin_sessions_audit_principal_id_fkey"
+            columns: ["audit_principal_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assignment_attempts: {
         Row: {
           assignment_id: string
@@ -2572,6 +3048,7 @@ export type Database = {
       }
     }
     Functions: {
+      accept_admin_invitation: { Args: { p_token: string }; Returns: Json }
       achievement_metric_value: {
         Args: {
           target_rule_type: Database["public"]["Enums"]["achievement_rule_type"]
@@ -2587,6 +3064,180 @@ export type Database = {
         Args: { session_id: string }
         Returns: Json
       }
+      admin_get_resource_detail:
+        | {
+            Args: { p_domain: string; p_resource: string; p_row_id: string }
+            Returns: Json
+          }
+        | {
+            Args: { p_domain: string; p_resource: string; p_row_key: Json }
+            Returns: Json
+          }
+      admin_health_summary: { Args: never; Returns: Json }
+      admin_internal_append_audit: {
+        Args: {
+          p_action: string
+          p_actor_principal_id: string
+          p_actor_type: Database["public"]["Enums"]["admin_actor_type"]
+          p_admin_session_id: string
+          p_auth_session_id: string
+          p_before_after?: Json
+          p_compensates_event_id?: string
+          p_correlation_id?: string
+          p_mfa_age_seconds?: number
+          p_reason_or_purpose?: string
+          p_result: string
+          p_runbook_operation_id?: string
+          p_target_principal_id: string
+          p_target_type: string
+        }
+        Returns: string
+      }
+      admin_internal_authorize: { Args: never; Returns: Json }
+      admin_internal_canonical_hash: {
+        Args: { p_fields: Json }
+        Returns: string
+      }
+      admin_internal_catalog_projection: {
+        Args: { p_resource: string; p_surface: string }
+        Returns: string
+      }
+      admin_internal_command_deny: {
+        Args: {
+          p_code: string
+          p_command_name: string
+          p_mfa_age_seconds?: number
+          p_reason_or_purpose: string
+          p_target_principal_id: string
+        }
+        Returns: Json
+      }
+      admin_internal_deny: {
+        Args: {
+          p_action: string
+          p_actor_principal_id: string
+          p_actor_type: Database["public"]["Enums"]["admin_actor_type"]
+          p_admin_session_id: string
+          p_auth_session_id: string
+          p_code: string
+          p_mfa_age_seconds?: number
+          p_reason_or_purpose?: string
+          p_resource_key: string
+          p_target_principal_id: string
+          p_target_type: string
+        }
+        Returns: Json
+      }
+      admin_internal_execute_command: {
+        Args: {
+          p_command_name: string
+          p_idempotency_key: string
+          p_receipt_id: string
+          p_request_hash: string
+          p_requires_fresh_totp: boolean
+        }
+        Returns: Json
+      }
+      admin_internal_finalize_command: {
+        Args: {
+          p_before_after: Json
+          p_command_name: string
+          p_gate: Json
+          p_idempotency_key: string
+          p_reason_or_purpose: string
+          p_receipt_id: string
+          p_request_hash: string
+          p_result: Json
+          p_target_principal_id: string
+        }
+        Returns: Json
+      }
+      admin_internal_isolate_factor: {
+        Args: {
+          p_actor_type: Database["public"]["Enums"]["admin_actor_type"]
+          p_admin_user_id: string
+          p_correlation_id: string
+          p_runbook_operation_id: string
+        }
+        Returns: Json
+      }
+      admin_internal_key_columns: {
+        Args: { p_resource: string }
+        Returns: string[]
+      }
+      admin_internal_lifecycle_lock: { Args: never; Returns: undefined }
+      admin_internal_mask: {
+        Args: { p_strategy: string; p_value: string }
+        Returns: string
+      }
+      admin_internal_record_denial: {
+        Args: { p_resource_key: string; p_safe_reason_code: string }
+        Returns: undefined
+      }
+      admin_internal_service_deny: {
+        Args: {
+          p_action: string
+          p_actor_principal_id: string
+          p_actor_type: Database["public"]["Enums"]["admin_actor_type"]
+          p_code: string
+          p_correlation_id?: string
+          p_resource_key: string
+          p_runbook_operation_id?: string
+          p_target_principal_id: string
+          p_target_type: string
+        }
+        Returns: Json
+      }
+      admin_list_admins: { Args: never; Returns: Json }
+      admin_list_invitations: { Args: never; Returns: Json }
+      admin_list_resource: {
+        Args: {
+          p_cursor?: string
+          p_domain: string
+          p_filters?: Json
+          p_resource: string
+          p_sort?: Json
+        }
+        Returns: Json
+      }
+      admin_list_sessions: { Args: never; Returns: Json }
+      admin_query_audit: {
+        Args: {
+          p_action?: string
+          p_actor_principal_id?: string
+          p_cursor?: string
+          p_from?: string
+          p_result?: string
+          p_target_type?: string
+          p_to?: string
+        }
+        Returns: Json
+      }
+      admin_reveal_field:
+        | {
+            Args: {
+              p_column: string
+              p_domain: string
+              p_idempotency_key: string
+              p_purpose: string
+              p_receipt_id: string
+              p_resource: string
+              p_row_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_column: string
+              p_domain: string
+              p_idempotency_key: string
+              p_purpose: string
+              p_receipt_id: string
+              p_resource: string
+              p_row_key: Json
+            }
+            Returns: Json
+          }
       advance_live_session: {
         Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
@@ -2637,6 +3288,10 @@ export type Database = {
         Args: { p_chapter_id: string }
         Returns: boolean
       }
+      close_admin_identity_session: {
+        Args: { p_revoke_reason: string; p_session_id: string }
+        Returns: boolean
+      }
       close_live_question: {
         Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
@@ -2653,6 +3308,16 @@ export type Database = {
       complete_review_card: {
         Args: { p_request_id: string; p_review_card_id: string }
         Returns: Json
+      }
+      create_admin_identity_session: {
+        Args: {
+          p_admin_user_id: string
+          p_auth_session_id: string
+          p_bound_factor_id: string
+          p_correlation_id: string
+          p_device_summary: string
+        }
+        Returns: string
       }
       create_assignment: {
         Args: {
@@ -2704,6 +3369,15 @@ export type Database = {
         Args: { p_classroom_id: string }
         Returns: boolean
       }
+      deactivate_admin: {
+        Args: {
+          p_idempotency_key: string
+          p_reason: string
+          p_receipt_id: string
+          p_target_principal_id: string
+        }
+        Returns: Json
+      }
       ensure_import_subtopic: {
         Args: { p_chapter: string; p_section_label: string }
         Returns: string
@@ -2728,6 +3402,7 @@ export type Database = {
         Args: { p_chapter_id: string }
         Returns: Json
       }
+      get_admin_session_state: { Args: never; Returns: Json }
       get_classroom_leaderboard: {
         Args: { p_classroom_id: string }
         Returns: Json
@@ -2799,6 +3474,15 @@ export type Database = {
         Returns: boolean
       }
       is_live_session_host: { Args: { p_session_id: string }; Returns: boolean }
+      issue_admin_invitation: {
+        Args: {
+          p_idempotency_key: string
+          p_invited_email: string
+          p_reason: string
+          p_receipt_id: string
+        }
+        Returns: Json
+      }
       join_classroom: {
         Args: { p_join_code: string; p_request_id: string }
         Returns: {
@@ -2972,6 +3656,24 @@ export type Database = {
         Args: { p_question_id: string }
         Returns: Json
       }
+      reactivate_admin: {
+        Args: {
+          p_idempotency_key: string
+          p_reason: string
+          p_receipt_id: string
+          p_target_principal_id: string
+        }
+        Returns: Json
+      }
+      reconcile_admin_security_operation: {
+        Args: {
+          p_idempotency_key: string
+          p_operation_id: string
+          p_reason: string
+          p_receipt_id: string
+        }
+        Returns: Json
+      }
       reconcile_wallet_cache: {
         Args: { target_user_id: string }
         Returns: number
@@ -2995,6 +3697,15 @@ export type Database = {
         Args: { p_hint_level: number; p_session_question_id: string }
         Returns: Json
       }
+      reset_admin_mfa: {
+        Args: {
+          p_idempotency_key: string
+          p_reason: string
+          p_receipt_id: string
+          p_target_principal_id: string
+        }
+        Returns: Json
+      }
       resume_live_session: {
         Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
@@ -3011,6 +3722,24 @@ export type Database = {
           subtopic_id: string
           total_count: number
         }[]
+      }
+      revoke_admin_invitation: {
+        Args: {
+          p_idempotency_key: string
+          p_invitation_id: string
+          p_reason: string
+          p_receipt_id: string
+        }
+        Returns: Json
+      }
+      revoke_admin_session: {
+        Args: {
+          p_idempotency_key: string
+          p_reason: string
+          p_receipt_id: string
+          p_session_id: string
+        }
+        Returns: Json
       }
       rotate_classroom_join_code: {
         Args: { p_classroom_id: string }
@@ -3070,6 +3799,93 @@ export type Database = {
           selected_option_id?: string
           session_question_id: string
         }
+        Returns: Json
+      }
+      svc_admin_bootstrap_identity: {
+        Args: { p_runbook_operation_id: string; p_user_id: string }
+        Returns: Json
+      }
+      svc_admin_canonical_hash_hex: {
+        Args: { p_fields: Json }
+        Returns: string
+      }
+      svc_admin_complete_oob_recovery: {
+        Args: { p_runbook_operation_id: string; p_target_user_id: string }
+        Returns: Json
+      }
+      svc_admin_complete_reset_step2: {
+        Args: { p_operation_id: string }
+        Returns: Json
+      }
+      svc_admin_complete_reset_step3: {
+        Args: { p_operation_id: string }
+        Returns: Json
+      }
+      svc_admin_confirm_enrollment: {
+        Args: {
+          p_admin_user_id: string
+          p_operation_id: string
+          p_verified_factor_id: string
+        }
+        Returns: Json
+      }
+      svc_admin_create_session: {
+        Args: {
+          p_admin_user_id: string
+          p_auth_session_id: string
+          p_correlation_id: string
+          p_device_summary: string
+          p_verified_factor_id: string
+        }
+        Returns: Json
+      }
+      svc_admin_isolate_factor_incident: {
+        Args: { p_admin_user_id: string; p_correlation_id: string }
+        Returns: Json
+      }
+      svc_admin_isolate_factor_incident_oob: {
+        Args: { p_admin_user_id: string; p_runbook_operation_id: string }
+        Returns: Json
+      }
+      svc_admin_issue_command_receipt: {
+        Args: {
+          p_actor_user_id: string
+          p_auth_session_id: string
+          p_command_name: string
+          p_idempotency_key: string
+          p_request_hash: string
+          p_requires_fresh_totp: boolean
+          p_verified_factor_id: string
+        }
+        Returns: Json
+      }
+      svc_admin_mark_operation_stuck: {
+        Args: { p_operation_id: string }
+        Returns: Json
+      }
+      svc_admin_record_edge_denial: {
+        Args: {
+          p_action: string
+          p_admin_user_id: string
+          p_code: string
+          p_resource_key: string
+        }
+        Returns: Json
+      }
+      svc_admin_record_totp_outcome: {
+        Args: { p_admin_user_id: string; p_success: boolean }
+        Returns: Json
+      }
+      svc_admin_refresh_session_mfa: {
+        Args: {
+          p_admin_user_id: string
+          p_auth_session_id: string
+          p_verified_factor_id: string
+        }
+        Returns: Json
+      }
+      svc_admin_tombstone_principal: {
+        Args: { p_principal_id: string; p_runbook_operation_id: string }
         Returns: Json
       }
       teacher_answer_facts: {
@@ -3241,6 +4057,29 @@ export type Database = {
         | "mistake_resolved"
         | "mastery_recomputed"
       achievement_visibility: "public" | "hidden"
+      admin_actor_type:
+        | "admin"
+        | "pre_session_user"
+        | "service"
+        | "owner_out_of_band"
+        | "unknown"
+      admin_identity_state:
+        | "active_pending_mfa"
+        | "active"
+        | "recovery_pending"
+        | "deactivated"
+      admin_invitation_status: "pending" | "accepted" | "revoked"
+      admin_operation_state:
+        | "pending"
+        | "step1_complete"
+        | "step2_complete"
+        | "completed"
+        | "stuck"
+      admin_operation_type:
+        | "reset_admin_mfa"
+        | "factor_incident_isolation"
+        | "owner_oob_recovery"
+        | "owner_bootstrap"
       app_role: "student" | "teacher" | "admin"
       assignment_activity_type: "quiz_template" | "live_activity"
       assignment_attempt_status:
@@ -3432,6 +4271,33 @@ export const Constants = {
         "mastery_recomputed",
       ],
       achievement_visibility: ["public", "hidden"],
+      admin_actor_type: [
+        "admin",
+        "pre_session_user",
+        "service",
+        "owner_out_of_band",
+        "unknown",
+      ],
+      admin_identity_state: [
+        "active_pending_mfa",
+        "active",
+        "recovery_pending",
+        "deactivated",
+      ],
+      admin_invitation_status: ["pending", "accepted", "revoked"],
+      admin_operation_state: [
+        "pending",
+        "step1_complete",
+        "step2_complete",
+        "completed",
+        "stuck",
+      ],
+      admin_operation_type: [
+        "reset_admin_mfa",
+        "factor_incident_isolation",
+        "owner_oob_recovery",
+        "owner_bootstrap",
+      ],
       app_role: ["student", "teacher", "admin"],
       assignment_activity_type: ["quiz_template", "live_activity"],
       assignment_attempt_status: [

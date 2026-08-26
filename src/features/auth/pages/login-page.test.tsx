@@ -10,7 +10,16 @@ import { describe, expect, it, vi } from 'vitest';
 import { AuthContext, type AuthContextValue } from '../context/auth-context';
 import { AuthRepositoryError } from '../types';
 import { ToastProvider } from '../../../components/ui/toast';
+import { createProfileRepository } from '../../profile/api/profile-repository';
 import { LoginPage } from './login-page';
+
+// 預設讓 profile 查詢失敗:既有測試走「查詢失敗 → 教師工作區」的保守
+// fallback(與真實 client 在測試環境的行為一致);admin 導向案再覆寫。
+vi.mock('../../profile/api/profile-repository', () => ({
+  createProfileRepository: vi.fn(() => ({
+    getMyProfile: () => Promise.reject(new Error('unavailable')),
+  })),
+}));
 
 const validCredentials = {
   account: 'cp045001',
@@ -105,7 +114,9 @@ describe('LoginPage', () => {
     expect(signInWithAccount).not.toHaveBeenCalled();
   });
 
-  it('requires the class code for teacher account logins', async () => {
+  it('submits teacher logins without a class code for the server to enforce', async () => {
+    // 班級序號改由 auth-login 伺服端強制(教師必填、管理員免填;
+    // 角色在登入前不可知):client 不再擋提交
     const user = userEvent.setup();
     const signInWithAccount = vi.fn(() => Promise.resolve());
     renderLoginPage(createAuthValue(undefined, signInWithAccount));
@@ -115,10 +126,27 @@ describe('LoginPage', () => {
     await user.type(screen.getByLabelText('密碼'), validCredentials.password);
     await user.click(screen.getByRole('button', { name: '登入' }));
 
-    expect(await screen.findByText('請輸入班級序號')).toBeVisible();
-    expect(signInWithAccount).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(signInWithAccount).toHaveBeenCalledWith({
+        account: 'teacher01',
+        password: validCredentials.password,
+        portal: 'teacher',
+      });
+    });
+  });
 
-    await user.type(screen.getByLabelText('班級序號'), 'ABCD-1234-EF56-7890');
+  it('passes the class code through for teacher account logins', async () => {
+    const user = userEvent.setup();
+    const signInWithAccount = vi.fn(() => Promise.resolve());
+    renderLoginPage(createAuthValue(undefined, signInWithAccount));
+
+    await user.click(screen.getByRole('radio', { name: '教師端登入' }));
+    await user.type(screen.getByLabelText('帳號'), 'teacher01');
+    await user.type(screen.getByLabelText('密碼'), validCredentials.password);
+    await user.type(
+      screen.getByLabelText('班級序號（管理員免填）'),
+      'ABCD-1234-EF56-7890',
+    );
     await user.click(screen.getByRole('button', { name: '登入' }));
 
     await waitFor(() => {
@@ -269,6 +297,37 @@ describe('LoginPage', () => {
       await screen.findByRole('heading', { name: '教師工作區' }),
     ).toBeVisible();
     expect(router.state.location.pathname).toBe('/teacher');
+  });
+
+  it('routes an admin teacher-portal login to the admin console', async () => {
+    const user = userEvent.setup();
+    const signIn = vi.fn(() => Promise.resolve());
+    vi.mocked(createProfileRepository).mockReturnValueOnce({
+      getMyProfile: () => Promise.resolve({ role: 'admin' }),
+    } as unknown as ReturnType<typeof createProfileRepository>);
+    const router = createMemoryRouter(
+      [
+        { element: <LoginPage />, path: '/login' },
+        { element: <h1>管理主控台</h1>, path: '/admin' },
+      ],
+      { initialEntries: ['/login'] },
+    );
+    render(
+      <AuthContext.Provider value={createAuthValue(signIn)}>
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
+      </AuthContext.Provider>,
+    );
+
+    await user.click(screen.getByRole('radio', { name: '教師端登入' }));
+    await fillEmailBridgeCredentials(user);
+    await user.click(screen.getByRole('button', { name: '登入' }));
+
+    expect(
+      await screen.findByRole('heading', { name: '管理主控台' }),
+    ).toBeVisible();
+    expect(router.state.location.pathname).toBe('/admin');
   });
 
   it.each([

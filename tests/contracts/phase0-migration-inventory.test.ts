@@ -1,0 +1,299 @@
+import { createHash } from 'node:crypto';
+import { spawn } from 'node:child_process';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { resolve } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+const repositoryRoot = resolve(import.meta.dirname, '../..');
+const createScript = resolve(
+  repositoryRoot,
+  'scripts/migration/create-inventory.mjs',
+);
+const compareScript = resolve(
+  repositoryRoot,
+  'scripts/migration/compare-inventory.mjs',
+);
+
+let root = '';
+
+beforeEach(async () => {
+  root = await mkdtemp(resolve(tmpdir(), 'colorplay-migration-inventory-'));
+});
+
+afterEach(async () => {
+  await rm(root, { recursive: true, force: true });
+});
+
+async function run(script: string, argumentsList: string[]) {
+  return new Promise<{ code: number | null; stderr: string; stdout: string }>(
+    (resolveResult, reject) => {
+      const child = spawn(process.execPath, [script, ...argumentsList], {
+        cwd: root,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      let stdout = '';
+      let stderr = '';
+      child.stdout.setEncoding('utf8');
+      child.stderr.setEncoding('utf8');
+      child.stdout.on('data', (chunk: string) => {
+        stdout += chunk;
+      });
+      child.stderr.on('data', (chunk: string) => {
+        stderr += chunk;
+      });
+      child.once('error', reject);
+      child.once('close', (code) => {
+        resolveResult({ code, stderr, stdout });
+      });
+    },
+  );
+}
+
+function sha256(value: string) {
+  return createHash('sha256').update(value).digest('hex');
+}
+
+async function createFixtureInventory() {
+  const migrations = resolve(root, 'migrations');
+  await mkdir(migrations, { recursive: true });
+  const later = 'select 2;\n';
+  const earlier = 'select 1;\n';
+  await writeFile(resolve(migrations, '20260806000200_later.sql'), later);
+  await writeFile(resolve(migrations, '20260806000100_earlier.sql'), earlier);
+  const schemaPath = resolve(root, 'schema.sql');
+  const typesPath = resolve(root, 'database.ts');
+  await writeFile(schemaPath, 'create table public.safe();\n');
+  await writeFile(typesPath, 'export type Database = {};\n');
+  const inputPath = resolve(root, 'input.json');
+  await writeFile(
+    inputPath,
+    JSON.stringify({
+      schema_version: 1,
+      project_ref: null,
+      frozen_git_sha: 'a'.repeat(40),
+      collected_at_utc: '2026-08-06T04:00:00.000Z',
+      hosted_ledger: [
+        { version: '20260806000200', name: 'later' },
+        { version: '20260806000100', name: 'earlier' },
+      ],
+      schema_path: schemaPath,
+      generated_types_path: typesPath,
+      aggregate_counts: { quiz_sessions: 2, profiles: 1 },
+      auth_user_count: 3,
+      storage: [
+        { bucket: 'zeta', object_count: 2, total_bytes: 20 },
+        { bucket: 'alpha', object_count: 1, total_bytes: 10 },
+      ],
+      custom_roles: ['teacher_role', 'admin_role'],
+      extensions: ['uuid-ossp', 'pgcrypto'],
+    }),
+  );
+  const outputPath = resolve(root, 'inventory.json');
+  const result = await run(createScript, [
+    '--environment',
+    'local',
+    '--input',
+    inputPath,
+    '--migrations-root',
+    migrations,
+    '--output',
+    outputPath,
+    '--evidence-root',
+    root,
+  ]);
+  return { earlier, inputPath, migrations, outputPath, result };
+}
+
+describe('migration inventory collector', () => {
+  it('sorts and hashes migrations without rewriting them', async () => {
+    const fixture = await createFixtureInventory();
+    expect(fixture.result).toEqual({
+      code: 0,
+      stderr: '',
+      stdout: 'MIGRATION_INVENTORY_CREATED\n',
+    });
+    const inventory = JSON.parse(
+      await readFile(fixture.outputPath, 'utf8'),
+    ) as {
+      aggregate_counts: Record<string, number>;
+      custom_roles: string[];
+      repo_migrations: { filename: string; sha256: string }[];
+      storage: { bucket: string }[];
+    };
+    expect(inventory.repo_migrations).toEqual([
+      {
+        filename: '20260806000100_earlier.sql',
+        sha256: sha256(fixture.earlier),
+      },
+      {
+        filename: '20260806000200_later.sql',
+        sha256: sha256('select 2;\n'),
+      },
+    ]);
+    expect(inventory.aggregate_counts).toEqual({
+      profiles: 1,
+      quiz_sessions: 2,
+    });
+    expect(inventory.storage.map(({ bucket }) => bucket)).toEqual([
+      'alpha',
+      'zeta',
+    ]);
+    expect(inventory.custom_roles).toEqual(['admin_role', 'teacher_role']);
+    expect(
+      await readFile(
+        resolve(fixture.migrations, '20260806000100_earlier.sql'),
+        'utf8',
+      ),
+    ).toBe(fixture.earlier);
+  });
+
+  it('rejects row-shaped, secret-shaped, and migration-repair input', async () => {
+    const fixture = await createFixtureInventory();
+    const base = JSON.parse(
+      await readFile(fixture.inputPath, 'utf8'),
+    ) as Record<string, unknown>;
+
+    for (const mutation of [
+      { rows: [{ id: 1 }] },
+      { database_password: 'synthetic' },
+      {
+        hosted_ledger: [
+          { version: '20260806000100', name: 'migration repair' },
+        ],
+      },
+    ]) {
+      await writeFile(
+        fixture.inputPath,
+        JSON.stringify({ ...base, ...mutation }),
+      );
+      const result = await run(createScript, [
+        '--environment',
+        'local',
+        '--input',
+        fixture.inputPath,
+        '--migrations-root',
+        fixture.migrations,
+        '--output',
+        fixture.outputPath,
+        '--evidence-root',
+        root,
+      ]);
+      expect(result.code).toBe(1);
+      expect(result.stderr).toBe('MIGRATION_INVENTORY_INVALID\n');
+    }
+  });
+});
+
+describe('migration inventory comparator', () => {
+  async function compare(
+    repoMutation: Record<string, unknown>,
+    targetMutation: Record<string, unknown>,
+    allowlist: unknown[] = [],
+  ) {
+    const fixture = await createFixtureInventory();
+    const base = JSON.parse(
+      await readFile(fixture.outputPath, 'utf8'),
+    ) as Record<string, unknown>;
+    const repoPath = resolve(root, 'repo.json');
+    const targetPath = resolve(root, 'target.json');
+    const allowlistPath = resolve(root, 'allowlist.json');
+    const outputPath = resolve(root, 'comparison.json');
+    await writeFile(repoPath, JSON.stringify({ ...base, ...repoMutation }));
+    await writeFile(targetPath, JSON.stringify({ ...base, ...targetMutation }));
+    await writeFile(
+      allowlistPath,
+      JSON.stringify({ schema_version: 1, exclusions: allowlist }),
+    );
+    const result = await run(compareScript, [
+      '--repo',
+      repoPath,
+      '--target',
+      targetPath,
+      '--allowlist',
+      allowlistPath,
+      '--output',
+      outputPath,
+      '--evidence-root',
+      root,
+    ]);
+    const output =
+      result.code === 0 || result.stdout.includes('MIGRATION_DRIFT_BLOCKED')
+        ? (JSON.parse(await readFile(outputPath, 'utf8')) as {
+            decision: string;
+            drift: { class: string }[];
+          })
+        : null;
+    return { output, result };
+  }
+
+  it('passes identical inventories with zero drift', async () => {
+    const { output, result } = await compare({}, {});
+    expect(result.code).toBe(0);
+    expect(output).toEqual({ schema_version: 1, decision: 'pass', drift: [] });
+  });
+
+  it.each([
+    [
+      'semantic_equivalent_version_filename',
+      {},
+      { hosted_ledger: [{ version: '20260806999999', name: 'earlier' }] },
+    ],
+    [
+      'hosted_only_untracked',
+      {},
+      { hosted_ledger: [{ version: '20260806999999', name: 'unknown' }] },
+    ],
+    ['repo_only_unapplied', {}, { hosted_ledger: [] }],
+  ])('classifies %s and blocks', async (classification, repo, target) => {
+    const { output, result } = await compare(repo, target);
+    expect(result.code).toBe(1);
+    expect(output?.decision).toBe('blocked');
+    expect(output?.drift.map(({ class: value }) => value)).toContain(
+      classification,
+    );
+  });
+
+  it('allows only reviewed provider-managed schema differences', async () => {
+    const targetHash = 'f'.repeat(64);
+    const without = await compare({}, { schema_sha256: targetHash });
+    expect(without.result.code).toBe(1);
+    expect(without.result.stderr).toBe('UNCLASSIFIED_SCHEMA_DRIFT\n');
+
+    const withExclusion = await compare({}, { schema_sha256: targetHash }, [
+      {
+        kind: 'schema_sha256',
+        repo_value: sha256('create table public.safe();\n'),
+        target_value: targetHash,
+        reason: 'Supabase managed schema metadata',
+        source:
+          'https://supabase.com/docs/guides/platform/migrating-within-supabase',
+      },
+    ]);
+    expect(withExclusion.result.code).toBe(0);
+    expect(withExclusion.output?.drift).toEqual([
+      { class: 'supabase_managed_schema_extension_difference' },
+    ]);
+  });
+
+  it('requires exact reviewed exclusions for provider-managed extensions', async () => {
+    const targetExtensions = ['pgcrypto', 'uuid-ossp', 'managed_ext'];
+    const without = await compare({}, { extensions: targetExtensions });
+    expect(without.result.code).toBe(1);
+    expect(without.result.stderr).toBe('UNCLASSIFIED_SCHEMA_DRIFT\n');
+
+    const reviewed = await compare({}, { extensions: targetExtensions }, [
+      {
+        kind: 'extension',
+        extension: 'managed_ext',
+        direction: 'target_only',
+        reason: 'Supabase managed extension',
+        source: 'https://supabase.com/docs/guides/database/extensions',
+      },
+    ]);
+    expect(reviewed.result.code).toBe(0);
+    expect(reviewed.output?.drift).toEqual([
+      { class: 'supabase_managed_schema_extension_difference' },
+    ]);
+  });
+});

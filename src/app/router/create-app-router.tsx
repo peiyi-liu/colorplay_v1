@@ -1,4 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
+import { AdminShell } from '../../features/admin/components/admin-shell';
+import { RequireAdminIdentity } from '../../features/admin/components/require-admin-identity';
+import { RequirePrivilegedSession } from '../../features/admin/components/require-privileged-session';
 import { RequireAuth } from '../../features/auth/components/require-auth';
 import { RequireRole } from '../../features/auth/components/require-role';
 import { ForgotPasswordPage } from '../../features/auth/pages/forgot-password-page';
@@ -187,6 +190,71 @@ export function createAppRouter() {
                       await import('../../features/classrooms/pages/teacher-student-progress-page');
                     return { Component: module.TeacherStudentProgressPage };
                   },
+                },
+              ],
+            },
+            {
+              element: <RequireAdminIdentity />,
+              children: [
+                {
+                  path: '/admin/mfa/enroll',
+                  lazy: () =>
+                    import('../../features/admin/pages/admin-mfa-enroll-page'),
+                },
+                {
+                  path: '/admin/mfa/challenge',
+                  lazy: () =>
+                    import('../../features/admin/pages/admin-mfa-challenge-page'),
+                },
+                {
+                  element: <RequirePrivilegedSession />,
+                  children: [
+                    {
+                      element: <AdminShell />,
+                      children: [
+                        {
+                          path: '/admin',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-overview-page'),
+                        },
+                        {
+                          path: '/admin/access/admins',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-access-admins-page'),
+                        },
+                        {
+                          path: '/admin/access/invitations',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-access-invitations-page'),
+                        },
+                        {
+                          path: '/admin/access/sessions',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-access-sessions-page'),
+                        },
+                        {
+                          path: '/admin/data/:domain/:resource',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-data-browser-page'),
+                        },
+                        {
+                          path: '/admin/data/:domain/:resource/:rowKey',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-data-detail-page'),
+                        },
+                        {
+                          path: '/admin/audit',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-audit-page'),
+                        },
+                        {
+                          path: '/admin/health',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-health-page'),
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
             },
