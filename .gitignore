@@ -34,3 +34,12 @@ artifacts/content/
 
 # 個人機器層設定（enabledPlugins、個人 permission 覆寫），不共用
 .claude/settings.local.json
+
+# 工具快取／本機 plugin 狀態，不共用
+.playwright-mcp/
+.pnpm-store/
+.remember/
+
+# 舊設計參考資料，保留在本機但不進版控
+/live/
+/live-v2/
