@@ -10,7 +10,7 @@ const authLoginSource = readFileSync(
 
 describe('teacher account login contract', () => {
   it('authenticates teachers by account, password, and server-owned role only', () => {
-    expect(authLoginSource).toContain('if (profile.role !== portalValue)');
+    expect(authLoginSource).toContain('profile.role !== portalValue');
     expect(authLoginSource).toContain('grant_type=password');
     expect(authLoginSource).not.toMatch(/classCode|normalizeClassCode/u);
   });

@@ -68,16 +68,16 @@ describe('Supabase API key migration', () => {
     });
   });
 
-  it('keeps the destructive staging bootstrap on new API keys', () => {
+  // 2026-08-06 commit e57808c 刻意退役這支腳本（改用 rebuild-staging.sh +
+  // 專屬 contract test），staging-runbook.md 的 ADR-0002 banner 明文禁止
+  // 復活「直接呼叫 Management API、無 owner-approval gate」的做法——所以
+  // 這裡驗證的是「退役狀態沒被復活」，不是「腳本本身用了新 API key」。
+  it('keeps the retired staging bootstrap script retired', () => {
     const source = readFileSync(
       resolve(process.cwd(), 'scripts/staging/bootstrap-staging-db.mjs'),
       'utf8',
     );
-    expect(source).toContain("key.type === 'secret'");
-    expect(source).toContain("key.type === 'publishable'");
-    expect(source).toContain('SUPABASE_SECRET_KEY: secretKey');
-    expect(source).not.toContain('SUPABASE_SERVICE_ROLE_KEY:');
-    expect(source).not.toContain("key.name === 'service_role'");
-    expect(source).not.toContain('VITE_SUPABASE_ANON_KEY=${publishableKey}');
+    expect(source).toContain('UNSAFE_BOOTSTRAP_RETIRED');
+    expect(source).toContain('process.exitCode = 1');
   });
 });
