@@ -23,22 +23,23 @@ import { startQuizFromLobby } from './helpers/quiz';
 // The quiz chapter must show every question in a single run so hint and
 // mistake targets are deterministic: chapter 4 has fewer questions than the
 // ten-question template ceiling, so all of them always appear.
+// These content-availability checks used to throw at module scope, which
+// crashes Playwright's test *discovery* for the whole tests/e2e directory
+// the moment content rollout hasn't reached this phase-gate's assumptions
+// yet (e.g. chapter-4 currently has 0 bank_kind='chapter' questions, not
+// 1-10) -- breaking every other spec file's ability to even be listed.
+// This test already requires PLAYWRIGHT_ACCEPTANCE=on to run at all, so
+// the guards belong inside the test body instead, where a stale/not-yet-
+// ready fixture only fails this one gate rather than the whole suite.
 const quizChapter = CONTENT_MANIFEST.find(
   ({ chapterCode, questionCount }) =>
     chapterCode === 'chapter-4' && questionCount > 0 && questionCount <= 10,
 );
-if (!quizChapter) throw new Error('LEARNING_EXPERIENCE_QUIZ_CHAPTER_MISSING');
 const QUIZ_CHAPTER_TITLE = '色彩與視覺';
 
 const reviewSubtopic = REVIEW_MANIFEST.find(
   ({ cardCount, chapterCode }) => chapterCode === 'chapter-3' && cardCount > 0,
 );
-if (!reviewSubtopic) {
-  throw new Error('LEARNING_EXPERIENCE_REVIEW_SUBTOPIC_MISSING');
-}
-if (!REVIEW_MEDIA_CARD) {
-  throw new Error('LEARNING_EXPERIENCE_MEDIA_CARD_MISSING');
-}
 const mediaCard = REVIEW_MEDIA_CARD;
 const REVIEW_CHAPTER_TITLE = '色彩表示';
 
@@ -89,6 +90,13 @@ test('Learning Experience phase gate', async ({
   }
   if (!baseURL) {
     throw new Error('LEARNING_EXPERIENCE_BASE_URL_REQUIRED');
+  }
+  if (!quizChapter) throw new Error('LEARNING_EXPERIENCE_QUIZ_CHAPTER_MISSING');
+  if (!reviewSubtopic) {
+    throw new Error('LEARNING_EXPERIENCE_REVIEW_SUBTOPIC_MISSING');
+  }
+  if (!mediaCard) {
+    throw new Error('LEARNING_EXPERIENCE_MEDIA_CARD_MISSING');
   }
 
   const teacherContext = await browser.newContext({ baseURL });

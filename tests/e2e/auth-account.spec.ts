@@ -100,7 +100,7 @@ test('student registers with OTP, signs in by account, and resets the password',
 
   await page.getByLabel('帳號（學號）').fill(account);
   await page.getByLabel('密碼', { exact: true }).fill(password);
-  await page.getByLabel('密碼確認').fill(password);
+  await page.getByLabel('密碼確認', { exact: true }).fill(password);
   const registrationResponsePromise = page.waitForResponse((response) =>
     response.url().endsWith('/functions/v1/student-register'),
   );
