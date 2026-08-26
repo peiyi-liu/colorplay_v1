@@ -46,3 +46,13 @@ artifacts/content/
 
 # blook 角色原始高畫質素材（production 用的縮圖在 public/assets/blooks/）
 /blook-art-originals/
+
+# git worktree 本體（每個都是完整 checkout，數 GB 起跳，絕不能進版控）
+/.worktrees/
+/.claude/worktrees/
+
+# 設計比對截圖／參考圖，只做路徑紀錄用，不進版控（batch3／batch4 是既有例外，維持已追蹤狀態）
+artifacts/design-audit/*
+!artifacts/design-audit/batch3/
+!artifacts/design-audit/batch4/
+artifacts/ref/
