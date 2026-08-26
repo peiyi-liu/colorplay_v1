@@ -94,10 +94,13 @@ values
   );
 
 -- Chapters 1 and 2 already carry real published content in addition to
--- this fixture's own question, and chapter mastery is computed across a
--- chapter's whole published question pool. Size each quiz template to
--- cover every published question so a fully-correct run reaches 100%
--- mastery instead of a stale hardcoded count going stale as content grows.
+-- this fixture's own question, but chapter_content_is_available() only
+-- counts bank_kind = 'chapter' toward a chapter-level template's
+-- question_count (content_pool_routing.sql routes section/chapter/live
+-- pools separately) -- the chapter's other published section-kind
+-- questions don't count here. Size each quiz template to cover only
+-- the chapter-kind pool so a fully-correct run reaches 100% mastery
+-- instead of a stale hardcoded count going stale as content grows.
 update public.quiz_templates t
 set question_count = (
   select count(*)
@@ -108,6 +111,7 @@ set question_count = (
     and q.status = 'published'
     and st.status = 'published'
     and se.status = 'published'
+    and q.bank_kind = 'chapter'
 )
 where t.chapter_id in (
   '21000000-0000-0000-0000-000000000001',
@@ -369,7 +373,16 @@ select is(
       '21000000-0000-0000-0000-000000000002'
     )
   ),
-  5,
+  (
+    select count(*)::integer
+    from public.review_cards card
+    join public.subtopics st on st.id = card.subtopic_id
+    join public.sections se on se.id = st.section_id
+    where se.chapter_id = '21000000-0000-0000-0000-000000000002'
+      and se.status = 'published'
+      and st.status = 'published'
+      and card.status = 'published'
+  ),
   'an unlocked chapter returns its published review tree'
 );
 
