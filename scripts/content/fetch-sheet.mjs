@@ -4,7 +4,7 @@
  * xlsx，轉成既有匯入器可直接讀取的 CSV：
  *   artifacts/content/question-bank.xlsx — 原始快照（不進 git）
  *   artifacts/content/questions.csv      — 「各單元隨機測驗題庫」→ import-questions.mjs 10 欄格式
- *   artifacts/content/review-cards.csv   — 「各單元複習大廳」→ import-review-cards.mjs 5 欄格式
+ *   artifacts/content/review-cards.csv   — 「各單元複習大廳」→ import-review-cards.mjs 7 欄格式
  * questions.csv 合併 QB／CR／LT；stable code 由 importer 分流為 section／chapter／live。
  *
  * 表頭以「去除所有空白」後比對，容忍欄名尾空格（如「選項 A 」「正確答案 」）。
@@ -287,21 +287,33 @@ export function extractReviewRows(workbook) {
   }
   const headerRow = aoa[0];
   const named = {
+    attachment: headerIndex(headerRow, ['附件']),
     content: headerIndex(headerRow, ['卡片內容']),
     group: headerIndex(headerRow, ['子主題']),
+    identifier: headerIndex(headerRow, ['複習卡序號']),
     section: headerIndex(headerRow, ['小節']),
     sectionTitle: headerIndex(headerRow, ['小節標題']),
     // Sheet 改版後子主題標題直接作為卡片標題（卡片內容的標題＝子主題標題），
     // 「卡片標題」欄已移除；保留舊名作為向前相容 fallback。
     title: headerIndex(headerRow, ['子主題標題', '卡片標題']),
-    identifier: headerIndex(headerRow, ['複習卡序號']),
-    attachment: headerIndex(headerRow, ['附件']),
   };
-  const missing = Object.entries(named)
-    .filter(
-      ([key, index]) =>
-        key !== 'attachment' && key !== 'sectionTitle' && index < 0,
-    )
+  // v2 Sheet 有全域複習卡序號欄（identifier），v1 舊版沒有——沒有時只要求
+  // 內容本身完整，identifier／attachment／sectionTitle 三者皆非必要。
+  const v2Sheet = named.identifier >= 0;
+  const required = v2Sheet
+    ? { ...named }
+    : {
+        content: named.content,
+        group: named.group,
+        section: named.section,
+        title: named.title,
+      };
+  if (v2Sheet) {
+    delete required.attachment;
+    delete required.sectionTitle;
+  }
+  const missing = Object.entries(required)
+    .filter(([, index]) => index < 0)
     .map(([key]) => key);
   if (missing.length > 0) {
     return {
@@ -325,7 +337,7 @@ export function extractReviewRows(workbook) {
           ? `${chapter}-${section}${sectionTitle ? ` ${sectionTitle}` : ''}`
           : section;
       return [
-        cellText(raw[named.identifier]),
+        named.identifier >= 0 ? cellText(raw[named.identifier]) : '',
         chapter,
         sectionLabel,
         cellText(raw[named.group]),

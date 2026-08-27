@@ -18,7 +18,7 @@ import { buildReviewCardImport } from '../../scripts/content/import-review-cards
 import { parseCsv } from '../../scripts/content/import-shared.mjs';
 
 const MESSY_QUESTION_HEADER = [
-  '題號',
+  '題庫序號',
   '章節',
   '章節標題',
   '小節',

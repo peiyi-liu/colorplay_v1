@@ -238,7 +238,11 @@ for (const width of WIDTHS) {
       expect(overflow.scrollWidth, scenario).toBeLessThanOrEqual(
         overflow.clientWidth,
       );
-      await expect(page.getByRole('heading').first()).toBeVisible();
+      if (scenario === 'live-session' && width < 1024) {
+        await expect(page.getByRole('alert')).toHaveText('投影視窗過小');
+      } else {
+        await expect(page.getByRole('heading').first()).toBeVisible();
+      }
       if (scenario === 'classes' && width === 393) {
         const classroom = page.getByTestId('classroom-disclosure').first();
         await expect(classroom).not.toHaveAttribute('open', '');

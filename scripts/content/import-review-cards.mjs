@@ -10,7 +10,8 @@
  *   node scripts/content/import-review-cards.mjs --url   # 直接抓公開試算表
  *
  * 資料規則：試算表為主來源；合併儲存格造成的空白「章節編號／小節」自動承上。
- * 缺必填欄位的列跳過並列入報告；結構性錯誤（未對應章節、重複卡片）中止匯入。
+ * 複習卡序號是全域 identifier，同一子主題可有多張同標題卡片。缺必填欄位的列跳過
+ * 並列入報告；結構性錯誤（未對應章節、重複 identifier）中止匯入。
  */
 import console from 'node:console';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -81,7 +82,7 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
     const chapter = carriedChapter;
     const sectionLabel = carriedSection;
 
-    if (groupLabel === '' && title === '') {
+    if (identifier === '' && groupLabel === '' && title === '') {
       if (content === '') return;
       if (!currentCard) {
         skipped.push({
@@ -164,6 +165,7 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
       id: deterministicUuid('review-card', identifier),
       stableCode: identifier,
       identity,
+      identifier,
       chapterCode,
       sectionKey,
       sectionLabel,
@@ -338,10 +340,47 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
   }
   if (cardValues.length > 0) {
     lines.push(
-      'insert into public.review_cards (id, subtopic_id, stable_code, group_label, title, content, version, status, requires_recompletion, sort_order)',
+      'insert into public.review_cards as existing (id, subtopic_id, stable_code, group_label, title, content, version, status, requires_recompletion, sort_order)',
       'values',
-      `${cardValues.join(',\n')}`,
-      'on conflict do nothing;',
+      cardValues.join(',\n'),
+      'on conflict (id) do update',
+      'set subtopic_id = excluded.subtopic_id,',
+      '    stable_code = excluded.stable_code,',
+      '    group_label = excluded.group_label,',
+      '    title = excluded.title,',
+      '    content = excluded.content,',
+      '    version = case',
+      '      when existing.group_label is distinct from excluded.group_label',
+      '        or existing.title is distinct from excluded.title',
+      '        or existing.content is distinct from excluded.content',
+      '      then existing.version + 1',
+      '      else existing.version',
+      '    end,',
+      '    status = excluded.status,',
+      '    requires_recompletion = case',
+      "      when existing.status = 'published' and (",
+      '        existing.group_label is distinct from excluded.group_label',
+      '        or existing.title is distinct from excluded.title',
+      '        or existing.content is distinct from excluded.content',
+      '      ) then true',
+      '      else excluded.requires_recompletion',
+      '    end,',
+      '    sort_order = excluded.sort_order,',
+      '    updated_at = clock_timestamp();',
+      '',
+    );
+  }
+
+  const syncedCardIds = [
+    ...cards.map((card) => card.id),
+    ...(firstSection
+      ? [deterministicUuid('review-card', DRAFT_PROBE_CARD.stableCode)]
+      : []),
+  ];
+  if (syncedCardIds.length > 0) {
+    lines.push(
+      'delete from public.review_card_media',
+      `where review_card_id in (${syncedCardIds.map(sqlText).join(', ')});`,
       '',
     );
   }
@@ -360,6 +399,24 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
       'values',
       `${mediaValues.join(',\n')}`,
       'on conflict do nothing;',
+      '',
+    );
+  }
+  if (cards.length > 0) {
+    lines.push(
+      'update public.review_cards as card',
+      "set status = 'archived', updated_at = clock_timestamp()",
+      "where card.stable_code like 'sheet-card-%'",
+      "  and card.stable_code <> 'sheet-card-draft-probe'",
+      `  and card.stable_code not in (${cards.map((card) => sqlText(card.stableCode)).join(', ')})`,
+      '  and exists (',
+      '    select 1',
+      '    from public.subtopics as subtopic',
+      '    join public.sections as section on section.id = subtopic.section_id',
+      '    join public.chapters as chapter on chapter.id = section.chapter_id',
+      '    where subtopic.id = card.subtopic_id',
+      "      and chapter.stable_code = 'chapter-3'",
+      '  );',
       '',
     );
   }

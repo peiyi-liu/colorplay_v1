@@ -34,6 +34,7 @@ describe('review card import', () => {
     expect(result.cards).toHaveLength(2);
     expect(result.cards[0]).toMatchObject({
       chapterCode: 'chapter-3',
+      identifier: 'RC3101',
       sectionKey: '3-1',
       groupLabel: '色彩的分類',
       title: '有彩色與無彩色',
@@ -42,14 +43,9 @@ describe('review card import', () => {
     });
     expect(result.cards[0]?.content).toBe('第一行\n\n第二行');
     expect(result.seedSql).toContain("'published'");
-    expect(result.seedSql).toContain('on conflict (id) do nothing');
+    expect(result.seedSql).toContain('on conflict (id) do update');
+    expect(result.seedSql).toContain('delete from public.review_card_media');
     expect(result.seedSql).toContain('CONTENT_VERSION_REQUIRED');
-    expect(result.seedSql).not.toContain(
-      'on conflict (id) do update set subtopic_id = excluded.subtopic_id',
-    );
-    expect(result.seedSql).not.toContain(
-      'delete from public.review_card_media',
-    );
   });
 
   it('derives identical deterministic identifiers on re-import', () => {
@@ -122,7 +118,7 @@ describe('review card import', () => {
     });
 
     expect(result.problems).toHaveLength(1);
-    expect(result.problems[0]).toContain('重複');
+    expect(result.problems[0]).toContain('複習卡序號「RC3101」重複');
   });
 
   it('allows multiple cards with the same title when RC identifiers differ', () => {
@@ -253,5 +249,20 @@ describe('review card import', () => {
     expect(result.seedSql).toContain(
       "'review-card-media/chapter-3/P304.webp', 'P304 色彩體系示意圖', 2",
     );
+  });
+
+  it('emits a transaction-safe chapter-3 sync for repeatable staging import', () => {
+    const csv = csvOf([
+      'RC3101,3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,內容甲',
+    ]);
+    const result = buildReviewCardImport({
+      csvText: csv,
+      fixes: fixesWithoutMedia,
+    });
+
+    expect(result.seedSql).toContain('on conflict (id) do update');
+    expect(result.seedSql).toContain('delete from public.review_card_media');
+    expect(result.seedSql).toContain("set status = 'archived'");
+    expect(result.seedSql).toContain("chapter.stable_code = 'chapter-3'");
   });
 });

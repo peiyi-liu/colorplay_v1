@@ -3,6 +3,7 @@ import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { Card } from '../../../components/ui/card';
 import { ChapterMap } from '../components/chapter-map';
+import type { StudentChapterMapEntry } from '../api/chapter-map';
 import type { StudentMapShellContext } from '../context/student-map-shell-context';
 import { useStudentChapterMap } from '../hooks/use-chapter-map';
 
@@ -35,6 +36,24 @@ export function LobbyPage() {
   const requestedChapter = searchParams.get('chapter') ?? undefined;
 
   return (
+    <LobbyPageView
+      chapters={chapterMap.data.chapters}
+      equippedBlook={shell?.equippedBlook ?? null}
+      {...(requestedChapter ? { requestedChapter } : {})}
+    />
+  );
+}
+
+export function LobbyPageView({
+  chapters,
+  equippedBlook,
+  requestedChapter,
+}: Readonly<{
+  chapters: readonly StudentChapterMapEntry[];
+  equippedBlook: StudentMapShellContext['equippedBlook'];
+  requestedChapter?: string;
+}>) {
+  return (
     <section
       aria-labelledby="learning-map-title"
       className="lobby lobby--map-fullscreen scene-night"
@@ -44,9 +63,9 @@ export function LobbyPage() {
           <h1 id="learning-map-title">學習地圖</h1>
         </header>
         <ChapterMap
-          chapters={chapterMap.data.chapters}
-          equippedBlook={shell?.equippedBlook ?? null}
-          initialChapterId={requestedChapter}
+          chapters={chapters}
+          equippedBlook={equippedBlook}
+          {...(requestedChapter ? { initialChapterId: requestedChapter } : {})}
         />
       </div>
     </section>

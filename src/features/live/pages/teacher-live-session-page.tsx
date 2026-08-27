@@ -35,10 +35,22 @@ export function TeacherLiveSessionPage({
   const transition = useLiveTransition(sessionId, repository);
   const [transitionError, setTransitionError] = useState<string>();
 
-  if (session.isPending) return <RouteLoading withinMain />;
+  if (session.isPending) {
+    return (
+      <section
+        aria-label="Live 主持工作階段"
+        className="teacher-live-session-page"
+      >
+        <RouteLoading withinMain />
+      </section>
+    );
+  }
   if (session.isError) {
     return (
-      <section className="route-panel route-panel--overture">
+      <section
+        aria-label="Live 主持工作階段"
+        className="route-panel route-panel--overture teacher-live-session-page teacher-workshop-page"
+      >
         <h1>Live 主持台</h1>
         <p role="alert">找不到這場課堂挑戰，或你不是主持人。</p>
         <Link className="primary-action" to="/teacher/live">
@@ -80,7 +92,10 @@ export function TeacherLiveSessionPage({
   };
 
   return (
-    <>
+    <section
+      aria-label="Live 主持工作階段"
+      className="teacher-live-session-page"
+    >
       {transitionError ? <p role="alert">{transitionError}</p> : null}
       <LivePresenter
         footerActions={[
@@ -123,6 +138,6 @@ export function TeacherLiveSessionPage({
         transitionPending={transition.isPending}
         {...(repository ? { repository } : {})}
       />
-    </>
+    </section>
   );
 }

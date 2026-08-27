@@ -23,6 +23,7 @@ import type {
   OwnedClassroom,
   StudentProgressSnapshot,
 } from '../../classrooms/types';
+import { LivePresenterHarness } from '../../live/components/live-presenter.harness';
 import { TeacherLivePage } from '../../live/pages/teacher-live-page';
 import { TeacherLiveReportPage } from '../../live/pages/teacher-live-report-page';
 import type { TeacherContentRepository } from '../api/teacher-content-repository';
@@ -47,6 +48,7 @@ export type TeacherRoutesHarnessScenario =
   | 'live-podium'
   | 'live-round'
   | 'live-report'
+  | 'live-session'
   | 'menu-avatar'
   | 'menu-errors'
   | 'questions'
@@ -63,6 +65,7 @@ export const TEACHER_ROUTES_HARNESS_SCENARIOS: readonly TeacherRoutesHarnessScen
     'live-podium',
     'live-round',
     'live-report',
+    'live-session',
     'menu-avatar',
     'menu-errors',
     'questions',
@@ -92,6 +95,7 @@ const routeForScenario: Readonly<
   'classroom-detail': `/teacher/classes/${CLASSROOM_ID}`,
   live: '/teacher/live',
   'live-report': `/teacher/live/${TEACHER_HARNESS_SESSION_ID}/report`,
+  'live-session': `/teacher/live/${TEACHER_HARNESS_SESSION_ID}`,
   questions: `/teacher/questions?classroomId=${CLASSROOM_ID}`,
   'student-progress': `/teacher/classes/${CLASSROOM_ID}/members/${MEMBER_REF}`,
 };
@@ -448,6 +452,18 @@ export function TeacherRoutesHarness({
             menu={teacherMenuFixture}
             repository={teacherContentRepositoryFixture()}
           />
+        ) : scenario === 'live-session' ? (
+          <section
+            aria-label="Live 主持工作階段"
+            className="teacher-live-session-page"
+          >
+            <LivePresenterHarness
+              optionLength={21}
+              pending={false}
+              promptLength={36}
+              scenario="reveal-boundary"
+            />
+          </section>
         ) : (
           <TeacherStudentProgressPage
             classroomId={CLASSROOM_ID}

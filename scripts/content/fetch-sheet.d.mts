@@ -19,6 +19,16 @@ export type SheetQuestionRow = Readonly<{
   source: 'chapter' | 'live' | 'section';
 }>;
 
+export type SheetReviewRow = readonly [
+  identifier: string,
+  chapter: string,
+  section: string,
+  group: string,
+  title: string,
+  content: string,
+  attachment: string,
+];
+
 export type SheetPlaceholderRow = Readonly<{
   chapter: string;
   code: string;
@@ -45,14 +55,14 @@ export function extractLiveRows(workbook: XLSX.WorkBook): Readonly<{
 
 export function extractReviewRows(workbook: XLSX.WorkBook): Readonly<{
   problems: readonly string[];
-  rows: readonly (readonly string[])[];
+  rows: readonly SheetReviewRow[];
 }>;
 
 export function toCsv(aoa: readonly (readonly unknown[])[]): string;
 
 export function toQuestionsCsv(rows: readonly SheetQuestionRow[]): string;
 
-export function toReviewCardsCsv(rows: readonly (readonly string[])[]): string;
+export function toReviewCardsCsv(rows: readonly SheetReviewRow[]): string;
 
 export function loadRemoteWorkbook(
   options: Readonly<{ fetchImpl?: typeof globalThis.fetch }>,

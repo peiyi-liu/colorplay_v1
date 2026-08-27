@@ -20,6 +20,7 @@ export const ROUTE_SCENARIOS = [
   'classroom-detail',
   'live',
   'live-report',
+  'live-session',
   'student-progress',
 ] as const;
 
