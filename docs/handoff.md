@@ -1235,3 +1235,48 @@
 - 下一步：本批（image-perf ＋ phase5f-u1，含之前已推斷等同、免重複合併的 `phase6/jrpg-generated-board-ui`／`integration/jrpg-student-teacher-20260814`）5 支分支整合到此告一段落，等 owner 看完整合報告核准後才 push。Push 完成後：① Phase 0（PR #1）依原計畫獨立處理；② 上述 100+ 個 e2e 過時斷言排一個獨立任務逐一校正；③ 4 個共用 module-throw 寫法的 phase-gate 檔案建議之後也一併搬進 test body，避免下次踩到同一種目錄級崩潰。
 - Blocker／待決策：無阻擋本次合併本身的 blocker；e2e 全量校正的排程與優先順序待 owner 裁定。
 - 相關檔案／commit：`1d312bc`（phase5f-u1 合併）、`4001bda`（viewport-warning 修復＋harness spec 重寫）、`083d940`（兩個 image-perf 期契約測試修正）、`14b0f53`（047 pgTAP bank_kind／複習卡片數量修正）、`47169d3`（e2e 目錄崩潰修復＋密碼確認 selector 修正）。
+
+## 2026-08-27 16:11 [Codex] — 複習卡 Markdown 匯入／學生顯示／本機即時預覽完成（未發布）
+
+- 做了什麼：在 `codex/review-card-ui-update`、固定起點 `f0638b04d74a8a5071ceb36e7a2369527dc5d0b7` 上完成未提交的本機第一階段。採用開源 `react-markdown` + `remark-gfm`，新增共用 Markdown 編譯／驗證契約，讓 Google Sheet 複習內容可使用標題、粗體、清單、引用、表格及 `![替代文字](review-media:P301)` 形式的行內圖片；匯入器會把媒體代號轉為環境無關的 private Storage path，拒絕 raw HTML、外部圖片 URL、缺少 mapping／alt 不符、超過 5000 字或每卡超過 3 張圖片。學生閱讀頁使用同一套 renderer，圖片仍經既有 private Storage signed URL resolver，行內引用不再於文章末尾重複顯示，舊資料未寫行內引用時仍保留末尾媒體相容行為；另補上手機字級及長表格的容器內捲動。新增獨立本機即時預覽 harness，桌面為左右編輯／預覽、手機為分頁切換，可選本機圖片建立最多 3 筆暫時 mapping；不寫入資料庫，也未加入 Admin。
+- 驗證：scoped Vitest（排除其他 worktree／store 重複發現）5 檔／47 tests 全綠；`pnpm lint`、`pnpm build` 全綠；以桌面與 390px 手機 viewport 實際檢查即時預覽、語意標題／表格／圖片 alt、mobile tabs 與 console（無 error/warning）。本輪未執行 `pnpm test:db`、Supabase reset 或任何 hosted 操作。
+- 下一步：owner 先確認正式內容與版本發布範圍。既有已發布卡片不可直接被 import SQL 覆寫，正式上 Staging 前需決定 `requires_recompletion` 並走 `publish_review_card`；同時補齊 RC3103／RC3201／RC3202 的真實 Storage 資產與 mapping。`review_card_media` metadata／Storage policy 對鎖定章節的繞過風險仍存在，本次未修改。
+- 狀態：HEAD 未變、分支無 upstream；本輪沒有 commit、push 或 deploy。Phase 0／1 保護路徑未修改。
+
+## 2026-08-27 21:31 [Codex] — 複習卡 H1 與單一螢光標記補強完成（未發布）
+
+- 做了什麼：修正共用學生／本機 renderer 的 element allowlist，讓標準 Markdown `# 標題` 產生真正的語意化 H1，並依學生端字型規格使用 `--font-pixel-tc`。加入 MIT 開源套件 `remark-flexible-markers@1.3.6`，將 `==重點文字==` 顯示為固定 ColorPlay 淡黃底／深色字的 `<mark>`；raw HTML 與任意 hex 仍不開放。匯入 compiler 新增負向契約，拒絕套件額外支援但產品未公開的 `=r=文字==` 顏色分類，維持單一、安全、可預期的螢光樣式。本機預覽範例與語法提示同步更新。
+- 驗證：依 TDD 先重現 H1 被解包成純文字及 `==…==` 原樣顯示，再修至綠；最終 scoped Vitest 5 檔／50 tests 全綠，直接異動 TS／TSX scoped ESLint、來源檔 scoped Prettier check、`pnpm build` 通過。`docs/handoff.md` 的全檔 Prettier check 仍會指出兩處本輪之前已存在的舊格式差異（約第 286、1211 行），本輪不改寫歷史紀錄。瀏覽器於桌面與 390×844 手機確認 H1 為 `H1`（Cubic 11、約 26px）、螢光為 `MARK`（淡黃底深色字）、手機預覽可見且 console 無 warning/error。
+- Review：依 M 級規則完成唯一一次雙軸 review；Spec 0 finding，Standards 2 findings（標題字型、套件隱藏分類語法）均於同輪修正，不再進行第二輪 review；Security axis 因未碰 trust boundary 而略過。
+- 狀態：仍在 `codex/review-card-ui-update`，HEAD 保持 `f0638b04d74a8a5071ceb36e7a2369527dc5d0b7`；沒有 commit、push、deploy、`pnpm test:db`、Supabase reset 或 hosted 操作。Google Sheet 必須寫 `# 標題`（井號後有空格），`#標題` 不是標準 Markdown H1。
+
+## 2026-08-28 00:23 [Codex] — P301～P310 本機 WebP 批次準備工具與成品完成（未上傳）
+
+- 做了什麼：新增 `scripts/assets/prepare-review-media.mjs` 與 `pnpm review-media:prepare`，可批次讀取 `P301.jpg`／`P301-v2.png` 類型的教材圖，在既有 512 KiB／2400px contract 下以 Playwright Canvas 輸出 WebP。工具優先保留原尺寸並在品質上限 0.94 內找最高可用畫質，超標才等比縮小；canonicalize 附件代號／版本檔名、拒絕覆寫既有圖片或 manifest，並輸出含來源、尺寸、大小、品質的 `review-media-manifest.json`。匯入指南同步補上本機命令與正確 gate 語法。
+- 真實成品：讀取 `/Users/guanyucheng/Downloads/Colorplay 文件/Pei-game RCP/JPG` 的 P301～P310，寫入新的 `/Users/guanyucheng/Downloads/Colorplay 文件/Pei-game RCP/WEBP/optimized`；既有 `WEBP/P301.webp`～`P305.webp` 未覆寫。10 張皆保留原尺寸、品質約 0.937，輸出 67～376 KiB；P304／P305／P307 人工視覺抽查文字與格線清楚，全部再次通過既有 review-media gate。
+- 驗證：TDD 契約 3/3 通過（轉檔／manifest、2500px 等比縮至 2400px＋版本檔名正規化、防覆寫）；scoped ESLint、Prettier、`pnpm typecheck`、`git diff --check` 全綠。唯一一次雙軸 review 的 Standards 4 項／Spec 2 項均於同輪修正；Security axis 因未碰 trust boundary 略過。
+- 下一步：圖片仍只在本機，尚未上傳 Supabase。P301～P305 已有既有卡片對照；P306～P310 必須由 owner 提供／確認 Sheet stable code、每張繁中 alt 與排序後，才可建立 Storage mapping。正式 Staging 發布仍須走 private Storage 與版本化 `publish_review_card`，不得直接覆寫已發布卡片。
+- 狀態：仍在 `codex/review-card-ui-update`，HEAD 保持 `f0638b04d74a8a5071ceb36e7a2369527dc5d0b7`；沒有 commit、push、deploy、`pnpm test:db`、Supabase reset 或 hosted 操作。Phase 0／1 保護路徑未修改。
+
+## 2026-08-28 00:39 [Codex] — P301～P310 納入 private-media 專案來源並記錄 Admin 後續範圍（待上傳授權）
+
+- 做了什麼：將已驗證的 P301～P310 WebP 與 manifest 複製到 `scripts/assets/source/review-card-media/chapter-3/`，逐檔 sha256 與 Downloads 成品一致。刻意不放 `public/`／`src/assets`，避免 private 教材進 client bundle。新增目錄 README，註明 Storage object path、版本檔名、防覆寫與 P306～P310 mapping 未定邊界；另新增 `docs/content/review-card-admin-media-backlog.md`，記錄未來 Admin 的選檔、即時預覽、壓縮 gate、alt／排序、private upload、版本化 publish，以及後端必須重驗證的信任邊界。現有 Playwright CLI 只作本機流程，不宣稱可直接匯入瀏覽器。
+- 驗證：10 張 project source 全部通過既有 review-media gate；scoped Prettier、`git diff --check`、全 checkout `pnpm typecheck`、排除其他 worktree/store 後的全 repo ESLint、production build 全綠。複習卡／圖片相關 8 檔 66 tests 全綠。完整目前-checkout Vitest 為 211/212 檔、1581/1582 tests；唯一失敗是受保護且既有的 `tests/contracts/phase0-restore.test.ts` 本機 restore code=1，與本輪無關，未修改 Phase 0。裸 `pnpm test` 另會錯誤發現 `.claude/worktrees/**`／`.pnpm-store/**` 的多份 checkout；以 exclude 隔離後取得上述真實結果。
+- Admin 前置風險：正式開放 Admin 上傳／發布前，必須先修正 `review_card_media` metadata／Storage policy 只依 published 判斷、可能讓鎖定章節媒體繞過 canonical access 的問題。P306～P310 仍需 owner 確認 Sheet stable code、繁中 alt 與排序。
+- 下一步：等待 owner 明確授權是否把本批圖片上傳至 Staging `onkxnkzeixpezetkmocf` private `review-card-media/chapter-3/`。建議首次操作採 no-upsert：先唯讀盤點，已存在同名物件即停止／跳過，不覆寫；本步只上傳 Storage，不發布卡片、不改 DB mapping。
+- 狀態：HEAD／branch 未變；沒有 commit、push、deploy、`pnpm test:db`、Supabase reset 或 hosted 操作。Phase 0／1 保護路徑未修改。
+
+## 2026-08-28 00:50 [Codex] — Staging P301～P305 同路徑優化替換完成，P306～P310 Storage 上傳完成
+
+- 授權與範圍：owner 明確要求覆寫之前圖片。先以 linked project 與唯讀 SQL 確認目標為 Staging `onkxnkzeixpezetkmocf`，private bucket `review-card-media`，目前五筆 published mapping 實際指向 `chapter-3/P301-v2.webp`～`P305-v2.webp`；資料庫與發布版本不在本次 mutation 範圍。
+- 操作：覆寫前把既有 P301～P305 的無尾碼／`-v2` 共 10 個 objects 備份到 `/private/tmp/colorplay-review-card-media-backup-20260828`。接著以官方 Storage recursive upload 的 `x-upsert` 行為，將 project source P301～P305 同時寫入兩組既有路徑，並新增 P306～P310 無尾碼路徑，共 15 個 WebP。明確指定 `Content-Type: image/webp` 與 `Cache-Control: max-age=3600`。
+- 驗證：從 Staging 重新下載全部 15 個 objects 到獨立 `/private/tmp/colorplay-review-card-media-verify-20260828`；與待上傳目錄 `diff -rq` 為 0 差異，逐檔 SHA-256 相符，review-media WebP／512 KiB／2400px gate 通過。remote recursive list 精確列出 15 個目標。操作後唯讀 SQL 再確認 bucket `public=false`，五筆 current published media mapping 未改、仍指向 P301-v2～P305-v2。
+- 注意：Supabase 官方不建議一般改版覆寫同路徑，因 CDN edge 可能短暫保留舊內容；本次是 owner 明確授權的一次性圖片 bytes 替換。未來內容改版仍預設新版本檔名＋`publish_review_card`。P306～P310 目前只有 private Storage objects，尚未 mapping／發布。
+- 狀態：Staging Storage mutation 已完成；未修改 DB、未 deploy web、未 commit、未 push、未執行 `pnpm test:db` 或 Supabase reset。Phase 0／1 保護路徑未修改。
+
+## 2026-08-28 01:01 [Codex] — 複習卡 Staging 發布 preflight 完成，等待重讀政策裁定
+
+- 做了什麼：更新 Git 遠端 refs，確認 `codex/review-card-ui-update` 起點 `f0638b0` 與 `origin/feature/v2-major-update` 一致，並包含現行 `origin/staging` 歷史。唯讀確認 `staging.colorplayapp.com` 目前指向 Ready 的 `colorplay-staging-web` deployment。重抓 Google Sheet（8 張複習卡）後，初次 gate 發現 9 個阻擋；已依 Sheet Markdown 的圖片代號與 alt 補上 P301～P308 private Storage mapping，並把 Markdown compiler 字數上限由 5000 對齊資料庫既有 8000 字 contract（RC3203 為 5002 字）。
+- 驗證：Sheet gate 已收旂為結構錯誤 0／覆核提示 1（原有 QB4301）；Markdown／import contract 共 12 檔 146 tests 全綠，Prettier check 通過。唯讀 Staging SQL 確認 RC3101～RC3302 全 8 張的新內容 hash 都與 current published 不同，因此正式發布必須逐張走 `publish_review_card` 產生新版本。
+- Blocker／待決策：owner 需決定這批 8 張是否 `requires_recompletion`。本次主要是 Markdown 排版與圖片內嵌，建議 `false`，保留已完成進度。另 Sheet P302 alt 目前為「色明表示的三種類型」，疑似應為「色名」，未自行改寫 SSOT。
+- 狀態：尚未 commit、push、deploy web 或發布 DB 版本；未執行 `pnpm test:db`、Supabase reset 或 Production 操作。

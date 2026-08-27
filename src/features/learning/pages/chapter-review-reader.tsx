@@ -24,6 +24,31 @@ import {
   type ReaderBookBlock,
 } from './review-book-block';
 
+const markdownImageSourcePattern =
+  /!\[[^\]\n]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/gu;
+
+function reviewCardMarkdownChunks(markdown: string): readonly string[] {
+  return markdown
+    .split(/\n{2,}/u)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean);
+}
+
+function markdownImageSources(markdown: string): ReadonlySet<string> {
+  return new Set(
+    Array.from(markdown.matchAll(markdownImageSourcePattern), (match) =>
+      String(match[1]),
+    ),
+  );
+}
+
+function isSplittableMarkdownParagraph(markdown: string): boolean {
+  return (
+    !markdown.includes('\n') &&
+    !/(?:^|\s)(?:#{1,3}\s|[*_`]|!\[|\[[^\]]+\]\(|>|\|)/u.test(markdown)
+  );
+}
+
 function useMobileBookLayout() {
   const query =
     '(max-width: 47.99rem), (orientation: landscape) and (max-width: 56rem) and (max-height: 30rem)';
@@ -126,11 +151,16 @@ export function ChapterReviewReader({
     }
     return resolved;
   }, [card.media, mediaQuery.data]);
+  const resolveMarkdownImage = useCallback(
+    (source: string) => ({
+      loading: privateMediaAssetPaths.includes(source) && mediaLoading,
+      resolvedUrl: resolvedMediaByAssetPath.get(source) ?? null,
+    }),
+    [mediaLoading, privateMediaAssetPaths, resolvedMediaByAssetPath],
+  );
   const blocks = useMemo<readonly ReaderBookBlock[]>(() => {
-    const contentParagraphs = card.content
-      .split(/\n{2,}/u)
-      .map((paragraph) => paragraph.trim())
-      .filter(Boolean);
+    const contentChunks = reviewCardMarkdownChunks(card.content);
+    const inlineMediaSources = markdownImageSources(card.content);
     return [
       {
         displayTitle,
@@ -138,19 +168,22 @@ export function ChapterReviewReader({
         kind: 'intro',
         title: card.title,
       },
-      ...contentParagraphs.map((text, index) => ({
-        key: `paragraph-${String(index)}`,
-        kind: 'paragraph' as const,
-        text,
+      ...contentChunks.map((markdown, index) => ({
+        key: `markdown-${String(index)}`,
+        kind: 'markdown' as const,
+        markdown,
+        splittable: isSplittableMarkdownParagraph(markdown),
       })),
-      ...card.media.map((media, index) => ({
-        altText: media.altText,
-        assetPath: resolvedMediaByAssetPath.get(media.assetPath) ?? null,
-        key: `media-${String(index)}`,
-        kind: 'media' as const,
-        loading:
-          privateMediaAssetPaths.includes(media.assetPath) && mediaLoading,
-      })),
+      ...card.media
+        .filter((media) => !inlineMediaSources.has(media.assetPath))
+        .map((media, index) => ({
+          altText: media.altText,
+          assetPath: resolvedMediaByAssetPath.get(media.assetPath) ?? null,
+          key: `legacy-media-${String(index)}`,
+          kind: 'media' as const,
+          loading:
+            privateMediaAssetPaths.includes(media.assetPath) && mediaLoading,
+        })),
     ];
   }, [
     card.content,
@@ -164,8 +197,8 @@ export function ChapterReviewReader({
   const paginationBlocks = useMemo<readonly BookPaginationBlock[]>(
     () =>
       blocks.map((block) =>
-        block.kind === 'paragraph'
-          ? { key: block.key, splittable: true, text: block.text }
+        block.kind === 'markdown' && block.splittable
+          ? { key: block.key, splittable: true, text: block.markdown }
           : { key: block.key, splittable: false },
       ),
     [blocks],
@@ -282,6 +315,7 @@ export function ChapterReviewReader({
                       block={block}
                       key={item.key}
                       onMediaLoad={handleMediaLoad}
+                      resolveImage={resolveMarkdownImage}
                       {...(item.text === undefined ? {} : { text: item.text })}
                     />
                   ) : null;
@@ -307,6 +341,7 @@ export function ChapterReviewReader({
                 block={block}
                 key={block.key}
                 onMediaLoad={handleMediaLoad}
+                resolveImage={resolveMarkdownImage}
               />
             ))}
           </div>

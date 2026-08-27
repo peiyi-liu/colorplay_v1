@@ -1,0 +1,111 @@
+{
+  "contract": {
+    "format": "image/webp",
+    "maxBytes": 524288,
+    "maxHeight": 2400,
+    "maxWidth": 2400
+  },
+  "files": [
+    {
+      "height": 815,
+      "originalBytes": 397871,
+      "output": "P301.webp",
+      "outputBytes": 77818,
+      "quality": 0.937,
+      "reference": "P301",
+      "source": "P301.jpg",
+      "width": 1654
+    },
+    {
+      "height": 1133,
+      "originalBytes": 646260,
+      "output": "P302.webp",
+      "outputBytes": 154728,
+      "quality": 0.937,
+      "reference": "P302",
+      "source": "P302.jpg",
+      "width": 1273
+    },
+    {
+      "height": 1110,
+      "originalBytes": 885952,
+      "output": "P303.webp",
+      "outputBytes": 178784,
+      "quality": 0.937,
+      "reference": "P303",
+      "source": "P303.jpg",
+      "width": 1633
+    },
+    {
+      "height": 1483,
+      "originalBytes": 1400050,
+      "output": "P304.webp",
+      "outputBytes": 385282,
+      "quality": 0.937,
+      "reference": "P304",
+      "source": "P304.jpg",
+      "width": 1636
+    },
+    {
+      "height": 867,
+      "originalBytes": 648569,
+      "output": "P305.webp",
+      "outputBytes": 151866,
+      "quality": 0.937,
+      "reference": "P305",
+      "source": "P305.jpg",
+      "width": 2015
+    },
+    {
+      "height": 965,
+      "originalBytes": 720821,
+      "output": "P306.webp",
+      "outputBytes": 144042,
+      "quality": 0.937,
+      "reference": "P306",
+      "source": "P306.jpg",
+      "width": 2105
+    },
+    {
+      "height": 1556,
+      "originalBytes": 920457,
+      "output": "P307.webp",
+      "outputBytes": 259620,
+      "quality": 0.937,
+      "reference": "P307",
+      "source": "P307.jpg",
+      "width": 1102
+    },
+    {
+      "height": 1192,
+      "originalBytes": 354544,
+      "output": "P308.webp",
+      "outputBytes": 68832,
+      "quality": 0.937,
+      "reference": "P308",
+      "source": "P308.jpg",
+      "width": 1032
+    },
+    {
+      "height": 1300,
+      "originalBytes": 613460,
+      "output": "P309.webp",
+      "outputBytes": 140180,
+      "quality": 0.937,
+      "reference": "P309",
+      "source": "P309.jpg",
+      "width": 1347
+    },
+    {
+      "height": 1329,
+      "originalBytes": 641328,
+      "output": "P310.webp",
+      "outputBytes": 132132,
+      "quality": 0.937,
+      "reference": "P310",
+      "source": "P310.jpg",
+      "width": 1563
+    }
+  ],
+  "generatedAt": "2026-08-27T16:17:49.590Z"
+}

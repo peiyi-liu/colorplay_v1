@@ -138,6 +138,40 @@
   --button-primary-text: var(--color-primary-contrast);
   --avatar-frame-bg: color-mix(in srgb, var(--amber-avatar) 30%, white);
 
+  /* Local review-card Markdown preview. Raw palette values stay here so the
+     dev harness follows the same token-only rule as product surfaces. */
+  --review-preview-canvas: #0e1822;
+  --review-preview-surface: #13212e;
+  --review-preview-surface-deep: #0b151e;
+  --review-preview-surface-raised: #1a3041;
+  --review-preview-surface-active: #245166;
+  --review-preview-border: #365269;
+  --review-preview-border-soft: #2b4255;
+  --review-preview-border-strong: #3c5a70;
+  --review-preview-accent: #66d0c2;
+  --review-preview-ink: #eaf2f8;
+  --review-preview-ink-editor: #dce8f1;
+  --review-preview-muted: #aabac8;
+  --review-preview-muted-mid: #91a4b4;
+  --review-preview-muted-deep: #8599aa;
+  --review-preview-syntax: #a8d9d2;
+  --review-preview-paper-stage: #e8e0d1;
+  --review-preview-paper: #f6f0e5;
+  --review-preview-paper-ink: #2b2117;
+  --review-preview-paper-muted: #725d45;
+  --review-preview-paper-border: #c4b69f;
+  --review-preview-paper-accent: #9c7a58;
+  --review-preview-image-fallback: #f5e6d0;
+  --review-preview-image-fallback-ink: #6d4b2c;
+  --review-preview-error-bg: #fff1ec;
+  --review-preview-error-border: #b65e4a;
+  --review-preview-error-ink: #7b2f20;
+  --review-preview-canvas-glow: rgb(72 106 138 / 20%);
+  --review-preview-focus: rgb(102 208 194 / 18%);
+  --review-preview-panel-shadow: rgb(0 0 0 / 32%);
+  --review-preview-paper-wash: rgb(255 255 255 / 45%);
+  --review-preview-paper-shadow: rgb(70 50 28 / 16%);
+
   /* ── 淡彩卡片系統(owner 0728 晚間裁定:學習大廳＋成就頁改參考圖
      「色彩任務選擇大廳」淡彩大卡片;範圍僅此兩頁,其餘頁面維持暖色系)。
      文字階與六章節主題色 hex 依 owner 規格逐字釘住;狀態標籤文字為

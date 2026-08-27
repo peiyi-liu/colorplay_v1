@@ -251,6 +251,55 @@ describe('review card import', () => {
     );
   });
 
+  it('compiles an inline Sheet media reference before writing card content', () => {
+    const csv = csvOf([
+      'RC3101,3,3-1 色彩三要素與色名的表示,色彩三要素,明度,"段落一\n\n![P301 明度階調示意圖](review-media:P301)\n\n段落二",P301',
+    ]);
+    const result = buildReviewCardImport({
+      csvText: csv,
+      fixes: {
+        chapterMap: fixes.chapterMap,
+        reviewCardMedia: {
+          RC3101: {
+            attachmentRef: 'P301',
+            asset: 'review-card-media/chapter-3/P301.webp',
+            alt: 'P301 明度階調示意圖',
+          },
+        },
+      },
+    });
+
+    expect(result.problems).toEqual([]);
+    expect(result.cards[0]?.content).toContain(
+      '![P301 明度階調示意圖](review-card-media/chapter-3/P301.webp)',
+    );
+    expect(result.cards[0]?.content).not.toContain('review-media:P301');
+    expect(result.seedSql).not.toContain('review-media:P301');
+  });
+
+  it('rejects a fourth approved media mapping before producing import output', () => {
+    const csv = csvOf([
+      'RC3101,3,3-1 色彩三要素與色名的表示,色彩三要素,明度,只有文字,P301 P302 P303 P304',
+    ]);
+    const result = buildReviewCardImport({
+      csvText: csv,
+      fixes: {
+        chapterMap: fixes.chapterMap,
+        reviewCardMedia: {
+          RC3101: ['P301', 'P302', 'P303', 'P304'].map((reference) => ({
+            attachmentRef: reference,
+            asset: `review-card-media/chapter-3/${reference}.webp`,
+            alt: `${reference} 圖片`,
+          })),
+        },
+      },
+    });
+
+    expect(result.problems).toContain(
+      '卡片「RC3101」：每張複習卡最多只能插入 3 張圖片',
+    );
+  });
+
   it('emits a transaction-safe chapter-3 sync for repeatable staging import', () => {
     const csv = csvOf([
       'RC3101,3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,內容甲',

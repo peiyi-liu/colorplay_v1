@@ -535,6 +535,71 @@ describe('ChapterDetailPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('renders imported Markdown and keeps inline media in document order', async () => {
+    const repository = repositoryWith({
+      listChapterReview: vi.fn().mockResolvedValue([
+        {
+          ...sections[0],
+          subtopics: [
+            {
+              ...sections[0].subtopics[0],
+              cards: [
+                {
+                  ...sections[0].subtopics[0].cards[0],
+                  content: `# 明度觀察
+
+**明度**代表色彩的明暗，==先找出最亮與最暗的位置==。
+
+![十二色相環示意圖](/media/review/color-wheel.svg)
+
+| 觀察 | 結果 |
+| --- | --- |
+| 明度 | 清楚 |`,
+                },
+              ],
+            },
+          ],
+        },
+      ]),
+      listReviewProgress: vi.fn().mockResolvedValue([]),
+    });
+    renderPage(repository);
+
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: '選擇複習卡：色彩的分類',
+      }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: '進入複習' }));
+
+    const reader = await screen.findByRole('region', {
+      name: /複習卡閱讀：色彩的分類/u,
+    });
+    const heading = within(reader).getByRole('heading', {
+      level: 1,
+      name: '明度觀察',
+    });
+    const image = within(reader).getByRole('img', {
+      name: '十二色相環示意圖',
+    });
+    const table = within(reader).getByRole('table');
+
+    expect(heading.compareDocumentPosition(image)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(image.compareDocumentPosition(table)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(
+      within(reader).getByText('明度', { selector: 'strong' }),
+    ).toBeInTheDocument();
+    expect(
+      within(reader).getByText('先找出最亮與最暗的位置', {
+        selector: 'mark',
+      }),
+    ).toBeInTheDocument();
+  });
+
   it('keeps review text and controls usable while private media signing is pending', async () => {
     const nativeSetTimeout = window.setTimeout;
     const timeoutSpy = vi

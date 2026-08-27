@@ -20,7 +20,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { deterministicUuid, parseCsv, sqlText } from './import-shared.mjs';
-import { TEXT_LIMITS } from './validation-rules.mjs';
+import { compileReviewCardMarkdown } from './review-card-markdown.mjs';
 import { writeFormattedOutput } from './write-formatted-output.mjs';
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -179,15 +179,6 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
     currentCard = card;
   });
 
-  // 延續列合併後才知道最終長度，故長度檢查移到迴圈結束後統一執行。
-  for (const card of cards) {
-    if (card.content.length > TEXT_LIMITS.reviewCardContent) {
-      problems.push(
-        `卡片「${card.identity}」內容（含延續列合併後）超過 8000 字`,
-      );
-    }
-  }
-
   const mediaEntries = Object.entries(fixes.reviewCardMedia ?? {})
     .filter(([key]) => key !== '$comment')
     .flatMap(([stableCode, rawMedia]) =>
@@ -231,6 +222,26 @@ export function buildReviewCardImport({ csvText, fixes, generatedAt }) {
         `reviewCardMedia 的「${stableCode}」asset 必須是 review-card-media bucket 的物件路徑`,
       );
     }
+  }
+
+  for (const card of cards) {
+    const mediaCatalog = Object.fromEntries(
+      mediaEntries
+        .filter((entry) => entry.stableCode === card.stableCode)
+        .filter((entry) => entry.media.attachmentRef?.trim())
+        .map((entry) => [
+          entry.media.attachmentRef.trim(),
+          {
+            altText: entry.media.alt?.trim() ?? '',
+            assetPath: entry.media.asset?.trim() ?? '',
+          },
+        ]),
+    );
+    const compiled = compileReviewCardMarkdown(card.content, mediaCatalog);
+    for (const error of compiled.errors) {
+      problems.push(`卡片「${card.stableCode}」：${error.message}`);
+    }
+    if (compiled.errors.length === 0) card.content = compiled.markdown;
   }
 
   const bySubtopic = new Map();

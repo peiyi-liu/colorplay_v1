@@ -1,0 +1,111 @@
+.review-card-markdown {
+  min-width: 0;
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+
+.review-card-markdown > :first-child {
+  margin-top: 0;
+}
+
+.review-card-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.review-card-markdown h1,
+.review-card-markdown h2,
+.review-card-markdown h3 {
+  margin: 0.9em 0 0.45em;
+  color: inherit;
+  font-family: var(--font-pixel-tc);
+  font-synthesis: none;
+  font-weight: 400;
+  letter-spacing: 0.025em;
+  line-height: 1.35;
+}
+
+.review-card-markdown h1 {
+  font-size: 1.55em;
+}
+
+.review-card-markdown h2 {
+  font-size: 1.3em;
+}
+
+.review-card-markdown h3 {
+  font-size: 1.12em;
+}
+
+.review-card-markdown p,
+.review-card-markdown blockquote,
+.review-card-markdown ul,
+.review-card-markdown ol {
+  margin: 0 0 0.85em;
+}
+
+.review-card-markdown mark {
+  padding: 0.02em 0.16em;
+  border-radius: 0.22em;
+  background: var(--amber-highlight-soft);
+  box-decoration-break: clone;
+  color: var(--ink-950);
+  -webkit-box-decoration-break: clone;
+}
+
+.review-card-markdown ul,
+.review-card-markdown ol {
+  padding-inline-start: 1.5em;
+}
+
+.review-card-markdown li + li {
+  margin-top: 0.32em;
+}
+
+.review-card-markdown blockquote {
+  border-inline-start: 4px solid
+    color-mix(in srgb, currentColor 42%, transparent);
+  color: color-mix(in srgb, currentColor 78%, transparent);
+  padding: 0.25em 0 0.25em 0.9em;
+}
+
+.review-card-markdown table {
+  display: table;
+  width: 100%;
+  margin: 0.75em 0 1em;
+  border-collapse: collapse;
+  font-size: 1em;
+  table-layout: fixed;
+}
+
+.review-card-markdown th,
+.review-card-markdown td {
+  border: 1px solid color-mix(in srgb, currentColor 34%, transparent);
+  padding: 0.5em 0.62em;
+  text-align: start;
+  vertical-align: top;
+}
+
+.review-card-markdown th {
+  background: color-mix(in srgb, currentColor 9%, transparent);
+  font-weight: 800;
+}
+
+.review-card-markdown .review-card__media,
+.review-card-markdown .review-card__media-fallback {
+  display: block;
+  max-width: 100%;
+  margin: 1em auto;
+}
+
+.chapter-review-reader__content:has(.review-card-markdown table) {
+  max-height: calc(100% - 18px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 47.99rem),
+  (orientation: landscape) and (max-width: 56rem) and (max-height: 30rem) {
+  .chapter-review-reader .review-card-markdown {
+    font-size: 1rem;
+  }
+}

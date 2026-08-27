@@ -23,6 +23,7 @@
     "document:manifest": "node scripts/verify/generate-document-manifest.mjs --write",
     "document:manifest:check": "node scripts/verify/generate-document-manifest.mjs --check",
     "assets:optimize": "node scripts/assets/optimize-production-images.mjs",
+    "review-media:prepare": "node scripts/assets/prepare-review-media.mjs",
     "assets:check": "node scripts/verify/check-image-assets.mjs",
     "assets:check:review-media": "node scripts/verify/check-image-assets.mjs --review-media",
     "content:fetch": "node scripts/content/fetch-sheet.mjs",
@@ -67,7 +68,10 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.81.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.18.1",
+    "remark-flexible-markers": "1.3.6",
+    "remark-gfm": "^4.0.1",
     "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
