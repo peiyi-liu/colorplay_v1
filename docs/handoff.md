@@ -1280,3 +1280,17 @@
 - 驗證：Sheet gate 已收旂為結構錯誤 0／覆核提示 1（原有 QB4301）；Markdown／import contract 共 12 檔 146 tests 全綠，Prettier check 通過。唯讀 Staging SQL 確認 RC3101～RC3302 全 8 張的新內容 hash 都與 current published 不同，因此正式發布必須逐張走 `publish_review_card` 產生新版本。
 - Blocker／待決策：owner 需決定這批 8 張是否 `requires_recompletion`。本次主要是 Markdown 排版與圖片內嵌，建議 `false`，保留已完成進度。另 Sheet P302 alt 目前為「色明表示的三種類型」，疑似應為「色名」，未自行改寫 SSOT。
 - 狀態：尚未 commit、push、deploy web 或發布 DB 版本；未執行 `pnpm test:db`、Supabase reset 或 Production 操作。
+
+## 2026-08-28 01:18 [Codex] — 複習卡 Markdown 前端已發布 Staging，DB 內容發布卡在教師憑證邊界
+
+- 做了什麼：owner 裁定 8 張新版複習卡均使用 `requires_recompletion=false`。重抓 Google Sheet 後同步 P302 alt 「色名表示的三種類型」，gate 為 0 error。建立 commit `b534cf6483511ed3f8a0ff848511c362eb524053` 並 push 至 `origin/codex/review-card-ui-update`。GitHub-source Preview `dpl_73h3CymcQ17VWQKQ5pZXwSCydmq1` 驗證後，以 Staging 專案 Production env 重建為 `dpl_9dSdq1hyQcLzkCmrvQaEtR1gstKW`，已 Ready 並接上 `staging.colorplayapp.com`。
+- 驗證：Git metadata 精確指向 `b534cf6`；bundle 只含 Staging Supabase ref `onkxnkzeixpezetkmocf`，不含 Production ref，chapter chunk／CSS 包含 `review-card-markdown`。本機 Sheet gate、lint、typecheck、production build、54 個 scoped tests 及 10 張 WebP budget 通過。
+- Blocker：DB 尚未發布。自動流程唯一現成教師憑證是 repo 中標記 `LocalOnly` 的 fixture 密碼；將已知 local-only 憑證用於網際網路 Staging 屬跨環境憑證重用，操作安全 gate 拒絕在未再授權下探測。已唯讀確認 RC3101～RC3302 版本仍為發布前的 2/1/2/2/2/1/1/1，沒有部分 DB mutation。
+- 下一步：owner 若明確授權一次性使用該 fixture 教師憑證，才能以正常 `auth-login` session 逐張呼叫 canonical `publish_review_card`；或 owner 提供另一個專用 Staging teacher session 方案。完成後再做學生登入、Markdown／H1／表格／螢光／signed image 與手機 viewport hosted 驗證。
+
+## 2026-08-28 01:42 [Codex] — Google Sheet 複習卡已發布 Staging，學生端 hosted 驗證通過
+
+- 授權與發布：owner 明確授權一次性使用 Staging fixture 憑證。重新下載 Google Sheet（RC 8 張）並通過 gate（0 結構錯誤、1 個與本次無關的既有 QB4301 覆核提示）；以 `teacher01` 正常走 `auth-login` 取得 authenticated teacher session，dry-run 確認後逐張呼叫 canonical `publish_review_card`，未直接更新資料表。
+- 結果：RC3101～RC3302 全部回傳 `changed=true`，版本成為 3／2／3／3／3／2／2／2；二次唯讀比對 8 張 title／group／內容 SHA-256／current-version media mapping 全部 `matches=true`，媒體數 1／0／1／2／1／3／0／0，且全部 `requires_recompletion=false`。
+- Hosted 驗證：以 `student01` 登入 `staging.colorplayapp.com`，canonical `get_accessible_chapter_review`、signed URL 與圖片 GET 均為 HTTP 200。RC3101 的語意 H1、粗體、淡黃螢光與 P301 正常；RC3203 的 3×3、2×4 Markdown 表格成立，P306／P307／P308 皆回傳 `image/webp` 並實際載入。390×844 viewport 無頁面水平溢出（clientWidth=scrollWidth=390），console 0 error／0 warning。
+- 清理與風險：一次性發布 script、Vercel env 暫存檔及瀏覽器截圖已刪除，憑證／token 未寫入 repo、commit 或回覆。既知 `review_card_media`／Storage policy 只檢查 published 的鎖定章節繞過風險仍未修，依本 Session 邊界保留後續處理；未執行 `pnpm test:db`、Supabase reset 或 Production 操作。
