@@ -161,6 +161,9 @@
   --review-preview-paper-muted: #725d45;
   --review-preview-paper-border: #c4b69f;
   --review-preview-paper-accent: #9c7a58;
+  --review-mark-bg: #f4a6b5;
+  --review-mark-edge: #b4234d;
+  --review-mark-ink: #6f1732;
   --review-preview-image-fallback: #f5e6d0;
   --review-preview-image-fallback-ink: #6d4b2c;
   --review-preview-error-bg: #fff1ec;

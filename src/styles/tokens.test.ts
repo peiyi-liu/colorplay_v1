@@ -9,6 +9,10 @@ const tokensCss = readFileSync(
   resolve(process.cwd(), 'src/styles/tokens.css'),
   'utf8',
 );
+const reviewCardMarkdownCss = readFileSync(
+  resolve(process.cwd(), 'src/styles/review-card-markdown.css'),
+  'utf8',
+);
 
 const teacherStylePaths = [
   'src/features/teacher-content/teacher-analytics-data.css',
@@ -93,6 +97,19 @@ describe('ColorPlay flat design tokens', () => {
     expect(tokensCss).toContain(
       '--avatar-frame-bg: color-mix(in srgb, var(--amber-avatar) 30%, white)',
     );
+  });
+
+  it('keeps review highlights distinct from yellow paper without relying on red text alone', () => {
+    expect(tokensCss).toContain('--review-mark-bg: #f4a6b5');
+    expect(tokensCss).toContain('--review-mark-edge: #b4234d');
+    expect(tokensCss).toContain('--review-mark-ink: #6f1732');
+    expect(reviewCardMarkdownCss).toContain(
+      'background: var(--review-mark-bg)',
+    );
+    expect(reviewCardMarkdownCss).toContain(
+      'box-shadow: inset 0 -0.14em 0 var(--review-mark-edge)',
+    );
+    expect(reviewCardMarkdownCss).toContain('font-weight: 800');
   });
 
   it.each(teacherStylePaths)(
