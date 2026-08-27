@@ -1294,3 +1294,11 @@
 - 結果：RC3101～RC3302 全部回傳 `changed=true`，版本成為 3／2／3／3／3／2／2／2；二次唯讀比對 8 張 title／group／內容 SHA-256／current-version media mapping 全部 `matches=true`，媒體數 1／0／1／2／1／3／0／0，且全部 `requires_recompletion=false`。
 - Hosted 驗證：以 `student01` 登入 `staging.colorplayapp.com`，canonical `get_accessible_chapter_review`、signed URL 與圖片 GET 均為 HTTP 200。RC3101 的語意 H1、粗體、淡黃螢光與 P301 正常；RC3203 的 3×3、2×4 Markdown 表格成立，P306／P307／P308 皆回傳 `image/webp` 並實際載入。390×844 viewport 無頁面水平溢出（clientWidth=scrollWidth=390），console 0 error／0 warning。
 - 清理與風險：一次性發布 script、Vercel env 暫存檔及瀏覽器截圖已刪除，憑證／token 未寫入 repo、commit 或回覆。既知 `review_card_media`／Storage policy 只檢查 published 的鎖定章節繞過風險仍未修，依本 Session 邊界保留後續處理；未執行 `pnpm test:db`、Supabase reset 或 Production 操作。
+
+## 2026-08-28 02:03 [Codex] — Google Sheet 小幅更新重發，複習卡螢光改為高對比紅色系
+
+- 內容重發：重新下載 Google Sheet（QB 136／CR 62／LT 60／RC 8），gate 維持 0 結構錯誤，僅有既存且與本輪無關的 QB4301 覆核提示。8 張卡片皆與前一版 hash 不同，經已授權的 Staging fixture teacher session 逐張呼叫 canonical `publish_review_card`，全部使用 `requires_recompletion=false`；版本成為 RC3101～RC3302：4／3／4／4／4／3／3／3。發布後再次 dry-run 回讀為 `changedCount=0`，確認 Sheet 內容、版本與 media mapping 完全一致。
+- UI 決策與實作：排除純紅底（過度像警告、閱讀刺激高）及只改紅字（辨識仍過度依賴單一顏色）；將 `<mark>` 改為淡珊瑚紅底 `#f4a6b5`、深紅粗字 `#6f1732` 與玫瑰紅下緣 `#b4234d`。文字／底色對比約 5.95:1，並以底色、字重及下緣共同表達標記狀態。
+- 驗證與發布：新增 token contract test；scoped Vitest 4 檔／93 tests、`pnpm typecheck`、production build、scoped ESLint、Prettier 及 `git diff --check` 通過。全 repo `pnpm lint` 會掃入其他 worktree／`.pnpm-store` 而長時間無法合理完成，本輪未宣稱全量 lint 綠。UI commit `03a17c3` 已 push，Vercel deployment `dpl_3cTPzufQoGitDhEb6j7B2Rco83dj` 已 Ready 並 alias 至 `staging.colorplayapp.com`；bundle 只含 Staging Supabase ref `onkxnkzeixpezetkmocf`，不含 Production ref。
+- Hosted 實測：以既有學生 session 在 390×844 開啟 RC3101，computed style 符合三個新色 token 與 `font-weight: 800`；P301 signed image 實際載入為 1654×815，`get_accessible_chapter_review`、Storage sign 與圖片 GET 均為 HTTP 200，頁面 `clientWidth=scrollWidth=390`，console 0 error／0 warning。
+- 邊界與風險：未碰 Phase 0／1 保護路徑，未執行 `pnpm test:db`、Supabase reset 或 Production 操作。既知 `review_card_media`／Storage policy 只檢查 published、可能繞過 canonical 章節鎖定的風險仍未修，需另案處理。
