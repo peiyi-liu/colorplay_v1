@@ -42,6 +42,7 @@ function isBlockStart(lines: readonly string[], index: number) {
 function isSafelySplittableParagraph(markdown: string) {
   return (
     !markdown.includes('\n') &&
+    !listItemPattern.test(markdown) &&
     !/(?:^#{1,6}\s|[*_`~]|==|!\[|\[[^\]]+\]\(|>|\|)/u.test(markdown)
   );
 }

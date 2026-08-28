@@ -32,4 +32,20 @@ describe('splitReviewCardMarkdown', () => {
       },
     ]);
   });
+
+  it('純文字清單仍保留完整 Markdown 結構，不當成可逐字切割的段落', () => {
+    const blocks = splitReviewCardMarkdown(`1. 色相是色彩的名稱
+2. 明度是色彩的明暗
+
+- 紅色
+- 藍色`);
+
+    expect(blocks).toHaveLength(4);
+    expect(blocks.map((block) => block.splittable)).toEqual([
+      false,
+      false,
+      false,
+      false,
+    ]);
+  });
 });
