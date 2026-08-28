@@ -132,9 +132,9 @@ describe('paginateBookBlocks', () => {
     ]);
   });
 
-  it('保留兩像素安全餘量，避免量測與實際 Markdown 渲染的捨入差異裁切頁尾', () => {
+  it('不接受超過頁面一像素的內容，避免量測容差在實際渲染時放大成裁切', () => {
     const { measureElement, sourceElement } = paginationElements(
-      { intro: 80, paragraph: 19 },
+      { intro: 80, paragraph: 21 },
       100,
     );
 
@@ -152,6 +152,26 @@ describe('paginateBookBlocks', () => {
         items: [{ blockKey: 'intro', key: 'intro' }],
         overflowFallback: false,
       },
+      {
+        items: [{ blockKey: 'paragraph', key: 'paragraph' }],
+        overflowFallback: false,
+      },
+    ]);
+  });
+
+  it('空白頁仍接受小於頁高的正常內容，不把所有頁面降級成捲動 fallback', () => {
+    const { measureElement, sourceElement } = paginationElements(
+      { paragraph: 99 },
+      100,
+    );
+
+    const pages = paginateBookBlocks({
+      blocks: [{ key: 'paragraph', splittable: false }],
+      measureElement,
+      sourceElement,
+    });
+
+    expect(pages).toEqual([
       {
         items: [{ blockKey: 'paragraph', key: 'paragraph' }],
         overflowFallback: false,

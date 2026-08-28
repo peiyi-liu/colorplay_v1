@@ -85,6 +85,7 @@ export async function assertCompleteReviewReaderPagination(
     .textContent();
   const renderedPageText: string[] = [];
   let sawTableWithoutInnerVerticalScroll = false;
+  let sawNonFallbackPage = false;
   let viewCount = 0;
 
   while (viewCount < 100) {
@@ -150,6 +151,7 @@ export async function assertCompleteReviewReaderPagination(
           ).toBeGreaterThan(0);
         }
       } else {
+        sawNonFallbackPage = true;
         expect(result.verticalOverflow).toBeLessThanOrEqual(1);
       }
     }
@@ -163,6 +165,7 @@ export async function assertCompleteReviewReaderPagination(
   const renderedText = normalizedText(renderedPageText.join(''));
   expect(viewCount).toBeLessThan(100);
   expect(viewCount).toBeGreaterThan(1);
+  expect(sawNonFallbackPage).toBe(true);
   expect(sawTableWithoutInnerVerticalScroll).toBe(true);
   expect(renderedText).toBe(normalizedText(sourceText ?? ''));
   for (const fragment of expectedContentFragments) {

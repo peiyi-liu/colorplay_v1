@@ -24,8 +24,6 @@ type PaginateBookBlocksOptions = Readonly<{
   sourceElement: HTMLElement;
 }>;
 
-const FIT_SAFETY_MARGIN_PX = 2;
-
 function clonePageItem(
   item: BookPageItem,
   sourceNodes: ReadonlyMap<string, HTMLElement>,
@@ -82,10 +80,7 @@ function fitsPage(
 ) {
   const clones = clonePageItems(items, sourceNodes);
   measureElement.replaceChildren(...clones);
-  return (
-    measureElement.scrollHeight <=
-    Math.max(0, measureElement.clientHeight - FIT_SAFETY_MARGIN_PX)
-  );
+  return measureElement.scrollHeight <= measureElement.clientHeight;
 }
 
 function preferredBreakLength(characters: readonly string[], length: number) {
