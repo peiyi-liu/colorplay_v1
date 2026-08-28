@@ -1,4 +1,5 @@
 export type BookPaginationBlock = Readonly<{
+  groupKey?: string;
   key: string;
   splittable: boolean;
   text?: string;
@@ -6,8 +7,14 @@ export type BookPaginationBlock = Readonly<{
 
 export type BookPageItem = Readonly<{
   blockKey: string;
+  groupKey?: string;
   key: string;
   text?: string;
+}>;
+
+export type BookPage = Readonly<{
+  items: readonly BookPageItem[];
+  overflowFallback: boolean;
 }>;
 
 type PaginateBookBlocksOptions = Readonly<{
@@ -72,6 +79,7 @@ function fittingPrefixLength(
     const middle = Math.floor((low + high) / 2);
     const candidate: BookPageItem = {
       blockKey: block.key,
+      ...(block.groupKey === undefined ? {} : { groupKey: block.groupKey }),
       key: `${block.key}:${String(consumedLength)}-${String(consumedLength + middle)}`,
       text: characters.slice(0, middle).join(''),
     };
@@ -90,7 +98,7 @@ export function paginateBookBlocks({
   blocks,
   measureElement,
   sourceElement,
-}: PaginateBookBlocksOptions): readonly (readonly BookPageItem[])[] {
+}: PaginateBookBlocksOptions): readonly BookPage[] {
   if (measureElement.clientHeight <= 0 || measureElement.clientWidth <= 0) {
     return [];
   }
@@ -100,26 +108,32 @@ export function paginateBookBlocks({
       sourceElement.querySelectorAll<HTMLElement>('[data-book-block-key]'),
     ).map((node) => [node.dataset.bookBlockKey ?? '', node] as const),
   );
-  const pages: BookPageItem[][] = [];
+  const pages: BookPage[] = [];
   let currentPage: BookPageItem[] = [];
 
   const finishPage = () => {
     if (currentPage.length === 0) return;
-    pages.push(currentPage);
+    pages.push({ items: currentPage, overflowFallback: false });
     currentPage = [];
   };
 
   for (const block of blocks) {
-    const fullItem: BookPageItem =
-      block.text === undefined
-        ? { blockKey: block.key, key: block.key }
-        : { blockKey: block.key, key: block.key, text: block.text };
+    const fullItem: BookPageItem = {
+      blockKey: block.key,
+      ...(block.groupKey === undefined ? {} : { groupKey: block.groupKey }),
+      key: block.key,
+      ...(block.text === undefined ? {} : { text: block.text }),
+    };
 
     if (!block.splittable || !block.text) {
       if (!fitsPage([...currentPage, fullItem], measureElement, sourceNodes)) {
         finishPage();
       }
-      currentPage.push(fullItem);
+      if (fitsPage([fullItem], measureElement, sourceNodes)) {
+        currentPage.push(fullItem);
+      } else {
+        pages.push({ items: [fullItem], overflowFallback: true });
+      }
       continue;
     }
 
@@ -128,6 +142,7 @@ export function paginateBookBlocks({
     while (remainingText.length > 0) {
       const remainingItem: BookPageItem = {
         blockKey: block.key,
+        ...(block.groupKey === undefined ? {} : { groupKey: block.groupKey }),
         key: `${block.key}:${String(consumedLength)}-end`,
         text: remainingText,
       };
@@ -151,11 +166,17 @@ export function paginateBookBlocks({
         finishPage();
         continue;
       }
+      if (fittingLength === 0) {
+        pages.push({ items: [remainingItem], overflowFallback: true });
+        remainingText = '';
+        continue;
+      }
 
       const characters = Array.from(remainingText);
-      const safeLength = Math.max(1, fittingLength);
+      const safeLength = fittingLength;
       currentPage.push({
         blockKey: block.key,
+        ...(block.groupKey === undefined ? {} : { groupKey: block.groupKey }),
         key: `${block.key}:${String(consumedLength)}-${String(consumedLength + safeLength)}`,
         text: characters.slice(0, safeLength).join(''),
       });
@@ -167,5 +188,5 @@ export function paginateBookBlocks({
 
   finishPage();
   measureElement.replaceChildren();
-  return pages.length > 0 ? pages : [[]];
+  return pages.length > 0 ? pages : [{ items: [], overflowFallback: false }];
 }

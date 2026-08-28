@@ -16,6 +16,7 @@ import { useReviewMedia } from '../hooks/use-learning';
 import type { ChapterDetailCardView } from './chapter-detail-view-model';
 import {
   paginateBookBlocks,
+  type BookPage,
   type BookPageItem,
   type BookPaginationBlock,
 } from './book-paginator';
@@ -23,16 +24,10 @@ import {
   ReaderBookBlockContent,
   type ReaderBookBlock,
 } from './review-book-block';
+import { splitReviewCardMarkdown } from './review-card-markdown-pagination';
 
 const markdownImageSourcePattern =
   /!\[[^\]\n]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/gu;
-
-function reviewCardMarkdownChunks(markdown: string): readonly string[] {
-  return markdown
-    .split(/\n{2,}/u)
-    .map((chunk) => chunk.trim())
-    .filter(Boolean);
-}
 
 function markdownImageSources(markdown: string): ReadonlySet<string> {
   return new Set(
@@ -42,11 +37,22 @@ function markdownImageSources(markdown: string): ReadonlySet<string> {
   );
 }
 
-function isSplittableMarkdownParagraph(markdown: string): boolean {
-  return (
-    !markdown.includes('\n') &&
-    !/(?:^|\s)(?:#{1,3}\s|[*_`]|!\[|\[[^\]]+\]\(|>|\|)/u.test(markdown)
-  );
+function groupPageItems(items: readonly BookPageItem[]) {
+  const groups: BookPageItem[][] = [];
+  for (const item of items) {
+    const previousGroup = groups.at(-1);
+    const previousItem = previousGroup?.at(-1);
+    if (
+      previousGroup !== undefined &&
+      item.groupKey !== undefined &&
+      previousItem?.groupKey === item.groupKey
+    ) {
+      previousGroup.push(item);
+    } else {
+      groups.push([item]);
+    }
+  }
+  return groups;
 }
 
 function useMobileBookLayout() {
@@ -108,7 +114,7 @@ export function ChapterReviewReader({
   const paginationIdentityRef = useRef('');
   const turnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [layoutRevision, setLayoutRevision] = useState(0);
-  const [pages, setPages] = useState<readonly (readonly BookPageItem[])[]>([]);
+  const [pages, setPages] = useState<readonly BookPage[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
   const [mediaWaitCycle, setMediaWaitCycle] = useState(0);
   const [showLongMediaWait, setShowLongMediaWait] = useState(false);
@@ -159,7 +165,7 @@ export function ChapterReviewReader({
     [mediaLoading, privateMediaAssetPaths, resolvedMediaByAssetPath],
   );
   const blocks = useMemo<readonly ReaderBookBlock[]>(() => {
-    const contentChunks = reviewCardMarkdownChunks(card.content);
+    const contentBlocks = splitReviewCardMarkdown(card.content);
     const inlineMediaSources = markdownImageSources(card.content);
     return [
       {
@@ -168,11 +174,12 @@ export function ChapterReviewReader({
         kind: 'intro',
         title: card.title,
       },
-      ...contentChunks.map((markdown, index) => ({
+      ...contentBlocks.map(({ groupKey, markdown, splittable }, index) => ({
         key: `markdown-${String(index)}`,
         kind: 'markdown' as const,
         markdown,
-        splittable: isSplittableMarkdownParagraph(markdown),
+        ...(groupKey === undefined ? {} : { paginationGroupKey: groupKey }),
+        splittable,
       })),
       ...card.media
         .filter((media) => !inlineMediaSources.has(media.assetPath))
@@ -198,8 +205,22 @@ export function ChapterReviewReader({
     () =>
       blocks.map((block) =>
         block.kind === 'markdown' && block.splittable
-          ? { key: block.key, splittable: true, text: block.markdown }
-          : { key: block.key, splittable: false },
+          ? {
+              ...(block.paginationGroupKey === undefined
+                ? {}
+                : { groupKey: block.paginationGroupKey }),
+              key: block.key,
+              splittable: true,
+              text: block.markdown,
+            }
+          : {
+              ...(block.kind !== 'markdown' ||
+              block.paginationGroupKey === undefined
+                ? {}
+                : { groupKey: block.paginationGroupKey }),
+              key: block.key,
+              splittable: false,
+            },
       ),
     [blocks],
   );
@@ -254,10 +275,13 @@ export function ChapterReviewReader({
 
   const pageCount = Math.max(1, Math.ceil(pages.length / pagesPerView));
   const activePageStart = pageIndex * pagesPerView;
-  const activePages: readonly (readonly BookPageItem[])[] = Array.from(
+  const activePages: readonly BookPage[] = Array.from(
     { length: pagesPerView },
     (_, index) =>
-      pages[activePageStart + index] ?? ([] as readonly BookPageItem[]),
+      pages[activePageStart + index] ?? {
+        items: [],
+        overflowFallback: false,
+      },
   );
   const goToPage = (nextPageIndex: number) => {
     const boundedPageIndex = Math.min(
@@ -298,25 +322,48 @@ export function ChapterReviewReader({
           className="chapter-review-reader__book"
         >
           <div
-            aria-hidden="true"
+            aria-hidden={pages.length === 0 ? true : undefined}
             className="chapter-review-reader__viewport"
             data-turn-direction={turnDirection ?? undefined}
           >
-            {activePages.map((pageItems, pageOffset) => (
+            {activePages.map((page, pageOffset) => (
               <section
+                aria-label={
+                  page.overflowFallback ? '本頁內容較長，可上下捲動' : undefined
+                }
                 className="chapter-review-reader__book-page"
+                data-overflow-fallback={
+                  page.overflowFallback ? true : undefined
+                }
                 data-page-number={activePageStart + pageOffset + 1}
                 key={`${String(activePageStart + pageOffset)}-${turnDirection ?? 'still'}`}
+                tabIndex={page.overflowFallback ? 0 : undefined}
               >
-                {pageItems.map((item) => {
-                  const block = blockByKey.get(item.blockKey);
+                {groupPageItems(page.items).map((itemGroup) => {
+                  const firstItem = itemGroup[0];
+                  if (!firstItem) return null;
+                  const block = blockByKey.get(firstItem.blockKey);
+                  const groupedMarkdown =
+                    itemGroup.length > 1
+                      ? itemGroup
+                          .map((item) => {
+                            if (item.text !== undefined) return item.text;
+                            const itemBlock = blockByKey.get(item.blockKey);
+                            return itemBlock?.kind === 'markdown'
+                              ? itemBlock.markdown
+                              : '';
+                          })
+                          .join('\n')
+                      : firstItem.text;
                   return block ? (
                     <ReaderBookBlockContent
                       block={block}
-                      key={item.key}
+                      key={itemGroup.map((item) => item.key).join(':')}
                       onMediaLoad={handleMediaLoad}
                       resolveImage={resolveMarkdownImage}
-                      {...(item.text === undefined ? {} : { text: item.text })}
+                      {...(groupedMarkdown === undefined
+                        ? {}
+                        : { text: groupedMarkdown })}
                     />
                   ) : null;
                 })}
@@ -333,6 +380,7 @@ export function ChapterReviewReader({
             />
           </div>
           <div
+            aria-hidden={pages.length > 0 ? true : undefined}
             className="chapter-review-reader__pagination-source"
             ref={paginationSourceRef}
           >

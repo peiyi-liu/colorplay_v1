@@ -12,6 +12,7 @@ export type ReaderBookBlock =
       title: string;
     }>
   | Readonly<{
+      paginationGroupKey?: string;
       key: string;
       kind: 'markdown';
       markdown: string;

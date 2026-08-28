@@ -1302,3 +1302,10 @@
 - 驗證與發布：新增 token contract test；scoped Vitest 4 檔／93 tests、`pnpm typecheck`、production build、scoped ESLint、Prettier 及 `git diff --check` 通過。全 repo `pnpm lint` 會掃入其他 worktree／`.pnpm-store` 而長時間無法合理完成，本輪未宣稱全量 lint 綠。UI commit `03a17c3` 已 push，Vercel deployment `dpl_3cTPzufQoGitDhEb6j7B2Rco83dj` 已 Ready 並 alias 至 `staging.colorplayapp.com`；bundle 只含 Staging Supabase ref `onkxnkzeixpezetkmocf`，不含 Production ref。
 - Hosted 實測：以既有學生 session 在 390×844 開啟 RC3101，computed style 符合三個新色 token 與 `font-weight: 800`；P301 signed image 實際載入為 1654×815，`get_accessible_chapter_review`、Storage sign 與圖片 GET 均為 HTTP 200，頁面 `clientWidth=scrollWidth=390`，console 0 error／0 warning。
 - 邊界與風險：未碰 Phase 0／1 保護路徑，未執行 `pnpm test:db`、Supabase reset 或 Production 操作。既知 `review_card_media`／Storage policy 只檢查 published、可能繞過 canonical 章節鎖定的風險仍未修，需另案處理。
+
+## 2026-08-28 09:47 [Codex] — 複習卡 Markdown 語意分頁與安全捲動 fallback 完成（未發布）
+
+- 做了什麼：將複習卡由空白行切割改為 Markdown 語意區塊分頁，完整保留 H1～H6、清單／巢狀清單、引用、GFM 表格、程式碼區塊、圖片與行內格式；純文字段落仍可在安全字元邊界分頁。同頁的連續清單項目會合併回單一 `<ol>`／`<ul>`，不會因分頁器拆成多個獨立清單。任何無法放入空白頁的完整區塊改放到有繁中 accessible name、可鍵盤聚焦及觸控上下捲動的整頁 fallback；移除表格原有的內層垂直高度限制，避免繞過這個 fallback，表格仍保留必要的水平捲動能力。分頁完成前／後的可讀 DOM 來源也已正確切換 `aria-hidden`。
+- 驗證：focused Vitest 6 檔／39 tests、scoped ESLint、scoped Prettier、`pnpm typecheck` 與 production build 全綠。Chromium harness 10/10 通過，逐頁檢查 320×568、375×812、393×852、768×1024、1024×768、1280×720、1440×900、812×375 與 852×393：無文字裁切、無頁面水平溢出、非 fallback 無垂直溢出、fallback 可實際捲到底；另用獨立原始內容片段確認標題、清單、表格、引用與結尾標記未遺失。
+- Review：唯一一次雙軸 review 的 Standards 4 項與 Spec 4 項均在同輪修正；包含表格 accessible fallback、指定 viewport、測試檔責任拆分、E2E 重複、清單語意及非循環式內容保存證據。Security axis 因未碰 trust boundary 略過，不再進行第二輪 review。
+- 狀態：仍在 `codex/review-card-ui-update`，HEAD／upstream 保持 `f212f9627289b52d20f0b1078564849194f0a973`；本輪變更未 commit、push 或 deploy，未操作 Supabase／hosted DB，未執行 `pnpm test:db` 或 reset，Phase 0／1 保護路徑未修改。

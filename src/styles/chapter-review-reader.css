@@ -122,6 +122,20 @@
   overflow: hidden;
 }
 
+.chapter-review-reader__book-page[data-overflow-fallback='true'] {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chapter-review-reader__book-page[data-overflow-fallback='true']:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-info);
+  outline-offset: -3px;
+}
+
 .chapter-review-reader__pagination-tools {
   position: absolute;
   inset: 6.5% 5% 9%;

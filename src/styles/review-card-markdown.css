@@ -100,9 +100,10 @@
 }
 
 .chapter-review-reader__content:has(.review-card-markdown table) {
-  max-height: calc(100% - 18px);
-  overflow: auto;
-  overscroll-behavior: contain;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-inline: contain;
 }
 
 @media (max-width: 47.99rem),

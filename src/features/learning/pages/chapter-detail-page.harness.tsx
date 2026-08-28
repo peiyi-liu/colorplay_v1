@@ -1,6 +1,8 @@
 // DEV/TEST-ONLY. 不得被 src/main.tsx 或 src/app/router/** import。
 // 用 Task 1 fixtures 直接建構 viewModel，掛載純 presentational 的
 // ChapterDetailPageView，完全不觸碰 Supabase／任何 hook。
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 import type { StudentChapterMapEntry } from '../api/chapter-map';
 import { LearningError } from '../api/learning-repository';
 import { StudentHudHarness } from '../../../app/shell/student-hud.harness';
@@ -38,6 +40,10 @@ export const CHAPTER_DETAIL_HARNESS_SCENARIOS: readonly ChapterDetailHarnessScen
 
 const LONG_TITLE =
   '這是一個刻意寫得很長很長很長很長很長很長很長很長的小節標題用來測試換行行為';
+
+const harnessQueryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+});
 
 function entryFor(
   scenario: ChapterDetailHarnessScenario,
@@ -126,14 +132,16 @@ export function ChapterDetailPageHarness({
   });
 
   return (
-    <StudentHudHarness initialEntry="/app/chapters/chapter-3">
-      <ChapterDetailPageView
-        completeError={undefined}
-        completePending={false}
-        onCompleteCard={() => undefined}
-        onRetry={() => undefined}
-        viewModel={viewModel}
-      />
-    </StudentHudHarness>
+    <QueryClientProvider client={harnessQueryClient}>
+      <StudentHudHarness initialEntry="/app/chapters/chapter-3">
+        <ChapterDetailPageView
+          completeError={undefined}
+          completePending={false}
+          onCompleteCard={() => undefined}
+          onRetry={() => undefined}
+          viewModel={viewModel}
+        />
+      </StudentHudHarness>
+    </QueryClientProvider>
   );
 }

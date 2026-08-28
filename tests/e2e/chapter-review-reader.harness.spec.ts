@@ -2,46 +2,12 @@ import { mkdir } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 import { expectMobileReaderHeaderOnBook } from './helpers/review-reader-header';
+import {
+  assertCompleteReviewReaderPagination,
+  reviewReaderViewports,
+} from './helpers/assert-review-reader-pagination';
 
-for (const viewport of [
-  { capture: true, height: 720, label: '1280', mobile: false, width: 1280 },
-  {
-    capture: false,
-    height: 768,
-    label: '1024x768',
-    mobile: false,
-    width: 1024,
-  },
-  {
-    capture: false,
-    height: 900,
-    label: '1440x900',
-    mobile: false,
-    width: 1440,
-  },
-  { capture: true, height: 852, label: '393', mobile: true, width: 393 },
-  {
-    capture: false,
-    height: 812,
-    label: '375x812',
-    mobile: true,
-    width: 375,
-  },
-  {
-    capture: false,
-    height: 393,
-    label: '852x393-landscape',
-    mobile: true,
-    width: 852,
-  },
-  {
-    capture: false,
-    height: 375,
-    label: '812x375-landscape',
-    mobile: true,
-    width: 812,
-  },
-] as const) {
+for (const viewport of reviewReaderViewports) {
   test(`06-v2 review reader matches the full-book contract at ${viewport.label}`, async ({
     page,
   }) => {
@@ -60,7 +26,7 @@ for (const viewport of [
     await expect(reader).toContainText('3-1 色彩三要素與色名的表示');
     await expect(reader).toContainText('複習 2 / 10');
     await expect(
-      reader.getByRole('img', { name: '十二色相環示意圖' }),
+      reader.locator('img[alt="十二色相環示意圖"]').first(),
     ).toBeAttached();
 
     const book = reader.getByRole('article', { name: '色彩三要素' });
@@ -393,6 +359,8 @@ for (const viewport of [
         path: `artifacts/design-audit/jrpg-review-reader/${viewport.label}/review-reader.png`,
       });
     }
+
+    await assertCompleteReviewReaderPagination(reader, viewport.mobile);
 
     const stableSelectors = [
       '.chapter-review-reader__header',
