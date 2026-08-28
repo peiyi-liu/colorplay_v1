@@ -1351,3 +1351,12 @@
 - 小視窗提示：`投影視窗過小` 改為置中的標題＋「請縮小瀏覽器畫面比例，或放大視窗後再試。」；原有取消狀態與離開投影路徑保留。幾何測試會驗證 footer 貼齊、內容中心、物件完整位於 stage、44px 控制尺寸與無頁面溢出。
 - 驗證：Live Presenter Chromium 41／41、教師 lobby 1024×768／1280×720／1366×768／1920×1080 共 4／4、既有 Live unit 34／34、focused ESLint／Prettier、`pnpm typecheck` 與 production build 通過。Review 唯一一輪 Spec 無 finding；Standards 的解析裁切與測試檔責任兩項 P2 已同輪修正，共用幾何抽至 `tests/e2e/helpers/live-projector-layout.ts`。
 - 狀態：本機預覽為 `http://127.0.0.1:4186/dev-harness/teacher-routes.html?scenario=live-lobby`；仍在 `codex/review-card-ui-update`，HEAD／upstream 保持 `b9c9db415e79b354ed3281b40c6d0bf85c375d19`。保留既有複習卡 WIP；本輪未 commit、push、deploy，未操作 Supabase／hosted 資料，也未碰 Phase 0／1 保護路徑。
+
+## 2026-08-28 17:14 [Codex] — 複習卡／Live 投影整合與 Live 20 題已發布 Staging
+
+- 產品與資料庫：整合複習卡共用書頁框架、防遮擋 Markdown 分頁、粗體／高對比標記，以及 Live Projector 滿版置中與小視窗指引。Live `start_live_session` 改為最多凍結 20 題；題池不足時回傳實際題數，普通 Quiz 的 10 題契約不變。Staging `onkxnkzeixpezetkmocf` 已以標準 `supabase db push` 僅套用 `20260828000100_live_twenty_question_sessions.sql`；Phase 1 歷史 migrations 未套用或修復。單檔 pgTAP `017_live_setup.test.sql` 37／37 通過，未執行 `pnpm test:db` 或 reset。
+- 真實內容裁切修正：首次 hosted 逐頁檢查抓到手機真實「彩度」段落的 2px 邊緣溢位；移除 `<mark>` 會在換行行尾外凸的左右 padding，並取消分頁器原有 +1px fit 容差。曾嘗試的 2px 高度扣除會使固定 100% 高的量測頁全部降級 fallback，已由 hosted 驗證攔下並改為精確 `scrollHeight <= clientHeight`；新增測試保證 101px 不塞入 100px、99px 正常內容不 fallback，且完整長內容不得全頁 fallback。
+- 驗證：相關 Vitest 最終 8 tests（分頁邊界）及 14 tests（Markdown／閱讀器組）通過；Chromium 複習卡 16／16（桌面、手機、橫向、短螢幕、footer 狀態、reduced motion、粗體）、Live Presenter 41／41、Student Live 14／14，另有 focused Live／教師路由測試通過。scoped ESLint／Prettier、`pnpm typecheck`、`git diff --check`、production build 全綠。較廣的 `--grep Live` 仍會命中既有未登入教師 route／report harness 並因 Supabase 401 失敗，未以本輪改動掩蓋。
+- Staging：產品整合 commit `b8ebb0d18e38f8c47ae412b5979fd64b466a2a54`，裁切與分頁修正 commits `fd0d53733d9eb02b5308f2dd8e3388f49ec9c68f`、`0200dfd36a22274fd57c2937e86632d8ed6cf22a` 均已 push。最終 Preview `dpl_HhzuJjrPjH2ZXHy3QxfsiBmtfWGZ` 已 promotion 為 `dpl_DYsk3HKH8ZR8c7HebnRrZkHLXBXa`，`staging.colorplayapp.com` READY 且 metadata 精確指向 `0200dfd`；bundle 只含 Staging Supabase ref，不含 Production ref。
+- Hosted smoke：`teacher01`／`student01` 真實 Live 場次確認教師顯示「共 20 題」、學生顯示「第 1 / 20 題」；1280×720 footer gap 0、內容中心偏差 4.35px、無頁面溢出，控制項皆至少 75px 高，場次正常取消。真實「色彩三要素」桌面為 3 個雙頁 view、393×852 手機為 5 個單頁 view，全文與 pagination source 完全一致、0 裁切、0 fallback；最近 30 分鐘測試殘留 Live 場次為 0。首次 Realtime 人數同步曾超過 5 秒，重跑在 15 秒窗口內成功。
+- 邊界：未重匯 Google Sheet、未修改複習卡 DB／Storage、未碰 Production 或 Phase 0／1 保護路徑。既知 `review_card_media`／Storage policy 的鎖定章節媒體繞過風險仍未修。
