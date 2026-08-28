@@ -1329,3 +1329,10 @@
 - 驗證：閱讀器 Chromium harness 最終 12/12 通過，涵蓋 1280、1024×768、1440×900、393、320×568、768×1024、375×812、852×393 與 812×375；無控制項重疊、文字裁切、頁面水平溢出或非 fallback 垂直溢出。相關 Vitest 5 檔／18 tests、scoped ESLint、Prettier、`pnpm typecheck` 與 production build 通過；1280 與 393 viewport 已人工檢視。
 - 設計邊界：依 preserve redesign 處理，只改資訊層級與空間分配，沿用既有書本資產、色彩、字型、按鈕、動態及可及性行為，沒有新增視覺系統或內容契約。
 - 狀態：變更將只提交在 `codex/review-card-ui-update` 本機，尚未 push 或 deploy；沒有修改 Google Sheet、Staging DB／Storage、執行 `pnpm test:db`／Supabase reset，也未碰 Phase 0／1 保護路徑。
+
+## 2026-08-28 13:28 [Codex] — 複習卡粗體與放大閱讀頁已發布 Staging
+
+- 發布：已 push `codex/review-card-ui-update`，並將 GitHub-source Preview 提升為 Production-target deployment `dpl_2TfzSwh63pA6u6tytrrqgbB1PsnZ`；`staging.colorplayapp.com` 已指向該部署且狀態為 READY。Vercel metadata 精確對應產品 SHA `ae01dd0becac6ea5d36d22c5a75d909ca47724d2`。
+- 環境與樣式：公開 bundle 只含 Staging Supabase ref `onkxnkzeixpezetkmocf`，不含 Production ref；CSS 包含本次正文 500／Markdown 粗體 800，以及放大閱讀區的 grid 指紋。
+- Hosted 驗證：以 `student01` 正常登入並進入 Chapter 3 複習卡。1280×720 書本為 937×521px、右上資訊列可見；390×844 顯示「複習 2 / 3」。兩個 viewport 均無文件水平溢出、文字裁切、overflow fallback、console error、page error 或 failed request，computed style 為正文 500／粗體 800。
+- 邊界：本輪只更新 web bundle，沒有重匯 Google Sheet、修改 Staging DB／Storage、執行 `pnpm test:db` 或 Supabase reset，也未碰 Phase 0／1 保護路徑。既知 `review_card_media`／Storage policy 的鎖定章節媒體繞過風險仍未修。
