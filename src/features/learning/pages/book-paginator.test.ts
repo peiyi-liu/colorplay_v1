@@ -131,4 +131,31 @@ describe('paginateBookBlocks', () => {
       },
     ]);
   });
+
+  it('保留兩像素安全餘量，避免量測與實際 Markdown 渲染的捨入差異裁切頁尾', () => {
+    const { measureElement, sourceElement } = paginationElements(
+      { intro: 80, paragraph: 19 },
+      100,
+    );
+
+    const pages = paginateBookBlocks({
+      blocks: [
+        { key: 'intro', splittable: false },
+        { key: 'paragraph', splittable: false },
+      ],
+      measureElement,
+      sourceElement,
+    });
+
+    expect(pages).toEqual([
+      {
+        items: [{ blockKey: 'intro', key: 'intro' }],
+        overflowFallback: false,
+      },
+      {
+        items: [{ blockKey: 'paragraph', key: 'paragraph' }],
+        overflowFallback: false,
+      },
+    ]);
+  });
 });

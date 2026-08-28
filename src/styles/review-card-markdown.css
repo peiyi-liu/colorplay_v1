@@ -48,7 +48,7 @@
 }
 
 .review-card-markdown mark {
-  padding: 0.02em 0.18em;
+  padding: 0.02em 0;
   border-radius: 0.18em;
   background: var(--review-mark-bg);
   box-decoration-break: clone;

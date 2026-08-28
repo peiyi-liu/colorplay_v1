@@ -24,7 +24,7 @@ type PaginateBookBlocksOptions = Readonly<{
   sourceElement: HTMLElement;
 }>;
 
-const FIT_TOLERANCE_PX = 1;
+const FIT_SAFETY_MARGIN_PX = 2;
 
 function clonePageItem(
   item: BookPageItem,
@@ -84,7 +84,7 @@ function fitsPage(
   measureElement.replaceChildren(...clones);
   return (
     measureElement.scrollHeight <=
-    measureElement.clientHeight + FIT_TOLERANCE_PX
+    Math.max(0, measureElement.clientHeight - FIT_SAFETY_MARGIN_PX)
   );
 }
 
