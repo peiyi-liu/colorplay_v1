@@ -1309,3 +1309,10 @@
 - 驗證：focused Vitest 6 檔／39 tests、scoped ESLint、scoped Prettier、`pnpm typecheck` 與 production build 全綠。Chromium harness 10/10 通過，逐頁檢查 320×568、375×812、393×852、768×1024、1024×768、1280×720、1440×900、812×375 與 852×393：無文字裁切、無頁面水平溢出、非 fallback 無垂直溢出、fallback 可實際捲到底；另用獨立原始內容片段確認標題、清單、表格、引用與結尾標記未遺失。
 - Review：唯一一次雙軸 review 的 Standards 4 項與 Spec 4 項均在同輪修正；包含表格 accessible fallback、指定 viewport、測試檔責任拆分、E2E 重複、清單語意及非循環式內容保存證據。Security axis 因未碰 trust boundary 略過，不再進行第二輪 review。
 - 狀態：仍在 `codex/review-card-ui-update`，HEAD／upstream 保持 `f212f9627289b52d20f0b1078564849194f0a973`；本輪變更未 commit、push 或 deploy，未操作 Supabase／hosted DB，未執行 `pnpm test:db` 或 reset，Phase 0／1 保護路徑未修改。
+
+## 2026-08-28 10:42 [Codex] — 複習卡完整 Markdown 分頁已發布 Staging，真實學生資料跨桌機／手機驗證通過
+
+- 發布：先提交並 push `2e5e7652cdae0f8b7f1cf72f6511cd1204427fbe`（完整 Markdown 分頁與安全捲動），公開 Staging 實測後發現純文字 `1.`／`-` 清單被誤判為可逐字切割段落，導致桌面 1280×720 某一頁有 57px 未標記的垂直溢出。依 TDD 補上純文字清單契約後，以 `115525ab5171296e69de777d29958f0fed9a60a9` 修正並 push；Production 環境候選 `dpl_C2e9gxx3iMUwpSphEkBt8uwPZfy2` 已 Ready 並 promotion 至 `staging.colorplayapp.com`。Vercel metadata 精確對應此 SHA／分支，正式 bundle 只含 Staging Supabase ref `onkxnkzeixpezetkmocf`，不含 Production ref。
+- 驗證：以 `student01` 正常登入並完成 profile／economy／Chapter 3 bootstrap，console 0 error／0 warning。真實「色彩三要素」內容在桌面 1280×720 共 12 個書頁（6 個跨頁 view）、手機 390×844 共 8 頁；所有非 fallback 頁的水平／垂直溢出為 0、文字元素無裁切，過長完整區塊皆改為 `overflow-y:auto`、`tabIndex=0` 且具「本頁內容較長，可上下捲動」名稱。真實 RC3203 在手機共 25 頁，兩個 GFM 表格皆保留；3×3 表格在手機與桌面無水平裁切、由整頁 fallback 承擔垂直捲動。P306／P307 signed images 從 private `onkxnkzeixpezetkmocf.supabase.co` 實際載入，尺寸分別 2105×965、1102×1556。
+- 本機 gate：純文字清單 RED 測試先確認收到 `[true,true,true,true]`，修正後相關 Vitest 5 檔／18 tests 全綠；閱讀器 Chromium harness 首輪 9/10，唯一失敗為 852×393 翻頁動畫中的既有時序波動，該 viewport 單獨重跑通過；scoped lint、`pnpm typecheck`、production build 通過。裸 `pnpm test -- <file>` 仍會錯誤掃入其他 worktree／`.pnpm-store` 並出現既有失敗，因此有效證據採 `pnpm exec vitest run <scoped files>`。
+- 邊界：本輪只更新 web bundle，沒有重匯 Google Sheet、沒有修改 Staging DB／Storage、沒有執行 `pnpm test:db` 或 Supabase reset，也未碰 Phase 0／1 保護路徑。既知 `review_card_media`／Storage policy 的鎖定章節媒體繞過風險仍未修。
