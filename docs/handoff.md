@@ -1316,3 +1316,9 @@
 - 驗證：以 `student01` 正常登入並完成 profile／economy／Chapter 3 bootstrap，console 0 error／0 warning。真實「色彩三要素」內容在桌面 1280×720 共 12 個書頁（6 個跨頁 view）、手機 390×844 共 8 頁；所有非 fallback 頁的水平／垂直溢出為 0、文字元素無裁切，過長完整區塊皆改為 `overflow-y:auto`、`tabIndex=0` 且具「本頁內容較長，可上下捲動」名稱。真實 RC3203 在手機共 25 頁，兩個 GFM 表格皆保留；3×3 表格在手機與桌面無水平裁切、由整頁 fallback 承擔垂直捲動。P306／P307 signed images 從 private `onkxnkzeixpezetkmocf.supabase.co` 實際載入，尺寸分別 2105×965、1102×1556。
 - 本機 gate：純文字清單 RED 測試先確認收到 `[true,true,true,true]`，修正後相關 Vitest 5 檔／18 tests 全綠；閱讀器 Chromium harness 首輪 9/10，唯一失敗為 852×393 翻頁動畫中的既有時序波動，該 viewport 單獨重跑通過；scoped lint、`pnpm typecheck`、production build 通過。裸 `pnpm test -- <file>` 仍會錯誤掃入其他 worktree／`.pnpm-store` 並出現既有失敗，因此有效證據採 `pnpm exec vitest run <scoped files>`。
 - 邊界：本輪只更新 web bundle，沒有重匯 Google Sheet、沒有修改 Staging DB／Storage、沒有執行 `pnpm test:db` 或 Supabase reset，也未碰 Phase 0／1 保護路徑。既知 `review_card_media`／Storage policy 的鎖定章節媒體繞過風險仍未修。
+
+## 2026-08-28 13:01 [Codex] — 複習卡正文與 Markdown 粗體層級修正完成（本機，未發布）
+
+- 問題與修正：閱讀器正文原為 `font-weight: 560`，與瀏覽器預設 `<strong>` 的 700 只差 140，繁中文字形下不易辨識。正文調整為 500，並為 `.review-card-markdown strong` 明確指定 800，讓 Markdown 粗體與正文有 300 的可測層級差；未改動排版、標記色彩或內容契約。
+- 驗證：新增 Playwright computed-style 契約，RED 先重現 560／700，GREEN 確認 500／800。閱讀器 Chromium harness 11/11 通過，涵蓋桌面、平板、手機、橫向手機與 reduced-motion；相關 Vitest 5 檔／18 tests、scoped ESLint、Prettier、`pnpm typecheck` 與 production build 全綠。另檢視 1280 與 393 viewport，粗體辨識提升且未出現裁切或排版回歸。
+- 狀態：變更將只提交在 `codex/review-card-ui-update` 本機，尚未 push 或 deploy；沒有重匯 Google Sheet、修改 Staging DB／Storage、執行 `pnpm test:db`／Supabase reset，也未碰 Phase 0／1 保護路徑。

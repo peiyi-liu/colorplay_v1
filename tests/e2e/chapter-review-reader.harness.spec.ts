@@ -466,3 +466,34 @@ test('06-v2 review reader removes page-turn motion when reduced motion is reques
     ),
   ).toBe('none');
 });
+
+test('06-v2 review reader makes Markdown bold visibly distinct from body copy', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 720, width: 1280 });
+  await page.goto('/dev-harness/chapter-detail.html?scenario=in-progress');
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('button', { name: '進入複習' }).click();
+
+  const visibleMarkdown = page
+    .locator(
+      '.chapter-review-reader__viewport > .chapter-review-reader__book-page .review-card-markdown',
+    )
+    .filter({ has: page.locator('strong') })
+    .first();
+  await expect(visibleMarkdown).toBeVisible();
+
+  const weights = await visibleMarkdown.evaluate((element) => {
+    const strong = element.querySelector('strong');
+    return {
+      body: Number.parseInt(getComputedStyle(element).fontWeight, 10),
+      strong: strong
+        ? Number.parseInt(getComputedStyle(strong).fontWeight, 10)
+        : 0,
+    };
+  });
+
+  expect(weights.body).toBeLessThanOrEqual(500);
+  expect(weights.strong).toBeGreaterThanOrEqual(700);
+  expect(weights.strong - weights.body).toBeGreaterThanOrEqual(200);
+});

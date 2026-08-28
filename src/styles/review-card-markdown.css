@@ -43,6 +43,10 @@
   margin: 0 0 0.85em;
 }
 
+.review-card-markdown strong {
+  font-weight: 800;
+}
+
 .review-card-markdown mark {
   padding: 0.02em 0.18em;
   border-radius: 0.18em;
