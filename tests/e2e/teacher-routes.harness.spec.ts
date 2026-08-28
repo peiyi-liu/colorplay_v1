@@ -6,6 +6,7 @@ import {
   verifyLiveReportComposition,
   WIDTHS,
 } from './teacher-routes.harness-support';
+import { measureLiveLobbyGeometry } from './helpers/live-projector-layout';
 
 for (const viewport of [
   { height: 900, label: '1280 desktop', width: 1280 },
@@ -239,7 +240,9 @@ for (const width of WIDTHS) {
         overflow.clientWidth,
       );
       if (scenario === 'live-session' && width < 1024) {
-        await expect(page.getByRole('alert')).toHaveText('投影視窗過小');
+        await expect(page.getByRole('alert')).toContainText(
+          '請縮小瀏覽器畫面比例',
+        );
       } else {
         await expect(page.getByRole('heading').first()).toBeVisible();
       }
@@ -340,56 +343,7 @@ for (const viewport of [
       imageFits: true,
     });
 
-    const geometry = await page.evaluate(() => {
-      const root = document.querySelector<HTMLElement>('.live-presenter');
-      const arena = document.querySelector<HTMLElement>(
-        '.live-presenter__wall',
-      );
-      const footer = document.querySelector<HTMLElement>(
-        '.live-projector__controls',
-      );
-      const portraits = Array.from(
-        document.querySelectorAll<HTMLElement>('.live-presenter__wall-chip'),
-      );
-      const controls = Array.from(
-        document.querySelectorAll<HTMLElement>('.live-projector__control'),
-      ).map((control) => {
-        const rect = control.getBoundingClientRect();
-        return { height: rect.height, width: rect.width };
-      });
-      if (!root || !arena || !footer) throw new Error('missing Live projector');
-      const arenaBounds = arena.getBoundingClientRect();
-      const footerBounds = footer.getBoundingClientRect();
-      const rootBounds = root.getBoundingClientRect();
-      return {
-        arenaDoesNotScroll:
-          arena.scrollHeight <= arena.clientHeight &&
-          arena.scrollWidth <= arena.clientWidth,
-        controls,
-        documentHeight: document.documentElement.scrollHeight,
-        documentWidth: document.documentElement.scrollWidth,
-        rootHeight: root.scrollHeight,
-        rootBounds: {
-          bottom: rootBounds.bottom,
-          left: rootBounds.left,
-          right: rootBounds.right,
-          top: rootBounds.top,
-        },
-        rootWidth: root.scrollWidth,
-        portraitsFit: portraits.every((portrait) => {
-          const bounds = portrait.getBoundingClientRect();
-          return (
-            bounds.left >= arenaBounds.left - 1 &&
-            bounds.right <= arenaBounds.right + 1 &&
-            bounds.top >= arenaBounds.top - 1 &&
-            bounds.bottom <= arenaBounds.bottom + 1 &&
-            bounds.bottom <= footerBounds.top + 1
-          );
-        }),
-        viewportHeight: document.documentElement.clientHeight,
-        viewportWidth: document.documentElement.clientWidth,
-      };
-    });
+    const geometry = await measureLiveLobbyGeometry(page);
     expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth);
     expect(geometry.documentHeight).toBeLessThanOrEqual(
       geometry.viewportHeight,
@@ -403,6 +357,8 @@ for (const viewport of [
       top: 0,
     });
     expect(geometry.arenaDoesNotScroll).toBe(true);
+    expect(Math.abs(geometry.contentCenterOffset)).toBeLessThanOrEqual(48);
+    expect(geometry.footerBottomGap).toBeLessThanOrEqual(1);
     expect(geometry.portraitsFit).toBe(true);
     expect(
       geometry.controls.every(

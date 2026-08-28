@@ -1336,3 +1336,18 @@
 - 環境與樣式：公開 bundle 只含 Staging Supabase ref `onkxnkzeixpezetkmocf`，不含 Production ref；CSS 包含本次正文 500／Markdown 粗體 800，以及放大閱讀區的 grid 指紋。
 - Hosted 驗證：以 `student01` 正常登入並進入 Chapter 3 複習卡。1280×720 書本為 937×521px、右上資訊列可見；390×844 顯示「複習 2 / 3」。兩個 viewport 均無文件水平溢出、文字裁切、overflow fallback、console error、page error 或 failed request，computed style 為正文 500／粗體 800。
 - 邊界：本輪只更新 web bundle，沒有重匯 Google Sheet、修改 Staging DB／Storage、執行 `pnpm test:db` 或 Supabase reset，也未碰 Phase 0／1 保護路徑。既知 `review_card_media`／Storage policy 的鎖定章節媒體繞過風險仍未修。
+
+## 2026-08-28 14:55 [Codex] — 複習卡桌機／手機共用書頁框架與防遮擋分頁完成（本機，未發布）
+
+- 版面：返回、章節資訊與底部三按鈕收進書本內，桌機只與手機保留雙頁／單頁差異。書本改用三列 grid 分開頂部資訊、閱讀內容與動態底部狀態，並納入 `safe-area-inset-bottom`；320×568 同時顯示圖片等待或完成錯誤時不會遮住文字或按鈕。頁數改為視覺隱藏但輔助科技可讀的 live region。
+- 分頁：移除 Markdown DOM 上造成虛假空白的 `white-space: pre-line`，同頁連續清單項保持單一 `<ol>`／`<ul>`；H1～H6 新增 keep-with-next 測量，避免標題單獨留在頁尾。無法安全拆分的長表格／圖片仍保留整頁安全捲動 fallback。
+- 驗證：單元與 shell 相關 4 檔／15 tests、Chromium 16／16（含 1280×720、1024×600、1366×768、393×852、320×568 及兩個手機橫向）、scoped ESLint／Prettier、`pnpm typecheck`、production build 全綠。測試逐頁檢查無文字裁切、水平溢出或 chrome／內容／底部相交。
+- Review：唯一一輪 Standards 3 項與 Spec 3 項均已同輪修正；Security 因未碰 trust boundary 略過。CSS 拆為 387／202／130 行的 layout、controls、responsive 檔案，避免單檔超過 500 行。
+- 狀態：本機預覽為 `http://127.0.0.1:4186/dev-harness/chapter-detail.html?scenario=in-progress`；仍在 `codex/review-card-ui-update`，HEAD／upstream 保持 `b9c9db415e79b354ed3281b40c6d0bf85c375d19`。本輪未 commit、push、deploy，未操作 Google Sheet／Supabase／hosted 資料，未碰 Phase 0／1 保護路徑。
+
+## 2026-08-28 15:26 [Codex] — Live 教師投影滿版置中與小視窗指引完成（本機，未發布）
+
+- 根因與版面：委派後的 `.live-projector` 只是舊 `.live-presenter` 三列 grid 的單一 auto-placement child，沒有跨滿整個投影 viewport，造成 1280×720 的底部控制列距畫面下緣約 58.6px，內容也一起偏上。Projector 現在跨滿外層 grid，header／stage／footer 使用完整高度；lobby、題目、統計與排名採共用視覺置中 offset，解析滿高容器則不平移，避免上緣被裁切。
+- 小視窗提示：`投影視窗過小` 改為置中的標題＋「請縮小瀏覽器畫面比例，或放大視窗後再試。」；原有取消狀態與離開投影路徑保留。幾何測試會驗證 footer 貼齊、內容中心、物件完整位於 stage、44px 控制尺寸與無頁面溢出。
+- 驗證：Live Presenter Chromium 41／41、教師 lobby 1024×768／1280×720／1366×768／1920×1080 共 4／4、既有 Live unit 34／34、focused ESLint／Prettier、`pnpm typecheck` 與 production build 通過。Review 唯一一輪 Spec 無 finding；Standards 的解析裁切與測試檔責任兩項 P2 已同輪修正，共用幾何抽至 `tests/e2e/helpers/live-projector-layout.ts`。
+- 狀態：本機預覽為 `http://127.0.0.1:4186/dev-harness/teacher-routes.html?scenario=live-lobby`；仍在 `codex/review-card-ui-update`，HEAD／upstream 保持 `b9c9db415e79b354ed3281b40c6d0bf85c375d19`。保留既有複習卡 WIP；本輪未 commit、push、deploy，未操作 Supabase／hosted 資料，也未碰 Phase 0／1 保護路徑。

@@ -50,7 +50,7 @@ export const baseState: LiveSessionState = {
   state: 'lobby',
   stateVersion: 2,
   currentPosition: 0,
-  questionCount: 10,
+  questionCount: 20,
   participantCount: 3,
   rulesVersion: '2026-07-live-1',
   questionDisplay: 'device',

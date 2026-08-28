@@ -1,7 +1,7 @@
 import { mkdir } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
-import { expectMobileReaderHeaderOnBook } from './helpers/review-reader-header';
+import { expectReaderChromeOnBook } from './helpers/review-reader-header';
 import {
   assertCompleteReviewReaderPagination,
   reviewReaderViewports,
@@ -47,27 +47,21 @@ for (const viewport of reviewReaderViewports) {
     const bookPageNumbers = book.locator(
       '.chapter-review-reader__book-page-numbers',
     );
-    if (viewport.mobile) {
-      await expect(bookPageNumbers).toBeHidden();
-      await expect(
-        reader.locator('.chapter-review-reader__position'),
-      ).toBeVisible();
-      await expect(
-        reader.locator('.chapter-review-reader__position'),
-      ).toContainText('複習 2 / 10');
-      await expect(
-        reader.locator('.chapter-review-reader__reading-progress'),
-      ).toBeHidden();
-      await expect(pageCount).toBeHidden();
-      await expect(
-        reader.locator('.chapter-review-reader__footer button'),
-      ).toHaveCount(3);
-    } else {
-      await expect(bookPageNumbers).toBeVisible();
-      await expect(
-        book.locator('.chapter-review-reader__book-page-number--left'),
-      ).toContainText('1');
-    }
+    await expect(bookPageNumbers).toBeHidden();
+    await expect(
+      reader.locator('.chapter-review-reader__position'),
+    ).toBeVisible();
+    await expect(
+      reader.locator('.chapter-review-reader__position'),
+    ).toContainText('複習 2 / 10');
+    await expect(
+      reader.locator('.chapter-review-reader__reading-progress'),
+    ).toBeHidden();
+    await expect(pageCount).toHaveClass(/visually-hidden/u);
+    await expect(pageCount).toContainText('第 1 /');
+    await expect(
+      reader.locator('.chapter-review-reader__footer button'),
+    ).toHaveCount(3);
     await expect(back).toBeVisible();
     await expect(
       hud.getByRole('button', { name: '返回複習卡選擇' }),
@@ -75,14 +69,12 @@ for (const viewport of reviewReaderViewports) {
     await expect(
       page.getByRole('button', { name: '返回複習卡選擇' }),
     ).toHaveCount(1);
-    if (viewport.mobile) await expectMobileReaderHeaderOnBook(page);
+    await expectReaderChromeOnBook(page);
     await expect(previous).toBeDisabled();
     await expect(next).toBeEnabled();
     await expect(pageCount).not.toContainText('第 1 / 1 頁');
     await expect(complete).toBeVisible();
-    if (viewport.mobile) {
-      await expect(complete).toContainText(/\d+%/u);
-    }
+    await expect(complete).toContainText(/\d+%/u);
 
     const metrics = await reader.evaluate((element) => {
       const box = element.getBoundingClientRect();
@@ -101,7 +93,9 @@ for (const viewport of reviewReaderViewports) {
       const headingGroup = element.querySelector<HTMLElement>(
         '.chapter-review-reader__heading-group',
       );
-      const back = document.querySelector<HTMLElement>('.student-route-back');
+      const back = element.querySelector<HTMLElement>(
+        '.chapter-review-reader__book > .student-route-back',
+      );
       const gutter = element.querySelector<HTMLElement>(
         '.chapter-review-reader__gutter',
       );
@@ -194,8 +188,9 @@ for (const viewport of reviewReaderViewports) {
         )
           .filter(
             (target) =>
-              target.scrollWidth > target.clientWidth + 1 ||
-              target.scrollHeight > target.clientHeight + 1,
+              !target.classList.contains('visually-hidden') &&
+              (target.scrollWidth > target.clientWidth + 1 ||
+                target.scrollHeight > target.clientHeight + 1),
           )
           .map((target) => ({
             clientHeight: target.clientHeight,
@@ -236,10 +231,6 @@ for (const viewport of reviewReaderViewports) {
         (metrics.footer?.top ?? -Infinity) -
           (metrics.contentViewport?.bottom ?? Infinity),
       ).toBeGreaterThanOrEqual(10);
-    } else {
-      expect(metrics.book?.bottom ?? Infinity).toBeLessThanOrEqual(
-        metrics.footer?.top ?? 0,
-      );
     }
     expect(metrics.footer?.bottom ?? Infinity).toBeLessThanOrEqual(
       metrics.reader.bottom,
@@ -299,22 +290,13 @@ for (const viewport of reviewReaderViewports) {
         controlStyle.text,
       ).toBe(true);
     }
-    if (!viewport.mobile) {
-      expect(metrics.pageNumbers?.bottom ?? Infinity).toBeLessThanOrEqual(
-        metrics.book?.bottom ?? 0,
-      );
-      expect(metrics.pageNumbers?.top ?? -1).toBeGreaterThan(
-        (metrics.book?.bottom ?? 0) - 80,
-      );
-    }
-
     const controls = reader.locator('button:visible');
     for (let index = 0; index < (await controls.count()); index += 1) {
       const controlBox = await controls.nth(index).boundingBox();
       expect(controlBox?.width ?? 0).toBeGreaterThanOrEqual(44);
       expect(controlBox?.height ?? 0).toBeGreaterThanOrEqual(44);
     }
-    if (viewport.mobile) {
+    {
       const [previousBox, completeBox, nextBox] = await reader.evaluate(
         (element) =>
           [
@@ -414,10 +396,6 @@ for (const viewport of reviewReaderViewports) {
       await expect
         .poll(() => complete.textContent())
         .not.toBe(completeTextBeforePageChange);
-    } else {
-      await expect(
-        book.locator('.chapter-review-reader__book-page-number--left'),
-      ).toContainText('3');
     }
     await expect
       .poll(() => visibleBookPages.allTextContents())
@@ -444,6 +422,59 @@ for (const viewport of reviewReaderViewports) {
         ).toBeLessThanOrEqual(0.5);
       }
     }
+  });
+}
+
+for (const readerState of ['completion-error', 'media-wait'] as const) {
+  test(`06-v2 review reader keeps ${readerState} footer clear of content at 320x568`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ height: 568, width: 320 });
+    await page.goto(
+      `/dev-harness/chapter-detail.html?scenario=in-progress&readerState=${readerState}`,
+    );
+    await page.waitForLoadState('networkidle');
+    if (readerState === 'media-wait') await page.clock.install();
+
+    await page.getByRole('button', { name: '進入複習' }).click();
+    const reader = page.getByRole('region', {
+      name: /複習卡閱讀：色彩三要素/u,
+    });
+    await expect(reader).toBeVisible();
+    if (readerState === 'media-wait') {
+      await page.clock.fastForward(10_100);
+      await expect(
+        reader.getByRole('button', { name: '略過圖片' }),
+      ).toBeVisible();
+    } else {
+      await expect(reader.getByRole('alert')).toBeVisible();
+    }
+
+    const geometry = await reader.evaluate((element) => {
+      const viewport = element.querySelector<HTMLElement>(
+        '.chapter-review-reader__viewport',
+      );
+      const footer = element.querySelector<HTMLElement>(
+        '.chapter-review-reader__footer',
+      );
+      const book = element.querySelector<HTMLElement>(
+        '.chapter-review-reader__book',
+      );
+      const rect = (target: HTMLElement | null) =>
+        target?.getBoundingClientRect() ?? null;
+      return {
+        book: rect(book),
+        footer: rect(footer),
+        viewport: rect(viewport),
+      };
+    });
+
+    expect(geometry.viewport?.bottom ?? Infinity).toBeLessThanOrEqual(
+      (geometry.footer?.top ?? -Infinity) - 10,
+    );
+    expect(geometry.footer?.bottom ?? Infinity).toBeLessThanOrEqual(
+      geometry.book?.bottom ?? -Infinity,
+    );
   });
 }
 
@@ -542,9 +573,10 @@ test('06-v2 review reader moves context to the upper right and enlarges the desk
     };
   });
 
-  expect(layout.heading.right).toBeGreaterThanOrEqual(layout.reader.right - 64);
-  expect(layout.heading.top).toBeLessThanOrEqual(layout.reader.top + 24);
-  expect(layout.heading.bottom + 4).toBeLessThanOrEqual(layout.viewport.top);
+  expect(layout.heading.right).toBeLessThanOrEqual(layout.book.right);
+  expect(layout.heading.right).toBeGreaterThanOrEqual(layout.book.right - 72);
+  expect(layout.heading.top).toBeGreaterThanOrEqual(layout.book.top);
+  expect(layout.heading.bottom + 8).toBeLessThanOrEqual(layout.viewport.top);
   expect(layout.book.width).toBeGreaterThanOrEqual(930);
   expect(layout.book.height).toBeGreaterThanOrEqual(515);
 });

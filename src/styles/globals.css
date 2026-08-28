@@ -5232,11 +5232,24 @@ a {
 
 .live-presenter__viewport-warning {
   display: none;
-  align-self: center;
+  max-width: 38rem;
+  flex-direction: column;
+  grid-area: 1 / 1 / -1 / -1;
+  place-self: center;
   margin: 0;
-  font-size: 2rem;
-  font-weight: 700;
+  gap: var(--space-3);
+  padding: var(--space-6);
   text-align: center;
+}
+
+.live-presenter__viewport-warning strong {
+  font-size: 2rem;
+}
+
+.live-presenter__viewport-warning span {
+  color: var(--slate-200);
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .live-presenter__hint {
@@ -5505,7 +5518,7 @@ a {
   }
 
   .live-presenter__viewport-warning {
-    display: block;
+    display: flex;
   }
 
   .live-presenter__status,

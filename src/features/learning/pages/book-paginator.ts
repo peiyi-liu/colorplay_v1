@@ -1,5 +1,6 @@
 export type BookPaginationBlock = Readonly<{
   groupKey?: string;
+  keepWithNext?: boolean;
   key: string;
   splittable: boolean;
   text?: string;
@@ -37,14 +38,49 @@ function clonePageItem(
   return clone;
 }
 
+function mergeGroupedListClone(target: HTMLElement, source: HTMLElement) {
+  const targetList = target.querySelector<HTMLOListElement | HTMLUListElement>(
+    '.review-card-markdown > :is(ol, ul)',
+  );
+  const sourceList = source.querySelector<HTMLOListElement | HTMLUListElement>(
+    '.review-card-markdown > :is(ol, ul)',
+  );
+  if (targetList === null) return false;
+  if (sourceList?.tagName !== targetList.tagName) return false;
+  targetList.append(...Array.from(sourceList.children));
+  return true;
+}
+
+function clonePageItems(
+  items: readonly BookPageItem[],
+  sourceNodes: ReadonlyMap<string, HTMLElement>,
+) {
+  const clones: HTMLElement[] = [];
+  let previousGroupKey: string | undefined;
+  for (const item of items) {
+    const clone = clonePageItem(item, sourceNodes);
+    if (!clone) continue;
+    const previousClone = clones.at(-1);
+    if (
+      item.groupKey !== undefined &&
+      item.groupKey === previousGroupKey &&
+      previousClone &&
+      mergeGroupedListClone(previousClone, clone)
+    ) {
+      continue;
+    }
+    clones.push(clone);
+    previousGroupKey = item.groupKey;
+  }
+  return clones;
+}
+
 function fitsPage(
   items: readonly BookPageItem[],
   measureElement: HTMLElement,
   sourceNodes: ReadonlyMap<string, HTMLElement>,
 ) {
-  const clones = items
-    .map((item) => clonePageItem(item, sourceNodes))
-    .filter((item): item is HTMLElement => item !== null);
+  const clones = clonePageItems(items, sourceNodes);
   measureElement.replaceChildren(...clones);
   return (
     measureElement.scrollHeight <=
@@ -117,13 +153,45 @@ export function paginateBookBlocks({
     currentPage = [];
   };
 
-  for (const block of blocks) {
+  for (const [blockIndex, block] of blocks.entries()) {
     const fullItem: BookPageItem = {
       blockKey: block.key,
       ...(block.groupKey === undefined ? {} : { groupKey: block.groupKey }),
       key: block.key,
       ...(block.text === undefined ? {} : { text: block.text }),
     };
+
+    const nextBlock = blocks[blockIndex + 1];
+    if (
+      block.keepWithNext &&
+      nextBlock !== undefined &&
+      currentPage.length > 0
+    ) {
+      const nextItem: BookPageItem = {
+        blockKey: nextBlock.key,
+        ...(nextBlock.groupKey === undefined
+          ? {}
+          : { groupKey: nextBlock.groupKey }),
+        key: nextBlock.key,
+        ...(nextBlock.text === undefined ? {} : { text: nextBlock.text }),
+      };
+      const nextCanBeginOnCurrentPage =
+        nextBlock.splittable && nextBlock.text
+          ? fittingPrefixLength(
+              [...currentPage, fullItem],
+              nextBlock,
+              nextBlock.text,
+              0,
+              measureElement,
+              sourceNodes,
+            ) > 0
+          : fitsPage(
+              [...currentPage, fullItem, nextItem],
+              measureElement,
+              sourceNodes,
+            );
+      if (!nextCanBeginOnCurrentPage) finishPage();
+    }
 
     if (!block.splittable || !block.text) {
       if (!fitsPage([...currentPage, fullItem], measureElement, sourceNodes)) {

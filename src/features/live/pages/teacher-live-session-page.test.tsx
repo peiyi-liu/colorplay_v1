@@ -78,7 +78,7 @@ describe('TeacherLiveSessionPage (host console)', () => {
         ...openState,
         isHost: true,
         state: 'question_feedback',
-        currentPosition: 10,
+        currentPosition: 20,
         stateVersion: 23,
         correctOptionId: '18700000-0000-0000-0000-000000000001',
         optionCounts: [

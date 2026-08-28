@@ -21,6 +21,7 @@ if (!challenge) throw new Error('ASSIGNMENTS_LIVE_CHALLENGE_MISSING');
 
 const sessionUrlPattern =
   /\/teacher\/live\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/iu;
+const LIVE_QUESTION_COUNT = 20;
 
 // 教師／學生共用登入表單（email 橋接一律導向 /app），但 app-shell.tsx 的導覽列
 // 是依帳號角色（isTeacher）擇一渲染，不是依路徑：教師帳號登入後即使停在
@@ -112,7 +113,7 @@ test('Assignments and Live Core phase gate', async ({
   browser,
   page: hostPage,
 }, testInfo) => {
-  test.setTimeout(480_000);
+  test.setTimeout(720_000);
   if (process.env.PLAYWRIGHT_ACCEPTANCE !== 'on') {
     throw new Error('ASSIGNMENTS_LIVE_ACCEPTANCE_MODE_REQUIRED');
   }
@@ -191,7 +192,11 @@ test('Assignments and Live Core phase gate', async ({
       await studentPage.getByRole('button', { name: '加入課堂' }).click();
       await expect(studentPage.getByText('等待主持人開始…')).toBeVisible();
     }
-    await expect(hostPage.getByText('2 位參與者・第 0 / 10 題')).toBeVisible();
+    await expect(
+      hostPage.getByText(
+        `2 位參與者・第 0 / ${String(LIVE_QUESTION_COUNT)} 題`,
+      ),
+    ).toBeVisible();
 
     if (sessionIndex === 1) {
       // Outsider denial arrives as a committed 200 payload error since
@@ -211,10 +216,12 @@ test('Assignments and Live Core phase gate', async ({
 
     await hostPage.getByRole('button', { name: '開始第一題' }).click();
 
-    for (let round = 1; round <= 10; round += 1) {
+    for (let round = 1; round <= LIVE_QUESTION_COUNT; round += 1) {
       for (const studentPage of [studentAPage, studentBPage]) {
         await expect(
-          studentPage.getByText(`第 ${String(round)} / 10 題`),
+          studentPage.getByText(
+            `第 ${String(round)} / ${String(LIVE_QUESTION_COUNT)} 題`,
+          ),
         ).toBeVisible();
       }
 
@@ -226,7 +233,9 @@ test('Assignments and Live Core phase gate', async ({
         // speed-bonus window).
         await studentAPage.reload();
         await expect(
-          studentAPage.getByText(`第 ${String(round)} / 10 題`),
+          studentAPage.getByText(
+            `第 ${String(round)} / ${String(LIVE_QUESTION_COUNT)} 題`,
+          ),
         ).toBeVisible();
         await expect(
           studentAPage.getByText('已收到你的答案，等待其他同學…'),
@@ -249,7 +258,7 @@ test('Assignments and Live Core phase gate', async ({
       ).toBeVisible();
       verifiedAnswerPairs += 2;
 
-      if (round < 10) {
+      if (round < LIVE_QUESTION_COUNT) {
         if (sessionIndex === 1 && round === 6) {
           // Two host consoles dispatch the same advance at the same version.
           // The server's compare-and-set admits exactly one; the losing tab
@@ -329,8 +338,8 @@ test('Assignments and Live Core phase gate', async ({
     const winnerScore = Number(
       /你的成績：(\d+) 分/u.exec(await winnerResult.innerText())?.[1],
     );
-    expect(winnerScore).toBeGreaterThanOrEqual(750);
-    expect(winnerScore).toBeLessThanOrEqual(1500);
+    expect(winnerScore).toBeGreaterThanOrEqual(1500);
+    expect(winnerScore).toBeLessThanOrEqual(3000);
     await expect(
       studentBPage.getByText(/你的成績：0 分，第 2 名/u),
     ).toBeVisible();
@@ -374,10 +383,10 @@ test('Assignments and Live Core phase gate', async ({
     answer_samples: answerDurations.length,
     finalize_p95_ms: percentile(finalizeDurations, 0.95),
     finalize_samples: finalizeDurations.length,
-    lost_or_duplicate_answers: 40 - verifiedAnswerPairs,
+    lost_or_duplicate_answers: LIVE_QUESTION_COUNT * 4 - verifiedAnswerPairs,
     outsider_access: outsiderDeniedCount === 1 ? 0 : 1,
   };
-  expect(verifiedAnswerPairs).toBe(40);
+  expect(verifiedAnswerPairs).toBe(LIVE_QUESTION_COUNT * 4);
   expect(latencyReport.answer_p95_ms).toBeLessThanOrEqual(800);
   expect(latencyReport.finalize_p95_ms).toBeLessThanOrEqual(1000);
 

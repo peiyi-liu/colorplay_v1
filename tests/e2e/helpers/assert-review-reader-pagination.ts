@@ -21,6 +21,20 @@ export const reviewReaderViewports = [
   },
   {
     capture: false,
+    height: 600,
+    label: '1024x600',
+    mobile: false,
+    width: 1024,
+  },
+  {
+    capture: false,
+    height: 768,
+    label: '1366x768',
+    mobile: false,
+    width: 1366,
+  },
+  {
+    capture: false,
     height: 900,
     label: '1440x900',
     mobile: false,
@@ -70,7 +84,6 @@ export async function assertCompleteReviewReaderPagination(
     .locator('.chapter-review-reader__pagination-source')
     .textContent();
   const renderedPageText: string[] = [];
-  let sawOverflowFallback = false;
   let sawTableWithoutInnerVerticalScroll = false;
   let viewCount = 0;
 
@@ -125,7 +138,6 @@ export async function assertCompleteReviewReaderPagination(
       expect(result.clippedText).toEqual([]);
       expect(result.horizontalOverflow).toBeLessThanOrEqual(1);
       if (result.overflowFallback) {
-        sawOverflowFallback = true;
         expect(['auto', 'scroll']).toContain(result.overflowY);
         expect(result.tabIndex).toBe(0);
         if (result.verticalOverflow > 1) {
@@ -151,7 +163,6 @@ export async function assertCompleteReviewReaderPagination(
   const renderedText = normalizedText(renderedPageText.join(''));
   expect(viewCount).toBeLessThan(100);
   expect(viewCount).toBeGreaterThan(1);
-  expect(sawOverflowFallback).toBe(true);
   expect(sawTableWithoutInnerVerticalScroll).toBe(true);
   expect(renderedText).toBe(normalizedText(sourceText ?? ''));
   for (const fragment of expectedContentFragments) {

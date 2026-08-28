@@ -13,7 +13,7 @@ import {
 import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
 
 const CLASSROOM_NAME = '進階Live班級';
-const QUESTION_COUNT = 10;
+const QUESTION_COUNT = 20;
 
 const signInStudent = async (
   page: Page,
@@ -64,7 +64,7 @@ test('Live Advanced phase gate', async ({
   browser,
   page: studentAPage,
 }, testInfo) => {
-  test.setTimeout(480_000);
+  test.setTimeout(720_000);
   if (process.env.PLAYWRIGHT_ACCEPTANCE !== 'on') {
     throw new Error('LIVE_ADVANCED_ACCEPTANCE_MODE_REQUIRED');
   }
@@ -262,7 +262,7 @@ test('Live Advanced phase gate', async ({
     teacherPage.getByRole('region', { name: '隊伍計分板' }),
   ).toBeVisible();
 
-  // --- Rounds 2..10: A stays correct (streak), B misses round 2 ---
+  // --- Rounds 2..20: A stays correct (streak), B misses round 2 ---
   for (let position = 2; position <= QUESTION_COUNT; position += 1) {
     await expect(studentAPage.locator('.question-card legend')).toBeVisible();
     await answerCurrent(studentAPage, 'A', true, position);

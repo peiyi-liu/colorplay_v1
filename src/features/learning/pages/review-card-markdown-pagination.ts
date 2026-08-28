@@ -1,11 +1,13 @@
 export type ReviewCardMarkdownPaginationBlock = Readonly<{
   groupKey?: string;
+  keepWithNext?: boolean;
   markdown: string;
   splittable: boolean;
 }>;
 
 type MarkdownChunk = Readonly<{
   groupKey?: string;
+  keepWithNext?: boolean;
   markdown: string;
 }>;
 
@@ -17,6 +19,32 @@ const thematicBreakPattern =
 const tableDelimiterPattern =
   /^ {0,3}\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/u;
 const standaloneImagePattern = /^ {0,3}!\[[^\]]*\]\([^)]*\)\s*$/u;
+const leadingH1Pattern =
+  /^[\t ]{0,3}#(?!#)[\t ]+([^\n]+?)[\t ]*(?:\n[\t ]*\n|\n|$)/u;
+
+function normalizedHeadingText(value: string) {
+  return value
+    .replace(/[\t ]+#+[\t ]*$/u, '')
+    .replaceAll(/[*_`~=]/gu, '')
+    .replaceAll(/\s+/gu, '')
+    .trim();
+}
+
+export function omitDuplicateLeadingReviewHeading(
+  markdown: string,
+  displayedTitles: readonly string[],
+) {
+  const normalizedMarkdown = markdown.replaceAll('\r\n', '\n');
+  const match = leadingH1Pattern.exec(normalizedMarkdown);
+  if (!match) return normalizedMarkdown;
+  const heading = normalizedHeadingText(match[1] ?? '');
+  const duplicatesDisplayedTitle = displayedTitles.some(
+    (title) => normalizedHeadingText(title) === heading,
+  );
+  return duplicatesDisplayedTitle
+    ? normalizedMarkdown.slice(match[0].length).trimStart()
+    : normalizedMarkdown;
+}
 
 function isSetextUnderline(line: string) {
   return /^ {0,3}(?:=+|-+)\s*$/u.test(line);
@@ -55,11 +83,17 @@ function markdownChunks(markdown: string) {
   let activeListIndent: number | undefined;
   let listGroupIndex = 0;
 
-  const pushLines = (start: number, end: number, groupKey?: string) => {
+  const pushLines = (
+    start: number,
+    end: number,
+    groupKey?: string,
+    keepWithNext?: boolean,
+  ) => {
     const chunk = lines.slice(start, end).join('\n').trim();
     if (chunk) {
       chunks.push({
         ...(groupKey === undefined ? {} : { groupKey }),
+        ...(keepWithNext === undefined ? {} : { keepWithNext }),
         markdown: chunk,
       });
     }
@@ -97,13 +131,13 @@ function markdownChunks(markdown: string) {
 
     if (atxHeadingPattern.test(lines[index] ?? '')) {
       index += 1;
-      pushLines(start, index);
+      pushLines(start, index, undefined, true);
       continue;
     }
 
     if (index + 1 < lines.length && isSetextUnderline(lines[index + 1] ?? '')) {
       index += 2;
-      pushLines(start, index);
+      pushLines(start, index, undefined, true);
       continue;
     }
 
@@ -192,6 +226,9 @@ export function splitReviewCardMarkdown(
 ): readonly ReviewCardMarkdownPaginationBlock[] {
   return markdownChunks(markdown).map((chunk) => ({
     ...(chunk.groupKey === undefined ? {} : { groupKey: chunk.groupKey }),
+    ...(chunk.keepWithNext === undefined
+      ? {}
+      : { keepWithNext: chunk.keepWithNext }),
     markdown: chunk.markdown,
     splittable: isSafelySplittableParagraph(chunk.markdown),
   }));

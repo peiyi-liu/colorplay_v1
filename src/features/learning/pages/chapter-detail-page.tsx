@@ -6,6 +6,7 @@ import '../../../styles/chapter-archive-controls.css';
 import '../../../styles/chapter-archive-header.css';
 import '../../../styles/chapter-archive-responsive.css';
 import '../../../styles/chapter-review-reader.css';
+import '../../../styles/chapter-review-reader-controls.css';
 import '../../../styles/chapter-review-reader-responsive.css';
 import { ProgressBar } from '../../../components/ui/progress-bar';
 import type { LearningRepository } from '../api/learning-repository';

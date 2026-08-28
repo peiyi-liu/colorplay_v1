@@ -12,6 +12,7 @@ export type ReaderBookBlock =
       title: string;
     }>
   | Readonly<{
+      keepWithNext?: boolean;
       paginationGroupKey?: string;
       key: string;
       kind: 'markdown';
@@ -43,7 +44,6 @@ export function ReaderBookBlockContent({
         className="chapter-review-reader__intro"
         data-book-block-key={block.key}
       >
-        <p className="chapter-review-reader__eyebrow">REVIEW ARCHIVE</p>
         <h2 className="chapter-review-reader__book-title">
           {block.displayTitle}
         </h2>

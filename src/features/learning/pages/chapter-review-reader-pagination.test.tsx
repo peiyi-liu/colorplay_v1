@@ -78,10 +78,16 @@ function mockReviewBookMeasurement(
       ) {
         return 0;
       }
-      return Array.from(this.children).reduce(
-        (height, child) => height + blockHeight(child.textContent ?? ''),
-        0,
-      );
+      return Array.from(this.children).reduce((height, child) => {
+        const groupedListItemCount = child.querySelectorAll(
+          '.review-card-markdown > :is(ol, ul) > li',
+        ).length;
+        return (
+          height +
+          blockHeight(child.textContent ?? '') *
+            Math.max(1, groupedListItemCount)
+        );
+      }, 0);
     });
 
   return () => {
@@ -122,7 +128,7 @@ describe('ChapterReviewReader Markdown pagination', () => {
 
   it('依完整清單項目分頁，同頁項目維持單一清單與格式語意', async () => {
     const restoreMeasurement = mockReviewBookMeasurement((text) => {
-      if (text.includes('REVIEW ARCHIVE')) return 40;
+      if (text.includes('色彩的分類')) return 40;
       if (text.includes('完整清單')) return 30;
       return 60;
     }, 140);

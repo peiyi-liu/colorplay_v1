@@ -18,6 +18,8 @@
 }
 
 .live-projector {
+  --live-projector-optical-center-offset: -12px;
+
   position: relative;
   display: grid;
   width: 100%;
@@ -26,6 +28,12 @@
   min-height: 0;
   grid-template-rows: auto minmax(0, 1fr) auto;
   isolation: isolate;
+}
+
+/* The delegated Projector is one child of the legacy presenter grid. Span the
+   complete grid so its own header/stage/footer rows reach the viewport edges. */
+.live-presenter > .live-projector {
+  grid-area: 1 / 1 / -1 / -1;
 }
 
 .live-projector::before {
@@ -127,6 +135,7 @@
   padding: clamp(18px, 2.8vh, 32px) clamp(24px, 5vw, 80px)
     clamp(8px, 1.5vh, 16px);
   gap: clamp(10px, 1.8vh, 20px);
+  transform: translateY(var(--live-projector-optical-center-offset));
 }
 
 .live-presenter[data-projector-phase='lobby'] .live-presenter__hint {

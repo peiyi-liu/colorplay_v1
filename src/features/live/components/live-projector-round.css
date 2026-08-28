@@ -79,6 +79,7 @@
 .live-round__statistics,
 .live-round__ranking {
   width: min(100%, 72rem);
+  transform: translateY(var(--live-projector-optical-center-offset));
 }
 
 .live-round__question > p {

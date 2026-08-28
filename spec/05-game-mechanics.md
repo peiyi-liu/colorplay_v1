@@ -246,6 +246,7 @@ mastery = coverage * accuracy / 100
 
 ### ColorPlay Live
 
+- 每場 Live 以 20 題已發布且有效的 LT 題目為目標；開場時由 server 隨機凍結題目。若該 section 可用 LT 題目不足 20 題，則凍結全部可用題目，並由 `live_sessions.question_count` 與 UI 顯示實際題數。
 - State machine 是 `draft -> lobby -> question_open -> question_feedback -> ... -> completed`，各 active state 可由 server policy轉 `cancelled`。
 - 只有 owning host 可 start/open/close/advance/finalize/cancel，並以 `state_version` 防雙分頁重複推進。
 - Authenticated active member 才能 join/answer；server deadline、hidden answer、response time、score/rank/reward 全由後端決定。

@@ -142,7 +142,7 @@ test('Live round follows question, statistics, explanation, ranking, and next-qu
   await expect(page.getByRole('button', { name: '下一題' })).toBeEnabled();
 
   await page.getByRole('button', { name: '下一題' }).click();
-  await expect(page.getByText('第 2 / 10 題').first()).toBeVisible();
+  await expect(page.getByText('第 2 / 20 題').first()).toBeVisible();
   await expect(page.getByRole('button', { name: '下一題' })).toBeDisabled();
   await expectPresenterOwnsViewport(page);
   expect(runtimeErrors.consoleErrors).toEqual([]);

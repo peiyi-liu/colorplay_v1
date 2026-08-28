@@ -6,6 +6,7 @@ import {
   useNavigationType,
 } from 'react-router-dom';
 
+import { StudentBackButton } from './student-back-button';
 import { useStudentBackNavigation } from './student-back-navigation';
 import './student-route-back-button.css';
 
@@ -51,10 +52,9 @@ export function StudentRouteBackButton() {
   if (location.pathname === '/app') return null;
 
   return (
-    <button
-      aria-label={activeOverride?.ariaLabel ?? '返回前一頁'}
-      className="student-route-back"
-      onClick={() => {
+    <StudentBackButton
+      ariaLabel={activeOverride?.ariaLabel ?? '返回前一頁'}
+      onBack={() => {
         if (activeOverride) {
           activeOverride.onBack();
           return;
@@ -65,12 +65,6 @@ export function StudentRouteBackButton() {
         }
         void navigate('/app');
       }}
-      type="button"
-    >
-      <span aria-hidden="true" className="student-route-back__arrow">
-        ←
-      </span>
-      <span>返回</span>
-    </button>
+    />
   );
 }

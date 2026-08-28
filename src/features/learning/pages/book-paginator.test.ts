@@ -100,4 +100,35 @@ describe('paginateBookBlocks', () => {
       'ordered-list',
     ]);
   });
+
+  it('標題在頁尾無法連同下一區塊顯示時，將標題移到下一頁', () => {
+    const { measureElement, sourceElement } = paginationElements(
+      { heading: 20, intro: 70, paragraph: 35 },
+      100,
+    );
+
+    const pages = paginateBookBlocks({
+      blocks: [
+        { key: 'intro', splittable: false },
+        { keepWithNext: true, key: 'heading', splittable: false },
+        { key: 'paragraph', splittable: false },
+      ],
+      measureElement,
+      sourceElement,
+    });
+
+    expect(pages).toEqual([
+      {
+        items: [{ blockKey: 'intro', key: 'intro' }],
+        overflowFallback: false,
+      },
+      {
+        items: [
+          { blockKey: 'heading', key: 'heading' },
+          { blockKey: 'paragraph', key: 'paragraph' },
+        ],
+        overflowFallback: false,
+      },
+    ]);
+  });
 });

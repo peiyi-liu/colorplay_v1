@@ -30,7 +30,7 @@ const lobbyState: LiveSessionState = {
   state: 'lobby',
   stateVersion: 2,
   currentPosition: 0,
-  questionCount: 10,
+  questionCount: 20,
   participantCount: 2,
   rulesVersion: '2026-07-live-3',
   questionDisplay: 'screen_only',
@@ -96,7 +96,7 @@ const completedState: LiveSessionState = {
   ...lobbyState,
   state: 'completed',
   stateVersion: 12,
-  currentPosition: 10,
+  currentPosition: 20,
   podium: [
     { rank: 1, displayName: '小艾', score: 1480 },
     { rank: 2, displayName: '小畢', score: 900 },
@@ -263,7 +263,7 @@ describe('LivePresenter', () => {
     ).toBeVisible();
     expect(screen.getByText('目前題目')).toBeVisible();
     expect(screen.getByText('等待開始')).toBeVisible();
-    expect(screen.getByText('共 10 題')).toBeVisible();
+    expect(screen.getByText('共 20 題')).toBeVisible();
     expect(screen.getByText('作答倒數環')).toBeVisible();
     expect(screen.getByText('待開始')).toBeVisible();
     expect(screen.getByText('即時排名')).toBeVisible();
@@ -275,6 +275,12 @@ describe('LivePresenter', () => {
     expect(screen.getByRole('button', { name: '音效' })).toBeVisible();
     expect(screen.getByRole('button', { name: '退出' })).toBeVisible();
     expect(screen.getAllByRole('button')).toHaveLength(3);
+  });
+
+  it('shows the actual frozen count when fewer than twenty questions are available', () => {
+    renderPresenter({ ...lobbyState, questionCount: 7 });
+
+    expect(screen.getByText('共 7 題')).toBeVisible();
   });
 
   it('starts the lobby through the existing Host action', async () => {
@@ -355,7 +361,7 @@ describe('LivePresenter', () => {
       screen.getByRole('heading', { name: '色彩三要素是？' }),
     ).toBeVisible();
     expect(screen.getByText('目前題目')).toBeVisible();
-    expect(screen.getAllByText('第 1 / 10 題')).toHaveLength(2);
+    expect(screen.getAllByText('第 1 / 20 題')).toHaveLength(2);
     expect(screen.getByText('作答倒數環')).toBeVisible();
     expect(screen.getByText('即時排名')).toBeVisible();
     expect(screen.getByText('本題結束後更新')).toBeVisible();

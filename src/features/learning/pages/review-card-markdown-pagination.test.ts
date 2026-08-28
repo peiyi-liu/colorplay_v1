@@ -1,8 +1,24 @@
 import { describe, expect, it } from 'vitest';
 
-import { splitReviewCardMarkdown } from './review-card-markdown-pagination';
+import {
+  omitDuplicateLeadingReviewHeading,
+  splitReviewCardMarkdown,
+} from './review-card-markdown-pagination';
 
 describe('splitReviewCardMarkdown', () => {
+  it('卡片內容以相同 H1 開頭時移除重複標題，但保留後續 Markdown', () => {
+    expect(
+      omitDuplicateLeadingReviewHeading(
+        '# 色彩三要素\n\n## 色相\n色相是色彩的名稱。',
+        ['色彩三要素'],
+      ),
+    ).toBe('## 色相\n色相是色彩的名稱。');
+
+    expect(
+      omitDuplicateLeadingReviewHeading('# 明度\n\n內容', ['色彩三要素']),
+    ).toBe('# 明度\n\n內容');
+  });
+
   it('依 Markdown 語意拆開標題與清單項目，並保留格式與順序', () => {
     const blocks = splitReviewCardMarkdown(`## 色彩體系
 1. **混色系**：以色光混色為主
@@ -12,6 +28,7 @@ describe('splitReviewCardMarkdown', () => {
 
     expect(blocks).toHaveLength(3);
     expect(blocks[0]).toEqual({
+      keepWithNext: true,
       markdown: '## 色彩體系',
       splittable: false,
     });
