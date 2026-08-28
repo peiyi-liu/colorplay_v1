@@ -5,12 +5,13 @@
 }
 
 .chapter-review-reader.scene-dungeon {
+  position: relative;
   display: grid;
   width: 100%;
   min-width: 0;
   height: 100%;
   min-height: 0;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
   overflow: hidden;
   color: var(--pixel-window-ink);
   padding: 16px clamp(20px, 3vw, 48px) 18px;
@@ -31,35 +32,55 @@
 }
 
 .chapter-review-reader__header {
-  position: relative;
-  display: grid;
-  width: min(100%, 1120px);
-  min-height: 74px;
-  margin: 0 auto 10px;
-  place-items: center;
+  position: absolute;
+  z-index: 6;
+  top: 16px;
+  right: clamp(20px, 3vw, 48px);
+  display: block;
+  width: min(52vw, 560px);
+  min-height: 0;
+  margin: 0;
+  pointer-events: none;
 }
 
 .chapter-review-reader__heading-group {
   display: grid;
   min-width: 0;
-  justify-items: center;
+  grid-template-areas:
+    'chapter position'
+    'subtopic subtopic';
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  justify-items: end;
+  column-gap: 14px;
   gap: 2px;
-  text-align: center;
+  text-align: right;
 }
 
 .chapter-review-reader__heading-group h1 {
+  grid-area: chapter;
   margin: 0;
   color: var(--pixel-gold);
   font-family: var(--font-pixel-tc);
-  font-size: clamp(1.55rem, 2.5vw, 2.25rem);
-  line-height: 1.4;
+  font-size: clamp(1rem, 1.55vw, 1.35rem);
+  line-height: 1.35;
   text-wrap: balance;
 }
 
 .chapter-review-reader__heading-group p {
   margin: 0;
   color: var(--pixel-window-ink);
-  font-size: clamp(0.9rem, 1.35vw, 1.08rem);
+  font-size: clamp(0.82rem, 1.15vw, 0.98rem);
+}
+
+.chapter-review-reader__heading-group
+  > p:not(.chapter-review-reader__position) {
+  grid-area: subtopic;
+}
+
+.chapter-review-reader__position {
+  grid-area: position;
+  white-space: nowrap;
 }
 
 .chapter-review-reader__position strong {
@@ -72,6 +93,7 @@
   display: grid;
   min-width: 0;
   min-height: 0;
+  padding-top: clamp(24px, 2.2vw, 30px);
   place-items: center;
   container-type: size;
 }
@@ -321,7 +343,7 @@
 .chapter-review-reader__footer {
   display: grid;
   width: min(100%, 1120px);
-  margin: 18px auto 0;
+  margin: 0 auto;
   gap: 10px;
 }
 

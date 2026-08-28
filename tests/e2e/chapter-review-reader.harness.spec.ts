@@ -51,7 +51,10 @@ for (const viewport of reviewReaderViewports) {
       await expect(bookPageNumbers).toBeHidden();
       await expect(
         reader.locator('.chapter-review-reader__position'),
-      ).toBeHidden();
+      ).toBeVisible();
+      await expect(
+        reader.locator('.chapter-review-reader__position'),
+      ).toContainText('複習 2 / 10');
       await expect(
         reader.locator('.chapter-review-reader__reading-progress'),
       ).toBeHidden();
@@ -496,4 +499,52 @@ test('06-v2 review reader makes Markdown bold visibly distinct from body copy', 
   expect(weights.body).toBeLessThanOrEqual(500);
   expect(weights.strong).toBeGreaterThanOrEqual(700);
   expect(weights.strong - weights.body).toBeGreaterThanOrEqual(200);
+});
+
+test('06-v2 review reader moves context to the upper right and enlarges the desktop book', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 720, width: 1280 });
+  await page.goto('/dev-harness/chapter-detail.html?scenario=in-progress');
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('button', { name: '進入複習' }).click();
+
+  const reader = page.getByRole('region', {
+    name: /複習卡閱讀：色彩三要素/u,
+  });
+  const layout = await reader.evaluate((element) => {
+    const readerBox = element.getBoundingClientRect();
+    const rect = (selector: string) => {
+      const target = element.querySelector<HTMLElement>(selector);
+      if (!target) throw new Error(`READER_LAYOUT_ELEMENT_MISSING:${selector}`);
+      const box = target.getBoundingClientRect();
+      return {
+        bottom: box.bottom,
+        height: box.height,
+        left: box.left,
+        right: box.right,
+        top: box.top,
+        width: box.width,
+      };
+    };
+    return {
+      book: rect('.chapter-review-reader__book'),
+      heading: rect('.chapter-review-reader__heading-group'),
+      viewport: rect('.chapter-review-reader__viewport'),
+      reader: {
+        bottom: readerBox.bottom,
+        height: readerBox.height,
+        left: readerBox.left,
+        right: readerBox.right,
+        top: readerBox.top,
+        width: readerBox.width,
+      },
+    };
+  });
+
+  expect(layout.heading.right).toBeGreaterThanOrEqual(layout.reader.right - 64);
+  expect(layout.heading.top).toBeLessThanOrEqual(layout.reader.top + 24);
+  expect(layout.heading.bottom + 4).toBeLessThanOrEqual(layout.viewport.top);
+  expect(layout.book.width).toBeGreaterThanOrEqual(930);
+  expect(layout.book.height).toBeGreaterThanOrEqual(515);
 });

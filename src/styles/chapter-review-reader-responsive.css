@@ -45,6 +45,11 @@
     top: 0;
     right: 0;
     width: min(64%, 240px);
+    grid-template-areas:
+      'chapter'
+      'subtopic'
+      'position';
+    grid-template-columns: minmax(0, 1fr);
     justify-items: end;
     gap: 1px;
     text-align: right;
@@ -71,7 +76,7 @@
   }
 
   .chapter-review-reader__heading-group .chapter-review-reader__position {
-    display: none;
+    display: block;
   }
 
   .chapter-review-reader__desktop-label {
@@ -86,6 +91,7 @@
     position: absolute;
     inset: 0;
     display: block;
+    padding-top: 0;
   }
 
   .chapter-review-reader__book {
@@ -107,7 +113,7 @@
 
   .chapter-review-reader__viewport,
   .chapter-review-reader__pagination-tools {
-    top: max(14%, calc(5.5% + 56px));
+    top: max(14%, calc(5.5% + 60px));
     right: 9%;
     bottom: max(15%, calc(3.5% + 64px));
     left: 9%;

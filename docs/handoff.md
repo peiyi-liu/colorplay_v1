@@ -1322,3 +1322,10 @@
 - 問題與修正：閱讀器正文原為 `font-weight: 560`，與瀏覽器預設 `<strong>` 的 700 只差 140，繁中文字形下不易辨識。正文調整為 500，並為 `.review-card-markdown strong` 明確指定 800，讓 Markdown 粗體與正文有 300 的可測層級差；未改動排版、標記色彩或內容契約。
 - 驗證：新增 Playwright computed-style 契約，RED 先重現 560／700，GREEN 確認 500／800。閱讀器 Chromium harness 11/11 通過，涵蓋桌面、平板、手機、橫向手機與 reduced-motion；相關 Vitest 5 檔／18 tests、scoped ESLint、Prettier、`pnpm typecheck` 與 production build 全綠。另檢視 1280 與 393 viewport，粗體辨識提升且未出現裁切或排版回歸。
 - 狀態：變更將只提交在 `codex/review-card-ui-update` 本機，尚未 push 或 deploy；沒有重匯 Google Sheet、修改 Staging DB／Storage、執行 `pnpm test:db`／Supabase reset，也未碰 Phase 0／1 保護路徑。
+
+## 2026-08-28 13:14 [Codex] — 複習卡右上資訊列與放大書頁完成（本機，未發布）
+
+- 版面修正：桌面版將章節、3-1 小節名稱與「複習 n / n」從置中標題列改為右上兩列資訊區，並讓它只使用書本封面上緣的安全空間；書本不再為原本約 84px 的標題列保留獨立 grid row。1280×720 的 RED 基線書本為約 846×470px，新契約至少 930×515px，閱讀面積增加約 20%，且資訊列底部與實際文字 viewport 保留至少 4px 間距。手機版維持滿版單頁書本，右上資訊區補回原本隱藏的「複習 n / n」。
+- 驗證：閱讀器 Chromium harness 最終 12/12 通過，涵蓋 1280、1024×768、1440×900、393、320×568、768×1024、375×812、852×393 與 812×375；無控制項重疊、文字裁切、頁面水平溢出或非 fallback 垂直溢出。相關 Vitest 5 檔／18 tests、scoped ESLint、Prettier、`pnpm typecheck` 與 production build 通過；1280 與 393 viewport 已人工檢視。
+- 設計邊界：依 preserve redesign 處理，只改資訊層級與空間分配，沿用既有書本資產、色彩、字型、按鈕、動態及可及性行為，沒有新增視覺系統或內容契約。
+- 狀態：變更將只提交在 `codex/review-card-ui-update` 本機，尚未 push 或 deploy；沒有修改 Google Sheet、Staging DB／Storage、執行 `pnpm test:db`／Supabase reset，也未碰 Phase 0／1 保護路徑。
