@@ -27,6 +27,7 @@ const repository = (
 const renderForm = (
   classroomRepository: ClassroomRepository,
   onJoined = vi.fn(),
+  initialJoinCode = 'ABCD-1234-EF56-7890',
 ) => {
   const client = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
@@ -38,7 +39,7 @@ const renderForm = (
   }
   render(
     <JoinClassroomForm
-      initialJoinCode="ABCD-1234-EF56-7890"
+      initialJoinCode={initialJoinCode}
       onJoined={onJoined}
       repository={classroomRepository}
     />,
@@ -72,6 +73,24 @@ describe('JoinClassroomForm', () => {
     expect(joinClassroom).toHaveBeenCalledOnce();
     resolve(joined);
     await waitFor(() => {
+      expect(onJoined).toHaveBeenCalledWith(joined.classroomId);
+    });
+  });
+
+  it('accepts a new eight-character classroom code', async () => {
+    const joinClassroom = vi.fn().mockResolvedValue(joined);
+    const onJoined = renderForm(
+      repository(joinClassroom),
+      vi.fn(),
+      '7KPM-X4TR',
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: '加入班級' }));
+
+    await waitFor(() => {
+      expect(joinClassroom).toHaveBeenCalledWith(
+        expect.objectContaining({ joinCode: '7KPM-X4TR' }),
+      );
       expect(onJoined).toHaveBeenCalledWith(joined.classroomId);
     });
   });

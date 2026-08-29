@@ -2,6 +2,7 @@
 
 - Status: **Accepted（owner 2026-07-20 以帳號規則文字規格裁定，取代原提案）**
 - Proposal date: 2026-07-19；Accepted: 2026-07-20
+- Superseded in part: 教師帳號建立與密碼復原改依 ADR 0009；學生流程不變。
 - 相關：spec/04（安全與隱私）、ADR 0002（環境策略）、
   `docs/superpowers/plans/2026-07-20-account-auth.md`（實作計畫）
 

@@ -1360,3 +1360,18 @@
 - Staging：產品整合 commit `b8ebb0d18e38f8c47ae412b5979fd64b466a2a54`，裁切與分頁修正 commits `fd0d53733d9eb02b5308f2dd8e3388f49ec9c68f`、`0200dfd36a22274fd57c2937e86632d8ed6cf22a` 均已 push。最終 Preview `dpl_HhzuJjrPjH2ZXHy3QxfsiBmtfWGZ` 已 promotion 為 `dpl_DYsk3HKH8ZR8c7HebnRrZkHLXBXa`，`staging.colorplayapp.com` READY 且 metadata 精確指向 `0200dfd`；bundle 只含 Staging Supabase ref，不含 Production ref。
 - Hosted smoke：`teacher01`／`student01` 真實 Live 場次確認教師顯示「共 20 題」、學生顯示「第 1 / 20 題」；1280×720 footer gap 0、內容中心偏差 4.35px、無頁面溢出，控制項皆至少 75px 高，場次正常取消。真實「色彩三要素」桌面為 3 個雙頁 view、393×852 手機為 5 個單頁 view，全文與 pagination source 完全一致、0 裁切、0 fallback；最近 30 分鐘測試殘留 Live 場次為 0。首次 Realtime 人數同步曾超過 5 秒，重跑在 15 秒窗口內成功。
 - 邊界：未重匯 Google Sheet、未修改複習卡 DB／Storage、未碰 Production 或 Phase 0／1 保護路徑。既知 `review_card_media`／Storage policy 的鎖定章節媒體繞過風險仍未修。
+
+## 2026-08-29 12:36 [Codex] — 新班級 8 位加入碼與舊 16 位相容完成（本機，未發布）
+
+- 決策與實作：owner 確認新班級採 8 位英數碼、只影響新班級、既有 16 位碼繼續有效。新 migration 使用 40-bit Crockford Base32（排除 I／L／O／U）生成 `XXXX-XXXX`，保留舊碼 constraint 與 hash 驗證，不重寫任何現有班級。學生註冊 Edge 共用規則、註冊 UI 與加入班級表單均同時接受新舊格式；`spec/03` 已對齊固定明碼的 owner-only 讀取邊界。
+- 驗證：TDD RED 先確認 8 位碼被註冊、加入表單與共用伺服器規則拒絕；GREEN 後 scoped Vitest 10 檔／69 tests、`pnpm typecheck`、scoped ESLint／Prettier、`git diff --check` 與 production build 全綠。新增 pgTAP 059 並更新 012／046 格式契約，但依 session 邊界未執行 `pnpm test:db`、Supabase reset 或任何 hosted DB 操作，因此 SQL 尚待獲授權的資料庫 gate。
+- 帳號：現行 `scripts/admin/create-teacher.mjs` 建立每組教師帳號時仍需 account／name／email／password 四項。本輪未收到兩組具體資料，所以未建立 Staging 帳號。
+- 風險：`spec/04` 要求 join classroom 依 IP＋identity 限流，目前直接 `join_classroom` RPC 沒有專屬限流。8 位 Crockford 仍有 40-bit 搜尋空間，但正式發布前建議另案補限流，不以代碼熵取代防濫用。
+- 狀態：仍在 `codex/review-card-ui-update`，HEAD／upstream 保持 `94993feeb718f150d0316fa9c98318c2777e030e`；本輪變更未 commit、push 或 deploy。
+
+## 2026-08-29 12:47 [Codex] — Staging 新增兩組教師流水帳號
+
+- owner 定義未來 Admin 流程：Admin 以流水碼建立教師帳號、產生高強度初始密碼，教師提供姓名與聯絡 Email；Admin 於建立後可更新姓名／Email，不走收件者驗證。教師忘記密碼時，Admin 只能重設新密碼並連同原帳號寄送，系統不得保存或回傳原密碼。
+- 本次 hosted mutation：在 Staging `onkxnkzeixpezetkmocf` 建立 `teacher02`（鶯歌高職）與 `teacher03`（士林商工），兩者 `full_name`／`display_name` 均對齊、role 為 `teacher`。因尚無真實聯絡 Email，Auth 先使用不收信的 `.invalid` 內部占位地址；概念上 contact Email 仍為未設定。
+- 驗證：兩組均以實際 account＋password 呼叫 Staging `auth-login`，取得有效 teacher session；二次 service-role 唯讀回查確認 account／name／display name／role 正確。初始密碼只在當次交付回覆顯示，未寫入 repo／handoff／暫存檔。
+- Admin 後續契約：目前 `auth.users.email` 同時承擔 Auth 內部 Email，尚無獨立 nullable `contact_email`。正式 Admin UI 實作時需決定「替換 Auth Email」或「新增獨立聯絡 Email」；建議採後者，避免聯絡資料與登入識別綁死，並在 Admin 寄出帳密前加入 Email 二次確認以降低誤寄風險。

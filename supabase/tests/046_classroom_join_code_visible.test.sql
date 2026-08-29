@@ -59,7 +59,7 @@ select is(
 
 select matches(
   :'created_join_code'::text,
-  '^[0-9A-F]{4}(-[0-9A-F]{4}){3}$',
+  '^[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$',
   'visible code keeps the display format'
 );
 

@@ -10,7 +10,13 @@ const joinCodeSchema = z.strictObject({
   joinCode: z
     .string()
     .trim()
-    .regex(/^[0-9a-f]{4}(?:-?[0-9a-f]{4}){3}$/iu, '請輸入有效的班級加入碼'),
+    .refine(
+      (value) =>
+        /^(?:[0-9A-HJKMNP-TV-Z]{8}|[0-9A-F]{16})$/.test(
+          value.toUpperCase().replace(/-/g, ''),
+        ),
+      '請輸入有效的班級加入碼',
+    ),
 });
 type JoinCodeValues = z.infer<typeof joinCodeSchema>;
 

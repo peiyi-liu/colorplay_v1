@@ -127,7 +127,7 @@ select * from public.create_classroom('  指令測試班級  ') \gset created_
 
 select matches(
   :'created_join_code'::text,
-  '^[0-9A-F]{4}(-[0-9A-F]{4}){3}$',
+  '^[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$',
   'create returns one display-safe random code'
 );
 select is(

@@ -28,6 +28,9 @@
 - 使用 Supabase Auth。
 - MVP 可使用 Email/password 或 magic link；選定方式須在設計文件鎖定。
 - Teacher role 只能由受控邀請／admin 流程賦予。
+- 教師帳號由 Admin 產生流水帳號與高強度初始密碼；聯絡 Email
+  可後補且不作為登入 ID、role 賦予或密碼自助復原的信任來源。
+- 教師忘記密碼時由 Admin 重設新密碼；系統不得保存、回傳或寄送原密碼。
 - 共享裝置需提供明顯登出與目前帳號顯示。
 - 敏感教師操作前若 session 太舊，可要求重新驗證。
 - 登入錯誤不得洩漏「此 Email 是否存在」超出 Auth provider 正常安全行為。

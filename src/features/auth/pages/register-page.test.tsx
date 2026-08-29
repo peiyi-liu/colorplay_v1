@@ -61,7 +61,7 @@ const renderRegisterPage = () =>
 const fillBasicDetails = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText('名字'), '王小明');
   await user.type(screen.getByLabelText('暱稱'), '彩彩');
-  await user.type(screen.getByLabelText('班級序號'), 'ABCD-1234-EF56-7890');
+  await user.type(screen.getByLabelText('班級序號'), '7KPM-X4TR');
 };
 
 const reachCredentialsStep = async (
@@ -123,6 +123,18 @@ describe('RegisterPage', () => {
     expect(screen.queryByLabelText('E-mail')).not.toBeInTheDocument();
   });
 
+  it('continues accepting an existing 16-character classroom code', async () => {
+    const user = userEvent.setup();
+    renderRegisterPage();
+
+    await user.type(screen.getByLabelText('名字'), '王小明');
+    await user.type(screen.getByLabelText('暱稱'), '彩彩');
+    await user.type(screen.getByLabelText('班級序號'), 'ABCD-1234-EF56-7890');
+    await user.click(screen.getByRole('button', { name: '下一步' }));
+
+    expect(await screen.findByLabelText('E-mail')).toBeVisible();
+  });
+
   it('moves from basic details through verified email to credentials', async () => {
     const user = userEvent.setup();
     renderRegisterPage();
@@ -172,9 +184,7 @@ describe('RegisterPage', () => {
     expect(confirmation).toHaveAttribute('type', 'password');
     expect(confirmation).toHaveValue('SecretA');
 
-    await user.click(
-      screen.getByRole('button', { name: '顯示密碼確認' }),
-    );
+    await user.click(screen.getByRole('button', { name: '顯示密碼確認' }));
 
     expect(password).toHaveAttribute('type', 'text');
     expect(confirmation).toHaveAttribute('type', 'text');
@@ -257,7 +267,7 @@ describe('RegisterPage', () => {
     await waitFor(() => {
       expect(mockedCompleteStudentRegistration).toHaveBeenCalledWith({
         account: 'cp045001',
-        classCode: 'ABCD-1234-EF56-7890',
+        classCode: '7KPM-X4TR',
         fullName: '王小明',
         nickname: '彩彩',
         password: 'SecretA',
