@@ -1375,3 +1375,12 @@
 - 本次 hosted mutation：在 Staging `onkxnkzeixpezetkmocf` 建立 `teacher02`（鶯歌高職）與 `teacher03`（士林商工），兩者 `full_name`／`display_name` 均對齊、role 為 `teacher`。因尚無真實聯絡 Email，Auth 先使用不收信的 `.invalid` 內部占位地址；概念上 contact Email 仍為未設定。
 - 驗證：兩組均以實際 account＋password 呼叫 Staging `auth-login`，取得有效 teacher session；二次 service-role 唯讀回查確認 account／name／display name／role 正確。初始密碼只在當次交付回覆顯示，未寫入 repo／handoff／暫存檔。
 - Admin 後續契約：目前 `auth.users.email` 同時承擔 Auth 內部 Email，尚無獨立 nullable `contact_email`。正式 Admin UI 實作時需決定「替換 Auth Email」或「新增獨立聯絡 Email」；建議採後者，避免聯絡資料與登入識別綁死，並在 Admin 寄出帳密前加入 Email 二次確認以降低誤寄風險。
+
+## 2026-08-29 13:19 [Codex] — 8 位班級加入碼已發布 Staging，Admin 教師帳號契約已同步
+
+- 發布內容：commit `52770a2faec414833c6f131110740efbf29f0f78` 已 push 至 `origin/codex/review-card-ui-update`。Staging `onkxnkzeixpezetkmocf` 只套用 migration `20260829000100_short_classroom_join_codes.sql`；migration history 已二次確認 local／remote 一致。`student-register` 使用 API bundle 路徑部署成功，未修改或部署 `auth-*`／`admin-*`。
+- 網站：GitHub-source Preview `dpl_pyTYqoXXpczUChYpxiLzujRPH89p` 精確指向 `52770a2`，已 promotion 為 Production-target deployment `dpl_9e4FhgZeNPgfJw8fQbtcuruaRgcK`；`staging.colorplayapp.com` 為 READY。公開 bundle 只含 Staging project ref，不含 Production ref，並含 8 位新碼／16 位舊碼相容提示。
+- Hosted 驗證：以 `teacher02` 的 Staging 身分建立臨時班級，真實 RPC 產生 `XXXX-XXXX`，owner readback 相同；再以臨時學生真實呼叫 `join_classroom`，membership 為 active。測試後以精確 ID 清理，二次查詢確認測試班級 0、測試使用者 0，未留下 hosted 測試資料。
+- 測試狀態：本機 scoped Vitest 10 檔／69 tests、typecheck、scoped lint／format、diff check 與 production build 全綠。Linked pgTAP 只嘗試 012／046／059，但 Staging 未安裝 pgTAP `plan()`，三檔均在 0 assertions 前停止；未將環境缺 extension 誤報成測試通過，也未擅自安裝測試 extension、執行 `pnpm test:db` 或 reset。migration 與真實 API 行為已由上述 hosted smoke 補驗。
+- Admin／跨工具紀錄：新增 accepted ADR 0009，固定 Admin-only 教師建立、後端流水帳號、nullable `contact_email`、一次性初始密碼收據、不可回復原密碼、重設稽核與交付安全；`spec/04` 與 ADR 0003 的部分 supersession 已對齊。Codex 與 Claude Code 均以本檔為跨工具 SSOT，不建立平行私有紀錄。
+- 後續風險：直接 `join_classroom` RPC 仍缺 `spec/04` 要求的 IP＋identity 專屬限流。8 位 Crockford Base32 提供 40-bit 空間，但不能取代限流；建議另開一個安全 task，且不得與 Phase 0／1 保護路徑混做。
