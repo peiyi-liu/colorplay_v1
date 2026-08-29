@@ -56,4 +56,14 @@ describe('classroom join rate-limit boundary', () => {
     expect(migration).toContain('identity_limit constant integer := 10');
     expect(migration).toContain('ip_limit constant integer := 100');
   });
+
+  it('avoids the PostgreSQL CURRENT_TIME keyword in the executable clock variable', async () => {
+    const followup = await readFile(
+      'supabase/migrations/20260829000300_fix_classroom_join_rate_limit_clock.sql',
+      'utf8',
+    );
+
+    expect(followup).toContain('observed_at timestamptz := clock_timestamp()');
+    expect(followup).not.toContain('current_time timestamptz');
+  });
 });
