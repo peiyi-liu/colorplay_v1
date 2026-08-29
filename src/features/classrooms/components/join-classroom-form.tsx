@@ -33,6 +33,12 @@ const messageForError = (error: unknown) => {
   ) {
     return '登入狀態已失效，請重新登入。';
   }
+  if (
+    error instanceof ClassroomRepositoryError &&
+    error.code === 'RATE_LIMITED'
+  ) {
+    return '嘗試次數過多，請等待 10 分鐘後再試。';
+  }
   return '目前無法加入班級，請稍後重試。';
 };
 

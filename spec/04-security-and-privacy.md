@@ -78,7 +78,11 @@
 
 最低限制：
 
-- Login／join classroom：依 IP + identity 限流。
+- Login／join classroom：依 IP + identity 限流。`join classroom` 採 10 分鐘固定視窗：
+  單一 identity 第 10 次錯碼起、單一共享 IP 第 100 次錯碼起拒絕，並回傳穩定
+  `CLASSROOM_JOIN_RATE_LIMITED` 與 `Retry-After`。加入必須經 Edge／service-only
+  邊界，authenticated 不得直接執行底層 RPC 繞過限流；IP 僅保存 HMAC 指紋，
+  不保存原始位址。
 - `submit_quiz_answer`：每 user 每秒最多 3 次，且 database unique constraint 為最後防線。
 - `create_quiz_session`：每 user 每分鐘最多 10 次。
 - `purchase_blook`：每 user 每分鐘最多 10 次。

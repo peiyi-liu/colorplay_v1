@@ -295,6 +295,24 @@ describe('RegisterPage', () => {
     ).toBeVisible();
   });
 
+  it('explains a classroom join rate limit during registration', async () => {
+    const user = userEvent.setup();
+    mockedCompleteStudentRegistration.mockRejectedValueOnce(
+      new AccountFlowError('CLASSROOM_JOIN_RATE_LIMITED'),
+    );
+    renderRegisterPage();
+    await reachCredentialsStep(user);
+
+    await user.type(screen.getByLabelText('帳號（學號）'), 'cp045003');
+    await user.type(screen.getByLabelText('密碼'), 'SecretA');
+    await user.type(screen.getByLabelText('密碼確認'), 'SecretA');
+    await user.click(screen.getByRole('button', { name: '完成註冊' }));
+
+    expect(
+      await screen.findByText('嘗試次數過多，請等待 10 分鐘後再試。'),
+    ).toBeVisible();
+  });
+
   it('links back to login from every registration step', () => {
     renderRegisterPage();
 

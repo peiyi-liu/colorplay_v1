@@ -47,17 +47,15 @@ import { signedInClient } from '../../helpers/signed-in-client.ts';
 //    「之後要用來操作的帳號」必須是同一個，註冊流程無法滿足。
 //
 //    目前產品內，已有 profile 的既有帳號完全沒有任何 UI 可以加入班級
-//    （上面第 3 點）；join_classroom 這個 RPC 本身沒被移除、也是
-//    on-conflict-do-update 的冪等寫法（同一份 migration 261-278 行），只是
-//    UI 入口沒了。同一份檔案已經示範「UI 消失、能力留在 repository 層」
-//    這個模式（見上面第 2 點的 rotateJoinCode）；這裡比照辦理，直接用
-//    supabase-js 呼叫 RPC，不透過 src/features/classrooms/api/
+//    （上面第 3 點）；這裡直接呼叫 join-classroom Edge Function，不透過
+//    src/features/classrooms/api/
 //    classroom-repository.ts 的包裝——那支檔案的 ClassroomRepositoryError
 //    用了建構子參數屬性（parameter property），Node 原生型別剝離不支援
 //    （實測 `TypeScript parameter property is not supported in strip-only
 //    mode`），import 進來會讓 capture-screens.mjs 直接掛掉；裸接
-//    `.rpc('join_classroom', …)` 才能讓這支檔案繼續同時被 Playwright（esbuild
-//    轉譯）與 capture-screens.mjs（Node 原生剝離）兩種執行環境載入。
+//    `.functions.invoke(...)` 才能讓這支檔案繼續同時被 Playwright（esbuild
+//    轉譯）與 capture-screens.mjs（Node 原生剝離）兩種執行環境載入。直接
+//    join_classroom RPC 已撤銷 authenticated 權限，避免繞過 IP＋帳號限流。
 
 export type ClassroomReceipt = Readonly<{ joinCode: string }>;
 
@@ -110,21 +108,20 @@ export async function readClassroomJoinCode(
 
 // 讓一個「已有帳號」的學生（seed-auth.ts 預建的固定 fixture，例如
 // liveStudentOne／studentOne）用加入碼成為某班級的學生成員。現行產品 UI
-// 對既有帳號完全沒有「加入班級」入口（見檔頭說明），直接呼叫 join_classroom
-// RPC——與 rotateJoinCode 同一套「UI 消失、能力留在 repository 層」模式，
-// 差別只在於這裡連 repository 包裝都不能用（見檔頭 Node 型別剝離限制），改
-// 用裸的 supabase-js client。join_classroom 本身是 on-conflict-do-update
-// 的冪等寫法，重複呼叫同一組（帳號、班級）不會出錯，呼叫端不需要事先檢查
-// 是否已是成員。
+// 對既有帳號完全沒有「加入班級」入口（見檔頭說明），直接呼叫受限流保護的
+// join-classroom Edge Function。重複呼叫同一組（帳號、班級）仍維持冪等，
+// 呼叫端不需要事先檢查是否已是成員。
 export async function joinClassroomByCode(
   credentials: Credentials,
   joinCode: string,
 ): Promise<void> {
   const client = await signedInClient(credentials);
   try {
-    const { error } = await client.rpc('join_classroom', {
-      p_join_code: joinCode.trim(),
-      p_request_id: randomUUID(),
+    const { error } = await client.functions.invoke('join-classroom', {
+      body: {
+        joinCode: joinCode.trim(),
+        requestId: randomUUID(),
+      },
     });
     if (error) {
       throw new Error(`CLASSROOM_HELPER_JOIN_FAILED: ${error.message}`);

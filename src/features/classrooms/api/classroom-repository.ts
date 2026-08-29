@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { FunctionsHttpError, type SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
 import type { Database } from '../../../types/database';
@@ -25,6 +25,11 @@ const databaseUuid = z
   .string()
   .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu);
 const classroomId = databaseUuid;
+const classroomJoinCode = z
+  .string()
+  .regex(
+    /^(?:[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}|[0-9A-F]{4}(?:-[0-9A-F]{4}){3})$/u,
+  );
 
 const studentClassroomSchema = z.strictObject({
   classroom_id: classroomId,
@@ -37,10 +42,7 @@ const ownedClassroomSchema = z.strictObject({
   classroom_name: classroomName,
   classroom_status: z.enum(['active', 'archived']),
   created_at: utcTimestamp,
-  join_code: z
-    .string()
-    .regex(/^[0-9A-F]{4}(?:-[0-9A-F]{4}){3}$/u)
-    .nullable(),
+  join_code: classroomJoinCode.nullable(),
   join_code_version: positiveInteger,
   member_count: nonNegativeInteger,
 });
@@ -89,12 +91,12 @@ const studentProgressSchema = z.strictObject({
 const createdClassroomSchema = z.strictObject({
   classroom_id: classroomId,
   classroom_name: classroomName,
-  join_code: z.string().regex(/^[0-9A-F]{4}(?:-[0-9A-F]{4}){3}$/u),
+  join_code: classroomJoinCode,
   join_code_version: positiveInteger,
 });
 const rotatedCodeSchema = z.strictObject({
   classroom_id: classroomId,
-  join_code: z.string().regex(/^[0-9A-F]{4}(?:-[0-9A-F]{4}){3}$/u),
+  join_code: classroomJoinCode,
   join_code_version: positiveInteger,
 });
 const joinedClassroomSchema = z.strictObject({
@@ -146,6 +148,33 @@ const mapRpcError = (
   return new ClassroomRepositoryError(
     operation === 'one-time' ? 'AMBIGUOUS_WRITE' : 'UNAVAILABLE',
   );
+};
+
+const mapJoinFunctionError = async (error: unknown) => {
+  if (error instanceof FunctionsHttpError) {
+    if (error.context.status === 429) {
+      return new ClassroomRepositoryError('RATE_LIMITED');
+    }
+    try {
+      const payload = (await error.context.clone().json()) as Readonly<{
+        error?: unknown;
+      }>;
+      if (typeof payload.error === 'string') {
+        return mapRpcError({ message: payload.error }, 'idempotent');
+      }
+    } catch {
+      return new ClassroomRepositoryError('UNAVAILABLE');
+    }
+  }
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    return mapRpcError({ message: error.message }, 'idempotent');
+  }
+  return new ClassroomRepositoryError('UNAVAILABLE');
 };
 
 const mapStudentClassroom = (
@@ -265,11 +294,13 @@ export function createClassroomRepository(
       return mapStudentProgress(parsed.data);
     },
     async joinClassroom(input) {
-      const { data, error } = await client.rpc('join_classroom', {
-        p_join_code: input.joinCode.trim(),
-        p_request_id: input.requestId,
+      const { data, error } = await client.functions.invoke('join-classroom', {
+        body: {
+          joinCode: input.joinCode.trim(),
+          requestId: input.requestId,
+        },
       });
-      if (error) throw mapRpcError(error, 'idempotent');
+      if (error) throw await mapJoinFunctionError(error);
       return mapJoined(parseReceipt(joinedClassroomSchema, data));
     },
     async listMine() {

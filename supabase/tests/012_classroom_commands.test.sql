@@ -1,5 +1,10 @@
 begin;
 
+-- 此檔保留舊 RPC 內部的冪等／權限行為回歸；正式 authenticated 權限已由
+-- 060_classroom_join_rate_limits.test.sql 驗證為撤銷。測試交易內暫時授權，
+-- rollback 後不會改變實際 schema 權限。
+grant execute on function public.join_classroom(text, uuid) to authenticated;
+
 select plan(42);
 
 select has_extension('pgcrypto', 'pgcrypto is available');

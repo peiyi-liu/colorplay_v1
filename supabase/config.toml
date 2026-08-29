@@ -409,6 +409,10 @@ verify_jwt = false
 [functions.student-register]
 verify_jwt = false
 
+# 由函式內 getUser 驗證 JWT，再走 service-only 限流／加入 RPC。
+[functions.join-classroom]
+verify_jwt = false
+
 [functions.auth-recover]
 verify_jwt = false
 

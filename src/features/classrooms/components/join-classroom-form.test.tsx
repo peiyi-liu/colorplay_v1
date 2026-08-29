@@ -107,4 +107,19 @@ describe('JoinClassroomForm', () => {
     );
     expect(screen.getByRole('alert')).not.toHaveTextContent('INVALID_CODE');
   });
+
+  it('explains a temporary rate limit without exposing server details', async () => {
+    renderForm(
+      repository(
+        vi.fn().mockRejectedValue(new ClassroomRepositoryError('RATE_LIMITED')),
+      ),
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: '加入班級' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '嘗試次數過多，請等待 10 分鐘後再試。',
+    );
+    expect(screen.getByRole('alert')).not.toHaveTextContent('RATE_LIMITED');
+  });
 });
