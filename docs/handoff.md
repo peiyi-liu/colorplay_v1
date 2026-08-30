@@ -1384,3 +1384,11 @@
 - 測試狀態：本機 scoped Vitest 10 檔／69 tests、typecheck、scoped lint／format、diff check 與 production build 全綠。Linked pgTAP 只嘗試 012／046／059，但 Staging 未安裝 pgTAP `plan()`，三檔均在 0 assertions 前停止；未將環境缺 extension 誤報成測試通過，也未擅自安裝測試 extension、執行 `pnpm test:db` 或 reset。migration 與真實 API 行為已由上述 hosted smoke 補驗。
 - Admin／跨工具紀錄：新增 accepted ADR 0009，固定 Admin-only 教師建立、後端流水帳號、nullable `contact_email`、一次性初始密碼收據、不可回復原密碼、重設稽核與交付安全；`spec/04` 與 ADR 0003 的部分 supersession 已對齊。Codex 與 Claude Code 均以本檔為跨工具 SSOT，不建立平行私有紀錄。
 - 後續風險：直接 `join_classroom` RPC 仍缺 `spec/04` 要求的 IP＋identity 專屬限流。8 位 Crockford Base32 提供 40-bit 空間，但不能取代限流；建議另開一個安全 task，且不得與 Phase 0／1 保護路徑混做。
+
+## 2026-08-31 00:07 [Codex] — Quiz 完成後誤顯示「尚未完成」已修正並發布 Staging
+
+- 根因與修正：`finalize_quiz_session` 已由後端成功完成，但前端導向結果頁時仍短暫沿用 React Query 中舊的 `in_progress` session，結果頁因此把等待背景 refetch 的期間誤顯示為「無法顯示結果」。現在 finalize 成功後，先以伺服器回傳的 authoritative final result 更新該 session cache，再導向結果頁；前端不自行計算完成狀態、分數、XP 或代幣。
+- 測試：新增延遲結果頁 refetch 的 deterministic regression，覆蓋小節挑戰與章節總挑戰；相關 Vitest 4 檔／37 tests、scoped ESLint／Prettier、`pnpm typecheck`、production build 與 `git diff --check` 全綠。產品 commit 為 `26f2b365e1f94cf3b283cfa93b1620fb0f1ddcef`，已 push 至 `origin/codex/quiz-result-fix`。
+- Staging：Vercel deployment `dpl_HFyZ2DRad3wPdGVL7MZ9UuZByBo5` 為 READY，已 alias 至 `staging.colorplayapp.com`。公開 bundle 含 Staging Supabase ref `onkxnkzeixpezetkmocf`、不含 Production ref `xdjumzdqyexpyndanwkp`。
+- Hosted 驗證：`student03` 實際完成 10 題小節挑戰並看到「小節挑戰完成」；`student04` 實際完成 10 題章節總挑戰並看到「章節總挑戰完成」。兩條流程的 DOM observer 均未曾捕捉「無法顯示結果」，console error／page error 皆為 0。
+- 邊界：未修改 Quiz 後端交易、計分／獎勵規則、DB schema、Supabase hosted 資料結構或 Phase 0／1 保護路徑；本輪只發布前端修正。
