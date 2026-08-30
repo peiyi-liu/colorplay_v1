@@ -44,6 +44,11 @@ export function LiveProjectorHud({
   transitionPending,
 }: LiveProjectorHudProps) {
   const [confirmingExit, setConfirmingExit] = useState(false);
+  const [startDialog, setStartDialog] = useState<'confirm' | 'empty' | null>(
+    null,
+  );
+  const startButtonRef = useRef<HTMLButtonElement>(null);
+  const startDialogWasOpenRef = useRef(false);
   const exitButtonRef = useRef<HTMLButtonElement>(null);
   const exitWasOpenRef = useRef(false);
   const participantEntries = useMemo(() => {
@@ -65,6 +70,17 @@ export function LiveProjectorHud({
   const [joiningParticipantKeys, setJoiningParticipantKeys] = useState<
     ReadonlySet<string>
   >(() => new Set());
+
+  useEffect(() => {
+    if (startDialog) {
+      startDialogWasOpenRef.current = true;
+      return;
+    }
+    if (startDialogWasOpenRef.current) {
+      startDialogWasOpenRef.current = false;
+      startButtonRef.current?.focus();
+    }
+  }, [startDialog]);
 
   useEffect(() => {
     const addedKeys = participantKeys.filter(
@@ -94,6 +110,28 @@ export function LiveProjectorHud({
       exitButtonRef.current?.focus();
     }
   }, [confirmingExit]);
+
+  const handleStartDialogKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setStartDialog(null);
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const buttons = Array.from(
+      event.currentTarget.querySelectorAll<HTMLButtonElement>('button'),
+    );
+    const first = buttons[0];
+    const last = buttons.at(-1);
+    if (!first || !last) return;
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
 
   const handleExitDialogKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
@@ -191,7 +229,14 @@ export function LiveProjectorHud({
           <button
             className="live-projector__control live-projector__control--primary"
             disabled={transitionPending}
-            onClick={onStart}
+            onClick={() => {
+              if (participantCount === 0) {
+                setStartDialog('empty');
+                return;
+              }
+              setStartDialog('confirm');
+            }}
+            ref={startButtonRef}
             type="button"
           >
             <Icon name="arrow-right" size={24} />
@@ -224,6 +269,60 @@ export function LiveProjectorHud({
           </button>
         ) : null}
       </footer>
+
+      {startDialog ? (
+        <div
+          aria-labelledby="live-projector-start-title"
+          aria-modal="true"
+          className="live-projector__exit-backdrop"
+          onKeyDown={handleStartDialogKeyDown}
+          role="alertdialog"
+        >
+          <div className="live-projector__exit-dialog">
+            <Icon
+              name={startDialog === 'empty' ? 'users' : 'arrow-right'}
+              size={32}
+            />
+            <h2 id="live-projector-start-title">
+              {startDialog === 'empty' ? '等待學生進入' : '立即開始'}
+            </h2>
+            <p>
+              {startDialog === 'empty'
+                ? '目前還沒有學生加入，請等待學生輸入課堂代碼後再開始。'
+                : `${String(participantCount)} 位同學已加入，確定要開始第一題嗎？`}
+            </p>
+            <div
+              className={
+                startDialog === 'empty'
+                  ? 'live-projector__dialog-actions--single'
+                  : undefined
+              }
+            >
+              <button
+                autoFocus
+                onClick={() => {
+                  setStartDialog(null);
+                }}
+                type="button"
+              >
+                繼續等待
+              </button>
+              {startDialog === 'confirm' ? (
+                <button
+                  className="live-projector__confirm-start"
+                  onClick={() => {
+                    setStartDialog(null);
+                    onStart?.();
+                  }}
+                  type="button"
+                >
+                  開始
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {confirmingExit ? (
         <div

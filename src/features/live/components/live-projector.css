@@ -388,6 +388,11 @@
   grid-template-columns: 1fr 1fr;
 }
 
+.live-projector__exit-dialog
+  > .live-projector__dialog-actions--single {
+  grid-template-columns: 1fr;
+}
+
 .live-projector__exit-dialog button {
   min-height: 48px;
   border: 1px solid rgb(255 255 255 / 24%);
@@ -402,6 +407,11 @@
 .live-projector__exit-dialog .live-projector__confirm-exit {
   border-color: #e86161;
   background: #8d2929;
+}
+
+.live-projector__exit-dialog .live-projector__confirm-start {
+  border-color: #8da5ff;
+  background: #3056d8;
 }
 
 @media (width <= 760px) {

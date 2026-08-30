@@ -14,7 +14,35 @@ import { LiveSessionPage } from './live-session-page';
 import { TeacherLiveSessionPage } from './teacher-live-session-page';
 
 describe('TeacherLiveSessionPage (host console)', () => {
-  it('drives each transition with the current state version', async () => {
+  it('keeps an empty lobby waiting instead of opening the first question', async () => {
+    const openQuestion = vi.fn().mockResolvedValue(undefined);
+    const repository = repositoryWith({
+      getState: vi.fn().mockResolvedValue({
+        ...baseState,
+        isHost: true,
+        participantCount: 0,
+        participants: [],
+      }),
+      openQuestion,
+    });
+    renderWith(
+      <TeacherLiveSessionPage
+        client={stubClient()}
+        repository={repository}
+        sessionId={SESSION_ID}
+      />,
+    );
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: '開始遊戲' }));
+
+    expect(
+      screen.getByRole('alertdialog', { name: '等待學生進入' }),
+    ).toBeVisible();
+    expect(openQuestion).not.toHaveBeenCalled();
+  });
+
+  it('confirms before opening the first question with the current state version', async () => {
     const openQuestion = vi.fn().mockResolvedValue(undefined);
     const repository = repositoryWith({
       getState: vi.fn().mockResolvedValue({
@@ -33,6 +61,20 @@ describe('TeacherLiveSessionPage (host console)', () => {
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('button', { name: '開始遊戲' }));
+
+    expect(openQuestion).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('alertdialog', { name: '立即開始' }),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: '開始' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '繼續等待' })).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: '繼續等待' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(openQuestion).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: '開始遊戲' }));
+    await user.click(screen.getByRole('button', { name: '開始' }));
 
     await waitFor(() => {
       expect(openQuestion).toHaveBeenCalledWith(SESSION_ID, 2);

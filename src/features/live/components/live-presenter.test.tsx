@@ -283,7 +283,7 @@ describe('LivePresenter', () => {
     expect(screen.getByText('共 7 題')).toBeVisible();
   });
 
-  it('starts the lobby through the existing Host action', async () => {
+  it('starts the lobby through the existing Host action after confirmation', async () => {
     const start = vi.fn();
     renderPresenter(lobbyState, {
       footerActions: [
@@ -298,6 +298,8 @@ describe('LivePresenter', () => {
     const user = userEvent.setup();
 
     await user.click(screen.getByRole('button', { name: '開始遊戲' }));
+    expect(start).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: '開始' }));
 
     expect(start).toHaveBeenCalledTimes(1);
   });

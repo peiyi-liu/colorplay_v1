@@ -297,6 +297,7 @@ mastery = coverage * accuracy / 100
 - **小節活動**：`live_activities.section_id`（nullable FK sections）；`create_live_activity` v3 可帶 `p_section_id`（驗證屬同一章且 published）；`start_live_session` v3 凍題母集改為該小節（未帶則整章，向後相容）。`list_live_section_options`（teacher-only）供「選擇單元」下拉：published section × 該章 published template × 有 published 題目。活動標題由 client 直接採用小節標題（如「3-1 色彩三要素與色名的表示」）。
 - **建立流程精簡**：建立表單只剩「選擇單元」＋「每題秒數」；對戰模式（team）、排程、開場班級選單、題目顯示位置選單自 UI 移除（後端能力保留）。場次自動掛教師第一個 active 班級；`question_display` 一律 `screen_only`。
 - **一鍵開場**：「建立活動」＝建立活動→建立場次→`start_live_session`（開等待室）→直接進入主持台投影模式（`?presenter=1`）。
+- **等待室開始確認**：主持端以 authoritative `participant_count` 判斷；0 人時按「開始遊戲」只顯示「等待學生進入」且不得送出開題指令，至少 1 人時先顯示「立即開始」確認框，由主持人選擇「開始」或「繼續等待」，只有確認「開始」才呼叫 `open_live_question`。
 - **學生端**：作答格只顯示形狀符號置中（無字母/文字，sr-only 保留色形名稱）；題間結果為全屏綠底白勾（答錯/逾時紅底白叉）＋「本題 +N 分」＋「目前第 N 名」，全白字且不顯示頁面標題。
 - **投影 feedback**：選項人數改為長條圖（按最高票正規化，正解加粗＋✓）。
 - **註冊 OTP**：重送驗證碼前端 60 秒倒數（對齊 Supabase Auth 伺服器端同信箱 60 秒冷卻），倒數中按鈕 disabled。
