@@ -1392,3 +1392,9 @@
 - Staging：Vercel deployment `dpl_HFyZ2DRad3wPdGVL7MZ9UuZByBo5` 為 READY，已 alias 至 `staging.colorplayapp.com`。公開 bundle 含 Staging Supabase ref `onkxnkzeixpezetkmocf`、不含 Production ref `xdjumzdqyexpyndanwkp`。
 - Hosted 驗證：`student03` 實際完成 10 題小節挑戰並看到「小節挑戰完成」；`student04` 實際完成 10 題章節總挑戰並看到「章節總挑戰完成」。兩條流程的 DOM observer 均未曾捕捉「無法顯示結果」，console error／page error 皆為 0。
 - 邊界：未修改 Quiz 後端交易、計分／獎勵規則、DB schema、Supabase hosted 資料結構或 Phase 0／1 保護路徑；本輪只發布前端修正。
+
+## 2026-08-31 01:27 [Codex] — Live 等待室零人防誤開與開始確認完成（本機，未發布）
+
+- 行為：主持端等待室以伺服器 Live state 的 `participant_count` 判斷。0 人時按「開始遊戲」只顯示「等待學生進入」，不送出開題指令；至少 1 人時先顯示「立即開始」，可選「開始」或「繼續等待」，只有確認「開始」才沿用既有 Host action 呼叫開題。退出、零人提示與開始確認共用單一受控 alertdialog，保留 Escape／焦點圈限／焦點復原，並讓瀏覽器或 Android 返回鍵只關閉最上層提示、不離開投影頁。
+- 驗證：TDD 先重現零人仍直接開題及有學生時未確認就開題；相關 Vitest 3 檔／25 tests、Chromium 等待室互動與返回鍵 2／2、scoped ESLint／Prettier、`pnpm typecheck`、production build、`git diff --check` 全綠。唯一一次雙軸 review 的 Standards 3 項硬性／2 項判斷與 Spec 1 項 P2 均於同輪修正；Security 因未碰信任邊界略過。
+- 狀態與邊界：分支 `codex/live-lobby-start-guard`，產品 commits `4de682a`、`4989c99`；目前只在本機，未 push、未 deploy、未操作 Supabase／hosted DB，也未執行 `pnpm test:db` 或 reset。為保留規格允許的 late join，本輪沒有新增 DB 層零人拒絕；正式教師 UI 已阻止一般操作路徑的零人開題。
