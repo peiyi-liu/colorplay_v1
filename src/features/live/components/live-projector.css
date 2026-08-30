@@ -348,7 +348,7 @@
   outline-offset: -5px;
 }
 
-.live-projector__exit-backdrop {
+.live-projector__dialog-backdrop {
   position: absolute;
   z-index: 10;
   display: grid;
@@ -358,7 +358,7 @@
   place-items: center;
 }
 
-.live-projector__exit-dialog {
+.live-projector__dialog {
   display: grid;
   width: min(100%, 30rem);
   border: 1px solid rgb(255 206 100 / 72%);
@@ -371,29 +371,28 @@
   text-align: center;
 }
 
-.live-projector__exit-dialog > svg {
+.live-projector__dialog > svg {
   margin: 0 auto;
   color: #ffc64f;
 }
 
-.live-projector__exit-dialog h2,
-.live-projector__exit-dialog p {
+.live-projector__dialog h2,
+.live-projector__dialog p {
   margin: 0;
 }
 
-.live-projector__exit-dialog > div {
+.live-projector__dialog > div {
   display: grid;
   margin-top: 8px;
   gap: 12px;
   grid-template-columns: 1fr 1fr;
 }
 
-.live-projector__exit-dialog
-  > .live-projector__dialog-actions--single {
+.live-projector__dialog > .live-projector__dialog-actions--single {
   grid-template-columns: 1fr;
 }
 
-.live-projector__exit-dialog button {
+.live-projector__dialog button {
   min-height: 48px;
   border: 1px solid rgb(255 255 255 / 24%);
   border-radius: 6px;
@@ -404,14 +403,28 @@
   font-weight: 700;
 }
 
-.live-projector__exit-dialog .live-projector__confirm-exit {
+.live-projector__dialog .live-projector__dialog-action--danger {
   border-color: #e86161;
   background: #8d2929;
 }
 
-.live-projector__exit-dialog .live-projector__confirm-start {
-  border-color: #8da5ff;
-  background: #3056d8;
+.live-projector__dialog .live-projector__dialog-action--primary {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.live-projector__dialog
+  .live-projector__dialog-action--primary:hover:not(:disabled) {
+  background: var(--color-accent-strong);
+}
+
+.live-projector__dialog button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.live-projector__dialog button:disabled {
+  cursor: wait;
+  opacity: 0.55;
 }
 
 @media (width <= 760px) {

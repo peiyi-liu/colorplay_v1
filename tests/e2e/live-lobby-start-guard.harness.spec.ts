@@ -45,3 +45,29 @@ test('lobby start confirmation stays inside the projector and preserves waiting'
   expect(consoleErrors).toEqual([]);
   expect(pageErrors).toEqual([]);
 });
+
+test('browser back closes one lobby dialog without leaving the projector', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 720, width: 1280 });
+  await page.goto(
+    '/dev-harness/live-presenter.html?scenario=lobby-boundary&promptLength=36&optionLength=21',
+  );
+  await page.waitForLoadState('networkidle');
+  const initialHistoryLength = await page.evaluate(() => history.length);
+
+  await page.getByRole('button', { name: '開始遊戲' }).click();
+  await expect(
+    page.getByRole('alertdialog', { name: '立即開始' }),
+  ).toBeVisible();
+  expect(await page.evaluate(() => history.length)).toBe(
+    initialHistoryLength + 1,
+  );
+
+  await page.goBack();
+  await expect(page.getByRole('alertdialog')).toBeHidden();
+  await expect(
+    page.getByRole('region', { name: 'Live 投影模式' }),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/\/dev-harness\/live-presenter\.html/u);
+});
