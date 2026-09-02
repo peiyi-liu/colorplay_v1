@@ -35,7 +35,7 @@ Stop before Task 1 unless:
 1. the R0 spec package is committed and the exact base contains Phase 1 Admin security commits plus ADR 0009;
 2. a dedicated Admin B worktree/branch and exact owned/forbidden path list are recorded;
 3. `pnpm lint`, `pnpm typecheck`, and affected Admin unit tests establish a current non-destructive baseline; the Local Admin DB suite runs only in an explicitly reserved exclusive window;
-4. migration path `20260902000200_admin_teacher_accounts.sql` and pgTAP IDs `059`–`060` are unused.
+4. migration path `20260902000200_admin_teacher_accounts.sql` and pgTAP IDs `064`–`065` are unused.
 
 Phase 0 merge and Phase 1 Hosted gate are **not** prerequisites for Admin B Tasks 1–6 Local development. They remain hard prerequisites for Task 7 Hosted verification and release integration. If current command/audit interfaces differ from the spec, amend the design/plan; do not create a bypass.
 
@@ -50,8 +50,8 @@ mutation.
 ### Database/Auth operation module
 
 - Create `supabase/migrations/20260902000200_admin_teacher_accounts.sql`.
-- Create `supabase/tests/059_admin_teacher_accounts.test.sql`.
-- Create `supabase/tests/060_admin_teacher_account_rls.test.sql`.
+- Create `supabase/tests/064_admin_teacher_accounts.test.sql`.
+- Create `supabase/tests/065_admin_teacher_account_rls.test.sql`.
 - Modify `supabase/catalog/admin-sensitivity-catalog.json` through its generator.
 - Modify `scripts/admin/generate-sensitivity-catalog.mjs` and tests.
 - Modify `src/types/database.ts` through the standard type generator.
@@ -104,8 +104,8 @@ reset_teacher_password
 **Files:**
 
 - Create: `supabase/migrations/20260902000200_admin_teacher_accounts.sql`
-- Test: `supabase/tests/059_admin_teacher_accounts.test.sql`
-- Test: `supabase/tests/060_admin_teacher_account_rls.test.sql`
+- Test: `supabase/tests/064_admin_teacher_accounts.test.sql`
+- Test: `supabase/tests/065_admin_teacher_account_rls.test.sql`
 - Modify: `scripts/admin/generate-sensitivity-catalog.mjs`
 - Modify: `supabase/catalog/admin-sensitivity-catalog.json`
 - Modify: `src/types/database.ts`
@@ -131,7 +131,7 @@ select throws_ok(
 
 - [ ] **Step 2: Run RED pgTAP files**
 
-Run tests 059/060; expect missing-column/function failures only.
+Run tests 064/065; expect missing-column/function failures only.
 
 - [ ] **Step 3: Implement schema and deep read module**
 
@@ -153,7 +153,7 @@ Stage the six exact paths and generated type/catalog files only; commit `feat(ad
 - Create/Test: `supabase/functions/_shared/teacher-account-operation.ts` and `.test.ts`.
 - Modify: `supabase/functions/admin-command/index.ts`.
 - Modify: `supabase/functions/admin-reconcile/index.ts`.
-- Modify/Test: migration and pgTAP 059.
+- Modify/Test: migration and pgTAP 064.
 
 **Interfaces:**
 
