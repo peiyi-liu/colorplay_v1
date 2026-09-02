@@ -20,6 +20,30 @@ interface Catalog {
   resources: CatalogResource[];
 }
 
+const REBASELINE_COLUMNS = [
+  'course_progression_settings.course_id',
+  'course_progression_settings.mode',
+  'course_progression_settings.rules_version',
+  'course_progression_settings.updated_at',
+  'live_session_questions.chapter_id',
+  'live_session_questions.section_id',
+  'questions.bank_kind',
+  'quiz_sessions.abandoned_at',
+  'quiz_sessions.classroom_id',
+  'quiz_templates.section_id',
+  'student_chapter_unlocks.chapter_id',
+  'student_chapter_unlocks.rules_version',
+  'student_chapter_unlocks.source_chapter_id',
+  'student_chapter_unlocks.unlocked_at',
+  'student_chapter_unlocks.user_id',
+  'student_registration_claims.created_at',
+  'student_registration_claims.lease_expires_at',
+  'student_registration_claims.lease_token',
+  'student_registration_claims.state',
+  'student_registration_claims.updated_at',
+  'student_registration_claims.user_id',
+] as const;
+
 describe('phase 1 admin sensitivity catalog contract', () => {
   it('regenerates byte-identically from the spec', () => {
     execFileSync(process.execPath, [
@@ -27,11 +51,11 @@ describe('phase 1 admin sensitivity catalog contract', () => {
       '--check',
     ]);
   });
-  it('holds 46 existing + 9 control resources, all export=false', async () => {
+  it('holds 46 existing + 9 control + 3 quarantined resources, all export=false', async () => {
     const catalog = JSON.parse(
       await readFile('supabase/catalog/admin-sensitivity-catalog.json', 'utf8'),
     ) as Catalog;
-    expect(catalog.resources).toHaveLength(55);
+    expect(catalog.resources).toHaveLength(58);
     expect(
       catalog.resources.filter((r) => r.resource.startsWith('admin_')),
     ).toHaveLength(9);
@@ -39,5 +63,85 @@ describe('phase 1 admin sensitivity catalog contract', () => {
     const names = catalog.resources.map((r) => r.resource);
     expect(names).toContain('external_activities'); // spec §9.1 曾遺漏,防回歸
     expect(names).not.toContain('audit_logs'); // spec §9.1:不存在的表不得入 catalog
+  });
+
+  it('quarantines every rebaseline column without adding a browser surface', async () => {
+    const catalog = JSON.parse(
+      await readFile('supabase/catalog/admin-sensitivity-catalog.json', 'utf8'),
+    ) as {
+      resources: {
+        columns: {
+          class: unknown;
+          filterable: unknown;
+          mask_strategy: unknown;
+          name: string;
+          searchable: unknown;
+          sortable: unknown;
+        }[];
+        export: unknown;
+        resource: string;
+        surface: string;
+      }[];
+    };
+    const byKey = new Map(
+      catalog.resources.flatMap((resource) =>
+        resource.columns.map((column) => [
+          `${resource.resource}.${column.name}`,
+          { column, resource },
+        ]),
+      ),
+    );
+
+    expect(
+      REBASELINE_COLUMNS.map((key) => ({
+        class: byKey.get(key)?.column.class,
+        filterable: byKey.get(key)?.column.filterable,
+        key,
+        mask_strategy: byKey.get(key)?.column.mask_strategy,
+        searchable: byKey.get(key)?.column.searchable,
+        sortable: byKey.get(key)?.column.sortable,
+      })),
+    ).toEqual(
+      REBASELINE_COLUMNS.map((key) => ({
+        class: 'forbidden',
+        filterable: false,
+        key,
+        mask_strategy: null,
+        searchable: false,
+        sortable: false,
+      })),
+    );
+    expect(
+      [
+        'course_progression_settings',
+        'student_chapter_unlocks',
+        'student_registration_claims',
+      ].map((name) => {
+        const resource = catalog.resources.find(
+          (candidate) => candidate.resource === name,
+        );
+        return {
+          export: resource?.export,
+          resource: name,
+          surface: resource?.surface,
+        };
+      }),
+    ).toEqual([
+      {
+        export: false,
+        resource: 'course_progression_settings',
+        surface: 'none',
+      },
+      {
+        export: false,
+        resource: 'student_chapter_unlocks',
+        surface: 'none',
+      },
+      {
+        export: false,
+        resource: 'student_registration_claims',
+        surface: 'none',
+      },
+    ]);
   });
 });

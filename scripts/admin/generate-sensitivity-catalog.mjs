@@ -3,6 +3,7 @@
 // 解析 spec §9.3/§9.4 markdown 表格,生成:
 //   supabase/catalog/admin-sensitivity-catalog.json
 //   supabase/migrations/20260808000500_admin_sensitivity_catalog.sql
+//   supabase/migrations/20260903000100_admin_catalog_rebaseline.sql
 // --check 模式:重新生成並與提交版本 byte 比對,不一致 exit 1。
 import { createHash } from 'node:crypto';
 import console from 'node:console';
@@ -11,9 +12,13 @@ import process from 'node:process';
 
 const SPEC_PATH =
   'docs/superpowers/specs/2026-08-07-phase-1-admin-identity-security-design.md';
+const REBASELINE_SPEC_PATH =
+  'docs/superpowers/specs/2026-09-03-admin-catalog-rebaseline-design.md';
 const JSON_PATH = 'supabase/catalog/admin-sensitivity-catalog.json';
 const MIGRATION_PATH =
   'supabase/migrations/20260808000500_admin_sensitivity_catalog.sql';
+const REBASELINE_MIGRATION_PATH =
+  'supabase/migrations/20260903000100_admin_catalog_rebaseline.sql';
 
 // spec §3.1 資料瀏覽七分類 → 46 張既有表(逐一明列,涵蓋率由 --check 與
 // compare-catalog-inventory.mjs 保證)。
@@ -170,6 +175,38 @@ function parseControlTables(section) {
   });
 }
 
+function parseCodeCell(cell, label) {
+  const match = /^`([a-z0-9_]+)`$/u.exec(cell);
+  if (!match) throw new Error(`CATALOG_REBASELINE_INVALID_${label}:${cell}`);
+  return match[1];
+}
+
+function parseRebaselineRows(spec) {
+  const section = extractSection(spec, '## 3.', '## 4.');
+  const rows = section
+    .split('\n')
+    .filter((line) => /^\| `[a-z0-9_]+` \|/u.test(line))
+    .map((line) => {
+      const [resource, domain, surface, column, classification] =
+        parseCells(line);
+      return {
+        resource: parseCodeCell(resource, 'RESOURCE'),
+        domain: parseCodeCell(domain, 'DOMAIN'),
+        surface: parseCodeCell(surface, 'SURFACE'),
+        column: parseCodeCell(column, 'COLUMN'),
+        class: parseCodeCell(classification, 'CLASS'),
+      };
+    });
+  if (rows.length !== 21)
+    throw new Error(`CATALOG_REBASELINE_EXPECTED_21_GOT_${rows.length}`);
+  if (rows.some((row) => row.class !== 'forbidden'))
+    throw new Error('CATALOG_REBASELINE_MUST_BE_FORBIDDEN');
+  const keys = new Set(rows.map((row) => `${row.resource}.${row.column}`));
+  if (keys.size !== rows.length)
+    throw new Error('CATALOG_REBASELINE_DUPLICATE_COLUMN');
+  return rows;
+}
+
 function domainOf(resource) {
   if (resource.startsWith('admin_')) return 'security';
   const found = Object.entries(DOMAIN_MAP).find(([, list]) =>
@@ -207,8 +244,48 @@ function failMask(key) {
   throw new Error(`CATALOG_MASK_RULE_MISSING:${key}`);
 }
 
+function applyRebaseline(baseResources, rows) {
+  const resources = baseResources.map((resource) => ({
+    ...resource,
+    columns: [...resource.columns],
+  }));
+  for (const row of rows) {
+    let resource = resources.find(
+      (candidate) => candidate.resource === row.resource,
+    );
+    if (!resource) {
+      resource = {
+        resource: row.resource,
+        domain: row.domain,
+        surface: row.surface,
+        export: false,
+        columns: [],
+      };
+      resources.push(resource);
+    }
+    if (resource.domain !== row.domain || resource.surface !== row.surface)
+      throw new Error(`CATALOG_REBASELINE_RESOURCE_MISMATCH:${row.resource}`);
+    if (resource.columns.some((column) => column.name === row.column))
+      throw new Error(
+        `CATALOG_REBASELINE_COLUMN_ALREADY_EXISTS:${row.resource}.${row.column}`,
+      );
+    resource.columns.push({
+      name: row.column,
+      class: row.class,
+      mask_strategy: null,
+      searchable: false,
+      filterable: false,
+      sortable: false,
+    });
+  }
+  return resources.sort((a, b) => a.resource.localeCompare(b.resource));
+}
+
 async function main() {
-  const spec = await readFile(SPEC_PATH, 'utf8');
+  const [spec, rebaselineSpec] = await Promise.all([
+    readFile(SPEC_PATH, 'utf8'),
+    readFile(REBASELINE_SPEC_PATH, 'utf8'),
+  ]);
   const existing = parseExistingTables(
     extractSection(spec, '### 9.3', '### 9.4'),
   );
@@ -218,7 +295,7 @@ async function main() {
   if (control.length !== 9)
     throw new Error(`CATALOG_EXPECTED_9_GOT_${control.length}`);
 
-  const resources = [...existing, ...control]
+  const baseResources = [...existing, ...control]
     .map((entry) => ({
       resource: entry.resource,
       domain: domainOf(entry.resource),
@@ -229,18 +306,26 @@ async function main() {
       columns: toColumns(entry),
     }))
     .sort((a, b) => a.resource.localeCompare(b.resource));
+  const rebaselineRows = parseRebaselineRows(rebaselineSpec);
+  const resources = applyRebaseline(baseResources, rebaselineRows);
 
   const json = `${JSON.stringify(
     {
       version: 1,
-      source_sha256: createHash('sha256').update(spec).digest('hex'),
+      source_sha256: createHash('sha256')
+        .update(spec)
+        .update('\n-- Catalog rebaseline overlay --\n')
+        .update(rebaselineSpec)
+        .digest('hex'),
       resources,
     },
     null,
     2,
   )}\n`;
 
-  const values = resources.flatMap((r) =>
+  // The historical 20260808 migration must stay byte-stable. The rebaseline
+  // forward migration adds only the quarantine overlay.
+  const values = baseResources.flatMap((r) =>
     r.columns.map(
       (c) =>
         `  ('${r.resource}', '${r.domain}', '${r.surface}', '${c.name}', '${c.class}', ` +
@@ -272,13 +357,34 @@ async function main() {
     `${values.join(',\n')};`,
     '',
   ].join('\n');
+  const rebaselineValues = rebaselineRows.map(
+    (row) =>
+      `  ('${row.resource}', '${row.domain}', '${row.surface}', ` +
+      `'${row.column}', 'forbidden', null, false, false, false)`,
+  );
+  const rebaselineMigration = [
+    '-- GENERATED FILE — do not edit by hand.',
+    '-- Regenerate: pnpm admin:catalog:generate',
+    '-- Source: 2026-09-03 Admin catalog rebaseline design.',
+    'insert into public.admin_sensitivity_catalog',
+    '  (resource, domain, surface, column_name, class, mask_strategy,',
+    '   searchable, filterable, sortable)',
+    'values',
+    `${rebaselineValues.join(',\n')};`,
+    '',
+  ].join('\n');
 
   if (process.argv.includes('--check')) {
-    const [jsonNow, migNow] = await Promise.all([
+    const [jsonNow, migNow, rebaselineMigNow] = await Promise.all([
       readFile(JSON_PATH, 'utf8'),
       readFile(MIGRATION_PATH, 'utf8'),
+      readFile(REBASELINE_MIGRATION_PATH, 'utf8'),
     ]);
-    if (jsonNow !== json || migNow !== migration) {
+    if (
+      jsonNow !== json ||
+      migNow !== migration ||
+      rebaselineMigNow !== rebaselineMigration
+    ) {
       console.error(
         'ADMIN_CATALOG_DRIFT: regenerate with pnpm admin:catalog:generate',
       );
@@ -287,8 +393,11 @@ async function main() {
     console.log('admin catalog: up to date');
     return;
   }
-  await writeFile(JSON_PATH, json);
-  await writeFile(MIGRATION_PATH, migration);
+  await Promise.all([
+    writeFile(JSON_PATH, json),
+    writeFile(MIGRATION_PATH, migration),
+    writeFile(REBASELINE_MIGRATION_PATH, rebaselineMigration),
+  ]);
   console.log(`admin catalog: wrote ${resources.length} resources`);
 }
 

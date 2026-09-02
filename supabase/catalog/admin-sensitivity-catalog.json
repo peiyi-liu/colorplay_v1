@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "source_sha256": "f7944d936398371f75506487eb6b410a6c41dc5594adab8cc445a7613d1ad0de",
+  "source_sha256": "4b6590796221bce70bc064f0947c73e5bad8a5f7f9c3483c2a9a1cdd0ccfce66",
   "resources": [
     {
       "resource": "achievement_definitions",
@@ -1995,6 +1995,46 @@
       ]
     },
     {
+      "resource": "course_progression_settings",
+      "domain": "learning",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "course_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "mode",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "rules_version",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
       "resource": "courses",
       "domain": "content",
       "surface": "browser",
@@ -2619,6 +2659,22 @@
         {
           "name": "explanation",
           "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "chapter_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "section_id",
+          "class": "forbidden",
           "mask_strategy": null,
           "searchable": false,
           "filterable": false,
@@ -3375,6 +3431,14 @@
           "searchable": false,
           "filterable": false,
           "sortable": false
+        },
+        {
+          "name": "bank_kind",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
         }
       ]
     },
@@ -3743,6 +3807,22 @@
           "searchable": false,
           "filterable": false,
           "sortable": false
+        },
+        {
+          "name": "abandoned_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "classroom_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
         }
       ]
     },
@@ -3811,6 +3891,14 @@
         {
           "name": "chapter_id",
           "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "section_id",
+          "class": "forbidden",
           "mask_strategy": null,
           "searchable": false,
           "filterable": false,
@@ -4179,6 +4267,110 @@
         {
           "name": "chapter_id",
           "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "student_chapter_unlocks",
+      "domain": "learning",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "chapter_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "rules_version",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_chapter_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "unlocked_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "student_registration_claims",
+      "domain": "users",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "created_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "lease_expires_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "lease_token",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "state",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "forbidden",
           "mask_strategy": null,
           "searchable": false,
           "filterable": false,
