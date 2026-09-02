@@ -1,5 +1,9 @@
 # Phase 4A：學生端章節體驗 UI Surface Design（Draft）
 
+> **Superseded in part on 2026-09-02:** 保留現行 JRPG 全貌與已工作的 UI；卡片、
+> 小節／章節挑戰的 lock state 與唯一「繼續學習」操作改以
+> `2026-09-02-section-progression-design.md` 為準。
+
 - 日期：2026-08-10（2026-08-10 Codex review remediation 更新）
 - 狀態：Owner approved：2026-08-10
 - Codex design review completed

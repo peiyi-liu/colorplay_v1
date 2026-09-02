@@ -1,5 +1,9 @@
 # JRPG Learning Map and Chapter Access Implementation Plan
 
+> **Superseded in part on 2026-09-02:** 不再實作跨章 prerequisite。JRPG 視覺與
+> content-readiness 可作歷史參考；存取與 next-action contract 以
+> `docs/superpowers/plans/2026-09-02-section-progression.md` 為準。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the paged learning lobby with a detailed six-building JRPG village and add one server-authoritative, permanently recorded chapter-access service while the course remains in `open` mode.

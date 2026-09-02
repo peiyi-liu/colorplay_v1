@@ -34,7 +34,7 @@ Course
 - media alt text：圖片必填，1–200 字元。
 - sort order。
 - status／version。
-- `requires_recompletion`：語意變更需學生重新完成時為 true。
+- progression impact：`compatible` 或 `requires_recompletion`；語意變更必須重新完成。
 
 可接受格式：純文字、受限 Markdown、圖片、色票資料。MVP 不允許任意 HTML iframe。
 
@@ -76,6 +76,28 @@ Published question 若修改以下任一欄位，必須建立新 version：
 只改 typo 是否新版本由內容治理規則決定；若可能影響答案解釋，必須新版本。
 
 所有 published review card、question 與影響語意的 media 都建立 `content_versions` frozen payload/hash，並以 `content_publication_events` 記錄 publish/archive actor、時間、版本與 request ID。歷史 quiz、hint、remediation、assignment、Live session 保存引用版本；不得用 current row 改寫歷史。
+
+每次 current version publish 必填 progression impact 與 reason，並由 server 依
+changed-field allowlist 驗證：
+
+- `compatible`：錯字、排版或不改變教學含義的 alt-text／accessibility 修正，舊進度
+  可映射到新版本。
+- `requires_recompletion`：review-card 觀念、正文含義或教學 media 實質改變。
+- `requires_requalification`：question 含義、options、correct answer、quiz template
+  pool／scope 或挑戰規則實質改變。
+- Correct answer、options 或 template scope 變更不得宣告 compatible。缺漏、不明確
+  或未被 allowlist 涵蓋時，review content 預設 requires recompletion，challenge
+  content 預設 requires requalification。
+- 對既有 section 插入新的 required card 時，publication command 必須在 event
+  同一 transaction 寫入 immutable effective cutoff、section/sort identity、
+  `publication_cutoff_order` 與
+  `grandfather_policy='finalized_before_publish'`。Eligibility 固定為 cutoff 前已
+  committed 的 server-valid、同 section finalized challenge，不論分數；其他人必讀，
+  cutoff 後不得追溯豁免。不以 80% mastery 或可變 projection 代替；
+  publication／finalize 在同一 section lock 內由 server 分配單調
+  `section_event_order`，只有
+  `finalize.section_event_order < publication.publication_cutoff_order` 才豁免。
+  Timestamp 只作 audit；等號、缺 order 或無法證明順序時 fail closed。
 
 ## 5. 發布驗證
 
@@ -260,4 +282,9 @@ Published question 若修改以下任一欄位，必須建立新 version：
 
 ## 16. Progress version input
 
-Progress 規則只讀 current published review/question versions；old-version、draft、archived 不進 current denominator。新 review version 的 `requires_recompletion` 決定是否重做；新 question version 只用新版本 latest qualifying answer。計算保存 content version set 與 `2026-07-progress-1`，可重現且不可由 browser 寫百分比。
+Progress 規則只讀 current published review/question versions；old-version、draft、
+archived 不直接進 current denominator。`compatible` 可沿用明確連結的舊 completion／
+attempt；`requires_recompletion` 要求新 review completion；`requires_requalification`
+保留舊 attempted／completed 事實，但 current best／mastered 只讀新版本 qualifying
+attempt。計算保存 content version set、impact 與 rules version，可重現且不可由
+browser 寫百分比。

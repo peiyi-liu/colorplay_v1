@@ -1,5 +1,10 @@
 # Sequential Content Activation Implementation Plan
 
+> **SUPERSEDED — DO NOT EXECUTE (2026-09-02):** Owner 已取消跨章 sequential
+> activation。新 implementation plan 為
+> `docs/superpowers/plans/2026-09-02-section-progression.md`。本檔只保留歷史，
+> 不得再執行 `activate_course_sequential` 或以完成 Chapter N 解鎖 N+1。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Validate complete Google Sheets content for all six chapters, prove the Chapter 1→6 flow with a dedicated fixture student, and activate sequential mode only through an explicit atomic operator action.

@@ -1,5 +1,19 @@
 # ColorPlay secure migration roadmap
 
+> **2026-09-02 program rebaseline（normative supersession）**：下方原
+> Phase 0–8 章節保留為歷史能力分組，不再代表目前執行順序。Current program
+> 採 dependency lanes：R0 committed base 後，Phase 0 release lane、Admin B Local
+> lane，以及 ownership 不重疊的 content／learning packages 可在獨立 worktrees
+> 平行開發；每條 lane 內仍依其 interface dependency 前進。Program integration
+> 一次只收一個 reviewed candidate，所有 Hosted／release gate 仍須等 Phase 0
+> protected merge 與 exact-SHA Staging。完整範圍與 owner gate 見
+> `docs/superpowers/specs/2026-09-02-program-rebaseline-owner-decisions.md`。
+
+目前 Phase 0／1 若因執行工具或人力暫停，允許文件、spec、AC 與 future plan
+獨立完成，也允許已具必要 committed lineage 的其他 package 做 Local 開發；不得
+因此跳過 Phase 0 merge、提前執行 Hosted mutation，或在 dirty canonical checkout
+平行整合產品碼。Admin C 為 deferred option，不在 current active lanes。
+
 ## 1. Authority and migration method
 
 - Canonical baseline 是 verified `colorplay` React/Vite/Supabase implementation；completed foundation、playable quiz slice、45-question pipeline 保留。

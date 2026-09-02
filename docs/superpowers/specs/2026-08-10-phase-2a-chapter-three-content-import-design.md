@@ -1,5 +1,9 @@
 # Phase 2A：第三章內容匯入 Design（Draft）
 
+> **Rebaseline note (2026-09-02):** Owner 保留本文件作為窄 Phase 2A；既有 LT、
+> 其他章節、version publishing 與 media 移至 Phase 2B，不回退。Current scope
+> contract 見 `2026-09-02-phase-2-5-6-scope-contracts.md`；本註記不授權實作。
+
 - 日期：2026-08-10（2026-08-11 Owner RC／QB／CR 序號裁定更新）
 - 狀態：Owner approved：2026-08-10
 - Codex design review completed

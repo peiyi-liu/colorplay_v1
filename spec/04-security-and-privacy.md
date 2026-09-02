@@ -32,6 +32,22 @@
 - 敏感教師操作前若 session 太舊，可要求重新驗證。
 - 登入錯誤不得洩漏「此 Email 是否存在」超出 Auth provider 正常安全行為。
 
+### Admin 管理教師帳號（2026-09-02 normative）
+
+- 教師不開放自助註冊。建立、名稱／聯絡 Email 更新與密碼重設只允許 active
+  privileged Admin 透過具名命令執行。
+- Login account 由後端 transaction 配發 `teacherNN`，以資料庫唯一約束處理
+  併發；client 不提供序號或角色。
+- `contact_email` nullable、Admin-only，不作 Auth login identifier 或 recovery
+  條件。Auth 所需內部 Email 不得顯示、寄送或當成聯絡資料。
+- 初始／重設密碼由後端 CSPRNG 產生 12 碼，至少含大寫、小寫、數字與符號；
+  明文只存在於當次成功 response 的一次性 receipt，不進 log、audit、analytics、
+  cache 或永久資料表。原密碼不可查看或復原。
+- Auth 與 PostgreSQL 間使用 fail-closed、可重入 saga。部分失敗必須補償或進入
+  reconciliation；不得留下具有 teacher login 能力但無合法 profile／audit 的 user。
+- 建立後的教師可登入 Teacher portal，不能登入 Admin portal；修改 client role、
+  直接呼叫 Auth 或猜測命令不得升權。
+
 ## 4. 授權
 
 - 前端 route guard 只改善 UX，不是安全機制。
@@ -41,6 +57,8 @@
 - Student 只讀 own profile/session/answer/wallet/achievement/assignment/progress 與 active Live projection；不可讀其他 raw answer 或寫 ledger/rank/role/host state。
 - Teacher 只管理 own classroom/content scope；Teacher A 不可讀 Teacher B classroom、analytics、assignment、Live 或 export。
 - Service role 只可用於必要的 system job，且 handler 仍驗證 caller；不可因使用 service role 就省略 authorization。
+- Teacher account operations 必須沿用 Admin privileged session、fresh MFA、一次性
+  authorization receipt、idempotency 與 append-only audit；不得另建較弱的管理入口。
 
 ## 5. 答案與計分保護
 
@@ -90,6 +108,8 @@
 - 排行榜不得顯示 Email、學號、真實姓名，除非研究與校方明確核准。
 - 匯出預設 pseudonymous ID。
 - 操作 log 不保存答案全文或不必要個資。
+- 教師 `contact_email` 預設遮罩；只有具目的、可稽核的 Admin projection／reveal
+  可取得。Auth 內部占位 Email 一律 forbidden，不進 safe browser catalog。
 - 定義 retention：MVP 預設正式作答保存至研究／課程目的結束後的政策期限；實際期限由研究倫理文件設定。
 - 支援依合法程序匯出或刪除個人資料；有研究鎖定需求時需記錄法律／倫理依據。
 
@@ -127,10 +147,15 @@ Production 必須：
 - Live create/join-code rotate/host transition/finalize/cancel。
 - achievement unlock、Blook purchase/equip 與 ledger reconciliation failure。
 - security policy denial 的彙總事件。
+- 教師帳號建立、名稱／聯絡資料更新、密碼重設、秘密 receipt 產生結果與 saga
+  補償。
 
 Audit log append-only；一般 teacher 不可修改或刪除。
 
 每筆 event 記錄 UTC timestamp、actor、action、target type/ID、request/correlation ID、result、rules/content version、safe metadata。禁止記錄完整 Email、answer payload、JWT/access token、credential、SQL/stack trace 或 raw research row。
+
+教師帳號事件另需 reason；contact Email 只存 redacted before/after，密碼與 Auth
+內部 Email 永遠不得出現在 audit metadata。
 
 ## 13. 安全驗收必測攻擊
 

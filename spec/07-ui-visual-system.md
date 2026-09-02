@@ -354,6 +354,41 @@ ColorPlay 採用手機優先的扁平化介面。視覺系統的首要目標不�
 
 **UI-STATE-006**：API error 必須在原操作脈絡顯示，不得只用短暫 Toast。
 
+### 6.3 章節內學習導引（2026-09-02 normative）
+
+**UI-LEARNING-001**：學習大廳保留所有 content-ready 章節全貌；章節彼此不顯示
+上一章 prerequisite。`content_unavailable` 可顯示但不可進入，並說明內容準備中。
+
+**UI-LEARNING-002**：章節頁保留所有 section 與 review-card 節點。Locked 節點
+可見但不可 click、focus 成為 action 或產生 route link；必須同時提供 lock icon／
+文字狀態與 blocker，不能只降 opacity 或只靠顏色。
+
+**UI-LEARNING-003**：已完成卡可回顧；目前唯一 available 卡才可開始；其他卡
+只顯示安全 metadata，不得因預載、React Query cache 或 hidden DOM 帶入正文／media。
+
+**UI-LEARNING-004**：未完成卡的「完成複習」只在目前視口已到達最後一頁時
+顯示／啟用。到最後一頁不自動提交；按下後 pending、成功與錯誤都在閱讀器內
+呈現。已完成卡只顯示「已完成複習」，不再次送 mutation。
+
+**UI-LEARNING-005**：唯一「小節挑戰」入口永遠跟隨目前選取的 `section`；標題、
+題數與 template 必須同 section。Cards 未全完成時顯示鎖定原因且沒有可猜測 link。
+
+**UI-LEARNING-006**：章節核心畫面只有一個 primary「繼續學習」action，由
+server 回傳的 `next_action` 決定。合法文案包含「閱讀下一張」、「開始小節挑戰」、
+「前往下一小節」、「再次挑戰小節以達 80%」、「開始章節總挑戰」與
+「再次挑戰以達精熟」。節點選取、回顧與分頁屬 secondary／tertiary 操作。
+
+**UI-LEARNING-007**：小節狀態至少區分未開放、閱讀中、可挑戰、已作答、已精熟；
+章節狀態至少區分未開始、學習中、已完成、已精熟。`已完成` 與 `已精熟` 必須
+有獨立文字，不能只用同一百分比或同一顏色表示。
+
+**UI-LEARNING-008**：直接 URL、Back／refresh、另一分頁或 stale cache 都必須
+重新讀取 server snapshot。Server 拒絕後 UI 更新 blocker，不得保留可操作的舊 link。
+
+**UI-LEARNING-009**：Inserted card 對 grandfathered user 顯示「新增內容（非必修）」
+與可選讀 secondary action，不顯示 locked／completed，也不取代 server primary
+`next_action`。同一卡對非豁免使用者仍按正常順序顯示 available／locked。
+
 ## 7. Quiz 頁面
 
 必須包含：
@@ -463,3 +498,5 @@ ColorPlay 採用手機優先的扁平化介面。視覺系統的首要目標不�
 | UI-ICON-001～005 | 圖示語意 | AC-UI-013 |
 | UI-STATUS-001～003 | 位置與進度 | AC-UI-014 |
 | UI-STATE-001～006 | Focus、selected、pending、error | AC-UI-015 |
+| UI-LEARNING-001～008 | 章節內解鎖、內容不洩漏與唯一下一步 | AC-PROG-007～012 |
+| UI-LEARNING-009 | 新增卡片豁免 cohort 呈現 | AC-PROG-015 |

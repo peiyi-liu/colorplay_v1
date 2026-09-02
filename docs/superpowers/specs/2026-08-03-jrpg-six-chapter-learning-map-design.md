@@ -1,5 +1,10 @@
 # JRPG Six-Chapter Learning Map Design
 
+> **Superseded in part on 2026-09-02:** the cross-chapter sequential access and
+> chapter-completion gating in this historical design are replaced by
+> `2026-09-02-section-progression-design.md`. The JRPG map, full chapter
+> overview, content-readiness state, and data-driven chapter identity remain.
+
 **Date:** 2026-08-03
 
 **Status:** Owner-approved design

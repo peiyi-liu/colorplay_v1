@@ -1,5 +1,9 @@
 # Phase 3A：第三章 Progression 驗證 Design（Draft）
 
+> **Superseded on 2026-09-02:** 本文件的跨章解鎖與舊章節完成三條件不再適用。
+> 現行規則見 `2026-09-02-section-progression-design.md`；本文件只保留歷史稽核
+> 與當時 Hosted gate 邊界，不得作為新實作 brief。
+
 - 日期：2026-08-10（2026-08-10 Codex review remediation 更新）
 - 狀態：Owner approved：2026-08-10
 - Codex design review completed

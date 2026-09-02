@@ -1,5 +1,10 @@
 # Phase 5F：教師與 Live 功能 Design（Draft）
 
+> **Rebaseline note (2026-09-02):** Owner 已選擇依既有 5F-F2 範圍盤點現況並補
+> 缺口；研究匯出、自訂統計與長期趨勢仍排除。Current scope contract 見
+> `2026-09-02-phase-2-5-6-scope-contracts.md`。此 scope 核准不等於 execution 或
+> Hosted mutation 授權。
+
 - 日期：2026-08-10（2026-08-10 Codex review remediation 更新）
 - 狀態：Owner approved：2026-08-10
 - Codex design review completed

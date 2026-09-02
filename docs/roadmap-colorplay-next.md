@@ -1,17 +1,31 @@
 # ColorPlay Current Program
 
-- Status: FOUNDATION CI GATE PASSED — PR #1 awaits owner approval; no Staging
-  merge, data-plane mutation, Candidate, or Production release has occurred
-- Last updated: 2026-08-26 (Asia/Taipei) — merged `phase1/admin-security-impl`
-  (Tasks 0-15, Local gate PASSED) into `feature/v2-major-update`; reconciled
-  this tracker with the divergent copy that had been living only on that
-  worktree since 2026-08-19
-- Last full review: 2026-08-06 (Asia/Taipei)
-- Current phase: Phase 0, local Tasks 1–12 and the GitHub control/CI portion of
-  Task 13 verified; the exact next human action is PR #1 review and approval.
-  Phase 1 implementation is now merged and Local-gate-complete but still
-  blocked on Phase 0 hosted readiness for its own Staging/Production gates.
+- Status: PROGRAM REBASELINE SPEC PACKAGE PREPARED — Claude Code 用量只暫停其
+  Phase 0 執行；Phase 1 Local-gate lineage 已在 `f0638b0`，Admin B 可以於
+  單一完整垂直 worktree 平行做 Local 開發。Phase 0 protected WIP 尚未固定為
+  候選 commit，所以 Hosted／release gate 仍不得跳過
+- Last updated: 2026-09-03 (Asia/Taipei) — Owner 已選定 Admin B 完整垂直 lane：
+  單一專屬 worktree／candidate 收斂 DB、Auth／Edge、真實 UI 與 Local gate；Phase 0
+  另線平行。Progression 的 80% 與相容性／豁免規則維持既有核准內容
+- Last full review: 2026-09-02 (Asia/Taipei)
+- Current phase: R0 canonical spec formalization，下一個 Owner 優先 product lane 為
+  Admin B Local implementation。R0 文件先隔離固定為 committed base，之後
+  Admin B 與 Phase 0 可各在專屬 worktree 平行；真實 restore E2E、push、merge
+  與 Hosted mutation 仍須分別取得 Owner 授權
 - Canonical entry point: this file
+- Current owner decision record:
+  `docs/superpowers/specs/2026-09-02-program-rebaseline-owner-decisions.md`
+- Parallel execution control（檔名為了舊連結相容而保留）:
+  `docs/superpowers/specs/2026-09-02-async-delivery-control.md`
+- Prepared designs/plans（含明列的 execution stop gates）:
+  `docs/superpowers/specs/2026-09-02-section-progression-design.md`,
+  `docs/superpowers/plans/2026-09-02-section-progression.md`,
+  `docs/superpowers/specs/2026-09-02-admin-b-operations-design.md`,
+  `docs/superpowers/plans/2026-09-02-admin-b-operations.md`
+- Deferred Admin C record:
+  `docs/superpowers/specs/2026-09-02-admin-c-platform-option.md`
+- Phase 2／5／6 scope contracts:
+  `docs/superpowers/specs/2026-09-02-phase-2-5-6-scope-contracts.md`
 - Historical task ledger: `.superpowers/sdd/progress.md`
 
 This tracker answers four questions for every new work session:
@@ -26,23 +40,36 @@ deployment, rollback, or material blocker. A status claim must name its evidence
 and date. Never describe local work, a Vercel `READY` state, or an HTTP 200 alone
 as a completed production release.
 
+> **2026-09-02 supersession notice：**本文件後續保留舊 phase 敘述作為歷史脈絡；
+> 凡 current status、執行順序、progression 或 Admin 範圍與上述 owner decision
+> record 衝突，一律以 2026-09-02 record 為準。這項 supersession 不把任何既有
+> implementation、CI、deployment 或 smoke 升級為正式 phase gate。
+
 ## Immediate next action
 
-Owner reviews and approves PR #1. The latest functional SHA
-`5cb1ed35aec0ae8a99712a41143b5f6c7067e495` passed Foundation CI run
-[`31093226087`](https://github.com/peiyi-liu/colorplay_v1/actions/runs/31093226087):
-format, lint, typecheck, unit coverage, Production build, Local database,
-Chromium E2E, and credential scan all passed. The PR is intentionally `BLOCKED`
-until owner approval; no agent should merge it.
+First isolate and commit the R0 canonical spec package so every parallel lane
+shares one reproducible contract. Then create a dedicated Admin B worktree from
+that exact docs candidate and run Tasks 1–6 as one vertical candidate through
+DB, Auth/Edge, real UI, review, and Local gate. In parallel, Phase 0 may
+continue only in its existing protected worktree. Both lanes must exclude all
+unrelated user WIP and must serialize destructive Local Supabase work.
 
-After an approved merge to protected `staging`, collect a fresh read-only
-preflight before any further hosted mutation. DNS, hosted Supabase reset,
-Staging acceptance, Production Candidate creation, Production promotion, and
-all data-plane changes remain explicitly unexecuted. Real B2 backup automation
-also remains blocked until the existing over-privileged B2 writer/recovery keys
-are replaced by credentials that meet the create-only and read-only contracts.
+Do **not** approve or merge the current PR #1 from its historical CI result.
+Its remote head `428dc78` is not the protected Phase 0 staged candidate and its
+current lint／Local database checks are not green.
 
-## Approved program structure
+The Admin B lane may implement and verify Tasks 1–6 locally because `f0638b0`
+contains Phase 1 tip `3f0f16d`. It may not touch the Phase 0/1 worktrees, run a
+shared DB reset without an exclusive window, integrate to release history, or
+run Hosted Task 7 yet. Separately, the Phase 0 lane still needs one staged-tree
+review and candidate commit; real isolated restore proof and every push/merge/
+Hosted action remain separately authorized gates.
+
+## Historical program structure snapshot（superseded 2026-09-02）
+
+The table below records the 2026-08-26-era program view. It is retained for
+history and must not be used as the current execution queue. See the current
+owner decision record linked at the top of this file.
 
 The owner approved seven independent design, plan, implementation, and release
 batches. Each batch must pass its own Staging gate before Production promotion.
