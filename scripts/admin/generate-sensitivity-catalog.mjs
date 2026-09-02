@@ -12,6 +12,8 @@ import process from 'node:process';
 
 const SPEC_PATH =
   'docs/superpowers/specs/2026-08-07-phase-1-admin-identity-security-design.md';
+const ADMIN_B_SPEC_PATH =
+  'docs/superpowers/specs/2026-09-02-admin-b-operations-design.md';
 const REBASELINE_SPEC_PATH =
   'docs/superpowers/specs/2026-09-03-admin-catalog-rebaseline-design.md';
 const JSON_PATH = 'supabase/catalog/admin-sensitivity-catalog.json';
@@ -84,6 +86,7 @@ const DOMAIN_MAP = {
 const MASK_RULES = {
   'profiles.full_name': 'first_char_mask', // 首字＋遮罩
   'profiles.login_account': 'last3_mask', // 只留末三碼
+  'profiles.contact_email': 'email_mask', // Admin B nullable contact address
   'admin_invitations.invited_email': 'email_mask', // a****@domain
   'admin_sessions.device_summary': 'truncate_120', // 固定截斷
   // spec §9.4 line「`user_id`（mapping service only）」的機器化:
@@ -282,8 +285,9 @@ function applyRebaseline(baseResources, rows) {
 }
 
 async function main() {
-  const [spec, rebaselineSpec] = await Promise.all([
+  const [spec, adminBSpec, rebaselineSpec] = await Promise.all([
     readFile(SPEC_PATH, 'utf8'),
+    readFile(ADMIN_B_SPEC_PATH, 'utf8'),
     readFile(REBASELINE_SPEC_PATH, 'utf8'),
   ]);
   const existing = parseExistingTables(
@@ -308,12 +312,26 @@ async function main() {
     .sort((a, b) => a.resource.localeCompare(b.resource));
   const rebaselineRows = parseRebaselineRows(rebaselineSpec);
   const resources = applyRebaseline(baseResources, rebaselineRows);
+  const profiles = resources.find(
+    (resource) => resource.resource === 'profiles',
+  );
+  if (!profiles) throw new Error('CATALOG_PROFILES_MISSING');
+  profiles.columns.push({
+    name: 'contact_email',
+    class: 'personal',
+    mask_strategy: MASK_RULES['profiles.contact_email'],
+    searchable: false,
+    filterable: false,
+    sortable: false,
+  });
 
   const json = `${JSON.stringify(
     {
       version: 1,
       source_sha256: createHash('sha256')
         .update(spec)
+        .update('\n-- Admin B overlay --\n')
+        .update(adminBSpec)
         .update('\n-- Catalog rebaseline overlay --\n')
         .update(rebaselineSpec)
         .digest('hex'),
@@ -323,8 +341,8 @@ async function main() {
     2,
   )}\n`;
 
-  // The historical 20260808 migration must stay byte-stable. The rebaseline
-  // forward migration adds only the quarantine overlay.
+  // The historical 20260808 migration must stay byte-stable. Admin B's
+  // forward migration adds its overlay row after the new column exists.
   const values = baseResources.flatMap((r) =>
     r.columns.map(
       (c) =>

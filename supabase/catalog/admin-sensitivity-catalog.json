@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "source_sha256": "4b6590796221bce70bc064f0947c73e5bad8a5f7f9c3483c2a9a1cdd0ccfce66",
+  "source_sha256": "72259437f0ced1f194de34e0f6c78d2672f1e98c13f3e0aac9fb9658a8d9b43e",
   "resources": [
     {
       "resource": "achievement_definitions",
@@ -3220,6 +3220,14 @@
           "name": "login_account",
           "class": "personal",
           "mask_strategy": "last3_mask",
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "contact_email",
+          "class": "personal",
+          "mask_strategy": "email_mask",
           "searchable": false,
           "filterable": false,
           "sortable": false

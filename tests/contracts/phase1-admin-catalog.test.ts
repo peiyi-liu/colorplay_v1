@@ -12,6 +12,11 @@ import { describe, expect, it } from 'vitest';
 // 跟 false 比較是多餘的」而要求改成 `!r.export`,但那樣任何非 boolean 假值
 // 也會被判成「符合」,削弱了這條 fail-closed 契約(Task 15 review Finding 4)。
 interface CatalogResource {
+  columns?: {
+    class?: unknown;
+    mask_strategy?: unknown;
+    name?: unknown;
+  }[];
   export: unknown;
   resource: string;
 }
@@ -63,6 +68,14 @@ describe('phase 1 admin sensitivity catalog contract', () => {
     const names = catalog.resources.map((r) => r.resource);
     expect(names).toContain('external_activities'); // spec §9.1 曾遺漏,防回歸
     expect(names).not.toContain('audit_logs'); // spec §9.1:不存在的表不得入 catalog
+    const profiles = catalog.resources.find((r) => r.resource === 'profiles');
+    expect(profiles?.columns).toContainEqual(
+      expect.objectContaining({
+        class: 'personal',
+        mask_strategy: 'email_mask',
+        name: 'contact_email',
+      }),
+    );
   });
 
   it('quarantines every rebaseline column without adding a browser surface', async () => {
