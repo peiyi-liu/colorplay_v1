@@ -8,6 +8,31 @@ export const teacherOperationStateSchema = z.enum([
   'reconciliation_required',
 ]);
 
+export const teacherMutationCommandSchema = z.enum([
+  'create_teacher_account',
+  'update_teacher_account',
+  'reset_teacher_password',
+]);
+
+export const teacherOperationStatusStateSchema = z.enum([
+  'operation_pending',
+  'requested',
+  'identity_reserved',
+  'auth_created_or_password_updated',
+  'profile_committed',
+  'completed',
+  'compensation_pending',
+  'compensated',
+  'reconciliation_required',
+]);
+
+export const teacherOperationLegalFollowUpSchema = z.enum([
+  'none',
+  'wait',
+  'retry_same_request',
+  'health_reconciliation',
+]);
+
 const uuidSchema = z.uuid();
 const timestampSchema = z.iso.datetime({ offset: true });
 const loginAccountSchema = z.string().regex(/^teacher[0-9]{2,13}$/u);
@@ -80,6 +105,61 @@ export const teacherDetailWireSchema = z.strictObject({
     ),
 });
 
+const teacherOperationFoundWireSchema = z
+  .strictObject({
+    legal_follow_up: teacherOperationLegalFollowUpSchema,
+    login_account: loginAccountSchema.nullable(),
+    operation_id: uuidSchema.nullable(),
+    operation_type: teacherMutationCommandSchema,
+    outcome: z.literal('ok'),
+    request_id: uuidSchema,
+    state: teacherOperationStatusStateSchema,
+    teacher_id: uuidSchema.nullable(),
+  })
+  .refine(
+    (value) => {
+      const expected =
+        value.state === 'reconciliation_required'
+          ? 'health_reconciliation'
+          : value.state === 'completed' || value.state === 'compensated'
+            ? 'none'
+            : 'wait';
+      return value.legal_follow_up === expected;
+    },
+    {
+      message: 'legal follow-up does not match the operation state',
+      path: ['legal_follow_up'],
+    },
+  )
+  .refine(
+    (value) =>
+      value.state === 'operation_pending'
+        ? value.operation_id === null &&
+          value.teacher_id === null &&
+          value.login_account === null
+        : value.state === 'completed' || value.operation_id !== null,
+    {
+      message: 'operation identity does not match the safe status state',
+      path: ['operation_id'],
+    },
+  );
+
+const teacherOperationNotFoundWireSchema = z.strictObject({
+  legal_follow_up: z.literal('retry_same_request'),
+  login_account: z.null(),
+  operation_id: z.null(),
+  operation_type: teacherMutationCommandSchema,
+  outcome: z.literal('ok'),
+  request_id: uuidSchema,
+  state: z.literal('not_found'),
+  teacher_id: z.null(),
+});
+
+export const teacherOperationStatusWireSchema = z.union([
+  teacherOperationFoundWireSchema,
+  teacherOperationNotFoundWireSchema,
+]);
+
 export const teacherDeniedWireSchema = z
   .strictObject({
     code: z.string().min(1),
@@ -145,6 +225,15 @@ export const teacherReplayWireSchema = z.strictObject({
 });
 
 export type TeacherOperationState = z.infer<typeof teacherOperationStateSchema>;
+export type TeacherMutationCommand = z.infer<
+  typeof teacherMutationCommandSchema
+>;
+export type TeacherOperationStatusState = z.infer<
+  typeof teacherOperationStatusStateSchema
+>;
+export type TeacherOperationLegalFollowUp = z.infer<
+  typeof teacherOperationLegalFollowUpSchema
+>;
 
 export interface TeacherAccountSummary {
   contactEmailMasked: string | null;
@@ -191,6 +280,25 @@ export interface TeacherDetailResult {
 }
 
 export type TeacherDetailOutcome = TeacherDetailResult | TeacherDeniedResult;
+
+export interface GetTeacherOperationInput {
+  command: TeacherMutationCommand;
+  requestId: string;
+}
+
+export interface TeacherOperationStatusResult {
+  legalFollowUp: TeacherOperationLegalFollowUp;
+  loginAccount: string | null;
+  operationId: string | null;
+  operationType: TeacherMutationCommand;
+  outcome: 'ok';
+  requestId: string;
+  state: TeacherOperationStatusState | 'not_found';
+  teacherId: string | null;
+}
+
+export type TeacherOperationStatusOutcome =
+  TeacherOperationStatusResult | TeacherDeniedResult;
 
 export interface CreateTeacherAccountInput {
   contactEmail: string | null;

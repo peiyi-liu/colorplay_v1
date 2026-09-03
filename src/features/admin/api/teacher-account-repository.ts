@@ -9,16 +9,19 @@ import {
   teacherDetailWireSchema,
   teacherDeniedWireSchema,
   teacherListWireSchema,
+  teacherOperationStatusWireSchema,
   teacherResetSuccessWireSchema,
   teacherReplayWireSchema,
   teacherUpdateSuccessWireSchema,
   type TeacherDeniedResult,
   type CreateTeacherAccountInput,
+  type GetTeacherOperationInput,
   type ResetTeacherPasswordInput,
   type TeacherCreateOutcome,
   type TeacherDetailOutcome,
   type TeacherListOutcome,
   type TeacherOperationState,
+  type TeacherOperationStatusOutcome,
   type TeacherResetOutcome,
   type TeacherReplayResult,
   type TeacherTerminalResult,
@@ -39,7 +42,8 @@ type TeacherMutationCommand = Extract<
   AdminCommandName,
   'create_teacher_account' | 'update_teacher_account' | 'reset_teacher_password'
 >;
-type TeacherReadRpc = 'admin_list_teachers' | 'admin_get_teacher';
+type TeacherReadRpc =
+  'admin_list_teachers' | 'admin_get_teacher' | 'admin_get_teacher_operation';
 
 export interface TeacherAccountTransport {
   invokeCommand(
@@ -55,6 +59,9 @@ export interface TeacherAccountRepository {
     input: CreateTeacherAccountInput,
   ): Promise<TeacherCreateOutcome>;
   getTeacher(teacherId: string): Promise<TeacherDetailOutcome>;
+  getOperation(
+    input: GetTeacherOperationInput,
+  ): Promise<TeacherOperationStatusOutcome>;
   listTeachers(
     input: Readonly<{
       cursor: string | null;
@@ -173,6 +180,26 @@ export function createTeacherAccountRepository(
           role: teacher.role,
           teacherId: teacher.teacher_id,
         },
+      };
+    },
+    async getOperation(input) {
+      const payload = await transport.rpc('admin_get_teacher_operation', {
+        p_command_name: input.command,
+        p_idempotency_key: input.requestId,
+      });
+      const denial = parseDenied(payload);
+      if (denial !== null) return denial;
+      const parsed = teacherOperationStatusWireSchema.safeParse(payload);
+      if (!parsed.success) throw new TeacherAccountRepositoryError();
+      return {
+        legalFollowUp: parsed.data.legal_follow_up,
+        loginAccount: parsed.data.login_account,
+        operationId: parsed.data.operation_id,
+        operationType: parsed.data.operation_type,
+        outcome: parsed.data.outcome,
+        requestId: parsed.data.request_id,
+        state: parsed.data.state,
+        teacherId: parsed.data.teacher_id,
       };
     },
     async listTeachers(input) {

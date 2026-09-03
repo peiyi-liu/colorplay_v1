@@ -3170,6 +3170,10 @@ export type Database = {
             Returns: Json
           }
       admin_get_teacher: { Args: { p_teacher_id: string }; Returns: Json }
+      admin_get_teacher_operation: {
+        Args: { p_command_name: string; p_idempotency_key: string }
+        Returns: Json
+      }
       admin_health_summary: { Args: never; Returns: Json }
       admin_internal_append_audit: {
         Args: {

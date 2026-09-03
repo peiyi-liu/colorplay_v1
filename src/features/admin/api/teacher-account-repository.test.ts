@@ -493,4 +493,210 @@ describe('teacher account repository', () => {
     ).rejects.toBeInstanceOf(TeacherAccountRepositoryError);
     expect(transport.invokeCommand).toHaveBeenCalledTimes(1);
   });
+
+  it('looks up an ambiguous teacher command by its exact command and original request key', async () => {
+    transport.rpc.mockResolvedValue({
+      legal_follow_up: 'wait',
+      login_account: 'teacher03',
+      operation_id: '44444444-4444-4444-8444-444444444444',
+      operation_type: 'create_teacher_account',
+      outcome: 'ok',
+      request_id: REQUEST_ID,
+      state: 'identity_reserved',
+      teacher_id: null,
+    });
+    const repository = createTeacherAccountRepository(transport);
+
+    await expect(
+      repository.getOperation({
+        command: 'create_teacher_account',
+        requestId: 'create-request-key',
+      }),
+    ).resolves.toEqual({
+      legalFollowUp: 'wait',
+      loginAccount: 'teacher03',
+      operationId: '44444444-4444-4444-8444-444444444444',
+      operationType: 'create_teacher_account',
+      outcome: 'ok',
+      requestId: REQUEST_ID,
+      state: 'identity_reserved',
+      teacherId: null,
+    });
+    expect(transport.rpc).toHaveBeenCalledWith('admin_get_teacher_operation', {
+      p_command_name: 'create_teacher_account',
+      p_idempotency_key: 'create-request-key',
+    });
+    expect(transport.rpc).toHaveBeenCalledTimes(1);
+    expect(transport.invokeCommand).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['requested', 'wait'],
+    ['auth_created_or_password_updated', 'wait'],
+    ['completed', 'none'],
+    ['compensated', 'none'],
+    ['reconciliation_required', 'health_reconciliation'],
+  ] as const)(
+    'maps operation state %s only with the server-owned %s follow-up',
+    async (state, legalFollowUp) => {
+      transport.rpc.mockResolvedValue({
+        legal_follow_up: legalFollowUp,
+        login_account: 'teacher01',
+        operation_id: '44444444-4444-4444-8444-444444444444',
+        operation_type: 'reset_teacher_password',
+        outcome: 'ok',
+        request_id: REQUEST_ID,
+        state,
+        teacher_id: UUID,
+      });
+
+      await expect(
+        createTeacherAccountRepository(transport).getOperation({
+          command: 'reset_teacher_password',
+          requestId: 'reset-request-key',
+        }),
+      ).resolves.toMatchObject({ state, legalFollowUp });
+      expect(transport.rpc).toHaveBeenCalledTimes(1);
+      expect(transport.invokeCommand).not.toHaveBeenCalled();
+    },
+  );
+
+  it('maps a uniform not-found status to retrying the same request key', async () => {
+    transport.rpc.mockResolvedValue({
+      legal_follow_up: 'retry_same_request',
+      login_account: null,
+      operation_id: null,
+      operation_type: 'update_teacher_account',
+      outcome: 'ok',
+      request_id: REQUEST_ID,
+      state: 'not_found',
+      teacher_id: null,
+    });
+
+    await expect(
+      createTeacherAccountRepository(transport).getOperation({
+        command: 'update_teacher_account',
+        requestId: 'unknown-update-key',
+      }),
+    ).resolves.toEqual({
+      legalFollowUp: 'retry_same_request',
+      loginAccount: null,
+      operationId: null,
+      operationType: 'update_teacher_account',
+      outcome: 'ok',
+      requestId: REQUEST_ID,
+      state: 'not_found',
+      teacherId: null,
+    });
+    expect(transport.rpc).toHaveBeenCalledTimes(1);
+    expect(transport.invokeCommand).not.toHaveBeenCalled();
+  });
+
+  it('maps a terminal command result without an operation as completed and not retryable', async () => {
+    transport.rpc.mockResolvedValue({
+      legal_follow_up: 'none',
+      login_account: null,
+      operation_id: null,
+      operation_type: 'update_teacher_account',
+      outcome: 'ok',
+      request_id: REQUEST_ID,
+      state: 'completed',
+      teacher_id: null,
+    });
+
+    await expect(
+      createTeacherAccountRepository(transport).getOperation({
+        command: 'update_teacher_account',
+        requestId: 'terminal-denial-key',
+      }),
+    ).resolves.toMatchObject({
+      legalFollowUp: 'none',
+      operationId: null,
+      state: 'completed',
+    });
+    expect(transport.rpc).toHaveBeenCalledTimes(1);
+    expect(transport.invokeCommand).not.toHaveBeenCalled();
+  });
+
+  it('maps an actor-isolated blocking operation to an anonymous pending status', async () => {
+    transport.rpc.mockResolvedValue({
+      legal_follow_up: 'wait',
+      login_account: null,
+      operation_id: null,
+      operation_type: 'reset_teacher_password',
+      outcome: 'ok',
+      request_id: REQUEST_ID,
+      state: 'operation_pending',
+      teacher_id: null,
+    });
+
+    await expect(
+      createTeacherAccountRepository(transport).getOperation({
+        command: 'reset_teacher_password',
+        requestId: 'foreign-blocked-key',
+      }),
+    ).resolves.toEqual({
+      legalFollowUp: 'wait',
+      loginAccount: null,
+      operationId: null,
+      operationType: 'reset_teacher_password',
+      outcome: 'ok',
+      requestId: REQUEST_ID,
+      state: 'operation_pending',
+      teacherId: null,
+    });
+    expect(transport.rpc).toHaveBeenCalledTimes(1);
+    expect(transport.invokeCommand).not.toHaveBeenCalled();
+  });
+
+  it.each(['STALE_PRIVILEGED_SESSION', ...TEACHER_SAFE_CODES] as const)(
+    'returns %s as a typed operation-status denial without any retry',
+    async (code) => {
+      transport.rpc.mockResolvedValue({
+        code,
+        message: '安全訊息',
+        ...(STATUS_CHECK_CODES.has(code) ? { operationId: UUID } : {}),
+        outcome: 'denied',
+        request_id: REQUEST_ID,
+        retryable: false,
+      });
+
+      await expect(
+        createTeacherAccountRepository(transport).getOperation({
+          command: 'create_teacher_account',
+          requestId: 'denied-create-key',
+        }),
+      ).resolves.toMatchObject({ code, outcome: 'denied' });
+      expect(transport.rpc).toHaveBeenCalledTimes(1);
+      expect(transport.invokeCommand).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    { internal_email: 'teacher01@teachers.local.invalid' },
+    { legal_follow_up: 'retry_same_request', state: 'requested' },
+    { legal_follow_up: 'wait', operation_id: null },
+    { legal_follow_up: 'wait', operation_type: 'delete_teacher_account' },
+  ])('fails closed on malformed operation status %#', async (overrides) => {
+    transport.rpc.mockResolvedValue({
+      legal_follow_up: 'wait',
+      login_account: 'teacher01',
+      operation_id: '44444444-4444-4444-8444-444444444444',
+      operation_type: 'create_teacher_account',
+      outcome: 'ok',
+      request_id: REQUEST_ID,
+      state: 'requested',
+      teacher_id: null,
+      ...overrides,
+    });
+
+    await expect(
+      createTeacherAccountRepository(transport).getOperation({
+        command: 'create_teacher_account',
+        requestId: 'malformed-create-key',
+      }),
+    ).rejects.toBeInstanceOf(TeacherAccountRepositoryError);
+    expect(transport.rpc).toHaveBeenCalledTimes(1);
+    expect(transport.invokeCommand).not.toHaveBeenCalled();
+  });
 });
