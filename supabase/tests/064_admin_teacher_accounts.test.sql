@@ -1,6 +1,6 @@
 -- Admin B Task 1: teacher account schema and safe read projections.
 begin;
-select plan(37);
+select plan(42);
 
 select has_column('public', 'profiles', 'contact_email',
   'profiles stores the optional Admin-managed contact email');
@@ -19,11 +19,35 @@ values ('00000000-0000-0000-0000-000000000000',
 
 select lives_ok($$
   update public.profiles
-     set display_name = repeat('名', 40), full_name = repeat('名', 40),
-         login_account = 'teacher99', role = 'teacher',
+     set full_name = '  ' || repeat('名', 40) || '  ',
+         login_account = 'teacher99',
+         role = 'teacher',
          contact_email = 'teacher@example.test'
    where id = '64000000-0000-0000-0000-000000000001'
 $$, 'teacher full and display names support the approved 40-character limit');
+select is((
+  select full_name || '|' || display_name from public.profiles
+   where id = '64000000-0000-0000-0000-000000000001'
+), repeat('名', 40) || '|' || repeat('名', 40),
+  'promoting a teacher synchronizes full and display names');
+select throws_ok($$
+  update public.profiles set display_name = '單邊改名'
+   where id = '64000000-0000-0000-0000-000000000001'
+$$, '23514', null,
+  'an existing teacher cannot persist mismatched full and display names');
+select throws_ok($$
+  update public.profiles set full_name = null
+   where id = '64000000-0000-0000-0000-000000000001'
+$$, '23514', null, 'a teacher must retain a non-null synchronized full name');
+select throws_ok($$
+  update public.profiles
+     set display_name = repeat('名', 41), full_name = repeat('名', 41)
+   where id = '64000000-0000-0000-0000-000000000001'
+$$, '23514', null, 'teacher names reject more than 40 trimmed characters');
+select throws_ok($$
+  update public.profiles set display_name = '   ', full_name = '   '
+   where id = '64000000-0000-0000-0000-000000000001'
+$$, '23514', null, 'teacher names reject an empty trimmed value');
 select throws_ok($$
   update public.profiles set contact_email = 'Teacher@Example.Test'
    where id = '64000000-0000-0000-0000-000000000001'

@@ -34,6 +34,53 @@ grant select (
 create schema admin_private;
 revoke all on schema admin_private from public, anon, authenticated, service_role;
 
+-- Teachers are renamed only through the receipt-bound Admin command. Converge
+-- historical rows before enforcing that its two public name projections agree.
+update public.profiles
+   set full_name = coalesce(nullif(btrim(full_name), ''), btrim(display_name)),
+       display_name = coalesce(nullif(btrim(full_name), ''), btrim(display_name))
+ where role = 'teacher';
+
+-- Auth-created profiles begin as students and are promoted by trusted backend
+-- paths. Normalize that transition so existing promotion flows satisfy the same
+-- invariant without granting clients access to role or full_name.
+create function admin_private.sync_teacher_names_on_promotion()
+returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public, admin_private, pg_temp
+as $$
+declare
+  v_canonical_name text;
+begin
+  if old.role is distinct from 'teacher' and new.role = 'teacher' then
+    v_canonical_name := coalesce(
+      nullif(btrim(new.full_name), ''),
+      btrim(new.display_name)
+    );
+    new.full_name := v_canonical_name;
+    new.display_name := v_canonical_name;
+  end if;
+  return new;
+end;
+$$;
+revoke all on function admin_private.sync_teacher_names_on_promotion()
+  from public, anon, authenticated, service_role;
+
+create trigger profiles_sync_teacher_names_on_promotion
+before update of role on public.profiles
+for each row execute function admin_private.sync_teacher_names_on_promotion();
+
+alter table public.profiles
+  add constraint profiles_teacher_names_synchronized_check check (
+    role <> 'teacher'
+    or (
+      full_name is not null
+      and full_name = btrim(full_name)
+      and display_name = full_name
+    )
+  );
+
 -- profiles.login_account is limited to 20 characters. Keep the sequence inside
 -- the largest suffix that can still form "teacher" + 13 decimal digits.
 create sequence admin_private.teacher_login_account_seq

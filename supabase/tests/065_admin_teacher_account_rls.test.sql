@@ -1,6 +1,6 @@
 -- Admin B Task 1: teacher contact-email and read-interface authorization matrix.
 begin;
-select plan(20);
+select plan(23);
 
 select ok(not has_column_privilege('anon', 'public.profiles',
   'contact_email', 'SELECT'), 'anonymous cannot select contact email');
@@ -73,12 +73,25 @@ select lives_ok($$
   update public.profiles set display_name = '安全暱稱'
    where id = 'cc000000-0000-0000-0000-000000000001'
 $$, 'existing safe own-profile update remains available');
+select is((select display_name from public.profiles
+  where id = 'cc000000-0000-0000-0000-000000000001'), '安全暱稱',
+  'student own-profile display-name update persists');
 reset role;
 
 select set_config('request.jwt.claim.sub',
   '65000000-0000-0000-0000-000000000001', true);
 select set_config('request.jwt.claim.session_id',
   '65000000-0000-0000-0000-0000000000e5', true);
+set local role authenticated;
+select throws_ok($$
+  update public.profiles set display_name = '教師自行繞過改名'
+   where id = '65000000-0000-0000-0000-000000000001'
+$$, '23514', null,
+  'teacher cannot bypass the Admin named command with an own-profile update');
+reset role;
+select is((select display_name from public.profiles
+  where id = '65000000-0000-0000-0000-000000000001'), '權限教師',
+  'rejected teacher self-update leaves the synchronized name unchanged');
 select is((public.admin_list_teachers(null, null, null)) ->> 'code',
   'STALE_PRIVILEGED_SESSION', 'teacher list attempt is denied');
 
