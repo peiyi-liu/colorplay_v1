@@ -37,7 +37,7 @@ const NAV_GROUPS: readonly {
     label: '身分與存取',
   },
   {
-    items: [{ label: '使用者資料', to: '/admin/data/users/profiles' }],
+    items: [{ label: '資料瀏覽', to: '/admin/data' }],
     label: '資料瀏覽',
   },
   { items: [{ label: '稽核紀錄', to: '/admin/audit' }], label: '稽核' },

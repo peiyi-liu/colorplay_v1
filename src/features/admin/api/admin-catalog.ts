@@ -40,6 +40,31 @@ export function allClientCatalogResources(): readonly AdminCatalogResource[] {
   return catalog.resources;
 }
 
+export interface AdminBrowserCatalogGroup {
+  domain: string;
+  resources: readonly string[];
+}
+
+/** Browser-only navigation derived from the same safe client catalog. */
+export function browserCatalogGroups(): readonly AdminBrowserCatalogGroup[] {
+  const grouped = new Map<string, string[]>();
+  for (const entry of catalog.resources) {
+    if (entry.surface !== 'browser') continue;
+    const resources = grouped.get(entry.domain) ?? [];
+    resources.push(entry.resource);
+    grouped.set(entry.domain, resources);
+  }
+
+  return [...grouped.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([domain, resources]) => ({
+      domain,
+      resources: [...resources].sort((left, right) =>
+        left.localeCompare(right),
+      ),
+    }));
+}
+
 /**
  * 只回傳 `surface='browser'` 的資源。控制表(admin_sessions、
  * admin_audit_events…)在 catalog 裡是 access/audit/health/none surface,

@@ -3340,8 +3340,8 @@ export type Database = {
         }
         Returns: Json
       }
-      admin_list_admins: { Args: never; Returns: Json }
-      admin_list_invitations: { Args: never; Returns: Json }
+      admin_list_admins: { Args: { p_cursor?: string }; Returns: Json }
+      admin_list_invitations: { Args: { p_cursor?: string }; Returns: Json }
       admin_list_resource: {
         Args: {
           p_cursor?: string
@@ -3352,7 +3352,7 @@ export type Database = {
         }
         Returns: Json
       }
-      admin_list_sessions: { Args: never; Returns: Json }
+      admin_list_sessions: { Args: { p_cursor?: string }; Returns: Json }
       admin_list_teachers: {
         Args: { p_cursor?: string; p_search?: string; p_state?: string }
         Returns: Json
@@ -4649,4 +4649,3 @@ export const Constants = {
     },
   },
 } as const
-

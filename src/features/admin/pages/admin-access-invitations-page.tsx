@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -28,6 +28,7 @@ interface AdminInvitationRow {
 }
 
 interface AdminListInvitationsOk {
+  next_cursor?: string | null;
   outcome: 'ok';
   rows: readonly AdminInvitationRow[];
 }
@@ -35,6 +36,8 @@ interface AdminListInvitationsOk {
 interface AdminOutcomeDenied {
   code?: string;
   outcome: 'denied';
+  request_id?: string;
+  retryable?: boolean;
 }
 
 type AdminListInvitationsResponse = AdminListInvitationsOk | AdminOutcomeDenied;
@@ -63,12 +66,24 @@ export function AdminAccessInvitationsPage() {
   const [pending, setPending] = useState<PendingCommand | null>(null);
   const [issuedToken, setIssuedToken] = useState<string | null>(null);
   const [replayNotice, setReplayNotice] = useState(false);
-  const list = useQuery({
-    queryFn: () =>
-      adminRpc<AdminListInvitationsResponse>('admin_list_invitations', {}),
+  const list = useInfiniteQuery({
+    getNextPageParam: (lastPage: AdminListInvitationsResponse) =>
+      lastPage.outcome === 'ok' ? (lastPage.next_cursor ?? null) : null,
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      adminRpc<AdminListInvitationsResponse>('admin_list_invitations', {
+        p_cursor: pageParam,
+      }),
     queryKey: INVITATIONS_QUERY_KEY,
   });
-  const code = list.data ? extractErrorCode(list.data) : null;
+  const firstPage = list.data?.pages[0];
+  const laterDenied = list.data?.pages
+    .slice(1)
+    .find((page) => page.outcome === 'denied');
+  const code = firstPage
+    ? (extractErrorCode(firstPage) ??
+      (laterDenied ? extractErrorCode(laterDenied) : null))
+    : null;
   const staleSession = code === 'STALE_PRIVILEGED_SESSION';
   useAdminStaleSessionRedirect(staleSession);
   const {
@@ -83,7 +98,9 @@ export function AdminAccessInvitationsPage() {
 
   if (list.isPending || staleSession) return <RouteLoading withinMain />;
 
-  if (list.isError || list.data.outcome === 'denied') {
+  if (list.isError || !firstPage || firstPage.outcome === 'denied') {
+    const denied = firstPage?.outcome === 'denied' ? firstPage : null;
+    const canRetry = !denied || denied.retryable === true;
     return (
       <section
         aria-labelledby="admin-access-invitations-page-heading"
@@ -95,20 +112,27 @@ export function AdminAccessInvitationsPage() {
         ) : (
           <p role="alert">邀請清單載入失敗，請稍後重試。</p>
         )}
-        <button
-          className="secondary-action"
-          onClick={() => {
-            void list.refetch();
-          }}
-          type="button"
-        >
-          重試
-        </button>
+        {typeof denied?.request_id === 'string' ? (
+          <p>追蹤代碼：{denied.request_id}</p>
+        ) : null}
+        {canRetry ? (
+          <button
+            className="secondary-action"
+            onClick={() => {
+              void list.refetch();
+            }}
+            type="button"
+          >
+            重試
+          </button>
+        ) : null}
       </section>
     );
   }
 
-  const rows = list.data.rows;
+  const rows = list.data.pages.flatMap((page) =>
+    page.outcome === 'ok' ? page.rows : [],
+  );
 
   const startIssue = handleSubmit((values) => {
     setPending({
@@ -197,6 +221,37 @@ export function AdminAccessInvitationsPage() {
           </table>
         </div>
       )}
+
+      {list.hasNextPage ? (
+        <button
+          className="secondary-action"
+          disabled={list.isFetchingNextPage}
+          onClick={() => {
+            void list.fetchNextPage();
+          }}
+          type="button"
+        >
+          載入更多邀請
+        </button>
+      ) : null}
+
+      {laterDenied ? (
+        <div className="admin-data-browser__page-error">
+          <AdminStatusBanner code={extractErrorCode(laterDenied)} />
+          {typeof laterDenied.request_id === 'string' ? (
+            <p>追蹤代碼：{laterDenied.request_id}</p>
+          ) : null}
+          {laterDenied.retryable === true ? (
+            <button
+              className="secondary-action"
+              onClick={() => void list.refetch()}
+              type="button"
+            >
+              重試載入更多
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {issuedToken ? (
         <div

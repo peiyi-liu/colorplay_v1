@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
@@ -10,6 +10,7 @@ import {
 import { AdminCommandDialog } from '../components/admin-command-dialog';
 import { AdminStatusBanner } from '../components/admin-status-banner';
 import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
+import { formatAdminTimestamp } from '../lib/admin-time';
 
 interface AdminIdentityRow {
   admin_user_id: string;
@@ -23,6 +24,7 @@ interface AdminIdentityRow {
 }
 
 interface AdminListAdminsOk {
+  next_cursor?: string | null;
   outcome: 'ok';
   rows: readonly AdminIdentityRow[];
 }
@@ -30,6 +32,8 @@ interface AdminListAdminsOk {
 interface AdminOutcomeDenied {
   code?: string;
   outcome: 'denied';
+  request_id?: string;
+  retryable?: boolean;
 }
 
 type AdminListAdminsResponse = AdminListAdminsOk | AdminOutcomeDenied;
@@ -51,17 +55,32 @@ interface PendingCommand {
 export function AdminAccessAdminsPage() {
   const queryClient = useQueryClient();
   const [pending, setPending] = useState<PendingCommand | null>(null);
-  const list = useQuery({
-    queryFn: () => adminRpc<AdminListAdminsResponse>('admin_list_admins', {}),
+  const list = useInfiniteQuery({
+    getNextPageParam: (lastPage: AdminListAdminsResponse) =>
+      lastPage.outcome === 'ok' ? (lastPage.next_cursor ?? null) : null,
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      adminRpc<AdminListAdminsResponse>('admin_list_admins', {
+        p_cursor: pageParam,
+      }),
     queryKey: ADMIN_LIST_QUERY_KEY,
   });
-  const code = list.data ? extractErrorCode(list.data) : null;
+  const firstPage = list.data?.pages[0];
+  const laterDenied = list.data?.pages
+    .slice(1)
+    .find((page) => page.outcome === 'denied');
+  const code = firstPage
+    ? (extractErrorCode(firstPage) ??
+      (laterDenied ? extractErrorCode(laterDenied) : null))
+    : null;
   const staleSession = code === 'STALE_PRIVILEGED_SESSION';
   useAdminStaleSessionRedirect(staleSession);
 
   if (list.isPending || staleSession) return <RouteLoading withinMain />;
 
-  if (list.isError || list.data.outcome === 'denied') {
+  if (list.isError || !firstPage || firstPage.outcome === 'denied') {
+    const denied = firstPage?.outcome === 'denied' ? firstPage : null;
+    const canRetry = !denied || denied.retryable === true;
     return (
       <section
         aria-labelledby="admin-access-admins-page-heading"
@@ -73,20 +92,27 @@ export function AdminAccessAdminsPage() {
         ) : (
           <p role="alert">管理員清單載入失敗，請稍後重試。</p>
         )}
-        <button
-          className="secondary-action"
-          onClick={() => {
-            void list.refetch();
-          }}
-          type="button"
-        >
-          重試
-        </button>
+        {typeof denied?.request_id === 'string' ? (
+          <p>追蹤代碼：{denied.request_id}</p>
+        ) : null}
+        {canRetry ? (
+          <button
+            className="secondary-action"
+            onClick={() => {
+              void list.refetch();
+            }}
+            type="button"
+          >
+            重試
+          </button>
+        ) : null}
       </section>
     );
   }
 
-  const rows = list.data.rows;
+  const rows = list.data.pages.flatMap((page) =>
+    page.outcome === 'ok' ? page.rows : [],
+  );
 
   return (
     <section
@@ -112,7 +138,7 @@ export function AdminAccessAdminsPage() {
                 <tr key={row.audit_principal_id}>
                   <td>{row.admin_user_id}</td>
                   <td>{row.state}</td>
-                  <td>{new Date(row.created_at).toLocaleString('zh-TW')}</td>
+                  <td>{formatAdminTimestamp(row.created_at)}</td>
                   <td>
                     <div className="admin-access-admins__actions">
                       {row.state === 'active' ? (
@@ -166,6 +192,31 @@ export function AdminAccessAdminsPage() {
                           重新啟用
                         </button>
                       ) : null}
+                      <details>
+                        <summary>查看詳細資料</summary>
+                        <dl>
+                          <div>
+                            <dt>Audit principal</dt>
+                            <dd>{row.audit_principal_id}</dd>
+                          </div>
+                          <div>
+                            <dt>lifecycle version</dt>
+                            <dd>{row.lifecycle_version}</dd>
+                          </div>
+                          <div>
+                            <dt>更新時間</dt>
+                            <dd>{formatAdminTimestamp(row.updated_at)}</dd>
+                          </div>
+                          <div>
+                            <dt>鎖定至</dt>
+                            <dd>
+                              {row.locked_until
+                                ? formatAdminTimestamp(row.locked_until)
+                                : '—'}
+                            </dd>
+                          </div>
+                        </dl>
+                      </details>
                     </div>
                   </td>
                 </tr>
@@ -174,6 +225,37 @@ export function AdminAccessAdminsPage() {
           </table>
         </div>
       )}
+
+      {list.hasNextPage ? (
+        <button
+          className="secondary-action"
+          disabled={list.isFetchingNextPage}
+          onClick={() => {
+            void list.fetchNextPage();
+          }}
+          type="button"
+        >
+          載入更多管理員
+        </button>
+      ) : null}
+
+      {laterDenied ? (
+        <div className="admin-data-browser__page-error">
+          <AdminStatusBanner code={extractErrorCode(laterDenied)} />
+          {typeof laterDenied.request_id === 'string' ? (
+            <p>追蹤代碼：{laterDenied.request_id}</p>
+          ) : null}
+          {laterDenied.retryable === true ? (
+            <button
+              className="secondary-action"
+              onClick={() => void list.refetch()}
+              type="button"
+            >
+              重試載入更多
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {pending ? (
         <AdminCommandDialog

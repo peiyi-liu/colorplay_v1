@@ -5961,12 +5961,40 @@ select#dashboard-classroom {
   padding: var(--space-2) var(--space-3);
 }
 
-/* Admin MFA enroll/challenge 表單(spec §3.4 44px target) */
+/* Admin invitation／MFA enroll/challenge 表單(spec §3.4 44px target) */
+.admin-invitation-accept-form,
+.admin-mfa-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.admin-invitation-accept-form label,
+.admin-mfa-form label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+
+.admin-invitation-accept-form input,
 .admin-mfa-form input {
+  width: 100%;
   min-height: 48px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
   padding: var(--space-2) var(--space-3);
+}
+
+.admin-mfa-form__qr {
+  width: fit-content;
+  border: 8px solid white;
+  background: white;
+}
+
+.admin-mfa-form details code {
+  display: block;
+  overflow-wrap: anywhere;
+  margin-top: var(--space-2);
+  font-family: monospace;
 }
 
 /* ── Admin 命令 UI 外殼(Task 12;spec §3.1、§3.4)────────────────── */
@@ -6180,6 +6208,31 @@ select#dashboard-classroom {
 }
 
 /* ── Admin 資料瀏覽器／稽核／健康頁(Task 13;spec §3.4、§7、§10)────── */
+
+.admin-data-index__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.admin-data-index__domain {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  padding: var(--space-4);
+}
+
+.admin-data-index__domain h2 {
+  margin-top: 0;
+}
+
+.admin-data-index__resources {
+  display: grid;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 
 /* .ui-table 是 width:100%,寬表會被壓縮而不是溢出,容器的 overflow-x 就永遠
    不會觸發。min-width:max-content 讓表格照內容撐開 → 由 .ui-table-scroll

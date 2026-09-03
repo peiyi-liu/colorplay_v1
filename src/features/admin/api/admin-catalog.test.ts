@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   allClientCatalogResources,
+  browserCatalogGroups,
   browserProjectionColumns,
   filterableColumns,
   findBrowserResource,
@@ -129,5 +130,23 @@ describe('admin catalog accessors', () => {
     const profiles = findBrowserResource('users', 'profiles');
 
     expect(profiles?.export).toBe(false);
+  });
+
+  it('groups every browser resource under the seven discoverable domains', () => {
+    const groups = browserCatalogGroups();
+
+    expect(groups.map((group) => group.domain)).toEqual([
+      'assessments',
+      'classrooms',
+      'content',
+      'learning',
+      'live',
+      'rewards',
+      'users',
+    ]);
+    expect(groups.find((group) => group.domain === 'users')?.resources).toEqual(
+      ['profiles'],
+    );
+    expect(groups.every((group) => group.resources.length > 0)).toBe(true);
   });
 });

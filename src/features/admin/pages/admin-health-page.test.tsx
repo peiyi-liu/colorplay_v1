@@ -21,6 +21,7 @@ vi.mock('../hooks/use-admin-session-state', () => ({
 }));
 
 const retryableOperation = {
+  action_kind: 'reconcile',
   attempt_count: 1,
   correlation_id: 'corr-1',
   created_at: '2026-08-09T08:00:00Z',
@@ -35,6 +36,7 @@ const retryableOperation = {
 };
 
 const stuckOperation = {
+  action_kind: 'manual_retry',
   attempt_count: 9,
   correlation_id: 'corr-2',
   created_at: '2026-08-08T08:00:00Z',
@@ -46,6 +48,13 @@ const stuckOperation = {
   state: 'stuck',
   target_principal_id: 'principal-2',
   updated_at: '2026-08-08T09:00:00Z',
+};
+
+const oobOperation = {
+  ...stuckOperation,
+  action_kind: 'owner_oob',
+  id: 'op-factor-incident',
+  operation_type: 'factor_incident_isolation',
 };
 
 const healthOk = {
@@ -63,18 +72,22 @@ const healthOk = {
     locked_identities: 2,
     stuck_operations: 1,
   },
-  operations: [retryableOperation, stuckOperation],
+  denials_truncated: true,
+  operations: [retryableOperation, stuckOperation, oobOperation],
+  operations_truncated: true,
   outcome: 'ok',
 };
 
 const healthClean = {
   denials: [],
+  denials_truncated: false,
   incidents: {
     denial_threshold_breaches: 0,
     locked_identities: 0,
     stuck_operations: 0,
   },
   operations: [],
+  operations_truncated: false,
   outcome: 'ok',
 };
 
@@ -152,13 +165,29 @@ describe('AdminHealthPage', () => {
       within(retryableRow).getByRole('button', { name: '觸發重新對帳' }),
     ).toBeInTheDocument();
 
-    // stuck 的 operation 由 RPC 明確拒絕(SECURITY_OPERATION_PENDING),
-    // 提供必然被拒的按鈕只會白燒 receipt 並累積 denial counter。
+    // reset saga 的 stuck operation 有一次性 manual retry 授權。
     const stuckRow = screen.getByText('op-stuck').closest('tr') as HTMLElement;
     expect(
-      within(stuckRow).queryByRole('button', { name: '觸發重新對帳' }),
-    ).not.toBeInTheDocument();
-    expect(stuckRow).toHaveTextContent('需負責人依 runbook 處理');
+      within(stuckRow).getByRole('button', { name: '授權一次人工重試' }),
+    ).toBeInTheDocument();
+
+    const oobRow = screen
+      .getByText('op-factor-incident')
+      .closest('tr') as HTMLElement;
+    expect(within(oobRow).queryByRole('button')).not.toBeInTheDocument();
+    expect(oobRow).toHaveTextContent('需負責人依 runbook 處理');
+  });
+
+  it('shows server-declared truncation instead of silently hiding health rows', async () => {
+    vi.mocked(adminRpc).mockResolvedValue(healthOk);
+    renderPage();
+
+    expect(
+      await screen.findByText('僅顯示最近 50 筆安全作業。'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('僅顯示前 50 筆 denial 聚合。'),
+    ).toBeInTheDocument();
   });
 
   it('runs reconcile through the shared command dialog with a reason', async () => {
@@ -234,6 +263,19 @@ describe('AdminHealthPage', () => {
         '此欄位不允許這項操作',
       );
     });
+  });
+
+  it('shows denial request context and suppresses deterministic retry', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({
+      code: 'COLUMN_NOT_ALLOWED',
+      outcome: 'denied',
+      request_id: 'health-request-1',
+      retryable: false,
+    });
+    renderPage();
+
+    expect(await screen.findByText(/health-request-1/u)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '重試' })).toBeNull();
   });
 
   it('redirects to challenge and refetches session state on a stale privileged session', async () => {

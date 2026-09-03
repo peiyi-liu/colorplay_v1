@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '../../../components/ui/toast';
 import { adminRpc, invokeAdminCommand } from '../api/admin-client';
 import { useAdminSessionState } from '../hooks/use-admin-session-state';
+import { formatAdminTimestamp } from '../lib/admin-time';
 import { AdminAccessSessionsPage } from './admin-access-sessions-page';
 
 vi.mock('../api/admin-client', async () => {
@@ -176,6 +177,81 @@ describe('AdminAccessSessionsPage', () => {
     expect(
       await screen.findByText('目前沒有 admin session。'),
     ).toBeInTheDocument();
+  });
+
+  it('loads the next server-cursor page and exposes session detail in place', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc)
+      .mockResolvedValueOnce({
+        next_cursor: 'sessions-cursor-1',
+        outcome: 'ok',
+        rows: [activeSession],
+      })
+      .mockResolvedValueOnce({
+        next_cursor: null,
+        outcome: 'ok',
+        rows: [revokedSession],
+      });
+    renderPage();
+
+    await user.click(
+      await screen.findByRole('button', { name: '載入更多 Session' }),
+    );
+    expect(await screen.findByText('iOS・Safari')).toBeInTheDocument();
+    expect(adminRpc).toHaveBeenLastCalledWith('admin_list_sessions', {
+      p_cursor: 'sessions-cursor-1',
+    });
+
+    const [firstSummary] = screen.getAllByText('查看詳細資料');
+    if (!firstSummary) {
+      throw new Error('Expected an expandable session detail row');
+    }
+    await user.click(firstSummary);
+    expect(screen.getByText(/corr-1/u)).toBeInTheDocument();
+    expect(screen.getByText(/principal-1/u)).toBeInTheDocument();
+  });
+
+  it('formats every session timestamp in Asia/Taipei', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc).mockResolvedValue({
+      outcome: 'ok',
+      rows: [activeSession, revokedSession],
+    });
+    renderPage();
+
+    const activeRow = (await screen.findByText('macOS・Chrome')).closest('tr');
+    if (!activeRow) throw new Error('Expected the active session row');
+    const activeCells = within(activeRow).getAllByRole('cell');
+    expect(activeCells.at(1)?.textContent).toBe(
+      formatAdminTimestamp(activeSession.created_at),
+    );
+    expect(activeCells.at(2)?.textContent).toBe(
+      formatAdminTimestamp(activeSession.last_activity_at),
+    );
+    await user.click(within(activeRow).getByText('查看詳細資料'));
+    expect(
+      within(activeRow).getByText('絕對到期').nextElementSibling?.textContent,
+    ).toBe(formatAdminTimestamp(activeSession.absolute_expires_at));
+
+    const revokedRow = screen.getByText('iOS・Safari').closest('tr');
+    if (!revokedRow) throw new Error('Expected the revoked session row');
+    await user.click(within(revokedRow).getByText('查看詳細資料'));
+    expect(
+      within(revokedRow).getByText('撤銷時間').nextElementSibling?.textContent,
+    ).toBe(formatAdminTimestamp(revokedSession.revoked_at));
+  });
+
+  it('shows denial request context and suppresses deterministic retry', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({
+      code: 'RESOURCE_NOT_ALLOWED',
+      outcome: 'denied',
+      request_id: 'sessions-request-1',
+      retryable: false,
+    });
+    renderPage();
+
+    expect(await screen.findByText(/sessions-request-1/u)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '重試' })).toBeNull();
   });
 
   it('shows a retryable error state when the list call throws', async () => {

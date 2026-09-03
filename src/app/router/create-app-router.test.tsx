@@ -289,6 +289,50 @@ describe('createAppRouter', () => {
     });
   });
 
+  it('protects invitation acceptance with authentication while preserving the return route', async () => {
+    const router = renderRouter('/admin/invitations/accept');
+
+    expect(await screen.findByRole('heading', { name: '登入' })).toBeVisible();
+    expect(router.state.location.pathname).toBe('/login');
+    expect(router.state.location.state).toEqual({
+      from: {
+        hash: '',
+        pathname: '/admin/invitations/accept',
+        search: '',
+      },
+    });
+  });
+
+  it('lets an authenticated incomplete non-admin reach invitation acceptance before privilege exists', async () => {
+    mockedUseMyProfile.mockReturnValue({
+      data: {
+        displayName: '待接受邀請',
+        id: 'invitee-id',
+        reducedMotion: false,
+        registrationComplete: false,
+        role: 'student',
+        timezone: 'Asia/Taipei',
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+
+    renderRouter('/admin/invitations/accept', {
+      email: 'invitee@colorplay.invalid',
+      userId: 'invitee-id',
+    });
+
+    expect(
+      await screen.findByRole('heading', { name: '接受管理員邀請' }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('heading', { name: '註冊帳號' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('沒有權限')).not.toBeInTheDocument();
+  });
+
   it('keeps an OTP-authenticated student on registration until the server profile is complete', async () => {
     mockedUseMyProfile.mockReturnValue({
       data: {

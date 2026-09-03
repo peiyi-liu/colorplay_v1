@@ -55,6 +55,11 @@ export function createAppRouter() {
           element: <RequireAuth />,
           children: [
             {
+              path: '/admin/invitations/accept',
+              lazy: () =>
+                import('../../features/admin/pages/admin-invitation-accept-page'),
+            },
+            {
               element: <RequireCompletedRegistration />,
               children: [
                 { path: '/app', element: <LobbyPage /> },
@@ -229,6 +234,11 @@ export function createAppRouter() {
                           path: '/admin/access/sessions',
                           lazy: () =>
                             import('../../features/admin/pages/admin-access-sessions-page'),
+                        },
+                        {
+                          path: '/admin/data',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-data-index-page'),
                         },
                         {
                           path: '/admin/data/:domain/:resource',

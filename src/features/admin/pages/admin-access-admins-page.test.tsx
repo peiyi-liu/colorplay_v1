@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '../../../components/ui/toast';
 import { adminRpc, invokeAdminCommand } from '../api/admin-client';
 import { useAdminSessionState } from '../hooks/use-admin-session-state';
+import { formatAdminTimestamp } from '../lib/admin-time';
 import { AdminAccessAdminsPage } from './admin-access-admins-page';
 
 vi.mock('../api/admin-client', async () => {
@@ -213,6 +214,81 @@ describe('AdminAccessAdminsPage', () => {
     renderPage();
 
     expect(await screen.findByText('目前沒有管理員帳號。')).toBeInTheDocument();
+  });
+
+  it('loads the next server-cursor page and exposes admin detail in place', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc)
+      .mockResolvedValueOnce({
+        next_cursor: 'admins-cursor-1',
+        outcome: 'ok',
+        rows: [activeRow],
+      })
+      .mockResolvedValueOnce({
+        next_cursor: null,
+        outcome: 'ok',
+        rows: [deactivatedRow],
+      });
+    renderPage();
+
+    await user.click(
+      await screen.findByRole('button', { name: '載入更多管理員' }),
+    );
+    expect(await screen.findByText('user-2')).toBeInTheDocument();
+    expect(adminRpc).toHaveBeenLastCalledWith('admin_list_admins', {
+      p_cursor: 'admins-cursor-1',
+    });
+
+    const [firstSummary] = screen.getAllByText('查看詳細資料');
+    if (!firstSummary?.parentElement) {
+      throw new Error('Expected an expandable admin detail row');
+    }
+    const firstDetail = firstSummary.parentElement;
+    await user.click(within(firstDetail).getByText('查看詳細資料'));
+    expect(within(firstDetail).getByText('principal-1')).toBeInTheDocument();
+    expect(within(firstDetail).getByText('1')).toBeInTheDocument();
+  });
+
+  it('formats every admin timestamp in Asia/Taipei', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc).mockResolvedValue({
+      outcome: 'ok',
+      rows: [
+        {
+          ...activeRow,
+          locked_until: '2026-08-01T02:00:00Z',
+          updated_at: '2026-08-01T01:00:00Z',
+        },
+      ],
+    });
+    renderPage();
+
+    const row = (await screen.findByText('user-1')).closest('tr');
+    if (!row) throw new Error('Expected the admin row');
+    const cells = within(row).getAllByRole('cell');
+    expect(cells.at(2)?.textContent).toBe(
+      formatAdminTimestamp(activeRow.created_at),
+    );
+    await user.click(within(row).getByText('查看詳細資料'));
+    expect(
+      within(row).getByText('更新時間').nextElementSibling?.textContent,
+    ).toBe(formatAdminTimestamp('2026-08-01T01:00:00Z'));
+    expect(
+      within(row).getByText('鎖定至').nextElementSibling?.textContent,
+    ).toBe(formatAdminTimestamp('2026-08-01T02:00:00Z'));
+  });
+
+  it('shows denial request context and suppresses deterministic retry', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({
+      code: 'RESOURCE_NOT_ALLOWED',
+      outcome: 'denied',
+      request_id: 'admins-request-1',
+      retryable: false,
+    });
+    renderPage();
+
+    expect(await screen.findByText(/admins-request-1/u)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '重試' })).toBeNull();
   });
 
   it('shows a retryable error state when the list call throws', async () => {

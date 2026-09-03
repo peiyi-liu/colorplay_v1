@@ -9,6 +9,7 @@ import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-r
 import { formatAdminTimestamp } from '../lib/admin-time';
 
 interface AdminHealthOperation {
+  action_kind: 'manual_retry' | 'owner_oob' | 'pending' | 'reconcile';
   attempt_count: number;
   correlation_id: string | null;
   created_at: string;
@@ -38,30 +39,23 @@ interface AdminHealthIncidents {
 
 interface AdminHealthSummaryOk {
   denials: readonly AdminHealthDenial[];
+  denials_truncated: boolean;
   incidents: AdminHealthIncidents;
   operations: readonly AdminHealthOperation[];
+  operations_truncated: boolean;
   outcome: 'ok';
 }
 
 interface AdminOutcomeDenied {
   code?: string;
   outcome: 'denied';
+  request_id?: string;
+  retryable?: boolean;
 }
 
 type AdminHealthSummaryResponse = AdminHealthSummaryOk | AdminOutcomeDenied;
 
 const HEALTH_QUERY_KEY = ['admin', 'health-summary'] as const;
-
-/**
- * `reconcile_admin_security_operation` 在 state 為 `completed`／`stuck` 時
- * 會直接回 `SECURITY_OPERATION_PENDING`(migration 000800)。對這些作業提供
- * 觸發鈕等於保證被拒:白燒一張 receipt、寫一筆 denial audit 與 denial
- * counter,而 counter 累積到 20 就會自己觸發 denial 門檻 incident。
- * spec §11 要求 incident 只提供**合法**的 follow-up,所以卡住的作業改為
- * 標示需走 owner OOB runbook,不給註定失敗的按鈕。
- */
-const isReconcilable = (operation: AdminHealthOperation): boolean =>
-  operation.state !== 'stuck' && operation.state !== 'completed';
 
 /**
  * Phase 1 控制面健康摘要(spec §3.2、§8.3、§11):operations、denial 聚合、
@@ -81,10 +75,14 @@ export function AdminHealthPage() {
   const code = health.data ? extractErrorCode(health.data) : null;
   const staleSession = code === 'STALE_PRIVILEGED_SESSION';
   useAdminStaleSessionRedirect(staleSession);
+  const response = health.data;
 
   if (health.isPending || staleSession) return <RouteLoading withinMain />;
 
-  if (health.isError || health.data.outcome === 'denied') {
+  if (health.isError || !response || response.outcome === 'denied') {
+    const denied: AdminOutcomeDenied | null =
+      response?.outcome === 'denied' ? response : null;
+    const canRetry = !denied || denied.retryable === true;
     return (
       <section
         aria-labelledby="admin-health-page-heading"
@@ -96,20 +94,31 @@ export function AdminHealthPage() {
         ) : (
           <p role="alert">系統健康資料載入失敗，請稍後重試。</p>
         )}
-        <button
-          className="secondary-action"
-          onClick={() => {
-            void health.refetch();
-          }}
-          type="button"
-        >
-          重試
-        </button>
+        {typeof denied?.request_id === 'string' ? (
+          <p>追蹤代碼：{denied.request_id}</p>
+        ) : null}
+        {canRetry ? (
+          <button
+            className="secondary-action"
+            onClick={() => {
+              void health.refetch();
+            }}
+            type="button"
+          >
+            重試
+          </button>
+        ) : null}
       </section>
     );
   }
 
-  const { denials, incidents, operations } = health.data;
+  const {
+    denials,
+    denials_truncated: denialsTruncated,
+    incidents,
+    operations,
+    operations_truncated: operationsTruncated,
+  } = response;
   const hasIncidents =
     incidents.stuck_operations > 0 ||
     incidents.denial_threshold_breaches > 0 ||
@@ -165,7 +174,8 @@ export function AdminHealthPage() {
                     <td>{operation.attempt_count}</td>
                     <td>{operation.last_safe_error_code ?? '—'}</td>
                     <td>
-                      {isReconcilable(operation) ? (
+                      {operation.action_kind === 'reconcile' ||
+                      operation.action_kind === 'manual_retry' ? (
                         <button
                           className="secondary-action"
                           onClick={() => {
@@ -173,8 +183,12 @@ export function AdminHealthPage() {
                           }}
                           type="button"
                         >
-                          觸發重新對帳
+                          {operation.action_kind === 'manual_retry'
+                            ? '授權一次人工重試'
+                            : '觸發重新對帳'}
                         </button>
+                      ) : operation.action_kind === 'pending' ? (
+                        <span>已授權，等待服務處理</span>
                       ) : (
                         <span>需負責人依 runbook 處理</span>
                       )}
@@ -185,6 +199,7 @@ export function AdminHealthPage() {
             </table>
           </div>
         )}
+        {operationsTruncated ? <p>僅顯示最近 50 筆安全作業。</p> : null}
       </section>
 
       <section aria-labelledby="admin-health-denials-heading">
@@ -215,6 +230,7 @@ export function AdminHealthPage() {
             </table>
           </div>
         )}
+        {denialsTruncated ? <p>僅顯示前 50 筆 denial 聚合。</p> : null}
       </section>
 
       {reconcileTarget !== null ? (

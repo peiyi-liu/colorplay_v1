@@ -45,6 +45,7 @@ describe('AdminMfaEnrollPage', () => {
     expect(await screen.findByTestId('totp-secret')).toHaveTextContent(
       'JBSWY3DPEHPK3PXP',
     );
+    expect(screen.getByTitle('管理員驗證器設定 QR code')).toBeInTheDocument();
     await user.type(screen.getByLabelText('驗證碼'), '123456');
     await user.click(screen.getByRole('button', { name: '完成綁定' }));
 
@@ -116,7 +117,15 @@ describe('AdminMfaEnrollPage', () => {
   });
 
   it('shows a generic failure message when begin-enrollment throws', async () => {
-    vi.mocked(invokeAdminMfa).mockRejectedValueOnce(new Error('network down'));
+    const user = userEvent.setup();
+    vi.mocked(invokeAdminMfa)
+      .mockRejectedValueOnce(new Error('network down'))
+      .mockResolvedValueOnce({
+        factorId: 'factor-1',
+        outcome: 'ok',
+        qrUri: 'otpauth://totp/example',
+        totpSecret: 'JBSWY3DPEHPK3PXP',
+      });
 
     renderPage();
 
@@ -124,6 +133,12 @@ describe('AdminMfaEnrollPage', () => {
       await screen.findByText('發生非預期的錯誤，請稍後再試或聯絡負責人。'),
     ).toBeInTheDocument();
     expect(screen.queryByTestId('totp-secret')).not.toBeInTheDocument();
+    const retry = screen.getByRole('button', {
+      name: '重新載入驗證器設定',
+    });
+    expect(retry).toHaveFocus();
+    await user.click(retry);
+    expect(await screen.findByTestId('totp-secret')).toBeInTheDocument();
   });
 
   it('shows a generic failure message when confirm-enrollment throws', async () => {
@@ -144,6 +159,8 @@ describe('AdminMfaEnrollPage', () => {
     expect(
       await screen.findByText('發生非預期的錯誤，請稍後再試或聯絡負責人。'),
     ).toBeInTheDocument();
+    expect(screen.getByLabelText('驗證碼')).toHaveFocus();
+    expect(screen.getByRole('button', { name: '完成綁定' })).toBeEnabled();
   });
 
   it('gives the submit button the standard primary-action affordances', async () => {

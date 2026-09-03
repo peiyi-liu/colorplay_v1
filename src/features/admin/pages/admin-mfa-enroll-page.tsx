@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
+import { QRCodeSVG } from 'qrcode.react';
 import { z } from 'zod';
 
 import { RpgWindow } from '../../../components/ui/rpg-window';
@@ -19,18 +20,22 @@ type CodeFormValues = z.infer<typeof codeSchema>;
 
 interface EnrolledFactor {
   factorId: string;
+  qrUri: string;
   totpSecret: string;
 }
 
 export function AdminMfaEnrollPage() {
   const navigate = useNavigate();
+  const mounted = useRef(true);
+  const retryRef = useRef<HTMLButtonElement>(null);
+  const codeInputRef = useRef<HTMLInputElement | null>(null);
   const [factor, setFactor] = useState<EnrolledFactor | null>(null);
+  const [beginPending, setBeginPending] = useState(true);
   const [beginError, setBeginError] = useState<AdminErrorCode | null>(null);
   const [submitError, setSubmitError] = useState<AdminErrorCode | null>(null);
-  // 涵蓋兩種都無法對應到具體穩定碼的失敗:invokeAdminMfa 拋出
-  // AdminClientError(網路/回應無法解析),或回應不是 ok 但
-  // extractErrorCode 也認不出代碼(不得靜默不顯示任何訊息)。
-  const [unexpectedError, setUnexpectedError] = useState(false);
+  const [unexpectedError, setUnexpectedError] = useState<
+    'begin' | 'submit' | null
+  >(null);
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -39,40 +44,78 @@ export function AdminMfaEnrollPage() {
     defaultValues: { code: '' },
     resolver: zodResolver(codeSchema),
   });
+  const codeRegistration = register('code');
+
+  const applyEnrollmentResponse = useCallback(
+    (response: Awaited<ReturnType<typeof invokeAdminMfa>>) => {
+      if (
+        response.outcome === 'ok' &&
+        typeof response.factorId === 'string' &&
+        typeof response.qrUri === 'string' &&
+        typeof response.totpSecret === 'string'
+      ) {
+        setFactor({
+          factorId: response.factorId,
+          qrUri: response.qrUri,
+          totpSecret: response.totpSecret,
+        });
+        return;
+      }
+      const code = extractErrorCode(response);
+      if (code) setBeginError(code);
+      else setUnexpectedError('begin');
+    },
+    [],
+  );
+
+  const loadEnrollment = useCallback(async () => {
+    setBeginPending(true);
+    setBeginError(null);
+    setUnexpectedError(null);
+    try {
+      const response = await invokeAdminMfa({ action: 'begin-enrollment' });
+      if (!mounted.current) return;
+      applyEnrollmentResponse(response);
+    } catch {
+      if (mounted.current) setUnexpectedError('begin');
+    } finally {
+      if (mounted.current) setBeginPending(false);
+    }
+  }, [applyEnrollmentResponse]);
 
   useEffect(() => {
-    let cancelled = false;
-    invokeAdminMfa({ action: 'begin-enrollment' })
+    mounted.current = true;
+    void invokeAdminMfa({ action: 'begin-enrollment' })
       .then((response) => {
-        if (cancelled) return;
-        if (
-          response.outcome === 'ok' &&
-          typeof response.factorId === 'string' &&
-          typeof response.totpSecret === 'string'
-        ) {
-          setFactor({
-            factorId: response.factorId,
-            totpSecret: response.totpSecret,
-          });
-          return;
-        }
-        const code = extractErrorCode(response);
-        if (code) {
-          setBeginError(code);
-        } else {
-          setUnexpectedError(true);
-        }
+        if (mounted.current) applyEnrollmentResponse(response);
       })
       .catch(() => {
-        if (!cancelled) setUnexpectedError(true);
+        if (mounted.current) setUnexpectedError('begin');
+      })
+      .finally(() => {
+        if (mounted.current) setBeginPending(false);
       });
     return () => {
-      cancelled = true;
+      mounted.current = false;
     };
-  }, []);
+  }, [applyEnrollmentResponse]);
+
+  const beginFailed = unexpectedError === 'begin' || beginError !== null;
+  useEffect(() => {
+    if (beginFailed) retryRef.current?.focus();
+  }, [beginFailed]);
+
+  const submitFailed = unexpectedError === 'submit' || submitError !== null;
+  useEffect(() => {
+    if (submitFailed && submitError !== 'MFA_LOCKED') {
+      codeInputRef.current?.focus();
+    }
+  }, [submitError, submitFailed]);
 
   const onSubmit = handleSubmit(async ({ code }) => {
     if (!factor) return;
+    setSubmitError(null);
+    setUnexpectedError(null);
     try {
       const response = await invokeAdminMfa({
         action: 'confirm-enrollment',
@@ -84,24 +127,12 @@ export function AdminMfaEnrollPage() {
         return;
       }
       const responseCode = extractErrorCode(response);
-      if (responseCode) {
-        setSubmitError(responseCode);
-      } else {
-        setUnexpectedError(true);
-      }
+      if (responseCode) setSubmitError(responseCode);
+      else setUnexpectedError('submit');
     } catch {
-      setUnexpectedError(true);
+      setUnexpectedError('submit');
     }
   });
-
-  if (unexpectedError) {
-    return (
-      <RpgWindow>
-        <h1 className="pixel-heading">管理員驗證器綁定</h1>
-        <p role="alert">發生非預期的錯誤，請稍後再試或聯絡負責人。</p>
-      </RpgWindow>
-    );
-  }
 
   if (beginError === 'INSUFFICIENT_MFA') {
     return (
@@ -126,13 +157,44 @@ export function AdminMfaEnrollPage() {
   return (
     <RpgWindow>
       <h1 className="pixel-heading">管理員驗證器綁定</h1>
+      {beginPending ? <p role="status">正在建立驗證器設定…</p> : null}
+      {beginFailed ? (
+        <>
+          {unexpectedError === 'begin' ? (
+            <p role="alert">發生非預期的錯誤，請稍後再試或聯絡負責人。</p>
+          ) : (
+            <AdminStatusBanner code={beginError} />
+          )}
+          <button
+            className="primary-action"
+            data-acceptance-interactive="true"
+            data-acceptance-target
+            data-primary-action="true"
+            onClick={() => void loadEnrollment()}
+            ref={retryRef}
+            type="button"
+          >
+            重新載入驗證器設定
+          </button>
+        </>
+      ) : null}
       {factor ? (
         <form
           className="admin-mfa-form"
           onSubmit={(event) => void onSubmit(event)}
         >
-          <p>請在驗證器 App 中手動輸入下方密鑰，再輸入產生的 6 位數驗證碼。</p>
-          <p data-testid="totp-secret">{factor.totpSecret}</p>
+          <p>請掃描 QR code，再輸入驗證器 App 產生的 6 位數驗證碼。</p>
+          <div className="admin-mfa-form__qr">
+            <QRCodeSVG
+              size={192}
+              title="管理員驗證器設定 QR code"
+              value={factor.qrUri}
+            />
+          </div>
+          <details>
+            <summary>無法掃描？顯示文字密鑰</summary>
+            <code data-testid="totp-secret">{factor.totpSecret}</code>
+          </details>
           <div>
             <label htmlFor="admin-mfa-enroll-code">驗證碼</label>
             <input
@@ -144,7 +206,11 @@ export function AdminMfaEnrollPage() {
               id="admin-mfa-enroll-code"
               inputMode="numeric"
               maxLength={6}
-              {...register('code')}
+              {...codeRegistration}
+              ref={(element) => {
+                codeRegistration.ref(element);
+                codeInputRef.current = element;
+              }}
             />
             {errors.code ? (
               <p id="admin-mfa-enroll-code-error" role="alert">
@@ -152,6 +218,10 @@ export function AdminMfaEnrollPage() {
               </p>
             ) : null}
           </div>
+          {unexpectedError === 'submit' ? (
+            <p role="alert">發生非預期的錯誤，請稍後再試或聯絡負責人。</p>
+          ) : null}
+          <AdminStatusBanner code={submitError} />
           <button
             className="primary-action"
             data-acceptance-interactive="true"
@@ -164,7 +234,6 @@ export function AdminMfaEnrollPage() {
           </button>
         </form>
       ) : null}
-      <AdminStatusBanner code={beginError ?? submitError} />
     </RpgWindow>
   );
 }

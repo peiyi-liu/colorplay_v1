@@ -219,6 +219,45 @@ describe('AdminAccessInvitationsPage', () => {
     expect(screen.getByRole('button', { name: '重試' })).toBeInTheDocument();
   });
 
+  it('loads another invitation page with the opaque server cursor', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminRpc)
+      .mockResolvedValueOnce({
+        next_cursor: 'invitations-cursor-1',
+        outcome: 'ok',
+        rows: [pendingInvitation],
+      })
+      .mockResolvedValueOnce({
+        next_cursor: null,
+        outcome: 'ok',
+        rows: [acceptedInvitation],
+      });
+    renderPage();
+
+    await user.click(
+      await screen.findByRole('button', { name: '載入更多邀請' }),
+    );
+    expect(await screen.findByText('b****@colorplay.test')).toBeInTheDocument();
+    expect(adminRpc).toHaveBeenLastCalledWith('admin_list_invitations', {
+      p_cursor: 'invitations-cursor-1',
+    });
+  });
+
+  it('shows denial request context and follows the server retryability flag', async () => {
+    vi.mocked(adminRpc).mockResolvedValue({
+      code: 'RESOURCE_NOT_ALLOWED',
+      outcome: 'denied',
+      request_id: 'invitations-request-1',
+      retryable: false,
+    });
+    renderPage();
+
+    expect(
+      await screen.findByText(/invitations-request-1/u),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '重試' })).toBeNull();
+  });
+
   it('redirects to challenge and refetches session state when the list call is denied as stale', async () => {
     vi.mocked(adminRpc).mockResolvedValue({
       code: 'STALE_PRIVILEGED_SESSION',

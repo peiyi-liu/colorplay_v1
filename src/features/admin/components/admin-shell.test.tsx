@@ -33,6 +33,7 @@ function renderShell(initialEntry: string) {
             element={<p>session 清單內容</p>}
             path="/admin/access/sessions"
           />
+          <Route element={<p>資料瀏覽內容</p>} path="/admin/data" />
           <Route element={<p>稽核內容</p>} path="/admin/audit" />
           <Route element={<p>健康內容</p>} path="/admin/health" />
         </Route>
@@ -65,7 +66,7 @@ describe('AdminShell', () => {
       '稽核',
       '系統健康',
     ]) {
-      expect(within(nav).getByText(label)).toBeInTheDocument();
+      expect(within(nav).getAllByText(label).length).toBeGreaterThan(0);
     }
     expect(screen.getByText('安全總覽內容')).toBeInTheDocument();
   });
@@ -80,6 +81,16 @@ describe('AdminShell', () => {
     );
     expect(screen.getByRole('link', { name: '安全總覽' })).not.toHaveAttribute(
       'aria-current',
+    );
+  });
+
+  it('links the data navigation to the catalog-derived landing page', () => {
+    stubWide(true);
+    renderShell('/admin');
+
+    expect(screen.getByRole('link', { name: '資料瀏覽' })).toHaveAttribute(
+      'href',
+      '/admin/data',
     );
   });
 
