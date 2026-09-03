@@ -8,6 +8,7 @@ import { useBlookInventory } from '../../features/inventory/hooks/use-blook-inve
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { EconomySummaryView } from '../../features/rewards/components/economy-summary';
 import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summary';
+import { EnvironmentMarker } from './environment-marker';
 import { HudCommandBar } from './hud-command-bar';
 import { RotateBanner } from './rotate-banner';
 import { useIdleLogout } from './use-idle-logout';
@@ -112,6 +113,7 @@ export function AppShell() {
   return (
     <div className="game-viewport">
       <div className="game-stage">
+        <EnvironmentMarker />
         <a className="skip-link" href="#main-content">
           跳到主要內容
         </a>

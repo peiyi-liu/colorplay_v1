@@ -269,16 +269,8 @@
       "g": 174.5,
       "b": 132.5
     },
-    "browserComputed": [
-      195.5,
-      174.5,
-      132.5
-    ],
-    "delta": [
-      0,
-      0,
-      0
-    ],
+    "browserComputed": [195.5, 174.5, 132.5],
+    "delta": [0, 0, 0],
     "proofPasses": true
   },
   "consoleHealth": {

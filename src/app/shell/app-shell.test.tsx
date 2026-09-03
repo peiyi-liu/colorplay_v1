@@ -14,6 +14,15 @@ import { useEconomySummary } from '../../features/rewards/hooks/use-economy-summ
 import { ToastProvider } from '../../components/ui/toast';
 import { AppShell } from './app-shell';
 
+vi.mock('./environment-marker', async () => {
+  const actual = await vi.importActual<typeof import('./environment-marker')>(
+    './environment-marker',
+  );
+  return {
+    EnvironmentMarker: () => <actual.EnvironmentMarker environment="staging" />,
+  };
+});
+
 vi.mock('../../features/auth/context/auth-context', () => ({
   useAuth: vi.fn(),
 }));
@@ -203,6 +212,14 @@ describe('AppShell', () => {
     expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
   });
 
+  it('mounts the visible Staging marker inside the game stage', () => {
+    renderStudentShell();
+
+    const marker = screen.getByRole('status', { name: 'STAGING 測試環境' });
+    expect(marker).toBeVisible();
+    expect(marker.closest('.game-stage')).not.toBeNull();
+  });
+
   it('renders student HUD navigation before the identity header and main content', () => {
     renderStudentShell();
 
@@ -336,7 +353,10 @@ describe('AppShell', () => {
         </ToastProvider>
       </MemoryRouter>,
     );
-    expect(screen.getByRole('status')).toHaveTextContent('經濟資料載入中…');
+    expect(screen.getByText('經濟資料載入中…')).toHaveAttribute(
+      'role',
+      'status',
+    );
 
     mockedUseEconomySummary.mockReturnValue(
       economyResult({ data: undefined, isError: true, isPending: false }),

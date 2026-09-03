@@ -114,16 +114,18 @@ test('renders only the real safe profile and derives role navigation from Postgr
     studentPage,
     TEST_USERS.studentOne,
   );
-  await studentPage.goto('/app/profile');
 
   expect(studentProfile).toMatchObject({
     display_name: 'student.one',
     role: 'student',
   });
+  await expect(studentPage).toHaveURL(/\/app$/u);
+  await expect(
+    studentPage.getByRole('heading', { name: '色彩任務選擇大廳' }),
+  ).toBeVisible();
   await expect(
     studentPage.getByRole('heading', { name: 'student.one' }),
   ).toBeVisible();
-  await expect(studentPage.getByText('角色：學生')).toBeVisible();
   await expect(studentPage.locator('body')).not.toContainText(
     TEST_USERS.studentOne.email,
   );

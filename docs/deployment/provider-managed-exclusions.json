@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "exclusions": [
+    {
+      "kind": "schema_sha256",
+      "repo_value": "1204ce0599216a0015401d9ffa5ed57cbb7529e9f91a819329913927e97d71e1",
+      "target_value": "1e8c011d69c1e017b76070907d78f530d755ed070f44dda2cb8069fc14a3b73a",
+      "reason": "The exact 9af07ee diff contains only Supabase-managed Auth indexes and Storage service schema-version objects.",
+      "source": "https://supabase.com/docs/guides/storage/schema/design"
+    },
+    {
+      "kind": "generated_types_sha256",
+      "repo_value": "c2e68bf1d0adc224d9d8fef310c10867c699c19a1869d4ad234422cca8062f29",
+      "target_value": "2f9a6f3f0c18bf8b6917d262d18d8cb62bfe735c8c786a5eeaaa238d065c6813",
+      "reason": "The exact 9af07ee type diff contains only generated PostgREST metadata and Supabase-managed Storage tables.",
+      "source": "https://supabase.com/docs/guides/storage/schema/design"
+    },
+    {
+      "kind": "custom_role",
+      "role": "cli_login_postgres",
+      "direction": "target_only",
+      "reason": "Supabase creates this internal role for passwordless CLI database flows.",
+      "source": "https://supabase.com/docs/guides/troubleshooting/supabase-cli-failed-sasl-auth-or-invalid-scram-server-final-message"
+    },
+    {
+      "kind": "extension",
+      "extension": "pg_net",
+      "direction": "repo_only",
+      "reason": "The Supabase Local stack enables pg_net by default while a hosted project may have it disabled.",
+      "source": "https://supabase.com/docs/guides/local-development/cli-workflows"
+    }
+  ]
+}

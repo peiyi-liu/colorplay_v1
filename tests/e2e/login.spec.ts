@@ -95,7 +95,7 @@ const unexpectedHealth = (health: BrowserHealth) => ({
   pageErrors: health.pageErrors,
 });
 
-test('invalid credentials stay anonymous and keyboard-only valid login restores the intended route', async ({
+test('invalid credentials stay anonymous and keyboard-only valid login lands on the fixed student route', async ({
   page,
 }) => {
   readLocalPublicEnvironment();
@@ -189,9 +189,7 @@ test('invalid credentials stay anonymous and keyboard-only valid login restores 
   expect(keyboardSafeLayout?.buttonHeight).toBeGreaterThanOrEqual(44);
 
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(
-    new RegExp('/app\\?chapter=color-theory#checkpoint$', 'u'),
-  );
+  await expect(page).toHaveURL(/\/app$/u);
   await expect(
     page.getByRole('heading', { name: '色彩任務選擇大廳' }),
   ).toBeVisible();

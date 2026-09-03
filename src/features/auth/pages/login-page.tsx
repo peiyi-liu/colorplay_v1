@@ -210,10 +210,7 @@ export function LoginPage() {
               type="password"
             />
             {errors.password ? (
-              <p
-                className="login-form__field-error"
-                id="login-password-error"
-              >
+              <p className="login-form__field-error" id="login-password-error">
                 {errors.password.message}
               </p>
             ) : null}

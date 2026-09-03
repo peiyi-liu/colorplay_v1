@@ -1,6 +1,6 @@
 begin;
 
-select plan(44);
+select plan(45);
 
 select has_table('public', 'quiz_sessions', 'quiz sessions exists');
 select has_table(
@@ -327,6 +327,13 @@ select is(
   ),
   0,
   'another student cannot read in-progress aggregate state'
+);
+select is(
+  public.quiz_answer_explanation(
+    current_setting('test.first_question_id')::uuid
+  ),
+  null,
+  'another student cannot request the owner answer explanation directly'
 );
 select set_config(
   'request.jwt.claim.sub',

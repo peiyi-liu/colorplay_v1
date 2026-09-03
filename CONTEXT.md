@@ -1,6 +1,31 @@
 # ColorPlay
 
+> Current work: **Phase 0 hosted foundation gates** on isolated branch
+> `phase0/release-foundation`. Read
+> [`docs/roadmap-colorplay-next.md`](docs/roadmap-colorplay-next.md), the
+> [approved spec](docs/superpowers/specs/2026-08-05-phase-0-environment-release-foundation-design.md),
+> and the
+> [implementation plan](docs/superpowers/plans/2026-08-06-phase-0-environment-release-foundation.md)
+> before acting. Status: **TASK 14 REOPENED — TASK 15 BLOCKED**. Independent
+> review invalidated the earlier completion claim; corrected local recovery
+> controls are implemented, but local cleanup/gates and fresh protected hosted
+> backup/restore evidence remain required. No Staging merge, Candidate, DNS
+> change, Production migration, deployment, or promotion has occurred.
+
 A classroom quiz platform. Teachers publish question content and open a Live Session from a Live Activity; during that session the teacher is its Host, Participants answer on their own devices, and the Projector carries the shared screen.
+
+## Current program
+
+Before starting or resuming ColorPlay work, read
+[`docs/roadmap-colorplay-next.md`](docs/roadmap-colorplay-next.md). It is the
+single current-status entry point for the active environment, Admin, content,
+learning-progression, Live, and JRPG rollout program. It records what is
+approved, what is in progress, what remains, and which worktrees contain
+protected work in progress.
+
+Historical task-level evidence remains in `.superpowers/sdd/progress.md` and
+does not replace the current program tracker. Re-verify time-sensitive Git,
+Vercel, Supabase, DNS, and deployment facts before acting on them.
 
 ## Language
 

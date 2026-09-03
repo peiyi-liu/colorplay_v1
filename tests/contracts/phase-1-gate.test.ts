@@ -137,9 +137,11 @@ describe('Phase 1 acceptance source contract', () => {
     expect(readme).toContain('pnpm acceptance');
     expect(readme).toContain('Phase 8');
     expect(readme).toContain('Foundation Task 16');
-    expect(deployment).toContain('Phase 8');
-    expect(deployment).toContain('NOT VERIFIED');
-    expect(deployment).toContain('authentication');
-    expect(deployment).toContain('must not');
+    expect(deployment).toContain('Phase 0 design');
+    expect(deployment).toContain(
+      'LOCAL IMPLEMENTATION ONLY — HOSTED CONFIGURATION NOT EXECUTED',
+    );
+    expect(deployment).toContain('only after human approval');
+    expect(deployment).toContain('must not auto-assign the Production domain');
   });
 });
