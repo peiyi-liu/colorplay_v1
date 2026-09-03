@@ -516,6 +516,7 @@ export type Database = {
           current_step: number
           id: string
           last_safe_error_code: string | null
+          manual_retry_claim_token: string | null
           next_retry_at: string | null
           operation_type: Database["public"]["Enums"]["admin_operation_type"]
           state: Database["public"]["Enums"]["admin_operation_state"]
@@ -529,6 +530,7 @@ export type Database = {
           current_step?: number
           id?: string
           last_safe_error_code?: string | null
+          manual_retry_claim_token?: string | null
           next_retry_at?: string | null
           operation_type: Database["public"]["Enums"]["admin_operation_type"]
           state?: Database["public"]["Enums"]["admin_operation_state"]
@@ -542,6 +544,7 @@ export type Database = {
           current_step?: number
           id?: string
           last_safe_error_code?: string | null
+          manual_retry_claim_token?: string | null
           next_retry_at?: string | null
           operation_type?: Database["public"]["Enums"]["admin_operation_type"]
           state?: Database["public"]["Enums"]["admin_operation_state"]
@@ -1971,6 +1974,7 @@ export type Database = {
         Row: {
           active_blook_id: string
           active_frame_id: string
+          contact_email: string | null
           created_at: string
           display_name: string
           full_name: string | null
@@ -1984,6 +1988,7 @@ export type Database = {
         Insert: {
           active_blook_id: string
           active_frame_id: string
+          contact_email?: string | null
           created_at?: string
           display_name: string
           full_name?: string | null
@@ -1997,6 +2002,7 @@ export type Database = {
         Update: {
           active_blook_id?: string
           active_frame_id?: string
+          contact_email?: string | null
           created_at?: string
           display_name?: string
           full_name?: string | null
@@ -3159,6 +3165,11 @@ export type Database = {
             Args: { p_domain: string; p_resource: string; p_row_key: Json }
             Returns: Json
           }
+        | {
+            Args: { p_domain: string; p_resource: string; p_row_token: string }
+            Returns: Json
+          }
+      admin_get_teacher: { Args: { p_teacher_id: string }; Returns: Json }
       admin_health_summary: { Args: never; Returns: Json }
       admin_internal_append_audit: {
         Args: {
@@ -3180,6 +3191,10 @@ export type Database = {
         Returns: string
       }
       admin_internal_authorize: { Args: never; Returns: Json }
+      admin_internal_base64url_encode: {
+        Args: { p_bytes: string }
+        Returns: string
+      }
       admin_internal_canonical_hash: {
         Args: { p_fields: Json }
         Returns: string
@@ -3198,6 +3213,30 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_internal_complete_reset_step2: {
+        Args: { p_claim_token: string; p_operation_id: string }
+        Returns: Json
+      }
+      admin_internal_complete_reset_step3: {
+        Args: { p_claim_token: string; p_operation_id: string }
+        Returns: Json
+      }
+      admin_internal_decode_row_key: {
+        Args: { p_token: string }
+        Returns: Json
+      }
+      admin_internal_denial_envelope: {
+        Args: { p_code: string; p_request_id: string }
+        Returns: Json
+      }
+      admin_internal_denial_message: {
+        Args: { p_code: string }
+        Returns: string
+      }
+      admin_internal_denial_retryable: {
+        Args: { p_code: string }
+        Returns: boolean
+      }
       admin_internal_deny: {
         Args: {
           p_action: string
@@ -3213,6 +3252,10 @@ export type Database = {
           p_target_type: string
         }
         Returns: Json
+      }
+      admin_internal_encode_row_key: {
+        Args: { p_key_columns: string[]; p_row: Json }
+        Returns: string
       }
       admin_internal_execute_command: {
         Args: {
@@ -3252,6 +3295,15 @@ export type Database = {
         Returns: string[]
       }
       admin_internal_lifecycle_lock: { Args: never; Returns: undefined }
+      admin_internal_list_binding: {
+        Args: {
+          p_domain: string
+          p_filters: Json
+          p_resource: string
+          p_sort_column: string
+        }
+        Returns: string
+      }
       admin_internal_mask: {
         Args: { p_strategy: string; p_value: string }
         Returns: string
@@ -3259,6 +3311,20 @@ export type Database = {
       admin_internal_record_denial: {
         Args: { p_resource_key: string; p_safe_reason_code: string }
         Returns: undefined
+      }
+      admin_internal_reveal_field_with_key: {
+        Args: {
+          p_audit_locator: Json
+          p_column: string
+          p_domain: string
+          p_idempotency_key: string
+          p_purpose: string
+          p_receipt_id: string
+          p_request_hash: string
+          p_resource: string
+          p_row_key: Json
+        }
+        Returns: Json
       }
       admin_internal_service_deny: {
         Args: {
@@ -3287,6 +3353,10 @@ export type Database = {
         Returns: Json
       }
       admin_list_sessions: { Args: never; Returns: Json }
+      admin_list_teachers: {
+        Args: { p_cursor?: string; p_search?: string; p_state?: string }
+        Returns: Json
+      }
       admin_query_audit: {
         Args: {
           p_action?: string
@@ -3321,6 +3391,18 @@ export type Database = {
               p_receipt_id: string
               p_resource: string
               p_row_key: Json
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_column: string
+              p_domain: string
+              p_idempotency_key: string
+              p_purpose: string
+              p_receipt_id: string
+              p_resource: string
+              p_row_token: string
             }
             Returns: Json
           }
@@ -3907,18 +3989,26 @@ export type Database = {
         Args: { p_fields: Json }
         Returns: string
       }
+      svc_admin_claim_manual_retry: {
+        Args: { p_operation_id: string }
+        Returns: Json
+      }
       svc_admin_complete_oob_recovery: {
         Args: { p_runbook_operation_id: string; p_target_user_id: string }
         Returns: Json
       }
-      svc_admin_complete_reset_step2: {
-        Args: { p_operation_id: string }
-        Returns: Json
-      }
-      svc_admin_complete_reset_step3: {
-        Args: { p_operation_id: string }
-        Returns: Json
-      }
+      svc_admin_complete_reset_step2:
+        | { Args: { p_operation_id: string }; Returns: Json }
+        | {
+            Args: { p_claim_token: string; p_operation_id: string }
+            Returns: Json
+          }
+      svc_admin_complete_reset_step3:
+        | { Args: { p_operation_id: string }; Returns: Json }
+        | {
+            Args: { p_claim_token: string; p_operation_id: string }
+            Returns: Json
+          }
       svc_admin_confirm_enrollment: {
         Args: {
           p_admin_user_id: string
@@ -3984,6 +4074,10 @@ export type Database = {
       }
       svc_admin_tombstone_principal: {
         Args: { p_principal_id: string; p_runbook_operation_id: string }
+        Returns: Json
+      }
+      svc_admin_touch_security_operation: {
+        Args: { p_operation_id: string }
         Returns: Json
       }
       teacher_answer_facts: {
@@ -4555,3 +4649,4 @@ export const Constants = {
     },
   },
 } as const
+
