@@ -11,6 +11,11 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { jsonResponse } from '../_shared/cors.ts';
 import { auditUnavailableEnvelope } from '../_shared/denial-envelope.ts';
+import {
+  reconcileTeacherAccountOperation,
+  type TeacherAccountCommand,
+  type TeacherAccountReconciliationDependencies,
+} from '../_shared/teacher-account-operation.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -64,6 +69,63 @@ async function deleteAllFactors(
 
 const rpcSucceeded = (result: { data: unknown; error: unknown }): boolean =>
   result.error === null && asRecord(result.data)?.outcome === 'ok';
+
+const isTeacherReconciliationCommand = (
+  value: string,
+): value is TeacherAccountCommand =>
+  value === 'create_teacher_account' || value === 'reset_teacher_password';
+
+const deleteAuthUserIfPresent = async (
+  service: ServiceClient,
+  userId: string,
+) => {
+  const result = await service.auth.admin.deleteUser(userId);
+  if (result.error?.status === 404) {
+    return { data: {}, error: null };
+  }
+  return result;
+};
+
+const teacherReconciliationDependencies = (
+  service: ServiceClient,
+): TeacherAccountReconciliationDependencies => ({
+  recordSafeEvent: (event) =>
+    console.info(
+      JSON.stringify({ event: 'teacher_account_reconciliation', ...event }),
+    ),
+  store: {
+    claimReconciliation: ({ operationId, expectedOperationType }) =>
+      service.rpc('svc_admin_claim_teacher_reconciliation', {
+        p_operation_id: operationId,
+        p_expected_operation_type: expectedOperationType,
+      }),
+    resolveReconciliation: ({
+      operationId,
+      expectedOperationType,
+      claimToken,
+    }) =>
+      service.rpc('svc_admin_resolve_teacher_reconciliation', {
+        p_operation_id: operationId,
+        p_expected_operation_type: expectedOperationType,
+        p_claim_token: claimToken,
+      }),
+    releaseReconciliation: ({
+      operationId,
+      expectedOperationType,
+      claimToken,
+      safeCode,
+    }) =>
+      service.rpc('svc_admin_release_teacher_reconciliation', {
+        p_operation_id: operationId,
+        p_expected_operation_type: expectedOperationType,
+        p_claim_token: claimToken,
+        p_safe_code: safeCode,
+      }),
+  },
+  auth: {
+    deleteUser: (userId) => deleteAuthUserIfPresent(service, userId),
+  },
+});
 
 Deno.serve(async (request) => {
   if (request.method !== 'POST')
@@ -225,6 +287,50 @@ Deno.serve(async (request) => {
         ? 'manual_retry_advanced'
         : 'manual_retry_failed',
     });
+  }
+
+  // Teacher-account recovery uses only service RPC projections. The private
+  // operation table is intentionally not readable by service_role; each worker
+  // must claim an exact operation kind/ID and spend the returned lease token.
+  const teacherCandidates = await service.rpc(
+    'svc_admin_list_teacher_reconciliation_candidates',
+    { p_limit: 20 },
+  );
+  const teacherList = asRecord(teacherCandidates.data);
+  if (
+    teacherCandidates.error !== null ||
+    teacherList?.outcome !== 'ok' ||
+    !Array.isArray(teacherList.operations)
+  ) {
+    return jsonResponse(503, auditUnavailableEnvelope());
+  }
+  const teacherDependencies = teacherReconciliationDependencies(service);
+  for (const candidateValue of teacherList.operations) {
+    const candidate = asRecord(candidateValue);
+    const operationId = asStr(candidate?.operation_id);
+    const command = asStr(candidate?.operation_type);
+    if (operationId === '' || !isTeacherReconciliationCommand(command)) {
+      results.push({ id: operationId, state: 'teacher_claim_invalid' });
+      continue;
+    }
+    try {
+      const reconciled = await reconcileTeacherAccountOperation(
+        { command, operationId },
+        teacherDependencies,
+      );
+      results.push({
+        id: operationId,
+        state:
+          reconciled.kind === 'resolved'
+            ? 'teacher_reconciliation_resolved'
+            : 'teacher_reconciliation_deferred',
+      });
+    } catch {
+      results.push({
+        id: operationId,
+        state: 'teacher_reconciliation_retrying',
+      });
+    }
   }
 
   return jsonResponse(200, { outcome: 'ok', operations: results });

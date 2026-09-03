@@ -12,16 +12,45 @@ import {
   COMMAND_POLICIES,
   resolveLocator,
 } from '../_shared/command-policies.ts';
-import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
+import {
+  corsHeaders,
+  jsonResponse as baseJsonResponse,
+} from '../_shared/cors.ts';
 import {
   auditUnavailableEnvelope,
   readDenialEnvelope,
 } from '../_shared/denial-envelope.ts';
 import { makeRecordAndDeny } from '../_shared/edge-denial.ts';
+import {
+  executeTeacherAccountSaga,
+  generateTeacherPassword,
+  resolveTeacherAccountReplay,
+  type TeacherAccountCommand,
+  type TeacherAccountOperationDependencies,
+} from '../_shared/teacher-account-operation.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+const TEACHER_COMMANDS = new Set([
+  'create_teacher_account',
+  'update_teacher_account',
+  'reset_teacher_password',
+]);
+const isTeacherSagaCommand = (
+  command: string,
+): command is TeacherAccountCommand =>
+  command === 'create_teacher_account' || command === 'reset_teacher_password';
+
+// One-time credentials must not enter browser or intermediary caches, including
+// denial/replay responses adjacent to a secret-producing command.
+const jsonResponse = (status: number, body: unknown): Response => {
+  const response = baseJsonResponse(status, body);
+  response.headers.set('Cache-Control', 'no-store, private');
+  response.headers.set('Pragma', 'no-cache');
+  return response;
+};
 
 const auditUnavailable = () => jsonResponse(503, auditUnavailableEnvelope());
 
@@ -29,10 +58,14 @@ const auditUnavailable = () => jsonResponse(503, auditUnavailableEnvelope());
 // Edge 自身判定的 denial 用 recordAndDeny(fail-closed)。
 // Task 13A-3:envelope 必須完整轉送 —— 半截或畸形的 denial 不得被當成
 // 「已入帳」交給 client,一律 fail closed。
-const denied = (payload: unknown, status = 403): Response => {
+const denied = (
+  payload: unknown,
+  status = 403,
+  extra?: Record<string, unknown>,
+): Response => {
   const envelope = readDenialEnvelope(payload);
   if (envelope === null) return auditUnavailable();
-  return jsonResponse(status, envelope);
+  return jsonResponse(status, extra ? { ...envelope, ...extra } : envelope);
 };
 
 function decodeJwtPayload(jwt: string): Record<string, unknown> {
@@ -47,9 +80,141 @@ function decodeJwtPayload(jwt: string): Record<string, unknown> {
 const asString = (value: unknown): string =>
   typeof value === 'string' ? value : '';
 
+type ServiceClient = ReturnType<typeof createClient>;
+
+const deleteAuthUserIfPresent = async (
+  service: ServiceClient,
+  userId: string,
+) => {
+  const result = await service.auth.admin.deleteUser(userId);
+  return result.error?.status === 404 ? { data: {}, error: null } : result;
+};
+
+const getAuthUserIfPresent = async (service: ServiceClient, userId: string) => {
+  const result = await service.auth.admin.getUserById(userId);
+  return result.error?.status === 404
+    ? { data: { user: null }, error: null }
+    : result;
+};
+
+const teacherDependencies = (
+  service: ServiceClient,
+  command: TeacherAccountCommand,
+): TeacherAccountOperationDependencies => ({
+  // Read this create-only environment value lazily. A missing namespace cannot
+  // break reset or any pre-existing Admin command.
+  internalEmailNamespace:
+    command === 'create_teacher_account'
+      ? (Deno.env.get('ADMIN_TEACHER_AUTH_EMAIL_NAMESPACE') ?? '')
+      : '',
+  generatePassword: generateTeacherPassword,
+  recordSafeEvent: (event) =>
+    console.info(
+      JSON.stringify({ event: 'teacher_account_operation', ...event }),
+    ),
+  store: {
+    claimExecution: ({ operationId, expectedOperationType }) =>
+      service.rpc('svc_admin_claim_teacher_account_execution', {
+        p_operation_id: operationId,
+        p_expected_operation_type: expectedOperationType,
+      }),
+    beginAuthCall: ({
+      operationId,
+      expectedOperationType,
+      executionClaimToken,
+      authCallKind,
+    }) =>
+      service.rpc('svc_admin_begin_teacher_auth_call', {
+        p_operation_id: operationId,
+        p_expected_operation_type: expectedOperationType,
+        p_execution_claim_token: executionClaimToken,
+        p_auth_call_kind: authCallKind,
+      }),
+    markAuthApplied: ({
+      operationId,
+      expectedOperationType,
+      executionClaimToken,
+      authUserId,
+    }) =>
+      service.rpc('svc_admin_mark_teacher_auth_applied', {
+        p_operation_id: operationId,
+        p_expected_operation_type: expectedOperationType,
+        p_execution_claim_token: executionClaimToken,
+        p_auth_user_id: authUserId,
+      }),
+    commitTeacherProfile: ({
+      operationId,
+      expectedOperationType,
+      executionClaimToken,
+    }) =>
+      service.rpc('svc_admin_commit_teacher_profile', {
+        p_operation_id: operationId,
+        p_expected_operation_type: expectedOperationType,
+        p_execution_claim_token: executionClaimToken,
+      }),
+    completeOperation: ({
+      operationId,
+      expectedOperationType,
+      executionClaimToken,
+    }) =>
+      service.rpc('svc_admin_complete_teacher_account_operation', {
+        p_operation_id: operationId,
+        p_expected_operation_type: expectedOperationType,
+        p_execution_claim_token: executionClaimToken,
+      }),
+    beginCreateCompensation: ({
+      operationId,
+      expectedOperationType,
+      safeCode,
+      cleanupAuthUserId,
+      executionClaimToken,
+    }) =>
+      service.rpc('svc_admin_begin_teacher_create_compensation', {
+        p_operation_id: operationId,
+        p_expected_operation_type: expectedOperationType,
+        p_safe_code: safeCode,
+        p_cleanup_auth_user_id: cleanupAuthUserId,
+        p_execution_claim_token: executionClaimToken,
+      }),
+    completeCreateCompensation: ({
+      operationId,
+      expectedOperationType,
+      safeCode,
+      executionClaimToken,
+    }) =>
+      service.rpc('svc_admin_complete_teacher_create_compensation', {
+        p_operation_id: operationId,
+        p_expected_operation_type: expectedOperationType,
+        p_safe_code: safeCode,
+        p_execution_claim_token: executionClaimToken,
+      }),
+    requireReconciliation: ({
+      operationId,
+      expectedOperationType,
+      safeCode,
+      executionClaimToken,
+    }) =>
+      service.rpc('svc_admin_require_teacher_reconciliation', {
+        p_operation_id: operationId,
+        p_expected_operation_type: expectedOperationType,
+        p_safe_code: safeCode,
+        p_execution_claim_token: executionClaimToken,
+      }),
+  },
+  auth: {
+    getUserById: (userId) => getAuthUserIfPresent(service, userId),
+    createUser: (attributes) => service.auth.admin.createUser(attributes),
+    updateUserById: (userId, attributes) =>
+      service.auth.admin.updateUserById(userId, attributes),
+    deleteUser: (userId) => deleteAuthUserIfPresent(service, userId),
+  },
+});
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS')
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', {
+      headers: { ...corsHeaders, 'Cache-Control': 'no-store, private' },
+    });
   if (request.method !== 'POST')
     return jsonResponse(405, { error: 'METHOD_NOT_ALLOWED' });
 
@@ -197,6 +362,40 @@ Deno.serve(async (request) => {
   if (receipt.error !== null || !receipt.data) return auditUnavailable();
   const mint = receipt.data as Record<string, unknown>;
   if (mint.outcome === 'replayed') {
+    if (TEACHER_COMMANDS.has(command)) {
+      const replay = resolveTeacherAccountReplay(command, mint.result);
+      if (replay === null) return auditUnavailable();
+      if (replay.kind === 'denial') return denied(replay.envelope);
+      if (replay.kind === 'resume') {
+        try {
+          const saga = await executeTeacherAccountSaga(
+            { command: replay.command, operationId: replay.operationId },
+            teacherDependencies(service, replay.command),
+          );
+          if (saga.kind === 'denied') {
+            if (saga.envelope) {
+              return denied(saga.envelope, 409, {
+                operationId: saga.operationId,
+              });
+            }
+            return recordAndDeny(
+              command,
+              userId,
+              saga.code,
+              saga.code === 'TEACHER_AUTH_UNAVAILABLE' ? 503 : 409,
+              { operationId: replay.operationId },
+            );
+          }
+          return jsonResponse(200, saga.payload);
+        } catch {
+          return auditUnavailable();
+        }
+      }
+      return jsonResponse(200, {
+        outcome: 'replayed',
+        result: replay.payload,
+      });
+    }
     return jsonResponse(200, { outcome: 'replayed', result: mint.result });
   }
   if (mint.outcome === 'denied') {
@@ -220,6 +419,34 @@ Deno.serve(async (request) => {
     return denied(outcome);
   }
   if (outcome.outcome !== 'ok') return auditUnavailable();
+
+  if (isTeacherSagaCommand(command)) {
+    const operationId = asString(outcome.operation_id);
+    if (operationId === '') return auditUnavailable();
+    try {
+      const saga = await executeTeacherAccountSaga(
+        { command, operationId },
+        teacherDependencies(service, command),
+      );
+      if (saga.kind === 'denied') {
+        if (saga.envelope) {
+          return denied(saga.envelope, 409, {
+            operationId: saga.operationId,
+          });
+        }
+        return recordAndDeny(
+          command,
+          userId,
+          saga.code,
+          saga.code === 'TEACHER_AUTH_UNAVAILABLE' ? 503 : 409,
+          { operationId },
+        );
+      }
+      return jsonResponse(200, saga.payload);
+    } catch {
+      return auditUnavailable();
+    }
+  }
 
   // reset saga step 2/3(spec §4.5):step1 成功後由同請求嘗試完成;
   // 每一步的結果都必須確認 —— GoTrue 讀取/刪除失敗或 step RPC 非 ok

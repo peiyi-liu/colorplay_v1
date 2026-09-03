@@ -62,6 +62,34 @@ describe('edge denial recorder fail-closed contract', () => {
     expect(calls).toHaveLength(1);
   });
 
+  it.each([
+    'TEACHER_ACCOUNT_INVALID',
+    'TEACHER_ACCOUNT_CONFLICT',
+    'TEACHER_OPERATION_PENDING',
+    'TEACHER_AUTH_UNAVAILABLE',
+    'TEACHER_RECONCILIATION_REQUIRED',
+  ])(
+    'passes the stable teacher-account code %s through verbatim',
+    async (code) => {
+      const recordedEnvelope = envelope(code);
+      const recordAndDeny = makeRecordAndDeny(
+        recorderReturning(recordedEnvelope),
+        'edge/test',
+        jsonResponse,
+      );
+
+      const response = await recordAndDeny(
+        'teacher_account',
+        'admin-1',
+        code,
+        409,
+      );
+
+      expect(response.status).toBe(409);
+      expect(await response.json()).toEqual(recordedEnvelope);
+    },
+  );
+
   it('fails closed with a 503 envelope when the recorder errors', async () => {
     const recordAndDeny = makeRecordAndDeny(
       recorderReturning(null, { message: 'db down' }),
@@ -200,5 +228,23 @@ describe('edge denial recorder fail-closed contract', () => {
       await recordAndDeny('challenge', 'user-1', 'NOT_A_REAL_STABLE_CODE', 403),
     );
     expect(body.message).not.toContain('raw internal detail');
+  });
+
+  it('fails closed on an unknown TEACHER_* code', async () => {
+    const code = 'TEACHER_NOT_A_REAL_STABLE_CODE';
+    const recordAndDeny = makeRecordAndDeny(
+      recorderReturning({
+        ...envelope(code),
+        message:
+          'raw teacher-account detail that should never reach the client',
+      }),
+      'edge/test',
+      jsonResponse,
+    );
+
+    const body = await failClosed(
+      await recordAndDeny('teacher_account', 'admin-1', code, 409),
+    );
+    expect(body.message).not.toContain('raw teacher-account detail');
   });
 });

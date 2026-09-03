@@ -52,6 +52,21 @@ export const COMMAND_POLICIES: Record<string, CommandPolicy> = {
     freshTotp: true,
     hashFields: ['session_id', 'reason'],
   },
+  create_teacher_account: {
+    rpc: 'create_teacher_account',
+    freshTotp: true,
+    hashFields: ['contact_email', 'full_name', 'reason'],
+  },
+  update_teacher_account: {
+    rpc: 'update_teacher_account',
+    freshTotp: true,
+    hashFields: ['contact_email', 'full_name', 'reason', 'teacher_id'],
+  },
+  reset_teacher_password: {
+    rpc: 'reset_teacher_password',
+    freshTotp: true,
+    hashFields: ['reason', 'teacher_id'],
+  },
   // reveal 的兩種定址形態(spec §1.3、§7):row_id 只適用具 id 欄的表;
   // row_token 是 admin_list_resource 為每列簽發的 opaque token,Edge 只
   // 原樣轉送與原樣入 hash —— 不解碼、不重建 canonical JSON、不改寫成
@@ -81,6 +96,7 @@ const UUID_HASH_FIELDS = new Set([
   'invitation_id',
   'operation_id',
   'row_id',
+  'teacher_id',
 ]);
 
 // DB 端 btrim(單參數)僅剝 0x20,不可用 JS trim()(會多剝 \n/\t 等,
@@ -135,11 +151,22 @@ export function buildHashFields(
       continue;
     }
     let value = String(raw);
-    if (source.hashField === 'reason' || source.hashField === 'purpose') {
+    if (
+      source.hashField === 'reason' ||
+      source.hashField === 'purpose' ||
+      source.hashField === 'full_name'
+    ) {
       value = trimAsciiSpaces(value);
     }
-    if (source.hashField === 'invited_email') {
+    if (
+      source.hashField === 'invited_email' ||
+      source.hashField === 'contact_email'
+    ) {
       value = trimAsciiSpaces(value).toLowerCase();
+    }
+    if (source.hashField === 'contact_email' && value === '') {
+      fields[source.hashField] = null;
+      continue;
     }
     if (UUID_HASH_FIELDS.has(source.hashField)) value = value.toLowerCase();
     fields[source.hashField] = value;

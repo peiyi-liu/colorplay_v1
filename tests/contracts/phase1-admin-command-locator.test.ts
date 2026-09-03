@@ -22,6 +22,14 @@ const policyFor = (command: string): CommandPolicy => {
 const reveal = policyFor('admin_reveal_field');
 const deactivate = policyFor('deactivate_admin');
 
+const FORBIDDEN_TEACHER_ARGS = {
+  auth_user_id: 'client-selected-auth-user',
+  internal_email: 'client-selected@internal.invalid',
+  login_account: 'teacher00',
+  password: 'ClientSelected1!',
+  role: 'admin',
+};
+
 // server 簽發的 token 是 base64url,大小寫有意義
 const TOKEN = 'eyJpZCI6IjBjMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDBjMSJ9';
 const BASE_REVEAL_ARGS = {
@@ -36,6 +44,106 @@ const resolved = (args: Record<string, unknown>) => {
   if (!resolution.ok) throw new Error('expected a resolvable locator');
   return resolution.locator;
 };
+
+describe('teacher account command policies', () => {
+  it.each([
+    {
+      command: 'create_teacher_account',
+      expectedPolicy: {
+        rpc: 'create_teacher_account',
+        freshTotp: true,
+        hashFields: ['contact_email', 'full_name', 'reason'],
+      },
+      args: {
+        contact_email: 'teacher@example.test',
+        full_name: '安全教師',
+        reason: '建立新的正式教師帳號',
+        ...FORBIDDEN_TEACHER_ARGS,
+      },
+      expectedRpcArgs: {
+        p_contact_email: 'teacher@example.test',
+        p_full_name: '安全教師',
+        p_reason: '建立新的正式教師帳號',
+      },
+    },
+    {
+      command: 'update_teacher_account',
+      expectedPolicy: {
+        rpc: 'update_teacher_account',
+        freshTotp: true,
+        hashFields: ['contact_email', 'full_name', 'reason', 'teacher_id'],
+      },
+      args: {
+        contact_email: null,
+        full_name: '更新後教師',
+        reason: '更新教師姓名與聯絡資料',
+        teacher_id: '65000000-0000-0000-0000-000000000001',
+        ...FORBIDDEN_TEACHER_ARGS,
+      },
+      expectedRpcArgs: {
+        p_contact_email: null,
+        p_full_name: '更新後教師',
+        p_reason: '更新教師姓名與聯絡資料',
+        p_teacher_id: '65000000-0000-0000-0000-000000000001',
+      },
+    },
+    {
+      command: 'reset_teacher_password',
+      expectedPolicy: {
+        rpc: 'reset_teacher_password',
+        freshTotp: true,
+        hashFields: ['reason', 'teacher_id'],
+      },
+      args: {
+        reason: '教師忘記密碼需要安全重設',
+        teacher_id: '65000000-0000-0000-0000-000000000001',
+        ...FORBIDDEN_TEACHER_ARGS,
+      },
+      expectedRpcArgs: {
+        p_reason: '教師忘記密碼需要安全重設',
+        p_teacher_id: '65000000-0000-0000-0000-000000000001',
+      },
+    },
+  ])('$command binds and forwards only its exact hash fields', (testCase) => {
+    const policy = policyFor(testCase.command);
+    expect(policy).toEqual(testCase.expectedPolicy);
+    expect(resolveLocator(policy, testCase.args)).toEqual({
+      ok: true,
+      locator: null,
+    });
+    expect(buildRpcArgs(policy, null, testCase.args)).toEqual(
+      testCase.expectedRpcArgs,
+    );
+  });
+
+  it('canonicalizes teacher fields exactly like PostgreSQL btrim and uuid text', () => {
+    const policy = policyFor('update_teacher_account');
+    expect(
+      buildHashFields(policy, null, {
+        contact_email: '  Teacher@Example.Test  ',
+        full_name: '  王老師\n ',
+        reason: '  更新教師聯絡資料\n ',
+        teacher_id: 'AB000000-0000-0000-0000-0000000000CD',
+      }),
+    ).toEqual({
+      contact_email: 'teacher@example.test',
+      full_name: '王老師\n',
+      reason: '更新教師聯絡資料\n',
+      teacher_id: 'ab000000-0000-0000-0000-0000000000cd',
+    });
+  });
+
+  it('canonicalizes a blank optional contact email to null', () => {
+    const policy = policyFor('create_teacher_account');
+    expect(
+      buildHashFields(policy, null, {
+        contact_email: '   ',
+        full_name: '王老師',
+        reason: '建立新的正式教師帳號',
+      }).contact_email,
+    ).toBeNull();
+  });
+});
 
 describe('admin-command locator resolution', () => {
   it('accepts exactly one locator', () => {
