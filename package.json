@@ -43,6 +43,7 @@
     "admin:catalog:generate": "node scripts/admin/generate-sensitivity-catalog.mjs",
     "admin:catalog:check": "node scripts/admin/generate-sensitivity-catalog.mjs --check",
     "admin:catalog:inventory": "node scripts/admin/compare-catalog-inventory.mjs",
+    "staging:admin-fixture-cleanup": "node scripts/staging/admin-fixture-cleanup.mjs",
     "phase:game-economy": "bash scripts/acceptance/run-game-economy-v2.sh",
     "phase:achievements": "bash scripts/acceptance/run-achievements.sh",
     "phase:classroom-leaderboard": "bash scripts/acceptance/run-classroom-leaderboard.sh",

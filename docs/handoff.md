@@ -1235,3 +1235,30 @@
 - 下一步：本批（image-perf ＋ phase5f-u1，含之前已推斷等同、免重複合併的 `phase6/jrpg-generated-board-ui`／`integration/jrpg-student-teacher-20260814`）5 支分支整合到此告一段落，等 owner 看完整合報告核准後才 push。Push 完成後：① Phase 0（PR #1）依原計畫獨立處理；② 上述 100+ 個 e2e 過時斷言排一個獨立任務逐一校正；③ 4 個共用 module-throw 寫法的 phase-gate 檔案建議之後也一併搬進 test body，避免下次踩到同一種目錄級崩潰。
 - Blocker／待決策：無阻擋本次合併本身的 blocker；e2e 全量校正的排程與優先順序待 owner 裁定。
 - 相關檔案／commit：`1d312bc`（phase5f-u1 合併）、`4001bda`（viewport-warning 修復＋harness spec 重寫）、`083d940`（兩個 image-perf 期契約測試修正）、`14b0f53`（047 pgTAP bank_kind／複習卡片數量修正）、`47169d3`（e2e 目錄崩潰修復＋密碼確認 selector 修正）。
+
+## 2026-09-03 23:27 [Codex] — Admin B A1：Hosted fixture cleanup harness 候選完成
+
+- 做了什麼：新增 manifest-driven、exact-ID、dry-run-first 的 Hosted Admin fixture cleanup runner、fail-closed contract、型別宣告、操作 runbook 與 scoped contract tests。manifest 綁定 exact Staging project ref、run ID、Git SHA、Vercel deployment ID、migration head、Auth/profile/operation UUID；Auth metadata、未列關聯列、錯誤 migration／環境與非精確目標皆拒絕。execute 需未逾期 receipt、精確 confirmation 與 execution flag；zero-residue verify 重跑完整 relationship guard。單次 review 的三項安全發現（DB mutation 前 Auth 再驗證、verify 關聯殘留守門、DB 階段 audit 不提前宣稱整體成功）均已修正。
+- 下一步：恢復原「Admin B 開發狀態審核」task，對本筆 local candidate commit 做唯一一輪審查；ALLOW 後仍須先處理 Phase 0、canonical integration/exact-SHA deployment 與 migration lineage，另取得一次性 Hosted mutation 授權，才可執行 Task 7 gate。
+- Blocker／待決策：A1 程式本身無未解 finding；依授權邊界未連線或異動 Local/Hosted，因此 SQL 尚未在真實 Staging Postgres parse/run。首次獲准操作只能先跑 exact-target read-only dry-run。DB→Auth 無跨系統原子性，中斷時須依 receipt TTL 重跑或重新 dry-run。
+- 相關檔案／commit：`package.json`、`docs/deployment/runbooks/admin-hosted-fixture-cleanup.md`、`scripts/staging/admin-fixture-cleanup{,-contract}.{mjs,d.mts}`、`tests/contracts/staging-admin-fixture-cleanup.test.ts`、本段 `docs/handoff.md`；commit 為本筆同一 local candidate。驗證：`pnpm typecheck`、`pnpm lint`、A1 scoped Vitest 10/10、Prettier 與 `git diff --check` 全綠。未 push、merge、deploy、改 env 或執行任何 Supabase mutation。
+
+## 2026-09-03 23:40 [Codex] — Admin B A1 review BLOCK remediation：非 DB 部分完成
+
+- 做了什麼：原 reviewer 對 A1 回報 2 個 P1、1 個 P2，均接受並修正：新增 migration-defined、`service_role`-only、transactional exact-ID cleanup RPC，CLI 的 execute 不再產生或用 psql 執行 DML；direct psql 僅保留明確 `read only` 的 dry-run/verify。補上「非 target identity 指向 target audit principal」反向 guard 與 negative pgTAP；manifest/snapshot/receipt/RPC 全部新增 ordered migration-ledger SHA-256 binding，同一 head 但 missing-old/extra-fork 也拒絕。另將 CLI/env/receipt 拆至獨立 runtime contract，allowlist + read-only SQL guard 保持同檔。
+- 下一步：非 DB contract tests、typecheck、lint、scoped formatting 與 diff check 通過後交回原 reviewer 複驗。新 migration/pgTAP 的真實執行需要另行核准 Local Supabase exclusive window；未獲授權前不得將靜態通過宣稱為 DB gate 通過，也不得建立 candidate commit。
+- Blocker／待決策：只剩 `20260903000400_admin_fixture_cleanup_rpc.sql` 與 `069_admin_fixture_cleanup_rpc.test.sql` 尚未在真實 Local Postgres 套用／執行；本輪刻意不啟動、不 reset、不連線 Local 或 Hosted。
+- 相關檔案／commit：A1 exact 12-path remediation，尚未 stage/commit。新增 runtime contract pair、migration `20260903000400` 與 pgTAP `069`；其餘為原 A1 runner/contract/test/runbook/package 與 append-only `docs/handoff.md`。
+
+## 2026-09-03 23:53 [Codex] — Admin B A1 Local DB gate 通過
+
+- 做了什麼：Owner 核准共享 Local Supabase exclusive destructive window 後，先確認沒有其他 DB task/process，並記錄 reset 前 head `20260903000300`、98 筆 migration、Auth/Profile 各 26 筆。完整 reset 實際套用 `20260903000400_admin_fixture_cleanup_rpc.sql`。pgTAP 069 前兩次在成功案例被 `DOMAIN_REFERENCE_PRESENT` 擋住，查證為正式 Auth bootstrap trigger 自動建立 wallet/default Blook/default frame，且 default Blook 又觸發 achievement progress/unlock；修法不是整類放行，而是只容許零餘額、單一預設資產與精確 default-Blook achievement source，任何產品活動仍 fail closed，並新增非零 wallet 負向測試。
+- 驗證：最終完整 reset 成功；`069_admin_fixture_cleanup_rpc.test.sql` 17/17 通過；Admin scoped pgTAP `064/065/068/069` 共 4 檔、225 assertions 全綠。reset 後 head `20260903000400`、99 筆 migration、ordered ledger SHA-256 `df361059d5a60a6547e3625da6b362673cbb2ccb96faf817a0fbeb7b9c7dc233`、cleanup RPC 存在、Auth/Profile 各 0 筆。
+- 下一步：交回原 Admin B reviewer 做同一輪最終複驗；ALLOW 前維持未 stage/commit。Hosted cleanup、fixture、env、push、merge、deploy 均未執行。
+- Blocker／待決策：Local DB gate 無 blocker；仍不得把 Local 通過外推為 Hosted gate。Task 7 的 Phase 0、canonical integration/exact-SHA deployment、Hosted migration lineage 與一次性 Hosted mutation 授權仍各自受控。
+
+## 2026-09-03 23:58 [Codex] — Admin B A1 NULL-safe guard 複驗通過
+
+- 做了什麼：root 同輪複核發現 `achievement_progress.last_source_type/last_source_id` 可為 NULL，原 `<>` 會得到 unknown 而錯誤放行。migration 與 read-only contract 均改用 `IS DISTINCT FROM`；pgTAP 069 新增 source pair 為 NULL 時必須回 `ADMIN_FIXTURE_CLEANUP_BOOTSTRAP_STATE_INVALID` 且 profile 仍存在的負向測試，再恢復精確 default-Blook source 後驗證成功 cleanup。
+- 驗證：重新完整 Local reset 套用 migration 成功；`064/065/068/069` 共 4 檔、227 assertions 全綠，其中 069 為 19/19。非 DB contract 14/14、typecheck、lint、scoped Prettier、`git diff --check` 全綠。
+- 下一步：交回原 reviewer 做同一輪最終判定；維持 exact 12 paths、未 stage/commit，未碰 Hosted。
