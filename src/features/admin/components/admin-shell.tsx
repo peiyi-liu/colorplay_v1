@@ -33,6 +33,7 @@ const NAV_GROUPS: readonly {
       { label: '管理員', to: '/admin/access/admins' },
       { label: '邀請', to: '/admin/access/invitations' },
       { label: 'Session', to: '/admin/access/sessions' },
+      { label: '教師帳號', to: '/admin/teachers' },
     ],
     label: '身分與存取',
   },

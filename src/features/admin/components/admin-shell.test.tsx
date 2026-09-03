@@ -25,6 +25,7 @@ function renderShell(initialEntry: string) {
         <Route element={<AdminShell />}>
           <Route element={<p>安全總覽內容</p>} path="/admin" />
           <Route element={<p>管理員清單內容</p>} path="/admin/access/admins" />
+          <Route element={<p>教師帳號內容</p>} path="/admin/teachers" />
           <Route
             element={<p>邀請清單內容</p>}
             path="/admin/access/invitations"
@@ -92,6 +93,21 @@ describe('AdminShell', () => {
       'href',
       '/admin/data',
     );
+  });
+
+  it('links teacher-account operations from identity and access', () => {
+    stubWide(true);
+    renderShell('/admin/teachers');
+
+    expect(screen.getByRole('link', { name: '教師帳號' })).toHaveAttribute(
+      'href',
+      '/admin/teachers',
+    );
+    expect(screen.getByRole('link', { name: '教師帳號' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(screen.getByText('教師帳號內容')).toBeInTheDocument();
   });
 
   it('keeps the sidebar persistently visible at wide viewports without a MENU toggle', () => {

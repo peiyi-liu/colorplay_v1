@@ -1,10 +1,14 @@
 import { render, screen } from '@testing-library/react';
+import { isValidElement } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthRepository, AuthSession } from '../../features/auth/types';
 import { usePublishedChapters } from '../../features/learning/api/chapters';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { AppProviders } from '../providers/app-providers';
+import { AdminShell } from '../../features/admin/components/admin-shell';
+import { RequireAdminIdentity } from '../../features/admin/components/require-admin-identity';
+import { RequirePrivilegedSession } from '../../features/admin/components/require-privileged-session';
 import { createAppRouter } from './create-app-router';
 
 vi.mock('../../features/profile/hooks/use-my-profile', () => ({
@@ -226,6 +230,39 @@ describe('createAppRouter', () => {
       refetch: vi.fn(),
     });
   });
+
+  it.each(['/admin/teachers', '/admin/teachers/:teacherId'])(
+    'keeps %s below all existing Admin guards',
+    (path) => {
+      interface RouteNode {
+        children?: RouteNode[];
+        element?: unknown;
+        path?: string;
+      }
+      const findAncestors = (
+        routes: readonly RouteNode[],
+        ancestors: readonly RouteNode[] = [],
+      ): readonly RouteNode[] | null => {
+        for (const route of routes) {
+          if (route.path === path) return ancestors;
+          const found = route.children
+            ? findAncestors(route.children, [...ancestors, route])
+            : null;
+          if (found) return found;
+        }
+        return null;
+      };
+      const router = createAppRouter();
+      const ancestors = findAncestors(router.routes as RouteNode[]);
+      expect(ancestors).not.toBeNull();
+      const elementTypes = ancestors?.flatMap((route) =>
+        isValidElement(route.element) ? [route.element.type] : [],
+      );
+      expect(elementTypes).toContain(RequireAdminIdentity);
+      expect(elementTypes).toContain(RequirePrivilegedSession);
+      expect(elementTypes).toContain(AdminShell);
+    },
+  );
 
   it.each([
     ['/', 'ColorPlay', '開始冒險'],

@@ -6317,6 +6317,137 @@ select#dashboard-classroom {
   font-size: 1.1rem;
 }
 
+/* ── Admin 教師帳號(Task 5;design §9.1–9.2)───────────────────── */
+
+.admin-teachers__heading-row,
+.admin-teachers__filters,
+.admin-teacher-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.admin-teachers__heading-row {
+  justify-content: space-between;
+}
+
+.admin-teachers__filters label {
+  display: block;
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+
+.admin-teachers__filters input,
+.admin-teachers__filters select,
+.teacher-account-form input {
+  min-height: 44px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--color-text);
+  font: inherit;
+  padding: 0 var(--space-3);
+}
+
+.teacher-account-form__destructive-confirmation {
+  border: 2px solid var(--color-danger, #b42318);
+  border-radius: 0.75rem;
+  padding: 0.875rem;
+}
+
+.teacher-account-form__destructive-confirmation label {
+  align-items: center;
+  display: flex;
+  gap: 0.625rem;
+  min-height: 44px;
+}
+
+.teacher-account-form__destructive-confirmation input {
+  flex: 0 0 auto;
+  min-height: 24px;
+  width: 24px;
+}
+
+.admin-teachers__operation-status {
+  border: 2px solid var(--color-alert);
+  border-radius: var(--radius-card);
+  background: var(--amber-tint-card);
+  padding: var(--space-4);
+}
+
+.admin-teachers__detail-link,
+.admin-teacher-detail__back-link,
+.admin-teachers__health-link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  font-weight: 700;
+  padding: 0 var(--space-2);
+}
+
+.admin-teacher-detail__facts,
+.teacher-secret-receipt dl {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.admin-teacher-detail__facts > div,
+.teacher-secret-receipt dl > div {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  padding: var(--space-3);
+}
+
+.admin-teacher-detail__facts dt,
+.teacher-secret-receipt dt {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.admin-teacher-detail__facts dd,
+.teacher-secret-receipt dd {
+  margin: var(--space-1) 0 0;
+}
+
+.admin-teacher-detail__hint,
+.teacher-secret-receipt__warning {
+  color: var(--color-muted);
+}
+
+.teacher-secret-receipt code {
+  display: block;
+  overflow-wrap: anywhere;
+  border-radius: var(--radius-control);
+  background: var(--ink-100);
+  margin: var(--space-2) 0;
+  padding: var(--space-3);
+  font-family: monospace;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 639px) {
+  .admin-teachers__heading-row,
+  .admin-teachers__filters,
+  .admin-teacher-detail__actions,
+  .admin-command-dialog__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-teachers__filters input,
+  .admin-teachers__filters select,
+  .admin-teacher-detail__actions > *,
+  .admin-command-dialog__actions > * {
+    width: 100%;
+  }
+}
+
 /* ── JRPG 對話窗(ADR 0005;元件 src/components/ui/rpg-window.tsx) ── */
 .rpg-window {
   background: var(--pixel-night);

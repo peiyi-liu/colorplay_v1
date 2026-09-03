@@ -236,6 +236,16 @@ export function createAppRouter() {
                             import('../../features/admin/pages/admin-access-sessions-page'),
                         },
                         {
+                          path: '/admin/teachers',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-teachers-page'),
+                        },
+                        {
+                          path: '/admin/teachers/:teacherId',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-teacher-detail-page'),
+                        },
+                        {
                           path: '/admin/data',
                           lazy: () =>
                             import('../../features/admin/pages/admin-data-index-page'),
