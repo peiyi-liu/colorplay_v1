@@ -518,7 +518,8 @@ revoke all on function admin_private.teacher_service_deny(
 
 -- Once a valid receipt has been consumed, every expected denial must itself be
 -- replayable. This helper records a terminal execution around the canonical
--- denial envelope; it deliberately does not create a target-bound operation.
+-- denial envelope. Pending denials bind the exact existing open operation;
+-- they never create a second target-bound operation.
 create function admin_private.finalize_teacher_command_denial(
   p_gate jsonb,
   p_command_name text,
@@ -526,7 +527,8 @@ create function admin_private.finalize_teacher_command_denial(
   p_request_hash bytea,
   p_receipt_id uuid,
   p_reason text,
-  p_code text
+  p_code text,
+  p_operation_id uuid default null
 ) returns jsonb
 language plpgsql
 security definer
@@ -535,22 +537,49 @@ as $$
 declare
   v_denial jsonb;
   v_audit_id uuid;
+  v_code text := admin_private.teacher_safe_error_code(p_code);
+  v_request_id uuid;
   v_result jsonb;
 begin
-  v_denial := public.admin_internal_command_deny(
+  if v_code = 'TEACHER_OPERATION_PENDING'
+     and p_operation_id is null then
+    raise exception 'pending teacher denial requires an operation id';
+  end if;
+  if p_operation_id is not null and not exists (
+    select 1 from admin_private.teacher_account_operations operation
+     where operation.id = p_operation_id
+       and operation.state not in ('completed', 'compensated')
+  ) then
+    raise exception 'teacher denial operation id is not open';
+  end if;
+  v_audit_id := public.admin_internal_append_audit(
+    'admin',
+    (p_gate ->> 'principal_id')::uuid,
+    (p_gate ->> 'session_id')::uuid,
+    (p_gate ->> 'auth_session_id')::uuid,
     p_command_name,
+    'admin_command',
     null,
-    admin_private.teacher_safe_error_code(p_code),
+    v_code,
     p_reason,
-    (p_gate ->> 'mfa_age_seconds')::integer
+    (p_gate ->> 'mfa_age_seconds')::integer,
+    null,
+    null,
+    null,
+    p_operation_id
   );
-  select audit.id into v_audit_id
+  select audit.request_id into v_request_id
     from public.admin_audit_events audit
-   where audit.request_id = (v_denial ->> 'request_id')::uuid;
+   where audit.id = v_audit_id;
+  perform public.admin_internal_record_denial(
+    'command/' || p_command_name, v_code
+  );
+  v_denial := public.admin_internal_denial_envelope(v_code, v_request_id);
   v_result := v_denial || jsonb_build_object(
     'result', 'denied',
     'secret_replayable', false
-  );
+  ) || case when p_operation_id is null then '{}'::jsonb else
+    jsonb_build_object('operation_id', p_operation_id::text) end;
   insert into public.admin_command_executions (
     actor_principal_id, command_name, idempotency_key, request_hash,
     receipt_id, audit_event_id, request_id, result_code,
@@ -559,13 +588,13 @@ begin
     (p_gate ->> 'principal_id')::uuid, p_command_name,
     p_idempotency_key, p_request_hash, p_receipt_id, v_audit_id,
     (v_denial ->> 'request_id')::uuid,
-    admin_private.teacher_safe_error_code(p_code), v_result, now()
+    v_code, v_result, now()
   );
   return v_result;
 end;
 $$;
 revoke all on function admin_private.finalize_teacher_command_denial(
-  jsonb, text, text, bytea, uuid, text, text
+  jsonb, text, text, bytea, uuid, text, text, uuid
 ) from public, anon, authenticated, service_role;
 
 -- Receipt-bound create only reserves identity. Auth creation is performed by
@@ -696,6 +725,7 @@ declare
   v_teacher public.profiles;
   v_execution_id uuid := gen_random_uuid();
   v_operation_id uuid := gen_random_uuid();
+  v_existing_operation_id uuid;
   v_request_id uuid := gen_random_uuid();
   v_audit_id uuid;
   v_result jsonb;
@@ -736,14 +766,16 @@ begin
       v_gate, 'update_teacher_account', p_idempotency_key, v_request_hash,
       p_receipt_id, p_reason, 'TEACHER_ACCOUNT_INVALID');
   end if;
-  if exists (
-    select 1 from admin_private.teacher_account_operations operation
+  select operation.id into v_existing_operation_id
+    from admin_private.teacher_account_operations operation
      where operation.teacher_id = p_teacher_id
        and operation.state not in ('completed', 'compensated')
-  ) then
+     for update;
+  if v_existing_operation_id is not null then
     return admin_private.finalize_teacher_command_denial(
       v_gate, 'update_teacher_account', p_idempotency_key, v_request_hash,
-      p_receipt_id, p_reason, 'TEACHER_OPERATION_PENDING');
+      p_receipt_id, p_reason, 'TEACHER_OPERATION_PENDING',
+      v_existing_operation_id);
   end if;
 
   insert into public.admin_command_executions (
@@ -833,6 +865,7 @@ declare
   v_teacher public.profiles;
   v_execution_id uuid := gen_random_uuid();
   v_operation_id uuid := gen_random_uuid();
+  v_existing_operation_id uuid;
   v_request_id uuid := gen_random_uuid();
   v_audit_id uuid;
   v_result jsonb;
@@ -864,14 +897,16 @@ begin
       v_gate, 'reset_teacher_password', p_idempotency_key, v_request_hash,
       p_receipt_id, p_reason, 'TEACHER_ACCOUNT_INVALID');
   end if;
-  if exists (
-    select 1 from admin_private.teacher_account_operations operation
+  select operation.id into v_existing_operation_id
+    from admin_private.teacher_account_operations operation
      where operation.teacher_id = p_teacher_id
        and operation.state not in ('completed', 'compensated')
-  ) then
+     for update;
+  if v_existing_operation_id is not null then
     return admin_private.finalize_teacher_command_denial(
       v_gate, 'reset_teacher_password', p_idempotency_key, v_request_hash,
-      p_receipt_id, p_reason, 'TEACHER_OPERATION_PENDING');
+      p_receipt_id, p_reason, 'TEACHER_OPERATION_PENDING',
+      v_existing_operation_id);
   end if;
 
   insert into public.admin_command_executions (

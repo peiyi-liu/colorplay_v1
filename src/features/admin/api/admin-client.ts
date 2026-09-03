@@ -18,6 +18,11 @@ export const ADMIN_ERROR_CODES = [
   'SECURITY_OPERATION_PENDING',
   'TARGET_STATE_INVALID',
   'SECURITY_AUDIT_UNAVAILABLE',
+  'TEACHER_ACCOUNT_INVALID',
+  'TEACHER_ACCOUNT_CONFLICT',
+  'TEACHER_OPERATION_PENDING',
+  'TEACHER_AUTH_UNAVAILABLE',
+  'TEACHER_RECONCILIATION_REQUIRED',
 ] as const;
 
 export type AdminErrorCode = (typeof ADMIN_ERROR_CODES)[number];
@@ -59,6 +64,13 @@ export const ADMIN_ERROR_MESSAGES: Record<AdminErrorCode, string> = {
   SECURITY_OPERATION_PENDING: '此安全作業目前無法重新觸發。',
   STALE_PRIVILEGED_SESSION: '特權連線已逾時或失效，請重新驗證。',
   TARGET_STATE_INVALID: '目標目前的狀態不允許此操作，請重新確認目標。',
+  TEACHER_ACCOUNT_INVALID: '教師帳號資料或狀態無效。',
+  TEACHER_ACCOUNT_CONFLICT: '教師帳號操作與目前狀態衝突。',
+  TEACHER_OPERATION_PENDING: '教師帳號已有尚未完成的安全作業。',
+  TEACHER_AUTH_UNAVAILABLE:
+    '帳號驗證服務暫時無法使用，請先查詢作業狀態再重試。',
+  TEACHER_RECONCILIATION_REQUIRED:
+    '教師帳號作業需要受控對帳，請前往系統健康頁。',
 };
 
 export type AdminCommandName =
@@ -69,7 +81,10 @@ export type AdminCommandName =
   | 'reset_admin_mfa'
   | 'revoke_admin_session'
   | 'admin_reveal_field'
-  | 'reconcile_admin_security_operation';
+  | 'reconcile_admin_security_operation'
+  | 'create_teacher_account'
+  | 'update_teacher_account'
+  | 'reset_teacher_password';
 
 export interface AdminMfaRequest {
   action: 'begin-enrollment' | 'confirm-enrollment' | 'challenge';

@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   executeTeacherAccountSaga,
   reconcileTeacherAccountOperation,
+  resolveTeacherAccountReplay,
+  teacherAccountDenialStatus,
   type TeacherAccountOperationDependencies,
   type TeacherAccountReconciliationDependencies,
   type TeacherAccountSagaResult,
@@ -23,6 +25,60 @@ const callNames = (calls: unknown[]): unknown[] =>
   calls.map((entry) => (entry as unknown[])[0]);
 const callAt = (calls: unknown[], index: number): unknown[] =>
   calls[index] as unknown[];
+
+describe('teacher account denial replay', () => {
+  it('preserves a strictly validated operation ID for status follow-up', () => {
+    expect(
+      resolveTeacherAccountReplay('create_teacher_account', {
+        outcome: 'denied',
+        code: 'TEACHER_RECONCILIATION_REQUIRED',
+        message: '教師帳號作業需要受控對帳，請前往系統健康頁。',
+        operation_id: OPERATION_ID,
+        request_id: crypto.randomUUID(),
+        retryable: false,
+      }),
+    ).toEqual({
+      kind: 'denial',
+      envelope: {
+        outcome: 'denied',
+        code: 'TEACHER_RECONCILIATION_REQUIRED',
+        message: '教師帳號作業需要受控對帳，請前往系統健康頁。',
+        request_id: expect.any(String),
+        retryable: false,
+      },
+      operationId: OPERATION_ID,
+    });
+  });
+
+  it.each([undefined, 'not-a-uuid'])(
+    'fails closed when a status-check denial has operation_id %s',
+    (operationId) => {
+      expect(
+        resolveTeacherAccountReplay('reset_teacher_password', {
+          outcome: 'denied',
+          code: 'TEACHER_AUTH_UNAVAILABLE',
+          message: '帳號驗證服務暫時無法使用，請先查詢作業狀態再重試。',
+          ...(operationId === undefined ? {} : { operation_id: operationId }),
+          request_id: crypto.randomUUID(),
+          retryable: true,
+        }),
+      ).toBeNull();
+    },
+  );
+
+  it.each([
+    ['TEACHER_ACCOUNT_INVALID', 403],
+    ['TEACHER_ACCOUNT_CONFLICT', 403],
+    ['TEACHER_OPERATION_PENDING', 409],
+    ['TEACHER_AUTH_UNAVAILABLE', 503],
+    ['TEACHER_RECONCILIATION_REQUIRED', 409],
+  ] as const)(
+    'maps %s to HTTP %s for fresh and replay paths',
+    (code, status) => {
+      expect(teacherAccountDenialStatus(code)).toBe(status);
+    },
+  );
+});
 
 const createHarness = () => {
   const storeCalls: unknown[] = [];

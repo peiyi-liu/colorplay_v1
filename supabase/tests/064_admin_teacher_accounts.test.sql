@@ -1,7 +1,7 @@
 -- Admin B Tasks 1-2: teacher account schema, named commands, saga state, and
 -- safe read projections. Auth-provider behavior remains an integration seam.
 begin;
-select plan(122);
+select plan(128);
 
 select has_column('public', 'profiles', 'contact_email',
   'profiles stores the optional Admin-managed contact email');
@@ -600,6 +600,93 @@ select is((select state::text || '|'
    where id = (current_setting('pgtap.teacher_reset')::jsonb
      ->> 'operation_id')::uuid),
   'requested|true', 'reset binds the existing teacher Auth identity exactly');
+
+-- A competing update/reset must bind its durable denial to the one exact open
+-- operation so both the fresh response and idempotent replay remain actionable.
+select public.admin_internal_canonical_hash(jsonb_build_object(
+  'contact_email', 'pending@example.test',
+  'full_name', '等待中教師',
+  'reason', '已有密碼重設時拒絕教師資料更新',
+  'teacher_id', :'teacher_create_auth_user'::text))
+  as teacher_update_pending_hash \gset
+select public.svc_admin_issue_command_receipt(
+  'aa000000-0000-0000-0000-000000000001',
+  'aa000000-0000-0000-0000-0000000000e1',
+  'update_teacher_account', 'teacher-update-pending-1',
+  :'teacher_update_pending_hash'::bytea,
+  'aa000000-0000-0000-0000-0000000000a1', true
+) ->> 'receipt_id' as teacher_update_pending_receipt \gset
+select set_config('pgtap.teacher_update_pending', public.update_teacher_account(
+  :'teacher_update_pending_receipt'::uuid, 'teacher-update-pending-1',
+  'pending@example.test', '等待中教師',
+  '已有密碼重設時拒絕教師資料更新',
+  :'teacher_create_auth_user'::uuid)::text, true);
+select is((current_setting('pgtap.teacher_update_pending')::jsonb ->> 'code')
+    || '|' || (current_setting('pgtap.teacher_update_pending')::jsonb
+      ->> 'operation_id'),
+  'TEACHER_OPERATION_PENDING|'
+    || (current_setting('pgtap.teacher_reset')::jsonb ->> 'operation_id'),
+  'fresh update pending denial binds the exact existing operation id');
+select is((public.svc_admin_issue_command_receipt(
+    'aa000000-0000-0000-0000-000000000001',
+    'aa000000-0000-0000-0000-0000000000e1',
+    'update_teacher_account', 'teacher-update-pending-1',
+    :'teacher_update_pending_hash'::bytea,
+    'aa000000-0000-0000-0000-0000000000a1', true)
+    #>> '{result,operation_id}'),
+  current_setting('pgtap.teacher_reset')::jsonb ->> 'operation_id',
+  'update pending replay preserves the same existing operation id');
+
+select public.admin_internal_canonical_hash(jsonb_build_object(
+  'reason', '已有密碼重設時拒絕第二次密碼重設',
+  'teacher_id', :'teacher_create_auth_user'::text))
+  as teacher_reset_pending_hash \gset
+select public.svc_admin_issue_command_receipt(
+  'aa000000-0000-0000-0000-000000000001',
+  'aa000000-0000-0000-0000-0000000000e1',
+  'reset_teacher_password', 'teacher-reset-pending-1',
+  :'teacher_reset_pending_hash'::bytea,
+  'aa000000-0000-0000-0000-0000000000a1', true
+) ->> 'receipt_id' as teacher_reset_pending_receipt \gset
+select set_config('pgtap.teacher_reset_pending', public.reset_teacher_password(
+  :'teacher_reset_pending_receipt'::uuid, 'teacher-reset-pending-1',
+  '已有密碼重設時拒絕第二次密碼重設',
+  :'teacher_create_auth_user'::uuid)::text, true);
+select is((current_setting('pgtap.teacher_reset_pending')::jsonb ->> 'code')
+    || '|' || (current_setting('pgtap.teacher_reset_pending')::jsonb
+      ->> 'operation_id'),
+  'TEACHER_OPERATION_PENDING|'
+    || (current_setting('pgtap.teacher_reset')::jsonb ->> 'operation_id'),
+  'fresh reset pending denial binds the exact existing operation id');
+select is((public.svc_admin_issue_command_receipt(
+    'aa000000-0000-0000-0000-000000000001',
+    'aa000000-0000-0000-0000-0000000000e1',
+    'reset_teacher_password', 'teacher-reset-pending-1',
+    :'teacher_reset_pending_hash'::bytea,
+    'aa000000-0000-0000-0000-0000000000a1', true)
+    #>> '{result,operation_id}'),
+  current_setting('pgtap.teacher_reset')::jsonb ->> 'operation_id',
+  'reset pending replay preserves the same existing operation id');
+select is((select count(*)::integer
+    from public.admin_command_executions execution
+    join public.admin_audit_events audit on audit.id = execution.audit_event_id
+   where execution.idempotency_key in (
+       'teacher-update-pending-1', 'teacher-reset-pending-1')
+     and audit.runbook_operation_id =
+       (current_setting('pgtap.teacher_reset')::jsonb
+         ->> 'operation_id')::uuid),
+  2, 'pending denial audits bind the existing operation at insert time');
+select throws_ok($$
+  update public.admin_audit_events
+     set runbook_operation_id = null
+   where id = (
+     select execution.audit_event_id
+       from public.admin_command_executions execution
+      where execution.idempotency_key = 'teacher-update-pending-1'
+   )
+$$, 'P0001', 'ADMIN_AUDIT_APPEND_ONLY',
+  'pending denial audit remains append-only after operation binding');
+
 select set_config('pgtap.teacher_reset_claim',
   public.svc_admin_claim_teacher_account_execution(
     (current_setting('pgtap.teacher_reset')::jsonb ->> 'operation_id')::uuid,

@@ -242,7 +242,11 @@ export type TeacherAccountReplayResolution =
       operationId: string;
     }
   | { kind: 'response'; payload: Record<string, unknown> }
-  | { kind: 'denial'; envelope: DenialEnvelope };
+  | {
+      kind: 'denial';
+      envelope: DenialEnvelope & { code: TeacherDenialCode };
+      operationId: string | null;
+    };
 
 export type TeacherDenialCode =
   | 'TEACHER_ACCOUNT_INVALID'
@@ -258,8 +262,20 @@ const TEACHER_DENIAL_CODES = new Set<TeacherDenialCode>([
   'TEACHER_AUTH_UNAVAILABLE',
   'TEACHER_RECONCILIATION_REQUIRED',
 ]);
+const STATUS_CHECK_DENIAL_CODES = new Set<TeacherDenialCode>([
+  'TEACHER_OPERATION_PENDING',
+  'TEACHER_AUTH_UNAVAILABLE',
+  'TEACHER_RECONCILIATION_REQUIRED',
+]);
 const UUID_SHAPE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function teacherAccountDenialStatus(
+  code: TeacherDenialCode,
+): 403 | 409 | 503 {
+  if (code === 'TEACHER_AUTH_UNAVAILABLE') return 503;
+  return STATUS_CHECK_DENIAL_CODES.has(code) ? 409 : 403;
+}
 
 export function resolveTeacherAccountReplay(
   command: TeacherAccountNamedCommand,
@@ -267,9 +283,23 @@ export function resolveTeacherAccountReplay(
 ): TeacherAccountReplayResolution | null {
   const denial = readDenialEnvelope(value);
   if (denial !== null) {
-    return TEACHER_DENIAL_CODES.has(denial.code as TeacherDenialCode)
-      ? { kind: 'denial', envelope: denial }
-      : null;
+    const code = denial.code as TeacherDenialCode;
+    if (!TEACHER_DENIAL_CODES.has(code)) return null;
+    const rawOperationId = (value as Record<string, unknown>).operation_id;
+    if (
+      rawOperationId !== undefined &&
+      (typeof rawOperationId !== 'string' || !UUID_SHAPE.test(rawOperationId))
+    ) {
+      return null;
+    }
+    if (STATUS_CHECK_DENIAL_CODES.has(code) && rawOperationId === undefined) {
+      return null;
+    }
+    return {
+      kind: 'denial',
+      envelope: { ...denial, code },
+      operationId: rawOperationId ?? null,
+    };
   }
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
     return null;

@@ -25,6 +25,7 @@ import {
   executeTeacherAccountSaga,
   generateTeacherPassword,
   resolveTeacherAccountReplay,
+  teacherAccountDenialStatus,
   type TeacherAccountCommand,
   type TeacherAccountOperationDependencies,
 } from '../_shared/teacher-account-operation.ts';
@@ -365,7 +366,13 @@ Deno.serve(async (request) => {
     if (TEACHER_COMMANDS.has(command)) {
       const replay = resolveTeacherAccountReplay(command, mint.result);
       if (replay === null) return auditUnavailable();
-      if (replay.kind === 'denial') return denied(replay.envelope);
+      if (replay.kind === 'denial') {
+        return denied(
+          replay.envelope,
+          teacherAccountDenialStatus(replay.envelope.code),
+          replay.operationId ? { operationId: replay.operationId } : undefined,
+        );
+      }
       if (replay.kind === 'resume') {
         try {
           const saga = await executeTeacherAccountSaga(
@@ -374,15 +381,19 @@ Deno.serve(async (request) => {
           );
           if (saga.kind === 'denied') {
             if (saga.envelope) {
-              return denied(saga.envelope, 409, {
-                operationId: saga.operationId,
-              });
+              return denied(
+                saga.envelope,
+                teacherAccountDenialStatus(saga.code),
+                {
+                  operationId: saga.operationId,
+                },
+              );
             }
             return recordAndDeny(
               command,
               userId,
               saga.code,
-              saga.code === 'TEACHER_AUTH_UNAVAILABLE' ? 503 : 409,
+              teacherAccountDenialStatus(saga.code),
               { operationId: replay.operationId },
             );
           }
@@ -416,6 +427,21 @@ Deno.serve(async (request) => {
   if (result.error !== null || !result.data) return auditUnavailable();
   const outcome = result.data as Record<string, unknown>;
   if (outcome.outcome === 'denied') {
+    if (TEACHER_COMMANDS.has(command)) {
+      const teacherDenial = resolveTeacherAccountReplay(command, outcome);
+      if (teacherDenial?.kind === 'denial') {
+        return denied(
+          teacherDenial.envelope,
+          teacherAccountDenialStatus(teacherDenial.envelope.code),
+          teacherDenial.operationId
+            ? { operationId: teacherDenial.operationId }
+            : undefined,
+        );
+      }
+      if (readDenialEnvelope(outcome)?.code.startsWith('TEACHER_')) {
+        return auditUnavailable();
+      }
+    }
     return denied(outcome);
   }
   if (outcome.outcome !== 'ok') return auditUnavailable();
@@ -430,7 +456,7 @@ Deno.serve(async (request) => {
       );
       if (saga.kind === 'denied') {
         if (saga.envelope) {
-          return denied(saga.envelope, 409, {
+          return denied(saga.envelope, teacherAccountDenialStatus(saga.code), {
             operationId: saga.operationId,
           });
         }
@@ -438,7 +464,7 @@ Deno.serve(async (request) => {
           command,
           userId,
           saga.code,
-          saga.code === 'TEACHER_AUTH_UNAVAILABLE' ? 503 : 409,
+          teacherAccountDenialStatus(saga.code),
           { operationId },
         );
       }

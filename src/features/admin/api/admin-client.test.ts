@@ -1,10 +1,12 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import {
   AdminClientError,
+  ADMIN_ERROR_MESSAGES,
   extractErrorCode,
   isAdminErrorCode,
   listOwnVerifiedTotpFactorId,
+  type AdminCommandName,
 } from './admin-client';
 
 const authMocks = vi.hoisted(() => ({
@@ -25,6 +27,33 @@ describe('isAdminErrorCode', () => {
     expect(isAdminErrorCode('INSUFFICIENT_MFA')).toBe(true);
     expect(isAdminErrorCode('MFA_LOCKED')).toBe(true);
     expect(isAdminErrorCode('SECURITY_AUDIT_UNAVAILABLE')).toBe(true);
+  });
+
+  it('accepts and translates all five teacher-account safe codes', () => {
+    const codes = [
+      'TEACHER_ACCOUNT_INVALID',
+      'TEACHER_ACCOUNT_CONFLICT',
+      'TEACHER_OPERATION_PENDING',
+      'TEACHER_AUTH_UNAVAILABLE',
+      'TEACHER_RECONCILIATION_REQUIRED',
+    ] as const;
+
+    for (const code of codes) {
+      expect(isAdminErrorCode(code)).toBe(true);
+      expect(ADMIN_ERROR_MESSAGES[code]).toEqual(expect.any(String));
+    }
+  });
+
+  it('includes only the three named teacher-account mutations in the command type', () => {
+    expectTypeOf<
+      Extract<AdminCommandName, `create_${string}`>
+    >().toEqualTypeOf<'create_teacher_account'>();
+    expectTypeOf<
+      Extract<AdminCommandName, `update_${string}`>
+    >().toEqualTypeOf<'update_teacher_account'>();
+    expectTypeOf<
+      Extract<AdminCommandName, `reset_teacher_${string}`>
+    >().toEqualTypeOf<'reset_teacher_password'>();
   });
 
   it('rejects unknown strings and non-string values', () => {
