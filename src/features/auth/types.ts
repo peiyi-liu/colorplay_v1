@@ -11,7 +11,6 @@ export type AccountSignInInput = Readonly<{
 
 export type AuthSession = Readonly<{
   userId: string;
-  email: string;
 }>;
 
 export type AuthErrorCode =

@@ -29,20 +29,30 @@ Supabase Auth password user 仍需要內部 Email，但教師的聯絡 Email 不
 4. **聯絡 Email**：新增 nullable、Admin-only 的 `profiles.contact_email`，不作
    登入識別或自助密碼復原條件。Admin 可後補／更新；交付前 UI 必須讓 Admin
    二次確認收件地址。
-5. **Auth 內部 Email**：在 Supabase Auth 仍要求 Email 的期間，使用不收信、
-   不對教師顯示的內部地址；不得把它當聯絡 Email、寄送目標或 safe-browser 欄位。
-6. **初始密碼**：後端 CSPRNG 產生 12 碼，至少包含大寫、小寫、數字與符號。
+5. **Auth synthetic Email**：在 Supabase Auth 仍要求 Email 的期間，以已預配且
+   不可由 `teacherNN` 推導的 Auth user UUID 作為 opaque local-part，搭配嚴格
+   `.invalid` namespace；同一 Auth UUID 必須 deterministic，且不得使用 contact
+   Email。它不收信、不對教師顯示，也不得作聯絡 Email、寄送目標或 safe-browser
+   欄位。
+6. **唯一 browser 例外**：synthetic Email 只可存在 Supabase 官方 Auth response、
+   access-token 必要 email claim，及官方 Auth session object 在其專用
+   sessionStorage key 的 serialization。自訂 `auth-login` response 只能回傳
+   access/refresh token，不得回傳 session user、Email、identity 或 provider metadata。
+   JWT/session 仍是高敏感 credential，關閉分頁或登出必須清除；React/AuthContext、
+   DOM、URL/history、console/log、audit、analytics、Query／mutation cache、app-owned
+   storage、safe browser、export 與一般 API payload 不在例外內。
+7. **初始密碼**：後端 CSPRNG 產生 12 碼，至少包含大寫、小寫、數字與符號。
    明文只在建立 receipt 當次 response 顯示，不進 log、audit metadata、repo、
    analytics、cache 或永久資料表。
-7. **忘記密碼**：Admin 執行「重設新密碼」後交付新 receipt。重設需要 fresh
+8. **忘記密碼**：Admin 執行「重設新密碼」後交付新 receipt。重設需要 fresh
    MFA、二次確認、reason、request ID、actor、target、UTC time 與成敗稽核；原
    密碼不可查看或恢復。
-8. **交付安全**：正式環境優先採一次性秘密連結，或將帳號與密碼分開通道交付。
+9. **交付安全**：正式環境優先採一次性秘密連結，或將帳號與密碼分開通道交付。
    尚未具備前述能力時，UI 必須明示同通道交付風險；首次登入強制改密碼需另案
    設計，不得假裝已交付。
-9. **跨系統一致性**：Auth 與 PostgreSQL 不宣稱 ACID；採 fail-closed、可重入
-   saga，記錄 operation state、補償與 reconciliation。不得留下可登入但缺合法
-   teacher profile／audit 的半成品。
+10. **跨系統一致性**：Auth 與 PostgreSQL 不宣稱 ACID；採 fail-closed、可重入
+    saga，記錄 operation state、補償與 reconciliation。不得留下可登入但缺合法
+    teacher profile／audit 的半成品。
 
 ## Admin UI 範圍
 
@@ -71,6 +81,9 @@ Supabase Auth password user 仍需要內部 Email，但教師的聯絡 Email 不
 - 名稱更新後 `full_name`／`display_name` 與教師 UI 一致。
 - 聯絡 Email 可為 null；後補不觸發自助驗證或改變登入帳號。
 - 重設後舊密碼失效、新密碼可登入；audit 可追蹤且無明文秘密。
+- Synthetic Email local-part 不含 `teacherNN`／contact Email；除 Supabase-owned
+  Auth session 例外外，browser、log、audit、cache 與一般 network payload findings
+  均為 0。
 
 ## Historical implementation snapshot
 

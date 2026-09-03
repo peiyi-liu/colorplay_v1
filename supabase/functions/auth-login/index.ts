@@ -79,6 +79,24 @@ Deno.serve(async (request) => {
   );
   if (!grant.ok) return invalidCredentials();
 
-  const session = await grant.json();
-  return jsonResponse(200, { session });
+  const session: unknown = await grant.json().catch(() => null);
+  if (
+    session === null ||
+    typeof session !== 'object' ||
+    Array.isArray(session) ||
+    !('access_token' in session) ||
+    typeof session.access_token !== 'string' ||
+    session.access_token === '' ||
+    !('refresh_token' in session) ||
+    typeof session.refresh_token !== 'string' ||
+    session.refresh_token === ''
+  ) {
+    return invalidCredentials();
+  }
+  return jsonResponse(200, {
+    session: {
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    },
+  });
 });

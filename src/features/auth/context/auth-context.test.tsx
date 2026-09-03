@@ -8,12 +8,10 @@ import { AuthBootstrap } from '../components/auth-bootstrap';
 import { AuthContext, type AuthContextValue, useAuth } from './auth-context';
 
 const authenticatedSession = {
-  email: 'learner@colorplay.invalid',
   userId: 'learner-id',
 } as const;
 
 const replacementSession = {
-  email: 'replacement@colorplay.invalid',
   userId: 'replacement-id',
 } as const;
 
@@ -71,7 +69,9 @@ function AuthProbe() {
   return (
     <section>
       <output aria-label="Auth 狀態">{auth.status}</output>
-      <output aria-label="Auth session">{auth.session?.email ?? 'none'}</output>
+      <output aria-label="Auth session">
+        {auth.session?.userId ?? 'none'}
+      </output>
       <output aria-label="Auth keys">
         {Object.keys(auth).sort().join(',')}
       </output>
@@ -226,7 +226,7 @@ describe('AuthBootstrap', () => {
 
     expect(await screen.findByText('authenticated')).toBeVisible();
     expect(screen.getByLabelText('Auth session')).toHaveTextContent(
-      authenticatedSession.email,
+      authenticatedSession.userId,
     );
   });
 
@@ -240,9 +240,9 @@ describe('AuthBootstrap', () => {
       harness.emit(replacementSession);
     });
     expect(screen.getByLabelText('Auth 狀態')).toHaveTextContent('loading');
-    expect(await screen.findByText(replacementSession.email)).toBeVisible();
+    expect(await screen.findByText(replacementSession.userId)).toBeVisible();
     expect(screen.getByLabelText('Auth session')).toHaveTextContent(
-      replacementSession.email,
+      replacementSession.userId,
     );
 
     await act(async () => {
@@ -251,7 +251,7 @@ describe('AuthBootstrap', () => {
     });
 
     expect(screen.getByLabelText('Auth session')).toHaveTextContent(
-      replacementSession.email,
+      replacementSession.userId,
     );
   });
 
@@ -287,7 +287,7 @@ describe('AuthBootstrap', () => {
 
     expect(await screen.findByText('authenticated')).toBeVisible();
     expect(screen.getByLabelText('Auth session')).toHaveTextContent(
-      replacementSession.email,
+      replacementSession.userId,
     );
   });
 
@@ -311,7 +311,7 @@ describe('AuthBootstrap', () => {
       'authenticated',
     );
     expect(screen.getByLabelText('Auth session')).toHaveTextContent(
-      authenticatedSession.email,
+      authenticatedSession.userId,
     );
   });
 
@@ -433,7 +433,7 @@ describe('AuthBootstrap', () => {
       Promise.resolve(authenticatedSession),
     );
     const view = renderBootstrap(harness.repository);
-    await screen.findByText(authenticatedSession.email);
+    await screen.findByText(authenticatedSession.userId);
     view.queryClient.setQueryData(['inventory', 'blooks'], {
       items: ['private-item'],
     });
@@ -442,7 +442,7 @@ describe('AuthBootstrap', () => {
       harness.emit(replacementSession);
     });
 
-    expect(await screen.findByText(replacementSession.email)).toBeVisible();
+    expect(await screen.findByText(replacementSession.userId)).toBeVisible();
     expect(
       view.queryClient.getQueryData(['inventory', 'blooks']),
     ).toBeUndefined();
@@ -467,7 +467,7 @@ describe('AuthBootstrap', () => {
       'authenticated',
     );
     expect(screen.getByLabelText('Auth session')).toHaveTextContent(
-      authenticatedSession.email,
+      authenticatedSession.userId,
     );
     expect(view.queryClient.getQueryData(['profile', 'me'])).toEqual({
       displayName: 'student.one',
@@ -570,7 +570,7 @@ describe('AuthBootstrap', () => {
       'authenticated',
     );
     expect(screen.getByLabelText('Auth session')).toHaveTextContent(
-      replacementSession.email,
+      replacementSession.userId,
     );
     expect(harness.getSession).toHaveBeenCalledTimes(2);
     expect(view.queryClient.getQueryData(['profile', 'me'])).toBeUndefined();

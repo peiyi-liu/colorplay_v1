@@ -122,11 +122,10 @@ const readResultData = (result: unknown): Record<string, unknown> => {
 const toAuthSession = (session: unknown): AuthSession => {
   if (!isRecord(session) || !isRecord(session.user)) return throwUnknown();
 
-  const { email, id } = session.user;
+  const { id } = session.user;
   if (typeof id !== 'string' || id.length === 0) return throwUnknown();
-  if (typeof email !== 'string' || email.length === 0) return throwUnknown();
 
-  return { userId: id, email };
+  return { userId: id };
 };
 
 const handleThrown = (error: unknown): never => {

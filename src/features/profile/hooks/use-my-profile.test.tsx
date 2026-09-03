@@ -26,7 +26,6 @@ vi.mock('../api/profile-repository', () => ({
 
 const authenticated: AuthContextValue = {
   session: {
-    email: 'student.one@colorplay.test',
     userId: 'student-one-id',
   },
   signIn: vi.fn(),
@@ -38,7 +37,6 @@ const authenticated: AuthContextValue = {
 const authenticatedAs = (userId: string): AuthContextValue => ({
   ...authenticated,
   session: {
-    email: `${userId}@colorplay.test`,
     userId,
   },
 });

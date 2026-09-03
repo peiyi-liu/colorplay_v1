@@ -40,20 +40,20 @@ audit 能走完真實 UI，Admin 可在相同控制面安全建立、查詢、�
 
 ## 3. Information architecture and routes
 
-| Route | Guard | Purpose |
-|---|---|---|
-| `/admin/invitations/accept` | authenticated invitee，非 privileged | 貼上一次性 token、接受後進 MFA enrollment |
-| `/admin` | active privileged Admin | 安全總覽 |
-| `/admin/access/admins` | active privileged Admin | Admin lifecycle |
-| `/admin/access/invitations` | active privileged Admin | invitation issue/revoke/history |
-| `/admin/access/sessions` | active privileged Admin | session list/detail/revoke |
-| `/admin/data` | active privileged Admin | 七個 safe-browser domain landing |
-| `/admin/data/:domain/:resource` | active privileged Admin＋catalog | allowlisted list |
-| `/admin/data/:domain/:resource/:rowKey` | active privileged Admin＋catalog | allowlisted detail/reveal |
-| `/admin/audit` | active privileged Admin | immutable audit query |
-| `/admin/health` | active privileged Admin | security operations／denials／合法 retry |
-| `/admin/teachers` | active privileged Admin | 教師列表、搜尋、建立入口 |
-| `/admin/teachers/:teacherId` | active privileged Admin | 教師 detail、編輯、重設密碼 |
+| Route                                   | Guard                                | Purpose                                   |
+| --------------------------------------- | ------------------------------------ | ----------------------------------------- |
+| `/admin/invitations/accept`             | authenticated invitee，非 privileged | 貼上一次性 token、接受後進 MFA enrollment |
+| `/admin`                                | active privileged Admin              | 安全總覽                                  |
+| `/admin/access/admins`                  | active privileged Admin              | Admin lifecycle                           |
+| `/admin/access/invitations`             | active privileged Admin              | invitation issue/revoke/history           |
+| `/admin/access/sessions`                | active privileged Admin              | session list/detail/revoke                |
+| `/admin/data`                           | active privileged Admin              | 七個 safe-browser domain landing          |
+| `/admin/data/:domain/:resource`         | active privileged Admin＋catalog     | allowlisted list                          |
+| `/admin/data/:domain/:resource/:rowKey` | active privileged Admin＋catalog     | allowlisted detail/reveal                 |
+| `/admin/audit`                          | active privileged Admin              | immutable audit query                     |
+| `/admin/health`                         | active privileged Admin              | security operations／denials／合法 retry  |
+| `/admin/teachers`                       | active privileged Admin              | 教師列表、搜尋、建立入口                  |
+| `/admin/teachers/:teacherId`            | active privileged Admin              | 教師 detail、編輯、重設密碼               |
 
 Invitation acceptance route 必須位於 `RequireAuth` 之下、Admin identity／privileged
 guard 之外；成功前不可讀任何 Admin control data。
@@ -62,6 +62,15 @@ guard 之外；成功前不可讀任何 Admin control data。
 
 建立一個深層 server module，對 Edge 只暴露三個 named-command interfaces；序號、
 Auth placeholder identity、密碼、saga、補償、receipt 與 audit 都留在 implementation。
+
+Auth placeholder 使用 reservation 已預配的 Auth user UUID 作為 opaque local-part，
+搭配 server-only `.invalid` namespace；不得由 `teacherNN` 或 contact Email 推導。
+Supabase 官方 Auth response/access-token/session serialization 是唯一 browser 例外；
+自訂 `auth-login` response 只能回傳 access/refresh token，不得回傳 session user、
+Email、identity 或 provider metadata。其 session/JWT 仍視為高敏感 credential，關閉
+分頁或登出清除。React/AuthContext、UI、URL/history、log、audit、analytics、
+app-owned storage/cache、safe browser、export 與一般 network payload 必須保持零
+synthetic Email。
 
 ```ts
 type CreateTeacherAccountInput = Readonly<{
@@ -212,27 +221,27 @@ terminal outcome。Plaintext 永遠不作 idempotent replay payload。
 
 沿用 Phase 1 denials，新增：
 
-| Code | 意義 | Retry |
-|---|---|---|
-| `TEACHER_ACCOUNT_INVALID` | 欄位或 target state 不合法 | false |
-| `TEACHER_ACCOUNT_CONFLICT` | account/idempotency/state conflict | false |
-| `TEACHER_OPERATION_PENDING` | 同 target 有未終結 operation | false，查狀態 |
-| `TEACHER_AUTH_UNAVAILABLE` | Auth provider 暫時失敗且未產生半成品 | true after status check |
-| `TEACHER_RECONCILIATION_REQUIRED` | 部分失敗需受控對帳 | false，health workflow |
+| Code                              | 意義                                 | Retry                   |
+| --------------------------------- | ------------------------------------ | ----------------------- |
+| `TEACHER_ACCOUNT_INVALID`         | 欄位或 target state 不合法           | false                   |
+| `TEACHER_ACCOUNT_CONFLICT`        | account/idempotency/state conflict   | false                   |
+| `TEACHER_OPERATION_PENDING`       | 同 target 有未終結 operation         | false，查狀態           |
+| `TEACHER_AUTH_UNAVAILABLE`        | Auth provider 暫時失敗且未產生半成品 | true after status check |
+| `TEACHER_RECONCILIATION_REQUIRED` | 部分失敗需受控對帳                   | false，health workflow  |
 
 Response 一律含 safe message、request ID、retryable 與可選 operation ID；無 target
 存在性、Auth error、SQL、stack、internal Email 或 secret。
 
 ## 11. RLS and privacy matrix
 
-| Actor | List teachers | Read contact Email | Create/update/reset | Auth internal Email |
-|---|---|---|---|---|
-| Anonymous | deny | deny | deny | deny |
-| Student | deny | deny | deny | deny |
-| Teacher | own normal profile only | own value only if future flow allows | deny | deny |
-| Admin without privileged session | deny | deny | deny | deny |
-| Active privileged Admin | safe projection | masked; purpose-bound reveal | named commands | deny |
-| Service orchestration | minimum fields for exact operation | operation-only | service functions | operation-only |
+| Actor                            | List teachers                      | Read contact Email                   | Create/update/reset | Auth internal Email |
+| -------------------------------- | ---------------------------------- | ------------------------------------ | ------------------- | ------------------- |
+| Anonymous                        | deny                               | deny                                 | deny                | deny                |
+| Student                          | deny                               | deny                                 | deny                | deny                |
+| Teacher                          | own normal profile only            | own value only if future flow allows | deny                | deny                |
+| Admin without privileged session | deny                               | deny                                 | deny                | deny                |
+| Active privileged Admin          | safe projection                    | masked; purpose-bound reveal         | named commands      | deny                |
+| Service orchestration            | minimum fields for exact operation | operation-only                       | service functions   | operation-only      |
 
 Direct table writes to role、login account、contact Email、operation/audit rows are denied
 to `anon`／`authenticated`。Service role 不能因技術能力而略過 actor/session/receipt
@@ -247,7 +256,9 @@ to `anon`／`authenticated`。Service role 不能因技術能力而略過 actor/
 - Unit/RTL：catalog domain nav、pagination、MFA QR/retry、invitation acceptance、
   teacher forms、one-time receipt no-cache、OOB/manual retry separation。
 - Playwright：invitation→MFA→Admin、teacher create→teacher login、update、reset→舊
-  password deny／新 password成功、stale session、三 viewport、network secret scan。
+  password deny／新 password成功、stale session、三 viewport、network secret scan；
+  解析 exact Supabase Auth session key，僅允許 synthetic Email 出現在官方 session
+  object/JWT email claim，並驗 local-part 與 `teacherNN`／contact Email 無關。
 - Hosted：只在 Phase 0 merge後，由 exact canonical SHA 建新的 Staging gate；記錄
   environment fingerprint、migration head、fixture IDs 與 cleanup。沒有 owner hosted
   mutation 授權時是 `NOT VERIFIED`。

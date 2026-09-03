@@ -1685,7 +1685,13 @@ Admin session。
 
 **預期**：合法更新同步 `full_name`／`display_name`；`teacherNN` 與 role 不可由 UI
 改派。Contact Email nullable、預設遮罩且不改登入／recovery；只有核准 Admin
-projection/reveal 可讀。Auth internal Email 對所有 browser surface forbidden。
+projection/reveal 可讀。Auth synthetic Email 必須以預配 Auth UUID 作 opaque
+local-part，不能含 `teacherNN` 或 contact Email。唯一 browser 例外是 Supabase 官方
+Auth response/access-token/session object 在 exact Auth sessionStorage key 的
+serialization。自訂 `auth-login` response 只能回傳 access/refresh token，不得回傳
+session user、Email、identity 或 provider metadata；React/AuthContext、DOM、
+URL/history、log、audit、analytics、app-owned cache/storage、safe browser、export 與
+一般 API payload findings 必須為 0。
 
 **證據**：D、N、Q、T。
 
@@ -1698,7 +1704,8 @@ log、analytics、cache、artifact；以舊／新密碼登入。
 
 **預期**：12 碼 CSPRNG 密碼只在成功 response 顯示一次；離開後不可復原。
 重設需要 fresh MFA、二次確認、reason、request ID；舊密碼立即失效、新密碼可登入
-Teacher portal。所有持久面與 log 明文 findings = 0。
+Teacher portal。所有持久面與 log 的明文 password findings = 0；Supabase-owned Auth
+session 例外不適用於 password。
 
 **證據**：D、N、L、Q。
 

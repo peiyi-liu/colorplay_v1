@@ -4,7 +4,7 @@
 
 假設攻擊者可以：
 
-- 讀取並修改所有前端 JavaScript、DOM、React state、localStorage。
+- 讀取並修改所有前端 JavaScript、DOM、React state、localStorage、sessionStorage。
 - 攔截、重放、修改 API request。
 - 猜測 UUID、route 與 classroom ID。
 - 多開分頁、快速重送、修改系統時間。
@@ -16,7 +16,7 @@
 ## 2. Secrets 管理
 
 - Supabase publishable／anon key 可在瀏覽器出現，但其權限完全受 RLS 限制。
-- `service_role`、DB password、JWT secret、SMTP credentials 不得進入 repo、前端 bundle、log、截圖。
+- `service_role`、DB password、JWT secret、SMTP credentials 不得進入 repo、前端 bundle、log、截圖。Supabase Auth access/refresh token 本身是高敏感 credential，僅能由官方 Auth client 放在其 session serialization；關閉分頁或登出必須清除。
 - Git pre-commit／CI 執行 secret scanning。
 - `.env.example` 不得包含真值。
 - Production secret 透過部署平台與 Supabase secrets 管理並可輪替。
@@ -39,7 +39,15 @@
 - Login account 由後端 transaction 配發 `teacherNN`，以資料庫唯一約束處理
   併發；client 不提供序號或角色。
 - `contact_email` nullable、Admin-only，不作 Auth login identifier 或 recovery
-  條件。Auth 所需內部 Email 不得顯示、寄送或當成聯絡資料。
+  條件。Auth 所需 synthetic Email 由預配 Auth user UUID 與嚴格 `.invalid`
+  namespace 決定；local-part 不得由 `teacherNN` 或 contact Email 推導。它不得顯示、
+  寄送或當成聯絡資料。
+- 唯一 browser 例外是 Supabase 官方 Auth response、access-token 必要 email claim，
+  以及同一官方 session object 在其專用 sessionStorage key 的 serialization。自訂
+  `auth-login` response 只能回傳 access/refresh token，不得回傳 session user、Email、
+  identity 或 provider metadata。此例外不包含 React/AuthContext 等 app-owned state、
+  storage/cache、DOM、URL/history、log、audit、analytics、safe browser、export 或一般
+  API payload；不得把例外擴張成「browser storage 可存」。
 - 初始／重設密碼由後端 CSPRNG 產生 12 碼，至少含大寫、小寫、數字與符號；
   明文只存在於當次成功 response 的一次性 receipt，不進 log、audit、analytics、
   cache 或永久資料表。原密碼不可查看或復原。
@@ -109,7 +117,8 @@
 - 匯出預設 pseudonymous ID。
 - 操作 log 不保存答案全文或不必要個資。
 - 教師 `contact_email` 預設遮罩；只有具目的、可稽核的 Admin projection／reveal
-  可取得。Auth 內部占位 Email 一律 forbidden，不進 safe browser catalog。
+  可取得。Auth synthetic Email 一律不進 safe browser catalog；除第 3 節列出的
+  Supabase-owned Auth session 例外外，所有 browser surface 均 forbidden。
 - 定義 retention：MVP 預設正式作答保存至研究／課程目的結束後的政策期限；實際期限由研究倫理文件設定。
 - 支援依合法程序匯出或刪除個人資料；有研究鎖定需求時需記錄法律／倫理依據。
 

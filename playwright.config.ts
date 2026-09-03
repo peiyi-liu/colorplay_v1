@@ -24,8 +24,10 @@ const chromiumOnlyLoginSpec = /login\.spec\.ts$/u;
 // 重綁），跨瀏覽器 project 重跑會在第二個 project 卡在已綁定狀態；
 // 比照 chromiumOnlyLoginSpec 只在 chromium 執行一次。
 const adminSecuritySpec = /admin-security\.spec\.ts$/u;
+const adminTeacherAccountsSpec = /admin-teacher-accounts\.spec\.ts$/u;
 const adminViewportsSpec = /admin-viewports\.spec\.ts$/u;
-const chromiumOnlyAdminSpec = /admin-(security|viewports)\.spec\.ts$/u;
+const chromiumOnlyAdminSpec =
+  /admin-(security|teacher-accounts|viewports)\.spec\.ts$/u;
 const video = precheckMode
   ? 'off'
   : process.env.PLAYWRIGHT_VIDEO === 'on' || acceptanceEvidence
@@ -65,11 +67,25 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
+      name: 'chromium-admin-teacher-accounts',
+      testMatch: adminTeacherAccountsSpec,
+      dependencies: ['chromium-admin-security'],
+      ...(realAuthAvailable ? {} : { testIgnore: [adminTeacherAccountsSpec] }),
+      // This journey handles one-time credentials. Never persist them in
+      // screenshots, traces, or videos, including on failure.
+      use: {
+        ...devices['Desktop Chrome'],
+        screenshot: 'off',
+        trace: 'off',
+        video: 'off',
+      },
+    },
+    {
       name: 'chromium-admin-viewports',
       testMatch: adminViewportsSpec,
       // dependencies 保證這個 project 的測試永遠在 chromium-admin-security
       // 全部跑完（且成功）之後才開始——沒有它就沒有可用的 TOTP secret。
-      dependencies: ['chromium-admin-security'],
+      dependencies: ['chromium-admin-teacher-accounts'],
       ...(realAuthAvailable ? {} : { testIgnore: [adminViewportsSpec] }),
       use: { ...devices['Desktop Chrome'] },
     },

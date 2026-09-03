@@ -1,11 +1,19 @@
 import { expect, test } from '@playwright/test';
 
 import { TEST_USERS } from '../fixtures/users';
-import {
-  challengeAdmin,
-  readAdminTotpSecret,
-  signInAdmin,
-} from './helpers/admin';
+import { challengeAdmin, readAdminTotpSecret } from './helpers/admin';
+
+async function signInAdmin(
+  page: import('@playwright/test').Page,
+  credentials: Readonly<{ email: string; password: string }>,
+) {
+  await page.goto('/login');
+  await page.getByText('教師端登入').click();
+  await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
+  await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
+  await page.getByRole('button', { name: '登入' }).click();
+  await page.waitForURL(/\/admin/u);
+}
 
 // admin-security.spec.ts 必須先跑過一次：這裡重用它留下的 adminPrimary
 // TOTP secret（見 tests/e2e/helpers/admin.ts 的說明——app 用 sessionStorage
@@ -55,7 +63,9 @@ for (const viewport of VIEWPORTS) {
       await expect(page.getByRole('button', { name: 'MENU' })).toHaveCount(0);
       await expect(nav).toBeVisible();
       for (const label of NAV_GROUP_LABELS) {
-        await expect(nav.getByText(label, { exact: true })).toBeVisible();
+        await expect(
+          nav.locator('.admin-shell__group-label').filter({ hasText: label }),
+        ).toHaveText(label);
       }
     } else {
       // (a) 小視口：MENU drawer 可開合，開啟後五群導覽皆可達
@@ -71,7 +81,9 @@ for (const viewport of VIEWPORTS) {
       await toggle.click();
       await expect(nav).toBeVisible();
       for (const label of NAV_GROUP_LABELS) {
-        await expect(nav.getByText(label, { exact: true })).toBeVisible();
+        await expect(
+          nav.locator('.admin-shell__group-label').filter({ hasText: label }),
+        ).toHaveText(label);
       }
       await toggle.click();
       await expect(nav).toBeHidden();
@@ -133,5 +145,39 @@ for (const viewport of VIEWPORTS) {
     await expect(dialog).toBeHidden();
     // (e) dialog 關閉後 focus 回到觸發鈕
     await expect(revealButton).toBeFocused();
+
+    // Task 6：教師帳號 list/detail/form/receipt 的主要操作面在三個 Admin
+    // 視口都不得造成頁面水平溢位；表單的 primary action 維持 44px。
+    await page.goto('/admin/teachers');
+    await expect(page.getByRole('heading', { name: '教師帳號' })).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+      .toBeLessThanOrEqual(viewport.width);
+
+    const createTeacherButton = page.getByRole('button', {
+      name: '新增教師',
+    });
+    const createTeacherBox = await createTeacherButton.boundingBox();
+    expect(createTeacherBox?.width).toBeGreaterThanOrEqual(44);
+    expect(createTeacherBox?.height).toBeGreaterThanOrEqual(44);
+    await createTeacherButton.click();
+    const teacherForm = page.getByRole('dialog', { name: '新增教師帳號' });
+    await expect(teacherForm).toBeVisible();
+    const createConfirm = teacherForm.getByRole('button', {
+      name: '確認新增',
+    });
+    const createConfirmBox = await createConfirm.boundingBox();
+    expect(createConfirmBox?.width).toBeGreaterThanOrEqual(44);
+    expect(createConfirmBox?.height).toBeGreaterThanOrEqual(44);
+    await teacherForm.getByRole('button', { name: '取消' }).click();
+    await expect(teacherForm).toBeHidden();
+
+    const detailLink = page.getByRole('link', { name: '查看教師' }).first();
+    await expect(detailLink).toBeVisible();
+    await detailLink.click();
+    await expect(page).toHaveURL(/\/admin\/teachers\/[0-9a-f-]+$/u);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+      .toBeLessThanOrEqual(viewport.width);
   });
 }

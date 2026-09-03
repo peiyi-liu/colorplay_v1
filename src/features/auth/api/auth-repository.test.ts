@@ -135,10 +135,8 @@ describe('AuthRepository error boundary', () => {
       password: 'fixture-value',
     });
 
-    expect(session).toEqual({
-      email: 'fixture@colorplay.invalid',
-      userId: 'fixture-id',
-    });
+    expect(session).toEqual({ userId: 'fixture-id' });
+    expect(session).not.toHaveProperty('email');
     expect(signInWithPassword).toHaveBeenCalledWith({
       email: 'fixture@colorplay.invalid',
       password: 'fixture-value',
@@ -172,10 +170,7 @@ describe('AuthRepository error boundary', () => {
         email: 'fixture@colorplay.invalid',
         password: 'fixture-value',
       }),
-    ).resolves.toEqual({
-      email: 'fixture@colorplay.invalid',
-      userId: 'fixture-id',
-    });
+    ).resolves.toEqual({ userId: 'fixture-id' });
     expect(signInWithPassword).toHaveBeenCalledTimes(2);
   });
 
@@ -208,16 +203,14 @@ describe('AuthRepository error boundary', () => {
       createClientForAuth({ setSession }, { invoke }),
     );
 
-    await expect(
-      repository.signInWithAccount({
-        account: 'teacher01',
-        password: 'fixture-value',
-        portal: 'teacher',
-      }),
-    ).resolves.toEqual({
-      email: 'teacher@colorplay.invalid',
-      userId: 'teacher-id',
+    const session = await repository.signInWithAccount({
+      account: 'teacher01',
+      password: 'fixture-value',
+      portal: 'teacher',
     });
+
+    expect(session).toEqual({ userId: 'teacher-id' });
+    expect(session).not.toHaveProperty('email');
     expect(invoke).toHaveBeenCalledWith('auth-login', {
       body: {
         account: 'teacher01',
@@ -270,10 +263,7 @@ describe('AuthRepository error boundary', () => {
         password: 'fixture-value',
         portal: 'student',
       }),
-    ).resolves.toEqual({
-      email: 'student@colorplay.invalid',
-      userId: 'student-id',
-    });
+    ).resolves.toEqual({ userId: 'student-id' });
     expect(invoke).toHaveBeenCalledTimes(2);
     expect(setSession).toHaveBeenCalledOnce();
   });
@@ -360,10 +350,9 @@ describe('AuthRepository error boundary', () => {
     );
 
     await expect(repository.getSession()).resolves.toBeNull();
-    await expect(repository.getSession()).resolves.toEqual({
-      email: 'fixture@colorplay.invalid',
-      userId: 'fixture-id',
-    });
+    const session = await repository.getSession();
+    expect(session).toEqual({ userId: 'fixture-id' });
+    expect(session).not.toHaveProperty('email');
   });
 
   it('uses local scope for a successful sign-out', async () => {
@@ -377,7 +366,13 @@ describe('AuthRepository error boundary', () => {
   it.each([
     ['missing session', { session: null, user: null }],
     ['missing user', { session: {}, user: null }],
-    ['missing email', { session: { user: { id: 'fixture-id' } }, user: null }],
+    [
+      'missing user id',
+      {
+        session: { user: { email: 'fixture@colorplay.invalid' } },
+        user: null,
+      },
+    ],
   ])('maps a %s sign-in response to AUTH_UNKNOWN', async (_label, data) => {
     const client = createClientForAuth({
       signInWithPassword: () => Promise.resolve({ data, error: null }),
@@ -606,10 +601,8 @@ describe('AuthRepository error boundary', () => {
     });
     providerListener?.('SIGNED_OUT', null);
 
-    expect(listener).toHaveBeenNthCalledWith(1, {
-      email: 'fixture@colorplay.invalid',
-      userId: 'fixture-id',
-    });
+    expect(listener).toHaveBeenNthCalledWith(1, { userId: 'fixture-id' });
+    expect(listener.mock.calls[0]?.[0]).not.toHaveProperty('email');
     expect(listener).toHaveBeenNthCalledWith(2, null);
 
     stop();
@@ -621,7 +614,7 @@ describe('AuthRepository error boundary', () => {
       ((event: string, session: unknown) => void) | undefined;
     const rawError = new TypeError('raw-session-getter-detail');
     const user = { id: 'fixture-id' };
-    Object.defineProperty(user, 'email', {
+    Object.defineProperty(user, 'id', {
       get: () => {
         throw rawError;
       },

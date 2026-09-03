@@ -75,14 +75,16 @@ SUPABASE_SERVICE_ROLE_KEY="$mfa_capability_service_role_key" \
   tests/integration/admin-mfa-flow.integration.test.ts \
   tests/integration/admin-canonical-hash.integration.test.ts \
   tests/integration/admin-command-saga.integration.test.ts \
-  tests/integration/admin-manual-retry-claim.integration.test.ts
+  tests/integration/admin-manual-retry-claim.integration.test.ts \
+  tests/integration/admin-teacher-account.integration.test.ts
 unset mfa_capability_service_role_key
 pnpm test:integration \
   --exclude tests/integration/admin-mfa-capability.integration.test.ts \
   --exclude tests/integration/admin-mfa-flow.integration.test.ts \
   --exclude tests/integration/admin-canonical-hash.integration.test.ts \
   --exclude tests/integration/admin-command-saga.integration.test.ts \
-  --exclude tests/integration/admin-manual-retry-claim.integration.test.ts
+  --exclude tests/integration/admin-manual-retry-claim.integration.test.ts \
+  --exclude tests/integration/admin-teacher-account.integration.test.ts
 node scripts/verify/task-11-network-evidence.mjs "$task11_network_report" "$task11_secret_scan_report"
 
 auth_http_status="$(

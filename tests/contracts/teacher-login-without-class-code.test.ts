@@ -14,4 +14,10 @@ describe('teacher account login contract', () => {
     expect(authLoginSource).toContain('grant_type=password');
     expect(authLoginSource).not.toMatch(/classCode|normalizeClassCode/u);
   });
+
+  it('returns only session tokens from the custom auth-login endpoint', () => {
+    expect(authLoginSource).toContain('access_token: session.access_token');
+    expect(authLoginSource).toContain('refresh_token: session.refresh_token');
+    expect(authLoginSource).not.toContain('jsonResponse(200, { session })');
+  });
 });

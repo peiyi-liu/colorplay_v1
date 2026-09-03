@@ -1,15 +1,39 @@
 import { randomUUID } from 'node:crypto';
 
 import { expect, test, type Page } from '@playwright/test';
+import * as OTPAuth from 'otpauth';
 
 import { TEST_USERS } from '../fixtures/users';
-import {
-  challengeAdmin,
-  enrollAdminTotp,
-  saveAdminTotpSecret,
-  signInAdmin,
-} from './helpers/admin';
-import { signInTeacher } from './helpers/auth';
+import { challengeAdmin, saveAdminTotpSecret } from './helpers/admin';
+import { signInStudent, signInTeacher } from './helpers/auth';
+
+async function signInAdmin(
+  page: Page,
+  credentials: Readonly<{ email: string; password: string }>,
+) {
+  await page.goto('/login');
+  await page.getByText('教師端登入').click();
+  await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
+  await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
+  await page.getByRole('button', { name: '登入' }).click();
+  await page.waitForURL(/\/admin/u);
+}
+
+async function enrollAdminTotp(page: Page): Promise<string> {
+  const secretLocator = page.getByTestId('totp-secret');
+  await expect(secretLocator).toHaveText(/[A-Z2-7]+/u);
+  const secret = (await secretLocator.textContent()) ?? '';
+  if (secret === '') throw new Error('ADMIN_E2E_TOTP_SECRET_MISSING');
+  const code = new OTPAuth.TOTP({
+    digits: 6,
+    period: 30,
+    secret,
+  }).generate();
+  await page.locator('#admin-mfa-enroll-code').fill(code);
+  await page.getByRole('button', { name: '完成綁定' }).click();
+  await page.waitForURL(/\/admin\/mfa\/challenge$/u);
+  return secret;
+}
 
 // 篩到只剩 adminPrimary／adminSecondary 兩列：full_name 是這兩個 fixture
 // 唯一可預期、非空的已知值（tests/fixtures/users.ts 的 TEST_USER_ACCOUNTS），
@@ -181,6 +205,46 @@ test('admin security journey: enroll, challenge, browse, reveal, audit, and sess
         new RegExp(`${returnToPath.replaceAll('/', String.raw`\/`)}$`, 'u'),
       );
     });
+
+    await test.step('7. Invitation → MFA → Admin：既有教師接受一次性邀請並完成綁定', async () => {
+      await primaryPage.goto('/admin/access/invitations');
+      await primaryPage
+        .getByLabel('受邀者 Email')
+        .fill(TEST_USERS.teacherTwo.email);
+      await primaryPage.getByRole('button', { name: '發出邀請' }).click();
+      const issueDialog = primaryPage.getByRole('dialog', {
+        name: '發出管理員邀請',
+      });
+      await issueDialog
+        .getByLabel('原因')
+        .fill('Task 6 驗證邀請接受後完成 MFA 並進入管理介面');
+      await issueDialog.getByRole('button', { name: '確認' }).click();
+      const tokenRegion = primaryPage.getByRole('region', {
+        name: '邀請 token',
+      });
+      const token = (await tokenRegion.locator('code').textContent()) ?? '';
+      expect(token).not.toBe('');
+
+      const invitedContext = await browser.newContext();
+      const invitedPage = await invitedContext.newPage();
+      try {
+        await signInTeacher(invitedPage, TEST_USERS.teacherTwo);
+        await invitedPage.goto('/admin/invitations/accept');
+        await invitedPage.getByLabel('邀請 token').fill(token);
+        await invitedPage.getByRole('button', { name: '接受邀請' }).click();
+        await expect(invitedPage).toHaveURL(/\/admin\/mfa\/enroll$/u);
+        const invitedSecret = await enrollAdminTotp(invitedPage);
+        await challengeAdmin(invitedPage, invitedSecret);
+        await expect(invitedPage).toHaveURL(/\/admin$/u);
+        await expect(
+          invitedPage.getByRole('heading', { name: '安全總覽' }),
+        ).toBeVisible();
+      } finally {
+        await invitedContext.close();
+      }
+      await tokenRegion.getByRole('button', { name: '關閉' }).click();
+      await expect(tokenRegion).toBeHidden();
+    });
   } finally {
     await primaryContext.close();
   }
@@ -193,4 +257,21 @@ test('non-admin session is redirected away from /admin', async ({ page }) => {
   await signInTeacher(page, TEST_USERS.teacher);
   await page.goto('/admin');
   await expect(page).toHaveURL(/\/unauthorized$/u);
+});
+
+test('anonymous and student sessions cannot enter /admin', async ({
+  browser,
+}) => {
+  const anonymousContext = await browser.newContext();
+  const anonymousPage = await anonymousContext.newPage();
+  await anonymousPage.goto('/admin');
+  await expect(anonymousPage).toHaveURL(/\/login$/u);
+  await anonymousContext.close();
+
+  const studentContext = await browser.newContext();
+  const studentPage = await studentContext.newPage();
+  await signInStudent(studentPage, TEST_USERS.studentOne);
+  await studentPage.goto('/admin');
+  await expect(studentPage).toHaveURL(/\/unauthorized$/u);
+  await studentContext.close();
 });

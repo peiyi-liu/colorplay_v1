@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildTeacherInternalEmail,
   executeTeacherAccountSaga,
   reconcileTeacherAccountOperation,
   resolveTeacherAccountReplay,
@@ -25,6 +26,40 @@ const callNames = (calls: unknown[]): unknown[] =>
   calls.map((entry) => (entry as unknown[])[0]);
 const callAt = (calls: unknown[], index: number): unknown[] =>
   calls[index] as unknown[];
+
+describe('teacher internal Auth identity', () => {
+  it('derives a deterministic opaque email from the reserved Auth UUID', () => {
+    const namespace = 'teachers.local.invalid';
+    const secondAuthUserId = '22000000-0000-0000-0000-000000000099';
+
+    const email = buildTeacherInternalEmail(AUTH_USER_ID, namespace);
+
+    expect(email).toBe(`${AUTH_USER_ID}@${namespace}`);
+    expect(email).not.toContain('teacher42');
+    expect(buildTeacherInternalEmail(AUTH_USER_ID, namespace)).toBe(email);
+    expect(
+      buildTeacherInternalEmail(AUTH_USER_ID.toUpperCase(), namespace),
+    ).toBe(email);
+    expect(buildTeacherInternalEmail(secondAuthUserId, namespace)).not.toBe(
+      email,
+    );
+  });
+
+  it.each([
+    ['teacher42', 'teachers.local.invalid'],
+    ['00000000-0000-0000-0000-000000000000', 'teachers.local.invalid'],
+    [AUTH_USER_ID, 'teachers.INVALID'],
+    [AUTH_USER_ID, 'teachers.example.com'],
+    [AUTH_USER_ID, 'invalid'],
+  ] as const)(
+    'fails closed for Auth UUID %s and namespace %s',
+    (id, namespace) => {
+      expect(() => buildTeacherInternalEmail(id, namespace)).toThrow(
+        'invalid teacher internal identity',
+      );
+    },
+  );
+});
 
 describe('teacher account denial replay', () => {
   it('preserves a strictly validated operation ID for status follow-up', () => {
@@ -87,7 +122,7 @@ const createHarness = () => {
   const password = `A1!a${crypto.randomUUID().replaceAll('-', '').slice(0, 8)}`;
   const loginAccount = `teacher${++accountCounter}`;
   const namespace = 'teachers.local.invalid';
-  const internalEmail = `${loginAccount}@${namespace}`;
+  const internalEmail = `${AUTH_USER_ID}@${namespace}`;
   const operation = {
     operation_id: OPERATION_ID,
     operation_type: 'create_teacher_account' as
@@ -99,11 +134,7 @@ const createHarness = () => {
     login_account: loginAccount,
     reconciliation_action: null,
     auth_call_kind: null as
-      | null
-      | 'create_user'
-      | 'reset_password'
-      | 'enable_user'
-      | 'delete_user',
+      null | 'create_user' | 'reset_password' | 'enable_user' | 'delete_user',
     redacted_result: {
       operation_id: OPERATION_ID,
       login_account: loginAccount,
@@ -134,7 +165,9 @@ const createHarness = () => {
         ].includes(operation.state);
         return ok({
           outcome: 'ok' as const,
-          claim_status: terminal ? ('terminal' as const) : ('acquired' as const),
+          claim_status: terminal
+            ? ('terminal' as const)
+            : ('acquired' as const),
           claim_token: terminal ? null : EXECUTION_CLAIM_TOKEN,
           operation,
         });
@@ -314,39 +347,39 @@ describe('teacher account operation saga', () => {
   it.each(['create_teacher_account', 'reset_teacher_password'] as const)(
     'returns pending with zero Auth side effects when another worker owns an active %s execution claim',
     async (command) => {
-    const harness = createHarness();
-    if (command === 'reset_teacher_password') makeReset(harness);
-    const requestId = crypto.randomUUID();
-    Object.assign(harness.dependencies.store, {
-      claimExecution: (input: unknown) => {
-        harness.storeCalls.push(['claimExecution', input]);
-        return ok({
-          outcome: 'denied' as const,
-          code: 'TEACHER_OPERATION_PENDING',
-          message: '教師帳號已有尚未完成的安全作業。',
-          request_id: requestId,
-          retryable: false,
-          operation_id: OPERATION_ID,
-        });
-      },
-    });
-    harness.dependencies.generatePassword = () =>
-      unexpected('generatePassword');
-    harness.dependencies.auth.getUserById = () => unexpected('getUserById');
-    harness.dependencies.auth.createUser = () => unexpected('createUser');
+      const harness = createHarness();
+      if (command === 'reset_teacher_password') makeReset(harness);
+      const requestId = crypto.randomUUID();
+      Object.assign(harness.dependencies.store, {
+        claimExecution: (input: unknown) => {
+          harness.storeCalls.push(['claimExecution', input]);
+          return ok({
+            outcome: 'denied' as const,
+            code: 'TEACHER_OPERATION_PENDING',
+            message: '教師帳號已有尚未完成的安全作業。',
+            request_id: requestId,
+            retryable: false,
+            operation_id: OPERATION_ID,
+          });
+        },
+      });
+      harness.dependencies.generatePassword = () =>
+        unexpected('generatePassword');
+      harness.dependencies.auth.getUserById = () => unexpected('getUserById');
+      harness.dependencies.auth.createUser = () => unexpected('createUser');
 
-    const result = await execute(harness);
+      const result = await execute(harness);
 
-    expectDenied(result, 'TEACHER_OPERATION_PENDING');
-    expect(callNames(harness.storeCalls)).toEqual(['claimExecution']);
-    expect(harness.authCalls).toEqual([]);
-    expect(result.kind === 'denied' && result.envelope).toEqual({
-      outcome: 'denied',
-      code: 'TEACHER_OPERATION_PENDING',
-      message: '教師帳號已有尚未完成的安全作業。',
-      request_id: requestId,
-      retryable: false,
-    });
+      expectDenied(result, 'TEACHER_OPERATION_PENDING');
+      expect(callNames(harness.storeCalls)).toEqual(['claimExecution']);
+      expect(harness.authCalls).toEqual([]);
+      expect(result.kind === 'denied' && result.envelope).toEqual({
+        outcome: 'denied',
+        code: 'TEACHER_OPERATION_PENDING',
+        message: '教師帳號已有尚未完成的安全作業。',
+        request_id: requestId,
+        retryable: false,
+      });
     },
   );
 
@@ -366,10 +399,7 @@ describe('teacher account operation saga', () => {
       'teacher account operation failed at begin_create_compensation',
     );
 
-    expect(callNames(harness.authCalls)).toEqual([
-      'getUserById',
-      'createUser',
-    ]);
+    expect(callNames(harness.authCalls)).toEqual(['getUserById', 'createUser']);
     expect(callAt(harness.storeCalls, 1)[1]).toMatchObject({
       executionClaimToken: EXECUTION_CLAIM_TOKEN,
     });

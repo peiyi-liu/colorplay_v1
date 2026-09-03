@@ -105,7 +105,6 @@ const renderShellRoute = (entry: string) => {
 const renderTeacherShell = () => {
   mockedUseAuth.mockReturnValue({
     session: {
-      email: 'teacher@colorplay.test',
       userId: 'teacher-id',
     },
     signIn: vi.fn(),
@@ -148,7 +147,6 @@ const renderTeacherShell = () => {
 const renderAdminShell = () => {
   mockedUseAuth.mockReturnValue({
     session: {
-      email: 'admin.primary@colorplay.test',
       userId: 'admin-id',
     },
     signIn: vi.fn(),
@@ -189,7 +187,6 @@ describe('AppShell', () => {
     mockedUseEconomySummary.mockReset();
     mockedUseAuth.mockReturnValue({
       session: {
-        email: 'student.one@colorplay.test',
         userId: 'student-one-id',
       },
       signIn: vi.fn(),
@@ -381,7 +378,7 @@ describe('AppShell', () => {
   it('signs an admin out directly without a MENU panel', async () => {
     const signOut = vi.fn(() => Promise.resolve());
     mockedUseAuth.mockReturnValue({
-      session: { email: 'admin.primary@colorplay.test', userId: 'admin-id' },
+      session: { userId: 'admin-id' },
       signIn: vi.fn(),
       signInWithAccount: vi.fn(),
       signOut,
@@ -902,7 +899,6 @@ describe('AppShell', () => {
   it('leaves teacher navigation ownership to the teacher page', () => {
     mockedUseAuth.mockReturnValue({
       session: {
-        email: 'teacher@colorplay.test',
         userId: 'teacher-id',
       },
       signIn: vi.fn(),
@@ -975,7 +971,6 @@ describe('AppShell', () => {
   it('does not recreate the retired teacher indigo rail', () => {
     mockedUseAuth.mockReturnValue({
       session: {
-        email: 'teacher@colorplay.test',
         userId: 'teacher-id',
       },
       signIn: vi.fn(),
@@ -1013,7 +1008,6 @@ describe('AppShell', () => {
     const signOut = vi.fn(() => Promise.resolve());
     mockedUseAuth.mockReturnValue({
       session: {
-        email: 'student.one@colorplay.test',
         userId: 'student-one-id',
       },
       signIn: vi.fn(),
@@ -1055,7 +1049,6 @@ describe('AppShell', () => {
     const signOut = vi.fn(() => Promise.reject(new Error('provider detail')));
     mockedUseAuth.mockReturnValue({
       session: {
-        email: 'student.one@colorplay.test',
         userId: 'student-one-id',
       },
       signIn: vi.fn(),

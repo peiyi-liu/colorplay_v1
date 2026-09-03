@@ -16,7 +16,7 @@ const repository = (getQuestionAnswer: ReturnType<typeof vi.fn>) =>
 const wrapper = ({ children }: Readonly<{ children: ReactNode }>) => (
   <AuthContext.Provider
     value={{
-      session: { email: 'teacher@colorplay.test', userId: 'teacher-id' },
+      session: { userId: 'teacher-id' },
       signIn: vi.fn(),
       signInWithAccount: vi.fn(),
       signOut: vi.fn(),

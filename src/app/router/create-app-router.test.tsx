@@ -357,7 +357,6 @@ describe('createAppRouter', () => {
     });
 
     renderRouter('/admin/invitations/accept', {
-      email: 'invitee@colorplay.invalid',
       userId: 'invitee-id',
     });
 
@@ -387,7 +386,6 @@ describe('createAppRouter', () => {
     });
 
     const router = renderRouter('/register', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
 
@@ -408,7 +406,6 @@ describe('createAppRouter', () => {
     });
 
     const router = renderRouter('/register', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
 
@@ -435,7 +432,6 @@ describe('createAppRouter', () => {
     });
 
     const router = renderRouter('/app', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
 
@@ -456,7 +452,6 @@ describe('createAppRouter', () => {
   // UAT 0727 R2 #1：導覽點擊直達自己班級的排行榜，不再經班級清單。
   it('renders the direct classroom leaderboard route', async () => {
     renderRouter('/app/leaderboard', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
     expect(
@@ -466,7 +461,6 @@ describe('createAppRouter', () => {
 
   it('renders the classroom-scoped leaderboard route', async () => {
     renderRouter('/app/leaderboard/ca000000-0000-4000-8000-000000000001', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
     expect(
@@ -476,7 +470,6 @@ describe('createAppRouter', () => {
 
   it('renders the Blook shop deep-link for an authenticated student', async () => {
     renderRouter('/app/shop', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
 
@@ -487,7 +480,6 @@ describe('createAppRouter', () => {
 
   it('renders the lazy achievement route only for an authenticated student', async () => {
     renderRouter('/app/achievements', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
 
@@ -521,7 +513,6 @@ describe('createAppRouter', () => {
       refetch: vi.fn(),
     });
     renderRouter('/app', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
 
@@ -537,7 +528,6 @@ describe('createAppRouter', () => {
 
   it('routes an authoritative student away from /teacher', async () => {
     const router = renderRouter('/teacher', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
 
@@ -565,7 +555,6 @@ describe('createAppRouter', () => {
     });
 
     renderRouter('/teacher', {
-      email: 'teacher@colorplay.invalid',
       userId: 'teacher-id',
     });
 
@@ -602,7 +591,6 @@ describe('createAppRouter', () => {
       refetch: vi.fn(),
     });
     const router = renderRouter('/teacher/classes', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
     expect(
@@ -630,7 +618,6 @@ describe('createAppRouter', () => {
     renderRouter(
       '/teacher/classes/14100000-0000-0000-0000-000000000001/assignments',
       {
-        email: 'learner@colorplay.invalid',
         userId: 'learner-id',
       },
     );
@@ -655,7 +642,6 @@ describe('createAppRouter', () => {
       refetch: vi.fn(),
     });
     renderRouter('/teacher/classes', {
-      email: 'teacher@colorplay.invalid',
       userId: 'teacher-id',
     });
     expect(

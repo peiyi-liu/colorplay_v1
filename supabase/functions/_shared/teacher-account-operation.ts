@@ -51,21 +51,26 @@ export function generateTeacherPassword(
 }
 
 const TEACHER_LOGIN_ACCOUNT = /^teacher[0-9]{2,13}$/;
+const UUID_SHAPE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const INTERNAL_EMAIL_NAMESPACE =
   /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+invalid$/;
 
 export function buildTeacherInternalEmail(
-  loginAccount: string,
+  authUserId: string,
   namespace: string,
 ): string {
+  const normalizedAuthUserId = authUserId.toLowerCase();
+  const internalEmail = `${normalizedAuthUserId}@${namespace}`;
   if (
-    !TEACHER_LOGIN_ACCOUNT.test(loginAccount) ||
-    namespace.length > 253 ||
-    !INTERNAL_EMAIL_NAMESPACE.test(namespace)
+    !UUID_SHAPE.test(authUserId) ||
+    normalizedAuthUserId === '00000000-0000-0000-0000-000000000000' ||
+    !INTERNAL_EMAIL_NAMESPACE.test(namespace) ||
+    internalEmail.length > 254
   ) {
     throw new Error('invalid teacher internal identity');
   }
-  return `${loginAccount}@${namespace}`;
+  return internalEmail;
 }
 
 type RpcResult<T> = PromiseLike<{ data: T | null; error: unknown | null }>;
@@ -80,11 +85,7 @@ interface TeacherAccountOperation {
   login_account: string | null;
   reconciliation_action: string | null;
   auth_call_kind:
-    | null
-    | 'create_user'
-    | 'reset_password'
-    | 'enable_user'
-    | 'delete_user';
+    null | 'create_user' | 'reset_password' | 'enable_user' | 'delete_user';
   redacted_result: Record<string, unknown>;
 }
 
@@ -120,7 +121,9 @@ export interface TeacherAccountOperationDependencies {
     claimExecution: (input: {
       operationId: string;
       expectedOperationType: TeacherAccountCommand;
-    }) => RpcResult<ClaimedExecution | DenialEnvelope & { operation_id: string }>;
+    }) => RpcResult<
+      ClaimedExecution | (DenialEnvelope & { operation_id: string })
+    >;
     markAuthApplied: (input: {
       operationId: string;
       expectedOperationType: TeacherAccountCommand;
@@ -132,10 +135,7 @@ export interface TeacherAccountOperationDependencies {
       expectedOperationType: TeacherAccountCommand;
       executionClaimToken: string;
       authCallKind:
-        | 'create_user'
-        | 'reset_password'
-        | 'enable_user'
-        | 'delete_user';
+        'create_user' | 'reset_password' | 'enable_user' | 'delete_user';
     }) => RpcResult<{ outcome: 'ok' }>;
     commitTeacherProfile: (input: {
       operationId: string;
@@ -267,9 +267,6 @@ const STATUS_CHECK_DENIAL_CODES = new Set<TeacherDenialCode>([
   'TEACHER_AUTH_UNAVAILABLE',
   'TEACHER_RECONCILIATION_REQUIRED',
 ]);
-const UUID_SHAPE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 export function teacherAccountDenialStatus(
   code: TeacherDenialCode,
 ): 403 | 409 | 503 {
@@ -553,9 +550,9 @@ export async function executeTeacherAccountSaga(
   dependencies: TeacherAccountOperationDependencies,
 ): Promise<TeacherAccountSagaResult> {
   const claimResult = await dependencies.store.claimExecution({
-      operationId: input.operationId,
-      expectedOperationType: input.command,
-    });
+    operationId: input.operationId,
+    expectedOperationType: input.command,
+  });
   if (claimResult.error !== null || claimResult.data === null) {
     throw new Error('teacher account operation failed at claim_execution');
   }
@@ -803,7 +800,7 @@ export async function executeTeacherAccountSaga(
   let internalEmail: string;
   try {
     internalEmail = buildTeacherInternalEmail(
-      operation.login_account,
+      authUserId,
       dependencies.internalEmailNamespace,
     );
   } catch {

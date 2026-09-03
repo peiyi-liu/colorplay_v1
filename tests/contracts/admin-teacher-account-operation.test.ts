@@ -34,18 +34,25 @@ describe('teacher account operation exported seam', () => {
     expect(fills > 23).toBe(true);
   });
 
-  it('derives Auth email only from a reserved account and .invalid namespace', () => {
+  it('derives Auth email only from an opaque reserved UUID and .invalid namespace', () => {
+    const authUserId = '22000000-0000-0000-0000-000000000002';
     expect(
-      buildTeacherInternalEmail('teacher42', 'teachers.local.invalid'),
-    ).toBe('teacher42@teachers.local.invalid');
-    for (const [loginAccount, namespace] of [
-      ['teacher1', 'teachers.local.invalid'],
-      ['teacher42', 'teachers.INVALID'],
-      ['teacher42', 'teachers.example.com'],
-      ['teacher42', 'invalid'],
-      ['teacher42@example.test', 'teachers.local.invalid'],
+      buildTeacherInternalEmail(authUserId, 'teachers.local.invalid'),
+    ).toBe(`${authUserId}@teachers.local.invalid`);
+    expect(
+      buildTeacherInternalEmail(
+        authUserId.toUpperCase(),
+        'teachers.local.invalid',
+      ),
+    ).toBe(`${authUserId}@teachers.local.invalid`);
+    for (const [candidateId, namespace] of [
+      ['teacher42', 'teachers.local.invalid'],
+      ['00000000-0000-0000-0000-000000000000', 'teachers.local.invalid'],
+      [authUserId, 'teachers.INVALID'],
+      [authUserId, 'teachers.example.com'],
+      [authUserId, 'invalid'],
     ] as const) {
-      expect(() => buildTeacherInternalEmail(loginAccount, namespace)).toThrow(
+      expect(() => buildTeacherInternalEmail(candidateId, namespace)).toThrow(
         'invalid teacher internal identity',
       );
     }
@@ -148,6 +155,7 @@ describe('teacher account operation exported seam', () => {
       outcome: 'denied' as const,
       code: 'TEACHER_AUTH_UNAVAILABLE',
       message: '帳號驗證服務暫時無法使用，請先查詢作業狀態再重試。',
+      operation_id: '22000000-0000-4000-8000-000000000001',
       request_id: '22000000-0000-4000-8000-000000000003',
       retryable: true,
       password: 'must-not-survive',
@@ -162,6 +170,7 @@ describe('teacher account operation exported seam', () => {
           request_id: '22000000-0000-4000-8000-000000000003',
           retryable: true,
         },
+        operationId: '22000000-0000-4000-8000-000000000001',
       },
     );
     expect(
@@ -210,10 +219,13 @@ describe('teacher account execution fencing contract', () => {
       `create function public.${functionName}(`,
     );
     expect(functionStart).toBeGreaterThan(-1);
-    const signatureEnd = migrationSource.indexOf(') returns jsonb', functionStart);
-    expect(
-      migrationSource.slice(functionStart, signatureEnd),
-    ).toContain('p_execution_claim_token uuid');
+    const signatureEnd = migrationSource.indexOf(
+      ') returns jsonb',
+      functionStart,
+    );
+    expect(migrationSource.slice(functionStart, signatureEnd)).toContain(
+      'p_execution_claim_token uuid',
+    );
   });
 
   it('wires claim, durable Auth-call intent, and fencing tokens through the service client only', () => {
@@ -227,7 +239,9 @@ describe('teacher account execution fencing contract', () => {
       'p_execution_claim_token: executionClaimToken',
     );
     expect(edgeSource).toMatch(/operationId:\s*saga\.operationId/);
-    expect(edgeSource).not.toMatch(/console\.(?:info|warn|error)[^\n]*claimToken/);
+    expect(edgeSource).not.toMatch(
+      /console\.(?:info|warn|error)[^\n]*claimToken/,
+    );
   });
 
   it('renews the bounded lease only from token-validated execution steps', () => {

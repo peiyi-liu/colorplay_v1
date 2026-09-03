@@ -22,7 +22,8 @@
 - Teacher login accounts are server-generated `teacherNN`; client never supplies account, role, Auth user ID, internal Email, or password.
 - Contact Email is nullable Admin-only personal data and is not an Auth/recovery identity.
 - Passwords are CSPRNG 12 characters with uppercase, lowercase, number, and symbol; plaintext appears in one successful response only.
-- Auth internal Email and plaintext credentials are forbidden from browser catalog, URL, DB receipt, audit, log, cache, analytics, repo, and evidence.
+- Auth synthetic Email uses the preallocated Auth user UUID as an opaque local-part plus a strict server-only `.invalid` namespace; it never derives from `teacherNN` or contact Email.
+- The only browser exception for that synthetic Email is Supabase-owned Auth response/access-token/session serialization in its exact sessionStorage key. The custom `auth-login` response returns access/refresh tokens only, never session user, Email, identity, or provider metadata. JWT/session remains a high-sensitivity credential and closes on tab close/sign-out. React/AuthContext, UI, URL/history, logs, audit, analytics, app-owned storage/cache, browser catalog, export, ordinary payloads, repo and evidence remain forbidden. Plaintext credentials have no exception.
 - Cross-system operations are fail-closed sagas; no login-capable Auth user may remain without a committed teacher profile and audit trail.
 - Do not implement Admin C content, support, Live, analytics, or export modules.
 - Work in a dedicated worktree based on an owner-approved exact SHA that contains the committed R0 docs and canonical Phase 1 Local-gate lineage. Do not touch the Phase 0/1 worktrees directly.
@@ -165,9 +166,9 @@ Stage the six exact paths and generated type/catalog files only; commit `feat(ad
 Add exact hash fields:
 
 ```ts
-create_teacher_account: ['contact_email', 'full_name', 'reason']
-update_teacher_account: ['contact_email', 'full_name', 'reason', 'teacher_id']
-reset_teacher_password: ['reason', 'teacher_id']
+create_teacher_account: ['contact_email', 'full_name', 'reason'];
+update_teacher_account: ['contact_email', 'full_name', 'reason', 'teacher_id'];
+reset_teacher_password: ['reason', 'teacher_id'];
 ```
 
 Assert extra `role`, `login_account`, `password`, `auth_user_id`, and `internal_email` are never forwarded to RPC/adapter.
@@ -178,7 +179,7 @@ Cover reserve→Auth→profile→complete; Auth create failure; profile failure 
 
 - [ ] **Step 3: Implement password/internal identity helpers**
 
-Use Web Crypto CSPRNG and rejection sampling from an approved character set. Validate 12 characters and all four classes in tests. Internal Email derives from the reserved login account and a server-only environment namespace; never accept it from args.
+Use Web Crypto CSPRNG and rejection sampling from an approved character set. Validate 12 characters and all four classes in tests. Internal Email derives deterministically from the preallocated Auth user UUID and a server-only `.invalid` namespace; never derive it from the login account/contact Email or accept it from args.
 
 - [ ] **Step 4: Extend the existing Edge orchestration**
 
@@ -303,7 +304,7 @@ Create ten accounts concurrently, inject each saga failure, reconcile, update na
 
 - [ ] **Step 2: Add browser flows and secret scanning**
 
-Invitation→MFA→Admin, console navigation, teacher create/receipt/login, update, reset, stale session, unauthorized roles. Inspect network/cache/DOM/logs for password/internal Email and use all three required Admin viewports in the phase gate.
+Invitation→MFA→Admin, console navigation, teacher create/receipt/login, update, reset, stale session, unauthorized roles. Inspect network/cache/DOM/logs for password/internal Email and use all three required Admin viewports in the phase gate. Parse the exact Supabase Auth sessionStorage key: permit the synthetic Email only in the official session object/JWT required email claim, assert its opaque local-part contains neither `teacherNN` nor contact Email, and scan every other storage key/surface without broad exclusions. Plaintext password remains permitted only in the exact fresh create/reset response and in-memory receipt.
 
 - [ ] **Step 3: Run scoped task checks**
 
