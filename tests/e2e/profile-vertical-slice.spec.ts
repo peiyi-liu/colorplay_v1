@@ -1,7 +1,7 @@
 import { expect, test, type Page, type Response } from '@playwright/test';
 
 import { OWN_PROFILE_SELECT } from '../../src/features/profile/api/own-profile-select';
-import { TEST_USERS } from '../fixtures/users';
+import { TEST_USER_ACCOUNTS, TEST_USERS } from '../fixtures/users';
 import {
   isLocalOwnProfileResponseUrl,
   readLocalProfileEnvironment,
@@ -154,7 +154,7 @@ test('renders only the real safe profile and derives role navigation from Postgr
   );
 
   expect(teacherProfile).toMatchObject({
-    display_name: 'teacher',
+    display_name: TEST_USER_ACCOUNTS.teacher.fullName,
     role: 'teacher',
   });
   await teacherPage.getByRole('link', { name: '教師工作區' }).click();

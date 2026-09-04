@@ -22,7 +22,16 @@ export async function launchLiveSessionFromTeacherHome(
 ): Promise<LiveSessionLaunch> {
   await teacherPage.goto('/teacher/live');
   const sectionSelect = teacherPage.getByLabel('1・選擇對戰單元');
-  await sectionSelect.waitFor();
+  try {
+    await sectionSelect.waitFor({ timeout: 15_000 });
+  } catch {
+    const pageText = (await teacherPage.locator('body').innerText())
+      .replace(/\s+/gu, ' ')
+      .slice(0, 500);
+    throw new Error(
+      `LIVE_LAUNCH_PAGE_NOT_READY: ${teacherPage.url()} :: ${pageText}`,
+    );
+  }
   // index 0 是「請選擇小節」placeholder；任一已發佈小節皆可用。
   await sectionSelect.selectOption({ index: 1 });
   await teacherPage.getByRole('button', { name: '建立活動並開場' }).click();

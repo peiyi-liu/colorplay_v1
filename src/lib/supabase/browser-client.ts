@@ -37,7 +37,12 @@ const withBoundedBody = (
   signal: AbortSignal,
   cleanup: () => void,
 ): Response => {
-  if (response.body === null) {
+  if (
+    response.body === null ||
+    response.status === 204 ||
+    response.status === 205 ||
+    response.status === 304
+  ) {
     cleanup();
     return response;
   }

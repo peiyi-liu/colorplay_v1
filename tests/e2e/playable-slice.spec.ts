@@ -78,7 +78,11 @@ test('student completes a mixed ten-question challenge with durable server total
         name: position <= 5 ? '✓ 答對了' : '✕ 答錯了',
       }),
     ).toBeVisible();
-    await expect(page.locator('.feedback-card > p').last()).toBeVisible();
+    if (position <= 5) {
+      await expect(page.locator('.feedback-card__score')).toBeVisible();
+    } else {
+      await expect(page.locator('.feedback-card__explanation')).toBeVisible();
+    }
 
     await page
       .getByRole('button', {

@@ -68,6 +68,23 @@ describe('getBrowserSupabaseClient', () => {
     vi.useRealTimers();
   });
 
+  it.each([204, 205, 304])(
+    'does not wrap a response body for null-body status %s',
+    async (status) => {
+      const response = {
+        body: new ReadableStream<Uint8Array>(),
+        status,
+      } as Response;
+      const baseFetch = vi
+        .fn()
+        .mockResolvedValue(response) as unknown as typeof fetch;
+
+      await expect(
+        createBoundedFetch(baseFetch)('/auth/v1/logout'),
+      ).resolves.toBe(response);
+    },
+  );
+
   it('honors an AbortSignal carried by a Request object', async () => {
     const stalledFetch = vi.fn(
       (_input: RequestInfo | URL, init?: RequestInit) =>
