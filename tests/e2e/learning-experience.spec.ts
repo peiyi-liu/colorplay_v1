@@ -5,7 +5,6 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { CONTENT_MANIFEST } from '../fixtures/content-manifest.generated';
 import { GENERATED_CORRECT_ANSWERS } from '../fixtures/question-answers.generated';
-import { GENERATED_QUESTION_HINTS } from '../fixtures/question-hints.generated';
 import {
   REVIEW_MANIFEST,
   REVIEW_MEDIA_CARD,
@@ -20,9 +19,10 @@ import {
 import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
 import { startQuizFromLobby } from './helpers/quiz';
 
-// The quiz chapter must show every question in a single run so hint and
-// mistake targets are deterministic: chapter 4 has fewer questions than the
-// ten-question template ceiling, so all of them always appear.
+// A full chapter challenge always serves ten questions. The generated
+// manifest records the published chapter-bank pool size, not the template
+// limit, so select a chapter with enough questions and keep the session size
+// explicit.
 // These content-availability checks used to throw at module scope, which
 // crashes Playwright's test *discovery* for the whole tests/e2e directory
 // the moment content rollout hasn't reached this phase-gate's assumptions
@@ -32,10 +32,10 @@ import { startQuizFromLobby } from './helpers/quiz';
 // the guards belong inside the test body instead, where a stale/not-yet-
 // ready fixture only fails this one gate rather than the whole suite.
 const quizChapter = CONTENT_MANIFEST.find(
-  ({ chapterCode, questionCount }) =>
-    chapterCode === 'chapter-4' && questionCount > 0 && questionCount <= 10,
+  ({ questionCount }) => questionCount >= 10,
 );
-const QUIZ_CHAPTER_TITLE = '色彩與視覺';
+const QUIZ_QUESTION_COUNT = 10;
+const QUIZ_CHAPTER_TITLE = '色彩表示';
 
 const reviewSubtopic = REVIEW_MANIFEST.find(
   ({ cardCount, chapterCode }) => chapterCode === 'chapter-3' && cardCount > 0,
@@ -176,9 +176,7 @@ test('Learning Experience phase gate', async ({
     templateId: quizChapter.templateId,
   });
 
-  const questionTotal = quizChapter.questionCount;
-  let declaredUnavailable = false;
-  let threeHintWrongDone = false;
+  const questionTotal = QUIZ_QUESTION_COUNT;
   let wrongPromptCount = 0;
   for (let position = 1; position <= questionTotal; position += 1) {
     await expect(studentPage.getByLabel('挑戰進度')).toContainText(
@@ -187,19 +185,9 @@ test('Learning Experience phase gate', async ({
     const prompt = await studentPage
       .locator('.question-card legend')
       .innerText();
-    // 提示 UI 已依 owner 指示移除（2026-07-21 #4）；仍沿用提示 fixture
-    // 挑出固定的兩題故意答錯，維持後續錯題中心斷言不變。
-    const hints = GENERATED_QUESTION_HINTS.get(prompt);
-    let answerWrong = false;
-    if (hints) {
-      if (hints.length === 2 && !declaredUnavailable) {
-        declaredUnavailable = true;
-        answerWrong = true;
-      } else if (hints.length === 3 && !threeHintWrongDone) {
-        threeHintWrongDone = true;
-        answerWrong = true;
-      }
-    }
+    // 提示 UI 已依 owner 指示移除（2026-07-21 #4）；直接把前兩題答錯，
+    // 讓隨機抽題仍能穩定產生兩筆補救項目。
+    const answerWrong = position <= 2;
     const correctText = GENERATED_CORRECT_ANSWERS.get(prompt);
     if (!correctText) throw new Error('LEARNING_EXPERIENCE_ANSWER_MISSING');
     if (answerWrong) {
@@ -224,9 +212,10 @@ test('Learning Experience phase gate', async ({
   await expect(
     studentPage.getByRole('heading', { name: '挑戰完成' }),
   ).toBeVisible();
-  // Six fast correct answers at the full daily rate: 6 × 75 XP, 6 × 25 Token.
-  await expect(rewards).toContainText('450 / 500 XP');
-  await expect(rewards).toContainText('150 Token');
+  // Eight fast correct answers: 8 × 75 XP, 8 × 25 Token. The 600 XP total
+  // advances one level and leaves 100 / 500 XP toward the next level.
+  await expect(rewards).toContainText('100 / 500 XP');
+  await expect(rewards).toContainText('200 Token');
 
   // --- Mistakes and remediation: resolve both, 20% XP, zero Tokens ---
   await studentPage.goto('/app/mistakes');
@@ -260,8 +249,8 @@ test('Learning Experience phase gate', async ({
   }
   await expect(studentPage.getByText(/補救練習完成/u)).toBeVisible();
   // 20% of two fast correct answers: +30 XP; the Token balance must not move.
-  await expect(rewards).toContainText('480 / 500 XP');
-  await expect(rewards).toContainText('150 Token');
+  await expect(rewards).toContainText('130 / 500 XP');
+  await expect(rewards).toContainText('200 Token');
   const returnToMistakes = studentPage.getByRole('link', {
     name: '返回我的錯題',
   });
