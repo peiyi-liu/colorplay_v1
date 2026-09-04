@@ -1,15 +1,15 @@
 # ColorPlay Current Program
 
-- Status: INTEGRATION PR OPEN — PR #6 已由 Phase 0 + Admin B verified candidate
-  指向 `staging`；首次 CI 的 format gate 揭露 merge 後 Prettier drift，純格式修正、
-  parser whitespace tolerance 與 catalog source hash 更新已完成，等待 fresh CI；尚未
-  merge protected branch、正式 deploy 或執行任何 Hosted mutation
-- Last updated: 2026-09-04 (Asia/Taipei) — PR #6 已建立，首次 format
-  remediation 已完成本機驗證並準備推送
+- Status: INTEGRATION PR UPDATE IN PROGRESS — PR #6 的 Phase 0 + Admin B
+  candidate 正在整合 `staging.colorplayapp.com` 實際部署的 exact SHA `9733923e`；
+  owner 已授權 fresh checks 全綠後合併受保護的 `staging`。Hosted DB migration／
+  fixture mutation 仍是獨立 gate，尚未獲授權或執行
+- Last updated: 2026-09-04 (Asia/Taipei) — exact deployed lineage 已完成本機文字
+  衝突整合、unit／lint／typecheck／format／build，等待唯一 review 與 fresh PR CI
 - Last full review: 2026-09-04 (Asia/Taipei) — integration review CLOSED
 - Current phase: PR #6 (`codex/adminb-phase0-integration-20260904` → `staging`)
-  已開啟；完成格式 remediation 後等待 fresh protected checks，merge 仍需 owner
-  另行授權
+  正在加入 exact deployed SHA `9733923e`；fresh protected checks 全綠後依 owner
+  本次授權合併
 - Canonical entry point: this file
 - Current owner decision record:
   `docs/superpowers/specs/2026-09-02-program-rebaseline-owner-decisions.md`
@@ -45,21 +45,19 @@ as a completed production release.
 
 ## Immediate next action
 
-Keep PR #6 open on `codex/adminb-phase0-integration-20260904` → `staging` until
-its fresh protected checks complete. A green PR does not authorize the
-protected-branch merge, formal deployment evidence, or Hosted Task 7; each
-remains a distinct owner gate.
-
-Do **not** merge PR #6, deploy it, or run Hosted Task 7 until its resulting exact
-SHA has fresh protected evidence and the owner separately authorizes each
-external mutation. Historical PR #1 evidence must not substitute for PR #6.
+Complete the exact deployed-SHA integration on PR #6, then merge it into
+`staging` only after the resulting head passes fresh protected checks. The owner
+authorized that protected-branch merge on 2026-09-04; this authorization does
+not include Hosted DB migrations, fixture cleanup, Task 7, or manual promotion.
+Historical PR #1 evidence must not substitute for PR #6.
 
 Admin B Tasks 1–6 and A1 are complete at approved tip `8dcdbe8`; the Phase 0
-release-foundation tip is integrated through `ba4ec45`. Their Local integration
-candidate has completed migration replay, generated-type parity, full DB/Auth
-integration tests, lint, typecheck, and unit tests. Hosted Task 7, exact-SHA
-deployment proof, push, protected-branch merge, and every external mutation
-remain separate owner-authorized gates.
+release-foundation tip is integrated through `ba4ec45`; current deployed web
+lineage is integrated through exact SHA `9733923e`. The earlier Phase 0 + Admin B
+candidate completed migration replay, generated-type parity, full DB/Auth
+integration tests, lint, typecheck, and unit tests. Fresh combined-lineage DB and
+Chromium evidence comes from the isolated PR CI. Hosted Task 7 and every Hosted
+DB mutation remain separate owner-authorized gates.
 
 ## Historical program structure snapshot（superseded 2026-09-02）
 

@@ -148,7 +148,10 @@ export function LivePresenter({
       role="region"
     >
       <p className="live-presenter__viewport-warning" role="alert">
-        投影視窗過小
+        <strong>投影視窗過小</strong>
+        <span>
+          請縮小瀏覽器畫面比例，或放大視窗後再試。
+        </span>
       </p>
       {phase === 'lobby' ? (
         <LiveProjectorHud

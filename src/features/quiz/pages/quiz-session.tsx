@@ -27,6 +27,7 @@ import { FeedbackCard } from '../components/feedback-card';
 import { QuestionCard } from '../components/question-card';
 import { QuizExitGuard } from '../components/quiz-exit-guard';
 import { comboCount } from '../lib/combo';
+import { applyFinalResultToSession } from '../lib/finalized-session-cache';
 import { withoutNumberPrefix } from '../lib/quiz-labels';
 import {
   feedbackFromQuestion,
@@ -255,6 +256,11 @@ export function QuizSessionPage({
       try {
         const finalResult = await finalizeMutation.mutateAsync(
           session.sessionId,
+        );
+        queryClient.setQueryData<QuizSession>(
+          quizSessionQueryKey(session.sessionId),
+          (cachedSession) =>
+            applyFinalResultToSession(cachedSession, finalResult),
         );
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: economyQueryKey }),

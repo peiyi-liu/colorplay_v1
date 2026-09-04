@@ -27,6 +27,7 @@ const repository = (
 const renderForm = (
   classroomRepository: ClassroomRepository,
   onJoined = vi.fn(),
+  initialJoinCode = 'ABCD-1234-EF56-7890',
 ) => {
   const client = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
@@ -38,7 +39,7 @@ const renderForm = (
   }
   render(
     <JoinClassroomForm
-      initialJoinCode="ABCD-1234-EF56-7890"
+      initialJoinCode={initialJoinCode}
       onJoined={onJoined}
       repository={classroomRepository}
     />,
@@ -76,6 +77,24 @@ describe('JoinClassroomForm', () => {
     });
   });
 
+  it('accepts a new eight-character classroom code', async () => {
+    const joinClassroom = vi.fn().mockResolvedValue(joined);
+    const onJoined = renderForm(
+      repository(joinClassroom),
+      vi.fn(),
+      '7KPM-X4TR',
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: '加入班級' }));
+
+    await waitFor(() => {
+      expect(joinClassroom).toHaveBeenCalledWith(
+        expect.objectContaining({ joinCode: '7KPM-X4TR' }),
+      );
+      expect(onJoined).toHaveBeenCalledWith(joined.classroomId);
+    });
+  });
+
   it('keeps an understandable invalid or expired code error beside the form', async () => {
     renderForm(
       repository(
@@ -87,5 +106,20 @@ describe('JoinClassroomForm', () => {
       '加入碼無效或已失效，請向老師確認。',
     );
     expect(screen.getByRole('alert')).not.toHaveTextContent('INVALID_CODE');
+  });
+
+  it('explains a temporary rate limit without exposing server details', async () => {
+    renderForm(
+      repository(
+        vi.fn().mockRejectedValue(new ClassroomRepositoryError('RATE_LIMITED')),
+      ),
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: '加入班級' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '嘗試次數過多，請等待 10 分鐘後再試。',
+    );
+    expect(screen.getByRole('alert')).not.toHaveTextContent('RATE_LIMITED');
   });
 });

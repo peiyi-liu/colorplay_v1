@@ -31,7 +31,7 @@ function stateFor(scenario: string): LiveSessionState {
     currentPosition: 0,
     isHost: false,
     participantCount: 24,
-    questionCount: 10,
+    questionCount: 20,
     questionDisplay: 'screen_only',
     rulesVersion: '2026-07-live-1',
     serverTime: new Date().toISOString(),

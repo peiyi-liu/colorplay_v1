@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react';
 
+import { StudentBackButton } from '../../../app/shell/student-back-button';
 import { useStudentBackOverride } from '../../../app/shell/student-back-navigation';
 import {
   isDirectReviewMediaAssetPath,
@@ -16,6 +17,7 @@ import { useReviewMedia } from '../hooks/use-learning';
 import type { ChapterDetailCardView } from './chapter-detail-view-model';
 import {
   paginateBookBlocks,
+  type BookPage,
   type BookPageItem,
   type BookPaginationBlock,
 } from './book-paginator';
@@ -23,6 +25,39 @@ import {
   ReaderBookBlockContent,
   type ReaderBookBlock,
 } from './review-book-block';
+import {
+  omitDuplicateLeadingReviewHeading,
+  splitReviewCardMarkdown,
+} from './review-card-markdown-pagination';
+
+const markdownImageSourcePattern =
+  /!\[[^\]\n]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/gu;
+
+function markdownImageSources(markdown: string): ReadonlySet<string> {
+  return new Set(
+    Array.from(markdown.matchAll(markdownImageSourcePattern), (match) =>
+      String(match[1]),
+    ),
+  );
+}
+
+function groupPageItems(items: readonly BookPageItem[]) {
+  const groups: BookPageItem[][] = [];
+  for (const item of items) {
+    const previousGroup = groups.at(-1);
+    const previousItem = previousGroup?.at(-1);
+    if (
+      previousGroup !== undefined &&
+      item.groupKey !== undefined &&
+      previousItem?.groupKey === item.groupKey
+    ) {
+      previousGroup.push(item);
+    } else {
+      groups.push([item]);
+    }
+  }
+  return groups;
+}
 
 function useMobileBookLayout() {
   const query =
@@ -83,7 +118,7 @@ export function ChapterReviewReader({
   const paginationIdentityRef = useRef('');
   const turnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [layoutRevision, setLayoutRevision] = useState(0);
-  const [pages, setPages] = useState<readonly (readonly BookPageItem[])[]>([]);
+  const [pages, setPages] = useState<readonly BookPage[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
   const [mediaWaitCycle, setMediaWaitCycle] = useState(0);
   const [showLongMediaWait, setShowLongMediaWait] = useState(false);
@@ -126,11 +161,20 @@ export function ChapterReviewReader({
     }
     return resolved;
   }, [card.media, mediaQuery.data]);
+  const resolveMarkdownImage = useCallback(
+    (source: string) => ({
+      loading: privateMediaAssetPaths.includes(source) && mediaLoading,
+      resolvedUrl: resolvedMediaByAssetPath.get(source) ?? null,
+    }),
+    [mediaLoading, privateMediaAssetPaths, resolvedMediaByAssetPath],
+  );
   const blocks = useMemo<readonly ReaderBookBlock[]>(() => {
-    const contentParagraphs = card.content
-      .split(/\n{2,}/u)
-      .map((paragraph) => paragraph.trim())
-      .filter(Boolean);
+    const visibleMarkdown = omitDuplicateLeadingReviewHeading(card.content, [
+      displayTitle,
+      card.title,
+    ]);
+    const contentBlocks = splitReviewCardMarkdown(visibleMarkdown);
+    const inlineMediaSources = markdownImageSources(card.content);
     return [
       {
         displayTitle,
@@ -138,19 +182,26 @@ export function ChapterReviewReader({
         kind: 'intro',
         title: card.title,
       },
-      ...contentParagraphs.map((text, index) => ({
-        key: `paragraph-${String(index)}`,
-        kind: 'paragraph' as const,
-        text,
-      })),
-      ...card.media.map((media, index) => ({
-        altText: media.altText,
-        assetPath: resolvedMediaByAssetPath.get(media.assetPath) ?? null,
-        key: `media-${String(index)}`,
-        kind: 'media' as const,
-        loading:
-          privateMediaAssetPaths.includes(media.assetPath) && mediaLoading,
-      })),
+      ...contentBlocks.map(
+        ({ groupKey, keepWithNext, markdown, splittable }, index) => ({
+          key: `markdown-${String(index)}`,
+          kind: 'markdown' as const,
+          ...(keepWithNext === undefined ? {} : { keepWithNext }),
+          markdown,
+          ...(groupKey === undefined ? {} : { paginationGroupKey: groupKey }),
+          splittable,
+        }),
+      ),
+      ...card.media
+        .filter((media) => !inlineMediaSources.has(media.assetPath))
+        .map((media, index) => ({
+          altText: media.altText,
+          assetPath: resolvedMediaByAssetPath.get(media.assetPath) ?? null,
+          key: `legacy-media-${String(index)}`,
+          kind: 'media' as const,
+          loading:
+            privateMediaAssetPaths.includes(media.assetPath) && mediaLoading,
+        })),
     ];
   }, [
     card.content,
@@ -164,9 +215,29 @@ export function ChapterReviewReader({
   const paginationBlocks = useMemo<readonly BookPaginationBlock[]>(
     () =>
       blocks.map((block) =>
-        block.kind === 'paragraph'
-          ? { key: block.key, splittable: true, text: block.text }
-          : { key: block.key, splittable: false },
+        block.kind === 'markdown' && block.splittable
+          ? {
+              ...(block.paginationGroupKey === undefined
+                ? {}
+                : { groupKey: block.paginationGroupKey }),
+              key: block.key,
+              ...(block.keepWithNext === undefined
+                ? {}
+                : { keepWithNext: block.keepWithNext }),
+              splittable: true,
+              text: block.markdown,
+            }
+          : {
+              ...(block.kind !== 'markdown' ||
+              block.paginationGroupKey === undefined
+                ? {}
+                : { groupKey: block.paginationGroupKey }),
+              key: block.key,
+              ...(block.kind !== 'markdown' || block.keepWithNext === undefined
+                ? {}
+                : { keepWithNext: block.keepWithNext }),
+              splittable: false,
+            },
       ),
     [blocks],
   );
@@ -221,10 +292,13 @@ export function ChapterReviewReader({
 
   const pageCount = Math.max(1, Math.ceil(pages.length / pagesPerView));
   const activePageStart = pageIndex * pagesPerView;
-  const activePages: readonly (readonly BookPageItem[])[] = Array.from(
+  const activePages: readonly BookPage[] = Array.from(
     { length: pagesPerView },
     (_, index) =>
-      pages[activePageStart + index] ?? ([] as readonly BookPageItem[]),
+      pages[activePageStart + index] ?? {
+        items: [],
+        overflowFallback: false,
+      },
   );
   const goToPage = (nextPageIndex: number) => {
     const boundedPageIndex = Math.min(
@@ -250,39 +324,64 @@ export function ChapterReviewReader({
       className="chapter-review-reader scene-dungeon"
       role="region"
     >
-      <header className="chapter-review-reader__header">
-        <div className="chapter-review-reader__heading-group">
-          <h1>{chapterLabel}</h1>
-          <p>{subtopicTitle}</p>
-          <p className="chapter-review-reader__position">
-            複習 <strong>{cardPosition}</strong> / {cardTotal}
-          </p>
-        </div>
-      </header>
       <div className="chapter-review-reader__book-stage">
         <article
           aria-label={card.title}
           className="chapter-review-reader__book"
         >
+          <StudentBackButton ariaLabel="返回複習卡選擇" onBack={onBack} />
+          <header className="chapter-review-reader__header">
+            <div className="chapter-review-reader__heading-group">
+              <h1>{chapterLabel}</h1>
+              <p>{subtopicTitle}</p>
+              <p className="chapter-review-reader__position">
+                複習 <strong>{cardPosition}</strong> / {cardTotal}
+              </p>
+            </div>
+          </header>
           <div
-            aria-hidden="true"
+            aria-hidden={pages.length === 0 ? true : undefined}
             className="chapter-review-reader__viewport"
             data-turn-direction={turnDirection ?? undefined}
           >
-            {activePages.map((pageItems, pageOffset) => (
+            {activePages.map((page, pageOffset) => (
               <section
+                aria-label={
+                  page.overflowFallback ? '本頁內容較長，可上下捲動' : undefined
+                }
                 className="chapter-review-reader__book-page"
+                data-overflow-fallback={
+                  page.overflowFallback ? true : undefined
+                }
                 data-page-number={activePageStart + pageOffset + 1}
                 key={`${String(activePageStart + pageOffset)}-${turnDirection ?? 'still'}`}
+                tabIndex={page.overflowFallback ? 0 : undefined}
               >
-                {pageItems.map((item) => {
-                  const block = blockByKey.get(item.blockKey);
+                {groupPageItems(page.items).map((itemGroup) => {
+                  const firstItem = itemGroup[0];
+                  if (!firstItem) return null;
+                  const block = blockByKey.get(firstItem.blockKey);
+                  const groupedMarkdown =
+                    itemGroup.length > 1
+                      ? itemGroup
+                          .map((item) => {
+                            if (item.text !== undefined) return item.text;
+                            const itemBlock = blockByKey.get(item.blockKey);
+                            return itemBlock?.kind === 'markdown'
+                              ? itemBlock.markdown
+                              : '';
+                          })
+                          .join('\n')
+                      : firstItem.text;
                   return block ? (
                     <ReaderBookBlockContent
                       block={block}
-                      key={item.key}
+                      key={itemGroup.map((item) => item.key).join(':')}
                       onMediaLoad={handleMediaLoad}
-                      {...(item.text === undefined ? {} : { text: item.text })}
+                      resolveImage={resolveMarkdownImage}
+                      {...(groupedMarkdown === undefined
+                        ? {}
+                        : { text: groupedMarkdown })}
                     />
                   ) : null;
                 })}
@@ -299,6 +398,7 @@ export function ChapterReviewReader({
             />
           </div>
           <div
+            aria-hidden={pages.length > 0 ? true : undefined}
             className="chapter-review-reader__pagination-source"
             ref={paginationSourceRef}
           >
@@ -307,6 +407,7 @@ export function ChapterReviewReader({
                 block={block}
                 key={block.key}
                 onMediaLoad={handleMediaLoad}
+                resolveImage={resolveMarkdownImage}
               />
             ))}
           </div>
@@ -325,120 +426,123 @@ export function ChapterReviewReader({
               {activePageStart + 1 < pages.length ? activePageStart + 2 : ''}
             </span>
           </div>
+          <footer className="chapter-review-reader__footer">
+            <div className="chapter-review-reader__reading-progress">
+              <span>本頁閱讀進度</span>
+              <progress
+                aria-label="本頁閱讀進度"
+                aria-valuemax={pageCount}
+                aria-valuemin={1}
+                aria-valuenow={pageIndex + 1}
+                max={pageCount}
+                value={pageIndex + 1}
+              />
+              <strong>{readingPercent}%</strong>
+            </div>
+            {showLongMediaWait && mediaLoading ? (
+              <div className="chapter-review-reader__media-wait" role="status">
+                <p>圖片連線時間較長；文字與翻頁仍可正常使用。</p>
+                <div className="chapter-review-reader__media-wait-actions">
+                  <button
+                    className="secondary-action"
+                    onClick={() => {
+                      setShowLongMediaWait(false);
+                      setMediaWaitCycle((current) => current + 1);
+                      void mediaQuery.refetch();
+                    }}
+                    type="button"
+                  >
+                    重新載入圖片
+                  </button>
+                  <button
+                    className="secondary-action"
+                    onClick={() => {
+                      setSkipPrivateMedia(true);
+                    }}
+                    type="button"
+                  >
+                    略過圖片
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            <div className="chapter-review-reader__controls">
+              <button
+                aria-label="閱讀上一頁"
+                className="secondary-action chapter-review-reader__page-action chapter-review-reader__page-action--previous"
+                disabled={pageIndex === 0}
+                onClick={() => {
+                  goToPage(pageIndex - 1);
+                }}
+                type="button"
+              >
+                <span className="chapter-review-reader__desktop-label">
+                  <span aria-hidden="true">‹</span> 閱讀上一頁
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="chapter-review-reader__mobile-label"
+                >
+                  ‹ 上一頁
+                </span>
+              </button>
+              <p
+                aria-live="polite"
+                className="chapter-review-reader__page-count visually-hidden"
+              >
+                第 {pageIndex + 1} / {pageCount} 頁
+              </p>
+              <button
+                aria-label="閱讀下一頁"
+                className="secondary-action chapter-review-reader__page-action chapter-review-reader__page-action--next"
+                disabled={pageIndex >= pageCount - 1}
+                onClick={() => {
+                  goToPage(pageIndex + 1);
+                }}
+                type="button"
+              >
+                <span className="chapter-review-reader__desktop-label">
+                  閱讀下一頁 <span aria-hidden="true">›</span>
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="chapter-review-reader__mobile-label"
+                >
+                  下一頁 ›
+                </span>
+              </button>
+              {completed ? (
+                <p className="review-card__status" role="status">
+                  已完成複習
+                </p>
+              ) : (
+                <button
+                  aria-label="完成複習"
+                  className="primary-action review-card__complete-button"
+                  data-primary-action="true"
+                  disabled={pending}
+                  onClick={onComplete}
+                  type="button"
+                >
+                  {pending ? (
+                    '儲存中…'
+                  ) : (
+                    <>
+                      <span className="chapter-review-reader__desktop-label">
+                        完成複習
+                      </span>
+                      <span className="chapter-review-reader__mobile-label chapter-review-reader__complete-label">
+                        完成複習 <strong>{readingPercent}%</strong>
+                      </span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+            {completeError ? <p role="alert">{completeError}</p> : null}
+          </footer>
         </article>
       </div>
-      <footer className="chapter-review-reader__footer">
-        <div className="chapter-review-reader__reading-progress">
-          <span>本頁閱讀進度</span>
-          <progress
-            aria-label="本頁閱讀進度"
-            aria-valuemax={pageCount}
-            aria-valuemin={1}
-            aria-valuenow={pageIndex + 1}
-            max={pageCount}
-            value={pageIndex + 1}
-          />
-          <strong>{readingPercent}%</strong>
-        </div>
-        {showLongMediaWait && mediaLoading ? (
-          <div className="chapter-review-reader__media-wait" role="status">
-            <p>圖片連線時間較長；文字與翻頁仍可正常使用。</p>
-            <div className="chapter-review-reader__media-wait-actions">
-              <button
-                className="secondary-action"
-                onClick={() => {
-                  setShowLongMediaWait(false);
-                  setMediaWaitCycle((current) => current + 1);
-                  void mediaQuery.refetch();
-                }}
-                type="button"
-              >
-                重新載入圖片
-              </button>
-              <button
-                className="secondary-action"
-                onClick={() => {
-                  setSkipPrivateMedia(true);
-                }}
-                type="button"
-              >
-                略過圖片
-              </button>
-            </div>
-          </div>
-        ) : null}
-        <div className="chapter-review-reader__controls">
-          <button
-            aria-label="閱讀上一頁"
-            className="secondary-action chapter-review-reader__page-action chapter-review-reader__page-action--previous"
-            disabled={pageIndex === 0}
-            onClick={() => {
-              goToPage(pageIndex - 1);
-            }}
-            type="button"
-          >
-            <span className="chapter-review-reader__desktop-label">
-              <span aria-hidden="true">‹</span> 閱讀上一頁
-            </span>
-            <span
-              aria-hidden="true"
-              className="chapter-review-reader__mobile-label"
-            >
-              ‹ 上一頁
-            </span>
-          </button>
-          <p aria-live="polite" className="chapter-review-reader__page-count">
-            第 {pageIndex + 1} / {pageCount} 頁
-          </p>
-          <button
-            aria-label="閱讀下一頁"
-            className="secondary-action chapter-review-reader__page-action chapter-review-reader__page-action--next"
-            disabled={pageIndex >= pageCount - 1}
-            onClick={() => {
-              goToPage(pageIndex + 1);
-            }}
-            type="button"
-          >
-            <span className="chapter-review-reader__desktop-label">
-              閱讀下一頁 <span aria-hidden="true">›</span>
-            </span>
-            <span
-              aria-hidden="true"
-              className="chapter-review-reader__mobile-label"
-            >
-              下一頁 ›
-            </span>
-          </button>
-          {completed ? (
-            <p className="review-card__status" role="status">
-              已完成複習
-            </p>
-          ) : (
-            <button
-              aria-label="完成複習"
-              className="primary-action chapter-archive__continue review-card__complete-button"
-              data-primary-action="true"
-              disabled={pending}
-              onClick={onComplete}
-              type="button"
-            >
-              {pending ? (
-                '儲存中…'
-              ) : (
-                <>
-                  <span className="chapter-review-reader__desktop-label">
-                    完成複習
-                  </span>
-                  <span className="chapter-review-reader__mobile-label chapter-review-reader__complete-label">
-                    完成複習 <strong>{readingPercent}%</strong>
-                  </span>
-                </>
-              )}
-            </button>
-          )}
-        </div>
-        {completeError ? <p role="alert">{completeError}</p> : null}
-      </footer>
     </section>
   );
 }

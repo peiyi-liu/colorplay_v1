@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { FunctionsHttpError, type SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Database } from '../../../types/database';
@@ -7,13 +7,22 @@ import {
   createClassroomRepository,
 } from './classroom-repository';
 
-const createHarness = (responses: readonly unknown[]) => {
+const createHarness = (
+  responses: readonly unknown[],
+  functionResponses: readonly unknown[] = [],
+) => {
   const rpc = vi.fn();
+  const invoke = vi.fn();
   responses.forEach((response) => rpc.mockResolvedValueOnce(response));
+  functionResponses.forEach((response) =>
+    invoke.mockResolvedValueOnce(response),
+  );
   return {
     repository: createClassroomRepository({
+      functions: { invoke },
       rpc,
     } as unknown as SupabaseClient<Database>),
+    invoke,
     rpc,
   };
 };
@@ -42,6 +51,15 @@ describe('ClassroomRepository', () => {
             join_code: 'ABCD-1234-EF56-7890',
             join_code_version: 2,
             member_count: 3,
+          },
+          {
+            classroom_id: 'ca000000-0000-4000-8000-000000000002',
+            classroom_name: '色彩二班',
+            classroom_status: 'active',
+            created_at: '2026-08-29T00:00:00.000Z',
+            join_code: '7KPM-X4TR',
+            join_code_version: 1,
+            member_count: 0,
           },
         ],
         error: null,
@@ -79,6 +97,15 @@ describe('ClassroomRepository', () => {
         joinCode: 'ABCD-1234-EF56-7890',
         joinCodeVersion: 2,
         memberCount: 3,
+      },
+      {
+        classroomId: 'ca000000-0000-4000-8000-000000000002',
+        classroomName: '色彩二班',
+        classroomStatus: 'active',
+        createdAt: '2026-08-29T00:00:00.000Z',
+        joinCode: '7KPM-X4TR',
+        joinCodeVersion: 1,
+        memberCount: 0,
       },
     ]);
     await expect(
@@ -187,7 +214,7 @@ describe('ClassroomRepository', () => {
           {
             classroom_id: 'ca000000-0000-4000-8000-000000000001',
             classroom_name: '色彩一班',
-            join_code: 'ABCD-1234-EF56-7890',
+            join_code: '7KPM-X4TR',
             join_code_version: 1,
           },
         ],
@@ -200,7 +227,7 @@ describe('ClassroomRepository', () => {
     ).resolves.toEqual({
       classroomId: 'ca000000-0000-4000-8000-000000000001',
       classroomName: '色彩一班',
-      joinCode: 'ABCD-1234-EF56-7890',
+      joinCode: '7KPM-X4TR',
       joinCodeVersion: 1,
     });
     expect(rpc).toHaveBeenCalledWith('create_classroom', {
@@ -220,28 +247,60 @@ describe('ClassroomRepository', () => {
   );
 
   it('passes join input to the server and maps the safe receipt', async () => {
-    const { repository, rpc } = createHarness([
-      {
-        data: [
-          {
-            classroom_id: 'ca000000-0000-4000-8000-000000000001',
-            classroom_name: '色彩一班',
-            joined_at: '2026-07-17T01:00:00.000Z',
-            membership_status: 'active',
-          },
-        ],
-        error: null,
-      },
-    ]);
+    const { repository, invoke, rpc } = createHarness(
+      [],
+      [
+        {
+          data: [
+            {
+              classroom_id: 'ca000000-0000-4000-8000-000000000001',
+              classroom_name: '色彩一班',
+              joined_at: '2026-07-17T01:00:00.000Z',
+              membership_status: 'active',
+            },
+          ],
+          error: null,
+        },
+      ],
+    );
 
     await repository.joinClassroom({
       joinCode: ' abcd-1234-ef56-7890 ',
       requestId: 'ca200000-0000-4000-8000-000000000001',
     });
-    expect(rpc).toHaveBeenCalledWith('join_classroom', {
-      p_join_code: 'abcd-1234-ef56-7890',
-      p_request_id: 'ca200000-0000-4000-8000-000000000001',
+    expect(invoke).toHaveBeenCalledWith('join-classroom', {
+      body: {
+        joinCode: 'abcd-1234-ef56-7890',
+        requestId: 'ca200000-0000-4000-8000-000000000001',
+      },
     });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('maps the enforced join-classroom rate limit without retry details leaking', async () => {
+    const { repository } = createHarness(
+      [],
+      [
+        {
+          data: null,
+          error: new FunctionsHttpError(
+            new Response(
+              JSON.stringify({ error: 'CLASSROOM_JOIN_RATE_LIMITED' }),
+              {
+                status: 429,
+              },
+            ),
+          ),
+        },
+      ],
+    );
+
+    await expect(
+      repository.joinClassroom({
+        joinCode: '7KPM-X4TR',
+        requestId: 'ca200000-0000-4000-8000-000000000001',
+      }),
+    ).rejects.toEqual(new ClassroomRepositoryError('RATE_LIMITED'));
   });
 
   it.each([
@@ -251,9 +310,10 @@ describe('ClassroomRepository', () => {
   ] as const)(
     'maps %s without leaking server details',
     async (message, code) => {
-      const { repository } = createHarness([
-        { data: null, error: { message: `${message}: secret` } },
-      ]);
+      const { repository } = createHarness(
+        [],
+        [{ data: null, error: { message: `${message}: secret` } }],
+      );
       await expect(
         repository.joinClassroom({
           joinCode: 'unknown',

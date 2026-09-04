@@ -964,6 +964,30 @@ export type Database = {
           },
         ]
       }
+      classroom_join_rate_limits: {
+        Row: {
+          failure_count: number
+          scope: string
+          subject_hash: string
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          failure_count?: number
+          scope: string
+          subject_hash: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Update: {
+          failure_count?: number
+          scope?: string
+          subject_hash?: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
+      }
       classroom_members: {
         Row: {
           activated_at: string
@@ -4228,6 +4252,23 @@ export type Database = {
         Args: { p_operation_id: string }
         Returns: Json
       }
+      svc_join_classroom: {
+        Args: {
+          p_actor_id: string
+          p_ip_hash: string
+          p_join_code: string
+          p_request_id: string
+        }
+        Returns: Json
+      }
+      svc_resolve_classroom_join_code: {
+        Args: {
+          p_actor_id: string
+          p_ip_hash: string
+          p_join_code: string
+        }
+        Returns: Json
+      }
       teacher_answer_facts: {
         Args: {
           p_chapter_id: string
@@ -4808,4 +4849,3 @@ export const Constants = {
     },
   },
 } as const
-

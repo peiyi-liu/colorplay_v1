@@ -89,6 +89,24 @@ describe('account flows', () => {
     });
   });
 
+  it('preserves classroom join throttling as a safe registration error', async () => {
+    const invoke = vi.fn().mockResolvedValue({
+      error: {
+        context: new Response(
+          JSON.stringify({ error: 'CLASSROOM_JOIN_RATE_LIMITED' }),
+          { status: 429 },
+        ),
+      },
+    });
+
+    await expect(
+      completeStudentRegistration(
+        registration,
+        clientFor({ functions: { invoke } }),
+      ),
+    ).rejects.toEqual(new AccountFlowError('CLASSROOM_JOIN_RATE_LIMITED'));
+  });
+
   it('collapses unknown and non-JSON registration failures to REGISTER_FAILED', async () => {
     const invoke = vi
       .fn()

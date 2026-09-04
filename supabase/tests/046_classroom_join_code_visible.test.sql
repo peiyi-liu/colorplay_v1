@@ -3,6 +3,9 @@
 
 begin;
 
+-- 僅供舊 RPC 行為 fixture；正式 client 權限由 060 驗證且維持撤銷。
+grant execute on function public.join_classroom(text, uuid) to authenticated;
+
 select plan(7);
 
 select has_column(
@@ -59,7 +62,7 @@ select is(
 
 select matches(
   :'created_join_code'::text,
-  '^[0-9A-F]{4}(-[0-9A-F]{4}){3}$',
+  '^[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$',
   'visible code keeps the display format'
 );
 

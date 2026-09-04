@@ -1,4 +1,13 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import {
+  expectFooterAligned,
+  expectInside,
+  visibleChildrenCenterOffset,
+} from './helpers/live-projector-layout';
+
+// This harness intentionally keeps the seven presenter phases in one typed
+// matrix so every viewport runs the same layout and runtime contract. Shared
+// geometry lives in helpers/live-projector-layout.ts to keep this file focused.
 
 // LivePresenter now delegates 'lobby' to LiveProjectorHud and
 // 'question'/'paused'/'reveal' to LiveProjectorRound (JRPG/image-perf
@@ -84,28 +93,6 @@ const observeRuntime = (page: Page) => {
     }
   });
   return { consoleErrors, pageErrors, unexpectedRequests };
-};
-
-const expectInside = async (
-  child: Locator,
-  parent: Locator,
-  tolerance = 0.5,
-) => {
-  const [childBox, parentBox] = await Promise.all([
-    child.boundingBox(),
-    parent.boundingBox(),
-  ]);
-  expect(childBox).not.toBeNull();
-  expect(parentBox).not.toBeNull();
-  if (!childBox || !parentBox) return;
-  expect(childBox.x).toBeGreaterThanOrEqual(parentBox.x - tolerance);
-  expect(childBox.y).toBeGreaterThanOrEqual(parentBox.y - tolerance);
-  expect(childBox.x + childBox.width).toBeLessThanOrEqual(
-    parentBox.x + parentBox.width + tolerance,
-  );
-  expect(childBox.y + childBox.height).toBeLessThanOrEqual(
-    parentBox.y + parentBox.height + tolerance,
-  );
 };
 
 const expectTouchTarget = async (control: Locator) => {
@@ -263,6 +250,15 @@ for (const viewport of VIEWPORTS) {
       await expectInside(footer, presenter);
       await expectInside(body, presenter);
 
+      if (
+        scenario === 'lobby-boundary' ||
+        scenario === 'question-boundary' ||
+        scenario === 'paused-boundary' ||
+        scenario === 'reveal-boundary'
+      ) {
+        await expectFooterAligned(footer, presenter);
+      }
+
       if (scenario === 'question-boundary' || scenario === 'paused-boundary') {
         const heading = body.locator('h2');
         const options = body.locator('.live-round__option');
@@ -315,17 +311,7 @@ test('all presenter phases keep the visible cluster centered in the viewport', a
     const offset = await page
       .locator(LAYOUT[scenario].body)
       .first()
-      .evaluate((body, viewportHeight) => {
-        const visibleChildren = Array.from(body.children).filter(
-          (element) => getComputedStyle(element).display !== 'none',
-        );
-        const boxes = visibleChildren.map((element) =>
-          element.getBoundingClientRect(),
-        );
-        const top = Math.min(...boxes.map((box) => box.top));
-        const bottom = Math.max(...boxes.map((box) => box.bottom));
-        return (top + bottom) / 2 - viewportHeight / 2;
-      }, 720);
+      .evaluate(visibleChildrenCenterOffset, 720);
     expect(Math.abs(offset), scenario).toBeLessThanOrEqual(8);
   }
 });
@@ -347,6 +333,8 @@ test('reveal-boundary explanation and ranking steps stay bounded', async ({
     timeout: 6_000,
   });
   await expectInside(stage, presenter);
+  await expectInside(page.locator('.live-round__explanation'), stage, 2);
+  await expectInside(page.locator('.live-round__scroll'), stage, 2);
 
   await page.getByRole('button', { name: '即時排名' }).click();
   const ranking = page.locator('.live-round__ranking');
@@ -401,7 +389,7 @@ test('too-small cancelled keeps the existing exit path', async ({ page }) => {
   );
   await page.waitForLoadState('networkidle');
 
-  await expect(page.getByRole('alert')).toHaveText('投影視窗過小');
+  await expect(page.getByRole('alert')).toContainText('請縮小瀏覽器畫面比例');
   await expect(page.getByText('本場已取消')).toBeHidden();
   await page.getByRole('button', { name: '離開投影' }).click();
   await expect(page.getByRole('status')).toHaveText('已離開投影');

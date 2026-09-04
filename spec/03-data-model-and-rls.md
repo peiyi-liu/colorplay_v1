@@ -27,8 +27,11 @@
 
 ### `classrooms`
 
-- `id`, `owner_teacher_id`, `name`, `join_code_hash`, `status`, `created_at`。
-- join code 不保存明文；顯示新代碼時只顯示一次或可輪替。
+- `id`, `owner_teacher_id`, `name`, `join_code`, `join_code_hash`, `status`, `created_at`。
+- 新班級使用固定的 8 位 Crockford Base32 加入碼（顯示為 `XXXX-XXXX`）；
+  既有 16 位 hexadecimal 加入碼繼續有效，不自動改碼。
+- `join_code` 明碼只可由 classroom owner 專用 RPC 讀取，學生與一般
+  `authenticated` 不可直讀；加入驗證使用 `join_code_hash`。
 
 ### `classroom_members`
 

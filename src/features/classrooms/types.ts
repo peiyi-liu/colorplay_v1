@@ -97,6 +97,7 @@ export type ClassroomRepositoryErrorCode =
   | 'INVALID_INPUT'
   | 'INVALID_RESPONSE'
   | 'NOT_AVAILABLE'
+  | 'RATE_LIMITED'
   | 'UNAVAILABLE';
 
 export class ClassroomRepositoryError extends Error {

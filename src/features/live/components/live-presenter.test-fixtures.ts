@@ -53,7 +53,7 @@ const baseState = (): LiveSessionState => ({
   currentPosition: 0,
   isHost: true,
   participantCount: 60,
-  questionCount: 10,
+  questionCount: 20,
   questionDisplay: 'screen_only',
   rulesVersion: '2026-07-live-3',
   serverTime: '2026-08-10T09:00:00.000Z',
@@ -141,7 +141,7 @@ export const livePresenterStateFixture = (
     case 'podium-boundary':
       return {
         ...baseState(),
-        currentPosition: 10,
+        currentPosition: 20,
         podium: [1, 2, 3].map((rank) => ({
           displayName: sizedText(30, `第${String(rank)}名同學`),
           rank,

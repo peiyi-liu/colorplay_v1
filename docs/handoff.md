@@ -1311,3 +1311,175 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 驗證：首次 PR head 的 production-build、typecheck、lint、credential-scan 與兩個 Vercel Preview checks 已通過；format 失敗原因已在本機重現。remediation 後 `pnpm format:check`、`pnpm lint`、`pnpm typecheck`、Admin catalog focused contract 3/3 與完整 unit suite 218 files／1784 tests 全綠；推送後仍以 fresh PR checks 為 protected evidence。
 - 後續 CI remediation：format 修正推送後，fresh `unit-coverage` 的 1784 個測試全部通過，但 function coverage 73.59% 低於既定 76%。逐檔摘要確認 coverage 母集合誤含 `src/**/*.harness.*` 與 `src/**/*.test-fixtures.*` 測試支援碼（174 個函式、僅 23 個會在 unit suite 執行）；修正 `vitest.config.ts` 排除這兩類非 production source，保留所有產品碼與原 76% 門檻不變。這些支援碼仍由 Playwright E2E 驗證。
 - 下一步／授權邊界：只將 CI remediation 推回同一 PR，等待 fresh protected checks。PR 建立與 Preview checks 不構成 merge、正式 Staging promotion、Hosted migration／fixture dry-run 或 Task 7 mutation 授權；其中任一後續 mutation 仍需 owner 另行核准。
+
+## 2026-08-27 16:11 [Codex] — 複習卡 Markdown 匯入／學生顯示／本機即時預覽完成（未發布）
+
+> 補登：以下 2026-08-27～2026-08-31 紀錄由 `staging.colorplayapp.com` 當時實際部署的 lineage 於 2026-09-04 整合時帶回，因此位於較新的 Admin B 紀錄之後。
+
+- 做了什麼：在 `codex/review-card-ui-update`、固定起點 `f0638b04d74a8a5071ceb36e7a2369527dc5d0b7` 上完成未提交的本機第一階段。採用開源 `react-markdown` + `remark-gfm`，新增共用 Markdown 編譯／驗證契約，讓 Google Sheet 複習內容可使用標題、粗體、清單、引用、表格及 `![替代文字](review-media:P301)` 形式的行內圖片；匯入器會把媒體代號轉為環境無關的 private Storage path，拒絕 raw HTML、外部圖片 URL、缺少 mapping／alt 不符、超過 5000 字或每卡超過 3 張圖片。學生閱讀頁使用同一套 renderer，圖片仍經既有 private Storage signed URL resolver，行內引用不再於文章末尾重複顯示，舊資料未寫行內引用時仍保留末尾媒體相容行為；另補上手機字級及長表格的容器內捲動。新增獨立本機即時預覽 harness，桌面為左右編輯／預覽、手機為分頁切換，可選本機圖片建立最多 3 筆暫時 mapping；不寫入資料庫，也未加入 Admin。
+- 驗證：scoped Vitest（排除其他 worktree／store 重複發現）5 檔／47 tests 全綠；`pnpm lint`、`pnpm build` 全綠；以桌面與 390px 手機 viewport 實際檢查即時預覽、語意標題／表格／圖片 alt、mobile tabs 與 console（無 error/warning）。本輪未執行 `pnpm test:db`、Supabase reset 或任何 hosted 操作。
+- 下一步：owner 先確認正式內容與版本發布範圍。既有已發布卡片不可直接被 import SQL 覆寫，正式上 Staging 前需決定 `requires_recompletion` 並走 `publish_review_card`；同時補齊 RC3103／RC3201／RC3202 的真實 Storage 資產與 mapping。`review_card_media` metadata／Storage policy 對鎖定章節的繞過風險仍存在，本次未修改。
+- 狀態：HEAD 未變、分支無 upstream；本輪沒有 commit、push 或 deploy。Phase 0／1 保護路徑未修改。
+
+## 2026-08-27 21:31 [Codex] — 複習卡 H1 與單一螢光標記補強完成（未發布）
+
+- 做了什麼：修正共用學生／本機 renderer 的 element allowlist，讓標準 Markdown `# 標題` 產生真正的語意化 H1，並依學生端字型規格使用 `--font-pixel-tc`。加入 MIT 開源套件 `remark-flexible-markers@1.3.6`，將 `==重點文字==` 顯示為固定 ColorPlay 淡黃底／深色字的 `<mark>`；raw HTML 與任意 hex 仍不開放。匯入 compiler 新增負向契約，拒絕套件額外支援但產品未公開的 `=r=文字==` 顏色分類，維持單一、安全、可預期的螢光樣式。本機預覽範例與語法提示同步更新。
+- 驗證：依 TDD 先重現 H1 被解包成純文字及 `==…==` 原樣顯示，再修至綠；最終 scoped Vitest 5 檔／50 tests 全綠，直接異動 TS／TSX scoped ESLint、來源檔 scoped Prettier check、`pnpm build` 通過。`docs/handoff.md` 的全檔 Prettier check 仍會指出兩處本輪之前已存在的舊格式差異（約第 286、1211 行），本輪不改寫歷史紀錄。瀏覽器於桌面與 390×844 手機確認 H1 為 `H1`（Cubic 11、約 26px）、螢光為 `MARK`（淡黃底深色字）、手機預覽可見且 console 無 warning/error。
+- Review：依 M 級規則完成唯一一次雙軸 review；Spec 0 finding，Standards 2 findings（標題字型、套件隱藏分類語法）均於同輪修正，不再進行第二輪 review；Security axis 因未碰 trust boundary 而略過。
+- 狀態：仍在 `codex/review-card-ui-update`，HEAD 保持 `f0638b04d74a8a5071ceb36e7a2369527dc5d0b7`；沒有 commit、push、deploy、`pnpm test:db`、Supabase reset 或 hosted 操作。Google Sheet 必須寫 `# 標題`（井號後有空格），`#標題` 不是標準 Markdown H1。
+
+## 2026-08-28 00:23 [Codex] — P301～P310 本機 WebP 批次準備工具與成品完成（未上傳）
+
+- 做了什麼：新增 `scripts/assets/prepare-review-media.mjs` 與 `pnpm review-media:prepare`，可批次讀取 `P301.jpg`／`P301-v2.png` 類型的教材圖，在既有 512 KiB／2400px contract 下以 Playwright Canvas 輸出 WebP。工具優先保留原尺寸並在品質上限 0.94 內找最高可用畫質，超標才等比縮小；canonicalize 附件代號／版本檔名、拒絕覆寫既有圖片或 manifest，並輸出含來源、尺寸、大小、品質的 `review-media-manifest.json`。匯入指南同步補上本機命令與正確 gate 語法。
+- 真實成品：讀取 `/Users/guanyucheng/Downloads/Colorplay 文件/Pei-game RCP/JPG` 的 P301～P310，寫入新的 `/Users/guanyucheng/Downloads/Colorplay 文件/Pei-game RCP/WEBP/optimized`；既有 `WEBP/P301.webp`～`P305.webp` 未覆寫。10 張皆保留原尺寸、品質約 0.937，輸出 67～376 KiB；P304／P305／P307 人工視覺抽查文字與格線清楚，全部再次通過既有 review-media gate。
+- 驗證：TDD 契約 3/3 通過（轉檔／manifest、2500px 等比縮至 2400px＋版本檔名正規化、防覆寫）；scoped ESLint、Prettier、`pnpm typecheck`、`git diff --check` 全綠。唯一一次雙軸 review 的 Standards 4 項／Spec 2 項均於同輪修正；Security axis 因未碰 trust boundary 略過。
+- 下一步：圖片仍只在本機，尚未上傳 Supabase。P301～P305 已有既有卡片對照；P306～P310 必須由 owner 提供／確認 Sheet stable code、每張繁中 alt 與排序後，才可建立 Storage mapping。正式 Staging 發布仍須走 private Storage 與版本化 `publish_review_card`，不得直接覆寫已發布卡片。
+- 狀態：仍在 `codex/review-card-ui-update`，HEAD 保持 `f0638b04d74a8a5071ceb36e7a2369527dc5d0b7`；沒有 commit、push、deploy、`pnpm test:db`、Supabase reset 或 hosted 操作。Phase 0／1 保護路徑未修改。
+
+## 2026-08-28 00:39 [Codex] — P301～P310 納入 private-media 專案來源並記錄 Admin 後續範圍（待上傳授權）
+
+- 做了什麼：將已驗證的 P301～P310 WebP 與 manifest 複製到 `scripts/assets/source/review-card-media/chapter-3/`，逐檔 sha256 與 Downloads 成品一致。刻意不放 `public/`／`src/assets`，避免 private 教材進 client bundle。新增目錄 README，註明 Storage object path、版本檔名、防覆寫與 P306～P310 mapping 未定邊界；另新增 `docs/content/review-card-admin-media-backlog.md`，記錄未來 Admin 的選檔、即時預覽、壓縮 gate、alt／排序、private upload、版本化 publish，以及後端必須重驗證的信任邊界。現有 Playwright CLI 只作本機流程，不宣稱可直接匯入瀏覽器。
+- 驗證：10 張 project source 全部通過既有 review-media gate；scoped Prettier、`git diff --check`、全 checkout `pnpm typecheck`、排除其他 worktree/store 後的全 repo ESLint、production build 全綠。複習卡／圖片相關 8 檔 66 tests 全綠。完整目前-checkout Vitest 為 211/212 檔、1581/1582 tests；唯一失敗是受保護且既有的 `tests/contracts/phase0-restore.test.ts` 本機 restore code=1，與本輪無關，未修改 Phase 0。裸 `pnpm test` 另會錯誤發現 `.claude/worktrees/**`／`.pnpm-store/**` 的多份 checkout；以 exclude 隔離後取得上述真實結果。
+- Admin 前置風險：正式開放 Admin 上傳／發布前，必須先修正 `review_card_media` metadata／Storage policy 只依 published 判斷、可能讓鎖定章節媒體繞過 canonical access 的問題。P306～P310 仍需 owner 確認 Sheet stable code、繁中 alt 與排序。
+- 下一步：等待 owner 明確授權是否把本批圖片上傳至 Staging `onkxnkzeixpezetkmocf` private `review-card-media/chapter-3/`。建議首次操作採 no-upsert：先唯讀盤點，已存在同名物件即停止／跳過，不覆寫；本步只上傳 Storage，不發布卡片、不改 DB mapping。
+- 狀態：HEAD／branch 未變；沒有 commit、push、deploy、`pnpm test:db`、Supabase reset 或 hosted 操作。Phase 0／1 保護路徑未修改。
+
+## 2026-08-28 00:50 [Codex] — Staging P301～P305 同路徑優化替換完成，P306～P310 Storage 上傳完成
+
+- 授權與範圍：owner 明確要求覆寫之前圖片。先以 linked project 與唯讀 SQL 確認目標為 Staging `onkxnkzeixpezetkmocf`，private bucket `review-card-media`，目前五筆 published mapping 實際指向 `chapter-3/P301-v2.webp`～`P305-v2.webp`；資料庫與發布版本不在本次 mutation 範圍。
+- 操作：覆寫前把既有 P301～P305 的無尾碼／`-v2` 共 10 個 objects 備份到 `/private/tmp/colorplay-review-card-media-backup-20260828`。接著以官方 Storage recursive upload 的 `x-upsert` 行為，將 project source P301～P305 同時寫入兩組既有路徑，並新增 P306～P310 無尾碼路徑，共 15 個 WebP。明確指定 `Content-Type: image/webp` 與 `Cache-Control: max-age=3600`。
+- 驗證：從 Staging 重新下載全部 15 個 objects 到獨立 `/private/tmp/colorplay-review-card-media-verify-20260828`；與待上傳目錄 `diff -rq` 為 0 差異，逐檔 SHA-256 相符，review-media WebP／512 KiB／2400px gate 通過。remote recursive list 精確列出 15 個目標。操作後唯讀 SQL 再確認 bucket `public=false`，五筆 current published media mapping 未改、仍指向 P301-v2～P305-v2。
+- 注意：Supabase 官方不建議一般改版覆寫同路徑，因 CDN edge 可能短暫保留舊內容；本次是 owner 明確授權的一次性圖片 bytes 替換。未來內容改版仍預設新版本檔名＋`publish_review_card`。P306～P310 目前只有 private Storage objects，尚未 mapping／發布。
+- 狀態：Staging Storage mutation 已完成；未修改 DB、未 deploy web、未 commit、未 push、未執行 `pnpm test:db` 或 Supabase reset。Phase 0／1 保護路徑未修改。
+
+## 2026-08-28 01:01 [Codex] — 複習卡 Staging 發布 preflight 完成，等待重讀政策裁定
+
+- 做了什麼：更新 Git 遠端 refs，確認 `codex/review-card-ui-update` 起點 `f0638b0` 與 `origin/feature/v2-major-update` 一致，並包含現行 `origin/staging` 歷史。唯讀確認 `staging.colorplayapp.com` 目前指向 Ready 的 `colorplay-staging-web` deployment。重抓 Google Sheet（8 張複習卡）後，初次 gate 發現 9 個阻擋；已依 Sheet Markdown 的圖片代號與 alt 補上 P301～P308 private Storage mapping，並把 Markdown compiler 字數上限由 5000 對齊資料庫既有 8000 字 contract（RC3203 為 5002 字）。
+- 驗證：Sheet gate 已收旂為結構錯誤 0／覆核提示 1（原有 QB4301）；Markdown／import contract 共 12 檔 146 tests 全綠，Prettier check 通過。唯讀 Staging SQL 確認 RC3101～RC3302 全 8 張的新內容 hash 都與 current published 不同，因此正式發布必須逐張走 `publish_review_card` 產生新版本。
+- Blocker／待決策：owner 需決定這批 8 張是否 `requires_recompletion`。本次主要是 Markdown 排版與圖片內嵌，建議 `false`，保留已完成進度。另 Sheet P302 alt 目前為「色明表示的三種類型」，疑似應為「色名」，未自行改寫 SSOT。
+- 狀態：尚未 commit、push、deploy web 或發布 DB 版本；未執行 `pnpm test:db`、Supabase reset 或 Production 操作。
+
+## 2026-08-28 01:18 [Codex] — 複習卡 Markdown 前端已發布 Staging，DB 內容發布卡在教師憑證邊界
+
+- 做了什麼：owner 裁定 8 張新版複習卡均使用 `requires_recompletion=false`。重抓 Google Sheet 後同步 P302 alt 「色名表示的三種類型」，gate 為 0 error。建立 commit `b534cf6483511ed3f8a0ff848511c362eb524053` 並 push 至 `origin/codex/review-card-ui-update`。GitHub-source Preview `dpl_73h3CymcQ17VWQKQ5pZXwSCydmq1` 驗證後，以 Staging 專案 Production env 重建為 `dpl_9dSdq1hyQcLzkCmrvQaEtR1gstKW`，已 Ready 並接上 `staging.colorplayapp.com`。
+- 驗證：Git metadata 精確指向 `b534cf6`；bundle 只含 Staging Supabase ref `onkxnkzeixpezetkmocf`，不含 Production ref，chapter chunk／CSS 包含 `review-card-markdown`。本機 Sheet gate、lint、typecheck、production build、54 個 scoped tests 及 10 張 WebP budget 通過。
+- Blocker：DB 尚未發布。自動流程唯一現成教師憑證是 repo 中標記 `LocalOnly` 的 fixture 密碼；將已知 local-only 憑證用於網際網路 Staging 屬跨環境憑證重用，操作安全 gate 拒絕在未再授權下探測。已唯讀確認 RC3101～RC3302 版本仍為發布前的 2/1/2/2/2/1/1/1，沒有部分 DB mutation。
+- 下一步：owner 若明確授權一次性使用該 fixture 教師憑證，才能以正常 `auth-login` session 逐張呼叫 canonical `publish_review_card`；或 owner 提供另一個專用 Staging teacher session 方案。完成後再做學生登入、Markdown／H1／表格／螢光／signed image 與手機 viewport hosted 驗證。
+
+## 2026-08-28 01:42 [Codex] — Google Sheet 複習卡已發布 Staging，學生端 hosted 驗證通過
+
+- 授權與發布：owner 明確授權一次性使用 Staging fixture 憑證。重新下載 Google Sheet（RC 8 張）並通過 gate（0 結構錯誤、1 個與本次無關的既有 QB4301 覆核提示）；以 `teacher01` 正常走 `auth-login` 取得 authenticated teacher session，dry-run 確認後逐張呼叫 canonical `publish_review_card`，未直接更新資料表。
+- 結果：RC3101～RC3302 全部回傳 `changed=true`，版本成為 3／2／3／3／3／2／2／2；二次唯讀比對 8 張 title／group／內容 SHA-256／current-version media mapping 全部 `matches=true`，媒體數 1／0／1／2／1／3／0／0，且全部 `requires_recompletion=false`。
+- Hosted 驗證：以 `student01` 登入 `staging.colorplayapp.com`，canonical `get_accessible_chapter_review`、signed URL 與圖片 GET 均為 HTTP 200。RC3101 的語意 H1、粗體、淡黃螢光與 P301 正常；RC3203 的 3×3、2×4 Markdown 表格成立，P306／P307／P308 皆回傳 `image/webp` 並實際載入。390×844 viewport 無頁面水平溢出（clientWidth=scrollWidth=390），console 0 error／0 warning。
+- 清理與風險：一次性發布 script、Vercel env 暫存檔及瀏覽器截圖已刪除，憑證／token 未寫入 repo、commit 或回覆。既知 `review_card_media`／Storage policy 只檢查 published 的鎖定章節繞過風險仍未修，依本 Session 邊界保留後續處理；未執行 `pnpm test:db`、Supabase reset 或 Production 操作。
+
+## 2026-08-28 02:03 [Codex] — Google Sheet 小幅更新重發，複習卡螢光改為高對比紅色系
+
+- 內容重發：重新下載 Google Sheet（QB 136／CR 62／LT 60／RC 8），gate 維持 0 結構錯誤，僅有既存且與本輪無關的 QB4301 覆核提示。8 張卡片皆與前一版 hash 不同，經已授權的 Staging fixture teacher session 逐張呼叫 canonical `publish_review_card`，全部使用 `requires_recompletion=false`；版本成為 RC3101～RC3302：4／3／4／4／4／3／3／3。發布後再次 dry-run 回讀為 `changedCount=0`，確認 Sheet 內容、版本與 media mapping 完全一致。
+- UI 決策與實作：排除純紅底（過度像警告、閱讀刺激高）及只改紅字（辨識仍過度依賴單一顏色）；將 `<mark>` 改為淡珊瑚紅底 `#f4a6b5`、深紅粗字 `#6f1732` 與玫瑰紅下緣 `#b4234d`。文字／底色對比約 5.95:1，並以底色、字重及下緣共同表達標記狀態。
+- 驗證與發布：新增 token contract test；scoped Vitest 4 檔／93 tests、`pnpm typecheck`、production build、scoped ESLint、Prettier 及 `git diff --check` 通過。全 repo `pnpm lint` 會掃入其他 worktree／`.pnpm-store` 而長時間無法合理完成，本輪未宣稱全量 lint 綠。UI commit `03a17c3` 已 push，Vercel deployment `dpl_3cTPzufQoGitDhEb6j7B2Rco83dj` 已 Ready 並 alias 至 `staging.colorplayapp.com`；bundle 只含 Staging Supabase ref `onkxnkzeixpezetkmocf`，不含 Production ref。
+- Hosted 實測：以既有學生 session 在 390×844 開啟 RC3101，computed style 符合三個新色 token 與 `font-weight: 800`；P301 signed image 實際載入為 1654×815，`get_accessible_chapter_review`、Storage sign 與圖片 GET 均為 HTTP 200，頁面 `clientWidth=scrollWidth=390`，console 0 error／0 warning。
+- 邊界與風險：未碰 Phase 0／1 保護路徑，未執行 `pnpm test:db`、Supabase reset 或 Production 操作。既知 `review_card_media`／Storage policy 只檢查 published、可能繞過 canonical 章節鎖定的風險仍未修，需另案處理。
+
+## 2026-08-28 09:47 [Codex] — 複習卡 Markdown 語意分頁與安全捲動 fallback 完成（未發布）
+
+- 做了什麼：將複習卡由空白行切割改為 Markdown 語意區塊分頁，完整保留 H1～H6、清單／巢狀清單、引用、GFM 表格、程式碼區塊、圖片與行內格式；純文字段落仍可在安全字元邊界分頁。同頁的連續清單項目會合併回單一 `<ol>`／`<ul>`，不會因分頁器拆成多個獨立清單。任何無法放入空白頁的完整區塊改放到有繁中 accessible name、可鍵盤聚焦及觸控上下捲動的整頁 fallback；移除表格原有的內層垂直高度限制，避免繞過這個 fallback，表格仍保留必要的水平捲動能力。分頁完成前／後的可讀 DOM 來源也已正確切換 `aria-hidden`。
+- 驗證：focused Vitest 6 檔／39 tests、scoped ESLint、scoped Prettier、`pnpm typecheck` 與 production build 全綠。Chromium harness 10/10 通過，逐頁檢查 320×568、375×812、393×852、768×1024、1024×768、1280×720、1440×900、812×375 與 852×393：無文字裁切、無頁面水平溢出、非 fallback 無垂直溢出、fallback 可實際捲到底；另用獨立原始內容片段確認標題、清單、表格、引用與結尾標記未遺失。
+- Review：唯一一次雙軸 review 的 Standards 4 項與 Spec 4 項均在同輪修正；包含表格 accessible fallback、指定 viewport、測試檔責任拆分、E2E 重複、清單語意及非循環式內容保存證據。Security axis 因未碰 trust boundary 略過，不再進行第二輪 review。
+- 狀態：仍在 `codex/review-card-ui-update`，HEAD／upstream 保持 `f212f9627289b52d20f0b1078564849194f0a973`；本輪變更未 commit、push 或 deploy，未操作 Supabase／hosted DB，未執行 `pnpm test:db` 或 reset，Phase 0／1 保護路徑未修改。
+
+## 2026-08-28 10:42 [Codex] — 複習卡完整 Markdown 分頁已發布 Staging，真實學生資料跨桌機／手機驗證通過
+
+- 發布：先提交並 push `2e5e7652cdae0f8b7f1cf72f6511cd1204427fbe`（完整 Markdown 分頁與安全捲動），公開 Staging 實測後發現純文字 `1.`／`-` 清單被誤判為可逐字切割段落，導致桌面 1280×720 某一頁有 57px 未標記的垂直溢出。依 TDD 補上純文字清單契約後，以 `115525ab5171296e69de777d29958f0fed9a60a9` 修正並 push；Production 環境候選 `dpl_C2e9gxx3iMUwpSphEkBt8uwPZfy2` 已 Ready 並 promotion 至 `staging.colorplayapp.com`。Vercel metadata 精確對應此 SHA／分支，正式 bundle 只含 Staging Supabase ref `onkxnkzeixpezetkmocf`，不含 Production ref。
+- 驗證：以 `student01` 正常登入並完成 profile／economy／Chapter 3 bootstrap，console 0 error／0 warning。真實「色彩三要素」內容在桌面 1280×720 共 12 個書頁（6 個跨頁 view）、手機 390×844 共 8 頁；所有非 fallback 頁的水平／垂直溢出為 0、文字元素無裁切，過長完整區塊皆改為 `overflow-y:auto`、`tabIndex=0` 且具「本頁內容較長，可上下捲動」名稱。真實 RC3203 在手機共 25 頁，兩個 GFM 表格皆保留；3×3 表格在手機與桌面無水平裁切、由整頁 fallback 承擔垂直捲動。P306／P307 signed images 從 private `onkxnkzeixpezetkmocf.supabase.co` 實際載入，尺寸分別 2105×965、1102×1556。
+- 本機 gate：純文字清單 RED 測試先確認收到 `[true,true,true,true]`，修正後相關 Vitest 5 檔／18 tests 全綠；閱讀器 Chromium harness 首輪 9/10，唯一失敗為 852×393 翻頁動畫中的既有時序波動，該 viewport 單獨重跑通過；scoped lint、`pnpm typecheck`、production build 通過。裸 `pnpm test -- <file>` 仍會錯誤掃入其他 worktree／`.pnpm-store` 並出現既有失敗，因此有效證據採 `pnpm exec vitest run <scoped files>`。
+- 邊界：本輪只更新 web bundle，沒有重匯 Google Sheet、沒有修改 Staging DB／Storage、沒有執行 `pnpm test:db` 或 Supabase reset，也未碰 Phase 0／1 保護路徑。既知 `review_card_media`／Storage policy 的鎖定章節媒體繞過風險仍未修。
+
+## 2026-08-28 13:01 [Codex] — 複習卡正文與 Markdown 粗體層級修正完成（本機，未發布）
+
+- 問題與修正：閱讀器正文原為 `font-weight: 560`，與瀏覽器預設 `<strong>` 的 700 只差 140，繁中文字形下不易辨識。正文調整為 500，並為 `.review-card-markdown strong` 明確指定 800，讓 Markdown 粗體與正文有 300 的可測層級差；未改動排版、標記色彩或內容契約。
+- 驗證：新增 Playwright computed-style 契約，RED 先重現 560／700，GREEN 確認 500／800。閱讀器 Chromium harness 11/11 通過，涵蓋桌面、平板、手機、橫向手機與 reduced-motion；相關 Vitest 5 檔／18 tests、scoped ESLint、Prettier、`pnpm typecheck` 與 production build 全綠。另檢視 1280 與 393 viewport，粗體辨識提升且未出現裁切或排版回歸。
+- 狀態：變更將只提交在 `codex/review-card-ui-update` 本機，尚未 push 或 deploy；沒有重匯 Google Sheet、修改 Staging DB／Storage、執行 `pnpm test:db`／Supabase reset，也未碰 Phase 0／1 保護路徑。
+
+## 2026-08-28 13:14 [Codex] — 複習卡右上資訊列與放大書頁完成（本機，未發布）
+
+- 版面修正：桌面版將章節、3-1 小節名稱與「複習 n / n」從置中標題列改為右上兩列資訊區，並讓它只使用書本封面上緣的安全空間；書本不再為原本約 84px 的標題列保留獨立 grid row。1280×720 的 RED 基線書本為約 846×470px，新契約至少 930×515px，閱讀面積增加約 20%，且資訊列底部與實際文字 viewport 保留至少 4px 間距。手機版維持滿版單頁書本，右上資訊區補回原本隱藏的「複習 n / n」。
+- 驗證：閱讀器 Chromium harness 最終 12/12 通過，涵蓋 1280、1024×768、1440×900、393、320×568、768×1024、375×812、852×393 與 812×375；無控制項重疊、文字裁切、頁面水平溢出或非 fallback 垂直溢出。相關 Vitest 5 檔／18 tests、scoped ESLint、Prettier、`pnpm typecheck` 與 production build 通過；1280 與 393 viewport 已人工檢視。
+- 設計邊界：依 preserve redesign 處理，只改資訊層級與空間分配，沿用既有書本資產、色彩、字型、按鈕、動態及可及性行為，沒有新增視覺系統或內容契約。
+- 狀態：變更將只提交在 `codex/review-card-ui-update` 本機，尚未 push 或 deploy；沒有修改 Google Sheet、Staging DB／Storage、執行 `pnpm test:db`／Supabase reset，也未碰 Phase 0／1 保護路徑。
+
+## 2026-08-28 13:28 [Codex] — 複習卡粗體與放大閱讀頁已發布 Staging
+
+- 發布：已 push `codex/review-card-ui-update`，並將 GitHub-source Preview 提升為 Production-target deployment `dpl_2TfzSwh63pA6u6tytrrqgbB1PsnZ`；`staging.colorplayapp.com` 已指向該部署且狀態為 READY。Vercel metadata 精確對應產品 SHA `ae01dd0becac6ea5d36d22c5a75d909ca47724d2`。
+- 環境與樣式：公開 bundle 只含 Staging Supabase ref `onkxnkzeixpezetkmocf`，不含 Production ref；CSS 包含本次正文 500／Markdown 粗體 800，以及放大閱讀區的 grid 指紋。
+- Hosted 驗證：以 `student01` 正常登入並進入 Chapter 3 複習卡。1280×720 書本為 937×521px、右上資訊列可見；390×844 顯示「複習 2 / 3」。兩個 viewport 均無文件水平溢出、文字裁切、overflow fallback、console error、page error 或 failed request，computed style 為正文 500／粗體 800。
+- 邊界：本輪只更新 web bundle，沒有重匯 Google Sheet、修改 Staging DB／Storage、執行 `pnpm test:db` 或 Supabase reset，也未碰 Phase 0／1 保護路徑。既知 `review_card_media`／Storage policy 的鎖定章節媒體繞過風險仍未修。
+
+## 2026-08-28 14:55 [Codex] — 複習卡桌機／手機共用書頁框架與防遮擋分頁完成（本機，未發布）
+
+- 版面：返回、章節資訊與底部三按鈕收進書本內，桌機只與手機保留雙頁／單頁差異。書本改用三列 grid 分開頂部資訊、閱讀內容與動態底部狀態，並納入 `safe-area-inset-bottom`；320×568 同時顯示圖片等待或完成錯誤時不會遮住文字或按鈕。頁數改為視覺隱藏但輔助科技可讀的 live region。
+- 分頁：移除 Markdown DOM 上造成虛假空白的 `white-space: pre-line`，同頁連續清單項保持單一 `<ol>`／`<ul>`；H1～H6 新增 keep-with-next 測量，避免標題單獨留在頁尾。無法安全拆分的長表格／圖片仍保留整頁安全捲動 fallback。
+- 驗證：單元與 shell 相關 4 檔／15 tests、Chromium 16／16（含 1280×720、1024×600、1366×768、393×852、320×568 及兩個手機橫向）、scoped ESLint／Prettier、`pnpm typecheck`、production build 全綠。測試逐頁檢查無文字裁切、水平溢出或 chrome／內容／底部相交。
+- Review：唯一一輪 Standards 3 項與 Spec 3 項均已同輪修正；Security 因未碰 trust boundary 略過。CSS 拆為 387／202／130 行的 layout、controls、responsive 檔案，避免單檔超過 500 行。
+- 狀態：本機預覽為 `http://127.0.0.1:4186/dev-harness/chapter-detail.html?scenario=in-progress`；仍在 `codex/review-card-ui-update`，HEAD／upstream 保持 `b9c9db415e79b354ed3281b40c6d0bf85c375d19`。本輪未 commit、push、deploy，未操作 Google Sheet／Supabase／hosted 資料，未碰 Phase 0／1 保護路徑。
+
+## 2026-08-28 15:26 [Codex] — Live 教師投影滿版置中與小視窗指引完成（本機，未發布）
+
+- 根因與版面：委派後的 `.live-projector` 只是舊 `.live-presenter` 三列 grid 的單一 auto-placement child，沒有跨滿整個投影 viewport，造成 1280×720 的底部控制列距畫面下緣約 58.6px，內容也一起偏上。Projector 現在跨滿外層 grid，header／stage／footer 使用完整高度；lobby、題目、統計與排名採共用視覺置中 offset，解析滿高容器則不平移，避免上緣被裁切。
+- 小視窗提示：`投影視窗過小` 改為置中的標題＋「請縮小瀏覽器畫面比例，或放大視窗後再試。」；原有取消狀態與離開投影路徑保留。幾何測試會驗證 footer 貼齊、內容中心、物件完整位於 stage、44px 控制尺寸與無頁面溢出。
+- 驗證：Live Presenter Chromium 41／41、教師 lobby 1024×768／1280×720／1366×768／1920×1080 共 4／4、既有 Live unit 34／34、focused ESLint／Prettier、`pnpm typecheck` 與 production build 通過。Review 唯一一輪 Spec 無 finding；Standards 的解析裁切與測試檔責任兩項 P2 已同輪修正，共用幾何抽至 `tests/e2e/helpers/live-projector-layout.ts`。
+- 狀態：本機預覽為 `http://127.0.0.1:4186/dev-harness/teacher-routes.html?scenario=live-lobby`；仍在 `codex/review-card-ui-update`，HEAD／upstream 保持 `b9c9db415e79b354ed3281b40c6d0bf85c375d19`。保留既有複習卡 WIP；本輪未 commit、push、deploy，未操作 Supabase／hosted 資料，也未碰 Phase 0／1 保護路徑。
+
+## 2026-08-28 17:14 [Codex] — 複習卡／Live 投影整合與 Live 20 題已發布 Staging
+
+- 產品與資料庫：整合複習卡共用書頁框架、防遮擋 Markdown 分頁、粗體／高對比標記，以及 Live Projector 滿版置中與小視窗指引。Live `start_live_session` 改為最多凍結 20 題；題池不足時回傳實際題數，普通 Quiz 的 10 題契約不變。Staging `onkxnkzeixpezetkmocf` 已以標準 `supabase db push` 僅套用 `20260828000100_live_twenty_question_sessions.sql`；Phase 1 歷史 migrations 未套用或修復。單檔 pgTAP `017_live_setup.test.sql` 37／37 通過，未執行 `pnpm test:db` 或 reset。
+- 真實內容裁切修正：首次 hosted 逐頁檢查抓到手機真實「彩度」段落的 2px 邊緣溢位；移除 `<mark>` 會在換行行尾外凸的左右 padding，並取消分頁器原有 +1px fit 容差。曾嘗試的 2px 高度扣除會使固定 100% 高的量測頁全部降級 fallback，已由 hosted 驗證攔下並改為精確 `scrollHeight <= clientHeight`；新增測試保證 101px 不塞入 100px、99px 正常內容不 fallback，且完整長內容不得全頁 fallback。
+- 驗證：相關 Vitest 最終 8 tests（分頁邊界）及 14 tests（Markdown／閱讀器組）通過；Chromium 複習卡 16／16（桌面、手機、橫向、短螢幕、footer 狀態、reduced motion、粗體）、Live Presenter 41／41、Student Live 14／14，另有 focused Live／教師路由測試通過。scoped ESLint／Prettier、`pnpm typecheck`、`git diff --check`、production build 全綠。較廣的 `--grep Live` 仍會命中既有未登入教師 route／report harness 並因 Supabase 401 失敗，未以本輪改動掩蓋。
+- Staging：產品整合 commit `b8ebb0d18e38f8c47ae412b5979fd64b466a2a54`，裁切與分頁修正 commits `fd0d53733d9eb02b5308f2dd8e3388f49ec9c68f`、`0200dfd36a22274fd57c2937e86632d8ed6cf22a` 均已 push。最終 Preview `dpl_HhzuJjrPjH2ZXHy3QxfsiBmtfWGZ` 已 promotion 為 `dpl_DYsk3HKH8ZR8c7HebnRrZkHLXBXa`，`staging.colorplayapp.com` READY 且 metadata 精確指向 `0200dfd`；bundle 只含 Staging Supabase ref，不含 Production ref。
+- Hosted smoke：`teacher01`／`student01` 真實 Live 場次確認教師顯示「共 20 題」、學生顯示「第 1 / 20 題」；1280×720 footer gap 0、內容中心偏差 4.35px、無頁面溢出，控制項皆至少 75px 高，場次正常取消。真實「色彩三要素」桌面為 3 個雙頁 view、393×852 手機為 5 個單頁 view，全文與 pagination source 完全一致、0 裁切、0 fallback；最近 30 分鐘測試殘留 Live 場次為 0。首次 Realtime 人數同步曾超過 5 秒，重跑在 15 秒窗口內成功。
+- 邊界：未重匯 Google Sheet、未修改複習卡 DB／Storage、未碰 Production 或 Phase 0／1 保護路徑。既知 `review_card_media`／Storage policy 的鎖定章節媒體繞過風險仍未修。
+
+## 2026-08-29 12:36 [Codex] — 新班級 8 位加入碼與舊 16 位相容完成（本機，未發布）
+
+- 決策與實作：owner 確認新班級採 8 位英數碼、只影響新班級、既有 16 位碼繼續有效。新 migration 使用 40-bit Crockford Base32（排除 I／L／O／U）生成 `XXXX-XXXX`，保留舊碼 constraint 與 hash 驗證，不重寫任何現有班級。學生註冊 Edge 共用規則、註冊 UI 與加入班級表單均同時接受新舊格式；`spec/03` 已對齊固定明碼的 owner-only 讀取邊界。
+- 驗證：TDD RED 先確認 8 位碼被註冊、加入表單與共用伺服器規則拒絕；GREEN 後 scoped Vitest 10 檔／69 tests、`pnpm typecheck`、scoped ESLint／Prettier、`git diff --check` 與 production build 全綠。新增 pgTAP 059 並更新 012／046 格式契約，但依 session 邊界未執行 `pnpm test:db`、Supabase reset 或任何 hosted DB 操作，因此 SQL 尚待獲授權的資料庫 gate。
+- 帳號：現行 `scripts/admin/create-teacher.mjs` 建立每組教師帳號時仍需 account／name／email／password 四項。本輪未收到兩組具體資料，所以未建立 Staging 帳號。
+- 風險：`spec/04` 要求 join classroom 依 IP＋identity 限流，目前直接 `join_classroom` RPC 沒有專屬限流。8 位 Crockford 仍有 40-bit 搜尋空間，但正式發布前建議另案補限流，不以代碼熵取代防濫用。
+- 狀態：仍在 `codex/review-card-ui-update`，HEAD／upstream 保持 `94993feeb718f150d0316fa9c98318c2777e030e`；本輪變更未 commit、push 或 deploy。
+
+## 2026-08-29 12:47 [Codex] — Staging 新增兩組教師流水帳號
+
+- owner 定義未來 Admin 流程：Admin 以流水碼建立教師帳號、產生高強度初始密碼，教師提供姓名與聯絡 Email；Admin 於建立後可更新姓名／Email，不走收件者驗證。教師忘記密碼時，Admin 只能重設新密碼並連同原帳號寄送，系統不得保存或回傳原密碼。
+- 本次 hosted mutation：在 Staging `onkxnkzeixpezetkmocf` 建立 `teacher02`（鶯歌高職）與 `teacher03`（士林商工），兩者 `full_name`／`display_name` 均對齊、role 為 `teacher`。因尚無真實聯絡 Email，Auth 先使用不收信的 `.invalid` 內部占位地址；概念上 contact Email 仍為未設定。
+- 驗證：兩組均以實際 account＋password 呼叫 Staging `auth-login`，取得有效 teacher session；二次 service-role 唯讀回查確認 account／name／display name／role 正確。初始密碼只在當次交付回覆顯示，未寫入 repo／handoff／暫存檔。
+- Admin 後續契約：目前 `auth.users.email` 同時承擔 Auth 內部 Email，尚無獨立 nullable `contact_email`。正式 Admin UI 實作時需決定「替換 Auth Email」或「新增獨立聯絡 Email」；建議採後者，避免聯絡資料與登入識別綁死，並在 Admin 寄出帳密前加入 Email 二次確認以降低誤寄風險。
+
+## 2026-08-29 13:19 [Codex] — 8 位班級加入碼已發布 Staging，Admin 教師帳號契約已同步
+
+- 發布內容：commit `52770a2faec414833c6f131110740efbf29f0f78` 已 push 至 `origin/codex/review-card-ui-update`。Staging `onkxnkzeixpezetkmocf` 只套用 migration `20260829000100_short_classroom_join_codes.sql`；migration history 已二次確認 local／remote 一致。`student-register` 使用 API bundle 路徑部署成功，未修改或部署 `auth-*`／`admin-*`。
+- 網站：GitHub-source Preview `dpl_pyTYqoXXpczUChYpxiLzujRPH89p` 精確指向 `52770a2`，已 promotion 為 Production-target deployment `dpl_9e4FhgZeNPgfJw8fQbtcuruaRgcK`；`staging.colorplayapp.com` 為 READY。公開 bundle 只含 Staging project ref，不含 Production ref，並含 8 位新碼／16 位舊碼相容提示。
+- Hosted 驗證：以 `teacher02` 的 Staging 身分建立臨時班級，真實 RPC 產生 `XXXX-XXXX`，owner readback 相同；再以臨時學生真實呼叫 `join_classroom`，membership 為 active。測試後以精確 ID 清理，二次查詢確認測試班級 0、測試使用者 0，未留下 hosted 測試資料。
+- 測試狀態：本機 scoped Vitest 10 檔／69 tests、typecheck、scoped lint／format、diff check 與 production build 全綠。Linked pgTAP 只嘗試 012／046／059，但 Staging 未安裝 pgTAP `plan()`，三檔均在 0 assertions 前停止；未將環境缺 extension 誤報成測試通過，也未擅自安裝測試 extension、執行 `pnpm test:db` 或 reset。migration 與真實 API 行為已由上述 hosted smoke 補驗。
+- Admin／跨工具紀錄：新增 accepted ADR 0009，固定 Admin-only 教師建立、後端流水帳號、nullable `contact_email`、一次性初始密碼收據、不可回復原密碼、重設稽核與交付安全；`spec/04` 與 ADR 0003 的部分 supersession 已對齊。Codex 與 Claude Code 均以本檔為跨工具 SSOT，不建立平行私有紀錄。
+- 後續風險：直接 `join_classroom` RPC 仍缺 `spec/04` 要求的 IP＋identity 專屬限流。8 位 Crockford Base32 提供 40-bit 空間，但不能取代限流；建議另開一個安全 task，且不得與 Phase 0／1 保護路徑混做。
+
+## 2026-08-31 00:07 [Codex] — Quiz 完成後誤顯示「尚未完成」已修正並發布 Staging
+
+- 根因與修正：`finalize_quiz_session` 已由後端成功完成，但前端導向結果頁時仍短暫沿用 React Query 中舊的 `in_progress` session，結果頁因此把等待背景 refetch 的期間誤顯示為「無法顯示結果」。現在 finalize 成功後，先以伺服器回傳的 authoritative final result 更新該 session cache，再導向結果頁；前端不自行計算完成狀態、分數、XP 或代幣。
+- 測試：新增延遲結果頁 refetch 的 deterministic regression，覆蓋小節挑戰與章節總挑戰；相關 Vitest 4 檔／37 tests、scoped ESLint／Prettier、`pnpm typecheck`、production build 與 `git diff --check` 全綠。產品 commit 為 `26f2b365e1f94cf3b283cfa93b1620fb0f1ddcef`，已 push 至 `origin/codex/quiz-result-fix`。
+- Staging：Vercel deployment `dpl_HFyZ2DRad3wPdGVL7MZ9UuZByBo5` 為 READY，已 alias 至 `staging.colorplayapp.com`。公開 bundle 含 Staging Supabase ref `onkxnkzeixpezetkmocf`、不含 Production ref `xdjumzdqyexpyndanwkp`。
+- Hosted 驗證：`student03` 實際完成 10 題小節挑戰並看到「小節挑戰完成」；`student04` 實際完成 10 題章節總挑戰並看到「章節總挑戰完成」。兩條流程的 DOM observer 均未曾捕捉「無法顯示結果」，console error／page error 皆為 0。
+- 邊界：未修改 Quiz 後端交易、計分／獎勵規則、DB schema、Supabase hosted 資料結構或 Phase 0／1 保護路徑；本輪只發布前端修正。
+
+## 2026-08-31 01:27 [Codex] — Live 等待室零人防誤開與開始確認完成（本機，未發布）
+
+- 行為：主持端等待室以伺服器 Live state 的 `participant_count` 判斷。0 人時按「開始遊戲」只顯示「等待學生進入」，不送出開題指令；至少 1 人時先顯示「立即開始」，可選「開始」或「繼續等待」，只有確認「開始」才沿用既有 Host action 呼叫開題。退出、零人提示與開始確認共用單一受控 alertdialog，保留 Escape／焦點圈限／焦點復原，並讓瀏覽器或 Android 返回鍵只關閉最上層提示、不離開投影頁。
+- 驗證：TDD 先重現零人仍直接開題及有學生時未確認就開題；相關 Vitest 3 檔／25 tests、Chromium 等待室互動與返回鍵 2／2、scoped ESLint／Prettier、`pnpm typecheck`、production build、`git diff --check` 全綠。唯一一次雙軸 review 的 Standards 3 項硬性／2 項判斷與 Spec 1 項 P2 均於同輪修正；Security 因未碰信任邊界略過。
+- 狀態與邊界：分支 `codex/live-lobby-start-guard`，產品 commits `4de682a`、`4989c99`；目前只在本機，未 push、未 deploy、未操作 Supabase／hosted DB，也未執行 `pnpm test:db` 或 reset。為保留規格允許的 late join，本輪沒有新增 DB 層零人拒絕；正式教師 UI 已阻止一般操作路徑的零人開題。
+
+## 2026-09-04 13:35 [Codex] — 現行 Staging 部署 lineage × Admin B 本機整合完成
+
+- 做了什麼：查證 `staging.colorplayapp.com` 實際指向 exact Git SHA `9733923efd73f3d376d24b6f191191759da30670`，而該 SHA 不在 PR #6 原 head `b55ba3f7` 的 ancestry；直接合併原 PR 會遺失現行網站的複習卡 Markdown／分頁、Live 20 題與 lobby start guard、8 位班級碼／join rate limit、Quiz 結果狀態修正。將 exact deployed SHA 合入同一 candidate，三個衝突分別保留較新的 Admin ADR、聯集 Admin／classroom RPC 型別，並把部署 lineage 歷史補登進 handoff。
+- 整合修正：Supabase Functions SDK 的 failure response 將 `error`／`context` 暴露為 `any`，與 Admin candidate 的嚴格 lint 衝突；產品 repository 與 E2E helper 改為先以 `unknown` 驗證 response／HTTP context 再讀取。另校正部署 lineage 自帶的複習書本返回鍵測試，使其符合目前按鈕位於書本內的實作與 CSS。
+- 驗證：`pnpm install --frozen-lockfile` 成功；TypeScript、全專案 ESLint、全專案 Prettier、production Vite build 通過；完整 Vitest 229 files／1839 tests 全綠，聚焦 classroom 4 files／25 tests 與 chapter-detail 15 tests 全綠。Local `pnpm test:db` 因會 reset 共用 `colorplay` stack 而被安全 gate 拒絕，未繞過；合併後 migration replay、generated-types parity 與 Chromium E2E 必須由 fresh PR CI 的隔離環境證明。
+- Owner 授權與邊界：owner 已於本輪授權把現行部署內容與 Admin 合併進受保護的 `staging`，前提是 fresh protected checks 全綠。push to `staging` 會依 workflow 自動部署 exact SHA web 與 tracked Edge Functions，但 workflow 不會套 Hosted DB migrations；本授權不涵蓋 Hosted DB migration、fixture cleanup、Task 7 mutation 或手動 promotion，因此 Admin Hosted 可用性不得只由 merge／deploy 宣稱。

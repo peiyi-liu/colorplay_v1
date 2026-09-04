@@ -9,7 +9,9 @@ export const normalizeAccount = (value: string): string =>
 // 6–12 碼、至少一個小寫與一個大寫、不含空白。
 export const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])\S{6,12}$/;
 
-export const CLASS_CODE_PATTERN = /^[0-9A-F]{16}$/;
+// 新班級使用 8 位 Crockford Base32（排除 I、L、O、U）；既有 16 位
+// hexadecimal 代碼繼續有效，避免已發佈的班級序號失效。
+export const CLASS_CODE_PATTERN = /^(?:[0-9A-HJKMNP-TV-Z]{8}|[0-9A-F]{16})$/;
 
 export const normalizeClassCode = (value: string): string =>
   value.trim().toUpperCase().replace(/-/g, '');

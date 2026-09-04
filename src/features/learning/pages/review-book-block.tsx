@@ -1,3 +1,7 @@
+import {
+  ReviewCardMarkdown,
+  type ReviewCardImageResolution,
+} from '../components/review-card-markdown';
 import { ReviewCardMedia } from './review-card-media';
 
 export type ReaderBookBlock =
@@ -8,9 +12,12 @@ export type ReaderBookBlock =
       title: string;
     }>
   | Readonly<{
+      keepWithNext?: boolean;
+      paginationGroupKey?: string;
       key: string;
-      kind: 'paragraph';
-      text: string;
+      kind: 'markdown';
+      markdown: string;
+      splittable: boolean;
     }>
   | Readonly<{
       altText: string;
@@ -23,10 +30,12 @@ export type ReaderBookBlock =
 export function ReaderBookBlockContent({
   block,
   onMediaLoad,
+  resolveImage,
   text,
 }: Readonly<{
   block: ReaderBookBlock;
   onMediaLoad: () => void;
+  resolveImage: (source: string) => ReviewCardImageResolution;
   text?: string;
 }>) {
   if (block.kind === 'intro') {
@@ -35,7 +44,6 @@ export function ReaderBookBlockContent({
         className="chapter-review-reader__intro"
         data-book-block-key={block.key}
       >
-        <p className="chapter-review-reader__eyebrow">REVIEW ARCHIVE</p>
         <h2 className="chapter-review-reader__book-title">
           {block.displayTitle}
         </h2>
@@ -46,14 +54,18 @@ export function ReaderBookBlockContent({
     );
   }
 
-  if (block.kind === 'paragraph') {
+  if (block.kind === 'markdown') {
     return (
-      <p
+      <div
         className="chapter-review-reader__content"
         data-book-block-key={block.key}
       >
-        {text ?? block.text}
-      </p>
+        <ReviewCardMarkdown
+          markdown={text ?? block.markdown}
+          onMediaLoad={onMediaLoad}
+          resolveImage={resolveImage}
+        />
+      </div>
     );
   }
 

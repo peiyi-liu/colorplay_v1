@@ -28,6 +28,9 @@
 - 使用 Supabase Auth。
 - MVP 可使用 Email/password 或 magic link；選定方式須在設計文件鎖定。
 - Teacher role 只能由受控邀請／admin 流程賦予。
+- 教師帳號由 Admin 產生流水帳號與高強度初始密碼；聯絡 Email
+  可後補且不作為登入 ID、role 賦予或密碼自助復原的信任來源。
+- 教師忘記密碼時由 Admin 重設新密碼；系統不得保存、回傳或寄送原密碼。
 - 共享裝置需提供明顯登出與目前帳號顯示。
 - 敏感教師操作前若 session 太舊，可要求重新驗證。
 - 登入錯誤不得洩漏「此 Email 是否存在」超出 Auth provider 正常安全行為。
@@ -101,7 +104,11 @@
 
 最低限制：
 
-- Login／join classroom：依 IP + identity 限流。
+- Login／join classroom：依 IP + identity 限流。`join classroom` 採 10 分鐘固定視窗：
+  單一 identity 第 10 次錯碼起、單一共享 IP 第 100 次錯碼起拒絕，並回傳穩定
+  `CLASSROOM_JOIN_RATE_LIMITED` 與 `Retry-After`。加入必須經 Edge／service-only
+  邊界，authenticated 不得直接執行底層 RPC 繞過限流；IP 僅保存 HMAC 指紋，
+  不保存原始位址。
 - `submit_quiz_answer`：每 user 每秒最多 3 次，且 database unique constraint 為最後防線。
 - `create_quiz_session`：每 user 每分鐘最多 10 次。
 - `purchase_blook`：每 user 每分鐘最多 10 次。

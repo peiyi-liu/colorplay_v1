@@ -103,7 +103,10 @@ describe('assignments and live phase gate contract', () => {
     // 375x812 detail screenshot — is gone; pin the removal instead.
     expect(spec).not.toContain('completeAssignmentQuiz');
     expect(spec).not.toContain('assignment-detail-375x812.png');
-    expect(spec).toContain('第 ${String(round)} / 10 題');
+    expect(spec).toContain('const LIVE_QUESTION_COUNT = 20;');
+    expect(spec).toContain(
+      '第 ${String(round)} / ${String(LIVE_QUESTION_COUNT)} 題',
+    );
     expect(spec).toContain('live-question-768x1024.png');
     expect(spec).toContain('live-host-console-1440x900.png');
     expect(spec).toContain('declareExpectedBrowserFailure');

@@ -1,8 +1,13 @@
 // DEV/TEST-ONLY. 不得被 src/main.tsx 或 src/app/router/** import。
 // 用 Task 1 fixtures 直接建構 viewModel，掛載純 presentational 的
 // ChapterDetailPageView，完全不觸碰 Supabase／任何 hook。
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 import type { StudentChapterMapEntry } from '../api/chapter-map';
-import { LearningError } from '../api/learning-repository';
+import {
+  LearningError,
+  type LearningRepository,
+} from '../api/learning-repository';
 import { StudentHudHarness } from '../../../app/shell/student-hud.harness';
 import { deriveChapterDetailViewModel } from './chapter-detail-adapter';
 import { ChapterDetailPageView } from './chapter-detail-page';
@@ -39,6 +44,10 @@ export const CHAPTER_DETAIL_HARNESS_SCENARIOS: readonly ChapterDetailHarnessScen
 const LONG_TITLE =
   '這是一個刻意寫得很長很長很長很長很長很長很長很長的小節標題用來測試換行行為';
 
+const harnessQueryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+});
+
 function entryFor(
   scenario: ChapterDetailHarnessScenario,
 ): StudentChapterMapEntry {
@@ -68,6 +77,9 @@ function entryFor(
 export function ChapterDetailPageHarness({
   scenario,
 }: Readonly<{ scenario: ChapterDetailHarnessScenario }>) {
+  const readerState = new URLSearchParams(window.location.search).get(
+    'readerState',
+  );
   const sections =
     scenario === 'content-readiness-error'
       ? chapterReviewSectionsFixture([
@@ -109,6 +121,25 @@ export function ChapterDetailPageHarness({
             },
           ])
         : chapterEntrySectionsFixture();
+  const readerSections =
+    readerState === 'media-wait'
+      ? sections.map((section) => ({
+          ...section,
+          subtopics: section.subtopics.map((subtopic) => ({
+            ...subtopic,
+            cards: subtopic.cards.map((card) => ({
+              ...card,
+              media: card.media.map((media) => ({
+                ...media,
+                assetPath: 'chapter-3/color-wheel.webp',
+              })),
+            })),
+          })),
+        }))
+      : sections;
+  const stalledMediaRepository = {
+    resolveReviewMedia: () => new Promise<never>(() => undefined),
+  } as unknown as LearningRepository;
 
   const viewModel = deriveChapterDetailViewModel({
     chapterMapEntry: scenario === 'loading' ? undefined : entryFor(scenario),
@@ -122,18 +153,27 @@ export function ChapterDetailPageHarness({
     progressRows: learningProgressRowsFixture(),
     reviewError: scenario === 'error' ? new LearningError('UNAVAILABLE') : null,
     reviewIsPending: false,
-    reviewSections: sections,
+    reviewSections: readerSections,
   });
 
   return (
-    <StudentHudHarness initialEntry="/app/chapters/chapter-3">
-      <ChapterDetailPageView
-        completeError={undefined}
-        completePending={false}
-        onCompleteCard={() => undefined}
-        onRetry={() => undefined}
-        viewModel={viewModel}
-      />
-    </StudentHudHarness>
+    <QueryClientProvider client={harnessQueryClient}>
+      <StudentHudHarness initialEntry="/app/chapters/chapter-3">
+        <ChapterDetailPageView
+          completeError={
+            readerState === 'completion-error'
+              ? '儲存失敗，請再試一次。'
+              : undefined
+          }
+          completePending={false}
+          onCompleteCard={() => undefined}
+          onRetry={() => undefined}
+          {...(readerState === 'media-wait'
+            ? { repository: stalledMediaRepository }
+            : {})}
+          viewModel={viewModel}
+        />
+      </StudentHudHarness>
+    </QueryClientProvider>
   );
 }

@@ -61,7 +61,7 @@ const renderRegisterPage = () =>
 const fillBasicDetails = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText('名字'), '王小明');
   await user.type(screen.getByLabelText('暱稱'), '彩彩');
-  await user.type(screen.getByLabelText('班級序號'), 'ABCD-1234-EF56-7890');
+  await user.type(screen.getByLabelText('班級序號'), '7KPM-X4TR');
 };
 
 const reachCredentialsStep = async (
@@ -121,6 +121,18 @@ describe('RegisterPage', () => {
       'step',
     );
     expect(screen.queryByLabelText('E-mail')).not.toBeInTheDocument();
+  });
+
+  it('continues accepting an existing 16-character classroom code', async () => {
+    const user = userEvent.setup();
+    renderRegisterPage();
+
+    await user.type(screen.getByLabelText('名字'), '王小明');
+    await user.type(screen.getByLabelText('暱稱'), '彩彩');
+    await user.type(screen.getByLabelText('班級序號'), 'ABCD-1234-EF56-7890');
+    await user.click(screen.getByRole('button', { name: '下一步' }));
+
+    expect(await screen.findByLabelText('E-mail')).toBeVisible();
   });
 
   it('moves from basic details through verified email to credentials', async () => {
@@ -255,7 +267,7 @@ describe('RegisterPage', () => {
     await waitFor(() => {
       expect(mockedCompleteStudentRegistration).toHaveBeenCalledWith({
         account: 'cp045001',
-        classCode: 'ABCD-1234-EF56-7890',
+        classCode: '7KPM-X4TR',
         fullName: '王小明',
         nickname: '彩彩',
         password: 'SecretA',
@@ -280,6 +292,24 @@ describe('RegisterPage', () => {
 
     expect(
       await screen.findByText('無法確認班級加入狀態，請稍後再試。'),
+    ).toBeVisible();
+  });
+
+  it('explains a classroom join rate limit during registration', async () => {
+    const user = userEvent.setup();
+    mockedCompleteStudentRegistration.mockRejectedValueOnce(
+      new AccountFlowError('CLASSROOM_JOIN_RATE_LIMITED'),
+    );
+    renderRegisterPage();
+    await reachCredentialsStep(user);
+
+    await user.type(screen.getByLabelText('帳號（學號）'), 'cp045003');
+    await user.type(screen.getByLabelText('密碼'), 'SecretA');
+    await user.type(screen.getByLabelText('密碼確認'), 'SecretA');
+    await user.click(screen.getByRole('button', { name: '完成註冊' }));
+
+    expect(
+      await screen.findByText('嘗試次數過多，請等待 10 分鐘後再試。'),
     ).toBeVisible();
   });
 

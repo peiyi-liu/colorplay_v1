@@ -64,7 +64,7 @@ export function RegisterBasicStep({
           type="text"
         />
         <p className="login-form__field-hint" id="register-class-code-hint">
-          輸入老師提供的 16 碼班級序號。
+          輸入老師提供的 8 碼班級序號；既有 16 碼序號仍可使用。
         </p>
         {errors.classCode ? (
           <p className="login-form__field-error" id="register-class-code-error">

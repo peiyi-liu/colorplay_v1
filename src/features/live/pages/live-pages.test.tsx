@@ -196,13 +196,38 @@ describe('LiveSessionPage (participant)', () => {
     });
     expect(screen.getByText('請看投影幕作答')).toBeVisible();
     expect(screen.getByRole('img', { name: '投影機' })).toBeVisible();
-    expect(screen.getByText('第 1 / 10 題')).toBeVisible();
+    expect(screen.getByText('第 1 / 20 題')).toBeVisible();
     expect(screen.getByRole('timer', { name: '剩餘秒數' })).toBeVisible();
     expect(screen.getAllByRole('button')).toHaveLength(4);
     expect(firstOption).toHaveTextContent('A');
     expect(screen.getByRole('button', { name: '選項 B：藍色正方形' })).toHaveTextContent('B');
     expect(screen.getByRole('button', { name: '選項 C：黃色圓形' })).toHaveTextContent('C');
     expect(screen.getByRole('button', { name: '選項 D：綠色菱形' })).toHaveTextContent('D');
+  });
+
+  it('shows the actual frozen count when fewer than twenty questions are available', async () => {
+    const repository = repositoryWith({
+      getState: vi.fn().mockResolvedValue({
+        ...baseState,
+        state: 'question_open',
+        stateVersion: 3,
+        currentPosition: 1,
+        questionCount: 7,
+        questionDisplay: 'screen_only',
+        question: screenOnlyQuestion,
+        answeredCount: 0,
+        myAnswer: { answered: false },
+      }),
+    });
+    renderWith(
+      <LiveSessionPage
+        client={stubClient()}
+        repository={repository}
+        sessionId={SESSION_ID}
+      />,
+    );
+
+    expect(await screen.findByText('第 1 / 7 題')).toBeVisible();
   });
 
   it('locks one screen-only choice immediately and then waits for reveal', async () => {

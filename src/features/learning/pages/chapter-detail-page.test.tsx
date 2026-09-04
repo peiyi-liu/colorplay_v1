@@ -343,7 +343,9 @@ describe('ChapterDetailPage', () => {
     expect(screen.getByRole('status')).toHaveTextContent('已完成複習');
 
     await userEvent.click(
-      screen.getByRole('button', { name: '返回複習卡選擇' }),
+      within(
+        screen.getByRole('region', { name: /複習卡閱讀：色彩的分類/u }),
+      ).getByRole('button', { name: '返回複習卡選擇' }),
     );
     await userEvent.click(
       screen.getByRole('button', { name: '選擇複習卡：色彩三要素' }),
@@ -481,10 +483,7 @@ describe('ChapterDetailPage', () => {
     expect(reader).toHaveTextContent('複習 3 / 5');
     expect(within(reader).getByRole('article')).toBeVisible();
     expect(
-      within(reader).queryByRole('button', { name: '返回複習卡選擇' }),
-    ).toBeNull();
-    expect(
-      screen.getByRole('button', { name: '返回複習卡選擇' }),
+      within(reader).getByRole('button', { name: '返回複習卡選擇' }),
     ).toBeVisible();
     expect(
       within(reader).getByRole('progressbar', { name: '本頁閱讀進度' }),
@@ -532,6 +531,71 @@ describe('ChapterDetailPage', () => {
 
     expect(
       screen.getByText(/圖片載入失敗：十二色相環示意圖/u),
+    ).toBeInTheDocument();
+  });
+
+  it('renders imported Markdown and keeps inline media in document order', async () => {
+    const repository = repositoryWith({
+      listChapterReview: vi.fn().mockResolvedValue([
+        {
+          ...sections[0],
+          subtopics: [
+            {
+              ...sections[0].subtopics[0],
+              cards: [
+                {
+                  ...sections[0].subtopics[0].cards[0],
+                  content: `# 明度觀察
+
+**明度**代表色彩的明暗，==先找出最亮與最暗的位置==。
+
+![十二色相環示意圖](/media/review/color-wheel.svg)
+
+| 觀察 | 結果 |
+| --- | --- |
+| 明度 | 清楚 |`,
+                },
+              ],
+            },
+          ],
+        },
+      ]),
+      listReviewProgress: vi.fn().mockResolvedValue([]),
+    });
+    renderPage(repository);
+
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: '選擇複習卡：色彩的分類',
+      }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: '進入複習' }));
+
+    const reader = await screen.findByRole('region', {
+      name: /複習卡閱讀：色彩的分類/u,
+    });
+    const heading = within(reader).getByRole('heading', {
+      level: 1,
+      name: '明度觀察',
+    });
+    const image = within(reader).getByRole('img', {
+      name: '十二色相環示意圖',
+    });
+    const table = within(reader).getByRole('table');
+
+    expect(heading.compareDocumentPosition(image)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(image.compareDocumentPosition(table)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(
+      within(reader).getByText('明度', { selector: 'strong' }),
+    ).toBeInTheDocument();
+    expect(
+      within(reader).getByText('先找出最亮與最暗的位置', {
+        selector: 'mark',
+      }),
     ).toBeInTheDocument();
   });
 

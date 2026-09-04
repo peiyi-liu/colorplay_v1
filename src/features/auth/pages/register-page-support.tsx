@@ -11,6 +11,7 @@ const registerErrorMessages: Readonly<Record<string, string>> = {
   ALREADY_IN_ACTIVE_CLASSROOM: '此帳號已加入其他班級，請聯絡老師辦理轉班',
   ALREADY_REGISTERED: '此 E-mail 已完成註冊，請返回登入',
   CLASSROOM_JOIN_FAILED: '加入班級失敗，請確認班級序號後再試。',
+  CLASSROOM_JOIN_RATE_LIMITED: '嘗試次數過多，請等待 10 分鐘後再試。',
   CLASSROOM_LOOKUP_FAILED: '無法確認班級資料，請稍後再試。',
   MEMBERSHIP_LOOKUP_FAILED: '無法確認班級加入狀態，請稍後再試。',
   PASSWORD_SETUP_FAILED: '密碼設定失敗，請重新輸入後再試。',

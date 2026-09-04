@@ -15,16 +15,29 @@
 
 ## 1. 準備圖片
 
+- 原始 JPG／PNG 放在同一個輸入資料夾，檔名使用 Sheet 的附件代號，例如 `P301.jpg`。
+- 在 repository root 執行批次轉檔；輸出請指定新的子資料夾，避免蓋掉原圖或舊版 WebP：
+
+```bash
+pnpm review-media:prepare \
+  --input "/absolute/path/JPG" \
+  --output "/absolute/path/WEBP/optimized"
+```
+
+工具會保留長寬比例、優先維持圖片尺寸，並在品質上限 0.94 內尋找符合 512 KiB 的最高 WebP 畫質；只有仍超標時才縮小尺寸。完成後會產生 `review-media-manifest.json`，記錄來源檔、輸出檔、尺寸、大小與編碼品質。檔名會正規化為 `P301.webp` 或 `P301-v2.webp`。若輸出圖片或 manifest 已存在，工具會停止且不覆寫；改版請使用新資料夾或新的版本檔名。
+
+核准上傳的版本控制來源放在 `scripts/assets/source/review-card-media/chapter-{n}/`；這個目錄不進 client bundle，也不取代 private Storage。未來 Admin 整合邊界記錄於 `docs/content/review-card-admin-media-backlog.md`。
+
 - 新上傳檔案只用 WebP；不接受 PNG、JPEG 或 SVG 直接進入發布流程。
 - 單檔不超過 512 KiB，長寬各不超過 2400px。
-- 檔名只用英數、`-`、`_`，例如 `P301.webp`。
+- 檔名使用附件代號或其版本尾碼，例如 `P301.webp`、`P301-v2.webp`。
 - 每張圖準備一段能說明教學資訊的繁體中文替代文字；不可只寫「圖片」或檔名。
 - 同一代號改版時建議用版本檔名（例如 `P301-v2.webp`），避免 CDN 舊快取。
 
 上傳前先在 repository root 執行；未通過不得上傳：
 
 ```bash
-pnpm assets:check:review-media -- /absolute/path/P301-v3.webp
+pnpm assets:check:review-media /absolute/path/P301-v3.webp
 ```
 
 ## 2. 上傳至 staging Storage

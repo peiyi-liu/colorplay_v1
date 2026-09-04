@@ -10,12 +10,12 @@ import {
 import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
 import { launchLiveSessionFromTeacherHome } from './helpers/live';
 
-// 輕量 Live 冒煙：單一學生走完 等待室 → 十題（含一次暫停/續行）→ 頒獎台。
+// 輕量 Live 冒煙：單一學生走完 等待室 → 二十題（含一次暫停/續行）→ 頒獎台。
 // 完整驗收（團隊模式、延遲預算、截圖、報表數字）仍在
 // live-advanced.spec.ts 的 phase gate，僅於 pnpm phase:live-advanced 執行；
 // 本檔的目的是讓每次 test:e2e 都覆蓋 Live 的核心投影與主持動作文案。
 const CLASSROOM_NAME = 'Live冒煙班級';
-const QUESTION_COUNT = 10;
+const QUESTION_COUNT = 20;
 
 // 登入的機制（表單填寫、送出、等 URL）與 scripts/design-audit 的截圖 runner
 // 共用 tests/e2e/helpers/auth.ts；這裡只保留本檔案特有的「登入後畫面已就緒」
@@ -72,7 +72,7 @@ test('Live smoke: 單人場次從等待室走到頒獎台', async ({
     !process.env.SUPABASE_URL,
     'Live smoke 需要本機 Supabase stack（SUPABASE_URL 未設定）',
   );
-  test.setTimeout(240_000);
+  test.setTimeout(480_000);
   if (!baseURL) throw new Error('LIVE_SMOKE_BASE_URL_REQUIRED');
 
   const teacherContext = await browser.newContext({ baseURL });
@@ -98,7 +98,7 @@ test('Live smoke: 單人場次從等待室走到頒獎台', async ({
   // --- 開新場次（主持發射台：選單元→一鍵開場，直入投影模式）---
   // 選擇器序列與 scripts/design-audit 的截圖 runner 共用，抽成
   // tests/e2e/helpers/live.ts（見該檔開頭的重用說明）；任一已發佈小節皆為
-  // 十題，正解由 GENERATED_CORRECT_ANSWERS 依題目 prompt 反查，與選哪節無關。
+  // 二十題，正解由 GENERATED_CORRECT_ANSWERS 依題目 prompt 反查，與選哪節無關。
   const { presenter, joinCode } =
     await launchLiveSessionFromTeacherHome(teacherPage);
 

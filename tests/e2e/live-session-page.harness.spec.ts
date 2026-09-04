@@ -9,7 +9,7 @@ test('student Live choice locks immediately and waits for reveal', async ({
 
   await expect(page.getByRole('heading', { name: '課堂挑戰' })).toBeVisible();
   await expect(page.getByText('請看投影幕作答')).toBeVisible();
-  await expect(page.getByText('第 3 / 10 題')).toBeVisible();
+  await expect(page.getByText('第 3 / 20 題')).toBeVisible();
   await expect(page.getByText('連線正常')).toBeVisible();
   await expect(page.getByText('24 人在線')).toBeVisible();
   await expect(page.getByRole('timer', { name: '剩餘秒數' })).toBeVisible();

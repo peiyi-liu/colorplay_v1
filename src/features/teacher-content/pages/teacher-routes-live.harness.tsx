@@ -45,7 +45,7 @@ const liveLobbyFixture: LiveSessionState = {
   isHost: true,
   participantCount: liveLobbyParticipants.length,
   participants: liveLobbyParticipants,
-  questionCount: 10,
+  questionCount: 20,
   questionDisplay: 'screen_only',
   rulesVersion: 'harness-only',
   serverTime: '2026-08-12T12:00:00.000Z',
@@ -101,7 +101,7 @@ const createLiveRoundQuestionState = (position = 1): LiveSessionState => {
       openedAt: new Date(now).toISOString(),
       position,
     },
-    questionCount: 10,
+    questionCount: 20,
     questionDisplay: 'screen_only',
     rulesVersion: 'harness-only',
     serverTime: new Date(now).toISOString(),
@@ -297,7 +297,7 @@ export function LivePodiumHarness() {
       sessionId={TEACHER_HARNESS_SESSION_ID}
       state={{
         ...liveLobbyFixture,
-        currentPosition: 10,
+        currentPosition: 20,
         podium: [
           { displayName: '晨星', rank: 1, score: 1_480 },
           { displayName: '青鳥', rank: 2, score: 1_210 },

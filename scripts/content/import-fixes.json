@@ -130,6 +130,50 @@
     ]
   },
   "reviewCardMedia": {
-    "$comment": "複習卡媒體只接受 owner 核准的 web asset path 與替代文字。RC 工作表目前只有圖號參照，未提供可匯入素材，因此不得沿用舊示意圖冒充附件。"
+    "$comment": "複習卡媒體只接受 owner 核准的 private Storage asset path 與 Sheet Markdown 替代文字。",
+    "RC3101": {
+      "attachmentRef": "P301",
+      "asset": "review-card-media/chapter-3/P301-v2.webp",
+      "alt": "色彩的分類"
+    },
+    "RC3103": {
+      "attachmentRef": "P302",
+      "asset": "review-card-media/chapter-3/P302-v2.webp",
+      "alt": "色名表示的三種類型"
+    },
+    "RC3201": [
+      {
+        "attachmentRef": "P303",
+        "asset": "review-card-media/chapter-3/P303-v2.webp",
+        "alt": "以光譜秩序組成並加入紅紫色的色相環"
+      },
+      {
+        "attachmentRef": "P304",
+        "asset": "review-card-media/chapter-3/P304-v2.webp",
+        "alt": "色立體的基本結構"
+      }
+    ],
+    "RC3202": {
+      "attachmentRef": "P305",
+      "asset": "review-card-media/chapter-3/P305-v2.webp",
+      "alt": "色彩體系的分類"
+    },
+    "RC3203": [
+      {
+        "attachmentRef": "P306",
+        "asset": "review-card-media/chapter-3/P306.webp",
+        "alt": "CIE制定的RGB系統"
+      },
+      {
+        "attachmentRef": "P307",
+        "asset": "review-card-media/chapter-3/P307.webp",
+        "alt": "CIE 1931XYZ表色系統的xy色度圖"
+      },
+      {
+        "attachmentRef": "P308",
+        "asset": "review-card-media/chapter-3/P308.webp",
+        "alt": "CIE 1931XYZ表色系統的色立體"
+      }
+    ]
   }
 }
