@@ -166,7 +166,15 @@ describe('automatic Staging deployment', () => {
       'utf8',
     );
 
+    const jobBlock = (name: string) =>
+      new RegExp(`^  ${name}:\\n(?:(?: {4,}.*)?\\n)*`, 'mu').exec(
+        workflow,
+      )?.[0] ?? '';
+
     expect(workflow).toContain('phase0:smoke');
+    expect(workflow.match(/phase0:smoke/gu)).toHaveLength(1);
+    expect(jobBlock('read-only-smoke')).toContain('needs: deploy-exact-sha');
+    expect(jobBlock('browser-rwd-gate')).toContain('needs: read-only-smoke');
     expect(workflow).toContain('--target-origin');
     expect(workflow).toContain('--http-origin http://staging.colorplayapp.com');
     expect(workflow).toContain('--output');
