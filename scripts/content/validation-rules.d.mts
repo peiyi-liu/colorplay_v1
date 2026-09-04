@@ -15,7 +15,7 @@ export function isValidQuestionCode(code: unknown): boolean;
 export function parseQuestionIdentifier(code: unknown): Readonly<{
   chapter: string;
   order: number;
-  scope: 'chapter' | 'legacy' | 'section';
+  scope: 'chapter' | 'legacy' | 'live' | 'section';
   section: string | null;
   sectionKey: string;
 }> | null;

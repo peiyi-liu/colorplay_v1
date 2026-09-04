@@ -13,6 +13,11 @@ const options = [
   { key: 'B', text: '乙' },
 ] as const;
 
+type ParsedQuestionIdentifier = NonNullable<
+  ReturnType<typeof parseQuestionIdentifier>
+>;
+const liveScope: ParsedQuestionIdentifier['scope'] = 'live';
+
 describe('shared content validation rules', () => {
   it('accepts letters and digits as correct answers, nothing else', () => {
     expect(resolveCorrectAnswer('A', options)).toEqual({ key: 'A' });
@@ -65,6 +70,7 @@ describe('shared content validation rules', () => {
   });
 
   it('接受 QB／CR／LT 系統序號並解析各自 scope', () => {
+    expect(liveScope).toBe('live');
     expect(parseQuestionIdentifier('QB3126')).toEqual({
       chapter: '3',
       order: 26,
