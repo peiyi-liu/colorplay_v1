@@ -34,8 +34,8 @@ beforeAll(async () => {
       ? '<div role="status">STAGING 測試環境</div>'
       : '';
     const body = request.url?.startsWith('/login')
-      ? '<main><h1>登入</h1><input type="password" aria-label="密碼"></main>'
-      : `<main><h1>PRESS START</h1>${marker}<script src="/app.js"></script></main>`;
+      ? '<main><h1>登入</h1><label for="password">密碼</label><input id="password" type="password"><button type="button" aria-label="顯示密碼">顯示</button></main>'
+      : `<main><a href="/login">開始冒險</a>${marker}<script src="/app.js"></script></main>`;
     response.end(`<!doctype html><html><body>${body}</body></html>`);
   });
   await new Promise<void>((resolveReady) => {

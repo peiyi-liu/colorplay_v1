@@ -184,7 +184,9 @@ export async function runReadOnlySmoke({
     });
     await page.goto(target.origin, { waitUntil: 'networkidle' });
     home =
-      (await page.getByText('PRESS START', { exact: true }).count()) === 1
+      (await page
+        .getByRole('link', { name: '開始冒險', exact: true })
+        .count()) === 1
         ? 'passed'
         : 'failed';
     const markerCount = await page
@@ -201,7 +203,7 @@ export async function runReadOnlySmoke({
     });
     login =
       (await page.getByRole('heading', { name: '登入' }).count()) === 1 &&
-      (await page.getByLabel('密碼').count()) === 1
+      (await page.getByLabel('密碼', { exact: true }).count()) === 1
         ? 'passed'
         : 'failed';
     writeRequestCount = guard.writeRequestCount;
