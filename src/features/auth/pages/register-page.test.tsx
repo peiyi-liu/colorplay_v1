@@ -1,117 +1,145 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ToastProvider } from '../../../components/ui/toast';
-import { AccountFlowError } from '../api/account-flows';
+import { AuthContext } from '../context/auth-context';
+import {
+  AccountFlowError,
+  completeStudentRegistration,
+  sendRegistrationOtp,
+  verifyRegistrationOtp,
+} from '../api/account-flows';
 import { RegisterPage } from './register-page';
-
-const flows = vi.hoisted(() => ({
-  completeStudentRegistration: vi.fn(),
-  navigate: vi.fn(),
-  sendRegistrationOtp: vi.fn(),
-  verifyRegistrationOtp: vi.fn(),
-}));
 
 vi.mock('../api/account-flows', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api/account-flows')>();
-  return { ...actual, ...flows };
+  return {
+    ...actual,
+    completeStudentRegistration: vi.fn(() => Promise.resolve()),
+    sendRegistrationOtp: vi.fn(() => Promise.resolve()),
+    verifyRegistrationOtp: vi.fn(() => Promise.resolve()),
+  };
 });
 
-vi.mock('react-router-dom', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react-router-dom')>();
-  return { ...actual, useNavigate: () => flows.navigate };
-});
+const mockedCompleteStudentRegistration = vi.mocked(
+  completeStudentRegistration,
+);
+const mockedSendRegistrationOtp = vi.mocked(sendRegistrationOtp);
+const mockedVerifyRegistrationOtp = vi.mocked(verifyRegistrationOtp);
+const mockedSignOut = vi.fn(() => Promise.resolve());
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location-path">{location.pathname}</output>;
+}
 
 const renderRegisterPage = () =>
   render(
     <MemoryRouter>
-      <ToastProvider>
-        <RegisterPage />
-      </ToastProvider>
+      <QueryClientProvider client={new QueryClient()}>
+        <AuthContext.Provider
+          value={{
+            session: null,
+            signIn: vi.fn(),
+            signInWithAccount: vi.fn(),
+            signOut: mockedSignOut,
+            status: 'anonymous',
+          }}
+        >
+          <ToastProvider>
+            <RegisterPage />
+            <LocationProbe />
+          </ToastProvider>
+        </AuthContext.Provider>
+      </QueryClientProvider>
     </MemoryRouter>,
   );
 
-const fillRegistration = () => {
-  fireEvent.change(screen.getByLabelText('名字'), {
-    target: { value: ' 王小明 ' },
-  });
-  fireEvent.change(screen.getByLabelText('暱稱'), {
-    target: { value: ' 小明 ' },
-  });
-  fireEvent.change(screen.getByLabelText('班級序號'), {
-    target: { value: ' 1234-5678-90AB-CDEF ' },
-  });
-  fireEvent.change(screen.getByLabelText('E-mail'), {
-    target: { value: 'student@colorplay.invalid' },
-  });
-  fireEvent.change(screen.getByLabelText('帳號（學號）'), {
-    target: { value: ' 11500001 ' },
-  });
-  fireEvent.change(screen.getByLabelText('密碼'), {
-    target: { value: 'PassWord1' },
-  });
-  fireEvent.change(screen.getByLabelText('密碼確認'), {
-    target: { value: 'PassWord1' },
-  });
+const fillBasicDetails = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.type(screen.getByLabelText('名字'), '王小明');
+  await user.type(screen.getByLabelText('暱稱'), '彩彩');
+  await user.type(screen.getByLabelText('班級序號'), 'ABCD-1234-EF56-7890');
 };
 
-const verifyEmail = async () => {
-  fireEvent.click(screen.getByRole('button', { name: '傳送驗證碼' }));
+const reachCredentialsStep = async (
+  user: ReturnType<typeof userEvent.setup>,
+) => {
+  await fillBasicDetails(user);
+  await user.click(screen.getByRole('button', { name: '下一步' }));
+  await user.type(screen.getByLabelText('E-mail'), 'student@example.com');
+  await user.click(screen.getByRole('button', { name: '傳送驗證碼' }));
+  await user.type(await screen.findByLabelText('E-mail 驗證碼'), '123456');
+  await user.click(screen.getByRole('button', { name: '確認驗證' }));
   await waitFor(() => {
-    expect(flows.sendRegistrationOtp).toHaveBeenCalledWith(
-      'student@colorplay.invalid',
-    );
+    expect(screen.getByText('✓ 已認證')).toBeVisible();
   });
-  fireEvent.change(screen.getByLabelText('E-mail 驗證碼'), {
-    target: { value: '123456' },
-  });
-  fireEvent.click(screen.getByRole('button', { name: '確認驗證' }));
-  await waitFor(() => {
-    expect(flows.verifyRegistrationOtp).toHaveBeenCalledWith(
-      'student@colorplay.invalid',
-      '123456',
-    );
-  });
+  await user.click(screen.getByRole('button', { name: '下一步' }));
 };
 
 describe('RegisterPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    flows.completeStudentRegistration.mockResolvedValue(undefined);
-    flows.sendRegistrationOtp.mockResolvedValue(undefined);
-    flows.verifyRegistrationOtp.mockResolvedValue(undefined);
+    mockedCompleteStudentRegistration.mockClear();
+    mockedSendRegistrationOtp.mockClear();
+    mockedVerifyRegistrationOtp.mockClear();
+    mockedSignOut.mockClear();
   });
 
-  it('renders the ggame register card with title and brand', () => {
+  it('starts on a fixed basic-details step without the removed guild branding', () => {
     renderRegisterPage();
 
     expect(
       screen.getByRole('heading', { name: '註冊帳號' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('ColorPlay 認證入口')).toBeInTheDocument();
-    expect(screen.getByText('學生入口')).toBeInTheDocument();
-    expect(document.querySelector('.auth-portal')).toHaveAttribute(
-      'data-portal',
-      'student',
+    expect(screen.getByText('基本資料')).toHaveAttribute(
+      'aria-current',
+      'step',
     );
-  });
-
-  it('gives the primary submit action the yellow student style, never the teacher variant', () => {
-    renderRegisterPage();
-
-    const submit = screen.getByRole('button', { name: '完成註冊' });
-    expect(submit).toHaveClass('primary-action');
-    expect(submit).not.toHaveClass('login-form__submit--teacher');
-  });
-
-  it('groups the labeled fields the DC spec requires', () => {
-    renderRegisterPage();
-
     expect(screen.getByLabelText('名字')).toHaveAttribute('type', 'text');
     expect(screen.getByLabelText('暱稱')).toHaveAttribute('type', 'text');
     expect(screen.getByLabelText('班級序號')).toHaveAttribute('type', 'text');
-    expect(screen.getByLabelText('E-mail')).toHaveAttribute('type', 'email');
+    expect(screen.queryByLabelText('E-mail')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('帳號（學號）')).not.toBeInTheDocument();
+    expect(screen.queryByText('冒險者公會')).not.toBeInTheDocument();
+    expect(screen.queryByText('建立你的冒險者通行證')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('img', { name: 'ColorPlay 藍金寶典' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('does not leave basic details until all three fields are valid', async () => {
+    const user = userEvent.setup();
+    renderRegisterPage();
+
+    await user.click(screen.getByRole('button', { name: '下一步' }));
+
+    expect(await screen.findByText('請輸入名字')).toBeVisible();
+    expect(screen.getByText('基本資料')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    expect(screen.queryByLabelText('E-mail')).not.toBeInTheDocument();
+  });
+
+  it('moves from basic details through verified email to credentials', async () => {
+    const user = userEvent.setup();
+    renderRegisterPage();
+
+    await reachCredentialsStep(user);
+
+    expect(mockedSendRegistrationOtp).toHaveBeenCalledWith(
+      'student@example.com',
+    );
+    expect(mockedVerifyRegistrationOtp).toHaveBeenCalledWith(
+      'student@example.com',
+      '123456',
+    );
+    expect(screen.getByText('帳號與密碼')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
     expect(screen.getByLabelText('帳號（學號）')).toHaveAttribute(
       'type',
       'text',
@@ -121,96 +149,148 @@ describe('RegisterPage', () => {
       'type',
       'password',
     );
-    expect(
-      screen.getByRole('button', { name: '傳送驗證碼' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '完成註冊' })).toBeEnabled();
   });
 
-  it('links back to login for existing accounts', () => {
+  it('toggles the two registration passwords independently without clearing either value', async () => {
+    const user = userEvent.setup();
     renderRegisterPage();
+    await reachCredentialsStep(user);
 
+    const password = screen.getByLabelText('密碼');
+    const confirmation = screen.getByLabelText('密碼確認');
+    await user.type(password, 'SecretA');
+    await user.type(confirmation, 'SecretA');
+
+    expect(password).toHaveAttribute('type', 'password');
+    expect(confirmation).toHaveAttribute('type', 'password');
+
+    await user.click(screen.getByRole('button', { name: '顯示密碼' }));
+
+    expect(password).toHaveAttribute('type', 'text');
+    expect(password).toHaveValue('SecretA');
+    expect(confirmation).toHaveAttribute('type', 'password');
+    expect(confirmation).toHaveValue('SecretA');
+
+    await user.click(
+      screen.getByRole('button', { name: '顯示密碼確認' }),
+    );
+
+    expect(password).toHaveAttribute('type', 'text');
+    expect(confirmation).toHaveAttribute('type', 'text');
+    expect(screen.getByRole('button', { name: '隱藏密碼' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     expect(
-      screen.getByRole('link', { name: '已有帳號？返回登入' }),
-    ).toHaveAttribute('href', '/login');
+      screen.getByRole('button', { name: '隱藏密碼確認' }),
+    ).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('moves through OTP states and recovers from send and verification failures', async () => {
-    flows.sendRegistrationOtp
-      .mockRejectedValueOnce(new Error('network'))
-      .mockResolvedValueOnce(undefined);
-    flows.verifyRegistrationOtp.mockRejectedValueOnce(new Error('expired'));
+  it('lets the student revisit every reached step without losing entered values', async () => {
+    const user = userEvent.setup();
     renderRegisterPage();
-    fireEvent.change(screen.getByLabelText('E-mail'), {
-      target: { value: 'student@colorplay.invalid' },
-    });
 
-    fireEvent.click(screen.getByRole('button', { name: '傳送驗證碼' }));
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(
-        '驗證碼寄送失敗，請稍後重試',
-      );
-    });
+    await reachCredentialsStep(user);
+
+    await user.click(screen.getByRole('button', { name: '基本資料' }));
+    expect(screen.getByText('基本資料')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    expect(screen.getByLabelText('暱稱')).toHaveValue('彩彩');
+
+    await user.click(screen.getByRole('button', { name: 'E-mail 驗證' }));
+    expect(screen.getByText('E-mail 驗證')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    expect(screen.getByLabelText('E-mail')).toHaveValue('student@example.com');
+    expect(screen.getByText('✓ 已認證')).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: '帳號與密碼' }));
+    expect(screen.getByText('帳號與密碼')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+  });
+
+  it('returns to the earliest invalid step before moving forward again', async () => {
+    const user = userEvent.setup();
+    renderRegisterPage();
+    await reachCredentialsStep(user);
+
+    await user.click(screen.getByRole('button', { name: '基本資料' }));
+    await user.clear(screen.getByLabelText('暱稱'));
+    await user.click(screen.getByRole('button', { name: '帳號與密碼' }));
+
+    expect(screen.getByText('基本資料')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    expect(await screen.findByText('暱稱需為 2 至 16 個字')).toBeVisible();
+  });
+
+  it('lets the student change and reverify the email after reaching step three', async () => {
+    const user = userEvent.setup();
+    renderRegisterPage();
+    await reachCredentialsStep(user);
+
+    await user.click(screen.getByRole('button', { name: 'E-mail 驗證' }));
+    await user.click(screen.getByRole('button', { name: '更改 E-mail' }));
+
+    expect(screen.getByLabelText('E-mail')).toBeEnabled();
+    expect(screen.getByRole('button', { name: '帳號與密碼' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '傳送驗證碼' })).toBeEnabled();
-
-    fireEvent.click(screen.getByRole('button', { name: '傳送驗證碼' }));
-    await screen.findByLabelText('E-mail 驗證碼');
-    fireEvent.click(screen.getByRole('button', { name: '確認驗證' }));
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(
-        '請輸入收到的 6 碼驗證碼',
-      );
-    });
-    fireEvent.change(screen.getByLabelText('E-mail 驗證碼'), {
-      target: { value: '123456' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: '確認驗證' }));
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(
-        '驗證碼不正確或已過期，請重試',
-      );
-    });
-    expect(screen.getByRole('button', { name: '確認驗證' })).toBeEnabled();
   });
 
-  it('trims verified registration input before server submission, then toasts and navigates', async () => {
+  it('keeps the existing registration submit contract on the third step', async () => {
+    const user = userEvent.setup();
     renderRegisterPage();
-    fillRegistration();
+    await reachCredentialsStep(user);
 
-    await verifyEmail();
-    await screen.findByText('✓ 已認證');
-    expect(screen.getByLabelText('E-mail')).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: '完成註冊' }));
+    await user.type(screen.getByLabelText('帳號（學號）'), 'cp045001');
+    await user.type(screen.getByLabelText('密碼'), 'SecretA');
+    await user.type(screen.getByLabelText('密碼確認'), 'SecretA');
+    await user.click(screen.getByRole('button', { name: '完成註冊' }));
 
     await waitFor(() => {
-      expect(flows.completeStudentRegistration).toHaveBeenCalledWith({
-        account: '11500001',
-        classCode: '1234-5678-90AB-CDEF',
+      expect(mockedCompleteStudentRegistration).toHaveBeenCalledWith({
+        account: 'cp045001',
+        classCode: 'ABCD-1234-EF56-7890',
         fullName: '王小明',
-        nickname: '小明',
-        password: 'PassWord1',
+        nickname: '彩彩',
+        password: 'SecretA',
       });
     });
-    expect(
-      await screen.findByText('註冊成功，歡迎加入 ColorPlay！'),
-    ).toBeVisible();
-    expect(flows.navigate).toHaveBeenCalledWith('/app', { replace: true });
+    expect(screen.getByTestId('location-path')).toHaveTextContent('/login');
+    expect(mockedSignOut).toHaveBeenCalledOnce();
   });
 
-  it('shows the stable account-taken message after verified registration fails', async () => {
-    flows.completeStudentRegistration.mockRejectedValueOnce(
-      new AccountFlowError('ACCOUNT_TAKEN'),
+  it('shows the safe registration stage that failed instead of a generic error', async () => {
+    const user = userEvent.setup();
+    mockedCompleteStudentRegistration.mockRejectedValueOnce(
+      new AccountFlowError('MEMBERSHIP_LOOKUP_FAILED'),
     );
     renderRegisterPage();
-    fillRegistration();
+    await reachCredentialsStep(user);
 
-    await verifyEmail();
-    fireEvent.click(screen.getByRole('button', { name: '完成註冊' }));
+    await user.type(screen.getByLabelText('帳號（學號）'), 'cp045002');
+    await user.type(screen.getByLabelText('密碼'), 'SecretA');
+    await user.type(screen.getByLabelText('密碼確認'), 'SecretA');
+    await user.click(screen.getByRole('button', { name: '完成註冊' }));
 
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent(
-        '這個帳號（學號）已被使用',
-      );
-    });
-    expect(flows.navigate).not.toHaveBeenCalled();
+    expect(
+      await screen.findByText('無法確認班級加入狀態，請稍後再試。'),
+    ).toBeVisible();
+  });
+
+  it('links back to login from every registration step', () => {
+    renderRegisterPage();
+
+    expect(screen.getByRole('link', { name: '返回登入' })).toHaveAttribute(
+      'href',
+      '/login',
+    );
   });
 });

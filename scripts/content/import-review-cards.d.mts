@@ -1,13 +1,16 @@
 export type ReviewCardImportRow = Readonly<{
+  attachmentRef: string;
   id: string;
   stableCode: string;
   identity: string;
+  identifier: string;
   chapterCode: string;
   sectionKey: string;
   sectionLabel: string;
   groupLabel: string;
   title: string;
   content: string;
+  attachment: string;
   sortOrder: number;
 }>;
 
@@ -23,7 +26,15 @@ export function buildReviewCardImport(
     fixes: Readonly<{
       chapterMap?: Readonly<Record<string, string>>;
       reviewCardMedia?: Readonly<
-        Record<string, Readonly<{ asset: string; alt: string }>>
+        Record<
+          string,
+          | Readonly<{ asset: string; alt: string; attachmentRef?: string }>
+          | readonly Readonly<{
+              asset: string;
+              alt: string;
+              attachmentRef?: string;
+            }>[]
+        >
       >;
     }>;
     generatedAt?: string;

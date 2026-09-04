@@ -8,6 +8,7 @@ const uuidString = z
   .regex(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu);
 
 export type LearningErrorCode =
+  | 'CHAPTER_LOCKED'
   | 'HINT_CLOSED'
   | 'HINT_SEQUENCE'
   | 'HINT_UNAVAILABLE'
@@ -17,6 +18,7 @@ export type LearningErrorCode =
   | 'UNAVAILABLE';
 
 const learningMessages: Record<LearningErrorCode, string> = {
+  CHAPTER_LOCKED: '請先完成上一章的複習與挑戰。',
   HINT_CLOSED: '這一題已經作答，提示已關閉。',
   HINT_SEQUENCE: '請依序索取提示。',
   HINT_UNAVAILABLE: '這一題沒有更多提示了。',
@@ -38,6 +40,7 @@ export class LearningError extends Error {
 
 const toLearningError = (message: string): LearningError => {
   const known: readonly LearningErrorCode[] = [
+    'CHAPTER_LOCKED',
     'HINT_CLOSED',
     'HINT_SEQUENCE',
     'HINT_UNAVAILABLE',
@@ -57,9 +60,26 @@ const parseWith = <Output>(
   return parsed.data;
 };
 
+const parsePrivateReviewMediaAssetPath = (
+  assetPath: string,
+): Readonly<{ bucket: string; objectPath: string }> => {
+  const separator = assetPath.indexOf('/');
+  if (separator <= 0 || separator === assetPath.length - 1) {
+    throw new LearningError('INVALID_RESPONSE');
+  }
+  return {
+    bucket: assetPath.slice(0, separator),
+    objectPath: assetPath.slice(separator + 1),
+  };
+};
+
+export const isDirectReviewMediaAssetPath = (assetPath: string): boolean =>
+  assetPath.startsWith('/') || assetPath.startsWith('https://');
+
 const chapterReviewSchema = z.array(
   z.object({
     id: uuidString,
+    quiz_template_id: uuidString.nullable(),
     sort_order: z.number().int().nonnegative(),
     stable_code: z.string().min(1),
     subtopics: z.array(
@@ -157,6 +177,11 @@ export type ReviewCardView = Readonly<{
   version: number;
 }>;
 
+export type ReviewMediaResolution = Readonly<{
+  assetPath: string;
+  resolvedUrl: string | null;
+}>;
+
 export type ChapterReviewSubtopic = Readonly<{
   cards: readonly ReviewCardView[];
   sortOrder: number;
@@ -166,6 +191,7 @@ export type ChapterReviewSubtopic = Readonly<{
 }>;
 
 export type ChapterReviewSection = Readonly<{
+  quizTemplateId: string | null;
   sectionId: string;
   sortOrder: number;
   stableCode: string;
@@ -240,6 +266,9 @@ export type LearningRepository = Readonly<{
       sessionQuestionId: string;
     }>,
   ): Promise<QuestionHintView>;
+  resolveReviewMedia(
+    assetPaths: readonly string[],
+  ): Promise<readonly ReviewMediaResolution[]>;
   startRemediation(
     input: Readonly<{
       requestId: string;
@@ -295,16 +324,14 @@ export function createLearningRepository(
     },
 
     async listChapterReview(chapterId) {
-      const { data, error } = await client
-        .from('sections')
-        .select(
-          'id, stable_code, title, sort_order, subtopics(id, stable_code, title, sort_order, review_cards(id, group_label, title, content, version, requires_recompletion, sort_order, review_card_media(asset_path, alt_text, sort_order)))',
-        )
-        .eq('chapter_id', chapterId)
-        .order('sort_order', { ascending: true });
+      const { data, error } = await client.rpc(
+        'get_accessible_chapter_review',
+        { p_chapter_id: chapterId },
+      );
       if (error) throw toLearningError(error.message);
       const sections = parseWith(chapterReviewSchema, data);
       return sections.map((section) => ({
+        quizTemplateId: section.quiz_template_id,
         sectionId: section.id,
         sortOrder: section.sort_order,
         stableCode: section.stable_code,
@@ -375,6 +402,48 @@ export function createLearningRepository(
         hintLevel: hint.hint_level,
         questionVersion: hint.question_version,
       };
+    },
+
+    async resolveReviewMedia(assetPaths) {
+      const resolvedUrls = new Map<string, string | null>();
+      const pathsByBucket = new Map<string, Set<string>>();
+
+      for (const assetPath of assetPaths) {
+        if (isDirectReviewMediaAssetPath(assetPath)) {
+          resolvedUrls.set(assetPath, assetPath);
+          continue;
+        }
+        const { bucket, objectPath } =
+          parsePrivateReviewMediaAssetPath(assetPath);
+        const bucketPaths = pathsByBucket.get(bucket) ?? new Set<string>();
+        bucketPaths.add(objectPath);
+        pathsByBucket.set(bucket, bucketPaths);
+      }
+
+      await Promise.all(
+        [...pathsByBucket].map(async ([bucket, objectPaths]) => {
+          const paths = [...objectPaths];
+          const { data, error } = await client.storage
+            .from(bucket)
+            .createSignedUrls(paths, 3600);
+          if (error) throw new LearningError('UNAVAILABLE');
+
+          const signedUrlByPath = new Map(
+            data.map((item) => [item.path, item.error ? null : item.signedUrl]),
+          );
+          for (const objectPath of paths) {
+            resolvedUrls.set(
+              `${bucket}/${objectPath}`,
+              signedUrlByPath.get(objectPath) ?? null,
+            );
+          }
+        }),
+      );
+
+      return assetPaths.map((assetPath) => ({
+        assetPath,
+        resolvedUrl: resolvedUrls.get(assetPath) ?? null,
+      }));
     },
 
     async startRemediation(input) {

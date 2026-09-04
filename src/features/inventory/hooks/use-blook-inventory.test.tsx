@@ -4,17 +4,30 @@ import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { economyQueryKey } from '../../rewards/hooks/use-economy-summary';
-import type { BlookInventory, InventoryRepository } from '../types';
+import type {
+  BlookInventory,
+  FrameInventory,
+  InventoryRepository,
+} from '../types';
 import {
+  frameInventoryQueryKey,
   inventoryQueryKey,
   useEquipBlook,
+  useEquipFrame,
   usePurchaseBlook,
+  usePurchaseFrame,
 } from './use-blook-inventory';
 
 const returnedSnapshot: BlookInventory = {
   activeBlookId: '50000000-0000-0000-0000-000000000002',
   items: [],
   tokenBalance: 150,
+};
+
+const returnedFrameSnapshot: FrameInventory = {
+  activeFrameId: '60000000-0000-0000-0000-000000000002',
+  items: [],
+  tokenBalance: 125,
 };
 
 const createWrapper = (client: QueryClient) =>
@@ -28,9 +41,9 @@ const createRepository = (): InventoryRepository => ({
   equipBlook: vi.fn().mockResolvedValue(returnedSnapshot),
   getInventory: vi.fn().mockResolvedValue(returnedSnapshot),
   purchaseBlook: vi.fn().mockResolvedValue(returnedSnapshot),
-  equipFrame: vi.fn(),
+  equipFrame: vi.fn().mockResolvedValue(returnedFrameSnapshot),
   getFrameInventory: vi.fn(() => new Promise<never>(() => undefined)),
-  purchaseFrame: vi.fn(),
+  purchaseFrame: vi.fn().mockResolvedValue(returnedFrameSnapshot),
 });
 
 describe('Blook inventory mutations', () => {
@@ -66,6 +79,32 @@ describe('Blook inventory mutations', () => {
         queryKey: economyQueryKey,
       });
       expect(client.getQueryData(inventoryQueryKey)).toEqual(returnedSnapshot);
+    },
+  );
+
+  it.each([
+    ['purchase', usePurchaseFrame] as const,
+    ['equip', useEquipFrame] as const,
+  ])(
+    'replaces the frame cache from the %s server snapshot for HUD subscribers',
+    async (_label, useMutationHook) => {
+      const repository = createRepository();
+      const client = new QueryClient({
+        defaultOptions: { mutations: { retry: false } },
+      });
+      const { result } = renderHook(() => useMutationHook(repository), {
+        wrapper: createWrapper(client),
+      });
+
+      await act(async () => {
+        await result.current.mutateAsync(
+          '60000000-0000-0000-0000-000000000002',
+        );
+      });
+
+      expect(client.getQueryData(frameInventoryQueryKey)).toEqual(
+        returnedFrameSnapshot,
+      );
     },
   );
 });

@@ -153,7 +153,7 @@ $$;
 select set_config(
   'test.s1',
   pg_temp.build_session(
-    '23000000-0000-0000-0000-000000000001', '3-1-01', 'incorrect', 'practice',
+    '23000000-0000-0000-0000-000000000001', 'QB3101', 'incorrect', 'practice',
     '23100000-0000-0000-0000-000000000001'
   )::text,
   true
@@ -170,7 +170,7 @@ select is(
     from public.mistake_items item
     join public.questions q on q.id = item.question_id
     where item.user_id = '23000000-0000-0000-0000-000000000001'
-      and q.stable_code = '3-1-01'
+      and q.stable_code = 'QB3101'
       and item.status = 'open'
       and item.origin_answer_id is not null
   ),
@@ -184,7 +184,7 @@ select set_config(
     from public.mistake_items item
     join public.questions q on q.id = item.question_id
     where item.user_id = '23000000-0000-0000-0000-000000000001'
-      and q.stable_code = '3-1-01'
+      and q.stable_code = 'QB3101'
   ),
   true
 );
@@ -207,7 +207,7 @@ select is(
 select set_config(
   'test.s2',
   pg_temp.build_session(
-    '23000000-0000-0000-0000-000000000001', '3-1-01', 'incorrect', 'practice',
+    '23000000-0000-0000-0000-000000000001', 'QB3101', 'incorrect', 'practice',
     '23100000-0000-0000-0000-000000000002'
   )::text,
   true
@@ -223,7 +223,7 @@ select is(
     from public.mistake_items item
     join public.questions q on q.id = item.question_id
     where item.user_id = '23000000-0000-0000-0000-000000000001'
-      and q.stable_code = '3-1-01'
+      and q.stable_code = 'QB3101'
   ),
   'open',
   'a repeated wrong answer keeps the item open'
@@ -234,7 +234,7 @@ select is(
     from public.mistake_items item
     join public.questions q on q.id = item.question_id
     where item.user_id = '23000000-0000-0000-0000-000000000001'
-      and q.stable_code = '3-1-01'
+      and q.stable_code = 'QB3101'
   ),
   current_setting('test.origin'),
   'the origin answer is never overwritten'
@@ -247,7 +247,7 @@ where user_id = '23000000-0000-0000-0000-000000000001';
 select set_config(
   'test.s3',
   pg_temp.build_session(
-    '23000000-0000-0000-0000-000000000001', '3-1-01', 'incorrect', 'practice',
+    '23000000-0000-0000-0000-000000000001', 'QB3101', 'incorrect', 'practice',
     '23100000-0000-0000-0000-000000000003'
   )::text,
   true
@@ -263,7 +263,7 @@ select is(
     from public.mistake_items item
     join public.questions q on q.id = item.question_id
     where item.user_id = '23000000-0000-0000-0000-000000000001'
-      and q.stable_code = '3-1-01'
+      and q.stable_code = 'QB3101'
   ),
   'reopened',
   'a current-version wrong answer reopens a resolved item'
@@ -272,7 +272,7 @@ select is(
 select set_config(
   'test.s4',
   pg_temp.build_session(
-    '23000000-0000-0000-0000-000000000001', '3-1-02', 'correct', 'practice',
+    '23000000-0000-0000-0000-000000000001', 'QB3102', 'correct', 'practice',
     '23100000-0000-0000-0000-000000000004'
   )::text,
   true
@@ -288,7 +288,7 @@ select is(
     from public.mistake_items item
     join public.questions q on q.id = item.question_id
     where item.user_id = '23000000-0000-0000-0000-000000000001'
-      and q.stable_code = '3-1-02'
+      and q.stable_code = 'QB3102'
   ),
   0,
   'correct answers never create mistakes'
@@ -297,7 +297,7 @@ select is(
 select set_config(
   'test.s5',
   pg_temp.build_session(
-    '23000000-0000-0000-0000-000000000001', '3-1-02', 'timeout', 'practice',
+    '23000000-0000-0000-0000-000000000001', 'QB3102', 'timeout', 'practice',
     '23100000-0000-0000-0000-000000000005'
   )::text,
   true
@@ -313,7 +313,7 @@ select is(
     from public.mistake_items item
     join public.questions q on q.id = item.question_id
     where item.user_id = '23000000-0000-0000-0000-000000000001'
-      and q.stable_code = '3-1-02'
+      and q.stable_code = 'QB3102'
       and item.status = 'open'
   ),
   1,
@@ -323,7 +323,7 @@ select is(
 select set_config(
   'test.s6',
   pg_temp.build_session(
-    '23000000-0000-0000-0000-000000000001', '3-1-03', 'incorrect',
+    '23000000-0000-0000-0000-000000000001', 'QB3103', 'incorrect',
     'remediation', '23100000-0000-0000-0000-000000000006'
   )::text,
   true
@@ -339,7 +339,7 @@ select is(
     from public.mistake_items item
     join public.questions q on q.id = item.question_id
     where item.user_id = '23000000-0000-0000-0000-000000000001'
-      and q.stable_code = '3-1-03'
+      and q.stable_code = 'QB3103'
   ),
   0,
   'remediation-internal wrongs never create mistakes'
@@ -348,7 +348,7 @@ select is(
 select set_config(
   'test.s7',
   pg_temp.build_session(
-    '23000000-0000-0000-0000-000000000002', '3-1-04', 'incorrect',
+    '23000000-0000-0000-0000-000000000002', 'QB3104', 'incorrect',
     'assignment', '23100000-0000-0000-0000-000000000007'
   )::text,
   true
@@ -364,7 +364,7 @@ select is(
     from public.mistake_items item
     join public.questions q on q.id = item.question_id
     where item.user_id = '23000000-0000-0000-0000-000000000002'
-      and q.stable_code = '3-1-04'
+      and q.stable_code = 'QB3104'
       and item.status = 'open'
   ),
   1,

@@ -169,7 +169,9 @@ Assignment、remediation、Live 同樣保存適用 rules/content version；歷�
 
 ## 14. Learning progress
 
-Progress 是多個獨立量測，不得把不相干數字拼成假百分比。第一版規則為 `2026-07-progress-1`。
+Progress 是多個獨立量測，不得把不相干數字拼成假百分比。報表公式沿用
+`2026-07-progress-1`；章節內存取規則使用 `2026-09-progression-1`。兩者是不同
+interface，不得用 client state 或同名百分比互換。
 
 ### Review completion
 
@@ -179,8 +181,64 @@ review_completion = completed current published review-card versions
 ```
 
 - Completion 需學生明確操作並由 secure command 記錄。
-- 新 card version 只有在 `requires_recompletion = true` 時要求重做。
+- 未完成卡必須先在 UI 到達閱讀器最後一頁，才可主動按「完成複習」；翻頁本身
+  不自動完成。Server 只能權威驗證「該卡目前可讀且 completion command 合法」，
+  不能宣稱證明學生理解或實際閱讀每個字。
+- 新 card version 標為 `compatible` 時沿用 completion；觀念、正文含義或教學 media
+  實質改變時標為 `requires_recompletion` 並要求完成新版本。分類缺漏或不明確時
+  fail closed 為 requires recompletion。
 - 無 published card 時顯示 `—`，不是 0%。
+
+### 章節內 progression
+
+`current-required card` 以 user 為單位計算：是目前 published 且對該 user
+仍屬 progression required 的 card；合法 `grandfather_exempt` 卡排除在該 user
+的 required set 外。
+
+1. 所有 published 且 content-ready 章節彼此獨立可進入，沒有上一章 prerequisite。
+2. 每章只先開放第一個 section；section 依 `sort_order` 前進。
+3. Section 內只開放第一張 current-required review card；完成目前卡後才開放
+   下一張。已完成卡可回顧且不重複完成／發獎。
+4. Section 的全部 current-required cards 完成後，才可建立該 section challenge。
+5. Section challenge 完整 finalized 後，不論結果，該 section 成為
+   `attempted` 並開放下一 section；abandoned／expired／unfinished 不算。
+6. 每 section 取 current content/rules version 的歷史最佳 qualifying percentage。
+   `qualifying_percentage = correct_count / question_count * 100`，分母是該 finalized
+   challenge 的總題數；server 以 `correct_count * 100 >= question_count * 80` 比較，
+   不先四捨五入。速度加權 Quiz Score 與 aggregate mastery 不參與 progression gate。
+7. 每個 required section 的最佳 qualifying percentage 都 ≥80% 時，才可建立
+   chapter challenge。
+8. Chapter challenge 第一次完整 finalized 即使未達 80%，章節也標為
+   `completed`；其 current-version 歷史最佳 qualifying percentage ≥80% 才標為
+   `mastered`。未達標可重試，attempt history 不覆寫。
+9. Chapter completion／mastery 不解鎖或鎖定其他章節。
+10. 舊版寬鬆規則留下的 out-of-order completion／early challenge 不刪除。Server
+    先要求補齊最早缺少的 required card；較後方完成紀錄不能跨越缺口。全部 cards
+    完成後，既有 finalized challenge 依原答對率生效，不要求重做、不改 timestamp，
+    也不重播 XP／Token／achievement。
+11. Published version 的 progression impact 依變更性質決定。非實質修改沿用進度；
+    material review-card change 要求 recompletion；material question/template/pool/scope
+    change 保留舊 attempted／chapter completed 事實，但移除其 current-version best／
+    mastered 資格，直到新 challenge 再達標。歷史 reward ledger 不追回。
+12. 既有 section 新增 required card 時，publication cutoff 前已有
+    server-valid、同 section finalized challenge 的學生豁免，不論分數。其他既有
+    學生與新學生必讀，cutoff 後不能補取得豁免。資格依 immutable finalize
+    fact 判定，不以 80% mastery 或可變 projection 代替。豁免卡不進該 user
+    的 required denominator／gate，可自願閱讀，但未明確提交前不得顯示為已完成。
+
+合法主流程：
+
+```text
+章節任選
+→ 第一小節／第一張卡
+→ 最後一頁＋完成複習
+→ 同節下一張卡
+→ 小節挑戰
+→ 完整交卷後下一小節
+→ 各小節最佳答對率皆達 80%
+→ 章節總挑戰
+→ 完整交卷＝已完成；最佳答對率達 80%＝已精熟
+```
 
 ### Coverage、accuracy、mastery
 
@@ -197,7 +255,10 @@ mastery = coverage * accuracy / 100
 - `developing`：mastery 60–79。
 - `mastered`：mastery 80–100。
 - Chapter 聚合以全部 current published question versions 計算，不平均 subtopic percentages。
-- Chapter completion 需要 review completion 100%、mastery ≥ 80、且沒有 blocking required assignment。
+- 本節的 aggregate mastery 保留供學習分析；`completed`／`mastered`、
+  `chapter_mastered_*` achievements 及 challenge access 依上方
+  `2026-09-progression-1` 的 finalized challenge 規則，不再以舊的跨章解鎖、
+  aggregate client 顯示值或速度分數判定。
 - Live answer 不改 mastery，避免即時競賽速度／題組污染正式學習進度。
 
 ## 15. Hints、mistakes 與 remediation

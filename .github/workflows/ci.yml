@@ -118,6 +118,9 @@ jobs:
       - name: Build production application
         run: npm run build
 
+      - name: Enforce production image budgets
+        run: pnpm assets:check
+
   local-database:
     name: local-database
     runs-on: ubuntu-24.04
@@ -170,6 +173,10 @@ jobs:
             < <(pnpm exec supabase status -o env 2>/dev/null)
           export SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY
           pnpm exec tsx scripts/supabase/seed-auth.ts
+      - name: Verify admin sensitivity catalog is regenerable
+        run: pnpm admin:catalog:check
+      - name: Verify admin catalog matches migration-derived inventory
+        run: pnpm admin:catalog:inventory
       - name: Build and test the Local stack through Chromium
         shell: bash
         run: |

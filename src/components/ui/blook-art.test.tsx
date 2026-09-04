@@ -8,7 +8,12 @@ describe('BlookArt', () => {
     render(<BlookArt label="小狐狸" size={72} stableCode="little_fox" />);
 
     const image = screen.getByRole('img', { name: '小狐狸' });
-    expect(image).toHaveAttribute('src', '/assets/blooks/little_fox.png');
+    expect(image).toHaveAttribute('src', '/assets/blooks/little_fox-128.webp');
+    expect(image).toHaveAttribute(
+      'srcset',
+      '/assets/blooks/little_fox-128.webp 128w, /assets/blooks/little_fox-256.webp 256w',
+    );
+    expect(image).toHaveAttribute('sizes', '72px');
     expect(image).toHaveAttribute('width', '72');
     expect(image).toHaveAttribute('height', '72');
     expect(image).toHaveAttribute('loading', 'lazy');

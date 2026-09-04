@@ -1,8 +1,10 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
+import { adminBrowserCatalogPlugin } from './scripts/vite/admin-browser-catalog';
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), adminBrowserCatalogPlugin()],
   test: {
     environment: 'jsdom',
     // Unit tests must not depend on a developer's .env file. Same synthetic

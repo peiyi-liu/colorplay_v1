@@ -1,5 +1,11 @@
 # 使用者角色、頁面與流程規格
 
+> **2026-09-02 progression／Admin rebaseline（normative）**：所有已發布且
+> content-ready 的章節彼此獨立，不再使用跨章循序解鎖。章節內依
+> `section -> review card -> section challenge -> chapter challenge` 前進；Admin
+> 目前範圍採安全控制台與教師帳號營運。與本次規則衝突的舊 phase／route
+> 說明只保留歷史參考。
+
 ## 1. 路由總覽
 
 正式目標路由與交付階段：
@@ -39,8 +45,23 @@
 | `/teacher/analytics/:classroomId`                 | Owning teacher                                         | `teacher` analytics   | Phase 6                               |
 | `/teacher/exports`                                | Authorized teacher/research scope                      | `teacher` export      | Phase 8                               |
 | `/teacher/integrations/kahoot`                    | Owning teacher                                         | `external_activities` | Phase 6                               |
+| `/admin/mfa/enroll`                               | Admin identity pending MFA                             | Admin security        | Phase 1                               |
+| `/admin/mfa/challenge`                            | Active Admin identity; pre-privileged                  | Admin security        | Phase 1                               |
+| `/admin`                                          | Active privileged Admin                                | Admin security        | Phase 1/Admin B                       |
+| `/admin/access/admins`                            | Active privileged Admin                                | Admin security        | Phase 1/Admin B                       |
+| `/admin/access/invitations`                       | Active privileged Admin                                | Admin security        | Phase 1/Admin B                       |
+| `/admin/access/sessions`                          | Active privileged Admin                                | Admin security        | Phase 1/Admin B                       |
+| `/admin/data/:domain/:resource`                   | Active privileged Admin + catalog                      | Admin safe browser    | Phase 1/Admin B                       |
+| `/admin/data/:domain/:resource/:rowKey`           | Active privileged Admin + catalog                      | Admin safe browser    | Phase 1/Admin B                       |
+| `/admin/audit`                                    | Active privileged Admin                                | Admin security        | Phase 1/Admin B                       |
+| `/admin/health`                                   | Active privileged Admin                                | Admin security        | Phase 1/Admin B                       |
+| `/admin/invitations/accept`                       | Authenticated invitee; pre-privileged                  | Admin security        | Admin B                               |
+| `/admin/teachers`                                 | Active privileged Admin                                | Teacher operations    | Admin B                               |
+| `/admin/teachers/:teacherId`                      | Active privileged Admin                                | Teacher operations    | Admin B                               |
 
-所有 `/app/*` 需 authenticated student 或 teacher；`/teacher/*` 需 teacher membership／ownership 檢查。只隱藏導覽按鈕不算權限控制。
+所有 `/app/*` 需 authenticated student 或 teacher；`/teacher/*` 需 teacher
+membership／ownership 檢查；除 invitation acceptance／MFA pre-privileged routes
+外，`/admin/*` 需 active privileged Admin。只隱藏導覽按鈕不算權限控制。
 
 每個 route 同時需要 React guard 與 RLS／RPC／Edge Function authorization。未交付 route 不得先放假資料頁面冒充完成。Teacher heavy routes 採 route-level lazy loading，不進 student initial bundle。
 
@@ -63,6 +84,17 @@
 - 建立唯一 `classroom_members` 記錄。
 - 重複提交不得建立重複 membership。
 
+### AUTH-Flow-03：Admin 建立教師帳號
+
+- 教師不開放自助註冊；只有 active privileged Admin 可建立、更新或重設。
+- Admin 只輸入教師名稱與 optional contact Email；`teacherNN` 帳號與一次性初始
+  密碼由後端產生。
+- Contact Email 不是登入識別，也不能啟動學生的自助密碼復原流程。
+- 建立／重設回應只顯示一次秘密；原密碼永遠不可查看或復原。
+- Auth user、profile 與操作紀錄跨系統不具單一 ACID transaction，必須使用
+  fail-closed saga、補償與 reconciliation，不能留下可登入但無合法 teacher
+  profile 的半成品。
+
 ## 3. 學生核心流程
 
 ### STU-Flow-01：學習大廳
@@ -71,23 +103,41 @@
 
 - 使用者暱稱、Blook、Level、目前 XP、Token。
 - 已加入班級與目前課程。
-- 已發布章節、完成進度、鎖定／未發布狀態。
+- 已發布且 content-ready 的章節、完成與精熟狀態；章節彼此不相互鎖定。
 - 班級排行榜摘要。
 
 不可顯示：未發布內容、其他班級資料、教師私密備註。
 
-### STU-Flow-02：章節與子主題
+### STU-Flow-02：章節與小節
 
-- 章節頁顯示章節描述、小節、子主題與完成狀態。
-- 子主題至少可進入複習卡。
-- 綜合挑戰只能從該章節已發布且有效題目抽取。
-- 題目不足 10 題時，按鈕必須顯示實際可出題數，不得宣稱固定 10 題。
+- 產品文案的「小節」對應資料模型 `section`；`subtopic` 只作 section 內部內容
+  分類，不構成使用者可見的解鎖層級。
+- 章節頁保留完整小節與複習卡全貌。鎖定節點可見但不可操作，並顯示非色彩
+  的鎖定指示與原因。
+- 第一小節起依 `section.sort_order` 解鎖；每小節內的複習卡依正式順序逐張
+  解鎖。本小節全部 current-required cards 完成後，才可建立本小節挑戰。
+- 本小節挑戰完整交卷後，不論成績，下一小節可閱讀；各小節最佳 qualifying
+  answer rate（`correct_count / question_count * 100`）皆達 80% 後，才可建立
+  章節總挑戰；速度加權 Quiz Score 不參與此 gate。
+- 章節總挑戰完整交卷即為「已完成」；最佳 qualifying percentage 達 80% 才為
+  「已精熟」。結果不影響其他章節存取。
+- 既有 section 新增 required card 時，只有 cutoff 前已 committed server-valid、
+  同 section finalized challenge 的學生豁免，不論分數；卡片標示「新增內容
+  （非必修）」且可選讀，不偽裝成完成。其他學生與新學生仍依正式順序
+  必讀，cutoff 後 finalize 不能追溯取得豁免。
+- 小節挑戰只從所選 `section` 的 published `bank_kind='section'` 題池抽題；章節
+  總挑戰只從該章 published `bank_kind='chapter'` 題池抽題。題數不足 template
+  目標時顯示並使用真實題數。
 
 ### STU-Flow-03：複習卡
 
-- 依教師設定順序顯示。
+- 依正式 section/card 順序顯示；已完成卡可回顧，尚未輪到的卡不可取得正文
+  或 media。唯一例外是 server 判定的 `grandfather_exempt` inserted card，可選讀但
+  不阻擋進度。
 - 支援純文字、圖片、色票示例與必要的替代文字。
-- 學生可開始該子主題練習或回章節。
+- 未完成卡必須到達閱讀器最後一頁，才顯示／啟用「完成複習」；只有主動按下
+  並取得後端 committed 結果才算完成。翻到最後一頁本身不自動完成。
+- 回顧已完成卡不更新原完成時間、不重複發獎，也不重新鎖定後續內容。
 - 內容載入失敗時需提供重試，不得呈現空白卡。
 
 ### STU-Flow-04：Quiz
@@ -220,6 +270,30 @@ Anonymous Live participation、固定 PIN、Kahoot branding 或官方 API 依賴
 - Live host 只能操作自己建立且仍授權的 session；狀態版本衝突時必須重新讀取，不可覆寫。
 - Live host refresh/斷線後從 authoritative state 恢復；另一分頁不可對同一 `state_version` 推進兩次。
 - Optional Kahoot compatibility 只保存教師擁有的外部 URL、關聯 scope、availability/status；不保存假 PIN、不匯入外部成績。
+
+## 4A. Admin B 核心流程
+
+### ADM-Flow-01：安全控制台
+
+1. 受邀 Admin 以已登入且 Email 綁定正確的 identity，在 pre-privileged route
+   接受一次性 invitation。
+2. 完成 MFA enrollment／challenge 後才建立 privileged session。
+3. Admin 由導覽進入總覽、身分與存取、七個 safe-browser domains、稽核、健康。
+4. 列表使用 server cursor；denial／partial failure 顯示 safe message、request ID
+   與 retryability。
+5. Health 只對允許 manual retry 的 operation 提供按鈕；OOB-only 顯示 runbook
+   guidance，不提供繞過。
+
+### ADM-Flow-02：教師帳號營運
+
+1. Admin 在教師列表選「建立教師帳號」，輸入名稱、optional contact Email、reason。
+2. 二次確認後，後端配發 `teacherNN`、產生密碼並完成 Auth/profile/audit saga。
+3. 成功時顯示一次性 account/password receipt；離開後無法回看密碼。
+4. Detail 可更新名稱/contact Email；role 與 login account 唯讀。
+5. 重設密碼需 fresh MFA、reason 與二次確認；成功後舊密碼失效，回新的一次性
+   receipt。
+6. Pending／部分失敗以 operation ID 進入 reconciliation，不重複建立帳號或顯示
+   未 committed 的秘密。
 
 ## 5. 路由與恢復規則
 

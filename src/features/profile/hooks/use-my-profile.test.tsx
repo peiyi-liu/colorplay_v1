@@ -26,7 +26,6 @@ vi.mock('../api/profile-repository', () => ({
 
 const authenticated: AuthContextValue = {
   session: {
-    email: 'student.one@colorplay.test',
     userId: 'student-one-id',
   },
   signIn: vi.fn(),
@@ -38,7 +37,6 @@ const authenticated: AuthContextValue = {
 const authenticatedAs = (userId: string): AuthContextValue => ({
   ...authenticated,
   session: {
-    email: `${userId}@colorplay.test`,
     userId,
   },
 });
@@ -66,6 +64,7 @@ describe('useMyProfile', () => {
       role: 'student',
       timezone: 'Asia/Taipei',
       reducedMotion: false,
+      registrationComplete: true,
     };
     repositoryMocks.getMyProfile.mockResolvedValue(profile);
     const client = new QueryClient({
@@ -105,6 +104,7 @@ describe('useMyProfile', () => {
       role: 'student',
       timezone: 'Asia/Taipei',
       reducedMotion: false,
+      registrationComplete: true,
     };
     const studentTwo: SafeProfile = {
       displayName: 'student.two',
@@ -112,6 +112,7 @@ describe('useMyProfile', () => {
       role: 'student',
       timezone: 'Asia/Taipei',
       reducedMotion: false,
+      registrationComplete: true,
     };
     repositoryMocks.getMyProfile
       .mockResolvedValueOnce(studentOne)

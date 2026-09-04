@@ -19,6 +19,14 @@
 - leaderboard read p95 ≤ 700ms。
 - teacher dashboard p95 ≤ 1,500ms。
 
+### 同步尖峰開發規則
+
+- 新增或修改 Auth、登入後 bootstrap、章節讀取、Quiz、Live、排行榜時，必須按「同一班級同步操作」而非平均流量設計；PR／task 報告需列出每位使用者的 request fan-out、cache、timeout 與 retry 行為。
+- 讀取重試必須有上限與 jitter；429、Auth、權限與 validation error 不得自動重試。mutation 不得盲目重送，必須使用既有 idempotency／command-status 契約。
+- Realtime subscription 必須有 bounded event payload、卸載 cleanup 與 reconnect 上限；不得以每秒 polling 代替現有 Realtime phase projection。
+- 新增 production 圖片必須通過 `pnpm assets:check`；非首屏圖片 lazy load，route-specific 大圖不得進入其他 route 的 initial transfer。
+- 影響上述關鍵路徑的 phase gate 必須包含 30+ 個獨立 Staging synthetic accounts 的同步尖峰；不得共用帳號，不得對 Production 壓測。若當下沒有真實校園網路／裝置環境，需在 `docs/handoff.md` 明列 deferred gate，不能宣稱多人容量通過。
+
 ## 2. 可用性與相容性
 
 支援最近兩個穩定 major：

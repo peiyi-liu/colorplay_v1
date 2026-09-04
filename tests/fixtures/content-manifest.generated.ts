@@ -23,13 +23,13 @@ export const CONTENT_MANIFEST: readonly ChapterContent[] = [
   {
     chapterCode: 'chapter-3',
     chapterNumber: 3,
-    questionCount: 37,
+    questionCount: 62,
     templateId: '26000000-0000-0000-0000-000000000003',
   },
   {
     chapterCode: 'chapter-4',
     chapterNumber: 4,
-    questionCount: 8,
+    questionCount: 0,
     templateId: '26000000-0000-0000-0000-000000000004',
   },
   {

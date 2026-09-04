@@ -251,17 +251,20 @@ UI 與流程 criterion 至少包含 S 或 Q/V，不能只有 L。安全／資料
 
 **證據**：Q、D、N、T。
 
-## AC-QUIZ-002：題目 payload 不含正解 — Blocking
+## AC-QUIZ-002：學生／公開題目 payload 在提交前不含正解 — Blocking
 
 **要求**
 
-- 建立／讀取題目的 response body、Playwright trace network、React query cache dump 均不含：`is_correct`, `correct_option_id`, `correct`, 正確索引或 explanation before submit。
+- Student／public 建立或讀取題目的 response body、提交前 Playwright network 與學生 React Query cache 均不得包含：`is_correct`、`correct_option_id`、`correct`、正確索引或提交前 explanation。
 - JS bundle／static JSON 不含 production 題庫正解。
+- 唯一例外是 ADR 0007 定義的專用 classroom-owner-only 正確答案 projection；只有 server 驗證同班 owner 後，該 projection 可以回傳 `is_correct`。
+- 教師例外不適用於現有 shared `QuestionDetail`、student Quiz、進行中 Live 或一般分析 payload。
+- 教師例外必須通過同班 owner 正向案例，以及 anonymous、學生、非 owner 教師、跨班級教師與越界題目負向矩陣；拒絕結果不得洩漏題目或班級是否存在。
 
 **判定方法**
 
 - 自動 schema assertion。
-- Network artifact 搜尋 forbidden fields。
+- Network artifact 依 endpoint、authenticated role、classroom ownership 與作答階段搜尋 forbidden fields；不得因 ADR 0007 的教師例外而全域忽略 `is_correct`。
 
 **證據**：N、L。
 
@@ -1162,11 +1165,14 @@ Cold start 可另列，但不能刪除；若 cold start 影響學生流程需改
 
 ## AC-PROG-001：Review completion 以 current published version 計算 — Blocking
 
-**前置**：subtopic 有已知數量 current published cards，且含 `requires_recompletion` true/false 的新版本案例。
+**前置**：subtopic 有已知數量 current published cards，且含 `compatible` 與
+`requires_recompletion` 的新版本案例。
 
 **操作**：依序完成 cards、發布新版本並查 progress。
 
-**預期**：completion = completed current required versions／current published versions；explicit completion 才增加；無 cards 顯示 `—`。
+**預期**：completion = completed current required versions／current published
+versions；compatible 版本可沿用明確連結的舊 completion，requires-recompletion
+版本只能由新 explicit completion 增加；無 cards 顯示 `—`。
 
 **證據**：D、S、L。
 
@@ -1219,6 +1225,140 @@ Cold start 可另列，但不能刪除；若 cold start 影響學生流程需改
 **預期**：A 的 metric 與 DB facts 一致；B/outsider 得 0 rows 或 permission denied，response 不洩漏存在性。
 
 **證據**：D、N、L。
+
+## AC-PROG-007：章節彼此獨立 — Blocking
+
+**前置**：至少兩個 published 且 content-ready 章節；學生在前一章零進度。
+
+**操作**：從 UI、直接 route 與 learning-path RPC 進入後一章。
+
+**預期**：兩章都可進入；payload 不含上一章 prerequisite；完成／未完成任一章
+不改變其他章節的 access state。`content_unavailable` 仍因自身內容不足而拒絕。
+
+**證據**：Q、D、N、T。
+
+## AC-PROG-008：鎖定卡片正文不送達 browser — Blocking
+
+**前置**：同 section 至少三張 current-required cards，只有第一張 available。
+
+**操作**：檢查 learning-path response、React Query cache、DOM、source map、Storage
+request，並以後兩張 ID 直接查 RPC/table/object。
+
+**預期**：所有節點 metadata 可見；只有 completed／current available 或該 user
+合法 `grandfather_exempt` 的卡可取得正文與 media。Locked 卡的 content、asset
+path、signed URL 都不存在；直接讀取被 RLS／guarded projection 拒絕且不洩漏存在性。
+
+**證據**：D、N、L、T。
+
+## AC-PROG-009：複習卡依序且明確完成 — Blocking
+
+**前置**：同 section 至少三張 ordered current-required cards。
+
+**操作**：在第一張最後一頁前檢查 UI；嘗試直接完成第二／三張；到第一張最後
+一頁後不按按鈕離開；最後按「完成複習」並將相同 request 重送 10 次。
+
+**預期**：最後一頁前無可用 completion action；只翻到最後一頁不新增 progress；
+後續卡命令回穩定 locked denial。明確提交後只有一筆 completion，第二張成為唯一
+available；重送不改完成時間、不重複獎勵。
+
+**證據**：Q、D、N、T。
+
+## AC-PROG-010：小節挑戰與下一小節 gate — Blocking
+
+**前置**：兩個 ordered sections；第一節 cards 未完成、完成後以及 challenge
+finalized 但 qualifying percentage 低於 80% 三種狀態。
+
+**操作**：每種狀態從唯一小節挑戰按鈕與直接 `create_quiz_session` 嘗試；低分
+session 完整 finalize。
+
+**預期**：cards 未完成時 UI 無 link 且 server 拒絕；完成後按鈕綁定目前 section
+template，session 題目只來自同 section 的 `bank_kind='section'`。完整交卷即使低分
+也使下一 section 第一張卡 available；abandoned／expired 不會解鎖。
+
+**證據**：Q、D、N、T。
+
+## AC-PROG-011：章節總挑戰、已完成與已精熟 — Blocking
+
+**前置**：每 section 有 finalized challenge；其中一節的
+`correct_count / question_count * 100` 先低於 80%，之後重試達標。
+
+**操作**：達標前後建立 chapter challenge；依序 finalize 一次低於 80% 與一次
+達 80% 的 chapter challenge。
+
+**預期**：任一 section current-version 最佳答對率 <80% 時 server 拒絕 chapter
+challenge；比較使用未四捨五入比例且不含速度分數。全部達標後只從
+`bank_kind='chapter'` 建立。Chapter challenge 第一次完整交卷後狀態為「已完成」
+但非「已精熟」；最佳答對率達 80% 後兩狀態皆成立，歷史 attempts 保留。
+
+**證據**：Q、D、N、T。
+
+## AC-PROG-012：唯一 next action 與 stale-state 防繞過 — Blocking
+
+**前置**：準備 review、section challenge、next section、chapter challenge、retry
+等各 progression 狀態，另開兩個 browser tabs。
+
+**操作**：比對 server `next_action` 與 UI primary action；在一分頁推進後，用另一
+分頁的 stale link／cache／request 嘗試舊操作。
+
+**預期**：每一 snapshot 恰有零或一個 primary next action，文案與 target 正確；
+stale mutation 由 server 重算後 idempotent 成功或穩定拒絕，UI refetch 後不保留
+越權 link。完成卡回顧永遠是 secondary 且不改 progress。
+
+**證據**：Q、D、N、T。
+
+## AC-PROG-013：既有跳號進度相容性正規化 — Blocking
+
+**前置**：同一 current-compatible section 有三張 ordered cards；歷史資料只完成
+第一、第三張，第二張缺漏，且存在早於完整 review 的 finalized section challenge。
+
+**操作**：執行 migration／projection 重算，檢查原 rows 與 timestamps；讀取 path，
+再完成第二張卡並重新讀取 path／section state／reward ledgers。
+
+**預期**：所有歷史 completion／attempt 原樣保留；第二張是唯一 next action，第三張
+仍可回顧但不能跨越缺口解鎖。缺口存在時舊 challenge 不投影 attempted／mastered；
+補齊後原 challenge 自動依原答對率生效，不新增 attempt、不改 timestamp、不要求
+重做，且 XP／Token／achievement 無重播。
+
+**證據**：D、N、L。
+
+## AC-PROG-014：內容版本 progression impact — Blocking
+
+**前置**：準備四種 publish diff：非實質 typo／排版、實質 review-card 含義變更、
+question correct answer／options 變更，以及缺少或不明確的 impact classification；
+學生在舊版本已有 completion、finalized attempt、80% mastery 與 reward ledger。
+
+**操作**：逐一發布新 current version，直接竄改 `compatible` classification，讀取
+learning path／歷史 session／ledger，並完成必要的新 card／challenge。
+
+**預期**：非實質修改沿用進度；實質 review 變更要求新版本 completion；實質
+question／template 變更保留舊 attempted／completed 歷史，但舊答對率不再滿足
+current-version mastered。禁止標 compatible 的 field diff 由 server 拒絕；缺漏／
+不明確時採類型最嚴格 impact。歷史 rows、timestamps 與既得 rewards 不刪改，只有
+合法 current-version completion／attempt 能恢復 current qualification。
+
+**證據**：D、N、L、Q。
+
+## AC-PROG-015：Inserted card 的 finalized-challenge 豁免 cohort — Blocking
+
+**前置**：在既有 section 插入新 required card；四位學生分別為 cutoff 前 finalized
+低分 section challenge、cutoff 前只完成 review、cutoff 後 finalized challenge，
+以及 cutoff 後建立的新學生。另準備 publish/finalize concurrency。
+
+**操作**：發布新卡，讀取四人的 learning path／card content／required denominator，
+嘗試 client/Admin竄改 exemption、timestamp 與 event order，並讓豁免者選讀及明確
+完成新卡。
+
+**預期**：只有 cutoff 前已 committed server-valid finalized challenge 的學生取得
+`grandfather_exempt`，分數與 80% mastery 不影響資格；其既有 progression 不回鎖，
+新卡不進 required denominator／primary next action，且未明確完成前不顯示
+completed。自願明確提交後只建立一筆正常 completion，不改變原有 gate。其餘
+三人皆依 sort order 必讀，cutoff 後不能追溯豁免。Publish/finalize 由同 section
+lock 序列化並分配 server-only monotonic order；只有
+`finalize.section_event_order < publication.publication_cutoff_order` 豁免，
+timestamp 不獨立決定。等號、缺 order 或無法證明先後時不豁免；
+client/Admin 無法切換。歷史 progress／attempt／reward 不變。
+
+**證據**：D、N、L、Q、T。
 
 ## AC-ASN-001：Assignment ownership — Blocking
 
@@ -1489,6 +1629,113 @@ Cold start 可另列，但不能刪除；若 cold start 影響學生流程需改
 **預期**：transfer findings = 0；每個保留 capability 由 approved React/Supabase boundary 與 tests 重建。
 
 **證據**：L、M、code review report。
+
+# M. Admin B 安全控制台與教師帳號營運
+
+Admin C 完整平台能力是 deferred option，不適用本節，也不得用 Admin B gate
+宣稱已交付內容營運、平台介入、Live operations 或研究匯出。
+
+## AC-ADM-001：Admin invitation acceptance 完整流程 — Blocking
+
+**前置**：有效、逾期、撤銷及已使用 invitation；正確與錯誤 Auth identity。
+
+**操作**：從登入後 pre-privileged route 接受 invitation，並重放／換帳號提交 token。
+
+**預期**：只有 email 綁定正確且有效的一次性 token 建立
+`active_pending_mfa`；其他情境同樣回 `INVITATION_INVALID`，不洩漏 invitation
+存在性。接受後仍須 enroll/challenge，不能直接進 privileged Admin shell。
+
+**證據**：D、N、Q、T。
+
+## AC-ADM-002：安全控制台導覽與狀態可達 — Blocking
+
+**前置**：46-resource browser catalog、超過一頁的 Admin／invitation／session
+資料、stuck operations、可用 TOTP enrollment。
+
+**操作**：以三個規定 viewport 操作所有七個 browser domains、列表翻頁、detail、
+MFA QR／retry、health manual-retry 與 OOB-only 狀態。
+
+**預期**：不必手打 canonical URL；列表有正確 keyset pagination 或明確 truncation；
+每個 denial／partial failure 顯示安全 message、request ID 與 server retryability；
+只有可人工重試的 operation 顯示命令，OOB-only 不顯示繞過操作。
+
+**證據**：Q、D、N、T。
+
+## AC-ADM-003：並發建立教師帳號不撞號且無半成品 — Blocking
+
+**前置**：兩個 active privileged Admin，同時建立至少 10 位教師；可注入 Auth
+create、profile finalize 與 compensation failure。
+
+**操作**：並發提交不同 idempotency keys，另以同 key重送與同 key不同 payload
+測試；逐步注入失敗再 reconciliation。
+
+**預期**：每位成功教師取得唯一 `teacherNN`；同 key同 payload 回原 redacted
+結果，不同 payload 回 conflict。失敗時不可登入的 reservation 可重試／補償；
+不存在可登入但缺 teacher profile／audit 的半成品。
+
+**證據**：D、N、L。
+
+## AC-ADM-004：教師資料更新與聯絡 Email 隱私 — Blocking
+
+**前置**：有／無 contact Email 教師各一位，另有 Student、Teacher、非 privileged
+Admin session。
+
+**操作**：更新教師名稱與 contact Email；嘗試改 role／login account；各角色直接
+查 profile、safe browser、RPC 與 Auth internal Email。
+
+**預期**：合法更新同步 `full_name`／`display_name`；`teacherNN` 與 role 不可由 UI
+改派。Contact Email nullable、預設遮罩且不改登入／recovery；只有核准 Admin
+projection/reveal 可讀。Auth synthetic Email 必須以預配 Auth UUID 作 opaque
+local-part，不能含 `teacherNN` 或 contact Email。唯一 browser 例外是 Supabase 官方
+Auth response/access-token/session object 在 exact Auth sessionStorage key 的
+serialization。自訂 `auth-login` response 只能回傳 access/refresh token，不得回傳
+session user、Email、identity 或 provider metadata；React/AuthContext、DOM、
+URL/history、log、audit、analytics、app-owned cache/storage、safe browser、export 與
+一般 API payload findings 必須為 0。
+
+**證據**：D、N、Q、T。
+
+## AC-ADM-005：一次性密碼 receipt 與重設 — Blocking
+
+**前置**：可登入教師及 active privileged Admin。
+
+**操作**：建立與重設密碼，關閉 receipt 後嘗試回看；掃描 DB、audit、Edge／browser
+log、analytics、cache、artifact；以舊／新密碼登入。
+
+**預期**：12 碼 CSPRNG 密碼只在成功 response 顯示一次；離開後不可復原。
+重設需要 fresh MFA、二次確認、reason、request ID；舊密碼立即失效、新密碼可登入
+Teacher portal。所有持久面與 log 的明文 password findings = 0；Supabase-owned Auth
+session 例外不適用於 password。
+
+**證據**：D、N、L、Q。
+
+## AC-ADM-006：教師帳號命令角色矩陣 — Blocking
+
+**前置**：Anonymous、Student、Teacher、Admin without privileged session、stale
+Admin、active privileged Admin。
+
+**操作**：各角色列出／建立／更新／重設同一教師，並竄改 client route、role、
+target ID、receipt、request hash 與 idempotency key。
+
+**預期**：只有 active privileged Admin 且 receipt/hash/fresh-MFA 符合的具名命令
+成功；其他全部 fail closed、無 Auth/profile/audit-success 副作用，也不洩漏 target
+是否存在。
+
+**證據**：D、N、L。
+
+## AC-ADM-007：Admin B Hosted gate 與清理 — Blocking
+
+**前置**：Phase 0 已合併，Staging 從 exact canonical SHA 新建，專屬 Admin／Teacher
+fixtures 與清理 manifest 已核准。
+
+**操作**：走 invitation、MFA、teacher create/update/reset/login、session revoke、
+stuck-operation reconciliation 與越權矩陣；完成後清理 fixtures／一次性秘密。
+
+**預期**：deployed SHA、Supabase ref、migration head、public bundle target 完全一致；
+流程與負向測試通過；fixture users、operations、receipt plaintext 與測試資料皆依
+manifest 清理。未取得 Hosted mutation 授權時只能是 `NOT VERIFIED`。
+
+**證據**：M、D、N、Q、T、L。
 
 ---
 

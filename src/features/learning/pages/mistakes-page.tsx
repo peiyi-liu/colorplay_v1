@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { GamePager, useStageWide } from '../../../components/ui/game-pager';
+import { SpiritAvatar } from '../../../components/ui/spirit-avatar';
 import type {
   LearningRepository,
   MistakeView,
 } from '../api/learning-repository';
 import { useMistakes, useStartRemediation } from '../hooks/use-learning';
+
+import './mistakes-page.css';
 
 type SubtopicGroup = Readonly<{
   mistakes: readonly MistakeView[];
@@ -66,15 +69,11 @@ export function MistakesPage({
   return (
     <section
       aria-labelledby="mistakes-title"
-      className="mistakes-codex scene-day"
+      className="mistakes-codex mistakes-codex--archive-v2 scene-day"
     >
       <header>
-        <p className="route-panel__eyebrow">補救學習</p>
         <h1 id="mistakes-title">我的錯題</h1>
-        <p>
-          補救練習答對即可解決錯題並回復精熟；不發 Token，XP 以 20%
-          計，原始成績不會改變。
-        </p>
+        <p>補救練習答對即可解決錯題並回復精熟。</p>
       </header>
 
       {openGroups.length === 0 ? (
@@ -101,7 +100,7 @@ export function MistakesPage({
                 <ul className="mistake-list">
                   {pageItems.map((mistake) => (
                     <li className="mistake-list__item" key={mistake.mistakeId}>
-                      <span aria-hidden="true" className="codex-monster" />
+                      <SpiritAvatar variant="red" />
                       <div className="mistake-list__body">
                         <p className="mistake-list__prompt">
                           {mistake.prompt}

@@ -32,6 +32,8 @@ export function createProfileRepository(
         displayName: data.display_name,
         id: data.id,
         reducedMotion: data.reduced_motion,
+        registrationComplete:
+          data.role !== 'student' || data.login_account !== null,
         role: data.role,
         timezone: data.timezone,
       };

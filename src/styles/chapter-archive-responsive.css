@@ -1,0 +1,149 @@
+/* 05a-v2 responsive and motion preferences. */
+@media (max-width: 900px) {
+  .chapter-dungeon.chapter-archive > .chapter-archive__header {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr) 88px;
+    column-gap: 8px;
+  }
+
+  .chapter-archive__title-group {
+    min-height: 44px;
+    grid-column: 2;
+    grid-row: 1;
+    place-content: center;
+  }
+
+  .chapter-archive .chapter-detail__progress {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin: 16px auto 0;
+  }
+}
+
+@media (max-width: 680px) {
+  .chapter-dungeon.chapter-archive > .chapter-archive__header {
+    grid-template-columns: 72px minmax(0, 1fr) 72px;
+  }
+
+  .chapter-dungeon.chapter-archive {
+    min-height: calc(100dvh - 76px);
+    padding: 22px 14px 38px;
+    background-color: var(--pixel-night-deep);
+    background-image:
+      linear-gradient(180deg, rgb(2 10 31 / 18%), rgb(2 8 24 / 62%)),
+      url('../assets/chapter/chapter-archive-world-mobile-v3.webp');
+    background-position: center top;
+    background-size: cover;
+    background-attachment: scroll;
+  }
+
+  .chapter-archive .chapter-archive__title {
+    font-size: clamp(1.42rem, 7.2vw, 1.8rem);
+  }
+
+  .chapter-archive__subtitle {
+    margin-bottom: 12px;
+    font-size: 0.88rem;
+  }
+
+  .chapter-archive .chapter-detail__progress {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    margin-inline: auto;
+    padding: 9px 10px;
+  }
+
+  .chapter-archive .chapter-detail__mastery {
+    display: none;
+  }
+
+  .chapter-archive__library {
+    margin-top: 30px;
+  }
+
+  .chapter-archive__subtopic-menu-title {
+    margin-left: 4px;
+  }
+
+  .chapter-archive__subtopic-menu-list {
+    grid-auto-columns: minmax(168px, 76vw);
+    grid-auto-flow: column;
+    padding: 2px 4px 8px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+
+  .chapter-archive__subtopic-menu-item {
+    scroll-snap-align: start;
+  }
+
+  .chapter-archive .chapter-detail__subtopic-title {
+    margin-left: 12px;
+    padding-right: 14px;
+    padding-left: 42px;
+    font-size: 0.94rem;
+    text-align: left;
+  }
+
+  .chapter-archive__nodes {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    padding: 4px 0 0 12px;
+    transform: none;
+  }
+
+  .chapter-archive__pagination {
+    margin-top: 18px;
+  }
+
+  .chapter-review-node__summary {
+    min-height: 112px;
+    padding: 5px 4px;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    text-align: left;
+  }
+
+  .chapter-review-node__artifact.review-accordion__badge {
+    width: 144px;
+    height: 112px;
+  }
+
+  .chapter-review-node__book-art {
+    bottom: 0;
+    width: 132px;
+  }
+
+  .chapter-review-node__copy {
+    max-width: none;
+    flex: 1;
+    align-items: flex-start;
+  }
+
+  .chapter-review-node__title {
+    font-size: 0.96rem;
+    text-align: left;
+  }
+
+  .chapter-archive__actions {
+    margin-top: 24px;
+    padding-top: 0;
+  }
+
+  .chapter-archive__challenge-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 10px 4px 0;
+  }
+
+  .chapter-archive__continue {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter-archive__continue:hover:not(:disabled) {
+    transform: none;
+  }
+}

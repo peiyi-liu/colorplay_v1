@@ -9,11 +9,13 @@ import {
   sha256Hex,
   validateNickname,
 } from '../_shared/account.ts';
+import { readRuntimeSupabaseApiKeys } from '../_shared/api-keys.ts';
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const { publishableKey, secretKey } = readRuntimeSupabaseApiKeys((name) =>
+  Deno.env.get(name),
+);
 
 const failure = (status: number, error: string) =>
   jsonResponse(status, { error });
@@ -62,7 +64,7 @@ Deno.serve(async (request) => {
 
   // 必須帶 OTP 驗證後的使用者 session。
   const authHeader = request.headers.get('Authorization') ?? '';
-  const userClient = createClient(supabaseUrl, anonKey, {
+  const userClient = createClient(supabaseUrl, publishableKey, {
     auth: { persistSession: false },
     global: { headers: { Authorization: authHeader } },
   });
@@ -72,9 +74,18 @@ Deno.serve(async (request) => {
   if (userError || !user) return failure(401, 'AUTH_REQUIRED');
   if (!user.email_confirmed_at) return failure(403, 'EMAIL_NOT_VERIFIED');
 
-  const admin = createClient(supabaseUrl, serviceRoleKey, {
+  const admin = createClient(supabaseUrl, secretKey, {
     auth: { persistSession: false },
   });
+
+  const { data: currentProfile, error: currentProfileError } = await admin
+    .from('profiles')
+    .select('login_account')
+    .eq('id', user.id)
+    .single();
+  if (currentProfileError) {
+    return failure(503, 'PROFILE_LOOKUP_FAILED');
+  }
 
   // 帳號唯一（自己重複送出視為同帳號覆寫）。
   const { data: existingAccount, error: accountError } = await admin
@@ -82,7 +93,9 @@ Deno.serve(async (request) => {
     .select('id')
     .eq('login_account', normalizedAccount)
     .maybeSingle();
-  if (accountError) return failure(500, 'REGISTER_FAILED');
+  if (accountError) {
+    return failure(503, 'ACCOUNT_LOOKUP_FAILED');
+  }
   if (existingAccount && existingAccount.id !== user.id) {
     return failure(409, 'ACCOUNT_TAKEN');
   }
@@ -95,16 +108,49 @@ Deno.serve(async (request) => {
     .eq('status', 'active')
     .eq('join_code_hash', codeHash)
     .maybeSingle();
-  if (classroomError) return failure(500, 'REGISTER_FAILED');
+  if (classroomError) {
+    return failure(503, 'CLASSROOM_LOOKUP_FAILED');
+  }
   if (!classroom) return failure(400, 'INVALID_CLASSROOM_CODE');
 
-  const { data: membership, error: membershipError } = await admin
-    .from('classroom_members')
-    .select('classroom_id')
-    .eq('classroom_id', classroom.id)
-    .eq('user_id', user.id)
-    .maybeSingle();
-  if (membershipError) return failure(500, 'REGISTER_FAILED');
+  // 只透過 user-scoped SECURITY DEFINER RPC 讀取本人的 active membership，
+  // 避免 Edge service role 直接擴張 classroom_members 欄位權限。
+  const { data: memberships, error: membershipError } =
+    await userClient.rpc('list_my_classrooms');
+  if (membershipError) {
+    return failure(503, 'MEMBERSHIP_LOOKUP_FAILED');
+  }
+  const membership = memberships?.find(
+    (entry) => entry.classroom_id === classroom.id,
+  );
+
+  if (currentProfile.login_account !== null) {
+    const sameCompletedRegistration =
+      currentProfile.login_account === normalizedAccount &&
+      membership?.membership_status === 'active';
+    return sameCompletedRegistration
+      ? jsonResponse(200, { ok: true })
+      : failure(409, 'ALREADY_REGISTERED');
+  }
+
+  const attemptId = crypto.randomUUID();
+  const { data: claimDisposition, error: claimError } = await userClient.rpc(
+    'claim_student_registration',
+    { p_attempt_id: attemptId },
+  );
+  if (claimError) return failure(503, 'REGISTRATION_STATE_FAILED');
+  if (claimDisposition !== 'ACQUIRED') {
+    return claimDisposition === 'IN_PROGRESS'
+      ? failure(409, 'REGISTER_IN_PROGRESS')
+      : failure(409, 'ALREADY_REGISTERED');
+  }
+
+  const failAfterClaim = async (status: number, error: string) => {
+    await userClient.rpc('release_student_registration_claim', {
+      p_attempt_id: attemptId,
+    });
+    return failure(status, error);
+  };
 
   if (!membership) {
     // 以學生本人身分走既有 RPC，保留角色檢查與審計語意。
@@ -113,9 +159,13 @@ Deno.serve(async (request) => {
       p_request_id: crypto.randomUUID(),
     });
     if (joinError) {
-      return joinError.message.includes('INVALID_CLASSROOM_CODE')
-        ? failure(400, 'INVALID_CLASSROOM_CODE')
-        : failure(500, 'REGISTER_FAILED');
+      if (joinError.message.includes('INVALID_CLASSROOM_CODE')) {
+        return await failAfterClaim(400, 'INVALID_CLASSROOM_CODE');
+      }
+      if (joinError.message.includes('ALREADY_IN_ACTIVE_CLASSROOM')) {
+        return await failAfterClaim(409, 'ALREADY_IN_ACTIVE_CLASSROOM');
+      }
+      return await failAfterClaim(503, 'CLASSROOM_JOIN_FAILED');
     }
   }
 
@@ -123,20 +173,36 @@ Deno.serve(async (request) => {
     user.id,
     { password },
   );
-  if (passwordError) return failure(500, 'REGISTER_FAILED');
+  if (passwordError) {
+    return await failAfterClaim(503, 'PASSWORD_SETUP_FAILED');
+  }
 
-  const { error: profileError } = await admin
+  const { data: updatedProfile, error: profileError } = await admin
     .from('profiles')
     .update({
       display_name: nicknameVerdict.nickname,
       full_name: trimmedFullName,
       login_account: normalizedAccount,
     })
-    .eq('id', user.id);
+    .eq('id', user.id)
+    .is('login_account', null)
+    .select('id');
   if (profileError) {
-    return profileError.code === '23505'
-      ? failure(409, 'ACCOUNT_TAKEN')
-      : failure(500, 'REGISTER_FAILED');
+    return await failAfterClaim(
+      profileError.code === '23505' ? 409 : 503,
+      profileError.code === '23505' ? 'ACCOUNT_TAKEN' : 'PROFILE_SETUP_FAILED',
+    );
+  }
+  if (!updatedProfile || updatedProfile.length !== 1) {
+    return await failAfterClaim(409, 'ALREADY_REGISTERED');
+  }
+
+  const { error: completeClaimError } = await userClient.rpc(
+    'complete_student_registration_claim',
+    { p_attempt_id: attemptId },
+  );
+  if (completeClaimError) {
+    return failure(503, 'REGISTRATION_FINALIZE_FAILED');
   }
 
   return jsonResponse(200, { ok: true });

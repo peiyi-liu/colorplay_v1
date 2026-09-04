@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -74,7 +75,11 @@ const renderPage = (repository: LiveRepository) => {
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <TeacherLiveReportPage repository={repository} sessionId={SESSION_ID} />
+        <TeacherLiveReportPage
+          menu={<nav>教師選單</nav>}
+          repository={repository}
+          sessionId={SESSION_ID}
+        />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -88,10 +93,49 @@ describe('TeacherLiveReportPage', () => {
     renderPage(repository);
 
     expect(await screen.findByText('色彩三要素是？')).toBeVisible();
-    expect(screen.getByText('50.0%')).toBeVisible();
-    expect(screen.getByText('1800 ms')).toBeVisible();
+    const questionTable = screen.getByRole('table', { name: '逐題分析' });
+    expect(within(questionTable).getByText('50.0%')).toBeVisible();
+    expect(within(questionTable).getByText('1800 ms')).toBeVisible();
     expect(screen.getByText(/學生一（300 分）/u)).toBeVisible();
     expect(repository.getSessionDetail).toHaveBeenCalledWith(SESSION_ID);
+    const summary = screen.getByRole('region', { name: '場次重點' });
+    expect(within(summary).getByText('參與人數')).toBeVisible();
+    expect(within(summary).getByText('2 人')).toBeVisible();
+    expect(within(summary).getByText('25.0%')).toBeVisible();
+    expect(within(summary).getByText('第 2 題')).toBeVisible();
+  });
+
+  it('preserves mobile question disclosure semantics', async () => {
+    const repository = {
+      getSessionDetail: vi.fn().mockResolvedValue(detailFixture),
+    } as unknown as LiveRepository;
+    renderPage(repository);
+
+    const summary = await screen.findByText('第 1 題．色彩三要素是？');
+    expect(summary).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(summary);
+    expect(summary).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('omits unavailable aggregate summaries instead of rendering fake zero', async () => {
+    const repository = {
+      getSessionDetail: vi.fn().mockResolvedValue({
+        ...detailFixture,
+        participants: [],
+        questions: detailFixture.questions.map((question) => ({
+          ...question,
+          answered: 0,
+          correct: 0,
+          correctRate: null,
+        })),
+        ranking: [],
+      }),
+    } as unknown as LiveRepository;
+    renderPage(repository);
+
+    await screen.findByRole('heading', { name: '逐題分析' });
+    expect(screen.queryByRole('region', { name: '場次重點' })).toBeNull();
+    expect(screen.queryByText('0 人')).toBeNull();
   });
 
   it('does not surface a reteach call-out section (owner decision)', async () => {

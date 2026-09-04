@@ -1,0 +1,98 @@
+.chapter-dungeon.chapter-archive > .chapter-archive__header {
+  display: grid;
+  width: 100%;
+  margin-inline: auto;
+  grid-template-columns:
+    minmax(280px, 320px) minmax(0, 1fr)
+    minmax(280px, 320px);
+  align-items: start;
+  gap: clamp(16px, 2vw, 28px);
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+}
+
+.chapter-archive__title-group {
+  min-width: 0;
+  grid-column: 2;
+  align-self: center;
+}
+
+.chapter-archive .chapter-archive__title {
+  width: fit-content;
+  margin: 0 auto;
+  padding-block: 2px;
+  color: #fff4c7;
+  font-family: var(--font-pixel-tc);
+  font-size: clamp(1.75rem, 3.2vw, 2.75rem);
+  line-height: 1.28;
+  text-wrap: balance;
+  text-shadow:
+    0 3px 0 #40290e,
+    0 0 20px rgb(255 197 61 / 44%);
+}
+
+.chapter-archive__subtitle {
+  width: fit-content;
+  margin: 8px auto 0;
+  color: #e7edf9;
+  font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-shadow: 0 2px 4px rgb(0 0 0 / 80%);
+}
+
+.chapter-archive .chapter-detail__progress {
+  display: grid;
+  width: min(100%, 320px);
+  margin: 0 0 0 auto;
+  grid-template-columns: minmax(0, 1fr);
+  grid-column: 3;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgb(141 175 229 / 34%);
+  border-radius: 2px;
+  background: rgb(3 14 40 / 78%);
+  box-shadow: 0 6px 22px rgb(0 0 0 / 30%);
+  backdrop-filter: blur(4px);
+}
+
+.chapter-detail__learning-status {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chapter-detail__progress-label {
+  color: #dbe7fa;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.chapter-archive .chapter-status-pill {
+  min-height: 32px;
+  border-color: #dbab43;
+  border-radius: 2px;
+  background: #f4e8be;
+  color: #402e16;
+}
+
+.chapter-archive .chapter-detail__review-progress-row {
+  margin-bottom: 5px;
+}
+
+.chapter-archive .chapter-detail__mastery {
+  min-width: max-content;
+}
+
+.chapter-archive .chapter-detail__mastery-text {
+  text-align: left;
+}

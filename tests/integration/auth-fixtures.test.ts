@@ -13,6 +13,7 @@ import {
 const fixtureLabels = [
   'authLifecycleOne',
   'authLifecycleTwo',
+  'sequenceStudent',
   'teacher',
   'studentOne',
   'studentTwo',

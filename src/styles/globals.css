@@ -5,6 +5,7 @@
 }
 
 html {
+  overflow-x: clip;
   min-height: 100%;
   background: var(--color-bg);
   color: var(--color-text);
@@ -13,6 +14,7 @@ html {
 }
 
 body {
+  overflow-x: clip;
   min-width: 0;
   min-height: 100dvh;
   margin: 0;
@@ -29,6 +31,14 @@ h3,
 h4 {
   font-weight: 800;
   letter-spacing: 0.005em;
+}
+
+/* 學生端每頁唯一的最大主標題統一使用繁中像素字；教師與公共頁維持各自字體。 */
+.game-stage[data-shell-role='student'] #main-content.route-world-stage h1 {
+  font-family: var(--font-pixel-tc);
+  font-synthesis: none;
+  font-weight: 400;
+  letter-spacing: 0.04em;
 }
 
 /* Syne 的 0/o 字形相近:僅用於品牌與章節編號等裝飾性文字,
@@ -68,7 +78,7 @@ a {
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  background: var(--surface-page);
+  background: var(--pixel-night-deep);
 }
 
 .environment-marker {
@@ -103,6 +113,71 @@ a {
   min-height: 0;
   flex: 1;
   flex-direction: column;
+}
+
+.game-stage[data-shell-role='student'] .game-stage__scene {
+  overscroll-behavior-y: contain;
+}
+
+/* 連續世界舞台：路由內容留在同一個深夜 App Shell，僅由場景層換色。
+   轉場是獨立裝飾節點，不 key／重掛 Outlet，避免閱讀與測驗狀態被重置。 */
+.route-world-stage {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(
+      circle at 18% 14%,
+      color-mix(in srgb, var(--pixel-window-muted) 28%, transparent) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 76% 28%,
+      color-mix(in srgb, var(--pixel-gold) 25%, transparent) 0 1px,
+      transparent 2px
+    ),
+    linear-gradient(var(--pixel-night-deep), var(--stage-void));
+  background-size:
+    128px 96px,
+    176px 132px,
+    auto;
+}
+
+.route-world-stage > :not(.route-world-stage__transition) {
+  position: relative;
+  z-index: 1;
+}
+
+.route-world-stage__transition {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--pixel-window-muted) 18%, transparent),
+    transparent
+  );
+  opacity: 0;
+  transform: translateX(14%);
+  animation: route-world-transition var(--journey-transition-duration) ease-out;
+}
+
+@keyframes route-world-transition {
+  from {
+    opacity: 0.48;
+    transform: translateX(-14%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-world-stage__transition {
+    animation-name: none;
+  }
+}
+
+.route-world-stage[data-motion='reduced'] .route-world-stage__transition {
+  animation-name: none;
 }
 
 @media (min-width: 768px) and (orientation: landscape) {
@@ -258,10 +333,13 @@ a {
 .hud-top {
   z-index: 40;
   display: flex;
-  align-items: flex-start;
+  min-height: var(--journey-hud-status-height);
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3) 0;
+  border-bottom: 2px solid var(--pixel-gold-deep);
+  background: color-mix(in srgb, var(--pixel-night) 94%, transparent);
+  padding: var(--space-1) var(--space-3);
 }
 
 /* 左上狀態窗：夜空窗小卡（Level＋EXP 條）。
@@ -453,72 +531,217 @@ a {
   margin-top: var(--space-8);
 }
 
-/* ── 遊戲標題畫面（spec §8）────────────────────────────────────── */
-.title-screen {
-  display: flex;
-  flex: 1;
-  min-width: 0; /* 阻斷 flexbox 預設 min-width:auto 隨不可斷詞子項向上撐開祖先(320px 溢出根因) */
+/* ── 世界入口首頁：board 02-v2 的桌機／手機獨立構圖 ─────────── */
+#main-content:has(> .home-world) {
+  align-items: stretch;
+  padding: 0;
+}
+
+.home-world {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  width: 100%;
   min-height: 100%;
-  flex-direction: column;
+  overflow: hidden;
+  grid-template-rows: auto 1fr auto;
+  background-color: var(--pixel-night-deep);
+  background-image: url('../assets/home/night-kingdom-desktop.webp');
+  background-position: center;
+  background-size: cover;
+  color: var(--pixel-window-ink);
+}
+
+.home-world::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--stage-void) 76%, transparent) 0%,
+    color-mix(in srgb, var(--stage-void) 26%, transparent) 43%,
+    transparent 70%
+  );
+  content: '';
+  pointer-events: none;
+}
+
+.home-world__brand-bar,
+.home-world__story,
+.home-world__actions {
+  position: relative;
+  z-index: 1;
+}
+
+.home-world__brand-bar {
+  display: flex;
+  min-height: 86px;
   align-items: center;
-  justify-content: center;
   gap: var(--space-3);
-  background: var(--pixel-night-deep);
-  color: var(--pixel-parchment);
-  text-align: center;
-  padding: var(--space-6) var(--space-4);
+  background: color-mix(in srgb, var(--stage-void) 86%, transparent);
+  padding: var(--space-3) clamp(var(--space-5), 4vw, var(--space-12));
 }
 
-.title-screen__logo {
-  margin: 0;
+.home-world__crest {
+  display: grid;
+  width: 52px;
+  height: 60px;
+  flex: none;
+  place-items: center;
+}
+
+.home-world__crest img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.home-world__brand-name {
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 2.4vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.home-world__story {
+  align-self: start;
+  justify-self: start;
+  margin: clamp(108px, 15vh, 164px) 0 0 clamp(42px, 7vw, 118px);
+}
+
+.home-world__title {
   max-width: 100%;
-  overflow-wrap: anywhere; /* "ColorPlay" 單詞不可斷詞的保底：極窄寬度改行而非溢出 */
-  font-family: var(--font-pixel-latin), var(--font-pixel-tc), sans-serif;
-  font-size: clamp(1.5rem, 8vw, 4rem);
-  letter-spacing: 0.06em;
-}
-
-.title-screen__subtitle {
   margin: 0;
-  font-size: 15px;
-  font-weight: 700;
+  background: linear-gradient(
+    90deg,
+    var(--coral-600),
+    var(--amber-avatar),
+    var(--jade-600),
+    var(--cobalt-600),
+    var(--hue-ch3)
+  );
+  background-clip: text;
+  color: transparent;
+  font-family: var(--font-display);
+  font-size: clamp(3.65rem, 6.25vw, 5.45rem);
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  white-space: nowrap;
 }
 
-.title-screen__start {
+.home-world__subtitle {
+  margin: var(--space-5) 0 0;
+  font-family: var(--font-pixel-tc);
+  font-size: clamp(1.35rem, 2.35vw, 2.15rem);
+  font-synthesis: none;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.home-world__actions {
+  display: flex;
+  width: min(330px, calc(100% - var(--space-8)));
+  align-self: end;
+  justify-self: end;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0 clamp(var(--space-6), 5vw, var(--space-12))
+    clamp(var(--space-6), 5vh, var(--space-12)) 0;
+}
+
+.home-world__start {
   display: inline-flex;
-  min-width: 44px;
-  min-height: 48px;
+  width: 100%;
+  min-height: 56px;
   align-items: center;
   justify-content: center;
-  border: 3px solid var(--pixel-window-frame);
   border-radius: var(--radius-pixel);
-  background: var(--pixel-night);
-  box-shadow: 4px 4px 0 var(--pixel-shadow);
-  color: var(--pixel-parchment);
-  font-family: var(--font-pixel-latin), var(--font-pixel-tc), sans-serif;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  margin-top: var(--space-3);
-  padding: var(--space-2) var(--space-5);
+  color: var(--pixel-window-ink);
+  font-family: var(--font-pixel-tc);
+  font-size: 1rem;
+  font-synthesis: none;
+  font-weight: 400;
+  padding: var(--space-3) var(--space-5);
+  text-align: center;
   text-decoration: none;
-  animation: title-start-blink 1.6s steps(2, jump-none) infinite;
 }
 
-@keyframes title-start-blink {
-  50% {
-    opacity: 0.7; /* 最暗幀對比仍 ≥4.5:1（parchment on night-deep ≈14:1，×0.7 有餘裕；gate 實測把關） */
+.home-world__start {
+  border: 2px solid color-mix(in srgb, var(--cobalt-600) 70%, white);
+  background: linear-gradient(
+    var(--cobalt-600),
+    color-mix(in srgb, var(--cobalt-700) 82%, var(--pixel-night))
+  );
+  box-shadow: 0 4px 0 var(--pixel-shadow);
+  font-size: 1.35rem;
+}
+
+.home-world__start:hover {
+  border-color: var(--pixel-window-frame);
+}
+
+@media (max-width: 47.99rem) {
+  .home-world {
+    min-height: max(100%, 720px);
+    background-image: url('../assets/home/night-kingdom-mobile.webp');
+    background-position: center;
   }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .title-screen__start {
-    animation: none;
+  .home-world::before {
+    background: linear-gradient(
+      var(--stage-void) 0%,
+      color-mix(in srgb, var(--stage-void) 42%, transparent) 22%,
+      transparent 54%,
+      color-mix(in srgb, var(--stage-void) 82%, transparent) 100%
+    );
   }
-}
 
-[data-reduced-motion='true'] .title-screen__start {
-  animation: none;
+  .home-world__brand-bar {
+    min-height: 78px;
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .home-world__crest {
+    width: 44px;
+    height: 52px;
+  }
+
+  .home-world__brand-name {
+    font-size: 1.55rem;
+  }
+
+  .home-world__story {
+    align-self: start;
+    justify-self: center;
+    margin: var(--space-12) var(--space-4) 0;
+    text-align: center;
+  }
+
+  .home-world__title {
+    font-size: clamp(2.5rem, 11.75vw, 3rem);
+    line-height: 1;
+  }
+
+  .home-world__subtitle {
+    margin-top: var(--space-3);
+    font-size: clamp(0.95rem, 4.35vw, 1.15rem);
+    letter-spacing: 0.07em;
+  }
+
+  .home-world__actions {
+    width: calc(100% - var(--space-8));
+    flex-direction: column;
+    justify-self: center;
+    margin: 0 0 max(var(--space-6), env(safe-area-inset-bottom));
+  }
+
+  .home-world__start {
+    min-height: 58px;
+  }
 }
 
 .login-form {
@@ -543,6 +766,62 @@ a {
   border-radius: var(--radius-control);
   background: var(--color-surface);
   padding: var(--space-2) var(--space-3);
+}
+
+.login-form__password-control {
+  position: relative;
+}
+
+.login-form__password-control input {
+  padding-right: 56px;
+}
+
+.login-form__password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  display: grid;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-pixel);
+  background: transparent;
+  color: var(--ink-700);
+  cursor: pointer;
+  padding: 0;
+  transform: translateY(-50%);
+}
+
+.login-form__password-toggle::after {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 2;
+  display: none;
+  width: max-content;
+  max-width: 160px;
+  border: 1px solid var(--pixel-window-frame);
+  background: var(--pixel-night-deep);
+  color: var(--pixel-window-ink);
+  content: attr(data-tooltip);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 5px 8px;
+  pointer-events: none;
+}
+
+.login-form__password-toggle:hover::after,
+.login-form__password-toggle:focus-visible::after {
+  display: block;
+}
+
+.login-form__password-toggle:hover {
+  background: color-mix(in srgb, var(--cobalt-600) 12%, transparent);
+  color: var(--cobalt-700);
 }
 
 .login-form__field input[aria-invalid='true'] {
@@ -1373,6 +1652,7 @@ a {
   z-index: 50;
   top: 0;
   display: flex;
+  min-height: var(--journey-hud-command-height);
   align-items: center;
   gap: var(--space-2);
   border-bottom: 2px solid var(--pixel-window-frame);
@@ -1437,6 +1717,14 @@ a {
   color: var(--pixel-night);
 }
 
+/* Phase 5V Task 1：教師端 HUD 識別——沿用既有 --color-teacher 暖橘 token，
+   與學生端共用 design system 但視覺可辨識（spec/07-ui-visual-system.md §4
+   Teacher：需有明顯視覺區隔，但共用 design system）。 */
+.hud-command[data-variant='teacher'] .hud-command__tab--active,
+.hud-command[data-variant='teacher'] .hud-command__link--active {
+  border-color: var(--color-teacher);
+}
+
 .hud-command__tab:hover,
 .hud-command__link:hover {
   border-color: var(--pixel-window-frame);
@@ -1460,6 +1748,10 @@ a {
   font-weight: 800;
   letter-spacing: 0.08em;
   padding: 0 var(--space-3);
+}
+
+.hud-menu__toggle:focus-visible {
+  outline-offset: -3px;
 }
 
 .hud-menu__panel {
@@ -1494,6 +1786,13 @@ a {
   background: var(--pixel-parchment);
   color: var(--pixel-night);
   font-weight: 800;
+}
+
+.hud-menu__logout--pixel,
+.login-form__submit--pixel,
+.logout-confirmation h2,
+.logout-confirmation button {
+  font-family: var(--font-pixel-tc);
 }
 
 /* 舞台模式：指令列是舞台頂列，sticky 還原為普通列。 */
@@ -2941,6 +3240,14 @@ a {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 900;
+}
+
+/* Phase 5V Task 3：成員數／加入碼摘要並列徽章。 */
+.classroom-section-header__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 /* 成員表狀態欄：純文字＋小圓點（無邊框，區別於上面的膠囊 chip） */
@@ -4469,6 +4776,11 @@ a {
   color: var(--pixel-window-ink);
 }
 
+.chapter-dungeon .chapter-detail__mastery-value--pending {
+  color: var(--pixel-window-muted);
+  font-size: 0.85em;
+}
+
 /* 透明底 pill 疊夜底字不可讀(批②同構缺陷)→ 改實色淺底。 */
 .chapter-dungeon .chapter-status-pill--success,
 .chapter-dungeon .chapter-status-pill--primary {
@@ -4505,6 +4817,30 @@ a {
 .chapter-dungeon .review-accordion {
   background: var(--pixel-parchment-card);
   border: 2px solid var(--pixel-gold-deep);
+}
+
+/* Phase 4A：locked／content-preparing／content-readiness-error／error 頁內狀態卡
+   （原 Navigate-away 行為改為頁內渲染，沿用本區塊既有夜窗配方，不新增 token）。 */
+.chapter-dungeon .chapter-detail-state {
+  background: var(--pixel-night);
+  border: 3px solid var(--pixel-window-frame);
+  outline: 2px solid var(--pixel-night);
+  box-shadow:
+    0 0 0 5px var(--pixel-window-frame),
+    4px 4px 0 var(--pixel-shadow);
+  border-radius: var(--radius-pixel);
+  padding: 20px 24px;
+  color: var(--pixel-window-ink);
+}
+
+.chapter-detail-state__icon {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: 32px;
+}
+
+.chapter-detail-state--error > p[role='alert'] {
+  color: var(--pixel-danger);
 }
 
 /* 空狀態與錯誤列直接坐夜底。 */
@@ -4815,13 +5151,13 @@ a {
   /* Task 8：保留 fixed——投影＝全螢幕接管例外（ledger「Live 投影墨色舞台例外」慣例），不隨舞台改動。 */
   position: fixed;
   z-index: 80;
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
-  padding: var(--space-6);
+  display: grid;
+  overflow: hidden;
+  padding: var(--space-3) var(--space-6);
   background: var(--pixel-night-deep);
   color: var(--white);
-  gap: var(--space-5);
+  gap: var(--space-1);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   inset: 0;
 }
 
@@ -4830,6 +5166,10 @@ a {
   align-items: center;
   justify-content: space-between;
   font-size: 1.25rem;
+}
+
+.live-presenter__bar > p {
+  margin: 0;
 }
 
 .live-presenter__bar > div {
@@ -4846,12 +5186,20 @@ a {
   padding: var(--space-2) var(--space-4);
 }
 
+.live-presenter :focus-visible {
+  outline: 3px solid var(--yellow-brand);
+  outline-offset: 2px;
+}
+
 .live-presenter__lobby,
 .live-presenter__question,
 .live-presenter__feedback,
-.live-presenter__podium-stage {
+.live-presenter__podium-stage,
+.live-presenter__status {
   display: flex;
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -4859,14 +5207,36 @@ a {
   text-align: center;
 }
 
+.live-presenter__feedback {
+  width: min(100%, 60rem);
+  height: 100%;
+  align-self: center;
+  justify-content: flex-start;
+}
+
+.live-presenter__feedback .live-presenter__chart {
+  width: 100%;
+  padding-right: 6%;
+}
+
 /* Neutralize inherited paragraph margins and accidental growth so the
    projector cluster stays tight on any viewport. */
 .live-presenter__lobby > *,
 .live-presenter__question > *,
 .live-presenter__feedback > *,
-.live-presenter__podium-stage > * {
+.live-presenter__podium-stage > *,
+.live-presenter__status > * {
   flex: 0 0 auto;
   margin: 0;
+}
+
+.live-presenter__viewport-warning {
+  display: none;
+  align-self: center;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
 }
 
 .live-presenter__hint {
@@ -4886,9 +5256,12 @@ a {
   font-size: 1.75rem;
 }
 
-.live-presenter__wall {
+.live-presenter__lobby > .live-presenter__wall {
   display: flex;
+  flex: 1 1 auto;
+  overflow: auto;
   max-width: 60rem;
+  min-height: 0;
   flex-wrap: wrap;
   justify-content: center;
   padding: 0;
@@ -4920,6 +5293,40 @@ a {
 .live-presenter__feedback h2 {
   max-width: 60rem;
   font-size: clamp(2rem, 5vw, 3.25rem);
+}
+
+.live-presenter__question {
+  display: grid;
+  width: min(100%, 60rem);
+  align-self: center;
+  gap: var(--space-2);
+  grid-template-areas:
+    'prompt prompt'
+    'timer answered'
+    'options options';
+  grid-template-columns: 120px minmax(0, 1fr);
+  grid-template-rows: auto 120px auto;
+}
+
+.live-presenter__question h2 {
+  grid-area: prompt;
+}
+
+.live-presenter__question .live-presenter__ring,
+.live-presenter__question .live-presenter__paused {
+  align-self: center;
+  grid-area: timer;
+  justify-self: center;
+}
+
+.live-presenter__question .live-presenter__answered {
+  align-self: center;
+  grid-area: answered;
+  justify-self: center;
+}
+
+.live-presenter__question .live-presenter__options {
+  grid-area: options;
 }
 
 .live-presenter__ring {
@@ -4977,7 +5384,7 @@ a {
   font-size: 2rem;
   font-weight: 700;
   gap: var(--space-3);
-  padding: 28px 32px;
+  padding: 12px 24px;
   text-align: left;
 }
 
@@ -5010,6 +5417,12 @@ a {
   padding: 0;
   font-size: 1.5rem;
   list-style: none;
+}
+
+.live-presenter__feedback > .live-presenter__standings {
+  flex: 1 1 auto;
+  overflow: auto;
+  min-height: 0;
 }
 
 .live-presenter__standings li {
@@ -5080,8 +5493,26 @@ a {
 
 .live-presenter__controls {
   display: flex;
+  min-height: 44px;
+  align-items: center;
   justify-content: center;
   gap: var(--space-3);
+}
+
+@media (width < 1024px), (height < 720px) {
+  .live-presenter {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+
+  .live-presenter__viewport-warning {
+    display: block;
+  }
+
+  .live-presenter__status,
+  .live-presenter__podium-stage,
+  .live-presenter > .live-projector {
+    display: none;
+  }
 }
 
 .live-presenter__controls button {
@@ -5094,6 +5525,11 @@ a {
   padding: var(--space-2) var(--space-5);
 }
 
+.live-presenter__controls button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .live-presenter__controls .primary-action {
   border: none;
   background: var(--yellow-brand);
@@ -5104,6 +5540,13 @@ a {
 [data-reduced-motion='true'] .live-presenter__wall-chip,
 [data-reduced-motion='true'] .live-presenter__podium-step {
   animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-presenter__wall-chip,
+  .live-presenter__podium-step {
+    animation-name: none;
+  }
 }
 
 [data-reduced-motion='true'] .live-presenter__ring svg {
@@ -5171,6 +5614,25 @@ a {
   border-radius: var(--radius-control);
   background: var(--surface-card);
   padding: var(--space-2) var(--space-3);
+}
+
+/* Phase 5V Task 2：篩選欄位有值時的 selected 態（client-only 視覺，不改查詢
+   邏輯本身；狀態不只靠顏色，邊框寬度也一起變化）。 */
+.teacher-analytics-filters > div[data-active='true'] {
+  border-color: var(--color-teacher);
+}
+
+.teacher-analytics-filters > div[data-active='true'] select,
+.teacher-analytics-filters > div[data-active='true'] input {
+  border: 2px solid var(--color-teacher);
+}
+
+/* Phase 5V Task 2：表格容器外層框線（僅框線與捲動容器，表格本身內距/欄寬/
+   字級不動）。 */
+.teacher-table-frame {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
 }
 
 /* Task 8（盤點 G 未守門缺口）：教學分析頁三張表（題目分析／子題精熟／Live
@@ -5497,6 +5959,493 @@ select#dashboard-classroom {
   border-radius: var(--radius-control);
   margin-right: var(--space-3);
   padding: var(--space-2) var(--space-3);
+}
+
+/* Admin invitation／MFA enroll/challenge 表單(spec §3.4 44px target) */
+.admin-invitation-accept-form,
+.admin-mfa-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.admin-invitation-accept-form label,
+.admin-mfa-form label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+
+.admin-invitation-accept-form input,
+.admin-mfa-form input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-2) var(--space-3);
+}
+
+.admin-mfa-form__qr {
+  width: fit-content;
+  border: 8px solid white;
+  background: white;
+}
+
+.admin-mfa-form details code {
+  display: block;
+  overflow-wrap: anywhere;
+  margin-top: var(--space-2);
+  font-family: monospace;
+}
+
+/* ── Admin 命令 UI 外殼(Task 12;spec §3.1、§3.4)────────────────── */
+
+.admin-shell {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  background: var(--surface-page);
+  color: var(--color-text);
+}
+
+.admin-shell__menu-toggle {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--color-text);
+  font-weight: 800;
+  margin: var(--space-3);
+}
+
+.admin-shell__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  padding: var(--space-4);
+}
+
+/* AdminShell 在窄視口用 `hidden` attribute 收起 MENU drawer（見
+   admin-shell.tsx 的 navVisible）。沒有這條規則的話，上面那條純 class
+   的 display:flex 具體度不輸給 [hidden] 這個 attribute selector，
+   會蓋掉瀏覽器對 hidden 屬性的預設隱藏——nav 元素的 hidden 屬性明明有設，
+   畫面上卻一直顯示，drawer 實際上從未真正收合過。 */
+.admin-shell__nav[hidden] {
+  display: none;
+}
+
+.admin-shell__group-label {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 var(--space-2);
+}
+
+.admin-shell__group ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-shell__link {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+  font-weight: 700;
+  text-decoration: none;
+  padding: 0 var(--space-3);
+}
+
+.admin-shell__link:hover {
+  background: var(--ink-100);
+}
+
+.admin-shell__link--active {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+.admin-shell__main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-6);
+}
+
+@media (min-width: 1024px) {
+  .admin-shell--wide {
+    flex-direction: row;
+  }
+
+  .admin-shell--wide .admin-shell__nav {
+    flex: 0 0 260px;
+    overflow-y: auto;
+    border-right: 1px solid var(--border-subtle);
+    border-bottom: none;
+  }
+
+  .admin-shell--wide .admin-shell__main {
+    overflow-y: auto;
+  }
+}
+
+/* ── Admin 命令確認框(Task 12;spec §3.1、§3.4、§8.2)──────────── */
+
+.admin-command-dialog__backdrop {
+  position: fixed;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 55%);
+  inset: 0;
+  padding: var(--space-4);
+}
+
+.admin-command-dialog {
+  width: min(100%, 480px);
+  max-height: calc(100vh - var(--space-8));
+  max-height: calc(100dvh - var(--space-8));
+  overflow-y: auto;
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  padding: var(--space-6);
+}
+
+.admin-command-dialog__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+
+.admin-command-dialog__field textarea {
+  min-height: 96px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font: inherit;
+  padding: var(--space-3);
+  resize: vertical;
+}
+
+.admin-command-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+/* ── Admin 安全總覽(Task 12;spec §3.1、§8.3)──────────────────── */
+
+.admin-overview__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.admin-overview__incidents {
+  border: 2px solid var(--color-alert);
+  border-radius: var(--radius-card);
+  background: var(--amber-tint-card);
+  padding: var(--space-4);
+}
+
+.admin-overview__incidents ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+/* ── Admin 身分與存取頁(Task 12;spec §3.1、§8.1)──────────────── */
+
+.admin-access-admins__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.admin-access-invitations__issue-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.admin-access-invitations__issue-form input {
+  min-height: 44px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font: inherit;
+  padding: 0 var(--space-3);
+}
+
+.admin-access-invitations__token-box {
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  padding: var(--space-4);
+}
+
+.admin-access-invitations__token-box code {
+  display: block;
+  overflow-wrap: anywhere;
+  border-radius: var(--radius-control);
+  background: var(--ink-100);
+  margin: var(--space-2) 0;
+  padding: var(--space-3);
+  font-family: monospace;
+}
+
+/* ── Admin 資料瀏覽器／稽核／健康頁(Task 13;spec §3.4、§7、§10)────── */
+
+.admin-data-index__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.admin-data-index__domain {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  padding: var(--space-4);
+}
+
+.admin-data-index__domain h2 {
+  margin-top: 0;
+}
+
+.admin-data-index__resources {
+  display: grid;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* .ui-table 是 width:100%,寬表會被壓縮而不是溢出,容器的 overflow-x 就永遠
+   不會觸發。min-width:max-content 讓表格照內容撐開 → 由 .ui-table-scroll
+   自己橫向捲動,頁面本體不水平捲動(spec §3.4)。同 .live-matrix-scroll 慣例。 */
+.admin-data-table__scroll .ui-table {
+  min-width: max-content;
+}
+
+/* 揭露鈕:44px 觸控目標下限(spec §3.4);與遮罩值同格並排。 */
+.admin-data-table__reveal {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--ink-700);
+  cursor: pointer;
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+  margin-left: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+}
+
+.admin-data-table__reveal:hover {
+  border-color: var(--ink-900);
+}
+
+/* 後續頁載入失敗:與表格區隔開,確保重試入口明顯可見。 */
+.admin-data-browser__page-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  border: 2px solid var(--color-alert);
+  border-radius: var(--radius-card);
+  background: var(--amber-tint-card);
+  padding: var(--space-3) var(--space-4);
+}
+
+.admin-data-browser__query,
+.admin-audit__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.admin-data-browser__query label,
+.admin-audit__filters label {
+  display: block;
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+
+.admin-data-browser__query input,
+.admin-data-browser__query select,
+.admin-audit__filters input,
+.admin-audit__filters select {
+  min-height: 44px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  font: inherit;
+  padding: 0 var(--space-3);
+}
+
+/* 揭露結果:明文只在這個框裡短暫出現,關閉即消失(spec §7)。 */
+.admin-reveal-dialog__result code {
+  display: block;
+  overflow-wrap: anywhere;
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--ink-100);
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  font-family: monospace;
+  font-size: 1.1rem;
+}
+
+/* ── Admin 教師帳號(Task 5;design §9.1–9.2)───────────────────── */
+
+.admin-teachers__heading-row,
+.admin-teachers__filters,
+.admin-teacher-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.admin-teachers__heading-row {
+  justify-content: space-between;
+}
+
+.admin-teachers__filters label {
+  display: block;
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+
+.admin-teachers__filters input,
+.admin-teachers__filters select,
+.teacher-account-form input {
+  min-height: 44px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  color: var(--color-text);
+  font: inherit;
+  padding: 0 var(--space-3);
+}
+
+.teacher-account-form__destructive-confirmation {
+  border: 2px solid var(--color-danger, #b42318);
+  border-radius: 0.75rem;
+  padding: 0.875rem;
+}
+
+.teacher-account-form__destructive-confirmation label {
+  align-items: center;
+  display: flex;
+  gap: 0.625rem;
+  min-height: 44px;
+}
+
+.teacher-account-form__destructive-confirmation input {
+  flex: 0 0 auto;
+  min-height: 24px;
+  width: 24px;
+}
+
+.admin-teachers__operation-status {
+  border: 2px solid var(--color-alert);
+  border-radius: var(--radius-card);
+  background: var(--amber-tint-card);
+  padding: var(--space-4);
+}
+
+.admin-teachers__detail-link,
+.admin-teacher-detail__back-link,
+.admin-teachers__health-link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  font-weight: 700;
+  padding: 0 var(--space-2);
+}
+
+.admin-teacher-detail__facts,
+.teacher-secret-receipt dl {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.admin-teacher-detail__facts > div,
+.teacher-secret-receipt dl > div {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-card);
+  padding: var(--space-3);
+}
+
+.admin-teacher-detail__facts dt,
+.teacher-secret-receipt dt {
+  color: var(--color-muted);
+  font-size: var(--font-size-metadata);
+  font-weight: 700;
+}
+
+.admin-teacher-detail__facts dd,
+.teacher-secret-receipt dd {
+  margin: var(--space-1) 0 0;
+}
+
+.admin-teacher-detail__hint,
+.teacher-secret-receipt__warning {
+  color: var(--color-muted);
+}
+
+.teacher-secret-receipt code {
+  display: block;
+  overflow-wrap: anywhere;
+  border-radius: var(--radius-control);
+  background: var(--ink-100);
+  margin: var(--space-2) 0;
+  padding: var(--space-3);
+  font-family: monospace;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 639px) {
+  .admin-teachers__heading-row,
+  .admin-teachers__filters,
+  .admin-teacher-detail__actions,
+  .admin-command-dialog__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-teachers__filters input,
+  .admin-teachers__filters select,
+  .admin-teacher-detail__actions > *,
+  .admin-command-dialog__actions > * {
+    width: 100%;
+  }
 }
 
 /* ── JRPG 對話窗(ADR 0005;元件 src/components/ui/rpg-window.tsx) ── */
@@ -6727,11 +7676,11 @@ select#dashboard-classroom {
 }
 
 .live-presenter__podium::before {
-  left: -44px;
+  left: 0;
 }
 
 .live-presenter__podium::after {
-  right: -44px;
+  right: 0;
   animation-delay: 0.6s;
 }
 
@@ -7009,6 +7958,9 @@ select#dashboard-classroom {
 /* 學生頂部：頭像＋Level/XP/Token 一體群組卡（像素金框）。 */
 .hud-economy-group {
   display: flex;
+  min-width: 0;
+  width: min(100%, 620px);
+  min-height: calc(var(--journey-hud-status-height) - var(--space-2));
   align-items: center;
   border: 2px solid var(--pixel-gold-deep);
   border-radius: var(--radius-pixel);
@@ -7016,6 +7968,22 @@ select#dashboard-classroom {
   box-shadow: 2px 2px 0 var(--pixel-shadow);
   gap: var(--space-2);
   padding: 4px 10px 4px 4px;
+}
+
+.hud-identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.hud-identity__name {
+  max-width: 14ch;
+  color: var(--pixel-window-ink);
+  font-family: var(--font-pixel-tc);
+  font-size: 13px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .hud-avatar {
@@ -7034,6 +8002,13 @@ select#dashboard-classroom {
   height: auto;
 }
 
+.hud-avatar__portrait {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+}
+
 .hud-avatar--hero {
   background:
     url('../assets/sprites/hero.png') center / 32px 32px no-repeat,
@@ -7044,10 +8019,2344 @@ select#dashboard-classroom {
   image-rendering: pixelated;
 }
 
+/* JRPG generated board 01：學生 HUD 是單一穩定介面，不再把指令列與
+   identity/economy 拆成上下兩條。桌機維持單列，route 切換只換主場景。 */
+.hud-top--student {
+  position: sticky;
+  z-index: 50;
+  top: 0;
+  display: grid;
+  min-height: var(--journey-student-hud-height);
+  flex: 0 0 auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(var(--space-3), 2vw, var(--space-6));
+  border: 1px solid
+    color-mix(in srgb, var(--pixel-window-frame) 42%, transparent);
+  border-width: 0 0 1px;
+  background: color-mix(in srgb, var(--pixel-night-deep) 96%, transparent);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--stage-void) 72%, transparent);
+  padding: 6px clamp(var(--space-3), 2vw, var(--space-6));
+}
+
+.hud-top--student .hud-economy-group {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: clamp(var(--space-3), 1.6vw, var(--space-5));
+  padding: 0;
+  grid-column: 1;
+}
+
+.hud-top--student .hud-identity {
+  display: grid;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  grid-template-columns: 56px minmax(300px, 1fr) auto;
+  grid-template-rows: 1fr 1fr;
+  align-items: center;
+  align-self: stretch;
+  gap: 0 clamp(var(--space-3), 1.6vw, var(--space-5));
+  border: 0;
+  padding: 0;
+}
+
+.hud-top--student .hud-identity__name {
+  max-width: 12ch;
+  grid-column: 2;
+  grid-row: 1;
+  align-self: end;
+  color: var(--pixel-window-ink);
+  font-size: clamp(15px, 1.35vw, 19px);
+  overflow-wrap: anywhere;
+}
+
+.economy-summary__hud-progression {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  grid-column: 2;
+  grid-row: 2;
+  gap: clamp(8px, 1vw, 14px);
+}
+
+.hud-top--student .hud-avatar {
+  width: 56px;
+  height: 56px;
+  border-color: var(--pixel-gold);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px var(--pixel-night-deep),
+    0 0 0 3px color-mix(in srgb, var(--pixel-window-frame) 72%, transparent);
+  overflow: hidden;
+  grid-column: 1;
+  grid-row: 1 / 3;
+}
+
+.hud-top--student .hud-avatar .blook-art {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.hud-top--student .economy-summary--hud {
+  display: contents;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--pixel-window-ink);
+  padding: 0;
+}
+
+.economy-summary__hud-level {
+  flex: 0 0 auto;
+  color: var(--pixel-window-muted);
+  font-size: clamp(14px, 1.25vw, 18px);
+  white-space: nowrap;
+}
+
+.economy-summary__hud-xp {
+  display: grid;
+  min-width: 140px;
+  max-width: 320px;
+  flex: 1 1 260px;
+  grid-template-columns: auto minmax(70px, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--pixel-window-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.economy-summary__hud-xp > strong {
+  color: var(--color-info);
+  font-size: 14px;
+}
+
+.economy-summary__hud-xp progress {
+  width: 100%;
+  height: 8px;
+  accent-color: var(--color-info);
+}
+
+.economy-summary__hud-xp progress::-webkit-progress-bar {
+  background: color-mix(in srgb, var(--pixel-window-muted) 28%, transparent);
+}
+
+.economy-summary__hud-xp progress::-webkit-progress-value {
+  background: var(--color-info);
+}
+
+.economy-summary__hud-xp progress::-moz-progress-bar {
+  background: var(--color-info);
+}
+
+.economy-summary__hud-xp > span {
+  color: var(--pixel-window-muted);
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.hud-top--student .economy-summary__tokens {
+  display: inline-flex;
+  min-width: 90px;
+  align-items: center;
+  justify-content: center;
+  grid-column: 3;
+  grid-row: 1 / 3;
+  gap: var(--space-1);
+  border: 0;
+  border-left: 1px solid
+    color-mix(in srgb, var(--pixel-window-frame) 24%, transparent);
+  border-radius: 0;
+  background: transparent;
+  color: var(--pixel-window-ink);
+  font-size: clamp(15px, 1.4vw, 19px);
+  padding: var(--space-2) 0 var(--space-2)
+    clamp(var(--space-3), 1.6vw, var(--space-5));
+}
+
+.hud-coin-pixel--32bit {
+  position: relative;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0 4px,
+      #713900 4px 20px,
+      transparent 20px
+    ),
+    linear-gradient(transparent 0 4px, #713900 4px 20px, transparent 20px);
+  clip-path: polygon(
+    25% 0,
+    75% 0,
+    100% 25%,
+    100% 75%,
+    75% 100%,
+    25% 100%,
+    0 75%,
+    0 25%
+  );
+  filter: drop-shadow(2px 2px 0 var(--pixel-shadow));
+  image-rendering: pixelated;
+}
+
+.hud-coin-pixel--32bit::before {
+  position: absolute;
+  inset: 3px;
+  background:
+    linear-gradient(135deg, #fff3a3 0 18%, transparent 19%),
+    linear-gradient(315deg, #b76408 0 22%, transparent 23%), #f7bd2d;
+  clip-path: inherit;
+  content: '';
+}
+
+.hud-coin-pixel--32bit::after {
+  position: absolute;
+  top: 7px;
+  left: 9px;
+  width: 6px;
+  height: 10px;
+  background: #a85606;
+  box-shadow:
+    2px 0 0 #ffe56e,
+    -2px 2px 0 #d9860c,
+    2px 8px 0 #713900;
+  content: '';
+}
+
+.hud-top--student .hud-command {
+  position: static;
+  min-height: 0;
+  flex: 0 1 auto;
+  gap: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  grid-column: 2;
+}
+
+.hud-top--student .hud-command__nav {
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  gap: 0;
+}
+
+.hud-top--student .hud-command__spacer {
+  display: none;
+}
+
+.hud-top--student .hud-command__tab {
+  min-width: clamp(76px, 7.5vw, 104px);
+  min-height: 60px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  border: 0;
+  border-left: 1px solid
+    color-mix(in srgb, var(--pixel-window-frame) 22%, transparent);
+  border-radius: 0;
+  color: var(--pixel-window-muted);
+  font-size: 13px;
+  padding: 0 var(--space-2);
+}
+
+.hud-top--student .hud-command__tab--active {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-info) 10%, transparent),
+    transparent
+  );
+  box-shadow: inset 0 -3px 0 var(--color-info);
+  color: var(--color-info);
+}
+
+.hud-top--student .hud-command__tab:hover {
+  border-color: color-mix(in srgb, var(--pixel-window-frame) 22%, transparent);
+  color: var(--pixel-window-ink);
+}
+
+.hud-top--student .hud-menu__toggle {
+  min-width: 76px;
+  min-height: 60px;
+  flex-direction: column;
+  gap: 5px;
+  border: 0;
+  border-left: 1px solid
+    color-mix(in srgb, var(--pixel-window-frame) 22%, transparent);
+  border-radius: 0;
+  background: transparent;
+  color: var(--pixel-window-ink);
+  padding: 0 var(--space-2);
+}
+
+.hud-menu__hamburger {
+  display: grid;
+  width: 24px;
+  gap: 4px;
+}
+
+.hud-menu__hamburger > span {
+  display: block;
+  height: 2px;
+  background: currentcolor;
+}
+
+.hud-top--student .hud-menu__panel {
+  top: calc(100% + 10px);
+  min-width: 240px;
+  border-color: color-mix(in srgb, var(--pixel-window-frame) 72%, transparent);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--pixel-night-deep) 98%, transparent);
+}
+
+.hud-menu__nav--primary {
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--pixel-window-frame) 24%, transparent);
+  padding-bottom: var(--space-2);
+}
+
+.student-hud-harness__scene {
+  overflow: hidden;
+  min-height: 0;
+  background:
+    linear-gradient(to bottom, transparent 0 48%, var(--stage-void) 100%),
+    radial-gradient(circle at 24% 38%, #17365b 0 2px, transparent 3px),
+    radial-gradient(circle at 74% 24%, #c9a64d 0 1px, transparent 2px),
+    linear-gradient(155deg, #07162d 0 44%, #0a2640 72%, #07111f 100%);
+  background-size:
+    auto,
+    116px 92px,
+    174px 128px,
+    auto;
+}
+
+.student-hud-harness__landscape {
+  position: absolute;
+  right: -5%;
+  bottom: -15%;
+  left: -5%;
+  height: 62%;
+  background:
+    linear-gradient(135deg, transparent 0 42%, #31506c 43% 46%, transparent 47%)
+      52% 20% / 46% 100% no-repeat,
+    radial-gradient(ellipse at 18% 100%, #102f38 0 32%, transparent 33%),
+    radial-gradient(ellipse at 78% 100%, #0b2734 0 38%, transparent 39%),
+    linear-gradient(to top, #061019, transparent);
+  filter: saturate(0.82);
+  pointer-events: none;
+}
+
+@media (max-width: 47.99rem) {
+  .hud-top--student {
+    min-height: 76px;
+    flex-basis: auto;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 64px;
+    gap: 0 var(--space-3);
+    padding: 6px 10px;
+  }
+
+  .hud-top--student .hud-economy-group {
+    display: block;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .hud-top--student .hud-identity {
+    display: grid;
+    height: 64px;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    grid-template-rows: 32px 32px;
+    gap: 0 var(--space-2);
+    border: 0;
+    padding: 0;
+  }
+
+  .hud-top--student .hud-identity__name {
+    max-width: none;
+    grid-column: 2;
+    grid-row: 1;
+    overflow: hidden;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hud-top--student .hud-avatar {
+    width: 48px;
+    height: 48px;
+    grid-column: 1;
+    grid-row: 1 / 3;
+  }
+
+  .hud-top--student .hud-avatar .blook-art {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+  }
+
+  .hud-top--student .economy-summary--hud {
+    display: contents;
+  }
+
+  .hud-top--student .economy-summary__hud-level {
+    font-size: 12px;
+    padding: 0;
+  }
+
+  .hud-top--student .economy-summary__hud-progression {
+    gap: 6px;
+  }
+
+  .hud-top--student .economy-summary__hud-xp {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: auto minmax(34px, 1fr) auto;
+    gap: 4px;
+    padding-right: 0;
+  }
+
+  .hud-top--student .economy-summary__hud-xp > span {
+    font-size: 10px;
+  }
+
+  .hud-top--student .economy-summary__tokens {
+    position: static;
+    min-width: 54px;
+    grid-column: 3;
+    grid-row: 1 / 3;
+    border: 0;
+    font-size: 14px;
+    padding: 0;
+  }
+
+  .hud-top--student .hud-command {
+    z-index: 1;
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .hud-top--student .hud-command__nav {
+    display: none;
+  }
+
+  .hud-top--student .hud-menu__toggle {
+    min-width: 52px;
+    min-height: 52px;
+    border-left-color: color-mix(
+      in srgb,
+      var(--pixel-window-frame) 24%,
+      transparent
+    );
+    font-size: 12px;
+  }
+
+  .hud-top--student .hud-menu__panel {
+    position: fixed;
+    top: 76px;
+    right: 8px;
+    width: min(320px, calc(100vw - 16px));
+    max-height: calc(100dvh - 84px);
+    overflow-y: auto;
+  }
+}
+
 @media (orientation: landscape) and (max-height: 480px) {
   .hud-menu__panel {
     max-height: calc(100vh - 72px);
     max-height: calc(100dvh - 72px);
     overflow-y: auto;
+  }
+}
+
+/* JRPG learning map */
+#main-content:has(> .lobby--map-fullscreen) {
+  align-items: start;
+  justify-items: stretch;
+  padding: 0;
+}
+
+.game-viewport:has(.lobby--map-fullscreen),
+.game-stage:has(.lobby--map-fullscreen) {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.lobby--map-fullscreen {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  gap: 0;
+  padding: 0;
+}
+
+.lobby--map-fullscreen .hud-bar {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: 0 3px 0 var(--pixel-shadow);
+}
+
+.scene-day.lobby--map-fullscreen .chapter-map-shell {
+  width: 100%;
+  min-width: 0;
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.chapter-map-shell {
+  gap: clamp(10px, 1.5vw, 18px);
+  overflow: hidden;
+  padding: clamp(10px, 1.5vw, 20px);
+}
+
+.chapter-map-scroll {
+  position: relative;
+  z-index: 2;
+  width: min(720px, calc(100% - 56px));
+  justify-self: center;
+  border: 2px solid #7d4b24;
+  background:
+    radial-gradient(
+      circle at 14% 22%,
+      rgb(126 75 36 / 10%) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 78% 68%,
+      rgb(126 75 36 / 9%) 0 1px,
+      transparent 2px
+    ),
+    linear-gradient(
+      90deg,
+      rgb(116 71 36 / 13%),
+      transparent 16% 84%,
+      rgb(116 71 36 / 13%)
+    ),
+    #f1d69a;
+  background-size:
+    19px 19px,
+    27px 27px,
+    auto,
+    auto;
+  box-shadow:
+    inset 0 0 0 3px rgb(255 241 184 / 62%),
+    inset 0 0 18px rgb(94 53 25 / 28%),
+    0 5px 0 rgb(52 31 20 / 52%),
+    0 8px 18px rgb(13 27 28 / 26%);
+  color: #3d2a1c;
+  padding: 9px clamp(54px, 8vw, 82px);
+  text-align: center;
+}
+
+.chapter-map-scroll::before,
+.chapter-map-scroll::after {
+  position: absolute;
+  z-index: -1;
+  width: 16px;
+  border: 2px solid #603817;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #6c3b17, #b77733 48%, #5a3014);
+  box-shadow: 2px 3px 0 rgb(49 28 16 / 52%);
+  content: '';
+  inset-block: -7px;
+}
+
+.chapter-map-scroll::before {
+  left: -9px;
+}
+
+.chapter-map-scroll::after {
+  right: -9px;
+}
+
+.chapter-map-scroll__copy {
+  display: grid;
+  gap: 2px;
+}
+
+.chapter-map-scroll__copy > * {
+  margin: 0;
+}
+
+.chapter-map-scroll__copy > p:first-child {
+  color: #6a3d1d;
+  font-family: var(--font-pixel-tc);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.chapter-map-scroll h1 {
+  color: #342417;
+  font-family: var(--font-pixel-tc);
+  font-size: clamp(20px, 2.4vw, 28px);
+  line-height: 1.15;
+  text-shadow: 0 1px 0 rgb(255 245 202 / 80%);
+}
+
+.chapter-map-scroll__copy > p:last-child {
+  color: #5c4029;
+  font-size: 12px;
+}
+
+.chapter-map-scroll__roller {
+  position: absolute;
+  left: -20px;
+  width: calc(100% + 40px);
+  height: 8px;
+  border: 2px solid #573115;
+  border-radius: 5px;
+  background: linear-gradient(#c48842, #754019 58%, #a46228);
+  box-shadow: 0 2px 0 rgb(48 27 15 / 55%);
+  pointer-events: none;
+}
+
+.chapter-map-scroll__roller::before,
+.chapter-map-scroll__roller::after {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border: 2px solid #573115;
+  border-radius: 50%;
+  background: #9a5a24;
+  content: '';
+  top: -5px;
+}
+
+.chapter-map-scroll__roller::before {
+  left: -5px;
+}
+
+.chapter-map-scroll__roller::after {
+  right: -5px;
+}
+
+.chapter-map-scroll__roller--top {
+  top: -6px;
+}
+
+.chapter-map-scroll__roller--bottom {
+  bottom: -8px;
+}
+
+.chapter-map-scroll__crest {
+  position: absolute;
+  top: 50%;
+  left: 20px;
+  width: 30px;
+  height: 30px;
+  border: 2px solid #7a4b24;
+  border-radius: 50% 50% 44% 44%;
+  background:
+    linear-gradient(135deg, transparent 46%, #f3c45e 47% 54%, transparent 55%),
+    linear-gradient(45deg, transparent 46%, #f3c45e 47% 54%, transparent 55%),
+    #2f6b3e;
+  box-shadow:
+    inset 0 0 0 2px #e3a938,
+    2px 2px 0 rgb(74 43 22 / 38%);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.chapter-map {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: clamp(8px, 1.2vw, 14px);
+}
+
+.chapter-map__viewport {
+  position: relative;
+  display: grid;
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-width: 0;
+  aspect-ratio: 3 / 2;
+  border: 3px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-night);
+  box-shadow:
+    inset 0 0 0 2px var(--pixel-window-ink),
+    4px 4px 0 var(--pixel-shadow);
+  isolation: isolate;
+  overscroll-behavior-x: contain;
+  touch-action: pan-y;
+}
+
+.chapter-map__viewport:focus-visible {
+  outline: 3px solid #fff4bd;
+  outline-offset: 3px;
+}
+
+.chapter-map__world {
+  position: relative;
+  container-type: size;
+  width: 100%;
+  min-width: 100%;
+  aspect-ratio: 3 / 2;
+  grid-area: 1 / 1;
+}
+
+.chapter-map__camera-guide {
+  position: sticky;
+  left: 8px;
+  z-index: 7;
+  display: flex;
+  width: fit-content;
+  align-self: end;
+  align-items: center;
+  grid-area: 1 / 1;
+  gap: 8px;
+  margin: 8px;
+  pointer-events: none;
+}
+
+.chapter-map__camera-instruction {
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: rgb(9 22 39 / 90%);
+  color: var(--pixel-window-ink);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 8px;
+}
+
+.chapter-map__positions {
+  display: flex;
+  margin: 0;
+  gap: 4px;
+  list-style: none;
+  padding: 0;
+}
+
+.chapter-map__positions li {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: 50%;
+  background: var(--pixel-night);
+  color: var(--pixel-window-muted);
+  font-size: 10px;
+  font-weight: 900;
+  place-items: center;
+}
+
+.chapter-map__positions li[aria-current='step'] {
+  background: var(--pixel-gold);
+  color: var(--pixel-night-deep);
+}
+
+.chapter-map__base {
+  position: absolute;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  inset: 0;
+  object-fit: cover;
+}
+
+.chapter-map__buildings {
+  position: absolute;
+  margin: 0;
+  inset: 0;
+  list-style: none;
+  padding: 0;
+  pointer-events: none;
+}
+
+.chapter-map__building {
+  position: absolute;
+  z-index: 1;
+  width: 17.5%;
+  min-width: 44px;
+  transform: translate(-50%, -100%);
+}
+
+.chapter-map__building-button {
+  position: relative;
+  width: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--pixel-window-ink);
+  cursor: pointer;
+  padding: 0;
+  pointer-events: auto;
+}
+
+.chapter-map__entry-action:focus-visible {
+  outline: 3px solid var(--pixel-window-ink);
+  outline-offset: -3px;
+}
+
+.chapter-map__building-button:focus-visible {
+  outline: 3px solid #fff4bd;
+  outline-offset: -3px;
+}
+
+.chapter-map__building-button:focus-visible .chapter-map__building-label,
+.chapter-map__building-button:focus-visible .chapter-map__status-medal {
+  outline: 3px solid #fff4bd;
+  outline-offset: 2px;
+}
+
+.chapter-map__building-visual {
+  position: relative;
+  display: grid;
+  width: 100%;
+  aspect-ratio: 7 / 5;
+  place-items: end center;
+  transform: translate(
+    var(--chapter-visual-offset-x),
+    var(--chapter-visual-offset-y)
+  );
+}
+
+.chapter-map__building-art {
+  --chapter-art-filter: drop-shadow(3px 4px 0 rgb(5 17 27 / 55%));
+
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: var(--chapter-art-filter);
+  will-change: filter;
+}
+
+.chapter-map__building-button:hover .chapter-map__building-art {
+  filter: var(--chapter-art-filter) drop-shadow(0 0 4px #ffe68a);
+}
+
+.chapter-map__building-button[aria-pressed='true'] .chapter-map__building-art {
+  animation: chapter-building-glow 1.65s ease-in-out infinite alternate;
+}
+
+.chapter-map__building-fallback {
+  width: 70%;
+  height: 72%;
+  border: 4px solid var(--pixel-window-ink);
+  background:
+    linear-gradient(
+      135deg,
+      transparent 47%,
+      var(--pixel-gold) 48% 52%,
+      transparent 53%
+    ),
+    var(--pixel-night);
+  box-shadow: 4px 4px 0 var(--pixel-shadow);
+}
+
+.chapter-map__cloud,
+.chapter-map__construction {
+  position: absolute;
+  z-index: 2;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.chapter-map__cloud {
+  width: 88%;
+  inset: 18% auto auto 50%;
+  animation: chapter-cloud-drift 2.8s ease-in-out infinite alternate;
+  transform: translateX(-50%);
+}
+
+.chapter-map__construction {
+  width: 82%;
+  inset: auto auto 3% 50%;
+  transform: translateX(-50%);
+}
+
+.chapter-map__building-label {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-height: 40px;
+  align-content: center;
+  border: 2px solid #4f2c16;
+  border-radius: 2px;
+  background:
+    linear-gradient(
+      90deg,
+      rgb(83 43 18 / 16%),
+      transparent 20% 80%,
+      rgb(83 43 18 / 16%)
+    ),
+    #9b5a28;
+  box-shadow:
+    inset 0 0 0 2px #c9833c,
+    3px 3px 0 rgb(42 24 15 / 58%);
+  color: #fff0bd;
+  line-height: 1.15;
+  padding: 5px 8px;
+  text-align: center;
+}
+
+.chapter-map__building-caption {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 50%;
+  z-index: 3;
+  display: grid;
+  width: min(184px, 150%);
+  justify-items: center;
+  gap: 5px;
+  transform: translateX(-50%);
+}
+
+.chapter-map__sign-chain {
+  position: absolute;
+  top: calc(100% - 7px);
+  z-index: 2;
+  width: 3px;
+  height: 18px;
+  background: repeating-linear-gradient(#d0a558 0 3px, #4c331f 3px 6px);
+  box-shadow: 1px 0 0 rgb(35 22 15 / 55%);
+  pointer-events: none;
+}
+
+.chapter-map__sign-chain--left {
+  left: 29%;
+}
+
+.chapter-map__sign-chain--right {
+  right: 29%;
+}
+
+.chapter-map__building-chapter {
+  color: #f7d37d;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.chapter-map__building-label strong {
+  overflow: visible;
+  font-family: var(--font-pixel-tc);
+  font-size: clamp(11px, 1.4vw, 15px);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.chapter-map__status-medal {
+  position: relative;
+  z-index: 4;
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #4f2c16;
+  border-radius: 999px;
+  background: #f1d69a;
+  box-shadow:
+    inset 0 0 0 1px #fff0bd,
+    2px 2px 0 rgb(42 24 15 / 54%);
+  color: #482e1b;
+  font-size: 10px;
+  font-weight: 900;
+  gap: 4px;
+  padding: 2px 7px;
+  transform: none;
+  white-space: nowrap;
+}
+
+/* Owner 2026-08-10 可見 UI 修正：登入卡保留完整欄位，但移除 desktop
+   不必要的垂直裝飾間距，避免 1440×900 首屏被推出 viewport。 */
+.auth-portal.scene-night {
+  min-height: auto;
+  padding: 24px 20px 28px;
+}
+
+.auth-portal.scene-night .auth-portal-brand {
+  margin-bottom: 12px;
+}
+
+.auth-portal.scene-night .press-start {
+  margin-top: 8px;
+}
+
+.auth-portal.scene-night .route-panel__message {
+  margin-top: 8px;
+}
+
+.auth-portal.scene-night .auth-window {
+  margin-top: 12px;
+}
+
+.auth-portal.scene-night .login-form {
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.auth-portal.scene-night .login-form__portal label {
+  min-height: 44px;
+}
+
+/* Owner 2026-08-10：教師端可見修正。七個 production route 共用同一個
+   「賢者工坊」surface；資料表仍維持現代可讀性，像素語彙只落在外框、
+   header 與 action hierarchy。 */
+.teacher-workshop-page {
+  position: relative;
+  border-top: 6px solid var(--pixel-gold-deep);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--pixel-gold) 12%, transparent),
+      transparent 42%
+    ),
+    var(--surface-page);
+  box-shadow: 4px 4px 0 var(--pixel-shadow);
+  padding: clamp(16px, 2.5vw, 32px);
+}
+
+.teacher-workshop-page::before {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  width: 54px;
+  height: 12px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--coral-700) 0 14px,
+    var(--cobalt-600) 14px 28px,
+    var(--jade-600) 28px 42px,
+    transparent 42px 54px
+  );
+  content: '';
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.teacher-workshop-page h1 {
+  font-family: var(--font-pixel-tc);
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 1.35;
+}
+
+.teacher-workshop-page > .teacher-dashboard-header,
+.teacher-workshop-page > .sage-page-header {
+  border: 2px solid var(--pixel-gold-deep);
+  border-bottom-width: 6px;
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 4px 4px 0 var(--pixel-shadow);
+  padding: clamp(16px, 2vw, 24px);
+}
+
+.teacher-workshop-page .teacher-summary-card,
+.teacher-workshop-page .teacher-shortcut-card,
+.teacher-workshop-page .teacher-analytics-section,
+.teacher-workshop-page .ui-card,
+.teacher-workshop-page .classroom-create-form,
+.teacher-workshop-page .classroom-card,
+.teacher-workshop-page .live-matrix-scroll,
+.teacher-workshop-page > section[aria-label='作答矩陣'],
+.teacher-workshop-page > section[aria-label='最終排名'] {
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-parchment-card);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+}
+
+.teacher-workshop-page .teacher-summary-card,
+.teacher-workshop-page .teacher-shortcut-card,
+.teacher-workshop-page .teacher-analytics-section,
+.teacher-workshop-page > section[aria-label='作答矩陣'],
+.teacher-workshop-page > section[aria-label='最終排名'] {
+  padding: clamp(14px, 2vw, 22px);
+}
+
+.teacher-workshop-page .teacher-summary-card__header,
+.teacher-workshop-page .teacher-shortcut-card__header,
+.teacher-workshop-page .classroom-section-header,
+.teacher-workshop-page .teacher-analytics-section > h2,
+.teacher-workshop-page > section > h2 {
+  border-bottom: 3px solid var(--pixel-gold-deep);
+  padding-bottom: 8px;
+}
+
+.teacher-workshop-page .primary-action,
+.teacher-workshop-page .secondary-action,
+.teacher-workshop-page .teacher-live-console__action,
+.teacher-workshop-page .live-report__action {
+  min-height: 44px;
+  border-radius: var(--radius-pixel);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+  font-weight: 800;
+}
+
+.teacher-workshop-page--live {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--pixel-gold) 10%, transparent),
+      transparent 46%
+    ),
+    var(--pixel-night-deep);
+}
+
+/* Live session route 的 Codédex frame 不改投影 grid 尺寸：以 inset shadow
+   標示主持工作階段，避免壓縮 1280×720 已量測的可用高度。 */
+.teacher-live-session-page {
+  min-height: 100dvh;
+  background: var(--pixel-night-deep);
+}
+
+.teacher-live-session-page .live-presenter__bar {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pixel-gold) 10%, transparent),
+    transparent
+  );
+  box-shadow: inset 0 -2px 0 rgb(246 196 83 / 72%);
+}
+
+.teacher-live-session-page .live-presenter__controls {
+  box-shadow: inset 0 2px 0 rgb(246 196 83 / 60%);
+}
+
+@media (max-width: 30rem) {
+  .teacher-workshop-page {
+    padding: 14px;
+  }
+
+  .teacher-workshop-page::before {
+    width: 42px;
+    background-size: 42px 12px;
+  }
+}
+
+.chapter-map__building[data-access-state='completed']
+  .chapter-map__status-medal {
+  background: #d8edb0;
+  color: #24542e;
+}
+
+.chapter-map__building[data-access-state='available']
+  .chapter-map__status-medal {
+  background: #ffe27b;
+  color: #5d3b06;
+}
+
+.chapter-map__building[data-access-state='content_unavailable']
+  .chapter-map__status-medal {
+  background: #f4c6a5;
+  color: #63331e;
+}
+
+.chapter-map__building[data-access-state='locked'] .chapter-map__building-art,
+.chapter-map__building[data-access-state='content_unavailable']
+  .chapter-map__building-art {
+  --chapter-art-filter: grayscale(0.72) brightness(0.72)
+    drop-shadow(3px 4px 0 rgb(5 17 27 / 55%));
+}
+
+.chapter-map__companion {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  border: 2px solid var(--pixel-gold);
+  border-radius: 50%;
+  background: var(--pixel-night-deep);
+  box-shadow: 2px 2px 0 var(--pixel-shadow);
+  image-rendering: pixelated;
+  place-items: center;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 12px));
+  transition:
+    left 180ms ease,
+    top 180ms ease;
+}
+
+.chapter-map__adventurer {
+  position: absolute;
+  z-index: 4;
+  overflow: hidden;
+  width: 48px;
+  height: 60px;
+  image-rendering: pixelated;
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+}
+
+.chapter-map__adventurer img {
+  width: 96px;
+  height: 60px;
+  max-width: none;
+  animation: chapter-adventurer-idle 1.6s steps(1, end) infinite;
+}
+
+.chapter-map__dialogue-lane {
+  position: relative;
+  z-index: 8;
+  min-width: 0;
+  padding-inline: clamp(10px, 2vw, 22px);
+}
+
+.chapter-map__panel {
+  position: relative;
+  display: grid;
+  overflow: visible;
+  width: 100%;
+  min-width: 0;
+  max-height: none;
+  grid-template-columns: minmax(150px, 0.85fr) minmax(220px, 1.2fr) minmax(
+      180px,
+      1fr
+    );
+  align-items: center;
+  border: 3px double var(--pixel-gold);
+  border-radius: var(--radius-pixel);
+  background: rgb(9 22 39 / 96%);
+  box-shadow:
+    inset 0 0 0 2px rgb(255 255 255 / 8%),
+    4px 4px 0 var(--pixel-shadow);
+  color: var(--pixel-window-ink);
+  gap: clamp(10px, 2vw, 24px);
+  padding: clamp(10px, 1.4vw, 16px);
+}
+
+.chapter-map__panel-heading,
+.chapter-map__progress,
+.chapter-map__blockers,
+.chapter-map__panel-outcome {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.chapter-map__panel-heading > *,
+.chapter-map__blockers > * {
+  margin: 0;
+}
+
+.chapter-map__panel-heading h2 {
+  color: var(--pixel-window-ink);
+  font-family: var(--font-pixel-tc);
+  font-size: clamp(18px, 2.2vw, 24px);
+}
+
+.chapter-map__unavailable {
+  color: var(--pixel-window-muted);
+}
+
+.chapter-map__eyebrow {
+  color: var(--pixel-gold);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.chapter-map__progress {
+  margin: 0;
+}
+
+.chapter-map__progress > div {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgb(255 255 255 / 18%);
+  gap: var(--space-3);
+}
+
+.chapter-map__progress dt {
+  color: var(--pixel-window-muted);
+  font-size: 12px;
+}
+
+.chapter-map__progress dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.chapter-map__blockers {
+  border: 2px solid var(--pixel-gold-deep);
+  background: var(--pixel-night);
+  padding: 8px 10px;
+}
+
+.chapter-map__blockers h3 {
+  color: var(--pixel-gold);
+  font-size: 14px;
+}
+
+.chapter-map__blockers ul {
+  display: grid;
+  margin: 0;
+  color: var(--pixel-window-ink);
+  font-size: 13px;
+  gap: 6px;
+  padding-inline-start: 20px;
+}
+
+.chapter-map__entry-action {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--pixel-gold-deep);
+  border-radius: var(--radius-pixel);
+  background: var(--pixel-gold);
+  box-shadow: 3px 3px 0 var(--pixel-shadow);
+  color: var(--pixel-night-deep);
+  font-weight: 900;
+  margin: 0;
+  padding: 8px 14px;
+  text-decoration: none;
+}
+
+.chapter-map__unavailable {
+  margin: 0;
+}
+
+@keyframes chapter-building-glow {
+  from {
+    filter: var(--chapter-art-filter) drop-shadow(0 0 4px #ffd64a)
+      drop-shadow(0 0 1px #fff8c6);
+  }
+  to {
+    filter: var(--chapter-art-filter) drop-shadow(0 0 9px #ffdf57)
+      drop-shadow(0 0 4px #fff3a6);
+  }
+}
+
+@keyframes chapter-cloud-drift {
+  from {
+    transform: translate(-52%, -2px);
+  }
+  to {
+    transform: translate(-48%, 3px);
+  }
+}
+
+@keyframes chapter-adventurer-idle {
+  0%,
+  49% {
+    transform: translateX(0);
+  }
+  50%,
+  100% {
+    transform: translateX(-48px);
+  }
+}
+
+@media (min-width: 64rem) and (orientation: landscape) {
+  .lobby--map-fullscreen {
+    position: relative;
+    height: 100%;
+    background: var(--pixel-night);
+    grid-template-rows: minmax(0, 1fr);
+    padding-bottom: 0;
+  }
+
+  .lobby--map-fullscreen .chapter-map-shell {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    height: 100%;
+    min-height: 0;
+    border: 0;
+    background: var(--pixel-night);
+    padding: 0;
+  }
+
+  .lobby--map-fullscreen .chapter-map-scroll {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    z-index: 12;
+    width: min(600px, calc(100% - 680px));
+    padding-block: 0;
+    transform: translateX(-50%);
+  }
+
+  .lobby--map-fullscreen .chapter-map-scroll__copy {
+    gap: 1px;
+  }
+
+  .lobby--map-fullscreen .chapter-map-scroll__copy > p:first-child {
+    font-size: 11px;
+    line-height: 1.1;
+  }
+
+  .lobby--map-fullscreen .chapter-map-scroll h1 {
+    font-size: 22px;
+    line-height: 1.1;
+  }
+
+  .lobby--map-fullscreen .chapter-map-scroll__copy > p:last-child {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .lobby--map-fullscreen .chapter-map {
+    position: absolute;
+    display: block;
+    height: 100%;
+    min-height: 0;
+    inset: 0;
+  }
+
+  .lobby--map-fullscreen .chapter-map__viewport {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    inset: 0;
+    aspect-ratio: auto;
+    border-radius: 0;
+    container-type: size;
+  }
+
+  .lobby--map-fullscreen .chapter-map__world {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: max(100cqw, 150cqh);
+    min-width: max(100cqw, 150cqh);
+    height: auto;
+    min-height: 100cqh;
+    max-width: none;
+    transform: translateX(-50%);
+  }
+
+  .lobby--map-fullscreen .chapter-map__building {
+    width: 10%;
+  }
+
+  .lobby--map-fullscreen .chapter-map__dialogue-lane {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    left: auto;
+    width: min(440px, calc(100% - 24px));
+    padding-inline: 0;
+  }
+
+  .lobby--map-fullscreen .chapter-map__panel {
+    max-height: none;
+    grid-template-columns: minmax(132px, 0.75fr) minmax(216px, 1.25fr);
+    align-items: start;
+    gap: 8px 14px;
+    padding: 10px 12px;
+  }
+
+  .lobby--map-fullscreen .chapter-map__progress > div {
+    min-height: 26px;
+  }
+
+  .lobby--map-fullscreen .chapter-map__panel-outcome {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
+@media (max-width: 48rem) and (orientation: landscape),
+  (orientation: landscape) and (max-height: 480px) {
+  .chapter-map-shell {
+    padding: 10px;
+  }
+
+  .chapter-map-scroll {
+    width: min(620px, calc(100% - 42px));
+    padding-block: 7px;
+  }
+
+  .chapter-map-scroll__copy > p:last-child {
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: normal;
+  }
+
+  .chapter-map__dialogue-lane {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: min(440px, calc(100% - 24px));
+    justify-self: end;
+    padding-inline: 0;
+  }
+
+  .chapter-map__panel {
+    max-height: none;
+    grid-template-columns: minmax(130px, 0.8fr) minmax(210px, 1.2fr);
+    align-items: start;
+    gap: 8px 14px;
+    padding: 8px 10px;
+  }
+
+  .chapter-map__panel-outcome {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .chapter-map__blockers ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+  }
+
+  .chapter-map__entry-action {
+    min-height: 44px;
+  }
+
+  .chapter-map__unavailable {
+    align-self: center;
+  }
+}
+
+@media (orientation: portrait) {
+  .chapter-map__viewport {
+    aspect-ratio: 4 / 5;
+  }
+
+  .chapter-map__world {
+    width: auto;
+    min-width: 187.5%;
+    height: 100%;
+  }
+}
+
+@media (max-width: 30rem) and (orientation: portrait) {
+  .chapter-map-scroll {
+    width: calc(100% - 34px);
+    padding-inline: 42px 16px;
+  }
+
+  .chapter-map-scroll__crest {
+    left: 10px;
+    width: 25px;
+    height: 25px;
+  }
+
+  .chapter-map__panel {
+    max-height: none;
+    grid-template-columns: 1fr;
+  }
+
+  .chapter-map__dialogue-lane {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    padding-inline: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter-map__building-button[aria-pressed='true']
+    .chapter-map__building-art {
+    animation: none;
+    filter: var(--chapter-art-filter) drop-shadow(0 0 7px #ffdf57)
+      drop-shadow(0 0 3px #fff3a6);
+  }
+
+  .chapter-map__cloud,
+  .chapter-map__adventurer img,
+  .chapter-map__companion {
+    animation: none;
+    transition: none;
+  }
+}
+
+[data-reduced-motion='true']
+  .chapter-map__building-button[aria-pressed='true']
+  .chapter-map__building-art {
+  animation: none;
+  filter: var(--chapter-art-filter) drop-shadow(0 0 7px #ffdf57)
+    drop-shadow(0 0 3px #fff3a6);
+}
+
+[data-reduced-motion='true'] .chapter-map__cloud,
+[data-reduced-motion='true'] .chapter-map__adventurer img,
+[data-reduced-motion='true'] .chapter-map__companion {
+  animation: none;
+  transition: none;
+}
+
+/* ── Generated board 05：六章連續世界學習地圖 ────────────────── */
+#main-content:has(> .lobby--map-fullscreen) {
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+  align-items: stretch;
+  justify-items: stretch;
+  background: var(--pixel-night-deep);
+  padding: 0;
+}
+
+.lobby--map-fullscreen,
+.lobby--map-fullscreen .chapter-map-shell,
+.lobby--map-fullscreen .chapter-map,
+.lobby--map-fullscreen .chapter-map__viewport {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  inset: 0;
+}
+
+.lobby--map-fullscreen {
+  display: block;
+  background: var(--pixel-night-deep);
+  padding: 0;
+}
+
+.lobby--map-fullscreen .chapter-map-shell {
+  display: block;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.chapter-map-title {
+  position: absolute;
+  z-index: 12;
+  top: clamp(var(--space-4), 2vw, var(--space-6));
+  left: clamp(var(--space-4), 2.5vw, var(--space-8));
+  pointer-events: none;
+}
+
+.chapter-map-title h1 {
+  margin: 0;
+  color: var(--pixel-window-ink);
+  font-family: var(--font-pixel-tc);
+  font-size: clamp(1.75rem, 3.4vw, 2.75rem);
+  letter-spacing: 0.06em;
+  text-shadow: 3px 3px 0 var(--pixel-shadow);
+}
+
+.lobby--map-fullscreen .chapter-map {
+  display: block;
+}
+
+.lobby--map-fullscreen .chapter-map__viewport {
+  overflow: hidden;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+  background: var(--pixel-night-deep);
+  box-shadow: none;
+  touch-action: auto;
+}
+
+.lobby--map-fullscreen .chapter-map__world {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  min-width: 100%;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 1672 / 941;
+  container-type: size;
+  transform: translateY(-50%);
+}
+
+.lobby--map-fullscreen .chapter-map__base {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  image-rendering: pixelated;
+}
+
+.chapter-map__base--mobile {
+  display: none;
+}
+
+.lobby--map-fullscreen .chapter-map__camera-guide,
+.lobby--map-fullscreen .chapter-map__companion,
+.lobby--map-fullscreen .chapter-map__adventurer,
+.lobby--map-fullscreen .chapter-map__sign-chain {
+  display: none;
+}
+
+.lobby--map-fullscreen .chapter-map__building {
+  width: clamp(100px, 11.5%, 172px);
+  min-width: 0;
+  transform: translate(-50%, -100%);
+}
+
+.lobby--map-fullscreen .chapter-map__building-button {
+  display: block;
+  min-height: 44px;
+  overflow: visible;
+  line-height: 0;
+}
+
+.lobby--map-fullscreen .chapter-map__building-visual {
+  width: 100%;
+  aspect-ratio: 7 / 5;
+  transform: translate(
+    var(--chapter-visual-offset-x),
+    var(--chapter-visual-offset-y)
+  );
+}
+
+.lobby--map-fullscreen .chapter-map__building-art {
+  display: block;
+  image-rendering: pixelated;
+}
+
+.lobby--map-fullscreen .chapter-map__building-label {
+  top: 28%;
+  left: 92%;
+  width: max-content;
+  min-width: 7rem;
+  min-height: 0;
+  justify-items: start;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--pixel-window-ink);
+  padding: 0;
+  text-align: left;
+  transform: none;
+}
+
+.lobby--map-fullscreen .chapter-map__building-chapter {
+  color: inherit;
+  font-family: var(--font-pixel-tc);
+  font-size: clamp(1rem, 1.7vw, 1.4rem);
+  font-weight: 900;
+  text-shadow: 2px 2px 0 var(--pixel-shadow);
+}
+
+.lobby--map-fullscreen .chapter-map__building-label strong {
+  display: none;
+}
+
+.lobby--map-fullscreen .chapter-map__status-medal {
+  top: 56%;
+  left: 92%;
+  min-height: 24px;
+  justify-content: flex-start;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--pixel-window-muted);
+  font-size: clamp(0.75rem, 1.15vw, 0.95rem);
+  padding: 0;
+  transform: none;
+  text-shadow: 2px 2px 0 var(--pixel-shadow);
+}
+
+.lobby--map-fullscreen
+  .chapter-map__building[data-access-state='completed']
+  .chapter-map__status-medal {
+  background: transparent;
+  color: var(--color-info);
+}
+
+.lobby--map-fullscreen
+  .chapter-map__building[data-access-state='available']
+  .chapter-map__status-medal {
+  background: transparent;
+  color: var(--pixel-gold);
+}
+
+.lobby--map-fullscreen
+  .chapter-map__building[data-access-state='content_unavailable']
+  .chapter-map__status-medal {
+  background: transparent;
+  color: var(--pixel-window-muted);
+}
+
+.lobby--map-fullscreen
+  .chapter-map__building[data-access-state='locked']
+  .chapter-map__building-art,
+.lobby--map-fullscreen
+  .chapter-map__building[data-access-state='content_unavailable']
+  .chapter-map__building-art {
+  --chapter-art-filter: grayscale(0.86) brightness(0.48)
+    drop-shadow(
+      3px 4px 0 color-mix(in srgb, var(--stage-void) 72%, transparent)
+    );
+}
+
+.lobby--map-fullscreen .chapter-map__cloud,
+.lobby--map-fullscreen .chapter-map__construction {
+  opacity: 0.58;
+}
+
+.lobby--map-fullscreen .chapter-map__dialogue-lane {
+  position: absolute;
+  z-index: 14;
+  right: clamp(var(--space-4), 3.5vw, var(--space-10));
+  bottom: clamp(var(--space-4), 3vw, var(--space-8));
+  left: auto;
+  width: min(310px, calc(100% - var(--space-8)));
+  padding: 0;
+}
+
+.lobby--map-fullscreen .chapter-map__panel {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.lobby--map-fullscreen .chapter-map__panel-heading,
+.lobby--map-fullscreen .chapter-map__progress,
+.lobby--map-fullscreen .chapter-map__blockers {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.lobby--map-fullscreen .chapter-map__panel-outcome {
+  display: block;
+}
+
+.lobby--map-fullscreen .chapter-map__entry-action {
+  width: 100%;
+  min-height: 56px;
+  border: 2px solid var(--pixel-window-frame);
+  border-radius: 0;
+  background: linear-gradient(var(--cobalt-600), var(--cobalt-700));
+  box-shadow:
+    inset 0 -3px 0 color-mix(in srgb, var(--cobalt-700) 70%, var(--stage-void)),
+    4px 4px 0 var(--pixel-shadow);
+  color: var(--pixel-window-ink);
+  font-size: 1.2rem;
+}
+
+.lobby--map-fullscreen .chapter-map__entry-action::after {
+  margin-left: auto;
+  content: '›';
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.lobby--map-fullscreen .chapter-map__unavailable {
+  border: 1px solid
+    color-mix(in srgb, var(--pixel-window-frame) 48%, transparent);
+  background: color-mix(in srgb, var(--pixel-night-deep) 88%, transparent);
+  color: var(--pixel-window-muted);
+  padding: var(--space-3);
+}
+
+@media (max-width: 47.99rem) {
+  .chapter-map-title {
+    top: var(--space-3);
+    left: var(--space-4);
+  }
+
+  .chapter-map-title h1 {
+    font-size: 1.55rem;
+  }
+
+  .lobby--map-fullscreen .chapter-map__world {
+    top: 50%;
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 941 / 1672;
+    transform: translateY(-50%);
+  }
+
+  .chapter-map__base--desktop {
+    display: none;
+  }
+
+  .chapter-map__base--mobile {
+    display: block;
+  }
+
+  .lobby--map-fullscreen .chapter-map__building {
+    width: clamp(76px, 23%, 94px);
+    left: var(--chapter-mobile-left) !important;
+    top: var(--chapter-mobile-top) !important;
+  }
+
+  .lobby--map-fullscreen .chapter-map__building-label {
+    top: 24%;
+    left: calc(100% + 4px);
+    min-width: 5.5rem;
+  }
+
+  .lobby--map-fullscreen .chapter-map__building-chapter {
+    font-size: 1rem;
+  }
+
+  .lobby--map-fullscreen .chapter-map__status-medal {
+    top: 53%;
+    left: calc(100% + 4px);
+    font-size: 0.76rem;
+  }
+
+  .lobby--map-fullscreen .chapter-map__dialogue-lane {
+    position: absolute;
+    right: var(--space-4);
+    bottom: var(--space-4);
+    left: var(--space-4);
+    width: auto;
+  }
+
+  .lobby--map-fullscreen .chapter-map__entry-action {
+    min-height: 56px;
+    font-size: 1rem;
+  }
+}
+
+/* ── 冒險者公會認證場景：固定視窗，不讓表單或裝飾造成頁面捲動。 ── */
+.game-stage #main-content:has(> .auth-portal) {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  align-items: center;
+  justify-items: stretch;
+  background-color: var(--pixel-night-deep);
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent 0 35%,
+      color-mix(in srgb, var(--stage-void) 32%, transparent) 52% 74%,
+      transparent 94%
+    ),
+    url('../assets/auth/guild-desk-desktop.webp');
+  background-position: center;
+  background-size: cover;
+  padding: clamp(var(--space-4), 2.5vw, var(--space-6));
+}
+
+.game-stage #main-content:has(> .auth-portal)::before,
+.scene-night.auth-portal::after {
+  content: none;
+}
+
+.auth-portal:has(> .auth-portal__welcome),
+.auth-portal--register {
+  position: relative;
+  min-height: 0;
+  align-self: center;
+  justify-self: end;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.auth-portal:has(> .auth-portal__welcome) {
+  width: min(420px, 39vw);
+  margin-right: clamp(var(--space-6), 7vw, 100px);
+}
+
+.auth-portal:has(> .auth-portal__welcome) > .auth-portal-brand,
+.auth-portal:has(> .auth-portal__welcome) > .route-panel__message {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.auth-portal:has(> .auth-portal__welcome) > .pixel-heading {
+  margin: 0 0 var(--space-2);
+  color: var(--pixel-window-ink);
+  font-size: 1.5rem;
+  text-shadow: 2px 2px 0 var(--pixel-shadow);
+}
+
+.auth-portal__welcome {
+  position: absolute;
+  top: 92px;
+  right: calc(100% + var(--space-5));
+  width: min(390px, 34vw);
+  margin: 0;
+  color: var(--pixel-window-ink);
+  font-family: var(--font-pixel-tc);
+  font-size: clamp(1.4rem, 2.35vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.45;
+  text-align: center;
+  text-shadow: 3px 3px 0 var(--pixel-shadow);
+  white-space: nowrap;
+}
+
+/* 登入與註冊共用設計板的藍銀雙層像素窗框。 */
+.auth-portal .auth-window {
+  width: 100%;
+  max-width: none;
+  border: 3px solid #b9c7f0;
+  border-radius: 0;
+  outline: 3px solid #080d22;
+  margin: 0;
+  background: color-mix(in srgb, var(--pixel-night) 97%, transparent);
+  box-shadow:
+    inset 0 0 0 2px #465786,
+    0 0 0 6px #7586b8,
+    7px 7px 0 rgb(2 5 17 / 82%);
+  padding: var(--space-4) var(--space-5);
+}
+
+.auth-portal .auth-window .rpg-window__body {
+  line-height: 1.45;
+}
+
+.auth-portal .login-form__portal {
+  border: 2px solid var(--pixel-window-muted);
+  border-radius: 0;
+  margin-top: 0;
+  background: var(--pixel-night-deep);
+}
+
+.auth-portal .login-form__portal label {
+  border-radius: 0;
+}
+
+.auth-portal .login-form__portal label[data-active='true'] {
+  background: var(--cobalt-600);
+  color: var(--pixel-window-ink);
+}
+
+.auth-portal .login-form {
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.auth-portal input:not([type='radio']):not([type='checkbox']) {
+  min-height: 46px;
+  border: 2px solid var(--pixel-window-muted);
+  border-radius: 0;
+  background: var(--stage-void);
+  box-shadow:
+    inset 2px 2px 0 rgb(0 0 0 / 38%),
+    inset -1px -1px 0 rgb(255 255 255 / 8%);
+  color: var(--pixel-window-ink);
+}
+
+.auth-portal input:not([type='radio']):not([type='checkbox']):focus {
+  border-color: var(--cobalt-600);
+}
+
+.auth-portal .primary-action {
+  width: 100%;
+  min-height: 48px;
+  border-color: color-mix(
+    in srgb,
+    var(--cobalt-600) 70%,
+    var(--pixel-window-frame)
+  );
+  border-radius: 0;
+  background: linear-gradient(var(--cobalt-600), var(--cobalt-700));
+  box-shadow: 0 4px 0 var(--pixel-shadow);
+  color: var(--pixel-window-ink);
+}
+
+.auth-portal:has(> .auth-portal__welcome) .primary-action {
+  font-size: 1.15rem;
+}
+
+.auth-portal .login-form__link,
+.auth-portal .login-form__field-hint,
+.auth-portal .login-form__status {
+  color: var(--pixel-window-muted);
+}
+
+.auth-portal .login-form__divider {
+  color: var(--pixel-window-muted);
+}
+
+/* 註冊固定為右側三步驟；每一步只保留該階段所需欄位。 */
+.auth-portal--register {
+  width: min(480px, 44vw);
+  margin-right: clamp(var(--space-5), 6vw, 88px);
+}
+
+.auth-register-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 var(--space-3);
+}
+
+.auth-register-heading .pixel-heading {
+  margin: 0;
+  color: var(--pixel-window-ink);
+  font-size: 1.55rem;
+  text-shadow: 2px 2px 0 var(--pixel-shadow);
+}
+
+.auth-register-heading__back {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--pixel-window-muted);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.auth-register-progress {
+  display: grid;
+  margin: 0;
+  gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  padding: 0;
+}
+
+.auth-register-progress li {
+  min-width: 0;
+}
+
+.auth-register-progress button {
+  display: grid;
+  width: 100%;
+  min-height: 48px;
+  align-content: center;
+  border: 1px solid #53658f;
+  background: #111a36;
+  color: var(--pixel-window-muted);
+  font-size: 0.75rem;
+  font-family: inherit;
+  font-weight: 800;
+  line-height: 1.15;
+  padding: 0;
+  text-align: center;
+  cursor: pointer;
+}
+
+.auth-register-progress button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.auth-register-progress b {
+  color: var(--pixel-gold);
+  font-family: var(--font-pixel-latin);
+  font-size: 0.7rem;
+}
+
+.auth-register-progress [aria-current='step'] {
+  border-color: var(--pixel-window-frame);
+  background: var(--cobalt-700);
+  color: var(--pixel-window-ink);
+  box-shadow: inset 0 -3px 0 var(--cobalt-600);
+}
+
+.auth-register-form {
+  display: block;
+  margin-top: var(--space-3);
+}
+
+.auth-register-email-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.auth-register-step {
+  display: grid;
+  min-width: 0;
+  border: 0;
+  margin: 0;
+  gap: var(--space-3);
+  padding: 0;
+}
+
+.auth-register-step legend {
+  margin-bottom: var(--space-2);
+  color: var(--pixel-window-ink);
+  font-family: var(--font-pixel-tc);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.auth-register-step .login-form__field {
+  gap: 4px;
+}
+
+.auth-register-step .login-form__field-hint {
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.auth-register-step .login-form__field-error,
+.auth-register-step .login-form__submit-error {
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.auth-register-actions {
+  display: grid;
+  margin-top: var(--space-1);
+  gap: var(--space-3);
+}
+
+.auth-register-actions--split {
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+}
+
+.auth-register-secondary {
+  min-height: 48px;
+  border: 2px solid var(--pixel-window-muted);
+  background: var(--pixel-night-deep);
+  color: var(--pixel-window-ink);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.auth-register-verified {
+  margin: 0;
+  color: var(--jade-200, #a9f2cc);
+  font-weight: 800;
+}
+
+@media (max-width: 47.99rem) {
+  .game-stage #main-content:has(> .auth-portal) {
+    height: 100%;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    align-items: end;
+    background-image:
+      linear-gradient(
+        transparent 0 34%,
+        color-mix(in srgb, var(--stage-void) 44%, transparent) 49%,
+        var(--stage-void) 78%
+      ),
+      url('../assets/auth/guild-desk-mobile.webp');
+    background-position: top center;
+    background-size: cover;
+    padding: var(--space-3);
+  }
+
+  .auth-portal:has(> .auth-portal__welcome),
+  .auth-portal--register {
+    width: 100%;
+    min-height: 0;
+    max-height: calc(100dvh - var(--space-6));
+    align-self: end;
+    justify-self: end;
+    margin: 0;
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) > .auth-portal-brand {
+    position: absolute;
+    top: clamp(-300px, -35vh, -228px);
+    left: 50%;
+    display: grid;
+    width: min(62vw, 235px);
+    height: auto;
+    clip: auto;
+    clip-path: none;
+    overflow: visible;
+    place-items: center;
+    transform: translateX(-50%);
+    white-space: normal;
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) .auth-portal-brand__mark,
+  .auth-portal:has(> .auth-portal__welcome) .auth-portal-brand__subtitle {
+    display: none;
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) .auth-portal-brand__title {
+    color: var(--pixel-window-ink);
+    font-family: var(--font-pixel-tc);
+    font-size: clamp(1.2rem, 5.5vw, 1.5rem);
+    line-height: 1.2;
+    text-shadow: 2px 2px 0 var(--pixel-shadow);
+    white-space: nowrap;
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) > .auth-portal__welcome {
+    display: none;
+  }
+
+  .auth-portal .auth-window {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) .login-form__portal {
+    flex-direction: row;
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) .login-form__portal label {
+    min-width: 0;
+    padding-inline: 4px;
+  }
+
+  .auth-portal:has(> .auth-portal__welcome) .login-form {
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .auth-register-heading {
+    margin-bottom: var(--space-2);
+  }
+
+  .auth-register-heading .pixel-heading {
+    font-size: 1.3rem;
+  }
+
+  .auth-register-progress button {
+    min-height: 42px;
+    font-size: 0.7rem;
+  }
+
+  .auth-register-form,
+  .auth-register-step {
+    gap: 10px;
+  }
+
+  .auth-register-step legend {
+    margin-bottom: 6px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 620px) {
+  #main-content:has(> .lobby--map-fullscreen) {
+    overflow-y: auto;
+    align-items: start;
+  }
+
+  .lobby--map-fullscreen {
+    position: relative;
+    height: auto;
+    min-height: 620px;
   }
 }

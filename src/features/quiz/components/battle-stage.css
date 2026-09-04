@@ -1,0 +1,148 @@
+.battle-stage {
+  isolation: isolate;
+  min-height: clamp(190px, 27vw, 300px);
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.battle-stage__enemy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  gap: 8px;
+}
+
+.battle-stage__health {
+  width: min(220px, 58vw);
+  border: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.battle-stage__health-track {
+  display: block;
+  height: 12px;
+  overflow: hidden;
+  border: 2px solid var(--pixel-window-frame);
+  background: var(--pixel-night-deep);
+  box-shadow: 2px 2px 0 var(--pixel-shadow);
+}
+
+.battle-stage__health-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--pixel-danger);
+  transform-origin: left;
+  transition: transform 500ms steps(6);
+}
+
+.battle-stage[data-enemy-health='empty'] .battle-stage__health-fill {
+  transform: scaleX(0);
+}
+
+.battle-stage__spirit {
+  display: grid;
+  width: 112px;
+  height: 112px;
+  place-items: center;
+  filter: drop-shadow(0 8px 4px rgb(0 0 0 / 55%));
+}
+
+.battle-stage__spirit .spirit-avatar,
+.battle-stage__spirit .spirit-avatar__body {
+  width: 96px;
+  height: 96px;
+}
+
+.battle-stage__spirit .spirit-avatar__body {
+  background-size: 96px 96px;
+}
+
+.battle-stage__enemy-name {
+  color: var(--pixel-window-ink);
+  font-family: var(--font-pixel-tc);
+  font-size: 0.875rem;
+  font-weight: 800;
+  line-height: 1.4;
+  text-shadow:
+    1px 1px 0 var(--stage-void),
+    -1px -1px 0 var(--stage-void);
+}
+
+.battle-stage--hit .battle-stage__spirit {
+  animation: quiz-spirit-defeat 700ms steps(6) both;
+}
+
+.battle-stage--enemy-strike .battle-stage__spirit {
+  animation: quiz-spirit-strike 300ms steps(3) 1;
+}
+
+@keyframes quiz-spirit-defeat {
+  0% {
+    opacity: 1;
+    transform: translate(0) scale(1);
+  }
+
+  55% {
+    opacity: 1;
+    transform: translate(-6px, 4px) scale(1.08);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(8px, 20px) scale(0.2);
+  }
+}
+
+@keyframes quiz-spirit-strike {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(14px) scale(1.08);
+  }
+}
+
+@media (max-width: 639px) {
+  .battle-stage {
+    min-height: 180px;
+  }
+
+  .battle-stage__health {
+    width: min(210px, calc(100vw - 48px));
+  }
+
+  .battle-stage__spirit,
+  .battle-stage__spirit .spirit-avatar,
+  .battle-stage__spirit .spirit-avatar__body {
+    width: 80px;
+    height: 80px;
+  }
+
+  .battle-stage__spirit .spirit-avatar__body {
+    background-size: 80px 80px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-stage__health-fill {
+    transition: none;
+  }
+
+  .battle-stage--hit .battle-stage__spirit,
+  .battle-stage--enemy-strike .battle-stage__spirit {
+    animation: none;
+  }
+
+  .battle-stage--hit .battle-stage__spirit {
+    opacity: 0;
+  }
+}

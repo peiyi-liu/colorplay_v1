@@ -83,7 +83,7 @@ describe('FeedbackCard', () => {
     expect(screen.getByText(/^[紅藍綠]精靈導師$/u)).toBeInTheDocument();
   });
 
-  it('keeps the explanation as the last direct-child paragraph', () => {
+  it('does not put a correct-answer explanation into a framed box', () => {
     const { container } = render(
       <FeedbackCard
         isLastQuestion={false}
@@ -93,10 +93,7 @@ describe('FeedbackCard', () => {
         result={mentorResult}
       />,
     );
-    const paragraphs = container.querySelectorAll('.feedback-card > p');
-    expect(paragraphs[paragraphs.length - 1]).toHaveTextContent(
-      mentorResult.explanation,
-    );
+    expect(container.querySelector('.feedback-card__explanation')).toBeNull();
   });
 
   it('renders no mentor row without mentorSeed', () => {
@@ -109,5 +106,32 @@ describe('FeedbackCard', () => {
       />,
     );
     expect(container.querySelector('.feedback-card__mentor')).toBeNull();
+  });
+
+  it('keeps the explanation box for incorrect answers only', () => {
+    const incorrectCard = render(
+      <FeedbackCard
+        isLastQuestion={false}
+        isPending={false}
+        onContinue={() => undefined}
+        result={incorrect}
+      />,
+    );
+    expect(
+      incorrectCard.container.querySelector('.feedback-card__explanation'),
+    ).toHaveTextContent(incorrect.explanation);
+    incorrectCard.unmount();
+
+    const correctCard = render(
+      <FeedbackCard
+        isLastQuestion={false}
+        isPending={false}
+        onContinue={() => undefined}
+        result={mentorResult}
+      />,
+    );
+    expect(
+      correctCard.container.querySelector('.feedback-card__explanation'),
+    ).toBeNull();
   });
 });

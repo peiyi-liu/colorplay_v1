@@ -10,7 +10,16 @@ import { describe, expect, it, vi } from 'vitest';
 import { AuthContext, type AuthContextValue } from '../context/auth-context';
 import { AuthRepositoryError } from '../types';
 import { ToastProvider } from '../../../components/ui/toast';
+import { createProfileRepository } from '../../profile/api/profile-repository';
 import { LoginPage } from './login-page';
+
+// 預設讓 profile 查詢失敗:既有測試走「查詢失敗 → 教師工作區」的保守
+// fallback(與真實 client 在測試環境的行為一致);admin 導向案再覆寫。
+vi.mock('../../profile/api/profile-repository', () => ({
+  createProfileRepository: vi.fn(() => ({
+    getMyProfile: () => Promise.reject(new Error('unavailable')),
+  })),
+}));
 
 const validCredentials = {
   account: 'cp045001',
@@ -49,6 +58,20 @@ const renderLoginPage = (value: AuthContextValue) =>
   );
 
 describe('LoginPage', () => {
+  it('呈現桌機迎賓文案與手機公會木牌文案', () => {
+    renderLoginPage(createAuthValue());
+
+    expect(screen.getByText('歡迎回來，冒險者。')).toHaveClass(
+      'auth-portal__welcome',
+    );
+    expect(screen.getByText('冒險者公會')).toHaveClass(
+      'auth-portal-brand__title',
+    );
+    expect(
+      screen.getByRole('img', { name: 'ColorPlay 藍金寶典' }),
+    ).toHaveAttribute('src', '/colorplay-grimoire-pixel.png');
+  });
+
   it('groups labeled inputs and one primary submit action', async () => {
     renderLoginPage(createAuthValue());
 
@@ -65,6 +88,34 @@ describe('LoginPage', () => {
     expect(screen.getByLabelText('密碼')).toHaveAccessibleDescription(
       '請輸入密碼',
     );
+  });
+
+  it('keeps the password hidden by default and preserves it while toggling visibility', async () => {
+    const user = userEvent.setup();
+    renderLoginPage(createAuthValue());
+
+    const password = screen.getByLabelText('密碼');
+    await user.type(password, validCredentials.password);
+
+    expect(password).toHaveAttribute('type', 'password');
+    expect(screen.getByRole('button', { name: '顯示密碼' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+
+    await user.click(screen.getByRole('button', { name: '顯示密碼' }));
+
+    expect(password).toHaveAttribute('type', 'text');
+    expect(password).toHaveValue(validCredentials.password);
+    expect(screen.getByRole('button', { name: '隱藏密碼' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    await user.click(screen.getByRole('button', { name: '隱藏密碼' }));
+
+    expect(password).toHaveAttribute('type', 'password');
+    expect(password).toHaveValue(validCredentials.password);
   });
 
   it('sends a student account through the account sign-in path', async () => {
@@ -105,26 +156,21 @@ describe('LoginPage', () => {
     expect(signInWithAccount).not.toHaveBeenCalled();
   });
 
-  it('requires the class code for teacher account logins', async () => {
+  it('lets teacher accounts sign in without a class code field', async () => {
     const user = userEvent.setup();
     const signInWithAccount = vi.fn(() => Promise.resolve());
     renderLoginPage(createAuthValue(undefined, signInWithAccount));
 
     await user.click(screen.getByRole('radio', { name: '教師端登入' }));
+    expect(screen.queryByLabelText('班級序號')).toBeNull();
+    expect(screen.queryByText(/班級序號/u)).toBeNull();
     await user.type(screen.getByLabelText('帳號'), 'teacher01');
     await user.type(screen.getByLabelText('密碼'), validCredentials.password);
-    await user.click(screen.getByRole('button', { name: '登入' }));
-
-    expect(await screen.findByText('請輸入班級序號')).toBeVisible();
-    expect(signInWithAccount).not.toHaveBeenCalled();
-
-    await user.type(screen.getByLabelText('班級序號'), 'ABCD-1234-EF56-7890');
     await user.click(screen.getByRole('button', { name: '登入' }));
 
     await waitFor(() => {
       expect(signInWithAccount).toHaveBeenCalledWith({
         account: 'teacher01',
-        classCode: 'ABCD-1234-EF56-7890',
         password: validCredentials.password,
         portal: 'teacher',
       });
@@ -133,7 +179,10 @@ describe('LoginPage', () => {
 
   it.each([
     ['AUTH_INVALID_CREDENTIALS', '帳號或密碼不正確'],
+    ['AUTH_TIMEOUT', '登入服務回應逾時，請再試一次'],
+    ['AUTH_RATE_LIMITED', '登入嘗試過於頻繁，請稍後再試'],
     ['AUTH_NETWORK', '網路連線失敗，請稍後重試'],
+    ['AUTH_UNAVAILABLE', '登入服務暫時無法使用，請稍後再試'],
     ['AUTH_UNKNOWN', '登入失敗，請使用追蹤代碼回報'],
   ] as const)('maps %s to a stable safe error', async (code, message) => {
     const user = userEvent.setup();
@@ -271,6 +320,37 @@ describe('LoginPage', () => {
     expect(router.state.location.pathname).toBe('/teacher');
   });
 
+  it('routes an admin teacher-portal login to the admin console', async () => {
+    const user = userEvent.setup();
+    const signIn = vi.fn(() => Promise.resolve());
+    vi.mocked(createProfileRepository).mockReturnValueOnce({
+      getMyProfile: () => Promise.resolve({ role: 'admin' }),
+    } as unknown as ReturnType<typeof createProfileRepository>);
+    const router = createMemoryRouter(
+      [
+        { element: <LoginPage />, path: '/login' },
+        { element: <h1>管理主控台</h1>, path: '/admin' },
+      ],
+      { initialEntries: ['/login'] },
+    );
+    render(
+      <AuthContext.Provider value={createAuthValue(signIn)}>
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
+      </AuthContext.Provider>,
+    );
+
+    await user.click(screen.getByRole('radio', { name: '教師端登入' }));
+    await fillEmailBridgeCredentials(user);
+    await user.click(screen.getByRole('button', { name: '登入' }));
+
+    expect(
+      await screen.findByRole('heading', { name: '管理主控台' }),
+    ).toBeVisible();
+    expect(router.state.location.pathname).toBe('/admin');
+  });
+
   it.each([
     ['protocol-relative', '//malicious.example'],
     ['backslash-normalized', '/\\malicious.example'],
@@ -360,16 +440,19 @@ describe('LoginPage', () => {
     expect(router.state.historyAction).toBe('REPLACE');
   });
 
-  it('renders the PRESS START marquee on the title screen', () => {
+  it('renders the adventurers guild identity on the login desk', () => {
     renderLoginPage(createAuthValue());
-    expect(screen.getByText('PRESS START')).toBeInTheDocument();
+    expect(screen.getByText('冒險者公會')).toBeInTheDocument();
+    expect(
+      document.querySelector('.auth-portal-brand__mark img'),
+    ).toHaveAttribute('src', '/colorplay-grimoire-pixel.png');
   });
 });
 
 it('shows the ggame auth portal branding', () => {
   renderLoginPage(createAuthValue());
-  expect(screen.getByText('ColorPlay')).toBeInTheDocument();
-  expect(screen.getByText('色彩原理遊戲式學習平台')).toBeInTheDocument();
+  expect(screen.getByText('冒險者公會')).toBeInTheDocument();
+  expect(screen.getByText('歡迎回來，冒險者。')).toBeInTheDocument();
 });
 
 it('switches the ggame portal tone and teacher note with the tabs', async () => {
@@ -399,6 +482,28 @@ it('gives the teacher-portal submit button the purple teacher variant class', as
   expect(screen.getByRole('button', { name: '登入' })).not.toHaveClass(
     'login-form__submit--teacher',
   );
+});
+
+it('uses the pixel action typeface for both login button states', async () => {
+  let resolveSignIn!: () => void;
+  const signIn = vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        resolveSignIn = resolve;
+      }),
+  );
+  const user = userEvent.setup();
+  renderLoginPage(createAuthValue(signIn));
+  const submit = screen.getByRole('button', { name: '登入' });
+
+  expect(submit).toHaveClass('login-form__submit--pixel');
+  await fillEmailBridgeCredentials(user);
+  await user.click(submit);
+  expect(screen.getByRole('button', { name: '登入中…' })).toHaveClass(
+    'login-form__submit--pixel',
+  );
+
+  resolveSignIn();
 });
 
 it('offers register and forgot-password entries on the student portal only', async () => {

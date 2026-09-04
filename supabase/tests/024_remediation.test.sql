@@ -212,7 +212,7 @@ reset role;
 select set_config(
   'test.s1',
   pg_temp.build_session(
-    '24000000-0000-0000-0000-000000000001', '3-1-01', 'incorrect', 'practice',
+    '24000000-0000-0000-0000-000000000001', 'QB3101', 'incorrect', 'practice',
     '24100000-0000-0000-0000-000000000001'
   )::text,
   true
@@ -220,7 +220,7 @@ select set_config(
 select set_config(
   'test.s2',
   pg_temp.build_session(
-    '24000000-0000-0000-0000-000000000001', '3-1-02', 'incorrect', 'practice',
+    '24000000-0000-0000-0000-000000000001', 'QB3102', 'incorrect', 'practice',
     '24100000-0000-0000-0000-000000000002'
   )::text,
   true
@@ -390,7 +390,7 @@ reset role;
 select set_config(
   'test.s4',
   pg_temp.build_session(
-    '24000000-0000-0000-0000-000000000001', '3-1-05', 'correct', 'practice',
+    '24000000-0000-0000-0000-000000000001', 'QB3105', 'correct', 'practice',
     '24100000-0000-0000-0000-000000000005'
   )::text,
   true

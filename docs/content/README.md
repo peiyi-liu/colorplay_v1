@@ -15,7 +15,7 @@ pnpm test:db          # 重建本機資料庫（會套用新內容）
 
 直接在試算表編輯，然後跑上面兩個指令。規則：
 
-- 題號格式 `章-節-兩位數`（如 `3-1-01`），全表不可重複。
+- 題號格式依工作表為 `QB章小節兩位數`、`CR章三位數`、`LT章小節兩位數`；全表不可重複。
 - 選項至少 2 個（A–D），正確答案填 A/B/C/D。
 - 「答錯觀念解析」建議填寫；留空時會使用 `scripts/content/import-fixes.json` 裡的 AI 草稿（若有）。**試算表填了就以試算表為準。**
 - 資料有問題（缺答案、題號重複…）時匯入會**直接中止並列出原因**，不會把壞資料寫進平台。
@@ -37,7 +37,7 @@ pnpm test:db          # 重建本機資料庫（會套用新內容）
 
 ### 跳過有問題的列、修正重複題號
 
-`skipCodes`（跳過並記錄原因）、`duplicateRenames`（第二次出現的題號自動改號）。
+`skipCodes` 僅用於有明確 owner 裁定的暫時略過。系統序號重複一律中止，必須回 Google Sheet 修正，匯入器不會代為改號。
 
 ## 每次匯入自動產生的檔案
 
@@ -46,7 +46,9 @@ pnpm test:db          # 重建本機資料庫（會套用新內容）
 | `supabase/seeds/content-questions.sql`         | 資料庫種子（勿手改）                                       |
 | `tests/fixtures/question-answers.generated.ts` | E2E 測試的題目↔正解對照                                    |
 | `tests/fixtures/content-manifest.generated.ts` | E2E 測試的章節清單——**測試會自動適應內容變動**，不用改測試 |
-| `docs/content/import-review.md`                | 審閱報告：跳過的列、改號、待確認答案、AI 解析草稿          |
+| `docs/content/import-review.md`                | 審閱報告：跳過的列、待確認答案、AI 解析草稿                |
+
+題池隔離：學生小節測驗只用 QB、章節總測驗只用 CR、Live 只用教師所選小節的 LT；不得把 LT 複製或降級成 QB／legacy。
 
 ## 匯入後建議
 

@@ -12,7 +12,7 @@ const signIn = async (
   credentials: (typeof TEST_USERS)['studentOne' | 'studentTwo'],
 ) => {
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
-  await page.getByLabel('密碼').fill(credentials.password);
+  await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
 };
 

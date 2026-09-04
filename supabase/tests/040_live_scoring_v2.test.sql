@@ -234,7 +234,7 @@ select pg_temp.as_user('40000000-0000-0000-0000-000000000001');
 select set_config(
   'test.activity',
   public.create_live_activity(
-    'Kahoot 節奏', '26000000-0000-0000-0000-000000000003', 20
+    'Kahoot 節奏', '4f208855-dfc8-6cc5-7671-02dfacba85d1', 20
   )::text,
   true
 );

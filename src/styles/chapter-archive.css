@@ -1,0 +1,406 @@
+/* ── 05a-v2 章節複習旅程 ──────────────────────────────────────────────
+   UI 維持語意化 HTML；chapter-archive-world 只提供無文字的連續世界背景。 */
+#main-content:has(> .chapter-archive) {
+  align-items: start;
+  justify-items: stretch;
+  padding: 0;
+}
+
+.chapter-dungeon.chapter-archive {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  width: 100%;
+  max-width: none;
+  min-height: 100%;
+  margin: 0;
+  padding: clamp(24px, 3vw, 42px) clamp(18px, 4vw, 64px) 48px;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--pixel-window-ink);
+  background:
+    linear-gradient(180deg, rgb(2 10 31 / 22%), rgb(2 8 24 / 72%)),
+    url('../assets/chapter/chapter-archive-world-desktop-v3.webp') center top /
+      cover scroll;
+}
+
+.chapter-archive::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 10%, rgb(67 166 255 / 18%), transparent 32%),
+    linear-gradient(
+      90deg,
+      rgb(1 9 29 / 18%),
+      transparent 24% 76%,
+      rgb(1 9 29 / 20%)
+    );
+  content: '';
+  pointer-events: none;
+}
+
+.chapter-archive::after {
+  position: absolute;
+  z-index: -1;
+  right: -14%;
+  bottom: -190px;
+  left: -14%;
+  height: 360px;
+  border-radius: 50%;
+  background: rgb(1 7 22 / 64%);
+  filter: blur(44px);
+  content: '';
+  pointer-events: none;
+}
+
+.chapter-archive__library {
+  display: grid;
+  width: min(100%, 1004px);
+  margin: 32px auto 0;
+  gap: 24px;
+}
+
+.chapter-archive__subtopic-menu {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+}
+
+.chapter-archive__subtopic-menu-title {
+  width: fit-content;
+  margin: 0 0 10px;
+  color: #ffe38b;
+  font-family: var(--font-pixel-tc);
+  font-size: 0.94rem;
+  letter-spacing: 0.12em;
+  text-shadow: 0 2px 0 #1d1205;
+}
+
+.chapter-archive__subtopic-menu-list {
+  display: grid;
+  gap: 8px;
+}
+
+.chapter-archive__subtopic-menu-item {
+  display: grid;
+  min-width: 0;
+  min-height: 56px;
+  padding: 8px 10px 8px 14px;
+  border: 1px solid rgb(134 161 208 / 42%);
+  border-left: 4px solid #415979;
+  border-radius: 0;
+  background: linear-gradient(90deg, rgb(5 20 50 / 94%), rgb(4 14 37 / 84%));
+  color: #cbd6e9;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: 3px 3px 0 rgb(0 0 0 / 38%);
+}
+
+.chapter-archive__subtopic-menu-item:hover,
+.chapter-archive__subtopic-menu-item:focus-visible {
+  border-color: #62bfff;
+  border-left-color: #62bfff;
+  background: linear-gradient(90deg, rgb(8 48 94 / 96%), rgb(5 23 53 / 92%));
+  color: #fff;
+  outline: 2px solid rgb(255 211 91 / 82%);
+  outline-offset: 2px;
+}
+
+.chapter-archive__subtopic-menu-item[aria-current='true'] {
+  border-color: #f1c54f;
+  border-left-color: #ffe074;
+  background: linear-gradient(90deg, rgb(15 72 128 / 98%), rgb(6 35 75 / 94%));
+  color: #fff8d2;
+  box-shadow:
+    inset 0 0 0 1px rgb(99 194 255 / 46%),
+    0 0 14px rgb(54 170 255 / 32%);
+}
+
+.chapter-archive__subtopic-menu-name,
+.chapter-archive__subtopic-menu-count {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.chapter-archive__subtopic-menu-name {
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.chapter-archive__subtopic-menu-count {
+  color: #91a4c3;
+  font-size: 0.76rem;
+}
+
+.chapter-archive__subtopic-menu-item[aria-current='true']
+  .chapter-archive__subtopic-menu-count {
+  color: #a9ddff;
+}
+
+.chapter-archive__challenge-actions {
+  display: grid;
+  margin-top: 16px;
+  gap: 10px;
+}
+
+.chapter-archive__challenge-action {
+  display: grid;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 12px;
+  place-content: center;
+  gap: 2px;
+  border: 2px solid var(--pixel-window-frame);
+  border-radius: 0;
+  background: rgb(4 24 58 / 92%);
+  color: #a9ddff;
+  font-weight: 850;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  box-shadow: 3px 3px 0 rgb(0 0 0 / 38%);
+}
+
+.chapter-archive__challenge-action small {
+  color: #8f9db5;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.chapter-archive__challenge-action--chapter:hover,
+.chapter-archive__challenge-action--chapter:focus-visible {
+  border-color: #ffe074;
+  background: linear-gradient(180deg, #237fce, #164f91);
+  color: #fff;
+  outline: 2px solid #62bfff;
+  outline-offset: 2px;
+}
+
+.chapter-archive__challenge-action:disabled {
+  cursor: not-allowed;
+  filter: saturate(0.45);
+  opacity: 0.72;
+}
+
+.chapter-dungeon .chapter-detail__subtopic.chapter-archive__subtopic {
+  position: relative;
+  margin: 0 0 26px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.chapter-archive .chapter-detail__subtopic-title {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 8px;
+  padding: 9px 26px 10px 44px;
+  border: 3px solid #d8a64d;
+  border-radius: 2px;
+  background: linear-gradient(
+    180deg,
+    rgb(116 69 28 / 98%),
+    rgb(66 35 15 / 98%)
+  );
+  color: #fff6d6;
+  font-family: var(--font-pixel-tc);
+  font-size: clamp(1rem, 1.8vw, 1.25rem);
+  line-height: 1.45;
+  text-align: center;
+  text-shadow: 0 2px 0 rgb(0 0 0 / 70%);
+  box-shadow:
+    inset 0 0 0 2px rgb(49 25 10 / 92%),
+    0 0 0 2px rgb(2 11 31 / 94%),
+    0 6px 0 rgb(2 11 31 / 70%);
+}
+
+.chapter-archive .chapter-detail__subtopic-title::before {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 9px;
+  width: 24px;
+  border: 2px solid #d8a64d;
+  background: linear-gradient(180deg, #164d8b, #08294f);
+  clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%);
+  content: '';
+}
+
+.chapter-archive .chapter-detail__subtopic-title::after {
+  position: absolute;
+  top: 50%;
+  left: 17px;
+  width: 7px;
+  height: 7px;
+  background: #f0c75e;
+  box-shadow: 0 0 0 2px #5c3515;
+  content: '';
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.chapter-archive .floor-torches,
+.chapter-archive .chapter-detail__subtopic-progress {
+  display: none;
+}
+
+.chapter-archive__nodes {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(12px, 2.4vw, 34px);
+  align-items: start;
+  padding: 0;
+}
+
+.chapter-archive__pagination {
+  display: flex;
+  min-height: 48px;
+  margin: 16px auto 0;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.chapter-archive__page-button {
+  display: inline-grid;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  place-items: center;
+  border: 2px solid var(--pixel-window-frame);
+  border-radius: 0;
+  background: linear-gradient(180deg, #238de9, #1056a3);
+  color: #fff;
+  cursor: pointer;
+  font-size: 2rem;
+  line-height: 1;
+  box-shadow:
+    inset 0 -3px 0 rgb(0 31 76 / 58%),
+    3px 3px 0 var(--pixel-shadow);
+}
+
+.chapter-archive__page-button:hover:not(:disabled),
+.chapter-archive__page-button:focus-visible {
+  background: linear-gradient(180deg, #55baff, #247bd5);
+  outline: 2px solid #ffe074;
+  outline-offset: 2px;
+}
+
+.chapter-archive__page-button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.chapter-archive__page-status {
+  min-width: 112px;
+  color: #fff4c7;
+  font-family: var(--font-pixel-tc);
+  font-size: 0.92rem;
+  text-align: center;
+  text-shadow: 0 2px 0 #000;
+}
+
+.chapter-dungeon .chapter-review-node {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.chapter-review-node__summary {
+  display: flex;
+  min-width: 0;
+  min-height: 160px;
+  padding: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  text-align: center;
+}
+
+.chapter-review-node__summary:hover {
+  border: 0;
+  background: transparent;
+}
+
+.chapter-review-node__summary:focus-visible {
+  outline: none;
+}
+
+.chapter-review-node__artifact.review-accordion__badge {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  width: 240px;
+  height: 108px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  image-rendering: pixelated;
+  transition: filter 160ms ease;
+}
+
+.chapter-review-node__book-art {
+  position: absolute;
+  left: 50%;
+  display: block;
+  max-width: none;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  image-rendering: pixelated;
+}
+
+.chapter-review-node__book-art {
+  bottom: 0;
+  width: 190px;
+  transform: translateX(-50%);
+}
+
+.chapter-review-node__artifact[data-selected='true'] {
+  filter: drop-shadow(0 0 7px rgb(255 219 92 / 96%))
+    drop-shadow(0 0 15px rgb(53 177 255 / 82%));
+}
+
+.chapter-review-node:not([data-completed='true']):not([data-current='true'])
+  .chapter-review-node__book-art {
+  filter: grayscale(0.72) brightness(0.72);
+}
+
+.chapter-review-node:hover .chapter-review-node__artifact,
+.chapter-review-node__summary:focus-visible .chapter-review-node__artifact {
+  filter: drop-shadow(0 0 8px rgb(255 221 104 / 100%))
+    drop-shadow(0 0 18px rgb(52 181 255 / 90%));
+}
+
+.chapter-review-node__copy {
+  display: flex;
+  min-width: 0;
+  max-width: 230px;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.chapter-review-node__title {
+  max-width: 100%;
+  color: #fff;
+  font-size: clamp(0.92rem, 1.55vw, 1.08rem);
+  line-height: 1.35;
+  text-shadow: 0 2px 3px #000;
+  text-wrap: balance;
+}

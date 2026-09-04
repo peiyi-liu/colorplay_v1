@@ -109,8 +109,12 @@ describe('ClassroomLeaderboardPage', () => {
     renderPage({ getClassroomLeaderboard });
     await screen.findByRole('heading', { name: '排行榜' });
     expect(
-      document.querySelector('.leaderboard-panel.scene-day.guild-board'),
+      document.querySelector(
+        '.leaderboard-panel.leaderboard-panel--guild-v2.scene-day.guild-board',
+      ),
     ).not.toBeNull();
     expect(screen.getByRole('heading', { name: '排行榜' })).toBeInTheDocument();
+    expect(screen.queryByText('班級 XP')).toBeNull();
+    expect(screen.queryByText(/Top 10 與你的名次/u)).toBeNull();
   });
 });

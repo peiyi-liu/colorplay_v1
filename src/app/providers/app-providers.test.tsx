@@ -35,6 +35,17 @@ function AuthProbe() {
 }
 
 describe('AppProviders', () => {
+  it('uses conservative global query defaults to avoid request storms', () => {
+    const defaults = queryClient.getDefaultOptions();
+
+    expect(defaults.queries).toMatchObject({
+      refetchOnWindowFocus: false,
+      retry: false,
+      staleTime: 30_000,
+    });
+    expect(defaults.mutations).toMatchObject({ retry: false });
+  });
+
   it('provides the shared application QueryClient', () => {
     const { repository } = createAnonymousRepository();
     render(

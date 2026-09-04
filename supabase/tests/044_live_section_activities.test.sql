@@ -4,7 +4,7 @@
 
 begin;
 
-select plan(7);
+select plan(13);
 
 select has_function(
   'public', 'list_live_section_options', 'section options listing exists'
@@ -26,6 +26,14 @@ values
   ),
   (
     '00000000-0000-0000-0000-000000000000',
+    '44000000-0000-0000-0000-000000000002',
+    'authenticated', 'authenticated', 'section.live.other@colorplay.test',
+    crypt('LocalOnly-Sec2!', gen_salt('bf')), now(),
+    '{"provider":"email","providers":["email"]}', '{}', now(), now(),
+    '', '', '', ''
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
     '44000000-0000-0000-0000-000000000003',
     'authenticated', 'authenticated', 'section.live.student@colorplay.test',
     crypt('LocalOnly-Sec3!', gen_salt('bf')), now(),
@@ -35,7 +43,10 @@ values
 
 update public.profiles
 set role = 'teacher'
-where id = '44000000-0000-0000-0000-000000000001';
+where id in (
+  '44000000-0000-0000-0000-000000000001',
+  '44000000-0000-0000-0000-000000000002'
+);
 
 insert into public.classrooms (
   id, owner_teacher_id, name, join_code_hash, join_code_version,
@@ -83,13 +94,28 @@ select is(
     select bool_or(
       entry ->> 'section_id' = 'cd732278-0bfe-1293-19e1-338db3fe6a3c'
       and entry ->> 'quiz_template_id'
-        = '26000000-0000-0000-0000-000000000003'
+        = '4f208855-dfc8-6cc5-7671-02dfacba85d1'
       and entry ->> 'title' like '3-1%'
     )
     from jsonb_array_elements(public.list_live_section_options()) entry
   ),
   true,
-  'the listing pairs the imported 3-1 section with its chapter template'
+  'the listing pairs the imported 3-1 section with its section template'
+);
+
+select is(
+  jsonb_array_length(public.list_live_section_options()),
+  3,
+  'only sections with a published LT question bank are listed for Live'
+);
+
+select throws_ok(
+  $$select public.create_live_activity(
+    '無小節範圍活動', '26000000-0000-0000-0000-000000000003', 20
+  )$$,
+  'P0001',
+  'LIVE_SECTION_NOT_FOUND',
+  'Live rejects chapter-wide templates without a section scope'
 );
 
 -- A section from another chapter's template is rejected.
@@ -106,7 +132,7 @@ select throws_ok(
 select set_config(
   'test.activity',
   public.create_live_activity(
-    '3-1 色彩三要素與色名的表示', '26000000-0000-0000-0000-000000000003',
+    '3-1 色彩三要素與色名的表示', '4f208855-dfc8-6cc5-7671-02dfacba85d1',
     20, 'screen_only', 'cd732278-0bfe-1293-19e1-338db3fe6a3c'
   )::text,
   true
@@ -126,19 +152,88 @@ select set_config(
   )::text,
   true
 );
+
+reset role;
+update public.profiles
+set role = 'student'
+where id = '44000000-0000-0000-0000-000000000001';
+set local role authenticated;
+select throws_ok(
+  format(
+    'select public.start_live_session(%L::uuid, 1)',
+    current_setting('test.session')::jsonb ->> 'session_id'
+  ),
+  'P0001', 'LIVE_SESSION_NOT_FOUND',
+  'a demoted host cannot start a previously created Live session'
+);
+
+reset role;
+update public.profiles
+set role = 'teacher'
+where id = '44000000-0000-0000-0000-000000000001';
+update public.classrooms
+set owner_teacher_id = '44000000-0000-0000-0000-000000000002'
+where id = '44100000-0000-0000-0000-000000000001';
+set local role authenticated;
+select throws_ok(
+  format(
+    'select public.start_live_session(%L::uuid, 1)',
+    current_setting('test.session')::jsonb ->> 'session_id'
+  ),
+  'P0001', 'LIVE_SESSION_NOT_FOUND',
+  'a stale host cannot start Live after classroom ownership changes'
+);
+
+reset role;
+update public.classrooms
+set owner_teacher_id = '44000000-0000-0000-0000-000000000001',
+    status = 'archived'
+where id = '44100000-0000-0000-0000-000000000001';
+set local role authenticated;
+select throws_ok(
+  format(
+    'select public.start_live_session(%L::uuid, 1)',
+    current_setting('test.session')::jsonb ->> 'session_id'
+  ),
+  'P0001', 'LIVE_SESSION_NOT_FOUND',
+  'a host cannot start Live for an archived classroom'
+);
+
+reset role;
+update public.classrooms
+set status = 'active'
+where id = '44100000-0000-0000-0000-000000000001';
+update public.live_activities
+set status = 'archived'
+where id = (current_setting('test.activity')::jsonb ->> 'activity_id')::uuid;
+set local role authenticated;
+select throws_ok(
+  format(
+    'select public.start_live_session(%L::uuid, 1)',
+    current_setting('test.session')::jsonb ->> 'session_id'
+  ),
+  'P0001', 'LIVE_SESSION_NOT_FOUND',
+  'a host cannot start Live from an archived activity'
+);
+
+reset role;
+update public.live_activities
+set status = 'active'
+where id = (current_setting('test.activity')::jsonb ->> 'activity_id')::uuid;
+set local role authenticated;
 select public.start_live_session(
   (current_setting('test.session')::jsonb ->> 'session_id')::uuid, 1
 );
 
 select is(
   (
-    select bool_and(question.question_stable_code like '3-1-%')
+    select bool_and(question.question_stable_code like 'LT31%')
     from public.live_session_questions question
     where question.session_id
       = (current_setting('test.session')::jsonb ->> 'session_id')::uuid
   ),
   true,
-  'the freeze samples questions from the chosen section only'
+  'the freeze samples LT questions from the chosen section only'
 );
 select cmp_ok(
   (

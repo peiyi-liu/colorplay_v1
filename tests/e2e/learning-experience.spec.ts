@@ -18,26 +18,28 @@ import {
   unexpectedBrowserHealth,
 } from './browser-health';
 import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
+import { startQuizFromLobby } from './helpers/quiz';
 
 // The quiz chapter must show every question in a single run so hint and
 // mistake targets are deterministic: chapter 4 has fewer questions than the
 // ten-question template ceiling, so all of them always appear.
+// These content-availability checks used to throw at module scope, which
+// crashes Playwright's test *discovery* for the whole tests/e2e directory
+// the moment content rollout hasn't reached this phase-gate's assumptions
+// yet (e.g. chapter-4 currently has 0 bank_kind='chapter' questions, not
+// 1-10) -- breaking every other spec file's ability to even be listed.
+// This test already requires PLAYWRIGHT_ACCEPTANCE=on to run at all, so
+// the guards belong inside the test body instead, where a stale/not-yet-
+// ready fixture only fails this one gate rather than the whole suite.
 const quizChapter = CONTENT_MANIFEST.find(
   ({ chapterCode, questionCount }) =>
     chapterCode === 'chapter-4' && questionCount > 0 && questionCount <= 10,
 );
-if (!quizChapter) throw new Error('LEARNING_EXPERIENCE_QUIZ_CHAPTER_MISSING');
 const QUIZ_CHAPTER_TITLE = '色彩與視覺';
 
 const reviewSubtopic = REVIEW_MANIFEST.find(
   ({ cardCount, chapterCode }) => chapterCode === 'chapter-3' && cardCount > 0,
 );
-if (!reviewSubtopic) {
-  throw new Error('LEARNING_EXPERIENCE_REVIEW_SUBTOPIC_MISSING');
-}
-if (!REVIEW_MEDIA_CARD) {
-  throw new Error('LEARNING_EXPERIENCE_MEDIA_CARD_MISSING');
-}
 const mediaCard = REVIEW_MEDIA_CARD;
 const REVIEW_CHAPTER_TITLE = '色彩表示';
 
@@ -62,7 +64,7 @@ const signIn = async (
 ) => {
   await page.goto('/login');
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
-  await page.getByLabel('密碼').fill(credentials.password);
+  await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u);
   await expect(
@@ -70,9 +72,7 @@ const signIn = async (
   ).toBeVisible();
   // Wait for the chapter query to settle before the caller navigates away,
   // so browser health never records a navigation-aborted manifest fetch.
-  await expect(
-    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: '學習地圖' })).toBeVisible();
 };
 
 test('Learning Experience phase gate', async ({
@@ -90,6 +90,13 @@ test('Learning Experience phase gate', async ({
   }
   if (!baseURL) {
     throw new Error('LEARNING_EXPERIENCE_BASE_URL_REQUIRED');
+  }
+  if (!quizChapter) throw new Error('LEARNING_EXPERIENCE_QUIZ_CHAPTER_MISSING');
+  if (!reviewSubtopic) {
+    throw new Error('LEARNING_EXPERIENCE_REVIEW_SUBTOPIC_MISSING');
+  }
+  if (!mediaCard) {
+    throw new Error('LEARNING_EXPERIENCE_MEDIA_CARD_MISSING');
   }
 
   const teacherContext = await browser.newContext({ baseURL });
@@ -109,8 +116,12 @@ test('Learning Experience phase gate', async ({
 
   // --- Review cards: published content only, explicit completion, media ---
   await studentPage
-    .getByRole('link', { name: `${REVIEW_CHAPTER_TITLE} 複習與進度` })
+    .getByRole('list', { name: '六章學習地圖' })
+    .getByRole('button', {
+      name: new RegExp(`^Chapter \\d+ ${REVIEW_CHAPTER_TITLE} `, 'u'),
+    })
     .click();
+  await studentPage.getByRole('link', { name: '進入複習與進度' }).click();
   await expect(
     studentPage.getByRole('heading', { name: REVIEW_CHAPTER_TITLE }),
   ).toBeVisible();
@@ -159,19 +170,9 @@ test('Learning Experience phase gate', async ({
   await studentPage.setViewportSize({ width: 1280, height: 720 });
 
   // --- Formal quiz with tiered hints and two deliberate mistakes ---
-  await studentPage.goto('/app');
-  await expect(
-    studentPage.getByRole('heading', { name: '色彩任務選擇大廳' }),
-  ).toBeVisible();
-  await studentPage
-    .getByRole('group', { name: '章節分頁' })
-    .getByRole('button', { name: '下一頁' })
-    .click();
-  await studentPage
-    .locator('article.chapter-card')
-    .filter({ hasText: QUIZ_CHAPTER_TITLE })
-    .getByRole('link', { name: /開始任務|繼續學習/u })
-    .click();
+  await startQuizFromLobby(studentPage, {
+    templateId: quizChapter.templateId,
+  });
 
   const questionTotal = quizChapter.questionCount;
   let declaredUnavailable = false;
@@ -237,7 +238,7 @@ test('Learning Experience phase gate', async ({
     'mistake-group__badge',
   );
   await studentPage.getByRole('button', { name: '再挑戰（補救練習）' }).click();
-  await expect(studentPage.getByText(/補救練習模式/u)).toBeVisible();
+  await expect(studentPage.getByText(/補救練習模式/u)).toHaveCount(0);
   for (let position = 1; position <= 2; position += 1) {
     await expect(studentPage.getByLabel('挑戰進度')).toContainText(
       `第 ${String(position)} / 2 題`,

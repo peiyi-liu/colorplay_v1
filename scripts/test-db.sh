@@ -45,6 +45,9 @@ load_local_supabase_environment \
   < <(pnpm exec supabase status -o env 2>/dev/null)
 export SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY
 pnpm exec tsx scripts/supabase/seed-auth.ts
+# Keep the service key out of the sanitized integration run below, but retain
+# it unexported for the two admin-mfa gates whose GoTrue admin calls need it.
+mfa_capability_service_role_key="$SUPABASE_SERVICE_ROLE_KEY"
 unset SUPABASE_SERVICE_ROLE_KEY
 
 printf '%s\n' \
@@ -59,7 +62,29 @@ printf '%s\n' \
 
 pnpm exec supabase test db --local
 pnpm exec supabase test db --local "$db_test_file"
-pnpm test:integration
+# The MFA capability and edge-flow gates must stay fail-closed, so run them
+# alone with the service key they require, then run every other integration
+# test without it.
+# --no-file-parallelism:GoTrue 的 mfa_factors.last_challenged_at 帶唯一
+# 約束,平行檔案同時 challenge 不同 factor 會撞同一時間戳(23505 → 500),
+# 造成假紅;帶 key 的 MFA 流程檔一律序列執行。
+SUPABASE_SERVICE_ROLE_KEY="$mfa_capability_service_role_key" \
+  pnpm exec vitest run --config vitest.integration.config.ts \
+  --no-file-parallelism \
+  tests/integration/admin-mfa-capability.integration.test.ts \
+  tests/integration/admin-mfa-flow.integration.test.ts \
+  tests/integration/admin-canonical-hash.integration.test.ts \
+  tests/integration/admin-command-saga.integration.test.ts \
+  tests/integration/admin-manual-retry-claim.integration.test.ts \
+  tests/integration/admin-teacher-account.integration.test.ts
+unset mfa_capability_service_role_key
+pnpm test:integration \
+  --exclude tests/integration/admin-mfa-capability.integration.test.ts \
+  --exclude tests/integration/admin-mfa-flow.integration.test.ts \
+  --exclude tests/integration/admin-canonical-hash.integration.test.ts \
+  --exclude tests/integration/admin-command-saga.integration.test.ts \
+  --exclude tests/integration/admin-manual-retry-claim.integration.test.ts \
+  --exclude tests/integration/admin-teacher-account.integration.test.ts
 node scripts/verify/task-11-network-evidence.mjs "$task11_network_report" "$task11_secret_scan_report"
 
 auth_http_status="$(

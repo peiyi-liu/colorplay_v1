@@ -5,18 +5,21 @@ export type SignInInput = Readonly<{
 
 export type AccountSignInInput = Readonly<{
   account: string;
-  classCode?: string;
   password: string;
   portal: 'student' | 'teacher';
 }>;
 
 export type AuthSession = Readonly<{
   userId: string;
-  email: string;
 }>;
 
 export type AuthErrorCode =
-  'AUTH_INVALID_CREDENTIALS' | 'AUTH_NETWORK' | 'AUTH_UNKNOWN';
+  | 'AUTH_INVALID_CREDENTIALS'
+  | 'AUTH_NETWORK'
+  | 'AUTH_RATE_LIMITED'
+  | 'AUTH_TIMEOUT'
+  | 'AUTH_UNAVAILABLE'
+  | 'AUTH_UNKNOWN';
 
 export class AuthRepositoryError extends Error {
   constructor(public readonly code: AuthErrorCode) {

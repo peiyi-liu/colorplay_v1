@@ -40,6 +40,16 @@ describe('RotateBanner', () => {
     expect(screen.getByRole('status')).toHaveTextContent('轉橫體驗更佳');
   });
 
+  it('allows route-specific copy while retaining the non-modal status role', () => {
+    stubMatchMedia(true);
+    render(<RotateBanner message="轉橫可看完整森林王國村" />);
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      '轉橫可看完整森林王國村',
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
   it('橫向時不渲染', () => {
     stubMatchMedia(false);
     render(<RotateBanner />);

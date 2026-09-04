@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   hasUnsafeText,
   isValidQuestionCode,
+  parseQuestionIdentifier,
   resolveCorrectAnswer,
   validateQuestionRow,
 } from '../../scripts/content/validation-rules.mjs';
@@ -61,5 +62,32 @@ describe('shared content validation rules', () => {
     );
     expect(isValidQuestionCode('7-1-01')).toBe(true);
     expect(isValidQuestionCode('7-1-1')).toBe(false);
+  });
+
+  it('接受 QB／CR／LT 系統序號並解析各自 scope', () => {
+    expect(parseQuestionIdentifier('QB3126')).toEqual({
+      chapter: '3',
+      order: 26,
+      scope: 'section',
+      section: '1',
+      sectionKey: '3-1',
+    });
+    expect(parseQuestionIdentifier('CR3064')).toEqual({
+      chapter: '3',
+      order: 64,
+      scope: 'chapter',
+      section: null,
+      sectionKey: '3-final',
+    });
+    expect(parseQuestionIdentifier('LT3120')).toEqual({
+      chapter: '3',
+      order: 20,
+      scope: 'live',
+      section: '1',
+      sectionKey: '3-1',
+    });
+    expect(isValidQuestionCode('QB3126')).toBe(true);
+    expect(isValidQuestionCode('CR3064')).toBe(true);
+    expect(isValidQuestionCode('LT3120')).toBe(true);
   });
 });

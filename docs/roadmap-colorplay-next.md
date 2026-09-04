@@ -1,14 +1,28 @@
 # ColorPlay Current Program
 
-- Status: TASK 14 REOPENED — corrected recoverability controls are local, but
-  local cleanup/gates and fresh protected hosted evidence remain; Task 15 is
-  blocked and no Staging merge, Candidate, DNS change, Production migration, or
-  release has occurred
-- Last updated: 2026-08-07 (Asia/Taipei)
-- Current phase: Phase 0 Task 14 remediation on `phase0/release-foundation`;
-  the exact next human action is authorization to remove 27 verified-empty
-  disposable restore networks so local coverage/restore gates can complete
+- Status: LOCAL INTEGRATION CANDIDATE IN PROGRESS — Phase 0 committed tip 與
+  Admin B final SHA 正在獨立本機分支整合；尚未 push、merge protected branch、
+  deploy 或執行任何 Hosted mutation
+- Last updated: 2026-09-04 (Asia/Taipei) — Admin B Tasks 1–6 與 A1 cleanup
+  harness 已完成 Local gate；目前處理 Phase 0／Admin migration 語意整合
+- Last full review: 2026-09-02 (Asia/Taipei)
+- Current phase: local-only canonical integration。完成衝突解決與 forward
+  reconciliation migration 後，仍須另取得新的 Local Supabase exclusive window
+  才能重放 migration、重生 DB types 與跑整合 DB gate
 - Canonical entry point: this file
+- Current owner decision record:
+  `docs/superpowers/specs/2026-09-02-program-rebaseline-owner-decisions.md`
+- Parallel execution control（檔名為了舊連結相容而保留）:
+  `docs/superpowers/specs/2026-09-02-async-delivery-control.md`
+- Prepared designs/plans（含明列的 execution stop gates）:
+  `docs/superpowers/specs/2026-09-02-section-progression-design.md`,
+  `docs/superpowers/plans/2026-09-02-section-progression.md`,
+  `docs/superpowers/specs/2026-09-02-admin-b-operations-design.md`,
+  `docs/superpowers/plans/2026-09-02-admin-b-operations.md`
+- Deferred Admin C record:
+  `docs/superpowers/specs/2026-09-02-admin-c-platform-option.md`
+- Phase 2／5／6 scope contracts:
+  `docs/superpowers/specs/2026-09-02-phase-2-5-6-scope-contracts.md`
 - Historical task ledger: `.superpowers/sdd/progress.md`
 
 This tracker answers four questions for every new work session:
@@ -23,48 +37,47 @@ deployment, rollback, or material blocker. A status claim must name its evidence
 and date. Never describe local work, a Vercel `READY` state, or an HTTP 200 alone
 as a completed production release.
 
+> **2026-09-02 supersession notice：**本文件後續保留舊 phase 敘述作為歷史脈絡；
+> 凡 current status、執行順序、progression 或 Admin 範圍與上述 owner decision
+> record 衝突，一律以 2026-09-02 record 為準。這項 supersession 不把任何既有
+> implementation、CI、deployment 或 smoke 升級為正式 phase gate。
+
 ## Immediate next action
 
-Authorize removal of only the 27 verified-empty
-`supabase_network_colorplay_restore_<pid>` networks, then complete local
-coverage/restore gates and strict review. Do not push until that evidence is
-green. PR #1 is still open against protected `staging`; its remote head remains frozen backup SHA
-`9af07ee9ee883d5813a3c2d1deb5e72d3af5fd20`, while the Task 14 remediation and
-closure commits remain local. The protected CI and exact-SHA owner approval must
-be rerun after that push; no agent should merge the PR merely because the older
-run passed.
+Complete the local-only merge candidate, including the forward migration that
+preserves Phase 0 `security_invoker`／safe explanation behavior together with
+Admin challenge-context columns. Then request a fresh exclusive Local Supabase
+window for migration replay, DB type generation, and scoped DB verification.
 
-Historical Task 14 evidence: backup run
-[`31158344282`](https://github.com/peiyi-liu/colorplay_v1/actions/runs/31158344282)
-and isolated restore run
-[`31158754421`](https://github.com/peiyi-liu/colorplay_v1/actions/runs/31158754421)
-passed at `9af07ee`, but independent review found those workflows incomplete,
-so they no longer close Task 14. Migration reconciliation found 57/57 entries: 48 exact and
-9 name-matched historical timestamp differences, with zero hosted-only or
-repo-only migrations. The comparator remains fail-closed for in-place reuse;
-Task 15 may proceed only by replaying migration zero on the clean Candidate.
+Do **not** approve or merge PR #1 from historical CI, push this candidate,
+deploy it, or run Hosted Task 7 until the resulting exact SHA has fresh protected
+evidence and the owner separately authorizes each external mutation.
 
-After the corrected SHA passes local gates, it needs owner-authorized push,
-protected CI/approval, and merge to `staging`. Rotate the recovery key to add
-only `listBuckets`, then rerun corrected backup/lifecycle/restore proof from the
-protected ref before Task 15. DNS, Staging deployment/acceptance, Candidate
-replay, Production promotion, and Production data-plane mutation remain
-unexecuted.
+The Admin B lane may implement and verify Tasks 1–6 locally because `f0638b0`
+contains Phase 1 tip `3f0f16d`. It may not touch the Phase 0/1 worktrees, run a
+shared DB reset without an exclusive window, integrate to release history, or
+run Hosted Task 7 yet. Separately, the Phase 0 lane still needs one staged-tree
+review and candidate commit; real isolated restore proof and every push/merge/
+Hosted action remain separately authorized gates.
 
-## Approved program structure
+## Historical program structure snapshot（superseded 2026-09-02）
+
+The table below records the 2026-08-26-era program view. It is retained for
+history and must not be used as the current execution queue. See the current
+owner decision record linked at the top of this file.
 
 The owner approved seven independent design, plan, implementation, and release
 batches. Each batch must pass its own Staging gate before Production promotion.
 
-| Phase | Scope                                         | Status                                              |
-| ----- | --------------------------------------------- | --------------------------------------------------- |
-| 0     | Environment and release foundation            | Task 14 reopened; local and hosted proof pending    |
-| 1     | Admin identity and security core              | Decisions captured; spec not started                |
-| 2     | Content SSOT and version publishing           | Decisions captured; spec not started                |
-| 3     | Learning progression and assessment authority | Decisions captured; spec not started                |
-| 4     | Learning Hall and chapter experience          | Visual/product decisions captured; spec not started |
-| 5     | Live and teacher reporting                    | Product rules captured; spec not started            |
-| 6     | Full-site JRPG visual unification             | Direction captured; spec not started                |
+| Phase | Scope                                         | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ----- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 0     | Environment and release foundation            | Foundation CI passed; PR #1 awaits owner approval                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 1     | Admin identity and security core              | **MERGED into `feature/v2-major-update` 2026-08-26.** Tasks 0-15 implemented and reviewed on `phase1/admin-security-impl` before merge; Local gate PASSED (see "Phase 1 admin-security-impl worktree" below for evidence). Staging and Production gates remain blocked on Phase 0 hosted readiness and explicit owner authorization, not yet executed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 2     | Content SSOT and version publishing           | Decisions captured; a chapter-3-scoped subset (Phase 2A, not the full Phase 2 spec) -- see docs/superpowers/specs/2026-08-10-phase-2a-chapter-three-content-import-design.md. Status: owner approved 2026-08-10 (scope boundary only) / Codex design review completed / implementation planning not yet authorized. Completing this slice does not mean the full Phase is complete.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 3     | Learning progression and assessment authority | Decisions captured; a chapter-3-scoped subset (Phase 3A, not the full Phase 3 spec) -- see docs/superpowers/specs/2026-08-10-phase-3a-chapter-three-progression-design.md. Status: owner approved 2026-08-10 (scope boundary only) / Codex design review completed / implementation planning not yet authorized. Completing this slice does not mean the full Phase is complete.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 4     | Learning Hall and chapter experience          | Visual/product decisions captured; a chapter-detail-page-scoped subset (Phase 4A, not the full Phase 4 spec) -- see docs/superpowers/specs/2026-08-10-phase-4a-student-chapter-detail-ui-design.md. Status: owner approved 2026-08-10 / Codex design review completed / implementation planning authorized -- see docs/superpowers/plans/2026-08-10-phase-4a-student-chapter-detail-ui.md. Completing this slice does not mean the full Phase is complete.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 5     | Live and teacher reporting                    | Product rules captured; split into a UI/UX-only draft (Phase 5V, docs/superpowers/specs/2026-08-10-phase-5v-teacher-ui-ux-restyle-design.md) and a functional draft (Phase 5F, docs/superpowers/specs/2026-08-10-phase-5f-teacher-live-functional-design.md, further split into 5F-U1/5F-F2 for sequencing -- see \"Chapter 3 slice program sequencing\" below). Status: 5V implemented and merged (`3230e16118e479c793de806dc49f2388e335d62e`, task-level UI surface complete, not feature complete); 5F-U1 (LivePresenter UI surface) is owner approved 2026-08-10, has completed its single Codex spec-review remediation, and is authorized for implementation planning (implementation itself has not started); 5F-F2 (stats/server semantics) remains owner approved 2026-08-10 (scope boundary only) / Codex design review completed / implementation planning not yet authorized. Completing either slice does not mean the full Phase is complete. Teacher report calculation methodology and privacy-preserving export remain untouched by either draft. |
+| 6     | Full-site JRPG visual unification             | Direction captured; spec not started                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 The required workflow for every phase is:
 
@@ -73,6 +86,66 @@ brainstorm → approved design → committed spec → owner review
 → implementation plan → isolated implementation → Staging gate
 → explicit Production authorization
 ```
+
+## Chapter 3 slice program sequencing (owner 2026-08-10)
+
+The five chapter-3 draft specs (2A, 3A, 4A, 5V, 5F -- see
+`docs/superpowers/specs/2026-08-10-chapter-three-umbrella-brief.md`) are
+approved for their scope boundaries. Phase 4A and 5V have been authorized,
+implemented, and merged into `feature/v2-major-update` as task-level UI
+surface complete (not feature complete, not Phase complete); 2A, 3A, and
+5F are not yet authorized for implementation planning. Execution order is
+UI-first:
+
+```text
+1. 4A-UI
+2. 5V-UI
+3. 5F-U1
+4. 2A
+5. 3A
+6. 5F-F2
+7. Integration
+```
+
+`5F-U1` is the visual/UI subset of Phase 5F, scope narrowed 2026-08-10 to
+LivePresenter only (`src/features/live/components/live-presenter.tsx`,
+mounted on the existing production-wired `/teacher/live/:sessionId` route):
+viewport, focus, keyboard, and accessibility work on top of the real
+hooks/repository/server state already in place; no new API/RPC/schema/
+query/mutation; test-only harness fixtures may be used to validate but must
+never be imported by the production route or show sample data at runtime.
+The teacher stats block (Live participation record) that an earlier draft
+of this sequencing note bundled into 5F-U1 has been removed from U1 and
+folded entirely into 5F-F2 -- that block has no existing production data to
+render honestly, unlike LivePresenter which already has real data and only
+needs presentation work. See
+`docs/superpowers/specs/2026-08-10-phase-5f-u1-teacher-live-presenter-ui-design.md`
+for the full contract. `5F-F2` is the functional subset (the teacher stats
+block in full, cancelled-session history rows, tie/absence ranking,
+stats RPC/RLS, server-authoritative aggregation, real data integration),
+executed after 2A/3A. `5V-UI` requires an inventory of file overlap with
+the Phase 1 AppShell/HUD/shared CSS work before it starts -- both 4A and
+5V are now integrated into `feature/v2-major-update` as task-level UI
+surface complete (not feature complete, not Phase complete). `4A`,
+`5V-UI`, and `5F-U1` may be marked "UI surface complete" but never
+"feature complete" or "Phase complete" -- 2A, 3A, and 5F-F2 are what
+actually wire up real data and product rules. This UI-first sequencing
+decision formally supersedes any earlier framing that treated
+LivePresenter's visual and functional work as a single undifferentiated
+unit to be delivered together; it is not authorization to build a static
+UI with fake data -- 5F-U1 must be built directly on the existing
+production-wired presenter. Current status: the 5F-U1 design spec has completed its single Codex
+spec-review remediation (draft/cancelled presentation contract, tightened
+viewport/overflow rules, full-screen region accessibility semantics,
+reduced-motion test layer, and a verified-against-schema content-bounds
+table with no outstanding owner blocker), and the owner has approved it
+2026-08-10, authorizing implementation planning. Codex is now the sole
+implementation actor for 5F-U1 (implementation plan, worktree, TDD,
+product code, scoped validation); Claude Code is the sole reviewer
+(implementation plan review, implementation diff review) -- see
+`docs/handoff.md` for the full role-handoff record. Implementation itself
+has not started. This is a sequencing decision only; it does not add or
+change any product rule beyond what each spec already defines.
 
 ## Environment decision
 
@@ -84,7 +157,27 @@ brainstorm → approved design → committed spec → owner review
 | Staging     | protected `staging` branch | `colorplay-staging-web` | `staging.colorplayapp.com` | existing project ref `onkxnkzeixpezetkmocf`, renamed `colorplay-staging` after the approved reset procedure | approved content plus fixture identities only   |
 | Production  | protected `main`           | `colorplay-web`         | `colorplayapp.com`         | new clean `colorplay-production` project                                                                    | approved content and authorized real users only |
 
+> **Environment invariant（owner re-confirmed 2026-08-11）：**
+> `colorplay-staging-web`／`staging.colorplayapp.com` 的 Supabase URL 與 public
+> key 必須同屬 `onkxnkzeixpezetkmocf`；只有 Production 的
+> `colorplay-web`／`colorplayapp.com` 可使用
+> `xdjumzdqyexpyndanwkp`。兩組 URL／key 禁止交叉混用。Vite deployment 完成後
+> 必須從實際 hosted bundle 驗證 Supabase host；不得只依 Vercel Dashboard
+> 設定推定已生效，也不得把未核對環境的 Preview artifact 直接 promote。
+
 ### Approved CI and deployment approval gates
+
+> **Pre-deployment test gate (owner decision, 2026-08-11):** no Staging or
+> Production alias/promotion may proceed merely because the build is `READY`,
+> routes return HTTP 200, or invalid credentials fail correctly. Before a
+> Staging deployment is exposed at `staging.colorplayapp.com`, a valid synthetic
+> Staging student identity must complete the real hosted sign-in flow, profile
+> bootstrap, and `/app` entry. A valid synthetic teacher identity must also
+> complete sign-in and enter its real teacher landing route whenever the release
+> changes Auth, App Shell, teacher navigation, permissions, or shared data
+> bootstrap. Production keeps no synthetic login identity: its promotion must
+> use the exact Git SHA that passed the Staging gate, followed by the approved
+> read-only Production smoke. Missing valid-login evidence fails closed.
 
 - A Feature branch enters Staging only through a Pull Request to the protected
   `staging` branch. Required checks cover formatting, lint, typecheck, unit
@@ -182,6 +275,27 @@ The owner adopted ADR 0002's clean-environment approach on 2026-08-05:
   migration reconciliation is required before reset or cutover.
 
 These facts are observations, not authorization to mutate hosted resources.
+
+### Verified current state (2026-08-09)
+
+- `staging.colorplayapp.com` now resolves and serves `HTTP 200` with a valid
+  certificate, superseding the "does not resolve yet" observation above.
+  Evidence: owner added Cloudflare `A staging 76.76.21.21` (DNS only, no
+  proxy); this session ran `vercel domains add staging.colorplayapp.com
+colorplay-staging-web` then `vercel alias set`; confirmed via
+  `curl -sI https://staging.colorplayapp.com/` returning `200`.
+- This is a **manual alias of whatever deployment already existed** in
+  `colorplay-staging-web`, not a build produced by the PR-to-protected-
+  `staging`-branch CI gate described under "Approved CI and deployment
+  approval gates" below. The `staging` branch is still at `24ee1ee`
+  (2026-08-03); `staging-deploy.yml` has not run since, and it does not yet
+  exist on `feature/v2-major-update` (only on `phase0/release-foundation`,
+  `phase1/admin-security-impl`, `phase1/admin-security-spec`). Treat today's
+  binding as an interim visibility fix, not Staging-gate evidence for any
+  phase. Full chain and caveats: `docs/staging-runbook.md` §5.
+- Staging's Supabase project is confirmed `onkxnkzeixpezetkmocf` (matches the
+  Target topology table above), separate from the `colorplay-production`
+  project (`xdjumzdqyexpyndanwkp`, created 2026-08-06).
 
 ### Approved backup and clean-rebuild policy
 
@@ -752,6 +866,60 @@ Do not overwrite, stash, reset, or accidentally stage unrelated changes.
 Use exact-path staging. Never use `git add -A`, destructive reset, broad restore,
 stash, or branch switching in a dirty shared worktree.
 
+### Phase 1 admin-security-impl worktree
+
+- **MERGED into `feature/v2-major-update` on 2026-08-26** (merge commit created
+  in this pass). This section is retained as the historical evidence record for
+  the Local gate; the worktree itself may still exist on disk but is no longer
+  the authoritative copy of this work.
+- Path: `.worktrees/phase1-admin-security-impl`
+- Branch: `phase1/admin-security-impl` (purely local; no remote/upstream)
+- Plan: `docs/superpowers/plans/2026-08-07-phase-1-admin-identity-security.md`
+- HEAD at verification: `0e6c4e6`
+- State: Tasks 0 through 15 of the approved plan are implemented and
+  reviewed under the plan's own graded workflow (AGENTS.md §7-§8 — each M-task
+  through a single review round, Task 13A and Task 14 additionally through
+  their own dedicated Codex review passes with all confirmed findings
+  remediated and re-verified). Task 15 added the OOB recovery runbook, the
+  Production smoke manifest, and their phase-gate contract test.
+- **Local gate: PASSED** (this plan's own Task 15 Step 4/5 definition, not
+  the global `pnpm acceptance` Phase 8 gate — see AGENTS.md §9). Evidence,
+  all re-run in a single consolidated pass at `0e6c4e6`:
+  - `pnpm lint` / `pnpm typecheck` / `pnpm test` — clean; 161 files / 1185
+    tests.
+  - Fresh `supabase db reset` + `pnpm test:db` — clean; 58 pgTAP files /
+    1455 assertions (includes the admin-domain RLS negative-privilege
+    matrix — every `admin_*` table now has the full anon/authenticated ×
+    SELECT/INSERT/UPDATE/DELETE default-deny coverage, 92+ assertions,
+    after closing a gap found during this gate pass in
+    `admin_sensitivity_catalog`), plus both integration test groups (the
+    MFA-capability suite requiring `service_role`, and the general suite
+    without it).
+  - `pnpm admin:catalog:check` / `admin:catalog:inventory` — clean.
+  - Full local E2E (`scripts/test-e2e-local.sh`, all three browsers) —
+    zero admin-related failures across two independent clean runs; the
+    only remaining failures are pre-existing, unrelated webkit-only
+    network-timing flakes in `playable-slice.spec.ts`/`quiz-runner.spec.ts`
+    (quiz domain, untouched by any Phase 1 work). Firefox/WebKit
+    acceptance is this project's own documented Staging-gate concern, not
+    a Local-gate blocker (see "Approved CI and deployment approval gates"
+    above).
+  - No unresolved Critical/High finding: every review round across Task
+    13A, Task 14 (two rounds), and Task 15 confirmed its findings against
+    real code/behavior before fixing (never accepted on faith), and every
+    Critical/High finding across all rounds was fixed and re-verified —
+    see `docs/handoff.md` for each round's findings and fixes.
+- **Staging and Production gates: blocked, not executed.** Per this
+  plan's own Task 15 Step 4, both require Phase 0 hosted readiness (Phase 0
+  itself is still at "PR #1 awaits owner approval" — no Staging merge has
+  happened) plus explicit owner authorization for any hosted mutation. No
+  Staging deployment, no Production smoke, no OOB runbook procedure has
+  been run against a hosted project. Both
+  `docs/deployment/phase1-production-smoke-manifest.md` and
+  `docs/runbooks/phase1-admin-oob-recovery.md` are documentation and local
+  verification only, per Task 15's own scope note — they describe what
+  those gates require, they do not themselves clear them.
+
 ## Remaining decisions
 
 ### Phase 0
@@ -777,7 +945,7 @@ stash, or branch switching in a dirty shared worktree.
 ### Later phases
 
 - Teacher report calculations and privacy-preserving exports.
-- Admin information architecture and per-table sensitivity catalog.
+- Phase 1 implementation plan review, implementation, and hosted acceptance remain separate gated work; the Admin IA and 46-table per-column sensitivity catalog are approved in the Phase 1 design spec.
 - Detailed map motion, transitions, guide dialogue, and chapter-interior layouts.
 - Real-device acceptance supplied by a human before formal release.
 

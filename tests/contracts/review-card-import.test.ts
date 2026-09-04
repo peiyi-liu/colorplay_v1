@@ -5,8 +5,9 @@ import { buildReviewCardImport } from '../../scripts/content/import-review-cards
 const fixes = {
   chapterMap: { '3': 'chapter-3' },
   reviewCardMedia: {
-    '3-1:色彩的分類:有彩色與無彩色': {
-      asset: '/media/review/color-wheel.svg',
+    RC3101: {
+      attachmentRef: '圖3-2',
+      asset: 'review-card-media/chapter-3/P302.webp',
       alt: '十二色相環示意圖',
     },
   },
@@ -14,35 +15,42 @@ const fixes = {
 
 const fixesWithoutMedia = { chapterMap: fixes.chapterMap } as const;
 
-const header = '章節編號,小節,子主題,卡片標題,卡片內容\n';
+const header = '複習卡序號,章節編號,小節,子主題,卡片標題,卡片內容,附件\n';
 
 const csvOf = (rows: readonly string[]) => header + rows.join('\n') + '\n';
 
 describe('review card import', () => {
-  it('builds published version-1 cards with preserved multi-line content', () => {
+  it('builds published version-1 cards without overwriting an existing published version', () => {
     const csv = csvOf([
-      '3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,"第一行\n\n第二行"',
-      '3,3-1 色彩三要素與色名的表示,色彩三要素,甚麼是HVC,內容乙',
+      'RC3101,3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,"第一行\n\n第二行",圖3-2',
+      'RC3102,3,3-1 色彩三要素與色名的表示,色彩三要素,甚麼是HVC,內容乙',
     ]);
-    const result = buildReviewCardImport({ csvText: csv, fixes });
+    const result = buildReviewCardImport({
+      csvText: csv,
+      fixes: fixesWithoutMedia,
+    });
 
     expect(result.problems).toEqual([]);
     expect(result.cards).toHaveLength(2);
     expect(result.cards[0]).toMatchObject({
       chapterCode: 'chapter-3',
+      identifier: 'RC3101',
       sectionKey: '3-1',
       groupLabel: '色彩的分類',
       title: '有彩色與無彩色',
       sortOrder: 1,
+      stableCode: 'RC3101',
     });
     expect(result.cards[0]?.content).toBe('第一行\n\n第二行');
     expect(result.seedSql).toContain("'published'");
-    expect(result.seedSql).toContain('on conflict (id) do nothing');
+    expect(result.seedSql).toContain('on conflict (id) do update');
+    expect(result.seedSql).toContain('delete from public.review_card_media');
+    expect(result.seedSql).toContain('CONTENT_VERSION_REQUIRED');
   });
 
   it('derives identical deterministic identifiers on re-import', () => {
     const csv = csvOf([
-      '3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,內容甲',
+      'RC3101,3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,內容甲,圖3-2',
     ]);
     const first = buildReviewCardImport({ csvText: csv, fixes });
     const second = buildReviewCardImport({ csvText: csv, fixes });
@@ -53,8 +61,8 @@ describe('review card import', () => {
 
   it('carries chapter and section forward across merged-cell rows', () => {
     const csv = csvOf([
-      '3,3-2 色彩體系與數值符號的表示,色彩體系的基本結構,結構卡,內容甲',
-      ',,色彩體系的分類,分類卡,內容乙',
+      'RC3201,3,3-2 色彩體系與數值符號的表示,色彩體系的基本結構,結構卡,內容甲',
+      'RC3202,,,色彩體系的分類,分類卡,內容乙',
     ]);
     const result = buildReviewCardImport({
       csvText: csv,
@@ -73,10 +81,13 @@ describe('review card import', () => {
 
   it('skips incomplete rows with reasons instead of importing them', () => {
     const csv = csvOf([
-      '3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,內容甲',
-      '3,3-2 色彩體系與數值符號的表示,色彩體系的基本結構,,缺標題的內容',
+      'RC3101,3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,內容甲',
+      'RC3201,3,3-2 色彩體系與數值符號的表示,色彩體系的基本結構,,缺標題的內容',
     ]);
-    const result = buildReviewCardImport({ csvText: csv, fixes });
+    const result = buildReviewCardImport({
+      csvText: csv,
+      fixes: fixesWithoutMedia,
+    });
 
     expect(result.problems).toEqual([]);
     expect(result.cards).toHaveLength(1);
@@ -86,7 +97,7 @@ describe('review card import', () => {
   });
 
   it('aborts on an unmapped chapter number', () => {
-    const csv = csvOf(['9,9-1 未對應章節,主題,標題,內容']);
+    const csv = csvOf(['RC9101,9,9-1 未對應章節,主題,標題,內容']);
     const result = buildReviewCardImport({
       csvText: csv,
       fixes: fixesWithoutMedia,
@@ -96,40 +107,162 @@ describe('review card import', () => {
     expect(result.problems[0]).toContain('9');
   });
 
-  it('aborts on duplicate card identity within a subtopic', () => {
+  it('aborts on duplicate RC identifier', () => {
     const csv = csvOf([
-      '3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,內容甲',
-      '3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,內容乙',
+      'RC3101,3,3-1 色彩三要素與色名的表示,色彩的分類,同名卡,內容甲',
+      'RC3101,3,3-1 色彩三要素與色名的表示,色彩的分類,另一張卡,內容乙',
     ]);
-    const result = buildReviewCardImport({ csvText: csv, fixes });
+    const result = buildReviewCardImport({
+      csvText: csv,
+      fixes: fixesWithoutMedia,
+    });
 
     expect(result.problems).toHaveLength(1);
-    expect(result.problems[0]).toContain('重複');
+    expect(result.problems[0]).toContain('複習卡序號「RC3101」重複');
+  });
+
+  it('allows multiple cards with the same title when RC identifiers differ', () => {
+    const csv = csvOf([
+      'RC3101,3,3-1 色彩三要素與色名的表示,色彩的分類,同名卡,內容甲',
+      'RC3102,3,3-1 色彩三要素與色名的表示,色彩的分類,同名卡,內容乙',
+    ]);
+
+    const result = buildReviewCardImport({
+      csvText: csv,
+      fixes: fixesWithoutMedia,
+    });
+
+    expect(result.problems).toEqual([]);
+    expect(result.cards.map((card) => card.stableCode)).toEqual([
+      'RC3101',
+      'RC3102',
+    ]);
   });
 
   it('emits the draft probe card and curated media rows', () => {
     const csv = csvOf([
-      '3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,內容甲',
+      'RC3101,3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,內容甲,圖3-2',
     ]);
     const result = buildReviewCardImport({ csvText: csv, fixes });
 
     expect(result.seedSql).toContain("'draft'");
     expect(result.seedSql).toContain('sheet-card-draft-probe');
-    expect(result.seedSql).toContain('/media/review/color-wheel.svg');
+    expect(result.seedSql).toContain('review-card-media/chapter-3/P302.webp');
     expect(result.seedSql).toContain('十二色相環示意圖');
     expect(result.manifestTs).toContain('REVIEW_DRAFT_CARD_ID');
     expect(result.manifestTs).toContain('REVIEW_MEDIA_CARD');
     expect(result.manifestTs).toContain('REVIEW_MANIFEST');
-    expect(result.reportMd).toContain('平台示意圖');
+    expect(result.reportMd).toContain('媒體附件與待補素材代號');
+  });
+
+  it('blocks a curated media mapping when its Sheet figure alias does not match', () => {
+    const csv = csvOf([
+      'RC3101,3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,內容甲,圖3-5',
+    ]);
+
+    const result = buildReviewCardImport({ csvText: csv, fixes });
+
+    expect(result.problems).toContain(
+      'reviewCardMedia 的「RC3101」附件代號「圖3-2」與 Sheet「圖3-5」不一致',
+    );
+  });
+
+  it('records a Sheet figure label without inventing a web media asset', () => {
+    const csv = csvOf([
+      'RC3103,3,3-1 色彩三要素與色名的表示,色名的表示,系統色名,內容甲,圖3-2',
+    ]);
+
+    const result = buildReviewCardImport({
+      csvText: csv,
+      fixes: fixesWithoutMedia,
+    });
+
+    expect(result.problems).toEqual([]);
+    expect(result.seedSql).not.toContain('圖3-2');
+    expect(result.reportMd).toContain(
+      'Sheet 僅提供附件標示「圖3-2」，未提供可匯入的圖片網址與替代文字',
+    );
   });
 
   it('reports a media reference that matches no imported card as a problem', () => {
     const csv = csvOf([
-      '3,3-1 色彩三要素與色名的表示,色彩三要素,甚麼是HVC,內容乙',
+      'RC3102,3,3-1 色彩三要素與色名的表示,色彩三要素,甚麼是HVC,內容乙',
     ]);
     const result = buildReviewCardImport({ csvText: csv, fixes });
 
     expect(result.problems).toHaveLength(1);
     expect(result.problems[0]).toContain('reviewCardMedia');
+  });
+
+  it('rejects unsafe or environment-bound media paths', () => {
+    const csv = csvOf([
+      'RC3101,3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,內容甲,圖3-2',
+    ]);
+    const result = buildReviewCardImport({
+      csvText: csv,
+      fixes: {
+        chapterMap: fixes.chapterMap,
+        reviewCardMedia: {
+          RC3101: {
+            attachmentRef: '圖3-2',
+            asset: 'javascript:alert(1)',
+            alt: '不安全測試',
+          },
+        },
+      },
+    });
+
+    expect(result.problems).toContain(
+      'reviewCardMedia 的「RC3101」asset 必須是 review-card-media bucket 的物件路徑',
+    );
+  });
+
+  it('imports multiple ordered media objects for one RC card', () => {
+    const csv = csvOf([
+      'RC3201,3,3-2 色彩體系與數值符號的表示,色彩體系,色彩體系,內容甲,P303 P304',
+    ]);
+    const result = buildReviewCardImport({
+      csvText: csv,
+      fixes: {
+        chapterMap: fixes.chapterMap,
+        reviewCardMedia: {
+          RC3201: [
+            {
+              attachmentRef: 'P303',
+              asset: 'review-card-media/chapter-3/P303.webp',
+              alt: 'P303 色彩體系示意圖',
+            },
+            {
+              attachmentRef: 'P304',
+              asset: 'review-card-media/chapter-3/P304.webp',
+              alt: 'P304 色彩體系示意圖',
+            },
+          ],
+        },
+      },
+    });
+
+    expect(result.problems).toEqual([]);
+    expect(result.seedSql).toContain(
+      "'review-card-media/chapter-3/P303.webp', 'P303 色彩體系示意圖', 1",
+    );
+    expect(result.seedSql).toContain(
+      "'review-card-media/chapter-3/P304.webp', 'P304 色彩體系示意圖', 2",
+    );
+  });
+
+  it('emits a transaction-safe chapter-3 sync for repeatable staging import', () => {
+    const csv = csvOf([
+      'RC3101,3,3-1 色彩三要素與色名的表示,色彩的分類,有彩色與無彩色,內容甲',
+    ]);
+    const result = buildReviewCardImport({
+      csvText: csv,
+      fixes: fixesWithoutMedia,
+    });
+
+    expect(result.seedSql).toContain('on conflict (id) do update');
+    expect(result.seedSql).toContain('delete from public.review_card_media');
+    expect(result.seedSql).toContain("set status = 'archived'");
+    expect(result.seedSql).toContain("chapter.stable_code = 'chapter-3'");
   });
 });

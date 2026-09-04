@@ -34,7 +34,7 @@ Course
 - media alt text：圖片必填，1–200 字元。
 - sort order。
 - status／version。
-- `requires_recompletion`：語意變更需學生重新完成時為 true。
+- progression impact：`compatible` 或 `requires_recompletion`；語意變更必須重新完成。
 
 可接受格式：純文字、受限 Markdown、圖片、色票資料。MVP 不允許任意 HTML iframe。
 
@@ -46,7 +46,7 @@ Course
 - 恰一個正確選項。
 - prompt 1–1,000 字元。
 - explanation 1–2,000 字元。
-- stable code 唯一於 course，例如 `3-1-01`。
+- stable code 唯一於 course。正式 Sheet 題池採 `QB章小節兩位題號`（例如 `QB3101`）、`CR章三位題號`（例如 `CR3001`）或 `LT章小節兩位題號`（例如 `LT3101`）；legacy stable code 只為歷史相容保留。
 - duration 5–120 秒，MVP UI 預設 20。
 
 ### 後續：
@@ -77,6 +77,28 @@ Published question 若修改以下任一欄位，必須建立新 version：
 
 所有 published review card、question 與影響語意的 media 都建立 `content_versions` frozen payload/hash，並以 `content_publication_events` 記錄 publish/archive actor、時間、版本與 request ID。歷史 quiz、hint、remediation、assignment、Live session 保存引用版本；不得用 current row 改寫歷史。
 
+每次 current version publish 必填 progression impact 與 reason，並由 server 依
+changed-field allowlist 驗證：
+
+- `compatible`：錯字、排版或不改變教學含義的 alt-text／accessibility 修正，舊進度
+  可映射到新版本。
+- `requires_recompletion`：review-card 觀念、正文含義或教學 media 實質改變。
+- `requires_requalification`：question 含義、options、correct answer、quiz template
+  pool／scope 或挑戰規則實質改變。
+- Correct answer、options 或 template scope 變更不得宣告 compatible。缺漏、不明確
+  或未被 allowlist 涵蓋時，review content 預設 requires recompletion，challenge
+  content 預設 requires requalification。
+- 對既有 section 插入新的 required card 時，publication command 必須在 event
+  同一 transaction 寫入 immutable effective cutoff、section/sort identity、
+  `publication_cutoff_order` 與
+  `grandfather_policy='finalized_before_publish'`。Eligibility 固定為 cutoff 前已
+  committed 的 server-valid、同 section finalized challenge，不論分數；其他人必讀，
+  cutoff 後不得追溯豁免。不以 80% mastery 或可變 projection 代替；
+  publication／finalize 在同一 section lock 內由 server 分配單調
+  `section_event_order`，只有
+  `finalize.section_event_order < publication.publication_cutoff_order` 才豁免。
+  Timestamp 只作 audit；等號、缺 order 或無法證明順序時 fail closed。
+
 ## 5. 發布驗證
 
 單選題發布必須全部通過：
@@ -97,7 +119,7 @@ Published question 若修改以下任一欄位，必須建立新 version：
 
 ## 6. XLSX 範本
 
-必須提供可真實下載的 `.xlsx`，至少三工作表：
+必須提供可真實下載的 `.xlsx`；正式內容來源至少包含 RC／QB／CR／LT 四個工作表，匯入範本可另含章節 metadata 工作表：
 
 ### `章節`
 
@@ -106,22 +128,22 @@ Published question 若修改以下任一欄位，必須建立新 version：
 - 章節描述
 - 顯示順序
 
-### `複習卡`
+### `(RC)各單元複習大廳`
 
 - 章節編號
 - 小節
 - 子主題
 - 卡片標題
 - 卡片內容
-- 圖片網址（選填）
-- 替代文字（圖片時必填）
+- 複習卡序號（`RC章小節兩位卡號`）
+- 附件代號（選填；圖片檔與替代文字另經核准 mapping 匯入）
 
-### `題庫`
+### `(QB)各單元隨機測驗題庫`
 
 - 章節編號
 - 小節
 - 子主題
-- 題號
+- 題庫序號（`QB章小節兩位題號`）
 - 題型
 - 題目
 - 選項A
@@ -132,6 +154,19 @@ Published question 若修改以下任一欄位，必須建立新 version：
 - 解析
 - 作答秒數
 - 狀態
+
+### `(CR)章節總複習`
+
+- 章節編號
+- 總章節題庫序號（`CR章三位題號`）
+- 題目／選項A-D／正解／解析
+
+### `(LT)LIVE 題目`
+
+- 章節、章節標題
+- 小節、小節標題
+- 題庫序號（`LT章小節兩位題號`）
+- 題目／選項A-D／正解／解析
 
 範本包含說明列與至少 2 筆合法示例，但匯入時可選擇忽略示例列。
 
@@ -168,8 +203,12 @@ Published question 若修改以下任一欄位，必須建立新 version：
 
 - 每列以 stable code 對既有內容比對：內容完全相同 → no-op；語意欄位變更且目標已
   published → 依 §4 建立新 version；目標為 draft → 就地更新草稿；不存在 → 新增。
-- 匯入永不刪除內容；下架僅能經由明確的 archive 指令。已驗證的 45 題 baseline
-  stable codes 不得因任何匯入而消失（`AC-MIG-003`）。
+- 匯入永不刪除內容；下架僅能經由明確的 archive 指令。已驗證的 RC／QB／CR／LT stable codes
+  不得因任何匯入而消失（`AC-MIG-003`）。
+- 上述規則適用於保留使用者與作答歷史的增量匯入及 Production。明確執行
+  `bootstrap-staging-db.mjs --confirm-wipe` 的 disposable Staging snapshot 會先清除
+  Auth、學習歷史與 public schema，之後可完全依當次教師核准的 Sheet 重建；Sheet
+  已刪除的列不必在該 snapshot 補回。這項例外不得用於 Production 或保留歷史的環境。
 - 伺服器端對每列重跑與 §5 相同的驗證；client 的驗證結果僅供預覽，不被信任。
 
 ## 8. 正解解析
@@ -187,6 +226,7 @@ Published question 若修改以下任一欄位，必須建立新 version：
 - 不抽 archived／draft。
 - 隨機化在後端執行。
 - Session 建立後 frozen。
+- 小節測驗只抽對應小節的 QB 題池；章節總測驗只抽該章 CR 題池；Live 只抽教師所選小節的 LT 題池，三者不得混抽。既有已凍結的 QB Live Session 保留歷史讀取與分析相容，但新 Session 不再從 QB 抽題。
 - 若題數不足，回傳實際題數與明確 reason；UI 顯示真實數量。
 - Practice／assignment／remediation 只抽 current published versions；Live session 建立時另凍結自己的 question/version/options/deadline projection。
 
@@ -204,6 +244,7 @@ Published question 若修改以下任一欄位，必須建立新 version：
 - 單檔上限 2 MiB，最大 4096×4096。
 - 上傳後產生安全檔名與 metadata。
 - Storage policy：學生只讀被發布內容；教師只可寫自己授權範圍。
+- 複習卡 Sheet 可先以附件代號列管；只有在代號、Storage object path 與 alt text 三者完成核准 mapping 後，才建立 `review_card_media`。同一卡片可有多張圖並以 `sort_order` 排序，操作方式見 `docs/content/review-card-media-import.md`。
 
 ## 12. 內容品質
 
@@ -217,9 +258,9 @@ Published question 若修改以下任一欄位，必須建立新 version：
 
 ## 13. Verified content baseline and legacy boundary
 
-- Approved pipeline 有 45 題：第三章 37 題、第四章 8 題。
-- 教師持續在同一份公開試算表擴充內容；重新匯入必須保留既有 45 題 baseline 的 stable codes（新內容只能新增或依 `import-fixes.json` 明示修正），不得覆蓋 verified baseline。
-- 複習卡來源分頁為「各單元複習大廳」（gid 0），欄位：`章節編號`、`小節`、`子主題`、`卡片標題`、`卡片內容`（多行）。匯入器 `scripts/content/import-review-cards.mjs` 產出 `supabase/seeds/content-review-cards.sql`、`tests/fixtures/review-manifest.generated.ts` 與 `docs/content/review-import-report.md`；UUID 決定性（stable key 派生），初版 version 1、status published。
+- 2026-08-14 16:00（Asia/Taipei）教師核准 Sheet baseline：QB 136 題、CR 62 題、LT 60 題、RC 8 張；結構 gate 為 0 error／0 warning。數量只描述該次 Staging snapshot，後續仍以重新抓取並通過 gate 的 Sheet 為準。
+- 教師持續在同一份公開試算表擴充內容；重新匯入以 RC／QB／CR／LT stable code 做 deterministic upsert，不刪除或改寫歷史 frozen session reference。
+- 複習卡來源分頁為 `(RC)各單元複習大廳`。匯入器 `scripts/content/import-review-cards.mjs` 產出 `supabase/seeds/content-review-cards.sql`、`tests/fixtures/review-manifest.generated.ts` 與 `docs/content/review-import-report.md`；UUID 決定性（stable key 派生），初版 version 1、status published。同一小節可有多張卡。
 - Hint content 在試算表尚無欄位前，由 `scripts/content/import-fixes.json` 以 level 1–3 草稿補充（AI 草稿，匯入報告標示「待教師審閱」，與解析草稿同一政策）；hint 不得等價揭露正解。試算表未來新增提示欄位後以試算表為準。
 - Legacy hosted 46 題沒有 unique valid content：44 prompts matching，2 remote-only rows invalid；不得覆蓋 verified baseline。
 - `colorplay-new` 六章描述、review card、Blook、avatar、badge 只作 candidate reference；必須先確認作者／媒體權利、教學正確、accessibility，再由正常 validation/version/import 發布。
@@ -241,4 +282,9 @@ Published question 若修改以下任一欄位，必須建立新 version：
 
 ## 16. Progress version input
 
-Progress 規則只讀 current published review/question versions；old-version、draft、archived 不進 current denominator。新 review version 的 `requires_recompletion` 決定是否重做；新 question version 只用新版本 latest qualifying answer。計算保存 content version set 與 `2026-07-progress-1`，可重現且不可由 browser 寫百分比。
+Progress 規則只讀 current published review/question versions；old-version、draft、
+archived 不直接進 current denominator。`compatible` 可沿用明確連結的舊 completion／
+attempt；`requires_recompletion` 要求新 review completion；`requires_requalification`
+保留舊 attempted／completed 事實，但 current best／mastered 只讀新版本 qualifying
+attempt。計算保存 content version set、impact 與 rules version，可重現且不可由
+browser 寫百分比。
