@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { CONTENT_MANIFEST } from '../fixtures/content-manifest.generated';
 import { GENERATED_CORRECT_ANSWERS } from '../fixtures/question-answers.generated';
@@ -57,6 +57,27 @@ const teacherStudentProgressDenial = {
   urlPattern: /\/rest\/v1\/rpc\/teacher_student_progress(?:\?.*)?$/u,
 } as const;
 
+const expectHudEconomy = async (
+  rewards: Locator,
+  expected: Readonly<{
+    currentLevelXp: number;
+    level: number;
+    tokenBalance: number;
+  }>,
+) => {
+  const progress = rewards.getByRole('progressbar', {
+    name: `Lv.${String(expected.level)} 經驗進度`,
+  });
+  await expect(progress).toHaveAttribute(
+    'value',
+    String(expected.currentLevelXp),
+  );
+  await expect(progress).toHaveAttribute('max', '500');
+  await expect(
+    rewards.getByLabel(`${String(expected.tokenBalance)} Token`),
+  ).toBeVisible();
+};
+
 const signIn = async (
   page: Page,
   credentials: Readonly<{ email: string; password: string }>,
@@ -107,8 +128,11 @@ test('Learning Experience phase gate', async ({
 
   await signIn(studentPage, TEST_USERS.learningStudent, '主要導覽');
   const rewards = studentPage.getByRole('region', { name: '學習獎勵' });
-  await expect(rewards).toContainText('0 / 500 XP');
-  await expect(rewards).toContainText('0 Token');
+  await expectHudEconomy(rewards, {
+    currentLevelXp: 0,
+    level: 1,
+    tokenBalance: 0,
+  });
 
   // --- Review cards: published content only and explicit completion ---
   await studentPage
@@ -215,8 +239,11 @@ test('Learning Experience phase gate', async ({
   ).toBeVisible();
   // Eight fast correct answers: 8 × 75 XP, 8 × 25 Token. The 600 XP total
   // advances one level and leaves 100 / 500 XP toward the next level.
-  await expect(rewards).toContainText('100 / 500 XP');
-  await expect(rewards).toContainText('200 Token');
+  await expectHudEconomy(rewards, {
+    currentLevelXp: 100,
+    level: 2,
+    tokenBalance: 200,
+  });
 
   // --- Mistakes and remediation: resolve both, 20% XP, zero Tokens ---
   await studentPage.goto('/app/mistakes');
@@ -250,8 +277,11 @@ test('Learning Experience phase gate', async ({
   }
   await expect(studentPage.getByText(/補救練習完成/u)).toBeVisible();
   // 20% of two fast correct answers: +30 XP; the Token balance must not move.
-  await expect(rewards).toContainText('130 / 500 XP');
-  await expect(rewards).toContainText('200 Token');
+  await expectHudEconomy(rewards, {
+    currentLevelXp: 130,
+    level: 2,
+    tokenBalance: 200,
+  });
   const returnToMistakes = studentPage.getByRole('link', {
     name: '返回我的錯題',
   });
