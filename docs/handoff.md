@@ -1483,3 +1483,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 整合修正：Supabase Functions SDK 的 failure response 將 `error`／`context` 暴露為 `any`，與 Admin candidate 的嚴格 lint 衝突；產品 repository 與 E2E helper 改為先以 `unknown` 驗證 response／HTTP context 再讀取。另校正部署 lineage 自帶的複習書本返回鍵測試，使其符合目前按鈕位於書本內的實作與 CSS。
 - 驗證：`pnpm install --frozen-lockfile` 成功；TypeScript、全專案 ESLint、全專案 Prettier、production Vite build 通過；完整 Vitest 229 files／1839 tests 全綠，聚焦 classroom 4 files／25 tests 與 chapter-detail 15 tests 全綠。Local `pnpm test:db` 因會 reset 共用 `colorplay` stack 而被安全 gate 拒絕，未繞過；合併後 migration replay、generated-types parity 與 Chromium E2E 必須由 fresh PR CI 的隔離環境證明。
 - Owner 授權與邊界：owner 已於本輪授權把現行部署內容與 Admin 合併進受保護的 `staging`，前提是 fresh protected checks 全綠。push to `staging` 會依 workflow 自動部署 exact SHA web 與 tracked Edge Functions，但 workflow 不會套 Hosted DB migrations；本授權不涵蓋 Hosted DB migration、fixture cleanup、Task 7 mutation 或手動 promotion，因此 Admin Hosted 可用性不得只由 merge／deploy 宣稱。
+
+## 2026-09-04 13:55 [Codex] — 整合 PR fixture join 相容性修正
+
+- Fresh PR CI 的 `local-database` 與 `chromium-e2e` 都在 migration／seed SQL 成功後停於 `CLASSROOM_MEMBERSHIP_FIXTURE_JOIN_FAILED`。根因是 deployed join-rate-limit migration 已撤銷 `authenticated` 對 legacy `join_classroom` RPC 的執行權，但 `seed-auth.ts` 仍以登入學生直接呼叫該 RPC。
+- 修正：fixture seeder 改由未登入的 service client 呼叫受保護的 `svc_join_classroom`，明確傳入學生 actor ID、request ID 與只代表 fixture 的 SHA-256 subject；並驗證 JSON outcome 必須為 `ok`。產品端仍只能走 `join-classroom` Edge Function，legacy RPC 沒有重新授權。
+- 回歸：新增秒級契約測試，禁止 seeder 再走 legacy RPC，並要求 service boundary 的 actor／IP hash 參數。測試先紅後綠；scoped typecheck、ESLint、Prettier 通過。完整乾淨 DB 與 E2E 仍交由下一輪隔離 PR CI 驗證，Hosted DB 邊界不變。

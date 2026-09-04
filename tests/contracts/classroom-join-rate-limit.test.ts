@@ -44,6 +44,15 @@ describe('classroom join rate-limit boundary', () => {
     );
   });
 
+  it('seeds existing student memberships through the service-only join boundary', async () => {
+    const seedAuth = await readFile('scripts/supabase/seed-auth.ts', 'utf8');
+
+    expect(seedAuth).toMatch(/admin\.rpc\(\s*'svc_join_classroom'/u);
+    expect(seedAuth).toContain('p_actor_id: student.userId');
+    expect(seedAuth).toContain('p_ip_hash: fixtureJoinIpHash');
+    expect(seedAuth).not.toContain("student.rpc('join_classroom'");
+  });
+
   it('pins the 10-minute identity and shared-IP limits', async () => {
     const migration = await readFile(
       'supabase/migrations/20260829000200_classroom_join_rate_limits.sql',

@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 import {
   createClient,
@@ -57,6 +57,14 @@ const adminBootstrapLabels = [
 ] as const satisfies readonly TestUserLabel[];
 const usersPerPage = 100;
 const maximumUserPages = 100;
+const fixtureJoinIpHash = createHash('sha256')
+  .update('colorplay-seed-auth-classroom-membership')
+  .digest('hex');
+
+type SignedInFixture = Readonly<{
+  client: SupabaseClient<Database>;
+  userId: string;
+}>;
 
 const failIfError = (error: unknown, code: string) => {
   if (error) throw new Error(code);
@@ -172,13 +180,16 @@ const signedInFixtureClient = async (
   url: string,
   serviceRoleKey: string,
   label: TestUserLabel,
-) => {
+): Promise<SignedInFixture> => {
   const client = createClient<Database>(url, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-  const { error } = await client.auth.signInWithPassword(TEST_USERS[label]);
+  const { data, error } = await client.auth.signInWithPassword(
+    TEST_USERS[label],
+  );
   failIfError(error, 'CLASSROOM_FIXTURE_SIGN_IN_FAILED');
-  return client;
+  if (!data.user) throw new Error('CLASSROOM_FIXTURE_SIGN_IN_FAILED');
+  return { client, userId: data.user.id };
 };
 
 const ensureOwnedClassroom = async (
@@ -208,16 +219,17 @@ const ensureOwnedClassroom = async (
 };
 
 const ensureStudentMemberships = async (
+  admin: SupabaseClient<Database>,
   owner: SupabaseClient<Database>,
   classroomId: string,
   initialJoinCode: string | null,
-  students: readonly SupabaseClient<Database>[],
+  students: readonly SignedInFixture[],
 ) => {
   let joinCode = initialJoinCode;
 
   for (const student of students) {
     const { data: memberships, error: listError } =
-      await student.rpc('list_my_classrooms');
+      await student.client.rpc('list_my_classrooms');
     failIfError(listError, 'CLASSROOM_MEMBERSHIP_FIXTURE_LIST_FAILED');
     if (
       memberships?.some((membership) => membership.classroom_id === classroomId)
@@ -235,11 +247,24 @@ const ensureStudentMemberships = async (
     }
     if (!joinCode) throw new Error('CLASSROOM_FIXTURE_JOIN_CODE_MISSING');
 
-    const { error: joinError } = await student.rpc('join_classroom', {
-      p_join_code: joinCode,
-      p_request_id: randomUUID(),
-    });
+    const { data: joinResult, error: joinError } = await admin.rpc(
+      'svc_join_classroom',
+      {
+        p_actor_id: student.userId,
+        p_join_code: joinCode,
+        p_request_id: randomUUID(),
+        p_ip_hash: fixtureJoinIpHash,
+      },
+    );
     failIfError(joinError, 'CLASSROOM_MEMBERSHIP_FIXTURE_JOIN_FAILED');
+    if (
+      typeof joinResult !== 'object' ||
+      joinResult === null ||
+      Array.isArray(joinResult) ||
+      joinResult.outcome !== 'ok'
+    ) {
+      throw new Error('CLASSROOM_MEMBERSHIP_FIXTURE_JOIN_FAILED');
+    }
   }
 };
 
@@ -247,6 +272,9 @@ const reconcileClassroomFixtures = async (
   url: string,
   serviceRoleKey: string,
 ) => {
+  const admin = createClient<Database>(url, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
   const teacherOne = await signedInFixtureClient(
     url,
     serviceRoleKey,
@@ -273,23 +301,24 @@ const reconcileClassroomFixtures = async (
 
   try {
     const first = await ensureOwnedClassroom(
-      teacherOne,
+      teacherOne.client,
       CLASSROOM_FIXTURES.teacherOneClassroom.name,
     );
     await ensureStudentMemberships(
-      teacherOne,
+      admin,
+      teacherOne.client,
       first.classroomId,
       first.joinCode,
       [studentOne, studentTwo],
     );
 
     await ensureOwnedClassroom(
-      teacherTwo,
+      teacherTwo.client,
       CLASSROOM_FIXTURES.teacherTwoClassroom.name,
     );
   } finally {
     await Promise.all(
-      clients.map((client) => client.auth.signOut({ scope: 'local' })),
+      clients.map(({ client }) => client.auth.signOut({ scope: 'local' })),
     );
   }
 };
