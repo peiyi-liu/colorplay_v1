@@ -1,13 +1,13 @@
 # ColorPlay Current Program
 
-- Status: LOCAL INTEGRATION CANDIDATE VERIFIED — Phase 0 committed tip 與
-  Admin B final SHA 已整合為本機 candidate；完整 Local gate 與唯一一次 review
-  均已通過；尚未 push、merge protected branch、deploy 或執行任何 Hosted mutation
+- Status: INTEGRATION CANDIDATE PUSHED — Phase 0 committed tip 與 Admin B final
+  SHA 已整合；完整 Local gate 與唯一一次 review 均已通過，candidate branch
+  已 push；尚未開 PR、merge protected branch、deploy 或執行任何 Hosted mutation
 - Last updated: 2026-09-04 (Asia/Taipei) — Admin B Tasks 1–6、A1 cleanup、
   Phase 0／Admin migration 語意整合與完整 Local gate 已完成
 - Last full review: 2026-09-04 (Asia/Taipei) — integration review CLOSED
-- Current phase: local-only canonical integration complete；等待 owner 對下一個
-  external gate 另行授權
+- Current phase: canonical integration candidate 已在 origin；等待 owner 對下一個
+  PR／protected-branch gate 另行授權
 - Canonical entry point: this file
 - Current owner decision record:
   `docs/superpowers/specs/2026-09-02-program-rebaseline-owner-decisions.md`
@@ -43,9 +43,10 @@ as a completed production release.
 
 ## Immediate next action
 
-Keep the verified candidate local until the owner separately authorizes the
-next external gate. Push, protected-branch merge, deployment, and Hosted Task 7
-remain distinct approvals; none is implied by the completed Local gate.
+Keep the verified candidate on
+`origin/codex/adminb-phase0-integration-20260904` until the owner separately
+authorizes the next gate. Opening a PR, protected-branch merge, deployment, and
+Hosted Task 7 remain distinct approvals; none is implied by this branch push.
 
 Do **not** approve or merge PR #1 from historical CI, push this candidate,
 deploy it, or run Hosted Task 7 until the resulting exact SHA has fresh protected

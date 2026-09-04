@@ -1300,3 +1300,8 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 驗證：完整 `pnpm test:db` 通過（81 pgTAP files／1950 tests + runtime 3 tests + 真實 Auth 17 tests + integration 26 tests）；review remediation 的 `004+070` 58 tests 通過；`pnpm test` 218 files／1784 tests、`pnpm typecheck`、`pnpm lint`、scoped Prettier、database-types exact contract、`git diff --check` 全綠。merge parents 精確為 `ba4ec459` + `8dcdbe8cc`；無 duplicate migration version、無 conflict marker、`legacy/**` 零變更。Vercel CLI 已是 59.11.2。
 - 對應驗收：Admin B plan 的 `AC-ADM-001`–`AC-ADM-006` Local evidence 與 Phase 0／Admin B migration compatibility；這是 local integration candidate，不是 Hosted 或 phase release gate。
 - 下一步／授權邊界：candidate 保持本機。push candidate branch、merge protected branch、exact-SHA deployment、Hosted migration／fixture dry-run／Task 7 mutation都必須各自取得 owner 明確授權；本輪未執行任何一項。
+
+## 2026-09-04 12:04 [Codex] — 已 push Phase 0 × Admin B integration candidate branch
+
+- 做了什麼：Owner 明確核准後，將乾淨的 `codex/adminb-phase0-integration-20260904` 推到 `origin`；第一次 push 的 exact SHA 為 `2452d31e48cc8bf09043bd8ceb283c016140a96c`，並設定同名 upstream。本筆只更新 push 狀態，不改產品程式、migration 或測試。
+- 下一步／授權邊界：尚未建立 PR、merge protected branch、deploy 或操作 Hosted。這四項仍是分開的 owner gate；下一個需要決定的是是否建立指向受保護分支的 PR。
