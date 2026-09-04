@@ -87,6 +87,9 @@ describe('learning experience phase gate contract', () => {
     expect(spec).toContain("PLAYWRIGHT_ACCEPTANCE !== 'on'");
     expect(spec).toContain('挑戰進度');
     expect(spec).toContain('尚未發布的卡片');
+    expect(spec).toContain('.chapter-review-node[data-current="true"]');
+    expect(spec).toContain("name: '進入複習'");
+    expect(spec).not.toContain(".locator('summary')");
     expect(spec).toContain('await studentPage.reload();');
     expect(spec).toContain('chapter-detail-375x812.png');
     expect(spec).toContain('review-card-768x1024.png');
