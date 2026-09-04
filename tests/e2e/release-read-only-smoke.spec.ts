@@ -16,7 +16,7 @@ test.beforeAll(async () => {
     }
     response.setHeader('content-type', 'text/html; charset=utf-8');
     response.end(`<!doctype html><html><body>
-      <h1>PRESS START</h1>
+      <a href="/login">開始冒險</a>
       <form method="post" action="/mutate"><button type="submit">禁止寫入</button></form>
     </body></html>`);
   });
@@ -41,7 +41,7 @@ test('release smoke guard permits only read requests', async ({ page }) => {
   observedMethods.length = 0;
   const guard = await installReadOnlyGuard(page);
   await page.goto(origin);
-  await expect(page.getByText('PRESS START', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: '開始冒險' })).toBeVisible();
 
   expect(guard.writeRequestCount).toBe(0);
   expect(
