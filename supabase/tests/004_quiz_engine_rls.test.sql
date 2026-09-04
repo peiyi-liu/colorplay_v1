@@ -1,6 +1,6 @@
 begin;
 
-select plan(47);
+select plan(50);
 
 select has_table('public', 'quiz_sessions', 'quiz sessions exists');
 select has_table(
@@ -300,6 +300,37 @@ select is(
   (current_setting('test.first_answer')::jsonb ->> 'score_delta')::integer,
   150,
   'answer within five seconds receives base and speed score'
+);
+reset role;
+select set_config(
+  'test.expected_explanation',
+  (
+    select explanation
+    from public.quiz_session_questions
+    where id = current_setting('test.first_question_id')::uuid
+  ),
+  true
+);
+set local role authenticated;
+select ok(
+  current_setting('test.expected_explanation', true) is not null,
+  'answered question fixture has a frozen explanation'
+);
+select is(
+  public.quiz_answer_explanation(
+    current_setting('test.first_question_id')::uuid
+  ),
+  current_setting('test.expected_explanation'),
+  'owner receives the exact frozen explanation after answering'
+);
+select is(
+  (
+    select explanation
+    from public.quiz_session_question_state
+    where session_question_id = current_setting('test.first_question_id')::uuid
+  ),
+  current_setting('test.expected_explanation'),
+  'owner projection returns the same guarded explanation'
 );
 select results_eq(
   format(

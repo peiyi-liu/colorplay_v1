@@ -1,14 +1,13 @@
 # ColorPlay Current Program
 
-- Status: LOCAL INTEGRATION CANDIDATE IN PROGRESS — Phase 0 committed tip 與
-  Admin B final SHA 正在獨立本機分支整合；尚未 push、merge protected branch、
-  deploy 或執行任何 Hosted mutation
-- Last updated: 2026-09-04 (Asia/Taipei) — Admin B Tasks 1–6 與 A1 cleanup
-  harness 已完成 Local gate；目前處理 Phase 0／Admin migration 語意整合
-- Last full review: 2026-09-02 (Asia/Taipei)
-- Current phase: local-only canonical integration。完成衝突解決與 forward
-  reconciliation migration 後，仍須另取得新的 Local Supabase exclusive window
-  才能重放 migration、重生 DB types 與跑整合 DB gate
+- Status: LOCAL INTEGRATION REVIEW REMEDIATION — Phase 0 committed tip 與
+  Admin B final SHA 已整合為本機 candidate `b8f0519`；完整 Local gate 已通過，
+  正在收斂唯一一次 review；尚未 push、merge protected branch、deploy 或執行
+  任何 Hosted mutation
+- Last updated: 2026-09-04 (Asia/Taipei) — Admin B Tasks 1–6、A1 cleanup、
+  Phase 0／Admin migration 語意整合與完整 Local gate 已完成
+- Last full review: 2026-09-04 (Asia/Taipei) — integration review remediation
+- Current phase: local-only canonical integration review closure
 - Canonical entry point: this file
 - Current owner decision record:
   `docs/superpowers/specs/2026-09-02-program-rebaseline-owner-decisions.md`
@@ -44,21 +43,20 @@ as a completed production release.
 
 ## Immediate next action
 
-Complete the local-only merge candidate, including the forward migration that
-preserves Phase 0 `security_invoker`／safe explanation behavior together with
-Admin challenge-context columns. Then request a fresh exclusive Local Supabase
-window for migration replay, DB type generation, and scoped DB verification.
+Close the two non-blocking integration review findings, rerun the affected
+Local gates, and keep candidate `b8f0519` local until the owner separately
+authorizes any push, protected-branch merge, deployment, or Hosted operation.
 
 Do **not** approve or merge PR #1 from historical CI, push this candidate,
 deploy it, or run Hosted Task 7 until the resulting exact SHA has fresh protected
 evidence and the owner separately authorizes each external mutation.
 
-The Admin B lane may implement and verify Tasks 1–6 locally because `f0638b0`
-contains Phase 1 tip `3f0f16d`. It may not touch the Phase 0/1 worktrees, run a
-shared DB reset without an exclusive window, integrate to release history, or
-run Hosted Task 7 yet. Separately, the Phase 0 lane still needs one staged-tree
-review and candidate commit; real isolated restore proof and every push/merge/
-Hosted action remain separately authorized gates.
+Admin B Tasks 1–6 and A1 are complete at approved tip `8dcdbe8`; the Phase 0
+release-foundation tip is integrated through `ba4ec45`. Their Local integration
+candidate has completed migration replay, generated-type parity, full DB/Auth
+integration tests, lint, typecheck, and unit tests. Hosted Task 7, exact-SHA
+deployment proof, push, protected-branch merge, and every external mutation
+remain separate owner-authorized gates.
 
 ## Historical program structure snapshot（superseded 2026-09-02）
 
