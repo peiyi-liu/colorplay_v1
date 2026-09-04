@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { FunctionsHttpError, type SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
 import type { Database } from '../../../types/database';
@@ -25,6 +25,11 @@ const databaseUuid = z
   .string()
   .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu);
 const classroomId = databaseUuid;
+const classroomJoinCode = z
+  .string()
+  .regex(
+    /^(?:[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}|[0-9A-F]{4}(?:-[0-9A-F]{4}){3})$/u,
+  );
 
 const studentClassroomSchema = z.strictObject({
   classroom_id: classroomId,
@@ -37,10 +42,7 @@ const ownedClassroomSchema = z.strictObject({
   classroom_name: classroomName,
   classroom_status: z.enum(['active', 'archived']),
   created_at: utcTimestamp,
-  join_code: z
-    .string()
-    .regex(/^[0-9A-F]{4}(?:-[0-9A-F]{4}){3}$/u)
-    .nullable(),
+  join_code: classroomJoinCode.nullable(),
   join_code_version: positiveInteger,
   member_count: nonNegativeInteger,
 });
@@ -57,12 +59,16 @@ const studentProgressSchema = z.strictObject({
   chapters: z.array(
     z.strictObject({
       accuracy: z.number().nullable(),
+      assessment_accuracy: z.number().nullable(),
+      chapter_quiz_accuracy: z.number().nullable(),
       chapter_id: databaseUuid,
       chapter_title: z.string().min(1),
       coverage: z.number().nullable(),
       mastery: z.number().nullable(),
+      live_accuracy: z.number().nullable(),
       review_completed: z.number().int().nonnegative(),
       review_total: z.number().int().positive().nullable(),
+      section_quiz_accuracy: z.number().nullable(),
       status: z.enum(['developing', 'learning', 'mastered', 'not_started']),
     }),
   ),
@@ -73,30 +79,24 @@ const studentProgressSchema = z.strictObject({
     login_account: z.string().min(1).nullable(),
     membership_status: z.enum(['active', 'inactive']),
   }),
-  mistakes: z.array(
-    z.strictObject({
-      prompt: z.string().min(1),
-      subtopic_code: z.string().min(1),
-      subtopic_title: z.string().min(1),
-      wrong_count: z.number().int().nonnegative(),
-    }),
-  ),
   stats: z.strictObject({
     avg_accuracy: z.number().nullable(),
     class_rank: z.number().int().positive().nullable(),
     class_xp: z.number().int().nonnegative(),
     open_mistake_count: z.number().int().nonnegative(),
+    total_mistake_count: z.number().int().nonnegative(),
+    unfinished_mistake_count: z.number().int().nonnegative(),
   }),
 });
 const createdClassroomSchema = z.strictObject({
   classroom_id: classroomId,
   classroom_name: classroomName,
-  join_code: z.string().regex(/^[0-9A-F]{4}(?:-[0-9A-F]{4}){3}$/u),
+  join_code: classroomJoinCode,
   join_code_version: positiveInteger,
 });
 const rotatedCodeSchema = z.strictObject({
   classroom_id: classroomId,
-  join_code: z.string().regex(/^[0-9A-F]{4}(?:-[0-9A-F]{4}){3}$/u),
+  join_code: classroomJoinCode,
   join_code_version: positiveInteger,
 });
 const joinedClassroomSchema = z.strictObject({
@@ -150,6 +150,40 @@ const mapRpcError = (
   );
 };
 
+const mapJoinFunctionError = async (error: unknown) => {
+  if (error instanceof FunctionsHttpError) {
+    const context: unknown = error.context;
+    if (!(context instanceof Response)) {
+      return new ClassroomRepositoryError('UNAVAILABLE');
+    }
+    if (context.status === 429) {
+      return new ClassroomRepositoryError('RATE_LIMITED');
+    }
+    try {
+      const payload: unknown = await context.clone().json();
+      if (
+        typeof payload === 'object' &&
+        payload !== null &&
+        'error' in payload &&
+        typeof payload.error === 'string'
+      ) {
+        return mapRpcError({ message: payload.error }, 'idempotent');
+      }
+    } catch {
+      return new ClassroomRepositoryError('UNAVAILABLE');
+    }
+  }
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    return mapRpcError({ message: error.message }, 'idempotent');
+  }
+  return new ClassroomRepositoryError('UNAVAILABLE');
+};
+
 const mapStudentClassroom = (
   row: z.infer<typeof studentClassroomSchema>,
 ): StudentClassroom => ({
@@ -185,12 +219,16 @@ const mapStudentProgress = (
 ): StudentProgressSnapshot => ({
   chapters: payload.chapters.map((chapter) => ({
     accuracy: chapter.accuracy,
+    assessmentAccuracy: chapter.assessment_accuracy,
+    chapterQuizAccuracy: chapter.chapter_quiz_accuracy,
     chapterId: chapter.chapter_id,
     chapterTitle: chapter.chapter_title,
     coverage: chapter.coverage,
     mastery: chapter.mastery,
+    liveAccuracy: chapter.live_accuracy,
     reviewCompleted: chapter.review_completed,
     reviewTotal: chapter.review_total,
+    sectionQuizAccuracy: chapter.section_quiz_accuracy,
     status: chapter.status,
   })),
   identity: {
@@ -200,17 +238,13 @@ const mapStudentProgress = (
     loginAccount: payload.identity.login_account,
     membershipStatus: payload.identity.membership_status,
   },
-  mistakes: payload.mistakes.map((mistake) => ({
-    prompt: mistake.prompt,
-    subtopicCode: mistake.subtopic_code,
-    subtopicTitle: mistake.subtopic_title,
-    wrongCount: mistake.wrong_count,
-  })),
   stats: {
     avgAccuracy: payload.stats.avg_accuracy,
     classRank: payload.stats.class_rank,
     classXp: payload.stats.class_xp,
     openMistakeCount: payload.stats.open_mistake_count,
+    totalMistakeCount: payload.stats.total_mistake_count,
+    unfinishedMistakeCount: payload.stats.unfinished_mistake_count,
   },
 });
 const mapJoined = (
@@ -257,7 +291,7 @@ export function createClassroomRepository(
       const parsedRef = databaseUuid.safeParse(requestedMemberRef);
       if (!parsedId.success || !parsedRef.success)
         throw new ClassroomRepositoryError('INVALID_INPUT');
-      const { data, error } = await client.rpc('teacher_student_progress', {
+      const { data, error } = await client.rpc('teacher_student_progress_v2', {
         p_classroom_id: parsedId.data,
         p_member_ref: parsedRef.data,
       });
@@ -267,12 +301,27 @@ export function createClassroomRepository(
       return mapStudentProgress(parsed.data);
     },
     async joinClassroom(input) {
-      const { data, error } = await client.rpc('join_classroom', {
-        p_join_code: input.joinCode.trim(),
-        p_request_id: input.requestId,
-      });
-      if (error) throw mapRpcError(error, 'idempotent');
-      return mapJoined(parseReceipt(joinedClassroomSchema, data));
+      const response: unknown = await client.functions.invoke<unknown>(
+        'join-classroom',
+        {
+          body: {
+            joinCode: input.joinCode.trim(),
+            requestId: input.requestId,
+          },
+        },
+      );
+      if (
+        typeof response !== 'object' ||
+        response === null ||
+        !('data' in response) ||
+        !('error' in response)
+      ) {
+        throw invalidResponse();
+      }
+      if (response.error !== null) {
+        throw await mapJoinFunctionError(response.error);
+      }
+      return mapJoined(parseReceipt(joinedClassroomSchema, response.data));
     },
     async listMine() {
       const { data, error } = await client.rpc('list_my_classrooms');

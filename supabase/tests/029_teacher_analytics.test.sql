@@ -157,15 +157,15 @@ $$;
 
 -- 2026-07-17T15:59Z = 台北 7/17 23:59；2026-07-17T16:01Z = 台北 7/18 00:01。
 select pg_temp.fact_session(
-  '3-1-01', true, '2026-07-17T15:59:00+00:00',
+  'QB3101', true, '2026-07-17T15:59:00+00:00',
   '29300000-0000-0000-0000-000000000001'
 );
 select pg_temp.fact_session(
-  '3-1-02', false, '2026-07-17T16:01:00+00:00',
+  'QB3102', false, '2026-07-17T16:01:00+00:00',
   '29300000-0000-0000-0000-000000000002'
 );
 select pg_temp.fact_session(
-  '3-2-01', true, '2026-07-18T03:00:00+00:00',
+  'QB3201', true, '2026-07-18T03:00:00+00:00',
   '29300000-0000-0000-0000-000000000003'
 );
 
@@ -217,7 +217,7 @@ select results_eq(
     from public.teacher_question_analysis(
       '29100000-0000-0000-0000-000000000001', null, null, null, null
     )
-    where stable_code = '3-1-01'$$,
+    where stable_code = 'QB3101'$$,
   $$values (1, 100.0::numeric)$$,
   'question analysis matches the facts'
 );

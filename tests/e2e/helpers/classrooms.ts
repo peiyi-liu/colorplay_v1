@@ -47,19 +47,42 @@ import { signedInClient } from '../../helpers/signed-in-client.ts';
 //    「之後要用來操作的帳號」必須是同一個，註冊流程無法滿足。
 //
 //    目前產品內，已有 profile 的既有帳號完全沒有任何 UI 可以加入班級
-//    （上面第 3 點）；join_classroom 這個 RPC 本身沒被移除、也是
-//    on-conflict-do-update 的冪等寫法（同一份 migration 261-278 行），只是
-//    UI 入口沒了。同一份檔案已經示範「UI 消失、能力留在 repository 層」
-//    這個模式（見上面第 2 點的 rotateJoinCode）；這裡比照辦理，直接用
-//    supabase-js 呼叫 RPC，不透過 src/features/classrooms/api/
+//    （上面第 3 點）；這裡直接呼叫 join-classroom Edge Function，不透過
+//    src/features/classrooms/api/
 //    classroom-repository.ts 的包裝——那支檔案的 ClassroomRepositoryError
 //    用了建構子參數屬性（parameter property），Node 原生型別剝離不支援
 //    （實測 `TypeScript parameter property is not supported in strip-only
 //    mode`），import 進來會讓 capture-screens.mjs 直接掛掉；裸接
-//    `.rpc('join_classroom', …)` 才能讓這支檔案繼續同時被 Playwright（esbuild
-//    轉譯）與 capture-screens.mjs（Node 原生剝離）兩種執行環境載入。
+//    `.functions.invoke(...)` 才能讓這支檔案繼續同時被 Playwright（esbuild
+//    轉譯）與 capture-screens.mjs（Node 原生剝離）兩種執行環境載入。直接
+//    join_classroom RPC 已撤銷 authenticated 權限，避免繞過 IP＋帳號限流。
 
-export type ClassroomReceipt = Readonly<{ joinCode: string }>;
+export type ClassroomReceipt = Readonly<{
+  classroomId: string;
+  joinCode: string;
+}>;
+
+const readFunctionError = async (error: unknown): Promise<string> => {
+  if (typeof error !== 'object' || error === null) return 'UNKNOWN';
+  const fallback =
+    'message' in error && typeof error.message === 'string'
+      ? error.message
+      : 'UNKNOWN';
+  if (!('context' in error) || !(error.context instanceof Response)) {
+    return fallback;
+  }
+
+  const payload: unknown = await error.context
+    .clone()
+    .json()
+    .catch(() => null);
+  return typeof payload === 'object' &&
+    payload !== null &&
+    'error' in payload &&
+    typeof payload.error === 'string'
+    ? payload.error
+    : fallback;
+};
 
 // 教師班級列表（/teacher/classes）上，用班級名稱找到對應卡片
 // （ul[aria-label="教師班級列表"] li article，heading 為班級名稱）。
@@ -83,12 +106,16 @@ export async function createClassroom(
   // `order by classroom.created_at, classroom.id`），剛建立的一定是同名卡片
   // 裡最後一張，用 .last() 精準鎖定「這次建立的」那一間，不會誤讀到別間
   // 同名舊班級的加入碼。
-  const codeValue = classroomCardByName(teacherPage, name)
-    .last()
-    .locator('.classroom-card__code-value');
+  const classroomCard = classroomCardByName(teacherPage, name).last();
+  const codeValue = classroomCard.locator('.classroom-card__code-value');
   await codeValue.waitFor();
   const joinCode = (await codeValue.innerText()).trim();
-  return { joinCode };
+  const href = await classroomCard
+    .getByRole('link', { name: '進入班級' })
+    .getAttribute('href');
+  const classroomId = href?.split('/').pop();
+  if (!classroomId) throw new Error('CLASSROOM_HELPER_ID_MISSING');
+  return { classroomId, joinCode };
 }
 
 // 讀某個「已存在」班級卡片上目前的固定加入碼（不需要先建立）。加入碼永久
@@ -110,24 +137,34 @@ export async function readClassroomJoinCode(
 
 // 讓一個「已有帳號」的學生（seed-auth.ts 預建的固定 fixture，例如
 // liveStudentOne／studentOne）用加入碼成為某班級的學生成員。現行產品 UI
-// 對既有帳號完全沒有「加入班級」入口（見檔頭說明），直接呼叫 join_classroom
-// RPC——與 rotateJoinCode 同一套「UI 消失、能力留在 repository 層」模式，
-// 差別只在於這裡連 repository 包裝都不能用（見檔頭 Node 型別剝離限制），改
-// 用裸的 supabase-js client。join_classroom 本身是 on-conflict-do-update
-// 的冪等寫法，重複呼叫同一組（帳號、班級）不會出錯，呼叫端不需要事先檢查
-// 是否已是成員。
+// 對既有帳號完全沒有「加入班級」入口（見檔頭說明），直接呼叫受限流保護的
+// join-classroom Edge Function。重複呼叫同一組（帳號、班級）仍維持冪等，
+// 呼叫端不需要事先檢查是否已是成員。
 export async function joinClassroomByCode(
   credentials: Credentials,
   joinCode: string,
 ): Promise<void> {
   const client = await signedInClient(credentials);
   try {
-    const { error } = await client.rpc('join_classroom', {
-      p_join_code: joinCode.trim(),
-      p_request_id: randomUUID(),
-    });
-    if (error) {
-      throw new Error(`CLASSROOM_HELPER_JOIN_FAILED: ${error.message}`);
+    const response: unknown = await client.functions.invoke<unknown>(
+      'join-classroom',
+      {
+        body: {
+          joinCode: joinCode.trim(),
+          requestId: randomUUID(),
+        },
+      },
+    );
+    if (
+      typeof response !== 'object' ||
+      response === null ||
+      !('error' in response)
+    ) {
+      throw new Error('CLASSROOM_HELPER_JOIN_FAILED: INVALID_RESPONSE');
+    }
+    if (response.error !== null) {
+      const message = await readFunctionError(response.error);
+      throw new Error(`CLASSROOM_HELPER_JOIN_FAILED: ${message}`);
     }
   } finally {
     await client.auth.signOut({ scope: 'local' });
@@ -144,7 +181,7 @@ export async function findClassroomIdByName(
   if ((await article.count()) === 0) return null;
   const href = await article
     .first()
-    .getByRole('link', { name: '管理班級' })
+    .getByRole('link', { name: '進入班級' })
     .getAttribute('href');
   return href ? (href.split('/').pop() ?? null) : null;
 }

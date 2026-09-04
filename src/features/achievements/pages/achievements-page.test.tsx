@@ -183,7 +183,9 @@ describe('AchievementsPage', () => {
       await screen.findByRole('heading', { name: /個人成就與徽章/u }),
     ).toBeVisible();
     expect(
-      document.querySelector('.achievements.scene-day.hall-of-medals'),
+      document.querySelector(
+        '.achievements.achievements--sanctuary-v2.scene-day.hall-of-medals',
+      ),
     ).not.toBeNull();
     expect(document.querySelector('.achievement-card--locked')).not.toBeNull();
     expect(

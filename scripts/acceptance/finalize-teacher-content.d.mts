@@ -8,7 +8,7 @@ export type TeacherContentCommand = Readonly<{
 
 export type TeacherContentManifest = Readonly<{
   schema_version: 1;
-  phase: 'teacher-content-v1';
+  phase: 'teacher-content-retirement-v2';
   git_sha: string;
   dirty_worktree: false;
   supabase_environment: 'local';
@@ -23,12 +23,7 @@ export type TeacherContentManifest = Readonly<{
   }>;
   browser_health: Readonly<{
     console_errors: 0;
-    expected_failures: readonly Readonly<{
-      expected_count: 1;
-      observed_count: 1;
-      status: 400;
-      url_pattern: string;
-    }>[];
+    expected_failures: readonly never[];
     page_errors: 0;
     failed_requests: 0;
     server_errors: 0;

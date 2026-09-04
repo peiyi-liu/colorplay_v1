@@ -1,7 +1,7 @@
 import { expect, test, type Page, type Response } from '@playwright/test';
 
 import { OWN_PROFILE_SELECT } from '../../src/features/profile/api/own-profile-select';
-import { TEST_USERS } from '../fixtures/users';
+import { TEST_USER_ACCOUNTS, TEST_USERS } from '../fixtures/users';
 import {
   isLocalOwnProfileResponseUrl,
   readLocalProfileEnvironment,
@@ -65,10 +65,14 @@ const isOwnProfileResponse = (response: Response) => {
 const signInAndReadProfile = async (
   page: Page,
   credentials: (typeof TEST_USERS)[keyof typeof TEST_USERS],
+  portal: 'student' | 'teacher' = 'student',
 ) => {
   await page.goto('/login');
+  if (portal === 'teacher') {
+    await page.getByText('教師端登入').click();
+  }
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
-  await page.getByLabel('密碼').fill(credentials.password);
+  await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
 
   const responsePromise = page.waitForResponse(isOwnProfileResponse);
   await page.getByRole('button', { name: '登入' }).click();
@@ -114,16 +118,18 @@ test('renders only the real safe profile and derives role navigation from Postgr
     studentPage,
     TEST_USERS.studentOne,
   );
-  await studentPage.goto('/app/profile');
 
   expect(studentProfile).toMatchObject({
     display_name: 'student.one',
     role: 'student',
   });
+  await expect(studentPage).toHaveURL(/\/app$/u);
   await expect(
-    studentPage.getByRole('heading', { name: 'student.one' }),
+    studentPage.getByRole('heading', { name: '學習地圖' }),
   ).toBeVisible();
-  await expect(studentPage.getByText('角色：學生')).toBeVisible();
+  await expect(studentPage.locator('.hud-identity__name')).toHaveText(
+    'student.one',
+  );
   await expect(studentPage.locator('body')).not.toContainText(
     TEST_USERS.studentOne.email,
   );
@@ -149,16 +155,17 @@ test('renders only the real safe profile and derives role navigation from Postgr
   const teacherProfile = await signInAndReadProfile(
     teacherPage,
     TEST_USERS.teacher,
+    'teacher',
   );
 
   expect(teacherProfile).toMatchObject({
-    display_name: 'teacher',
+    display_name: TEST_USER_ACCOUNTS.teacher.fullName,
     role: 'teacher',
   });
-  await teacherPage.getByRole('link', { name: '教師工作區' }).click();
-  await expect(teacherPage).toHaveURL(/\/teacher$/u);
+  await teacherPage.getByRole('link', { name: '教學分析' }).click();
+  await expect(teacherPage).toHaveURL((url) => url.pathname === '/teacher');
   await expect(
-    teacherPage.getByRole('heading', { name: '教師工作區' }),
+    teacherPage.getByRole('heading', { name: '教學分析' }),
   ).toBeVisible();
   await expect(teacherPage.locator('body')).not.toContainText(
     TEST_USERS.teacher.email,

@@ -1,6 +1,6 @@
 begin;
 
-select plan(33);
+select plan(37);
 
 select has_function('public', 'create_live_activity', 'create live activity exists');
 select has_function('public', 'create_live_session', 'create live session exists');
@@ -99,7 +99,7 @@ select set_config(
 select set_config(
   'test.activity',
   public.create_live_activity(
-    'Live 色彩對戰', '26000000-0000-0000-0000-000000000003', 20
+    'Live 色彩對戰', '4f208855-dfc8-6cc5-7671-02dfacba85d1', 20
   )::text,
   true
 );
@@ -171,8 +171,8 @@ select is(
 );
 select is(
   (current_setting('test.started')::jsonb ->> 'question_count')::integer,
-  10,
-  'starting freezes the template question count'
+  20,
+  'starting freezes the Live target question count'
 );
 select is(
   (
@@ -180,7 +180,7 @@ select is(
     from public.live_session_questions
     where session_id = current_setting('test.session_id')::uuid
   ),
-  10,
+  20,
   'frozen live questions exist for every position'
 );
 select throws_ok(
@@ -200,6 +200,75 @@ select throws_ok(
   'P0001',
   'LIVE_STATE_INVALID_TRANSITION',
   'a lobby session cannot start twice'
+);
+
+set local role postgres;
+update public.questions question
+set status = 'draft'
+where question.id in (
+  select candidate.id
+  from public.questions candidate
+  join public.subtopics subtopic on subtopic.id = candidate.subtopic_id
+  where candidate.bank_kind = 'live'
+    and subtopic.section_id = (
+      select activity.section_id
+      from public.live_activities activity
+      where activity.id = (
+        current_setting('test.activity')::jsonb ->> 'activity_id'
+      )::uuid
+    )
+  order by candidate.stable_code
+  offset 7
+);
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '17000000-0000-0000-0000-000000000001',
+  true
+);
+select set_config(
+  'test.short_session',
+  public.create_live_session(
+    (current_setting('test.activity')::jsonb ->> 'activity_id')::uuid,
+    '17100000-0000-0000-0000-000000000001',
+    null
+  )::text,
+  true
+);
+select set_config(
+  'test.short_started',
+  public.start_live_session(
+    (current_setting('test.short_session')::jsonb ->> 'session_id')::uuid,
+    1
+  )::text,
+  true
+);
+select is(
+  (current_setting('test.short_started')::jsonb ->> 'question_count')::integer,
+  7,
+  'a short Live pool reports its actual frozen question count'
+);
+select is(
+  (
+    select session.question_count
+    from public.live_sessions session
+    where session.id = (
+      current_setting('test.short_session')::jsonb ->> 'session_id'
+    )::uuid
+  ),
+  7,
+  'a short Live session persists its actual frozen question count'
+);
+select is(
+  (
+    select count(*)::integer
+    from public.live_session_questions
+    where session_id = (
+      current_setting('test.short_session')::jsonb ->> 'session_id'
+    )::uuid
+  ),
+  7,
+  'a short Live pool freezes every available question'
 );
 
 select set_config(
@@ -228,6 +297,15 @@ select throws_ok(
 );
 select throws_ok(
   format(
+    $$select public.start_live_session(%L, 2)$$,
+    current_setting('test.session_id')
+  ),
+  'P0001',
+  'LIVE_SESSION_NOT_FOUND',
+  'another teacher cannot start a foreign session'
+);
+select throws_ok(
+  format(
     $$select public.get_live_session_state(%L)$$,
     current_setting('test.session_id')
   ),
@@ -243,7 +321,7 @@ select set_config(
 );
 select throws_ok(
   $$select public.create_live_activity(
-    '學生活動', '26000000-0000-0000-0000-000000000003', 20
+    '學生活動', '4f208855-dfc8-6cc5-7671-02dfacba85d1', 20
   )$$,
   'P0001',
   'LIVE_TEACHER_ROLE_REQUIRED',
@@ -373,7 +451,7 @@ select is(
     where session_id = current_setting('test.session_id')::uuid
       and correct_option_id is not null
   ),
-  10,
+  20,
   'every frozen question stores its hidden answer server-side'
 );
 

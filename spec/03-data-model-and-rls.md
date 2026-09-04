@@ -17,6 +17,9 @@
 |---|---|---|
 | id | uuid PK | 等於 `auth.users.id` |
 | display_name | text | 1–30 字元，trim 後不可空 |
+| full_name | text nullable | 學生／教師正式名稱；受限 mutation |
+| login_account | text nullable unique | 學生帳號或後端產生的 `teacherNN`；建立後不得由 browser 改寫 |
+| contact_email | text nullable | Admin-only 教師聯絡資料；不是 Auth login 或 recovery identity |
 | role | enum | `student`, `teacher`, `admin`；使用者不可自行升權 |
 | active_blook_id | uuid nullable | 必須是自己已擁有或免費預設 |
 | timezone | text | 預設 `Asia/Taipei` |
@@ -24,14 +27,19 @@
 
 ### `classrooms`
 
-- `id`, `owner_teacher_id`, `name`, `join_code_hash`, `status`, `created_at`。
-- join code 不保存明文；顯示新代碼時只顯示一次或可輪替。
+- `id`, `owner_teacher_id`, `name`, `join_code`, `join_code_hash`, `status`, `created_at`。
+- 新班級使用固定的 8 位 Crockford Base32 加入碼（顯示為 `XXXX-XXXX`）；
+  既有 16 位 hexadecimal 加入碼繼續有效，不自動改碼。
+- `join_code` 明碼只可由 classroom owner 專用 RPC 讀取，學生與一般
+  `authenticated` 不可直讀；加入驗證使用 `join_code_hash`。
 
 ### `classroom_members`
 
 - `classroom_id`, `user_id`, `member_role`, `joined_at`, `status`。
 - Unique：`(classroom_id, user_id)`；同一 classroom 只有一筆 active membership。
-- Student 可同時屬於多個 classrooms；join／leave／rejoin 必須 idempotent 並保留稽核。
+- Student 同一時間最多只能有一筆 active classroom membership；相同班級的
+  join／rejoin 必須 idempotent，另一 active 班級的 join 必須 fail closed。
+- 轉班需使用另行核准、保留歷史與稽核的 workflow，不得由 join 自動停用舊班級。
 
 ### Content taxonomy
 
@@ -46,8 +54,17 @@
 狀態：`draft`, `published`, `archived`。
 
 - `review_card_media`：card/version、Storage object、alt text、sort order、media metadata。
-- `content_versions`：content type/id、version、frozen payload/hash、status、creator、timestamps。
-- `content_publication_events`：append-only publish/archive history、actor、version、request ID。
+- `content_versions`：content type/id、version、frozen payload/hash、status、creator、
+  progression impact（`compatible`／`requires_recompletion`／
+  `requires_requalification`）、
+  classification reason、changed-field digest、timestamps。
+- `content_publication_events`：append-only publish/archive history、actor、version、
+  request ID；inserted required card 另保存 immutable effective cutoff、section／sort
+  identity、`publication_cutoff_order` 與 grandfather policy。
+- 章節之間沒有 prerequisite。章節內有效順序為 `sections.sort_order`，同 section
+  的 review card 順序為 `(subtopics.sort_order, review_cards.sort_order)`；stable
+  identity 作 deterministic tie-breaker。Published 內容必須以 constraint／validation
+  排除同 parent 重複順序，不能由 browser 自行排序後宣稱權威。
 
 ### Questions
 
@@ -55,6 +72,7 @@
 
 - `id`
 - `stable_code`，例如 `3-1-01`
+- `bank_kind`：`section`（QB 小節測驗）、`chapter`（CR 章節總測驗）、`live`（LT Live 專用）或歷史 `legacy`；新 Session 必須依產品 surface 由 server 選定題池。
 - `version`
 - `subtopic_id`
 - `question_type`
@@ -73,11 +91,14 @@
 
 ### Quiz
 
-`quiz_templates`：章節綜合或子主題練習設定。
+`quiz_templates`：章節綜合或小節練習設定；小節 template 明確保存
+`section_id`，章節 template 保存 `chapter_id` 且 `section_id is null`。建立 session
+時，server 依 surface 強制 `bank_kind='section'` 或 `bank_kind='chapter'`。
 
 `quiz_sessions`：
 
-- `id`, `user_id`, `classroom_id`, `template_id`
+- `id`, `user_id`, `classroom_id`, `template_id`；`classroom_id` 由後端在建立
+  session 時保存，不得由前端指定或事後依目前 membership 推測。
 - `status`: `in_progress`, `completed`, `abandoned`, `expired`
 - `started_at`, `completed_at`
 - `question_count`
@@ -86,6 +107,9 @@
 - optional `assignment_id`／attempt reference
 - `game_rules_version`
 - `finalized_at`
+- section challenge 成功 finalize 另保存 server-only `section_event_order`；chapter／
+  其他 session 為 null。該 order 與 inserted-card publication cutoff order 在同一
+  section lock 內分配，timestamp 只作 audit。
 
 `quiz_session_questions`：
 
@@ -133,7 +157,10 @@
 - `mistake_items`：user、question/version、origin answer、status `open/resolved/reopened`、first/last event timestamps；同一 current mistake identity 防重。
 - `remediation_attempts`：mistake item、authoritative remediation session/answer、result、XP source、resolved transition；不可改寫 origin answer/score。
 - `review_progress`：user、review card/current version、explicit completed time、rules version；Unique current completion identity。
-- `subtopic_progress`、`chapter_progress`：server-derived read model/cache，保存 coverage、accuracy、mastery、review completion、status、rules/content version、computed time；不得由 browser 直寫。
+- Section challenge qualifying result 由 finalized `quiz_sessions` 推導；同一 user／
+  section 保存 attempted 與 best qualifying percentage 的 server-derived projection，
+  browser 不可直寫。
+- `subtopic_progress`、`chapter_progress`：server-derived read model/cache，保存 coverage、accuracy、mastery、review completion、status、rules/content version、computed time；不得由 browser 直寫。報表 mastery 與 progression gate 分開命名，不能拿 client 百分比互換。
 
 ### Achievements
 
@@ -172,7 +199,8 @@ Live tables 與 ordinary quiz tables分離，因 state machine、host authority 
 |---|---|---|---|
 | own profile | read/update limited | own read/update | managed |
 | other profile | leaderboard-safe projection only | classroom-safe projection | managed |
-| published content | read if classroom/course allowed | read | managed |
+| published taxonomy/metadata | read if course allowed | read | managed |
+| review-card body/media | completed、current available 或 own grandfather-exempt card through guarded projection | authorized teaching scope | managed projection |
 | draft content | no | own/assigned content | managed |
 | own quiz sessions/answers | read own | own plus managed classroom analytics | managed |
 | other student raw answers | no | managed classroom only | managed |
@@ -186,6 +214,7 @@ Live tables 與 ordinary quiz tables分離，因 state machine、host authority 
 | Live | own participant/public active projection | own hosted session command/read | managed |
 | `realtime.messages` Live topic | active participant receive/Presence only | host approved events | managed |
 | `external_activities` | authorized available link only | own CRUD | managed |
+| teacher contact Email | no | own value only if separately authorized | masked/reveal or named command only |
 
 ## 4. 必要 RLS 行為
 
@@ -198,6 +227,12 @@ Live tables 與 ordinary quiz tables分離，因 state machine、host authority 
 - Student 不可直接 insert/update/delete achievement、progress、assignment completion、Live score/rank/state 或 ledger。
 - Teacher A 不可讀／host／assign Teacher B classroom；Outsider 不可加入 Live private topic。
 - Anonymous 不可讀 profile、question option `is_correct` 或任何 product table。
+- Student 直接查 `review_cards.content`、`review_card_media.asset_path` 或 private
+  Storage object 必須拒絕；合法閱讀只經目前 access snapshot 所允許的 guarded
+  projection／signed delivery。猜 ID、直接 URL 或竄改 client state 不得繞過。
+- Student 不可直接建立被鎖定小節／章節的 quiz session，也不可用後續卡 ID
+  呼叫 `complete_review_card` 跳過 predecessor。
+- 非 Admin 不可列出其他教師的 `contact_email`，也不可建立、修改或重設教師帳號。
 
 ## 5. Authorization metadata
 
@@ -241,6 +276,20 @@ Live tables 與 ordinary quiz tables分離，因 state machine、host authority 
 
 ### Additional trusted commands
 
+- `get_student_learning_path`：回章節內所有節點的 metadata、順序、access state、
+  completion、grandfather exemption、best result、blocker 與唯一 next action；locked
+  card 不含正文／media。
+- `get_review_card_content`：只為 completed 或目前唯一 available card 回 current
+  body/media，另允許 own grandfather-exempt inserted card 選讀；每次呼叫重新驗
+  actor、version 與 progression state。
+- `complete_review_card`：row lock 後重算 current card 與 predecessor，只接受目前
+  available card 或 own current `grandfather_exempt` card；idempotent 重送回原完成
+  結果。豁免卡只在明確提交後變為 completed，不影響原有 gate。
+- `create_quiz_session`：除既有 Auth／published 驗證外，小節挑戰要求本節全部
+  current-required cards 完成；章節總挑戰要求每節有 qualifying best percentage
+  ≥80%。Qualifying percentage 為 finalized challenge 的
+  `correct_count / question_count * 100`；server 以未四捨五入的比例比較門檻，速度
+  加權 Quiz Score 與 aggregate mastery 不參與此 gate。
 - `equip_blook`：驗 caller ownership；只允許 own profile active Blook。
 - `request_question_hint`：驗 own active question、hint level 1–3、防重並回 safe hint。
 - Remediation commands：建立 authoritative remediation session、finalize result、resolve/reopen mistake，不改 origin answer。
@@ -249,6 +298,9 @@ Live tables 與 ordinary quiz tables分離，因 state machine、host authority 
 - `create_live_session`、`rotate_live_join_code`、`join_live_session`、`get_live_session_state`。
 - `start_live_session`、`open_live_question`、`submit_live_answer`、`close_live_question`、`advance_live_session`。
 - `finalize_live_session`、`cancel_live_session`。
+- Admin teacher-account named commands：create／update identity fields／reset password；
+  由 privileged Admin receipt 啟動，Edge 協調 Auth，PostgreSQL 保存 lifecycle、
+  idempotency、redacted receipt 與 audit。一次性密碼不得落 DB 或 log。
 
 Live command 全部驗 `auth.uid()`、role、host ownership/member relation、current state、`state_version`、server deadline、idempotency；lock relevant rows。`finalize_live_session` 在同一 transaction 完成 score、rank、reward ledgers、achievement、assignment/progress、audit，失敗全 rollback。
 
@@ -280,6 +332,22 @@ Security definer function 必須：
 - Archive 不等於 delete；已有作答引用的內容禁止 hard delete。
 - Published review/question/media 經語意變更建立 `content_versions`；session、hint、progress 保存使用版本。
 - Progress 只以 current published versions 重算；歷史 session 仍讀 frozen version。
+- Progression 規則版本為 `2026-09-progression-1`。舊跨章 unlock rows只保留歷史，
+  不再作新 access 決策；不得用 destructive delete 假裝完成規則遷移。
+- 既有跳號 completion／早於完整 review 的 challenge attempt 採相容性正規化：
+  facts 與 timestamps 原樣保留；最早未完成 required card 始終是下一步，後段紀錄
+  不跨越缺口解鎖；缺口補齊後舊 challenge 才依原結果生效，不重做也不重播獎勵。
+- Content-version impact 由受保護 publish command 依 allowlisted field diff 驗證：
+  非實質修改 compatible；實質 review 變更要求 recompletion；實質 challenge 變更
+  要求 current-version requalification。未分類／無法判定採類型最嚴格結果，歷史
+  facts／timestamps／reward ledgers 不刪改。
+- 新 required card 對 publication cutoff 前已有 server-valid、同 section
+  finalized challenge 的既有學生豁免，不論分數；其他既有學生與新學生必讀，
+  cutoff 後不能追溯取得 exemption。Server 直接讀取 immutable finalize fact，
+  不以 80% mastery 或可變 projection 代替；以 section lock／ordering 解決 race，
+  只有 `finalize.section_event_order < publication.publication_cutoff_order` 才豁免。
+  Timestamp 等號、缺
+  order 或無法證明先後時不豁免，且不得使用人工名單。
 
 ## 9. Seed data
 

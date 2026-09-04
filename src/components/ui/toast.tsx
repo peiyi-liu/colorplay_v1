@@ -3,6 +3,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -24,15 +25,26 @@ const AUTO_DISMISS_MS = 4000;
 /** 右上角系統通知（GGAME toast-container）。錯誤用 alert 積極播報。 */
 export function ToastProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [toasts, setToasts] = useState<readonly ToastEntry[]>([]);
+  const dismissTimers = useRef(new Set<number>());
   const nextId = useRef(1);
+
+  useEffect(() => {
+    const timers = dismissTimers.current;
+    return () => {
+      for (const timer of timers) window.clearTimeout(timer);
+      timers.clear();
+    };
+  }, []);
 
   const toast = useCallback<ToastFn>(({ message, tone }) => {
     const id = nextId.current;
     nextId.current += 1;
     setToasts((previous) => [...previous, { id, message, tone }]);
-    setTimeout(() => {
+    const timer = window.setTimeout(() => {
+      dismissTimers.current.delete(timer);
       setToasts((previous) => previous.filter((entry) => entry.id !== id));
     }, AUTO_DISMISS_MS);
+    dismissTimers.current.add(timer);
   }, []);
 
   const value = useMemo(() => toast, [toast]);

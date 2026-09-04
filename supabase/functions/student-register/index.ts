@@ -6,17 +6,38 @@ import {
   normalizeAccount,
   normalizeClassCode,
   PASSWORD_PATTERN,
-  sha256Hex,
   validateNickname,
 } from '../_shared/account.ts';
+import { readRuntimeSupabaseApiKeys } from '../_shared/api-keys.ts';
+import { hashClassroomJoinIp } from '../_shared/classroom-join-rate-limit.ts';
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const { publishableKey, secretKey } = readRuntimeSupabaseApiKeys((name) =>
+  Deno.env.get(name),
+);
 
 const failure = (status: number, error: string) =>
   jsonResponse(status, { error });
+
+const rateLimited = (retryAfterSeconds: number) =>
+  new Response(
+    JSON.stringify({
+      error: 'CLASSROOM_JOIN_RATE_LIMITED',
+      retryAfterSeconds,
+    }),
+    {
+      status: 429,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+        'Retry-After': String(retryAfterSeconds),
+      },
+    },
+  );
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') {
@@ -62,7 +83,7 @@ Deno.serve(async (request) => {
 
   // 必須帶 OTP 驗證後的使用者 session。
   const authHeader = request.headers.get('Authorization') ?? '';
-  const userClient = createClient(supabaseUrl, anonKey, {
+  const userClient = createClient(supabaseUrl, publishableKey, {
     auth: { persistSession: false },
     global: { headers: { Authorization: authHeader } },
   });
@@ -72,9 +93,19 @@ Deno.serve(async (request) => {
   if (userError || !user) return failure(401, 'AUTH_REQUIRED');
   if (!user.email_confirmed_at) return failure(403, 'EMAIL_NOT_VERIFIED');
 
-  const admin = createClient(supabaseUrl, serviceRoleKey, {
+  const admin = createClient(supabaseUrl, secretKey, {
     auth: { persistSession: false },
   });
+  const ipHash = await hashClassroomJoinIp(request, secretKey);
+
+  const { data: currentProfile, error: currentProfileError } = await admin
+    .from('profiles')
+    .select('login_account')
+    .eq('id', user.id)
+    .single();
+  if (currentProfileError) {
+    return failure(503, 'PROFILE_LOOKUP_FAILED');
+  }
 
   // 帳號唯一（自己重複送出視為同帳號覆寫）。
   const { data: existingAccount, error: accountError } = await admin
@@ -82,40 +113,114 @@ Deno.serve(async (request) => {
     .select('id')
     .eq('login_account', normalizedAccount)
     .maybeSingle();
-  if (accountError) return failure(500, 'REGISTER_FAILED');
+  if (accountError) {
+    return failure(503, 'ACCOUNT_LOOKUP_FAILED');
+  }
   if (existingAccount && existingAccount.id !== user.id) {
     return failure(409, 'ACCOUNT_TAKEN');
   }
 
-  // 班級序號 → classroom（與 join_classroom 相同的 sha256 比對）。
-  const codeHash = `\\x${await sha256Hex(normalizedCode)}`;
-  const { data: classroom, error: classroomError } = await admin
-    .from('classrooms')
-    .select('id')
-    .eq('status', 'active')
-    .eq('join_code_hash', codeHash)
-    .maybeSingle();
-  if (classroomError) return failure(500, 'REGISTER_FAILED');
-  if (!classroom) return failure(400, 'INVALID_CLASSROOM_CODE');
+  // 班級碼解析也走 service-only 限流邊界，避免註冊流程成為繞過入口。
+  const { data: resolution, error: classroomError } = await admin.rpc(
+    'svc_resolve_classroom_join_code',
+    {
+      p_actor_id: user.id,
+      p_ip_hash: ipHash,
+      p_join_code: normalizedCode,
+    },
+  );
+  if (classroomError || !isRecord(resolution)) {
+    return failure(503, 'CLASSROOM_LOOKUP_FAILED');
+  }
+  if (resolution.outcome === 'rate_limited') {
+    return rateLimited(
+      typeof resolution.retry_after_seconds === 'number'
+        ? Math.max(1, Math.ceil(resolution.retry_after_seconds))
+        : 600,
+    );
+  }
+  if (resolution.outcome === 'invalid') {
+    return failure(400, 'INVALID_CLASSROOM_CODE');
+  }
+  if (
+    resolution.outcome !== 'ok' ||
+    typeof resolution.classroom_id !== 'string'
+  ) {
+    return failure(503, 'CLASSROOM_LOOKUP_FAILED');
+  }
+  const classroom = { id: resolution.classroom_id };
 
-  const { data: membership, error: membershipError } = await admin
-    .from('classroom_members')
-    .select('classroom_id')
-    .eq('classroom_id', classroom.id)
-    .eq('user_id', user.id)
-    .maybeSingle();
-  if (membershipError) return failure(500, 'REGISTER_FAILED');
+  // 只透過 user-scoped SECURITY DEFINER RPC 讀取本人的 active membership，
+  // 避免 Edge service role 直接擴張 classroom_members 欄位權限。
+  const { data: memberships, error: membershipError } =
+    await userClient.rpc('list_my_classrooms');
+  if (membershipError) {
+    return failure(503, 'MEMBERSHIP_LOOKUP_FAILED');
+  }
+  const membership = memberships?.find(
+    (entry) => entry.classroom_id === classroom.id,
+  );
+
+  if (currentProfile.login_account !== null) {
+    const sameCompletedRegistration =
+      currentProfile.login_account === normalizedAccount &&
+      membership?.membership_status === 'active';
+    return sameCompletedRegistration
+      ? jsonResponse(200, { ok: true })
+      : failure(409, 'ALREADY_REGISTERED');
+  }
+
+  const attemptId = crypto.randomUUID();
+  const { data: claimDisposition, error: claimError } = await userClient.rpc(
+    'claim_student_registration',
+    { p_attempt_id: attemptId },
+  );
+  if (claimError) return failure(503, 'REGISTRATION_STATE_FAILED');
+  if (claimDisposition !== 'ACQUIRED') {
+    return claimDisposition === 'IN_PROGRESS'
+      ? failure(409, 'REGISTER_IN_PROGRESS')
+      : failure(409, 'ALREADY_REGISTERED');
+  }
+
+  const failAfterClaim = async (status: number, error: string) => {
+    await userClient.rpc('release_student_registration_claim', {
+      p_attempt_id: attemptId,
+    });
+    return failure(status, error);
+  };
 
   if (!membership) {
-    // 以學生本人身分走既有 RPC，保留角色檢查與審計語意。
-    const { error: joinError } = await userClient.rpc('join_classroom', {
-      p_join_code: normalizedCode,
-      p_request_id: crypto.randomUUID(),
-    });
-    if (joinError) {
-      return joinError.message.includes('INVALID_CLASSROOM_CODE')
-        ? failure(400, 'INVALID_CLASSROOM_CODE')
-        : failure(500, 'REGISTER_FAILED');
+    const { data: joinResult, error: joinError } = await admin.rpc(
+      'svc_join_classroom',
+      {
+        p_actor_id: user.id,
+        p_ip_hash: ipHash,
+        p_join_code: normalizedCode,
+        p_request_id: crypto.randomUUID(),
+      },
+    );
+    if (joinError || !isRecord(joinResult)) {
+      return await failAfterClaim(503, 'CLASSROOM_JOIN_FAILED');
+    }
+    if (joinResult.outcome === 'rate_limited') {
+      await userClient.rpc('release_student_registration_claim', {
+        p_attempt_id: attemptId,
+      });
+      return rateLimited(
+        typeof joinResult.retry_after_seconds === 'number'
+          ? Math.max(1, Math.ceil(joinResult.retry_after_seconds))
+          : 600,
+      );
+    }
+    if (joinResult.outcome !== 'ok') {
+      const joinCode = String(joinResult.error ?? '');
+      if (joinResult.outcome === 'invalid') {
+        return await failAfterClaim(400, 'INVALID_CLASSROOM_CODE');
+      }
+      if (joinCode === 'ALREADY_IN_ACTIVE_CLASSROOM') {
+        return await failAfterClaim(409, 'ALREADY_IN_ACTIVE_CLASSROOM');
+      }
+      return await failAfterClaim(503, 'CLASSROOM_JOIN_FAILED');
     }
   }
 
@@ -123,20 +228,36 @@ Deno.serve(async (request) => {
     user.id,
     { password },
   );
-  if (passwordError) return failure(500, 'REGISTER_FAILED');
+  if (passwordError) {
+    return await failAfterClaim(503, 'PASSWORD_SETUP_FAILED');
+  }
 
-  const { error: profileError } = await admin
+  const { data: updatedProfile, error: profileError } = await admin
     .from('profiles')
     .update({
       display_name: nicknameVerdict.nickname,
       full_name: trimmedFullName,
       login_account: normalizedAccount,
     })
-    .eq('id', user.id);
+    .eq('id', user.id)
+    .is('login_account', null)
+    .select('id');
   if (profileError) {
-    return profileError.code === '23505'
-      ? failure(409, 'ACCOUNT_TAKEN')
-      : failure(500, 'REGISTER_FAILED');
+    return await failAfterClaim(
+      profileError.code === '23505' ? 409 : 503,
+      profileError.code === '23505' ? 'ACCOUNT_TAKEN' : 'PROFILE_SETUP_FAILED',
+    );
+  }
+  if (!updatedProfile || updatedProfile.length !== 1) {
+    return await failAfterClaim(409, 'ALREADY_REGISTERED');
+  }
+
+  const { error: completeClaimError } = await userClient.rpc(
+    'complete_student_registration_claim',
+    { p_attempt_id: attemptId },
+  );
+  if (completeClaimError) {
+    return failure(503, 'REGISTRATION_FINALIZE_FAILED');
   }
 
   return jsonResponse(200, { ok: true });

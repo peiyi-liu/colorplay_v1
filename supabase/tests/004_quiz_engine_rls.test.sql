@@ -1,6 +1,6 @@
 begin;
 
-select plan(44);
+select plan(50);
 
 select has_table('public', 'quiz_sessions', 'quiz sessions exists');
 select has_table(
@@ -223,6 +223,16 @@ select ok(
   current_setting('test.quiz_payload') !~ 'is_correct',
   'session payload contains no correctness field'
 );
+select is(
+  current_setting('test.quiz_payload')::jsonb ->> 'challenge_kind',
+  'chapter',
+  'chapter challenge payload identifies its authoritative context'
+);
+select is(
+  (current_setting('test.quiz_payload')::jsonb ->> 'chapter_sort_order')::integer,
+  3,
+  'session payload exposes the authoritative chapter display order'
+);
 
 select set_config(
   'test.first_question_id',
@@ -291,6 +301,37 @@ select is(
   150,
   'answer within five seconds receives base and speed score'
 );
+reset role;
+select set_config(
+  'test.expected_explanation',
+  (
+    select explanation
+    from public.quiz_session_questions
+    where id = current_setting('test.first_question_id')::uuid
+  ),
+  true
+);
+set local role authenticated;
+select ok(
+  current_setting('test.expected_explanation', true) is not null,
+  'answered question fixture has a frozen explanation'
+);
+select is(
+  public.quiz_answer_explanation(
+    current_setting('test.first_question_id')::uuid
+  ),
+  current_setting('test.expected_explanation'),
+  'owner receives the exact frozen explanation after answering'
+);
+select is(
+  (
+    select explanation
+    from public.quiz_session_question_state
+    where session_question_id = current_setting('test.first_question_id')::uuid
+  ),
+  current_setting('test.expected_explanation'),
+  'owner projection returns the same guarded explanation'
+);
 select results_eq(
   format(
     $$
@@ -327,6 +368,13 @@ select is(
   ),
   0,
   'another student cannot read in-progress aggregate state'
+);
+select is(
+  public.quiz_answer_explanation(
+    current_setting('test.first_question_id')::uuid
+  ),
+  null,
+  'another student cannot request the owner answer explanation directly'
 );
 select set_config(
   'request.jwt.claim.sub',

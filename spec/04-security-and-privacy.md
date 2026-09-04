@@ -4,7 +4,7 @@
 
 假設攻擊者可以：
 
-- 讀取並修改所有前端 JavaScript、DOM、React state、localStorage。
+- 讀取並修改所有前端 JavaScript、DOM、React state、localStorage、sessionStorage。
 - 攔截、重放、修改 API request。
 - 猜測 UUID、route 與 classroom ID。
 - 多開分頁、快速重送、修改系統時間。
@@ -16,7 +16,7 @@
 ## 2. Secrets 管理
 
 - Supabase publishable／anon key 可在瀏覽器出現，但其權限完全受 RLS 限制。
-- `service_role`、DB password、JWT secret、SMTP credentials 不得進入 repo、前端 bundle、log、截圖。
+- `service_role`、DB password、JWT secret、SMTP credentials 不得進入 repo、前端 bundle、log、截圖。Supabase Auth access/refresh token 本身是高敏感 credential，僅能由官方 Auth client 放在其 session serialization；關閉分頁或登出必須清除。
 - Git pre-commit／CI 執行 secret scanning。
 - `.env.example` 不得包含真值。
 - Production secret 透過部署平台與 Supabase secrets 管理並可輪替。
@@ -28,9 +28,36 @@
 - 使用 Supabase Auth。
 - MVP 可使用 Email/password 或 magic link；選定方式須在設計文件鎖定。
 - Teacher role 只能由受控邀請／admin 流程賦予。
+- 教師帳號由 Admin 產生流水帳號與高強度初始密碼；聯絡 Email
+  可後補且不作為登入 ID、role 賦予或密碼自助復原的信任來源。
+- 教師忘記密碼時由 Admin 重設新密碼；系統不得保存、回傳或寄送原密碼。
 - 共享裝置需提供明顯登出與目前帳號顯示。
 - 敏感教師操作前若 session 太舊，可要求重新驗證。
 - 登入錯誤不得洩漏「此 Email 是否存在」超出 Auth provider 正常安全行為。
+
+### Admin 管理教師帳號（2026-09-02 normative）
+
+- 教師不開放自助註冊。建立、名稱／聯絡 Email 更新與密碼重設只允許 active
+  privileged Admin 透過具名命令執行。
+- Login account 由後端 transaction 配發 `teacherNN`，以資料庫唯一約束處理
+  併發；client 不提供序號或角色。
+- `contact_email` nullable、Admin-only，不作 Auth login identifier 或 recovery
+  條件。Auth 所需 synthetic Email 由預配 Auth user UUID 與嚴格 `.invalid`
+  namespace 決定；local-part 不得由 `teacherNN` 或 contact Email 推導。它不得顯示、
+  寄送或當成聯絡資料。
+- 唯一 browser 例外是 Supabase 官方 Auth response、access-token 必要 email claim，
+  以及同一官方 session object 在其專用 sessionStorage key 的 serialization。自訂
+  `auth-login` response 只能回傳 access/refresh token，不得回傳 session user、Email、
+  identity 或 provider metadata。此例外不包含 React/AuthContext 等 app-owned state、
+  storage/cache、DOM、URL/history、log、audit、analytics、safe browser、export 或一般
+  API payload；不得把例外擴張成「browser storage 可存」。
+- 初始／重設密碼由後端 CSPRNG 產生 12 碼，至少含大寫、小寫、數字與符號；
+  明文只存在於當次成功 response 的一次性 receipt，不進 log、audit、analytics、
+  cache 或永久資料表。原密碼不可查看或復原。
+- Auth 與 PostgreSQL 間使用 fail-closed、可重入 saga。部分失敗必須補償或進入
+  reconciliation；不得留下具有 teacher login 能力但無合法 profile／audit 的 user。
+- 建立後的教師可登入 Teacher portal，不能登入 Admin portal；修改 client role、
+  直接呼叫 Auth 或猜測命令不得升權。
 
 ## 4. 授權
 
@@ -41,6 +68,8 @@
 - Student 只讀 own profile/session/answer/wallet/achievement/assignment/progress 與 active Live projection；不可讀其他 raw answer 或寫 ledger/rank/role/host state。
 - Teacher 只管理 own classroom/content scope；Teacher A 不可讀 Teacher B classroom、analytics、assignment、Live 或 export。
 - Service role 只可用於必要的 system job，且 handler 仍驗證 caller；不可因使用 service role 就省略 authorization。
+- Teacher account operations 必須沿用 Admin privileged session、fresh MFA、一次性
+  authorization receipt、idempotency 與 append-only audit；不得另建較弱的管理入口。
 
 ## 5. 答案與計分保護
 
@@ -75,7 +104,11 @@
 
 最低限制：
 
-- Login／join classroom：依 IP + identity 限流。
+- Login／join classroom：依 IP + identity 限流。`join classroom` 採 10 分鐘固定視窗：
+  單一 identity 第 10 次錯碼起、單一共享 IP 第 100 次錯碼起拒絕，並回傳穩定
+  `CLASSROOM_JOIN_RATE_LIMITED` 與 `Retry-After`。加入必須經 Edge／service-only
+  邊界，authenticated 不得直接執行底層 RPC 繞過限流；IP 僅保存 HMAC 指紋，
+  不保存原始位址。
 - `submit_quiz_answer`：每 user 每秒最多 3 次，且 database unique constraint 為最後防線。
 - `create_quiz_session`：每 user 每分鐘最多 10 次。
 - `purchase_blook`：每 user 每分鐘最多 10 次。
@@ -90,6 +123,9 @@
 - 排行榜不得顯示 Email、學號、真實姓名，除非研究與校方明確核准。
 - 匯出預設 pseudonymous ID。
 - 操作 log 不保存答案全文或不必要個資。
+- 教師 `contact_email` 預設遮罩；只有具目的、可稽核的 Admin projection／reveal
+  可取得。Auth synthetic Email 一律不進 safe browser catalog；除第 3 節列出的
+  Supabase-owned Auth session 例外外，所有 browser surface 均 forbidden。
 - 定義 retention：MVP 預設正式作答保存至研究／課程目的結束後的政策期限；實際期限由研究倫理文件設定。
 - 支援依合法程序匯出或刪除個人資料；有研究鎖定需求時需記錄法律／倫理依據。
 
@@ -127,10 +163,15 @@ Production 必須：
 - Live create/join-code rotate/host transition/finalize/cancel。
 - achievement unlock、Blook purchase/equip 與 ledger reconciliation failure。
 - security policy denial 的彙總事件。
+- 教師帳號建立、名稱／聯絡資料更新、密碼重設、秘密 receipt 產生結果與 saga
+  補償。
 
 Audit log append-only；一般 teacher 不可修改或刪除。
 
 每筆 event 記錄 UTC timestamp、actor、action、target type/ID、request/correlation ID、result、rules/content version、safe metadata。禁止記錄完整 Email、answer payload、JWT/access token、credential、SQL/stack trace 或 raw research row。
+
+教師帳號事件另需 reason；contact Email 只存 redacted before/after，密碼與 Auth
+內部 Email 永遠不得出現在 audit metadata。
 
 ## 13. 安全驗收必測攻擊
 

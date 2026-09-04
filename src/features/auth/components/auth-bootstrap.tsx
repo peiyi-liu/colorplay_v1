@@ -176,7 +176,10 @@ export function AuthBootstrap({
       }
 
       if (recoveredSession) {
-        setState(stateFromSession(recoveredSession));
+        if (currentUserId.current !== recoveredSession.userId) {
+          await clearUserScopedQueries(queryClient);
+        }
+        commitState(stateFromSession(recoveredSession));
         throw signOutError;
       }
 

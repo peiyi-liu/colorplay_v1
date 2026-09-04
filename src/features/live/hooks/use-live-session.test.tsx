@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -27,17 +27,23 @@ type BroadcastHandler = (message: { payload: unknown }) => void;
 
 const stubChannel = () => {
   const handlers: BroadcastHandler[] = [];
+  let subscriptionHandler: ((status: string) => void) | undefined;
   const channel = {
     on: vi.fn((_type: string, _filter: unknown, handler: BroadcastHandler) => {
       handlers.push(handler);
       return channel;
     }),
     subscribe: vi.fn((callback?: (status: string) => void) => {
+      subscriptionHandler = callback;
       callback?.('SUBSCRIBED');
       return channel;
     }),
   };
-  return { channel, handlers };
+  return {
+    channel,
+    handlers,
+    notifySubscription: (status: string) => subscriptionHandler?.(status),
+  };
 };
 
 describe('useLiveSession', () => {
@@ -72,6 +78,7 @@ describe('useLiveSession', () => {
     expect(queryClient.getQueryData(liveKeys.session(SESSION_ID))).toEqual(
       lobbyState,
     );
+    expect(result.current.connectionStatus).toBe('connected');
 
     const callsBeforeBroadcast = getState.mock.calls.length;
     handlers[0]?.({ payload: { state: 'question_open', state_version: 3 } });
@@ -81,6 +88,37 @@ describe('useLiveSession', () => {
 
     unmount();
     expect(removeChannelSpy).toHaveBeenCalledWith(channel);
+  });
+
+  it('reports a lost realtime connection without changing server state', async () => {
+    const { channel, notifySubscription } = stubChannel();
+    const client = {
+      channel: vi.fn(() => channel),
+      removeChannel: vi.fn(),
+    } as unknown as SupabaseClient<Database>;
+    const repository = {
+      getState: vi.fn().mockResolvedValue(lobbyState),
+    } as unknown as LiveRepository;
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const wrapper = ({ children }: Readonly<{ children: ReactNode }>) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(
+      () => useLiveSession(SESSION_ID, { client, repository }),
+      { wrapper },
+    );
+
+    await waitFor(() => {
+      expect(result.current.connectionStatus).toBe('connected');
+    });
+    act(() => {
+      notifySubscription('CHANNEL_ERROR');
+    });
+
+    expect(result.current.connectionStatus).toBe('disconnected');
+    expect(result.current.data).toEqual(lobbyState);
   });
 
   it('patches same-version progress counts without refetching', async () => {
@@ -120,5 +158,52 @@ describe('useLiveSession', () => {
     expect(getState.mock.calls.length).toBe(callsBeforePatch);
 
     unmount();
+  });
+
+  it('refetches the authoritative participant roster on a same-version join event', async () => {
+    const { channel, handlers } = stubChannel();
+    const client = {
+      channel: vi.fn(() => channel),
+      removeChannel: vi.fn(),
+    } as unknown as SupabaseClient<Database>;
+    const joinedState: LiveSessionState = {
+      ...lobbyState,
+      participantCount: 2,
+      participants: [{ displayName: '小彩' }, { displayName: '新同學' }],
+    };
+    const getState = vi
+      .fn()
+      .mockResolvedValueOnce(lobbyState)
+      .mockResolvedValue(joinedState);
+    const repository = { getState } as unknown as LiveRepository;
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const wrapper = ({ children }: Readonly<{ children: ReactNode }>) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(
+      () => useLiveSession(SESSION_ID, { client, repository }),
+      { wrapper },
+    );
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    handlers[0]?.({
+      payload: {
+        joined_display_name: '新同學',
+        participant_count: 2,
+        state_version: 2,
+      },
+    });
+
+    await waitFor(() => {
+      expect(result.current.data?.participants).toEqual([
+        { displayName: '小彩' },
+        { displayName: '新同學' },
+      ]);
+    });
+    expect(getState).toHaveBeenCalledTimes(2);
   });
 });

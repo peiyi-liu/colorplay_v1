@@ -4,7 +4,9 @@ const STORAGE_KEY = 'colorplay.rotate-banner-dismissed';
 const PORTRAIT_QUERY = '(orientation: portrait)';
 
 // 直向軟提示（spec §3）：佔位式、可關、sessionStorage 記住；不硬擋直式操作。
-export function RotateBanner(): ReactElement | null {
+export function RotateBanner({
+  message = '轉橫體驗更佳',
+}: Readonly<{ message?: string }>): ReactElement | null {
   const [isPortrait, setIsPortrait] = useState(
     () => window.matchMedia(PORTRAIT_QUERY).matches,
   );
@@ -27,7 +29,7 @@ export function RotateBanner(): ReactElement | null {
 
   return (
     <div className="rotate-banner" role="status">
-      <span className="rotate-banner__text">轉橫體驗更佳</span>
+      <span className="rotate-banner__text">{message}</span>
       <button
         aria-label="關閉轉向提示"
         className="rotate-banner__close"

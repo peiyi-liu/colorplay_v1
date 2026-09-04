@@ -1,0 +1,130 @@
+@media (max-width: 47.99rem),
+  (orientation: landscape) and (max-width: 56rem) and (max-height: 30rem) {
+  .chapter-review-reader.scene-dungeon {
+    height: 100%;
+    padding: 0;
+    background: #c7ad80;
+  }
+
+  .chapter-review-reader__book {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    aspect-ratio: auto;
+    grid-template-rows:
+      max(calc(14% + 10px), calc(5.5% + 78px))
+      minmax(0, 1fr)
+      auto;
+    background-image: url('../assets/chapter/review-reader/open-book-page-upright.webp');
+    background-size: 112% 106%;
+    box-shadow: none;
+    padding: 0 9% max(3.5%, env(safe-area-inset-bottom, 0px));
+  }
+
+  @supports (height: 1cqh) {
+    .chapter-review-reader__book {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .chapter-review-reader__book > .student-route-back {
+    top: 5.5%;
+    left: 8%;
+    min-width: 72px;
+  }
+
+  .chapter-review-reader__header {
+    top: 5.5%;
+    right: 8%;
+    width: min(58%, 240px);
+  }
+
+  .chapter-review-reader__heading-group h1 {
+    color: #6a451d;
+    font-size: clamp(0.72rem, 3vw, 0.86rem);
+  }
+
+  .chapter-review-reader__heading-group p {
+    color: #3f2a17;
+    font-size: clamp(0.66rem, 2.7vw, 0.78rem);
+  }
+
+  .chapter-review-reader__viewport,
+  .chapter-review-reader__pagination-tools {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .chapter-review-reader__book-title {
+    font-size: clamp(1.15rem, 5.2vw, 1.45rem);
+  }
+
+  .chapter-review-reader__content {
+    font-size: clamp(0.94rem, 4vw, 1rem);
+    line-height: 1.68;
+  }
+
+  .chapter-review-reader__gutter,
+  .chapter-review-reader__book-page-numbers {
+    display: none;
+  }
+
+  .chapter-review-reader__footer {
+    margin: 0 -1%;
+  }
+
+  .chapter-review-reader__media-wait {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-size: 0.78rem;
+    padding: 6px;
+  }
+
+  .chapter-review-reader__media-wait-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .chapter-review-reader__media-wait-actions button {
+    min-width: 0;
+    min-height: 44px;
+    padding: 4px 6px;
+  }
+
+  .chapter-review-reader__controls {
+    gap: 6px;
+  }
+
+  .chapter-review-reader__page-action,
+  .chapter-review-reader .review-card__complete-button {
+    border-width: 2px;
+    font-size: 0.94rem;
+    box-shadow:
+      inset 0 0 0 1px #5c88b9,
+      2px 2px 0 #00142f;
+  }
+
+  .chapter-review-reader .review-card__complete-button {
+    box-shadow:
+      inset 0 -2px 0 #07386c,
+      2px 2px 0 #00142f;
+  }
+
+  .chapter-review-reader__viewport[data-turn-direction]::after {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter-review-reader__viewport[data-turn-direction]::after {
+    content: none;
+    animation: none;
+  }
+
+  .chapter-review-reader__viewport[data-turn-direction]
+    .chapter-review-reader__book-page {
+    animation: none;
+  }
+}

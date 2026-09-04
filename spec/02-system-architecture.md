@@ -193,7 +193,7 @@ SMTP_PASSWORD
 - Mutation 失敗不做 optimistic 正式獎勵；可做純視覺 pending。
 - 每個 request／function invocation 產生 correlation ID。
 - React query retry：讀取可有限重試；非 idempotent mutation 不盲目自動重送，應使用 idempotency key。
-- Read Query 最多重試兩次，使用 exponential backoff + jitter；Auth、permission、validation、not-found 不重試。
+- Read Query 最多重試兩次，使用 exponential backoff + jitter；Auth、permission、validation、not-found 不重試。複習卡的非阻塞媒體簽署查詢經 2026-08-18 owner 核准可額外重試一次（最多三次），但不得阻塞文字與翻頁操作。
 - Rate limit 遵守 retry metadata。Mutation 遇 uncertain timeout 時先查 command status，再以原 idempotency key 由使用者重試。
 
 Terminal code handling：

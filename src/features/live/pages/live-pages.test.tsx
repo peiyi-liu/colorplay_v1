@@ -1,150 +1,18 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { Database } from '../../../types/database';
-import type { LiveRepository, LiveSessionState } from '../types';
+import { LiveRepositoryError } from '../types';
 import { LiveJoinPage } from './live-join-page';
+import {
+  baseState,
+  openState,
+  renderWith,
+  repositoryWith,
+  SESSION_ID,
+  stubClient,
+} from './live-pages.test-fixtures';
 import { LiveSessionPage } from './live-session-page';
-import { TeacherLivePage } from './teacher-live-page';
-import { TeacherLiveSessionPage } from './teacher-live-session-page';
-
-vi.mock('../../classrooms/hooks/use-classrooms', () => ({
-  useOwnedClassrooms: () => ({
-    data: [
-      {
-        classroomId: '18100000-0000-0000-0000-000000000001',
-        classroomName: '七年級 A 班',
-        classroomStatus: 'active',
-        createdAt: '2026-07-01T00:00:00+00:00',
-        joinCodeVersion: 1,
-        memberCount: 3,
-      },
-    ],
-    isError: false,
-    isPending: false,
-  }),
-}));
-
-const SESSION_ID = '18400000-0000-0000-0000-000000000001';
-
-const stubClient = () => {
-  const channel = {
-    on: vi.fn().mockReturnThis(),
-    subscribe: vi.fn().mockReturnThis(),
-  };
-  return {
-    channel: vi.fn(() => channel),
-    removeChannel: vi.fn(),
-  } as unknown as SupabaseClient<Database>;
-};
-
-const baseState: LiveSessionState = {
-  sessionId: SESSION_ID,
-  state: 'lobby',
-  stateVersion: 2,
-  currentPosition: 0,
-  questionCount: 10,
-  participantCount: 3,
-  rulesVersion: '2026-07-live-1',
-  questionDisplay: 'device',
-  serverTime: new Date().toISOString(),
-  isHost: false,
-};
-
-const openState: LiveSessionState = {
-  ...baseState,
-  state: 'question_open',
-  stateVersion: 3,
-  currentPosition: 1,
-  question: {
-    questionId: '18500000-0000-0000-0000-000000000001',
-    position: 1,
-    prompt: '色彩三要素是？',
-    publicOptions: [
-      {
-        id: '18700000-0000-0000-0000-000000000001',
-        key: 'A',
-        text: '色相、明度、彩度',
-        sortOrder: 1,
-      },
-      {
-        id: '18700000-0000-0000-0000-000000000002',
-        key: 'B',
-        text: '紅、綠、藍',
-        sortOrder: 2,
-      },
-    ],
-    openedAt: new Date().toISOString(),
-    deadlineAt: new Date(Date.now() + 15000).toISOString(),
-  },
-  answeredCount: 1,
-  myAnswer: { answered: false },
-};
-
-const repositoryWith = (
-  overrides: Partial<LiveRepository>,
-): LiveRepository => ({
-  advance: vi.fn(),
-  cancel: vi.fn(),
-  closeQuestion: vi.fn(),
-  createActivity: vi.fn(),
-  createSession: vi.fn(),
-  finalize: vi.fn(),
-  getDistribution: vi.fn().mockResolvedValue({ answeredCount: 0, options: [] }),
-  getMyStanding: vi.fn().mockResolvedValue({
-    rank: 1,
-    score: 0,
-    participantCount: 1,
-    aheadRank: null,
-    pointsBehind: null,
-  }),
-  getSessionDetail: vi.fn(),
-  getStandings: vi
-    .fn()
-    .mockResolvedValue({ participantCount: 0, standings: [] }),
-  getState: vi.fn().mockResolvedValue(baseState),
-  join: vi.fn(),
-  listMyActivities: vi.fn().mockResolvedValue([]),
-  listSectionOptions: vi.fn().mockResolvedValue([
-    {
-      sectionId: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
-      title: '3-1 色彩三要素與色名的表示',
-      quizTemplateId: '26000000-0000-0000-0000-000000000003',
-    },
-  ]),
-  openQuestion: vi.fn(),
-  pauseSession: vi.fn(),
-  resumeSession: vi.fn(),
-  rotateJoinCode: vi.fn(),
-  startSession: vi.fn(),
-  submitAnswer: vi.fn().mockResolvedValue({ streak: 0 }),
-  ...overrides,
-});
-
-const renderWith = (element: ReactNode) => {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  return render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={['/current']}>
-        <Routes>
-          <Route element={element} path="/current" />
-          <Route element={<p>已進入課堂頁</p>} path="/app/live/:sessionId" />
-          <Route
-            element={<p>已進入主持台</p>}
-            path="/teacher/live/:sessionId"
-          />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
-};
 
 describe('LiveJoinPage', () => {
   it('joins with one request id and enters the session route', async () => {
@@ -157,7 +25,7 @@ describe('LiveJoinPage', () => {
     renderWith(<LiveJoinPage repository={repository} />);
     const user = userEvent.setup();
 
-    await user.type(screen.getByLabelText('課堂代碼'), '123456');
+    await user.type(screen.getByLabelText('輸入 6 位加入代碼'), '123456');
     await user.click(screen.getByRole('button', { name: '加入課堂' }));
 
     expect(await screen.findByText('已進入課堂頁')).toBeVisible();
@@ -174,31 +42,78 @@ describe('LiveJoinPage', () => {
     renderWith(<LiveJoinPage repository={repositoryWith({})} />);
     const user = userEvent.setup();
 
-    await user.type(screen.getByLabelText('課堂代碼'), 'nope12');
+    await user.type(screen.getByLabelText('輸入 6 位加入代碼'), 'nope12');
     await user.click(screen.getByRole('button', { name: '加入課堂' }));
 
     expect(await screen.findByText('請輸入六位數字課堂代碼')).toBeVisible();
   });
 
-  it('renders the summons scroll: night scene and six rune slots lighting per typed digit', async () => {
+  it('renders only the requested join copy and one semantic six-digit input', async () => {
     renderWith(<LiveJoinPage repository={repositoryWith({})} />);
     const user = userEvent.setup();
 
-    expect(document.querySelector('.live-join.scene-night')).not.toBeNull();
-    const slotsWrap = document.querySelector('.rune-slots');
-    expect(slotsWrap).not.toBeNull();
-    expect(slotsWrap).toHaveAttribute('aria-hidden', 'true');
-    expect(slotsWrap).toHaveTextContent('');
-    expect(document.querySelectorAll('.rune-slot')).toHaveLength(6);
-    expect(document.querySelectorAll('.rune-slot--lit')).toHaveLength(0);
+    expect(
+      screen.getByRole('heading', { name: '加入 Live 課堂' }),
+    ).toBeVisible();
+    expect(
+      screen.getByText('輸入老師公布的課堂代碼，即可進入等待室。'),
+    ).toBeVisible();
+    expect(screen.queryByText('ColorPlay Live')).not.toBeInTheDocument();
+    expect(screen.queryByText('加入課堂挑戰')).not.toBeInTheDocument();
+    expect(document.querySelector('.live-join--portal.scene-night')).not.toBeNull();
 
-    await user.type(screen.getByLabelText('課堂代碼'), '123');
+    const input = screen.getByLabelText('輸入 6 位加入代碼');
+    expect(input).toHaveAttribute('inputmode', 'numeric');
+    expect(input).toHaveAttribute('maxlength', '6');
+    expect(document.querySelectorAll('.live-join__digit')).toHaveLength(6);
+    expect(document.querySelector('.rune-slots')).toBeNull();
 
-    expect(document.querySelectorAll('.rune-slot--lit')).toHaveLength(3);
+    await user.type(input, '012');
+
+    expect(
+      Array.from(document.querySelectorAll('.live-join__digit')).map(
+        (digit) => digit.textContent,
+      ),
+    ).toEqual(['0', '1', '2', '', '', '']);
+  });
+
+  it('shows the safe server error only after a failed join', async () => {
+    const join = vi
+      .fn()
+      .mockRejectedValue(new LiveRepositoryError('JOIN_INVALID_CODE'));
+    renderWith(<LiveJoinPage repository={repositoryWith({ join })} />);
+    const user = userEvent.setup();
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText('輸入 6 位加入代碼'), '123456');
+    await user.click(screen.getByRole('button', { name: '加入課堂' }));
+
+    expect(
+      await screen.findByText('代碼無效或課堂尚未開放，請向老師確認。'),
+    ).toBeVisible();
   });
 });
 
 describe('LiveSessionPage (participant)', () => {
+  it('shows the waiting room with challenge, connection, question, and online status', async () => {
+    renderWith(
+      <LiveSessionPage
+        client={stubClient()}
+        repository={repositoryWith({})}
+        sessionId={SESSION_ID}
+      />,
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: '課堂挑戰' }),
+    ).toBeVisible();
+    expect(screen.getByText('等待主持人開始…')).toBeVisible();
+    expect(screen.getByText('等待開始')).toBeVisible();
+    expect(screen.getByText('連線正常')).toBeVisible();
+    expect(screen.getByText('3 人在線')).toBeVisible();
+    expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+  });
+
   it('submits one answer and locks the options', async () => {
     const submitAnswer = vi.fn().mockResolvedValue({ streak: 1 });
     const getState = vi
@@ -238,7 +153,7 @@ describe('LiveSessionPage (participant)', () => {
     );
     expect(submitArgs.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/u);
     expect(
-      await screen.findByText('已收到你的答案，等待其他同學…'),
+      await screen.findByText('答案已送出，等待揭曉…'),
     ).toBeVisible();
   });
 
@@ -255,7 +170,7 @@ describe('LiveSessionPage (participant)', () => {
     deadlineAt: new Date(Date.now() + 15000).toISOString(),
   };
 
-  it('keeps the screen_only option label off-screen behind the shared visually-hidden class (DC 1192-1195: shape-only)', async () => {
+  it('shows the projector reminder and four visible A/B/C/D response choices', async () => {
     const repository = repositoryWith({
       getState: vi.fn().mockResolvedValue({
         ...baseState,
@@ -279,12 +194,86 @@ describe('LiveSessionPage (participant)', () => {
     const firstOption = await screen.findByRole('button', {
       name: '選項 A：紅色三角形',
     });
-    // 純形狀鍵（DC 1192-1195）：色與形狀敘述只給螢幕閱讀器，畫面上只能看到
-    // 形狀符號。這個描述必須套用共用的 .visually-hidden（globals.css:1216）
-    // 而不是專案裡不存在任何 CSS 規則的 `sr-only`——後者在真實瀏覽器會直接
-    // 顯示成看得到的文字，等於在雙螢幕模式洩題。
-    expect(firstOption.querySelector('.visually-hidden')).not.toBeNull();
-    expect(firstOption.querySelector('.sr-only')).toBeNull();
+    expect(screen.getByText('請看投影幕作答')).toBeVisible();
+    expect(screen.getByRole('img', { name: '投影機' })).toBeVisible();
+    expect(screen.getByText('第 1 / 20 題')).toBeVisible();
+    expect(screen.getByRole('timer', { name: '剩餘秒數' })).toBeVisible();
+    expect(screen.getAllByRole('button')).toHaveLength(4);
+    expect(firstOption).toHaveTextContent('A');
+    expect(screen.getByRole('button', { name: '選項 B：藍色正方形' })).toHaveTextContent('B');
+    expect(screen.getByRole('button', { name: '選項 C：黃色圓形' })).toHaveTextContent('C');
+    expect(screen.getByRole('button', { name: '選項 D：綠色菱形' })).toHaveTextContent('D');
+  });
+
+  it('shows the actual frozen count when fewer than twenty questions are available', async () => {
+    const repository = repositoryWith({
+      getState: vi.fn().mockResolvedValue({
+        ...baseState,
+        state: 'question_open',
+        stateVersion: 3,
+        currentPosition: 1,
+        questionCount: 7,
+        questionDisplay: 'screen_only',
+        question: screenOnlyQuestion,
+        answeredCount: 0,
+        myAnswer: { answered: false },
+      }),
+    });
+    renderWith(
+      <LiveSessionPage
+        client={stubClient()}
+        repository={repository}
+        sessionId={SESSION_ID}
+      />,
+    );
+
+    expect(await screen.findByText('第 1 / 7 題')).toBeVisible();
+  });
+
+  it('locks one screen-only choice immediately and then waits for reveal', async () => {
+    const submitAnswer = vi.fn().mockResolvedValue({ streak: 1 });
+    const repository = repositoryWith({
+      getState: vi.fn().mockResolvedValue({
+        ...baseState,
+        state: 'question_open',
+        stateVersion: 3,
+        currentPosition: 1,
+        questionDisplay: 'screen_only',
+        question: screenOnlyQuestion,
+        answeredCount: 0,
+        myAnswer: { answered: false },
+      }),
+      submitAnswer,
+    });
+    renderWith(
+      <LiveSessionPage
+        client={stubClient()}
+        repository={repository}
+        sessionId={SESSION_ID}
+      />,
+    );
+    const user = userEvent.setup();
+    const choice = await screen.findByRole('button', {
+      name: '選項 C：黃色圓形',
+    });
+
+    await user.click(choice);
+
+    await waitFor(() => {
+      expect(submitAnswer).toHaveBeenCalledTimes(1);
+    });
+    for (const button of screen.getAllByRole('button')) {
+      expect(button).toBeDisabled();
+    }
+    expect(
+      screen.getByRole('button', {
+        name: /選項 C：黃色圓形.*已選擇/u,
+      }),
+    ).toHaveClass('ui-option--state-selected');
+    expect(
+      await screen.findByText('答案已送出，等待揭曉…'),
+    ).toBeVisible();
+    expect(screen.queryByRole('button', { name: /送出/u })).toBeNull();
   });
 
   // device 模式（非雙螢幕）目前教師端 UI 已無法產生——10D 簡化後
@@ -458,192 +447,5 @@ describe('LiveSessionPage (participant)', () => {
     expect(fire).not.toBeNull();
     expect(fire).toHaveAttribute('aria-hidden', 'true');
     expect(fire).toHaveTextContent('');
-  });
-});
-
-describe('TeacherLiveSessionPage (host console)', () => {
-  it('drives each transition with the current state version', async () => {
-    const openQuestion = vi.fn().mockResolvedValue(undefined);
-    const repository = repositoryWith({
-      getState: vi.fn().mockResolvedValue({
-        ...baseState,
-        isHost: true,
-      }),
-      openQuestion,
-    });
-    renderWith(
-      <TeacherLiveSessionPage
-        client={stubClient()}
-        repository={repository}
-        sessionId={SESSION_ID}
-      />,
-    );
-    const user = userEvent.setup();
-
-    await user.click(await screen.findByRole('button', { name: '開始第一題' }));
-
-    await waitFor(() => {
-      expect(openQuestion).toHaveBeenCalledWith(SESSION_ID, 2);
-    });
-  });
-
-  it('offers finalize on the last feedback and surfaces version conflicts', async () => {
-    const finalize = vi
-      .fn()
-      .mockRejectedValue(
-        Object.assign(new Error('STATE_CONFLICT'), { code: 'STATE_CONFLICT' }),
-      );
-    const repository = repositoryWith({
-      getState: vi.fn().mockResolvedValue({
-        ...openState,
-        isHost: true,
-        state: 'question_feedback',
-        currentPosition: 10,
-        stateVersion: 23,
-        correctOptionId: '18700000-0000-0000-0000-000000000001',
-        optionCounts: [
-          { optionId: '18700000-0000-0000-0000-000000000001', count: 2 },
-        ],
-      }),
-      finalize,
-    });
-    renderWith(
-      <TeacherLiveSessionPage
-        client={stubClient()}
-        repository={repository}
-        sessionId={SESSION_ID}
-      />,
-    );
-    const user = userEvent.setup();
-
-    await user.click(await screen.findByRole('button', { name: '結算成績' }));
-
-    await waitFor(() => {
-      expect(finalize).toHaveBeenCalledWith(SESSION_ID, 23);
-    });
-    expect(
-      await screen.findByText('另一個主持分頁已推進狀態，畫面已同步為最新。'),
-    ).toBeVisible();
-  });
-
-  // owner 0730 #14：主持台只保留投影幕模式——開題中直接投影並顯示已作答數。
-  it('projects the open question with the live answered count', async () => {
-    const repository = repositoryWith({
-      getState: vi
-        .fn()
-        .mockResolvedValue({ ...openState, isHost: true, answeredCount: 2 }),
-    });
-    renderWith(
-      <TeacherLiveSessionPage
-        client={stubClient()}
-        repository={repository}
-        sessionId={SESSION_ID}
-      />,
-    );
-
-    expect(
-      await screen.findByRole('dialog', { name: '投影模式' }),
-    ).toBeVisible();
-    expect(screen.getByText(/已作答 2/u)).toBeVisible();
-  });
-
-  it('celebrates a server-reported streak after answering', async () => {
-    const submitAnswer = vi.fn().mockResolvedValue({ streak: 2 });
-    const repository = repositoryWith({
-      getState: vi.fn().mockResolvedValue(openState),
-      submitAnswer,
-    });
-    renderWith(
-      <LiveSessionPage
-        client={stubClient()}
-        repository={repository}
-        sessionId={SESSION_ID}
-      />,
-    );
-    const user = userEvent.setup();
-
-    await user.click(
-      await screen.findByRole('button', { name: 'A. 色相、明度、彩度' }),
-    );
-
-    expect(await screen.findByText(/連擊 x2!/u)).toBeVisible();
-  });
-
-});
-
-describe('TeacherLivePage (advanced)', () => {
-  const activity = {
-    activityId: '18300000-0000-0000-0000-000000000001',
-    title: '色彩快問快答',
-    quizTemplateId: '26000000-0000-0000-0000-000000000003',
-    questionTimeLimitSeconds: 20,
-    status: 'active' as const,
-    rulesVersion: '2026-07-live-1',
-    questionDisplay: 'screen_only' as const,
-  };
-
-  it('creates a section activity and launches straight into the presenter', async () => {
-    const createActivity = vi.fn().mockResolvedValue({
-      ...activity,
-      sectionId: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
-      title: '3-1 色彩三要素與色名的表示',
-    });
-    const createSession = vi.fn().mockResolvedValue({
-      sessionId: SESSION_ID,
-      state: 'draft',
-      stateVersion: 1,
-      joinCode: '654321',
-      joinCodeVersion: 1,
-    });
-    const startSession = vi.fn().mockResolvedValue(undefined);
-    const repository = repositoryWith({
-      createActivity,
-      createSession,
-      startSession,
-    });
-    renderWith(<TeacherLivePage repository={repository} />);
-    const user = userEvent.setup();
-
-    await user.selectOptions(
-      await screen.findByLabelText('1・選擇對戰單元'),
-      '3-1 色彩三要素與色名的表示',
-    );
-    await user.click(screen.getByRole('button', { name: '建立活動並開場' }));
-
-    expect(await screen.findByText('已進入主持台')).toBeVisible();
-    expect(createActivity).toHaveBeenCalledWith(
-      expect.objectContaining({
-        sectionId: 'cd732278-0bfe-1293-19e1-338db3fe6a3c',
-        title: '3-1 色彩三要素與色名的表示',
-        quizTemplateId: '26000000-0000-0000-0000-000000000003',
-      }),
-    );
-    expect(createSession).toHaveBeenCalledWith(
-      expect.objectContaining({
-        classroomId: '18100000-0000-0000-0000-000000000001',
-      }),
-    );
-    expect(startSession).toHaveBeenCalledWith(SESSION_ID, 1);
-  });
-
-  it('hides the activity history table — the page only creates new activities (owner 2026-07-23)', async () => {
-    const repository = repositoryWith({
-      listMyActivities: vi.fn().mockResolvedValue([activity]),
-    });
-    renderWith(<TeacherLivePage repository={repository} />);
-
-    expect(await screen.findByText('建立新活動')).toBeVisible();
-    expect(screen.queryByText('我的 Live 活動')).toBeNull();
-    expect(screen.queryByRole('button', { name: '開新場次' })).toBeNull();
-  });
-
-  it('offers no removed controls (mode, classroom, schedule, display)', async () => {
-    renderWith(<TeacherLivePage repository={repositoryWith({})} />);
-
-    expect(await screen.findByLabelText('1・選擇對戰單元')).toBeVisible();
-    expect(screen.queryByLabelText('對戰模式')).toBeNull();
-    expect(screen.queryByLabelText('開場班級')).toBeNull();
-    expect(screen.queryByLabelText('題目顯示位置')).toBeNull();
-    expect(screen.queryByText(/即將進行/u)).toBeNull();
   });
 });

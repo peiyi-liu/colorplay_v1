@@ -1,8 +1,10 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
+import { adminBrowserCatalogPlugin } from './scripts/vite/admin-browser-catalog';
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), adminBrowserCatalogPlugin()],
   test: {
     environment: 'jsdom',
     // Unit tests must not depend on a developer's .env file. Same synthetic
@@ -31,6 +33,10 @@ export default defineConfig({
       exclude: [
         'src/**/*.test.{ts,tsx}',
         'src/**/*.spec.{ts,tsx}',
+        // Browser/dev harnesses and their fixtures are test support, not
+        // production source. Their behavior is exercised by Playwright.
+        'src/**/*.harness.{ts,tsx}',
+        'src/**/*.test-fixtures.{ts,tsx}',
         'src/test/**',
         'src/**/*.d.ts',
       ],

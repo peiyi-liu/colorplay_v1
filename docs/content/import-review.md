@@ -1,81 +1,293 @@
 # 題庫匯入審閱報告
 
-產生時間：2026-07-18T02:00:14.317Z
+產生時間：2026-08-14T08:02:38.106Z
 
-已匯入 45 題（published）：chapter-3 37 題、chapter-4 8 題。
+已產生 258 題的 published 匯入資料：QB 小節題庫 136 題、CR 章節總題庫 62 題、LT Live 題庫 60 題。
 
 ## 需要教師處理的項目
 
 ### 跳過的列（請在試算表修正後重跑 `pnpm content:import`）
 
-- 4-1-01：選項文字含 OCR 亂碼、缺 D 選項與正確答案，請在試算表修正後重跑匯入
-- 4-1-10：空白列
-
-### 自動改號
-
-- 3-3-06 第二次出現 → 已改為 3-3-11（請同步修正試算表）
-
 ### 標準答案待確認
 
-- 3-3-03：DIC 與 TOYO 均為印刷油墨色票，題目與標準答案（B）的分類依據建議再確認
-- 4-1-09：生理學上柱狀細胞反應速度確實比錐狀細胞慢，標準答案（C）與教材說法建議再確認
+- 無。最新版 Sheet 結構 gate 為 0 error／0 warning；QB3238 與 QB3239 題幹相同但選項組不同，依 owner 裁定保留為兩題。
 
 ### 章節對應
 
+- 試算表第 1 章 → 平台 chapter-1
+- 試算表第 2 章 → 平台 chapter-2
 - 試算表第 3 章 → 平台 chapter-3
 - 試算表第 4 章 → 平台 chapter-4
-- 試算表第 $comment 章 → 平台 試算表章節編號 → 平台章節 stable_code。改這裡後重跑 pnpm content:import 即可。
+- 試算表第 5 章 → 平台 chapter-5
+- 試算表第 6 章 → 平台 chapter-6
 
-## AI 起草的解析（共 45 題，請審閱後填回試算表）
+## Stable code disposition ledger
+
+Disposition `owner_ssot_accepted` 表示此 stable code 來自 owner 維護的最新版 Google Sheet，並已通過本次結構 gate；不是代理自行改寫或補題。
+
+- QB1101: owner_ssot_accepted
+- QB1201: owner_ssot_accepted
+- QB1301: owner_ssot_accepted
+- QB2101: owner_ssot_accepted
+- QB2201: owner_ssot_accepted
+- QB2301: owner_ssot_accepted
+- QB2401: owner_ssot_accepted
+- QB3101: owner_ssot_accepted
+- QB3102: owner_ssot_accepted
+- QB3103: owner_ssot_accepted
+- QB3104: owner_ssot_accepted
+- QB3105: owner_ssot_accepted
+- QB3106: owner_ssot_accepted
+- QB3107: owner_ssot_accepted
+- QB3108: owner_ssot_accepted
+- QB3109: owner_ssot_accepted
+- QB3110: owner_ssot_accepted
+- QB3111: owner_ssot_accepted
+- QB3112: owner_ssot_accepted
+- QB3113: owner_ssot_accepted
+- QB3114: owner_ssot_accepted
+- QB3115: owner_ssot_accepted
+- QB3116: owner_ssot_accepted
+- QB3117: owner_ssot_accepted
+- QB3118: owner_ssot_accepted
+- QB3119: owner_ssot_accepted
+- QB3120: owner_ssot_accepted
+- QB3121: owner_ssot_accepted
+- QB3122: owner_ssot_accepted
+- QB3123: owner_ssot_accepted
+- QB3124: owner_ssot_accepted
+- QB3125: owner_ssot_accepted
+- QB3126: owner_ssot_accepted
+- QB3201: owner_ssot_accepted
+- QB3202: owner_ssot_accepted
+- QB3203: owner_ssot_accepted
+- QB3204: owner_ssot_accepted
+- QB3205: owner_ssot_accepted
+- QB3206: owner_ssot_accepted
+- QB3207: owner_ssot_accepted
+- QB3208: owner_ssot_accepted
+- QB3209: owner_ssot_accepted
+- QB3210: owner_ssot_accepted
+- QB3211: owner_ssot_accepted
+- QB3212: owner_ssot_accepted
+- QB3213: owner_ssot_accepted
+- QB3214: owner_ssot_accepted
+- QB3215: owner_ssot_accepted
+- QB3216: owner_ssot_accepted
+- QB3217: owner_ssot_accepted
+- QB3218: owner_ssot_accepted
+- QB3220: owner_ssot_accepted
+- QB3221: owner_ssot_accepted
+- QB3222: owner_ssot_accepted
+- QB3223: owner_ssot_accepted
+- QB3224: owner_ssot_accepted
+- QB3225: owner_ssot_accepted
+- QB3226: owner_ssot_accepted
+- QB3227: owner_ssot_accepted
+- QB3228: owner_ssot_accepted
+- QB3229: owner_ssot_accepted
+- QB3230: owner_ssot_accepted
+- QB3231: owner_ssot_accepted
+- QB3232: owner_ssot_accepted
+- QB3233: owner_ssot_accepted
+- QB3234: owner_ssot_accepted
+- QB3235: owner_ssot_accepted
+- QB3236: owner_ssot_accepted
+- QB3237: owner_ssot_accepted
+- QB3238: owner_ssot_accepted
+- QB3239: owner_ssot_accepted
+- QB3240: owner_ssot_accepted
+- QB3241: owner_ssot_accepted
+- QB3242: owner_ssot_accepted
+- QB3243: owner_ssot_accepted
+- QB3244: owner_ssot_accepted
+- QB3245: owner_ssot_accepted
+- QB3246: owner_ssot_accepted
+- QB3247: owner_ssot_accepted
+- QB3248: owner_ssot_accepted
+- QB3249: owner_ssot_accepted
+- QB3250: owner_ssot_accepted
+- QB3251: owner_ssot_accepted
+- QB3252: owner_ssot_accepted
+- QB3253: owner_ssot_accepted
+- QB3254: owner_ssot_accepted
+- QB3255: owner_ssot_accepted
+- QB3256: owner_ssot_accepted
+- QB3257: owner_ssot_accepted
+- QB3258: owner_ssot_accepted
+- QB3259: owner_ssot_accepted
+- QB3260: owner_ssot_accepted
+- QB3261: owner_ssot_accepted
+- QB3262: owner_ssot_accepted
+- QB3263: owner_ssot_accepted
+- QB3301: owner_ssot_accepted
+- QB3302: owner_ssot_accepted
+- QB3303: owner_ssot_accepted
+- QB3304: owner_ssot_accepted
+- QB3305: owner_ssot_accepted
+- QB3306: owner_ssot_accepted
+- QB3307: owner_ssot_accepted
+- QB3308: owner_ssot_accepted
+- QB3309: owner_ssot_accepted
+- QB3310: owner_ssot_accepted
+- QB3311: owner_ssot_accepted
+- QB3312: owner_ssot_accepted
+- QB3313: owner_ssot_accepted
+- QB3314: owner_ssot_accepted
+- QB3315: owner_ssot_accepted
+- QB3316: owner_ssot_accepted
+- QB3317: owner_ssot_accepted
+- QB3318: owner_ssot_accepted
+- QB3319: owner_ssot_accepted
+- QB3320: owner_ssot_accepted
+- QB3321: owner_ssot_accepted
+- QB3322: owner_ssot_accepted
+- QB3323: owner_ssot_accepted
+- QB4101: owner_ssot_accepted
+- QB4102: owner_ssot_accepted
+- QB4103: owner_ssot_accepted
+- QB4104: owner_ssot_accepted
+- QB4105: owner_ssot_accepted
+- QB4106: owner_ssot_accepted
+- QB4107: owner_ssot_accepted
+- QB4108: owner_ssot_accepted
+- QB4109: owner_ssot_accepted
+- QB4201: owner_ssot_accepted
+- QB4301: owner_ssot_accepted
+- QB4401: owner_ssot_accepted
+- QB5101: owner_ssot_accepted
+- QB5201: owner_ssot_accepted
+- QB5301: owner_ssot_accepted
+- QB6101: owner_ssot_accepted
+- QB6201: owner_ssot_accepted
+- QB6301: owner_ssot_accepted
+- CR3001: owner_ssot_accepted
+- CR3002: owner_ssot_accepted
+- CR3003: owner_ssot_accepted
+- CR3004: owner_ssot_accepted
+- CR3005: owner_ssot_accepted
+- CR3006: owner_ssot_accepted
+- CR3007: owner_ssot_accepted
+- CR3008: owner_ssot_accepted
+- CR3009: owner_ssot_accepted
+- CR3010: owner_ssot_accepted
+- CR3011: owner_ssot_accepted
+- CR3012: owner_ssot_accepted
+- CR3013: owner_ssot_accepted
+- CR3014: owner_ssot_accepted
+- CR3015: owner_ssot_accepted
+- CR3016: owner_ssot_accepted
+- CR3017: owner_ssot_accepted
+- CR3018: owner_ssot_accepted
+- CR3019: owner_ssot_accepted
+- CR3020: owner_ssot_accepted
+- CR3021: owner_ssot_accepted
+- CR3022: owner_ssot_accepted
+- CR3023: owner_ssot_accepted
+- CR3024: owner_ssot_accepted
+- CR3025: owner_ssot_accepted
+- CR3026: owner_ssot_accepted
+- CR3027: owner_ssot_accepted
+- CR3028: owner_ssot_accepted
+- CR3029: owner_ssot_accepted
+- CR3030: owner_ssot_accepted
+- CR3031: owner_ssot_accepted
+- CR3033: owner_ssot_accepted
+- CR3034: owner_ssot_accepted
+- CR3035: owner_ssot_accepted
+- CR3036: owner_ssot_accepted
+- CR3037: owner_ssot_accepted
+- CR3038: owner_ssot_accepted
+- CR3039: owner_ssot_accepted
+- CR3040: owner_ssot_accepted
+- CR3041: owner_ssot_accepted
+- CR3042: owner_ssot_accepted
+- CR3043: owner_ssot_accepted
+- CR3044: owner_ssot_accepted
+- CR3045: owner_ssot_accepted
+- CR3046: owner_ssot_accepted
+- CR3047: owner_ssot_accepted
+- CR3048: owner_ssot_accepted
+- CR3049: owner_ssot_accepted
+- CR3050: owner_ssot_accepted
+- CR3051: owner_ssot_accepted
+- CR3052: owner_ssot_accepted
+- CR3053: owner_ssot_accepted
+- CR3054: owner_ssot_accepted
+- CR3055: owner_ssot_accepted
+- CR3056: owner_ssot_accepted
+- CR3057: owner_ssot_accepted
+- CR3058: owner_ssot_accepted
+- CR3059: owner_ssot_accepted
+- CR3060: owner_ssot_accepted
+- CR3061: owner_ssot_accepted
+- CR3062: owner_ssot_accepted
+- CR3063: owner_ssot_accepted
+- LT3101: owner_ssot_accepted
+- LT3102: owner_ssot_accepted
+- LT3103: owner_ssot_accepted
+- LT3104: owner_ssot_accepted
+- LT3105: owner_ssot_accepted
+- LT3106: owner_ssot_accepted
+- LT3107: owner_ssot_accepted
+- LT3108: owner_ssot_accepted
+- LT3109: owner_ssot_accepted
+- LT3110: owner_ssot_accepted
+- LT3111: owner_ssot_accepted
+- LT3112: owner_ssot_accepted
+- LT3113: owner_ssot_accepted
+- LT3114: owner_ssot_accepted
+- LT3115: owner_ssot_accepted
+- LT3116: owner_ssot_accepted
+- LT3117: owner_ssot_accepted
+- LT3118: owner_ssot_accepted
+- LT3119: owner_ssot_accepted
+- LT3120: owner_ssot_accepted
+- LT3201: owner_ssot_accepted
+- LT3202: owner_ssot_accepted
+- LT3203: owner_ssot_accepted
+- LT3204: owner_ssot_accepted
+- LT3205: owner_ssot_accepted
+- LT3206: owner_ssot_accepted
+- LT3207: owner_ssot_accepted
+- LT3208: owner_ssot_accepted
+- LT3209: owner_ssot_accepted
+- LT3210: owner_ssot_accepted
+- LT3211: owner_ssot_accepted
+- LT3212: owner_ssot_accepted
+- LT3213: owner_ssot_accepted
+- LT3214: owner_ssot_accepted
+- LT3215: owner_ssot_accepted
+- LT3216: owner_ssot_accepted
+- LT3217: owner_ssot_accepted
+- LT3218: owner_ssot_accepted
+- LT3219: owner_ssot_accepted
+- LT3220: owner_ssot_accepted
+- LT3301: owner_ssot_accepted
+- LT3302: owner_ssot_accepted
+- LT3303: owner_ssot_accepted
+- LT3304: owner_ssot_accepted
+- LT3305: owner_ssot_accepted
+- LT3306: owner_ssot_accepted
+- LT3307: owner_ssot_accepted
+- LT3308: owner_ssot_accepted
+- LT3309: owner_ssot_accepted
+- LT3310: owner_ssot_accepted
+- LT3311: owner_ssot_accepted
+- LT3312: owner_ssot_accepted
+- LT3313: owner_ssot_accepted
+- LT3314: owner_ssot_accepted
+- LT3315: owner_ssot_accepted
+- LT3316: owner_ssot_accepted
+- LT3317: owner_ssot_accepted
+- LT3318: owner_ssot_accepted
+- LT3319: owner_ssot_accepted
+- LT3320: owner_ssot_accepted
+
+## AI 起草的解析（共 0 題，請審閱後填回試算表）
 
 審閱方式：以下解析已匯入平台。建議把確認過的文字貼回試算表「答錯觀念解析」欄，
 之後重跑匯入時就會以試算表為準。
-
-- **3-1-01**（答案 D）：純色加入黑色後明度降低，所得的深色調稱為「暗色」；加白色則為「明色」，同時加入黑與白（等於加灰）則成「濁色」。
-- **3-1-02**（答案 A）：純色只加白（明色）或只加黑（暗色）時都不含灰色成分，統稱「清色」；含灰色成分的色彩則稱「濁色」。
-- **3-1-03**（答案 D）：同時加入白色與黑色等於加入灰色，色彩會失去鮮明感、變得混濁柔和，稱為「濁色」。
-- **3-1-04**（答案 C）：金色、銀色無法以一般色料混合調出，也不屬於有彩色或無彩色系統，色彩學上歸類為「獨立色」。
-- **3-1-05**（答案 B）：特殊色指金、銀、銅、錫箔、螢光色等需特殊材質或發色方式的色彩；「七彩色」只是多種色彩的通稱，不是特殊色的分類。
-- **3-1-06**（答案 A）：色彩三屬性（三要素）為色相、明度、彩度：色相辨別色彩相貌，明度描述明暗，彩度描述鮮豔程度。
-- **3-1-07**（答案 C）：色相是辨識色彩「相貌」的屬性，由光的波長決定，用來區別紅、黃、藍等不同色彩；「以光線反射的強弱分出感覺差異」描述的是明度，不是色相。
-- **3-1-08**（答案 D）：明度指色彩的明暗程度，與色光的振幅（反射量）有關；「波長」決定的是色相，因此以波長定義明度是錯誤的。
-- **3-1-09**（答案 A）：「墨分五色」（焦、濃、重、淡、清）是以水調墨產生深淺層次，改變的是色彩的明度。
-- **3-1-10**（答案 A）：各純色中黃色的光反射率最高、明度最高；紫色明度最低，黑色屬於無彩色不在比較之列。
-- **3-1-11**（答案 D）：曼塞爾明度軸以 N0（黑）至 N10（白）表示，白、亮灰、淺灰屬於高明度端，依序約為 N10、N9、N8。
-- **3-1-12**（答案 B）：「低調子」指明度低、接近黑色的階段，即 N1、N2、N3；N4～N6 為中調子，N7～N9 為高調子。
-- **3-1-13**（答案 C）：黃色本身的明度已非常接近白色，混入白色後明度能提升的空間最小，因此明度階段變化最少。
-- **3-2-01**（答案 A）：芬蘭學者佛西士（Forsius）於 1611 年提出最早的色彩系統化排列理論，是色彩體系研究的先驅。
-- **3-2-02**（答案 B）：光譜由紅到紫，其中沒有「紅紫（品紅）」；色相環為了讓紅與紫首尾銜接而加入紅紫，使色環閉合，因此它在光譜上找不到。
-- **3-2-03**（答案 B）：色相環上通過圓心相對的兩個色彩互為「補色」，兩者混合後會趨近無彩色（灰、黑）。
-- **3-2-04**（答案 D）：等色相面上，同一垂直軸線的色彩與中心明度軸的距離相同，因此「彩度」一致；明度則沿垂直方向改變。
-- **3-2-05**（答案 B）：等色相面中，越靠上方明度越高、越靠外緣彩度越高；「淺色（明清色）」分布於外緣且靠近上方，深色靠下方，濁色靠內側。
-- **3-2-06**（答案 B）：將色相、明度、彩度三屬性有系統地排列成三度空間結構，稱為「色立體」：中心軸為明度、圓周方向為色相、半徑方向為彩度。
-- **3-2-07**（答案 A）：色立體的中心軸是無彩色的明度階段（垂直軸），與彩度無關；彩度是沿半徑方向、離軸越遠越高。
-- **3-2-08**（答案 D）：在色立體同一水平面上，離中心軸越遠的色彩彩度越高；明度由垂直高度決定，不隨水平距離改變。
-- **3-2-09**（答案 A）：任何色彩體系的色立體都無法涵蓋「所有」色彩（例如金銀色、螢光色或超出該體系色域的色彩），因此「包含了所有的色彩」的敘述不正確；其餘關於明度與彩度方向的敘述皆正確。
-- **3-2-10**（答案 B）：1810 年德國奧圖倫格（P. Otto Runge）最先構想出球狀色立體。選項 A 與 C 的方向敘述相反（向上明度才越高、向外彩度才越高）；具有色調（Tone）概念的是 PCCS 等體系，並非色立體的通則。
-- **3-2-11**（答案 D）：CIE（國際照明委員會）表色系以色光三原色的混色實驗為基礎，屬於「混色系」；Munsell、PCCS、NCS 則是以色料與目視比對為基礎的「顯色系」。
-- **3-2-12**（答案 D）：顯色系以標準色票目測比對，方便實用，但精確度不如以儀器測定數值的混色系（如 CIE）；因此「顯色系較混色系精確、科學」的敘述是錯誤的。
-- **3-2-13**（答案 D）：CIE 表色系以標準光源與儀器測色為基礎，將色彩完全數值化，誤差最小、最科學，是目前國際通用的表色系統。
-- **3-3-01**（答案 B）：每一色光通道有 256 個階調（0～255），紅、綠、藍三通道相乘為 256×256×256，約可產生 1,677 萬種色彩。
-- **3-3-02**（答案 B）：紅光與綠光等量相加會形成黃光，藍色通道為 0 表示沒有藍光，因此 R255 G255 B0 呈現黃色。
-- **3-3-03**（答案 B）：PCCS 是日本色彩研究所制定的實用配色體系，以其為依據的色票包括日本 PCCS 色票與中華色彩研究所色票等；TOYO 色票是印刷油墨色票，不是以 PCCS 表色系為製作依據。（此題答案待教師確認）
-- **3-3-04**（答案 D）：R0 G0 B0 沒有任何色光、呈現黑色是正確的；但 R255 G0 B255 是紅光加藍光，呈現洋紅色（Magenta）而非綠色，因此 D 的敘述不正確。
-- **3-3-05**（答案 D）：彩色列印輸出使用的是 CMYK（青、洋紅、黃、黑）四色油墨的減法混色，不是紅、黃、綠、藍四色，因此 D 的敘述錯誤。
-- **3-3-06**（答案 B）：HSB 模式中 H 是色相角：0° 為紅、120° 為綠、240° 為藍；H120° 且飽和度與明度都最大時即為純綠色。
-- **3-3-07**（答案 C）：H330° 位於紅紫（洋紅）色相區，是紅光與藍光的混合，對應 RGB 數值最接近 R255 G0 B255（洋紅色）。
-- **3-3-08**（答案 C）：H:0° 是紅色相，S70%、B80% 仍是鮮明的紅色；選項 A 與 D 的彩度過低呈深濁色，選項 B（NCS Y10R）偏黃橙色相，都離純紅較遠。
-- **3-3-09**（答案 D）：色彩體系數值、印刷色量數值與標準色票都有公認的標準可依循；自製顏料色卡沒有統一標準，無法作為色彩溝通的共識依據。
-- **3-3-10**（答案 C）：PANTONE 206C、M100+Y100、Munsell 5R 4/14 都有明確的數值或編號定義；「Red」只是籠統的色名，每個人的認知不同，不適合精確的色彩傳達與管理。
-- **3-3-11**（答案 D）：PANTONE、TOYO、TRUMATCH 都是印刷油墨或印刷色彩的色票系統；ITTEN（伊登）是色彩學者的名字，以十二色相環聞名，不是油墨色票。
-- **4-1-02**（答案 C）：虹膜可以放大或縮小瞳孔，控制進入眼球的光線量，功能如同相機的光圈。
-- **4-1-03**（答案 A）：水晶體像一片可變厚薄的凸透鏡，負責聚集光線並調節焦距，使影像清楚成像在視網膜上，如同相機的鏡頭。
-- **4-1-04**（答案 A）：視網膜上有兩種感光細胞：柱狀（桿狀）細胞感應明暗，錐狀細胞負責分辨色彩。
-- **4-1-05**（答案 D）：錐狀細胞在明亮環境下運作，能分辨色彩；柱狀（桿狀）細胞只能感應光線明暗，無法辨色。
-- **4-1-06**（答案 B）：錐狀細胞密集分布於視網膜中央的「中心窩」，這裡是視覺最敏銳、辨色能力最強的位置。
-- **4-1-07**（答案 A）：柱狀細胞對光線的強弱（明暗）非常敏感，主要在昏暗環境下作用，但不能分辨色相或彩度。
-- **4-1-08**（答案 B）：柱狀細胞廣泛分布在視網膜上（中心窩除外），數量遠多於錐狀細胞，在微弱光線下才發揮感應力，且不負責色彩，因此只有 B 的敘述正確。
-- **4-1-09**（答案 C）：依教材說法，柱狀細胞對光線明暗的反應敏銳，反應速度並不比錐狀細胞慢，因此 C 的敘述不正確；A、B、D 均為正確描述。（此題答案待教師確認）
 
 ## AI 起草的分層提示（共 6 題，請審閱）
 

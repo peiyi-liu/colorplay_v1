@@ -8,7 +8,7 @@ const uuidSchema = z
   .regex(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu);
 const timestampSchema = z.iso.datetime({ offset: true });
 const answerStatusSchema = z.enum(['correct', 'incorrect', 'timeout']);
-const sessionStatusSchema = z.enum(['in_progress', 'completed']);
+const sessionStatusSchema = z.enum(['in_progress', 'completed', 'abandoned']);
 const optionSchema = z.object({
   id: uuidSchema,
   key: z.string().min(1),
@@ -32,8 +32,11 @@ const questionSchema = z.object({
 });
 const rewardRateSchema = z.union([z.literal(20), z.literal(100)]);
 const gameRulesVersionSchema = z.enum(['2026-07-mvp-1', '2026-07-progress-1']);
+const challengeKindSchema = z.enum(['section', 'chapter']);
 const sessionSchema = z.strictObject({
   answered_count: z.number().int().nonnegative(),
+  challenge_kind: challengeKindSchema,
+  chapter_sort_order: z.number().int().nonnegative(),
   chapter_title: z.string().min(1),
   completed_at: timestampSchema.nullable(),
   correct_count: z.number().int().nonnegative(),
@@ -41,6 +44,8 @@ const sessionSchema = z.strictObject({
   question_count: z.number().int().positive(),
   questions: z.array(questionSchema).min(1),
   reward_rate_percent: rewardRateSchema,
+  section_sort_order: z.number().int().nonnegative().nullable(),
+  section_title: z.string().min(1).nullable(),
   session_id: uuidSchema,
   status: sessionStatusSchema,
   template_id: uuidSchema,
@@ -80,9 +85,15 @@ const finalResultSchema = z.strictObject({
   total_score: z.number().int().nonnegative(),
   xp_awarded: z.number().int().nonnegative(),
 });
+const abandonResultSchema = z.strictObject({
+  session_id: uuidSchema,
+  status: z.literal('abandoned'),
+});
 const sessionStateRowSchema = z.strictObject({
   answer_status: answerStatusSchema.nullable(),
   answered_count: z.number().int().nonnegative(),
+  challenge_kind: challengeKindSchema,
+  chapter_sort_order: z.number().int().nonnegative(),
   chapter_title: z.string().min(1),
   completed_at: timestampSchema.nullable(),
   correct_count: z.number().int().nonnegative(),
@@ -98,6 +109,8 @@ const sessionStateRowSchema = z.strictObject({
   question_version: z.number().int().positive(),
   response_ms: z.number().int().nonnegative().nullable(),
   reward_rate_percent: rewardRateSchema,
+  section_sort_order: z.number().int().nonnegative().nullable(),
+  section_title: z.string().min(1).nullable(),
   score_delta: z.number().int().nonnegative().nullable(),
   selected_option_id: uuidSchema.nullable(),
   session_id: uuidSchema,
@@ -134,6 +147,8 @@ export type QuizQuestion = Readonly<{
 }>;
 export type QuizSession = Readonly<{
   answeredCount: number;
+  challengeKind: z.infer<typeof challengeKindSchema>;
+  chapterSortOrder: number;
   chapterTitle: string;
   completedAt: string | null;
   correctCount: number;
@@ -146,6 +161,8 @@ export type QuizSession = Readonly<{
   tokensAwarded: number;
   totalScore: number;
   rewardRatePercent: z.infer<typeof rewardRateSchema>;
+  sectionSortOrder: number | null;
+  sectionTitle: string | null;
   xpAwarded: number;
 }>;
 export type QuizAnswerResult = Readonly<{
@@ -182,8 +199,14 @@ export type QuizFinalResult = Readonly<{
   xpAwarded: number;
 }>;
 
+export type QuizAbandonResult = Readonly<{
+  sessionId: string;
+  status: 'abandoned';
+}>;
+
 export type QuizRepositoryErrorCode =
   | 'AUTH_REQUIRED'
+  | 'CHAPTER_LOCKED'
   | 'INVALID_RESPONSE'
   | 'QUESTION_ALREADY_ANSWERED'
   | 'SESSION_INCOMPLETE'
@@ -192,6 +215,7 @@ export type QuizRepositoryErrorCode =
 
 const errorMessages: Record<QuizRepositoryErrorCode, string> = {
   AUTH_REQUIRED: '請先登入再開始挑戰。',
+  CHAPTER_LOCKED: '請先完成上一章的複習與挑戰。',
   INVALID_RESPONSE: '答題資料格式不正確，請重新載入。',
   QUESTION_ALREADY_ANSWERED: '這一題已經作答，正在載入最新結果。',
   SESSION_INCOMPLETE: '還有題目尚未完成，暫時不能結算。',
@@ -210,6 +234,9 @@ export class QuizRepositoryError extends Error {
 }
 
 const mapServerError = (message: string): QuizRepositoryError => {
+  if (message.includes('CHAPTER_LOCKED')) {
+    return new QuizRepositoryError('CHAPTER_LOCKED');
+  }
   if (message.includes('AUTH_REQUIRED')) {
     return new QuizRepositoryError('AUTH_REQUIRED');
   }
@@ -250,6 +277,8 @@ const mapQuestion = (
 
 const mapSession = (session: z.infer<typeof sessionSchema>): QuizSession => ({
   answeredCount: session.answered_count,
+  challengeKind: session.challenge_kind,
+  chapterSortOrder: session.chapter_sort_order,
   chapterTitle: session.chapter_title,
   completedAt: session.completed_at,
   correctCount: session.correct_count,
@@ -262,6 +291,8 @@ const mapSession = (session: z.infer<typeof sessionSchema>): QuizSession => ({
   tokensAwarded: session.tokens_awarded,
   totalScore: session.total_score,
   rewardRatePercent: session.reward_rate_percent,
+  sectionSortOrder: session.section_sort_order,
+  sectionTitle: session.section_title,
   xpAwarded: session.xp_awarded,
 });
 
@@ -340,6 +371,8 @@ function sessionFromStateRows(value: unknown): QuizSession {
   );
   return {
     answeredCount: first.answered_count,
+    challengeKind: first.challenge_kind,
+    chapterSortOrder: first.chapter_sort_order,
     chapterTitle: first.chapter_title,
     completedAt: first.completed_at,
     correctCount: first.correct_count,
@@ -352,11 +385,14 @@ function sessionFromStateRows(value: unknown): QuizSession {
     tokensAwarded: first.tokens_awarded,
     totalScore: first.total_score,
     rewardRatePercent: first.reward_rate_percent,
+    sectionSortOrder: first.section_sort_order,
+    sectionTitle: first.section_title,
     xpAwarded: first.xp_awarded,
   };
 }
 
 export type QuizRepository = Readonly<{
+  abandonSession(sessionId: string): Promise<QuizAbandonResult>;
   activateNextQuestion(sessionId: string): Promise<QuizSession>;
   createSession(
     templateId: string,
@@ -375,6 +411,19 @@ export function createQuizRepository(
   client: SupabaseClient<Database>,
 ): QuizRepository {
   return {
+    async abandonSession(sessionId) {
+      const { data, error } = await client.rpc('abandon_quiz_session', {
+        session_id: sessionId,
+      });
+      if (error) throw mapServerError(error.message);
+      const parsed = abandonResultSchema.safeParse(data);
+      if (!parsed.success) throw new QuizRepositoryError('INVALID_RESPONSE');
+      return {
+        sessionId: parsed.data.session_id,
+        status: parsed.data.status,
+      };
+    },
+
     async activateNextQuestion(sessionId) {
       const { data, error } = await client.rpc('activate_next_quiz_question', {
         session_id: sessionId,

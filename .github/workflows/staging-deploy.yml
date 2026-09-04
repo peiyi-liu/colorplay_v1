@@ -1,0 +1,189 @@
+name: Staging deploy and acceptance
+
+on:
+  push:
+    branches:
+      - staging
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: read
+  deployments: write
+  issues: write
+  statuses: write
+
+env:
+  COLORPLAY_DEPLOYMENT_ENVIRONMENT: staging
+  STAGING_WEB_PROJECT_NAME: colorplay-staging-web
+  STAGING_DOMAIN: staging.colorplayapp.com
+
+jobs:
+  deploy-exact-sha:
+    runs-on: ubuntu-24.04
+    environment: staging
+    outputs:
+      deployment_id: ${{ steps.deploy.outputs.deployment_id }}
+      deployed_functions: ${{ steps.functions.outputs.deployed_functions }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+      - run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Verify exact protected ref
+        run: |
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          test "${{ github.ref }}" = "refs/heads/staging"
+      - name: Build exact Staging SHA
+        env:
+          VERCEL_ORG_ID: ${{ vars.STAGING_VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.STAGING_VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.STAGING_VERCEL_TOKEN }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ vars.STAGING_SUPABASE_URL }}
+        run: |
+          node -e '
+            const endpoint = new URL(`https://api.vercel.com/v9/projects/${process.env.VERCEL_PROJECT_ID}`);
+            endpoint.searchParams.set("teamId", process.env.VERCEL_ORG_ID);
+            fetch(endpoint, { headers: { Authorization: `Bearer ${process.env.VERCEL_TOKEN}` } })
+              .then(async (response) => {
+                if (!response.ok) throw new Error("STAGING_VERCEL_PROJECT_LOOKUP_FAILED");
+                const project = await response.json();
+                if (project.name !== process.env.STAGING_WEB_PROJECT_NAME) {
+                  throw new Error("STAGING_VERCEL_PROJECT_MISMATCH");
+                }
+              })
+              .catch((error) => { console.error(error.message); process.exit(1); });
+          '
+          pnpm exec vercel build --yes
+      - name: Deploy exact prebuilt artifact
+        id: deploy
+        env:
+          VERCEL_ORG_ID: ${{ vars.STAGING_VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.STAGING_VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.STAGING_VERCEL_TOKEN }}
+        run: |
+          deployment_url="$(pnpm exec vercel deploy --prebuilt --yes --token "$VERCEL_TOKEN")"
+          deployment_id="$(pnpm exec vercel inspect "$deployment_url" --token "$VERCEL_TOKEN" --json | jq -r '.id')"
+          [[ "$deployment_id" == dpl_* ]]
+          printf 'deployment_url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
+          printf 'deployment_id=%s\n' "$deployment_id" >> "$GITHUB_OUTPUT"
+          pnpm exec vercel alias set "$deployment_url" "$STAGING_DOMAIN" --token "$VERCEL_TOKEN"
+      - name: Deploy tracked Edge Functions from the same SHA
+        id: functions
+        env:
+          STAGING_SUPABASE_ACCESS_TOKEN: ${{ secrets.STAGING_SUPABASE_ACCESS_TOKEN }}
+          STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+        run: |
+          mapfile -t functions < <(find supabase/functions -mindepth 1 -maxdepth 1 -type d ! -name '_shared' -exec basename {} \; | sort)
+          for function_name in "${functions[@]}"; do
+            SUPABASE_ACCESS_TOKEN="$STAGING_SUPABASE_ACCESS_TOKEN" pnpm exec supabase functions deploy "$function_name" --project-ref "$STAGING_SUPABASE_PROJECT_REF"
+          done
+          printf 'deployed_functions=%s\n' "$(IFS=,; echo "${functions[*]}")" >> "$GITHUB_OUTPUT"
+
+  browser-rwd-gate:
+    needs: deploy-exact-sha
+    runs-on: ubuntu-24.04
+    environment: staging
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+        viewport: [1280x720, 812x375, 375x812]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+      - run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      - name: Read-only marker and runtime smoke
+        run: pnpm phase0:smoke -- --environment staging --target-origin https://staging.colorplayapp.com --http-origin http://staging.colorplayapp.com --evidence-root artifacts/phase0 --output artifacts/phase0/staging-smoke-${{ matrix.browser }}-${{ matrix.viewport }}.json
+      - name: Marker, console/network, three-browser and RWD gate
+        env:
+          PLAYWRIGHT_BASE_URL: https://staging.colorplayapp.com
+          COLORPLAY_RWD_VIEWPORT: ${{ matrix.viewport }}
+          EXPECTED_DEPLOYMENT_ENVIRONMENT: staging
+        run: pnpm exec playwright test tests/e2e/environment-marker.spec.ts --project=${{ matrix.browser }} # staging-marker
+
+  phase-acceptance:
+    needs: browser-rwd-gate
+    runs-on: ubuntu-24.04
+    environment: staging
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+      - run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: 'phase:learning-experience hosted acceptance and rls-cross-tenant-negative'
+        env:
+          PLAYWRIGHT_ACCEPTANCE: on
+          PLAYWRIGHT_BASE_URL: https://staging.colorplayapp.com
+          PLAYWRIGHT_EVIDENCE_ROOT: artifacts/phase0/staging-learning
+          SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          SUPABASE_URL: ${{ vars.STAGING_SUPABASE_URL }}
+        run: pnpm exec playwright test tests/e2e/learning-experience.spec.ts --project=chromium
+
+  real-device-approval:
+    needs: phase-acceptance
+    runs-on: ubuntu-24.04
+    environment: staging-approval
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      real_device_evidence_url: ${{ steps.evidence.outputs.real_device_evidence_url }}
+    steps:
+      - name: Bind the human real-device evidence URL from the approval record
+        id: evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          evidence_url="$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/approvals" --jq '[.[] | select(.state == "approved") | .comment // empty] | last // empty')"
+          node -e 'const url = new URL(process.argv[1]); if (url.protocol !== "https:" || url.href !== process.argv[1]) process.exit(1)' "$evidence_url"
+          printf 'real_device_evidence_url=%s\n' "$evidence_url" >> "$GITHUB_OUTPUT"
+
+  record-staging-gate:
+    needs: [deploy-exact-sha, real-device-approval]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Record sanitized deployment evidence
+        env:
+          DEPLOYMENT_ID: ${{ needs.deploy-exact-sha.outputs.deployment_id }}
+          DEPLOYED_FUNCTIONS: ${{ needs.deploy-exact-sha.outputs.deployed_functions }}
+          REAL_DEVICE_EVIDENCE_URL: ${{ needs.real-device-approval.outputs.real_device_evidence_url }}
+        run: |
+          jq -n \
+            --arg deployment_id "$DEPLOYMENT_ID" \
+            --arg git_sha "${{ github.sha }}" \
+            --arg deployed_functions "$DEPLOYED_FUNCTIONS" \
+            --arg real_device_evidence_url "$REAL_DEVICE_EVIDENCE_URL" \
+            '{deployment_id:$deployment_id,git_sha:$git_sha,deployed_functions:$deployed_functions,real_device_evidence_url:$real_device_evidence_url,"staging-gate":"pass"}' \
+            > staging-release-evidence.json
+      - uses: actions/upload-artifact@v5
+        with:
+          name: staging-release-evidence
+          path: staging-release-evidence.json
+      - name: Set staging-gate success
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api "repos/${{ github.repository }}/statuses/${{ github.sha }}" -f state=success -f context=staging-gate -f description='Hosted and real-device Staging gate passed' -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'

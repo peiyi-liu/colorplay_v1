@@ -180,7 +180,7 @@ select pg_temp.as_user('33000000-0000-0000-0000-000000000001');
 select set_config(
   'test.activity',
   public.create_live_activity(
-    'Teams 對戰', '26000000-0000-0000-0000-000000000003', 20
+    'Teams 對戰', '4f208855-dfc8-6cc5-7671-02dfacba85d1', 20
   )::text,
   true
 );
@@ -369,7 +369,7 @@ select pg_temp.play_team_round(
   current_setting('test.session_id')::uuid,
   '33000000-0000-0000-0000-000000000001',
   false
-) from generate_series(2, 10);
+) from generate_series(2, 20);
 
 select pg_temp.as_user('33000000-0000-0000-0000-000000000001');
 select lives_ok(
@@ -393,7 +393,7 @@ select is(
       and ledger.source_type = 'live'
       and ledger.source_id = current_setting('test.session_id')::uuid
   ),
-  750,
+  1500,
   'individual live rewards are untouched by team mode'
 );
 

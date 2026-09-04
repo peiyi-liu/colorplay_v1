@@ -9,6 +9,26 @@ const tokensCss = readFileSync(
   resolve(process.cwd(), 'src/styles/tokens.css'),
   'utf8',
 );
+const reviewCardMarkdownCss = readFileSync(
+  resolve(process.cwd(), 'src/styles/review-card-markdown.css'),
+  'utf8',
+);
+
+const teacherStylePaths = [
+  'src/features/teacher-content/teacher-analytics-data.css',
+  'src/features/teacher-content/teacher-analytics-mobile.css',
+  'src/features/teacher-content/teacher-analytics-reimplementation.css',
+  'src/features/teacher-content/teacher-analytics.css',
+  'src/features/teacher-content/teacher-materials.css',
+  'src/features/teacher-content/teacher-questions-reimplementation.css',
+  'src/features/teacher-content/teacher-workspace-mobile.css',
+  'src/features/teacher-content/teacher-workspace.css',
+  'src/features/live/pages/teacher-live-page.css',
+  'src/features/live/pages/teacher-live-report-page.css',
+  'src/features/live/pages/teacher-live-workspace.css',
+];
+
+const rawColorPattern = /#[0-9a-f]{3,8}\b|\brgba?\([^)]*\)|\bhsla?\([^)]*\)/giu;
 
 describe('ColorPlay flat design tokens', () => {
   // owner 0728 深夜裁定:淡彩系統擴大全站——墨色改冷灰階、紙張改白。
@@ -60,9 +80,9 @@ describe('ColorPlay flat design tokens', () => {
     expect(tokensCss).toContain('--color-primary-strong: var(--amber-avatar)');
   });
 
-  it('keeps the page background on the warm-yellow base (live-v2 設計稿)', () => {
+  it('keeps the legacy warm surface while routing the app shell to the JRPG night base', () => {
     expect(tokensCss).toContain('--surface-page: #fff8e1');
-    expect(tokensCss).toContain('--color-bg: var(--surface-page)');
+    expect(tokensCss).toContain('--color-bg: var(--pixel-night-deep)');
   });
 
   it('keeps legacy GGAME aliases routed into the new palette', () => {
@@ -78,6 +98,30 @@ describe('ColorPlay flat design tokens', () => {
       '--avatar-frame-bg: color-mix(in srgb, var(--amber-avatar) 30%, white)',
     );
   });
+
+  it('keeps review highlights distinct from yellow paper without relying on red text alone', () => {
+    expect(tokensCss).toContain('--review-mark-bg: #f4a6b5');
+    expect(tokensCss).toContain('--review-mark-edge: #b4234d');
+    expect(tokensCss).toContain('--review-mark-ink: #6f1732');
+    expect(reviewCardMarkdownCss).toContain(
+      'background: var(--review-mark-bg)',
+    );
+    expect(reviewCardMarkdownCss).toContain(
+      'box-shadow: inset 0 -0.14em 0 var(--review-mark-edge)',
+    );
+    expect(reviewCardMarkdownCss).toContain('font-weight: 800');
+  });
+
+  it.each(teacherStylePaths)(
+    'keeps teacher colors centralized in tokens.css: %s',
+    (stylePath) => {
+      const stylesheet = readFileSync(
+        resolve(process.cwd(), stylePath),
+        'utf8',
+      );
+      expect(stylesheet.match(rawColorPattern)).toBeNull();
+    },
+  );
 
   // owner 0728 晚間淡彩批:大廳/成就頁專用淡彩系統(hex 依規格逐字釘住)。
   it.each([

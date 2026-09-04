@@ -78,11 +78,20 @@ test('student completes a mixed ten-question challenge with durable server total
         name: position <= 5 ? '✓ 答對了' : '✕ 答錯了',
       }),
     ).toBeVisible();
-    await expect(page.locator('.feedback-card > p').last()).toBeVisible();
+    if (position <= 5) {
+      await expect(page.locator('.feedback-card__score')).toBeVisible();
+    } else {
+      await expect(page.locator('.feedback-card__explanation')).toBeVisible();
+    }
 
     await page
       .getByRole('button', {
-        name: position === 10 ? '結算並查看結果' : '我理解了，下一題',
+        name:
+          position === 10
+            ? '結算並查看結果'
+            : position <= 5
+              ? '下一題'
+              : '我理解了，下一題',
       })
       .click();
   }
@@ -128,7 +137,9 @@ test('student completes a mixed ten-question challenge with durable server total
   await page
     .getByRole('textbox', { name: '帳號' })
     .fill(TEST_USERS.studentTwo.email);
-  await page.getByLabel('密碼').fill(TEST_USERS.studentTwo.password);
+  await page
+    .getByLabel('密碼', { exact: true })
+    .fill(TEST_USERS.studentTwo.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u);
   await page.goto(`/app/quiz/${sessionId ?? ''}/result`);

@@ -140,9 +140,9 @@ describe('AuthRepository with local Supabase', () => {
 
     const signedIn = await repository.signIn(TEST_USERS.authLifecycleOne);
 
-    expect(signedIn.email).toBe(TEST_USERS.authLifecycleOne.email);
     expect(typeof signedIn.userId).toBe('string');
-    expect(Object.keys(signedIn).sort()).toEqual(['email', 'userId']);
+    expect(Object.keys(signedIn).sort()).toEqual(['userId']);
+    expect(signedIn).not.toHaveProperty('email');
     await expect(repository.getSession()).resolves.toEqual(signedIn);
 
     await repository.signOut();
@@ -188,10 +188,7 @@ describe('AuthRepository with local Supabase', () => {
     const repository = createAuthRepository(
       createLocalClient('authLifecycleOne'),
     );
-    const observedSessions: (Readonly<{
-      userId: string;
-      email: string;
-    }> | null)[] = [];
+    const observedSessions: (Readonly<{ userId: string }> | null)[] = [];
     const unsubscribe = repository.onAuthStateChange((session) => {
       observedSessions.push(session);
     });

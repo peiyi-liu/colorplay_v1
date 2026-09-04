@@ -7,7 +7,7 @@ import {
   useQueryClient,
   type UseQueryResult,
 } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { Database } from '../../../types/database';
 import { parsePublicEnv } from '../../../lib/config/public-env';
@@ -23,18 +23,35 @@ export const liveKeys = {
   session: (sessionId: string) => ['live', 'session', sessionId] as const,
 };
 
+export type LiveConnectionStatus =
+  | 'connecting'
+  | 'connected'
+  | 'disconnected';
+
+export type LiveSessionQueryResult = UseQueryResult<
+  LiveSessionState,
+  LiveRepositoryError
+> &
+  Readonly<{ connectionStatus: LiveConnectionStatus }>;
+
 export function useLiveSession(
   sessionId: string,
   dependencies?: Readonly<{
     client?: SupabaseClient<Database>;
     repository?: LiveRepository;
   }>,
-): UseQueryResult<LiveSessionState, LiveRepositoryError> {
+): LiveSessionQueryResult {
   const client =
     dependencies?.client ??
     getBrowserSupabaseClient(parsePublicEnv(import.meta.env));
   const repository = dependencies?.repository ?? createLiveRepository(client);
   const queryClient = useQueryClient();
+  const [connection, setConnection] = useState<Readonly<{
+    sessionId: string;
+    status: LiveConnectionStatus;
+  }>>({ sessionId, status: 'connecting' });
+  const connectionStatus =
+    connection.sessionId === sessionId ? connection.status : 'connecting';
 
   const query = useQuery<LiveSessionState, LiveRepositoryError>({
     enabled: sessionId.length > 0,
@@ -100,7 +117,12 @@ export function useLiveSession(
         reconcile();
       })
       .subscribe((status) => {
-        if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) reconcile();
+        if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
+          setConnection({ sessionId, status: 'connected' });
+          reconcile();
+          return;
+        }
+        setConnection({ sessionId, status: 'disconnected' });
       });
 
     return () => {
@@ -108,5 +130,5 @@ export function useLiveSession(
     };
   }, [client, queryClient, sessionId]);
 
-  return query;
+  return { ...query, connectionStatus };
 }

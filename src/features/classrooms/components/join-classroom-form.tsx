@@ -10,7 +10,13 @@ const joinCodeSchema = z.strictObject({
   joinCode: z
     .string()
     .trim()
-    .regex(/^[0-9a-f]{4}(?:-?[0-9a-f]{4}){3}$/iu, '請輸入有效的班級加入碼'),
+    .refine(
+      (value) =>
+        /^(?:[0-9A-HJKMNP-TV-Z]{8}|[0-9A-F]{16})$/.test(
+          value.toUpperCase().replace(/-/g, ''),
+        ),
+      '請輸入有效的班級加入碼',
+    ),
 });
 type JoinCodeValues = z.infer<typeof joinCodeSchema>;
 
@@ -26,6 +32,12 @@ const messageForError = (error: unknown) => {
     error.code === 'AUTH_REQUIRED'
   ) {
     return '登入狀態已失效，請重新登入。';
+  }
+  if (
+    error instanceof ClassroomRepositoryError &&
+    error.code === 'RATE_LIMITED'
+  ) {
+    return '嘗試次數過多，請等待 10 分鐘後再試。';
   }
   return '目前無法加入班級，請稍後重試。';
 };

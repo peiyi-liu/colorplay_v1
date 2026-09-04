@@ -9,13 +9,15 @@ const templateId = '26000000-0000-0000-0000-000000000003';
 
 function clientReturning(data: unknown, error: unknown = null) {
   const order = vi.fn().mockResolvedValue({ data, error });
-  const eq = vi.fn(() => ({ order }));
+  const is = vi.fn(() => ({ order }));
+  const eq = vi.fn(() => ({ is }));
   const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));
   return {
     client: { from } as unknown as SupabaseClient<Database>,
     eq,
     from,
+    is,
     order,
     select,
   };
@@ -97,6 +99,7 @@ describe('fetchPublishedChapters', () => {
 
     expect(fake.from).toHaveBeenCalledWith('quiz_templates');
     expect(fake.eq).toHaveBeenCalledWith('status', 'published');
+    expect(fake.is).toHaveBeenCalledWith('section_id', null);
     expect(fake.order).toHaveBeenCalledWith('sort_order', {
       referencedTable: 'chapters',
     });

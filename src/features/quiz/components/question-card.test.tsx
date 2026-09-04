@@ -13,6 +13,8 @@ const question: QuizQuestion = {
   options: [
     { id: 'option-a', key: 'A', sortOrder: 1, text: 'RGB' },
     { id: 'option-b', key: 'B', sortOrder: 2, text: 'CMYK' },
+    { id: 'option-c', key: 'C', sortOrder: 3, text: 'RYB' },
+    { id: 'option-d', key: 'D', sortOrder: 4, text: 'Lab' },
   ],
   position: 1,
   prompt: '螢幕常用哪一種色彩模型？',
@@ -93,6 +95,12 @@ describe('QuestionCard', () => {
     expect(
       container.querySelector('.question-options.question-options--command'),
     ).not.toBeNull();
-    expect(container.querySelectorAll('.question-option')).toHaveLength(2);
+    expect(container.querySelectorAll('.question-option')).toHaveLength(4);
+    expect(
+      [...container.querySelectorAll('.question-option__key')].map(
+        (key) => key.textContent,
+      ),
+    ).toEqual(['A', 'B', 'C', 'D']);
+    expect(container.querySelector('img, svg')).toBeNull();
   });
 });

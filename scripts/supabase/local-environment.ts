@@ -14,7 +14,8 @@ export const readLocalAdminEnvironment = (
   environment: NodeJS.ProcessEnv,
 ): LocalAdminEnvironment => {
   const url = environment.SUPABASE_URL;
-  const serviceRoleKey = environment.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey =
+    environment.SUPABASE_SECRET_KEY ?? environment.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !serviceRoleKey) throw new Error('LOCAL_ADMIN_ENV_MISSING');
   if (!localKeyPattern.test(serviceRoleKey)) {
@@ -30,3 +31,21 @@ export const readLocalAdminEnvironment = (
 
   return { serviceRoleKey, url };
 };
+
+// Admin identities are a materially different risk class from the demo
+// teacher/student fixtures: bootstrapping one grants role='admin' plus a
+// self-service-enrollable TOTP factor. spec §12 restricts Admin fixtures to
+// genuinely local seeding — the SEED_REMOTE_CONFIRM opt-in above exists for
+// the rest of the demo dataset and must never extend to Admin provisioning.
+export const isStrictlyLocalAdminUrl = (url: string): boolean =>
+  url === localApiUrl;
+
+// Excluding Admin labels from a non-local seed run only stops *this* run
+// from creating/promoting them — it says nothing about whether an earlier
+// (pre-fix) run already left known-password Admin accounts live on that
+// project. The caller must fail closed rather than silently reporting
+// success when any of these emails is already present.
+export const findPresentAdminFixtureEmails = (
+  existingEmails: ReadonlyMap<string, unknown>,
+  adminFixtureEmails: readonly string[],
+): string[] => adminFixtureEmails.filter((email) => existingEmails.has(email));

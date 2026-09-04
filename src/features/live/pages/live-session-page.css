@@ -1,0 +1,424 @@
+#main-content:has(> .live-student-arena) {
+  align-items: stretch;
+  padding: 0;
+  background: #071120;
+}
+
+#main-content.route-world-stage > .live-result-screen {
+  position: fixed;
+  width: 100vw;
+  height: 100dvh;
+  inset: 0;
+}
+
+#main-content.route-world-stage:has(> .live-student-arena) > .student-route-back {
+  top: 16px;
+}
+
+.scene-night.live-session-shell.live-student-arena {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: 100%;
+  min-height: 100%;
+  padding: 0;
+  overflow-x: clip;
+  color: #f7fbff;
+  background-color: #071120;
+  background-image:
+    linear-gradient(180deg, rgb(2 8 20 / 8%) 0%, rgb(3 10 24 / 18%) 48%, rgb(3 8 19 / 78%) 100%),
+    url('../../../assets/live/live-student-arena-desktop-v1.webp');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.live-student-status-bar {
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 112px minmax(180px, 1.35fr) minmax(138px, 1fr) minmax(122px, 0.9fr) 64px minmax(120px, 0.8fr);
+  gap: 14px;
+  align-items: center;
+  min-height: 76px;
+  padding: 10px clamp(18px, 3vw, 44px);
+  background: rgb(3 9 22 / 88%);
+  border-bottom: 1px solid rgb(76 160 236 / 35%);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 32%);
+  backdrop-filter: blur(10px);
+}
+
+.live-student-status-bar h1,
+.live-student-status-bar p {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.live-student-status-bar h1 {
+  grid-column: 2;
+  color: #f8fbff;
+  font-size: clamp(1.15rem, 2.1vw, 1.65rem);
+}
+
+.live-student-status-bar h1 svg,
+.live-student-status-bar__question svg {
+  color: #55baff;
+}
+
+.live-student-status-bar__question,
+.live-student-status-bar__online {
+  color: #dbeafe;
+  font-weight: 700;
+}
+
+.live-student-status-bar__question {
+  grid-column: 3;
+}
+
+.live-student-status-bar__connection {
+  grid-column: 4;
+}
+
+.live-student-countdown {
+  grid-column: 5;
+}
+
+.live-student-status-bar__online {
+  grid-column: 6;
+}
+
+.live-student-status-bar__connection {
+  color: #d6e4f5;
+  font-weight: 700;
+}
+
+.live-student-status-bar__connection > span {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  background: #f6b83f;
+  border-radius: 999px;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.live-student-status-bar__connection[data-state='connected'] > span {
+  background: #4ade80;
+}
+
+.live-student-status-bar__connection[data-state='disconnected'] > span {
+  background: #fb7185;
+}
+
+.live-student-countdown {
+  position: relative;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  justify-self: center;
+}
+
+.live-student-countdown svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.live-student-countdown circle {
+  fill: rgb(2 10 24 / 74%);
+  stroke-width: 4;
+}
+
+.live-student-countdown__track {
+  stroke: rgb(120 153 191 / 30%);
+}
+
+.live-student-countdown__progress {
+  stroke: #49b8ff;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 250ms linear;
+}
+
+.live-student-countdown > strong {
+  position: absolute;
+  font-size: 0.9rem;
+}
+
+.live-student-countdown--urgent .live-student-countdown__progress {
+  stroke: #fb7185;
+}
+
+.live-student-question-phase,
+.live-student-lobby,
+.live-student-arena > .live-waiting {
+  display: grid;
+  min-height: 0;
+  padding: clamp(20px, 4vh, 44px) clamp(20px, 4vw, 64px) clamp(22px, 4vh, 50px);
+}
+
+.live-student-question-phase {
+  grid-template-rows: minmax(150px, 1fr) auto auto;
+  gap: 16px;
+}
+
+.live-student-question-card {
+  display: contents;
+}
+
+.live-student-question-card legend {
+  display: flex;
+  gap: 14px;
+  align-self: end;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  width: auto;
+  margin: 0 0 6px;
+  padding: 14px 24px;
+  color: #f6fbff;
+  font-size: clamp(1.25rem, 2.6vw, 2rem);
+  font-weight: 800;
+  text-align: center;
+  text-shadow: 0 2px 12px #000;
+  background: rgb(3 11 27 / 76%);
+  border: 1px solid rgb(94 188 255 / 55%);
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgb(0 0 0 / 32%);
+}
+
+.live-student-question-card legend svg {
+  flex: 0 0 auto;
+  color: #55baff;
+}
+
+.live-student-arena .live-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: min(100%, 1040px);
+  margin-inline: auto;
+}
+
+.live-student-arena .ui-option {
+  min-height: 82px;
+  padding: 14px 20px;
+  color: #edf7ff;
+  font-size: clamp(1.1rem, 2vw, 1.45rem);
+  background: linear-gradient(145deg, rgb(10 27 52 / 94%), rgb(5 16 36 / 96%));
+  border: 2px solid rgb(118 163 211 / 45%);
+  border-radius: 12px;
+  box-shadow: 0 9px 24px rgb(0 0 0 / 25%);
+}
+
+.live-student-arena .live-options--screen-only .ui-option {
+  min-height: clamp(72px, 10vh, 92px);
+  font-size: clamp(1.1rem, 2vw, 1.45rem);
+}
+
+.live-student-arena .ui-option:hover:not(:disabled) {
+  border-color: #55baff;
+  box-shadow: 0 0 0 2px rgb(85 186 255 / 18%), 0 10px 26px rgb(0 0 0 / 34%);
+  transform: translateY(-1px);
+}
+
+.live-student-arena .ui-option:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.live-student-arena .ui-option--state-selected {
+  color: #f2fff7;
+  background: linear-gradient(145deg, rgb(16 74 64 / 96%), rgb(5 40 38 / 96%));
+  border-color: #4ade80;
+  box-shadow: 0 0 0 2px rgb(74 222 128 / 18%), 0 10px 28px rgb(0 0 0 / 32%);
+  opacity: 1;
+}
+
+.live-student-arena .ui-option--rose > span:first-child {
+  color: #fb7185;
+}
+
+.live-student-arena .ui-option--sky > span:first-child {
+  color: #55baff;
+}
+
+.live-student-arena .ui-option--amber > span:first-child {
+  color: #fbbf24;
+}
+
+.live-student-arena .ui-option--emerald > span:first-child {
+  color: #4ade80;
+}
+
+.live-option-key {
+  font-size: 1.35em;
+  font-weight: 900;
+}
+
+.live-student-arena .ui-option__state {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  margin-left: auto;
+  color: #b7f7ce;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.live-student-submit-error {
+  justify-self: center;
+  margin: 0;
+  padding: 9px 16px;
+  color: #dbeafe;
+  font-weight: 700;
+  text-align: center;
+  background: rgb(3 11 27 / 78%);
+  border-radius: 999px;
+}
+
+.live-student-submit-error {
+  color: #fecdd3;
+  border: 1px solid rgb(251 113 133 / 50%);
+}
+
+.live-student-lobby,
+.live-student-arena > .live-waiting {
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  text-shadow: 0 2px 14px #000;
+}
+
+.live-student-lobby h2,
+.live-student-arena > .live-waiting h2 {
+  margin: 0 0 10px;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+}
+
+.live-student-lobby p {
+  margin: 0;
+  color: #dbeafe;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+}
+
+@media (max-width: 767px) {
+  .scene-night.live-session-shell.live-student-arena {
+    min-height: 100%;
+    background-image:
+      linear-gradient(180deg, rgb(2 8 20 / 2%) 0%, rgb(3 10 24 / 14%) 34%, #071120 66%),
+      url('../../../assets/live/live-student-arena-desktop-v1.webp');
+    background-position: center, center 72%;
+    background-size: cover, auto 120%;
+  }
+
+  .live-student-status-bar {
+    grid-template-columns: 80px minmax(0, 1fr) auto auto;
+    gap: 8px 12px;
+    min-height: 94px;
+    padding: 9px 14px;
+  }
+
+  .live-student-status-bar h1 {
+    grid-column: 2;
+    font-size: 1.05rem;
+  }
+
+  .live-student-status-bar__question {
+    grid-column: 3 / 5;
+    justify-self: end;
+    font-size: 0.83rem;
+  }
+
+  .live-student-status-bar__connection,
+  .live-student-status-bar__online {
+    font-size: 0.78rem;
+  }
+
+  .live-student-status-bar__connection {
+    grid-column: 2;
+  }
+
+  .live-student-status-bar__online {
+    grid-column: 3;
+  }
+
+  .live-student-countdown {
+    grid-column: 4;
+    grid-row: 2;
+    width: 42px;
+    height: 42px;
+  }
+
+  #main-content.route-world-stage:has(> .live-student-arena) > .student-route-back {
+    top: 32px;
+  }
+
+  .live-student-question-phase {
+    grid-template-rows: minmax(105px, 1fr) minmax(240px, 60%) auto;
+    gap: 10px;
+    padding: 14px 12px 18px;
+  }
+
+  .live-student-question-card legend {
+    gap: 10px;
+    margin-bottom: 2px;
+    padding: 10px 14px;
+    font-size: 1.08rem;
+  }
+
+  .live-student-arena .live-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    height: 100%;
+  }
+
+  .live-student-arena .ui-option {
+    min-height: 100px;
+    padding: 9px 14px;
+    font-size: 1.35rem;
+  }
+
+  .live-student-arena .live-options--screen-only .ui-option {
+    min-height: 100px;
+    font-size: 1.35rem;
+  }
+
+  .live-student-arena .ui-option > span:first-child {
+    font-size: 1.45em;
+    line-height: 1;
+  }
+
+  .live-student-arena .live-option-key {
+    font-size: 1.5em;
+  }
+
+  .live-student-arena .ui-option__state {
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .live-student-status-bar {
+    padding-inline: 10px;
+  }
+
+  .live-student-status-bar h1 svg,
+  .live-student-status-bar__question svg,
+  .live-student-status-bar__online svg {
+    display: none;
+  }
+
+  .live-student-question-phase {
+    grid-template-rows: minmax(105px, 1fr) minmax(240px, 60%) auto;
+  }
+
+  .live-student-arena .ui-option {
+    min-height: 100px;
+  }
+}

@@ -156,7 +156,7 @@ select pg_temp.as_user('42000000-0000-0000-0000-000000000001');
 -- The display switch validates its value.
 select throws_ok(
   $$select public.create_live_activity(
-    '壞開關', '26000000-0000-0000-0000-000000000003', 20, 'projector'
+    '壞開關', '4f208855-dfc8-6cc5-7671-02dfacba85d1', 20, 'projector'
   )$$,
   'P0001',
   'LIVE_INVALID_REQUEST',
@@ -166,7 +166,7 @@ select throws_ok(
 select set_config(
   'test.activity',
   public.create_live_activity(
-    '雙螢幕對戰', '26000000-0000-0000-0000-000000000003', 20
+    '雙螢幕對戰', '4f208855-dfc8-6cc5-7671-02dfacba85d1', 20
   )::text,
   true
 );
@@ -455,7 +455,7 @@ select pg_temp.as_user('42000000-0000-0000-0000-000000000001');
 select set_config(
   'test.device_activity',
   public.create_live_activity(
-    '裝置模式對戰', '26000000-0000-0000-0000-000000000003', 20, 'device'
+    '裝置模式對戰', '4f208855-dfc8-6cc5-7671-02dfacba85d1', 20, 'device'
   )::text,
   true
 );

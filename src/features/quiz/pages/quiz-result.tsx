@@ -16,7 +16,10 @@ import {
   type QuizRepository,
 } from '../api/quiz-repository';
 import { LootReveal } from '../components/loot-reveal';
+import { withoutNumberPrefix } from '../lib/quiz-labels';
 import { crossedLevelBoundary, unlockedSince } from '../lib/reward-derivations';
+
+import './quiz-result.css';
 
 const answerText = (question: QuizQuestion, optionId: string | null) => {
   if (optionId === null) return '未作答（逾時）';
@@ -94,18 +97,32 @@ export function QuizResultPage({
           economyQuery.data.xpPerLevel,
         )
       : false;
+  const chapterLabel = `第 ${String(session.chapterSortOrder)} 章・${withoutNumberPrefix(session.chapterTitle)}`;
+  const isSectionChallenge = session.challengeKind === 'section';
+  const challengeLabel =
+    isSectionChallenge &&
+    session.sectionSortOrder !== null &&
+    session.sectionTitle
+      ? `${String(session.chapterSortOrder)}-${String(session.sectionSortOrder)}・${withoutNumberPrefix(session.sectionTitle)}`
+      : '章節總挑戰';
 
   return (
     <section
-      className="quiz-result scene-night victory-scene"
+      className="quiz-result quiz-result--victory-v2 scene-night victory-scene"
       aria-labelledby="quiz-result-title"
+      data-challenge-kind={session.challengeKind}
     >
       <header className="quiz-result__summary">
         <p aria-hidden="true" className="victory-banner">
           VICTORY
         </p>
-        <p className="route-panel__eyebrow">{session.chapterTitle}</p>
-        <h1 id="quiz-result-title">挑戰完成 🎉</h1>
+        <div className="quiz-result__context" aria-label="挑戰範圍">
+          <p>{chapterLabel}</p>
+          <p>{challengeLabel}</p>
+        </div>
+        <h1 id="quiz-result-title">
+          {isSectionChallenge ? '小節挑戰完成' : '章節總挑戰完成'}
+        </h1>
         <LootReveal
           correctCount={session.correctCount}
           questionCount={session.questionCount}

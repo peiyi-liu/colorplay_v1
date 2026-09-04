@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
-export const EXPECTED_ACCEPTANCE_COUNT = 122;
+export const EXPECTED_ACCEPTANCE_COUNT = 138;
 
 export function countAcceptanceIds(markdown) {
   return [

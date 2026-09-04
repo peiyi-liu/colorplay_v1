@@ -7,7 +7,7 @@ import { createClassroomRepository } from '../../classrooms/api/classroom-reposi
 import { LiveRepositoryError } from '../types';
 import { createLiveRepository } from './live-repository';
 
-const QUIZ_TEMPLATE_ID = '26000000-0000-0000-0000-000000000003';
+const QUIZ_TEMPLATE_ID = '4f208855-dfc8-6cc5-7671-02dfacba85d1';
 
 describe('LiveRepository with local Supabase', () => {
   const clients: Awaited<ReturnType<typeof signedInClient>>[] = [];
@@ -113,11 +113,15 @@ describe('LiveRepository with local Supabase', () => {
 
     await host.finalize(session.sessionId, hostState.stateVersion);
 
+    const perfectScore = hostState.questionCount * 150;
     const finalA = await studentA.getState(session.sessionId);
     expect(finalA.state).toBe('completed');
-    expect(finalA.myResult).toEqual({ score: 1500, rank: 1 });
+    expect(finalA.myResult).toEqual({ score: perfectScore, rank: 1 });
     const finalB = await studentB.getState(session.sessionId);
     expect(finalB.myResult).toEqual({ score: 0, rank: 2 });
-    expect(finalA.podium?.[0]).toMatchObject({ rank: 1, score: 1500 });
+    expect(finalA.podium?.[0]).toMatchObject({
+      rank: 1,
+      score: perfectScore,
+    });
   });
 });

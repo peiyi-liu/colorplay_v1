@@ -104,7 +104,6 @@ describe('RequireAuth', () => {
     renderGuard(
       createAuthValue({
         session: {
-          email: 'learner@colorplay.invalid',
           userId: 'learner-id',
         },
         status: 'authenticated',

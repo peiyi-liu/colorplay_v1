@@ -309,15 +309,15 @@ message_service_sid = ""
 # DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
 auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 
-# Multi-factor-authentication is available to Supabase Pro plan.
+# TOTP MFA is available on all Supabase plans; phone MFA has separate plan requirements.
 [auth.mfa]
 # Control how many MFA factors can be enrolled at once per user.
 max_enrolled_factors = 10
 
 # Control MFA via App Authenticator (TOTP)
 [auth.mfa.totp]
-enroll_enabled = false
-verify_enabled = false
+enroll_enabled = true
+verify_enabled = true
 
 # Configure MFA via Phone Messaging
 [auth.mfa.phone]
@@ -398,8 +398,10 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
-# [edge_runtime.secrets]
-# secret_key = "env(SECRET_VALUE)"
+[edge_runtime.secrets]
+# Local-only, non-routable namespace for Admin-managed teacher Auth identities.
+# Hosted environments must configure their own server-side value.
+ADMIN_TEACHER_AUTH_EMAIL_NAMESPACE = "admin-b.local.invalid"
 
 # 認證前端點：函式內自行驗證（auth-login 密碼授與、student-register getUser、
 # auth-recover 恆泛用回應），不依賴 gateway JWT 驗證。
@@ -409,7 +411,24 @@ verify_jwt = false
 [functions.student-register]
 verify_jwt = false
 
+# 由函式內 getUser 驗證 JWT，再走 service-only 限流／加入 RPC。
+[functions.join-classroom]
+verify_jwt = false
+
 [functions.auth-recover]
+verify_jwt = false
+
+# admin-mfa 自行驗證 JWT(getUser)並對缺失/無效 JWT 做 fail-closed denial
+# 入帳;runtime 層先擋會讓這些 denial 永不入帳,故關閉 verify_jwt。
+[functions.admin-mfa]
+verify_jwt = false
+
+# admin-command 同 admin-mfa:自行驗 JWT 並入帳 denial。
+[functions.admin-command]
+verify_jwt = false
+
+# admin-reconcile 為排程入口,以 x-reconcile-key 部署 secret 驗證,無 JWT。
+[functions.admin-reconcile]
 verify_jwt = false
 
 [analytics]

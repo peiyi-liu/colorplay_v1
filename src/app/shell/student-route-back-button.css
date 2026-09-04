@@ -1,0 +1,43 @@
+#main-content.route-world-stage > .student-route-back {
+  position: absolute;
+  z-index: 4;
+  top: clamp(24px, 3vw, 42px);
+  left: clamp(var(--space-3), 2vw, var(--space-6));
+  display: inline-flex;
+  min-width: 88px;
+  min-height: 44px;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid color-mix(in srgb, var(--pixel-gold) 70%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--pixel-night-deep) 90%, transparent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--stage-void) 50%, transparent);
+  color: var(--pixel-window-ink);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+#main-content.route-world-stage > .student-route-back:hover,
+#main-content.route-world-stage > .student-route-back:focus-visible {
+  border-color: var(--pixel-gold);
+  background: color-mix(in srgb, var(--pixel-window-frame) 82%, transparent);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.student-route-back__arrow {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+@media (max-width: 680px) {
+  #main-content.route-world-stage > .student-route-back {
+    top: 22px;
+    left: 10px;
+    min-width: 72px;
+    min-height: 40px;
+    padding-inline: 8px;
+  }
+}

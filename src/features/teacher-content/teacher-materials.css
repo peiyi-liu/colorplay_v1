@@ -1,0 +1,87 @@
+.teacher-workspace-shell :where(.primary-action, .secondary-action) {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--teacher-radius-control);
+  font: inherit;
+  font-weight: 850;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.teacher-workspace-shell .primary-action {
+  border: 1px solid var(--teacher-palette-hex-f0c767-c7c383b8);
+  background: var(--teacher-palette-hex-b77a13-9ff90d44);
+  box-shadow: inset 0 1px var(--teacher-palette-rgb-8ebd3c07);
+  color: var(--teacher-palette-hex-fff8e5-1bc6c63b);
+}
+
+.teacher-workspace-shell .primary-action:hover:enabled {
+  background: var(--teacher-palette-hex-d28d16-2102e363);
+}
+
+.teacher-workspace-shell .secondary-action {
+  border: 1px solid var(--teacher-palette-hex-4c7ca7-ab8c6019);
+  background: var(--teacher-palette-hex-0a2946-65134172);
+  box-shadow: none;
+  color: var(--teacher-palette-hex-eff7ff-3c611667);
+}
+
+.teacher-workspace-shell .secondary-action:hover {
+  border-color: var(--teacher-palette-hex-72b8ed-67354c7d);
+  background: var(--teacher-palette-hex-103a60-892a2afc);
+  color: var(--teacher-palette-hex-fff-e08de713);
+}
+
+.teacher-workspace-shell :where(.primary-action, .secondary-action):active {
+  translate: 0 1px;
+}
+
+.teacher-workspace-shell :where(.primary-action, .secondary-action):disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.teacher-workspace-shell .ui-table-scroll {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--teacher-palette-hex-294866-b494b925);
+  border-radius: var(--teacher-radius-group);
+  background: var(--teacher-palette-hex-06182a-611a4569);
+}
+
+.teacher-workspace-shell .ui-table {
+  width: 100%;
+  border: 0;
+  border-collapse: collapse;
+  background: transparent;
+  color: var(--teacher-ink);
+}
+
+.teacher-workspace-shell .ui-table thead {
+  background: var(--teacher-palette-hex-0b2b47-d43ffe5f);
+}
+
+.teacher-workspace-shell .ui-table :where(th, td) {
+  border: 0;
+  border-bottom: 1px solid var(--teacher-palette-hex-24445f-4490464e);
+  padding: 13px 15px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.teacher-workspace-shell .ui-table tbody tr:last-child :where(th, td) {
+  border-bottom: 0;
+}
+
+.teacher-workspace-shell .ui-table tbody tr:hover {
+  background: var(--teacher-palette-rgb-00d5a756);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .teacher-workspace-shell :where(.primary-action, .secondary-action) {
+    transition: none;
+  }
+}

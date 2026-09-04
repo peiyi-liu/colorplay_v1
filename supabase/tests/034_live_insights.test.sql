@@ -245,7 +245,7 @@ select pg_temp.as_user('34000000-0000-0000-0000-000000000001');
 select set_config(
   'test.activity',
   public.create_live_activity(
-    'Insights 對戰', '26000000-0000-0000-0000-000000000003', 20
+    'Insights 對戰', '4f208855-dfc8-6cc5-7671-02dfacba85d1', 20
   )::text,
   true
 );
@@ -497,7 +497,7 @@ select pg_temp.host_advance(
   current_setting('test.session_id')::uuid,
   '34000000-0000-0000-0000-000000000001'
 )
-from generate_series(4, 10);
+from generate_series(4, 20);
 
 select pg_temp.as_user('34000000-0000-0000-0000-000000000001');
 select lives_ok(
@@ -521,7 +521,7 @@ select set_config(
 );
 select is(
   jsonb_array_length(current_setting('test.detail')::jsonb -> 'questions'),
-  10,
+  20,
   'the detail report covers every question'
 );
 select is(

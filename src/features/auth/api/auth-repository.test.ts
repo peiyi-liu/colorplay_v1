@@ -1,16 +1,22 @@
 import {
   AuthApiError,
   AuthRetryableFetchError,
+  FunctionsFetchError,
+  FunctionsHttpError,
   type SupabaseClient,
 } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Database } from '../../../types/database';
+import { RequestTimeoutError } from '../../../lib/supabase/browser-client';
 import { AuthRepositoryError } from '../types';
 import { createAuthRepository } from './auth-repository';
 
-const createClientForAuth = (auth: object): SupabaseClient<Database> =>
-  ({ auth }) as unknown as SupabaseClient<Database>;
+const createClientForAuth = (
+  auth: object,
+  functions?: object,
+): SupabaseClient<Database> =>
+  ({ auth, functions }) as unknown as SupabaseClient<Database>;
 
 const unknownProviderError = new AuthApiError(
   'provider detail must not escape',
@@ -129,14 +135,199 @@ describe('AuthRepository error boundary', () => {
       password: 'fixture-value',
     });
 
-    expect(session).toEqual({
-      email: 'fixture@colorplay.invalid',
-      userId: 'fixture-id',
-    });
+    expect(session).toEqual({ userId: 'fixture-id' });
+    expect(session).not.toHaveProperty('email');
     expect(signInWithPassword).toHaveBeenCalledWith({
       email: 'fixture@colorplay.invalid',
       password: 'fixture-value',
     });
+  });
+
+  it('retries one transient e-mail sign-in transport failure', async () => {
+    const signInWithPassword = vi
+      .fn()
+      .mockResolvedValueOnce({
+        data: { session: null, user: null },
+        error: new AuthRetryableFetchError('temporary transport failure', 503),
+      })
+      .mockResolvedValueOnce({
+        data: {
+          session: {
+            user: {
+              email: 'fixture@colorplay.invalid',
+              id: 'fixture-id',
+            },
+          },
+        },
+        error: null,
+      });
+    const repository = createAuthRepository(
+      createClientForAuth({ signInWithPassword }),
+    );
+
+    await expect(
+      repository.signIn({
+        email: 'fixture@colorplay.invalid',
+        password: 'fixture-value',
+      }),
+    ).resolves.toEqual({ userId: 'fixture-id' });
+    expect(signInWithPassword).toHaveBeenCalledTimes(2);
+  });
+
+  it('sends teacher account login without a class code', async () => {
+    const invoke = vi.fn(() =>
+      Promise.resolve({
+        data: {
+          session: {
+            access_token: 'fixture-access-token',
+            refresh_token: 'fixture-refresh-token',
+          },
+        },
+        error: null,
+      }),
+    );
+    const setSession = vi.fn(() =>
+      Promise.resolve({
+        data: {
+          session: {
+            user: {
+              email: 'teacher@colorplay.invalid',
+              id: 'teacher-id',
+            },
+          },
+        },
+        error: null,
+      }),
+    );
+    const repository = createAuthRepository(
+      createClientForAuth({ setSession }, { invoke }),
+    );
+
+    const session = await repository.signInWithAccount({
+      account: 'teacher01',
+      password: 'fixture-value',
+      portal: 'teacher',
+    });
+
+    expect(session).toEqual({ userId: 'teacher-id' });
+    expect(session).not.toHaveProperty('email');
+    expect(invoke).toHaveBeenCalledWith('auth-login', {
+      body: {
+        account: 'teacher01',
+        password: 'fixture-value',
+        portal: 'teacher',
+      },
+    });
+    expect(setSession).toHaveBeenCalledWith({
+      access_token: 'fixture-access-token',
+      refresh_token: 'fixture-refresh-token',
+    });
+  });
+
+  it('retries one transient account-login transport failure', async () => {
+    const invoke = vi
+      .fn()
+      .mockResolvedValueOnce({
+        data: null,
+        error: new FunctionsFetchError(new TypeError('transport failed')),
+      })
+      .mockResolvedValueOnce({
+        data: {
+          session: {
+            access_token: 'fixture-access-token',
+            refresh_token: 'fixture-refresh-token',
+          },
+        },
+        error: null,
+      });
+    const setSession = vi.fn(() =>
+      Promise.resolve({
+        data: {
+          session: {
+            user: {
+              email: 'student@colorplay.invalid',
+              id: 'student-id',
+            },
+          },
+        },
+        error: null,
+      }),
+    );
+    const repository = createAuthRepository(
+      createClientForAuth({ setSession }, { invoke }),
+    );
+
+    await expect(
+      repository.signInWithAccount({
+        account: 'student01',
+        password: 'fixture-value',
+        portal: 'student',
+      }),
+    ).resolves.toEqual({ userId: 'student-id' });
+    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(setSession).toHaveBeenCalledOnce();
+  });
+
+  it('maps a request timeout to AUTH_TIMEOUT without retrying it', async () => {
+    const invoke = vi.fn(() =>
+      Promise.resolve({
+        data: null,
+        error: new FunctionsFetchError(new RequestTimeoutError()),
+      }),
+    );
+    const repository = createAuthRepository(
+      createClientForAuth({}, { invoke }),
+    );
+
+    await expect(
+      repository.signInWithAccount({
+        account: 'student01',
+        password: 'fixture-value',
+        portal: 'student',
+      }),
+    ).rejects.toEqual(new AuthRepositoryError('AUTH_TIMEOUT'));
+    expect(invoke).toHaveBeenCalledOnce();
+  });
+
+  it('maps a rate-limited account login without retrying it', async () => {
+    const invoke = vi.fn(() =>
+      Promise.resolve({
+        data: null,
+        error: new FunctionsHttpError(new Response(null, { status: 429 })),
+      }),
+    );
+    const repository = createAuthRepository(
+      createClientForAuth({}, { invoke }),
+    );
+
+    await expect(
+      repository.signInWithAccount({
+        account: 'student01',
+        password: 'fixture-value',
+        portal: 'student',
+      }),
+    ).rejects.toEqual(new AuthRepositoryError('AUTH_RATE_LIMITED'));
+    expect(invoke).toHaveBeenCalledOnce();
+  });
+
+  it('maps an upstream account-login outage without calling it credentials', async () => {
+    const invoke = vi.fn(() =>
+      Promise.resolve({
+        data: null,
+        error: new FunctionsHttpError(new Response(null, { status: 503 })),
+      }),
+    );
+    const repository = createAuthRepository(
+      createClientForAuth({}, { invoke }),
+    );
+
+    await expect(
+      repository.signInWithAccount({
+        account: 'student01',
+        password: 'fixture-value',
+        portal: 'student',
+      }),
+    ).rejects.toEqual(new AuthRepositoryError('AUTH_UNAVAILABLE'));
   });
 
   it('returns null or a minimal session from valid get-session responses', async () => {
@@ -159,10 +350,9 @@ describe('AuthRepository error boundary', () => {
     );
 
     await expect(repository.getSession()).resolves.toBeNull();
-    await expect(repository.getSession()).resolves.toEqual({
-      email: 'fixture@colorplay.invalid',
-      userId: 'fixture-id',
-    });
+    const session = await repository.getSession();
+    expect(session).toEqual({ userId: 'fixture-id' });
+    expect(session).not.toHaveProperty('email');
   });
 
   it('uses local scope for a successful sign-out', async () => {
@@ -176,7 +366,13 @@ describe('AuthRepository error boundary', () => {
   it.each([
     ['missing session', { session: null, user: null }],
     ['missing user', { session: {}, user: null }],
-    ['missing email', { session: { user: { id: 'fixture-id' } }, user: null }],
+    [
+      'missing user id',
+      {
+        session: { user: { email: 'fixture@colorplay.invalid' } },
+        user: null,
+      },
+    ],
   ])('maps a %s sign-in response to AUTH_UNKNOWN', async (_label, data) => {
     const client = createClientForAuth({
       signInWithPassword: () => Promise.resolve({ data, error: null }),
@@ -405,10 +601,8 @@ describe('AuthRepository error boundary', () => {
     });
     providerListener?.('SIGNED_OUT', null);
 
-    expect(listener).toHaveBeenNthCalledWith(1, {
-      email: 'fixture@colorplay.invalid',
-      userId: 'fixture-id',
-    });
+    expect(listener).toHaveBeenNthCalledWith(1, { userId: 'fixture-id' });
+    expect(listener.mock.calls[0]?.[0]).not.toHaveProperty('email');
     expect(listener).toHaveBeenNthCalledWith(2, null);
 
     stop();
@@ -420,7 +614,7 @@ describe('AuthRepository error boundary', () => {
       ((event: string, session: unknown) => void) | undefined;
     const rawError = new TypeError('raw-session-getter-detail');
     const user = { id: 'fixture-id' };
-    Object.defineProperty(user, 'email', {
+    Object.defineProperty(user, 'id', {
       get: () => {
         throw rawError;
       },

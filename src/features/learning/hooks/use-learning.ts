@@ -18,7 +18,9 @@ import {
   type MistakeView,
   type QuestionHintView,
   type ReviewCompletionRow,
+  type ReviewMediaResolution,
 } from '../api/learning-repository';
+import { studentChapterMapKey } from './use-chapter-map';
 
 export const learningKeys = {
   chapterReview: (chapterId: string) =>
@@ -29,7 +31,35 @@ export const learningKeys = {
   progress: (chapterId: string | null) =>
     ['learning', 'progress', chapterId ?? 'all'] as const,
   reviewProgress: ['learning', 'review-progress'] as const,
+  reviewMedia: (assetPaths: readonly string[]) =>
+    ['learning', 'review-media', ...assetPaths] as const,
 };
+
+export const REVIEW_MEDIA_STALE_TIME_MS = 50 * 60 * 1000;
+export const REVIEW_MEDIA_GC_TIME_MS = 60 * 60 * 1000;
+export const REVIEW_MEDIA_MAX_RETRIES = 3;
+const REVIEW_MEDIA_INITIAL_RETRY_DELAY_MS = 500;
+const REVIEW_MEDIA_MAX_RETRY_DELAY_MS = 4_000;
+
+export const calculateReadQueryRetryDelay = (
+  attemptIndex: number,
+  random: () => number = Math.random,
+): number => {
+  const exponentialDelay = Math.min(
+    REVIEW_MEDIA_INITIAL_RETRY_DELAY_MS * 2 ** attemptIndex,
+    REVIEW_MEDIA_MAX_RETRY_DELAY_MS,
+  );
+  return Math.round(exponentialDelay * (0.5 + random() * 0.5));
+};
+
+export const readQueryRetryDelay = (attemptIndex: number): number =>
+  calculateReadQueryRetryDelay(attemptIndex);
+
+export const shouldRetryReviewMedia = (
+  failureCount: number,
+  error: LearningError,
+): boolean =>
+  error.code === 'UNAVAILABLE' && failureCount < REVIEW_MEDIA_MAX_RETRIES;
 
 const resolveRepository = (
   repository?: LearningRepository,
@@ -42,14 +72,16 @@ const resolveRepository = (
 export function useChapterReview(
   chapterId: string,
   repository?: LearningRepository,
+  accessConfirmed = true,
 ): UseQueryResult<readonly ChapterReviewSection[], LearningError> {
   const resolved = resolveRepository(repository);
   return useQuery<readonly ChapterReviewSection[], LearningError>({
-    enabled: chapterId.length > 0,
+    enabled: chapterId.length > 0 && accessConfirmed,
     queryFn: () => resolved.listChapterReview(chapterId),
     queryKey: learningKeys.chapterReview(chapterId),
     retry: (failureCount, error) =>
       error.code === 'UNAVAILABLE' && failureCount < 2,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -63,6 +95,7 @@ export function useLearningProgress(
     queryKey: learningKeys.progress(chapterId),
     retry: (failureCount, error) =>
       error.code === 'UNAVAILABLE' && failureCount < 2,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -75,6 +108,23 @@ export function useReviewProgressRows(
     queryKey: learningKeys.reviewProgress,
     retry: (failureCount, error) =>
       error.code === 'UNAVAILABLE' && failureCount < 2,
+    retryDelay: readQueryRetryDelay,
+  });
+}
+
+export function useReviewMedia(
+  assetPaths: readonly string[],
+  repository?: LearningRepository,
+): UseQueryResult<readonly ReviewMediaResolution[], LearningError> {
+  const resolved = resolveRepository(repository);
+  return useQuery<readonly ReviewMediaResolution[], LearningError>({
+    enabled: assetPaths.length > 0,
+    gcTime: REVIEW_MEDIA_GC_TIME_MS,
+    queryFn: () => resolved.resolveReviewMedia(assetPaths),
+    queryKey: learningKeys.reviewMedia(assetPaths),
+    retry: shouldRetryReviewMedia,
+    retryDelay: readQueryRetryDelay,
+    staleTime: REVIEW_MEDIA_STALE_TIME_MS,
   });
 }
 
@@ -101,6 +151,7 @@ export function useCompleteReviewCard(
         queryClient.invalidateQueries({
           queryKey: learningKeys.progress(null),
         }),
+        queryClient.invalidateQueries({ queryKey: studentChapterMapKey }),
       ]);
     },
     retry: false,

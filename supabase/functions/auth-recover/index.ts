@@ -1,11 +1,13 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { ACCOUNT_PATTERN, normalizeAccount } from '../_shared/account.ts';
+import { readRuntimeSupabaseApiKeys } from '../_shared/api-keys.ts';
 import { ALLOWED_ORIGINS, corsHeaders, jsonResponse } from '../_shared/cors.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const { publishableKey, secretKey } = readRuntimeSupabaseApiKeys((name) =>
+  Deno.env.get(name),
+);
 
 // 防列舉：無論帳號／Email 是否配對成功，一律回相同訊息。
 const genericSuccess = () => jsonResponse(200, { ok: true });
@@ -42,7 +44,7 @@ Deno.serve(async (request) => {
     ? origin
     : 'https://colorplay-staging.vercel.app';
 
-  const admin = createClient(supabaseUrl, serviceRoleKey, {
+  const admin = createClient(supabaseUrl, secretKey, {
     auth: { persistSession: false },
   });
 
@@ -59,7 +61,7 @@ Deno.serve(async (request) => {
     return genericSuccess();
   }
 
-  const anonClient = createClient(supabaseUrl, anonKey, {
+  const anonClient = createClient(supabaseUrl, publishableKey, {
     auth: { persistSession: false },
   });
   await anonClient.auth.resetPasswordForEmail(userEmail, {

@@ -2,20 +2,17 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { usePublishedChapters } from '../api/chapters';
-import type {
-  LearningProgressRow,
-  LearningRepository,
-} from '../api/learning-repository';
 import {
   useMasteryHint,
   useMasteryState,
   useStartMastery,
   useSubmitMasteryAttempt,
 } from '../hooks/use-mastery';
+import { useStudentChapterMap } from '../hooks/use-chapter-map';
+import { MasteryError } from '../api/mastery-repository';
 import { MissionPage, MissionSelectPage } from './mission-page';
 
 vi.mock('../hooks/use-mastery', async (importOriginal) => {
@@ -29,16 +26,15 @@ vi.mock('../hooks/use-mastery', async (importOriginal) => {
     useSubmitMasteryAttempt: vi.fn(),
   };
 });
-vi.mock('../api/chapters', async (importOriginal) => {
-  const original = await importOriginal<typeof import('../api/chapters')>();
-  return { ...original, usePublishedChapters: vi.fn() };
-});
+vi.mock('../hooks/use-chapter-map', () => ({
+  useStudentChapterMap: vi.fn(),
+}));
 
 const mockedState = vi.mocked(useMasteryState);
 const mockedSubmit = vi.mocked(useSubmitMasteryAttempt);
 const mockedHint = vi.mocked(useMasteryHint);
 const mockedStart = vi.mocked(useStartMastery);
-const mockedChapters = vi.mocked(usePublishedChapters);
+const mockedChapterMap = vi.mocked(useStudentChapterMap);
 
 const asResult = (value: unknown) => value as never;
 
@@ -202,96 +198,171 @@ const worldMapChapters = [
   },
 ];
 
-const progressRow = (
-  chapterId: string,
-  status: LearningProgressRow['status'],
-): LearningProgressRow => ({
-  accuracy: null,
-  chapterId,
-  coverage: null,
-  mastery: null,
-  reviewCompleted: 0,
-  reviewTotal: null,
-  rulesVersion: 'v1',
-  scope: 'chapter',
-  status,
-  subtopicId: null,
-});
+const chapterMapResult = (
+  chapters: readonly Readonly<{
+    accessState: 'available' | 'completed' | 'content_unavailable' | 'locked';
+    blockers: readonly unknown[];
+    chapterId: string;
+    description: string;
+    mastery: number | null;
+    progressStatus: 'developing' | 'learning' | 'mastered' | 'not_started';
+    reviewCompleted: number;
+    reviewTotal: number | null;
+    sortOrder: number;
+    stableCode: string;
+    templateId: string | null;
+    templateQuestionCount: number | null;
+    title: string;
+  }>[],
+) =>
+  asResult({
+    data: {
+      chapters,
+      mode: 'sequential',
+      rulesVersion: '2026-08-sequence-1',
+    },
+    isError: false,
+    isPending: false,
+    refetch: vi.fn(),
+  });
 
-const learningStub = (
-  rows: readonly LearningProgressRow[],
-): LearningRepository => ({
-  completeReviewCard: () => Promise.reject(new Error('unused')),
-  getClassroomProgress: () => Promise.reject(new Error('unused')),
-  getLearningProgress: () => Promise.resolve(rows),
-  listChapterReview: () => Promise.reject(new Error('unused')),
-  listMistakes: () => Promise.reject(new Error('unused')),
-  listReviewProgress: () => Promise.reject(new Error('unused')),
-  requestHint: () => Promise.reject(new Error('unused')),
-  startRemediation: () => Promise.reject(new Error('unused')),
-});
-
-const renderMissionSelect = (learningRepository: LearningRepository) => {
+const renderMissionSelect = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   const wrapper = ({ children }: Readonly<{ children: ReactNode }>) => (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>{children}</MemoryRouter>
+      <MemoryRouter>
+        {children}
+        <LocationProbe />
+      </MemoryRouter>
     </QueryClientProvider>
   );
-  return render(<MissionSelectPage learningRepository={learningRepository} />, {
-    wrapper,
-  });
+  return render(<MissionSelectPage />, { wrapper });
 };
+
+function LocationProbe() {
+  const location = useLocation();
+  return (
+    <output data-testid="location">
+      {location.pathname}
+      {location.search}
+    </output>
+  );
+}
 
 describe('MissionSelectPage world map', () => {
   beforeEach(() => {
     mockedStart.mockReturnValue(
       asResult({ isPending: false, mutate: vi.fn() }),
     );
-    mockedChapters.mockReturnValue(
+    mockedChapterMap.mockReturnValue(
+      chapterMapResult(
+        worldMapChapters.map((chapter, index) => ({
+          accessState: index === 0 ? 'available' : 'locked',
+          blockers:
+            index === 0
+              ? []
+              : [
+                  {
+                    chapterId: '21000000-0000-0000-0000-000000000001',
+                    chapterTitle: '色彩三要素',
+                    code: 'PREREQUISITE_MASTERY',
+                    current: 60,
+                    required: 80,
+                  },
+                ],
+          chapterId: chapter.id,
+          description: chapter.description,
+          mastery: index === 0 ? null : 60,
+          progressStatus: index === 0 ? 'not_started' : 'learning',
+          reviewCompleted: 0,
+          reviewTotal: 5,
+          sortOrder: chapter.sortOrder,
+          stableCode: chapter.stableCode,
+          templateId: chapter.template.id,
+          templateQuestionCount: chapter.template.questionCount,
+          title: chapter.title,
+        })),
+      ),
+    );
+  });
+
+  it('exposes mastery start only for authoritative available chapters', async () => {
+    renderMissionSelect();
+    expect(
+      await screen.findByRole('button', { name: '展開小節任務' }),
+    ).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: '下一頁' }));
+    expect(screen.getByText('尚未解鎖')).toBeVisible();
+    expect(screen.getByText('「色彩三要素」精熟度 60% / 80%')).toBeVisible();
+    expect(screen.queryByRole('button', { name: '展開小節任務' })).toBeNull();
+  });
+
+  it('returns a stale locked mastery start to the selected map panel', async () => {
+    mockedStart.mockReturnValue(
       asResult({
-        data: worldMapChapters,
-        error: null,
-        isError: false,
         isPending: false,
-        refetch: vi.fn(),
+        mutate: (
+          _chapterId: string,
+          options: { onError: (error: MasteryError) => void },
+        ) => {
+          options.onError(new MasteryError('CHAPTER_LOCKED'));
+        },
       }),
+    );
+    renderMissionSelect();
+    await userEvent.click(screen.getByRole('button', { name: '展開小節任務' }));
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      '/app?chapter=21000000-0000-0000-0000-000000000001&reason=locked',
     );
   });
 
   it('maps chapter progress onto four-state nodes with the hero on the first unmastered chapter', async () => {
     const user = userEvent.setup();
-    renderMissionSelect(
-      learningStub([
-        progressRow('21000000-0000-0000-0000-000000000001', 'mastered'),
-        progressRow('21000000-0000-0000-0000-000000000002', 'learning'),
-      ]),
+    mockedChapterMap.mockReturnValue(
+      chapterMapResult(
+        worldMapChapters.map((chapter, index) => ({
+          accessState: index === 0 ? 'completed' : 'available',
+          blockers: [],
+          chapterId: chapter.id,
+          description: chapter.description,
+          mastery: index === 0 ? 90 : 40,
+          progressStatus: index === 0 ? 'mastered' : 'learning',
+          reviewCompleted: index === 0 ? 5 : 1,
+          reviewTotal: 5,
+          sortOrder: chapter.sortOrder,
+          stableCode: chapter.stableCode,
+          templateId: chapter.template.id,
+          templateQuestionCount: chapter.template.questionCount,
+          title: chapter.title,
+        })),
+      ),
     );
+    renderMissionSelect();
     expect(await screen.findByText('已精熟')).toBeInTheDocument();
     expect(document.querySelector('.map-node--mastered')).not.toBeNull();
     // 分頁批:global matchMedia stub=narrow,容量1、playable=2→溢出兩頁,
     // 章節2落頁2,需先點「下一頁」才可見。
     await user.click(screen.getByRole('button', { name: '下一頁' }));
-    expect(screen.getByText('學習中・目前位置')).toBeInTheDocument();
+    expect(screen.getByText('學習中')).toBeInTheDocument();
     expect(
       document.querySelector('.map-node--learning .map-node__hero'),
     ).not.toBeNull();
   });
 
-  it('degrades to not_started nodes when progress is unavailable', async () => {
-    renderMissionSelect({
-      ...learningStub([]),
-      getLearningProgress: () => Promise.reject(new Error('down')),
-    });
-    // 章節列表照常渲染,節點退灰霧,不新增 alert
-    expect(
-      await screen.findAllByRole('button', { name: '展開小節任務' }),
-    ).not.toHaveLength(0);
-    expect(document.querySelector('.map-node--not_started')).not.toBeNull();
-    // 決議 1 軟鎖:progress 讀取失敗不得升級成錯誤橫幅。
-    expect(screen.queryAllByRole('alert')).toHaveLength(0);
+  it('fails closed when authoritative access is unavailable', () => {
+    mockedChapterMap.mockReturnValue(
+      asResult({
+        data: undefined,
+        isError: true,
+        isPending: false,
+        refetch: vi.fn(),
+      }),
+    );
+    renderMissionSelect();
+    expect(screen.getByRole('alert')).toHaveTextContent('章節狀態暫時無法確認');
+    expect(screen.getByRole('button', { name: '重新載入' })).toBeVisible();
   });
 
   it('章節數超過單頁容量時分頁,跨頁章節仍可透過下一頁抵達', async () => {
@@ -310,16 +381,26 @@ describe('MissionSelectPage world map', () => {
       },
       title: `章節${String(n)}`,
     }));
-    mockedChapters.mockReturnValue(
-      asResult({
-        data: overflowChapters,
-        error: null,
-        isError: false,
-        isPending: false,
-        refetch: vi.fn(),
-      }),
+    mockedChapterMap.mockReturnValue(
+      chapterMapResult(
+        overflowChapters.map((chapter) => ({
+          accessState: 'available',
+          blockers: [],
+          chapterId: chapter.id,
+          description: chapter.description,
+          mastery: null,
+          progressStatus: 'not_started',
+          reviewCompleted: 0,
+          reviewTotal: 5,
+          sortOrder: chapter.sortOrder,
+          stableCode: chapter.stableCode,
+          templateId: chapter.template.id,
+          templateQuestionCount: chapter.template.questionCount,
+          title: chapter.title,
+        })),
+      ),
     );
-    renderMissionSelect(learningStub([]));
+    renderMissionSelect();
     // 全域 matchMedia stub matches:false → narrow 容量 1 → 5 頁。
     expect(await screen.findByText('第 1 / 5 頁')).toBeVisible();
     expect(

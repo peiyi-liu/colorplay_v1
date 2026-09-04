@@ -13,6 +13,7 @@ describe('ProfileSummary', () => {
           role: 'student',
           timezone: 'Asia/Taipei',
           reducedMotion: false,
+          registrationComplete: true,
         }}
       />,
     );

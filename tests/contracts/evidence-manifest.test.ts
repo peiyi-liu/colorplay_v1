@@ -108,7 +108,7 @@ describe('acceptance metadata', () => {
     );
 
     const acceptanceIds = countAcceptanceIds(markdown);
-    expect(EXPECTED_ACCEPTANCE_COUNT).toBe(122);
+    expect(EXPECTED_ACCEPTANCE_COUNT).toBe(138);
     expect(phaseZeroAcceptanceIds).toHaveLength(38);
     expect(acceptanceIds).toHaveLength(EXPECTED_ACCEPTANCE_COUNT);
     expect(acceptanceIds).toEqual(
@@ -861,8 +861,15 @@ describe('acceptance metadata', () => {
       'utf8',
     );
 
+    // Task 14 review Finding 3：admin-security／admin-viewports 有真正的
+    // 執行順序依賴（viewports 重用 security 留下的 TOTP secret），改用
+    // 三個獨立 chromium-admin-* project + `dependencies` 明確表達，不再
+    // 只靠 workers:1／檔名字母序這種未言明的假設。
     expect(playwrightConfig.projects?.map(({ name }) => name)).toEqual([
       'chromium',
+      'chromium-admin-security',
+      'chromium-admin-teacher-accounts',
+      'chromium-admin-viewports',
       'firefox',
       'webkit',
     ]);
@@ -874,13 +881,32 @@ describe('acceptance metadata', () => {
       trace: 'on-first-retry',
       video: 'retain-on-failure',
     });
+    const adminViewportsProject = playwrightConfig.projects?.find(
+      ({ name }) => name === 'chromium-admin-viewports',
+    );
+    const adminTeacherAccountsProject = playwrightConfig.projects?.find(
+      ({ name }) => name === 'chromium-admin-teacher-accounts',
+    );
+    expect(adminTeacherAccountsProject?.dependencies).toEqual([
+      'chromium-admin-security',
+    ]);
+    expect(adminViewportsProject?.dependencies).toEqual([
+      'chromium-admin-teacher-accounts',
+    ]);
     for (const project of playwrightConfig.projects?.filter(
-      ({ name }) => name !== 'chromium',
+      ({ name }) => name === 'firefox' || name === 'webkit',
     ) ?? []) {
       expect(project.testIgnore).toEqual([
         /\.visual\.spec\.ts$/u,
         /auth-guards\.spec\.ts$/u,
         /login\.spec\.ts$/u,
+        // Task 14：admin TOTP enrollment 是一次性動作，跨瀏覽器 project
+        // 重跑會在第二個 project 卡在已綁定狀態，比照 login.spec.ts
+        // 只在 chromium 執行一次。
+        /admin-(security|teacher-accounts|viewports)\.spec\.ts$/u,
+        /(?:\.harness|learning-map-generated-board\.visual|student-auth-shell-polish|student-hud\.visual)\.spec\.ts$/u,
+        /chapter-sequence\.spec\.ts$/u,
+        /learning-map-(?:desktop-cover|fullscreen|layout-refinement|viewport)\.spec\.ts$/u,
       ]);
     }
     expect(foundationSpec).not.toContain('chromium.launch');

@@ -1,0 +1,4766 @@
+{
+  "version": 1,
+  "source_sha256": "853131fbe718265ab88e52ba931777bc5a8366da1a9c601fcecd7ab09b620b3f",
+  "resources": [
+    {
+      "resource": "achievement_definitions",
+      "domain": "rewards",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "stable_code",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "display_name",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "description",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "visibility",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "sort_order",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "badge_key",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "rule_type",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "rule_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "rule_parameters",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "achievement_progress",
+      "domain": "rewards",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "state",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "computed_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "achievement_definition_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "definition_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "current_value",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "target_value",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "last_source_type",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "last_source_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "achievement_unlocks",
+      "domain": "rewards",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "unlocked_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "achievement_definition_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "definition_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_type",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "admin_audit_events",
+      "domain": "security",
+      "surface": "audit",
+      "export": false,
+      "columns": [
+        {
+          "name": "occurred_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "action",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "target_type",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "result",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "actor_type",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "actor_principal_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "admin_session_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "auth_session_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "target_principal_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "correlation_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "reason_or_purpose_redacted",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "mfa_age_seconds",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "before_after_redacted",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_summary_redacted",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "compensates_event_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "runbook_operation_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "admin_audit_principals",
+      "domain": "security",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "tombstoned_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "personal",
+          "mask_strategy": "service_only",
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "admin_command_authorizations",
+      "domain": "security",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "issued_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "expires_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "consumed_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "actor_principal_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "command_name",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "auth_session_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "idempotency_key",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_hash",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "bound_factor_id_snapshot",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "admin_command_executions",
+      "domain": "security",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "completed_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "result_code",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "actor_principal_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "command_name",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "receipt_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "audit_event_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "redacted_result_receipt",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "idempotency_key",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_hash",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "admin_denial_counters",
+      "domain": "security",
+      "surface": "health",
+      "export": false,
+      "columns": [
+        {
+          "name": "window_started_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "window_ends_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "resource_key",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "safe_reason_code",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "count",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "admin_invitations",
+      "domain": "security",
+      "surface": "access",
+      "export": false,
+      "columns": [
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "expires_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "accepted_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "revoked_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "issuer_principal_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "accepted_principal_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "invited_email",
+          "class": "personal",
+          "mask_strategy": "email_mask",
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "token_hash",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "admin_security_identities",
+      "domain": "security",
+      "surface": "access",
+      "export": false,
+      "columns": [
+        {
+          "name": "state",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "admin_user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "audit_principal_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "failed_totp_attempts",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "locked_until",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "lifecycle_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "bound_factor_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "admin_security_operations",
+      "domain": "security",
+      "surface": "health",
+      "export": false,
+      "columns": [
+        {
+          "name": "state",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "current_step",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "next_retry_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "operation_type",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "target_principal_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "attempt_count",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "last_safe_error_code",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "correlation_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "manual_retry_claim_token",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "admin_sessions",
+      "domain": "security",
+      "surface": "access",
+      "export": false,
+      "columns": [
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "last_activity_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "absolute_expires_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "revoked_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "revoke_reason",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "admin_user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "audit_principal_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "last_totp_verified_at",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "correlation_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "device_summary",
+          "class": "personal",
+          "mask_strategy": "truncate_120",
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "auth_session_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "bound_factor_id_snapshot",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "assignment_attempts",
+      "domain": "assessments",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "started_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "completed_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "assignment_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "attempt_number",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "quiz_session_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "live_session_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "passed",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "assignment_targets",
+      "domain": "assessments",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "assignment_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "assignments",
+      "domain": "assessments",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "title",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "activity_type",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "classroom_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "owner_teacher_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "quiz_template_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "live_activity_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "available_from",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "deadline_at",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "attempt_limit",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "passing_rule",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "rules_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "avatar_frames",
+      "domain": "rewards",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "stable_code",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "name",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "gradient_start",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "gradient_end",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "cost_tokens",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "sort_order",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "blooks",
+      "domain": "rewards",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "stable_code",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "name",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "emoji",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "cost_tokens",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "sort_order",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "chapters",
+      "domain": "content",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "stable_code",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "title",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "description",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "sort_order",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "course_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "classroom_join_rate_limits",
+      "domain": "classrooms",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "failure_count",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "scope",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "subject_hash",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "window_started_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "classroom_members",
+      "domain": "classrooms",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "joined_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "activated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "deactivated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "classroom_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "member_role",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "member_ref",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "last_join_request_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "classrooms",
+      "domain": "classrooms",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "name",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "owner_teacher_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "join_code_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "join_code_rotated_at",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "join_code_hash",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "join_code",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "content_imports",
+      "domain": "content",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "dry_run",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "total_rows",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "valid_rows",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "error_rows",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "warning_rows",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "teacher_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "filename",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "row_errors",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_ids",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "content_publication_events",
+      "domain": "content",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "event_type",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "content_type",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "content_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "actor_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "content_versions",
+      "domain": "content",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "version",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "content_type",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "content_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "frozen_payload",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "payload_hash",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_by",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "course_progression_settings",
+      "domain": "learning",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "course_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "mode",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "rules_version",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "courses",
+      "domain": "content",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "stable_code",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "title",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "description",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "sort_order",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "external_activities",
+      "domain": "content",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "title",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "owner_teacher_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "classroom_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "chapter_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "url",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "hint_events",
+      "domain": "learning",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "hint_level",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "session_question_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "served_content",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "live_activities",
+      "domain": "live",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "title",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "owner_teacher_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "quiz_template_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_time_limit_seconds",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "rules_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "scheduled_for",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "question_display",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "section_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "live_answers",
+      "domain": "live",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "answer_status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "submitted_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "session_question_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "participant_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "selected_option_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "response_ms",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "score_delta",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "idempotency_key",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "live_join_throttle",
+      "domain": "live",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "window_started_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "failure_count",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "live_participants",
+      "domain": "live",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "joined_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "left_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "session_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "score",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "final_rank",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "team_number",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "current_streak",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "eligible_from_position",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "live_session_questions",
+      "domain": "live",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "position",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "opened_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "deadline_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "closed_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "session_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_stable_code",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "prompt",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "public_options",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "correct_option_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "explanation",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "chapter_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "section_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "live_sessions",
+      "domain": "live",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "state",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "opened_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "completed_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "cancelled_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "live_activity_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "host_teacher_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "classroom_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "assignment_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "join_code_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "current_position",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "state_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_count",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "rules_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "paused_remaining_ms",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "mode",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "team_count",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "join_code_hash",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "mastery_attempts",
+      "domain": "learning",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "attempt_number",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "is_correct",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "session_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "selected_option_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "mastery_hint_events",
+      "domain": "learning",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "hint_level",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "session_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "mastery_sessions",
+      "domain": "learning",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "position",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "completed_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "chapter_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_ids",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_versions",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "rules_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "mistake_items",
+      "domain": "learning",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "first_wrong_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "last_event_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "origin_answer_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "origin_live_answer_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "profiles",
+      "domain": "users",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "display_name",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "role",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "timezone",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "active_blook_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "reduced_motion",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "active_frame_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "full_name",
+          "class": "personal",
+          "mask_strategy": "first_char_mask",
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "login_account",
+          "class": "personal",
+          "mask_strategy": "last3_mask",
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "contact_email",
+          "class": "personal",
+          "mask_strategy": "email_mask",
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "question_hints",
+      "domain": "content",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "hint_level",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "content",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "question_options",
+      "domain": "content",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "option_key",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "sort_order",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "option_text",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "is_correct",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "questions",
+      "domain": "content",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "stable_code",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "sort_order",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "subtopic_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_type",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "prompt",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "explanation",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "bank_kind",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "quiz_answers",
+      "domain": "assessments",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "answer_status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "answered_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "session_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "session_question_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "selected_option_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "correct_option_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "response_ms",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "score_delta",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "provisional_xp",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "provisional_tokens",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "idempotency_key",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "quiz_session_questions",
+      "domain": "assessments",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "position",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "started_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "deadline_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "session_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_stable_code",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "prompt",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "explanation",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "frozen_options",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "correct_option_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "quiz_sessions",
+      "domain": "assessments",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "started_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "completed_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "template_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "chapter_title",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_count",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "answered_count",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "correct_count",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "total_score",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "xp_awarded",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "tokens_awarded",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "game_rules_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "reward_rate_percent",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "purpose",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "assignment_attempt_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "client_request_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "abandoned_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "classroom_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "quiz_templates",
+      "domain": "content",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "stable_code",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "title",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_count",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "chapter_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "section_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "remediation_attempts",
+      "domain": "learning",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "result",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "mistake_item_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "session_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "answer_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "review_card_media",
+      "domain": "content",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "alt_text",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "sort_order",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "review_card_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "card_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "asset_path",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "review_cards",
+      "domain": "content",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "stable_code",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "group_label",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "title",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "requires_recompletion",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "sort_order",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "subtopic_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "content",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "review_progress",
+      "domain": "learning",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "completed_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "review_card_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "card_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "rules_version",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "sections",
+      "domain": "content",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "stable_code",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "title",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "description",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "sort_order",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "chapter_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "student_chapter_unlocks",
+      "domain": "learning",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "chapter_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "rules_version",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_chapter_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "unlocked_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "student_registration_claims",
+      "domain": "users",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "created_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "lease_expires_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "lease_token",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "state",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "subtopics",
+      "domain": "content",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "stable_code",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "title",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": true,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "description",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "sort_order",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "section_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "user_blooks",
+      "domain": "rewards",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "acquired_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "blook_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "user_frames",
+      "domain": "rewards",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "acquired_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "frame_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "wallet_transactions",
+      "domain": "rewards",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "amount",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "reason",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_type",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "source_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "wallets",
+      "domain": "rewards",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "token_balance",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "xp_transactions",
+      "domain": "rewards",
+      "surface": "browser",
+      "export": false,
+      "columns": [
+        {
+          "name": "created_at",
+          "class": "open",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": true
+        },
+        {
+          "name": "id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "amount",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "reason",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_type",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": true,
+          "sortable": false
+        },
+        {
+          "name": "source_id",
+          "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    }
+  ]
+}

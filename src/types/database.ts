@@ -181,6 +181,485 @@ export type Database = {
           },
         ]
       }
+      admin_audit_events: {
+        Row: {
+          action: string
+          actor_principal_id: string | null
+          actor_type: Database["public"]["Enums"]["admin_actor_type"]
+          admin_session_id: string | null
+          auth_session_id: string | null
+          before_after_redacted: Json | null
+          compensates_event_id: string | null
+          correlation_id: string | null
+          id: string
+          mfa_age_seconds: number | null
+          occurred_at: string
+          reason_or_purpose_redacted: string | null
+          request_id: string
+          result: string
+          runbook_operation_id: string | null
+          source_summary_redacted: string | null
+          target_principal_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action: string
+          actor_principal_id?: string | null
+          actor_type: Database["public"]["Enums"]["admin_actor_type"]
+          admin_session_id?: string | null
+          auth_session_id?: string | null
+          before_after_redacted?: Json | null
+          compensates_event_id?: string | null
+          correlation_id?: string | null
+          id?: string
+          mfa_age_seconds?: number | null
+          occurred_at?: string
+          reason_or_purpose_redacted?: string | null
+          request_id?: string
+          result: string
+          runbook_operation_id?: string | null
+          source_summary_redacted?: string | null
+          target_principal_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action?: string
+          actor_principal_id?: string | null
+          actor_type?: Database["public"]["Enums"]["admin_actor_type"]
+          admin_session_id?: string | null
+          auth_session_id?: string | null
+          before_after_redacted?: Json | null
+          compensates_event_id?: string | null
+          correlation_id?: string | null
+          id?: string
+          mfa_age_seconds?: number | null
+          occurred_at?: string
+          reason_or_purpose_redacted?: string | null
+          request_id?: string
+          result?: string
+          runbook_operation_id?: string | null
+          source_summary_redacted?: string | null
+          target_principal_id?: string | null
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_events_actor_principal_id_fkey"
+            columns: ["actor_principal_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_audit_events_compensates_event_id_fkey"
+            columns: ["compensates_event_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_audit_events_target_principal_id_fkey"
+            columns: ["target_principal_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_audit_principals: {
+        Row: {
+          created_at: string
+          id: string
+          tombstoned_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tombstoned_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tombstoned_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      admin_command_authorizations: {
+        Row: {
+          actor_principal_id: string
+          auth_session_id: string
+          bound_factor_id_snapshot: string
+          command_name: string
+          consumed_at: string | null
+          expires_at: string
+          id: string
+          idempotency_key: string
+          issued_at: string
+          request_hash: string
+        }
+        Insert: {
+          actor_principal_id: string
+          auth_session_id: string
+          bound_factor_id_snapshot: string
+          command_name: string
+          consumed_at?: string | null
+          expires_at: string
+          id?: string
+          idempotency_key: string
+          issued_at?: string
+          request_hash: string
+        }
+        Update: {
+          actor_principal_id?: string
+          auth_session_id?: string
+          bound_factor_id_snapshot?: string
+          command_name?: string
+          consumed_at?: string | null
+          expires_at?: string
+          id?: string
+          idempotency_key?: string
+          issued_at?: string
+          request_hash?: string
+        }
+        Relationships: []
+      }
+      admin_command_executions: {
+        Row: {
+          actor_principal_id: string
+          audit_event_id: string | null
+          command_name: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          idempotency_key: string
+          receipt_id: string | null
+          redacted_result_receipt: Json | null
+          request_hash: string
+          request_id: string
+          result_code: string | null
+        }
+        Insert: {
+          actor_principal_id: string
+          audit_event_id?: string | null
+          command_name: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          receipt_id?: string | null
+          redacted_result_receipt?: Json | null
+          request_hash: string
+          request_id?: string
+          result_code?: string | null
+        }
+        Update: {
+          actor_principal_id?: string
+          audit_event_id?: string | null
+          command_name?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          receipt_id?: string | null
+          redacted_result_receipt?: Json | null
+          request_hash?: string
+          request_id?: string
+          result_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_command_executions_actor_principal_id_fkey"
+            columns: ["actor_principal_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_command_executions_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "admin_command_authorizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_denial_counters: {
+        Row: {
+          count: number
+          resource_key: string
+          safe_reason_code: string
+          window_ends_at: string
+          window_started_at: string
+        }
+        Insert: {
+          count?: number
+          resource_key: string
+          safe_reason_code: string
+          window_ends_at?: string
+          window_started_at?: string
+        }
+        Update: {
+          count?: number
+          resource_key?: string
+          safe_reason_code?: string
+          window_ends_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
+      }
+      admin_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_principal_id: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          invited_email: string
+          issuer_principal_id: string
+          revoked_at: string | null
+          status: Database["public"]["Enums"]["admin_invitation_status"]
+          token_hash: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_principal_id?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          invited_email: string
+          issuer_principal_id: string
+          revoked_at?: string | null
+          status?: Database["public"]["Enums"]["admin_invitation_status"]
+          token_hash: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_principal_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invited_email?: string
+          issuer_principal_id?: string
+          revoked_at?: string | null
+          status?: Database["public"]["Enums"]["admin_invitation_status"]
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_invitations_accepted_principal_id_fkey"
+            columns: ["accepted_principal_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_invitations_issuer_principal_id_fkey"
+            columns: ["issuer_principal_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_security_identities: {
+        Row: {
+          admin_user_id: string
+          audit_principal_id: string
+          bound_factor_id: string | null
+          created_at: string
+          failed_totp_attempts: number
+          lifecycle_version: number
+          locked_until: string | null
+          state: Database["public"]["Enums"]["admin_identity_state"]
+          updated_at: string
+        }
+        Insert: {
+          admin_user_id: string
+          audit_principal_id: string
+          bound_factor_id?: string | null
+          created_at?: string
+          failed_totp_attempts?: number
+          lifecycle_version?: number
+          locked_until?: string | null
+          state?: Database["public"]["Enums"]["admin_identity_state"]
+          updated_at?: string
+        }
+        Update: {
+          admin_user_id?: string
+          audit_principal_id?: string
+          bound_factor_id?: string | null
+          created_at?: string
+          failed_totp_attempts?: number
+          lifecycle_version?: number
+          locked_until?: string | null
+          state?: Database["public"]["Enums"]["admin_identity_state"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_security_identities_audit_principal_id_fkey"
+            columns: ["audit_principal_id"]
+            isOneToOne: true
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_security_operations: {
+        Row: {
+          attempt_count: number
+          correlation_id: string | null
+          created_at: string
+          current_step: number
+          id: string
+          last_safe_error_code: string | null
+          manual_retry_claim_token: string | null
+          next_retry_at: string | null
+          operation_type: Database["public"]["Enums"]["admin_operation_type"]
+          state: Database["public"]["Enums"]["admin_operation_state"]
+          target_principal_id: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          correlation_id?: string | null
+          created_at?: string
+          current_step?: number
+          id?: string
+          last_safe_error_code?: string | null
+          manual_retry_claim_token?: string | null
+          next_retry_at?: string | null
+          operation_type: Database["public"]["Enums"]["admin_operation_type"]
+          state?: Database["public"]["Enums"]["admin_operation_state"]
+          target_principal_id: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          correlation_id?: string | null
+          created_at?: string
+          current_step?: number
+          id?: string
+          last_safe_error_code?: string | null
+          manual_retry_claim_token?: string | null
+          next_retry_at?: string | null
+          operation_type?: Database["public"]["Enums"]["admin_operation_type"]
+          state?: Database["public"]["Enums"]["admin_operation_state"]
+          target_principal_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_security_operations_target_principal_id_fkey"
+            columns: ["target_principal_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_sensitivity_catalog: {
+        Row: {
+          class: string
+          column_name: string
+          domain: string
+          filterable: boolean
+          mask_strategy: string | null
+          resource: string
+          searchable: boolean
+          sortable: boolean
+          surface: string
+        }
+        Insert: {
+          class: string
+          column_name: string
+          domain: string
+          filterable: boolean
+          mask_strategy?: string | null
+          resource: string
+          searchable: boolean
+          sortable: boolean
+          surface: string
+        }
+        Update: {
+          class?: string
+          column_name?: string
+          domain?: string
+          filterable?: boolean
+          mask_strategy?: string | null
+          resource?: string
+          searchable?: boolean
+          sortable?: boolean
+          surface?: string
+        }
+        Relationships: []
+      }
+      admin_sessions: {
+        Row: {
+          absolute_expires_at: string
+          admin_user_id: string
+          audit_principal_id: string
+          auth_session_id: string
+          bound_factor_id_snapshot: string
+          correlation_id: string | null
+          created_at: string
+          device_summary: string | null
+          id: string
+          last_activity_at: string
+          last_totp_verified_at: string
+          revoke_reason: string | null
+          revoked_at: string | null
+        }
+        Insert: {
+          absolute_expires_at: string
+          admin_user_id: string
+          audit_principal_id: string
+          auth_session_id: string
+          bound_factor_id_snapshot: string
+          correlation_id?: string | null
+          created_at?: string
+          device_summary?: string | null
+          id?: string
+          last_activity_at?: string
+          last_totp_verified_at?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+        }
+        Update: {
+          absolute_expires_at?: string
+          admin_user_id?: string
+          audit_principal_id?: string
+          auth_session_id?: string
+          bound_factor_id_snapshot?: string
+          correlation_id?: string | null
+          created_at?: string
+          device_summary?: string | null
+          id?: string
+          last_activity_at?: string
+          last_totp_verified_at?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_sessions_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_security_identities"
+            referencedColumns: ["admin_user_id"]
+          },
+          {
+            foreignKeyName: "admin_sessions_audit_principal_id_fkey"
+            columns: ["audit_principal_id"]
+            isOneToOne: false
+            referencedRelation: "admin_audit_principals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assignment_attempts: {
         Row: {
           assignment_id: string
@@ -485,6 +964,30 @@ export type Database = {
           },
         ]
       }
+      classroom_join_rate_limits: {
+        Row: {
+          failure_count: number
+          scope: string
+          subject_hash: string
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          failure_count?: number
+          scope: string
+          subject_hash: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Update: {
+          failure_count?: number
+          scope?: string
+          subject_hash?: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
+      }
       classroom_members: {
         Row: {
           activated_at: string
@@ -493,6 +996,7 @@ export type Database = {
           deactivated_at: string | null
           joined_at: string
           last_join_request_id: string
+          member_ref: string
           member_role: Database["public"]["Enums"]["classroom_member_role"]
           status: Database["public"]["Enums"]["classroom_member_status"]
           updated_at: string
@@ -505,6 +1009,7 @@ export type Database = {
           deactivated_at?: string | null
           joined_at?: string
           last_join_request_id: string
+          member_ref?: string
           member_role: Database["public"]["Enums"]["classroom_member_role"]
           status?: Database["public"]["Enums"]["classroom_member_status"]
           updated_at?: string
@@ -517,6 +1022,7 @@ export type Database = {
           deactivated_at?: string | null
           joined_at?: string
           last_join_request_id?: string
+          member_ref?: string
           member_role?: Database["public"]["Enums"]["classroom_member_role"]
           status?: Database["public"]["Enums"]["classroom_member_status"]
           updated_at?: string
@@ -543,6 +1049,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          join_code: string | null
           join_code_hash: string
           join_code_rotated_at: string
           join_code_version: number
@@ -554,6 +1061,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          join_code?: string | null
           join_code_hash: string
           join_code_rotated_at?: string
           join_code_version?: number
@@ -565,6 +1073,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          join_code?: string | null
           join_code_hash?: string
           join_code_rotated_at?: string
           join_code_version?: number
@@ -720,6 +1229,35 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_progression_settings: {
+        Row: {
+          course_id: string
+          mode: string
+          rules_version: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          mode?: string
+          rules_version?: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          mode?: string
+          rules_version?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_progression_settings_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: true
+            referencedRelation: "courses"
             referencedColumns: ["id"]
           },
         ]
@@ -1070,6 +1608,7 @@ export type Database = {
       }
       live_session_questions: {
         Row: {
+          chapter_id: string | null
           closed_at: string | null
           correct_option_id: string
           deadline_at: string | null
@@ -1081,9 +1620,11 @@ export type Database = {
           public_options: Json
           question_stable_code: string
           question_version: number
+          section_id: string | null
           session_id: string
         }
         Insert: {
+          chapter_id?: string | null
           closed_at?: string | null
           correct_option_id: string
           deadline_at?: string | null
@@ -1095,9 +1636,11 @@ export type Database = {
           public_options: Json
           question_stable_code: string
           question_version: number
+          section_id?: string | null
           session_id: string
         }
         Update: {
+          chapter_id?: string | null
           closed_at?: string | null
           correct_option_id?: string
           deadline_at?: string | null
@@ -1109,9 +1652,24 @@ export type Database = {
           public_options?: Json
           question_stable_code?: string
           question_version?: number
+          section_id?: string | null
           session_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "live_session_questions_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_session_questions_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "live_session_questions_session_id_fkey"
             columns: ["session_id"]
@@ -1440,6 +1998,7 @@ export type Database = {
         Row: {
           active_blook_id: string
           active_frame_id: string
+          contact_email: string | null
           created_at: string
           display_name: string
           full_name: string | null
@@ -1453,6 +2012,7 @@ export type Database = {
         Insert: {
           active_blook_id: string
           active_frame_id: string
+          contact_email?: string | null
           created_at?: string
           display_name: string
           full_name?: string | null
@@ -1466,6 +2026,7 @@ export type Database = {
         Update: {
           active_blook_id?: string
           active_frame_id?: string
+          contact_email?: string | null
           created_at?: string
           display_name?: string
           full_name?: string | null
@@ -1565,6 +2126,7 @@ export type Database = {
       }
       questions: {
         Row: {
+          bank_kind: string
           created_at: string
           explanation: string
           id: string
@@ -1578,6 +2140,7 @@ export type Database = {
           version: number
         }
         Insert: {
+          bank_kind?: string
           created_at?: string
           explanation: string
           id?: string
@@ -1591,6 +2154,7 @@ export type Database = {
           version?: number
         }
         Update: {
+          bank_kind?: string
           created_at?: string
           explanation?: string
           id?: string
@@ -1801,9 +2365,11 @@ export type Database = {
       }
       quiz_sessions: {
         Row: {
+          abandoned_at: string | null
           answered_count: number
           assignment_attempt_id: string | null
           chapter_title: string
+          classroom_id: string | null
           client_request_id: string
           completed_at: string | null
           correct_count: number
@@ -1821,9 +2387,11 @@ export type Database = {
           xp_awarded: number
         }
         Insert: {
+          abandoned_at?: string | null
           answered_count?: number
           assignment_attempt_id?: string | null
           chapter_title: string
+          classroom_id?: string | null
           client_request_id: string
           completed_at?: string | null
           correct_count?: number
@@ -1841,9 +2409,11 @@ export type Database = {
           xp_awarded?: number
         }
         Update: {
+          abandoned_at?: string | null
           answered_count?: number
           assignment_attempt_id?: string | null
           chapter_title?: string
+          classroom_id?: string | null
           client_request_id?: string
           completed_at?: string | null
           correct_count?: number
@@ -1869,6 +2439,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "quiz_sessions_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "quiz_sessions_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -1883,6 +2460,7 @@ export type Database = {
           created_at: string
           id: string
           question_count: number
+          section_id: string | null
           stable_code: string
           status: Database["public"]["Enums"]["content_status"]
           title: string
@@ -1893,6 +2471,7 @@ export type Database = {
           created_at?: string
           id?: string
           question_count?: number
+          section_id?: string | null
           stable_code: string
           status?: Database["public"]["Enums"]["content_status"]
           title: string
@@ -1903,6 +2482,7 @@ export type Database = {
           created_at?: string
           id?: string
           question_count?: number
+          section_id?: string | null
           stable_code?: string
           status?: Database["public"]["Enums"]["content_status"]
           title?: string
@@ -1914,6 +2494,13 @@ export type Database = {
             columns: ["chapter_id"]
             isOneToOne: false
             referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_templates_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
             referencedColumns: ["id"]
           },
         ]
@@ -2157,6 +2744,87 @@ export type Database = {
             columns: ["chapter_id"]
             isOneToOne: false
             referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_chapter_unlocks: {
+        Row: {
+          chapter_id: string
+          rules_version: string
+          source_chapter_id: string | null
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          chapter_id: string
+          rules_version?: string
+          source_chapter_id?: string | null
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string
+          rules_version?: string
+          source_chapter_id?: string | null
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_chapter_unlocks_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_chapter_unlocks_source_chapter_id_fkey"
+            columns: ["source_chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_chapter_unlocks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_registration_claims: {
+        Row: {
+          created_at: string
+          lease_expires_at: string | null
+          lease_token: string | null
+          state: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          state?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          state?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_registration_claims_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2422,6 +3090,8 @@ export type Database = {
             | Database["public"]["Enums"]["quiz_answer_status"]
             | null
           answered_count: number | null
+          challenge_kind: string | null
+          chapter_sort_order: number | null
           chapter_title: string | null
           completed_at: string | null
           correct_count: number | null
@@ -2438,6 +3108,8 @@ export type Database = {
           response_ms: number | null
           reward_rate_percent: number | null
           score_delta: number | null
+          section_sort_order: number | null
+          section_title: string | null
           selected_option_id: string | null
           session_id: string | null
           session_question_id: string | null
@@ -2491,6 +3163,8 @@ export type Database = {
       }
     }
     Functions: {
+      abandon_quiz_session: { Args: { session_id: string }; Returns: Json }
+      accept_admin_invitation: { Args: { p_token: string }; Returns: Json }
       achievement_metric_value: {
         Args: {
           target_rule_type: Database["public"]["Enums"]["achievement_rule_type"]
@@ -2498,10 +3172,277 @@ export type Database = {
         }
         Returns: number
       }
+      activate_course_sequential: {
+        Args: { p_course_id: string }
+        Returns: Json
+      }
       activate_next_quiz_question: {
         Args: { session_id: string }
         Returns: Json
       }
+      admin_get_resource_detail:
+        | {
+            Args: { p_domain: string; p_resource: string; p_row_id: string }
+            Returns: Json
+          }
+        | {
+            Args: { p_domain: string; p_resource: string; p_row_key: Json }
+            Returns: Json
+          }
+        | {
+            Args: { p_domain: string; p_resource: string; p_row_token: string }
+            Returns: Json
+          }
+      admin_get_teacher: { Args: { p_teacher_id: string }; Returns: Json }
+      admin_get_teacher_operation: {
+        Args: { p_command_name: string; p_idempotency_key: string }
+        Returns: Json
+      }
+      admin_health_summary: { Args: never; Returns: Json }
+      admin_internal_access_page: {
+        Args: {
+          p_cursor?: string
+          p_direction: string
+          p_id_column: string
+          p_resource: string
+        }
+        Returns: Json
+      }
+      admin_internal_append_audit: {
+        Args: {
+          p_action: string
+          p_actor_principal_id: string
+          p_actor_type: Database["public"]["Enums"]["admin_actor_type"]
+          p_admin_session_id: string
+          p_auth_session_id: string
+          p_before_after?: Json
+          p_compensates_event_id?: string
+          p_correlation_id?: string
+          p_mfa_age_seconds?: number
+          p_reason_or_purpose?: string
+          p_result: string
+          p_runbook_operation_id?: string
+          p_target_principal_id: string
+          p_target_type: string
+        }
+        Returns: string
+      }
+      admin_internal_authorize: { Args: never; Returns: Json }
+      admin_internal_base64url_encode: {
+        Args: { p_bytes: string }
+        Returns: string
+      }
+      admin_internal_canonical_hash: {
+        Args: { p_fields: Json }
+        Returns: string
+      }
+      admin_internal_catalog_projection: {
+        Args: { p_resource: string; p_surface: string }
+        Returns: string
+      }
+      admin_internal_command_deny: {
+        Args: {
+          p_code: string
+          p_command_name: string
+          p_mfa_age_seconds?: number
+          p_reason_or_purpose: string
+          p_target_principal_id: string
+        }
+        Returns: Json
+      }
+      admin_internal_complete_reset_step2: {
+        Args: { p_claim_token: string; p_operation_id: string }
+        Returns: Json
+      }
+      admin_internal_complete_reset_step3: {
+        Args: { p_claim_token: string; p_operation_id: string }
+        Returns: Json
+      }
+      admin_internal_decode_row_key: {
+        Args: { p_token: string }
+        Returns: Json
+      }
+      admin_internal_denial_envelope: {
+        Args: { p_code: string; p_request_id: string }
+        Returns: Json
+      }
+      admin_internal_denial_message: {
+        Args: { p_code: string }
+        Returns: string
+      }
+      admin_internal_denial_retryable: {
+        Args: { p_code: string }
+        Returns: boolean
+      }
+      admin_internal_deny: {
+        Args: {
+          p_action: string
+          p_actor_principal_id: string
+          p_actor_type: Database["public"]["Enums"]["admin_actor_type"]
+          p_admin_session_id: string
+          p_auth_session_id: string
+          p_code: string
+          p_mfa_age_seconds?: number
+          p_reason_or_purpose?: string
+          p_resource_key: string
+          p_target_principal_id: string
+          p_target_type: string
+        }
+        Returns: Json
+      }
+      admin_internal_encode_row_key: {
+        Args: { p_key_columns: string[]; p_row: Json }
+        Returns: string
+      }
+      admin_internal_execute_command: {
+        Args: {
+          p_command_name: string
+          p_idempotency_key: string
+          p_receipt_id: string
+          p_request_hash: string
+          p_requires_fresh_totp: boolean
+        }
+        Returns: Json
+      }
+      admin_internal_finalize_command: {
+        Args: {
+          p_before_after: Json
+          p_command_name: string
+          p_gate: Json
+          p_idempotency_key: string
+          p_reason_or_purpose: string
+          p_receipt_id: string
+          p_request_hash: string
+          p_result: Json
+          p_target_principal_id: string
+        }
+        Returns: Json
+      }
+      admin_internal_isolate_factor: {
+        Args: {
+          p_actor_type: Database["public"]["Enums"]["admin_actor_type"]
+          p_admin_user_id: string
+          p_correlation_id: string
+          p_runbook_operation_id: string
+        }
+        Returns: Json
+      }
+      admin_internal_key_columns: {
+        Args: { p_resource: string }
+        Returns: string[]
+      }
+      admin_internal_lifecycle_lock: { Args: never; Returns: undefined }
+      admin_internal_list_binding: {
+        Args: {
+          p_domain: string
+          p_filters: Json
+          p_resource: string
+          p_sort_column: string
+        }
+        Returns: string
+      }
+      admin_internal_mask: {
+        Args: { p_strategy: string; p_value: string }
+        Returns: string
+      }
+      admin_internal_record_denial: {
+        Args: { p_resource_key: string; p_safe_reason_code: string }
+        Returns: undefined
+      }
+      admin_internal_reveal_field_with_key: {
+        Args: {
+          p_audit_locator: Json
+          p_column: string
+          p_domain: string
+          p_idempotency_key: string
+          p_purpose: string
+          p_receipt_id: string
+          p_request_hash: string
+          p_resource: string
+          p_row_key: Json
+        }
+        Returns: Json
+      }
+      admin_internal_service_deny: {
+        Args: {
+          p_action: string
+          p_actor_principal_id: string
+          p_actor_type: Database["public"]["Enums"]["admin_actor_type"]
+          p_code: string
+          p_correlation_id?: string
+          p_resource_key: string
+          p_runbook_operation_id?: string
+          p_target_principal_id: string
+          p_target_type: string
+        }
+        Returns: Json
+      }
+      admin_list_admins: { Args: { p_cursor?: string }; Returns: Json }
+      admin_list_invitations: { Args: { p_cursor?: string }; Returns: Json }
+      admin_list_resource: {
+        Args: {
+          p_cursor?: string
+          p_domain: string
+          p_filters?: Json
+          p_resource: string
+          p_sort?: Json
+        }
+        Returns: Json
+      }
+      admin_list_sessions: { Args: { p_cursor?: string }; Returns: Json }
+      admin_list_teachers: {
+        Args: { p_cursor?: string; p_search?: string; p_state?: string }
+        Returns: Json
+      }
+      admin_query_audit: {
+        Args: {
+          p_action?: string
+          p_actor_principal_id?: string
+          p_cursor?: string
+          p_from?: string
+          p_result?: string
+          p_target_type?: string
+          p_to?: string
+        }
+        Returns: Json
+      }
+      admin_reveal_field:
+        | {
+            Args: {
+              p_column: string
+              p_domain: string
+              p_idempotency_key: string
+              p_purpose: string
+              p_receipt_id: string
+              p_resource: string
+              p_row_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_column: string
+              p_domain: string
+              p_idempotency_key: string
+              p_purpose: string
+              p_receipt_id: string
+              p_resource: string
+              p_row_key: Json
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_column: string
+              p_domain: string
+              p_idempotency_key: string
+              p_purpose: string
+              p_receipt_id: string
+              p_resource: string
+              p_row_token: string
+            }
+            Returns: Json
+          }
       advance_live_session: {
         Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
@@ -2527,6 +3468,10 @@ export type Database = {
         Args: { p_value: string }
         Returns: undefined
       }
+      assert_student_chapter_access: {
+        Args: { p_chapter_id: string }
+        Returns: undefined
+      }
       build_assignment_attempt_payload: {
         Args: { target_attempt_id: string }
         Returns: Json
@@ -2542,6 +3487,40 @@ export type Database = {
       cancel_live_session: {
         Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
+      }
+      chapter_access_blockers: { Args: { p_chapter_id: string }; Returns: Json }
+      chapter_content_is_available: {
+        Args: { p_chapter_id: string }
+        Returns: boolean
+      }
+      claim_student_registration: {
+        Args: { p_attempt_id: string }
+        Returns: string
+      }
+      cleanup_hosted_admin_fixtures: {
+        Args: {
+          p_admin_command_authorization_ids: string[]
+          p_admin_command_execution_ids: string[]
+          p_admin_invitation_ids: string[]
+          p_admin_principal_auth_user_ids: string[]
+          p_admin_principal_ids: string[]
+          p_admin_security_operation_ids: string[]
+          p_admin_session_ids: string[]
+          p_auth_user_ids: string[]
+          p_auth_user_labels: string[]
+          p_cleanup_operation_id: string
+          p_expected_migration_head: string
+          p_expected_migration_ledger_sha256: string
+          p_profile_ids: string[]
+          p_project_ref: string
+          p_run_id: string
+          p_teacher_account_operation_ids: string[]
+        }
+        Returns: Json
+      }
+      close_admin_identity_session: {
+        Args: { p_revoke_reason: string; p_session_id: string }
+        Returns: boolean
       }
       close_live_question: {
         Args: { p_expected_version: number; p_session_id: string }
@@ -2559,6 +3538,20 @@ export type Database = {
       complete_review_card: {
         Args: { p_request_id: string; p_review_card_id: string }
         Returns: Json
+      }
+      complete_student_registration_claim: {
+        Args: { p_attempt_id: string }
+        Returns: undefined
+      }
+      create_admin_identity_session: {
+        Args: {
+          p_admin_user_id: string
+          p_auth_session_id: string
+          p_bound_factor_id: string
+          p_correlation_id: string
+          p_device_summary: string
+        }
+        Returns: string
       }
       create_assignment: {
         Args: {
@@ -2606,9 +3599,28 @@ export type Database = {
         Args: { client_request_id: string; template_id: string }
         Returns: Json
       }
+      create_teacher_account: {
+        Args: {
+          p_contact_email: string
+          p_full_name: string
+          p_idempotency_key: string
+          p_reason: string
+          p_receipt_id: string
+        }
+        Returns: Json
+      }
       current_user_owns_classroom: {
         Args: { p_classroom_id: string }
         Returns: boolean
+      }
+      deactivate_admin: {
+        Args: {
+          p_idempotency_key: string
+          p_reason: string
+          p_receipt_id: string
+          p_target_principal_id: string
+        }
+        Returns: Json
       }
       ensure_import_subtopic: {
         Args: { p_chapter: string; p_section_label: string }
@@ -2630,6 +3642,11 @@ export type Database = {
       }
       finalize_quiz_session: { Args: { session_id: string }; Returns: Json }
       generate_live_join_code: { Args: never; Returns: Record<string, unknown> }
+      get_accessible_chapter_review: {
+        Args: { p_chapter_id: string }
+        Returns: Json
+      }
+      get_admin_session_state: { Args: never; Returns: Json }
       get_classroom_leaderboard: {
         Args: { p_classroom_id: string }
         Returns: Json
@@ -2679,6 +3696,11 @@ export type Database = {
           total_count: number
         }[]
       }
+      get_student_chapter_map: { Args: never; Returns: Json }
+      grant_next_chapter_if_completed: {
+        Args: { p_source_chapter_id: string; p_user_id: string }
+        Returns: undefined
+      }
       is_active_classroom_member: {
         Args: { p_classroom_id: string; p_user_id: string }
         Returns: boolean
@@ -2696,6 +3718,15 @@ export type Database = {
         Returns: boolean
       }
       is_live_session_host: { Args: { p_session_id: string }; Returns: boolean }
+      issue_admin_invitation: {
+        Args: {
+          p_idempotency_key: string
+          p_invited_email: string
+          p_reason: string
+          p_receipt_id: string
+        }
+        Returns: Json
+      }
       join_classroom: {
         Args: { p_join_code: string; p_request_id: string }
         Returns: {
@@ -2708,6 +3739,24 @@ export type Database = {
       join_live_session: {
         Args: { p_join_code: string; p_request_id: string }
         Returns: Json
+      }
+      learning_progress_for: {
+        Args: { p_chapter_id?: string; p_user_id: string }
+        Returns: {
+          accuracy: number
+          chapter_id: string
+          coverage: number
+          mastery: number
+          question_answered: number
+          question_correct: number
+          question_total: number
+          review_completed: number
+          review_total: number
+          rules_version: string
+          scope: string
+          status: string
+          subtopic_id: string
+        }[]
       }
       list_classroom_assignments: {
         Args: { p_classroom_id: string }
@@ -2759,9 +3808,9 @@ export type Database = {
         Returns: {
           active_blook_id: string
           display_name: string
-          full_name: string | null
+          full_name: string
           joined_at: string
-          login_account: string | null
+          login_account: string
           member_ref: string
           membership_status: Database["public"]["Enums"]["classroom_member_status"]
         }[]
@@ -2773,7 +3822,7 @@ export type Database = {
           classroom_name: string
           classroom_status: Database["public"]["Enums"]["classroom_status"]
           created_at: string
-          join_code: string | null
+          join_code: string
           join_code_version: number
           member_count: number
         }[]
@@ -2851,6 +3900,28 @@ export type Database = {
         Args: { p_question_id: string }
         Returns: Json
       }
+      quiz_answer_explanation: {
+        Args: { p_session_question_id: string }
+        Returns: string
+      }
+      reactivate_admin: {
+        Args: {
+          p_idempotency_key: string
+          p_reason: string
+          p_receipt_id: string
+          p_target_principal_id: string
+        }
+        Returns: Json
+      }
+      reconcile_admin_security_operation: {
+        Args: {
+          p_idempotency_key: string
+          p_operation_id: string
+          p_reason: string
+          p_receipt_id: string
+        }
+        Returns: Json
+      }
       reconcile_wallet_cache: {
         Args: { target_user_id: string }
         Returns: number
@@ -2866,8 +3937,34 @@ export type Database = {
         }
         Returns: undefined
       }
+      release_student_registration_claim: {
+        Args: { p_attempt_id: string }
+        Returns: boolean
+      }
+      reopen_course_progression: {
+        Args: { p_course_id: string }
+        Returns: Json
+      }
       request_question_hint: {
         Args: { p_hint_level: number; p_session_question_id: string }
+        Returns: Json
+      }
+      reset_admin_mfa: {
+        Args: {
+          p_idempotency_key: string
+          p_reason: string
+          p_receipt_id: string
+          p_target_principal_id: string
+        }
+        Returns: Json
+      }
+      reset_teacher_password: {
+        Args: {
+          p_idempotency_key: string
+          p_reason: string
+          p_receipt_id: string
+          p_teacher_id: string
+        }
         Returns: Json
       }
       resume_live_session: {
@@ -2876,6 +3973,33 @@ export type Database = {
       }
       review_card_semantic_payload: {
         Args: { p_card_id: string }
+        Returns: Json
+      }
+      review_completion_for: {
+        Args: { p_chapter_id?: string; p_user_id: string }
+        Returns: {
+          chapter_id: string
+          completed_count: number
+          subtopic_id: string
+          total_count: number
+        }[]
+      }
+      revoke_admin_invitation: {
+        Args: {
+          p_idempotency_key: string
+          p_invitation_id: string
+          p_reason: string
+          p_receipt_id: string
+        }
+        Returns: Json
+      }
+      revoke_admin_session: {
+        Args: {
+          p_idempotency_key: string
+          p_reason: string
+          p_receipt_id: string
+          p_session_id: string
+        }
         Returns: Json
       }
       rotate_classroom_join_code: {
@@ -2904,6 +4028,20 @@ export type Database = {
         Args: { p_request_id: string; p_subtopic_id: string }
         Returns: Json
       }
+      student_can_access_chapter: {
+        Args: { p_chapter_id: string }
+        Returns: boolean
+      }
+      student_chapter_completion: {
+        Args: { p_chapter_id: string; p_user_id: string }
+        Returns: {
+          is_complete: boolean
+          mastery: number
+          progress_status: string
+          review_completed: number
+          review_total: number
+        }[]
+      }
       submit_live_answer: {
         Args: {
           p_idempotency_key: string
@@ -2921,6 +4059,213 @@ export type Database = {
           idempotency_key: string
           selected_option_id?: string
           session_question_id: string
+        }
+        Returns: Json
+      }
+      svc_admin_begin_teacher_auth_call: {
+        Args: {
+          p_auth_call_kind: string
+          p_execution_claim_token: string
+          p_expected_operation_type: string
+          p_operation_id: string
+        }
+        Returns: Json
+      }
+      svc_admin_begin_teacher_create_compensation: {
+        Args: {
+          p_cleanup_auth_user_id: string
+          p_execution_claim_token: string
+          p_expected_operation_type: string
+          p_operation_id: string
+          p_safe_code: string
+        }
+        Returns: Json
+      }
+      svc_admin_bootstrap_identity: {
+        Args: { p_runbook_operation_id: string; p_user_id: string }
+        Returns: Json
+      }
+      svc_admin_canonical_hash_hex: {
+        Args: { p_fields: Json }
+        Returns: string
+      }
+      svc_admin_claim_manual_retry: {
+        Args: { p_operation_id: string }
+        Returns: Json
+      }
+      svc_admin_claim_teacher_account_execution: {
+        Args: { p_expected_operation_type: string; p_operation_id: string }
+        Returns: Json
+      }
+      svc_admin_claim_teacher_reconciliation: {
+        Args: { p_expected_operation_type: string; p_operation_id: string }
+        Returns: Json
+      }
+      svc_admin_commit_teacher_profile: {
+        Args: {
+          p_execution_claim_token: string
+          p_expected_operation_type: string
+          p_operation_id: string
+        }
+        Returns: Json
+      }
+      svc_admin_complete_oob_recovery: {
+        Args: { p_runbook_operation_id: string; p_target_user_id: string }
+        Returns: Json
+      }
+      svc_admin_complete_reset_step2:
+        | { Args: { p_operation_id: string }; Returns: Json }
+        | {
+            Args: { p_claim_token: string; p_operation_id: string }
+            Returns: Json
+          }
+      svc_admin_complete_reset_step3:
+        | { Args: { p_operation_id: string }; Returns: Json }
+        | {
+            Args: { p_claim_token: string; p_operation_id: string }
+            Returns: Json
+          }
+      svc_admin_complete_teacher_account_operation: {
+        Args: {
+          p_execution_claim_token: string
+          p_expected_operation_type: string
+          p_operation_id: string
+        }
+        Returns: Json
+      }
+      svc_admin_complete_teacher_create_compensation: {
+        Args: {
+          p_execution_claim_token: string
+          p_expected_operation_type: string
+          p_operation_id: string
+          p_safe_code: string
+        }
+        Returns: Json
+      }
+      svc_admin_confirm_enrollment: {
+        Args: {
+          p_admin_user_id: string
+          p_operation_id: string
+          p_verified_factor_id: string
+        }
+        Returns: Json
+      }
+      svc_admin_create_session: {
+        Args: {
+          p_admin_user_id: string
+          p_auth_session_id: string
+          p_correlation_id: string
+          p_device_summary: string
+          p_verified_factor_id: string
+        }
+        Returns: Json
+      }
+      svc_admin_isolate_factor_incident: {
+        Args: { p_admin_user_id: string; p_correlation_id: string }
+        Returns: Json
+      }
+      svc_admin_isolate_factor_incident_oob: {
+        Args: { p_admin_user_id: string; p_runbook_operation_id: string }
+        Returns: Json
+      }
+      svc_admin_issue_command_receipt: {
+        Args: {
+          p_actor_user_id: string
+          p_auth_session_id: string
+          p_command_name: string
+          p_idempotency_key: string
+          p_request_hash: string
+          p_requires_fresh_totp: boolean
+          p_verified_factor_id: string
+        }
+        Returns: Json
+      }
+      svc_admin_list_teacher_reconciliation_candidates: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
+      svc_admin_mark_operation_stuck: {
+        Args: { p_operation_id: string }
+        Returns: Json
+      }
+      svc_admin_mark_teacher_auth_applied: {
+        Args: {
+          p_auth_user_id: string
+          p_execution_claim_token: string
+          p_expected_operation_type: string
+          p_operation_id: string
+        }
+        Returns: Json
+      }
+      svc_admin_record_edge_denial: {
+        Args: {
+          p_action: string
+          p_admin_user_id: string
+          p_code: string
+          p_resource_key: string
+        }
+        Returns: Json
+      }
+      svc_admin_record_totp_outcome: {
+        Args: { p_admin_user_id: string; p_success: boolean }
+        Returns: Json
+      }
+      svc_admin_refresh_session_mfa: {
+        Args: {
+          p_admin_user_id: string
+          p_auth_session_id: string
+          p_verified_factor_id: string
+        }
+        Returns: Json
+      }
+      svc_admin_release_teacher_reconciliation: {
+        Args: {
+          p_claim_token: string
+          p_expected_operation_type: string
+          p_operation_id: string
+          p_safe_code: string
+        }
+        Returns: Json
+      }
+      svc_admin_require_teacher_reconciliation: {
+        Args: {
+          p_execution_claim_token: string
+          p_expected_operation_type: string
+          p_operation_id: string
+          p_safe_code: string
+        }
+        Returns: Json
+      }
+      svc_admin_resolve_teacher_reconciliation: {
+        Args: {
+          p_claim_token: string
+          p_expected_operation_type: string
+          p_operation_id: string
+        }
+        Returns: Json
+      }
+      svc_admin_tombstone_principal: {
+        Args: { p_principal_id: string; p_runbook_operation_id: string }
+        Returns: Json
+      }
+      svc_admin_touch_security_operation: {
+        Args: { p_operation_id: string }
+        Returns: Json
+      }
+      svc_join_classroom: {
+        Args: {
+          p_actor_id: string
+          p_ip_hash: string
+          p_join_code: string
+          p_request_id: string
+        }
+        Returns: Json
+      }
+      svc_resolve_classroom_join_code: {
+        Args: {
+          p_actor_id: string
+          p_ip_hash: string
+          p_join_code: string
         }
         Returns: Json
       }
@@ -2944,6 +4289,50 @@ export type Database = {
           user_id: string
         }[]
       }
+      teacher_assessment_facts: {
+        Args: {
+          p_chapter_id: string
+          p_classroom_id: string
+          p_from: string
+          p_source: string
+          p_to: string
+        }
+        Returns: {
+          answered_at: string
+          chapter_id: string
+          chapter_sort_order: number
+          chapter_title: string
+          is_correct: boolean
+          prompt: string
+          section_id: string
+          section_sort_order: number
+          section_title: string
+          source_kind: string
+          stable_code: string
+          user_id: string
+        }[]
+      }
+      teacher_assessment_question_analysis: {
+        Args: {
+          p_chapter_id?: string
+          p_classroom_id: string
+          p_from?: string
+          p_source?: string
+          p_to?: string
+        }
+        Returns: {
+          attempts: number
+          chapter_id: string
+          chapter_sort_order: number
+          chapter_title: string
+          correct_rate: number
+          prompt: string
+          section_id: string
+          section_sort_order: number
+          section_title: string
+          stable_code: string
+        }[]
+      }
       teacher_assignment_summary: {
         Args: { p_classroom_id: string; p_from?: string; p_to?: string }
         Returns: {
@@ -2954,6 +4343,33 @@ export type Database = {
           status: string
           targets: number
           title: string
+        }[]
+      }
+      teacher_chapter_completion_summary: {
+        Args: { p_chapter_id?: string; p_classroom_id: string }
+        Returns: {
+          chapter_id: string
+          chapter_sort_order: number
+          chapter_title: string
+          completed_students: number
+          completion_rate: number
+          student_statuses: Json
+          total_students: number
+        }[]
+      }
+      teacher_classroom_overview: {
+        Args: {
+          p_chapter_id?: string
+          p_classroom_id: string
+          p_from?: string
+          p_to?: string
+        }
+        Returns: {
+          average_accuracy: number
+          completed_students: number
+          total_students: number
+          worst_subtopic_code: string
+          worst_subtopic_title: string
         }[]
       }
       teacher_classroom_summary: {
@@ -3001,6 +4417,25 @@ export type Database = {
           state: string
         }[]
       }
+      teacher_live_session_report_v2: {
+        Args: {
+          p_classroom_id: string
+          p_from?: string
+          p_limit?: number
+          p_offset?: number
+          p_to?: string
+        }
+        Returns: {
+          activity_title: string
+          answers: number
+          classroom_name: string
+          completed_at: string
+          correct_rate: number
+          participants: number
+          session_id: string
+          total_count: number
+        }[]
+      }
       teacher_question_analysis: {
         Args: {
           p_chapter_id?: string
@@ -3016,7 +4451,32 @@ export type Database = {
           stable_code: string
         }[]
       }
+      teacher_question_answer_options: {
+        Args: {
+          p_classroom_id: string
+          p_live_session_id?: string
+          p_source: string
+          p_stable_code: string
+        }
+        Returns: {
+          is_correct: boolean
+          option_key: string
+          option_text: string
+        }[]
+      }
+      teacher_question_detail: {
+        Args: { p_classroom_id: string; p_stable_code: string }
+        Returns: {
+          options: Json
+          prompt: string
+          stable_code: string
+        }[]
+      }
       teacher_student_progress: {
+        Args: { p_classroom_id: string; p_member_ref: string }
+        Returns: Json
+      }
+      teacher_student_progress_v2: {
         Args: { p_classroom_id: string; p_member_ref: string }
         Returns: Json
       }
@@ -3041,6 +4501,17 @@ export type Database = {
           p_assignment_id: string
           p_expected_updated_at: string
           p_status: Database["public"]["Enums"]["assignment_status"]
+        }
+        Returns: Json
+      }
+      update_teacher_account: {
+        Args: {
+          p_contact_email: string
+          p_full_name: string
+          p_idempotency_key: string
+          p_reason: string
+          p_receipt_id: string
+          p_teacher_id: string
         }
         Returns: Json
       }
@@ -3093,6 +4564,29 @@ export type Database = {
         | "mistake_resolved"
         | "mastery_recomputed"
       achievement_visibility: "public" | "hidden"
+      admin_actor_type:
+        | "admin"
+        | "pre_session_user"
+        | "service"
+        | "owner_out_of_band"
+        | "unknown"
+      admin_identity_state:
+        | "active_pending_mfa"
+        | "active"
+        | "recovery_pending"
+        | "deactivated"
+      admin_invitation_status: "pending" | "accepted" | "revoked"
+      admin_operation_state:
+        | "pending"
+        | "step1_complete"
+        | "step2_complete"
+        | "completed"
+        | "stuck"
+      admin_operation_type:
+        | "reset_admin_mfa"
+        | "factor_incident_isolation"
+        | "owner_oob_recovery"
+        | "owner_bootstrap"
       app_role: "student" | "teacher" | "admin"
       assignment_activity_type: "quiz_template" | "live_activity"
       assignment_attempt_status:
@@ -3128,7 +4622,7 @@ export type Database = {
       question_type: "single_choice"
       quiz_answer_status: "correct" | "incorrect" | "timeout"
       quiz_session_purpose: "practice" | "assignment" | "remediation"
-      quiz_session_status: "in_progress" | "completed"
+      quiz_session_status: "in_progress" | "completed" | "abandoned"
       remediation_result: "resolved" | "unresolved"
       versioned_content_type: "question" | "review_card"
     }
@@ -3284,6 +4778,33 @@ export const Constants = {
         "mastery_recomputed",
       ],
       achievement_visibility: ["public", "hidden"],
+      admin_actor_type: [
+        "admin",
+        "pre_session_user",
+        "service",
+        "owner_out_of_band",
+        "unknown",
+      ],
+      admin_identity_state: [
+        "active_pending_mfa",
+        "active",
+        "recovery_pending",
+        "deactivated",
+      ],
+      admin_invitation_status: ["pending", "accepted", "revoked"],
+      admin_operation_state: [
+        "pending",
+        "step1_complete",
+        "step2_complete",
+        "completed",
+        "stuck",
+      ],
+      admin_operation_type: [
+        "reset_admin_mfa",
+        "factor_incident_isolation",
+        "owner_oob_recovery",
+        "owner_bootstrap",
+      ],
       app_role: ["student", "teacher", "admin"],
       assignment_activity_type: ["quiz_template", "live_activity"],
       assignment_attempt_status: [
@@ -3322,10 +4843,9 @@ export const Constants = {
       question_type: ["single_choice"],
       quiz_answer_status: ["correct", "incorrect", "timeout"],
       quiz_session_purpose: ["practice", "assignment", "remediation"],
-      quiz_session_status: ["in_progress", "completed"],
+      quiz_session_status: ["in_progress", "completed", "abandoned"],
       remediation_result: ["resolved", "unresolved"],
       versioned_content_type: ["question", "review_card"],
     },
   },
 } as const
-

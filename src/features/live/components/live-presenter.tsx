@@ -1,11 +1,6 @@
 import { Icon } from '../../../components/ui/icons';
-import {
-  OPTION_ORDER,
-  SHAPE_SYMBOLS,
-} from '../../../components/ui/option-button';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 
-import { useLiveStandings } from '../hooks/use-live-commands';
 import {
   createPresenterAudio,
   type PresenterAudio,
@@ -14,13 +9,15 @@ import {
   cueFor,
   type ProjectorPhaseKind,
 } from '../lib/live-audio-cue';
-import { tick, type LiveClockTick } from '../lib/live-clock';
 import { projectorView } from '../lib/live-phase-view';
-import type {
-  LiveRepository,
-  LiveSessionState,
-  LiveStandingEntry,
-} from '../types';
+import type { LiveRepository, LiveSessionState } from '../types';
+import { LiveProjectorHud } from './live-projector-hud';
+import {
+  LiveProjectorRound,
+  type ProjectorFooterAction,
+} from './live-projector-round';
+
+export type { ProjectorFooterAction } from './live-projector-round';
 
 const MUTE_STORAGE_KEY = 'live-presenter-muted';
 
@@ -43,135 +40,6 @@ const readStoredMute = (): boolean => {
   }
 };
 
-function CountdownRing({
-  deadlineAt,
-  openedAt,
-  serverTime,
-  onSecond,
-}: Readonly<{
-  deadlineAt: string | null;
-  openedAt: string | null;
-  serverTime: string;
-  onSecond: (tickResult: LiveClockTick) => void;
-}>) {
-  const [clock, setClock] = useState(() => ({
-    fetchedAt: Date.now(),
-    now: Date.now(),
-  }));
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setClock((previous) => ({ ...previous, now: Date.now() }));
-    }, 250);
-    return () => {
-      clearInterval(timer);
-    };
-  }, []);
-
-  const tickResult = tick(
-    { question: { deadlineAt, openedAt }, serverTime, state: 'question_open' },
-    clock.now,
-    clock.fetchedAt,
-  );
-  const seconds = tickResult.secondsLeft;
-  const lastSecondRef = useRef<number | null>(null);
-  useEffect(() => {
-    if (seconds === null || seconds === lastSecondRef.current) return;
-    lastSecondRef.current = seconds;
-    onSecond(tickResult);
-  }, [seconds, onSecond, tickResult]);
-  if (seconds === null) return null;
-
-  const circumference = 2 * Math.PI * 54;
-
-  return (
-    <div aria-label="剩餘秒數" className="live-presenter__ring" role="timer">
-      <svg aria-hidden="true" viewBox="0 0 120 120">
-        <circle className="live-presenter__ring-track" cx="60" cy="60" r="54" />
-        <circle
-          className="live-presenter__ring-fill"
-          cx="60"
-          cy="60"
-          r="54"
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - tickResult.fraction)}
-        />
-      </svg>
-      <span className="live-presenter__ring-number">{seconds}</span>
-    </div>
-  );
-}
-
-function StandingsBoard({
-  sessionId,
-  state,
-  repository,
-}: Readonly<{
-  sessionId: string;
-  state: LiveSessionState;
-  repository?: LiveRepository;
-}>) {
-  const standings = useLiveStandings(
-    sessionId,
-    {
-      enabled: state.state === 'question_feedback',
-      stateVersion: state.stateVersion,
-    },
-    repository,
-  );
-  const entries = standings.data?.standings;
-  // Each feedback round is snapshotted once (state adjusted during render,
-  // per the previous-props pattern) so the arrows compare against the
-  // previous round and stay stable across re-renders within a round.
-  const [board, setBoard] = useState<Readonly<{
-    rows: readonly Readonly<{ arrow: string; entry: LiveStandingEntry }>[];
-    version: number;
-  }> | null>(null);
-  if (entries && board?.version !== state.stateVersion) {
-    const previousRanks = new Map(
-      (board?.rows ?? []).map((row) => [row.entry.displayName, row.entry.rank]),
-    );
-    setBoard({
-      rows: entries.map((entry) => {
-        const before = previousRanks.get(entry.displayName);
-        return {
-          arrow:
-            before === undefined || before === entry.rank
-              ? '—'
-              : before > entry.rank
-                ? '↑'
-                : '↓',
-          entry,
-        };
-      }),
-      version: state.stateVersion,
-    });
-  }
-
-  if (!board || board.rows.length === 0) return null;
-  return (
-    <section aria-label="目前排行榜" className="live-presenter__standings">
-      <h3>目前 Top 5</h3>
-      <ol>
-        {board.rows.map(({ arrow, entry }) => (
-          <li key={entry.displayName + String(entry.rank)}>
-            <span aria-hidden="true" className="live-presenter__arrow">
-              {arrow}
-            </span>
-            第 {entry.rank} 名 {entry.displayName}（{entry.score} 分）
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
-export type ProjectorFooterAction = Readonly<{
-  id: string;
-  label: string;
-  precedence: 'primary' | 'secondary';
-  run: () => void;
-}>;
-
 export function LivePresenter({
   sessionId,
   state,
@@ -191,7 +59,6 @@ export function LivePresenter({
   repository?: LiveRepository;
   audio?: PresenterAudio;
 }>) {
-  const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [muted, setMuted] = useState(readStoredMute);
   const [engine] = useState<PresenterAudio>(
     () => audio ?? createPresenterAudio(),
@@ -234,206 +101,121 @@ export function LivePresenter({
   );
 
   const joinCode = readStoredJoinCode(sessionId);
-  const question = state.question;
+
+  // Draft 是唯一由本檔直接渲染取消動作的階段（lobby／question 系列各自
+  // 委派給 Hud／Round，兩者都已有自己的退出確認對話框）；沿用同一套
+  // alertdialog 焦點循環，讓「取消挑戰」與其他階段的退出行為一致。
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const cancelWasOpenRef = useRef(false);
+  useEffect(() => {
+    if (confirmingCancel) {
+      cancelWasOpenRef.current = true;
+      return;
+    }
+    if (cancelWasOpenRef.current) {
+      cancelWasOpenRef.current = false;
+      cancelButtonRef.current?.focus();
+    }
+  }, [confirmingCancel]);
+  const handleCancelDialogKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setConfirmingCancel(false);
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const buttons = Array.from(
+      event.currentTarget.querySelectorAll<HTMLButtonElement>('button'),
+    );
+    const first = buttons[0];
+    const last = buttons.at(-1);
+    if (!first || !last) return;
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
 
   return (
     <div
-      aria-label="投影模式"
-      aria-modal="true"
+      aria-label="Live 投影模式"
       className="live-presenter"
-      role="dialog"
+      data-projector-phase={phase}
+      role="region"
     >
-      <header className="live-presenter__bar">
-        <p>
-          {phase === 'lobby'
-            ? '等待室'
-            : `第 ${String(state.currentPosition)} / ${String(state.questionCount)} 題`}
-        </p>
-        <div>
-          <button
-            aria-pressed={muted}
-            onClick={() => {
-              setMuted((previous) => !previous);
-            }}
-            type="button"
-          >
-            {muted ? '已靜音' : '音效開啟'}
-          </button>
-          {onCancel &&
-          phase !== 'podium' &&
-          phase !== 'cancelled' ? (
-            confirmingCancel ? (
-              <>
-                <button
-                  onClick={() => {
-                    setConfirmingCancel(false);
-                  }}
-                  type="button"
-                >
-                  返回
-                </button>
-                <button
-                  className="live-presenter__cancel"
-                  onClick={() => {
-                    setConfirmingCancel(false);
-                    onCancel();
-                  }}
-                  type="button"
-                >
-                  確認取消挑戰
-                </button>
-              </>
-            ) : (
-              <button
-                className="live-presenter__cancel"
-                onClick={() => {
-                  setConfirmingCancel(true);
-                }}
-                type="button"
-              >
-                取消挑戰
-              </button>
-            )
-          ) : null}
-          {phase === 'podium' || phase === 'cancelled' ? (
+      <p className="live-presenter__viewport-warning" role="alert">
+        <strong>投影視窗過小</strong>
+        <span>
+          請縮小瀏覽器畫面比例，或放大視窗後再試。
+        </span>
+      </p>
+      {phase === 'lobby' ? (
+        <LiveProjectorHud
+          joinCode={joinCode}
+          muted={muted}
+          onExit={onCancel ?? null}
+          onStart={
+            footerActions.find((entry) => entry.id === 'openQuestion')?.run ??
+            null
+          }
+          onToggleMute={() => {
+            setMuted((previous) => !previous);
+          }}
+          participantCount={state.participantCount}
+          participants={state.participants ?? []}
+          questionCount={state.questionCount}
+          transitionPending={transitionPending}
+        />
+      ) : phase === 'question' || phase === 'paused' || phase === 'reveal' ? (
+        <LiveProjectorRound
+          footerActions={footerActions}
+          muted={muted}
+          onCancel={onCancel ?? null}
+          onFinalCountdown={() => {
+            engine.tick();
+          }}
+          onToggleMute={() => {
+            setMuted((previous) => !previous);
+          }}
+          sessionId={sessionId}
+          state={state}
+          transitionPending={transitionPending}
+          {...(repository ? { repository } : {})}
+        />
+      ) : (
+        <>
+          <header className="live-presenter__bar">
+            <p>
+              {phase === 'draft'
+                ? '尚未開始'
+                : phase === 'cancelled'
+                  ? '已取消'
+                  : `第 ${String(state.currentPosition)} / ${String(state.questionCount)} 題`}
+            </p>
             <button onClick={onExit} type="button">
               離開投影
             </button>
+          </header>
+
+          {phase === 'draft' ? (
+            <div className="live-presenter__status">
+              <h2>場次準備中</h2>
+              <p>尚未開放學生加入，請稍候或開啟等待室。</p>
+            </div>
           ) : null}
-        </div>
-      </header>
 
-      {phase === 'lobby' ? (
-        <div className="live-presenter__lobby">
-          <p className="live-presenter__hint">輸入課堂代碼加入</p>
-          <p aria-label="課堂代碼" className="live-presenter__code">
-            {joinCode ?? '請回活動頁產生代碼'}
-          </p>
-          <p aria-live="polite" className="live-presenter__count">
-            {state.participantCount} 位同學已加入
-          </p>
-          <ul aria-label="已加入同學" className="live-presenter__wall">
-            {(state.participants ?? []).map((participant, index) => (
-              <li
-                className="live-presenter__wall-chip"
-                key={participant.displayName + String(index)}
-              >
-                {participant.displayName}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+          {phase === 'cancelled' ? (
+            <div className="live-presenter__status">
+              <h2>本場已取消</h2>
+              <p>這場挑戰已取消，不會產生正式名次或完整正確率。</p>
+            </div>
+          ) : null}
 
-      {question && (phase === 'question' || phase === 'paused') ? (
-        <div className="live-presenter__question">
-          <h2>{question.prompt}</h2>
-          {phase === 'paused' ? (
-            <p className="live-presenter__paused" role="status">
-              已暫停（剩餘 {tick(state, 0, 0).secondsLeft}{' '}
-              秒已凍結）
-            </p>
-          ) : (
-            <CountdownRing
-              deadlineAt={question.deadlineAt}
-              onSecond={(clockTick) => {
-                if (clockTick.isFinalCountdown) engine.tick();
-              }}
-              openedAt={question.openedAt}
-              serverTime={state.serverTime}
-            />
-          )}
-          <p aria-live="polite" className="live-presenter__answered">
-            已作答 {state.answeredCount ?? 0} / {state.participantCount}
-          </p>
-          <ul aria-label="答案選項" className="live-presenter__options">
-            {question.publicOptions.map((option, index) => {
-              const order = OPTION_ORDER[index % 4] ?? OPTION_ORDER[0];
-              const style = {
-                shape: SHAPE_SYMBOLS[order.shape],
-                variant: order.variant,
-              };
-              return (
-                <li
-                  className={`live-presenter__option live-presenter__option--${style.variant}`}
-                  key={option.id}
-                >
-                  <span aria-hidden="true">{style.shape}</span> {option.key}.{' '}
-                  {option.text}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ) : null}
-
-      {question && phase === 'reveal' ? (
-        <div className="live-presenter__feedback">
-          <h2>{question.prompt}</h2>
-          <div aria-label="作答分布長條圖" className="live-presenter__chart">
-            {question.publicOptions.map((option, index) => {
-              const order = OPTION_ORDER[index % 4] ?? OPTION_ORDER[0];
-              const style = {
-                shape: SHAPE_SYMBOLS[order.shape],
-                variant: order.variant,
-              };
-              const count =
-                state.optionCounts?.find(
-                  (entry) => entry.optionId === option.id,
-                )?.count ?? 0;
-              const maxCount = Math.max(
-                1,
-                ...question.publicOptions.map(
-                  (candidate) =>
-                    state.optionCounts?.find(
-                      (entry) => entry.optionId === candidate.id,
-                    )?.count ?? 0,
-                ),
-              );
-              const isCorrect = state.correctOptionId === option.id;
-              return (
-                <div
-                  className={`live-presenter__chart-row${isCorrect ? ' live-presenter__chart-row--correct' : ''}`}
-                  key={option.id}
-                >
-                  <span
-                    className={`live-presenter__chart-label${
-                      isCorrect ? ' live-presenter__chart-label--correct' : ''
-                    }`}
-                  >
-                    <span aria-hidden="true">{style.shape}</span>{' '}
-                    {isCorrect ? '✓ ' : ''}
-                    {option.key}. {option.text}
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className="live-presenter__chart-track"
-                  >
-                    <span
-                      className={`live-presenter__chart-fill live-presenter__chart-fill--${style.variant}${
-                        isCorrect ? ' live-presenter__chart-fill--correct' : ''
-                      }`}
-                      style={{
-                        width: `${String(Math.round((count / maxCount) * 100))}%`,
-                      }}
-                    />
-                  </span>
-                  <span className="live-presenter__chart-count">
-                    {count} 人
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          <StandingsBoard
-            sessionId={sessionId}
-            state={state}
-            {...(repository ? { repository } : {})}
-          />
-        </div>
-      ) : null}
-
-      {phase === 'podium' ? (
+          {phase === 'podium' ? (
         <div className="live-presenter__podium-stage">
           <span
             aria-hidden="true"
@@ -466,35 +248,73 @@ export function LivePresenter({
             ))}
           </ol>
         </div>
-      ) : null}
+          ) : null}
 
-      <footer className="live-presenter__controls">
-        {footerActions
-          .filter((entry) => entry.precedence === 'secondary')
-          .map((entry) => (
-            <button
-              disabled={transitionPending}
-              key={entry.id}
-              onClick={entry.run}
-              type="button"
+          <footer className="live-presenter__controls">
+            {footerActions.map((entry) => (
+              <button
+                className={entry.precedence === 'primary' ? 'primary-action' : undefined}
+                disabled={transitionPending}
+                key={entry.id}
+                onClick={entry.run}
+                type="button"
+              >
+                {transitionPending ? '處理中…' : entry.label}
+              </button>
+            ))}
+            {phase === 'draft' && onCancel ? (
+              <button
+                className="live-presenter__cancel"
+                disabled={transitionPending}
+                onClick={() => {
+                  setConfirmingCancel(true);
+                }}
+                ref={cancelButtonRef}
+                type="button"
+              >
+                取消挑戰
+              </button>
+            ) : null}
+          </footer>
+
+          {confirmingCancel ? (
+            <div
+              aria-labelledby="live-presenter-cancel-title"
+              aria-modal="true"
+              className="live-projector__exit-backdrop"
+              onKeyDown={handleCancelDialogKeyDown}
+              role="alertdialog"
             >
-              {entry.label}
-            </button>
-          ))}
-        {footerActions
-          .filter((entry) => entry.precedence === 'primary')
-          .map((entry) => (
-            <button
-              className="primary-action"
-              disabled={transitionPending}
-              key={entry.id}
-              onClick={entry.run}
-              type="button"
-            >
-              {transitionPending ? '處理中…' : entry.label}
-            </button>
-          ))}
-      </footer>
+              <div className="live-projector__exit-dialog">
+                <Icon name="alert" size={32} />
+                <h2 id="live-presenter-cancel-title">確定取消這場挑戰？</h2>
+                <p>取消後不會產生正式名次或完整正確率。</p>
+                <div>
+                  <button
+                    autoFocus
+                    onClick={() => {
+                      setConfirmingCancel(false);
+                    }}
+                    type="button"
+                  >
+                    返回
+                  </button>
+                  <button
+                    className="live-projector__confirm-exit"
+                    onClick={() => {
+                      setConfirmingCancel(false);
+                      onCancel?.();
+                    }}
+                    type="button"
+                  >
+                    確認取消挑戰
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </>
+      )}
     </div>
   );
 }

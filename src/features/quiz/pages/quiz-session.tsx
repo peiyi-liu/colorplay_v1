@@ -8,25 +8,34 @@ import {
 } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
-import { MapStepper } from '../../../components/ui/map-stepper';
 import { parsePublicEnv } from '../../../lib/config/public-env';
 import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
+import {
+  studentChapterMapKey,
+  useStudentChapterMap,
+} from '../../learning/hooks/use-chapter-map';
 import { economyQueryKey } from '../../rewards/hooks/use-economy-summary';
 import {
   createQuizRepository,
   QuizRepositoryError,
-  type QuizQuestion,
   type QuizRepository,
   type QuizSession,
 } from '../api/quiz-repository';
 import { BattleStage, type BattlePhase } from '../components/battle-stage';
 import { Countdown } from '../components/countdown';
-import {
-  FeedbackCard,
-  type QuizFeedbackResult,
-} from '../components/feedback-card';
+import { FeedbackCard } from '../components/feedback-card';
 import { QuestionCard } from '../components/question-card';
+import { QuizExitGuard } from '../components/quiz-exit-guard';
 import { comboCount } from '../lib/combo';
+import { applyFinalResultToSession } from '../lib/finalized-session-cache';
+import { withoutNumberPrefix } from '../lib/quiz-labels';
+import {
+  feedbackFromQuestion,
+  quizActionErrorMessage,
+  type QuizActionError,
+} from '../lib/quiz-session-view-model';
+
+import './quiz-session.css';
 
 const quizSessionQueryKey = (sessionId: string) =>
   ['quiz', 'session', sessionId] as const;
@@ -38,41 +47,6 @@ type SubmissionAttempt = Readonly<{
   questionId: string;
   selectedId: string | null;
 }>;
-
-type ActionError = Readonly<{
-  kind: 'advance' | 'finalize' | 'submit';
-  message: string;
-}>;
-
-const actionErrorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : '答題服務暫時無法使用，請稍後重試。';
-
-const feedbackFromQuestion = (
-  question: QuizQuestion | undefined,
-  totalScore: number,
-): QuizFeedbackResult | undefined => {
-  if (
-    !question?.answerStatus ||
-    !question.correctOptionId ||
-    !question.explanation ||
-    question.scoreDelta === null
-  ) {
-    return undefined;
-  }
-  const correctOption = question.options.find(
-    ({ id }) => id === question.correctOptionId,
-  );
-  if (!correctOption) return undefined;
-  return {
-    answerStatus: question.answerStatus,
-    correctOptionId: question.correctOptionId,
-    correctOptionText: correctOption.text,
-    explanation: question.explanation,
-    scoreDelta: question.scoreDelta,
-    selectedOptionId: question.selectedOptionId,
-    totalScore,
-  };
-};
 
 export function QuizSessionPage({
   repository: suppliedRepository,
@@ -96,12 +70,13 @@ export function QuizSessionPage({
   const [selection, setSelection] = useState<
     Readonly<{ optionId: string; questionId: string }> | undefined
   >();
-  const [actionError, setActionError] = useState<ActionError>();
+  const [actionError, setActionError] = useState<QuizActionError>();
   const [attacking, setAttacking] = useState(false);
   const submissionStarted = useRef(false);
   const submissionAttempt = useRef<SubmissionAttempt | undefined>(undefined);
   const creationStarted = useRef(false);
   const creationRequestId = useRef<string | undefined>(undefined);
+  const allowQuizNavigation = useRef(false);
 
   const sessionQuery = useQuery<QuizSession, QuizRepositoryError>({
     enabled: Boolean(routeSessionId) && !isNewSession,
@@ -130,6 +105,26 @@ export function QuizSessionPage({
       void navigate(`/app/quiz/${createdSession.sessionId}`, { replace: true });
     },
   });
+
+  const lockedCreation =
+    createMutation.isError &&
+    createMutation.error instanceof QuizRepositoryError &&
+    createMutation.error.code === 'CHAPTER_LOCKED';
+  const chapterMap = useStudentChapterMap(undefined, lockedCreation);
+  const lockedChapter =
+    lockedCreation && templateId
+      ? chapterMap.data?.chapters.find(
+          (chapter) => chapter.templateId === templateId,
+        )
+      : undefined;
+
+  useEffect(() => {
+    if (!lockedChapter) return;
+    void navigate(
+      `/app?chapter=${encodeURIComponent(lockedChapter.chapterId)}&reason=locked`,
+      { replace: true },
+    );
+  }, [lockedChapter, navigate]);
 
   useEffect(() => {
     if (!isNewSession || !templateId || creationStarted.current) return;
@@ -195,10 +190,21 @@ export function QuizSessionPage({
     : attacking
       ? 'attacking'
       : 'idle';
+  const chapterLabel = `第 ${String(session?.chapterSortOrder ?? '')} 章・${withoutNumberPrefix(session?.chapterTitle ?? '')}`;
+  const challengeLabel =
+    session?.challengeKind === 'section' &&
+    session.sectionSortOrder !== null &&
+    session.sectionTitle
+      ? `${String(session.chapterSortOrder)}-${String(session.sectionSortOrder)}・${withoutNumberPrefix(session.sectionTitle)}`
+      : '章節總挑戰';
 
   useEffect(() => {
     if (session?.status === 'completed') {
+      allowQuizNavigation.current = true;
       void navigate(`/app/quiz/${session.sessionId}/result`, { replace: true });
+    } else if (session?.status === 'abandoned') {
+      allowQuizNavigation.current = true;
+      void navigate('/app', { replace: true });
     }
   }, [navigate, session]);
 
@@ -232,7 +238,10 @@ export function QuizSessionPage({
         submissionAttempt.current = undefined;
         setActionError(undefined);
       } else {
-        setActionError({ kind: 'submit', message: actionErrorMessage(error) });
+        setActionError({
+          kind: 'submit',
+          message: quizActionErrorMessage(error),
+        });
       }
     } finally {
       submissionStarted.current = false;
@@ -248,7 +257,16 @@ export function QuizSessionPage({
         const finalResult = await finalizeMutation.mutateAsync(
           session.sessionId,
         );
-        await queryClient.invalidateQueries({ queryKey: economyQueryKey });
+        queryClient.setQueryData<QuizSession>(
+          quizSessionQueryKey(session.sessionId),
+          (cachedSession) =>
+            applyFinalResultToSession(cachedSession, finalResult),
+        );
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: economyQueryKey }),
+          queryClient.invalidateQueries({ queryKey: studentChapterMapKey }),
+        ]);
+        allowQuizNavigation.current = true;
         void navigate(`/app/quiz/${session.sessionId}/result`, {
           state: {
             fromFinalize: true,
@@ -260,7 +278,7 @@ export function QuizSessionPage({
       } catch (error) {
         setActionError({
           kind: 'finalize',
-          message: actionErrorMessage(error),
+          message: quizActionErrorMessage(error),
         });
       }
       return;
@@ -275,7 +293,10 @@ export function QuizSessionPage({
       );
       setSelection(undefined);
     } catch (error) {
-      setActionError({ kind: 'advance', message: actionErrorMessage(error) });
+      setActionError({
+        kind: 'advance',
+        message: quizActionErrorMessage(error),
+      });
     }
   };
 
@@ -292,10 +313,24 @@ export function QuizSessionPage({
   }
 
   if (isNewSession && createMutation.isError) {
+    if (lockedCreation) {
+      if (chapterMap.isPending || lockedChapter) {
+        return <RouteLoading withinMain />;
+      }
+      return (
+        <section className="quiz-message-panel">
+          <h1>無法建立挑戰</h1>
+          <p role="alert">章節狀態暫時無法確認</p>
+          <Link className="primary-action" to="/app">
+            回學習地圖
+          </Link>
+        </section>
+      );
+    }
     return (
       <section className="quiz-message-panel">
         <h1>無法建立挑戰</h1>
-        <p role="alert">{actionErrorMessage(createMutation.error)}</p>
+        <p role="alert">{quizActionErrorMessage(createMutation.error)}</p>
         <button
           className="primary-action"
           data-primary-action="true"
@@ -341,109 +376,117 @@ export function QuizSessionPage({
 
   if (!displayedQuestion?.deadlineAt) {
     return (
-      <section className="quiz-message-panel">
-        <h1>{session.chapterTitle}</h1>
-        <p role="status">正在準備下一題…</p>
-      </section>
+      <>
+        <QuizExitGuard
+          active={session.status === 'in_progress'}
+          allowNavigationRef={allowQuizNavigation}
+          repository={repository}
+          sessionId={session.sessionId}
+        />
+        <section className="quiz-message-panel">
+          <h1>{session.chapterTitle}</h1>
+          <p role="status">正在準備下一題…</p>
+        </section>
+      </>
     );
   }
 
   return (
-    <section
-      className="quiz-runner scene-night battle-scene"
-      aria-labelledby="quiz-runner-title"
-    >
-      <div className="quiz-map-panel">
-        <p className="quiz-map-panel__caption">
-          精熟學習地圖(未通過上一關前不可跳關)
-        </p>
-        <MapStepper
-          currentIndex={displayedQuestion.position - 1}
-          onJump={() => undefined}
-          total={session.questionCount}
-          unlockedCount={displayedQuestion.position}
+    <>
+      <QuizExitGuard
+        active={session.status === 'in_progress'}
+        allowNavigationRef={allowQuizNavigation}
+        repository={repository}
+        sessionId={session.sessionId}
+      />
+      <section
+        className="quiz-runner quiz-runner--battle-v2 scene-night battle-scene"
+        aria-labelledby="quiz-runner-title"
+      >
+        <header className="quiz-runner__header">
+          <div className="quiz-runner__title-group">
+            <h1 id="quiz-runner-title">{chapterLabel}</h1>
+            <p>{challengeLabel}</p>
+          </div>
+          <div className="quiz-runner__status" aria-label="挑戰進度">
+            <p>
+              第 {String(displayedQuestion.position)} /{' '}
+              {String(session.questionCount)} 題
+            </p>
+            <p>
+              Quiz Score：
+              {String(session.totalScore)}
+            </p>
+            <Countdown
+              deadlineAt={displayedQuestion.deadlineAt}
+              onExpire={() => void submit(null)}
+              paused={feedbackResult !== undefined}
+              startedAt={displayedQuestion.startedAt}
+            />
+          </div>
+        </header>
+
+        <BattleStage
+          comboCount={comboCount(session.questions)}
+          phase={battlePhase}
+          questionSeed={displayedQuestion.stableCode}
         />
-      </div>
-      <header className="quiz-runner__header">
-        <div>
-          <p className="route-panel__eyebrow">限時挑戰</p>
-          <h1 id="quiz-runner-title">{session.chapterTitle}</h1>
-        </div>
-        <div className="quiz-runner__status" aria-label="挑戰進度">
-          <p>
-            第 {String(displayedQuestion.position)} /{' '}
-            {String(session.questionCount)} 題
-          </p>
-          <p>
-            Quiz Score：
-            {String(session.totalScore)}
-          </p>
-          <Countdown
-            deadlineAt={displayedQuestion.deadlineAt}
-            onExpire={() => void submit(null)}
-            paused={feedbackResult !== undefined}
-            startedAt={displayedQuestion.startedAt}
+
+        <div className="quiz-runner__question-dock">
+          <QuestionCard
+            isPending={submitMutation.isPending}
+            locked={
+              feedbackResult !== undefined || actionError?.kind === 'submit'
+            }
+            onSelect={(optionId) => {
+              setSelection({
+                optionId,
+                questionId: displayedQuestion.sessionQuestionId,
+              });
+            }}
+            onSubmit={() => void submit(selectedOptionId)}
+            question={displayedQuestion}
+            selectedOptionId={
+              feedbackResult
+                ? feedbackResult.selectedOptionId
+                : selectedOptionId
+            }
           />
-        </div>
-      </header>
 
-      <BattleStage
-        comboCount={comboCount(session.questions)}
-        phase={battlePhase}
-      />
+          {actionError ? (
+            <div className="quiz-action-error" role="alert">
+              <p>{actionError.message}</p>
+              {actionError.kind === 'submit' ? (
+                <button
+                  className="primary-action"
+                  data-primary-action="true"
+                  disabled={submitMutation.isPending}
+                  onClick={() => {
+                    const attempt = submissionAttempt.current;
+                    if (attempt) void submit(attempt.selectedId);
+                  }}
+                  type="button"
+                >
+                  重試送出
+                </button>
+              ) : null}
+            </div>
+          ) : null}
 
-      {session.gameRulesVersion === '2026-07-progress-1' ? (
-        <p role="status">
-          補救練習模式：答對可解決錯題並回復精熟；不發 Token，XP 以 20%
-          計，原始成績不變。
-        </p>
-      ) : null}
-
-      <QuestionCard
-        isPending={submitMutation.isPending}
-        locked={feedbackResult !== undefined || actionError?.kind === 'submit'}
-        onSelect={(optionId) => {
-          setSelection({
-            optionId,
-            questionId: displayedQuestion.sessionQuestionId,
-          });
-        }}
-        onSubmit={() => void submit(selectedOptionId)}
-        question={displayedQuestion}
-        selectedOptionId={
-          feedbackResult ? feedbackResult.selectedOptionId : selectedOptionId
-        }
-      />
-
-      {actionError ? (
-        <div className="quiz-action-error" role="alert">
-          <p>{actionError.message}</p>
-          {actionError.kind === 'submit' ? (
-            <button
-              className="primary-action"
-              data-primary-action="true"
-              disabled={submitMutation.isPending}
-              onClick={() => {
-                const attempt = submissionAttempt.current;
-                if (attempt) void submit(attempt.selectedId);
-              }}
-              type="button"
-            >
-              重試送出
-            </button>
+          {feedbackResult ? (
+            <FeedbackCard
+              isLastQuestion={
+                displayedQuestion.position === session.questionCount
+              }
+              isPending={
+                finalizeMutation.isPending || activateMutation.isPending
+              }
+              onContinue={() => void continueAfterFeedback()}
+              result={feedbackResult}
+            />
           ) : null}
         </div>
-      ) : null}
-
-      {feedbackResult ? (
-        <FeedbackCard
-          isLastQuestion={displayedQuestion.position === session.questionCount}
-          isPending={finalizeMutation.isPending || activateMutation.isPending}
-          mentorSeed={session.chapterTitle}
-          onContinue={() => void continueAfterFeedback()}
-          result={feedbackResult}
-        />
-      ) : null}
-    </section>
+      </section>
+    </>
   );
 }

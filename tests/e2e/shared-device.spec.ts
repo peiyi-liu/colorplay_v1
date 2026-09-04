@@ -12,7 +12,7 @@ const signIn = async (
   credentials: (typeof TEST_USERS)['studentOne' | 'studentTwo'],
 ) => {
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
-  await page.getByLabel('密碼').fill(credentials.password);
+  await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
 };
 
@@ -25,13 +25,9 @@ test('isolates two accounts that use the same browser page in sequence', async (
 
   await page.goto('/login');
   await signIn(page, TEST_USERS.studentOne);
-  await expect(
-    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
-  ).toBeVisible();
-  await page.getByRole('link', { name: '個人資料' }).click();
-  await expect(
-    page.getByRole('heading', { name: 'student.one' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: '學習地圖' })).toBeVisible();
+  await expect(page).toHaveURL(/\/app$/u);
+  await expect(page.locator('.hud-identity__name')).toHaveText('student.one');
 
   const logoutResponsePromise = page.waitForResponse(
     (response) =>
@@ -66,11 +62,8 @@ test('isolates two accounts that use the same browser page in sequence', async (
   });
 
   await signIn(page, TEST_USERS.studentTwo);
-  // 登出前停在 /app/profile，登入會回到原頁（個人資料入口現只在大廳）。
-  await expect(page).toHaveURL(/\/app\/profile$/u);
-  await expect(
-    page.getByRole('heading', { name: 'student.two' }),
-  ).toBeVisible();
+  await expect(page).toHaveURL(/\/app$/u);
+  await expect(page.locator('.hud-identity__name')).toHaveText('student.two');
   await expect(page.locator('body')).not.toContainText('student.one');
   expect(
     await page.evaluate(

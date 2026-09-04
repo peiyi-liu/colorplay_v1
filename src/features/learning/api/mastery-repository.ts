@@ -101,6 +101,7 @@ export type MasteryAttemptResult =
 
 export type MasteryErrorCode =
   | 'AUTH_REQUIRED'
+  | 'CHAPTER_LOCKED'
   | 'NOT_FOUND'
   | 'NO_QUESTIONS'
   | 'OPTION_LOCKED'
@@ -115,13 +116,15 @@ export class MasteryError extends Error {
   readonly code: MasteryErrorCode;
 
   constructor(code: MasteryErrorCode) {
-    super(code);
+    super(code === 'CHAPTER_LOCKED' ? '請先完成上一章的複習與挑戰。' : code);
     this.code = code;
     this.name = 'MasteryError';
   }
 }
 
 const mapServerError = (message: string): MasteryError => {
+  if (message.includes('CHAPTER_LOCKED'))
+    return new MasteryError('CHAPTER_LOCKED');
   if (message.includes('AUTH_REQUIRED'))
     return new MasteryError('AUTH_REQUIRED');
   if (message.includes('MASTERY_NOT_FOUND'))

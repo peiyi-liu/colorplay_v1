@@ -178,45 +178,60 @@ select pg_temp.as_user('18000000-0000-0000-0000-000000000001');
 select set_config(
   'test.activity',
   public.create_live_activity(
-    'Play 對戰', '26000000-0000-0000-0000-000000000003', 20
+    'Play 對戰', '4f208855-dfc8-6cc5-7671-02dfacba85d1', 20
   )::text,
   true
 );
-select set_config(
-  'test.assignment',
-  public.create_assignment(
-    '18100000-0000-0000-0000-000000000001',
-    'Live 對戰作業',
-    'live_activity',
+
+-- Preserve one valid historical Assignment link without calling the retired
+-- mutation RPC. New Live sessions must reject this otherwise valid ID.
+reset role;
+insert into public.assignments (
+  id, classroom_id, owner_teacher_id, title, activity_type,
+  live_activity_id, passing_rule, status
+)
+values (
+  '18500000-0000-0000-0000-000000000001',
+  '18100000-0000-0000-0000-000000000001',
+  '18000000-0000-0000-0000-000000000001',
+  'Historical Live assignment',
+  'live_activity',
+  (current_setting('test.activity')::jsonb ->> 'activity_id')::uuid,
+  '{"rule":"score_at_least","threshold":"600"}',
+  'published'
+);
+set local role authenticated;
+select pg_temp.as_user('18000000-0000-0000-0000-000000000001');
+
+select throws_ok(
+  $$select public.create_live_session(
     (current_setting('test.activity')::jsonb ->> 'activity_id')::uuid,
-    null, null, null, 600
-  )::text,
-  true
+    '18100000-0000-0000-0000-000000000001',
+    '18500000-0000-0000-0000-000000000001',
+    'individual',
+    null
+  )$$,
+  'P0001',
+  'ASSIGNMENT_FEATURE_RETIRED',
+  'new Live sessions cannot link a retired Assignment'
 );
+reset role;
 select is(
-  current_setting('test.assignment')::jsonb ->> 'status',
-  'draft',
-  'live assignments can now be created'
+  (select count(*)::integer from public.live_sessions),
+  0,
+  'a rejected Assignment link creates no Live session'
 );
-select set_config(
-  'test.assignment_id',
-  current_setting('test.assignment')::jsonb ->> 'assignment_id',
-  true
-);
-select set_config(
-  'test.assignment_published',
-  public.update_assignment_status(
-    current_setting('test.assignment_id')::uuid, 'published', null
-  )::text,
-  true
-);
+set local role authenticated;
+select pg_temp.as_user('18000000-0000-0000-0000-000000000001');
 
 select set_config(
   'test.session',
   public.create_live_session(
     (current_setting('test.activity')::jsonb ->> 'activity_id')::uuid,
     '18100000-0000-0000-0000-000000000001',
-    current_setting('test.assignment_id')::uuid
+    null,
+    'individual',
+    null
   )::text,
   true
 );
@@ -451,8 +466,8 @@ select is(
     '18000000-0000-0000-0000-000000000001',
     '18000000-0000-0000-0000-000000000003'
   ),
-  9,
-  'the host advances through the remaining nine questions'
+  19,
+  'the host advances through the remaining nineteen questions'
 );
 reset role;
 select is(
@@ -467,7 +482,7 @@ select is(
       and participant.user_id = '18000000-0000-0000-0000-000000000004'
       and answer.answer_status = 'timeout'
   ),
-  9,
+  19,
   'closing writes timeout answers for silent participants'
 );
 
@@ -563,14 +578,26 @@ select is(
 reset role;
 select is(
   (
+    select count(*)::integer
+    from public.student_chapter_unlocks
+    where user_id in (
+      '18000000-0000-0000-0000-000000000003',
+      '18000000-0000-0000-0000-000000000004'
+    )
+  ),
+  0,
+  'Live participation and finalization grant no self-study chapter unlocks'
+);
+select is(
+  (
     select amount
     from public.xp_transactions
     where source_type = 'live'
       and source_id = current_setting('test.session_id')::uuid
       and user_id = '18000000-0000-0000-0000-000000000003'
   ),
-  750,
-  'ten fast correct answers award 750 live XP'
+  1500,
+  'twenty fast correct answers award 1500 live XP'
 );
 select is(
   (
@@ -580,8 +607,8 @@ select is(
       and source_id = current_setting('test.session_id')::uuid
       and user_id = '18000000-0000-0000-0000-000000000003'
   ),
-  250,
-  'ten fast correct answers award 250 live Token'
+  500,
+  'twenty fast correct answers award 500 live Token'
 );
 select is(
   (
@@ -630,33 +657,12 @@ select is(
 );
 select is(
   (
-    select count(*)::integer
-    from public.assignment_attempts
-    where assignment_id = current_setting('test.assignment_id')::uuid
-      and live_session_id = current_setting('test.session_id')::uuid
+    select assignment_id
+    from public.live_sessions
+    where id = current_setting('test.session_id')::uuid
   ),
-  2,
-  'a linked assignment derives one attempt per participant'
-);
-select is(
-  (
-    select passed
-    from public.assignment_attempts
-    where assignment_id = current_setting('test.assignment_id')::uuid
-      and user_id = '18000000-0000-0000-0000-000000000003'
-  ),
-  true,
-  'a 1500-point live run passes the 600-point rule'
-);
-select is(
-  (
-    select passed
-    from public.assignment_attempts
-    where assignment_id = current_setting('test.assignment_id')::uuid
-      and user_id = '18000000-0000-0000-0000-000000000004'
-  ),
-  false,
-  'a zero-point live run fails the passing rule'
+  null,
+  'pure Live completion remains independent from Assignment history'
 );
 select pass(
   'mastery tables arrive in a later phase; live finalize writes none'

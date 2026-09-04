@@ -4,6 +4,9 @@
 
 begin;
 
+-- 僅供舊 RPC 行為 fixture；正式 client 權限由 060 驗證且維持撤銷。
+grant execute on function public.join_classroom(text, uuid) to authenticated;
+
 select plan(22);
 
 select has_column(

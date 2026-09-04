@@ -12,13 +12,15 @@ const classCodeInput = z
   .string()
   .trim()
   .refine(
-    (value) => /^[0-9A-F]{16}$/.test(value.toUpperCase().replace(/-/g, '')),
-    '請輸入教師提供的 16 碼班級序號',
+    (value) =>
+      /^(?:[0-9A-HJKMNP-TV-Z]{8}|[0-9A-F]{16})$/.test(
+        value.toUpperCase().replace(/-/g, ''),
+      ),
+    '請輸入教師提供的 8 碼班級序號（既有 16 碼仍可使用）',
   );
 
 export const accountSignInSchema = z.object({
   account: z.string().trim().min(1, '請輸入帳號'),
-  classCode: z.string().trim().optional(),
   password: z.string().min(1, '請輸入密碼').max(128, '請輸入密碼'),
 });
 

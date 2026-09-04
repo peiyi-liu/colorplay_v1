@@ -1,106 +1,186 @@
-name: Foundation CI
+name: Feature CI
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
-      - main
+      - staging
 
 permissions:
   contents: read
 
+env:
+  CI: 'true'
+  VITE_SUPABASE_URL: https://synthetic-colorplay-ci.invalid
+  VITE_SUPABASE_ANON_KEY: synthetic-browser-public-anon-key
+
 jobs:
-  foundation-ci:
-    name: foundation-ci
+  format:
+    name: format
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    env:
-      CI: 'true'
-      VITE_SUPABASE_URL: https://synthetic-colorplay-ci.invalid
-      VITE_SUPABASE_ANON_KEY: synthetic-browser-public-anon-key
-      # PLAYWRIGHT_EVIDENCE_ROOT / PLAYWRIGHT_TRACE 不得在 job 層設定：
-      # evidence-manifest contract 要求 playwright-local-* 預設樣式與
-      # trace on-first-retry；e2e 失敗證據（截圖/影片/trace）依 config
-      # 預設保留，並經 artifacts/acceptance/** 整批上傳。
+    timeout-minutes: 15
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
-
-      # pnpm/action-setup 的 self-installer 自本 repo 首次 run 起穩定失敗
-      # （annotation: "self-installer exits with code 1"，29/29 紅）；改用
-      # npm 依 packageManager pin 安裝——版本仍唯一來自 package.json。
       - name: Set up pnpm from packageManager
         run: npm install --global "$(node --print "require('./package.json').packageManager")"
-
       - name: Set up pinned Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '24.13.1'
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
-
       - name: Check formatting
         run: pnpm format:check
 
+  lint:
+    name: lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Set up pnpm from packageManager
+        run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
       - name: Lint
         run: pnpm lint
 
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Set up pnpm from packageManager
+        run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
       - name: Typecheck
         run: pnpm typecheck
 
-      # 必須先於 unit coverage：evidence-manifest 的 retention contract 會
-      # 起 vite dev 並以 chromium 實跑 playwright 產生證據。
-      - name: Install Chromium and operating-system dependencies
+  unit-coverage:
+    name: unit-coverage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Set up pnpm from packageManager
+        run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium for evidence contracts
         run: pnpm exec playwright install --with-deps chromium
-
+      - name: Install age for encrypted backup contracts
+        run: sudo apt-get update && sudo apt-get install --yes age
       - name: Run stack-independent unit coverage
-        shell: bash
-        run: |
-          set -o pipefail
-          pnpm test:coverage 2>&1 | tee coverage-run.log
+        run: pnpm test:coverage
 
-      # coverage 失敗時把尾段輸出轉成 annotations——logs API 需認證，
-      # annotations 可匿名讀取，供診斷「無測試失敗的 exit 1」。
-      - name: Surface coverage failure detail
-        if: failure()
-        shell: bash
-        run: |
-          # GitHub 每步僅保留前 10 條 annotations——只吐總結與錯誤行。
-          grep -E "ERROR|does not meet|Error|All files|Test Files|Tests  " \
-            coverage-run.log | tail -n 10 | while IFS= read -r line; do
-            printf '::error::COV %s\n' "$line"
-          done
-
+  production-build:
+    name: production-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Set up pnpm from packageManager
+        run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
       - name: Build production application
         run: npm run build
 
-      - name: Test seeded local database and real-stack integration
-        shell: bash
-        run: |
-          set -o pipefail
-          pnpm test:db 2>&1 | tee testdb-run.log
+      - name: Enforce production image budgets
+        run: pnpm assets:check
 
-      - name: Surface test:db failure detail
-        if: failure()
-        shell: bash
-        run: |
-          tail -n 10 testdb-run.log | while IFS= read -r line; do
-            printf '::error::DB %s\n' "$line"
-          done
+  local-database:
+    name: local-database
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Set up pnpm from packageManager
+        run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Test clean seeded Local Supabase
+        run: pnpm test:db
 
-      - name: Run Chromium end-to-end tests against the built preview
-        env:
-          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
+  chromium-e2e:
+    name: chromium-e2e
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Set up pnpm from packageManager
+        run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium and operating-system dependencies
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Reset and seed an isolated Local Supabase stack
         shell: bash
         run: |
-          # e2e 走真實本機 stack（test:db 已啟動並播種）：以真實環境重建
-          # bundle——synthetic URL 的 bundle 無法完成登入等真實旅程；
-          # Live smoke 也需要 SUPABASE_URL 才不會被 skip。
+          set -euo pipefail
+          pnpm exec supabase start >/dev/null 2>&1
+          pnpm exec supabase db reset --local
+          source scripts/supabase/load-local-environment.sh
+          load_local_supabase_environment \
+            < <(pnpm exec supabase status -o env 2>/dev/null)
+          export SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY
+          pnpm exec tsx scripts/supabase/seed-auth.ts
+      - name: Verify admin sensitivity catalog is regenerable
+        run: pnpm admin:catalog:check
+      - name: Verify admin catalog matches migration-derived inventory
+        run: pnpm admin:catalog:inventory
+      - name: Build and test the Local stack through Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
           source scripts/supabase/load-local-environment.sh
           load_local_supabase_environment \
             < <(pnpm exec supabase status -o env 2>/dev/null)
@@ -108,12 +188,9 @@ jobs:
           export VITE_SUPABASE_URL="$SUPABASE_URL"
           export VITE_SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
           pnpm build
-          mkdir -p artifacts/acceptance/phase-1a-task-08/reports
-          pnpm preview --host 127.0.0.1 --port 4173 \
-            > artifacts/acceptance/phase-1a-task-08/reports/vite-preview.log 2>&1 &
+          pnpm preview --host 127.0.0.1 --port 4173 > /tmp/colorplay-preview.log 2>&1 &
           preview_pid=$!
           trap 'kill "$preview_pid"' EXIT
-
           for attempt in {1..30}; do
             if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then
               break
@@ -123,52 +200,53 @@ jobs:
           curl --fail --silent http://127.0.0.1:4173/ >/dev/null
           pnpm test:e2e --project=chromium
 
-      # e2e 用真實本機環境重建過 dist；掃描前還原 synthetic 版本，
-      # 維持「bundle 內不得出現任何憑證樣態」的掃描語意。
-      - name: Rebuild bundle with synthetic env for credential scan
+  credential-scan:
+    name: credential-scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Set up pnpm from packageManager
+        run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Rebuild bundle with synthetic public config
         run: npm run build
-
       - name: Scan source, bundle, and evidence for credentials
         id: secret-scan
         shell: bash
         run: |
-          report_directory=artifacts/acceptance/phase-1a-task-08/reports
-          report_path="$report_directory/ci-secret-scan.txt"
+          set -euo pipefail
+          report_directory=artifacts/phase0/ci
+          report_path="$report_directory/credential-scan.txt"
           mkdir -p "$report_directory"
-
           credential_value_pattern='(?i)(eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+|sb_secret_[A-Za-z0-9_-]{16,}|(?:postgres(?:ql)?|mysql)://[^[:space:]]+:[^@[:space:]]+@|-----BEGIN [A-Z ]*PRIVATE KEY-----)'
           if rg --hidden --pcre2 -q \
             --glob '!.git/**' \
             --glob '!node_modules/**' \
-            --glob '!ci-secret-scan.txt' \
+            --glob '!credential-scan.txt' \
             "$credential_value_pattern" .; then
             printf 'findings=detected\ndetails=withheld\n' > "$report_path"
             exit 1
           fi
-
-          while IFS= read -r archive; do
-            if unzip -p "$archive" | rg --pcre2 -q "$credential_value_pattern"; then
-              printf 'findings=detected\ndetails=withheld\n' > "$report_path"
-              exit 1
-            fi
-          done < <(find artifacts/acceptance -type f -name '*.zip' -print)
-
           if rg -q '^\s+VITE_[A-Z0-9_]*(SERVICE|ROLE|DATABASE|PASSWORD|JWT|SECRET)[A-Z0-9_]*:' \
             .github/workflows/ci.yml; then
             printf 'findings=detected\ndetails=withheld\n' > "$report_path"
             exit 1
           fi
-
-          printf 'findings=0\nscope=current-tree,dist,coverage,acceptance-artifacts,expanded-traces\n' \
-            > "$report_path"
-
-      - name: Upload scanned foundation evidence
+          printf 'findings=0\nscope=current-tree,dist,evidence\n' > "$report_path"
+      - name: Upload scanned CI evidence
         uses: actions/upload-artifact@v5
         if: ${{ success() && steps.secret-scan.outcome == 'success' }}
         with:
-          name: foundation-ci-evidence
-          path: |
-            artifacts/acceptance/
-            coverage/
+          name: feature-ci-credential-scan
+          path: artifacts/phase0/ci/
           if-no-files-found: error
           retention-days: 14

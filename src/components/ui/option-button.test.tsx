@@ -44,4 +44,21 @@ describe('OptionButton', () => {
     expect(button).toBeDisabled();
     expect(button.querySelector('svg')).not.toBeNull();
   });
+
+  it('selected state shows a check and explicit confirmation', () => {
+    render(
+      <OptionButton
+        variant="emerald"
+        shape="diamond"
+        state="selected"
+        onClick={vi.fn()}
+      >
+        D
+      </OptionButton>,
+    );
+
+    const button = screen.getByRole('button', { name: /D.*已選擇/u });
+    expect(button).toHaveClass('ui-option--state-selected');
+    expect(button.querySelector('svg')).not.toBeNull();
+  });
 });

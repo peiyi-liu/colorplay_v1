@@ -11,14 +11,13 @@ if test -n "$git_status"; then
 fi
 
 git_sha="$(git rev-parse HEAD)"
-phase_root="$project_root/artifacts/acceptance/teacher-content-${git_sha}"
+phase_root="$project_root/artifacts/acceptance/teacher-content-retirement-${git_sha}"
 if test -e "$phase_root"; then
   printf 'TEACHER_CONTENT_EVIDENCE_ALREADY_EXISTS\n' >&2
   exit 1
 fi
 
 mkdir -p \
-  "$phase_root/downloads" \
   "$phase_root/reports" \
   "$phase_root/screenshots" \
   "$phase_root/traces" \
@@ -73,31 +72,36 @@ node -e '
   const { writeFileSync } = require("node:fs");
   const [path, sha] = process.argv.slice(1);
   writeFileSync(path, `${JSON.stringify({
-    acceptance_ids: [
-      "AC-TCH-001", "AC-TCH-002", "AC-TCH-003", "AC-TCH-004", "AC-TCH-005",
-      "AC-TCH-006", "AC-TCH-007", "AC-TCH-008", "AC-TCH-009", "AC-MIG-003"
-    ],
+    acceptance_ids: ["AC-RETIRE-TCH-001", "AC-RETIRE-TCH-002"],
     dirty_worktree: false,
     git_sha: sha,
-    phase: "teacher-content-v1",
+    phase: "teacher-content-retirement-v2",
     supabase_environment: "local"
   }, null, 2)}\n`);
 ' "$phase_root/run.json" "$git_sha"
 
-run_logged 'pnpm format:check' "$phase_root/reports/format-check.log" pnpm format:check
+run_logged \
+  'bash -n scripts/acceptance/run-teacher-content.sh' \
+  "$phase_root/reports/shell-syntax.log" \
+  bash -n scripts/acceptance/run-teacher-content.sh
+run_logged \
+  'pnpm exec prettier --check teacher-content-retirement-v2' \
+  "$phase_root/reports/format-check.log" \
+  pnpm exec prettier --check \
+    package.json \
+    scripts/acceptance/finalize-teacher-content.mjs \
+    scripts/acceptance/finalize-teacher-content.d.mts \
+    tests/contracts/teacher-content-phase-gate.test.ts \
+    tests/e2e/teacher-content.spec.ts \
+    tests/e2e/teacher-content-expected-failures.ts
 run_logged 'pnpm lint' "$phase_root/reports/lint.log" pnpm lint
 run_logged 'pnpm typecheck' "$phase_root/reports/typecheck.log" pnpm typecheck
 run_logged 'pnpm test' "$phase_root/reports/unit.log" pnpm test
 run_logged 'pnpm build' "$phase_root/reports/build.log" pnpm build
-# Reset before the db tests: earlier browser runs commit real content
-# imports, and the pgTAP suite asserts against the seeded curriculum. The
-# rollback-only pgTAP run plus the idempotent auth seed keep this single
-# reset valid for the browser gate too.
 run_logged \
-  'pnpm exec supabase db reset --local' \
-  "$phase_root/reports/e2e-database-reset.log" \
-  pnpm exec supabase db reset --local
-run_logged 'pnpm test:db' "$phase_root/reports/database-integration.log" pnpm test:db
+  'pnpm exec supabase test db --local' \
+  "$phase_root/reports/database-integration.log" \
+  pnpm exec supabase test db --local
 
 source scripts/supabase/load-local-environment.sh
 load_local_supabase_environment \
@@ -118,21 +122,20 @@ export PLAYWRIGHT_VIDEO=on
 export PLAYWRIGHT_TRACE=on
 export PLAYWRIGHT_EVIDENCE_ROOT="$phase_root"
 run_logged \
-  "bash scripts/test-e2e-local.sh --project=chromium --headed --grep='Teacher Content phase gate'" \
+  "bash scripts/test-e2e-local.sh --project=chromium --headed --grep='Teacher Content retirement gate'" \
   "$phase_root/reports/e2e-headed.log" \
   bash scripts/test-e2e-local.sh \
     --project=chromium \
     --headed \
-    --grep='Teacher Content phase gate'
+    --grep='Teacher Content retirement gate'
 
 while IFS= read -r screenshot; do
   cp "$screenshot" "$phase_root/screenshots/$(basename "$screenshot")"
 done < <(
   find "$phase_root/playwright" \
     -type f \
-    \( -name 'teacher-dashboard-*.png' \
-      -o -name 'import-preview-*.png' \
-      -o -name 'content-workspace-*.png' \) \
+    \( -name 'teacher-import-retired-*.png' \
+      -o -name 'teacher-content-retired-*.png' \) \
     -print
 )
 node scripts/acceptance/sanitize-playwright-artifacts.mjs \

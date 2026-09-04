@@ -40,7 +40,7 @@ const signIn = async (
 ) => {
   await page.goto('/login');
   await page.getByRole('textbox', { name: '帳號' }).fill(user.email);
-  await page.getByLabel('密碼').fill(user.password);
+  await page.getByLabel('密碼', { exact: true }).fill(user.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/(app|teacher)/u);
 };

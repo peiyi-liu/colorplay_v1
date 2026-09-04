@@ -75,6 +75,14 @@ describe('LeaderboardTable', () => {
     expect(
       document.querySelectorAll('.leaderboard-blook__avatar'),
     ).toHaveLength(3);
+    const knownBlook = document.querySelector<HTMLImageElement>(
+      '.leaderboard-blook__avatar .blook-art',
+    );
+    expect(knownBlook).toHaveAttribute('width', '64');
+    expect(knownBlook).toHaveAttribute('height', '64');
+    expect(screen.getByText('這是你').parentElement).toHaveClass(
+      'leaderboard-blook__avatar-wrap',
+    );
     expect(screen.getAllByText('0 XP')).toHaveLength(2);
     expect(document.body).not.toHaveTextContent('59999999-');
   });

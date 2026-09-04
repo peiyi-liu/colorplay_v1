@@ -1,19 +1,15 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-import {
-  ACCOUNT_PATTERN,
-  CLASS_CODE_PATTERN,
-  normalizeAccount,
-  normalizeClassCode,
-  sha256Hex,
-} from '../_shared/account.ts';
+import { ACCOUNT_PATTERN, normalizeAccount } from '../_shared/account.ts';
+import { readRuntimeSupabaseApiKeys } from '../_shared/api-keys.ts';
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const { publishableKey, secretKey } = readRuntimeSupabaseApiKeys((name) =>
+  Deno.env.get(name),
+);
 
-// 防列舉：帳號不存在、角色不符、班級不符、密碼錯誤一律同一回應。
+// 防列舉：帳號不存在、角色不符、密碼錯誤一律同一回應。
 const invalidCredentials = () =>
   jsonResponse(401, { error: 'AUTH_INVALID_CREDENTIALS' });
 
@@ -32,7 +28,7 @@ Deno.serve(async (request) => {
     return jsonResponse(400, { error: 'INVALID_JSON' });
   }
 
-  const { account, password, portal, classCode } = payload;
+  const { account, password, portal } = payload;
   if (
     typeof account !== 'string' ||
     typeof password !== 'string' ||
@@ -47,7 +43,7 @@ Deno.serve(async (request) => {
     return invalidCredentials();
   }
 
-  const admin = createClient(supabaseUrl, serviceRoleKey, {
+  const admin = createClient(supabaseUrl, secretKey, {
     auth: { persistSession: false },
   });
 
@@ -57,24 +53,12 @@ Deno.serve(async (request) => {
     .eq('login_account', normalizedAccount)
     .maybeSingle();
   if (profileError || !profile) return invalidCredentials();
-  if (profile.role !== portalValue) return invalidCredentials();
-
-  if (portalValue === 'teacher') {
-    if (typeof classCode !== 'string') return invalidCredentials();
-    const normalizedCode = normalizeClassCode(classCode);
-    if (!CLASS_CODE_PATTERN.test(normalizedCode)) return invalidCredentials();
-
-    const codeHash = `\\x${await sha256Hex(normalizedCode)}`;
-    const { data: classrooms, error: classroomError } = await admin
-      .from('classrooms')
-      .select('id, join_code_hash')
-      .eq('owner_teacher_id', profile.id)
-      .eq('status', 'active');
-    if (classroomError) return invalidCredentials();
-    const ownsClassroom = (classrooms ?? []).some(
-      (row) => row.join_code_hash === codeHash,
-    );
-    if (!ownsClassroom) return invalidCredentials();
+  // admin 經教師入口登入(spec §3.1);防列舉:所有失敗一律同一回應
+  if (
+    profile.role !== portalValue &&
+    !(portalValue === 'teacher' && profile.role === 'admin')
+  ) {
+    return invalidCredentials();
   }
 
   const { data: userData, error: userError } =
@@ -86,12 +70,33 @@ Deno.serve(async (request) => {
     `${supabaseUrl}/auth/v1/token?grant_type=password`,
     {
       method: 'POST',
-      headers: { apikey: anonKey, 'Content-Type': 'application/json' },
+      headers: {
+        apikey: publishableKey,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ email, password }),
     },
   );
   if (!grant.ok) return invalidCredentials();
 
-  const session = await grant.json();
-  return jsonResponse(200, { session });
+  const session: unknown = await grant.json().catch(() => null);
+  if (
+    session === null ||
+    typeof session !== 'object' ||
+    Array.isArray(session) ||
+    !('access_token' in session) ||
+    typeof session.access_token !== 'string' ||
+    session.access_token === '' ||
+    !('refresh_token' in session) ||
+    typeof session.refresh_token !== 'string' ||
+    session.refresh_token === ''
+  ) {
+    return invalidCredentials();
+  }
+  return jsonResponse(200, {
+    session: {
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    },
+  });
 });

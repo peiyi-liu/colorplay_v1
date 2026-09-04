@@ -1,10 +1,14 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import { isValidElement } from 'react';
 import { RouterProvider } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthRepository, AuthSession } from '../../features/auth/types';
 import { usePublishedChapters } from '../../features/learning/api/chapters';
 import { useMyProfile } from '../../features/profile/hooks/use-my-profile';
 import { AppProviders } from '../providers/app-providers';
+import { AdminShell } from '../../features/admin/components/admin-shell';
+import { RequireAdminIdentity } from '../../features/admin/components/require-admin-identity';
+import { RequirePrivilegedSession } from '../../features/admin/components/require-privileged-session';
 import { createAppRouter } from './create-app-router';
 
 vi.mock('../../features/profile/hooks/use-my-profile', () => ({
@@ -15,6 +19,7 @@ vi.mock('../../features/profile/hooks/use-my-profile', () => ({
       role: 'student',
       timezone: 'Asia/Taipei',
       reducedMotion: false,
+      registrationComplete: true,
     },
     error: null,
     isError: false,
@@ -25,6 +30,40 @@ vi.mock('../../features/profile/hooks/use-my-profile', () => ({
 vi.mock('../../features/learning/api/chapters', () => ({
   usePublishedChapters: vi.fn(() => ({
     data: [],
+    error: null,
+    isError: false,
+    isPending: false,
+    refetch: vi.fn(),
+  })),
+}));
+vi.mock('../../features/learning/hooks/use-chapter-map', () => ({
+  useStudentChapterMap: vi.fn(() => ({
+    data: {
+      chapters: [
+        '認識色彩',
+        '色彩呈現',
+        '色彩表示',
+        '色彩感知',
+        '色彩認知',
+        '色彩應用',
+      ].map((title, index) => ({
+        accessState: index === 2 ? 'available' : 'content_unavailable',
+        blockers: [],
+        chapterId: `21000000-0000-0000-0000-${String(index + 1).padStart(12, '0')}`,
+        description: `第 ${String(index + 1)} 章說明`,
+        mastery: null,
+        progressStatus: 'not_started',
+        reviewCompleted: 0,
+        reviewTotal: index === 2 ? 5 : null,
+        sortOrder: index + 1,
+        stableCode: `chapter-${String(index + 1)}`,
+        templateId: index === 2 ? '26000000-0000-0000-0000-000000000003' : null,
+        templateQuestionCount: index === 2 ? 10 : null,
+        title,
+      })),
+      mode: 'open',
+      rulesVersion: '2026-08-sequence-1',
+    },
     error: null,
     isError: false,
     isPending: false,
@@ -175,8 +214,58 @@ const renderRouter = (path: string, session: AuthSession | null = null) => {
 };
 
 describe('createAppRouter', () => {
+  beforeEach(() => {
+    mockedUseMyProfile.mockReturnValue({
+      data: {
+        displayName: 'student.one',
+        id: 'learner-id',
+        reducedMotion: false,
+        registrationComplete: true,
+        role: 'student',
+        timezone: 'Asia/Taipei',
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+  });
+
+  it.each(['/admin/teachers', '/admin/teachers/:teacherId'])(
+    'keeps %s below all existing Admin guards',
+    (path) => {
+      interface RouteNode {
+        children?: RouteNode[];
+        element?: unknown;
+        path?: string;
+      }
+      const findAncestors = (
+        routes: readonly RouteNode[],
+        ancestors: readonly RouteNode[] = [],
+      ): readonly RouteNode[] | null => {
+        for (const route of routes) {
+          if (route.path === path) return ancestors;
+          const found = route.children
+            ? findAncestors(route.children, [...ancestors, route])
+            : null;
+          if (found) return found;
+        }
+        return null;
+      };
+      const router = createAppRouter();
+      const ancestors = findAncestors(router.routes as RouteNode[]);
+      expect(ancestors).not.toBeNull();
+      const elementTypes = ancestors?.flatMap((route) =>
+        isValidElement(route.element) ? [route.element.type] : [],
+      );
+      expect(elementTypes).toContain(RequireAdminIdentity);
+      expect(elementTypes).toContain(RequirePrivilegedSession);
+      expect(elementTypes).toContain(AdminShell);
+    },
+  );
+
   it.each([
-    ['/', 'ColorPlay', 'PRESS START'],
+    ['/', 'ColorPlay', '開始冒險'],
     ['/unauthorized', '沒有權限', '返回登入'],
     ['/missing-route', '找不到頁面', '返回首頁'],
     // 學習進度依 owner 批示（2026-07-26 #2）改為教師專屬；學生端
@@ -237,6 +326,121 @@ describe('createAppRouter', () => {
     });
   });
 
+  it('protects invitation acceptance with authentication while preserving the return route', async () => {
+    const router = renderRouter('/admin/invitations/accept');
+
+    expect(await screen.findByRole('heading', { name: '登入' })).toBeVisible();
+    expect(router.state.location.pathname).toBe('/login');
+    expect(router.state.location.state).toEqual({
+      from: {
+        hash: '',
+        pathname: '/admin/invitations/accept',
+        search: '',
+      },
+    });
+  });
+
+  it('lets an authenticated incomplete non-admin reach invitation acceptance before privilege exists', async () => {
+    mockedUseMyProfile.mockReturnValue({
+      data: {
+        displayName: '待接受邀請',
+        id: 'invitee-id',
+        reducedMotion: false,
+        registrationComplete: false,
+        role: 'student',
+        timezone: 'Asia/Taipei',
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+
+    renderRouter('/admin/invitations/accept', {
+      userId: 'invitee-id',
+    });
+
+    expect(
+      await screen.findByRole('heading', { name: '接受管理員邀請' }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('heading', { name: '註冊帳號' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('沒有權限')).not.toBeInTheDocument();
+  });
+
+  it('keeps an OTP-authenticated student on registration until the server profile is complete', async () => {
+    mockedUseMyProfile.mockReturnValue({
+      data: {
+        displayName: '待完成註冊',
+        id: 'learner-id',
+        reducedMotion: false,
+        registrationComplete: false,
+        role: 'student',
+        timezone: 'Asia/Taipei',
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+
+    const router = renderRouter('/register', {
+      userId: 'learner-id',
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    expect(screen.getByRole('heading', { name: '註冊帳號' })).toBeVisible();
+    expect(router.state.location.pathname).toBe('/register');
+    expect(document.querySelector('.student-hud')).toBeNull();
+  });
+
+  it('does not unmount the registration form while the OTP session profile is resolving', async () => {
+    mockedUseMyProfile.mockReturnValue({
+      data: undefined,
+      error: null,
+      isError: false,
+      isPending: true,
+      refetch: vi.fn(),
+    });
+
+    const router = renderRouter('/register', {
+      userId: 'learner-id',
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    expect(screen.getByRole('heading', { name: '註冊帳號' })).toBeVisible();
+    expect(router.state.location.pathname).toBe('/register');
+  });
+
+  it('redirects an incomplete OTP-authenticated student away from protected app routes', async () => {
+    mockedUseMyProfile.mockReturnValue({
+      data: {
+        displayName: '待完成註冊',
+        id: 'learner-id',
+        reducedMotion: false,
+        registrationComplete: false,
+        role: 'student',
+        timezone: 'Asia/Taipei',
+      },
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: vi.fn(),
+    });
+
+    const router = renderRouter('/app', {
+      userId: 'learner-id',
+    });
+
+    expect(
+      await screen.findByRole('heading', { name: '註冊帳號' }),
+    ).toBeVisible();
+    expect(router.state.location.pathname).toBe('/register');
+  });
+
   // owner 0730 #14：加入班級頁停做，邀請連結一律落在全站 404。
   it('sends the removed join route to the site-wide 404', async () => {
     renderRouter('/join/ABCD-1234-EF56-7890');
@@ -248,7 +452,6 @@ describe('createAppRouter', () => {
   // UAT 0727 R2 #1：導覽點擊直達自己班級的排行榜，不再經班級清單。
   it('renders the direct classroom leaderboard route', async () => {
     renderRouter('/app/leaderboard', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
     expect(
@@ -258,7 +461,6 @@ describe('createAppRouter', () => {
 
   it('renders the classroom-scoped leaderboard route', async () => {
     renderRouter('/app/leaderboard/ca000000-0000-4000-8000-000000000001', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
     expect(
@@ -268,7 +470,6 @@ describe('createAppRouter', () => {
 
   it('renders the Blook shop deep-link for an authenticated student', async () => {
     renderRouter('/app/shop', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
 
@@ -279,7 +480,6 @@ describe('createAppRouter', () => {
 
   it('renders the lazy achievement route only for an authenticated student', async () => {
     renderRouter('/app/achievements', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
 
@@ -288,7 +488,7 @@ describe('createAppRouter', () => {
     ).toBeVisible();
   });
 
-  it('renders the published chapter home at /app for an authenticated session', async () => {
+  it('renders the six-chapter learning map at /app for an authenticated session', async () => {
     mockedUsePublishedChapters.mockReturnValue({
       data: [
         {
@@ -313,20 +513,21 @@ describe('createAppRouter', () => {
       refetch: vi.fn(),
     });
     renderRouter('/app', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
 
     expect(
-      await screen.findByRole('heading', { name: '色彩任務選擇大廳' }),
+      await screen.findByRole('heading', { name: '學習地圖' }),
     ).toBeVisible();
-    expect(screen.getByRole('link', { name: '繼續學習' })).toBeVisible();
+    expect(screen.getByRole('list', { name: '六章學習地圖' })).toBeVisible();
+    expect(screen.getAllByRole('button', { name: /^Chapter /u })).toHaveLength(
+      6,
+    );
     expect(document.body).not.toHaveTextContent('learner@colorplay.invalid');
   });
 
   it('routes an authoritative student away from /teacher', async () => {
     const router = renderRouter('/teacher', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
 
@@ -345,6 +546,7 @@ describe('createAppRouter', () => {
         role: 'teacher',
         timezone: 'Asia/Taipei',
         reducedMotion: false,
+        registrationComplete: true,
       },
       error: null,
       isError: false,
@@ -353,17 +555,24 @@ describe('createAppRouter', () => {
     });
 
     renderRouter('/teacher', {
-      email: 'teacher@colorplay.invalid',
       userId: 'teacher-id',
     });
 
     expect(
-      await screen.findByRole('heading', { name: '教師工作區' }),
+      await screen.findByRole('heading', { name: '教學分析' }),
     ).toBeVisible();
-    expect(screen.getByRole('link', { name: '教師工作區' })).toHaveAttribute(
+    const teacherNavigation = screen.getByRole('navigation', {
+      name: '教師導覽',
+    });
+    expect(teacherNavigation.querySelectorAll('a')).toHaveLength(3);
+    expect(screen.getByRole('link', { name: '教學分析' })).toHaveAttribute(
       'href',
       '/teacher',
     );
+    expect(screen.queryByRole('navigation', { name: '主要導覽' })).toBeNull();
+    expect(screen.queryByRole('link', { name: '教師工作區' })).toBeNull();
+    expect(document.querySelector('.hud-command')).toBeNull();
+    expect(document.querySelector('.hud-top')).toBeNull();
   });
 
   it('keeps a student out of the teacher classes route', async () => {
@@ -374,6 +583,7 @@ describe('createAppRouter', () => {
         role: 'student',
         timezone: 'Asia/Taipei',
         reducedMotion: false,
+        registrationComplete: true,
       },
       error: null,
       isError: false,
@@ -381,7 +591,6 @@ describe('createAppRouter', () => {
       refetch: vi.fn(),
     });
     const router = renderRouter('/teacher/classes', {
-      email: 'learner@colorplay.invalid',
       userId: 'learner-id',
     });
     expect(
@@ -399,6 +608,7 @@ describe('createAppRouter', () => {
         role: 'student',
         timezone: 'Asia/Taipei',
         reducedMotion: false,
+        registrationComplete: true,
       },
       error: null,
       isError: false,
@@ -408,13 +618,12 @@ describe('createAppRouter', () => {
     renderRouter(
       '/teacher/classes/14100000-0000-0000-0000-000000000001/assignments',
       {
-        email: 'learner@colorplay.invalid',
         userId: 'learner-id',
       },
     );
-    expect(
-      await screen.findByRole('heading', { name: '找不到頁面' }),
-    ).toBeVisible();
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: '找不到頁面' })).toBeVisible();
+    });
   });
 
   it('lazy-loads the classes route for an authoritative teacher', async () => {
@@ -425,6 +634,7 @@ describe('createAppRouter', () => {
         role: 'teacher',
         timezone: 'Asia/Taipei',
         reducedMotion: false,
+        registrationComplete: true,
       },
       error: null,
       isError: false,
@@ -432,7 +642,6 @@ describe('createAppRouter', () => {
       refetch: vi.fn(),
     });
     renderRouter('/teacher/classes', {
-      email: 'teacher@colorplay.invalid',
       userId: 'teacher-id',
     });
     expect(

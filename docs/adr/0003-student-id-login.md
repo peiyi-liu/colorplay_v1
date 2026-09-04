@@ -2,6 +2,7 @@
 
 - Status: **Accepted（owner 2026-07-20 以帳號規則文字規格裁定，取代原提案）**
 - Proposal date: 2026-07-19；Accepted: 2026-07-20
+- Superseded in part: 教師帳號建立與密碼復原改依 ADR 0009；學生流程不變。
 - 相關：spec/04（安全與隱私）、ADR 0002（環境策略）、
   `docs/superpowers/plans/2026-07-20-account-auth.md`（實作計畫）
 
@@ -21,7 +22,8 @@
 2. **註冊**（僅學生）：`/register` 表單內先 OTP 驗證 Email（`signInWithOtp`
    shouldCreateUser → `verifyOtp` 成功即持有 session 並顯示綠色「已認證」），
    送出後由 Edge Function `student-register` 完成：暱稱審核（不雅字＋禁 emoji）、
-   班級序號驗證（沿用 `join_classroom` 之 sha256 雜湊比對）、帳號唯一性、
+   班級序號驗證（透過 service-only resolver 沿用 sha256 雜湊比對，並共用
+   IP＋identity 限流）、帳號唯一性、
    密碼政策（6–12 碼含大小寫）、設定密碼、寫入 profile、自動入班。
 3. **登入**：帳號＋密碼（教師另填班級序號）→ Edge Function `auth-login` 以 service
    role 查 `login_account`→email，代理密碼授與後回傳 session；教師需通過

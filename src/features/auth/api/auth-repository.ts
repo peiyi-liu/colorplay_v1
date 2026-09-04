@@ -1,9 +1,13 @@
 import {
+  FunctionsFetchError,
+  FunctionsHttpError,
+  FunctionsRelayError,
   isAuthError,
   isAuthRetryableFetchError,
   type SupabaseClient,
 } from '@supabase/supabase-js';
 
+import { isRequestTimeoutError } from '../../../lib/supabase/browser-client';
 import type { Database } from '../../../types/database';
 import {
   AuthRepositoryError,
@@ -18,13 +22,66 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isAuthErrorCode = (value: unknown): value is AuthErrorCode =>
   value === 'AUTH_INVALID_CREDENTIALS' ||
   value === 'AUTH_NETWORK' ||
+  value === 'AUTH_RATE_LIMITED' ||
+  value === 'AUTH_TIMEOUT' ||
+  value === 'AUTH_UNAVAILABLE' ||
   value === 'AUTH_UNKNOWN';
+
+const readStatus = (error: unknown): number | undefined => {
+  if (isAuthError(error) && typeof error.status === 'number') {
+    return error.status;
+  }
+  if (!(error instanceof FunctionsHttpError)) return undefined;
+
+  const context = error.context as Readonly<{ status?: unknown }> | undefined;
+  return typeof context?.status === 'number' ? context.status : undefined;
+};
+
+const isTimeoutError = (error: unknown): boolean =>
+  isRequestTimeoutError(error) ||
+  (error instanceof FunctionsFetchError &&
+    isRequestTimeoutError(error.context as unknown));
+
+const isRateLimitedError = (error: unknown): boolean =>
+  readStatus(error) === 429 ||
+  (isAuthError(error) &&
+    (error.code === 'over_request_rate_limit' ||
+      error.code === 'over_email_send_rate_limit'));
+
+const isRetryableLoginTransportError = (error: unknown): boolean =>
+  !isTimeoutError(error) &&
+  !isRateLimitedError(error) &&
+  (error instanceof TypeError ||
+    error instanceof FunctionsFetchError ||
+    isAuthRetryableFetchError(error));
+
+const runLoginTransport = async <T>(
+  operation: () => Promise<T>,
+  readError: (result: T) => unknown,
+): Promise<T> => {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const result = await operation();
+      if (attempt === 0 && isRetryableLoginTransportError(readError(result))) {
+        continue;
+      }
+      return result;
+    } catch (error) {
+      if (attempt === 0 && isRetryableLoginTransportError(error)) continue;
+      throw error;
+    }
+  }
+  throw new AuthRepositoryError('AUTH_UNKNOWN');
+};
 
 const classifyRepositoryError = (error: unknown): AuthErrorCode => {
   try {
     if (error instanceof AuthRepositoryError) {
       return isAuthErrorCode(error.code) ? error.code : 'AUTH_UNKNOWN';
     }
+
+    if (isTimeoutError(error)) return 'AUTH_TIMEOUT';
+    if (isRateLimitedError(error)) return 'AUTH_RATE_LIMITED';
 
     if (error instanceof TypeError || isAuthRetryableFetchError(error)) {
       return 'AUTH_NETWORK';
@@ -33,6 +90,9 @@ const classifyRepositoryError = (error: unknown): AuthErrorCode => {
     if (isAuthError(error) && error.code === 'invalid_credentials') {
       return 'AUTH_INVALID_CREDENTIALS';
     }
+
+    const status = readStatus(error);
+    if (status !== undefined && status >= 500) return 'AUTH_UNAVAILABLE';
   } catch {
     return 'AUTH_UNKNOWN';
   }
@@ -62,29 +122,37 @@ const readResultData = (result: unknown): Record<string, unknown> => {
 const toAuthSession = (session: unknown): AuthSession => {
   if (!isRecord(session) || !isRecord(session.user)) return throwUnknown();
 
-  const { email, id } = session.user;
+  const { id } = session.user;
   if (typeof id !== 'string' || id.length === 0) return throwUnknown();
-  if (typeof email !== 'string' || email.length === 0) return throwUnknown();
 
-  return { userId: id, email };
+  return { userId: id };
 };
 
 const handleThrown = (error: unknown): never => {
   throw toRepositoryError(error);
 };
 
-// Edge Function auth-login 的失敗分類：HTTP 錯誤＝憑證問題（後端一律 401 泛用
-// 回應），fetch 層失敗＝網路。
 const classifyFunctionError = (error: unknown): AuthRepositoryError => {
-  const name =
-    typeof error === 'object' && error !== null && 'name' in error
-      ? error.name
-      : undefined;
-  return new AuthRepositoryError(
-    name === 'FunctionsFetchError'
-      ? 'AUTH_NETWORK'
-      : 'AUTH_INVALID_CREDENTIALS',
-  );
+  if (isTimeoutError(error)) return new AuthRepositoryError('AUTH_TIMEOUT');
+  if (isRateLimitedError(error)) {
+    return new AuthRepositoryError('AUTH_RATE_LIMITED');
+  }
+  if (error instanceof FunctionsFetchError) {
+    return new AuthRepositoryError('AUTH_NETWORK');
+  }
+  if (error instanceof FunctionsRelayError) {
+    return new AuthRepositoryError('AUTH_UNAVAILABLE');
+  }
+  if (error instanceof FunctionsHttpError) {
+    const status = readStatus(error);
+    if (status === 400 || status === 401 || status === 403) {
+      return new AuthRepositoryError('AUTH_INVALID_CREDENTIALS');
+    }
+    if (status !== undefined && status >= 500) {
+      return new AuthRepositoryError('AUTH_UNAVAILABLE');
+    }
+  }
+  return new AuthRepositoryError('AUTH_UNKNOWN');
 };
 
 const readSessionTokens = (
@@ -109,7 +177,10 @@ export const createAuthRepository = (
 ): AuthRepository => ({
   async signIn(input) {
     try {
-      const result: unknown = await client.auth.signInWithPassword(input);
+      const result: unknown = await runLoginTransport(
+        () => client.auth.signInWithPassword(input),
+        readResultError,
+      );
       const error = readResultError(result);
       if (error !== null) throw toRepositoryError(error);
 
@@ -121,14 +192,17 @@ export const createAuthRepository = (
 
   async signInWithAccount(input) {
     try {
-      const response = (await client.functions.invoke('auth-login', {
-        body: {
-          account: input.account,
-          classCode: input.classCode,
-          password: input.password,
-          portal: input.portal,
-        },
-      })) as Readonly<{ data: unknown; error: unknown }>;
+      const response = (await runLoginTransport(
+        () =>
+          client.functions.invoke('auth-login', {
+            body: {
+              account: input.account,
+              password: input.password,
+              portal: input.portal,
+            },
+          }),
+        readResultError,
+      )) as Readonly<{ data: unknown; error: unknown }>;
       if (response.error) throw classifyFunctionError(response.error);
 
       const result: unknown = await client.auth.setSession(

@@ -19,13 +19,33 @@ export type LiveSessionLaunch = Readonly<{
 
 export async function launchLiveSessionFromTeacherHome(
   teacherPage: Page,
+  classroomId?: string,
 ): Promise<LiveSessionLaunch> {
   await teacherPage.goto('/teacher/live');
-  const sectionSelect = teacherPage.getByLabel('1・選擇對戰單元');
-  await sectionSelect.waitFor();
-  // index 0 是「請選擇小節」placeholder；任一已發佈小節皆可用。
-  await sectionSelect.selectOption({ index: 1 });
-  await teacherPage.getByRole('button', { name: '建立活動並開場' }).click();
+  const sectionOption = teacherPage
+    .locator('.teacher-live-create__section-list label')
+    .first();
+  try {
+    await sectionOption.waitFor({ timeout: 15_000 });
+  } catch {
+    const pageText = (await teacherPage.locator('body').innerText())
+      .replace(/\s+/gu, ' ')
+      .slice(0, 500);
+    throw new Error(
+      `LIVE_LAUNCH_PAGE_NOT_READY: ${teacherPage.url()} :: ${pageText}`,
+    );
+  }
+  if (classroomId) {
+    await teacherPage
+      .getByRole('combobox', { name: '1・選擇班級' })
+      .selectOption(classroomId);
+  }
+  // 任一已發佈小節皆可用；原生 radio 由 label 繪製可見選項。
+  await sectionOption.click();
+  if (!(await sectionOption.getByRole('radio').isChecked())) {
+    throw new Error('LIVE_LAUNCH_SECTION_NOT_SELECTED');
+  }
+  await teacherPage.getByRole('button', { name: '建立課堂' }).click();
   const presenter = teacherPage.getByLabel('投影模式');
   // 開場即 startSession（draft→lobby）並導向 ?presenter=1。投影鎖定：進行
   // 中不可離開投影，之後的主持動作都走投影 footer 的操作列。
