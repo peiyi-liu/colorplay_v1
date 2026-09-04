@@ -39,7 +39,7 @@ export async function launchLiveSessionFromTeacherHome(
   if (!(await sectionOption.getByRole('radio').isChecked())) {
     throw new Error('LIVE_LAUNCH_SECTION_NOT_SELECTED');
   }
-  await teacherPage.getByRole('button', { name: '建立活動並開場' }).click();
+  await teacherPage.getByRole('button', { name: '建立課堂' }).click();
   const presenter = teacherPage.getByLabel('投影模式');
   // 開場即 startSession（draft→lobby）並導向 ?presenter=1。投影鎖定：進行
   // 中不可離開投影，之後的主持動作都走投影 footer 的操作列。
