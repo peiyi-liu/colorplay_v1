@@ -33,6 +33,10 @@ export default defineConfig({
       exclude: [
         'src/**/*.test.{ts,tsx}',
         'src/**/*.spec.{ts,tsx}',
+        // Browser/dev harnesses and their fixtures are test support, not
+        // production source. Their behavior is exercised by Playwright.
+        'src/**/*.harness.{ts,tsx}',
+        'src/**/*.test-fixtures.{ts,tsx}',
         'src/test/**',
         'src/**/*.d.ts',
       ],
