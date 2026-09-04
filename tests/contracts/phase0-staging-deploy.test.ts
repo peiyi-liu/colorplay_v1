@@ -167,8 +167,8 @@ describe('automatic Staging deployment', () => {
     );
 
     const jobBlock = (name: string) =>
-      workflow.match(
-        new RegExp(`^  ${name}:\\n(?:(?: {4,}.*)?\\n)*`, 'mu'),
+      new RegExp(`^  ${name}:\\n(?:(?: {4,}.*)?\\n)*`, 'mu').exec(
+        workflow,
       )?.[0] ?? '';
 
     expect(workflow).toContain('phase0:smoke');
