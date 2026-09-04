@@ -123,9 +123,9 @@ test('renders only the real safe profile and derives role navigation from Postgr
   await expect(
     studentPage.getByRole('heading', { name: '學習地圖' }),
   ).toBeVisible();
-  await expect(
-    studentPage.getByRole('heading', { name: 'student.one' }),
-  ).toBeVisible();
+  await expect(studentPage.locator('.hud-identity__name')).toHaveText(
+    'student.one',
+  );
   await expect(studentPage.locator('body')).not.toContainText(
     TEST_USERS.studentOne.email,
   );

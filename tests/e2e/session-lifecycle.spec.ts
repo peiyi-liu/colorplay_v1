@@ -64,11 +64,11 @@ test('restores the session at the fixed post-login route, then protects it after
   await focusViaKeyboard(menuButton);
   await page.keyboard.press('Enter');
 
-  const missions = page.getByRole('link', { name: '課後任務實戰' });
-  await expect(missions).toBeVisible();
-  await focusViaKeyboard(missions);
+  const mistakes = page.getByRole('link', { name: '我的錯題' });
+  await expect(mistakes).toBeVisible();
+  await focusViaKeyboard(mistakes);
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/\/app\/missions$/u);
+  await expect(page).toHaveURL(/\/app\/mistakes$/u);
 
   await expect(menuButton).toBeVisible();
   await focusViaKeyboard(menuButton);

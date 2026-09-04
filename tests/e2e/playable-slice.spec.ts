@@ -82,7 +82,12 @@ test('student completes a mixed ten-question challenge with durable server total
 
     await page
       .getByRole('button', {
-        name: position === 10 ? '結算並查看結果' : '我理解了，下一題',
+        name:
+          position === 10
+            ? '結算並查看結果'
+            : position <= 5
+              ? '下一題'
+              : '我理解了，下一題',
       })
       .click();
   }

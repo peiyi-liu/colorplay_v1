@@ -906,6 +906,7 @@ describe('acceptance metadata', () => {
         /admin-(security|teacher-accounts|viewports)\.spec\.ts$/u,
         /(?:\.harness|learning-map-generated-board\.visual|student-auth-shell-polish|student-hud\.visual)\.spec\.ts$/u,
         /chapter-sequence\.spec\.ts$/u,
+        /learning-map-(?:desktop-cover|fullscreen|layout-refinement|viewport)\.spec\.ts$/u,
       ]);
     }
     expect(foundationSpec).not.toContain('chromium.launch');

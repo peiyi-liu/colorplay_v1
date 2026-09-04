@@ -41,7 +41,7 @@ test('student starts a real quiz, submits an answer, and advances', async ({
   await expect(options.first()).toBeChecked();
   await submitSelectedQuizOption(page);
 
-  await expect(page.locator('.feedback-card > p').last()).toBeVisible();
+  await expect(page.locator('.feedback-card')).toBeVisible();
   await expect(options.first()).toBeDisabled();
   await expect(page.getByRole('button', { name: '送出答案' })).toHaveCount(0);
 
@@ -52,10 +52,11 @@ test('student starts a real quiz, submits an answer, and advances', async ({
     }),
   ).toBeVisible();
   // 確定性等待：等「下一題」可點擊（session 狀態已回寫），不用固定毫秒。
-  await expect(
-    page.getByRole('button', { name: '我理解了，下一題' }),
-  ).toBeEnabled();
-  await page.getByRole('button', { name: '我理解了，下一題' }).click();
+  const continueButton = page.getByRole('button', {
+    name: /^(?:下一題|我理解了，下一題)$/u,
+  });
+  await expect(continueButton).toBeEnabled();
+  await continueButton.click();
   await expect(page.getByLabel('挑戰進度')).toContainText('第 2 / 10 題');
   await expect(page.getByText(/剩餘 (?:1[6-9]|20) 秒/u)).toBeVisible();
   await expect(page.getByRole('button', { name: '送出答案' })).toBeDisabled();

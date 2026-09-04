@@ -27,9 +27,7 @@ test('isolates two accounts that use the same browser page in sequence', async (
   await signIn(page, TEST_USERS.studentOne);
   await expect(page.getByRole('heading', { name: '學習地圖' })).toBeVisible();
   await expect(page).toHaveURL(/\/app$/u);
-  await expect(
-    page.getByRole('heading', { name: 'student.one' }),
-  ).toBeVisible();
+  await expect(page.locator('.hud-identity__name')).toHaveText('student.one');
 
   const logoutResponsePromise = page.waitForResponse(
     (response) =>
@@ -65,9 +63,7 @@ test('isolates two accounts that use the same browser page in sequence', async (
 
   await signIn(page, TEST_USERS.studentTwo);
   await expect(page).toHaveURL(/\/app$/u);
-  await expect(
-    page.getByRole('heading', { name: 'student.two' }),
-  ).toBeVisible();
+  await expect(page.locator('.hud-identity__name')).toHaveText('student.two');
   await expect(page.locator('body')).not.toContainText('student.one');
   expect(
     await page.evaluate(

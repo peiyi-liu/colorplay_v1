@@ -1500,7 +1500,7 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 ## 2026-09-04 15:20 [Codex] — 一般 Chromium CI 與專用 harness／phase gate 分流
 
-- `33843831192` 的 isolated Chromium job 已完成乾淨 migration replay、auth seed 與 Admin catalog 536-column exact inventory，但一般 production-preview E2E 誤跑所有 `*.harness.spec.ts`；這些測試必須使用各自 Playwright config 啟動 Vite dev server，production `dist` 本來就沒有 `/dev-harness/*.html`。main config 現明確排除 harness，專用 config 與測試本體均保留。
+- `33843831192` 的 isolated Chromium job 已完成乾淨 migration replay、auth seed 與 Admin catalog 536-column exact inventory，但一般 production-preview E2E 誤跑所有 `*.harness.spec.ts`；這些測試必須使用各自 Playwright config 啟動 Vite dev server，production `dist` 本來就沒有 `/dev-harness/*.html`。main config 現明確排除 harness，專用 config 與測試本體均保留。舊村莊地圖的 desktop-cover／fullscreen／layout-refinement／viewport 版面 gate 同樣只在 `PLAYWRIGHT_ACCEPTANCE=on` 執行，不混入日常 production suite；測試本體未刪除或 skip。
 - 同一 job 也誤跑需 `PLAYWRIGHT_ACCEPTANCE=on`、專屬 fixture 與 evidence root 的 `chapter-sequence.spec.ts`；一般 suite 現排除，`pnpm phase:chapter-sequence` 在 acceptance mode 下仍可執行。
 - 同步校正已由現行產品／CSS／元件測試證明過時的瀏覽器斷言：登入後標題為「學習地圖」、公開入口為「開始冒險」、地圖動態 CTA 為「開始／繼續／查看第 N 章」、認證 main 允許 `overflow-y:auto` 以支援受限高度，以及內容未備妥 panel 的 eyebrow 完整文案。未放寬無水平溢位、控制項可見性、Auth 真實登入或後端資料斷言。
 - 真實重現另確認，多數學習頁失敗是舊 Local fixture 學生沒有 `login_account`，因而被現行 completed-registration guard 正確導向註冊頁。Seeder 現只在 loopback Local stack 為未具正式帳號 fixture 的學生補上唯一 `fixtureNN` 帳號；remote seed 行為與既有 Hosted fixture 身分不變，本輪也不執行 Hosted seed／migration。

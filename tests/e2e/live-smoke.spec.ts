@@ -22,7 +22,7 @@ const QUESTION_COUNT = 20;
 // 斷言。
 const signInTeacher = async (page: Page, credentials: Credentials) => {
   await authSignInTeacher(page, credentials);
-  await expect(page.getByRole('heading', { name: '教師工作區' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '教學分析' })).toBeVisible();
 };
 
 const signInStudent = async (page: Page, credentials: Credentials) => {
