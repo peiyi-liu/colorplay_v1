@@ -27,15 +27,11 @@ test('restores the session at the fixed post-login route, then protects it after
   await expect(page).toHaveURL(/\/login$/u);
   await signIn(page);
   await expect(page).toHaveURL(/\/app$/u);
-  await expect(
-    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: '學習地圖' })).toBeVisible();
 
   await page.reload();
   await expect(page).toHaveURL(/\/app$/u);
-  await expect(
-    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: '學習地圖' })).toBeVisible();
 
   // GameStage Shell（2026-08-01）：登出鈕收進底部 HUD 的 MENU 面板，鍵盤路
   // 徑改三段——先聚焦 MENU 鈕開面板，再聚焦登出鈕，最後於確認框送出。

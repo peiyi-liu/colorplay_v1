@@ -435,9 +435,9 @@ for (const viewport of viewports) {
         .getAttribute('data-access-state');
       if (accessState === 'locked' || accessState === 'content_unavailable') {
         await expect(
-          page
-            .locator('.chapter-map__panel')
-            .getByRole('link', { name: '進入複習與進度' }),
+          page.locator('.chapter-map__panel').getByRole('link', {
+            name: /^(?:開始|繼續|查看)第.+章/u,
+          }),
         ).toHaveCount(0);
       }
     }
@@ -471,7 +471,7 @@ for (const viewport of viewports) {
     await expectPointerReachable(accessibleButton);
     const action = page
       .locator('.chapter-map__panel')
-      .getByRole('link', { name: '進入複習與進度' });
+      .getByRole('link', { name: /^(?:開始|繼續|查看)第.+章/u });
     const actionBox = await action.boundingBox();
     expect(actionBox?.width).toBeGreaterThanOrEqual(MINIMUM_TARGET);
     expect(actionBox?.height).toBeGreaterThanOrEqual(MINIMUM_TARGET);

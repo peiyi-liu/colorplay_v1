@@ -84,7 +84,7 @@ test.describe('JRPG guild-desk login', () => {
       expect(metrics.documentOverflow).toBeLessThanOrEqual(1);
       expect(metrics.documentVerticalOverflow).toBeLessThanOrEqual(1);
       expect(metrics.mainVerticalOverflow).toBeLessThanOrEqual(1);
-      expect(metrics.mainOverflowY).toBe('hidden');
+      expect(metrics.mainOverflowY).toBe('auto');
       expect(metrics.villageContent).toBe('none');
       expect(metrics.frameStyle.borderRadius).toBe('0px');
       expect(metrics.frameStyle.borderTopWidth).toBe('3px');
@@ -121,7 +121,9 @@ test.describe('JRPG guild-desk login', () => {
 
       if (viewport.width === 1280) {
         expect(portal.left).toBeGreaterThan(viewport.width * 0.45);
-        expect(metrics.backgroundImage).toContain('guild-desk-desktop.webp');
+        expect(metrics.backgroundImage).toMatch(
+          /guild-desk-desktop-[A-Za-z0-9_-]+\.webp/u,
+        );
         await expect(page.getByText('歡迎回來，冒險者。')).toBeVisible();
         const welcomeBox = await page
           .getByText('歡迎回來，冒險者。')
@@ -130,7 +132,9 @@ test.describe('JRPG guild-desk login', () => {
         expect(welcomeBox?.x ?? viewport.width).toBeLessThan(portal.left);
       } else {
         expect(portal.top).toBeGreaterThan(250);
-        expect(metrics.backgroundImage).toContain('guild-desk-mobile.webp');
+        expect(metrics.backgroundImage).toMatch(
+          /guild-desk-mobile-[A-Za-z0-9_-]+\.webp/u,
+        );
         await expect(page.getByText('冒險者公會')).toBeVisible();
         await expect(page.getByText('歡迎回來，冒險者。')).toBeHidden();
       }

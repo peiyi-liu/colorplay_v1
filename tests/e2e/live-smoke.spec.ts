@@ -27,9 +27,7 @@ const signInTeacher = async (page: Page, credentials: Credentials) => {
 
 const signInStudent = async (page: Page, credentials: Credentials) => {
   await authSignInStudent(page, credentials);
-  await expect(
-    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: '學習地圖' })).toBeVisible();
 };
 
 // 單一學生答對當前題：唯一參與者作答即觸發伺服器自動關題，

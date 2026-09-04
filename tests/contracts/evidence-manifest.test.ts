@@ -904,6 +904,8 @@ describe('acceptance metadata', () => {
         // 重跑會在第二個 project 卡在已綁定狀態，比照 login.spec.ts
         // 只在 chromium 執行一次。
         /admin-(security|teacher-accounts|viewports)\.spec\.ts$/u,
+        /(?:\.harness|learning-map-generated-board\.visual|student-auth-shell-polish|student-hud\.visual)\.spec\.ts$/u,
+        /chapter-sequence\.spec\.ts$/u,
       ]);
     }
     expect(foundationSpec).not.toContain('chromium.launch');

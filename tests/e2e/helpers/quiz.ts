@@ -28,7 +28,7 @@ const isOnQuizResultPage = (page: Page): boolean =>
   new URL(page.url()).pathname.endsWith('/result');
 
 // 從地圖開始一場 quiz。傳 templateId 時先由型別化 manifest 解回章節序號，
-// 再依學生真的看得到的兩步流程「選建築→進入複習與進度→開始挑戰」操作；
+// 再依學生真的看得到的兩步流程「選建築→開始／繼續／查看章節→章節總挑戰」操作；
 // 不使用舊卡片 selector 或隱藏直達 URL。
 export async function startQuizFromLobby(
   page: Page,
@@ -47,7 +47,9 @@ export async function startQuizFromLobby(
       name: new RegExp(`^Chapter ${String(chapter.chapterNumber)} `, 'u'),
     })
     .click();
-  const detailAction = page.getByRole('link', { name: '進入複習與進度' });
+  const detailAction = page.getByRole('link', {
+    name: /^(?:開始|繼續|查看)第.+章/u,
+  });
   await detailAction.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {
     throw new Error(
       `QUIZ_HELPER_CHAPTER_NOT_ENTERABLE: Chapter ${String(chapter.chapterNumber)}`,
@@ -55,7 +57,7 @@ export async function startQuizFromLobby(
   });
   await detailAction.click();
 
-  const challengeAction = page.getByRole('link', { name: '開始挑戰' });
+  const challengeAction = page.getByRole('link', { name: '章節總挑戰' });
   await challengeAction.waitFor({ state: 'visible', timeout: 10000 });
   await challengeAction.click();
   await page.waitForURL(quizSessionUrlPattern);

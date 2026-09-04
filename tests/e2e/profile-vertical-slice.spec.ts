@@ -121,7 +121,7 @@ test('renders only the real safe profile and derives role navigation from Postgr
   });
   await expect(studentPage).toHaveURL(/\/app$/u);
   await expect(
-    studentPage.getByRole('heading', { name: '色彩任務選擇大廳' }),
+    studentPage.getByRole('heading', { name: '學習地圖' }),
   ).toBeVisible();
   await expect(
     studentPage.getByRole('heading', { name: 'student.one' }),

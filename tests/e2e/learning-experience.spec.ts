@@ -121,7 +121,9 @@ test('Learning Experience phase gate', async ({
       name: new RegExp(`^Chapter \\d+ ${REVIEW_CHAPTER_TITLE} `, 'u'),
     })
     .click();
-  await studentPage.getByRole('link', { name: '進入複習與進度' }).click();
+  await studentPage
+    .getByRole('link', { name: /^(?:開始|繼續|查看)第.+章/u })
+    .click();
   await expect(
     studentPage.getByRole('heading', { name: REVIEW_CHAPTER_TITLE }),
   ).toBeVisible();

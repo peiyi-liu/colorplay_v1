@@ -1497,3 +1497,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 同一輪 clean schema inventory 揭露 `classroom_join_rate_limits` 的 5 欄從未納入 Admin sensitivity catalog。採 fail-closed quarantine：五欄全列為 `forbidden`、`surface=none`、不可查詢／匯出；由既有 spec-driven generator 重生 JSON 與 `20260903000100_admin_catalog_rebaseline.sql`，並將 catalog 契約更新為 59 resources／26 overlay rows。沒有把限流 subject hash 暴露到 Admin browser。
 - 本機生成器 byte check 與相關 Vitest 2 files／8 tests 通過。共用 Local Supabase 仍是較舊 schema、沒有 `classroom_join_rate_limits`，因此只讀 inventory 會正確回報五筆 stale reference；未 reset 共用 stack，最終 536-column inventory 與三個 pgTAP 校正交由下一輪隔離 PR CI 驗證。Hosted DB migration 授權邊界不變。
 - 下一輪 isolated DB run 已證明 clean replay、018／033／034 Live、060 join-rate-limit 與 066 Admin rebaseline 全綠；83 files／1976 assertions 只剩 049 的資源總數仍寫死舊值 58。該斷言同步為 59（46 historical + 9 Admin control + 4 quarantine），不改 catalog 或 runtime 行為。
+
+## 2026-09-04 15:20 [Codex] — 一般 Chromium CI 與專用 harness／phase gate 分流
+
+- `33843831192` 的 isolated Chromium job 已完成乾淨 migration replay、auth seed 與 Admin catalog 536-column exact inventory，但一般 production-preview E2E 誤跑所有 `*.harness.spec.ts`；這些測試必須使用各自 Playwright config 啟動 Vite dev server，production `dist` 本來就沒有 `/dev-harness/*.html`。main config 現明確排除 harness，專用 config 與測試本體均保留。
+- 同一 job 也誤跑需 `PLAYWRIGHT_ACCEPTANCE=on`、專屬 fixture 與 evidence root 的 `chapter-sequence.spec.ts`；一般 suite 現排除，`pnpm phase:chapter-sequence` 在 acceptance mode 下仍可執行。
+- 同步校正已由現行產品／CSS／元件測試證明過時的瀏覽器斷言：登入後標題為「學習地圖」、公開入口為「開始冒險」、地圖動態 CTA 為「開始／繼續／查看第 N 章」、認證 main 允許 `overflow-y:auto` 以支援受限高度，以及內容未備妥 panel 的 eyebrow 完整文案。未放寬無水平溢位、控制項可見性、Auth 真實登入或後端資料斷言。
+- 真實重現另確認，多數學習頁失敗是舊 Local fixture 學生沒有 `login_account`，因而被現行 completed-registration guard 正確導向註冊頁。Seeder 現只在 loopback Local stack 為未具正式帳號 fixture 的學生補上唯一 `fixtureNN` 帳號；remote seed 行為與既有 Hosted fixture 身分不變，本輪也不執行 Hosted seed／migration。

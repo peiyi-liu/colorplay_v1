@@ -20,6 +20,15 @@ const realAuthAvailable = Boolean(
 );
 const authGuardSpec = /auth-guards\.spec\.ts$/u;
 const chromiumOnlyLoginSpec = /login\.spec\.ts$/u;
+// `*.harness.spec.ts` 依賴各自的 Vite dev-server config；production preview
+// 不會輸出 `/dev-harness/*.html`。章節循序 gate 則必須由
+// `phase:chapter-sequence` 準備 fixture 與 evidence root 後執行。
+const dedicatedHarnessSpec =
+  /(?:\.harness|learning-map-generated-board\.visual|student-auth-shell-polish|student-hud\.visual)\.spec\.ts$/u;
+const chapterSequenceGateSpec = /chapter-sequence\.spec\.ts$/u;
+const standardSuiteIgnore = acceptanceEvidence
+  ? [dedicatedHarnessSpec]
+  : [dedicatedHarnessSpec, chapterSequenceGateSpec];
 // Task 14：admin TOTP enrollment 是一次性動作（同一 factor 綁定後無法
 // 重綁），跨瀏覽器 project 重跑會在第二個 project 卡在已綁定狀態；
 // 比照 chromiumOnlyLoginSpec 只在 chromium 執行一次。
@@ -54,8 +63,8 @@ export default defineConfig({
       // secret），這裡一律排除，順序改由 Playwright 的 `dependencies` 保證，
       // 不再依賴檔名字母序這種未言明的假設（Task 14 review Finding 3）。
       testIgnore: realAuthAvailable
-        ? [chromiumOnlyAdminSpec]
-        : [authGuardSpec, chromiumOnlyAdminSpec],
+        ? [chromiumOnlyAdminSpec, ...standardSuiteIgnore]
+        : [authGuardSpec, chromiumOnlyAdminSpec, ...standardSuiteIgnore],
       use: { ...devices['Desktop Chrome'] },
     },
     {
@@ -96,6 +105,7 @@ export default defineConfig({
         authGuardSpec,
         chromiumOnlyLoginSpec,
         chromiumOnlyAdminSpec,
+        ...standardSuiteIgnore,
       ],
       use: { ...devices['Desktop Firefox'] },
     },
@@ -106,6 +116,7 @@ export default defineConfig({
         authGuardSpec,
         chromiumOnlyLoginSpec,
         chromiumOnlyAdminSpec,
+        ...standardSuiteIgnore,
       ],
       use: { ...devices['Desktop Safari'] },
     },

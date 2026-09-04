@@ -297,7 +297,9 @@ for (const viewport of desktopViewports) {
       });
     }
 
-    const action = page.getByRole('link', { name: '進入複習與進度' });
+    const action = page.getByRole('link', {
+      name: /^(?:開始|繼續|查看)第.+章/u,
+    });
     const actionBox = await action.boundingBox();
     expect(actionBox?.width).toBeGreaterThanOrEqual(MINIMUM_TARGET);
     expect(actionBox?.height).toBeGreaterThanOrEqual(MINIMUM_TARGET);

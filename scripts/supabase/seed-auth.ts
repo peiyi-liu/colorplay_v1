@@ -137,13 +137,26 @@ const reconcileProfileRole = async (
   admin: SupabaseClient<Database>,
   user: User,
   label: TestUserLabel,
+  strictlyLocal: boolean,
 ) => {
   const skipRole = isAdminBootstrapLabel(label);
   const expectedRole = TEST_USER_ROLES[label];
-  const accountFixture =
+  const explicitAccountFixture =
     label in TEST_USER_ACCOUNTS
       ? TEST_USER_ACCOUNTS[label as keyof typeof TEST_USER_ACCOUNTS]
       : undefined;
+  const fixturePosition = fixtureLabels.indexOf(label) + 1;
+  // 完整註冊 guard 以 student profile 的 login_account 判斷。未列入正式
+  // TEST_USER_ACCOUNTS 的 E2E 學生仍需能進入受保護路由，但這些補值只能寫進
+  // loopback Local stack，避免 remote seed 悄悄改變 Hosted fixture 身分。
+  const accountFixture =
+    explicitAccountFixture ??
+    (strictlyLocal && expectedRole === 'student'
+      ? {
+          account: `fixture${String(fixturePosition).padStart(2, '0')}`,
+          fullName: `本機測試學生 ${String(fixturePosition)}`,
+        }
+      : undefined);
   // db reset 後 PostgREST schema cache 需要片刻重載；新欄位在快取重建前
   // 會回 PGRST204／權限錯誤，這裡以短暫重試消除競態。
   let lastError: unknown = null;
@@ -403,7 +416,7 @@ export const seedAuthUsers = async (): Promise<void> => {
   const usersByLabel = new Map<TestUserLabel, User>();
   for (const label of activeFixtureLabels) {
     const user = await reconcileAuthUser(admin, existingUsersByEmail, label);
-    await reconcileProfileRole(admin, user, label);
+    await reconcileProfileRole(admin, user, label, strictlyLocal);
     usersByLabel.set(label, user);
   }
   if (strictlyLocal) {

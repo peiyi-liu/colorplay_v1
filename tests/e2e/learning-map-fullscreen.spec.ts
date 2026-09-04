@@ -216,7 +216,7 @@ test('desktop village imagery covers the usable learning stage beneath its overl
     await expect(buildingButtons.nth(index)).toBeInViewport();
   }
   await expect(
-    page.getByRole('link', { name: '進入複習與進度' }),
+    page.getByRole('link', { name: /^(?:開始|繼續|查看)第.+章/u }),
   ).toBeInViewport();
 });
 
@@ -348,7 +348,9 @@ test('keeps the lower chapter row operable beside a wrapped dialogue at 812 by 3
     .first();
   await accessibleChapter.click();
 
-  const action = panel.getByRole('link', { name: '進入複習與進度' });
+  const action = panel.getByRole('link', {
+    name: /^(?:開始|繼續|查看)第.+章/u,
+  });
   await expect(action).toBeVisible();
   const actionMetrics = await action.evaluate((element) => ({
     height: element.getBoundingClientRect().height,

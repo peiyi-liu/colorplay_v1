@@ -202,9 +202,7 @@ test('invalid credentials stay anonymous and keyboard-only valid login lands on 
 
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/app$/u);
-  await expect(
-    page.getByRole('heading', { name: '色彩任務選擇大廳' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: '學習地圖' })).toBeVisible();
   expect(passwordRequests).toBe(2);
   expect(unexpectedHealth(health)).toEqual({
     consoleErrors: [],

@@ -50,7 +50,7 @@ test('the built artifact exposes only the expected Staging marker', async ({
   ]) {
     await page.setViewportSize(viewport);
     await page.goto('/');
-    await expect(page.getByRole('link', { name: 'PRESS START' })).toBeVisible();
+    await expect(page.getByRole('link', { name: '開始冒險' })).toBeVisible();
 
     const marker = page.getByRole('status', { name: 'STAGING 測試環境' });
     if (expectedEnvironment === 'staging') {

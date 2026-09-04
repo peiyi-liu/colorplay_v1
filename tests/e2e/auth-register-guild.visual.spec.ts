@@ -86,7 +86,7 @@ test.describe('JRPG guild registration desk', () => {
       expect(metrics.documentOverflow).toBeLessThanOrEqual(1);
       expect(metrics.documentVerticalOverflow).toBeLessThanOrEqual(1);
       expect(metrics.mainVerticalOverflow).toBeLessThanOrEqual(1);
-      expect(metrics.mainOverflowY).toBe('hidden');
+      expect(metrics.mainOverflowY).toBe('auto');
       expect(metrics.villageContent).toBe('none');
       expect(metrics.frameStyle.borderRadius).toBe('0px');
       expect(metrics.frameStyle.borderTopWidth).toBe('3px');

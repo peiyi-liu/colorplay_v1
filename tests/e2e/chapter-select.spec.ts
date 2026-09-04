@@ -76,13 +76,15 @@ test('student sees the semantic six-building chapter map', async ({ page }) => {
 
   await unavailable.first().click();
   const panel = page.locator('.chapter-map__panel');
-  await expect(panel.getByText('內容準備中', { exact: true })).toBeVisible();
-  await expect(panel.getByRole('link', { name: '進入複習與進度' })).toHaveCount(
-    0,
-  );
+  await expect(panel.getByText(/Chapter \d+ · 內容準備中/u)).toBeVisible();
+  await expect(
+    panel.getByRole('link', { name: /^(?:開始|繼續|查看)第.+章/u }),
+  ).toHaveCount(0);
 
   await available.first().click();
-  const detailAction = panel.getByRole('link', { name: '進入複習與進度' });
+  const detailAction = panel.getByRole('link', {
+    name: /^(?:開始|繼續|查看)第.+章/u,
+  });
   await expect(detailAction).toBeVisible();
   await detailAction.click();
   await expect(
