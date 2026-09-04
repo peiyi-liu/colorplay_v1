@@ -65,8 +65,12 @@ const isOwnProfileResponse = (response: Response) => {
 const signInAndReadProfile = async (
   page: Page,
   credentials: (typeof TEST_USERS)[keyof typeof TEST_USERS],
+  portal: 'student' | 'teacher' = 'student',
 ) => {
   await page.goto('/login');
+  if (portal === 'teacher') {
+    await page.getByText('教師端登入').click();
+  }
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
   await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
 
@@ -151,6 +155,7 @@ test('renders only the real safe profile and derives role navigation from Postgr
   const teacherProfile = await signInAndReadProfile(
     teacherPage,
     TEST_USERS.teacher,
+    'teacher',
   );
 
   expect(teacherProfile).toMatchObject({

@@ -19,6 +19,7 @@ export type LiveSessionLaunch = Readonly<{
 
 export async function launchLiveSessionFromTeacherHome(
   teacherPage: Page,
+  classroomId?: string,
 ): Promise<LiveSessionLaunch> {
   await teacherPage.goto('/teacher/live');
   const sectionOption = teacherPage
@@ -33,6 +34,11 @@ export async function launchLiveSessionFromTeacherHome(
     throw new Error(
       `LIVE_LAUNCH_PAGE_NOT_READY: ${teacherPage.url()} :: ${pageText}`,
     );
+  }
+  if (classroomId) {
+    await teacherPage
+      .getByRole('combobox', { name: '1・選擇班級' })
+      .selectOption(classroomId);
   }
   // 任一已發佈小節皆可用；原生 radio 由 label 繪製可見選項。
   await sectionOption.click();

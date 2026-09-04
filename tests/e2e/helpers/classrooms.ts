@@ -57,7 +57,32 @@ import { signedInClient } from '../../helpers/signed-in-client.ts';
 //    轉譯）與 capture-screens.mjs（Node 原生剝離）兩種執行環境載入。直接
 //    join_classroom RPC 已撤銷 authenticated 權限，避免繞過 IP＋帳號限流。
 
-export type ClassroomReceipt = Readonly<{ joinCode: string }>;
+export type ClassroomReceipt = Readonly<{
+  classroomId: string;
+  joinCode: string;
+}>;
+
+const readFunctionError = async (error: unknown): Promise<string> => {
+  if (typeof error !== 'object' || error === null) return 'UNKNOWN';
+  const fallback =
+    'message' in error && typeof error.message === 'string'
+      ? error.message
+      : 'UNKNOWN';
+  if (!('context' in error) || !(error.context instanceof Response)) {
+    return fallback;
+  }
+
+  const payload: unknown = await error.context
+    .clone()
+    .json()
+    .catch(() => null);
+  return typeof payload === 'object' &&
+    payload !== null &&
+    'error' in payload &&
+    typeof payload.error === 'string'
+    ? payload.error
+    : fallback;
+};
 
 // 教師班級列表（/teacher/classes）上，用班級名稱找到對應卡片
 // （ul[aria-label="教師班級列表"] li article，heading 為班級名稱）。
@@ -81,12 +106,16 @@ export async function createClassroom(
   // `order by classroom.created_at, classroom.id`），剛建立的一定是同名卡片
   // 裡最後一張，用 .last() 精準鎖定「這次建立的」那一間，不會誤讀到別間
   // 同名舊班級的加入碼。
-  const codeValue = classroomCardByName(teacherPage, name)
-    .last()
-    .locator('.classroom-card__code-value');
+  const classroomCard = classroomCardByName(teacherPage, name).last();
+  const codeValue = classroomCard.locator('.classroom-card__code-value');
   await codeValue.waitFor();
   const joinCode = (await codeValue.innerText()).trim();
-  return { joinCode };
+  const href = await classroomCard
+    .getByRole('link', { name: '進入班級' })
+    .getAttribute('href');
+  const classroomId = href?.split('/').pop();
+  if (!classroomId) throw new Error('CLASSROOM_HELPER_ID_MISSING');
+  return { classroomId, joinCode };
 }
 
 // 讀某個「已存在」班級卡片上目前的固定加入碼（不需要先建立）。加入碼永久
@@ -134,12 +163,7 @@ export async function joinClassroomByCode(
       throw new Error('CLASSROOM_HELPER_JOIN_FAILED: INVALID_RESPONSE');
     }
     if (response.error !== null) {
-      const message =
-        typeof response.error === 'object' &&
-        'message' in response.error &&
-        typeof response.error.message === 'string'
-          ? response.error.message
-          : 'UNKNOWN';
+      const message = await readFunctionError(response.error);
       throw new Error(`CLASSROOM_HELPER_JOIN_FAILED: ${message}`);
     }
   } finally {
@@ -157,7 +181,7 @@ export async function findClassroomIdByName(
   if ((await article.count()) === 0) return null;
   const href = await article
     .first()
-    .getByRole('link', { name: '管理班級' })
+    .getByRole('link', { name: '進入班級' })
     .getAttribute('href');
   return href ? (href.split('/').pop() ?? null) : null;
 }

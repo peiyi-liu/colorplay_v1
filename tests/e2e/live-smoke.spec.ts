@@ -43,20 +43,37 @@ const answerCurrentCorrectly = async (
     page.getByText(`第 ${String(position)} / ${String(QUESTION_COUNT)} 題`),
   ).toBeVisible();
   const prompt = (
-    await presenter.locator('.live-presenter__question h2').innerText()
+    await presenter.locator('.live-round__question h2').innerText()
   ).trim();
   const correctText = GENERATED_CORRECT_ANSWERS.get(prompt);
   if (!correctText) throw new Error('LIVE_SMOKE_ANSWER_MISSING');
   const optionTexts = await presenter
-    .locator('.live-presenter__options li')
+    .locator('.live-round__options li')
     .allInnerTexts();
   const correctIndex = optionTexts.findIndex((text) =>
     text.includes(correctText),
   );
   if (correctIndex < 0) throw new Error('LIVE_SMOKE_OPTION_MISSING');
-  await page.locator('.question-card button').nth(correctIndex).click();
+  await page
+    .getByRole('group', { name: '答案選項' })
+    .getByRole('button')
+    .nth(correctIndex)
+    .click();
   // screen_only 的回饋是全版結果頁（p 元素），文案含驚嘆號。
   await expect(page.getByText(/答對了/u).first()).toBeVisible();
+};
+
+const showRankingAndContinue = async (
+  presenter: Locator,
+  actionName: '下一題' | '結算成績',
+) => {
+  await expect(
+    presenter.getByRole('heading', { name: '本題解析' }),
+  ).toBeVisible({ timeout: 7_500 });
+  await presenter.getByRole('button', { name: '即時排名' }).click();
+  const action = presenter.getByRole('button', { name: actionName });
+  await expect(action).toBeEnabled();
+  await action.click();
 };
 
 test('Live smoke: 單人場次從等待室走到頒獎台', async ({
@@ -70,7 +87,8 @@ test('Live smoke: 單人場次從等待室走到頒獎台', async ({
     !process.env.SUPABASE_URL,
     'Live smoke 需要本機 Supabase stack（SUPABASE_URL 未設定）',
   );
-  test.setTimeout(480_000);
+  // 每題作答統計固定展示 5 秒，二十題的產品流程本身至少需要 100 秒。
+  test.setTimeout(180_000);
   if (!baseURL) throw new Error('LIVE_SMOKE_BASE_URL_REQUIRED');
 
   const teacherContext = await browser.newContext({ baseURL });
@@ -79,7 +97,7 @@ test('Live smoke: 單人場次從等待室走到頒獎台', async ({
   // --- 班級與成員 ---
   await signInTeacher(teacherPage, TEST_USERS.liveHostTeacher);
   await teacherPage.goto('/teacher/classes');
-  const { joinCode: classroomCode } = await createClassroom(
+  const { classroomId, joinCode: classroomCode } = await createClassroom(
     teacherPage,
     CLASSROOM_NAME,
   );
@@ -97,11 +115,13 @@ test('Live smoke: 單人場次從等待室走到頒獎台', async ({
   // 選擇器序列與 scripts/design-audit 的截圖 runner 共用，抽成
   // tests/e2e/helpers/live.ts（見該檔開頭的重用說明）；任一已發佈小節皆為
   // 二十題，正解由 GENERATED_CORRECT_ANSWERS 依題目 prompt 反查，與選哪節無關。
-  const { presenter, joinCode } =
-    await launchLiveSessionFromTeacherHome(teacherPage);
+  const { presenter, joinCode } = await launchLiveSessionFromTeacherHome(
+    teacherPage,
+    classroomId,
+  );
 
   await studentPage.goto('/app/live/join');
-  await studentPage.getByLabel('課堂代碼').fill(joinCode);
+  await studentPage.getByLabel('輸入 6 位加入代碼').fill(joinCode);
   await studentPage.getByRole('button', { name: '加入課堂' }).click();
   await expect(studentPage.getByText('等待主持人開始…')).toBeVisible();
 
@@ -112,27 +132,29 @@ test('Live smoke: 單人場次從等待室走到頒獎台', async ({
   await expect(startDialog).toBeVisible();
   await startDialog.getByRole('button', { name: '開始', exact: true }).click();
   await answerCurrentCorrectly(presenter, studentPage, 1);
-  await presenter.getByRole('button', { name: '下一題' }).click();
+  await showRankingAndContinue(presenter, '下一題');
 
   // --- 第 2 題：開題中暫停/續行一次 ---
-  await expect(studentPage.locator('.question-card legend')).toBeVisible();
+  await expect(
+    studentPage.getByRole('group', { name: '答案選項' }),
+  ).toBeVisible();
   await presenter.getByRole('button', { name: '暫停' }).click();
   await expect(presenter.getByText('已暫停')).toBeVisible();
   await expect(studentPage.getByText('暫停中')).toBeVisible();
   await presenter.getByRole('button', { name: '繼續作答' }).click();
   await answerCurrentCorrectly(presenter, studentPage, 2);
-  await presenter.getByRole('button', { name: '下一題' }).click();
+  await showRankingAndContinue(presenter, '下一題');
 
   // --- 第 3 題起走完全場 ---
   for (let position = 3; position <= QUESTION_COUNT; position += 1) {
     await answerCurrentCorrectly(presenter, studentPage, position);
     if (position < QUESTION_COUNT) {
-      await presenter.getByRole('button', { name: '下一題' }).click();
+      await showRankingAndContinue(presenter, '下一題');
     }
   }
 
   // --- 結算與頒獎台 ---
-  await presenter.getByRole('button', { name: '結算成績' }).click();
+  await showRankingAndContinue(presenter, '結算成績');
   await expect(
     presenter.getByRole('heading', { name: '最終頒獎台' }),
   ).toBeVisible();
