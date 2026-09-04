@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { isValidElement } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -621,9 +621,9 @@ describe('createAppRouter', () => {
         userId: 'learner-id',
       },
     );
-    expect(
-      await screen.findByRole('heading', { name: '找不到頁面' }),
-    ).toBeVisible();
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: '找不到頁面' })).toBeVisible();
+    });
   });
 
   it('lazy-loads the classes route for an authoritative teacher', async () => {
