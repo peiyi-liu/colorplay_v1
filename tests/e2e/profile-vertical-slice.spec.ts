@@ -157,10 +157,10 @@ test('renders only the real safe profile and derives role navigation from Postgr
     display_name: TEST_USER_ACCOUNTS.teacher.fullName,
     role: 'teacher',
   });
-  await teacherPage.getByRole('link', { name: '教師工作區' }).click();
+  await teacherPage.getByRole('link', { name: '教學分析' }).click();
   await expect(teacherPage).toHaveURL(/\/teacher$/u);
   await expect(
-    teacherPage.getByRole('heading', { name: '教師工作區' }),
+    teacherPage.getByRole('heading', { name: '教學分析' }),
   ).toBeVisible();
   await expect(teacherPage.locator('body')).not.toContainText(
     TEST_USERS.teacher.email,
