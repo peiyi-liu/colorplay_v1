@@ -1,13 +1,13 @@
 # ColorPlay Current Program
 
-- Status: LOCAL INTEGRATION REVIEW REMEDIATION — Phase 0 committed tip 與
-  Admin B final SHA 已整合為本機 candidate `b8f0519`；完整 Local gate 已通過，
-  正在收斂唯一一次 review；尚未 push、merge protected branch、deploy 或執行
-  任何 Hosted mutation
+- Status: LOCAL INTEGRATION CANDIDATE VERIFIED — Phase 0 committed tip 與
+  Admin B final SHA 已整合為本機 candidate；完整 Local gate 與唯一一次 review
+  均已通過；尚未 push、merge protected branch、deploy 或執行任何 Hosted mutation
 - Last updated: 2026-09-04 (Asia/Taipei) — Admin B Tasks 1–6、A1 cleanup、
   Phase 0／Admin migration 語意整合與完整 Local gate 已完成
-- Last full review: 2026-09-04 (Asia/Taipei) — integration review remediation
-- Current phase: local-only canonical integration review closure
+- Last full review: 2026-09-04 (Asia/Taipei) — integration review CLOSED
+- Current phase: local-only canonical integration complete；等待 owner 對下一個
+  external gate 另行授權
 - Canonical entry point: this file
 - Current owner decision record:
   `docs/superpowers/specs/2026-09-02-program-rebaseline-owner-decisions.md`
@@ -43,9 +43,9 @@ as a completed production release.
 
 ## Immediate next action
 
-Close the two non-blocking integration review findings, rerun the affected
-Local gates, and keep candidate `b8f0519` local until the owner separately
-authorizes any push, protected-branch merge, deployment, or Hosted operation.
+Keep the verified candidate local until the owner separately authorizes the
+next external gate. Push, protected-branch merge, deployment, and Hosted Task 7
+remain distinct approvals; none is implied by the completed Local gate.
 
 Do **not** approve or merge PR #1 from historical CI, push this candidate,
 deploy it, or run Hosted Task 7 until the resulting exact SHA has fresh protected

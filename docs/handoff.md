@@ -1292,3 +1292,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 做了什麼：root 同輪複核發現 `achievement_progress.last_source_type/last_source_id` 可為 NULL，原 `<>` 會得到 unknown 而錯誤放行。migration 與 read-only contract 均改用 `IS DISTINCT FROM`；pgTAP 069 新增 source pair 為 NULL 時必須回 `ADMIN_FIXTURE_CLEANUP_BOOTSTRAP_STATE_INVALID` 且 profile 仍存在的負向測試，再恢復精確 default-Blook source 後驗證成功 cleanup。
 - 驗證：重新完整 Local reset 套用 migration 成功；`064/065/068/069` 共 4 檔、227 assertions 全綠，其中 069 為 19/19。非 DB contract 14/14、typecheck、lint、scoped Prettier、`git diff --check` 全綠。
 - 下一步：交回原 reviewer 做同一輪最終判定；維持 exact 12 paths、未 stage/commit，未碰 Hosted。
+
+## 2026-09-04 11:55 [Codex] — Phase 0 × Admin B 本機整合 candidate 驗證完成
+
+- 做了什麼：從 `origin/staging` exact SHA `24ee1ee9` 建立 `codex/adminb-phase0-integration-20260904`，先整合 Phase 0 tip `3446a38f`，再以 merge commit `b8f0519` 整合 Admin B approved tip `8dcdbe8c`。七個文字衝突逐檔依兩側意圖解決；`src/types/database.ts` 未偏選任一側，而是完整 migration replay 後由 Local schema 重生。新增 forward migration `20260904000100_quiz_question_state_security_reconciliation.sql`，同時保留 Phase 0 的 `security_barrier`／`security_invoker`／caller-bound explanation 與 Admin B 的 challenge、chapter、section context。Local Edge runtime 加入非路由 `.invalid` teacher Auth namespace；Hosted 仍必須另設 server-side value，缺值維持 fail-closed。
+- 整合修正：完整 gate 揭露並修正四個 seed-aware pgTAP 假設、Local Edge namespace 缺值，以及 sequence 在 rollback 後仍前進造成的 reservation 測試污染；並發測試改以當下 occupied maximum 的下一個十進位邊界驗證，不再假設 namespace 為空。唯一 reviewer 回報兩個 P2：roadmap 的舊下一步與 owner explanation 缺正向語意測試；兩項均在 `0cbfaa0` 修正，同一 reviewer 複核 `CLOSED`，無 blocking security finding。
+- 驗證：完整 `pnpm test:db` 通過（81 pgTAP files／1950 tests + runtime 3 tests + 真實 Auth 17 tests + integration 26 tests）；review remediation 的 `004+070` 58 tests 通過；`pnpm test` 218 files／1784 tests、`pnpm typecheck`、`pnpm lint`、scoped Prettier、database-types exact contract、`git diff --check` 全綠。merge parents 精確為 `ba4ec459` + `8dcdbe8cc`；無 duplicate migration version、無 conflict marker、`legacy/**` 零變更。Vercel CLI 已是 59.11.2。
+- 對應驗收：Admin B plan 的 `AC-ADM-001`–`AC-ADM-006` Local evidence 與 Phase 0／Admin B migration compatibility；這是 local integration candidate，不是 Hosted 或 phase release gate。
+- 下一步／授權邊界：candidate 保持本機。push candidate branch、merge protected branch、exact-SHA deployment、Hosted migration／fixture dry-run／Task 7 mutation都必須各自取得 owner 明確授權；本輪未執行任何一項。
