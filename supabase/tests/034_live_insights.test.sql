@@ -497,7 +497,7 @@ select pg_temp.host_advance(
   current_setting('test.session_id')::uuid,
   '34000000-0000-0000-0000-000000000001'
 )
-from generate_series(4, 10);
+from generate_series(4, 20);
 
 select pg_temp.as_user('34000000-0000-0000-0000-000000000001');
 select lives_ok(
@@ -521,7 +521,7 @@ select set_config(
 );
 select is(
   jsonb_array_length(current_setting('test.detail')::jsonb -> 'questions'),
-  10,
+  20,
   'the detail report covers every question'
 );
 select is(

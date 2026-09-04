@@ -5,6 +5,11 @@ insert into public.admin_sensitivity_catalog
   (resource, domain, surface, column_name, class, mask_strategy,
    searchable, filterable, sortable)
 values
+  ('classroom_join_rate_limits', 'classrooms', 'none', 'failure_count', 'forbidden', null, false, false, false),
+  ('classroom_join_rate_limits', 'classrooms', 'none', 'scope', 'forbidden', null, false, false, false),
+  ('classroom_join_rate_limits', 'classrooms', 'none', 'subject_hash', 'forbidden', null, false, false, false),
+  ('classroom_join_rate_limits', 'classrooms', 'none', 'updated_at', 'forbidden', null, false, false, false),
+  ('classroom_join_rate_limits', 'classrooms', 'none', 'window_started_at', 'forbidden', null, false, false, false),
   ('course_progression_settings', 'learning', 'none', 'course_id', 'forbidden', null, false, false, false),
   ('course_progression_settings', 'learning', 'none', 'mode', 'forbidden', null, false, false, false),
   ('course_progression_settings', 'learning', 'none', 'rules_version', 'forbidden', null, false, false, false),

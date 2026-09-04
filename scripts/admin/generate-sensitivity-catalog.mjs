@@ -200,8 +200,8 @@ function parseRebaselineRows(spec) {
         class: parseCodeCell(classification, 'CLASS'),
       };
     });
-  if (rows.length !== 21)
-    throw new Error(`CATALOG_REBASELINE_EXPECTED_21_GOT_${rows.length}`);
+  if (rows.length !== 26)
+    throw new Error(`CATALOG_REBASELINE_EXPECTED_26_GOT_${rows.length}`);
   if (rows.some((row) => row.class !== 'forbidden'))
     throw new Error('CATALOG_REBASELINE_MUST_BE_FORBIDDEN');
   const keys = new Set(rows.map((row) => `${row.resource}.${row.column}`));

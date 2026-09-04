@@ -6,14 +6,14 @@
 
 ## 1. Problem
 
-Twenty-one columns introduced after the Phase 1 Admin catalog baseline are
+Twenty-six columns introduced after the Phase 1 Admin catalog baseline are
 present in the `public` schema but absent from the machine catalog. The runtime
 already denies unnamed resources and columns, but the exact-inventory gate must
 also remain complete so later Admin work cannot inherit silent catalog drift.
 
 ## 2. Decision
 
-This package records every drifted column explicitly as `forbidden`. The three
+This package records every drifted column explicitly as `forbidden`. The four
 previously unregistered resources use `surface=none`; every resource remains
 `export=false`. All overlay columns have no mask strategy and are not searchable,
 filterable, or sortable.
@@ -27,6 +27,11 @@ forbidden because it is an attempt-binding capability.
 
 | Resource                      | Domain        | Surface   | Column              | Class       |
 | ----------------------------- | ------------- | --------- | ------------------- | ----------- |
+| `classroom_join_rate_limits`  | `classrooms`  | `none`    | `failure_count`     | `forbidden` |
+| `classroom_join_rate_limits`  | `classrooms`  | `none`    | `scope`             | `forbidden` |
+| `classroom_join_rate_limits`  | `classrooms`  | `none`    | `subject_hash`      | `forbidden` |
+| `classroom_join_rate_limits`  | `classrooms`  | `none`    | `updated_at`        | `forbidden` |
+| `classroom_join_rate_limits`  | `classrooms`  | `none`    | `window_started_at` | `forbidden` |
 | `course_progression_settings` | `learning`    | `none`    | `course_id`         | `forbidden` |
 | `course_progression_settings` | `learning`    | `none`    | `mode`              | `forbidden` |
 | `course_progression_settings` | `learning`    | `none`    | `rules_version`     | `forbidden` |
@@ -51,12 +56,13 @@ forbidden because it is an attempt-binding capability.
 
 ## 4. Acceptance contract
 
-- The generated JSON contains exactly 58 resources: 46 historical domain
-  resources, nine Admin control resources, and the three quarantined resources.
-- The 21 rows above exist exactly once and remain `forbidden`, non-queryable,
+- The generated JSON contains exactly 59 resources: 46 historical domain
+  resources, nine Admin control resources, and the four quarantined resources.
+- The 26 rows above exist exactly once and remain `forbidden`, non-queryable,
   unmasked, and non-exportable.
-- `course_progression_settings`, `student_chapter_unlocks`, and
-  `student_registration_claims` remain absent from the Admin browser surface.
+- `classroom_join_rate_limits`, `course_progression_settings`,
+  `student_chapter_unlocks`, and `student_registration_claims` remain absent from
+  the Admin browser surface.
 - The historical `20260808000500_admin_sensitivity_catalog.sql` migration stays
   byte-identical. A new forward migration adds only this quarantine overlay.
 - No source migration, product payload, or long-term domain rule changes here.

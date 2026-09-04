@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "source_sha256": "1683685431640467eb23aa5a8036300e2202440effff26218bf9bc22242548d0",
+  "source_sha256": "853131fbe718265ab88e52ba931777bc5a8366da1a9c601fcecd7ab09b620b3f",
   "resources": [
     {
       "resource": "achievement_definitions",
@@ -1539,6 +1539,54 @@
         {
           "name": "course_id",
           "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "classroom_join_rate_limits",
+      "domain": "classrooms",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "failure_count",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "scope",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "subject_hash",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "window_started_at",
+          "class": "forbidden",
           "mask_strategy": null,
           "searchable": false,
           "filterable": false,

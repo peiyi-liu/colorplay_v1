@@ -26,6 +26,11 @@ interface Catalog {
 }
 
 const REBASELINE_COLUMNS = [
+  'classroom_join_rate_limits.failure_count',
+  'classroom_join_rate_limits.scope',
+  'classroom_join_rate_limits.subject_hash',
+  'classroom_join_rate_limits.updated_at',
+  'classroom_join_rate_limits.window_started_at',
   'course_progression_settings.course_id',
   'course_progression_settings.mode',
   'course_progression_settings.rules_version',
@@ -56,11 +61,11 @@ describe('phase 1 admin sensitivity catalog contract', () => {
       '--check',
     ]);
   });
-  it('holds 46 existing + 9 control + 3 quarantined resources, all export=false', async () => {
+  it('holds 46 existing + 9 control + 4 quarantined resources, all export=false', async () => {
     const catalog = JSON.parse(
       await readFile('supabase/catalog/admin-sensitivity-catalog.json', 'utf8'),
     ) as Catalog;
-    expect(catalog.resources).toHaveLength(58);
+    expect(catalog.resources).toHaveLength(59);
     expect(
       catalog.resources.filter((r) => r.resource.startsWith('admin_')),
     ).toHaveLength(9);
@@ -126,6 +131,7 @@ describe('phase 1 admin sensitivity catalog contract', () => {
     );
     expect(
       [
+        'classroom_join_rate_limits',
         'course_progression_settings',
         'student_chapter_unlocks',
         'student_registration_claims',
@@ -140,6 +146,11 @@ describe('phase 1 admin sensitivity catalog contract', () => {
         };
       }),
     ).toEqual([
+      {
+        export: false,
+        resource: 'classroom_join_rate_limits',
+        surface: 'none',
+      },
       {
         export: false,
         resource: 'course_progression_settings',

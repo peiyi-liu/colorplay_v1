@@ -1490,3 +1490,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 修正：fixture seeder 改由未登入的 service client 呼叫受保護的 `svc_join_classroom`，明確傳入學生 actor ID、request ID 與只代表 fixture 的 SHA-256 subject；並驗證 JSON outcome 必須為 `ok`。產品端仍只能走 `join-classroom` Edge Function，legacy RPC 沒有重新授權。
 - 回歸：新增秒級契約測試，禁止 seeder 再走 legacy RPC，並要求 service boundary 的 actor／IP hash 參數。測試先紅後綠；scoped typecheck、ESLint、Prettier 通過。完整乾淨 DB 與 E2E 仍交由下一輪隔離 PR CI 驗證，Hosted DB 邊界不變。
 - 第二層根因：service path 隨後揭露 PostgreSQL `42883`；原 migration 在 PL/pgSQL 使用 `current_time` 作變數名，被 parser 視為回傳 `time with time zone` 的 SQL keyword，造成 `time with time zone - timestamp with time zone`。新增 forward migration `20260904000200_fix_classroom_join_rate_limit_timestamp.sql`，以 `attempted_at timestamptz` 原樣重建 resolver；未修改已發布 migration，且 normalized diff 證明除 `create or replace` 與變數改名外無行為漂移。契約測試鎖定不可再使用該 keyword。此 migration 尚未套用 Hosted Staging。
+
+## 2026-09-04 14:20 [Codex] — 整合 PR clean replay 後續校正
+
+- Fresh PR CI `33843114600` 已證明 83 個 migrations 可由空資料庫完整 replay，fixture seed 也已成功；`060_classroom_join_rate_limits.test.sql` 通過。剩餘 DB failures 是三個 Live pgTAP 仍以舊 10 題契約收尾，與已發布且由 `spec/05` 固定的 20 題規則不符：測試現改為完成第 2–20／4–20 題，並校正 20 題 fast-correct 的 XP 1500、Token 500 與報告題數 20；未更動 Live 產品邏輯或獎勵規則。
+- 同一輪 clean schema inventory 揭露 `classroom_join_rate_limits` 的 5 欄從未納入 Admin sensitivity catalog。採 fail-closed quarantine：五欄全列為 `forbidden`、`surface=none`、不可查詢／匯出；由既有 spec-driven generator 重生 JSON 與 `20260903000100_admin_catalog_rebaseline.sql`，並將 catalog 契約更新為 59 resources／26 overlay rows。沒有把限流 subject hash 暴露到 Admin browser。
+- 本機生成器 byte check 與相關 Vitest 2 files／8 tests 通過。共用 Local Supabase 仍是較舊 schema、沒有 `classroom_join_rate_limits`，因此只讀 inventory 會正確回報五筆 stale reference；未 reset 共用 stack，最終 536-column inventory 與三個 pgTAP 校正交由下一輪隔離 PR CI 驗證。Hosted DB migration 授權邊界不變。

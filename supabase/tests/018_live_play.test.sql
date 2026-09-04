@@ -466,8 +466,8 @@ select is(
     '18000000-0000-0000-0000-000000000001',
     '18000000-0000-0000-0000-000000000003'
   ),
-  9,
-  'the host advances through the remaining nine questions'
+  19,
+  'the host advances through the remaining nineteen questions'
 );
 reset role;
 select is(
@@ -482,7 +482,7 @@ select is(
       and participant.user_id = '18000000-0000-0000-0000-000000000004'
       and answer.answer_status = 'timeout'
   ),
-  9,
+  19,
   'closing writes timeout answers for silent participants'
 );
 
@@ -596,8 +596,8 @@ select is(
       and source_id = current_setting('test.session_id')::uuid
       and user_id = '18000000-0000-0000-0000-000000000003'
   ),
-  750,
-  'ten fast correct answers award 750 live XP'
+  1500,
+  'twenty fast correct answers award 1500 live XP'
 );
 select is(
   (
@@ -607,8 +607,8 @@ select is(
       and source_id = current_setting('test.session_id')::uuid
       and user_id = '18000000-0000-0000-0000-000000000003'
   ),
-  250,
-  'ten fast correct answers award 250 live Token'
+  500,
+  'twenty fast correct answers award 500 live Token'
 );
 select is(
   (
