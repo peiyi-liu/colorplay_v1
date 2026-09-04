@@ -65,4 +65,19 @@ describe('classroom join rate-limit boundary', () => {
     expect(migration).toContain('identity_limit constant integer := 10');
     expect(migration).toContain('ip_limit constant integer := 100');
   });
+
+  it('uses a non-keyword timestamp variable in the forward rate-limit fix', async () => {
+    const migration = await readFile(
+      'supabase/migrations/20260904000200_fix_classroom_join_rate_limit_timestamp.sql',
+      'utf8',
+    );
+
+    expect(migration).toContain(
+      'create or replace function public.svc_resolve_classroom_join_code',
+    );
+    expect(migration).toContain(
+      'attempted_at timestamptz := clock_timestamp()',
+    );
+    expect(migration).not.toMatch(/\bcurrent_time\b/iu);
+  });
 });
