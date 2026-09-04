@@ -163,7 +163,7 @@ test('renders only the real safe profile and derives role navigation from Postgr
     role: 'teacher',
   });
   await teacherPage.getByRole('link', { name: '教學分析' }).click();
-  await expect(teacherPage).toHaveURL(/\/teacher$/u);
+  await expect(teacherPage).toHaveURL((url) => url.pathname === '/teacher');
   await expect(
     teacherPage.getByRole('heading', { name: '教學分析' }),
   ).toBeVisible();
