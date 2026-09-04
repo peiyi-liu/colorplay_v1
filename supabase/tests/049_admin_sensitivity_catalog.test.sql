@@ -22,7 +22,7 @@ select ok(not has_table_privilege('authenticated',
 select ok(not has_table_privilege('authenticated',
   'public.admin_sensitivity_catalog', 'DELETE'), 'authenticated cannot delete catalog');
 select is((select count(distinct resource)::int
-  from public.admin_sensitivity_catalog), 58, 'exactly 46+12 resources');
+  from public.admin_sensitivity_catalog), 59, 'exactly 46+13 resources');
 select is((select class from public.admin_sensitivity_catalog
   where resource = 'profiles' and column_name = 'full_name'),
   'personal', 'profiles.full_name is personal');
