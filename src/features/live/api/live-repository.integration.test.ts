@@ -113,11 +113,15 @@ describe('LiveRepository with local Supabase', () => {
 
     await host.finalize(session.sessionId, hostState.stateVersion);
 
+    const perfectScore = hostState.questionCount * 150;
     const finalA = await studentA.getState(session.sessionId);
     expect(finalA.state).toBe('completed');
-    expect(finalA.myResult).toEqual({ score: 1500, rank: 1 });
+    expect(finalA.myResult).toEqual({ score: perfectScore, rank: 1 });
     const finalB = await studentB.getState(session.sessionId);
     expect(finalB.myResult).toEqual({ score: 0, rank: 2 });
-    expect(finalA.podium?.[0]).toMatchObject({ rank: 1, score: 1500 });
+    expect(finalA.podium?.[0]).toMatchObject({
+      rank: 1,
+      score: perfectScore,
+    });
   });
 });
