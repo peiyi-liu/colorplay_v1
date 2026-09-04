@@ -51,4 +51,23 @@ describe('Toast', () => {
     });
     expect(screen.getByRole('alert')).toHaveTextContent('已裝備熔岩流金。');
   });
+
+  it('cancels auto-dismiss work when the provider unmounts', () => {
+    vi.useFakeTimers();
+    const { unmount } = render(
+      <ToastProvider>
+        <Trigger tone="info" />
+      </ToastProvider>,
+    );
+    act(() => {
+      screen.getByRole('button', { name: '發送' }).click();
+    });
+    expect(vi.getTimerCount()).toBe(1);
+
+    unmount();
+    const pendingTimers = vi.getTimerCount();
+    vi.useRealTimers();
+
+    expect(pendingTimers).toBe(0);
+  });
 });
