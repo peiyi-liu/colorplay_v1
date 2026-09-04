@@ -89,7 +89,9 @@ async function assertAxeAndSave(page: Page, filename: string) {
 async function signIn(page: Page) {
   const environment = requireAcceptanceEnvironment();
   await page.getByLabel('Email').fill(environment.studentEmail);
-  await page.getByLabel('密碼', { exact: true }).fill(environment.studentPassword);
+  await page
+    .getByLabel('密碼', { exact: true })
+    .fill(environment.studentPassword);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u);
   await expect(
@@ -153,7 +155,9 @@ test('@phase1-headed login/profile/refresh/logout/unauthorized/deep-link evidenc
 
     const stopLatency = await enableBriefLatency(context, page);
     await page.getByLabel('Email').fill(environment.studentEmail);
-    await page.getByLabel('密碼', { exact: true }).fill(environment.studentPassword);
+    await page
+      .getByLabel('密碼', { exact: true })
+      .fill(environment.studentPassword);
     await page
       .getByRole('button', { name: '登入' })
       .click({ noWaitAfter: true });

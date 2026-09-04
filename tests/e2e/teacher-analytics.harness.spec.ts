@@ -120,7 +120,9 @@ test('Live source hides chapter completion and question analysis shows authorita
     name: /查看 QB3101 題目內容（手機）/u,
   });
   await expect(button).toBeVisible();
-  expect(await button.evaluate((el) => el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+  expect(
+    await button.evaluate((el) => el.getBoundingClientRect().height),
+  ).toBeGreaterThanOrEqual(44);
   await button.focus();
   await page.keyboard.press('Enter');
   await expect(button).toHaveAttribute('aria-expanded', 'true');
@@ -128,7 +130,9 @@ test('Live source hides chapter completion and question analysis shows authorita
   await expect(button).toBeFocused();
   expect(
     await page.evaluate(
-      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      () =>
+        document.documentElement.scrollWidth <=
+        document.documentElement.clientWidth,
     ),
   ).toBe(true);
 });

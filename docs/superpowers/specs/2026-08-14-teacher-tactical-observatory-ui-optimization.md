@@ -17,14 +17,14 @@ Implementation status: not started
 
 ### 1.1 Owner decisions recorded on 2026-08-14
 
-| Page | Owner status | Decision now binding Phase B |
-| --- | --- | --- |
-| 教學分析 | approved | Preserve family A tactical-observatory direction. |
-| 班級管理 | approved | Preserve direct class-name input and create action; no persistent visible label is required. |
-| 進入班級 | approved | Preserve composition with the formal `activeBlookId` asset guardrail in section 4.3. |
-| 查看學生細節 | approved | Summary is limited to four named server-backed fields; the revised desktop/mobile directions supersede the prior pair. |
-| 題目分析 | approved | Preserve correct-answer marking, but render it only after the dedicated owner-only server projection exists. |
-| Live 課程報表 | approved | Preserve family C composition and use only the derivations defined in section 4.6. |
+| Page          | Owner status | Decision now binding Phase B                                                                                           |
+| ------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| 教學分析      | approved     | Preserve family A tactical-observatory direction.                                                                      |
+| 班級管理      | approved     | Preserve direct class-name input and create action; no persistent visible label is required.                           |
+| 進入班級      | approved     | Preserve composition with the formal `activeBlookId` asset guardrail in section 4.3.                                   |
+| 查看學生細節  | approved     | Summary is limited to four named server-backed fields; the revised desktop/mobile directions supersede the prior pair. |
+| 題目分析      | approved     | Preserve correct-answer marking, but render it only after the dedicated owner-only server projection exists.           |
+| Live 課程報表 | approved     | Preserve family C composition and use only the derivations defined in section 4.6.                                     |
 
 These approvals are design decisions, not authorization to start Phase B implementation.
 
@@ -32,14 +32,14 @@ These approvals are design decisions, not authorization to start Phase B impleme
 
 ### 2.1 Confirmed facts
 
-| Page | Production route | Page component | Direct page CSS | Harness scenario |
-| --- | --- | --- | --- | --- |
-| 教學分析 | `/teacher` | `src/features/teacher-content/pages/teacher-analytics-page.tsx` | `teacher-analytics.css`, `teacher-analytics-data.css`, `teacher-analytics-mobile.css` | `analytics` |
-| 班級管理 | `/teacher/classes` | `src/features/classrooms/pages/teacher-classrooms-page.tsx` | `teacher-classrooms-workspace.css` | `classes` |
-| 進入班級 | `/teacher/classes/:classroomId` | `src/features/classrooms/pages/teacher-classroom-detail-page.tsx` | `teacher-classrooms-workspace.css` | `classroom-detail` |
-| 查看學生細節 | `/teacher/classes/:classroomId/members/:memberRef` | `src/features/classrooms/pages/teacher-student-progress-page.tsx` | `teacher-classrooms-workspace.css` | `student-progress` |
-| 題目分析 | `/teacher/questions` | `src/features/teacher-content/pages/teacher-question-analysis-page.tsx` | analytics CSS trio | `questions` |
-| Live 課程報表 | `/teacher/live/:sessionId/report` | `src/features/live/pages/teacher-live-report-page.tsx` | `teacher-live-report-page.css` | `live-report` |
+| Page          | Production route                                   | Page component                                                          | Direct page CSS                                                                       | Harness scenario   |
+| ------------- | -------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------ |
+| 教學分析      | `/teacher`                                         | `src/features/teacher-content/pages/teacher-analytics-page.tsx`         | `teacher-analytics.css`, `teacher-analytics-data.css`, `teacher-analytics-mobile.css` | `analytics`        |
+| 班級管理      | `/teacher/classes`                                 | `src/features/classrooms/pages/teacher-classrooms-page.tsx`             | `teacher-classrooms-workspace.css`                                                    | `classes`          |
+| 進入班級      | `/teacher/classes/:classroomId`                    | `src/features/classrooms/pages/teacher-classroom-detail-page.tsx`       | `teacher-classrooms-workspace.css`                                                    | `classroom-detail` |
+| 查看學生細節  | `/teacher/classes/:classroomId/members/:memberRef` | `src/features/classrooms/pages/teacher-student-progress-page.tsx`       | `teacher-classrooms-workspace.css`                                                    | `student-progress` |
+| 題目分析      | `/teacher/questions`                               | `src/features/teacher-content/pages/teacher-question-analysis-page.tsx` | analytics CSS trio                                                                    | `questions`        |
+| Live 課程報表 | `/teacher/live/:sessionId/report`                  | `src/features/live/pages/teacher-live-report-page.tsx`                  | `teacher-live-report-page.css`                                                        | `live-report`      |
 
 All six pages use `AuthenticatedTeacherMenu` and `TeacherWorkSurface`. `TeacherMenu` owns identity, avatar upload, the three teacher destinations and sign-out confirmation. `TeacherWorkSurface` owns the common title, optional eyebrow/subtitle/toolbar and loading, empty, error, retry or content state. The shared surface CSS is `teacher-workspace.css` and `teacher-workspace-mobile.css`.
 
@@ -92,13 +92,13 @@ Page-local boundary:
 
 Use the existing Traditional Chinese stack. No new font dependency.
 
-| Role | Desktop | Mobile | Rule |
-| --- | --- | --- | --- |
-| Page title | 40-44 / 1.15, 900 | 28-32 / 1.2, 900 | One or two lines, no ellipsis |
-| Section title | 20-22 / 1.35, 800 | 18-20 / 1.4, 800 | Plain functional title |
-| Metric | 28-36 / 1.1, 900 | 24-30 / 1.1, 900 | `tabular-nums` |
-| Body / table | 16 / 1.55 | 16 / 1.6 | Mobile never below 16px |
-| Metadata | 13-14 / 1.5 | 13-14 / 1.5 | Not for essential instructions |
+| Role          | Desktop           | Mobile           | Rule                           |
+| ------------- | ----------------- | ---------------- | ------------------------------ |
+| Page title    | 40-44 / 1.15, 900 | 28-32 / 1.2, 900 | One or two lines, no ellipsis  |
+| Section title | 20-22 / 1.35, 800 | 18-20 / 1.4, 800 | Plain functional title         |
+| Metric        | 28-36 / 1.1, 900  | 24-30 / 1.1, 900 | `tabular-nums`                 |
+| Body / table  | 16 / 1.55         | 16 / 1.6         | Mobile never below 16px        |
+| Metadata      | 13-14 / 1.5       | 13-14 / 1.5      | Not for essential instructions |
 
 ### 3.3 Spacing, radius, borders and shadow
 

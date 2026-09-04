@@ -25,12 +25,12 @@
 
 ## 載重字串與選擇器（不可變更）
 
-| 頁 | 來源 | 內容 |
-| --- | --- | --- |
-| shop | tests/e2e/game-economy.spec.ts:98-150、shop-page.test.tsx | h1 `裝備商店`；`{N} Token 可用`；按鈕 `購買 {名}，{N} Token`／`選用 {名}`／`還差 {N} Token，無法購買 {名}`／`確認購買`／`取消`／`購買中…`；dialog name `購買「{名}」？`＋`將扣除 {N} Token。`；status `已購買{名}。`/`已裝備{名}。`；**`已裝備` exact-text 計數＝1**（`.blook-card__state`）；`.blook-card__art svg` 數量斷言（class 與內部 svg 結構不可動）；tab `角色`/`外框`；aria `商店分類`/`外框商店`；hint `裝備後將顯示在大廳頭貼外框。`；error `無法載入裝備商店，請稍後重試。`＋`重試` |
-| mistakes | tests/e2e/learning-experience.spec.ts:200-230、mistakes-page.test.tsx | h1 `我的錯題`；eyebrow `補救學習`；`{N} 題待補救`（class `mistake-group__badge`）；heading `已解決`；`正確答案：{X}`；按鈕 `再挑戰（補救練習）`；status `目前沒有待補救的錯題，繼續保持！`；`（再次答錯）` 字尾；error 文案＋`重試`；補救 session 內的 `返回我的錯題` link 在 quiz 頁（本批不碰） |
-| leaderboard | tests/e2e/classroom-leaderboard.spec.ts、live-advanced、classroom-leaderboard-page.test.tsx | h1 `排行榜`；eyebrow `班級 XP`；`Top 10 與你的名次都由伺服器依正式 XP 紀錄計算。`；table aria-label `` `${classroomName} Top 10` ``；th `名次`/`暱稱`/`XP`；`第 {N} 名`；`{N} XP`；`這是你`；aside aria-label `我的班級名次`；`目前還沒有可排行的學生。`；alert `無法顯示排行榜…`；class `ui-table leaderboard-table`＋`leaderboard-table__row--gold/--silver/--bronze`＋`leaderboard-blook`（結構沿用，只加樣式） |
-| achievements | tests/e2e/achievements.spec.ts:51-124、achievements-page.test.tsx | h1 `個人成就與徽章`；description `完成學習任務、累積挑戰紀錄，解鎖你的專屬色彩成就。`；list aria-label `成就徽章列表`；StatusBadge `已解鎖`/`未解鎖`；`解鎖於 {日期}`；`進度`＋`{X} / {Y}`；progressbar aria-label `` `${displayName}進度` ``；back link aria `回課後學習大廳`；`重試`；attr `data-achievement-state`／class `achievement-card--locked`（測試與樣式錨點，保留） |
+| 頁           | 來源                                                                                        | 內容                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| shop         | tests/e2e/game-economy.spec.ts:98-150、shop-page.test.tsx                                   | h1 `裝備商店`；`{N} Token 可用`；按鈕 `購買 {名}，{N} Token`／`選用 {名}`／`還差 {N} Token，無法購買 {名}`／`確認購買`／`取消`／`購買中…`；dialog name `購買「{名}」？`＋`將扣除 {N} Token。`；status `已購買{名}。`/`已裝備{名}。`；**`已裝備` exact-text 計數＝1**（`.blook-card__state`）；`.blook-card__art svg` 數量斷言（class 與內部 svg 結構不可動）；tab `角色`/`外框`；aria `商店分類`/`外框商店`；hint `裝備後將顯示在大廳頭貼外框。`；error `無法載入裝備商店，請稍後重試。`＋`重試` |
+| mistakes     | tests/e2e/learning-experience.spec.ts:200-230、mistakes-page.test.tsx                       | h1 `我的錯題`；eyebrow `補救學習`；`{N} 題待補救`（class `mistake-group__badge`）；heading `已解決`；`正確答案：{X}`；按鈕 `再挑戰（補救練習）`；status `目前沒有待補救的錯題，繼續保持！`；`（再次答錯）` 字尾；error 文案＋`重試`；補救 session 內的 `返回我的錯題` link 在 quiz 頁（本批不碰）                                                                                                                                                                                                |
+| leaderboard  | tests/e2e/classroom-leaderboard.spec.ts、live-advanced、classroom-leaderboard-page.test.tsx | h1 `排行榜`；eyebrow `班級 XP`；`Top 10 與你的名次都由伺服器依正式 XP 紀錄計算。`；table aria-label `` `${classroomName} Top 10` ``；th `名次`/`暱稱`/`XP`；`第 {N} 名`；`{N} XP`；`這是你`；aside aria-label `我的班級名次`；`目前還沒有可排行的學生。`；alert `無法顯示排行榜…`；class `ui-table leaderboard-table`＋`leaderboard-table__row--gold/--silver/--bronze`＋`leaderboard-blook`（結構沿用，只加樣式）                                                                               |
+| achievements | tests/e2e/achievements.spec.ts:51-124、achievements-page.test.tsx                           | h1 `個人成就與徽章`；description `完成學習任務、累積挑戰紀錄，解鎖你的專屬色彩成就。`；list aria-label `成就徽章列表`；StatusBadge `已解鎖`/`未解鎖`；`解鎖於 {日期}`；`進度`＋`{X} / {Y}`；progressbar aria-label `` `${displayName}進度` ``；back link aria `回課後學習大廳`；`重試`；attr `data-achievement-state`／class `achievement-card--locked`（測試與樣式錨點，保留）                                                                                                                  |
 
 四頁的 loading／error 早退 branch（`route-panel`／`shop-message-panel`／achievements 的 `page-card` alert 版）一律**不掛 scene class**（批③慣例）。
 
@@ -49,11 +49,13 @@
 ### Task 1: 道具店（/app/shop＝木架陳列＋櫃檯分頁＋夜窗購買確認）
 
 **Files:**
+
 - Modify: `src/features/inventory/pages/shop-page.tsx`
 - Modify: `src/features/inventory/pages/shop-page.test.tsx`
 - Modify: `src/styles/globals.css`
 
 **Interfaces:**
+
 - Consumes: 既有 `.scene-day`（只鋪背景）、`.rpg-window` 邊框配方（globals.css:4740，抄配方不掛 class）、tokens
 - Produces: `.shop-keeper`/`.shop-keeper--blooks`/`.shop-keeper--frames` 裝飾 class（素材批換裝點）
 
@@ -228,11 +230,13 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 2: 魔物圖鑑（/app/mistakes＝錯題魔物卡、復仇點亮）
 
 **Files:**
+
 - Modify: `src/features/learning/pages/mistakes-page.tsx`
 - Modify: `src/features/learning/pages/mistakes-page.test.tsx`
 - Modify: `src/styles/globals.css`
 
 **Interfaces:**
+
 - Consumes: 既有 `.scene-day`、tokens
 - Produces: `.codex-monster`／`.codex-monster--lit` 裝飾 class（素材批換裝點）
 
@@ -405,11 +409,13 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 3: 公會佈告欄（/app/leaderboard＝木板底＋羊皮紙名條＋金銀銅）
 
 **Files:**
+
 - Modify: `src/features/leaderboard/pages/classroom-leaderboard-page.tsx`
 - Modify: `src/features/leaderboard/pages/classroom-leaderboard-page.test.tsx`
 - Modify: `src/styles/globals.css`
 
 **Interfaces:**
+
 - Consumes: 既有 `.leaderboard-table__row--gold/--silver/--bronze` class（leaderboard-table.tsx:70-75，JSX 不動）、tokens
 - Produces: `.guild-board` 版型 class
 
@@ -568,11 +574,13 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 4: 勳章殿堂（/app/achievements＝未解鎖石膏、解鎖光柱）
 
 **Files:**
+
 - Modify: `src/features/achievements/pages/achievements-page.tsx`
 - Modify: `src/features/achievements/pages/achievements-page.test.tsx`
 - Modify: `src/styles/globals.css`
 
 **Interfaces:**
+
 - Consumes: 既有 `.achievement-card`／`.achievement-card--locked`／`data-achievement-state`（achievement-card.tsx，JSX 不動）、tokens
 - Produces: `.hall-of-medals` 版型 class
 
@@ -710,10 +718,12 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 5: Batch Gate（驗證與證據＋批③ continuity）
 
 **Files:**
+
 - Create: `artifacts/design-audit/batch4/`
 - Modify: `.superpowers/sdd/progress.md`（只 append batch-4 段落）
 
 **Interfaces:**
+
 - Consumes: Tasks 1-4 全部 commit；批③ gate 工具（session scratchpad 的 `gate-capture.mjs`；若已蒸發，按 `artifacts/design-audit/batch3/contrast.md` 記載的方法重建於 scratchpad——**不得放 repo 內**）
 
 - [ ] **Step 1: 靜態全套**
@@ -736,6 +746,7 @@ for s in 裝備商店 "Token 可用" 確認購買 已裝備 選用 還差; do ec
 for s in 我的錯題 題待補救 已解決 "再挑戰（補救練習）" 正確答案; do echo "$s:"; grep -c "$s" src/features/learning/pages/mistakes-page.tsx; git show 82993ba:src/features/learning/pages/mistakes-page.tsx | grep -c "$s"; done
 git diff 82993ba..HEAD -- src/features/leaderboard/components/leaderboard-table.tsx src/features/achievements/components/achievement-card.tsx
 ```
+
 Expected: 每組前後計數一致；最後一條 diff 為空（兩元件零接觸＝字串天然不變）
 
 - [ ] **Step 4: 目標 e2e（不跑全電池；紅的用批③ base-worktree 對照法歸因後記錄）**
@@ -743,6 +754,7 @@ Expected: 每組前後計數一致；最後一條 diff 為空（兩元件零接�
 ```bash
 npx playwright test tests/e2e/game-economy.spec.ts tests/e2e/achievements.spec.ts tests/e2e/learning-experience.spec.ts tests/e2e/classroom-leaderboard.spec.ts --project=chromium
 ```
+
 Expected: 全綠，或紅者經 `git worktree add` 於 base `82993ba` 重跑證明失敗與本批 diff 無關（classroom-leaderboard 與 learning-experience 已知受平行 session content seed 漂移影響）
 
 - [ ] **Step 5: 截圖證據（1280×720＋375×812）→ `artifacts/design-audit/batch4/`**
@@ -754,6 +766,7 @@ Expected: 全綠，或紅者經 `git worktree add` 於 base `82993ba` 重跑證�
 **先打驗證針（批③ continuity #1）**：對已知 opacity≠1 的元素（世界地圖 `.scene-day .mission-select__list::before` opacity 0.5，或合成 swatch）量測一次，證明 opacity 合成 helper 混色數學正確，記入 contrast.md 方法節。
 
 然後全部配對 ≥4.5:1：
+
 - shop：釘牌 data-on 反白字×金深底；貨架卡 h2/h3/price/`已裝備`/`還差` disabled 字×卡底；夜窗 h2/p×night 底；取消/確認鍵字×鍵底。
 - mistakes：header 與卡片全部文字×parchment-card；`mistake-group__badge` 字×badge 底；空狀態×scene-day 底。
 - leaderboard：eyebrow/h1/description/空榜×木板底；thead th×parchment；一般列 td 墨字×紙條；金列 night×gold、銀列 ink-900×slate-200、銅列 ink-900×hue-ch3-soft；`這是你` night×gold；SelfRankCard 文字×紙條。

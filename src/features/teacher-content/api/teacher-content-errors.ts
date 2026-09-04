@@ -29,9 +29,7 @@ export class TeacherContentError extends Error {
   }
 }
 
-export const toTeacherContentError = (
-  message: string,
-): TeacherContentError => {
+export const toTeacherContentError = (message: string): TeacherContentError => {
   if (message.includes('CONTENT_ALREADY_PUBLISHED')) {
     return new TeacherContentError('CONTENT_ALREADY_PUBLISHED');
   }

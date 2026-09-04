@@ -25,16 +25,16 @@
 
 ## 載重字串與選擇器（不可變更）
 
-| 來源 | 內容 | 約束 |
-| --- | --- | --- |
-| tests/e2e/ui-restyle.spec.ts:84-87、tests/e2e/helpers/mission.ts:12 | button accessible name `展開小節任務`；點擊後 URL `/app/missions/{uuid}` | 按鈕文字與 role=button 不可變 |
-| tests/e2e/quiz-runner.spec.ts:44、tests/e2e/playable-slice.spec.ts:81 | `.feedback-card > p` 且 `.last()` 為解說文 | 解說 `<p>{result.explanation}</p>` 必須維持 `.feedback-card` **直接子節點**且為**最後一個 p**；新增列用 `<div>` 不用 `<p>` |
-| 多個 spec（achievements/assignments-live/classroom-leaderboard/game-economy/quiz-runner/live-smoke） | heading `✓ 答對了`／`✕ 答錯了`／`⌛ 作答逾時`；button `我理解了，下一題`／`結算並查看結果` | FeedbackCard h2 與按鈕文字不可變；mission resolved 卡的 h2 `✓ 答對了` 同樣不可變 |
-| tests/e2e/learning-experience.spec.ts:96-123 | heading 含章節標題（h1 `Chapter {sortOrder}：{title}` 子字串匹配）；`getByLabel('章節進度')` 內含 `複習完成 X / Y`；article name=卡標題；button `完成複習`；status `已完成複習`；img alt | ChapterDetailPage 的 h1 格式、`aria-label="章節進度"`、reviewText 格式、按鈕/status 文字不可變 |
-| src/features/learning/pages/chapter-detail-page.test.tsx:165-192 | 同上＋`學習中`、`精熟程度`、`59.5%`、progressbar（MasteryRing role）、`重試`、error 文案 | statusLabels 四文案、MasteryRing role=progressbar＋aria-label `精熟程度` 不可變 |
-| src/features/learning/pages/mission-page.test.tsx:87-120 | `送出答案`、`索取第 1 層提示`、`第 2 / 5 關`、`本關已嘗試 1 次`、`階段任務挑戰完成！` | MissionPage 作答區文字不可變（本批不動作答區） |
-| tests/e2e/chapter-select.spec.ts | `/app` 大廳的 `開始挑戰`／`鎖定中`／`敬請期待` | 本批**不碰** lobby；chapter-detail 的 `開始挑戰` link 文字也不可變 |
-| src/features/learning/pages/mission-page.tsx:32,47,48,53,55,66,84,93,143,145 | `課後任務實戰`、SectionHeader description、`目前沒有可挑戰的章節。`、`${chapter.title} 小節` aria-label、`無法開始精熟任務，請稍後重試。` | MissionSelectPage 既有文字全保留 |
+| 來源                                                                                                 | 內容                                                                                                                                                                                     | 約束                                                                                                                       |
+| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| tests/e2e/ui-restyle.spec.ts:84-87、tests/e2e/helpers/mission.ts:12                                  | button accessible name `展開小節任務`；點擊後 URL `/app/missions/{uuid}`                                                                                                                 | 按鈕文字與 role=button 不可變                                                                                              |
+| tests/e2e/quiz-runner.spec.ts:44、tests/e2e/playable-slice.spec.ts:81                                | `.feedback-card > p` 且 `.last()` 為解說文                                                                                                                                               | 解說 `<p>{result.explanation}</p>` 必須維持 `.feedback-card` **直接子節點**且為**最後一個 p**；新增列用 `<div>` 不用 `<p>` |
+| 多個 spec（achievements/assignments-live/classroom-leaderboard/game-economy/quiz-runner/live-smoke） | heading `✓ 答對了`／`✕ 答錯了`／`⌛ 作答逾時`；button `我理解了，下一題`／`結算並查看結果`                                                                                               | FeedbackCard h2 與按鈕文字不可變；mission resolved 卡的 h2 `✓ 答對了` 同樣不可變                                           |
+| tests/e2e/learning-experience.spec.ts:96-123                                                         | heading 含章節標題（h1 `Chapter {sortOrder}：{title}` 子字串匹配）；`getByLabel('章節進度')` 內含 `複習完成 X / Y`；article name=卡標題；button `完成複習`；status `已完成複習`；img alt | ChapterDetailPage 的 h1 格式、`aria-label="章節進度"`、reviewText 格式、按鈕/status 文字不可變                             |
+| src/features/learning/pages/chapter-detail-page.test.tsx:165-192                                     | 同上＋`學習中`、`精熟程度`、`59.5%`、progressbar（MasteryRing role）、`重試`、error 文案                                                                                                 | statusLabels 四文案、MasteryRing role=progressbar＋aria-label `精熟程度` 不可變                                            |
+| src/features/learning/pages/mission-page.test.tsx:87-120                                             | `送出答案`、`索取第 1 層提示`、`第 2 / 5 關`、`本關已嘗試 1 次`、`階段任務挑戰完成！`                                                                                                    | MissionPage 作答區文字不可變（本批不動作答區）                                                                             |
+| tests/e2e/chapter-select.spec.ts                                                                     | `/app` 大廳的 `開始挑戰`／`鎖定中`／`敬請期待`                                                                                                                                           | 本批**不碰** lobby；chapter-detail 的 `開始挑戰` link 文字也不可變                                                         |
+| src/features/learning/pages/mission-page.tsx:32,47,48,53,55,66,84,93,143,145                         | `課後任務實戰`、SectionHeader description、`目前沒有可挑戰的章節。`、`${chapter.title} 小節` aria-label、`無法開始精熟任務，請稍後重試。`                                                | MissionSelectPage 既有文字全保留                                                                                           |
 
 ## File Structure
 
@@ -57,12 +57,14 @@
 ### Task 1: SpiritAvatar 三色精靈元件
 
 **Files:**
+
 - Create: `src/components/ui/spirit-avatar.tsx`
 - Create: `src/components/ui/spirit-avatar.test.tsx`
 - Modify: `src/styles/globals.css`（附在 `.rpg-window__muted` 區塊之後，globals.css:4767 附近）
 - Modify: `CONTEXT.md`（Tri-Spirits 詞條，第 62-65 行）
 
 **Interfaces:**
+
 - Consumes: 既有 tokens（`--coral-700`、`--cobalt-600`、`--jade-600`、`--pixel-window-frame`、`--pixel-shadow`、`--radius-pixel`）
 - Produces（Task 2、3 依賴，簽名逐字使用）:
   - `export type SpiritVariant = 'blue' | 'green' | 'red'`
@@ -263,6 +265,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 2: 回饋列接入三色精靈（FeedbackCard＋Mission resolved 卡）
 
 **Files:**
+
 - Modify: `src/features/quiz/components/feedback-card.tsx`
 - Modify: `src/features/quiz/components/feedback-card.test.tsx`
 - Modify: `src/features/quiz/pages/quiz-session.tsx`（FeedbackCard 呼叫點，約 439 行）
@@ -270,6 +273,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Modify: `src/styles/globals.css`（導師列 CSS，附在 `.feedback-card__score` 區塊後，約 660 行）
 
 **Interfaces:**
+
 - Consumes: Task 1 的 `SpiritAvatar`、`spiritForSeed`、`spiritLabels`、`SpiritVariant`
 - Produces: `FeedbackCard` 新 optional prop `mentorSeed?: string`（不傳＝現狀零變化）
 
@@ -358,16 +362,18 @@ const mentor = mentorSeed === undefined ? undefined : spiritForSeed(mentorSeed);
 在 `{result.answerStatus === 'correct' ? null : (…正確答案…)}` 與 `<p>{result.explanation}</p>` 之間插入：
 
 ```tsx
-{mentor ? (
-  <div className="feedback-card__mentor">
-    <SpiritAvatar variant={mentor} />
-    <span
-      className={`feedback-card__mentor-name feedback-card__mentor-name--${mentor}`}
-    >
-      {spiritLabels[mentor]}
-    </span>
-  </div>
-) : null}
+{
+  mentor ? (
+    <div className="feedback-card__mentor">
+      <SpiritAvatar variant={mentor} />
+      <span
+        className={`feedback-card__mentor-name feedback-card__mentor-name--${mentor}`}
+      >
+        {spiritLabels[mentor]}
+      </span>
+    </div>
+  ) : null;
+}
 ```
 
 - [ ] **Step 4: quiz-session 傳 seed（決議 3：一章一位導師＝各管一個講解領域的零後端近似；章節即現有內容的領域粒度）**
@@ -450,9 +456,7 @@ resolved aside 內、h2 之後（190 行後）插入（import 同 Step 3）：
 it('shows a tri-spirit mentor on the correct-answer feedback card', async () => {
   // 沿用檔內既有 render + 答題流程:選正確選項→送出→出現「✓ 答對了」
   // 後追加斷言:
-  expect(
-    await screen.findByText(/^[紅藍綠]精靈導師$/u),
-  ).toBeInTheDocument();
+  expect(await screen.findByText(/^[紅藍綠]精靈導師$/u)).toBeInTheDocument();
 });
 ```
 
@@ -475,6 +479,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 3: 世界地圖（MissionSelectPage＝章節大陸＋軟鎖四態）
 
 **Files:**
+
 - Create: `src/features/learning/lib/progress-status.ts`
 - Modify: `src/features/learning/pages/chapter-detail-page.tsx`（20-27 行的 statusLabels 改為 import＋re-export）
 - Modify: `src/features/learning/pages/mission-page.tsx`（MissionSelectPage，20-103 行）
@@ -482,6 +487,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Modify: `src/styles/globals.css`（`.mission-select` 區塊 3334-3383 行就地改寫＋新增節點 CSS）
 
 **Interfaces:**
+
 - Consumes: 既有 `useLearningProgress(null, repo)`（use-learning.ts:56）、`LearningProgressRow`／`LearningRepository`（learning-repository.ts:181/219）、chapter 物件的 `id`/`title`/`sortOrder`/`isPlayable`/`subtopicTitles`/`description`
 - Produces:
   - `src/features/learning/lib/progress-status.ts`: `export type ChapterStatus = LearningProgressRow['status']`；`export const statusLabels: Readonly<Record<ChapterStatus, string>>`（值不變：進步中/學習中/已精熟/尚未開始）
@@ -649,28 +655,30 @@ section 與 Card（42-44 行）：
 li 內容（58-96 行）——在既有 `<div>` 前插入節點徽章、`<h2>` 後插入狀態文案；**h2 文字、subtopics、button 一字不動**：
 
 ```tsx
-{playable.map((chapter) => {
-  const status = statusOf(chapter.id);
-  const isHero = chapter.id === heroChapterId;
-  return (
-    <li className="mission-select__item" key={chapter.id}>
-      <span aria-hidden="true" className={`map-node map-node--${status}`}>
-        <span className="map-node__number">{chapter.sortOrder}</span>
-        {isHero ? <span className="map-node__hero" /> : null}
-      </span>
-      <div>
-        <h2>{chapter.title}</h2>
-        <p className={`map-node-status map-node-status--${status}`}>
-          {statusLabels[status]}
-          {isHero ? '・目前位置' : null}
-        </p>
-        {/* owner 0730 #5 小節列與 description fallback 原樣保留 */}
-        {/* …既有 subtopicTitles / description 區塊原樣… */}
-      </div>
-      {/* …既有 button 原樣(展開小節任務)… */}
-    </li>
-  );
-})}
+{
+  playable.map((chapter) => {
+    const status = statusOf(chapter.id);
+    const isHero = chapter.id === heroChapterId;
+    return (
+      <li className="mission-select__item" key={chapter.id}>
+        <span aria-hidden="true" className={`map-node map-node--${status}`}>
+          <span className="map-node__number">{chapter.sortOrder}</span>
+          {isHero ? <span className="map-node__hero" /> : null}
+        </span>
+        <div>
+          <h2>{chapter.title}</h2>
+          <p className={`map-node-status map-node-status--${status}`}>
+            {statusLabels[status]}
+            {isHero ? '・目前位置' : null}
+          </p>
+          {/* owner 0730 #5 小節列與 description fallback 原樣保留 */}
+          {/* …既有 subtopicTitles / description 區塊原樣… */}
+        </div>
+        {/* …既有 button 原樣(展開小節任務)… */}
+      </li>
+    );
+  });
+}
 ```
 
 - [ ] **Step 4: 跑測試確認通過**
@@ -683,10 +691,10 @@ Expected: PASS（含既有 MissionPage 例）
 (a) 就地改寫 `.mission-select__item`（globals.css:3347-3359）的外觀三行——其餘 flex 屬性不動：
 
 ```css
-  /* 批③:世界地圖大陸卡=羊皮紙+金深框(0729 暖黃框裁定由 JRPG spec §1 取代)。 */
-  border: 2px solid var(--pixel-gold-deep);
-  border-radius: var(--radius-pixel);
-  background: var(--pixel-parchment);
+/* 批③:世界地圖大陸卡=羊皮紙+金深框(0729 暖黃框裁定由 JRPG spec §1 取代)。 */
+border: 2px solid var(--pixel-gold-deep);
+border-radius: var(--radius-pixel);
+background: var(--pixel-parchment);
 ```
 
 (b) 新增區塊（`.mission-select__subtopics li + li` 之後）：
@@ -858,35 +866,37 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 4: 地城樓層（ChapterDetailPage＝冷色地城＋火把進度＋樓層對話窗）
 
 **Files:**
+
 - Modify: `src/features/learning/pages/chapter-detail-page.tsx`
 - Modify: `src/features/learning/pages/chapter-detail-page.test.tsx`
 - Modify: `src/styles/globals.css`
 
 **Interfaces:**
+
 - Consumes: 既有 `reviewCompleted`/`reviewTotal` 區域變數（chapter-detail-page.tsx:331-332）、既有版型 class
 - Produces: 無對外介面（純頁內表現）
 
 **深色面設色清單（批②教訓：逐一列舉，缺一即 gate 擋）**——本頁淺色面（review-accordion、review-card、status pill、`開始挑戰` 按鈕、ProgressBar、`完成複習` 按鈕）靠「不設容器色」自然保持墨字；深色面逐條顯式設色：
 
-| 元素 | 現值（globals.css 行） | 地城覆蓋 |
-| --- | --- | --- |
-| `.route-panel__eyebrow` | 既有淺底墨色 | `--pixel-gold`（夜底金） |
-| `.chapter-detail__title` h1 | 繼承墨色 (3798) | `--pixel-window-ink`＋`--font-pixel-tc` |
-| `.chapter-detail__review-progress-label` | `--color-muted` (3875) | `--pixel-window-muted` |
-| `.chapter-detail__review-progress-value` | `--color-text` (3881) | `--pixel-window-ink` |
-| `.chapter-detail__mastery-label` | `--color-muted` (3920) | `--pixel-window-muted` |
-| `.chapter-detail__mastery-value` | `--color-text` (3926) | `--pixel-window-ink` |
-| `.chapter-status-pill--success` | **透明底** color-mix＋emerald-700 字 (3822) | 底改實色 `--pixel-parchment-card`（透明底疊夜底＝深字不可讀，批②同構缺陷） |
-| `.chapter-status-pill--primary` | **透明底** color-mix＋ink-900 字 (3828) | 底改實色 `--pixel-parchment-card` |
-| `.chapter-status-pill--neutral` | slate-100 底＋color-muted 字 (3834) | 字改 `--ink-700`（muted 於 slate-100 底貼線） |
-| `.chapter-detail__subtopic` 樓層卡 | `--paper` 白卡黃框 (3937) | 夜窗：`--pixel-night` 底＋rpg-window 邊框配方 |
-| `.chapter-detail__subtopic-title` | `--ink-700` (3949) | `--pixel-window-ink` |
-| `.chapter-detail__subtopic-progress` | `--color-muted` (3972) | `--pixel-window-ink`（子 span 繼承） |
-| 空狀態 `<p>`（section 直接子，325 行） | 繼承墨色 | `--pixel-window-ink` |
-| `<p role="alert">`（section 直接子，405 行） | 繼承墨色 | `--pixel-danger` |
-| `.chapter-detail__subtopic-tag`（小節 chip） | 淺黃實底 ink-900 字 (3956) | 保留（自帶淺底）——gate 實測 |
-| `.mastery-ring__track` | `--border-subtle`（淺色，夜底可見） | 保留——gate 截圖確認 |
-| `.review-accordion` | 既有白卡 | 底改 `--pixel-parchment-card`＋框 `--pixel-gold-deep`（墨字自然繼承） |
+| 元素                                         | 現值（globals.css 行）                      | 地城覆蓋                                                                   |
+| -------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------- |
+| `.route-panel__eyebrow`                      | 既有淺底墨色                                | `--pixel-gold`（夜底金）                                                   |
+| `.chapter-detail__title` h1                  | 繼承墨色 (3798)                             | `--pixel-window-ink`＋`--font-pixel-tc`                                    |
+| `.chapter-detail__review-progress-label`     | `--color-muted` (3875)                      | `--pixel-window-muted`                                                     |
+| `.chapter-detail__review-progress-value`     | `--color-text` (3881)                       | `--pixel-window-ink`                                                       |
+| `.chapter-detail__mastery-label`             | `--color-muted` (3920)                      | `--pixel-window-muted`                                                     |
+| `.chapter-detail__mastery-value`             | `--color-text` (3926)                       | `--pixel-window-ink`                                                       |
+| `.chapter-status-pill--success`              | **透明底** color-mix＋emerald-700 字 (3822) | 底改實色 `--pixel-parchment-card`（透明底疊夜底＝深字不可讀，批②同構缺陷） |
+| `.chapter-status-pill--primary`              | **透明底** color-mix＋ink-900 字 (3828)     | 底改實色 `--pixel-parchment-card`                                          |
+| `.chapter-status-pill--neutral`              | slate-100 底＋color-muted 字 (3834)         | 字改 `--ink-700`（muted 於 slate-100 底貼線）                              |
+| `.chapter-detail__subtopic` 樓層卡           | `--paper` 白卡黃框 (3937)                   | 夜窗：`--pixel-night` 底＋rpg-window 邊框配方                              |
+| `.chapter-detail__subtopic-title`            | `--ink-700` (3949)                          | `--pixel-window-ink`                                                       |
+| `.chapter-detail__subtopic-progress`         | `--color-muted` (3972)                      | `--pixel-window-ink`（子 span 繼承）                                       |
+| 空狀態 `<p>`（section 直接子，325 行）       | 繼承墨色                                    | `--pixel-window-ink`                                                       |
+| `<p role="alert">`（section 直接子，405 行） | 繼承墨色                                    | `--pixel-danger`                                                           |
+| `.chapter-detail__subtopic-tag`（小節 chip） | 淺黃實底 ink-900 字 (3956)                  | 保留（自帶淺底）——gate 實測                                                |
+| `.mastery-ring__track`                       | `--border-subtle`（淺色，夜底可見）         | 保留——gate 截圖確認                                                        |
+| `.review-accordion`                          | 既有白卡                                    | 底改 `--pixel-parchment-card`＋框 `--pixel-gold-deep`（墨字自然繼承）      |
 
 - [ ] **Step 1: 寫失敗測試（chapter-detail-page.test.tsx 新增；先讀該檔 fixture 的 subtopic reviewCompleted/reviewTotal 實值，下方 3 與 1 若與 fixture 不符則以 fixture 實值釘）**
 
@@ -936,16 +946,18 @@ export const torchStates = (
 (c) 小節樓層 h2（339-342 行）之後插入火把列（`reviewCompleted`/`reviewTotal` 變數既有於 331-332 行）：
 
 ```tsx
-{torchStates(reviewCompleted, reviewTotal).length > 0 ? (
-  <span aria-hidden="true" className="floor-torches">
-    {torchStates(reviewCompleted, reviewTotal).map((lit, index) => (
-      <span
-        className={lit ? 'floor-torch floor-torch--lit' : 'floor-torch'}
-        key={index}
-      />
-    ))}
-  </span>
-) : null}
+{
+  torchStates(reviewCompleted, reviewTotal).length > 0 ? (
+    <span aria-hidden="true" className="floor-torches">
+      {torchStates(reviewCompleted, reviewTotal).map((lit, index) => (
+        <span
+          className={lit ? 'floor-torch floor-torch--lit' : 'floor-torch'}
+          key={index}
+        />
+      ))}
+    </span>
+  ) : null;
+}
 ```
 
 （文字節點 `已學習`／`複習 X / Y`／`精熟 X%`、`小節` tag 原樣保留。）
@@ -1132,10 +1144,12 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 5: Batch Gate（驗證與證據）
 
 **Files:**
+
 - Create: `artifacts/design-audit/batch3/`（截圖與對比實測報告）
 - Modify: `.superpowers/sdd/progress.md`（batch-3 紀錄；**此檔有平行 session 未 commit 變更，只 append 本批段落、不整檔重排**）
 
 **Interfaces:**
+
 - Consumes: Tasks 1-4 全部 commit
 - Produces: gate PASS/FAIL 報告＋證據
 
@@ -1159,15 +1173,18 @@ for s in 展開小節任務 課後任務實戰 目前沒有可挑戰的章節; d
 for s in "✓ 答對了" "我理解了，下一題" "結算並查看結果"; do echo "$s:"; grep -c "$s" src/features/quiz/components/feedback-card.tsx; git show 1d2d27e:src/features/quiz/components/feedback-card.tsx | grep -c "$s"; done
 for s in 章節複習 複習完成 完成複習 已完成複習 章節進度 開始挑戰; do echo "$s:"; grep -c "$s" src/features/learning/pages/chapter-detail-page.tsx; git show 1d2d27e:src/features/learning/pages/chapter-detail-page.tsx | grep -c "$s"; done
 ```
+
 Expected: 每組前後計數一致
 
 - [ ] **Step 4: 目標 e2e（不跑全電池；18 個範圍外失敗與 webkit flake 為既知，勿計入）**
 
 Run（沿用批② gate 的本機 e2e 啟動方式，參考 `scripts/test-e2e-local.sh` 與 batch2 gate 報告）:
+
 ```bash
 npx playwright test tests/e2e/chapter-select.spec.ts tests/e2e/ui-restyle.spec.ts tests/e2e/learning-experience.spec.ts tests/e2e/quiz-runner.spec.ts tests/e2e/playable-slice.spec.ts --project=chromium
 npx playwright test tests/e2e/quiz-runner.spec.ts --project=firefox
 ```
+
 Expected: 全綠（若 learning-experience 因 content seed 漂移紅，須以 stash 前後對照證明失敗與本批 diff 無關並記錄，不得默默放行）
 
 - [ ] **Step 5: 截圖證據（1280×720＋375×812）→ `artifacts/design-audit/batch3/`**
@@ -1177,6 +1194,7 @@ Expected: 全綠（若 learning-experience 因 content seed 漂移紅，須以 s
 - [ ] **Step 6: rendered 對比實測（getComputedStyle 配對，非 token 配對）→ `artifacts/design-audit/batch3/contrast.md`**
 
 全部 ≥4.5:1：
+
 - 世界地圖：狀態文案四態 × item 底；`map-node__number` 四態 × 各自徽章底；item 內 h2/小節列 × item 底；SectionHeader 標題/描述 × world-map-panel 底。
 - 地城：eyebrow × header 底；h1 × header 底；pill 三態字 × pill 實底；review-progress label/value × header 底；subtopic h2/progress 列 × 樓層窗底；accordion 標題 × accordion 底；`完成複習` 按鈕字 × 按鈕底；空狀態 p 與 alert p × 頁底。
 - 回饋列：三色導師名銜 × feedback-card 底（量三個 variant）。

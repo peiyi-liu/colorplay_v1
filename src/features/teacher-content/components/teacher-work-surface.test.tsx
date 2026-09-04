@@ -52,7 +52,9 @@ describe('TeacherWorkSurface', () => {
         <button type="button">內容操作</button>
       </TeacherWorkSurface>,
     );
-    expect(screen.queryByRole('button', { name: '內容操作' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: '內容操作' }),
+    ).not.toBeInTheDocument();
   });
 
   it('distinguishes loading, empty and error semantics', () => {

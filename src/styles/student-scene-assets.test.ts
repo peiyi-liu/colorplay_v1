@@ -25,8 +25,11 @@ const sceneAssets = [
 ] as const;
 
 describe('student scene asset budget', () => {
-  it.each(sceneAssets)('%s stays below the first-load decode budget', (asset) => {
-    const bytes = statSync(join(process.cwd(), 'src/assets', asset)).size;
-    expect(bytes).toBeLessThanOrEqual(350 * 1024);
-  });
+  it.each(sceneAssets)(
+    '%s stays below the first-load decode budget',
+    (asset) => {
+      const bytes = statSync(join(process.cwd(), 'src/assets', asset)).size;
+      expect(bytes).toBeLessThanOrEqual(350 * 1024);
+    },
+  );
 });

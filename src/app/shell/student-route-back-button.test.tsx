@@ -130,9 +130,7 @@ describe('StudentRouteBackButton', () => {
       name: '返回複習卡選擇',
     });
     expect(backButtons).toHaveLength(1);
-    await user.click(
-      screen.getByRole('button', { name: '返回複習卡選擇' }),
-    );
+    await user.click(screen.getByRole('button', { name: '返回複習卡選擇' }));
     expect(onBack).toHaveBeenCalledOnce();
   });
 });

@@ -26,18 +26,18 @@
 
 ## 檔案結構總覽
 
-| 區域 | 路徑 |
-|---|---|
-| Migrations(8 個) | `supabase/migrations/20260808000100_admin_identity_tables.sql` … `20260808000800_admin_lifecycle_commands.sql` |
-| pgTAP(6 個) | `supabase/tests/047_admin_identity_tables.test.sql` … `052_admin_lifecycle_commands.test.sql` |
-| Catalog | `supabase/catalog/admin-sensitivity-catalog.json`(生成)、`scripts/admin/generate-sensitivity-catalog.mjs`、`scripts/admin/compare-catalog-inventory.mjs` |
-| Edge Functions | `supabase/functions/admin-mfa/index.ts`、`supabase/functions/admin-command/index.ts`、`supabase/functions/admin-reconcile/index.ts` |
-| 前端 feature | `src/features/admin/{api,hooks,components,pages}/**`(見 Task 10–13) |
-| Router／登入 | `src/app/router/create-app-router.tsx`、`src/features/auth/pages/login-page.tsx`、`supabase/functions/auth-login/index.ts` |
-| 測試 | `tests/integration/admin-*.integration.test.ts`、`tests/contracts/phase1-admin-*.test.ts`、`tests/e2e/admin-*.spec.ts`、`tests/e2e/helpers/admin.ts` |
-| Fixtures／seed | `tests/fixtures/users.ts`、`supabase/seed.sql`(local-only Admin fixture) |
-| 文件 | `docs/runbooks/phase1-admin-oob-recovery.md`、`docs/deployment/phase1-production-smoke-manifest.md`、`docs/roadmap-colorplay-next.md` |
-| CI | `.github/workflows/ci.yml`(catalog 檢查步驟)、`package.json`(`admin:catalog:*` scripts) |
+| 區域             | 路徑                                                                                                                                                     |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Migrations(8 個) | `supabase/migrations/20260808000100_admin_identity_tables.sql` … `20260808000800_admin_lifecycle_commands.sql`                                           |
+| pgTAP(6 個)      | `supabase/tests/047_admin_identity_tables.test.sql` … `052_admin_lifecycle_commands.test.sql`                                                            |
+| Catalog          | `supabase/catalog/admin-sensitivity-catalog.json`(生成)、`scripts/admin/generate-sensitivity-catalog.mjs`、`scripts/admin/compare-catalog-inventory.mjs` |
+| Edge Functions   | `supabase/functions/admin-mfa/index.ts`、`supabase/functions/admin-command/index.ts`、`supabase/functions/admin-reconcile/index.ts`                      |
+| 前端 feature     | `src/features/admin/{api,hooks,components,pages}/**`(見 Task 10–13)                                                                                      |
+| Router／登入     | `src/app/router/create-app-router.tsx`、`src/features/auth/pages/login-page.tsx`、`supabase/functions/auth-login/index.ts`                               |
+| 測試             | `tests/integration/admin-*.integration.test.ts`、`tests/contracts/phase1-admin-*.test.ts`、`tests/e2e/admin-*.spec.ts`、`tests/e2e/helpers/admin.ts`     |
+| Fixtures／seed   | `tests/fixtures/users.ts`、`supabase/seed.sql`(local-only Admin fixture)                                                                                 |
+| 文件             | `docs/runbooks/phase1-admin-oob-recovery.md`、`docs/deployment/phase1-production-smoke-manifest.md`、`docs/roadmap-colorplay-next.md`                    |
+| CI               | `.github/workflows/ci.yml`(catalog 檢查步驟)、`package.json`(`admin:catalog:*` scripts)                                                                  |
 
 ---
 
@@ -46,10 +46,12 @@
 > 前置條件:本計畫已通過 Codex 審查且 owner 已核准。此 task 在 spec worktree `/Users/guanyucheng/Desktop/pei-game/colorplay/.worktrees/phase1-admin-security-spec`(branch `phase1/admin-security-spec`)執行。
 
 **Files:**
+
 - Commit(不新建):`docs/roadmap-colorplay-next.md`、`docs/superpowers/specs/2026-08-07-phase-1-admin-identity-security-design.md`、`docs/superpowers/plans/2026-08-07-phase-1-admin-identity-security.md`
 - Create(git 結構):worktree `.worktrees/phase1-admin-security-impl`、branch `phase1/admin-security-impl`
 
 **Interfaces:**
+
 - Produces:reviewed commit SHA(記為 `$PLAN_SHA`);所有後續 task 的工作目錄 `/Users/guanyucheng/Desktop/pei-game/colorplay/.worktrees/phase1-admin-security-impl`。
 
 - [ ] **Step 1: 確認 working tree 只含預期文件變更**
@@ -115,11 +117,13 @@ Expected:log 首行 SHA 等於 `$PLAN_SHA`;`supabase start` 輸出 local API/DB 
 > 此修正不變更 spec 架構或任何 capability 斷言。
 
 **Files:**
+
 - Test: `tests/integration/admin-mfa-capability.integration.test.ts`
 - Modify: `package.json`(新增 devDependency `otpauth`)、`pnpm-lock.yaml`、
   `supabase/config.toml`(啟用 local TOTP MFA;2026-08-07 核准修正)
 
 **Interfaces:**
+
 - Consumes:local Supabase stack(`supabase start`)、`tests/integration/supabase-health.test.ts` 既有的 env 讀取慣例(`SUPABASE_URL`、`SUPABASE_ANON_KEY`、`SUPABASE_SERVICE_ROLE_KEY`,由 `scripts/supabase/load-local-environment.sh` 載入)。
 - Produces:能力證明(通過的 integration test),後續 Edge/E2E task 依賴的四個事實:(1) user-scoped `auth.mfa.enroll/challenge/verify` 可用且回傳 TOTP secret;(2) `auth.admin.mfa.listFactors`/`deleteFactor` 可用;(3) JWT payload 含 `session_id` 與 `amr`(password entry 含 timestamp);(4) verify 成功後 `aal2`。
 
@@ -174,14 +178,20 @@ function totpCode(secret: string): string {
 
 describe('GoTrue MFA capability proof gate (spec §14.5)', () => {
   it('proves enroll/challenge/verify, admin factor APIs, session_id and amr claims', async () => {
-    const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
+    const admin = createClient(url, serviceKey, {
+      auth: { persistSession: false },
+    });
     const created = await admin.auth.admin.createUser({
-      email, password, email_confirm: true,
+      email,
+      password,
+      email_confirm: true,
     });
     expect(created.error).toBeNull();
     const userId = created.data.user!.id;
 
-    const client = createClient(url, anonKey, { auth: { persistSession: false } });
+    const client = createClient(url, anonKey, {
+      auth: { persistSession: false },
+    });
     const signIn = await client.auth.signInWithPassword({ email, password });
     expect(signIn.error).toBeNull();
 
@@ -189,7 +199,9 @@ describe('GoTrue MFA capability proof gate (spec §14.5)', () => {
     const payload = decodeJwtPayload(signIn.data.session!.access_token);
     expect(typeof payload.session_id).toBe('string');
     const amr = payload.amr as Array<{ method: string; timestamp: number }>;
-    expect(amr.some((e) => e.method === 'password' && e.timestamp > 0)).toBe(true);
+    expect(amr.some((e) => e.method === 'password' && e.timestamp > 0)).toBe(
+      true,
+    );
 
     // 事實 1:user-scoped enroll 回傳 TOTP secret;challenge+verify 成功
     const enroll = await client.auth.mfa.enroll({ factorType: 'totp' });
@@ -201,7 +213,9 @@ describe('GoTrue MFA capability proof gate (spec §14.5)', () => {
     const challenge = await client.auth.mfa.challenge({ factorId });
     expect(challenge.error).toBeNull();
     const verify = await client.auth.mfa.verify({
-      factorId, challengeId: challenge.data!.id, code: totpCode(secret),
+      factorId,
+      challengeId: challenge.data!.id,
+      code: totpCode(secret),
     });
     expect(verify.error).toBeNull();
 
@@ -212,13 +226,20 @@ describe('GoTrue MFA capability proof gate (spec §14.5)', () => {
     // 事實 2:admin API 可列出與刪除 factor(reset saga step 2 依據)
     const listed = await admin.auth.admin.mfa.listFactors({ userId });
     expect(listed.error).toBeNull();
-    const verified = listed.data!.factors.filter((f) => f.status === 'verified');
+    const verified = listed.data!.factors.filter(
+      (f) => f.status === 'verified',
+    );
     expect(verified.map((f) => f.id)).toEqual([factorId]);
 
-    const removed = await admin.auth.admin.mfa.deleteFactor({ userId, id: factorId });
+    const removed = await admin.auth.admin.mfa.deleteFactor({
+      userId,
+      id: factorId,
+    });
     expect(removed.error).toBeNull();
     const relisted = await admin.auth.admin.mfa.listFactors({ userId });
-    expect(relisted.data!.factors.filter((f) => f.status === 'verified')).toHaveLength(0);
+    expect(
+      relisted.data!.factors.filter((f) => f.status === 'verified'),
+    ).toHaveLength(0);
 
     await admin.auth.admin.deleteUser(userId);
   });
@@ -254,11 +275,13 @@ spec §4.1、§5.1、§6.3、§13(migration 順序:principals/identities → ses
 > events/principals → `admin_audit_principals`。
 
 **Files:**
+
 - Create: `supabase/migrations/20260808000100_admin_identity_tables.sql`
 - Create: `supabase/migrations/20260808000200_admin_session_invitation_tables.sql`
 - Test: `supabase/tests/047_admin_identity_tables.test.sql`
 
 **Interfaces:**
+
 - Consumes:`auth.users`、`public.profiles`(`role` enum 已含 `admin`,spec §13)。
 - Produces:tables `admin_audit_principals`、`admin_security_identities`、`admin_sessions`、`admin_invitations`;enum `admin_identity_state`、`admin_invitation_status`;functions `admin_internal_lifecycle_lock()`、`create_admin_identity_session(...)`、`close_admin_identity_session(...)`(皆 service-only)。後續 task 依賴的欄位名以下列 SQL 為準。
 
@@ -320,15 +343,15 @@ select * from finish();
 rollback;
 ```
 
-| TC | 對齊 spec | 預期 SQL 行為 |
-|---|---|---|
-| 047-01 | §4.1/§4.3 | 結構存在;enum 值數精確 |
-| 047-02 | §6.3 | 4 表 × 4 動作 × 2 角色全 deny |
-| 047-03 | §5.1/§2.3 | 第二筆 active 觸發 23505;revoke 後可續建 |
-| 047-04 | §5.1 | 8h 等式檢查;±1 秒皆 23514 |
-| 047-05 | §4.1 | active 必有 factor;recovery/pending 必清空 |
-| 047-06 | §4.3 | token_hash 唯一;72h 等式;過期不可 accepted |
-| 047-07 | §5.1/§6 | helpers 僅 service;create supersede 冪等;close 冪等 |
+| TC     | 對齊 spec | 預期 SQL 行為                                       |
+| ------ | --------- | --------------------------------------------------- |
+| 047-01 | §4.1/§4.3 | 結構存在;enum 值數精確                              |
+| 047-02 | §6.3      | 4 表 × 4 動作 × 2 角色全 deny                       |
+| 047-03 | §5.1/§2.3 | 第二筆 active 觸發 23505;revoke 後可續建            |
+| 047-04 | §5.1      | 8h 等式檢查;±1 秒皆 23514                           |
+| 047-05 | §4.1      | active 必有 factor;recovery/pending 必清空          |
+| 047-06 | §4.3      | token_hash 唯一;72h 等式;過期不可 accepted          |
+| 047-07 | §5.1/§6   | helpers 僅 service;create supersede 冪等;close 冪等 |
 
 - [ ] **Step 2: 執行確認失敗**
 
@@ -551,6 +574,7 @@ Expected:reset 重放全部 migrations 無錯;047 全數通過(`Result: PASS` �
 與 helper 冪等雙呼叫場景,較存在性檢查工作量約增一倍。
 
 **Risk note(2026-08-07 amendment 後):**
+
 1. 行為式 INSERT/UPDATE TC 依賴以 superuser 直寫控制表;它們驗證的是約束與
    helper,不代表 anon/authenticated 有任何寫入路徑(TC-047-02 反向保證)。
 2. `create_admin_identity_session` 的 8h expiry 由 `now() + interval '8 hours'`
@@ -578,11 +602,13 @@ git commit -m "feat(phase1): add admin identity, session and invitation control 
 spec §6.2、§6.3、§8、§10、§13(順序:operations/receipts/executions → audit/denial)。**Receipt TTL 60 秒由 CHECK constraint 寫死。Audit append-only 由「無 grant + trigger 再封鎖」雙重強制。**
 
 **Files:**
+
 - Create: `supabase/migrations/20260808000300_admin_operation_receipt_tables.sql`
 - Create: `supabase/migrations/20260808000400_admin_audit_denial_tables.sql`
 - Test: `supabase/tests/048_admin_receipt_audit_tables.test.sql`
 
 **Interfaces:**
+
 - Consumes:Task 2 的 `admin_audit_principals`、`admin_security_identities`。
 - Produces:tables `admin_security_operations`、`admin_command_authorizations`、`admin_command_executions`、`admin_audit_events`、`admin_denial_counters`;enums `admin_operation_type`、`admin_operation_state`、`admin_actor_type`;internal functions `admin_internal_append_audit(...) returns uuid`、`admin_internal_record_denial(p_resource_key text, p_safe_reason_code text) returns void`、`admin_internal_deny(p_resource_key text, p_code text, p_action text, p_target_type text, p_actor_type admin_actor_type, p_actor_principal_id uuid, p_admin_session_id uuid, p_auth_session_id uuid, p_target_principal_id uuid, p_reason_or_purpose text, p_mfa_age_seconds integer) returns jsonb`(user-scoped 預期 denial 出口)、`admin_internal_service_deny(p_resource_key text, p_code text, p_action text, p_target_type text, p_actor_type admin_actor_type, p_actor_principal_id uuid, p_target_principal_id uuid, p_correlation_id text, p_runbook_operation_id uuid) returns jsonb`(service/owner 語境預期 denial 出口;actor=語意發起者、target=受影響 principal,嚴格分離)、`admin_internal_canonical_hash(p_fields jsonb) returns bytea`(與 Edge 共用的 canonical request hash)。兩個 deny helper 是全計畫預期 denial 的僅有出口;`admin_internal_authorize`/`admin_internal_execute_command` 的 `ok:false` 回傳是內部 gate 訊號,一律由其唯一呼叫端記帳一次,不重複計數。
 
@@ -956,6 +982,7 @@ git commit -m "feat(phase1): add receipt, operation, append-only audit and denia
 spec §9。**禁止手抄 catalog**:spec §9.3(46 張既有表)與 §9.4(9 張控制表)的表格是機器來源,由 script 解析生成 JSON 與 migration;CI 以「重新生成 diff」+「與實際 DB inventory 比對」雙重強制。任何未列名 table/column 一律 `forbidden`。
 
 **Files:**
+
 - Create: `scripts/admin/generate-sensitivity-catalog.mjs`
 - Create: `scripts/admin/compare-catalog-inventory.mjs`
 - Create: `supabase/catalog/admin-sensitivity-catalog.json`(由 script 生成後提交)
@@ -964,6 +991,7 @@ spec §9。**禁止手抄 catalog**:spec §9.3(46 張既有表)與 §9.4(9 張�
 - Modify: `package.json`(scripts)、`.github/workflows/ci.yml`
 
 **Interfaces:**
+
 - Consumes:spec 檔 `docs/superpowers/specs/2026-08-07-phase-1-admin-identity-security-design.md` §9.3/§9.4 markdown 表格(Task 0 已提交,為凍結來源)。
 - Produces:table `admin_sensitivity_catalog(resource, domain, surface, column_name, class, mask_strategy, searchable, filterable, sortable)`(default-deny);JSON catalog;package scripts `admin:catalog:generate`、`admin:catalog:check`、`admin:catalog:inventory`。Task 6 的 browser RPC 以此表為唯一 allowlist。
 
@@ -994,34 +1022,64 @@ const DOMAIN_MAP = {
   users: ['profiles'],
   classrooms: ['classrooms', 'classroom_members'],
   content: [
-    'courses', 'chapters', 'sections', 'subtopics', 'questions',
-    'question_options', 'question_hints', 'review_cards', 'review_card_media',
-    'quiz_templates', 'content_imports', 'content_versions',
-    'content_publication_events', 'external_activities',
+    'courses',
+    'chapters',
+    'sections',
+    'subtopics',
+    'questions',
+    'question_options',
+    'question_hints',
+    'review_cards',
+    'review_card_media',
+    'quiz_templates',
+    'content_imports',
+    'content_versions',
+    'content_publication_events',
+    'external_activities',
   ],
   learning: [
-    'review_progress', 'mistake_items', 'remediation_attempts', 'hint_events',
-    'mastery_sessions', 'mastery_attempts', 'mastery_hint_events',
+    'review_progress',
+    'mistake_items',
+    'remediation_attempts',
+    'hint_events',
+    'mastery_sessions',
+    'mastery_attempts',
+    'mastery_hint_events',
   ],
   assessments: [
-    'quiz_sessions', 'quiz_session_questions', 'quiz_answers',
-    'assignments', 'assignment_targets', 'assignment_attempts',
+    'quiz_sessions',
+    'quiz_session_questions',
+    'quiz_answers',
+    'assignments',
+    'assignment_targets',
+    'assignment_attempts',
   ],
   live: [
-    'live_activities', 'live_sessions', 'live_session_questions',
-    'live_participants', 'live_answers', 'live_join_throttle',
+    'live_activities',
+    'live_sessions',
+    'live_session_questions',
+    'live_participants',
+    'live_answers',
+    'live_join_throttle',
   ],
   rewards: [
-    'wallets', 'wallet_transactions', 'xp_transactions', 'blooks',
-    'user_blooks', 'avatar_frames', 'user_frames', 'achievement_definitions',
-    'achievement_progress', 'achievement_unlocks',
+    'wallets',
+    'wallet_transactions',
+    'xp_transactions',
+    'blooks',
+    'user_blooks',
+    'avatar_frames',
+    'user_frames',
+    'achievement_definitions',
+    'achievement_progress',
+    'achievement_unlocks',
   ],
 };
 
 // personal 欄位遮罩策略(spec §9.3/§9.4 括號註記的機器化):
 const MASK_RULES = {
-  'profiles.full_name': 'first_char_mask',      // 首字＋遮罩
-  'profiles.login_account': 'last3_mask',       // 只留末三碼
+  'profiles.full_name': 'first_char_mask', // 首字＋遮罩
+  'profiles.login_account': 'last3_mask', // 只留末三碼
   'admin_invitations.invited_email': 'email_mask', // a****@domain
   'admin_sessions.device_summary': 'truncate_120', // 固定截斷
 };
@@ -1040,7 +1098,10 @@ const CONTROL_SURFACES = {
 };
 
 function parseCells(line) {
-  return line.split('|').slice(1, -1).map((cell) => cell.trim());
+  return line
+    .split('|')
+    .slice(1, -1)
+    .map((cell) => cell.trim());
 }
 
 function parseColumnList(cell) {
@@ -1052,42 +1113,66 @@ function parseColumnList(cell) {
 function parseQueryCell(cell) {
   const [search = '—', filter = '—', sort = '—'] = cell.split('／');
   const names = (part) =>
-    part.trim() === '—' ? [] : part.split(/[,、]/u).map((s) => s.trim()).filter(Boolean);
+    part.trim() === '—'
+      ? []
+      : part
+          .split(/[,、]/u)
+          .map((s) => s.trim())
+          .filter(Boolean);
   return { search: names(search), filter: names(filter), sort: names(sort) };
 }
 
 function extractSection(spec, heading, nextHeading) {
   const start = spec.indexOf(heading);
   const end = spec.indexOf(nextHeading, start);
-  if (start < 0 || end < 0) throw new Error(`CATALOG_SPEC_SECTION_MISSING:${heading}`);
+  if (start < 0 || end < 0)
+    throw new Error(`CATALOG_SPEC_SECTION_MISSING:${heading}`);
   return spec.slice(start, end);
 }
 
 function parseExistingTables(section) {
-  const rows = section.split('\n').filter((l) => /^\| `[a-z0-9_]+` \|/u.test(l));
+  const rows = section
+    .split('\n')
+    .filter((l) => /^\| `[a-z0-9_]+` \|/u.test(l));
   return rows.map((line) => {
-    const [resourceCell, open, internal, personal, forbidden, query] = parseCells(line);
+    const [resourceCell, open, internal, personal, forbidden, query] =
+      parseCells(line);
     const resource = /`([a-z0-9_]+)`/u.exec(resourceCell)[1];
-    return { resource, open: parseColumnList(open), internal: parseColumnList(internal),
-      personal: parseColumnList(personal), forbidden: parseColumnList(forbidden),
-      query: parseQueryCell(query) };
+    return {
+      resource,
+      open: parseColumnList(open),
+      internal: parseColumnList(internal),
+      personal: parseColumnList(personal),
+      forbidden: parseColumnList(forbidden),
+      query: parseQueryCell(query),
+    };
   });
 }
 
 function parseControlTables(section) {
-  const rows = section.split('\n').filter((l) => /^\| `admin_[a-z_]+`／/u.test(l));
+  const rows = section
+    .split('\n')
+    .filter((l) => /^\| `admin_[a-z_]+`／/u.test(l));
   return rows.map((line) => {
-    const [resourceCell, open, internal, personal, forbidden] = parseCells(line);
+    const [resourceCell, open, internal, personal, forbidden] =
+      parseCells(line);
     const resource = /`([a-z0-9_]+)`/u.exec(resourceCell)[1];
-    return { resource, open: parseColumnList(open), internal: parseColumnList(internal),
-      personal: parseColumnList(personal), forbidden: parseColumnList(forbidden),
-      query: { search: [], filter: [], sort: [] } };
+    return {
+      resource,
+      open: parseColumnList(open),
+      internal: parseColumnList(internal),
+      personal: parseColumnList(personal),
+      forbidden: parseColumnList(forbidden),
+      query: { search: [], filter: [], sort: [] },
+    };
   });
 }
 
 function domainOf(resource) {
   if (resource.startsWith('admin_')) return 'security';
-  const found = Object.entries(DOMAIN_MAP).find(([, list]) => list.includes(resource));
+  const found = Object.entries(DOMAIN_MAP).find(([, list]) =>
+    list.includes(resource),
+  );
   if (!found) throw new Error(`CATALOG_DOMAIN_UNMAPPED:${resource}`);
   return found[0];
 }
@@ -1095,14 +1180,18 @@ function domainOf(resource) {
 function toColumns(entry) {
   const rows = [];
   for (const [cls, list] of [
-    ['open', entry.open], ['internal', entry.internal],
-    ['personal', entry.personal], ['forbidden', entry.forbidden],
+    ['open', entry.open],
+    ['internal', entry.internal],
+    ['personal', entry.personal],
+    ['forbidden', entry.forbidden],
   ]) {
     for (const name of list) {
       const key = `${entry.resource}.${name}`;
       rows.push({
-        name, class: cls,
-        mask_strategy: cls === 'personal' ? (MASK_RULES[key] ?? failMask(key)) : null,
+        name,
+        class: cls,
+        mask_strategy:
+          cls === 'personal' ? (MASK_RULES[key] ?? failMask(key)) : null,
         searchable: entry.query.search.includes(name),
         filterable: entry.query.filter.includes(name),
         sortable: entry.query.sort.includes(name),
@@ -1119,32 +1208,44 @@ function failMask(key) {
 async function main() {
   const spec = await readFile(SPEC_PATH, 'utf8');
   const existing = parseExistingTables(
-    extractSection(spec, '### 9.3', '### 9.4'));
-  const control = parseControlTables(
-    extractSection(spec, '### 9.4', '## 10.'));
-  if (existing.length !== 46) throw new Error(`CATALOG_EXPECTED_46_GOT_${existing.length}`);
-  if (control.length !== 9) throw new Error(`CATALOG_EXPECTED_9_GOT_${control.length}`);
+    extractSection(spec, '### 9.3', '### 9.4'),
+  );
+  const control = parseControlTables(extractSection(spec, '### 9.4', '## 10.'));
+  if (existing.length !== 46)
+    throw new Error(`CATALOG_EXPECTED_46_GOT_${existing.length}`);
+  if (control.length !== 9)
+    throw new Error(`CATALOG_EXPECTED_9_GOT_${control.length}`);
 
-  const resources = [...existing, ...control].map((entry) => ({
-    resource: entry.resource,
-    domain: domainOf(entry.resource),
-    surface: entry.resource.startsWith('admin_')
-      ? CONTROL_SURFACES[entry.resource]
-      : 'browser',
-    export: false, // spec §9.2:Phase 1 所有表 export=false
-    columns: toColumns(entry),
-  })).sort((a, b) => a.resource.localeCompare(b.resource));
+  const resources = [...existing, ...control]
+    .map((entry) => ({
+      resource: entry.resource,
+      domain: domainOf(entry.resource),
+      surface: entry.resource.startsWith('admin_')
+        ? CONTROL_SURFACES[entry.resource]
+        : 'browser',
+      export: false, // spec §9.2:Phase 1 所有表 export=false
+      columns: toColumns(entry),
+    }))
+    .sort((a, b) => a.resource.localeCompare(b.resource));
 
-  const json = `${JSON.stringify({
-    version: 1,
-    source_sha256: createHash('sha256').update(spec).digest('hex'),
-    resources,
-  }, null, 2)}\n`;
+  const json = `${JSON.stringify(
+    {
+      version: 1,
+      source_sha256: createHash('sha256').update(spec).digest('hex'),
+      resources,
+    },
+    null,
+    2,
+  )}\n`;
 
-  const values = resources.flatMap((r) => r.columns.map((c) =>
-    `  ('${r.resource}', '${r.domain}', '${r.surface}', '${c.name}', '${c.class}', ` +
-    `${c.mask_strategy ? `'${c.mask_strategy}'` : 'null'}, ` +
-    `${c.searchable}, ${c.filterable}, ${c.sortable})`));
+  const values = resources.flatMap((r) =>
+    r.columns.map(
+      (c) =>
+        `  ('${r.resource}', '${r.domain}', '${r.surface}', '${c.name}', '${c.class}', ` +
+        `${c.mask_strategy ? `'${c.mask_strategy}'` : 'null'}, ` +
+        `${c.searchable}, ${c.filterable}, ${c.sortable})`,
+    ),
+  );
   const migration = [
     '-- GENERATED FILE — do not edit by hand.',
     '-- Regenerate: pnpm admin:catalog:generate  (source: spec §9.3/§9.4)',
@@ -1152,7 +1253,7 @@ async function main() {
     '  resource text not null,',
     '  domain text not null,',
     '  surface text not null,',
-    "  column_name text not null,",
+    '  column_name text not null,',
     "  class text not null check (class in ('open','internal','personal','forbidden')),",
     '  mask_strategy text,',
     '  searchable boolean not null,',
@@ -1172,10 +1273,13 @@ async function main() {
 
   if (process.argv.includes('--check')) {
     const [jsonNow, migNow] = await Promise.all([
-      readFile(JSON_PATH, 'utf8'), readFile(MIGRATION_PATH, 'utf8'),
+      readFile(JSON_PATH, 'utf8'),
+      readFile(MIGRATION_PATH, 'utf8'),
     ]);
     if (jsonNow !== json || migNow !== migration) {
-      console.error('ADMIN_CATALOG_DRIFT: regenerate with pnpm admin:catalog:generate');
+      console.error(
+        'ADMIN_CATALOG_DRIFT: regenerate with pnpm admin:catalog:generate',
+      );
       process.exit(1);
     }
     console.log('admin catalog: up to date');
@@ -1199,8 +1303,14 @@ node scripts/admin/generate-sensitivity-catalog.mjs --check
 Expected:`admin catalog: wrote 55 resources`、`admin catalog: up to date`。抽查生成 JSON 三筆代表值必須逐字等於:
 
 ```json
-{ "name": "full_name", "class": "personal", "mask_strategy": "first_char_mask",
-  "searchable": false, "filterable": false, "sortable": false }
+{
+  "name": "full_name",
+  "class": "personal",
+  "mask_strategy": "first_char_mask",
+  "searchable": false,
+  "filterable": false,
+  "sortable": false
+}
 ```
 
 (`profiles`);`classrooms.join_code` → `"class": "forbidden"`;`external_activities.url` → `"class": "internal"`。
@@ -1214,8 +1324,9 @@ Expected:`admin catalog: wrote 55 resources`、`admin catalog: up to date`。抽
 import { readFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 
-const dbUrl = process.env.SUPABASE_DB_URL
-  ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
+const dbUrl =
+  process.env.SUPABASE_DB_URL ??
+  'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
 const sql = `
   select table_name || '.' || column_name
   from information_schema.columns c
@@ -1225,20 +1336,28 @@ const sql = `
     and c.table_name <> 'admin_sensitivity_catalog'
   order by 1;`;
 const psql = spawnSync('psql', [dbUrl, '-At', '-c', sql], { encoding: 'utf8' });
-if (psql.status !== 0) { console.error(psql.stderr); process.exit(1); }
+if (psql.status !== 0) {
+  console.error(psql.stderr);
+  process.exit(1);
+}
 const dbSet = new Set(psql.stdout.split('\n').filter(Boolean));
 
 const catalog = JSON.parse(
-  await readFile('supabase/catalog/admin-sensitivity-catalog.json', 'utf8'));
-const catalogSet = new Set(catalog.resources.flatMap(
-  (r) => r.columns.map((c) => `${r.resource}.${c.name}`)));
+  await readFile('supabase/catalog/admin-sensitivity-catalog.json', 'utf8'),
+);
+const catalogSet = new Set(
+  catalog.resources.flatMap((r) =>
+    r.columns.map((c) => `${r.resource}.${c.name}`),
+  ),
+);
 
 const missing = [...dbSet].filter((k) => !catalogSet.has(k));
 const stale = [...catalogSet].filter((k) => !dbSet.has(k));
 if (missing.length > 0 || stale.length > 0) {
   console.error('ADMIN_CATALOG_INVENTORY_MISMATCH');
   for (const k of missing) console.error(`  uncataloged column: ${k}`);
-  for (const k of stale) console.error(`  catalog references missing column: ${k}`);
+  for (const k of stale)
+    console.error(`  catalog references missing column: ${k}`);
   process.exit(1);
 }
 console.log(`admin catalog inventory: ${dbSet.size} columns match`);
@@ -1257,10 +1376,10 @@ console.log(`admin catalog inventory: ${dbSet.size} columns match`);
 `.github/workflows/ci.yml`:在 Local database job(執行 `supabase db reset` 之後)新增兩步:
 
 ```yaml
-      - name: Verify admin sensitivity catalog is regenerable
-        run: pnpm admin:catalog:check
-      - name: Verify admin catalog matches migration-derived inventory
-        run: pnpm admin:catalog:inventory
+- name: Verify admin sensitivity catalog is regenerable
+  run: pnpm admin:catalog:check
+- name: Verify admin catalog matches migration-derived inventory
+  run: pnpm admin:catalog:inventory
 ```
 
 - [ ] **Step 5: pgTAP 與 contract 測試**
@@ -1297,18 +1416,27 @@ import { describe, expect, it } from 'vitest';
 
 describe('phase 1 admin sensitivity catalog contract', () => {
   it('regenerates byte-identically from the spec', () => {
-    execFileSync(process.execPath,
-      ['scripts/admin/generate-sensitivity-catalog.mjs', '--check']);
+    execFileSync(process.execPath, [
+      'scripts/admin/generate-sensitivity-catalog.mjs',
+      '--check',
+    ]);
   });
   it('holds 46 existing + 9 control resources, all export=false', async () => {
     const catalog = JSON.parse(
-      await readFile('supabase/catalog/admin-sensitivity-catalog.json', 'utf8'));
+      await readFile('supabase/catalog/admin-sensitivity-catalog.json', 'utf8'),
+    );
     expect(catalog.resources).toHaveLength(55);
-    expect(catalog.resources.filter(
-      (r: { resource: string }) => r.resource.startsWith('admin_'))).toHaveLength(9);
-    expect(catalog.resources.every((r: { export: boolean }) => r.export === false))
-      .toBe(true);
-    const names = catalog.resources.map((r: { resource: string }) => r.resource);
+    expect(
+      catalog.resources.filter((r: { resource: string }) =>
+        r.resource.startsWith('admin_'),
+      ),
+    ).toHaveLength(9);
+    expect(
+      catalog.resources.every((r: { export: boolean }) => r.export === false),
+    ).toBe(true);
+    const names = catalog.resources.map(
+      (r: { resource: string }) => r.resource,
+    );
     expect(names).toContain('external_activities'); // spec §9.1 曾遺漏,防回歸
     expect(names).not.toContain('audit_logs'); // spec §9.1:不存在的表不得入 catalog
   });
@@ -1345,10 +1473,12 @@ git commit -m "feat(phase1): generate 46+9 sensitivity catalog with CI drift enf
 spec §4.4、§5.3、§6.1、§6.2、§8.3。這些 function 只授予 `service_role`;`anon`/`authenticated` 直呼一律拒絕(pgTAP 逐一驗證)。**Session 建立與 `last_totp_verified_at` 更新只存在這條 path(spec §5.3)。**
 
 **Files:**
+
 - Create: `supabase/migrations/20260808000600_admin_service_functions.sql`
 - Test: `supabase/tests/050_admin_service_functions.test.sql`
 
 **Interfaces:**
+
 - Consumes:Task 2–4 全部表與 internal helpers。
 - Produces(全部 `security definer`、`set search_path = public, pg_temp`、revoke public/anon/authenticated,grant execute to `service_role`):
   - `svc_admin_create_session(p_admin_user_id uuid, p_auth_session_id uuid, p_verified_factor_id uuid, p_device_summary text, p_correlation_id text) returns jsonb`
@@ -2234,11 +2364,13 @@ spec §3.2、§5.2、§6.1、§7、§9.2。全部 RPC:`security definer`、固�
 > Idle 續期語意(Codex 修訂 1、修訂三-2):user-scoped RPC(含全部讀取與命令)一律**唯讀** `admin_sessions`。activity 續期只存在於兩個完整授權成功點 —— receipt mint 成功與 fresh-MFA refresh 成功(皆 service-only path);被拒的請求絕不續期 idle 窗。純瀏覽不延長 15 分鐘 idle 窗;spec §5.2 的「授權活動才續期」由 service path 代行,契約效果不變。
 
 **Files:**
+
 - Create: `supabase/migrations/20260808000700_admin_read_rpcs.sql`
 - Create: `supabase/tests/helpers/admin_test_seed.sql`(pgTAP 共用 seed;非 `.test.sql`,不被 runner 當測試)
 - Test: `supabase/tests/051_admin_safe_browser.test.sql`
 
 **Interfaces:**
+
 - Consumes:Task 4 catalog table、Task 5 functions、Task 2–3 表與 `admin_internal_deny`。
 - Produces:
   - `admin_internal_authorize() returns jsonb`(internal、**唯讀**:`{"ok":bool,"code":text,"session_id":uuid,"principal_id":uuid,"auth_session_id":uuid,"mfa_age_seconds":int}`;絕不 UPDATE 任何表)
@@ -2862,10 +2994,12 @@ git commit -m "feat(phase1): add catalog-driven safe browser and session state R
 spec §1.3、§7。背景:7 個 browser 資源(wallets、classroom_members、user_blooks、user_frames、assignment_targets、live_join_throttle、achievement_progress)無單一 `id` 欄;owner 裁定方案 (b) 擴充定址契約。migration 000700 為 local-only 未部署,直接原地修訂(比照 review 回修波慣例)。
 
 **Files:**
+
 - Modify: `supabase/migrations/20260808000700_admin_read_rpcs.sql`
 - Test: `supabase/tests/051_admin_safe_browser.test.sql`
 
 **Interfaces:**
+
 - Produces:
   - `admin_internal_key_columns(p_resource text) returns text[]`(internal;由 `pg_catalog` 解析 PK 欄,依 constraint ordinal)
   - `admin_get_resource_detail(p_domain text, p_resource text, p_row_key jsonb) returns jsonb`(overload;row_key 恰為全部 PK 欄的 object,值以 text 比對)
@@ -2887,11 +3021,13 @@ spec §1.3、§7。背景:7 個 browser 資源(wallets、classroom_members、use
 spec §4.3、§4.5、§6.2、§7(reveal)、§8。**每個特權命令 RPC 在消耗 receipt 的同一交易內重驗 identity/factor/session/receipt 全欄位;預期 denial 以 typed outcome 返回並在同一提交交易寫 audit(硬性修正 #6:絕不以 RAISE 造成 audit 回滾)。**
 
 **Files:**
+
 - Create: `supabase/migrations/20260808000800_admin_lifecycle_commands.sql`
 - Test: `supabase/tests/052_admin_lifecycle_commands.test.sql`
 - Modify: `src/types/database.ts`(重新生成)
 
 **Interfaces:**
+
 - Consumes:Task 3 receipts/executions 與 `admin_internal_deny`、`admin_internal_canonical_hash`;Task 5 service functions;Task 6 `admin_internal_authorize`、seed helper。
 - Produces(grant execute to `authenticated`,內部驗權;簽名固定如下,Edge Task 9 依此呼叫):
   - `admin_internal_execute_command(p_receipt_id uuid, p_command_name text, p_idempotency_key text, p_request_hash bytea, p_requires_fresh_totp boolean) returns jsonb`(internal:鎖定 → 逐欄驗證 → 謂詞式消耗;Codex 修訂 2)
@@ -3707,12 +3843,14 @@ git commit -m "feat(phase1): add receipt-revalidated admin lifecycle command RPC
 spec §4.4、§5.3、§5.4。Edge 是 orchestration boundary:provider 驗證成功後才呼叫 service-only DB path;直接 GoTrue enroll/verify 永遠拿不到 privileged session(DB 層已由 Task 5 保證,此處測試證明)。
 
 **Files:**
+
 - Create: `supabase/functions/_shared/edge-denial.ts`(fail-closed 的 Edge denial 入帳 helper;admin-mfa 與 admin-command 共用)
 - Create: `supabase/functions/admin-mfa/index.ts`
 - Test: `tests/contracts/phase1-admin-edge-denial.test.ts`(recorder 成功/失敗/畸形輸出三案)
 - Test: `tests/integration/admin-mfa-flow.integration.test.ts`
 
 **Interfaces:**
+
 - Consumes:`_shared/cors.ts`(`corsHeaders`、`jsonResponse`)、Task 5 `svc_*` functions、GoTrue user-scoped MFA API、`auth.admin.mfa.listFactors`。
 - Produces:POST `admin-mfa`,body `{"action":"begin-enrollment"|"confirm-enrollment"|"challenge","factorId"?,"challengeId"?,"code"?}`;回應 `{outcome, code?, factorId?, totpSecret?, qrUri?, sessionId?}`。前端 Task 11 依此呼叫。
 
@@ -3787,8 +3925,10 @@ function decodeJwtPayload(jwt: string): Record<string, unknown> {
 }
 
 Deno.serve(async (request) => {
-  if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  if (request.method !== 'POST') return jsonResponse(405, { error: 'METHOD_NOT_ALLOWED' });
+  if (request.method === 'OPTIONS')
+    return new Response('ok', { headers: corsHeaders });
+  if (request.method !== 'POST')
+    return jsonResponse(405, { error: 'METHOD_NOT_ALLOWED' });
 
   const authorization = request.headers.get('Authorization') ?? '';
   const jwt = authorization.replace(/^Bearer\s+/i, '');
@@ -3799,105 +3939,135 @@ Deno.serve(async (request) => {
   const service = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false },
   });
-  const recordAndDeny = makeRecordAndDeny(service, 'edge/admin-mfa', jsonResponse);
+  const recordAndDeny = makeRecordAndDeny(
+    service,
+    'edge/admin-mfa',
+    jsonResponse,
+  );
   if (jwt === '') {
     return recordAndDeny('admin_mfa', null, 'STALE_PRIVILEGED_SESSION', 401);
   }
 
   const { data: userData, error: userError } = await user.auth.getUser(jwt);
   if (userError || !userData.user) {
-    return recordAndDeny('admin_mfa', null,
-      'STALE_PRIVILEGED_SESSION', 401);
+    return recordAndDeny('admin_mfa', null, 'STALE_PRIVILEGED_SESSION', 401);
   }
   const userId = userData.user.id;
   const claims = decodeJwtPayload(jwt);
   const authSessionId = String(claims.session_id ?? '');
   if (authSessionId === '') {
-    return recordAndDeny('admin_mfa', userId,
-      'STALE_PRIVILEGED_SESSION', 401);
+    return recordAndDeny('admin_mfa', userId, 'STALE_PRIVILEGED_SESSION', 401);
   }
 
-  const body = await request.json().catch(() => null) as
-    | { action?: string; factorId?: string; challengeId?: string; code?: string }
-    | null;
+  const body = (await request.json().catch(() => null)) as {
+    action?: string;
+    factorId?: string;
+    challengeId?: string;
+    code?: string;
+  } | null;
   if (!body?.action) return jsonResponse(400, { error: 'INVALID_JSON' });
 
   // 鎖定檢查(spec §5.4):任何 action 前先問 service path
   const lockState = await service.rpc('svc_admin_record_totp_outcome', {
-    p_admin_user_id: userId, p_success: true, // probe 模式不計失敗
+    p_admin_user_id: userId,
+    p_success: true, // probe 模式不計失敗
   });
   // MFA_LOCKED 已由 svc_admin_record_totp_outcome 入帳,原樣回傳不重複記錄
   if (lockState.data?.code === 'MFA_LOCKED') return denied('MFA_LOCKED', 429);
 
   if (body.action === 'begin-enrollment') {
     // primary re-auth ≤ 5 分鐘:GoTrue amr password timestamp,不用 JWT iat(spec §4.4-1)
-    const amr = (claims.amr ?? []) as Array<{ method: string; timestamp: number }>;
+    const amr = (claims.amr ?? []) as Array<{
+      method: string;
+      timestamp: number;
+    }>;
     const password = amr.find((entry) => entry.method === 'password');
     if (!password || Date.now() / 1000 - password.timestamp > 300) {
-      return recordAndDeny('begin_admin_mfa_enrollment', userId,
-        'INSUFFICIENT_MFA');
+      return recordAndDeny(
+        'begin_admin_mfa_enrollment',
+        userId,
+        'INSUFFICIENT_MFA',
+      );
     }
     // verified factor 已存在 → 禁止重 enroll,走 idempotent finalize(spec §4.4-2)
     const factors = await service.auth.admin.mfa.listFactors({ userId });
-    const verified = (factors.data?.factors ?? []).filter((f) => f.status === 'verified');
+    const verified = (factors.data?.factors ?? []).filter(
+      (f) => f.status === 'verified',
+    );
     if (verified.length > 0) {
-      return recordAndDeny('begin_admin_mfa_enrollment', userId,
-        'FACTOR_BINDING_MISMATCH');
+      return recordAndDeny(
+        'begin_admin_mfa_enrollment',
+        userId,
+        'FACTOR_BINDING_MISMATCH',
+      );
     }
-    for (const stale of (factors.data?.factors ?? []).filter((f) => f.status !== 'verified')) {
+    for (const stale of (factors.data?.factors ?? []).filter(
+      (f) => f.status !== 'verified',
+    )) {
       await service.auth.admin.mfa.deleteFactor({ userId, id: stale.id });
     }
     const enroll = await user.auth.mfa.enroll({ factorType: 'totp' });
     if (enroll.error) {
-      return recordAndDeny('begin_admin_mfa_enrollment', userId,
-        'FACTOR_BINDING_MISMATCH');
+      return recordAndDeny(
+        'begin_admin_mfa_enrollment',
+        userId,
+        'FACTOR_BINDING_MISMATCH',
+      );
     }
     return jsonResponse(200, {
-      outcome: 'ok', factorId: enroll.data.id,
-      totpSecret: enroll.data.totp.secret, qrUri: enroll.data.totp.uri,
+      outcome: 'ok',
+      factorId: enroll.data.id,
+      totpSecret: enroll.data.totp.secret,
+      qrUri: enroll.data.totp.uri,
     });
   }
 
   if (body.action === 'confirm-enrollment' || body.action === 'challenge') {
-    if (!body.factorId || !body.code) return jsonResponse(400, { error: 'INVALID_JSON' });
+    if (!body.factorId || !body.code)
+      return jsonResponse(400, { error: 'INVALID_JSON' });
     const challenge = body.challengeId
       ? { data: { id: body.challengeId }, error: null }
       : await user.auth.mfa.challenge({ factorId: body.factorId });
     if (challenge.error) {
-      return recordAndDeny(body.action, userId,
-        'FACTOR_BINDING_MISMATCH');
+      return recordAndDeny(body.action, userId, 'FACTOR_BINDING_MISMATCH');
     }
     const verify = await user.auth.mfa.verify({
-      factorId: body.factorId, challengeId: challenge.data!.id, code: body.code,
+      factorId: body.factorId,
+      challengeId: challenge.data!.id,
+      code: body.code,
     });
     if (verify.error) {
       const attempt = await service.rpc('svc_admin_record_totp_outcome', {
-        p_admin_user_id: userId, p_success: false,
+        p_admin_user_id: userId,
+        p_success: false,
       });
       // 第 5 次失敗:MFA_LOCKED 已由 DB 入帳,原樣回傳;其餘失敗在此入帳
       if (attempt.data?.code === 'MFA_LOCKED') return denied('MFA_LOCKED', 429);
-      return recordAndDeny(body.action, userId,
-        'INSUFFICIENT_MFA', 401);
+      return recordAndDeny(body.action, userId, 'INSUFFICIENT_MFA', 401);
     }
     await service.rpc('svc_admin_record_totp_outcome', {
-      p_admin_user_id: userId, p_success: true,
+      p_admin_user_id: userId,
+      p_success: true,
     });
 
     // server-only factor binding 確認:恰一個 verified factor(spec §5.3)
     const factors = await service.auth.admin.mfa.listFactors({ userId });
-    const verified = (factors.data?.factors ?? []).filter((f) => f.status === 'verified');
+    const verified = (factors.data?.factors ?? []).filter(
+      (f) => f.status === 'verified',
+    );
     if (verified.length !== 1 || verified[0].id !== body.factorId) {
       await service.rpc('svc_admin_isolate_factor_incident', {
-        p_admin_user_id: userId, p_correlation_id: crypto.randomUUID(),
+        p_admin_user_id: userId,
+        p_correlation_id: crypto.randomUUID(),
       });
-      return recordAndDeny(body.action, userId,
-        'FACTOR_BINDING_MISMATCH');
+      return recordAndDeny(body.action, userId, 'FACTOR_BINDING_MISMATCH');
     }
 
     if (body.action === 'confirm-enrollment') {
       // saga:Auth verify 成功後只補 identity/binding,不建 session(spec §4.4-3)
       const confirm = await service.rpc('svc_admin_confirm_enrollment', {
-        p_admin_user_id: userId, p_verified_factor_id: body.factorId,
+        p_admin_user_id: userId,
+        p_verified_factor_id: body.factorId,
         p_operation_id: crypto.randomUUID(),
       });
       if (confirm.error || confirm.data?.outcome !== 'ok') {
@@ -3909,14 +4079,16 @@ Deno.serve(async (request) => {
 
     // challenge:既有 session 相同 auth_session_id → refresh fresh-MFA;否則建新 session
     const refresh = await service.rpc('svc_admin_refresh_session_mfa', {
-      p_admin_user_id: userId, p_auth_session_id: authSessionId,
+      p_admin_user_id: userId,
+      p_auth_session_id: authSessionId,
       p_verified_factor_id: body.factorId,
     });
     if (refresh.data?.outcome === 'ok') {
       return jsonResponse(200, { outcome: 'ok', refreshed: true });
     }
     const created = await service.rpc('svc_admin_create_session', {
-      p_admin_user_id: userId, p_auth_session_id: authSessionId,
+      p_admin_user_id: userId,
+      p_auth_session_id: authSessionId,
       p_verified_factor_id: body.factorId,
       p_device_summary: (request.headers.get('User-Agent') ?? '').slice(0, 120),
       p_correlation_id: crypto.randomUUID(),
@@ -3925,7 +4097,10 @@ Deno.serve(async (request) => {
       // typed denial 已由 svc_admin_create_session 入帳,不重複記錄
       return denied(created.data?.code ?? 'STALE_PRIVILEGED_SESSION');
     }
-    return jsonResponse(200, { outcome: 'ok', sessionId: created.data.session_id });
+    return jsonResponse(200, {
+      outcome: 'ok',
+      sessionId: created.data.session_id,
+    });
   }
 
   return jsonResponse(400, { error: 'INVALID_JSON' });
@@ -3950,40 +4125,67 @@ const jsonResponse = (status: number, body: unknown) =>
 describe('edge denial recorder fail-closed contract', () => {
   it('returns the typed denial only after the recorder confirms it', async () => {
     const calls: unknown[] = [];
-    const recordAndDeny = makeRecordAndDeny({
-      rpc: async (fn, args) => {
-        calls.push([fn, args]);
-        return {
-          data: { outcome: 'denied', code: 'INSUFFICIENT_MFA' },
-          error: null,
-        };
+    const recordAndDeny = makeRecordAndDeny(
+      {
+        rpc: async (fn, args) => {
+          calls.push([fn, args]);
+          return {
+            data: { outcome: 'denied', code: 'INSUFFICIENT_MFA' },
+            error: null,
+          };
+        },
       },
-    }, 'edge/test', jsonResponse);
+      'edge/test',
+      jsonResponse,
+    );
     const response = await recordAndDeny(
-      'challenge', 'user-1', 'INSUFFICIENT_MFA', 401);
+      'challenge',
+      'user-1',
+      'INSUFFICIENT_MFA',
+      401,
+    );
     expect(response.status).toBe(401);
-    expect(await response.json())
-      .toEqual({ outcome: 'denied', code: 'INSUFFICIENT_MFA' });
+    expect(await response.json()).toEqual({
+      outcome: 'denied',
+      code: 'INSUFFICIENT_MFA',
+    });
     expect(calls).toHaveLength(1);
   });
 
   it('fails closed with 503 when the recorder errors', async () => {
-    const recordAndDeny = makeRecordAndDeny({
-      rpc: async () => ({ data: null, error: { message: 'db down' } }),
-    }, 'edge/test', jsonResponse);
+    const recordAndDeny = makeRecordAndDeny(
+      {
+        rpc: async () => ({ data: null, error: { message: 'db down' } }),
+      },
+      'edge/test',
+      jsonResponse,
+    );
     const response = await recordAndDeny(
-      'challenge', 'user-1', 'INSUFFICIENT_MFA', 401);
+      'challenge',
+      'user-1',
+      'INSUFFICIENT_MFA',
+      401,
+    );
     expect(response.status).toBe(503);
-    expect(await response.json())
-      .toEqual({ error: 'SECURITY_AUDIT_UNAVAILABLE' });
+    expect(await response.json()).toEqual({
+      error: 'SECURITY_AUDIT_UNAVAILABLE',
+    });
   });
 
   it('fails closed with 503 on malformed recorder output', async () => {
-    const recordAndDeny = makeRecordAndDeny({
-      rpc: async () => ({ data: { outcome: 'ok' }, error: null }),
-    }, 'edge/test', jsonResponse);
+    const recordAndDeny = makeRecordAndDeny(
+      {
+        rpc: async () => ({ data: { outcome: 'ok' }, error: null }),
+      },
+      'edge/test',
+      jsonResponse,
+    );
     const response = await recordAndDeny(
-      'challenge', 'user-1', 'INSUFFICIENT_MFA', 401);
+      'challenge',
+      'user-1',
+      'INSUFFICIENT_MFA',
+      401,
+    );
     expect(response.status).toBe(503);
   });
 });
@@ -4011,15 +4213,20 @@ describe('admin-mfa edge flow', () => {
   let accessToken = '';
   let secret = '';
   let factorId = '';
-  const service = createClient(url, serviceKey, { auth: { persistSession: false } });
-  const client = createClient(url, anonKey, { auth: { persistSession: false } });
+  const service = createClient(url, serviceKey, {
+    auth: { persistSession: false },
+  });
+  const client = createClient(url, anonKey, {
+    auth: { persistSession: false },
+  });
 
   async function invokeMfa(body: Record<string, unknown>) {
     const response = await fetch(`${url}/functions/v1/admin-mfa`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        apikey: anonKey, 'Content-Type': 'application/json',
+        apikey: anonKey,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
     });
@@ -4028,11 +4235,14 @@ describe('admin-mfa edge flow', () => {
 
   beforeAll(async () => {
     const created = await service.auth.admin.createUser({
-      email, password, email_confirm: true,
+      email,
+      password,
+      email_confirm: true,
     });
     userId = created.data.user!.id;
     await service.rpc('svc_admin_bootstrap_identity', {
-      p_user_id: userId, p_runbook_operation_id: crypto.randomUUID(),
+      p_user_id: userId,
+      p_runbook_operation_id: crypto.randomUUID(),
     });
     const signIn = await client.auth.signInWithPassword({ email, password });
     accessToken = signIn.data.session!.access_token;
@@ -4044,11 +4254,20 @@ describe('admin-mfa edge flow', () => {
     factorId = begin.json.factorId;
     secret = begin.json.totpSecret;
 
-    const code = () => new OTPAuth.TOTP({ digits: 6, period: 30, secret }).generate();
-    const confirm = await invokeMfa({ action: 'confirm-enrollment', factorId, code: code() });
+    const code = () =>
+      new OTPAuth.TOTP({ digits: 6, period: 30, secret }).generate();
+    const confirm = await invokeMfa({
+      action: 'confirm-enrollment',
+      factorId,
+      code: code(),
+    });
     expect(confirm.json.outcome).toBe('ok');
 
-    const challenge = await invokeMfa({ action: 'challenge', factorId, code: code() });
+    const challenge = await invokeMfa({
+      action: 'challenge',
+      factorId,
+      code: code(),
+    });
     expect(challenge.json.outcome).toBe('ok');
 
     const state = await client.rpc('get_admin_session_state');
@@ -4057,13 +4276,20 @@ describe('admin-mfa edge flow', () => {
 
   it('direct GoTrue verify alone never yields a privileged session', async () => {
     // 撤銷現有 session(service)後,只做 provider verify,不經 admin-mfa
-    await service.from('admin_sessions').update({
-      revoked_at: new Date().toISOString(), revoke_reason: 'test_reset',
-    }).eq('admin_user_id', userId).is('revoked_at', null);
+    await service
+      .from('admin_sessions')
+      .update({
+        revoked_at: new Date().toISOString(),
+        revoke_reason: 'test_reset',
+      })
+      .eq('admin_user_id', userId)
+      .is('revoked_at', null);
     const code = new OTPAuth.TOTP({ digits: 6, period: 30, secret }).generate();
     const challenge = await client.auth.mfa.challenge({ factorId });
     const verify = await client.auth.mfa.verify({
-      factorId, challengeId: challenge.data!.id, code,
+      factorId,
+      challengeId: challenge.data!.id,
+      code,
     });
     expect(verify.error).toBeNull();
     const state = await client.rpc('get_admin_session_state');
@@ -4074,7 +4300,11 @@ describe('admin-mfa edge flow', () => {
     for (let index = 0; index < 5; index += 1) {
       await invokeMfa({ action: 'challenge', factorId, code: '000000' });
     }
-    const locked = await invokeMfa({ action: 'challenge', factorId, code: '000000' });
+    const locked = await invokeMfa({
+      action: 'challenge',
+      factorId,
+      code: '000000',
+    });
     expect(locked.json.code).toBe('MFA_LOCKED');
   });
 });
@@ -4106,6 +4336,7 @@ git commit -m "feat(phase1): add admin-mfa edge orchestration with bound-factor 
 spec §4.5、§6.2、§8。**receipt 由 Edge 在 factor binding 確認後以 service path 簽發(TTL 60 秒由 DB CHECK 決定,Edge 無 TTL 參數);命令本體以 caller JWT 的 user-scoped client 呼叫 RPC。**
 
 **Files:**
+
 - Create: `supabase/functions/_shared/canonical.ts`(Edge 端 canonical hash;與 DB `admin_internal_canonical_hash` byte-identical)
 - Create: `supabase/functions/admin-command/index.ts`
 - Create: `supabase/functions/admin-reconcile/index.ts`
@@ -4113,6 +4344,7 @@ spec §4.5、§6.2、§8。**receipt 由 Edge 在 factor binding 確認後以 se
 - Test: `tests/integration/admin-command-saga.integration.test.ts`
 
 **Interfaces:**
+
 - Consumes:Task 5 `svc_admin_issue_command_receipt`、`svc_admin_isolate_factor_incident`、reset step2/3 functions;Task 7 命令 RPCs。
 - Produces:POST `admin-command`,body `{"command":<name>,"idempotencyKey":string,"args":object}`;POST `admin-reconcile`(header `x-reconcile-key`)。前端 Task 11–14 只經 `admin-command` 執行特權命令。
 
@@ -4129,10 +4361,12 @@ export function canonicalCommandJson(
 ): string {
   const keys = Object.keys(fields).sort();
   return `{${keys
-    .map((key) =>
-      `${JSON.stringify(key)}:${
-        fields[key] === null ? 'null' : JSON.stringify(fields[key])
-      }`)
+    .map(
+      (key) =>
+        `${JSON.stringify(key)}:${
+          fields[key] === null ? 'null' : JSON.stringify(fields[key])
+        }`,
+    )
     .join(',')}}`;
 }
 
@@ -4163,17 +4397,54 @@ const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 // 完整命令政策表(spec §8.1)。args 鍵名即 RPC 參數去 p_ 前綴;
 // hashFields 與 Task 7 各 RPC 的 canonical hash 欄位集合完全一致
 // (reason/purpose 也綁進 hash;Codex 修訂 8)。
-const COMMAND_POLICIES: Record<string, {
-  rpc: string; freshTotp: boolean; hashFields: string[];
-}> = {
-  issue_admin_invitation: { rpc: 'issue_admin_invitation', freshTotp: true, hashFields: ['invited_email', 'reason'] },
-  revoke_admin_invitation: { rpc: 'revoke_admin_invitation', freshTotp: true, hashFields: ['invitation_id', 'reason'] },
-  deactivate_admin: { rpc: 'deactivate_admin', freshTotp: true, hashFields: ['target_principal_id', 'reason'] },
-  reactivate_admin: { rpc: 'reactivate_admin', freshTotp: true, hashFields: ['target_principal_id', 'reason'] },
-  reset_admin_mfa: { rpc: 'reset_admin_mfa', freshTotp: true, hashFields: ['target_principal_id', 'reason'] },
-  revoke_admin_session: { rpc: 'revoke_admin_session', freshTotp: true, hashFields: ['session_id', 'reason'] },
-  admin_reveal_field: { rpc: 'admin_reveal_field', freshTotp: true, hashFields: ['column', 'domain', 'purpose', 'resource', 'row_id'] },
-  reconcile_admin_security_operation: { rpc: 'reconcile_admin_security_operation', freshTotp: true, hashFields: ['operation_id', 'reason'] },
+const COMMAND_POLICIES: Record<
+  string,
+  {
+    rpc: string;
+    freshTotp: boolean;
+    hashFields: string[];
+  }
+> = {
+  issue_admin_invitation: {
+    rpc: 'issue_admin_invitation',
+    freshTotp: true,
+    hashFields: ['invited_email', 'reason'],
+  },
+  revoke_admin_invitation: {
+    rpc: 'revoke_admin_invitation',
+    freshTotp: true,
+    hashFields: ['invitation_id', 'reason'],
+  },
+  deactivate_admin: {
+    rpc: 'deactivate_admin',
+    freshTotp: true,
+    hashFields: ['target_principal_id', 'reason'],
+  },
+  reactivate_admin: {
+    rpc: 'reactivate_admin',
+    freshTotp: true,
+    hashFields: ['target_principal_id', 'reason'],
+  },
+  reset_admin_mfa: {
+    rpc: 'reset_admin_mfa',
+    freshTotp: true,
+    hashFields: ['target_principal_id', 'reason'],
+  },
+  revoke_admin_session: {
+    rpc: 'revoke_admin_session',
+    freshTotp: true,
+    hashFields: ['session_id', 'reason'],
+  },
+  admin_reveal_field: {
+    rpc: 'admin_reveal_field',
+    freshTotp: true,
+    hashFields: ['column', 'domain', 'purpose', 'resource', 'row_id'],
+  },
+  reconcile_admin_security_operation: {
+    rpc: 'reconcile_admin_security_operation',
+    freshTotp: true,
+    hashFields: ['operation_id', 'reason'],
+  },
 };
 
 // mint/RPC 已入帳的 typed denial 用 denied() 原樣回傳,不重複記錄;
@@ -4182,8 +4453,10 @@ const denied = (code: string, status = 403) =>
   jsonResponse(status, { outcome: 'denied', code });
 
 Deno.serve(async (request) => {
-  if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  if (request.method !== 'POST') return jsonResponse(405, { error: 'METHOD_NOT_ALLOWED' });
+  if (request.method === 'OPTIONS')
+    return new Response('ok', { headers: corsHeaders });
+  if (request.method !== 'POST')
+    return jsonResponse(405, { error: 'METHOD_NOT_ALLOWED' });
 
   const authorization = request.headers.get('Authorization') ?? '';
   const jwt = authorization.replace(/^Bearer\s+/i, '');
@@ -4191,40 +4464,62 @@ Deno.serve(async (request) => {
     auth: { persistSession: false },
     global: { headers: { Authorization: authorization } },
   });
-  const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+  const service = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false },
+  });
   const recordAndDeny = makeRecordAndDeny(
-    service, 'edge/admin-command', jsonResponse);
+    service,
+    'edge/admin-command',
+    jsonResponse,
+  );
 
   const { data: userData, error: userError } = await user.auth.getUser(jwt);
   if (userError || !userData.user) {
-    return recordAndDeny('admin_command', null,
-      'STALE_PRIVILEGED_SESSION', 401);
+    return recordAndDeny(
+      'admin_command',
+      null,
+      'STALE_PRIVILEGED_SESSION',
+      401,
+    );
   }
   const userId = userData.user.id;
   const [, payloadPart] = jwt.split('.');
-  const claims = JSON.parse(atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/')));
+  const claims = JSON.parse(
+    atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/')),
+  );
   const authSessionId = String(claims.session_id ?? '');
 
-  const body = await request.json().catch(() => null) as
-    | { command?: string; idempotencyKey?: string; args?: Record<string, unknown> }
-    | null;
+  const body = (await request.json().catch(() => null)) as {
+    command?: string;
+    idempotencyKey?: string;
+    args?: Record<string, unknown>;
+  } | null;
   const policy = body?.command ? COMMAND_POLICIES[body.command] : undefined;
-  if (!policy || !body?.idempotencyKey) return jsonResponse(400, { error: 'INVALID_JSON' });
+  if (!policy || !body?.idempotencyKey)
+    return jsonResponse(400, { error: 'INVALID_JSON' });
   const args = body.args ?? {};
 
   // server-only factor binding 確認(spec §6.2 步驟 2);不符即獨立隔離操作。
   // 隔離只由這個技術檢查觸發,絕不解析 reason/purpose 文字(硬性修正 #2)。
-  const identity = await service.from('admin_security_identities')
-    .select('bound_factor_id').eq('admin_user_id', userId).maybeSingle();
+  const identity = await service
+    .from('admin_security_identities')
+    .select('bound_factor_id')
+    .eq('admin_user_id', userId)
+    .maybeSingle();
   const factors = await service.auth.admin.mfa.listFactors({ userId });
-  const verified = (factors.data?.factors ?? []).filter((f) => f.status === 'verified');
-  if (!identity.data?.bound_factor_id || verified.length !== 1
-      || verified[0].id !== identity.data.bound_factor_id) {
+  const verified = (factors.data?.factors ?? []).filter(
+    (f) => f.status === 'verified',
+  );
+  if (
+    !identity.data?.bound_factor_id ||
+    verified.length !== 1 ||
+    verified[0].id !== identity.data.bound_factor_id
+  ) {
     await service.rpc('svc_admin_isolate_factor_incident', {
-      p_admin_user_id: userId, p_correlation_id: crypto.randomUUID(),
+      p_admin_user_id: userId,
+      p_correlation_id: crypto.randomUUID(),
     });
-    return recordAndDeny(body.command, userId,
-      'FACTOR_BINDING_MISMATCH');
+    return recordAndDeny(body.command, userId, 'FACTOR_BINDING_MISMATCH');
   }
 
   // Activity 續期(修訂三-2):不做任何 pre-touch。續期只發生在
@@ -4236,7 +4531,10 @@ Deno.serve(async (request) => {
   const fields: Record<string, string | null> = {};
   for (const field of policy.hashFields) {
     const raw = args[field];
-    if (raw === null || raw === undefined) { fields[field] = null; continue; }
+    if (raw === null || raw === undefined) {
+      fields[field] = null;
+      continue;
+    }
     let value = String(raw);
     if (field === 'reason' || field === 'purpose') value = value.trim();
     if (field === 'invited_email') value = value.trim().toLowerCase();
@@ -4245,18 +4543,22 @@ Deno.serve(async (request) => {
   const hashHex = await canonicalCommandHashHex(fields);
 
   const receipt = await service.rpc('svc_admin_issue_command_receipt', {
-    p_actor_user_id: userId, p_auth_session_id: authSessionId,
-    p_command_name: body.command, p_idempotency_key: body.idempotencyKey,
+    p_actor_user_id: userId,
+    p_auth_session_id: authSessionId,
+    p_command_name: body.command,
+    p_idempotency_key: body.idempotencyKey,
     p_request_hash: `\\x${hashHex}`,
     p_verified_factor_id: identity.data.bound_factor_id,
     p_requires_fresh_totp: policy.freshTotp,
   });
   if (receipt.error) {
-    return recordAndDeny(body.command, userId,
-      'AUTHORIZATION_RECEIPT_INVALID');
+    return recordAndDeny(body.command, userId, 'AUTHORIZATION_RECEIPT_INVALID');
   }
   if (receipt.data.outcome === 'replayed') {
-    return jsonResponse(200, { outcome: 'replayed', result: receipt.data.result });
+    return jsonResponse(200, {
+      outcome: 'replayed',
+      result: receipt.data.result,
+    });
   }
   // mint 的 typed denial 已由 svc_admin_issue_command_receipt 入帳,原樣回傳
   if (receipt.data.outcome !== 'issued') return denied(receipt.data.code);
@@ -4269,8 +4571,12 @@ Deno.serve(async (request) => {
   for (const [key, value] of Object.entries(args)) rpcArgs[`p_${key}`] = value;
   const result = await user.rpc(policy.rpc, rpcArgs);
   if (result.error) {
-    return recordAndDeny(body.command, userId,
-      'AUTHORIZATION_RECEIPT_INVALID', 500);
+    return recordAndDeny(
+      body.command,
+      userId,
+      'AUTHORIZATION_RECEIPT_INVALID',
+      500,
+    );
   }
 
   // reset saga step 2/3(spec §4.5):step1 成功後由同請求嘗試完成;
@@ -4279,14 +4585,23 @@ Deno.serve(async (request) => {
     const operationId = result.data.operation_id as string;
     const targetUserId = result.data.target_user_id as string;
     try {
-      const targetFactors = await service.auth.admin.mfa.listFactors({ userId: targetUserId });
+      const targetFactors = await service.auth.admin.mfa.listFactors({
+        userId: targetUserId,
+      });
       for (const factor of targetFactors.data?.factors ?? []) {
-        await service.auth.admin.mfa.deleteFactor({ userId: targetUserId, id: factor.id });
+        await service.auth.admin.mfa.deleteFactor({
+          userId: targetUserId,
+          id: factor.id,
+        });
       }
       // Auth session 終止:本版 GoTrue 無 per-user admin sign-out API,
       // 依 spec §4.5 已知限制(owner 裁定接受)不呼叫;PG gate 已撤權。
-      await service.rpc('svc_admin_complete_reset_step2', { p_operation_id: operationId });
-      await service.rpc('svc_admin_complete_reset_step3', { p_operation_id: operationId });
+      await service.rpc('svc_admin_complete_reset_step2', {
+        p_operation_id: operationId,
+      });
+      await service.rpc('svc_admin_complete_reset_step3', {
+        p_operation_id: operationId,
+      });
     } catch {
       // 維持 recovery_pending;reconciliation 依 operation ID 重入
     }
@@ -4309,12 +4624,19 @@ const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const reconcileKey = Deno.env.get('ADMIN_RECONCILE_KEY') ?? '';
 
 Deno.serve(async (request) => {
-  if (request.method !== 'POST') return jsonResponse(405, { error: 'METHOD_NOT_ALLOWED' });
-  if (reconcileKey === '' || request.headers.get('x-reconcile-key') !== reconcileKey) {
+  if (request.method !== 'POST')
+    return jsonResponse(405, { error: 'METHOD_NOT_ALLOWED' });
+  if (
+    reconcileKey === '' ||
+    request.headers.get('x-reconcile-key') !== reconcileKey
+  ) {
     return jsonResponse(401, { error: 'UNAUTHORIZED' });
   }
-  const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
-  const due = await service.from('admin_security_operations')
+  const service = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false },
+  });
+  const due = await service
+    .from('admin_security_operations')
     .select('id, operation_type, state, target_principal_id, attempt_count')
     .in('state', ['pending', 'step1_complete', 'step2_complete'])
     .or('next_retry_at.is.null,next_retry_at.lte.now()')
@@ -4324,23 +4646,35 @@ Deno.serve(async (request) => {
   for (const operation of due.data ?? []) {
     if (operation.attempt_count >= 10) {
       // 卡住門檻:標 stuck + incident audit;不得放寬權限(spec §8.3)
-      await service.rpc('svc_admin_mark_operation_stuck', { p_operation_id: operation.id });
+      await service.rpc('svc_admin_mark_operation_stuck', {
+        p_operation_id: operation.id,
+      });
       results.push({ id: operation.id, state: 'stuck' });
       continue;
     }
     if (operation.operation_type === 'reset_admin_mfa') {
-      const principal = await service.from('admin_audit_principals')
-        .select('user_id').eq('id', operation.target_principal_id).single();
+      const principal = await service
+        .from('admin_audit_principals')
+        .select('user_id')
+        .eq('id', operation.target_principal_id)
+        .single();
       if (operation.state === 'step1_complete' && principal.data?.user_id) {
         const factors = await service.auth.admin.mfa.listFactors({
-          userId: principal.data.user_id });
+          userId: principal.data.user_id,
+        });
         for (const factor of factors.data?.factors ?? []) {
           await service.auth.admin.mfa.deleteFactor({
-            userId: principal.data.user_id, id: factor.id });
+            userId: principal.data.user_id,
+            id: factor.id,
+          });
         }
-        await service.rpc('svc_admin_complete_reset_step2', { p_operation_id: operation.id });
+        await service.rpc('svc_admin_complete_reset_step2', {
+          p_operation_id: operation.id,
+        });
       }
-      await service.rpc('svc_admin_complete_reset_step3', { p_operation_id: operation.id });
+      await service.rpc('svc_admin_complete_reset_step3', {
+        p_operation_id: operation.id,
+      });
     }
     results.push({ id: operation.id, state: 'advanced' });
   }
@@ -4367,13 +4701,21 @@ const url = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 
 const VECTORS: Array<Record<string, string | null>> = [
-  { reason: '目標帳號已離職需要停用',
-    target_principal_id: '11111111-1111-1111-1111-111111111111' },
-  { invited_email: 'admin.new@colorplay.test',
-    reason: '含 Unicode ✓ 與「引號」的理由字串' },
-  { column: 'full_name', domain: 'users', purpose: '客訴單 #123 需要核對姓名',
+  {
+    reason: '目標帳號已離職需要停用',
+    target_principal_id: '11111111-1111-1111-1111-111111111111',
+  },
+  {
+    invited_email: 'admin.new@colorplay.test',
+    reason: '含 Unicode ✓ 與「引號」的理由字串',
+  },
+  {
+    column: 'full_name',
+    domain: 'users',
+    purpose: '客訴單 #123 需要核對姓名',
     resource: 'profiles',
-    row_id: '22222222-2222-2222-2222-222222222222' },
+    row_id: '22222222-2222-2222-2222-222222222222',
+  },
   { operation_id: '33333333-3333-3333-3333-333333333333', reason: null },
 ];
 
@@ -4405,7 +4747,9 @@ import { beforeAll, describe, expect, it } from 'vitest';
 const url = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
 const anonKey = process.env.SUPABASE_ANON_KEY ?? '';
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
-const service = createClient(url, serviceKey, { auth: { persistSession: false } });
+const service = createClient(url, serviceKey, {
+  auth: { persistSession: false },
+});
 
 type AdminActor = {
   userId: string;
@@ -4416,8 +4760,9 @@ type AdminActor = {
 
 function jwtClaim(token: string, claim: string): string {
   const [, payload] = token.split('.');
-  return String(JSON.parse(
-    Buffer.from(payload, 'base64url').toString('utf8'))[claim] ?? '');
+  return String(
+    JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'))[claim] ?? '',
+  );
 }
 
 async function invokeEdge(fn: string, token: string, body: unknown) {
@@ -4438,13 +4783,18 @@ async function provisionAdmin(tag: string): Promise<AdminActor> {
   const email = `admin.saga.${tag}.${Date.now()}@colorplay.test`;
   const password = 'LocalOnly-AdminSaga1!';
   const created = await service.auth.admin.createUser({
-    email, password, email_confirm: true,
+    email,
+    password,
+    email_confirm: true,
   });
   const userId = created.data.user!.id;
   await service.rpc('svc_admin_bootstrap_identity', {
-    p_user_id: userId, p_runbook_operation_id: crypto.randomUUID(),
+    p_user_id: userId,
+    p_runbook_operation_id: crypto.randomUUID(),
   });
-  const client = createClient(url, anonKey, { auth: { persistSession: false } });
+  const client = createClient(url, anonKey, {
+    auth: { persistSession: false },
+  });
   const signIn = await client.auth.signInWithPassword({ email, password });
   const accessToken = signIn.data.session!.access_token;
   const begin = await invokeEdge('admin-mfa', accessToken, {
@@ -4454,13 +4804,20 @@ async function provisionAdmin(tag: string): Promise<AdminActor> {
   const code = () =>
     new OTPAuth.TOTP({ digits: 6, period: 30, secret: totpSecret }).generate();
   await invokeEdge('admin-mfa', accessToken, {
-    action: 'confirm-enrollment', factorId, code: code(),
+    action: 'confirm-enrollment',
+    factorId,
+    code: code(),
   });
   await invokeEdge('admin-mfa', accessToken, {
-    action: 'challenge', factorId, code: code(),
+    action: 'challenge',
+    factorId,
+    code: code(),
   });
-  const identity = await service.from('admin_security_identities')
-    .select('audit_principal_id').eq('admin_user_id', userId).single();
+  const identity = await service
+    .from('admin_security_identities')
+    .select('audit_principal_id')
+    .eq('admin_user_id', userId)
+    .single();
   return {
     userId,
     principalId: identity.data!.audit_principal_id,
@@ -4469,10 +4826,16 @@ async function provisionAdmin(tag: string): Promise<AdminActor> {
   };
 }
 
-function runCommand(actor: AdminActor, commandName: string,
-  idempotencyKey: string, args: Record<string, unknown>) {
+function runCommand(
+  actor: AdminActor,
+  commandName: string,
+  idempotencyKey: string,
+  args: Record<string, unknown>,
+) {
   return invokeEdge('admin-command', actor.accessToken, {
-    command: commandName, idempotencyKey, args,
+    command: commandName,
+    idempotencyKey,
+    args,
   });
 }
 
@@ -4494,11 +4857,20 @@ describe('admin-command saga, replay and concurrency', () => {
     const first = await runCommand(adminA, 'issue_admin_invitation', key, args);
     expect(first.json.outcome).toBe('ok');
     expect(typeof first.json.invitation_token).toBe('string');
-    const replay = await runCommand(adminA, 'issue_admin_invitation', key, args);
+    const replay = await runCommand(
+      adminA,
+      'issue_admin_invitation',
+      key,
+      args,
+    );
     expect(replay.json.outcome).toBe('replayed');
-    expect(JSON.stringify(replay.json)).not.toContain(first.json.invitation_token);
-    const rows = await service.from('admin_invitations')
-      .select('id').eq('invited_email', email);
+    expect(JSON.stringify(replay.json)).not.toContain(
+      first.json.invitation_token,
+    );
+    const rows = await service
+      .from('admin_invitations')
+      .select('id')
+      .eq('invited_email', email);
     expect(rows.data).toHaveLength(1);
   }, 30_000);
 
@@ -4514,9 +4886,13 @@ describe('admin-command saga, replay and concurrency', () => {
       p_command_name: 'revoke_admin_session',
       p_idempotency_key: crypto.randomUUID(),
       p_request_hash: `\\x${hash.data}`,
-      p_verified_factor_id: (await service
-        .from('admin_security_identities').select('bound_factor_id')
-        .eq('admin_user_id', adminA.userId).single()).data!.bound_factor_id,
+      p_verified_factor_id: (
+        await service
+          .from('admin_security_identities')
+          .select('bound_factor_id')
+          .eq('admin_user_id', adminA.userId)
+          .single()
+      ).data!.bound_factor_id,
       p_requires_fresh_totp: true,
     });
     expect(receipt.data.outcome).toBe('issued');
@@ -4531,33 +4907,47 @@ describe('admin-command saga, replay and concurrency', () => {
       p_session_id: '00000000-0000-0000-0000-000000000001',
       p_reason: reason,
     });
-    expect((result.data as { code: string }).code)
-      .toBe('AUTHORIZATION_RECEIPT_INVALID');
+    expect((result.data as { code: string }).code).toBe(
+      'AUTHORIZATION_RECEIPT_INVALID',
+    );
   }, 90_000);
 
   it('reset_admin_mfa completes the cross-system saga end to end', async () => {
-    const result = await runCommand(adminA, 'reset_admin_mfa',
-      crypto.randomUUID(), {
+    const result = await runCommand(
+      adminA,
+      'reset_admin_mfa',
+      crypto.randomUUID(),
+      {
         target_principal_id: adminC.principalId,
         reason: '例行安全演練重置目標管理員因子',
-      });
+      },
+    );
     expect(result.json.outcome).toBe('ok');
-    const identity = await service.from('admin_security_identities')
-      .select('state, bound_factor_id').eq('admin_user_id', adminC.userId)
+    const identity = await service
+      .from('admin_security_identities')
+      .select('state, bound_factor_id')
+      .eq('admin_user_id', adminC.userId)
       .single();
     expect(identity.data).toEqual({
-      state: 'active_pending_mfa', bound_factor_id: null,
+      state: 'active_pending_mfa',
+      bound_factor_id: null,
     });
     const factors = await service.auth.admin.mfa.listFactors({
       userId: adminC.userId,
     });
     expect(factors.data!.factors).toHaveLength(0);
-    const sessions = await service.from('admin_sessions').select('id')
-      .eq('admin_user_id', adminC.userId).is('revoked_at', null);
+    const sessions = await service
+      .from('admin_sessions')
+      .select('id')
+      .eq('admin_user_id', adminC.userId)
+      .is('revoked_at', null);
     expect(sessions.data).toHaveLength(0);
-    const operation = await service.from('admin_security_operations')
-      .select('id, state').eq('operation_type', 'reset_admin_mfa')
-      .eq('target_principal_id', adminC.principalId).single();
+    const operation = await service
+      .from('admin_security_operations')
+      .select('id, state')
+      .eq('operation_type', 'reset_admin_mfa')
+      .eq('target_principal_id', adminC.principalId)
+      .single();
     expect(operation.data!.state).toBe('completed');
 
     // saga step 重入安全:completed 後重呼 step2/step3 為 no-op,不改狀態
@@ -4567,8 +4957,11 @@ describe('admin-command saga, replay and concurrency', () => {
     await service.rpc('svc_admin_complete_reset_step3', {
       p_operation_id: operation.data!.id,
     });
-    const recheck = await service.from('admin_security_operations')
-      .select('state').eq('id', operation.data!.id).single();
+    const recheck = await service
+      .from('admin_security_operations')
+      .select('state')
+      .eq('id', operation.data!.id)
+      .single();
     expect(recheck.data!.state).toBe('completed');
   }, 60_000);
 
@@ -4585,11 +4978,18 @@ describe('admin-command saga, replay and concurrency', () => {
     ]);
     const outcomes = [first.json, second.json];
     expect(outcomes.filter((o) => o.outcome === 'ok')).toHaveLength(1);
-    expect(outcomes.filter((o) => o.code === 'LAST_ADMIN_PROTECTED'
-      || o.code === 'STALE_PRIVILEGED_SESSION'
-      || o.code === 'AUTHORIZATION_RECEIPT_INVALID')).toHaveLength(1);
-    const active = await service.from('admin_security_identities')
-      .select('admin_user_id').eq('state', 'active');
+    expect(
+      outcomes.filter(
+        (o) =>
+          o.code === 'LAST_ADMIN_PROTECTED' ||
+          o.code === 'STALE_PRIVILEGED_SESSION' ||
+          o.code === 'AUTHORIZATION_RECEIPT_INVALID',
+      ),
+    ).toHaveLength(1);
+    const active = await service
+      .from('admin_security_identities')
+      .select('admin_user_id')
+      .eq('state', 'active');
     expect(active.data!.length).toBeGreaterThanOrEqual(1);
   }, 30_000);
 
@@ -4631,6 +5031,7 @@ git commit -m "feat(phase1): add admin-command receipt orchestration and reconci
 spec §3.1、§3.2、§3.3。Route guard 僅 UX;server RPC/Edge 是權威。**登入入口:admin 經教師端登入,auth-login 放行 `role='admin'`(免班級碼),登入後導向 `/admin`。**
 
 **Files:**
+
 - Create: `src/features/admin/api/admin-client.ts`
 - Create: `src/features/admin/hooks/use-admin-session-state.ts`
 - Create: `src/features/admin/components/require-admin-identity.tsx`(+ colocated `.test.tsx`)
@@ -4640,6 +5041,7 @@ spec §3.1、§3.2、§3.3。Route guard 僅 UX;server RPC/Edge 是權威。**�
 - Modify: `supabase/functions/auth-login/index.ts`(教師入口放行 admin)
 
 **Interfaces:**
+
 - Consumes:Task 6–9 的 RPC/Edge 名稱與回應形狀;`getBrowserSupabaseClient`(`src/lib/supabase/browser-client.ts`);`RequireAuth`/`RequireRole` 既有模式(`src/features/auth/components/`)。
 - Produces:
   - `invokeAdminMfa(body: AdminMfaRequest): Promise<AdminMfaResponse>`、`invokeAdminCommand(command: AdminCommandName, idempotencyKey: string, args: Record<string, unknown>): Promise<AdminCommandResponse>`、`adminRpc<T>(fn: string, args: object): Promise<T>`
@@ -4716,7 +5118,11 @@ export function RequirePrivilegedSession() {
   if (session.state === 'privileged') return <Outlet />;
   // stale/none:導向 challenge 並保留 return intent(spec §3.3)
   return (
-    <Navigate replace state={{ returnTo: location.pathname }} to="/admin/mfa/challenge" />
+    <Navigate
+      replace
+      state={{ returnTo: location.pathname }}
+      to="/admin/mfa/challenge"
+    />
   );
 }
 ```
@@ -4765,7 +5171,9 @@ if (
 }
 // 原 classroom 檢查區塊加上條件:admin 無班級,免班級碼(表單端 classCode 對
 // admin 為選填;teacher 驗證不變)
-if (portalValue === 'teacher' && profile.role === 'teacher') { /* 既有檢查 */ }
+if (portalValue === 'teacher' && profile.role === 'teacher') {
+  /* 既有檢查 */
+}
 ```
 
 同步把 login 表單 Zod 的 `classCode` 改為 optional(`accountSignInSchema`),teacher 分支仍由 server 強制;表單欄位說明文字改「班級代碼(管理員免填)」。
@@ -4793,11 +5201,13 @@ git commit -m "feat(phase1): add admin routing, guards and teacher-entry admin l
 spec §3.3、§4.4。兩頁都是 pre-privileged 例外 route;所有結果以 `aria-live` 播報。
 
 **Files:**
+
 - Create: `src/features/admin/pages/admin-mfa-enroll-page.tsx`(+ `.test.tsx`)
 - Create: `src/features/admin/pages/admin-mfa-challenge-page.tsx`(+ `.test.tsx`)
 - Create: `src/features/admin/components/admin-status-banner.tsx`(+ `.test.tsx`;`role="status" aria-live="polite"` 統一播報命令結果/timeout/denial/incident)
 
 **Interfaces:**
+
 - Consumes:`invokeAdminMfa`、`useAdminSessionState`、`AdminErrorCode` 文案。
 - Produces:enroll 完成 → navigate `/admin/mfa/challenge`;challenge 成功 → navigate `location.state.returnTo ?? '/admin'` 並 `refetch()` session state。
 
@@ -4811,13 +5221,17 @@ Enroll 頁核心結構(RpgWindow 容器、單一 primary action、6 碼輸入與
 
 ```tsx
 // src/features/admin/pages/admin-mfa-enroll-page.tsx(核心;imports 依現況補齊)
-const codeSchema = z.object({ code: z.string().regex(/^\d{6}$/u, '請輸入 6 位數驗證碼') });
+const codeSchema = z.object({
+  code: z.string().regex(/^\d{6}$/u, '請輸入 6 位數驗證碼'),
+});
 
 export function Component() {
   const navigate = useNavigate();
-  const [factor, setFactor] = useState<
-    { factorId: string; totpSecret: string; qrUri: string } | null
-  >(null);
+  const [factor, setFactor] = useState<{
+    factorId: string;
+    totpSecret: string;
+    qrUri: string;
+  } | null>(null);
   const [error, setError] = useState<AdminErrorCode | null>(null);
   const {
     formState: { errors, isSubmitting },
@@ -4867,7 +5281,9 @@ export function Component() {
       <h1 className="pixel-heading">管理員驗證器綁定</h1>
       {factor ? (
         <form onSubmit={onSubmit}>
-          <p>請以驗證器 App 掃描 QR 或手動輸入密鑰,再輸入產生的 6 位數驗證碼。</p>
+          <p>
+            請以驗證器 App 掃描 QR 或手動輸入密鑰,再輸入產生的 6 位數驗證碼。
+          </p>
           <p data-testid="totp-secret">{factor.totpSecret}</p>
           <label>
             驗證碼
@@ -4915,6 +5331,7 @@ git commit -m "feat(phase1): add admin TOTP enrollment and challenge pages"
 spec §3.1、§3.4、§8。五群側欄;1280×720 常駐、812×375 與 375×812 收 MENU drawer;所有命令走 `invokeAdminCommand` 且 reason ≥10 字 Zod(UX)。
 
 **Files:**
+
 - Create: `src/features/admin/components/admin-shell.tsx`(+ `.test.tsx`;側欄+drawer+`aria-current`)
 - Create: `src/features/admin/components/admin-command-dialog.tsx`(+ `.test.tsx`;共用命令確認框:reason 欄、44px target、focus trap/restore、成功/denial 經 AdminStatusBanner)
 - Create: `src/features/admin/pages/admin-overview-page.tsx`(+ `.test.tsx`;安全總覽:sessions、pending operations、denial windows、incident 旗標,資料源 `admin_health_summary` + `admin_list_sessions`)
@@ -4923,6 +5340,7 @@ spec §3.1、§3.4、§8。五群側欄;1280×720 常駐、812×375 與 375×812
 - Create: `src/features/admin/pages/admin-access-sessions-page.tsx`(+ `.test.tsx`;`admin_list_sessions`;命令:`revoke_admin_session`)
 
 **Interfaces:**
+
 - Consumes:Task 10 client/hook、Task 11 banner。
 - Produces:`AdminCommandDialog` props `{ command: AdminCommandName; args: Record<string, unknown>; requiresReason: boolean; onSettled(result): void }`;`idempotencyKey` 由 dialog 開啟時 `crypto.randomUUID()` 生成、重試沿用(idempotent replay)。
 
@@ -4956,6 +5374,7 @@ git commit -m "feat(phase1): add admin shell, overview and access command pages"
 spec §3.2、§7、§10、§11。瀏覽器完全由 catalog 驅動:欄位、filter、sort 選項來自 `admin_list_resource` 回應與 catalog JSON 匯入的型別(build-time import `supabase/catalog/admin-sensitivity-catalog.json`,僅用於 UI 選項渲染;server 仍自行驗證)。
 
 **Files:**
+
 - Create: `src/features/admin/pages/admin-data-browser-page.tsx`(+ `.test.tsx`)
 - Create: `src/features/admin/components/admin-data-table.tsx`(+ `.test.tsx`;keyset cursor「載入更多」、寬表自身容器 `overflow-x: auto`)
 - Create: `src/features/admin/components/admin-reveal-dialog.tsx`(+ `.test.tsx`)
@@ -4963,6 +5382,7 @@ spec §3.2、§7、§10、§11。瀏覽器完全由 catalog 驅動:欄位、filt
 - Create: `src/features/admin/pages/admin-health-page.tsx`(+ `.test.tsx`;operations、denial 聚合、incident 清單與合法 follow-up 操作連結)
 
 **Interfaces:**
+
 - Consumes:`adminRpc('admin_list_resource'|'admin_get_resource_detail'|'admin_query_audit'|'admin_health_summary')`、`invokeAdminCommand('admin_reveal_field', …)`。
 - Produces:reveal 流程 —— 遮罩儲存格旁「揭露」按鈕 → `AdminRevealDialog`(purpose ≥10 字)→ 成功後明文只放 component state 並於 dialog 關閉/route 離開時清除;絕不寫入 query cache、storage 或 log(spec §7)。
 
@@ -5058,6 +5478,7 @@ Task 13 的前端在 review 波中暴露三個**已核准規格與實作之間�
   並行 client** 驗證,不得以單連線 pgTAP 或依序呼叫充數。
 
 **Files:**
+
 - Create(forward migrations,順序即依賴序;**不修改**已提交的
   `20260808000700_admin_read_rpcs.sql` 與
   `20260808000800_admin_lifecycle_commands.sql`):
@@ -5094,6 +5515,7 @@ hosted smoke。
 spec §3.4、§12、§14.4。fixture Admin 與 TOTP 只進 local seed(spec §12);E2E 以 UI enrollment 取得 secret,`otpauth` 計碼。單一 privileged session ⇒ admin E2E 以 `workers: 1` 串行。
 
 **Files:**
+
 - Create: `tests/e2e/helpers/admin.ts`
 - Create: `tests/e2e/admin-security.spec.ts`
 - Create: `tests/e2e/admin-viewports.spec.ts`
@@ -5101,6 +5523,7 @@ spec §3.4、§12、§14.4。fixture Admin 與 TOTP 只進 local seed(spec §12)
 - Modify: `tests/fixtures/users.ts`(新增 `adminPrimary`、`adminSecondary`)
 
 **Interfaces:**
+
 - Consumes:`tests/e2e/helpers/auth.ts` 的教師端登入選擇器慣例;Task 10–13 頁面。
 - Produces:`signInAdmin(page, credentials)`(教師端 tab、免班級碼)、`enrollAdminTotp(page): Promise<string>`(回傳畫面上的 totpSecret)、`challengeAdmin(page, secret)`。
 
@@ -5194,12 +5617,14 @@ git commit -m "test(phase1): add admin security E2E journeys and viewport gates"
 spec §4.2、§8.1(runbook operation)、§12、§14.4。**本 task 只產文件與 local 驗證;不執行任何 hosted 動作。**
 
 **Files:**
+
 - Create: `docs/runbooks/phase1-admin-oob-recovery.md`
 - Create: `docs/deployment/phase1-production-smoke-manifest.md`
 - Test: `tests/contracts/phase1-admin-gate.test.ts`
 - Modify: `docs/roadmap-colorplay-next.md`(Phase 1 狀態 → `In progress`/實作完成註記與 worktree 保護條目)
 
 **Interfaces:**
+
 - Consumes:Task 5 `svc_admin_bootstrap_identity`、`svc_admin_isolate_factor_incident_oob`、`svc_admin_complete_oob_recovery`、`svc_admin_tombstone_principal`。
 - Produces:owner 可執行的 OOB 程序與 smoke 允許寫入清單;phase gate contract test。
 
@@ -5224,13 +5649,13 @@ Runbook 明文規則:無任何步驟繞過 enrollment/challenge;通知不含 byp
 
 `docs/deployment/phase1-production-smoke-manifest.md`:smoke 於登入 fixture-free Production 的定義 —— 「唯讀」指不寫 student/teacher/content/learning/assessment/Live/reward 領域資料(spec §12);明列**允許的控制面寫入**(超出即 gate failure):
 
-| 允許寫入 | 來源 |
-|---|---|
-| `admin_sessions` insert/supersede、`last_activity_at`、`last_totp_verified_at` | challenge 與授權觸碰 |
-| `admin_audit_events` insert | 全部操作稽核 |
-| `admin_denial_counters` upsert | 預期 denial 探測 |
-| `admin_security_operations` insert/update | 事故/reset 演練不在 Production smoke 內;僅容忍 reconcile 掃描的 no-op 更新 |
-| `admin_command_authorizations`/`admin_command_executions` insert/consume | smoke 若含命令探測(僅 `revoke_admin_session` 自身 session) |
+| 允許寫入                                                                       | 來源                                                                       |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| `admin_sessions` insert/supersede、`last_activity_at`、`last_totp_verified_at` | challenge 與授權觸碰                                                       |
+| `admin_audit_events` insert                                                    | 全部操作稽核                                                               |
+| `admin_denial_counters` upsert                                                 | 預期 denial 探測                                                           |
+| `admin_security_operations` insert/update                                      | 事故/reset 演練不在 Production smoke 內;僅容忍 reconcile 掃描的 no-op 更新 |
+| `admin_command_authorizations`/`admin_command_executions` insert/consume       | smoke 若含命令探測(僅 `revoke_admin_session` 自身 session)                 |
 
 禁止事項清單:不建立邀請、不 reveal 真實個資、不停用/重置任何身分、不觸碰 domain tables。
 
@@ -5241,13 +5666,22 @@ Runbook 明文規則:無任何步驟繞過 enrollment/challenge;通知不含 byp
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
-const DOMAIN_TABLES = ['profiles', 'quiz_sessions', 'live_sessions', 'wallets',
-  'classrooms', 'questions', 'mistake_items'];
+const DOMAIN_TABLES = [
+  'profiles',
+  'quiz_sessions',
+  'live_sessions',
+  'wallets',
+  'classrooms',
+  'questions',
+  'mistake_items',
+];
 
 describe('phase 1 admin release gate documents', () => {
   it('smoke manifest exists and never authorizes domain-table writes', async () => {
     const manifest = await readFile(
-      'docs/deployment/phase1-production-smoke-manifest.md', 'utf8');
+      'docs/deployment/phase1-production-smoke-manifest.md',
+      'utf8',
+    );
     expect(manifest).toContain('admin_sessions');
     expect(manifest).toContain('admin_audit_events');
     const allowedSection = manifest.split('允許的控制面寫入')[1] ?? '';
@@ -5257,7 +5691,9 @@ describe('phase 1 admin release gate documents', () => {
   });
   it('oob runbook covers bootstrap, incident recovery and tombstone', async () => {
     const runbook = await readFile(
-      'docs/runbooks/phase1-admin-oob-recovery.md', 'utf8');
+      'docs/runbooks/phase1-admin-oob-recovery.md',
+      'utf8',
+    );
     expect(runbook).toContain('svc_admin_bootstrap_identity');
     expect(runbook).toContain('svc_admin_isolate_factor_incident_oob');
     expect(runbook).toContain('svc_admin_complete_oob_recovery');
@@ -5303,23 +5739,23 @@ git commit -m "docs(phase1): add OOB runbook, smoke manifest and phase gate cont
 
 ### Spec 章節 → Task 對照(spec §1–§15 全覆蓋)
 
-| Spec 節 | 內容 | 承接 Task |
-|---|---|---|
-| §1 文件控制/核准 | 計畫前置與 Task 0 提交順序 | Task 0 |
-| §2 範圍/非目標/術語/依賴 | Global Constraints、全計畫邊界(無 export、無 domain mutation、無 hosted) | 全部;Task 15 gate 文件 |
-| §3 IA/路由/全域狀態/響應式 | 路由樹、guards、全域狀態、三視口/a11y | Task 10、11、12、13、14 |
-| §4 identity/邀請/enrollment/reset/OOB | 狀態機表與約束、邀請 RPC、enrollment saga、reset saga、bootstrap/OOB | Task 2、5、7、8、9、15 |
-| §5 session/MFA protocol/attempt control | sessions 表、timeouts、factor binding、service-only 寫入、5 次鎖 15 分 | Task 2、5、6、8 |
-| §6 trust boundary/receipt/RLS | default-deny、receipt 60s CHECK、mint/consume、grants | Task 2、3、5、7 |
-| §7 safe browser 契約 | `admin_list_resource`/detail/reveal、cursor、timeout、無 export | Task 6、7(reveal)、13 |
-| §8 named operations/idempotency/reconciliation | 命令政策表、idempotency 鍵、saga、reconcile、stuck incident | Task 3、5、7、9 |
-| §9 46+9 catalog | 機械生成、migration、CI 雙重強制 | Task 4 |
-| §10 immutable audit/privacy | append-only trigger、principal/tombstone、denial 分離、audit 查詢 | Task 3、5、6、13、15(tombstone runbook) |
-| §11 errors/incident/a11y | 穩定碼 union、typed denial、incident UI、aria-live | Task 6、7、10–13 |
-| §12 Local/Staging/Production 邊界 | local-only seed、Staging fixture 演練清單、smoke 控制面寫入 manifest | Task 14、15 |
-| §13 migration/rollout/rollback | migration 順序 000100→000800、types regen、不破壞既有表 | Task 2–7 |
-| §14 test matrix/observability/risks | pgTAP 047–052、integration(capability/mfa-flow/saga/concurrency)、contracts、E2E、三視口 | Task 1、2–9、13、14 |
-| §15 later-phase handoff | receipt/idempotency/audit 契約由 Task 5/7 介面固定;canonical route `/admin/data/:domain/:resource` | Task 6、10 |
+| Spec 節                                        | 內容                                                                                               | 承接 Task                               |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| §1 文件控制/核准                               | 計畫前置與 Task 0 提交順序                                                                         | Task 0                                  |
+| §2 範圍/非目標/術語/依賴                       | Global Constraints、全計畫邊界(無 export、無 domain mutation、無 hosted)                           | 全部;Task 15 gate 文件                  |
+| §3 IA/路由/全域狀態/響應式                     | 路由樹、guards、全域狀態、三視口/a11y                                                              | Task 10、11、12、13、14                 |
+| §4 identity/邀請/enrollment/reset/OOB          | 狀態機表與約束、邀請 RPC、enrollment saga、reset saga、bootstrap/OOB                               | Task 2、5、7、8、9、15                  |
+| §5 session/MFA protocol/attempt control        | sessions 表、timeouts、factor binding、service-only 寫入、5 次鎖 15 分                             | Task 2、5、6、8                         |
+| §6 trust boundary/receipt/RLS                  | default-deny、receipt 60s CHECK、mint/consume、grants                                              | Task 2、3、5、7                         |
+| §7 safe browser 契約                           | `admin_list_resource`/detail/reveal、cursor、timeout、無 export                                    | Task 6、7(reveal)、13                   |
+| §8 named operations/idempotency/reconciliation | 命令政策表、idempotency 鍵、saga、reconcile、stuck incident                                        | Task 3、5、7、9                         |
+| §9 46+9 catalog                                | 機械生成、migration、CI 雙重強制                                                                   | Task 4                                  |
+| §10 immutable audit/privacy                    | append-only trigger、principal/tombstone、denial 分離、audit 查詢                                  | Task 3、5、6、13、15(tombstone runbook) |
+| §11 errors/incident/a11y                       | 穩定碼 union、typed denial、incident UI、aria-live                                                 | Task 6、7、10–13                        |
+| §12 Local/Staging/Production 邊界              | local-only seed、Staging fixture 演練清單、smoke 控制面寫入 manifest                               | Task 14、15                             |
+| §13 migration/rollout/rollback                 | migration 順序 000100→000800、types regen、不破壞既有表                                            | Task 2–7                                |
+| §14 test matrix/observability/risks            | pgTAP 047–052、integration(capability/mfa-flow/saga/concurrency)、contracts、E2E、三視口           | Task 1、2–9、13、14                     |
+| §15 later-phase handoff                        | receipt/idempotency/audit 契約由 Task 5/7 介面固定;canonical route `/admin/data/:domain/:resource` | Task 6、10                              |
 
 ### 硬性修正檢核(含 2026-08-07 第二輪)
 

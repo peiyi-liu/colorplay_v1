@@ -2,9 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Database } from '../../../types/database';
-import {
-  createTeacherContentRepository,
-} from './teacher-content-repository';
+import { createTeacherContentRepository } from './teacher-content-repository';
 
 const rpcClient = (rpc: ReturnType<typeof vi.fn>) =>
   ({ rpc }) as unknown as SupabaseClient<Database>;
@@ -252,5 +250,4 @@ describe('teacher content repository', () => {
     const payload = (rpc.mock.calls[0]?.[1] as { p_payload: object }).p_payload;
     expect(payload).not.toHaveProperty('media');
   });
-
 });

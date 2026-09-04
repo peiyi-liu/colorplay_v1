@@ -76,9 +76,7 @@ describe('TeacherClassroomDetailPage', () => {
     expect((await screen.findAllByText('學生一')).length).toBeGreaterThan(0);
     expect(screen.getByText('學生人數 1')).toBeVisible();
     const row = screen.getByTestId('member-disclosure');
-    expect(
-      within(row).getByTestId('member-disclosure-chevron'),
-    ).toBeVisible();
+    expect(within(row).getByTestId('member-disclosure-chevron')).toBeVisible();
     expect(row.querySelector('summary')).toHaveAttribute(
       'aria-expanded',
       'false',

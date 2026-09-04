@@ -25,29 +25,29 @@ forbidden because it is an attempt-binding capability.
 
 ## 3. Machine-readable quarantine overlay
 
-| Resource | Domain | Surface | Column | Class |
-|---|---|---|---|---|
-| `course_progression_settings` | `learning` | `none` | `course_id` | `forbidden` |
-| `course_progression_settings` | `learning` | `none` | `mode` | `forbidden` |
-| `course_progression_settings` | `learning` | `none` | `rules_version` | `forbidden` |
-| `course_progression_settings` | `learning` | `none` | `updated_at` | `forbidden` |
-| `live_session_questions` | `live` | `browser` | `chapter_id` | `forbidden` |
-| `live_session_questions` | `live` | `browser` | `section_id` | `forbidden` |
-| `questions` | `content` | `browser` | `bank_kind` | `forbidden` |
-| `quiz_sessions` | `assessments` | `browser` | `abandoned_at` | `forbidden` |
-| `quiz_sessions` | `assessments` | `browser` | `classroom_id` | `forbidden` |
-| `quiz_templates` | `content` | `browser` | `section_id` | `forbidden` |
-| `student_chapter_unlocks` | `learning` | `none` | `chapter_id` | `forbidden` |
-| `student_chapter_unlocks` | `learning` | `none` | `rules_version` | `forbidden` |
-| `student_chapter_unlocks` | `learning` | `none` | `source_chapter_id` | `forbidden` |
-| `student_chapter_unlocks` | `learning` | `none` | `unlocked_at` | `forbidden` |
-| `student_chapter_unlocks` | `learning` | `none` | `user_id` | `forbidden` |
-| `student_registration_claims` | `users` | `none` | `created_at` | `forbidden` |
-| `student_registration_claims` | `users` | `none` | `lease_expires_at` | `forbidden` |
-| `student_registration_claims` | `users` | `none` | `lease_token` | `forbidden` |
-| `student_registration_claims` | `users` | `none` | `state` | `forbidden` |
-| `student_registration_claims` | `users` | `none` | `updated_at` | `forbidden` |
-| `student_registration_claims` | `users` | `none` | `user_id` | `forbidden` |
+| Resource                      | Domain        | Surface   | Column              | Class       |
+| ----------------------------- | ------------- | --------- | ------------------- | ----------- |
+| `course_progression_settings` | `learning`    | `none`    | `course_id`         | `forbidden` |
+| `course_progression_settings` | `learning`    | `none`    | `mode`              | `forbidden` |
+| `course_progression_settings` | `learning`    | `none`    | `rules_version`     | `forbidden` |
+| `course_progression_settings` | `learning`    | `none`    | `updated_at`        | `forbidden` |
+| `live_session_questions`      | `live`        | `browser` | `chapter_id`        | `forbidden` |
+| `live_session_questions`      | `live`        | `browser` | `section_id`        | `forbidden` |
+| `questions`                   | `content`     | `browser` | `bank_kind`         | `forbidden` |
+| `quiz_sessions`               | `assessments` | `browser` | `abandoned_at`      | `forbidden` |
+| `quiz_sessions`               | `assessments` | `browser` | `classroom_id`      | `forbidden` |
+| `quiz_templates`              | `content`     | `browser` | `section_id`        | `forbidden` |
+| `student_chapter_unlocks`     | `learning`    | `none`    | `chapter_id`        | `forbidden` |
+| `student_chapter_unlocks`     | `learning`    | `none`    | `rules_version`     | `forbidden` |
+| `student_chapter_unlocks`     | `learning`    | `none`    | `source_chapter_id` | `forbidden` |
+| `student_chapter_unlocks`     | `learning`    | `none`    | `unlocked_at`       | `forbidden` |
+| `student_chapter_unlocks`     | `learning`    | `none`    | `user_id`           | `forbidden` |
+| `student_registration_claims` | `users`       | `none`    | `created_at`        | `forbidden` |
+| `student_registration_claims` | `users`       | `none`    | `lease_expires_at`  | `forbidden` |
+| `student_registration_claims` | `users`       | `none`    | `lease_token`       | `forbidden` |
+| `student_registration_claims` | `users`       | `none`    | `state`             | `forbidden` |
+| `student_registration_claims` | `users`       | `none`    | `updated_at`        | `forbidden` |
+| `student_registration_claims` | `users`       | `none`    | `user_id`           | `forbidden` |
 
 ## 4. Acceptance contract
 

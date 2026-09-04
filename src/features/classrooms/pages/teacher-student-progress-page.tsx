@@ -186,38 +186,38 @@ export function TeacherStudentProgressPage({
           <>
             <div className="ui-table-scroll">
               <table className="ui-table">
-              <caption className="visually-hidden">各章節學習進度</caption>
-              <thead>
-                <tr>
-                  <th scope="col">章節</th>
-                  <th scope="col">複習完成</th>
-                  <th scope="col">正確率</th>
-                  <th scope="col">狀態</th>
-                </tr>
-              </thead>
-              <tbody>
-                {chapters.map((chapter) => (
-                  <tr key={chapter.chapterId}>
-                    <th scope="row">{chapter.chapterTitle}</th>
-                    <td>
-                      {chapter.reviewTotal === null
-                        ? EM_DASH
-                        : `${String(chapter.reviewCompleted)} / ${String(chapter.reviewTotal)}`}
-                    </td>
-                    <td>
-                      {formatPercent(chapter.assessmentAccuracy)}（小節{' '}
-                      {formatPercent(chapter.sectionQuizAccuracy)}／章節{' '}
-                      {formatPercent(chapter.chapterQuizAccuracy)}／Live{' '}
-                      {formatPercent(chapter.liveAccuracy)}）
-                    </td>
-                    <td>
-                      <Chip tone={chapterStatusTone(chapter.status)}>
-                        {chapterStatusLabel(chapter.status)}
-                      </Chip>
-                    </td>
+                <caption className="visually-hidden">各章節學習進度</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">章節</th>
+                    <th scope="col">複習完成</th>
+                    <th scope="col">正確率</th>
+                    <th scope="col">狀態</th>
                   </tr>
-                ))}
-              </tbody>
+                </thead>
+                <tbody>
+                  {chapters.map((chapter) => (
+                    <tr key={chapter.chapterId}>
+                      <th scope="row">{chapter.chapterTitle}</th>
+                      <td>
+                        {chapter.reviewTotal === null
+                          ? EM_DASH
+                          : `${String(chapter.reviewCompleted)} / ${String(chapter.reviewTotal)}`}
+                      </td>
+                      <td>
+                        {formatPercent(chapter.assessmentAccuracy)}（小節{' '}
+                        {formatPercent(chapter.sectionQuizAccuracy)}／章節{' '}
+                        {formatPercent(chapter.chapterQuizAccuracy)}／Live{' '}
+                        {formatPercent(chapter.liveAccuracy)}）
+                      </td>
+                      <td>
+                        <Chip tone={chapterStatusTone(chapter.status)}>
+                          {chapterStatusLabel(chapter.status)}
+                        </Chip>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
             <div className="teacher-chapter-disclosures">

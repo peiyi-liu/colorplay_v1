@@ -128,7 +128,9 @@ test('student completes a mixed ten-question challenge with durable server total
   await page
     .getByRole('textbox', { name: '帳號' })
     .fill(TEST_USERS.studentTwo.email);
-  await page.getByLabel('密碼', { exact: true }).fill(TEST_USERS.studentTwo.password);
+  await page
+    .getByLabel('密碼', { exact: true })
+    .fill(TEST_USERS.studentTwo.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/app$/u);
   await page.goto(`/app/quiz/${sessionId ?? ''}/result`);

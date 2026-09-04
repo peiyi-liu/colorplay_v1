@@ -132,8 +132,8 @@ describe('TeacherStudentProgressPage', () => {
       'true',
     );
     expect(within(chapter).getByText('3 / 3')).toBeVisible();
-    expect((screen.getAllByText('已完成')).length).toBeGreaterThan(0);
-    expect((screen.getAllByText('尚未開始')).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('已完成').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('尚未開始').length).toBeGreaterThan(0);
     expect(
       screen.getByText(/74.3%（小節 76.0%／章節 80.0%／Live 67.0%）/u),
     ).toBeVisible();

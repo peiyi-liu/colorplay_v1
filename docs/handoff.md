@@ -316,7 +316,6 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Blocker／待決策：無。生成 PNG 約 40MB，只作主 checkout 的只讀視覺參考，不放入產品 bundle，也不把整張圖當 runtime background。
 - 相關檔案／commit：`docs/superpowers/plans/2026-08-10-jrpg-continuous-world-app-shell.md`、`docs/superpowers/specs/2026-08-10-jrpg-continuous-world-app-shell-design.md`、`artifacts/design-audit/jrpg-app-shell/batch-{01,02}/manifest.md`、`docs/handoff.md`（planning checkpoint commit 待建立）。
 
-
 ## 2026-08-11 01:27 [Codex] — 首頁／登入／註冊修正版待 owner 逐頁核准
 
 - 做了什麼：依 owner 回饋只修正目前公開與認證場景，未前進學習地圖。首頁改為唯一「開始冒險」主行動並導向 `/login`，移除「已有帳號？登入」，縮小 ColorPlay 與「色彩王國的冒險旅程」並強制單行；原 64×64 裁圖 icon 已替換為 1254×1254 透明高畫質像素風藍金寶典（深藍書體、金色書角／書脊、六色色相環、金色羽筆）。登入桌機將「歡迎回來，冒險者。」置於人物上方，手機將「冒險者公會」定位於木牌，帳號／密碼改為設計圖的直角深藍框。註冊保留真實 OTP／欄位／提交流程，改為同一公會場景，桌機雙欄表單固定右側、手機單欄接續場景；匿名公開／Auth route 不再插入學生頁專用的「轉橫體驗更佳」橫幅。
@@ -1241,7 +1240,7 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
   - `src/types/database.ts`（Supabase 產生的型別檔）：兩側各自新增的 RPC 型別因為字母排序緊鄰而衝突，合併時逐一比對 `git show <branch>:...` 確認雙方簽章後聯集保留。
   - `src/features/learning/api/mastery-repository.test.ts`：add/add 衝突，確認兩份測試檢查同一支已存在的 `MasteryError` 實作（非二選一），合併成兩個 `describe` 區塊並存。
   - `docs/staging-runbook.md`、`docs/roadmap-colorplay-next.md`、`docs/handoff.md`：三份文件各自分岔，逐段比對後合併（roadmap 的 Phase 0/1 狀態列改用較新且與內文一致的版本；handoff 純接續，因為 trunk 段落在 8/11 結束、phase1 段落從 8/18 開始，時間軸本來就不重疊）。
-  合併提交 `5932ef4`。
+    合併提交 `5932ef4`。
 - 驗證發現的真實問題（非猜測，皆已查證根因）：`pnpm test` 首次跑出 3 個失敗（`app-shell.test.tsx` 兩處 `role="status"` 查詢因為 Phase 1 新增的 `EnvironmentMarker` 在測試檔內被強制 mock 成常駐顯示而變得模糊；`tests/contracts/phase0-documentation.test.ts`——Phase 1 新增的文件治理測試——揪出 `docs/staging-runbook.md` 裡「Phase 9-AUTH」歷史段落本身違反同一份文件開頭就寫明的禁止事項：明文 `git push HEAD:main`、寫死的 `LocalOnly-*` 測試密碼、`sbp_` token 佔位字串、加寬版 Auth redirect 萬用字元）。`pnpm test:db` 跑出 5 個 pgTAP 檔失敗（`003`／`025`／`036`／`047`／`048`），逐一查證後全部是同一類根因：兩條分支各自成長了數週的真實內容（章節、題目、複習卡）疊在一起後，讓舊測試裡寫死的數量假設（如「45 題」「180 個選項」「章節 1 只有 1 題」）或命名空間假設（`stable_code = '1-1-01'` 撞到真實種子內容）失真或互撞——不是我這次合併邏輯寫錯，是兩條線各自往前跑太久、互不知道對方進度的必然結果（跟 owner 稍早裁定要收斂的「文件與現況脫節」是同一類問題）。`047`／`048` 兩檔另外牽涉到新的 sequential chapter access 功能對「章節內容量門檻」「章節整體 mastery 而非單題正確率」的真實業務規則，修法時改成動態查詢當下真實內容量（而非重新硬編一個新的固定數字），比照這次其他修正的原則，讓測試不會在下次內容量再變動時又假紅。修復後全部驗證：`pnpm lint`／`pnpm typecheck` 全綠；`pnpm test` 1335/1336（唯一剩餘失敗 `tests/contracts/phase0-restore.test.ts` 查證為本機 Docker 資源競爭——這台機器同時有多組 Supabase 容器在跑，與本次修改內容無關，非本次程式或測試邏輯問題）；`pnpm test:db` 全綠（60 檔／1506 pgTAP assertions + 2 組 integration 測試全過）。修復提交 `02cb875`。
 - 下一步：push `worktree-integration-phase1-merge` 分支到 `origin/feature/v2-major-update`，讓遠端反映合併後狀態。接著依 owner 裁定順序進入下一階段：處理 PR #1（Phase 0 環境基礎，已卡 20 天待 owner 核准），以及後續環境重新基準化（ADR、environment registry）。
 - Blocker／待決策：`tests/contracts/phase0-restore.test.ts` 因本機多組 Supabase Docker 容器並存而無法在此環境穩定驗證，需要在乾淨、單一 Supabase 實例的環境重跑確認；不屬於本次合併範圍，未動測試邏輯本身。
@@ -1305,3 +1304,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - 做了什麼：Owner 明確核准後，將乾淨的 `codex/adminb-phase0-integration-20260904` 推到 `origin`；第一次 push 的 exact SHA 為 `2452d31e48cc8bf09043bd8ceb283c016140a96c`，並設定同名 upstream。本筆只更新 push 狀態，不改產品程式、migration 或測試。
 - 下一步／授權邊界：尚未建立 PR、merge protected branch、deploy 或操作 Hosted。這四項仍是分開的 owner gate；下一個需要決定的是是否建立指向受保護分支的 PR。
+
+## 2026-09-04 12:12 [Codex] — PR #6 已建立；首次 CI format remediation 完成
+
+- 做了什麼：Owner 明確核准建立 PR 後，以 `191aa14c08a515a1d362323f932919b81e3c0ebc` 建立 PR #6（`codex/adminb-phase0-integration-20260904` → `staging`）；GitHub 判定 `MERGEABLE`。首次 Foundation CI 的 format job 揭露 merge 後有 37 個既有檔案未符合 repo Prettier 規則；套用純機械式格式化後，Admin catalog parser 亦改為接受 Prettier 對齊表格所產生的可變空白，並以既有 generator 更新只因規格 bytes 改變的 `source_sha256`。catalog resources 與 migration 內容不變。
+- 驗證：首次 PR head 的 production-build、typecheck、lint、credential-scan 與兩個 Vercel Preview checks 已通過；format 失敗原因已在本機重現。remediation 後 `pnpm format:check`、`pnpm lint`、`pnpm typecheck`、Admin catalog focused contract 3/3 與完整 unit suite 218 files／1784 tests 全綠；推送後仍以 fresh PR checks 為 protected evidence。
+- 下一步／授權邊界：只將 format remediation 推回同一 PR，等待 fresh protected checks。PR 建立與 Preview checks 不構成 merge、正式 Staging promotion、Hosted migration／fixture dry-run 或 Task 7 mutation 授權；其中任一後續 mutation 仍需 owner 另行核准。

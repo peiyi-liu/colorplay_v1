@@ -17,7 +17,9 @@ test('student sees the semantic six-building chapter map', async ({ page }) => {
   await page
     .getByRole('textbox', { name: '帳號' })
     .fill(TEST_USERS.studentOne.email);
-  await page.getByLabel('密碼', { exact: true }).fill(TEST_USERS.studentOne.password);
+  await page
+    .getByLabel('密碼', { exact: true })
+    .fill(TEST_USERS.studentOne.password);
   await page.getByRole('button', { name: '登入' }).click();
 
   await expect(page).toHaveURL(/\/app$/u);

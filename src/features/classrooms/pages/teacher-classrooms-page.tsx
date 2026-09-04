@@ -89,7 +89,9 @@ function ClassroomCard({
           <dl className="classroom-card__meta">
             <div>
               <dt>建立日期</dt>
-              <dd>{new Date(classroom.createdAt).toLocaleDateString('zh-TW')}</dd>
+              <dd>
+                {new Date(classroom.createdAt).toLocaleDateString('zh-TW')}
+              </dd>
             </div>
           </dl>
           <div className="classroom-card__actions">

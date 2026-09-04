@@ -172,9 +172,7 @@ describe('RegisterPage', () => {
     expect(confirmation).toHaveAttribute('type', 'password');
     expect(confirmation).toHaveValue('SecretA');
 
-    await user.click(
-      screen.getByRole('button', { name: '顯示密碼確認' }),
-    );
+    await user.click(screen.getByRole('button', { name: '顯示密碼確認' }));
 
     expect(password).toHaveAttribute('type', 'text');
     expect(confirmation).toHaveAttribute('type', 'text');

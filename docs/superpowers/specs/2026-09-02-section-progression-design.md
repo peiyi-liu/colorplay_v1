@@ -72,10 +72,7 @@ review_card.sort_order, stable identity)` 決定。Browser 排序只供呈現，
 
 ```ts
 type ReviewCardAccessState =
-  | 'locked'
-  | 'available'
-  | 'grandfather_exempt'
-  | 'completed';
+  'locked' | 'available' | 'grandfather_exempt' | 'completed';
 ```
 
 - `completed`：current published version 已有合法 completion，可回顧；對
@@ -91,11 +88,7 @@ type ReviewCardAccessState =
 
 ```ts
 type SectionLearningState =
-  | 'locked'
-  | 'reviewing'
-  | 'challenge_available'
-  | 'attempted'
-  | 'mastered';
+  'locked' | 'reviewing' | 'challenge_available' | 'attempted' | 'mastered';
 ```
 
 - 第一 section 永遠不因其他 section 被鎖；後續 section 要求上一 section
@@ -108,10 +101,7 @@ type SectionLearningState =
 
 ```ts
 type ChapterLearningState =
-  | 'not_started'
-  | 'learning'
-  | 'completed'
-  | 'mastered';
+  'not_started' | 'learning' | 'completed' | 'mastered';
 ```
 
 - `completed`：至少一個 current-version chapter challenge finalized。
@@ -141,9 +131,7 @@ changed-field digest 與下列 impact；browser 不能決定或覆寫：
 
 ```ts
 type ProgressionImpact =
-  | 'compatible'
-  | 'requires_recompletion'
-  | 'requires_requalification';
+  'compatible' | 'requires_recompletion' | 'requires_requalification';
 ```
 
 - `compatible`：錯字、排版或不改變學習語意的 accessibility／alt-text 修正；舊
@@ -285,15 +273,15 @@ attempt 仍開下一 section；低分 chapter attempt只建立 completed，不�
 
 Server 至少提供下列安全碼；同類不存在／無權存取不得洩漏 target existence：
 
-| Code | 意義 | Client action |
-|---|---|---|
-| `LEARNING_CONTENT_UNAVAILABLE` | chapter 自身內容未 ready | 顯示內容準備中 |
-| `REVIEW_CARD_LOCKED` | card 非 completed／current available／own grandfather-exempt | refetch snapshot |
-| `REVIEW_SEQUENCE_REQUIRED` | predecessor 未完成 | 顯示 blocker |
-| `SECTION_REVIEW_INCOMPLETE` | section challenge 尚未開放 | refetch snapshot |
-| `SECTION_CHALLENGE_REQUIRED` | 下一 section 尚未開放 | 顯示需完成上一節挑戰 |
-| `CHAPTER_CHALLENGE_LOCKED` | 至少一 section 未達 80% | 顯示逐節差距 |
-| `LEARNING_VERSION_CHANGED` | client snapshot 已 stale | refetch，不自動重送新 mutation |
+| Code                           | 意義                                                         | Client action                  |
+| ------------------------------ | ------------------------------------------------------------ | ------------------------------ |
+| `LEARNING_CONTENT_UNAVAILABLE` | chapter 自身內容未 ready                                     | 顯示內容準備中                 |
+| `REVIEW_CARD_LOCKED`           | card 非 completed／current available／own grandfather-exempt | refetch snapshot               |
+| `REVIEW_SEQUENCE_REQUIRED`     | predecessor 未完成                                           | 顯示 blocker                   |
+| `SECTION_REVIEW_INCOMPLETE`    | section challenge 尚未開放                                   | refetch snapshot               |
+| `SECTION_CHALLENGE_REQUIRED`   | 下一 section 尚未開放                                        | 顯示需完成上一節挑戰           |
+| `CHAPTER_CHALLENGE_LOCKED`     | 至少一 section 未達 80%                                      | 顯示逐節差距                   |
+| `LEARNING_VERSION_CHANGED`     | client snapshot 已 stale                                     | refetch，不自動重送新 mutation |
 
 未知錯誤一律 generic、可追蹤且不洩漏 SQL／stack。
 

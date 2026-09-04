@@ -158,9 +158,7 @@ test('invalid credentials stay anonymous and keyboard-only valid login lands on 
   await expect(page.getByLabel('密碼', { exact: true })).toBeFocused();
   await page.keyboard.type(TEST_USERS.studentOne.password);
   await page.keyboard.press('Tab');
-  await expect(
-    page.getByRole('button', { name: '顯示密碼' }),
-  ).toBeFocused();
+  await expect(page.getByRole('button', { name: '顯示密碼' })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.getByLabel('密碼', { exact: true })).toHaveAttribute(
     'type',

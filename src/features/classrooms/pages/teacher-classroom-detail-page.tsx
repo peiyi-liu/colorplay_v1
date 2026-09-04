@@ -152,35 +152,35 @@ export function TeacherClassroomDetailPage({
           <>
             <div className="ui-table-scroll">
               <table className="ui-table">
-              <caption className="visually-hidden">班級學生</caption>
-              <thead>
-                <tr>
-                  <th scope="col">學號</th>
-                  <th scope="col">姓名</th>
-                  <th scope="col">暱稱</th>
-                  <th scope="col">成員資格</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(members.data ?? []).map((member) => (
-                  <tr key={member.memberRef}>
-                    <th scope="row">{member.loginAccount ?? '—'}</th>
-                    <td>{member.fullName ?? '—'}</td>
-                    <td>{member.displayName}</td>
-                    <td>
-                      {member.membershipStatus === 'inactive' ? (
-                        <Chip tone="neutral">已停用</Chip>
-                      ) : null}{' '}
-                      <Link
-                        className="secondary-action"
-                        to={`/teacher/classes/${classroomId}/members/${member.memberRef}`}
-                      >
-                        查看細節 ›
-                      </Link>
-                    </td>
+                <caption className="visually-hidden">班級學生</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">學號</th>
+                    <th scope="col">姓名</th>
+                    <th scope="col">暱稱</th>
+                    <th scope="col">成員資格</th>
                   </tr>
-                ))}
-              </tbody>
+                </thead>
+                <tbody>
+                  {(members.data ?? []).map((member) => (
+                    <tr key={member.memberRef}>
+                      <th scope="row">{member.loginAccount ?? '—'}</th>
+                      <td>{member.fullName ?? '—'}</td>
+                      <td>{member.displayName}</td>
+                      <td>
+                        {member.membershipStatus === 'inactive' ? (
+                          <Chip tone="neutral">已停用</Chip>
+                        ) : null}{' '}
+                        <Link
+                          className="secondary-action"
+                          to={`/teacher/classes/${classroomId}/members/${member.memberRef}`}
+                        >
+                          查看細節 ›
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
             <div className="teacher-roster-disclosures">

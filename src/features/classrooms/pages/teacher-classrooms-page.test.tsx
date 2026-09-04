@@ -268,9 +268,10 @@ describe('TeacherClassroomsPage', () => {
 
     const disclosure = await screen.findByTestId('classroom-disclosure');
     expect(disclosure).not.toHaveAttribute('open');
-    expect(
-      disclosure.querySelector('summary'),
-    ).toHaveAttribute('aria-expanded', 'false');
+    expect(disclosure.querySelector('summary')).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
     const summary = disclosure.querySelector('summary');
     expect(summary).not.toBeNull();
     if (summary) await userEvent.click(summary);
@@ -285,8 +286,8 @@ describe('TeacherClassroomsPage', () => {
     await waitFor(() => {
       expect(writeText).toHaveBeenCalledOnce();
     });
-    expect(screen.getByRole('button', { name: /複製 分頁班 1/u })).toHaveTextContent(
-      '複製',
-    );
+    expect(
+      screen.getByRole('button', { name: /複製 分頁班 1/u }),
+    ).toHaveTextContent('複製');
   });
 });

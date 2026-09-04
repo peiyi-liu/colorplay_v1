@@ -143,7 +143,7 @@ function extractSection(spec, heading, nextHeading) {
 function parseExistingTables(section) {
   const rows = section
     .split('\n')
-    .filter((l) => /^\| `[a-z0-9_]+` \|/u.test(l));
+    .filter((line) => /^\|\s*`[a-z0-9_]+`\s*\|/u.test(line));
   return rows.map((line) => {
     const [resourceCell, open, internal, personal, forbidden, query] =
       parseCells(line);
@@ -162,7 +162,7 @@ function parseExistingTables(section) {
 function parseControlTables(section) {
   const rows = section
     .split('\n')
-    .filter((l) => /^\| `admin_[a-z_]+`／/u.test(l));
+    .filter((line) => /^\|\s*`admin_[a-z_]+`／/u.test(line));
   return rows.map((line) => {
     const [resourceCell, open, internal, personal, forbidden] =
       parseCells(line);
@@ -188,7 +188,7 @@ function parseRebaselineRows(spec) {
   const section = extractSection(spec, '## 3.', '## 4.');
   const rows = section
     .split('\n')
-    .filter((line) => /^\| `[a-z0-9_]+` \|/u.test(line))
+    .filter((line) => /^\|\s*`[a-z0-9_]+`\s*\|/u.test(line))
     .map((line) => {
       const [resource, domain, surface, column, classification] =
         parseCells(line);

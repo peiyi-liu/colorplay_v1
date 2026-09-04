@@ -28,7 +28,7 @@ credentials into a command, or add broad Auth redirect wildcards.
 The rebuild script itself: wipes the `public` schema and all users, replays
 every tracked migration in order (including history), applies the content
 seed (question bank, review cards, hints), reloads PostgREST, then creates
-test accounts. It only prints the frontend-required variable *names* at the
+test accounts. It only prints the frontend-required variable _names_ at the
 end, never a deployed value — the operator retrieves the current publishable
 key from Supabase's own secure environment and injects it into Vercel
 directly; `VITE_SUPABASE_ANON_KEY` is retained only as the frontend

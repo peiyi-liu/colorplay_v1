@@ -351,7 +351,10 @@ test('reveal-boundary explanation and ranking steps stay bounded', async ({
   await page.getByRole('button', { name: '即時排名' }).click();
   const ranking = page.locator('.live-round__ranking');
   await expect(ranking).toBeVisible();
-  await expect(ranking).toHaveAttribute('aria-labelledby', 'live-round-ranking');
+  await expect(ranking).toHaveAttribute(
+    'aria-labelledby',
+    'live-round-ranking',
+  );
   await expectInside(ranking, stage);
 
   expect(runtime.consoleErrors).toEqual([]);
@@ -487,9 +490,7 @@ for (const viewport of VIEWPORTS) {
       '.live-round__controls button:disabled',
     );
     await expect(disabledControls).toHaveCount(4);
-    await expect(
-      page.getByRole('button', { name: '音效' }),
-    ).toBeEnabled();
+    await expect(page.getByRole('button', { name: '音效' })).toBeEnabled();
     for (const control of await disabledControls.all()) {
       const cursor = await control.evaluate(
         (element) => getComputedStyle(element).cursor,

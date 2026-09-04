@@ -39,7 +39,9 @@ test('Teacher Content retirement gate', async ({ page }, testInfo) => {
   await page
     .getByRole('textbox', { name: '帳號' })
     .fill(TEST_USERS.contentTeacher.email);
-  await page.getByLabel('密碼', { exact: true }).fill(TEST_USERS.contentTeacher.password);
+  await page
+    .getByLabel('密碼', { exact: true })
+    .fill(TEST_USERS.contentTeacher.password);
   await page.getByRole('button', { name: '登入' }).click();
   await expect(page).toHaveURL(/\/teacher$/u);
   await expect(page.getByRole('heading', { name: '教師工作區' })).toBeVisible();
