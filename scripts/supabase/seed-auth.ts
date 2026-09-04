@@ -256,14 +256,25 @@ const ensureStudentMemberships = async (
         p_ip_hash: fixtureJoinIpHash,
       },
     );
-    failIfError(joinError, 'CLASSROOM_MEMBERSHIP_FIXTURE_JOIN_FAILED');
+    if (joinError) {
+      throw new Error(
+        `CLASSROOM_MEMBERSHIP_FIXTURE_JOIN_FAILED: ${joinError.code}: ${joinError.message}`,
+      );
+    }
     if (
       typeof joinResult !== 'object' ||
       joinResult === null ||
       Array.isArray(joinResult) ||
       joinResult.outcome !== 'ok'
     ) {
-      throw new Error('CLASSROOM_MEMBERSHIP_FIXTURE_JOIN_FAILED');
+      const outcome =
+        typeof joinResult === 'object' &&
+        joinResult !== null &&
+        !Array.isArray(joinResult) &&
+        typeof joinResult.outcome === 'string'
+          ? joinResult.outcome
+          : 'invalid_response';
+      throw new Error(`CLASSROOM_MEMBERSHIP_FIXTURE_JOIN_FAILED: ${outcome}`);
     }
   }
 };
