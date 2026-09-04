@@ -89,8 +89,26 @@ jobs:
           done
           printf 'deployed_functions=%s\n' "$(IFS=,; echo "${functions[*]}")" >> "$GITHUB_OUTPUT"
 
-  browser-rwd-gate:
+  read-only-smoke:
     needs: deploy-exact-sha
+    runs-on: ubuntu-24.04
+    environment: staging
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+      - run: npm install --global "$(node --print "require('./package.json').packageManager")"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24.13.1'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Read-only marker and runtime smoke
+        run: pnpm phase0:smoke -- --environment staging --target-origin https://staging.colorplayapp.com --http-origin http://staging.colorplayapp.com --evidence-root artifacts/phase0 --output artifacts/phase0/staging-smoke.json
+
+  browser-rwd-gate:
+    needs: read-only-smoke
     runs-on: ubuntu-24.04
     environment: staging
     strategy:
@@ -109,8 +127,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
-      - name: Read-only marker and runtime smoke
-        run: pnpm phase0:smoke -- --environment staging --target-origin https://staging.colorplayapp.com --http-origin http://staging.colorplayapp.com --evidence-root artifacts/phase0 --output artifacts/phase0/staging-smoke-${{ matrix.browser }}-${{ matrix.viewport }}.json
       - name: Marker, console/network, three-browser and RWD gate
         env:
           PLAYWRIGHT_BASE_URL: https://staging.colorplayapp.com

@@ -167,6 +167,10 @@ describe('automatic Staging deployment', () => {
     );
 
     expect(workflow).toContain('phase0:smoke');
+    expect(workflow.match(/phase0:smoke/gu)).toHaveLength(1);
+    expect(workflow).toMatch(
+      /read-only-smoke:\n[\s\S]*?needs: deploy-exact-sha[\s\S]*?browser-rwd-gate:\n\s+needs: read-only-smoke/u,
+    );
     expect(workflow).toContain('--target-origin');
     expect(workflow).toContain('--http-origin http://staging.colorplayapp.com');
     expect(workflow).toContain('--output');
