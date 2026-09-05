@@ -1,4 +1,23 @@
 /* Admin console: scoped to operational routes; student surfaces keep their tokens. */
+.game-stage[data-shell-role='admin'] {
+  background: #f6f7f8;
+}
+.game-stage[data-shell-role='admin'] #main-content {
+  align-items: start;
+  background: #f6f7f8;
+}
+.game-stage[data-shell-role='admin'] .route-world-stage__transition {
+  display: none;
+}
+.game-stage[data-shell-role='admin'] .hud-top {
+  background: #fff;
+  border-bottom: 1px solid #d2d7dd;
+  box-shadow: none;
+  color: #202c35;
+}
+.game-stage[data-shell-role='admin'] .hud-top__identity {
+  color: #202c35;
+}
 .admin-shell {
   --admin-rule: #d2d7dd;
   --admin-muted: #52616e;

@@ -6,6 +6,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AuthContext } from '../src/features/auth/context/auth-context';
 import { ToastProvider } from '../src/components/ui/toast';
 import { AdminShell } from '../src/features/admin/components/admin-shell';
+import { AppShell } from '../src/app/shell/app-shell';
 import { AdminOverviewPage } from '../src/features/admin/pages/admin-overview-page';
 import { AdminTeachersPage } from '../src/features/admin/pages/admin-teachers-page';
 import { AdminTeacherDetailPage } from '../src/features/admin/pages/admin-teacher-detail-page';
@@ -33,6 +34,14 @@ queryClient.setQueryData(['admin', 'session-state'], {
   state: 'privileged',
   mfa_age_seconds: 0,
 });
+queryClient.setQueryData(['profile', 'me'], {
+  id: '11111111-1111-4111-8111-111111111111',
+  role: 'admin',
+  displayName: 'UI 測試管理員',
+  registrationComplete: true,
+  reducedMotion: false,
+  timezone: 'Asia/Taipei',
+});
 const route = new URLSearchParams(location.search).get('route') ?? '/admin';
 const root = document.getElementById('root');
 if (!root) throw new Error('HARNESS_ROOT_MISSING');
@@ -40,8 +49,8 @@ createRoot(root).render(
   <QueryClientProvider client={queryClient}>
     <AuthContext.Provider
       value={{
-        status: 'anonymous',
-        session: null,
+        status: 'authenticated',
+        session: { userId: '11111111-1111-4111-8111-111111111111' },
         signIn: () => Promise.resolve(),
         signInWithAccount: () => Promise.resolve(),
         signOut: () => Promise.resolve(),
@@ -49,8 +58,8 @@ createRoot(root).render(
     >
       <MemoryRouter initialEntries={[route]}>
         <ToastProvider>
-          <main id="main-content">
-            <Routes>
+          <Routes>
+            <Route element={<AppShell />}>
               <Route element={<AdminShell />}>
                 <Route path="/admin" element={<AdminOverviewPage />} />
                 <Route path="/admin/teachers" element={<AdminTeachersPage />} />
@@ -94,8 +103,8 @@ createRoot(root).render(
                 path="/admin/invitations/accept"
                 element={<AdminInvitationAcceptPage />}
               />
-            </Routes>
-          </main>
+            </Route>
+          </Routes>
         </ToastProvider>
       </MemoryRouter>
     </AuthContext.Provider>
