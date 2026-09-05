@@ -1531,3 +1531,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 實作：14 routes 採 Admin 專用營運控制台樣式；教師入口、查詢新鮮度／刷新失敗保留資料、10 秒等待說明、命令 completed／accepted／unknown 分流、安全追蹤碼、教師合法後續動作、健康步驟／連線狀態、MFA 送出與失敗回饋。未修改後端權限、RPC／RLS、schema、Recovery URL 或學生樣式。
 - 驗證：全專案 Vitest 234 files／1858 tests PASS；全域 lint、typecheck、Prettier 與 Vite build PASS。首次完整測試因 sandbox 無法啟動 loopback HTTP／Chromium 而失敗，使用允許本機測試的權限重跑後全綠。單一 reviewer 依 Task 1–7 各一輪，回饋均於同輪修正；UI harness 明確標示合成回應，不能當 Hosted lifecycle 證據。
 - 發布：分支 codex/admin-ui-redesign。即將整合 origin/staging cddaa6c 的 Recovery／工具版本修正，經 protected PR checks 與真實合成帳號登入檢查後交付 Staging。PR #14、Hosted DB migration、Admin B lifecycle、Production 與真實裝置 phase gate 均不在本次執行範圍。
+
+## 2026-09-05 18:24 [Codex] — Admin UI PR #16 與發布前驗證補齊
+
+- 本機 Admin Chromium harness 8 tests 全綠：14 routes × 5 viewports，包含成功內容／MFA 表單、Tab／Shift-Tab／Escape／回焦點、10 秒後停止等待與延遲回應、200% CSS zoom、背景刷新失敗保留資料。已整合 Staging cddaa6c，Recovery／delivery contracts 9 tests PASS；PR #16 已建立。首輪 protected CI 除 harness 空函式 lint 皆綠，空函式已修正。
+- 發布準備發現現有 workflow 先 alias 再驗證，與既有部署契約不符。補上 exact SHA／project／公開 key 指紋、hosted candidate bytes 與預定 custom-domain origin、學生／教師真實登入及 profile bootstrap 的 pre-alias proof；只使用現有 automation bypass，不變更部署保護。單一 reviewer 一輪指出 Edge Functions 必須在 proof 前完成，已調整 functions → proof → alias，契約測試固定順序。
+- 實際工具驗證：現行 cddaa6c Staging artifact 的 student／teacher 登入與 profile 均 PASS，輸出只含安全版本／指紋／角色／路由。Vercel 自動 PR Preview 使用較舊 public key，正確遭 fingerprint gate 拒絕；本次正式發布仍由 protected workflow 以目前 Staging secrets 建置，不能拿自動 Preview 冒充最終候選。
+- 邊界：未執行 Admin B lifecycle、Hosted DB migration／cleanup 或 Production；新增發布檢查不等於完整 phase gate。專案 Vercel CLI 已隨整合更新為 59.11.7。

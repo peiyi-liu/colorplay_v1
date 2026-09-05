@@ -71,12 +71,11 @@ jobs:
           VERCEL_PROJECT_ID: ${{ vars.STAGING_VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.STAGING_VERCEL_TOKEN }}
         run: |
-          deployment_url="$(pnpm exec vercel deploy --prebuilt --yes --token "$VERCEL_TOKEN")"
+          deployment_url="$(pnpm exec vercel deploy --prebuilt --yes --meta githubCommitSha="${{ github.sha }}" --token "$VERCEL_TOKEN")"
           deployment_id="$(pnpm exec vercel inspect "$deployment_url" --token "$VERCEL_TOKEN" --json | jq -r '.id')"
           [[ "$deployment_id" == dpl_* ]]
           printf 'deployment_url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
           printf 'deployment_id=%s\n' "$deployment_id" >> "$GITHUB_OUTPUT"
-          pnpm exec vercel alias set "$deployment_url" "$STAGING_DOMAIN" --token "$VERCEL_TOKEN"
       - name: Deploy tracked Edge Functions from the same SHA
         id: functions
         env:
@@ -88,6 +87,30 @@ jobs:
             SUPABASE_ACCESS_TOKEN="$STAGING_SUPABASE_ACCESS_TOKEN" pnpm exec supabase functions deploy "$function_name" --project-ref "$STAGING_SUPABASE_PROJECT_REF"
           done
           printf 'deployed_functions=%s\n' "$(IFS=,; echo "${functions[*]}")" >> "$GITHUB_OUTPUT"
+      - name: Install browser for pre-alias authentication proof
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Verify hosted artifact and synthetic login before alias
+        env:
+          VERCEL_ORG_ID: ${{ vars.STAGING_VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.STAGING_VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.STAGING_VERCEL_TOKEN }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ vars.STAGING_SUPABASE_URL }}
+          STAGING_AUTH_DEPLOYMENT_ID: ${{ steps.deploy.outputs.deployment_id }}
+          STAGING_AUTH_EXPECTED_SHA: ${{ github.sha }}
+        run: pnpm exec tsx scripts/release/staging-artifact-auth.ts
+      - uses: actions/upload-artifact@v5
+        with:
+          name: staging-artifact-auth
+          path: artifacts/acceptance/admin-ui/staging-artifact-auth.json
+          if-no-files-found: error
+      - name: Assign validated artifact to Staging
+        env:
+          VERCEL_ORG_ID: ${{ vars.STAGING_VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.STAGING_VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.STAGING_VERCEL_TOKEN }}
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment_url }}
+        run: pnpm exec vercel alias set "$DEPLOYMENT_URL" "$STAGING_DOMAIN" --token "$VERCEL_TOKEN"
 
   read-only-smoke:
     needs: deploy-exact-sha

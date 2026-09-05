@@ -170,7 +170,9 @@ test('dialog focus, long wait, delayed acceptance and no duplicate command', asy
 }) => {
   await fixture(page);
   let calls = 0;
-  let release: () => void = () => {};
+  let release: () => void = () => {
+    throw new Error('Response latch not initialized');
+  };
   const responseReady = new Promise<void>((resolve) => {
     release = resolve;
   });
