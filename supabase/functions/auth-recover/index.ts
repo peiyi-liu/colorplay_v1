@@ -42,7 +42,7 @@ Deno.serve(async (request) => {
   const origin = request.headers.get('Origin') ?? '';
   const redirectBase = (ALLOWED_ORIGINS as readonly string[]).includes(origin)
     ? origin
-    : 'https://colorplay-staging.vercel.app';
+    : 'https://staging.colorplayapp.com';
 
   const admin = createClient(supabaseUrl, secretKey, {
     auth: { persistSession: false },
