@@ -23,7 +23,7 @@ const PLAINTEXT = '王小明';
 
 function Harness() {
   const [open, setOpen] = useState(true);
-  if (!open) return <p>資料瀏覽器</p>;
+  if (!open) return <p>資料查核器</p>;
   return (
     <AdminRevealDialog
       column="full_name"
@@ -127,7 +127,7 @@ describe('AdminRevealDialog', () => {
 
     await user.click(screen.getByRole('button', { name: '關閉' }));
 
-    expect(await screen.findByText('資料瀏覽器')).toBeInTheDocument();
+    expect(await screen.findByText('資料查核器')).toBeInTheDocument();
     expect(screen.queryByText(PLAINTEXT)).not.toBeInTheDocument();
     expect(document.body.textContent).not.toContain(PLAINTEXT);
   });

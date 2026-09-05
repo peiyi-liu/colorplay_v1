@@ -28,9 +28,9 @@ const VIEWPORTS = [
 ] as const;
 
 const NAV_GROUP_LABELS = [
-  '總覽',
+  '日常營運',
   '身分與存取',
-  '資料瀏覽',
+  '資料查核',
   '稽核',
   '系統健康',
 ] as const;
@@ -60,7 +60,9 @@ for (const viewport of VIEWPORTS) {
     const nav = page.locator('#admin-shell-nav');
     if (viewport.wide) {
       // ≥1024px：nav 常駐，沒有 MENU 切換鈕
-      await expect(page.getByRole('button', { name: 'MENU' })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: '開啟導覽' })).toHaveCount(
+        0,
+      );
       await expect(nav).toBeVisible();
       for (const label of NAV_GROUP_LABELS) {
         await expect(
@@ -69,7 +71,7 @@ for (const viewport of VIEWPORTS) {
       }
     } else {
       // (a) 小視口：MENU drawer 可開合，開啟後五群導覽皆可達
-      const toggle = page.getByRole('button', { name: 'MENU' });
+      const toggle = page.getByRole('button', { name: '開啟導覽' });
       await expect(toggle).toBeVisible();
       await expect(nav).toBeHidden();
 

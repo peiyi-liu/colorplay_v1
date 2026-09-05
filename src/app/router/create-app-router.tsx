@@ -266,6 +266,11 @@ export function createAppRouter() {
                             import('../../features/admin/pages/admin-audit-page'),
                         },
                         {
+                          path: '/admin/monitoring',
+                          lazy: () =>
+                            import('../../features/admin/pages/admin-platform-health-page'),
+                        },
+                        {
                           path: '/admin/health',
                           lazy: () =>
                             import('../../features/admin/pages/admin-health-page'),

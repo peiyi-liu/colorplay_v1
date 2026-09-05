@@ -73,7 +73,7 @@
 }
 .admin-shell .page-wide {
   width: 100%;
-  max-width: 1280px;
+  max-width: none;
   margin-inline: auto;
 }
 .admin-shell .page-stack {
@@ -448,5 +448,104 @@
   .admin-auth-panel {
     padding: 20px 16px;
     margin-block: 12px;
+  }
+}
+
+/* Shared geometry for index, detail, pending and error routes. */
+.game-stage[data-shell-role='admin'] #main-content {
+  width: 100%;
+}
+.admin-shell {
+  width: 100%;
+  min-width: 0;
+}
+.admin-shell__main {
+  width: 100%;
+  min-width: 0;
+  scrollbar-gutter: stable;
+}
+.admin-shell__main > :is(section, div) {
+  max-width: none;
+}
+.admin-data-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.admin-data-categories button[aria-pressed='true'] {
+  background: #eaf0f4;
+  border-color: #31576e;
+}
+.admin-data-index__domain {
+  min-width: 0;
+}
+.admin-data-index__domain p {
+  font-size: 14px;
+  color: var(--admin-muted);
+}
+
+.admin-monitor__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.admin-monitor__group {
+  padding: 24px;
+  background: white;
+  border: 1px solid var(--admin-rule);
+  border-radius: 8px;
+  min-width: 0;
+}
+.admin-monitor__group ul {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+.admin-monitor__metric {
+  border-top: 1px solid var(--admin-rule);
+  padding: 18px 0;
+  display: grid;
+  gap: 8px;
+}
+.admin-monitor__metric-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.admin-monitor__metric h3 {
+  font-size: 16px;
+  margin: 0;
+}
+.admin-monitor__metric p,
+.admin-monitor__action {
+  font-size: 14px;
+}
+.admin-monitor__metric small {
+  display: block;
+  color: var(--admin-muted);
+}
+.admin-monitor__state {
+  font-size: 12px;
+  background: #eef1f4;
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+.admin-monitor__state--attention {
+  background: #fff0d7;
+  color: #805000;
+}
+.admin-monitor__state--ok {
+  background: #e7f2e9;
+  color: #275638;
+}
+.admin-monitor__state--stale {
+  background: #f8e8e6;
+  color: #803b32;
+}
+@media (max-width: 1100px) {
+  .admin-monitor__grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

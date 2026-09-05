@@ -153,7 +153,7 @@ export function AdminDataBrowserPage() {
 
   if (list.isPending || staleSession)
     return (
-      <AdminPageLoading title="資料瀏覽器" onRetry={() => list.refetch()} />
+      <AdminPageLoading title="資料查核器" onRetry={() => list.refetch()} />
     );
 
   if (firstPageCode === 'RESOURCE_NOT_ALLOWED') {
@@ -164,7 +164,7 @@ export function AdminDataBrowserPage() {
         aria-labelledby="admin-data-browser-page-heading"
         className="page-wide page-stack"
       >
-        <h1 id="admin-data-browser-page-heading">資料瀏覽器</h1>
+        <h1 id="admin-data-browser-page-heading">資料查核器</h1>
         {/* 同一句文案涵蓋「不存在」與「存在但不允許」,不洩漏存在性 */}
         <p role="alert">此資源不可瀏覽</p>
         {typeof requestId === 'string' ? (
@@ -188,7 +188,7 @@ export function AdminDataBrowserPage() {
         aria-labelledby="admin-data-browser-page-heading"
         className="page-wide page-stack"
       >
-        <h1 id="admin-data-browser-page-heading">資料瀏覽器</h1>
+        <h1 id="admin-data-browser-page-heading">資料查核器</h1>
         {firstPageCode ? (
           <AdminStatusBanner code={firstPageCode} />
         ) : (
@@ -253,7 +253,7 @@ export function AdminDataBrowserPage() {
       className="page-wide page-stack"
     >
       <h1 id="admin-data-browser-page-heading">
-        資料瀏覽器：{domain}/{resource}
+        資料查核器：{domain}/{resource}
       </h1>
       <AdminQueryStatus query={list} />
 

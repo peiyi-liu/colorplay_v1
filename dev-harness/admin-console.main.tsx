@@ -13,6 +13,7 @@ import { AdminTeacherDetailPage } from '../src/features/admin/pages/admin-teache
 import { AdminAccessAdminsPage } from '../src/features/admin/pages/admin-access-admins-page';
 import { AdminAccessInvitationsPage } from '../src/features/admin/pages/admin-access-invitations-page';
 import { AdminAccessSessionsPage } from '../src/features/admin/pages/admin-access-sessions-page';
+import { AdminPlatformHealthPage } from '../src/features/admin/pages/admin-platform-health-page';
 import { AdminHealthPage } from '../src/features/admin/pages/admin-health-page';
 import { AdminAuditPage } from '../src/features/admin/pages/admin-audit-page';
 import { AdminDataIndexPage } from '../src/features/admin/pages/admin-data-index-page';
@@ -78,6 +79,10 @@ createRoot(root).render(
                 <Route
                   path="/admin/access/sessions"
                   element={<AdminAccessSessionsPage />}
+                />
+                <Route
+                  path="/admin/monitoring"
+                  element={<AdminPlatformHealthPage />}
                 />
                 <Route path="/admin/health" element={<AdminHealthPage />} />
                 <Route path="/admin/audit" element={<AdminAuditPage />} />

@@ -16,6 +16,22 @@ export function adminUiRpc(name: string): unknown {
   switch (name) {
     case 'get_admin_session_state':
       return { state: 'privileged', mfa_age_seconds: 0 };
+    case 'admin_platform_health':
+      return {
+        outcome: 'ok',
+        checked_at: time,
+        metrics: [
+          {
+            signal: 'wallet_ledger_mismatch',
+            status: 'attention',
+            value: 2,
+            sample_count: 15,
+            source: 'database',
+            checked_at: time,
+            observed_at: time,
+          },
+        ],
+      };
     case 'admin_health_summary':
       return {
         outcome: 'ok',

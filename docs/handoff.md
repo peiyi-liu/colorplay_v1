@@ -1538,3 +1538,33 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 發布準備發現現有 workflow 先 alias 再驗證，與既有部署契約不符。補上 exact SHA／project／公開 key 指紋、hosted candidate bytes 與預定 custom-domain origin、學生／教師真實登入及 profile bootstrap 的 pre-alias proof；只使用現有 automation bypass，不變更部署保護。單一 reviewer 一輪指出 Edge Functions 必須在 proof 前完成，已調整 functions → proof → alias，契約測試固定順序。
 - 實際工具驗證：現行 cddaa6c Staging artifact 的 student／teacher 登入與 profile 均 PASS，輸出只含安全版本／指紋／角色／路由。Vercel 自動 PR Preview 使用較舊 public key，正確遭 fingerprint gate 拒絕；本次正式發布仍由 protected workflow 以目前 Staging secrets 建置，不能拿自動 Preview 冒充最終候選。
 - 邊界：未執行 Admin B lifecycle、Hosted DB migration／cleanup 或 Production；新增發布檢查不等於完整 phase gate。專案 Vercel CLI 已隨整合更新為 59.11.7。
+
+## 2026-09-05 18:48 [Codex] — Admin UI redesign 已合併並發布 Staging
+
+- 完成：PR #16 正常合併至 Staging，exact SHA `d795add3fa926d2f49589157c2461a2fa883e589`，公開網址 `https://staging.colorplayapp.com/admin`。原有設計 A 與 Task 1–7 已全部實作；最後將 harness 接入正式 AppShell 並以 Admin role 限定外層中性樣式，8 項 browser checks 再次全綠。
+- Required CI：run `33960984220` 的 format／lint／typecheck／unit-coverage／production-build／local-database／chromium-e2e／credential-scan 全綠，236 files／1860 tests PASS。依 owner 本次明確 Staging 授權，透過正式 owner-approval run `33961314463` 與受保護環境記錄 exact PR head `6216058e758af8bb35246d0f342102703fc787f0`；未使用 admin merge bypass。
+- 發布證據：workflow `33961423744` 的 deploy-exact-sha 與 read-only-smoke PASS。公開 alias 實際指向 `dpl_9r5CxwZsYRDXdxd8eJsK9R6CKyRC`，與 pre-alias artifact 證據一致；Staging Supabase ref `onkxnkzeixpezetkmocf`、public-key SHA-256 `287e53db8aa9e39769d1063303af8595c4cee0be211ffd4c34427e1890c1d0ae`。合成學生已登入 `/app`、教師已登入 `/teacher`，兩者 profile bootstrap 通過，無必要 console／network failures。證據在 `artifacts/acceptance/admin-ui/release-d795add/staging-artifact-auth.json`（不進 git）及 workflow artifact。
+- 邊界與下一步：Admin B Hosted lifecycle、人工裝置、完整 phase acceptance 仍按原安排另行驗證；本次沒有執行 Hosted DB migration／cleanup 或 Production。自動 workflow 後續三 browser marker 與既有 learning phase gate 仍由原 pipeline 執行，不用本次 Web 發布通過替代那些 gate。
+
+## 2026-09-05 [Codex] — Admin UI 畫面展示與內容範圍說明
+
+- 依 owner 要求，從 d795add 的實際 Admin 元件／正式 AppShell 擷取安全總覽、教師帳號、資料瀏覽、健康狀態四頁，僅使用合成帳號與安全狀態，沒有讀取或操作 Hosted 管理資料。
+- 展示：`/Users/guanyucheng/.codex/visualizations/2026/09/05/01a0709f-85ed-7ee2-8b20-911fc4df466a/admin-ui-preview/index.html`，附四張 1440×960 原始頁面截圖與來源 manifest；圖片不回讀進代理 context。
+- 範圍說明：安全總覽、教師帳號、管理員／邀請／特權連線、受控資料瀏覽、稽核紀錄、健康狀態，以及邀請接受與 MFA 流程。跨班級學生支援仍維持取消；本輪只提供畫面與說明，未修改或重新部署產品。
+
+## 2026-09-05 20:18 [Codex] — Admin 資料查核分類提案與預覽
+
+- Owner 明確選擇「先看分類提案與預覽」。本輪只製作設計提案，未修改產品程式、後端權限或部署；原 Admin C 仍待後續決策，跨班級學生支援保持取消。
+- 提案：將資料瀏覽改以教學內容、學習與評量、班級與 Live、獎勵與收藏、帳號資料五類呈現；中文用途為主要入口，技術名稱收進詳細資訊，支援跨分類搜尋。46 個入口與目前 safe-browser catalog 精確對應，未加入控制表或 forbidden 欄位。
+- 預覽：`/Users/guanyucheng/.codex/visualizations/2026/09/05/01a0709f-85ed-7ee2-8b20-911fc4df466a/admin-data-proposal/index.html`。包含資料分類與建議新增監控兩頁，明示尚未實作且無資料庫連線；截圖及 manifest 同目錄。
+- 建議優先：教材可用性、課堂／作答異常、發布／復原狀態；後續評估服務品質、獎勵一致性，以及具稽核的內容／Live／分項維護控制。既有 runbook 不代表 Hosted 監控與備份排程已驗證啟用。
+- 驗證：本機 Chromium 預覽檢查 PASS，包含 46 個來源覆蓋與唯一性、中文／技術名稱搜尋、空狀態、Dialog Escape 與回焦點、頁籤鍵盤操作、桌面／手機無橫向溢出與無 page errors。未回讀截圖，不將預覽當成產品或 Hosted 驗收。
+- 下一步：依 owner 對分類與優先順序的意見調整；新增監控聚合與控制另列需求，不能視為此提案已核准實作。
+
+## 2026-09-05 21:02 [Codex] — 資料查核／平台監控已核准並完成本機實作
+
+- Owner 明確核准五類「資料查核」、教材／課堂／發布復原／服務品質／獎勵五项監控、跨頁一致邊界，並要求完成後部署 Staging；取代前次僅提案界線。其他 Admin C 寫入控制、跨班級學生支援與 Production 不納入。
+- 分支 `codex/admin-platform-monitoring`，基準 d795add。新增受 privileged Admin 保護的後端彙整與 service-only 採集 seam；private schema 鎖定 Staging、RLS 預設拒絕。受信任 collector 採集日誌、媒體、備份與版本；pg_cron／Vault 每 15 分鐘採集，發布 workflow 套用單一本次 additive migration，使用既有受保護 secrets，並在真實登入 proof 與 alias 後保存版本證據。
+- 完成五類中文導覽／搜尋，所有操作頁共用固定內容寬度；15 routes × 5 viewports 與 393／1440 跨頁邊界差異 ≤1px，10 項 browser checks PASS。Admin 與 collector 36 files／288 tests PASS；15 項 Local DB rollback 測試 PASS，未 reset 共用 Local DB；typecheck、lint、build 已通過，最後格式檢查中。
+- 單一 reviewer 一輪：修正 release receipt 短暫失敗後恢復、Production proof 不得混入、HTTP 有效樣本不足不得顯示正常；加入回歸測試。延遲改讀有明確毫秒定義的 Kong header，未知保留 null。
+- 界線：教材查核含 LT 題庫 20 題門檻與媒體／版本；獎勵漏發目前可核對 Quiz 正式結果，其他活動不冒稱覆蓋。備份清單與校驗／還原證據分開，缺同環境證據保持未知。下一步 protected PR、CI、Staging 實際採集與 exact artifact 驗證。
