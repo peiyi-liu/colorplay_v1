@@ -15,9 +15,11 @@ const hash = (value: string) =>
   createHash('sha256').update(value).digest('hex');
 
 function api(path: string): Record<string, unknown> {
+  const team = process.env.VERCEL_ORG_ID;
+  const endpoint = team ? `${path}?teamId=${encodeURIComponent(team)}` : path;
   return record(
     JSON.parse(
-      execFileSync('pnpm', ['exec', 'vercel', 'api', path], {
+      execFileSync('pnpm', ['exec', 'vercel', 'api', endpoint], {
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'pipe'],
         timeout: 30_000,
