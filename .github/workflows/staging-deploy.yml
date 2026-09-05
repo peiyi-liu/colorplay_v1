@@ -76,6 +76,11 @@ jobs:
           [[ "$deployment_id" == dpl_* ]]
           printf 'deployment_url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
           printf 'deployment_id=%s\n' "$deployment_id" >> "$GITHUB_OUTPUT"
+      - name: Install Staging platform monitoring and protected schedule
+        env:
+          STAGING_SUPABASE_ACCESS_TOKEN: ${{ secrets.STAGING_SUPABASE_ACCESS_TOKEN }}
+          STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+        run: node scripts/admin/install-staging-monitoring.mjs
       - name: Deploy tracked Edge Functions from the same SHA
         id: functions
         env:
@@ -111,6 +116,11 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.STAGING_VERCEL_TOKEN }}
           DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment_url }}
         run: pnpm exec vercel alias set "$DEPLOYMENT_URL" "$STAGING_DOMAIN" --token "$VERCEL_TOKEN"
+      - name: Record verified Staging release and start monitoring collection
+        env:
+          STAGING_SUPABASE_ACCESS_TOKEN: ${{ secrets.STAGING_SUPABASE_ACCESS_TOKEN }}
+          STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+        run: node scripts/admin/record-staging-monitor-proof.mjs
 
   read-only-smoke:
     needs: deploy-exact-sha

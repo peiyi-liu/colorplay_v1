@@ -11,6 +11,8 @@ export default tseslint.config(
     ignores: [
       'coverage',
       'dist',
+      '.vercel', // Generated deployment output; never source code.
+
       'src/types/database.ts',
       'supabase/functions',
       // Tool-managed scratch dirs outside the TS project service.

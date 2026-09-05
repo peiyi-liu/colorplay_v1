@@ -1,34 +1,38 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
-
 import { AdminDataIndexPage } from './admin-data-index-page';
-
 describe('AdminDataIndexPage', () => {
-  it('makes all seven browser domains and their catalog resources discoverable', () => {
+  it('finds records by Chinese purpose while preserving safe catalog routes', async () => {
+    const user = userEvent.setup();
     render(
       <MemoryRouter>
         <AdminDataIndexPage />
       </MemoryRouter>,
     );
-
-    for (const domain of [
-      'assessments',
-      'classrooms',
-      'content',
-      'learning',
-      'live',
-      'rewards',
-      'users',
-    ]) {
-      expect(
-        screen.getByRole('heading', { name: new RegExp(domain) }),
-      ).toBeInTheDocument();
-    }
-
-    const users = screen.getByRole('region', { name: 'users' });
     expect(
-      within(users).getByRole('link', { name: 'profiles' }),
-    ).toHaveAttribute('href', '/admin/data/users/profiles');
+      screen.getByRole('heading', { name: '資料查核' }),
+    ).toBeInTheDocument();
+    for (const name of [
+      '教學內容',
+      '學習與評量',
+      '班級與 Live',
+      '獎勵與收藏',
+      '帳號資料',
+    ]) {
+      expect(screen.getByRole('button', { name })).toBeInTheDocument();
+    }
+    await user.type(screen.getByRole('searchbox'), '錯題');
+    expect(screen.getByRole('link', { name: /錯題紀錄/ })).toHaveAttribute(
+      'href',
+      '/admin/data/learning/mistake_items',
+    );
+    await user.clear(screen.getByRole('searchbox'));
+    await user.type(screen.getByRole('searchbox'), 'profiles');
+    expect(screen.getByRole('link', { name: /帳號基本資料/ })).toHaveAttribute(
+      'href',
+      '/admin/data/users/profiles',
+    );
   });
 });

@@ -1,7 +1,7 @@
 # Admin C：完整平台型 Admin Deferred Option
 
 - 日期：2026-09-02（Asia/Taipei）
-- 狀態：**DEFERRED／NOT AUTHORIZED**
+- 狀態：完整 Admin C 仍 **DEFERRED**；2026-09-05 owner 已另行核准五類資料查核與五項只讀平台監控，見 [實作計畫](../plans/2026-09-05-admin-data-monitoring.md)。其餘寫入控制／研究匯出未納入。
 - 目的：保存未來可升級的完整建議與實作邊界
 - 前置：Admin B Local＋Hosted gate 通過，且 Owner 另行啟動新的 L 級 phase
 - Owner 決策（2026-09-05）：**跨班級學生支援已取消，不屬於 deferred scope**

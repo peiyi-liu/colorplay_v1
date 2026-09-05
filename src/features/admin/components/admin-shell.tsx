@@ -45,11 +45,17 @@ const NAV_GROUPS: readonly {
     label: '身分與存取',
   },
   {
-    items: [{ label: '資料瀏覽', to: '/admin/data' }],
-    label: '資料瀏覽',
+    items: [{ label: '資料查核', to: '/admin/data' }],
+    label: '資料查核',
   },
   { items: [{ label: '稽核紀錄', to: '/admin/audit' }], label: '稽核' },
-  { items: [{ label: '健康狀態', to: '/admin/health' }], label: '系統健康' },
+  {
+    items: [
+      { label: '平台監控', to: '/admin/monitoring' },
+      { label: '健康狀態', to: '/admin/health' },
+    ],
+    label: '系統健康',
+  },
 ];
 
 const navLinkClassName = ({ isActive }: { isActive: boolean }) =>

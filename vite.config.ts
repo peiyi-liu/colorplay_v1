@@ -2,6 +2,8 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
+import { adminReleaseMarkerPlugin } from './scripts/vite/admin-release-marker';
+
 import { adminBrowserCatalogPlugin } from './scripts/vite/admin-browser-catalog';
 
 const deploymentEnvironments = ['local', 'staging', 'production'] as const;
@@ -24,5 +26,10 @@ export default defineConfig(() => ({
       deploymentEnvironment(),
     ),
   },
-  plugins: [react(), tailwindcss(), adminBrowserCatalogPlugin()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    adminBrowserCatalogPlugin(),
+    adminReleaseMarkerPlugin(deploymentEnvironment()),
+  ],
 }));

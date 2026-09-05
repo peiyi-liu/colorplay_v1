@@ -43,7 +43,7 @@ function renderShell(initialEntry: string) {
               element={<p>session 清單內容</p>}
               path="/admin/access/sessions"
             />
-            <Route element={<p>資料瀏覽內容</p>} path="/admin/data" />
+            <Route element={<p>資料查核內容</p>} path="/admin/data" />
             <Route element={<p>稽核內容</p>} path="/admin/audit" />
             <Route element={<p>健康內容</p>} path="/admin/health" />
           </Route>
@@ -73,7 +73,7 @@ describe('AdminShell', () => {
     for (const label of [
       '日常營運',
       '身分與存取',
-      '資料瀏覽',
+      '資料查核',
       '稽核',
       '系統健康',
     ]) {
@@ -99,7 +99,7 @@ describe('AdminShell', () => {
     stubWide(true);
     renderShell('/admin');
 
-    expect(screen.getByRole('link', { name: '資料瀏覽' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '資料查核' })).toHaveAttribute(
       'href',
       '/admin/data',
     );

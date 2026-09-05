@@ -8,6 +8,7 @@ const routes = [
   '/admin/access/invitations',
   '/admin/access/sessions',
   '/admin/health',
+  '/admin/monitoring',
   '/admin/audit',
   '/admin/data',
   '/admin/data/users/profiles',
@@ -89,7 +90,7 @@ for (const viewport of [
   { width: 1024, height: 768 },
   { width: 1440, height: 900 },
 ]) {
-  test(`14 routes fit ${String(viewport.width)}x${String(viewport.height)}`, async ({
+  test(`15 routes fit ${String(viewport.width)}x${String(viewport.height)}`, async ({
     page,
   }) => {
     await page.setViewportSize(viewport);
@@ -123,7 +124,7 @@ for (const viewport of [
         ).toBeVisible();
       else if (route === '/admin/data')
         await expect(
-          page.getByRole('link', { name: /profiles/ }).first(),
+          page.getByRole('link', { name: '課程', exact: true }).first(),
         ).toBeVisible();
       else if (route.startsWith('/admin/data/'))
         await expect(
@@ -251,3 +252,39 @@ test('narrow navigation supports keyboard open, Escape and return focus', async 
     page.getByRole('navigation', { name: '管理主控台導覽' }),
   ).toBeHidden();
 });
+
+for (const viewport of [
+  { width: 393, height: 852 },
+  { width: 1440, height: 900 },
+]) {
+  test(
+    'operational page boundaries remain aligned at ' + String(viewport.width),
+    async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await fixture(page);
+      let baseline: { x: number; width: number } | null = null;
+      for (const route of routes.filter(
+        (path) =>
+          !path.includes('/mfa/') && !path.includes('/invitations/accept'),
+      )) {
+        await page.goto(
+          '/dev-harness/admin-console.html?route=' + encodeURIComponent(route),
+        );
+        await expect(page.locator('h1')).toBeVisible();
+        await expect(
+          page.getByRole('status', { name: '頁面載入中' }),
+        ).toHaveCount(0);
+        const box = await page
+          .locator('.admin-shell__main > section')
+          .boundingBox();
+        expect(box).not.toBeNull();
+        if (!box) throw new Error('PAGE_GEOMETRY_MISSING');
+        baseline ??= box;
+        expect(Math.abs(box.x - baseline.x), route).toBeLessThanOrEqual(1);
+        expect(Math.abs(box.width - baseline.width), route).toBeLessThanOrEqual(
+          1,
+        );
+      }
+    },
+  );
+}
