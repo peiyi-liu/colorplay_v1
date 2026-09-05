@@ -65,9 +65,28 @@ export function AdminOverviewPage() {
       aria-labelledby="admin-overview-page-heading"
       className="page-wide page-stack"
     >
-      <h1 id="admin-overview-page-heading">安全總覽</h1>
-      <p>先查看需要注意的安全狀態，再進入對應工作。</p>
+      <header className="admin-page-heading">
+        <h1 id="admin-overview-page-heading">安全總覽</h1>
+        <p>把身分、連線與安全作業放在同一個起點。</p>
+      </header>
       <AdminQueryStatus query={health} />
+      <div className="admin-summary-grid" aria-label="安全狀態摘要">
+        {[
+          ['卡住的作業', incidents.stuck_operations, '需要確認的安全作業'],
+          ['鎖定中的身分', incidents.locked_identities, '依後端回傳的身分狀態'],
+          [
+            '拒絕次數達門檻',
+            incidents.denial_threshold_breaches,
+            '依目前安全觀察窗',
+          ],
+        ].map(([title, value, note]) => (
+          <div className="admin-summary-card" key={title}>
+            <span>{title}</span>
+            <strong>{value}</strong>
+            <p>{note}</p>
+          </div>
+        ))}
+      </div>
       {hasIncidents ? (
         <section
           aria-label="安全事故旗標"
@@ -84,12 +103,12 @@ export function AdminOverviewPage() {
           <Link to="/admin/health">查看作業與合法處理方式 →</Link>
         </section>
       ) : (
-        <section>
+        <section className="admin-overview-panel">
           <h2>目前沒有安全事故旗標</h2>
           <p>這是安全控制面的查詢結果，不代表所有服務的健康狀態。</p>
         </section>
       )}
-      <section>
+      <section className="admin-overview-panel">
         <h2>安全作業</h2>
         <p>
           {response.operations.length === 0
@@ -103,6 +122,14 @@ export function AdminOverviewPage() {
         ) : null}
       </section>
       <nav className="admin-overview__links" aria-label="常用管理工作">
+        <Link to="/admin/data">
+          <strong>資料查核 →</strong>
+          <span>依五類業務找到資料與紀錄</span>
+        </Link>
+        <Link to="/admin/monitoring">
+          <strong>平台監控 →</strong>
+          <span>優先查看異常與缺少的證據</span>
+        </Link>
         <Link to="/admin/teachers">
           <strong>教師帳號 →</strong>
           <span>查詢、建立與更新教師資料</span>

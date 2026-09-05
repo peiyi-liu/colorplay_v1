@@ -1568,3 +1568,28 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 完成五類中文導覽／搜尋，所有操作頁共用固定內容寬度；15 routes × 5 viewports 與 393／1440 跨頁邊界差異 ≤1px，10 項 browser checks PASS。Admin 與 collector 36 files／288 tests PASS；15 項 Local DB rollback 測試 PASS，未 reset 共用 Local DB；typecheck、lint、build 已通過，最後格式檢查中。
 - 單一 reviewer 一輪：修正 release receipt 短暫失敗後恢復、Production proof 不得混入、HTTP 有效樣本不足不得顯示正常；加入回歸測試。延遲改讀有明確毫秒定義的 Kong header，未知保留 null。
 - 界線：教材查核含 LT 題庫 20 題門檻與媒體／版本；獎勵漏發目前可核對 Quiz 正式結果，其他活動不冒稱覆蓋。備份清單與校驗／還原證據分開，缺同環境證據保持未知。下一步 protected PR、CI、Staging 實際採集與 exact artifact 驗證。
+
+## 2026-09-05 21:44 [Codex] — 資料查核與平台監控已發布 Staging
+
+- 完成：PR #17 正常合併至 Staging，exact SHA `570c0f18a7329cc5f07cbf707b016ff787105bf1`；入口 `/admin/data` 與 `/admin/monitoring`。五類中文用途導覽／搜尋、五組可信監控及一致頁面邊界均已實作。未加入任意教材／Live／餘額寫入控制或 Production 操作。
+- 核准與 CI：candidate `a6b4af51c0ae6619616bdeb043f05e58b14414ee` 的 run `33967942409` 八項必要檢查全綠；owner-approval run `33969271340` 經既有 `staging-approval` 環境核准，沒有 admin bypass。初次從 main dispatch 不符環境分支政策，改用既有成功的 staging ref；未變更保護規則。本機全套補跑僅舊備份 fixture 5 秒逾時，單檔重跑 8 tests PASS，CI 完整 unit-coverage 同版通過。
+- 部署證據：run `33969320734` 的 deploy-exact-sha、read-only-smoke 與三 browser × 三 viewports 全部 PASS。公開 alias 實際指向 `dpl_2cNiv52Z2SVh23oMJYtNSBkegBq8`，與 pre-alias proof 一致；網站 marker 的 exact SHA 相符，Supabase ref `onkxnkzeixpezetkmocf`、public-key SHA-256 `287e53db8aa9e39769d1063303af8595c4cee0be211ffd4c34427e1890c1d0ae`。真實合成學生 `/app`、教師 `/teacher` 的登入與 profile bootstrap 皆 PASS。證據：`artifacts/acceptance/admin-ui/release-570c0f1/staging-artifact-auth.json`（不進 git）。
+- Hosted 監控：僅新增 migration `20260905000100` 已核對 ledger，未重播其他 pending migration；private schema 無 authenticated usage、service collector RPC 無 authenticated execute。每 15 分鐘 cron 已啟用，發布後採集 HTTP 200、無逾時，八項 observation 已寫入；release receipt 綁定本次 SHA／workflow。
+- 第一輪真實結果（21:38–21:40，Asia/Taipei）：8 個媒體實際可讀；21 個已發布節中 18 節 Live 題庫不足、18 節缺複習卡；311 個內容中 142 個缺同版已發布快照；6 個 Live 場次長時間閒置，須人工查核是否仍授課。錢包／Quiz 獎勵核對與完成 Live 結算未發現差異。登入 32／教材讀取 16 個 HTTP 樣本無錯誤，作答無樣本；延遲、供應商備份、備份校驗與還原證據目前未知。這些是 Staging 當時的查核結果，不代表 Production 或自動修復完成。
+- 界線：完整 learning phase acceptance 與人工裝置 gate 仍依既有流程獨立判定；本次不藉缺失證據宣稱還原可用或完整 phase 通過。後續內容缺漏修正、備份／還原證據接入及其他活動漏發覆蓋另列工作。
+- 21:45 定時驗證：cron 自動觸發 succeeded，八項 observation 的 checked_at 更新至 `2026-09-05T13:45:10.607203Z`，確認不是只有部署時單次採集。Owner 提醒重點是 Admin 畫面與內容，已另製作免登入七畫面預覽（五類資料查核／平台監控／安全總覽）：`/Users/guanyucheng/.codex/visualizations/2026/09/05/01a0709f-85ed-7ee2-8b20-911fc4df466a/admin-updated-preview/index.html`。來源為本次已實作元件＋合成資料；固定外框、七張圖片載入與實際頁面 x／width 一致性驗證 PASS，未回讀截圖。Staging 仍保留管理員登入與 MFA。
+
+## 2026-09-06 [Codex] — ui-ux-pro-max Admin 優化提案預覽
+
+- Owner 指定 ui-ux-pro-max 再優化 Admin，接續明確要求先看預計畫面；本輪範圍改為獨立互動預覽，未修改產品程式／API／權限，也未重新部署。
+- 已依技能執行 design-system、UX 與 React 搜尋，製作資料查核、平台監控、教師帳號、安全總覽四頁：固定共用框架、五分類並排查找、監控異常優先與按需展開、教師狀態對應下一步。入口仍覆蓋現有 46 個受控資源，所有數值與帳號清楚標示合成示範。
+- 預覽：`/Users/guanyucheng/.codex/visualizations/2026/09/05/01a0709f-85ed-7ee2-8b20-911fc4df466a/admin-ux-refinement/index.html`；同目錄有 design-notes.md 與 manifest.json。320／375／768／1024／1440 × 四頁、左右邊界一致、無整頁橫向溢出、搜尋／篩選／Dialog／手機導覽與示範建立確認 PASS。無外部網路請求／page errors，未回讀截圖。
+- 下一步：Owner 檢視這份「預計優化」方向後，再將選定設計套用既有 Admin 元件。此前已部署的 570c0f18 仍是本任務最後一次核對的 Staging 版本，本輪未重新查詢線上狀態。
+
+## 2026-09-06 [Codex] — Admin UI／UX 優化已核准並套用真實元件
+
+- Owner 核准「開始實作，完成後部署 staging，我會看最後結果」。基準 origin/staging `570c0f18`，分支 `codex/admin-ux-refinement`；計畫 `docs/superpowers/plans/2026-09-06-admin-ux-refinement.md`。
+- 共用淺灰白／靛藍樣式、九個導覽圖示與固定頁面寬度、手機原生 Dialog 導覽及首尾焦點循環；資料分類並排／快捷搜尋／用途與技術資訊分層；19 個唯一監控項目的需查核／資料不足／全部篩選與按需展開；教師清單與安全總覽層級重整。只使用既有 API 結果，未變更權限、migration、教師建立／秘密收據／非同步交易流程。
+- 一位 reviewer、一輪，2 個 P2 已修正：資料不足空篩選不得宣稱無异常，補 attention=1/incomplete=0 回歸；重新整理按鈕恢復 44px。單元測試 34 files／282 tests PASS，lint／typecheck／build 通過；browser 全套在最終樣式修正後重跑。此前 9 項排版／流程 PASS，手機新增首尾焦點檢查已單獨 PASS。
+- 下一步：精確候選 protected CI／owner-approval、正常合併 Staging、真實登入與部署版本證據。使用者新增的未追蹤 `.codex/skills/` 保持原狀，不納入本次產品 commit。
+- 最終本機檢查：10 項 browser checks 全部 PASS（15 routes × 5 viewports、393／1440 邊界、手機焦點首尾循環、原有長等待／accepted／刷新失敗保留資料／200% zoom）；lint 與 tracked-file Prettier PASS。JSDOM 未提供原生 Dialog 方法，單元 seam 用測試專屬替身，實際焦點行為由 Chromium 驗證。

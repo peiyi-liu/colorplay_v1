@@ -1,0 +1,268 @@
+/* Shared Admin framework, scoped away from student and teacher surfaces. */
+.game-stage[data-shell-role='admin'],
+.game-stage[data-shell-role='admin'] #main-content {
+  background: var(--admin-page);
+}
+.admin-shell {
+  --admin-rule: var(--admin-border);
+  --admin-muted: var(--admin-text-muted);
+  background: var(--admin-page);
+  color: var(--admin-ink);
+}
+.admin-shell .admin-shell__nav {
+  background: var(--admin-surface);
+  gap: 16px;
+  padding: 24px 16px;
+}
+.admin-shell__brand {
+  padding: 0 12px 20px;
+}
+.admin-shell__brand span {
+  color: var(--admin-accent);
+  letter-spacing: 0.12em;
+}
+.admin-shell__brand strong {
+  font-size: 21px;
+}
+.admin-shell .admin-shell__group-label {
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 12px 6px;
+}
+.admin-shell .admin-shell__link {
+  border: 1px solid transparent;
+  gap: 10px;
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--admin-muted);
+}
+.admin-shell .admin-shell__link svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.admin-shell .admin-shell__link:hover {
+  background: var(--admin-soft);
+}
+.admin-shell .admin-shell__link--active {
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent);
+  border-color: transparent;
+  font-weight: 700;
+}
+.admin-shell .admin-shell__context {
+  font-size: 13px;
+  border-bottom: 1px solid var(--admin-rule);
+  padding-bottom: 18px;
+  margin-bottom: 26px;
+}
+.admin-shell .admin-shell__main > .page-wide {
+  max-width: 1180px;
+  margin-inline: auto;
+}
+.admin-shell .page-stack {
+  gap: 22px;
+}
+.admin-shell h1 {
+  font-size: clamp(26px, 2.2vw, 30px);
+  letter-spacing: -0.025em;
+}
+.admin-shell .admin-page-heading {
+  display: flex;
+  align-items: start;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 18px;
+}
+.admin-page-heading > p {
+  flex-basis: 100%;
+}
+.admin-page-heading p,
+.admin-teachers__heading-row p {
+  margin: 8px 0 0;
+  color: var(--admin-muted);
+  font-size: 14px;
+}
+.admin-shell :is(button, a, summary) {
+  transition:
+    color 180ms,
+    background-color 180ms,
+    border-color 180ms;
+}
+.admin-shell :is(button, a, summary):focus-visible {
+  outline: 3px solid var(--admin-accent);
+  outline-offset: 3px;
+}
+.admin-shell button:not(:disabled) {
+  cursor: pointer;
+}
+.admin-shell .primary-action {
+  background: var(--admin-accent);
+  border-color: var(--admin-accent);
+}
+.admin-shell .primary-action:hover:not(:disabled) {
+  background: var(--admin-accent-hover);
+}
+.admin-shell .secondary-action {
+  border-color: var(--admin-rule);
+  color: var(--admin-ink);
+}
+.admin-shell .secondary-action:hover:not(:disabled) {
+  background: var(--admin-soft);
+}
+.admin-shell :is(a, summary) {
+  color: var(--admin-accent);
+}
+.admin-shell .admin-query-status {
+  border: 1px solid var(--admin-rule);
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: var(--admin-surface);
+  font-size: 12px;
+  gap: 8px 16px;
+}
+.admin-shell .admin-query-status p {
+  font-size: 12px;
+  flex-basis: 210px;
+}
+.admin-shell .admin-query-status button {
+  font-size: 13px;
+  min-height: 44px;
+  padding: 8px 12px;
+}
+.admin-shell .ui-table {
+  font-size: 14px;
+}
+.admin-shell .ui-table th {
+  background: var(--admin-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+.admin-shell .ui-table :is(th, td) {
+  padding: 16px 20px;
+  border-color: var(--admin-rule);
+}
+.admin-shell .ui-table tbody tr:hover {
+  background: var(--admin-accent-soft);
+}
+.admin-shell .ui-table-scroll {
+  border-radius: 12px;
+}
+.admin-shell .admin-teachers__filters {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  gap: 12px;
+}
+.admin-shell .admin-teachers__filters > div:first-child {
+  flex: 1;
+}
+.admin-shell .admin-teachers__filters input {
+  width: 100%;
+}
+.admin-shell .admin-teachers__heading-row > div:first-child {
+  margin-right: auto;
+}
+.admin-shell .admin-teachers__detail-link {
+  display: inline-block;
+  min-height: 44px;
+  padding: 8px 0;
+  white-space: nowrap;
+}
+.admin-shell .admin-overview__links {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.admin-shell .admin-overview__links a {
+  border-color: var(--admin-rule);
+  border-radius: 10px;
+  padding: 20px 24px;
+}
+.admin-shell .admin-overview__links a:hover {
+  background: var(--admin-accent-soft);
+}
+.admin-shell .admin-overview__links strong {
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+.admin-overview-panel {
+  padding: 22px 24px;
+  border: 1px solid var(--admin-rule);
+  border-radius: 12px;
+  background: var(--admin-surface);
+}
+.admin-overview-panel p {
+  color: var(--admin-muted);
+  font-size: 14px;
+}
+.admin-shell .admin-shell__menu-toggle {
+  border: 1px solid var(--admin-rule);
+  background: var(--admin-surface);
+  color: var(--admin-ink);
+  border-radius: 7px;
+  padding: 8px 12px;
+  gap: 8px;
+  font-size: 14px;
+}
+.admin-shell__menu-toggle svg {
+  width: 18px;
+}
+.admin-nav-dialog {
+  position: fixed;
+  margin: 0 auto 0 0;
+  width: min(320px, calc(100% - 36px));
+  height: 100dvh;
+  max-height: 100dvh;
+  max-width: none;
+  border: 0;
+  padding: 0;
+  background: var(--admin-surface);
+  color: var(--admin-ink);
+  overflow-y: auto;
+}
+.admin-nav-dialog::backdrop {
+  background: rgb(24 34 57 / 45%);
+}
+.admin-nav-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 12px 0 auto;
+  min-height: 44px;
+  padding: 8px 12px;
+  background: var(--admin-soft);
+  border: 0;
+  border-radius: 6px;
+  color: var(--admin-ink);
+}
+.admin-nav-close svg {
+  width: 18px;
+}
+@media (min-width: 1024px) {
+  .admin-shell.admin-shell--wide .admin-shell__nav {
+    flex-basis: 236px;
+  }
+  .admin-shell .admin-shell__main {
+    padding: 26px 36px 40px;
+  }
+}
+@media (max-width: 767px) {
+  .admin-shell .admin-overview__links {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .admin-shell .admin-shell__main {
+    padding: 12px 16px 30px;
+  }
+  .admin-shell .admin-query-status p {
+    flex-basis: 100%;
+  }
+  .admin-shell .admin-teachers__filters {
+    padding: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-shell :is(button, a, summary) {
+    transition: none;
+  }
+}

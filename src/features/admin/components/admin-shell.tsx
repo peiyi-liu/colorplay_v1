@@ -1,9 +1,36 @@
 import { AdminOperationProvider } from './admin-operation-notices';
 import '../../../styles/admin-console.css';
+import '../../../styles/admin-refinement.css';
+import '../../../styles/admin-workspaces.css';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import {
+  Activity,
+  BookOpen,
+  ClipboardList,
+  HeartPulse,
+  KeyRound,
+  LayoutDashboard,
+  Mail,
+  Menu,
+  ShieldCheck,
+  Users,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 
 const WIDE_QUERY = '(min-width: 1024px)';
+const NAV_ICONS: Record<string, LucideIcon> = {
+  安全總覽: LayoutDashboard,
+  教師帳號: Users,
+  管理員: ShieldCheck,
+  邀請: Mail,
+  特權連線: KeyRound,
+  資料查核: BookOpen,
+  稽核紀錄: ClipboardList,
+  平台監控: Activity,
+  健康狀態: HeartPulse,
+};
 
 // 1024px 分界(spec §3.4 三視口:1280×720 常駐、812×375/375×812 收 drawer)。
 // 812 寬雖已達 GameStage 的 768px 橫向分界,admin shell 仍要收 drawer,
@@ -70,6 +97,7 @@ export function AdminShell(): ReactElement {
   const wide = useAdminShellWide();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const location = useLocation();
 
   // 換頁後收起 drawer;寬版永遠可見不受影響。渲染期間調整狀態(React 官方
@@ -96,6 +124,52 @@ export function AdminShell(): ReactElement {
   }, [drawerOpen]);
 
   const navVisible = wide || drawerOpen;
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (drawerOpen && !wide) {
+      if (!dialog.open) dialog.showModal();
+    } else if (dialog.open) {
+      dialog.close();
+      toggleRef.current?.focus();
+    }
+  }, [drawerOpen, wide]);
+
+  const navigation = (
+    <nav
+      aria-label="管理主控台導覽"
+      className="admin-shell__nav"
+      hidden={!navVisible}
+      id="admin-shell-nav"
+    >
+      <div className="admin-shell__brand">
+        <span>COLORPLAY</span>
+        <strong>管理控制台</strong>
+      </div>
+      {NAV_GROUPS.map((group) => (
+        <div className="admin-shell__group" key={group.label}>
+          <p className="admin-shell__group-label">{group.label}</p>
+          <ul>
+            {group.items.map((item) => {
+              const Icon = NAV_ICONS[item.label];
+              return (
+                <li key={item.to}>
+                  <NavLink
+                    className={navLinkClassName}
+                    end={item.end ?? false}
+                    to={item.to}
+                  >
+                    {Icon ? <Icon aria-hidden="true" /> : null}
+                    {item.label}
+                  </NavLink>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </nav>
+  );
 
   return (
     <div className={`admin-shell${wide ? ' admin-shell--wide' : ''}`}>
@@ -110,38 +184,53 @@ export function AdminShell(): ReactElement {
           ref={toggleRef}
           type="button"
         >
+          <Menu aria-hidden="true" />
           開啟導覽
         </button>
       ) : null}
-      <nav
-        aria-label="管理主控台導覽"
-        className="admin-shell__nav"
-        hidden={!navVisible}
-        id="admin-shell-nav"
-      >
-        <div className="admin-shell__brand">
-          <span>COLORPLAY</span>
-          <strong>管理控制台</strong>
-        </div>
-        {NAV_GROUPS.map((group) => (
-          <div className="admin-shell__group" key={group.label}>
-            <p className="admin-shell__group-label">{group.label}</p>
-            <ul>
-              {group.items.map((item) => (
-                <li key={item.to}>
-                  <NavLink
-                    className={navLinkClassName}
-                    end={item.end ?? false}
-                    to={item.to}
-                  >
-                    {item.label}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </nav>
+      {wide ? (
+        navigation
+      ) : (
+        <dialog
+          className="admin-nav-dialog"
+          ref={dialogRef}
+          aria-label="管理導覽"
+          onKeyDown={(event) => {
+            if (event.key !== 'Tab') return;
+            const controls = event.currentTarget.querySelectorAll<HTMLElement>(
+              'button:not([disabled]), a[href]',
+            );
+            const first = controls[0];
+            const last = controls[controls.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+              event.preventDefault();
+              last?.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+              event.preventDefault();
+              first?.focus();
+            }
+          }}
+          onCancel={(event) => {
+            event.preventDefault();
+            setDrawerOpen(false);
+          }}
+          onClose={() => {
+            setDrawerOpen(false);
+          }}
+        >
+          <button
+            className="admin-nav-close"
+            type="button"
+            onClick={() => {
+              setDrawerOpen(false);
+            }}
+          >
+            <X aria-hidden="true" />
+            關閉導覽
+          </button>
+          {navigation}
+        </dialog>
+      )}
       {/* div 不用 main:AppShell 的 <main id="main-content"> 已是全站唯一 main
           landmark(review 波標準軸抓到巢狀 main 會讓螢幕閱讀器多出重複
           landmark)。 */}
