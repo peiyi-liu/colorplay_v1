@@ -1504,3 +1504,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 同一 job 也誤跑需 `PLAYWRIGHT_ACCEPTANCE=on`、專屬 fixture 與 evidence root 的 `chapter-sequence.spec.ts`；一般 suite 現排除，`pnpm phase:chapter-sequence` 在 acceptance mode 下仍可執行。
 - 同步校正已由現行產品／CSS／元件測試證明過時的瀏覽器斷言：登入後標題為「學習地圖」、公開入口為「開始冒險」、地圖動態 CTA 為「開始／繼續／查看第 N 章」、認證 main 允許 `overflow-y:auto` 以支援受限高度，以及內容未備妥 panel 的 eyebrow 完整文案。未放寬無水平溢位、控制項可見性、Auth 真實登入或後端資料斷言。
 - 真實重現另確認，多數學習頁失敗是舊 Local fixture 學生沒有 `login_account`，因而被現行 completed-registration guard 正確導向註冊頁。Seeder 現只在 loopback Local stack 為未具正式帳號 fixture 的學生補上唯一 `fixtureNN` 帳號；remote seed 行為與既有 Hosted fixture 身分不變，本輪也不執行 Hosted seed／migration。
+
+## 2026-09-05 16:16 [Codex] — Admin 後續範圍與 recovery Staging 修正窗口
+
+- Owner 決策：跨班級學生支援自 Admin C 完整取消，不是延後項目；第一個 Staging Admin 已建立並完成 MFA，其餘 Admin B Hosted lifecycle／教師操作／角色拒絕／fixture cleanup 測試延後到同一個後續核准窗口，Task 7 目前仍為 `NOT VERIFIED`。
+- Recovery：確認 Staging 已部署 `auth-recover` 的 Origin 白名單與 fallback 仍指向舊 `colorplay-staging.vercel.app`。Owner 已核准修正並部署 Staging；新增 contract regression 後已完成 RED→GREEN，custom domain 與 fallback 均改為 `https://staging.colorplayapp.com`。下一步只經 protected Staging pipeline 部署並做 custom-domain smoke，不碰 Production 或 Hosted DB。
+- Admin UI：已另開 `gpt-6-astra` 專案 task「Admin UI 與營運資訊架構優化」，基準為 `origin/staging` 的 `2a37a09`。主技能為 `ecc:frontend-design-direction`，搭配 `ecc:dashboard-builder` 與 `ecc:make-interfaces-feel-better`；先 audit 每頁 operator questions、資訊層級與前後端 pending／成功／錯誤／逾時／部分完成／刷新狀態，再提出 L 級設計與實作計畫。Recovery 修正不在該 task 範圍。
