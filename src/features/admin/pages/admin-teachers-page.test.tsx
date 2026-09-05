@@ -269,9 +269,7 @@ describe('AdminTeachersPage', () => {
       rows: [],
     });
     const first = renderPage();
-    expect(
-      await screen.findByText('目前沒有符合條件的教師帳號。'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('尚未建立教師帳號。')).toBeInTheDocument();
     first.unmount();
 
     repository.listTeachers.mockResolvedValueOnce({

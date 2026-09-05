@@ -21,7 +21,9 @@ describe('AdminDataIndexPage', () => {
       'rewards',
       'users',
     ]) {
-      expect(screen.getByRole('heading', { name: domain })).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: new RegExp(domain) }),
+      ).toBeInTheDocument();
     }
 
     const users = screen.getByRole('region', { name: 'users' });

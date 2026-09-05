@@ -1,3 +1,7 @@
+import { commandOutcome, type SafeCommandOutcome } from '../api/admin-outcome';
+import { AdminTrace } from './admin-trace';
+import { useAdminOperations } from './admin-operation-notices';
+import { useAdminWait } from '../hooks/use-admin-wait';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useForm } from 'react-hook-form';
@@ -52,12 +56,17 @@ export function AdminCommandDialog({
   const location = useLocation();
   const session = useAdminSessionState();
   const toast = useToast();
-  const [idempotencyKey, setIdempotencyKey] = useState(() =>
-    crypto.randomUUID(),
-  );
+  const operations = useAdminOperations();
+  const mounted = useRef(true);
+  const inFlight = useRef(false);
+  const submittedArgs = useRef<Record<string, unknown> | null>(null);
+  const [attemptStarted, setAttemptStarted] = useState(false);
+  const [outcome, setOutcome] = useState<SafeCommandOutcome | null>(null);
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [submitting, setSubmitting] = useState(false);
   const [deniedCode, setDeniedCode] = useState<AdminErrorCode | null>(null);
   const [unexpectedError, setUnexpectedError] = useState(false);
+  const longWait = useAdminWait(submitting);
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -73,11 +82,13 @@ export function AdminCommandDialog({
   });
 
   useEffect(() => {
+    mounted.current = true;
     previousFocusRef.current = document.activeElement as HTMLElement | null;
     const first =
       dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
     first?.focus();
     return () => {
+      mounted.current = false;
       previousFocusRef.current?.focus();
     };
   }, []);
@@ -91,7 +102,7 @@ export function AdminCommandDialog({
       // drawer,兩邊的 focus-restore 互搶造成焦點恢復競態(review 波 bugs
       // 軸抓到)。
       event.stopPropagation();
-      if (submitting) return;
+      if (submitting && !longWait) return;
       onCancel();
       return;
     }
@@ -112,21 +123,38 @@ export function AdminCommandDialog({
     }
   };
 
-  const submit = handleSubmit(async (values) => {
+  const submit = async (values: ReasonFormValues) => {
+    if (
+      inFlight.current ||
+      (!attemptStarted && operations?.blocked(command)) ||
+      (outcome && !outcome.retryable)
+    )
+      return;
+    inFlight.current = true;
+    setAttemptStarted(true);
     setSubmitting(true);
+    operations?.begin(command, idempotencyKey, title);
     setDeniedCode(null);
     setUnexpectedError(false);
     try {
-      const commandArgs = requiresReason
-        ? { ...args, reason: values.reason }
-        : args;
+      const commandArgs =
+        submittedArgs.current ??
+        (requiresReason ? { ...args, reason: values.reason } : args);
+      submittedArgs.current = commandArgs;
       const response = await invokeAdminCommand(
         command,
         idempotencyKey,
         commandArgs,
       );
-      if (response.outcome === 'ok' || response.outcome === 'replayed') {
-        toast({ message: '操作已完成。', tone: 'success' });
+      const safe = commandOutcome(command, response);
+      operations?.settle(idempotencyKey, safe);
+      if (!mounted.current) return;
+      setOutcome(safe);
+      if (safe.kind === 'completed' || safe.kind === 'accepted') {
+        toast({
+          message: safe.message,
+          tone: safe.kind === 'completed' ? 'success' : 'info',
+        });
         onSettled(response);
         return;
       }
@@ -138,20 +166,24 @@ export function AdminCommandDialog({
         });
         return;
       }
-      if (code === 'IDEMPOTENCY_CONFLICT') {
-        setIdempotencyKey(crypto.randomUUID());
-      }
+
       if (code) {
         setDeniedCode(code);
       } else {
         setUnexpectedError(true);
       }
     } catch {
-      setUnexpectedError(true);
+      const safe = commandOutcome(command, null);
+      operations?.settle(idempotencyKey, safe);
+      if (mounted.current) {
+        setOutcome(safe);
+        setUnexpectedError(true);
+      }
     } finally {
-      setSubmitting(false);
+      inFlight.current = false;
+      if (mounted.current) setSubmitting(false);
     }
-  });
+  };
 
   return (
     <div className="admin-command-dialog__backdrop">
@@ -164,7 +196,7 @@ export function AdminCommandDialog({
         role="dialog"
       >
         <h2 id="admin-command-dialog-title">{title}</h2>
-        <form onSubmit={(event) => void submit(event)}>
+        <form onSubmit={(event) => void handleSubmit(submit)(event)}>
           {requiresReason ? (
             <div className="admin-command-dialog__field">
               <label htmlFor="admin-command-dialog-reason">原因</label>
@@ -175,6 +207,7 @@ export function AdminCommandDialog({
                     : undefined
                 }
                 aria-invalid={errors.reason ? 'true' : 'false'}
+                disabled={submitting || attemptStarted}
                 id="admin-command-dialog-reason"
                 {...register('reason')}
               />
@@ -186,22 +219,45 @@ export function AdminCommandDialog({
             </div>
           ) : null}
           {unexpectedError ? (
-            <p role="alert">發生非預期的錯誤，請稍後再試或聯絡負責人。</p>
+            <p role="alert">
+              尚無法確認操作結果。請先查核狀態，系統不會自動重送。
+            </p>
           ) : null}
           <AdminStatusBanner code={deniedCode} />
+          {outcome ? (
+            <>
+              <AdminTrace value={outcome.requestId} />
+              <AdminTrace label="作業代碼" value={outcome.operationId} />
+              {outcome.kind === 'unknown' && !unexpectedError ? (
+                <p role="alert">{outcome.message}</p>
+              ) : null}
+            </>
+          ) : null}
+          {longWait ? (
+            <p role="status">
+              尚未收到最終結果。關閉視窗不會撤銷已送出的作業；請稍後查看操作結果。
+            </p>
+          ) : null}
+          {operations?.blocked(command) && !attemptStarted ? (
+            <p role="alert">此類操作尚有結果未確認，請先查看本次操作結果。</p>
+          ) : null}
           <div className="admin-command-dialog__actions">
             <button
               className="secondary-action"
-              disabled={submitting}
+              disabled={submitting && !longWait}
               onClick={onCancel}
               type="button"
             >
-              取消
+              {submitting ? '關閉視窗，稍後查看' : '取消'}
             </button>
             <button
               className="primary-action"
               data-primary-action="true"
-              disabled={submitting}
+              disabled={
+                submitting ||
+                (outcome !== null && !outcome.retryable) ||
+                (!attemptStarted && operations?.blocked(command) === true)
+              }
               type="submit"
             >
               {submitting ? '處理中…' : '確認'}

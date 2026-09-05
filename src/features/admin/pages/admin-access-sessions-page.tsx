@@ -1,7 +1,9 @@
+import { safeTraceId } from '../api/admin-outcome';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { AdminPageLoading } from '../components/admin-page-loading';
+import { AdminQueryStatus } from '../components/admin-query-status';
 import {
   adminRpc,
   extractErrorCode,
@@ -78,9 +80,10 @@ export function AdminAccessSessionsPage() {
   const staleSession = code === 'STALE_PRIVILEGED_SESSION';
   useAdminStaleSessionRedirect(staleSession);
 
-  if (list.isPending || staleSession) return <RouteLoading withinMain />;
+  if (list.isPending || staleSession)
+    return <AdminPageLoading title="特權連線" onRetry={() => list.refetch()} />;
 
-  if (list.isError || !firstPage || firstPage.outcome === 'denied') {
+  if (!list.data || !firstPage || firstPage.outcome === 'denied') {
     const denied = firstPage?.outcome === 'denied' ? firstPage : null;
     const canRetry = !denied || denied.retryable === true;
     return (
@@ -95,7 +98,7 @@ export function AdminAccessSessionsPage() {
           <p role="alert">Session 清單載入失敗，請稍後重試。</p>
         )}
         {typeof denied?.request_id === 'string' ? (
-          <p>追蹤代碼：{denied.request_id}</p>
+          <p>追蹤代碼：{safeTraceId(denied.request_id)}</p>
         ) : null}
         {canRetry ? (
           <button
@@ -122,6 +125,7 @@ export function AdminAccessSessionsPage() {
       className="page-wide page-stack"
     >
       <h1 id="admin-access-sessions-page-heading">特權連線</h1>
+      <AdminQueryStatus query={list} />
       {rows.length === 0 ? (
         <p>目前沒有 admin session。</p>
       ) : (
@@ -132,6 +136,7 @@ export function AdminAccessSessionsPage() {
                 <th scope="col">裝置</th>
                 <th scope="col">建立時間</th>
                 <th scope="col">最後活動</th>
+                <th scope="col">撤銷狀態</th>
                 <th scope="col">撤銷原因</th>
                 <th scope="col">動作</th>
               </tr>
@@ -142,6 +147,11 @@ export function AdminAccessSessionsPage() {
                   <td>{row.device_summary ?? '—'}</td>
                   <td>{formatAdminTimestamp(row.created_at)}</td>
                   <td>{formatAdminTimestamp(row.last_activity_at)}</td>
+                  <td>
+                    {row.revoked_at ? '已撤銷' : '尚未撤銷'}
+                    <br />
+                    到期：{formatAdminTimestamp(row.absolute_expires_at)}
+                  </td>
                   <td>{row.revoke_reason ?? '—'}</td>
                   <td>
                     {row.revoked_at === null ? (
@@ -168,7 +178,7 @@ export function AdminAccessSessionsPage() {
                         </div>
                         <div>
                           <dt>Correlation ID</dt>
-                          <dd>{row.correlation_id ?? '—'}</dd>
+                          <dd>{safeTraceId(row.correlation_id) ?? '—'}</dd>
                         </div>
                         <div>
                           <dt>絕對到期</dt>
@@ -211,7 +221,7 @@ export function AdminAccessSessionsPage() {
         <div className="admin-data-browser__page-error">
           <AdminStatusBanner code={extractErrorCode(laterDenied)} />
           {typeof laterDenied.request_id === 'string' ? (
-            <p>追蹤代碼：{laterDenied.request_id}</p>
+            <p>追蹤代碼：{safeTraceId(laterDenied.request_id)}</p>
           ) : null}
           {laterDenied.retryable === true ? (
             <button

@@ -76,7 +76,7 @@ describe('AdminInvitationAcceptPage', () => {
     vi.mocked(adminRpc).mockResolvedValue({
       code: 'INVITATION_INVALID',
       outcome: 'denied',
-      request_id: 'request-123',
+      request_id: '959a57df-8932-5296-a9c5-a1b4321f969d',
       retryable: false,
     });
     renderPage();
@@ -87,7 +87,9 @@ describe('AdminInvitationAcceptPage', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(
       '邀請無效或已失效',
     );
-    expect(screen.getByText(/request-123/u)).toBeInTheDocument();
+    expect(
+      screen.getByText(/959a57df-8932-5296-a9c5-a1b4321f969d/u),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: '重試' }),
     ).not.toBeInTheDocument();

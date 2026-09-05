@@ -1,8 +1,10 @@
+import { safeTraceId } from '../api/admin-outcome';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
-import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { AdminPageLoading } from '../components/admin-page-loading';
+import { AdminQueryStatus } from '../components/admin-query-status';
 import {
   browserProjectionColumns,
   filterableColumns,
@@ -149,7 +151,10 @@ export function AdminDataBrowserPage() {
   const staleSession = code === 'STALE_PRIVILEGED_SESSION';
   useAdminStaleSessionRedirect(staleSession);
 
-  if (list.isPending || staleSession) return <RouteLoading withinMain />;
+  if (list.isPending || staleSession)
+    return (
+      <AdminPageLoading title="資料瀏覽器" onRetry={() => list.refetch()} />
+    );
 
   if (firstPageCode === 'RESOURCE_NOT_ALLOWED') {
     const requestId =
@@ -164,14 +169,15 @@ export function AdminDataBrowserPage() {
         <p role="alert">此資源不可瀏覽</p>
         {typeof requestId === 'string' ? (
           <p>
-            追蹤代碼：<span data-testid="admin-request-id">{requestId}</span>
+            追蹤代碼：
+            <span data-testid="admin-request-id">{safeTraceId(requestId)}</span>
           </p>
         ) : null}
       </section>
     );
   }
 
-  if (list.isError || !firstPage || firstPage.outcome === 'denied') {
+  if (!list.data || !firstPage || firstPage.outcome === 'denied') {
     const deniedFirstPage =
       firstPage?.outcome === 'denied' ? firstPage : undefined;
     // 網路層失敗沒有 envelope,重試是唯一出路;已入帳的 denial 則依 §11 的
@@ -192,7 +198,7 @@ export function AdminDataBrowserPage() {
           <p>
             追蹤代碼：
             <span data-testid="admin-request-id">
-              {deniedFirstPage.request_id}
+              {safeTraceId(deniedFirstPage.request_id)}
             </span>
           </p>
         ) : null}
@@ -249,6 +255,7 @@ export function AdminDataBrowserPage() {
       <h1 id="admin-data-browser-page-heading">
         資料瀏覽器：{domain}/{resource}
       </h1>
+      <AdminQueryStatus query={list} />
 
       <form
         className="admin-data-browser__query"
@@ -331,7 +338,7 @@ export function AdminDataBrowserPage() {
             <p>
               追蹤代碼：
               <span data-testid="admin-later-request-id">
-                {laterDeniedPage.request_id}
+                {safeTraceId(laterDeniedPage.request_id)}
               </span>
             </p>
           ) : null}

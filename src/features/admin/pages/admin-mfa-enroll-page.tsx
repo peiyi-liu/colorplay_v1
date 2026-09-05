@@ -1,3 +1,4 @@
+import { useAdminWait } from '../hooks/use-admin-wait';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -5,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { z } from 'zod';
 
-import { RpgWindow } from '../../../components/ui/rpg-window';
+import '../../../styles/admin-console.css';
 import {
   extractErrorCode,
   invokeAdminMfa,
@@ -83,6 +84,7 @@ export function AdminMfaEnrollPage() {
     }
   }, [applyEnrollmentResponse]);
 
+  const longWait = useAdminWait(isSubmitting || beginPending);
   useEffect(() => {
     mounted.current = true;
     void invokeAdminMfa({ action: 'begin-enrollment' })
@@ -136,8 +138,8 @@ export function AdminMfaEnrollPage() {
 
   if (beginError === 'INSUFFICIENT_MFA') {
     return (
-      <RpgWindow>
-        <h1 className="pixel-heading">管理員驗證器綁定</h1>
+      <section className="admin-auth-panel">
+        <h1 className="admin-auth-panel__heading">管理員驗證器綁定</h1>
         <p aria-live="polite" role="status">
           請重新輸入密碼登入後再繼續
         </p>
@@ -150,13 +152,13 @@ export function AdminMfaEnrollPage() {
         >
           返回登入
         </Link>
-      </RpgWindow>
+      </section>
     );
   }
 
   return (
-    <RpgWindow>
-      <h1 className="pixel-heading">管理員驗證器綁定</h1>
+    <section className="admin-auth-panel">
+      <h1 className="admin-auth-panel__heading">管理員驗證器綁定</h1>
       {beginPending ? <p role="status">正在建立驗證器設定…</p> : null}
       {beginFailed ? (
         <>
@@ -179,62 +181,69 @@ export function AdminMfaEnrollPage() {
         </>
       ) : null}
       {factor ? (
-        <form
-          className="admin-mfa-form"
-          onSubmit={(event) => void onSubmit(event)}
-        >
-          <p>請掃描 QR code，再輸入驗證器 App 產生的 6 位數驗證碼。</p>
-          <div className="admin-mfa-form__qr">
-            <QRCodeSVG
-              size={192}
-              title="管理員驗證器設定 QR code"
-              value={factor.qrUri}
-            />
-          </div>
-          <details>
-            <summary>無法掃描？顯示文字密鑰</summary>
-            <code data-testid="totp-secret">{factor.totpSecret}</code>
-          </details>
-          <div>
-            <label htmlFor="admin-mfa-enroll-code">驗證碼</label>
-            <input
-              aria-describedby={
-                errors.code ? 'admin-mfa-enroll-code-error' : undefined
-              }
-              aria-invalid={errors.code ? 'true' : 'false'}
-              autoComplete="one-time-code"
-              id="admin-mfa-enroll-code"
-              inputMode="numeric"
-              maxLength={6}
-              {...codeRegistration}
-              ref={(element) => {
-                codeRegistration.ref(element);
-                codeInputRef.current = element;
-              }}
-            />
-            {errors.code ? (
-              <p id="admin-mfa-enroll-code-error" role="alert">
-                {errors.code.message}
-              </p>
-            ) : null}
-          </div>
-          {unexpectedError === 'submit' ? (
-            <p role="alert">發生非預期的錯誤，請稍後再試或聯絡負責人。</p>
+        <>
+          {longWait ? (
+            <p role="status">
+              請求處理時間較長，尚未收到最終結果。請勿重複送出；離開頁面不會撤銷已送出的請求。
+            </p>
           ) : null}
-          <AdminStatusBanner code={submitError} />
-          <button
-            className="primary-action"
-            data-acceptance-interactive="true"
-            data-acceptance-target
-            data-primary-action="true"
-            disabled={isSubmitting || submitError === 'MFA_LOCKED'}
-            type="submit"
+          <form
+            className="admin-mfa-form"
+            onSubmit={(event) => void onSubmit(event)}
           >
-            完成綁定
-          </button>
-        </form>
+            <p>請掃描 QR code，再輸入驗證器 App 產生的 6 位數驗證碼。</p>
+            <div className="admin-mfa-form__qr">
+              <QRCodeSVG
+                size={192}
+                title="管理員驗證器設定 QR code"
+                value={factor.qrUri}
+              />
+            </div>
+            <details>
+              <summary>無法掃描？顯示文字密鑰</summary>
+              <code data-testid="totp-secret">{factor.totpSecret}</code>
+            </details>
+            <div>
+              <label htmlFor="admin-mfa-enroll-code">驗證碼</label>
+              <input
+                aria-describedby={
+                  errors.code ? 'admin-mfa-enroll-code-error' : undefined
+                }
+                aria-invalid={errors.code ? 'true' : 'false'}
+                autoComplete="one-time-code"
+                id="admin-mfa-enroll-code"
+                inputMode="numeric"
+                maxLength={6}
+                {...codeRegistration}
+                ref={(element) => {
+                  codeRegistration.ref(element);
+                  codeInputRef.current = element;
+                }}
+              />
+              {errors.code ? (
+                <p id="admin-mfa-enroll-code-error" role="alert">
+                  {errors.code.message}
+                </p>
+              ) : null}
+            </div>
+            {unexpectedError === 'submit' ? (
+              <p role="alert">發生非預期的錯誤，請稍後再試或聯絡負責人。</p>
+            ) : null}
+            <AdminStatusBanner code={submitError} />
+            <button
+              className="primary-action"
+              data-acceptance-interactive="true"
+              data-acceptance-target
+              data-primary-action="true"
+              disabled={isSubmitting || submitError === 'MFA_LOCKED'}
+              type="submit"
+            >
+              {isSubmitting ? '綁定中…' : '完成綁定'}
+            </button>
+          </form>
+        </>
       ) : null}
-    </RpgWindow>
+    </section>
   );
 }
 

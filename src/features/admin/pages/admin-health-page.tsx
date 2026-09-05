@@ -1,7 +1,10 @@
+import { safeTraceId } from '../api/admin-outcome';
+import { adminStateLabel, adminStepLabel } from '../lib/admin-labels';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { AdminPageLoading } from '../components/admin-page-loading';
+import { AdminQueryStatus } from '../components/admin-query-status';
 import { adminRpc, extractErrorCode } from '../api/admin-client';
 import { AdminCommandDialog } from '../components/admin-command-dialog';
 import { AdminStatusBanner } from '../components/admin-status-banner';
@@ -13,7 +16,7 @@ interface AdminHealthOperation {
   attempt_count: number;
   correlation_id: string | null;
   created_at: string;
-  current_step: string | null;
+  current_step: number | string | null;
   id: string;
   last_safe_error_code: string | null;
   next_retry_at: string | null;
@@ -77,9 +80,12 @@ export function AdminHealthPage() {
   useAdminStaleSessionRedirect(staleSession);
   const response = health.data;
 
-  if (health.isPending || staleSession) return <RouteLoading withinMain />;
+  if (health.isPending || staleSession)
+    return (
+      <AdminPageLoading title="系統健康" onRetry={() => health.refetch()} />
+    );
 
-  if (health.isError || !response || response.outcome === 'denied') {
+  if (!response || response.outcome === 'denied') {
     const denied: AdminOutcomeDenied | null =
       response?.outcome === 'denied' ? response : null;
     const canRetry = !denied || denied.retryable === true;
@@ -95,7 +101,7 @@ export function AdminHealthPage() {
           <p role="alert">系統健康資料載入失敗，請稍後重試。</p>
         )}
         {typeof denied?.request_id === 'string' ? (
-          <p>追蹤代碼：{denied.request_id}</p>
+          <p>追蹤代碼：{safeTraceId(denied.request_id)}</p>
         ) : null}
         {canRetry ? (
           <button
@@ -130,6 +136,7 @@ export function AdminHealthPage() {
       className="page-wide page-stack"
     >
       <h1 id="admin-health-page-heading">系統健康</h1>
+      <AdminQueryStatus query={health} />
 
       {hasIncidents ? (
         <div
@@ -160,18 +167,26 @@ export function AdminHealthPage() {
                   <th scope="col">狀態</th>
                   <th scope="col">目前步驟</th>
                   <th scope="col">嘗試次數</th>
+                  <th scope="col">最後更新／下次重試</th>
                   <th scope="col">最後安全錯誤碼</th>
                   <th scope="col">後續處理</th>
                 </tr>
               </thead>
               <tbody>
                 {operations.map((operation) => (
-                  <tr key={operation.id}>
-                    <td>{operation.id}</td>
-                    <td>{operation.operation_type}</td>
-                    <td>{operation.state}</td>
-                    <td>{operation.current_step ?? '—'}</td>
+                  <tr key={safeTraceId(operation.id)}>
+                    <td>{safeTraceId(operation.id)}</td>
+                    <td>{adminStateLabel(operation.operation_type)}</td>
+                    <td>{adminStateLabel(operation.state)}</td>
+                    <td>{adminStepLabel(operation.current_step)}</td>
                     <td>{operation.attempt_count}</td>
+                    <td>
+                      {formatAdminTimestamp(operation.updated_at)}
+                      <br />
+                      {operation.next_retry_at
+                        ? formatAdminTimestamp(operation.next_retry_at)
+                        : '未排定重試'}
+                    </td>
                     <td>{operation.last_safe_error_code ?? '—'}</td>
                     <td>
                       {operation.action_kind === 'reconcile' ||

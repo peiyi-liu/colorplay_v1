@@ -1,8 +1,14 @@
+import { safeTraceId } from '../api/admin-outcome';
+import { teacherOperationOutcome } from '../api/teacher-operation-outcome';
+import { TeacherOperationStatus } from '../components/teacher-operation-status';
+import { useAdminOperations } from '../components/admin-operation-notices';
+import { commandOutcome } from '../api/admin-outcome';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { AdminPageLoading } from '../components/admin-page-loading';
+import { AdminQueryStatus } from '../components/admin-query-status';
 import type { AdminErrorCode } from '../api/admin-client';
 import type {
   CreateTeacherAccountInput,
@@ -44,6 +50,10 @@ const stateLabel: Record<TeacherOperationState, string> = {
 export function AdminTeachersPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const operations = useAdminOperations();
+  const inFlight = useRef(false);
+  const checkingRef = useRef(false);
+  const [checking, setChecking] = useState(false);
   const [draftSearch, setDraftSearch] = useState('');
   const [draftState, setDraftState] = useState<TeacherOperationState | ''>('');
   const [filters, setFilters] = useState<Filters>({
@@ -62,6 +72,13 @@ export function AdminTeachersPage() {
   const [unexpectedError, setUnexpectedError] = useState(false);
   const [replayNotice, setReplayNotice] = useState(false);
   const [secret, setSecret] = useState<SecretState | null>(null);
+
+  const unresolved =
+    commandInput !== null &&
+    (submitting ||
+      checking ||
+      unexpectedError ||
+      (operationStatus !== null && operationStatus.legalFollowUp !== 'none'));
 
   const list = useInfiniteQuery({
     getNextPageParam: (lastPage: TeacherListOutcome) =>
@@ -86,6 +103,9 @@ export function AdminTeachersPage() {
   useAdminStaleSessionRedirect(staleSession);
 
   const checkOperation = async (input: CreateTeacherAccountInput) => {
+    if (checkingRef.current) return;
+    checkingRef.current = true;
+    setChecking(true);
     setFormOpen(false);
     setCommandDenied(null);
     setUnexpectedError(false);
@@ -96,22 +116,55 @@ export function AdminTeachersPage() {
         requestId: input.requestId,
       });
       if (status.outcome === 'denied') {
+        setUnexpectedError(true);
         setCommandDenied(status.code);
         return;
       }
       setOperationStatus(status);
+      operations?.settle(input.requestId, teacherOperationOutcome(status));
+      if (status.legalFollowUp === 'none')
+        void queryClient.invalidateQueries({ queryKey: ['admin', 'teachers'] });
     } catch {
       setUnexpectedError(true);
+    } finally {
+      checkingRef.current = false;
+      setChecking(false);
     }
   };
 
   const runCreate = async (input: CreateTeacherAccountInput) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    operations?.begin(
+      'create_teacher_account',
+      input.requestId,
+      '教師帳號操作',
+    );
     setSubmitting(true);
     setCommandDenied(null);
     setUnexpectedError(false);
     setOperationStatus(null);
     try {
       const result = await repository.createTeacher(input);
+      operations?.settle(
+        input.requestId,
+        result.outcome === 'denied'
+          ? {
+              ...commandOutcome('create_teacher_account', null),
+              kind: 'denied',
+              message: '教師作業尚未完成，請查看本頁狀態。',
+              requestId: result.requestId,
+              operationId: result.operationId,
+            }
+          : {
+              ...commandOutcome('create_teacher_account', {
+                outcome: 'ok',
+                result: result.result,
+              }),
+              requestId: result.requestId,
+              operationId: result.operationId,
+            },
+      );
       if (result.outcome === 'denied') {
         if (result.statusCheckRequired) await checkOperation(input);
         else setCommandDenied(result.code);
@@ -132,20 +185,22 @@ export function AdminTeachersPage() {
     } catch {
       await checkOperation(input);
     } finally {
+      inFlight.current = false;
       setSubmitting(false);
     }
   };
 
-  if (list.isPending || staleSession) return <RouteLoading withinMain />;
+  if (list.isPending || staleSession)
+    return <AdminPageLoading title="教師帳號" onRetry={() => list.refetch()} />;
 
-  if (list.isError || !firstPage || firstPage.outcome === 'denied') {
+  if (!list.data || !firstPage || firstPage.outcome === 'denied') {
     return (
       <section aria-labelledby="admin-teachers-heading" className="page-wide">
         <h1 id="admin-teachers-heading">教師帳號</h1>
         {firstPage?.outcome === 'denied' ? (
           <>
             <AdminStatusBanner code={firstPage.code} />
-            <p>追蹤代碼：{firstPage.requestId}</p>
+            <p>追蹤代碼：{safeTraceId(firstPage.requestId)}</p>
           </>
         ) : (
           <p role="alert">教師清單載入失敗，請稍後重試。</p>
@@ -182,7 +237,13 @@ export function AdminTeachersPage() {
     >
       <div className="admin-teachers__heading-row">
         <h1 id="admin-teachers-heading">教師帳號</h1>
-        {!formOpen && !secret ? (
+        <AdminQueryStatus query={list} />
+        {!formOpen &&
+        !secret &&
+        !unresolved &&
+        !submitting &&
+        !checking &&
+        !operations?.blocked('create_teacher_account') ? (
           <button
             className="primary-action"
             data-primary-action="true"
@@ -242,7 +303,26 @@ export function AdminTeachersPage() {
       </form>
 
       {rows.length === 0 ? (
-        <p>目前沒有符合條件的教師帳號。</p>
+        <div>
+          <p>
+            {filters.search || filters.state
+              ? '目前沒有符合條件的教師帳號。'
+              : '尚未建立教師帳號。'}
+          </p>
+          {filters.search || filters.state ? (
+            <button
+              type="button"
+              className="secondary-action"
+              onClick={() => {
+                setDraftSearch('');
+                setDraftState('');
+                setFilters({ search: null, state: null });
+              }}
+            >
+              清除篩選
+            </button>
+          ) : null}
+        </div>
       ) : (
         <AdminDataTable
           caption="教師帳號清單"
@@ -278,7 +358,7 @@ export function AdminTeachersPage() {
       {laterDenied ? (
         <div className="admin-data-browser__page-error">
           <AdminStatusBanner code={laterDenied.code} />
-          <p>追蹤代碼：{laterDenied.requestId}</p>
+          <p>追蹤代碼：{safeTraceId(laterDenied.requestId)}</p>
           {laterDenied.retryable ? (
             <button
               className="secondary-action"
@@ -291,49 +371,33 @@ export function AdminTeachersPage() {
         </div>
       ) : null}
 
+      {checking || submitting ? (
+        <p role="status">
+          {checking ? '正在查詢作業狀態…' : '教師作業處理中，請勿重複送出。'}
+        </p>
+      ) : null}
+      {unexpectedError && !checking ? (
+        <button
+          type="button"
+          className="secondary-action"
+          onClick={() => {
+            if (commandInput) void checkOperation(commandInput);
+          }}
+        >
+          重新查詢狀態
+        </button>
+      ) : null}
       {operationStatus ? (
-        <div aria-live="polite" className="admin-teachers__operation-status">
-          {operationStatus.operationId ? (
-            <p>作業代碼：{operationStatus.operationId}</p>
-          ) : null}
-          {operationStatus.legalFollowUp === 'retry_same_request' ? (
-            <>
-              <p>伺服器尚未受理這次操作，可使用原操作代碼重試。</p>
-              <button
-                className="secondary-action"
-                onClick={() => commandInput && void runCreate(commandInput)}
-                type="button"
-              >
-                以相同代碼重試
-              </button>
-            </>
-          ) : null}
-          {operationStatus.legalFollowUp === 'wait' ? (
-            <>
-              <p>作業仍在處理中。</p>
-              <button
-                className="secondary-action"
-                onClick={() =>
-                  commandInput && void checkOperation(commandInput)
-                }
-                type="button"
-              >
-                重新查詢狀態
-              </button>
-            </>
-          ) : null}
-          {operationStatus.legalFollowUp === 'health_reconciliation' ? (
-            <p>
-              作業需要受控對帳。
-              <Link className="admin-teachers__health-link" to="/admin/health">
-                前往健康狀態
-              </Link>
-            </p>
-          ) : null}
-          {operationStatus.legalFollowUp === 'none' ? (
-            <p>操作已完成或終止，不會再次重送。</p>
-          ) : null}
-        </div>
+        <TeacherOperationStatus
+          status={operationStatus}
+          busy={checking || submitting}
+          onRetry={() => {
+            if (commandInput) void runCreate(commandInput);
+          }}
+          onCheck={() => {
+            if (commandInput) void checkOperation(commandInput);
+          }}
+        />
       ) : null}
       {commandDenied && !formOpen ? (
         <AdminStatusBanner code={commandDenied} />
@@ -351,7 +415,7 @@ export function AdminTeachersPage() {
           isSubmitting={submitting}
           mode="create"
           onCancel={() => {
-            if (!submitting) setFormOpen(false);
+            setFormOpen(false);
           }}
           onSubmit={(values) => {
             const input = {

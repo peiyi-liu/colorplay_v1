@@ -1,8 +1,10 @@
+import { safeTraceId } from '../api/admin-outcome';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
-import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { AdminPageLoading } from '../components/admin-page-loading';
+import { AdminQueryStatus } from '../components/admin-query-status';
 import {
   browserProjectionColumns,
   findBrowserResource,
@@ -116,7 +118,10 @@ export function AdminDataDetailPage() {
     );
   }
 
-  if (detail.isPending || staleSession) return <RouteLoading withinMain />;
+  if (detail.isPending || staleSession)
+    return (
+      <AdminPageLoading title="資料明細" onRetry={() => detail.refetch()} />
+    );
 
   if (code === 'RESOURCE_NOT_ALLOWED') {
     return (
@@ -130,7 +135,7 @@ export function AdminDataDetailPage() {
     );
   }
 
-  if (detail.isError || detail.data.outcome === 'denied') {
+  if (!detail.data || detail.data.outcome === 'denied') {
     // 網路層失敗時 data 可能根本不存在,不能無條件讀 outcome
     const response: AdminDetailResponse | undefined = detail.data;
     const denied = response?.outcome === 'denied' ? response : undefined;
@@ -151,7 +156,9 @@ export function AdminDataDetailPage() {
         {typeof denied?.request_id === 'string' ? (
           <p>
             追蹤代碼：
-            <span data-testid="admin-request-id">{denied.request_id}</span>
+            <span data-testid="admin-request-id">
+              {safeTraceId(denied.request_id)}
+            </span>
           </p>
         ) : null}
         {canRetry ? (
@@ -208,6 +215,7 @@ export function AdminDataDetailPage() {
       <h1 id="admin-data-detail-page-heading">
         資料明細：{domain}/{resource}
       </h1>
+      <AdminQueryStatus query={detail} />
       {backLink}
       <dl className="admin-data-detail__fields">
         {orderedKeys.map((name) => (

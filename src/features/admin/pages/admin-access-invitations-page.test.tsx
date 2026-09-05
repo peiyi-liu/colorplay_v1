@@ -247,13 +247,13 @@ describe('AdminAccessInvitationsPage', () => {
     vi.mocked(adminRpc).mockResolvedValue({
       code: 'RESOURCE_NOT_ALLOWED',
       outcome: 'denied',
-      request_id: 'invitations-request-1',
+      request_id: 'dcd936e3-2e57-576f-b92e-13c28499bf9e',
       retryable: false,
     });
     renderPage();
 
     expect(
-      await screen.findByText(/invitations-request-1/u),
+      await screen.findByText(/dcd936e3-2e57-576f-b92e-13c28499bf9e/u),
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '重試' })).toBeNull();
   });

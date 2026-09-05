@@ -252,7 +252,7 @@ describe('AdminDataDetailPage', () => {
       code: 'COLUMN_NOT_ALLOWED',
       message: '此欄位不允許這項操作。',
       outcome: 'denied',
-      request_id: 'req-bad-token',
+      request_id: '212dfc6c-8112-5215-a37d-e44daf5624e1',
       retryable: false,
     });
     renderPage('/admin/data/users/profiles/not-a-valid-key');
@@ -265,7 +265,7 @@ describe('AdminDataDetailPage', () => {
       });
     });
     expect(await screen.findByTestId('admin-request-id')).toHaveTextContent(
-      'req-bad-token',
+      '212dfc6c-8112-5215-a37d-e44daf5624e1',
     );
     // 非可重試的拒絕不留假的重試入口
     expect(

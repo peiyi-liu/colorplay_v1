@@ -108,7 +108,7 @@ describe('AdminMfaChallengePage', () => {
     vi.mocked(listOwnVerifiedTotpFactorId).mockResolvedValue('factor-1');
     vi.mocked(invokeAdminMfa).mockResolvedValue({
       code: 'FACTOR_BINDING_MISMATCH',
-      operationId: 'op-abc-123',
+      operationId: 'eddc3e71-37ee-5ff9-a3dd-bd682f068af9',
       outcome: 'denied',
     });
 
@@ -121,7 +121,9 @@ describe('AdminMfaChallengePage', () => {
     await waitFor(() => {
       expect(screen.getByRole('status')).toHaveTextContent('驗證器綁定異常');
     });
-    expect(screen.getByText('op-abc-123')).toBeInTheDocument();
+    expect(
+      screen.getByText('eddc3e71-37ee-5ff9-a3dd-bd682f068af9'),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('驗證碼')).not.toBeInTheDocument();
   });

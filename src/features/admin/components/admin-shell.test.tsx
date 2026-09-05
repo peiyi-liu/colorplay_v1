@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -20,26 +21,35 @@ function stubWide(matches: boolean) {
 
 function renderShell(initialEntry: string) {
   render(
-    <MemoryRouter initialEntries={[initialEntry]}>
-      <Routes>
-        <Route element={<AdminShell />}>
-          <Route element={<p>安全總覽內容</p>} path="/admin" />
-          <Route element={<p>管理員清單內容</p>} path="/admin/access/admins" />
-          <Route element={<p>教師帳號內容</p>} path="/admin/teachers" />
-          <Route
-            element={<p>邀請清單內容</p>}
-            path="/admin/access/invitations"
-          />
-          <Route
-            element={<p>session 清單內容</p>}
-            path="/admin/access/sessions"
-          />
-          <Route element={<p>資料瀏覽內容</p>} path="/admin/data" />
-          <Route element={<p>稽核內容</p>} path="/admin/audit" />
-          <Route element={<p>健康內容</p>} path="/admin/health" />
-        </Route>
-      </Routes>
-    </MemoryRouter>,
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <Routes>
+          <Route element={<AdminShell />}>
+            <Route element={<p>安全總覽內容</p>} path="/admin" />
+            <Route
+              element={<p>管理員清單內容</p>}
+              path="/admin/access/admins"
+            />
+            <Route element={<p>教師帳號內容</p>} path="/admin/teachers" />
+            <Route
+              element={<p>邀請清單內容</p>}
+              path="/admin/access/invitations"
+            />
+            <Route
+              element={<p>session 清單內容</p>}
+              path="/admin/access/sessions"
+            />
+            <Route element={<p>資料瀏覽內容</p>} path="/admin/data" />
+            <Route element={<p>稽核內容</p>} path="/admin/audit" />
+            <Route element={<p>健康內容</p>} path="/admin/health" />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -61,7 +71,7 @@ describe('AdminShell', () => {
 
     const nav = screen.getByRole('navigation', { name: '管理主控台導覽' });
     for (const label of [
-      '總覽',
+      '日常營運',
       '身分與存取',
       '資料瀏覽',
       '稽核',
@@ -115,7 +125,7 @@ describe('AdminShell', () => {
     renderShell('/admin');
 
     expect(
-      screen.queryByRole('button', { name: 'MENU' }),
+      screen.queryByRole('button', { name: '開啟導覽' }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole('navigation', { name: '管理主控台導覽' }),
@@ -131,7 +141,7 @@ describe('AdminShell', () => {
     expect(nav).toHaveAttribute('aria-label', '管理主控台導覽');
     expect(nav).not.toBeVisible();
 
-    const toggle = screen.getByRole('button', { name: 'MENU' });
+    const toggle = screen.getByRole('button', { name: '開啟導覽' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await user.click(toggle);
 
@@ -146,7 +156,7 @@ describe('AdminShell', () => {
     stubWide(false);
     renderShell('/admin');
 
-    const toggle = screen.getByRole('button', { name: 'MENU' });
+    const toggle = screen.getByRole('button', { name: '開啟導覽' });
     await user.click(toggle);
     expect(
       screen.getByRole('navigation', { name: '管理主控台導覽' }),
@@ -165,11 +175,11 @@ describe('AdminShell', () => {
     stubWide(false);
     renderShell('/admin');
 
-    await user.click(screen.getByRole('button', { name: 'MENU' }));
+    await user.click(screen.getByRole('button', { name: '開啟導覽' }));
     await user.click(screen.getByRole('link', { name: '稽核紀錄' }));
 
     expect(await screen.findByText('稽核內容')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'MENU' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: '開啟導覽' })).toHaveAttribute(
       'aria-expanded',
       'false',
     );

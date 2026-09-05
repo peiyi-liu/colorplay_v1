@@ -58,7 +58,7 @@ const healthOk = {
       correlation_id: 'corr-1',
       created_at: '2026-08-09T08:00:00Z',
       current_step: 'step1_complete',
-      id: 'op-1',
+      id: '2ab50adc-0764-5f36-b286-b95d02627177',
       last_safe_error_code: null,
       next_retry_at: '2026-08-09T09:30:00Z',
       operation_type: 'reset_admin_mfa',
@@ -130,11 +130,14 @@ describe('AdminOverviewPage', () => {
     );
     renderPage();
 
-    expect(await screen.findByText('1 位有效管理員連線')).toBeInTheDocument();
-    expect(screen.getByText('1 個待處理作業')).toBeInTheDocument();
-    expect(screen.getByText('1 個 denial 觀察窗')).toBeInTheDocument();
-    expect(screen.getByText('reset_admin_mfa')).toBeInTheDocument();
-    expect(screen.getByText('stuck')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('link', { name: '前往系統健康' }),
+    ).toBeVisible();
+    expect(screen.queryByText(/位有效管理員連線/)).not.toBeInTheDocument();
+    expect(adminRpc).not.toHaveBeenCalledWith(
+      'admin_list_sessions',
+      expect.anything(),
+    );
   });
 
   it('surfaces incident flags distinctly when present', async () => {
@@ -147,7 +150,7 @@ describe('AdminOverviewPage', () => {
       name: '安全事故旗標',
     });
     expect(incidents).toHaveTextContent('卡住的作業：1');
-    expect(incidents).toHaveTextContent('denial 門檻突破：1');
+    expect(incidents).toHaveTextContent('拒絕次數達門檻的觀察窗：1');
     expect(incidents).toHaveTextContent('鎖定中的身分：2');
   });
 
@@ -170,7 +173,7 @@ describe('AdminOverviewPage', () => {
     );
     renderPage();
 
-    expect(await screen.findByText('0 位有效管理員連線')).toBeInTheDocument();
+    expect(await screen.findByText('目前沒有安全事故旗標')).toBeInTheDocument();
     expect(screen.getByText('目前沒有待處理的安全作業。')).toBeInTheDocument();
     expect(
       screen.queryByRole('region', { name: '安全事故旗標' }),

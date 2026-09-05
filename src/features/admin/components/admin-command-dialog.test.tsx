@@ -115,7 +115,7 @@ describe('AdminCommandDialog', () => {
       }),
     );
     // spec §3.4:命令結果要以 aria-live 播報,不能只是「dialog 消失了」。
-    expect(await screen.findByRole('status')).toHaveTextContent('操作已完成');
+    expect(await screen.findByRole('status')).toHaveTextContent('管理員已停用');
   });
 
   it('shows a clear denial message and keeps the dialog open for LAST_ADMIN_PROTECTED', async () => {
@@ -135,7 +135,7 @@ describe('AdminCommandDialog', () => {
       );
     });
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '確認' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: '確認' })).toBeDisabled();
   });
 
   it('refetches session state and redirects to challenge on STALE_PRIVILEGED_SESSION', async () => {
@@ -158,6 +158,7 @@ describe('AdminCommandDialog', () => {
     vi.mocked(invokeAdminCommand).mockResolvedValueOnce({
       code: 'AUTHORIZATION_RECEIPT_INVALID',
       outcome: 'denied',
+      retryable: true,
     });
     vi.mocked(invokeAdminCommand).mockResolvedValueOnce({
       audit_event_id: 'audit-1',
@@ -184,35 +185,18 @@ describe('AdminCommandDialog', () => {
     expect(secondCall[1]).toBe(firstCall[1]);
   });
 
-  it('mints a fresh idempotency key after IDEMPOTENCY_CONFLICT', async () => {
+  it('does not mint a new key to bypass an idempotency conflict', async () => {
     const user = userEvent.setup();
-    vi.mocked(invokeAdminCommand).mockResolvedValueOnce({
+    vi.mocked(invokeAdminCommand).mockResolvedValue({
       code: 'IDEMPOTENCY_CONFLICT',
       outcome: 'denied',
-    });
-    vi.mocked(invokeAdminCommand).mockResolvedValueOnce({
-      audit_event_id: 'audit-1',
-      outcome: 'ok',
+      retryable: false,
     });
     renderDialog();
-
     await user.type(screen.getByLabelText('原因'), '帳號異常需要立即停用處理');
     await user.click(screen.getByRole('button', { name: '確認' }));
-    await waitFor(() => {
-      expect(invokeAdminCommand).toHaveBeenCalledTimes(1);
-    });
-    await user.click(screen.getByRole('button', { name: '確認' }));
-    await waitFor(() => {
-      expect(invokeAdminCommand).toHaveBeenCalledTimes(2);
-    });
-
-    const calls = vi.mocked(invokeAdminCommand).mock.calls;
-    const firstCall = calls[0];
-    const secondCall = calls[1];
-    if (!firstCall || !secondCall) {
-      throw new Error('expected two invokeAdminCommand calls');
-    }
-    expect(secondCall[1]).not.toBe(firstCall[1]);
+    expect(screen.getByRole('button', { name: '確認' })).toBeDisabled();
+    expect(invokeAdminCommand).toHaveBeenCalledTimes(1);
   });
 
   it('cancels without invoking the command', async () => {
