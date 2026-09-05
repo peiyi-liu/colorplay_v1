@@ -77,8 +77,10 @@ describe('delivery configuration', () => {
     ]);
     const packageJson = JSON.parse(packageJsonText) as {
       packageManager?: string;
+      devDependencies?: Record<string, string>;
     };
-    expect(packageJson.packageManager).toMatch(/^pnpm@\d+\.\d+\.\d+$/u);
+    expect(packageJson.packageManager).toBe('pnpm@11.25.0');
+    expect(packageJson.devDependencies?.vercel).toBe('59.11.7');
     expect(workflow).toMatch(/node-version: '\d+\.\d+\.\d+'/u);
     // pnpm 一律依 packageManager pin 安裝；workflow 不得另行硬編版本。
     expect(workflow).toContain(

@@ -4,20 +4,20 @@
 - 狀態：**DEFERRED／NOT AUTHORIZED**
 - 目的：保存未來可升級的完整建議與實作邊界
 - 前置：Admin B Local＋Hosted gate 通過，且 Owner 另行啟動新的 L 級 phase
+- Owner 決策（2026-09-05）：**跨班級學生支援已取消，不屬於 deferred scope**
 
 本文件不是 current roadmap、implementation plan 或 mutation 授權。任何代理不得
 因本文件存在就建立 route、RPC、migration、export、hosted resource 或 fixture。
 
 ## 1. 何時才考慮啟動
 
-只有在 Admin B 已可安全營運，且實際出現跨教師內容、平台支援、Live 事故或平台
+只有在 Admin B 已可安全營運，且實際出現跨教師內容、Live 事故或平台
 分析需求時才評估 C。啟動前 Owner 必須重新確認：
 
 1. Admin 與 Teacher 的責任分界。
 2. 內容 maker／reviewer／publisher 是否分權。
-3. 跨班級與個資介入的合法目的、保存與通知。
-4. 補償／rollback、two-person approval 與 emergency break-glass。
-5. 研究匯出、去識別與再識別風險。
+3. 補償／rollback、two-person approval 與 emergency break-glass。
+4. 研究匯出、去識別與再識別風險。
 
 ## 2. 建議資訊架構
 
@@ -26,7 +26,6 @@ Admin
 ├─ 安全與身分
 ├─ 教師帳號
 ├─ 內容生命週期
-├─ 學習／班級支援
 ├─ Live operations
 ├─ 平台分析與匯出
 ├─ 稽核與治理
@@ -55,20 +54,12 @@ shallow pass-through。
 - Rollback 建立新 publication event，不覆寫舊 version 或歷史 attempt。
 - Import failure 不留下部分 rows；未驗證內容不能因 Admin role 跳過 validator。
 
-## 4. Platform support module
+## 4. Cancelled scope：跨班級學生支援
 
-### Interface
-
-- 跨教師查詢 classroom/membership/student support case。
-- 受控轉班、停權、恢復、資料修復與補償。
-- 每次命令先顯示 target preview、受影響 rows、可逆性與後果。
-
-### Implementation rules
-
-- 每個 case 有合法 purpose、actor、target、ticket/reference、before/after、receipt。
-- Ledger／progress correction 使用 compensating entry/event，不直接改歷史 totals。
-- 高風險跨班級操作要求 re-auth、二次確認，必要時 two-person approval。
-- Student/Teacher 可見通知與申訴流程需在啟動 phase 時另行裁定。
+Owner 已於 2026-09-05 取消此能力。未來 Admin C 不得建立跨教師查詢
+classroom／membership／student support case、受控轉班、跨班停權／恢復或相關
+`/admin/support/**` route、RPC、Edge Function、migration、fixture 與 UI。若未來需求改變，
+必須由 Owner 明確推翻本決策並重新走新的 L 級 phase；不得把取消項目解讀為 deferred。
 
 ## 5. Live operations module
 
@@ -115,7 +106,6 @@ shallow pass-through。
 
 ```text
 /admin/content/**
-/admin/support/cases/**
 /admin/live/operations/**
 /admin/analytics/**
 /admin/exports/**
@@ -130,7 +120,7 @@ shallow pass-through。
 - 每個 mutation：正向、越權、重送、競爭、部分失敗、補償與 audit tests。
 - Admin／Teacher／Student／anonymous 完整 RLS/RPC/Edge 角色矩陣。
 - Frontend bundle 無 forbidden schema、secret、service-role credential、未作答正解。
-- 內容發布、個資揭露、匯出及高風險支援皆需 exact-SHA Hosted proof。
+- 內容發布、個資揭露、匯出及 Live 高風險操作皆需 exact-SHA Hosted proof。
 - Fixture、一次性 secret、download artifact 與 operation cleanup 完成後才能關 gate。
 - 三 viewport、鍵盤、focus、aria-live、狀態不只靠顏色；真實裝置項由人類驗證。
 

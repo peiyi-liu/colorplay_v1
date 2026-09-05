@@ -328,6 +328,11 @@ Stage exact integration/E2E/review-fix paths and commit `test(admin): verify tea
 
 ### Task 7: Owner-gated Phase 1/Admin B Hosted verification
 
+> Owner 排程決策（2026-09-05）：第一個 Staging Admin 已建立並完成 MFA；其餘
+> Admin B Hosted lifecycle、teacher operation、role-denial 與 fixture cleanup 測試
+> 延後到後續同一個核准窗口集中執行。此前 Task 7 維持 `NOT VERIFIED`，不得因第一個
+> Admin 可登入就宣稱 Hosted gate 通過。
+
 **Files:**
 
 - Evidence only in the phase-approved artifact directory; do not commit secrets/screenshots.
