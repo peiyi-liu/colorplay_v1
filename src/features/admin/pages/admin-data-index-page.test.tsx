@@ -34,5 +34,9 @@ describe('AdminDataIndexPage', () => {
       'href',
       '/admin/data/users/profiles',
     );
+    await user.clear(screen.getByRole('searchbox'));
+    await user.type(screen.getByRole('searchbox'), 'no-such-resource');
+    await user.click(screen.getByRole('button', { name: '清除搜尋' }));
+    expect(screen.getByRole('searchbox')).toHaveFocus();
   });
 });

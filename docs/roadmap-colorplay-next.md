@@ -1,6 +1,8 @@
 # ColorPlay Current Program
 
-- 2026-09-05 最新補充：Admin UI d795add 已發布 Staging（PR #16）。Owner 接續核准資料查核五分類、五項只讀監控、跨頁固定邊界與 Staging 部署；目前實作／驗證中，計畫見 `docs/superpowers/plans/2026-09-05-admin-data-monitoring.md`。以下 Phase 0／整合紀錄保留作歷史脈絡，不能覆蓋本次新授權。
+- 2026-09-06：Owner 已核准 ui-ux-pro-max Admin 提案的實作與 Staging 部署，真實元件優化與一次 review 修正完成，進入發布前驗證；計畫見 `docs/superpowers/plans/2026-09-06-admin-ux-refinement.md`。資料查核／監控 API 與權限維持既有契約。
+
+- 2026-09-05 最新補充：資料查核五分類、五項只讀監控與跨頁固定邊界已隨 PR #17 發布 Staging，exact SHA `570c0f18a7329cc5f07cbf707b016ff787105bf1`。Workflow `33969320734` 的部署、真實學生／教師登入、環境版本核對、read-only smoke 與九組 browser/RWD 檢查通過；監控 migration `20260905000100` 已套用，每 15 分鐘排程啟用，第一輪實際採集成功。延遲樣本、備份校驗／還原證據不足仍保持未知；既有完整 phase／人工裝置驗收另行判定。計畫見 `docs/superpowers/plans/2026-09-05-admin-data-monitoring.md`，詳細交付證據見 handoff 最新段。以下 Phase 0／整合紀錄保留作歷史脈絡，不能覆蓋本次新授權與完成狀態。
 
 - Status: INTEGRATION PR UPDATE IN PROGRESS — PR #6 的 Phase 0 + Admin B
   candidate 正在整合 `staging.colorplayapp.com` 實際部署的 exact SHA `9733923e`；

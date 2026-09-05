@@ -196,7 +196,10 @@ export function AdminTeachersPage() {
   if (!list.data || !firstPage || firstPage.outcome === 'denied') {
     return (
       <section aria-labelledby="admin-teachers-heading" className="page-wide">
-        <h1 id="admin-teachers-heading">教師帳號</h1>
+        <div>
+          <h1 id="admin-teachers-heading">教師帳號</h1>
+          <p>查詢教師資料，確認目前狀態與可進行的操作。</p>
+        </div>
         {firstPage?.outcome === 'denied' ? (
           <>
             <AdminStatusBanner code={firstPage.code} />
@@ -276,6 +279,7 @@ export function AdminTeachersPage() {
           <label htmlFor="admin-teacher-search">搜尋教師</label>
           <input
             id="admin-teacher-search"
+            placeholder="教師姓名或登入帳號"
             onChange={(event) => {
               setDraftSearch(event.target.value);
             }}
@@ -302,8 +306,12 @@ export function AdminTeachersPage() {
         </button>
       </form>
 
+      <div className="admin-panel-heading">
+        <h2>教師清單</h2>
+        <span>已載入 {rows.length} 筆 · 聯絡資料保持遮罩</span>
+      </div>
       {rows.length === 0 ? (
-        <div>
+        <div className="admin-empty-state">
           <p>
             {filters.search || filters.state
               ? '目前沒有符合條件的教師帳號。'
@@ -327,10 +335,10 @@ export function AdminTeachersPage() {
         <AdminDataTable
           caption="教師帳號清單"
           columns={[
-            { header: '登入帳號', key: 'loginAccount', personal: false },
             { header: '教師姓名', key: 'displayName', personal: false },
-            { header: '聯絡 Email', key: 'contactEmail', personal: false },
+            { header: '登入帳號', key: 'loginAccount', personal: false },
             { header: '狀態', key: 'state', personal: false },
+            { header: '聯絡 Email', key: 'contactEmail', personal: false },
             { header: '建立時間', key: 'createdAt', personal: false },
           ]}
           isLoadingMore={list.isFetchingNextPage}
@@ -347,7 +355,7 @@ export function AdminTeachersPage() {
                 className="admin-teachers__detail-link"
                 to={`/admin/teachers/${teacher.teacherId}`}
               >
-                查看教師
+                {teacher.operationState === 'ready' ? '查看教師' : '查看作業'}
               </Link>
             ) : null;
           }}

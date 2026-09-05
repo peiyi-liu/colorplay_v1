@@ -246,6 +246,14 @@ test('narrow navigation supports keyboard open, Escape and return focus', async 
   await expect(
     page.getByRole('navigation', { name: '管理主控台導覽' }),
   ).toBeVisible();
+  const drawer = page.getByRole('dialog', { name: '管理導覽' });
+  await expect(drawer).toBeVisible();
+  const close = drawer.getByRole('button', { name: '關閉導覽' });
+  await expect(close).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(drawer.getByRole('link', { name: '健康狀態' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(close).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(toggle).toBeFocused();
   await expect(

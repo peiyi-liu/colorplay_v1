@@ -2,9 +2,48 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 
 import { AdminShell } from './admin-shell';
+// JSDOM has no native dialog methods. Real focus trapping is checked in Chromium.
+const dialogDescriptors = ['showModal', 'close'].map(
+  (name) =>
+    [
+      name,
+      Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, name),
+    ] as const,
+);
+beforeAll(() => {
+  Object.defineProperties(HTMLDialogElement.prototype, {
+    showModal: {
+      configurable: true,
+      value(this: HTMLDialogElement) {
+        this.setAttribute('open', '');
+      },
+    },
+    close: {
+      configurable: true,
+      value(this: HTMLDialogElement) {
+        this.removeAttribute('open');
+      },
+    },
+  });
+});
+afterAll(() => {
+  for (const [name, descriptor] of dialogDescriptors) {
+    if (descriptor)
+      Object.defineProperty(HTMLDialogElement.prototype, name, descriptor);
+    else Reflect.deleteProperty(HTMLDialogElement.prototype, name);
+  }
+});
 
 function stubWide(matches: boolean) {
   vi.stubGlobal('matchMedia', (query: string) => ({

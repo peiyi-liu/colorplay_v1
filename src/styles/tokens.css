@@ -4,6 +4,17 @@
    唯一色彩／圓角定義點:元件與畫面一律引用 var(--…),不得出現裸 hex。
    概念:白底 + 冷灰墨色文字階(spec §二) + 六章節淡彩主題色。 */
 :root {
+  --admin-surface: #ffffff;
+  --admin-page: #f7f8fb;
+  --admin-ink: #202d40;
+  --admin-text-muted: #59677a;
+  --admin-border: #dde3eb;
+  --admin-soft: #f3f5f9;
+  --admin-accent: #4254bc;
+  --admin-accent-hover: #334398;
+  --admin-accent-soft: #eef0ff;
+  --admin-success: #206346;
+  --admin-warning: #895615;
   /* ── Primitive:墨色階(spec §二文字色)與白色紙張 ────── */
   --ink-950: #18212f;
   --ink-900: #253042;
