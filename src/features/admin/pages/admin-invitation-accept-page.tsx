@@ -1,10 +1,12 @@
+import { useAdminWait } from '../hooks/use-admin-wait';
+import { safeTraceId } from '../api/admin-outcome';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
-import { RpgWindow } from '../../../components/ui/rpg-window';
+import '../../../styles/admin-console.css';
 import { myProfileQueryKey } from '../../profile/hooks/use-my-profile';
 import { adminRpc, extractErrorCode } from '../api/admin-client';
 import { AdminStatusBanner } from '../components/admin-status-banner';
@@ -61,13 +63,19 @@ export function AdminInvitationAcceptPage() {
     retry: false,
   });
 
+  const longWait = useAdminWait(accept.isPending);
   const denied = accept.data?.outcome === 'denied' ? accept.data : null;
   const code = denied ? extractErrorCode(denied) : null;
 
   return (
-    <RpgWindow>
-      <h1 className="pixel-heading">接受管理員邀請</h1>
+    <section className="admin-auth-panel">
+      <h1 className="admin-auth-panel__heading">接受管理員邀請</h1>
       <p>請貼上管理員提供的一次性邀請 token。</p>
+      {longWait ? (
+        <p role="status">
+          請求處理時間較長，尚未收到最終結果。請勿重複送出；離開頁面不會撤銷已送出的請求。
+        </p>
+      ) : null}
       <form
         className="admin-invitation-accept-form"
         onSubmit={(event) =>
@@ -111,12 +119,12 @@ export function AdminInvitationAcceptPage() {
       ) : null}
       <AdminStatusBanner code={code} />
       {typeof denied?.request_id === 'string' ? (
-        <p>追蹤代碼：{denied.request_id}</p>
+        <p>追蹤代碼：{safeTraceId(denied.request_id)}</p>
       ) : null}
       {denied && denied.retryable !== true ? (
         <p>請確認 token 是否完整，或請管理員重新發出邀請。</p>
       ) : null}
-    </RpgWindow>
+    </section>
   );
 }
 

@@ -25,8 +25,8 @@ const retryableOperation = {
   attempt_count: 1,
   correlation_id: 'corr-1',
   created_at: '2026-08-09T08:00:00Z',
-  current_step: 'step1_complete',
-  id: 'op-retryable',
+  current_step: 1,
+  id: '20eef638-61ba-5db4-880d-3fb8c6a0c1aa',
   last_safe_error_code: null,
   next_retry_at: '2026-08-09T09:30:00Z',
   operation_type: 'reset_admin_mfa',
@@ -40,8 +40,8 @@ const stuckOperation = {
   attempt_count: 9,
   correlation_id: 'corr-2',
   created_at: '2026-08-08T08:00:00Z',
-  current_step: 'step2_complete',
-  id: 'op-stuck',
+  current_step: 2,
+  id: '8419e5b5-48e5-5ee5-890e-f1f61539bdd5',
   last_safe_error_code: 'SECURITY_AUDIT_UNAVAILABLE',
   next_retry_at: null,
   operation_type: 'reset_admin_mfa',
@@ -53,7 +53,7 @@ const stuckOperation = {
 const oobOperation = {
   ...stuckOperation,
   action_kind: 'owner_oob',
-  id: 'op-factor-incident',
+  id: '26259bb2-8313-5d70-8d53-c20c6823c712',
   operation_type: 'factor_incident_isolation',
 };
 
@@ -142,8 +142,12 @@ describe('AdminHealthPage', () => {
     vi.mocked(adminRpc).mockResolvedValue(healthOk);
     renderPage();
 
-    expect(await screen.findByText('op-retryable')).toBeInTheDocument();
-    expect(screen.getByText('op-stuck')).toBeInTheDocument();
+    expect(
+      await screen.findByText('20eef638-61ba-5db4-880d-3fb8c6a0c1aa'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('8419e5b5-48e5-5ee5-890e-f1f61539bdd5'),
+    ).toBeInTheDocument();
     expect(screen.getByText('command/deactivate_admin')).toBeInTheDocument();
     expect(screen.getByText('23')).toBeInTheDocument();
 
@@ -156,23 +160,25 @@ describe('AdminHealthPage', () => {
   it('offers reconcile only for operations the command actually accepts', async () => {
     vi.mocked(adminRpc).mockResolvedValue(healthOk);
     renderPage();
-    await screen.findByText('op-retryable');
+    await screen.findByText('20eef638-61ba-5db4-880d-3fb8c6a0c1aa');
 
     const retryableRow = screen
-      .getByText('op-retryable')
+      .getByText('20eef638-61ba-5db4-880d-3fb8c6a0c1aa')
       .closest('tr') as HTMLElement;
     expect(
       within(retryableRow).getByRole('button', { name: '觸發重新對帳' }),
     ).toBeInTheDocument();
 
     // reset saga 的 stuck operation 有一次性 manual retry 授權。
-    const stuckRow = screen.getByText('op-stuck').closest('tr') as HTMLElement;
+    const stuckRow = screen
+      .getByText('8419e5b5-48e5-5ee5-890e-f1f61539bdd5')
+      .closest('tr') as HTMLElement;
     expect(
       within(stuckRow).getByRole('button', { name: '授權一次人工重試' }),
     ).toBeInTheDocument();
 
     const oobRow = screen
-      .getByText('op-factor-incident')
+      .getByText('26259bb2-8313-5d70-8d53-c20c6823c712')
       .closest('tr') as HTMLElement;
     expect(within(oobRow).queryByRole('button')).not.toBeInTheDocument();
     expect(oobRow).toHaveTextContent('需負責人依 runbook 處理');
@@ -194,15 +200,15 @@ describe('AdminHealthPage', () => {
     const user = userEvent.setup();
     vi.mocked(adminRpc).mockResolvedValue(healthOk);
     vi.mocked(invokeAdminCommand).mockResolvedValueOnce({
-      operation_id: 'op-retryable',
+      operation_id: '20eef638-61ba-5db4-880d-3fb8c6a0c1aa',
       outcome: 'ok',
       result: 'reconcile_requested',
     });
     renderPage();
-    await screen.findByText('op-retryable');
+    await screen.findByText('20eef638-61ba-5db4-880d-3fb8c6a0c1aa');
 
     const retryableRow = screen
-      .getByText('op-retryable')
+      .getByText('20eef638-61ba-5db4-880d-3fb8c6a0c1aa')
       .closest('tr') as HTMLElement;
     await user.click(
       within(retryableRow).getByRole('button', { name: '觸發重新對帳' }),
@@ -221,7 +227,7 @@ describe('AdminHealthPage', () => {
         'reconcile_admin_security_operation',
         expect.any(String),
         expect.objectContaining({
-          operation_id: 'op-retryable',
+          operation_id: '20eef638-61ba-5db4-880d-3fb8c6a0c1aa',
           reason: '作業逾時需要手動重新對帳',
         }),
       );
@@ -269,12 +275,14 @@ describe('AdminHealthPage', () => {
     vi.mocked(adminRpc).mockResolvedValue({
       code: 'COLUMN_NOT_ALLOWED',
       outcome: 'denied',
-      request_id: 'health-request-1',
+      request_id: '376a7cc4-929d-5f2a-99ee-ac8fbc28abac',
       retryable: false,
     });
     renderPage();
 
-    expect(await screen.findByText(/health-request-1/u)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/376a7cc4-929d-5f2a-99ee-ac8fbc28abac/u),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '重試' })).toBeNull();
   });
 
@@ -294,7 +302,7 @@ describe('AdminHealthPage', () => {
   it('exposes no export or download control', async () => {
     vi.mocked(adminRpc).mockResolvedValue(healthOk);
     renderPage();
-    await screen.findByText('op-retryable');
+    await screen.findByText('20eef638-61ba-5db4-880d-3fb8c6a0c1aa');
 
     expect(screen.queryByText(/匯出|下載|CSV|export|download/iu)).toBeNull();
     expect(document.querySelector('a[download]')).toBeNull();

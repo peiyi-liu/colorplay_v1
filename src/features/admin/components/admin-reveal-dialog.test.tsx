@@ -255,40 +255,27 @@ describe('AdminRevealDialog', () => {
     expect(refetch).toHaveBeenCalled();
   });
 
-  it('reuses the idempotency key on retry but mints a fresh one after IDEMPOTENCY_CONFLICT', async () => {
+  it('preserves retry arguments and does not bypass an idempotency conflict', async () => {
     const user = userEvent.setup();
     vi.mocked(invokeAdminCommand)
       .mockResolvedValueOnce({
         code: 'AUTHORIZATION_RECEIPT_INVALID',
         outcome: 'denied',
+        retryable: true,
       })
       .mockResolvedValueOnce({
         code: 'IDEMPOTENCY_CONFLICT',
         outcome: 'denied',
-      })
-      .mockResolvedValueOnce({ outcome: 'ok', value: PLAINTEXT });
+        retryable: false,
+      });
     renderDialog();
-
     await submitPurpose(user);
-    await waitFor(() => {
-      expect(invokeAdminCommand).toHaveBeenCalledTimes(1);
-    });
+    expect(screen.getByLabelText('揭露目的')).toBeDisabled();
     await user.click(screen.getByRole('button', { name: '揭露' }));
-    await waitFor(() => {
-      expect(invokeAdminCommand).toHaveBeenCalledTimes(2);
-    });
-    await user.click(screen.getByRole('button', { name: '揭露' }));
-    await waitFor(() => {
-      expect(invokeAdminCommand).toHaveBeenCalledTimes(3);
-    });
-
+    expect(screen.getByRole('button', { name: '揭露' })).toBeDisabled();
     const calls = vi.mocked(invokeAdminCommand).mock.calls;
-    const [first, second, third] = calls;
-    if (!first || !second || !third) {
-      throw new Error('expected three invokeAdminCommand calls');
-    }
-    expect(second[1]).toBe(first[1]);
-    expect(third[1]).not.toBe(second[1]);
+    expect(calls).toHaveLength(2);
+    expect(calls[1]).toEqual(calls[0]);
   });
 
   it('closes on Escape without leaking the key to document listeners, and restores focus', async () => {

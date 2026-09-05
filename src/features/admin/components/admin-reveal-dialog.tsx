@@ -1,3 +1,6 @@
+import { useAdminWait } from '../hooks/use-admin-wait';
+import { safeTraceId } from '../api/admin-outcome';
+import { AdminTrace } from './admin-trace';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useForm } from 'react-hook-form';
@@ -72,6 +75,13 @@ export function AdminRevealDialog({
   const [replayed, setReplayed] = useState(false);
   const [deniedCode, setDeniedCode] = useState<AdminErrorCode | null>(null);
   const [unexpectedError, setUnexpectedError] = useState(false);
+  const longWait = useAdminWait(submitting);
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const [retryAllowed, setRetryAllowed] = useState(true);
+  const mounted = useRef(true);
+  const inFlight = useRef(false);
+  const submittedArgs = useRef<Record<string, unknown> | null>(null);
+  const [attemptStarted, setAttemptStarted] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -85,9 +95,11 @@ export function AdminRevealDialog({
   });
 
   useEffect(() => {
+    mounted.current = true;
     previousFocusRef.current = document.activeElement as HTMLElement | null;
     dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)?.focus();
     return () => {
+      mounted.current = false;
       previousFocusRef.current?.focus();
     };
   }, []);
@@ -97,7 +109,7 @@ export function AdminRevealDialog({
       // modal 吃下自己的 Escape,不冒泡到 document-level 監聽器(窄視口的
       // MENU drawer 不是遮擋式 overlay,兩者同時關閉會搶 focus restore)。
       event.stopPropagation();
-      if (submitting) return;
+      if (submitting && !longWait) return;
       onClose();
       return;
     }
@@ -118,27 +130,37 @@ export function AdminRevealDialog({
     }
   };
 
-  const submit = handleSubmit(async (values) => {
+  const submit = async (values: PurposeFormValues) => {
+    if (inFlight.current || !retryAllowed) return;
+    inFlight.current = true;
+    setAttemptStarted(true);
     setSubmitting(true);
     setDeniedCode(null);
     setUnexpectedError(false);
     setReplayed(false);
     try {
+      const commandArgs = submittedArgs.current ?? {
+        column,
+        domain,
+        resource,
+        purpose: values.purpose,
+        ...(locator.kind === 'row_id'
+          ? { row_id: locator.value }
+          : { row_token: locator.value }),
+      };
+      submittedArgs.current = commandArgs;
       const response = await invokeAdminCommand(
         'admin_reveal_field',
         idempotencyKey,
-        {
-          column,
-          domain,
-          purpose: values.purpose,
-          resource,
-          // 只送出這次選定的那一個定址欄位;Edge 會拒絕同時帶兩個
-          ...(locator.kind === 'row_token'
-            ? { row_token: locator.value }
-            : { row_id: locator.value }),
-        },
+        commandArgs,
       );
-      if (response.outcome === 'ok') {
+      if (!mounted.current) return;
+      setRequestId(safeTraceId(response.request_id));
+      setRetryAllowed(response.retryable === true);
+      if (
+        response.outcome === 'ok' &&
+        (response.value === null || typeof response.value === 'string')
+      ) {
         setRevealResult({
           value: typeof response.value === 'string' ? response.value : null,
         });
@@ -149,7 +171,10 @@ export function AdminRevealDialog({
         // 申請 —— 新目的就是新的 canonical request hash,沿用同一把 key
         // 必然撞 IDEMPOTENCY_CONFLICT(spec §8.2),所以這裡就換新 key。
         setIdempotencyKey(crypto.randomUUID());
+        submittedArgs.current = null;
+        setAttemptStarted(false);
         setReplayed(true);
+        setRetryAllowed(true);
         return;
       }
       const code = extractErrorCode(response);
@@ -160,20 +185,22 @@ export function AdminRevealDialog({
         });
         return;
       }
-      if (code === 'IDEMPOTENCY_CONFLICT') {
-        setIdempotencyKey(crypto.randomUUID());
-      }
+
       if (code) {
         setDeniedCode(code);
       } else {
         setUnexpectedError(true);
       }
     } catch {
-      setUnexpectedError(true);
+      if (mounted.current) {
+        setUnexpectedError(true);
+        setRetryAllowed(false);
+      }
     } finally {
-      setSubmitting(false);
+      inFlight.current = false;
+      if (mounted.current) setSubmitting(false);
     }
-  });
+  };
 
   const revealed = revealResult !== null;
 
@@ -213,7 +240,7 @@ export function AdminRevealDialog({
             </button>
           </div>
         ) : (
-          <form onSubmit={(event) => void submit(event)}>
+          <form onSubmit={(event) => void handleSubmit(submit)(event)}>
             <p>
               系統會完整記錄這次揭露的資源、列、欄與目的（不含明文）。明文只顯示這一次。
             </p>
@@ -226,6 +253,7 @@ export function AdminRevealDialog({
                     : undefined
                 }
                 aria-invalid={errors.purpose ? 'true' : 'false'}
+                disabled={submitting || !retryAllowed || attemptStarted}
                 id="admin-reveal-dialog-purpose"
                 {...register('purpose')}
               />
@@ -241,13 +269,21 @@ export function AdminRevealDialog({
               </p>
             ) : null}
             {unexpectedError ? (
-              <p role="alert">發生非預期的錯誤，請稍後再試或聯絡負責人。</p>
+              <p role="alert">
+                尚未取得揭露結果。請關閉視窗；如仍需要，重新申請核准。
+              </p>
             ) : null}
             <AdminStatusBanner code={deniedCode} />
+            <AdminTrace value={requestId} />
+            {longWait ? (
+              <p role="status">
+                尚未取得揭露結果。可以關閉視窗；關閉後不會顯示稍後回傳的明文。
+              </p>
+            ) : null}
             <div className="admin-command-dialog__actions">
               <button
                 className="secondary-action"
-                disabled={submitting}
+                disabled={submitting && !longWait}
                 onClick={onClose}
                 type="button"
               >
@@ -256,7 +292,7 @@ export function AdminRevealDialog({
               <button
                 className="primary-action"
                 data-primary-action="true"
-                disabled={submitting}
+                disabled={submitting || !retryAllowed}
                 type="submit"
               >
                 {submitting ? '揭露中…' : '揭露'}

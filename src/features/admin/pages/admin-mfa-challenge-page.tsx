@@ -1,10 +1,12 @@
+import { useAdminWait } from '../hooks/use-admin-wait';
+import { safeTraceId } from '../api/admin-outcome';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
-import { RpgWindow } from '../../../components/ui/rpg-window';
+import '../../../styles/admin-console.css';
 import {
   extractErrorCode,
   invokeAdminMfa,
@@ -39,6 +41,7 @@ export function AdminMfaChallengePage() {
   // 涵蓋:factor 查詢本身失敗(非「查無 factor」)、invokeAdminMfa 拋出、
   // 或回應不是 ok 但 extractErrorCode 也認不出代碼 —— 都不能靜默不顯示。
   const [unexpectedError, setUnexpectedError] = useState(false);
+  const [lookupAttempt, setLookupAttempt] = useState(0);
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -48,6 +51,7 @@ export function AdminMfaChallengePage() {
     resolver: zodResolver(codeSchema),
   });
 
+  const longWait = useAdminWait(isSubmitting || factorId === undefined);
   useEffect(() => {
     let cancelled = false;
     listOwnVerifiedTotpFactorId()
@@ -60,10 +64,12 @@ export function AdminMfaChallengePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [lookupAttempt]);
 
   const onSubmit = handleSubmit(async ({ code }) => {
     if (!factorId) return;
+    setError(null);
+    setUnexpectedError(false);
     try {
       const response = await invokeAdminMfa({
         action: 'challenge',
@@ -100,81 +106,120 @@ export function AdminMfaChallengePage() {
 
   if (incident) {
     return (
-      <RpgWindow>
-        <h1 className="pixel-heading">管理員雙因素驗證</h1>
+      <section className="admin-auth-panel">
+        <h1 className="admin-auth-panel__heading">管理員雙因素驗證</h1>
+        {factorId === undefined ? (
+          <p role="status">
+            {longWait
+              ? '驗證狀態取得時間較長，尚未收到結果。'
+              : '正在取得驗證狀態…'}
+          </p>
+        ) : null}
         <AdminStatusBanner code="FACTOR_BINDING_MISMATCH" />
         {incidentOperationId ? (
           <p>
             回報代碼：
             <span data-testid="incident-operation-id">
-              {incidentOperationId}
+              {safeTraceId(incidentOperationId)}
             </span>
           </p>
         ) : null}
-      </RpgWindow>
+      </section>
     );
   }
 
   if (unexpectedError) {
     return (
-      <RpgWindow>
-        <h1 className="pixel-heading">管理員雙因素驗證</h1>
+      <section className="admin-auth-panel">
+        <h1 className="admin-auth-panel__heading">管理員雙因素驗證</h1>
+        {factorId === undefined ? (
+          <p role="status">
+            {longWait
+              ? '驗證狀態取得時間較長，尚未收到結果。'
+              : '正在取得驗證狀態…'}
+          </p>
+        ) : null}
         <p role="alert">發生非預期的錯誤，請稍後再試或聯絡負責人。</p>
-      </RpgWindow>
+        <button
+          type="button"
+          className="secondary-action"
+          onClick={() => {
+            setUnexpectedError(false);
+            setFactorId(undefined);
+            setLookupAttempt((count) => count + 1);
+          }}
+        >
+          重新取得驗證狀態
+        </button>
+      </section>
     );
   }
 
   if (factorId === null) {
     return (
-      <RpgWindow>
-        <h1 className="pixel-heading">管理員雙因素驗證</h1>
+      <section className="admin-auth-panel">
+        <h1 className="admin-auth-panel__heading">管理員雙因素驗證</h1>
         <p role="alert">找不到已綁定的驗證器，請聯絡負責人。</p>
-      </RpgWindow>
+      </section>
     );
   }
 
   return (
-    <RpgWindow>
-      <h1 className="pixel-heading">管理員雙因素驗證</h1>
+    <section className="admin-auth-panel">
+      <h1 className="admin-auth-panel__heading">管理員雙因素驗證</h1>
+      {factorId === undefined ? (
+        <p role="status">
+          {longWait
+            ? '驗證狀態取得時間較長，尚未收到結果。'
+            : '正在取得驗證狀態…'}
+        </p>
+      ) : null}
       {factorId ? (
-        <form
-          className="admin-mfa-form"
-          onSubmit={(event) => void onSubmit(event)}
-        >
-          <p>請輸入驗證器 App 產生的 6 位數驗證碼。</p>
-          <div>
-            <label htmlFor="admin-mfa-challenge-code">驗證碼</label>
-            <input
-              aria-describedby={
-                errors.code ? 'admin-mfa-challenge-code-error' : undefined
-              }
-              aria-invalid={errors.code ? 'true' : 'false'}
-              autoComplete="one-time-code"
-              id="admin-mfa-challenge-code"
-              inputMode="numeric"
-              maxLength={6}
-              {...register('code')}
-            />
-            {errors.code ? (
-              <p id="admin-mfa-challenge-code-error" role="alert">
-                {errors.code.message}
-              </p>
-            ) : null}
-          </div>
-          <button
-            className="primary-action"
-            data-acceptance-interactive="true"
-            data-acceptance-target
-            data-primary-action="true"
-            disabled={isSubmitting || error === 'MFA_LOCKED'}
-            type="submit"
+        <>
+          {longWait && isSubmitting ? (
+            <p role="status">
+              驗證仍在處理中，尚未收到最終結果。請勿重複送出；可離開此頁稍後重新確認。
+            </p>
+          ) : null}
+          <form
+            className="admin-mfa-form"
+            onSubmit={(event) => void onSubmit(event)}
           >
-            驗證
-          </button>
-        </form>
+            <p>請輸入驗證器 App 產生的 6 位數驗證碼。</p>
+            <div>
+              <label htmlFor="admin-mfa-challenge-code">驗證碼</label>
+              <input
+                aria-describedby={
+                  errors.code ? 'admin-mfa-challenge-code-error' : undefined
+                }
+                aria-invalid={errors.code ? 'true' : 'false'}
+                autoComplete="one-time-code"
+                id="admin-mfa-challenge-code"
+                inputMode="numeric"
+                maxLength={6}
+                {...register('code')}
+              />
+              {errors.code ? (
+                <p id="admin-mfa-challenge-code-error" role="alert">
+                  {errors.code.message}
+                </p>
+              ) : null}
+            </div>
+            <button
+              className="primary-action"
+              data-acceptance-interactive="true"
+              data-acceptance-target
+              data-primary-action="true"
+              disabled={isSubmitting || error === 'MFA_LOCKED'}
+              type="submit"
+            >
+              {isSubmitting ? '驗證中…' : '驗證'}
+            </button>
+          </form>
+        </>
       ) : null}
       <AdminStatusBanner code={error} />
-    </RpgWindow>
+    </section>
   );
 }
 

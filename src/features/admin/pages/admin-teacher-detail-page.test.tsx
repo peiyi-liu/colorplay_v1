@@ -201,7 +201,7 @@ describe('AdminTeacherDetailPage', () => {
 
   it.each([
     ['health_reconciliation', '前往健康狀態'],
-    ['none', '操作已完成或終止，不會再次重送。'],
+    ['none', '已完成，不會再次重送。'],
   ] as const)(
     'obeys server legal follow-up %s without retrying the mutation',
     async (legalFollowUp, expectedText) => {

@@ -126,6 +126,13 @@ export class AdminClientError extends Error {
 const browserClient = () =>
   getBrowserSupabaseClient(parsePublicEnv(import.meta.env));
 
+function readResponseObject(value: unknown): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new AdminClientError();
+  }
+  return value as Record<string, unknown>;
+}
+
 // supabase-js functions.invoke 對 4xx/5xx 回 error 並把 Response 掛在
 // error.context;typed denial 的 body(outcome/code)就在裡面,原樣回傳
 // 給呼叫端判讀,不在 client 層改寫或吞掉。
@@ -134,13 +141,13 @@ async function readFunctionResponse(response: {
   error: unknown;
 }): Promise<Record<string, unknown>> {
   if (response.error === null || response.error === undefined) {
-    return (response.data ?? {}) as Record<string, unknown>;
+    return readResponseObject(response.data);
   }
   const context = (response.error as { context?: unknown }).context;
   if (context instanceof Response) {
     try {
       // clone:Response body 單次可讀,保留原件給日後的呼叫端/記錄使用
-      return (await context.clone().json()) as Record<string, unknown>;
+      return readResponseObject(await context.clone().json());
     } catch {
       throw new AdminClientError();
     }
@@ -187,6 +194,6 @@ export async function adminRpc<T>(
   args: Record<string, unknown>,
 ): Promise<T> {
   const { data, error } = await browserClient().rpc(fn as never, args as never);
-  if (error) throw new Error(error.message);
+  if (error) throw new AdminClientError();
   return data;
 }

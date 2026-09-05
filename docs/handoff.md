@@ -1504,3 +1504,24 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 同一 job 也誤跑需 `PLAYWRIGHT_ACCEPTANCE=on`、專屬 fixture 與 evidence root 的 `chapter-sequence.spec.ts`；一般 suite 現排除，`pnpm phase:chapter-sequence` 在 acceptance mode 下仍可執行。
 - 同步校正已由現行產品／CSS／元件測試證明過時的瀏覽器斷言：登入後標題為「學習地圖」、公開入口為「開始冒險」、地圖動態 CTA 為「開始／繼續／查看第 N 章」、認證 main 允許 `overflow-y:auto` 以支援受限高度，以及內容未備妥 panel 的 eyebrow 完整文案。未放寬無水平溢位、控制項可見性、Auth 真實登入或後端資料斷言。
 - 真實重現另確認，多數學習頁失敗是舊 Local fixture 學生沒有 `login_account`，因而被現行 completed-registration guard 正確導向註冊頁。Seeder 現只在 loopback Local stack 為未具正式帳號 fixture 的學生補上唯一 `fixtureNN` 帳號；remote seed 行為與既有 Hosted fixture 身分不變，本輪也不執行 Hosted seed／migration。
+
+## 2026-09-05 16:19 [Codex] — Admin UI audit 與 redesign 草案（待核准）
+
+- 做了什麼：於 `f7ab/colorplay` 核實 HEAD／本機 origin/staging／唯讀遠端 staging 均為 `2a37a0931ff838c7f16580d225ad02b99e21edda`，起始乾淨。完成 14 routes 的角色、操作問題、資訊優先級及全鏈路狀態 audit，提出保留 routes 的營運控制台方向與 7 個實作 task。發現總覽分頁數誤當有效連線／全量待辦，以及共用 dialog 將非終態 ok 說成完成等缺口。Admin 基準 Vitest 28 files／267 tests PASS；未做真實 browser／Hosted 驗證。
+- Owner 本輪邊界：跨班級學生支援永久取消，不可在 Admin C 重新加入；首位 Staging Admin／MFA 已完成為 owner 提供的狀態；Admin B Hosted lifecycle 延後統一執行，不宣稱 phase gate 通過。Recovery URL／部署另 session 負責，PR #14 不在範圍。
+- 下一步：owner 審閱設計 A 與 Task 1–7，再依核准範圍啟動實作。產品未改、未 commit／push／deploy，無 DB／Production 操作。
+- Blocker／待決策：已詢問「禁止密碼／token／TOTP 顯示」是否保留現有一次性密碼 receipt、邀請 token、MFA QR／設定資料的受控交付例外；未答覆前不啟動相關實作。通用命令缺完整狀態 lookup，以未知結果＋安全轉交呈現，不新增未核准 API。
+- 相關檔案：`docs/superpowers/specs/2026-09-05-admin-ui-redesign-design.md`、`docs/superpowers/plans/2026-09-05-admin-ui-redesign.md`。
+
+## 2026-09-05 17:29 [Codex] — Admin UI 受控憑證流程保留已確認
+
+- 決策：owner 回覆「是」，確認保留既有一次性教師密碼交付、管理員邀請 token 與 MFA 設定／輸入流程；秘密仍不得進入一般狀態、錯誤、追蹤資訊、query cache、URL/history 或 log。既有清除與不重現明文契約保留。
+- 做了什麼：同步更新 Admin UI 設計第 8 節、逐頁 audit 與 implementation plan，解除憑證範圍待決項；未修改產品程式。
+- 下一步：整體設計 A／Task 1–7 仍待核准。本次只確認憑證語意，沒有擴張為部署、Hosted DB 或 Production 授權。
+
+## 2026-09-05 18:10 [Codex] — Admin UI 設計 A／Task 1–7 實作與 Staging 授權
+
+- Owner 已明確要求「Admin UI 重新設計，並製作完成，可以部署在 staging」；設計 A 與 Task 1–7 已核准，不再等待重複核准。設計與計畫已同步狀態，保留受控一次性密碼／邀請 token／MFA 流程；跨班級學生支援仍永久取消。
+- 實作：14 routes 採 Admin 專用營運控制台樣式；教師入口、查詢新鮮度／刷新失敗保留資料、10 秒等待說明、命令 completed／accepted／unknown 分流、安全追蹤碼、教師合法後續動作、健康步驟／連線狀態、MFA 送出與失敗回饋。未修改後端權限、RPC／RLS、schema、Recovery URL 或學生樣式。
+- 驗證：全專案 Vitest 234 files／1858 tests PASS；全域 lint、typecheck、Prettier 與 Vite build PASS。首次完整測試因 sandbox 無法啟動 loopback HTTP／Chromium 而失敗，使用允許本機測試的權限重跑後全綠。單一 reviewer 依 Task 1–7 各一輪，回饋均於同輪修正；UI harness 明確標示合成回應，不能當 Hosted lifecycle 證據。
+- 發布：分支 codex/admin-ui-redesign。即將整合 origin/staging cddaa6c 的 Recovery／工具版本修正，經 protected PR checks 與真實合成帳號登入檢查後交付 Staging。PR #14、Hosted DB migration、Admin B lifecycle、Production 與真實裝置 phase gate 均不在本次執行範圍。

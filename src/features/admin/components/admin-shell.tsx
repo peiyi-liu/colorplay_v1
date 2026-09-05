@@ -1,3 +1,5 @@
+import { AdminOperationProvider } from './admin-operation-notices';
+import '../../../styles/admin-console.css';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
@@ -27,13 +29,18 @@ const NAV_GROUPS: readonly {
   label: string;
   items: readonly { label: string; to: string; end?: boolean }[];
 }[] = [
-  { items: [{ end: true, label: '安全總覽', to: '/admin' }], label: '總覽' },
+  {
+    items: [
+      { end: true, label: '安全總覽', to: '/admin' },
+      { label: '教師帳號', to: '/admin/teachers' },
+    ],
+    label: '日常營運',
+  },
   {
     items: [
       { label: '管理員', to: '/admin/access/admins' },
       { label: '邀請', to: '/admin/access/invitations' },
-      { label: 'Session', to: '/admin/access/sessions' },
-      { label: '教師帳號', to: '/admin/teachers' },
+      { label: '特權連線', to: '/admin/access/sessions' },
     ],
     label: '身分與存取',
   },
@@ -97,7 +104,7 @@ export function AdminShell(): ReactElement {
           ref={toggleRef}
           type="button"
         >
-          MENU
+          開啟導覽
         </button>
       ) : null}
       <nav
@@ -106,6 +113,10 @@ export function AdminShell(): ReactElement {
         hidden={!navVisible}
         id="admin-shell-nav"
       >
+        <div className="admin-shell__brand">
+          <span>COLORPLAY</span>
+          <strong>管理控制台</strong>
+        </div>
         {NAV_GROUPS.map((group) => (
           <div className="admin-shell__group" key={group.label}>
             <p className="admin-shell__group-label">{group.label}</p>
@@ -129,7 +140,20 @@ export function AdminShell(): ReactElement {
           landmark(review 波標準軸抓到巢狀 main 會讓螢幕閱讀器多出重複
           landmark)。 */}
       <div className="admin-shell__main">
-        <Outlet />
+        <div className="admin-shell__context">
+          管理控制台 <span aria-hidden="true">／</span>{' '}
+          {NAV_GROUPS.flatMap((group) => group.items)
+            .filter(
+              (item) =>
+                item.to === location.pathname ||
+                (item.to !== '/admin' &&
+                  location.pathname.startsWith(`${item.to}/`)),
+            )
+            .at(-1)?.label ?? '資料明細'}
+        </div>
+        <AdminOperationProvider>
+          <Outlet />
+        </AdminOperationProvider>
       </div>
     </div>
   );

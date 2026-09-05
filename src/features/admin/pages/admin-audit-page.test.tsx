@@ -32,7 +32,7 @@ const auditRows = [
     mfa_age_seconds: 42,
     occurred_at: '2026-08-09T10:00:00Z',
     reason_or_purpose_redacted: '家長來電確認學生身分需要核對',
-    request_id: 'req-1',
+    request_id: '212368a7-0138-518e-aa15-c4ccfd6834b6',
     result: 'success',
     source_summary_redacted: null,
     target_principal_id: null,
@@ -50,7 +50,7 @@ const auditRows = [
     mfa_age_seconds: 10,
     occurred_at: '2026-08-09T09:00:00Z',
     reason_or_purpose_redacted: '帳號異常需要立即停用處理',
-    request_id: 'req-2',
+    request_id: 'a0b03bde-1e40-529d-9579-bc1f42259143',
     result: 'LAST_ADMIN_PROTECTED',
     source_summary_redacted: null,
     target_principal_id: 'principal-2',
@@ -224,7 +224,7 @@ describe('AdminAuditPage', () => {
       .mockResolvedValueOnce({
         code: 'COLUMN_NOT_ALLOWED',
         outcome: 'denied',
-        request_id: 'req-audit-2',
+        request_id: 'fcaca26e-a359-51f6-910e-040add39e226',
       });
     renderPage();
     await screen.findByText('admin_reveal_field');
@@ -238,7 +238,9 @@ describe('AdminAuditPage', () => {
     });
     expect(screen.getByText('admin_reveal_field')).toBeInTheDocument();
     // 可追蹤的 partial failure(spec §3.3):必須帶出 request ID
-    expect(screen.getByText('req-audit-2')).toBeInTheDocument();
+    expect(
+      screen.getByText('fcaca26e-a359-51f6-910e-040add39e226'),
+    ).toBeInTheDocument();
     // 非 retryable:不給註定重蹈覆轍的按鈕,改引導調整查詢條件
     expect(
       screen.queryByRole('button', { name: '重試載入更多' }),

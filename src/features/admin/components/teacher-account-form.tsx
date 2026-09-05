@@ -1,3 +1,4 @@
+import { useAdminWait } from '../hooks/use-admin-wait';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useRef, type KeyboardEvent } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -71,6 +72,7 @@ export function TeacherAccountForm({
 }: Readonly<TeacherAccountFormProps>) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const longWait = useAdminWait(isSubmitting);
   const isReset = mode === 'reset';
   const title =
     mode === 'create'
@@ -127,7 +129,7 @@ export function TeacherAccountForm({
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
       event.stopPropagation();
-      if (!isSubmitting) onCancel();
+      if (!isSubmitting || longWait) onCancel();
       return;
     }
     if (event.key !== 'Tab') return;
@@ -273,10 +275,15 @@ export function TeacherAccountForm({
             <p role="alert">發生非預期錯誤；系統不會自動重送操作。</p>
           ) : null}
           <AdminStatusBanner code={deniedCode} />
+          {longWait ? (
+            <p role="status">
+              尚未收到最終結果。可關閉視窗等待，關閉不會撤銷已送出的作業。
+            </p>
+          ) : null}
           <div className="admin-command-dialog__actions">
             <button
               className="secondary-action"
-              disabled={isSubmitting}
+              disabled={isSubmitting && !longWait}
               onClick={onCancel}
               type="button"
             >

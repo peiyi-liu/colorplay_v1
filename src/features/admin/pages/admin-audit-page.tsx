@@ -1,7 +1,9 @@
+import { safeTraceId } from '../api/admin-outcome';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { AdminPageLoading } from '../components/admin-page-loading';
+import { AdminQueryStatus } from '../components/admin-query-status';
 import { adminRpc, extractErrorCode } from '../api/admin-client';
 import { AdminStatusBanner } from '../components/admin-status-banner';
 import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
@@ -221,9 +223,12 @@ export function AdminAuditPage() {
     </form>
   );
 
-  if (query.isPending || staleSession) return <RouteLoading withinMain />;
+  if (query.isPending || staleSession)
+    return (
+      <AdminPageLoading title="稽核紀錄" onRetry={() => query.refetch()} />
+    );
 
-  if (query.isError || !firstPage || firstPage.outcome === 'denied') {
+  if (!query.data || !firstPage || firstPage.outcome === 'denied') {
     return (
       <section
         aria-labelledby="admin-audit-page-heading"
@@ -238,15 +243,17 @@ export function AdminAuditPage() {
         {/* 表單必須留著:失敗常常就是某個 filter 值造成的,只給「重試」
             會把同一個壞值再送一次,使用者永遠出不來。 */}
         {filterForm}
-        <button
-          className="secondary-action"
-          onClick={() => {
-            void query.refetch();
-          }}
-          type="button"
-        >
-          重試
-        </button>
+        {firstPage?.outcome !== 'denied' || firstPage.retryable === true ? (
+          <button
+            className="secondary-action"
+            onClick={() => {
+              void query.refetch();
+            }}
+            type="button"
+          >
+            重試
+          </button>
+        ) : null}
       </section>
     );
   }
@@ -264,6 +271,7 @@ export function AdminAuditPage() {
       className="page-wide page-stack"
     >
       <h1 id="admin-audit-page-heading">稽核紀錄</h1>
+      <AdminQueryStatus query={query} />
       {filterForm}
       {/* 後續頁被拒:保留已載入的事件,說明原因並留下重試入口(被拒的那頁
           會讓 cursor 消失,沒有出路就再也載不到)。 */}
@@ -278,7 +286,7 @@ export function AdminAuditPage() {
             <p>
               追蹤代碼：
               <span data-testid="admin-audit-later-request-id">
-                {laterDeniedPage.request_id}
+                {safeTraceId(laterDeniedPage.request_id)}
               </span>
             </p>
           ) : null}
@@ -324,7 +332,7 @@ export function AdminAuditPage() {
                   <td>{row.actor_principal_id ?? row.actor_type}</td>
                   <td>{row.target_principal_id ?? '—'}</td>
                   <td>{row.reason_or_purpose_redacted ?? '—'}</td>
-                  <td>{row.request_id ?? '—'}</td>
+                  <td>{safeTraceId(row.request_id) ?? '—'}</td>
                 </tr>
               ))}
             </tbody>

@@ -93,7 +93,7 @@ describe('AdminAccessAdminsPage', () => {
     const activeRowEl = (await screen.findByText('user-1')).closest(
       'tr',
     ) as HTMLElement;
-    expect(within(activeRowEl).getByText('active')).toBeInTheDocument();
+    expect(within(activeRowEl).getByText('啟用')).toBeInTheDocument();
     expect(
       within(activeRowEl).getByRole('button', { name: '停用' }),
     ).toBeInTheDocument();
@@ -191,7 +191,7 @@ describe('AdminAccessAdminsPage', () => {
     const user = userEvent.setup();
     vi.mocked(adminRpc).mockResolvedValue({ outcome: 'ok', rows: [activeRow] });
     vi.mocked(invokeAdminCommand).mockResolvedValueOnce({
-      operation_id: 'op-1',
+      operation_id: '2ab50adc-0764-5f36-b286-b95d02627177',
       outcome: 'ok',
     });
     renderPage();
@@ -282,12 +282,14 @@ describe('AdminAccessAdminsPage', () => {
     vi.mocked(adminRpc).mockResolvedValue({
       code: 'RESOURCE_NOT_ALLOWED',
       outcome: 'denied',
-      request_id: 'admins-request-1',
+      request_id: 'd178e40a-6614-5163-a907-45f400d6c3a9',
       retryable: false,
     });
     renderPage();
 
-    expect(await screen.findByText(/admins-request-1/u)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/d178e40a-6614-5163-a907-45f400d6c3a9/u),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '重試' })).toBeNull();
   });
 

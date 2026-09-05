@@ -170,12 +170,14 @@ describe('AdminDataBrowserPage', () => {
     vi.mocked(adminRpc).mockResolvedValue({
       code: 'RESOURCE_NOT_ALLOWED',
       outcome: 'denied',
-      request_id: 'req-abc-123',
+      request_id: '6f0f80d7-070d-568c-b65b-16b72a01ab45',
     });
     renderPage('/admin/data/users/secret_table');
 
     expect(await screen.findByText('此資源不可瀏覽')).toBeInTheDocument();
-    expect(screen.getByText('req-abc-123')).toBeInTheDocument();
+    expect(
+      screen.getByText('6f0f80d7-070d-568c-b65b-16b72a01ab45'),
+    ).toBeInTheDocument();
     // 不得洩漏資源是否存在
     expect(screen.queryByText(/不存在|找不到|已刪除/u)).toBeNull();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
@@ -199,7 +201,7 @@ describe('AdminDataBrowserPage', () => {
       code: 'COLUMN_NOT_ALLOWED',
       message: '此欄位不允許這項操作。',
       outcome: 'denied',
-      request_id: 'req-first-page',
+      request_id: '4e4891dc-ee8b-5a3b-8396-fa098a2a3760',
       retryable: false,
     });
     renderPage();
@@ -210,7 +212,7 @@ describe('AdminDataBrowserPage', () => {
       );
     });
     expect(screen.getByTestId('admin-request-id')).toHaveTextContent(
-      'req-first-page',
+      '4e4891dc-ee8b-5a3b-8396-fa098a2a3760',
     );
     expect(
       screen.queryByRole('button', { name: '重試' }),
@@ -225,7 +227,7 @@ describe('AdminDataBrowserPage', () => {
       code: 'SECURITY_AUDIT_UNAVAILABLE',
       message: '安全稽核暫時無法使用，操作已中止，請稍後再試。',
       outcome: 'denied',
-      request_id: 'req-audit-down',
+      request_id: '42917e84-52b9-5782-816c-bab1aff4c74d',
       retryable: true,
     });
     renderPage();
@@ -659,7 +661,7 @@ describe('AdminDataBrowserPage', () => {
       })
       .mockResolvedValueOnce({
         outcome: 'denied',
-        request_id: 'req-page-2',
+        request_id: 'e886d4de-ef1e-5d46-a25e-6b1b2cb4231b',
       });
     renderPage();
     await screen.findByText('小明');
@@ -669,7 +671,9 @@ describe('AdminDataBrowserPage', () => {
     expect(
       await screen.findByText('載入更多資料失敗，請稍後重試。'),
     ).toBeInTheDocument();
-    expect(screen.getByText('req-page-2')).toBeInTheDocument();
+    expect(
+      screen.getByText('e886d4de-ef1e-5d46-a25e-6b1b2cb4231b'),
+    ).toBeInTheDocument();
   });
 
   it('offers no load-more when the server issues no cursor', async () => {

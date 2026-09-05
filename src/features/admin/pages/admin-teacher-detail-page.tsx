@@ -1,8 +1,14 @@
+import { safeTraceId } from '../api/admin-outcome';
+import { teacherOperationOutcome } from '../api/teacher-operation-outcome';
+import { TeacherOperationStatus } from '../components/teacher-operation-status';
+import { useAdminOperations } from '../components/admin-operation-notices';
+import { commandOutcome } from '../api/admin-outcome';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
-import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { AdminPageLoading } from '../components/admin-page-loading';
+import { AdminQueryStatus } from '../components/admin-query-status';
 import type { AdminErrorCode } from '../api/admin-client';
 import type {
   ResetTeacherPasswordInput,
@@ -41,6 +47,10 @@ const detailStateLabel = {
 export function AdminTeacherDetailPage() {
   const { teacherId = '' } = useParams();
   const queryClient = useQueryClient();
+  const operations = useAdminOperations();
+  const inFlight = useRef(false);
+  const checkingRef = useRef(false);
+  const [checking, setChecking] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [formMode, setFormMode] = useState<'update' | 'reset' | null>(null);
   const [revealOpen, setRevealOpen] = useState(false);
@@ -56,6 +66,13 @@ export function AdminTeacherDetailPage() {
   const [unexpectedError, setUnexpectedError] = useState(false);
   const [notice, setNotice] = useState('');
   const [secret, setSecret] = useState<SecretState | null>(null);
+
+  const unresolved =
+    pendingCommand !== null &&
+    (submitting ||
+      checking ||
+      unexpectedError ||
+      (operationStatus !== null && operationStatus.legalFollowUp !== 'none'));
 
   const detail = useQuery({
     enabled: teacherId !== '',
@@ -74,6 +91,9 @@ export function AdminTeacherDetailPage() {
   }, [detail.data]);
 
   const checkOperation = async (pending: PendingCommand) => {
+    if (checkingRef.current) return;
+    checkingRef.current = true;
+    setChecking(true);
     setFormMode(null);
     setCommandDenied(null);
     setUnexpectedError(false);
@@ -84,16 +104,33 @@ export function AdminTeacherDetailPage() {
         requestId: pending.input.requestId,
       });
       if (status.outcome === 'denied') {
+        setUnexpectedError(true);
         setCommandDenied(status.code);
         return;
       }
       setOperationStatus(status);
+      operations?.settle(
+        pending.input.requestId,
+        teacherOperationOutcome(status),
+      );
+      if (status.legalFollowUp === 'none')
+        void queryClient.invalidateQueries({ queryKey: ['admin', 'teachers'] });
     } catch {
       setUnexpectedError(true);
+    } finally {
+      checkingRef.current = false;
+      setChecking(false);
     }
   };
 
   const runCommand = async (pending: PendingCommand) => {
+    if (
+      inFlight.current ||
+      (unresolved && pendingCommand.input.requestId !== pending.input.requestId)
+    )
+      return;
+    inFlight.current = true;
+    operations?.begin(pending.command, pending.input.requestId, '教師帳號操作');
     setSubmitting(true);
     setCommandDenied(null);
     setUnexpectedError(false);
@@ -103,6 +140,25 @@ export function AdminTeacherDetailPage() {
         pending.command === 'update_teacher_account'
           ? await repository.updateTeacher(pending.input)
           : await repository.resetTeacherPassword(pending.input);
+      operations?.settle(
+        pending.input.requestId,
+        result.outcome === 'denied'
+          ? {
+              ...commandOutcome(pending.command, null),
+              kind: 'denied',
+              message: '教師作業尚未完成，請查看本頁狀態。',
+              requestId: result.requestId,
+              operationId: result.operationId,
+            }
+          : {
+              ...commandOutcome(pending.command, {
+                outcome: 'ok',
+                result: result.result,
+              }),
+              requestId: result.requestId,
+              operationId: result.operationId,
+            },
+      );
       if (result.outcome === 'denied') {
         if (result.statusCheckRequired) await checkOperation(pending);
         else setCommandDenied(result.code);
@@ -134,13 +190,17 @@ export function AdminTeacherDetailPage() {
     } catch {
       await checkOperation(pending);
     } finally {
+      inFlight.current = false;
       setSubmitting(false);
     }
   };
 
-  if (detail.isPending || staleSession) return <RouteLoading withinMain />;
+  if (detail.isPending || staleSession)
+    return (
+      <AdminPageLoading title="教師帳號詳情" onRetry={() => detail.refetch()} />
+    );
 
-  if (detail.isError || detail.data.outcome === 'denied') {
+  if (!detail.data || detail.data.outcome === 'denied') {
     return (
       <section
         aria-labelledby="admin-teacher-detail-heading"
@@ -150,7 +210,7 @@ export function AdminTeacherDetailPage() {
         {denied ? (
           <>
             <AdminStatusBanner code={denied.code} />
-            <p>追蹤代碼：{denied.requestId}</p>
+            <p>追蹤代碼：{safeTraceId(denied.requestId)}</p>
           </>
         ) : (
           <p role="alert">教師資料載入失敗，請稍後重試。</p>
@@ -169,10 +229,10 @@ export function AdminTeacherDetailPage() {
   }
 
   const teacher = detail.data.teacher;
-  const canUpdate = teacher.availableCommands.includes(
-    'update_teacher_account',
-  );
-  const canReset = teacher.availableCommands.includes('reset_teacher_password');
+  const canUpdate =
+    !unresolved && teacher.availableCommands.includes('update_teacher_account');
+  const canReset =
+    !unresolved && teacher.availableCommands.includes('reset_teacher_password');
 
   return (
     <section
@@ -185,6 +245,7 @@ export function AdminTeacherDetailPage() {
       <h1 id="admin-teacher-detail-heading" ref={headingRef} tabIndex={-1}>
         {teacher.fullName}
       </h1>
+      <AdminQueryStatus query={detail} />
       <dl className="admin-teacher-detail__facts">
         <div>
           <dt>登入帳號</dt>
@@ -259,51 +320,33 @@ export function AdminTeacherDetailPage() {
         <p role="alert">狀態查詢失敗；系統沒有重送教師帳號操作。</p>
       ) : null}
 
+      {checking || submitting ? (
+        <p role="status">
+          {checking ? '正在查詢作業狀態…' : '教師作業處理中，請勿重複送出。'}
+        </p>
+      ) : null}
+      {unexpectedError && !checking ? (
+        <button
+          type="button"
+          className="secondary-action"
+          onClick={() => {
+            if (pendingCommand) void checkOperation(pendingCommand);
+          }}
+        >
+          重新查詢狀態
+        </button>
+      ) : null}
       {operationStatus ? (
-        <div aria-live="polite" className="admin-teachers__operation-status">
-          {operationStatus.operationId ? (
-            <p>作業代碼：{operationStatus.operationId}</p>
-          ) : null}
-          {operationStatus.legalFollowUp === 'retry_same_request' ? (
-            <>
-              <p>伺服器尚未受理這次操作，可使用原操作代碼重試。</p>
-              <button
-                className="secondary-action"
-                onClick={() =>
-                  pendingCommand && void runCommand(pendingCommand)
-                }
-                type="button"
-              >
-                以相同代碼重試
-              </button>
-            </>
-          ) : null}
-          {operationStatus.legalFollowUp === 'wait' ? (
-            <>
-              <p>作業仍在處理中。</p>
-              <button
-                className="secondary-action"
-                onClick={() =>
-                  pendingCommand && void checkOperation(pendingCommand)
-                }
-                type="button"
-              >
-                重新查詢狀態
-              </button>
-            </>
-          ) : null}
-          {operationStatus.legalFollowUp === 'health_reconciliation' ? (
-            <p>
-              作業需要受控對帳。
-              <Link className="admin-teachers__health-link" to="/admin/health">
-                前往健康狀態
-              </Link>
-            </p>
-          ) : null}
-          {operationStatus.legalFollowUp === 'none' ? (
-            <p>操作已完成或終止，不會再次重送。</p>
-          ) : null}
-        </div>
+        <TeacherOperationStatus
+          status={operationStatus}
+          busy={checking || submitting}
+          onRetry={() => {
+            if (pendingCommand) void runCommand(pendingCommand);
+          }}
+          onCheck={() => {
+            if (pendingCommand) void checkOperation(pendingCommand);
+          }}
+        />
       ) : null}
 
       {formMode ? (
@@ -315,7 +358,7 @@ export function AdminTeacherDetailPage() {
           isSubmitting={submitting}
           mode={formMode}
           onCancel={() => {
-            if (!submitting) setFormMode(null);
+            setFormMode(null);
           }}
           onSubmit={(values) => {
             const requestId = crypto.randomUUID();

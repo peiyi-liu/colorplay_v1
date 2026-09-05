@@ -1,7 +1,10 @@
+import { safeTraceId } from '../api/admin-outcome';
+import { adminStateLabel } from '../lib/admin-labels';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { RouteLoading } from '../../../app/boundaries/route-loading';
+import { AdminPageLoading } from '../components/admin-page-loading';
+import { AdminQueryStatus } from '../components/admin-query-status';
 import {
   adminRpc,
   extractErrorCode,
@@ -76,9 +79,12 @@ export function AdminAccessAdminsPage() {
   const staleSession = code === 'STALE_PRIVILEGED_SESSION';
   useAdminStaleSessionRedirect(staleSession);
 
-  if (list.isPending || staleSession) return <RouteLoading withinMain />;
+  if (list.isPending || staleSession)
+    return (
+      <AdminPageLoading title="管理員帳號" onRetry={() => list.refetch()} />
+    );
 
-  if (list.isError || !firstPage || firstPage.outcome === 'denied') {
+  if (!list.data || !firstPage || firstPage.outcome === 'denied') {
     const denied = firstPage?.outcome === 'denied' ? firstPage : null;
     const canRetry = !denied || denied.retryable === true;
     return (
@@ -93,7 +99,7 @@ export function AdminAccessAdminsPage() {
           <p role="alert">管理員清單載入失敗，請稍後重試。</p>
         )}
         {typeof denied?.request_id === 'string' ? (
-          <p>追蹤代碼：{denied.request_id}</p>
+          <p>追蹤代碼：{safeTraceId(denied.request_id)}</p>
         ) : null}
         {canRetry ? (
           <button
@@ -120,6 +126,7 @@ export function AdminAccessAdminsPage() {
       className="page-wide page-stack"
     >
       <h1 id="admin-access-admins-page-heading">管理員帳號</h1>
+      <AdminQueryStatus query={list} />
       {rows.length === 0 ? (
         <p>目前沒有管理員帳號。</p>
       ) : (
@@ -137,7 +144,7 @@ export function AdminAccessAdminsPage() {
               {rows.map((row) => (
                 <tr key={row.audit_principal_id}>
                   <td>{row.admin_user_id}</td>
-                  <td>{row.state}</td>
+                  <td>{adminStateLabel(row.state)}</td>
                   <td>{formatAdminTimestamp(row.created_at)}</td>
                   <td>
                     <div className="admin-access-admins__actions">
@@ -243,7 +250,7 @@ export function AdminAccessAdminsPage() {
         <div className="admin-data-browser__page-error">
           <AdminStatusBanner code={extractErrorCode(laterDenied)} />
           {typeof laterDenied.request_id === 'string' ? (
-            <p>追蹤代碼：{laterDenied.request_id}</p>
+            <p>追蹤代碼：{safeTraceId(laterDenied.request_id)}</p>
           ) : null}
           {laterDenied.retryable === true ? (
             <button

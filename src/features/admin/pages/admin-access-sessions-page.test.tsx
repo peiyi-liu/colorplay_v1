@@ -49,7 +49,7 @@ const activeSession = {
   absolute_expires_at: '2026-08-09T18:00:00Z',
   admin_user_id: 'user-1',
   audit_principal_id: 'principal-1',
-  correlation_id: 'corr-1',
+  correlation_id: '11111111-1111-4111-8111-111111111111',
   created_at: '2026-08-09T10:00:00Z',
   device_summary: 'macOS・Chrome',
   id: 'session-1',
@@ -63,7 +63,7 @@ const revokedSession = {
   absolute_expires_at: '2026-08-09T12:00:00Z',
   admin_user_id: 'user-2',
   audit_principal_id: 'principal-2',
-  correlation_id: 'corr-2',
+  correlation_id: '22222222-2222-4222-8222-222222222222',
   created_at: '2026-08-09T09:00:00Z',
   device_summary: 'iOS・Safari',
   id: 'session-2',
@@ -207,7 +207,9 @@ describe('AdminAccessSessionsPage', () => {
       throw new Error('Expected an expandable session detail row');
     }
     await user.click(firstSummary);
-    expect(screen.getByText(/corr-1/u)).toBeInTheDocument();
+    expect(
+      screen.getByText(/11111111-1111-4111-8111-111111111111/u),
+    ).toBeInTheDocument();
     expect(screen.getByText(/principal-1/u)).toBeInTheDocument();
   });
 
@@ -245,12 +247,14 @@ describe('AdminAccessSessionsPage', () => {
     vi.mocked(adminRpc).mockResolvedValue({
       code: 'RESOURCE_NOT_ALLOWED',
       outcome: 'denied',
-      request_id: 'sessions-request-1',
+      request_id: 'f929746e-713e-549f-8900-6c29a1c4499e',
       retryable: false,
     });
     renderPage();
 
-    expect(await screen.findByText(/sessions-request-1/u)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/f929746e-713e-549f-8900-6c29a1c4499e/u),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '重試' })).toBeNull();
   });
 
