@@ -5,23 +5,21 @@ import { describe, it, expect, vi } from 'vitest';
 import { AdminPlatformHealthPage } from './admin-platform-health-page';
 vi.mock('../api/admin-client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../api/admin-client')>()),
-  adminRpc: vi
-    .fn()
-    .mockResolvedValue({
-      outcome: 'ok',
-      checked_at: '2026-09-05T12:00:00Z',
-      metrics: [
-        {
-          signal: 'wallet_ledger_mismatch',
-          status: 'attention',
-          value: 2,
-          sample_count: 15,
-          checked_at: '2026-09-05T12:00:00Z',
-          observed_at: '2026-09-05T12:00:00Z',
-          source: 'database',
-        },
-      ],
-    }),
+  adminRpc: vi.fn().mockResolvedValue({
+    outcome: 'ok',
+    checked_at: '2026-09-05T12:00:00Z',
+    metrics: [
+      {
+        signal: 'wallet_ledger_mismatch',
+        status: 'attention',
+        value: 2,
+        sample_count: 15,
+        checked_at: '2026-09-05T12:00:00Z',
+        observed_at: '2026-09-05T12:00:00Z',
+        source: 'database',
+      },
+    ],
+  }),
 }));
 vi.mock('../hooks/use-admin-session-state', () => ({
   useAdminSessionState: () => ({ clear: vi.fn() }),
