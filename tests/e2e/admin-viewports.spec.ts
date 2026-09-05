@@ -60,7 +60,9 @@ for (const viewport of VIEWPORTS) {
     const nav = page.locator('#admin-shell-nav');
     if (viewport.wide) {
       // ≥1024px：nav 常駐，沒有 MENU 切換鈕
-      await expect(page.getByRole('button', { name: '開啟導覽' })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: '開啟導覽' })).toHaveCount(
+        0,
+      );
       await expect(nav).toBeVisible();
       for (const label of NAV_GROUP_LABELS) {
         await expect(
