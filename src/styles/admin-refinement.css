@@ -119,24 +119,36 @@
   border-radius: 8px;
   padding: 10px 14px;
   background: var(--admin-surface);
-  font-size: 12px;
+  font-size: 14px;
   gap: 8px 16px;
 }
 .admin-shell .admin-query-status p {
-  font-size: 12px;
+  font-size: 14px;
   flex-basis: 210px;
 }
 .admin-shell .admin-query-status button {
-  font-size: 13px;
+  font-size: 14px;
   min-height: 44px;
   padding: 8px 12px;
+}
+.admin-state-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--admin-warning);
+  border-left-width: 4px;
+  border-radius: 8px;
+  background: var(--admin-warning-soft);
+}
+.admin-state-panel > p {
+  margin: 0;
 }
 .admin-shell .ui-table {
   font-size: 14px;
 }
 .admin-shell .ui-table th {
   background: var(--admin-soft);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
 }
 .admin-shell .ui-table :is(th, td) {
@@ -221,7 +233,7 @@
   overflow-y: auto;
 }
 .admin-nav-dialog::backdrop {
-  background: rgb(24 34 57 / 45%);
+  background: var(--admin-backdrop);
 }
 .admin-nav-close {
   display: flex;
@@ -264,5 +276,98 @@
 @media (prefers-reduced-motion: reduce) {
   .admin-shell :is(button, a, summary) {
     transition: none;
+  }
+}
+
+/* Standalone invitation and MFA routes share the same Admin design system. */
+.admin-auth-panel {
+  --admin-rule: var(--admin-border);
+  --admin-muted: var(--admin-text-muted);
+  width: min(100%, 520px);
+  margin: 32px auto;
+  padding: 28px;
+  border: 1px solid var(--admin-rule);
+  border-radius: 10px;
+  background: var(--admin-surface);
+  color: var(--admin-ink);
+  line-height: 1.6;
+  font-family: var(--font-body);
+}
+.admin-auth-panel__heading {
+  font-family: inherit;
+  font-size: 26px;
+  line-height: 1.35;
+  margin-block: 0 20px;
+}
+.admin-auth-panel :is(input, button) {
+  min-height: 44px;
+  max-width: 100%;
+  border-radius: 6px;
+}
+.admin-auth-panel :is(code, p) {
+  overflow-wrap: anywhere;
+}
+.admin-auth-panel :is(form, label) {
+  display: grid;
+  gap: 12px;
+}
+.admin-auth-panel .primary-action {
+  background: var(--admin-accent);
+  color: var(--admin-surface);
+  box-shadow: none;
+}
+.admin-auth-panel :is(button, input):focus-visible {
+  outline: 3px solid var(--admin-accent);
+  outline-offset: 3px;
+}
+.admin-operation-notices {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.admin-teachers__heading-row .admin-query-status {
+  flex-basis: 100%;
+  order: 3;
+}
+.admin-teachers__heading-row {
+  flex-wrap: wrap;
+}
+
+/* Shared geometry for index, detail, pending and error routes. */
+.game-stage[data-shell-role='admin'] #main-content {
+  width: 100%;
+}
+.admin-shell {
+  width: 100%;
+  min-width: 0;
+}
+.admin-shell__main {
+  width: 100%;
+  min-width: 0;
+  scrollbar-gutter: stable;
+}
+.admin-shell__main > :is(section, div) {
+  max-width: none;
+}
+.admin-data-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.admin-data-categories button[aria-pressed='true'] {
+  background: var(--admin-accent-soft);
+  border-color: var(--admin-accent);
+}
+.admin-data-index__domain {
+  min-width: 0;
+}
+.admin-data-index__domain p {
+  font-size: 14px;
+  color: var(--admin-muted);
+}
+@media (max-width: 767px) {
+  .admin-auth-panel {
+    padding: 20px 16px;
+    margin-block: 12px;
   }
 }

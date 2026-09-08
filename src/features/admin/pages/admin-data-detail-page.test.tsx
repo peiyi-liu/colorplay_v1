@@ -264,9 +264,9 @@ describe('AdminDataDetailPage', () => {
         p_row_token: 'not-a-valid-key',
       });
     });
-    expect(await screen.findByTestId('admin-request-id')).toHaveTextContent(
-      '212dfc6c-8112-5215-a37d-e44daf5624e1',
-    );
+    expect(
+      await screen.findByText('212dfc6c-8112-5215-a37d-e44daf5624e1'),
+    ).toBeInTheDocument();
     // 非可重試的拒絕不留假的重試入口
     expect(
       screen.queryByRole('button', { name: '重試' }),

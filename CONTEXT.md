@@ -1,16 +1,18 @@
 # ColorPlay
 
-> Current work: **Phase 0 hosted foundation gates** on isolated branch
-> `phase0/release-foundation`. Read
-> [`docs/roadmap-colorplay-next.md`](docs/roadmap-colorplay-next.md), the
-> [approved spec](docs/superpowers/specs/2026-08-05-phase-0-environment-release-foundation-design.md),
-> and the
-> [implementation plan](docs/superpowers/plans/2026-08-06-phase-0-environment-release-foundation.md)
-> before acting. Status: **TASK 14 REOPENED — TASK 15 BLOCKED**. Independent
-> review invalidated the earlier completion claim; corrected local recovery
-> controls are implemented, but local cleanup/gates and fresh protected hosted
-> backup/restore evidence remain required. No Staging merge, Candidate, DNS
-> change, Production migration, deployment, or promotion has occurred.
+> Current work (2026-09-08): the Admin UI／UX release is live on Staging from
+> product SHA `3abd4d1eb0d48267cddcc7c45d3c3333c4a4e29c`; an owner-approved
+> Admin security/UI remediation candidate is being prepared for protected
+> Staging delivery. Its remaining release gate is a project-scoped monitoring
+> PAT limited to Staging logs/backups plus protected CI and exact-SHA hosted
+> proof. Admin B Task 7 remains `NOT VERIFIED`, cross-class student support is
+> permanently cancelled, and Production is outside this window. Read
+> [`docs/roadmap-colorplay-next.md`](docs/roadmap-colorplay-next.md) for the
+> current queue. Phase 0 details remain active in the
+> [approved design](docs/superpowers/specs/2026-08-05-phase-0-environment-release-foundation-design.md)
+> and
+> [implementation plan](docs/superpowers/plans/2026-08-06-phase-0-environment-release-foundation.md),
+> and must not be inferred from Admin release status.
 
 A classroom quiz platform. Teachers publish question content and open a Live Session from a Live Activity; during that session the teacher is its Host, Participants answer on their own devices, and the Projector carries the shared screen.
 

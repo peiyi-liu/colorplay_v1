@@ -282,9 +282,7 @@ describe('AdminTeachersPage', () => {
       statusCheckRequired: false,
     });
     renderPage();
-    expect(
-      await screen.findByText(`追蹤代碼：${REQUEST_ID}`),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(REQUEST_ID)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '重試' })).toBeNull();
   });
 

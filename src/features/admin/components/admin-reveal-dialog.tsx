@@ -21,7 +21,7 @@ const purposeSchema = z.object({
 type PurposeFormValues = z.infer<typeof purposeSchema>;
 
 const FOCUSABLE_SELECTOR =
-  'textarea, button:not(:disabled), input, [tabindex]:not([tabindex="-1"])';
+  'textarea:not(:disabled), button:not(:disabled), input:not(:disabled), [tabindex]:not([tabindex="-1"]):not([aria-disabled="true"])';
 
 /**
  * 定址形態(spec §1.3.6、§7 的 2026-08-18 修訂):`row_token` 是 server 為

@@ -1,4 +1,3 @@
-import { safeTraceId } from '../api/admin-outcome';
 import { adminStateLabel } from '../lib/admin-labels';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -12,6 +11,7 @@ import {
 } from '../api/admin-client';
 import { AdminCommandDialog } from '../components/admin-command-dialog';
 import { AdminStatusBanner } from '../components/admin-status-banner';
+import { AdminTrace } from '../components/admin-trace';
 import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
 import { formatAdminTimestamp } from '../lib/admin-time';
 
@@ -98,9 +98,7 @@ export function AdminAccessAdminsPage() {
         ) : (
           <p role="alert">管理員清單載入失敗，請稍後重試。</p>
         )}
-        {typeof denied?.request_id === 'string' ? (
-          <p>追蹤代碼：{safeTraceId(denied.request_id)}</p>
-        ) : null}
+        <AdminTrace value={denied?.request_id} />
         {canRetry ? (
           <button
             className="secondary-action"
@@ -249,9 +247,7 @@ export function AdminAccessAdminsPage() {
       {laterDenied ? (
         <div className="admin-data-browser__page-error">
           <AdminStatusBanner code={extractErrorCode(laterDenied)} />
-          {typeof laterDenied.request_id === 'string' ? (
-            <p>追蹤代碼：{safeTraceId(laterDenied.request_id)}</p>
-          ) : null}
+          <AdminTrace value={laterDenied.request_id} />
           {laterDenied.retryable === true ? (
             <button
               className="secondary-action"

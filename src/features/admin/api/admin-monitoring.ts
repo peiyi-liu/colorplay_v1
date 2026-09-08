@@ -25,7 +25,12 @@ const response = z.discriminatedUnion('outcome', [
     checked_at: z.string(),
     metrics: z.array(metric),
   }),
-  z.object({ outcome: z.literal('denied'), code: z.string() }),
+  z.object({
+    outcome: z.literal('denied'),
+    code: z.string(),
+    retryable: z.boolean().optional(),
+    request_id: z.string().optional(),
+  }),
 ]);
 export async function getAdminPlatformHealth() {
   return response.parse(await adminRpc<unknown>('admin_platform_health', {}));

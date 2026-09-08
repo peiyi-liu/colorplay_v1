@@ -1,6 +1,8 @@
 // Synthetic UI-only responses. Never creates identities or modifies a database.
 export const ADMIN_UI_ID = '11111111-1111-4111-8111-111111111111';
 export const ADMIN_UI_TIME = '2026-09-05T09:00:00Z';
+const fixtureId = (index: number) =>
+  `11111111-1111-4111-8111-${String(index).padStart(12, '0')}`;
 export function adminUiRpc(name: string): unknown {
   const id = ADMIN_UI_ID,
     time = ADMIN_UI_TIME;
@@ -72,7 +74,18 @@ export function adminUiRpc(name: string): unknown {
         outcome: 'ok',
         request_id: id,
         next_cursor: null,
-        rows: [teacher],
+        rows: [
+          teacher,
+          ...Array.from({ length: 31 }, (_, index) => ({
+            ...teacher,
+            teacher_id: fixtureId(index + 2),
+            login_account: `teacher${String(index + 2).padStart(2, '0')}`,
+            display_name:
+              index === 0
+                ? `介面測試教師${'很長的識別名稱'.repeat(12)}`
+                : `介面測試教師 ${String(index + 2)}`,
+          })),
+        ],
       };
     case 'admin_get_teacher':
       return {
@@ -178,15 +191,17 @@ export function adminUiRpc(name: string): unknown {
       return {
         outcome: 'ok',
         next_cursor: null,
-        rows: [
-          {
-            row_key: id,
-            id,
-            full_name: '測***',
-            role: 'teacher',
-            created_at: time,
-          },
-        ],
+        page_size_limit: 50,
+        rows: Array.from({ length: 50 }, (_, index) => ({
+          row_key: `opaque-row-${String(index)}-${'x'.repeat(96)}`,
+          id:
+            index === 0
+              ? `external-directory-reference-${'9'.repeat(96)}`
+              : fixtureId(index + 1),
+          full_name: `測***${String(index + 1)}`,
+          role: 'teacher',
+          created_at: time,
+        })),
       };
     case 'admin_get_resource_detail':
       return {

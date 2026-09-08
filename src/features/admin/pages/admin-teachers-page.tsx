@@ -1,4 +1,3 @@
-import { safeTraceId } from '../api/admin-outcome';
 import { teacherOperationOutcome } from '../api/teacher-operation-outcome';
 import { TeacherOperationStatus } from '../components/teacher-operation-status';
 import { useAdminOperations } from '../components/admin-operation-notices';
@@ -19,6 +18,7 @@ import type {
 import { createTeacherAccountRepository } from '../api/teacher-account-repository';
 import { AdminDataTable } from '../components/admin-data-table';
 import { AdminStatusBanner } from '../components/admin-status-banner';
+import { AdminTrace } from '../components/admin-trace';
 import {
   TeacherAccountForm,
   type TeacherAccountFormValues,
@@ -203,7 +203,7 @@ export function AdminTeachersPage() {
         {firstPage?.outcome === 'denied' ? (
           <>
             <AdminStatusBanner code={firstPage.code} />
-            <p>追蹤代碼：{safeTraceId(firstPage.requestId)}</p>
+            <AdminTrace value={firstPage.requestId} />
           </>
         ) : (
           <p role="alert">教師清單載入失敗，請稍後重試。</p>
@@ -366,7 +366,7 @@ export function AdminTeachersPage() {
       {laterDenied ? (
         <div className="admin-data-browser__page-error">
           <AdminStatusBanner code={laterDenied.code} />
-          <p>追蹤代碼：{safeTraceId(laterDenied.requestId)}</p>
+          <AdminTrace value={laterDenied.requestId} />
           {laterDenied.retryable ? (
             <button
               className="secondary-action"

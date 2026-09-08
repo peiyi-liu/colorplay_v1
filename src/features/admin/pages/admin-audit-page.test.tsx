@@ -232,9 +232,7 @@ describe('AdminAuditPage', () => {
     await user.click(screen.getByRole('button', { name: '載入更多' }));
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent(
-        '此欄位不允許這項操作',
-      );
+      expect(screen.getByText('此欄位不允許這項操作。')).toBeInTheDocument();
     });
     expect(screen.getByText('admin_reveal_field')).toBeInTheDocument();
     // 可追蹤的 partial failure(spec §3.3):必須帶出 request ID

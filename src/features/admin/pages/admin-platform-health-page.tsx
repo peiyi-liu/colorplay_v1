@@ -6,6 +6,7 @@ import { AdminQueryStatus } from '../components/admin-query-status';
 import { AdminStatusBanner } from '../components/admin-status-banner';
 import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
 import { AdminMonitorResults } from '../components/admin-monitor-results';
+import { AdminTrace } from '../components/admin-trace';
 
 export function AdminPlatformHealthPage() {
   const health = useQuery({
@@ -32,11 +33,28 @@ export function AdminPlatformHealthPage() {
         </p>
       </header>
       <AdminStatusBanner code={code} />
-      <AdminQueryStatus query={health} />
       {health.data?.outcome === 'ok' ? (
-        <AdminMonitorResults metrics={metrics} />
+        <>
+          <AdminQueryStatus query={health} />
+          <AdminMonitorResults metrics={metrics} />
+        </>
+      ) : health.data?.outcome === 'denied' ? (
+        <div className="admin-state-panel" role="alert">
+          <p>平台監控資料無法取得，請確認權限或重新整理。</p>
+          <AdminTrace value={health.data.request_id} />
+          {health.data.retryable === true ? (
+            <button
+              className="secondary-action"
+              disabled={health.isFetching}
+              onClick={() => void health.refetch()}
+              type="button"
+            >
+              {health.isFetching ? '更新中…' : '重新整理'}
+            </button>
+          ) : null}
+        </div>
       ) : (
-        <p role="alert">平台監控資料無法取得，請確認權限或重新整理。</p>
+        <AdminQueryStatus query={health} />
       )}
     </section>
   );

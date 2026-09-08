@@ -1593,3 +1593,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 一位 reviewer、一輪，2 個 P2 已修正：資料不足空篩選不得宣稱無异常，補 attention=1/incomplete=0 回歸；重新整理按鈕恢復 44px。單元測試 34 files／282 tests PASS，lint／typecheck／build 通過；browser 全套在最終樣式修正後重跑。此前 9 項排版／流程 PASS，手機新增首尾焦點檢查已單獨 PASS。
 - 下一步：精確候選 protected CI／owner-approval、正常合併 Staging、真實登入與部署版本證據。使用者新增的未追蹤 `.codex/skills/` 保持原狀，不納入本次產品 commit。
 - 最終本機檢查：10 項 browser checks 全部 PASS（15 routes × 5 viewports、393／1440 邊界、手機焦點首尾循環、原有長等待／accepted／刷新失敗保留資料／200% zoom）；lint 與 tracked-file Prettier PASS。JSDOM 未提供原生 Dialog 方法，單元 seam 用測試專屬替身，實際焦點行為由 Chromium 驗證。
+
+## 2026-09-08 13:40 [Codex] — PR #18 發布補登與 Admin 安全／UI remediation candidate
+
+- PR #18 已於 2026-09-06 00:40（Asia/Taipei）正常合併；Staging product SHA 為 `3abd4d1eb0d48267cddcc7c45d3c3333c4a4e29c`。Workflow `33978595646` 的 exact-SHA deploy、pre-alias 真實合成學生／教師登入與 profile bootstrap、alias、read-only smoke，以及 Chromium／Firefox／WebKit 各三種 viewport 均通過。該 workflow 整體標成 failure 的唯一原因是另一個 `phase-acceptance` job 在 `learning-experience.spec.ts:169` 等待「色彩的分類」8.4 分鐘逾時；不可把這個 learning gate 當成 Admin 發布失敗，也不可把 Admin 通過冒稱完整 phase 通過。
+- Owner 已核准後續 Admin 安全與 UI remediation window，以及經受保護 PR／Staging 流程部署；不含 Production、已永久取消的跨班級學生支援，亦不含 Admin B Task 7 Hosted lifecycle。Candidate 從上述 exact Staging SHA 建立，修正 Dialog 長等待後焦點逸出、監控 denial 假成功、全域追蹤碼空標籤、Admin 色票／關鍵字級／跨頁樣式與窄螢幕表格證據；collector 新增 DB-backed lease／cooldown 與 request-bound last-writer 防護。
+- Runtime 監控憑證不再沿用 deployment PAT。新流程要求 project-scoped `sbp_fc` token、GitHub Staging protected-environment 精確 scope 證明、Staging logs／backups 正向 preflight、Staging database 與 Production logs 負向 preflight，任一不符都在 alias 前 fail closed。2026-09-08 13:40 時 GitHub Staging 尚未設定新 read token／scope，故 candidate 尚未 push、merge 或部署；不得宣稱 remediation window 已發布。
+- 本機證據：Admin／collector 38 files／302 tests PASS；新 migration `20260908000100` 以外層 transaction 跑 pgTAP 27/27 後 rollback，確認共用 Local DB 無殘留；Admin Chromium harness 11/11、lint、typecheck、build 與 `git diff --check` 均已通過。唯一 review round 的有效 findings 已納入同輪修正；正式完成仍以 scoped token 建立、protected CI、Staging exact SHA／環境指紋／真實 Auth-profile smoke 與 hosted lease/collector 證據為準。

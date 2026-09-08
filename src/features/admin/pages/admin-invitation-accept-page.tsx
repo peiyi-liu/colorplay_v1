@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
-import '../../../styles/admin-console.css';
+import '../../../styles/admin.css';
 import { myProfileQueryKey } from '../../profile/hooks/use-my-profile';
 import { adminRpc, extractErrorCode } from '../api/admin-client';
 import { AdminStatusBanner } from '../components/admin-status-banner';
@@ -66,6 +66,7 @@ export function AdminInvitationAcceptPage() {
   const longWait = useAdminWait(accept.isPending);
   const denied = accept.data?.outcome === 'denied' ? accept.data : null;
   const code = denied ? extractErrorCode(denied) : null;
+  const requestId = safeTraceId(denied?.request_id);
 
   return (
     <section className="admin-auth-panel">
@@ -118,9 +119,7 @@ export function AdminInvitationAcceptPage() {
         <p role="alert">邀請驗證暫時失敗，請稍後重試。</p>
       ) : null}
       <AdminStatusBanner code={code} />
-      {typeof denied?.request_id === 'string' ? (
-        <p>追蹤代碼：{safeTraceId(denied.request_id)}</p>
-      ) : null}
+      {requestId ? <p>追蹤代碼：{requestId}</p> : null}
       {denied && denied.retryable !== true ? (
         <p>請確認 token 是否完整，或請管理員重新發出邀請。</p>
       ) : null}

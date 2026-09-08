@@ -1,7 +1,5 @@
 import { AdminOperationProvider } from './admin-operation-notices';
-import '../../../styles/admin-console.css';
-import '../../../styles/admin-refinement.css';
-import '../../../styles/admin-workspaces.css';
+import '../../../styles/admin.css';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {

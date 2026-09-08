@@ -97,6 +97,14 @@ for (const viewport of [
     await fixture(page);
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (message) => {
+      if (message.type() === 'error') errors.push(message.text());
+    });
+    page.on('requestfailed', (request) => {
+      errors.push(
+        `${request.url()}: ${request.failure()?.errorText ?? 'request failed'}`,
+      );
+    });
     for (const route of routes) {
       await page.goto(
         '/dev-harness/admin-console.html?route=' + encodeURIComponent(route),
@@ -128,7 +136,9 @@ for (const viewport of [
         ).toBeVisible();
       else if (route.startsWith('/admin/data/'))
         await expect(
-          page.getByRole('button', { name: '揭露 full_name', exact: true }),
+          page
+            .getByRole('button', { name: '揭露 full_name', exact: true })
+            .first(),
         ).toBeVisible();
       else if (route === '/admin/health')
         await expect(
@@ -163,6 +173,15 @@ for (const viewport of [
         route,
       ).toBe(true);
       expect(errors, route).toEqual([]);
+      if (viewport.width === 320 && route === '/admin/data/users/profiles') {
+        const localScroller = page.locator('.admin-data-table__scroll');
+        await expect(localScroller).toBeVisible();
+        expect(
+          await localScroller.evaluate(
+            (element) => element.scrollWidth > element.clientWidth,
+          ),
+        ).toBe(true);
+      }
     }
   });
 }
@@ -206,12 +225,38 @@ test('dialog focus, long wait, delayed acceptance and no duplicate command', asy
   await expect(page.getByText(/尚未收到最終結果。關閉視窗/)).toBeVisible({
     timeout: 12_000,
   });
-  await page.getByRole('button', { name: '關閉視窗，稍後查看' }).click();
+  const delayedClose = page.getByRole('button', {
+    name: '關閉視窗，稍後查看',
+  });
+  await delayedClose.focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(delayedClose).toBeFocused();
+  await delayedClose.click();
   await expect(invoker).toBeFocused();
   release();
   await expect(page.getByText(/請求已受理，作業仍待處理/)).toBeVisible();
   expect(calls).toBe(1);
 });
+
+test('reveal denial keeps keyboard focus inside the dialog', async ({
+  page,
+}) => {
+  await fixture(page);
+  await page.goto(
+    '/dev-harness/admin-console.html?route=/admin/data/users/profiles/' +
+      ADMIN_UI_ID,
+  );
+  await page.getByRole('button', { name: '揭露 full_name' }).click();
+  await page.getByLabel('揭露目的').fill('稽核抽查需要核對本人姓名');
+  await page.getByRole('button', { name: '揭露', exact: true }).click();
+  await expect(page.getByText(/目標目前的狀態不允許此操作/)).toBeVisible();
+
+  const cancel = page.getByRole('button', { name: '取消' });
+  await cancel.focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(cancel).toBeFocused();
+});
+
 test('refresh failure retains safe rows; reduced motion at 200 percent CSS zoom', async ({
   page,
 }) => {

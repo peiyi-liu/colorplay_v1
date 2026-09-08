@@ -1,4 +1,3 @@
-import { safeTraceId } from '../api/admin-outcome';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -15,6 +14,7 @@ import {
 } from '../api/admin-client';
 import { AdminCommandDialog } from '../components/admin-command-dialog';
 import { AdminStatusBanner } from '../components/admin-status-banner';
+import { AdminTrace } from '../components/admin-trace';
 import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
 
 interface AdminInvitationRow {
@@ -117,9 +117,7 @@ export function AdminAccessInvitationsPage() {
         ) : (
           <p role="alert">邀請清單載入失敗，請稍後重試。</p>
         )}
-        {typeof denied?.request_id === 'string' ? (
-          <p>追蹤代碼：{safeTraceId(denied.request_id)}</p>
-        ) : null}
+        <AdminTrace value={denied?.request_id} />
         {canRetry ? (
           <button
             className="secondary-action"
@@ -244,9 +242,7 @@ export function AdminAccessInvitationsPage() {
       {laterDenied ? (
         <div className="admin-data-browser__page-error">
           <AdminStatusBanner code={extractErrorCode(laterDenied)} />
-          {typeof laterDenied.request_id === 'string' ? (
-            <p>追蹤代碼：{safeTraceId(laterDenied.request_id)}</p>
-          ) : null}
+          <AdminTrace value={laterDenied.request_id} />
           {laterDenied.retryable === true ? (
             <button
               className="secondary-action"

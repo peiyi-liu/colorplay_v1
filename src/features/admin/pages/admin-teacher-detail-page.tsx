@@ -1,4 +1,3 @@
-import { safeTraceId } from '../api/admin-outcome';
 import { teacherOperationOutcome } from '../api/teacher-operation-outcome';
 import { TeacherOperationStatus } from '../components/teacher-operation-status';
 import { useAdminOperations } from '../components/admin-operation-notices';
@@ -19,6 +18,7 @@ import type {
 import { createTeacherAccountRepository } from '../api/teacher-account-repository';
 import { AdminRevealDialog } from '../components/admin-reveal-dialog';
 import { AdminStatusBanner } from '../components/admin-status-banner';
+import { AdminTrace } from '../components/admin-trace';
 import {
   TeacherAccountForm,
   type TeacherAccountFormValues,
@@ -210,7 +210,7 @@ export function AdminTeacherDetailPage() {
         {denied ? (
           <>
             <AdminStatusBanner code={denied.code} />
-            <p>追蹤代碼：{safeTraceId(denied.requestId)}</p>
+            <AdminTrace value={denied.requestId} />
           </>
         ) : (
           <p role="alert">教師資料載入失敗，請稍後重試。</p>

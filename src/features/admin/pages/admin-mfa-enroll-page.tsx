@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { z } from 'zod';
 
-import '../../../styles/admin-console.css';
+import '../../../styles/admin.css';
 import {
   extractErrorCode,
   invokeAdminMfa,

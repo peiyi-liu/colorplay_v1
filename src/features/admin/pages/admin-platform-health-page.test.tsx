@@ -28,6 +28,62 @@ vi.mock('../hooks/use-admin-session-state', () => ({
   useAdminSessionState: () => ({ clear: vi.fn() }),
 }));
 describe('AdminPlatformHealthPage', () => {
+  it('renders a denial as a denial without a false successful-query status', async () => {
+    vi.mocked(adminRpc).mockResolvedValueOnce({
+      outcome: 'denied',
+      code: 'INSUFFICIENT_MFA',
+      retryable: false,
+      request_id: '123e4567-e89b-12d3-a456-426614174000',
+    });
+    render(
+      <QueryClientProvider
+        client={
+          new QueryClient({ defaultOptions: { queries: { retry: false } } })
+        }
+      >
+        <MemoryRouter>
+          <AdminPlatformHealthPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(
+      await screen.findByText('平台監控資料無法取得，請確認權限或重新整理。'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('已取得最新查詢結果。')).not.toBeInTheDocument();
+    expect(
+      screen.getByText('123e4567-e89b-12d3-a456-426614174000'),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: '重新整理' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('offers a refresh only when the denial is explicitly retryable', async () => {
+    vi.mocked(adminRpc).mockResolvedValueOnce({
+      outcome: 'denied',
+      code: 'SECURITY_AUDIT_UNAVAILABLE',
+      retryable: true,
+    });
+    const user = userEvent.setup();
+    render(
+      <QueryClientProvider
+        client={
+          new QueryClient({ defaultOptions: { queries: { retry: false } } })
+        }
+      >
+        <MemoryRouter>
+          <AdminPlatformHealthPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await user.click(await screen.findByRole('button', { name: '重新整理' }));
+    expect(
+      await screen.findByRole('heading', { name: '獎勵一致性' }),
+    ).toBeInTheDocument();
+  });
+
   it('does not claim no anomalies when the incomplete filter is empty', async () => {
     const time = '2026-09-05T12:00:00Z';
     vi.mocked(adminRpc).mockResolvedValueOnce({
