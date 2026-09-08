@@ -8,8 +8,11 @@
 > proof. Admin B Task 7 remains `NOT VERIFIED`, cross-class student support is
 > permanently cancelled, and Production is outside this window. Read
 > [`docs/roadmap-colorplay-next.md`](docs/roadmap-colorplay-next.md) for the
-> current queue; Phase 0 details remain active in their own plan and must not
-> be inferred from Admin release status.
+> current queue. Phase 0 details remain active in the
+> [approved design](docs/superpowers/specs/2026-08-05-phase-0-environment-release-foundation-design.md)
+> and
+> [implementation plan](docs/superpowers/plans/2026-08-06-phase-0-environment-release-foundation.md),
+> and must not be inferred from Admin release status.
 
 A classroom quiz platform. Teachers publish question content and open a Live Session from a Live Activity; during that session the teacher is its Host, Participants answer on their own devices, and the Projector carries the shared screen.
 
