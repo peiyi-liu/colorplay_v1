@@ -14,7 +14,13 @@
   --admin-accent-hover: #334398;
   --admin-accent-soft: #eef0ff;
   --admin-success: #206346;
+  --admin-success-soft: #e7f2e9;
   --admin-warning: #895615;
+  --admin-warning-soft: #fff0d7;
+  --admin-danger: #803b32;
+  --admin-danger-soft: #f8e8e6;
+  --admin-modal-shadow: rgb(0 0 0 / 18%);
+  --admin-backdrop: rgb(24 34 57 / 45%);
   /* ── Primitive:墨色階(spec §二文字色)與白色紙張 ────── */
   --ink-950: #18212f;
   --ink-900: #253042;

@@ -147,6 +147,9 @@ export function AdminDataBrowserPage() {
   const laterPageCode = laterDeniedPage
     ? extractErrorCode(laterDeniedPage)
     : null;
+  const firstPageRequestId =
+    firstPage?.outcome === 'denied' ? safeTraceId(firstPage.request_id) : null;
+  const laterPageRequestId = safeTraceId(laterDeniedPage?.request_id);
   const code = firstPageCode ?? laterPageCode;
   const staleSession = code === 'STALE_PRIVILEGED_SESSION';
   useAdminStaleSessionRedirect(staleSession);
@@ -157,8 +160,6 @@ export function AdminDataBrowserPage() {
     );
 
   if (firstPageCode === 'RESOURCE_NOT_ALLOWED') {
-    const requestId =
-      firstPage && 'request_id' in firstPage ? firstPage.request_id : undefined;
     return (
       <section
         aria-labelledby="admin-data-browser-page-heading"
@@ -167,10 +168,10 @@ export function AdminDataBrowserPage() {
         <h1 id="admin-data-browser-page-heading">資料查核器</h1>
         {/* 同一句文案涵蓋「不存在」與「存在但不允許」,不洩漏存在性 */}
         <p role="alert">此資源不可瀏覽</p>
-        {typeof requestId === 'string' ? (
+        {firstPageRequestId ? (
           <p>
             追蹤代碼：
-            <span data-testid="admin-request-id">{safeTraceId(requestId)}</span>
+            <span data-testid="admin-request-id">{firstPageRequestId}</span>
           </p>
         ) : null}
       </section>
@@ -194,12 +195,10 @@ export function AdminDataBrowserPage() {
         ) : (
           <p role="alert">資料載入失敗，請稍後重試。</p>
         )}
-        {typeof deniedFirstPage?.request_id === 'string' ? (
+        {firstPageRequestId ? (
           <p>
             追蹤代碼：
-            <span data-testid="admin-request-id">
-              {safeTraceId(deniedFirstPage.request_id)}
-            </span>
+            <span data-testid="admin-request-id">{firstPageRequestId}</span>
           </p>
         ) : null}
         {canRetry ? (
@@ -334,11 +333,11 @@ export function AdminDataBrowserPage() {
             // 未知/缺漏的 code 不能只留一個空 banner
             <p role="alert">載入更多資料失敗，請稍後重試。</p>
           )}
-          {typeof laterDeniedPage.request_id === 'string' ? (
+          {laterPageRequestId ? (
             <p>
               追蹤代碼：
               <span data-testid="admin-later-request-id">
-                {safeTraceId(laterDeniedPage.request_id)}
+                {laterPageRequestId}
               </span>
             </p>
           ) : null}

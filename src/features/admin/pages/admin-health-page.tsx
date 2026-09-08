@@ -8,6 +8,7 @@ import { AdminQueryStatus } from '../components/admin-query-status';
 import { adminRpc, extractErrorCode } from '../api/admin-client';
 import { AdminCommandDialog } from '../components/admin-command-dialog';
 import { AdminStatusBanner } from '../components/admin-status-banner';
+import { AdminTrace } from '../components/admin-trace';
 import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
 import { formatAdminTimestamp } from '../lib/admin-time';
 
@@ -100,9 +101,7 @@ export function AdminHealthPage() {
         ) : (
           <p role="alert">系統健康資料載入失敗，請稍後重試。</p>
         )}
-        {typeof denied?.request_id === 'string' ? (
-          <p>追蹤代碼：{safeTraceId(denied.request_id)}</p>
-        ) : null}
+        <AdminTrace value={denied?.request_id} />
         {canRetry ? (
           <button
             className="secondary-action"

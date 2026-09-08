@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
-import '../../../styles/admin-console.css';
+import '../../../styles/admin.css';
 import {
   extractErrorCode,
   invokeAdminMfa,
@@ -88,7 +88,7 @@ export function AdminMfaChallengePage() {
       if (responseCode === 'FACTOR_BINDING_MISMATCH') {
         setIncidentOperationId(
           typeof response.operationId === 'string'
-            ? response.operationId
+            ? safeTraceId(response.operationId)
             : null,
         );
         setIncident(true);
@@ -120,7 +120,7 @@ export function AdminMfaChallengePage() {
           <p>
             回報代碼：
             <span data-testid="incident-operation-id">
-              {safeTraceId(incidentOperationId)}
+              {incidentOperationId}
             </span>
           </p>
         ) : null}

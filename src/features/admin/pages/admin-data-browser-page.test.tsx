@@ -1,3 +1,8 @@
+/*
+ * Test-only consolidation exception: pagination, reveal, and route-state cases share one
+ * security-sensitive mocked query/router harness. Splitting this file before that harness
+ * is extracted would duplicate setup and let denial assertions drift between suites.
+ */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -183,14 +188,16 @@ describe('AdminDataBrowserPage', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
-  it('never fabricates a request id for the shape the RPC actually returns today', async () => {
+  it('never renders or fabricates an invalid request id', async () => {
     vi.mocked(adminRpc).mockResolvedValue({
       code: 'RESOURCE_NOT_ALLOWED',
       outcome: 'denied',
+      request_id: 'not-a-safe-trace-id',
     });
     renderPage('/admin/data/users/secret_table');
 
     expect(await screen.findByText('此資源不可瀏覽')).toBeInTheDocument();
+    expect(screen.queryByText(/追蹤代碼/u)).not.toBeInTheDocument();
     expect(screen.queryByTestId('admin-request-id')).not.toBeInTheDocument();
   });
 

@@ -1,4 +1,3 @@
-import { safeTraceId } from '../api/admin-outcome';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -16,6 +15,7 @@ import {
   type AdminRevealLocator,
 } from '../components/admin-reveal-dialog';
 import { AdminStatusBanner } from '../components/admin-status-banner';
+import { AdminTrace } from '../components/admin-trace';
 import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
 
 interface AdminDetailOk {
@@ -153,14 +153,7 @@ export function AdminDataDetailPage() {
         ) : (
           <p role="alert">資料載入失敗，請稍後重試。</p>
         )}
-        {typeof denied?.request_id === 'string' ? (
-          <p>
-            追蹤代碼：
-            <span data-testid="admin-request-id">
-              {safeTraceId(denied.request_id)}
-            </span>
-          </p>
-        ) : null}
+        <AdminTrace value={denied?.request_id} />
         {canRetry ? (
           <button
             className="secondary-action"

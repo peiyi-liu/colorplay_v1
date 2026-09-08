@@ -6,6 +6,7 @@ import { AdminPageLoading } from '../components/admin-page-loading';
 import { AdminQueryStatus } from '../components/admin-query-status';
 import { adminRpc, extractErrorCode } from '../api/admin-client';
 import { AdminStatusBanner } from '../components/admin-status-banner';
+import { AdminTrace } from '../components/admin-trace';
 import { useAdminStaleSessionRedirect } from '../hooks/use-admin-stale-session-redirect';
 import { formatAdminTimestamp, taipeiLocalToIso } from '../lib/admin-time';
 
@@ -282,14 +283,7 @@ export function AdminAuditPage() {
           ) : (
             <p role="alert">載入更多資料失敗，請稍後重試。</p>
           )}
-          {typeof laterDeniedPage.request_id === 'string' ? (
-            <p>
-              追蹤代碼：
-              <span data-testid="admin-audit-later-request-id">
-                {safeTraceId(laterDeniedPage.request_id)}
-              </span>
-            </p>
-          ) : null}
+          <AdminTrace value={laterDeniedPage.request_id} />
           {laterDeniedPage.retryable === true ? (
             <button
               className="secondary-action"

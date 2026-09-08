@@ -24,12 +24,24 @@ Deno.serve(async (request) => {
   )
     return new Response(null, { status: 403 });
   try {
-    const results = await collectPlatformMonitoring({
+    const collection = await collectPlatformMonitoring({
       supabaseUrl: Deno.env.get('SUPABASE_URL') ?? '',
       serviceKey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       managementToken: Deno.env.get('ADMIN_MONITOR_MANAGEMENT_TOKEN') ?? '',
     });
-    return Response.json({ outcome: 'ok', results });
+    if (collection.outcome === 'busy')
+      return Response.json(
+        {
+          outcome: 'busy',
+          code: 'MONITOR_COLLECTION_BUSY',
+          retry_after_seconds: collection.retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(collection.retryAfterSeconds) },
+        },
+      );
+    return Response.json(collection);
   } catch {
     return Response.json(
       { outcome: 'unavailable', code: 'MONITOR_COLLECTION_FAILED' },

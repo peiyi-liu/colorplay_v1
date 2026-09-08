@@ -26,7 +26,7 @@ const looseReasonSchema = z.object({ reason: z.string() });
 type ReasonFormValues = z.infer<typeof strictReasonSchema>;
 
 const FOCUSABLE_SELECTOR =
-  'textarea, button:not(:disabled), input, [tabindex]:not([tabindex="-1"])';
+  'textarea:not(:disabled), button:not(:disabled), input:not(:disabled), [tabindex]:not([tabindex="-1"]):not([aria-disabled="true"])';
 
 export interface AdminCommandDialogProps {
   args: Record<string, unknown>;

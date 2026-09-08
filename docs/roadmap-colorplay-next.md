@@ -1,6 +1,8 @@
 # ColorPlay Current Program
 
-- 2026-09-06：Owner 已核准 ui-ux-pro-max Admin 提案的實作與 Staging 部署，真實元件優化與一次 review 修正完成，進入發布前驗證；計畫見 `docs/superpowers/plans/2026-09-06-admin-ux-refinement.md`。資料查核／監控 API 與權限維持既有契約。
+- 2026-09-08：PR #18 的 Admin UI／UX 優化已發布 Staging，product SHA `3abd4d1eb0d48267cddcc7c45d3c3333c4a4e29c`；exact deploy、真實合成學生／教師登入與 profile bootstrap、read-only smoke、三瀏覽器 × 三 viewport 均通過。Workflow `33978595646` 的整體 failure 只來自獨立 learning-experience gate 等待「色彩的分類」逾時，Admin 發布證據本身通過，但完整 phase 尚未通過。
+
+- 目前進行：Owner 已核准 Admin 安全與 UI remediation window 及受保護 Staging 部署。Candidate 修正焦點圈限、denial 狀態、全域安全追蹤碼、Admin tokens／字級／跨頁 RWD，以及監控 collector 的 DB lease/cooldown。部署前另需建立只限 Staging、僅 `analytics_logs_read`／`backups_read` 的 scoped PAT，並通過正負 preflight；在此 gate 與 protected CI 完成前不可宣稱已發布。Admin B Task 7 Hosted lifecycle 仍 `NOT VERIFIED`；跨班級學生支援永久取消；Production 不在本窗口。
 
 - 2026-09-05 最新補充：資料查核五分類、五項只讀監控與跨頁固定邊界已隨 PR #17 發布 Staging，exact SHA `570c0f18a7329cc5f07cbf707b016ff787105bf1`。Workflow `33969320734` 的部署、真實學生／教師登入、環境版本核對、read-only smoke 與九組 browser/RWD 檢查通過；監控 migration `20260905000100` 已套用，每 15 分鐘排程啟用，第一輪實際採集成功。延遲樣本、備份校驗／還原證據不足仍保持未知；既有完整 phase／人工裝置驗收另行判定。計畫見 `docs/superpowers/plans/2026-09-05-admin-data-monitoring.md`，詳細交付證據見 handoff 最新段。以下 Phase 0／整合紀錄保留作歷史脈絡，不能覆蓋本次新授權與完成狀態。
 
