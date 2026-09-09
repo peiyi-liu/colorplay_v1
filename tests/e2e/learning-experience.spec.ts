@@ -5,10 +5,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { CONTENT_MANIFEST } from '../fixtures/content-manifest.generated';
 import { GENERATED_CORRECT_ANSWERS } from '../fixtures/question-answers.generated';
-import {
-  REVIEW_MANIFEST,
-  REVIEW_MEDIA_CARD,
-} from '../fixtures/review-manifest.generated';
+import { REVIEW_MEDIA_CARD } from '../fixtures/review-manifest.generated';
 import { TEST_USERS } from '../fixtures/users';
 import {
   attachBrowserHealth,
@@ -37,9 +34,6 @@ const quizChapter = CONTENT_MANIFEST.find(
 const QUIZ_QUESTION_COUNT = 10;
 const QUIZ_CHAPTER_TITLE = '色彩表示';
 
-const reviewSubtopic = REVIEW_MANIFEST.find(
-  ({ cardCount, chapterCode }) => chapterCode === 'chapter-3' && cardCount > 0,
-);
 const mediaCard = REVIEW_MEDIA_CARD;
 const REVIEW_CHAPTER_TITLE = '色彩表示';
 
@@ -78,6 +72,72 @@ const expectHudEconomy = async (
   ).toBeVisible();
 };
 
+const readReviewCompletion = async (page: Page) => {
+  const progressText = await page.getByLabel('章節進度').innerText();
+  const match = /複習完成\s+(\d+)\s*\/\s*(\d+)/u.exec(progressText);
+  if (!match?.[1] || !match[2]) {
+    throw new Error('LEARNING_EXPERIENCE_REVIEW_PROGRESS_INVALID');
+  }
+  return {
+    completed: Number(match[1]),
+    total: Number(match[2]),
+  };
+};
+
+const openCurrentReviewCard = async (page: Page) => {
+  const subtopicButtons = page.locator('.chapter-archive__subtopic-menu-item');
+  const subtopicCount = await subtopicButtons.count();
+  for (
+    let subtopicIndex = 0;
+    subtopicIndex < subtopicCount;
+    subtopicIndex += 1
+  ) {
+    await subtopicButtons.nth(subtopicIndex).click();
+    for (let pageIndex = 0; pageIndex < 100; pageIndex += 1) {
+      const currentNode = page.locator(
+        '.chapter-review-node[data-current="true"]',
+      );
+      const currentCount = await currentNode.count();
+      if (currentCount > 1) {
+        throw new Error('LEARNING_EXPERIENCE_MULTIPLE_CURRENT_REVIEW_CARDS');
+      }
+      if (currentCount === 1) {
+        await currentNode.getByRole('button').click();
+        await page.getByRole('button', { name: '進入複習' }).click();
+        await expect(
+          page.getByRole('region', { name: /^複習卡閱讀：/u }),
+        ).toBeVisible();
+        return;
+      }
+
+      const nextPage = page
+        .getByRole('navigation', { name: /複習卡分頁/u })
+        .getByRole('button', { name: '下一頁' });
+      if (!(await nextPage.isVisible()) || (await nextPage.isDisabled())) break;
+      await nextPage.click();
+    }
+  }
+  throw new Error('LEARNING_EXPERIENCE_CURRENT_REVIEW_CARD_MISSING');
+};
+
+const reachLastReviewPage = async (page: Page) => {
+  const progress = page.getByRole('progressbar', { name: '本頁閱讀進度' });
+  await expect(
+    page.locator(
+      '.chapter-review-reader__pagination-source[aria-hidden="true"]',
+    ),
+  ).toBeAttached();
+  const pageTotal = Number(await progress.getAttribute('max'));
+  if (!Number.isInteger(pageTotal) || pageTotal < 1) {
+    throw new Error('LEARNING_EXPERIENCE_REVIEW_PAGE_TOTAL_INVALID');
+  }
+  const nextPage = page.getByRole('button', { name: '閱讀下一頁' });
+  for (let pageNumber = 1; pageNumber < pageTotal; pageNumber += 1) {
+    await nextPage.click();
+    await expect(progress).toHaveAttribute('value', String(pageNumber + 1));
+  }
+};
+
 const signIn = async (
   page: Page,
   credentials: Readonly<{ email: string; password: string }>,
@@ -113,9 +173,6 @@ test('Learning Experience phase gate', async ({
     throw new Error('LEARNING_EXPERIENCE_BASE_URL_REQUIRED');
   }
   if (!quizChapter) throw new Error('LEARNING_EXPERIENCE_QUIZ_CHAPTER_MISSING');
-  if (!reviewSubtopic) {
-    throw new Error('LEARNING_EXPERIENCE_REVIEW_SUBTOPIC_MISSING');
-  }
   const teacherContext = await browser.newContext({ baseURL });
   const teacherBContext = await browser.newContext({ baseURL });
   const teacherPage = await teacherContext.newPage();
@@ -144,35 +201,45 @@ test('Learning Experience phase gate', async ({
   await studentPage
     .getByRole('link', { name: /^(?:開始|繼續|查看)第.+章/u })
     .click();
+  await studentPage.waitForURL(/\/app\/chapters\//u);
   await expect(
-    studentPage.getByRole('heading', { name: REVIEW_CHAPTER_TITLE }),
+    studentPage.getByRole('heading', { name: /色彩表示/u }),
   ).toBeVisible();
   await expect(studentPage.locator('body')).not.toContainText('尚未發布的卡片');
-  // Media belongs to a later publication slice. Verify it when the generated
-  // manifest contains an approved published mapping, without blocking the
-  // current text-only Chapter 3 slice or pretending that media was covered.
-  if (mediaCard) {
-    await studentPage
-      .locator('summary')
-      .filter({ hasText: mediaCard.title })
-      .click();
-    await expect(
-      studentPage.getByRole('img', { name: mediaCard.alt }),
-    ).toBeVisible();
-  }
-  for (const cardTitle of reviewSubtopic.cardTitles) {
-    const card = studentPage.getByRole('article', { name: cardTitle });
-    if (!(await card.isVisible())) {
-      await studentPage
-        .locator('summary')
-        .filter({ hasText: cardTitle })
-        .click();
-    }
+  const initialReviewProgress = await readReviewCompletion(studentPage);
+  expect(initialReviewProgress.completed).toBe(0);
+  expect(initialReviewProgress.total).toBeGreaterThan(0);
+  let mediaVerified = false;
+  for (
+    let completedCount = 0;
+    completedCount < initialReviewProgress.total;
+    completedCount += 1
+  ) {
+    await openCurrentReviewCard(studentPage);
+    const card = studentPage.locator('article.chapter-review-reader__book');
     await expect(card).toBeVisible();
+    const cardTitle = await card.getAttribute('aria-label');
+    // Media belongs to a later publication slice. Verify it when the generated
+    // manifest contains an approved published mapping, without blocking a
+    // text-only release or pretending that media was covered.
+    const expectedMedia = mediaCard?.title === cardTitle ? mediaCard : null;
+    if (expectedMedia) {
+      await expect(
+        studentPage.getByRole('img', { name: expectedMedia.alt }),
+      ).toBeVisible();
+      mediaVerified = true;
+    }
+    await reachLastReviewPage(studentPage);
     await card.getByRole('button', { name: '完成複習' }).click();
     await expect(card.getByRole('status')).toHaveText('已完成複習');
+    await studentPage.getByRole('button', { name: '返回複習卡選擇' }).click();
+    await expect(studentPage.getByText('選擇複習卡，再進入複習')).toBeVisible();
+    await expect
+      .poll(async () => (await readReviewCompletion(studentPage)).completed)
+      .toBe(completedCount + 1);
   }
-  const completionText = `複習完成 ${String(reviewSubtopic.cardCount)} / ${String(reviewSubtopic.cardCount)}`;
+  if (mediaCard) expect(mediaVerified).toBe(true);
+  const completionText = `複習完成 ${String(initialReviewProgress.total)} / ${String(initialReviewProgress.total)}`;
   await expect(studentPage.getByLabel('章節進度')).toContainText(
     completionText,
   );
@@ -190,10 +257,19 @@ test('Learning Experience phase gate', async ({
     path: testInfo.outputPath('chapter-detail-375x812.png'),
   });
   await studentPage.setViewportSize({ width: 768, height: 1024 });
+  await studentPage
+    .getByRole('button', { name: /^選擇複習卡：/u })
+    .first()
+    .click();
+  await studentPage.getByRole('button', { name: '進入複習' }).click();
+  await expect(
+    studentPage.getByRole('region', { name: /^複習卡閱讀：/u }),
+  ).toBeVisible();
   await studentPage.screenshot({
     fullPage: true,
     path: testInfo.outputPath('review-card-768x1024.png'),
   });
+  await studentPage.getByRole('button', { name: '返回複習卡選擇' }).click();
   await studentPage.setViewportSize({ width: 1280, height: 720 });
 
   // --- Formal quiz with tiered hints and two deliberate mistakes ---
