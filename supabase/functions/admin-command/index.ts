@@ -5,6 +5,7 @@
 // ok → 200、已確認入帳的 denied → 原樣 passthrough、其餘(RPC error/畸形
 // 輸出)→ 503 SECURITY_AUDIT_UNAVAILABLE(Task 8 edge-denial 契約)。
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { readRuntimeSupabaseApiKeys } from '../_shared/api-keys.ts';
 import { canonicalCommandHashHex } from '../_shared/canonical.ts';
 import {
   buildHashFields,
@@ -31,8 +32,15 @@ import {
 } from '../_shared/teacher-account-operation.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+let anonKey = '';
+let serviceRoleKey = '';
+let credentialConfigurationInvalid = false;
+try {
+  ({ publishableKey: anonKey, secretKey: serviceRoleKey } =
+    readRuntimeSupabaseApiKeys((name) => Deno.env.get(name)));
+} catch {
+  credentialConfigurationInvalid = true;
+}
 
 const TEACHER_COMMANDS = new Set([
   'create_teacher_account',
@@ -216,6 +224,7 @@ Deno.serve(async (request) => {
     return new Response('ok', {
       headers: { ...corsHeaders, 'Cache-Control': 'no-store, private' },
     });
+  if (credentialConfigurationInvalid) return auditUnavailable();
   if (request.method !== 'POST')
     return jsonResponse(405, { error: 'METHOD_NOT_ALLOWED' });
 

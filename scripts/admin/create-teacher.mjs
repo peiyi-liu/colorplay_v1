@@ -1,9 +1,11 @@
 // 開發後台：建立教師帳號（owner 規則——教師不開放自助註冊）。
 // 用法：
-//   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/admin/create-teacher.mjs \
+//   SUPABASE_URL=... SUPABASE_SECRET_KEY=... node scripts/admin/create-teacher.mjs \
 //     --email teacher@example.com --password 'Abc123' --account teacher01 \
 //     --name '王小明' [--classroom '一年甲班']
 // 密碼需符合政策：6–12 碼、含大小寫。--classroom 會以該教師身分建立班級並印出班級序號。
+// SUPABASE_SECRET_KEY 是新版命名 secret key；SUPABASE_SERVICE_ROLE_KEY
+// 只在 migration 期間作為 fallback 保留。
 
 import console from 'node:console';
 import process from 'node:process';
@@ -27,7 +29,20 @@ const readArgs = () => {
 const main = async () => {
   const { account, classroom, email, name, password } = readArgs();
   const url = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // SUPABASE_SECRET_KEY is the new named-secret-key credential;
+  // SUPABASE_SERVICE_ROLE_KEY is a fallback used ONLY when the new
+  // variable is entirely unset (undefined) -- the legacy-key migration
+  // window. If the new variable IS set but blank/whitespace, that is a
+  // deploy-time misconfiguration: fail closed instead of silently falling
+  // back to whatever the legacy key holds.
+  const newSecretKey = process.env.SUPABASE_SECRET_KEY;
+  if (newSecretKey !== undefined && newSecretKey.trim() === '') {
+    throw new Error('ADMIN_SECRET_KEY_INVALID');
+  }
+  const serviceRoleKey =
+    newSecretKey !== undefined
+      ? newSecretKey
+      : process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceRoleKey) throw new Error('ADMIN_ENV_MISSING');
   if (!email || !password || !account || !name) {
     throw new Error('USAGE: --email --password --account --name [--classroom]');

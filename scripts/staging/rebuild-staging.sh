@@ -84,7 +84,26 @@ if [[ "$preflight_only" == true ]]; then
   exit 0
 fi
 [[ "${STAGING_REBUILD_EXECUTE:-}" == "yes" ]] || fail STAGING_EXECUTION_CONFIRMATION_REQUIRED
-[[ -n "${STAGING_SUPABASE_URL:-}" && -n "${STAGING_SUPABASE_SERVICE_ROLE_KEY:-}" ]] || \
+# STAGING_SUPABASE_SECRET_KEY is the new named-secret-key credential;
+# STAGING_SUPABASE_SERVICE_ROLE_KEY is a fallback used ONLY when the new
+# variable is entirely unset -- the legacy-key migration window. `${VAR+x}`
+# (not the macOS-bash-3.2-incompatible `[[ -v VAR ]]`) is the portable way
+# to tell "unset" from "set but empty/whitespace": it expands to "x" only
+# when the variable is set, even to an empty string. If the new variable
+# IS set but blank/whitespace, that is a deploy-time misconfiguration, not
+# "not configured yet": fail closed instead of silently falling back to
+# whatever the legacy key holds. The value itself never reaches argv,
+# stdout, or stderr -- only a fixed sentinel does.
+staging_secret_key=''
+if [[ -n "${STAGING_SUPABASE_SECRET_KEY+x}" ]]; then
+  if [[ "$STAGING_SUPABASE_SECRET_KEY" =~ ^[[:space:]]*$ ]]; then
+    fail STAGING_SECRET_KEY_INVALID
+  fi
+  staging_secret_key="$STAGING_SUPABASE_SECRET_KEY"
+else
+  staging_secret_key="${STAGING_SUPABASE_SERVICE_ROLE_KEY:-}"
+fi
+[[ -n "${STAGING_SUPABASE_URL:-}" && -n "$staging_secret_key" ]] || \
   fail STAGING_CREDENTIALS_MISSING
 
 link_and_reset_database() {
