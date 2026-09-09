@@ -9,6 +9,7 @@
 // reconcile_admin_security_operation 走完整 privileged-session／fresh-MFA
 // 驗證後才會寫入,本函式不放寬任何權限。
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { resolveSecretKey } from '../_shared/api-keys.ts';
 import { jsonResponse } from '../_shared/cors.ts';
 import { auditUnavailableEnvelope } from '../_shared/denial-envelope.ts';
 import {
@@ -18,8 +19,14 @@ import {
 } from '../_shared/teacher-account-operation.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const reconcileKey = Deno.env.get('ADMIN_RECONCILE_KEY') ?? '';
+let serviceRoleKey = '';
+let credentialConfigurationInvalid = false;
+try {
+  serviceRoleKey = resolveSecretKey((name) => Deno.env.get(name));
+} catch {
+  credentialConfigurationInvalid = true;
+}
 
 type ServiceClient = ReturnType<typeof createClient>;
 
@@ -130,6 +137,9 @@ const teacherReconciliationDependencies = (
 Deno.serve(async (request) => {
   if (request.method !== 'POST')
     return jsonResponse(405, { error: 'METHOD_NOT_ALLOWED' });
+  if (credentialConfigurationInvalid) {
+    return jsonResponse(503, auditUnavailableEnvelope());
+  }
   if (
     reconcileKey === '' ||
     request.headers.get('x-reconcile-key') !== reconcileKey

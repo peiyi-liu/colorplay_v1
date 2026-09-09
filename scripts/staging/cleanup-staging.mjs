@@ -10,7 +10,20 @@ function fail(code) {
 const mode = process.argv[2];
 const projectRef = process.env.STAGING_PROJECT_REF;
 const expectedRef = process.env.STAGING_EXPECTED_PROJECT_REF;
-const serviceRoleKey = process.env.STAGING_SUPABASE_SERVICE_ROLE_KEY;
+// STAGING_SUPABASE_SECRET_KEY is the new named-secret-key credential;
+// STAGING_SUPABASE_SERVICE_ROLE_KEY is a fallback used ONLY when the new
+// variable is entirely unset (undefined) -- the legacy-key migration
+// window. If the new variable IS set but blank/whitespace, that is a
+// deploy-time misconfiguration, not "not configured yet": fail closed
+// instead of silently falling back to whatever the legacy key holds.
+const newSecretKey = process.env.STAGING_SUPABASE_SECRET_KEY;
+if (newSecretKey !== undefined && newSecretKey.trim() === '') {
+  fail('STAGING_CLEANUP_CREDENTIAL_INVALID');
+}
+const serviceRoleKey =
+  newSecretKey !== undefined
+    ? newSecretKey
+    : process.env.STAGING_SUPABASE_SERVICE_ROLE_KEY;
 const url = process.env.STAGING_SUPABASE_URL;
 
 if (

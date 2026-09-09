@@ -3,6 +3,7 @@
 // 才呼叫 service-only DB path;直接 GoTrue enroll/verify 永遠拿不到
 // privileged session(DB 層由 Task 5 保證)。
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { readRuntimeSupabaseApiKeys } from '../_shared/api-keys.ts';
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
 import {
   auditUnavailableEnvelope,
@@ -11,8 +12,15 @@ import {
 import { makeRecordAndDeny } from '../_shared/edge-denial.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+let anonKey = '';
+let serviceRoleKey = '';
+let credentialConfigurationInvalid = false;
+try {
+  ({ publishableKey: anonKey, secretKey: serviceRoleKey } =
+    readRuntimeSupabaseApiKeys((name) => Deno.env.get(name)));
+} catch {
+  credentialConfigurationInvalid = true;
+}
 
 const auditUnavailable = () => jsonResponse(503, auditUnavailableEnvelope());
 
@@ -42,6 +50,7 @@ const asString = (value: unknown): string =>
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS')
     return new Response('ok', { headers: corsHeaders });
+  if (credentialConfigurationInvalid) return auditUnavailable();
   if (request.method !== 'POST')
     return jsonResponse(405, { error: 'METHOD_NOT_ALLOWED' });
 
