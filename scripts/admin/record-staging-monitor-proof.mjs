@@ -1,4 +1,4 @@
-/* global process, fetch, AbortSignal, console */
+/* global process, fetch, AbortSignal, console, setTimeout, performance */
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -19,6 +19,15 @@ const PUBLIC_ERROR_CODES = new Set([
 ]);
 const RECORD_SQL_FAILURE = 'STAGING_MONITOR_PROOF_RECORD_SQL_FAILED';
 const ENQUEUE_SQL_FAILURE = 'STAGING_MONITOR_PROOF_ENQUEUE_SQL_FAILED';
+const MARKER_POLL_BUDGET_MS = 30_000;
+const MARKER_POLL_INTERVAL_MS = 5_000;
+const MARKER_REQUEST_TIMEOUT_MS = 15_000;
+
+function defaultSleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 class MonitorProofError extends Error {
   constructor(code) {
@@ -94,7 +103,7 @@ async function readArtifact(readFileImpl, ref, revision) {
   }
 }
 
-async function verifyReleaseMarker(fetchImpl, revision) {
+async function fetchMarkerOnce(fetchImpl, revision, requestTimeoutMs) {
   let markerResponse;
   try {
     markerResponse = await fetchImpl(
@@ -102,19 +111,19 @@ async function verifyReleaseMarker(fetchImpl, revision) {
       {
         cache: 'no-store',
         redirect: 'error',
-        signal: AbortSignal.timeout(15_000),
+        signal: AbortSignal.timeout(requestTimeoutMs),
       },
     );
   } catch {
-    fail('STAGING_MONITOR_PROOF_MARKER_NETWORK_FAILED');
+    return 'network';
   }
-  if (!markerResponse.ok) fail('STAGING_MONITOR_PROOF_MARKER_INVALID');
+  if (!markerResponse.ok) return 'invalid';
 
   let marker;
   try {
     marker = await markerResponse.json();
   } catch {
-    fail('STAGING_MONITOR_PROOF_MARKER_INVALID');
+    return 'invalid';
   }
   if (
     marker === null ||
@@ -122,7 +131,45 @@ async function verifyReleaseMarker(fetchImpl, revision) {
     marker.environment !== 'staging' ||
     marker.revision !== revision
   ) {
-    fail('STAGING_MONITOR_PROOF_MARKER_INVALID');
+    return 'invalid';
+  }
+  return 'ok';
+}
+
+// Vercel alias propagation and marker cache invalidation can lag briefly
+// behind the deploy step, so a short-lived marker mismatch is expected, not
+// an error; bounded polling absorbs that race without retrying forever. A
+// single monotonic deadline bounds the whole window: both the per-request
+// timeout and the inter-attempt sleep are floored to a non-negative integer
+// and clamped to whatever time remains, so slow requests count against the
+// same 30s budget as sleeping does, and AbortSignal.timeout (which rejects
+// fractional or negative values) never sees the fractional milliseconds a
+// monotonic clock can produce.
+async function verifyReleaseMarker(fetchImpl, revision, sleepImpl, clockImpl) {
+  const deadline = clockImpl() + MARKER_POLL_BUDGET_MS;
+  let lastOutcome = 'invalid';
+  for (;;) {
+    const requestTimeoutMs = Math.min(
+      MARKER_REQUEST_TIMEOUT_MS,
+      Math.floor(deadline - clockImpl()),
+    );
+    if (requestTimeoutMs <= 0) {
+      fail(
+        lastOutcome === 'network'
+          ? 'STAGING_MONITOR_PROOF_MARKER_NETWORK_FAILED'
+          : 'STAGING_MONITOR_PROOF_MARKER_INVALID',
+      );
+    }
+    lastOutcome = await fetchMarkerOnce(fetchImpl, revision, requestTimeoutMs);
+    if (lastOutcome === 'ok') return;
+
+    const sleepMs = Math.min(
+      MARKER_POLL_INTERVAL_MS,
+      Math.floor(deadline - clockImpl()),
+    );
+    if (sleepMs > 0) {
+      await sleepImpl(sleepMs);
+    }
   }
 }
 
@@ -195,14 +242,16 @@ async function classifyRejectedQuery(response) {
 }
 
 export async function recordStagingMonitorProof({
+  clockImpl = () => performance.now(),
   env = process.env,
   fetchImpl = fetch,
   now = () => new Date(),
   readFileImpl = readFile,
+  sleepImpl = defaultSleep,
 } = {}) {
   const { accessToken, ref, revision, runId } = readConfiguration(env);
   await readArtifact(readFileImpl, ref, revision);
-  await verifyReleaseMarker(fetchImpl, revision);
+  await verifyReleaseMarker(fetchImpl, revision, sleepImpl, clockImpl);
 
   const observations = [
     {
