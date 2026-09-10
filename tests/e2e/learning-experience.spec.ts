@@ -18,7 +18,7 @@ import {
 } from './browser-health';
 import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
 import { startQuizFromLobby } from './helpers/quiz';
-import { walkReviewCards } from './helpers/review-card-walk';
+import * as reviewCardWalk from './helpers/review-card-walk';
 
 // A full chapter challenge always serves ten questions. The generated
 // manifest records the published chapter-bank pool size, not the template
@@ -151,7 +151,7 @@ test('Learning Experience phase gate', async ({
   await expect(studentPage.locator('body')).not.toContainText('尚未發布的卡片');
   // Verify media only when the generated manifest has a published mapping;
   // the current text-only slice must not pretend that media was covered.
-  await walkReviewCards(
+  await reviewCardWalk.walkReviewCards(
     studentPage,
     reviewSubtopic.cardTitles,
     async (card, cardTitle) => {
@@ -160,8 +160,7 @@ test('Learning Experience phase gate', async ({
           studentPage.getByRole('img', { name: mediaCard.alt }),
         ).toBeVisible();
       }
-      await card.getByRole('button', { exact: true, name: '完成複習' }).click();
-      await expect(card.getByRole('status')).toHaveText('已完成複習');
+      await reviewCardWalk.completeReviewCard(card);
     },
   );
   const completionText = `複習完成 ${String(reviewSubtopic.cardCount)} / ${String(reviewSubtopic.cardCount)}`;
