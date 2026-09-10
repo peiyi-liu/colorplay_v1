@@ -1608,3 +1608,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - **修改內容摘要**：`supabase/functions/_shared/api-keys.ts` 的 resolver 改為新 key-set（`SUPABASE_PUBLISHABLE_KEYS`／`SUPABASE_SECRET_KEYS`）優先；只有新版變數**完全未設定**時才允許退回 legacy（`SUPABASE_ANON_KEY`／`SUPABASE_SERVICE_ROLE_KEY`）；新變數或 named selector（`COLORPLAY_SUPABASE_SECRET_KEY_NAME`）若明確設成空字串或純空白，一律 fail closed，絕不偷偷退回 legacy。三支 Admin Edge Functions（`admin-command`／`admin-mfa`／`admin-reconcile`）改用這個共用 resolver；credential configuration 判定無效時，在任何 `createClient` 呼叫之前就回傳固定的 503 安全回應，不建立任何 privileged client。`scripts/staging/cleanup-staging.mjs`、`scripts/staging/rebuild-staging.sh`、`scripts/admin/create-teacher.mjs` 三支手動腳本套用同樣的新變數優先、legacy bounded fallback、明確空白 fail closed 規則。
 - **驗證**：Codex bounded review 獨立完成 focused tests（54/54）與 `pnpm typecheck`，本輪未重跑。
 - **目前狀態**：**尚未 deploy**、**尚未修改任何 Hosted secrets**（GitHub／Vercel／Supabase）、**尚未停用任何 legacy key**。下一步是獨立的、owner-authorized 的 Staging cutover（實際在 Supabase Dashboard 建立新 key、更新 Hosted 環境變數、驗證、確認後才停用 legacy key），本則僅記錄本地程式修改收斂為 commit 這一步。
+
+## 2026-09-10 15:37 [Codex] — Learning Experience 複習卡走訪 blocker 修正（未 stage）
+
+- 修正 `learning-experience.spec.ts` 返回 reader 後 library remount 到第 1 頁造成的分頁走訪錯位，以及按鈕 `groupLabel` 與 reader `title` 不同時的錯誤等值假設；共用走訪抽至 `tests/e2e/helpers/review-card-walk.ts`，主測試降為 499 行。
+- 新增兩個 focused Chromium regression，分別固定 `groupLabel/title` mismatch 與跨第 2 頁返回重設；最終 2/2 PASS。Prettier、scoped ESLint、typecheck、`git diff --check` 全綠；一輪 spec／quality review 的兩個 P2（掛載前 `count()` flake、mismatch fixture 假綠）已修正。
+- 邊界：所有修改保持 unstaged；HEAD 仍為 `bbe228c0e53e3ff81836ef1d0add9120ce386efe`。未 commit、push、deploy、rerun、新建 SHA，未修改任何 GitHub／Vercel／Supabase secret、Production 或 legacy key。
