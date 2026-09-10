@@ -80,6 +80,9 @@ export function ChapterDetailPageHarness({
   const readerState = new URLSearchParams(window.location.search).get(
     'readerState',
   );
+  const groupLabelMismatch =
+    new URLSearchParams(window.location.search).get('groupLabelMismatch') ===
+    'true';
   const sections =
     scenario === 'content-readiness-error'
       ? chapterReviewSectionsFixture([
@@ -137,6 +140,19 @@ export function ChapterDetailPageHarness({
           })),
         }))
       : sections;
+  const displaySections = groupLabelMismatch
+    ? readerSections.map((section, sectionIndex) => ({
+        ...section,
+        subtopics: section.subtopics.map((subtopic, subtopicIndex) => ({
+          ...subtopic,
+          cards: subtopic.cards.map((card, cardIndex) =>
+            sectionIndex === 0 && subtopicIndex === 0 && cardIndex === 0
+              ? { ...card, groupLabel: '分類顯示標籤' }
+              : card,
+          ),
+        })),
+      }))
+    : readerSections;
   const stalledMediaRepository = {
     resolveReviewMedia: () => new Promise<never>(() => undefined),
   } as unknown as LearningRepository;
@@ -153,7 +169,7 @@ export function ChapterDetailPageHarness({
     progressRows: learningProgressRowsFixture(),
     reviewError: scenario === 'error' ? new LearningError('UNAVAILABLE') : null,
     reviewIsPending: false,
-    reviewSections: readerSections,
+    reviewSections: displaySections,
   });
 
   return (

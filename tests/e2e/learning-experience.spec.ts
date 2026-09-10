@@ -18,6 +18,7 @@ import {
 } from './browser-health';
 import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
 import { startQuizFromLobby } from './helpers/quiz';
+import { walkReviewCards } from './helpers/review-card-walk';
 
 // A full chapter challenge always serves ten questions. The generated
 // manifest records the published chapter-bank pool size, not the template
@@ -148,30 +149,21 @@ test('Learning Experience phase gate', async ({
     studentPage.getByRole('heading', { name: REVIEW_CHAPTER_TITLE }),
   ).toBeVisible();
   await expect(studentPage.locator('body')).not.toContainText('尚未發布的卡片');
-  // Media belongs to a later publication slice. Verify it when the generated
-  // manifest contains an approved published mapping, without blocking the
-  // current text-only Chapter 3 slice or pretending that media was covered.
-  if (mediaCard) {
-    await studentPage
-      .locator('summary')
-      .filter({ hasText: mediaCard.title })
-      .click();
-    await expect(
-      studentPage.getByRole('img', { name: mediaCard.alt }),
-    ).toBeVisible();
-  }
-  for (const cardTitle of reviewSubtopic.cardTitles) {
-    const card = studentPage.getByRole('article', { name: cardTitle });
-    if (!(await card.isVisible())) {
-      await studentPage
-        .locator('summary')
-        .filter({ hasText: cardTitle })
-        .click();
-    }
-    await expect(card).toBeVisible();
-    await card.getByRole('button', { name: '完成複習' }).click();
-    await expect(card.getByRole('status')).toHaveText('已完成複習');
-  }
+  // Verify media only when the generated manifest has a published mapping;
+  // the current text-only slice must not pretend that media was covered.
+  await walkReviewCards(
+    studentPage,
+    reviewSubtopic.cardTitles,
+    async (card, cardTitle) => {
+      if (mediaCard?.title === cardTitle) {
+        await expect(
+          studentPage.getByRole('img', { name: mediaCard.alt }),
+        ).toBeVisible();
+      }
+      await card.getByRole('button', { exact: true, name: '完成複習' }).click();
+      await expect(card.getByRole('status')).toHaveText('已完成複習');
+    },
+  );
   const completionText = `複習完成 ${String(reviewSubtopic.cardCount)} / ${String(reviewSubtopic.cardCount)}`;
   await expect(studentPage.getByLabel('章節進度')).toContainText(
     completionText,
