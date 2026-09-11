@@ -1,9 +1,55 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import {
   completeReviewCard,
   walkReviewCards,
 } from './helpers/review-card-walk';
+
+// Two choices where clicking the second never commits its aria-pressed
+// state, so "進入複習" keeps opening the first article regardless of which
+// choice was actually clicked (simulates an unresolved selection race).
+async function setUpUnresolvedSelectionRaceFixture(page: Page) {
+  await page.setContent(`
+    <button aria-label="選擇複習卡：A" aria-pressed="true" id="choice-0" type="button">A</button>
+    <button aria-label="選擇複習卡：B" aria-pressed="false" id="choice-1" type="button">B</button>
+    <button id="enter" type="button">進入複習</button>
+    <article aria-label="A" hidden id="article-0">A body</article>
+    <article aria-label="B" hidden id="article-1">B body</article>
+    <button id="back" type="button">返回複習卡選擇</button>
+  `);
+  await page.evaluate(() => {
+    document.getElementById('enter')?.addEventListener('click', () => {
+      const firstPressed =
+        document.getElementById('choice-0')?.getAttribute('aria-pressed') ===
+        'true';
+      const target = document.getElementById(
+        firstPressed ? 'article-0' : 'article-1',
+      );
+      target?.removeAttribute('hidden');
+    });
+    document.getElementById('back')?.addEventListener('click', () => {
+      document.getElementById('article-0')?.setAttribute('hidden', '');
+      document.getElementById('article-1')?.setAttribute('hidden', '');
+    });
+  });
+}
+
+type ElementGetAttribute = (this: Element, name: string) => string | null;
+
+async function walkAndCaptureMismatch(page: Page): Promise<Error> {
+  let thrown: unknown;
+  try {
+    await walkReviewCards(page, ['A', 'B'], async (card) => {
+      await expect(card).toBeVisible();
+    });
+  } catch (error: unknown) {
+    thrown = error;
+  }
+  if (!(thrown instanceof Error)) {
+    throw new Error('EXPECTED_NAVIGATION_MISMATCH_ERROR');
+  }
+  return thrown;
+}
 
 const firstSubtopicCardTitles = [
   '色彩的分類',
@@ -92,4 +138,82 @@ test('completion is idempotent when the card already shows completion status', a
   await completeReviewCard(card);
   await expect(card.getByRole('status')).toHaveCount(1);
   await expect(card.getByRole('button', { name: '完成複習' })).toHaveCount(0);
+});
+
+// Phase 0 Task 15 / Staging run 34568536342: capture the
+// selection-state mismatch without exposing hosted content.
+test('reports a bounded navigation-mismatch diagnostic when the second choice opens the first article', async ({
+  page,
+}) => {
+  await setUpUnresolvedSelectionRaceFixture(page);
+
+  const thrown = await walkAndCaptureMismatch(page);
+  const [sentinel, payload] = thrown.message.split(/ (.*)/u);
+  expect(sentinel).toBe('REVIEW_CARD_NAVIGATION_MISMATCH');
+  expect(JSON.parse(payload ?? '')).toEqual({
+    cardsPerPage: 2,
+    choiceIndexOnPage: 1,
+    clickedChoicePressedAfterClick: false,
+    diagnosticCollectionFailed: false,
+    expectedCardIndex: 1,
+    pressedChoiceIndexes: [0],
+    targetPageIndex: 0,
+    visibleArticleExpectedIndexes: [0],
+    visibleChoiceCount: 2,
+  });
+});
+
+// Phase 0 Task 15 / Staging run 34568536342: the collector must fail closed
+// with the fixed sentinel, not leak the underlying error, and not wait for
+// Playwright's default actionability timeout when its own snapshot throws.
+test('falls back to a safe fixed diagnostic without leaking injected content when the snapshot itself fails', async ({
+  page,
+}) => {
+  await setUpUnresolvedSelectionRaceFixture(page);
+  const secret = 'synthetic-secret-not-a-credential';
+  const hostileUrl = 'https://attacker.invalid/exfiltrate';
+  const hostilePath = '/private/tmp/synthetic-navigation-secret.json';
+  await page.evaluate(
+    ({ hostilePath, hostileUrl, secret }) => {
+      // Native DOM method captured only to invoke via .call(this, name)
+      // below; disabled as a block since Prettier may wrap this statement
+      // and move the flagged expression off a single "next line".
+      /* eslint-disable @typescript-eslint/unbound-method */
+      const originalGetAttribute: ElementGetAttribute =
+        Element.prototype.getAttribute;
+      /* eslint-enable @typescript-eslint/unbound-method */
+      Element.prototype.getAttribute = function throwOnAriaLabel(
+        this: Element,
+        name: string,
+      ) {
+        if (name === 'aria-label') {
+          throw new Error(`leaked ${secret} ${hostileUrl} ${hostilePath}`);
+        }
+        return originalGetAttribute.call(this, name);
+      };
+    },
+    { hostilePath, hostileUrl, secret },
+  );
+
+  const startedAt = Date.now();
+  const thrown = await walkAndCaptureMismatch(page);
+  const elapsedMs = Date.now() - startedAt;
+
+  expect(thrown.message).not.toContain(secret);
+  expect(thrown.message).not.toContain(hostileUrl);
+  expect(thrown.message).not.toContain(hostilePath);
+  const [sentinel, payload] = thrown.message.split(/ (.*)/u);
+  expect(sentinel).toBe('REVIEW_CARD_NAVIGATION_MISMATCH');
+  expect(JSON.parse(payload ?? '')).toEqual({
+    cardsPerPage: 2,
+    choiceIndexOnPage: 1,
+    clickedChoicePressedAfterClick: false,
+    diagnosticCollectionFailed: true,
+    expectedCardIndex: 1,
+    pressedChoiceIndexes: [],
+    targetPageIndex: 0,
+    visibleArticleExpectedIndexes: [],
+    visibleChoiceCount: 0,
+  });
+  expect(elapsedMs).toBeLessThan(10_000);
 });
