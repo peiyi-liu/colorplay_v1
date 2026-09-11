@@ -1,6 +1,12 @@
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { buildReviewCardImport } from '../../scripts/content/import-review-cards.mjs';
+import {
+  REVIEW_MANIFEST,
+  type ReviewSubtopicContent,
+} from '../fixtures/review-manifest.generated';
 
 const fixes = {
   chapterMap: { '3': 'chapter-3' },
@@ -313,5 +319,182 @@ describe('review card import', () => {
     expect(result.seedSql).toContain('delete from public.review_card_media');
     expect(result.seedSql).toContain("set status = 'archived'");
     expect(result.seedSql).toContain("chapter.stable_code = 'chapter-3'");
+  });
+});
+async function readFixtureText(relativePath: string): Promise<string> {
+  return readFile(resolve(import.meta.dirname, relativePath), 'utf8');
+}
+function cardTotal(): number {
+  return REVIEW_MANIFEST.reduce((sum, s) => sum + s.cardCount, 0);
+}
+function countsBySection(
+  manifest: readonly ReviewSubtopicContent[],
+): Map<string, number> {
+  return manifest.reduce((counts, s) => {
+    counts.set(s.sectionKey, (counts.get(s.sectionKey) ?? 0) + s.cardCount);
+    return counts;
+  }, new Map<string, number>());
+}
+interface ParsedReviewImportReport {
+  counts: Map<string, number>;
+  total: number;
+}
+function need<T>(value: T | undefined, code: string): T {
+  if (value === undefined) throw new Error(code);
+  return value;
+}
+function posInt(text: string, errorCode: string): number {
+  if (!/^(?:0|[1-9]\d*)$/u.test(text)) throw new Error(errorCode);
+  const value = Number(text);
+  if (!Number.isSafeInteger(value) || value < 0) throw new Error(errorCode);
+  return value;
+}
+// Trusts only the one canonical "已產生 N 張卡片的 published 匯入資料：..." line so total/sections can never disagree.
+function parseReviewImportReport(reportMd: string): ParsedReviewImportReport {
+  const lineMatches = [
+    ...reportMd.matchAll(
+      /^已產生\s*(\d+)\s*張卡片的\s*published\s*匯入資料：(.*)$/gmu,
+    ),
+  ];
+  if (lineMatches.length !== 1) throw new Error('REPORT_SUMMARY_NOT_UNIQUE');
+  const [summaryLine] = lineMatches;
+  const totalText = need(summaryLine?.[1], 'REPORT_SUMMARY_UNPARSEABLE');
+  const sectionListText = need(summaryLine?.[2], 'REPORT_SUMMARY_UNPARSEABLE');
+  const total = posInt(totalText, 'REPORT_TOTAL_INVALID');
+  const counts = new Map<string, number>();
+  for (const token of sectionListText.trim().replace(/。$/u, '').split('、')) {
+    const tokenMatch = /^(\d+-\d+)\s*(\d+)\s*張$/u.exec(token.trim());
+    if (tokenMatch === null) throw new Error('REPORT_TOKEN_MALFORMED');
+    const sectionKey = need(tokenMatch[1], 'REPORT_TOKEN_MALFORMED');
+    const countText = need(tokenMatch[2], 'REPORT_TOKEN_MALFORMED');
+    if (counts.has(sectionKey)) throw new Error('REPORT_DUPLICATE_SECTION');
+    counts.set(sectionKey, posInt(countText, 'REPORT_COUNT_INVALID'));
+  }
+  if (counts.size === 0) throw new Error('REPORT_SECTIONS_EMPTY');
+  return { counts, total };
+}
+const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+// stable_code is column 3; anchoring on two leading UUID literals (id, subtopic_id) avoids stray 'RC...' text elsewhere.
+const TUPLE_STABLE_CODE = new RegExp(
+  `\\(\\s*'${UUID}'\\s*,\\s*'${UUID}'\\s*,\\s*'([^']*)'`,
+  'gu',
+);
+// Anchored on the exact column list plus the bare "on conflict do nothing;" unique to this insert (others qualify with "(id)"; the incoming CTE has none).
+const CANONICAL_REVIEW_CARDS_INSERT =
+  /insert into public\.review_cards \(id, subtopic_id, stable_code, group_label, title, content, version, status, requires_recompletion, sort_order\)\s*values\s*([\s\S]*?)on conflict do nothing;/gu;
+function parseSeedCodes(seedSql: string): string[] {
+  const blockMatches = [...seedSql.matchAll(CANONICAL_REVIEW_CARDS_INSERT)];
+  if (blockMatches.length !== 1) throw new Error('SEED_INSERT_NOT_UNIQUE');
+  const tuplesBlock = need(blockMatches[0]?.[1], 'SEED_INSERT_UNPARSEABLE');
+  const cs = [...tuplesBlock.matchAll(TUPLE_STABLE_CODE)]
+    .map((found) => found[1])
+    .filter((code): code is string => code !== undefined)
+    .filter((code) => /^RC\d+$/u.test(code));
+  if (cs.length === 0) throw new Error('SEED_CODES_EMPTY');
+  if (new Set(cs).size !== cs.length) throw new Error('SEED_DUPLICATE_CODE');
+  return cs;
+}
+const RPT = '../../docs/content/review-import-report.md';
+const SEED_PATH = '../../supabase/seeds/content-review-cards.sql';
+describe('review manifest generated-artifact consistency', () => {
+  it('keeps every subtopicId unique with cardCount matching cardTitles', () => {
+    const ids = REVIEW_MANIFEST.map((s) => s.subtopicId);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(
+      REVIEW_MANIFEST.every((s) => s.cardCount === s.cardTitles.length),
+    ).toBe(true);
+  });
+  it('matches report total and per-section counts', async () => {
+    const parsed = parseReviewImportReport(await readFixtureText(RPT));
+    expect(cardTotal()).toBe(parsed.total);
+    expect(countsBySection(REVIEW_MANIFEST)).toEqual(parsed.counts);
+  });
+  it('matches unique RC stable code count from the canonical seed insert', async () => {
+    const seedSql = await readFixtureText(SEED_PATH);
+    expect(cardTotal()).toBe(parseSeedCodes(seedSql).length);
+  });
+});
+function mkTuple(code: string, index: number): string {
+  const uuid = (seed: number) =>
+    `00000000-0000-4000-8000-${seed.toString(16).padStart(12, '0')}`;
+  const idx = String(index);
+  return `('${uuid(index * 2)}','${uuid(index * 2 + 1)}','${code}','${idx}','t','c',1,'published',false,${idx})`;
+}
+// Always renders the earlier validation CTE so tests can prove the canonical INSERT parses independently of it.
+function mkSeed(
+  canonicalCodes: readonly string[] | undefined,
+  options: { dup?: boolean; incoming?: readonly string[]; noise?: string } = {},
+): string {
+  const incoming = (options.incoming ?? ['RC1', 'RC2'])
+    .map(mkTuple)
+    .join(',\n');
+  const canonicalBlock =
+    canonicalCodes === undefined
+      ? ''
+      : `insert into public.review_cards (id, subtopic_id, stable_code, group_label, title, content, version, status, requires_recompletion, sort_order)\nvalues\n${canonicalCodes.map(mkTuple).join(',\n')}\non conflict do nothing;\n`;
+  return [
+    `do $$ begin if exists (with incoming (id, subtopic_id, stable_code, group_label, title, content, sort_order, media) as (values\n${incoming}\n) select 1 from incoming) then raise exception using message = 'noop'; end if; end $$;`,
+    canonicalBlock,
+    options.dup === true ? canonicalBlock : '',
+    options.noise ?? '',
+  ].join('\n');
+}
+type SeedOpts = Parameters<typeof mkSeed>[1];
+const seedCode =
+  (codes: readonly string[] | undefined, extra?: SeedOpts) => () =>
+    parseSeedCodes(mkSeed(codes, extra));
+const reportCode = (md: string) => () => parseReviewImportReport(md);
+describe('review-import parsers: accept well-formed input, fail closed on ambiguous input', () => {
+  const acceptCases: [string, () => unknown, unknown][] = [
+    [
+      'seed: counts only the canonical insert, not the earlier incoming CTE',
+      seedCode(['RC1', 'RC2'], { incoming: ['RC1', 'RC2', 'RC3'] }),
+      ['RC1', 'RC2'],
+    ],
+    [
+      'seed: ignores an RC-shaped string in a comment or card content',
+      seedCode(['RC1', 'RC2'], { noise: "-- RC9999 'RC9999'" }),
+      ['RC1', 'RC2'],
+    ],
+  ];
+  it.each(acceptCases)('accepts: %s', (_label, run, expected) => {
+    expect(run()).toEqual(expected);
+  });
+  const rejectCases: [string, () => unknown, string][] = [
+    [
+      'report: two contradictory published summary lines',
+      reportCode(
+        '已產生 1 張卡片的 published 匯入資料：3-1 1 張。\n已產生 2 張卡片的 published 匯入資料：3-1 2 張。',
+      ),
+      'REPORT_SUMMARY_NOT_UNIQUE',
+    ],
+    [
+      'report: duplicate sectionKey inside the summary line',
+      reportCode('已產生 8 張卡片的 published 匯入資料：3-1 3 張、3-1 3 張。'),
+      'REPORT_DUPLICATE_SECTION',
+    ],
+    [
+      'report: malformed trailing section token',
+      reportCode('已產生 8 張卡片的 published 匯入資料：3-1 3 張 extra。'),
+      'REPORT_TOKEN_MALFORMED',
+    ],
+    [
+      'seed: canonical insert block is missing',
+      seedCode(undefined),
+      'SEED_INSERT_NOT_UNIQUE',
+    ],
+    [
+      'seed: canonical insert block appears more than once',
+      seedCode(['RC1'], { dup: true }),
+      'SEED_INSERT_NOT_UNIQUE',
+    ],
+    [
+      'seed: stable code repeated within the canonical insert',
+      seedCode(['RC1', 'RC1']),
+      'SEED_DUPLICATE_CODE',
+    ],
+  ];
+  it.each(rejectCases)('rejects: %s', (_label, run, sentinel) => {
+    expect(run).toThrow(sentinel);
   });
 });
