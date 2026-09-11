@@ -78,3 +78,18 @@ test('completion assertion distinguishes completion from pending media status', 
   await completeReviewCard(card);
   await expect(card.getByRole('status')).toHaveCount(2);
 });
+
+test('completion is idempotent when the card already shows completion status', async ({
+  page,
+}) => {
+  await page.setContent(`
+    <article aria-label="色彩的分類">
+      <p role="status">已完成複習</p>
+    </article>
+  `);
+
+  const card = page.getByRole('article', { name: '色彩的分類' });
+  await completeReviewCard(card);
+  await expect(card.getByRole('status')).toHaveCount(1);
+  await expect(card.getByRole('button', { name: '完成複習' })).toHaveCount(0);
+});

@@ -3,10 +3,12 @@ import { expect, type Locator, type Page } from '@playwright/test';
 type ReviewCardVisitor = (card: Locator, cardTitle: string) => Promise<void>;
 
 export async function completeReviewCard(card: Locator) {
-  await card.getByRole('button', { exact: true, name: '完成複習' }).click();
   const completionStatus = card
     .getByRole('status')
     .filter({ hasText: /^已完成複習$/u });
+  if (!(await completionStatus.isVisible())) {
+    await card.getByRole('button', { exact: true, name: '完成複習' }).click();
+  }
   await expect(completionStatus).toHaveText('已完成複習');
 }
 
