@@ -1,16 +1,16 @@
 # ColorPlay
 
-> Current work: **Phase 0 hosted foundation gates** on isolated branch
-> `phase0/release-foundation`. Read
+> Current work: **Phase 0A Local＋Staging foundation closeout**. Owner chose the
+> 0A／0B split on 2026-09-11: 0A closes Local／Staging foundation; 0B contains
+> Production migration and is deferred to Phase 8. Read
 > [`docs/roadmap-colorplay-next.md`](docs/roadmap-colorplay-next.md), the
-> [approved spec](docs/superpowers/specs/2026-08-05-phase-0-environment-release-foundation-design.md),
+> [rebaseline decision](docs/superpowers/specs/2026-09-11-phase-0a-0b-rebaseline-decision.md)
 > and the
-> [implementation plan](docs/superpowers/plans/2026-08-06-phase-0-environment-release-foundation.md)
-> before acting. Status: **TASK 14 REOPENED — TASK 15 BLOCKED**. Independent
-> review invalidated the earlier completion claim; corrected local recovery
-> controls are implemented, but local cleanup/gates and fresh protected hosted
-> backup/restore evidence remain required. No Staging merge, Candidate, DNS
-> change, Production migration, deployment, or promotion has occurred.
+> [0A closeout plan](docs/superpowers/plans/2026-09-11-phase-0a-staging-foundation-closeout.md)
+> before acting. Status: **0A IN PROGRESS / 0B DEFERRED**. The immediate task is
+> the stale 28-card review manifest rebaseline to the accepted 8-card 3／3／2
+> content. Do not create Tokyo, delete Sydney, mutate Production, run Phase 8
+> release proof, or claim all of Phase 0 complete.
 
 A classroom quiz platform. Teachers publish question content and open a Live Session from a Live Activity; during that session the teacher is its Host, Participants answer on their own devices, and the Projector carries the shared screen.
 
