@@ -32,9 +32,40 @@ Phase 0A 只有在下列五項都完成時才能標記 `PHASE 0A COMPLETE`：
 B2 Object Lock 權威證據或 human real-device release proof。這些項目保持
 `NOT VERIFIED — deferred to Phase 0B / Phase 8`，不得改寫為 PASS。
 
+### 0.1 Phase 0A automated evidence manifest（0A-5 的必要輸入）
+
+`PHASE 0A COMPLETE` 不得只憑敘述宣稱；必須先有一份獨立、sanitized、綁定同一
+exact Staging SHA 的 evidence manifest／receipt，至少彙整：
+
+- **環境 fingerprint**：exact Git SHA、Vercel deployment ID、Staging Supabase
+  project ref（`onkxnkzeixpezetkmocf`）與 public-key fingerprint。
+- **automated gates**：0A-2 各項 Staging automated foundation job（build／deploy、
+  synthetic student＋teacher Auth/profile、monitoring proof、read-only smoke、
+  browser/RWD、`phase-acceptance`）的通過結果與 run ID。
+- **restore evidence**：0A-3 該次成功 restore drill 的 evidence schema、cleanup
+  `verified=true` 與 residual containers/networks=0 的結果。
+- **deferred real-device／0B 項目清單**：明列仍是
+  `NOT VERIFIED — deferred to Phase 0B / Phase 8` 的項目（Production smoke、
+  RPO／RTO、Tokyo Candidate、Sydney retirement、B2 Object Lock 權威證據、human
+  real-device release proof），不得留白也不得改寫為 PASS。
+
+manifest 不含任何 secret value、raw log 或未 sanitize 的 URL／DOM 內容。沒有這份
+經 verifier 驗證過的 manifest，Task 0A-5 不得把 0A 標記 `COMPLETE`。
+
+### 0.2 實作者與治理判定分工
+
+0A-1 至 0A-4 由 Claude Code 逐 task 實作，每 task 完成後保持 unstaged，交 Codex
+做一次 bounded review；0A-5 的 evidence 彙整與 `PHASE 0A COMPLETE` 判定，是 Codex
+的治理判定，不是 Claude Code 可自行宣告的實作產出。若 0A-5 需要 Claude Code 編輯
+`CONTEXT.md`、canonical roadmap 或 `docs/handoff.md` 等 closeout 文件，僅能在 Codex
+已確認 0A-1～0A-4 evidence 狀態、並下達明確 task brief 之後，執行 bounded mechanical
+edit（依 brief 更新指定欄位／連結／狀態字串），不得由 Claude Code 自行判定證據是否
+足以宣告 `COMPLETE`。
+
 ## Task 0A-1：修復 review manifest SSOT regression
 
-**級別：**S（generated test fixture＋contract correction）
+**級別：**M（跨兩檔的新 fail-closed contract＋generated fixture rebaseline，保留一次
+Codex bounded review）
 
 **實作者：**Claude Code
 
@@ -125,12 +156,15 @@ legacy keys。若任何 new-positive 失敗，停止並保留可回復路徑，�
 
 ## Task 0A-5：Phase 0A closeout 與 Phase 1 handoff
 
-Codex 只在 0A-1 至 0A-4 證據全部綁定同一 canonical lineage 後執行：
+Codex 只在 0A-1 至 0A-4 證據全部綁定同一 canonical lineage，且已依 §0.1 彙整出
+verified 的 automated evidence manifest／receipt 後執行：
 
 - 更新 `CONTEXT.md`、`docs/roadmap-colorplay-next.md` 與 append-only
   `docs/handoff.md`，列出 exact SHA、workflow／restore receipts、key retirement
-  receipt、deferred 0B 與 remaining unknown。
-- 將 0A 標記 `COMPLETE`；Phase 0 整體標記 `0A COMPLETE / 0B DEFERRED`，不得只寫
+  receipt、deferred 0B 與 remaining unknown。若這段文件更新指派給 Claude Code
+  執行，依 §0.2 僅能是 Codex 已確認狀態後的 bounded mechanical edit。
+- 沒有 §0.1 的 verified manifest，不得將 0A 標記 `COMPLETE`。有了 manifest 才
+  將 0A 標記 `COMPLETE`；Phase 0 整體標記 `0A COMPLETE / 0B DEFERRED`，不得只寫
   `PHASE 0 COMPLETE`。
 - 宣告 Phase 1 Hosted Admin gate 可在該 exact Staging foundation 上另行排程；這不
   自動核准它的 fixture mutation、Hosted DB mutation 或 Production gate。

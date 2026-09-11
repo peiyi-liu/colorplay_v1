@@ -55,7 +55,12 @@ as a completed production release.
 
 > **2026-09-11 Phase 0 supersession notice：**只針對 Phase 0 release-foundation
 > 執行範圍與完成定義，以 2026-09-11 的 0A／0B decision 與 closeout plan 為準；
-> 2026-09-02 progression／Admin／Phase 2–6 決策保持有效，歷史證據不重寫。
+> 2026-09-02 progression／Admin／Phase 2–6 決策保持有效，歷史證據不重寫。任何
+> 下方仍標記「Approved」的 Production-specific 需求或程序（Candidate 建立、
+> Production migration、two-slot cutover、Sydney／Tokyo、B2／Cloudflare 權威
+> 證據、正式 promotion、完整人工 release proof）保留作為 Phase 0B／Phase 8 的
+> deferred requirement inventory，不是 0A 現行可執行程序；Staging／Local 專屬
+> 段落不受本則影響。
 
 ## Immediate next action
 
@@ -156,11 +161,11 @@ change any product rule beyond what each spec already defines.
 
 ### Target topology
 
-| Environment | Git                        | Vercel                  | Domain                     | Supabase                                                                                                    | Data                                            |
-| ----------- | -------------------------- | ----------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Local       | developer worktree         | local Vite              | loopback URL               | local CLI stack                                                                                             | deterministic synthetic fixtures                |
-| Staging     | protected `staging` branch | `colorplay-staging-web` | `staging.colorplayapp.com` | existing project ref `onkxnkzeixpezetkmocf`, renamed `colorplay-staging` after the approved reset procedure | approved content plus fixture identities only   |
-| Production  | protected `main`           | `colorplay-web`         | `colorplayapp.com`         | new clean `colorplay-production` project                                                                    | approved content and authorized real users only |
+| Environment | Git                        | Vercel                  | Domain                     | Supabase                                                                                                                                                               | Data                                            |
+| ----------- | -------------------------- | ----------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Local       | developer worktree         | local Vite              | loopback URL               | local CLI stack                                                                                                                                                        | deterministic synthetic fixtures                |
+| Staging     | protected `staging` branch | `colorplay-staging-web` | `staging.colorplayapp.com` | existing project ref `onkxnkzeixpezetkmocf`, current Staging under Phase 0A — no reset is planned or required in 0A; any future rename/retirement is 0B／Phase 8 scope | approved content plus fixture identities only   |
+| Production  | protected `main`           | `colorplay-web`         | `colorplayapp.com`         | new clean `colorplay-production` project                                                                                                                               | approved content and authorized real users only |
 
 > **Environment invariant（owner re-confirmed 2026-08-11）：**
 > `colorplay-staging-web`／`staging.colorplayapp.com` 的 Supabase URL 與 public
@@ -246,6 +251,17 @@ change any product rule beyond what each spec already defines.
   the Backblaze free-tier allowance is never hardcoded. Vercel, Supabase, and B2
   native usage and error notifications are enabled when available.
 
+> **2026-09-11 status（covers this whole block through "Approved migration
+> reconciliation policy" below）：**the clean-environment approach, the two
+> dated "Verified current state" snapshots, and the migration-reconciliation
+> policy below all describe the 2026-08-05 plan to turn the current hosted
+> project into Staging via a destructive reset. `onkxnkzeixpezetkmocf` is
+> **already** the current Staging project under Phase 0A; 0A does not run
+> this reset and does not require one. This block is retained as the
+> historical design record and as deferred requirement inventory for
+> Phase 0B／Phase 8; it is not a currently approved executable procedure
+> under 0A.
+
 The owner adopted ADR 0002's clean-environment approach on 2026-08-05:
 
 - The existing hosted `colorplay_v1` project becomes Staging only after backup,
@@ -302,7 +318,15 @@ colorplay-staging-web` then `vercel alias set`; confirmed via
   Target topology table above), separate from the `colorplay-production`
   project (`xdjumzdqyexpyndanwkp`, created 2026-08-06).
 
-### Approved backup and clean-rebuild policy
+### Approved backup and clean-rebuild policy (dated historical, superseded for 0A)
+
+> **2026-09-11 status：**this section describes the 2026-08-05 clean-rebuild
+> plan for turning the current hosted project into Staging via a destructive
+> reset. Phase 0A keeps `onkxnkzeixpezetkmocf` as Staging **without** running
+> this reset. This is retained as the historical design record and as
+> deferred requirement inventory for Phase 0B／Phase 8 — it is not a
+> currently approved executable procedure and must not be run under 0A
+> authorization.
 
 Before the current hosted project is reset into Staging, the release operator
 must produce all of the following:
@@ -327,7 +351,7 @@ the backup target and retention deadline, and must leave a non-secret audit
 record. No password, private key, database credential, or backup payload enters
 Git history, logs, artifacts, or the Program Tracker.
 
-### Approved migration reconciliation policy
+### Approved migration reconciliation policy (dated historical, superseded for 0A)
 
 Repository migrations are the only schema authority. Before any hosted reset,
 the release operator freezes a repo SHA and compares all of the following:
@@ -358,7 +382,17 @@ Migration reconciliation passes only when:
   disposition plus relevant authorization tests;
 - regenerated database types have no unexpected difference.
 
-### Approved two-slot hosted cutover
+### Approved two-slot hosted cutover (dated historical, superseded for 0A)
+
+> **2026-09-11 status：**this section describes the 2026-08-06 two-slot
+> Candidate/reset cutover sequence for creating Production and eventually
+> retiring the current hosted project into permanent Staging. Phase 0A does
+> not create a Production Candidate, does not migrate Production, and does
+> not reset or rename `onkxnkzeixpezetkmocf`. This is retained as the
+> historical design record and as 0B／Phase 8 deferred inventory; a 0B plan
+> must be written against the provider topology and plan quotas current at
+> that time rather than replaying this sequence verbatim (see the 0A／0B
+> rebaseline decision). It is not a currently approved executable procedure.
 
 The Free Plan's two Supabase project slots are rotated without interrupting the
 current Production site:
@@ -848,7 +882,15 @@ Do not overwrite, stash, reset, or accidentally stage unrelated changes.
   - `tests/e2e/helpers/quiz.ts`
   - `tests/e2e/learning-experience.spec.ts`
 
-### Phase 0 release-foundation worktree
+### Phase 0 release-foundation worktree (historical, superseded by 0A-1～0A-5)
+
+> **2026-09-11 status：**the PR #1 / Task 14–15 sequence below predates the
+> 0A／0B rebaseline and never merged or deployed. It is retained only as the
+> historical record of that earlier attempt. It is not the current execution
+> queue: current Phase 0 work is the five 0A tasks in the 0A closeout plan
+> (`docs/superpowers/plans/2026-09-11-phase-0a-staging-foundation-closeout.md`),
+> starting from `origin/staging` `877d7abcb1cdd49f01d1f22cdb372f04c9b54eb3`, not
+> from this worktree's PR #1 head.
 
 - Path: `.worktrees/phase0-release-foundation`
 - Branch: `phase0/release-foundation`
@@ -915,10 +957,12 @@ stash, or branch switching in a dirty shared worktree.
     Critical/High finding across all rounds was fixed and re-verified —
     see `docs/handoff.md` for each round's findings and fixes.
 - **Staging and Production gates: blocked, not executed.** Per this
-  plan's own Task 15 Step 4, both require Phase 0 hosted readiness (Phase 0
-  itself is still at "PR #1 awaits owner approval" — no Staging merge has
-  happened) plus explicit owner authorization for any hosted mutation. No
-  Staging deployment, no Production smoke, no OOB runbook procedure has
+  plan's own Task 15 Step 4, both require Phase 0 hosted readiness plus
+  explicit owner authorization for any hosted mutation. (Historical note:
+  this was written when Phase 0 was still at "PR #1 awaits owner approval";
+  Phase 0 has since moved on to the 0A／0B rebaseline and Staging has since
+  received unrelated merges — see the current 0A closeout plan for the
+  current Phase 0 state.) No Production smoke or OOB runbook procedure has
   been run against a hosted project. Both
   `docs/deployment/phase1-production-smoke-manifest.md` and
   `docs/runbooks/phase1-admin-oob-recovery.md` are documentation and local
@@ -929,23 +973,41 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-- Twenty-seven verified-empty disposable restore networks currently exhaust
-  the local Docker subnet pool. Exact removal requires owner authorization;
-  no other Docker resource is in scope.
-- After local gates pass, the Task 14 remediation SHA needs owner authorization
-  to push. PR #1 then needs a fresh complete CI run and exact-SHA owner approval
-  before it may merge to `staging`; older approval does not cover a changed
-  head.
-- The Production recovery key needs least-privilege rotation to add
-  `listBuckets`, because actual lifecycle metadata is now read with the Native
-  Backblaze API. Do not expose or paste the credential.
+Current Phase 0 remaining work is the five 0A tasks in the current 0A plan
+(0A-1 through 0A-5); see the "Current Phase 0A plan" link at the top of this
+file. Do not resume the historical PR #1 / Task 14–15 sequence recorded above
+under "Phase 0 release-foundation worktree" — it is superseded.
+
+- **0A-1** (review manifest SSOT rebaseline): in progress, see "Immediate next
+  action" above.
+- **0A-2** (single exact-SHA Staging automated foundation receipt): blocked on
+  0A-1 merging and a fresh Staging deployment run.
+- **0A-3** (isolated restore drill): blocked on 0A-2; needs an owner-granted
+  exclusive Local Supabase／Docker window. Fresh corrected backup/lifecycle/
+  restore evidence must originate from a run against protected `staging`, not
+  from the historical feature-branch runs, which remain historical evidence
+  only.
+- **0A-4** (Staging API-key incident closure): blocked on 0A-2／0A-3; needs a
+  separate owner mutation gate for the accidental
+  `ADMIN_TEACHER_AUTH_EMAIL_NAMESPACE` value and for legacy anon／service-role
+  retirement.
+- **0A-5** (0A closeout and Phase 1 handoff): a Codex-owned governance／
+  evidence decision, made after 0A-1–0A-4 evidence binds to the same
+  canonical lineage. Claude Code may only perform bounded mechanical
+  documentation edits to the closeout files after Codex has made that
+  determination, per §0.2 of the 0A plan — Claude Code does not itself judge
+  whether the evidence is sufficient to declare `COMPLETE`.
+- Twenty-seven verified-empty disposable restore networks were observed
+  (dated 2026-08 observation, not re-verified since) to exhaust the local
+  Docker subnet pool. This needs a fresh re-inventory before any cleanup is
+  planned; it is not an 0A cleanup authorization, and no 0A task includes
+  Docker resource removal.
 - A fresh provider preflight is required on the day of each later hosted action;
   previously observed project/domain state is not durable evidence.
-- Current Production's nine name-matched timestamp differences remain blocked
-  for in-place ledger repair. Task 15 must use the clean Candidate and replay the
-  frozen repository migration chain from zero.
-- Fresh corrected backup/lifecycle/restore runs must originate from protected
-  `staging`; the earlier feature-branch runs remain historical evidence only.
+
+0B／Phase 8 deferred (not 0A scope): the Production recovery key's
+least-privilege rotation to add `listBuckets`; current Production's nine
+name-matched timestamp differences and any Candidate-based ledger repair.
 
 ### Later phases
 
