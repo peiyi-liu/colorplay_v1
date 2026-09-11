@@ -1614,3 +1614,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 修正 `learning-experience.spec.ts` 返回 reader 後 library remount 到第 1 頁造成的分頁走訪錯位，以及按鈕 `groupLabel` 與 reader `title` 不同時的錯誤等值假設；共用走訪抽至 `tests/e2e/helpers/review-card-walk.ts`，主測試降為 499 行。
 - 新增兩個 focused Chromium regression，分別固定 `groupLabel/title` mismatch 與跨第 2 頁返回重設；最終 2/2 PASS。Prettier、scoped ESLint、typecheck、`git diff --check` 全綠；一輪 spec／quality review 的兩個 P2（掛載前 `count()` flake、mismatch fixture 假綠）已修正。
 - 邊界：所有修改保持 unstaged；HEAD 仍為 `bbe228c0e53e3ff81836ef1d0add9120ce386efe`。未 commit、push、deploy、rerun、新建 SHA，未修改任何 GitHub／Vercel／Supabase secret、Production 或 legacy key。
+
+## 2026-09-11 16:13 [Codex] — Owner 採方案 A，Phase 0 拆成 0A／0B 並完成正式規劃
+
+- 決策：Phase 0A 只關閉 Local＋Staging foundation；Phase 0B 接收 Sydney／Tokyo／Production migration、B2／Cloudflare、RPO／RTO 與完整 release proof，延後到 Phase 8。`Phase 0A COMPLETE` 不得改寫成整體 Phase 0 或 Production complete；0A 完成後 Phase 1 Hosted 與 Phase 2–6 非 Production lane 可依各自 gate 推進。
+- 計畫：新增 `docs/superpowers/specs/2026-09-11-phase-0a-0b-rebaseline-decision.md` 與 `docs/superpowers/plans/2026-09-11-phase-0a-staging-foundation-closeout.md`，並校正 `CONTEXT.md`／canonical roadmap 的現況。0A 依序為 review manifest SSOT rebaseline、exact-SHA Staging automated receipt、isolated restore drill、Staging key incident retirement、closeout；每 task 由 Claude Code 實作、Codex 唯一一次 bounded review。
+- 基準與下一步：規劃基準 `origin/staging` 為 `877d7abcb1cdd49f01d1f22cdb372f04c9b54eb3`。第一個實作 task 只允許修 `tests/fixtures/review-manifest.generated.ts` 與 `tests/contracts/review-card-import.test.ts`，把 stale 28-card／重複 `3-3` fixture 收斂到 report／seed 已核准的 8-card 3／3／2；不得 content fetch/import、Hosted mutation 或 Production 操作。
+- 邊界：本輪只建立 Codex decision／plan 文件，未修改產品、測試、workflow 或 provider；未執行 restore、deploy、secret mutation、legacy-key retirement、commit、push 或 merge。主 checkout 的既有 dirty files 未觸碰；規劃位於獨立 `codex/phase0a-0b-rebaseline-plan` worktree。

@@ -1,21 +1,27 @@
 # ColorPlay Current Program
 
-- 2026-09-06：Owner 已核准 ui-ux-pro-max Admin 提案的實作與 Staging 部署，真實元件優化與一次 review 修正完成，進入發布前驗證；計畫見 `docs/superpowers/plans/2026-09-06-admin-ux-refinement.md`。資料查核／監控 API 與權限維持既有契約。
-
-- 2026-09-05 最新補充：資料查核五分類、五項只讀監控與跨頁固定邊界已隨 PR #17 發布 Staging，exact SHA `570c0f18a7329cc5f07cbf707b016ff787105bf1`。Workflow `33969320734` 的部署、真實學生／教師登入、環境版本核對、read-only smoke 與九組 browser/RWD 檢查通過；監控 migration `20260905000100` 已套用，每 15 分鐘排程啟用，第一輪實際採集成功。延遲樣本、備份校驗／還原證據不足仍保持未知；既有完整 phase／人工裝置驗收另行判定。計畫見 `docs/superpowers/plans/2026-09-05-admin-data-monitoring.md`，詳細交付證據見 handoff 最新段。以下 Phase 0／整合紀錄保留作歷史脈絡，不能覆蓋本次新授權與完成狀態。
-
-- Status: INTEGRATION PR UPDATE IN PROGRESS — PR #6 的 Phase 0 + Admin B
-  candidate 正在整合 `staging.colorplayapp.com` 實際部署的 exact SHA `9733923e`；
-  owner 已授權 fresh checks 全綠後合併受保護的 `staging`。Hosted DB migration／
-  fixture mutation 仍是獨立 gate，尚未獲授權或執行
-- Last updated: 2026-09-04 (Asia/Taipei) — exact deployed lineage 已完成本機文字
-  衝突整合、unit／lint／typecheck／format／build，等待唯一 review 與 fresh PR CI
-- Last full review: 2026-09-04 (Asia/Taipei) — integration review CLOSED
-- Current phase: PR #6 (`codex/adminb-phase0-integration-20260904` → `staging`)
-  正在加入 exact deployed SHA `9733923e`；fresh protected checks 全綠後依 owner
-  本次授權合併
+- **Status：PHASE 0A IN PROGRESS / PHASE 0B DEFERRED.** Owner 於 2026-09-11
+  選擇方案 A：Local＋Staging foundation 可獨立關閉；Production migration 改列
+  0B，延後至 Phase 8，不再阻塞 Phase 1–6 的非 Production 工作。
+- **Current canonical snapshot：**`origin/staging`
+  `877d7abcb1cdd49f01d1f22cdb372f04c9b54eb3`。最近 Staging lineage 已包含
+  Phase 0 foundation、Admin API-key resolver、monitoring marker bounded polling 與
+  review-navigation diagnostics；每個新 task 開始前仍須重新 fetch。
+- **Immediate blocker：**`tests/fixtures/review-manifest.generated.ts` 是 stale
+  28-card artifact，重複 `3-3`；owner-accepted import report 與 seed 皆為 8 cards
+  （3／3／2）。先修 SSOT regression，再取得新的 exact-SHA automated Staging
+  receipt；不得再以 diagnostics PR 代替修正 fixture。
+- **0A remaining：**manifest rebaseline、exact-SHA Staging automated jobs、一次成功
+  isolated restore drill、Staging key incident retirement、evidence closeout。
+- **0B deferred：**Sydney preservation／retirement、Tokyo Candidate、Production
+  migration／promotion、B2／Cloudflare 權威證據、RPO／RTO 與完整 human release
+  proof。0A 完成不得宣稱 Production-ready。
 - Canonical entry point: this file
 - Current owner decision record:
+  `docs/superpowers/specs/2026-09-11-phase-0a-0b-rebaseline-decision.md`
+- Current Phase 0A plan:
+  `docs/superpowers/plans/2026-09-11-phase-0a-staging-foundation-closeout.md`
+- Previous program decision record（仍適用於 progression／Admin／Phase 2–6）：
   `docs/superpowers/specs/2026-09-02-program-rebaseline-owner-decisions.md`
 - Parallel execution control（檔名為了舊連結相容而保留）:
   `docs/superpowers/specs/2026-09-02-async-delivery-control.md`
@@ -47,21 +53,17 @@ as a completed production release.
 > record 衝突，一律以 2026-09-02 record 為準。這項 supersession 不把任何既有
 > implementation、CI、deployment 或 smoke 升級為正式 phase gate。
 
+> **2026-09-11 Phase 0 supersession notice：**只針對 Phase 0 release-foundation
+> 執行範圍與完成定義，以 2026-09-11 的 0A／0B decision 與 closeout plan 為準；
+> 2026-09-02 progression／Admin／Phase 2–6 決策保持有效，歷史證據不重寫。
+
 ## Immediate next action
 
-Complete the exact deployed-SHA integration on PR #6, then merge it into
-`staging` only after the resulting head passes fresh protected checks. The owner
-authorized that protected-branch merge on 2026-09-04; this authorization does
-not include Hosted DB migrations, fixture cleanup, Task 7, or manual promotion.
-Historical PR #1 evidence must not substitute for PR #6.
-
-Admin B Tasks 1–6 and A1 are complete at approved tip `8dcdbe8`; the Phase 0
-release-foundation tip is integrated through `ba4ec45`; current deployed web
-lineage is integrated through exact SHA `9733923e`. The earlier Phase 0 + Admin B
-candidate completed migration replay, generated-type parity, full DB/Auth
-integration tests, lint, typecheck, and unit tests. Fresh combined-lineage DB and
-Chromium evidence comes from the isolated PR CI. Hosted Task 7 and every Hosted
-DB mutation remain separate owner-authorized gates.
+Execute only Phase 0A Task 0A-1 from the current plan: add a fail-closed contract
+between the review import report, seed and generated manifest, then restore the
+manifest to the accepted 8-card 3／3／2 content. Keep the implementation unstaged
+for one Codex bounded review. No content fetch/import, Hosted workflow, secret
+mutation, legacy-key retirement or Production operation is part of that task.
 
 ## Historical program structure snapshot（superseded 2026-09-02）
 
