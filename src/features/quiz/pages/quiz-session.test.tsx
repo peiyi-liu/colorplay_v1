@@ -16,7 +16,13 @@ import {
   type QuizRepository,
   type QuizSession,
 } from '../api/quiz-repository';
-import { useStudentChapterMap } from '../../learning/hooks/use-chapter-map';
+import type { MistakeView } from '../../learning/api/learning-repository';
+import {
+  studentChapterMapKey,
+  useStudentChapterMap,
+} from '../../learning/hooks/use-chapter-map';
+import { learningKeys } from '../../learning/hooks/use-learning';
+import { economyQueryKey } from '../../rewards/hooks/use-economy-summary';
 import { QuizSessionPage } from './quiz-session';
 
 vi.mock('../../learning/hooks/use-chapter-map', async (importOriginal) => {
@@ -102,6 +108,19 @@ const incorrectResult: QuizAnswerResult = {
   selectedOptionId: '33000000-0000-0000-0000-000000000002',
   totalScore: 0,
 };
+
+const staleOpenMistake: readonly MistakeView[] = [
+  {
+    correctOptionText: 'RGB',
+    lastEventAt: '2099-07-14T11:00:00.000Z',
+    mistakeId: '40000000-0000-0000-0000-000000000099',
+    prompt: '合成的待補救錯題',
+    stableCode: '3-1-99',
+    status: 'open',
+    subtopicId: '21000000-0000-0000-0000-000000000003',
+    subtopicTitle: '色彩表示',
+  },
+];
 
 function repositoryMock() {
   const abandonSession = vi.fn<QuizRepository['abandonSession']>();
@@ -482,7 +501,7 @@ describe('QuizSessionPage', () => {
     );
   });
 
-  it('refreshes the user economy before showing a finalized result', async () => {
+  it('invalidates every finalize-dependent cache, including stale mistakes, only after finalize succeeds and before navigating to the result', async () => {
     const mock = repositoryMock();
     const lastQuestion = question(1, {
       answerStatus: 'correct',
@@ -506,11 +525,44 @@ describe('QuizSessionPage', () => {
       xpAwarded: 750,
     });
     const { client, router } = renderQuiz(mock.repository);
-    const invalidateQueries = vi.spyOn(client, 'invalidateQueries');
+    client.setQueryData(learningKeys.mistakes, staleOpenMistake);
+    expect(client.getQueryState(learningKeys.mistakes)?.isInvalidated).toBe(
+      false,
+    );
+
+    // 用真實 invalidateQueries 做 call-through，只在 mistakes 這個 key 上
+    // 卡住 resolve，藉此能在「已 invalidate 但還沒 navigate」的中間狀態斷言。
+    const realInvalidateQueries = client.invalidateQueries.bind(client);
+    let releaseMistakesInvalidation: () => void = () => undefined;
+    const mistakesInvalidationGate = new Promise<void>((resolve) => {
+      releaseMistakesInvalidation = resolve;
+    });
+    const invalidateQueries = vi
+      .spyOn(client, 'invalidateQueries')
+      .mockImplementation(
+        async (...args: Parameters<typeof client.invalidateQueries>) => {
+          await realInvalidateQueries(...args);
+          if (args[0]?.queryKey === learningKeys.mistakes) {
+            await mistakesInvalidationGate;
+          }
+        },
+      );
 
     await userEvent.click(
       await screen.findByRole('button', { name: '結算並查看結果' }),
     );
+
+    await waitFor(() => {
+      expect(invalidateQueries).toHaveBeenCalledWith({
+        queryKey: learningKeys.mistakes,
+      });
+    });
+    expect(client.getQueryState(learningKeys.mistakes)?.isInvalidated).toBe(
+      true,
+    );
+    expect(router.state.location.pathname).toBe(`/app/quiz/${sessionId}`);
+
+    releaseMistakesInvalidation();
 
     await waitFor(() => {
       expect(router.state.location.pathname).toBe(
@@ -518,14 +570,60 @@ describe('QuizSessionPage', () => {
       );
     });
     expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['economy', 'summary'],
+      queryKey: economyQueryKey,
     });
     expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['learning', 'chapter-map'],
+      queryKey: studentChapterMapKey,
     });
-    expect(mock.finalizeSession.mock.invocationCallOrder[0]).toBeLessThan(
-      invalidateQueries.mock.invocationCallOrder[0] ?? 0,
+    for (const queryKey of [
+      economyQueryKey,
+      studentChapterMapKey,
+      learningKeys.mistakes,
+    ]) {
+      const callOrder = invalidateQueries.mock.calls
+        .map((call, index) =>
+          call[0]?.queryKey === queryKey
+            ? invalidateQueries.mock.invocationCallOrder[index]
+            : undefined,
+        )
+        .find((order) => order !== undefined);
+      expect(mock.finalizeSession.mock.invocationCallOrder[0]).toBeLessThan(
+        callOrder ?? 0,
+      );
+    }
+  });
+
+  it('fails closed: a rejected finalize never marks the mistakes cache invalidated or navigates away', async () => {
+    const mock = repositoryMock();
+    const lastQuestion = question(1, {
+      answerStatus: 'correct',
+      correctOptionId: '33000000-0000-0000-0000-000000000001',
+      explanation: 'RGB 使用三色光。',
+      scoreDelta: 1_000,
+      selectedOptionId: '33000000-0000-0000-0000-000000000001',
+    });
+    mock.getSession.mockResolvedValue(session([lastQuestion]));
+    mock.finalizeSession.mockRejectedValue(
+      new QuizRepositoryError('UNAVAILABLE'),
     );
+    const { client, router } = renderQuiz(mock.repository);
+    client.setQueryData(learningKeys.mistakes, staleOpenMistake);
+    const invalidateQueries = vi.spyOn(client, 'invalidateQueries');
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: '結算並查看結果' }),
+    );
+
+    expect(
+      await screen.findByText('答題服務暫時無法使用，請稍後重試。'),
+    ).toBeVisible();
+    expect(router.state.location.pathname).toBe(`/app/quiz/${sessionId}`);
+    expect(client.getQueryState(learningKeys.mistakes)?.isInvalidated).toBe(
+      false,
+    );
+    expect(invalidateQueries).not.toHaveBeenCalledWith({
+      queryKey: learningKeys.mistakes,
+    });
   });
 
   it('returns an already abandoned attempt to the learning lobby', async () => {

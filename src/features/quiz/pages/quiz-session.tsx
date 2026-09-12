@@ -14,6 +14,7 @@ import {
   studentChapterMapKey,
   useStudentChapterMap,
 } from '../../learning/hooks/use-chapter-map';
+import { learningKeys } from '../../learning/hooks/use-learning';
 import { economyQueryKey } from '../../rewards/hooks/use-economy-summary';
 import {
   createQuizRepository,
@@ -257,15 +258,20 @@ export function QuizSessionPage({
         const finalResult = await finalizeMutation.mutateAsync(
           session.sessionId,
         );
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: economyQueryKey }),
+          queryClient.invalidateQueries({ queryKey: studentChapterMapKey }),
+          queryClient.invalidateQueries({ queryKey: learningKeys.mistakes }),
+        ]);
+        // 這個 setQueryData 必須留在 Promise.all 之後：它會把 session.status
+        // 標成 'completed'，觸發上方另一個獨立的 useEffect 導頁到 /result。
+        // 若在 invalidate 前就標記完成，該 effect 會搶在快取失效前先導頁，
+        // 讓下面這行明確的 navigate 與 invalidate 順序失去意義。
         queryClient.setQueryData<QuizSession>(
           quizSessionQueryKey(session.sessionId),
           (cachedSession) =>
             applyFinalResultToSession(cachedSession, finalResult),
         );
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: economyQueryKey }),
-          queryClient.invalidateQueries({ queryKey: studentChapterMapKey }),
-        ]);
         allowQuizNavigation.current = true;
         void navigate(`/app/quiz/${session.sessionId}/result`, {
           state: {
