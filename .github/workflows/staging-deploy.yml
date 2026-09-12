@@ -182,14 +182,32 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
+      - name: Provision run-scoped learning-experience fixture
+        env:
+          # jobs.<job_id>.env does not support the runner context; only
+          # jobs.<job_id>.steps.<step_id>.env does. This exact literal is
+          # repeated identically in the Playwright and cleanup steps below
+          # instead, so all three compute the same path independently.
+          LEARNING_EXPERIENCE_FIXTURE_CREDENTIAL_FILE: ${{ runner.temp }}/learning-experience-fixture-credential.json
+          STAGING_SUPABASE_PROJECT_REF: ${{ vars.STAGING_SUPABASE_PROJECT_REF }}
+          STAGING_SUPABASE_SECRET_KEY: ${{ secrets.STAGING_SUPABASE_SECRET_KEY }}
+          STAGING_SUPABASE_URL: ${{ vars.STAGING_SUPABASE_URL }}
+        run: node scripts/staging/provision-learning-experience-fixture.mjs
       - name: 'phase:learning-experience hosted acceptance and rls-cross-tenant-negative'
         env:
+          LEARNING_EXPERIENCE_FIXTURE_CREDENTIAL_FILE: ${{ runner.temp }}/learning-experience-fixture-credential.json
           PLAYWRIGHT_ACCEPTANCE: on
           PLAYWRIGHT_BASE_URL: https://staging.colorplayapp.com
           PLAYWRIGHT_EVIDENCE_ROOT: artifacts/phase0/staging-learning
+          PLAYWRIGHT_REQUIRE_RUN_SCOPED_LEARNING_FIXTURE: on
           SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
           SUPABASE_URL: ${{ vars.STAGING_SUPABASE_URL }}
         run: pnpm exec playwright test tests/e2e/learning-experience.spec.ts --project=chromium
+      - name: Remove run-scoped learning-experience fixture credential file
+        if: always()
+        env:
+          LEARNING_EXPERIENCE_FIXTURE_CREDENTIAL_FILE: ${{ runner.temp }}/learning-experience-fixture-credential.json
+        run: rm -f "$LEARNING_EXPERIENCE_FIXTURE_CREDENTIAL_FILE"
 
   real-device-approval:
     needs: phase-acceptance

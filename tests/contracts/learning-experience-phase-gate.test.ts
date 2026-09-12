@@ -1,8 +1,17 @@
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import { ACCEPTANCE_IDS } from '../../scripts/acceptance/finalize-learning-experience.mjs';
+import { LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL } from '../../scripts/staging/provision-learning-experience-fixture.mjs';
+import { TEST_USERS } from '../fixtures/users';
+import {
+  classroomRunLabel,
+  learningStudentDisplayNameFromEmail,
+  resolveLearningStudentCredentials,
+} from '../e2e/helpers/learning-experience-fixture';
 import {
   quizContinueActionName,
   type QuizAnswerStatus,
@@ -150,5 +159,126 @@ describe('quiz continue action name contract', () => {
     const remediationBlock = spec.slice(start, end);
     expect(remediationBlock).toContain('quizContinueActionName(');
     expect(remediationBlock).toContain('exact: true');
+  });
+});
+
+describe('resolveLearningStudentCredentials (real behavior, not source-string)', () => {
+  const baseEnv = () => ({
+    ...process.env,
+    LEARNING_EXPERIENCE_FIXTURE_CREDENTIAL_FILE: undefined,
+    PLAYWRIGHT_REQUIRE_RUN_SCOPED_LEARNING_FIXTURE: undefined,
+  });
+
+  it('uses the fixed fixture when the gate is not on', async () => {
+    await expect(resolveLearningStudentCredentials(baseEnv())).resolves.toEqual(
+      TEST_USERS.learningStudent,
+    );
+  });
+
+  it('fails closed with the fixed sentinel, never the fixed fixture, when the gate is on but no path is set', async () => {
+    await expect(
+      resolveLearningStudentCredentials({
+        ...baseEnv(),
+        PLAYWRIGHT_REQUIRE_RUN_SCOPED_LEARNING_FIXTURE: 'on',
+      }),
+    ).rejects.toThrow(LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL);
+  });
+
+  it('fails closed when the gate is on but the credential file does not exist', async () => {
+    await expect(
+      resolveLearningStudentCredentials({
+        ...baseEnv(),
+        LEARNING_EXPERIENCE_FIXTURE_CREDENTIAL_FILE: join(
+          tmpdir(),
+          'learning-fixture-missing-credential.json',
+        ),
+        PLAYWRIGHT_REQUIRE_RUN_SCOPED_LEARNING_FIXTURE: 'on',
+      }),
+    ).rejects.toThrow(LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL);
+  });
+
+  it('resolves the run-scoped credentials from a valid 0600 file when the gate is on', async () => {
+    const fixtureRoot = await mkdtemp(join(tmpdir(), 'learning-fixture-gate-'));
+    const credentialPath = join(fixtureRoot, 'credential.json');
+    const expected = {
+      email: 'learning-experience-fixture-run-1-attempt-1@colorplay.test',
+      password: 'run-scoped-secret-value',
+    };
+    try {
+      await writeFile(credentialPath, JSON.stringify(expected), {
+        mode: 0o600,
+      });
+      await expect(
+        resolveLearningStudentCredentials({
+          ...baseEnv(),
+          LEARNING_EXPERIENCE_FIXTURE_CREDENTIAL_FILE: credentialPath,
+          PLAYWRIGHT_REQUIRE_RUN_SCOPED_LEARNING_FIXTURE: 'on',
+        }),
+      ).resolves.toEqual(expected);
+    } finally {
+      await rm(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('learningStudentDisplayNameFromEmail (real behavior)', () => {
+  it.each([
+    ['learning.student@colorplay.test', 'learning.student'],
+    ['learning-fixture-1-1@colorplay.test', 'learning-fixture-1-1'],
+    [`${'a'.repeat(40)}@colorplay.test`, 'a'.repeat(30)],
+  ])('derives %s -> %s', (email, expected) => {
+    expect(learningStudentDisplayNameFromEmail(email)).toBe(expected);
+  });
+});
+
+describe('classroomRunLabel (real behavior)', () => {
+  it('uses the run id and attempt when present', () => {
+    expect(
+      classroomRunLabel({
+        ...process.env,
+        GITHUB_RUN_ATTEMPT: '2',
+        GITHUB_RUN_ID: '123',
+      }),
+    ).toBe('123-2');
+  });
+
+  it('falls back to a local, process-scoped label when unset', () => {
+    expect(
+      classroomRunLabel({
+        ...process.env,
+        GITHUB_RUN_ATTEMPT: undefined,
+        GITHUB_RUN_ID: undefined,
+      }),
+    ).toMatch(/^local-\d+$/u);
+  });
+});
+
+describe('learning-experience.spec.ts wiring (structural only, resolver behavior tested above)', () => {
+  it('imports the fixture-resolution helpers instead of reimplementing them', async () => {
+    const spec = await readText('tests/e2e/learning-experience.spec.ts');
+    expect(spec).toContain("from './helpers/learning-experience-fixture'");
+    expect(spec).not.toContain('const resolveLearningStudentCredentials');
+    expect(spec).not.toContain('LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL');
+  });
+
+  it('wires the resolved credentials into sign-in, classroom join, and the teacher heading', async () => {
+    const spec = await readText('tests/e2e/learning-experience.spec.ts');
+    expect(spec).toContain('signIn(studentPage, learningStudentCredentials');
+    expect(spec).toContain('joinClassroomByCode(learningStudentCredentials');
+    expect(spec).toContain('learningStudentDisplayName');
+    expect(spec).not.toContain('learning.student 的學習進度');
+    expect(spec).not.toContain('TEST_USERS.learningStudent');
+  });
+
+  it('never re-enables automatic screenshot, trace, or video capture for this fixture-bearing spec', async () => {
+    const spec = await readText('tests/e2e/learning-experience.spec.ts');
+    const useIndex = spec.indexOf('test.use(');
+    const testIndex = spec.indexOf("test('Learning Experience phase gate'");
+    expect(useIndex).toBeGreaterThan(-1);
+    expect(testIndex).toBeGreaterThan(useIndex);
+    const useBlock = spec.slice(useIndex, testIndex);
+    expect(useBlock).toContain("screenshot: 'off'");
+    expect(useBlock).toContain("trace: 'off'");
+    expect(useBlock).toContain("video: 'off'");
   });
 });
