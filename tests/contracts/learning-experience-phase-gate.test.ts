@@ -3,6 +3,10 @@ import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 import { ACCEPTANCE_IDS } from '../../scripts/acceptance/finalize-learning-experience.mjs';
+import {
+  quizContinueActionName,
+  type QuizAnswerStatus,
+} from '../e2e/helpers/quiz';
 
 const readText = (path: string) => readFile(path, 'utf8');
 
@@ -98,5 +102,53 @@ describe('learning experience phase gate contract', () => {
     expect(spec).not.toContain('page.route(');
     expect(spec).not.toContain('test.skip(');
     expect(spec).not.toContain('service_role');
+  });
+});
+
+describe('quiz continue action name contract', () => {
+  const cases: [string, QuizAnswerStatus, boolean, string][] = [
+    ['correct, non-final', 'correct', false, '下一題'],
+    ['incorrect, non-final', 'incorrect', false, '我理解了，下一題'],
+    ['timeout, non-final', 'timeout', false, '我理解了，下一題'],
+    ['correct, final', 'correct', true, '結算並查看結果'],
+    ['incorrect, final', 'incorrect', true, '結算並查看結果'],
+    ['timeout, final', 'timeout', true, '結算並查看結果'],
+  ];
+
+  it.each(cases)('%s', (_label, status, isLastQuestion, expected) => {
+    expect(quizContinueActionName(status, isLastQuestion)).toBe(expected);
+  });
+
+  it('never reintroduces the hardcoded ternary', async () => {
+    const spec = await readText('tests/e2e/learning-experience.spec.ts');
+    expect(spec).not.toMatch(/'結算並查看結果'\s*:\s*'我理解了，下一題'/u);
+  });
+
+  it('main quiz block uses the resolver with an exact button match', async () => {
+    const spec = await readText('tests/e2e/learning-experience.spec.ts');
+    const start = spec.indexOf(
+      '--- Formal quiz with tiered hints and two deliberate mistakes ---',
+    );
+    const end = spec.indexOf(
+      '--- Mistakes and remediation: resolve both, 20% XP, zero Tokens ---',
+    );
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    const mainQuizBlock = spec.slice(start, end);
+    expect(mainQuizBlock).toContain('quizContinueActionName(');
+    expect(mainQuizBlock).toContain('exact: true');
+  });
+
+  it('remediation quiz block uses the resolver with an exact button match', async () => {
+    const spec = await readText('tests/e2e/learning-experience.spec.ts');
+    const start = spec.indexOf(
+      '--- Mistakes and remediation: resolve both, 20% XP, zero Tokens ---',
+    );
+    const end = spec.indexOf('補救練習完成', start);
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    const remediationBlock = spec.slice(start, end);
+    expect(remediationBlock).toContain('quizContinueActionName(');
+    expect(remediationBlock).toContain('exact: true');
   });
 });

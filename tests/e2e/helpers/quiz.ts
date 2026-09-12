@@ -24,6 +24,22 @@ export const fullChallengeChapter = resolvedFullChallengeChapter;
 const quizSessionUrlPattern = /\/app\/quiz\/[0-9a-f-]{36}$/u;
 const quizFeedbackHeadingPattern = /(?:✓ 答對了|✕ 答錯了)/u;
 
+export type QuizAnswerStatus = 'correct' | 'incorrect' | 'timeout';
+
+// FeedbackCard (src/features/quiz/components/feedback-card.tsx) picks the
+// continue button's accessible name from answerStatus and isLastQuestion:
+// correct + non-final shows "下一題"; incorrect/timeout + non-final shows
+// "我理解了，下一題"; any status on the last question shows "結算並查看結果".
+// Callers must resolve the exact name here instead of assuming every
+// non-final question shows the same wrong-answer wording.
+export function quizContinueActionName(
+  answerStatus: QuizAnswerStatus,
+  isLastQuestion: boolean,
+): string {
+  if (isLastQuestion) return '結算並查看結果';
+  return answerStatus === 'correct' ? '下一題' : '我理解了，下一題';
+}
+
 const isOnQuizResultPage = (page: Page): boolean =>
   new URL(page.url()).pathname.endsWith('/result');
 
@@ -130,7 +146,7 @@ export async function finishQuizByAnsweringFirstOption(
     if (isOnQuizResultPage(page)) return;
     await answerQuizQuestionByFirstOption(page);
     const continueButton = page.getByRole('button', {
-      name: /我理解了，下一題|結算並查看結果/u,
+      name: /^(?:下一題|我理解了，下一題|結算並查看結果)$/u,
     });
     await continueButton.click();
     await waitForNextQuizStep(page);
