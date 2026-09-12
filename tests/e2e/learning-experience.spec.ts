@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
 
 import { CONTENT_MANIFEST } from '../fixtures/content-manifest.generated';
 import { GENERATED_CORRECT_ANSWERS } from '../fixtures/question-answers.generated';
@@ -18,6 +18,12 @@ import {
 } from './browser-health';
 import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
 import {
+  classroomRunLabel,
+  learningStudentDisplayNameFromEmail,
+  resolveLearningStudentCredentials,
+  signIn,
+} from './helpers/learning-experience-fixture';
+import {
   quizContinueActionName,
   startQuizFromLobby,
   submitSelectedQuizOption,
@@ -25,18 +31,11 @@ import {
 } from './helpers/quiz';
 import * as reviewCardWalk from './helpers/review-card-walk';
 
-// A full chapter challenge always serves ten questions. The generated
-// manifest records the published chapter-bank pool size, not the template
-// limit, so select a chapter with enough questions and keep the session size
-// explicit.
-// These content-availability checks used to throw at module scope, which
-// crashes Playwright's test *discovery* for the whole tests/e2e directory
-// the moment content rollout hasn't reached this phase-gate's assumptions
-// yet (e.g. chapter-4 currently has 0 bank_kind='chapter' questions, not
-// 1-10) -- breaking every other spec file's ability to even be listed.
-// This test already requires PLAYWRIGHT_ACCEPTANCE=on to run at all, so
-// the guards belong inside the test body instead, where a stale/not-yet-
-// ready fixture only fails this one gate rather than the whole suite.
+// A full chapter challenge always serves ten questions; pick a chapter with
+// enough questions and keep the session size explicit. These checks live in
+// the test body (needs PLAYWRIGHT_ACCEPTANCE=on anyway), not module scope,
+// so a not-yet-ready content fixture only fails this one gate rather than
+// crashing Playwright's discovery for the whole tests/e2e directory.
 const quizChapter = CONTENT_MANIFEST.find(
   ({ questionCount }) => questionCount >= 10,
 );
@@ -84,23 +83,10 @@ const expectHudEconomy = async (
   ).toBeVisible();
 };
 
-const signIn = async (
-  page: Page,
-  credentials: Readonly<{ email: string; password: string }>,
-  navigationName: '主要導覽' | '教師導覽',
-) => {
-  await page.goto('/login');
-  await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
-  await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
-  await page.getByRole('button', { name: '登入' }).click();
-  await expect(page).toHaveURL(/\/app$/u);
-  await expect(
-    page.getByRole('navigation', { name: navigationName }),
-  ).toBeVisible();
-  // Wait for the chapter query to settle before the caller navigates away,
-  // so browser health never records a navigation-aborted manifest fetch.
-  await expect(page.getByRole('heading', { name: '學習地圖' })).toBeVisible();
-};
+// The run-scoped student's password is typed into a login form here; never
+// let Playwright's automatic capture put it in a screenshot, trace, or
+// video artifact. Explicit page.screenshot() evidence calls below still run.
+test.use({ screenshot: 'off', trace: 'off', video: 'off' });
 
 test('Learning Experience phase gate', async ({
   baseURL,
@@ -122,6 +108,11 @@ test('Learning Experience phase gate', async ({
   if (!reviewSubtopic) {
     throw new Error('LEARNING_EXPERIENCE_REVIEW_SUBTOPIC_MISSING');
   }
+  const learningStudentCredentials = await resolveLearningStudentCredentials();
+  const learningStudentDisplayName = learningStudentDisplayNameFromEmail(
+    learningStudentCredentials.email,
+  );
+  const tag = classroomRunLabel();
   const teacherContext = await browser.newContext({ baseURL });
   const teacherBContext = await browser.newContext({ baseURL });
   const teacherPage = await teacherContext.newPage();
@@ -132,7 +123,7 @@ test('Learning Experience phase gate', async ({
   const teacherBHealth = attachBrowserHealth(teacherBPage);
   declareExpectedBrowserFailure(teacherBHealth, teacherStudentProgressDenial);
 
-  await signIn(studentPage, TEST_USERS.learningStudent, '主要導覽');
+  await signIn(studentPage, learningStudentCredentials, '主要導覽');
   const rewards = studentPage.getByRole('region', { name: '學習獎勵' });
   await expectHudEconomy(rewards, {
     currentLevelXp: 0,
@@ -208,8 +199,7 @@ test('Learning Experience phase gate', async ({
     const prompt = await studentPage
       .locator('.question-card legend')
       .innerText();
-    // 提示 UI 已依 owner 指示移除（2026-07-21 #4）；直接把前兩題答錯，
-    // 讓隨機抽題仍能穩定產生兩筆補救項目。
+    // 提示 UI 已依 owner 指示移除（2026-07-21 #4）；直接把前兩題答錯，讓隨機抽題仍能穩定產生兩筆補救項目。
     const answerWrong = position <= 2;
     const correctText = GENERATED_CORRECT_ANSWERS.get(prompt);
     if (!correctText) throw new Error('LEARNING_EXPERIENCE_ANSWER_MISSING');
@@ -415,14 +405,15 @@ test('Learning Experience phase gate', async ({
   );
   await expect(emptyMistakesStatus).toBeVisible();
 
-  // 學習進度 dashboard 依 owner 批示（2026-07-26 #2）已改為教師專屬，學生端 `/app/progress` 路由與頁面已移除（Task 10）；原本在此驗證的伺服器端公式
-  // （章節 100%/已精熟、尚未開始章節破折號佔位、reload 後精熟度持久化）改由下方「Teacher analytics」區塊的 `teacherRow` 斷言從教師視角覆蓋 100%/已精熟案例。
-  // 尚未開始章節（reviewChapterRow 的破折號佔位）與 reload 持久化目前沒有教師視角的等效斷言——若日後需要，屬於 teacher-classroom-progress-page 自己的測試範圍，不在本任務內補齊。
+  // 學生端 /app/progress 已移除（Task 10）；100%/已精熟改由下方 teacherRow 斷言從教師視角覆蓋。
 
   // --- Teacher analytics: owner reads exact mastery, others read nothing ---
   await signIn(teacherPage, TEST_USERS.learningTeacher, '教師導覽');
   await teacherPage.goto('/teacher/classes');
-  const { joinCode } = await createClassroom(teacherPage, '學習體驗班級');
+  const { joinCode } = await createClassroom(
+    teacherPage,
+    `學習體驗班級 ${tag}`,
+  );
   await teacherPage.getByRole('link', { name: '管理班級' }).click();
   await teacherPage.waitForURL(classroomIdPattern);
   const classroomId = classroomIdPattern.exec(teacherPage.url())?.[1];
@@ -430,7 +421,7 @@ test('Learning Experience phase gate', async ({
     throw new Error('LEARNING_EXPERIENCE_CLASSROOM_ID_MISSING');
   }
 
-  await joinClassroomByCode(TEST_USERS.learningStudent, joinCode);
+  await joinClassroomByCode(learningStudentCredentials, joinCode);
   await teacherPage.reload();
 
   const memberProgressLink = teacherPage
@@ -444,7 +435,9 @@ test('Learning Experience phase gate', async ({
   }
   await memberProgressLink.click();
   await expect(
-    teacherPage.getByRole('heading', { name: 'learning.student 的學習進度' }),
+    teacherPage.getByRole('heading', {
+      name: `${learningStudentDisplayName} 的學習進度`,
+    }),
   ).toBeVisible();
   const teacherRow = teacherPage.getByRole('row', {
     name: new RegExp(QUIZ_CHAPTER_TITLE, 'u'),
