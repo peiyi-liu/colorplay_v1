@@ -83,6 +83,11 @@ export function ChapterDetailPageHarness({
   const groupLabelMismatch =
     new URLSearchParams(window.location.search).get('groupLabelMismatch') ===
     'true';
+  // Derived from the fixture's own card list, never a hardcoded ID list, so
+  // this stays correct if the fixture's cards ever change.
+  const firstSubtopicComplete =
+    new URLSearchParams(window.location.search).get('firstSubtopicComplete') ===
+    'true';
   const sections =
     scenario === 'content-readiness-error'
       ? chapterReviewSectionsFixture([
@@ -156,12 +161,18 @@ export function ChapterDetailPageHarness({
   const stalledMediaRepository = {
     resolveReviewMedia: () => new Promise<never>(() => undefined),
   } as unknown as LearningRepository;
+  const completions = firstSubtopicComplete
+    ? (displaySections[0]?.subtopics[0]?.cards ?? []).map((card) => ({
+        cardVersion: card.version,
+        reviewCardId: card.cardId,
+      }))
+    : reviewCompletionsFixture();
 
   const viewModel = deriveChapterDetailViewModel({
     chapterMapEntry: scenario === 'loading' ? undefined : entryFor(scenario),
     chapterMapIsError: false,
     chapterMapIsPending: scenario === 'loading',
-    completions: reviewCompletionsFixture(),
+    completions,
     completionsIsError: false,
     completionsIsPending: false,
     progressIsError: false,

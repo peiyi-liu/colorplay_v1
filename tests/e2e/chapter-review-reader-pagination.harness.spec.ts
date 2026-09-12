@@ -4,6 +4,7 @@ import type { ReviewSubtopicContent } from '../fixtures/review-manifest.generate
 import {
   chapterCardTotal,
   completeReviewCard,
+  selectReviewSubtopic,
   walkReviewCards,
 } from './helpers/review-card-walk';
 
@@ -25,6 +26,9 @@ function syntheticSubtopic(
 // choice was actually clicked (simulates an unresolved selection race).
 async function setUpUnresolvedSelectionRaceFixture(page: Page) {
   await page.setContent(`
+    <nav aria-label="第三章小節">
+      <button aria-current="true" type="button">1-1 合成小節</button>
+    </nav>
     <button aria-label="選擇複習卡：A" aria-pressed="true" id="choice-0" type="button">A</button>
     <button aria-label="選擇複習卡：B" aria-pressed="false" id="choice-1" type="button">B</button>
     <button id="enter" type="button">進入複習</button>
@@ -54,7 +58,7 @@ type ElementGetAttribute = (this: Element, name: string) => string | null;
 async function walkAndCaptureMismatch(page: Page): Promise<Error> {
   let thrown: unknown;
   try {
-    await walkReviewCards(page, ['A', 'B'], async (card) => {
+    await walkReviewCards(page, '1-1', ['A', 'B'], async (card) => {
       await expect(card).toBeVisible();
     });
   } catch (error: unknown) {
@@ -98,6 +102,7 @@ test('review card walk uses title after a different group label', async ({
 
   await walkReviewCards(
     page,
+    '3-1',
     firstSubtopicCardTitles.slice(0, 1),
     async (card) => {
       await expect(card).toBeVisible();
@@ -110,7 +115,7 @@ test('review card walk survives the page reset after returning', async ({
 }) => {
   await page.goto('/dev-harness/chapter-detail.html?scenario=in-progress');
 
-  await walkReviewCards(page, firstSubtopicCardTitles, async (card) => {
+  await walkReviewCards(page, '3-1', firstSubtopicCardTitles, async (card) => {
     await expect(card).toBeVisible();
   });
 });
@@ -245,6 +250,106 @@ test('chapterCardTotal sums only the same-chapter subtopics', () => {
     syntheticSubtopic({ cardCount: 99, chapterCode: 'chapter-y' }),
   ];
   expect(chapterCardTotal(manifest, selected)).toBe(8);
+});
+
+test('review card walk selects the target subtopic when the account default lands elsewhere', async ({
+  page,
+}) => {
+  // firstSubtopicComplete marks every 3-1 card completed (IDs derived from
+  // the fixture itself), so ChapterDetailPageView's own "first uncompleted
+  // card" logic naturally lands currentCardId in 3-2 -- no manual click.
+  await page.goto(
+    '/dev-harness/chapter-detail.html?scenario=in-progress&firstSubtopicComplete=true',
+  );
+  const nav = page.getByRole('navigation', { name: '第三章小節' });
+  await expect(nav.getByRole('button', { name: /^3-2\s/u })).toHaveAttribute(
+    'aria-current',
+    'true',
+  );
+
+  // Direct evidence per card, not an inference from eventual success:
+  // returning to the library after a card remounts it and re-derives the
+  // default subtopic from currentCardId, so 3-2 becomes active again before
+  // every re-select except the first (which already found 3-2 active above).
+  const driftObservedAtCardIndex: number[] = [];
+  await walkReviewCards(
+    page,
+    '3-1',
+    firstSubtopicCardTitles.slice(0, 3),
+    async (card) => {
+      await expect(card).toBeVisible();
+    },
+    async (cardIndex) => {
+      if (cardIndex === 0) return;
+      const driftedBack = await nav
+        .getByRole('button', { name: /^3-2\s/u })
+        .getAttribute('aria-current');
+      if (driftedBack === 'true') {
+        driftObservedAtCardIndex.push(cardIndex);
+      }
+    },
+  );
+  expect(driftObservedAtCardIndex).toEqual([1, 2]);
+});
+
+test('selectReviewSubtopic fails closed on a malformed sectionKey', async ({
+  page,
+}) => {
+  await page.goto('/dev-harness/chapter-detail.html?scenario=in-progress');
+  await expect(selectReviewSubtopic(page, 'not-a-section')).rejects.toThrow(
+    'LEARNING_EXPERIENCE_SECTION_KEY_INVALID',
+  );
+});
+
+function subtopicNavContent(buttonsHtml: string): string {
+  return `<nav aria-label="第三章小節">${buttonsHtml}</nav>`;
+}
+
+test('selectReviewSubtopic waits for a delayed-mount target before succeeding', async ({
+  page,
+}) => {
+  await page.setContent(subtopicNavContent(''));
+  await page.evaluate(() => {
+    setTimeout(() => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = '3-1 延遲掛載小節';
+      button.addEventListener('click', () => {
+        button.setAttribute('aria-current', 'true');
+      });
+      document
+        .querySelector('nav[aria-label="第三章小節"]')
+        ?.appendChild(button);
+    }, 300);
+  });
+  await selectReviewSubtopic(page, '3-1');
+  await expect(
+    page
+      .getByRole('navigation', { name: '第三章小節' })
+      .getByRole('button', { name: /^3-1\s/u }),
+  ).toHaveAttribute('aria-current', 'true');
+});
+
+test('selectReviewSubtopic fails closed when the target never mounts', async ({
+  page,
+}) => {
+  await page.setContent(subtopicNavContent(''));
+  await expect(selectReviewSubtopic(page, '3-1')).rejects.toThrow(
+    'LEARNING_EXPERIENCE_SUBTOPIC_BUTTON_NOT_UNIQUE',
+  );
+});
+
+test('selectReviewSubtopic fails closed on a duplicate target', async ({
+  page,
+}) => {
+  await page.setContent(
+    subtopicNavContent(
+      '<button type="button">3-1 重複一</button><button type="button">3-1 重複二</button>',
+    ),
+  );
+  await expect(selectReviewSubtopic(page, '3-1')).rejects.toThrow(
+    'LEARNING_EXPERIENCE_SUBTOPIC_BUTTON_NOT_UNIQUE',
+  );
 });
 
 test('chapterCardTotal fails closed on an invalid total', () => {

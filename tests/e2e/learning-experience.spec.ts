@@ -149,10 +149,12 @@ test('Learning Experience phase gate', async ({
     studentPage.getByRole('heading', { name: REVIEW_CHAPTER_TITLE }),
   ).toBeVisible();
   await expect(studentPage.locator('body')).not.toContainText('尚未發布的卡片');
-  // Verify media only when the generated manifest has a published mapping;
-  // the current text-only slice must not pretend that media was covered.
+  // Never trust the account's currentCardId default: walkReviewCards
+  // re-selects reviewSubtopic before every card, not just once upfront.
+  // Verify media only when the generated manifest has a published mapping; the current text-only slice must not pretend that media was covered.
   await reviewCardWalk.walkReviewCards(
     studentPage,
+    reviewSubtopic.sectionKey,
     reviewSubtopic.cardTitles,
     async (card, cardTitle) => {
       if (mediaCard?.title === cardTitle) {
@@ -402,13 +404,9 @@ test('Learning Experience phase gate', async ({
   );
   await expect(emptyMistakesStatus).toBeVisible();
 
-  // 學習進度 dashboard 依 owner 批示（2026-07-26 #2）已改為教師專屬，學生端
-  // `/app/progress` 路由與頁面已移除（Task 10）；原本在此驗證的伺服器端公式
-  // （章節 100%/已精熟、尚未開始章節破折號佔位、reload 後精熟度持久化）改由
-  // 下方「Teacher analytics」區塊的 `teacherRow` 斷言從教師視角覆蓋 100%/
-  // 已精熟案例。尚未開始章節（reviewChapterRow 的破折號佔位）與 reload
-  // 持久化目前沒有教師視角的等效斷言——若日後需要，屬於
-  // teacher-classroom-progress-page 自己的測試範圍，不在本任務內補齊。
+  // 學習進度 dashboard 依 owner 批示（2026-07-26 #2）已改為教師專屬，學生端 `/app/progress` 路由與頁面已移除（Task 10）；原本在此驗證的伺服器端公式
+  // （章節 100%/已精熟、尚未開始章節破折號佔位、reload 後精熟度持久化）改由下方「Teacher analytics」區塊的 `teacherRow` 斷言從教師視角覆蓋 100%/已精熟案例。
+  // 尚未開始章節（reviewChapterRow 的破折號佔位）與 reload 持久化目前沒有教師視角的等效斷言——若日後需要，屬於 teacher-classroom-progress-page 自己的測試範圍，不在本任務內補齊。
 
   // --- Teacher analytics: owner reads exact mastery, others read nothing ---
   await signIn(teacherPage, TEST_USERS.learningTeacher, '教師導覽');
