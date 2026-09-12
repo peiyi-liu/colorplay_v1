@@ -163,7 +163,7 @@ test('Learning Experience phase gate', async ({
       await reviewCardWalk.completeReviewCard(card);
     },
   );
-  const completionText = `複習完成 ${String(reviewSubtopic.cardCount)} / ${String(reviewSubtopic.cardCount)}`;
+  const completionText = `複習完成 ${String(reviewSubtopic.cardCount)} / ${String(reviewCardWalk.chapterCardTotal(REVIEW_MANIFEST, reviewSubtopic))}`;
   await expect(studentPage.getByLabel('章節進度')).toContainText(
     completionText,
   );
