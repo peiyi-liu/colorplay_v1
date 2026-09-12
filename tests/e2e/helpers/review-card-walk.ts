@@ -1,6 +1,29 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
+import type { ReviewSubtopicContent } from '../../fixtures/review-manifest.generated';
+
 type ReviewCardVisitor = (card: Locator, cardTitle: string) => Promise<void>;
+
+// aria-label="章節進度" reports chapter-level review progress (summed across
+// every subtopic in the chapter), even when a walk only completes one
+// subtopic's cards -- so callers must use this chapter total as the
+// completion denominator, not the selected subtopic's own cardCount.
+export function chapterCardTotal(
+  manifest: readonly ReviewSubtopicContent[],
+  reviewSubtopic: ReviewSubtopicContent,
+): number {
+  const total = manifest
+    .filter(({ chapterCode }) => chapterCode === reviewSubtopic.chapterCode)
+    .reduce((sum, subtopic) => sum + subtopic.cardCount, 0);
+  if (
+    !Number.isSafeInteger(total) ||
+    total <= 0 ||
+    total < reviewSubtopic.cardCount
+  ) {
+    throw new Error('LEARNING_EXPERIENCE_CHAPTER_CARD_TOTAL_INVALID');
+  }
+  return total;
+}
 
 export async function completeReviewCard(card: Locator) {
   const completionStatus = card

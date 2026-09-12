@@ -1,9 +1,24 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import type { ReviewSubtopicContent } from '../fixtures/review-manifest.generated';
 import {
+  chapterCardTotal,
   completeReviewCard,
   walkReviewCards,
 } from './helpers/review-card-walk';
+
+function syntheticSubtopic(
+  overrides: Partial<ReviewSubtopicContent>,
+): ReviewSubtopicContent {
+  return {
+    cardCount: 0,
+    cardTitles: [],
+    chapterCode: 'chapter-synthetic',
+    sectionKey: 'synthetic-1',
+    subtopicId: 'synthetic-subtopic',
+    ...overrides,
+  };
+}
 
 // Two choices where clicking the second never commits its aria-pressed
 // state, so "進入複習" keeps opening the first article regardless of which
@@ -216,4 +231,47 @@ test('falls back to a safe fixed diagnostic without leaking injected content whe
     visibleChoiceCount: 0,
   });
   expect(elapsedMs).toBeLessThan(10_000);
+});
+
+test('chapterCardTotal sums only the same-chapter subtopics', () => {
+  const selected = syntheticSubtopic({
+    cardCount: 3,
+    chapterCode: 'chapter-x',
+  });
+  const manifest = [
+    selected,
+    syntheticSubtopic({ cardCount: 3, chapterCode: 'chapter-x' }),
+    syntheticSubtopic({ cardCount: 2, chapterCode: 'chapter-x' }),
+    syntheticSubtopic({ cardCount: 99, chapterCode: 'chapter-y' }),
+  ];
+  expect(chapterCardTotal(manifest, selected)).toBe(8);
+});
+
+test('chapterCardTotal fails closed on an invalid total', () => {
+  const noMatchingChapter = syntheticSubtopic({
+    cardCount: 3,
+    chapterCode: 'chapter-x',
+  });
+  expect(() => chapterCardTotal([], noMatchingChapter)).toThrow(
+    'LEARNING_EXPERIENCE_CHAPTER_CARD_TOTAL_INVALID',
+  );
+
+  const belowSelected = syntheticSubtopic({
+    cardCount: 5,
+    chapterCode: 'chapter-x',
+  });
+  expect(() =>
+    chapterCardTotal(
+      [syntheticSubtopic({ cardCount: 2, chapterCode: 'chapter-x' })],
+      belowSelected,
+    ),
+  ).toThrow('LEARNING_EXPERIENCE_CHAPTER_CARD_TOTAL_INVALID');
+
+  const nonInteger = syntheticSubtopic({
+    cardCount: 1.5,
+    chapterCode: 'chapter-x',
+  });
+  expect(() => chapterCardTotal([nonInteger], nonInteger)).toThrow(
+    'LEARNING_EXPERIENCE_CHAPTER_CARD_TOTAL_INVALID',
+  );
 });
