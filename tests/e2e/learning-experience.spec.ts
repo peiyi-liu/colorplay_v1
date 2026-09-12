@@ -17,7 +17,12 @@ import {
   unexpectedBrowserHealth,
 } from './browser-health';
 import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
-import { startQuizFromLobby } from './helpers/quiz';
+import {
+  quizContinueActionName,
+  startQuizFromLobby,
+  submitSelectedQuizOption,
+  waitForNextQuizStep,
+} from './helpers/quiz';
 import * as reviewCardWalk from './helpers/review-card-walk';
 
 // A full chapter challenge always serves ten questions. The generated
@@ -218,13 +223,17 @@ test('Learning Experience phase gate', async ({
     } else {
       await studentPage.getByRole('radio', { name: correctText }).check();
     }
-    await studentPage.getByRole('button', { name: '送出答案' }).click();
+    await submitSelectedQuizOption(studentPage);
     await studentPage
       .getByRole('button', {
-        name:
-          position === questionTotal ? '結算並查看結果' : '我理解了，下一題',
+        exact: true,
+        name: quizContinueActionName(
+          answerWrong ? 'incorrect' : 'correct',
+          position === questionTotal,
+        ),
       })
       .click();
+    await waitForNextQuizStep(studentPage);
   }
   expect(wrongPromptCount).toBe(2);
   await expect(
@@ -261,12 +270,14 @@ test('Learning Experience phase gate', async ({
     const correctText = GENERATED_CORRECT_ANSWERS.get(prompt);
     if (!correctText) throw new Error('LEARNING_EXPERIENCE_ANSWER_MISSING');
     await studentPage.getByRole('radio', { name: correctText }).check();
-    await studentPage.getByRole('button', { name: '送出答案' }).click();
+    await submitSelectedQuizOption(studentPage);
     await studentPage
       .getByRole('button', {
-        name: position === 2 ? '結算並查看結果' : '我理解了，下一題',
+        exact: true,
+        name: quizContinueActionName('correct', position === 2),
       })
       .click();
+    await waitForNextQuizStep(studentPage);
   }
   await expect(studentPage.getByText(/補救練習完成/u)).toBeVisible();
   // 20% of two fast correct answers: +30 XP; the Token balance must not move.
