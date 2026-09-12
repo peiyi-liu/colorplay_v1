@@ -25,6 +25,33 @@ export function chapterCardTotal(
   return total;
 }
 
+const SECTION_KEY_PATTERN = /^\d+-\d+$/u;
+
+// A hosted account's currentCardId can sit in any subtopic, so the review
+// library's default active subtopic must never be trusted -- callers select
+// the intended subtopic explicitly by sectionKey before walking its cards.
+export async function selectReviewSubtopic(
+  page: Page,
+  sectionKey: string,
+): Promise<void> {
+  if (!SECTION_KEY_PATTERN.test(sectionKey)) {
+    throw new Error('LEARNING_EXPERIENCE_SECTION_KEY_INVALID');
+  }
+  const button = page
+    .getByRole('navigation', { name: '第三章小節' })
+    .getByRole('button', { name: new RegExp(`^${sectionKey}\\s`, 'u') });
+  // A retrying assertion (not a one-shot count()) so a target that mounts
+  // slightly late still resolves; zero, duplicate, and timeout all collapse
+  // into the same fixed sentinel with no locator/DOM detail attached.
+  try {
+    await expect(button).toHaveCount(1);
+  } catch {
+    throw new Error('LEARNING_EXPERIENCE_SUBTOPIC_BUTTON_NOT_UNIQUE');
+  }
+  await button.click();
+  await expect(button).toHaveAttribute('aria-current', 'true');
+}
+
 export async function completeReviewCard(card: Locator) {
   const completionStatus = card
     .getByRole('status')
@@ -123,16 +150,23 @@ async function describeReviewCardNavigationMismatch(
 
 export async function walkReviewCards(
   page: Page,
+  sectionKey: string,
   cardTitles: readonly string[],
   visitCard: ReviewCardVisitor,
+  onBeforeReselect?: (cardIndex: number) => Promise<void>,
 ) {
-  const firstPageChoices = page.getByRole('button', {
-    name: /^選擇複習卡：/u,
-  });
-  await expect(firstPageChoices.first()).toBeVisible();
-  const cardsPerPage = await firstPageChoices.count();
-
   for (const [cardIndex, cardTitle] of cardTitles.entries()) {
+    await onBeforeReselect?.(cardIndex);
+    // Returning to the library after a card can remount it and re-derive
+    // the default subtopic from currentCardId, so re-select every card
+    // rather than trusting a single selection made before the whole walk.
+    await selectReviewSubtopic(page, sectionKey);
+
+    const firstPageChoices = page.getByRole('button', {
+      name: /^選擇複習卡：/u,
+    });
+    await expect(firstPageChoices.first()).toBeVisible();
+    const cardsPerPage = await firstPageChoices.count();
     const targetPageIndex = Math.floor(cardIndex / cardsPerPage);
     for (let pageIndex = 0; pageIndex < targetPageIndex; pageIndex += 1) {
       const nextPage = page.getByRole('button', {
