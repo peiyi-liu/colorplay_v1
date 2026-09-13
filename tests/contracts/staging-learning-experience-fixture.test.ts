@@ -7,7 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildFixtureAppMetadata,
   deriveRunScopedEmail,
+  deriveRunScopedLoginAccount,
   type FixtureAppMetadata,
+  type FixtureProfileVerification,
   generateSecurePassword,
   isLearningFixtureCredentials,
   LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL,
@@ -120,6 +122,41 @@ describe('generateSecurePassword', () => {
   });
 });
 
+describe('deriveRunScopedLoginAccount', () => {
+  it('produces a value satisfying the profiles.login_account column check', () => {
+    const account = deriveRunScopedLoginAccount('1234567890', '1');
+    expect(account).toMatch(/^[a-z0-9]{3,20}$/u);
+  });
+
+  it('is deterministic for the same run id and attempt', () => {
+    const first = deriveRunScopedLoginAccount('1234567890', '2');
+    const second = deriveRunScopedLoginAccount('1234567890', '2');
+    expect(first).toBe(second);
+  });
+
+  it('differs across run id and attempt so short concatenation cannot collide', () => {
+    // A naive concat/truncate of the two numbers could alias distinct pairs
+    // (e.g. runId "1" + runAttempt "23" vs runId "12" + runAttempt "3");
+    // hashing with a separator keeps these apart.
+    const accounts = new Set([
+      deriveRunScopedLoginAccount('1', '23'),
+      deriveRunScopedLoginAccount('12', '3'),
+      deriveRunScopedLoginAccount('123', '1'),
+      deriveRunScopedLoginAccount('1234567890', '1'),
+      deriveRunScopedLoginAccount('1234567890', '2'),
+    ]);
+    expect(accounts.size).toBe(5);
+  });
+
+  it('stays within the 20-char column limit at the maximum allowed run id and attempt', () => {
+    const maxRunId = '9'.repeat(20);
+    const maxRunAttempt = '9'.repeat(4);
+    const account = deriveRunScopedLoginAccount(maxRunId, maxRunAttempt);
+    expect(account.length).toBeLessThanOrEqual(20);
+    expect(account).toMatch(/^[a-z0-9]{3,20}$/u);
+  });
+});
+
 describe('buildFixtureAppMetadata', () => {
   it('tags exactly the five required app_metadata keys', () => {
     const metadata = buildFixtureAppMetadata({
@@ -213,15 +250,10 @@ describe('isLearningFixtureCredentials', () => {
   });
 });
 
-type FakeCounts = Readonly<{
-  profiles: number;
-  walletTokenBalance: number | null;
-  wallets: number;
-}>;
-
 function fakePorts(
   overrides: Readonly<{
-    countProfileAndWallet?: () => Promise<FakeCounts>;
+    setLoginAccount?: () => Promise<number>;
+    verifyFixtureProfile?: () => Promise<FixtureProfileVerification>;
   }> = {},
 ) {
   const writtenFiles: { credentials: unknown; path: string }[] = [];
@@ -229,11 +261,14 @@ function fakePorts(
     ports: {
       auth: { createStudent: () => Promise.resolve('fake-user-id') },
       database: {
-        countProfileAndWallet:
-          overrides.countProfileAndWallet ??
+        setLoginAccount: overrides.setLoginAccount ?? (() => Promise.resolve(1)),
+        verifyFixtureProfile:
+          overrides.verifyFixtureProfile ??
           (() =>
-            Promise.resolve<FakeCounts>({
+            Promise.resolve<FixtureProfileVerification>({
+              loginAccount: 'placeholder-login-account',
               profiles: 1,
+              role: 'student',
               walletTokenBalance: 0,
               wallets: 1,
             })),
@@ -260,10 +295,14 @@ const environment = () => ({
 });
 
 describe('runProvisionWorkflow', () => {
-  it('calls createStudent with the exact derived identity, countProfileAndWallet with its exact returned user id, and only then writes the file', async () => {
+  it('calls createStudent, then setLoginAccount with its exact returned user id and the derived login account, then verifyFixtureProfile, and only then writes the file', async () => {
     const env = environment();
     const expectedEmail = deriveRunScopedEmail(env.runId, env.runAttempt);
     const expectedAppMetadata = buildFixtureAppMetadata(env);
+    const expectedLoginAccount = deriveRunScopedLoginAccount(
+      env.runId,
+      env.runAttempt,
+    );
     const fakeUserId = 'fake-user-id-42';
 
     const createStudent = vi
@@ -275,8 +314,15 @@ describe('runProvisionWorkflow', () => {
         }) => Promise<string>
       >()
       .mockResolvedValue(fakeUserId);
-    const countProfileAndWallet = vi.fn(() =>
-      Promise.resolve({ profiles: 1, walletTokenBalance: 0, wallets: 1 }),
+    const setLoginAccount = vi.fn(() => Promise.resolve(1));
+    const verifyFixtureProfile = vi.fn(() =>
+      Promise.resolve<FixtureProfileVerification>({
+        loginAccount: expectedLoginAccount,
+        profiles: 1,
+        role: 'student',
+        walletTokenBalance: 0,
+        wallets: 1,
+      }),
     );
     const writeCredentialFile = vi.fn(() => Promise.resolve());
 
@@ -284,7 +330,7 @@ describe('runProvisionWorkflow', () => {
       environment: env,
       ports: {
         auth: { createStudent },
-        database: { countProfileAndWallet },
+        database: { setLoginAccount, verifyFixtureProfile },
         filesystem: { writeCredentialFile },
       },
     });
@@ -297,35 +343,109 @@ describe('runProvisionWorkflow', () => {
     expect(typeof createStudentArgs?.password).toBe('string');
     expect(createStudentArgs?.appMetadata).toEqual(expectedAppMetadata);
 
-    expect(countProfileAndWallet).toHaveBeenCalledTimes(1);
-    expect(countProfileAndWallet).toHaveBeenCalledWith(fakeUserId);
+    expect(setLoginAccount).toHaveBeenCalledTimes(1);
+    expect(setLoginAccount).toHaveBeenCalledWith(
+      fakeUserId,
+      expectedLoginAccount,
+    );
+
+    expect(verifyFixtureProfile).toHaveBeenCalledTimes(1);
+    expect(verifyFixtureProfile).toHaveBeenCalledWith(fakeUserId);
 
     expect(writeCredentialFile).toHaveBeenCalledTimes(1);
     const [createOrder] = createStudent.mock.invocationCallOrder;
-    const [countOrder] = countProfileAndWallet.mock.invocationCallOrder;
+    const [setLoginOrder] = setLoginAccount.mock.invocationCallOrder;
+    const [verifyOrder] = verifyFixtureProfile.mock.invocationCallOrder;
     const [writeOrder] = writeCredentialFile.mock.invocationCallOrder;
-    expect(createOrder).toBeLessThan(countOrder ?? 0);
-    expect(countOrder).toBeLessThan(writeOrder ?? 0);
+    expect(createOrder).toBeLessThan(setLoginOrder ?? 0);
+    expect(setLoginOrder).toBeLessThan(verifyOrder ?? 0);
+    expect(verifyOrder).toBeLessThan(writeOrder ?? 0);
 
     expect(result.email).toBe(expectedEmail);
   });
 
   it.each([
-    ['extra profile row', { profiles: 2, walletTokenBalance: 0, wallets: 1 }],
-    ['missing wallet row', { profiles: 1, walletTokenBalance: 0, wallets: 0 }],
+    ['no row updated', 0],
+    ['more than one row updated', 2],
+  ])(
+    'fails closed before verifying the profile or writing any file when setLoginAccount reports %s',
+    async (_label, updatedRowCount) => {
+      const verifyFixtureProfile = vi.fn();
+      const { ports, writtenFiles } = fakePorts({
+        setLoginAccount: () => Promise.resolve(updatedRowCount),
+        verifyFixtureProfile,
+      });
+      await expect(
+        runProvisionWorkflow({ environment: environment(), ports }),
+      ).rejects.toThrow('LEARNING_FIXTURE_PROVISION_LOGIN_ACCOUNT_UPDATE_FAILED');
+      expect(verifyFixtureProfile).not.toHaveBeenCalled();
+      expect(writtenFiles).toHaveLength(0);
+    },
+  );
+
+  it.each([
+    [
+      'extra profile row',
+      {
+        loginAccount: 'placeholder-login-account',
+        profiles: 2,
+        role: 'student',
+        walletTokenBalance: 0,
+        wallets: 1,
+      },
+    ],
+    [
+      'missing wallet row',
+      {
+        loginAccount: 'placeholder-login-account',
+        profiles: 1,
+        role: 'student',
+        walletTokenBalance: 0,
+        wallets: 0,
+      },
+    ],
     [
       'non-zero starting balance',
-      { profiles: 1, walletTokenBalance: 5, wallets: 1 },
+      {
+        loginAccount: 'placeholder-login-account',
+        profiles: 1,
+        role: 'student',
+        walletTokenBalance: 5,
+        wallets: 1,
+      },
     ],
-  ])('fails closed before writing any file on %s', async (_label, counts) => {
-    const { ports, writtenFiles } = fakePorts({
-      countProfileAndWallet: () => Promise.resolve(counts),
-    });
-    await expect(
-      runProvisionWorkflow({ environment: environment(), ports }),
-    ).rejects.toThrow('LEARNING_FIXTURE_PROVISION_CARDINALITY_INVALID');
-    expect(writtenFiles).toHaveLength(0);
-  });
+    [
+      'role is not student',
+      {
+        loginAccount: 'placeholder-login-account',
+        profiles: 1,
+        role: 'teacher',
+        walletTokenBalance: 0,
+        wallets: 1,
+      },
+    ],
+    [
+      'login_account does not match the derived value',
+      {
+        loginAccount: 'some-other-account',
+        profiles: 1,
+        role: 'student',
+        walletTokenBalance: 0,
+        wallets: 1,
+      },
+    ],
+  ] satisfies [string, FixtureProfileVerification][])(
+    'fails closed before writing any file on %s',
+    async (_label, profile) => {
+      const { ports, writtenFiles } = fakePorts({
+        verifyFixtureProfile: () => Promise.resolve(profile),
+      });
+      await expect(
+        runProvisionWorkflow({ environment: environment(), ports }),
+      ).rejects.toThrow('LEARNING_FIXTURE_PROVISION_CARDINALITY_INVALID');
+      expect(writtenFiles).toHaveLength(0);
+    },
+  );
 });
 
 describe('sanitizeProvisionFailure', () => {
