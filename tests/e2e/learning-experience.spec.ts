@@ -393,9 +393,9 @@ test('Learning Experience phase gate', async ({
     if (index < remediationResultViewports.length - 1) {
       await studentPage.goBack();
       await expect(returnToMistakes).toBeVisible();
-      await expect(studentPage.getByRole('status')).toContainText(
-        '補救練習完成',
-      );
+      await expect(
+        studentPage.getByRole('status').filter({ hasText: '補救練習完成' }),
+      ).toBeVisible();
     }
   }
   await mkdir(join(evidenceRoot, 'reports'), { recursive: true });
