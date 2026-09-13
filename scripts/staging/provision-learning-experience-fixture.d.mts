@@ -23,6 +23,14 @@ export interface FixtureAppMetadata {
   colorplay_fixture_run_id: string;
 }
 
+export interface FixtureProfileVerification {
+  loginAccount: string | null;
+  profiles: number;
+  role: string | null;
+  walletTokenBalance: number | null;
+  wallets: number;
+}
+
 export interface ProvisionPorts {
   auth: {
     createStudent(input: {
@@ -32,11 +40,8 @@ export interface ProvisionPorts {
     }): Promise<string>;
   };
   database: {
-    countProfileAndWallet(userId: string): Promise<{
-      profiles: number;
-      walletTokenBalance: number | null;
-      wallets: number;
-    }>;
+    setLoginAccount(userId: string, loginAccount: string): Promise<number>;
+    verifyFixtureProfile(userId: string): Promise<FixtureProfileVerification>;
   };
   filesystem: {
     writeCredentialFile(
@@ -56,6 +61,11 @@ export declare function deriveRunScopedEmail(
 ): string;
 
 export declare function generateSecurePassword(): string;
+
+export declare function deriveRunScopedLoginAccount(
+  runId: string,
+  runAttempt: string,
+): string;
 
 export declare function buildFixtureAppMetadata(input: {
   gitSha: string;

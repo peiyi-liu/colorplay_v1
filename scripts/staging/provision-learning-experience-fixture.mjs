@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { chmod, readFile, stat, writeFile } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 import process from 'node:process';
@@ -145,6 +145,21 @@ export function generateSecurePassword() {
   return randomBytes(32).toString('base64url');
 }
 
+// public.profiles.login_account is constrained to `^[a-z0-9]{3,20}$` and
+// unique (see 20260723000100_account_identity.sql). A hash of (runId,
+// runAttempt) -- rather than naive concatenation/truncation of the two
+// numbers -- keeps distinct run/attempt pairs from colliding into the same
+// short string; the DB's own unique index remains the fail-closed backstop
+// if a collision ever did occur.
+const LOGIN_ACCOUNT_LENGTH = 16;
+
+export function deriveRunScopedLoginAccount(runId, runAttempt) {
+  const digest = createHash('sha256')
+    .update(`learning-fixture:${runId}:${runAttempt}`)
+    .digest('hex');
+  return digest.slice(0, LOGIN_ACCOUNT_LENGTH);
+}
+
 export function buildFixtureAppMetadata({ gitSha, runAttempt, runId }) {
   return {
     colorplay_fixture_environment: 'staging',
@@ -206,17 +221,32 @@ export async function runProvisionWorkflow({ environment, ports }) {
   const email = deriveRunScopedEmail(environment.runId, environment.runAttempt);
   const password = generateSecurePassword();
   const appMetadata = buildFixtureAppMetadata(environment);
+  const loginAccount = deriveRunScopedLoginAccount(
+    environment.runId,
+    environment.runAttempt,
+  );
 
   const userId = await ports.auth.createStudent({
     appMetadata,
     email,
     password,
   });
-  const counts = await ports.database.countProfileAndWallet(userId);
+
+  const updatedRowCount = await ports.database.setLoginAccount(
+    userId,
+    loginAccount,
+  );
+  if (updatedRowCount !== 1) {
+    fail('LEARNING_FIXTURE_PROVISION_LOGIN_ACCOUNT_UPDATE_FAILED');
+  }
+
+  const profile = await ports.database.verifyFixtureProfile(userId);
   if (
-    counts.profiles !== 1 ||
-    counts.wallets !== 1 ||
-    counts.walletTokenBalance !== 0
+    profile.profiles !== 1 ||
+    profile.role !== 'student' ||
+    profile.loginAccount !== loginAccount ||
+    profile.wallets !== 1 ||
+    profile.walletTokenBalance !== 0
   ) {
     fail('LEARNING_FIXTURE_PROVISION_CARDINALITY_INVALID');
   }
@@ -248,20 +278,34 @@ function createPorts(runtime) {
       },
     },
     database: {
-      async countProfileAndWallet(userId) {
+      async setLoginAccount(userId, loginAccount) {
+        const result = await client
+          .from('profiles')
+          .update({ login_account: loginAccount })
+          .eq('id', userId)
+          .select('id');
+        if (result.error) {
+          fail('LEARNING_FIXTURE_PROVISION_LOGIN_ACCOUNT_UPDATE_FAILED');
+        }
+        return (result.data ?? []).length;
+      },
+      async verifyFixtureProfile(userId) {
         const [profileResult, walletResult] = await Promise.all([
           client
             .from('profiles')
-            .select('id', { count: 'exact', head: true })
+            .select('role, login_account')
             .eq('id', userId),
           client.from('wallets').select('token_balance').eq('user_id', userId),
         ]);
         if (profileResult.error || walletResult.error) {
           fail('LEARNING_FIXTURE_PROVISION_CARDINALITY_CHECK_FAILED');
         }
+        const profiles = profileResult.data ?? [];
         const wallets = walletResult.data ?? [];
         return {
-          profiles: profileResult.count ?? 0,
+          loginAccount: profiles[0]?.login_account ?? null,
+          profiles: profiles.length,
+          role: profiles[0]?.role ?? null,
           walletTokenBalance: wallets[0]?.token_balance ?? null,
           wallets: wallets.length,
         };
