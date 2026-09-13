@@ -1,3 +1,8 @@
+// AGENTS.md section 6: this file exceeds 500 lines. Issue #37 scopes
+// ownership to exactly three files (this one plus the .mjs/.d.mts it
+// covers), so splitting it into multiple test files would be an
+// out-of-scope refactor; the length is one contract test file growing with
+// its module's fail-closed gates, not an unbounded or unrelated file.
 import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -261,7 +266,8 @@ function fakePorts(
     ports: {
       auth: { createStudent: () => Promise.resolve('fake-user-id') },
       database: {
-        setLoginAccount: overrides.setLoginAccount ?? (() => Promise.resolve(1)),
+        setLoginAccount:
+          overrides.setLoginAccount ?? (() => Promise.resolve(1)),
         verifyFixtureProfile:
           overrides.verifyFixtureProfile ??
           (() =>
@@ -377,62 +383,40 @@ describe('runProvisionWorkflow', () => {
       });
       await expect(
         runProvisionWorkflow({ environment: environment(), ports }),
-      ).rejects.toThrow('LEARNING_FIXTURE_PROVISION_LOGIN_ACCOUNT_UPDATE_FAILED');
+      ).rejects.toThrow(
+        'LEARNING_FIXTURE_PROVISION_LOGIN_ACCOUNT_UPDATE_FAILED',
+      );
       expect(verifyFixtureProfile).not.toHaveBeenCalled();
       expect(writtenFiles).toHaveLength(0);
     },
   );
 
+  // Every case below must flip exactly one field away from a fully valid
+  // profile. Reusing a placeholder login account for the non-login-account
+  // cases would make them fail on the login-account mismatch first, hiding
+  // whether the corresponding profile/wallet/role check fires at all.
+  const validFixtureProfile = (): FixtureProfileVerification => ({
+    loginAccount: deriveRunScopedLoginAccount(
+      environment().runId,
+      environment().runAttempt,
+    ),
+    profiles: 1,
+    role: 'student',
+    walletTokenBalance: 0,
+    wallets: 1,
+  });
+
   it.each([
-    [
-      'extra profile row',
-      {
-        loginAccount: 'placeholder-login-account',
-        profiles: 2,
-        role: 'student',
-        walletTokenBalance: 0,
-        wallets: 1,
-      },
-    ],
-    [
-      'missing wallet row',
-      {
-        loginAccount: 'placeholder-login-account',
-        profiles: 1,
-        role: 'student',
-        walletTokenBalance: 0,
-        wallets: 0,
-      },
-    ],
+    ['extra profile row', { ...validFixtureProfile(), profiles: 2 }],
+    ['missing wallet row', { ...validFixtureProfile(), wallets: 0 }],
     [
       'non-zero starting balance',
-      {
-        loginAccount: 'placeholder-login-account',
-        profiles: 1,
-        role: 'student',
-        walletTokenBalance: 5,
-        wallets: 1,
-      },
+      { ...validFixtureProfile(), walletTokenBalance: 5 },
     ],
-    [
-      'role is not student',
-      {
-        loginAccount: 'placeholder-login-account',
-        profiles: 1,
-        role: 'teacher',
-        walletTokenBalance: 0,
-        wallets: 1,
-      },
-    ],
+    ['role is not student', { ...validFixtureProfile(), role: 'teacher' }],
     [
       'login_account does not match the derived value',
-      {
-        loginAccount: 'some-other-account',
-        profiles: 1,
-        role: 'student',
-        walletTokenBalance: 0,
-        wallets: 1,
-      },
+      { ...validFixtureProfile(), loginAccount: 'some-other-account' },
     ],
   ] satisfies [string, FixtureProfileVerification][])(
     'fails closed before writing any file on %s',

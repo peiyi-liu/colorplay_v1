@@ -41,9 +41,7 @@ export interface ProvisionPorts {
   };
   database: {
     setLoginAccount(userId: string, loginAccount: string): Promise<number>;
-    verifyFixtureProfile(
-      userId: string,
-    ): Promise<FixtureProfileVerification>;
+    verifyFixtureProfile(userId: string): Promise<FixtureProfileVerification>;
   };
   filesystem: {
     writeCredentialFile(
