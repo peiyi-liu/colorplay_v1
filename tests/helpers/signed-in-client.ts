@@ -9,7 +9,12 @@ const STAGING_SUPABASE_HOSTNAME = 'onkxnkzeixpezetkmocf.supabase.co';
 const isLocalUrl = (parsedUrl: URL) =>
   parsedUrl.protocol === 'http:' &&
   parsedUrl.hostname === '127.0.0.1' &&
-  parsedUrl.port === '54321';
+  parsedUrl.port === '54321' &&
+  parsedUrl.pathname === '/' &&
+  parsedUrl.search === '' &&
+  parsedUrl.hash === '' &&
+  !parsedUrl.username &&
+  !parsedUrl.password;
 
 const isAcceptedStagingUrl = (parsedUrl: URL) =>
   process.env.PLAYWRIGHT_ACCEPTANCE === 'on' &&
@@ -46,11 +51,17 @@ export async function signedInClient(
   credentials: Credentials,
 ): Promise<SupabaseClient<Database>> {
   const { anonKey, url } = readPublicEnvironment();
-  const client = createClient<Database>(url, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-  const { error } = await client.auth.signInWithPassword(credentials);
 
-  if (error) throw new Error('LOCAL_SIGN_IN_FAILED');
+  let client: SupabaseClient<Database>;
+  try {
+    client = createClient<Database>(url, anonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { error } = await client.auth.signInWithPassword(credentials);
+    if (error) throw error;
+  } catch {
+    throw new Error('LOCAL_SIGN_IN_FAILED');
+  }
+
   return client;
 }

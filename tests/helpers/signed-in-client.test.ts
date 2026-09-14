@@ -133,6 +133,23 @@ describe('signedInClient public environment guard', () => {
   });
 
   it.each([
+    ['a non-root path', `${LOCAL_URL}/rest/v1`],
+    ['a query string', `${LOCAL_URL}/?token=1`],
+    ['a fragment', `${LOCAL_URL}/#frag`],
+    ['embedded URL credentials', 'http://user:pass@127.0.0.1:54321'],
+  ])('rejects a Local URL variant: %s', async (_label, url) => {
+    await expect(
+      callWithEnv({
+        SUPABASE_URL: url,
+        SUPABASE_ANON_KEY: TRAP.key,
+        PLAYWRIGHT_ACCEPTANCE: undefined,
+        COLORPLAY_DEPLOYMENT_ENVIRONMENT: undefined,
+      }),
+    ).rejects.toThrow('LOCAL_PUBLIC_ENV_INVALID');
+    expect(createClient).not.toHaveBeenCalled();
+  });
+
+  it.each([
     ['Production Supabase project', PRODUCTION_URL],
     ['a localhost lookalike hostname', 'https://localhost.supabase.co'],
     [
@@ -166,28 +183,36 @@ describe('signedInClient public environment guard', () => {
     expect(createClient).not.toHaveBeenCalled();
   });
 
-  it('never leaks secret-like values in the thrown diagnostic', async () => {
-    const attempts = [
-      callWithEnv({
+  it.each([
+    [
+      'a Staging-lookalike URL trap',
+      {
         SUPABASE_URL: `https://${TRAP.url}.supabase.co`,
         SUPABASE_ANON_KEY: TRAP.key,
         ...STAGING_GATES,
-      }),
-      callWithEnv({
+      },
+    ],
+    [
+      'missing SUPABASE_URL and SUPABASE_ANON_KEY',
+      {
         SUPABASE_URL: undefined,
         SUPABASE_ANON_KEY: undefined,
-      }),
-      callWithEnv({
+      },
+    ],
+    [
+      'a malformed URL',
+      {
         SUPABASE_URL: 'not a valid url',
         SUPABASE_ANON_KEY: TRAP.key,
         ...STAGING_GATES,
-      }),
-    ];
-
-    for (const attempt of attempts) {
+      },
+    ],
+  ])(
+    'never leaks secret-like values in the thrown diagnostic: %s',
+    async (_label, env) => {
       let thrown: unknown;
       try {
-        await attempt;
+        await callWithEnv(env);
       } catch (error) {
         thrown = error;
       }
@@ -204,8 +229,64 @@ describe('signedInClient public environment guard', () => {
         'LOCAL_PUBLIC_ENV_MISSING',
         'LOCAL_PUBLIC_ENV_INVALID',
       ]).toContain(messageText);
+      expect(createClient).not.toHaveBeenCalled();
+    },
+  );
+
+  it('wraps a synchronous createClient throw as the fixed sign-in sentinel without leaking trap values', async () => {
+    createClient.mockImplementationOnce(() => {
+      throw new Error(
+        `sdk exploded url=${TRAP.url} key=${TRAP.key} email=${TRAP.email} password=${TRAP.password} message=${TRAP.message} details=${TRAP.details} hint=${TRAP.hint}`,
+      );
+    });
+
+    let thrown: unknown;
+    try {
+      await callWithEnv({
+        SUPABASE_URL: LOCAL_URL,
+        SUPABASE_ANON_KEY: TRAP.key,
+      });
+    } catch (error) {
+      thrown = error;
     }
-    expect(createClient).not.toHaveBeenCalled();
+    expect(thrown).toBeInstanceOf(Error);
+    const messageText = (thrown as Error).message;
+    expect(messageText).toBe('LOCAL_SIGN_IN_FAILED');
+    expect(messageText).not.toContain(TRAP.url);
+    expect(messageText).not.toContain(TRAP.key);
+    expect(messageText).not.toContain(TRAP.email);
+    expect(messageText).not.toContain(TRAP.password);
+    expect(messageText).not.toContain(TRAP.message);
+    expect(messageText).not.toContain(TRAP.details);
+    expect(messageText).not.toContain(TRAP.hint);
+  });
+
+  it('wraps a rejected signInWithPassword promise as the fixed sign-in sentinel without leaking trap values', async () => {
+    signInWithPassword.mockRejectedValueOnce(
+      new Error(
+        `network exploded url=${TRAP.url} key=${TRAP.key} email=${TRAP.email} password=${TRAP.password} message=${TRAP.message} details=${TRAP.details} hint=${TRAP.hint}`,
+      ),
+    );
+
+    let thrown: unknown;
+    try {
+      await callWithEnv({
+        SUPABASE_URL: LOCAL_URL,
+        SUPABASE_ANON_KEY: TRAP.key,
+      });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(Error);
+    const messageText = (thrown as Error).message;
+    expect(messageText).toBe('LOCAL_SIGN_IN_FAILED');
+    expect(messageText).not.toContain(TRAP.url);
+    expect(messageText).not.toContain(TRAP.key);
+    expect(messageText).not.toContain(TRAP.email);
+    expect(messageText).not.toContain(TRAP.password);
+    expect(messageText).not.toContain(TRAP.message);
+    expect(messageText).not.toContain(TRAP.details);
+    expect(messageText).not.toContain(TRAP.hint);
   });
 
   it('rejects with a fixed sentinel and never calls the Supabase client boundary when the URL is malformed', async () => {
