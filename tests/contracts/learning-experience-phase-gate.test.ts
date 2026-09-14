@@ -9,6 +9,7 @@ import { LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL } from '../../scripts/sta
 import { TEST_USERS } from '../fixtures/users';
 import {
   classroomRunLabel,
+  isTeacherLandingUrl,
   learningStudentDisplayNameFromEmail,
   resolveLearningStudentCredentials,
   signIn,
@@ -293,7 +294,7 @@ describe('signIn teacher/student portal branching (source contract)', () => {
     expect(teacherBranchStart).toBeGreaterThan(clickIndex);
     expect(studentBranchStart).toBeGreaterThan(teacherBranchStart);
     const teacherBranch = source.slice(teacherBranchStart, studentBranchStart);
-    expect(teacherBranch).toContain('toHaveURL(/\\/teacher$/u)');
+    expect(teacherBranch).toContain('toHaveURL(isTeacherLandingUrl)');
     expect(teacherBranch).toContain("name: '教學分析'");
     expect(teacherBranch).not.toContain('學習地圖');
   });
@@ -351,6 +352,107 @@ describe('signIn portal click containment (executable, mocked Page)', () => {
       STOP_AFTER_ACCOUNT_FILL,
     );
     expect(getByText).not.toHaveBeenCalled();
+  });
+});
+
+// Issue #41 run 34845782905 S-level fix: the prior /\/teacher$/u assertion
+// rejected the teacher analytics page's normal /teacher?classroomId=... state.
+// isTeacherLandingUrl is exported specifically so this exact-pathname
+// predicate can be executed against real URL instances instead of only
+// being locked as a source string.
+describe('isTeacherLandingUrl (real behavior, exact pathname match)', () => {
+  it('accepts the bare /teacher pathname', () => {
+    expect(
+      isTeacherLandingUrl(new URL('https://staging.colorplay.test/teacher')),
+    ).toBe(true);
+  });
+
+  it('accepts /teacher with the teacher-analytics classroomId query', () => {
+    expect(
+      isTeacherLandingUrl(
+        new URL(
+          'https://staging.colorplay.test/teacher?classroomId=fixture-classroom-1',
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it.each([
+    ['/teacher/classes (prefix, not exact)', '/teacher/classes'],
+    ['/app (student route)', '/app'],
+    ['/unauthorized', '/unauthorized'],
+  ])('rejects %s', (_label, pathname) => {
+    expect(
+      isTeacherLandingUrl(new URL(`https://staging.colorplay.test${pathname}`)),
+    ).toBe(false);
+  });
+});
+
+// Executes the real signIn() teacher branch through a mocked Page that
+// implements just enough of page.context()/page.mainFrame().waitForURL()
+// for Playwright's real expect(page).toHaveURL(isTeacherLandingUrl) matcher
+// to run for real (see playwright/lib/matchers/expect.js
+// toHaveURLWithPredicate) -- proving the fix end-to-end, not just the
+// isolated predicate above, while never touching the actual Hosted browser.
+describe('signIn teacher URL gate (executable, mocked Page)', () => {
+  const credentials = { email: 'fixture@colorplay.test', password: 'x' };
+
+  const mockedTeacherPage = (currentUrl: string) => {
+    const NAVIGATION_CHECK_REACHED = new Error(
+      'navigation-check-reached-sentinel',
+    );
+    const waitForURL = vi.fn((predicate: (url: URL) => boolean) =>
+      predicate(new URL(currentUrl))
+        ? Promise.resolve()
+        : Promise.reject(
+            new Error('waitForURL: predicate never matched (mock)'),
+          ),
+    );
+    const getByRole = vi.fn((role: string) => {
+      if (role === 'navigation') {
+        throw NAVIGATION_CHECK_REACHED;
+      }
+      return { click: () => Promise.resolve(), fill: () => Promise.resolve() };
+    });
+    const page = {
+      context: () => ({ _options: {} }),
+      getByLabel: vi.fn(() => ({ fill: () => Promise.resolve() })),
+      getByRole,
+      getByText: vi.fn(() => ({ click: () => Promise.resolve() })),
+      goto: vi.fn(() => Promise.resolve()),
+      mainFrame: () => ({ waitForURL }),
+    };
+    return {
+      NAVIGATION_CHECK_REACHED,
+      getByRole,
+      page: page as unknown as Parameters<typeof signIn>[0],
+      waitForURL,
+    };
+  };
+
+  it('accepts /teacher?classroomId=<fixture-id> and still reaches the navigation check', async () => {
+    const { NAVIGATION_CHECK_REACHED, getByRole, page, waitForURL } =
+      mockedTeacherPage(
+        'https://staging.colorplay.test/teacher?classroomId=fixture-classroom-1',
+      );
+    await expect(signIn(page, credentials, '教師導覽')).rejects.toBe(
+      NAVIGATION_CHECK_REACHED,
+    );
+    expect(waitForURL).toHaveBeenCalledOnce();
+    expect(getByRole).toHaveBeenCalledWith('navigation', {
+      name: '教師導覽',
+    });
+  });
+
+  it('rejects a non-/teacher pathname and never reaches the navigation check', async () => {
+    const { getByRole, page, waitForURL } = mockedTeacherPage(
+      'https://staging.colorplay.test/teacher/classes',
+    );
+    await expect(signIn(page, credentials, '教師導覽')).rejects.toThrow(
+      /toHaveURL/u,
+    );
+    expect(waitForURL).toHaveBeenCalledOnce();
+    expect(getByRole).not.toHaveBeenCalledWith('navigation', expect.anything());
   });
 });
 

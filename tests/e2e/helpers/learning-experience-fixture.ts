@@ -37,6 +37,13 @@ export function classroomRunLabel(
   return `${env.GITHUB_RUN_ID ?? 'local'}-${env.GITHUB_RUN_ATTEMPT ?? String(process.pid)}`;
 }
 
+// 教師分析頁在需要時會把當前擁有的班級補上 classroomId query，pathname 仍固定
+// 是 /teacher；獨立匯出這個 predicate，讓 contract test 能直接對真實 URL 執行，
+// 不必只靠原始碼字串比對。不能放寬成 prefix/substring（否則 /teacher/classes、
+// /app 等也會通過）。
+export const isTeacherLandingUrl = (url: URL): boolean =>
+  url.pathname === '/teacher';
+
 export const signIn = async (
   page: Page,
   credentials: Credentials,
@@ -53,7 +60,7 @@ export const signIn = async (
   await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   if (isTeacherPortal) {
-    await expect(page).toHaveURL(/\/teacher$/u);
+    await expect(page).toHaveURL(isTeacherLandingUrl);
     await expect(
       page.getByRole('navigation', { name: navigationName }),
     ).toBeVisible();
