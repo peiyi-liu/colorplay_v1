@@ -31,6 +31,23 @@ export interface FixtureProfileVerification {
   wallets: number;
 }
 
+// Mirrors the shape of a real @supabase/postgrest-js response: `error`, when
+// present, always carries `message`/`details`/`hint` alongside `code` (see
+// PostgrestError). Those three fields are typed here -- as optional, since a
+// caller need not supply them -- purely so tests can construct a realistic,
+// fully-populated error without a type-widening cast; the implementation
+// never reads them.
+export interface LoginAccountUpdateResult {
+  data: { id: string }[] | null;
+  error: {
+    code: string;
+    details?: string;
+    hint?: string;
+    message?: string;
+  } | null;
+  status: number;
+}
+
 export interface ProvisionPorts {
   auth: {
     createStudent(input: {
@@ -84,6 +101,10 @@ export declare function readRunScopedLearningFixtureCredentialFile(
     stat: (path: string) => Promise<{ mode: number }>;
   },
 ): Promise<LearningFixtureCredentials>;
+
+export declare function classifyLoginAccountUpdateResult(
+  result: LoginAccountUpdateResult,
+): number;
 
 export declare function runProvisionWorkflow(input: {
   environment: ProvisionerEnvironment;

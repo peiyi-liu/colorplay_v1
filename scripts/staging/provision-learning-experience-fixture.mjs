@@ -24,6 +24,7 @@ const RUN_ID_PATTERN = /^[1-9][0-9]{0,19}$/u;
 const RUN_ATTEMPT_PATTERN = /^[1-9][0-9]{0,3}$/u;
 const SHA_PATTERN = /^[0-9a-f]{40}$/u;
 const CREDENTIAL_FILE_MODE = 0o600;
+const API_ERROR_CODE_PATTERN = /^[A-Za-z0-9_]{1,32}$/u;
 
 export const LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL =
   'LEARNING_EXPERIENCE_RUN_SCOPED_FIXTURE_REQUIRED';
@@ -217,6 +218,44 @@ export async function readRunScopedLearningFixtureCredentialFile(
   return { email: parsed.email, password: parsed.password };
 }
 
+// A Supabase update()/select() response's own `error.code` and `status` are
+// the only two fields on it that are both diagnostically useful and safe --
+// `message`/`details`/`hint` can embed the request URL, key, or row values
+// (see PostgrestError). Each is independently allowlisted to a narrow shape
+// before being embedded in the sentinel, so a malicious or malformed value
+// on either can never survive into the sentinel this function throws.
+function sanitizeLoginAccountApiErrorCode(code) {
+  return typeof code === 'string' && API_ERROR_CODE_PATTERN.test(code)
+    ? code.toUpperCase()
+    : 'UNKNOWN';
+}
+
+function sanitizeLoginAccountApiErrorStatus(status) {
+  return Number.isInteger(status) && status >= 100 && status <= 599
+    ? String(status)
+    : 'UNKNOWN';
+}
+
+// Distinguishes the three possible outcomes of the login_account update so
+// the next Hosted failure is diagnosable without ever logging the raw
+// Supabase result: an API-level error (from exactly its allowlisted code
+// and status), a zero-row update (no matching profile), or success (the
+// updated row count, for the caller's own cardinality check).
+export function classifyLoginAccountUpdateResult(result) {
+  if (result.error) {
+    fail(
+      `LEARNING_FIXTURE_PROVISION_LOGIN_ACCOUNT_UPDATE_API_ERROR_CODE_${sanitizeLoginAccountApiErrorCode(
+        result.error.code,
+      )}_STATUS_${sanitizeLoginAccountApiErrorStatus(result.status)}`,
+    );
+  }
+  const rowCount = (result.data ?? []).length;
+  if (rowCount === 0) {
+    fail('LEARNING_FIXTURE_PROVISION_LOGIN_ACCOUNT_UPDATE_ZERO_ROWS');
+  }
+  return rowCount;
+}
+
 export async function runProvisionWorkflow({ environment, ports }) {
   const email = deriveRunScopedEmail(environment.runId, environment.runAttempt);
   const password = generateSecurePassword();
@@ -284,10 +323,7 @@ function createPorts(runtime) {
           .update({ login_account: loginAccount })
           .eq('id', userId)
           .select('id');
-        if (result.error) {
-          fail('LEARNING_FIXTURE_PROVISION_LOGIN_ACCOUNT_UPDATE_FAILED');
-        }
-        return (result.data ?? []).length;
+        return classifyLoginAccountUpdateResult(result);
       },
       async verifyFixtureProfile(userId) {
         const [profileResult, walletResult] = await Promise.all([

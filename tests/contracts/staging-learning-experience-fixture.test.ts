@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   buildFixtureAppMetadata,
+  classifyLoginAccountUpdateResult,
   deriveRunScopedEmail,
   deriveRunScopedLoginAccount,
   type FixtureAppMetadata,
@@ -18,6 +19,7 @@ import {
   generateSecurePassword,
   isLearningFixtureCredentials,
   LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL,
+  type LoginAccountUpdateResult,
   readRunScopedLearningFixtureCredentialFile,
   runProvisionWorkflow,
   sanitizeProvisionFailure,
@@ -298,6 +300,84 @@ const environment = () => ({
   runId: '999',
   secretKey: 'sb_secret_fake_value',
   url: `https://${PROJECT_REF}.supabase.co`,
+});
+
+describe('classifyLoginAccountUpdateResult', () => {
+  it('produces the exact safe diagnostic for an API error with a valid code and status', () => {
+    const result: LoginAccountUpdateResult = {
+      data: null,
+      error: { code: 'PGRST116' },
+      status: 404,
+    };
+    expect(() => classifyLoginAccountUpdateResult(result)).toThrow(
+      'LEARNING_FIXTURE_PROVISION_LOGIN_ACCOUNT_UPDATE_API_ERROR_CODE_PGRST116_STATUS_404',
+    );
+  });
+
+  it('produces a zero-row sentinel that is distinct from the API-error sentinel', () => {
+    const result: LoginAccountUpdateResult = {
+      data: [],
+      error: null,
+      status: 200,
+    };
+    expect(() => classifyLoginAccountUpdateResult(result)).toThrow(
+      'LEARNING_FIXTURE_PROVISION_LOGIN_ACCOUNT_UPDATE_ZERO_ROWS',
+    );
+  });
+
+  it('falls back to UNKNOWN for a malformed code and an out-of-range status, and never leaks any other error field into the diagnostic', () => {
+    const trapPassword = 'hunter2';
+    const trapApiKey = 'apikey=sb_secret_trap';
+    const trapUrl = 'onkxnkzeixpezetkmocf.supabase.co';
+    const trapEmail = 'a@colorplay.test';
+    const trapSql = "'; DROP TABLE profiles; --";
+    const trapValues = [trapPassword, trapApiKey, trapUrl, trapEmail, trapSql];
+    const result: LoginAccountUpdateResult = {
+      data: null,
+      error: {
+        code: 'code with spaces; DROP TABLE profiles; --',
+        details: `details trap ${trapSql}`,
+        hint: `hint trap ${trapApiKey}`,
+        message: `invalid request to https://${trapUrl}/auth/v1?${trapApiKey} for password "${trapPassword}" (${trapEmail})`,
+      },
+      status: 9999,
+    };
+
+    let caught: unknown;
+    try {
+      classifyLoginAccountUpdateResult(result);
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBeInstanceOf(Error);
+    const message = (caught as Error).message;
+    expect(message).toBe(
+      'LEARNING_FIXTURE_PROVISION_LOGIN_ACCOUNT_UPDATE_API_ERROR_CODE_UNKNOWN_STATUS_UNKNOWN',
+    );
+    for (const trap of trapValues) {
+      expect(message).not.toContain(trap);
+    }
+  });
+
+  it('falls back to UNKNOWN for a non-integer status', () => {
+    const result: LoginAccountUpdateResult = {
+      data: null,
+      error: { code: 'PGRST116' },
+      status: 404.5,
+    };
+    expect(() => classifyLoginAccountUpdateResult(result)).toThrow(
+      'LEARNING_FIXTURE_PROVISION_LOGIN_ACCOUNT_UPDATE_API_ERROR_CODE_PGRST116_STATUS_UNKNOWN',
+    );
+  });
+
+  it('returns the updated row count unchanged on success, without throwing', () => {
+    const result: LoginAccountUpdateResult = {
+      data: [{ id: 'fake-user-id' }],
+      error: null,
+      status: 200,
+    };
+    expect(classifyLoginAccountUpdateResult(result)).toBe(1);
+  });
 });
 
 describe('runProvisionWorkflow', () => {
