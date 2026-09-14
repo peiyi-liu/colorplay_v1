@@ -45,7 +45,9 @@ export const signIn = async (
   await page.goto('/login');
   const isTeacherPortal = navigationName === '教師導覽';
   if (isTeacherPortal) {
-    await page.getByRole('radio', { name: '教師端登入' }).check();
+    // 原生 radio 被樣式裁切成 tab，check() 會等到可見狀態逾時；改點 label 文字
+    // （見 tests/e2e/helpers/auth.ts signInTeacher 的既有慣例）。
+    await page.getByText('教師端登入').click();
   }
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
   await page.getByLabel('密碼', { exact: true }).fill(credentials.password);

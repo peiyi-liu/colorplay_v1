@@ -267,14 +267,20 @@ describe('signIn teacher/student portal branching (source contract)', () => {
     return full.slice(start);
   };
 
-  it('selects the 教師端登入 portal before submitting, only when navigationName is 教師導覽', async () => {
+  it('selects the 教師端登入 portal via the established getByText(...).click() interaction before submitting, only when navigationName is 教師導覽', async () => {
     const source = await signInSource();
     const guardIndex = source.indexOf("navigationName === '教師導覽'");
-    const radioIndex = source.indexOf("'教師端登入'");
+    const portalClickIndex = source.indexOf("getByText('教師端登入').click()");
     const submitIndex = source.indexOf("name: '登入' }).click()");
     expect(guardIndex).toBeGreaterThan(-1);
-    expect(radioIndex).toBeGreaterThan(guardIndex);
-    expect(submitIndex).toBeGreaterThan(radioIndex);
+    expect(portalClickIndex).toBeGreaterThan(guardIndex);
+    expect(submitIndex).toBeGreaterThan(portalClickIndex);
+  });
+
+  it('never uses .check() on the portal radio: it is visually clipped and .check() waits for visibility until timeout (tests/e2e/helpers/auth.ts signInTeacher)', async () => {
+    const source = await signInSource();
+    expect(source).not.toContain('.check()');
+    expect(source).not.toContain("getByRole('radio'");
   });
 
   it('asserts /teacher and 教學分析 for the teacher branch, never the student learning-map heading', async () => {
