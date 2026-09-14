@@ -9,6 +9,7 @@ import {
   REVIEW_MANIFEST,
   REVIEW_MEDIA_CARD,
 } from '../fixtures/review-manifest.generated';
+import { TEST_USERS } from '../fixtures/users';
 import {
   attachBrowserHealth,
   declareExpectedBrowserFailure,
@@ -19,7 +20,7 @@ import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
 import {
   classroomRunLabel,
   learningStudentDisplayNameFromEmail,
-  resolveLearningExperienceIdentities,
+  resolveLearningStudentCredentials,
   signIn,
 } from './helpers/learning-experience-fixture';
 import {
@@ -107,11 +108,7 @@ test('Learning Experience phase gate', async ({
   if (!reviewSubtopic) {
     throw new Error('LEARNING_EXPERIENCE_REVIEW_SUBTOPIC_MISSING');
   }
-  const {
-    nonOwnerTeacher,
-    ownerTeacher,
-    student: learningStudentCredentials,
-  } = await resolveLearningExperienceIdentities();
+  const learningStudentCredentials = await resolveLearningStudentCredentials();
   const learningStudentDisplayName = learningStudentDisplayNameFromEmail(
     learningStudentCredentials.email,
   );
@@ -125,7 +122,9 @@ test('Learning Experience phase gate', async ({
   const teacherHealth = attachBrowserHealth(teacherPage);
   const teacherBHealth = attachBrowserHealth(teacherBPage);
   declareExpectedBrowserFailure(teacherBHealth, teacherStudentProgressDenial);
-
+  // Teacher preflight (Issue #41): fail closed on both fixed teachers before the student mutates state; both contexts stay signed in and are reused below.
+  await signIn(teacherPage, TEST_USERS.teacher, '教師導覽');
+  await signIn(teacherBPage, TEST_USERS.teacherTwo, '教師導覽');
   await signIn(studentPage, learningStudentCredentials, '主要導覽');
   const rewards = studentPage.getByRole('region', { name: '學習獎勵' });
   await expectHudEconomy(rewards, {
@@ -410,8 +409,7 @@ test('Learning Experience phase gate', async ({
 
   // 學生端 /app/progress 已移除（Task 10）；100%/已精熟改由下方 teacherRow 斷言從教師視角覆蓋。
 
-  // --- Teacher analytics: owner reads exact mastery, others read nothing ---
-  await signIn(teacherPage, ownerTeacher, '教師導覽');
+  // --- Teacher analytics: owner reads exact mastery, others read nothing (teacherPage reused from the preflight above, not re-signed-in) ---
   await teacherPage.goto('/teacher/classes');
   const { joinCode } = await createClassroom(
     teacherPage,
@@ -451,7 +449,6 @@ test('Learning Experience phase gate', async ({
     '@colorplay.test',
   );
 
-  await signIn(teacherBPage, nonOwnerTeacher, '教師導覽');
   await teacherBPage.goto(
     `/teacher/classes/${classroomId}/members/${memberRef}`,
   );

@@ -10,7 +10,7 @@ import { TEST_USERS } from '../fixtures/users';
 import {
   classroomRunLabel,
   learningStudentDisplayNameFromEmail,
-  resolveLearningExperienceIdentities,
+  resolveLearningStudentCredentials,
 } from '../e2e/helpers/learning-experience-fixture';
 import {
   quizContinueActionName,
@@ -162,26 +162,22 @@ describe('quiz continue action name contract', () => {
   });
 });
 
-describe('resolveLearningExperienceIdentities (real behavior, not source-string)', () => {
+describe('resolveLearningStudentCredentials (real behavior, not source-string)', () => {
   const baseEnv = () => ({
     ...process.env,
     LEARNING_EXPERIENCE_FIXTURE_CREDENTIAL_FILE: undefined,
     PLAYWRIGHT_REQUIRE_RUN_SCOPED_LEARNING_FIXTURE: undefined,
   });
 
-  it('uses the fixed fixtures for all three identities when the gate is not on', async () => {
-    await expect(
-      resolveLearningExperienceIdentities(baseEnv()),
-    ).resolves.toEqual({
-      nonOwnerTeacher: TEST_USERS.teacherTwo,
-      ownerTeacher: TEST_USERS.learningTeacher,
-      student: TEST_USERS.learningStudent,
-    });
+  it('uses the fixed fixture when the gate is not on', async () => {
+    await expect(resolveLearningStudentCredentials(baseEnv())).resolves.toEqual(
+      TEST_USERS.learningStudent,
+    );
   });
 
-  it('fails closed with the fixed sentinel, never the fixed fixtures, when the gate is on but no path is set', async () => {
+  it('fails closed with the fixed sentinel, never the fixed fixture, when the gate is on but no path is set', async () => {
     await expect(
-      resolveLearningExperienceIdentities({
+      resolveLearningStudentCredentials({
         ...baseEnv(),
         PLAYWRIGHT_REQUIRE_RUN_SCOPED_LEARNING_FIXTURE: 'on',
       }),
@@ -190,7 +186,7 @@ describe('resolveLearningExperienceIdentities (real behavior, not source-string)
 
   it('fails closed when the gate is on but the credential file does not exist', async () => {
     await expect(
-      resolveLearningExperienceIdentities({
+      resolveLearningStudentCredentials({
         ...baseEnv(),
         LEARNING_EXPERIENCE_FIXTURE_CREDENTIAL_FILE: join(
           tmpdir(),
@@ -201,59 +197,19 @@ describe('resolveLearningExperienceIdentities (real behavior, not source-string)
     ).rejects.toThrow(LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL);
   });
 
-  it('fails closed when the gate is on but the file only has a partial bundle (a teacher missing)', async () => {
-    const fixtureRoot = await mkdtemp(join(tmpdir(), 'learning-fixture-gate-'));
-    const credentialPath = join(fixtureRoot, 'credential.json');
-    try {
-      await writeFile(
-        credentialPath,
-        JSON.stringify({
-          ownerTeacher: {
-            email: 'owner@colorplay.test',
-            password: 'run-scoped-secret-value',
-          },
-          student: {
-            email: 'student@colorplay.test',
-            password: 'run-scoped-secret-value',
-          },
-        }),
-        { mode: 0o600 },
-      );
-      await expect(
-        resolveLearningExperienceIdentities({
-          ...baseEnv(),
-          LEARNING_EXPERIENCE_FIXTURE_CREDENTIAL_FILE: credentialPath,
-          PLAYWRIGHT_REQUIRE_RUN_SCOPED_LEARNING_FIXTURE: 'on',
-        }),
-      ).rejects.toThrow(LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL);
-    } finally {
-      await rm(fixtureRoot, { recursive: true, force: true });
-    }
-  });
-
-  it('resolves the run-scoped student and teacher pair from a valid 0600 bundle file when the gate is on', async () => {
+  it('resolves the run-scoped credentials from a valid 0600 file when the gate is on', async () => {
     const fixtureRoot = await mkdtemp(join(tmpdir(), 'learning-fixture-gate-'));
     const credentialPath = join(fixtureRoot, 'credential.json');
     const expected = {
-      nonOwnerTeacher: {
-        email: 'learning-fixture-non-owner-teacher-1-1@colorplay.test',
-        password: 'run-scoped-secret-value-b',
-      },
-      ownerTeacher: {
-        email: 'learning-fixture-owner-teacher-1-1@colorplay.test',
-        password: 'run-scoped-secret-value-a',
-      },
-      student: {
-        email: 'learning-fixture-student-1-1@colorplay.test',
-        password: 'run-scoped-secret-value-s',
-      },
+      email: 'learning-experience-fixture-run-1-attempt-1@colorplay.test',
+      password: 'run-scoped-secret-value',
     };
     try {
       await writeFile(credentialPath, JSON.stringify(expected), {
         mode: 0o600,
       });
       await expect(
-        resolveLearningExperienceIdentities({
+        resolveLearningStudentCredentials({
           ...baseEnv(),
           LEARNING_EXPERIENCE_FIXTURE_CREDENTIAL_FILE: credentialPath,
           PLAYWRIGHT_REQUIRE_RUN_SCOPED_LEARNING_FIXTURE: 'on',
@@ -301,27 +257,17 @@ describe('learning-experience.spec.ts wiring (structural only, resolver behavior
   it('imports the fixture-resolution helpers instead of reimplementing them', async () => {
     const spec = await readText('tests/e2e/learning-experience.spec.ts');
     expect(spec).toContain("from './helpers/learning-experience-fixture'");
-    expect(spec).not.toContain('const resolveLearningExperienceIdentities');
+    expect(spec).not.toContain('const resolveLearningStudentCredentials');
     expect(spec).not.toContain('LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL');
   });
 
   it('wires the resolved credentials into sign-in, classroom join, and the teacher heading', async () => {
     const spec = await readText('tests/e2e/learning-experience.spec.ts');
-    expect(spec).toContain('resolveLearningExperienceIdentities()');
     expect(spec).toContain('signIn(studentPage, learningStudentCredentials');
     expect(spec).toContain('joinClassroomByCode(learningStudentCredentials');
     expect(spec).toContain('learningStudentDisplayName');
     expect(spec).not.toContain('learning.student 的學習進度');
     expect(spec).not.toContain('TEST_USERS.learningStudent');
-  });
-
-  it('resolves both run-scoped teachers instead of reaching into TEST_USERS directly (Issue #41)', async () => {
-    const spec = await readText('tests/e2e/learning-experience.spec.ts');
-    expect(spec).not.toContain("from '../fixtures/users'");
-    expect(spec).not.toContain('TEST_USERS.learningTeacher');
-    expect(spec).not.toContain('TEST_USERS.teacherTwo');
-    expect(spec).toContain("signIn(teacherPage, ownerTeacher, '教師導覽')");
-    expect(spec).toContain("signIn(teacherBPage, nonOwnerTeacher, '教師導覽')");
   });
 
   it('never re-enables automatic screenshot, trace, or video capture for this fixture-bearing spec', async () => {
