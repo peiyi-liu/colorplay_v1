@@ -359,6 +359,30 @@ describe('classifyLoginAccountUpdateResult', () => {
     }
   });
 
+  it('falls back to UNKNOWN for a key-like code that is not a real SQLSTATE or PostgREST code family', () => {
+    // Codex PR #44 P1: "sb_secret_trap" is identifier-shaped (alnum +
+    // underscore) and previously passed the old broad allowlist, letting a
+    // leaked key-like value reach the sentinel. It is neither a 5-char
+    // SQLSTATE nor PGRST+3-digits, so it must now fall back to UNKNOWN.
+    const trapCode = 'sb_secret_trap';
+    const result: LoginAccountUpdateResult = {
+      data: null,
+      error: { code: trapCode },
+      status: 500,
+    };
+    expect(() => classifyLoginAccountUpdateResult(result)).toThrow(
+      'LEARNING_FIXTURE_PROVISION_LOGIN_ACCOUNT_UPDATE_API_ERROR_CODE_UNKNOWN_STATUS_500',
+    );
+
+    let caught: unknown;
+    try {
+      classifyLoginAccountUpdateResult(result);
+    } catch (error) {
+      caught = error;
+    }
+    expect((caught as Error).message).not.toContain(trapCode);
+  });
+
   it('falls back to UNKNOWN for a non-integer status', () => {
     const result: LoginAccountUpdateResult = {
       data: null,

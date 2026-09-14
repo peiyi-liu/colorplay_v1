@@ -24,7 +24,13 @@ const RUN_ID_PATTERN = /^[1-9][0-9]{0,19}$/u;
 const RUN_ATTEMPT_PATTERN = /^[1-9][0-9]{0,3}$/u;
 const SHA_PATTERN = /^[0-9a-f]{40}$/u;
 const CREDENTIAL_FILE_MODE = 0o600;
-const API_ERROR_CODE_PATTERN = /^[A-Za-z0-9_]{1,32}$/u;
+// The only two code families a PostgREST update()/select() response's
+// `error.code` actually takes: a 5-character Postgres SQLSTATE (digits and
+// uppercase letters only), or PostgREST's own `PGRST` + 3 digits. Anything
+// else -- including an identifier-shaped but unrelated value such as a
+// leaked secret name -- must fall back to UNKNOWN rather than pass through.
+const SQLSTATE_ERROR_CODE_PATTERN = /^[0-9A-Z]{5}$/u;
+const POSTGREST_ERROR_CODE_PATTERN = /^PGRST[0-9]{3}$/u;
 
 export const LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL =
   'LEARNING_EXPERIENCE_RUN_SCOPED_FIXTURE_REQUIRED';
@@ -225,8 +231,10 @@ export async function readRunScopedLearningFixtureCredentialFile(
 // before being embedded in the sentinel, so a malicious or malformed value
 // on either can never survive into the sentinel this function throws.
 function sanitizeLoginAccountApiErrorCode(code) {
-  return typeof code === 'string' && API_ERROR_CODE_PATTERN.test(code)
-    ? code.toUpperCase()
+  return typeof code === 'string' &&
+    (SQLSTATE_ERROR_CODE_PATTERN.test(code) ||
+      POSTGREST_ERROR_CODE_PATTERN.test(code))
+    ? code
     : 'UNKNOWN';
 }
 
