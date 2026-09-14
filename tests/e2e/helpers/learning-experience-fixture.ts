@@ -77,11 +77,12 @@ export const signIn = async (
   if (isTeacherPortal) {
     try {
       await expect(page).toHaveURL(isTeacherLandingUrl);
-    } catch (cause) {
+    } catch {
+      // 絕不保留或記錄原始 assertion 錯誤：它可能夾帶完整 URL/query/call log。
+      // 只往外丟固定安全分類，catch 不綁定變數，原始錯誤在此就地捨棄。
       const diagnostic = await classifyTeacherLoginFailure(page);
       throw new Error(
         `LEARNING_EXPERIENCE_TEACHER_LOGIN_GATE_FAILED: ${diagnostic}`,
-        { cause },
       );
     }
     await expect(

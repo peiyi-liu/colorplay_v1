@@ -443,8 +443,6 @@ test('Learning Experience phase gate', async ({
   const teacherRow = teacherPage.getByRole('row', {
     name: new RegExp(QUIZ_CHAPTER_TITLE, 'u'),
   });
-  // 正式測驗 10 題答錯 2 題（見上方 wrongPromptCount），補救練習不計入正式測驗正確率：
-  // 8 / 10 = 80.0%，教師端 mastery 標籤對應為「已完成」，並非「已精熟」。
   await expect(teacherRow).toContainText('80.0%');
   await expect(teacherRow).toContainText('已完成');
   await expect(teacherPage.locator('body')).not.toContainText(
