@@ -44,6 +44,21 @@ export function classroomRunLabel(
 export const isTeacherLandingUrl = (url: URL): boolean =>
   url.pathname === '/teacher';
 
+export type TeacherLoginGateDiagnostic =
+  'still_on_login' | 'unauthorized' | 'alert_visible' | 'unrecognized_state';
+
+// 5 秒 landing gate 逾時（例如 run 34852498818 的 teacherTwo 案例）沒有留下任何
+// Playwright 失敗證物；在拋出前只分類安全類別，絕不外洩帳密或畫面文字內容。
+export const classifyTeacherLoginFailure = async (
+  page: Page,
+): Promise<TeacherLoginGateDiagnostic> => {
+  const { pathname } = new URL(page.url());
+  if (pathname === '/login') return 'still_on_login';
+  if (pathname === '/unauthorized') return 'unauthorized';
+  if ((await page.getByRole('alert').count()) > 0) return 'alert_visible';
+  return 'unrecognized_state';
+};
+
 export const signIn = async (
   page: Page,
   credentials: Credentials,
@@ -60,7 +75,16 @@ export const signIn = async (
   await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   if (isTeacherPortal) {
-    await expect(page).toHaveURL(isTeacherLandingUrl);
+    try {
+      await expect(page).toHaveURL(isTeacherLandingUrl);
+    } catch {
+      // 絕不保留或記錄原始 assertion 錯誤：它可能夾帶完整 URL/query/call log。
+      // 只往外丟固定安全分類，catch 不綁定變數，原始錯誤在此就地捨棄。
+      const diagnostic = await classifyTeacherLoginFailure(page);
+      throw new Error(
+        `LEARNING_EXPERIENCE_TEACHER_LOGIN_GATE_FAILED: ${diagnostic}`,
+      );
+    }
     await expect(
       page.getByRole('navigation', { name: navigationName }),
     ).toBeVisible();
