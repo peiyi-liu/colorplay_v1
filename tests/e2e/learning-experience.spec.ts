@@ -54,8 +54,6 @@ const remediationResultViewports = [
   { height: 812, label: 'mobile-portrait', width: 375 },
 ] as const;
 
-const classroomIdPattern =
-  /\/teacher\/classes\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/iu;
 const teacherStudentProgressDenial = {
   count: 1,
   status: 403,
@@ -411,16 +409,18 @@ test('Learning Experience phase gate', async ({
 
   // --- Teacher analytics: owner reads exact mastery, others read nothing (teacherPage reused from the preflight above, not re-signed-in) ---
   await teacherPage.goto('/teacher/classes');
-  const { joinCode } = await createClassroom(
+  const { classroomId, joinCode } = await createClassroom(
     teacherPage,
     `學習體驗班級 ${tag}`,
   );
-  await teacherPage.getByRole('link', { name: '管理班級' }).click();
-  await teacherPage.waitForURL(classroomIdPattern);
-  const classroomId = classroomIdPattern.exec(teacherPage.url())?.[1];
-  if (!classroomId) {
-    throw new Error('LEARNING_EXPERIENCE_CLASSROOM_ID_MISSING');
-  }
+  const targetClassroomLink = teacherPage
+    .getByRole('link', { name: '進入班級', exact: true })
+    .and(teacherPage.locator(`a[href="/teacher/classes/${classroomId}"]`));
+  await expect(targetClassroomLink).toBeVisible();
+  await targetClassroomLink.click();
+  await expect(teacherPage).toHaveURL(
+    new RegExp(`/teacher/classes/${classroomId}$`),
+  );
 
   await joinClassroomByCode(learningStudentCredentials, joinCode);
   await teacherPage.reload();
