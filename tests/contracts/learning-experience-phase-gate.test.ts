@@ -253,6 +253,55 @@ describe('classroomRunLabel (real behavior)', () => {
   });
 });
 
+// signIn() takes a live Playwright Page, so a real click-through of the
+// teacher-portal branch can only execute in a Hosted browser session; this
+// locks the source shape of the fix instead, per the S-level remediation
+// brief's "narrow source/contract test" allowance.
+describe('signIn teacher/student portal branching (source contract)', () => {
+  const signInSource = async () => {
+    const full = await readText(
+      'tests/e2e/helpers/learning-experience-fixture.ts',
+    );
+    const start = full.indexOf('export const signIn');
+    expect(start).toBeGreaterThan(-1);
+    return full.slice(start);
+  };
+
+  it('selects the 教師端登入 portal before submitting, only when navigationName is 教師導覽', async () => {
+    const source = await signInSource();
+    const guardIndex = source.indexOf("navigationName === '教師導覽'");
+    const radioIndex = source.indexOf("'教師端登入'");
+    const submitIndex = source.indexOf("name: '登入' }).click()");
+    expect(guardIndex).toBeGreaterThan(-1);
+    expect(radioIndex).toBeGreaterThan(guardIndex);
+    expect(submitIndex).toBeGreaterThan(radioIndex);
+  });
+
+  it('asserts /teacher and 教學分析 for the teacher branch, never the student learning-map heading', async () => {
+    const source = await signInSource();
+    const clickIndex = source.indexOf("name: '登入' }).click()");
+    const teacherBranchStart = source.indexOf('isTeacherPortal', clickIndex);
+    const studentBranchStart = source.indexOf('toHaveURL(/\\/app$/u)');
+    expect(clickIndex).toBeGreaterThan(-1);
+    expect(teacherBranchStart).toBeGreaterThan(clickIndex);
+    expect(studentBranchStart).toBeGreaterThan(teacherBranchStart);
+    const teacherBranch = source.slice(teacherBranchStart, studentBranchStart);
+    expect(teacherBranch).toContain('toHaveURL(/\\/teacher$/u)');
+    expect(teacherBranch).toContain("name: '教學分析'");
+    expect(teacherBranch).not.toContain('學習地圖');
+  });
+
+  it('preserves the student branch: no portal selection, /app URL, and the 學習地圖 heading', async () => {
+    const source = await signInSource();
+    const studentBranchStart = source.indexOf('toHaveURL(/\\/app$/u)');
+    expect(studentBranchStart).toBeGreaterThan(-1);
+    const studentBranch = source.slice(studentBranchStart);
+    expect(studentBranch).toContain("name: '學習地圖'");
+    expect(studentBranch).not.toContain('教師端登入');
+    expect(studentBranch).not.toContain('/teacher');
+  });
+});
+
 describe('learning-experience.spec.ts wiring (structural only, resolver behavior tested above)', () => {
   it('imports the fixture-resolution helpers instead of reimplementing them', async () => {
     const spec = await readText('tests/e2e/learning-experience.spec.ts');

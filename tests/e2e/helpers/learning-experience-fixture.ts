@@ -43,9 +43,22 @@ export const signIn = async (
   navigationName: '主要導覽' | '教師導覽',
 ): Promise<void> => {
   await page.goto('/login');
+  const isTeacherPortal = navigationName === '教師導覽';
+  if (isTeacherPortal) {
+    await page.getByRole('radio', { name: '教師端登入' }).check();
+  }
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
   await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
+  if (isTeacherPortal) {
+    await expect(page).toHaveURL(/\/teacher$/u);
+    await expect(
+      page.getByRole('navigation', { name: navigationName }),
+    ).toBeVisible();
+    // Teacher landing heading, never the student learning-map heading.
+    await expect(page.getByRole('heading', { name: '教學分析' })).toBeVisible();
+    return;
+  }
   await expect(page).toHaveURL(/\/app$/u);
   await expect(
     page.getByRole('navigation', { name: navigationName }),
