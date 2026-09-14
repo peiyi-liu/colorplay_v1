@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { ACCEPTANCE_IDS } from '../../scripts/acceptance/finalize-learning-experience.mjs';
 import { LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL } from '../../scripts/staging/provision-learning-experience-fixture.mjs';
@@ -11,6 +11,7 @@ import {
   classroomRunLabel,
   learningStudentDisplayNameFromEmail,
   resolveLearningStudentCredentials,
+  signIn,
 } from '../e2e/helpers/learning-experience-fixture';
 import {
   quizContinueActionName,
@@ -250,6 +251,106 @@ describe('classroomRunLabel (real behavior)', () => {
         GITHUB_RUN_ID: undefined,
       }),
     ).toMatch(/^local-\d+$/u);
+  });
+});
+
+// signIn() takes a live Playwright Page, so a real click-through of the
+// teacher-portal branch can only execute in a Hosted browser session; this
+// locks the source shape of the fix instead, per the S-level remediation
+// brief's "narrow source/contract test" allowance.
+describe('signIn teacher/student portal branching (source contract)', () => {
+  const signInSource = async () => {
+    const full = await readText(
+      'tests/e2e/helpers/learning-experience-fixture.ts',
+    );
+    const start = full.indexOf('export const signIn');
+    expect(start).toBeGreaterThan(-1);
+    return full.slice(start);
+  };
+
+  it('selects the 教師端登入 portal via the established getByText(...).click() interaction before submitting, only when navigationName is 教師導覽', async () => {
+    const source = await signInSource();
+    const guardIndex = source.indexOf("navigationName === '教師導覽'");
+    const portalClickIndex = source.indexOf("getByText('教師端登入').click()");
+    const submitIndex = source.indexOf("name: '登入' }).click()");
+    expect(guardIndex).toBeGreaterThan(-1);
+    expect(portalClickIndex).toBeGreaterThan(guardIndex);
+    expect(submitIndex).toBeGreaterThan(portalClickIndex);
+  });
+
+  it('never uses .check() on the portal radio: it is visually clipped and .check() waits for visibility until timeout (tests/e2e/helpers/auth.ts signInTeacher)', async () => {
+    const source = await signInSource();
+    expect(source).not.toContain('.check()');
+    expect(source).not.toContain("getByRole('radio'");
+  });
+
+  it('asserts /teacher and 教學分析 for the teacher branch, never the student learning-map heading', async () => {
+    const source = await signInSource();
+    const clickIndex = source.indexOf("name: '登入' }).click()");
+    const teacherBranchStart = source.indexOf('isTeacherPortal', clickIndex);
+    const studentBranchStart = source.indexOf('toHaveURL(/\\/app$/u)');
+    expect(clickIndex).toBeGreaterThan(-1);
+    expect(teacherBranchStart).toBeGreaterThan(clickIndex);
+    expect(studentBranchStart).toBeGreaterThan(teacherBranchStart);
+    const teacherBranch = source.slice(teacherBranchStart, studentBranchStart);
+    expect(teacherBranch).toContain('toHaveURL(/\\/teacher$/u)');
+    expect(teacherBranch).toContain("name: '教學分析'");
+    expect(teacherBranch).not.toContain('學習地圖');
+  });
+
+  it('preserves the student branch: no portal selection, /app URL, and the 學習地圖 heading', async () => {
+    const source = await signInSource();
+    const studentBranchStart = source.indexOf('toHaveURL(/\\/app$/u)');
+    expect(studentBranchStart).toBeGreaterThan(-1);
+    const studentBranch = source.slice(studentBranchStart);
+    expect(studentBranch).toContain("name: '學習地圖'");
+    expect(studentBranch).not.toContain('教師端登入');
+    expect(studentBranch).not.toContain('/teacher');
+  });
+});
+
+// Codex finding-closure review on PR #43 (reviewed head 8317ddd) held P2
+// open: the source-position contract above proves the guard text and the
+// portal click occur in that order, but not that the click is actually
+// contained inside the `if (isTeacherPortal)` body -- an unconditional
+// click after an empty guard would still satisfy it. This executes the
+// real signIn() against a mocked Page and proves containment directly: a
+// stub .fill() on the account textbox rejects with a sentinel right after
+// the portal-selection step, so signIn() never reaches the Playwright
+// expect() matchers that need a real Page/Locator.
+describe('signIn portal click containment (executable, mocked Page)', () => {
+  const STOP_AFTER_ACCOUNT_FILL = new Error('stop-after-account-fill-sentinel');
+  const credentials = { email: 'fixture@colorplay.test', password: 'x' };
+
+  const mockedPage = () => {
+    const portalClick = vi.fn(() => Promise.resolve());
+    const getByText = vi.fn(() => ({ click: portalClick }));
+    const getByRole = vi.fn(() => ({
+      fill: () => Promise.reject(STOP_AFTER_ACCOUNT_FILL),
+    }));
+    const page = { getByRole, getByText, goto: vi.fn(() => Promise.resolve()) };
+    return {
+      getByText,
+      page: page as unknown as Parameters<typeof signIn>[0],
+      portalClick,
+    };
+  };
+
+  it('clicks 教師端登入 exactly once for a teacher sign-in', async () => {
+    const { getByText, page, portalClick } = mockedPage();
+    await expect(signIn(page, credentials, '教師導覽')).rejects.toBe(
+      STOP_AFTER_ACCOUNT_FILL,
+    );
+    expect(getByText).toHaveBeenCalledExactlyOnceWith('教師端登入');
+    expect(portalClick).toHaveBeenCalledOnce();
+  });
+
+  it('never calls getByText for a student sign-in', async () => {
+    const { getByText, page } = mockedPage();
+    await expect(signIn(page, credentials, '主要導覽')).rejects.toBe(
+      STOP_AFTER_ACCOUNT_FILL,
+    );
+    expect(getByText).not.toHaveBeenCalled();
   });
 });
 

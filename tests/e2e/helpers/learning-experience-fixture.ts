@@ -43,9 +43,24 @@ export const signIn = async (
   navigationName: '主要導覽' | '教師導覽',
 ): Promise<void> => {
   await page.goto('/login');
+  const isTeacherPortal = navigationName === '教師導覽';
+  if (isTeacherPortal) {
+    // 原生 radio 被樣式裁切成 tab，check() 會等到可見狀態逾時；改點 label 文字
+    // （見 tests/e2e/helpers/auth.ts signInTeacher 的既有慣例）。
+    await page.getByText('教師端登入').click();
+  }
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
   await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
+  if (isTeacherPortal) {
+    await expect(page).toHaveURL(/\/teacher$/u);
+    await expect(
+      page.getByRole('navigation', { name: navigationName }),
+    ).toBeVisible();
+    // Teacher landing heading, never the student learning-map heading.
+    await expect(page.getByRole('heading', { name: '教學分析' })).toBeVisible();
+    return;
+  }
   await expect(page).toHaveURL(/\/app$/u);
   await expect(
     page.getByRole('navigation', { name: navigationName }),
