@@ -7,17 +7,18 @@ import { pathToFileURL, URL } from 'node:url';
 
 import { createClient } from '@supabase/supabase-js';
 
-// Task 0A-2 run-scoped Hosted learning-experience fixture. Every GitHub
-// workflow run/attempt provisions its own synthetic student instead of
-// reusing tests/fixtures/users.ts' learningStudent, so repeated Hosted runs
-// stop accumulating XP/Token/mistakes on one shared account (see the
-// bounded read-only design audit this file implements). This stage does
-// NOT delete or reset anything -- created identities and their data are
-// left in place, tagged via app_metadata, for a later Phase 0B clean
-// rebuild to reconcile. This file must never remove rows from
-// public.xp_transactions or public.wallet_transactions (immutable ledgers
-// guarded by triggers), never bypass those triggers, and never reset any
-// ledger -- it only ever INSERTs one new auth user and reads counts back.
+// Task 0A-2 / Issue #41 run-scoped Hosted learning-experience fixture. Every
+// GitHub workflow run/attempt provisions its own synthetic student *and* its
+// own owner/non-owner teacher pair instead of reusing tests/fixtures/users.ts'
+// learningStudent/learningTeacher/teacherTwo, so repeated Hosted runs stop
+// accumulating XP/Token/mistakes -- or drifting teacher role/profile state --
+// on shared accounts (see the bounded read-only design audit this file
+// implements). This stage does NOT delete or reset anything -- created
+// identities and their data are left in place, tagged via app_metadata, for a
+// later Phase 0B clean rebuild to reconcile. This file must never remove rows
+// from public.xp_transactions or public.wallet_transactions (immutable
+// ledgers guarded by triggers), never bypass those triggers, and never reset
+// any ledger -- it only ever INSERTs new auth users and reads counts back.
 
 const EXPECTED_PROJECT_REF = 'onkxnkzeixpezetkmocf';
 const RUN_ID_PATTERN = /^[1-9][0-9]{0,19}$/u;
@@ -132,13 +133,19 @@ export function validateProvisionerEnvironment(environment) {
   };
 }
 
-// Deterministic given (runId, runAttempt): the same run retried at a new
-// attempt always gets a distinct identity, but nothing here is secret --
+// Every derived email/login_account is scoped by (kind, runId, runAttempt)
+// -- kind is one of 'student' | 'owner-teacher' | 'non-owner-teacher' -- so
+// the student and its two teachers never collide with each other or across
+// runs.
+//
+// Deterministic given (kind, runId, runAttempt): the same run retried at a
+// new attempt always gets a distinct identity, but nothing here is secret --
 // only the password (generateSecurePassword) needs to be unpredictable.
-export function deriveRunScopedEmail(runId, runAttempt) {
-  // "learning-fixture-" (17) + runId (<=20) + "-" (1) + runAttempt (<=4)
-  // = <=42 chars, comfortably inside the RFC 5321 64-char local-part limit.
-  return `learning-fixture-${runId}-${runAttempt}@colorplay.test`;
+export function deriveRunScopedEmail(runId, runAttempt, kind) {
+  // "learning-fixture-" (17) + kind (<=18, "non-owner-teacher-") +
+  // runId (<=20) + "-" (1) + runAttempt (<=4) = <=60 chars, comfortably
+  // inside the RFC 5321 64-char local-part limit.
+  return `learning-fixture-${kind}-${runId}-${runAttempt}@colorplay.test`;
 }
 
 export function generateSecurePassword() {
@@ -146,31 +153,32 @@ export function generateSecurePassword() {
 }
 
 // public.profiles.login_account is constrained to `^[a-z0-9]{3,20}$` and
-// unique (see 20260723000100_account_identity.sql). A hash of (runId,
-// runAttempt) -- rather than naive concatenation/truncation of the two
-// numbers -- keeps distinct run/attempt pairs from colliding into the same
-// short string; the DB's own unique index remains the fail-closed backstop
-// if a collision ever did occur.
+// unique (see 20260723000100_account_identity.sql). A hash of (kind, runId,
+// runAttempt) -- rather than naive concatenation/truncation of the three
+// values -- keeps distinct identity/run/attempt combinations from colliding
+// into the same short string; the DB's own unique index remains the
+// fail-closed backstop if a collision ever did occur.
 const LOGIN_ACCOUNT_LENGTH = 16;
 
-export function deriveRunScopedLoginAccount(runId, runAttempt) {
+export function deriveRunScopedLoginAccount(runId, runAttempt, kind) {
   const digest = createHash('sha256')
-    .update(`learning-fixture:${runId}:${runAttempt}`)
+    .update(`learning-fixture:${kind}:${runId}:${runAttempt}`)
     .digest('hex');
   return digest.slice(0, LOGIN_ACCOUNT_LENGTH);
 }
 
-export function buildFixtureAppMetadata({ gitSha, runAttempt, runId }) {
+export function buildFixtureAppMetadata({ gitSha, kind, runAttempt, runId }) {
   return {
     colorplay_fixture_environment: 'staging',
     colorplay_fixture_git_sha: gitSha,
+    colorplay_fixture_identity: kind,
     colorplay_fixture_kind: 'learning-experience',
     colorplay_fixture_run_attempt: runAttempt,
     colorplay_fixture_run_id: runId,
   };
 }
 
-export function isLearningFixtureCredentials(value) {
+export function isLearningFixtureCredentialPair(value) {
   return (
     isRecord(value) &&
     Object.keys(value).length === 2 &&
@@ -178,6 +186,18 @@ export function isLearningFixtureCredentials(value) {
     value.email.length > 0 &&
     typeof value.password === 'string' &&
     value.password.length > 0
+  );
+}
+
+const CREDENTIAL_BUNDLE_KEYS = ['nonOwnerTeacher', 'ownerTeacher', 'student'];
+
+export function isLearningFixtureCredentialBundle(value) {
+  return (
+    isRecord(value) &&
+    Object.keys(value).length === CREDENTIAL_BUNDLE_KEYS.length &&
+    CREDENTIAL_BUNDLE_KEYS.every((key) =>
+      isLearningFixtureCredentialPair(value[key]),
+    )
   );
 }
 
@@ -211,31 +231,45 @@ export async function readRunScopedLearningFixtureCredentialFile(
   } catch {
     throw new Error(LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL);
   }
-  if (!isLearningFixtureCredentials(parsed)) {
+  if (!isLearningFixtureCredentialBundle(parsed)) {
     throw new Error(LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL);
   }
-  return { email: parsed.email, password: parsed.password };
+  return {
+    nonOwnerTeacher: parsed.nonOwnerTeacher,
+    ownerTeacher: parsed.ownerTeacher,
+    student: parsed.student,
+  };
 }
 
-export async function runProvisionWorkflow({ environment, ports }) {
-  const email = deriveRunScopedEmail(environment.runId, environment.runAttempt);
+// One identity's full create -> assign role/login_account -> verify
+// pipeline. Every call must complete (including verifyFixtureProfile) before
+// runProvisionWorkflow is allowed to write any credential file -- a teacher
+// whose role update silently failed on Hosted (this file's root-caused bug,
+// Issue #41) must never reach the Playwright step's credential file.
+async function provisionIdentity({ environment, expectedRole, kind, ports }) {
+  const email = deriveRunScopedEmail(
+    environment.runId,
+    environment.runAttempt,
+    kind,
+  );
   const password = generateSecurePassword();
-  const appMetadata = buildFixtureAppMetadata(environment);
+  const appMetadata = buildFixtureAppMetadata({ ...environment, kind });
   const loginAccount = deriveRunScopedLoginAccount(
     environment.runId,
     environment.runAttempt,
+    kind,
   );
 
-  const userId = await ports.auth.createStudent({
+  const userId = await ports.auth.createIdentity({
     appMetadata,
     email,
     password,
   });
 
-  const updatedRowCount = await ports.database.setLoginAccount(
-    userId,
+  const updatedRowCount = await ports.database.provisionProfile(userId, {
     loginAccount,
-  );
+    role: expectedRole,
+  });
   if (updatedRowCount !== 1) {
     fail('LEARNING_FIXTURE_PROVISION_LOGIN_ACCOUNT_UPDATE_FAILED');
   }
@@ -243,7 +277,7 @@ export async function runProvisionWorkflow({ environment, ports }) {
   const profile = await ports.database.verifyFixtureProfile(userId);
   if (
     profile.profiles !== 1 ||
-    profile.role !== 'student' ||
+    profile.role !== expectedRole ||
     profile.loginAccount !== loginAccount ||
     profile.wallets !== 1 ||
     profile.walletTokenBalance !== 0
@@ -251,11 +285,45 @@ export async function runProvisionWorkflow({ environment, ports }) {
     fail('LEARNING_FIXTURE_PROVISION_CARDINALITY_INVALID');
   }
 
-  await ports.filesystem.writeCredentialFile(environment.credentialFilePath, {
-    email,
-    password,
+  return { email, password };
+}
+
+export async function runProvisionWorkflow({ environment, ports }) {
+  const student = await provisionIdentity({
+    environment,
+    expectedRole: 'student',
+    kind: 'student',
+    ports,
   });
-  return { email };
+  const ownerTeacher = await provisionIdentity({
+    environment,
+    expectedRole: 'teacher',
+    kind: 'owner-teacher',
+    ports,
+  });
+  const nonOwnerTeacher = await provisionIdentity({
+    environment,
+    expectedRole: 'teacher',
+    kind: 'non-owner-teacher',
+    ports,
+  });
+
+  await ports.filesystem.writeCredentialFile(environment.credentialFilePath, {
+    nonOwnerTeacher: {
+      email: nonOwnerTeacher.email,
+      password: nonOwnerTeacher.password,
+    },
+    ownerTeacher: {
+      email: ownerTeacher.email,
+      password: ownerTeacher.password,
+    },
+    student: { email: student.email, password: student.password },
+  });
+  return {
+    nonOwnerTeacherEmail: nonOwnerTeacher.email,
+    ownerTeacherEmail: ownerTeacher.email,
+    studentEmail: student.email,
+  };
 }
 
 function createPorts(runtime) {
@@ -264,7 +332,7 @@ function createPorts(runtime) {
   });
   return {
     auth: {
-      async createStudent({ appMetadata, email, password }) {
+      async createIdentity({ appMetadata, email, password }) {
         const result = await client.auth.admin.createUser({
           app_metadata: appMetadata,
           email,
@@ -278,10 +346,10 @@ function createPorts(runtime) {
       },
     },
     database: {
-      async setLoginAccount(userId, loginAccount) {
+      async provisionProfile(userId, { loginAccount, role }) {
         const result = await client
           .from('profiles')
-          .update({ login_account: loginAccount })
+          .update({ login_account: loginAccount, role })
           .eq('id', userId)
           .select('id');
         if (result.error) {

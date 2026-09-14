@@ -9,7 +9,6 @@ import {
   REVIEW_MANIFEST,
   REVIEW_MEDIA_CARD,
 } from '../fixtures/review-manifest.generated';
-import { TEST_USERS } from '../fixtures/users';
 import {
   attachBrowserHealth,
   declareExpectedBrowserFailure,
@@ -20,7 +19,7 @@ import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
 import {
   classroomRunLabel,
   learningStudentDisplayNameFromEmail,
-  resolveLearningStudentCredentials,
+  resolveLearningExperienceIdentities,
   signIn,
 } from './helpers/learning-experience-fixture';
 import {
@@ -108,7 +107,11 @@ test('Learning Experience phase gate', async ({
   if (!reviewSubtopic) {
     throw new Error('LEARNING_EXPERIENCE_REVIEW_SUBTOPIC_MISSING');
   }
-  const learningStudentCredentials = await resolveLearningStudentCredentials();
+  const {
+    nonOwnerTeacher,
+    ownerTeacher,
+    student: learningStudentCredentials,
+  } = await resolveLearningExperienceIdentities();
   const learningStudentDisplayName = learningStudentDisplayNameFromEmail(
     learningStudentCredentials.email,
   );
@@ -408,7 +411,7 @@ test('Learning Experience phase gate', async ({
   // 學生端 /app/progress 已移除（Task 10）；100%/已精熟改由下方 teacherRow 斷言從教師視角覆蓋。
 
   // --- Teacher analytics: owner reads exact mastery, others read nothing ---
-  await signIn(teacherPage, TEST_USERS.learningTeacher, '教師導覽');
+  await signIn(teacherPage, ownerTeacher, '教師導覽');
   await teacherPage.goto('/teacher/classes');
   const { joinCode } = await createClassroom(
     teacherPage,
@@ -448,7 +451,7 @@ test('Learning Experience phase gate', async ({
     '@colorplay.test',
   );
 
-  await signIn(teacherBPage, TEST_USERS.teacherTwo, '教師導覽');
+  await signIn(teacherBPage, nonOwnerTeacher, '教師導覽');
   await teacherBPage.goto(
     `/teacher/classes/${classroomId}/members/${memberRef}`,
   );

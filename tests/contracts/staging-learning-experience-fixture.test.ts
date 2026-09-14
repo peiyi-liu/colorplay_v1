@@ -1,8 +1,8 @@
-// AGENTS.md section 6: this file exceeds 500 lines. Issue #37 scopes
-// ownership to exactly three files (this one plus the .mjs/.d.mts it
-// covers), so splitting it into multiple test files would be an
-// out-of-scope refactor; the length is one contract test file growing with
-// its module's fail-closed gates, not an unbounded or unrelated file.
+// AGENTS.md section 6: this file exceeds 500 lines. Issue #37 and Issue #41
+// both scope ownership to a small, fixed set of files (this one plus the
+// .mjs/.d.mts it covers), so splitting it into multiple test files would be
+// an out-of-scope refactor; the length is one contract test file growing
+// with its module's fail-closed gates, not an unbounded or unrelated file.
 import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -16,7 +16,8 @@ import {
   type FixtureAppMetadata,
   type FixtureProfileVerification,
   generateSecurePassword,
-  isLearningFixtureCredentials,
+  isLearningFixtureCredentialBundle,
+  isLearningFixtureCredentialPair,
   LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL,
   readRunScopedLearningFixtureCredentialFile,
   runProvisionWorkflow,
@@ -100,17 +101,30 @@ describe('validateProvisionerEnvironment', () => {
 
 describe('deriveRunScopedEmail', () => {
   it('produces a distinct identity for the same run id at a different attempt', () => {
-    const first = deriveRunScopedEmail('1234567890', '1');
-    const second = deriveRunScopedEmail('1234567890', '2');
+    const first = deriveRunScopedEmail('1234567890', '1', 'student');
+    const second = deriveRunScopedEmail('1234567890', '2', 'student');
     expect(first).not.toBe(second);
     expect(first).toMatch(/^[a-z0-9-]+@colorplay\.test$/u);
     expect(second).toMatch(/^[a-z0-9-]+@colorplay\.test$/u);
   });
 
-  it('keeps the local-part within the RFC 5321 64-char limit at the maximum allowed run id and attempt', () => {
+  it('produces a distinct identity for each of the three kinds at the same run id and attempt', () => {
+    const emails = new Set([
+      deriveRunScopedEmail('1234567890', '1', 'student'),
+      deriveRunScopedEmail('1234567890', '1', 'owner-teacher'),
+      deriveRunScopedEmail('1234567890', '1', 'non-owner-teacher'),
+    ]);
+    expect(emails.size).toBe(3);
+  });
+
+  it('keeps the local-part within the RFC 5321 64-char limit at the maximum allowed run id, attempt, and longest kind', () => {
     const maxRunId = '9'.repeat(20); // RUN_ID_PATTERN allows up to 20 digits
     const maxRunAttempt = '9'.repeat(4); // RUN_ATTEMPT_PATTERN allows up to 4
-    const email = deriveRunScopedEmail(maxRunId, maxRunAttempt);
+    const email = deriveRunScopedEmail(
+      maxRunId,
+      maxRunAttempt,
+      'non-owner-teacher',
+    );
     const [localPart] = email.split('@');
     expect(localPart).toBeDefined();
     expect(localPart?.length).toBeLessThanOrEqual(64);
@@ -129,55 +143,75 @@ describe('generateSecurePassword', () => {
 
 describe('deriveRunScopedLoginAccount', () => {
   it('produces a value satisfying the profiles.login_account column check', () => {
-    const account = deriveRunScopedLoginAccount('1234567890', '1');
+    const account = deriveRunScopedLoginAccount('1234567890', '1', 'student');
     expect(account).toMatch(/^[a-z0-9]{3,20}$/u);
   });
 
-  it('is deterministic for the same run id and attempt', () => {
-    const first = deriveRunScopedLoginAccount('1234567890', '2');
-    const second = deriveRunScopedLoginAccount('1234567890', '2');
+  it('is deterministic for the same run id, attempt, and kind', () => {
+    const first = deriveRunScopedLoginAccount('1234567890', '2', 'student');
+    const second = deriveRunScopedLoginAccount('1234567890', '2', 'student');
     expect(first).toBe(second);
   });
 
-  it('differs across run id and attempt so short concatenation cannot collide', () => {
-    // A naive concat/truncate of the two numbers could alias distinct pairs
+  it('differs across run id, attempt, and kind so short concatenation cannot collide', () => {
+    // A naive concat/truncate of the values could alias distinct triples
     // (e.g. runId "1" + runAttempt "23" vs runId "12" + runAttempt "3");
-    // hashing with a separator keeps these apart.
+    // hashing with separators keeps these apart.
     const accounts = new Set([
-      deriveRunScopedLoginAccount('1', '23'),
-      deriveRunScopedLoginAccount('12', '3'),
-      deriveRunScopedLoginAccount('123', '1'),
-      deriveRunScopedLoginAccount('1234567890', '1'),
-      deriveRunScopedLoginAccount('1234567890', '2'),
+      deriveRunScopedLoginAccount('1', '23', 'student'),
+      deriveRunScopedLoginAccount('12', '3', 'student'),
+      deriveRunScopedLoginAccount('123', '1', 'student'),
+      deriveRunScopedLoginAccount('1234567890', '1', 'student'),
+      deriveRunScopedLoginAccount('1234567890', '2', 'student'),
+      deriveRunScopedLoginAccount('1234567890', '2', 'owner-teacher'),
+      deriveRunScopedLoginAccount('1234567890', '2', 'non-owner-teacher'),
     ]);
-    expect(accounts.size).toBe(5);
+    expect(accounts.size).toBe(7);
   });
 
-  it('stays within the 20-char column limit at the maximum allowed run id and attempt', () => {
+  it('stays within the 20-char column limit at the maximum allowed run id and attempt, for every kind', () => {
     const maxRunId = '9'.repeat(20);
     const maxRunAttempt = '9'.repeat(4);
-    const account = deriveRunScopedLoginAccount(maxRunId, maxRunAttempt);
-    expect(account.length).toBeLessThanOrEqual(20);
-    expect(account).toMatch(/^[a-z0-9]{3,20}$/u);
+    for (const kind of [
+      'student',
+      'owner-teacher',
+      'non-owner-teacher',
+    ] as const) {
+      const account = deriveRunScopedLoginAccount(
+        maxRunId,
+        maxRunAttempt,
+        kind,
+      );
+      expect(account.length).toBeLessThanOrEqual(20);
+      expect(account).toMatch(/^[a-z0-9]{3,20}$/u);
+    }
   });
 });
 
 describe('buildFixtureAppMetadata', () => {
-  it('tags exactly the five required app_metadata keys', () => {
+  it('tags exactly the six required app_metadata keys', () => {
     const metadata = buildFixtureAppMetadata({
       gitSha: 'b'.repeat(40),
+      kind: 'owner-teacher',
       runAttempt: '2',
       runId: '42',
     });
     expect(metadata).toEqual({
       colorplay_fixture_environment: 'staging',
       colorplay_fixture_git_sha: 'b'.repeat(40),
+      colorplay_fixture_identity: 'owner-teacher',
       colorplay_fixture_kind: 'learning-experience',
       colorplay_fixture_run_attempt: '2',
       colorplay_fixture_run_id: '42',
     });
   });
 });
+
+const VALID_BUNDLE = {
+  nonOwnerTeacher: { email: 'c@colorplay.test', password: 'secret-value-c' },
+  ownerTeacher: { email: 'b@colorplay.test', password: 'secret-value-b' },
+  student: { email: 'a@colorplay.test', password: 'secret-value-a' },
+};
 
 describe('readRunScopedLearningFixtureCredentialFile', () => {
   let fixtureRoot = '';
@@ -199,10 +233,7 @@ describe('readRunScopedLearningFixtureCredentialFile', () => {
   });
 
   it('fails closed when the file permissions are not exactly 0600', async () => {
-    await writeFile(
-      credentialPath,
-      '{"email":"a@colorplay.test","password":"x"}\n',
-    );
+    await writeFile(credentialPath, `${JSON.stringify(VALID_BUNDLE)}\n`);
     await chmod(credentialPath, 0o644);
     await expect(
       readRunScopedLearningFixtureCredentialFile(credentialPath),
@@ -218,32 +249,61 @@ describe('readRunScopedLearningFixtureCredentialFile', () => {
   });
 
   it.each([
-    ['missing password', '{"email":"a@colorplay.test"}'],
-    ['empty email', '{"email":"","password":"x"}'],
-    ['extra key', '{"email":"a@colorplay.test","password":"x","secret":"y"}'],
-    ['wrong types', '{"email":1,"password":true}'],
-  ])('fails closed on schema violation: %s', async (_label, json) => {
-    await writeFile(credentialPath, json, { mode: 0o600 });
+    [
+      'missing non-owner teacher (partial provisioning)',
+      { ...VALID_BUNDLE, nonOwnerTeacher: undefined },
+    ],
+    [
+      'missing owner teacher (partial provisioning)',
+      { ...VALID_BUNDLE, ownerTeacher: undefined },
+    ],
+    [
+      'missing student (partial provisioning)',
+      { ...VALID_BUNDLE, student: undefined },
+    ],
+    [
+      'a nested pair missing its password',
+      { ...VALID_BUNDLE, student: { email: 'a@colorplay.test' } },
+    ],
+    [
+      'a nested pair with an empty email',
+      { ...VALID_BUNDLE, student: { email: '', password: 'x' } },
+    ],
+    [
+      'a nested pair with an extra key',
+      {
+        ...VALID_BUNDLE,
+        student: { email: 'a@colorplay.test', password: 'x', secret: 'y' },
+      },
+    ],
+    [
+      'wrong types on a nested pair',
+      { ...VALID_BUNDLE, student: { email: 1, password: true } },
+    ],
+    [
+      'an extra top-level identity key',
+      { ...VALID_BUNDLE, admin: VALID_BUNDLE.student },
+    ],
+  ])('fails closed on schema violation: %s', async (_label, bundle) => {
+    await writeFile(credentialPath, JSON.stringify(bundle), { mode: 0o600 });
     await chmod(credentialPath, 0o600);
     await expect(
       readRunScopedLearningFixtureCredentialFile(credentialPath),
     ).rejects.toThrow(LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL);
   });
 
-  it('resolves the credentials from a correctly-shaped, 0600 file', async () => {
-    await writeFile(
-      credentialPath,
-      '{"email":"a@colorplay.test","password":"secret-value"}',
-      { mode: 0o600 },
-    );
+  it('resolves all three identities from a correctly-shaped, 0600 bundle file', async () => {
+    await writeFile(credentialPath, JSON.stringify(VALID_BUNDLE), {
+      mode: 0o600,
+    });
     await chmod(credentialPath, 0o600);
     await expect(
       readRunScopedLearningFixtureCredentialFile(credentialPath),
-    ).resolves.toEqual({ email: 'a@colorplay.test', password: 'secret-value' });
+    ).resolves.toEqual(VALID_BUNDLE);
   });
 });
 
-describe('isLearningFixtureCredentials', () => {
+describe('isLearningFixtureCredentialPair', () => {
   it.each([
     [{ email: 'a@colorplay.test', password: 'x' }, true],
     [{ email: '', password: 'x' }, false],
@@ -251,23 +311,39 @@ describe('isLearningFixtureCredentials', () => {
     [null, false],
     ['string', false],
   ])('classifies %j as %s', (value, expected) => {
-    expect(isLearningFixtureCredentials(value)).toBe(expected);
+    expect(isLearningFixtureCredentialPair(value)).toBe(expected);
+  });
+});
+
+describe('isLearningFixtureCredentialBundle', () => {
+  it('classifies a full three-identity bundle as valid', () => {
+    expect(isLearningFixtureCredentialBundle(VALID_BUNDLE)).toBe(true);
+  });
+
+  it.each([
+    ['missing an identity', { student: VALID_BUNDLE.student }],
+    ['an extra identity', { ...VALID_BUNDLE, admin: VALID_BUNDLE.student }],
+    ['a null identity', { ...VALID_BUNDLE, ownerTeacher: null }],
+    ['a null value', null],
+    ['a single pair, not a bundle', VALID_BUNDLE.student],
+  ])('classifies %s as invalid', (_label, value) => {
+    expect(isLearningFixtureCredentialBundle(value)).toBe(false);
   });
 });
 
 function fakePorts(
   overrides: Readonly<{
-    setLoginAccount?: () => Promise<number>;
+    provisionProfile?: () => Promise<number>;
     verifyFixtureProfile?: () => Promise<FixtureProfileVerification>;
   }> = {},
 ) {
   const writtenFiles: { credentials: unknown; path: string }[] = [];
   return {
     ports: {
-      auth: { createStudent: () => Promise.resolve('fake-user-id') },
+      auth: { createIdentity: () => Promise.resolve('fake-user-id') },
       database: {
-        setLoginAccount:
-          overrides.setLoginAccount ?? (() => Promise.resolve(1)),
+        provisionProfile:
+          overrides.provisionProfile ?? (() => Promise.resolve(1)),
         verifyFixtureProfile:
           overrides.verifyFixtureProfile ??
           (() =>
@@ -301,17 +377,35 @@ const environment = () => ({
 });
 
 describe('runProvisionWorkflow', () => {
-  it('calls createStudent, then setLoginAccount with its exact returned user id and the derived login account, then verifyFixtureProfile, and only then writes the file', async () => {
+  it('provisions the student, then the owner teacher, then the non-owner teacher -- each fully created, role-assigned, and verified -- and only then writes one credential bundle', async () => {
     const env = environment();
-    const expectedEmail = deriveRunScopedEmail(env.runId, env.runAttempt);
-    const expectedAppMetadata = buildFixtureAppMetadata(env);
-    const expectedLoginAccount = deriveRunScopedLoginAccount(
-      env.runId,
-      env.runAttempt,
-    );
-    const fakeUserId = 'fake-user-id-42';
+    const studentUserId = 'fake-user-id-student';
+    const ownerTeacherUserId = 'fake-user-id-owner';
+    const nonOwnerTeacherUserId = 'fake-user-id-non-owner';
+    const roleByUserId: Record<string, string> = {
+      [nonOwnerTeacherUserId]: 'teacher',
+      [ownerTeacherUserId]: 'teacher',
+      [studentUserId]: 'student',
+    };
+    const loginAccountByUserId: Record<string, string> = {
+      [nonOwnerTeacherUserId]: deriveRunScopedLoginAccount(
+        env.runId,
+        env.runAttempt,
+        'non-owner-teacher',
+      ),
+      [ownerTeacherUserId]: deriveRunScopedLoginAccount(
+        env.runId,
+        env.runAttempt,
+        'owner-teacher',
+      ),
+      [studentUserId]: deriveRunScopedLoginAccount(
+        env.runId,
+        env.runAttempt,
+        'student',
+      ),
+    };
 
-    const createStudent = vi
+    const createIdentity = vi
       .fn<
         (input: {
           appMetadata: FixtureAppMetadata;
@@ -319,66 +413,134 @@ describe('runProvisionWorkflow', () => {
           password: string;
         }) => Promise<string>
       >()
-      .mockResolvedValue(fakeUserId);
-    const setLoginAccount = vi.fn(() => Promise.resolve(1));
-    const verifyFixtureProfile = vi.fn(() =>
-      Promise.resolve<FixtureProfileVerification>({
-        loginAccount: expectedLoginAccount,
-        profiles: 1,
-        role: 'student',
-        walletTokenBalance: 0,
-        wallets: 1,
-      }),
+      .mockResolvedValueOnce(studentUserId)
+      .mockResolvedValueOnce(ownerTeacherUserId)
+      .mockResolvedValueOnce(nonOwnerTeacherUserId);
+    const provisionProfile = vi.fn(() => Promise.resolve(1));
+    const verifyFixtureProfile = vi.fn(
+      (userId: string): Promise<FixtureProfileVerification> =>
+        Promise.resolve({
+          loginAccount: loginAccountByUserId[userId] ?? null,
+          profiles: 1,
+          role: roleByUserId[userId] ?? null,
+          walletTokenBalance: 0,
+          wallets: 1,
+        }),
     );
-    const writeCredentialFile = vi.fn(() => Promise.resolve());
+    const writeCredentialFile = vi.fn<
+      (path: string, credentials: unknown) => Promise<void>
+    >(() => Promise.resolve());
+    const appMetadataFor = (
+      kind: 'student' | 'owner-teacher' | 'non-owner-teacher',
+    ) =>
+      buildFixtureAppMetadata({
+        gitSha: env.gitSha,
+        kind,
+        runAttempt: env.runAttempt,
+        runId: env.runId,
+      });
 
     const result = await runProvisionWorkflow({
       environment: env,
       ports: {
-        auth: { createStudent },
-        database: { setLoginAccount, verifyFixtureProfile },
+        auth: { createIdentity },
+        database: { provisionProfile, verifyFixtureProfile },
         filesystem: { writeCredentialFile },
       },
     });
 
-    expect(createStudent).toHaveBeenCalledTimes(1);
-    const createStudentArgs = createStudent.mock.calls[0]?.[0];
-    expect(createStudentArgs?.email).toBe(expectedEmail);
-    // Never assert a literal password value -- only its type -- so this
-    // test can't accidentally snapshot the generated secret.
-    expect(typeof createStudentArgs?.password).toBe('string');
-    expect(createStudentArgs?.appMetadata).toEqual(expectedAppMetadata);
+    expect(createIdentity).toHaveBeenCalledTimes(3);
+    expect(provisionProfile).toHaveBeenCalledTimes(3);
+    expect(verifyFixtureProfile).toHaveBeenCalledTimes(3);
+    expect(writeCredentialFile).toHaveBeenCalledTimes(1);
 
-    expect(setLoginAccount).toHaveBeenCalledTimes(1);
-    expect(setLoginAccount).toHaveBeenCalledWith(
-      fakeUserId,
-      expectedLoginAccount,
+    const studentCreateArgs = createIdentity.mock.calls[0]?.[0];
+    expect(studentCreateArgs?.email).toBe(
+      deriveRunScopedEmail(env.runId, env.runAttempt, 'student'),
+    );
+    // Never assert a literal password value -- only its type -- so this
+    // test can't accidentally snapshot a generated secret.
+    expect(typeof studentCreateArgs?.password).toBe('string');
+    expect(studentCreateArgs?.appMetadata).toEqual(appMetadataFor('student'));
+
+    const ownerCreateArgs = createIdentity.mock.calls[1]?.[0];
+    expect(ownerCreateArgs?.email).toBe(
+      deriveRunScopedEmail(env.runId, env.runAttempt, 'owner-teacher'),
+    );
+    expect(ownerCreateArgs?.appMetadata).toEqual(
+      appMetadataFor('owner-teacher'),
     );
 
-    expect(verifyFixtureProfile).toHaveBeenCalledTimes(1);
-    expect(verifyFixtureProfile).toHaveBeenCalledWith(fakeUserId);
+    const nonOwnerCreateArgs = createIdentity.mock.calls[2]?.[0];
+    expect(nonOwnerCreateArgs?.email).toBe(
+      deriveRunScopedEmail(env.runId, env.runAttempt, 'non-owner-teacher'),
+    );
+    expect(nonOwnerCreateArgs?.appMetadata).toEqual(
+      appMetadataFor('non-owner-teacher'),
+    );
 
-    expect(writeCredentialFile).toHaveBeenCalledTimes(1);
-    const [createOrder] = createStudent.mock.invocationCallOrder;
-    const [setLoginOrder] = setLoginAccount.mock.invocationCallOrder;
-    const [verifyOrder] = verifyFixtureProfile.mock.invocationCallOrder;
-    const [writeOrder] = writeCredentialFile.mock.invocationCallOrder;
-    expect(createOrder).toBeLessThan(setLoginOrder ?? 0);
-    expect(setLoginOrder).toBeLessThan(verifyOrder ?? 0);
-    expect(verifyOrder).toBeLessThan(writeOrder ?? 0);
+    expect(provisionProfile).toHaveBeenNthCalledWith(1, studentUserId, {
+      loginAccount: loginAccountByUserId[studentUserId],
+      role: 'student',
+    });
+    expect(provisionProfile).toHaveBeenNthCalledWith(2, ownerTeacherUserId, {
+      loginAccount: loginAccountByUserId[ownerTeacherUserId],
+      role: 'teacher',
+    });
+    expect(provisionProfile).toHaveBeenNthCalledWith(3, nonOwnerTeacherUserId, {
+      loginAccount: loginAccountByUserId[nonOwnerTeacherUserId],
+      role: 'teacher',
+    });
 
-    expect(result.email).toBe(expectedEmail);
+    // The bundle is written only once every identity has been verified.
+    const writeOrder = writeCredentialFile.mock.invocationCallOrder[0] ?? 0;
+    for (const order of verifyFixtureProfile.mock.invocationCallOrder) {
+      expect(order).toBeLessThan(writeOrder);
+    }
+
+    const writeCall = writeCredentialFile.mock.calls[0];
+    expect(writeCall?.[0]).toBe(env.credentialFilePath);
+    const writtenBundle = writeCall?.[1] as
+      Record<string, { email: string; password: string }> | undefined;
+    expect(writtenBundle?.nonOwnerTeacher?.email).toBe(
+      deriveRunScopedEmail(env.runId, env.runAttempt, 'non-owner-teacher'),
+    );
+    expect(writtenBundle?.ownerTeacher?.email).toBe(
+      deriveRunScopedEmail(env.runId, env.runAttempt, 'owner-teacher'),
+    );
+    expect(writtenBundle?.student?.email).toBe(
+      deriveRunScopedEmail(env.runId, env.runAttempt, 'student'),
+    );
+    // Never assert a literal password value -- only its type -- so this
+    // test can't accidentally snapshot a generated secret.
+    expect(typeof writtenBundle?.nonOwnerTeacher?.password).toBe('string');
+    expect(typeof writtenBundle?.ownerTeacher?.password).toBe('string');
+    expect(typeof writtenBundle?.student?.password).toBe('string');
+
+    expect(result).toEqual({
+      nonOwnerTeacherEmail: deriveRunScopedEmail(
+        env.runId,
+        env.runAttempt,
+        'non-owner-teacher',
+      ),
+      ownerTeacherEmail: deriveRunScopedEmail(
+        env.runId,
+        env.runAttempt,
+        'owner-teacher',
+      ),
+      studentEmail: deriveRunScopedEmail(env.runId, env.runAttempt, 'student'),
+    });
   });
 
   it.each([
     ['no row updated', 0],
     ['more than one row updated', 2],
   ])(
-    'fails closed before verifying the profile or writing any file when setLoginAccount reports %s',
+    'fails closed before verifying the profile or writing any file when provisionProfile reports %s (malformed update)',
     async (_label, updatedRowCount) => {
       const verifyFixtureProfile = vi.fn();
       const { ports, writtenFiles } = fakePorts({
-        setLoginAccount: () => Promise.resolve(updatedRowCount),
+        provisionProfile: () => Promise.resolve(updatedRowCount),
         verifyFixtureProfile,
       });
       await expect(
@@ -394,11 +556,14 @@ describe('runProvisionWorkflow', () => {
   // Every case below must flip exactly one field away from a fully valid
   // profile. Reusing a placeholder login account for the non-login-account
   // cases would make them fail on the login-account mismatch first, hiding
-  // whether the corresponding profile/wallet/role check fires at all.
+  // whether the corresponding profile/wallet/role check fires at all. These
+  // exercise the shared provisionIdentity() gate via the student (the first
+  // identity attempted), which is the same gate every identity runs through.
   const validFixtureProfile = (): FixtureProfileVerification => ({
     loginAccount: deriveRunScopedLoginAccount(
       environment().runId,
       environment().runAttempt,
+      'student',
     ),
     profiles: 1,
     role: 'student',
@@ -407,13 +572,22 @@ describe('runProvisionWorkflow', () => {
   });
 
   it.each([
-    ['extra profile row', { ...validFixtureProfile(), profiles: 2 }],
-    ['missing wallet row', { ...validFixtureProfile(), wallets: 0 }],
+    [
+      'extra profile row (missing profile invariant)',
+      { ...validFixtureProfile(), profiles: 2 },
+    ],
+    [
+      'missing wallet row (missing profile invariant)',
+      { ...validFixtureProfile(), wallets: 0 },
+    ],
     [
       'non-zero starting balance',
       { ...validFixtureProfile(), walletTokenBalance: 5 },
     ],
-    ['role is not student', { ...validFixtureProfile(), role: 'teacher' }],
+    [
+      'role is not the expected role (wrong role)',
+      { ...validFixtureProfile(), role: 'teacher' },
+    ],
     [
       'login_account does not match the derived value',
       { ...validFixtureProfile(), loginAccount: 'some-other-account' },
@@ -430,6 +604,65 @@ describe('runProvisionWorkflow', () => {
       expect(writtenFiles).toHaveLength(0);
     },
   );
+
+  it('fails closed on a teacher-specific wrong role (owner teacher provisioned as student) without writing any file', async () => {
+    const env = environment();
+    const createIdentity = vi
+      .fn<() => Promise<string>>()
+      .mockResolvedValueOnce('fake-user-id-student')
+      .mockResolvedValueOnce('fake-user-id-owner');
+    const provisionProfile = vi.fn(() => Promise.resolve(1));
+    const verifyFixtureProfile = vi
+      .fn<(userId: string) => Promise<FixtureProfileVerification>>()
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          loginAccount: deriveRunScopedLoginAccount(
+            env.runId,
+            env.runAttempt,
+            'student',
+          ),
+          profiles: 1,
+          role: 'student',
+          walletTokenBalance: 0,
+          wallets: 1,
+        }),
+      )
+      // The owner teacher's role update silently didn't take -- this is the
+      // exact Hosted failure Issue #41 root-caused.
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          loginAccount: deriveRunScopedLoginAccount(
+            env.runId,
+            env.runAttempt,
+            'owner-teacher',
+          ),
+          profiles: 1,
+          role: 'student',
+          walletTokenBalance: 0,
+          wallets: 1,
+        }),
+      );
+    const writeCredentialFile = vi.fn(() => Promise.resolve());
+
+    await expect(
+      runProvisionWorkflow({
+        environment: env,
+        ports: {
+          auth: { createIdentity },
+          database: { provisionProfile, verifyFixtureProfile },
+          filesystem: { writeCredentialFile },
+        },
+      }),
+    ).rejects.toThrow('LEARNING_FIXTURE_PROVISION_CARDINALITY_INVALID');
+
+    // The student was fully provisioned and verified, but the pipeline must
+    // stop before the non-owner teacher and must never write a file -- a
+    // partially-provisioned bundle (missing/broken identities) is exactly
+    // what this fail-closed gate exists to prevent.
+    expect(createIdentity).toHaveBeenCalledTimes(2);
+    expect(verifyFixtureProfile).toHaveBeenCalledTimes(2);
+    expect(writeCredentialFile).not.toHaveBeenCalled();
+  });
 });
 
 describe('sanitizeProvisionFailure', () => {

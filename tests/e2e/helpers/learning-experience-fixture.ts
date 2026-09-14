@@ -7,15 +7,27 @@ import {
 import { TEST_USERS } from '../../fixtures/users';
 import type { Credentials } from './auth.ts';
 
-// Task 0A-2 run-scoped Hosted fixture resolution, extracted so contract
-// tests can import and actually execute this logic (importing
-// learning-experience.spec.ts itself into Vitest throws -- Playwright's
-// test() rejects being called outside its own runner).
-export async function resolveLearningStudentCredentials(
+// Issue #41: the run-scoped Hosted fixture now provisions a student and its
+// owner/non-owner teacher pair together (Issue #37 originally resolved only
+// the student). Extracted so contract tests can import and actually execute
+// this logic (importing learning-experience.spec.ts itself into Vitest
+// throws -- Playwright's test() rejects being called outside its own
+// runner).
+export interface LearningExperienceIdentities {
+  nonOwnerTeacher: Credentials;
+  ownerTeacher: Credentials;
+  student: Credentials;
+}
+
+export async function resolveLearningExperienceIdentities(
   env: NodeJS.ProcessEnv = process.env,
-): Promise<Credentials> {
+): Promise<LearningExperienceIdentities> {
   if (env.PLAYWRIGHT_REQUIRE_RUN_SCOPED_LEARNING_FIXTURE !== 'on') {
-    return TEST_USERS.learningStudent;
+    return {
+      nonOwnerTeacher: TEST_USERS.teacherTwo,
+      ownerTeacher: TEST_USERS.learningTeacher,
+      student: TEST_USERS.learningStudent,
+    };
   }
   const credentialPath = env.LEARNING_EXPERIENCE_FIXTURE_CREDENTIAL_FILE;
   if (!credentialPath) {
