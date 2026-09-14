@@ -57,7 +57,7 @@ const remediationResultViewports = [
 const teacherStudentProgressDenial = {
   count: 1,
   status: 403,
-  urlPattern: /\/rest\/v1\/rpc\/teacher_student_progress(?:\?.*)?$/u,
+  urlPattern: /\/rest\/v1\/rpc\/teacher_student_progress_v2(?:\?.*)?$/u,
 } as const;
 
 const expectHudEconomy = async (
@@ -405,7 +405,7 @@ test('Learning Experience phase gate', async ({
   );
   await expect(emptyMistakesStatus).toBeVisible();
 
-  // 學生端 /app/progress 已移除（Task 10）；100%/已精熟改由下方 teacherRow 斷言從教師視角覆蓋。
+  // 學生端 /app/progress 已移除（Task 10）；80%/已完成改由下方 teacherRow 斷言從教師視角覆蓋。
 
   // --- Teacher analytics: owner reads exact mastery, others read nothing (teacherPage reused from the preflight above, not re-signed-in) ---
   await teacherPage.goto('/teacher/classes');
@@ -443,8 +443,10 @@ test('Learning Experience phase gate', async ({
   const teacherRow = teacherPage.getByRole('row', {
     name: new RegExp(QUIZ_CHAPTER_TITLE, 'u'),
   });
-  await expect(teacherRow).toContainText('100.0%');
-  await expect(teacherRow).toContainText('已精熟');
+  // 正式測驗 10 題答錯 2 題（見上方 wrongPromptCount），補救練習不計入正式測驗正確率：
+  // 8 / 10 = 80.0%，教師端 mastery 標籤對應為「已完成」，並非「已精熟」。
+  await expect(teacherRow).toContainText('80.0%');
+  await expect(teacherRow).toContainText('已完成');
   await expect(teacherPage.locator('body')).not.toContainText(
     '@colorplay.test',
   );

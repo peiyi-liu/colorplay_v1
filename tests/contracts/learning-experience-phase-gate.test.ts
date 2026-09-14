@@ -8,6 +8,7 @@ import { ACCEPTANCE_IDS } from '../../scripts/acceptance/finalize-learning-exper
 import { LEARNING_FIXTURE_CREDENTIAL_FALLBACK_SENTINEL } from '../../scripts/staging/provision-learning-experience-fixture.mjs';
 import { TEST_USERS } from '../fixtures/users';
 import {
+  classifyTeacherLoginFailure,
   classroomRunLabel,
   isTeacherLandingUrl,
   learningStudentDisplayNameFromEmail,
@@ -113,6 +114,36 @@ describe('learning experience phase gate contract', () => {
     expect(spec).not.toContain('page.route(');
     expect(spec).not.toContain('test.skip(');
     expect(spec).not.toContain('service_role');
+  });
+});
+
+// Run 34852498818 staging failure: the deterministic teacher analytics
+// expectations had drifted from the actual formal-assessment path. These
+// three facts can only be asserted as source contracts here -- the real
+// values only exist once a live Hosted run computes accuracy and renders
+// the teacher progress UI -- matching the existing "keeps the acceptance
+// spec honest" pattern above.
+describe('teacher analytics contract (matches the actual formal assessment path)', () => {
+  it('asserts 80.0% (8 of 10 formal questions correct; remediation excluded), never the stale 100.0%', async () => {
+    const spec = await readText('tests/e2e/learning-experience.spec.ts');
+    expect(spec).toContain("toContainText('80.0%')");
+    expect(spec).not.toContain("toContainText('100.0%')");
+  });
+
+  it('asserts the current teacher progress UI mastery label 已完成, never the retired 已精熟', async () => {
+    const spec = await readText('tests/e2e/learning-experience.spec.ts');
+    expect(spec).toContain("toContainText('已完成')");
+    expect(spec).not.toContain("toContainText('已精熟')");
+  });
+
+  it('declares the cross-tenant expected-failure URL pattern against the RPC actually called (_v2), never the legacy endpoint', async () => {
+    const spec = await readText('tests/e2e/learning-experience.spec.ts');
+    expect(spec).toContain(
+      'urlPattern: /\\/rest\\/v1\\/rpc\\/teacher_student_progress_v2(?:\\?.*)?$/u,',
+    );
+    expect(spec).not.toContain(
+      'urlPattern: /\\/rest\\/v1\\/rpc\\/teacher_student_progress(?:\\?.*)?$/u,',
+    );
   });
 });
 
@@ -397,7 +428,7 @@ describe('isTeacherLandingUrl (real behavior, exact pathname match)', () => {
 describe('signIn teacher URL gate (executable, mocked Page)', () => {
   const credentials = { email: 'fixture@colorplay.test', password: 'x' };
 
-  const mockedTeacherPage = (currentUrl: string) => {
+  const mockedTeacherPage = (currentUrl: string, alertCount = 0) => {
     const NAVIGATION_CHECK_REACHED = new Error(
       'navigation-check-reached-sentinel',
     );
@@ -412,6 +443,9 @@ describe('signIn teacher URL gate (executable, mocked Page)', () => {
       if (role === 'navigation') {
         throw NAVIGATION_CHECK_REACHED;
       }
+      if (role === 'alert') {
+        return { count: () => Promise.resolve(alertCount) };
+      }
       return { click: () => Promise.resolve(), fill: () => Promise.resolve() };
     });
     const page = {
@@ -421,6 +455,7 @@ describe('signIn teacher URL gate (executable, mocked Page)', () => {
       getByText: vi.fn(() => ({ click: () => Promise.resolve() })),
       goto: vi.fn(() => Promise.resolve()),
       mainFrame: () => ({ waitForURL }),
+      url: () => currentUrl,
     };
     return {
       NAVIGATION_CHECK_REACHED,
@@ -444,15 +479,106 @@ describe('signIn teacher URL gate (executable, mocked Page)', () => {
     });
   });
 
-  it('rejects a non-/teacher pathname and never reaches the navigation check', async () => {
+  it('rejects a non-/teacher pathname with a diagnostic-classified error, never reaching the navigation check', async () => {
     const { getByRole, page, waitForURL } = mockedTeacherPage(
       'https://staging.colorplay.test/teacher/classes',
     );
     await expect(signIn(page, credentials, '教師導覽')).rejects.toThrow(
-      /toHaveURL/u,
+      'LEARNING_EXPERIENCE_TEACHER_LOGIN_GATE_FAILED: unrecognized_state',
     );
     expect(waitForURL).toHaveBeenCalledOnce();
     expect(getByRole).not.toHaveBeenCalledWith('navigation', expect.anything());
+  });
+
+  it('preserves the original toHaveURL failure as the diagnostic error cause (fail-closed, no swallowed error)', async () => {
+    const { page } = mockedTeacherPage(
+      'https://staging.colorplay.test/teacher/classes',
+    );
+    const rejection: unknown = await signIn(
+      page,
+      credentials,
+      '教師導覽',
+    ).catch((error: unknown) => error);
+    expect(rejection).toBeInstanceOf(Error);
+    const { cause } = rejection as Error;
+    expect(cause).toBeInstanceOf(Error);
+    expect((cause as Error).message).toContain('toHaveURL');
+  });
+
+  it('classifies still_on_login when the 5s gate times out while the page never left /login (run 34852498818 shape)', async () => {
+    const { page, waitForURL } = mockedTeacherPage(
+      'https://staging.colorplay.test/login',
+    );
+    await expect(signIn(page, credentials, '教師導覽')).rejects.toThrow(
+      'LEARNING_EXPERIENCE_TEACHER_LOGIN_GATE_FAILED: still_on_login',
+    );
+    expect(waitForURL).toHaveBeenCalledOnce();
+  });
+
+  it('classifies alert_visible when the gate fails with a visible alert on screen', async () => {
+    const { page } = mockedTeacherPage(
+      'https://staging.colorplay.test/teacher/classes',
+      1,
+    );
+    await expect(signIn(page, credentials, '教師導覽')).rejects.toThrow(
+      'LEARNING_EXPERIENCE_TEACHER_LOGIN_GATE_FAILED: alert_visible',
+    );
+  });
+});
+
+// classifyTeacherLoginFailure only reads page.url() and a role=alert count --
+// both cheap, synchronous-shaped reads with no extra waits/timeouts of their
+// own -- so it is tested directly against a minimal mocked Page rather than
+// only indirectly through signIn() above.
+describe('classifyTeacherLoginFailure (real behavior, privacy-safe categories only)', () => {
+  const mockedPage = (url: string, alertCount: number) => {
+    const getByRole = vi.fn((role: string) => {
+      if (role !== 'alert') throw new Error(`unexpected role: ${role}`);
+      return { count: () => Promise.resolve(alertCount) };
+    });
+    return {
+      getByRole,
+      page: {
+        getByRole,
+        url: () => url,
+      } as unknown as Parameters<typeof classifyTeacherLoginFailure>[0],
+    };
+  };
+
+  it('returns still_on_login for a /login pathname without checking for an alert', async () => {
+    const { getByRole, page } = mockedPage(
+      'https://staging.colorplay.test/login',
+      0,
+    );
+    await expect(classifyTeacherLoginFailure(page)).resolves.toBe(
+      'still_on_login',
+    );
+    expect(getByRole).not.toHaveBeenCalled();
+  });
+
+  it('returns unauthorized for an /unauthorized pathname without checking for an alert', async () => {
+    const { getByRole, page } = mockedPage(
+      'https://staging.colorplay.test/unauthorized',
+      0,
+    );
+    await expect(classifyTeacherLoginFailure(page)).resolves.toBe(
+      'unauthorized',
+    );
+    expect(getByRole).not.toHaveBeenCalled();
+  });
+
+  it('returns alert_visible when a role=alert element is present on any other pathname', async () => {
+    const { page } = mockedPage('https://staging.colorplay.test/teacher', 1);
+    await expect(classifyTeacherLoginFailure(page)).resolves.toBe(
+      'alert_visible',
+    );
+  });
+
+  it('falls back to unrecognized_state when no safe category matches', async () => {
+    const { page } = mockedPage('https://staging.colorplay.test/teacher', 0);
+    await expect(classifyTeacherLoginFailure(page)).resolves.toBe(
+      'unrecognized_state',
+    );
   });
 });
 
