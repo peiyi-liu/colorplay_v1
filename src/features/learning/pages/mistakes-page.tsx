@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { GamePager, useStageWide } from '../../../components/ui/game-pager';
@@ -9,6 +9,10 @@ import type {
   MistakeView,
 } from '../api/learning-repository';
 import { useMistakes, useStartRemediation } from '../hooks/use-learning';
+import {
+  mistakeSubtopicAnchor,
+  returnedMistakeSubtopic,
+} from '../lib/remediation-navigation';
 
 import './mistakes-page.css';
 
@@ -20,19 +24,27 @@ type SubtopicGroup = Readonly<{
 
 export const groupOpenMistakes = (
   mistakes: readonly MistakeView[],
+  returnSubtopicId?: string,
 ): readonly SubtopicGroup[] => {
-  const groups = new Map<string, MistakeView[]>();
+  const groups = new Map<
+    string,
+    { mistakes: MistakeView[]; subtopicId: string; subtopicTitle: string }
+  >();
   for (const mistake of mistakes) {
-    if (mistake.status === 'resolved') continue;
-    const list = groups.get(mistake.subtopicId) ?? [];
-    list.push(mistake);
-    groups.set(mistake.subtopicId, list);
+    if (
+      mistake.status === 'resolved' &&
+      mistake.subtopicId !== returnSubtopicId
+    )
+      continue;
+    const group = groups.get(mistake.subtopicId) ?? {
+      mistakes: [],
+      subtopicId: mistake.subtopicId,
+      subtopicTitle: mistake.subtopicTitle,
+    };
+    if (mistake.status !== 'resolved') group.mistakes.push(mistake);
+    groups.set(mistake.subtopicId, group);
   }
-  return [...groups.values()].map((list) => ({
-    mistakes: list,
-    subtopicId: list[0]?.subtopicId ?? '',
-    subtopicTitle: list[0]?.subtopicTitle ?? '',
-  }));
+  return [...groups.values()];
 };
 
 export function MistakesPage({
@@ -41,8 +53,28 @@ export function MistakesPage({
   const mistakes = useMistakes(repository);
   const start = useStartRemediation(repository);
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnSubtopicId = returnedMistakeSubtopic(location.hash);
+  const restoredLocation = useRef<string | undefined>(undefined);
   const [startError, setStartError] = useState<string>();
   const stageWide = useStageWide();
+
+  useEffect(() => {
+    if (
+      !returnSubtopicId ||
+      !mistakes.data ||
+      mistakes.isFetching ||
+      restoredLocation.current === location.key
+    )
+      return;
+    const target = document.getElementById(
+      mistakeSubtopicAnchor(returnSubtopicId),
+    );
+    if (target) {
+      target.scrollIntoView({ block: 'start' });
+      restoredLocation.current = location.key;
+    }
+  }, [location.key, mistakes.data, mistakes.isFetching, returnSubtopicId]);
 
   if (mistakes.isPending) return <RouteLoading withinMain />;
   if (mistakes.isError) {
@@ -61,7 +93,7 @@ export function MistakesPage({
     );
   }
 
-  const openGroups = groupOpenMistakes(mistakes.data);
+  const openGroups = groupOpenMistakes(mistakes.data, returnSubtopicId);
   const resolved = mistakes.data.filter(
     (mistake) => mistake.status === 'resolved',
   );
@@ -76,74 +108,91 @@ export function MistakesPage({
         <p>補救練習答對即可解決錯題並回復精熟。</p>
       </header>
 
-      {openGroups.length === 0 ? (
+      {!openGroups.some((group) => group.mistakes.length > 0) && (
         <p role="status">目前沒有待補救的錯題，繼續保持！</p>
-      ) : (
-        openGroups.map((group) => (
-          <section
-            aria-label={group.subtopicTitle}
-            className="mistake-group"
-            key={group.subtopicId}
-          >
-            <h2 className="mistake-group__title">
-              {group.subtopicTitle}{' '}
+      )}
+      {openGroups.map((group) => (
+        <section
+          aria-label={group.subtopicTitle}
+          className="mistake-group"
+          id={mistakeSubtopicAnchor(group.subtopicId)}
+          key={group.subtopicId}
+        >
+          <h2 className="mistake-group__title">
+            {group.subtopicTitle}{' '}
+            {group.mistakes.length > 0 && (
               <span className="mistake-group__badge">
                 {group.mistakes.length} 題待補救
               </span>
-            </h2>
-            <GamePager
-              ariaLabel={`${group.subtopicTitle} 錯題分頁`}
-              items={group.mistakes}
-              pageSize={stageWide ? 5 : 3}
-            >
-              {(pageItems) => (
-                <ul className="mistake-list">
-                  {pageItems.map((mistake) => (
-                    <li className="mistake-list__item" key={mistake.mistakeId}>
-                      <SpiritAvatar variant="red" />
-                      <div className="mistake-list__body">
-                        <p className="mistake-list__prompt">
-                          {mistake.prompt}
-                          {mistake.status === 'reopened' ? '（再次答錯）' : ''}
-                        </p>
-                        <p className="mistake-list__answer">
-                          正確答案：{mistake.correctOptionText}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </GamePager>
-            <div className="mistake-group__actions">
-              <button
-                className="primary-action"
-                disabled={start.isPending}
-                onClick={() => {
-                  setStartError(undefined);
-                  start.mutate(
-                    {
-                      requestId: crypto.randomUUID(),
-                      subtopicId: group.subtopicId,
-                    },
-                    {
-                      onError: (error) => {
-                        setStartError(error.message);
-                      },
-                      onSuccess: (sessionId) => {
-                        void navigate(`/app/quiz/${sessionId}`);
-                      },
-                    },
-                  );
-                }}
-                type="button"
+            )}
+          </h2>
+          {group.mistakes.length === 0 ? (
+            <p role="status">這個小節的錯題已全部解決。</p>
+          ) : (
+            <>
+              <GamePager
+                ariaLabel={`${group.subtopicTitle} 錯題分頁`}
+                items={group.mistakes}
+                pageSize={stageWide ? 5 : 3}
               >
-                再挑戰（補救練習）
-              </button>
-            </div>
-          </section>
-        ))
-      )}
+                {(pageItems) => (
+                  <ul className="mistake-list">
+                    {pageItems.map((mistake) => (
+                      <li
+                        className="mistake-list__item"
+                        key={mistake.mistakeId}
+                      >
+                        <SpiritAvatar variant="red" />
+                        <div className="mistake-list__body">
+                          <p className="mistake-list__prompt">
+                            {mistake.prompt}
+                            {mistake.status === 'reopened'
+                              ? '（再次答錯）'
+                              : ''}
+                          </p>
+                          <p className="mistake-list__answer">
+                            正確答案：{mistake.correctOptionText}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </GamePager>
+              <div className="mistake-group__actions">
+                <button
+                  className="primary-action"
+                  disabled={start.isPending}
+                  onClick={() => {
+                    setStartError(undefined);
+                    start.mutate(
+                      {
+                        requestId: crypto.randomUUID(),
+                        subtopicId: group.subtopicId,
+                      },
+                      {
+                        onError: (error) => {
+                          setStartError(error.message);
+                        },
+                        onSuccess: (sessionId) => {
+                          void navigate(`/app/quiz/${sessionId}`, {
+                            state: {
+                              remediationReturnSubtopicId: group.subtopicId,
+                            },
+                          });
+                        },
+                      },
+                    );
+                  }}
+                  type="button"
+                >
+                  再挑戰（補救練習）
+                </button>
+              </div>
+            </>
+          )}
+        </section>
+      ))}
       {startError ? <p role="alert">{startError}</p> : null}
 
       {resolved.length > 0 ? (

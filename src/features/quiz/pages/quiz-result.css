@@ -21,6 +21,14 @@
   background: transparent;
 }
 
+/* Portrait uses document scrolling; do not trap gestures in an unscrollable main. */
+@media (max-width: 767px), (orientation: portrait) {
+  .game-stage[data-shell-role='student']
+    #main-content:has(> .quiz-result--victory-v2) {
+    overscroll-behavior-y: auto;
+  }
+}
+
 .quiz-result--victory-v2.scene-night::before,
 .quiz-result--victory-v2.scene-night::after {
   display: none;

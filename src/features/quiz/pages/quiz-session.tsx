@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Link,
+  useLocation,
   useNavigate,
   useParams,
   useSearchParams,
@@ -15,6 +16,7 @@ import {
   useStudentChapterMap,
 } from '../../learning/hooks/use-chapter-map';
 import { learningKeys } from '../../learning/hooks/use-learning';
+import { remediationReturnState } from '../../learning/lib/remediation-navigation';
 import { economyQueryKey } from '../../rewards/hooks/use-economy-summary';
 import {
   createQuizRepository,
@@ -29,7 +31,7 @@ import { QuestionCard } from '../components/question-card';
 import { QuizExitGuard } from '../components/quiz-exit-guard';
 import { comboCount } from '../lib/combo';
 import { applyFinalResultToSession } from '../lib/finalized-session-cache';
-import { withoutNumberPrefix } from '../lib/quiz-labels';
+import { quizChallengeLabel, withoutNumberPrefix } from '../lib/quiz-labels';
 import {
   feedbackFromQuestion,
   quizActionErrorMessage,
@@ -55,6 +57,7 @@ export function QuizSessionPage({
   repository?: QuizRepository;
 }>) {
   const { sessionId: routeSessionId } = useParams();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -192,22 +195,20 @@ export function QuizSessionPage({
       ? 'attacking'
       : 'idle';
   const chapterLabel = `第 ${String(session?.chapterSortOrder ?? '')} 章・${withoutNumberPrefix(session?.chapterTitle ?? '')}`;
-  const challengeLabel =
-    session?.challengeKind === 'section' &&
-    session.sectionSortOrder !== null &&
-    session.sectionTitle
-      ? `${String(session.chapterSortOrder)}-${String(session.sectionSortOrder)}・${withoutNumberPrefix(session.sectionTitle)}`
-      : '章節總挑戰';
+  const challengeLabel = quizChallengeLabel(session);
 
   useEffect(() => {
     if (session?.status === 'completed') {
       allowQuizNavigation.current = true;
-      void navigate(`/app/quiz/${session.sessionId}/result`, { replace: true });
+      void navigate(`/app/quiz/${session.sessionId}/result`, {
+        replace: true,
+        state: remediationReturnState(location.state),
+      });
     } else if (session?.status === 'abandoned') {
       allowQuizNavigation.current = true;
       void navigate('/app', { replace: true });
     }
-  }, [navigate, session]);
+  }, [location.state, navigate, session]);
 
   const submit = async (selectedId: string | null) => {
     if (!activeQuestion || submissionStarted.current) return;
@@ -275,6 +276,7 @@ export function QuizSessionPage({
         allowQuizNavigation.current = true;
         void navigate(`/app/quiz/${session.sessionId}/result`, {
           state: {
+            ...remediationReturnState(location.state),
             fromFinalize: true,
             ...(finalResult.assignmentAttempt
               ? { assignmentAttempt: finalResult.assignmentAttempt }
