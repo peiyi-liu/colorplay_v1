@@ -1467,6 +1467,86 @@
       ]
     },
     {
+      "resource": "chapter_challenge_finalize_facts",
+      "domain": "assessments",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "challenge_fingerprint",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "chapter_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "correct_count",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "finalized_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "question_count",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "session_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "template_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "user_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
       "resource": "chapters",
       "domain": "content",
       "surface": "browser",
@@ -3874,6 +3954,22 @@
         },
         {
           "name": "classroom_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "chapter_progression_fingerprint",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "chapter_progression_id",
           "class": "forbidden",
           "mask_strategy": null,
           "searchable": false,

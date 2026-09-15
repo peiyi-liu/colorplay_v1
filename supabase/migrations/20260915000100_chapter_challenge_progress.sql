@@ -143,6 +143,23 @@ alter table public.chapter_challenge_finalize_facts enable row level security;
 revoke all on public.chapter_challenge_finalize_facts
 from public, anon, authenticated;
 
+insert into public.admin_sensitivity_catalog (
+  resource, domain, surface, column_name, class, mask_strategy,
+  searchable, filterable, sortable
+)
+values
+  ('chapter_challenge_finalize_facts', 'assessments', 'none', 'challenge_fingerprint', 'forbidden', null, false, false, false),
+  ('chapter_challenge_finalize_facts', 'assessments', 'none', 'chapter_id', 'forbidden', null, false, false, false),
+  ('chapter_challenge_finalize_facts', 'assessments', 'none', 'correct_count', 'forbidden', null, false, false, false),
+  ('chapter_challenge_finalize_facts', 'assessments', 'none', 'created_at', 'forbidden', null, false, false, false),
+  ('chapter_challenge_finalize_facts', 'assessments', 'none', 'finalized_at', 'forbidden', null, false, false, false),
+  ('chapter_challenge_finalize_facts', 'assessments', 'none', 'question_count', 'forbidden', null, false, false, false),
+  ('chapter_challenge_finalize_facts', 'assessments', 'none', 'session_id', 'forbidden', null, false, false, false),
+  ('chapter_challenge_finalize_facts', 'assessments', 'none', 'template_id', 'forbidden', null, false, false, false),
+  ('chapter_challenge_finalize_facts', 'assessments', 'none', 'user_id', 'forbidden', null, false, false, false),
+  ('quiz_sessions', 'assessments', 'browser', 'chapter_progression_fingerprint', 'forbidden', null, false, false, false),
+  ('quiz_sessions', 'assessments', 'browser', 'chapter_progression_id', 'forbidden', null, false, false, false);
+
 create function public.record_chapter_challenge_finalize_fact()
 returns trigger
 language plpgsql

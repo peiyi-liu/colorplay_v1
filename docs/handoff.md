@@ -1679,3 +1679,14 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 做了什麼：唯一一輪 Standards／Spec review 指出原 helper 仍可把人工 `completed` row 當權威完成、只比對抽中題目的 version 而漏掉 template／pool／scope 變更，且舊 `get_classroom_progress` 仍用 remediation aggregate 判 `mastered`。Owner 明確核准擴大 DB contract 後，同一輪修正為：quiz session 建立時由 server trigger freeze chapter id 與 SHA-256 challenge fingerprint；成功 finalize transition 才把題數、答對數與 fingerprint 寫入無 browser write privilege 的 `chapter_challenge_finalize_facts`；不完整題組、非 CR 題、section scope、非 template 題數或 remediation 都不產生 completion fact。歷史 structurally valid completion 可回填 immutable fact，但 fingerprint 留空，保留 `completed` 且 fail closed 不宣稱 current-version `mastered`。四個教師 projection 現在共用同一權威 helper；題庫／template／scope／rules identity 改變時保留完成、撤銷舊 mastery。`src/types/database.ts` 由一次性 Local schema clone 套 migration 後用標準 Supabase generator 產生，再只帶入本 migration 對應的 generated hunks；clone 已刪除，正式 Local DB 未變動。
 - 驗證：新增 pgTAP 10/10（含 browser 不可 forge fact、直接 status update 不造 completion、remediation 排除、7/10 completed、8/10 mastered、material template change 撤銷 mastery但保留 completion、四 projection 一致）；既有 learning progress 15/15、teacher chapter completion 12/12、teacher analytics v2 23/23 皆在 transaction 內套 migration 後 rollback 通過。尚待重跑相關 Vitest、lint、typecheck、格式與 diff gate 後 amend／push／開 Draft PR。
 - 邊界：未 reset 共用 Local Supabase、未操作 Hosted migration／Staging workflow／Vercel／Production；未 merge。Migration 693 行刻意維持單一 atomic deploy unit，避免 fact table、backfill、finalize trigger 與四個 projection 在 rollout 中短暫使用不同定義。
+
+## 2026-09-15 11:48 [Codex] — PR #50 Foundation CI catalog inventory remediation
+
+- 做了什麼：PR #50 Foundation CI run `34925741613` 的 `chromium-e2e` job 並非瀏覽器測試失敗，而是在前置 `admin:catalog:inventory` gate 列出本 migration 新增的 11 個欄位未登錄。依既有 catalog fail-closed 規則，在同一 forward migration 新增 11 筆 `forbidden` catalog rows；`chapter_challenge_finalize_facts` 設為 `surface=none`，兩個 `quiz_sessions` progression identity 欄位沿用 `surface=browser` 但不可投影。Catalog generator 加入 forward-only overlay，保留歷史 `20260808000500`／`20260903000100` generated migrations byte-stable，並重生 `admin-sensitivity-catalog.json`。
+- 驗證：以一次性 Local schema clone 套用本 migration 後，執行與 CI 完全相同的 public base-table／catalog 欄位集合比對，零 diff；`pnpm admin:catalog:check` 通過。一次性資料庫已刪除，正式 Local DB 未變動。尚待重跑 DB contract、lint／typecheck／format／diff gate，完成後 amend 同一 commit 並 push；不得重跑舊 workflow，push 觸發新 CI 即為唯一驗證。
+- 邊界：這是既有 CI finding 的最小必要修正；未增加 Admin 瀏覽能力、未修改舊 migration、未碰 Hosted／Production、未轉 Ready 或 merge。
+
+## 2026-09-15 11:50 [Codex] — PR #50 catalog remediation local gates complete
+
+- 驗證：一次性 schema inventory 集合比對零 diff；`pnpm admin:catalog:check`、新 DB contract 10/10、focused Vitest 58/58、scoped ESLint、Prettier、typecheck、`git diff --check` 全綠。舊 generated migrations 仍為零 diff，正式 Local DB 無持久變更。
+- 下一步：精確 stage 本次 generator／catalog JSON／forward migration／handoff 四檔，commit 後 push 同一 PR #50；由新 push 自動觸發 CI，不手動 rerun 失敗 run `34925741613`。PR 維持 Draft，禁止 merge／Hosted migration／Staging gate／Production action。
