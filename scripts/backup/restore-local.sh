@@ -30,6 +30,7 @@ done
   fail 'RESTORE_TARGET_MUST_BE_LOCAL'
 backup_root="$(cd "$backup_root" 2>/dev/null && pwd)" || fail 'RESTORE_BACKUP_NOT_FOUND'
 [[ "$backup_root" != "$project_root" ]] || fail 'RESTORE_TARGET_MUST_BE_LOCAL'
+[[ ! -e "$backup_root/restore-report.json" ]] || fail 'RESTORE_REPORT_ALREADY_EXISTS'
 
 manifest_encrypted="$backup_root/backup-manifest.json.age"
 manifest_checksum="$backup_root/backup-manifest.json.age.sha256"
@@ -47,29 +48,53 @@ restore_project_id="colorplay_restore_${$}"
 restore_database='colorplay_restore_target'
 started_at="$(date +%s)"
 preview_pid=''
+stack_attempted='false'
+cleanup_verified='false'
 
 cleanup() {
+  local containers networks failed='false'
   if [[ -n "$preview_pid" && "$preview_pid" =~ ^[0-9]+$ ]]; then
-    kill "$preview_pid" >/dev/null 2>&1 || true
+    if kill -0 "$preview_pid" 2>/dev/null; then
+      kill "$preview_pid" >/dev/null 2>&1 || failed='true'
+    fi
     wait "$preview_pid" >/dev/null 2>&1 || true
+    kill -0 "$preview_pid" 2>/dev/null && failed='true'
+    preview_pid=''
   fi
-  if [[ "$restore_project_id" == colorplay_restore_* ]]; then
+  if [[ "$stack_attempted" == 'true' ]]; then
+    [[ "$restore_project_id" =~ ^colorplay_restore_[0-9]+$ ]] || return 1
+    containers="$(docker ps --all --filter "label=com.supabase.cli.project=$restore_project_id" --format '{{.Names}}' 2>/dev/null)" || return 1
     while IFS= read -r container; do
-      [[ -n "$container" && "$container" == supabase_*_"$restore_project_id" ]] || continue
-      docker rm --force "$container" >/dev/null 2>&1 || true
-    done < <(
-      docker ps --all \
-        --filter "label=com.supabase.cli.project=$restore_project_id" \
-        --format '{{.Names}}' 2>/dev/null
-    )
-    docker network rm "supabase_network_$restore_project_id" \
-      >/dev/null 2>&1 || true
+      [[ -n "$container" ]] || continue
+      [[ "$container" == supabase_*_"$restore_project_id" ]] || return 1
+      docker rm --force "$container" >/dev/null 2>&1 || failed='true'
+    done <<< "$containers"
+    networks="$(docker network ls --filter "name=^supabase_network_${restore_project_id}$" --format '{{.Name}}' 2>/dev/null)" || return 1
+    if [[ -n "$networks" ]]; then
+      [[ "$networks" == "supabase_network_$restore_project_id" ]] || return 1
+      docker network rm "supabase_network_$restore_project_id" >/dev/null 2>&1 || failed='true'
+    fi
+    # A missing/changed CLI label must not conceal a residual owned container.
+    containers="$(docker ps --all --filter "name=^supabase_.*_${restore_project_id}$" --format '{{.Names}}' 2>/dev/null)" || return 1
+    networks="$(docker network ls --filter "name=^supabase_network_${restore_project_id}$" --format '{{.Name}}' 2>/dev/null)" || return 1
+    [[ -z "$containers" && -z "$networks" ]] || failed='true'
   fi
-  if [[ "$temporary_root" == "${TMPDIR:-/tmp}/colorplay-restore."* ]]; then
-    rm -rf "$temporary_root"
-  fi
+  [[ "$temporary_root" == "${TMPDIR:-/tmp}/colorplay-restore."* ]] || return 1
+  rm -rf "$temporary_root" || failed='true'
+  [[ ! -e "$temporary_root" && ! -L "$temporary_root" ]] || failed='true'
+  [[ "$failed" == 'false' ]] || return 1
+  cleanup_verified='true'
 }
-trap cleanup EXIT
+cleanup_on_exit() {
+  local original_status=$?
+  trap - EXIT
+  if [[ "$cleanup_verified" != 'true' ]] && ! cleanup; then
+    printf '%s\n' 'RESTORE_CLEANUP_FAILED' >&2
+    [[ "$original_status" != 0 ]] || original_status=1
+  fi
+  exit "$original_status"
+}
+trap cleanup_on_exit EXIT
 
 identity_path="${AGE_IDENTITY_FILE:-$backup_root/fixture-recovery-key.txt}"
 [[ -f "$identity_path" ]] || fail 'RESTORE_IDENTITY_MISSING'
@@ -171,6 +196,11 @@ config = config.replace(/^(\s*(?:shadow_|inspector_)?port\s*=\s*)(\d+)$/gmu, (_,
 await writeFile(path, config, 'utf8');
 NODE
 
+# PIDs can be reused; fail before taking ownership of any existing project.
+existing_containers="$(docker ps --all --filter "name=^supabase_.*_${restore_project_id}$" --format '{{.Names}}' 2>/dev/null)" || fail 'RESTORE_PREFLIGHT_FAILED'
+existing_networks="$(docker network ls --filter "name=^supabase_network_${restore_project_id}$" --format '{{.Name}}' 2>/dev/null)" || fail 'RESTORE_PREFLIGHT_FAILED'
+[[ -z "$existing_containers" && -z "$existing_networks" ]] || fail 'RESTORE_PROJECT_COLLISION'
+stack_attempted='true'
 pnpm --dir "$project_root" exec supabase start --workdir "$restore_workdir" \
   >"$temporary_root/stack-start.log" 2>&1 || fail 'RESTORE_STACK_START_FAILED'
 database_container="supabase_db_$restore_project_id"
@@ -306,13 +336,20 @@ if [[ "$application_probe_required" == 'true' ]]; then
 fi
 
 elapsed_seconds="$(( $(date +%s) - started_at ))"
+# Read the small sanitized report input before removing the temporary root.
+report_manifest="$(node -e "const fs=require('node:fs');const m=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));console.log(JSON.stringify({b2_prefix:m.b2_prefix,repo_sha:m.repo_sha,migration_first:m.migration_first,migration_last:m.migration_last,created_at_utc:m.created_at_utc}))" "$temporary_root/backup-manifest.json")"
+if ! cleanup; then
+  # Do not retry a failed explicit cleanup from the EXIT handler.
+  trap - EXIT
+  fail 'RESTORE_CLEANUP_FAILED'
+fi
 node - \
   "$backup_root/restore-report.json" \
   "$elapsed_seconds" \
-  "$temporary_root/backup-manifest.json" \
+  "$report_manifest" \
   "$application_probe_required" <<'NODE'
-import { readFile, writeFile } from 'node:fs/promises';
-const manifest = JSON.parse(await readFile(process.argv[4], 'utf8'));
+import { writeFile } from 'node:fs/promises';
+const manifest = JSON.parse(process.argv[4]);
 const probeStatus = process.argv[5] === 'true' ? 'passed' : 'skipped';
 const createdAt = Date.parse(manifest.created_at_utc);
 const actualDataLossHours = Math.max(0, (Date.now() - createdAt) / 3_600_000);
@@ -329,7 +366,8 @@ await writeFile(process.argv[2], `${JSON.stringify({
   actual_data_loss_hours: actualDataLossHours,
   role_inventory: probeStatus,
   authorization_probe: probeStatus,
-  application_startup: probeStatus
+  application_startup: probeStatus,
+  cleanup: { verified: true, residual_containers: 0, residual_networks: 0, temp_root_removed: true }
 }, null, 2)}\n`, { mode: 0o600 });
 NODE
 printf 'LOCAL_RESTORE_VERIFIED\n'

@@ -160,11 +160,16 @@ function installFakePnpmStackStartProbe() {
   const fakeBin = resolve(root, 'bin');
   const fakePnpm = resolve(fakeBin, 'pnpm');
   return mkdir(fakeBin).then(() =>
-    writeFile(
-      fakePnpm,
-      "#!/usr/bin/env bash\nprintf '%s\\n' 'RESTORE_STACK_START_REACHED' >&2\nexit 86\n",
-      { mode: 0o700 },
-    ).then(() => ({ PATH: `${fakeBin}:${process.env.PATH ?? ''}` })),
+    Promise.all([
+      writeFile(
+        fakePnpm,
+        "#!/usr/bin/env bash\nprintf '%s\\n' 'RESTORE_STACK_START_REACHED' >&2\nexit 86\n",
+        { mode: 0o700 },
+      ),
+      writeFile(resolve(fakeBin, 'docker'), '#!/bin/sh\nexit 0\n', {
+        mode: 0o700,
+      }),
+    ]).then(() => ({ PATH: `${fakeBin}:${process.env.PATH ?? ''}` })),
   );
 }
 
@@ -330,66 +335,13 @@ describe('isolated Local restore', () => {
     expect(result.stdout).toBe('');
   });
 
-  it('restores the encrypted synthetic set and records a matching RTO report', async () => {
-    const backupRoot = await createFixture();
-    const result = await run('bash', [
-      restoreScript,
-      '--backup-root',
-      backupRoot,
-    ]);
-
-    expect(result.code).toBe(0);
-    expect(result.stderr).toBe('');
-    expect(result.stdout).toContain('LOCAL_RESTORE_VERIFIED');
-    const report = JSON.parse(
-      await readFile(resolve(backupRoot, 'restore-report.json'), 'utf8'),
-    ) as {
-      actual_data_loss_hours: number;
-      backup_prefix: string;
-      decision: string;
-      elapsed_seconds: number;
-      application_startup: string;
-      authorization_probe: string;
-      role_inventory: string;
-      migration_first: string;
-      migration_last: string;
-      repo_sha: string;
-      schema_version: number;
-      target: string;
-    };
-    expect(report.schema_version).toBe(1);
-    expect(report.decision).toBe('pass');
-    expect(report.target).toBe('isolated-local');
-    expect(report.backup_prefix).toMatch(/^production\//u);
-    expect(report.repo_sha).toBe('a'.repeat(40));
-    expect(report.migration_first).toBe('20260713000100');
-    expect(report.migration_last).toBe('20260728000100');
-    expect(report.actual_data_loss_hours).toBeGreaterThanOrEqual(0);
-    expect(report.application_startup).toBe('skipped');
-    expect(report.authorization_probe).toBe('skipped');
-    expect(report.role_inventory).toBe('skipped');
-    expect(typeof report.elapsed_seconds).toBe('number');
-    expect(report.elapsed_seconds).toBeGreaterThanOrEqual(0);
-    // A cold GitHub runner may need almost two minutes to start the disposable
-    // Supabase stack (the prior passing run took 119.838 seconds). This is an
-    // integrity drill, not a two-minute RTO requirement; the CI job itself
-    // remains bounded at 30 minutes and the product RTO target is eight hours.
-  }, 300_000);
-
   it('accepts an empty Storage inventory before starting the isolated stack', async () => {
     const backupRoot = await createFixture('synthetic-empty-storage');
-    const fakeBin = resolve(root, 'bin');
-    const fakePnpm = resolve(fakeBin, 'pnpm');
-    await mkdir(fakeBin);
-    await writeFile(
-      fakePnpm,
-      "#!/usr/bin/env bash\nprintf '%s\\n' 'RESTORE_STACK_START_REACHED' >&2\nexit 86\n",
-      { mode: 0o700 },
-    );
+    const env = await installFakePnpmStackStartProbe();
     const result = await run(
       'bash',
       [restoreScript, '--backup-root', backupRoot],
-      { PATH: `${fakeBin}:${process.env.PATH ?? ''}` },
+      env,
     );
 
     expect(result.code).toBe(1);

@@ -56,6 +56,66 @@ function run(command: string, argumentsList: string[], env = {}) {
 }
 
 describe('encrypted immutable backup creation', () => {
+  it('binds synthetic metadata to actual source HEAD and ordered migrations', async () => {
+    const backupRoot = resolve(root, 'lineage');
+    const created = await run('bash', [
+      createScript,
+      '--fixture',
+      'synthetic',
+      '--output-root',
+      backupRoot,
+      '--fake-upload-root',
+      resolve(root, 'fake-s3'),
+    ]);
+    expect(created.code).toBe(0);
+    const decrypted = await run('age', [
+      '--decrypt',
+      '--identity',
+      resolve(backupRoot, 'fixture-recovery-key.txt'),
+      resolve(backupRoot, 'backup-manifest.json.age'),
+    ]);
+    expect(decrypted.code).toBe(0);
+    const manifest: unknown = JSON.parse(decrypted.stdout);
+    const head = await run('git', ['rev-parse', 'HEAD']);
+    expect(head.code).toBe(0);
+    const versions = (
+      await readdir(resolve(repositoryRoot, 'supabase/migrations'))
+    )
+      .filter((file) => file.endsWith('.sql'))
+      .map((file) => file.split('_')[0])
+      .sort();
+    expect(manifest).toMatchObject({
+      artifact_kind: 'synthetic_fixture',
+      repo_sha: head.stdout.trim(),
+      migration_first: versions[0],
+      migration_last: versions.at(-1),
+    });
+  });
+
+  it('fails closed when source Git lineage cannot be resolved', async () => {
+    const bin = resolve(root, 'bin');
+    await mkdir(bin);
+    await writeFile(resolve(bin, 'git'), '#!/bin/sh\nexit 7\n', {
+      mode: 0o700,
+    });
+    const result = await run(
+      'bash',
+      [
+        createScript,
+        '--fixture',
+        'synthetic',
+        '--output-root',
+        resolve(root, 'backup'),
+        '--fake-upload-root',
+        resolve(root, 'fake-s3'),
+      ],
+      { PATH: `${bin}:${process.env.PATH ?? ''}` },
+    );
+    expect(result.code).toBe(1);
+    expect(result.stderr).toBe('BACKUP_FIXTURE_LINEAGE_INVALID\n');
+    expect(result.stdout).not.toContain('SYNTHETIC_BACKUP_CREATED');
+  });
+
   it('creates a synthetic encrypted-only upload fixture', async () => {
     const outputRoot = resolve(root, 'output');
     const uploadRoot = resolve(root, 'fake-s3');
