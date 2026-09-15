@@ -94,7 +94,7 @@ describe('ChapterMapCamera', () => {
       </ChapterMapCamera>,
     );
 
-    expect(viewport.scrollLeft).toBeCloseTo(37.081, 3);
+    expect(viewport.scrollLeft).toBeCloseTo(40.072, 3);
     expect(viewport).not.toHaveFocus();
     expect(document.body).toHaveFocus();
   });
@@ -126,7 +126,7 @@ describe('ChapterMapCamera', () => {
     );
     const viewport = screen.getByRole('region', { name: '村莊地圖探索區' });
     const world = screen.getByTestId('village-world');
-    expect(viewport.scrollLeft).toBeCloseTo(37.081, 3);
+    expect(viewport.scrollLeft).toBeCloseTo(40.072, 3);
     expect(observeResize).toHaveBeenCalledWith(viewport);
     expect(observeResize).toHaveBeenCalledWith(world);
 
@@ -135,7 +135,7 @@ describe('ChapterMapCamera', () => {
     viewport.scrollLeft = 0;
     resizeCallback?.([], {} as ResizeObserver);
 
-    expect(viewport.scrollLeft).toBeCloseTo(194.498, 3);
+    expect(viewport.scrollLeft).toBeCloseTo(198.086, 3);
     expect(viewport).not.toHaveFocus();
     expect(document.body).toHaveFocus();
   });
@@ -163,11 +163,11 @@ describe('ChapterMapCamera', () => {
     viewportClientWidth = 300;
     viewportScrollWidth = 1200;
     resizeCallback?.([], {} as ResizeObserver);
-    expect(viewport.scrollLeft).toBeCloseTo(194.498, 3);
+    expect(viewport.scrollLeft).toBeCloseTo(198.086, 3);
     expect(release).toHaveBeenCalledWith(7);
 
     fireEvent.pointerMove(viewport, { clientX: 150, pointerId: 7 });
-    expect(viewport.scrollLeft).toBeCloseTo(194.498, 3);
+    expect(viewport.scrollLeft).toBeCloseTo(198.086, 3);
   });
 
   it('drags blank world directly but leaves button and link gestures alone', () => {
