@@ -61,11 +61,11 @@ describe('phase 1 admin sensitivity catalog contract', () => {
       '--check',
     ]);
   });
-  it('holds 46 existing + 9 control + 4 quarantined resources, all export=false', async () => {
+  it('holds 46 existing + 9 control + 4 quarantined + 1 progression resource, all export=false', async () => {
     const catalog = JSON.parse(
       await readFile('supabase/catalog/admin-sensitivity-catalog.json', 'utf8'),
     ) as Catalog;
-    expect(catalog.resources).toHaveLength(59);
+    expect(catalog.resources).toHaveLength(60);
     expect(
       catalog.resources.filter((r) => r.resource.startsWith('admin_')),
     ).toHaveLength(9);

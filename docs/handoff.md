@@ -1690,3 +1690,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - 驗證：一次性 schema inventory 集合比對零 diff；`pnpm admin:catalog:check`、新 DB contract 10/10、focused Vitest 58/58、scoped ESLint、Prettier、typecheck、`git diff --check` 全綠。舊 generated migrations 仍為零 diff，正式 Local DB 無持久變更。
 - 下一步：精確 stage 本次 generator／catalog JSON／forward migration／handoff 四檔，commit 後 push 同一 PR #50；由新 push 自動觸發 CI，不手動 rerun 失敗 run `34925741613`。PR 維持 Draft，禁止 merge／Hosted migration／Staging gate／Production action。
+
+## 2026-09-15 11:56 [Codex] — PR #50 CI fixed-count contract remediation
+
+- 新 CI run `34926390646` 顯示 catalog inventory 已通過；`local-database` 與 `unit-coverage` 分別只因既有 pgTAP／TypeScript contract 仍把 catalog resource 總數寫死為 59 而失敗，實際加入 `chapter_challenge_finalize_facts` 後正確總數為 60。只同步兩處 fixed-count assertion 與測試名稱，未改產品、migration 或 catalog 內容。
+- 驗證：更新後 pgTAP catalog contract 13/13、TypeScript catalog contract 3/3、scoped Prettier／ESLint、`pnpm admin:catalog:check` 全綠。CI 同輪其餘 2,086 個 unit tests 與新 chapter completion／mastery pgTAP 皆已通過。完整本機 `pnpm test:db` 已成功 reset 並套用所有 migrations，但 Docker Desktop 無法掛載 `/private/tmp` 測試路徑，因此改以 stdin 對同一 Local DB 執行 focused pgTAP；僅測試 transaction rollback，另在 Local test DB 安裝 pgTAP extension，未操作 Hosted／Production。
+- 下一步：精確 stage 兩個 contract 與本 append-only handoff，commit／push 同一 Draft PR #50，由新 push 自動觸發新 CI；不得手動 rerun 舊 run，不得轉 Ready／merge／Hosted migration。
