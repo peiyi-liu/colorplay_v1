@@ -81,9 +81,12 @@ describe('LiveRepository with local Supabase', () => {
       state: 'lobby',
       participantCount: 2,
       isHost: true,
+      rulesVersion: '2026-07-live-3',
     });
 
-    for (let round = 1; round <= hostState.questionCount; round += 1) {
+    const questionCount = hostState.questionCount;
+    let earnedScore = 0;
+    for (let round = 1; round <= questionCount; round += 1) {
       if (round === 1) {
         await host.openQuestion(session.sessionId, hostState.stateVersion);
       } else {
@@ -109,19 +112,36 @@ describe('LiveRepository with local Supabase', () => {
       hostState = await host.getState(session.sessionId);
       await host.closeQuestion(session.sessionId, hostState.stateVersion);
       hostState = await host.getState(session.sessionId);
+      const feedbackView = await studentA.getState(session.sessionId);
+      expect(feedbackView).toMatchObject({
+        state: 'question_feedback',
+        currentPosition: round,
+        question: { questionId: question.questionId },
+        myFeedback: {
+          answerStatus: 'correct',
+          selectedOptionId: correctOption.id,
+        },
+      });
+      const scoreDelta = feedbackView.myFeedback?.scoreDelta;
+      if (scoreDelta === undefined) throw new Error('LIVE_TEST_FEEDBACK_MISSING');
+      expect(Number.isSafeInteger(scoreDelta)).toBe(true);
+      expect(scoreDelta).toBeGreaterThanOrEqual(75);
+      expect(scoreDelta).toBeLessThanOrEqual(150);
+      // Reconcile authoritative answer deltas, not an assumed zero-latency
+      // perfect score. The exact speed formula is checked by pgTAP 040.
+      earnedScore += scoreDelta;
     }
 
     await host.finalize(session.sessionId, hostState.stateVersion);
 
-    const perfectScore = hostState.questionCount * 150;
     const finalA = await studentA.getState(session.sessionId);
     expect(finalA.state).toBe('completed');
-    expect(finalA.myResult).toEqual({ score: perfectScore, rank: 1 });
+    expect(finalA.myResult).toEqual({ score: earnedScore, rank: 1 });
     const finalB = await studentB.getState(session.sessionId);
     expect(finalB.myResult).toEqual({ score: 0, rank: 2 });
     expect(finalA.podium?.[0]).toMatchObject({
       rank: 1,
-      score: perfectScore,
+      score: earnedScore,
     });
   });
 });
