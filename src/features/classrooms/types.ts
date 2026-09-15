@@ -38,7 +38,7 @@ export type StudentChapterProgress = Readonly<{
   reviewTotal: number | null;
   liveAccuracy: number | null;
   sectionQuizAccuracy: number | null;
-  status: 'developing' | 'learning' | 'mastered' | 'not_started';
+  status: 'completed' | 'developing' | 'learning' | 'mastered' | 'not_started';
 }>;
 
 export type StudentProgressSnapshot = Readonly<{

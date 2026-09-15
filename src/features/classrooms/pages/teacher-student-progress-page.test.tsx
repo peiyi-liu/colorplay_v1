@@ -28,6 +28,20 @@ const snapshot: StudentProgressSnapshot = {
       status: 'mastered',
     },
     {
+      accuracy: 60,
+      assessmentAccuracy: 60,
+      chapterQuizAccuracy: 60,
+      chapterId: 'cc000000-0000-4000-8000-000000000003',
+      chapterTitle: '第二章：色彩呈現',
+      coverage: 100,
+      mastery: 60,
+      liveAccuracy: null,
+      reviewCompleted: 3,
+      reviewTotal: 3,
+      sectionQuizAccuracy: null,
+      status: 'completed',
+    },
+    {
       accuracy: null,
       assessmentAccuracy: null,
       chapterQuizAccuracy: null,
@@ -132,6 +146,7 @@ describe('TeacherStudentProgressPage', () => {
       'true',
     );
     expect(within(chapter).getByText('3 / 3')).toBeVisible();
+    expect(screen.getAllByText('已精熟').length).toBeGreaterThan(0);
     expect(screen.getAllByText('已完成').length).toBeGreaterThan(0);
     expect(screen.getAllByText('尚未開始').length).toBeGreaterThan(0);
     expect(

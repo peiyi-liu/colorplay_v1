@@ -140,7 +140,7 @@ describe('ClassroomRepository', () => {
               review_completed: 3,
               review_total: 3,
               section_quiz_accuracy: 76,
-              status: 'mastered',
+              status: 'completed',
             },
           ],
           identity: {
@@ -182,7 +182,7 @@ describe('ClassroomRepository', () => {
           reviewCompleted: 3,
           reviewTotal: 3,
           sectionQuizAccuracy: 76,
-          status: 'mastered',
+          status: 'completed',
         },
       ],
       identity: {

@@ -115,14 +115,14 @@ describe('learning experience phase gate contract', () => {
     expect(spec).not.toContain('service_role');
   });
 
-  // Run 34852498818: AC-PROG-005 (accuracy), AC-PROG-003 (mastery label),
+  // AC-PROG-005 (accuracy), AC-PROG-011 (chapter mastery), and
   // AC-PROG-006 (cross-tenant _v2 denial). Source contracts only.
   it('asserts the teacher analytics contract matches the actual formal assessment path', async () => {
     const spec = await readText('tests/e2e/learning-experience.spec.ts');
     expect(spec).toContain("toContainText('80.0%')");
     expect(spec).not.toContain("toContainText('100.0%')");
-    expect(spec).toContain("toContainText('已完成')");
-    expect(spec).not.toContain("toContainText('已精熟')");
+    expect(spec).toContain("toContainText('已精熟')");
+    expect(spec).not.toContain("toContainText('已完成')");
     expect(spec).toContain('rpc\\/teacher_student_progress_v2(?:');
     expect(spec).not.toContain('teacher_student_progress(?:');
   });
