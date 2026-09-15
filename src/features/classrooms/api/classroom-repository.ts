@@ -69,7 +69,13 @@ const studentProgressSchema = z.strictObject({
       review_completed: z.number().int().nonnegative(),
       review_total: z.number().int().positive().nullable(),
       section_quiz_accuracy: z.number().nullable(),
-      status: z.enum(['developing', 'learning', 'mastered', 'not_started']),
+      status: z.enum([
+        'completed',
+        'developing',
+        'learning',
+        'mastered',
+        'not_started',
+      ]),
     }),
   ),
   identity: z.strictObject({

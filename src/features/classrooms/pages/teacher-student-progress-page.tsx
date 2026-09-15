@@ -17,7 +17,8 @@ const formatPercent = (value: number | null): string =>
   value === null ? EM_DASH : `${value.toFixed(1)}%`;
 
 const chapterStatusLabel = (status: StudentChapterProgress['status']) => {
-  if (status === 'mastered') return '已完成';
+  if (status === 'mastered') return '已精熟';
+  if (status === 'completed') return '已完成';
   if (status === 'not_started') return '尚未開始';
   return '進行中';
 };
@@ -25,7 +26,7 @@ const chapterStatusLabel = (status: StudentChapterProgress['status']) => {
 const chapterStatusTone = (
   status: StudentChapterProgress['status'],
 ): ChipTone => {
-  if (status === 'mastered') return 'success';
+  if (status === 'mastered' || status === 'completed') return 'success';
   if (status === 'not_started') return 'neutral';
   return 'alert';
 };

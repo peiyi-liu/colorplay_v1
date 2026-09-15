@@ -920,6 +920,78 @@ export type Database = {
         }
         Relationships: []
       }
+      chapter_challenge_finalize_facts: {
+        Row: {
+          challenge_fingerprint: string | null
+          chapter_id: string
+          correct_count: number
+          created_at: string
+          finalized_at: string
+          question_count: number
+          session_id: string
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          challenge_fingerprint?: string | null
+          chapter_id: string
+          correct_count: number
+          created_at?: string
+          finalized_at: string
+          question_count: number
+          session_id: string
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          challenge_fingerprint?: string | null
+          chapter_id?: string
+          correct_count?: number
+          created_at?: string
+          finalized_at?: string
+          question_count?: number
+          session_id?: string
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapter_challenge_finalize_facts_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chapter_challenge_finalize_facts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "quiz_session_question_state"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "chapter_challenge_finalize_facts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "quiz_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chapter_challenge_finalize_facts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chapter_challenge_finalize_facts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chapters: {
         Row: {
           course_id: string
@@ -2368,6 +2440,8 @@ export type Database = {
           abandoned_at: string | null
           answered_count: number
           assignment_attempt_id: string | null
+          chapter_progression_fingerprint: string | null
+          chapter_progression_id: string | null
           chapter_title: string
           classroom_id: string | null
           client_request_id: string
@@ -2390,6 +2464,8 @@ export type Database = {
           abandoned_at?: string | null
           answered_count?: number
           assignment_attempt_id?: string | null
+          chapter_progression_fingerprint?: string | null
+          chapter_progression_id?: string | null
           chapter_title: string
           classroom_id?: string | null
           client_request_id: string
@@ -2412,6 +2488,8 @@ export type Database = {
           abandoned_at?: string | null
           answered_count?: number
           assignment_attempt_id?: string | null
+          chapter_progression_fingerprint?: string | null
+          chapter_progression_id?: string | null
           chapter_title?: string
           classroom_id?: string | null
           client_request_id?: string
@@ -2436,6 +2514,13 @@ export type Database = {
             columns: ["assignment_attempt_id"]
             isOneToOne: false
             referencedRelation: "assignment_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_sessions_chapter_progression_id_fkey"
+            columns: ["chapter_progression_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
             referencedColumns: ["id"]
           },
           {
@@ -3489,6 +3574,17 @@ export type Database = {
         Returns: Json
       }
       chapter_access_blockers: { Args: { p_chapter_id: string }; Returns: Json }
+      chapter_challenge_fingerprint: {
+        Args: { p_template_id: string }
+        Returns: string
+      }
+      chapter_challenge_progress_for: {
+        Args: { p_chapter_id: string; p_user_id: string }
+        Returns: {
+          best_qualifying_percentage: number
+          status: string
+        }[]
+      }
       chapter_content_is_available: {
         Args: { p_chapter_id: string }
         Returns: boolean

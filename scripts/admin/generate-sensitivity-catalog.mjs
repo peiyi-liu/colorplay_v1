@@ -107,6 +107,38 @@ const CONTROL_SURFACES = {
   admin_denial_counters: 'health',
 };
 
+// Forward-only schema overlays added after the generated 20260903 migration.
+// Keep the historical migration byte-stable; the owning forward migration
+// inserts these rows into the database catalog.
+const FORWARD_CATALOG_ROWS = [
+  ...[
+    'challenge_fingerprint',
+    'chapter_id',
+    'correct_count',
+    'created_at',
+    'finalized_at',
+    'question_count',
+    'session_id',
+    'template_id',
+    'user_id',
+  ].map((column) => ({
+    resource: 'chapter_challenge_finalize_facts',
+    domain: 'assessments',
+    surface: 'none',
+    column,
+    class: 'forbidden',
+  })),
+  ...['chapter_progression_fingerprint', 'chapter_progression_id'].map(
+    (column) => ({
+      resource: 'quiz_sessions',
+      domain: 'assessments',
+      surface: 'browser',
+      column,
+      class: 'forbidden',
+    }),
+  ),
+];
+
 function parseCells(line) {
   return line
     .split('|')
@@ -311,7 +343,10 @@ async function main() {
     }))
     .sort((a, b) => a.resource.localeCompare(b.resource));
   const rebaselineRows = parseRebaselineRows(rebaselineSpec);
-  const resources = applyRebaseline(baseResources, rebaselineRows);
+  const resources = applyRebaseline(
+    applyRebaseline(baseResources, rebaselineRows),
+    FORWARD_CATALOG_ROWS,
+  );
   const profiles = resources.find(
     (resource) => resource.resource === 'profiles',
   );

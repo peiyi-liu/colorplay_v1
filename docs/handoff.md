@@ -1666,3 +1666,33 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 下一步：交回 Codex 驗證這一輪修正是否收斂該 finding；Codex 確認後才輪到 owner 決定 PR #49 是否轉 Ready、要不要 merge，以及是否觸發 Hosted Staging workflow 重跑驗證。
 - Blocker／待決策：程式修正本身無待決事項；PR #49 維持 Draft，等 Codex 收斂確認。
 - 相關檔案／commit：`tests/e2e/learning-experience.spec.ts`（測試修正，commit `e25e5e5`）、`docs/handoff.md`（本則）；Draft PR [#49](https://github.com/peiyi-liu/colorplay_v1/pull/49)（分支 `codex/issue-41-phase-gate-fixture-order` → `staging`）。
+
+## 2026-09-15 11:03 [Codex] — Chapter completion／mastery authoritative 判定修正，待單輪 review 與 Draft PR
+
+- 做了什麼：針對 PR #49 合併後 Staging run `34920416545` 的 phase-acceptance 失敗，新增 `chapter_challenge_progress_for` server helper，以 finalized `practice`／`assignment` chapter challenge 判定狀態；低於 80% 為 `completed`，current-version 最佳 `correct_count / question_count` 達 80% 為 `mastered`。Remediation、Live、速度分數與整份題庫 aggregate mastery 不決定這兩態。教師個人進度、章節完成摘要與班級 overview 改用同一 helper；前端新增 `completed` 型別，分別顯示「已完成」與「已精熟」。
+- 驗證：新 pgTAP 5/5、既有 teacher analytics v2 pgTAP 23/23、相關 Vitest 58/58、Prettier／ESLint／typecheck／`git diff --check` 全綠；Playwright learning-experience spec 可正常列出。兩組 DB 驗證皆把 migration 暫時套用於 transaction 後 rollback，未 reset 或保留 Local DB 變更。
+- 下一步：Codex 依 M 級流程做唯一一次 Standards／Spec review；若無 blocking finding，精確 commit／push 並建立 targeting `staging` 的 Draft PR。任何 merge、Hosted migration、Staging workflow rerun 或 Production action都未授權。
+- Blocker／待決策：無。Claude Code 兩次受限實作嘗試皆在 5 分鐘內未產生檔案而中止；worktree 未被污染，後續由 Codex直接完成。
+
+## 2026-09-15 11:36 [Codex] — Chapter completion／mastery review remediation，擴大 DB contract 已核准
+
+- 做了什麼：唯一一輪 Standards／Spec review 指出原 helper 仍可把人工 `completed` row 當權威完成、只比對抽中題目的 version 而漏掉 template／pool／scope 變更，且舊 `get_classroom_progress` 仍用 remediation aggregate 判 `mastered`。Owner 明確核准擴大 DB contract 後，同一輪修正為：quiz session 建立時由 server trigger freeze chapter id 與 SHA-256 challenge fingerprint；成功 finalize transition 才把題數、答對數與 fingerprint 寫入無 browser write privilege 的 `chapter_challenge_finalize_facts`；不完整題組、非 CR 題、section scope、非 template 題數或 remediation 都不產生 completion fact。歷史 structurally valid completion 可回填 immutable fact，但 fingerprint 留空，保留 `completed` 且 fail closed 不宣稱 current-version `mastered`。四個教師 projection 現在共用同一權威 helper；題庫／template／scope／rules identity 改變時保留完成、撤銷舊 mastery。`src/types/database.ts` 由一次性 Local schema clone 套 migration 後用標準 Supabase generator 產生，再只帶入本 migration 對應的 generated hunks；clone 已刪除，正式 Local DB 未變動。
+- 驗證：新增 pgTAP 10/10（含 browser 不可 forge fact、直接 status update 不造 completion、remediation 排除、7/10 completed、8/10 mastered、material template change 撤銷 mastery但保留 completion、四 projection 一致）；既有 learning progress 15/15、teacher chapter completion 12/12、teacher analytics v2 23/23 皆在 transaction 內套 migration 後 rollback 通過。尚待重跑相關 Vitest、lint、typecheck、格式與 diff gate 後 amend／push／開 Draft PR。
+- 邊界：未 reset 共用 Local Supabase、未操作 Hosted migration／Staging workflow／Vercel／Production；未 merge。Migration 693 行刻意維持單一 atomic deploy unit，避免 fact table、backfill、finalize trigger 與四個 projection 在 rollout 中短暫使用不同定義。
+
+## 2026-09-15 11:48 [Codex] — PR #50 Foundation CI catalog inventory remediation
+
+- 做了什麼：PR #50 Foundation CI run `34925741613` 的 `chromium-e2e` job 並非瀏覽器測試失敗，而是在前置 `admin:catalog:inventory` gate 列出本 migration 新增的 11 個欄位未登錄。依既有 catalog fail-closed 規則，在同一 forward migration 新增 11 筆 `forbidden` catalog rows；`chapter_challenge_finalize_facts` 設為 `surface=none`，兩個 `quiz_sessions` progression identity 欄位沿用 `surface=browser` 但不可投影。Catalog generator 加入 forward-only overlay，保留歷史 `20260808000500`／`20260903000100` generated migrations byte-stable，並重生 `admin-sensitivity-catalog.json`。
+- 驗證：以一次性 Local schema clone 套用本 migration 後，執行與 CI 完全相同的 public base-table／catalog 欄位集合比對，零 diff；`pnpm admin:catalog:check` 通過。一次性資料庫已刪除，正式 Local DB 未變動。尚待重跑 DB contract、lint／typecheck／format／diff gate，完成後 amend 同一 commit 並 push；不得重跑舊 workflow，push 觸發新 CI 即為唯一驗證。
+- 邊界：這是既有 CI finding 的最小必要修正；未增加 Admin 瀏覽能力、未修改舊 migration、未碰 Hosted／Production、未轉 Ready 或 merge。
+
+## 2026-09-15 11:50 [Codex] — PR #50 catalog remediation local gates complete
+
+- 驗證：一次性 schema inventory 集合比對零 diff；`pnpm admin:catalog:check`、新 DB contract 10/10、focused Vitest 58/58、scoped ESLint、Prettier、typecheck、`git diff --check` 全綠。舊 generated migrations 仍為零 diff，正式 Local DB 無持久變更。
+- 下一步：精確 stage 本次 generator／catalog JSON／forward migration／handoff 四檔，commit 後 push 同一 PR #50；由新 push 自動觸發 CI，不手動 rerun 失敗 run `34925741613`。PR 維持 Draft，禁止 merge／Hosted migration／Staging gate／Production action。
+
+## 2026-09-15 11:56 [Codex] — PR #50 CI fixed-count contract remediation
+
+- 新 CI run `34926390646` 顯示 catalog inventory 已通過；`local-database` 與 `unit-coverage` 分別只因既有 pgTAP／TypeScript contract 仍把 catalog resource 總數寫死為 59 而失敗，實際加入 `chapter_challenge_finalize_facts` 後正確總數為 60。只同步兩處 fixed-count assertion 與測試名稱，未改產品、migration 或 catalog 內容。
+- 驗證：更新後 pgTAP catalog contract 13/13、TypeScript catalog contract 3/3、scoped Prettier／ESLint、`pnpm admin:catalog:check` 全綠。CI 同輪其餘 2,086 個 unit tests 與新 chapter completion／mastery pgTAP 皆已通過。完整本機 `pnpm test:db` 已成功 reset 並套用所有 migrations，但 Docker Desktop 無法掛載 `/private/tmp` 測試路徑，因此改以 stdin 對同一 Local DB 執行 focused pgTAP；僅測試 transaction rollback，另在 Local test DB 安裝 pgTAP extension，未操作 Hosted／Production。
+- 下一步：精確 stage 兩個 contract 與本 append-only handoff，commit／push 同一 Draft PR #50，由新 push 自動觸發新 CI；不得手動 rerun 舊 run，不得轉 Ready／merge／Hosted migration。

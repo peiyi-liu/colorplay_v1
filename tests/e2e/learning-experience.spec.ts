@@ -420,7 +420,7 @@ test('Learning Experience phase gate', async ({
   );
   await expect(emptyMistakesStatus).toBeVisible();
 
-  // 學生端 /app/progress 已移除（Task 10）；80%/已完成改由下方 teacherRow 斷言從教師視角覆蓋。
+  // 學生端 /app/progress 已移除（Task 10）；80%/已精熟改由下方 teacherRow 斷言從教師視角覆蓋。
 
   // --- Teacher analytics: owner reads exact mastery, others read nothing (classroom already created/joined before the Quiz; reload picks up membership) ---
   await teacherPage.reload();
@@ -444,7 +444,7 @@ test('Learning Experience phase gate', async ({
     name: new RegExp(QUIZ_CHAPTER_TITLE, 'u'),
   });
   await expect(teacherRow).toContainText('80.0%');
-  await expect(teacherRow).toContainText('已完成');
+  await expect(teacherRow).toContainText('已精熟');
   await expect(teacherPage.locator('body')).not.toContainText(
     '@colorplay.test',
   );
