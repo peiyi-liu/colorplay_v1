@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { LEARNING_MAP_PLATFORMS } from '../fixtures/learning-map-platforms';
 
 // Frontend regression only: this is not Android/Samsung real-device evidence.
 // Do not use scrollIntoView or click's auto-scroll to mask a scroll-chain trap.
@@ -86,55 +87,138 @@ test('Live join action remains reachable in a reduced-height phone viewport', as
   await expect(page.getByRole('alert')).toContainText('代碼無效或課堂尚未開放');
 });
 
+// Compare visible footprint centers to independently calibrated artwork pads.
+// Reading data-ground-* here would only prove agreement with the implementation.
+async function readMapFeet(page: Page) {
+  return page.evaluate(() => {
+    const mobile = innerWidth < 768;
+    const base = document.querySelector<HTMLImageElement>(
+      mobile ? '.chapter-map__base--mobile' : '.chapter-map__base--desktop',
+    );
+    if (!base) throw new Error('CHAPTER_MAP_BASE_MISSING');
+    const bounds = base.getBoundingClientRect();
+    return Array.from(
+      document.querySelectorAll<HTMLImageElement>('.chapter-map__building-art'),
+    ).map((art) => {
+      const rect = art.getBoundingClientRect();
+      return {
+        x:
+          ((rect.left + rect.width / 2 - bounds.left) / bounds.width) *
+          (mobile ? 941 : 1672),
+        y:
+          ((rect.top + rect.height * (336 / 384) - bounds.top) /
+            bounds.height) *
+          (mobile ? 1672 : 941),
+        width: rect.width,
+        height: rect.height,
+      };
+    });
+  });
+}
+
+async function expectCenteredFeet(page: Page) {
+  const mobile = (page.viewportSize()?.width ?? 0) < 768;
+  const feet = await readMapFeet(page);
+  expect(feet).toHaveLength(6);
+  for (const [index, foot] of feet.entries()) {
+    const pad = LEARNING_MAP_PLATFORMS[mobile ? 'mobile' : 'desktop'][index];
+    if (!pad) throw new Error('CHAPTER_MAP_REFERENCE_PAD_MISSING');
+    expect(
+      Math.abs(foot.x - pad.x),
+      `chapter ${String(index + 1)} x`,
+    ).toBeLessThan(1);
+    expect(
+      Math.abs(foot.y - pad.y),
+      `chapter ${String(index + 1)} y`,
+    ).toBeLessThan(1);
+  }
+}
+
 for (const viewport of [
   { width: 1440, height: 900 },
   { width: 393, height: 852 },
+  { width: 812, height: 375 },
 ]) {
-  test(`six buildings touch their terrain anchors at ${String(viewport.width)}x${String(viewport.height)}`, async ({
+  const label = `${String(viewport.width)}x${String(viewport.height)}`;
+  test(`six footprint centers stay on artwork pads at ${label}`, async ({
     page,
   }) => {
     await page.setViewportSize(viewport);
     await page.goto('/dev-harness/learning-map.html');
     await expect(page.locator('.chapter-map__building-art')).toHaveCount(6);
-    await expect
-      .poll(() =>
-        page.evaluate(() => {
-          const world = document.querySelector('.chapter-map__world');
-          if (!world) throw new Error('CHAPTER_MAP_WORLD_MISSING');
-          const bounds = world.getBoundingClientRect();
-          const mobile = innerWidth < 768;
-          return Array.from(
-            document.querySelectorAll<HTMLElement>('.chapter-map__building'),
-          )
-            .map((building) => {
-              const art = building.querySelector('.chapter-map__building-art');
-              if (!art) throw new Error('CHAPTER_MAP_ART_MISSING');
-              const rect = art.getBoundingClientRect();
-              const x = Number(
-                mobile
-                  ? building.dataset.mobileGroundX
-                  : building.dataset.groundX,
-              );
-              const y = Number(
-                mobile
-                  ? building.dataset.mobileGroundY
-                  : building.dataset.groundY,
-              );
-              return Math.max(
-                Math.abs(
-                  rect.left +
-                    rect.width / 2 -
-                    (bounds.left + (x / (mobile ? 941 : 1672)) * bounds.width),
-                ),
-                Math.abs(
-                  rect.bottom -
-                    (bounds.top + (y / (mobile ? 1672 : 941)) * bounds.height),
-                ),
-              );
-            })
-            .every((error) => error <= 1);
-        }),
-      )
-      .toBe(true);
+    await expectCenteredFeet(page);
+    await page.reload();
+    await expect(page.locator('.chapter-map__building-art')).toHaveCount(6);
+    await expectCenteredFeet(page);
+  });
+
+  test(`delayed first-entry artwork does not shift feet at ${label}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    let releaseImages!: () => void;
+    const imagesReady = new Promise<void>((resolve) => {
+      releaseImages = resolve;
+    });
+    await page.route('**/src/assets/learning-map/*', async (route) => {
+      if (route.request().resourceType() === 'image') await imagesReady;
+      await route.continue();
+    });
+    try {
+      await page.goto('/dev-harness/learning-map.html', {
+        waitUntil: 'domcontentloaded',
+      });
+      const art = page.locator('.chapter-map__building-art');
+      await expect(art).toHaveCount(6);
+      expect(
+        await art.evaluateAll((images) =>
+          images.every(
+            (image) => (image as HTMLImageElement).naturalWidth === 0,
+          ),
+        ),
+      ).toBe(true);
+      const before = await readMapFeet(page);
+      releaseImages();
+      await expect
+        .poll(() =>
+          art.evaluateAll((images) =>
+            images.every(
+              (image) =>
+                (image as HTMLImageElement).complete &&
+                (image as HTMLImageElement).naturalWidth > 0,
+            ),
+          ),
+        )
+        .toBe(true);
+      const after = await readMapFeet(page);
+      for (const [index, foot] of before.entries()) {
+        const loaded = after[index];
+        if (!loaded) throw new Error('CHAPTER_MAP_LOADED_ART_MISSING');
+        expect(Math.abs(foot.width - loaded.width)).toBeLessThan(0.5);
+        expect(Math.abs(foot.height - loaded.height)).toBeLessThan(0.5);
+        expect(Math.abs(foot.x - loaded.x)).toBeLessThan(0.1);
+        expect(Math.abs(foot.y - loaded.y)).toBeLessThan(0.1);
+      }
+      await expectCenteredFeet(page);
+    } finally {
+      releaseImages();
+      await page.unrouteAll({ behavior: 'wait' });
+    }
   });
 }
+
+test('portrait-landscape-portrait switch keeps all six feet centered', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto('/dev-harness/learning-map.html');
+  await expect(page.locator('.chapter-map__building-art')).toHaveCount(6);
+  for (const viewport of [
+    { width: 393, height: 852 },
+    { width: 852, height: 393 },
+    { width: 393, height: 852 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await expectCenteredFeet(page);
+  }
+});

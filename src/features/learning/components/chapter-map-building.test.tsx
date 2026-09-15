@@ -34,6 +34,21 @@ const anchor: ChapterGroundAnchor = {
 };
 
 describe('ChapterMapBuilding', () => {
+  it('reserves the sprite aspect ratio before the image loads', () => {
+    render(
+      <ol>
+        <ChapterMapBuilding
+          anchor={anchor}
+          chapter={chapter('available')}
+          onSelect={vi.fn()}
+          selected={false}
+        />
+      </ol>,
+    );
+    const art = screen.getByTestId('chapter-building-art');
+    expect(art).toHaveAttribute('width', '512');
+    expect(art).toHaveAttribute('height', '384');
+  });
   it.each([
     ['content_unavailable', '內容準備中'],
     ['locked', '未解鎖'],

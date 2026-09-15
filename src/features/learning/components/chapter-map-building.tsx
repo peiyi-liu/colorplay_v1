@@ -87,6 +87,8 @@ export function ChapterMapBuilding({
               className="chapter-map__building-art"
               data-testid="chapter-building-art"
               decoding="async"
+              width={512}
+              height={384}
               onError={() => {
                 setImageFailed(true);
               }}

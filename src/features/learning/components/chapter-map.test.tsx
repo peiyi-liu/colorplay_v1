@@ -149,12 +149,12 @@ describe('ChapterMap', () => {
     );
 
     const expectedGroundPoints = [
-      ['480', '220'],
-      ['1000', '210'],
-      ['815', '500'],
-      ['330', '515'],
-      ['1100', '735'],
-      ['480', '760'],
+      ['480', '230'],
+      ['1010', '210'],
+      ['805', '475'],
+      ['390', '490'],
+      ['1140', '715'],
+      ['485', '760'],
     ];
     const buildings = Array.from(
       container.querySelectorAll('.chapter-map__building'),
@@ -216,7 +216,7 @@ describe('ChapterMap', () => {
 
     expect(sixth).toHaveFocus();
     expect(viewport).not.toHaveFocus();
-    expect(viewport.scrollLeft).toBeCloseTo(37.081, 3);
+    expect(viewport.scrollLeft).toBeCloseTo(40.072, 3);
     expect(screen.getByText('拖曳探索村莊')).toBeVisible();
     expect(
       container.querySelector('.chapter-map__dialogue-lane'),

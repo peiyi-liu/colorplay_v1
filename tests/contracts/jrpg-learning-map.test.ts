@@ -1,5 +1,7 @@
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { LEARNING_MAP_TERRAIN_SHA256 } from '../fixtures/learning-map-platforms';
 
 const assetDirectory = 'src/assets/learning-map';
 const baseAsset = 'forest-village-base.webp';
@@ -21,6 +23,24 @@ const byteBudget = 1_258_291;
 const assetPath = (filename: string) => `${assetDirectory}/${filename}`;
 
 describe('JRPG learning map artwork contract', () => {
+  it('binds independently calibrated pad positions to the unchanged terrain artwork', () => {
+    for (const layout of ['desktop', 'mobile'] as const) {
+      const terrain = readFileSync(
+        assetPath(`continuous-world-${layout}.webp`),
+      );
+      expect(createHash('sha256').update(terrain).digest('hex')).toBe(
+        LEARNING_MAP_TERRAIN_SHA256[layout],
+      );
+    }
+  });
+
+  it('keeps all six sprite canvases at the reserved pre-load dimensions', () => {
+    for (const filename of spriteAssets.slice(0, 6)) {
+      const sprite = readFileSync(assetPath(filename));
+      expect(sprite.readUInt32BE(16), filename).toBe(512);
+      expect(sprite.readUInt32BE(20), filename).toBe(384);
+    }
+  });
   it('provides every fixed modular asset as a non-empty file', () => {
     for (const filename of imageAssets) {
       expect(existsSync(assetPath(filename)), filename).toBe(true);

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { LEARNING_MAP_PLATFORMS } from '../../../../tests/fixtures/learning-map-platforms';
 
 import {
   CHAPTER_GROUND_ANCHORS,
@@ -12,29 +13,29 @@ describe('chapter map world layout', () => {
   it('keeps the six building contact points at their specified logical coordinates', () => {
     expect(CHAPTER_MAP_WORLD).toEqual({ height: 941, width: 1672 });
     expect(CHAPTER_MAP_MOBILE_WORLD).toEqual({ height: 1672, width: 941 });
-    expect(CHAPTER_GROUND_ANCHORS).toMatchObject({
-      1: { mobileX: 500, mobileY: 270, x: 480, y: 220 },
-      2: { mobileX: 515, mobileY: 540, x: 1000, y: 210 },
-      3: { mobileX: 320, mobileY: 735, x: 815, y: 500 },
-      4: { mobileX: 585, mobileY: 900, x: 330, y: 515 },
-      5: { mobileX: 335, mobileY: 1085, x: 1100, y: 735 },
-      6: { mobileX: 540, mobileY: 1270, x: 480, y: 760 },
+    Object.values(CHAPTER_GROUND_ANCHORS).forEach((anchor, index) => {
+      expect({ x: anchor.x, y: anchor.y }).toEqual(
+        LEARNING_MAP_PLATFORMS.desktop[index],
+      );
+      expect({ x: anchor.mobileX, y: anchor.mobileY }).toEqual(
+        LEARNING_MAP_PLATFORMS.mobile[index],
+      );
     });
   });
 
   it('converts logical points to world-relative styles without moving the ground point', () => {
     expect(anchorStyle(getChapterGroundAnchor(1))).toMatchObject({
       '--chapter-anchor-x': '480',
-      '--chapter-anchor-y': '220',
-      '--chapter-mobile-left': '53.135%',
-      '--chapter-mobile-top': '16.148%',
+      '--chapter-anchor-y': '230',
+      '--chapter-mobile-left': '51.010%',
+      '--chapter-mobile-top': '16.447%',
       '--chapter-visual-offset-x': '0.000cqw',
       '--chapter-visual-offset-y': '0.000cqh',
       left: '28.708%',
-      top: '23.379%',
+      top: '24.442%',
     });
     expect(anchorStyle(getChapterGroundAnchor(6))).toMatchObject({
-      left: '28.708%',
+      left: '29.007%',
       top: '80.765%',
     });
   });
