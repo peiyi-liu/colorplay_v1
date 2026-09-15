@@ -203,6 +203,13 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
           SUPABASE_URL: ${{ vars.STAGING_SUPABASE_URL }}
         run: pnpm exec playwright test tests/e2e/learning-experience.spec.ts --project=chromium
+      - name: Preserve allowlisted achievement request diagnostics
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: learning-achievement-diagnostics
+          path: artifacts/phase0/staging-learning/reports/achievement-requests.safe.json
+          if-no-files-found: warn
       - name: Remove run-scoped learning-experience fixture credential file
         if: always()
         env:
