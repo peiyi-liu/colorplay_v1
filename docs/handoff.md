@@ -1696,3 +1696,18 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 新 CI run `34926390646` 顯示 catalog inventory 已通過；`local-database` 與 `unit-coverage` 分別只因既有 pgTAP／TypeScript contract 仍把 catalog resource 總數寫死為 59 而失敗，實際加入 `chapter_challenge_finalize_facts` 後正確總數為 60。只同步兩處 fixed-count assertion 與測試名稱，未改產品、migration 或 catalog 內容。
 - 驗證：更新後 pgTAP catalog contract 13/13、TypeScript catalog contract 3/3、scoped Prettier／ESLint、`pnpm admin:catalog:check` 全綠。CI 同輪其餘 2,086 個 unit tests 與新 chapter completion／mastery pgTAP 皆已通過。完整本機 `pnpm test:db` 已成功 reset 並套用所有 migrations，但 Docker Desktop 無法掛載 `/private/tmp` 測試路徑，因此改以 stdin 對同一 Local DB 執行 focused pgTAP；僅測試 transaction rollback，另在 Local test DB 安裝 pgTAP extension，未操作 Hosted／Production。
 - 下一步：精確 stage 兩個 contract 與本 append-only handoff，commit／push 同一 Draft PR #50，由新 push 自動觸發新 CI；不得手動 rerun 舊 run，不得轉 Ready／merge／Hosted migration。
+
+## 2026-09-15 13:30 [Codex] — Android scroll repair：本機修正完成，尚未發布
+
+- 核准範圍與基準：owner 核准只修手機捲動與按鈕可達性、保留滿版。修改位於 `/private/tmp/colorplay-pr50-hosted`，HEAD 為 PR #50 staging merge `5291630911db881da90d52637100d6b5cd9227c5`；目前修改全部 unstaged，尚未 commit／push／開 PR。
+- 成因與修法：Quiz 與縮短高度的 Live join 主內容自己沒有 scroll range，卻用 `overscroll-behavior-y: contain` 阻止 document 承接手勢；新增僅學生 Quiz／Live join／fullscreen lobby 在窄視窗或直式的 `auto` 例外。另確認橫式 Quiz 的百分比高度漏計錯題 dock，加入 `height: max-content`，讓完整內容納入 main scroll extent；橫式仍保留內部 scroll containment。地圖固定滿版／裁切版型未改，現有測試尺寸下按鈕可達。
+- 驗證：內建瀏覽器在 375×812、320×568、812×375 的 Quiz correct／incorrect 六情境、三個地圖情境及 Live 375×400 共 10/10 可達性 assertion 通過；Quiz 六次 next click 成功，Live 填碼／click／safe error 成功，地圖滿版與 document horizontal overflow=0。修前 Quiz 375×812 與 Live 375×400 scroll gesture 後位置仍 0／按鈕不可達；修後可達。縮短高度不是 OS 鍵盤或真實手機證據。
+- 自動測試與檔案：新增 `tests/e2e/student-scroll.harness.spec.ts`、`playwright.student-scroll-harness.config.ts`，並納入 `tsconfig.node.json`。`vitest run --configLoader runner --cache=false` 的 constrained viewport／Quiz styles+Harness／Live join styles+Harness／JRPG map contract 共 15/15；Prettier、scoped ESLint、兩份 TS project noEmit 全綠。Playwright `--list` 列出 10 案例；本輪未執行 standalone Playwright，以上瀏覽器 assertion 是同情境操作檢查，不冒充 Playwright runner 全綠。
+- 下一步與禁止事項：需 owner 核准 commit／push／開 Draft PR targeting staging，之後再決定 review／merge／Staging 發布。既有 Staging run `34927723855` 的 real-device gate 尚未通過；S26 Ultra／Android 16 的單指互動問題仍須發布後人工重驗。未重跑 workflow、未改 DB／計分／Production，不能宣稱 Android 修復或 phase gate 通過。
+
+## 2026-09-15 14:24 [Codex] — 捲動＋地圖建築對齊：核准提交 Draft PR
+
+- Owner 擴大本次限定 UI 修正，要求建築與地圖空地對齊，完成後 commit／push／開 Draft PR targeting staging；明確禁止自動 merge 與重跑驗收。遠端 staging 唯讀確認仍為 `5291630911db881da90d52637100d6b5cd9227c5`，建立獨立分支 `codex/mobile-scroll-map-alignment`，不修改 PR #50。
+- 地圖成因：fullscreen 版型雖把章名／狀態移到建築旁，卻繼承 `position: relative`，使文字仍增加建築容器高度；`translate(-50%, -100%)` 因此把圖片底部往上推約 49.76 CSS px。僅將 fullscreen label／status 改為 absolute，不改地圖圖片、六章 logical ground anchors、進度或權限。修前實際 DOM 幾何 assertion FAIL；修後 1440×900 與 393×852 六棟建築 bottom-center 均與對應 terrain anchor 誤差小於 0.02 CSS px。
+- 驗證：受影響 Vitest 9 files／37 tests 全通過；Prettier、scoped ESLint、app／node TS noEmit、`git diff --check` 全綠。新增兩個實際 browser-geometry Playwright regression cases，專用 config `--list` 共 12 cases；本輪仍未執行 standalone Playwright runner，不能把 discovery 視為 12/12 execution。內建瀏覽器執行本次兩個地圖對齊情境，先前 10 個 scroll/reachability 情境的結果與限制見上一段。對應 AC-UI-009／010／014 的 UI 配對、可達性與狀態可視性；不是 phase release evidence。
+- 下一步：提交本次六個指定檔案並建立 Draft PR，然後停在 owner review／merge gate。允許新 push／PR 的一般 CI 自動觸發，但不手動 rerun、不觸發 Staging deploy／phase acceptance、不改 Hosted／Production。手機單指異常是否完全排除仍待發布後人類 Android Chrome／Samsung Internet 實機驗證。
