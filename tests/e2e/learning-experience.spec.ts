@@ -32,19 +32,17 @@ import {
 import * as reviewCardWalk from './helpers/review-card-walk';
 
 // A full chapter challenge always serves ten questions; pick a chapter with
-// enough questions and keep the session size explicit. These checks live in
-// the test body (needs PLAYWRIGHT_ACCEPTANCE=on anyway), not module scope,
-// so a not-yet-ready content fixture only fails this one gate rather than
-// crashing Playwright's discovery for the whole tests/e2e directory.
+// enough questions. This lives in the test body so an unready fixture only fails this one test, not Playwright's discovery.
 const quizChapter = CONTENT_MANIFEST.find(
   ({ questionCount }) => questionCount >= 10,
 );
 const QUIZ_QUESTION_COUNT = 10;
 const QUIZ_CHAPTER_TITLE = '色彩表示';
 
-const reviewSubtopic = REVIEW_MANIFEST.find(
+const reviewSubtopics = REVIEW_MANIFEST.filter(
   ({ cardCount, chapterCode }) => chapterCode === 'chapter-3' && cardCount > 0,
 );
+const [firstReviewSubtopic] = reviewSubtopics;
 const mediaCard = REVIEW_MEDIA_CARD;
 const REVIEW_CHAPTER_TITLE = '色彩表示';
 
@@ -82,8 +80,7 @@ const expectHudEconomy = async (
 };
 
 // The run-scoped student's password is typed into a login form here; never
-// let Playwright's automatic capture put it in a screenshot, trace, or
-// video artifact. Explicit page.screenshot() evidence calls below still run.
+// let Playwright auto-capture it into a screenshot/trace/video artifact.
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
 
 test('Learning Experience phase gate', async ({
@@ -103,7 +100,7 @@ test('Learning Experience phase gate', async ({
     throw new Error('LEARNING_EXPERIENCE_BASE_URL_REQUIRED');
   }
   if (!quizChapter) throw new Error('LEARNING_EXPERIENCE_QUIZ_CHAPTER_MISSING');
-  if (!reviewSubtopic) {
+  if (!firstReviewSubtopic) {
     throw new Error('LEARNING_EXPERIENCE_REVIEW_SUBTOPIC_MISSING');
   }
   const learningStudentCredentials = await resolveLearningStudentCredentials();
@@ -131,6 +128,22 @@ test('Learning Experience phase gate', async ({
     tokenBalance: 0,
   });
 
+  // Issue #41: create/join the classroom before the Quiz -- quiz_sessions snapshots classroom_id, so joining later would exclude it.
+  await teacherPage.goto('/teacher/classes');
+  const { classroomId, joinCode } = await createClassroom(
+    teacherPage,
+    `學習體驗班級 ${tag}`,
+  );
+  const targetClassroomLink = teacherPage
+    .getByRole('link', { name: '進入班級', exact: true })
+    .and(teacherPage.locator(`a[href="/teacher/classes/${classroomId}"]`));
+  await expect(targetClassroomLink).toBeVisible();
+  await targetClassroomLink.click();
+  await expect(teacherPage).toHaveURL(
+    new RegExp(`/teacher/classes/${classroomId}$`),
+  );
+  await joinClassroomByCode(learningStudentCredentials, joinCode);
+
   // --- Review cards: published content only and explicit completion ---
   await studentPage
     .getByRole('list', { name: '六章學習地圖' })
@@ -145,27 +158,30 @@ test('Learning Experience phase gate', async ({
     studentPage.getByRole('heading', { name: REVIEW_CHAPTER_TITLE }),
   ).toBeVisible();
   await expect(studentPage.locator('body')).not.toContainText('尚未發布的卡片');
-  // Never trust the account's currentCardId default: walkReviewCards
-  // re-selects reviewSubtopic before every card, not just once upfront.
-  // Verify media only when the generated manifest has a published mapping; the current text-only slice must not pretend that media was covered.
-  await reviewCardWalk.walkReviewCards(
-    studentPage,
-    reviewSubtopic.sectionKey,
-    reviewSubtopic.cardTitles,
-    async (card, cardTitle) => {
-      if (mediaCard?.title === cardTitle) {
-        await expect(
-          studentPage.getByRole('img', { name: mediaCard.alt }),
-        ).toBeVisible();
-      }
-      await reviewCardWalk.completeReviewCard(card);
-    },
+  // Walk every published chapter-3 subtopic (not just the first) so completion covers all published cards; media is checked only when mapped.
+  for (const subtopic of reviewSubtopics) {
+    await reviewCardWalk.walkReviewCards(
+      studentPage,
+      subtopic.sectionKey,
+      subtopic.cardTitles,
+      async (card, cardTitle) => {
+        if (mediaCard?.title === cardTitle) {
+          await expect(
+            studentPage.getByRole('img', { name: mediaCard.alt }),
+          ).toBeVisible();
+        }
+        await reviewCardWalk.completeReviewCard(card);
+      },
+    );
+  }
+  const chapterCardTotal = reviewCardWalk.chapterCardTotal(
+    REVIEW_MANIFEST,
+    firstReviewSubtopic,
   );
-  const completionText = `複習完成 ${String(reviewSubtopic.cardCount)} / ${String(reviewCardWalk.chapterCardTotal(REVIEW_MANIFEST, reviewSubtopic))}`;
+  const completionText = `複習完成 ${String(chapterCardTotal)} / ${String(chapterCardTotal)}`;
   await expect(studentPage.getByLabel('章節進度')).toContainText(
     completionText,
   );
-  // Route recovery: a refresh restores the same authoritative content.
   await studentPage.reload();
   await expect(
     studentPage.getByRole('heading', { name: REVIEW_CHAPTER_TITLE }),
@@ -229,8 +245,7 @@ test('Learning Experience phase gate', async ({
   await expect(
     studentPage.getByRole('heading', { name: '章節總挑戰完成' }),
   ).toBeVisible();
-  // Eight fast correct answers: 8 × 75 XP, 8 × 25 Token. The 600 XP total
-  // advances one level and leaves 100 / 500 XP toward the next level.
+  // Eight fast correct answers: 8×75 XP, 8×25 Token; the 600 XP total advances one level, leaving 100/500 XP toward the next.
   await expectHudEconomy(rewards, {
     currentLevelXp: 100,
     level: 2,
@@ -407,22 +422,7 @@ test('Learning Experience phase gate', async ({
 
   // 學生端 /app/progress 已移除（Task 10）；80%/已完成改由下方 teacherRow 斷言從教師視角覆蓋。
 
-  // --- Teacher analytics: owner reads exact mastery, others read nothing (teacherPage reused from the preflight above, not re-signed-in) ---
-  await teacherPage.goto('/teacher/classes');
-  const { classroomId, joinCode } = await createClassroom(
-    teacherPage,
-    `學習體驗班級 ${tag}`,
-  );
-  const targetClassroomLink = teacherPage
-    .getByRole('link', { name: '進入班級', exact: true })
-    .and(teacherPage.locator(`a[href="/teacher/classes/${classroomId}"]`));
-  await expect(targetClassroomLink).toBeVisible();
-  await targetClassroomLink.click();
-  await expect(teacherPage).toHaveURL(
-    new RegExp(`/teacher/classes/${classroomId}$`),
-  );
-
-  await joinClassroomByCode(learningStudentCredentials, joinCode);
+  // --- Teacher analytics: owner reads exact mastery, others read nothing (classroom already created/joined before the Quiz; reload picks up membership) ---
   await teacherPage.reload();
 
   const memberProgressLink = teacherPage
