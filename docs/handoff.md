@@ -1738,3 +1738,17 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - Owner 明確核准提交上述三項修正並開 Draft PR targeting `staging`，不自動合併或重跑验收。提交前唯讀核對 remote staging 仍為 `7b9e0ff553dd7dc89195f98de669d5ade4ae3006`，既有 open PR 無相同 branch；從該 exact base 建立 `codex/phase0a-restore-prerequisites`，精確 stage 九個相關檔案，排除未追蹤的 node_modules symlink、所有 temp receipts／debug artifacts。
 - 驗證與 stop point：前一 checkpoint 的 13 files／188 contracts、格式／lint／typecheck／Shell 語法皆 PASS；一次 review 的唯一 P2 已用行為測試修正。一般 push／PR CI 可正常自動觸發，但不 dispatch／rerun workflow、不轉 Ready／owner approval／merge／deploy、不啟用 real restore／DB／key／Production mutation，也不宣告 Phase COMPLETE。PR URL／exact head 由完成後 sanitized release receipt 記錄；目前 Staging 不會因 Draft PR 自動更新。
+
+## 2026-09-16 00:35 [Codex] — Learning achievement 離頁競態：修正／Draft PR checkpoint
+
+- 做了什麼：PR #53 已經正常流程合併 `staging`，exact merge 為 `e92e8c556209eb1b08991ad894e2117b4a9b0b0b`。自動部署 run `34992791266` 的學生／教師 artifact auth、smoke、九組 browser/RWD PASS，公開 marker 為相同 revision／`staging`；學習驗收最終 health assertion 因 `get_my_achievement_catalog` 的 `ERR_ABORTED` FAIL，實機與 record gate SKIPPED。先前等待的舊 run `34942857037` 已依 owner 核准取消，未把人工驗證標成 PASS。
+- 診斷與修正：owner 核准一次唯讀診斷及 fetch，確認 source tree 與 exact merge 相同。本機 Chromium 證明完整換頁與 bounded-fetch 真逾時皆可能產生相同 abort，因此實際失敗的唯一原因仍 NOT VERIFIED，禁止整批豁免 staging abort。依核准 brief 建立獨立 `codex/learning-achievement-settlement` 分支；只在測試加入精確 origin／RPC／POST 的完成屏障，等成功回應及 JSON body 讀完再離頁；同文件 cached success 可重用，pending refetch、403／5xx／abort／transport／body error／document change 仍擋下。既有全域 health 過濾、分數／獎勵／RLS／fixtures／產品程式碼不變。
+- 證據與審查：新增 24 個行為 contracts，三檔共 78 tests PASS；scoped prettier／eslint、typecheck、Playwright `--list` PASS；完全攔截網路的本機 Chromium 新屏障情境 PASS（診斷輔助，非真 Supabase／Hosted／phase acceptance）。失敗也會寫 allowlisted 相對時間、狀態、document／固定 route 分類報告；workflow `always()` 只上傳該專用 safe JSON，不上傳 URL/query/body/headers/帳密或 trace。唯一 reviewer 一輪 ALLOW、Standards／Spec 各零問題；主 spec 原為 500 行，新增 23 行限追蹤／報告／屏障，保留 523 行以避免無關重構，helper 另檔。
+- 下一步／stop point：依已核准範圍精確 stage 五個相關檔案（四個測試／workflow 檔及本交接 log），一般 commit／push／開 Draft PR targeting `staging`。PR URL／exact head 另記 sanitized release receipt。Draft 到審查點即停，不轉 Ready、不執行 owner-approval／merge／deploy／rerun `34992791266`，不啟用 real restore／DB／key／Production mutation；Phase 0A 仍 IN PROGRESS，不宣告驗收完成。既有 node_modules symlink 與診斷 temp artifacts 排除提交。
+
+## 2026-09-16 01:01 [Codex] — PR #54 Live 計分測試：限定修正與 Local 阻塞
+
+- Owner 核准將 Live 測試修正納入現有 Draft PR #54，不另開微型 PR。原 head `8cc434e597564f1c495b15ff9f7621733a61e51b` 的自動 CI `34996164658` 為 7/8 PASS；唯一失敗在 Live 整合測試把全答對寫死為 3000 分，實際為 2999。spec/05 與後端 `2026-07-live-3` 規則按反應時間給每題 75～150 分；唯讀合成 134 ms 案例可產生 2999，但原 CI 實際逐題反應時間未記錄，不能聲稱已查得該次的精確時間。
+- 只改 `src/features/live/api/live-repository.integration.test.ts`：固定驗證現行 rulesVersion，逐題核對 question id／position、correct 狀態、所選 option 及 safe integer 75～150 的後端 scoreDelta，再以總和核對最終 score／rank／podium；未作答者仍須 0 分／第二名。精確速度公式仍由既有 pgTAP 040 獨立驗證，不改產品計分、migration、fixtures 或 browser-health 豁免。
+- scoped Prettier／ESLint、typecheck、diff check PASS；本次唯一限定 reviewer ALLOW，無 actionable 缺陷。真實 focused Local integration 執行一次，在第一位學生 joinClassroom (`:37`) 以 `UNAVAILABLE` 提前失敗，尚未進入 Live，新增計分斷言 NOT VERIFIED。唯讀確認主 DB healthy、`supabase_edge_runtime_colorplay` 已 Exited (255) 三天，Local functions 入口 GET 回 503。未重啟容器、重置 DB、重跑測試或呼叫 Hosted；此次測試建立一個 UUID synthetic classroom，未建立 Live session／作答，clients 已 signOut。
+- 下一步／邊界：精確提交本測試與 append-only handoff，正常 push 更新同一 Draft PR #54，允許新 push 自動 CI。需另行確認新 head CI；不手動 rerun 失敗 run、不轉 Ready／合併／Staging 部署，不執行 real restore／DB reset／key／Production mutation。Local 真實整合驗證受環境阻塞，不能宣稱已全綠或 phase acceptance 通過。

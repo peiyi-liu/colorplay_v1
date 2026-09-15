@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { CONTENT_MANIFEST } from '../fixtures/content-manifest.generated';
 import { GENERATED_CORRECT_ANSWERS } from '../fixtures/question-answers.generated';
@@ -17,6 +17,7 @@ import {
   unexpectedBrowserHealth,
 } from './browser-health';
 import { createClassroom, joinClassroomByCode } from './helpers/classrooms';
+import { attachAchievementSettlement } from './helpers/achievement-settlement';
 import {
   classroomRunLabel,
   learningStudentDisplayNameFromEmail,
@@ -83,6 +84,21 @@ const expectHudEconomy = async (
 // let Playwright auto-capture it into a screenshot/trace/video artifact.
 test.use({ screenshot: 'off', trace: 'off', video: 'off' });
 
+const achievementTrackers = new WeakMap<
+  Page,
+  ReturnType<typeof attachAchievementSettlement>
+>();
+test.afterEach(async ({ page }) => {
+  const tracker = achievementTrackers.get(page);
+  const root = process.env.PLAYWRIGHT_EVIDENCE_ROOT;
+  if (!tracker || !root) return;
+  await mkdir(join(root, 'reports'), { recursive: true });
+  await writeFile(
+    join(root, 'reports/achievement-requests.safe.json'),
+    `${JSON.stringify(tracker.report(), null, 2)}\n`,
+  );
+});
+
 test('Learning Experience phase gate', async ({
   baseURL,
   browser,
@@ -108,6 +124,11 @@ test('Learning Experience phase gate', async ({
     learningStudentCredentials.email,
   );
   const tag = classroomRunLabel();
+  const achievementTracker = attachAchievementSettlement(
+    studentPage,
+    process.env.SUPABASE_URL ?? '',
+  );
+  achievementTrackers.set(studentPage, achievementTracker);
   const teacherContext = await browser.newContext({ baseURL });
   const teacherBContext = await browser.newContext({ baseURL });
   const teacherPage = await teacherContext.newPage();
@@ -253,6 +274,7 @@ test('Learning Experience phase gate', async ({
   });
 
   // --- Mistakes and remediation: resolve both, 20% XP, zero Tokens ---
+  await achievementTracker.waitBeforeLeavingResult();
   await studentPage.goto('/app/mistakes');
   await expect(
     studentPage.getByRole('heading', { name: '我的錯題' }),
@@ -402,6 +424,7 @@ test('Learning Experience phase gate', async ({
     expect(box.focusVisible).toBe(true);
     expect(box.hasFocusRing).toBe(true);
     remediationResultBoxes.push(box);
+    await achievementTracker.waitBeforeLeavingResult();
     await returnToMistakes.click();
     await expect(studentPage).toHaveURL(/\/app\/mistakes$/u);
     await expect(emptyMistakesStatus).toBeVisible();
