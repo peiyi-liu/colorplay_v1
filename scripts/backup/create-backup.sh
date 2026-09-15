@@ -138,17 +138,30 @@ create_synthetic_fixture() {
   retention_epoch=$((upload_epoch + 30 * 24 * 60 * 60))
   retention_until_utc="$(format_retention_until_utc "$retention_epoch")"
 
-  node - "$temporary_root/base-input.json" "$recipient" "$object_prefix" "$retention_until_utc" <<'NODE'
+  node - "$temporary_root/base-input.json" "$recipient" "$object_prefix" "$retention_until_utc" "$project_root" <<'NODE'
 import { writeFile } from 'node:fs/promises';
-const [, , path, recipient, prefix, retention] = process.argv;
+import { readdir } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+const [, , path, recipient, prefix, retention, sourceRoot] = process.argv;
+let repoSha, versions;
+try {
+  repoSha = execFileSync('git', ['-C', sourceRoot, 'rev-parse', '--verify', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  const files = (await readdir(`${sourceRoot}/supabase/migrations`)).filter(file => file.endsWith('.sql'));
+  if (!/^[0-9a-f]{40}$/.test(repoSha) || files.length === 0 || files.some(file => !/^\d{14}_[a-z0-9_]+\.sql$/.test(file))) throw new Error();
+  versions = files.map(file => file.split('_')[0]).sort();
+  if (new Set(versions).size !== versions.length) throw new Error();
+} catch {
+  process.stderr.write('BACKUP_FIXTURE_LINEAGE_INVALID\n');
+  process.exit(1);
+}
 await writeFile(path, JSON.stringify({
   schema_version: 1,
   environment: 'production',
   artifact_kind: 'synthetic_fixture',
   project_ref: 'abcdefghijklmnopqrst',
-  repo_sha: 'a'.repeat(40),
-  migration_first: '20260713000100',
-  migration_last: '20260728000100',
+  repo_sha: repoSha,
+  migration_first: versions[0],
+  migration_last: versions.at(-1),
   created_at_utc: new Date().toISOString(),
   cli_versions: { age: 'fixture', b2: 'fixture', pg_dump: 'fixture', supabase: 'fixture' },
   age_recipient_fingerprint: recipient,
