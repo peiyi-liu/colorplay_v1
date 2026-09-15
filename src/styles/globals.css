@@ -119,6 +119,20 @@ a {
   overscroll-behavior-y: contain;
 }
 
+/* 手機／直式舞台由 document 承接長內容；scene 可能沒有自己的捲動
+   範圍，此時 contain 會把手勢困在 scene，讓畫面外的操作無法到達。
+   固定高度的橫式舞台仍保留內部捲動與 containment。 */
+@media (max-width: 767px), (orientation: portrait) {
+  .game-stage[data-shell-role='student']
+    #main-content:has(
+      > .quiz-runner--battle-v2,
+      > .live-join--portal,
+      > .lobby--map-fullscreen
+    ) {
+    overscroll-behavior-y: auto;
+  }
+}
+
 /* 連續世界舞台：路由內容留在同一個深夜 App Shell，僅由場景層換色。
    轉場是獨立裝飾節點，不 key／重掛 Outlet，避免閱讀與測驗狀態被重置。 */
 .route-world-stage {
@@ -9742,6 +9756,8 @@ select#dashboard-classroom {
 }
 
 .lobby--map-fullscreen .chapter-map__building-label {
+  /* Captions must not change the bottom-center terrain contact point. */
+  position: absolute;
   top: 28%;
   left: 92%;
   width: max-content;
@@ -9770,6 +9786,7 @@ select#dashboard-classroom {
 }
 
 .lobby--map-fullscreen .chapter-map__status-medal {
+  position: absolute;
   top: 56%;
   left: 92%;
   min-height: 24px;
