@@ -3,23 +3,26 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Route, Routes } from 'react-router-dom';
 
 import { StudentHudHarness } from '../../../app/shell/student-hud.harness';
+import type { LearningRepository } from '../../learning/api/learning-repository';
+import { MistakesPage } from '../../learning/pages/mistakes-page';
 import type { AchievementRepository } from '../../achievements/types';
 import type { EconomyRepository } from '../../rewards/types';
 import type { QuizRepository, QuizSession } from '../api/quiz-repository';
 import { QuizResultPage } from './quiz-result';
 
-export type QuizResultHarnessKind = 'section' | 'chapter';
+export type QuizResultHarnessKind = 'section' | 'chapter' | 'remediation';
 
 const sessionId = '31000000-0000-0000-0000-000000000001';
 
 const fixtureSession = (kind: QuizResultHarnessKind): QuizSession => ({
   answeredCount: 5,
-  challengeKind: kind,
+  challengeKind: kind === 'section' ? 'section' : 'chapter',
   chapterSortOrder: 3,
   chapterTitle: '色彩表示',
   completedAt: '2026-08-13T00:00:00.000Z',
   correctCount: 4,
-  gameRulesVersion: '2026-07-mvp-1',
+  gameRulesVersion:
+    kind === 'remediation' ? '2026-07-progress-1' : '2026-07-mvp-1',
   questionCount: 5,
   questions: [
     {
@@ -100,6 +103,33 @@ const fixtureRepository = (kind: QuizResultHarnessKind): QuizRepository => {
   };
 };
 
+const subtopicId = 'f929cde5-c294-46ce-5faf-c866b3cb9583';
+const mistakesRepository = {
+  listMistakes: () =>
+    Promise.resolve([
+      {
+        mistakeId: 'other',
+        status: 'open',
+        subtopicId: 'f929cde5-c294-46ce-5faf-c866b3cb9584',
+        subtopicTitle: '3-1 色彩三要素與色名的表示',
+        prompt: '其他待補救題目',
+        correctOptionText: 'RGB',
+        stableCode: '3-1-01',
+        lastEventAt: '2026-09-16T00:00:00Z',
+      },
+      {
+        mistakeId: 'origin',
+        status: 'resolved',
+        subtopicId,
+        subtopicTitle: '3-3 數位色彩與色票的表示',
+        prompt: '剛剛解決的錯題',
+        correctOptionText: 'RGB',
+        stableCode: '3-3-01',
+        lastEventAt: '2026-09-16T00:00:00Z',
+      },
+    ]),
+} as unknown as LearningRepository;
+
 export function QuizResultHarness({
   kind,
 }: Readonly<{ kind: QuizResultHarnessKind }>) {
@@ -108,9 +138,20 @@ export function QuizResultHarness({
   });
 
   return (
-    <StudentHudHarness initialEntry={`/app/quiz/${sessionId}/result`}>
+    <StudentHudHarness
+      initialEntry={`/app/quiz/${sessionId}/result`}
+      initialState={
+        kind === 'remediation'
+          ? { remediationReturnSubtopicId: subtopicId }
+          : null
+      }
+    >
       <QueryClientProvider client={client}>
         <Routes>
+          <Route
+            path="/app/mistakes"
+            element={<MistakesPage repository={mistakesRepository} />}
+          />
           <Route
             element={
               <QuizResultPage

@@ -3,6 +3,90 @@ import { LEARNING_MAP_PLATFORMS } from '../fixtures/learning-map-platforms';
 
 // Frontend regression only: this is not Android/Samsung real-device evidence.
 // Do not use scrollIntoView or click's auto-scroll to mask a scroll-chain trap.
+test.describe('completed challenge touch scrolling', () => {
+  test.use({ hasTouch: true, isMobile: true });
+  for (const viewport of [
+    { width: 393, height: 852 },
+    { width: 852, height: 393 },
+  ]) {
+    for (const kind of ['section', 'chapter', 'remediation']) {
+      test(`${kind} result touch scrolling at ${String(viewport.width)}x${String(viewport.height)}`, async ({
+        page,
+        context,
+      }) => {
+        await page.setViewportSize(viewport);
+        await page.goto(`/dev-harness/quiz-result.html?kind=${kind}`);
+        await expect(page.locator('#quiz-result-title')).toHaveText(
+          kind === 'remediation'
+            ? '錯題補救練習完成'
+            : kind === 'section'
+              ? '小節挑戰完成'
+              : '章節總挑戰完成',
+        );
+        const read = () =>
+          page.evaluate(() => ({
+            window: window.scrollY,
+            main:
+              document.querySelector<HTMLElement>('#main-content')?.scrollTop ??
+              0,
+          }));
+        const before = await read();
+        const cdp = await context.newCDPSession(page);
+        await cdp.send('Input.synthesizeScrollGesture', {
+          x: Math.round(viewport.width / 2),
+          y: Math.round(viewport.height * 0.7),
+          yDistance: -500,
+          gestureSourceType: 'touch',
+        });
+        const after = await read();
+        expect(after.window > before.window || after.main > before.main).toBe(
+          true,
+        );
+        for (let gesture = 0; gesture < 5; gesture++) {
+          await cdp.send('Input.synthesizeScrollGesture', {
+            x: Math.round(viewport.width / 2),
+            y: Math.round(viewport.height * 0.7),
+            yDistance: -500,
+            gestureSourceType: 'touch',
+          });
+        }
+        const action = page.getByRole('link', {
+          name: kind === 'remediation' ? '返回我的錯題' : '再玩一次',
+        });
+        await expectReachable(action);
+        const bottom = await read();
+        await cdp.send('Input.synthesizeScrollGesture', {
+          x: Math.round(viewport.width / 2),
+          y: Math.round(viewport.height * 0.7),
+          yDistance: 500,
+          gestureSourceType: 'touch',
+        });
+        const up = await read();
+        expect(up.window < bottom.window || up.main < bottom.main).toBe(true);
+        if (kind === 'remediation') {
+          await expect(
+            page.getByRole('link', { name: '再玩一次' }),
+          ).toHaveCount(0);
+          await page.getByRole('button', { name: '返回我的錯題' }).click();
+          const anchor = page.locator(
+            '#mistake-subtopic-f929cde5-c294-46ce-5faf-c866b3cb9583',
+          );
+          await expect(anchor).toContainText('3-3 數位色彩與色票的表示');
+          await expect(anchor).toContainText('這個小節的錯題已全部解決。');
+          await expect
+            .poll(() =>
+              anchor.evaluate((e) => {
+                const r = e.getBoundingClientRect();
+                return r.top >= 0 && r.top < innerHeight;
+              }),
+            )
+            .toBe(true);
+        }
+      });
+    }
+  }
+});
+
 async function scrollContent(page: Page) {
   const main = page.locator('#main-content');
   const box = await main.boundingBox();

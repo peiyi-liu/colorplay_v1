@@ -104,6 +104,7 @@ const economyRepository: EconomyRepository = {
 
 const renderTransition = (
   repository: QuizRepository,
+  state: unknown = null,
 ): Readonly<{
   client: QueryClient;
   router: ReturnType<typeof createMemoryRouter>;
@@ -128,7 +129,7 @@ const renderTransition = (
         ),
       },
     ],
-    { initialEntries: [`/app/quiz/${sessionId}`] },
+    { initialEntries: [{ pathname: `/app/quiz/${sessionId}`, state }] },
   );
   function Wrapper({ children }: Readonly<{ children: ReactNode }>) {
     return (
@@ -151,13 +152,20 @@ describe('quiz finalize to result transition', () => {
   });
 
   it.each([
-    ['section', '小節挑戰完成'],
-    ['chapter', '章節總挑戰完成'],
+    ['section', '小節挑戰完成', '2026-07-mvp-1'],
+    ['chapter', '章節總挑戰完成', '2026-07-mvp-1'],
+    ['chapter', '錯題補救練習完成', '2026-07-progress-1'],
   ] as const)(
     'does not show an incomplete error while a finalized %s result refetches',
-    async (challengeKind, expectedHeading) => {
-      const activeSession = quizSession(challengeKind, 'in_progress');
-      const completedSession = quizSession(challengeKind, 'completed');
+    async (challengeKind, expectedHeading, gameRulesVersion) => {
+      const activeSession = {
+        ...quizSession(challengeKind, 'in_progress'),
+        gameRulesVersion,
+      };
+      const completedSession = {
+        ...quizSession(challengeKind, 'completed'),
+        gameRulesVersion,
+      };
       let resolveCompletedSession!: (value: QuizSession) => void;
       const completedSessionRequest = new Promise<QuizSession>((resolve) => {
         resolveCompletedSession = resolve;
@@ -174,7 +182,7 @@ describe('quiz finalize to result transition', () => {
           answeredCount: 1,
           completedAt,
           correctCount: 1,
-          gameRulesVersion: '2026-07-mvp-1',
+          gameRulesVersion,
           questionCount: 1,
           rewardRatePercent: 100,
           sessionId,
@@ -186,7 +194,14 @@ describe('quiz finalize to result transition', () => {
         getSession,
         submitAnswer: vi.fn(),
       };
-      const { router } = renderTransition(repository);
+      const returnState = {
+        remediationReturnSubtopicId: 'f929cde5-c294-46ce-5faf-c866b3cb9583',
+      };
+      const { router } = renderTransition(repository, returnState);
+
+      if (gameRulesVersion === '2026-07-progress-1') {
+        expect(await screen.findByText('錯題補救練習')).toBeVisible();
+      }
 
       await userEvent.click(
         await screen.findByRole('button', { name: '結算並查看結果' }),
@@ -200,6 +215,7 @@ describe('quiz finalize to result transition', () => {
       await waitFor(() => {
         expect(getSession).toHaveBeenCalledTimes(2);
       });
+      expect(router.state.location.state).toMatchObject(returnState);
       expect(
         screen.queryByRole('heading', { name: '無法顯示結果' }),
       ).not.toBeInTheDocument();

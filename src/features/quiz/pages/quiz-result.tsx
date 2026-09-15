@@ -7,6 +7,7 @@ import { parsePublicEnv } from '../../../lib/config/public-env';
 import { getBrowserSupabaseClient } from '../../../lib/supabase/browser-client';
 import { useAchievements } from '../../achievements/hooks/use-achievements';
 import { type AchievementRepository } from '../../achievements/types';
+import { remediationReturnTarget } from '../../learning/lib/remediation-navigation';
 import { useEconomySummary } from '../../rewards/hooks/use-economy-summary';
 import { type EconomyRepository } from '../../rewards/types';
 import {
@@ -16,7 +17,8 @@ import {
   type QuizRepository,
 } from '../api/quiz-repository';
 import { LootReveal } from '../components/loot-reveal';
-import { withoutNumberPrefix } from '../lib/quiz-labels';
+import { RemediationResultNavigation } from '../components/remediation-result-navigation';
+import { quizChallengeLabel, withoutNumberPrefix } from '../lib/quiz-labels';
 import { crossedLevelBoundary, unlockedSince } from '../lib/reward-derivations';
 
 import './quiz-result.css';
@@ -99,12 +101,8 @@ export function QuizResultPage({
       : false;
   const chapterLabel = `第 ${String(session.chapterSortOrder)} 章・${withoutNumberPrefix(session.chapterTitle)}`;
   const isSectionChallenge = session.challengeKind === 'section';
-  const challengeLabel =
-    isSectionChallenge &&
-    session.sectionSortOrder !== null &&
-    session.sectionTitle
-      ? `${String(session.chapterSortOrder)}-${String(session.sectionSortOrder)}・${withoutNumberPrefix(session.sectionTitle)}`
-      : '章節總挑戰';
+  const isRemediation = session.gameRulesVersion === '2026-07-progress-1';
+  const challengeLabel = quizChallengeLabel(session);
 
   return (
     <section
@@ -121,7 +119,11 @@ export function QuizResultPage({
           <p>{challengeLabel}</p>
         </div>
         <h1 id="quiz-result-title">
-          {isSectionChallenge ? '小節挑戰完成' : '章節總挑戰完成'}
+          {isRemediation
+            ? '錯題補救練習完成'
+            : isSectionChallenge
+              ? '小節挑戰完成'
+              : '章節總挑戰完成'}
         </h1>
         <LootReveal
           correctCount={session.correctCount}
@@ -141,7 +143,6 @@ export function QuizResultPage({
               補救練習完成：原始成績不變，Token +0，XP 以 20%
               計；答對的錯題已解決。
             </p>
-            <Link to="/app/mistakes">返回我的錯題</Link>
           </div>
         ) : session.rewardRatePercent === 20 ? (
           <p className="quiz-result__decay">
@@ -210,16 +211,24 @@ export function QuizResultPage({
       </div>
 
       <nav className="quiz-result__actions" aria-label="結果頁操作">
-        <Link
-          className="primary-action"
-          data-primary-action="true"
-          to={`/app/quiz/new?template=${session.templateId}`}
-        >
-          再玩一次
-        </Link>
-        <Link className="secondary-action" to="/app">
-          回章節
-        </Link>
+        {isRemediation ? (
+          <RemediationResultNavigation
+            to={remediationReturnTarget(location.state)}
+          />
+        ) : (
+          <>
+            <Link
+              className="primary-action"
+              data-primary-action="true"
+              to={`/app/quiz/new?template=${session.templateId}`}
+            >
+              再玩一次
+            </Link>
+            <Link className="secondary-action" to="/app">
+              回章節
+            </Link>
+          </>
+        )}
       </nav>
     </section>
   );

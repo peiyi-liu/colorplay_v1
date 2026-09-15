@@ -11,7 +11,12 @@ import { StudentRouteBackButton } from './student-route-back-button';
 export function StudentHudHarness({
   children,
   initialEntry = '/app',
-}: Readonly<{ children?: ReactNode; initialEntry?: string }>) {
+  initialState = null,
+}: Readonly<{
+  children?: ReactNode;
+  initialEntry?: string;
+  initialState?: unknown;
+}>) {
   const router = createMemoryRouter(
     [
       {
@@ -75,7 +80,7 @@ export function StudentHudHarness({
         ),
       },
     ],
-    { initialEntries: [initialEntry] },
+    { initialEntries: [{ pathname: initialEntry, state: initialState }] },
   );
 
   return <RouterProvider router={router} />;

@@ -10,7 +10,9 @@ import '../src/styles/globals.css';
 
 const requested = new URLSearchParams(window.location.search).get('kind');
 const kind: QuizResultHarnessKind =
-  requested === 'chapter' ? 'chapter' : 'section';
+  requested === 'chapter' || requested === 'remediation'
+    ? requested
+    : 'section';
 const root = document.querySelector('#root');
 if (!root) throw new Error('dev-harness: #root missing');
 
