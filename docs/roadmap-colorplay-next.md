@@ -1,18 +1,24 @@
 # ColorPlay Current Program
 
-- **Status：PHASE 0A IN PROGRESS / PHASE 0B DEFERRED.** Owner 於 2026-09-11
-  選擇方案 A：Local＋Staging foundation 可獨立關閉；Production migration 改列
-  0B，延後至 Phase 8，不再阻塞 Phase 1–6 的非 Production 工作。
+- **Status：PHASE 0A COMPLETE / PHASE 0B DEFERRED.** Owner 於 2026-09-11
+  選擇方案 A；Local＋Staging foundation 已於 2026-09-18 依 0A plan 關閉。
+  Production migration 仍列 0B，延後至 Phase 8，不阻塞 Phase 1–6 的非
+  Production 工作，也不得把本狀態改寫成整個 Phase 0 完成。
 - **Current canonical snapshot：**`origin/staging`
-  `877d7abcb1cdd49f01d1f22cdb372f04c9b54eb3`。最近 Staging lineage 已包含
-  Phase 0 foundation、Admin API-key resolver、monitoring marker bounded polling 與
-  review-navigation diagnostics；每個新 task 開始前仍須重新 fetch。
-- **Immediate blocker：**`tests/fixtures/review-manifest.generated.ts` 是 stale
-  28-card artifact，重複 `3-3`；owner-accepted import report 與 seed 皆為 8 cards
-  （3／3／2）。先修 SSOT regression，再取得新的 exact-SHA automated Staging
-  receipt；不得再以 diagnostics PR 代替修正 fixture。
-- **0A remaining：**manifest rebaseline、exact-SHA Staging automated jobs、一次成功
-  isolated restore drill、Staging key incident retirement、evidence closeout。
+  `82d3b40f8e873eb81f85b65e74abcbc4761407d6`。0A automated foundation receipt
+  為 workflow run `35311027470`、Vercel deployment
+  `dpl_8WGsmMRmQUXNM8ds6cVmKbXrhTHX`、Staging Supabase ref
+  `onkxnkzeixpezetkmocf` 與 publishable-key SHA-256
+  `0c52322255ed78754d53466517f85c3209903fcd09837d4cba9cb73f55ce9509`；每個新
+  task 開始前仍須重新 fetch。
+- **0A closeout evidence：**sanitized manifest
+  `artifacts/acceptance/phase-0a-closeout-82d3b40/manifest.json` 已由獨立 verifier
+  驗證，checksum
+  `df1f025604c57368700d4e2c0c947b808b811aa06aca0fd54bfa868b18005feb`；0A scope
+  無 unresolved Critical／High finding。該 evidence 目錄依 repo policy 不進 Git。
+- **Immediate next gate：**Phase 1 Hosted Admin gate 可在上述 exact Staging
+  foundation 上另行排程；需新的 owner authorization，且不自動授權 fixture、
+  Hosted DB 或 Production mutation。
 - **0B deferred：**Sydney preservation／retirement、Tokyo Candidate、Production
   migration／promotion、B2／Cloudflare 權威證據、RPO／RTO 與完整 human release
   proof。0A 完成不得宣稱 Production-ready。
@@ -64,11 +70,11 @@ as a completed production release.
 
 ## Immediate next action
 
-Execute only Phase 0A Task 0A-1 from the current plan: add a fail-closed contract
-between the review import report, seed and generated manifest, then restore the
-manifest to the accepted 8-card 3／3／2 content. Keep the implementation unstaged
-for one Codex bounded review. No content fetch/import, Hosted workflow, secret
-mutation, legacy-key retirement or Production operation is part of that task.
+Obtain a separate owner authorization before scheduling the Phase 1 Hosted
+Admin gate on exact Staging SHA
+`82d3b40f8e873eb81f85b65e74abcbc4761407d6`. That future gate must restate its
+fixture and Hosted DB mutation scope; 0A closeout does not authorize either one,
+does not start 0B／Phase 8, and does not authorize any Production operation.
 
 ## Historical program structure snapshot（superseded 2026-09-02）
 
@@ -973,35 +979,29 @@ stash, or branch switching in a dirty shared worktree.
 
 ### Phase 0
 
-Current Phase 0 remaining work is the five 0A tasks in the current 0A plan
-(0A-1 through 0A-5); see the "Current Phase 0A plan" link at the top of this
-file. Do not resume the historical PR #1 / Task 14–15 sequence recorded above
-under "Phase 0 release-foundation worktree" — it is superseded.
+The five 0A tasks in the current 0A plan are complete at exact Staging SHA
+`82d3b40f8e873eb81f85b65e74abcbc4761407d6`. Do not resume the historical PR #1
+/ Task 14–15 sequence recorded above under "Phase 0 release-foundation
+worktree" — it is superseded.
 
-- **0A-1** (review manifest SSOT rebaseline): in progress, see "Immediate next
-  action" above.
-- **0A-2** (single exact-SHA Staging automated foundation receipt): blocked on
-  0A-1 merging and a fresh Staging deployment run.
-- **0A-3** (isolated restore drill): blocked on 0A-2; needs an owner-granted
-  exclusive Local Supabase／Docker window. Fresh corrected backup/lifecycle/
-  restore evidence must originate from a run against protected `staging`, not
-  from the historical feature-branch runs, which remain historical evidence
-  only.
-- **0A-4** (Staging API-key incident closure): blocked on 0A-2／0A-3; needs a
-  separate owner mutation gate for the accidental
-  `ADMIN_TEACHER_AUTH_EMAIL_NAMESPACE` value and for legacy anon／service-role
-  retirement.
-- **0A-5** (0A closeout and Phase 1 handoff): a Codex-owned governance／
-  evidence decision, made after 0A-1–0A-4 evidence binds to the same
-  canonical lineage. Claude Code may only perform bounded mechanical
-  documentation edits to the closeout files after Codex has made that
-  determination, per §0.2 of the 0A plan — Claude Code does not itself judge
-  whether the evidence is sufficient to declare `COMPLETE`.
-- Twenty-seven verified-empty disposable restore networks were observed
-  (dated 2026-08 observation, not re-verified since) to exhaust the local
-  Docker subnet pool. This needs a fresh re-inventory before any cleanup is
-  planned; it is not an 0A cleanup authorization, and no 0A task includes
-  Docker resource removal.
+- **0A-1 COMPLETE:** PR #28 merged as
+  `0d551e9287d6706a400685d4b4e89ad8ab50d015`; report／seed／generated fixture
+  agree on 8 review cards（3／3／2）, and the current exact SHA contract is 27／27.
+- **0A-2 COMPLETE:** workflow run `35311027470` binds build／deploy,
+  environment fingerprint, synthetic student＋teacher Auth/profile, monitoring,
+  read-only smoke, nine browser／RWD jobs and `phase-acceptance` to the exact SHA.
+- **0A-3 COMPLETE:** one authorized encrypted synthetic restore drill at the
+  exact SHA passed after Phase 0 contracts 13 files／188 tests; receipt schema 1,
+  baseline preserved, cleanup verified, residual containers／networks=0 and temp
+  root removed. Production-only probes remained skipped.
+- **0A-4 COMPLETE:** PR #58 merged into the exact SHA; Staging legacy keys are
+  disabled, old-negative／new-positive synthetic Auth/profile and Admin probes
+  passed, and credential／exact-value scans found no leak. Production was not
+  touched.
+- **0A-5 COMPLETE:** independent sanitized manifest verified with checksum
+  `df1f025604c57368700d4e2c0c947b808b811aa06aca0fd54bfa868b18005feb`; no
+  unresolved Critical／High finding exists in 0A scope. Phase 1 Hosted Admin may
+  be scheduled only under a separate owner gate.
 - A fresh provider preflight is required on the day of each later hosted action;
   previously observed project/domain state is not durable evidence.
 

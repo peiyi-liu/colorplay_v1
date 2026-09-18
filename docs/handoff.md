@@ -1815,3 +1815,27 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 驗證：focused contract 2／2 PASS；Phase 0 contracts 13 files／188 tests PASS；scoped Prettier／ESLint、完整 typecheck PASS。首次 Phase 0 contracts 因 macOS `/usr/bin/git` Xcode license gate 造成 26 個衍生失敗，改用既有 Command Line Tools Git 後全綠，未修改／skip tests 或系統 license。臨時 `node_modules` symlink 已移除；下一步為本 task 唯一一輪 Standards／Spec review，之後只提交／push／開 Draft PR targeting `staging`，不轉 Ready、不合併或部署。
 - 唯一一輪 review 結果：Standards 0、Spec 0、Security 0，PASS／ALLOW，無需 remediation 或第二輪 reviewer。Security 軸確認固定 stage allowlist、child output pipe／discard 與 regression contract 維持 fail-closed、無 secret leakage；reviewer 因隔離 worktree 已移除 dependency symlink 而未自行重跑 focused test，不取代上段由主 session 完成的 GREEN／188-contract 證據。
 - Delivery：reviewed implementation commit `d566906` 與 review handoff commit `722e907` 已正常 push，建立 Draft PR #58（`codex/staging-auth-safe-diagnostics` → `staging`）。本段是唯一的 PR-completion documentation follow-up；一般 push CI 可自動執行，但不手動 rerun、不轉 Ready／合併／部署，也不再次停用 legacy keys。0A-4 仍 BLOCKED，下一個 gate 必須在 PR 綠且合併後另行取得 owner mutation authorization。
+
+## 2026-09-18 14:12 [Codex] — Phase 0A-4 Staging legacy key retirement PASS
+
+- PR #58 已合併；protected `staging`、workflow run `35311027470`、公開 release marker 與 deployment `dpl_8WGsmMRmQUXNM8ds6cVmKbXrhTHX` 均為 exact SHA `82d3b40f8e873eb81f85b65e74abcbc4761407d6`。Staging Supabase ref `onkxnkzeixpezetkmocf` 與 owner-approved publishable-key SHA-256 `0c52322255ed78754d53466517f85c3209903fcd09837d4cba9cb73f55ce9509` 一致；學生 `/app`、教師 `/teacher` synthetic Auth/profile proof PASS。
+- Owner 核准後只在 Staging 停用 legacy anon／privileged keys；結束時保持停用，未觸發 rollback。Legacy anon 對 Staging REST 回 401，post-retirement exact-artifact verifier PASS；Admin probes 依序回 405／405／401，named resolver path PASS。
+- PR #58 credential-scan job `105490684488` success；legacy anon exact value 在 current source／sanitized artifacts、公開入口 assets 與 workflow log 的匹配均為 0，workflow log 的 privileged key value 匹配亦為 0。未碰 Production、Hosted DB、migration、deploy或 workflow rerun；未 reveal privileged key。0A-4 PASS，下一步為 Codex 0A-5 closeout。
+
+## 2026-09-18 14:18 [Codex] — Phase 0A-5 exact-SHA consistency gate BLOCKED
+
+- 首次 0A-5 稽核發現 0A-3 receipt 綁定祖先 SHA `356561029362e5e6f5affc3da73c53dab096520b`，但目前 Staging 為 `82d3b40f8e873eb81f85b65e74abcbc4761407d6`，不符合 owner-approved plan 的同一 exact SHA gate。唯讀 diff 證明中間只修改 Staging Auth 診斷、其 contract 與 handoff，restore／Supabase／backup scope 無差異，但 Codex 未自行豁免；`CONTEXT.md`／roadmap 當時保持 IN PROGRESS。
+- Owner 隨後明確選擇嚴格路徑：核准 exclusive Local Supabase／Docker 時窗，並核准在 `82d3b40…` 上唯一一次真實 restore drill；不採 equivalence waiver。
+
+## 2026-09-18 14:27 [Codex] — Phase 0A-5 closeout PASS；0A COMPLETE / 0B DEFERRED
+
+- 於 detached exact-SHA worktree `/private/tmp/colorplay-phase0a-restore-82d3b40` 執行；先記錄既有 Local Supabase、Task 14、歷史 restore containers／networks，只列入 baseline、不清理。Command Line Tools Git、Docker、AWS 與依賴可用；Phase 0 contracts 13 files／188 tests PASS。
+- 唯一一次 `PHASE0_RESTORE_E2E=1` 執行 1／1 PASS（約 37 秒），未重跑。Sanitized receipt：`/var/folders/33/2m0ncd_j1x32lwtsvvw55wr00000gn/T/colorplay-real-restore-e2e-PAoE4i/drill-receipt.json`；SHA-256 `02b238505e44733c79d4aff624385bb90aa7f1e63f31938bf05b39ddd81ad1c1`。Receipt schema 1、`repo_sha=82d3b40f8e873eb81f85b65e74abcbc4761407d6`、baseline preserved、cleanup verified、residual containers／networks=0、temp root removed；Production-only probes 保持 skipped。本輪需要的 Colima 已回復原本停止狀態，前後資源集合一致。
+- 0A-1 current exact-SHA review manifest contract 27／27 PASS；run `35311027470` 的 deploy、read-only smoke、九個 browser／RWD jobs 與 phase-acceptance 均 success，artifacts `10533038902`／`10534156340` 未過期。獨立 sanitized manifest：`artifacts/acceptance/phase-0a-closeout-82d3b40/manifest.json`；verifier 同時核對 manifest 與真實 restore receipt，輸出 `PHASE0A_CLOSEOUT_MANIFEST_VERIFIED`，manifest SHA-256 `df1f025604c57368700d4e2c0c947b808b811aa06aca0fd54bfa868b18005feb`。Evidence 目錄依 repo policy ignored、不進 Git。
+- `CONTEXT.md`、canonical roadmap 與本 handoff 已一致更新為 **0A COMPLETE / 0B DEFERRED**；0A scope 無 unresolved Critical／High finding。Production smoke、Production RPO／RTO、Tokyo Candidate、Sydney retirement、B2 Object Lock 權威證據與完整 human real-device release proof仍是 `NOT VERIFIED — deferred to Phase 0B / Phase 8`；本次 Android approval 只屬 supplemental evidence，不升級為完整 release proof。
+- 下一步可另行排程 Phase 1 Hosted Admin gate，但必須取得新的 owner authorization；本 closeout 不授權 fixture／Hosted DB mutation、0B／Phase 8、Production 或 Sydney／Tokyo 操作。文件與 evidence consistency review 尚須在交付前完成一次；目前變更保持 unstaged，未 commit／push／PR。
+
+## 2026-09-18 14:29 [Codex] — Phase 0A-5 文件／evidence consistency review PASS
+
+- 唯一一次 closeout consistency review 已完成，無 actionable finding：manifest verifier 重驗輸出 `PHASE0A_CLOSEOUT_MANIFEST_VERIFIED` 與相同 checksum；`git diff --check` PASS；current `CONTEXT.md`／roadmap 無殘留 `0A IN PROGRESS`、0A-1 immediate action 或 0A-2～0A-4 blocked 字串。Manifest、真實 restore receipt 與三份文件的 exact SHA、run、deployment、Supabase ref、key fingerprint、cleanup 與 deferred 清單一致。
+- 最後唯讀 `ls-remote` 確認 `refs/heads/staging` 仍為 `82d3b40f8e873eb81f85b65e74abcbc4761407d6`。0A-5 判定維持 PASS；三份 tracked 文件保持 unstaged，evidence manifest／verifier 位於 ignored evidence 目錄，未 commit／push／PR 或開始下一個 gate。
