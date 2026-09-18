@@ -1,16 +1,22 @@
 # ColorPlay
 
-> Current work: **Phase 0A Local＋Staging foundation closeout**. Owner chose the
-> 0A／0B split on 2026-09-11: 0A closes Local／Staging foundation; 0B contains
-> Production migration and is deferred to Phase 8. Read
+> Current work: **Phase 0A Local＋Staging foundation complete; Phase 0B
+> deferred**. Owner chose the 0A／0B split on 2026-09-11: 0A closes
+> Local／Staging foundation; 0B contains Production migration and is deferred to
+> Phase 8. Read
 > [`docs/roadmap-colorplay-next.md`](docs/roadmap-colorplay-next.md), the
 > [rebaseline decision](docs/superpowers/specs/2026-09-11-phase-0a-0b-rebaseline-decision.md)
 > and the
 > [0A closeout plan](docs/superpowers/plans/2026-09-11-phase-0a-staging-foundation-closeout.md)
-> before acting. Status: **0A IN PROGRESS / 0B DEFERRED**. The immediate task is
-> the stale 28-card review manifest rebaseline to the accepted 8-card 3／3／2
-> content. Do not create Tokyo, delete Sydney, mutate Production, run Phase 8
-> release proof, or claim all of Phase 0 complete.
+> before acting. Status: **0A COMPLETE / 0B DEFERRED** at exact Staging SHA
+> `82d3b40f8e873eb81f85b65e74abcbc4761407d6`, workflow run `35311027470` and
+> deployment `dpl_8WGsmMRmQUXNM8ds6cVmKbXrhTHX`; the independently verified
+> closeout manifest checksum is
+> `df1f025604c57368700d4e2c0c947b808b811aa06aca0fd54bfa868b18005feb`.
+> The next owner gate may separately schedule Phase 1 Hosted Admin work; it does
+> not authorize fixture／Hosted DB mutation or Production. Do not create Tokyo,
+> delete Sydney, mutate Production, run Phase 8 release proof, or claim all of
+> Phase 0 complete.
 
 A classroom quiz platform. Teachers publish question content and open a Live Session from a Live Activity; during that session the teacher is its Host, Participants answer on their own devices, and the Projector carries the shared screen.
 
