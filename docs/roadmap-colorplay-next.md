@@ -4,13 +4,14 @@
   選擇方案 A；Local＋Staging foundation 已於 2026-09-18 依 0A plan 關閉。
   Production migration 仍列 0B，延後至 Phase 8，不阻塞 Phase 1–6 的非
   Production 工作，也不得把本狀態改寫成整個 Phase 0 完成。
-- **Current canonical snapshot：**`origin/staging`
-  `82d3b40f8e873eb81f85b65e74abcbc4761407d6`。0A automated foundation receipt
-  為 workflow run `35311027470`、Vercel deployment
+- **0A foundation evidence snapshot：**exact protected Staging SHA
+  `82d3b40f8e873eb81f85b65e74abcbc4761407d6`。這是 0A gate 的 immutable
+  evidence binding，不宣稱後續 governance-only merge 後的 `origin/staging`
+  仍停在該 SHA；每個新 task 開始前必須重新 fetch。0A automated foundation
+  receipt 為 workflow run `35311027470`、Vercel deployment
   `dpl_8WGsmMRmQUXNM8ds6cVmKbXrhTHX`、Staging Supabase ref
   `onkxnkzeixpezetkmocf` 與 publishable-key SHA-256
-  `0c52322255ed78754d53466517f85c3209903fcd09837d4cba9cb73f55ce9509`；每個新
-  task 開始前仍須重新 fetch。
+  `0c52322255ed78754d53466517f85c3209903fcd09837d4cba9cb73f55ce9509`。
 - **0A closeout evidence：**sanitized manifest
   `artifacts/acceptance/phase-0a-closeout-82d3b40/manifest.json` 已由獨立 verifier
   驗證，checksum

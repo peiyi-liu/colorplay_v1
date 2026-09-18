@@ -1839,3 +1839,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - 唯一一次 closeout consistency review 已完成，無 actionable finding：manifest verifier 重驗輸出 `PHASE0A_CLOSEOUT_MANIFEST_VERIFIED` 與相同 checksum；`git diff --check` PASS；current `CONTEXT.md`／roadmap 無殘留 `0A IN PROGRESS`、0A-1 immediate action 或 0A-2～0A-4 blocked 字串。Manifest、真實 restore receipt 與三份文件的 exact SHA、run、deployment、Supabase ref、key fingerprint、cleanup 與 deferred 清單一致。
 - 最後唯讀 `ls-remote` 確認 `refs/heads/staging` 仍為 `82d3b40f8e873eb81f85b65e74abcbc4761407d6`。0A-5 判定維持 PASS；三份 tracked 文件保持 unstaged，evidence manifest／verifier 位於 ignored evidence 目錄，未 commit／push／PR 或開始下一個 gate。
+
+## 2026-09-18 16:22 [Codex] — PR #59 merged；canonical-snapshot 措辭 follow-up
+
+- 三份 0A-5 closeout 文件提交為 `0ff5e822e165a418ba1d21af75408f7c7f52f7d6`，Draft PR #59 targeting `staging`。Foundation CI run `35315534003` 的 format／lint／typecheck／unit-coverage／production-build／local-database／chromium-e2e／credential-scan 與兩個 Vercel PR Preview checks 全部 PASS；owner 於 protected `staging-approval` environment 人工核准 run `35316141271`，正式 `owner-approval` status 綁定 exact PR head，未使用 admin bypass。
+- PR #59 正常 merge，merge SHA `c33f2adb0b0d68bd18b793da364d3ccd055d078e`；遠端 `refs/heads/staging` 已對齊，自動 Staging workflow `35323924241` 已由該 merge SHA 觸發。這是 normal staging automation；未手動 dispatch／rerun、未碰 Production alias 或開始 0B。
+- 合併後發現 roadmap 將 immutable 0A evidence SHA `82d3b40…` 標成「Current canonical snapshot」，會在 governance-only merge 後形成自指式陳舊資訊。限定 follow-up 只把該欄改為「0A foundation evidence snapshot」，明確區分 evidence binding 與會繼續前進的 `origin/staging`，並追加本 handoff；不改 0A 判定、manifest、產品、workflow 或 Hosted state。
