@@ -107,6 +107,13 @@ describe('learning experience phase gate contract', () => {
       "getByRole('heading', { name: '錯題補救練習完成' })",
     );
     expect(spec).not.toContain('getByText(/補救練習完成/u)');
+    expect(spec).toContain('const remediationSourceGroup = studentPage');
+    expect(spec).toContain('mistake-subtopic-');
+    expect(spec).toContain('`/app/mistakes#${remediationSourceAnchor}`');
+    expect(spec).toContain(
+      'await expect(studentPage).toHaveURL(remediationReturnUrl);',
+    );
+    expect(spec).not.toContain('toHaveURL(/\\/app\\/mistakes$/u)');
     expect(spec).toContain('chapter-detail-375x812.png');
     expect(spec).toContain('review-card-768x1024.png');
     // 學生端學習進度頁依 owner 批示（2026-07-26 #2）已移除（Task 10），

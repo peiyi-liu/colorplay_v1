@@ -285,7 +285,24 @@ test('Learning Experience phase gate', async ({
   await expect(studentPage.getByText('2 題待補救')).toHaveClass(
     'mistake-group__badge',
   );
-  await studentPage.getByRole('button', { name: '再挑戰（補救練習）' }).click();
+  const remediationStart = studentPage.getByRole('button', {
+    name: '再挑戰（補救練習）',
+  });
+  const remediationSourceGroup = studentPage
+    .locator('section.mistake-group')
+    .filter({ has: remediationStart });
+  await expect(remediationSourceGroup).toHaveCount(1);
+  const remediationSourceAnchor =
+    await remediationSourceGroup.getAttribute('id');
+  if (
+    !remediationSourceAnchor ||
+    !/^mistake-subtopic-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(
+      remediationSourceAnchor,
+    )
+  ) {
+    throw new Error('LEARNING_EXPERIENCE_REMEDIATION_SOURCE_ANCHOR_MISSING');
+  }
+  await remediationStart.click();
   await expect(studentPage.getByText(/補救練習模式/u)).toHaveCount(0);
   for (let position = 1; position <= 2; position += 1) {
     await expect(studentPage.getByLabel('挑戰進度')).toContainText(
@@ -318,6 +335,17 @@ test('Learning Experience phase gate', async ({
   const returnToMistakes = studentPage.getByRole('link', {
     name: '返回我的錯題',
   });
+  const remediationReturnHref = await returnToMistakes.getAttribute('href');
+  if (!remediationReturnHref) {
+    throw new Error('LEARNING_EXPERIENCE_REMEDIATION_RETURN_TARGET_MISSING');
+  }
+  expect(remediationReturnHref).toBe(
+    `/app/mistakes#${remediationSourceAnchor}`,
+  );
+  const remediationReturnUrl = new URL(
+    remediationReturnHref,
+    studentPage.url(),
+  ).toString();
   const emptyMistakesStatus = studentPage
     .getByRole('status')
     .filter({ hasText: '目前沒有待補救的錯題，繼續保持！' });
@@ -428,7 +456,7 @@ test('Learning Experience phase gate', async ({
     remediationResultBoxes.push(box);
     await achievementTracker.waitBeforeLeavingResult();
     await returnToMistakes.click();
-    await expect(studentPage).toHaveURL(/\/app\/mistakes$/u);
+    await expect(studentPage).toHaveURL(remediationReturnUrl);
     await expect(emptyMistakesStatus).toBeVisible();
     if (index < remediationResultViewports.length - 1) {
       await studentPage.goBack();
