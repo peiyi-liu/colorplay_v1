@@ -1852,3 +1852,8 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Owner 核准一次性診斷與 test-only micro-PR。根因是共用 helper 只把 GET／read RPC 視為導航可取消的唯讀請求，漏掉 Supabase Storage 以 POST 傳輸、但語意唯讀的 signed-URL 取得；實際媒體可見與其餘功能斷言已通過，console／page／server errors 皆為 0。修正只在已辨識的取消錯誤下，豁免 `fetch`＋`POST`＋精確 `/storage/v1/object/sign/<bucket>` 路徑；4xx／5xx response、`ERR_FAILED`、upload mutation 與非 POST 仍維持 fail-closed。
 - RED→GREEN：focused contract 原先精確重現兩筆相同 failure（1 failed／18 passed），修正後 19／19 PASS；scoped Prettier、ESLint、完整 typecheck 與 `git diff --check` PASS。變更只含 `tests/e2e/browser-health.ts`、`tests/contracts/browser-health.test.ts` 與本 handoff；沒有產品、workflow、Hosted state、Production、0B 或 gate rerun。
 - 下一步只提交、push 並建立 Draft PR targeting `staging`，讓一般 PR CI 執行；不轉 Ready、不合併、不手動 rerun workflow。
+
+## 2026-09-18 16:52 [Codex] — Browser-health test-only micro-PR delivered
+
+- 修復與 regression contract 已提交為 `2828cb3`，branch `codex/browser-health-storage-abort` 已推送，建立 Draft PR #61 targeting `staging`。一般 PR CI 可自動執行；本輪未把 PR 轉 Ready、未合併、未手動重跑失敗的 Staging workflow，也未觸發新的部署。
+- 下一個 owner gate：PR #61 final head 的 required checks 全綠後，另行核准 Ready／merge；merge 產生的新 exact SHA 才能觸發一次新的正常 Staging gate。Real device approval 仍必須等該 gate 的所有自動 jobs 通過後由真人處理。
