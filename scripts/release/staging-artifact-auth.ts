@@ -13,13 +13,22 @@ const record = (value: unknown): Record<string, unknown> =>
     : {};
 const hash = (value: string) =>
   createHash('sha256').update(value).digest('hex');
+type FailureStage =
+  | 'CONFIG'
+  | 'VERCEL_API'
+  | 'DEPLOYMENT_METADATA'
+  | 'BROWSER_LAUNCH'
+  | 'STUDENT_BROWSER_PROOF'
+  | 'TEACHER_BROWSER_PROOF'
+  | 'ARTIFACT_WRITE';
+let failureStage: FailureStage = 'CONFIG';
 
 function api(path: string): Record<string, unknown> {
   const team = process.env.VERCEL_ORG_ID;
   const endpoint = team ? `${path}?teamId=${encodeURIComponent(team)}` : path;
   return record(
     JSON.parse(
-      execFileSync('pnpm', ['exec', 'vercel', 'api', endpoint], {
+      execFileSync('vercel', ['api', endpoint], {
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'pipe'],
         timeout: 30_000,
@@ -42,8 +51,10 @@ async function main() {
     process.env.VITE_SUPABASE_URL !== supabaseOrigin
   )
     throw new Error('STAGING_AUTH_CONFIG_INVALID');
+  failureStage = 'VERCEL_API';
   const deployment = api(`/v13/deployments/${deploymentId}`);
   const project = api(`/v9/projects/${expectedProject}`);
+  failureStage = 'DEPLOYMENT_METADATA';
   const meta = record(deployment.meta);
   if (
     project.name !== 'colorplay-staging-web' ||
@@ -62,10 +73,13 @@ async function main() {
   const headers: Record<string, string> = bypass
     ? { 'x-vercel-protection-bypass': bypass }
     : {};
+  failureStage = 'BROWSER_LAUNCH';
   const browser = await chromium.launch();
   const results: { role: string; route: string; profileLoaded: boolean }[] = [];
   try {
     for (const role of ['student', 'teacher'] as const) {
+      failureStage =
+        role === 'student' ? 'STUDENT_BROWSER_PROOF' : 'TEACHER_BROWSER_PROOF';
       const context = await browser.newContext();
       const page = await context.newPage();
       const failures: string[] = [];
@@ -202,6 +216,7 @@ async function main() {
   } finally {
     await browser.close();
   }
+  failureStage = 'ARTIFACT_WRITE';
   const output = 'artifacts/acceptance/admin-ui/staging-artifact-auth.json';
   await mkdir('artifacts/acceptance/admin-ui', { recursive: true });
   await writeFile(
@@ -223,6 +238,6 @@ async function main() {
   console.log('STAGING_ARTIFACT_AUTH_PASS');
 }
 main().catch(() => {
-  console.error('STAGING_ARTIFACT_AUTH_FAILED');
+  console.error(`STAGING_ARTIFACT_AUTH_FAILED:${failureStage}`);
   process.exitCode = 1;
 });
