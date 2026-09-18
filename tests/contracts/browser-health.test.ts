@@ -12,6 +12,8 @@ import {
 } from '../e2e/browser-health';
 
 const logoutUrl = 'http://127.0.0.1:54321/auth/v1/logout?scope=local';
+const reviewCardStorageSignUrl =
+  'https://onkxnkzeixpezetkmocf.supabase.co/storage/v1/object/sign/review-card-media';
 
 const createRequest = (method = 'POST', url = logoutUrl) => ({
   method: () => method,
@@ -176,6 +178,50 @@ describe('browser health logout request identity', () => {
     });
 
     expect(successfulRequests).toEqual(new Set([successfulRequest]));
+  });
+});
+
+describe('browser health navigation cancellations', () => {
+  it('ignores repeated navigation-aborted read-only storage signing requests', () => {
+    const firstRequest = createRequest('POST', reviewCardStorageSignUrl);
+    const secondRequest = createRequest('POST', reviewCardStorageSignUrl);
+
+    expect(
+      unexpectedRequestFailures(
+        'chromium',
+        [failureFor(firstRequest), failureFor(secondRequest)],
+        new Set(),
+      ),
+    ).toEqual([]);
+  });
+
+  it.each([
+    [
+      'a non-cancellation error',
+      createRequest('POST', reviewCardStorageSignUrl),
+      'net::ERR_FAILED',
+    ],
+    [
+      'a storage mutation',
+      createRequest(
+        'POST',
+        'https://onkxnkzeixpezetkmocf.supabase.co/storage/v1/object/upload/review-card-media/card.webp',
+      ),
+      'net::ERR_ABORTED',
+    ],
+    [
+      'a non-POST signing request',
+      createRequest('GET', reviewCardStorageSignUrl),
+      'net::ERR_ABORTED',
+    ],
+  ])('keeps %s visible', (_label, request, errorText) => {
+    expect(
+      unexpectedRequestFailures(
+        'chromium',
+        [failureFor(request, errorText)],
+        new Set(),
+      ),
+    ).toEqual([`${errorText} ${request.url()}`]);
   });
 });
 

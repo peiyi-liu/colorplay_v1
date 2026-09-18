@@ -62,6 +62,17 @@ export function unexpectedRequestFailures<RequestType extends TrackedRequest>(
     try {
       const parsed = new URL(request.url());
       if (parsed.pathname.startsWith('/assets/')) return true;
+      // Supabase Storage creates signed read URLs through POST even though the
+      // operation is read-only. Route changes can cancel this fetch after the
+      // card media has already rendered; an actual denial still arrives as a
+      // 4xx response and remains visible through responseErrors.
+      if (
+        request.resourceType() === 'fetch' &&
+        request.method() === 'POST' &&
+        /^\/storage\/v1\/object\/sign\/[^/]+$/u.test(parsed.pathname)
+      ) {
+        return true;
+      }
       // 本機 Supabase 只豁免「只讀」請求：GET 或 get_/list_ 讀取 RPC。
       // mutation 與 auth 端點（含 logout）不豁免——其中止可能代表真 bug，
       // logout 語意由下方身分比對規則嚴格把關。
