@@ -103,6 +103,10 @@ describe('learning experience phase gate contract', () => {
     expect(spec).toContain('挑戰進度');
     expect(spec).toContain('尚未發布的卡片');
     expect(spec).toContain('await studentPage.reload();');
+    expect(spec).toContain(
+      "getByRole('heading', { name: '錯題補救練習完成' })",
+    );
+    expect(spec).not.toContain('getByText(/補救練習完成/u)');
     expect(spec).toContain('chapter-detail-375x812.png');
     expect(spec).toContain('review-card-768x1024.png');
     // 學生端學習進度頁依 owner 批示（2026-07-26 #2）已移除（Task 10），

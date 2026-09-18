@@ -306,7 +306,9 @@ test('Learning Experience phase gate', async ({
       .click();
     await waitForNextQuizStep(studentPage);
   }
-  await expect(studentPage.getByText(/補救練習完成/u)).toBeVisible();
+  await expect(
+    studentPage.getByRole('heading', { name: '錯題補救練習完成' }),
+  ).toBeVisible();
   // 20% of two fast correct answers: +30 XP; the Token balance must not move.
   await expectHudEconomy(rewards, {
     currentLevelXp: 130,
