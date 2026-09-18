@@ -1845,3 +1845,15 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 三份 0A-5 closeout 文件提交為 `0ff5e822e165a418ba1d21af75408f7c7f52f7d6`，Draft PR #59 targeting `staging`。Foundation CI run `35315534003` 的 format／lint／typecheck／unit-coverage／production-build／local-database／chromium-e2e／credential-scan 與兩個 Vercel PR Preview checks 全部 PASS；owner 於 protected `staging-approval` environment 人工核准 run `35316141271`，正式 `owner-approval` status 綁定 exact PR head，未使用 admin bypass。
 - PR #59 正常 merge，merge SHA `c33f2adb0b0d68bd18b793da364d3ccd055d078e`；遠端 `refs/heads/staging` 已對齊，自動 Staging workflow `35323924241` 已由該 merge SHA 觸發。這是 normal staging automation；未手動 dispatch／rerun、未碰 Production alias 或開始 0B。
 - 合併後發現 roadmap 將 immutable 0A evidence SHA `82d3b40…` 標成「Current canonical snapshot」，會在 governance-only merge 後形成自指式陳舊資訊。限定 follow-up 只把該欄改為「0A foundation evidence snapshot」，明確區分 evidence binding 與會繼續前進的 `origin/staging`，並追加本 handoff；不改 0A 判定、manifest、產品、workflow 或 Hosted state。
+
+## 2026-09-18 16:49 [Codex] — Staging phase-acceptance browser-health false positive diagnosed and fixed
+
+- PR #60 已以 merge SHA `31cab2c93ee7601bded7ef2afd9261a43bdb0d71` 合併；自動 Staging run `35325162471` 的 exact-SHA deploy、read-only smoke 與九組 browser／RWD jobs 全綠，但 `phase-acceptance` 在所有功能斷言完成後，因兩筆 `POST /storage/v1/object/sign/review-card-media` 的 `net::ERR_ABORTED` 被 browser-health 判為失敗而停止。`real-device-approval` 與 `record-staging-gate` 因此 skipped；依 gate 規則沒有重跑。
+- Owner 核准一次性診斷與 test-only micro-PR。根因是共用 helper 只把 GET／read RPC 視為導航可取消的唯讀請求，漏掉 Supabase Storage 以 POST 傳輸、但語意唯讀的 signed-URL 取得；實際媒體可見與其餘功能斷言已通過，console／page／server errors 皆為 0。修正只在已辨識的取消錯誤下，豁免 `fetch`＋`POST`＋精確 `/storage/v1/object/sign/<bucket>` 路徑；4xx／5xx response、`ERR_FAILED`、upload mutation 與非 POST 仍維持 fail-closed。
+- RED→GREEN：focused contract 原先精確重現兩筆相同 failure（1 failed／18 passed），修正後 19／19 PASS；scoped Prettier、ESLint、完整 typecheck 與 `git diff --check` PASS。變更只含 `tests/e2e/browser-health.ts`、`tests/contracts/browser-health.test.ts` 與本 handoff；沒有產品、workflow、Hosted state、Production、0B 或 gate rerun。
+- 下一步只提交、push 並建立 Draft PR targeting `staging`，讓一般 PR CI 執行；不轉 Ready、不合併、不手動 rerun workflow。
+
+## 2026-09-18 16:52 [Codex] — Browser-health test-only micro-PR delivered
+
+- 修復與 regression contract 已提交為 `2828cb3`，branch `codex/browser-health-storage-abort` 已推送，建立 Draft PR #61 targeting `staging`。一般 PR CI 可自動執行；本輪未把 PR 轉 Ready、未合併、未手動重跑失敗的 Staging workflow，也未觸發新的部署。
+- 下一個 owner gate：PR #61 final head 的 required checks 全綠後，另行核准 Ready／merge；merge 產生的新 exact SHA 才能觸發一次新的正常 Staging gate。Real device approval 仍必須等該 gate 的所有自動 jobs 通過後由真人處理。
