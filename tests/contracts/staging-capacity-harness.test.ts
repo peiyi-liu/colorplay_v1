@@ -1,0 +1,188 @@
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { buildCleanupSql } from '../e2e/helpers/staging-capacity-cleanup';
+import {
+  buildStudentAccountPlan,
+  createSyntheticAccounts,
+  percentile,
+  readCapacityConfig,
+  summarizeDurations,
+  type CapacityAccount,
+} from '../e2e/helpers/staging-capacity';
+
+const VALID_ENV = {
+  COLORPLAY_CAPACITY_APP_URL: 'https://staging.colorplayapp.com',
+  COLORPLAY_CAPACITY_CONFIRM: 'STAGING_1_PLUS_39_ONLY',
+  COLORPLAY_CAPACITY_EXPECTED_SHA: 'a'.repeat(40),
+  COLORPLAY_CAPACITY_RUN_ID: 'c40-contract-test',
+  STAGING_EXPECTED_SUPABASE_PROJECT_REF: 'onkxnkzeixpezetkmocf',
+  STAGING_SUPABASE_ACCESS_TOKEN: 'synthetic-access-token',
+  STAGING_SUPABASE_ANON_KEY: 'synthetic-public-key',
+  STAGING_SUPABASE_PROJECT_REF: 'onkxnkzeixpezetkmocf',
+  STAGING_SUPABASE_SECRET_KEY: 'synthetic-secret-key',
+  STAGING_SUPABASE_URL: 'https://onkxnkzeixpezetkmocf.supabase.co',
+} satisfies NodeJS.ProcessEnv;
+
+const account = (id: string): CapacityAccount => ({
+  account: 'cpcontract01',
+  displayName: '容量學生 01',
+  email: 'cpcontract01@capacity.colorplay.invalid',
+  id,
+  password: 'SyntheticA1',
+  role: 'student',
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe('Staging capacity harness contract', () => {
+  it('fails closed for Production or an incorrect confirmation', () => {
+    expect(() =>
+      readCapacityConfig({
+        ...VALID_ENV,
+        COLORPLAY_CAPACITY_APP_URL: 'https://colorplayapp.com',
+      }),
+    ).toThrow('CAPACITY_TARGET_INVALID');
+    expect(() =>
+      readCapacityConfig({
+        ...VALID_ENV,
+        COLORPLAY_CAPACITY_CONFIRM: 'yes',
+      }),
+    ).toThrow('CAPACITY_TARGET_INVALID');
+  });
+
+  it('plans 39 students to run with one fixed preflighted teacher', () => {
+    const accounts = buildStudentAccountPlan('c40-contract-test');
+    expect(accounts).toHaveLength(39);
+    expect(accounts.filter((entry) => entry.role === 'student')).toHaveLength(
+      39,
+    );
+    expect(new Set(accounts.map((entry) => entry.account))).toHaveLength(39);
+    expect(new Set(accounts.map((entry) => entry.password))).toHaveLength(39);
+  });
+
+  it('uses nearest-rank p95 and reports the maximum', () => {
+    expect(percentile([100, 200, 300, 400], 95)).toBe(400);
+    expect(summarizeDurations([100.4, 200.5, 300.6, 400.1])).toEqual({
+      count: 4,
+      max_ms: 400,
+      p50_ms: 201,
+      p95_ms: 400,
+    });
+  });
+
+  it('builds exact-id cleanup with identity limiter removal', () => {
+    const sql = buildCleanupSql(
+      [account('11111111-1111-4111-8111-111111111111')],
+      '55555555-5555-4555-8555-555555555555',
+      {
+        activityId: '22222222-2222-4222-8222-222222222222',
+        classroomId: '33333333-3333-4333-8333-333333333333',
+        classroomName: "容量基準 c40-contract-test'quoted",
+        sessionId: '44444444-4444-4444-8444-444444444444',
+      },
+    );
+    expect(sql).toContain(
+      "live_session.host_teacher_id = '55555555-5555-4555-8555-555555555555'::uuid",
+    );
+    expect(sql).toContain("name = '容量基準 c40-contract-test''quoted'");
+    expect(sql).toContain("scope = 'identity'");
+    expect(sql).not.toContain("scope = 'ip'");
+  });
+
+  it('reconciles an Auth user when create response is ambiguous', async () => {
+    let fetchCall = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => {
+        fetchCall += 1;
+        return Promise.resolve(
+          new Response(
+            JSON.stringify(
+              fetchCall === 1
+                ? []
+                : [
+                    {
+                      capacity_account: 'cpde1aae8401',
+                      capacity_run_id: 'c40-contract-test',
+                      email: 'cpde1aae8401@capacity.colorplay.invalid',
+                      id: '11111111-1111-4111-8111-111111111111',
+                    },
+                  ],
+            ),
+            { status: 200 },
+          ),
+        );
+      }),
+    );
+    let createCall = 0;
+    const service = {
+      auth: {
+        admin: {
+          createUser: vi.fn(() => {
+            createCall += 1;
+            return Promise.resolve(
+              createCall === 1
+                ? { data: { user: null }, error: new Error('response lost') }
+                : {
+                    data: {
+                      user: {
+                        id: `11111111-1111-4111-8111-${String(createCall).padStart(12, '0')}`,
+                      },
+                    },
+                    error: null,
+                  },
+            );
+          }),
+        },
+      },
+      from: vi.fn(() => ({
+        update: vi.fn(
+          (
+            payload: Readonly<{ full_name: string; login_account: string }>,
+          ) => ({
+            eq: vi.fn((_column: string, id: string) => ({
+              select: vi.fn(() => ({
+                single: vi.fn(() =>
+                  Promise.resolve({
+                    data: { ...payload, id, role: 'student' },
+                    error: null,
+                  }),
+                ),
+              })),
+            })),
+          }),
+        ),
+      })),
+    };
+    const config = readCapacityConfig(VALID_ENV);
+    const created = await createSyntheticAccounts(
+      config,
+      service as never,
+      config.runId,
+    );
+
+    expect(created).toHaveLength(39);
+    expect(created[0]?.id).toBe('11111111-1111-4111-8111-111111111111');
+    expect(fetchCall).toBe(2);
+  });
+
+  it('drives browser Auth and Live UI without manual Realtime auth', async () => {
+    const source = await readFile(
+      resolve(process.cwd(), 'tests/e2e/staging-capacity.spec.ts'),
+      'utf8',
+    );
+    expect(source).toContain('signInTeacher');
+    expect(source).toContain('signInStudent');
+    expect(source).toContain('FIXED_TEACHER');
+    expect(source).toMatch(/functions\.invoke\(\s*'join-classroom'/u);
+    expect(source).toContain('launchLiveSessionFromTeacherHome');
+    expect(source).toContain("getByText('連線正常')");
+    expect(source).not.toContain('realtime.setAuth');
+    expect(source).not.toContain("rpc('join_classroom'");
+  });
+});

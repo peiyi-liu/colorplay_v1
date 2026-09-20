@@ -1857,3 +1857,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - 修復與 regression contract 已提交為 `2828cb3`，branch `codex/browser-health-storage-abort` 已推送，建立 Draft PR #61 targeting `staging`。一般 PR CI 可自動執行；本輪未把 PR 轉 Ready、未合併、未手動重跑失敗的 Staging workflow，也未觸發新的部署。
 - 下一個 owner gate：PR #61 final head 的 required checks 全綠後，另行核准 Ready／merge；merge 產生的新 exact SHA 才能觸發一次新的正常 Staging gate。Real device approval 仍必須等該 gate 的所有自動 jobs 通過後由真人處理。
+
+## 2026-09-21 00:41 [Codex] — Staging 1+39 supplemental capacity harness candidate
+
+- Owner 核准 test-only capacity harness micro-PR；base 是 protected `staging` exact SHA `70911099607593c78923c55d964b147bee0f0259`，branch `codex/test-capacity-harness`。新增 `pnpm staging:capacity`：只接受硬編碼 Staging app／Supabase ref、exact deployment SHA、專用確認字串與 1 個固定已核准教師；建立 39 個具 run marker 的獨立學生，40 個 Chromium context 同時走真實 Auth，39 位學生走正式 `join-classroom` Edge Function、Live Realtime 與 3 回合 concurrent answer。每回合要求 39 答案／39 distinct participants，answer p95 上限 800 ms，40 個瀏覽器皆須觀察到 Realtime socket，任何 429／5xx／console／page／WebSocket error 或斷線都 fail closed。
+- Harness 明確是 supplemental capacity baseline，`replaces_ac_live_012=false`；不冒充 AC-LIVE-012 正式 phase gate。固定教師只做登入與 role／`teacher01` preflight，不建立或直接升權教師。學生 Auth user 以 deterministic email＋`capacity_run_id` metadata 標記；建立回應遺失時會由 marker／email reconcile。Finally 會先關閉 40 contexts，再用 exact IDs／run marker 清除學生、identity rate limiter、exact classroom／Live session／activity並驗證全為 0；即使教師 preflight 失敗仍會清學生。共享 IP limiter 是同 NAT operational state，為避免刪到同時流量而保留並在 receipt 明示。
+- 唯一一輪 Standards／Spec／Security review 的 blocking findings 已修正；完整 typecheck、scoped ESLint、focused contract 6／6、Playwright list 1 test 與無確認字串 dry-run 1 skipped 全部通過。沒有執行真實 Staging 1+39 run、沒有建立 Hosted 帳號、沒有碰 Production、deploy、workflow、migration 或產品程式。下一步只提交／push／建立 PR targeting `staging`；PR 合併與一次真實 Staging capacity run 仍是後續獨立 gate。
