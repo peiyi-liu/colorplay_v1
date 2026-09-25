@@ -69,7 +69,7 @@ export function unexpectedRequestFailures<RequestType extends TrackedRequest>(
       if (
         request.resourceType() === 'fetch' &&
         request.method() === 'POST' &&
-        /^\/storage\/v1\/object\/sign\/[^/]+$/u.test(parsed.pathname)
+        /^\/storage\/v1\/object\/sign\/[^/]+\/.+$/u.test(parsed.pathname)
       ) {
         return true;
       }
