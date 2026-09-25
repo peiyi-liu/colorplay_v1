@@ -1,6 +1,4 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { writeFile } from 'node:fs/promises';
-
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 import type { Database } from '../../../src/types/database';
@@ -254,19 +252,48 @@ export function buildStudentAccountPlan(
   });
 }
 
+const combinedSignal = (
+  first: AbortSignal | null | undefined,
+  second: AbortSignal,
+): AbortSignal => (first ? AbortSignal.any([first, second]) : second);
+
 export function createServiceClient(
   config: CapacityConfig,
+  signal?: AbortSignal,
 ): SupabaseClient<Database> {
   return createClient<Database>(config.supabaseUrl, config.secretKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    ...(signal
+      ? {
+          global: {
+            fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+              fetch(input, {
+                ...init,
+                signal: combinedSignal(init?.signal, signal),
+              }),
+          },
+        }
+      : {}),
   });
 }
 
 export function createSessionClient(
   config: CapacityConfig,
+  signal?: AbortSignal,
 ): SupabaseClient<Database> {
   return createClient<Database>(config.supabaseUrl, config.anonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    ...(signal
+      ? {
+          global: {
+            fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+              fetch(input, {
+                ...init,
+                signal: combinedSignal(init?.signal, signal),
+              }),
+          },
+        }
+      : {}),
   });
 }
 
@@ -275,14 +302,22 @@ export async function createSyntheticAccounts(
   service: SupabaseClient<Database>,
   runId: string,
   onCreated?: (account: CapacityAccount) => void,
+  signal?: AbortSignal,
 ): Promise<readonly CapacityAccount[]> {
   const plan = buildStudentAccountPlan(runId);
-  const collisionRows = await findSyntheticAccountRows(config, runId);
+  signal?.throwIfAborted();
+  const collisionRows = await findSyntheticAccountRows(
+    config,
+    runId,
+    undefined,
+    signal,
+  );
   if (collisionRows.length !== 0) {
     fail('CAPACITY_ACCOUNT_COLLISION');
   }
   const created: CapacityAccount[] = [];
   for (const fixture of plan) {
+    signal?.throwIfAborted();
     let createdId: string | undefined;
     try {
       const { data, error } = await service.auth.admin.createUser({
@@ -300,11 +335,13 @@ export async function createSyntheticAccounts(
       // An interrupted response can still mean that Auth committed the user.
       // Reconciliation below is the source of truth for both error shapes.
     }
+    signal?.throwIfAborted();
     if (createdId === undefined) {
       const reconciled = await findSyntheticAccountRows(
         config,
         runId,
         fixture.email,
+        signal,
       );
       const row = reconciled[0];
       if (
@@ -348,6 +385,7 @@ export async function findSyntheticAccountRows(
   config: CapacityConfig,
   runId: string,
   email?: string,
+  signal?: AbortSignal,
 ): Promise<readonly QueryRow[]> {
   if (!RUN_ID_PATTERN.test(runId)) return fail('CAPACITY_RUN_ID_INVALID');
   const plannedEmails = buildStudentAccountPlan(runId).map(
@@ -371,16 +409,20 @@ export async function findSyntheticAccountRows(
        from auth.users
       where ${predicate}
       order by id;`,
+    signal,
   );
 }
 
-export async function readReleaseMarker(config: CapacityConfig) {
+export async function readReleaseMarker(
+  config: CapacityConfig,
+  signal?: AbortSignal,
+) {
   let response: Response;
   try {
     response = await fetch(`${config.appUrl}/admin-release.json`, {
       cache: 'no-store',
       redirect: 'error',
-      signal: AbortSignal.timeout(15_000),
+      signal: combinedSignal(signal, AbortSignal.timeout(15_000)),
     });
   } catch {
     return fail('CAPACITY_RELEASE_MARKER_NETWORK_FAILED');
@@ -403,6 +445,7 @@ export async function readReleaseMarker(config: CapacityConfig) {
 export async function managementQuery(
   config: CapacityConfig,
   query: string,
+  signal?: AbortSignal,
 ): Promise<readonly QueryRow[]> {
   let response: Response;
   try {
@@ -415,7 +458,7 @@ export async function managementQuery(
           'Content-Type': 'application/json',
         },
         method: 'POST',
-        signal: AbortSignal.timeout(30_000),
+        signal: combinedSignal(signal, AbortSignal.timeout(30_000)),
       },
     );
   } catch {
@@ -431,13 +474,6 @@ export async function managementQuery(
 }
 
 const sqlText = (value: string): string => `'${value.replaceAll("'", "''")}'`;
-
-export async function writeSafeJson(path: string, value: unknown) {
-  await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, {
-    encoding: 'utf8',
-    mode: 0o600,
-  });
-}
 
 export function publicErrorCode(
   error: unknown,
