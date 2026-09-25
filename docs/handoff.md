@@ -1883,4 +1883,5 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Owner 核准 test-only Realtime 診斷 micro-PR，且明示完成後不自動重跑。Harness 現在會等待全部 39 位學生完成 Live join 嘗試，再以匿名 `client_index` 記錄 lobby／Realtime 結果、DOM connection state sequence、allowlisted Phoenix subscription status 與 WebSocket socket／close／error counts；任何一位失敗仍維持原 fail-closed error code。
 - 原始 WebSocket frame、topic、ref、payload、Token、帳號與例外訊息都不寫入 result；frame decoder 只在記憶體辨識 Live subscription，持久化結果只有 allowlisted 狀態與計數。主 capacity spec 維持 496 行，沒有產品程式、schema、RLS、部署、Hosted mutation 或 Production 變更。
 - Focused contract 11／11、typecheck、scoped ESLint／Prettier、Playwright list 與 `git diff --check` PASS。完整 Vitest 為 248 files PASS，僅既有 `phase0-restore-cleanup.test.ts` 5 個案例因 5 秒 timeout 未通過，與本次三個 Realtime 診斷檔案無關；不在本 micro-PR 擴大修復。
+- 唯一一輪 Standards／Spec／Security review：Spec PASS；同輪修正非 timeout Playwright 錯誤誤標為 timeout、DOM `data-state` 白名單，以及 pending Realtime join ref 上限／回覆後刪除。沒有第二輪 review。
 - 下一步僅提交、push 並建立 Draft PR targeting `staging`；不轉 Ready、不合併、不 deploy、不自動重跑 final 1+39。任何 merge 或容量重跑都需要新的 owner gate。

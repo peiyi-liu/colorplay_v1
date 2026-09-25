@@ -1,6 +1,6 @@
 import { performance } from 'node:perf_hooks';
 
-import { expect, type Page } from '@playwright/test';
+import { errors, type Page } from '@playwright/test';
 
 import {
   CapacityHarnessError,
@@ -90,10 +90,12 @@ export const joinLiveThroughUi = async (
       await page.getByLabel('輸入 6 位加入代碼').fill(joinCode);
       await page.getByRole('button', { name: '加入課堂' }).click();
       try {
-        await expect(page.getByText('等待主持人開始…')).toBeVisible({
+        await page.getByText('等待主持人開始…').waitFor({
+          state: 'visible',
           timeout: LIVE_JOIN_TIMEOUT_MS,
         });
-      } catch {
+      } catch (error) {
+        if (!(error instanceof errors.TimeoutError)) throw error;
         return {
           durationMs: performance.now() - startedAt,
           lobbyMs: null,
@@ -104,10 +106,12 @@ export const joinLiveThroughUi = async (
       const lobbyMs = performance.now() - startedAt;
       const realtimeStartedAt = performance.now();
       try {
-        await expect(page.getByText('連線正常')).toBeVisible({
+        await page.getByText('連線正常').waitFor({
+          state: 'visible',
           timeout: LIVE_JOIN_TIMEOUT_MS,
         });
-      } catch {
+      } catch (error) {
+        if (!(error instanceof errors.TimeoutError)) throw error;
         return {
           durationMs: performance.now() - startedAt,
           lobbyMs,
@@ -338,7 +342,12 @@ export const attachDiagnostics = async (
     realtimeSocketCount += 1;
     socket.on('framesent', ({ payload }) => {
       const frame = decodeSafeRealtimeFrame(payload);
-      if (frame?.event === 'phx_join' && frame.isLiveTopic && frame.ref) {
+      if (
+        frame?.event === 'phx_join' &&
+        frame.isLiveTopic &&
+        frame.ref &&
+        liveJoinRefs.size < MAX_SAFE_REALTIME_EVENTS
+      ) {
         liveJoinRefs.add(frame.ref);
       }
     });
@@ -350,6 +359,7 @@ export const attachDiagnostics = async (
         frame.ref !== null &&
         liveJoinRefs.has(frame.ref)
       ) {
+        liveJoinRefs.delete(frame.ref);
         recordSubscriptionStatus(
           frame.replyStatus === 'ok' ? 'SUBSCRIBED' : 'CHANNEL_ERROR',
         );
@@ -387,13 +397,15 @@ export const attachDiagnostics = async (
       const value =
         document.querySelector<HTMLElement>('[data-state]')?.dataset.state ??
         '';
-      if (value === state.last) return;
       if (
-        (value === 'connecting' ||
-          value === 'connected' ||
-          value === 'disconnected') &&
-        state.sequence.length < 16
+        value !== 'connecting' &&
+        value !== 'connected' &&
+        value !== 'disconnected'
       ) {
+        return;
+      }
+      if (value === state.last) return;
+      if (state.sequence.length < 16) {
         state.sequence.push(value);
       }
       if (value === 'connected') state.seenConnected = true;

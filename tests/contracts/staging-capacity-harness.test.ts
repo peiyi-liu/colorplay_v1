@@ -374,6 +374,14 @@ describe('Staging capacity harness contract', () => {
     expect(browserHelperSource).toContain('CAPACITY_LIVE_REALTIME_FAILED');
     expect(browserHelperSource).toContain('collectLiveJoinAttempts');
     expect(browserHelperSource).toContain('decodeSafeRealtimeFrame');
+    expect(browserHelperSource).toContain(
+      'error instanceof errors.TimeoutError',
+    );
+    expect(browserHelperSource).toContain(
+      'liveJoinRefs.size < MAX_SAFE_REALTIME_EVENTS',
+    );
+    expect(browserHelperSource).toContain('liveJoinRefs.delete(frame.ref)');
+    expect(browserHelperSource).toContain("value !== 'connecting'");
     expect(source).toContain('buildLiveJoinEvidence(');
     expect(browserHelperSource).toContain('live_join_clients: clients');
     expect(browserHelperSource).toContain('live_join_summary:');
