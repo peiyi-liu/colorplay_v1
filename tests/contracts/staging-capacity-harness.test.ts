@@ -5,6 +5,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { buildCleanupSql } from '../e2e/helpers/staging-capacity-cleanup';
 import {
+  buildLiveJoinEvidence,
+  collectLiveJoinAttempts,
+  decodeSafeRealtimeFrame,
+  failureCodeForLiveJoinResults,
+  summarizeLiveJoinOutcomes,
+  type LiveJoinResult,
+} from '../e2e/helpers/staging-capacity-browser';
+import {
   buildStudentAccountPlan,
   capacityStageFailureCode,
   CapacityHarnessError,
@@ -38,6 +46,16 @@ const account = (id: string): CapacityAccount => ({
   id,
   password: 'SyntheticA1',
   role: 'student',
+});
+
+const liveJoinResult = (
+  outcome: LiveJoinResult['outcome'],
+): LiveJoinResult => ({
+  durationMs: outcome === 'ui_error' ? null : 1_000,
+  lobbyMs:
+    outcome === 'connected' || outcome === 'realtime_timeout' ? 600 : null,
+  outcome,
+  realtimeMs: outcome === 'connected' ? 400 : null,
 });
 
 afterEach(() => {
@@ -144,6 +162,97 @@ describe('Staging capacity harness contract', () => {
     expect(publicErrorCode(new Error('unknown'))).toBe(
       'CAPACITY_HARNESS_FAILED',
     );
+  });
+
+  it('collects every anonymous Live join outcome after one client fails', async () => {
+    let finalAttemptCompleted = false;
+    const results = await collectLiveJoinAttempts([
+      () => Promise.resolve(liveJoinResult('connected')),
+      () => Promise.reject(new Error('sensitive account and token details')),
+      () => Promise.resolve(liveJoinResult('realtime_timeout')),
+      async () => {
+        await Promise.resolve();
+        finalAttemptCompleted = true;
+        return liveJoinResult('lobby_timeout');
+      },
+    ]);
+
+    expect(finalAttemptCompleted).toBe(true);
+    expect(results).toEqual([
+      liveJoinResult('connected'),
+      liveJoinResult('ui_error'),
+      liveJoinResult('realtime_timeout'),
+      liveJoinResult('lobby_timeout'),
+    ]);
+    expect(summarizeLiveJoinOutcomes(results)).toEqual({
+      connected: 1,
+      lobby_timeout: 1,
+      realtime_timeout: 1,
+      total: 4,
+      ui_error: 1,
+    });
+    expect(failureCodeForLiveJoinResults(results)).toBe(
+      'CAPACITY_LIVE_JOIN_FAILED',
+    );
+    const evidence = buildLiveJoinEvidence(
+      results,
+      results.map((_entry, index) => ({
+        closeCount: index === 2 ? 1 : 0,
+        connectionStateSequence:
+          index === 0 ? ['connecting', 'connected'] : ['connecting'],
+        disconnectCount: 0,
+        errorCount: 0,
+        lastConnectionState: index === 0 ? 'connected' : 'connecting',
+        socketCount: 1,
+        subscriptionStatusSequence:
+          index === 0 ? (['SUBSCRIBED'] as const) : [],
+      })),
+    );
+    expect(evidence.failureCode).toBe('CAPACITY_LIVE_JOIN_FAILED');
+    expect(evidence.result.live_join_summary).toEqual({
+      connected: 1,
+      lobby_timeout: 1,
+      realtime_timeout: 1,
+      total: 4,
+      ui_error: 1,
+    });
+    expect(evidence.result.live_join_clients).toHaveLength(4);
+    expect(evidence.result.live_join_clients[0]).toMatchObject({
+      client_index: 1,
+      connection_state_sequence: ['connecting', 'connected'],
+      outcome: 'connected',
+      subscription_status_sequence: ['SUBSCRIBED'],
+    });
+    expect(JSON.stringify(results)).not.toContain('sensitive');
+    expect(JSON.stringify(evidence)).not.toContain('sensitive');
+  });
+
+  it('allowlists Realtime frame metadata without retaining payloads or tokens', () => {
+    const decoded = decodeSafeRealtimeFrame(
+      JSON.stringify({
+        event: 'phx_join',
+        payload: { access_token: 'secret-token-must-not-survive' },
+        ref: 'safe-ref',
+        topic: 'realtime:private:live-session:synthetic-session',
+      }),
+    );
+    expect(decoded).toEqual({
+      event: 'phx_join',
+      isLiveTopic: true,
+      ref: 'safe-ref',
+      replyStatus: null,
+    });
+    expect(JSON.stringify(decoded)).not.toContain('secret-token');
+    expect(
+      decodeSafeRealtimeFrame(
+        JSON.stringify({
+          event: 'broadcast',
+          payload: { answer: 'must-not-survive' },
+          ref: null,
+          topic: 'realtime:private:live-session:synthetic-session',
+        }),
+      ),
+    ).toBeNull();
   });
 
   it('builds exact-id cleanup with identity limiter removal', () => {
@@ -263,7 +372,21 @@ describe('Staging capacity harness contract', () => {
     expect(source).toContain('CAPACITY_LOGIN_TIMING_COUNT_INVALID');
     expect(browserHelperSource).toContain('CAPACITY_LIVE_LOBBY_FAILED');
     expect(browserHelperSource).toContain('CAPACITY_LIVE_REALTIME_FAILED');
-    expect(source).toContain('result.live_join_realtime = summarizeDurations(');
+    expect(browserHelperSource).toContain('collectLiveJoinAttempts');
+    expect(browserHelperSource).toContain('decodeSafeRealtimeFrame');
+    expect(browserHelperSource).toContain(
+      'error instanceof errors.TimeoutError',
+    );
+    expect(browserHelperSource).toContain(
+      'liveJoinRefs.size < MAX_SAFE_REALTIME_EVENTS',
+    );
+    expect(browserHelperSource).toContain('liveJoinRefs.delete(frame.ref)');
+    expect(browserHelperSource).toContain("value !== 'connecting'");
+    expect(source).toContain('buildLiveJoinEvidence(');
+    expect(browserHelperSource).toContain('live_join_clients: clients');
+    expect(browserHelperSource).toContain('live_join_summary:');
+    expect(browserHelperSource).toContain('subscription_status_sequence');
+    expect(browserHelperSource).toContain('live_join_realtime:');
     expect(source).toContain("enterStage('host_roster')");
     expect(source).toContain("enterStage('round_answer')");
     expect(source).toContain('result.failure_stage = currentStage');

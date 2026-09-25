@@ -9,7 +9,9 @@ import { createClassroom } from './helpers/classrooms';
 import { launchLiveSessionFromTeacherHome } from './helpers/live';
 import {
   attachDiagnostics,
+  buildLiveJoinEvidence,
   joinLiveThroughUi,
+  liveSessionIdFromUrl,
   sessionTokensFromPage,
   type PageDiagnostics,
 } from './helpers/staging-capacity-browser';
@@ -196,15 +198,6 @@ const authoritativeAnswerCount = async (
   };
 };
 
-const sessionIdFromUrl = (url: string) => {
-  const match = /^\/teacher\/live\/([0-9a-f-]{36})$/iu.exec(
-    new URL(url).pathname,
-  );
-  if (!match?.[1])
-    throw new CapacityHarnessError('CAPACITY_LIVE_SESSION_ID_MISSING');
-  return match[1];
-};
-
 test.describe('Staging 1+39 capacity harness', () => {
   test('40 browsers use official Auth, Edge join, Realtime, and three Live rounds', async ({
     browser,
@@ -317,7 +310,7 @@ test.describe('Staging 1+39 capacity harness', () => {
         teacherPage,
         classroom.classroomId,
       );
-      resources.sessionId = sessionIdFromUrl(teacherPage.url());
+      resources.sessionId = liveSessionIdFromUrl(teacherPage.url());
       const [sessionRow] = await managementQuery(
         config,
         `select live_activity_id from public.live_sessions where id = '${resources.sessionId}'::uuid;`,
@@ -333,15 +326,17 @@ test.describe('Staging 1+39 capacity harness', () => {
         pages.slice(1),
         launch.joinCode,
       );
-      result.live_join = summarizeDurations(
-        liveJoins.map((entry) => entry.durationMs),
+      const liveRealtimeDiagnostics = await Promise.all(
+        diagnostics.slice(1).map((entry) => entry.realtime()),
       );
-      result.live_join_lobby = summarizeDurations(
-        liveJoins.map((entry) => entry.lobbyMs),
+      const liveJoinEvidence = buildLiveJoinEvidence(
+        liveJoins,
+        liveRealtimeDiagnostics,
       );
-      result.live_join_realtime = summarizeDurations(
-        liveJoins.map((entry) => entry.realtimeMs),
-      );
+      Object.assign(result, liveJoinEvidence.result);
+      if (liveJoinEvidence.failureCode !== undefined) {
+        throw new CapacityHarnessError(liveJoinEvidence.failureCode);
+      }
       completeStage();
       enterStage('host_roster');
       await expect(
@@ -402,7 +397,9 @@ test.describe('Staging 1+39 capacity harness', () => {
       const disconnectCounts = await Promise.all(
         diagnostics.map((entry) => entry.disconnects()),
       );
-      const realtimeDiagnostics = diagnostics.map((entry) => entry.realtime());
+      const realtimeDiagnostics = await Promise.all(
+        diagnostics.map((entry) => entry.realtime()),
+      );
       const diagnosticSummary = {
         browser_clients_with_realtime: realtimeDiagnostics.filter(
           (entry) => entry.socketCount > 0,
