@@ -248,10 +248,7 @@ describe('Staging capacity harness contract', () => {
       'utf8',
     );
     const browserHelperSource = await readFile(
-      resolve(
-        process.cwd(),
-        'tests/e2e/helpers/staging-capacity-browser.ts',
-      ),
+      resolve(process.cwd(), 'tests/e2e/helpers/staging-capacity-browser.ts'),
       'utf8',
     );
     expect(source).toContain('signInTeacher');

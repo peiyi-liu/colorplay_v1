@@ -1871,3 +1871,8 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Live 訂閱加入 0–1500 ms 初始 jitter，整個 hook 生命週期最多重連兩次（500／1000 ms 加 0–250 ms jitter）；每個失敗 channel 先完成移除才建立下一個，移除失敗則 fail closed，不留下無上限 Phoenix rejoin。每次成功訂閱都 invalidate query，以後端狀態重新對帳。
 - RED→GREEN：新增測試先精確重現立即同時訂閱、無 reconnect、成功後計數歸零造成無限重連，以及最後失敗 channel 未移除；修正後通過。唯一一輪 Standards／Spec／Security review 共 3 個同源 finding，全部在同輪 remediation：改為 lifetime budget、移除耗盡 channel，並把 Live join 流程抽到 capacity browser helper，使主 spec 從 529 行回到 499 行；無第二輪 review。
 - 驗證：受影響 25 files／186 tests PASS；完整 lint、typecheck＋production build、`git diff --check` PASS；capacity Playwright `--list` 正確發現 Chromium／Firefox／WebKit 各 1 個 test。未執行真實 Staging 1+39、未建立 Hosted 帳號、未 deploy／merge／碰 Production。下一步只交付 Draft micro-PR targeting `staging`；required checks 全綠後需另行 owner gate 才能轉 Ready／merge，合併 exact SHA 後再另行核准唯一一次 final Staging 1+39。
+
+## 2026-09-25 [Codex] — 平衡版 Draft PR #65 delivery follow-up
+
+- Final implementation commit `661b065ed6bb883807025eb5c60907a8246d34a5` 已正常 push，建立 Draft PR #65（`codex/live-capacity-balanced-fix` → `staging`）。首次 `gh pr create` 只因 shell 選到未接受 Xcode license 的系統 Git 而未建立任何 PR；改用既有 Command Line Tools Git 後成功。
+- 一般 PR CI run `36120923956` 的 format job 單獨失敗；本機 `pnpm format:check` 精確重現為 `tests/contracts/staging-capacity-harness.test.ts` 一處 Prettier 換行，與產品行為無關。只格式化該檔並重驗全 repo format check／diff check PASS；以一般 follow-up commit／push 觸發新 CI，不手動 rerun 舊 job。PR 仍為 Draft；不轉 Ready、不合併、不 deploy，也不執行 final Staging 1+39。
