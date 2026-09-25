@@ -47,6 +47,10 @@ describe('Staging capacity source contract', () => {
     expect(source).toContain("stageRunner.run('host_roster'");
     expect(source).toContain("stageRunner.run('round_answer'");
     expect(source).toContain('result.failure_stage = currentStage');
+    expect(source).toContain('await stageRunner.settlePendingOperation()');
+    expect(source).toContain('CAPACITY_CLEANUP_TIMEOUT_MS');
+    expect(source).toContain('cleanupAbortController.signal');
+    expect(source).toContain('runAbortController.signal');
     expect(source).toContain("'cleanup'");
     expect(source).toContain("'finished'");
     expect(source).toContain('const cleanupService = createServiceClient');

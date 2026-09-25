@@ -172,6 +172,7 @@ export async function assertNoClassroomCollision(
   config: CapacityConfig,
   teacherId: string,
   classroomName: string,
+  signal?: AbortSignal,
 ) {
   const rows = await managementQuery(
     config,
@@ -179,6 +180,7 @@ export async function assertNoClassroomCollision(
        from public.classrooms
       where owner_teacher_id = ${sqlUuid(teacherId)}
         and name = ${sqlText(classroomName)};`,
+    signal,
   );
   if (Number(rows[0]?.collision_count ?? -1) !== 0) {
     fail('CAPACITY_CLASSROOM_COLLISION');
@@ -191,9 +193,15 @@ export async function cleanupSyntheticRun(
   accounts: readonly CapacityAccount[],
   teacherId: string | undefined,
   resources: Readonly<CreatedResources>,
+  signal?: AbortSignal,
 ): Promise<Readonly<Record<string, number>>> {
   const plan = buildStudentAccountPlan(config.runId);
-  const discoveredRows = await findSyntheticAccountRows(config, config.runId);
+  const discoveredRows = await findSyntheticAccountRows(
+    config,
+    config.runId,
+    undefined,
+    signal,
+  );
   const discovered = discoveredRows.flatMap((row) => {
     const fixture = plan.find((entry) => entry.email === row.email);
     if (
@@ -215,12 +223,14 @@ export async function cleanupSyntheticRun(
     await managementQuery(
       config,
       buildCleanupSql(exactAccounts, teacherId, resources),
+      signal,
     );
   } catch {
     databaseCleanupFailed = true;
   }
   let authCleanupFailed = false;
   for (const account of [...exactAccounts].reverse()) {
+    signal?.throwIfAborted();
     const { error } = await service.auth.admin.deleteUser(account.id);
     if (error) authCleanupFailed = true;
   }
@@ -234,6 +244,7 @@ export async function cleanupSyntheticRun(
       teacherId,
       resources,
     ),
+    signal,
   );
   if (verification === undefined) {
     throw new CapacityHarnessError('CAPACITY_CLEANUP_VERIFY_FAILED');

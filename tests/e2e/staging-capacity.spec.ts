@@ -26,7 +26,6 @@ import {
   summarizeDurations,
   type CapacityAccount,
   type CreatedResources,
-  writeCapacityStageCheckpoint,
 } from './helpers/staging-capacity';
 import {
   answerOneRound,
@@ -36,8 +35,10 @@ import {
   loginAll,
 } from './helpers/staging-capacity-journey';
 import {
+  CAPACITY_CLEANUP_TIMEOUT_MS,
   CAPACITY_TEST_TIMEOUT_MS,
   createCapacityStageRunner,
+  runWithCapacityTimeout,
 } from './helpers/staging-capacity-stage-runner';
 
 const STUDENT_COUNT = 39;
@@ -75,6 +76,10 @@ test.describe('Staging 1+39 capacity harness', () => {
     };
     let failureCode: string | undefined;
     const stageRunner = createCapacityStageRunner({
+      onCheckpointError: () => {
+        const count = Number(result.checkpoint_error_count ?? 0);
+        result.checkpoint_error_count = count + 1;
+      },
       onTimeout: () => {
         runAbortController.abort();
       },
@@ -83,7 +88,9 @@ test.describe('Staging 1+39 capacity harness', () => {
     });
 
     try {
-      await stageRunner.run('release_marker', () => readReleaseMarker(config));
+      await stageRunner.run('release_marker', () =>
+        readReleaseMarker(config, runAbortController.signal),
+      );
       await stageRunner.run('account_setup', async () => {
         await createSyntheticAccounts(
           config,
@@ -92,6 +99,7 @@ test.describe('Staging 1+39 capacity harness', () => {
           (account) => {
             accounts.push(account);
           },
+          runAbortController.signal,
         );
         if (
           accounts.length !== STUDENT_COUNT ||
@@ -137,7 +145,7 @@ test.describe('Staging 1+39 capacity harness', () => {
         throw new CapacityHarnessError('CAPACITY_TEACHER_PAGE_MISSING');
       }
       const verifiedTeacherId = await stageRunner.run('teacher_preflight', () =>
-        fixedTeacherId(teacherPage, service),
+        fixedTeacherId(teacherPage, service, runAbortController.signal),
       );
       teacherId = verifiedTeacherId;
       const classroom = await stageRunner.run('classroom_create', async () => {
@@ -148,6 +156,7 @@ test.describe('Staging 1+39 capacity harness', () => {
           config,
           verifiedTeacherId,
           classroomName,
+          runAbortController.signal,
         );
         const createdClassroom = await createClassroom(
           teacherPage,
@@ -162,6 +171,7 @@ test.describe('Staging 1+39 capacity harness', () => {
           pages.slice(1),
           accounts,
           classroom.joinCode,
+          runAbortController.signal,
         );
         result.classroom_join = summarizeDurations(
           classroomJoins.map((entry) => entry.durationMs),
@@ -180,6 +190,7 @@ test.describe('Staging 1+39 capacity harness', () => {
           const [sessionRow] = await managementQuery(
             config,
             `select live_activity_id from public.live_sessions where id = '${createdSessionId}'::uuid;`,
+            runAbortController.signal,
           );
           if (typeof sessionRow?.live_activity_id !== 'string') {
             throw new CapacityHarnessError('CAPACITY_LIVE_ACTIVITY_ID_MISSING');
@@ -235,7 +246,11 @@ test.describe('Staging 1+39 capacity harness', () => {
             await expect(
               launch.presenter.getByRole('heading', { name: '本題解析' }),
             ).toBeVisible({ timeout: 20_000 });
-            return authoritativeAnswerCount(sessionId, position);
+            return authoritativeAnswerCount(
+              sessionId,
+              position,
+              runAbortController.signal,
+            );
           },
         );
         await stageRunner.run('round_gate', () => {
@@ -326,20 +341,9 @@ test.describe('Staging 1+39 capacity harness', () => {
       );
       result.failure_code = failureCode;
       result.verdict = 'FAIL';
-      await writeCapacityStageCheckpoint(
-        config.resultPath,
-        result,
-        currentStage,
-        'failed',
-      );
+      await stageRunner.checkpoint('failed');
     } finally {
-      const currentStage = stageRunner.currentStage();
-      await writeCapacityStageCheckpoint(
-        config.resultPath,
-        result,
-        currentStage,
-        'cleanup',
-      );
+      await stageRunner.checkpoint('cleanup');
       const contextCloseResults = await Promise.allSettled(
         contexts.map((context) => context.close()),
       );
@@ -353,29 +357,53 @@ test.describe('Staging 1+39 capacity harness', () => {
         result.failure_code = failureCode;
       }
       try {
-        const cleanupService = createServiceClient(config);
-        result.cleanup = await cleanupSyntheticRun(
+        await stageRunner.settlePendingOperation();
+      } catch (error) {
+        const settleCode = publicErrorCode(
+          error,
+          'CAPACITY_OPERATION_SETTLE_FAILED',
+        );
+        result.operation_settle_error = settleCode;
+        result.verdict = 'FAIL';
+        failureCode = settleCode;
+        result.failure_code = failureCode;
+      }
+      const cleanupAbortController = new AbortController();
+      try {
+        const cleanupService = createServiceClient(
+          config,
+          cleanupAbortController.signal,
+        );
+        const cleanupPromise = cleanupSyntheticRun(
           config,
           cleanupService,
           accounts,
           teacherId,
           resources,
+          cleanupAbortController.signal,
+        );
+        result.cleanup = await runWithCapacityTimeout(
+          () => cleanupPromise,
+          CAPACITY_CLEANUP_TIMEOUT_MS,
+          () => {
+            cleanupAbortController.abort();
+          },
         );
         result.cleanup_verified = true;
         result.shared_ip_limiter_policy = 'preserved_shared_operational_state';
       } catch (error) {
-        result.cleanup_error = publicErrorCode(error);
+        const rawCode = publicErrorCode(error);
+        const cleanupCode =
+          rawCode === 'CAPACITY_STAGE_TIMEOUT'
+            ? 'CAPACITY_CLEANUP_TIMEOUT'
+            : rawCode;
+        result.cleanup_error = cleanupCode;
         result.cleanup_verified = false;
-        failureCode = 'CAPACITY_CLEANUP_FAILED';
+        failureCode = cleanupCode;
         result.verdict = 'FAIL';
         result.failure_code = failureCode;
       }
-      await writeCapacityStageCheckpoint(
-        config.resultPath,
-        result,
-        currentStage,
-        'finished',
-      );
+      await stageRunner.checkpoint('finished');
     }
 
     expect(result.cleanup_verified).toBe(true);

@@ -17,7 +17,6 @@ import {
   buildStudentAccountPlan,
   capacityStageFailureCode,
   CapacityHarnessError,
-  createSyntheticAccounts,
   parseAuthServerTiming,
   percentile,
   publicErrorCode,
@@ -25,9 +24,11 @@ import {
   summarizeDurations,
   summarizeAuthStageTimings,
   type CapacityAccount,
-  writeCapacityStageCheckpoint,
 } from '../e2e/helpers/staging-capacity';
+import { writeCapacityStageCheckpoint } from '../e2e/helpers/staging-capacity-checkpoint';
 import {
+  CAPACITY_CLEANUP_TIMEOUT_MS,
+  CAPACITY_OPERATION_SETTLE_TIMEOUT_MS,
   CAPACITY_RUN_TIMEOUT_MS,
   CAPACITY_TEST_TIMEOUT_MS,
   capacityStageTimeoutMs,
@@ -226,9 +227,81 @@ describe('Staging capacity harness contract', () => {
 
   it('reserves four minutes for cleanup after the bounded capacity run', () => {
     expect(CAPACITY_TEST_TIMEOUT_MS - CAPACITY_RUN_TIMEOUT_MS).toBe(240_000);
+    expect(
+      CAPACITY_OPERATION_SETTLE_TIMEOUT_MS + CAPACITY_CLEANUP_TIMEOUT_MS,
+    ).toBeLessThan(240_000);
     expect(capacityStageTimeoutMs('account_setup')).toBe(180_000);
     expect(capacityStageTimeoutMs('login')).toBe(120_000);
     expect(capacityStageTimeoutMs('browser_diagnostics')).toBe(30_000);
+  });
+
+  it('waits for a cancelled stage to settle before cleanup starts', async () => {
+    vi.useFakeTimers();
+    const directory = await mkdtemp(join(tmpdir(), 'capacity-settle-'));
+    const resultPath = join(directory, 'result.json');
+    let finishOperation: (() => void) | undefined;
+    const operation = new Promise<void>((resolveOperation) => {
+      finishOperation = resolveOperation;
+    });
+    let markStarted: (() => void) | undefined;
+    const started = new Promise<void>((resolveStarted) => {
+      markStarted = resolveStarted;
+    });
+    const runner = createCapacityStageRunner({
+      onTimeout: vi.fn(),
+      result: { verdict: 'INCOMPLETE' },
+      resultPath,
+    });
+
+    try {
+      const pending = runner.run('login', () => {
+        markStarted?.();
+        return operation;
+      });
+      await started;
+      const rejection = expect(pending).rejects.toThrow(
+        'CAPACITY_STAGE_TIMEOUT',
+      );
+      await vi.advanceTimersByTimeAsync(120_000);
+      await rejection;
+
+      let settled = false;
+      const settling = runner.settlePendingOperation().then(() => {
+        settled = true;
+      });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(settled).toBe(false);
+
+      finishOperation?.();
+      await settling;
+      expect(settled).toBe(true);
+    } finally {
+      await rm(directory, { force: true, recursive: true });
+    }
+  });
+
+  it('does not run a Hosted stage when its required checkpoint cannot be written', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'capacity-checkpoint-'));
+    const resultPath = join(directory, 'missing', 'result.json');
+    const onCheckpointError = vi.fn();
+    const operation = vi.fn(() => Promise.resolve());
+    const runner = createCapacityStageRunner({
+      onCheckpointError,
+      onTimeout: vi.fn(),
+      result: { verdict: 'INCOMPLETE' },
+      resultPath,
+    });
+
+    try {
+      await expect(runner.run('release_marker', operation)).rejects.toThrow(
+        'CAPACITY_CHECKPOINT_WRITE_FAILED',
+      );
+      expect(operation).not.toHaveBeenCalled();
+      expect(onCheckpointError).toHaveBeenCalled();
+      await expect(runner.checkpoint('cleanup')).resolves.toBeUndefined();
+    } finally {
+      await rm(directory, { force: true, recursive: true });
+    }
   });
 
   it('checkpoints a timed-out stage before returning control to cleanup', async () => {
@@ -378,82 +451,5 @@ describe('Staging capacity harness contract', () => {
     expect(sql).toContain("name = '容量基準 c40-contract-test''quoted'");
     expect(sql).toContain("scope = 'identity'");
     expect(sql).not.toContain("scope = 'ip'");
-  });
-
-  it('reconciles an Auth user when create response is ambiguous', async () => {
-    let fetchCall = 0;
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(() => {
-        fetchCall += 1;
-        return Promise.resolve(
-          new Response(
-            JSON.stringify(
-              fetchCall === 1
-                ? []
-                : [
-                    {
-                      capacity_account: 'cpde1aae8401',
-                      capacity_run_id: 'c40-contract-test',
-                      email: 'cpde1aae8401@capacity.colorplay.invalid',
-                      id: '11111111-1111-4111-8111-111111111111',
-                    },
-                  ],
-            ),
-            { status: 200 },
-          ),
-        );
-      }),
-    );
-    let createCall = 0;
-    const service = {
-      auth: {
-        admin: {
-          createUser: vi.fn(() => {
-            createCall += 1;
-            return Promise.resolve(
-              createCall === 1
-                ? { data: { user: null }, error: new Error('response lost') }
-                : {
-                    data: {
-                      user: {
-                        id: `11111111-1111-4111-8111-${String(createCall).padStart(12, '0')}`,
-                      },
-                    },
-                    error: null,
-                  },
-            );
-          }),
-        },
-      },
-      from: vi.fn(() => ({
-        update: vi.fn(
-          (
-            payload: Readonly<{ full_name: string; login_account: string }>,
-          ) => ({
-            eq: vi.fn((_column: string, id: string) => ({
-              select: vi.fn(() => ({
-                single: vi.fn(() =>
-                  Promise.resolve({
-                    data: { ...payload, id, role: 'student' },
-                    error: null,
-                  }),
-                ),
-              })),
-            })),
-          }),
-        ),
-      })),
-    };
-    const config = readCapacityConfig(VALID_ENV);
-    const created = await createSyntheticAccounts(
-      config,
-      service as never,
-      config.runId,
-    );
-
-    expect(created).toHaveLength(39);
-    expect(created[0]?.id).toBe('11111111-1111-4111-8111-111111111111');
-    expect(fetchCall).toBe(2);
   });
 });

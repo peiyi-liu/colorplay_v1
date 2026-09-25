@@ -1885,3 +1885,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Focused contract 11／11、typecheck、scoped ESLint／Prettier、Playwright list 與 `git diff --check` PASS。完整 Vitest 為 248 files PASS，僅既有 `phase0-restore-cleanup.test.ts` 5 個案例因 5 秒 timeout 未通過，與本次三個 Realtime 診斷檔案無關；不在本 micro-PR 擴大修復。
 - 唯一一輪 Standards／Spec／Security review：Spec PASS；同輪修正非 timeout Playwright 錯誤誤標為 timeout、DOM `data-state` 白名單，以及 pending Realtime join ref 上限／回覆後刪除。沒有第二輪 review。
 - 下一步僅提交、push 並建立 Draft PR targeting `staging`；不轉 Ready、不合併、不 deploy、不自動重跑 final 1+39。任何 merge 或容量重跑都需要新的 owner gate。
+
+## 2026-09-25 [Codex] — capacity harness 超時／清理保護 candidate
+
+- Owner 核准 test-only 容量 harness 超時修正 micro-PR，並明示完成後不自動重跑；base 為 protected `staging` exact SHA `1d655b0823e0714e1a060421b7628d38e569d684`，branch `codex/capacity-timeout-checkpoint`。前次單一診斷 run `c40-20260925-diag2` 已完成帳號、瀏覽器與登入階段，但撞到 12 分鐘全域 timeout；人工 exact-run cleanup 已確認 synthetic Auth／profile／課堂／Live／identity limiter 全為 0，Production 未觸碰。
+- Harness 新增 8 分鐘 run deadline、各 stage bounded timeout 與 `0600` atomic checkpoint；即使失敗也能保留最後完成階段。唯一一輪 Standards／Spec／Security review 找到兩個同源 High／blocking 風險：`Promise.race` timeout 後原工作可能續跑並與 cleanup 競賽，以及 checkpoint 寫入錯誤可能遮蔽原錯誤或阻斷 cleanup。
+- 同輪 remediation 已補上 run-scoped AbortSignal、關閉瀏覽器後等待 pending operation 收斂、獨立 150 秒 cleanup deadline 與全新的 cleanup client／signal；setup checkpoint 維持 fail-closed，failure／cleanup／finished checkpoint 改為 best-effort，寫檔失敗不再阻止清理。主測試與 helpers 均低於 500 行，沒有產品程式、schema、RLS、部署或 Hosted state 變更。
+- RED→GREEN focused contracts 3 files／17 tests PASS；完整 lint、typecheck、scoped Prettier／ESLint、`git diff --check` PASS。Playwright 正確列出 capacity case；缺少確認字串的 Chromium dry-run 為 1 skipped，未發出 Hosted request。未執行 Staging 1+39、未建立 synthetic 帳號、未碰 Production。
+- 下一步只提交、push 並建立 Draft PR targeting `staging`；不轉 Ready、不合併、不 deploy、不自動重跑。任何 CI rerun、merge 或新的 1+39 都需要後續獨立 owner gate。

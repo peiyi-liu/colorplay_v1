@@ -54,9 +54,10 @@ export const loginAll = async (
 export const fixedTeacherId = async (
   page: Page,
   service: ReturnType<typeof createServiceClient>,
+  signal?: AbortSignal,
 ) => {
   const config = readCapacityConfig();
-  const client = createSessionClient(config);
+  const client = createSessionClient(config, signal);
   const tokens = await sessionTokensFromPage(page);
   const { error: sessionError } = await client.auth.setSession(tokens);
   if (sessionError) {
@@ -85,6 +86,7 @@ export const joinClassroomThroughEdge = async (
   pages: readonly Page[],
   accounts: readonly CapacityAccount[],
   joinCode: string,
+  signal?: AbortSignal,
 ) => {
   const config = readCapacityConfig();
   return Promise.all(
@@ -93,7 +95,7 @@ export const joinClassroomThroughEdge = async (
       if (account?.role !== 'student') {
         throw new CapacityHarnessError('CAPACITY_STUDENT_ACCOUNT_MISSING');
       }
-      const client = createSessionClient(config);
+      const client = createSessionClient(config, signal);
       const tokens = await sessionTokensFromPage(page);
       const { error: sessionError } = await client.auth.setSession(tokens);
       if (sessionError) {
@@ -152,6 +154,7 @@ export const answerOneRound = async (studentPages: readonly Page[]) =>
 export const authoritativeAnswerCount = async (
   sessionId: string,
   position: number,
+  signal?: AbortSignal,
 ) => {
   const config = readCapacityConfig();
   const rows = await managementQuery(
@@ -163,6 +166,7 @@ export const authoritativeAnswerCount = async (
          on question.id = answer.session_question_id
       where question.session_id = '${sessionId}'::uuid
         and question.position = ${String(position)};`,
+    signal,
   );
   const row = rows[0];
   return {
