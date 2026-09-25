@@ -58,6 +58,30 @@ export class CapacityHarnessError extends Error {
   }
 }
 
+const STAGE_FAILURE_CODES = {
+  account_setup: 'CAPACITY_ACCOUNT_SETUP_FAILED',
+  browser_diagnostics: 'CAPACITY_BROWSER_DIAGNOSTIC_FAILED',
+  browser_setup: 'CAPACITY_BROWSER_SETUP_FAILED',
+  classroom_create: 'CAPACITY_CLASSROOM_CREATE_FAILED',
+  classroom_join: 'CAPACITY_CLASSROOM_JOIN_FAILED',
+  host_roster: 'CAPACITY_HOST_ROSTER_FAILED',
+  live_join: 'CAPACITY_LIVE_JOIN_FAILED',
+  live_launch: 'CAPACITY_LIVE_LAUNCH_FAILED',
+  live_start: 'CAPACITY_LIVE_START_FAILED',
+  login: 'CAPACITY_LOGIN_FAILED',
+  release_marker: 'CAPACITY_RELEASE_MARKER_FAILED',
+  round_answer: 'CAPACITY_ROUND_ANSWER_FAILED',
+  round_gate: 'CAPACITY_ROUND_GATE_FAILED',
+  round_reveal: 'CAPACITY_ROUND_REVEAL_FAILED',
+  round_transition: 'CAPACITY_ROUND_TRANSITION_FAILED',
+  teacher_preflight: 'CAPACITY_TEACHER_PREFLIGHT_FAILED',
+} as const;
+
+export type CapacityStage = keyof typeof STAGE_FAILURE_CODES;
+
+export const capacityStageFailureCode = (stage: CapacityStage): string =>
+  STAGE_FAILURE_CODES[stage];
+
 const fail = (code: string): never => {
   throw new CapacityHarnessError(code);
 };
@@ -343,8 +367,11 @@ export async function writeSafeJson(path: string, value: unknown) {
   });
 }
 
-export function publicErrorCode(error: unknown): string {
+export function publicErrorCode(
+  error: unknown,
+  fallbackCode = 'CAPACITY_HARNESS_FAILED',
+): string {
   return error instanceof CapacityHarnessError
     ? error.publicCode
-    : 'CAPACITY_HARNESS_FAILED';
+    : fallbackCode;
 }

@@ -17,6 +17,7 @@ import {
   cleanupSyntheticRun,
 } from './helpers/staging-capacity-cleanup';
 import {
+  capacityStageFailureCode,
   CapacityHarnessError,
   createServiceClient,
   createSessionClient,
@@ -27,6 +28,7 @@ import {
   readReleaseMarker,
   summarizeDurations,
   type CapacityAccount,
+  type CapacityStage,
   type CreatedResources,
   writeSafeJson,
 } from './helpers/staging-capacity';
@@ -46,12 +48,10 @@ const FIXED_TEACHER = {
   credentials: TEST_USERS.teacher,
 } as const;
 
-const now = () => performance.now();
-
 const time = async <T>(operation: () => Promise<T>) => {
-  const startedAt = now();
+  const startedAt = performance.now();
   const value = await operation();
-  return { durationMs: now() - startedAt, value };
+  return { durationMs: performance.now() - startedAt, value };
 };
 
 const loginAll = async (
@@ -243,9 +243,19 @@ test.describe('Staging 1+39 capacity harness', () => {
       verdict: 'INCOMPLETE',
     };
     let failureCode: string | undefined;
+    let currentStage: CapacityStage = 'release_marker';
+    const enterStage = (stage: CapacityStage) => {
+      currentStage = stage;
+    };
+    const completeStage = () => {
+      result.last_completed_stage = currentStage;
+    };
 
     try {
+      enterStage('release_marker');
       await readReleaseMarker(config);
+      completeStage();
+      enterStage('account_setup');
       await createSyntheticAccounts(
         config,
         service,
@@ -260,6 +270,8 @@ test.describe('Staging 1+39 capacity harness', () => {
       ) {
         throw new CapacityHarnessError('CAPACITY_ACCOUNT_COUNT_INVALID');
       }
+      completeStage();
+      enterStage('browser_setup');
       for (let index = 0; index < STUDENT_COUNT + 1; index += 1) {
         const context = await browser.newContext({ baseURL: config.appUrl });
         contexts.push(context);
@@ -271,23 +283,31 @@ test.describe('Staging 1+39 capacity harness', () => {
         .filter((page): page is Page => page !== undefined);
       if (pages.length !== 40)
         throw new CapacityHarnessError('CAPACITY_BROWSER_COUNT_INVALID');
+      completeStage();
 
+      enterStage('login');
       const logins = await loginAll(pages, FIXED_TEACHER.credentials, accounts);
       result.login = summarizeDurations(
         logins.map((entry) => entry.durationMs),
       );
+      completeStage();
 
+      enterStage('teacher_preflight');
       const teacherPage = pages[0];
       if (!teacherPage)
         throw new CapacityHarnessError('CAPACITY_TEACHER_PAGE_MISSING');
       teacherId = await fixedTeacherId(teacherPage, service);
+      completeStage();
+      enterStage('classroom_create');
       await teacherPage.goto('/teacher/classes');
       const classroomName = `容量基準 ${config.runId}`;
       resources.classroomName = classroomName;
       await assertNoClassroomCollision(config, teacherId, classroomName);
       const classroom = await createClassroom(teacherPage, classroomName);
       resources.classroomId = classroom.classroomId;
+      completeStage();
 
+      enterStage('classroom_join');
       const classroomJoins = await joinClassroomThroughEdge(
         pages.slice(1),
         accounts,
@@ -296,7 +316,9 @@ test.describe('Staging 1+39 capacity harness', () => {
       result.classroom_join = summarizeDurations(
         classroomJoins.map((entry) => entry.durationMs),
       );
+      completeStage();
 
+      enterStage('live_launch');
       const launch = await launchLiveSessionFromTeacherHome(
         teacherPage,
         classroom.classroomId,
@@ -310,7 +332,9 @@ test.describe('Staging 1+39 capacity harness', () => {
         throw new CapacityHarnessError('CAPACITY_LIVE_ACTIVITY_ID_MISSING');
       }
       resources.activityId = sessionRow.live_activity_id;
+      completeStage();
 
+      enterStage('live_join');
       const liveJoins = await joinLiveThroughUi(
         pages.slice(1),
         launch.joinCode,
@@ -318,10 +342,14 @@ test.describe('Staging 1+39 capacity harness', () => {
       result.live_join = summarizeDurations(
         liveJoins.map((entry) => entry.durationMs),
       );
+      completeStage();
+      enterStage('host_roster');
       await expect(
         launch.presenter.getByText(`${String(STUDENT_COUNT)} 位同學已加入`),
       ).toBeVisible({ timeout: 20_000 });
+      completeStage();
 
+      enterStage('live_start');
       await launch.presenter.getByRole('button', { name: '開始遊戲' }).click();
       const startDialog = launch.presenter.getByRole('alertdialog', {
         name: '立即開始',
@@ -329,10 +357,15 @@ test.describe('Staging 1+39 capacity harness', () => {
       await startDialog
         .getByRole('button', { name: '開始', exact: true })
         .click();
+      completeStage();
 
       const rounds: Record<string, unknown>[] = [];
       for (let position = 1; position <= ROUND_COUNT; position += 1) {
+        result.round_position = position;
+        enterStage('round_answer');
         const durations = await answerOneRound(pages.slice(1));
+        completeStage();
+        enterStage('round_reveal');
         await expect(
           launch.presenter.getByRole('heading', { name: '本題解析' }),
         ).toBeVisible({ timeout: 20_000 });
@@ -340,6 +373,8 @@ test.describe('Staging 1+39 capacity harness', () => {
           resources.sessionId,
           position,
         );
+        completeStage();
+        enterStage('round_gate');
         const timing = summarizeDurations(durations);
         rounds.push({ ...authoritative, position, timing });
         if (
@@ -349,17 +384,21 @@ test.describe('Staging 1+39 capacity harness', () => {
         ) {
           throw new CapacityHarnessError('CAPACITY_ROUND_GATE_FAILED');
         }
+        completeStage();
         if (position < ROUND_COUNT) {
+          enterStage('round_transition');
           await launch.presenter
             .getByRole('button', { name: '即時排名' })
             .click();
           await launch.presenter
             .getByRole('button', { name: '下一題' })
             .click();
+          completeStage();
         }
       }
       result.rounds = rounds;
 
+      enterStage('browser_diagnostics');
       const disconnectCounts = await Promise.all(
         diagnostics.map((entry) => entry.disconnects()),
       );
@@ -403,6 +442,7 @@ test.describe('Staging 1+39 capacity harness', () => {
       ) {
         throw new CapacityHarnessError('CAPACITY_BROWSER_DIAGNOSTIC_FAILED');
       }
+      completeStage();
       result.realtime = {
         browser_clients: 40,
         disconnect_count: diagnosticSummary.disconnect_count,
@@ -412,7 +452,11 @@ test.describe('Staging 1+39 capacity harness', () => {
       };
       result.verdict = 'PASS';
     } catch (error) {
-      failureCode = publicErrorCode(error);
+      result.failure_stage = currentStage;
+      failureCode = publicErrorCode(
+        error,
+        capacityStageFailureCode(currentStage),
+      );
       result.failure_code = failureCode;
       result.verdict = 'FAIL';
     } finally {
