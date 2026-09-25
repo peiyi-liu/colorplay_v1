@@ -12,8 +12,8 @@ import {
 } from '../e2e/browser-health';
 
 const logoutUrl = 'http://127.0.0.1:54321/auth/v1/logout?scope=local';
-const reviewCardStorageSignUrl =
-  'https://onkxnkzeixpezetkmocf.supabase.co/storage/v1/object/sign/review-card-media';
+const signedObjectStorageUrl =
+  'https://onkxnkzeixpezetkmocf.supabase.co/storage/v1/object/sign/teacher-avatars/5badcc41-f701-447e-8abe-8016af81ab0d/avatar';
 
 const createRequest = (method = 'POST', url = logoutUrl) => ({
   method: () => method,
@@ -183,8 +183,8 @@ describe('browser health logout request identity', () => {
 
 describe('browser health navigation cancellations', () => {
   it('ignores repeated navigation-aborted read-only storage signing requests', () => {
-    const firstRequest = createRequest('POST', reviewCardStorageSignUrl);
-    const secondRequest = createRequest('POST', reviewCardStorageSignUrl);
+    const firstRequest = createRequest('POST', signedObjectStorageUrl);
+    const secondRequest = createRequest('POST', signedObjectStorageUrl);
 
     expect(
       unexpectedRequestFailures(
@@ -198,7 +198,7 @@ describe('browser health navigation cancellations', () => {
   it.each([
     [
       'a non-cancellation error',
-      createRequest('POST', reviewCardStorageSignUrl),
+      createRequest('POST', signedObjectStorageUrl),
       'net::ERR_FAILED',
     ],
     [
@@ -211,7 +211,7 @@ describe('browser health navigation cancellations', () => {
     ],
     [
       'a non-POST signing request',
-      createRequest('GET', reviewCardStorageSignUrl),
+      createRequest('GET', signedObjectStorageUrl),
       'net::ERR_ABORTED',
     ],
   ])('keeps %s visible', (_label, request, errorText) => {
