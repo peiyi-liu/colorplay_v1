@@ -1,10 +1,52 @@
-import type { Page } from '@playwright/test';
+import { performance } from 'node:perf_hooks';
 
-import type { SessionTokens } from './staging-capacity';
+import { expect, type Page } from '@playwright/test';
+
+import {
+  CapacityHarnessError,
+  parseAuthServerTiming,
+  type AuthLoginStageTiming,
+  type SessionTokens,
+} from './staging-capacity';
 
 const SUPABASE_SESSION_KEY_PREFIX = 'sb-';
 
+export const joinLiveThroughUi = async (
+  pages: readonly Page[],
+  joinCode: string,
+) =>
+  Promise.all(
+    pages.map(async (page) => {
+      const startedAt = performance.now();
+      await page.goto('/app/live/join');
+      await page.getByLabel('輸入 6 位加入代碼').fill(joinCode);
+      await page.getByRole('button', { name: '加入課堂' }).click();
+      try {
+        await expect(page.getByText('等待主持人開始…')).toBeVisible({
+          timeout: 20_000,
+        });
+      } catch {
+        throw new CapacityHarnessError('CAPACITY_LIVE_LOBBY_FAILED');
+      }
+      const lobbyMs = performance.now() - startedAt;
+      const realtimeStartedAt = performance.now();
+      try {
+        await expect(page.getByText('連線正常')).toBeVisible({
+          timeout: 20_000,
+        });
+      } catch {
+        throw new CapacityHarnessError('CAPACITY_LIVE_REALTIME_FAILED');
+      }
+      return {
+        durationMs: performance.now() - startedAt,
+        lobbyMs,
+        realtimeMs: performance.now() - realtimeStartedAt,
+      };
+    }),
+  );
+
 export type PageDiagnostics = Readonly<{
+  authTimings: () => Promise<readonly AuthLoginStageTiming[]>;
   consoleErrors: string[];
   disconnects: () => Promise<number>;
   pageErrors: string[];
@@ -49,6 +91,7 @@ export const attachDiagnostics = async (
   const consoleErrors: string[] = [];
   const pageErrors: string[] = [];
   const serverErrors: string[] = [];
+  const authTimingTasks: Promise<AuthLoginStageTiming>[] = [];
   let realtimeCloseCount = 0;
   let realtimeErrorCount = 0;
   let realtimeSocketCount = 0;
@@ -57,9 +100,19 @@ export const attachDiagnostics = async (
   });
   page.on('pageerror', (error) => pageErrors.push(error.name));
   page.on('response', (response) => {
+    const pathname = new URL(response.url()).pathname;
     if (response.status() === 429 || response.status() >= 500) {
-      serverErrors.push(
-        `${String(response.status())} ${new URL(response.url()).pathname}`,
+      serverErrors.push(`${String(response.status())} ${pathname}`);
+    }
+    if (
+      response.status() === 200 &&
+      response.request().method() === 'POST' &&
+      pathname.endsWith('/functions/v1/auth-login')
+    ) {
+      authTimingTasks.push(
+        response
+          .headerValue('x-colorplay-auth-timing')
+          .then((value) => parseAuthServerTiming(value ?? undefined)),
       );
     }
   });
@@ -99,6 +152,7 @@ export const attachDiagnostics = async (
     });
   });
   return {
+    authTimings: () => Promise.all(authTimingTasks),
     consoleErrors,
     disconnects: () =>
       page.evaluate(() => {

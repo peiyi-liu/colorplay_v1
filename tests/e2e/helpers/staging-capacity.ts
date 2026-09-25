@@ -86,6 +86,65 @@ const fail = (code: string): never => {
   throw new CapacityHarnessError(code);
 };
 
+export type AuthLoginStageTiming = Readonly<{
+  auth_user_ms: number;
+  password_grant_ms: number;
+  profile_ms: number;
+  total_ms: number;
+}>;
+
+const AUTH_TIMING_NAMES = [
+  'profile',
+  'auth-user',
+  'password-grant',
+  'total',
+] as const;
+
+export function parseAuthServerTiming(
+  value: string | undefined,
+): AuthLoginStageTiming {
+  if (value === undefined) return fail('CAPACITY_LOGIN_TIMING_INVALID');
+  const entries = value.split(',').map((entry) => entry.trim());
+  if (entries.length !== AUTH_TIMING_NAMES.length) {
+    return fail('CAPACITY_LOGIN_TIMING_INVALID');
+  }
+  const metrics = new Map<string, number>();
+  for (const entry of entries) {
+    const match = /^([a-z-]+);dur=(\d+(?:\.\d+)?)$/u.exec(entry);
+    const duration = Number(match?.[2]);
+    if (
+      match?.[1] === undefined ||
+      !AUTH_TIMING_NAMES.includes(
+        match[1] as (typeof AUTH_TIMING_NAMES)[number],
+      ) ||
+      !Number.isFinite(duration) ||
+      duration < 0 ||
+      metrics.has(match[1])
+    ) {
+      return fail('CAPACITY_LOGIN_TIMING_INVALID');
+    }
+    metrics.set(match[1], duration);
+  }
+  const profile = metrics.get('profile');
+  const authUser = metrics.get('auth-user');
+  const passwordGrant = metrics.get('password-grant');
+  const total = metrics.get('total');
+  if (
+    profile === undefined ||
+    authUser === undefined ||
+    passwordGrant === undefined ||
+    total === undefined
+  ) {
+    return fail('CAPACITY_LOGIN_TIMING_INVALID');
+  }
+  return {
+    auth_user_ms: authUser,
+    password_grant_ms: passwordGrant,
+    profile_ms: profile,
+    total_ms: total,
+  };
+}
+
 const requireString = (env: NodeJS.ProcessEnv, name: string): string => {
   const value = env[name];
   if (typeof value !== 'string' || value.trim() === '') {
@@ -158,6 +217,19 @@ export function summarizeDurations(values: readonly number[]) {
     max_ms: Math.max(...rounded),
     p50_ms: percentile(rounded, 50),
     p95_ms: percentile(rounded, 95),
+  };
+}
+
+export function summarizeAuthStageTimings(
+  values: readonly AuthLoginStageTiming[],
+) {
+  return {
+    auth_user: summarizeDurations(values.map((value) => value.auth_user_ms)),
+    password_grant: summarizeDurations(
+      values.map((value) => value.password_grant_ms),
+    ),
+    profile: summarizeDurations(values.map((value) => value.profile_ms)),
+    total: summarizeDurations(values.map((value) => value.total_ms)),
   };
 }
 

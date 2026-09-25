@@ -3,17 +3,22 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { ACCOUNT_PATTERN, normalizeAccount } from '../_shared/account.ts';
 import { readRuntimeSupabaseApiKeys } from '../_shared/api-keys.ts';
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
+import { buildAuthTimingHeader } from './timing.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const { publishableKey, secretKey } = readRuntimeSupabaseApiKeys((name) =>
   Deno.env.get(name),
 );
+const admin = createClient(supabaseUrl, secretKey, {
+  auth: { persistSession: false },
+});
 
 // 防列舉：帳號不存在、角色不符、密碼錯誤一律同一回應。
 const invalidCredentials = () =>
   jsonResponse(401, { error: 'AUTH_INVALID_CREDENTIALS' });
 
 Deno.serve(async (request) => {
+  const requestStartedAt = performance.now();
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -43,15 +48,13 @@ Deno.serve(async (request) => {
     return invalidCredentials();
   }
 
-  const admin = createClient(supabaseUrl, secretKey, {
-    auth: { persistSession: false },
-  });
-
+  const profileStartedAt = performance.now();
   const { data: profile, error: profileError } = await admin
     .from('profiles')
     .select('id, role')
     .eq('login_account', normalizedAccount)
     .maybeSingle();
+  const profileMs = performance.now() - profileStartedAt;
   if (profileError || !profile) return invalidCredentials();
   // admin 經教師入口登入(spec §3.1);防列舉:所有失敗一律同一回應
   if (
@@ -61,11 +64,14 @@ Deno.serve(async (request) => {
     return invalidCredentials();
   }
 
+  const authUserStartedAt = performance.now();
   const { data: userData, error: userError } =
     await admin.auth.admin.getUserById(profile.id);
+  const authUserMs = performance.now() - authUserStartedAt;
   const email = userData?.user?.email;
   if (userError || !email) return invalidCredentials();
 
+  const passwordGrantStartedAt = performance.now();
   const grant = await fetch(
     `${supabaseUrl}/auth/v1/token?grant_type=password`,
     {
@@ -77,6 +83,7 @@ Deno.serve(async (request) => {
       body: JSON.stringify({ email, password }),
     },
   );
+  const passwordGrantMs = performance.now() - passwordGrantStartedAt;
   if (!grant.ok) return invalidCredentials();
 
   const session: unknown = await grant.json().catch(() => null);
@@ -93,10 +100,26 @@ Deno.serve(async (request) => {
   ) {
     return invalidCredentials();
   }
-  return jsonResponse(200, {
-    session: {
-      access_token: session.access_token,
-      refresh_token: session.refresh_token,
+  return new Response(
+    JSON.stringify({
+      session: {
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      },
+    }),
+    {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        'Access-Control-Expose-Headers': 'X-ColorPlay-Auth-Timing',
+        'Content-Type': 'application/json',
+        'X-ColorPlay-Auth-Timing': buildAuthTimingHeader({
+          authUserMs,
+          passwordGrantMs,
+          profileMs,
+          totalMs: performance.now() - requestStartedAt,
+        }),
+      },
     },
-  });
+  );
 });
