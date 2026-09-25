@@ -23,6 +23,10 @@ export const liveKeys = {
   session: (sessionId: string) => ['live', 'session', sessionId] as const,
 };
 
+const LIVE_INITIAL_SUBSCRIBE_JITTER_MS = 1_500;
+const LIVE_RECONNECT_BASE_DELAYS_MS = [500, 1_000] as const;
+const LIVE_RECONNECT_JITTER_MS = 250;
+
 export type LiveConnectionStatus =
   | 'connecting'
   | 'connected'
@@ -64,69 +68,110 @@ export function useLiveSession(
   useEffect(() => {
     if (sessionId.length === 0) return;
     const key = liveKeys.session(sessionId);
+    let activeChannel: ReturnType<typeof client.channel> | undefined;
+    let disposed = false;
+    let reconnectAttempts = 0;
+    let subscribeTimer: number | undefined;
     const reconcile = () => {
       void queryClient.invalidateQueries({ queryKey: key });
     };
-    const channel = client
-      .channel(`live-session:${sessionId}`, {
-        config: { broadcast: { self: true }, private: true },
-      })
-      .on('broadcast', { event: 'live_state' }, (message) => {
-        // Realtime is transport only. Messages below the cached version are
-        // echoes we already reconciled; an equal-version message carries live
-        // progress within the same state (answered or participant counts) and
-        // patches the cache directly; anything newer (or unparseable)
-        // triggers one authoritative fetch.
-        const payload = message.payload as {
-          answered_count?: unknown;
-          joined_display_name?: unknown;
-          participant_count?: unknown;
-          state_version?: unknown;
-        };
-        const cached = queryClient.getQueryData<LiveSessionState>(key);
-        if (typeof payload.state_version === 'number' && cached) {
-          if (payload.state_version < cached.stateVersion) return;
-          if (payload.state_version === cached.stateVersion) {
-            if (typeof payload.joined_display_name === 'string') {
-              // A join changes the lobby roster, so take the authoritative
-              // fetch instead of a count-only patch.
-              reconcile();
-              return;
-            }
-            const answeredPatch =
-              typeof payload.answered_count === 'number'
-                ? { answeredCount: payload.answered_count }
-                : {};
-            const participantPatch =
-              typeof payload.participant_count === 'number'
-                ? { participantCount: payload.participant_count }
-                : {};
-            if (
-              Object.keys(answeredPatch).length > 0 ||
-              Object.keys(participantPatch).length > 0
-            ) {
-              queryClient.setQueryData<LiveSessionState>(key, {
-                ...cached,
-                ...answeredPatch,
-                ...participantPatch,
-              });
-            }
+    const handleBroadcast = (message: { payload: unknown }) => {
+      // Realtime is transport only. Messages below the cached version are
+      // echoes we already reconciled; an equal-version message carries live
+      // progress within the same state (answered or participant counts) and
+      // patches the cache directly; anything newer (or unparseable)
+      // triggers one authoritative fetch.
+      const payload = message.payload as {
+        answered_count?: unknown;
+        joined_display_name?: unknown;
+        participant_count?: unknown;
+        state_version?: unknown;
+      };
+      const cached = queryClient.getQueryData<LiveSessionState>(key);
+      if (typeof payload.state_version === 'number' && cached) {
+        if (payload.state_version < cached.stateVersion) return;
+        if (payload.state_version === cached.stateVersion) {
+          if (typeof payload.joined_display_name === 'string') {
+            // A join changes the lobby roster, so take the authoritative
+            // fetch instead of a count-only patch.
+            reconcile();
             return;
           }
-        }
-        reconcile();
-      })
-      .subscribe((status) => {
-        if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
-          setConnection({ sessionId, status: 'connected' });
-          reconcile();
+          const answeredPatch =
+            typeof payload.answered_count === 'number'
+              ? { answeredCount: payload.answered_count }
+              : {};
+          const participantPatch =
+            typeof payload.participant_count === 'number'
+              ? { participantCount: payload.participant_count }
+              : {};
+          if (
+            Object.keys(answeredPatch).length > 0 ||
+            Object.keys(participantPatch).length > 0
+          ) {
+            queryClient.setQueryData<LiveSessionState>(key, {
+              ...cached,
+              ...answeredPatch,
+              ...participantPatch,
+            });
+          }
           return;
         }
-        setConnection({ sessionId, status: 'disconnected' });
-      });
+      }
+      reconcile();
+    };
+    const scheduleSubscription = (delayMs: number) => {
+      subscribeTimer = window.setTimeout(() => {
+        if (disposed) return;
+        const channel = client
+          .channel(`live-session:${sessionId}`, {
+            config: { broadcast: { self: true }, private: true },
+          })
+          .on('broadcast', { event: 'live_state' }, handleBroadcast);
+        activeChannel = channel;
+        channel.subscribe((status) => {
+          if (disposed || activeChannel !== channel) return;
+          if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
+            setConnection({ sessionId, status: 'connected' });
+            reconcile();
+            return;
+          }
+          setConnection({ sessionId, status: 'disconnected' });
+          activeChannel = undefined;
+          const baseDelay = LIVE_RECONNECT_BASE_DELAYS_MS[reconnectAttempts];
+          if (baseDelay === undefined) {
+            void client.removeChannel(channel);
+            return;
+          }
+          reconnectAttempts += 1;
+          void client
+            .removeChannel(channel)
+            .then(() => {
+              if (disposed) return;
+              scheduleSubscription(
+                baseDelay +
+                  Math.round(Math.random() * LIVE_RECONNECT_JITTER_MS),
+              );
+            })
+            .catch(() => {
+              // Fail closed: do not create another channel if the stale
+              // transport could not be removed.
+            });
+        });
+      }, delayMs);
+    };
+    scheduleSubscription(
+      Math.round(Math.random() * LIVE_INITIAL_SUBSCRIBE_JITTER_MS),
+    );
 
     return () => {
-      void client.removeChannel(channel);
+      disposed = true;
+      if (subscribeTimer !== undefined) window.clearTimeout(subscribeTimer);
+      if (activeChannel !== undefined) {
+        const channel = activeChannel;
+        activeChannel = undefined;
+        void client.removeChannel(channel);
+      }
     };
   }, [client, queryClient, sessionId]);
 

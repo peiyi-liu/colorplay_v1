@@ -9,10 +9,12 @@ import {
   capacityStageFailureCode,
   CapacityHarnessError,
   createSyntheticAccounts,
+  parseAuthServerTiming,
   percentile,
   publicErrorCode,
   readCapacityConfig,
   summarizeDurations,
+  summarizeAuthStageTimings,
   type CapacityAccount,
 } from '../e2e/helpers/staging-capacity';
 
@@ -75,6 +77,51 @@ describe('Staging capacity harness contract', () => {
       max_ms: 400,
       p50_ms: 201,
       p95_ms: 400,
+    });
+  });
+
+  it('parses only the four allowlisted auth-login timing stages', () => {
+    expect(
+      parseAuthServerTiming(
+        'profile;dur=12.4, auth-user;dur=20, password-grant;dur=31.6, total;dur=65.2',
+      ),
+    ).toEqual({
+      auth_user_ms: 20,
+      password_grant_ms: 31.6,
+      profile_ms: 12.4,
+      total_ms: 65.2,
+    });
+    expect(() =>
+      parseAuthServerTiming(
+        'profile;dur=12, auth-user;dur=20, password-grant;dur=31, total;dur=65, account;dur=1',
+      ),
+    ).toThrow('CAPACITY_LOGIN_TIMING_INVALID');
+    expect(() => parseAuthServerTiming(undefined)).toThrow(
+      'CAPACITY_LOGIN_TIMING_INVALID',
+    );
+  });
+
+  it('summarizes auth-login stages independently from full page login', () => {
+    expect(
+      summarizeAuthStageTimings([
+        {
+          auth_user_ms: 20,
+          password_grant_ms: 30,
+          profile_ms: 10,
+          total_ms: 65,
+        },
+        {
+          auth_user_ms: 40,
+          password_grant_ms: 50,
+          profile_ms: 20,
+          total_ms: 115,
+        },
+      ]),
+    ).toEqual({
+      auth_user: { count: 2, max_ms: 40, p50_ms: 20, p95_ms: 40 },
+      password_grant: { count: 2, max_ms: 50, p50_ms: 30, p95_ms: 50 },
+      profile: { count: 2, max_ms: 20, p50_ms: 10, p95_ms: 20 },
+      total: { count: 2, max_ms: 115, p50_ms: 65, p95_ms: 115 },
     });
   });
 
@@ -200,12 +247,26 @@ describe('Staging capacity harness contract', () => {
       resolve(process.cwd(), 'tests/e2e/staging-capacity.spec.ts'),
       'utf8',
     );
+    const browserHelperSource = await readFile(
+      resolve(
+        process.cwd(),
+        'tests/e2e/helpers/staging-capacity-browser.ts',
+      ),
+      'utf8',
+    );
     expect(source).toContain('signInTeacher');
     expect(source).toContain('signInStudent');
     expect(source).toContain('FIXED_TEACHER');
     expect(source).toMatch(/functions\.invoke\(\s*'join-classroom'/u);
     expect(source).toContain('launchLiveSessionFromTeacherHome');
-    expect(source).toContain("getByText('連線正常')");
+    expect(browserHelperSource).toContain("getByText('連線正常')");
+    expect(source).toContain(
+      'result.auth_login = summarizeAuthStageTimings(authTimings)',
+    );
+    expect(source).toContain('CAPACITY_LOGIN_TIMING_COUNT_INVALID');
+    expect(browserHelperSource).toContain('CAPACITY_LIVE_LOBBY_FAILED');
+    expect(browserHelperSource).toContain('CAPACITY_LIVE_REALTIME_FAILED');
+    expect(source).toContain('result.live_join_realtime = summarizeDurations(');
     expect(source).toContain("enterStage('host_roster')");
     expect(source).toContain("enterStage('round_answer')");
     expect(source).toContain('result.failure_stage = currentStage');

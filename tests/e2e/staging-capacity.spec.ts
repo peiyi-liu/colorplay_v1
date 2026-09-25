@@ -9,6 +9,7 @@ import { createClassroom } from './helpers/classrooms';
 import { launchLiveSessionFromTeacherHome } from './helpers/live';
 import {
   attachDiagnostics,
+  joinLiveThroughUi,
   sessionTokensFromPage,
   type PageDiagnostics,
 } from './helpers/staging-capacity-browser';
@@ -26,6 +27,7 @@ import {
   publicErrorCode,
   readCapacityConfig,
   readReleaseMarker,
+  summarizeAuthStageTimings,
   summarizeDurations,
   type CapacityAccount,
   type CapacityStage,
@@ -143,23 +145,6 @@ const joinClassroomThroughEdge = async (
     }),
   );
 };
-
-const joinLiveThroughUi = async (pages: readonly Page[], joinCode: string) =>
-  Promise.all(
-    pages.map((page) =>
-      time(async () => {
-        await page.goto('/app/live/join');
-        await page.getByLabel('輸入 6 位加入代碼').fill(joinCode);
-        await page.getByRole('button', { name: '加入課堂' }).click();
-        await expect(page.getByText('等待主持人開始…')).toBeVisible({
-          timeout: 20_000,
-        });
-        await expect(page.getByText('連線正常')).toBeVisible({
-          timeout: 20_000,
-        });
-      }),
-    ),
-  );
 
 const answerResponse = (page: Page): Promise<Response> =>
   page.waitForResponse(
@@ -290,6 +275,15 @@ test.describe('Staging 1+39 capacity harness', () => {
       result.login = summarizeDurations(
         logins.map((entry) => entry.durationMs),
       );
+      const authTimings = (
+        await Promise.all(
+          diagnostics.slice(1).map((entry) => entry.authTimings()),
+        )
+      ).flat();
+      if (authTimings.length !== STUDENT_COUNT) {
+        throw new CapacityHarnessError('CAPACITY_LOGIN_TIMING_COUNT_INVALID');
+      }
+      result.auth_login = summarizeAuthStageTimings(authTimings);
       completeStage();
 
       enterStage('teacher_preflight');
@@ -341,6 +335,12 @@ test.describe('Staging 1+39 capacity harness', () => {
       );
       result.live_join = summarizeDurations(
         liveJoins.map((entry) => entry.durationMs),
+      );
+      result.live_join_lobby = summarizeDurations(
+        liveJoins.map((entry) => entry.lobbyMs),
+      );
+      result.live_join_realtime = summarizeDurations(
+        liveJoins.map((entry) => entry.realtimeMs),
       );
       completeStage();
       enterStage('host_roster');

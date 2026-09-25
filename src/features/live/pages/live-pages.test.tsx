@@ -109,7 +109,9 @@ describe('LiveSessionPage (participant)', () => {
     ).toBeVisible();
     expect(screen.getByText('等待主持人開始…')).toBeVisible();
     expect(screen.getByText('等待開始')).toBeVisible();
-    expect(screen.getByText('連線正常')).toBeVisible();
+    expect(
+      await screen.findByText('連線正常', {}, { timeout: 2_000 }),
+    ).toBeVisible();
     expect(screen.getByText('3 人在線')).toBeVisible();
     expect(screen.queryByRole('timer')).not.toBeInTheDocument();
   });
