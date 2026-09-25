@@ -6,8 +6,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildCleanupSql } from '../e2e/helpers/staging-capacity-cleanup';
 import {
   buildStudentAccountPlan,
+  capacityStageFailureCode,
+  CapacityHarnessError,
   createSyntheticAccounts,
   percentile,
+  publicErrorCode,
   readCapacityConfig,
   summarizeDurations,
   type CapacityAccount,
@@ -73,6 +76,27 @@ describe('Staging capacity harness contract', () => {
       p50_ms: 201,
       p95_ms: 400,
     });
+  });
+
+  it('preserves explicit harness codes and safely classifies Playwright failures by stage', () => {
+    expect(capacityStageFailureCode('host_roster')).toBe(
+      'CAPACITY_HOST_ROSTER_FAILED',
+    );
+    expect(
+      publicErrorCode(
+        new CapacityHarnessError('CAPACITY_ROUND_GATE_FAILED'),
+        'CAPACITY_HOST_ROSTER_FAILED',
+      ),
+    ).toBe('CAPACITY_ROUND_GATE_FAILED');
+    expect(
+      publicErrorCode(
+        new Error('locator timed out with sensitive page details'),
+        'CAPACITY_HOST_ROSTER_FAILED',
+      ),
+    ).toBe('CAPACITY_HOST_ROSTER_FAILED');
+    expect(publicErrorCode(new Error('unknown'))).toBe(
+      'CAPACITY_HARNESS_FAILED',
+    );
   });
 
   it('builds exact-id cleanup with identity limiter removal', () => {
@@ -182,6 +206,9 @@ describe('Staging capacity harness contract', () => {
     expect(source).toMatch(/functions\.invoke\(\s*'join-classroom'/u);
     expect(source).toContain('launchLiveSessionFromTeacherHome');
     expect(source).toContain("getByText('連線正常')");
+    expect(source).toContain("enterStage('host_roster')");
+    expect(source).toContain("enterStage('round_answer')");
+    expect(source).toContain('result.failure_stage = currentStage');
     expect(source).not.toContain('realtime.setAuth');
     expect(source).not.toContain("rpc('join_classroom'");
   });
