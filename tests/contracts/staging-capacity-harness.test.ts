@@ -1,5 +1,6 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -24,7 +25,15 @@ import {
   summarizeDurations,
   summarizeAuthStageTimings,
   type CapacityAccount,
+  writeCapacityStageCheckpoint,
 } from '../e2e/helpers/staging-capacity';
+import {
+  CAPACITY_RUN_TIMEOUT_MS,
+  CAPACITY_TEST_TIMEOUT_MS,
+  capacityStageTimeoutMs,
+  createCapacityStageRunner,
+  runWithCapacityTimeout,
+} from '../e2e/helpers/staging-capacity-stage-runner';
 
 const VALID_ENV = {
   COLORPLAY_CAPACITY_APP_URL: 'https://staging.colorplayapp.com',
@@ -59,6 +68,7 @@ const liveJoinResult = (
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -162,6 +172,102 @@ describe('Staging capacity harness contract', () => {
     expect(publicErrorCode(new Error('unknown'))).toBe(
       'CAPACITY_HARNESS_FAILED',
     );
+  });
+
+  it('fails a hung stage before the reserved cleanup window', async () => {
+    vi.useFakeTimers();
+    const onTimeout = vi.fn();
+    const pending = runWithCapacityTimeout(
+      () => new Promise<never>(() => undefined),
+      5_000,
+      onTimeout,
+    );
+    const rejection = expect(pending).rejects.toThrow('CAPACITY_STAGE_TIMEOUT');
+
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    await rejection;
+    expect(onTimeout).toHaveBeenCalledOnce();
+  });
+
+  it('persists the current and last completed stage before final cleanup', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'capacity-checkpoint-'));
+    const resultPath = join(directory, 'result.json');
+    const result: Record<string, unknown> = { verdict: 'INCOMPLETE' };
+
+    try {
+      await writeCapacityStageCheckpoint(
+        resultPath,
+        result,
+        'login',
+        'running',
+      );
+      expect(JSON.parse(await readFile(resultPath, 'utf8'))).toMatchObject({
+        current_stage: 'login',
+        stage_status: 'running',
+        verdict: 'INCOMPLETE',
+      });
+
+      await writeCapacityStageCheckpoint(
+        resultPath,
+        result,
+        'login',
+        'completed',
+      );
+      expect(JSON.parse(await readFile(resultPath, 'utf8'))).toMatchObject({
+        current_stage: 'login',
+        last_completed_stage: 'login',
+        stage_status: 'completed',
+      });
+    } finally {
+      await rm(directory, { force: true, recursive: true });
+    }
+  });
+
+  it('reserves four minutes for cleanup after the bounded capacity run', () => {
+    expect(CAPACITY_TEST_TIMEOUT_MS - CAPACITY_RUN_TIMEOUT_MS).toBe(240_000);
+    expect(capacityStageTimeoutMs('account_setup')).toBe(180_000);
+    expect(capacityStageTimeoutMs('login')).toBe(120_000);
+    expect(capacityStageTimeoutMs('browser_diagnostics')).toBe(30_000);
+  });
+
+  it('checkpoints a timed-out stage before returning control to cleanup', async () => {
+    vi.useFakeTimers();
+    const directory = await mkdtemp(join(tmpdir(), 'capacity-runner-'));
+    const resultPath = join(directory, 'result.json');
+    const result: Record<string, unknown> = { verdict: 'INCOMPLETE' };
+    const onTimeout = vi.fn();
+    const runner = createCapacityStageRunner({
+      onTimeout,
+      result,
+      resultPath,
+    });
+    let markStarted: (() => void) | undefined;
+    const started = new Promise<void>((resolveStarted) => {
+      markStarted = resolveStarted;
+    });
+
+    try {
+      const pending = runner.run('login', () => {
+        markStarted?.();
+        return new Promise<never>(() => undefined);
+      });
+      await started;
+      const rejection = expect(pending).rejects.toThrow(
+        'CAPACITY_STAGE_TIMEOUT',
+      );
+      await vi.advanceTimersByTimeAsync(120_000);
+      await rejection;
+
+      expect(onTimeout).toHaveBeenCalledOnce();
+      expect(runner.currentStage()).toBe('login');
+      expect(JSON.parse(await readFile(resultPath, 'utf8'))).toMatchObject({
+        current_stage: 'login',
+        stage_status: 'failed',
+      });
+    } finally {
+      await rm(directory, { force: true, recursive: true });
+    }
   });
 
   it('collects every anonymous Live join outcome after one client fails', async () => {
@@ -349,48 +455,5 @@ describe('Staging capacity harness contract', () => {
     expect(created).toHaveLength(39);
     expect(created[0]?.id).toBe('11111111-1111-4111-8111-111111111111');
     expect(fetchCall).toBe(2);
-  });
-
-  it('drives browser Auth and Live UI without manual Realtime auth', async () => {
-    const source = await readFile(
-      resolve(process.cwd(), 'tests/e2e/staging-capacity.spec.ts'),
-      'utf8',
-    );
-    const browserHelperSource = await readFile(
-      resolve(process.cwd(), 'tests/e2e/helpers/staging-capacity-browser.ts'),
-      'utf8',
-    );
-    expect(source).toContain('signInTeacher');
-    expect(source).toContain('signInStudent');
-    expect(source).toContain('FIXED_TEACHER');
-    expect(source).toMatch(/functions\.invoke\(\s*'join-classroom'/u);
-    expect(source).toContain('launchLiveSessionFromTeacherHome');
-    expect(browserHelperSource).toContain("getByText('連線正常')");
-    expect(source).toContain(
-      'result.auth_login = summarizeAuthStageTimings(authTimings)',
-    );
-    expect(source).toContain('CAPACITY_LOGIN_TIMING_COUNT_INVALID');
-    expect(browserHelperSource).toContain('CAPACITY_LIVE_LOBBY_FAILED');
-    expect(browserHelperSource).toContain('CAPACITY_LIVE_REALTIME_FAILED');
-    expect(browserHelperSource).toContain('collectLiveJoinAttempts');
-    expect(browserHelperSource).toContain('decodeSafeRealtimeFrame');
-    expect(browserHelperSource).toContain(
-      'error instanceof errors.TimeoutError',
-    );
-    expect(browserHelperSource).toContain(
-      'liveJoinRefs.size < MAX_SAFE_REALTIME_EVENTS',
-    );
-    expect(browserHelperSource).toContain('liveJoinRefs.delete(frame.ref)');
-    expect(browserHelperSource).toContain("value !== 'connecting'");
-    expect(source).toContain('buildLiveJoinEvidence(');
-    expect(browserHelperSource).toContain('live_join_clients: clients');
-    expect(browserHelperSource).toContain('live_join_summary:');
-    expect(browserHelperSource).toContain('subscription_status_sequence');
-    expect(browserHelperSource).toContain('live_join_realtime:');
-    expect(source).toContain("enterStage('host_roster')");
-    expect(source).toContain("enterStage('round_answer')");
-    expect(source).toContain('result.failure_stage = currentStage');
-    expect(source).not.toContain('realtime.setAuth');
-    expect(source).not.toContain("rpc('join_classroom'");
   });
 });

@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { writeFile } from 'node:fs/promises';
+import { rename, writeFile } from 'node:fs/promises';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
@@ -256,9 +256,18 @@ export function buildStudentAccountPlan(
 
 export function createServiceClient(
   config: CapacityConfig,
+  signal?: AbortSignal,
 ): SupabaseClient<Database> {
   return createClient<Database>(config.supabaseUrl, config.secretKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    ...(signal
+      ? {
+          global: {
+            fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+              fetch(input, { ...init, signal }),
+          },
+        }
+      : {}),
   });
 }
 
@@ -433,10 +442,27 @@ export async function managementQuery(
 const sqlText = (value: string): string => `'${value.replaceAll("'", "''")}'`;
 
 export async function writeSafeJson(path: string, value: unknown) {
-  await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, {
+  const temporaryPath = `${path}.${String(process.pid)}.tmp`;
+  await writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, {
     encoding: 'utf8',
     mode: 0o600,
   });
+  await rename(temporaryPath, path);
+}
+
+type CapacityStageStatus =
+  'cleanup' | 'completed' | 'failed' | 'finished' | 'running';
+
+export async function writeCapacityStageCheckpoint(
+  path: string,
+  result: Record<string, unknown>,
+  stage: CapacityStage,
+  status: CapacityStageStatus,
+) {
+  result.current_stage = stage;
+  result.stage_status = status;
+  if (status === 'completed') result.last_completed_stage = stage;
+  await writeSafeJson(path, result);
 }
 
 export function publicErrorCode(
