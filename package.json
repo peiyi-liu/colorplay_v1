@@ -42,6 +42,7 @@
     "phase0:contracts": "vitest run tests/contracts/phase0-*.test.ts",
     "phase0:migration:inventory": "node scripts/migration/create-inventory.mjs",
     "phase0:migration:compare": "node scripts/migration/compare-inventory.mjs",
+    "staging:capacity": "PLAYWRIGHT_ACCEPTANCE=on COLORPLAY_DEPLOYMENT_ENVIRONMENT=staging PLAYWRIGHT_BASE_URL=https://staging.colorplayapp.com playwright test tests/e2e/staging-capacity.spec.ts --project=chromium --workers=1 --reporter=list",
     "admin:catalog:generate": "node scripts/admin/generate-sensitivity-catalog.mjs",
     "admin:catalog:check": "node scripts/admin/generate-sensitivity-catalog.mjs --check",
     "admin:catalog:inventory": "node scripts/admin/compare-catalog-inventory.mjs",
