@@ -12,7 +12,13 @@ export const contentEntityTypeSchema = z.enum([
 
 export const contentDraftSourceSchema = z.enum(['manual', 'import']);
 
-const uuidSchema = z.uuid();
+// Historical curriculum rows use deterministic UUID-shaped identifiers whose
+// version nibble is 0. PostgreSQL accepts them as uuid; the browser contract
+// therefore validates the canonical 8-4-4-4-12 shape without inventing a v4
+// requirement that the database does not have.
+const uuidSchema = z
+  .string()
+  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu);
 const timestampSchema = z.iso.datetime({ offset: true });
 const payloadSchema = z.record(z.string(), z.unknown());
 const contentStatusSchema = z.enum(['draft', 'published', 'archived']);

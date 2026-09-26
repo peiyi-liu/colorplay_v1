@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-const uuidSchema = z.uuid();
+const uuidSchema = z
+  .string()
+  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu);
 const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/u);
 
 export const contentMediaSemanticRoleSchema = z.enum([

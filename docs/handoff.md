@@ -1967,3 +1967,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - `pnpm content:import` 已改為只把既有 Google Sheet compatibility source 建成可審核的第三章 package，不再直接改 seed／DB；下載範本涵蓋 Course／Chapter／Section／Subtopic／RC／QB／CR／LT／Question／Media。既有 026／027／028／031／049 測試同步改為驗證舊 Teacher direct-write retirement，不恢復已撤權的舊路徑。
 - Fresh Local reset 從空 DB 成功；pgTAP 077 為 44／44 PASS，browser parser／repository／template／package contracts 10／10 PASS，database type contract、完整 typecheck、focused ESLint 與 `git diff --check` PASS。Deno parser／typecheck 已在本 task 候選階段通過；本次最終重跑因目前 shell 沒有獨立 `deno` executable，未將環境缺工具誤報為產品失敗。
 - 唯一一輪 code review 的公式 metadata、nested XLSX zip bomb、payload canonicalization、preview denial、stale preview race、MIME／extension mismatch 與 no-op comparison findings 已在同輪修正。尚未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰；下一步：提交 PR 4，進 PR 5 Admin Content Studio A＋C manual authoring UI。
+
+## 2026-09-26 [Codex] — PR 5 Admin Content Studio A＋C manual authoring candidate complete
+
+- `/admin/content` 已置於既有 `RequireAdminIdentity`、`RequirePrivilegedSession` 與 `AdminShell` 下。A 工作區提供 hierarchy、scoped list、editor 三欄；C 模式提供全部內容搜尋、類型／狀態篩選與批次選取，A／C 保留目前選取。375×812 與 812×375 改為可捲動單欄，1280×720 維持三欄。
+- Manual Editor 以 RHF＋Zod 管理 Course／Chapter／Section／Subtopic、Review Card、QB／CR／LT Assessment Bank 與共用 Question；既有 published stable code readonly。所有儲存只呼叫 `admin_save_content_draft`，並提供 server validation、student-safe preview、unsaved-change guard、stale revision 重新載入與可操作的 loading／empty／denial／network failure 狀態。
+- 瀏覽器 gate 找到既有 deterministic curriculum UUID version nibble 為 0、但前端 `z.uuid()` 誤拒真實 seed 的整合缺陷；已改為驗證 PostgreSQL UUID 接受的 canonical 8-4-4-4-12 hex shape，避免 scope／publication／media response 被前端誤判，未擴大 DB 權限。
+- 唯一一輪 code review 同輪補上 A→C 未儲存變更保護、C 批次選取、network-uncertain save 沿用 request ID、stale conflict reload，以及新建內容取消切換不再誤跳模式。Focused Content Studio／Admin shell／router 共 66／66 PASS；三指定 viewport Playwright 3／3 PASS，console／network 無錯；scoped ESLint、typecheck、production build 與 `git diff --check` PASS。
+- 尚未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰。下一步：提交 PR 5，進 PR 6，把 Import、Media、Publish、History／Rollback operator workflows 接到同一工作台。

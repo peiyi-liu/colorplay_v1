@@ -2,7 +2,9 @@ import { z } from 'zod';
 
 import { contentEntityTypeSchema, type ContentEntityType } from './contracts';
 
-const uuidSchema = z.uuid();
+const uuidSchema = z
+  .string()
+  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu);
 const timestampSchema = z.iso.datetime({ offset: true });
 
 export const publicationImpactSchema = z.enum([

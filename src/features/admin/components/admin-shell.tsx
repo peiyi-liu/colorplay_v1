@@ -27,6 +27,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   邀請: Mail,
   特權連線: KeyRound,
   資料查核: BookOpen,
+  內容工作台: BookOpen,
   稽核紀錄: ClipboardList,
   平台監控: Activity,
   健康狀態: HeartPulse,
@@ -60,6 +61,7 @@ const NAV_GROUPS: readonly {
     items: [
       { end: true, label: '安全總覽', to: '/admin' },
       { label: '教師帳號', to: '/admin/teachers' },
+      { label: '內容工作台', to: '/admin/content' },
     ],
     label: '日常營運',
   },
