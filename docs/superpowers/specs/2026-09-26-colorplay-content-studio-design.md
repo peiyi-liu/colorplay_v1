@@ -2,9 +2,9 @@
 
 - 日期：2026-09-26（Asia/Taipei）
 - 設計基準：protected `staging@9c42ba3d9e6552e4c135d3d52efad783dc526f57`
-- 狀態：Owner 已核准對話版完整文字規格；書面規格待 Owner 審閱
+- 狀態：Owner 已核准完整書面規格與 A 主介面＋C 清單模式 HTML 原型
 - 第一個交付切片：通用平台能力＋第三章完整內容
-- 後續順序：書面規格核准 → 獨立 HTML 互動原型 → 原型核准 → 實作計畫 → 產品實作
+- 後續順序：實作計畫核准 → bounded task PRs → Phase 2 Local gate → separately authorized Staging gate
 
 ## 1. 目標
 
