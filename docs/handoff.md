@@ -1924,3 +1924,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Owner 已核准 `docs/superpowers/plans/2026-09-26-phase-2-chapter-3.md`。本次授權涵蓋依七個 bounded tasks 執行 Local implementation；先完成 docs-only rebaseline，再從 exact protected `staging@9c42ba3d9e6552e4c135d3d52efad783dc526f57` 加已審文件建立乾淨的 `codex/phase2-ch3-integration` worktree。
 - TDD seam 固定為 ContentAuthoring、ContentPublication、ContentMedia、ContentImport、ContentReadiness；PR 1 從 canonical curriculum／assessment bank／persistent draft 的失敗測試開始。不得把 throwaway prototype 直接升格為產品 code，也不得復活 `/teacher/content` 或 `/teacher/import`。
 - 這次核准不含 branch push／PR／merge、Hosted migration／Storage／content mutation、Vercel deploy 或任何 Production 操作。因 `staging` merge 會自動部署，只有全部 Local gate 完成後的一個 integration → `staging` final PR 能進入後續獨立 owner gate。
+
+## 2026-09-26 [Codex] — PR 1 foundation first vertical slice
+
+- Docs-only rebaseline 已提交為 `cb99b7b`；乾淨 integration worktree 建於同一 SHA，實作 branch 為 `codex/phase2-ch3-pr1-foundation`。主 checkout 的既有 dirty WIP 未帶入，且未 push／PR／merge／deploy。
+- 第一個 TDD slice 先以缺少 repository 與 schema 精確 RED，再建立 explicit `assessment_banks`、Question `bank_id`、private `content_drafts`／request receipts，以及 `admin_save_content_draft` expected-revision／idempotency command。QB／LT 固定 Section，CR 固定 Chapter，legacy question 保留 null bank；private helper 不暴露為 public RPC。
+- 首次 fresh Local reset 找到「migration 早於 seed，seeded question 尚無 bank」缺陷；修正為相容 trigger 依實際 taxonomy 原子建立唯一 bank 後，完整 migration＋三份 content seeds 從空 DB 成功。Focused pgTAP 074 為 24／24 PASS；repository 6／6、相關 contract 合計 11／11、focused ESLint、完整 typecheck、generated DB types exact-diff 與 `git diff --check` PASS。
+- PR 1 尚未完成：下一步繼續用 RED→GREEN 補齊 `listScope`、`readEditorState`、`validateDraft`、`previewDraft`，以及 duplicate code／parent mismatch／draft validation cases；完成後才做本 task 唯一一輪 review。Local reset 已執行並只重建測試資料；Hosted／Production 未觸碰。

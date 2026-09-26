@@ -73,3 +73,9 @@ grep -q 'request_question_hint' src/types/database.ts
 grep -q 'start_remediation_session' src/types/database.ts
 grep -q 'get_learning_progress' src/types/database.ts
 grep -q 'get_classroom_progress' src/types/database.ts
+
+grep -q 'assessment_banks' src/types/database.ts
+grep -q 'content_drafts' src/types/database.ts
+grep -q 'content_draft_requests' src/types/database.ts
+grep -q 'bank_id' src/types/database.ts
+grep -q 'admin_save_content_draft' src/types/database.ts

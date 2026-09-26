@@ -660,6 +660,69 @@ export type Database = {
           },
         ]
       }
+      assessment_banks: {
+        Row: {
+          chapter_id: string | null
+          created_at: string
+          description: string
+          id: string
+          kind: string
+          section_id: string | null
+          selection_settings: Json
+          sort_order: number
+          stable_code: string
+          status: Database["public"]["Enums"]["content_status"]
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          chapter_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          kind: string
+          section_id?: string | null
+          selection_settings?: Json
+          sort_order?: number
+          stable_code: string
+          status?: Database["public"]["Enums"]["content_status"]
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          chapter_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          kind?: string
+          section_id?: string | null
+          selection_settings?: Json
+          sort_order?: number
+          stable_code?: string
+          status?: Database["public"]["Enums"]["content_status"]
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_banks_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_banks_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assignment_attempts: {
         Row: {
           assignment_id: string
@@ -1163,6 +1226,83 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      content_draft_requests: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          draft_id: string
+          request_hash: string
+          request_id: string
+          result_receipt: Json
+        }
+        Insert: {
+          actor_user_id: string
+          created_at?: string
+          draft_id: string
+          request_hash: string
+          request_id: string
+          result_receipt: Json
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          draft_id?: string
+          request_hash?: string
+          request_id?: string
+          result_receipt?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_draft_requests_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "content_drafts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_drafts: {
+        Row: {
+          actor_user_id: string
+          base_version: number | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          payload: Json
+          revision: number
+          source: string
+          stable_code: string
+          updated_at: string
+        }
+        Insert: {
+          actor_user_id: string
+          base_version?: number | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          payload: Json
+          revision?: number
+          source: string
+          stable_code: string
+          updated_at?: string
+        }
+        Update: {
+          actor_user_id?: string
+          base_version?: number | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          payload?: Json
+          revision?: number
+          source?: string
+          stable_code?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       content_imports: {
         Row: {
@@ -2198,6 +2338,7 @@ export type Database = {
       }
       questions: {
         Row: {
+          bank_id: string | null
           bank_kind: string
           created_at: string
           explanation: string
@@ -2212,6 +2353,7 @@ export type Database = {
           version: number
         }
         Insert: {
+          bank_id?: string | null
           bank_kind?: string
           created_at?: string
           explanation: string
@@ -2226,6 +2368,7 @@ export type Database = {
           version?: number
         }
         Update: {
+          bank_id?: string | null
           bank_kind?: string
           created_at?: string
           explanation?: string
@@ -2240,6 +2383,13 @@ export type Database = {
           version?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "questions_bank_id_fkey"
+            columns: ["bank_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_banks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "questions_subtopic_id_fkey"
             columns: ["subtopic_id"]
@@ -3479,6 +3629,7 @@ export type Database = {
         Args: { p_cursor?: string; p_search?: string; p_state?: string }
         Returns: Json
       }
+      admin_platform_health: { Args: never; Returns: Json }
       admin_query_audit: {
         Args: {
           p_action?: string
@@ -3528,6 +3679,19 @@ export type Database = {
             }
             Returns: Json
           }
+      admin_save_content_draft: {
+        Args: {
+          p_draft_id: string
+          p_entity_id: string
+          p_entity_type: string
+          p_expected_revision: number
+          p_payload: Json
+          p_request_id: string
+          p_source: string
+          p_stable_code: string
+        }
+        Returns: Json
+      }
       advance_live_session: {
         Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
@@ -3738,6 +3902,13 @@ export type Database = {
       }
       finalize_quiz_session: { Args: { session_id: string }; Returns: Json }
       generate_live_join_code: { Args: never; Returns: Record<string, unknown> }
+      generate_short_classroom_join_code: {
+        Args: never
+        Returns: {
+          display_code: string
+          normalized_code: string
+        }[]
+      }
       get_accessible_chapter_review: {
         Args: { p_chapter_id: string }
         Returns: Json
@@ -4293,6 +4464,7 @@ export type Database = {
         }
         Returns: Json
       }
+      svc_admin_monitor_state: { Args: never; Returns: Json }
       svc_admin_record_edge_denial: {
         Args: {
           p_action: string
@@ -4301,6 +4473,10 @@ export type Database = {
           p_resource_key: string
         }
         Returns: Json
+      }
+      svc_admin_record_monitor_observations: {
+        Args: { p_observations: Json }
+        Returns: undefined
       }
       svc_admin_record_totp_outcome: {
         Args: { p_admin_user_id: string; p_success: boolean }
@@ -4358,11 +4534,7 @@ export type Database = {
         Returns: Json
       }
       svc_resolve_classroom_join_code: {
-        Args: {
-          p_actor_id: string
-          p_ip_hash: string
-          p_join_code: string
-        }
+        Args: { p_actor_id: string; p_ip_hash: string; p_join_code: string }
         Returns: Json
       }
       teacher_answer_facts: {
@@ -4945,3 +5117,4 @@ export const Constants = {
     },
   },
 } as const
+
