@@ -98,10 +98,7 @@ const sheets = {
       999,
     ],
   ],
-  Media: [
-    ['owner_code', 'path', 'alt_text', 'semantic_role', 'sort_order'],
-    ['RC-EXAMPLE', 'media/example.webp', '色彩教學圖片範例', 'standard', 0],
-  ],
+  Media: [['owner_code', 'path', 'alt_text', 'semantic_role', 'sort_order']],
 } as const;
 
 export const CONTENT_IMPORT_TEMPLATE_SHEETS = Object.freeze(
@@ -116,7 +113,7 @@ export function createContentImportTemplate(): ArrayBuffer {
   for (const [name, rows] of Object.entries(sheets)) {
     const sheet = XLSX.utils.aoa_to_sheet(rows.map((row) => [...row]));
     sheet['!autofilter'] = {
-      ref: `A1:${XLSX.utils.encode_col(rows[0].length - 1)}2`,
+      ref: `A1:${XLSX.utils.encode_col(rows[0].length - 1)}${String(rows.length)}`,
     };
     sheet['!cols'] = rows[0].map((header) => ({
       wch: Math.max(14, typeof header === 'string' ? header.length + 2 : 14),

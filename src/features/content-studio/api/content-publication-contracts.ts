@@ -31,10 +31,35 @@ export const publicationSuccessWireSchema = z.strictObject({
   version: z.number().int().positive(),
 });
 
+export const publicationPreviewWireSchema = z.strictObject({
+  changed_fields: z.array(z.string().min(1).max(100)),
+  current_version: z.number().int().positive().nullable(),
+  draft_id: uuidSchema,
+  entity_type: contentEntityTypeSchema,
+  impact: publicationImpactSchema,
+  next_version: z.number().int().positive(),
+  outcome: z.literal('ok'),
+  request_id: uuidSchema,
+  stable_code: z.string().trim().min(1).max(200),
+});
+
+export const archivePreviewWireSchema = z.strictObject({
+  changed_fields: z.tuple([z.literal('status')]),
+  current_version: z.number().int().positive(),
+  entity_id: uuidSchema,
+  entity_type: contentEntityTypeSchema,
+  impact: publicationImpactSchema,
+  next_version: z.number().int().positive(),
+  outcome: z.literal('ok'),
+  request_id: uuidSchema,
+  stable_code: z.string().trim().min(1).max(200),
+});
+
 export const publicationHistoryWireSchema = z.strictObject({
   entries: z.array(
     z.strictObject({
       changed_fields: z.array(z.string().min(1).max(100)),
+      actor_id: uuidSchema,
       created_at: timestampSchema,
       event_id: uuidSchema,
       event_type: publicationEventTypeSchema,
@@ -69,6 +94,30 @@ export const publicationDeniedWireSchema = z.strictObject({
 export type PublicationImpact = z.infer<typeof publicationImpactSchema>;
 export type PublicationEventType = z.infer<typeof publicationEventTypeSchema>;
 
+export type PublicationPreview = Readonly<{
+  changedFields: readonly string[];
+  currentVersion: number | null;
+  draftId: string;
+  entityType: ContentEntityType;
+  impact: PublicationImpact;
+  nextVersion: number;
+  outcome: 'ok';
+  requestId: string;
+  stableCode: string;
+}>;
+
+export type ArchivePreview = Readonly<{
+  changedFields: readonly ['status'];
+  currentVersion: number;
+  entityId: string;
+  entityType: ContentEntityType;
+  impact: PublicationImpact;
+  nextVersion: number;
+  outcome: 'ok';
+  requestId: string;
+  stableCode: string;
+}>;
+
 export type PublicationSuccess = Readonly<{
   changedFields: readonly string[];
   entityId: string;
@@ -83,6 +132,7 @@ export type PublicationSuccess = Readonly<{
 
 export type PublicationHistory = Readonly<{
   entries: readonly Readonly<{
+    actorId: string;
     changedFields: readonly string[];
     createdAt: string;
     eventId: string;

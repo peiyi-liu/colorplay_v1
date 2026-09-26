@@ -243,7 +243,7 @@ const workbookFromCsvEntries = (
   )) {
     if (!/^csv\/[A-Za-z]+\.csv$/u.test(path)) continue;
     const sheetName = path.slice(4, -4);
-    if (!sheetTypes.has(sheetName))
+    if (!sheetTypes.has(sheetName) && sheetName !== 'Media')
       throw new ContentImportPackageError('IMPORT_WORKBOOK_INVALID');
     const parsed = XLSX.read(bytes, { raw: true, type: 'array' });
     const firstSheetName = parsed.SheetNames[0];

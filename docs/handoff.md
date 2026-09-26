@@ -1975,3 +1975,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 瀏覽器 gate 找到既有 deterministic curriculum UUID version nibble 為 0、但前端 `z.uuid()` 誤拒真實 seed 的整合缺陷；已改為驗證 PostgreSQL UUID 接受的 canonical 8-4-4-4-12 hex shape，避免 scope／publication／media response 被前端誤判，未擴大 DB 權限。
 - 唯一一輪 code review 同輪補上 A→C 未儲存變更保護、C 批次選取、network-uncertain save 沿用 request ID、stale conflict reload，以及新建內容取消切換不再誤跳模式。Focused Content Studio／Admin shell／router 共 66／66 PASS；三指定 viewport Playwright 3／3 PASS，console／network 無錯；scoped ESLint、typecheck、production build 與 `git diff --check` PASS。
 - 尚未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰。下一步：提交 PR 5，進 PR 6，把 Import、Media、Publish、History／Rollback operator workflows 接到同一工作台。
+
+## 2026-09-26 [Codex] — PR 6 Content Studio operator workflows candidate complete
+
+- Admin Content Studio 已接上外部匯入、圖片處理、發布／封存、版本歷史與 rollback。CSV＋圖片 ZIP 會先以可信任 media pipeline 產生 manifest，再把 path 對映成 asset ID；Import 只建立 draft。圖片工作流提供原檔預覽、alt、semantic role、排序、WebP 衍生檔摘要與 RC draft attach。
+- 發布與封存都有 server-derived impact preview；按鈕只接受同一 draft／entity／expected version 的預覽，避免切換內容後沿用舊確認。成功只採信 server receipt；unknown network result 不自動重送。History 只回 actor／time／reason／safe changed fields，C 清單明示本階段需逐項確認，避免以非原子 client loop 製造部分成功。
+- Fresh Local reset 從零成功套用 migration 00100–00800；pgTAP 078 為 12／12 PASS。Content Studio Vitest 9 files／40 tests、database type contract、typecheck、scoped ESLint／Prettier、三指定 viewport Playwright、production build 與 `git diff --check` PASS。`fflate` lockfile diff 已限縮為單一直接依賴，未順帶更新無關 transitive package。
+- 唯一一輪 review 同輪修正 stale preview binding、archive 影響預覽、CSV Media sheet、Sheet／row error provenance、render-time object URL side effect 與 misleading bulk wording。Local `supabase functions serve` 仍有既有 CLI runtime `failed to determine entrypoint` bootstrap 問題；Hosted deploy 前需以 exact function bundle／deploy gate 驗證，不能拿本機啟動失敗當產品回歸或略過 Hosted gate。
+- 尚未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰。下一步：提交 PR 6，進 PR 7 建立 versioned Chapter 3 canonical package、readiness authority 與一次 Local phase gate。

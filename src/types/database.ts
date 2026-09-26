@@ -4074,6 +4074,14 @@ export type Database = {
         Returns: Json
       }
       admin_platform_health: { Args: never; Returns: Json }
+      admin_preview_content_archive: {
+        Args: {
+          p_entity_id: string
+          p_entity_type: string
+          p_expected_version: number
+        }
+        Returns: Json
+      }
       admin_preview_content_draft: {
         Args: { p_draft_id: string; p_expected_revision: number }
         Returns: Json
@@ -4085,6 +4093,10 @@ export type Database = {
           p_source_filename: string
           p_source_sha256: string
         }
+        Returns: Json
+      }
+      admin_preview_content_publication: {
+        Args: { p_draft_id: string; p_expected_revision: number }
         Returns: Json
       }
       admin_publish_content_draft: {

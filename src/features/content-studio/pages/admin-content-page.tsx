@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { List, PanelLeft, Plus, Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -7,8 +7,12 @@ import {
   createContentAuthoringRepository,
   type ContentAuthoringRepository,
 } from '../api/content-authoring-repository';
+import type { ContentMediaRepository } from '../api/content-media-repository';
+import type { ContentPublicationRepository } from '../api/content-publication-repository';
 import type { ContentEntityType } from '../api/contracts';
 import { ContentEditorForm } from '../components/content-editor-form';
+import { ContentOperatorWorkflows } from '../components/content-operator-workflows';
+import type { ContentImportRepository } from '../import/content-import-repository';
 import {
   CONTENT_ENTITY_LABELS,
   createNewContentItem,
@@ -48,8 +52,17 @@ function ItemButton({
 }
 
 export function AdminContentPage({
+  importRepository,
+  mediaRepository,
+  publicationRepository,
   repository = createContentAuthoringRepository(),
-}: Readonly<{ repository?: ContentAuthoringRepository }>) {
+}: Readonly<{
+  importRepository?: ContentImportRepository | undefined;
+  mediaRepository?: ContentMediaRepository | undefined;
+  publicationRepository?: ContentPublicationRepository | undefined;
+  repository?: ContentAuthoringRepository;
+}>) {
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<'workspace' | 'list'>('workspace');
   const [selected, setSelected] = useState<ContentStudioItem | null>(null);
   const [entityType, setEntityType] =
@@ -130,6 +143,9 @@ export function AdminContentPage({
   });
   const editorState =
     editorQuery.data && 'current' in editorQuery.data ? editorQuery.data : null;
+  const refreshContent = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: contentStudioKeys.all });
+  }, [queryClient]);
 
   const filtered = useMemo(() => {
     const normalized = search.trim().toLocaleLowerCase('zh-Hant');
@@ -240,6 +256,16 @@ export function AdminContentPage({
           <span>已選取：{selected.stableCode || selected.title}</span>
         ) : null}
       </div>
+
+      <ContentOperatorWorkflows
+        authoringRepository={repository}
+        editorState={editorState}
+        importRepository={importRepository}
+        mediaRepository={mediaRepository}
+        onChanged={refreshContent}
+        publicationRepository={publicationRepository}
+        selected={selected}
+      />
 
       {mode === 'workspace' ? (
         <div className="content-studio__workspace">
@@ -460,7 +486,7 @@ export function AdminContentPage({
           {bulkSelected.size > 0 ? (
             <p role="status">
               已選取 {bulkSelected.size}{' '}
-              項；批次發布／封存會在操作流程中另外確認。
+              項；本階段為避免部分成功，請逐項開啟並確認發布／封存影響。
             </p>
           ) : null}
           {filtered.length === 0 ? <p>沒有符合篩選條件的內容。</p> : null}

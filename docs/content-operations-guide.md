@@ -1,29 +1,37 @@
 # ColorPlay 內容上傳與維運操作手冊
 
-給內容維護者（老師）與系統維護者的完整操作說明。
-目前內容以 Google 試算表為主來源；Phase 6 之後會提供教師後台直接管理。
+給內容管理員與系統維護者的操作說明。正式 authoring surface 是 Admin
+`/admin/content`；Google Sheet 腳本只保留為舊資料轉入 compatibility adapter，
+不再直接改寫 current published content。
 
 ---
 
 ## 一、內容更新流程總覽
 
 ```
-老師編輯 Google 試算表
+Admin 開啟「內容工作台」
       │
       ▼
-維護者執行  pnpm content:import      ← 下載、驗證、產生種子與審閱報告
+手動新增／修改，或下載 XLSX 範本後上傳 XLSX／CSV＋圖片 ZIP
       │
       ▼
-檢查審閱報告（docs/content/*.md）    ← 跳過列、待確認、AI 草稿
+可信驗證 → 逐列差異／錯誤 → 警告確認 → 建立持久草稿
       │
       ▼
-git commit + push                     ← 前端自動部署到 Vercel
+伺服器計算發布影響 → 二次確認 → 建立不可變版本／事件
       │
       ▼
-執行 Staging 資料庫引導               ← 內容進入 staging 資料庫
+學生只讀 current published version；歷史事實不被改寫
 ```
 
-## 二、試算表格式
+圖片 ZIP 內的 JPG／PNG／WebP 會自動逐張進入 private quarantine，由可信
+processor 產生 320／800／必要時 1200 WebP，再以 source SHA-256 核對 manifest。
+不可在試算表貼圖片、base64、data URL 或遠端 URL。
+
+下列 Google Sheet／CLI 流程只用於把既有第三章資料建成可審核 package；執行
+`pnpm content:import` 不會直接發布、封存、刪除或改寫 Hosted DB。
+
+## 二、舊 Google Sheet compatibility 格式
 
 試算表（同一份活頁簿）有兩個分頁，**欄位名稱與順序不可更動**。
 
@@ -85,24 +93,19 @@ pnpm exec supabase db reset --local   # 套用種子
 pnpm test:db                          # 資料庫測試全綠才推送
 ```
 
-## 四、部署
+## 四、Staging 發布邊界
 
 ### 前端（自動）
 
-`git push` 到 GitHub `main` 後 Vercel 自動建置部署，約 1–2 分鐘生效：
-<https://colorplay-staging.vercel.app>
+合併 GitHub `staging` 後，Vercel 會自動建置 `colorplay-staging-web`。前端部署
+不會自動套用 Supabase migration、部署 Edge Function 或發布內容；三者必須依
+mutation manifest 分開核對 exact SHA／project ref。
 
 ### Staging 資料庫內容（手動）
 
-> ⚠️ 目前的做法是**整庫重置**：staging 上的學習紀錄、班級、作業都會清空
-> （測試帳號會重建）。適合目前的驗證階段；Phase 6 之後教師可在後台
-> 直接新增內容，不再需要重置。
-
-```bash
-export SUPABASE_ACCESS_TOKEN=sbp_（你的 token）
-export STAGING_PROJECT_REF=onkxnkzeixpezetkmocf
-node scripts/staging/bootstrap-staging-db.mjs --confirm-wipe
-```
+Staging 專案固定為 `onkxnkzeixpezetkmocf`。內容更新一律經 Content Studio
+draft／publish commands；不得以整庫重置或 SQL Editor 直接更新取代正式流程。
+Production 專案不在此手冊的內容操作範圍。
 
 詳見 `docs/staging-runbook.md`。
 

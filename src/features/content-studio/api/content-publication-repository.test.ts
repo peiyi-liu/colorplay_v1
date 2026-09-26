@@ -49,6 +49,35 @@ describe('content publication repository', () => {
     });
   });
 
+  it('previews changed fields and progress impact on the server before confirmation', async () => {
+    transport.rpc.mockResolvedValue({
+      changed_fields: ['content'],
+      current_version: 2,
+      draft_id: DRAFT_ID,
+      entity_type: 'review_card',
+      impact: 'requires_recompletion',
+      next_version: 3,
+      outcome: 'ok',
+      request_id: REQUEST_ID,
+      stable_code: 'RC3101',
+    });
+
+    await expect(
+      createContentPublicationRepository(transport).previewPublish({
+        draftId: DRAFT_ID,
+        expectedRevision: 4,
+      }),
+    ).resolves.toMatchObject({
+      changedFields: ['content'],
+      impact: 'requires_recompletion',
+      nextVersion: 3,
+    });
+    expect(transport.rpc).toHaveBeenCalledWith(
+      'admin_preview_content_publication',
+      { p_draft_id: DRAFT_ID, p_expected_revision: 4 },
+    );
+  });
+
   it('archives and rolls back through distinct idempotent commands', async () => {
     transport.rpc
       .mockResolvedValueOnce({
@@ -108,10 +137,45 @@ describe('content publication repository', () => {
     });
   });
 
+  it('previews archive scope and impact on the server', async () => {
+    transport.rpc.mockResolvedValue({
+      changed_fields: ['status'],
+      current_version: 3,
+      entity_id: ENTITY_ID,
+      entity_type: 'question',
+      impact: 'requires_requalification',
+      next_version: 4,
+      outcome: 'ok',
+      request_id: REQUEST_ID,
+      stable_code: 'Q3101',
+    });
+
+    await expect(
+      createContentPublicationRepository(transport).previewArchive({
+        entityId: ENTITY_ID,
+        entityType: 'question',
+        expectedVersion: 3,
+      }),
+    ).resolves.toMatchObject({
+      entityId: ENTITY_ID,
+      impact: 'requires_requalification',
+      nextVersion: 4,
+    });
+    expect(transport.rpc).toHaveBeenCalledWith(
+      'admin_preview_content_archive',
+      {
+        p_entity_id: ENTITY_ID,
+        p_entity_type: 'question',
+        p_expected_version: 3,
+      },
+    );
+  });
+
   it('lists safe immutable history metadata without returning frozen answer payloads', async () => {
     transport.rpc.mockResolvedValue({
       entries: [
         {
+          actor_id: 'aa000000-0000-0000-0000-000000000001',
           changed_fields: ['prompt'],
           created_at: '2026-09-26T08:30:00+00:00',
           event_id: EVENT_ID,

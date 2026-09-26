@@ -1,11 +1,15 @@
 import { adminRpc } from '../../admin/api/admin-client';
 import {
+  archivePreviewWireSchema,
   publicationDeniedWireSchema,
   publicationHistoryWireSchema,
+  publicationPreviewWireSchema,
   publicationSuccessWireSchema,
+  type ArchivePreview,
   type PublicationDenied,
   type PublicationHistory,
   type PublicationOutcome,
+  type PublicationPreview,
   type PublicationSuccess,
 } from './content-publication-contracts';
 import type { ContentEntityType } from './contracts';
@@ -13,6 +17,8 @@ import type { ContentEntityType } from './contracts';
 type ContentPublicationRpc =
   | 'admin_archive_content'
   | 'admin_list_content_history'
+  | 'admin_preview_content_archive'
+  | 'admin_preview_content_publication'
   | 'admin_publish_content_draft'
   | 'admin_rollback_content';
 
@@ -49,6 +55,16 @@ export interface ContentPublicationRepository {
   listHistory(
     input: Readonly<{ entityId: string; entityType: ContentEntityType }>,
   ): Promise<PublicationOutcome<PublicationHistory>>;
+  previewPublish(
+    input: Readonly<{ draftId: string; expectedRevision: number }>,
+  ): Promise<PublicationOutcome<PublicationPreview>>;
+  previewArchive(
+    input: Readonly<{
+      entityId: string;
+      entityType: ContentEntityType;
+      expectedVersion: number;
+    }>,
+  ): Promise<PublicationOutcome<ArchivePreview>>;
 }
 
 export class ContentPublicationRepositoryError extends Error {
@@ -96,7 +112,12 @@ export function createContentPublicationRepository(
   transport: ContentPublicationTransport = defaultTransport,
 ): ContentPublicationRepository {
   const runCommand = async (
-    fn: Exclude<ContentPublicationRpc, 'admin_list_content_history'>,
+    fn: Extract<
+      ContentPublicationRpc,
+      | 'admin_archive_content'
+      | 'admin_publish_content_draft'
+      | 'admin_rollback_content'
+    >,
     args: Record<string, unknown>,
   ): Promise<PublicationOutcome<PublicationSuccess>> => {
     const payload = await transport.rpc(fn, args);
@@ -140,6 +161,7 @@ export function createContentPublicationRepository(
       if (!parsed.success) throw new ContentPublicationRepositoryError();
       return {
         entries: parsed.data.entries.map((entry) => ({
+          actorId: entry.actor_id,
           changedFields: entry.changed_fields,
           createdAt: entry.created_at,
           eventId: entry.event_id,
@@ -153,6 +175,49 @@ export function createContentPublicationRepository(
         entityType: parsed.data.entity_type,
         outcome: 'ok',
         requestId: parsed.data.request_id,
+      };
+    },
+    async previewPublish(input) {
+      const payload = await transport.rpc('admin_preview_content_publication', {
+        p_draft_id: input.draftId,
+        p_expected_revision: input.expectedRevision,
+      });
+      const denied = toDenied(payload);
+      if (denied) return denied;
+      const parsed = publicationPreviewWireSchema.safeParse(payload);
+      if (!parsed.success) throw new ContentPublicationRepositoryError();
+      return {
+        changedFields: parsed.data.changed_fields,
+        currentVersion: parsed.data.current_version,
+        draftId: parsed.data.draft_id,
+        entityType: parsed.data.entity_type,
+        impact: parsed.data.impact,
+        nextVersion: parsed.data.next_version,
+        outcome: 'ok',
+        requestId: parsed.data.request_id,
+        stableCode: parsed.data.stable_code,
+      };
+    },
+    async previewArchive(input) {
+      const payload = await transport.rpc('admin_preview_content_archive', {
+        p_entity_id: input.entityId,
+        p_entity_type: input.entityType,
+        p_expected_version: input.expectedVersion,
+      });
+      const denied = toDenied(payload);
+      if (denied) return denied;
+      const parsed = archivePreviewWireSchema.safeParse(payload);
+      if (!parsed.success) throw new ContentPublicationRepositoryError();
+      return {
+        changedFields: parsed.data.changed_fields,
+        currentVersion: parsed.data.current_version,
+        entityId: parsed.data.entity_id,
+        entityType: parsed.data.entity_type,
+        impact: parsed.data.impact,
+        nextVersion: parsed.data.next_version,
+        outcome: 'ok',
+        requestId: parsed.data.request_id,
+        stableCode: parsed.data.stable_code,
       };
     },
   };

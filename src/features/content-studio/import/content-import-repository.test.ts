@@ -55,6 +55,8 @@ const transport = (): ContentImportTransport => ({
         disposition: 'create',
         entity_type: 'review_card',
         issues: [],
+        row_number: 2,
+        sheet: 'RC',
         stable_code: 'RC31-01',
         warnings: [],
       },

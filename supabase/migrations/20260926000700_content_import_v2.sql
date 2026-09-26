@@ -289,6 +289,11 @@ as $$
 declare
   v_type text := p_item ->> 'entity_type';
   v_code text := btrim(coalesce(p_item ->> 'stable_code', ''));
+  v_sheet text := nullif(btrim(coalesce(p_item ->> 'sheet', '')), '');
+  v_row_number integer := case
+    when p_item ->> 'row_number' ~ '^[1-9][0-9]*$'
+      then (p_item ->> 'row_number')::integer
+    else null end;
   v_payload jsonb := coalesce(p_item -> 'payload', '{}'::jsonb);
   v_parent uuid;
   v_entity_id uuid;
@@ -303,7 +308,9 @@ begin
     'course', 'chapter', 'section', 'subtopic', 'review_card',
     'assessment_bank', 'question'
   ) or v_code = '' or jsonb_typeof(v_payload) is distinct from 'object' then
-    return jsonb_build_object('entity_type', v_type, 'stable_code', v_code,
+    return jsonb_build_object(
+      'sheet', v_sheet, 'row_number', v_row_number,
+      'entity_type', v_type, 'stable_code', v_code,
       'disposition', 'error', 'issues', jsonb_build_array(
         content_private.issue('IMPORT_ROW_INVALID', 'row', '匯入列格式不正確。')));
   end if;
@@ -387,6 +394,7 @@ begin
     when v_entity_id is null then 'create'
     else 'update' end;
   return jsonb_build_object(
+    'sheet', v_sheet, 'row_number', v_row_number,
     'entity_type', v_type, 'stable_code', v_code,
     'entity_id', v_entity_id, 'draft_id', v_draft.id,
     'base_version', (v_current ->> 'version')::integer,

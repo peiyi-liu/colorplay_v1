@@ -61,13 +61,18 @@ Deno.test('parses one XLSX authority and bounded media from ZIP', () => {
 
 Deno.test('parses CSV package authority', () => {
   const zipped = zipSync({
+    'csv/Media.csv': strToU8(
+      'owner_code,path,alt_text,semantic_role,sort_order\nRC31-01,media/P301.png,色彩三要素圖,standard,0',
+    ),
     'csv/RC.csv': strToU8(
       'stable_code,subtopic_code,title,content\nRC31-01,sheet-3-1-all,色彩三要素,複習內容',
     ),
+    'media/P301.png': new Uint8Array([0x89, 0x50, 0x4e, 0x47]),
   });
   const parsed = parseTrustedContentPackage(zipped, 'chapter-3.zip');
   assertEquals(parsed.sourceFormat, 'csv_zip');
   assertEquals(parsed.items.length, 1);
+  assertEquals(parsed.media.length, 1);
 });
 
 Deno.test('rejects mixed authority and traversal', () => {

@@ -89,6 +89,7 @@ grep -q 'admin_publish_content_draft' src/types/database.ts
 grep -q 'admin_archive_content' src/types/database.ts
 grep -q 'admin_rollback_content' src/types/database.ts
 grep -q 'admin_list_content_history' src/types/database.ts
+grep -q 'admin_preview_content_publication' src/types/database.ts
 grep -q 'content_media_upload_runs' src/types/database.ts
 grep -q 'content_media_assets' src/types/database.ts
 grep -q 'content_media_variants' src/types/database.ts

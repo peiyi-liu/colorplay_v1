@@ -28,6 +28,8 @@ const previewSchema = z.object({
       disposition: z.enum(['create', 'update', 'no_op', 'error']),
       entity_type: z.string().min(1),
       issues: z.array(z.unknown()),
+      row_number: z.number().int().positive(),
+      sheet: z.string().min(1).max(100),
       stable_code: z.string().min(1),
       warnings: z.array(z.unknown()).optional(),
     }),

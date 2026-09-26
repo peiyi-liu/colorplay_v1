@@ -17,7 +17,7 @@ describe('content import template', () => {
 
     const parsed = parseContentWorkbook(bytes);
     expect(parsed.items).toHaveLength(9);
-    expect(parsed.mediaPaths).toEqual(['media/example.webp']);
+    expect(parsed.mediaPaths).toEqual([]);
     expect(parsed.items.map((item) => item.entityType)).toEqual([
       'course',
       'chapter',

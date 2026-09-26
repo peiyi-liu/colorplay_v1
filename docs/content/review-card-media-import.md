@@ -2,6 +2,14 @@
 
 ## 結論
 
+新內容請在 Admin `/admin/content` 使用「圖片」或「外部匯入」：原圖自動進入
+private quarantine、可信壓縮為 WebP derivatives、通過品質 gate 後才取得
+immutable manifest。CSV＋圖片 ZIP 會自動處理每張圖並核對 Media sheet，管理員
+不需要手動上傳 Storage 或抄 manifest UUID。
+
+以下 `review-card-media`／Google Sheet 步驟只供既有 legacy 物件辨識與遷移，
+不得用來建立新的 current Content Studio 圖片。
+
 圖片檔放在 Supabase Storage，Postgres 的 `review_card_media` 只保存物件路徑、替代文字與排序。Google Sheet 的「附件」欄先放穩定代號即可；目前最新版代號為：
 
 | 複習卡 | Sheet 附件代號 |
