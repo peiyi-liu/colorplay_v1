@@ -2021,3 +2021,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Clean `5fd415fa016299ffb84b784845b0f41e3f1dbbb6` Phase 2 Local gate PASS：47／47 Vitest、363／363 focused pgTAP、readiness 與 3／3 viewport 全綠；evidence 在 ignored `artifacts/acceptance/content-studio-ch3-5fd415fa016299ffb84b784845b0f41e3f1dbbb6/manifest.json`。
 - GitHub Local DB job 的唯一 pgTAP failure 是既有 `049_admin_sensitivity_catalog` 仍鎖 60 resources；更新為 69，並新增 assertion 確認九張 private Content Studio resource 全部 `surface=none`／`forbidden`。Focused 14／14 與完整 pgTAP 92 files／2236 assertions PASS。
 - 本機完整 `test:db` 後段 Admin Edge integration 因既有 Local Edge runtime container 未啟動而回 503；這與 SQL assertion 修正無關，且先前 handoff 已記錄本機 CLI bootstrap 問題。不得改弱 integration；下一步以 GitHub Linux job 實際判定 runtime，若仍紅再依遠端精確 log 修。Production 未觸碰。
+
+## 2026-09-26 [Codex] — Admin 視覺統一與 Content Studio 清單優先改版完成
+
+- Admin shell 改用統一語意色票，修正頂部「歡迎／管理主控台」對比，加入 session-scoped 日／夜間切換；內容工作台預設進入「全部內容清單」，頂部只保留清單、外部匯入、發布／歷史。
+- 清單改為新增、章節、小節、內容類型、QB／LT／CR、狀態與搜尋篩選；移除批次選取，操作欄前置，加入 12 筆分頁。新增／編輯才進單一表單工作區，穩定代碼與上層 ID readonly；題目移除作答秒數，RC 圖片上傳整合進表單，學生預覽可顯示題目與四個選項。
+- `驗證草稿` 的介面說明已明示只檢查必填欄位、父層、選項與圖片，不會發布。編輯器拆為 form orchestration、model、media 與 support 元件，避免新增需求繼續堆進單一巨型檔案。
+- Prettier、scoped ESLint、typecheck、production build、Admin／Content Studio Vitest 44 files／360 tests 與完整 Admin harness 15／15 PASS；harness 涵蓋 15 routes、320–1440 px、指定三視口、200% CSS zoom、reduced motion、全操作路由 dark persistence 與 light／dark flow。尚未 push／PR／merge／Staging deploy，Production 未觸碰。
+- 下一步：Owner 檢視本機候選；核准後再提交 branch、建立 PR 並依 release gate 推進 Staging。

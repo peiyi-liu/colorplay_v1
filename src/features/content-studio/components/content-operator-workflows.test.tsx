@@ -21,13 +21,17 @@ const ASSET_ID = '76000000-0000-4000-8000-000000000311';
 const REQUEST_ID = '91000000-0000-4000-8000-000000000001';
 
 const selected: ContentStudioItem = {
+  bankKind: null,
+  chapterId: '21000000-0000-0000-0000-000000000003',
   draftId: DRAFT_ID,
   entityId: ENTITY_ID,
   entityType: 'review_card',
   parentId: '23000000-0000-0000-0000-000000000311',
   parentType: 'subtopic',
+  sectionId: '22000000-0000-0000-0000-000000000031',
   stableCode: 'RC3101',
   status: 'published',
+  subtopicId: '23000000-0000-0000-0000-000000000311',
   title: '色彩三要素',
   version: 3,
 };

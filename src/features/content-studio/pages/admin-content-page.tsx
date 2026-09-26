@@ -1,5 +1,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { List, PanelLeft, Plus, Search } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  FileClock,
+  FileUp,
+  List,
+  Plus,
+  Search,
+} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AdminPageLoading } from '../../admin/components/admin-page-loading';
@@ -23,32 +31,19 @@ import { contentStudioKeys } from '../query-keys';
 import '../../../styles/content-studio.css';
 
 const CHAPTER_3_ID = '21000000-0000-0000-0000-000000000003';
+const PAGE_SIZE = 12;
 const ENTITY_TYPES = Object.keys(CONTENT_ENTITY_LABELS) as ContentEntityType[];
+type StudioView = 'list' | 'editor' | 'import' | 'publication';
 
-function ItemButton({
-  item,
-  onSelect,
-  selected,
-}: Readonly<{
-  item: ContentStudioItem;
-  onSelect: (item: ContentStudioItem) => void;
-  selected: boolean;
-}>) {
-  return (
-    <button
-      aria-label={`${item.stableCode} ${item.title}`}
-      aria-current={selected ? 'true' : undefined}
-      className="content-item-button"
-      onClick={() => {
-        onSelect(item);
-      }}
-      type="button"
-    >
-      <span>{item.stableCode}</span>
-      <strong>{item.title}</strong>
-      {item.draftId ? <small>有草稿</small> : null}
-    </button>
-  );
+function itemKey(item: ContentStudioItem): string {
+  return `${item.entityType}-${item.entityId ?? item.draftId ?? 'new'}`;
+}
+
+function statusLabel(item: ContentStudioItem): string {
+  if (item.draftId) return '有草稿';
+  if (item.status === 'published') return '已發布';
+  if (item.status === 'archived') return '已封存';
+  return '草稿';
 }
 
 export function AdminContentPage({
@@ -63,21 +58,22 @@ export function AdminContentPage({
   repository?: ContentAuthoringRepository;
 }>) {
   const queryClient = useQueryClient();
-  const [mode, setMode] = useState<'workspace' | 'list'>('workspace');
+  const [view, setView] = useState<StudioView>('list');
   const [selected, setSelected] = useState<ContentStudioItem | null>(null);
-  const [entityType, setEntityType] =
-    useState<ContentEntityType>('review_card');
   const [search, setSearch] = useState('');
+  const [sectionFilter, setSectionFilter] = useState('all');
+  const [bankKindFilter, setBankKindFilter] = useState<
+    'all' | 'QB' | 'CR' | 'LT'
+  >('all');
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'draft' | 'published' | 'archived'
   >('all');
   const [typeFilter, setTypeFilter] = useState<'all' | ContentEntityType>(
     'all',
   );
+  const [page, setPage] = useState(1);
   const [dirty, setDirty] = useState(false);
-  const [bulkSelected, setBulkSelected] = useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
+  const [notice, setNotice] = useState<string | null>(null);
 
   const scopeQuery = useQuery({
     queryFn: () => repository.listScope({ chapterId: CHAPTER_3_ID }),
@@ -90,27 +86,30 @@ export function AdminContentPage({
     [scope],
   );
 
-  const choose = useCallback(
-    (next: ContentStudioItem): boolean => {
-      if (dirty && !window.confirm('尚有未儲存變更，確定要切換內容嗎？'))
-        return false;
-      setSelected(next);
-      setDirty(false);
-      return true;
+  const confirmLeaveEditor = useCallback((): boolean => {
+    if (!dirty) return true;
+    return window.confirm('尚有未儲存變更，離開會捨棄這些變更。確定繼續嗎？');
+  }, [dirty]);
+
+  const openView = useCallback(
+    (next: StudioView): void => {
+      if (next !== view && !confirmLeaveEditor()) return;
+      if (next !== view) setDirty(false);
+      setView(next);
     },
-    [dirty],
+    [confirmLeaveEditor, view],
   );
 
-  const switchMode = (next: 'workspace' | 'list') => {
-    if (
-      next !== mode &&
-      dirty &&
-      !window.confirm('尚有未儲存變更，切換模式會捨棄這些變更。確定繼續嗎？')
-    )
-      return;
-    if (next !== mode) setDirty(false);
-    setMode(next);
-  };
+  const openEditor = useCallback(
+    (item: ContentStudioItem): void => {
+      if (!confirmLeaveEditor()) return;
+      setSelected(item);
+      setDirty(false);
+      setNotice(null);
+      setView('editor');
+    },
+    [confirmLeaveEditor],
+  );
 
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -143,6 +142,9 @@ export function AdminContentPage({
   });
   const editorState =
     editorQuery.data && 'current' in editorQuery.data ? editorQuery.data : null;
+  const editorNeedsLoading =
+    selected !== null &&
+    (selected.entityId !== null || selected.draftId !== null);
   const refreshContent = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: contentStudioKeys.all });
   }, [queryClient]);
@@ -155,12 +157,23 @@ export function AdminContentPage({
           item.status === statusFilter ||
           (statusFilter === 'draft' && item.draftId !== null)) &&
         (typeFilter === 'all' || item.entityType === typeFilter) &&
+        (sectionFilter === 'all' || item.sectionId === sectionFilter) &&
+        (bankKindFilter === 'all' || item.bankKind === bankKindFilter) &&
         (!normalized ||
           `${item.stableCode} ${item.title}`
             .toLocaleLowerCase('zh-Hant')
             .includes(normalized)),
     );
-  }, [items, search, statusFilter, typeFilter]);
+  }, [bankKindFilter, items, search, sectionFilter, statusFilter, typeFilter]);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const visibleItems = filtered.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
+  const resetPage = () => {
+    setPage(1);
+  };
 
   if (scopeQuery.isPending)
     return (
@@ -199,204 +212,162 @@ export function AdminContentPage({
         <div>
           <span>第三章內容切片</span>
           <h1 id="content-studio-heading">內容工作台</h1>
-          <p>
-            所有修改先成為持久草稿；發布、封存與回復會在操作流程中另外確認。
-          </p>
+          <p>從清單新增或編輯；所有修改先儲存為草稿，不會直接影響學生。</p>
         </div>
-        <div aria-label="內容工作台顯示模式" className="content-studio__mode">
+        <nav aria-label="內容工作台功能" className="content-studio__nav">
           <button
-            aria-pressed={mode === 'workspace'}
+            aria-pressed={view === 'list'}
             onClick={() => {
-              switchMode('workspace');
+              openView('list');
             }}
             type="button"
           >
-            <PanelLeft aria-hidden="true" /> 工作區
+            <List aria-hidden="true" /> 清單
           </button>
           <button
-            aria-pressed={mode === 'list'}
+            aria-pressed={view === 'import'}
             onClick={() => {
-              switchMode('list');
+              openView('import');
             }}
             type="button"
           >
-            <List aria-hidden="true" /> 全部內容清單
+            <FileUp aria-hidden="true" /> 外部匯入
           </button>
-        </div>
+          <button
+            aria-pressed={view === 'publication'}
+            onClick={() => {
+              openView('publication');
+            }}
+            type="button"
+          >
+            <FileClock aria-hidden="true" /> 發布／歷史
+          </button>
+        </nav>
       </header>
 
-      <div className="content-studio__create">
-        <label>
-          新增類型
-          <select
-            value={entityType}
-            onChange={(event) => {
-              setEntityType(event.target.value as ContentEntityType);
-            }}
-          >
-            {ENTITY_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {CONTENT_ENTITY_LABELS[type]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          className="secondary-action"
-          onClick={() => {
-            if (choose(createNewContentItem(entityType, selected))) {
-              setMode('workspace');
-            }
-          }}
-          type="button"
+      {notice ? (
+        <p className="content-studio__notice" role="status">
+          {notice}
+        </p>
+      ) : null}
+
+      {view === 'import' || view === 'publication' ? (
+        <ContentOperatorWorkflows
+          editorState={editorState}
+          importRepository={importRepository}
+          mediaRepository={mediaRepository}
+          onChanged={refreshContent}
+          publicationRepository={publicationRepository}
+          selected={selected}
+          workflow={view}
+        />
+      ) : null}
+
+      {view === 'editor' && selected ? (
+        <section
+          aria-label="內容編輯工作區"
+          className="content-studio__editor-page"
         >
-          <Plus aria-hidden="true" /> 新增草稿
-        </button>
-        {selected ? (
-          <span>已選取：{selected.stableCode || selected.title}</span>
-        ) : null}
-      </div>
+          {editorNeedsLoading && editorQuery.isPending ? (
+            <p role="status">正在載入編輯資料…</p>
+          ) : null}
+          {(!editorNeedsLoading || !editorQuery.isPending) &&
+          (editorState || (!selected.entityId && !selected.draftId)) ? (
+            <ContentEditorForm
+              allItems={items}
+              item={selected}
+              key={`${selected.entityType}-${selected.entityId ?? selected.draftId ?? 'new'}-${String(editorState?.draft?.revision ?? 0)}`}
+              mediaRepository={mediaRepository}
+              onCancel={() => {
+                openView('list');
+              }}
+              onCreated={() => {
+                setDirty(false);
+                setNotice('內容已儲存，可在清單中確認。');
+                setView('list');
+                refreshContent();
+              }}
+              onDirtyChange={setDirty}
+              onNewTypeChange={(entityType) => {
+                setSelected(createNewContentItem(entityType, null));
+              }}
+              onReload={() => editorQuery.refetch()}
+              repository={repository}
+              scope={scope}
+              state={editorState}
+            />
+          ) : null}
+          {editorQuery.data?.outcome === 'denied' ? (
+            <p role="alert">{editorQuery.data.message}</p>
+          ) : null}
+          {editorQuery.isError ? (
+            <div className="content-studio__error">
+              <p role="alert">編輯資料載入失敗。</p>
+              <button
+                className="secondary-action"
+                type="button"
+                onClick={() => void editorQuery.refetch()}
+              >
+                重新載入
+              </button>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
-      <ContentOperatorWorkflows
-        authoringRepository={repository}
-        editorState={editorState}
-        importRepository={importRepository}
-        mediaRepository={mediaRepository}
-        onChanged={refreshContent}
-        publicationRepository={publicationRepository}
-        selected={selected}
-      />
-
-      {mode === 'workspace' ? (
-        <div className="content-studio__workspace">
-          <section aria-label="內容階層" className="content-studio__tree">
-            <header>
-              <h2>內容階層</h2>
-              <span>{scope.chapter.title}</span>
-            </header>
-            {items[0] ? (
-              <ItemButton
-                item={items[0]}
-                onSelect={choose}
-                selected={selected?.entityId === items[0].entityId}
-              />
-            ) : null}
-            {scope.sections.map((section) => {
-              const sectionItem = items.find(
-                (item) => item.entityId === section.sectionId,
-              );
-              return (
-                <details key={section.sectionId} open>
-                  <summary>{section.title}</summary>
-                  {sectionItem ? (
-                    <ItemButton
-                      item={sectionItem}
-                      onSelect={choose}
-                      selected={selected?.entityId === sectionItem.entityId}
-                    />
-                  ) : null}
-                  {section.subtopics.map((subtopic) => {
-                    const subtopicItem = items.find(
-                      (item) => item.entityId === subtopic.subtopicId,
-                    );
-                    return subtopicItem ? (
-                      <ItemButton
-                        key={subtopic.subtopicId}
-                        item={subtopicItem}
-                        onSelect={choose}
-                        selected={selected?.entityId === subtopicItem.entityId}
-                      />
-                    ) : null;
-                  })}
-                </details>
-              );
-            })}
-          </section>
-          <section aria-label="範圍內容" className="content-studio__list">
-            <header>
-              <h2>範圍內容</h2>
-              <span>{items.length} 項</span>
-            </header>
-            {items
-              .filter(
-                (item) =>
-                  !['chapter', 'section', 'subtopic'].includes(item.entityType),
-              )
-              .map((item) => (
-                <ItemButton
-                  item={item}
-                  key={`${item.entityType}-${item.entityId ?? item.draftId ?? 'new'}`}
-                  onSelect={choose}
-                  selected={
-                    (selected?.entityId ?? selected?.draftId) ===
-                    (item.entityId ?? item.draftId)
-                  }
-                />
-              ))}
-          </section>
-          <section aria-label="內容編輯器" className="content-studio__editor">
-            {!selected ? (
-              <div className="content-studio__empty">
-                <h2>選取內容開始編輯</h2>
-                <p>也可以先選擇類型建立新草稿。</p>
-              </div>
-            ) : null}
-            {selected && editorQuery.isPending ? (
-              <p role="status">正在載入編輯資料…</p>
-            ) : null}
-            {selected &&
-            !editorQuery.isPending &&
-            (editorState || (!selected.entityId && !selected.draftId)) ? (
-              <ContentEditorForm
-                item={selected}
-                key={`${selected.entityType}-${selected.entityId ?? selected.draftId ?? 'new'}-${String(editorState?.draft?.revision ?? 0)}`}
-                onDirtyChange={setDirty}
-                onReload={() => editorQuery.refetch()}
-                repository={repository}
-                state={editorState}
-              />
-            ) : null}
-            {selected && editorQuery.data?.outcome === 'denied' ? (
-              <p role="alert">{editorQuery.data.message}</p>
-            ) : null}
-            {selected && editorQuery.isError ? (
-              <>
-                <p role="alert">編輯資料載入失敗。</p>
-                <button
-                  className="secondary-action"
-                  type="button"
-                  onClick={() => void editorQuery.refetch()}
-                >
-                  重新載入
-                </button>
-              </>
-            ) : null}
-          </section>
-        </div>
-      ) : (
+      {view === 'list' ? (
         <section aria-label="全部內容清單" className="content-studio__all">
           <div className="content-studio__filters">
-            <label className="content-studio__search">
-              <Search aria-hidden="true" />
-              <span className="sr-only">搜尋</span>
-              <input
-                aria-label="搜尋內容"
-                placeholder="搜尋代碼或標題"
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                }}
-              />
+            <button
+              className="primary-action content-studio__add"
+              onClick={() => {
+                openEditor(createNewContentItem('review_card', null));
+              }}
+              type="button"
+            >
+              <Plus aria-hidden="true" /> 新增
+            </button>
+            <label>
+              章節
+              <select
+                aria-label="章節"
+                value={scope.chapter.chapterId}
+                disabled
+              >
+                <option value={scope.chapter.chapterId}>
+                  第 {scope.chapter.sortOrder} 章・{scope.chapter.title}
+                </option>
+              </select>
             </label>
             <label>
-              類型
+              小節
               <select
+                aria-label="小節"
+                value={sectionFilter}
+                onChange={(event) => {
+                  setSectionFilter(event.target.value);
+                  resetPage();
+                }}
+              >
+                <option value="all">全部小節</option>
+                {scope.sections.map((section) => (
+                  <option key={section.sectionId} value={section.sectionId}>
+                    {section.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              內容類型
+              <select
+                aria-label="內容類型"
                 value={typeFilter}
                 onChange={(event) => {
                   setTypeFilter(event.target.value as typeof typeFilter);
+                  resetPage();
                 }}
               >
-                <option value="all">全部</option>
+                <option value="all">全部類型</option>
                 {ENTITY_TYPES.map((type) => (
                   <option key={type} value={type}>
                     {CONTENT_ENTITY_LABELS[type]}
@@ -405,93 +376,139 @@ export function AdminContentPage({
               </select>
             </label>
             <label>
+              題庫類型
+              <select
+                aria-label="題庫類型"
+                value={bankKindFilter}
+                onChange={(event) => {
+                  setBankKindFilter(
+                    event.target.value as typeof bankKindFilter,
+                  );
+                  resetPage();
+                }}
+              >
+                <option value="all">全部題庫</option>
+                <option value="QB">QB 小節題庫</option>
+                <option value="LT">LT Live 題庫</option>
+                <option value="CR">CR 章節總題庫</option>
+              </select>
+            </label>
+            <label>
               狀態
               <select
+                aria-label="狀態"
                 value={statusFilter}
                 onChange={(event) => {
                   setStatusFilter(event.target.value as typeof statusFilter);
+                  resetPage();
                 }}
               >
-                <option value="all">全部</option>
+                <option value="all">全部狀態</option>
                 <option value="draft">有草稿</option>
                 <option value="published">已發布</option>
                 <option value="archived">已封存</option>
               </select>
             </label>
+            <label className="content-studio__search">
+              <Search aria-hidden="true" />
+              <span>搜尋</span>
+              <input
+                aria-label="搜尋內容"
+                placeholder="代碼或標題"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  resetPage();
+                }}
+              />
+            </label>
+          </div>
+          <div className="content-studio__list-summary">
+            <strong>{filtered.length} 筆內容</strong>
+            <span>
+              第 {currentPage}／{pageCount} 頁
+            </span>
           </div>
           <div className="ui-table-scroll">
             <table aria-label="全部內容" className="ui-table">
               <thead>
                 <tr>
-                  <th scope="col">
-                    <span className="sr-only">批次選取</span>
-                  </th>
+                  <th scope="col">操作</th>
                   <th scope="col">代碼</th>
                   <th scope="col">類型</th>
+                  <th scope="col">題庫</th>
                   <th scope="col">標題</th>
                   <th scope="col">狀態</th>
-                  <th scope="col">操作</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((item) => (
-                  <tr
-                    key={`${item.entityType}-${item.entityId ?? item.draftId ?? 'new'}`}
-                  >
-                    <td>
-                      <input
-                        aria-label={`選取 ${item.stableCode}`}
-                        checked={bulkSelected.has(
-                          `${item.entityType}-${item.entityId ?? item.draftId ?? 'new'}`,
-                        )}
-                        onChange={(event) => {
-                          const key = `${item.entityType}-${item.entityId ?? item.draftId ?? 'new'}`;
-                          setBulkSelected((current) => {
-                            const next = new Set(current);
-                            if (event.target.checked) next.add(key);
-                            else next.delete(key);
-                            return next;
-                          });
-                        }}
-                        type="checkbox"
-                      />
-                    </td>
-                    <td>{item.stableCode}</td>
-                    <td>{CONTENT_ENTITY_LABELS[item.entityType]}</td>
-                    <td>{item.title}</td>
-                    <td>
-                      {item.draftId
-                        ? '有草稿'
-                        : item.status === 'published'
-                          ? '已發布'
-                          : item.status === 'archived'
-                            ? '已封存'
-                            : '草稿'}
-                    </td>
+                {visibleItems.map((item) => (
+                  <tr key={itemKey(item)}>
                     <td>
                       <button
+                        aria-label={`編輯 ${item.stableCode}`}
+                        className="secondary-action content-studio__edit"
                         type="button"
                         onClick={() => {
-                          if (choose(item)) setMode('workspace');
+                          openEditor(item);
                         }}
                       >
                         編輯
                       </button>
+                    </td>
+                    <td>{item.stableCode}</td>
+                    <td>{CONTENT_ENTITY_LABELS[item.entityType]}</td>
+                    <td>{item.bankKind ?? '—'}</td>
+                    <td>{item.title}</td>
+                    <td>
+                      <span
+                        className={`content-status content-status--${item.draftId ? 'draft' : item.status}`}
+                      >
+                        {statusLabel(item)}
+                      </span>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          {bulkSelected.size > 0 ? (
-            <p role="status">
-              已選取 {bulkSelected.size}{' '}
-              項；本階段為避免部分成功，請逐項開啟並確認發布／封存影響。
-            </p>
+          {visibleItems.length === 0 ? (
+            <p className="content-studio__empty">沒有符合篩選條件的內容。</p>
           ) : null}
-          {filtered.length === 0 ? <p>沒有符合篩選條件的內容。</p> : null}
+          {pageCount > 1 ? (
+            <nav
+              aria-label="內容清單分頁"
+              className="content-studio__pagination"
+            >
+              <button
+                aria-label="上一頁"
+                className="secondary-action"
+                disabled={currentPage === 1}
+                onClick={() => {
+                  setPage((value) => Math.max(1, value - 1));
+                }}
+                type="button"
+              >
+                <ChevronLeft aria-hidden="true" /> 上一頁
+              </button>
+              <span aria-live="polite">
+                第 {currentPage} 頁，共 {pageCount} 頁
+              </span>
+              <button
+                aria-label="下一頁"
+                className="secondary-action"
+                disabled={currentPage === pageCount}
+                onClick={() => {
+                  setPage((value) => Math.min(pageCount, value + 1));
+                }}
+                type="button"
+              >
+                下一頁 <ChevronRight aria-hidden="true" />
+              </button>
+            </nav>
+          ) : null}
         </section>
-      )}
+      ) : null}
     </section>
   );
 }
