@@ -1,22 +1,15 @@
 # ColorPlay
 
-> Current work: **Phase 0A Local＋Staging foundation complete; Phase 0B
-> deferred**. Owner chose the 0A／0B split on 2026-09-11: 0A closes
-> Local／Staging foundation; 0B contains Production migration and is deferred to
-> Phase 8. Read
+> Current work: **Phase 2 Content Studio written design awaiting owner review**. Read
 > [`docs/roadmap-colorplay-next.md`](docs/roadmap-colorplay-next.md), the
-> [rebaseline decision](docs/superpowers/specs/2026-09-11-phase-0a-0b-rebaseline-decision.md)
-> and the
-> [0A closeout plan](docs/superpowers/plans/2026-09-11-phase-0a-staging-foundation-closeout.md)
-> before acting. Status: **0A COMPLETE / 0B DEFERRED** at exact Staging SHA
-> `82d3b40f8e873eb81f85b65e74abcbc4761407d6`, workflow run `35311027470` and
-> deployment `dpl_8WGsmMRmQUXNM8ds6cVmKbXrhTHX`; the independently verified
-> closeout manifest checksum is
-> `df1f025604c57368700d4e2c0c947b808b811aa06aca0fd54bfa868b18005feb`.
-> The next owner gate may separately schedule Phase 1 Hosted Admin work; it does
-> not authorize fixture／Hosted DB mutation or Production. Do not create Tokyo,
-> delete Sydney, mutate Production, run Phase 8 release proof, or claim all of
-> Phase 0 complete.
+> [Content Studio design](docs/superpowers/specs/2026-09-26-colorplay-content-studio-design.md)
+> before acting. The platform design is
+> chapter-generic while its first delivery and evidence slice covers Chapter 3;
+> typo／formatting／non-semantic
+> accessibility corrections preserve Current Progress, while new required content
+> or semantic changes require Recompletion／Requalification for every learner.
+> There is no grandfather exemption. Product implementation, Hosted／Production
+> mutation, push, merge, and deployment are not authorized by this status.
 
 A classroom quiz platform. Teachers publish question content and open a Live Session from a Live Activity; during that session the teacher is its Host, Participants answer on their own devices, and the Projector carries the shared screen.
 
@@ -34,6 +27,56 @@ does not replace the current program tracker. Re-verify time-sensitive Git,
 Vercel, Supabase, DNS, and deployment facts before acting on them.
 
 ## Language
+
+### Learning Content
+
+**Curriculum Node**:
+A Course, Chapter, Section, or Subtopic that gives learning content its canonical place and order.
+_Avoid_: folder, category, page
+
+**Assessment Bank**:
+A collection of Questions with one fixed kind and scope. QB and LT belong to a Section; CR belongs to a Chapter.
+_Avoid_: question type, quiz mode, mixed pool
+
+**Question**:
+The shared assessment item model used by QB, CR, and LT. One Question belongs to exactly one Assessment Bank.
+_Avoid_: reusable question across banks, quiz row
+
+**Content Draft**:
+A persistent proposed revision that is visible to authorized authors but has no effect on learners until publication.
+_Avoid_: unpublished current row, temporary form
+
+**Content Version**:
+An immutable frozen payload and media identity created by publication and retained for historical references.
+_Avoid_: edit number, mutable revision
+
+**Publication Impact**:
+The server-derived effect of publishing a Content Draft: Compatible Publication, Recompletion, or Requalification.
+_Avoid_: admin override, manual reset flag
+
+**Historical Learning Fact**:
+An immutable record that a learner read or attempted a specific published content version. It remains visible after later publications but does not automatically qualify the learner for the current version.
+_Avoid_: old progress, obsolete progress
+
+**Current Content Set**:
+The currently published curriculum, review cards, and assessment content against which current completion and mastery are evaluated. The first Phase 2 delivery proves this for Chapter 3 without making the model Chapter-3-specific.
+_Avoid_: latest data, active rows
+
+**Current Progress**:
+The learner's completion and mastery projected only against the Current Content Set. It may decrease after required content is added or semantically changed without deleting Historical Learning Facts.
+_Avoid_: stored percentage, lifetime progress
+
+**Compatible Publication**:
+A publication limited to typo, formatting, or non-semantic accessibility correction that preserves Current Progress.
+_Avoid_: minor version, harmless update
+
+**Recompletion**:
+The requirement to read and explicitly complete a new or semantically changed review-card version before it contributes to Current Progress.
+_Avoid_: reset, wipe progress
+
+**Requalification**:
+The requirement to complete a new qualifying assessment after its questions, answers, or governing pool semantics change. Earlier attempts remain Historical Learning Facts.
+_Avoid_: delete score, retake penalty
 
 ### Live
 
