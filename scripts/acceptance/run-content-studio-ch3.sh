@@ -34,6 +34,13 @@ run_logged() {
   return "$exit_code"
 }
 
+run_pgtap_files() {
+  local file
+  for file in "$@"; do
+    supabase test db "$file" || return $?
+  done
+}
+
 node -e '
   const { writeFileSync } = require("node:fs");
   const [path, sha] = process.argv.slice(1);
@@ -67,7 +74,7 @@ run_logged 'focused vitest' "$phase_root/reports/vitest.log" \
   tests/contracts/content-import-package.test.ts \
   tests/contracts/content-studio-ch3-finalizer.test.ts
 run_logged 'focused pgtap' "$phase_root/reports/pgtap.log" \
-  supabase test db \
+  run_pgtap_files \
   supabase/tests/003_content_rls.test.sql \
   supabase/tests/020_review_progress.test.sql \
   supabase/tests/021_review_cards.test.sql \
