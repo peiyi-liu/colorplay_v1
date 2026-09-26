@@ -230,11 +230,35 @@ select is(
 
 -- Publish version 2 of both cards: the sticky card keeps its completion, the
 -- strict card demands recompletion.
+select content_private.ensure_content_baseline(
+  'review_card', '21600000-0000-0000-0000-000000000001'
+);
+select content_private.ensure_content_baseline(
+  'review_card', '21600000-0000-0000-0000-000000000002'
+);
 update public.review_cards
 set version = 2
 where id in (
   '21600000-0000-0000-0000-000000000001',
   '21600000-0000-0000-0000-000000000002'
+);
+select content_private.store_content_version(
+  'review_card', '21600000-0000-0000-0000-000000000001',
+  'progress-card-021-sticky', 2,
+  content_private.current_entity(
+    'review_card', '21600000-0000-0000-0000-000000000001'
+  ) -> 'payload',
+  'published', 1, 'compatible', 'test compatible publication',
+  array['sort_order'], null, null, null, gen_random_uuid()
+);
+select content_private.store_content_version(
+  'review_card', '21600000-0000-0000-0000-000000000002',
+  'progress-card-021-strict', 2,
+  content_private.current_entity(
+    'review_card', '21600000-0000-0000-0000-000000000002'
+  ) -> 'payload',
+  'published', 1, 'requires_recompletion', 'test semantic publication',
+  array['content'], null, null, null, gen_random_uuid()
 );
 
 set local role authenticated;

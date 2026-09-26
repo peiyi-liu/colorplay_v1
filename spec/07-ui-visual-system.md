@@ -385,9 +385,10 @@ server 回傳的 `next_action` 決定。合法文案包含「閱讀下一張」�
 **UI-LEARNING-008**：直接 URL、Back／refresh、另一分頁或 stale cache 都必須
 重新讀取 server snapshot。Server 拒絕後 UI 更新 blocker，不得保留可操作的舊 link。
 
-**UI-LEARNING-009**：Inserted card 對 grandfathered user 顯示「新增內容（非必修）」
-與可選讀 secondary action，不顯示 locked／completed，也不取代 server primary
-`next_action`。同一卡對非豁免使用者仍按正常順序顯示 available／locked。
+**UI-LEARNING-009**：Inserted required card 對所有學生依正常順序顯示
+available／locked，並以「新增必修內容」等明確文案說明進度變動；不得顯示
+「非必修」、選讀或豁免狀態。百分比、blocker 與 primary `next_action` 必須使用
+最新 server snapshot。
 
 ## 7. Quiz 頁面
 
@@ -499,4 +500,4 @@ server 回傳的 `next_action` 決定。合法文案包含「閱讀下一張」�
 | UI-STATUS-001～003 | 位置與進度 | AC-UI-014 |
 | UI-STATE-001～006 | Focus、selected、pending、error | AC-UI-015 |
 | UI-LEARNING-001～008 | 章節內解鎖、內容不洩漏與唯一下一步 | AC-PROG-007～012 |
-| UI-LEARNING-009 | 新增卡片豁免 cohort 呈現 | AC-PROG-015 |
+| UI-LEARNING-009 | 新增必修卡一致呈現 | AC-PROG-015 |

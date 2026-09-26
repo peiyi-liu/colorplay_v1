@@ -4,6 +4,7 @@ const routes = [
   '/admin',
   '/admin/teachers',
   '/admin/teachers/' + ADMIN_UI_ID,
+  '/admin/content',
   '/admin/access/admins',
   '/admin/access/invitations',
   '/admin/access/sessions',
@@ -122,6 +123,10 @@ for (const viewport of [
         await expect(
           page.getByRole('button', { name: '更新教師資料' }),
         ).toBeVisible();
+      else if (route === '/admin/content')
+        await expect(
+          page.getByRole('region', { name: '內容階層' }),
+        ).toBeVisible();
       else if (route === '/admin/data')
         await expect(
           page.getByRole('link', { name: '課程', exact: true }).first(),
@@ -164,6 +169,52 @@ for (const viewport of [
       ).toBe(true);
       expect(errors, route).toEqual([]);
     }
+  });
+}
+
+for (const viewport of [
+  { width: 375, height: 812 },
+  { width: 812, height: 375 },
+  { width: 1280, height: 720 },
+]) {
+  test(`content studio A+C flow fits ${String(viewport.width)}x${String(viewport.height)}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await fixture(page);
+    const errors: string[] = [];
+    const failedRequests: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('requestfailed', (request) => failedRequests.push(request.url()));
+    await page.goto('/dev-harness/admin-console.html?route=/admin/content');
+    await expect(
+      page.getByRole('heading', { name: '內容工作台' }),
+    ).toBeVisible();
+    await expect(page.getByRole('region', { name: '內容階層' })).toBeVisible();
+    await page.getByRole('button', { name: 'RC3101 色彩三要素' }).click();
+    await expect(page.getByLabel('複習卡內容')).toBeVisible();
+    await page.getByRole('button', { name: '全部內容清單' }).click();
+    await expect(page.getByRole('table', { name: '全部內容' })).toBeVisible();
+    await expect(page.getByText('已選取：RC3101')).toBeVisible();
+    await page.getByRole('button', { name: '外部匯入' }).click();
+    await expect(
+      page.getByRole('region', { name: '內容匯入流程' }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: '圖片', exact: true }).click();
+    await expect(
+      page.getByRole('region', { name: '圖片處理流程' }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: '發布／歷史' }).click();
+    await expect(
+      page.getByRole('region', { name: '發布與版本歷史' }),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth + 1,
+      ),
+    ).toBe(true);
+    expect(errors).toEqual([]);
+    expect(failedRequests).toEqual([]);
   });
 }
 test('dialog focus, long wait, delayed acceptance and no duplicate command', async ({

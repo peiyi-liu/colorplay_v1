@@ -191,9 +191,9 @@ review_completion = completed current published review-card versions
 
 ### 章節內 progression
 
-`current-required card` 以 user 為單位計算：是目前 published 且對該 user
-仍屬 progression required 的 card；合法 `grandfather_exempt` 卡排除在該 user
-的 required set 外。
+`current-required card` 是目前 published 且屬 progression required 的 card；所有
+學生使用同一個 current-required set，不因舊 completion、challenge、帳號建立時間
+或人工名單排除新增卡。
 
 1. 所有 published 且 content-ready 章節彼此獨立可進入，沒有上一章 prerequisite。
 2. 每章只先開放第一個 section；section 依 `sort_order` 前進。
@@ -220,11 +220,10 @@ review_completion = completed current published review-card versions
     material review-card change 要求 recompletion；material question/template/pool/scope
     change 保留舊 attempted／chapter completed 事實，但移除其 current-version best／
     mastered 資格，直到新 challenge 再達標。歷史 reward ledger 不追回。
-12. 既有 section 新增 required card 時，publication cutoff 前已有
-    server-valid、同 section finalized challenge 的學生豁免，不論分數。其他既有
-    學生與新學生必讀，cutoff 後不能補取得豁免。資格依 immutable finalize
-    fact 判定，不以 80% mastery 或可變 projection 代替。豁免卡不進該 user
-    的 required denominator／gate，可自願閱讀，但未明確提交前不得顯示為已完成。
+12. 既有 section 新增 required card 時，所有學生都必須依正式順序完成新卡；沒有
+    grandfather cohort、cutoff、event-order threshold 或人工豁免。既有 completion／
+    attempt／reward facts 保留不變，但 current denominator、next action 與 gate 立即
+    以新卡重算，因此目前進度可以下降，且缺少新卡 completion 時必須重新補完。
 
 合法主流程：
 

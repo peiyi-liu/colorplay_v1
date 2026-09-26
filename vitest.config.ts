@@ -25,6 +25,10 @@ export default defineConfig({
       'tests/visual/**',
       'tests/integration/**',
       '**/*.integration.test.*',
+      // Supabase Function tests use Deno.test, npm: specifiers, and Deno's
+      // WASM/file APIs. They run under the pinned Deno/Supabase runtime, not
+      // Vitest's Node/jsdom collector.
+      'supabase/functions/**/*.test.ts',
     ],
     setupFiles: ['./src/test/setup.ts'],
     coverage: {

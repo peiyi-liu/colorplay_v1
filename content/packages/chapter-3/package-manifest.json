@@ -1,0 +1,122 @@
+{
+  "chapter": "chapter-3",
+  "content_counts": {
+    "Course": 1,
+    "Chapter": 1,
+    "Section": 3,
+    "Subtopic": 3,
+    "RC": 8,
+    "QB": 3,
+    "CR": 1,
+    "LT": 3,
+    "Question": 233,
+    "Media": 8
+  },
+  "format_version": 1,
+  "media": [
+    {
+      "alt_text": "色彩的分類",
+      "bytes": 77818,
+      "height": 815,
+      "owner_code": "RC3101",
+      "package_path": "media/P301.webp",
+      "semantic_role": "color_critical",
+      "sha256": "4a9a9996769652aa5c2d83e5051aeebc2a568376f81a22f4ca186127577d47a8",
+      "sort_order": 0,
+      "source_path": "scripts/assets/source/review-card-media/chapter-3/P301.webp",
+      "width": 1654
+    },
+    {
+      "alt_text": "色名表示的三種類型",
+      "bytes": 154728,
+      "height": 1133,
+      "owner_code": "RC3103",
+      "package_path": "media/P302.webp",
+      "semantic_role": "color_critical",
+      "sha256": "735f0d2ce856e785c555cb1e7db026fd8a624ab3a175d149c7acbb0bd6144b6a",
+      "sort_order": 0,
+      "source_path": "scripts/assets/source/review-card-media/chapter-3/P302.webp",
+      "width": 1273
+    },
+    {
+      "alt_text": "以光譜秩序組成並加入紅紫色的色相環",
+      "bytes": 178784,
+      "height": 1110,
+      "owner_code": "RC3201",
+      "package_path": "media/P303.webp",
+      "semantic_role": "color_critical",
+      "sha256": "377b008452330911107901d681ae59830676edc4909bac27801f63b1e74a2ee0",
+      "sort_order": 0,
+      "source_path": "scripts/assets/source/review-card-media/chapter-3/P303.webp",
+      "width": 1633
+    },
+    {
+      "alt_text": "色立體的基本結構",
+      "bytes": 385282,
+      "height": 1483,
+      "owner_code": "RC3201",
+      "package_path": "media/P304.webp",
+      "semantic_role": "color_critical",
+      "sha256": "b2744dff130c8ef65137fdf5426dd4a729b538f6580a14f55c7ed3a4f10bf214",
+      "sort_order": 1,
+      "source_path": "scripts/assets/source/review-card-media/chapter-3/P304.webp",
+      "width": 1636
+    },
+    {
+      "alt_text": "色彩體系的分類",
+      "bytes": 151866,
+      "height": 867,
+      "owner_code": "RC3202",
+      "package_path": "media/P305.webp",
+      "semantic_role": "color_critical",
+      "sha256": "19c4794da05bb1cb1a1b836dfaae2afd916a24e46f5054d4b77330a5999232e0",
+      "sort_order": 0,
+      "source_path": "scripts/assets/source/review-card-media/chapter-3/P305.webp",
+      "width": 2015
+    },
+    {
+      "alt_text": "CIE制定的RGB系統",
+      "bytes": 144042,
+      "height": 965,
+      "owner_code": "RC3203",
+      "package_path": "media/P306.webp",
+      "semantic_role": "color_critical",
+      "sha256": "7f3170c1dbf673666e8f7b5cb9e0c5d9b54d71d85126ead6c67e480ae279b505",
+      "sort_order": 0,
+      "source_path": "scripts/assets/source/review-card-media/chapter-3/P306.webp",
+      "width": 2105
+    },
+    {
+      "alt_text": "CIE 1931XYZ表色系統的xy色度圖",
+      "bytes": 259620,
+      "height": 1556,
+      "owner_code": "RC3203",
+      "package_path": "media/P307.webp",
+      "semantic_role": "color_critical",
+      "sha256": "5394ef81d71ba20ab68bb1a668c5357506b526b7482719ce3946814b8943bfde",
+      "sort_order": 1,
+      "source_path": "scripts/assets/source/review-card-media/chapter-3/P307.webp",
+      "width": 1102
+    },
+    {
+      "alt_text": "CIE 1931XYZ表色系統的色立體",
+      "bytes": 68832,
+      "height": 1192,
+      "owner_code": "RC3203",
+      "package_path": "media/P308.webp",
+      "semantic_role": "color_critical",
+      "sha256": "622ae71ed9ec14eb70f18d1979d9e93da18217c85c369a700615adbd9ea0e71f",
+      "sort_order": 2,
+      "source_path": "scripts/assets/source/review-card-media/chapter-3/P308.webp",
+      "width": 1032
+    }
+  ],
+  "package_authority": "content.xlsx",
+  "source": {
+    "kind": "google_sheet_xlsx_export",
+    "sha256": "4871644cba8bdcf2c31ef6f9cef68f17894f1d9a21eebbbad35341b5dc5fd610"
+  },
+  "unresolved_errors": 0,
+  "unresolved_warnings": 0,
+  "workbook_sha256": "cfc17f91376daf496f02f7610b4438abc0b3ffc001dc0f5d7eea9d35b7d6ff61"
+}

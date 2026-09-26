@@ -9,8 +9,12 @@ import remarkGfm from 'remark-gfm';
 import '../../../styles/review-card-markdown.css';
 
 export type ReviewCardImageResolution = Readonly<{
+  height?: number;
   loading: boolean;
   resolvedUrl: string | null;
+  sizes?: string;
+  srcSet?: string;
+  width?: number;
 }>;
 
 const allowedElements = [
@@ -97,7 +101,11 @@ function MarkdownImage({
         setFailed(true);
       }}
       onLoad={onLoad}
+      sizes={resolution.sizes}
       src={resolution.resolvedUrl}
+      srcSet={resolution.srcSet}
+      height={resolution.height}
+      width={resolution.width}
     />
   );
 }

@@ -35,39 +35,15 @@ select is(
   'all RC rows are published review cards'
 );
 
-update public.questions
-set bank_kind = 'legacy'
-where id = (
-  select id from public.questions where stable_code like 'LT%' order by id limit 1
-);
-
-select public.apply_question_payload(
-  (
-    select id
-    from public.questions
-    where stable_code like 'LT%'
-    order by id
-    limit 1
-  ),
-  public.question_semantic_payload((
-    select id
-    from public.questions
-    where stable_code like 'LT%'
-    order by id
-    limit 1
-  ))
-);
-
 select is(
   (
-    select bank_kind
+    select count(*)::integer
     from public.questions
-    where stable_code like 'LT%'
-    order by id
-    limit 1
+    where stable_code like 'LT%' and bank_kind = 'live'
+      and bank_id is not null
   ),
-  'live',
-  'versioned content commands derive the Live bank from an LT code'
+  60,
+  'all Live questions use canonical LT banks without a legacy fallback'
 );
 
 insert into auth.users (

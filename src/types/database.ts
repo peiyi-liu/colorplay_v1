@@ -660,6 +660,72 @@ export type Database = {
           },
         ]
       }
+      assessment_banks: {
+        Row: {
+          chapter_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          kind: string
+          section_id: string | null
+          selection_settings: Json
+          sort_order: number
+          stable_code: string
+          status: Database["public"]["Enums"]["content_status"]
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          chapter_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          kind: string
+          section_id?: string | null
+          selection_settings?: Json
+          sort_order?: number
+          stable_code: string
+          status?: Database["public"]["Enums"]["content_status"]
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          chapter_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          kind?: string
+          section_id?: string | null
+          selection_settings?: Json
+          sort_order?: number
+          stable_code?: string
+          status?: Database["public"]["Enums"]["content_status"]
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_banks_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_banks_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assignment_attempts: {
         Row: {
           assignment_id: string
@@ -996,6 +1062,7 @@ export type Database = {
         Row: {
           course_id: string
           created_at: string
+          created_by: string | null
           description: string
           id: string
           sort_order: number
@@ -1003,10 +1070,12 @@ export type Database = {
           status: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at: string
+          version: number
         }
         Insert: {
           course_id: string
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           sort_order?: number
@@ -1014,10 +1083,12 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at?: string
+          version?: number
         }
         Update: {
           course_id?: string
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           sort_order?: number
@@ -1025,6 +1096,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title?: string
           updated_at?: string
+          version?: number
         }
         Relationships: [
           {
@@ -1164,6 +1236,176 @@ export type Database = {
           },
         ]
       }
+      content_draft_requests: {
+        Row: {
+          actor_user_id: string
+          auth_session_id: string
+          created_at: string
+          draft_id: string
+          request_hash: string
+          request_id: string
+          result_receipt: Json
+        }
+        Insert: {
+          actor_user_id: string
+          auth_session_id: string
+          created_at?: string
+          draft_id: string
+          request_hash: string
+          request_id: string
+          result_receipt: Json
+        }
+        Update: {
+          actor_user_id?: string
+          auth_session_id?: string
+          created_at?: string
+          draft_id?: string
+          request_hash?: string
+          request_id?: string
+          result_receipt?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_draft_requests_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "content_drafts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_drafts: {
+        Row: {
+          actor_user_id: string
+          base_version: number | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          payload: Json
+          revision: number
+          source: string
+          stable_code: string
+          updated_at: string
+        }
+        Insert: {
+          actor_user_id: string
+          base_version?: number | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          payload: Json
+          revision?: number
+          source: string
+          stable_code: string
+          updated_at?: string
+        }
+        Update: {
+          actor_user_id?: string
+          base_version?: number | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          payload?: Json
+          revision?: number
+          source?: string
+          stable_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      content_import_runs: {
+        Row: {
+          actor_user_id: string
+          auth_session_id: string
+          commit_request_id: string | null
+          committed_at: string | null
+          created_at: string
+          id: string
+          normalized_items: Json
+          preview: Json
+          preview_request_id: string
+          result_receipt: Json | null
+          source_filename: string
+          source_sha256: string
+          status: string
+        }
+        Insert: {
+          actor_user_id: string
+          auth_session_id: string
+          commit_request_id?: string | null
+          committed_at?: string | null
+          created_at?: string
+          id?: string
+          normalized_items: Json
+          preview: Json
+          preview_request_id: string
+          result_receipt?: Json | null
+          source_filename: string
+          source_sha256: string
+          status?: string
+        }
+        Update: {
+          actor_user_id?: string
+          auth_session_id?: string
+          commit_request_id?: string | null
+          committed_at?: string | null
+          created_at?: string
+          id?: string
+          normalized_items?: Json
+          preview?: Json
+          preview_request_id?: string
+          result_receipt?: Json | null
+          source_filename?: string
+          source_sha256?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      content_import_upload_runs: {
+        Row: {
+          actor_user_id: string
+          auth_session_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          object_path: string
+          request_id: string
+          source_bytes: number
+          source_filename: string
+          source_mime_type: string
+          status: string
+        }
+        Insert: {
+          actor_user_id: string
+          auth_session_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          object_path: string
+          request_id: string
+          source_bytes: number
+          source_filename: string
+          source_mime_type: string
+          status?: string
+        }
+        Update: {
+          actor_user_id?: string
+          auth_session_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          object_path?: string
+          request_id?: string
+          source_bytes?: number
+          source_filename?: string
+          source_mime_type?: string
+          status?: string
+        }
+        Relationships: []
+      }
       content_imports: {
         Row: {
           created_at: string
@@ -1220,36 +1462,220 @@ export type Database = {
           },
         ]
       }
+      content_media_assets: {
+        Row: {
+          created_by: string
+          has_alpha: boolean
+          height: number
+          id: string
+          manifest_sha256: string
+          master_object_path: string
+          pixel_semantic_sha256: string
+          processor_version: string
+          semantic_role: string
+          source_bytes: number
+          source_mime_type: string
+          source_sha256: string
+          upload_run_id: string
+          verified_at: string
+          width: number
+        }
+        Insert: {
+          created_by: string
+          has_alpha: boolean
+          height: number
+          id: string
+          manifest_sha256: string
+          master_object_path: string
+          pixel_semantic_sha256: string
+          processor_version: string
+          semantic_role: string
+          source_bytes: number
+          source_mime_type: string
+          source_sha256: string
+          upload_run_id: string
+          verified_at?: string
+          width: number
+        }
+        Update: {
+          created_by?: string
+          has_alpha?: boolean
+          height?: number
+          id?: string
+          manifest_sha256?: string
+          master_object_path?: string
+          pixel_semantic_sha256?: string
+          processor_version?: string
+          semantic_role?: string
+          source_bytes?: number
+          source_mime_type?: string
+          source_sha256?: string
+          upload_run_id?: string
+          verified_at?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_media_assets_upload_run_id_fkey"
+            columns: ["upload_run_id"]
+            isOneToOne: true
+            referencedRelation: "content_media_upload_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_media_upload_runs: {
+        Row: {
+          actor_user_id: string
+          asset_id: string
+          auth_session_id: string
+          created_at: string
+          expires_at: string
+          failure_code: string | null
+          id: string
+          quarantine_object_path: string
+          request_hash: string
+          request_id: string
+          result_receipt: Json | null
+          semantic_role: string
+          source_bytes: number
+          source_filename: string
+          source_mime_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          actor_user_id: string
+          asset_id?: string
+          auth_session_id: string
+          created_at?: string
+          expires_at?: string
+          failure_code?: string | null
+          id?: string
+          quarantine_object_path: string
+          request_hash: string
+          request_id: string
+          result_receipt?: Json | null
+          semantic_role: string
+          source_bytes: number
+          source_filename: string
+          source_mime_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          actor_user_id?: string
+          asset_id?: string
+          auth_session_id?: string
+          created_at?: string
+          expires_at?: string
+          failure_code?: string | null
+          id?: string
+          quarantine_object_path?: string
+          request_hash?: string
+          request_id?: string
+          result_receipt?: Json | null
+          semantic_role?: string
+          source_bytes?: number
+          source_filename?: string
+          source_mime_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      content_media_variants: {
+        Row: {
+          asset_id: string
+          bytes: number
+          height: number
+          kind: string
+          mime_type: string
+          object_path: string
+          quality_mode: string
+          sha256: string
+          structural_similarity_distortion: number | null
+          width: number
+        }
+        Insert: {
+          asset_id: string
+          bytes: number
+          height: number
+          kind: string
+          mime_type?: string
+          object_path: string
+          quality_mode: string
+          sha256: string
+          structural_similarity_distortion?: number | null
+          width: number
+        }
+        Update: {
+          asset_id?: string
+          bytes?: number
+          height?: number
+          kind?: string
+          mime_type?: string
+          object_path?: string
+          quality_mode?: string
+          sha256?: string
+          structural_similarity_distortion?: number | null
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_media_variants_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_publication_events: {
         Row: {
           actor_id: string
+          auth_session_id: string | null
+          changed_fields: string[]
           content_id: string
-          content_type: Database["public"]["Enums"]["versioned_content_type"]
+          content_type: string
           created_at: string
-          event_type: Database["public"]["Enums"]["publication_event_type"]
+          event_type: string
           id: string
+          impact: string
+          reason: string
           request_id: string
           version: number
+          version_id: string | null
         }
         Insert: {
           actor_id: string
+          auth_session_id?: string | null
+          changed_fields?: string[]
           content_id: string
-          content_type: Database["public"]["Enums"]["versioned_content_type"]
+          content_type: string
           created_at?: string
-          event_type: Database["public"]["Enums"]["publication_event_type"]
+          event_type: string
           id?: string
+          impact?: string
+          reason?: string
           request_id: string
           version: number
+          version_id?: string | null
         }
         Update: {
           actor_id?: string
+          auth_session_id?: string | null
+          changed_fields?: string[]
           content_id?: string
-          content_type?: Database["public"]["Enums"]["versioned_content_type"]
+          content_type?: string
           created_at?: string
-          event_type?: Database["public"]["Enums"]["publication_event_type"]
+          event_type?: string
           id?: string
+          impact?: string
+          reason?: string
           request_id?: string
           version?: number
+          version_id?: string | null
         }
         Relationships: [
           {
@@ -1259,39 +1685,100 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "content_publication_events_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "content_versions"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      content_publication_requests: {
+        Row: {
+          actor_user_id: string
+          auth_session_id: string
+          created_at: string
+          request_hash: string
+          request_id: string
+          result_receipt: Json
+        }
+        Insert: {
+          actor_user_id: string
+          auth_session_id: string
+          created_at?: string
+          request_hash: string
+          request_id: string
+          result_receipt: Json
+        }
+        Update: {
+          actor_user_id?: string
+          auth_session_id?: string
+          created_at?: string
+          request_hash?: string
+          request_id?: string
+          result_receipt?: Json
+        }
+        Relationships: []
       }
       content_versions: {
         Row: {
+          auth_session_id: string | null
+          changed_fields: string[]
           content_id: string
-          content_type: Database["public"]["Enums"]["versioned_content_type"]
+          content_type: string
           created_at: string
-          created_by: string
+          created_by: string | null
           frozen_payload: Json
           id: string
+          impact: string
           payload_hash: string
+          payload_schema_version: number
+          previous_version: number | null
+          reason: string
+          request_id: string | null
+          source_draft_id: string | null
+          stable_code: string
           status: Database["public"]["Enums"]["content_status"]
           version: number
         }
         Insert: {
+          auth_session_id?: string | null
+          changed_fields?: string[]
           content_id: string
-          content_type: Database["public"]["Enums"]["versioned_content_type"]
+          content_type: string
           created_at?: string
-          created_by: string
+          created_by?: string | null
           frozen_payload: Json
           id?: string
+          impact?: string
           payload_hash: string
+          payload_schema_version?: number
+          previous_version?: number | null
+          reason?: string
+          request_id?: string | null
+          source_draft_id?: string | null
+          stable_code: string
           status: Database["public"]["Enums"]["content_status"]
           version: number
         }
         Update: {
+          auth_session_id?: string | null
+          changed_fields?: string[]
           content_id?: string
-          content_type?: Database["public"]["Enums"]["versioned_content_type"]
+          content_type?: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           frozen_payload?: Json
           id?: string
+          impact?: string
           payload_hash?: string
+          payload_schema_version?: number
+          previous_version?: number | null
+          reason?: string
+          request_id?: string | null
+          source_draft_id?: string | null
+          stable_code?: string
           status?: Database["public"]["Enums"]["content_status"]
           version?: number
         }
@@ -1337,6 +1824,7 @@ export type Database = {
       courses: {
         Row: {
           created_at: string
+          created_by: string | null
           description: string
           id: string
           sort_order: number
@@ -1344,9 +1832,11 @@ export type Database = {
           status: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at: string
+          version: number
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           sort_order?: number
@@ -1354,9 +1844,11 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at?: string
+          version?: number
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           sort_order?: number
@@ -1364,6 +1856,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title?: string
           updated_at?: string
+          version?: number
         }
         Relationships: []
       }
@@ -2198,8 +2691,11 @@ export type Database = {
       }
       questions: {
         Row: {
+          bank_id: string | null
           bank_kind: string
           created_at: string
+          created_by: string | null
+          duration_seconds: number
           explanation: string
           id: string
           prompt: string
@@ -2212,8 +2708,11 @@ export type Database = {
           version: number
         }
         Insert: {
+          bank_id?: string | null
           bank_kind?: string
           created_at?: string
+          created_by?: string | null
+          duration_seconds?: number
           explanation: string
           id?: string
           prompt: string
@@ -2226,8 +2725,11 @@ export type Database = {
           version?: number
         }
         Update: {
+          bank_id?: string | null
           bank_kind?: string
           created_at?: string
+          created_by?: string | null
+          duration_seconds?: number
           explanation?: string
           id?: string
           prompt?: string
@@ -2240,6 +2742,13 @@ export type Database = {
           version?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "questions_bank_id_fkey"
+            columns: ["bank_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_banks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "questions_subtopic_id_fkey"
             columns: ["subtopic_id"]
@@ -2662,7 +3171,9 @@ export type Database = {
           asset_path: string
           card_version: number
           id: string
+          manifest_id: string | null
           review_card_id: string
+          semantic_role: string | null
           sort_order: number
         }
         Insert: {
@@ -2670,7 +3181,9 @@ export type Database = {
           asset_path: string
           card_version: number
           id?: string
+          manifest_id?: string | null
           review_card_id: string
+          semantic_role?: string | null
           sort_order: number
         }
         Update: {
@@ -2678,10 +3191,19 @@ export type Database = {
           asset_path?: string
           card_version?: number
           id?: string
+          manifest_id?: string | null
           review_card_id?: string
+          semantic_role?: string | null
           sort_order?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "review_card_media_manifest_id_fkey"
+            columns: ["manifest_id"]
+            isOneToOne: false
+            referencedRelation: "content_media_assets"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "review_card_media_review_card_id_fkey"
             columns: ["review_card_id"]
@@ -2695,6 +3217,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          created_by: string | null
           group_label: string
           id: string
           requires_recompletion: boolean
@@ -2709,6 +3232,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          created_by?: string | null
           group_label?: string
           id?: string
           requires_recompletion?: boolean
@@ -2723,6 +3247,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          created_by?: string | null
           group_label?: string
           id?: string
           requires_recompletion?: boolean
@@ -2793,6 +3318,7 @@ export type Database = {
         Row: {
           chapter_id: string
           created_at: string
+          created_by: string | null
           description: string
           id: string
           sort_order: number
@@ -2800,10 +3326,12 @@ export type Database = {
           status: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at: string
+          version: number
         }
         Insert: {
           chapter_id: string
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           sort_order?: number
@@ -2811,10 +3339,12 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at?: string
+          version?: number
         }
         Update: {
           chapter_id?: string
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           sort_order?: number
@@ -2822,6 +3352,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title?: string
           updated_at?: string
+          version?: number
         }
         Relationships: [
           {
@@ -2917,6 +3448,7 @@ export type Database = {
       subtopics: {
         Row: {
           created_at: string
+          created_by: string | null
           description: string
           id: string
           section_id: string
@@ -2925,9 +3457,11 @@ export type Database = {
           status: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at: string
+          version: number
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           section_id: string
@@ -2936,9 +3470,11 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at?: string
+          version?: number
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           section_id?: string
@@ -2947,6 +3483,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title?: string
           updated_at?: string
+          version?: number
         }
         Relationships: [
           {
@@ -3265,6 +3802,55 @@ export type Database = {
         Args: { session_id: string }
         Returns: Json
       }
+      admin_abort_content_media_upload: {
+        Args: { p_request_id: string; p_run_id: string }
+        Returns: Json
+      }
+      admin_archive_content: {
+        Args: {
+          p_entity_id: string
+          p_entity_type: string
+          p_expected_version: number
+          p_reason: string
+          p_request_id: string
+        }
+        Returns: Json
+      }
+      admin_begin_content_import_upload: {
+        Args: {
+          p_request_id: string
+          p_source_bytes: number
+          p_source_filename: string
+          p_source_mime_type: string
+        }
+        Returns: Json
+      }
+      admin_begin_content_media_upload: {
+        Args: {
+          p_request_id: string
+          p_semantic_role: string
+          p_source_bytes: number
+          p_source_filename: string
+          p_source_mime_type: string
+        }
+        Returns: Json
+      }
+      admin_claim_content_import_upload: {
+        Args: { p_request_id: string; p_run_id: string }
+        Returns: Json
+      }
+      admin_claim_content_media_upload: {
+        Args: { p_request_id: string; p_run_id: string }
+        Returns: Json
+      }
+      admin_commit_content_import_v2: {
+        Args: {
+          p_confirm_warnings: boolean
+          p_request_id: string
+          p_run_id: string
+        }
+        Returns: Json
+      }
       admin_get_resource_detail:
         | {
             Args: { p_domain: string; p_resource: string; p_row_id: string }
@@ -3463,6 +4049,14 @@ export type Database = {
         Returns: Json
       }
       admin_list_admins: { Args: { p_cursor?: string }; Returns: Json }
+      admin_list_content_history: {
+        Args: { p_entity_id: string; p_entity_type: string }
+        Returns: Json
+      }
+      admin_list_content_scope: {
+        Args: { p_chapter_id: string }
+        Returns: Json
+      }
       admin_list_invitations: { Args: { p_cursor?: string }; Returns: Json }
       admin_list_resource: {
         Args: {
@@ -3479,6 +4073,46 @@ export type Database = {
         Args: { p_cursor?: string; p_search?: string; p_state?: string }
         Returns: Json
       }
+      admin_platform_health: { Args: never; Returns: Json }
+      admin_preview_content_archive: {
+        Args: {
+          p_entity_id: string
+          p_entity_type: string
+          p_expected_version: number
+        }
+        Returns: Json
+      }
+      admin_preview_content_draft: {
+        Args: { p_draft_id: string; p_expected_revision: number }
+        Returns: Json
+      }
+      admin_preview_content_import_v2: {
+        Args: {
+          p_items: Json
+          p_request_id: string
+          p_source_filename: string
+          p_source_sha256: string
+        }
+        Returns: Json
+      }
+      admin_preview_content_publication: {
+        Args: {
+          p_change_classification?: string
+          p_draft_id: string
+          p_expected_revision: number
+        }
+        Returns: Json
+      }
+      admin_publish_content_draft: {
+        Args: {
+          p_change_classification?: string
+          p_draft_id: string
+          p_expected_revision: number
+          p_reason: string
+          p_request_id: string
+        }
+        Returns: Json
+      }
       admin_query_audit: {
         Args: {
           p_action?: string
@@ -3489,6 +4123,10 @@ export type Database = {
           p_target_type?: string
           p_to?: string
         }
+        Returns: Json
+      }
+      admin_read_content_editor_state: {
+        Args: { p_draft_id: string; p_entity_id: string; p_entity_type: string }
         Returns: Json
       }
       admin_reveal_field:
@@ -3528,6 +4166,34 @@ export type Database = {
             }
             Returns: Json
           }
+      admin_rollback_content: {
+        Args: {
+          p_entity_id: string
+          p_entity_type: string
+          p_expected_version: number
+          p_reason: string
+          p_request_id: string
+          p_target_version: number
+        }
+        Returns: Json
+      }
+      admin_save_content_draft: {
+        Args: {
+          p_draft_id: string
+          p_entity_id: string
+          p_entity_type: string
+          p_expected_revision: number
+          p_payload: Json
+          p_request_id: string
+          p_source: string
+          p_stable_code: string
+        }
+        Returns: Json
+      }
+      admin_validate_content_draft: {
+        Args: { p_draft_id: string; p_expected_revision: number }
+        Returns: Json
+      }
       advance_live_session: {
         Args: { p_expected_version: number; p_session_id: string }
         Returns: Json
@@ -3738,6 +4404,13 @@ export type Database = {
       }
       finalize_quiz_session: { Args: { session_id: string }; Returns: Json }
       generate_live_join_code: { Args: never; Returns: Record<string, unknown> }
+      generate_short_classroom_join_code: {
+        Args: never
+        Returns: {
+          display_code: string
+          normalized_code: string
+        }[]
+      }
       get_accessible_chapter_review: {
         Args: { p_chapter_id: string }
         Returns: Json
@@ -4293,6 +4966,7 @@ export type Database = {
         }
         Returns: Json
       }
+      svc_admin_monitor_state: { Args: never; Returns: Json }
       svc_admin_record_edge_denial: {
         Args: {
           p_action: string
@@ -4301,6 +4975,10 @@ export type Database = {
           p_resource_key: string
         }
         Returns: Json
+      }
+      svc_admin_record_monitor_observations: {
+        Args: { p_observations: Json }
+        Returns: undefined
       }
       svc_admin_record_totp_outcome: {
         Args: { p_admin_user_id: string; p_success: boolean }
@@ -4348,6 +5026,45 @@ export type Database = {
         Args: { p_operation_id: string }
         Returns: Json
       }
+      svc_complete_content_media_upload: {
+        Args: {
+          p_actor_user_id: string
+          p_auth_session_id: string
+          p_has_alpha: boolean
+          p_height: number
+          p_manifest_sha256: string
+          p_master_object_path: string
+          p_pixel_semantic_sha256: string
+          p_processor_version: string
+          p_run_id: string
+          p_source_sha256: string
+          p_variants: Json
+          p_width: number
+        }
+        Returns: Json
+      }
+      svc_content_media_delivery: {
+        Args: { p_actor_user_id: string; p_asset_ids: string[] }
+        Returns: Json
+      }
+      svc_fail_content_media_upload: {
+        Args: {
+          p_actor_user_id: string
+          p_auth_session_id: string
+          p_failure_code: string
+          p_run_id: string
+        }
+        Returns: Json
+      }
+      svc_finish_content_import_upload: {
+        Args: {
+          p_actor_user_id: string
+          p_auth_session_id: string
+          p_run_id: string
+          p_status: string
+        }
+        Returns: undefined
+      }
       svc_join_classroom: {
         Args: {
           p_actor_id: string
@@ -4358,12 +5075,12 @@ export type Database = {
         Returns: Json
       }
       svc_resolve_classroom_join_code: {
-        Args: {
-          p_actor_id: string
-          p_ip_hash: string
-          p_join_code: string
-        }
+        Args: { p_actor_id: string; p_ip_hash: string; p_join_code: string }
         Returns: Json
+      }
+      svc_verify_content_import_media: {
+        Args: { p_mappings: Json }
+        Returns: boolean
       }
       teacher_answer_facts: {
         Args: {
@@ -4945,3 +5662,4 @@ export const Constants = {
     },
   },
 } as const
+

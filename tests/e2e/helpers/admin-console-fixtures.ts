@@ -74,6 +74,115 @@ export function adminUiRpc(name: string): unknown {
         next_cursor: null,
         rows: [teacher],
       };
+    case 'admin_list_content_scope':
+      return {
+        chapter: {
+          id: '21000000-0000-0000-0000-000000000003',
+          sort_order: 3,
+          stable_code: 'chapter-3',
+          status: 'published',
+          title: '色彩表示',
+        },
+        chapter_banks: [
+          {
+            id: '26000000-0000-0000-0000-000000000003',
+            kind: 'CR',
+            question_count: 1,
+            questions: [
+              {
+                id: '25000000-0000-0000-0000-000000003001',
+                sort_order: 1,
+                stable_code: 'CR3001',
+                status: 'published',
+                title: '第三章總測驗題目',
+                version: 1,
+              },
+            ],
+            sort_order: 1,
+            stable_code: 'CR-chapter-3',
+            status: 'published',
+            title: '第三章總測驗',
+          },
+        ],
+        drafts: [
+          {
+            draft_id: '74000000-0000-4000-8000-000000000311',
+            entity_id: '24000000-0000-0000-0000-000000000311',
+            entity_type: 'review_card',
+            revision: 2,
+            stable_code: 'RC3101',
+            updated_at: time,
+          },
+        ],
+        outcome: 'ok',
+        request_id: id,
+        sections: [
+          {
+            banks: [],
+            id: '22000000-0000-0000-0000-000000000031',
+            sort_order: 1,
+            stable_code: 'section-3-1',
+            status: 'published',
+            subtopics: [
+              {
+                id: '23000000-0000-0000-0000-000000000311',
+                review_card_count: 1,
+                review_cards: [
+                  {
+                    id: '24000000-0000-0000-0000-000000000311',
+                    sort_order: 1,
+                    stable_code: 'RC3101',
+                    status: 'published',
+                    title: '色彩三要素',
+                    version: 1,
+                  },
+                ],
+                sort_order: 1,
+                stable_code: 'subtopic-3-1-1',
+                status: 'published',
+                title: '色彩三要素',
+              },
+            ],
+            title: '3-1 色彩表示',
+          },
+        ],
+      };
+    case 'admin_read_content_editor_state':
+      return {
+        current: {
+          entity_id: '24000000-0000-0000-0000-000000000311',
+          entity_type: 'review_card',
+          payload: {
+            content: '以色相、明度和彩度描述色彩。',
+            group_label: '3-1',
+            sort_order: 1,
+            subtopic_id: '23000000-0000-0000-0000-000000000311',
+            title: '色彩三要素',
+          },
+          stable_code: 'RC3101',
+          status: 'published',
+          version: 1,
+        },
+        draft: {
+          base_version: 1,
+          draft_id: '74000000-0000-4000-8000-000000000311',
+          entity_id: '24000000-0000-0000-0000-000000000311',
+          entity_type: 'review_card',
+          payload: {
+            content: '以色相、明度和彩度描述色彩。',
+            group_label: '3-1',
+            sort_order: 1,
+            subtopic_id: '23000000-0000-0000-0000-000000000311',
+            title: '色彩三要素',
+          },
+          revision: 2,
+          source: 'manual',
+          stable_code: 'RC3101',
+          updated_at: time,
+        },
+        outcome: 'ok',
+        request_id: id,
+      };
     case 'admin_get_teacher':
       return {
         outcome: 'ok',

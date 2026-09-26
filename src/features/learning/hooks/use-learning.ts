@@ -35,8 +35,8 @@ export const learningKeys = {
     ['learning', 'review-media', ...assetPaths] as const,
 };
 
-export const REVIEW_MEDIA_STALE_TIME_MS = 50 * 60 * 1000;
-export const REVIEW_MEDIA_GC_TIME_MS = 60 * 60 * 1000;
+export const REVIEW_MEDIA_STALE_TIME_MS = 10 * 60 * 1000;
+export const REVIEW_MEDIA_GC_TIME_MS = 15 * 60 * 1000;
 export const REVIEW_MEDIA_MAX_RETRIES = 3;
 const REVIEW_MEDIA_INITIAL_RETRY_DELAY_MS = 500;
 const REVIEW_MEDIA_MAX_RETRY_DELAY_MS = 4_000;

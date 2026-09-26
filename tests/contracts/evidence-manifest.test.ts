@@ -108,7 +108,7 @@ describe('acceptance metadata', () => {
     );
 
     const acceptanceIds = countAcceptanceIds(markdown);
-    expect(EXPECTED_ACCEPTANCE_COUNT).toBe(138);
+    expect(EXPECTED_ACCEPTANCE_COUNT).toBe(143);
     expect(phaseZeroAcceptanceIds).toHaveLength(38);
     expect(acceptanceIds).toHaveLength(EXPECTED_ACCEPTANCE_COUNT);
     expect(acceptanceIds).toEqual(

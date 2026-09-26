@@ -478,7 +478,7 @@ UI 與流程 criterion 至少包含 S 或 Q/V，不能只有 L。安全／資料
 
 ---
 
-# F. 教師內容、匯入、分析與匯出
+# F. 內容工作平台、教師分析、匯入與匯出
 
 ## AC-TCH-001：Teacher Dashboard 正確統計 — Blocking
 
@@ -496,7 +496,7 @@ UI 與流程 criterion 至少包含 S 或 Q/V，不能只有 L。安全／資料
 
 **要求**
 
-- Draft 可新增／編輯。
+- Privileged Admin 可新增／編輯 Draft；既有 retired Teacher authoring route 不重新開放。
 - 發布後修改正解建立新 version；歷史 session 仍顯示舊 version 結果。
 - Student 看不到 draft。
 
@@ -507,7 +507,7 @@ UI 與流程 criterion 至少包含 S 或 Q/V，不能只有 L。安全／資料
 **要求**
 
 - 點擊後取得可被 Excel／LibreOffice／SheetJS 打開的 `.xlsx`。
-- 含三個規定工作表與必要欄位。
+- 含 Course／Chapter／Section／Subtopic／RC／QB／CR／LT／Media 規定工作表與必要欄位。
 - 不得只顯示「下載成功」Toast。
 
 **證據**：Q、L（程式讀檔驗證 sheet names）、檔案 artifact。
@@ -582,6 +582,61 @@ UI 與流程 criterion 至少包含 S 或 Q/V，不能只有 L。安全／資料
 - 產生 audit log。
 
 **證據**：Q、D、N、檔案 artifact。
+
+## AC-TCH-011：Admin Content Studio access 與 A／C 模式 — Blocking
+
+**要求**
+
+- `/admin/content` 位於既有 Admin identity、有效 MFA privileged session 與 `AdminShell` 內。
+- 預設 A 三欄編輯工作區；同頁可切換 C 全部內容清單，並保留可合理保留的 scope、filter 與 selected content。
+- Anonymous／Student／Teacher 直接 route 或 RPC 都被拒絕；不得重新開放 `/teacher/content` 或 `/teacher/import`。
+- 375×812、812×375、1280×720 無水平 overflow，且 loading／empty／error／conflict 狀態可操作。
+
+**證據**：Q、D、N、T。
+
+## AC-TCH-012：Curriculum、Bank、RC、Question canonical authoring — Blocking
+
+**要求**
+
+- Admin 可新增／修改／排序 Course、Chapter、Section、Subtopic、Review Card、Assessment Bank 與 Question draft。
+- QB／LT 只能屬於 Section bank；CR 只能屬於 Chapter bank；每道 current Question 恰屬一個 Bank，三種 bank 不 fallback／混抽。
+- Stable code 首次發布後不可修改；已被發布或歷史引用的內容不可 hard delete。
+- Duplicate code、parent mismatch、cross-kind move、invalid order 與 unsafe text 由 server 拒絕，無 partial mutation。
+
+**證據**：Q、D、N、L。
+
+## AC-TCH-013：Persistent draft、發布歷史與 rollback — Blocking
+
+**要求**
+
+- Save draft 使用 expected revision；stale revision 明確 conflict，不做 last-write-wins。
+- Draft 不改 current student projection；publish／archive／rollback 皆產生 immutable version、event、audit 與 idempotent receipt。
+- Rollback 經同一 validator 建立新 current version，不覆寫或刪除舊版本。
+- Client 不能指定或降低 progression impact；結果符合 AC-PROG-014／015。
+
+**證據**：Q、D、N、L。
+
+## AC-TCH-014：Trusted media processing 與 private delivery — Blocking
+
+**要求**
+
+- 只接受 JPG／PNG／WebP master；SVG、偽造 MIME、超過 2 MiB／4096px 或缺 alt 被拒絕。
+- Trusted processor 從 master 直接產生 320／800／必要 1200 WebP derivatives，保存 source/output hashes、dimensions、bytes 與 processor version；browser preview 不算正式 manifest。
+- Quarantine／master／old versions 對 Student／Teacher 不可讀；Student 只取得 current published content 的短期 signed URLs。
+- Object path immutable、禁止 overwrite；失敗只清理該 run，且不刪除其他 run 或歷史 object。
+
+**證據**：Q、D、N、L、T。
+
+## AC-TCH-015：第三章 Content Readiness authority — Blocking
+
+**要求**
+
+- 唯一報告列出第三章所有 hierarchy、RC、QB／CR／LT bank、Question、draft/current version、impact、source digest 與 media manifest。
+- Duplicate stable code、invalid parent/scope、bank fallback、unresolved import warning/error、stale media、draft 冒充 published、answer/internal-path leakage 全為 0。
+- 報告綁定 repository SHA、migration head 與 package digest；Local 結果不得冒充 Staging。
+- 通過只能宣稱 `Phase 2 Content Studio + Chapter 3 Local slice PASS`；其他章與 Production 未完成。
+
+**證據**：Q、D、N、L、T、S。
 
 ---
 
@@ -691,7 +746,7 @@ UI 與流程 criterion 至少包含 S 或 Q/V，不能只有 L。安全／資料
 3. Incorrect → explanation → next question。
 4. Timeout flow。
 5. Shop purchase/equip。
-6. Teacher import → publish → student visibility。
+6. Admin content package import → draft → publish → student visibility。
 
 每組至少 5 張有序截圖，或 video + ≥3 關鍵截圖 + trace。
 
@@ -1198,7 +1253,7 @@ versions；compatible 版本可沿用明確連結的舊 completion，requires-re
 
 ## AC-PROG-004：Content version 變更不竄改歷史 — Blocking
 
-**前置**：學生已有 old-version completed session，教師發布 current question/review version。
+**前置**：學生已有 old-version completed session，privileged Admin 發布 current question/review version。
 
 **操作**：讀歷史 result 與 current progress denominator。
 
@@ -1244,9 +1299,10 @@ versions；compatible 版本可沿用明確連結的舊 completion，requires-re
 **操作**：檢查 learning-path response、React Query cache、DOM、source map、Storage
 request，並以後兩張 ID 直接查 RPC/table/object。
 
-**預期**：所有節點 metadata 可見；只有 completed／current available 或該 user
-合法 `grandfather_exempt` 的卡可取得正文與 media。Locked 卡的 content、asset
-path、signed URL 都不存在；直接讀取被 RLS／guarded projection 拒絕且不洩漏存在性。
+**預期**：所有節點 metadata 可見；只有 current-version completed 或 current
+available card 可取得正文與 media。Locked 卡的 content、asset path、signed URL
+都不存在；直接讀取被 RLS／guarded projection 拒絕且不洩漏存在性。新增 required
+card 沒有選讀或豁免例外。
 
 **證據**：D、N、L、T。
 
@@ -1338,25 +1394,21 @@ current-version mastered。禁止標 compatible 的 field diff 由 server 拒絕
 
 **證據**：D、N、L、Q。
 
-## AC-PROG-015：Inserted card 的 finalized-challenge 豁免 cohort — Blocking
+## AC-PROG-015：Inserted required card 對所有 learner 生效 — Blocking
 
-**前置**：在既有 section 插入新 required card；四位學生分別為 cutoff 前 finalized
-低分 section challenge、cutoff 前只完成 review、cutoff 後 finalized challenge，
-以及 cutoff 後建立的新學生。另準備 publish/finalize concurrency。
+**前置**：在既有 section 插入新 required card；四位學生分別已有低分 finalized
+section challenge、只完成 review、已 mastered section，以及發布後建立的新帳號。
 
 **操作**：發布新卡，讀取四人的 learning path／card content／required denominator，
-嘗試 client/Admin竄改 exemption、timestamp 與 event order，並讓豁免者選讀及明確
-完成新卡。
+嘗試由 client/Admin 竄改 exemption、timestamp、帳號 cohort 或 event order，並讓
+學生依正式順序完成新卡。
 
-**預期**：只有 cutoff 前已 committed server-valid finalized challenge 的學生取得
-`grandfather_exempt`，分數與 80% mastery 不影響資格；其既有 progression 不回鎖，
-新卡不進 required denominator／primary next action，且未明確完成前不顯示
-completed。自願明確提交後只建立一筆正常 completion，不改變原有 gate。其餘
-三人皆依 sort order 必讀，cutoff 後不能追溯豁免。Publish/finalize 由同 section
-lock 序列化並分配 server-only monotonic order；只有
-`finalize.section_event_order < publication.publication_cutoff_order` 豁免，
-timestamp 不獨立決定。等號、缺 order 或無法證明先後時不豁免；
-client/Admin 無法切換。歷史 progress／attempt／reward 不變。
+**預期**：四位學生的 current-required set 都包含新卡，且不存在
+`grandfather_exempt`、cutoff、event-order threshold 或人工豁免；舊 completion／
+attempt／reward facts 不刪改，但 current denominator、percentage、blocker 與 primary
+`next_action` 立即重算，百分比可以下降，缺少新卡 completion 時 challenge gate
+重新阻擋。新卡只有在 current available 時才送達正文／media；明確提交後建立一筆
+idempotent completion 並恢復相應 gate。Client/Admin 無法切換或偽造豁免。
 
 **證據**：D、N、L、Q、T。
 

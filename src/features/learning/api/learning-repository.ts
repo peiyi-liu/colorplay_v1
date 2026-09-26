@@ -76,6 +76,39 @@ const parsePrivateReviewMediaAssetPath = (
 export const isDirectReviewMediaAssetPath = (assetPath: string): boolean =>
   assetPath.startsWith('/') || assetPath.startsWith('https://');
 
+const trustedMediaPrefix = 'content-media:';
+
+const parseTrustedMediaAssetId = (assetPath: string): string | null => {
+  if (!assetPath.startsWith(trustedMediaPrefix)) return null;
+  const parsed = uuidString.safeParse(
+    assetPath.slice(trustedMediaPrefix.length),
+  );
+  if (!parsed.success) throw new LearningError('INVALID_RESPONSE');
+  return parsed.data;
+};
+
+const trustedMediaResolutionSchema = z.object({
+  action: z.literal('resolve'),
+  assets: z.array(
+    z.object({
+      asset_id: uuidString,
+      height: z.number().int().positive(),
+      variants: z.array(
+        z.object({
+          height: z.number().int().positive(),
+          kind: z.enum(['thumbnail', 'reading', 'color_critical']),
+          mime_type: z.literal('image/webp'),
+          url: z.url(),
+          width: z.number().int().positive(),
+        }),
+      ),
+      width: z.number().int().positive(),
+    }),
+  ),
+  expires_at: z.iso.datetime(),
+  outcome: z.literal('ok'),
+});
+
 const chapterReviewSchema = z.array(
   z.object({
     id: uuidString,
@@ -179,7 +212,11 @@ export type ReviewCardView = Readonly<{
 
 export type ReviewMediaResolution = Readonly<{
   assetPath: string;
+  height?: number;
   resolvedUrl: string | null;
+  sizes?: string;
+  srcSet?: string;
+  width?: number;
 }>;
 
 export type ChapterReviewSubtopic = Readonly<{
@@ -405,12 +442,18 @@ export function createLearningRepository(
     },
 
     async resolveReviewMedia(assetPaths) {
-      const resolvedUrls = new Map<string, string | null>();
+      const resolutions = new Map<string, ReviewMediaResolution>();
       const pathsByBucket = new Map<string, Set<string>>();
+      const trustedAssetPaths = new Map<string, string>();
 
       for (const assetPath of assetPaths) {
         if (isDirectReviewMediaAssetPath(assetPath)) {
-          resolvedUrls.set(assetPath, assetPath);
+          resolutions.set(assetPath, { assetPath, resolvedUrl: assetPath });
+          continue;
+        }
+        const trustedAssetId = parseTrustedMediaAssetId(assetPath);
+        if (trustedAssetId !== null) {
+          trustedAssetPaths.set(trustedAssetId, assetPath);
           continue;
         }
         const { bucket, objectPath } =
@@ -432,18 +475,62 @@ export function createLearningRepository(
             data.map((item) => [item.path, item.error ? null : item.signedUrl]),
           );
           for (const objectPath of paths) {
-            resolvedUrls.set(
-              `${bucket}/${objectPath}`,
-              signedUrlByPath.get(objectPath) ?? null,
-            );
+            const assetPath = `${bucket}/${objectPath}`;
+            resolutions.set(assetPath, {
+              assetPath,
+              resolvedUrl: signedUrlByPath.get(objectPath) ?? null,
+            });
           }
         }),
       );
 
-      return assetPaths.map((assetPath) => ({
-        assetPath,
-        resolvedUrl: resolvedUrls.get(assetPath) ?? null,
-      }));
+      const trustedAssetIds = [...trustedAssetPaths.keys()];
+      for (let offset = 0; offset < trustedAssetIds.length; offset += 6) {
+        const assetIds = trustedAssetIds.slice(offset, offset + 6);
+        const invocation = (await client.functions.invoke('content-media', {
+          body: { action: 'resolve', assetIds },
+        })) as Readonly<{ data: unknown; error: unknown }>;
+        if (invocation.error) throw new LearningError('UNAVAILABLE');
+        const payload = parseWith(
+          trustedMediaResolutionSchema,
+          invocation.data,
+        );
+        const returnedIds = new Set(
+          payload.assets.map((asset) => asset.asset_id),
+        );
+        if (assetIds.some((assetId) => !returnedIds.has(assetId))) {
+          throw new LearningError('INVALID_RESPONSE');
+        }
+        for (const asset of payload.assets) {
+          const assetPath = trustedAssetPaths.get(asset.asset_id);
+          if (assetPath === undefined)
+            throw new LearningError('INVALID_RESPONSE');
+          const variants = [...asset.variants].sort(
+            (left, right) => left.width - right.width,
+          );
+          const fallback =
+            variants.find((variant) => variant.kind === 'color_critical') ??
+            variants.find((variant) => variant.kind === 'reading') ??
+            variants.at(-1);
+          if (fallback === undefined)
+            throw new LearningError('INVALID_RESPONSE');
+          resolutions.set(assetPath, {
+            assetPath,
+            height: asset.height,
+            resolvedUrl: fallback.url,
+            sizes: '(max-width: 640px) 100vw, 800px',
+            srcSet: variants
+              .map((variant) => `${variant.url} ${String(variant.width)}w`)
+              .join(', '),
+            width: asset.width,
+          });
+        }
+      }
+
+      return assetPaths.map(
+        (assetPath) =>
+          resolutions.get(assetPath) ?? { assetPath, resolvedUrl: null },
+      );
     },
 
     async startRemediation(input) {

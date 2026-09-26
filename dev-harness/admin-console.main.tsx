@@ -22,6 +22,7 @@ import { AdminDataDetailPage } from '../src/features/admin/pages/admin-data-deta
 import { AdminMfaEnrollPage } from '../src/features/admin/pages/admin-mfa-enroll-page';
 import { AdminMfaChallengePage } from '../src/features/admin/pages/admin-mfa-challenge-page';
 import { AdminInvitationAcceptPage } from '../src/features/admin/pages/admin-invitation-accept-page';
+import { AdminContentPage } from '../src/features/content-studio/pages/admin-content-page';
 import '../src/styles/tokens.css';
 import '../src/styles/globals.css';
 import '../src/styles/admin-console.css';
@@ -64,6 +65,7 @@ createRoot(root).render(
               <Route element={<AdminShell />}>
                 <Route path="/admin" element={<AdminOverviewPage />} />
                 <Route path="/admin/teachers" element={<AdminTeachersPage />} />
+                <Route path="/admin/content" element={<AdminContentPage />} />
                 <Route
                   path="/admin/teachers/:teacherId"
                   element={<AdminTeacherDetailPage />}

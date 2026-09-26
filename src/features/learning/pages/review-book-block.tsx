@@ -22,9 +22,13 @@ export type ReaderBookBlock =
   | Readonly<{
       altText: string;
       assetPath: string | null;
+      height?: number;
       key: string;
       kind: 'media';
       loading: boolean;
+      sizes?: string;
+      srcSet?: string;
+      width?: number;
     }>;
 
 export function ReaderBookBlockContent({
@@ -74,9 +78,13 @@ export function ReaderBookBlockContent({
       altText={block.altText}
       assetPath={block.assetPath}
       blockKey={block.key}
+      {...(block.height === undefined ? {} : { height: block.height })}
       key={`${block.key}:${block.assetPath ?? 'unavailable'}`}
       loading={block.loading}
       onLoad={onMediaLoad}
+      {...(block.sizes === undefined ? {} : { sizes: block.sizes })}
+      {...(block.srcSet === undefined ? {} : { srcSet: block.srcSet })}
+      {...(block.width === undefined ? {} : { width: block.width })}
     />
   );
 }

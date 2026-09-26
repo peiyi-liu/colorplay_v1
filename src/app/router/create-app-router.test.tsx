@@ -231,7 +231,7 @@ describe('createAppRouter', () => {
     });
   });
 
-  it.each(['/admin/teachers', '/admin/teachers/:teacherId'])(
+  it.each(['/admin/teachers', '/admin/teachers/:teacherId', '/admin/content'])(
     'keeps %s below all existing Admin guards',
     (path) => {
       interface RouteNode {

@@ -1893,3 +1893,131 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 同輪 remediation 已補上 run-scoped AbortSignal、關閉瀏覽器後等待 pending operation 收斂、獨立 150 秒 cleanup deadline 與全新的 cleanup client／signal；setup checkpoint 維持 fail-closed，failure／cleanup／finished checkpoint 改為 best-effort，寫檔失敗不再阻止清理。主測試與 helpers 均低於 500 行，沒有產品程式、schema、RLS、部署或 Hosted state 變更。
 - RED→GREEN focused contracts 3 files／17 tests PASS；完整 lint、typecheck、scoped Prettier／ESLint、`git diff --check` PASS。Playwright 正確列出 capacity case；缺少確認字串的 Chromium dry-run 為 1 skipped，未發出 Hosted request。未執行 Staging 1+39、未建立 synthetic 帳號、未碰 Production。
 - 下一步只提交、push 並建立 Draft PR targeting `staging`；不轉 Ready、不合併、不 deploy、不自動重跑。任何 CI rerun、merge 或新的 1+39 都需要後續獨立 owner gate。
+
+## 2026-09-26 [Codex] — 第三章 Phase 2 範圍與版本進度規則拍板
+
+- 做了什麼：Owner 將目前 Phase 2 delivery lane 縮限為第三章：2A 處理 RC／QB／CR canonical import，2B-Ch3 處理 LT、版本發布／封存／rollback、媒體完整性與第三章 readiness。歷史完成／作答／獎勵 facts 永久保留，但 Current Progress 只認 current published versions；錯字、排版與無語意 accessibility 修正保留進度，新增 required content 或語意變更要求 recompletion／requalification。Owner 明確取消先前 inserted-card `finalized_before_publish` grandfather 豁免；不再建立 cutoff／section event order／人工 exemption 機制。第 1、2、4、5、6 章移出本輪，第三章通過只能稱 `Phase 2 Chapter 3 slice PASS`。
+- 下一步：Owner 審閱並明確核准 `docs/superpowers/plans/2026-09-26-phase-2-chapter-3.md` 後，才從 exact protected `staging` 建立 PR 1 implementation worktree；目前不開始產品或 DB 實作。
+- Blocker／待決策：implementation plan 尚待 Owner 核准；Local Supabase exclusive window、Google Sheet／Storage／Hosted mutation、push／merge／deploy 均未授權。
+- 相關檔案／commit：`CONTEXT.md`、`docs/roadmap-colorplay-next.md`、`spec/01`、`spec/03`、`spec/05`、`spec/06`、`spec/07`、`acceptance/ACCEPTANCE_CRITERIA.md`、`docs/superpowers/specs/2026-09-26-phase-2-chapter-3-rebaseline-decision.md`、`docs/superpowers/plans/2026-09-26-phase-2-chapter-3.md`、三份歷史 contract／plan 的 supersession note；尚未 commit。
+
+## 2026-09-26 [Codex] — Content Studio 完整書面設計待 Owner 審閱
+
+- Owner 核准通用架構／第三章先行與完整版本，不採精簡版：Admin `/admin/content` 管理所有教學內容結構、RC、section-scoped QB／LT、chapter-scoped CR、共用 Question、XLSX／CSV＋圖片 ZIP、持久 draft、發布影響、版本歷史／rollback、media 衍生版本與 readiness。其他章後續應以輸入內容為主，不重建相同平台功能。
+- 正式設計 `docs/superpowers/specs/2026-09-26-colorplay-content-studio-design.md` 與領域詞彙已提交為 `b994e83`。Prettier、placeholder scan 與 `git diff --check` PASS；隔離 worktree 的 `pnpm exec` 曾因缺少本地 `node_modules` 嘗試 registry restore 並遇 DNS 失敗，改用主 checkout 既有 Prettier 完成檢查，未改依賴或 lockfile。
+- 下一個 gate：Owner 審閱並核准實際書面規格；之後先建立不接 DB／Storage 的隔離 HTML 互動原型，Owner 核准原型後才撰寫 implementation plan。尚未開始產品 code、migration、Local DB、Storage、Hosted mutation、push、merge或部署；既有舊候選 plan 明確排除 CMS，後續必須重寫，不能直接執行。
+
+## 2026-09-26 [Codex] — Content Studio HTML 原型方向核准
+
+- Owner 核准 A「三欄工作區」作 `/admin/content` 預設主介面，並納入 C「全部內容」作同頁清單／批次管理模式；B「引導式流程」不進正式實作。A／C 需共用同一 Content Studio、route、資料與權限邊界，不得拆成第二套 CMS。
+- Throwaway primary source 位於 branch `codex/content-studio-prototype`、verdict commit `36573cf`；原型使用假資料、不接 Supabase，已驗證匯入三步驟、A→B→C 切換、資料表選取，以及核准後的 A editor ↔ C all-content 切換。正式程式必須重寫並補齊授權、錯誤狀態與測試，不得直接搬用 prototype code。
+- 下一步：依已核准書面規格與 A＋C UI verdict 重寫 bounded Phase 2 Chapter 3 implementation plan；仍不得開始產品 code、migration、Local／Hosted DB、Storage、push、merge或部署，直到新 plan 經 Owner 核准。
+
+## 2026-09-26 [Codex] — Phase 2 Content Studio implementation plan candidate
+
+- 舊四 PR plan 已被完整重寫為七個 bounded task PR：canonical bank/draft、publication/progress impact、trusted media、unified import、Admin A＋C manual authoring、operator workflows、Chapter 3 readiness/Local gate。新計畫明確保留 `/teacher/content`／`/teacher/import` retirement，不把新 authoring 塞回 analytics repository，也禁止直接升格 throwaway prototype code。
+- 因 GitHub `staging` merge 會自動觸發 Vercel，task PR 改為依序進 `codex/phase2-ch3-integration`；完成 Local gate 後才建立唯一 integration → `staging` final PR，避免七次半成品 Staging deploy。所有 branch push／PR／merge、Hosted migration／Storage／content mutation與部署仍需後續獨立授權。
+- `origin/staging` 於 2026-09-26 唯讀重驗仍為 `9c42ba3d9e6552e4c135d3d52efad783dc526f57`；plan 共 273 行，所有引用 AC IDs 與 pgTAP 074–077 號碼空間已核對。下一個 gate 是 Owner 一次核准本 plan；核准後只先整理 docs-only rebaseline/AC commit 與 clean implementation worktree，不立即碰 Hosted。
+
+## 2026-09-26 [Codex] — Phase 2 Chapter 3 implementation plan approved
+
+- Owner 已核准 `docs/superpowers/plans/2026-09-26-phase-2-chapter-3.md`。本次授權涵蓋依七個 bounded tasks 執行 Local implementation；先完成 docs-only rebaseline，再從 exact protected `staging@9c42ba3d9e6552e4c135d3d52efad783dc526f57` 加已審文件建立乾淨的 `codex/phase2-ch3-integration` worktree。
+- TDD seam 固定為 ContentAuthoring、ContentPublication、ContentMedia、ContentImport、ContentReadiness；PR 1 從 canonical curriculum／assessment bank／persistent draft 的失敗測試開始。不得把 throwaway prototype 直接升格為產品 code，也不得復活 `/teacher/content` 或 `/teacher/import`。
+- 這次核准不含 branch push／PR／merge、Hosted migration／Storage／content mutation、Vercel deploy 或任何 Production 操作。因 `staging` merge 會自動部署，只有全部 Local gate 完成後的一個 integration → `staging` final PR 能進入後續獨立 owner gate。
+
+## 2026-09-26 [Codex] — PR 1 foundation first vertical slice
+
+- Docs-only rebaseline 已提交為 `cb99b7b`；乾淨 integration worktree 建於同一 SHA，實作 branch 為 `codex/phase2-ch3-pr1-foundation`。主 checkout 的既有 dirty WIP 未帶入，且未 push／PR／merge／deploy。
+- 第一個 TDD slice 先以缺少 repository 與 schema 精確 RED，再建立 explicit `assessment_banks`、Question `bank_id`、private `content_drafts`／request receipts，以及 `admin_save_content_draft` expected-revision／idempotency command。QB／LT 固定 Section，CR 固定 Chapter，legacy question 保留 null bank；private helper 不暴露為 public RPC。
+- 首次 fresh Local reset 找到「migration 早於 seed，seeded question 尚無 bank」缺陷；修正為相容 trigger 依實際 taxonomy 原子建立唯一 bank 後，完整 migration＋三份 content seeds 從空 DB 成功。Focused pgTAP 074 為 24／24 PASS；repository 6／6、相關 contract 合計 11／11、focused ESLint、完整 typecheck、generated DB types exact-diff 與 `git diff --check` PASS。
+- PR 1 尚未完成：下一步繼續用 RED→GREEN 補齊 `listScope`、`readEditorState`、`validateDraft`、`previewDraft`，以及 duplicate code／parent mismatch／draft validation cases；完成後才做本 task 唯一一輪 review。Local reset 已執行並只重建測試資料；Hosted／Production 未觸碰。
+
+## 2026-09-26 [Codex] — PR 1 foundation implementation candidate complete
+
+- ContentAuthoring 五個固定 seams 已完成：`listScope`、`readEditorState`、`saveDraft`、`validateDraft`、`previewDraft`。新增 Admin-only safe projections、question duration constraint 與 deterministic server validator；student-safe preview 不含正解、解析、bank identity 或內部 media path。所有 RPC 共用 typed permission／revision denial，client 不自行重試或把 denial 誤判成壞資料。
+- RED→GREEN 補齊 duplicate stable code、parent／bank scope、cross-kind move、published stable-code rename、invalid sort、question options／唯一正解、unsafe text、stale revision、idempotent replay與非 Admin denial。Fresh Local reset 已從零成功套用三支 20260926 migrations 與既有三份 content seeds；pgTAP 074 為 64／64 PASS，repository＋既有 Admin／Teacher Content regression 共 23／23 PASS。
+- Generated `src/types/database.ts` 與 fresh Local schema exact-diff PASS；database type greps、完整 typecheck、focused ESLint、TS Prettier、shell syntax 與 `git diff --check` 全綠。下一步只做 PR 1 唯一一輪 Standards／Spec／Security review；修正同輪 findings 後才封版本地 commit，接著進 PR 2。未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰。
+
+## 2026-09-26 [Codex] — PR 1 review remediation complete
+
+- 唯一一輪 Standards／Spec／Security review 共回報 Standards 7 個 hard＋1 個 judgement、Spec 5 個、Security 2 個 non-blocking；重疊後的實質缺口已在同輪全部修正：existing-entity `base_version`、creator/version provenance、20 秒預設、canonical Question stable code、RC media／長度、option key／boolean、Student／Teacher denial、session-bound/concurrent idempotency，以及 scope list 的 RC／Question／draft identities。Repeated Switches judgement 保留為 bounded entity dispatch；目前 entity 集合固定，抽象化反而會跨 migration 模糊 SQL 驗證邊界。
+- Request receipt 現在保存 issuing `auth_session_id`，跨 session 相同 request ID fail closed；transaction advisory lock 讓相同 actor/request 的並發 retry 序列化後回原 receipt。List projection 只回 identity／status／counts／draft metadata，不回 payload、正解或內部 path；preview 仍剝除正解、解析、bank identity與 media path。
+- Remediation RED 先重現 schema／duration／list 缺口；最終 fresh Local reset 完整套用所有 migrations 與三份 content seeds。pgTAP 074 擴充為 80／80 PASS，repository＋既有 Admin／Teacher Content regression 23／23 PASS；generated DB types exact-diff、database type contract、完整 typecheck、focused ESLint／Prettier、shell syntax 與 `git diff --check` PASS。未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰；下一步封版本地 remediation commit，PR 1 即可完成並進 PR 2 RED。
+
+## 2026-09-26 [Codex] — PR 2 publication／版本歷史／Current Progress candidate complete
+
+- `ContentPublication` seam 與發布 migration 已完成：Admin 需 MFA 才能 publish／archive／rollback／讀 history；版本與事件 append-only，request receipt 綁定 session，舊 `publish_review_card`、`archive_review_card`、`upsert_question`、`commit_content_import` 等 authenticated 直寫路徑已撤權。發布影響固定為 `compatible`、`requires_recompletion`、`requires_requalification`，不提供 grandfather／cutoff／人工豁免。
+- RC Current Progress 只沿 immutable compatible lineage 繼承；必要內容或語意變更要求重做。Chapter qualification fingerprint 改讀 current published CR bank／version／settings，同時在既有 v1＋空設定基線保持原 hash，migration 本身不會誤降舊進度。QB／LT／CR／mastery／Live／classroom progress 的 current selector 已切到 published canonical bank；歷史 session facts 不改寫。
+- Fresh Local reset 從空 DB 成功；16 份相關 pgTAP 共 449／449 PASS（其中 075 為 54／54），publication repository 2 files／15 tests PASS，generated DB types exact-diff、database type contract、typecheck、focused ESLint／Prettier 與 `git diff --check` PASS。唯讀比對確認第三章既有 fingerprint 等於新函式結果。
+- 唯一一輪 Standards／Spec／Security review 的 bypass、duplicate publish、impact vocabulary、canonical selector、fresh-seed baseline、scope divergence、history nullable ID、audit、MFA/session、append-only delete 與 fingerprint regression findings 已在同輪修正。文字 typo 尚不能由 DB 自動辨識語意，現階段 fail closed；PR 6 需提供受審核的 editorial classification，而不是在 client 自行宣告 compatible。
+- 尚未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰。下一步：PR 3 trusted media，建立 quarantine、Deno/WASM 壓縮衍生檔、immutable manifest、signed URL／`srcset` 與完整性測試。
+
+## 2026-09-26 [Codex] — PR 3 trusted media candidate complete
+
+- `ContentMedia` seam 已完成：Admin browser 只取得單一 run-scoped quarantine signed upload；Edge Function 重新驗 JWT／Admin session／MFA，依 magic bytes 驗 JPG／PNG／WebP，以 pin 住的 `@imagemagick/magick-wasm@0.0.43` 修正 EXIF、保留 alpha、輸出 320／800 WebP，color-critical 另有 1200 px、250 KiB、SSIM distortion ≤ 0.01 gate。最終 Storage key 由 server 產生且禁止 overwrite；verified manifest／variants append-only。
+- 發布內容只保存 `content-media:<asset UUID>`，Student 端經 access-checked Edge resolve 取得 15 分鐘 signed URLs；UI 使用 `srcset`／`sizes`／固有尺寸，query cache 已縮到簽名有效期內。舊 `review-card-media` 路徑只保留既有內容相容性，新 draft 不得偽造 legacy path。
+- 驗證：processor 4／4（含 JPG／PNG alpha／WebP、EXIF、determinism、MIME spoof／SVG／oversize）、媒體 pgTAP 32／32、前端 focused 29 tests PASS；Deno 2.5 typecheck 與 Supabase Edge runtime v1.74.3 bundle PASS，generated DB types、TypeScript typecheck、focused ESLint、`git diff --check` PASS。本機 `supabase functions serve` 連既有 `admin-command` 控制組也同樣回 `failed to determine entrypoint`，判定為目前 CLI/runtime bootstrap 問題，不是新 Function 專屬失敗；Hosted deploy 前仍需 exact bundle／invoke gate。
+- 唯一一輪 code review 發現 browser 只驗 run ID、未驗 receipt request ID／semantic role；同輪已改為三者全部一致才接受。完整 DB regression 暫有 5 組舊合約紅燈：026 缺新 version provenance、027／028／031 仍要求已撤權 Teacher direct write、049 仍建立 legacy Question＋current bank。不得恢復舊權限；PR 4 unified import 需正式更新／取代這些舊測試，Phase gate 前全綠。
+- 尚未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰。下一步：封存 PR 3 本地 commit，進 PR 4 unified import 與 legacy contract retirement。
+
+## 2026-09-26 [Codex] — PR 4 unified content import candidate complete
+
+- `ContentImport` seam 已完成：瀏覽器可預覽 XLSX；可信任 Edge Function 會從 private quarantine 重新解析 XLSX 或 CSV＋圖片 ZIP，拒絕公式、HTML／data URL／remote URL、重複 stable code、路徑穿越、MIME／副檔名不符，以及套件／展開容量／壓縮比／檔案數／目錄深度超限。Import 只建立 persistent drafts，永不直接 publish、archive 或 hard delete。
+- Preview 固定輸出 create／update／no-op／warning／error；update 必須明確確認，commit 會重驗 entity current version、base version 與 draft revision，stale preview fail closed。run／receipt 綁定 Admin JWT、MFA session、request ID 與 source digest；失敗 cleanup 和 terminal state 均留下 structured audit。
+- `pnpm content:import` 已改為只把既有 Google Sheet compatibility source 建成可審核的第三章 package，不再直接改 seed／DB；下載範本涵蓋 Course／Chapter／Section／Subtopic／RC／QB／CR／LT／Question／Media。既有 026／027／028／031／049 測試同步改為驗證舊 Teacher direct-write retirement，不恢復已撤權的舊路徑。
+- Fresh Local reset 從空 DB 成功；pgTAP 077 為 44／44 PASS，browser parser／repository／template／package contracts 10／10 PASS，database type contract、完整 typecheck、focused ESLint 與 `git diff --check` PASS。Deno parser／typecheck 已在本 task 候選階段通過；本次最終重跑因目前 shell 沒有獨立 `deno` executable，未將環境缺工具誤報為產品失敗。
+- 唯一一輪 code review 的公式 metadata、nested XLSX zip bomb、payload canonicalization、preview denial、stale preview race、MIME／extension mismatch 與 no-op comparison findings 已在同輪修正。尚未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰；下一步：提交 PR 4，進 PR 5 Admin Content Studio A＋C manual authoring UI。
+
+## 2026-09-26 [Codex] — PR 5 Admin Content Studio A＋C manual authoring candidate complete
+
+- `/admin/content` 已置於既有 `RequireAdminIdentity`、`RequirePrivilegedSession` 與 `AdminShell` 下。A 工作區提供 hierarchy、scoped list、editor 三欄；C 模式提供全部內容搜尋、類型／狀態篩選與批次選取，A／C 保留目前選取。375×812 與 812×375 改為可捲動單欄，1280×720 維持三欄。
+- Manual Editor 以 RHF＋Zod 管理 Course／Chapter／Section／Subtopic、Review Card、QB／CR／LT Assessment Bank 與共用 Question；既有 published stable code readonly。所有儲存只呼叫 `admin_save_content_draft`，並提供 server validation、student-safe preview、unsaved-change guard、stale revision 重新載入與可操作的 loading／empty／denial／network failure 狀態。
+- 瀏覽器 gate 找到既有 deterministic curriculum UUID version nibble 為 0、但前端 `z.uuid()` 誤拒真實 seed 的整合缺陷；已改為驗證 PostgreSQL UUID 接受的 canonical 8-4-4-4-12 hex shape，避免 scope／publication／media response 被前端誤判，未擴大 DB 權限。
+- 唯一一輪 code review 同輪補上 A→C 未儲存變更保護、C 批次選取、network-uncertain save 沿用 request ID、stale conflict reload，以及新建內容取消切換不再誤跳模式。Focused Content Studio／Admin shell／router 共 66／66 PASS；三指定 viewport Playwright 3／3 PASS，console／network 無錯；scoped ESLint、typecheck、production build 與 `git diff --check` PASS。
+- 尚未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰。下一步：提交 PR 5，進 PR 6，把 Import、Media、Publish、History／Rollback operator workflows 接到同一工作台。
+
+## 2026-09-26 [Codex] — PR 6 Content Studio operator workflows candidate complete
+
+- Admin Content Studio 已接上外部匯入、圖片處理、發布／封存、版本歷史與 rollback。CSV＋圖片 ZIP 會先以可信任 media pipeline 產生 manifest，再把 path 對映成 asset ID；Import 只建立 draft。圖片工作流提供原檔預覽、alt、semantic role、排序、WebP 衍生檔摘要與 RC draft attach。
+- 發布與封存都有 server-derived impact preview；按鈕只接受同一 draft／entity／expected version 的預覽，避免切換內容後沿用舊確認。成功只採信 server receipt；unknown network result 不自動重送。History 只回 actor／time／reason／safe changed fields，C 清單明示本階段需逐項確認，避免以非原子 client loop 製造部分成功。
+- Fresh Local reset 從零成功套用 migration 00100–00800；pgTAP 078 為 12／12 PASS。Content Studio Vitest 9 files／40 tests、database type contract、typecheck、scoped ESLint／Prettier、三指定 viewport Playwright、production build 與 `git diff --check` PASS。`fflate` lockfile diff 已限縮為單一直接依賴，未順帶更新無關 transitive package。
+- 唯一一輪 review 同輪修正 stale preview binding、archive 影響預覽、CSV Media sheet、Sheet／row error provenance、render-time object URL side effect 與 misleading bulk wording。Local `supabase functions serve` 仍有既有 CLI runtime `failed to determine entrypoint` bootstrap 問題；Hosted deploy 前需以 exact function bundle／deploy gate 驗證，不能拿本機啟動失敗當產品回歸或略過 Hosted gate。
+- 尚未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰。下一步：提交 PR 6，進 PR 7 建立 versioned Chapter 3 canonical package、readiness authority 與一次 Local phase gate。
+
+## 2026-09-26 [Codex] — PR 7 Chapter 3 readiness candidate ready for Local gate
+
+- 最新 owner Sheet 已轉為版本化第三章 canonical package：Course 1、Chapter 1、Section 3、Subtopic 3、RC 8、QB 3／111 題、CR 1／62 題、LT 3／60 題、Media 8；共 233 題。修正舊 compatibility filter 以章號精確比對，避免把「第一章第三節」誤收進第三章；第三章來源為 0 error／0 warning，P309／P310 因未有核准 RC mapping 明確排除。
+- `content/packages/chapter-3/` 保存 workbook／manifest 與來源、workbook、media SHA-256；`pnpm content:chapter3` 產生 ignored 上傳 ZIP。readiness SQL、pgTAP 079、finalizer 與 `pnpm phase:content-studio-ch3` 已建立，Local gate 僅能宣稱 Phase 2 Content Studio＋Chapter 3 Local slice，不代表 Hosted／Production／其他章／Phase 8。
+- 發布流程補上 `semantic`／`nonsemantic` 分類：新內容一律重做；既有錯字、排版或非語意 accessibility 修正才可保留進度。唯一一輪 review 發現非語意分類原本可能掩蓋正解或色彩關鍵圖片替換；已改為 server 比對選項鍵／正解與媒體資產／角色／排序，只有選項文字或 alt 文案修正可相容。fresh Local reset 成功，相關 pgTAP 075／078／079 共 94／94 PASS。
+- 下一步：封存 PR 7 候選 commit，從 clean SHA 執行唯一 Local phase gate；PASS 後才產生 exact Staging mutation manifest、final integration PR 與 Staging deploy。Hosted／push／merge／Vercel／Production 目前仍未觸碰。
+
+## 2026-09-26 [Codex] — Content Studio Local gate stopped by pgTAP CLI path parsing
+
+- Clean candidate `94ca00b` 的 gate 已通過 scoped Prettier、完整 ESLint、typecheck、production build 與 focused Vitest 47／47；在 focused pgTAP 階段，Supabase CLI 2.109.1 把 15 個測試檔一次交給 container `pg_prove` 時截斷長 worktree path，只完成 003 的 11／11 後以 `Cannot detect source of '.../.wor'` exit 2。這是 gate runner 的命令長度／path parsing 問題，不是產品 assertion 失敗，也不能宣稱 gate PASS。
+- 修正限定在 gate runner：逐檔呼叫 `supabase test db`、任一檔失敗立即停止，仍收在同一 focused pgTAP report；不降低或刪除任何測試。失敗 evidence 保留於 ignored `artifacts/acceptance/content-studio-ch3-94ca00bddfb5d5a6d2226e81a790cc136ada4759/`，新 commit 會使用新 evidence 目錄。
+- 依 gate 失敗不得自動重跑規則，下一步需 Owner 明確核准一次修正後 Local gate rerun；Hosted／push／merge／Vercel／Production 仍未觸碰。
+
+## 2026-09-26 [Codex] — Approved Local gate rerun exposed stale pgTAP filenames
+
+- Owner 核准後以 clean `bdee8d4a33ebc04ac83e19f37dbe06626f4f6b54` 重跑；scoped Prettier、完整 ESLint、typecheck、production build、focused Vitest 47／47，以及 pgTAP 003 的 11／11 通過，接著再次在 Supabase CLI `Cannot detect source of '.../.wor'` 停止，仍不得宣稱 gate PASS。
+- 唯讀診斷證實根因不是有效檔案路徑過長，而是 runner 清單把 020／021 名稱對調，並引用不存在的 `050_live_qb_routing`、`070_chapter_challenge_progress`。CLI 對 missing path 只顯示截斷的絕對路徑，造成前次誤判。
+- 修正改用實際存在且對應風險的 020 review cards、021 review progress、049 canonical QB／CR／LT routing、050 review media storage、070 quiz answer-state security、073 chapter completion/mastery，再加 074–079；呼叫 CLI 前逐檔檢查存在性，不降低 assertion。下一步仍需 Owner 明確核准新的 clean SHA gate rerun；Hosted／push／merge／Vercel／Production 未觸碰。
+
+## 2026-09-26 [Codex] — Phase 2 Content Studio + Chapter 3 Local slice PASS
+
+- Owner 核准持續修正後，clean `85ef72863accb60efe57da6c796a7bf8a07e376f` 的正式 Local gate PASS：Prettier、完整 ESLint、typecheck、production build、focused Vitest 47／47、16 份 pgTAP 363／363、readiness SQL、Content Studio A＋C 三 viewport 3／3 全部 exit 0。evidence manifest 位於 ignored `artifacts/acceptance/content-studio-ch3-85ef72863accb60efe57da6c796a7bf8a07e376f/manifest.json`；此證據只代表 Local slice。
+- Staging preflight 重驗 GitHub `origin/staging`／`FETCH_HEAD` 仍為 `9c42ba3d9e6552e4c135d3d52efad783dc526f57`，且為 integration ancestor；Supabase ref 為 `onkxnkzeixpezetkmocf`，migration ledger 無分叉，dry-run 只列 `20260926000100`–`20260926000800` 八支 pending migrations。Production `xdjumzdqyexpyndanwkp` 未觸碰。
+- Canonical workbook／manifest／upload ZIP SHA-256 分別為 `cfc17f91376daf496f02f7610b4438abc0b3ffc001dc0f5d7eea9d35b7d6ff61`、`711b30add3f0a8850b2d0b565bdf9462dc3d668beef5005472a60e1474b8662e`、`690b31ff30e7dc245928972ed7ea9b42f07cf7359b60fd9de2a8fbb3cd5b9c67`。Vercel CLI 已升級並讀回 60.1.3；Staging project 維持 `colorplay-staging-web`。
+- 下一步依已核准 window：提交這段 handoff、更新 `codex/phase2-ch3-integration`、建立 final PR；套用 Staging migrations／Functions、建立第三章 media／package drafts，合併後驗 exact Vercel SHA 與 Admin／Student smoke。仍不得觸碰 Production 或宣稱 Phase 8。
+
+## 2026-09-26 [Codex] — PR #68 CI remediation ready for clean Local rerun
+
+- PR #68 首輪 CI 的產品相關 failure 已精確定位：acceptance SSOT 已增至 143 但 verifier 仍鎖 138；Phase 2 `CONTEXT.md` 取代 active 入口時漏留 Phase 0A／0B release boundary；Vitest 誤收只支援 Deno runtime 的 Function tests；Content Studio 新增的 135 個欄位未進 Admin sensitivity catalog。沒有刪 assertion、skip 測試或恢復舊寫入權限。
+- 修正後 acceptance contract／Phase 0 docs／catalog contracts 33／33 PASS；fresh Local reset 從空 DB 套完 00100–00800，`admin:catalog:check` PASS，migration-derived inventory 679／679 欄一致。九張 private Content Studio 表全部 `surface=none`、所有新欄位 fail-closed `forbidden`；歷史 20260808／20260903 generated migrations維持 byte-stable，overlay 由尚未 Hosted 套用的 20260926000100 擁有。
+- format、lint、typecheck、production build PASS。完整 coverage 已不再出現原 CI 的四個 failure；本機高平行跑只剩既有 `phase0-restore-cleanup` 5 秒 timeout（單獨重跑 PASS），交由 GitHub Linux gate 判定，不放寬 timeout。下一步：commit 此修正後，以新 clean SHA 重跑 Phase 2 Local gate；PASS 才 push 並等 PR #68 全綠。Production 未觸碰。
+
+## 2026-09-26 [Codex] — PR #68 second CI remediation
+
+- Clean `5fd415fa016299ffb84b784845b0f41e3f1dbbb6` Phase 2 Local gate PASS：47／47 Vitest、363／363 focused pgTAP、readiness 與 3／3 viewport 全綠；evidence 在 ignored `artifacts/acceptance/content-studio-ch3-5fd415fa016299ffb84b784845b0f41e3f1dbbb6/manifest.json`。
+- GitHub Local DB job 的唯一 pgTAP failure 是既有 `049_admin_sensitivity_catalog` 仍鎖 60 resources；更新為 69，並新增 assertion 確認九張 private Content Studio resource 全部 `surface=none`／`forbidden`。Focused 14／14 與完整 pgTAP 92 files／2236 assertions PASS。
+- 本機完整 `test:db` 後段 Admin Edge integration 因既有 Local Edge runtime container 未啟動而回 503；這與 SQL assertion 修正無關，且先前 handoff 已記錄本機 CLI bootstrap 問題。不得改弱 integration；下一步以 GitHub Linux job 實際判定 runtime，若仍紅再依遠端精確 log 修。Production 未觸碰。
