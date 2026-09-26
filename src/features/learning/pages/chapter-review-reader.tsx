@@ -152,20 +152,34 @@ export function ChapterReviewReader({
 
   const resolvedMediaByAssetPath = useMemo(() => {
     const resolved = new Map(
-      (mediaQuery.data ?? []).map((item) => [item.assetPath, item.resolvedUrl]),
+      (mediaQuery.data ?? []).map((item) => [item.assetPath, item]),
     );
     for (const item of card.media) {
       if (isDirectReviewMediaAssetPath(item.assetPath)) {
-        resolved.set(item.assetPath, item.assetPath);
+        resolved.set(item.assetPath, {
+          assetPath: item.assetPath,
+          resolvedUrl: item.assetPath,
+        });
       }
     }
     return resolved;
   }, [card.media, mediaQuery.data]);
   const resolveMarkdownImage = useCallback(
-    (source: string) => ({
-      loading: privateMediaAssetPaths.includes(source) && mediaLoading,
-      resolvedUrl: resolvedMediaByAssetPath.get(source) ?? null,
-    }),
+    (source: string) => {
+      const resolution = resolvedMediaByAssetPath.get(source);
+      return {
+        ...(resolution?.height === undefined
+          ? {}
+          : { height: resolution.height }),
+        loading: privateMediaAssetPaths.includes(source) && mediaLoading,
+        resolvedUrl: resolution?.resolvedUrl ?? null,
+        ...(resolution?.sizes === undefined ? {} : { sizes: resolution.sizes }),
+        ...(resolution?.srcSet === undefined
+          ? {}
+          : { srcSet: resolution.srcSet }),
+        ...(resolution?.width === undefined ? {} : { width: resolution.width }),
+      };
+    },
     [mediaLoading, privateMediaAssetPaths, resolvedMediaByAssetPath],
   );
   const blocks = useMemo<readonly ReaderBookBlock[]>(() => {
@@ -194,14 +208,29 @@ export function ChapterReviewReader({
       ),
       ...card.media
         .filter((media) => !inlineMediaSources.has(media.assetPath))
-        .map((media, index) => ({
-          altText: media.altText,
-          assetPath: resolvedMediaByAssetPath.get(media.assetPath) ?? null,
-          key: `legacy-media-${String(index)}`,
-          kind: 'media' as const,
-          loading:
-            privateMediaAssetPaths.includes(media.assetPath) && mediaLoading,
-        })),
+        .map((media, index) => {
+          const resolution = resolvedMediaByAssetPath.get(media.assetPath);
+          return {
+            altText: media.altText,
+            assetPath: resolution?.resolvedUrl ?? null,
+            ...(resolution?.height === undefined
+              ? {}
+              : { height: resolution.height }),
+            key: `legacy-media-${String(index)}`,
+            kind: 'media' as const,
+            loading:
+              privateMediaAssetPaths.includes(media.assetPath) && mediaLoading,
+            ...(resolution?.sizes === undefined
+              ? {}
+              : { sizes: resolution.sizes }),
+            ...(resolution?.srcSet === undefined
+              ? {}
+              : { srcSet: resolution.srcSet }),
+            ...(resolution?.width === undefined
+              ? {}
+              : { width: resolution.width }),
+          };
+        }),
     ];
   }, [
     card.content,

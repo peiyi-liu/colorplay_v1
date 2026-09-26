@@ -1372,6 +1372,175 @@ export type Database = {
           },
         ]
       }
+      content_media_assets: {
+        Row: {
+          created_by: string
+          has_alpha: boolean
+          height: number
+          id: string
+          manifest_sha256: string
+          master_object_path: string
+          pixel_semantic_sha256: string
+          processor_version: string
+          semantic_role: string
+          source_bytes: number
+          source_mime_type: string
+          source_sha256: string
+          upload_run_id: string
+          verified_at: string
+          width: number
+        }
+        Insert: {
+          created_by: string
+          has_alpha: boolean
+          height: number
+          id: string
+          manifest_sha256: string
+          master_object_path: string
+          pixel_semantic_sha256: string
+          processor_version: string
+          semantic_role: string
+          source_bytes: number
+          source_mime_type: string
+          source_sha256: string
+          upload_run_id: string
+          verified_at?: string
+          width: number
+        }
+        Update: {
+          created_by?: string
+          has_alpha?: boolean
+          height?: number
+          id?: string
+          manifest_sha256?: string
+          master_object_path?: string
+          pixel_semantic_sha256?: string
+          processor_version?: string
+          semantic_role?: string
+          source_bytes?: number
+          source_mime_type?: string
+          source_sha256?: string
+          upload_run_id?: string
+          verified_at?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_media_assets_upload_run_id_fkey"
+            columns: ["upload_run_id"]
+            isOneToOne: true
+            referencedRelation: "content_media_upload_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_media_upload_runs: {
+        Row: {
+          actor_user_id: string
+          asset_id: string
+          auth_session_id: string
+          created_at: string
+          expires_at: string
+          failure_code: string | null
+          id: string
+          quarantine_object_path: string
+          request_hash: string
+          request_id: string
+          result_receipt: Json | null
+          semantic_role: string
+          source_bytes: number
+          source_filename: string
+          source_mime_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          actor_user_id: string
+          asset_id?: string
+          auth_session_id: string
+          created_at?: string
+          expires_at?: string
+          failure_code?: string | null
+          id?: string
+          quarantine_object_path: string
+          request_hash: string
+          request_id: string
+          result_receipt?: Json | null
+          semantic_role: string
+          source_bytes: number
+          source_filename: string
+          source_mime_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          actor_user_id?: string
+          asset_id?: string
+          auth_session_id?: string
+          created_at?: string
+          expires_at?: string
+          failure_code?: string | null
+          id?: string
+          quarantine_object_path?: string
+          request_hash?: string
+          request_id?: string
+          result_receipt?: Json | null
+          semantic_role?: string
+          source_bytes?: number
+          source_filename?: string
+          source_mime_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      content_media_variants: {
+        Row: {
+          asset_id: string
+          bytes: number
+          height: number
+          kind: string
+          mime_type: string
+          object_path: string
+          quality_mode: string
+          sha256: string
+          structural_similarity_distortion: number | null
+          width: number
+        }
+        Insert: {
+          asset_id: string
+          bytes: number
+          height: number
+          kind: string
+          mime_type?: string
+          object_path: string
+          quality_mode: string
+          sha256: string
+          structural_similarity_distortion?: number | null
+          width: number
+        }
+        Update: {
+          asset_id?: string
+          bytes?: number
+          height?: number
+          kind?: string
+          mime_type?: string
+          object_path?: string
+          quality_mode?: string
+          sha256?: string
+          structural_similarity_distortion?: number | null
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_media_variants_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "content_media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_publication_events: {
         Row: {
           actor_id: string
@@ -2912,7 +3081,9 @@ export type Database = {
           asset_path: string
           card_version: number
           id: string
+          manifest_id: string | null
           review_card_id: string
+          semantic_role: string | null
           sort_order: number
         }
         Insert: {
@@ -2920,7 +3091,9 @@ export type Database = {
           asset_path: string
           card_version: number
           id?: string
+          manifest_id?: string | null
           review_card_id: string
+          semantic_role?: string | null
           sort_order: number
         }
         Update: {
@@ -2928,10 +3101,19 @@ export type Database = {
           asset_path?: string
           card_version?: number
           id?: string
+          manifest_id?: string | null
           review_card_id?: string
+          semantic_role?: string | null
           sort_order?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "review_card_media_manifest_id_fkey"
+            columns: ["manifest_id"]
+            isOneToOne: false
+            referencedRelation: "content_media_assets"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "review_card_media_review_card_id_fkey"
             columns: ["review_card_id"]
@@ -3530,6 +3712,10 @@ export type Database = {
         Args: { session_id: string }
         Returns: Json
       }
+      admin_abort_content_media_upload: {
+        Args: { p_request_id: string; p_run_id: string }
+        Returns: Json
+      }
       admin_archive_content: {
         Args: {
           p_entity_id: string
@@ -3538,6 +3724,20 @@ export type Database = {
           p_reason: string
           p_request_id: string
         }
+        Returns: Json
+      }
+      admin_begin_content_media_upload: {
+        Args: {
+          p_request_id: string
+          p_semantic_role: string
+          p_source_bytes: number
+          p_source_filename: string
+          p_source_mime_type: string
+        }
+        Returns: Json
+      }
+      admin_claim_content_media_upload: {
+        Args: { p_request_id: string; p_run_id: string }
         Returns: Json
       }
       admin_get_resource_detail:
@@ -4687,6 +4887,36 @@ export type Database = {
       }
       svc_admin_touch_security_operation: {
         Args: { p_operation_id: string }
+        Returns: Json
+      }
+      svc_complete_content_media_upload: {
+        Args: {
+          p_actor_user_id: string
+          p_auth_session_id: string
+          p_has_alpha: boolean
+          p_height: number
+          p_manifest_sha256: string
+          p_master_object_path: string
+          p_pixel_semantic_sha256: string
+          p_processor_version: string
+          p_run_id: string
+          p_source_sha256: string
+          p_variants: Json
+          p_width: number
+        }
+        Returns: Json
+      }
+      svc_content_media_delivery: {
+        Args: { p_actor_user_id: string; p_asset_ids: string[] }
+        Returns: Json
+      }
+      svc_fail_content_media_upload: {
+        Args: {
+          p_actor_user_id: string
+          p_auth_session_id: string
+          p_failure_code: string
+          p_run_id: string
+        }
         Returns: Json
       }
       svc_join_classroom: {

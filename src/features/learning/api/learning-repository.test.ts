@@ -307,4 +307,67 @@ describe('learning repository', () => {
       ]),
     ).rejects.toMatchObject({ code: 'UNAVAILABLE' });
   });
+
+  it('resolves trusted logical media through the access-checked Edge function', async () => {
+    const invoke = vi.fn().mockResolvedValue({
+      data: {
+        action: 'resolve',
+        assets: [
+          {
+            asset_id: '76000000-0000-4000-8000-000000000001',
+            height: 800,
+            variants: [
+              {
+                height: 213,
+                kind: 'thumbnail',
+                mime_type: 'image/webp',
+                url: 'https://signed.test/thumbnail',
+                width: 320,
+              },
+              {
+                height: 533,
+                kind: 'reading',
+                mime_type: 'image/webp',
+                url: 'https://signed.test/reading',
+                width: 800,
+              },
+            ],
+            width: 1200,
+          },
+        ],
+        expires_at: '2026-09-26T09:15:00.000Z',
+        outcome: 'ok',
+      },
+      error: null,
+    });
+    const from = vi.fn();
+    const client = {
+      functions: { invoke },
+      rpc: vi.fn(),
+      storage: { from },
+    } as unknown as SupabaseClient<Database>;
+
+    const resolved = await createLearningRepository(client).resolveReviewMedia([
+      'content-media:76000000-0000-4000-8000-000000000001',
+    ]);
+
+    expect(invoke).toHaveBeenCalledWith('content-media', {
+      body: {
+        action: 'resolve',
+        assetIds: ['76000000-0000-4000-8000-000000000001'],
+      },
+    });
+    expect(from).not.toHaveBeenCalled();
+    expect(resolved).toEqual([
+      {
+        assetPath: 'content-media:76000000-0000-4000-8000-000000000001',
+        height: 800,
+        resolvedUrl: 'https://signed.test/reading',
+        sizes: '(max-width: 640px) 100vw, 800px',
+        srcSet:
+          'https://signed.test/thumbnail 320w, https://signed.test/reading 800w',
+        width: 1200,
+      },
+    ]);
+  });
 });

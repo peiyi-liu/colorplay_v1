@@ -82,6 +82,32 @@ describe('ReviewCardMarkdown', () => {
     );
   });
 
+  it('將可信媒體的尺寸與響應式 WebP 候選交給瀏覽器', () => {
+    render(
+      <ReviewCardMarkdown
+        markdown="![色相環](content-media:76000000-0000-4000-8000-000000000001)"
+        resolveImage={() => ({
+          height: 800,
+          loading: false,
+          resolvedUrl: 'https://signed.example/reading',
+          sizes: '(max-width: 640px) 100vw, 800px',
+          srcSet:
+            'https://signed.example/thumbnail 320w, https://signed.example/reading 800w',
+          width: 1200,
+        })}
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: '色相環' })).toHaveAttribute(
+      'srcset',
+      'https://signed.example/thumbnail 320w, https://signed.example/reading 800w',
+    );
+    expect(screen.getByRole('img', { name: '色相環' })).toHaveAttribute(
+      'width',
+      '1200',
+    );
+  });
+
   it('不執行 raw HTML，也不直接載入外部圖片 URL', () => {
     render(
       <ReviewCardMarkdown

@@ -427,6 +427,11 @@ verify_jwt = false
 [functions.admin-command]
 verify_jwt = false
 
+# content-media 自行驗 JWT，並在 user-scoped RPC 重新驗 Admin／fresh MFA；
+# student delivery 則只接受 service-side access projection。
+[functions.content-media]
+verify_jwt = false
+
 # admin-reconcile 為排程入口,以 x-reconcile-key 部署 secret 驗證,無 JWT。
 [functions.admin-reconcile]
 verify_jwt = false

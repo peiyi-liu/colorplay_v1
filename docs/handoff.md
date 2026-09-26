@@ -1951,3 +1951,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Fresh Local reset 從空 DB 成功；16 份相關 pgTAP 共 449／449 PASS（其中 075 為 54／54），publication repository 2 files／15 tests PASS，generated DB types exact-diff、database type contract、typecheck、focused ESLint／Prettier 與 `git diff --check` PASS。唯讀比對確認第三章既有 fingerprint 等於新函式結果。
 - 唯一一輪 Standards／Spec／Security review 的 bypass、duplicate publish、impact vocabulary、canonical selector、fresh-seed baseline、scope divergence、history nullable ID、audit、MFA/session、append-only delete 與 fingerprint regression findings 已在同輪修正。文字 typo 尚不能由 DB 自動辨識語意，現階段 fail closed；PR 6 需提供受審核的 editorial classification，而不是在 client 自行宣告 compatible。
 - 尚未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰。下一步：PR 3 trusted media，建立 quarantine、Deno/WASM 壓縮衍生檔、immutable manifest、signed URL／`srcset` 與完整性測試。
+
+## 2026-09-26 [Codex] — PR 3 trusted media candidate complete
+
+- `ContentMedia` seam 已完成：Admin browser 只取得單一 run-scoped quarantine signed upload；Edge Function 重新驗 JWT／Admin session／MFA，依 magic bytes 驗 JPG／PNG／WebP，以 pin 住的 `@imagemagick/magick-wasm@0.0.43` 修正 EXIF、保留 alpha、輸出 320／800 WebP，color-critical 另有 1200 px、250 KiB、SSIM distortion ≤ 0.01 gate。最終 Storage key 由 server 產生且禁止 overwrite；verified manifest／variants append-only。
+- 發布內容只保存 `content-media:<asset UUID>`，Student 端經 access-checked Edge resolve 取得 15 分鐘 signed URLs；UI 使用 `srcset`／`sizes`／固有尺寸，query cache 已縮到簽名有效期內。舊 `review-card-media` 路徑只保留既有內容相容性，新 draft 不得偽造 legacy path。
+- 驗證：processor 4／4（含 JPG／PNG alpha／WebP、EXIF、determinism、MIME spoof／SVG／oversize）、媒體 pgTAP 32／32、前端 focused 29 tests PASS；Deno 2.5 typecheck 與 Supabase Edge runtime v1.74.3 bundle PASS，generated DB types、TypeScript typecheck、focused ESLint、`git diff --check` PASS。本機 `supabase functions serve` 連既有 `admin-command` 控制組也同樣回 `failed to determine entrypoint`，判定為目前 CLI/runtime bootstrap 問題，不是新 Function 專屬失敗；Hosted deploy 前仍需 exact bundle／invoke gate。
+- 唯一一輪 code review 發現 browser 只驗 run ID、未驗 receipt request ID／semantic role；同輪已改為三者全部一致才接受。完整 DB regression 暫有 5 組舊合約紅燈：026 缺新 version provenance、027／028／031 仍要求已撤權 Teacher direct write、049 仍建立 legacy Question＋current bank。不得恢復舊權限；PR 4 unified import 需正式更新／取代這些舊測試，Phase gate 前全綠。
+- 尚未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰。下一步：封存 PR 3 本地 commit，進 PR 4 unified import 與 legacy contract retirement。

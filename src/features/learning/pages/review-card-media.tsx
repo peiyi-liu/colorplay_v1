@@ -6,12 +6,20 @@ export function ReviewCardMedia({
   blockKey,
   loading,
   onLoad,
+  sizes,
+  srcSet,
+  height,
+  width,
 }: Readonly<{
   altText: string;
   assetPath: string | null;
   blockKey: string;
+  height?: number;
   loading: boolean;
   onLoad: () => void;
+  sizes?: string;
+  srcSet?: string;
+  width?: number;
 }>) {
   const [failed, setFailed] = useState(false);
 
@@ -48,11 +56,15 @@ export function ReviewCardMedia({
       data-book-block-key={blockKey}
       decoding="async"
       loading="lazy"
+      height={height}
       onError={() => {
         setFailed(true);
       }}
       onLoad={onLoad}
+      sizes={sizes}
       src={assetPath}
+      srcSet={srcSet}
+      width={width}
     />
   );
 }
