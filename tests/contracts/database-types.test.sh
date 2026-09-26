@@ -97,3 +97,9 @@ grep -q 'admin_claim_content_media_upload' src/types/database.ts
 grep -q 'admin_abort_content_media_upload' src/types/database.ts
 grep -q 'svc_complete_content_media_upload' src/types/database.ts
 grep -q 'svc_content_media_delivery' src/types/database.ts
+grep -q 'content_import_upload_runs' src/types/database.ts
+grep -q 'content_import_runs' src/types/database.ts
+grep -q 'admin_begin_content_import_upload' src/types/database.ts
+grep -q 'admin_preview_content_import_v2' src/types/database.ts
+grep -q 'admin_commit_content_import_v2' src/types/database.ts
+grep -q 'svc_verify_content_import_media' src/types/database.ts

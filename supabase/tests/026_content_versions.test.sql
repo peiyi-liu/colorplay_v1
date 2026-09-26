@@ -80,14 +80,14 @@ set role = 'teacher'
 where id = '26100000-0000-0000-0000-000000000001';
 
 insert into public.content_versions (
-  id, content_type, content_id, version, frozen_payload, payload_hash, status,
-  created_by
+  id, content_type, content_id, stable_code, version, frozen_payload,
+  payload_hash, status, created_by
 )
 values (
   '26200000-0000-0000-0000-000000000001',
   'question',
   (select id from public.questions where stable_code = 'QB3101'),
-  1,
+  'QB3101', 1,
   '{"prompt":"快照"}',
   'deadbeef', 'published',
   '26100000-0000-0000-0000-000000000001'
@@ -111,32 +111,22 @@ select set_config(
   '26100000-0000-0000-0000-000000000001',
   true
 );
-select is(
-  (select count(*)::integer from public.content_versions),
-  1,
-  'a teacher reads version history'
-);
-select is(
-  (select count(*)::integer from public.content_publication_events),
-  1,
-  'a teacher reads publication events'
-);
+select throws_ok('select count(*) from public.content_versions', '42501', null,
+  'Teacher browsers cannot read immutable version payloads directly');
+select throws_ok('select count(*) from public.content_publication_events',
+  '42501', null,
+  'Teacher browsers cannot read publication events directly');
 
 select set_config(
   'request.jwt.claim.sub',
   '26100000-0000-0000-0000-000000000002',
   true
 );
-select is(
-  (select count(*)::integer from public.content_versions),
-  0,
-  'students read no version history'
-);
-select is(
-  (select count(*)::integer from public.content_publication_events),
-  0,
-  'students read no publication events'
-);
+select throws_ok('select count(*) from public.content_versions', '42501', null,
+  'Student browsers cannot read immutable version payloads directly');
+select throws_ok('select count(*) from public.content_publication_events',
+  '42501', null,
+  'Student browsers cannot read publication events directly');
 
 reset role;
 set local role anon;

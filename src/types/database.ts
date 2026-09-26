@@ -1316,6 +1316,96 @@ export type Database = {
         }
         Relationships: []
       }
+      content_import_runs: {
+        Row: {
+          actor_user_id: string
+          auth_session_id: string
+          commit_request_id: string | null
+          committed_at: string | null
+          created_at: string
+          id: string
+          normalized_items: Json
+          preview: Json
+          preview_request_id: string
+          result_receipt: Json | null
+          source_filename: string
+          source_sha256: string
+          status: string
+        }
+        Insert: {
+          actor_user_id: string
+          auth_session_id: string
+          commit_request_id?: string | null
+          committed_at?: string | null
+          created_at?: string
+          id?: string
+          normalized_items: Json
+          preview: Json
+          preview_request_id: string
+          result_receipt?: Json | null
+          source_filename: string
+          source_sha256: string
+          status?: string
+        }
+        Update: {
+          actor_user_id?: string
+          auth_session_id?: string
+          commit_request_id?: string | null
+          committed_at?: string | null
+          created_at?: string
+          id?: string
+          normalized_items?: Json
+          preview?: Json
+          preview_request_id?: string
+          result_receipt?: Json | null
+          source_filename?: string
+          source_sha256?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      content_import_upload_runs: {
+        Row: {
+          actor_user_id: string
+          auth_session_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          object_path: string
+          request_id: string
+          source_bytes: number
+          source_filename: string
+          source_mime_type: string
+          status: string
+        }
+        Insert: {
+          actor_user_id: string
+          auth_session_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          object_path: string
+          request_id: string
+          source_bytes: number
+          source_filename: string
+          source_mime_type: string
+          status?: string
+        }
+        Update: {
+          actor_user_id?: string
+          auth_session_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          object_path?: string
+          request_id?: string
+          source_bytes?: number
+          source_filename?: string
+          source_mime_type?: string
+          status?: string
+        }
+        Relationships: []
+      }
       content_imports: {
         Row: {
           created_at: string
@@ -3726,6 +3816,15 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_begin_content_import_upload: {
+        Args: {
+          p_request_id: string
+          p_source_bytes: number
+          p_source_filename: string
+          p_source_mime_type: string
+        }
+        Returns: Json
+      }
       admin_begin_content_media_upload: {
         Args: {
           p_request_id: string
@@ -3736,8 +3835,20 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_claim_content_import_upload: {
+        Args: { p_request_id: string; p_run_id: string }
+        Returns: Json
+      }
       admin_claim_content_media_upload: {
         Args: { p_request_id: string; p_run_id: string }
+        Returns: Json
+      }
+      admin_commit_content_import_v2: {
+        Args: {
+          p_confirm_warnings: boolean
+          p_request_id: string
+          p_run_id: string
+        }
         Returns: Json
       }
       admin_get_resource_detail:
@@ -3965,6 +4076,15 @@ export type Database = {
       admin_platform_health: { Args: never; Returns: Json }
       admin_preview_content_draft: {
         Args: { p_draft_id: string; p_expected_revision: number }
+        Returns: Json
+      }
+      admin_preview_content_import_v2: {
+        Args: {
+          p_items: Json
+          p_request_id: string
+          p_source_filename: string
+          p_source_sha256: string
+        }
         Returns: Json
       }
       admin_publish_content_draft: {
@@ -4919,6 +5039,15 @@ export type Database = {
         }
         Returns: Json
       }
+      svc_finish_content_import_upload: {
+        Args: {
+          p_actor_user_id: string
+          p_auth_session_id: string
+          p_run_id: string
+          p_status: string
+        }
+        Returns: undefined
+      }
       svc_join_classroom: {
         Args: {
           p_actor_id: string
@@ -4931,6 +5060,10 @@ export type Database = {
       svc_resolve_classroom_join_code: {
         Args: { p_actor_id: string; p_ip_hash: string; p_join_code: string }
         Returns: Json
+      }
+      svc_verify_content_import_media: {
+        Args: { p_mappings: Json }
+        Returns: boolean
       }
       teacher_answer_facts: {
         Args: {

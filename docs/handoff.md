@@ -1959,3 +1959,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 驗證：processor 4／4（含 JPG／PNG alpha／WebP、EXIF、determinism、MIME spoof／SVG／oversize）、媒體 pgTAP 32／32、前端 focused 29 tests PASS；Deno 2.5 typecheck 與 Supabase Edge runtime v1.74.3 bundle PASS，generated DB types、TypeScript typecheck、focused ESLint、`git diff --check` PASS。本機 `supabase functions serve` 連既有 `admin-command` 控制組也同樣回 `failed to determine entrypoint`，判定為目前 CLI/runtime bootstrap 問題，不是新 Function 專屬失敗；Hosted deploy 前仍需 exact bundle／invoke gate。
 - 唯一一輪 code review 發現 browser 只驗 run ID、未驗 receipt request ID／semantic role；同輪已改為三者全部一致才接受。完整 DB regression 暫有 5 組舊合約紅燈：026 缺新 version provenance、027／028／031 仍要求已撤權 Teacher direct write、049 仍建立 legacy Question＋current bank。不得恢復舊權限；PR 4 unified import 需正式更新／取代這些舊測試，Phase gate 前全綠。
 - 尚未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰。下一步：封存 PR 3 本地 commit，進 PR 4 unified import 與 legacy contract retirement。
+
+## 2026-09-26 [Codex] — PR 4 unified content import candidate complete
+
+- `ContentImport` seam 已完成：瀏覽器可預覽 XLSX；可信任 Edge Function 會從 private quarantine 重新解析 XLSX 或 CSV＋圖片 ZIP，拒絕公式、HTML／data URL／remote URL、重複 stable code、路徑穿越、MIME／副檔名不符，以及套件／展開容量／壓縮比／檔案數／目錄深度超限。Import 只建立 persistent drafts，永不直接 publish、archive 或 hard delete。
+- Preview 固定輸出 create／update／no-op／warning／error；update 必須明確確認，commit 會重驗 entity current version、base version 與 draft revision，stale preview fail closed。run／receipt 綁定 Admin JWT、MFA session、request ID 與 source digest；失敗 cleanup 和 terminal state 均留下 structured audit。
+- `pnpm content:import` 已改為只把既有 Google Sheet compatibility source 建成可審核的第三章 package，不再直接改 seed／DB；下載範本涵蓋 Course／Chapter／Section／Subtopic／RC／QB／CR／LT／Question／Media。既有 026／027／028／031／049 測試同步改為驗證舊 Teacher direct-write retirement，不恢復已撤權的舊路徑。
+- Fresh Local reset 從空 DB 成功；pgTAP 077 為 44／44 PASS，browser parser／repository／template／package contracts 10／10 PASS，database type contract、完整 typecheck、focused ESLint 與 `git diff --check` PASS。Deno parser／typecheck 已在本 task 候選階段通過；本次最終重跑因目前 shell 沒有獨立 `deno` executable，未將環境缺工具誤報為產品失敗。
+- 唯一一輪 code review 的公式 metadata、nested XLSX zip bomb、payload canonicalization、preview denial、stale preview race、MIME／extension mismatch 與 no-op comparison findings 已在同輪修正。尚未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰；下一步：提交 PR 4，進 PR 5 Admin Content Studio A＋C manual authoring UI。
