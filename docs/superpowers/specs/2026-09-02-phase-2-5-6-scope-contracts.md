@@ -1,5 +1,11 @@
 # Phase 2／5／6 Rebaseline Scope Contracts
 
+> **Superseded for Phase 2 only on 2026-09-26.** The current content lane is the
+> Chapter 3-only contract in
+> `2026-09-26-phase-2-chapter-3-rebaseline-decision.md`. Chapters 1, 2, 4, 5,
+> and 6 are deferred, and the prior inserted-card grandfather policy no longer
+> applies. Phase 5／6 scope in this historical document is unchanged.
+
 - 日期：2026-09-02（Asia/Taipei）
 - 狀態：Owner 已核准 scope 與方法；尚未核准 implementation execution
 - 基準 snapshot：`f0638b04d74a8a5071ceb36e7a2369527dc5d0b7`

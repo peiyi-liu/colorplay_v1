@@ -1,15 +1,19 @@
 # ColorPlay
 
-> Current work: **Phase 2 Content Studio written design awaiting owner review**. Read
+> Current work: **Owner-approved Phase 2 Content Studio implementation plan;
+> docs-only rebaseline is being consolidated before PR 1**. Read
 > [`docs/roadmap-colorplay-next.md`](docs/roadmap-colorplay-next.md), the
-> [Content Studio design](docs/superpowers/specs/2026-09-26-colorplay-content-studio-design.md)
+> [Content Studio design](docs/superpowers/specs/2026-09-26-colorplay-content-studio-design.md),
+> and the
+> [Chapter 3 implementation plan](docs/superpowers/plans/2026-09-26-phase-2-chapter-3.md)
 > before acting. The platform design is
 > chapter-generic while its first delivery and evidence slice covers Chapter 3;
 > typo／formatting／non-semantic
 > accessibility corrections preserve Current Progress, while new required content
 > or semantic changes require Recompletion／Requalification for every learner.
-> There is no grandfather exemption. Product implementation, Hosted／Production
-> mutation, push, merge, and deployment are not authorized by this status.
+> There is no grandfather exemption. Bounded Local implementation is authorized
+> after the clean integration worktree is verified. Hosted／Production mutation,
+> push, merge, and deployment remain separately gated.
 
 A classroom quiz platform. Teachers publish question content and open a Live Session from a Live Activity; during that session the teacher is its Host, Participants answer on their own devices, and the Projector carries the shared screen.
 

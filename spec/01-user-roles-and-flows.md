@@ -121,19 +121,19 @@ membership／ownership 檢查；除 invitation acceptance／MFA pre-privileged r
   章節總挑戰；速度加權 Quiz Score 不參與此 gate。
 - 章節總挑戰完整交卷即為「已完成」；最佳 qualifying percentage 達 80% 才為
   「已精熟」。結果不影響其他章節存取。
-- 既有 section 新增 required card 時，只有 cutoff 前已 committed server-valid、
-  同 section finalized challenge 的學生豁免，不論分數；卡片標示「新增內容
-  （非必修）」且可選讀，不偽裝成完成。其他學生與新學生仍依正式順序
-  必讀，cutoff 後 finalize 不能追溯取得豁免。
+- 既有 section 新增 required card 時，所有學生都必須依正式順序完成新卡；不因
+  舊 challenge、completion time、帳號建立時間或人工名單取得 grandfather 豁免。
+  舊 completion／attempt／reward 事實不改寫，但 current progress 與 gate 立即以
+  新的 current-required set 重算，因此百分比可以下降。
 - 小節挑戰只從所選 `section` 的 published `bank_kind='section'` 題池抽題；章節
   總挑戰只從該章 published `bank_kind='chapter'` 題池抽題。題數不足 template
   目標時顯示並使用真實題數。
 
 ### STU-Flow-03：複習卡
 
-- 依正式 section/card 順序顯示；已完成卡可回顧，尚未輪到的卡不可取得正文
-  或 media。唯一例外是 server 判定的 `grandfather_exempt` inserted card，可選讀但
-  不阻擋進度。
+- 依正式 section/card 順序顯示；已完成且仍是 current version 的卡可回顧，目前
+  available card 可取得正文與 media，尚未輪到的卡不可取得正文或 media。新增的
+  required card 沒有選讀或豁免例外。
 - 支援純文字、圖片、色票示例與必要的替代文字。
 - 未完成卡必須到達閱讀器最後一頁，才顯示／啟用「完成複習」；只有主動按下
   並取得後端 committed 結果才算完成。翻到最後一頁本身不自動完成。

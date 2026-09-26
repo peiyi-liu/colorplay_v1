@@ -48,19 +48,23 @@
 - `sections`
 - `subtopics`
 - `review_cards`
+- `assessment_banks`
 
 共同欄位：`id`, parent FK, `title`, `description/content`, `sort_order`, `status`, `version`, `created_by`, timestamps。
 
 狀態：`draft`, `published`, `archived`。
 
 - `review_card_media`：card/version、Storage object、alt text、sort order、media metadata。
+- `assessment_banks`：stable code、kind（`QB`／`CR`／`LT`）、chapter/section scope、title、selection settings、status/version。Constraint 強制 QB／LT 只連 Section、CR 只連 Chapter。
+- `content_drafts`：entity type/id 或新 stable identity、base version、revision、normalized payload、source、actor、request identity 與 timestamps；只允許 trusted Admin command mutation。
 - `content_versions`：content type/id、version、frozen payload/hash、status、creator、
   progression impact（`compatible`／`requires_recompletion`／
   `requires_requalification`）、
   classification reason、changed-field digest、timestamps。
 - `content_publication_events`：append-only publish/archive history、actor、version、
-  request ID；inserted required card 另保存 immutable effective cutoff、section／sort
-  identity、`publication_cutoff_order` 與 grandfather policy。
+  request ID、progression impact、classification reason 與 changed-field digest。
+  Inserted required card 只記錄 section／sort identity 與發布事實；不得保存或套用
+  grandfather cutoff、event-order threshold 或使用者豁免名單。
 - 章節之間沒有 prerequisite。章節內有效順序為 `sections.sort_order`，同 section
   的 review card 順序為 `(subtopics.sort_order, review_cards.sort_order)`；stable
   identity 作 deterministic tie-breaker。Published 內容必須以 constraint／validation
@@ -71,10 +75,9 @@
 `questions`：
 
 - `id`
-- `stable_code`，例如 `3-1-01`
-- `bank_kind`：`section`（QB 小節測驗）、`chapter`（CR 章節總測驗）、`live`（LT Live 專用）或歷史 `legacy`；新 Session 必須依產品 surface 由 server 選定題池。
+- `stable_code`，例如 `QB3101`、`CR3001`、`LT3101`
+- `bank_id`：current QB／CR／LT Question 必填並只屬於一個 `assessment_banks`；歷史 `legacy` rows 保留 frozen 相容，不得冒充 current bank。
 - `version`
-- `subtopic_id`
 - `question_type`
 - `prompt`
 - `explanation`
@@ -93,7 +96,7 @@
 
 `quiz_templates`：章節綜合或小節練習設定；小節 template 明確保存
 `section_id`，章節 template 保存 `chapter_id` 且 `section_id is null`。建立 session
-時，server 依 surface 強制 `bank_kind='section'` 或 `bank_kind='chapter'`。
+時，server 依 surface 選擇同 scope 的 QB 或 CR `assessment_banks`，不得 fallback。
 
 `quiz_sessions`：
 
@@ -107,9 +110,6 @@
 - optional `assignment_id`／attempt reference
 - `game_rules_version`
 - `finalized_at`
-- section challenge 成功 finalize 另保存 server-only `section_event_order`；chapter／
-  其他 session 為 null。該 order 與 inserted-card publication cutoff order 在同一
-  section lock 內分配，timestamp 只作 audit。
 
 `quiz_session_questions`：
 
@@ -200,8 +200,8 @@ Live tables 與 ordinary quiz tables分離，因 state machine、host authority 
 | own profile | read/update limited | own read/update | managed |
 | other profile | leaderboard-safe projection only | classroom-safe projection | managed |
 | published taxonomy/metadata | read if course allowed | read | managed |
-| review-card body/media | completed、current available 或 own grandfather-exempt card through guarded projection | authorized teaching scope | managed projection |
-| draft content | no | own/assigned content | managed |
+| review-card body/media | completed current version 或 current available card through guarded projection | authorized teaching scope | managed projection |
+| draft content | no | no | privileged Admin command only |
 | own quiz sessions/answers | read own | own plus managed classroom analytics | managed |
 | other student raw answers | no | managed classroom only | managed |
 | wallet/transactions | read own | read own | managed |
@@ -277,14 +277,14 @@ Live tables 與 ordinary quiz tables分離，因 state machine、host authority 
 ### Additional trusted commands
 
 - `get_student_learning_path`：回章節內所有節點的 metadata、順序、access state、
-  completion、grandfather exemption、best result、blocker 與唯一 next action；locked
-  card 不含正文／media。
+  current-version completion、best result、blocker 與唯一 next action；locked card
+  不含正文／media，且不得回傳 grandfather exemption。
 - `get_review_card_content`：只為 completed 或目前唯一 available card 回 current
-  body/media，另允許 own grandfather-exempt inserted card 選讀；每次呼叫重新驗
-  actor、version 與 progression state。
+  body/media；每次呼叫重新驗 actor、version 與 progression state，新增 required
+  card 不存在選讀例外。
 - `complete_review_card`：row lock 後重算 current card 與 predecessor，只接受目前
-  available card 或 own current `grandfather_exempt` card；idempotent 重送回原完成
-  結果。豁免卡只在明確提交後變為 completed，不影響原有 gate。
+  available card；idempotent 重送回原完成結果。新增 required card 必須依正式順序
+  明確提交完成，才能恢復 current gate。
 - `create_quiz_session`：除既有 Auth／published 驗證外，小節挑戰要求本節全部
   current-required cards 完成；章節總挑戰要求每節有 qualifying best percentage
   ≥80%。Qualifying percentage 為 finalized challenge 的
@@ -341,13 +341,11 @@ Security definer function 必須：
   非實質修改 compatible；實質 review 變更要求 recompletion；實質 challenge 變更
   要求 current-version requalification。未分類／無法判定採類型最嚴格結果，歷史
   facts／timestamps／reward ledgers 不刪改。
-- 新 required card 對 publication cutoff 前已有 server-valid、同 section
-  finalized challenge 的既有學生豁免，不論分數；其他既有學生與新學生必讀，
-  cutoff 後不能追溯取得 exemption。Server 直接讀取 immutable finalize fact，
-  不以 80% mastery 或可變 projection 代替；以 section lock／ordering 解決 race，
-  只有 `finalize.section_event_order < publication.publication_cutoff_order` 才豁免。
-  Timestamp 等號、缺
-  order 或無法證明先後時不豁免，且不得使用人工名單。
+- 新 required card 對所有學生立即成為 current-required set 的一部分；不得依舊
+  finalized challenge、completion timestamp、帳號建立時間、publication event order
+  或人工名單豁免。Server 保留既有 completion／attempt／reward facts，但以新的
+  current-required set 重算 denominator、next action 與 gate；缺少新卡 completion
+  時，current progress 可下降且 challenge gate 重新阻擋。
 
 ## 9. Seed data
 

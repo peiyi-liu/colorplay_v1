@@ -4,7 +4,7 @@
 - 設計基準：protected `staging@9c42ba3d9e6552e4c135d3d52efad783dc526f57`（2026-09-26 唯讀重驗）
 - 核准設計：`../specs/2026-09-26-colorplay-content-studio-design.md`，commit `85ba401`
 - 原型結論：A 三欄編輯工作區＋C 全部內容清單，throwaway verdict commit `36573cf`
-- 狀態：candidate implementation plan，待 Owner 一次核准；尚未授權產品實作或外部 mutation
+- 狀態：Owner-approved；授權依本 plan 進行 bounded Local implementation，外部 mutation 仍需另行授權
 
 ## 1. Outcome
 

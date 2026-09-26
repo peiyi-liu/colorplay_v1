@@ -1,5 +1,13 @@
 # Section Progression Correction Implementation Plan
 
+> **2026-09-26 content-version supersession:** the current Chapter 3 Phase 2
+> contract cancels the inserted-card grandfather exemption. Historical facts
+> remain immutable, while added required content or semantic changes invalidate
+> current completion／qualification until the learner completes the new version.
+> Any implementation of this historical plan must first remove its
+> `finalized_before_publish` assumptions and consume the replacement contract in
+> `../specs/2026-09-26-phase-2-chapter-3-rebaseline-decision.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace cross-chapter access with server-authoritative, within-chapter section/card progression and one truthful next-learning action.

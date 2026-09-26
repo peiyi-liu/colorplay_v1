@@ -1,5 +1,13 @@
 # Phase 3／4：章節內小節解鎖與學習導引設計規格
 
+> **2026-09-26 content-version supersession:** preserve historical completion
+> and attempt facts, but evaluate current progress only against current
+> published versions. Compatible typo／formatting／non-semantic accessibility
+> corrections retain progress; added required content or semantic changes
+> require recompletion／requalification. The inserted-card grandfather
+> exemption below is cancelled by
+> `2026-09-26-phase-2-chapter-3-rebaseline-decision.md`.
+
 - 日期：2026-09-02（Asia/Taipei）
 - 狀態：Owner 已核准全部 progression 產品與 migration semantics；尚未授權實作
 - 規則版本：`2026-09-progression-1`

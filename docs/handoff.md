@@ -1893,3 +1893,34 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 同輪 remediation 已補上 run-scoped AbortSignal、關閉瀏覽器後等待 pending operation 收斂、獨立 150 秒 cleanup deadline 與全新的 cleanup client／signal；setup checkpoint 維持 fail-closed，failure／cleanup／finished checkpoint 改為 best-effort，寫檔失敗不再阻止清理。主測試與 helpers 均低於 500 行，沒有產品程式、schema、RLS、部署或 Hosted state 變更。
 - RED→GREEN focused contracts 3 files／17 tests PASS；完整 lint、typecheck、scoped Prettier／ESLint、`git diff --check` PASS。Playwright 正確列出 capacity case；缺少確認字串的 Chromium dry-run 為 1 skipped，未發出 Hosted request。未執行 Staging 1+39、未建立 synthetic 帳號、未碰 Production。
 - 下一步只提交、push 並建立 Draft PR targeting `staging`；不轉 Ready、不合併、不 deploy、不自動重跑。任何 CI rerun、merge 或新的 1+39 都需要後續獨立 owner gate。
+
+## 2026-09-26 [Codex] — 第三章 Phase 2 範圍與版本進度規則拍板
+
+- 做了什麼：Owner 將目前 Phase 2 delivery lane 縮限為第三章：2A 處理 RC／QB／CR canonical import，2B-Ch3 處理 LT、版本發布／封存／rollback、媒體完整性與第三章 readiness。歷史完成／作答／獎勵 facts 永久保留，但 Current Progress 只認 current published versions；錯字、排版與無語意 accessibility 修正保留進度，新增 required content 或語意變更要求 recompletion／requalification。Owner 明確取消先前 inserted-card `finalized_before_publish` grandfather 豁免；不再建立 cutoff／section event order／人工 exemption 機制。第 1、2、4、5、6 章移出本輪，第三章通過只能稱 `Phase 2 Chapter 3 slice PASS`。
+- 下一步：Owner 審閱並明確核准 `docs/superpowers/plans/2026-09-26-phase-2-chapter-3.md` 後，才從 exact protected `staging` 建立 PR 1 implementation worktree；目前不開始產品或 DB 實作。
+- Blocker／待決策：implementation plan 尚待 Owner 核准；Local Supabase exclusive window、Google Sheet／Storage／Hosted mutation、push／merge／deploy 均未授權。
+- 相關檔案／commit：`CONTEXT.md`、`docs/roadmap-colorplay-next.md`、`spec/01`、`spec/03`、`spec/05`、`spec/06`、`spec/07`、`acceptance/ACCEPTANCE_CRITERIA.md`、`docs/superpowers/specs/2026-09-26-phase-2-chapter-3-rebaseline-decision.md`、`docs/superpowers/plans/2026-09-26-phase-2-chapter-3.md`、三份歷史 contract／plan 的 supersession note；尚未 commit。
+
+## 2026-09-26 [Codex] — Content Studio 完整書面設計待 Owner 審閱
+
+- Owner 核准通用架構／第三章先行與完整版本，不採精簡版：Admin `/admin/content` 管理所有教學內容結構、RC、section-scoped QB／LT、chapter-scoped CR、共用 Question、XLSX／CSV＋圖片 ZIP、持久 draft、發布影響、版本歷史／rollback、media 衍生版本與 readiness。其他章後續應以輸入內容為主，不重建相同平台功能。
+- 正式設計 `docs/superpowers/specs/2026-09-26-colorplay-content-studio-design.md` 與領域詞彙已提交為 `b994e83`。Prettier、placeholder scan 與 `git diff --check` PASS；隔離 worktree 的 `pnpm exec` 曾因缺少本地 `node_modules` 嘗試 registry restore 並遇 DNS 失敗，改用主 checkout 既有 Prettier 完成檢查，未改依賴或 lockfile。
+- 下一個 gate：Owner 審閱並核准實際書面規格；之後先建立不接 DB／Storage 的隔離 HTML 互動原型，Owner 核准原型後才撰寫 implementation plan。尚未開始產品 code、migration、Local DB、Storage、Hosted mutation、push、merge或部署；既有舊候選 plan 明確排除 CMS，後續必須重寫，不能直接執行。
+
+## 2026-09-26 [Codex] — Content Studio HTML 原型方向核准
+
+- Owner 核准 A「三欄工作區」作 `/admin/content` 預設主介面，並納入 C「全部內容」作同頁清單／批次管理模式；B「引導式流程」不進正式實作。A／C 需共用同一 Content Studio、route、資料與權限邊界，不得拆成第二套 CMS。
+- Throwaway primary source 位於 branch `codex/content-studio-prototype`、verdict commit `36573cf`；原型使用假資料、不接 Supabase，已驗證匯入三步驟、A→B→C 切換、資料表選取，以及核准後的 A editor ↔ C all-content 切換。正式程式必須重寫並補齊授權、錯誤狀態與測試，不得直接搬用 prototype code。
+- 下一步：依已核准書面規格與 A＋C UI verdict 重寫 bounded Phase 2 Chapter 3 implementation plan；仍不得開始產品 code、migration、Local／Hosted DB、Storage、push、merge或部署，直到新 plan 經 Owner 核准。
+
+## 2026-09-26 [Codex] — Phase 2 Content Studio implementation plan candidate
+
+- 舊四 PR plan 已被完整重寫為七個 bounded task PR：canonical bank/draft、publication/progress impact、trusted media、unified import、Admin A＋C manual authoring、operator workflows、Chapter 3 readiness/Local gate。新計畫明確保留 `/teacher/content`／`/teacher/import` retirement，不把新 authoring 塞回 analytics repository，也禁止直接升格 throwaway prototype code。
+- 因 GitHub `staging` merge 會自動觸發 Vercel，task PR 改為依序進 `codex/phase2-ch3-integration`；完成 Local gate 後才建立唯一 integration → `staging` final PR，避免七次半成品 Staging deploy。所有 branch push／PR／merge、Hosted migration／Storage／content mutation與部署仍需後續獨立授權。
+- `origin/staging` 於 2026-09-26 唯讀重驗仍為 `9c42ba3d9e6552e4c135d3d52efad783dc526f57`；plan 共 273 行，所有引用 AC IDs 與 pgTAP 074–077 號碼空間已核對。下一個 gate 是 Owner 一次核准本 plan；核准後只先整理 docs-only rebaseline/AC commit 與 clean implementation worktree，不立即碰 Hosted。
+
+## 2026-09-26 [Codex] — Phase 2 Chapter 3 implementation plan approved
+
+- Owner 已核准 `docs/superpowers/plans/2026-09-26-phase-2-chapter-3.md`。本次授權涵蓋依七個 bounded tasks 執行 Local implementation；先完成 docs-only rebaseline，再從 exact protected `staging@9c42ba3d9e6552e4c135d3d52efad783dc526f57` 加已審文件建立乾淨的 `codex/phase2-ch3-integration` worktree。
+- TDD seam 固定為 ContentAuthoring、ContentPublication、ContentMedia、ContentImport、ContentReadiness；PR 1 從 canonical curriculum／assessment bank／persistent draft 的失敗測試開始。不得把 throwaway prototype 直接升格為產品 code，也不得復活 `/teacher/content` 或 `/teacher/import`。
+- 這次核准不含 branch push／PR／merge、Hosted migration／Storage／content mutation、Vercel deploy 或任何 Production 操作。因 `staging` merge 會自動部署，只有全部 Local gate 完成後的一個 integration → `staging` final PR 能進入後續獨立 owner gate。

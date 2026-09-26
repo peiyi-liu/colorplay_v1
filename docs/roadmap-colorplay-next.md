@@ -17,9 +17,10 @@
   驗證，checksum
   `df1f025604c57368700d4e2c0c947b808b811aa06aca0fd54bfa868b18005feb`；0A scope
   無 unresolved Critical／High finding。該 evidence 目錄依 repo policy 不進 Git。
-- **Immediate next gate：**Phase 1 Hosted Admin gate 可在上述 exact Staging
-  foundation 上另行排程；需新的 owner authorization，且不自動授權 fixture、
-  Hosted DB 或 Production mutation。
+- **Immediate next gate：**Owner 已核准第三章 Phase 2 Content Studio implementation
+  plan；先完成 docs-only rebaseline commit，再從 exact protected `staging` 建立 clean
+  integration worktree。Phase 1 Hosted Admin lane 仍可另行排程，但不屬目前 Content
+  lane，也不自動授權 fixture、Hosted DB 或 Production mutation。
 - **0B deferred：**Sydney preservation／retirement、Tokyo Candidate、Production
   migration／promotion、B2／Cloudflare 權威證據、RPO／RTO 與完整 human release
   proof。0A 完成不得宣稱 Production-ready。
@@ -41,6 +42,13 @@
   `docs/superpowers/specs/2026-09-02-admin-c-platform-option.md`
 - Phase 2／5／6 scope contracts:
   `docs/superpowers/specs/2026-09-02-phase-2-5-6-scope-contracts.md`
+- Current Phase 2 Chapter 3 decision（supersedes the Phase 2 all-chapter lane and
+  grandfather rule only）:
+  `docs/superpowers/specs/2026-09-26-phase-2-chapter-3-rebaseline-decision.md`
+- Current approved Content Studio design:
+  `docs/superpowers/specs/2026-09-26-colorplay-content-studio-design.md`
+- Current approved Phase 2 Chapter 3 implementation plan:
+  `docs/superpowers/plans/2026-09-26-phase-2-chapter-3.md`
 - Historical task ledger: `.superpowers/sdd/progress.md`
 
 This tracker answers four questions for every new work session:
@@ -69,7 +77,20 @@ as a completed production release.
 > deferred requirement inventory，不是 0A 現行可執行程序；Staging／Local 專屬
 > 段落不受本則影響。
 
+> **2026-09-26 Phase 2 supersession notice：**目前 Content lane 只完成第三章；
+> 第 1、2、4、5、6 章移出本輪，不得把第三章 gate 宣稱為完整 Phase 2。歷史學習
+> facts 保留，但 Current Progress 只認 current published versions。錯字／排版／
+> 無語意 accessibility 修正保留進度；新增 required content 或語意變更一律要求
+> recompletion／requalification，且取消先前 inserted-card grandfather 豁免。
+
 ## Immediate next action
+
+Content lane: finish the approved docs-only rebaseline, then create
+`codex/phase2-ch3-integration` from exact protected `staging` plus the reviewed
+docs commits and begin bounded PR 1. This does not authorize Local reset,
+Sheet／Storage／Hosted mutation, push, merge, or deploy.
+
+Release/Admin lane remains independently available:
 
 Obtain a separate owner authorization before scheduling the Phase 1 Hosted
 Admin gate on exact Staging SHA

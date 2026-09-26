@@ -1,12 +1,12 @@
 {
   "package_name": "ColorPlay React + Supabase Development Specification Package",
   "package_version": "2.0.0",
-  "generated_at": "2026-09-02T16:36:27.964Z",
-  "markdown_files": 68,
-  "acceptance_criteria": 138,
-  "unique_acceptance_criteria": 138,
+  "generated_at": "2026-09-26T06:07:06.706Z",
+  "markdown_files": 73,
+  "acceptance_criteria": 143,
+  "unique_acceptance_criteria": 143,
   "ui_acceptance_criteria": 15,
-  "total_bytes_before_manifest": 821603,
+  "total_bytes_before_manifest": 919701,
   "real_device_required_criteria": [
     "AC-UI-010",
     "AC-UI-012"
@@ -24,8 +24,8 @@
     },
     {
       "path": "acceptance/ACCEPTANCE_CRITERIA.md",
-      "sha256": "a0af6591230697977116d18da32249ab8a6ceca67fa9634c9d6783182ce08170",
-      "size_bytes": 59996
+      "sha256": "419573b962b795de1aacb59fae0dd57b5e380359983a33daf194db31a03de1f9",
+      "size_bytes": 63619
     },
     {
       "path": "acceptance/EVIDENCE_TEMPLATE.md",
@@ -44,8 +44,8 @@
     },
     {
       "path": "docs/adr/0003-student-id-login.md",
-      "sha256": "524b626f824d6a2bb9bc127b7be9e4828a8818c437bde2c60b248c3a1959bada",
-      "size_bytes": 4357
+      "sha256": "19929576e5ba6e01910b24913cd022f21efc24a5973518d561b40defd077d639",
+      "size_bytes": 4496
     },
     {
       "path": "docs/adr/0004-live-phase-projection.md",
@@ -74,8 +74,8 @@
     },
     {
       "path": "docs/adr/0009-admin-managed-teacher-accounts.md",
-      "sha256": "4eece2f2608c3ab73ef116d8f237256289803cf90dd2dfb101abcde58f64455a",
-      "size_bytes": 4793
+      "sha256": "dc0d22e00302501e30b5fbca1addc39981192da1db9908a5dc19257e0530e087",
+      "size_bytes": 5797
     },
     {
       "path": "docs/deployment/environment-matrix.md",
@@ -204,8 +204,8 @@
     },
     {
       "path": "docs/superpowers/specs/2026-08-07-phase-1-admin-identity-security-design.md",
-      "sha256": "f7944d936398371f75506487eb6b410a6c41dc5594adab8cc445a7613d1ad0de",
-      "size_bytes": 52245
+      "sha256": "7ec4dade539bf2e5fed6129f291f2ff9ac0c106063e048f75aab7cfb66fdf796",
+      "size_bytes": 74537
     },
     {
       "path": "docs/superpowers/specs/2026-08-10-chapter-three-umbrella-brief.md",
@@ -254,18 +254,18 @@
     },
     {
       "path": "docs/superpowers/specs/2026-08-14-teacher-tactical-observatory-ui-optimization.md",
-      "sha256": "19b83675a52accc0b0864ea2585ef052a18a9b3269930d9782c16cee33dc919f",
-      "size_bytes": 23811
+      "sha256": "953cc8b4f4add801e8e43030e6d2b3320056b7f2bfee66940504dffce45fb576",
+      "size_bytes": 25364
     },
     {
       "path": "docs/superpowers/specs/2026-09-02-admin-b-operations-design.md",
-      "sha256": "6663816c407accebe9a5df59df5dcdcd862eedc8bb144ed02bb564f576ed1f65",
-      "size_bytes": 14073
+      "sha256": "cdc34ac1f596bfeca857eb9d568a77b15b98dadb1989a6e830d537388bde3007",
+      "size_bytes": 16614
     },
     {
       "path": "docs/superpowers/specs/2026-09-02-admin-c-platform-option.md",
-      "sha256": "5a4f8ec0205a5ab1ff276f0932e420c9e16f579f36c12599a59784cce1d849ab",
-      "size_bytes": 6339
+      "sha256": "3573cf4e6890050f651b6276d035335b8390d64fb249204a811404f89c24a2f2",
+      "size_bytes": 6308
     },
     {
       "path": "docs/superpowers/specs/2026-09-02-async-delivery-control.md",
@@ -274,8 +274,8 @@
     },
     {
       "path": "docs/superpowers/specs/2026-09-02-phase-2-5-6-scope-contracts.md",
-      "sha256": "8b0e5b14518a34b392e31159a379902e1137bc212729771da15e692a04a82f70",
-      "size_bytes": 10401
+      "sha256": "bb21628cb32b5c5a5a01fe692a7593add5a0ebe43575286187a16aa3af135717",
+      "size_bytes": 10740
     },
     {
       "path": "docs/superpowers/specs/2026-09-02-program-rebaseline-owner-decisions.md",
@@ -284,8 +284,33 @@
     },
     {
       "path": "docs/superpowers/specs/2026-09-02-section-progression-design.md",
-      "sha256": "674ef23376eda71ee1f8823ea42495144fceeeda46a769a4f1cbdf15a62dc8c0",
-      "size_bytes": 18337
+      "sha256": "fbc321aeb72e3dd70fc17edf0057a70d50b756d76b0375d3e803fa02c85007c5",
+      "size_bytes": 19330
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-03-admin-catalog-rebaseline-design.md",
+      "sha256": "7db0e171968b6bed9cdbe32fcbee405f1f8cd676cb9ff08eb3f8c35ad24a767b",
+      "size_bytes": 4582
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-05-admin-ui-redesign-design.md",
+      "sha256": "b20abc8a5c0862a1e4cdf809a7c34289734a3b0d231838613a0de2936b1d6e2d",
+      "size_bytes": 24447
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-11-phase-0a-0b-rebaseline-decision.md",
+      "sha256": "409efbac884aa0b64bce41ef8d9be07efbc04391e5bf9d473fcf257c13bbce77",
+      "size_bytes": 6690
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-26-colorplay-content-studio-design.md",
+      "sha256": "8fed955079ea525b4211bca0a5a30744b31a5ddcf121d2ba4c08b707e6c790b2",
+      "size_bytes": 19098
+    },
+    {
+      "path": "docs/superpowers/specs/2026-09-26-phase-2-chapter-3-rebaseline-decision.md",
+      "sha256": "3fdc654069b4fffeb7d37868af043d9a572f6841327b269ee5e515f5bdb19ba1",
+      "size_bytes": 7475
     },
     {
       "path": "spec/00-project-charter.md",
@@ -294,8 +319,8 @@
     },
     {
       "path": "spec/01-user-roles-and-flows.md",
-      "sha256": "49370c062c3c8bda2a2465535349c3dea2b666e7f8603e971054748c88f604ee",
-      "size_bytes": 20979
+      "sha256": "fda9b285c58ffe8e97a971df10dbe919974ede45eb03086cf407d957496a1ff8",
+      "size_bytes": 21029
     },
     {
       "path": "spec/02-system-architecture.md",
@@ -304,28 +329,28 @@
     },
     {
       "path": "spec/03-data-model-and-rls.md",
-      "sha256": "e8fc134e88146ed11d57f3b242f5ee18ba09a0005195446cda073ef6bb4d6e18",
-      "size_bytes": 19798
+      "sha256": "4f284b0111cd68f702ea1d498ded121ff2dea32a546bfaaba14f6f57422b5e5e",
+      "size_bytes": 20204
     },
     {
       "path": "spec/04-security-and-privacy.md",
-      "sha256": "041875fda4906a728e11c073e330473af2bc3e15e418a8c41e44faf2b78d3feb",
-      "size_bytes": 9893
+      "sha256": "ae647882c24d78a2c4dc86458144f9a0201a91ea1d7aca9ed5c5519a02271a38",
+      "size_bytes": 11474
     },
     {
       "path": "spec/05-game-mechanics.md",
-      "sha256": "68426cbc7be8bfcb2d67349da28b77dd206fd836d8c1689bd432ac11e0f46cf7",
-      "size_bytes": 25817
+      "sha256": "5f27226ac613a34fec675b7af3cabd02d0b9edcd846b03d453a6b78f7d0f8963",
+      "size_bytes": 26378
     },
     {
       "path": "spec/06-content-and-question-bank.md",
-      "sha256": "e8771c5ae7f8e5c9497c4f0f85c22ab425b5ce6da0354605a580a41fa76d91e7",
-      "size_bytes": 12167
+      "sha256": "c4f296b429bfca8515b0452aeae94a286d2135fce7657d319db9533243e190de",
+      "size_bytes": 12901
     },
     {
       "path": "spec/07-ui-visual-system.md",
-      "sha256": "8987bc51f0c5f5817455b1ae45d29db3ae433d74d1cd9945b271b67ff0484535",
-      "size_bytes": 24753
+      "sha256": "d72a5c7057a3f5e78f128e0535479e0557d0845e562a2bb6d0b649672d1fb4f7",
+      "size_bytes": 24774
     },
     {
       "path": "spec/08-testing-and-evidence.md",

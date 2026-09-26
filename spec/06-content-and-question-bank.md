@@ -5,10 +5,15 @@
 ```text
 Course
 └─ Chapter
+   ├─ CR Bank（chapter scope）
+   │  └─ Question
    └─ Section
+      ├─ QB Bank（section scope）
+      │  └─ Question
+      ├─ LT Bank（section scope）
+      │  └─ Question
       └─ Subtopic
-         ├─ Review Card
-         └─ Question
+         └─ Review Card
 ```
 
 第一個 course：色彩原理。
@@ -40,6 +45,10 @@ Course
 
 ## 3. Question types
 
+Question 透過 `assessment_banks` 取得唯一 scope；每題只能屬於一個 bank。QB／LT
+bank 的 parent 必須是 Section，CR bank 的 parent 必須是 Chapter。新 session 依產品
+surface 選定 bank kind，禁止 QB／CR／LT fallback 或混抽。
+
 ### MVP 必須：`single_choice`
 
 - 2–4 個非空選項。
@@ -60,7 +69,7 @@ Course
 
 ## 4. 內容狀態與版本
 
-- Draft：只有教師可見。
+- Draft：只有完成 Admin identity 與 MFA privileged session 的管理員可見。
 - Published：學生可見，需通過 validation。
 - Archived：新 session 不再抽取，歷史仍可讀。
 
@@ -88,16 +97,11 @@ changed-field allowlist 驗證：
 - Correct answer、options 或 template scope 變更不得宣告 compatible。缺漏、不明確
   或未被 allowlist 涵蓋時，review content 預設 requires recompletion，challenge
   content 預設 requires requalification。
-- 對既有 section 插入新的 required card 時，publication command 必須在 event
-  同一 transaction 寫入 immutable effective cutoff、section/sort identity、
-  `publication_cutoff_order` 與
-  `grandfather_policy='finalized_before_publish'`。Eligibility 固定為 cutoff 前已
-  committed 的 server-valid、同 section finalized challenge，不論分數；其他人必讀，
-  cutoff 後不得追溯豁免。不以 80% mastery 或可變 projection 代替；
-  publication／finalize 在同一 section lock 內由 server 分配單調
-  `section_event_order`，只有
-  `finalize.section_event_order < publication.publication_cutoff_order` 才豁免。
-  Timestamp 只作 audit；等號、缺 order 或無法證明順序時 fail closed。
+- 對既有 section 插入新的 required card 時，publication command 必須記錄
+  section/sort identity、版本、impact reason 與 changed-field digest。新卡對所有
+  學生立即成為 current-required set 的一部分；不得建立 grandfather cohort、
+  cutoff、event-order threshold 或人工豁免。既有 completion／attempt／reward facts
+  保留，但 current denominator、next action 與 gate 以新卡重算。
 
 ## 5. 發布驗證
 
@@ -190,7 +194,7 @@ changed-field allowlist 驗證：
 
 ### Confirm
 
-教師明確確認後才 commit。若有 error rows，預設禁止 commit；warning 可確認後繼續。
+Privileged Admin 明確確認後才 commit。若有 error rows，預設禁止 commit；warning 可確認後繼續。
 
 ### Commit
 
@@ -230,25 +234,27 @@ changed-field allowlist 驗證：
 - 若題數不足，回傳實際題數與明確 reason；UI 顯示真實數量。
 - Practice／assignment／remediation 只抽 current published versions；Live session 建立時另凍結自己的 question/version/options/deadline projection。
 
-## 10. 教師編輯器
+## 10. Admin 內容工作平台
 
 - 有 unsaved changes 提示。
 - 表單 validation 即時顯示，但 server validation 最終決定。
 - 正解設定需清楚，不只靠顏色。
 - 預覽 student view 不得暴露資料庫內部欄位。
 - 發布需二次確認並顯示版本影響。
+- 預設為 A 三欄編輯工作區，同頁提供 C 全部內容清單；兩者共用同一資料、權限與 authoring Interface。
+- 既有 `/teacher/content`、`/teacher/import` 保持退役，不建立第二個 production write path。
 
 ## 11. 媒體
 
 - 圖片格式：PNG、JPEG、WebP；MVP 不接受 SVG 上傳。
 - 單檔上限 2 MiB，最大 4096×4096。
-- 上傳後產生安全檔名與 metadata。
-- Storage policy：學生只讀被發布內容；教師只可寫自己授權範圍。
+- 原始 master 存 private immutable path；trusted processor 從 master 產生 320／800／必要 1200 WebP derivatives 與完整 hash／dimension／byte manifest。
+- Storage policy：只有 trusted Admin command 可建立 quarantine／master／derivatives；學生只經 guarded projection 取得 current published version 的短期 signed URL，Teacher 不可讀 draft、master 或 quarantine。
 - 複習卡 Sheet 可先以附件代號列管；只有在代號、Storage object path 與 alt text 三者完成核准 mapping 後，才建立 `review_card_media`。同一卡片可有多張圖並以 `sort_order` 排序，操作方式見 `docs/content/review-card-media-import.md`。
 
 ## 12. 內容品質
 
-程式驗收只驗證結構與流程，不能替代教學內容審查。正式發布前教師需確認：
+程式驗收只驗證結構與流程，不能替代教學內容審查。正式發布前內容 Owner／Admin 需確認：
 
 - 題目有唯一合理答案。
 - 解析與教材一致。
@@ -270,7 +276,7 @@ changed-field allowlist 驗證：
 ## 14. Hint content
 
 - 每題可定義最多 three hints，依 level 1–3 由淺入深；缺少某 level 時 API 回明確 unavailable，不補造內容。
-- Hint 是 versioned published content，需教師權限與發布驗證；不得包含 correct option ID/index 或直接等價答案。
+- Hint 是 versioned published content，需 privileged Admin 權限與發布驗證；不得包含 correct option ID/index 或直接等價答案。
 - `request_question_hint` 只回目前允許 level，並記錄 user/session question/content version/server time。
 - 第一版 hint 不扣正式 score/reward；內容作者不可在 hint payload 加 client-calculated penalty。
 
