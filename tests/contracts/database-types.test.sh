@@ -84,3 +84,8 @@ grep -q 'admin_preview_content_draft' src/types/database.ts
 grep -q 'admin_read_content_editor_state' src/types/database.ts
 grep -q 'admin_save_content_draft' src/types/database.ts
 grep -q 'admin_validate_content_draft' src/types/database.ts
+grep -q 'content_publication_requests' src/types/database.ts
+grep -q 'admin_publish_content_draft' src/types/database.ts
+grep -q 'admin_archive_content' src/types/database.ts
+grep -q 'admin_rollback_content' src/types/database.ts
+grep -q 'admin_list_content_history' src/types/database.ts

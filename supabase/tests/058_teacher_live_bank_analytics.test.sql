@@ -207,7 +207,10 @@ join public.question_options as option
 where question.stable_code = 'LT3101';
 
 -- Current taxonomy may later move while the completed Live attribution must
--- remain bound to the frozen 3-1 identities above.
+-- remain bound to the frozen 3-1 identities above. Current publication now
+-- forbids this move, so the fixture temporarily bypasses the current-row
+-- compatibility trigger to represent pre-constraint historical drift.
+alter table public.questions disable trigger questions_validate_canonical_bank;
 update public.questions
 set subtopic_id = (
   select subtopic.id
@@ -215,6 +218,7 @@ set subtopic_id = (
   where subtopic.stable_code = 'sheet-3-2-all'
 )
 where stable_code = 'LT3101';
+alter table public.questions enable trigger questions_validate_canonical_bank;
 
 set local role authenticated;
 select set_config(

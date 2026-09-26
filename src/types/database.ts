@@ -1375,33 +1375,48 @@ export type Database = {
       content_publication_events: {
         Row: {
           actor_id: string
+          auth_session_id: string | null
+          changed_fields: string[]
           content_id: string
-          content_type: Database["public"]["Enums"]["versioned_content_type"]
+          content_type: string
           created_at: string
-          event_type: Database["public"]["Enums"]["publication_event_type"]
+          event_type: string
           id: string
+          impact: string
+          reason: string
           request_id: string
           version: number
+          version_id: string | null
         }
         Insert: {
           actor_id: string
+          auth_session_id?: string | null
+          changed_fields?: string[]
           content_id: string
-          content_type: Database["public"]["Enums"]["versioned_content_type"]
+          content_type: string
           created_at?: string
-          event_type: Database["public"]["Enums"]["publication_event_type"]
+          event_type: string
           id?: string
+          impact?: string
+          reason?: string
           request_id: string
           version: number
+          version_id?: string | null
         }
         Update: {
           actor_id?: string
+          auth_session_id?: string | null
+          changed_fields?: string[]
           content_id?: string
-          content_type?: Database["public"]["Enums"]["versioned_content_type"]
+          content_type?: string
           created_at?: string
-          event_type?: Database["public"]["Enums"]["publication_event_type"]
+          event_type?: string
           id?: string
+          impact?: string
+          reason?: string
           request_id?: string
           version?: number
+          version_id?: string | null
         }
         Relationships: [
           {
@@ -1411,39 +1426,100 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "content_publication_events_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "content_versions"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      content_publication_requests: {
+        Row: {
+          actor_user_id: string
+          auth_session_id: string
+          created_at: string
+          request_hash: string
+          request_id: string
+          result_receipt: Json
+        }
+        Insert: {
+          actor_user_id: string
+          auth_session_id: string
+          created_at?: string
+          request_hash: string
+          request_id: string
+          result_receipt: Json
+        }
+        Update: {
+          actor_user_id?: string
+          auth_session_id?: string
+          created_at?: string
+          request_hash?: string
+          request_id?: string
+          result_receipt?: Json
+        }
+        Relationships: []
       }
       content_versions: {
         Row: {
+          auth_session_id: string | null
+          changed_fields: string[]
           content_id: string
-          content_type: Database["public"]["Enums"]["versioned_content_type"]
+          content_type: string
           created_at: string
-          created_by: string
+          created_by: string | null
           frozen_payload: Json
           id: string
+          impact: string
           payload_hash: string
+          payload_schema_version: number
+          previous_version: number | null
+          reason: string
+          request_id: string | null
+          source_draft_id: string | null
+          stable_code: string
           status: Database["public"]["Enums"]["content_status"]
           version: number
         }
         Insert: {
+          auth_session_id?: string | null
+          changed_fields?: string[]
           content_id: string
-          content_type: Database["public"]["Enums"]["versioned_content_type"]
+          content_type: string
           created_at?: string
-          created_by: string
+          created_by?: string | null
           frozen_payload: Json
           id?: string
+          impact?: string
           payload_hash: string
+          payload_schema_version?: number
+          previous_version?: number | null
+          reason?: string
+          request_id?: string | null
+          source_draft_id?: string | null
+          stable_code: string
           status: Database["public"]["Enums"]["content_status"]
           version: number
         }
         Update: {
+          auth_session_id?: string | null
+          changed_fields?: string[]
           content_id?: string
-          content_type?: Database["public"]["Enums"]["versioned_content_type"]
+          content_type?: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           frozen_payload?: Json
           id?: string
+          impact?: string
           payload_hash?: string
+          payload_schema_version?: number
+          previous_version?: number | null
+          reason?: string
+          request_id?: string | null
+          source_draft_id?: string | null
+          stable_code?: string
           status?: Database["public"]["Enums"]["content_status"]
           version?: number
         }
@@ -3454,6 +3530,16 @@ export type Database = {
         Args: { session_id: string }
         Returns: Json
       }
+      admin_archive_content: {
+        Args: {
+          p_entity_id: string
+          p_entity_type: string
+          p_expected_version: number
+          p_reason: string
+          p_request_id: string
+        }
+        Returns: Json
+      }
       admin_get_resource_detail:
         | {
             Args: { p_domain: string; p_resource: string; p_row_id: string }
@@ -3652,6 +3738,10 @@ export type Database = {
         Returns: Json
       }
       admin_list_admins: { Args: { p_cursor?: string }; Returns: Json }
+      admin_list_content_history: {
+        Args: { p_entity_id: string; p_entity_type: string }
+        Returns: Json
+      }
       admin_list_content_scope: {
         Args: { p_chapter_id: string }
         Returns: Json
@@ -3675,6 +3765,15 @@ export type Database = {
       admin_platform_health: { Args: never; Returns: Json }
       admin_preview_content_draft: {
         Args: { p_draft_id: string; p_expected_revision: number }
+        Returns: Json
+      }
+      admin_publish_content_draft: {
+        Args: {
+          p_draft_id: string
+          p_expected_revision: number
+          p_reason: string
+          p_request_id: string
+        }
         Returns: Json
       }
       admin_query_audit: {
@@ -3730,6 +3829,17 @@ export type Database = {
             }
             Returns: Json
           }
+      admin_rollback_content: {
+        Args: {
+          p_entity_id: string
+          p_entity_type: string
+          p_expected_version: number
+          p_reason: string
+          p_request_id: string
+          p_target_version: number
+        }
+        Returns: Json
+      }
       admin_save_content_draft: {
         Args: {
           p_draft_id: string
