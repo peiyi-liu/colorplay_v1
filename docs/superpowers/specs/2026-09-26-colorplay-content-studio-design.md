@@ -329,6 +329,14 @@ Manifest 保存 source hash、normalized pixel／semantic hash、output hash、w
 
 Owner 核准 prototype 後才寫 implementation plan；未核准前不接正式 route、DB、Storage 或 Hosted state。
 
+#### Owner-approved UI direction
+
+- 預設進入 A「三欄工作區」：左欄為 Course／Chapter／Section／bank 結構，中欄為目前 scope 的內容清單，右欄為 editor／preview／publish actions。
+- 同一 `/admin/content` 功能頁提供 C「全部內容」清單模式，供 stable code 搜尋、跨類型篩選、狀態檢查與批次管理；它不是第二套工作平台或獨立 route。
+- A／C 切換必須保留可合理保留的 chapter／section、filter 與 selected-content context。預設與新增／編輯回到 A；大量盤點與批次操作使用 C。
+- B「引導式流程」不進正式實作；其長頁面在內容量增加後會降低掃描與切換效率，只保留於 throwaway prototype history。
+- 正式產品需依本規格重寫、補齊型別、授權、錯誤、loading／empty／conflict states 與測試；不得直接升格拋棄式 HTML 原型。
+
 ### 12.3 Phase 2 Local gate
 
 第三章 readiness 必須無：
