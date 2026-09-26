@@ -2015,3 +2015,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - PR #68 首輪 CI 的產品相關 failure 已精確定位：acceptance SSOT 已增至 143 但 verifier 仍鎖 138；Phase 2 `CONTEXT.md` 取代 active 入口時漏留 Phase 0A／0B release boundary；Vitest 誤收只支援 Deno runtime 的 Function tests；Content Studio 新增的 135 個欄位未進 Admin sensitivity catalog。沒有刪 assertion、skip 測試或恢復舊寫入權限。
 - 修正後 acceptance contract／Phase 0 docs／catalog contracts 33／33 PASS；fresh Local reset 從空 DB 套完 00100–00800，`admin:catalog:check` PASS，migration-derived inventory 679／679 欄一致。九張 private Content Studio 表全部 `surface=none`、所有新欄位 fail-closed `forbidden`；歷史 20260808／20260903 generated migrations維持 byte-stable，overlay 由尚未 Hosted 套用的 20260926000100 擁有。
 - format、lint、typecheck、production build PASS。完整 coverage 已不再出現原 CI 的四個 failure；本機高平行跑只剩既有 `phase0-restore-cleanup` 5 秒 timeout（單獨重跑 PASS），交由 GitHub Linux gate 判定，不放寬 timeout。下一步：commit 此修正後，以新 clean SHA 重跑 Phase 2 Local gate；PASS 才 push 並等 PR #68 全綠。Production 未觸碰。
+
+## 2026-09-26 [Codex] — PR #68 second CI remediation
+
+- Clean `5fd415fa016299ffb84b784845b0f41e3f1dbbb6` Phase 2 Local gate PASS：47／47 Vitest、363／363 focused pgTAP、readiness 與 3／3 viewport 全綠；evidence 在 ignored `artifacts/acceptance/content-studio-ch3-5fd415fa016299ffb84b784845b0f41e3f1dbbb6/manifest.json`。
+- GitHub Local DB job 的唯一 pgTAP failure 是既有 `049_admin_sensitivity_catalog` 仍鎖 60 resources；更新為 69，並新增 assertion 確認九張 private Content Studio resource 全部 `surface=none`／`forbidden`。Focused 14／14 與完整 pgTAP 92 files／2236 assertions PASS。
+- 本機完整 `test:db` 後段 Admin Edge integration 因既有 Local Edge runtime container 未啟動而回 503；這與 SQL assertion 修正無關，且先前 handoff 已記錄本機 CLI bootstrap 問題。不得改弱 integration；下一步以 GitHub Linux job 實際判定 runtime，若仍紅再依遠端精確 log 修。Production 未觸碰。

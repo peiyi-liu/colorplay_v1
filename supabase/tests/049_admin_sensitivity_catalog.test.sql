@@ -1,6 +1,6 @@
 -- supabase/tests/049_admin_sensitivity_catalog.test.sql
 begin;
-select plan(13);
+select plan(14);
 select has_table('public', 'admin_sensitivity_catalog', 'catalog table exists');
 -- Phase 1 gate:每張 admin_* 表都要有完整的 anon/authenticated ×
 -- SELECT/INSERT/UPDATE/DELETE default-deny 矩陣(比照 047/048),這張表原本
@@ -22,7 +22,21 @@ select ok(not has_table_privilege('authenticated',
 select ok(not has_table_privilege('authenticated',
   'public.admin_sensitivity_catalog', 'DELETE'), 'authenticated cannot delete catalog');
 select is((select count(distinct resource)::int
-  from public.admin_sensitivity_catalog), 60, 'exactly 60 resources');
+  from public.admin_sensitivity_catalog), 69, 'exactly 69 resources');
+select is((select count(distinct resource)::int
+  from public.admin_sensitivity_catalog
+  where resource in (
+    'assessment_banks',
+    'content_draft_requests',
+    'content_drafts',
+    'content_import_runs',
+    'content_import_upload_runs',
+    'content_media_assets',
+    'content_media_upload_runs',
+    'content_media_variants',
+    'content_publication_requests'
+  ) and surface = 'none' and class = 'forbidden'), 9,
+  'Content Studio private resources remain fail-closed');
 select is((select class from public.admin_sensitivity_catalog
   where resource = 'profiles' and column_name = 'full_name'),
   'personal', 'profiles.full_name is personal');
