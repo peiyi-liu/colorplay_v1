@@ -29,6 +29,7 @@
     "content:fetch": "node scripts/content/fetch-sheet.mjs",
     "content:verify": "node scripts/content/verify-sheet-db.mjs",
     "content:import": "node scripts/content/build-import-package.mjs --chapter 3",
+    "content:chapter3": "node scripts/content/build-chapter-3-canonical.mjs",
     "content:package": "node scripts/content/build-import-package.mjs",
     "content:verify-sequential": "tsx scripts/content/verify-sequential-readiness.ts",
     "phase:chapter-sequence": "bash scripts/acceptance/run-chapter-sequence.sh",
@@ -54,6 +55,7 @@
     "phase:assignments-live": "bash scripts/acceptance/run-assignments-live.sh",
     "phase:learning-experience": "bash scripts/acceptance/run-learning-experience.sh",
     "phase:teacher-content": "bash scripts/acceptance/run-teacher-content.sh",
+    "phase:content-studio-ch3": "bash scripts/acceptance/run-content-studio-ch3.sh",
     "phase:live-advanced": "bash scripts/acceptance/run-live-advanced.sh",
     "phase:ui-restyle": "bash scripts/acceptance/run-ui-restyle.sh"
   },

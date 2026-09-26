@@ -6,6 +6,7 @@ import {
   publicationPreviewWireSchema,
   publicationSuccessWireSchema,
   type ArchivePreview,
+  type ChangeClassification,
   type PublicationDenied,
   type PublicationHistory,
   type PublicationOutcome,
@@ -41,6 +42,7 @@ export interface ContentPublicationRepository {
   publish(
     input: Readonly<{
       draftId: string;
+      changeClassification: ChangeClassification;
       expectedRevision: number;
       reason: string;
       requestId: string;
@@ -56,7 +58,11 @@ export interface ContentPublicationRepository {
     input: Readonly<{ entityId: string; entityType: ContentEntityType }>,
   ): Promise<PublicationOutcome<PublicationHistory>>;
   previewPublish(
-    input: Readonly<{ draftId: string; expectedRevision: number }>,
+    input: Readonly<{
+      changeClassification: ChangeClassification;
+      draftId: string;
+      expectedRevision: number;
+    }>,
   ): Promise<PublicationOutcome<PublicationPreview>>;
   previewArchive(
     input: Readonly<{
@@ -129,6 +135,7 @@ export function createContentPublicationRepository(
     publish: (input) =>
       runCommand('admin_publish_content_draft', {
         p_draft_id: input.draftId,
+        p_change_classification: input.changeClassification,
         p_expected_revision: input.expectedRevision,
         p_reason: input.reason,
         p_request_id: input.requestId,
@@ -179,6 +186,7 @@ export function createContentPublicationRepository(
     },
     async previewPublish(input) {
       const payload = await transport.rpc('admin_preview_content_publication', {
+        p_change_classification: input.changeClassification,
         p_draft_id: input.draftId,
         p_expected_revision: input.expectedRevision,
       });
@@ -187,6 +195,7 @@ export function createContentPublicationRepository(
       const parsed = publicationPreviewWireSchema.safeParse(payload);
       if (!parsed.success) throw new ContentPublicationRepositoryError();
       return {
+        changeClassification: parsed.data.change_classification,
         changedFields: parsed.data.changed_fields,
         currentVersion: parsed.data.current_version,
         draftId: parsed.data.draft_id,

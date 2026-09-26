@@ -4096,11 +4096,16 @@ export type Database = {
         Returns: Json
       }
       admin_preview_content_publication: {
-        Args: { p_draft_id: string; p_expected_revision: number }
+        Args: {
+          p_change_classification?: string
+          p_draft_id: string
+          p_expected_revision: number
+        }
         Returns: Json
       }
       admin_publish_content_draft: {
         Args: {
+          p_change_classification?: string
           p_draft_id: string
           p_expected_revision: number
           p_reason: string

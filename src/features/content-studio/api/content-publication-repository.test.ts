@@ -31,6 +31,7 @@ describe('content publication repository', () => {
 
     await expect(
       createContentPublicationRepository(transport).publish({
+        changeClassification: 'nonsemantic',
         draftId: DRAFT_ID,
         expectedRevision: 3,
         reason: '修正標題錯字',
@@ -42,6 +43,7 @@ describe('content publication repository', () => {
       version: 2,
     });
     expect(transport.rpc).toHaveBeenCalledWith('admin_publish_content_draft', {
+      p_change_classification: 'nonsemantic',
       p_draft_id: DRAFT_ID,
       p_expected_revision: 3,
       p_reason: '修正標題錯字',
@@ -51,6 +53,7 @@ describe('content publication repository', () => {
 
   it('previews changed fields and progress impact on the server before confirmation', async () => {
     transport.rpc.mockResolvedValue({
+      change_classification: 'semantic',
       changed_fields: ['content'],
       current_version: 2,
       draft_id: DRAFT_ID,
@@ -64,6 +67,7 @@ describe('content publication repository', () => {
 
     await expect(
       createContentPublicationRepository(transport).previewPublish({
+        changeClassification: 'semantic',
         draftId: DRAFT_ID,
         expectedRevision: 4,
       }),
@@ -74,7 +78,11 @@ describe('content publication repository', () => {
     });
     expect(transport.rpc).toHaveBeenCalledWith(
       'admin_preview_content_publication',
-      { p_draft_id: DRAFT_ID, p_expected_revision: 4 },
+      {
+        p_change_classification: 'semantic',
+        p_draft_id: DRAFT_ID,
+        p_expected_revision: 4,
+      },
     );
   });
 
@@ -230,6 +238,7 @@ describe('content publication repository', () => {
 
     await expect(
       createContentPublicationRepository(transport).publish({
+        changeClassification: 'semantic',
         draftId: DRAFT_ID,
         expectedRevision: 2,
         reason: '更新內容',

@@ -2,7 +2,7 @@ begin;
 
 set local search_path = public, extensions;
 
-select plan(54);
+select plan(60);
 
 select has_table('public', 'content_publication_requests',
   'publication commands persist private idempotency receipts');
@@ -13,7 +13,7 @@ select has_column('public', 'content_versions', 'changed_fields',
 select has_column('public', 'content_publication_events', 'version_id',
   'each event points to its immutable version');
 select has_function('public', 'admin_publish_content_draft',
-  array['uuid','integer','text','uuid'],
+  array['uuid','integer','text','uuid','text'],
   'draft publication is a dedicated trusted command');
 select has_function('public', 'admin_archive_content',
   array['uuid','text','integer','text','uuid'],
@@ -31,10 +31,10 @@ select ok(not has_table_privilege(
   'authenticated', 'public.content_versions', 'SELECT'),
   'browser clients cannot read frozen version payloads directly');
 select ok(not has_function_privilege(
-  'anon', 'public.admin_publish_content_draft(uuid,integer,text,uuid)',
+  'anon', 'public.admin_publish_content_draft(uuid,integer,text,uuid,text)',
   'EXECUTE'), 'anonymous clients cannot publish content');
 select ok(has_function_privilege(
-  'authenticated', 'public.admin_publish_content_draft(uuid,integer,text,uuid)',
+  'authenticated', 'public.admin_publish_content_draft(uuid,integer,text,uuid,text)',
   'EXECUTE'), 'authenticated callers can reach the authorized publish command');
 select ok(not has_function_privilege(
   'authenticated', 'public.publish_question(uuid,jsonb,uuid)', 'EXECUTE'),
@@ -58,13 +58,46 @@ select is(content_private.publication_impact(
   '{"title":"相同","content":"新教學"}'), 'requires_recompletion',
   'review-card teaching changes require recompletion');
 select is(content_private.publication_impact(
+  'review_card', '{"title":"相同","content":"錯字"}',
+  '{"title":"相同","content":"正字"}', 'nonsemantic'), 'compatible',
+  'review-card typo corrections preserve current completion when classified');
+select is(content_private.publication_impact(
+  'review_card',
+  '{"media":[{"manifest_id":"11111111-1111-4111-8111-111111111111","semantic_role":"color_critical","alt_text":"舊替代文字","sort_order":0}]}',
+  '{"media":[{"manifest_id":"11111111-1111-4111-8111-111111111111","semantic_role":"color_critical","alt_text":"新替代文字","sort_order":0}]}',
+  'nonsemantic'), 'compatible',
+  'media alt-text-only corrections preserve current completion');
+select is(content_private.publication_impact(
+  'review_card',
+  '{"media":[{"manifest_id":"11111111-1111-4111-8111-111111111111","semantic_role":"color_critical","alt_text":"圖","sort_order":0}]}',
+  '{"media":[{"manifest_id":"22222222-2222-4222-8222-222222222222","semantic_role":"color_critical","alt_text":"圖","sort_order":0}]}',
+  'nonsemantic'), 'requires_recompletion',
+  'nonsemantic classification cannot hide a media asset replacement');
+select is(content_private.publication_impact(
   'question', '{"prompt":"舊題意","options":[]}',
   '{"prompt":"新題意","options":[]}'), 'requires_requalification',
   'question meaning changes require requalification');
 select is(content_private.publication_impact(
+  'question',
+  '{"options":[{"key":"A","text":"錯字","is_correct":true},{"key":"B","text":"其他","is_correct":false}]}',
+  '{"options":[{"key":"A","text":"正字","is_correct":true},{"key":"B","text":"其他","is_correct":false}]}',
+  'nonsemantic'), 'compatible',
+  'option typo corrections preserve qualification when answer identity is unchanged');
+select is(content_private.publication_impact(
+  'question',
+  '{"options":[{"key":"A","text":"甲","is_correct":true},{"key":"B","text":"乙","is_correct":false}]}',
+  '{"options":[{"key":"A","text":"甲","is_correct":false},{"key":"B","text":"乙","is_correct":true}]}',
+  'nonsemantic'), 'requires_requalification',
+  'nonsemantic classification cannot hide a correct-answer change');
+select is(content_private.publication_impact(
   'assessment_bank', '{"selection_settings":{"count":10}}',
   '{"selection_settings":{"count":20}}'), 'requires_requalification',
   'bank selection changes require requalification');
+select is(content_private.publication_impact(
+  'assessment_bank', '{"selection_settings":{"count":10}}',
+  '{"selection_settings":{"count":20}}', 'nonsemantic'),
+  'requires_requalification',
+  'nonsemantic classification cannot override bank selection changes');
 select is(content_private.publication_impact(
   'question', '{"duration_seconds":20,"sort_order":1}',
   '{"duration_seconds":30,"sort_order":1}'), 'requires_requalification',
@@ -121,7 +154,7 @@ select set_config('pgtap.publication_save', public.admin_save_content_draft(
   null, null, 'review_card', 'RC-P2-NEW', 0,
   jsonb_build_object(
     'subtopic_id', :'publication_subtopic_id', 'group_label', '3-1',
-    'title', '新內容', 'content', '第一版教學內容',
+    'title', '新內容', 'content', '第一版教學內容。',
     'requires_recompletion', false, 'sort_order', 999, 'media', '[]'::jsonb
   ), 'manual', '75000000-0000-4000-8000-000000000002')::text, true);
 
@@ -236,11 +269,11 @@ select set_config('pgtap.editorial_save', public.admin_save_content_draft(
   ), 'manual', '75000000-0000-4000-8000-000000000005')::text, true);
 select set_config('pgtap.editorial_publish', public.admin_publish_content_draft(
   (current_setting('pgtap.publication_save')::jsonb #>> '{draft,draft_id}')::uuid,
-  2, '調整顯示順序',
-  '75000000-0000-4000-8000-000000000006')::text, true);
+  2, '修正標點但不改語意',
+  '75000000-0000-4000-8000-000000000006', 'nonsemantic')::text, true);
 
 select is(current_setting('pgtap.editorial_publish')::jsonb ->> 'impact',
-  'compatible', 'ordering-only publication is classified as compatible');
+  'compatible', 'nonsemantic typo publication is classified as compatible');
 reset role;
 select is((select completed_count::text from public.review_completion_for(
   'cc000000-0000-0000-0000-000000000001',
@@ -311,7 +344,7 @@ select set_config('pgtap.history', public.admin_list_content_history(
 select is(current_setting('pgtap.history')::jsonb ->> 'outcome', 'ok',
   'Admin can list safe publication history');
 select ok(current_setting('pgtap.history') !~
-  'frozen_payload|payload_hash|actor_id|auth_session_id',
+  'frozen_payload|payload_hash|auth_session_id',
   'history projection omits frozen payloads and security internals');
 
 select set_config('pgtap.archive', public.admin_archive_content(

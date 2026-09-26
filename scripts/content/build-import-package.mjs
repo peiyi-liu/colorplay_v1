@@ -90,12 +90,28 @@ const headers = {
   Media: ['owner_code', 'path', 'alt_text', 'semantic_role', 'sort_order'],
 };
 
+const course = {
+  description: '從光、視覺、表示法到配色的基礎課程。',
+  stableCode: 'color-theory',
+  title: '色彩原理',
+};
+
+const chapterCatalog = {
+  1: ['色彩與光源', '理解光與色彩形成的關係。'],
+  2: ['色彩與生理', '認識眼睛與視覺系統如何感受色彩。'],
+  3: ['色彩表示', '使用色彩模型與數值描述顏色。'],
+  4: ['色彩混色', '比較加法與減法混色。'],
+  5: ['色彩心理', '探索色彩知覺與心理感受。'],
+  6: ['色彩配色', '練習有目的的色彩組合。'],
+};
+
 const questionScope = (code) => {
   const section = /^(QB|LT)([1-9])([1-9])([0-9]{2})$/u.exec(code);
   if (section) {
     const [, kind, chapter, sectionNumber, sequence] = section;
     return {
       bankCode: `${kind}-sheet-${chapter}-${sectionNumber}`,
+      chapter,
       kind,
       scopeCode: `sheet-${chapter}-${sectionNumber}`,
       sequence: Number(sequence),
@@ -105,6 +121,7 @@ const questionScope = (code) => {
   if (chapter) {
     return {
       bankCode: `CR-chapter-${chapter[1]}`,
+      chapter: chapter[1],
       kind: 'CR',
       scopeCode: `chapter-${chapter[1]}`,
       sequence: Number(chapter[2]),
@@ -113,7 +130,11 @@ const questionScope = (code) => {
   throw new Error(`不支援的題號：${code}`);
 };
 
-export function buildCompatibilityWorkbook(snapshot, chapterNumber = '3') {
+export function buildCompatibilityWorkbook(
+  snapshot,
+  chapterNumber = '3',
+  mediaRows = [],
+) {
   const workbook = XLSX.utils.book_new();
   const rows = Object.fromEntries(
     Object.entries(headers).map(([name, sheetHeaders]) => [
@@ -123,6 +144,26 @@ export function buildCompatibilityWorkbook(snapshot, chapterNumber = '3') {
   );
   const chapterPrefix = `chapter-${chapterNumber}`;
   const attachmentWarnings = [];
+  const chapter = chapterCatalog[chapterNumber];
+  if (!chapter) throw new Error(`不支援的章節：${chapterNumber}`);
+  rows.Course.push([course.stableCode, course.title, course.description, 1]);
+  rows.Chapter.push([
+    chapterPrefix,
+    course.stableCode,
+    chapter[0],
+    chapter[1],
+    Number(chapterNumber),
+  ]);
+
+  const sectionLabels = new Map();
+  for (const card of snapshot.reviewCards) {
+    if (card.chapterCode !== chapterPrefix) continue;
+    sectionLabels.set(
+      card.sectionKey,
+      card.sectionLabel ||
+        `第 ${chapterNumber} 章第 ${card.sectionKey.split('-')[1]} 節`,
+    );
+  }
 
   for (const [index, card] of snapshot.reviewCards.entries()) {
     if (card.chapterCode !== chapterPrefix) continue;
@@ -141,7 +182,14 @@ export function buildCompatibilityWorkbook(snapshot, chapterNumber = '3') {
   const bankRows = new Map();
   for (const question of snapshot.questions) {
     const scope = questionScope(question.code);
-    if (!scope.scopeCode.includes(`-${chapterNumber}`)) continue;
+    if (scope.chapter !== chapterNumber) continue;
+    if (scope.kind !== 'CR' && !sectionLabels.has(scope.scopeCode.slice(6))) {
+      const sectionNumber = scope.scopeCode.split('-').at(-1);
+      sectionLabels.set(
+        `${chapterNumber}-${sectionNumber}`,
+        `第 ${chapterNumber} 章第 ${sectionNumber} 節`,
+      );
+    }
     if (question.explanation.trim() === '')
       throw new Error(`題號 ${question.code} 缺少解析，不能建立匯入套件`);
     if (!bankRows.has(scope.bankCode)) {
@@ -183,6 +231,42 @@ export function buildCompatibilityWorkbook(snapshot, chapterNumber = '3') {
       scope.sequence,
     ]);
   }
+
+  for (const [sectionKey, title] of [...sectionLabels.entries()].sort(
+    ([left], [right]) => left.localeCompare(right),
+  )) {
+    const sectionNumber = Number(sectionKey.split('-')[1]);
+    rows.Section.push([
+      `sheet-${sectionKey}`,
+      chapterPrefix,
+      title,
+      '',
+      sectionNumber,
+    ]);
+    if (
+      snapshot.reviewCards.some(
+        (card) =>
+          card.chapterCode === chapterPrefix && card.sectionKey === sectionKey,
+      )
+    ) {
+      rows.Subtopic.push([
+        `sheet-${sectionKey}-all`,
+        `sheet-${sectionKey}`,
+        title,
+        '',
+        1,
+      ]);
+    }
+  }
+  rows.Media.push(
+    ...mediaRows.map((media) => [
+      media.ownerCode,
+      media.path,
+      media.altText,
+      media.semanticRole,
+      media.sortOrder,
+    ]),
+  );
 
   for (const [name, sheetRows] of Object.entries(rows)) {
     XLSX.utils.book_append_sheet(

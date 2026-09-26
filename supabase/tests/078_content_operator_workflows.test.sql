@@ -1,15 +1,15 @@
 begin;
 
 set local search_path = public, extensions;
-select plan(12);
+select plan(14);
 
 select has_function('public', 'admin_preview_content_publication',
-  array['uuid','integer'], 'publication impact preview is server-derived');
+  array['uuid','integer','text'], 'publication impact preview is server-derived');
 select ok(not has_function_privilege(
-  'anon', 'public.admin_preview_content_publication(uuid,integer)', 'EXECUTE'),
+  'anon', 'public.admin_preview_content_publication(uuid,integer,text)', 'EXECUTE'),
   'anonymous callers cannot preview draft impact');
 select ok(has_function_privilege(
-  'authenticated', 'public.admin_preview_content_publication(uuid,integer)',
+  'authenticated', 'public.admin_preview_content_publication(uuid,integer,text)',
   'EXECUTE'), 'authenticated callers reach the authorized preview command');
 select has_function('public', 'admin_preview_content_archive',
   array['uuid','text','integer'], 'archive impact preview is server-derived');
@@ -63,6 +63,12 @@ select is(current_setting('pgtap.workflow_preview')::jsonb ->> 'impact',
   'requires_recompletion', 'new required review content requires recompletion');
 select is(current_setting('pgtap.workflow_preview')::jsonb ->> 'next_version',
   '1', 'preview reports the exact next version without publishing');
+select is(current_setting('pgtap.workflow_preview')::jsonb ->> 'change_classification',
+  'semantic', 'preview echoes the classification bound to confirmation');
+select is(public.admin_preview_content_publication(
+  (current_setting('pgtap.workflow_save')::jsonb #>> '{draft,draft_id}')::uuid,
+  1, 'nonsemantic') ->> 'impact', 'requires_recompletion',
+  'new required content cannot receive a grandfather-compatible impact');
 select is(
   jsonb_typeof(public.admin_list_content_history(
     :'workflow_review_card_id', 'review_card') -> 'entries'),

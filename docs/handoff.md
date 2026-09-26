@@ -1983,3 +1983,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Fresh Local reset 從零成功套用 migration 00100–00800；pgTAP 078 為 12／12 PASS。Content Studio Vitest 9 files／40 tests、database type contract、typecheck、scoped ESLint／Prettier、三指定 viewport Playwright、production build 與 `git diff --check` PASS。`fflate` lockfile diff 已限縮為單一直接依賴，未順帶更新無關 transitive package。
 - 唯一一輪 review 同輪修正 stale preview binding、archive 影響預覽、CSV Media sheet、Sheet／row error provenance、render-time object URL side effect 與 misleading bulk wording。Local `supabase functions serve` 仍有既有 CLI runtime `failed to determine entrypoint` bootstrap 問題；Hosted deploy 前需以 exact function bundle／deploy gate 驗證，不能拿本機啟動失敗當產品回歸或略過 Hosted gate。
 - 尚未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰。下一步：提交 PR 6，進 PR 7 建立 versioned Chapter 3 canonical package、readiness authority 與一次 Local phase gate。
+
+## 2026-09-26 [Codex] — PR 7 Chapter 3 readiness candidate ready for Local gate
+
+- 最新 owner Sheet 已轉為版本化第三章 canonical package：Course 1、Chapter 1、Section 3、Subtopic 3、RC 8、QB 3／111 題、CR 1／62 題、LT 3／60 題、Media 8；共 233 題。修正舊 compatibility filter 以章號精確比對，避免把「第一章第三節」誤收進第三章；第三章來源為 0 error／0 warning，P309／P310 因未有核准 RC mapping 明確排除。
+- `content/packages/chapter-3/` 保存 workbook／manifest 與來源、workbook、media SHA-256；`pnpm content:chapter3` 產生 ignored 上傳 ZIP。readiness SQL、pgTAP 079、finalizer 與 `pnpm phase:content-studio-ch3` 已建立，Local gate 僅能宣稱 Phase 2 Content Studio＋Chapter 3 Local slice，不代表 Hosted／Production／其他章／Phase 8。
+- 發布流程補上 `semantic`／`nonsemantic` 分類：新內容一律重做；既有錯字、排版或非語意 accessibility 修正才可保留進度。唯一一輪 review 發現非語意分類原本可能掩蓋正解或色彩關鍵圖片替換；已改為 server 比對選項鍵／正解與媒體資產／角色／排序，只有選項文字或 alt 文案修正可相容。fresh Local reset 成功，相關 pgTAP 075／078／079 共 94／94 PASS。
+- 下一步：封存 PR 7 候選 commit，從 clean SHA 執行唯一 Local phase gate；PASS 後才產生 exact Staging mutation manifest、final integration PR 與 Staging deploy。Hosted／push／merge／Vercel／Production 目前仍未觸碰。

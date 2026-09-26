@@ -3,7 +3,8 @@
 -- mutation immediately before an Admin confirms publication.
 create function public.admin_preview_content_publication(
   p_draft_id uuid,
-  p_expected_revision integer
+  p_expected_revision integer,
+  p_change_classification text default 'semantic'
 ) returns jsonb
 language plpgsql
 security definer
@@ -25,6 +26,10 @@ begin
   if (v_auth ->> 'mfa_age_seconds')::integer > 300 then
     return content_private.publication_denial(
       v_auth, 'INSUFFICIENT_MFA', 'admin_preview_content_publication');
+  end if;
+  if p_change_classification not in ('semantic', 'nonsemantic') then
+    return content_private.publication_denial(
+      v_auth, 'CONTENT_VALIDATION_FAILED', 'admin_preview_content_publication');
   end if;
 
   select draft.* into v_draft
@@ -69,15 +74,17 @@ begin
     'current_version', (v_current ->> 'version')::integer,
     'next_version', coalesce((v_current ->> 'version')::integer, 0) + 1,
     'changed_fields', v_fields,
+    'change_classification', p_change_classification,
     'impact', content_private.publication_impact(
-      v_draft.entity_type, v_before, v_draft.payload)
+      v_draft.entity_type, v_before, v_draft.payload,
+      p_change_classification)
   );
 end;
 $$;
 
-revoke all on function public.admin_preview_content_publication(uuid, integer)
+revoke all on function public.admin_preview_content_publication(uuid, integer, text)
 from public, anon;
-grant execute on function public.admin_preview_content_publication(uuid, integer)
+grant execute on function public.admin_preview_content_publication(uuid, integer, text)
 to authenticated;
 
 -- Archive uses the same server-owned progress classification as the mutation.

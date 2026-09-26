@@ -123,7 +123,8 @@ $$;
 create function content_private.publication_impact(
   p_entity_type text,
   p_before jsonb,
-  p_after jsonb
+  p_after jsonb,
+  p_change_classification text default 'semantic'
 ) returns text
 language plpgsql
 immutable
@@ -131,6 +132,10 @@ set search_path = pg_catalog, content_private
 as $$
 declare
   v_fields text[] := content_private.changed_fields(p_before, p_after);
+  v_before_media_identity text[];
+  v_after_media_identity text[];
+  v_before_option_answers text[];
+  v_after_option_answers text[];
 begin
   if p_before is null then
     return case
@@ -139,6 +144,56 @@ begin
         then 'requires_requalification'
       else 'compatible'
     end;
+  end if;
+
+  -- An authorized editor classifies whether an existing text/media change is
+  -- semantic. The server owns the allowlist and never permits structural,
+  -- answer-routing, or selection-setting changes to inherit progress.
+  if p_change_classification = 'nonsemantic' then
+    select coalesce(array_agg(concat_ws(':',
+      coalesce(entry ->> 'manifest_id', entry ->> 'asset_path'),
+      entry ->> 'semantic_role', entry ->> 'sort_order') order by
+      coalesce(entry ->> 'manifest_id', entry ->> 'asset_path'),
+      entry ->> 'sort_order'), '{}'::text[])
+    into v_before_media_identity
+    from jsonb_array_elements(coalesce(p_before -> 'media', '[]'::jsonb)) entry;
+    select coalesce(array_agg(concat_ws(':',
+      coalesce(entry ->> 'manifest_id', entry ->> 'asset_path'),
+      entry ->> 'semantic_role', entry ->> 'sort_order') order by
+      coalesce(entry ->> 'manifest_id', entry ->> 'asset_path'),
+      entry ->> 'sort_order'), '{}'::text[])
+    into v_after_media_identity
+    from jsonb_array_elements(coalesce(p_after -> 'media', '[]'::jsonb)) entry;
+    select coalesce(array_agg(concat_ws(':',
+      entry ->> 'key', entry ->> 'is_correct') order by entry ->> 'key'),
+      '{}'::text[])
+    into v_before_option_answers
+    from jsonb_array_elements(coalesce(p_before -> 'options', '[]'::jsonb)) entry;
+    select coalesce(array_agg(concat_ws(':',
+      entry ->> 'key', entry ->> 'is_correct') order by entry ->> 'key'),
+      '{}'::text[])
+    into v_after_option_answers
+    from jsonb_array_elements(coalesce(p_after -> 'options', '[]'::jsonb)) entry;
+
+    if p_entity_type in ('course', 'chapter', 'section', 'subtopic')
+       and v_fields <@ array['title', 'description', 'sort_order']::text[] then
+      return 'compatible';
+    elsif p_entity_type = 'review_card'
+       and v_fields <@ array[
+         'title', 'content', 'group_label', 'media', 'sort_order'
+       ]::text[]
+       and v_before_media_identity is not distinct from v_after_media_identity then
+      return 'compatible';
+    elsif p_entity_type = 'question'
+       and v_fields <@ array[
+         'prompt', 'explanation', 'options', 'sort_order'
+       ]::text[]
+       and v_before_option_answers is not distinct from v_after_option_answers then
+      return 'compatible';
+    elsif p_entity_type = 'assessment_bank'
+       and v_fields <@ array['title', 'description', 'sort_order']::text[] then
+      return 'compatible';
+    end if;
   end if;
 
   if p_entity_type = 'review_card' then
@@ -522,7 +577,8 @@ create function public.admin_publish_content_draft(
   p_draft_id uuid,
   p_expected_revision integer,
   p_reason text,
-  p_request_id uuid
+  p_request_id uuid,
+  p_change_classification text default 'semantic'
 ) returns jsonb
 language plpgsql
 security definer
@@ -553,7 +609,9 @@ begin
     return content_private.publication_denial(v_auth, 'INSUFFICIENT_MFA',
       'admin_publish_content_draft');
   end if;
-  if p_request_id is null or char_length(btrim(coalesce(p_reason, '')))
+  if p_request_id is null
+     or p_change_classification not in ('semantic', 'nonsemantic')
+     or char_length(btrim(coalesce(p_reason, '')))
       not between 1 and 500 then
     return content_private.publication_denial(v_auth,
       'CONTENT_VALIDATION_FAILED', 'admin_publish_content_draft');
@@ -562,6 +620,7 @@ begin
   v_hash := extensions.digest(convert_to(jsonb_build_object(
     'draft_id', p_draft_id, 'expected_revision', p_expected_revision,
     'reason', btrim(p_reason),
+    'change_classification', p_change_classification,
     'auth_session_id', v_auth ->> 'auth_session_id'
   )::text, 'UTF8'), 'sha256');
   perform pg_advisory_xact_lock(hashtextextended(
@@ -619,7 +678,8 @@ begin
       'CONTENT_VALIDATION_FAILED', 'admin_publish_content_draft');
   end if;
   v_impact := content_private.publication_impact(
-    v_draft.entity_type, v_before, v_draft.payload);
+    v_draft.entity_type, v_before, v_draft.payload,
+    p_change_classification);
   v_next_version := coalesce((v_current ->> 'version')::integer, 0) + 1;
   v_entity_id := content_private.apply_content_version(
     v_draft.entity_type, v_draft.entity_id, v_draft.stable_code,
@@ -657,7 +717,8 @@ begin
     btrim(p_reason), (v_auth ->> 'mfa_age_seconds')::integer,
     jsonb_build_object('entity_type', v_draft.entity_type,
       'stable_code', v_draft.stable_code, 'version', v_next_version,
-      'impact', v_impact), p_request_id::text);
+      'impact', v_impact,
+      'change_classification', p_change_classification), p_request_id::text);
   return v_receipt;
 end;
 $$;
@@ -1057,7 +1118,7 @@ revoke execute on function content_private.block_immutable_content_history()
   from public, anon, authenticated;
 revoke execute on function content_private.changed_fields(jsonb, jsonb)
   from public, anon, authenticated;
-revoke execute on function content_private.publication_impact(text, jsonb, jsonb)
+revoke execute on function content_private.publication_impact(text, jsonb, jsonb, text)
   from public, anon, authenticated;
 revoke execute on function content_private.version_hash(jsonb)
   from public, anon, authenticated;
@@ -1081,10 +1142,10 @@ revoke execute on function content_private.current_version_number(text, uuid)
   from public, anon, authenticated;
 
 revoke execute on function public.admin_publish_content_draft(
-  uuid, integer, text, uuid
+  uuid, integer, text, uuid, text
 ) from public, anon;
 grant execute on function public.admin_publish_content_draft(
-  uuid, integer, text, uuid
+  uuid, integer, text, uuid, text
 ) to authenticated;
 revoke execute on function public.admin_archive_content(
   uuid, text, integer, text, uuid

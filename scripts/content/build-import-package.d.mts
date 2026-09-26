@@ -14,6 +14,7 @@ export type CompatibilityReviewCard = Readonly<{
   content: string;
   groupLabel: string;
   sectionKey: string;
+  sectionLabel?: string;
   sortOrder: number;
   stableCode: string;
   title: string;
@@ -25,6 +26,13 @@ export function buildCompatibilityWorkbook(
     reviewCards: readonly CompatibilityReviewCard[];
   }>,
   chapterNumber?: string,
+  mediaRows?: readonly Readonly<{
+    altText: string;
+    ownerCode: string;
+    path: string;
+    semanticRole: 'color_critical' | 'standard';
+    sortOrder: number;
+  }>[],
 ): Readonly<{
   attachmentWarnings: readonly string[];
   workbook: XLSX.WorkBook;

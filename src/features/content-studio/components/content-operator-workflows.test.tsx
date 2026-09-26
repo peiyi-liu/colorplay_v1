@@ -299,6 +299,7 @@ describe('Content Studio operator workflows', () => {
         requestId: REQUEST_ID,
       }),
       previewPublish: vi.fn().mockResolvedValue({
+        changeClassification: 'semantic',
         changedFields: ['content'],
         currentVersion: 3,
         draftId: DRAFT_ID,

@@ -772,7 +772,7 @@ $$;
 -- validator and the wrapped apply function inserts immutable media rows.
 create or replace function public.admin_publish_content_draft(
   p_draft_id uuid, p_expected_revision integer, p_reason text,
-  p_request_id uuid
+  p_request_id uuid, p_change_classification text default 'semantic'
 ) returns jsonb
 language plpgsql
 security definer
@@ -803,7 +803,9 @@ begin
     return content_private.publication_denial(v_auth, 'INSUFFICIENT_MFA',
       'admin_publish_content_draft');
   end if;
-  if p_request_id is null or char_length(btrim(coalesce(p_reason, '')))
+  if p_request_id is null
+     or p_change_classification not in ('semantic', 'nonsemantic')
+     or char_length(btrim(coalesce(p_reason, '')))
       not between 1 and 500 then
     return content_private.publication_denial(v_auth,
       'CONTENT_VALIDATION_FAILED', 'admin_publish_content_draft');
@@ -811,6 +813,7 @@ begin
   v_hash := extensions.digest(convert_to(jsonb_build_object(
     'draft_id', p_draft_id, 'expected_revision', p_expected_revision,
     'reason', btrim(p_reason),
+    'change_classification', p_change_classification,
     'auth_session_id', v_auth ->> 'auth_session_id'
   )::text, 'UTF8'), 'sha256');
   perform pg_advisory_xact_lock(hashtextextended(
@@ -860,7 +863,8 @@ begin
       'CONTENT_VALIDATION_FAILED', 'admin_publish_content_draft');
   end if;
   v_impact := content_private.publication_impact(
-    v_draft.entity_type, v_before, v_draft.payload);
+    v_draft.entity_type, v_before, v_draft.payload,
+    p_change_classification);
   v_next_version := coalesce((v_current ->> 'version')::integer, 0) + 1;
   v_entity_id := content_private.apply_content_version(
     v_draft.entity_type, v_draft.entity_id, v_draft.stable_code,
@@ -898,7 +902,8 @@ begin
     btrim(p_reason), (v_auth ->> 'mfa_age_seconds')::integer,
     jsonb_build_object('entity_type', v_draft.entity_type,
       'stable_code', v_draft.stable_code, 'version', v_next_version,
-      'impact', v_impact), p_request_id::text);
+      'impact', v_impact,
+      'change_classification', p_change_classification), p_request_id::text);
   return v_receipt;
 end;
 $$;

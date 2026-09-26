@@ -13,6 +13,8 @@ export const publicationImpactSchema = z.enum([
   'requires_requalification',
 ]);
 
+export const changeClassificationSchema = z.enum(['nonsemantic', 'semantic']);
+
 export const publicationEventTypeSchema = z.enum([
   'publish',
   'archive',
@@ -32,6 +34,7 @@ export const publicationSuccessWireSchema = z.strictObject({
 });
 
 export const publicationPreviewWireSchema = z.strictObject({
+  change_classification: changeClassificationSchema,
   changed_fields: z.array(z.string().min(1).max(100)),
   current_version: z.number().int().positive().nullable(),
   draft_id: uuidSchema,
@@ -92,9 +95,11 @@ export const publicationDeniedWireSchema = z.strictObject({
 });
 
 export type PublicationImpact = z.infer<typeof publicationImpactSchema>;
+export type ChangeClassification = z.infer<typeof changeClassificationSchema>;
 export type PublicationEventType = z.infer<typeof publicationEventTypeSchema>;
 
 export type PublicationPreview = Readonly<{
+  changeClassification: ChangeClassification;
   changedFields: readonly string[];
   currentVersion: number | null;
   draftId: string;

@@ -22,6 +22,16 @@ describe('legacy Sheet compatibility adapter', () => {
           ],
           prompt: '下列何者是色彩三要素？',
         },
+        {
+          answer: 'A',
+          code: 'QB1398',
+          explanation: '這是第一章第三節，不可被第三章套件收錄。',
+          options: [
+            { key: 'A', text: '第一章' },
+            { key: 'B', text: '第三章' },
+          ],
+          prompt: '此題屬於哪一章？',
+        },
       ],
       reviewCards: [
         {
@@ -30,6 +40,7 @@ describe('legacy Sheet compatibility adapter', () => {
           content: '色彩包含色相、明度、彩度。',
           groupLabel: '3-1',
           sectionKey: '3-1',
+          sectionLabel: '3-1 色彩三要素與色名的表示',
           sortOrder: 1,
           stableCode: 'RC-ADAPTER-TEST',
           title: '色彩三要素',
@@ -44,8 +55,12 @@ describe('legacy Sheet compatibility adapter', () => {
     const parsed = parseContentWorkbook(bytes);
 
     expect(attachmentWarnings).toEqual([]);
-    expect(parsed.items).toHaveLength(3);
+    expect(parsed.items).toHaveLength(7);
     expect(parsed.items.map((item) => item.sheet)).toEqual([
+      'Course',
+      'Chapter',
+      'Section',
+      'Subtopic',
       'RC',
       'QB',
       'Question',

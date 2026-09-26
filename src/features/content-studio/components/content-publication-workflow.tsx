@@ -6,6 +6,7 @@ import {
   type ContentPublicationRepository,
 } from '../api/content-publication-repository';
 import type { ContentEditorState } from '../api/contracts';
+import type { ChangeClassification } from '../api/content-publication-contracts';
 import type { ContentStudioItem } from '../lib/content-studio-model';
 
 const IMPACT_LABELS = {
@@ -32,6 +33,8 @@ export function ContentPublicationWorkflow({
   selected: ContentStudioItem | null;
 }>) {
   const [reason, setReason] = useState('');
+  const [changeClassification, setChangeClassification] =
+    useState<ChangeClassification>('semantic');
   const [confirmed, setConfirmed] = useState(false);
   const [rollbackVersion, setRollbackVersion] = useState('');
   const publishRequestId = useRef<string | null>(null);
@@ -47,6 +50,7 @@ export function ContentPublicationWorkflow({
     mutationFn: async () => {
       if (!draft) throw new Error('DRAFT_REQUIRED');
       return repository.previewPublish({
+        changeClassification,
         draftId: draft.draftId,
         expectedRevision: draft.revision,
       });
@@ -75,6 +79,7 @@ export function ContentPublicationWorkflow({
         throw new Error('PUBLICATION_CONFIRMATION_REQUIRED');
       publishRequestId.current ??= crypto.randomUUID();
       return repository.publish({
+        changeClassification,
         draftId: draft.draftId,
         expectedRevision: draft.revision,
         reason: reason.trim(),
@@ -244,6 +249,22 @@ export function ContentPublicationWorkflow({
       {selected ? (
         <>
           <label>
+            內容變更分類
+            <select
+              value={changeClassification}
+              onChange={(event) => {
+                setChangeClassification(
+                  event.target.value as ChangeClassification,
+                );
+              }}
+            >
+              <option value="semantic">新增或語意變更（需重做）</option>
+              <option value="nonsemantic">
+                錯字、排版或無語意 accessibility 修正（保留進度）
+              </option>
+            </select>
+          </label>
+          <label>
             操作原因（至少 10 字）
             <textarea
               rows={3}
@@ -269,6 +290,7 @@ export function ContentPublicationWorkflow({
               disabled={
                 preview.data?.outcome !== 'ok' ||
                 preview.data.draftId !== draft?.draftId ||
+                preview.data.changeClassification !== changeClassification ||
                 !reasonReady ||
                 !confirmed ||
                 publish.isPending
