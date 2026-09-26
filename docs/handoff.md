@@ -2002,3 +2002,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Owner 核准後以 clean `bdee8d4a33ebc04ac83e19f37dbe06626f4f6b54` 重跑；scoped Prettier、完整 ESLint、typecheck、production build、focused Vitest 47／47，以及 pgTAP 003 的 11／11 通過，接著再次在 Supabase CLI `Cannot detect source of '.../.wor'` 停止，仍不得宣稱 gate PASS。
 - 唯讀診斷證實根因不是有效檔案路徑過長，而是 runner 清單把 020／021 名稱對調，並引用不存在的 `050_live_qb_routing`、`070_chapter_challenge_progress`。CLI 對 missing path 只顯示截斷的絕對路徑，造成前次誤判。
 - 修正改用實際存在且對應風險的 020 review cards、021 review progress、049 canonical QB／CR／LT routing、050 review media storage、070 quiz answer-state security、073 chapter completion/mastery，再加 074–079；呼叫 CLI 前逐檔檢查存在性，不降低 assertion。下一步仍需 Owner 明確核准新的 clean SHA gate rerun；Hosted／push／merge／Vercel／Production 未觸碰。
+
+## 2026-09-26 [Codex] — Phase 2 Content Studio + Chapter 3 Local slice PASS
+
+- Owner 核准持續修正後，clean `85ef72863accb60efe57da6c796a7bf8a07e376f` 的正式 Local gate PASS：Prettier、完整 ESLint、typecheck、production build、focused Vitest 47／47、16 份 pgTAP 363／363、readiness SQL、Content Studio A＋C 三 viewport 3／3 全部 exit 0。evidence manifest 位於 ignored `artifacts/acceptance/content-studio-ch3-85ef72863accb60efe57da6c796a7bf8a07e376f/manifest.json`；此證據只代表 Local slice。
+- Staging preflight 重驗 GitHub `origin/staging`／`FETCH_HEAD` 仍為 `9c42ba3d9e6552e4c135d3d52efad783dc526f57`，且為 integration ancestor；Supabase ref 為 `onkxnkzeixpezetkmocf`，migration ledger 無分叉，dry-run 只列 `20260926000100`–`20260926000800` 八支 pending migrations。Production `xdjumzdqyexpyndanwkp` 未觸碰。
+- Canonical workbook／manifest／upload ZIP SHA-256 分別為 `cfc17f91376daf496f02f7610b4438abc0b3ffc001dc0f5d7eea9d35b7d6ff61`、`711b30add3f0a8850b2d0b565bdf9462dc3d668beef5005472a60e1474b8662e`、`690b31ff30e7dc245928972ed7ea9b42f07cf7359b60fd9de2a8fbb3cd5b9c67`。Vercel CLI 已升級並讀回 60.1.3；Staging project 維持 `colorplay-staging-web`。
+- 下一步依已核准 window：提交這段 handoff、更新 `codex/phase2-ch3-integration`、建立 final PR；套用 Staging migrations／Functions、建立第三章 media／package drafts，合併後驗 exact Vercel SHA 與 Admin／Student smoke。仍不得觸碰 Production 或宣稱 Phase 8。
