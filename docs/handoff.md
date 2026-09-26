@@ -1996,3 +1996,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Clean candidate `94ca00b` 的 gate 已通過 scoped Prettier、完整 ESLint、typecheck、production build 與 focused Vitest 47／47；在 focused pgTAP 階段，Supabase CLI 2.109.1 把 15 個測試檔一次交給 container `pg_prove` 時截斷長 worktree path，只完成 003 的 11／11 後以 `Cannot detect source of '.../.wor'` exit 2。這是 gate runner 的命令長度／path parsing 問題，不是產品 assertion 失敗，也不能宣稱 gate PASS。
 - 修正限定在 gate runner：逐檔呼叫 `supabase test db`、任一檔失敗立即停止，仍收在同一 focused pgTAP report；不降低或刪除任何測試。失敗 evidence 保留於 ignored `artifacts/acceptance/content-studio-ch3-94ca00bddfb5d5a6d2226e81a790cc136ada4759/`，新 commit 會使用新 evidence 目錄。
 - 依 gate 失敗不得自動重跑規則，下一步需 Owner 明確核准一次修正後 Local gate rerun；Hosted／push／merge／Vercel／Production 仍未觸碰。
+
+## 2026-09-26 [Codex] — Approved Local gate rerun exposed stale pgTAP filenames
+
+- Owner 核准後以 clean `bdee8d4a33ebc04ac83e19f37dbe06626f4f6b54` 重跑；scoped Prettier、完整 ESLint、typecheck、production build、focused Vitest 47／47，以及 pgTAP 003 的 11／11 通過，接著再次在 Supabase CLI `Cannot detect source of '.../.wor'` 停止，仍不得宣稱 gate PASS。
+- 唯讀診斷證實根因不是有效檔案路徑過長，而是 runner 清單把 020／021 名稱對調，並引用不存在的 `050_live_qb_routing`、`070_chapter_challenge_progress`。CLI 對 missing path 只顯示截斷的絕對路徑，造成前次誤判。
+- 修正改用實際存在且對應風險的 020 review cards、021 review progress、049 canonical QB／CR／LT routing、050 review media storage、070 quiz answer-state security、073 chapter completion/mastery，再加 074–079；呼叫 CLI 前逐檔檢查存在性，不降低 assertion。下一步仍需 Owner 明確核准新的 clean SHA gate rerun；Hosted／push／merge／Vercel／Production 未觸碰。

@@ -37,8 +37,12 @@ run_logged() {
 run_pgtap_files() {
   local file
   for file in "$@"; do
-    supabase test db "$file" || return $?
+    if ! test -f "$file"; then
+      printf 'CONTENT_STUDIO_CH3_PGTAP_FILE_MISSING:%s\n' "$file" >&2
+      return 1
+    fi
   done
+  supabase test db "$@"
 }
 
 node -e '
@@ -76,14 +80,15 @@ run_logged 'focused vitest' "$phase_root/reports/vitest.log" \
 run_logged 'focused pgtap' "$phase_root/reports/pgtap.log" \
   run_pgtap_files \
   supabase/tests/003_content_rls.test.sql \
-  supabase/tests/020_review_progress.test.sql \
-  supabase/tests/021_review_cards.test.sql \
+  supabase/tests/020_review_cards.test.sql \
+  supabase/tests/021_review_progress.test.sql \
   supabase/tests/026_content_versions.test.sql \
   supabase/tests/027_teacher_content.test.sql \
   supabase/tests/028_content_import.test.sql \
   supabase/tests/049_content_bank_routing.test.sql \
-  supabase/tests/050_live_qb_routing.test.sql \
-  supabase/tests/070_chapter_challenge_progress.test.sql \
+  supabase/tests/050_review_card_media_storage.test.sql \
+  supabase/tests/070_quiz_question_state_security_reconciliation.test.sql \
+  supabase/tests/073_chapter_completion_mastery.test.sql \
   supabase/tests/074_content_studio_foundation.test.sql \
   supabase/tests/075_content_studio_publication.test.sql \
   supabase/tests/076_content_media_pipeline.test.sql \
