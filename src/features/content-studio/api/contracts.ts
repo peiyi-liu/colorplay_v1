@@ -15,6 +15,50 @@ export const contentDraftSourceSchema = z.enum(['manual', 'import']);
 const uuidSchema = z.uuid();
 const timestampSchema = z.iso.datetime({ offset: true });
 const payloadSchema = z.record(z.string(), z.unknown());
+const contentStatusSchema = z.enum(['draft', 'published', 'archived']);
+
+export const contentBankSummaryWireSchema = z.strictObject({
+  id: uuidSchema,
+  kind: z.enum(['QB', 'CR', 'LT']),
+  question_count: z.number().int().nonnegative(),
+  sort_order: z.number().int().nonnegative(),
+  stable_code: z.string().trim().min(1).max(200),
+  status: contentStatusSchema,
+  title: z.string().min(1).max(100),
+});
+
+export const contentScopeWireSchema = z.strictObject({
+  chapter: z.strictObject({
+    id: uuidSchema,
+    sort_order: z.number().int().nonnegative(),
+    stable_code: z.string().trim().min(1).max(200),
+    status: contentStatusSchema,
+    title: z.string().min(1).max(100),
+  }),
+  chapter_banks: z.array(contentBankSummaryWireSchema),
+  outcome: z.literal('ok'),
+  request_id: uuidSchema,
+  sections: z.array(
+    z.strictObject({
+      banks: z.array(contentBankSummaryWireSchema),
+      id: uuidSchema,
+      sort_order: z.number().int().nonnegative(),
+      stable_code: z.string().trim().min(1).max(200),
+      status: contentStatusSchema,
+      subtopics: z.array(
+        z.strictObject({
+          id: uuidSchema,
+          review_card_count: z.number().int().nonnegative(),
+          sort_order: z.number().int().nonnegative(),
+          stable_code: z.string().trim().min(1).max(200),
+          status: contentStatusSchema,
+          title: z.string().min(1).max(100),
+        }),
+      ),
+      title: z.string().min(1).max(100),
+    }),
+  ),
+});
 
 export const contentDraftWireSchema = z.strictObject({
   base_version: z.number().int().positive().nullable(),
@@ -26,6 +70,77 @@ export const contentDraftWireSchema = z.strictObject({
   source: contentDraftSourceSchema,
   stable_code: z.string().trim().min(1).max(200),
   updated_at: timestampSchema,
+});
+
+export const contentEditorStateWireSchema = z.strictObject({
+  current: z
+    .strictObject({
+      entity_id: uuidSchema,
+      entity_type: contentEntityTypeSchema,
+      payload: payloadSchema,
+      stable_code: z.string().trim().min(1).max(200),
+      status: contentStatusSchema,
+      version: z.number().int().positive().nullable(),
+    })
+    .nullable(),
+  draft: contentDraftWireSchema.nullable(),
+  outcome: z.literal('ok'),
+  request_id: uuidSchema,
+});
+
+export const contentValidationWireSchema = z.strictObject({
+  draft_id: uuidSchema,
+  issues: z.array(
+    z.strictObject({
+      code: z.string().min(1).max(100),
+      field: z.string().min(1).max(100),
+      message: z.string().min(1).max(300),
+      severity: z.enum(['error', 'warning']),
+    }),
+  ),
+  outcome: z.literal('ok'),
+  request_id: uuidSchema,
+  revision: z.number().int().positive(),
+  valid: z.boolean(),
+});
+
+const questionPreviewWireSchema = z.strictObject({
+  duration_seconds: z.number().int().min(5).max(120),
+  entity_type: z.literal('question'),
+  options: z.array(
+    z.strictObject({
+      key: z.string().regex(/^[A-D]$/u),
+      text: z.string().min(1).max(500),
+    }),
+  ),
+  prompt: z.string().min(1).max(1000),
+  question_type: z.literal('single_choice'),
+  stable_code: z.string().trim().min(1).max(200),
+});
+
+const reviewCardPreviewWireSchema = z.strictObject({
+  content: z.string().min(1).max(8000),
+  entity_type: z.literal('review_card'),
+  group_label: z.string().max(120),
+  media: z.array(
+    z.strictObject({
+      alt_text: z.string().min(1).max(300),
+      sort_order: z.number().int().nonnegative(),
+    }),
+  ),
+  stable_code: z.string().trim().min(1).max(200),
+  title: z.string().min(1).max(200),
+});
+
+export const contentPreviewWireSchema = z.strictObject({
+  draft_id: uuidSchema,
+  outcome: z.literal('ok'),
+  projection: z.discriminatedUnion('entity_type', [
+    questionPreviewWireSchema,
+    reviewCardPreviewWireSchema,
+  ]),
+  request_id: uuidSchema,
+  revision: z.number().int().positive(),
 });
 
 export const saveContentDraftSuccessWireSchema = z.strictObject({
@@ -53,6 +168,98 @@ export const contentAuthoringDeniedWireSchema = z.strictObject({
 export type ContentEntityType = z.infer<typeof contentEntityTypeSchema>;
 export type ContentDraftSource = z.infer<typeof contentDraftSourceSchema>;
 export type ContentDraftWire = z.infer<typeof contentDraftWireSchema>;
+export type ContentScopeWire = z.infer<typeof contentScopeWireSchema>;
+
+export type ContentEditorState = Readonly<{
+  current: Readonly<{
+    entityId: string;
+    entityType: ContentEntityType;
+    payload: Readonly<Record<string, unknown>>;
+    stableCode: string;
+    status: 'draft' | 'published' | 'archived';
+    version: number | null;
+  }> | null;
+  draft: ContentDraft | null;
+  outcome: 'ok';
+  requestId: string;
+}>;
+
+export type ContentValidationResult = Readonly<{
+  draftId: string;
+  issues: readonly Readonly<{
+    code: string;
+    field: string;
+    message: string;
+    severity: 'error' | 'warning';
+  }>[];
+  outcome: 'ok';
+  requestId: string;
+  revision: number;
+  valid: boolean;
+}>;
+
+export type ContentPreview = Readonly<{
+  draftId: string;
+  outcome: 'ok';
+  projection:
+    | Readonly<{
+        durationSeconds: number;
+        entityType: 'question';
+        options: readonly Readonly<{ key: string; text: string }>[];
+        prompt: string;
+        questionType: 'single_choice';
+        stableCode: string;
+      }>
+    | Readonly<{
+        content: string;
+        entityType: 'review_card';
+        groupLabel: string;
+        media: readonly Readonly<{ altText: string; sortOrder: number }>[];
+        stableCode: string;
+        title: string;
+      }>;
+  requestId: string;
+  revision: number;
+}>;
+
+export type ContentBankSummary = Readonly<{
+  bankId: string;
+  kind: 'QB' | 'CR' | 'LT';
+  questionCount: number;
+  sortOrder: number;
+  stableCode: string;
+  status: 'draft' | 'published' | 'archived';
+  title: string;
+}>;
+
+export type ContentScope = Readonly<{
+  chapter: Readonly<{
+    chapterId: string;
+    sortOrder: number;
+    stableCode: string;
+    status: 'draft' | 'published' | 'archived';
+    title: string;
+  }>;
+  chapterBanks: readonly ContentBankSummary[];
+  outcome: 'ok';
+  requestId: string;
+  sections: readonly Readonly<{
+    banks: readonly ContentBankSummary[];
+    sectionId: string;
+    sortOrder: number;
+    stableCode: string;
+    status: 'draft' | 'published' | 'archived';
+    subtopics: readonly Readonly<{
+      reviewCardCount: number;
+      sortOrder: number;
+      stableCode: string;
+      status: 'draft' | 'published' | 'archived';
+      subtopicId: string;
+      title: string;
+    }>[];
+    title: string;
+  }>[];
+}>;
 
 export type ContentDraft = Readonly<{
   baseVersion: number | null;
@@ -92,5 +299,7 @@ export type ContentAuthoringDenied = Readonly<{
   retryable: boolean;
 }>;
 
+export type ContentAuthoringOutcome<T> = T | ContentAuthoringDenied;
+
 export type SaveContentDraftOutcome =
-  SaveContentDraftSuccess | ContentAuthoringDenied;
+  ContentAuthoringOutcome<SaveContentDraftSuccess>;

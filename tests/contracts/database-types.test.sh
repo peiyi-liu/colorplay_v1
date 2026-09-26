@@ -78,4 +78,9 @@ grep -q 'assessment_banks' src/types/database.ts
 grep -q 'content_drafts' src/types/database.ts
 grep -q 'content_draft_requests' src/types/database.ts
 grep -q 'bank_id' src/types/database.ts
+grep -q 'duration_seconds' src/types/database.ts
+grep -q 'admin_list_content_scope' src/types/database.ts
+grep -q 'admin_preview_content_draft' src/types/database.ts
+grep -q 'admin_read_content_editor_state' src/types/database.ts
 grep -q 'admin_save_content_draft' src/types/database.ts
+grep -q 'admin_validate_content_draft' src/types/database.ts

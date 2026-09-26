@@ -2341,6 +2341,7 @@ export type Database = {
           bank_id: string | null
           bank_kind: string
           created_at: string
+          duration_seconds: number
           explanation: string
           id: string
           prompt: string
@@ -2356,6 +2357,7 @@ export type Database = {
           bank_id?: string | null
           bank_kind?: string
           created_at?: string
+          duration_seconds?: number
           explanation: string
           id?: string
           prompt: string
@@ -2371,6 +2373,7 @@ export type Database = {
           bank_id?: string | null
           bank_kind?: string
           created_at?: string
+          duration_seconds?: number
           explanation?: string
           id?: string
           prompt?: string
@@ -3613,6 +3616,10 @@ export type Database = {
         Returns: Json
       }
       admin_list_admins: { Args: { p_cursor?: string }; Returns: Json }
+      admin_list_content_scope: {
+        Args: { p_chapter_id: string }
+        Returns: Json
+      }
       admin_list_invitations: { Args: { p_cursor?: string }; Returns: Json }
       admin_list_resource: {
         Args: {
@@ -3630,6 +3637,10 @@ export type Database = {
         Returns: Json
       }
       admin_platform_health: { Args: never; Returns: Json }
+      admin_preview_content_draft: {
+        Args: { p_draft_id: string; p_expected_revision: number }
+        Returns: Json
+      }
       admin_query_audit: {
         Args: {
           p_action?: string
@@ -3640,6 +3651,10 @@ export type Database = {
           p_target_type?: string
           p_to?: string
         }
+        Returns: Json
+      }
+      admin_read_content_editor_state: {
+        Args: { p_draft_id: string; p_entity_id: string; p_entity_type: string }
         Returns: Json
       }
       admin_reveal_field:
@@ -3690,6 +3705,10 @@ export type Database = {
           p_source: string
           p_stable_code: string
         }
+        Returns: Json
+      }
+      admin_validate_content_draft: {
+        Args: { p_draft_id: string; p_expected_revision: number }
         Returns: Json
       }
       advance_live_session: {

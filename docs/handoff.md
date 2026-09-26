@@ -1931,3 +1931,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 第一個 TDD slice 先以缺少 repository 與 schema 精確 RED，再建立 explicit `assessment_banks`、Question `bank_id`、private `content_drafts`／request receipts，以及 `admin_save_content_draft` expected-revision／idempotency command。QB／LT 固定 Section，CR 固定 Chapter，legacy question 保留 null bank；private helper 不暴露為 public RPC。
 - 首次 fresh Local reset 找到「migration 早於 seed，seeded question 尚無 bank」缺陷；修正為相容 trigger 依實際 taxonomy 原子建立唯一 bank 後，完整 migration＋三份 content seeds 從空 DB 成功。Focused pgTAP 074 為 24／24 PASS；repository 6／6、相關 contract 合計 11／11、focused ESLint、完整 typecheck、generated DB types exact-diff 與 `git diff --check` PASS。
 - PR 1 尚未完成：下一步繼續用 RED→GREEN 補齊 `listScope`、`readEditorState`、`validateDraft`、`previewDraft`，以及 duplicate code／parent mismatch／draft validation cases；完成後才做本 task 唯一一輪 review。Local reset 已執行並只重建測試資料；Hosted／Production 未觸碰。
+
+## 2026-09-26 [Codex] — PR 1 foundation implementation candidate complete
+
+- ContentAuthoring 五個固定 seams 已完成：`listScope`、`readEditorState`、`saveDraft`、`validateDraft`、`previewDraft`。新增 Admin-only safe projections、question duration constraint 與 deterministic server validator；student-safe preview 不含正解、解析、bank identity 或內部 media path。所有 RPC 共用 typed permission／revision denial，client 不自行重試或把 denial 誤判成壞資料。
+- RED→GREEN 補齊 duplicate stable code、parent／bank scope、cross-kind move、published stable-code rename、invalid sort、question options／唯一正解、unsafe text、stale revision、idempotent replay與非 Admin denial。Fresh Local reset 已從零成功套用三支 20260926 migrations 與既有三份 content seeds；pgTAP 074 為 64／64 PASS，repository＋既有 Admin／Teacher Content regression 共 23／23 PASS。
+- Generated `src/types/database.ts` 與 fresh Local schema exact-diff PASS；database type greps、完整 typecheck、focused ESLint、TS Prettier、shell syntax 與 `git diff --check` 全綠。下一步只做 PR 1 唯一一輪 Standards／Spec／Security review；修正同輪 findings 後才封版本地 commit，接著進 PR 2。未 push／PR／merge／Hosted mutation／deploy，Production 未觸碰。
