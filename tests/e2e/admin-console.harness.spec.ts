@@ -125,7 +125,7 @@ for (const viewport of [
         ).toBeVisible();
       else if (route === '/admin/content')
         await expect(
-          page.getByRole('region', { name: '內容階層' }),
+          page.getByRole('table', { name: '全部內容' }),
         ).toBeVisible();
       else if (route === '/admin/data')
         await expect(
@@ -177,7 +177,7 @@ for (const viewport of [
   { width: 812, height: 375 },
   { width: 1280, height: 720 },
 ]) {
-  test(`content studio A+C flow fits ${String(viewport.width)}x${String(viewport.height)}`, async ({
+  test(`content studio list and editor flow fits ${String(viewport.width)}x${String(viewport.height)}`, async ({
     page,
   }) => {
     await page.setViewportSize(viewport);
@@ -190,24 +190,29 @@ for (const viewport of [
     await expect(
       page.getByRole('heading', { name: '內容工作台' }),
     ).toBeVisible();
-    await expect(page.getByRole('region', { name: '內容階層' })).toBeVisible();
-    await page.getByRole('button', { name: 'RC3101 色彩三要素' }).click();
-    await expect(page.getByLabel('複習卡內容')).toBeVisible();
-    await page.getByRole('button', { name: '全部內容清單' }).click();
     await expect(page.getByRole('table', { name: '全部內容' })).toBeVisible();
-    await expect(page.getByText('已選取：RC3101')).toBeVisible();
+    await page.getByRole('button', { name: '編輯 RC3101' }).click();
+    await expect(page.getByLabel('複習卡內容')).toBeVisible();
+    await expect(page.getByText('內容圖片（最多 3 張）')).toBeVisible();
+    await expect(page.getByLabel('穩定代碼')).toBeDisabled();
+    await expect(page.getByLabel('上層 ID')).toBeDisabled();
+    await page.getByRole('button', { name: '清單', exact: true }).click();
+    await expect(page.getByRole('table', { name: '全部內容' })).toBeVisible();
     await page.getByRole('button', { name: '外部匯入' }).click();
     await expect(
       page.getByRole('region', { name: '內容匯入流程' }),
-    ).toBeVisible();
-    await page.getByRole('button', { name: '圖片', exact: true }).click();
-    await expect(
-      page.getByRole('region', { name: '圖片處理流程' }),
     ).toBeVisible();
     await page.getByRole('button', { name: '發布／歷史' }).click();
     await expect(
       page.getByRole('region', { name: '發布與版本歷史' }),
     ).toBeVisible();
+    await page.getByRole('button', { name: '切換為夜間模式' }).click();
+    await expect(
+      page.getByRole('button', { name: '切換為日間模式' }),
+    ).toBeVisible();
+    expect(await page.locator('html').getAttribute('data-admin-theme')).toBe(
+      'dark',
+    );
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth + 1,
@@ -217,6 +222,53 @@ for (const viewport of [
     expect(failedRequests).toEqual([]);
   });
 }
+
+test('content studio remains usable in dark mode at 200 percent zoom and reduced motion', async ({
+  page,
+}) => {
+  await fixture(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/dev-harness/admin-console.html?route=/admin/content');
+  await page.getByRole('button', { name: '切換為夜間模式' }).click();
+  await page.getByRole('button', { name: '編輯 RC3101' }).click();
+  await expect(page.getByText('「驗證草稿」會做什麼？')).toBeVisible();
+  await page.evaluate(() => {
+    document.documentElement.style.zoom = '2';
+  });
+  await expect(page.getByText('「驗證草稿」會做什麼？')).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth + 1,
+    ),
+  ).toBe(true);
+});
+
+test('admin dark theme persists across operational routes', async ({
+  page,
+}) => {
+  await fixture(page);
+  await page.goto('/dev-harness/admin-console.html?route=/admin/content');
+  await page.getByRole('button', { name: '切換為夜間模式' }).click();
+  for (const route of routes.filter(
+    (entry) =>
+      !entry.includes('/mfa/') && !entry.includes('/invitations/accept'),
+  )) {
+    await page.goto(`/dev-harness/admin-console.html?route=${route}`);
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-admin-theme',
+      'dark',
+    );
+    await expect(page.locator('.admin-shell__main')).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth + 1,
+      ),
+      route,
+    ).toBe(true);
+  }
+});
+
 test('dialog focus, long wait, delayed acceptance and no duplicate command', async ({
   page,
 }) => {

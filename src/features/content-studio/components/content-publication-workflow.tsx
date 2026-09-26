@@ -173,7 +173,9 @@ export function ContentPublicationWorkflow({
         <h2>發布與版本歷史</h2>
         <p>影響由伺服器判定；發布、封存與回復都保留不可變事件。</p>
       </header>
-      {!selected ? <p>先在工作區選取內容。</p> : null}
+      {!selected ? (
+        <p>請先回到清單，按「編輯」選取要發布或查看歷史的內容。</p>
+      ) : null}
       {selected ? (
         <p className="content-workflow__hint">
           {selected.stableCode || '新草稿'}・目前版本{' '}

@@ -1,191 +1,116 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { useForm, useWatch } from 'react-hook-form';
 
 import type { ContentAuthoringRepository } from '../api/content-authoring-repository';
-import type { ContentEditorState, ContentEntityType } from '../api/contracts';
+import {
+  createContentMediaRepository,
+  type ContentMediaRepository,
+} from '../api/content-media-repository';
+import type {
+  ContentEditorState,
+  ContentEntityType,
+  ContentScope,
+} from '../api/contracts';
 import {
   CONTENT_ENTITY_LABELS,
   type ContentStudioItem,
 } from '../lib/content-studio-model';
 import { contentStudioKeys } from '../query-keys';
-
-const editorSchema = z.object({
-  content: z.string().max(5000),
-  description: z.string().max(1000),
-  durationSeconds: z.number().int().min(5).max(120),
-  explanation: z.string().max(2000),
-  groupLabel: z.string().max(120),
-  kind: z.enum(['QB', 'CR', 'LT']),
-  optionA: z.string().max(500),
-  optionB: z.string().max(500),
-  optionC: z.string().max(500),
-  optionD: z.string().max(500),
-  correctAnswer: z.enum(['A', 'B', 'C', 'D']),
-  parentId: z.string(),
-  prompt: z.string().max(1000),
-  sortOrder: z.number().int().nonnegative(),
-  stableCode: z.string().trim().min(1).max(200),
-  title: z.string().max(100),
-});
-
-type EditorValues = z.infer<typeof editorSchema>;
-
-function stringValue(payload: Readonly<Record<string, unknown>>, key: string) {
-  return typeof payload[key] === 'string' ? payload[key] : '';
-}
-
-function numberValue(
-  payload: Readonly<Record<string, unknown>>,
-  key: string,
-  fallback: number,
-) {
-  return typeof payload[key] === 'number' ? payload[key] : fallback;
-}
-
-function valuesFromState(
-  item: ContentStudioItem,
-  state: ContentEditorState | null,
-): EditorValues {
-  const payload = state?.draft?.payload ?? state?.current?.payload ?? {};
-  const options = Array.isArray(payload.options)
-    ? (payload.options as Record<string, unknown>[])
-    : [];
-  const optionText = (key: string) => {
-    const value = options.find((option) => option.key === key)?.text;
-    return typeof value === 'string' ? value : '';
-  };
-  const correct = options.find((option) => option.is_correct === true)?.key;
-  return {
-    content: stringValue(payload, 'content'),
-    correctAnswer:
-      correct === 'A' || correct === 'B' || correct === 'C' || correct === 'D'
-        ? correct
-        : 'A',
-    description: stringValue(payload, 'description'),
-    durationSeconds: numberValue(payload, 'duration_seconds', 20),
-    explanation: stringValue(payload, 'explanation'),
-    groupLabel: stringValue(payload, 'group_label'),
-    kind: payload.kind === 'CR' || payload.kind === 'LT' ? payload.kind : 'QB',
-    optionA: optionText('A'),
-    optionB: optionText('B'),
-    optionC: optionText('C'),
-    optionD: optionText('D'),
-    parentId:
-      (stringValue(payload, 'course_id') ||
-        stringValue(payload, 'chapter_id') ||
-        stringValue(payload, 'section_id') ||
-        stringValue(payload, 'subtopic_id') ||
-        stringValue(payload, 'bank_id') ||
-        item.parentId) ??
-      '',
-    prompt: stringValue(payload, 'prompt'),
-    sortOrder: numberValue(payload, 'sort_order', 0),
-    stableCode: state?.draft?.stableCode ?? state?.current?.stableCode ?? '',
-    title: stringValue(payload, 'title') || item.title,
-  };
-}
-
-function payloadFromValues(
-  entityType: ContentEntityType,
-  values: EditorValues,
-): Readonly<Record<string, unknown>> {
-  const common = { sort_order: values.sortOrder, title: values.title };
-  switch (entityType) {
-    case 'course':
-      return { ...common, description: values.description };
-    case 'chapter':
-      return {
-        ...common,
-        course_id: values.parentId,
-        description: values.description,
-      };
-    case 'section':
-      return {
-        ...common,
-        chapter_id: values.parentId,
-        description: values.description,
-      };
-    case 'subtopic':
-      return {
-        ...common,
-        section_id: values.parentId,
-        description: values.description,
-      };
-    case 'review_card':
-      return {
-        ...common,
-        content: values.content,
-        group_label: values.groupLabel,
-        media: [],
-        subtopic_id: values.parentId,
-      };
-    case 'assessment_bank':
-      return {
-        ...common,
-        ...(values.kind === 'CR'
-          ? { chapter_id: values.parentId }
-          : { section_id: values.parentId }),
-        description: values.description,
-        kind: values.kind,
-        selection_settings: {},
-      };
-    case 'question':
-      return {
-        bank_id: values.parentId,
-        duration_seconds: values.durationSeconds,
-        explanation: values.explanation,
-        options: (['A', 'B', 'C', 'D'] as const)
-          .map((key, index) => ({
-            is_correct: values.correctAnswer === key,
-            key,
-            sort_order: index + 1,
-            text: values[`option${key}`],
-          }))
-          .filter((option) => option.text.trim().length > 0),
-        prompt: values.prompt,
-        question_type: 'single_choice',
-        sort_order: values.sortOrder,
-      };
-  }
-}
+import {
+  editorSchema,
+  ENTITY_TYPES,
+  type EditorValues,
+  nextStableCode,
+  payloadFromValues,
+  valuesFromState,
+} from './content-editor-form-model';
+import { ContentEditorMediaField } from './content-editor-media-field';
+import {
+  ContentEditorActions,
+  ContentEditorFeedback,
+  ContentEditorQuestionFields,
+} from './content-editor-support';
 
 export function ContentEditorForm({
+  allItems,
   item,
+  mediaRepository = createContentMediaRepository(),
+  onCancel,
+  onCreated,
   onDirtyChange,
+  onNewTypeChange,
   onReload,
   repository,
+  scope,
   state,
 }: Readonly<{
+  allItems: readonly ContentStudioItem[];
   item: ContentStudioItem;
+  mediaRepository?: ContentMediaRepository | undefined;
+  onCancel: () => void;
+  onCreated: () => void;
   onDirtyChange: (dirty: boolean) => void;
+  onNewTypeChange: (entityType: ContentEntityType) => void;
   onReload: () => Promise<unknown>;
   repository: ContentAuthoringRepository;
+  scope: ContentScope;
   state: ContentEditorState | null;
 }>) {
   const queryClient = useQueryClient();
+  const isNew = item.entityId === null && item.draftId === null;
   const [draftIdentity, setDraftIdentity] = useState(() => ({
     draftId: state?.draft?.draftId ?? item.draftId,
     revision: state?.draft?.revision ?? 0,
   }));
   const [notice, setNotice] = useState<string | null>(null);
   const [conflicted, setConflicted] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageAlt, setImageAlt] = useState('');
+  const [imageRole, setImageRole] = useState<'standard' | 'color_critical'>(
+    'standard',
+  );
   const saveRequest = useRef<{ id: string; signature: string } | null>(null);
+  const uploadRequest = useRef<string | null>(null);
   const initialValues = useMemo(
-    () => valuesFromState(item, state),
-    [item, state],
+    () => valuesFromState(item, state, scope),
+    [item, scope, state],
   );
   const {
+    control,
     formState: { errors, isDirty },
     handleSubmit,
     register,
     reset,
+    setValue,
   } = useForm<EditorValues>({
     defaultValues: initialValues,
     resolver: zodResolver(editorSchema),
   });
+  const values = useWatch({
+    control,
+    defaultValue: initialValues,
+  }) as EditorValues;
+  const sections = scope.sections;
+  const subtopics =
+    sections.find((section) => section.sectionId === values.sectionId)
+      ?.subtopics ?? [];
+  const allBanks = [
+    ...scope.chapterBanks,
+    ...sections.flatMap((section) => section.banks),
+  ];
+  const eligibleBanks = allBanks.filter(
+    (bank) =>
+      bank.kind === values.kind &&
+      (bank.kind === 'CR' ||
+        sections.some(
+          (section) =>
+            section.sectionId === values.sectionId &&
+            section.banks.some((entry) => entry.bankId === bank.bankId),
+        )),
+  );
 
   useEffect(() => {
     onDirtyChange(isDirty);
@@ -194,30 +119,51 @@ export function ContentEditorForm({
     };
   }, [isDirty, onDirtyChange]);
 
+  useEffect(() => {
+    if (!isNew) return;
+    const stableCode = nextStableCode(item.entityType, values, scope, allItems);
+    if (values.stableCode !== stableCode)
+      setValue('stableCode', stableCode, { shouldDirty: false });
+  }, [allItems, isNew, item.entityType, scope, setValue, values]);
+
+  useEffect(() => {
+    let parentId = values.parentId;
+    if (item.entityType === 'section') parentId = values.chapterId;
+    if (item.entityType === 'subtopic') parentId = values.sectionId;
+    if (item.entityType === 'review_card') parentId = values.subtopicId;
+    if (item.entityType === 'assessment_bank')
+      parentId = values.kind === 'CR' ? values.chapterId : values.sectionId;
+    if (item.entityType === 'question') parentId = values.bankId;
+    if (values.parentId !== parentId)
+      setValue('parentId', parentId, { shouldDirty: false });
+  }, [item.entityType, setValue, values]);
+
   const save = useMutation({
-    mutationFn: (values: EditorValues) => {
+    mutationFn: (formValues: EditorValues) => {
       const signature = JSON.stringify({
         draftIdentity,
         entityId: item.entityId,
         entityType: item.entityType,
-        stableCode: values.stableCode,
-        values,
+        stableCode: formValues.stableCode,
+        values: formValues,
       });
-      if (saveRequest.current?.signature !== signature) {
+      if (saveRequest.current?.signature !== signature)
         saveRequest.current = { id: crypto.randomUUID(), signature };
-      }
       return repository.saveDraft({
         draftId: draftIdentity.draftId,
         entityId: item.entityId,
         entityType: item.entityType,
         expectedRevision: draftIdentity.revision,
-        payload: payloadFromValues(item.entityType, values),
+        payload: payloadFromValues(item.entityType, formValues),
         requestId: saveRequest.current.id,
         source: 'manual',
-        stableCode: values.stableCode,
+        stableCode: formValues.stableCode,
       });
     },
-    onSuccess: (result, values) => {
+    onError: () => {
+      setNotice('草稿儲存失敗，資料尚未變更。');
+    },
+    onSuccess: (result, formValues) => {
       if (result.outcome === 'denied') {
         saveRequest.current = null;
         setConflicted(result.code === 'CONTENT_DRAFT_CONFLICT');
@@ -234,12 +180,10 @@ export function ContentEditorForm({
         draftId: result.draft.draftId,
         revision: result.draft.revision,
       });
-      reset(values);
-      setNotice(`草稿已儲存（修訂 ${String(result.draft.revision)}）`);
+      reset(formValues);
       void queryClient.invalidateQueries({ queryKey: contentStudioKeys.all });
-    },
-    onError: () => {
-      setNotice('草稿儲存失敗，資料尚未變更。');
+      if (isNew) onCreated();
+      else setNotice(`草稿已儲存（修訂 ${String(result.draft.revision)}）`);
     },
   });
 
@@ -252,13 +196,13 @@ export function ContentEditorForm({
         expectedRevision: draftIdentity.revision,
       });
     },
-    onSuccess: (result) => {
-      if (result.outcome === 'denied') setNotice(result.message);
-      else if (result.valid) setNotice('草稿驗證通過');
-      else setNotice(result.issues.map((issue) => issue.message).join('；'));
-    },
     onError: () => {
       setNotice('請先儲存草稿，再執行驗證。');
+    },
+    onSuccess: (result) => {
+      if (result.outcome === 'denied') setNotice(result.message);
+      else if (result.valid) setNotice('草稿驗證通過，可以進入發布流程。');
+      else setNotice(result.issues.map((issue) => issue.message).join('；'));
     },
   });
 
@@ -271,60 +215,259 @@ export function ContentEditorForm({
         expectedRevision: draftIdentity.revision,
       });
     },
+    onError: () => {
+      setNotice('請先儲存草稿，才能產生學生預覽。');
+    },
   });
 
-  const publishedStableCode = state?.current?.version != null;
+  const uploadImage = useMutation({
+    mutationFn: async () => {
+      if (!imageFile || !imageAlt.trim()) throw new Error('IMAGE_REQUIRED');
+      uploadRequest.current ??= crypto.randomUUID();
+      return mediaRepository.uploadAndProcess({
+        file: imageFile,
+        requestId: uploadRequest.current,
+        semanticRole: imageRole,
+      });
+    },
+    onError: () => {
+      setNotice('圖片處理失敗；原圖不會加入內容。');
+    },
+    onSuccess: (asset) => {
+      setValue(
+        'media',
+        [
+          ...values.media,
+          {
+            alt_text: imageAlt.trim(),
+            manifest_id: asset.assetId,
+            semantic_role: asset.semanticRole,
+            sort_order: values.media.length,
+          },
+        ],
+        { shouldDirty: true },
+      );
+      setImageFile(null);
+      setImageAlt('');
+      uploadRequest.current = null;
+      setNotice('圖片已壓縮為 WebP 並加入表單；儲存草稿後才會套用。');
+    },
+  });
+
+  const heading = isNew
+    ? `新增${CONTENT_ENTITY_LABELS[item.entityType]}`
+    : `編輯 ${item.stableCode}`;
+  const showHierarchyNumber = [
+    'course',
+    'chapter',
+    'section',
+    'subtopic',
+  ].includes(item.entityType);
+
   return (
     <form
       className="content-editor"
       onSubmit={(event) => {
-        void handleSubmit((values) => {
-          save.mutate(values);
+        void handleSubmit((formValues) => {
+          save.mutate(formValues);
         })(event);
       }}
     >
-      <header>
+      <header className="content-editor__heading">
         <div>
+          <button
+            className="content-editor__back"
+            onClick={onCancel}
+            type="button"
+          >
+            <ArrowLeft aria-hidden="true" /> 返回清單
+          </button>
           <span>{CONTENT_ENTITY_LABELS[item.entityType]}</span>
-          <h2>{item.title}</h2>
+          <h2>{heading}</h2>
         </div>
         <span className={`content-status content-status--${item.status}`}>
-          {item.status === 'published'
-            ? '已發布'
-            : item.status === 'archived'
-              ? '已封存'
-              : '草稿'}
+          {isNew
+            ? '新增中'
+            : item.status === 'published'
+              ? '已發布'
+              : item.status === 'archived'
+                ? '已封存'
+                : '草稿'}
         </span>
       </header>
-      <label>
-        穩定代碼
-        <input disabled={publishedStableCode} {...register('stableCode')} />
-      </label>
-      {errors.stableCode ? <p role="alert">請輸入穩定代碼。</p> : null}
-      <label>
-        標題
-        <input {...register('title')} />
-      </label>
-      {item.entityType !== 'course' ? (
+
+      {isNew ? (
         <label>
-          上層 ID
-          <input {...register('parentId')} />
+          新增類型
+          <select
+            value={item.entityType}
+            onChange={(event) => {
+              onNewTypeChange(event.target.value as ContentEntityType);
+            }}
+          >
+            {ENTITY_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {CONTENT_ENTITY_LABELS[type]}
+              </option>
+            ))}
+          </select>
         </label>
       ) : null}
-      <label>
-        排序
+
+      <div className="content-editor__scope-grid">
+        {item.entityType !== 'course' ? (
+          <label>
+            章節
+            <select aria-label="章節" value={scope.chapter.chapterId} disabled>
+              <option value={scope.chapter.chapterId}>
+                第 {scope.chapter.sortOrder} 章・{scope.chapter.title}
+              </option>
+            </select>
+          </label>
+        ) : null}
+        {['subtopic', 'review_card', 'assessment_bank', 'question'].includes(
+          item.entityType,
+        ) &&
+        !(item.entityType === 'assessment_bank' && values.kind === 'CR') ? (
+          <label>
+            小節
+            <select
+              aria-label="小節"
+              value={values.sectionId}
+              onChange={(event) => {
+                const sectionId = event.target.value;
+                const section = sections.find(
+                  (entry) => entry.sectionId === sectionId,
+                );
+                setValue('sectionId', sectionId, { shouldDirty: true });
+                setValue(
+                  'subtopicId',
+                  section?.subtopics.at(0)?.subtopicId ?? '',
+                  {
+                    shouldDirty: true,
+                  },
+                );
+                const bank = section?.banks.find(
+                  (entry) => entry.kind === values.kind,
+                );
+                if (bank)
+                  setValue('bankId', bank.bankId, { shouldDirty: true });
+              }}
+            >
+              {sections.map((section) => (
+                <option key={section.sectionId} value={section.sectionId}>
+                  {section.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {item.entityType === 'review_card' ? (
+          <label>
+            子主題
+            <select aria-label="子主題" {...register('subtopicId')}>
+              {subtopics.map((subtopic) => (
+                <option key={subtopic.subtopicId} value={subtopic.subtopicId}>
+                  {subtopic.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {item.entityType === 'assessment_bank' ||
+        item.entityType === 'question' ? (
+          <label>
+            題庫類型
+            <select
+              {...register('kind')}
+              onChange={(event) => {
+                const kind = event.target.value as 'QB' | 'CR' | 'LT';
+                setValue('kind', kind, { shouldDirty: true });
+                const nextBank = allBanks.find(
+                  (bank) =>
+                    bank.kind === kind &&
+                    (kind === 'CR' ||
+                      sections
+                        .find(
+                          (section) => section.sectionId === values.sectionId,
+                        )
+                        ?.banks.some((entry) => entry.bankId === bank.bankId)),
+                );
+                if (nextBank)
+                  setValue('bankId', nextBank.bankId, { shouldDirty: true });
+              }}
+            >
+              <option value="QB">QB 小節題庫</option>
+              <option value="LT">LT Live 題庫</option>
+              <option value="CR">CR 章節總題庫</option>
+            </select>
+          </label>
+        ) : null}
+        {item.entityType === 'question' ? (
+          <label>
+            題庫
+            <select aria-label="題庫" {...register('bankId')}>
+              {eligibleBanks.map((bank) => (
+                <option key={bank.bankId} value={bank.bankId}>
+                  {bank.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+      </div>
+
+      <div className="content-editor__identity-grid">
+        <label>
+          穩定代碼
+          <input aria-label="穩定代碼" disabled value={values.stableCode} />
+          <input type="hidden" {...register('stableCode')} />
+        </label>
+        {item.entityType !== 'course' ? (
+          <label>
+            上層 ID
+            <input aria-label="上層 ID" disabled value={values.parentId} />
+            <input type="hidden" {...register('parentId')} />
+          </label>
+        ) : null}
+      </div>
+      {errors.stableCode ? (
+        <p role="alert">請先完成必要的章節與父層選擇。</p>
+      ) : null}
+
+      {showHierarchyNumber ? (
+        <label>
+          {item.entityType === 'chapter'
+            ? '章節編號'
+            : item.entityType === 'section'
+              ? '小節編號'
+              : item.entityType === 'subtopic'
+                ? '子主題編號'
+                : '課程順序'}
+          <input
+            min="1"
+            type="number"
+            {...register('sortOrder', { valueAsNumber: true })}
+          />
+        </label>
+      ) : (
         <input
-          min="0"
-          type="number"
+          type="hidden"
           {...register('sortOrder', { valueAsNumber: true })}
         />
-      </label>
+      )}
 
-      {['course', 'chapter', 'section', 'subtopic'].includes(
+      {item.entityType !== 'question' ? (
+        <label>
+          標題
+          <input {...register('title')} />
+        </label>
+      ) : null}
+      {['course', 'chapter', 'section', 'subtopic', 'assessment_bank'].includes(
         item.entityType,
       ) ? (
         <label>
-          說明
+          說明（選填）
           <textarea rows={4} {...register('description')} />
         </label>
       ) : null}
@@ -338,120 +481,61 @@ export function ContentEditorForm({
             複習卡內容
             <textarea rows={10} {...register('content')} />
           </label>
-        </>
-      ) : null}
-      {item.entityType === 'assessment_bank' ? (
-        <>
-          <label>
-            題庫類型
-            <select {...register('kind')}>
-              <option value="QB">QB 小節測驗</option>
-              <option value="LT">LT Live 題庫</option>
-              <option value="CR">CR 章節總測驗</option>
-            </select>
-          </label>
-          <label>
-            說明
-            <textarea rows={3} {...register('description')} />
-          </label>
+          <ContentEditorMediaField
+            altText={imageAlt}
+            file={imageFile}
+            isUploading={uploadImage.isPending}
+            media={values.media}
+            onAltTextChange={setImageAlt}
+            onFileChange={(file) => {
+              setImageFile(file);
+              uploadRequest.current = null;
+            }}
+            onRemove={(index) => {
+              setValue(
+                'media',
+                values.media
+                  .filter((_, mediaIndex) => mediaIndex !== index)
+                  .map((media, mediaIndex) => ({
+                    ...media,
+                    sort_order: mediaIndex,
+                  })),
+                { shouldDirty: true },
+              );
+            }}
+            onRoleChange={setImageRole}
+            onUpload={() => {
+              uploadImage.mutate();
+            }}
+            role={imageRole}
+          />
         </>
       ) : null}
       {item.entityType === 'question' ? (
-        <>
-          <label>
-            題目
-            <textarea rows={4} {...register('prompt')} />
-          </label>
-          <div className="content-editor__options">
-            {(['A', 'B', 'C', 'D'] as const).map((key) => (
-              <label key={key}>
-                選項 {key}
-                <input {...register(`option${key}`)} />
-              </label>
-            ))}
-          </div>
-          <label>
-            正確答案
-            <select {...register('correctAnswer')}>
-              {['A', 'B', 'C', 'D'].map((key) => (
-                <option key={key}>{key}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            作答秒數
-            <input
-              min="5"
-              max="120"
-              type="number"
-              {...register('durationSeconds', { valueAsNumber: true })}
-            />
-          </label>
-          <label>
-            解說
-            <textarea rows={4} {...register('explanation')} />
-          </label>
-        </>
+        <ContentEditorQuestionFields register={register} />
       ) : null}
 
-      {notice ? (
-        <p className="content-editor__notice" role="status">
-          {notice}
-        </p>
-      ) : null}
-      {conflicted ? (
-        <button
-          className="secondary-action"
-          type="button"
-          onClick={() => {
-            void onReload();
-          }}
-        >
-          重新載入並比較
-        </button>
-      ) : null}
-      {preview.data?.outcome === 'ok' ? (
-        <section aria-label="學生安全預覽" className="content-editor__preview">
-          <h3>學生預覽</h3>
-          {'prompt' in preview.data.projection ? (
-            <p>{preview.data.projection.prompt}</p>
-          ) : (
-            <>
-              <strong>{preview.data.projection.title}</strong>
-              <p>{preview.data.projection.content}</p>
-            </>
-          )}
-        </section>
-      ) : null}
-      <div className="content-editor__actions">
-        <button
-          className="primary-action"
-          disabled={save.isPending}
-          type="submit"
-        >
-          {save.isPending ? '儲存中…' : '儲存草稿'}
-        </button>
-        <button
-          className="secondary-action"
-          type="button"
-          onClick={() => {
-            validate.mutate();
-          }}
-        >
-          驗證草稿
-        </button>
-        {item.entityType === 'review_card' || item.entityType === 'question' ? (
-          <button
-            className="secondary-action"
-            type="button"
-            onClick={() => {
-              preview.mutate();
-            }}
-          >
-            學生預覽
-          </button>
-        ) : null}
-      </div>
+      <ContentEditorFeedback
+        conflicted={conflicted}
+        notice={notice}
+        onReload={onReload}
+        projection={
+          preview.data?.outcome === 'ok' ? preview.data.projection : null
+        }
+      />
+      <ContentEditorActions
+        isNew={isNew}
+        isSaving={save.isPending}
+        onPreview={() => {
+          preview.mutate();
+        }}
+        onValidate={() => {
+          validate.mutate();
+        }}
+        showPreview={
+          item.entityType === 'review_card' || item.entityType === 'question'
+        }
+      />
     </form>
   );
 }

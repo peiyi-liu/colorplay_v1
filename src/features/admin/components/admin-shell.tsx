@@ -13,13 +13,23 @@ import {
   LayoutDashboard,
   Mail,
   Menu,
+  Moon,
   ShieldCheck,
+  Sun,
   Users,
   X,
   type LucideIcon,
 } from 'lucide-react';
 
 const WIDE_QUERY = '(min-width: 1024px)';
+const ADMIN_THEME_KEY = 'colorplay-admin-theme';
+type AdminTheme = 'light' | 'dark';
+
+function initialAdminTheme(): AdminTheme {
+  const saved = window.sessionStorage.getItem(ADMIN_THEME_KEY);
+  if (saved === 'light' || saved === 'dark') return saved;
+  return 'light';
+}
 const NAV_ICONS: Record<string, LucideIcon> = {
   安全總覽: LayoutDashboard,
   教師帳號: Users,
@@ -98,9 +108,22 @@ const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
 export function AdminShell(): ReactElement {
   const wide = useAdminShellWide();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [theme, setTheme] = useState<AdminTheme>(initialAdminTheme);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const location = useLocation();
+
+  useEffect(() => {
+    document.documentElement.dataset.adminTheme = theme;
+    window.sessionStorage.setItem(ADMIN_THEME_KEY, theme);
+  }, [theme]);
+
+  useEffect(
+    () => () => {
+      delete document.documentElement.dataset.adminTheme;
+    },
+    [],
+  );
 
   // 換頁後收起 drawer;寬版永遠可見不受影響。渲染期間調整狀態(React 官方
   // pattern),不用 effect——避免 react-hooks/set-state-in-effect,做法比照
@@ -237,16 +260,34 @@ export function AdminShell(): ReactElement {
           landmark(review 波標準軸抓到巢狀 main 會讓螢幕閱讀器多出重複
           landmark)。 */}
       <div className="admin-shell__main">
-        <div className="admin-shell__context">
-          管理控制台 <span aria-hidden="true">／</span>{' '}
-          {NAV_GROUPS.flatMap((group) => group.items)
-            .filter(
-              (item) =>
-                item.to === location.pathname ||
-                (item.to !== '/admin' &&
-                  location.pathname.startsWith(`${item.to}/`)),
-            )
-            .at(-1)?.label ?? '資料明細'}
+        <div className="admin-shell__utility">
+          <div className="admin-shell__context">
+            管理控制台 <span aria-hidden="true">／</span>{' '}
+            {NAV_GROUPS.flatMap((group) => group.items)
+              .filter(
+                (item) =>
+                  item.to === location.pathname ||
+                  (item.to !== '/admin' &&
+                    location.pathname.startsWith(`${item.to}/`)),
+              )
+              .at(-1)?.label ?? '資料明細'}
+          </div>
+          <button
+            aria-label={theme === 'light' ? '切換為夜間模式' : '切換為日間模式'}
+            aria-pressed={theme === 'dark'}
+            className="admin-theme-toggle"
+            onClick={() => {
+              setTheme((current) => (current === 'light' ? 'dark' : 'light'));
+            }}
+            type="button"
+          >
+            {theme === 'light' ? (
+              <Moon aria-hidden="true" />
+            ) : (
+              <Sun aria-hidden="true" />
+            )}
+            {theme === 'light' ? '夜間模式' : '日間模式'}
+          </button>
         </div>
         <AdminOperationProvider>
           <Outlet />

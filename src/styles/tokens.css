@@ -13,8 +13,10 @@
   --admin-accent: #4254bc;
   --admin-accent-hover: #334398;
   --admin-accent-soft: #eef0ff;
+  --admin-accent-contrast: #ffffff;
   --admin-success: #206346;
   --admin-warning: #895615;
+  --admin-danger: #943e35;
   /* ── Primitive:墨色階(spec §二文字色)與白色紙張 ────── */
   --ink-950: #18212f;
   --ink-900: #253042;
@@ -575,4 +577,21 @@
   --teacher-palette-rgb-854f41c8: rgb(81 180 255 / 48%);
   --teacher-palette-rgb-5e5d75bf: rgb(86 58 12 / 38%);
   --teacher-palette-rgb-1f35691c: rgb(9 42 74 / 92%);
+}
+
+:root[data-admin-theme='dark'] {
+  color-scheme: dark;
+  --admin-surface: #182235;
+  --admin-page: #101827;
+  --admin-ink: #f4f7fb;
+  --admin-text-muted: #b5c0cf;
+  --admin-border: #3a485c;
+  --admin-soft: #222e42;
+  --admin-accent: #a8b4ff;
+  --admin-accent-hover: #c4ccff;
+  --admin-accent-soft: #2e3c65;
+  --admin-accent-contrast: #17203a;
+  --admin-success: #74d3a7;
+  --admin-warning: #f4c46d;
+  --admin-danger: #ff9b91;
 }

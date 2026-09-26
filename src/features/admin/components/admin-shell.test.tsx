@@ -94,7 +94,27 @@ function renderShell(initialEntry: string) {
 
 describe('AdminShell', () => {
   afterEach(() => {
+    sessionStorage.clear();
+    document.documentElement.removeAttribute('data-admin-theme');
     vi.unstubAllGlobals();
+  });
+
+  it('offers an accessible day/night toggle and remembers it for the admin session', async () => {
+    const user = userEvent.setup();
+    stubWide(true);
+    renderShell('/admin');
+
+    const toggle = screen.getByRole('button', { name: '切換為夜間模式' });
+    await user.click(toggle);
+
+    expect(document.documentElement).toHaveAttribute(
+      'data-admin-theme',
+      'dark',
+    );
+    expect(sessionStorage.getItem('colorplay-admin-theme')).toBe('dark');
+    expect(
+      screen.getByRole('button', { name: '切換為日間模式' }),
+    ).toBeVisible();
   });
 
   it('does not render its own <main> landmark (AppShell already owns the single #main-content landmark)', () => {
