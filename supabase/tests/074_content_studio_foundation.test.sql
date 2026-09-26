@@ -2,12 +2,31 @@ begin;
 
 set local search_path = public, extensions;
 
-select plan(64);
+-- Requirements: Phase 2 Chapter 3 PR1, AC-TCH-011..015, spec/03 §Content
+-- taxonomy, spec/06 §2–5. This focused pgTAP intentionally exceeds 500 lines:
+-- one transaction proves schema, RLS/RPC access, draft replay/revision, validator,
+-- and safe projection against the same seeded identities without hidden fixtures.
+select plan(80);
 
 select has_table(
   'public',
   'assessment_banks',
   'Content Studio has an explicit assessment bank table'
+);
+
+select has_column(
+  'public', 'assessment_banks', 'created_by',
+  'assessment banks preserve creator provenance'
+);
+
+select has_column(
+  'public', 'questions', 'created_by',
+  'questions preserve creator provenance'
+);
+
+select has_column(
+  'public', 'courses', 'version',
+  'curriculum nodes expose a current content version'
 );
 
 select has_column(
@@ -42,6 +61,17 @@ select has_column(
   'questions',
   'duration_seconds',
   'question authoring has a server-constrained duration'
+);
+
+select is(
+  (
+    select column_default
+    from information_schema.columns
+    where table_schema = 'public' and table_name = 'questions'
+      and column_name = 'duration_seconds'
+  ),
+  '20',
+  'question authoring defaults to the twenty-second MVP duration'
 );
 
 select throws_ok(
@@ -284,12 +314,19 @@ where bank_kind = 'section'
 order by stable_code
 limit 1 \gset
 
-select id as editor_bank_id,
-  stable_code as editor_bank_code,
-  section_id as editor_bank_section_id
-from public.assessment_banks
-where kind = 'QB'
-order by stable_code
+select bank.id as editor_bank_id,
+  bank.stable_code as editor_bank_code,
+  bank.section_id as editor_bank_section_id
+from public.assessment_banks as bank
+join public.sections as section on section.id = bank.section_id
+join public.chapters as chapter on chapter.id = section.chapter_id
+where bank.kind = 'QB' and chapter.sort_order = 3 and section.sort_order = 1
+order by bank.stable_code
+limit 1 \gset
+
+select id as editor_subtopic_id
+from public.subtopics
+where stable_code = 'sheet-3-1-all'
 limit 1 \gset
 
 select set_config(
@@ -304,6 +341,15 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 set local role authenticated;
+
+select is(
+  (
+    select role::text from public.profiles
+    where id = 'cc000000-0000-0000-0000-000000000001'
+  ),
+  'student',
+  'the non-Admin negative fixture first exercises the Student role'
+);
 
 select is(
   (
@@ -358,6 +404,21 @@ select is(
 );
 
 reset role;
+update public.profiles set role = 'teacher'
+where id = 'cc000000-0000-0000-0000-000000000001';
+set local role authenticated;
+
+select is(
+  (
+    public.admin_read_content_editor_state(
+      'question', :'editor_question_id'::uuid, null
+    ) ->> 'code'
+  ),
+  'STALE_PRIVILEGED_SESSION',
+  'a Teacher cannot read privileged Content Studio editor state'
+);
+
+reset role;
 select set_config(
   'request.jwt.claim.sub',
   'aa000000-0000-0000-0000-000000000001',
@@ -395,6 +456,22 @@ select ok(
   current_setting('pgtap.content_scope') !~
     'is_correct|correct_option|payload|actor_user_id|request_hash',
   'the navigation projection contains no answer, draft, actor, or request hash'
+);
+
+select ok(
+  jsonb_array_length(
+    current_setting('pgtap.content_scope')::jsonb
+      #> '{chapter_banks,0,questions}'
+  ) > 0,
+  'the scope projection lists selectable Question identities'
+);
+
+select ok(
+  jsonb_array_length(
+    current_setting('pgtap.content_scope')::jsonb
+      #> '{sections,0,subtopics,0,review_cards}'
+  ) > 0,
+  'the scope projection lists selectable Review Card identities'
 );
 
 select set_config(
@@ -457,6 +534,19 @@ select is(
   '1',
   'the first persistent draft starts at revision one'
 );
+
+reset role;
+select is(
+  (
+    select auth_session_id::text
+    from public.content_draft_requests
+    where actor_user_id = 'aa000000-0000-0000-0000-000000000001'
+      and request_id = '74000000-0000-4000-8000-000000000002'
+  ),
+  'aa000000-0000-0000-0000-0000000000e1',
+  'draft request receipts are bound to the issuing Admin auth session'
+);
+set local role authenticated;
 
 select set_config(
   'pgtap.content_replay',
@@ -600,6 +690,19 @@ select is(
   current_setting('pgtap.valid_question_save')::jsonb ->> 'outcome',
   'ok',
   'a normalized question WIP is persisted before validation'
+);
+
+select ok(
+  exists (
+    select 1 from jsonb_array_elements(
+      public.admin_list_content_scope(
+        '21000000-0000-0000-0000-000000000003'
+      ) -> 'drafts'
+    ) as draft
+    where draft ->> 'draft_id' =
+      current_setting('pgtap.valid_question_save')::jsonb #>> '{draft,draft_id}'
+  ),
+  'the scope projection lists persisted draft identities without payloads'
 );
 
 select set_config(
@@ -759,6 +862,13 @@ select ok(
   'published question stable code rename is rejected'
 );
 
+select is(
+  current_setting('pgtap.renamed_question_save')::jsonb
+    #>> '{draft,base_version}',
+  '1',
+  'an existing-entity draft captures its current base version'
+);
+
 select set_config(
   'pgtap.cross_kind_bank_save',
   public.admin_save_content_draft(
@@ -784,6 +894,124 @@ select ok(
     where issue ->> 'code' = 'CONTENT_BANK_SCOPE_IMMUTABLE'
   ),
   'published bank cannot move across QB, CR, and LT kinds'
+);
+
+select set_config(
+  'pgtap.invalid_card_save',
+  public.admin_save_content_draft(
+    null, null, 'review_card', 'RC-invalid-media', 0,
+    jsonb_build_object(
+      'subtopic_id', :'editor_subtopic_id', 'group_label', '',
+      'title', repeat('卡', 81), 'content', repeat('文', 5001),
+      'sort_order', 1,
+      'media', jsonb_build_array(
+        jsonb_build_object('alt_text', '', 'sort_order', 'bad')
+      )
+    ),
+    'manual', '74000000-0000-4000-8000-000000000009'
+  )::text,
+  true
+);
+select is(
+  public.admin_validate_content_draft(
+    (current_setting('pgtap.invalid_card_save')::jsonb
+      #>> '{draft,draft_id}')::uuid, 1
+  ) ->> 'valid',
+  'false',
+  'an oversized Review Card with malformed media fails validation'
+);
+select ok(
+  exists (
+    select 1 from jsonb_array_elements(
+      public.admin_validate_content_draft(
+        (current_setting('pgtap.invalid_card_save')::jsonb
+          #>> '{draft,draft_id}')::uuid, 1
+      ) -> 'issues'
+    ) as issue
+    where issue ->> 'code' in (
+      'CONTENT_REVIEW_CARD_INVALID', 'CONTENT_MEDIA_INVALID'
+    )
+  ),
+  'Review Card validation returns field-level size or media errors'
+);
+
+select set_config(
+  'pgtap.invalid_options_save',
+  public.admin_save_content_draft(
+    null, null, 'question', 'QB3198', 0,
+    jsonb_build_object(
+      'bank_id', :'editor_bank_id', 'question_type', 'single_choice',
+      'prompt', '畸形選項', 'explanation', '驗證布林與 key 唯一性',
+      'duration_seconds', 20, 'sort_order', 98,
+      'options', jsonb_build_array(
+        jsonb_build_object('key', 'A', 'text', '甲', 'is_correct', true),
+        jsonb_build_object('key', 'A', 'text', '乙', 'is_correct', null)
+      )
+    ),
+    'manual', '74000000-0000-4000-8000-000000000010'
+  )::text,
+  true
+);
+select ok(
+  exists (
+    select 1 from jsonb_array_elements(
+      public.admin_validate_content_draft(
+        (current_setting('pgtap.invalid_options_save')::jsonb
+          #>> '{draft,draft_id}')::uuid, 1
+      ) -> 'issues'
+    ) as issue where issue ->> 'code' = 'CONTENT_OPTIONS_INVALID'
+  ),
+  'duplicate option keys and non-boolean correctness fail closed'
+);
+
+select set_config(
+  'pgtap.invalid_code_save',
+  public.admin_save_content_draft(
+    null, null, 'question', 'CR3001-wrong-kind', 0,
+    jsonb_build_object(
+      'bank_id', :'editor_bank_id', 'question_type', 'single_choice',
+      'prompt', '錯誤代碼', 'explanation', '題型前綴必須符合 bank kind',
+      'duration_seconds', 20, 'sort_order', 97,
+      'options', jsonb_build_array(
+        jsonb_build_object('key', 'A', 'text', '甲', 'is_correct', true),
+        jsonb_build_object('key', 'B', 'text', '乙', 'is_correct', false)
+      )
+    ),
+    'manual', '74000000-0000-4000-8000-000000000011'
+  )::text,
+  true
+);
+select ok(
+  exists (
+    select 1 from jsonb_array_elements(
+      public.admin_validate_content_draft(
+        (current_setting('pgtap.invalid_code_save')::jsonb
+          #>> '{draft,draft_id}')::uuid, 1
+      ) -> 'issues'
+    ) as issue where issue ->> 'code' = 'CONTENT_STABLE_CODE_INVALID'
+  ),
+  'Question stable code format and bank kind must agree'
+);
+
+reset role;
+update public.admin_sessions
+set auth_session_id = 'aa000000-0000-0000-0000-0000000000e9'
+where admin_user_id = 'aa000000-0000-0000-0000-000000000001'
+  and revoked_at is null;
+select set_config(
+  'request.jwt.claim.session_id',
+  'aa000000-0000-0000-0000-0000000000e9',
+  true
+);
+set local role authenticated;
+select is(
+  public.admin_save_content_draft(
+    null, null, 'assessment_bank', 'QB-draft-31', 0,
+    '{"kind":"QB","title":"3-1 小節題庫"}'::jsonb, 'manual',
+    '74000000-0000-4000-8000-000000000002'
+  ) ->> 'code',
+  'IDEMPOTENCY_CONFLICT',
+  'a rotated Admin session cannot replay an earlier session receipt'
 );
 
 reset role;

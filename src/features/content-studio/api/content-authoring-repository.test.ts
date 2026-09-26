@@ -65,10 +65,30 @@ describe('content authoring repository', () => {
           id: BANK_ID,
           kind: 'CR',
           question_count: 10,
+          questions: [
+            {
+              id: ENTITY_ID,
+              sort_order: 1,
+              stable_code: 'CR3001',
+              status: 'published',
+              title: '章節總測驗題目',
+              version: 2,
+            },
+          ],
           sort_order: 3,
           stable_code: 'CR-chapter-3',
           status: 'published',
           title: '色彩表示 章節總題庫',
+        },
+      ],
+      drafts: [
+        {
+          draft_id: DRAFT_ID,
+          entity_id: ENTITY_ID,
+          entity_type: 'question',
+          revision: 3,
+          stable_code: 'CR3001',
+          updated_at: UPDATED_AT,
         },
       ],
       outcome: 'ok',
@@ -80,6 +100,7 @@ describe('content authoring repository', () => {
               id: '99999999-9999-4999-8999-999999999999',
               kind: 'QB',
               question_count: 4,
+              questions: [],
               sort_order: 1,
               stable_code: 'QB-section-3-1',
               status: 'published',
@@ -94,6 +115,16 @@ describe('content authoring repository', () => {
             {
               id: SUBTOPIC_ID,
               review_card_count: 3,
+              review_cards: [
+                {
+                  id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+                  sort_order: 1,
+                  stable_code: 'RC-3-1-1',
+                  status: 'published',
+                  title: '色彩表示複習卡',
+                  version: 1,
+                },
+              ],
               sort_order: 1,
               stable_code: 'subtopic-3-1-1',
               status: 'published',
@@ -111,14 +142,30 @@ describe('content authoring repository', () => {
       }),
     ).resolves.toMatchObject({
       chapter: { chapterId: CHAPTER_ID, stableCode: 'chapter-3' },
-      chapterBanks: [{ bankId: BANK_ID, kind: 'CR', questionCount: 10 }],
+      chapterBanks: [
+        {
+          bankId: BANK_ID,
+          kind: 'CR',
+          questionCount: 10,
+          questions: [{ entityId: ENTITY_ID, stableCode: 'CR3001' }],
+        },
+      ],
+      drafts: [
+        { draftId: DRAFT_ID, entityType: 'question', stableCode: 'CR3001' },
+      ],
       outcome: 'ok',
       requestId: REQUEST_ID,
       sections: [
         {
           banks: [{ kind: 'QB', questionCount: 4 }],
           sectionId: SECTION_ID,
-          subtopics: [{ reviewCardCount: 3, subtopicId: SUBTOPIC_ID }],
+          subtopics: [
+            {
+              reviewCardCount: 3,
+              reviewCards: [{ stableCode: 'RC-3-1-1' }],
+              subtopicId: SUBTOPIC_ID,
+            },
+          ],
         },
       ],
     });
@@ -136,6 +183,7 @@ describe('content authoring repository', () => {
         title: '色彩表示',
       },
       chapter_banks: [],
+      drafts: [],
       outcome: 'ok',
       request_id: REQUEST_ID,
       sections: [],

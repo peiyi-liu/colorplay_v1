@@ -21,6 +21,16 @@ export const contentBankSummaryWireSchema = z.strictObject({
   id: uuidSchema,
   kind: z.enum(['QB', 'CR', 'LT']),
   question_count: z.number().int().nonnegative(),
+  questions: z.array(
+    z.strictObject({
+      id: uuidSchema,
+      sort_order: z.number().int().nonnegative(),
+      stable_code: z.string().trim().min(1).max(200),
+      status: contentStatusSchema,
+      title: z.string().min(1).max(1000),
+      version: z.number().int().positive(),
+    }),
+  ),
   sort_order: z.number().int().nonnegative(),
   stable_code: z.string().trim().min(1).max(200),
   status: contentStatusSchema,
@@ -36,6 +46,16 @@ export const contentScopeWireSchema = z.strictObject({
     title: z.string().min(1).max(100),
   }),
   chapter_banks: z.array(contentBankSummaryWireSchema),
+  drafts: z.array(
+    z.strictObject({
+      draft_id: uuidSchema,
+      entity_id: uuidSchema.nullable(),
+      entity_type: contentEntityTypeSchema,
+      revision: z.number().int().positive(),
+      stable_code: z.string().trim().min(1).max(200),
+      updated_at: timestampSchema,
+    }),
+  ),
   outcome: z.literal('ok'),
   request_id: uuidSchema,
   sections: z.array(
@@ -48,6 +68,16 @@ export const contentScopeWireSchema = z.strictObject({
       subtopics: z.array(
         z.strictObject({
           id: uuidSchema,
+          review_cards: z.array(
+            z.strictObject({
+              id: uuidSchema,
+              sort_order: z.number().int().nonnegative(),
+              stable_code: z.string().trim().min(1).max(200),
+              status: contentStatusSchema,
+              title: z.string().min(1).max(80),
+              version: z.number().int().positive(),
+            }),
+          ),
           review_card_count: z.number().int().nonnegative(),
           sort_order: z.number().int().nonnegative(),
           stable_code: z.string().trim().min(1).max(200),
@@ -119,17 +149,19 @@ const questionPreviewWireSchema = z.strictObject({
 });
 
 const reviewCardPreviewWireSchema = z.strictObject({
-  content: z.string().min(1).max(8000),
+  content: z.string().min(1).max(5000),
   entity_type: z.literal('review_card'),
   group_label: z.string().max(120),
-  media: z.array(
-    z.strictObject({
-      alt_text: z.string().min(1).max(300),
-      sort_order: z.number().int().nonnegative(),
-    }),
-  ),
+  media: z
+    .array(
+      z.strictObject({
+        alt_text: z.string().min(1).max(200),
+        sort_order: z.number().int().nonnegative(),
+      }),
+    )
+    .max(3),
   stable_code: z.string().trim().min(1).max(200),
-  title: z.string().min(1).max(200),
+  title: z.string().min(1).max(80),
 });
 
 export const contentPreviewWireSchema = z.strictObject({
@@ -226,10 +258,29 @@ export type ContentBankSummary = Readonly<{
   bankId: string;
   kind: 'QB' | 'CR' | 'LT';
   questionCount: number;
+  questions: readonly ContentItemSummary[];
   sortOrder: number;
   stableCode: string;
   status: 'draft' | 'published' | 'archived';
   title: string;
+}>;
+
+export type ContentItemSummary = Readonly<{
+  entityId: string;
+  sortOrder: number;
+  stableCode: string;
+  status: 'draft' | 'published' | 'archived';
+  title: string;
+  version: number;
+}>;
+
+export type ContentDraftSummary = Readonly<{
+  draftId: string;
+  entityId: string | null;
+  entityType: ContentEntityType;
+  revision: number;
+  stableCode: string;
+  updatedAt: string;
 }>;
 
 export type ContentScope = Readonly<{
@@ -241,6 +292,7 @@ export type ContentScope = Readonly<{
     title: string;
   }>;
   chapterBanks: readonly ContentBankSummary[];
+  drafts: readonly ContentDraftSummary[];
   outcome: 'ok';
   requestId: string;
   sections: readonly Readonly<{
@@ -251,6 +303,7 @@ export type ContentScope = Readonly<{
     status: 'draft' | 'published' | 'archived';
     subtopics: readonly Readonly<{
       reviewCardCount: number;
+      reviewCards: readonly ContentItemSummary[];
       sortOrder: number;
       stableCode: string;
       status: 'draft' | 'published' | 'archived';

@@ -1,6 +1,9 @@
 -- Deterministic draft validation and student-safe preview. Saving a draft may
 -- preserve incomplete WIP; validation is the server-authoritative readiness
 -- boundary and preview never returns answer flags or internal media paths.
+-- This migration intentionally keeps the validator and its safe preview in one
+-- 500+ line atomic boundary: both must accept the same normalized revision, and
+-- deploying either function alone could preview content the validator rejected.
 
 create function content_private.json_uuid(p_payload jsonb, p_key text)
 returns uuid
@@ -44,10 +47,13 @@ declare
   v_current jsonb;
   v_parent_id uuid;
   v_bank public.assessment_banks;
+  v_media jsonb;
   v_options jsonb;
   v_option_count integer;
   v_correct_count integer;
   v_duplicate_count integer;
+  v_distinct_key_count integer;
+  v_expected_code_pattern text;
   v_has_duplicate boolean := false;
   v_has_database_duplicate boolean := false;
 begin
@@ -177,12 +183,33 @@ begin
         ));
       end if;
       if char_length(btrim(coalesce(p_draft.payload ->> 'title', '')))
-          not between 1 and 200
+          not between 1 and 80
          or char_length(btrim(coalesce(p_draft.payload ->> 'content', '')))
-          not between 1 and 8000 then
+          not between 1 and 5000 then
         v_issues := v_issues || jsonb_build_array(content_private.issue(
           'CONTENT_REVIEW_CARD_INVALID', 'content',
           '複習卡標題或正文不符合規格。'
+        ));
+      end if;
+      v_media := coalesce(p_draft.payload -> 'media', '[]'::jsonb);
+      if jsonb_typeof(v_media) is distinct from 'array' then
+        v_issues := v_issues || jsonb_build_array(content_private.issue(
+          'CONTENT_MEDIA_INVALID', 'media', '複習卡圖片必須為 0–3 筆。'
+        ));
+      elsif jsonb_array_length(v_media) > 3 then
+        v_issues := v_issues || jsonb_build_array(content_private.issue(
+          'CONTENT_MEDIA_INVALID', 'media', '複習卡圖片必須為 0–3 筆。'
+        ));
+      elsif exists (
+        select 1 from jsonb_array_elements(v_media) as media
+        where jsonb_typeof(media) is distinct from 'object'
+          or char_length(btrim(coalesce(media ->> 'alt_text', '')))
+            not between 1 and 200
+          or coalesce(media ->> 'sort_order', '') !~ '^[0-9]+$'
+      ) then
+        v_issues := v_issues || jsonb_build_array(content_private.issue(
+          'CONTENT_MEDIA_INVALID', 'media',
+          '每張圖片都需要 1–200 字替代文字與合法排序。'
         ));
       end if;
     when 'assessment_bank' then
@@ -236,6 +263,33 @@ begin
           'CONTENT_PARENT_INVALID', 'bank_id', '題目必須屬於有效題庫。'
         ));
       end if;
+      if v_bank.id is not null then
+        if v_bank.kind in ('QB', 'LT') then
+          select '^' || v_bank.kind || chapter.sort_order::text
+            || section.sort_order::text || '[0-9]{2}$'
+          into v_expected_code_pattern
+          from public.sections as section
+          join public.chapters as chapter on chapter.id = section.chapter_id
+          where section.id = v_bank.section_id;
+        else
+          select '^CR' || chapter.sort_order::text || '[0-9]{3}$'
+          into v_expected_code_pattern
+          from public.chapters as chapter where chapter.id = v_bank.chapter_id;
+        end if;
+        if not (
+          v_current is not null
+          and v_current ->> 'stable_code' = p_draft.stable_code
+          and p_draft.stable_code ~ '^[0-9]+-[0-9]+-[0-9]{2}$'
+        ) and (
+          v_expected_code_pattern is null
+          or p_draft.stable_code !~ v_expected_code_pattern
+        ) then
+          v_issues := v_issues || jsonb_build_array(content_private.issue(
+            'CONTENT_STABLE_CODE_INVALID', 'stable_code',
+            '題目 stable code 必須符合題庫種類與章節 scope。'
+          ));
+        end if;
+      end if;
       if p_draft.payload ->> 'question_type' is distinct from 'single_choice'
          or char_length(btrim(coalesce(p_draft.payload ->> 'prompt', '')))
           not between 1 and 1000
@@ -266,22 +320,25 @@ begin
         ));
       else
         v_option_count := jsonb_array_length(v_options);
-        select count(*)::integer,
-          count(distinct lower(btrim(option ->> 'text')))::integer
-        into v_correct_count, v_duplicate_count
+        select count(*)::integer
+        into v_correct_count
         from jsonb_array_elements(v_options) as option
-        where option ->> 'is_correct' = 'true';
-        select count(distinct lower(btrim(option ->> 'text')))::integer
-        into v_duplicate_count
+        where option -> 'is_correct' = 'true'::jsonb;
+        select count(distinct lower(btrim(option ->> 'text')))::integer,
+          count(distinct option ->> 'key')::integer
+        into v_duplicate_count, v_distinct_key_count
         from jsonb_array_elements(v_options) as option;
         if v_option_count not between 2 and 4
            or v_correct_count <> 1
            or v_duplicate_count <> v_option_count
+           or v_distinct_key_count <> v_option_count
            or exists (
              select 1 from jsonb_array_elements(v_options) as option
-             where coalesce(option ->> 'key', '') !~ '^[A-D]$'
+             where jsonb_typeof(option) is distinct from 'object'
+               or coalesce(option ->> 'key', '') !~ '^[A-D]$'
                or btrim(coalesce(option ->> 'text', '')) = ''
-               or option ->> 'is_correct' not in ('true', 'false')
+               or jsonb_typeof(option -> 'is_correct')
+                 is distinct from 'boolean'
            ) then
           v_issues := v_issues || jsonb_build_array(content_private.issue(
             'CONTENT_OPTIONS_INVALID', 'options',

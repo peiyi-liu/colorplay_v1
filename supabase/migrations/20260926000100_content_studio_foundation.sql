@@ -9,6 +9,32 @@
 create schema if not exists content_private;
 revoke all on schema content_private from public, anon, authenticated;
 
+-- Rebaseline the legacy taxonomy onto the version/creator contract used by the
+-- Content Studio. Existing seeded rows remain attributable as imported legacy
+-- content (null creator); trusted publication commands fill future creators.
+alter table public.courses
+  add column version integer not null default 1 check (version > 0),
+  add column created_by uuid references auth.users(id) on delete set null;
+alter table public.chapters
+  add column version integer not null default 1 check (version > 0),
+  add column created_by uuid references auth.users(id) on delete set null;
+alter table public.sections
+  add column version integer not null default 1 check (version > 0),
+  add column created_by uuid references auth.users(id) on delete set null;
+alter table public.subtopics
+  add column version integer not null default 1 check (version > 0),
+  add column created_by uuid references auth.users(id) on delete set null;
+alter table public.review_cards
+  add column created_by uuid references auth.users(id) on delete set null;
+alter table public.questions
+  add column created_by uuid references auth.users(id) on delete set null;
+
+alter table public.questions drop constraint questions_stable_code_check;
+alter table public.questions add constraint questions_stable_code_check check (
+  stable_code ~ '^[0-9]+-[0-9]+-[0-9]{2}$'
+  or stable_code ~ '^(QB|CR|LT)[0-9]{4}$'
+);
+
 create table public.assessment_banks (
   id uuid primary key default gen_random_uuid(),
   stable_code text not null unique
@@ -22,6 +48,7 @@ create table public.assessment_banks (
     check (jsonb_typeof(selection_settings) = 'object'),
   status public.content_status not null default 'draft',
   version integer not null default 1 check (version > 0),
+  created_by uuid references auth.users(id) on delete set null,
   sort_order integer not null default 0 check (sort_order >= 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -324,6 +351,7 @@ create index content_drafts_scope_idx
 
 create table public.content_draft_requests (
   actor_user_id uuid not null,
+  auth_session_id uuid not null,
   request_id uuid not null,
   request_hash bytea not null,
   draft_id uuid not null references public.content_drafts(id),
@@ -388,6 +416,7 @@ declare
   v_existing_request public.content_draft_requests;
   v_request_hash bytea;
   v_receipt jsonb;
+  v_base_version integer;
 begin
   perform set_config('statement_timeout', '5000', true);
   v_auth := public.admin_internal_authorize();
@@ -401,6 +430,7 @@ begin
       (v_auth ->> 'auth_session_id')::uuid, null, null, null
     );
   end if;
+
   if (v_auth ->> 'mfa_age_seconds')::integer > 300 then
     return public.admin_internal_deny(
       'content/drafts', 'INSUFFICIENT_MFA', 'admin_save_content_draft',
@@ -409,6 +439,36 @@ begin
       (v_auth ->> 'auth_session_id')::uuid, null, null,
       (v_auth ->> 'mfa_age_seconds')::integer
     );
+  end if;
+
+  if p_entity_id is not null then
+    case p_entity_type
+      when 'course' then select version into v_base_version
+        from public.courses where id = p_entity_id;
+      when 'chapter' then select version into v_base_version
+        from public.chapters where id = p_entity_id;
+      when 'section' then select version into v_base_version
+        from public.sections where id = p_entity_id;
+      when 'subtopic' then select version into v_base_version
+        from public.subtopics where id = p_entity_id;
+      when 'review_card' then select version into v_base_version
+        from public.review_cards where id = p_entity_id;
+      when 'assessment_bank' then select version into v_base_version
+        from public.assessment_banks where id = p_entity_id;
+      when 'question' then select version into v_base_version
+        from public.questions where id = p_entity_id;
+      else null;
+    end case;
+    if v_base_version is null then
+      return public.admin_internal_deny(
+        'content/drafts', 'CONTENT_SCOPE_INVALID',
+        'admin_save_content_draft', 'content_draft', 'admin',
+        (v_auth ->> 'principal_id')::uuid,
+        (v_auth ->> 'session_id')::uuid,
+        (v_auth ->> 'auth_session_id')::uuid, null, null,
+        (v_auth ->> 'mfa_age_seconds')::integer
+      );
+    end if;
   end if;
 
   if p_request_id is null
@@ -437,15 +497,22 @@ begin
     'stable_code', btrim(p_stable_code),
     'expected_revision', p_expected_revision,
     'payload', p_payload,
-    'source', p_source
+    'source', p_source,
+    'auth_session_id', v_auth ->> 'auth_session_id'
   )::text, 'utf8'), 'sha256');
+
+  perform pg_advisory_xact_lock(hashtextextended(
+    v_actor::text || ':' || p_request_id::text, 0
+  ));
 
   select request.* into v_existing_request
   from public.content_draft_requests as request
   where request.actor_user_id = v_actor
     and request.request_id = p_request_id;
   if v_existing_request.request_id is not null then
-    if v_existing_request.request_hash is distinct from v_request_hash then
+    if v_existing_request.auth_session_id is distinct from
+         (v_auth ->> 'auth_session_id')::uuid
+       or v_existing_request.request_hash is distinct from v_request_hash then
       return public.admin_internal_deny(
         'content/drafts', 'IDEMPOTENCY_CONFLICT',
         'admin_save_content_draft', 'content_draft', 'admin',
@@ -486,7 +553,7 @@ begin
       entity_type, entity_id, stable_code, base_version, revision, payload,
       source, actor_user_id
     ) values (
-      p_entity_type, p_entity_id, btrim(p_stable_code), null, 1, p_payload,
+      p_entity_type, p_entity_id, btrim(p_stable_code), v_base_version, 1, p_payload,
       p_source, v_actor
     ) returning * into v_draft;
   else
@@ -515,9 +582,11 @@ begin
 
   v_receipt := content_private.draft_receipt(v_draft, p_request_id, false);
   insert into public.content_draft_requests (
-    actor_user_id, request_id, request_hash, draft_id, result_receipt
+    actor_user_id, auth_session_id, request_id, request_hash, draft_id,
+    result_receipt
   ) values (
-    v_actor, p_request_id, v_request_hash, v_draft.id, v_receipt
+    v_actor, (v_auth ->> 'auth_session_id')::uuid, p_request_id,
+    v_request_hash, v_draft.id, v_receipt
   );
 
   perform public.admin_internal_append_audit(

@@ -664,6 +664,7 @@ export type Database = {
         Row: {
           chapter_id: string | null
           created_at: string
+          created_by: string | null
           description: string
           id: string
           kind: string
@@ -679,6 +680,7 @@ export type Database = {
         Insert: {
           chapter_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           kind: string
@@ -694,6 +696,7 @@ export type Database = {
         Update: {
           chapter_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           kind?: string
@@ -1059,6 +1062,7 @@ export type Database = {
         Row: {
           course_id: string
           created_at: string
+          created_by: string | null
           description: string
           id: string
           sort_order: number
@@ -1066,10 +1070,12 @@ export type Database = {
           status: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at: string
+          version: number
         }
         Insert: {
           course_id: string
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           sort_order?: number
@@ -1077,10 +1083,12 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at?: string
+          version?: number
         }
         Update: {
           course_id?: string
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           sort_order?: number
@@ -1088,6 +1096,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title?: string
           updated_at?: string
+          version?: number
         }
         Relationships: [
           {
@@ -1230,6 +1239,7 @@ export type Database = {
       content_draft_requests: {
         Row: {
           actor_user_id: string
+          auth_session_id: string
           created_at: string
           draft_id: string
           request_hash: string
@@ -1238,6 +1248,7 @@ export type Database = {
         }
         Insert: {
           actor_user_id: string
+          auth_session_id: string
           created_at?: string
           draft_id: string
           request_hash: string
@@ -1246,6 +1257,7 @@ export type Database = {
         }
         Update: {
           actor_user_id?: string
+          auth_session_id?: string
           created_at?: string
           draft_id?: string
           request_hash?: string
@@ -1477,6 +1489,7 @@ export type Database = {
       courses: {
         Row: {
           created_at: string
+          created_by: string | null
           description: string
           id: string
           sort_order: number
@@ -1484,9 +1497,11 @@ export type Database = {
           status: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at: string
+          version: number
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           sort_order?: number
@@ -1494,9 +1509,11 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at?: string
+          version?: number
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           sort_order?: number
@@ -1504,6 +1521,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title?: string
           updated_at?: string
+          version?: number
         }
         Relationships: []
       }
@@ -2341,6 +2359,7 @@ export type Database = {
           bank_id: string | null
           bank_kind: string
           created_at: string
+          created_by: string | null
           duration_seconds: number
           explanation: string
           id: string
@@ -2357,6 +2376,7 @@ export type Database = {
           bank_id?: string | null
           bank_kind?: string
           created_at?: string
+          created_by?: string | null
           duration_seconds?: number
           explanation: string
           id?: string
@@ -2373,6 +2393,7 @@ export type Database = {
           bank_id?: string | null
           bank_kind?: string
           created_at?: string
+          created_by?: string | null
           duration_seconds?: number
           explanation?: string
           id?: string
@@ -2848,6 +2869,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          created_by: string | null
           group_label: string
           id: string
           requires_recompletion: boolean
@@ -2862,6 +2884,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          created_by?: string | null
           group_label?: string
           id?: string
           requires_recompletion?: boolean
@@ -2876,6 +2899,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          created_by?: string | null
           group_label?: string
           id?: string
           requires_recompletion?: boolean
@@ -2946,6 +2970,7 @@ export type Database = {
         Row: {
           chapter_id: string
           created_at: string
+          created_by: string | null
           description: string
           id: string
           sort_order: number
@@ -2953,10 +2978,12 @@ export type Database = {
           status: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at: string
+          version: number
         }
         Insert: {
           chapter_id: string
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           sort_order?: number
@@ -2964,10 +2991,12 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at?: string
+          version?: number
         }
         Update: {
           chapter_id?: string
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           sort_order?: number
@@ -2975,6 +3004,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title?: string
           updated_at?: string
+          version?: number
         }
         Relationships: [
           {
@@ -3070,6 +3100,7 @@ export type Database = {
       subtopics: {
         Row: {
           created_at: string
+          created_by: string | null
           description: string
           id: string
           section_id: string
@@ -3078,9 +3109,11 @@ export type Database = {
           status: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at: string
+          version: number
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           section_id: string
@@ -3089,9 +3122,11 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title: string
           updated_at?: string
+          version?: number
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           description?: string
           id?: string
           section_id?: string
@@ -3100,6 +3135,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["content_status"]
           title?: string
           updated_at?: string
+          version?: number
         }
         Relationships: [
           {

@@ -3,7 +3,7 @@
 -- remain behind dedicated privileged reads.
 
 alter table public.questions
-  add column duration_seconds integer not null default 30
+  add column duration_seconds integer not null default 20
   check (duration_seconds between 5 and 120);
 
 create function content_private.current_entity(
@@ -22,7 +22,7 @@ begin
       select jsonb_build_object(
         'entity_id', course.id, 'entity_type', 'course',
         'stable_code', course.stable_code, 'status', course.status,
-        'version', null,
+        'version', course.version,
         'payload', jsonb_build_object(
           'title', course.title, 'description', course.description,
           'sort_order', course.sort_order
@@ -33,7 +33,7 @@ begin
       select jsonb_build_object(
         'entity_id', chapter.id, 'entity_type', 'chapter',
         'stable_code', chapter.stable_code, 'status', chapter.status,
-        'version', null,
+        'version', chapter.version,
         'payload', jsonb_build_object(
           'course_id', chapter.course_id, 'title', chapter.title,
           'description', chapter.description, 'sort_order', chapter.sort_order
@@ -44,7 +44,7 @@ begin
       select jsonb_build_object(
         'entity_id', section.id, 'entity_type', 'section',
         'stable_code', section.stable_code, 'status', section.status,
-        'version', null,
+        'version', section.version,
         'payload', jsonb_build_object(
           'chapter_id', section.chapter_id, 'title', section.title,
           'description', section.description, 'sort_order', section.sort_order
@@ -55,7 +55,7 @@ begin
       select jsonb_build_object(
         'entity_id', subtopic.id, 'entity_type', 'subtopic',
         'stable_code', subtopic.stable_code, 'status', subtopic.status,
-        'version', null,
+        'version', subtopic.version,
         'payload', jsonb_build_object(
           'section_id', subtopic.section_id, 'title', subtopic.title,
           'description', subtopic.description,
@@ -138,6 +138,7 @@ declare
   v_auth jsonb;
   v_chapter public.chapters;
   v_chapter_banks jsonb;
+  v_drafts jsonb;
   v_sections jsonb;
   v_request_id uuid := gen_random_uuid();
 begin
@@ -175,6 +176,14 @@ begin
       select count(*)::integer from public.questions as question
       where question.bank_id = bank.id
     ),
+    'questions', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', question.id, 'stable_code', question.stable_code,
+        'title', question.prompt, 'status', question.status,
+        'version', question.version, 'sort_order', question.sort_order
+      ) order by question.sort_order, question.stable_code)
+      from public.questions as question where question.bank_id = bank.id
+    ), '[]'::jsonb),
     'sort_order', bank.sort_order,
     'stable_code', bank.stable_code,
     'status', bank.status,
@@ -198,6 +207,14 @@ begin
           select count(*)::integer from public.questions as question
           where question.bank_id = bank.id
         ),
+        'questions', coalesce((
+          select jsonb_agg(jsonb_build_object(
+            'id', question.id, 'stable_code', question.stable_code,
+            'title', question.prompt, 'status', question.status,
+            'version', question.version, 'sort_order', question.sort_order
+          ) order by question.sort_order, question.stable_code)
+          from public.questions as question where question.bank_id = bank.id
+        ), '[]'::jsonb),
         'sort_order', bank.sort_order,
         'stable_code', bank.stable_code,
         'status', bank.status,
@@ -216,7 +233,16 @@ begin
         'review_card_count', (
           select count(*)::integer from public.review_cards as card
           where card.subtopic_id = subtopic.id
-        )
+        ),
+        'review_cards', coalesce((
+          select jsonb_agg(jsonb_build_object(
+            'id', card.id, 'stable_code', card.stable_code,
+            'title', card.title, 'status', card.status,
+            'version', card.version, 'sort_order', card.sort_order
+          ) order by card.sort_order, card.stable_code)
+          from public.review_cards as card
+          where card.subtopic_id = subtopic.id
+        ), '[]'::jsonb)
       ) order by subtopic.sort_order, subtopic.stable_code)
       from public.subtopics as subtopic
       where subtopic.section_id = section.id
@@ -225,6 +251,69 @@ begin
   into v_sections
   from public.sections as section
   where section.chapter_id = v_chapter.id;
+
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'draft_id', draft.id, 'entity_type', draft.entity_type,
+    'entity_id', draft.entity_id, 'stable_code', draft.stable_code,
+    'revision', draft.revision, 'updated_at', draft.updated_at
+  ) order by draft.updated_at desc, draft.stable_code), '[]'::jsonb)
+  into v_drafts
+  from public.content_drafts as draft
+  where (draft.entity_type = 'chapter' and draft.entity_id = v_chapter.id)
+    or (draft.entity_type = 'section' and (
+      draft.entity_id in (
+        select id from public.sections where chapter_id = v_chapter.id
+      ) or draft.payload ->> 'chapter_id' = v_chapter.id::text
+    ))
+    or (draft.entity_type in ('subtopic', 'review_card') and (
+      draft.entity_id in (
+        select entity.id from (
+          select subtopic.id from public.subtopics as subtopic
+          join public.sections as section on section.id = subtopic.section_id
+          where section.chapter_id = v_chapter.id
+          union all
+          select card.id from public.review_cards as card
+          join public.subtopics as subtopic on subtopic.id = card.subtopic_id
+          join public.sections as section on section.id = subtopic.section_id
+          where section.chapter_id = v_chapter.id
+        ) as entity
+      )
+      or draft.payload ->> 'section_id' in (
+        select id::text from public.sections where chapter_id = v_chapter.id
+      )
+      or draft.payload ->> 'subtopic_id' in (
+        select subtopic.id::text from public.subtopics as subtopic
+        join public.sections as section on section.id = subtopic.section_id
+        where section.chapter_id = v_chapter.id
+      )
+    ))
+    or (draft.entity_type = 'assessment_bank' and (
+      draft.entity_id in (
+        select id from public.assessment_banks
+        where chapter_id = v_chapter.id or section_id in (
+          select id from public.sections where chapter_id = v_chapter.id
+        )
+      )
+      or draft.payload ->> 'chapter_id' = v_chapter.id::text
+      or draft.payload ->> 'section_id' in (
+        select id::text from public.sections where chapter_id = v_chapter.id
+      )
+    ))
+    or (draft.entity_type = 'question' and (
+      draft.entity_id in (
+        select question.id from public.questions as question
+        join public.assessment_banks as bank on bank.id = question.bank_id
+        where bank.chapter_id = v_chapter.id or bank.section_id in (
+          select id from public.sections where chapter_id = v_chapter.id
+        )
+      )
+      or draft.payload ->> 'bank_id' in (
+        select bank.id::text from public.assessment_banks as bank
+        where bank.chapter_id = v_chapter.id or bank.section_id in (
+          select id from public.sections where chapter_id = v_chapter.id
+        )
+      )
+    ));
 
   return jsonb_build_object(
     'outcome', 'ok',
@@ -237,6 +326,7 @@ begin
       'sort_order', v_chapter.sort_order
     ),
     'chapter_banks', v_chapter_banks,
+    'drafts', v_drafts,
     'sections', v_sections
   );
 end;
