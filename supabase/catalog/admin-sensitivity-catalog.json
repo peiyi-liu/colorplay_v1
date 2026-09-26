@@ -1067,6 +1067,126 @@
       ]
     },
     {
+      "resource": "assessment_banks",
+      "domain": "content",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "chapter_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_by",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "description",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "kind",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "section_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "selection_settings",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "sort_order",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "stable_code",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "title",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "version",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
       "resource": "assignment_attempts",
       "domain": "assessments",
       "surface": "browser",
@@ -1623,6 +1743,22 @@
           "searchable": false,
           "filterable": false,
           "sortable": false
+        },
+        {
+          "name": "created_by",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "version",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
         }
       ]
     },
@@ -1859,6 +1995,374 @@
       ]
     },
     {
+      "resource": "content_draft_requests",
+      "domain": "content",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "actor_user_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "auth_session_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "draft_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_hash",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "result_receipt",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "content_drafts",
+      "domain": "content",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "actor_user_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "base_version",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "entity_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "entity_type",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "payload",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "revision",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "stable_code",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "content_import_runs",
+      "domain": "content",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "actor_user_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "auth_session_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "commit_request_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "committed_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "normalized_items",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "preview",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "preview_request_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "result_receipt",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_filename",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_sha256",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "content_import_upload_runs",
+      "domain": "content",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "actor_user_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "auth_session_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "expires_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "object_path",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_bytes",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_filename",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_mime_type",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
       "resource": "content_imports",
       "domain": "content",
       "surface": "browser",
@@ -1971,6 +2475,366 @@
       ]
     },
     {
+      "resource": "content_media_assets",
+      "domain": "content",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "created_by",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "has_alpha",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "height",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "manifest_sha256",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "master_object_path",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "pixel_semantic_sha256",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "processor_version",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "semantic_role",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_bytes",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_mime_type",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_sha256",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "upload_run_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "verified_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "width",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "content_media_upload_runs",
+      "domain": "content",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "actor_user_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "asset_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "auth_session_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "expires_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "failure_code",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "quarantine_object_path",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_hash",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "result_receipt",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "semantic_role",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_bytes",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_filename",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_mime_type",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "status",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "updated_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "content_media_variants",
+      "domain": "content",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "asset_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "bytes",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "height",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "kind",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "mime_type",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "object_path",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "quality_mode",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "sha256",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "structural_similarity_distortion",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "width",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
       "resource": "content_publication_events",
       "domain": "content",
       "surface": "browser",
@@ -2035,6 +2899,102 @@
         {
           "name": "request_id",
           "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "auth_session_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "changed_fields",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "impact",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "reason",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "version_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        }
+      ]
+    },
+    {
+      "resource": "content_publication_requests",
+      "domain": "content",
+      "surface": "none",
+      "export": false,
+      "columns": [
+        {
+          "name": "actor_user_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "auth_session_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_at",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_hash",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "result_receipt",
+          "class": "forbidden",
           "mask_strategy": null,
           "searchable": false,
           "filterable": false,
@@ -2115,6 +3075,78 @@
         {
           "name": "created_by",
           "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "auth_session_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "changed_fields",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "impact",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "payload_schema_version",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "previous_version",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "reason",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "request_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "source_draft_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "stable_code",
+          "class": "forbidden",
           "mask_strategy": null,
           "searchable": false,
           "filterable": false,
@@ -2227,6 +3259,22 @@
         {
           "name": "id",
           "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_by",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "version",
+          "class": "forbidden",
           "mask_strategy": null,
           "searchable": false,
           "filterable": false,
@@ -3575,6 +4623,30 @@
           "searchable": false,
           "filterable": false,
           "sortable": false
+        },
+        {
+          "name": "bank_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_by",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "duration_seconds",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
         }
       ]
     },
@@ -4175,6 +5247,22 @@
           "searchable": false,
           "filterable": false,
           "sortable": false
+        },
+        {
+          "name": "manifest_id",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "semantic_role",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
         }
       ]
     },
@@ -4275,6 +5363,14 @@
         {
           "name": "version",
           "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_by",
+          "class": "forbidden",
           "mask_strategy": null,
           "searchable": false,
           "filterable": false,
@@ -4419,6 +5515,22 @@
         {
           "name": "chapter_id",
           "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_by",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "version",
+          "class": "forbidden",
           "mask_strategy": null,
           "searchable": false,
           "filterable": false,
@@ -4603,6 +5715,22 @@
         {
           "name": "section_id",
           "class": "internal",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "created_by",
+          "class": "forbidden",
+          "mask_strategy": null,
+          "searchable": false,
+          "filterable": false,
+          "sortable": false
+        },
+        {
+          "name": "version",
+          "class": "forbidden",
           "mask_strategy": null,
           "searchable": false,
           "filterable": false,

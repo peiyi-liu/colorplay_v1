@@ -30,6 +30,12 @@ Historical task-level evidence remains in `.superpowers/sdd/progress.md` and
 does not replace the current program tracker. Re-verify time-sensitive Git,
 Vercel, Supabase, DNS, and deployment facts before acting on them.
 
+The completed Phase 0A／deferred Phase 0B release boundary remains governed by
+[`docs/superpowers/specs/2026-09-11-phase-0a-0b-rebaseline-decision.md`](docs/superpowers/specs/2026-09-11-phase-0a-0b-rebaseline-decision.md)
+and its
+[`docs/superpowers/plans/2026-09-11-phase-0a-staging-foundation-closeout.md`](docs/superpowers/plans/2026-09-11-phase-0a-staging-foundation-closeout.md).
+These historical controls remain valid even while Phase 2 is the active work.
+
 ## Language
 
 ### Learning Content

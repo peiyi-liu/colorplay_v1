@@ -620,3 +620,86 @@ revoke execute on function public.admin_save_content_draft(
 grant execute on function public.admin_save_content_draft(
   uuid, uuid, text, text, integer, jsonb, text, uuid
 ) to authenticated;
+
+-- Fail closed in the generic Admin data browser until a later, separately
+-- reviewed catalog change promotes any Content Studio field. Content Studio
+-- itself reads and mutates these records only through its bounded RPCs.
+insert into public.admin_sensitivity_catalog (
+  resource, domain, surface, column_name, class, mask_strategy,
+  searchable, filterable, sortable
+)
+select
+  entry.resource,
+  'content',
+  entry.surface,
+  catalog_column.column_name,
+  'forbidden',
+  null,
+  false,
+  false,
+  false
+from (
+  values
+    ('assessment_banks', 'none', array[
+      'chapter_id', 'created_at', 'created_by', 'description', 'id', 'kind',
+      'section_id', 'selection_settings', 'sort_order', 'stable_code', 'status',
+      'title', 'updated_at', 'version'
+    ]::text[]),
+    ('chapters', 'browser', array['created_by', 'version']::text[]),
+    ('content_draft_requests', 'none', array[
+      'actor_user_id', 'auth_session_id', 'created_at', 'draft_id',
+      'request_hash', 'request_id', 'result_receipt'
+    ]::text[]),
+    ('content_drafts', 'none', array[
+      'actor_user_id', 'base_version', 'created_at', 'entity_id', 'entity_type',
+      'id', 'payload', 'revision', 'source', 'stable_code', 'updated_at'
+    ]::text[]),
+    ('content_import_runs', 'none', array[
+      'actor_user_id', 'auth_session_id', 'commit_request_id', 'committed_at',
+      'created_at', 'id', 'normalized_items', 'preview', 'preview_request_id',
+      'result_receipt', 'source_filename', 'source_sha256', 'status'
+    ]::text[]),
+    ('content_import_upload_runs', 'none', array[
+      'actor_user_id', 'auth_session_id', 'created_at', 'expires_at', 'id',
+      'object_path', 'request_id', 'source_bytes', 'source_filename',
+      'source_mime_type', 'status'
+    ]::text[]),
+    ('content_media_assets', 'none', array[
+      'created_by', 'has_alpha', 'height', 'id', 'manifest_sha256',
+      'master_object_path', 'pixel_semantic_sha256', 'processor_version',
+      'semantic_role', 'source_bytes', 'source_mime_type', 'source_sha256',
+      'upload_run_id', 'verified_at', 'width'
+    ]::text[]),
+    ('content_media_upload_runs', 'none', array[
+      'actor_user_id', 'asset_id', 'auth_session_id', 'created_at', 'expires_at',
+      'failure_code', 'id', 'quarantine_object_path', 'request_hash',
+      'request_id', 'result_receipt', 'semantic_role', 'source_bytes',
+      'source_filename', 'source_mime_type', 'status', 'updated_at'
+    ]::text[]),
+    ('content_media_variants', 'none', array[
+      'asset_id', 'bytes', 'height', 'kind', 'mime_type', 'object_path',
+      'quality_mode', 'sha256', 'structural_similarity_distortion', 'width'
+    ]::text[]),
+    ('content_publication_events', 'browser', array[
+      'auth_session_id', 'changed_fields', 'impact', 'reason', 'version_id'
+    ]::text[]),
+    ('content_publication_requests', 'none', array[
+      'actor_user_id', 'auth_session_id', 'created_at', 'request_hash',
+      'request_id', 'result_receipt'
+    ]::text[]),
+    ('content_versions', 'browser', array[
+      'auth_session_id', 'changed_fields', 'impact', 'payload_schema_version',
+      'previous_version', 'reason', 'request_id', 'source_draft_id', 'stable_code'
+    ]::text[]),
+    ('courses', 'browser', array['created_by', 'version']::text[]),
+    ('questions', 'browser', array[
+      'bank_id', 'created_by', 'duration_seconds'
+    ]::text[]),
+    ('review_card_media', 'browser', array[
+      'manifest_id', 'semantic_role'
+    ]::text[]),
+    ('review_cards', 'browser', array['created_by']::text[]),
+    ('sections', 'browser', array['created_by', 'version']::text[]),
+    ('subtopics', 'browser', array['created_by', 'version']::text[])
+) as entry(resource, surface, columns)
+cross join lateral unnest(entry.columns) as catalog_column(column_name);

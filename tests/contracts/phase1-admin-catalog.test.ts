@@ -61,11 +61,11 @@ describe('phase 1 admin sensitivity catalog contract', () => {
       '--check',
     ]);
   });
-  it('holds 46 existing + 9 control + 4 quarantined + 1 progression resource, all export=false', async () => {
+  it('holds the baseline plus progression and Content Studio quarantine resources, all export=false', async () => {
     const catalog = JSON.parse(
       await readFile('supabase/catalog/admin-sensitivity-catalog.json', 'utf8'),
     ) as Catalog;
-    expect(catalog.resources).toHaveLength(60);
+    expect(catalog.resources).toHaveLength(69);
     expect(
       catalog.resources.filter((r) => r.resource.startsWith('admin_')),
     ).toHaveLength(9);
@@ -80,6 +80,46 @@ describe('phase 1 admin sensitivity catalog contract', () => {
         mask_strategy: 'email_mask',
         name: 'contact_email',
       }),
+    );
+  });
+
+  it('keeps Content Studio private tables off the generic Admin browser', async () => {
+    const catalog = JSON.parse(
+      await readFile('supabase/catalog/admin-sensitivity-catalog.json', 'utf8'),
+    ) as Catalog;
+    const privateResources = [
+      'assessment_banks',
+      'content_draft_requests',
+      'content_drafts',
+      'content_import_runs',
+      'content_import_upload_runs',
+      'content_media_assets',
+      'content_media_upload_runs',
+      'content_media_variants',
+      'content_publication_requests',
+    ];
+
+    expect(
+      privateResources.map((name) => {
+        const resource = catalog.resources.find(
+          (candidate) => candidate.resource === name,
+        ) as (CatalogResource & { surface?: unknown }) | undefined;
+        return {
+          columnsAreForbidden: resource?.columns?.every(
+            (column) => column.class === 'forbidden',
+          ),
+          export: resource?.export,
+          resource: name,
+          surface: resource?.surface,
+        };
+      }),
+    ).toEqual(
+      privateResources.map((resource) => ({
+        columnsAreForbidden: true,
+        export: false,
+        resource,
+        surface: 'none',
+      })),
     );
   });
 

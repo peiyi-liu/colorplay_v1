@@ -2009,3 +2009,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Staging preflight 重驗 GitHub `origin/staging`／`FETCH_HEAD` 仍為 `9c42ba3d9e6552e4c135d3d52efad783dc526f57`，且為 integration ancestor；Supabase ref 為 `onkxnkzeixpezetkmocf`，migration ledger 無分叉，dry-run 只列 `20260926000100`–`20260926000800` 八支 pending migrations。Production `xdjumzdqyexpyndanwkp` 未觸碰。
 - Canonical workbook／manifest／upload ZIP SHA-256 分別為 `cfc17f91376daf496f02f7610b4438abc0b3ffc001dc0f5d7eea9d35b7d6ff61`、`711b30add3f0a8850b2d0b565bdf9462dc3d668beef5005472a60e1474b8662e`、`690b31ff30e7dc245928972ed7ea9b42f07cf7359b60fd9de2a8fbb3cd5b9c67`。Vercel CLI 已升級並讀回 60.1.3；Staging project 維持 `colorplay-staging-web`。
 - 下一步依已核准 window：提交這段 handoff、更新 `codex/phase2-ch3-integration`、建立 final PR；套用 Staging migrations／Functions、建立第三章 media／package drafts，合併後驗 exact Vercel SHA 與 Admin／Student smoke。仍不得觸碰 Production 或宣稱 Phase 8。
+
+## 2026-09-26 [Codex] — PR #68 CI remediation ready for clean Local rerun
+
+- PR #68 首輪 CI 的產品相關 failure 已精確定位：acceptance SSOT 已增至 143 但 verifier 仍鎖 138；Phase 2 `CONTEXT.md` 取代 active 入口時漏留 Phase 0A／0B release boundary；Vitest 誤收只支援 Deno runtime 的 Function tests；Content Studio 新增的 135 個欄位未進 Admin sensitivity catalog。沒有刪 assertion、skip 測試或恢復舊寫入權限。
+- 修正後 acceptance contract／Phase 0 docs／catalog contracts 33／33 PASS；fresh Local reset 從空 DB 套完 00100–00800，`admin:catalog:check` PASS，migration-derived inventory 679／679 欄一致。九張 private Content Studio 表全部 `surface=none`、所有新欄位 fail-closed `forbidden`；歷史 20260808／20260903 generated migrations維持 byte-stable，overlay 由尚未 Hosted 套用的 20260926000100 擁有。
+- format、lint、typecheck、production build PASS。完整 coverage 已不再出現原 CI 的四個 failure；本機高平行跑只剩既有 `phase0-restore-cleanup` 5 秒 timeout（單獨重跑 PASS），交由 GitHub Linux gate 判定，不放寬 timeout。下一步：commit 此修正後，以新 clean SHA 重跑 Phase 2 Local gate；PASS 才 push 並等 PR #68 全綠。Production 未觸碰。
