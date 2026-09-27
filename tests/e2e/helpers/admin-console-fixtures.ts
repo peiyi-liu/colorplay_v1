@@ -16,6 +16,41 @@ export function adminUiRpc(name: string): unknown {
   switch (name) {
     case 'get_admin_session_state':
       return { state: 'privileged', mfa_age_seconds: 0 };
+    case 'admin_touch_session_activity':
+      return { outcome: 'ok' };
+    case 'admin_list_content_catalog':
+      return {
+        chapters: [
+          {
+            id: '21000000-0000-0000-0000-000000000001',
+            course_id: '20000000-0000-0000-0000-000000000001',
+            sort_order: 1,
+            stable_code: 'chapter-1',
+            status: 'published',
+            title: '色彩概論',
+          },
+          {
+            id: '21000000-0000-0000-0000-000000000003',
+            course_id: '20000000-0000-0000-0000-000000000001',
+            sort_order: 3,
+            stable_code: 'chapter-3',
+            status: 'published',
+            title: '色彩表示',
+          },
+        ],
+        courses: [
+          {
+            id: '20000000-0000-0000-0000-000000000001',
+            sort_order: 1,
+            stable_code: 'color-theory',
+            status: 'published',
+            title: '色彩原理',
+          },
+        ],
+        hierarchy_drafts: [],
+        outcome: 'ok',
+        request_id: id,
+      };
     case 'admin_platform_health':
       return {
         outcome: 'ok',

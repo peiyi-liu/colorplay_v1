@@ -165,6 +165,69 @@
   border-radius: 12px;
   background: var(--admin-surface);
 }
+.admin-shell :is(.ui-table-scroll, .admin-data-table__scroll) {
+  max-height: min(68vh, 720px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.admin-shell .ui-table {
+  background: var(--admin-surface);
+  color: var(--admin-ink);
+}
+.admin-shell .ui-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.admin-shell .ui-table :is(tbody, tr, td) {
+  background-color: var(--admin-surface);
+  color: var(--admin-ink);
+}
+.admin-shell .ui-table tbody tr:hover :is(th, td) {
+  background: var(--admin-accent-soft);
+}
+.admin-shell__collapse-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  border: 1px solid var(--admin-rule);
+  border-radius: 8px;
+  background: var(--admin-surface);
+  color: var(--admin-ink);
+}
+.admin-shell__collapse-toggle svg {
+  width: 18px;
+}
+.admin-shell.admin-shell--nav-collapsed .admin-shell__nav {
+  flex-basis: 72px;
+  width: 72px;
+  padding-inline: 10px;
+}
+.admin-shell.admin-shell--nav-collapsed
+  :is(
+    .admin-shell__brand strong,
+    .admin-shell__brand span,
+    .admin-shell__group-label,
+    .admin-shell__link span,
+    .admin-shell__collapse-toggle span
+  ) {
+  display: none;
+}
+.admin-shell.admin-shell--nav-collapsed .admin-shell__brand {
+  min-height: 1px;
+  padding: 0;
+  border: 0;
+}
+.admin-shell.admin-shell--nav-collapsed
+  :is(.admin-shell__link, .admin-shell__collapse-toggle) {
+  padding-inline: 0;
+}
+.admin-shell.admin-shell--nav-collapsed .admin-shell__link {
+  justify-content: center;
+}
 .admin-shell .admin-teachers__filters {
   border: 0;
   background: transparent;

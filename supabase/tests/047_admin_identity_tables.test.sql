@@ -1,6 +1,6 @@
 -- supabase/tests/047_admin_identity_tables.test.sql
 -- Phase 1 控制表 I:存在性、default-deny 矩陣、單一 active session、
--- 8h expiry 邊界、identity/factor 綁定、邀請 token 安全、service-only helpers。
+-- inactivity-only session lifetime、identity/factor 綁定、邀請 token 安全、service-only helpers。
 -- TC 編號對齊 implementation plan Task 2(2026-08-07 amendment)。
 begin;
 set local search_path = public, extensions;
@@ -147,7 +147,7 @@ select lives_ok(
   'a new active session is allowed after the previous one is revoked');
 
 -- ---------------------------------------------------------------------------
--- TC-047-04 8 小時 absolute expiry 邊界(3)
+-- TC-047-04 持續操作不受 absolute expiry 中斷(3)
 -- ---------------------------------------------------------------------------
 select lives_ok(
   $$insert into public.admin_sessions
@@ -157,36 +157,17 @@ select lives_ok(
       ('a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002',
        'd0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000002',
        timestamptz '2026-08-07 00:00:00+00', timestamptz '2026-08-07 08:00:00+00')$$,
-  'absolute expiry exactly created_at + 8 hours is accepted');
+  'session creation accepts the legacy expiry input');
 
-update public.admin_sessions
-   set revoked_at = now(), revoke_reason = 'revoked_by_admin'
- where admin_user_id = 'a0000000-0000-0000-0000-000000000002'
-   and revoked_at is null;
+select is((select absolute_expires_at::text from public.admin_sessions
+  where auth_session_id = 'd0000000-0000-0000-0000-000000000004'),
+  'infinity', 'session creation normalizes absolute expiry to infinity');
 
-select throws_ok(
-  $$insert into public.admin_sessions
-      (admin_user_id, audit_principal_id, auth_session_id,
-       bound_factor_id_snapshot, created_at, absolute_expires_at)
-    values
-      ('a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002',
-       'd0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000002',
-       timestamptz '2026-08-07 00:00:00+00', timestamptz '2026-08-07 07:59:59+00')$$,
-  '23514',
-  null,
-  'absolute expiry one second short of 8 hours is rejected');
-
-select throws_ok(
-  $$insert into public.admin_sessions
-      (admin_user_id, audit_principal_id, auth_session_id,
-       bound_factor_id_snapshot, created_at, absolute_expires_at)
-    values
-      ('a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002',
-       'd0000000-0000-0000-0000-000000000006', 'c0000000-0000-0000-0000-000000000002',
-       timestamptz '2026-08-07 00:00:00+00', timestamptz '2026-08-07 08:00:01+00')$$,
-  '23514',
-  null,
-  'absolute expiry one second past 8 hours is rejected');
+select ok(exists(select 1 from pg_trigger
+  where tgrelid = 'public.admin_sessions'::regclass
+    and tgname = 'admin_sessions_unbounded_active_session'
+    and not tgisinternal),
+  'session table keeps the inactivity-only lifetime trigger');
 
 -- ---------------------------------------------------------------------------
 -- TC-047-05 identity/factor 綁定(4)

@@ -3,6 +3,7 @@ import type { Database } from '../../types/database';
 import type { PublicEnv } from '../config/public-env';
 
 let singleton: SupabaseClient<Database> | undefined;
+const AUTH_TAB_ID_KEY = 'colorplay-auth-tab-id';
 
 export const SUPABASE_REQUEST_TIMEOUT_MS = 15_000;
 const REQUEST_TIMEOUT_ERROR_MESSAGE = 'SUPABASE_REQUEST_TIMEOUT';
@@ -24,6 +25,25 @@ export const isRequestTimeoutError = (error: unknown): boolean => {
     candidate.message === REQUEST_TIMEOUT_ERROR_MESSAGE
   );
 };
+
+export function createTabScopedAuthStorageKey(
+  supabaseUrl: string,
+  storage: Storage,
+): string {
+  const projectRef = new URL(supabaseUrl).hostname.split('.')[0] ?? 'local';
+  const legacyKey = `sb-${projectRef}-auth-token`;
+  let tabId = storage.getItem(AUTH_TAB_ID_KEY);
+  if (!tabId) {
+    tabId = crypto.randomUUID();
+    storage.setItem(AUTH_TAB_ID_KEY, tabId);
+  }
+  const scopedKey = `${legacyKey}-${tabId}`;
+  const legacySession = storage.getItem(legacyKey);
+  if (storage.getItem(scopedKey) === null && legacySession !== null) {
+    storage.setItem(scopedKey, legacySession);
+  }
+  return scopedKey;
+}
 
 const abortReason = (signal: AbortSignal): Error => {
   const reason = signal.reason as unknown;
@@ -169,7 +189,13 @@ export function getBrowserSupabaseClient(
   // sessionStorage：關閉分頁／瀏覽器即結束登入（owner 要求的自動登出），
   // 同分頁重新整理仍可復原 session（E2E-004 refresh recovery）。
   singleton ??= createClient<Database>(env.supabaseUrl, env.supabaseAnonKey, {
-    auth: { storage: window.sessionStorage },
+    auth: {
+      storage: window.sessionStorage,
+      storageKey: createTabScopedAuthStorageKey(
+        env.supabaseUrl,
+        window.sessionStorage,
+      ),
+    },
     global: { fetch: createBoundedFetch() },
   });
   return singleton;

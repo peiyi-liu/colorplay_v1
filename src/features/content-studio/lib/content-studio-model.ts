@@ -49,10 +49,25 @@ export function flattenContentScope(scope: ContentScope): ContentStudioItem[] {
 
   add({
     bankKind: null,
+    chapterId: null,
+    entityId: scope.course.courseId,
+    entityType: 'course',
+    parentId: null,
+    parentType: null,
+    sectionId: null,
+    stableCode: scope.course.stableCode,
+    status: scope.course.status,
+    subtopicId: null,
+    title: scope.course.title,
+    version: null,
+  });
+
+  add({
+    bankKind: null,
     chapterId: scope.chapter.chapterId,
     entityId: scope.chapter.chapterId,
     entityType: 'chapter',
-    parentId: null,
+    parentId: scope.course.courseId,
     parentType: 'course',
     sectionId: null,
     stableCode: scope.chapter.stableCode,

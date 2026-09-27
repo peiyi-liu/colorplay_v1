@@ -96,14 +96,20 @@ export function ContentEditorFeedback({
 }
 
 export function ContentEditorActions({
+  canDeleteDraft,
   isNew,
   isSaving,
   onPreview,
+  onDeleteDraft,
+  onOpenLifecycle,
   onValidate,
   showPreview,
 }: Readonly<{
   isNew: boolean;
   isSaving: boolean;
+  canDeleteDraft: boolean;
+  onDeleteDraft: () => void;
+  onOpenLifecycle: () => void;
   onPreview: () => void;
   onValidate: () => void;
   showPreview: boolean;
@@ -139,6 +145,30 @@ export function ContentEditorActions({
           >
             學生預覽
           </button>
+        ) : null}
+        {!isNew ? (
+          <button
+            className="secondary-action"
+            onClick={onOpenLifecycle}
+            type="button"
+          >
+            封存／版本
+          </button>
+        ) : null}
+        {!isNew ? (
+          <>
+            <button
+              className="danger-action"
+              disabled={!canDeleteDraft || isSaving}
+              onClick={onDeleteDraft}
+              type="button"
+            >
+              刪除草稿
+            </button>
+            <small className="content-editor__lifecycle-help">
+              刪除只移除未發布草稿；已發布內容請使用封存，避免破壞學習紀錄。
+            </small>
+          </>
         ) : null}
       </div>
     </>

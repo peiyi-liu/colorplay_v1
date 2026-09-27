@@ -51,6 +51,71 @@ describe('content authoring repository', () => {
     vi.clearAllMocks();
   });
 
+  it('lists the reusable course/chapter catalog instead of hard-coding Chapter 3', async () => {
+    transport.rpc.mockResolvedValue({
+      chapters: [
+        {
+          course_id: ENTITY_ID,
+          id: CHAPTER_ID,
+          sort_order: 3,
+          stable_code: 'chapter-3',
+          status: 'published',
+          title: '色彩表示',
+        },
+      ],
+      courses: [
+        {
+          id: ENTITY_ID,
+          sort_order: 1,
+          stable_code: 'color-theory',
+          status: 'published',
+          title: '色彩原理',
+        },
+      ],
+      hierarchy_drafts: [],
+      outcome: 'ok',
+      request_id: REQUEST_ID,
+    });
+
+    await expect(
+      createContentAuthoringRepository(transport).listCatalog(),
+    ).resolves.toMatchObject({
+      chapters: [{ chapterId: CHAPTER_ID, courseId: ENTITY_ID }],
+      courses: [{ courseId: ENTITY_ID }],
+      outcome: 'ok',
+    });
+    expect(transport.rpc).toHaveBeenCalledWith(
+      'admin_list_content_catalog',
+      {},
+    );
+  });
+
+  it('deletes only the selected draft revision through an idempotent request', async () => {
+    transport.rpc.mockResolvedValue({
+      deleted_draft_id: DRAFT_ID,
+      outcome: 'ok',
+      replayed: false,
+      request_id: REQUEST_ID,
+    });
+
+    await expect(
+      createContentAuthoringRepository(transport).deleteDraft({
+        draftId: DRAFT_ID,
+        expectedRevision: 3,
+        requestId: REQUEST_ID,
+      }),
+    ).resolves.toMatchObject({
+      deletedDraftId: DRAFT_ID,
+      outcome: 'ok',
+      replayed: false,
+    });
+    expect(transport.rpc).toHaveBeenCalledWith('admin_delete_content_draft', {
+      p_draft_id: DRAFT_ID,
+      p_expected_revision: 3,
+      p_request_id: REQUEST_ID,
+    });
+  });
+
   it('maps the Admin scope tree without exposing question answers or table internals', async () => {
     transport.rpc.mockResolvedValue({
       chapter: {

@@ -244,6 +244,41 @@ test('content studio remains usable in dark mode at 200 percent zoom and reduced
   ).toBe(true);
 });
 
+test('wide admin navigation collapses and dark tables keep readable sticky content', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await fixture(page);
+  await page.goto('/dev-harness/admin-console.html?route=/admin/content');
+
+  await page.getByRole('button', { name: '收合導覽' }).click();
+  await expect(page.locator('.admin-shell')).toHaveClass(
+    /admin-shell--nav-collapsed/u,
+  );
+  await page.getByRole('button', { name: '切換為夜間模式' }).click();
+
+  const tableStyle = await page
+    .getByRole('table', { name: '全部內容' })
+    .evaluate((table) => {
+      const cell = table.querySelector('tbody td');
+      const header = table.querySelector('thead');
+      const scroller = table.parentElement;
+      if (!cell || !header || !scroller) throw new Error('TABLE_REQUIRED');
+      const cellStyle = getComputedStyle(cell);
+      return {
+        background: cellStyle.backgroundColor,
+        color: cellStyle.color,
+        headerPosition: getComputedStyle(header).position,
+        overflowX: getComputedStyle(scroller).overflowX,
+        overflowY: getComputedStyle(scroller).overflowY,
+      };
+    });
+  expect(tableStyle.color).not.toBe(tableStyle.background);
+  expect(tableStyle.headerPosition).toBe('sticky');
+  expect(tableStyle.overflowX).toBe('auto');
+  expect(tableStyle.overflowY).toBe('auto');
+});
+
 test('admin dark theme persists across operational routes', async ({
   page,
 }) => {

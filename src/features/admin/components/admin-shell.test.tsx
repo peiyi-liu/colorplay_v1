@@ -191,6 +191,28 @@ describe('AdminShell', () => {
     ).toBeVisible();
   });
 
+  it('lets a wide-screen operator collapse and reopen the sidebar', async () => {
+    const user = userEvent.setup();
+    stubWide(true);
+    renderShell('/admin');
+
+    const toggle = screen.getByRole('button', { name: '收合導覽' });
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(document.querySelector('.admin-shell')).toHaveClass(
+      'admin-shell--nav-collapsed',
+    );
+    expect(sessionStorage.getItem('colorplay-admin-nav-collapsed')).toBe(
+      'true',
+    );
+
+    await user.click(screen.getByRole('button', { name: '展開導覽' }));
+    expect(document.querySelector('.admin-shell')).not.toHaveClass(
+      'admin-shell--nav-collapsed',
+    );
+  });
+
   it('collapses navigation into a MENU drawer at narrow viewports', async () => {
     const user = userEvent.setup();
     stubWide(false);

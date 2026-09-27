@@ -96,6 +96,33 @@ export const contentScopeWireSchema = z.strictObject({
   ),
 });
 
+const hierarchySummaryWireSchema = z.strictObject({
+  id: uuidSchema,
+  sort_order: z.number().int().nonnegative(),
+  stable_code: z.string().trim().min(1).max(200),
+  status: contentStatusSchema,
+  title: z.string().min(1).max(100),
+});
+
+export const contentCatalogWireSchema = z.strictObject({
+  chapters: z.array(
+    hierarchySummaryWireSchema.extend({ course_id: uuidSchema }),
+  ),
+  courses: z.array(hierarchySummaryWireSchema),
+  hierarchy_drafts: z.array(
+    z.strictObject({
+      draft_id: uuidSchema,
+      entity_type: z.enum(['course', 'chapter']),
+      payload: payloadSchema,
+      revision: z.number().int().positive(),
+      stable_code: z.string().trim().min(1).max(200),
+      updated_at: timestampSchema,
+    }),
+  ),
+  outcome: z.literal('ok'),
+  request_id: uuidSchema,
+});
+
 export const contentDraftWireSchema = z.strictObject({
   base_version: z.number().int().positive().nullable(),
   draft_id: uuidSchema,
@@ -188,6 +215,13 @@ export const saveContentDraftSuccessWireSchema = z.strictObject({
   request_id: uuidSchema,
 });
 
+export const deleteContentDraftSuccessWireSchema = z.strictObject({
+  deleted_draft_id: uuidSchema,
+  outcome: z.literal('ok'),
+  replayed: z.boolean(),
+  request_id: uuidSchema,
+});
+
 export const contentAuthoringDeniedWireSchema = z.strictObject({
   code: z.enum([
     'CONTENT_DRAFT_CONFLICT',
@@ -207,6 +241,27 @@ export type ContentEntityType = z.infer<typeof contentEntityTypeSchema>;
 export type ContentDraftSource = z.infer<typeof contentDraftSourceSchema>;
 export type ContentDraftWire = z.infer<typeof contentDraftWireSchema>;
 export type ContentScopeWire = z.infer<typeof contentScopeWireSchema>;
+
+export type ContentCatalog = Readonly<{
+  chapters: readonly Readonly<{
+    chapterId: string;
+    courseId: string;
+    sortOrder: number;
+    stableCode: string;
+    status: 'draft' | 'published' | 'archived';
+    title: string;
+  }>[];
+  courses: readonly Readonly<{
+    courseId: string;
+    sortOrder: number;
+    stableCode: string;
+    status: 'draft' | 'published' | 'archived';
+    title: string;
+  }>[];
+  hierarchyDrafts: readonly ContentDraftSummary[];
+  outcome: 'ok';
+  requestId: string;
+}>;
 
 export type ContentEditorState = Readonly<{
   current: Readonly<{
@@ -290,6 +345,13 @@ export type ContentDraftSummary = Readonly<{
 }>;
 
 export type ContentScope = Readonly<{
+  course: Readonly<{
+    courseId: string;
+    sortOrder: number;
+    stableCode: string;
+    status: 'draft' | 'published' | 'archived';
+    title: string;
+  }>;
   chapter: Readonly<{
     chapterId: string;
     sortOrder: number;
@@ -362,3 +424,12 @@ export type ContentAuthoringOutcome<T> = T | ContentAuthoringDenied;
 
 export type SaveContentDraftOutcome =
   ContentAuthoringOutcome<SaveContentDraftSuccess>;
+
+export type DeleteContentDraftOutcome = ContentAuthoringOutcome<
+  Readonly<{
+    deletedDraftId: string;
+    outcome: 'ok';
+    replayed: boolean;
+    requestId: string;
+  }>
+>;

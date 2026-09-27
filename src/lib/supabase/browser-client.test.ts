@@ -1,12 +1,41 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   createBoundedFetch,
+  createTabScopedAuthStorageKey,
   getBrowserSupabaseClient,
   RequestTimeoutError,
   SUPABASE_REQUEST_TIMEOUT_MS,
 } from './browser-client';
 
 describe('getBrowserSupabaseClient', () => {
+  it('isolates Supabase auth broadcasts per browser tab and migrates the current tab session', () => {
+    const first = new Map<string, string>();
+    const second = new Map<string, string>();
+    const storage = (values: Map<string, string>): Storage => ({
+      clear: () => {
+        values.clear();
+      },
+      getItem: (key) => values.get(key) ?? null,
+      key: (index) => [...values.keys()][index] ?? null,
+      get length() {
+        return values.size;
+      },
+      removeItem: (key) => {
+        values.delete(key);
+      },
+      setItem: (key, value) => values.set(key, value),
+    });
+    const url = 'https://project-ref.supabase.co';
+    first.set('sb-project-ref-auth-token', '{"access_token":"existing"}');
+
+    const firstKey = createTabScopedAuthStorageKey(url, storage(first));
+    const secondKey = createTabScopedAuthStorageKey(url, storage(second));
+
+    expect(firstKey).not.toBe(secondKey);
+    expect(first.get(firstKey)).toBe('{"access_token":"existing"}');
+    expect(createTabScopedAuthStorageKey(url, storage(first))).toBe(firstKey);
+  });
+
   it('returns the same client for repeated calls', () => {
     const env = {
       supabaseUrl: 'http://127.0.0.1:54321',

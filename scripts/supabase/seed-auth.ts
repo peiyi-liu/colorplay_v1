@@ -158,9 +158,10 @@ const reconcileProfileRole = async (
         }
       : undefined);
   // db reset 後 PostgREST schema cache 需要片刻重載；新欄位在快取重建前
-  // 會回 PGRST204／權限錯誤，這裡以短暫重試消除競態。
+  // 會回 PGRST204／權限錯誤。Docker 負載較高時 3 秒不足，給最多 15 秒
+  // 的 bounded retry，避免 db reset 已成功卻因 schema cache 競態造成假紅。
   let lastError: unknown = null;
-  for (let attempt = 0; attempt < 6; attempt += 1) {
+  for (let attempt = 0; attempt < 30; attempt += 1) {
     const { data, error } = await admin
       .from('profiles')
       .update({

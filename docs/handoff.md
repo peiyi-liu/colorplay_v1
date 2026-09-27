@@ -2029,3 +2029,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - `驗證草稿` 的介面說明已明示只檢查必填欄位、父層、選項與圖片，不會發布。編輯器拆為 form orchestration、model、media 與 support 元件，避免新增需求繼續堆進單一巨型檔案。
 - Prettier、scoped ESLint、typecheck、production build、Admin／Content Studio Vitest 44 files／360 tests 與完整 Admin harness 15／15 PASS；harness 涵蓋 15 routes、320–1440 px、指定三視口、200% CSS zoom、reduced motion、全操作路由 dark persistence 與 light／dark flow。尚未 push／PR／merge／Staging deploy，Production 未觸碰。
 - 下一步：Owner 檢視本機候選；核准後再提交 branch、建立 PR 並依 release gate 推進 Staging。
+
+## 2026-09-27 [Codex] — Admin 閒置 session、分頁帳號隔離與 Content Studio 修正完成
+
+- Admin 保留登入 MFA，改為畫面實際閒置 20 分鐘後登出；持續操作會延長 session，一般草稿儲存不再被 5 分鐘 fresh-MFA 中斷，發布、封存、rollback 與刪除仍保留 fresh-MFA。Supabase browser client 改用 tab-scoped auth storage key，避免同一 Chrome 不同分頁的登入／登出 broadcast 相互汙染。
+- Admin 側邊導覽可收合且維持 session 內偏好；所有 Admin table 補齊 light／dark 語意色、sticky header 與縱橫雙向捲動，Content Studio 改為畫面不溢出、上下捲動為主。
+- Content Studio 章節 selector 改讀全部 catalog；章節新增／編輯移除無意義的章節選單，保留所屬課程。Course／Chapter／Section／Subtopic／RC／Assessment Bank／Question 的 payload 與 parent 合約已逐類測試；儲存驗證錯誤會顯示可操作提示，編輯頁可進入真實封存／版本流程並刪除未發布草稿；已發布內容禁止 hard delete。
+- Local gate PASS：Prettier、完整 ESLint、typecheck、production build；93 份 pgTAP／2247 assertions；Admin MFA 6 files／17 tests；其餘 integration 13 files／26 tests。Admin browser harness 的側邊欄、dark table、overflow 新驗證也通過。`db reset` 後 PostgREST schema cache 競態將 seed bounded retry 由 3 秒改為最多 15 秒，不降低 assertion。
+- 唯一一輪 diff review 無 Critical／High finding。`admin-content-page.tsx` 與 `content-editor-form.tsx` 原本在 `origin/staging` 已分別為 516／541 行；本次保留已抽出的 model／support／repository 邊界，避免在 Staging repair 混入大型重構，後續功能不得再直接堆進這兩個 orchestrator。下一步：commit、PR 合併至 `staging`，等 GitHub／Vercel 自動部署後驗 exact SHA；Production 不得觸碰。

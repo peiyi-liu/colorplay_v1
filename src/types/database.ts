@@ -1236,6 +1236,30 @@ export type Database = {
           },
         ]
       }
+      content_draft_deletion_requests: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          request_hash: string
+          request_id: string
+          result_receipt: Json
+        }
+        Insert: {
+          actor_user_id: string
+          created_at?: string
+          request_hash: string
+          request_id: string
+          result_receipt: Json
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          request_hash?: string
+          request_id?: string
+          result_receipt?: Json
+        }
+        Relationships: []
+      }
       content_draft_requests: {
         Row: {
           actor_user_id: string
@@ -3851,6 +3875,14 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_delete_content_draft: {
+        Args: {
+          p_draft_id: string
+          p_expected_revision: number
+          p_request_id: string
+        }
+        Returns: Json
+      }
       admin_get_resource_detail:
         | {
             Args: { p_domain: string; p_resource: string; p_row_id: string }
@@ -4049,6 +4081,7 @@ export type Database = {
         Returns: Json
       }
       admin_list_admins: { Args: { p_cursor?: string }; Returns: Json }
+      admin_list_content_catalog: { Args: never; Returns: Json }
       admin_list_content_history: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: Json
@@ -4190,6 +4223,7 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_touch_session_activity: { Args: never; Returns: Json }
       admin_validate_content_draft: {
         Args: { p_draft_id: string; p_expected_revision: number }
         Returns: Json
