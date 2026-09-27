@@ -33,6 +33,7 @@ describe('getBrowserSupabaseClient', () => {
 
     expect(firstKey).not.toBe(secondKey);
     expect(first.get(firstKey)).toBe('{"access_token":"existing"}');
+    expect(first.has('sb-project-ref-auth-token')).toBe(false);
     expect(createTabScopedAuthStorageKey(url, storage(first))).toBe(firstKey);
   });
 

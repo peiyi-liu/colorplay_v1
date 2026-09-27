@@ -197,16 +197,25 @@ test('proves loading, intended-route retention, and a real authenticated outlet'
     TEST_USERS.studentOne.email,
   );
   expect(
-    await authenticatedPage.evaluate(
-      (allowedKey) => ({
+    await authenticatedPage.evaluate((legacyKey) => {
+      const tabId = sessionStorage.getItem('colorplay-auth-tab-id');
+      const scopedKey = tabId ? `${legacyKey}-${tabId}` : null;
+      return {
+        legacyKeyPresent: sessionStorage.getItem(legacyKey) !== null,
         localKeys: Object.keys(localStorage),
-        sessionExtras: Object.keys(sessionStorage).filter(
-          (key) => key !== allowedKey,
-        ),
-      }),
-      storageKey,
-    ),
-  ).toEqual({ localKeys: [], sessionExtras: [] });
+        scopedSessionPresent:
+          scopedKey !== null && sessionStorage.getItem(scopedKey) !== null,
+        sessionKeyCount: sessionStorage.length,
+        tabIdPresent: Boolean(tabId),
+      };
+    }, storageKey),
+  ).toEqual({
+    legacyKeyPresent: false,
+    localKeys: [],
+    scopedSessionPresent: true,
+    sessionKeyCount: 2,
+    tabIdPresent: true,
+  });
   expect(observedErrors(authenticatedHealth)).toEqual(NO_OBSERVED_ERRORS);
   await authenticatedPage.close();
   await authenticatedContext.close();

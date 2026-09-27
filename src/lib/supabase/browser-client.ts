@@ -39,8 +39,11 @@ export function createTabScopedAuthStorageKey(
   }
   const scopedKey = `${legacyKey}-${tabId}`;
   const legacySession = storage.getItem(legacyKey);
-  if (storage.getItem(scopedKey) === null && legacySession !== null) {
-    storage.setItem(scopedKey, legacySession);
+  if (legacySession !== null) {
+    if (storage.getItem(scopedKey) === null) {
+      storage.setItem(scopedKey, legacySession);
+    }
+    storage.removeItem(legacyKey);
   }
   return scopedKey;
 }

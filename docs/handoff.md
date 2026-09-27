@@ -2042,3 +2042,8 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - GitHub `chromium-e2e` 的唯一紅燈是新增 `content_draft_deletion_requests` 五個欄位未進入 catalog SSOT，瀏覽器測試尚未開始。已將整張 internal receipt table 設為 `surface=none`、所有欄位 `forbidden`，由同一 forward migration 插入；歷史 generated migrations 維持 byte-stable。
 - `admin:catalog:generate`／`check`／`inventory` PASS，70 resources／684 columns 完全一致；pgTAP 049 的 14 assertions 與 080 的 11 assertions PASS。下一步：推送 remediation commit，只有 PR #70 所有 required checks 全綠才合併 `staging`。
+
+## 2026-09-27 [Codex] — PR #70 auth storage contract remediation
+
+- 第二輪 CI 的 `unit-coverage` 只剩 catalog contract 舊的 69-resource 數量斷言；已更新為 70，focused 4／4 PASS。`chromium-e2e` 28 項中 27 PASS，唯一失敗是 `auth-guards` 仍假設 sessionStorage 只有舊的固定 token key。
+- Auth storage contract 改驗 tab ID 與 tab-scoped session key，並在舊 session 搬移完成後移除 legacy token key，避免同一 token 留兩份。browser-client／catalog 13／13 unit tests、production build 與真實 Local Supabase `auth-guards` Chromium 1／1 PASS。下一步：推送最後 remediation，等 PR #70 全綠後合併 Staging。
