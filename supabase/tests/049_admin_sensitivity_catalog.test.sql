@@ -22,12 +22,13 @@ select ok(not has_table_privilege('authenticated',
 select ok(not has_table_privilege('authenticated',
   'public.admin_sensitivity_catalog', 'DELETE'), 'authenticated cannot delete catalog');
 select is((select count(distinct resource)::int
-  from public.admin_sensitivity_catalog), 69, 'exactly 69 resources');
+  from public.admin_sensitivity_catalog), 70, 'exactly 70 resources');
 select is((select count(distinct resource)::int
   from public.admin_sensitivity_catalog
   where resource in (
     'assessment_banks',
     'content_draft_requests',
+    'content_draft_deletion_requests',
     'content_drafts',
     'content_import_runs',
     'content_import_upload_runs',
@@ -35,7 +36,7 @@ select is((select count(distinct resource)::int
     'content_media_upload_runs',
     'content_media_variants',
     'content_publication_requests'
-  ) and surface = 'none' and class = 'forbidden'), 9,
+  ) and surface = 'none' and class = 'forbidden'), 10,
   'Content Studio private resources remain fail-closed');
 select is((select class from public.admin_sensitivity_catalog
   where resource = 'profiles' and column_name = 'full_name'),

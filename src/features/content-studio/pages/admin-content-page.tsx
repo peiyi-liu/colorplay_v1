@@ -74,16 +74,70 @@ export function AdminContentPage({
   const [page, setPage] = useState(1);
   const [dirty, setDirty] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [chapterId, setChapterId] = useState(CHAPTER_3_ID);
+
+  const catalogQuery = useQuery({
+    queryFn: () => repository.listCatalog(),
+    queryKey: [...contentStudioKeys.all, 'catalog'],
+  });
 
   const scopeQuery = useQuery({
-    queryFn: () => repository.listScope({ chapterId: CHAPTER_3_ID }),
-    queryKey: contentStudioKeys.scope(CHAPTER_3_ID),
+    queryFn: () => repository.listScope({ chapterId }),
+    queryKey: contentStudioKeys.scope(chapterId),
   });
-  const scope =
+  const rawScope =
     scopeQuery.data && 'chapter' in scopeQuery.data ? scopeQuery.data : null;
-  const items = useMemo(
-    () => (scope ? flattenContentScope(scope) : []),
-    [scope],
+  const catalog =
+    catalogQuery.data && 'chapters' in catalogQuery.data
+      ? catalogQuery.data
+      : null;
+  const activeChapter = catalog?.chapters.find(
+    (chapter) => chapter.chapterId === chapterId,
+  );
+  const activeCourse = catalog?.courses.find(
+    (course) => course.courseId === activeChapter?.courseId,
+  );
+  const scope = useMemo(
+    () =>
+      rawScope && activeCourse ? { ...rawScope, course: activeCourse } : null,
+    [activeCourse, rawScope],
+  );
+  const items = useMemo(() => {
+    if (!scope) return [];
+    const scoped = flattenContentScope(scope);
+    const knownDrafts = new Set(scoped.map((item) => item.draftId));
+    const hierarchyDrafts = (catalog?.hierarchyDrafts ?? [])
+      .filter((draft) => !knownDrafts.has(draft.draftId))
+      .map((draft): ContentStudioItem => ({
+        bankKind: null,
+        chapterId: draft.entityType === 'chapter' ? chapterId : null,
+        draftId: draft.draftId,
+        entityId: null,
+        entityType: draft.entityType,
+        parentId: draft.entityType === 'chapter' ? scope.course.courseId : null,
+        parentType: draft.entityType === 'chapter' ? 'course' : null,
+        sectionId: null,
+        stableCode: draft.stableCode,
+        status: 'draft',
+        subtopicId: null,
+        title: '未發布草稿',
+        version: null,
+      }));
+    return [...scoped, ...hierarchyDrafts];
+  }, [catalog?.hierarchyDrafts, chapterId, scope]);
+
+  const newItem = useCallback(
+    (entityType: ContentEntityType): ContentStudioItem => {
+      const item = createNewContentItem(entityType, null);
+      return {
+        ...item,
+        chapterId,
+        parentId:
+          entityType === 'chapter' ? (scope?.course.courseId ?? null) : null,
+        parentType: entityType === 'chapter' ? 'course' : null,
+      };
+    },
+    [chapterId, scope?.course.courseId],
   );
 
   const confirmLeaveEditor = useCallback((): boolean => {
@@ -175,7 +229,7 @@ export function AdminContentPage({
     setPage(1);
   };
 
-  if (scopeQuery.isPending)
+  if (scopeQuery.isPending || catalogQuery.isPending)
     return (
       <AdminPageLoading
         title="內容工作台"
@@ -210,7 +264,9 @@ export function AdminContentPage({
     >
       <header className="content-studio__heading">
         <div>
-          <span>第三章內容切片</span>
+          <span>
+            第 {scope.chapter.sortOrder} 章・{scope.chapter.title}
+          </span>
           <h1 id="content-studio-heading">內容工作台</h1>
           <p>從清單新增或編輯；所有修改先儲存為草稿，不會直接影響學生。</p>
         </div>
@@ -289,7 +345,11 @@ export function AdminContentPage({
               }}
               onDirtyChange={setDirty}
               onNewTypeChange={(entityType) => {
-                setSelected(createNewContentItem(entityType, null));
+                setSelected(newItem(entityType));
+              }}
+              onOpenLifecycle={() => {
+                setDirty(false);
+                setView('publication');
               }}
               onReload={() => editorQuery.refetch()}
               repository={repository}
@@ -321,7 +381,7 @@ export function AdminContentPage({
             <button
               className="primary-action content-studio__add"
               onClick={() => {
-                openEditor(createNewContentItem('review_card', null));
+                openEditor(newItem('review_card'));
               }}
               type="button"
             >
@@ -331,12 +391,18 @@ export function AdminContentPage({
               章節
               <select
                 aria-label="章節"
-                value={scope.chapter.chapterId}
-                disabled
+                value={chapterId}
+                onChange={(event) => {
+                  setChapterId(event.target.value);
+                  setSectionFilter('all');
+                  setPage(1);
+                }}
               >
-                <option value={scope.chapter.chapterId}>
-                  第 {scope.chapter.sortOrder} 章・{scope.chapter.title}
-                </option>
+                {catalog?.chapters.map((chapter) => (
+                  <option key={chapter.chapterId} value={chapter.chapterId}>
+                    第 {chapter.sortOrder} 章・{chapter.title}
+                  </option>
+                ))}
               </select>
             </label>
             <label>

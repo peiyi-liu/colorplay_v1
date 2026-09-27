@@ -42,6 +42,7 @@ export function ContentEditorForm({
   onCreated,
   onDirtyChange,
   onNewTypeChange,
+  onOpenLifecycle,
   onReload,
   repository,
   scope,
@@ -54,6 +55,7 @@ export function ContentEditorForm({
   onCreated: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onNewTypeChange: (entityType: ContentEntityType) => void;
+  onOpenLifecycle: () => void;
   onReload: () => Promise<unknown>;
   repository: ContentAuthoringRepository;
   scope: ContentScope;
@@ -206,6 +208,29 @@ export function ContentEditorForm({
     },
   });
 
+  const deleteDraft = useMutation({
+    mutationFn: () => {
+      if (!draftIdentity.draftId || draftIdentity.revision < 1)
+        throw new Error('DRAFT_REQUIRED');
+      return repository.deleteDraft({
+        draftId: draftIdentity.draftId,
+        expectedRevision: draftIdentity.revision,
+        requestId: crypto.randomUUID(),
+      });
+    },
+    onError: () => {
+      setNotice('草稿刪除失敗，資料未變更。');
+    },
+    onSuccess: (result) => {
+      if (result.outcome === 'denied') {
+        setNotice(result.message);
+        return;
+      }
+      void queryClient.invalidateQueries({ queryKey: contentStudioKeys.all });
+      onCreated();
+    },
+  });
+
   const preview = useMutation({
     mutationFn: () => {
       if (!draftIdentity.draftId || draftIdentity.revision < 1)
@@ -268,9 +293,14 @@ export function ContentEditorForm({
     <form
       className="content-editor"
       onSubmit={(event) => {
-        void handleSubmit((formValues) => {
-          save.mutate(formValues);
-        })(event);
+        void handleSubmit(
+          (formValues) => {
+            save.mutate(formValues);
+          },
+          () => {
+            setNotice('尚有必填或格式錯誤欄位，請依欄位提示修正後再儲存。');
+          },
+        )(event);
       }}
     >
       <header className="content-editor__heading">
@@ -312,10 +342,29 @@ export function ContentEditorForm({
             ))}
           </select>
         </label>
-      ) : null}
+      ) : (
+        <label>
+          內容類型
+          <select aria-label="內容類型" disabled value={item.entityType}>
+            <option value={item.entityType}>
+              {CONTENT_ENTITY_LABELS[item.entityType]}
+            </option>
+          </select>
+        </label>
+      )}
 
       <div className="content-editor__scope-grid">
-        {item.entityType !== 'course' ? (
+        {item.entityType === 'chapter' ? (
+          <label>
+            所屬課程
+            <select aria-label="所屬課程" {...register('parentId')}>
+              <option value={scope.course.courseId}>
+                {scope.course.title}
+              </option>
+            </select>
+          </label>
+        ) : null}
+        {!['course', 'chapter'].includes(item.entityType) ? (
           <label>
             章節
             <select aria-label="章節" value={scope.chapter.chapterId} disabled>
@@ -524,8 +573,15 @@ export function ContentEditorForm({
         }
       />
       <ContentEditorActions
+        canDeleteDraft={draftIdentity.draftId !== null}
         isNew={isNew}
         isSaving={save.isPending}
+        onDeleteDraft={() => {
+          if (window.confirm('確定刪除此草稿？已發布版本不會被刪除。')) {
+            deleteDraft.mutate();
+          }
+        }}
+        onOpenLifecycle={onOpenLifecycle}
         onPreview={() => {
           preview.mutate();
         }}

@@ -65,7 +65,7 @@ describe('phase 1 admin sensitivity catalog contract', () => {
     const catalog = JSON.parse(
       await readFile('supabase/catalog/admin-sensitivity-catalog.json', 'utf8'),
     ) as Catalog;
-    expect(catalog.resources).toHaveLength(69);
+    expect(catalog.resources).toHaveLength(70);
     expect(
       catalog.resources.filter((r) => r.resource.startsWith('admin_')),
     ).toHaveLength(9);

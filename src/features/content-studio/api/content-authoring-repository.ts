@@ -1,12 +1,15 @@
 import { adminRpc } from '../../admin/api/admin-client';
 import {
   contentAuthoringDeniedWireSchema,
+  contentCatalogWireSchema,
+  deleteContentDraftSuccessWireSchema,
   contentEditorStateWireSchema,
   contentPreviewWireSchema,
   contentScopeWireSchema,
   contentValidationWireSchema,
   saveContentDraftSuccessWireSchema,
   type ContentBankSummary,
+  type ContentCatalog,
   type ContentAuthoringDenied,
   type ContentAuthoringOutcome,
   type ContentDraft,
@@ -16,11 +19,14 @@ import {
   type ContentPreview,
   type ContentScope,
   type ContentValidationResult,
+  type DeleteContentDraftOutcome,
   type SaveContentDraftInput,
   type SaveContentDraftOutcome,
 } from './contracts';
 
 type ContentAuthoringRpc =
+  | 'admin_delete_content_draft'
+  | 'admin_list_content_catalog'
   | 'admin_list_content_scope'
   | 'admin_preview_content_draft'
   | 'admin_read_content_editor_state'
@@ -32,6 +38,14 @@ export interface ContentAuthoringTransport {
 }
 
 export interface ContentAuthoringRepository {
+  deleteDraft(
+    input: Readonly<{
+      draftId: string;
+      expectedRevision: number;
+      requestId: string;
+    }>,
+  ): Promise<DeleteContentDraftOutcome>;
+  listCatalog(): Promise<ContentAuthoringOutcome<ContentCatalog>>;
   listScope(
     input: Readonly<{ chapterId: string }>,
   ): Promise<ContentAuthoringOutcome<ContentScope>>;
@@ -114,6 +128,63 @@ export function createContentAuthoringRepository(
   transport: ContentAuthoringTransport = defaultTransport,
 ): ContentAuthoringRepository {
   return {
+    async deleteDraft(input) {
+      const payload = await transport.rpc('admin_delete_content_draft', {
+        p_draft_id: input.draftId,
+        p_expected_revision: input.expectedRevision,
+        p_request_id: input.requestId,
+      });
+      const denial = toDenied(payload);
+      if (denial) return denial;
+      const parsed = deleteContentDraftSuccessWireSchema.safeParse(payload);
+      if (!parsed.success) throw new ContentAuthoringRepositoryError();
+      return {
+        deletedDraftId: parsed.data.deleted_draft_id,
+        outcome: 'ok',
+        replayed: parsed.data.replayed,
+        requestId: parsed.data.request_id,
+      };
+    },
+    async listCatalog() {
+      const payload = await transport.rpc('admin_list_content_catalog', {});
+      const denial = toDenied(payload);
+      if (denial) return denial;
+      const parsed = contentCatalogWireSchema.safeParse(payload);
+      if (!parsed.success) throw new ContentAuthoringRepositoryError();
+      const toHierarchy = (entry: {
+        id: string;
+        sort_order: number;
+        stable_code: string;
+        status: 'draft' | 'published' | 'archived';
+        title: string;
+      }) => ({
+        sortOrder: entry.sort_order,
+        stableCode: entry.stable_code,
+        status: entry.status,
+        title: entry.title,
+      });
+      return {
+        chapters: parsed.data.chapters.map((chapter) => ({
+          chapterId: chapter.id,
+          courseId: chapter.course_id,
+          ...toHierarchy(chapter),
+        })),
+        courses: parsed.data.courses.map((course) => ({
+          courseId: course.id,
+          ...toHierarchy(course),
+        })),
+        hierarchyDrafts: parsed.data.hierarchy_drafts.map((draft) => ({
+          draftId: draft.draft_id,
+          entityId: null,
+          entityType: draft.entity_type,
+          revision: draft.revision,
+          stableCode: draft.stable_code,
+          updatedAt: draft.updated_at,
+        })),
+        outcome: 'ok',
+        requestId: parsed.data.request_id,
+      };
+    },
     async listScope(input) {
       const payload = await transport.rpc('admin_list_content_scope', {
         p_chapter_id: input.chapterId,
@@ -123,6 +194,13 @@ export function createContentAuthoringRepository(
       const parsed = contentScopeWireSchema.safeParse(payload);
       if (!parsed.success) throw new ContentAuthoringRepositoryError();
       return {
+        course: {
+          courseId: '',
+          sortOrder: 0,
+          stableCode: '',
+          status: 'draft',
+          title: '',
+        },
         chapter: {
           chapterId: parsed.data.chapter.id,
           sortOrder: parsed.data.chapter.sort_order,

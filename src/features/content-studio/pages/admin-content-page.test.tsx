@@ -18,6 +18,13 @@ const BANK_ID = '25000000-0000-0000-0000-000000000031';
 const QUESTION_ID = '26000000-0000-0000-0000-000000000311';
 
 const scope = {
+  course: {
+    courseId: '20000000-0000-0000-0000-000000000001',
+    sortOrder: 1,
+    stableCode: 'color-theory',
+    status: 'published' as const,
+    title: '色彩原理',
+  },
   chapter: {
     chapterId: CHAPTER_ID,
     sortOrder: 3,
@@ -92,6 +99,36 @@ function makeRepository(): {
   });
   return {
     repository: {
+      deleteDraft: vi.fn().mockResolvedValue({
+        deletedDraftId: DRAFT_ID,
+        outcome: 'ok',
+        replayed: false,
+        requestId: REQUEST_ID,
+      }),
+      listCatalog: vi.fn().mockResolvedValue({
+        chapters: [
+          {
+            chapterId: '21000000-0000-0000-0000-000000000001',
+            courseId: '20000000-0000-0000-0000-000000000001',
+            sortOrder: 1,
+            stableCode: 'chapter-1',
+            status: 'published',
+            title: '色彩概論',
+          },
+          {
+            chapterId: CHAPTER_ID,
+            courseId: '20000000-0000-0000-0000-000000000001',
+            sortOrder: 3,
+            stableCode: 'chapter-3',
+            status: 'published',
+            title: '色彩表示',
+          },
+        ],
+        courses: [scope.course],
+        hierarchyDrafts: [],
+        outcome: 'ok',
+        requestId: REQUEST_ID,
+      }),
       listScope: vi.fn().mockResolvedValue(scope),
       previewDraft: vi.fn().mockResolvedValue({
         draftId: DRAFT_ID,
@@ -197,6 +234,8 @@ describe('AdminContentPage', () => {
     expect(within(table).queryByRole('checkbox')).toBeNull();
     expect(screen.getByRole('button', { name: '新增' })).toBeVisible();
     expect(screen.getByLabelText('章節')).toHaveValue(CHAPTER_ID);
+    expect(screen.getByLabelText('章節')).not.toBeDisabled();
+    expect(screen.getByRole('option', { name: /第 1 章/ })).toBeVisible();
     expect(screen.getByLabelText('小節')).toBeVisible();
     expect(screen.getByLabelText('內容類型')).toBeVisible();
     expect(screen.getByLabelText('題庫類型')).toBeVisible();
@@ -210,6 +249,27 @@ describe('AdminContentPage', () => {
     expect(screen.queryByRole('region', { name: '內容階層' })).toBeNull();
     expect(screen.getByLabelText('穩定代碼')).toBeDisabled();
     expect(screen.getByLabelText('上層 ID')).toBeDisabled();
+  });
+
+  it('removes the meaningless chapter selector from chapter creation and exposes real lifecycle actions on edit', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: '新增' }));
+    await user.selectOptions(screen.getByLabelText('新增類型'), 'chapter');
+
+    expect(screen.getByRole('heading', { name: '新增章節' })).toBeVisible();
+    expect(screen.queryByLabelText('章節')).toBeNull();
+    expect(screen.getByLabelText('所屬課程')).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: '返回清單' }));
+    const table = await screen.findByRole('table', { name: '全部內容' });
+    await user.click(
+      within(table).getByRole('button', { name: '編輯 RC3101' }),
+    );
+    expect(await screen.findByLabelText('內容類型')).toHaveValue('review_card');
+    expect(screen.getByRole('button', { name: '封存／版本' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '刪除草稿' })).toBeVisible();
   });
 
   it('saves a persistent draft with the current revision and validates it', async () => {

@@ -172,6 +172,13 @@ const FORWARD_CATALOG_ROWS = [
     'request_id',
     'result_receipt',
   ]),
+  ...quarantineRows('content_draft_deletion_requests', [
+    'actor_user_id',
+    'created_at',
+    'request_hash',
+    'request_id',
+    'result_receipt',
+  ]),
   ...quarantineRows('content_drafts', [
     'actor_user_id',
     'base_version',

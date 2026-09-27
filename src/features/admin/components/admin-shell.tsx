@@ -1,4 +1,5 @@
 import { AdminOperationProvider } from './admin-operation-notices';
+import { AdminIdleSession } from './admin-idle-session';
 import '../../../styles/admin-console.css';
 import '../../../styles/admin-refinement.css';
 import '../../../styles/admin-workspaces.css';
@@ -14,6 +15,8 @@ import {
   Mail,
   Menu,
   Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
   ShieldCheck,
   Sun,
   Users,
@@ -23,6 +26,7 @@ import {
 
 const WIDE_QUERY = '(min-width: 1024px)';
 const ADMIN_THEME_KEY = 'colorplay-admin-theme';
+const ADMIN_NAV_COLLAPSED_KEY = 'colorplay-admin-nav-collapsed';
 type AdminTheme = 'light' | 'dark';
 
 function initialAdminTheme(): AdminTheme {
@@ -108,6 +112,9 @@ const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
 export function AdminShell(): ReactElement {
   const wide = useAdminShellWide();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [navCollapsed, setNavCollapsed] = useState(
+    () => window.sessionStorage.getItem(ADMIN_NAV_COLLAPSED_KEY) === 'true',
+  );
   const [theme, setTheme] = useState<AdminTheme>(initialAdminTheme);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -171,6 +178,31 @@ export function AdminShell(): ReactElement {
         <span>COLORPLAY</span>
         <strong>管理控制台</strong>
       </div>
+      {wide ? (
+        <button
+          aria-expanded={!navCollapsed}
+          aria-label={navCollapsed ? '展開導覽' : '收合導覽'}
+          className="admin-shell__collapse-toggle"
+          onClick={() => {
+            setNavCollapsed((current) => {
+              const next = !current;
+              window.sessionStorage.setItem(
+                ADMIN_NAV_COLLAPSED_KEY,
+                String(next),
+              );
+              return next;
+            });
+          }}
+          type="button"
+        >
+          {navCollapsed ? (
+            <PanelLeftOpen aria-hidden="true" />
+          ) : (
+            <PanelLeftClose aria-hidden="true" />
+          )}
+          <span>{navCollapsed ? '展開' : '收合'}</span>
+        </button>
+      ) : null}
       {NAV_GROUPS.map((group) => (
         <div className="admin-shell__group" key={group.label}>
           <p className="admin-shell__group-label">{group.label}</p>
@@ -185,7 +217,7 @@ export function AdminShell(): ReactElement {
                     to={item.to}
                   >
                     {Icon ? <Icon aria-hidden="true" /> : null}
-                    {item.label}
+                    <span>{item.label}</span>
                   </NavLink>
                 </li>
               );
@@ -197,7 +229,10 @@ export function AdminShell(): ReactElement {
   );
 
   return (
-    <div className={`admin-shell${wide ? ' admin-shell--wide' : ''}`}>
+    <div
+      className={`admin-shell${wide ? ' admin-shell--wide' : ''}${wide && navCollapsed ? ' admin-shell--nav-collapsed' : ''}`}
+    >
+      <AdminIdleSession />
       {!wide ? (
         <button
           aria-controls="admin-shell-nav"
