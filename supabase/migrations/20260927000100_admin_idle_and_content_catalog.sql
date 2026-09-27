@@ -175,6 +175,27 @@ alter table public.content_draft_deletion_requests enable row level security;
 revoke all on table public.content_draft_deletion_requests
   from public, anon, authenticated;
 
+-- This receipt table is internal implementation state. Keep every column out
+-- of the generic Admin data browser and satisfy the migration-derived catalog
+-- inventory fail-closed contract.
+insert into public.admin_sensitivity_catalog (
+  resource, domain, surface, column_name, class, mask_strategy,
+  searchable, filterable, sortable
+)
+select
+  'content_draft_deletion_requests',
+  'content',
+  'none',
+  catalog_column.column_name,
+  'forbidden',
+  null,
+  false,
+  false,
+  false
+from unnest(array[
+  'actor_user_id', 'created_at', 'request_hash', 'request_id', 'result_receipt'
+]::text[]) as catalog_column(column_name);
+
 create or replace function public.admin_delete_content_draft(
   p_draft_id uuid,
   p_expected_revision integer,

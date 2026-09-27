@@ -2037,3 +2037,8 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Content Studio 章節 selector 改讀全部 catalog；章節新增／編輯移除無意義的章節選單，保留所屬課程。Course／Chapter／Section／Subtopic／RC／Assessment Bank／Question 的 payload 與 parent 合約已逐類測試；儲存驗證錯誤會顯示可操作提示，編輯頁可進入真實封存／版本流程並刪除未發布草稿；已發布內容禁止 hard delete。
 - Local gate PASS：Prettier、完整 ESLint、typecheck、production build；93 份 pgTAP／2247 assertions；Admin MFA 6 files／17 tests；其餘 integration 13 files／26 tests。Admin browser harness 的側邊欄、dark table、overflow 新驗證也通過。`db reset` 後 PostgREST schema cache 競態將 seed bounded retry 由 3 秒改為最多 15 秒，不降低 assertion。
 - 唯一一輪 diff review 無 Critical／High finding。`admin-content-page.tsx` 與 `content-editor-form.tsx` 原本在 `origin/staging` 已分別為 516／541 行；本次保留已抽出的 model／support／repository 邊界，避免在 Staging repair 混入大型重構，後續功能不得再直接堆進這兩個 orchestrator。下一步：commit、PR 合併至 `staging`，等 GitHub／Vercel 自動部署後驗 exact SHA；Production 不得觸碰。
+
+## 2026-09-27 [Codex] — PR #70 sensitivity catalog remediation
+
+- GitHub `chromium-e2e` 的唯一紅燈是新增 `content_draft_deletion_requests` 五個欄位未進入 catalog SSOT，瀏覽器測試尚未開始。已將整張 internal receipt table 設為 `surface=none`、所有欄位 `forbidden`，由同一 forward migration 插入；歷史 generated migrations 維持 byte-stable。
+- `admin:catalog:generate`／`check`／`inventory` PASS，70 resources／684 columns 完全一致；pgTAP 049 的 14 assertions 與 080 的 11 assertions PASS。下一步：推送 remediation commit，只有 PR #70 所有 required checks 全綠才合併 `staging`。
