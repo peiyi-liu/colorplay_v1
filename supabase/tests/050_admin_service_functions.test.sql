@@ -65,7 +65,7 @@ select is((select (expires_at - issued_at)::text
   '00:01:00', 'minted receipt ttl is exactly 60 seconds');
 
 -- Mint 預期 denial 入帳(Codex 修訂三-1):錯 factor、錯 session、
--- fresh-MFA 逾時、idempotency 衝突各留 typed outcome + audit + counter
+-- 閒置逾時、idempotency 衝突各留 typed outcome + audit + counter
 select is((public.svc_admin_issue_command_receipt(
   '50000000-0000-0000-0000-000000000001',
   '50000000-0000-0000-0000-0000000000e2'::uuid, 'deactivate_admin', 'idem-f1',
@@ -77,16 +77,16 @@ select is((public.svc_admin_issue_command_receipt(
   sha256('{}'::bytea), '50000000-0000-0000-0000-0000000000aa', true))->>'code',
   'STALE_PRIVILEGED_SESSION', 'mint denies mismatched auth session');
 update public.admin_sessions
-  set last_totp_verified_at = now() - interval '11 minutes'
+  set last_activity_at = now() - interval '20 minutes'
   where admin_user_id = '50000000-0000-0000-0000-000000000001'
     and revoked_at is null;
 select is((public.svc_admin_issue_command_receipt(
   '50000000-0000-0000-0000-000000000001',
   '50000000-0000-0000-0000-0000000000e2'::uuid, 'deactivate_admin', 'idem-m1',
   sha256('{}'::bytea), '50000000-0000-0000-0000-0000000000aa', true))->>'code',
-  'INSUFFICIENT_MFA', 'mint denies stale fresh-MFA');
+  'STALE_PRIVILEGED_SESSION', 'mint denies twenty-minute idle session');
 update public.admin_sessions
-  set last_totp_verified_at = now()
+  set last_activity_at = now()
   where admin_user_id = '50000000-0000-0000-0000-000000000001'
     and revoked_at is null;
 insert into public.admin_command_executions
@@ -101,7 +101,7 @@ select is((public.svc_admin_issue_command_receipt(
   sha256('b'::bytea), '50000000-0000-0000-0000-0000000000aa', true))->>'code',
   'IDEMPOTENCY_CONFLICT', 'mint denies same key with different request');
 select is((select count(*)::int from public.admin_denial_counters
-  where resource_key = 'service/issue_command_receipt'), 4,
+  where resource_key = 'service/issue_command_receipt'), 3,
   'each mint denial code recorded its counter row');
 select is((select count(*)::int from public.admin_audit_events
   where target_type = 'command_receipt' and result in

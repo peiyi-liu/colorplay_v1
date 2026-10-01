@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import {
   createMemoryRouter,
   MemoryRouter,
@@ -13,6 +13,10 @@ import { RequirePrivilegedSession } from './require-privileged-session';
 
 vi.mock('../hooks/use-admin-session-state', () => ({
   useAdminSessionState: vi.fn(),
+}));
+const signOut = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+vi.mock('../../auth/context/auth-context', () => ({
+  useAuth: () => ({ signOut }),
 }));
 
 function renderWithState(state: string, isPending = false) {
@@ -46,7 +50,7 @@ describe('RequirePrivilegedSession', () => {
     expect(screen.getByText('enroll 頁')).toBeInTheDocument();
   });
 
-  it('sends stale sessions to challenge with return intent', () => {
+  it('signs out stale sessions instead of challenging during admin use', async () => {
     vi.mocked(useAdminSessionState).mockReturnValue({
       isPending: false,
       mfaAgeSeconds: 0,
@@ -60,15 +64,16 @@ describe('RequirePrivilegedSession', () => {
           children: [{ element: <p>稽核頁</p>, path: '/admin/audit' }],
         },
         { element: <p>challenge 頁</p>, path: '/admin/mfa/challenge' },
+        { element: <p>登入頁</p>, path: '/login' },
       ],
       { initialEntries: ['/admin/audit'] },
     );
     render(<RouterProvider router={router} />);
-    expect(screen.getByText('challenge 頁')).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/admin/mfa/challenge');
-    expect(
-      (router.state.location.state as { returnTo?: string }).returnTo,
-    ).toBe('/admin/audit');
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/login');
+    });
+    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('challenge 頁')).not.toBeInTheDocument();
     expect(router.state.historyAction).toBe('REPLACE');
   });
 

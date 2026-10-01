@@ -2,6 +2,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { RouteLoading } from '../../../app/boundaries/route-loading';
 import { useAdminSessionState } from '../hooks/use-admin-session-state';
+import { AdminExpiredSession } from './admin-expired-session';
 
 /**
  * UX-only guard:PostgreSQL RPC/Edge 才是授權權威(spec §3.2)。
@@ -16,6 +17,7 @@ export function RequirePrivilegedSession() {
     return <Navigate replace to="/admin/mfa/enroll" />;
   }
   if (session.state === 'privileged') return <Outlet />;
+  if (session.state === 'stale') return <AdminExpiredSession />;
 
   // stale/none/recovery_pending/deactivated:導向 challenge 並保留
   // return intent(spec §3.3);challenge 成功與否仍由伺服端裁決

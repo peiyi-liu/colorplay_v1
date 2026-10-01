@@ -22,7 +22,7 @@ import { RouteErrorBoundary } from '../boundaries/root-error-boundary';
 import { RouteLoading } from '../boundaries/route-loading';
 import { AppShell } from '../shell/app-shell';
 import { RoutePage } from './route-page';
-import { TitlePage } from './title-page';
+import { HomeRoute } from './home-route';
 
 export function createAppRouter() {
   return createBrowserRouter([
@@ -33,7 +33,7 @@ export function createAppRouter() {
       children: [
         {
           path: '/',
-          element: <TitlePage />,
+          element: <HomeRoute />,
         },
         {
           path: '/login',

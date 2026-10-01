@@ -3,7 +3,7 @@ import { strToU8, zipSync } from 'fflate';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { ContentAuthoringRepository } from '../api/content-authoring-repository';
 import type { ContentMediaRepository } from '../api/content-media-repository';
@@ -98,6 +98,7 @@ function Wrapper({ children }: Readonly<{ children: ReactNode }>) {
 }
 
 describe('Content Studio operator workflows', () => {
+  afterEach(() => vi.restoreAllMocks());
   it('processes ZIP images automatically before trusted preview and draft commit', async () => {
     const user = userEvent.setup();
     const mediaRepository: ContentMediaRepository = {
@@ -345,7 +346,14 @@ describe('Content Studio operator workflows', () => {
       '第三章教學內容語意更新',
     );
     await user.click(screen.getByRole('checkbox', { name: /核對版本差異/ }));
+    const confirmation = vi
+      .spyOn(window, 'confirm')
+      .mockReturnValueOnce(false)
+      .mockReturnValue(true);
     await user.click(screen.getByRole('button', { name: '二次確認並發布' }));
+    expect(publish).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: '二次確認並發布' }));
+    expect(confirmation).toHaveBeenCalledTimes(2);
     await waitFor(() => {
       expect(publish).toHaveBeenCalledWith(
         expect.objectContaining({ reason: '第三章教學內容語意更新' }),

@@ -2,6 +2,9 @@ import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import {
   AdminClientError,
+  adminRpc,
+  ADMIN_SESSION_EXPIRED_EVENT,
+  invokeAdminMfa,
   ADMIN_ERROR_MESSAGES,
   extractErrorCode,
   isAdminErrorCode,
@@ -11,6 +14,8 @@ import {
 
 const authMocks = vi.hoisted(() => ({
   listFactors: vi.fn(),
+  rpc: vi.fn(),
+  invoke: vi.fn(),
 }));
 
 vi.mock('../../../lib/config/public-env', () => ({
@@ -19,8 +24,45 @@ vi.mock('../../../lib/config/public-env', () => ({
 vi.mock('../../../lib/supabase/browser-client', () => ({
   getBrowserSupabaseClient: vi.fn(() => ({
     auth: { mfa: { listFactors: authMocks.listFactors } },
+    rpc: authMocks.rpc,
+    functions: { invoke: authMocks.invoke },
   })),
 }));
+
+describe('Admin expired-session responses', () => {
+  it('signals logout for an expired session returned by an admin RPC', async () => {
+    const listener = vi.fn();
+    window.addEventListener(ADMIN_SESSION_EXPIRED_EVENT, listener);
+    try {
+      authMocks.rpc.mockResolvedValue({
+        data: { outcome: 'denied', code: 'INSUFFICIENT_MFA' },
+        error: null,
+      });
+      await adminRpc('admin_list_content_history', {});
+      expect(listener).toHaveBeenCalledTimes(1);
+    } finally {
+      window.removeEventListener(ADMIN_SESSION_EXPIRED_EVENT, listener);
+    }
+  });
+  it('does not turn a wrong login MFA code into an active-session logout', async () => {
+    const listener = vi.fn();
+    window.addEventListener(ADMIN_SESSION_EXPIRED_EVENT, listener);
+    try {
+      authMocks.invoke.mockResolvedValue({
+        data: { outcome: 'denied', code: 'INSUFFICIENT_MFA' },
+        error: null,
+      });
+      await invokeAdminMfa({
+        action: 'challenge',
+        code: '000000',
+        factorId: 'factor-1',
+      });
+      expect(listener).not.toHaveBeenCalled();
+    } finally {
+      window.removeEventListener(ADMIN_SESSION_EXPIRED_EVENT, listener);
+    }
+  });
+});
 
 describe('isAdminErrorCode', () => {
   it('accepts every §11 stable code', () => {

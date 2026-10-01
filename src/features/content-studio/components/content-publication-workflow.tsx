@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   createContentPublicationRepository,
@@ -8,6 +8,7 @@ import {
 import type { ContentEditorState } from '../api/contracts';
 import type { ChangeClassification } from '../api/content-publication-contracts';
 import type { ContentStudioItem } from '../lib/content-studio-model';
+import { ContentDraftDiff, ContentPayloadView } from './content-payload-view';
 
 const IMPACT_LABELS = {
   compatible: '保留目前進度',
@@ -23,11 +24,13 @@ const EVENT_LABELS = {
 
 export function ContentPublicationWorkflow({
   editorState,
+  mode,
   onChanged,
   repository = createContentPublicationRepository(),
   selected,
 }: Readonly<{
   editorState: ContentEditorState | null;
+  mode?: 'publication' | 'history';
   onChanged: () => void;
   repository?: ContentPublicationRepository | undefined;
   selected: ContentStudioItem | null;
@@ -73,6 +76,10 @@ export function ContentPublicationWorkflow({
       return repository.listHistory({ entityId, entityType });
     },
   });
+  const loadHistory = history.mutate;
+  useEffect(() => {
+    if (mode === 'history' && entityId && entityType) loadHistory();
+  }, [entityId, entityType, loadHistory, mode]);
   const publish = useMutation({
     mutationFn: async () => {
       if (!draft || reason.trim().length < 10 || !confirmed)
@@ -87,6 +94,7 @@ export function ContentPublicationWorkflow({
       });
     },
     onSuccess: (result) => {
+      publishRequestId.current = null;
       if (result.outcome === 'ok') onChanged();
     },
   });
@@ -110,6 +118,7 @@ export function ContentPublicationWorkflow({
       });
     },
     onSuccess: (result) => {
+      archiveRequestId.current = null;
       if (result.outcome === 'ok') onChanged();
     },
   });
@@ -137,6 +146,7 @@ export function ContentPublicationWorkflow({
       });
     },
     onSuccess: (result) => {
+      rollbackRequestId.current = null;
       if (result.outcome === 'ok') onChanged();
     },
   });
@@ -168,14 +178,21 @@ export function ContentPublicationWorkflow({
     ) ?? null;
 
   return (
-    <section aria-label="發布與版本歷史" className="content-workflow">
+    <section
+      aria-label={mode === 'publication' ? '草稿發布確認' : '發布與版本歷史'}
+      className="content-workflow"
+    >
       <header>
-        <h2>發布與版本歷史</h2>
+        <h2>
+          {mode === 'publication'
+            ? '草稿發布確認'
+            : mode === 'history'
+              ? '版本歷史與封存'
+              : '發布與版本歷史'}
+        </h2>
         <p>影響由伺服器判定；發布、封存與回復都保留不可變事件。</p>
       </header>
-      {!selected ? (
-        <p>請先回到清單，按「編輯」選取要發布或查看歷史的內容。</p>
-      ) : null}
+      {!selected ? <p>請從上方清單選擇內容。</p> : null}
       {selected ? (
         <p className="content-workflow__hint">
           {selected.stableCode || '新草稿'}・目前版本{' '}
@@ -183,9 +200,17 @@ export function ContentPublicationWorkflow({
         </p>
       ) : null}
 
+      {draft && mode !== 'history' ? (
+        <ContentDraftDiff
+          current={editorState?.current?.payload ?? null}
+          draft={draft.payload}
+        />
+      ) : null}
+
       <div className="content-workflow__actions">
         <button
           className="secondary-action"
+          hidden={mode === 'history'}
           disabled={!draft || preview.isPending}
           onClick={() => {
             preview.mutate();
@@ -196,6 +221,10 @@ export function ContentPublicationWorkflow({
         </button>
         <button
           className="secondary-action"
+          hidden={
+            mode === 'publication' ||
+            editorState?.current?.status === 'archived'
+          }
           disabled={
             !entityId || currentVersion === null || archivePreview.isPending
           }
@@ -208,6 +237,7 @@ export function ContentPublicationWorkflow({
         </button>
         <button
           className="secondary-action"
+          hidden={mode === 'publication'}
           disabled={!entityId || history.isPending}
           onClick={() => {
             history.mutate();
@@ -250,7 +280,7 @@ export function ContentPublicationWorkflow({
 
       {selected ? (
         <>
-          <label>
+          <label hidden={mode === 'history'}>
             內容變更分類
             <select
               value={changeClassification}
@@ -258,6 +288,8 @@ export function ContentPublicationWorkflow({
                 setChangeClassification(
                   event.target.value as ChangeClassification,
                 );
+                setConfirmed(false);
+                publishRequestId.current = null;
               }}
             >
               <option value="semantic">新增或語意變更（需重做）</option>
@@ -273,6 +305,9 @@ export function ContentPublicationWorkflow({
               value={reason}
               onChange={(event) => {
                 setReason(event.target.value);
+                publishRequestId.current = null;
+                archiveRequestId.current = null;
+                rollbackRequestId.current = null;
               }}
             />
           </label>
@@ -289,6 +324,7 @@ export function ContentPublicationWorkflow({
           <div className="content-workflow__actions">
             <button
               className="primary-action"
+              hidden={mode === 'history'}
               disabled={
                 preview.data?.outcome !== 'ok' ||
                 preview.data.draftId !== draft?.draftId ||
@@ -298,7 +334,12 @@ export function ContentPublicationWorkflow({
                 publish.isPending
               }
               onClick={() => {
-                publish.mutate();
+                if (
+                  window.confirm(
+                    `第二次確認：發布 ${selected.stableCode}，${preview.data?.outcome === 'ok' ? IMPACT_LABELS[preview.data.impact] : '將更新學生端內容'}。確定發布嗎？`,
+                  )
+                )
+                  publish.mutate();
               }}
               type="button"
             >
@@ -306,6 +347,10 @@ export function ContentPublicationWorkflow({
             </button>
             <button
               className="secondary-action"
+              hidden={
+                mode === 'publication' ||
+                editorState?.current?.status === 'archived'
+              }
               disabled={
                 !entityId ||
                 currentVersion === null ||
@@ -317,11 +362,16 @@ export function ContentPublicationWorkflow({
                 archive.isPending
               }
               onClick={() => {
-                archive.mutate();
+                if (
+                  window.confirm(
+                    '確定下架此內容？歷史與學生紀錄會保留，學生將無法再讀取此內容。',
+                  )
+                )
+                  archive.mutate();
               }}
               type="button"
             >
-              {archive.isPending ? '封存中…' : '封存目前版本'}
+              {archive.isPending ? '封存中…' : '下架並封存內容'}
             </button>
           </div>
         </>
@@ -340,6 +390,14 @@ export function ContentPublicationWorkflow({
                 <span>{new Date(entry.createdAt).toLocaleString('zh-TW')}</span>
                 <span>操作者 {entry.actorId}</span>
                 <span>{entry.reason}</span>
+                {entry.payload ? (
+                  <details>
+                    <summary>查看此版本內容</summary>
+                    <ContentPayloadView payload={entry.payload} />
+                  </details>
+                ) : (
+                  <span>此舊事件未保留可讀取的內容快照。</span>
+                )}
                 <span>
                   {IMPACT_LABELS[entry.impact]}・
                   {entry.changedFields.join('、') || '無欄位差異'}
@@ -374,7 +432,12 @@ export function ContentPublicationWorkflow({
                   rollback.isPending
                 }
                 onClick={() => {
-                  rollback.mutate();
+                  if (
+                    window.confirm(
+                      `確定將 v${rollbackVersion} 回復為新版本？這不是刪除後續歷史。`,
+                    )
+                  )
+                    rollback.mutate();
                 }}
                 type="button"
               >

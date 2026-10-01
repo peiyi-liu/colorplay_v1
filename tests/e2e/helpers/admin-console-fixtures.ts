@@ -48,6 +48,23 @@ export function adminUiRpc(name: string): unknown {
           },
         ],
         hierarchy_drafts: [],
+        drafts: [
+          {
+            draft_id: '74000000-0000-4000-8000-000000000311',
+            entity_id: '24000000-0000-0000-0000-000000000311',
+            entity_type: 'review_card',
+            stable_code: 'RC3101',
+            revision: 2,
+            updated_at: time,
+            title: '色彩三要素',
+            parent_id: '23000000-0000-0000-0000-000000000311',
+            parent_type: 'subtopic',
+            bank_kind: null,
+            chapter_id: '21000000-0000-0000-0000-000000000003',
+            section_id: '22000000-0000-0000-0000-000000000031',
+            subtopic_id: '23000000-0000-0000-0000-000000000311',
+          },
+        ],
         outcome: 'ok',
         request_id: id,
       };

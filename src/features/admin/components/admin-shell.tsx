@@ -26,7 +26,8 @@ import {
 
 const WIDE_QUERY = '(min-width: 1024px)';
 const ADMIN_THEME_KEY = 'colorplay-admin-theme';
-const ADMIN_NAV_COLLAPSED_KEY = 'colorplay-admin-nav-collapsed';
+const ADMIN_NAV_MODE_KEY = 'colorplay-admin-nav-mode';
+type AdminNavMode = 'auto' | 'open' | 'closed';
 type AdminTheme = 'light' | 'dark';
 
 function initialAdminTheme(): AdminTheme {
@@ -112,9 +113,18 @@ const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
 export function AdminShell(): ReactElement {
   const wide = useAdminShellWide();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [navCollapsed, setNavCollapsed] = useState(
-    () => window.sessionStorage.getItem(ADMIN_NAV_COLLAPSED_KEY) === 'true',
-  );
+  const [navMode, setNavMode] = useState<AdminNavMode>(() => {
+    const saved = window.sessionStorage.getItem(ADMIN_NAV_MODE_KEY);
+    return saved === 'open' || saved === 'closed' ? saved : 'auto';
+  });
+  const [navHovered, setNavHovered] = useState(false);
+  const [navFocused, setNavFocused] = useState(false);
+  const navCollapsed =
+    navMode === 'closed' || (navMode === 'auto' && !navHovered && !navFocused);
+  const changeNavMode = (mode: AdminNavMode) => {
+    setNavMode(mode);
+    window.sessionStorage.setItem(ADMIN_NAV_MODE_KEY, mode);
+  };
   const [theme, setTheme] = useState<AdminTheme>(initialAdminTheme);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -173,6 +183,19 @@ export function AdminShell(): ReactElement {
       className="admin-shell__nav"
       hidden={!navVisible}
       id="admin-shell-nav"
+      onPointerEnter={() => {
+        setNavHovered(true);
+      }}
+      onPointerLeave={() => {
+        setNavHovered(false);
+      }}
+      onFocus={() => {
+        setNavFocused(true);
+      }}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget))
+          setNavFocused(false);
+      }}
     >
       <div className="admin-shell__brand">
         <span>COLORPLAY</span>
@@ -181,26 +204,32 @@ export function AdminShell(): ReactElement {
       {wide ? (
         <button
           aria-expanded={!navCollapsed}
-          aria-label={navCollapsed ? '展開導覽' : '收合導覽'}
+          aria-label={navMode !== 'open' ? '固定展開導覽' : '固定收合導覽'}
           className="admin-shell__collapse-toggle"
           onClick={() => {
-            setNavCollapsed((current) => {
-              const next = !current;
-              window.sessionStorage.setItem(
-                ADMIN_NAV_COLLAPSED_KEY,
-                String(next),
-              );
-              return next;
-            });
+            changeNavMode(navMode === 'open' ? 'closed' : 'open');
           }}
           type="button"
         >
-          {navCollapsed ? (
+          {navMode !== 'open' ? (
             <PanelLeftOpen aria-hidden="true" />
           ) : (
             <PanelLeftClose aria-hidden="true" />
           )}
-          <span>{navCollapsed ? '展開' : '收合'}</span>
+          <span>{navMode !== 'open' ? '固定展開' : '固定收合'}</span>
+        </button>
+      ) : null}
+      {wide && navMode !== 'auto' ? (
+        <button
+          className="admin-shell__collapse-toggle"
+          type="button"
+          aria-label="恢復滑鼠自動展開"
+          onClick={() => {
+            changeNavMode('auto');
+          }}
+        >
+          <Menu aria-hidden="true" />
+          <span>滑鼠自動展開</span>
         </button>
       ) : null}
       {NAV_GROUPS.map((group) => (
@@ -212,6 +241,7 @@ export function AdminShell(): ReactElement {
               return (
                 <li key={item.to}>
                   <NavLink
+                    aria-label={item.label}
                     className={navLinkClassName}
                     end={item.end ?? false}
                     to={item.to}

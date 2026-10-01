@@ -1,12 +1,12 @@
 {
   "package_name": "ColorPlay React + Supabase Development Specification Package",
   "package_version": "2.0.0",
-  "generated_at": "2026-09-26T15:07:49.569Z",
-  "markdown_files": 74,
+  "generated_at": "2026-10-01T04:51:30.385Z",
+  "markdown_files": 75,
   "acceptance_criteria": 143,
   "unique_acceptance_criteria": 143,
   "ui_acceptance_criteria": 15,
-  "total_bytes_before_manifest": 921995,
+  "total_bytes_before_manifest": 926334,
   "real_device_required_criteria": [
     "AC-UI-010",
     "AC-UI-012"
@@ -74,13 +74,18 @@
     },
     {
       "path": "docs/adr/0009-admin-managed-teacher-accounts.md",
-      "sha256": "dc0d22e00302501e30b5fbca1addc39981192da1db9908a5dc19257e0530e087",
-      "size_bytes": 5797
+      "sha256": "5b65ff5831bfa4af85e8290080bcfa13237306aed5d8eee82b1eed1997fb0089",
+      "size_bytes": 5924
     },
     {
       "path": "docs/adr/0010-trusted-content-media-processing.md",
       "sha256": "4bd1b035ca4928ab18ec8fc579cbc92ead3d6cf8d2e3366d0f424d5481389ff4",
       "size_bytes": 2294
+    },
+    {
+      "path": "docs/adr/0011-admin-active-session-and-content-workflow.md",
+      "sha256": "5393a1a6c7d76a3a6678e18cbcf1d758b072a229fa5fe6b22366d4204139fa9d",
+      "size_bytes": 3207
     },
     {
       "path": "docs/deployment/environment-matrix.md",
@@ -209,8 +214,8 @@
     },
     {
       "path": "docs/superpowers/specs/2026-08-07-phase-1-admin-identity-security-design.md",
-      "sha256": "7ec4dade539bf2e5fed6129f291f2ff9ac0c106063e048f75aab7cfb66fdf796",
-      "size_bytes": 74537
+      "sha256": "89fd493231f93df44d890cc28aaeb785591773cf4e5e598d69969c284346f7a8",
+      "size_bytes": 74816
     },
     {
       "path": "docs/superpowers/specs/2026-08-10-chapter-three-umbrella-brief.md",
@@ -339,8 +344,8 @@
     },
     {
       "path": "spec/04-security-and-privacy.md",
-      "sha256": "ae647882c24d78a2c4dc86458144f9a0201a91ea1d7aca9ed5c5519a02271a38",
-      "size_bytes": 11474
+      "sha256": "786c9b13b41a1bf2169818b91ae42789fd7f4d52a45d35196b99d3f6f6b16ec2",
+      "size_bytes": 12200
     },
     {
       "path": "spec/05-game-mechanics.md",

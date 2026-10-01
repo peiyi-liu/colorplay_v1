@@ -35,6 +35,16 @@
 - 敏感教師操作前若 session 太舊，可要求重新驗證。
 - 登入錯誤不得洩漏「此 Email 是否存在」超出 Auth provider 正常安全行為。
 
+### Admin 活躍連線政策（2026-10-01 owner 核准；ADR 0011）
+
+- 登入 Admin 時仍必須完成 MFA；所有 Admin 讀取與命令仍驗證 active identity、
+  Auth session 與綁定 factor，不以 UI 操作作為授權依據。
+- 完成登入後，只依真正操作的閒置時間計算 20 分鐘逾時，不再依距離上次 TOTP
+  的 5／10 分鐘或固定絕對時限中斷持續操作。
+- 伺服器拒絕閒置達 20 分鐘、撤銷或綁定失效的連線；client 結束登入，回登入頁，
+  不在工作中顯示重新 MFA 的操作提示。一般網路錯誤不可當成 MFA 失效。
+- 具名命令保留一次性 receipt、idempotency、理由與 append-only audit。
+
 ### Admin 管理教師帳號（2026-09-02 normative）
 
 - 教師不開放自助註冊。建立、名稱／聯絡 Email 更新與密碼重設只允許 active
@@ -68,7 +78,7 @@
 - Student 只讀 own profile/session/answer/wallet/achievement/assignment/progress 與 active Live projection；不可讀其他 raw answer 或寫 ledger/rank/role/host state。
 - Teacher 只管理 own classroom/content scope；Teacher A 不可讀 Teacher B classroom、analytics、assignment、Live 或 export。
 - Service role 只可用於必要的 system job，且 handler 仍驗證 caller；不可因使用 service role 就省略 authorization。
-- Teacher account operations 必須沿用 Admin privileged session、fresh MFA、一次性
+- Teacher account operations 必須沿用 Admin privileged session、登入 MFA 與 20 分鐘閒置政策、一次性
   authorization receipt、idempotency 與 append-only audit；不得另建較弱的管理入口。
 
 ## 5. 答案與計分保護

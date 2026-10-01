@@ -1,5 +1,9 @@
 # Phase 1: Admin 身分與安全核心設計規格
 
+> 2026-10-01 核准覆寫：本文件中的 fresh-MFA 時窗與固定 absolute timeout 改依
+> `spec/04-security-and-privacy.md` 的登入 MFA＋20 分鐘閒置政策及 ADR 0011。
+> 因素綁定、receipt、RLS 與審計要求不變；下文保留原階段的設計歷史。
+
 ## 1. 文件控制與核准狀態
 
 - 日期：2026-08-07（Asia/Taipei）

@@ -96,7 +96,7 @@ describe('AdminMfaChallengePage', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('status')).toHaveTextContent(
-        '需要重新完成雙因素驗證',
+        '驗證碼無效或已過期',
       );
     });
     expect(screen.getByRole('button', { name: '驗證' })).toBeEnabled();

@@ -210,7 +210,6 @@
   :is(
     .admin-shell__brand strong,
     .admin-shell__brand span,
-    .admin-shell__group-label,
     .admin-shell__link span,
     .admin-shell__collapse-toggle span
   ) {
@@ -227,6 +226,12 @@
 }
 .admin-shell.admin-shell--nav-collapsed .admin-shell__link {
   justify-content: center;
+}
+.admin-shell.admin-shell--wide .admin-shell__brand {
+  display: none;
+}
+.admin-shell.admin-shell--nav-collapsed .admin-shell__group-label {
+  visibility: hidden;
 }
 .admin-shell .admin-teachers__filters {
   border: 0;
@@ -356,6 +361,9 @@
 @media (min-width: 1024px) {
   .admin-shell.admin-shell--wide .admin-shell__nav {
     flex-basis: 236px;
+  }
+  .admin-shell.admin-shell--wide.admin-shell--nav-collapsed .admin-shell__nav {
+    flex-basis: 72px;
   }
   .admin-shell .admin-shell__main {
     padding: 26px 36px 40px;

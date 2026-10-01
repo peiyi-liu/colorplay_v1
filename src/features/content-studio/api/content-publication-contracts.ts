@@ -70,6 +70,7 @@ export const publicationHistoryWireSchema = z.strictObject({
       reason: z.string().min(1).max(500),
       version: z.number().int().positive(),
       version_id: uuidSchema.nullable(),
+      payload: z.record(z.string(), z.unknown()).nullable().optional(),
     }),
   ),
   entity_id: uuidSchema,
@@ -146,6 +147,7 @@ export type PublicationHistory = Readonly<{
     reason: string;
     version: number;
     versionId: string | null;
+    payload?: Readonly<Record<string, unknown>> | null;
   }>[];
   entityId: string;
   entityType: ContentEntityType;

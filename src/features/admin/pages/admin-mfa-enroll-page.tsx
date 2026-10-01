@@ -229,7 +229,14 @@ export function AdminMfaEnrollPage() {
             {unexpectedError === 'submit' ? (
               <p role="alert">發生非預期的錯誤，請稍後再試或聯絡負責人。</p>
             ) : null}
-            <AdminStatusBanner code={submitError} />
+            <AdminStatusBanner
+              code={submitError}
+              message={
+                submitError === 'INSUFFICIENT_MFA'
+                  ? '驗證碼無效或已過期，請輸入最新的 6 位數驗證碼。'
+                  : undefined
+              }
+            />
             <button
               className="primary-action"
               data-acceptance-interactive="true"
