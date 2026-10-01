@@ -198,26 +198,26 @@ select is((select count(*)::text from public.content_versions
   '1', 'unchanged republish does not append a duplicate version');
 
 update public.admin_sessions
-set last_totp_verified_at = now() - interval '10 minutes'
+set last_activity_at = now() - interval '20 minutes'
 where admin_user_id = 'aa000000-0000-0000-0000-000000000001';
 set local role authenticated;
 select is(public.admin_publish_content_draft(
   (current_setting('pgtap.publication_save')::jsonb #>> '{draft,draft_id}')::uuid,
   1, 'stale mfa publish', '75000000-0000-4000-8000-000000000012'
-) ->> 'code', 'INSUFFICIENT_MFA', 'stale MFA cannot publish');
+) ->> 'code', 'STALE_PRIVILEGED_SESSION', 'idle session cannot publish');
 select is(public.admin_archive_content(
   (current_setting('pgtap.publication_first')::jsonb ->> 'entity_id')::uuid,
   'review_card', 1, 'stale mfa archive',
   '75000000-0000-4000-8000-000000000013'
-) ->> 'code', 'INSUFFICIENT_MFA', 'stale MFA cannot archive');
+) ->> 'code', 'STALE_PRIVILEGED_SESSION', 'idle session cannot archive');
 select is(public.admin_rollback_content(
   (current_setting('pgtap.publication_first')::jsonb ->> 'entity_id')::uuid,
   'review_card', 1, 1, 'stale mfa rollback',
   '75000000-0000-4000-8000-000000000014'
-) ->> 'code', 'INSUFFICIENT_MFA', 'stale MFA cannot roll back');
+) ->> 'code', 'STALE_PRIVILEGED_SESSION', 'idle session cannot roll back');
 
 reset role;
-update public.admin_sessions set last_totp_verified_at = now()
+update public.admin_sessions set last_activity_at = now()
 where admin_user_id = 'aa000000-0000-0000-0000-000000000001';
 select set_config('request.jwt.claim.session_id',
   'aa000000-0000-0000-0000-0000000000e9', true);

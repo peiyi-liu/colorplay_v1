@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import {
@@ -196,18 +202,36 @@ describe('AdminShell', () => {
     stubWide(true);
     renderShell('/admin');
 
-    const toggle = screen.getByRole('button', { name: '收合導覽' });
-    await user.click(toggle);
-
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const nav = screen.getByRole('navigation', { name: '管理主控台導覽' });
     expect(document.querySelector('.admin-shell')).toHaveClass(
       'admin-shell--nav-collapsed',
     );
-    expect(sessionStorage.getItem('colorplay-admin-nav-collapsed')).toBe(
-      'true',
+    fireEvent.pointerEnter(nav);
+    expect(document.querySelector('.admin-shell')).not.toHaveClass(
+      'admin-shell--nav-collapsed',
     );
+    fireEvent.pointerLeave(nav);
+    expect(document.querySelector('.admin-shell')).toHaveClass(
+      'admin-shell--nav-collapsed',
+    );
+    const toggle = screen.getByRole('button', { name: '固定展開導覽' });
+    await user.click(toggle);
+    expect(sessionStorage.getItem('colorplay-admin-nav-mode')).toBe('open');
+    fireEvent.pointerLeave(nav);
+    expect(document.querySelector('.admin-shell')).not.toHaveClass(
+      'admin-shell--nav-collapsed',
+    );
+    await user.click(screen.getByRole('button', { name: '固定收合導覽' }));
+    expect(document.querySelector('.admin-shell')).toHaveClass(
+      'admin-shell--nav-collapsed',
+    );
+    expect(sessionStorage.getItem('colorplay-admin-nav-mode')).toBe('closed');
 
-    await user.click(screen.getByRole('button', { name: '展開導覽' }));
+    fireEvent.pointerEnter(nav);
+    expect(document.querySelector('.admin-shell')).toHaveClass(
+      'admin-shell--nav-collapsed',
+    );
+    await user.click(screen.getByRole('button', { name: '固定展開導覽' }));
     expect(document.querySelector('.admin-shell')).not.toHaveClass(
       'admin-shell--nav-collapsed',
     );

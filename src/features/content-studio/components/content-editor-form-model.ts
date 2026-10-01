@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import type {
   ContentEditorState,
+  ContentCatalog,
   ContentEntityType,
   ContentScope,
 } from '../api/contracts';
@@ -45,6 +46,28 @@ export type EditorValues = z.infer<typeof editorSchema>;
 export const ENTITY_TYPES = Object.keys(
   CONTENT_ENTITY_LABELS,
 ) as ContentEntityType[];
+
+export function newHierarchyOrder(
+  type: ContentEntityType,
+  scope: ContentScope,
+  catalog: ContentCatalog,
+  sectionId: string,
+): number | null {
+  const orders =
+    type === 'course'
+      ? catalog.courses
+      : type === 'chapter'
+        ? catalog.chapters
+        : type === 'section'
+          ? scope.sections
+          : type === 'subtopic'
+            ? (scope.sections.find((section) => section.sectionId === sectionId)
+                ?.subtopics ?? [])
+            : null;
+  return orders
+    ? Math.max(0, ...orders.map((entry) => entry.sortOrder)) + 1
+    : null;
+}
 
 function stringValue(payload: Readonly<Record<string, unknown>>, key: string) {
   return typeof payload[key] === 'string' ? payload[key] : '';
@@ -223,8 +246,14 @@ export function nextStableCode(
   const chapterCode = String(chapterNumber);
   const sectionCode = String(sectionNumber);
   const orderCode = String(Math.max(1, values.sortOrder));
-  const countFor = (predicate: (item: ContentStudioItem) => boolean) =>
-    items.filter(predicate).length + 1;
+  const freeCode = (makeCode: (sequence: number) => string, limit: number) => {
+    const used = new Set(items.map((entry) => entry.stableCode));
+    for (let sequence = 1; sequence <= limit; sequence++) {
+      const code = makeCode(sequence);
+      if (!used.has(code)) return code;
+    }
+    return '';
+  };
   switch (entityType) {
     case 'course':
       return `course-${orderCode}`;
@@ -235,12 +264,11 @@ export function nextStableCode(
     case 'subtopic':
       return `subtopic-${chapterCode}-${sectionCode}-${orderCode}`;
     case 'review_card': {
-      const sequence = countFor(
-        (entry) =>
-          entry.entityType === 'review_card' &&
-          entry.subtopicId === values.subtopicId,
+      return freeCode(
+        (sequence) =>
+          `RC${chapterCode}${sectionCode}${String(sequence).padStart(2, '0')}`,
+        99,
       );
-      return `RC${chapterCode}${sectionCode}${String(sequence).padStart(2, '0')}`;
     }
     case 'assessment_bank':
       return values.kind === 'CR'
@@ -253,13 +281,13 @@ export function nextStableCode(
           entry.entityId === values.bankId,
       );
       const kind = bank?.bankKind ?? values.kind;
-      const sequence = countFor(
-        (entry) =>
-          entry.entityType === 'question' && entry.parentId === values.bankId,
+      return freeCode(
+        (sequence) =>
+          kind === 'CR'
+            ? `CR${chapterCode}${String(sequence).padStart(3, '0')}`
+            : `${kind}${chapterCode}${sectionCode}${String(sequence).padStart(2, '0')}`,
+        kind === 'CR' ? 999 : 99,
       );
-      return kind === 'CR'
-        ? `CR${chapterCode}${String(sequence).padStart(3, '0')}`
-        : `${kind}${chapterCode}${sectionCode}${String(sequence).padStart(2, '0')}`;
     }
   }
 }

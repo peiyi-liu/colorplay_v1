@@ -164,6 +164,25 @@ export function createContentAuthoringRepository(
         title: entry.title,
       });
       return {
+        ...(parsed.data.drafts
+          ? {
+              drafts: parsed.data.drafts.map((draft) => ({
+                draftId: draft.draft_id,
+                entityId: draft.entity_id,
+                entityType: draft.entity_type,
+                stableCode: draft.stable_code,
+                revision: draft.revision,
+                updatedAt: draft.updated_at,
+                title: draft.title,
+                parentId: draft.parent_id,
+                parentType: draft.parent_type,
+                bankKind: draft.bank_kind,
+                chapterId: draft.chapter_id,
+                sectionId: draft.section_id,
+                subtopicId: draft.subtopic_id,
+              })),
+            }
+          : {}),
         chapters: parsed.data.chapters.map((chapter) => ({
           chapterId: chapter.id,
           courseId: chapter.course_id,

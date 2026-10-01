@@ -214,6 +214,13 @@ const renderRouter = (path: string, session: AuthSession | null = null) => {
 };
 
 describe('createAppRouter', () => {
+  it('returns an authenticated student at / to the learning workspace', async () => {
+    const router = renderRouter('/', { userId: 'learner-id' });
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/app');
+    });
+    expect(screen.queryByRole('link', { name: '開始冒險' })).toBeNull();
+  });
   beforeEach(() => {
     mockedUseMyProfile.mockReturnValue({
       data: {

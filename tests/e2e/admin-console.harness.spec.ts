@@ -202,9 +202,13 @@ for (const viewport of [
     await expect(
       page.getByRole('region', { name: '內容匯入流程' }),
     ).toBeVisible();
-    await page.getByRole('button', { name: '發布／歷史' }).click();
+    await page.getByRole('button', { name: '發布', exact: true }).click();
     await expect(
-      page.getByRole('region', { name: '發布與版本歷史' }),
+      page.getByRole('region', { name: '待發布草稿' }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: '歷史', exact: true }).click();
+    await expect(
+      page.getByRole('region', { name: '內容與封存歷史' }),
     ).toBeVisible();
     await page.getByRole('button', { name: '切換為夜間模式' }).click();
     await expect(
@@ -251,7 +255,8 @@ test('wide admin navigation collapses and dark tables keep readable sticky conte
   await fixture(page);
   await page.goto('/dev-harness/admin-console.html?route=/admin/content');
 
-  await page.getByRole('button', { name: '收合導覽' }).click();
+  await page.getByRole('button', { name: '固定展開導覽' }).click();
+  await page.getByRole('button', { name: '固定收合導覽' }).click();
   await expect(page.locator('.admin-shell')).toHaveClass(
     /admin-shell--nav-collapsed/u,
   );
@@ -277,6 +282,36 @@ test('wide admin navigation collapses and dark tables keep readable sticky conte
   expect(tableStyle.headerPosition).toBe('sticky');
   expect(tableStyle.overflowX).toBe('auto');
   expect(tableStyle.overflowY).toBe('auto');
+});
+
+test('admin navigation hover and pin modes match the content workflow', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await fixture(page);
+  await page.goto('/dev-harness/admin-console.html?route=/admin/content');
+  const shell = page.locator('.admin-shell');
+  const nav = page.getByRole('navigation', { name: '管理主控台導覽' });
+  await expect(shell).toHaveClass(/admin-shell--nav-collapsed/u);
+  await nav.hover();
+  await expect(shell).not.toHaveClass(/admin-shell--nav-collapsed/u);
+  await page.getByRole('heading', { name: '內容工作台' }).hover();
+  await expect(shell).toHaveClass(/admin-shell--nav-collapsed/u);
+  await nav.hover();
+  await page.getByRole('button', { name: '固定展開導覽' }).click();
+  await page.getByRole('heading', { name: '內容工作台' }).hover();
+  await expect(shell).not.toHaveClass(/admin-shell--nav-collapsed/u);
+  await page.getByRole('button', { name: '固定收合導覽' }).click();
+  await nav.hover();
+  await expect(shell).toHaveClass(/admin-shell--nav-collapsed/u);
+  await page.getByRole('button', { name: '發布', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: '準備發布 RC3101' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: '歷史', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: '查看歷史 RC3101' }),
+  ).toBeVisible();
 });
 
 test('admin dark theme persists across operational routes', async ({

@@ -218,7 +218,14 @@ export function AdminMfaChallengePage() {
           </form>
         </>
       ) : null}
-      <AdminStatusBanner code={error} />
+      <AdminStatusBanner
+        code={error}
+        message={
+          error === 'INSUFFICIENT_MFA'
+            ? '驗證碼無效或已過期，請輸入最新的 6 位數驗證碼。'
+            : undefined
+        }
+      />
     </section>
   );
 }

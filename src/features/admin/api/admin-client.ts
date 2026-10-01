@@ -55,14 +55,14 @@ export const ADMIN_ERROR_MESSAGES: Record<AdminErrorCode, string> = {
   COLUMN_NOT_ALLOWED: '此欄位不允許這項操作。',
   FACTOR_BINDING_MISMATCH: '驗證器綁定異常，帳號已進入安全隔離，請聯絡負責人。',
   IDEMPOTENCY_CONFLICT: '相同操作代碼已用於不同內容，請重新發起操作。',
-  INSUFFICIENT_MFA: '需要重新完成雙因素驗證。',
+  INSUFFICIENT_MFA: '登入驗證已失效，正在登出；請重新登入。',
   INVITATION_INVALID: '邀請無效或已失效。',
   LAST_ADMIN_PROTECTED: '不能對最後一位有效管理員執行此操作。',
   MFA_LOCKED: '驗證失敗次數過多，帳號已暫時鎖定，請 15 分鐘後再試。',
   RESOURCE_NOT_ALLOWED: '此資源不允許這項操作。',
   SECURITY_AUDIT_UNAVAILABLE: '安全稽核暫時無法使用，操作已中止，請稍後再試。',
   SECURITY_OPERATION_PENDING: '此安全作業目前無法重新觸發。',
-  STALE_PRIVILEGED_SESSION: '特權連線已逾時或失效，請重新驗證。',
+  STALE_PRIVILEGED_SESSION: '管理連線已逾時或失效，正在登出；請重新登入。',
   TARGET_STATE_INVALID: '目標目前的狀態不允許此操作，請重新確認目標。',
   TEACHER_ACCOUNT_INVALID: '教師帳號資料或狀態無效。',
   TEACHER_ACCOUNT_CONFLICT: '教師帳號操作與目前狀態衝突。',
@@ -126,6 +126,25 @@ export class AdminClientError extends Error {
 const browserClient = () =>
   getBrowserSupabaseClient(parsePublicEnv(import.meta.env));
 
+export const ADMIN_SESSION_EXPIRED_EVENT = 'colorplay-admin-session-expired';
+
+function notifyExpiredSession(response: unknown) {
+  if (
+    !response ||
+    typeof response !== 'object' ||
+    !('outcome' in response) ||
+    !('code' in response)
+  )
+    return;
+  if (
+    response.outcome === 'denied' &&
+    (response.code === 'INSUFFICIENT_MFA' ||
+      response.code === 'STALE_PRIVILEGED_SESSION')
+  ) {
+    window.dispatchEvent(new Event(ADMIN_SESSION_EXPIRED_EVENT));
+  }
+}
+
 function readResponseObject(value: unknown): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new AdminClientError();
@@ -172,7 +191,9 @@ export async function invokeAdminCommand(
   const response = await browserClient().functions.invoke('admin-command', {
     body: { args, command, idempotencyKey },
   });
-  return await readFunctionResponse(response);
+  const result = await readFunctionResponse(response);
+  notifyExpiredSession(result);
+  return result;
 }
 
 // challenge action 需要 factorId 才能請求(admin-mfa 契約);這是使用者自己
@@ -195,5 +216,6 @@ export async function adminRpc<T>(
 ): Promise<T> {
   const { data, error } = await browserClient().rpc(fn as never, args as never);
   if (error) throw new AdminClientError();
+  notifyExpiredSession(data);
   return data;
 }

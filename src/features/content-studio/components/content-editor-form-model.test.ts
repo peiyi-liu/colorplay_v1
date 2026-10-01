@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ContentEntityType } from '../api/contracts';
+import type { ContentEntityType, ContentScope } from '../api/contracts';
+import type { ContentStudioItem } from '../lib/content-studio-model';
 import {
   payloadFromValues,
+  nextStableCode,
   type EditorValues,
 } from './content-editor-form-model';
 
@@ -31,6 +33,60 @@ const values: EditorValues = {
 };
 
 describe('Content Editor payload mapping', () => {
+  it('avoids code collisions across subtopics and archived cards instead of counting rows', () => {
+    const scope: ContentScope = {
+      course: {
+        courseId: 'course-id',
+        stableCode: 'course',
+        title: '課程',
+        sortOrder: 1,
+        status: 'published',
+      },
+      chapter: {
+        chapterId: 'chapter-id',
+        stableCode: 'chapter-3',
+        title: '第三章',
+        sortOrder: 3,
+        status: 'published',
+      },
+      chapterBanks: [],
+      drafts: [],
+      outcome: 'ok',
+      requestId: 'request-id',
+      sections: [
+        {
+          sectionId: 'section-id',
+          stableCode: 'section',
+          title: '小節',
+          sortOrder: 1,
+          status: 'published',
+          banks: [],
+          subtopics: [],
+        },
+      ],
+    };
+    const items: ContentStudioItem[] = ['RC3101', 'RC3103'].map(
+      (stableCode) => ({
+        stableCode,
+        bankKind: null,
+        chapterId: 'chapter-id',
+        draftId: null,
+        entityId: stableCode,
+        entityType: 'review_card',
+        parentId: 'other-subtopic',
+        parentType: 'subtopic',
+        sectionId: 'section-id',
+        subtopicId: 'other-subtopic',
+        title: '其他子主題卡片',
+        status: 'archived',
+        version: 1,
+      }),
+    );
+    expect(nextStableCode('review_card', values, scope, items)).toBe('RC3102');
+    expect(
+      nextStableCode('question', { ...values, kind: 'CR' }, scope, []),
+    ).toBe('CR3001');
+  });
   it.each<readonly [ContentEntityType, string, unknown]>([
     ['course', 'description', '說明'],
     ['chapter', 'course_id', 'course-id'],

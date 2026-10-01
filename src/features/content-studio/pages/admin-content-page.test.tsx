@@ -129,7 +129,26 @@ function makeRepository(): {
         outcome: 'ok',
         requestId: REQUEST_ID,
       }),
-      listScope: vi.fn().mockResolvedValue(scope),
+      listScope: vi
+        .fn()
+        .mockImplementation(({ chapterId }: { chapterId: string }) =>
+          Promise.resolve(
+            chapterId === CHAPTER_ID
+              ? scope
+              : {
+                  ...scope,
+                  chapter: {
+                    ...scope.chapter,
+                    chapterId,
+                    sortOrder: 1,
+                    stableCode: 'chapter-1',
+                    title: '色彩概論',
+                  },
+                  sections: [],
+                  drafts: [],
+                },
+          ),
+        ),
       previewDraft: vi.fn().mockResolvedValue({
         draftId: DRAFT_ID,
         outcome: 'ok',
@@ -213,6 +232,82 @@ function renderPage(bundle = makeRepository()) {
 }
 
 describe('AdminContentPage', () => {
+  it('offers separate publication and history pages without entering an editor', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: /^發布$/ }));
+    expect(
+      await screen.findByRole('button', { name: '準備發布 RC3101' }),
+    ).toBeVisible();
+    await user.click(screen.getByRole('button', { name: /^歷史$/ }));
+    expect(
+      await screen.findByRole('button', { name: '查看歷史 RC3101' }),
+    ).toBeVisible();
+  });
+  it('allows creation in another chapter independently of list filters', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: '新增' }));
+    expect(screen.getByLabelText('章節')).not.toBeDisabled();
+    expect(screen.getByRole('option', { name: /第 1 章/ })).toBeVisible();
+  });
+  it('saves a new section under the editor chapter, not the list chapter', async () => {
+    const user = userEvent.setup();
+    const { saveDraft } = renderPage();
+    await user.click(await screen.findByRole('button', { name: '新增' }));
+    await user.selectOptions(screen.getByLabelText('新增類型'), 'section');
+    const chapterId = '21000000-0000-0000-0000-000000000001';
+    await user.selectOptions(screen.getByLabelText('章節'), chapterId);
+    await user.clear(screen.getByLabelText('小節編號'));
+    await user.type(screen.getByLabelText('小節編號'), '1');
+    await user.type(screen.getByLabelText('標題'), '第一章新小節');
+    await user.click(screen.getByRole('button', { name: '新增內容' }));
+    await waitFor(() => {
+      expect(saveDraft).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entityType: 'section',
+          stableCode: 'section-1-1',
+          payload: expect.objectContaining({
+            chapter_id: chapterId,
+            title: '第一章新小節',
+          }) as unknown,
+        }),
+      );
+    });
+  });
+  it('hides archived content from the normal list but exposes it directly in history', async () => {
+    const user = userEvent.setup();
+    const bundle = makeRepository();
+    const section = scope.sections[0];
+    const subtopic = section?.subtopics[0];
+    if (!section || !subtopic) throw new Error('TEST_SCOPE_REQUIRED');
+    bundle.repository.listScope = vi.fn().mockResolvedValue({
+      ...scope,
+      drafts: [],
+      sections: [
+        {
+          ...section,
+          subtopics: [
+            {
+              ...subtopic,
+              reviewCards: subtopic.reviewCards.map((card) => ({
+                ...card,
+                status: 'archived',
+              })),
+            },
+          ],
+        },
+      ],
+    });
+    renderPage(bundle);
+    const table = await screen.findByRole('table', { name: '全部內容' });
+    expect(within(table).queryByText('RC3101')).toBeNull();
+    await user.click(screen.getByRole('button', { name: /^歷史$/ }));
+    await user.selectOptions(screen.getByLabelText('歷史狀態'), 'archived');
+    expect(
+      screen.getByRole('button', { name: '查看歷史 RC3101' }),
+    ).toBeVisible();
+  });
   it('opens on the content list with the approved filters and no batch selection', async () => {
     const user = userEvent.setup();
     renderPage();
@@ -225,7 +320,8 @@ describe('AdminContentPage', () => {
       'true',
     );
     expect(screen.getByRole('button', { name: '外部匯入' })).toBeVisible();
-    expect(screen.getByRole('button', { name: '發布／歷史' })).toBeVisible();
+    expect(screen.getByRole('button', { name: /^發布$/ })).toBeVisible();
+    expect(screen.getByRole('button', { name: /^歷史$/ })).toBeVisible();
     expect(screen.queryByRole('button', { name: '工作區' })).toBeNull();
     expect(screen.queryByText('新增類型')).toBeNull();
 
@@ -260,7 +356,8 @@ describe('AdminContentPage', () => {
 
     expect(screen.getByRole('heading', { name: '新增章節' })).toBeVisible();
     expect(screen.queryByLabelText('章節')).toBeNull();
-    expect(screen.getByLabelText('所屬課程')).toBeVisible();
+    expect(screen.queryByLabelText('所屬課程')).toBeNull();
+    expect(screen.getByText(/課程：色彩原理/)).toBeVisible();
 
     await user.click(screen.getByRole('button', { name: '返回清單' }));
     const table = await screen.findByRole('table', { name: '全部內容' });

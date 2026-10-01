@@ -73,6 +73,23 @@ describe('content authoring repository', () => {
         },
       ],
       hierarchy_drafts: [],
+      drafts: [
+        {
+          draft_id: DRAFT_ID,
+          entity_id: ENTITY_ID,
+          entity_type: 'review_card',
+          stable_code: 'RC3101',
+          title: '待發布標題',
+          revision: 2,
+          updated_at: UPDATED_AT,
+          parent_id: SUBTOPIC_ID,
+          parent_type: 'subtopic',
+          bank_kind: null,
+          chapter_id: CHAPTER_ID,
+          section_id: SECTION_ID,
+          subtopic_id: SUBTOPIC_ID,
+        },
+      ],
       outcome: 'ok',
       request_id: REQUEST_ID,
     });
@@ -82,6 +99,15 @@ describe('content authoring repository', () => {
     ).resolves.toMatchObject({
       chapters: [{ chapterId: CHAPTER_ID, courseId: ENTITY_ID }],
       courses: [{ courseId: ENTITY_ID }],
+      drafts: [
+        {
+          draftId: DRAFT_ID,
+          entityType: 'review_card',
+          title: '待發布標題',
+          chapterId: CHAPTER_ID,
+          parentId: SUBTOPIC_ID,
+        },
+      ],
       outcome: 'ok',
     });
     expect(transport.rpc).toHaveBeenCalledWith(

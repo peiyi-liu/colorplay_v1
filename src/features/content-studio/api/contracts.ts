@@ -105,6 +105,25 @@ const hierarchySummaryWireSchema = z.strictObject({
 });
 
 export const contentCatalogWireSchema = z.strictObject({
+  drafts: z
+    .array(
+      z.strictObject({
+        draft_id: uuidSchema,
+        entity_id: uuidSchema.nullable(),
+        entity_type: contentEntityTypeSchema,
+        stable_code: z.string().min(1),
+        revision: z.number().int().positive(),
+        updated_at: timestampSchema,
+        title: z.string().min(1),
+        parent_id: uuidSchema.nullable(),
+        parent_type: contentEntityTypeSchema.nullable(),
+        bank_kind: z.enum(['QB', 'LT', 'CR']).nullable(),
+        chapter_id: uuidSchema.nullable(),
+        section_id: uuidSchema.nullable(),
+        subtopic_id: uuidSchema.nullable(),
+      }),
+    )
+    .optional(),
   chapters: z.array(
     hierarchySummaryWireSchema.extend({ course_id: uuidSchema }),
   ),
@@ -243,6 +262,7 @@ export type ContentDraftWire = z.infer<typeof contentDraftWireSchema>;
 export type ContentScopeWire = z.infer<typeof contentScopeWireSchema>;
 
 export type ContentCatalog = Readonly<{
+  drafts?: readonly ContentCatalogDraft[];
   chapters: readonly Readonly<{
     chapterId: string;
     courseId: string;
@@ -262,6 +282,17 @@ export type ContentCatalog = Readonly<{
   outcome: 'ok';
   requestId: string;
 }>;
+
+export type ContentCatalogDraft = ContentDraftSummary &
+  Readonly<{
+    title: string;
+    parentId: string | null;
+    parentType: ContentEntityType | null;
+    bankKind: 'QB' | 'LT' | 'CR' | null;
+    chapterId: string | null;
+    sectionId: string | null;
+    subtopicId: string | null;
+  }>;
 
 export type ContentEditorState = Readonly<{
   current: Readonly<{

@@ -247,6 +247,19 @@
   margin: -6px 0 8px -10px;
   color: var(--admin-accent);
 }
+.content-payload {
+  margin: 0;
+}
+.content-payload dt {
+  font-weight: 700;
+  margin-top: 12px;
+}
+.content-payload dd {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: inherit;
+}
 .content-editor__scope-grid,
 .content-editor__identity-grid,
 .content-editor__options,

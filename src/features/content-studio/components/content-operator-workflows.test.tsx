@@ -3,7 +3,7 @@ import { strToU8, zipSync } from 'fflate';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { ContentAuthoringRepository } from '../api/content-authoring-repository';
 import type { ContentMediaRepository } from '../api/content-media-repository';
@@ -98,6 +98,7 @@ function Wrapper({ children }: Readonly<{ children: ReactNode }>) {
 }
 
 describe('Content Studio operator workflows', () => {
+  afterEach(() => vi.restoreAllMocks());
   it('processes ZIP images automatically before trusted preview and draft commit', async () => {
     const user = userEvent.setup();
     const mediaRepository: ContentMediaRepository = {
@@ -345,7 +346,14 @@ describe('Content Studio operator workflows', () => {
       '第三章教學內容語意更新',
     );
     await user.click(screen.getByRole('checkbox', { name: /核對版本差異/ }));
+    const confirmation = vi
+      .spyOn(window, 'confirm')
+      .mockReturnValueOnce(false)
+      .mockReturnValue(true);
     await user.click(screen.getByRole('button', { name: '二次確認並發布' }));
+    expect(publish).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: '二次確認並發布' }));
+    expect(confirmation).toHaveBeenCalledTimes(2);
     await waitFor(() => {
       expect(publish).toHaveBeenCalledWith(
         expect.objectContaining({ reason: '第三章教學內容語意更新' }),
@@ -360,6 +368,74 @@ describe('Content Studio operator workflows', () => {
       expect(rollback).toHaveBeenCalledWith(
         expect.objectContaining({ targetVersion: 1 }),
       );
+    });
+  });
+
+  it('locks an unknown publication and replays the same command receipt', async () => {
+    const user = userEvent.setup();
+    const publish = vi
+      .fn<ContentPublicationRepository['publish']>()
+      .mockRejectedValue(new Error('NETWORK_RESULT_UNKNOWN'));
+    const repository = {
+      archive: vi.fn(),
+      listHistory: vi.fn().mockResolvedValue({
+        outcome: 'ok',
+        requestId: REQUEST_ID,
+        entityId: ENTITY_ID,
+        entityType: 'review_card',
+        entries: [],
+      }),
+      previewPublish: vi.fn().mockResolvedValue({
+        outcome: 'ok',
+        requestId: REQUEST_ID,
+        draftId: DRAFT_ID,
+        entityType: 'review_card',
+        changeClassification: 'semantic',
+        changedFields: ['content'],
+        currentVersion: 3,
+        nextVersion: 4,
+        impact: 'requires_recompletion',
+        stableCode: 'RC3101',
+      }),
+      previewArchive: vi.fn(),
+      publish,
+      rollback: vi.fn(),
+    } satisfies ContentPublicationRepository;
+    const onChanged = vi.fn();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(
+      <ContentPublicationWorkflow
+        mode="publication"
+        editorState={editorState}
+        onChanged={onChanged}
+        repository={repository}
+        selected={selected}
+      />,
+      { wrapper: Wrapper },
+    );
+    await user.click(screen.getByRole('button', { name: '預覽發布影響' }));
+    await user.type(
+      screen.getByLabelText(/操作原因/),
+      '第三章教學內容語意更新',
+    );
+    await user.click(screen.getByRole('checkbox', { name: /核對版本差異/ }));
+    await user.click(screen.getByRole('button', { name: '二次確認並發布' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('操作結果未知');
+    expect(screen.getByLabelText(/操作原因/)).toBeDisabled();
+    expect(screen.getByLabelText('內容變更分類')).toBeDisabled();
+    expect(
+      screen.getByRole('checkbox', { name: /核對版本差異/ }),
+    ).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: '二次確認並發布' }));
+    await waitFor(() => {
+      expect(publish).toHaveBeenCalledTimes(2);
+    });
+    expect(publish.mock.calls[1]?.[0]).toEqual(publish.mock.calls[0]?.[0]);
+    await user.click(
+      screen.getByRole('button', { name: '重新載入並核對版本歷史' }),
+    );
+    await waitFor(() => {
+      expect(onChanged).toHaveBeenCalledOnce();
     });
   });
 

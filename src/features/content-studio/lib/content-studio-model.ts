@@ -19,10 +19,10 @@ export type ContentStudioItem = Readonly<{
 }>;
 
 export const CONTENT_ENTITY_LABELS: Record<ContentEntityType, string> = {
-  assessment_bank: '測驗題庫',
+  assessment_bank: '題目集合',
   chapter: '章節',
   course: '課程',
-  question: '測驗題目',
+  question: '單選題',
   review_card: '複習卡',
   section: '小節',
   subtopic: '子主題',

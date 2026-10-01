@@ -11,6 +11,7 @@ import {
 } from '../api/content-media-repository';
 import type {
   ContentEditorState,
+  ContentCatalog,
   ContentEntityType,
   ContentScope,
 } from '../api/contracts';
@@ -24,10 +25,12 @@ import {
   ENTITY_TYPES,
   type EditorValues,
   nextStableCode,
+  newHierarchyOrder,
   payloadFromValues,
   valuesFromState,
 } from './content-editor-form-model';
 import { ContentEditorMediaField } from './content-editor-media-field';
+import { ContentEditorScopeFields } from './content-editor-scope-fields';
 import {
   ContentEditorActions,
   ContentEditorFeedback,
@@ -36,9 +39,11 @@ import {
 
 export function ContentEditorForm({
   allItems,
+  catalog,
   item,
   mediaRepository = createContentMediaRepository(),
   onCancel,
+  onChapterChange,
   onCreated,
   onDirtyChange,
   onNewTypeChange,
@@ -49,9 +54,11 @@ export function ContentEditorForm({
   state,
 }: Readonly<{
   allItems: readonly ContentStudioItem[];
+  catalog: ContentCatalog;
   item: ContentStudioItem;
   mediaRepository?: ContentMediaRepository | undefined;
   onCancel: () => void;
+  onChapterChange: (chapterId: string) => void;
   onCreated: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onNewTypeChange: (entityType: ContentEntityType) => void;
@@ -76,10 +83,14 @@ export function ContentEditorForm({
   );
   const saveRequest = useRef<{ id: string; signature: string } | null>(null);
   const uploadRequest = useRef<string | null>(null);
-  const initialValues = useMemo(
-    () => valuesFromState(item, state, scope),
-    [item, scope, state],
-  );
+  const initialValues = useMemo(() => {
+    const initial = valuesFromState(item, state, scope);
+    const order = isNew
+      ? newHierarchyOrder(item.entityType, scope, catalog, initial.sectionId)
+      : null;
+    if (order !== null) initial.sortOrder = order;
+    return initial;
+  }, [catalog, isNew, item, scope, state]);
   const {
     control,
     formState: { errors, isDirty },
@@ -95,25 +106,6 @@ export function ContentEditorForm({
     control,
     defaultValue: initialValues,
   }) as EditorValues;
-  const sections = scope.sections;
-  const subtopics =
-    sections.find((section) => section.sectionId === values.sectionId)
-      ?.subtopics ?? [];
-  const allBanks = [
-    ...scope.chapterBanks,
-    ...sections.flatMap((section) => section.banks),
-  ];
-  const eligibleBanks = allBanks.filter(
-    (bank) =>
-      bank.kind === values.kind &&
-      (bank.kind === 'CR' ||
-        sections.some(
-          (section) =>
-            section.sectionId === values.sectionId &&
-            section.banks.some((entry) => entry.bankId === bank.bankId),
-        )),
-  );
-
   useEffect(() => {
     onDirtyChange(isDirty);
     return () => {
@@ -312,7 +304,6 @@ export function ContentEditorForm({
           >
             <ArrowLeft aria-hidden="true" /> 返回清單
           </button>
-          <span>{CONTENT_ENTITY_LABELS[item.entityType]}</span>
           <h2>{heading}</h2>
         </div>
         <span className={`content-status content-status--${item.status}`}>
@@ -353,119 +344,15 @@ export function ContentEditorForm({
         </label>
       )}
 
-      <div className="content-editor__scope-grid">
-        {item.entityType === 'chapter' ? (
-          <label>
-            所屬課程
-            <select aria-label="所屬課程" {...register('parentId')}>
-              <option value={scope.course.courseId}>
-                {scope.course.title}
-              </option>
-            </select>
-          </label>
-        ) : null}
-        {!['course', 'chapter'].includes(item.entityType) ? (
-          <label>
-            章節
-            <select aria-label="章節" value={scope.chapter.chapterId} disabled>
-              <option value={scope.chapter.chapterId}>
-                第 {scope.chapter.sortOrder} 章・{scope.chapter.title}
-              </option>
-            </select>
-          </label>
-        ) : null}
-        {['subtopic', 'review_card', 'assessment_bank', 'question'].includes(
-          item.entityType,
-        ) &&
-        !(item.entityType === 'assessment_bank' && values.kind === 'CR') ? (
-          <label>
-            小節
-            <select
-              aria-label="小節"
-              value={values.sectionId}
-              onChange={(event) => {
-                const sectionId = event.target.value;
-                const section = sections.find(
-                  (entry) => entry.sectionId === sectionId,
-                );
-                setValue('sectionId', sectionId, { shouldDirty: true });
-                setValue(
-                  'subtopicId',
-                  section?.subtopics.at(0)?.subtopicId ?? '',
-                  {
-                    shouldDirty: true,
-                  },
-                );
-                const bank = section?.banks.find(
-                  (entry) => entry.kind === values.kind,
-                );
-                if (bank)
-                  setValue('bankId', bank.bankId, { shouldDirty: true });
-              }}
-            >
-              {sections.map((section) => (
-                <option key={section.sectionId} value={section.sectionId}>
-                  {section.title}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
-        {item.entityType === 'review_card' ? (
-          <label>
-            子主題
-            <select aria-label="子主題" {...register('subtopicId')}>
-              {subtopics.map((subtopic) => (
-                <option key={subtopic.subtopicId} value={subtopic.subtopicId}>
-                  {subtopic.title}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
-        {item.entityType === 'assessment_bank' ||
-        item.entityType === 'question' ? (
-          <label>
-            題庫類型
-            <select
-              {...register('kind')}
-              onChange={(event) => {
-                const kind = event.target.value as 'QB' | 'CR' | 'LT';
-                setValue('kind', kind, { shouldDirty: true });
-                const nextBank = allBanks.find(
-                  (bank) =>
-                    bank.kind === kind &&
-                    (kind === 'CR' ||
-                      sections
-                        .find(
-                          (section) => section.sectionId === values.sectionId,
-                        )
-                        ?.banks.some((entry) => entry.bankId === bank.bankId)),
-                );
-                if (nextBank)
-                  setValue('bankId', nextBank.bankId, { shouldDirty: true });
-              }}
-            >
-              <option value="QB">QB 小節題庫</option>
-              <option value="LT">LT Live 題庫</option>
-              <option value="CR">CR 章節總題庫</option>
-            </select>
-          </label>
-        ) : null}
-        {item.entityType === 'question' ? (
-          <label>
-            題庫
-            <select aria-label="題庫" {...register('bankId')}>
-              {eligibleBanks.map((bank) => (
-                <option key={bank.bankId} value={bank.bankId}>
-                  {bank.title}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
-      </div>
-
+      <ContentEditorScopeFields
+        catalog={catalog}
+        item={item}
+        onChapterChange={onChapterChange}
+        register={register}
+        scope={scope}
+        setValue={setValue}
+        values={values}
+      />
       <div className="content-editor__identity-grid">
         <label>
           穩定代碼
@@ -525,6 +412,10 @@ export function ContentEditorForm({
           <label>
             群組標籤
             <input {...register('groupLabel')} />
+            <span>
+              學生端優先顯示此標籤；留白時顯示「標題」。目前學生主標題：
+              {values.groupLabel || values.title || '（尚未輸入）'}
+            </span>
           </label>
           <label>
             複習卡內容

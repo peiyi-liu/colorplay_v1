@@ -3,6 +3,7 @@
 - Status: **Accepted（owner 2026-08-29 裁定；2026-09-02 rebaseline 保留）**
 - Accepted: 2026-08-29
 - Reconfirmed: 2026-09-02
+- MFA timing superseded: 2026-10-01 ADR 0011；改採登入 MFA＋20 分鐘閒置，既有 command receipt 與 audit 不變。
 - Supersedes: ADR 0003 中僅限「教師帳號建立與密碼復原」的細節；學生註冊、
   Email OTP 與自助密碼重設不變。
 - Related: `spec/03-data-model-and-rls.md`, `spec/04-security-and-privacy.md`,

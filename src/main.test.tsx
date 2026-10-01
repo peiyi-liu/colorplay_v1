@@ -21,7 +21,9 @@ describe('application bootstrap', () => {
       await import('./main');
     });
 
-    expect(screen.getByRole('heading', { name: 'ColorPlay' })).toBeVisible();
+    expect(
+      await screen.findByRole('heading', { name: 'ColorPlay' }),
+    ).toBeVisible();
   });
 
   it('fails with a stable error when the application root is missing', async () => {

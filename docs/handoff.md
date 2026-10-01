@@ -2047,3 +2047,18 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - 第二輪 CI 的 `unit-coverage` 只剩 catalog contract 舊的 69-resource 數量斷言；已更新為 70，focused 4／4 PASS。`chromium-e2e` 28 項中 27 PASS，唯一失敗是 `auth-guards` 仍假設 sessionStorage 只有舊的固定 token key。
 - Auth storage contract 改驗 tab ID 與 tab-scoped session key，並在舊 session 搬移完成後移除 legacy token key，避免同一 token 留兩份。browser-client／catalog 13／13 unit tests、production build 與真實 Local Supabase `auth-guards` Chromium 1／1 PASS。下一步：推送最後 remediation，等 PR #70 全綠後合併 Staging。
+
+## 2026-10-01 [Codex] — Admin active-session 與 Content Studio 發布／歷史修正候選
+
+- Owner 核准完整修正並部署 Staging；基線為 `origin/staging@bad7fee6d29a7f165e55a24937b29b816f2f2b4f`，唯一工作 checkout 為 `.worktrees/admin-session-content-fixes`／`codex/admin-content-workflow-fixes`。登入仍需 MFA；ADR 0011 明確取代操作中 5／10 分鐘 fresh-MFA，保留伺服器 session／identity／factor／20 分鐘 idle 授權。前端活動含 nested scroll，最後實際活動 bounded touch；失效時登出，錯誤登入驗證碼不觸發登出訊號。
+- 已登入 `/` 依角色導向正式入口。Admin 側欄支援 hover／focus 暫展與固定開／關。Content Studio 清單排除封存、新增不受清單篩選限制、`題目集合`／`單選題` 分開命名；發布直接列跨章待發布草稿、差異與進度影響、兩次確認；歷史直接列內容及封存並提供 immutable payload。單課程顯示固定課程說明；已發布內容跨父層搬移仍禁止，需在新位置新增再封存舊內容。
+- 唯讀核對 Staging：學生 chapter map 與 Admin catalog 都讀 `chapters.title`，RC 主要標題為 `group_label || title`；內容已在 courses／chapters／sections／subtopics／review_cards／assessment_banks／questions，不建立第二套資料庫、不擅改章名。Staging 現有六章名與 Owner 截圖一致；第三章有 38 cards，其餘章尚無 cards。
+- Local `test:db` 完整 PASS：94 files／2260 pgTAP assertions、runtime 3／3、Admin MFA integration 17／17、其餘 integration 26／26；Admin browser harness 17／17（視口、日夜、overflow、200% zoom、hover／pin）。lint／typecheck／build 與 scoped Vitest 通過，最後新增 auth-signal／queue-wire／stable-code collision regression 正在收尾重驗。當日 Local Realtime 分區缺失已只在 Local 補空分區，沒有改 Hosted 或放寬產品 assertion。
+- Hosted dry-run ledger 無分叉，pending 恰好一份 `20261001000100_admin_active_session_content_queue.sql`；目前 Hosted 未寫入。下一步：一位 reviewer 一輪審查、修正確認問題、PR required checks 與 exact-SHA owner approval 通過，再套用唯一 Staging migration、正常合併 `staging`、確認 Vercel alias 與 release SHA。Production 禁止觸碰；本記錄不是 Phase 2 全平台驗收 PASS。
+
+## 2026-10-01 [Codex] — 唯一 review finding 已修正，準備 Staging PR
+
+- `80292243f661ed013bb52bbb272e62e6432500e8` 一位 reviewer 一輪查 Standards／Spec／Security：Standards 0；Spec／Security 同一項 unknown-result idempotency finding。已凍結 pending／unknown 操作的分類、原因、確認與目標，僅原參數＋原 requestId 可重播；權威 history 成功後才刷新選擇。新增 regression 確認欄位鎖定、兩次 command 完全相同與 history refresh，focused 9／9 PASS，無需第二輪 review。
+- 最後 scoped unit 46 files／376 tests、lint／typecheck PASS；完整格式與 document manifest check PASS。規格 supersession 改變 sensitivity catalog 的 source hash，正常生成器只更新 JSON source hash，不改舊 migrations。Bootstrap 測試等待實際匿名入口（保留原 heading assertion）。
+- 額外 full coverage 在沙箱中因 TCP listen EPERM 停止；相應四份合約測試移到允許本機監聽環境後 20／20 PASS。完整 coverage 的高並行 shell 測試另有 timeout，不能宣稱完整 coverage PASS；以 protected GitHub Linux CI 判定，任何真正產品 assertion failure 必須修正，不 skip、不降低 thresholds。
+- 下一步為 exact-head PR、required CI、owner approval、唯一 Staging migration 與正常合併部署；不得繞過 protected gates，Production 未觸碰。

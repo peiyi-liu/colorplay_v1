@@ -177,6 +177,7 @@ export function createContentPublicationRepository(
           reason: entry.reason,
           version: entry.version,
           versionId: entry.version_id,
+          ...(entry.payload !== undefined ? { payload: entry.payload } : {}),
         })),
         entityId: parsed.data.entity_id,
         entityType: parsed.data.entity_type,
