@@ -2075,3 +2075,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 交接最後補驗確認：滑鼠點過導覽連結後，focus 仍在 nav，原 `navFocused` 會讓 hover-auto 模式移開後仍展開。新增 unit RED 明確重現；pointerleave 同時清除 hover／focus 展開狀態，固定 open／closed 模式不受影響，鍵盤仍能 focus 展開。
 - 這是 S 級一行 UI bug fix，非新的架構／安全變更，不新增第二輪 review、沒有 migration／Hosted DB mutation。Scoped lint／typecheck／12 AdminShell tests PASS；真實 Chromium focused harness 加入點擊內容工作台後滑鼠移開、固定開關與發布歷史，1／1 PASS。
 - 已部署 PR #71 的發布收據保持原 SHA；下一步另以極小 follow-up PR 的 required checks 與 exact-SHA approval 正常更新 Staging。前段「不觸發第二次部署」僅指 closeout 文件本身，這個實際 bug fix 需要新版部署。
+
+## 2026-10-01 [Codex] — Final sidebar follow-up Staging delivery verified
+
+- PR #72 正常合併，candidate `0264c8871b6f9d0574ebabdfdbc993e623da6211`、最終 merge／deployed SHA `7418740e64a856ecfa064f326d99a4c0dbd28164`。CI `36820050356` 所有 required checks PASS，unit 2188／2188，DB／Chromium 維持全綠；exact-SHA approval `36820103205` PASS。這是 S 級一行 UI 邊界修正，沒有第二份 migration，也未更動 Hosted DB。
+- 取消已被取代、僅停在真人裝置 gate 的 `cb941c6` deploy run `36818968673` 以解除同一部署鎖，不偽造真人 PASS。最終 run `36820761071` deploy-exact-sha／read-only-smoke PASS；正式 Staging `/admin-release.json` 已驗證 `{environment:staging,revision:7418740e64a856ecfa064f326d99a4c0dbd28164}`；auth artifact `11143286386` 存在。完整自動 phase acceptance／真人裝置 gate 不冒稱完成，Owner 可開始實測。
+- 本次功能修正全部已在 Staging。下一步：Owner 重新登入 `/admin/content`，先確認「發布」直接列草稿，以及點側欄連結後滑鼠移開仍收合。發布收據同步 PR #72；這最後 closeout 僅作本機文件提交，不再觸發 Staging 部署。Production 正式 alias／DB 未變更。
