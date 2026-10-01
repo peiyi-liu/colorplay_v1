@@ -298,6 +298,10 @@ test('admin navigation hover and pin modes match the content workflow', async ({
   await page.getByRole('heading', { name: '內容工作台' }).hover();
   await expect(shell).toHaveClass(/admin-shell--nav-collapsed/u);
   await nav.hover();
+  await page.getByRole('link', { name: '內容工作台', exact: true }).click();
+  await page.getByRole('heading', { name: '內容工作台' }).hover();
+  await expect(shell).toHaveClass(/admin-shell--nav-collapsed/u);
+  await nav.hover();
   await page.getByRole('button', { name: '固定展開導覽' }).click();
   await page.getByRole('heading', { name: '內容工作台' }).hover();
   await expect(shell).not.toHaveClass(/admin-shell--nav-collapsed/u);

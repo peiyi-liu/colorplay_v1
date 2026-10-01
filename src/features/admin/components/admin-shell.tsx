@@ -188,6 +188,7 @@ export function AdminShell(): ReactElement {
       }}
       onPointerLeave={() => {
         setNavHovered(false);
+        setNavFocused(false);
       }}
       onFocus={() => {
         setNavFocused(true);

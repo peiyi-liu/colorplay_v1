@@ -197,6 +197,19 @@ describe('AdminShell', () => {
     ).toBeVisible();
   });
 
+  it('collapses after leaving a mouse-selected navigation link', async () => {
+    const user = userEvent.setup();
+    stubWide(true);
+    renderShell('/admin');
+    const nav = screen.getByRole('navigation', { name: '管理主控台導覽' });
+    fireEvent.pointerEnter(nav);
+    await user.click(screen.getByRole('link', { name: '教師帳號' }));
+    fireEvent.pointerLeave(nav);
+    expect(document.querySelector('.admin-shell')).toHaveClass(
+      'admin-shell--nav-collapsed',
+    );
+  });
+
   it('lets a wide-screen operator collapse and reopen the sidebar', async () => {
     const user = userEvent.setup();
     stubWide(true);
