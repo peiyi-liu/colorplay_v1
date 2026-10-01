@@ -427,12 +427,16 @@ describe('Content Studio operator workflows', () => {
       screen.getByRole('checkbox', { name: /核對版本差異/ }),
     ).toBeDisabled();
     await user.click(screen.getByRole('button', { name: '二次確認並發布' }));
-    await waitFor(() => { expect(publish).toHaveBeenCalledTimes(2); });
+    await waitFor(() => {
+      expect(publish).toHaveBeenCalledTimes(2);
+    });
     expect(publish.mock.calls[1]?.[0]).toEqual(publish.mock.calls[0]?.[0]);
     await user.click(
       screen.getByRole('button', { name: '重新載入並核對版本歷史' }),
     );
-    await waitFor(() => { expect(onChanged).toHaveBeenCalledOnce(); });
+    await waitFor(() => {
+      expect(onChanged).toHaveBeenCalledOnce();
+    });
   });
 
   it('renders a revision conflict without sending a publish command', async () => {
