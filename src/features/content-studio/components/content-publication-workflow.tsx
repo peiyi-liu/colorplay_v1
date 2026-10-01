@@ -75,6 +75,15 @@ export function ContentPublicationWorkflow({
       if (!entityId || !entityType) throw new Error('ENTITY_REQUIRED');
       return repository.listHistory({ entityId, entityType });
     },
+    onSuccess: (result) => {
+      // Refresh authoritative content before leaving an unknown command state.
+      // Until then, only an unchanged replay of the original receipt is safe.
+      if (
+        result.outcome === 'ok' &&
+        (publish.isError || archive.isError || rollback.isError)
+      )
+        onChanged();
+    },
   });
   const loadHistory = history.mutate;
   useEffect(() => {
@@ -163,6 +172,10 @@ export function ContentPublicationWorkflow({
     [currentVersion, historyEntries],
   );
   const reasonReady = reason.trim().length >= 10;
+  const commandPending =
+    publish.isPending || archive.isPending || rollback.isPending;
+  const commandUnknown = publish.isError || archive.isError || rollback.isError;
+  const commandLocked = commandPending || commandUnknown;
   const denied =
     [
       preview.data,
@@ -237,14 +250,18 @@ export function ContentPublicationWorkflow({
         </button>
         <button
           className="secondary-action"
-          hidden={mode === 'publication'}
-          disabled={!entityId || history.isPending}
+          hidden={mode === 'publication' && !commandUnknown}
+          disabled={!entityId || history.isPending || commandPending}
           onClick={() => {
             history.mutate();
           }}
           type="button"
         >
-          {history.isPending ? '載入歷史中…' : '查看版本歷史'}
+          {history.isPending
+            ? '載入歷史中…'
+            : commandUnknown
+              ? '重新載入並核對版本歷史'
+              : '查看版本歷史'}
         </button>
       </div>
 
@@ -283,6 +300,7 @@ export function ContentPublicationWorkflow({
           <label hidden={mode === 'history'}>
             內容變更分類
             <select
+              disabled={commandLocked}
               value={changeClassification}
               onChange={(event) => {
                 setChangeClassification(
@@ -301,6 +319,7 @@ export function ContentPublicationWorkflow({
           <label>
             操作原因（至少 10 字）
             <textarea
+              disabled={commandLocked}
               rows={3}
               value={reason}
               onChange={(event) => {
@@ -313,6 +332,7 @@ export function ContentPublicationWorkflow({
           </label>
           <label className="content-workflow__confirm">
             <input
+              disabled={commandLocked}
               checked={confirmed}
               onChange={(event) => {
                 setConfirmed(event.target.checked);
@@ -331,7 +351,9 @@ export function ContentPublicationWorkflow({
                 preview.data.changeClassification !== changeClassification ||
                 !reasonReady ||
                 !confirmed ||
-                publish.isPending
+                commandPending ||
+                archive.isError ||
+                rollback.isError
               }
               onClick={() => {
                 if (
@@ -359,7 +381,9 @@ export function ContentPublicationWorkflow({
                 archivePreview.data.currentVersion !== currentVersion ||
                 !reasonReady ||
                 !confirmed ||
-                archive.isPending
+                commandPending ||
+                publish.isError ||
+                rollback.isError
               }
               onClick={() => {
                 if (
@@ -410,6 +434,7 @@ export function ContentPublicationWorkflow({
               <label>
                 回復來源版本
                 <select
+                  disabled={commandLocked}
                   value={rollbackVersion}
                   onChange={(event) => {
                     setRollbackVersion(event.target.value);
@@ -429,7 +454,9 @@ export function ContentPublicationWorkflow({
                   rollbackVersion === '' ||
                   !reasonReady ||
                   !confirmed ||
-                  rollback.isPending
+                  commandPending ||
+                  publish.isError ||
+                  archive.isError
                 }
                 onClick={() => {
                   if (
@@ -458,7 +485,7 @@ export function ContentPublicationWorkflow({
       ) : null}
       {publish.isError || archive.isError || rollback.isError ? (
         <p role="alert">
-          操作結果未知；請先重新載入版本歷史，確認後再決定是否重送。
+          操作結果未知；操作內容已鎖定。請先重新載入版本歷史，或以相同內容與原請求編號重送，不會建立第二筆操作。
         </p>
       ) : null}
       {completed?.outcome === 'ok' ? (
