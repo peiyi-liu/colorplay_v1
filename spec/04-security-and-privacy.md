@@ -39,6 +39,8 @@
 
 - 登入 Admin 時仍必須完成 MFA；所有 Admin 讀取與命令仍驗證 active identity、
   Auth session 與綁定 factor，不以 UI 操作作為授權依據。
+- 新 Auth 登入尚未完成本次 MFA 時，狀態為 `mfa_required`，導向 MFA 而非登出；
+  同一 Auth 登入曾取得特權但已逾時或撤銷時仍為 `stale`，必須結束登入。
 - 完成登入後，只依真正操作的閒置時間計算 20 分鐘逾時，不再依距離上次 TOTP
   的 5／10 分鐘或固定絕對時限中斷持續操作。
 - 伺服器拒絕閒置達 20 分鐘、撤銷或綁定失效的連線；client 結束登入，回登入頁，

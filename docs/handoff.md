@@ -2081,3 +2081,17 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - PR #72 正常合併，candidate `0264c8871b6f9d0574ebabdfdbc993e623da6211`、最終 merge／deployed SHA `7418740e64a856ecfa064f326d99a4c0dbd28164`。CI `36820050356` 所有 required checks PASS，unit 2188／2188，DB／Chromium 維持全綠；exact-SHA approval `36820103205` PASS。這是 S 級一行 UI 邊界修正，沒有第二份 migration，也未更動 Hosted DB。
 - 取消已被取代、僅停在真人裝置 gate 的 `cb941c6` deploy run `36818968673` 以解除同一部署鎖，不偽造真人 PASS。最終 run `36820761071` deploy-exact-sha／read-only-smoke PASS；正式 Staging `/admin-release.json` 已驗證 `{environment:staging,revision:7418740e64a856ecfa064f326d99a4c0dbd28164}`；auth artifact `11143286386` 存在。完整自動 phase acceptance／真人裝置 gate 不冒稱完成，Owner 可開始實測。
 - 本次功能修正全部已在 Staging。下一步：Owner 重新登入 `/admin/content`，先確認「發布」直接列草稿，以及點側欄連結後滑鼠移開仍收合。發布收據同步 PR #72；這最後 closeout 僅作本機文件提交，不再觸發 Staging 部署。Production 正式 alias／DB 未變更。
+
+## 2026-10-02 [Codex] — Admin 新登入被 stale guard 登出：唯讀診斷
+
+- 做了什麼：Owner 回報帳密登入後顯示歡迎、未進 MFA 即返回登入。Live Staging marker 與 GitHub staging 均為 `7418740e64a856ecfa064f326d99a4c0dbd28164`。現有 4 個 focused test files／43 tests PASS，但既有 stale guard 測試正是要求直接 signOut；未覆蓋新登入的跨層情境。
+- 確認原因：Hosted `get_admin_session_state()` 對 active identity、尚未取得本次 privileged session 的登入回傳 stale；`RequirePrivilegedSession` 將所有 stale 交給 `AdminExpiredSession` 登出。Staging READ ONLY transaction 模擬新 JWT session context，回應 `{state:stale}` 後 ROLLBACK，沒有更改帳號、資料或真實登入。這確認可重現的登入迴圈機制，不冒稱取得 Owner 瀏覽器 request；可用 browser tools 均只有 about:blank。
+- 下一步：需分清「新登入尚待 MFA」與「同一特權連線已過期」，前者進 challenge，後者按 20 分鐘閒置契約登出，並補跨層回歸測試。不可放寬後端授權或讓 activity 復活過期連線。
+- Blocker／待決策：本回合僅詢問原因，尚未核准修復／Hosted mutation／部署；產品程式碼與 Hosted 狀態未修改，僅追加本機交接紀錄。
+
+## 2026-10-02 [Codex] — Owner 核准 MFA 重新登入修復與 Staging 發布
+
+- 做了什麼：Owner 明確核准「修復並推上 staging」。新 migration `20261002000100_admin_relogin_mfa_state.sql` 僅改唯讀狀態 RPC：active Admin 的新 Auth login 尚無同登入特權紀錄時回 `mfa_required`；同登入已失效／撤銷紀錄仍 stale 登出。20 分鐘閒置、factor binding、receipt 與實際資料授權 gate 不改。
+- 驗證：pgTAP 新登入 RED（stale ≠ mfa_required）→ GREEN；focused DB 59 assertions、Admin/Auth/router 453 unit tests、真實 Local Auth/MFA flow 6 tests PASS；Chromium 重新登入完整路徑及非 Admin 拒絕 3 tests PASS。一次 combined Standards/Spec/Security review 0 findings。lint/typecheck/build PASS；不保存 MFA 畫面截圖／trace／video。
+- 限制：重用 Local stack 的完整 pgTAP 有 018／050／052／067 失敗，全域 fixture 筆數受既有 integration 資料影響，完整 DB PASS 必須由 clean CI 確認；沒有改無關測試或跳過 assertion。Browser enrollment journey 首跑在新增重登入導致歷史連線多一列時失敗，定位撤銷操作改為精準選取未撤銷列；focused login regression 隨後 PASS，不冒稱整段 security journey 全綠。
+- 下一步：建立 bounded PR，required checks／exact SHA approval → 只套用唯一待推 migration → 合併至 Staging → 驗證正式 marker 與 hosted fresh-login state。dry-run 已確認只有該 migration；Production 不在範圍。
