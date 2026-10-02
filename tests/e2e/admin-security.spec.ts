@@ -4,7 +4,11 @@ import { expect, test, type Page } from '@playwright/test';
 import * as OTPAuth from 'otpauth';
 
 import { TEST_USERS } from '../fixtures/users';
-import { challengeAdmin, saveAdminTotpSecret } from './helpers/admin';
+import {
+  challengeAdmin,
+  readAdminTotpSecret,
+  saveAdminTotpSecret,
+} from './helpers/admin';
 import { signInStudent, signInTeacher } from './helpers/auth';
 
 async function signInAdmin(
@@ -104,6 +108,23 @@ test('admin security journey: enroll, challenge, browse, reveal, audit, and sess
       ).toBeVisible();
     });
 
+    await test.step('2a. 登出後重新登入 → MFA → 管理總覽，不再返回帳密登入', async () => {
+      await primaryPage
+        .getByRole('button', { name: '登出', exact: true })
+        .click();
+      await expect(primaryPage).toHaveURL(/\/login$/u);
+      await signInAdmin(primaryPage, TEST_USERS.adminPrimary);
+      await expect(primaryPage).toHaveURL(/\/admin\/mfa\/challenge$/u);
+      await expect(
+        primaryPage.locator('#admin-mfa-challenge-code'),
+      ).toBeVisible();
+      await challengeAdmin(primaryPage, primarySecret);
+      await expect(primaryPage).toHaveURL(/\/admin$/u);
+      await expect(
+        primaryPage.getByRole('heading', { name: '安全總覽' }),
+      ).toBeVisible();
+    });
+
     await test.step('3. Browser：列表出現，personal 欄（full_name）遮罩', async () => {
       await primaryPage.goto('/admin/data/users/profiles');
       await filterProfilesToAdminRole(primaryPage);
@@ -162,7 +183,7 @@ test('admin security journey: enroll, challenge, browse, reveal, audit, and sess
       await expect(primaryPage.getByText('下載')).toHaveCount(0);
     });
 
-    await test.step('6. Timeout/restore：secondary 撤銷 primary，primary 被導去 challenge，challenge 後回到原頁', async () => {
+    await test.step('6. 撤銷特權連線 → 強制登出 → 重新登入並完成 MFA', async () => {
       const secondaryContext = await browser.newContext({
         userAgent: SECONDARY_USER_AGENT,
       });
@@ -178,7 +199,13 @@ test('admin security journey: enroll, challenge, browse, reveal, audit, and sess
         await secondaryPage.goto('/admin/access/sessions');
         const primaryRow = secondaryPage
           .locator('table[aria-label="特權連線"] tbody tr')
-          .filter({ hasText: PRIMARY_USER_AGENT });
+          .filter({ hasText: PRIMARY_USER_AGENT })
+          .filter({
+            has: secondaryPage.getByRole('button', {
+              name: '撤銷',
+              exact: true,
+            }),
+          });
         await expect(primaryRow).toHaveCount(1);
         await primaryRow.getByRole('button', { name: '撤銷' }).click();
 
@@ -196,11 +223,15 @@ test('admin security journey: enroll, challenge, browse, reveal, audit, and sess
       // 撤銷發生在 primary 頁面「背後」——sessionStorage 60 秒輪詢太慢，
       // 用整頁重新整理強制 useAdminSessionState 重新掛載並立刻 refetch
       // （staleTime 預設 0），才會在同一次導覽判定裡就被 RequirePrivilegedSession
-      // 導去 challenge，而不必等到下一次輪詢視窗。
+      // 結束登入，而不必等到下一次輪詢視窗。
       const returnToPath = new URL(primaryPage.url()).pathname;
       await primaryPage.reload();
-      await primaryPage.waitForURL(/\/admin\/mfa\/challenge$/u);
+      await primaryPage.waitForURL(/\/login$/u);
+      await signInAdmin(primaryPage, TEST_USERS.adminPrimary);
+      await expect(primaryPage).toHaveURL(/\/admin\/mfa\/challenge$/u);
       await challengeAdmin(primaryPage, primarySecret);
+      await expect(primaryPage).toHaveURL(/\/admin$/u);
+      await primaryPage.goto(returnToPath);
       await primaryPage.waitForURL(
         new RegExp(`${returnToPath.replaceAll('/', String.raw`\/`)}$`, 'u'),
       );
@@ -248,6 +279,30 @@ test('admin security journey: enroll, challenge, browse, reveal, audit, and sess
   } finally {
     await primaryContext.close();
   }
+});
+
+// Reuses the verified local fixture factor from the enrollment journey above.
+test('admin password re-login reaches MFA and returns to the protected workspace', async ({
+  page,
+}) => {
+  const secret = await readAdminTotpSecret('adminPrimary');
+  await signInAdmin(page, TEST_USERS.adminPrimary);
+  await expect(page).toHaveURL(/\/admin\/mfa\/challenge$/u);
+  await expect(page.locator('#admin-mfa-challenge-code')).toBeVisible();
+  await challengeAdmin(page, secret);
+  await expect(page).toHaveURL(/\/admin$/u);
+  await expect(page.getByRole('heading', { name: '安全總覽' })).toBeVisible();
+
+  await page.getByRole('button', { name: '登出', exact: true }).click();
+  await expect(page).toHaveURL(/\/login$/u);
+  await signInAdmin(page, TEST_USERS.adminPrimary);
+  await expect(page).toHaveURL(/\/admin\/mfa\/challenge$/u);
+  await challengeAdmin(page, secret);
+  await expect(page).toHaveURL(/\/admin$/u);
+  await page.goto('/admin/content');
+  await expect(
+    page.getByRole('heading', { name: '內容工作台', exact: true }),
+  ).toBeVisible();
 });
 
 // 獨立於上面的旅程，不需要任何前置 admin 狀態：一般教師直接開 /admin

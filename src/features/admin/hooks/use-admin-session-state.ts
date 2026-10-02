@@ -14,6 +14,7 @@ const sessionStateSchema = z.object({
   state: z.enum([
     'privileged',
     'pending_mfa',
+    'mfa_required',
     'recovery_pending',
     'deactivated',
     'none',

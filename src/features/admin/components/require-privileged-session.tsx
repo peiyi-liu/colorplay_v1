@@ -19,8 +19,8 @@ export function RequirePrivilegedSession() {
   if (session.state === 'privileged') return <Outlet />;
   if (session.state === 'stale') return <AdminExpiredSession />;
 
-  // stale/none/recovery_pending/deactivated:導向 challenge 並保留
-  // return intent(spec §3.3);challenge 成功與否仍由伺服端裁決
+  // mfa_required 是本次 Auth 登入尚未完成 MFA，不是已失效的特權連線。
+  // 其餘非 privileged 狀態保留 return intent；授權仍由伺服端裁決。
   return (
     <Navigate
       replace

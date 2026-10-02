@@ -116,6 +116,31 @@ describe('admin-mfa edge flow', () => {
     expect((state.data as { state: string }).state).toBe('privileged');
   });
 
+  it('a password re-login requires MFA again and becomes privileged only after verification', async () => {
+    await client.auth.signOut({ scope: 'local' });
+    const login = await client.auth.signInWithPassword({ email, password });
+    expect(login.error).toBeNull();
+    accessToken = requireValue(
+      login.data.session,
+      're-login session',
+    ).access_token;
+    const awaitingMfa = await client.rpc('get_admin_session_state');
+    expect(awaitingMfa.error).toBeNull();
+    expect(awaitingMfa.data).toEqual({ state: 'mfa_required' });
+    const protectedContent = await client.rpc('admin_list_content_catalog');
+    expect(
+      asStr((protectedContent.data as Record<string, unknown> | null)?.code),
+    ).toBe('STALE_PRIVILEGED_SESSION');
+    const code = new OTPAuth.TOTP({ digits: 6, period: 30, secret }).generate();
+    const challenge = await invokeMfa({ action: 'challenge', factorId, code });
+    expect(asStr(challenge.json.outcome)).toBe('ok');
+    const verified = await client.rpc('get_admin_session_state');
+    expect(verified.error).toBeNull();
+    expect(
+      asStr((verified.data as Record<string, unknown> | null)?.state),
+    ).toBe('privileged');
+  });
+
   it('direct GoTrue verify alone never yields a privileged session', async () => {
     // spec §5.3:連 service_role 都不能直接寫 admin_sessions(僅 svc
     // functions 可寫)——先把這個邊界變成正向斷言,再走合法 service path
