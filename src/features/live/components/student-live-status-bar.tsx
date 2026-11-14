@@ -30,7 +30,12 @@ function CountdownRing({ state }: Readonly<{ state: LiveSessionState }>) {
       role="timer"
     >
       <svg aria-hidden="true" viewBox="0 0 48 48">
-        <circle className="live-student-countdown__track" cx="24" cy="24" r={radius} />
+        <circle
+          className="live-student-countdown__track"
+          cx="24"
+          cy="24"
+          r={radius}
+        />
         <circle
           className="live-student-countdown__progress"
           cx="24"
@@ -87,7 +92,7 @@ export function StudentLiveStatusBar({
       ) : null}
       <p className="live-student-status-bar__online">
         <Icon name="users" size={18} />
-        {state.participantCount} 人在線
+        已加入 {state.participantCount} 人
       </p>
     </header>
   );

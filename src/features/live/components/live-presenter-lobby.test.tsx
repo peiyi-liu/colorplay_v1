@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -92,12 +92,16 @@ describe('LivePresenter lobby', () => {
     renderLobby(lobbyState, { audio });
 
     expect(screen.getByLabelText('課堂代碼')).toHaveTextContent('123456');
-    expect(screen.getByText('2 位同學已加入')).toBeVisible();
+    expect(screen.getAllByText('已加入 2 人')).toHaveLength(2);
     const wall = screen.getByLabelText('已加入同學');
     expect(wall).not.toHaveTextContent('小艾');
     expect(wall).not.toHaveTextContent('小畢');
-    expect(screen.getByLabelText('小艾已加入').querySelector('img')).not.toBeNull();
-    expect(screen.getByLabelText('小畢已加入').querySelector('img')).not.toBeNull();
+    expect(
+      screen.getByLabelText('小艾已加入').querySelector('img'),
+    ).not.toBeNull();
+    expect(
+      screen.getByLabelText('小畢已加入').querySelector('img'),
+    ).not.toBeNull();
     expect(audio.startLobbyLoop).toHaveBeenCalled();
   });
 
@@ -130,9 +134,7 @@ describe('LivePresenter lobby', () => {
     window.sessionStorage.setItem(presenterJoinCodeKey(SESSION_ID), '123456');
     renderLobby();
 
-    expect(
-      screen.getByRole('region', { name: 'Live 投影模式' }),
-    ).toBeVisible();
+    expect(screen.getByRole('region', { name: 'Live 投影模式' })).toBeVisible();
     expect(screen.getByText('目前題目')).toBeVisible();
     expect(screen.getByText('等待開始')).toBeVisible();
     expect(screen.getByText('共 20 題')).toBeVisible();
@@ -141,7 +143,9 @@ describe('LivePresenter lobby', () => {
     expect(screen.getByText('即時排名')).toBeVisible();
     expect(screen.getByText('尚未產生')).toBeVisible();
     expect(screen.getByText('參與狀況')).toBeVisible();
-    expect(screen.getByText('2 人已加入')).toBeVisible();
+    expect(
+      within(screen.getByLabelText('Live 課堂狀態')).getByText('已加入 2 人'),
+    ).toBeVisible();
     expect(screen.getByRole('button', { name: '開始遊戲' })).toBeVisible();
     expect(screen.getByRole('button', { name: '音效' })).toBeVisible();
     expect(screen.getByRole('button', { name: '退出' })).toBeVisible();

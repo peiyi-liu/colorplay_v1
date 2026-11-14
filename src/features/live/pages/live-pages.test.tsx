@@ -60,7 +60,9 @@ describe('LiveJoinPage', () => {
     ).toBeVisible();
     expect(screen.queryByText('ColorPlay Live')).not.toBeInTheDocument();
     expect(screen.queryByText('加入課堂挑戰')).not.toBeInTheDocument();
-    expect(document.querySelector('.live-join--portal.scene-night')).not.toBeNull();
+    expect(
+      document.querySelector('.live-join--portal.scene-night'),
+    ).not.toBeNull();
 
     const input = screen.getByLabelText('輸入 6 位加入代碼');
     expect(input).toHaveAttribute('inputmode', 'numeric');
@@ -112,7 +114,7 @@ describe('LiveSessionPage (participant)', () => {
     expect(
       await screen.findByText('連線正常', {}, { timeout: 2_000 }),
     ).toBeVisible();
-    expect(screen.getByText('3 人在線')).toBeVisible();
+    expect(screen.getByText('已加入 3 人')).toBeVisible();
     expect(screen.queryByRole('timer')).not.toBeInTheDocument();
   });
 
@@ -154,9 +156,7 @@ describe('LiveSessionPage (participant)', () => {
       '18500000-0000-0000-0000-000000000001',
     );
     expect(submitArgs.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/u);
-    expect(
-      await screen.findByText('答案已送出，等待揭曉…'),
-    ).toBeVisible();
+    expect(await screen.findByText('答案已送出，等待揭曉…')).toBeVisible();
   });
 
   const screenOnlyQuestion = {
@@ -202,9 +202,15 @@ describe('LiveSessionPage (participant)', () => {
     expect(screen.getByRole('timer', { name: '剩餘秒數' })).toBeVisible();
     expect(screen.getAllByRole('button')).toHaveLength(4);
     expect(firstOption).toHaveTextContent('A');
-    expect(screen.getByRole('button', { name: '選項 B：藍色正方形' })).toHaveTextContent('B');
-    expect(screen.getByRole('button', { name: '選項 C：黃色圓形' })).toHaveTextContent('C');
-    expect(screen.getByRole('button', { name: '選項 D：綠色菱形' })).toHaveTextContent('D');
+    expect(
+      screen.getByRole('button', { name: '選項 B：藍色正方形' }),
+    ).toHaveTextContent('B');
+    expect(
+      screen.getByRole('button', { name: '選項 C：黃色圓形' }),
+    ).toHaveTextContent('C');
+    expect(
+      screen.getByRole('button', { name: '選項 D：綠色菱形' }),
+    ).toHaveTextContent('D');
   });
 
   it('shows the actual frozen count when fewer than twenty questions are available', async () => {
@@ -272,9 +278,7 @@ describe('LiveSessionPage (participant)', () => {
         name: /選項 C：黃色圓形.*已選擇/u,
       }),
     ).toHaveClass('ui-option--state-selected');
-    expect(
-      await screen.findByText('答案已送出，等待揭曉…'),
-    ).toBeVisible();
+    expect(await screen.findByText('答案已送出，等待揭曉…')).toBeVisible();
     expect(screen.queryByRole('button', { name: /送出/u })).toBeNull();
   });
 

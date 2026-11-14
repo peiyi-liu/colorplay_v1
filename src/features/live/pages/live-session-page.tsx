@@ -9,6 +9,7 @@ import {
   OptionButton,
 } from '../../../components/ui/option-button';
 import type { Database } from '../../../types/database';
+import { LiveConnectionRecovery } from '../components/live-connection-recovery';
 import { StudentLiveStatusBar } from '../components/student-live-status-bar';
 import {
   useLiveMyStanding,
@@ -34,11 +35,13 @@ function QuestionPhase({
 }>) {
   const submit = useSubmitLiveAnswer(sessionId, repository);
   const keysRef = useRef(new Map<string, string>());
-  const [submission, setSubmission] = useState<Readonly<{
-    questionId: string;
-    selectedOptionId?: string;
-    error?: string;
-  }>>();
+  const [submission, setSubmission] = useState<
+    Readonly<{
+      questionId: string;
+      selectedOptionId?: string;
+      error?: string;
+    }>
+  >();
   const [streak, setStreak] = useState(0);
   const question = state.question;
   if (!question) return null;
@@ -314,7 +317,7 @@ export function LiveSessionPage({
   });
 
   if (session.isPending) return <RouteLoading withinMain />;
-  if (session.isError) {
+  if (session.isError || session.connectionBlocked) {
     return (
       <section className="route-panel">
         <h1>課堂挑戰</h1>
@@ -332,11 +335,14 @@ export function LiveSessionPage({
   // 雙螢幕模式的題間結果佔滿整個畫面：不顯示 ColorPlay Live／課堂挑戰標題。
   if (view.kind === 'screen-only-result') {
     return (
-      <FullscreenResult
-        sessionId={sessionId}
-        state={state}
-        {...(repository ? { repository } : {})}
-      />
+      <>
+        <LiveConnectionRecovery {...session} />
+        <FullscreenResult
+          sessionId={sessionId}
+          state={state}
+          {...(repository ? { repository } : {})}
+        />
+      </>
     );
   }
 
@@ -345,6 +351,7 @@ export function LiveSessionPage({
       aria-labelledby="live-session-title"
       className="live-session-shell scene-night live-guild-raid live-student-arena"
     >
+      <LiveConnectionRecovery {...session} />
       <StudentLiveStatusBar
         connectionStatus={session.connectionStatus}
         state={state}
@@ -407,8 +414,7 @@ export function LiveSessionPage({
                 <ol aria-label="前三名">
                   {view.podium.map((entry) => (
                     <li key={entry.rank}>
-                      第 {entry.rank} 名 {entry.displayName}（{entry.score}{' '}
-                      分）
+                      第 {entry.rank} 名 {entry.displayName}（{entry.score} 分）
                     </li>
                   ))}
                 </ol>

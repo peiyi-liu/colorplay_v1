@@ -219,7 +219,9 @@ test.describe('Staging 1+39 capacity harness', () => {
       });
       await stageRunner.run('host_roster', () =>
         expect(
-          launch.presenter.getByText(`${String(STUDENT_COUNT)} 位同學已加入`),
+          launch.presenter
+            .getByLabel('Live 課堂狀態')
+            .getByText(`已加入 ${String(STUDENT_COUNT)} 人`),
         ).toBeVisible({ timeout: 20_000 }),
       );
       await stageRunner.run('live_start', async () => {

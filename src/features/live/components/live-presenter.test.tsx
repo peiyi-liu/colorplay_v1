@@ -7,10 +7,7 @@ import type { LiveRepository, LiveSessionState } from '../types';
 import { actionCopy } from '../lib/live-action-copy';
 import { hostConsoleView } from '../lib/live-phase-view';
 import type { PresenterAudio } from '../lib/presenter-audio';
-import {
-  LivePresenter,
-  type ProjectorFooterAction,
-} from './live-presenter';
+import { LivePresenter, type ProjectorFooterAction } from './live-presenter';
 
 const SESSION_ID = '18400000-0000-0000-0000-000000000001';
 
@@ -148,7 +145,12 @@ const renderPresenter = (
     </QueryClientProvider>
   );
   const utils = render(ui(state));
-  return { ...utils, rerenderWith: (next: LiveSessionState) => { utils.rerender(ui(next)); } };
+  return {
+    ...utils,
+    rerenderWith: (next: LiveSessionState) => {
+      utils.rerender(ui(next));
+    },
+  };
 };
 
 describe('LivePresenter', () => {
@@ -173,16 +175,12 @@ describe('LivePresenter', () => {
     renderPresenter(draftState, { onCancel });
     const user = userEvent.setup();
 
-    expect(
-      screen.getByRole('heading', { name: '場次準備中' }),
-    ).toBeVisible();
+    expect(screen.getByRole('heading', { name: '場次準備中' })).toBeVisible();
     expect(screen.getByText(/尚未開放學生加入/u)).toBeVisible();
-    expect(screen.queryByText(/位同學已加入/u)).not.toBeInTheDocument();
+    expect(screen.queryByText(/已加入 [0-9]+ 人/u)).not.toBeInTheDocument();
     expect(screen.queryByText(/第 \d+ \/ \d+ 題/u)).not.toBeInTheDocument();
     expect(screen.queryByRole('timer')).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: '開啟等待室' }),
-    ).toBeVisible();
+    expect(screen.getByRole('button', { name: '開啟等待室' })).toBeVisible();
 
     await user.click(screen.getByRole('button', { name: '取消挑戰' }));
     expect(onCancel).not.toHaveBeenCalled();
@@ -199,12 +197,8 @@ describe('LivePresenter', () => {
     renderPresenter(cancelledState, { onExit });
     const user = userEvent.setup();
 
-    expect(
-      screen.getByRole('heading', { name: '本場已取消' }),
-    ).toBeVisible();
-    expect(
-      screen.getByText(/不會產生正式名次或完整正確率/u),
-    ).toBeVisible();
+    expect(screen.getByRole('heading', { name: '本場已取消' })).toBeVisible();
+    expect(screen.getByText(/不會產生正式名次或完整正確率/u)).toBeVisible();
     expect(screen.queryByText(/第 [1-9] 名/u)).not.toBeInTheDocument();
     expect(screen.queryByText(/%/u)).not.toBeInTheDocument();
     expect(screen.queryByText(/第 \d+ \/ \d+ 題/u)).not.toBeInTheDocument();
@@ -339,7 +333,9 @@ describe('LivePresenter', () => {
     const chart = screen.getByLabelText('作答分布文字圖表');
     expect(chart).toHaveTextContent('✓ 正確答案：A. 色相');
     expect(chart).toHaveTextContent('1 人／50%');
-    expect(screen.queryByRole('heading', { name: '本題解析' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: '本題解析' }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '下一題' })).toBeDisabled();
 
     await act(async () => {

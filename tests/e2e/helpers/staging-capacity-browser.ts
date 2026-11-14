@@ -1,6 +1,11 @@
-import { performance } from 'node:perf_hooks';
-
-import { errors, type Page } from '@playwright/test';
+import type { LiveJoinResult } from './staging-capacity-live-join';
+export {
+  collectLiveJoinAttempts,
+  joinLiveThroughUi,
+  type LiveJoinOutcome,
+  type LiveJoinResult,
+} from './staging-capacity-live-join';
+import type { Page } from '@playwright/test';
 
 import {
   CapacityHarnessError,
@@ -10,41 +15,17 @@ import {
   type SessionTokens,
 } from './staging-capacity';
 
-const SUPABASE_SESSION_KEY_PREFIX = 'sb-';
-const LIVE_JOIN_TIMEOUT_MS = 20_000;
+import {
+  createLiveConnectionDiagnostics,
+  decodeSafeRealtimeFrame,
+  liveDiagnosticsForPage,
+  liveDiagnosticStageTimings,
+  observeLiveSnapshots,
+  type LiveDiagnosticEvent,
+} from './live-connection-diagnostics';
+export { decodeSafeRealtimeFrame } from './live-connection-diagnostics';
+
 const MAX_SAFE_REALTIME_EVENTS = 16;
-
-export type LiveJoinOutcome =
-  'connected' | 'lobby_timeout' | 'realtime_timeout' | 'ui_error';
-
-export type LiveJoinResult = Readonly<{
-  durationMs: number | null;
-  lobbyMs: number | null;
-  outcome: LiveJoinOutcome;
-  realtimeMs: number | null;
-}>;
-
-type LiveJoinAttempt = () => Promise<LiveJoinResult>;
-
-const UI_ERROR_RESULT: LiveJoinResult = {
-  durationMs: null,
-  lobbyMs: null,
-  outcome: 'ui_error',
-  realtimeMs: null,
-};
-
-export const collectLiveJoinAttempts = async (
-  attempts: readonly LiveJoinAttempt[],
-): Promise<readonly LiveJoinResult[]> =>
-  Promise.all(
-    attempts.map(async (attempt) => {
-      try {
-        return await attempt();
-      } catch {
-        return UI_ERROR_RESULT;
-      }
-    }),
-  );
 
 export const summarizeLiveJoinOutcomes = (
   results: readonly LiveJoinResult[],
@@ -79,110 +60,11 @@ export const liveSessionIdFromUrl = (url: string): string => {
   return match[1];
 };
 
-export const joinLiveThroughUi = async (
-  pages: readonly Page[],
-  joinCode: string,
-) =>
-  collectLiveJoinAttempts(
-    pages.map((page) => async () => {
-      const startedAt = performance.now();
-      await page.goto('/app/live/join');
-      await page.getByLabel('輸入 6 位加入代碼').fill(joinCode);
-      await page.getByRole('button', { name: '加入課堂' }).click();
-      try {
-        await page.getByText('等待主持人開始…').waitFor({
-          state: 'visible',
-          timeout: LIVE_JOIN_TIMEOUT_MS,
-        });
-      } catch (error) {
-        if (!(error instanceof errors.TimeoutError)) throw error;
-        return {
-          durationMs: performance.now() - startedAt,
-          lobbyMs: null,
-          outcome: 'lobby_timeout',
-          realtimeMs: null,
-        };
-      }
-      const lobbyMs = performance.now() - startedAt;
-      const realtimeStartedAt = performance.now();
-      try {
-        await page.getByText('連線正常').waitFor({
-          state: 'visible',
-          timeout: LIVE_JOIN_TIMEOUT_MS,
-        });
-      } catch (error) {
-        if (!(error instanceof errors.TimeoutError)) throw error;
-        return {
-          durationMs: performance.now() - startedAt,
-          lobbyMs,
-          outcome: 'realtime_timeout',
-          realtimeMs: null,
-        };
-      }
-      return {
-        durationMs: performance.now() - startedAt,
-        lobbyMs,
-        outcome: 'connected',
-        realtimeMs: performance.now() - realtimeStartedAt,
-      };
-    }),
-  );
-
 type SafeSubscriptionStatus =
   'CHANNEL_ERROR' | 'CLOSED' | 'SOCKET_CLOSED' | 'SOCKET_ERROR' | 'SUBSCRIBED';
 
-type SafeRealtimeFrame = Readonly<{
-  event: 'phx_close' | 'phx_error' | 'phx_join' | 'phx_reply';
-  isLiveTopic: boolean;
-  ref: string | null;
-  replyStatus: 'error' | 'ok' | null;
-}>;
-
-export const decodeSafeRealtimeFrame = (
-  raw: string | Buffer,
-): SafeRealtimeFrame | null => {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(typeof raw === 'string' ? raw : raw.toString('utf8'));
-  } catch {
-    return null;
-  }
-  const objectFrame =
-    typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : undefined;
-  const arrayFrame: readonly unknown[] | undefined = Array.isArray(parsed)
-    ? (parsed as readonly unknown[])
-    : undefined;
-  const event: unknown = objectFrame?.event ?? arrayFrame?.[3];
-  if (
-    event !== 'phx_join' &&
-    event !== 'phx_reply' &&
-    event !== 'phx_error' &&
-    event !== 'phx_close'
-  ) {
-    return null;
-  }
-  const topic: unknown = objectFrame?.topic ?? arrayFrame?.[2];
-  const ref: unknown = objectFrame?.ref ?? arrayFrame?.[1];
-  const payload: unknown = objectFrame?.payload ?? arrayFrame?.[4];
-  const replyStatus =
-    typeof payload === 'object' &&
-    payload !== null &&
-    !Array.isArray(payload) &&
-    ((payload as Record<string, unknown>).status === 'ok' ||
-      (payload as Record<string, unknown>).status === 'error')
-      ? ((payload as Record<string, unknown>).status as 'error' | 'ok')
-      : null;
-  return {
-    event,
-    isLiveTopic: typeof topic === 'string' && topic.includes('live-session:'),
-    ref: typeof ref === 'string' ? ref : null,
-    replyStatus,
-  };
-};
-
 export type RealtimeClientDiagnostics = Readonly<{
+  events?: readonly LiveDiagnosticEvent[];
   closeCount: number;
   connectionStateSequence: readonly string[];
   disconnectCount: number;
@@ -206,6 +88,10 @@ export const buildLiveJoinEvidence = (
     }
     return {
       client_index: index + 1,
+      diagnostic_events: diagnostic.events ?? [],
+      diagnostic_stage_elapsed_ms: liveDiagnosticStageTimings(
+        diagnostic.events ?? [],
+      ),
       connection_state_sequence: diagnostic.connectionStateSequence,
       duration_ms:
         entry.durationMs === null ? null : Math.round(entry.durationMs),
@@ -261,6 +147,10 @@ export const buildLiveJoinEvidence = (
 };
 
 export type PageDiagnostics = Readonly<{
+  waitForSubscriptionAck: (
+    timeoutMs: number,
+    signal?: AbortSignal,
+  ) => Promise<boolean>;
   authTimings: () => Promise<readonly AuthLoginStageTiming[]>;
   consoleErrors: string[];
   disconnects: () => Promise<number>;
@@ -271,34 +161,54 @@ export type PageDiagnostics = Readonly<{
 
 export const sessionTokensFromPage = async (
   page: Page,
-): Promise<SessionTokens> =>
-  page.evaluate((prefix) => {
-    for (let index = 0; index < sessionStorage.length; index += 1) {
-      const key = sessionStorage.key(index);
-      if (!key?.startsWith(prefix) || !key.endsWith('-auth-token')) continue;
-      const raw = sessionStorage.getItem(key);
-      if (!raw) continue;
-      const parsed: unknown = JSON.parse(raw);
-      if (
-        typeof parsed === 'object' &&
-        parsed !== null &&
-        'access_token' in parsed &&
-        typeof parsed.access_token === 'string' &&
-        'refresh_token' in parsed &&
-        typeof parsed.refresh_token === 'string'
-      ) {
+  supabaseUrl: string,
+): Promise<SessionTokens> => {
+  try {
+    const tokens = await page.evaluate((expectedUrl) => {
+      try {
+        const projectRef =
+          new URL(expectedUrl).hostname.split('.')[0] ?? 'local';
+        const legacyKey = `sb-${projectRef}-auth-token`;
+        const tabId = sessionStorage.getItem('colorplay-auth-tab-id');
+        if (tabId !== null && (!tabId.trim() || tabId.trim() !== tabId))
+          return null;
+        const key = tabId === null ? legacyKey : `${legacyKey}-${tabId}`;
+        const raw = sessionStorage.getItem(key);
+        if (!raw) return null;
+        const parsed: unknown = JSON.parse(raw);
+        if (
+          typeof parsed !== 'object' ||
+          parsed === null ||
+          Array.isArray(parsed) ||
+          !('access_token' in parsed) ||
+          typeof parsed.access_token !== 'string' ||
+          !parsed.access_token.trim() ||
+          !('refresh_token' in parsed) ||
+          typeof parsed.refresh_token !== 'string' ||
+          !parsed.refresh_token.trim()
+        )
+          return null;
         return {
           access_token: parsed.access_token,
           refresh_token: parsed.refresh_token,
         };
+      } catch {
+        return null;
       }
-    }
-    throw new Error('CAPACITY_BROWSER_SESSION_MISSING');
-  }, SUPABASE_SESSION_KEY_PREFIX);
+    }, supabaseUrl);
+    if (tokens) return tokens;
+  } catch {
+    // Evaluation/storage failures must never forward browser exceptions or tokens.
+  }
+  throw new CapacityHarnessError('CAPACITY_BROWSER_SESSION_MISSING');
+};
 
 export const attachDiagnostics = async (
   page: Page,
 ): Promise<PageDiagnostics> => {
+  const liveDiagnostics = createLiveConnectionDiagnostics();
+  liveDiagnosticsForPage.set(page, liveDiagnostics);
+  observeLiveSnapshots(page, liveDiagnostics);
   const consoleErrors: string[] = [];
   const pageErrors: string[] = [];
   const serverErrors: string[] = [];
@@ -308,6 +218,7 @@ export const attachDiagnostics = async (
   let realtimeSocketCount = 0;
   const liveJoinRefs = new Set<string>();
   const subscriptionStatusSequence: SafeSubscriptionStatus[] = [];
+  const ackWaiters = new Set<() => void>();
   const recordSubscriptionStatus = (status: SafeSubscriptionStatus) => {
     if (
       subscriptionStatusSequence.at(-1) !== status &&
@@ -315,6 +226,7 @@ export const attachDiagnostics = async (
     ) {
       subscriptionStatusSequence.push(status);
     }
+    for (const waiter of ackWaiters) waiter();
   };
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text());
@@ -330,17 +242,28 @@ export const attachDiagnostics = async (
       response.request().method() === 'POST' &&
       pathname.endsWith('/functions/v1/auth-login')
     ) {
-      authTimingTasks.push(
-        response
-          .headerValue('x-colorplay-auth-timing')
-          .then((value) => parseAuthServerTiming(value ?? undefined)),
-      );
+      const task = response
+        .headerValue('x-colorplay-auth-timing')
+        .then((value) => parseAuthServerTiming(value ?? undefined));
+      // Observe rejection now, even if timing evidence is requested later.
+      // Keep the original promise so authTimings() still rejects on failure.
+      void task.catch(() => undefined);
+      authTimingTasks.push(task);
     }
   });
   page.on('websocket', (socket) => {
     if (!socket.url().includes('/realtime/v1/websocket')) return;
     realtimeSocketCount += 1;
+    const generation = liveDiagnostics.generation();
+    let observedOpen = false;
+    const observeOpen = () => {
+      if (observedOpen) return;
+      observedOpen = true;
+      liveDiagnostics.record(generation, 'ws_open', 'ok');
+    };
     socket.on('framesent', ({ payload }) => {
+      observeOpen();
+      liveDiagnostics.frame(generation, 'sent', payload);
       const frame = decodeSafeRealtimeFrame(payload);
       if (
         frame?.event === 'phx_join' &&
@@ -352,6 +275,8 @@ export const attachDiagnostics = async (
       }
     });
     socket.on('framereceived', ({ payload }) => {
+      observeOpen();
+      liveDiagnostics.frame(generation, 'received', payload);
       const frame = decodeSafeRealtimeFrame(payload);
       if (!frame) return;
       if (
@@ -374,10 +299,12 @@ export const attachDiagnostics = async (
     });
     socket.on('close', () => {
       realtimeCloseCount += 1;
+      liveDiagnostics.record(generation, 'closed', 'error', 'transport');
       recordSubscriptionStatus('SOCKET_CLOSED');
     });
     socket.on('socketerror', () => {
       realtimeErrorCount += 1;
+      liveDiagnostics.record(generation, 'closed', 'error', 'transport');
       recordSubscriptionStatus('SOCKET_ERROR');
     });
   });
@@ -393,7 +320,7 @@ export const attachDiagnostics = async (
       value: state,
       writable: false,
     });
-    const scan = () => {
+    new MutationObserver(() => {
       const value =
         document.querySelector<HTMLElement>('[data-state]')?.dataset.state ??
         '';
@@ -413,8 +340,7 @@ export const attachDiagnostics = async (
         state.disconnects += 1;
       }
       state.last = value;
-    };
-    new MutationObserver(scan).observe(document, {
+    }).observe(document, {
       attributeFilter: ['data-state'],
       attributes: true,
       childList: true,
@@ -422,6 +348,46 @@ export const attachDiagnostics = async (
     });
   });
   return {
+    waitForSubscriptionAck: (timeoutMs, signal) => {
+      if (signal?.aborted || page.isClosed()) return Promise.resolve(false);
+      if (subscriptionStatusSequence.includes('SUBSCRIBED'))
+        return Promise.resolve(true);
+      if (!Number.isFinite(timeoutMs) || timeoutMs <= 0)
+        return Promise.resolve(false);
+      return new Promise<boolean>((resolve) => {
+        const wait: {
+          settled: boolean;
+          timer?: ReturnType<typeof setTimeout>;
+        } = { settled: false };
+        const finish = (observed: boolean) => {
+          if (wait.settled) return;
+          wait.settled = true;
+          if (wait.timer !== undefined) clearTimeout(wait.timer);
+          ackWaiters.delete(check);
+          signal?.removeEventListener('abort', abort);
+          page.off('close', closed);
+          resolve(observed);
+        };
+        const check = () => {
+          if (subscriptionStatusSequence.includes('SUBSCRIBED')) finish(true);
+        };
+        const abort = () => {
+          finish(false);
+        };
+        const closed = () => {
+          finish(false);
+        };
+        page.on('close', closed);
+        if (wait.settled) return;
+        signal?.addEventListener('abort', abort, { once: true });
+        wait.timer = setTimeout(() => {
+          finish(false);
+        }, timeoutMs);
+        ackWaiters.add(check);
+        if (signal?.aborted || page.isClosed()) finish(false);
+        else check(); // Recheck after listener installation to avoid a lost ACK.
+      });
+    },
     authTimings: () => Promise.all(authTimingTasks),
     consoleErrors,
     disconnects: () =>
@@ -456,6 +422,7 @@ export const attachDiagnostics = async (
           sequence: [] as string[],
         }));
       return {
+        events: liveDiagnostics.events(),
         closeCount: realtimeCloseCount,
         connectionStateSequence: [...connection.sequence],
         disconnectCount: connection.disconnectCount,

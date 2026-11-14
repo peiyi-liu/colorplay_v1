@@ -1,0 +1,27 @@
+/* The lobby is also the Host's phone waiting room. Other projector phases
+   retain the existing minimum-viewport warning in globals.css. */
+@media (width < 1024px), (height < 720px) {
+  .live-presenter[data-projector-phase='lobby'] > .live-projector {
+    display: grid;
+  }
+
+  .live-presenter[data-projector-phase='lobby']
+    > .live-presenter__viewport-warning {
+    display: none;
+  }
+}
+
+@media (width <= 760px) {
+  .live-presenter[data-projector-phase='lobby'] .live-presenter__lobby {
+    gap: 8px;
+  }
+
+  .live-presenter[data-projector-phase='lobby'] .live-presenter__code {
+    font-size: clamp(3rem, 14vw, 4rem);
+    letter-spacing: 0.1em;
+  }
+
+  .live-presenter[data-projector-phase='lobby'] .live-projector__control {
+    gap: 4px;
+  }
+}

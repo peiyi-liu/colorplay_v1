@@ -18,6 +18,9 @@ export default tseslint.config(
       // Tool-managed scratch dirs outside the TS project service.
       '.remember',
       '.agents',
+      '**/.worktrees/**',
+      '**/.claude/worktrees/**',
+      '**/.pnpm-store/**',
       // Claude Design handoff bundle（原型，非產品程式碼）。
       'live',
     ],

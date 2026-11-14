@@ -126,7 +126,9 @@ test('Live smoke: 單人場次從等待室走到頒獎台', async ({
   await expect(studentPage.getByText('等待主持人開始…')).toBeVisible();
 
   // --- 第 1 題：作答即自動關題 ---
-  await expect(presenter.getByText('1 位同學已加入')).toBeVisible();
+  await expect(
+    presenter.getByLabel('Live 課堂狀態').getByText('已加入 1 人'),
+  ).toBeVisible();
   await presenter.getByRole('button', { name: '開始遊戲' }).click();
   const startDialog = presenter.getByRole('alertdialog', { name: '立即開始' });
   await expect(startDialog).toBeVisible();

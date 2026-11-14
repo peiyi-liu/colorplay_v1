@@ -19,7 +19,9 @@ export default defineConfig({
       // under .worktrees/ carries its own, and vitest would then discover and
       // run every dependency's own test suite.
       '**/node_modules/**',
-      '.worktrees/**',
+      '**/.worktrees/**',
+      '**/.claude/worktrees/**',
+      '**/.pnpm-store/**',
       'tests/e2e/**',
       'tests/acceptance/**',
       'tests/visual/**',

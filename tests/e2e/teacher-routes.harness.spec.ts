@@ -6,6 +6,7 @@ import {
   verifyLiveReportComposition,
   WIDTHS,
 } from './teacher-routes.harness-support';
+import { verifySmallLobby } from './helpers/live-lobby-viewport';
 import { measureLiveLobbyGeometry } from './helpers/live-projector-layout';
 
 for (const viewport of [
@@ -139,7 +140,9 @@ test('Live waiting lobby honors reduced motion without hiding status', async ({
   await page.waitForLoadState('networkidle');
 
   await expect(page.getByText('等待開始')).toBeVisible();
-  await expect(page.getByText('40 人已加入')).toBeVisible();
+  await expect(
+    page.getByLabel('Live 課堂狀態').getByText('已加入 40 人'),
+  ).toBeVisible();
   await page.evaluate(() => {
     window.dispatchEvent(new Event('colorplay-live-harness-join'));
   });
@@ -218,7 +221,9 @@ test('only a newly joined participant grows and floats into the avatar arena', a
   );
   expect(settledBubbleFrame.opacity).toBe(1);
   await expect(newcomer).toBeVisible();
-  await expect(page.getByText('41 人已加入')).toBeVisible();
+  await expect(
+    page.getByLabel('Live 課堂狀態').getByText('已加入 41 人'),
+  ).toBeVisible();
 });
 
 for (const width of WIDTHS) {
@@ -301,7 +306,9 @@ for (const viewport of [
       page.getByRole('region', { name: 'Live 投影模式' }),
     ).toBeVisible();
     await expect(page.getByText('482731')).toBeVisible();
-    await expect(page.getByText('40 人已加入')).toBeVisible();
+    await expect(
+      page.getByLabel('Live 課堂狀態').getByText('已加入 40 人'),
+    ).toBeVisible();
     await expect(page.getByRole('button', { name: '開始遊戲' })).toBeVisible();
     await expect(page.getByRole('button', { name: '音效' })).toBeVisible();
     await expect(page.getByRole('button', { name: '退出' })).toBeVisible();
@@ -444,4 +451,17 @@ test('clicking outside the MENU panel closes it', async ({ page }) => {
   await expect(panel).toBeVisible();
   await page.mouse.click(5, 5);
   await expect(panel).toBeHidden();
+});
+
+test.describe('small Live lobby viewport regression', () => {
+  for (const viewport of [
+    { width: 320, height: 640 },
+    { width: 390, height: 844 },
+  ]) {
+    test(`lobby controls remain usable at ${String(viewport.width)}px while other phases retain their warning`, async ({
+      page,
+    }) => {
+      await verifySmallLobby(page, viewport);
+    });
+  }
 });

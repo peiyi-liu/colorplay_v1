@@ -57,7 +57,11 @@
     "phase:teacher-content": "bash scripts/acceptance/run-teacher-content.sh",
     "phase:content-studio-ch3": "bash scripts/acceptance/run-content-studio-ch3.sh",
     "phase:live-advanced": "bash scripts/acceptance/run-live-advanced.sh",
-    "phase:ui-restyle": "bash scripts/acceptance/run-ui-restyle.sh"
+    "phase:ui-restyle": "bash scripts/acceptance/run-ui-restyle.sh",
+    "live:capacity": "node --import tsx scripts/live/run-capacity.ts",
+    "live:verify:local": "bash scripts/live/verify-local.sh",
+    "live:capacity:browser": "playwright test --config scripts/live/playwright.config.ts",
+    "live:capacity:hybrid": "COLORPLAY_LIVE_PROFILE=hybrid playwright test --config scripts/live/playwright.config.ts"
   },
   "keywords": [],
   "author": "",

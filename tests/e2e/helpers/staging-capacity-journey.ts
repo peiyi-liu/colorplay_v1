@@ -58,7 +58,7 @@ export const fixedTeacherId = async (
 ) => {
   const config = readCapacityConfig();
   const client = createSessionClient(config, signal);
-  const tokens = await sessionTokensFromPage(page);
+  const tokens = await sessionTokensFromPage(page, config.supabaseUrl);
   const { error: sessionError } = await client.auth.setSession(tokens);
   if (sessionError) {
     throw new CapacityHarnessError('CAPACITY_TEACHER_SESSION_FAILED');
@@ -96,7 +96,7 @@ export const joinClassroomThroughEdge = async (
         throw new CapacityHarnessError('CAPACITY_STUDENT_ACCOUNT_MISSING');
       }
       const client = createSessionClient(config, signal);
-      const tokens = await sessionTokensFromPage(page);
+      const tokens = await sessionTokensFromPage(page, config.supabaseUrl);
       const { error: sessionError } = await client.auth.setSession(tokens);
       if (sessionError) {
         throw new CapacityHarnessError('CAPACITY_SESSION_RESTORE_FAILED');

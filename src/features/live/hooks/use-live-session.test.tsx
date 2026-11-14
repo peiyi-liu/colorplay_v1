@@ -338,6 +338,7 @@ describe('useLiveSession', () => {
     const getState = vi
       .fn()
       .mockResolvedValueOnce(lobbyState)
+      .mockResolvedValueOnce(lobbyState)
       .mockResolvedValue(joinedState);
     const repository = { getState } as unknown as LiveRepository;
     const queryClient = new QueryClient({
@@ -367,6 +368,7 @@ describe('useLiveSession', () => {
     });
 
     await waitFor(() => {
+      expect(getState).toHaveBeenCalledTimes(callsBeforeJoin + 1);
       expect(result.current.data?.participants).toEqual([
         { displayName: '小彩' },
         { displayName: '新同學' },

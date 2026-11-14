@@ -9,10 +9,24 @@ describe('Staging capacity source contract', () => {
       resolve(process.cwd(), 'tests/e2e/staging-capacity.spec.ts'),
       'utf8',
     );
-    const browserHelperSource = await readFile(
-      resolve(process.cwd(), 'tests/e2e/helpers/staging-capacity-browser.ts'),
-      'utf8',
-    );
+    const browserHelperSource = (
+      await Promise.all([
+        readFile(
+          resolve(
+            process.cwd(),
+            'tests/e2e/helpers/staging-capacity-browser.ts',
+          ),
+          'utf8',
+        ),
+        readFile(
+          resolve(
+            process.cwd(),
+            'tests/e2e/helpers/staging-capacity-live-join.ts',
+          ),
+          'utf8',
+        ),
+      ])
+    ).join('\n');
     const journeySource = await readFile(
       resolve(process.cwd(), 'tests/e2e/helpers/staging-capacity-journey.ts'),
       'utf8',
