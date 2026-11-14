@@ -347,10 +347,19 @@ export function createContentMediaHandler(
             );
             const result = asRecord(recovered.data);
             if (!recovered.error && result?.action === 'verified') {
-              return (
-                verifiedResponse(result, runId, requestId) ??
-                pendingResponse(runId, requestId)
+              const receiptResponse = verifiedResponse(
+                result,
+                runId,
+                requestId,
               );
+              if (receiptResponse) {
+                // This original worker knows its exact quarantine path; initial replays do not.
+                await cleanupExact(service, 'content-media-quarantine', [
+                  sourcePath,
+                ]);
+                return receiptResponse;
+              }
+              return pendingResponse(runId, requestId);
             }
           } catch {
             /* Preserve uncertainty and objects. */

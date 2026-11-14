@@ -1,8 +1,9 @@
 import { createContentMediaHandler } from '../../supabase/functions/content-media/handler';
 export const runId = '81000000-0000-4000-8000-000000000002';
 export const requestId = '81000000-0000-4000-8000-000000000001';
-const actor = 'synthetic-actor';
-const session = 'synthetic-session';
+const actor = '81000000-0000-4000-8000-000000000004';
+const session = '81000000-0000-4000-8000-000000000005';
+export const sourcePath = `${actor}/${runId}/source.png`;
 export const deferred = () => {
   let resolve!: () => void;
   const promise = new Promise<void>((done) => {
@@ -15,6 +16,8 @@ export interface Scenario {
   cleanupThrows?: boolean;
   failReply?: 'error' | 'lost' | 'denied' | 'wrong_run' | 'malformed' | 'ok';
   uploadFails?: boolean;
+  uploadReplyLost?: boolean;
+  omitReading?: boolean;
   processorGate?: ReturnType<typeof deferred>;
   completeGate?: ReturnType<typeof deferred>;
   abortReply?: 'lost' | 'wrong_run';
@@ -26,6 +29,7 @@ export interface Scenario {
 export function setupMediaHandler(scenario: Scenario = {}) {
   const events: string[] = [];
   const objects = new Set<string>();
+  const quarantine = new Set([sourcePath]);
   let status: string = scenario.initialStatus ?? 'awaiting_upload';
   let claims = 0;
   let processorCalls = 0;
@@ -38,7 +42,7 @@ export function setupMediaHandler(scenario: Scenario = {}) {
     variants: ['thumbnail', 'reading'].map((kind) => ({
       kind,
       mime_type: 'image/webp',
-      sha256: 'c'.repeat(64),
+      sha256: (kind === 'thumbnail' ? 'c' : 'e').repeat(64),
       bytes: 1,
       width: 1,
       height: 1,
@@ -46,6 +50,14 @@ export function setupMediaHandler(scenario: Scenario = {}) {
     width: 1,
     height: 1,
   };
+  if (status === 'verified') {
+    objects.add(`masters/${receipt.asset_id}/${receipt.source_sha256}.png`);
+    for (const variant of receipt.variants) {
+      objects.add(
+        `variants/${receipt.asset_id}/${variant.kind}-${variant.sha256}.webp`,
+      );
+    }
+  }
   const claim = () => {
     if (status === 'failed' || status === 'aborted')
       return { outcome: 'denied' };
@@ -67,7 +79,7 @@ export function setupMediaHandler(scenario: Scenario = {}) {
       replayed,
       actor_user_id: actor,
       auth_session_id: session,
-      object_path: 'synthetic-source',
+      object_path: sourcePath,
       asset_id: '81000000-0000-4000-8000-000000000003',
       source_mime_type: 'image/png',
       source_bytes: 1,
@@ -93,7 +105,7 @@ export function setupMediaHandler(scenario: Scenario = {}) {
             outcome: 'ok',
             run_id:
               scenario.abortReply === 'wrong_run' ? 'different-run' : runId,
-            object_path: 'synthetic-source',
+            object_path: sourcePath,
           },
           error: null,
         };
@@ -117,12 +129,48 @@ export function setupMediaHandler(scenario: Scenario = {}) {
     },
   };
   const service = {
-    rpc: async (name: string) => {
+    rpc: async (name: string, args: Record<string, unknown>) => {
       if (name === 'svc_complete_content_media_upload') {
         events.push('complete');
         await scenario.completeGate?.promise;
         if (status !== 'processing')
           return { data: { outcome: 'denied' }, error: null };
+        const rows = Array.isArray(args.p_variants) ? args.p_variants : [];
+        const expectedRows = receipt.variants.map((variant) => ({
+          ...variant,
+          object_path: `variants/${receipt.asset_id}/${variant.kind}-${variant.sha256}.webp`,
+          quality_mode: 'lossy',
+          structural_similarity_distortion: null,
+        }));
+        const master = `masters/${receipt.asset_id}/${receipt.source_sha256}.png`;
+        const valid =
+          args.p_run_id === runId &&
+          args.p_actor_user_id === actor &&
+          args.p_auth_session_id === session &&
+          args.p_master_object_path === master &&
+          args.p_source_sha256 === receipt.source_sha256 &&
+          args.p_manifest_sha256 === receipt.manifest_sha256 &&
+          rows.length === 2 &&
+          expectedRows.every((expected) =>
+            rows.some(
+              (row: unknown) =>
+                typeof row === 'object' &&
+                row !== null &&
+                Object.entries(expected).every(
+                  ([key, value]) =>
+                    (row as Record<string, unknown>)[key] === value,
+                ),
+            ),
+          ) &&
+          objects.has(master) &&
+          expectedRows.every((row) => objects.has(row.object_path));
+        if (!valid) {
+          events.push('complete_invalid');
+          return {
+            data: { outcome: 'denied', code: 'CONTENT_MEDIA_INTEGRITY_FAILED' },
+            error: null,
+          };
+        }
         status = 'verified';
         if (scenario.completeReplyError) return { data: null, error: {} };
         if (scenario.completeReplyLost) throw new Error('SYNTHETIC_REPLY_LOST');
@@ -162,7 +210,9 @@ export function setupMediaHandler(scenario: Scenario = {}) {
         download: () => {
           events.push('download');
           return Promise.resolve({
-            data: new Blob([new Uint8Array([1])]),
+            data: quarantine.has(sourcePath)
+              ? new Blob([new Uint8Array([1])])
+              : null,
             error: null,
           });
         },
@@ -171,6 +221,8 @@ export function setupMediaHandler(scenario: Scenario = {}) {
           events.push('upload');
           if (scenario.uploadFails && objects.size > 0) return { error: {} };
           objects.add(path);
+          if (scenario.uploadReplyLost && objects.size === 2)
+            throw new Error('SYNTHETIC_UPLOAD_REPLY_LOST');
           return { error: null };
         },
         remove: async (paths: string[]) => {
@@ -180,7 +232,9 @@ export function setupMediaHandler(scenario: Scenario = {}) {
           );
           if (bucket !== 'content-media' && scenario.cleanupThrows)
             throw new Error('SYNTHETIC_CLEANUP');
-          paths.forEach((path) => objects.delete(path));
+          const bucketObjects =
+            bucket === 'content-media' ? objects : quarantine;
+          paths.forEach((path) => bucketObjects.delete(path));
           return { error: null };
         },
       }),
@@ -197,18 +251,19 @@ export function setupMediaHandler(scenario: Scenario = {}) {
         manifestSha256: 'b'.repeat(64),
         pixelSemanticSha256: 'd'.repeat(64),
         processorVersion: 'synthetic-processor',
-        variants: [
-          {
-            kind: 'thumbnail',
-            sha256: 'c'.repeat(64),
-            bytes: new Uint8Array([2]),
-            width: 1,
-            height: 1,
-            mimeType: 'image/webp',
-            qualityMode: 'lossy',
-            structuralSimilarityDistortion: null,
-          },
-        ],
+        variants: (scenario.omitReading
+          ? ['thumbnail']
+          : ['thumbnail', 'reading']
+        ).map((kind) => ({
+          kind,
+          sha256: (kind === 'thumbnail' ? 'c' : 'e').repeat(64),
+          bytes: new Uint8Array([2]),
+          width: 1,
+          height: 1,
+          mimeType: 'image/webp',
+          qualityMode: 'lossy',
+          structuralSimilarityDistortion: null,
+        })),
         width: 1,
         height: 1,
         hasAlpha: false,
@@ -229,6 +284,7 @@ export function setupMediaHandler(scenario: Scenario = {}) {
     invoke,
     events,
     objects,
+    quarantine,
     status: () => status,
     processorCalls: () => processorCalls,
   };
