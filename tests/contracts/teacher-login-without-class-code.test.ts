@@ -4,11 +4,20 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const authLoginSource = readFileSync(
-  resolve(process.cwd(), 'supabase/functions/auth-login/index.ts'),
+  resolve(process.cwd(), 'supabase/functions/auth-login/handler.ts'),
   'utf8',
 );
 
 describe('teacher account login contract', () => {
+  it('wires the real handler through the existing fail-closed runtime keys', () => {
+    const runtimeSource = readFileSync(
+      resolve(process.cwd(), 'supabase/functions/auth-login/index.ts'),
+      'utf8',
+    );
+    expect(runtimeSource).toContain('Deno.serve');
+    expect(runtimeSource).toContain('createAuthLoginHandler');
+    expect(runtimeSource).toContain('readRuntimeSupabaseApiKeys');
+  });
   it('authenticates teachers by account, password, and server-owned role only', () => {
     expect(authLoginSource).toContain('profile.role !== portalValue');
     expect(authLoginSource).toContain('grant_type=password');
