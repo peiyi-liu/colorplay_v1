@@ -1,3 +1,4 @@
+import { classifyReadFailure } from '../../../lib/query/read-failure';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
@@ -94,10 +95,27 @@ export function createLeaderboardRepository(
       if (!isDatabaseUuid(classroomId)) {
         throw new LeaderboardRepositoryError('INVALID_INPUT');
       }
-      const { data, error } = await client.rpc('get_classroom_leaderboard', {
-        p_classroom_id: classroomId,
-      });
-      if (error) throw mapError(error.message);
+      const { data, error, status } = await client.rpc(
+        'get_classroom_leaderboard',
+        {
+          p_classroom_id: classroomId,
+        },
+      );
+      if (error) {
+        const known = mapError(error.message);
+        if (known.code !== 'UNAVAILABLE') throw known;
+        const codes = {
+          AUTH: 'AUTH_REQUIRED',
+          PERMISSION: 'PERMISSION_DENIED',
+          RATE_LIMIT: 'RATE_LIMITED',
+          VALIDATION: 'INVALID_INPUT',
+          NOT_FOUND: 'NOT_AVAILABLE',
+          UNAVAILABLE: 'UNAVAILABLE',
+        } as const;
+        throw new LeaderboardRepositoryError(
+          codes[classifyReadFailure({ error, status })],
+        );
+      }
       const parsed = payloadSchema.safeParse(data);
       if (!parsed.success) {
         throw new LeaderboardRepositoryError('INVALID_RESPONSE');

@@ -12,7 +12,13 @@ export type EconomyRepository = Readonly<{
 }>;
 
 export type EconomyRepositoryErrorCode =
-  'AUTH_REQUIRED' | 'INVALID_RESPONSE' | 'UNAVAILABLE';
+  | 'AUTH_REQUIRED'
+  | 'PERMISSION_DENIED'
+  | 'RATE_LIMITED'
+  | 'INVALID_INPUT'
+  | 'NOT_FOUND'
+  | 'INVALID_RESPONSE'
+  | 'UNAVAILABLE';
 
 export class EconomyRepositoryError extends Error {
   constructor(public readonly code: EconomyRepositoryErrorCode) {

@@ -1,3 +1,4 @@
+import { classifyReadFailure } from '../../../lib/query/read-failure';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
@@ -253,8 +254,24 @@ export function createInventoryRepository(
       return command('equip_blook', blookId);
     },
     async getInventory() {
-      const { data, error } = await client.rpc('get_my_blook_inventory');
-      if (error) throw mapServerError(error.message);
+      const { data, error, status } = await client.rpc(
+        'get_my_blook_inventory',
+      );
+      if (error) {
+        const known = mapServerError(error.message);
+        if (known.code !== 'UNAVAILABLE') throw known;
+        const codes = {
+          AUTH: 'AUTH_REQUIRED',
+          PERMISSION: 'PERMISSION_DENIED',
+          RATE_LIMIT: 'RATE_LIMITED',
+          VALIDATION: 'INVALID_INPUT',
+          NOT_FOUND: 'NOT_FOUND',
+          UNAVAILABLE: 'UNAVAILABLE',
+        } as const;
+        throw new InventoryRepositoryError(
+          codes[classifyReadFailure({ error, status })],
+        );
+      }
       return parseInventory(data);
     },
     async purchaseBlook(blookId) {
@@ -264,8 +281,24 @@ export function createInventoryRepository(
       return frameCommand('equip_frame', frameId);
     },
     async getFrameInventory() {
-      const { data, error } = await client.rpc('get_my_frame_inventory');
-      if (error) throw mapServerError(error.message);
+      const { data, error, status } = await client.rpc(
+        'get_my_frame_inventory',
+      );
+      if (error) {
+        const known = mapServerError(error.message);
+        if (known.code !== 'UNAVAILABLE') throw known;
+        const codes = {
+          AUTH: 'AUTH_REQUIRED',
+          PERMISSION: 'PERMISSION_DENIED',
+          RATE_LIMIT: 'RATE_LIMITED',
+          VALIDATION: 'INVALID_INPUT',
+          NOT_FOUND: 'NOT_FOUND',
+          UNAVAILABLE: 'UNAVAILABLE',
+        } as const;
+        throw new InventoryRepositoryError(
+          codes[classifyReadFailure({ error, status })],
+        );
+      }
       return parseFrameInventory(data);
     },
     async purchaseFrame(frameId) {

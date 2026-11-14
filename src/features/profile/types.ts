@@ -10,7 +10,10 @@ export type SafeProfile = Readonly<{
 }>;
 
 export type ProfileRepositoryErrorCode =
-  'PROFILE_AUTHORIZATION' | 'PROFILE_UNAVAILABLE';
+  | 'PROFILE_AUTHORIZATION'
+  | 'PROFILE_RATE_LIMITED'
+  | 'PROFILE_INVALID_RESPONSE'
+  | 'PROFILE_UNAVAILABLE';
 
 export class ProfileRepositoryError extends Error {
   constructor(public readonly code: ProfileRepositoryErrorCode) {

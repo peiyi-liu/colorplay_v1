@@ -1,3 +1,4 @@
+import { readQueryRetryDelay } from '../../../lib/query/read-retry';
 import {
   useMutation,
   type UseMutationResult,
@@ -38,22 +39,10 @@ export const learningKeys = {
 export const REVIEW_MEDIA_STALE_TIME_MS = 10 * 60 * 1000;
 export const REVIEW_MEDIA_GC_TIME_MS = 15 * 60 * 1000;
 export const REVIEW_MEDIA_MAX_RETRIES = 3;
-const REVIEW_MEDIA_INITIAL_RETRY_DELAY_MS = 500;
-const REVIEW_MEDIA_MAX_RETRY_DELAY_MS = 4_000;
-
-export const calculateReadQueryRetryDelay = (
-  attemptIndex: number,
-  random: () => number = Math.random,
-): number => {
-  const exponentialDelay = Math.min(
-    REVIEW_MEDIA_INITIAL_RETRY_DELAY_MS * 2 ** attemptIndex,
-    REVIEW_MEDIA_MAX_RETRY_DELAY_MS,
-  );
-  return Math.round(exponentialDelay * (0.5 + random() * 0.5));
-};
-
-export const readQueryRetryDelay = (attemptIndex: number): number =>
-  calculateReadQueryRetryDelay(attemptIndex);
+export {
+  calculateReadQueryRetryDelay,
+  readQueryRetryDelay,
+} from '../../../lib/query/read-retry';
 
 export const shouldRetryReviewMedia = (
   failureCount: number,
@@ -167,6 +156,7 @@ export function useMistakes(
     queryKey: learningKeys.mistakes,
     retry: (failureCount, error) =>
       error.code === 'UNAVAILABLE' && failureCount < 2,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
@@ -213,5 +203,6 @@ export function useClassroomProgress(
     queryKey: learningKeys.classroomProgress(classroomId),
     retry: (failureCount, error) =>
       error.code === 'UNAVAILABLE' && failureCount < 2,
+    retryDelay: readQueryRetryDelay,
   });
 }

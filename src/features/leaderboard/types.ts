@@ -23,6 +23,8 @@ export type LeaderboardRepository = Readonly<{
 
 export type LeaderboardRepositoryErrorCode =
   | 'AUTH_REQUIRED'
+  | 'PERMISSION_DENIED'
+  | 'RATE_LIMITED'
   | 'INVALID_INPUT'
   | 'INVALID_RESPONSE'
   | 'NOT_AVAILABLE'

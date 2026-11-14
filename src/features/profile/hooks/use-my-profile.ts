@@ -1,3 +1,4 @@
+import { readQueryRetryDelay } from '../../../lib/query/read-retry';
 import {
   useMutation,
   type UseMutationResult,
@@ -38,7 +39,10 @@ export function useMyProfile(): MyProfileQuery {
       ).getMyProfile(),
     queryKey: myProfileQueryKey,
     retry: (failureCount, error) =>
-      error.code !== 'PROFILE_AUTHORIZATION' && failureCount < 2,
+      error instanceof ProfileRepositoryError &&
+      error.code === 'PROFILE_UNAVAILABLE' &&
+      failureCount < 2,
+    retryDelay: readQueryRetryDelay,
   });
 
   useEffect(() => {
