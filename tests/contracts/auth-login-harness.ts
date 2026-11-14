@@ -33,6 +33,8 @@ export interface Scenario {
   stallBody?: Hop;
   delays?: Partial<Record<Hop, number>>;
   ignoreAbort?: boolean;
+  headers?: Partial<Record<Hop, Record<string, string>>>;
+  grantRetryAfter?: readonly (string | undefined)[];
 }
 let clientIndex = 0;
 export const setupHandler = (scenario: Scenario = {}) => {
@@ -40,6 +42,7 @@ export const setupHandler = (scenario: Scenario = {}) => {
   const releases = new Set<() => void>();
   let bodyCancellations = 0;
   let activeFetchListeners = 0;
+  let grantReplyIndex = 0;
   const reply = (hop: Hop): Response => {
     const status = scenario.statuses?.[hop] ?? 200;
     const success = {
@@ -58,7 +61,19 @@ export const setupHandler = (scenario: Scenario = {}) => {
         : status >= 400
           ? { message: secretMarker, code: 'synthetic_failure' }
           : success[hop];
-    if (scenario.stallBody !== hop) return jsonResponse(body, status);
+    const headers = new Headers(scenario.headers?.[hop]);
+    if (hop === 'grant' && scenario.grantRetryAfter) {
+      const value = scenario.grantRetryAfter[grantReplyIndex++];
+      if (value !== undefined) headers.set('Retry-After', value);
+      else headers.delete('Retry-After');
+    }
+    if (scenario.stallBody !== hop) {
+      const response = jsonResponse(body, status);
+      headers.forEach((value, key) => {
+        response.headers.set(key, value);
+      });
+      return response;
+    }
     let cancelled = false;
     return new Response(
       new ReadableStream<Uint8Array>({

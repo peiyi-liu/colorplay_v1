@@ -28,10 +28,18 @@ export interface AuthLoginDependencies {
 // Account absence, role mismatch and invalid credentials share one response.
 const invalidCredentials = () =>
   jsonResponse(401, { error: 'AUTH_INVALID_CREDENTIALS' });
-const unavailable = (status?: number) =>
-  status === 429
-    ? jsonResponse(429, { error: 'AUTH_RATE_LIMITED' })
-    : jsonResponse(503, { error: 'AUTH_UNAVAILABLE' });
+const unavailable = (status?: number, retryAfter?: string) => {
+  const response =
+    status === 429
+      ? jsonResponse(429, { error: 'AUTH_RATE_LIMITED' })
+      : jsonResponse(503, { error: 'AUTH_UNAVAILABLE' });
+  if (status === 429) {
+    response.headers.set('Access-Control-Expose-Headers', 'Retry-After');
+    if (retryAfter !== undefined)
+      response.headers.set('Retry-After', retryAfter);
+  }
+  return response;
+};
 const errorStatus = (error: unknown): number | undefined => {
   if (typeof error !== 'object' || error === null) return undefined;
   const descriptor = Object.getOwnPropertyDescriptor(error, 'status');
@@ -92,7 +100,8 @@ export const createAuthLoginHandler = (dependencies: AuthLoginDependencies) => {
         } = await admin.profile(normalizedAccount, deadline.signal);
         deadline.check();
         const profileMs = now() - profileStartedAt;
-        if (profileError) return unavailable(profileStatus);
+        if (profileError)
+          return unavailable(profileStatus, deadline.retryAfter());
         if (
           !profile ||
           (profile.role !== portalValue &&
@@ -109,7 +118,7 @@ export const createAuthLoginHandler = (dependencies: AuthLoginDependencies) => {
         if (userError)
           return errorStatus(userError) === 404
             ? invalidCredentials()
-            : unavailable(errorStatus(userError));
+            : unavailable(errorStatus(userError), deadline.retryAfter());
         const email = userData.user?.email;
         if (!email) return invalidCredentials();
 
@@ -131,7 +140,7 @@ export const createAuthLoginHandler = (dependencies: AuthLoginDependencies) => {
             grant.status === 401 ||
             grant.status === 403
             ? invalidCredentials()
-            : unavailable(grant.status);
+            : unavailable(grant.status, deadline.retryAfter());
         const session: unknown = await grant.json().catch(() => null);
         deadline.check();
         if (

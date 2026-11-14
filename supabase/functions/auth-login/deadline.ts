@@ -1,4 +1,16 @@
 export const AUTH_LOGIN_DEADLINE_MS = 12_000;
+export const AUTH_LOGIN_MAX_RETRY_AFTER_SECONDS = 86_400;
+
+// Delta-seconds only. Do not reinterpret dates, signed values or provider text.
+export const sanitizeAuthRetryAfter = (
+  value: string | null,
+): string | undefined => {
+  if (value === null || !/^[0-9]{1,10}$/u.test(value)) return undefined;
+  const seconds = Number(value);
+  return seconds <= AUTH_LOGIN_MAX_RETRY_AFTER_SECONDS
+    ? String(seconds)
+    : undefined;
+};
 
 class AuthLoginDeadlineError extends Error {
   constructor() {
@@ -16,6 +28,7 @@ export const createAuthLoginDeadline = (
   const controller = new AbortController();
   const expiresAt = now() + AUTH_LOGIN_DEADLINE_MS;
   const bodies = new Set<() => void>();
+  let retryAfter: string | undefined;
   const abort = () => {
     controller.abort(new AuthLoginDeadlineError());
   };
@@ -88,6 +101,7 @@ export const createAuthLoginDeadline = (
   return {
     signal: controller.signal,
     check,
+    retryAfter: () => retryAfter,
     run: <T>(operation: () => Promise<T>): Promise<T> =>
       Promise.race([
         Promise.resolve().then(() => {
@@ -99,6 +113,7 @@ export const createAuthLoginDeadline = (
     fetch:
       (fetcher: typeof fetch): typeof fetch =>
       async (input, init) => {
+        retryAfter = undefined;
         const safeFailure = (status: 503 | 504) =>
           new Response(
             JSON.stringify({
@@ -124,11 +139,16 @@ export const createAuthLoginDeadline = (
           void response.body?.cancel().catch(() => undefined);
           return safeFailure(504);
         }
+        retryAfter =
+          response.status === 429
+            ? sanitizeAuthRetryAfter(response.headers.get('Retry-After'))
+            : undefined;
         return bindBody(response);
       },
     json: (request: Request): Promise<unknown> =>
       bindBody(new Response(request.body)).json(),
     dispose() {
+      retryAfter = undefined;
       clearTimeout(timer);
       requestSignal.removeEventListener('abort', abort);
       controller.signal.removeEventListener('abort', rejectAbort);
