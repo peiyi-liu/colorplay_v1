@@ -102,6 +102,8 @@ describe('Content Studio operator workflows', () => {
   it('processes ZIP images automatically before trusted preview and draft commit', async () => {
     const user = userEvent.setup();
     const mediaRepository: ContentMediaRepository = {
+      recover: vi.fn(),
+      cancel: vi.fn(),
       uploadAndProcess: vi.fn().mockResolvedValue(asset),
     };
     const previewPackage = vi.fn().mockResolvedValue({
@@ -212,6 +214,8 @@ describe('Content Studio operator workflows', () => {
       saveDraft,
     } as unknown as ContentAuthoringRepository;
     const mediaRepository: ContentMediaRepository = {
+      recover: vi.fn(),
+      cancel: vi.fn(),
       uploadAndProcess: vi.fn().mockResolvedValue(asset),
     };
     render(
