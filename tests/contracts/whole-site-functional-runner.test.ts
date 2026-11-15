@@ -139,10 +139,13 @@ describe('whole-site complete runner with fake ports only', () => {
         });
         expect(create).not.toHaveBeenCalled();
       }
-      expect(write.mock.calls.map(([name]) => name)).toEqual([
-        'functional-health-before-close',
-        'functional-cleanup-diagnostic',
-      ]);
+      expect(write.mock.calls.map(([name]) => name).sort()).toEqual(
+        [
+          'business-stage-fixture-setup',
+          'functional-health-before-close',
+          'functional-cleanup-diagnostic',
+        ].sort(),
+      );
     },
   );
   it('actual normal shutdown finishes context close before starting browser close', async () => {

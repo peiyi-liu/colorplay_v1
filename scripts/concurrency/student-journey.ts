@@ -4,6 +4,10 @@ import type { Database } from '../../src/types/database';
 import { fail, safely, type FunctionalScope } from './config';
 import type { FunctionalIdentity } from './owned-fixtures';
 import type { PrivateJournal } from './private-journal';
+import {
+  createBusinessDiagnostics,
+  type BusinessHealthPort,
+} from './business-diagnostics';
 import { formalFunctionalQuiz } from './student-quiz';
 import {
   functionalChapter,
@@ -26,6 +30,8 @@ export const runFunctionalStudent = async (
   scope: FunctionalScope,
   journal: PrivateJournal,
   classroomId: string,
+  signal?: AbortSignal,
+  health?: BusinessHealthPort,
 ) =>
   safely(async () => {
     if (!['S1', 'S2'].includes(identity.label) || !identity.userId)
@@ -35,35 +41,54 @@ export const runFunctionalStudent = async (
       write: (name, value) =>
         journal.write(`${identity.label.toLowerCase()}-${name}`, value),
     };
-    const chapter = await functionalChapter(client);
-    const review = await reviewFunctionalCards(page, client);
-    const quiz = await formalFunctionalQuiz(
-      page,
-      client,
-      scope,
-      chapter.templateId,
-      identity.label === 'S2' ? 2 : 0,
+    const userId = identity.userId;
+    const diagnostic = createBusinessDiagnostics(
       localJournal,
-      `formal-${identity.label.toLowerCase()}`,
+      signal,
+      undefined,
+      health,
+    );
+    const chapter = await diagnostic.step('chapter', () =>
+      functionalChapter(client),
+    );
+    const review = await diagnostic.step('review', () =>
+      reviewFunctionalCards(page, client),
+    );
+    const quiz = await diagnostic.step('formal_quiz', () =>
+      formalFunctionalQuiz(
+        page,
+        client,
+        scope,
+        chapter.templateId,
+        identity.label === 'S2' ? 2 : 0,
+        localJournal,
+        `formal-${identity.label.toLowerCase()}`,
+      ),
     );
     const remediation =
       identity.label === 'S2'
-        ? await remediationFunctional(page, client, scope, localJournal)
+        ? await diagnostic.step('remediation', () =>
+            remediationFunctional(page, client, scope, localJournal),
+          )
         : null;
     const mastery =
       identity.label === 'S1'
-        ? await masteryFunctional(page, client, localJournal)
+        ? await diagnostic.step('mastery', () =>
+            masteryFunctional(page, client, localJournal),
+          )
         : null;
     const purchase =
       identity.label === 'S1'
-        ? await purchaseEquipFunctional(page, client, scope)
+        ? await diagnostic.step('purchase', () =>
+            purchaseEquipFunctional(page, client, scope),
+          )
         : null;
-    const achievements = await achievementLeaderboardFunctional(
-      page,
-      client,
-      classroomId,
+    const achievements = await diagnostic.step('achievements', () =>
+      achievementLeaderboardFunctional(page, client, classroomId),
     );
-    const ledger = await studentLedgerReadback(client, identity.userId);
+    const ledger = await diagnostic.step('ledger', () =>
+      studentLedgerReadback(client, userId),
+    );
     return {
       review,
       quiz: {

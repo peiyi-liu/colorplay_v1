@@ -35,6 +35,7 @@ import {
   authIsolationJourney,
   controlledRevokedRefresh,
 } from './auth-journey';
+import { createBusinessStageObserver } from './business-diagnostics';
 import { runFunctionalStudent } from './student-journey';
 import {
   runTeacherReadJourney,
@@ -285,6 +286,8 @@ export const createActualFunctionalPorts = (
         scope(),
         runtime.journal,
         classroom().c1.classroomId,
+        signal,
+        health,
       );
       if (
         !result.review.progressConfirmed ||
@@ -445,7 +448,7 @@ export const createActualFunctionalPorts = (
       return ready;
     },
     canonicalBaseline: runtime.canonicalBaseline,
-    stage: stages,
+    stage: createBusinessStageObserver(runtime.journal, health, stages),
     close: () => {
       stopping = true;
       return (closing ??= (async () => {

@@ -143,6 +143,34 @@ export const masteryFunctional = async (
     const card = page.locator('li.mission-select__item').filter({
       has: page.getByRole('heading', { name: chapter.title, exact: true }),
     });
+    await expect(page.locator('li.mission-select__item').first()).toBeVisible();
+    let found = false;
+    for (let turn = 0; turn < 30; turn++) {
+      const matches = await card.count();
+      if (matches > 1) return fail('FUNCTIONAL_STUDENT_FAILED');
+      if (matches === 1) {
+        await expect(card).toBeVisible();
+        found = true;
+        break;
+      }
+      const pager = page.getByRole('group', {
+        name: '任務章節分頁',
+        exact: true,
+      });
+      const next = pager.getByRole('button', { name: '下一頁', exact: true });
+      if (
+        (await pager.count()) !== 1 ||
+        (await next.count()) !== 1 ||
+        !(await next.isEnabled())
+      )
+        return fail('FUNCTIONAL_STUDENT_FAILED');
+      const status = pager.locator('.game-pager__status');
+      const before = await status.textContent();
+      if (!before) return fail('FUNCTIONAL_STUDENT_FAILED');
+      await next.click();
+      await expect(status).not.toHaveText(before);
+    }
+    if (!found) return fail('FUNCTIONAL_STUDENT_FAILED');
     await card
       .getByRole('button', { name: '展開小節任務', exact: true })
       .click();
@@ -153,6 +181,8 @@ export const masteryFunctional = async (
     let attempted = 0;
     for (let index = 0; index < 30; index++) {
       const state = await repository.getState(id);
+      if (state.chapterId !== chapter.chapterId)
+        return fail('FUNCTIONAL_STUDENT_FAILED');
       if (state.status === 'completed') {
         await expect(
           page.getByRole('heading', { name: '階段任務挑戰完成！' }),
@@ -169,13 +199,52 @@ export const masteryFunctional = async (
       );
       if (!answer) return fail('FUNCTIONAL_STUDENT_FAILED');
       if (attempted === 0) {
+        if (question.wrongAttempts !== 0)
+          return fail('FUNCTIONAL_STUDENT_FAILED');
+        const wrong = question.options.find(
+          (option) => option.text !== answerText && !option.locked,
+        );
+        if (!wrong) return fail('FUNCTIONAL_STUDENT_FAILED');
+        await page
+          .getByRole('radio', { name: wrong.text, exact: true })
+          .check();
+        await page
+          .getByRole('button', { name: '送出答案', exact: true })
+          .click();
+        attempted++;
+        await expect(
+          page.getByText('✕ 還不對，該選項已鎖定。可索取提示後再試。', {
+            exact: true,
+          }),
+        ).toBeVisible();
+        await expect(
+          page.getByRole('radio', { name: wrong.text, exact: true }),
+        ).toBeDisabled();
+        const afterWrong = await repository.getState(id);
+        if (
+          afterWrong.status !== 'in_progress' ||
+          afterWrong.position !== state.position ||
+          afterWrong.question?.questionId !== question.questionId ||
+          afterWrong.question.wrongAttempts !== 1 ||
+          !afterWrong.question.options.some(
+            (option) => option.id === wrong.id && option.locked,
+          )
+        )
+          return fail('FUNCTIONAL_STUDENT_FAILED');
         await page
           .getByRole('button', { name: '索取第 1 層提示', exact: true })
           .click();
-        await expect(page.locator('.mission__hints')).toBeVisible();
+        const hint = page.locator('.mission__hints .ui-hint--tier1');
+        await expect(hint).toBeVisible();
+        if (!(await hint.locator('span').textContent())?.trim())
+          return fail('FUNCTIONAL_STUDENT_FAILED');
       }
+      if (attempted >= 30) return fail('FUNCTIONAL_STUDENT_FAILED');
       await page.getByRole('radio', { name: answer.text, exact: true }).check();
       await page.getByRole('button', { name: '送出答案', exact: true }).click();
+      await expect(
+        page.getByRole('heading', { name: '✓ 答對了', exact: true }),
+      ).toBeVisible();
       await page
         .getByRole('button', { name: /^(?:下一關|查看結算) →$/u })
         .click();

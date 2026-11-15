@@ -22,6 +22,10 @@ export const observeFunctionalPurchase = (
       const url = new URL(request.url());
       if (
         request.method() !== 'POST' ||
+        url.search !== '' ||
+        url.hash !== '' ||
+        url.username !== '' ||
+        url.password !== '' ||
         url.origin !== new URL(scope.supabaseUrl).origin ||
         url.pathname !== '/rest/v1/rpc/purchase_blook'
       )
@@ -33,12 +37,22 @@ export const observeFunctionalPurchase = (
       }
       // Only the natural key is retained. Header/body objects are never saved.
       const body: unknown = request.postDataJSON();
-      const { blook_id } = z.strictObject({ blook_id: z.uuid() }).parse(body);
+      const { blook_id } = z
+        .strictObject({
+          blook_id: z
+            .string()
+            .regex(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu),
+        })
+        .parse(body);
       tasks.push(
         request
           .headerValue('authorization')
           .then(async (value) => {
-            if (!value?.startsWith('Bearer ') || !value.slice(7))
+            if (
+              !value?.startsWith('Bearer ') ||
+              !value.slice(7) ||
+              value.length > 16391
+            )
               return fail('FUNCTIONAL_STUDENT_FAILED');
             const userId = z.uuid().parse(await subject(value.slice(7)));
             captured = { userId, blookId: blook_id };
