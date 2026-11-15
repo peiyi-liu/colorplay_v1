@@ -6,6 +6,7 @@ import * as functionalRuntime from '../../scripts/concurrency/functional-runtime
 import * as functionalJourneys from '../../scripts/concurrency/functional-journeys';
 import { functionalMain } from '../../scripts/concurrency/run-functional';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { FunctionalError } from '../../scripts/concurrency/config';
 import {
   runFunctional,
   type FunctionalRunPorts,
@@ -104,7 +105,9 @@ describe('whole-site complete runner with fake ports only', () => {
       const create = vi
         .spyOn(browserRuntime, 'createFunctionalContext')
         .mockReturnValueOnce(contextPromise);
-      const write = vi.fn(() => Promise.resolve());
+      const write = vi.fn<(name: string, value: unknown) => Promise<void>>(() =>
+        Promise.resolve(),
+      );
       const ports = createActualFunctionalPorts({
         scope,
         secrets: syntheticSecrets,
@@ -136,7 +139,10 @@ describe('whole-site complete runner with fake ports only', () => {
         });
         expect(create).not.toHaveBeenCalled();
       }
-      expect(write).not.toHaveBeenCalled();
+      expect(write.mock.calls.map(([name]) => name)).toEqual([
+        'functional-health-before-close',
+        'functional-cleanup-diagnostic',
+      ]);
     },
   );
   it('requires preflight, canonical then every ordered stage and refresh last before health', async () => {
@@ -353,4 +359,36 @@ describe('whole-site complete runner with fake ports only', () => {
     expect(vi.getTimerCount()).toBe(0);
     vi.useRealTimers();
   });
+});
+
+describe('safe stage failure diagnostic codes', () => {
+  it.each(['known', 'foreign'] as const)(
+    'preserves only allowlisted %s errors in stage checkpoint',
+    async (kind) => {
+      const h = await harness(),
+        original = h.ports.stage.bind(h.ports);
+      h.ports.stage = (stage, signal) =>
+        stage === 'registration_recovery'
+          ? Promise.reject(
+              kind === 'known'
+                ? new FunctionalError('FUNCTIONAL_RECOVERY_INVALID')
+                : new Error('SYNTHETIC_RECOVERY_SECRET'),
+            )
+          : original(stage, signal);
+      await runFunctional(h.ports);
+      expect(h.writes).toContainEqual({
+        name: 'stage-registration-recovery-failure',
+        value: {
+          stage: 'registration_recovery',
+          code:
+            kind === 'known'
+              ? 'FUNCTIONAL_RECOVERY_INVALID'
+              : 'FUNCTIONAL_OPERATION_FAILED',
+        },
+      });
+      expect(JSON.stringify(h.writes)).not.toContain(
+        'SYNTHETIC_RECOVERY_SECRET',
+      );
+    },
+  );
 });

@@ -11,6 +11,7 @@ import { fail, type FunctionalScope } from './config';
 import { createFunctionalClient } from './local-runtime';
 import { createFunctionalContext } from './browser-runtime';
 import { createFunctionalHealth } from './functional-health';
+import { captureFunctionalHealth } from './auth-recovery-diagnostics';
 import { createMediaHookBinding } from './media-hook-binding';
 import {
   provisionFunctionalIdentities,
@@ -430,6 +431,14 @@ export const createActualFunctionalPorts = (
     close: () => {
       stopping = true;
       return (closing ??= (async () => {
+        const beforeHealth = captureFunctionalHealth(health);
+        const beforeWrite = Promise.resolve().then(() =>
+          runtime.journal.write('functional-health-before-close', {
+            phase,
+            ...beforeHealth,
+          }),
+        );
+        void beforeWrite.catch(() => undefined);
         const earlyBrowserClose = stopBrowser();
         void earlyBrowserClose.catch(() => undefined);
         await starting?.catch(() => undefined);
@@ -455,8 +464,23 @@ export const createActualFunctionalPorts = (
           }),
         ]);
         await health.settle();
+        const afterHealth = captureFunctionalHealth(health);
         await health.dispose();
+        const diagnostics = await Promise.allSettled([
+          beforeWrite,
+          runtime.journal.write('functional-cleanup-diagnostic', {
+            phase,
+            closeOperations: outcomes.length,
+            rejectedCloseOperations: outcomes.filter(
+              (row) => row.status === 'rejected',
+            ).length,
+            health: afterHealth,
+            physicalProcessExit: 'ROOT_ATTESTATION_REQUIRED',
+          }),
+        ]);
         if (
+          diagnostics.some((result) => result.status !== 'fulfilled') ||
+          afterHealth.collection === 'UNAVAILABLE' ||
           outcomes.some((result) => result.status !== 'fulfilled') ||
           health.snapshot().unexpectedErrors !== 0
         )

@@ -1,6 +1,6 @@
 import { performance } from 'node:perf_hooks';
 import { z } from 'zod';
-import { fail, type FunctionalScope } from './config';
+import { fail, functionalFailureCode, type FunctionalScope } from './config';
 import { requireFunctionalReady } from './local-runtime';
 import type { PrivateJournal } from './private-journal';
 import {
@@ -120,7 +120,7 @@ export const runFunctional = async (ports: FunctionalRunPorts) => {
           }),
         );
         row.status = 'pass';
-      } catch {
+      } catch (error) {
         row.status = 'fail';
         row.elapsedMs = Math.max(0, now() - stageStarted);
         receipt.failureStage = stage;
@@ -130,7 +130,7 @@ export const runFunctional = async (ports: FunctionalRunPorts) => {
             stage,
             code: controller.signal.aborted
               ? 'FUNCTIONAL_ABORTED'
-              : 'FUNCTIONAL_OPERATION_FAILED',
+              : functionalFailureCode(error),
           }),
         ).catch(() => undefined);
         break;

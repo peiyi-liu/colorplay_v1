@@ -10,6 +10,7 @@ import { createProfileRepository } from '../../src/features/profile/api/profile-
 import { createClassroomRepository } from '../../src/features/classrooms/api/classroom-repository';
 import {
   fail,
+  functionalFailureCode,
   parseFunctionalScope,
   safely,
   type FunctionalScope,
@@ -27,6 +28,7 @@ import {
 } from './auth-refresh-observer';
 import { runFunctionalTabLifecycle } from './auth-tab-lifecycle';
 import type { PrivateJournal } from './private-journal';
+import { createRecoveryDiagnostics } from './auth-recovery-diagnostics';
 
 export const loginFunctionalApi = async (
   scope: FunctionalScope,
@@ -274,39 +276,56 @@ export const resetFunctionalPassword = async (
   identity: FunctionalIdentity,
   journal: PrivateJournal,
   signal: AbortSignal,
-) =>
-  safely(async () => {
+) => {
+  try {
+    const diagnostic = createRecoveryDiagnostics(journal, signal);
     const mailbox = createOwnedMailbox(scope, identity.email, signal);
-    const before = await mailbox.baseline();
-    await signOutViaHud(page);
-    await page.waitForURL(/\/login$/u);
-    await page.goto('/forgot-password');
-    await page.getByRole('textbox', { name: '帳號' }).fill(identity.account);
-    await page.getByLabel('E-mail').fill(identity.email);
-    await page.getByRole('button', { name: '寄送重設連結' }).click();
-    await expect(page.getByText(/重設密碼連結已寄出/u)).toBeVisible();
-    const callback = await recoveryCallback(
-      scope,
-      await mailbox.wait(before, 'recovery'),
-      signal,
+    const before = await diagnostic.step('mailbox_baseline', () =>
+      mailbox.baseline(),
     );
-    await navigateRecovery(page, scope, callback);
-    await expect(
-      page.getByRole('button', { name: '更新密碼', exact: true }),
-    ).toBeEnabled();
-    await page
-      .getByLabel('新密碼', { exact: true })
-      .fill(identity.replacementPassword);
-    await page.getByLabel('確認新密碼').fill(identity.replacementPassword);
-    await journal.write('password-reset-intent', { label: identity.label });
-    await page.getByRole('button', { name: '更新密碼', exact: true }).click();
-    await page.waitForURL(/\/login$/u);
+    await diagnostic.step('hud_signout', async () => {
+      await signOutViaHud(page);
+      await page.waitForURL(/\/login$/u);
+    });
+    await diagnostic.step('recovery_request', async () => {
+      await page.goto('/forgot-password');
+      await page.getByRole('textbox', { name: '帳號' }).fill(identity.account);
+      await page.getByLabel('E-mail').fill(identity.email);
+      await page.getByRole('button', { name: '寄送重設連結' }).click();
+      await expect(page.getByText(/重設密碼連結已寄出/u)).toBeVisible();
+    });
+    const mail = await diagnostic.step('recovery_mail', () =>
+      mailbox.wait(before, 'recovery'),
+    );
+    const callback = await diagnostic.step('verify_handoff', () =>
+      recoveryCallback(scope, mail, signal),
+    );
+    await diagnostic.step('reset_form', async () => {
+      await navigateRecovery(page, scope, callback);
+      await expect(
+        page.getByRole('button', { name: '更新密碼', exact: true }),
+      ).toBeEnabled();
+      await page
+        .getByLabel('新密碼', { exact: true })
+        .fill(identity.replacementPassword);
+      await page.getByLabel('確認新密碼').fill(identity.replacementPassword);
+      await journal.write('password-reset-intent', { label: identity.label });
+    });
+    await diagnostic.step('password_update', async () => {
+      await page.getByRole('button', { name: '更新密碼', exact: true }).click();
+      await page.waitForURL(/\/login$/u);
+    });
     const oldPassword = identity.password;
     identity.password = identity.replacementPassword;
-    await loginFunctionalPage(page, identity);
+    await diagnostic.step('new_login', () =>
+      loginFunctionalPage(page, identity),
+    );
     await journal.write('password-reset-confirmed', { label: identity.label });
     return oldPassword;
-  }, 'FUNCTIONAL_AUTH_FAILED');
+  } catch (error) {
+    return fail(functionalFailureCode(error));
+  }
+};
 
 export const controlledRevokedRefresh = async (
   page: Page,
