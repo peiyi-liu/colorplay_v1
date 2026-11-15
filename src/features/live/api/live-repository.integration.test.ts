@@ -123,7 +123,8 @@ describe('LiveRepository with local Supabase', () => {
         },
       });
       const scoreDelta = feedbackView.myFeedback?.scoreDelta;
-      if (scoreDelta === undefined) throw new Error('LIVE_TEST_FEEDBACK_MISSING');
+      if (scoreDelta === undefined)
+        throw new Error('LIVE_TEST_FEEDBACK_MISSING');
       expect(Number.isSafeInteger(scoreDelta)).toBe(true);
       expect(scoreDelta).toBeGreaterThanOrEqual(75);
       expect(scoreDelta).toBeLessThanOrEqual(150);

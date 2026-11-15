@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-} from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 
 import { Icon } from '../../../components/ui/icons';
 import {
@@ -174,8 +169,13 @@ function QuestionPanel({ state }: Readonly<{ state: LiveSessionState }>) {
   const question = state.question;
   if (!question) return <p role="status">正在同步題目…</p>;
   return (
-    <section aria-labelledby="live-round-question" className="live-round__question">
-      <p>第 {state.currentPosition} / {state.questionCount} 題</p>
+    <section
+      aria-labelledby="live-round-question"
+      className="live-round__question"
+    >
+      <p>
+        第 {state.currentPosition} / {state.questionCount} 題
+      </p>
       <h2 id="live-round-question">{question.prompt}</h2>
       <ul aria-label="答案選項" className="live-round__options">
         {question.publicOptions.map((option, index) => {
@@ -208,30 +208,40 @@ function StatisticsPanel({ state }: Readonly<{ state: LiveSessionState }>) {
   );
   const rows = [
     ...question.publicOptions.map((option, index) => ({
-      count: state.optionCounts?.find((entry) => entry.optionId === option.id)?.count ?? 0,
+      count:
+        state.optionCounts?.find((entry) => entry.optionId === option.id)
+          ?.count ?? 0,
       id: option.id,
       isCorrect: state.correctOptionId === option.id,
       label: `${option.key}. ${option.text ?? ''}`,
       ...optionStyle(index),
     })),
     ...(state.optionCounts.find((entry) => entry.optionId === null)?.count
-      ? [{
-          count: state.optionCounts.find((entry) => entry.optionId === null)?.count ?? 0,
-          id: 'timeout',
-          isCorrect: false,
-          label: '逾時／未選擇',
-          shape: '—',
-          variant: 'muted',
-        }]
+      ? [
+          {
+            count:
+              state.optionCounts.find((entry) => entry.optionId === null)
+                ?.count ?? 0,
+            id: 'timeout',
+            isCorrect: false,
+            label: '逾時／未選擇',
+            shape: '—',
+            variant: 'muted',
+          },
+        ]
       : []),
   ];
   return (
-    <section aria-labelledby="live-round-statistics" className="live-round__statistics">
+    <section
+      aria-labelledby="live-round-statistics"
+      className="live-round__statistics"
+    >
       <h2 id="live-round-statistics">作答統計</h2>
       <p>統計將在 5 秒後自動進入本題解析</p>
       <div aria-label="作答分布文字圖表" className="live-round__distribution">
         {rows.map((row) => {
-          const percent = denominator > 0 ? Math.round((row.count / denominator) * 100) : 0;
+          const percent =
+            denominator > 0 ? Math.round((row.count / denominator) * 100) : 0;
           return (
             <div
               aria-label={row.isCorrect ? `正確答案：${row.label}` : row.label}
@@ -240,12 +250,18 @@ function StatisticsPanel({ state }: Readonly<{ state: LiveSessionState }>) {
             >
               <strong>
                 <span aria-hidden="true">{row.shape}</span>{' '}
-                {row.isCorrect ? '✓ 正確答案：' : ''}{row.label}
+                {row.isCorrect ? '✓ 正確答案：' : ''}
+                {row.label}
               </strong>
-              <span aria-hidden="true" className="live-round__distribution-track">
+              <span
+                aria-hidden="true"
+                className="live-round__distribution-track"
+              >
                 <span style={{ width: `${String(percent)}%` }} />
               </span>
-              <span>{row.count} 人／{percent}%</span>
+              <span>
+                {row.count} 人／{percent}%
+              </span>
             </div>
           );
         })}
@@ -263,15 +279,31 @@ function ExplanationPanel({
   );
   const explanation = state.explanation?.trim();
   return (
-    <section aria-labelledby="live-round-explanation" className="live-round__explanation">
+    <section
+      aria-labelledby="live-round-explanation"
+      className="live-round__explanation"
+    >
       <div className="live-round__scroll">
         <div className="live-round__scroll-body">
           <h2 id="live-round-explanation">本題解析</h2>
-          <p className="live-round__scroll-question">{state.question?.prompt}</p>
-          <p><strong>正確答案：</strong>{correct ? `${correct.key}. ${correct.text ?? ''}` : '尚未提供'}</p>
-          <p>{explanation && explanation.length > 0 ? explanation : '本題沒有提供解析。'}</p>
+          <p className="live-round__scroll-question">
+            {state.question?.prompt}
+          </p>
+          <p>
+            <strong>正確答案：</strong>
+            {correct ? `${correct.key}. ${correct.text ?? ''}` : '尚未提供'}
+          </p>
+          <p>
+            {explanation && explanation.length > 0
+              ? explanation
+              : '本題沒有提供解析。'}
+          </p>
         </div>
-        <button className="live-round__ranking-button" onClick={onShowRanking} type="button">
+        <button
+          className="live-round__ranking-button"
+          onClick={onShowRanking}
+          type="button"
+        >
           <Icon name="trophy" size={22} />
           即時排名
         </button>
@@ -287,7 +319,11 @@ function RankingPanel({
 }: Readonly<{
   isError: boolean;
   isPending: boolean;
-  rows: readonly Readonly<{ displayName: string; rank: number; score: number }>[];
+  rows: readonly Readonly<{
+    displayName: string;
+    rank: number;
+    score: number;
+  }>[];
 }>) {
   if (isPending) return <p role="status">正在同步即時排名…</p>;
   if (isError) return <p role="alert">即時排名暫時無法載入，請稍後再試。</p>;
@@ -297,7 +333,10 @@ function RankingPanel({
   );
   const remaining = rows.filter((entry) => entry.rank > 3);
   return (
-    <section aria-labelledby="live-round-ranking" className="live-round__ranking">
+    <section
+      aria-labelledby="live-round-ranking"
+      className="live-round__ranking"
+    >
       <h2 id="live-round-ranking">即時排名</h2>
       <ol aria-label="即時排名前三名" className="live-round__podium">
         {podium.map((entry) => (
@@ -353,7 +392,9 @@ export function LiveProjectorRound({
   state: LiveSessionState;
   transitionPending: boolean;
 }>) {
-  const [feedback, setFeedback] = useState<Readonly<{ step: FeedbackStep; version: number }>>({
+  const [feedback, setFeedback] = useState<
+    Readonly<{ step: FeedbackStep; version: number }>
+  >({
     step: 'statistics',
     version: state.stateVersion,
   });
@@ -363,11 +404,13 @@ export function LiveProjectorRound({
   if (feedback.version !== state.stateVersion) {
     setFeedback({ step: 'statistics', version: state.stateVersion });
   }
-  const feedbackStep = state.state === 'question_feedback' ? feedback.step : 'statistics';
+  const feedbackStep =
+    state.state === 'question_feedback' ? feedback.step : 'statistics';
   const headingRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (state.state !== 'question_feedback' || feedbackStep !== 'statistics') return;
+    if (state.state !== 'question_feedback' || feedbackStep !== 'statistics')
+      return;
     const timer = window.setTimeout(() => {
       setFeedback({ step: 'explanation', version: state.stateVersion });
     }, 5_000);
@@ -393,11 +436,16 @@ export function LiveProjectorRound({
 
   const standings = useLiveStandings(
     sessionId,
-    { enabled: state.state === 'question_feedback', stateVersion: state.stateVersion },
+    {
+      enabled: state.state === 'question_feedback',
+      stateVersion: state.stateVersion,
+    },
     repository,
   );
   const action = (id: string) => footerActions.find((entry) => entry.id === id);
-  const pauseAction = action(state.state === 'paused' ? 'resumeSession' : 'pauseSession');
+  const pauseAction = action(
+    state.state === 'paused' ? 'resumeSession' : 'pauseSession',
+  );
   const closeAction = action('closeQuestion');
   const nextAction = action('advance') ?? action('finalize');
   const nextEnabled = feedbackStep === 'ranking' && nextAction !== undefined;
@@ -424,11 +472,18 @@ export function LiveProjectorRound({
   };
 
   return (
-    <div className="live-projector live-round" data-feedback-step={feedbackStep}>
+    <div
+      className="live-projector live-round"
+      data-feedback-step={feedbackStep}
+    >
       <StatusBar
         feedbackStep={feedbackStep}
-        onExpire={() => { closeAction?.run(); }}
-        onSecond={(clock) => { if (clock.isFinalCountdown) onFinalCountdown(); }}
+        onExpire={() => {
+          closeAction?.run();
+        }}
+        onSecond={(clock) => {
+          if (clock.isFinalCountdown) onFinalCountdown();
+        }}
         state={state}
       />
       <main
@@ -436,11 +491,26 @@ export function LiveProjectorRound({
         ref={headingRef}
         tabIndex={-1}
       >
-        {state.state === 'question_open' || state.state === 'paused' ? <QuestionPanel state={state} /> : null}
-        {state.state === 'paused' ? <p className="live-round__paused" role="status">作答時間已暫停</p> : null}
-        {state.state === 'question_feedback' && feedbackStep === 'statistics' ? <StatisticsPanel state={state} /> : null}
-        {state.state === 'question_feedback' && feedbackStep === 'explanation' ? (
-          <ExplanationPanel onShowRanking={() => { setFeedback({ step: 'ranking', version: state.stateVersion }); }} state={state} />
+        {state.state === 'question_open' || state.state === 'paused' ? (
+          <QuestionPanel state={state} />
+        ) : null}
+        {state.state === 'paused' ? (
+          <p className="live-round__paused" role="status">
+            作答時間已暫停
+          </p>
+        ) : null}
+        {state.state === 'question_feedback' &&
+        feedbackStep === 'statistics' ? (
+          <StatisticsPanel state={state} />
+        ) : null}
+        {state.state === 'question_feedback' &&
+        feedbackStep === 'explanation' ? (
+          <ExplanationPanel
+            onShowRanking={() => {
+              setFeedback({ step: 'ranking', version: state.stateVersion });
+            }}
+            state={state}
+          />
         ) : null}
         {state.state === 'question_feedback' && feedbackStep === 'ranking' ? (
           <RankingPanel
@@ -451,30 +521,93 @@ export function LiveProjectorRound({
         ) : null}
       </main>
       <footer aria-label="Live 課堂控制" className="live-round__controls">
-        <button disabled={!pauseAction || transitionPending} onClick={() => { pauseAction?.run(); }} type="button">
-          <Icon name="clock" size={22} />{pauseAction?.label ?? '暫停時間'}
+        <button
+          disabled={!pauseAction || transitionPending}
+          onClick={() => {
+            pauseAction?.run();
+          }}
+          type="button"
+        >
+          <Icon name="clock" size={22} />
+          {pauseAction?.label ?? '暫停時間'}
         </button>
-        <button disabled={!closeAction || transitionPending} onClick={() => { closeAction?.run(); }} type="button">
-          <Icon name="check" size={22} />結束作答
+        <button
+          disabled={!closeAction || transitionPending}
+          onClick={() => {
+            closeAction?.run();
+          }}
+          type="button"
+        >
+          <Icon name="check" size={22} />
+          結束作答
         </button>
-        <button className={nextEnabled ? 'live-round__next live-round__next--active' : 'live-round__next'} disabled={!nextEnabled || transitionPending} onClick={() => { nextAction?.run(); }} type="button">
-          <Icon name="arrow-right" size={22} />{nextAction?.id === 'finalize' ? '結算成績' : '下一題'}
+        <button
+          className={
+            nextEnabled
+              ? 'live-round__next live-round__next--active'
+              : 'live-round__next'
+          }
+          disabled={!nextEnabled || transitionPending}
+          onClick={() => {
+            nextAction?.run();
+          }}
+          type="button"
+        >
+          <Icon name="arrow-right" size={22} />
+          {nextAction?.id === 'finalize' ? '結算成績' : '下一題'}
         </button>
-        <button aria-label="音效" aria-pressed={muted} onClick={onToggleMute} type="button">
-          <Icon name="megaphone" size={22} />音效 <small>{muted ? '靜音' : '開啟'}</small>
+        <button
+          aria-label="音效"
+          aria-pressed={muted}
+          onClick={onToggleMute}
+          type="button"
+        >
+          <Icon name="megaphone" size={22} />
+          音效 <small>{muted ? '靜音' : '開啟'}</small>
         </button>
-        <button disabled={!onCancel || state.state === 'paused' || transitionPending} onClick={() => { setConfirmingExit(true); }} ref={exitButtonRef} type="button">
-          <Icon name="x" size={22} />退出
+        <button
+          disabled={!onCancel || state.state === 'paused' || transitionPending}
+          onClick={() => {
+            setConfirmingExit(true);
+          }}
+          ref={exitButtonRef}
+          type="button"
+        >
+          <Icon name="x" size={22} />
+          退出
         </button>
       </footer>
       {confirmingExit && onCancel ? (
-        <div aria-labelledby="live-round-exit-title" aria-modal="true" className="live-projector__exit-backdrop" onKeyDown={handleExitDialogKeyDown} role="alertdialog">
+        <div
+          aria-labelledby="live-round-exit-title"
+          aria-modal="true"
+          className="live-projector__exit-backdrop"
+          onKeyDown={handleExitDialogKeyDown}
+          role="alertdialog"
+        >
           <div className="live-projector__exit-dialog">
             <h2 id="live-round-exit-title">確定退出 Live 課堂？</h2>
             <p>退出會結束這場 Live 課堂。</p>
             <div>
-              <button autoFocus onClick={() => { setConfirmingExit(false); }} type="button">繼續課堂</button>
-              <button className="live-projector__confirm-exit" onClick={() => { setConfirmingExit(false); onCancel(); }} type="button">確定退出</button>
+              <button
+                autoFocus
+                onClick={() => {
+                  setConfirmingExit(false);
+                }}
+                type="button"
+              >
+                繼續課堂
+              </button>
+              <button
+                className="live-projector__confirm-exit"
+                onClick={() => {
+                  setConfirmingExit(false);
+                  onCancel();
+                }}
+                type="button"
+              >
+                確定退出
+              </button>
             </div>
           </div>
         </div>

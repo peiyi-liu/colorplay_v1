@@ -12,11 +12,15 @@ describe('student Live arena layout contract', () => {
   it('reuses the proportional desktop background at the mobile center', () => {
     expect(styles).toContain('live-student-arena-desktop-v1.webp');
     expect(styles).toMatch(/@media\s*\(max-width:\s*767px\)/u);
-    const mobileStyles = styles.slice(styles.indexOf('@media (max-width: 767px)'));
+    const mobileStyles = styles.slice(
+      styles.indexOf('@media (max-width: 767px)'),
+    );
     expect(mobileStyles).toContain('live-student-arena-desktop-v1.webp');
     expect(mobileStyles).not.toContain('live-student-arena-mobile-v1.webp');
-    expect(mobileStyles).toContain('background-position: center, center 72%;');
-    expect(mobileStyles).toContain('background-size: cover, auto 120%;');
+    expect(mobileStyles).toMatch(
+      /background-position:\s*center,\s*center 72%;/u,
+    );
+    expect(mobileStyles).toMatch(/background-size:\s*cover,\s*auto 120%;/u);
   });
 
   it('keeps the arena below the HUD while the feedback result owns the viewport', () => {

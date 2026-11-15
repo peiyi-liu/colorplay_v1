@@ -52,7 +52,10 @@ export function LiveJoinPage({
   const visibleDigits = typedCode.trim().slice(0, 6).split('');
   const joinCodeField = register('joinCode');
   const fieldError = errors.joinCode?.message;
-  const describedBy = [fieldError ? 'live-join-code-error' : undefined, joinError ? 'live-join-server-error' : undefined]
+  const describedBy = [
+    fieldError ? 'live-join-code-error' : undefined,
+    joinError ? 'live-join-server-error' : undefined,
+  ]
     .filter(Boolean)
     .join(' ');
 

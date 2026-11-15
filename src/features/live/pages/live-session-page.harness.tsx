@@ -40,7 +40,11 @@ function stateFor(scenario: string): LiveSessionState {
     stateVersion: 2,
   };
   if (scenario === 'lobby') return base;
-  if (scenario === 'correct' || scenario === 'wrong' || scenario === 'timeout') {
+  if (
+    scenario === 'correct' ||
+    scenario === 'wrong' ||
+    scenario === 'timeout'
+  ) {
     const answerStatus =
       scenario === 'correct'
         ? ('correct' as const)
@@ -115,7 +119,8 @@ function harnessClient(): SupabaseClient<Database> {
 }
 
 export function LiveSessionPageHarness() {
-  const scenario = new URLSearchParams(window.location.search).get('scenario') ?? 'question';
+  const scenario =
+    new URLSearchParams(window.location.search).get('scenario') ?? 'question';
   const state = stateFor(scenario);
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },

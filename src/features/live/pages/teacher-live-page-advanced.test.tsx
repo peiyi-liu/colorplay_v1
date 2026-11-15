@@ -40,7 +40,10 @@ describe('TeacherLivePage (advanced)', () => {
       startSession,
     });
     renderWith(
-      <TeacherLivePage menu={<div data-testid="teacher-menu" />} repository={repository} />,
+      <TeacherLivePage
+        menu={<div data-testid="teacher-menu" />}
+        repository={repository}
+      />,
     );
     const user = userEvent.setup();
 
@@ -72,7 +75,10 @@ describe('TeacherLivePage (advanced)', () => {
       listMyActivities: vi.fn().mockResolvedValue([activity]),
     });
     renderWith(
-      <TeacherLivePage menu={<div data-testid="teacher-menu" />} repository={repository} />,
+      <TeacherLivePage
+        menu={<div data-testid="teacher-menu" />}
+        repository={repository}
+      />,
     );
 
     expect(

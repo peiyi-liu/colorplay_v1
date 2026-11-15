@@ -5,10 +5,7 @@ import {
   createPresenterAudio,
   type PresenterAudio,
 } from '../lib/presenter-audio';
-import {
-  cueFor,
-  type ProjectorPhaseKind,
-} from '../lib/live-audio-cue';
+import { cueFor, type ProjectorPhaseKind } from '../lib/live-audio-cue';
 import { projectorView } from '../lib/live-phase-view';
 import type { LiveRepository, LiveSessionState } from '../types';
 import { LiveProjectorHud } from './live-projector-hud';
@@ -149,9 +146,7 @@ export function LivePresenter({
     >
       <p className="live-presenter__viewport-warning" role="alert">
         <strong>投影視窗過小</strong>
-        <span>
-          請縮小瀏覽器畫面比例，或放大視窗後再試。
-        </span>
+        <span>請縮小瀏覽器畫面比例，或放大視窗後再試。</span>
       </p>
       {phase === 'lobby' ? (
         <LiveProjectorHud
@@ -216,44 +211,46 @@ export function LivePresenter({
           ) : null}
 
           {phase === 'podium' ? (
-        <div className="live-presenter__podium-stage">
-          <span
-            aria-hidden="true"
-            className="podium-fireworks podium-fireworks--left"
-          />
-          <span
-            aria-hidden="true"
-            className="podium-fireworks podium-fireworks--right"
-          />
-          <h2>最終頒獎台</h2>
-          <ol aria-label="頒獎台" className="live-presenter__podium">
-            {(state.podium ?? []).map((entry) => (
-              <li
-                className={`live-presenter__podium-step live-presenter__podium-step--${String(entry.rank)}`}
-                key={entry.rank}
-              >
-                {entry.rank === 1 ? (
-                  <span aria-hidden="true" className="podium-gems" />
-                ) : null}
-                <span className="live-presenter__podium-rank">
-                  {entry.rank === 1 ? (
-                    <Icon name="crown" size={28} />
-                  ) : (
-                    <Icon name="medal" size={24} />
-                  )}
-                </span>
-                <span>{entry.displayName}</span>
-                <span>{entry.score} 分</span>
-              </li>
-            ))}
-          </ol>
-        </div>
+            <div className="live-presenter__podium-stage">
+              <span
+                aria-hidden="true"
+                className="podium-fireworks podium-fireworks--left"
+              />
+              <span
+                aria-hidden="true"
+                className="podium-fireworks podium-fireworks--right"
+              />
+              <h2>最終頒獎台</h2>
+              <ol aria-label="頒獎台" className="live-presenter__podium">
+                {(state.podium ?? []).map((entry) => (
+                  <li
+                    className={`live-presenter__podium-step live-presenter__podium-step--${String(entry.rank)}`}
+                    key={entry.rank}
+                  >
+                    {entry.rank === 1 ? (
+                      <span aria-hidden="true" className="podium-gems" />
+                    ) : null}
+                    <span className="live-presenter__podium-rank">
+                      {entry.rank === 1 ? (
+                        <Icon name="crown" size={28} />
+                      ) : (
+                        <Icon name="medal" size={24} />
+                      )}
+                    </span>
+                    <span>{entry.displayName}</span>
+                    <span>{entry.score} 分</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
           ) : null}
 
           <footer className="live-presenter__controls">
             {footerActions.map((entry) => (
               <button
-                className={entry.precedence === 'primary' ? 'primary-action' : undefined}
+                className={
+                  entry.precedence === 'primary' ? 'primary-action' : undefined
+                }
                 disabled={transitionPending}
                 key={entry.id}
                 onClick={entry.run}
