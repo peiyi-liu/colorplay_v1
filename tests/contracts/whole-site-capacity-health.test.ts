@@ -131,4 +131,33 @@ describe('separate host/VM clocks, footprint guards and unavailable data', () =>
     feed(h, 1000, { ...hostSample(1001000), nodeRssBytes: 2 * 1024 ** 3 + 1 });
     expect(h.snapshot(1002).reasons).toContain('node_rss');
   });
+  it.each(['NATIVE_BROWSER', 'HYBRID_BROWSER_SDK'] as const)(
+    'requires positive measured browser RSS and footprint in %s',
+    (mode) => {
+      for (const field of [
+        'browserTreeRssBytes',
+        'browserTreePhysicalFootprintBytes',
+      ] as const) {
+        const health = createCapacityHealth(mode);
+        feed(health, 0, { ...hostSample(), [field]: 0 });
+        expect(health.snapshot(2).validity).toBe('UNKNOWN');
+      }
+      const healthy = createCapacityHealth(mode);
+      feed(healthy, 0);
+      expect(healthy.snapshot(2).validity).toBe('VALID');
+    },
+  );
+  it('does not infer sustained footprint limitation from one short high peak', () => {
+    const health = createCapacityHealth('NATIVE_BROWSER');
+    feed(health, 0, {
+      ...hostSample(),
+      browserTreePhysicalFootprintBytes: 7 * 1024 ** 3,
+    });
+    expect(health.snapshot(2).validity).toBe('VALID');
+    feed(health, 1000);
+    expect(health.snapshot(1002).validity).toBe('VALID');
+    expect(health.snapshot(1002).browserTreeFootprintMaxBytes).toBe(
+      7 * 1024 ** 3,
+    );
+  });
 });

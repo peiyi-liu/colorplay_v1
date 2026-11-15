@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { capacityEngineeringGuards as guards } from './capacity-manifest';
-import { capacityModes, type CapacityMode } from './capacity-scope';
+import {
+  capacityModes,
+  capacityFailure,
+  type CapacityMode,
+} from './capacity-scope';
 const nonnegative = z.number().nonnegative();
 const bytes = nonnegative.int();
 const start = z.string().regex(/^[0-9]{1,30}$/u);
@@ -95,6 +99,46 @@ export const capacityHealthSchema = z.strictObject({
   vmLoad1: nonnegative.nullable(),
 });
 export type CapacityHealth = z.infer<typeof capacityHealthSchema>;
+export const validateCapacityHealth = (input: unknown): CapacityHealth => {
+  const health = capacityHealthSchema.parse(input);
+  if (health.validity === 'VALID') {
+    if (
+      health.reasons.length !== 0 ||
+      health.hostSamples < 1 ||
+      health.vmSamples < 1 ||
+      health.nodeRssMaxBytes === null ||
+      health.nodeRssMaxBytes <= 0 ||
+      health.nodeRssMaxBytes > guards.nodeRssLimitBytes ||
+      health.hostPressureFlag === null ||
+      health.hostPressureFlag === 4 ||
+      health.lastHostAgeMs === null ||
+      health.lastHostAgeMs > guards.hostSampleMaxAgeMs ||
+      health.lastVmAgeMs === null ||
+      health.lastVmAgeMs > guards.vmSampleMaxAgeMs ||
+      health.eventLoopP95MaxMs === null ||
+      health.nodeCpuLifetimePercentOfHost === null ||
+      health.vmMemoryTotalBytes === null ||
+      health.vmMemoryTotalBytes <= 0 ||
+      health.vmMemoryAvailableBytes === null ||
+      health.vmMemoryAvailableBytes > health.vmMemoryTotalBytes
+    )
+      return capacityFailure();
+    if (
+      health.mode === 'NODE_PROTOCOL'
+        ? health.browserTreeRssMaxBytes !== null ||
+          health.browserTreeFootprintMaxBytes !== null ||
+          health.browserCpuLifetimePercentOfHost !== null
+        : health.browserTreeRssMaxBytes === null ||
+          health.browserTreeRssMaxBytes <= 0 ||
+          health.browserTreeFootprintMaxBytes === null ||
+          health.browserTreeFootprintMaxBytes <= 0 ||
+          health.browserCpuLifetimePercentOfHost === null
+    )
+      return capacityFailure();
+  }
+  return health;
+};
+
 export const createCapacityHealth = (mode: CapacityMode) => {
   let host: Collected<HostCapacitySample> | null = null,
     vm: Collected<VmCapacitySample> | null = null,
@@ -153,7 +197,9 @@ export const createCapacityHealth = (mode: CapacityMode) => {
               sample.treeComplete !== true ||
               sample.browserProcessCount < 1 ||
               sample.browserTreeRssBytes === null ||
+              sample.browserTreeRssBytes <= 0 ||
               sample.browserTreePhysicalFootprintBytes === null ||
+              sample.browserTreePhysicalFootprintBytes <= 0 ||
               sample.browserCpuLifetimePercentOfOneCore === null
         )
           throw new Error('TREE');
@@ -307,7 +353,7 @@ export const createCapacityHealth = (mode: CapacityMode) => {
         stale.add('loop_stale');
       if (unknown) stale.add('collector_unavailable');
       const browserCpu = host?.sample.browserCpuLifetimePercentOfOneCore;
-      return capacityHealthSchema.parse({
+      return validateCapacityHealth({
         mode,
         validity: stale.size
           ? 'UNKNOWN'

@@ -5,9 +5,14 @@ import {
 } from '../../scripts/concurrency/capacity-receipt';
 import { parseCapacityScope } from '../../scripts/concurrency/capacity-scope';
 import { sha256 } from '../../scripts/concurrency/local-runtime';
-import { createCapacityManifest } from '../../scripts/concurrency/capacity-manifest';
+import { summarizeOperations } from '../../scripts/concurrency/capacity-metrics';
+import {
+  createCapacityManifest,
+  capacityOperations,
+} from '../../scripts/concurrency/capacity-manifest';
 import {
   capacityFixture,
+  operation,
   completeCapacityReceipt,
 } from './helpers/whole-site-capacity';
 describe('capacity receipts fail closed without exact owned proofs and chain', () => {
@@ -69,6 +74,16 @@ describe('capacity receipts fail closed without exact owned proofs and chain', (
     large.metrics.operations.teacher_dashboard.result =
       'NOT_EVALUATED_INSUFFICIENT_SAMPLES';
     large.metrics.operations.teacher_dashboard.independentSamples = 29;
+    Object.assign(large.metrics.operations.teacher_dashboard, {
+      operationsStarted: 29,
+      physicalAttempts: 29,
+      coldSamples: 29,
+      concurrentSamples: 29,
+    });
+    const host = large.metrics.perActor[0];
+    if (!host) throw new Error('SYNTHETIC_ACTOR_MISSING');
+    host.operationsStarted -= 11;
+    host.physicalAttempts -= 11;
     expect(finalizeCapacityReceipt(large, plan, scope).result).toBe(
       'INCONCLUSIVE',
     );
@@ -226,4 +241,112 @@ describe('capacity receipts fail closed without exact owned proofs and chain', (
     expect(result.overallSloPassed).toBe(false);
     expect(result.sloResult).toBe('NOT_EVALUATED_MISSING_EVIDENCE');
   });
+  it.each([
+    'masked_error',
+    'masked_error_consistent',
+    'missing_actor',
+    'actor_aggregate',
+    'immediate_rss',
+    'critical_pressure',
+    'valid_with_reason',
+  ] as const)(
+    'rejects contradictory %s summary and refuses next leg',
+    async (kind) => {
+      const h = await capacityFixture(),
+        scope = parseCapacityScope(h.input, h.proof),
+        plan = createCapacityManifest(scope),
+        receipt = finalizeCapacityReceipt(
+          completeCapacityReceipt(
+            scope,
+            plan,
+            'existing_login_game-native_browser-3',
+          ),
+          plan,
+          scope,
+        );
+      if (!receipt.metrics || !receipt.health)
+        throw new Error('SYNTHETIC_PROOF_MISSING');
+      if (kind === 'masked_error')
+        receipt.metrics.operations.finalize_quiz.errorCount = 1;
+      if (kind === 'masked_error_consistent') {
+        receipt.metrics.operations.finalize_quiz.errorCount = 1;
+        const actor = receipt.metrics.perActor[0];
+        if (!actor) throw new Error('SYNTHETIC_ACTOR_MISSING');
+        actor.errors = 1;
+      }
+      if (kind === 'missing_actor') receipt.metrics.perActor = [];
+      if (kind === 'actor_aggregate') {
+        const actor = receipt.metrics.perActor[0];
+        if (!actor) throw new Error('SYNTHETIC_ACTOR_MISSING');
+        actor.physicalAttempts += 1;
+      }
+      if (kind === 'immediate_rss')
+        receipt.health.nodeRssMaxBytes = 2 * 1024 ** 3 + 1;
+      if (kind === 'critical_pressure') receipt.health.hostPressureFlag = 4;
+      if (kind === 'valid_with_reason') receipt.health.reasons = ['node_rss'];
+      expect(() => finalizeCapacityReceipt(receipt, plan, scope)).toThrow();
+      expect(() =>
+        assertCapacityPredecessor(
+          plan,
+          'existing_login_game-native_browser-10',
+          [{ receiptBytes: JSON.stringify(receipt) }],
+          scope,
+        ),
+      ).toThrow();
+    },
+  );
+  it.each([
+    'missing_cold',
+    'unavailable_timing',
+    'no_concurrent_teacher',
+  ] as const)(
+    'small leg %s is not the pure insufficient-samples exception',
+    async (missing) => {
+      const h = await capacityFixture(),
+        scope = parseCapacityScope(h.input, h.proof),
+        plan = createCapacityManifest(scope),
+        receipt = completeCapacityReceipt(
+          scope,
+          plan,
+          'existing_login_game-native_browser-3',
+        );
+      const problematic =
+        missing === 'no_concurrent_teacher'
+          ? 'teacher_dashboard'
+          : 'published_content';
+      const samples = capacityOperations.flatMap((kind, index) =>
+        Array.from({ length: kind === problematic ? 30 : 3 }, (_, i) =>
+          operation(index * 100 + i, 100, {
+            operation: kind,
+            actorIndex: kind === 'teacher_dashboard' ? 0 : i % 3,
+            cache:
+              kind === problematic && missing === 'missing_cold'
+                ? 'warm'
+                : kind === problematic && missing === 'unavailable_timing'
+                  ? 'unavailable'
+                  : 'cold',
+            attempts:
+              kind === problematic && missing === 'unavailable_timing'
+                ? []
+                : [{ startedAtMs: 0, finishedAtMs: 100 }],
+            duringStudentBusinessLoad:
+              kind === 'teacher_dashboard' &&
+              missing !== 'no_concurrent_teacher',
+          }),
+        ),
+      );
+      receipt.metrics = summarizeOperations(samples, 3, [0, 1, 2]);
+      const result = finalizeCapacityReceipt(receipt, plan, scope);
+      expect(result.result).not.toBe('PASS');
+      expect(result.sloResult).toBe('NOT_EVALUATED_MISSING_EVIDENCE');
+      expect(() =>
+        assertCapacityPredecessor(
+          plan,
+          'existing_login_game-native_browser-10',
+          [{ receiptBytes: JSON.stringify({ ...result, result: 'PASS' }) }],
+          scope,
+        ),
+      ).toThrow();
+    },
+  );
 });

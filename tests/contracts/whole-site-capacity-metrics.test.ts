@@ -130,4 +130,38 @@ describe('physical operation budgets and real request barriers', () => {
       ),
     ).toThrow();
   });
+  it.each(['error', 'timeout'] as const)(
+    'failed %s replay is still an operation error without becoming a new p95 sample',
+    (status) => {
+      const rows = Array.from({ length: 30 }, (_, i) =>
+        operation(i, 100, { operation: 'finalize_quiz' }),
+      );
+      const replay = operation(99, 200, {
+        actorIndex: 0,
+        operation: 'finalize_quiz',
+        replayOf: 'op-000000',
+        status,
+        reason: status === 'timeout' ? 'timeout' : 'unavailable',
+        attempts: [
+          { startedAtMs: 0, finishedAtMs: status === 'timeout' ? null : 200 },
+        ],
+      });
+      const result = summarizeOperations([...rows, replay], 40, []).operations
+        .finalize_quiz;
+      expect(result.independentSamples).toBe(30);
+      expect(result.errorCount).toBe(1);
+      expect(result.result).toBe('FAIL');
+      expect(result.p95Ms).toBe(100);
+      const success = operation(100, 200, {
+        actorIndex: 0,
+        operation: 'finalize_quiz',
+        replayOf: 'op-000000',
+      });
+      const healthy = summarizeOperations([...rows, success], 40, []).operations
+        .finalize_quiz;
+      expect(healthy.errorCount).toBe(0);
+      expect(healthy.result).toBe('PASS');
+      expect(healthy.independentSamples).toBe(30);
+    },
+  );
 });

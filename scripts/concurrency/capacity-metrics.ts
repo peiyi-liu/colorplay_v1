@@ -90,6 +90,96 @@ export const capacityMetricsSchema = z.strictObject({
     .max(60),
 });
 export type CapacityMetrics = z.infer<typeof capacityMetricsSchema>;
+type OperationMetrics = z.infer<typeof operationMetricsSchema>;
+const operationResult = (
+  operation: CapacityOperation,
+  row: Pick<
+    OperationMetrics,
+    | 'errorCount'
+    | 'independentSamples'
+    | 'unavailableTimings'
+    | 'coldSamples'
+    | 'concurrentSamples'
+    | 'p95Ms'
+  >,
+): OperationMetrics['result'] =>
+  row.errorCount > 0
+    ? 'FAIL'
+    : row.unavailableTimings > 0
+      ? 'NOT_EVALUATED_UNAVAILABLE_TIMING'
+      : operation === 'published_content' && row.coldSamples === 0
+        ? 'NOT_EVALUATED_MISSING_COLD_SAMPLE'
+        : operation === 'teacher_dashboard' &&
+            row.independentSamples > 0 &&
+            row.concurrentSamples === 0
+          ? 'NOT_EVALUATED_NO_CONCURRENT_TEACHER_READS'
+          : row.independentSamples < 30
+            ? 'NOT_EVALUATED_INSUFFICIENT_SAMPLES'
+            : operation === 'teacher_dashboard' && row.concurrentSamples < 30
+              ? 'NOT_EVALUATED_NO_CONCURRENT_TEACHER_READS'
+              : row.p95Ms !== null && row.p95Ms <= operationBudgetsMs[operation]
+                ? 'PASS'
+                : 'FAIL';
+export const validateCapacityMetrics = (input: unknown): CapacityMetrics => {
+  const metrics = capacityMetricsSchema.parse(input),
+    actors = metrics.perActor;
+  if (
+    actors.length !== metrics.actorsStarted ||
+    actors.some(
+      (actor, index) =>
+        actor.actorIndex !== index ||
+        actor.errors > actor.operationsStarted ||
+        actor.cacheHits > actor.operationsStarted ||
+        actor.physicalAttempts > 64 * actor.operationsStarted,
+    ) ||
+    metrics.actorsCompleted > metrics.actorsStarted ||
+    metrics.actorCompletionRate !==
+      metrics.actorsCompleted / metrics.actorsStarted
+  )
+    return capacityFailure();
+  const rows = capacityOperations.map((name) => metrics.operations[name]);
+  for (const name of capacityOperations) {
+    const row = metrics.operations[name];
+    if (
+      row.budgetMs !== operationBudgetsMs[name] ||
+      row.result !== operationResult(name, row) ||
+      row.replays + row.independentSamples > row.operationsStarted ||
+      row.physicalAttempts < row.independentSamples ||
+      row.physicalAttempts > 64 * row.operationsStarted ||
+      row.errorCount > row.operationsStarted ||
+      row.cacheHits > row.operationsStarted ||
+      row.coldSamples + row.warmSamples > row.independentSamples ||
+      row.concurrentSamples > row.independentSamples ||
+      row.unavailableTimings >
+        row.operationsStarted - row.replays - row.independentSamples
+    )
+      return capacityFailure();
+    const quantiles = [row.p50Ms, row.p95Ms, row.maxMs];
+    if (
+      row.independentSamples === 0
+        ? quantiles.some((value) => value !== null)
+        : quantiles.some((value) => value === null) ||
+          (row.p50Ms !== null &&
+            row.p95Ms !== null &&
+            row.maxMs !== null &&
+            (row.p50Ms > row.p95Ms || row.p95Ms > row.maxMs))
+    )
+      return capacityFailure();
+  }
+  const total = (key: 'operationsStarted' | 'physicalAttempts' | 'cacheHits') =>
+    rows.reduce((n, row) => n + row[key], 0) ===
+    actors.reduce((n, actor) => n + actor[key], 0);
+  if (
+    !total('operationsStarted') ||
+    !total('physicalAttempts') ||
+    !total('cacheHits') ||
+    rows.reduce((n, row) => n + row.errorCount, 0) !==
+      actors.reduce((n, actor) => n + actor.errors, 0)
+  )
+    return capacityFailure();
+  return metrics;
+};
+
 export const nearestRank = (
   values: readonly number[],
   quantile: number,
@@ -175,29 +265,21 @@ export const summarizeOperations = (
       });
       const p95Ms = nearestRank(values, 0.95),
         coldSamples = physical.filter((row) => row.cache === 'cold').length,
-        errorCount = independent.filter(
-          (row) => row.status !== 'success',
-        ).length;
+        errorCount = rows.filter((row) => row.status !== 'success').length;
       const unavailableTimings = independent.filter(
         (row) => row.cache !== 'hit' && durations.get(row.id) === null,
       ).length;
       const concurrent = physical.filter(
         (row) => row.duringStudentBusinessLoad === true,
       ).length;
-      const result =
-        errorCount > 0
-          ? 'FAIL'
-          : physical.length < 30
-            ? 'NOT_EVALUATED_INSUFFICIENT_SAMPLES'
-            : unavailableTimings > 0
-              ? 'NOT_EVALUATED_UNAVAILABLE_TIMING'
-              : operation === 'published_content' && coldSamples === 0
-                ? 'NOT_EVALUATED_MISSING_COLD_SAMPLE'
-                : operation === 'teacher_dashboard' && concurrent < 30
-                  ? 'NOT_EVALUATED_NO_CONCURRENT_TEACHER_READS'
-                  : p95Ms !== null && p95Ms <= operationBudgetsMs[operation]
-                    ? 'PASS'
-                    : 'FAIL';
+      const result = operationResult(operation, {
+        errorCount,
+        independentSamples: physical.length,
+        unavailableTimings,
+        coldSamples,
+        concurrentSamples: concurrent,
+        p95Ms,
+      });
       return [
         operation,
         {
@@ -230,7 +312,7 @@ export const summarizeOperations = (
       errors: rows.filter((row) => row.status !== 'success').length,
     };
   });
-  return capacityMetricsSchema.parse({
+  return validateCapacityMetrics({
     actorsStarted,
     actorsCompleted: completedActors.length,
     actorCompletionRate: completedActors.length / actorsStarted,

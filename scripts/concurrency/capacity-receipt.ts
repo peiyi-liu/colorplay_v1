@@ -16,9 +16,12 @@ import {
 import {
   capacityMetricsSchema,
   barrierResultSchema,
-  operationBudgetsMs,
+  validateCapacityMetrics,
 } from './capacity-metrics';
-import { capacityHealthSchema } from './capacity-health';
+import {
+  capacityHealthSchema,
+  validateCapacityHealth,
+} from './capacity-health';
 const digest = z.string().regex(/^[a-f0-9]{64}$/u);
 export const capacityBundleSchema = z.strictObject({
   sourceRevision: z.string().regex(/^[a-f0-9]{40}$/u),
@@ -233,6 +236,10 @@ export const finalizeCapacityReceipt = (
         JSON.stringify(leg.barriers)
     )
       return capacityFailure();
+    if (receipt.metrics !== null)
+      receipt.metrics = validateCapacityMetrics(receipt.metrics);
+    if (receipt.health !== null)
+      receipt.health = validateCapacityHealth(receipt.health);
     const reasons = new Set<(typeof failureReasons)[number]>();
     const controls = receipt.controls;
     if (receipt.rateLimit === null) reasons.add('missing_proof');
@@ -343,23 +350,6 @@ export const finalizeCapacityReceipt = (
       const operations = leg.requiredOperations.map(
         (name) => metrics.operations[name],
       );
-      for (const name of leg.requiredOperations) {
-        const operation = receipt.metrics.operations[name];
-        if (
-          operation.budgetMs !== operationBudgetsMs[name] ||
-          (operation.result === 'PASS' &&
-            (operation.independentSamples < 30 ||
-              operation.p95Ms === null ||
-              operation.p95Ms > operationBudgetsMs[name] ||
-              operation.errorCount > 0 ||
-              operation.unavailableTimings > 0 ||
-              (name === 'published_content' && operation.coldSamples < 1) ||
-              (name === 'teacher_dashboard' &&
-                operation.concurrentSamples < 30)))
-        )
-          reasons.add('metrics_incomplete');
-      }
-
       if (operations.length === 0) receipt.sloResult = 'NOT_APPLICABLE';
       else if (operations.some((row) => row.result === 'FAIL')) {
         receipt.sloResult = 'FAIL';
@@ -376,6 +366,8 @@ export const finalizeCapacityReceipt = (
       )
         receipt.sloResult = 'NOT_EVALUATED_INSUFFICIENT_SAMPLES';
       else receipt.sloResult = 'NOT_EVALUATED_MISSING_EVIDENCE';
+      if (receipt.sloResult === 'NOT_EVALUATED_MISSING_EVIDENCE')
+        reasons.add('metrics_incomplete');
       if (leg.actors >= 40 && operations.some((row) => row.result !== 'PASS'))
         reasons.add('metrics_incomplete');
     }
