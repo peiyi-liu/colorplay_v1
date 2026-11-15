@@ -48,7 +48,7 @@ export const withMediaDiagnostics = async <T>(
     code: (typeof codes)[number] | null,
   ) =>
     journal.write(
-      `media-step-${step}-${status}`,
+      `media-step-${step.replaceAll('_', '-')}-${status}`,
       mediaStepDiagnosticSchema.parse({ step, status, code }),
     );
   const confirm = async () => {
