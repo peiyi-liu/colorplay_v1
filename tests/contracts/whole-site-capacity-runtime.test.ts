@@ -198,7 +198,38 @@ const fixture = async () => {
       };
     }),
   };
-  return { scope, path, files, io, request };
+  return { scope, path, files, io, request, approval };
+};
+const sortedJson = (value: unknown): unknown => {
+  if (Array.isArray(value))
+    return value.map((item: unknown) => sortedJson(item));
+  if (value !== null && typeof value === 'object') {
+    const object = value as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.keys(object)
+        .sort()
+        .map((key) => [key, sortedJson(object[key])]),
+    );
+  }
+  return value;
+};
+const replaceApproval = (
+  f: Awaited<ReturnType<typeof fixture>>,
+  value: unknown,
+  bindHash = true,
+) => {
+  const bytes = JSON.stringify(sortedJson(value));
+  f.files.set(
+    join(
+      CAPACITY_RUNTIME_ROOT,
+      `capacity-oracle-approval-${f.scope.planId}.json`,
+    ),
+    bytes,
+  );
+  if (bindHash) {
+    f.request.oracleApprovalSha256 = sha256(bytes);
+    f.files.set(f.path, JSON.stringify(f.request));
+  }
 };
 describe('capacity strict runtime read-only boundary', () => {
   it('loads only approved fixed files without executing a helper or creating fixtures', async () => {
@@ -246,6 +277,48 @@ describe('capacity strict runtime read-only boundary', () => {
       expect(f.io.execute).not.toHaveBeenCalled();
     },
   );
+});
+
+describe('approval semantic identity remains strict under Python sort_keys', () => {
+  it('accepts an entire recursively sorted approval with its actual byte hash bound', async () => {
+    const f = await fixture();
+    replaceApproval(f, f.approval);
+    const runtime = await loadCapacityRuntime(
+      f.path,
+      new AbortController().signal,
+      f.io,
+    );
+    expect(runtime.scope).toEqual(f.scope);
+    expect(f.io.execute).not.toHaveBeenCalled();
+  });
+  it.each([
+    'scope-value',
+    'scope-extra',
+    'scope-missing',
+    'helper-value',
+    'helper-extra',
+    'helper-missing',
+    'wrong-hash',
+  ])('rejects sorted approval %s before any helper', async (kind) => {
+    const f = await fixture(),
+      changed = structuredClone(f.approval);
+    if (kind === 'scope-value') changed.scope.artifactSha256 = 'd'.repeat(64);
+    if (kind === 'scope-extra')
+      Object.assign(changed.scope, { unexpected: 'SYNTHETIC_SECRET' });
+    if (kind === 'scope-missing')
+      Reflect.deleteProperty(changed.scope, 'helpers');
+    if (kind === 'helper-value')
+      changed.helpers['capacity-root-readonly.py'] = 'd'.repeat(64);
+    if (kind === 'helper-extra')
+      Object.assign(changed.helpers, { 'unexpected.py': 'd'.repeat(64) });
+    if (kind === 'helper-missing')
+      Reflect.deleteProperty(changed.helpers, 'capacity-root-readonly.py');
+    replaceApproval(f, changed, kind !== 'wrong-hash');
+    await expect(
+      loadCapacityRuntime(f.path, new AbortController().signal, f.io),
+    ).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+    expect(f.io.execute).not.toHaveBeenCalled();
+  });
 });
 
 import { admitCapacityRun } from '../../scripts/concurrency/capacity-runtime';

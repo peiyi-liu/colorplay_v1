@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util';
 import { performance } from 'node:perf_hooks';
 import { spawn } from 'node:child_process';
 import { lstat, open, realpath } from 'node:fs/promises';
@@ -8,6 +9,7 @@ import { readCapacityGitState } from '../live/capacity-preflight';
 import {
   CAPACITY_RUNTIME_ROOT,
   capacityRootHelperNames,
+  capacityRequestSchema,
   loadCapacityConfiguration,
   type CapacityConfigIo,
 } from './capacity-config';
@@ -259,7 +261,7 @@ export const loadCapacityRuntime = async (
         projectId: z.literal(scope.projectId),
         planId: z.literal(scope.planId),
         sourceRevision: z.literal(scope.sourceRevision),
-        scope: z.unknown(),
+        scope: capacityRequestSchema.shape.scope,
         journalDir: z.literal(config.journalRoot),
         functionalJournalDir: z.literal(
           join(
@@ -268,7 +270,7 @@ export const loadCapacityRuntime = async (
             scope.functionalRunId,
           ),
         ),
-        helpers: z.record(z.string(), digest),
+        helpers: capacityRequestSchema.shape.helpers,
         manifestSha256: digest,
         manifestFileSha256: digest,
         privatePlanSha256: digest,
@@ -287,8 +289,8 @@ export const loadCapacityRuntime = async (
       })
       .parse(JSON.parse(approvalBytes));
     if (
-      JSON.stringify(approval.scope) !== JSON.stringify(scope) ||
-      JSON.stringify(approval.helpers) !== JSON.stringify(request.helpers) ||
+      !isDeepStrictEqual(approval.scope, scope) ||
+      !isDeepStrictEqual(approval.helpers, request.helpers) ||
       [
         'manifestSha256',
         'manifestFileSha256',
@@ -307,9 +309,7 @@ export const loadCapacityRuntime = async (
       account: a.account,
       cohortSize: index < 40 ? 40 : 60,
     }));
-    if (
-      JSON.stringify(approval.registrationActors) !== JSON.stringify(expected)
-    )
+    if (!isDeepStrictEqual(approval.registrationActors, expected))
       return capacityFailure();
     for (const actor of config.privatePlan.actors.slice(0, 6)) {
       const name =

@@ -79,4 +79,38 @@ describe('capacity private plan ownership', () => {
       createCapacityPrivatePlan(f.scope, f.manifest, f.functional),
     ).toThrow('CAPACITY_EVIDENCE_INVALID');
   });
+  it('keeps true 40 and 60 UI-OTP mailboxes under distinct plan-owned cohort prefixes', async () => {
+    const f = await fixture(),
+      plan = createCapacityPrivatePlan(f.scope, f.manifest, f.functional);
+    const prefix = (email: string) => {
+      const local = required(email.split('@')[0]);
+      return local.slice(0, local.lastIndexOf('.') + 1);
+    };
+    expect(
+      new Set(plan.actors.slice(6, 46).map((actor) => prefix(actor.email))),
+    ).toEqual(new Set([`${f.scope.planId}.reg40.`]));
+    expect(
+      new Set(plan.actors.slice(46).map((actor) => prefix(actor.email))),
+    ).toEqual(new Set([`${f.scope.planId}.reg60.`]));
+  });
+  it.each([
+    'forty-as-sixty',
+    'sixty-as-forty',
+    'wrong-account',
+    'shared-prefix',
+  ])('rejects mailbox/alias pairing %s', async (kind) => {
+    const f = await fixture(),
+      plan = createCapacityPrivatePlan(f.scope, f.manifest, f.functional);
+    const actor = required(plan.actors[kind === 'sixty-as-forty' ? 46 : 6]);
+    const prefix =
+      kind === 'forty-as-sixty'
+        ? 'reg60'
+        : kind === 'shared-prefix'
+          ? ''
+          : 'reg40';
+    actor.email = `${f.scope.planId}.${prefix ? `${prefix}.` : ''}${kind === 'wrong-account' ? 'wbdifferentaccount' : actor.account}@colorplay.test`;
+    expect(() =>
+      validateCapacityPrivatePlan(plan, f.scope, f.manifest),
+    ).toThrow('CAPACITY_EVIDENCE_INVALID');
+  });
 });

@@ -10,6 +10,10 @@ import {
   validateCapacityManifest,
   type CapacityManifest,
 } from './capacity-manifest';
+const registrationEmail = (planId: string, alias: string, account: string) => {
+  const cohort = /^REG(40|60)_[0-9]{2}$/u.exec(alias)?.[1] ?? capacityFailure();
+  return `${planId}.reg${cohort}.${account}@colorplay.test`;
+};
 export const capacityPrivateActorSchema = z.strictObject({
   alias: z.string().regex(/^(T1|T2|S1|S2|A1|R1|REG(?:40|60)_[0-9]{2})$/u),
   account: z.string().regex(/^[a-z0-9]{3,20}$/u),
@@ -66,7 +70,7 @@ export const validateCapacityPrivatePlan = (
         a.role !== role ||
         (i >= 6 &&
           (a.userId !== null ||
-            !a.email.startsWith(`${scope.planId}.`) ||
+            a.email !== registrationEmail(scope.planId, a.alias, a.account) ||
             !/(?=.*[A-Z])(?=.*[a-z])^[A-Za-z0-9_-]{6,12}$/u.test(a.password)))
       )
         return capacityFailure();
@@ -93,7 +97,7 @@ export const createCapacityPrivatePlan = (
         return {
           alias,
           account,
-          email: `${scope.planId}.${account}@colorplay.test`,
+          email: registrationEmail(scope.planId, alias, account),
           password: `Aa1${randomBytes(6).toString('base64url')}`,
           displayName: `負載${alias}`,
           userId: null,
