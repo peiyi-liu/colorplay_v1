@@ -100,7 +100,7 @@ export const adminRoleDenials = async (
     if (!identity.userId || !['S1', 'T1'].includes(identity.label))
       return fail('FUNCTIONAL_SCOPE_INVALID');
     await page.goto('/admin');
-    await page.waitForURL(identity.label === 'T1' ? /\/teacher$/u : /\/app$/u);
+    await page.waitForURL(/\/unauthorized$/u);
     const wire = await adminSensitiveDenial(
       client,
       identity.userId,

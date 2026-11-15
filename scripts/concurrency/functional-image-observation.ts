@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Page, CDPSession } from '@playwright/test';
 import { z } from 'zod';
 import type { FunctionalScope } from './config';
 import { requiredProofs, type FunctionalStage } from './functional-receipt';
@@ -102,6 +102,7 @@ const requestSchema = z.object({
   requestId: z.string().min(1).max(180),
   type: z.literal('Image'),
   documentURL: z.string().max(32768),
+  frameId: z.string().min(1).max(180),
   loaderId: z.string().min(1).max(180),
   request: z.object({ url: z.string().max(32768), method: z.literal('GET') }),
 });
@@ -111,6 +112,8 @@ interface Candidate {
   actor: string;
   phase: FunctionalStage;
   generation: number;
+  frameId: string;
+  loaderId: string;
   documentUrl: string;
   pathname: string;
   used: boolean;
@@ -125,13 +128,23 @@ export const createFunctionalImages = (
   const allowed = new Set(approved);
   const pages = new Map<
     Page,
-    { actor: () => string | null; generation: number; stop: () => void }
+    {
+      actor: () => string | null;
+      generation: number;
+      stop: () => void;
+      frameId: string | null;
+      loaderId: string | null;
+      documentUrl: string | null;
+      ready: boolean;
+      nonCandidates: Set<string>;
+      exhausted: boolean;
+    }
   >();
   const records = new Map<string, Candidate>();
-  const seen = new Set<string>();
   const pending = new Set<Promise<Proof>>();
-  const stops = new Set<() => void>();
+  const stops = new Map<Candidate, () => void>();
   let stopped = false;
+  const isStopped = () => stopped;
   let expected = 0;
   let decoded = 0;
   let retired = 0;
@@ -145,6 +158,9 @@ export const createFunctionalImages = (
     !record.poisoned &&
     !stopped &&
     !record.page.isClosed() &&
+    pages.get(record.page)?.ready === true &&
+    pages.get(record.page)?.frameId === record.frameId &&
+    pages.get(record.page)?.loaderId === record.loaderId &&
     pages.get(record.page)?.generation === record.generation &&
     pages.get(record.page)?.actor() === record.actor &&
     phase() === record.phase &&
@@ -156,7 +172,7 @@ export const createFunctionalImages = (
         if (settled) return;
         settled = true;
         clearTimeout(timer);
-        stops.delete(cancel);
+        stops.delete(record);
         record.page.off('close', cancel);
         if (!stopped) {
           if (result === 'UNAVAILABLE' && !record.poisoned) unavailable++;
@@ -172,7 +188,7 @@ export const createFunctionalImages = (
         finish('UNAVAILABLE');
       };
       const timer = setTimeout(cancel, 15_000);
-      stops.add(cancel);
+      stops.set(record, cancel);
       record.page.on('close', cancel);
       if (!current(record)) {
         cancel();
@@ -209,48 +225,110 @@ export const createFunctionalImages = (
   return {
     register(page: Page, actor: () => string | null) {
       if (!allowed.size || pages.has(page)) return;
-      const state = { actor, generation: 0, stop: () => undefined };
-      const navigated = (frame: ReturnType<Page['mainFrame']>) => {
-        if (frame === page.mainFrame()) state.generation++;
+      pages.set(page, {
+        actor,
+        generation: 0,
+        stop: () => undefined,
+        frameId: null,
+        loaderId: null,
+        documentUrl: null,
+        ready: false,
+        nonCandidates: new Set(),
+        exhausted: false,
+      });
+    },
+    async attach(page: Page, cdp: CDPSession) {
+      if (!allowed.size) return;
+      const state = pages.get(page);
+      if (!state || isStopped()) throw new Error('FUNCTIONAL_BROWSER_FAILED');
+      const frameSchema = z.object({
+        id: z.string().min(1).max(180),
+        loaderId: z.string().max(180),
+        url: z.string().max(32768),
+        parentId: z.string().optional(),
+      });
+      const apply = (frame: z.infer<typeof frameSchema>) => {
+        if (stopped || frame.parentId) return;
+        if (state.frameId && state.frameId !== frame.id)
+          throw new Error('FUNCTIONAL_BROWSER_FAILED');
+        if (
+          state.ready &&
+          state.loaderId === frame.loaderId &&
+          state.documentUrl === frame.url
+        )
+          return;
+        state.generation++;
+        state.frameId = frame.id;
+        state.loaderId = frame.loaderId;
+        state.documentUrl = frame.url;
+        state.ready = true;
+        state.nonCandidates.clear();
+        state.exhausted = false;
+        for (const [key, record] of records)
+          if (record.page === page) {
+            stops.get(record)?.();
+            if (!record.used) records.delete(key);
+          }
       };
-      page.on('framenavigated', navigated);
+      const navigated = (raw: unknown) => {
+        try {
+          apply(z.object({ frame: frameSchema }).parse(raw).frame);
+        } catch {
+          if (!stopped) unavailable++;
+        }
+      };
+      cdp.on('Page.frameNavigated', navigated);
       state.stop = () => {
-        page.off('framenavigated', navigated);
+        cdp.off('Page.frameNavigated', navigated);
       };
-      pages.set(page, state);
+      const before = state.generation;
+      try {
+        await cdp.send('Page.enable');
+        const tree = z
+          .object({ frameTree: z.object({ frame: frameSchema }) })
+          .parse(await cdp.send('Page.getFrameTree'));
+        if (isStopped()) throw new Error('FUNCTIONAL_BROWSER_FAILED');
+        if (state.generation === before) apply(tree.frameTree.frame);
+      } catch {
+        unavailable++;
+        throw new Error('FUNCTIONAL_BROWSER_FAILED');
+      }
     },
     request(page: Page, key: string, raw: unknown) {
       if (stopped || !allowed.size) return;
-      // Keep tombstones even for noncandidates so reused requestIds never gain provenance.
-      if (seen.has(key)) {
-        const record = records.get(key);
-        if (record) poison(record);
-        records.delete(key);
+      const existing = records.get(key);
+      if (existing) {
+        poison(existing);
         return;
       }
-      if (seen.size >= 2000) {
-        unavailable++;
-        return;
-      }
-      seen.add(key);
-      const parsed = requestSchema.safeParse(raw);
       const owner = pages.get(page);
-      const actor = owner?.actor();
-      const stage = phase();
+      if (!owner) return;
+      const remember = () => {
+        if (owner.nonCandidates.size < 2000) owner.nonCandidates.add(key);
+        else owner.exhausted = true;
+      };
+      const parsed = requestSchema.safeParse(raw),
+        actor = owner.actor(),
+        stage = phase();
       if (
         !parsed.success ||
-        !owner ||
         !actor ||
         !['T1', 'T2', 'S1', 'S2', 'A1', 'R1'].includes(actor) ||
         !stage ||
         !(stage in requiredProofs)
-      )
+      ) {
+        remember();
         return;
+      }
       const event = parsed.data;
       try {
-        const url = new URL(event.request.url);
-        const documentUrl = new URL(event.documentURL);
+        const url = new URL(event.request.url),
+          documentUrl = new URL(event.documentURL);
         if (
+          !owner.ready ||
+          owner.frameId !== event.frameId ||
+          owner.loaderId !== event.loaderId ||
+          owner.documentUrl !== event.documentURL ||
           url.origin !== origin ||
           url.username ||
           url.password ||
@@ -262,21 +340,30 @@ export const createFunctionalImages = (
           documentUrl.password ||
           page.url() !== event.documentURL ||
           page.isClosed()
-        )
+        ) {
+          remember();
           return;
+        }
+        if (owner.exhausted || owner.nonCandidates.has(key)) return;
+        if (records.size >= 2000) {
+          unavailable++;
+          return;
+        }
         records.set(key, {
           key,
           page,
           actor,
           phase: stage,
           generation: owner.generation,
+          frameId: event.frameId,
+          loaderId: event.loaderId,
           documentUrl: event.documentURL,
           pathname: url.pathname,
           used: false,
           poisoned: false,
         });
       } catch {
-        /* No request provenance. */
+        remember();
       }
     },
     response(key: string, raw: unknown) {
@@ -324,7 +411,7 @@ export const createFunctionalImages = (
       if (pending.size) unavailable += pending.size;
       stopped = true;
       for (const state of pages.values()) state.stop();
-      for (const stop of [...stops]) stop();
+      for (const stop of [...stops.values()]) stop();
       await Promise.allSettled([...pending]);
     },
   };

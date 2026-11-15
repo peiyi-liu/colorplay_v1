@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import type { LiveSessionState } from '../../src/features/live/types';
 import { performance } from 'node:perf_hooks';
 import { expect, type Page } from '@playwright/test';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -16,21 +18,97 @@ import type { PrivateJournal } from './private-journal';
 import { fail, safely, type FunctionalScope } from './config';
 export const selectFunctionalLiveTemplate = (
   options: readonly { sectionId: string; quizTemplateId: string }[],
-  templates: readonly { id: string; question_count: number }[],
+) => options[0] ?? fail('FUNCTIONAL_OPERATION_FAILED');
+export const assertFunctionalLiveCount = (
+  state: LiveSessionState,
+  expected: number,
 ) => {
-  const eligible = templates
-    .filter(
-      (row) =>
-        row.question_count >= 3 &&
-        row.question_count <= 20 &&
-        options.some((option) => option.quizTemplateId === row.id),
+  if (
+    !Number.isInteger(expected) ||
+    expected < 1 ||
+    expected > 20 ||
+    state.questionCount !== expected
+  )
+    return fail('FUNCTIONAL_OPERATION_FAILED');
+  return state;
+};
+export const bindFunctionalLiveSession = async (
+  client: SupabaseClient<Database>,
+  expected: {
+    sessionId: string;
+    classroomId: string;
+    sectionId: string;
+    quizTemplateId: string;
+    teacherId?: string;
+  },
+  lobby: LiveSessionState,
+  signal: AbortSignal,
+) => {
+  const signalIsAborted = () => signal.aborted;
+  const subject = await client.auth.getUser();
+  const teacherId = subject.data.user?.id;
+  if (
+    signalIsAborted() ||
+    subject.error ||
+    !teacherId ||
+    (expected.teacherId && expected.teacherId !== teacherId) ||
+    !lobby.isHost ||
+    lobby.sessionId !== expected.sessionId
+  )
+    return fail('FUNCTIONAL_OPERATION_FAILED');
+  const session = await client
+    .from('live_sessions')
+    .select(
+      'id, host_teacher_id, classroom_id, live_activity_id, question_count',
     )
-    .sort((a, b) => a.question_count - b.question_count);
-  const chosen = eligible[0];
-  const option = options.find((row) => row.quizTemplateId === chosen?.id);
-  return chosen && option
-    ? { ...option, questionCount: chosen.question_count }
-    : fail('FUNCTIONAL_OPERATION_FAILED');
+    .eq('id', expected.sessionId)
+    .abortSignal(signal)
+    .retry(false)
+    .single();
+  const row = z
+    .object({
+      id: z.string(),
+      host_teacher_id: z.string(),
+      classroom_id: z.string(),
+      live_activity_id: z.string(),
+      question_count: z.number().int().min(1).max(20),
+    })
+    .safeParse(session.data);
+  if (
+    session.error ||
+    !row.success ||
+    row.data.id !== expected.sessionId ||
+    row.data.host_teacher_id !== teacherId ||
+    row.data.classroom_id !== expected.classroomId
+  )
+    return fail('FUNCTIONAL_OPERATION_FAILED');
+  const activity = await client
+    .from('live_activities')
+    .select('id, owner_teacher_id, section_id, quiz_template_id')
+    .eq('id', row.data.live_activity_id)
+    .abortSignal(signal)
+    .retry(false)
+    .single();
+  const linked = z
+    .object({
+      id: z.string(),
+      owner_teacher_id: z.string(),
+      section_id: z.string(),
+      quiz_template_id: z.string(),
+    })
+    .safeParse(activity.data);
+  if (
+    signalIsAborted() ||
+    activity.error ||
+    !linked.success ||
+    linked.data.id !== row.data.live_activity_id ||
+    linked.data.owner_teacher_id !== teacherId ||
+    linked.data.section_id !== expected.sectionId ||
+    linked.data.quiz_template_id !== expected.quizTemplateId
+  )
+    return fail('FUNCTIONAL_OPERATION_FAILED');
+  assertFunctionalLiveCount(lobby, row.data.question_count);
+  return row.data.question_count;
 };
 export const runTeacherLiveJourney = async (
   pages: readonly [Page, Page, Page],
@@ -46,17 +124,7 @@ export const runTeacherLiveJourney = async (
   safely(async () => {
     const repository = createLiveRepository(teacher);
     const options = await repository.listSectionOptions();
-    const templates = await teacher
-      .from('quiz_templates')
-      .select('id, question_count')
-      .eq('status', 'published')
-      .in(
-        'id',
-        options.map((row) => row.quizTemplateId),
-      )
-      .retry(false);
-    if (templates.error) return fail('FUNCTIONAL_OPERATION_FAILED');
-    const selected = selectFunctionalLiveTemplate(options, templates.data);
+    const selected = selectFunctionalLiveTemplate(options);
     const actors = [
       identities.T1,
       identities.S1,
@@ -137,10 +205,19 @@ export const runTeacherLiveJourney = async (
       }
       await r1.actor.proveOutsiderRefusal(sessionId, code);
       const lobby = await host.actor.getState(sessionId);
-      if (
-        lobby.participantCount !== 2 ||
-        lobby.questionCount !== selected.questionCount
-      )
+      if (!identities.T1.userId) return fail('FUNCTIONAL_OPERATION_FAILED');
+      const questionCount = await bindFunctionalLiveSession(
+        teacher,
+        {
+          ...selected,
+          sessionId,
+          classroomId,
+          teacherId: identities.T1.userId,
+        },
+        lobby,
+        signal,
+      );
+      if (lobby.participantCount !== 2)
         return fail('FUNCTIONAL_OPERATION_FAILED');
       await presenter
         .getByRole('button', { name: '開始遊戲', exact: true })
@@ -150,11 +227,11 @@ export const runTeacherLiveJourney = async (
         .getByRole('button', { name: '開始', exact: true })
         .click();
       const detailedRounds: { position: number; answerMs: number[] }[] = [];
-      for (let position = 1; position <= selected.questionCount; position++) {
+      for (let position = 1; position <= questionCount; position++) {
         await journal.write(`teacher-live-round-${String(position)}-intent`, {
           sessionId,
           position,
-          questionCount: selected.questionCount,
+          questionCount: questionCount,
           expectedAnswers: 2,
         });
         const states = await settleCapacityOperations(
@@ -171,11 +248,12 @@ export const runTeacherLiveJourney = async (
         const answerMs = await settleCapacityOperations(
           pages.slice(1).map((page, index) => async () => {
             const state = states[index];
+            if (state) assertFunctionalLiveCount(state, questionCount);
             if (!state?.question) return fail('FUNCTIONAL_OPERATION_FAILED');
             await expect(
               page
                 .getByText(
-                  `第 ${String(position)} / ${String(selected.questionCount)} 題`,
+                  `第 ${String(position)} / ${String(questionCount)} 題`,
                   { exact: false },
                 )
                 .first(),
@@ -225,12 +303,13 @@ export const runTeacherLiveJourney = async (
             state.currentPosition === position &&
             state.answeredCount === 2,
         );
+        assertFunctionalLiveCount(feedback, questionCount);
         await journal.write(
           `teacher-live-round-${String(position)}-confirmed`,
           {
             sessionId,
             position,
-            questionCount: selected.questionCount,
+            questionCount: questionCount,
             answeredCount: feedback.answeredCount,
             participantCount: feedback.participantCount,
             confirmedRounds: position,
@@ -245,25 +324,30 @@ export const runTeacherLiveJourney = async (
           .getByRole('button', { name: '即時排名', exact: true })
           .click();
         const action = presenter.getByRole('button', {
-          name: position === selected.questionCount ? '結算成績' : '下一題',
+          name: position === questionCount ? '結算成績' : '下一題',
           exact: true,
         });
         await expect(action).toBeEnabled({ timeout: 20_000 });
         await action.click();
       }
-      await host.actor.waitForState(
-        sessionId,
-        (state) => state.state === 'completed',
+      assertFunctionalLiveCount(
+        await host.actor.waitForState(
+          sessionId,
+          (state) => state.state === 'completed',
+        ),
+        questionCount,
       );
       const report = await repository.getSessionDetail(sessionId);
       if (
         !report.completedAt ||
+        report.sessionId !== sessionId ||
+        report.classroomId !== classroomId ||
+        report.activity.quizTemplateId !== selected.quizTemplateId ||
         report.participants.length !== 2 ||
-        report.questions.length !== selected.questionCount ||
+        report.questions.length !== questionCount ||
         report.questions.some((question) => question.answered !== 2) ||
         report.participants.some(
-          (participant) =>
-            participant.answers.length !== selected.questionCount,
+          (participant) => participant.answers.length !== questionCount,
         )
       )
         return fail('FUNCTIONAL_OPERATION_FAILED');
@@ -286,13 +370,13 @@ export const runTeacherLiveJourney = async (
       await journal.write('teacher-live-completed', {
         sessionId,
         classroomId,
-        questionCount: selected.questionCount,
+        questionCount: questionCount,
       });
       return {
-        questionCount: selected.questionCount,
+        questionCount: questionCount,
         detailedRounds,
-        remainingRounds: selected.questionCount - detailedRounds.length,
-        answers: selected.questionCount * 2,
+        remainingRounds: questionCount - detailedRounds.length,
+        answers: questionCount * 2,
         finalized: true,
         report: true,
         outsider: r1.actor.getOutsiderDiagnostics(),

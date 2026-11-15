@@ -1,7 +1,20 @@
+import { parseCapacityScope } from '../../scripts/concurrency/capacity-scope';
+import { EventEmitter } from 'node:events';
+import type { Page } from '@playwright/test';
+import * as liveApi from '../../src/features/live/api/live-repository';
+import {
+  LiveRepositoryError,
+  type LiveRepository,
+} from '../../src/features/live/types';
+import * as browserHelper from '../e2e/helpers/staging-capacity-browser';
+import { capacityFixture } from './helpers/whole-site-capacity';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../src/types/database';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createCapacityLiveGate } from '../../scripts/concurrency/capacity-live-game';
+import {
+  createCapacityLiveGate,
+  runCapacityLiveGame,
+} from '../../scripts/concurrency/capacity-live-game';
 const state = {
   session_id: '18400000-0000-0000-0000-000000000001',
   state: 'lobby',
@@ -50,7 +63,10 @@ const fixture = () => {
     },
   };
 };
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 describe('dynamic capacity live gate keeps original 20s authoritative semantics', () => {
   it('broadcast wakes a second authoritative fetch instead of trusting payload as state', async () => {
     const f = fixture(),
@@ -120,5 +136,189 @@ describe('dynamic capacity live gate keeps original 20s authoritative semantics'
     );
     expect(f.channelMock).toHaveBeenCalledTimes(count);
     gate.close();
+  });
+});
+
+describe('actual dynamic Native Live start flow', () => {
+  it('binds actual20 then confirms the in-presenter dialog before first student answer', async () => {
+    let dialog = false,
+      opened = false,
+      answering = false;
+    const sessionId = '11000000-0000-4000-8000-000000000001';
+    const choices = [{ id: 'option', text: '合成' }];
+    const baseLocator = {
+      selectOption: () => Promise.resolve(),
+      click: () => Promise.resolve(),
+      waitFor: () => Promise.resolve(),
+      innerText: () => Promise.resolve('123456'),
+      locator: () => baseLocator,
+      filter: () => baseLocator,
+    };
+    const presenter = {
+      getByLabel: () => baseLocator,
+      getByRole: (role: string, options: { name: string }) => {
+        if (role === 'alertdialog') {
+          expect(options.name).toBe('立即開始');
+          expect(dialog).toBe(true);
+          return {
+            getByRole: (_role: string, child: { name: string }) => {
+              expect(child.name).toBe('開始');
+              return {
+                click: () => {
+                  opened = true;
+                  return Promise.resolve();
+                },
+              };
+            },
+          };
+        }
+        return {
+          ...baseLocator,
+          click: () => {
+            if (options.name === '開始遊戲') dialog = true;
+            return Promise.resolve();
+          },
+        };
+      },
+    };
+    const page = Object.assign(new EventEmitter(), {
+      goto: () => Promise.resolve(),
+      url: () => `http://127.0.0.1:58373/teacher/live/${sessionId}`,
+      locator: () => baseLocator,
+      getByRole: (role: string) =>
+        role === 'region' ? presenter : baseLocator,
+    }) as unknown as Page;
+    const makeClient = (outside = false) =>
+      ({
+        auth: {
+          getUser: () =>
+            Promise.resolve({ data: { user: { id: 'teacher' } }, error: null }),
+        },
+        from: (table: string) => ({
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          abortSignal: vi.fn().mockReturnThis(),
+          retry: vi.fn().mockReturnThis(),
+          single: () =>
+            Promise.resolve({
+              data:
+                table === 'live_sessions'
+                  ? {
+                      id: sessionId,
+                      host_teacher_id: 'teacher',
+                      classroom_id: 'classroom',
+                      live_activity_id: 'activity',
+                      question_count: 20,
+                    }
+                  : {
+                      id: 'activity',
+                      owner_teacher_id: 'teacher',
+                      section_id: 'section',
+                      quiz_template_id: 'template',
+                    },
+              error: null,
+            }),
+        }),
+        channel: () => {
+          const channel = {
+            on: vi.fn().mockReturnThis(),
+            subscribe: (cb: (status: string, error?: Error) => void) => {
+              cb(
+                outside ? 'CHANNEL_ERROR' : 'SUBSCRIBED',
+                outside
+                  ? new Error(
+                      'Unauthorized: You do not have permissions to read from this Channel topic: synthetic',
+                    )
+                  : undefined,
+              );
+              return channel;
+            },
+          };
+          return channel;
+        },
+        removeChannel: () => Promise.resolve('ok'),
+      }) as unknown as SupabaseClient<Database>;
+    const host = makeClient(),
+      outside = makeClient(true),
+      member1 = makeClient(),
+      member2 = makeClient();
+    vi.spyOn(liveApi, 'createLiveRepository').mockImplementation(
+      (client) =>
+        ({
+          listSectionOptions: () =>
+            Promise.resolve([
+              { sectionId: 'section', quizTemplateId: 'template' },
+            ]),
+          join: () =>
+            client === outside
+              ? Promise.reject(new LiveRepositoryError('JOIN_INVALID_CODE'))
+              : Promise.resolve({ sessionId }),
+          getState: () => {
+            if (client === outside)
+              return Promise.reject(new LiveRepositoryError('NOT_FOUND'));
+            if (answering && !opened)
+              return Promise.reject(new Error('SYNTHETIC_START_NOT_CONFIRMED'));
+            return Promise.resolve({
+              sessionId,
+              state: opened ? 'question_open' : 'lobby',
+              currentPosition: 1,
+              questionCount: 20,
+              participantCount: 2,
+              isHost: client === host,
+              stateVersion: 1,
+              question: {
+                questionId: 'question',
+                prompt: '合成題目',
+                publicOptions: choices,
+              },
+            });
+          },
+        }) as unknown as LiveRepository,
+    );
+    vi.spyOn(browserHelper, 'attachDiagnostics').mockResolvedValue({
+      consoleErrors: [],
+      pageErrors: [],
+      serverErrors: [],
+      waitForSubscriptionAck: () => Promise.resolve(true),
+    } as unknown as Awaited<
+      ReturnType<typeof browserHelper.attachDiagnostics>
+    >);
+    vi.spyOn(browserHelper, 'joinLiveThroughUi').mockResolvedValue([
+      { outcome: 'connected', durationMs: 1, lobbyMs: 1, realtimeMs: 1 },
+    ]);
+    const measure = vi.fn(() =>
+      Promise.reject(new Error('SYNTHETIC_STOP_AFTER_START')),
+    );
+    const writes: { name: string; value: unknown }[] = [];
+    const actors = [host, member1, member2].map((client, actorIndex) => ({
+      client,
+      actorIndex,
+      page,
+      measure,
+    }));
+    const capacity = await capacityFixture();
+    await expect(
+      runCapacityLiveGame(
+        parseCapacityScope(capacity.input, capacity.proof),
+        actors,
+        { client: outside, actorIndex: 3, measure },
+        'classroom',
+        {
+          directory: 'synthetic',
+          write: (name, value) => {
+            writes.push({ name, value });
+            if (name === 'live-question-1-intent') answering = true;
+            return Promise.resolve();
+          },
+        },
+        new AbortController().signal,
+      ),
+    ).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+    expect(opened).toBe(true);
+    expect(measure).toHaveBeenCalledTimes(2);
+    expect(writes).toContainEqual({
+      name: 'live-question-1-intent',
+      value: { sessionId, position: 1, questionCount: 20 },
+    });
   });
 });

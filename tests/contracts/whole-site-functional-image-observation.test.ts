@@ -25,7 +25,16 @@ const setup = async (
     evaluate,
   });
   const cdp = Object.assign(new EventEmitter(), {
-    send: () => Promise.resolve({}),
+    send: (method: string) =>
+      Promise.resolve(
+        method === 'Page.getFrameTree'
+          ? {
+              frameTree: {
+                frame: { id: 'frame1', loaderId: 'document1', url },
+              },
+            }
+          : {},
+      ),
     detach: () => Promise.resolve(),
   });
   const health = createFunctionalHealth(
@@ -47,6 +56,7 @@ const setup = async (
       type: 'Image',
       documentURL: url,
       loaderId: 'document1',
+      frameId: 'frame1',
       request: { url: `${app}${path}`, method: 'GET' },
       ...patch,
     });
@@ -72,7 +82,9 @@ const setup = async (
       phase = 'teacher_reads';
     },
     navigate: () => {
-      page.emit('framenavigated', frame);
+      cdp.emit('Page.frameNavigated', {
+        frame: { id: 'frame1', loaderId: 'document2', url },
+      });
     },
     foreign: () => {
       url = 'https://synthetic.invalid/shop';
@@ -255,6 +267,68 @@ describe('image provenance and bounded proof lifecycle', () => {
       await h.health.dispose();
     },
   );
+  it.each([
+    'no-proof',
+    'unknown-new',
+    'kept-candidate',
+    'new-document',
+    'late-old-loader',
+    'mixed-id',
+    'accepted-late',
+  ])('reclaims exact image provenance safely: %s', async (mode) => {
+    const h = await setup();
+    if (mode === 'kept-candidate' || mode === 'accepted-late') h.request();
+    if (mode === 'accepted-late') {
+      h.cancel();
+      await h.health.settle();
+    }
+    if (mode === 'mixed-id') h.request({ type: 'Script' });
+    else
+      for (let i = 0; i < 2001; i++) {
+        const requestId = `script${String(i)}`;
+        h.request({
+          requestId,
+          type: 'Script',
+          request: { url: `${app}/assets/synthetic.js`, method: 'GET' },
+        });
+        h.cdp.emit('Network.responseReceived', {
+          requestId,
+          type: 'Script',
+          response: { status: 200, mimeType: 'text/javascript' },
+        });
+        h.cdp.emit('Network.loadingFinished', { requestId });
+        await h.health.settle();
+      }
+    if (
+      mode === 'new-document' ||
+      mode === 'late-old-loader' ||
+      mode === 'accepted-late'
+    )
+      h.navigate();
+    if (mode === 'accepted-late')
+      h.cdp.emit('Network.responseReceived', {
+        requestId: 'image1',
+        type: 'Image',
+        response: { status: 200, mimeType: 'text/html' },
+      });
+    else if (mode !== 'no-proof') {
+      if (mode !== 'kept-candidate')
+        h.request(mode === 'new-document' ? { loaderId: 'document2' } : {});
+      h.cancel();
+    }
+    await h.health.settle();
+    const valid = ['no-proof', 'kept-candidate', 'new-document'].includes(mode);
+    expect(
+      h.health.snapshot().available &&
+        h.health.snapshot().unexpectedErrors === 0,
+    ).toBe(valid);
+    expect(h.health.imageDiagnostics().expectedSupersededImages).toBe(
+      ['kept-candidate', 'new-document', 'accepted-late'].includes(mode)
+        ? 1
+        : 0,
+    );
+    await h.health.dispose();
+  });
   it('accepts known successful webp response but does not reconcile any console or duplicate', async () => {
     const h = await setup();
     h.request();
@@ -306,7 +380,7 @@ describe('image provenance and bounded proof lifecycle', () => {
     expect(h.health.snapshot().available).toBe(false);
     expect(h.health.imageDiagnostics().pendingImageProofs).toBe(0);
     await h.health.dispose();
-    expect(h.page.listenerCount('framenavigated')).toBe(0);
+    expect(h.cdp.listenerCount('Page.frameNavigated')).toBe(0);
     expect(h.page.listenerCount('close')).toBe(0);
     expect(vi.getTimerCount()).toBe(0);
   });

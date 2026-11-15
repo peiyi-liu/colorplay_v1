@@ -1,9 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { LiveSessionState } from '../../src/features/live/types';
 import type { Database } from '../../src/types/database';
 import { createSdkLiveActor } from '../../scripts/live/capacity-actors';
 import { createCapacityReceipt } from '../../scripts/live/capacity-receipt';
-import { selectFunctionalLiveTemplate } from '../../scripts/concurrency/teacher-live';
+import {
+  selectFunctionalLiveTemplate,
+  bindFunctionalLiveSession,
+  assertFunctionalLiveCount,
+} from '../../scripts/concurrency/teacher-live';
 import { liveFunctionalConfig } from '../../scripts/concurrency/teacher-live-bridge';
 import { createFunctionalClient } from '../../scripts/concurrency/local-runtime';
 import {
@@ -26,26 +31,98 @@ const setup = () => {
   return { scope, config, evidence };
 };
 describe('functional Live preserves its existing actor lifecycle', () => {
-  it('uses the minimum published eligible real question count, never a fabricated three-round finalize', () => {
-    const options = [
-      { sectionId: 's', quizTemplateId: 'a' },
-      { sectionId: 't', quizTemplateId: 'b' },
-    ];
-    expect(
-      selectFunctionalLiveTemplate(options, [
-        { id: 'a', question_count: 10 },
-        { id: 'b', question_count: 3 },
-      ]),
-    ).toMatchObject({ quizTemplateId: 'b', questionCount: 3 });
-    expect(
-      selectFunctionalLiveTemplate(options, [
-        { id: 'a', question_count: 10 },
-        { id: 'b', question_count: 21 },
-      ]),
-    ).toMatchObject({ questionCount: 10 });
+  it('does not substitute a Quiz template10 count for the actual Live20 session', () => {
+    const option = { sectionId: 's', quizTemplateId: 'a' };
+    expect(selectFunctionalLiveTemplate([option])).toEqual(option);
+  });
+  it.each([
+    'valid20',
+    'session',
+    'host',
+    'classroom',
+    'activity',
+    'owner',
+    'section',
+    'template',
+    'count',
+    'noninteger',
+    'too-many',
+    'error',
+    'not-host',
+    'aborted',
+  ])('binds actual Live count and rejects wrong scope: %s', async (mode) => {
+    const session = {
+      id: 'live-session',
+      host_teacher_id: 'teacher',
+      classroom_id: 'classroom',
+      live_activity_id: 'activity',
+      question_count: 20,
+    };
+    const activity = {
+      id: 'activity',
+      owner_teacher_id: 'teacher',
+      section_id: 'section',
+      quiz_template_id: 'template',
+    };
+    if (mode === 'session') session.id = 'other';
+    if (mode === 'host') session.host_teacher_id = 'other';
+    if (mode === 'classroom') session.classroom_id = 'other';
+    if (mode === 'activity') activity.id = 'other';
+    if (mode === 'owner') activity.owner_teacher_id = 'other';
+    if (mode === 'section') activity.section_id = 'other';
+    if (mode === 'template') activity.quiz_template_id = 'other';
+    if (mode === 'count') session.question_count = 10;
+    if (mode === 'noninteger') session.question_count = 19.5;
+    if (mode === 'too-many') session.question_count = 21;
+    const signal = new AbortController();
+    if (mode === 'aborted') signal.abort();
+    const retry = vi.fn().mockReturnThis();
+    const client = {
+      auth: {
+        getUser: () =>
+          Promise.resolve({ data: { user: { id: 'teacher' } }, error: null }),
+      },
+      from: (table: string) => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        abortSignal: vi.fn().mockReturnThis(),
+        retry,
+        single: () =>
+          Promise.resolve({
+            data: table === 'live_sessions' ? session : activity,
+            error: mode === 'error' ? { message: 'SYNTHETIC_PRIVATE' } : null,
+          }),
+      }),
+    } as unknown as SupabaseClient<Database>;
+    const lobby = {
+      sessionId: 'live-session',
+      questionCount: 20,
+      isHost: mode !== 'not-host',
+    } as LiveSessionState;
+    const pending = bindFunctionalLiveSession(
+      client,
+      {
+        sessionId: 'live-session',
+        classroomId: 'classroom',
+        sectionId: 'section',
+        quizTemplateId: 'template',
+        teacherId: 'teacher',
+      },
+      lobby,
+      signal.signal,
+    );
+    if (mode === 'valid20') {
+      expect(await pending).toBe(20);
+      expect(retry).toHaveBeenCalledWith(false);
+    } else await expect(pending).rejects.toThrow('FUNCTIONAL_OPERATION_FAILED');
+  });
+  it('requires a stable authoritative count through question, feedback and completion snapshots', () => {
     expect(() =>
-      selectFunctionalLiveTemplate(options, [{ id: 'a', question_count: 21 }]),
+      assertFunctionalLiveCount({ questionCount: 10 } as LiveSessionState, 20),
     ).toThrow('FUNCTIONAL_OPERATION_FAILED');
+    expect(() =>
+      assertFunctionalLiveCount({ questionCount: 20 } as LiveSessionState, 20),
+    ).not.toThrow();
   });
   it('passes the owned combined signal and counts actual injected client fetches', async () => {
     const h = setup();

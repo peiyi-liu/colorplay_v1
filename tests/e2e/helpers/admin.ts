@@ -18,7 +18,7 @@ export async function signInAdmin(
   await page.goto('/login');
   await page.getByText('教師端登入').click();
   await page.getByRole('textbox', { name: '帳號' }).fill(credentials.email);
-  await page.getByLabel('密碼').fill(credentials.password);
+  await page.getByLabel('密碼', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: '登入' }).click();
   await page.waitForURL(/\/admin/u);
 }
@@ -29,6 +29,7 @@ export async function signInAdmin(
 // session），這裡等到那個轉場完成再回傳 secret，避免呼叫端緊接著操作
 // challenge 頁的欄位時它還沒掛載。
 export async function enrollAdminTotp(page: Page): Promise<string> {
+  await page.getByText('無法掃描？顯示文字密鑰', { exact: true }).click();
   const secretLocator = page.getByTestId('totp-secret');
   await expect(secretLocator).toBeVisible();
   const secret = await secretLocator.textContent();

@@ -128,6 +128,7 @@ export const createFunctionalHealth = (
         await auth.observeOpener(page);
         const cdp = await context.newCDPSession(page);
         info.cdp = cdp;
+        await images.attach(page, cdp);
         const requestListener = (raw: unknown) => {
           try {
             const event = z

@@ -21,7 +21,11 @@ import {
 } from '../../tests/e2e/helpers/staging-capacity-browser';
 import { isLiveBroadcast } from '../live/capacity-live-broadcast';
 import { isExplicitPermissionDenial } from '../live/capacity-permission-denial';
-import { selectFunctionalLiveTemplate } from './teacher-live';
+import {
+  selectFunctionalLiveTemplate,
+  bindFunctionalLiveSession,
+  assertFunctionalLiveCount,
+} from './teacher-live';
 import { capacityFailure, type CapacityScope } from './capacity-scope';
 import type { PrivateJournal } from './private-journal';
 import type { CapacityOperation } from './capacity-manifest';
@@ -203,21 +207,10 @@ export const runCapacityLiveGame = async (
         a.page.on('websocket', listener);
         bindings.push({ page: a.page, listener, diagnostics });
       }
-    const options = await repository.listSectionOptions(),
-      templates = await host.client
-        .from('quiz_templates')
-        .select('id, question_count')
-        .eq('status', 'published')
-        .in(
-          'id',
-          options.map((o) => o.quizTemplateId),
-        )
-        .retry(false);
-    if (templates.error) return capacityFailure();
-    const selected = selectFunctionalLiveTemplate(options, templates.data);
+    const options = await repository.listSectionOptions();
+    const selected = selectFunctionalLiveTemplate(options);
     await journal.write('live-create-intent', {
       classroomId,
-      questionCount: selected.questionCount,
       sectionId: selected.sectionId,
     });
     check();
@@ -281,7 +274,6 @@ export const runCapacityLiveGame = async (
     await journal.write('live-created', {
       sessionId,
       classroomId,
-      questionCount: selected.questionCount,
     });
     const joins = actors.slice(1).map(async (a, index) => {
       check();
@@ -333,22 +325,28 @@ export const runCapacityLiveGame = async (
     if (!deniedJoin || !deniedState) return capacityFailure();
     await outsideGate.subscribe(sessionId, true);
     const lobby = await repository.getState(sessionId);
-    if (
-      lobby.participantCount !== actors.length - 1 ||
-      lobby.questionCount !== selected.questionCount
-    )
-      return capacityFailure();
+    const questionCount = await bindFunctionalLiveSession(
+      host.client,
+      { ...selected, sessionId, classroomId },
+      lobby,
+      signal,
+    );
+    if (lobby.participantCount !== actors.length - 1) return capacityFailure();
     check();
-    if (presenter)
+    if (presenter) {
       await presenter
         .getByRole('button', { name: '開始遊戲', exact: true })
         .click();
-    else await repository.openQuestion(sessionId, lobby.stateVersion);
-    for (let position = 1; position <= selected.questionCount; position++) {
+      await presenter
+        .getByRole('alertdialog', { name: '立即開始', exact: true })
+        .getByRole('button', { name: '開始', exact: true })
+        .click();
+    } else await repository.openQuestion(sessionId, lobby.stateVersion);
+    for (let position = 1; position <= questionCount; position++) {
       await journal.write(`live-question-${String(position)}-intent`, {
         sessionId,
         position,
-        questionCount: selected.questionCount,
+        questionCount,
       });
       check();
       const answered = await Promise.allSettled(
@@ -358,6 +356,7 @@ export const runCapacityLiveGame = async (
             (s) =>
               s.state === 'question_open' && s.currentPosition === position,
           );
+          assertFunctionalLiveCount(state, questionCount);
           const q = state.question;
           if (!q?.prompt || !q.publicOptions.length) return capacityFailure();
           const choice =
@@ -414,10 +413,11 @@ export const runCapacityLiveGame = async (
           s.currentPosition === position &&
           s.answeredCount === actors.length - 1,
       );
+      assertFunctionalLiveCount(feedback, questionCount);
       await journal.write(`live-question-${String(position)}-confirmed`, {
         sessionId,
         position,
-        questionCount: selected.questionCount,
+        questionCount,
         answeredCount: feedback.answeredCount,
         participantCount: feedback.participantCount,
       });
@@ -431,30 +431,34 @@ export const runCapacityLiveGame = async (
           .click();
         await presenter
           .getByRole('button', {
-            name: position === selected.questionCount ? '結算成績' : '下一題',
+            name: position === questionCount ? '結算成績' : '下一題',
             exact: true,
           })
           .click();
       } else {
         const state = await repository.getState(sessionId);
-        if (position === selected.questionCount)
+        if (position === questionCount)
           await repository.finalize(sessionId, state.stateVersion);
         else await repository.advance(sessionId, state.stateVersion);
       }
     }
-    await (gates[0] ?? capacityFailure()).wait(
-      sessionId,
-      (s) => s.state === 'completed',
+    assertFunctionalLiveCount(
+      await (gates[0] ?? capacityFailure()).wait(
+        sessionId,
+        (s) => s.state === 'completed',
+      ),
+      questionCount,
     );
     const report = await repository.getSessionDetail(sessionId);
     if (
       !report.completedAt ||
+      report.sessionId !== sessionId ||
+      report.classroomId !== classroomId ||
+      report.activity.quizTemplateId !== selected.quizTemplateId ||
       report.participants.length !== actors.length - 1 ||
-      report.questions.length !== selected.questionCount ||
+      report.questions.length !== questionCount ||
       report.questions.some((q) => q.answered !== actors.length - 1) ||
-      report.participants.some(
-        (p) => p.answers.length !== selected.questionCount,
-      )
+      report.participants.some((p) => p.answers.length !== questionCount)
     )
       return capacityFailure();
     if (host.page) {
@@ -473,7 +477,7 @@ export const runCapacityLiveGame = async (
     )
       return capacityFailure();
     return {
-      questions: selected.questionCount,
+      questions: questionCount,
       participants: actors.length - 1,
       outsiderDenied: true,
       reportConfirmed: true,

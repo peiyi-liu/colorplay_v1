@@ -1,5 +1,6 @@
 import { EventEmitter } from 'node:events';
-import type { Page, Response } from '@playwright/test';
+import { installFunctionalNavigation } from '../../scripts/concurrency/functional-navigation';
+import type { BrowserContext, Page, Response } from '@playwright/test';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { visitAdminRead } from '../../scripts/concurrency/admin-read-observer';
 import { leaveUnsavedMediaEditor } from '../../scripts/concurrency/media-journey';
@@ -11,57 +12,113 @@ import { syntheticScope } from './helpers/whole-site-functional';
 const response = (
   status = 200,
   body: unknown = { outcome: 'ok', rows: [{ synthetic: true }] },
-) =>
-  ({
+) => {
+  const request = {
+    method: () => 'POST',
     url: () => 'http://127.0.0.1:58321/rest/v1/rpc/admin_health_summary',
-    request: () => ({ method: () => 'POST' }),
+  };
+  return {
+    url: request.url,
+    request: () => request,
     status: () => status,
     finished: () => Promise.resolve(null),
     body: () => Promise.resolve(Buffer.from(JSON.stringify(body))),
-  }) as unknown as Response;
+  } as unknown as Response;
+};
+const adminPage = (
+  navigate: (page: EventEmitter) => void = () => undefined,
+) => {
+  const context = new EventEmitter();
+  const page = Object.assign(new EventEmitter(), {
+    goto: () => {
+      navigate(page);
+      return Promise.resolve(null);
+    },
+    waitForURL: () => Promise.resolve(),
+    waitForLoadState: vi.fn(() => Promise.resolve()),
+    evaluate: () => Promise.resolve(),
+    isClosed: () => false,
+  });
+  installFunctionalNavigation(context as unknown as BrowserContext);
+  context.emit('page', page);
+  return { page, dispose: () => context.emit('close') };
+};
 afterEach(() => vi.useRealTimers());
 describe('functional Admin observers release listeners and safe outputs', () => {
-  it('requires the actual successful privileged response, not just navigation', async () => {
-    const emitter = new EventEmitter();
+  it('requires the actual successful privileged response from this navigation request', async () => {
+    const h = adminPage((page) => {
+      const received = response();
+      page.emit('request', received.request());
+      page.emit('response', received);
+    });
     const result = await visitAdminRead(
-      emitter as unknown as Page,
+      h.page as unknown as Page,
       syntheticScope(),
       new AbortController().signal,
       '/admin',
       'admin_health_summary',
-      () => {
-        emitter.emit('response', response());
-        return Promise.resolve();
-      },
     );
     expect(result).toEqual({ status: 200, rowCount: 1 });
-    expect(emitter.eventNames()).toHaveLength(0);
+    h.dispose();
+    expect(h.page.eventNames()).toHaveLength(0);
   });
   it('cannot treat an unavailable read as successful Admin navigation', async () => {
-    const emitter = new EventEmitter();
+    const h = adminPage((page) => {
+      const received = response(503, { message: 'SYNTHETIC_SECRET' });
+      page.emit('request', received.request());
+      page.emit('response', received);
+    });
     await expect(
       visitAdminRead(
-        emitter as unknown as Page,
+        h.page as unknown as Page,
         syntheticScope(),
         new AbortController().signal,
         '/admin',
         'admin_health_summary',
-        () => {
-          emitter.emit(
-            'response',
-            response(503, { message: 'SYNTHETIC_SECRET' }),
-          );
-          return Promise.resolve();
-        },
       ),
     ).rejects.toThrow('FUNCTIONAL_OPERATION_FAILED');
-    expect(emitter.eventNames()).toHaveLength(0);
+    h.dispose();
+    expect(h.page.eventNames()).toHaveLength(0);
+  });
+  it('old pending/effect same-RPC responses during readiness cannot prove the new route read', async () => {
+    let release: () => void = () => undefined;
+    const oldPending = new Promise<void>((done) => {
+      release = done;
+    });
+    const h = adminPage((page) => {
+      const received = response(200, { outcome: 'ok', rows: [{}, {}] });
+      page.emit('request', received.request());
+      page.emit('response', received);
+    });
+    h.page.waitForLoadState.mockReturnValueOnce(oldPending);
+    let done = false;
+    const pending = visitAdminRead(
+      h.page as unknown as Page,
+      syntheticScope(),
+      new AbortController().signal,
+      '/admin',
+      'admin_health_summary',
+    ).then((value) => {
+      done = true;
+      return value;
+    });
+    const old = response();
+    h.page.emit('request', old.request());
+    h.page.emit('response', old);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(done).toBe(false);
+    release();
+    expect(await pending).toEqual({ status: 200, rowCount: 2 });
+    h.dispose();
+    expect(h.page.eventNames()).toHaveLength(0);
   });
   it.each(['timeout', 'abort', 'close'] as const)(
     '%s releases the read observer without unhandled rejection',
     async (mode) => {
       vi.useFakeTimers();
-      const emitter = new EventEmitter();
+      const h = adminPage();
+      const emitter = h.page;
       const controller = new AbortController();
       const remove = vi.spyOn(controller.signal, 'removeEventListener');
       const task = visitAdminRead(
@@ -79,6 +136,7 @@ describe('functional Admin observers release listeners and safe outputs', () => 
       else if (mode === 'close') emitter.emit('close');
       else await vi.advanceTimersByTimeAsync(15_000);
       await caught;
+      h.dispose();
       expect(emitter.eventNames()).toHaveLength(0);
       expect(remove).toHaveBeenCalled();
       expect(vi.getTimerCount()).toBe(0);

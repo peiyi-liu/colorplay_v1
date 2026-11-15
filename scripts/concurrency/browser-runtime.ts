@@ -1,3 +1,4 @@
+import { installFunctionalNavigation } from './functional-navigation';
 import {
   boundedHttpHook,
   parseMediaHttpRequest,
@@ -107,6 +108,7 @@ export const createFunctionalContext = async (
     });
     try {
       await restrictFunctionalBrowser(context, scope, hooks);
+      installFunctionalNavigation(context, hooks?.signal);
       return context;
     } catch {
       await context.close().catch(() => undefined);
