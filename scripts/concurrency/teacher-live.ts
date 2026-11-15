@@ -151,6 +151,12 @@ export const runTeacherLiveJourney = async (
         .click();
       const detailedRounds: { position: number; answerMs: number[] }[] = [];
       for (let position = 1; position <= selected.questionCount; position++) {
+        await journal.write(`teacher-live-round-${String(position)}-intent`, {
+          sessionId,
+          position,
+          questionCount: selected.questionCount,
+          expectedAnswers: 2,
+        });
         const states = await settleCapacityOperations(
           [s1, s2].map(
             (base) => () =>
@@ -212,12 +218,24 @@ export const runTeacherLiveJourney = async (
             return elapsed;
           }),
         );
-        await host.actor.waitForState(
+        const feedback = await host.actor.waitForState(
           sessionId,
           (state) =>
             state.state === 'question_feedback' &&
             state.currentPosition === position &&
             state.answeredCount === 2,
+        );
+        await journal.write(
+          `teacher-live-round-${String(position)}-confirmed`,
+          {
+            sessionId,
+            position,
+            questionCount: selected.questionCount,
+            answeredCount: feedback.answeredCount,
+            participantCount: feedback.participantCount,
+            confirmedRounds: position,
+            ...(position <= 3 ? { answerMs } : {}),
+          },
         );
         if (position <= 3) detailedRounds.push({ position, answerMs });
         await expect(
