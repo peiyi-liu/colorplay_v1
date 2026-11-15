@@ -2118,3 +2118,11 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 修後 actual authIsolationJourney＋正式 hooks／canonical reader，在 G2 既有 S1／S2 與原 app artifact9a1ada 下完成（工具 e49a078，明列兩 revision，不冒充新全站驗收）。9.71 秒，health available=true／unexpectedErrors0；精確 popup static gaps7、normal logout abort3、known revoked logout1、unresolved0。Root physical closed true／remaining0／stderr0，0新帳號／郵件／遊戲。
 - Actual blank native close postcontrol 12.06 秒：unready preflight 正確拒絕、0network／fixture；正常 Context fulfilled 後 Browser fulfilled，closeCode null。Root physical closed true／remaining0／stderr0。原失敗紀錄不改判。之前用 ServerUTC 對 Host mtime 推論 logout actor 的 readonly-v2 未校準時鐘，不能作 actor／phase 確證；目前來源接線與 exact CDP token／phase 證據取代該推論。
 - Owner 已提供受控 Gmail 作未來 Staging 註冊信集中收件（完整地址僅 private runtime 0600）；這不是 Hosted 寄信或測試 window 批准，現在 0Hosted mail／writes。下一步只複製本次自有 auth-observation brief＋focused handoff 到隔離 clone 共同 freeze，保留 G1／G2 完整檔案、VM／volumes，建立全新 G3 後 build／all37 Edge bind／真六身份 functional；成功才執行容量15legs。
+
+
+### 2026-11-15 — Recovery shell ACCEPTED 3b051a9，準備新共同候選
+
+- Base8ddf491→final3b051a96ac8319691ffbede990e5c3c0422080bf／clean；exact兩檔289+，產品僅AppShell22行、max423，新actual-component regression267行。Root唯一review Standards／Spec／trust boundary findings皆0，ACCEPTED／1round／0unresolved。只在exact/reset-password保留同一public RouteWorldStage／Outlet，Auth與profilepending／student／teacher／admin／error變化不再重建密碼表單，其他shell原bytes相同；SDKsession／invalid-link／API／role guards不變，無password persistence／refill／sleep／retry。
+- 真元件RED3fail／2pass→GREEN，worker26files240tests PASS4.34s，原full lint無排除／type／format／diff0；packet SHA7c74a036c09587bcee47443be224eabed1b74c4961e4a8b43a5bac50e838e47e。Root獨立4files46tests PASS1.70s、兩source與所有validation log hashes相符。原root兩generated control檔被full lint收集，root保bytes／hash搬到.git/root-recovery-remount-evidence，未修改lint規則，原失敗log與relocation manifest均保留。
+- 這修正已被確證的component remount產品缺陷；G3原FAIL沒有完整click trace，不能追認因果或PASS。三代原FAIL／VM／volumes／alljournals保留；現在才解除先前「停止新世代」的診斷暫停，準備本次自有新brief＋focused handoff共同freeze後新空白G4真functional，不重跑非空G3，也不放寬fresh／health／deadline。
+- Root clone外的capacity plan／oneleg preparers已備，僅語法與兩個invalid-args guards通過／0有效plan／0capacity。Gmail profile-only確認連接的是Owner所提供受控信箱，0信件讀取／0寄信；完整mailbox僅private receipt。仍無Hosted測試寫入／push／PR／merge／部署。
