@@ -2,7 +2,9 @@
 
 ## 結果
 
-目前：G5集中tools **ACCEPTED cd65df0**，root唯一review1round，1項SPA image P2已清、unresolved0。17final source paths／41worker logs已核對；worker60files636tests14.78s、full lint/type/format/import/diff皆0；root initial6files113tests3.92s＋delta2files76tests2.66s通過，原same-document public-health RED兩組現在皆proof1／health0。程式只修Live權威count／正常Native開始確認、image bounded provenance／CDP真loader及SPA、Admin正常UI與拒絕及read request binding、intercepted functional navigation readiness。產品／DB／配額／Native timing/barrier／health policy不改。原共同3bfc的G5完整functional **FAIL仍保留**，registration health1未逐request歸因，媒體尚待fresh真驗。準備固定共同版本及新空白G6；40／60容量、Hosted驗收尚未開始。受控信箱僅已記錄，0Gmail讀信／寄信，未Hosted寫入／push／PR／merge／deploy。
+目前：G6 followups **ACCEPTED 1449561**。Root唯一1round／Standards0、Spec0、Security0、unresolved0；21source／20logs hashes皆符。Worker68files731tests16.88s與完整checks0；Root9files120tests5.14s綠，真SQL舊schema23505 RED、migration+076/121/122共62assertions綠且每次106表及public schema/extensions hash前後一致，未persist migration。真教師postfix9.143s全checkpoint health0；受控S2 revoked refresh15.053s expectedReject1/health0且實際await/login，兩browser process正常closed/remaining0/stderr0，0新帳信。Root review summary SHA126a180929c01f9f763f431c8649b3f37b6694d88dc14ab12f824b3c1227efd8。
+
+修正fresh Request-event quiet、真fieldset combobox/7slot duplicate與安全substeps、shared strict own auth aliases，以及只移除digest全球唯一、保留其他UUID/FK/immutable/權限的最小migration與exact121 guards。原common b084的G6完整functional **FAIL/media仍保留**，所有資料不刪，不能稱全站或容量PASS。接共同版本freeze與新空白G7真7slot/WASM/16objects完整驗證，通過後才40/60容量。Hosted限流/SMTP仍UNKNOWN，Staging設定頁瀏覽器讀取受阻；0Hosted寫入/Gmail讀寄/push/PR/merge/deploy。
 
 WB1 **ACCEPTED**，root 唯一 review：base `85c0843ac26bce9fa9b37eeb798d66cc759f2ad4` → source `0f15b353053e44ceb658ff363abe1667b46273f2`。25 檔、835+/140−、最大498行、clean。Standards 0／Spec 0／信任邊界安全 findings 0；未改 DB、quota、Auth lifecycle、Live gate、正式答案／成績／獎勵／mutation 重送。
 
@@ -318,3 +320,13 @@ AC-PERF-001/003與AUTH/SEC005僅工具模型範圍；0真UI/API/collector/身份
 同輪cd65df066c6284509d6ef11c45ce83c442734cd2只4核准paths292+101−：helper452行、既有fixture抽出111、原test396、新SPA141。新12controls加原64cases均過；真loader／當代tombstones及exhausted保留、pending舊URL失效、accepted late poison及雙listener清理皆符。Delta packet SHA758aeaccc146052d95df948fc7ac6c6e6e174f08b8c44d2140396e27fd380466。Root同一控制再驗兩組proof1/health0；finalreview SHAd7f94c589db2ca8408622873d1943691d0c2c50215b4419e3a5e8e4e340a4d30。初版／RED／G5總FAIL不改。
 
 對應AC-AUTH-001、AC-SEC-005部分工具正確性及AC-PERF-003容量工具準備，非完整AC／Local容量／Hosted／phase PASS。真原生Live仍待完整執行；fake actual caller只確認authoritative20及inside dialog後進首題，刻意停止處明列，不冒充完成。Root新六槽媒體approval與安全network side-channel僅操作準備，嚴格Local且不改producer verdict／Native metrics。
+
+## G6 followups 唯一review與實際Local控制
+
+Base b08451ef5b41554e5cb67ab31d2517fe39764fd7 → source1449561133081c93b49c6b6eba56ada00626c817／clean，exact21paths1063+374−／max443；media wrapper有縮排churn，Root以-w核對實際行為並讀全部新helper/SQL/directtests。Worker packet SHA74ba9485f82ed6632488daa28abb60eb26552f943f88f602e9704b326b5565f5。AC-AUTH-001／AC-SEC-005／AC-PERF-003／AC-TCH-014只追蹤focused regressions，不宣稱完整AC/phase。
+
+Root真SQL：舊schema122先3assertions後23505 exit3；各自BEGIN加migration與07632／12110／12220→ROLLBACK，62全綠。106表data hash269440fdb3df631b090d777367ddea4a31c0c89b08220c7afb11c2fcb136d4d1、public schema/extensions hash4061f20fce6b4f6d5feb215f3cc3a59b5a8eecb4e415975270ef7432197d635f前後相同。SQLreceipt SHA27d058176ecd5c5e6a6b136b4f2cd1d3bc460a01a96619490d360f309de02440。這是交易回滾實證，不是G6持久新schema或Hosted完成。
+
+Actual tools144956／App artifact b084分列，教師原initial reads與assessment-next-route競態不再出現，health/failures/console皆0；refresh真拒絕已由shared code解析，helper完成await/login。兩process receipt SHA0262140a9227c0cd8cec0200587107703cb04d06ee0a0abd5087294df0e8a8dd／c0289f95ddfebdd7da9ee7a39f7743e39b795ea84c33add64a2e92f40163d3f3。初Rootwrapper進度label不在既有allowlist，在child啟動前拒絕；僅Rootwrapper改合法label，0產品/guard變更，原拒絕記錄保留。
+
+下一步G7保留G6files/volumes並停owned8containers/preview/VM，新VM同8image IDs/keys換新、loopback先驗；121migrations/7media slots事先綁authority，5verified2aborted、5assets11variants、16objects、2ZIPdrafts與4intentional drops。Private容量bridge獨立綁observed functional publisher與physical observer，14pure admission controls綠；沒有放寬scope/PASS前置。新full仍待執行，所有前代FAIL與300秒terminatedprobe不改判。
