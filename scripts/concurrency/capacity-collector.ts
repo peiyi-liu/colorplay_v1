@@ -19,7 +19,8 @@ export const createCapacityCollector = (
     ? null
     : monitorEventLoopDelay({ resolution: 20 });
   let stopping = false,
-    started = false;
+    started = false,
+    baselineReady = false;
   let releaseFirstLoop: (() => void) | null = null;
   const pending = new Set<Promise<void>>(),
     timers = new Set<ReturnType<typeof setTimeout>>();
@@ -27,6 +28,7 @@ export const createCapacityCollector = (
   const controller = new AbortController(),
     combined = AbortSignal.any([signal, controller.signal]);
   const notify = () => {
+    if (!baselineReady || stopping || combined.aborted) return;
     const status = health.snapshot(now()).validity;
     if (status !== 'VALID') ports.onInvalid?.(status);
   };
@@ -105,15 +107,22 @@ export const createCapacityCollector = (
       };
       combined.addEventListener('abort', abortLoop, { once: true });
       try {
-        await Promise.all([collect('host'), collect('vm'), firstLoop]);
+        await Promise.all([
+          collect('host').then(() => {
+            recurring('host', 1000);
+          }),
+          collect('vm').then(() => {
+            recurring('vm', 5000);
+          }),
+          firstLoop,
+        ]);
         if (
           isStopping() ||
           combined.aborted ||
           health.snapshot(now()).validity !== 'VALID'
         )
           return capacityFailure();
-        recurring('host', 1000);
-        recurring('vm', 5000);
+        baselineReady = true;
         const tick = () => {
           if (stopping || combined.aborted) return;
           loop();
@@ -121,6 +130,13 @@ export const createCapacityCollector = (
           schedule(tick, 1000);
         };
         schedule(tick, 1000);
+      } catch (error) {
+        stopping = true;
+        controller.abort();
+        abort();
+        histogram?.disable();
+        signal.removeEventListener('abort', abort);
+        throw error;
       } finally {
         combined.removeEventListener('abort', abortLoop);
       }
