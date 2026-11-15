@@ -1,0 +1,276 @@
+import { randomUUID } from 'node:crypto';
+import { join } from 'node:path';
+import { describe, expect, it, vi } from 'vitest';
+import { capacityFixture } from './helpers/whole-site-capacity';
+import { syntheticSecrets } from './helpers/whole-site-functional';
+import { parseCapacityScope } from '../../scripts/concurrency/capacity-scope';
+import {
+  createCapacityManifest,
+  capacityManifestHash,
+} from '../../scripts/concurrency/capacity-manifest';
+import { createCapacityPrivatePlan } from '../../scripts/concurrency/capacity-private-plan';
+import { sha256 } from '../../scripts/concurrency/local-runtime';
+import {
+  CAPACITY_RUNTIME_ROOT,
+  capacityRootHelperNames,
+} from '../../scripts/concurrency/capacity-config';
+import { loadCapacityRuntime } from '../../scripts/concurrency/capacity-runtime';
+const required = <T>(value: T | null | undefined): T => {
+  if (value === null || value === undefined)
+    throw new Error('SYNTHETIC_FIXTURE_MISSING');
+  return value;
+};
+
+const fixture = async () => {
+  const f = await capacityFixture();
+  f.input.helpers['host-sample.py'] = sha256('host-sample.py');
+  f.input.helpers['vm-sample.py'] = sha256('vm-sample.py');
+  const scope = parseCapacityScope(f.input, f.proof),
+    manifest = createCapacityManifest(scope);
+  const identities = ['T1', 'T2', 'S1', 'S2', 'A1', 'R1'].map(
+    (alias, index) => ({
+      alias,
+      account: `wb${String(index).padStart(16, '0')}`,
+      email: `synthetic${String(index)}@colorplay.test`,
+      password: 'AaSynthetic',
+      displayName: `驗證${alias}`,
+      userId: randomUUID(),
+      role:
+        alias === 'A1'
+          ? 'admin'
+          : alias.startsWith('T')
+            ? 'teacher'
+            : 'student',
+    }),
+  );
+  const privatePlan = createCapacityPrivatePlan(scope, manifest, identities),
+    manifestBytes = JSON.stringify(manifest),
+    privateBytes = JSON.stringify(privatePlan),
+    journalDir = join(CAPACITY_RUNTIME_ROOT, 'capacity-journals', scope.planId),
+    functionalJournalDir = join(
+      CAPACITY_RUNTIME_ROOT,
+      'functional-private',
+      scope.functionalRunId,
+    );
+  const helpers = Object.fromEntries(
+    capacityRootHelperNames.map((name) => [name, sha256(name)]),
+  );
+  const bundleBytes = JSON.stringify({
+    sourceRevision: scope.sourceRevision,
+    artifactSha256: scope.artifactSha256,
+    entryClosureSha256: 'a'.repeat(64),
+    entryClosureGzipBytes: 300000,
+    recursiveColdImports: true,
+    deduplicatedChunks: true,
+  });
+  const secretBytes = JSON.stringify({
+    ANON_KEY: syntheticSecrets.anonKey,
+    SERVICE_ROLE_KEY: syntheticSecrets.serviceKey,
+    UNRELATED_PRIVATE: 'SECRET_MARKER',
+  });
+  const bindings = {
+    manifestSha256: capacityManifestHash(manifest),
+    manifestFileSha256: sha256(manifestBytes),
+    privatePlanSha256: sha256(privateBytes),
+    bundleProofSha256: sha256(bundleBytes),
+  };
+  const approval = {
+    schemaVersion: 1,
+    confirmation: 'LOCAL_CAPACITY_READ_ONLY_ORACLES',
+    projectId: scope.projectId,
+    planId: scope.planId,
+    sourceRevision: scope.sourceRevision,
+    scope,
+    journalDir,
+    functionalJournalDir,
+    helpers,
+    ...bindings,
+    registrationActors: privatePlan.actors.slice(6).map((a, index) => ({
+      actorIndex: index < 40 ? index : index - 40,
+      alias: a.alias,
+      email: a.email,
+      account: a.account,
+      cohortSize: index < 40 ? 40 : 60,
+    })),
+  };
+  const approvalBytes = JSON.stringify(approval),
+    request = {
+      schemaVersion: 1,
+      confirmation: 'LOCAL_WHOLE_SITE_CAPACITY_ONE_LEG',
+      scope,
+      legId: required(manifest.legs[0]).legId,
+      runId: 'wcr-abcdef-123456',
+      ...bindings,
+      oracleApprovalSha256: sha256(approvalBytes),
+      secretsSha256: sha256(secretBytes),
+      helpers,
+      rootCapacityPublisherSha256: 'a'.repeat(64),
+      rootCapacityValidatorSha256: 'b'.repeat(64),
+      retention: {
+        sequence: 0,
+        previousProofSha256: null,
+        completedRegistrationCohorts: [],
+      },
+      predecessors: [],
+      registrationReady: [],
+    };
+  const path = join(
+      CAPACITY_RUNTIME_ROOT,
+      `capacity-request-${request.runId}.json`,
+    ),
+    files = new Map<string, string>([
+      [path, JSON.stringify(request)],
+      [
+        join(functionalJournalDir, 'functional-result.json'),
+        f.proof.receiptBytes,
+      ],
+      [
+        join(functionalJournalDir, 'functional-process-close.json'),
+        f.proof.processCloseBytes,
+      ],
+      [
+        join(
+          CAPACITY_RUNTIME_ROOT,
+          'capacity-plans',
+          scope.planId,
+          'manifest.json',
+        ),
+        manifestBytes,
+      ],
+      [
+        join(
+          CAPACITY_RUNTIME_ROOT,
+          'capacity-plans',
+          scope.planId,
+          'private-plan.json',
+        ),
+        privateBytes,
+      ],
+      [join(CAPACITY_RUNTIME_ROOT, 'status-secret.json'), secretBytes],
+      [join(CAPACITY_RUNTIME_ROOT, 'entry-bundle-proof.json'), bundleBytes],
+      [
+        join(
+          CAPACITY_RUNTIME_ROOT,
+          `capacity-oracle-approval-${scope.planId}.json`,
+        ),
+        approvalBytes,
+      ],
+    ]);
+  for (const helper of [
+    ...capacityRootHelperNames,
+    'host-sample.py',
+    'vm-sample.py',
+  ])
+    files.set(join(CAPACITY_RUNTIME_ROOT, helper), helper);
+  for (const identity of identities) {
+    const name =
+      identity.alias === 'R1'
+        ? 'r1-active-password-confirmed'
+        : `create-${identity.alias.toLowerCase()}-confirmed`;
+    files.set(
+      join(functionalJournalDir, `${name}.json`),
+      JSON.stringify({ identity: { ...identity, label: identity.alias } }),
+    );
+  }
+  const io = {
+    read: async (p: string) => {
+      await Promise.resolve();
+      const v = files.get(p);
+      if (v === undefined) throw Error('MISSING');
+      return v;
+    },
+    directory: async () => {
+      await Promise.resolve();
+      return undefined;
+    },
+    git: async () => {
+      await Promise.resolve();
+      return { repoSha: scope.sourceRevision, dirty: false };
+    },
+    execute: vi.fn(async () => {
+      await Promise.resolve();
+      return {
+        databaseIdentitySha256: scope.databaseIdentitySha256,
+        readOnlyProofSha256: 'a'.repeat(64),
+        sourceFrozen: true,
+        artifactMatched: true,
+        approvedPlanMatched: true,
+      };
+    }),
+  };
+  return { scope, path, files, io, request };
+};
+describe('capacity strict runtime read-only boundary', () => {
+  it('loads only approved fixed files without executing a helper or creating fixtures', async () => {
+    const f = await fixture(),
+      runtime = await loadCapacityRuntime(
+        f.path,
+        new AbortController().signal,
+        f.io,
+      );
+    expect(f.io.execute).not.toHaveBeenCalled();
+    expect(JSON.stringify(runtime.scope)).not.toContain('SECRET_MARKER');
+    await runtime.preflight();
+    expect(f.io.execute).toHaveBeenCalledWith(
+      'capacity-preflight-readback.py',
+      [f.scope.sourceRevision, f.scope.planId, f.request.oracleApprovalSha256],
+      expect.objectContaining({ operation: 'preflight' }),
+      expect.any(AbortSignal),
+    );
+  });
+  it.each(['helper', 'r1-password', 'bundle', 'key'])(
+    'rejects changed %s before any root command',
+    async (kind) => {
+      const f = await fixture();
+      const path =
+        kind === 'helper'
+          ? join(CAPACITY_RUNTIME_ROOT, 'capacity-root-readonly.py')
+          : kind === 'r1-password'
+            ? join(
+                CAPACITY_RUNTIME_ROOT,
+                'functional-private',
+                f.scope.functionalRunId,
+                'r1-active-password-confirmed.json',
+              )
+            : kind === 'bundle'
+              ? join(CAPACITY_RUNTIME_ROOT, 'entry-bundle-proof.json')
+              : join(CAPACITY_RUNTIME_ROOT, 'status-secret.json');
+      f.files.set(
+        path,
+        required(f.files.get(path)).replace('AaSynthetic', 'ChangedSecret') +
+          ' ',
+      );
+      await expect(
+        loadCapacityRuntime(f.path, new AbortController().signal, f.io),
+      ).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+      expect(f.io.execute).not.toHaveBeenCalled();
+    },
+  );
+});
+
+import { admitCapacityRun } from '../../scripts/concurrency/capacity-runtime';
+import type { CapacityRuntime } from '../../scripts/concurrency/capacity-runtime';
+it('write-once admission refuses a second CLI run before any provision or root request', async () => {
+  const files = new Map<string, unknown>();
+  const runtime = {
+    request: { runId: 'wcr-abcdef-123456' },
+    requestSha256: 'a'.repeat(64),
+    leg: { legId: 'anonymous_entry_prepare-native_browser-3' },
+    journal: {
+      directory: 'synthetic',
+      write: (name: string, value: unknown) => {
+        if (files.has(name))
+          return Promise.reject(new Error('ALREADY_ADMITTED'));
+        files.set(name, value);
+        return Promise.resolve();
+      },
+    },
+  } as unknown as CapacityRuntime;
+  await admitCapacityRun(runtime, new AbortController().signal);
+  const original = JSON.stringify(files.get('capacity-run-admitted'));
+  await expect(
+    admitCapacityRun(runtime, new AbortController().signal),
+  ).rejects.toThrow('ALREADY_ADMITTED');
+  expect(JSON.stringify(files.get('capacity-run-admitted'))).toBe(original);
+  expect(files.size).toBe(1);
+});

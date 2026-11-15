@@ -62,7 +62,8 @@
     "live:capacity": "node --import tsx scripts/live/run-capacity.ts",
     "live:verify:local": "bash scripts/live/verify-local.sh",
     "live:capacity:browser": "playwright test --config scripts/live/playwright.config.ts",
-    "live:capacity:hybrid": "COLORPLAY_LIVE_PROFILE=hybrid playwright test --config scripts/live/playwright.config.ts"
+    "live:capacity:hybrid": "COLORPLAY_LIVE_PROFILE=hybrid playwright test --config scripts/live/playwright.config.ts",
+    "whole-site:capacity": "node --import tsx scripts/concurrency/run-capacity.ts"
   },
   "keywords": [],
   "author": "",
