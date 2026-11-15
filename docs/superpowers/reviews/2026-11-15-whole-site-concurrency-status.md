@@ -2,7 +2,7 @@
 
 ## 結果
 
-目前：G6 followups **ACCEPTED1449561**，S格式整合 **ACCEPTED088ab08**，G7空VM準備完成、尚無服務/fixture/build。實際CI format:check已綠，16Live檔固定點格式/原CSS非空白bytes不變，兩個CSSassert僅容許合法換行；196distinct Live cases分段皆綠，未宣稱原失敗suite重跑PASS。Append-only交接log保留全部bytes並明確排除自動重排；617行round JSX為純formatter展開理由已記錄。接最終共同freeze及G7服務/真完整functional，再40/60容量。
+目前：G7完整functional **FAIL/media**（241.577s），Root及producer cleanup皆verified、health0、remaining0。Root已集中定位兩個工具整合缺陷，S **ACCEPTED039da8f**修真writer檔名、S **ACCEPTEDa225553**修雙status定位。其後既有A1實際single/recovery/cancel/duplicate/ZIPrecovery建立5assets/2drafts，Root驗16物件bytes/canonical同；ZIPcancel另session6.524s證原6run/5asset/2draft/16物件未改刪，controlled refresh15.410s拒絕並回/login。這是分段診斷，原fullFAIL與status前UNAVAILABLE均不改判。接共同freeze與新空白G8真完整7slot，再40/60容量；未Hosted寫入/Gmail讀寄/push/PR/merge/deploy。
 
 G6修補細節：G6 followups **ACCEPTED 1449561**。Root唯一1round／Standards0、Spec0、Security0、unresolved0；21source／20logs hashes皆符。Worker68files731tests16.88s與完整checks0；Root9files120tests5.14s綠，真SQL舊schema23505 RED、migration+076/121/122共62assertions綠且每次106表及public schema/extensions hash前後一致，未persist migration。真教師postfix9.143s全checkpoint health0；受控S2 revoked refresh15.053s expectedReject1/health0且實際await/login，兩browser process正常closed/remaining0/stderr0，0新帳信。Root review summary SHA126a180929c01f9f763f431c8649b3f37b6694d88dc14ab12f824b3c1227efd8。
 
@@ -340,3 +340,15 @@ Baseba6f49a9d70188a485c208fc245ab5c829fe14fb → 088ab08d386da2913f9a0b654bef710
 實際format:check0、原完整lint0+final style-test scopedlint0、final完整typecheck0。原28files196cases run有195pass/1純單行CSSassert fail保留；核准同test只colon/comma後空白regex替換，exact center72/auto120數值/順序/semicolon/mobile scope與其他assert全保留，final styles2綠，其餘27files194cases未變/未重跑，因此196distinct cases已綠，不能稱完整suite重跑綠。CSS某grid換行需第二次formatter才固定，已核全16fixedpoint/CSS非空白bytes同；9/10TS emittedAST相同，round去除無語意括號wrapper後AST同、literal/identifier差異0。
 
 `live-projector-round.tsx`617行是純formatter展開既有JSX，emit等價/樣式值不變，本S不擴產品重構。資料庫integration格式檔未跑integration；0runtime/API/SQL/寄信/build/容量/Hosted。前兩個人工tracked-format診斷未同時套CLI的.gitignore而多列.impeccable/artifacts，屬診斷scope誤差，實際CI只17warnings；那些檔案未改。G7最初ba6只用於空VM/新keys/same8images準備，不是build或functional證據；初receipt留在sixth-failure不覆寫，最終source由新final receipt另綁。
+
+## G7 集中診斷與兩個 S 工具整合修正
+
+原common b14fc609e79c11226563b01ff857b8276a4a0d22/runwsb-261115-a6076ec408d0完整FAIL，media40.994ms在content_lookup檔名被真writer拒，未upload；此前兩學生/teacher/Live20題40answers/Admin10reads均完成，producerhealth0/cleanupverified、Rootclosed/stderr0/residual0。原receipt7bf9251c24fb05f82db9e5808f5e8d27ba05d162d5f310ba3c5b1c34511b5405與closea55f4ce6503b0b583e0b699c2ffa90d5bd0370248d7d3ada49c76d357d404dc2保留。
+
+S039da8f1b61c065ef1f09f0d44c56de56de72b7c只2paths134+4−：診斷檔名underscore→hyphen，body enum/PrivateJournal/Localguards不變。真FS17cases先9RED8pass，再7files59GREEN1.97s/fullchecks0；Root核2source9logs/3guardhash及publichelper真writerRED→GREEN，summary8c0dec870af1027f1a370503ef127750998d7174b755c4e9d59706e26e759f59。原M fakewriter未覆蓋真filename契約，是Root此前review漏項。
+
+Root既有A1有界診斷19.960s actual single/recovery/cancel/duplicate/leave/ZIPrecovery皆走過，但建立2draft後genericstatus在實際同時兩role=status而strict失敗，原UNAVAILABLE不改。S a225553301edde3f3ff5e2d42ac443a5f75c3a58只1path9+2−，actualexport精確完成2draft文案filter+count1+原textassert，沒有first或產品UI改；worker3files28tests1.60s/fullchecks0。Root核1source16logs，真Chromium publicexport兩status正向＋缺完成/錯3份/外scope/duplicate4負向；0HTTP/API，v2 physicalclosed1.572s/residual0/stderr0，summaryed28b5a016a5a9568d87c44a22477a46f0229113f0bc8f0b4132764ee301d268。初v1 0.856s短於observer採樣，雖語意綠/residual0，資源觀察仍INCONCLUSIVE，不稱physicalclosePASS。
+
+Root只讀first6綁定/5assets11variants2drafts/16物件hash全符、quarantine0/canonical同；只剩ZIPcancel以另context/session6.524s正常操作1upload/pre-drop/abort，0新asset/draft/import request，舊6run/5asset/2draft metadata及16物件bytes全部不變。S2refresh15.410s expectedReject1/errors0並真await/login。所有0新users/mail/reenroll，未fake fresh WeakSet/ownerMatch，未重上傳成功資產或重建drafts。5diagnostic processes＝4normalclosed＋1短observer未觀測，全部residual0。分段多context不可稱同一fresh7slot完整PASS。Consolidated manifest SHA0d7d249d4eebf26ee4774dd14440ec62f293016b670122a17ab4ec0589f94da3，原所有data/FAIL/Rootoperator prechild與readonly錯誤均保留。
+
+接新G8空DB，同121migrations與8imageIDs/新keys/loopback，G7原8containers及volumes/files全留（前7代總77containers）。只有新fulltruePASS+RootcloseVERIFIED才容量；Hosted adapter僅完成唯讀可行性，原guard executionAuthority NONE，無可執行Hosted驗收完成宣稱。
