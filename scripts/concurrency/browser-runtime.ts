@@ -6,6 +6,11 @@ import {
   type FunctionalScope,
 } from './config';
 
+// Intercepted correctness mode: routing proxies HTTP, disables browser cache
+// and forwards WebSocket messages via the driver; not native capacity evidence.
+export const FUNCTIONAL_BROWSER_MODE =
+  'INTERCEPTED_FUNCTIONAL_CORRECTNESS' as const;
+
 export const restrictFunctionalBrowser = async (
   context: BrowserContext,
   scope: FunctionalScope,

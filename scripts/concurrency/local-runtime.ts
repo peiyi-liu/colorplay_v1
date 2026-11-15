@@ -25,8 +25,18 @@ export const scopedFetch = (
   const allowed = [scope.appUrl, scope.supabaseUrl, scope.mailpitUrl].map(
     (value) => new URL(value).origin,
   );
-  return (input, init) => {
-    if (signal.aborted) return Promise.reject(new Error('FUNCTIONAL_ABORTED'));
+  const safeFailure = (status: 503 | 504) =>
+    Response.json(
+      {
+        message:
+          status === 504
+            ? 'FUNCTIONAL_TRANSPORT_TIMEOUT'
+            : 'FUNCTIONAL_TRANSPORT_UNAVAILABLE',
+      },
+      { status },
+    );
+  return async (input, init) => {
+    if (signal.aborted || init?.signal?.aborted) return safeFailure(504);
     const target = new URL(
       typeof input === 'string'
         ? input
@@ -35,16 +45,23 @@ export const scopedFetch = (
           : input.url,
     );
     if (!allowed.includes(target.origin))
-      return Promise.reject(new Error('FUNCTIONAL_SCOPE_INVALID'));
-    return transport(input, {
-      ...init,
-      redirect: 'error',
-      signal: AbortSignal.any([
-        signal,
-        ...(init?.signal ? [init.signal] : []),
-        AbortSignal.timeout(15_000),
-      ]),
-    });
+      return fail('FUNCTIONAL_SCOPE_INVALID');
+    const combined = AbortSignal.any([
+      signal,
+      ...(init?.signal ? [init.signal] : []),
+      AbortSignal.timeout(15_000),
+    ]);
+    try {
+      return await transport(input, {
+        ...init,
+        redirect: 'error',
+        signal: combined,
+      });
+    } catch {
+      // GoTrue logs fetch exceptions before returning an AuthError. Translate
+      // only transport failures here; never let provider text reach that path.
+      return safeFailure(combined.aborted ? 504 : 503);
+    }
   };
 };
 export const createFunctionalClient = (

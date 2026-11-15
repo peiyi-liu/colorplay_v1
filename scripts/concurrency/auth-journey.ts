@@ -25,6 +25,7 @@ import {
   observeOwnedRefresh,
   assertRevokedRefresh,
 } from './auth-refresh-observer';
+import { runFunctionalTabLifecycle } from './auth-tab-lifecycle';
 import type { PrivateJournal } from './private-journal';
 
 export const loginFunctionalApi = async (
@@ -369,80 +370,70 @@ export const authIsolationJourney = async (
   s2: FunctionalIdentity,
 ) =>
   safely(async () => {
-    const first = await context.newPage();
-    const second = await context.newPage();
-    let copied: Page | undefined;
-    let fresh: Page | undefined;
-    const snapshot = async (page: Page, identity: FunctionalIdentity) => {
-      const client = await pageClient(page, scope, secrets, signal, identity);
-      const economy = await createEconomyRepository(client).getSummary();
-      await expect(
-        page
-          .getByLabel('學習獎勵')
-          .getByLabel(`${String(economy.tokenBalance)} Token`, { exact: true }),
-      ).toBeVisible();
-      return { totalXp: economy.totalXp, tokenBalance: economy.tokenBalance };
+    const anonymous = async (page: Page) => {
+      await page.waitForURL(/\/login$/u);
+      await expect(page.getByRole('textbox', { name: '帳號' })).toBeVisible();
+      let missing = false;
+      try {
+        await sessionTokensFromPage(page, scope.supabaseUrl);
+      } catch (error) {
+        missing =
+          error instanceof Error &&
+          error.message === 'CAPACITY_BROWSER_SESSION_MISSING';
+      }
+      if (!missing) return fail('FUNCTIONAL_AUTH_FAILED');
     };
-    try {
-      await loginFunctionalPage(first, s1);
-      const s1Balance = await snapshot(first, s1);
-      await first.reload();
-      await expect(
-        first.getByText(s1.displayName, { exact: true }).first(),
-      ).toBeVisible();
-      await loginFunctionalPage(second, s2);
-      const s2Balance = await snapshot(second, s2);
-      const opened = context.waitForEvent('page');
-      await first.evaluate(() => {
-        window.open('/app', '_blank');
-      });
-      copied = await opened;
-      await copied.waitForLoadState('domcontentloaded');
-      await expect(
-        copied.getByText(s1.displayName, { exact: true }).first(),
-      ).toBeVisible();
-      await signOutViaHud(copied);
-      await copied.waitForURL(/\/login$/u);
-      await loginFunctionalPage(copied, s2);
-      if (
-        JSON.stringify(await snapshot(first, s1)) !==
-          JSON.stringify(s1Balance) ||
-        JSON.stringify(await snapshot(second, s2)) !== JSON.stringify(s2Balance)
-      )
-        return fail('FUNCTIONAL_AUTH_FAILED');
-      const a = await sessionTokensFromPage(first, scope.supabaseUrl);
-      const b = await sessionTokensFromPage(second, scope.supabaseUrl);
-      if (
-        a.access_token === b.access_token ||
-        a.refresh_token === b.refresh_token
-      )
-        return fail('FUNCTIONAL_AUTH_FAILED');
-      await signOutViaHud(first);
-      await first.waitForURL(/\/login$/u);
-      await loginFunctionalPage(first, s2);
-      if (
-        JSON.stringify(await snapshot(second, s2)) !== JSON.stringify(s2Balance)
-      )
-        return fail('FUNCTIONAL_AUTH_FAILED');
-      await first.close();
-      fresh = await context.newPage();
-      await fresh.goto('/app');
-      await fresh.waitForURL(/\/login$/u);
-      return {
-        reload: true,
-        switch: true,
-        independentTabs: true,
-        copiedOpenerIsolation: true,
-        freshTabUnauthenticated: true,
-      };
-    } finally {
-      await Promise.allSettled([
-        first.close(),
-        second.close(),
-        ...(copied ? [copied.close()] : []),
-        ...(fresh ? [fresh.close()] : []),
-      ]);
-    }
+    const logout = async (page: Page) => {
+      await signOutViaHud(page);
+      await anonymous(page);
+    };
+    return runFunctionalTabLifecycle(context, signal, s1, s2, {
+      login: loginFunctionalPage,
+      logout,
+      anonymous,
+      accessToken: async (page) =>
+        (await sessionTokensFromPage(page, scope.supabaseUrl)).access_token,
+      refreshToken: async (page) =>
+        (await sessionTokensFromPage(page, scope.supabaseUrl)).refresh_token,
+      authenticated: async (page, identity) => {
+        // The real rendered identity is checked independently of a Node client.
+        await expect(
+          page.getByText(identity.displayName, { exact: true }).first(),
+        ).toBeVisible();
+        const client = await pageClient(page, scope, secrets, signal, identity);
+        const subject = await client.auth.getUser();
+        if (subject.error || subject.data.user.id !== identity.userId)
+          return fail('FUNCTIONAL_AUTH_FAILED');
+        const economy = await createEconomyRepository(client).getSummary();
+        await expect(
+          page
+            .getByLabel('學習獎勵')
+            .getByLabel(`${String(economy.tokenBalance)} Token`, {
+              exact: true,
+            }),
+        ).toBeVisible();
+        return { totalXp: economy.totalXp, tokenBalance: economy.tokenBalance };
+      },
+      clearSharedRevoked: async (page, identity, originalAccessToken) => {
+        const client = createFunctionalClient(scope, secrets.anonKey, signal);
+        const subject = await client.auth.getUser(originalAccessToken);
+        if (
+          !subject.error ||
+          ![401, 403].includes(subject.error.status ?? 0) ||
+          subject.error.code !== 'session_not_found'
+        )
+          return fail('FUNCTIONAL_AUTH_FAILED');
+        if (new URL(page.url()).pathname === '/login') {
+          await anonymous(page);
+          return 'anonymous';
+        }
+        await expect(
+          page.getByText(identity.displayName, { exact: true }).first(),
+        ).toBeVisible();
+        await logout(page);
+        return 'cached_source_identity';
+      },
+    });
   }, 'FUNCTIONAL_AUTH_FAILED');
 
 export const assertInvalidFunctionalLogin = async (

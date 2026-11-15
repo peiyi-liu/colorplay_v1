@@ -56,7 +56,7 @@ export const runFunctionalStudent = async (
         : null;
     const purchase =
       identity.label === 'S1'
-        ? await purchaseEquipFunctional(page, client)
+        ? await purchaseEquipFunctional(page, client, scope)
         : null;
     const achievements = await achievementLeaderboardFunctional(
       page,

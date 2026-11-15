@@ -6,7 +6,13 @@ import { createInventoryRepository } from '../../src/features/inventory/api/inve
 import { createEconomyRepository } from '../../src/features/rewards/api/economy-repository';
 import { createAchievementRepository } from '../../src/features/achievements/api/achievement-repository';
 import { createLeaderboardRepository } from '../../src/features/leaderboard/api/leaderboard-repository';
-import { fail, safely } from './config';
+import { fail, safely, type FunctionalScope } from './config';
+import {
+  observeFunctionalPurchase,
+  readPurchaseWallet,
+  walletBalance,
+  assertConfirmedPurchaseReplay,
+} from './purchase-replay';
 
 export const affordableUnownedItem = (inventory: BlookInventory) => {
   const item = inventory.items
@@ -67,50 +73,91 @@ export const studentLedgerReadback = async (
 export const purchaseEquipFunctional = async (
   page: Page,
   client: SupabaseClient<Database>,
+  scope: FunctionalScope,
 ) =>
   safely(async () => {
     const repository = createInventoryRepository(client);
+    const user = await client.auth.getUser();
+    if (user.error) return fail('FUNCTIONAL_STUDENT_FAILED');
+    const userId = user.data.user.id;
     const before = await repository.getInventory();
     const item = affordableUnownedItem(before);
-    await page.goto('/app/shop');
-    await page
-      .getByRole('button', {
-        name: `購買 ${item.name}，${String(item.costTokens)} Token`,
-        exact: true,
-      })
-      .click();
-    await page
-      .getByRole('dialog', { name: `購買「${item.name}」？`, exact: true })
-      .getByRole('button', { name: '確認購買', exact: true })
-      .click();
-    await expect(
-      page.getByText(`已購買${item.name}。`, { exact: true }),
-    ).toBeVisible();
-    const bought = await repository.getInventory();
+    const wallet = await readPurchaseWallet(client, userId);
     if (
-      !bought.items.find((row) => row.id === item.id)?.owned ||
-      before.tokenBalance - bought.tokenBalance !== item.costTokens
+      walletBalance(wallet) !== before.tokenBalance ||
+      wallet.some(
+        (row) =>
+          row.source_type === 'blook_purchase' && row.source_id === item.id,
+      )
     )
       return fail('FUNCTIONAL_STUDENT_FAILED');
-    await page
-      .getByRole('button', { name: `選用 ${item.name}`, exact: true })
-      .click();
-    await expect(
-      page.getByText(`已裝備${item.name}。`, { exact: true }),
-    ).toBeVisible();
-    const equipped = await repository.getInventory();
-    if (
-      equipped.activeBlookId !== item.id ||
-      equipped.tokenBalance !== bought.tokenBalance ||
-      equipped.items.filter((row) => row.equipped).length !== 1
-    )
-      return fail('FUNCTIONAL_STUDENT_FAILED');
-    return {
-      purchaseConfirmed: true,
-      equipConfirmed: true,
-      spentTokens: item.costTokens,
-    };
+    const observer = observeFunctionalPurchase(page, scope, async (token) => {
+      const subject = await client.auth.getUser(token);
+      if (subject.error || subject.data.user.id !== userId)
+        return fail('FUNCTIONAL_STUDENT_FAILED');
+      return subject.data.user.id;
+    });
+    try {
+      await page.goto('/app/shop');
+      await page
+        .getByRole('button', {
+          name: `購買 ${item.name}，${String(item.costTokens)} Token`,
+          exact: true,
+        })
+        .click();
+      await page
+        .getByRole('dialog', { name: `購買「${item.name}」？`, exact: true })
+        .getByRole('button', { name: '確認購買', exact: true })
+        .click();
+      await expect(
+        page.getByText(`已購買${item.name}。`, { exact: true }),
+      ).toBeVisible();
+      // UI success plus fresh authoritative readback precede the explicit replay.
+      const key = await observer.key();
+      observer.dispose();
+      const bought = await repository.getInventory();
+      if (
+        key.userId !== userId ||
+        key.blookId !== item.id ||
+        !bought.items.find((row) => row.id === item.id)?.owned ||
+        before.tokenBalance - bought.tokenBalance !== item.costTokens
+      )
+        return fail('FUNCTIONAL_STUDENT_FAILED');
+      await assertConfirmedPurchaseReplay(
+        key,
+        bought,
+        item.costTokens,
+        client,
+        (id) => repository.purchaseBlook(id),
+      );
+      const readback = await repository.getInventory();
+      if (JSON.stringify(readback) !== JSON.stringify(bought))
+        return fail('FUNCTIONAL_STUDENT_FAILED');
+      await page
+        .getByRole('button', { name: `選用 ${item.name}`, exact: true })
+        .click();
+      await expect(
+        page.getByText(`已裝備${item.name}。`, { exact: true }),
+      ).toBeVisible();
+      const equipped = await repository.getInventory();
+      if (
+        equipped.activeBlookId !== item.id ||
+        equipped.tokenBalance !== bought.tokenBalance ||
+        equipped.items.filter((row) => row.equipped).length !== 1
+      )
+        return fail('FUNCTIONAL_STUDENT_FAILED');
+      return {
+        purchaseConfirmed: true,
+        replayConfirmed: true,
+        equipConfirmed: true,
+        spentTokens: item.costTokens,
+      };
+    } finally {
+      observer.dispose();
+      await observer.settle();
+    }
   }, 'FUNCTIONAL_STUDENT_FAILED');
+
 export const achievementLeaderboardFunctional = async (
   page: Page,
   client: SupabaseClient<Database>,
