@@ -1,100 +1,12 @@
+import {
+  app,
+  path,
+  setup,
+  deferred,
+} from './helpers/whole-site-functional-image';
 import { runInNewContext } from 'node:vm';
 import { readFunctionalImageProof } from '../../scripts/concurrency/functional-image-observation';
-import { EventEmitter } from 'node:events';
-import type { BrowserContext, CDPSession, Page } from '@playwright/test';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createFunctionalHealth } from '../../scripts/concurrency/functional-health';
-import type { FunctionalStage } from '../../scripts/concurrency/functional-receipt';
-import { syntheticScope } from './helpers/whole-site-functional';
-const path = '/assets/blooks/synthetic-256.webp';
-const app = syntheticScope().appUrl;
-const setup = async (
-  proof: unknown = { result: 'DECODED' },
-  approved = [path],
-) => {
-  let phase: FunctionalStage | null = 'student_s1';
-  let url = `${app}/shop`;
-  let closed = false;
-  const frame = {};
-  const evaluate = vi.fn(() => Promise.resolve(proof));
-  const page = Object.assign(new EventEmitter(), {
-    isClosed: () => closed,
-    opener: () => Promise.resolve(null),
-    url: () => url,
-    mainFrame: () => frame,
-    evaluate,
-  });
-  const cdp = Object.assign(new EventEmitter(), {
-    send: (method: string) =>
-      Promise.resolve(
-        method === 'Page.getFrameTree'
-          ? {
-              frameTree: {
-                frame: { id: 'frame1', loaderId: 'document1', url },
-              },
-            }
-          : {},
-      ),
-    detach: () => Promise.resolve(),
-  });
-  const health = createFunctionalHealth(
-    syntheticScope(),
-    () => phase,
-    [],
-    approved,
-  );
-  await health.attach(
-    {
-      newCDPSession: () => Promise.resolve(cdp as unknown as CDPSession),
-    } as unknown as BrowserContext,
-    page as unknown as Page,
-  );
-  health.identify(page as unknown as Page, 'S1');
-  const request = (patch: Record<string, unknown> = {}) =>
-    cdp.emit('Network.requestWillBeSent', {
-      requestId: 'image1',
-      type: 'Image',
-      documentURL: url,
-      loaderId: 'document1',
-      frameId: 'frame1',
-      request: { url: `${app}${path}`, method: 'GET' },
-      ...patch,
-    });
-  const cancel = (patch: Record<string, unknown> = {}) =>
-    cdp.emit('Network.loadingFailed', {
-      requestId: 'image1',
-      type: 'Image',
-      errorText: 'net::ERR_ABORTED',
-      canceled: true,
-      ...patch,
-    });
-  return {
-    health,
-    page,
-    cdp,
-    evaluate,
-    request,
-    cancel,
-    identify: (actor: string) => {
-      health.identify(page as unknown as Page, actor);
-    },
-    phase: () => {
-      phase = 'teacher_reads';
-    },
-    navigate: () => {
-      cdp.emit('Page.frameNavigated', {
-        frame: { id: 'frame1', loaderId: 'document2', url },
-      });
-    },
-    foreign: () => {
-      url = 'https://synthetic.invalid/shop';
-    },
-    close: () => {
-      closed = true;
-      page.emit('close');
-    },
-  };
-};
 afterEach(() => {
   vi.useRealTimers();
 });
@@ -118,13 +30,6 @@ describe('proven superseded static images retain functional health', () => {
   );
 });
 
-const deferred = <T>() => {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>((done) => {
-    resolve = done;
-  });
-  return { promise, resolve };
-};
 describe('image provenance and bounded proof lifecycle', () => {
   it.each(['REJECTED', 'UNAVAILABLE', 'SYNTHETIC_SECRET'])(
     'fails closed on %s DOM result',

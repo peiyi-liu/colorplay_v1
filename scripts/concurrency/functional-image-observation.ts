@@ -277,9 +277,43 @@ export const createFunctionalImages = (
           if (!stopped) unavailable++;
         }
       };
+      const withinDocument = (raw: unknown) => {
+        if (stopped) return;
+        try {
+          const event = z
+            .object({
+              frameId: z.string().min(1).max(180),
+              url: z.string().max(32768),
+              navigationType: z.enum(['fragment', 'historyApi', 'other']),
+            })
+            .parse(raw);
+          if (event.frameId !== state.frameId) return;
+          const url = new URL(event.url);
+          if (
+            !state.ready ||
+            url.origin !== origin ||
+            url.username ||
+            url.password
+          )
+            throw new Error('FUNCTIONAL_BROWSER_FAILED');
+          if (state.documentUrl === event.url) return;
+          state.documentUrl = event.url;
+          state.generation++;
+          // Same loader/document: retain exact tombstones, exhaustion and accepted IDs.
+          for (const record of records.values())
+            if (record.page === page) stops.get(record)?.();
+        } catch {
+          state.ready = false;
+          unavailable++;
+          for (const record of records.values())
+            if (record.page === page) stops.get(record)?.();
+        }
+      };
       cdp.on('Page.frameNavigated', navigated);
+      cdp.on('Page.navigatedWithinDocument', withinDocument);
       state.stop = () => {
         cdp.off('Page.frameNavigated', navigated);
+        cdp.off('Page.navigatedWithinDocument', withinDocument);
       };
       const before = state.generation;
       try {
