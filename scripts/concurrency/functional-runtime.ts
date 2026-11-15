@@ -16,6 +16,7 @@ import {
   sha256,
   type FunctionalSecrets,
 } from './local-runtime';
+import { approvedStaticAssetPathsSchema } from './functional-auth-observation';
 import { readCapacityGitState } from '../live/capacity-preflight';
 import { assertMediaReadback, type MediaReadbackInput } from './media-readback';
 const sourceRoot = resolve(import.meta.dirname, '../..');
@@ -218,10 +219,13 @@ export const loadFunctionalRuntime = async (
       return fail('FUNCTIONAL_PREFLIGHT_FAILED');
     const attestation = await io.read(
       join(FUNCTIONAL_RUNTIME_ROOT, 'functional-runtime-attestation.json'),
-      16384,
+      131072,
     );
     if (sha256(attestation) !== scope.runtimeAttestationSha256)
       return fail('FUNCTIONAL_PREFLIGHT_FAILED');
+    const { approvedStaticAssetPaths } = z
+      .object({ approvedStaticAssetPaths: approvedStaticAssetPathsSchema })
+      .parse(JSON.parse(attestation));
     const stateText = await io.read(
       join(FUNCTIONAL_RUNTIME_ROOT, 'status-secret.json'),
       131072,
@@ -277,6 +281,7 @@ export const loadFunctionalRuntime = async (
       scope,
       secrets,
       artifactSha256: request.artifactSha256,
+      approvedStaticAssetPaths,
       journal: lazyJournal,
       preflight: async (signal: AbortSignal) => {
         let fresh:
@@ -376,6 +381,7 @@ export const loadFunctionalRuntime = async (
         ),
     };
   }, 'FUNCTIONAL_PREFLIGHT_FAILED');
-export type FunctionalRuntime = Awaited<
-  ReturnType<typeof loadFunctionalRuntime>
->;
+export type FunctionalRuntime = Omit<
+  Awaited<ReturnType<typeof loadFunctionalRuntime>>,
+  'approvedStaticAssetPaths'
+> & { approvedStaticAssetPaths?: readonly string[] };

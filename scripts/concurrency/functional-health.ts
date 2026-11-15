@@ -12,11 +12,11 @@ import {
   type MediaHttpRequest,
 } from './media-http-contract';
 import type { FunctionalStage } from './functional-receipt';
-const refreshCodes = new Set([
-  'refresh_token_not_found',
-  'refresh_token_already_used',
-  'session_not_found',
-]);
+import {
+  createFunctionalAuthObservation,
+  readFunctionalAuthCode,
+  isFunctionalRefreshCode,
+} from './functional-auth-observation';
 const mediaKey = (request: MediaHttpRequest) =>
   request.action === 'begin'
     ? null
@@ -24,7 +24,7 @@ const mediaKey = (request: MediaHttpRequest) =>
 interface NetworkRecord {
   page: number;
   phase: FunctionalStage | null;
-  endpoint: 'media' | 'refresh' | 'other';
+  endpoint: 'media' | 'refresh' | 'logout' | 'other';
   media: string | null;
   refresh: string | null;
   status: number | null;
@@ -36,8 +36,14 @@ interface NetworkRecord {
 export const createFunctionalHealth = (
   scope: FunctionalScope,
   phase: () => FunctionalStage | null,
+  approvedStaticAssetPaths: readonly string[] = [],
 ) => {
   const api = new URL(scope.supabaseUrl).origin;
+  const auth = createFunctionalAuthObservation(
+    scope,
+    phase,
+    approvedStaticAssetPaths,
+  );
   const records = new Map<string, NetworkRecord>();
   const expectedDrops = new Map<string, number>();
   const observedDrops = new Set<string>();
@@ -65,6 +71,7 @@ export const createFunctionalHealth = (
     try {
       const url = new URL(raw);
       if (url.origin !== api) return 'other';
+      if (auth.isLogoutUrl(raw)) return 'logout';
       if (url.pathname === '/functions/v1/content-media' && url.search === '')
         return 'media';
       if (
@@ -117,6 +124,12 @@ export const createFunctionalHealth = (
       enabled: false,
     };
     pages.set(page, info);
+    auth.register(page, info.index);
+    const loaded = auth.loaded.bind(undefined, page);
+    page.on('load', loaded);
+    info.disposers.push(() => {
+      page.off('load', loaded);
+    });
     // Synchronous page listeners precede CDP setup and navigation, including popups.
     const consoleListener = (message: ConsoleMessage) => {
       if (message.type() !== 'error') return;
@@ -141,6 +154,7 @@ export const createFunctionalHealth = (
     });
     info.ready = (async () => {
       try {
+        await auth.observeOpener(page);
         const cdp = await context.newCDPSession(page);
         info.cdp = cdp;
         const requestListener = (raw: unknown) => {
@@ -148,6 +162,7 @@ export const createFunctionalHealth = (
             const event = z
               .object({
                 requestId: z.string().max(180),
+                type: z.string().optional(),
                 request: z.object({
                   url: z.string().max(32768),
                   method: z.string().max(12),
@@ -158,10 +173,14 @@ export const createFunctionalHealth = (
               unavailable = true;
               return;
             }
+            if (event.type === 'Document') auth.navigated(page);
             const target = endpoint(event.request.url);
             let media: string | null = null;
             let refresh: string | null = null;
-            if (target !== 'other' && event.request.method === 'POST') {
+            if (
+              (target === 'media' || target === 'refresh') &&
+              event.request.method === 'POST'
+            ) {
               const detail = z
                 .object({
                   request: z.object({
@@ -200,6 +219,16 @@ export const createFunctionalHealth = (
                 if (parsed.success) refresh = sha256(parsed.data.refresh_token);
               }
             }
+            if (
+              target === 'logout' &&
+              event.request.method === 'POST' &&
+              !auth.request(
+                page,
+                event.requestId,
+                (raw as { request: unknown }).request,
+              )
+            )
+              unexpected++;
             records.set(`${String(info.index)}:${event.requestId}`, {
               page: info.index,
               phase: phase(),
@@ -226,9 +255,10 @@ export const createFunctionalHealth = (
               `${String(info.index)}:${event.requestId}`,
             );
             if (!record) {
-              unavailable = true;
+              if (!auth.gap(page, raw)) unavailable = true;
               return;
             }
+            auth.response(page, event.requestId, event.response.status);
             record.status = event.response.status;
             if (record.status >= 500) unexpected++;
           } catch {
@@ -243,6 +273,13 @@ export const createFunctionalHealth = (
             const record = records.get(
               `${String(info.index)}:${event.requestId}`,
             );
+            if (auth.aborted(page, event.requestId, event.errorText)) {
+              if (record) {
+                record.failed = true;
+                record.finished = true;
+              }
+              return;
+            }
             if (
               record?.phase === 'media' &&
               record.media &&
@@ -266,10 +303,19 @@ export const createFunctionalHealth = (
               `${String(info.index)}:${event.requestId}`,
             );
             if (record?.status === null || record === undefined) {
+              if (auth.gapFinished(page, event.requestId)) return;
               unavailable = true;
               return;
             }
             record.finished = true;
+            if (
+              record.endpoint === 'logout' &&
+              (await auth.finished(page, event.requestId, cdp))
+            ) {
+              if (record.status === 403)
+                approvedLogs.add(`${String(info.index)}:${event.requestId}`);
+              return;
+            }
             if (record.status < 400) {
               records.delete(`${String(info.index)}:${event.requestId}`);
               return;
@@ -286,32 +332,8 @@ export const createFunctionalHealth = (
               unexpected++;
               return;
             }
-            const response = z
-              .object({ body: z.string(), base64Encoded: z.boolean() })
-              .parse(
-                await cdp.send('Network.getResponseBody', {
-                  requestId: event.requestId,
-                }),
-              );
-            if (Buffer.byteLength(response.body) > 24576) {
-              unexpected++;
-              return;
-            }
-            const body = response.base64Encoded
-              ? Buffer.from(response.body, 'base64').toString('utf8')
-              : response.body;
-            if (Buffer.byteLength(body) > 16384) {
-              unexpected++;
-              return;
-            }
-            const code = z
-              .object({ error_code: z.string().max(80) })
-              .safeParse(JSON.parse(body));
-            if (
-              !code.success ||
-              !refreshCodes.has(code.data.error_code) ||
-              observedRefresh.size
-            )
+            const code = await readFunctionalAuthCode(cdp, event.requestId);
+            if (!code || !isFunctionalRefreshCode(code) || observedRefresh.size)
               unexpected++;
             else {
               observedRefresh.add(`${String(info.index)}:${record.refresh}`);
@@ -359,7 +381,10 @@ export const createFunctionalHealth = (
               refreshExpected?.page === info.index &&
               refreshExpected.hash === record.refresh;
             const key = `${String(info.index)}:${entry.networkRequestId ?? ''}`;
-            if ((drop || denied) && !networkLogs.has(key))
+            const logout =
+              record.endpoint === 'logout' &&
+              auth.deniedLog(page, entry.networkRequestId ?? '', entry.text);
+            if ((drop || denied || logout) && !networkLogs.has(key))
               networkLogs.set(
                 key,
                 `${String(info.index)}:${record.endpoint}:${code}`,
@@ -399,7 +424,10 @@ export const createFunctionalHealth = (
       const info = pages.get(page);
       if (!info) return fail('FUNCTIONAL_BROWSER_FAILED');
       info.actor = actor;
+      auth.identify(page, actor);
     },
+    expectLogout: auth.expectLogout,
+    authDiagnostics: auth.diagnostics,
     expectMediaDrop: (page: Page, request: MediaHttpRequest) => {
       const info = pages.get(page);
       const key = mediaKey(request);
@@ -449,6 +477,7 @@ export const createFunctionalHealth = (
       return {
         available:
           !unavailable &&
+          auth.diagnostics().unresolvedLogoutDeclarations === 0 &&
           pages.size > 0 &&
           [...pages.values()].every((info) => info.enabled),
         expectedMediaDrops: observedDrops.size,

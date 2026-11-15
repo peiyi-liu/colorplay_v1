@@ -258,7 +258,7 @@ describe('health evidence does not assert physical process exit', () => {
       name: 'functional-cleanup-diagnostic',
       value: {
         phase: null,
-        closeOperations: 2,
+        closeOperations: 0,
         rejectedCloseOperations: 0,
         health: {
           collection: 'OBSERVED',
@@ -266,6 +266,14 @@ describe('health evidence does not assert physical process exit', () => {
           expectedMediaDrops: 0,
           expectedRefreshRejections: 0,
           unexpectedErrors: 1,
+        },
+        browserCloseComponents: [],
+        clientCloseComponents: [],
+        authObservation: {
+          approvedPopupStaticGaps: 0,
+          expectedLogoutAborts: 0,
+          expectedRevokedLogouts: 0,
+          unresolvedLogoutDeclarations: 0,
         },
         physicalProcessExit: 'ROOT_ATTESTATION_REQUIRED',
       },

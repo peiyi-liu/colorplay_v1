@@ -145,6 +145,59 @@ describe('whole-site complete runner with fake ports only', () => {
       ]);
     },
   );
+  it('actual normal shutdown finishes context close before starting browser close', async () => {
+    const scope = await readyScope();
+    const order: string[] = [];
+    let browserClosing = false;
+    const context = {
+      close: vi.fn(() => {
+        order.push('context');
+        return browserClosing
+          ? Promise.reject(Error('ALREADY_CLOSING'))
+          : Promise.resolve();
+      }),
+      newPage: vi.fn(),
+      setDefaultTimeout: vi.fn(),
+      on: vi.fn(),
+    };
+    const browser = {
+      close: vi.fn(() => {
+        browserClosing = true;
+        order.push('browser');
+        return Promise.resolve();
+      }),
+    };
+    vi.spyOn(chromium, 'launch').mockResolvedValueOnce(
+      browser as unknown as Browser,
+    );
+    vi.spyOn(browserRuntime, 'createFunctionalContext').mockResolvedValueOnce(
+      context as unknown as BrowserContext,
+    );
+    const ports = createActualFunctionalPorts({
+      scope,
+      secrets: syntheticSecrets,
+      artifactSha256: 'a'.repeat(64),
+      journal: { directory: 'synthetic', write: () => Promise.resolve() },
+      preflight: () => Promise.resolve(scope),
+      canonicalBaseline: () => Promise.resolve(undefined),
+      mediaOracle: () => Promise.reject(Error('NOT_USED')),
+    });
+    await ports.preflight(new AbortController().signal);
+    // Stop at the first setup journal, after actual launch/context initialization.
+    // No fixture factory or network transport is permitted in this control.
+    const abort = new AbortController();
+    context.on.mockImplementation(() => {
+      abort.abort();
+    });
+    await expect(ports.stage('fixture_setup', abort.signal)).rejects.toThrow();
+    await expect(ports.close()).resolves.toEqual({
+      resourcesClosed: true,
+      settled: true,
+    });
+    expect(order).toEqual(['context', 'browser']);
+    expect(context.close).toHaveBeenCalledTimes(1);
+    expect(browser.close).toHaveBeenCalledTimes(1);
+  });
   it('requires preflight, canonical then every ordered stage and refresh last before health', async () => {
     const h = await harness();
     const result = await runFunctional(h.ports);
@@ -166,6 +219,7 @@ describe('whole-site complete runner with fake ports only', () => {
       return Promise.resolve();
     };
     vi.spyOn(functionalRuntime, 'loadFunctionalRuntime').mockResolvedValueOnce({
+      approvedStaticAssetPaths: [],
       scope: h.scope,
       secrets: syntheticSecrets,
       artifactSha256: 'a'.repeat(64),

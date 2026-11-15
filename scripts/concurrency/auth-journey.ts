@@ -29,6 +29,10 @@ import {
 import { runFunctionalTabLifecycle } from './auth-tab-lifecycle';
 import type { PrivateJournal } from './private-journal';
 import { createRecoveryDiagnostics } from './auth-recovery-diagnostics';
+import {
+  isFunctionalMissingSession,
+  type FunctionalAuthHooks,
+} from './functional-auth-observation';
 
 export const loginFunctionalApi = async (
   scope: FunctionalScope,
@@ -276,6 +280,7 @@ export const resetFunctionalPassword = async (
   identity: FunctionalIdentity,
   journal: PrivateJournal,
   signal: AbortSignal,
+  observations?: FunctionalAuthHooks,
 ) => {
   try {
     const diagnostic = createRecoveryDiagnostics(journal, signal);
@@ -284,6 +289,7 @@ export const resetFunctionalPassword = async (
       mailbox.baseline(),
     );
     await diagnostic.step('hud_signout', async () => {
+      await observations?.beforeLogout(page, 'normal');
       await signOutViaHud(page);
       await page.waitForURL(/\/login$/u);
     });
@@ -387,6 +393,7 @@ export const authIsolationJourney = async (
   signal: AbortSignal,
   s1: FunctionalIdentity,
   s2: FunctionalIdentity,
+  observations?: FunctionalAuthHooks,
 ) =>
   safely(async () => {
     const anonymous = async (page: Page) => {
@@ -402,12 +409,19 @@ export const authIsolationJourney = async (
       }
       if (!missing) return fail('FUNCTIONAL_AUTH_FAILED');
     };
-    const logout = async (page: Page) => {
+    const logout = async (
+      page: Page,
+      kind: 'normal' | 'shared_revoked' = 'normal',
+    ) => {
+      await observations?.beforeLogout(page, kind);
       await signOutViaHud(page);
       await anonymous(page);
     };
     return runFunctionalTabLifecycle(context, signal, s1, s2, {
-      login: loginFunctionalPage,
+      login: async (page, identity) => {
+        observations?.identify(page, identity.label);
+        await loginFunctionalPage(page, identity);
+      },
       logout,
       anonymous,
       accessToken: async (page) =>
@@ -437,9 +451,8 @@ export const authIsolationJourney = async (
         const client = createFunctionalClient(scope, secrets.anonKey, signal);
         const subject = await client.auth.getUser(originalAccessToken);
         if (
-          !subject.error ||
-          ![401, 403].includes(subject.error.status ?? 0) ||
-          subject.error.code !== 'session_not_found'
+          subject.data.user !== null ||
+          !isFunctionalMissingSession(subject.error)
         )
           return fail('FUNCTIONAL_AUTH_FAILED');
         if (new URL(page.url()).pathname === '/login') {
@@ -449,7 +462,7 @@ export const authIsolationJourney = async (
         await expect(
           page.getByText(identity.displayName, { exact: true }).first(),
         ).toBeVisible();
-        await logout(page);
+        await logout(page, 'shared_revoked');
         return 'cached_source_identity';
       },
     });

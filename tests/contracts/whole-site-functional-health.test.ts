@@ -40,6 +40,8 @@ const setup = async (
   } as unknown as BrowserContext;
   const owned = Object.assign(page, {
     isClosed: () => false,
+    opener: () => Promise.resolve(null),
+    url: () => `${syntheticScope().appUrl}/app`,
   }) as unknown as Page;
   const health = createFunctionalHealth(syntheticScope(), () => phase);
   await health.attach(context, owned);
@@ -265,7 +267,11 @@ describe('exact CDP request identity, not URL/time, classifies functional negati
     const pending = new Promise<CDPSession>((resolve) => {
       finish = resolve;
     });
-    const page = Object.assign(new EventEmitter(), { isClosed: () => false });
+    const page = Object.assign(new EventEmitter(), {
+      isClosed: () => false,
+      opener: () => Promise.resolve(null),
+      url: () => `${syntheticScope().appUrl}/app`,
+    });
     const cdp = Object.assign(new EventEmitter(), {
       send: () => Promise.resolve(),
       detach: () => Promise.resolve(),

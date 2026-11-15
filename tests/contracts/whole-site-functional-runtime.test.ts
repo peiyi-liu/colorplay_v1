@@ -16,10 +16,15 @@ import {
 } from './helpers/whole-site-functional';
 import { sha256 } from '../../scripts/concurrency/local-runtime';
 const setup = () => {
+  const attestation = {
+    ...syntheticAttestation,
+    approvedStaticAssetPaths: ['/assets/main-synthetic.js'],
+  };
   const scope = {
     ...syntheticScope(),
     privateRoot: join(FUNCTIONAL_RUNTIME_ROOT, 'functional-private'),
     databaseUrl: 'postgresql://postgres@127.0.0.1:58322/postgres',
+    runtimeAttestationSha256: sha256(JSON.stringify(attestation)),
   };
   const state = JSON.stringify({
     ANON_KEY: syntheticSecrets.anonKey,
@@ -51,7 +56,7 @@ const setup = () => {
     [path]: text,
     [join(FUNCTIONAL_RUNTIME_ROOT, 'status-secret.json')]: state,
     [join(FUNCTIONAL_RUNTIME_ROOT, 'functional-runtime-attestation.json')]:
-      JSON.stringify(syntheticAttestation),
+      JSON.stringify(attestation),
   };
   const execute = vi.fn<FunctionalRootIo['execute']>(() =>
     Promise.resolve(
@@ -79,6 +84,34 @@ describe('fixed functional runtime approval before every helper', () => {
     expect(runtime.secrets.anonKey).toBe(syntheticSecrets.anonKey);
     expect(JSON.stringify(runtime.scope)).not.toContain('SYNTHETIC_SECRET');
   });
+  it.each([
+    undefined,
+    [],
+    ['https://foreign.invalid/a.js'],
+    ['/assets/a.js?secret=SYNTHETIC_SECRET'],
+    ['/assets/../a.js'],
+    ['/assets/a.js', '/assets/a.js'],
+    ['/assets/z.js', '/assets/a.js'],
+  ])(
+    'rejects missing or unsafe approved static asset list %# before helper/network',
+    async (paths) => {
+      const h = setup();
+      const attestation = JSON.stringify({
+        ...syntheticAttestation,
+        ...(paths === undefined ? {} : { approvedStaticAssetPaths: paths }),
+      });
+      h.scope.runtimeAttestationSha256 = sha256(attestation);
+      h.files[
+        join(FUNCTIONAL_RUNTIME_ROOT, 'functional-runtime-attestation.json')
+      ] = attestation;
+      const text = JSON.stringify(h.request);
+      h.files[h.path] = text;
+      await expect(
+        loadFunctionalRuntime(h.path, sha256(text), h.io),
+      ).rejects.toThrow('FUNCTIONAL_PREFLIGHT_FAILED');
+      expect(h.execute).not.toHaveBeenCalled();
+    },
+  );
   it.each([
     'outside',
     'approval',

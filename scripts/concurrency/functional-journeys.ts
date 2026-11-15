@@ -12,6 +12,11 @@ import { createFunctionalClient } from './local-runtime';
 import { createFunctionalContext } from './browser-runtime';
 import { createFunctionalHealth } from './functional-health';
 import { captureFunctionalHealth } from './auth-recovery-diagnostics';
+import {
+  createFunctionalBrowserCloser,
+  closeFunctionalClient,
+} from './functional-close';
+import { createFunctionalAuthHooks } from './functional-auth-observation';
 import { createMediaHookBinding } from './media-hook-binding';
 import {
   provisionFunctionalIdentities,
@@ -51,16 +56,26 @@ export const createActualFunctionalPorts = (
   let stopping = false;
   const isStopped = (signal?: AbortSignal) => stopping || signal?.aborted;
   let starting: Promise<void> | undefined;
-  let browserClosing: Promise<void> | undefined;
-  const stopBrowser = () =>
-    browser ? (browserClosing ??= browser.close()) : Promise.resolve();
+  const browserCloser = createFunctionalBrowserCloser(
+    () => browser,
+    () => context,
+  );
   let identities: FunctionalIdentities | null = null;
   let classes: Awaited<ReturnType<typeof createFunctionalClassrooms>> | null =
     null;
   const clients = new Set<SupabaseClient<Database>>();
   const api = new Map<string, SupabaseClient<Database>>();
   const pages = new Map<string, Page>();
-  const health = createFunctionalHealth(runtime.scope, () => phase);
+  const health = createFunctionalHealth(
+    runtime.scope,
+    () => phase,
+    runtime.approvedStaticAssetPaths ?? [],
+  );
+  const authObservations = createFunctionalAuthHooks(
+    health,
+    async (value) =>
+      (await sessionTokensFromPage(value, scope().supabaseUrl)).access_token,
+  );
   let binding: ReturnType<typeof createMediaHookBinding> | null = null;
   let s1MemberRef: string | null = null;
   const keep = (client: SupabaseClient<Database>) => {
@@ -214,6 +229,7 @@ export const createActualFunctionalPorts = (
         all().R1,
         runtime.journal,
         signal,
+        authObservations,
       );
       await assertInvalidFunctionalLogin(
         scope(),
@@ -249,6 +265,7 @@ export const createActualFunctionalPorts = (
         signal,
         all().S1,
         all().S2,
+        authObservations,
       );
       return proof(stage);
     }
@@ -439,29 +456,9 @@ export const createActualFunctionalPorts = (
           }),
         );
         void beforeWrite.catch(() => undefined);
-        const earlyBrowserClose = stopBrowser();
-        void earlyBrowserClose.catch(() => undefined);
-        await starting?.catch(() => undefined);
         const outcomes = await Promise.allSettled([
-          earlyBrowserClose,
-          stopBrowser(),
-          ...(context ? [context.close()] : []),
-          ...[...clients].map(async (value) => {
-            let removed: Awaited<ReturnType<typeof value.removeAllChannels>>;
-            let ended: PromiseSettledResult<unknown>[];
-            try {
-              removed = await value.removeAllChannels();
-            } finally {
-              ended = await Promise.allSettled([
-                value.realtime.disconnect(),
-                value.auth.stopAutoRefresh(),
-              ]);
-            }
-            if (ended.some((result) => result.status !== 'fulfilled'))
-              return fail('FUNCTIONAL_BROWSER_FAILED');
-            if (removed.some((status) => status !== 'ok'))
-              return fail('FUNCTIONAL_BROWSER_FAILED');
-          }),
+          browserCloser.close(starting),
+          ...[...clients].map(closeFunctionalClient),
         ]);
         await health.settle();
         const afterHealth = captureFunctionalHealth(health);
@@ -470,11 +467,9 @@ export const createActualFunctionalPorts = (
           beforeWrite,
           runtime.journal.write('functional-cleanup-diagnostic', {
             phase,
-            closeOperations: outcomes.length,
-            rejectedCloseOperations: outcomes.filter(
-              (row) => row.status === 'rejected',
-            ).length,
             health: afterHealth,
+            ...browserCloser.summary(outcomes.slice(1)),
+            authObservation: health.authDiagnostics(),
             physicalProcessExit: 'ROOT_ATTESTATION_REQUIRED',
           }),
         ]);
@@ -482,6 +477,7 @@ export const createActualFunctionalPorts = (
           diagnostics.some((result) => result.status !== 'fulfilled') ||
           afterHealth.collection === 'UNAVAILABLE' ||
           outcomes.some((result) => result.status !== 'fulfilled') ||
+          browserCloser.hasFailures() ||
           health.snapshot().unexpectedErrors !== 0
         )
           return fail('FUNCTIONAL_BROWSER_FAILED');
