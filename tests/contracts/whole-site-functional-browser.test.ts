@@ -86,7 +86,12 @@ describe('functional browser scope before navigation', () => {
     const route = {
       request: () => ({ url: () => 'http://127.0.0.1:58373/data' }),
       abort: vi.fn(() => Promise.resolve(undefined)),
-      fetch: vi.fn(() => Promise.resolve({ status: () => 303 })),
+      fetch: vi.fn(() =>
+        Promise.resolve({
+          status: () => 303,
+          dispose: () => Promise.resolve(),
+        }),
+      ),
       fulfill: vi.fn(),
     };
     await h.http()(route as unknown as Route);

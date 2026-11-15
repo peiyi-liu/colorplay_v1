@@ -19,7 +19,11 @@ import type {
   SessionTokens,
 } from '../../tests/e2e/helpers/staging-capacity';
 import { runWithCapacityTimeout } from '../../tests/e2e/helpers/staging-capacity-stage-runner';
-import { failCapacity, type CapacityConfig } from './capacity-config';
+import {
+  failCapacity,
+  requireLocalExecution,
+  type CapacityConfig,
+} from './capacity-config';
 import {
   createLocalClient,
   type CapacitySecrets,
@@ -71,20 +75,30 @@ export interface LiveActor {
   assertBrowserHealth?: () => Promise<void>;
 }
 
+export type LiveClientFactory = (
+  signal: AbortSignal,
+  onRequest: () => void,
+) => SupabaseClient<Database>;
+
 export const createSdkLiveActor = (
   config: CapacityConfig,
   secrets: CapacitySecrets,
   credentials: CapacityCredentials,
   runSignal: AbortSignal,
   evidence: ActorEvidence,
+  clientFactory?: LiveClientFactory,
 ) => {
+  requireLocalExecution(config);
   const controller = new AbortController();
   const signal = AbortSignal.any([runSignal, controller.signal]);
   evidence.requests = 0;
   evidence.broadcasts = 0;
-  const client = createLocalClient(config, secrets.anonKey, signal, () => {
+  const onRequest = () => {
     if (typeof evidence.requests === 'number') evidence.requests += 1;
-  });
+  };
+  const client = clientFactory
+    ? clientFactory(signal, onRequest)
+    : createLocalClient(config, secrets.anonKey, signal, onRequest);
   const repository = createLiveRepository(client);
   const outsiderDiagnostics = createOutsiderDiagnostics();
   let closed = false;

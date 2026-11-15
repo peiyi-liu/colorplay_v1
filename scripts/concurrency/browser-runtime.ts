@@ -1,3 +1,9 @@
+import {
+  boundedHttpHook,
+  parseMediaHttpRequest,
+  parseMediaHttpResponse,
+  type FunctionalHttpHooks,
+} from './media-http-contract';
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 import {
   fail,
@@ -14,6 +20,7 @@ export const FUNCTIONAL_BROWSER_MODE =
 export const restrictFunctionalBrowser = async (
   context: BrowserContext,
   scope: FunctionalScope,
+  hooks?: FunctionalHttpHooks,
 ) => {
   parseFunctionalScope(scope);
   const app = new URL(scope.appUrl).origin;
@@ -29,12 +36,47 @@ export const restrictFunctionalBrowser = async (
         await route.abort('blockedbyclient');
         return;
       }
-      const response = await route.fetch({ maxRedirects: 0, maxRetries: 0 });
-      if (response.status() >= 300 && response.status() < 400) {
-        await route.abort('blockedbyclient');
-        return;
+      const meta = hooks
+        ? await boundedHttpHook(
+            () => parseMediaHttpRequest(route.request()),
+            hooks.signal,
+          )
+        : null;
+      if (hooks?.beforeSend && meta) {
+        const policy = hooks.beforeSend;
+        if (
+          (await boundedHttpHook(() => policy(meta), hooks.signal)) === 'drop'
+        ) {
+          await route.abort('failed');
+          return;
+        }
       }
-      await route.fulfill({ response });
+      const response = await route.fetch({ maxRedirects: 0, maxRetries: 0 });
+      try {
+        if (response.status() >= 300 && response.status() < 400) {
+          await route.abort('blockedbyclient');
+          return;
+        }
+        if (hooks?.afterResponse && meta) {
+          const parsed = await boundedHttpHook(
+            () => parseMediaHttpResponse(meta, response),
+            hooks.signal,
+          );
+          const policy = hooks.afterResponse;
+          if (
+            (await boundedHttpHook(
+              () => policy(meta, parsed),
+              hooks.signal,
+            )) === 'drop'
+          ) {
+            await route.abort('failed');
+            return;
+          }
+        }
+        await route.fulfill({ response });
+      } finally {
+        await response.dispose();
+      }
     } catch {
       await route.abort('failed').catch(() => undefined);
     }
@@ -54,6 +96,7 @@ export const restrictFunctionalBrowser = async (
 export const createFunctionalContext = async (
   browser: Browser,
   scope: FunctionalScope,
+  hooks?: FunctionalHttpHooks,
 ) =>
   safely(async () => {
     const context = await browser.newContext({
@@ -63,7 +106,7 @@ export const createFunctionalContext = async (
       acceptDownloads: false,
     });
     try {
-      await restrictFunctionalBrowser(context, scope);
+      await restrictFunctionalBrowser(context, scope, hooks);
       return context;
     } catch {
       await context.close().catch(() => undefined);
