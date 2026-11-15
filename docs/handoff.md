@@ -2095,3 +2095,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 驗證：pgTAP 新登入 RED（stale ≠ mfa_required）→ GREEN；focused DB 59 assertions、Admin/Auth/router 453 unit tests、真實 Local Auth/MFA flow 6 tests PASS；Chromium 重新登入完整路徑及非 Admin 拒絕 3 tests PASS。一次 combined Standards/Spec/Security review 0 findings。lint/typecheck/build PASS；不保存 MFA 畫面截圖／trace／video。
 - 限制：重用 Local stack 的完整 pgTAP 有 018／050／052／067 失敗，全域 fixture 筆數受既有 integration 資料影響，完整 DB PASS 必須由 clean CI 確認；沒有改無關測試或跳過 assertion。Browser enrollment journey 首跑在新增重登入導致歷史連線多一列時失敗，定位撤銷操作改為精準選取未撤銷列；focused login regression 隨後 PASS，不冒稱整段 security journey 全綠。
 - 下一步：建立 bounded PR，required checks／exact SHA approval → 只套用唯一待推 migration → 合併至 Staging → 驗證正式 marker 與 hosted fresh-login state。dry-run 已確認只有該 migration；Production 不在範圍。
+
+
+### 2026-11-15 — C3 ACCEPTED 9e85053，準備共同freeze與首次真functional
+
+- Final9e85053a282bb65b9ad4adcfaa0cf8e2b646fda9／clean，唯一review兩P2同輪清除，僅4delta121+/10−。40/60郵件前綴精確綁cohort／alias／account；批准scope/helpers先strictparse再deepEqual，保留實際bytes hash與extra/missing/value拒絕。產品／DB／C1C2／native三模組／門檻未改。
+- Worker61files461tests PASS14.45s、full lint/type/format/import/diff0；root初61files448tests PASS9.94s、delta3files34tests PASS0.716s、全部27file hashes相符，actual-export postcontrols確認sorted批准接受／40與60不同prefix，0真requests。PacketSHA39b8e598a67b722ee3dd3c42939c137c72b427620ddda7e13a4408f376c52ce3；root c3-root-final-review-summary.json記1round／0unresolved。原RED與初交收據保留。
+- 下一步由root只複製本次自有新design/plan/brief/review文件進隔離clone並append focused handoff，共同commit凍結後才更新Local review pointer、build--manifest／entryproof／綁all37functions及六身份functional。初次真流程尚未開始，不能稱全站功能／40或60容量PASS。原7protected與handoff原prefix再次比對均保持；未push／PR／Hosted寫入／部署。
