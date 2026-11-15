@@ -1,10 +1,15 @@
 import { z } from 'zod';
+import {
+  linuxEngineeringGuards,
+  linuxEngineeringGuardsSchema,
+} from './execution-profile';
 import { sha256 } from './local-runtime';
 import {
   capacityScopeSchema,
   capacityFailure,
   requireCapacityScope,
   capacityModes,
+  capacityExecutionProfile,
   type CapacityScope,
   type CapacityMode,
 } from './capacity-scope';
@@ -90,7 +95,10 @@ export type CapacityLeg = z.infer<typeof capacityLegSchema>;
 export const capacityManifestSchema = z.strictObject({
   schemaVersion: z.literal(1),
   scope: capacityScopeSchema,
-  engineeringGuards: engineeringGuardsSchema,
+  engineeringGuards: z.union([
+    engineeringGuardsSchema,
+    linuxEngineeringGuardsSchema,
+  ]),
   identities: z.array(alias).length(106),
   retention: z.literal('ALL_OWNED_AUTH_PROFILE_LEDGER_MEDIA_AUDIT_RETAINED'),
   cohorts: z.strictObject({ registration40: cohort, registration60: cohort }),
@@ -196,7 +204,9 @@ export const createCapacityManifest = (
   return capacityManifestSchema.parse({
     schemaVersion: 1,
     scope,
-    engineeringGuards: capacityEngineeringGuards,
+    engineeringGuards: capacityExecutionProfile(scope)
+      ? linuxEngineeringGuards
+      : capacityEngineeringGuards,
     identities: ['T1', 'T2', 'S1', 'S2', 'A1', 'R1', ...reg40, ...reg60],
     retention: 'ALL_OWNED_AUTH_PROFILE_LEDGER_MEDIA_AUDIT_RETAINED',
     cohorts: {

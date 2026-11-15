@@ -1,4 +1,12 @@
 import { z } from 'zod';
+import {
+  executionProfileDigest,
+  executionProfileField,
+} from './execution-profile';
+import {
+  validateReceiptHealth,
+  receiptHealthStatus,
+} from './capacity-receipt-health';
 import { sha256 } from './local-runtime';
 import {
   capacityScopeSchema,
@@ -18,10 +26,7 @@ import {
   barrierResultSchema,
   validateCapacityMetrics,
 } from './capacity-metrics';
-import {
-  capacityHealthSchema,
-  validateCapacityHealth,
-} from './capacity-health';
+import { capacityHealthSchema } from './capacity-health';
 const digest = z.string().regex(/^[a-f0-9]{64}$/u);
 export const capacityBundleSchema = z.strictObject({
   sourceRevision: z.string().regex(/^[a-f0-9]{40}$/u),
@@ -108,6 +113,7 @@ const controlsSchema = z.strictObject({
 const failureReasons = [
   'missing_proof',
   'functional_failure',
+  'backend_resource',
   'generator_unknown',
   'generator_limited',
   'barrier_unknown',
@@ -120,6 +126,7 @@ const failureReasons = [
   'cleanup_incomplete',
 ] as const;
 export const capacityReceiptSchema = z.strictObject({
+  executionProfileSha256: executionProfileDigest.optional(),
   schemaVersion: z.literal(1),
   scope: capacityScopeSchema,
   planSha256: digest,
@@ -176,6 +183,7 @@ export const newCapacityReceipt = (
   validateCapacityManifest(plan, scope);
   const leg = findCapacityLeg(plan, legId);
   return capacityReceiptSchema.parse({
+    ...executionProfileField(scope),
     schemaVersion: 1,
     scope,
     planSha256: capacityManifestHash(plan),
@@ -227,6 +235,7 @@ export const finalizeCapacityReceipt = (
     const receipt = capacityReceiptSchema.parse(input),
       leg = findCapacityLeg(plan, receipt.leg.legId);
     if (
+      receipt.executionProfileSha256 !== scope.executionProfileSha256 ||
       JSON.stringify(receipt.scope) !== JSON.stringify(scope) ||
       receipt.planSha256 !== capacityManifestHash(plan) ||
       JSON.stringify(receipt.leg) !== JSON.stringify(leg) ||
@@ -239,7 +248,7 @@ export const finalizeCapacityReceipt = (
     if (receipt.metrics !== null)
       receipt.metrics = validateCapacityMetrics(receipt.metrics);
     if (receipt.health !== null)
-      receipt.health = validateCapacityHealth(receipt.health);
+      receipt.health = validateReceiptHealth(receipt.health, scope);
     const reasons = new Set<(typeof failureReasons)[number]>();
     const controls = receipt.controls;
     if (receipt.rateLimit === null) reasons.add('missing_proof');
@@ -285,24 +294,8 @@ export const finalizeCapacityReceipt = (
           ? 'FAIL'
           : 'UNKNOWN';
     if (receipt.timedOut || receipt.runAborted) reasons.add('timeout');
-    if (
-      receipt.health?.mode !== leg.mode ||
-      receipt.health.validity === 'UNKNOWN' ||
-      receipt.health.hostSamples < 1 ||
-      receipt.health.vmSamples < 1 ||
-      receipt.health.nodeRssMaxBytes === null ||
-      receipt.health.lastHostAgeMs === null ||
-      receipt.health.lastHostAgeMs > 3000 ||
-      receipt.health.lastVmAgeMs === null ||
-      receipt.health.lastVmAgeMs > 7000 ||
-      receipt.health.eventLoopP95MaxMs === null ||
-      (leg.mode !== 'NODE_PROTOCOL' &&
-        (receipt.health.browserTreeRssMaxBytes === null ||
-          receipt.health.browserTreeFootprintMaxBytes === null))
-    )
-      reasons.add('generator_unknown');
-    else if (receipt.health.validity === 'GENERATOR_LIMITED')
-      reasons.add('generator_limited');
+    const healthStatus = receiptHealthStatus(receipt.health, leg.mode);
+    if (healthStatus) reasons.add(healthStatus);
     for (const barrier of receipt.barriers) {
       if (
         !barrier.measurement ||
@@ -373,6 +366,7 @@ export const finalizeCapacityReceipt = (
     }
     if (reasons.has('functional_failure')) receipt.productResult = 'FAIL';
     const inconclusive = [
+      'backend_resource',
       'missing_proof',
       'generator_unknown',
       'generator_limited',
@@ -389,6 +383,7 @@ export const finalizeCapacityReceipt = (
         ? 'FAIL'
         : 'PASS';
     if (
+      reasons.has('backend_resource') ||
       reasons.has('generator_unknown') ||
       reasons.has('generator_limited') ||
       reasons.has('barrier_unknown') ||

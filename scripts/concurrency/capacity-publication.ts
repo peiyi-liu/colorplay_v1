@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { executionProfileDigest } from './execution-profile';
 import {
   capacityFailure,
   capacityModes,
@@ -32,6 +33,7 @@ export const createCapacityCandidate = (input: CapacityReceipt) => {
   });
 };
 export const capacityProcessCloseSchema = z.strictObject({
+  executionProfileSha256: executionProfileDigest.optional(),
   schemaVersion: z.literal(1),
   kind: z.literal('ROOT_CAPACITY_PROCESS_CLOSE'),
   projectId: z.literal('cp-whole-site-261115'),
@@ -97,6 +99,8 @@ export const assertCapacityRootClose = (
     const recomputed = finalizeCapacityReceipt(receipt, plan, scope);
     if (
       JSON.stringify(receipt) !== JSON.stringify(recomputed) ||
+      close.executionProfileSha256 !== scope.executionProfileSha256 ||
+      receipt.executionProfileSha256 !== scope.executionProfileSha256 ||
       receipt.result !== 'PASS' ||
       close.result !== 'VERIFIED' ||
       close.runOutcome !== 'PASS' ||

@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  executionProfileDigest,
+  executionProfileField,
+} from './execution-profile';
 import { fail, type FunctionalScope } from './config';
 export const requiredProofs = {
   canonical_baseline: ['canonical_snapshot'],
@@ -101,6 +105,7 @@ const cleanup = z.strictObject({
 });
 export type FunctionalCleanup = z.infer<typeof cleanup>;
 export const functionalReceiptSchema = z.strictObject({
+  executionProfileSha256: executionProfileDigest.optional(),
   schemaVersion: z.literal(1),
   sourceRevision: z.string().regex(/^[a-f0-9]{40}$/u),
   artifactRevision: z.string().regex(/^[a-f0-9]{40}$/u),
@@ -139,6 +144,7 @@ export const newFunctionalReceipt = (
   artifactSha256: string,
 ): FunctionalReceipt =>
   functionalReceiptSchema.parse({
+    ...executionProfileField(scope),
     schemaVersion: 1,
     sourceRevision: scope.expectedRevision,
     artifactRevision: scope.expectedRevision,

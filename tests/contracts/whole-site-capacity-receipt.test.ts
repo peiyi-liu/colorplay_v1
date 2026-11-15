@@ -266,6 +266,8 @@ describe('capacity receipts fail closed without exact owned proofs and chain', (
         );
       if (!receipt.metrics || !receipt.health)
         throw new Error('SYNTHETIC_PROOF_MISSING');
+      if ('kind' in receipt.health)
+        throw new Error('SYNTHETIC_DARWIN_REQUIRED');
       if (kind === 'masked_error')
         receipt.metrics.operations.finalize_quiz.errorCount = 1;
       if (kind === 'masked_error_consistent') {

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { executionProfileDigest } from './execution-profile';
 import { assertLoopbackUrl } from '../live/capacity-config';
 
 const publicCodes = [
@@ -40,6 +41,7 @@ const schema = z.strictObject({
   serviceKeySha256: digest,
   databaseIdentitySha256: digest,
   runtimeAttestationSha256: digest,
+  executionProfileSha256: executionProfileDigest.optional(),
   confirmation: z.literal('LOCAL_WHOLE_SITE_FUNCTIONAL'),
 });
 export type FunctionalScope = z.infer<typeof schema>;

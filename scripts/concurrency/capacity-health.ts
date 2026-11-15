@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  linuxCapacityHealthSchema,
+  validateLinuxCapacityHealth,
+} from './capacity-linux-health';
+import type { ExecutionProfileAuthority } from './execution-profile';
 import { capacityEngineeringGuards as guards } from './capacity-manifest';
 import {
   capacityModes,
@@ -74,7 +79,7 @@ const reasons = [
   'host_swap',
 ] as const;
 type Reason = (typeof reasons)[number];
-export const capacityHealthSchema = z.strictObject({
+const darwinCapacityHealthSchema = z.strictObject({
   mode: z.enum(capacityModes),
   validity: z.enum(['VALID', 'GENERATOR_LIMITED', 'UNKNOWN']),
   reasons: z.array(z.enum(reasons)).max(reasons.length),
@@ -98,9 +103,14 @@ export const capacityHealthSchema = z.strictObject({
   vmSwapUsedBytes: bytes.nullable(),
   vmLoad1: nonnegative.nullable(),
 });
+type DarwinCapacityHealth = z.infer<typeof darwinCapacityHealthSchema>;
+export const capacityHealthSchema = z.union([
+  darwinCapacityHealthSchema,
+  linuxCapacityHealthSchema,
+]);
 export type CapacityHealth = z.infer<typeof capacityHealthSchema>;
-export const validateCapacityHealth = (input: unknown): CapacityHealth => {
-  const health = capacityHealthSchema.parse(input);
+const validateDarwinCapacityHealth = (input: unknown): DarwinCapacityHealth => {
+  const health = darwinCapacityHealthSchema.parse(input);
   if (health.validity === 'VALID') {
     if (
       health.reasons.length !== 0 ||
@@ -139,6 +149,15 @@ export const validateCapacityHealth = (input: unknown): CapacityHealth => {
   return health;
 };
 
+export const validateCapacityHealth = (
+  input: unknown,
+  profile?: ExecutionProfileAuthority,
+): CapacityHealth => {
+  const value = capacityHealthSchema.parse(input);
+  if ('kind' in value) return validateLinuxCapacityHealth(value, profile);
+  if (profile) return capacityFailure();
+  return validateDarwinCapacityHealth(value);
+};
 export const createCapacityHealth = (mode: CapacityMode) => {
   let host: Collected<HostCapacitySample> | null = null,
     vm: Collected<VmCapacitySample> | null = null,
@@ -329,7 +348,7 @@ export const createCapacityHealth = (mode: CapacityMode) => {
         input.atNodeMs,
       );
     },
-    snapshot: (atNodeMs: number): CapacityHealth => {
+    snapshot: (atNodeMs: number): DarwinCapacityHealth => {
       const stale = new Set<Reason>(faults);
       const age = (
         input: { startedAtNodeMs: number; completedAtNodeMs: number } | null,
@@ -353,7 +372,7 @@ export const createCapacityHealth = (mode: CapacityMode) => {
         stale.add('loop_stale');
       if (unknown) stale.add('collector_unavailable');
       const browserCpu = host?.sample.browserCpuLifetimePercentOfOneCore;
-      return validateCapacityHealth({
+      return validateDarwinCapacityHealth({
         mode,
         validity: stale.size
           ? 'UNKNOWN'

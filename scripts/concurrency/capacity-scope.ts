@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  executionProfileDigest,
+  requireExecutionProfile,
+  type ExecutionProfileAuthority,
+} from './execution-profile';
 import { sha256 } from './local-runtime';
 import {
   finishFunctionalReceipt,
@@ -14,6 +19,7 @@ export const capacityModes = [
 ] as const;
 export type CapacityMode = (typeof capacityModes)[number];
 export const capacityScopeSchema = z.strictObject({
+  executionProfileSha256: executionProfileDigest.optional(),
   schemaVersion: z.literal(1),
   environment: z.literal('local'),
   projectId: z.literal('cp-whole-site-261115'),
@@ -44,6 +50,7 @@ export const capacityScopeSchema = z.strictObject({
 });
 export type CapacityScope = z.infer<typeof capacityScopeSchema>;
 export const functionalProcessCloseSchema = z.strictObject({
+  executionProfileSha256: executionProfileDigest.optional(),
   schemaVersion: z.literal(1),
   kind: z.literal('ROOT_FUNCTIONAL_PROCESS_CLOSE'),
   projectId: z.literal('cp-whole-site-261115'),
@@ -68,6 +75,7 @@ export const functionalProcessCloseSchema = z.strictObject({
   resourceVerification: z.literal('PRODUCER_CLEANUP_AND_OBSERVED_PROCESS_EXIT'),
 });
 const ready = new WeakSet<object>();
+const profiles = new WeakMap<object, ExecutionProfileAuthority>();
 export const capacityFailure = (): never => {
   throw new Error('CAPACITY_EVIDENCE_INVALID');
 };
@@ -76,10 +84,19 @@ export const requireCapacityScope = (scope: CapacityScope) => {
 };
 export const parseCapacityScope = (
   input: unknown,
-  authority: { receiptBytes: string; processCloseBytes: string },
+  authority: {
+    receiptBytes: string;
+    processCloseBytes: string;
+    executionProfileAuthority?: ExecutionProfileAuthority;
+  },
 ): CapacityScope => {
   try {
     const scope = capacityScopeSchema.parse(input);
+    const profile = requireExecutionProfile(
+      scope.executionProfileSha256,
+      authority.executionProfileAuthority,
+      scope.databaseIdentitySha256,
+    );
     if (
       Buffer.byteLength(authority.receiptBytes) > 131072 ||
       Buffer.byteLength(authority.processCloseBytes) > 32768
@@ -97,6 +114,8 @@ export const parseCapacityScope = (
       JSON.parse(authority.processCloseBytes),
     );
     if (
+      receipt.executionProfileSha256 !== scope.executionProfileSha256 ||
+      closed.executionProfileSha256 !== scope.executionProfileSha256 ||
       receipt.result !== 'PASS' ||
       finishFunctionalReceipt(receipt).result !== 'PASS' ||
       closed.result !== 'VERIFIED' ||
@@ -129,9 +148,19 @@ export const parseCapacityScope = (
       return capacityFailure();
     Object.freeze(scope.helpers);
     Object.freeze(scope);
+    if (profile) profiles.set(scope, profile);
     ready.add(scope);
     return scope;
   } catch {
     return capacityFailure();
   }
+};
+
+export const capacityExecutionProfile = (scope: CapacityScope) => {
+  requireCapacityScope(scope);
+  return requireExecutionProfile(
+    scope.executionProfileSha256,
+    profiles.get(scope),
+    scope.databaseIdentitySha256,
+  );
 };

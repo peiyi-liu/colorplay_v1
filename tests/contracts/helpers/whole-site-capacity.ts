@@ -155,7 +155,11 @@ export const completeCapacityReceipt = (
   plan: CapacityManifest,
   legId: string,
   predecessorSha256: string | null = null,
-) => {
+): ReturnType<typeof newCapacityReceipt> & {
+  health: ReturnType<
+    ReturnType<typeof createCapacityHealth>['snapshot']
+  > | null;
+} => {
   const receipt = newCapacityReceipt(
     plan,
     scope,
@@ -232,5 +236,5 @@ export const completeCapacityReceipt = (
     deduplicatedChunks: true,
   };
   receipt.elapsedMs = 1000;
-  return receipt;
+  return { ...receipt, health: health.snapshot(2) };
 };

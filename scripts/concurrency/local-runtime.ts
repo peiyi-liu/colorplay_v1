@@ -1,6 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import {
+  requireExecutionProfile,
+  type ExecutionProfileAuthority,
+} from './execution-profile';
 import type { Database } from '../../src/types/database';
 import { readCapacityGitState } from '../live/capacity-preflight';
 import {
@@ -107,6 +111,7 @@ const counts = z.strictObject({
   mediaAssets: z.literal(0),
 });
 export interface FunctionalPreflightPorts {
+  executionProfileAuthority?: ExecutionProfileAuthority;
   git(): Promise<{ repoSha: string; dirty: boolean }>;
   baseline(): Promise<unknown>;
   databaseIdentity(): Promise<string>;
@@ -124,6 +129,11 @@ export const preflightFunctional = async (
 ): Promise<FunctionalScope> =>
   safely(async () => {
     const scope = parseFunctionalScope(input);
+    requireExecutionProfile(
+      scope.executionProfileSha256,
+      ports.executionProfileAuthority,
+      scope.databaseIdentitySha256,
+    );
     if (
       sha256(secrets.anonKey) !== scope.anonKeySha256 ||
       sha256(secrets.serviceKey) !== scope.serviceKeySha256 ||
@@ -149,6 +159,11 @@ export const preflightFunctional = async (
       anonKeySha256: z.literal(scope.anonKeySha256),
       serviceKeySha256: z.literal(scope.serviceKeySha256),
     }).parse(JSON.parse(attestationText));
+    const attestedProfile = z
+      .object({ executionProfileSha256: z.string().optional() })
+      .parse(JSON.parse(attestationText));
+    if (scope.executionProfileSha256 !== attestedProfile.executionProfileSha256)
+      return fail('FUNCTIONAL_PREFLIGHT_FAILED');
     counts.parse(await ports.baseline());
     const response = await scopedFetch(
       scope,
