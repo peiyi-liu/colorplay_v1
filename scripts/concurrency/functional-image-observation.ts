@@ -106,6 +106,7 @@ const requestSchema = z.object({
   request: z.object({ url: z.string().max(32768), method: z.literal('GET') }),
 });
 interface Candidate {
+  key: string;
   page: Page;
   actor: string;
   phase: FunctionalStage;
@@ -113,7 +114,7 @@ interface Candidate {
   documentUrl: string;
   pathname: string;
   used: boolean;
-  badResponse: boolean;
+  poisoned: boolean;
 }
 export const createFunctionalImages = (
   scope: FunctionalScope,
@@ -135,7 +136,13 @@ export const createFunctionalImages = (
   let decoded = 0;
   let retired = 0;
   let unavailable = 0;
+  const poison = (record: Candidate) => {
+    if (!record.poisoned) unavailable++;
+    record.poisoned = true;
+  };
   const current = (record: Candidate) =>
+    records.get(record.key) === record &&
+    !record.poisoned &&
     !stopped &&
     !record.page.isClosed() &&
     pages.get(record.page)?.generation === record.generation &&
@@ -152,7 +159,7 @@ export const createFunctionalImages = (
         stops.delete(cancel);
         record.page.off('close', cancel);
         if (!stopped) {
-          if (result === 'UNAVAILABLE') unavailable++;
+          if (result === 'UNAVAILABLE' && !record.poisoned) unavailable++;
           if (result === 'DECODED' || result === 'RETIRED') {
             expected++;
             if (result === 'DECODED') decoded++;
@@ -216,6 +223,8 @@ export const createFunctionalImages = (
       if (stopped || !allowed.size) return;
       // Keep tombstones even for noncandidates so reused requestIds never gain provenance.
       if (seen.has(key)) {
+        const record = records.get(key);
+        if (record) poison(record);
         records.delete(key);
         return;
       }
@@ -256,6 +265,7 @@ export const createFunctionalImages = (
         )
           return;
         records.set(key, {
+          key,
           page,
           actor,
           phase: stage,
@@ -263,7 +273,7 @@ export const createFunctionalImages = (
           documentUrl: event.documentURL,
           pathname: url.pathname,
           used: false,
-          badResponse: false,
+          poisoned: false,
         });
       } catch {
         /* No request provenance. */
@@ -286,7 +296,7 @@ export const createFunctionalImages = (
         parsed.data.response.status < 200 ||
         parsed.data.response.status >= 400
       )
-        record.badResponse = true;
+        poison(record);
     },
     failed(page: Page, key: string, raw: unknown): Promise<Proof> | null {
       const record = records.get(key);
@@ -299,8 +309,7 @@ export const createFunctionalImages = (
           canceled: z.literal(true),
         })
         .safeParse(raw);
-      if (!parsed.success || record.badResponse || !current(record))
-        return null;
+      if (!parsed.success || record.poisoned || !current(record)) return null;
       return proof(record);
     },
     available: () => unavailable === 0 && pending.size === 0,

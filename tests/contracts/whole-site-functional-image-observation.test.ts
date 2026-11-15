@@ -207,6 +207,54 @@ describe('image provenance and bounded proof lifecycle', () => {
     expect(h.evaluate).not.toHaveBeenCalled();
     await h.health.dispose();
   });
+  it.each([
+    ['before', 'status'],
+    ['pending', 'status'],
+    ['after', 'status'],
+    ['before', 'mime'],
+    ['pending', 'mime'],
+    ['after', 'mime'],
+    ['pending', 'duplicate'],
+    ['after', 'duplicate'],
+  ] as const)(
+    'invalidates %s proof on contradictory %s event',
+    async (when, contradiction) => {
+      const h = await setup();
+      const d = deferred<{ result: string }>();
+      h.evaluate.mockReturnValue(d.promise);
+      h.request();
+      if (when !== 'before') h.cancel();
+      if (when === 'after') {
+        d.resolve({ result: 'DECODED' });
+        await h.health.settle();
+      } else {
+        await Promise.resolve();
+        await Promise.resolve();
+      }
+      if (contradiction === 'duplicate') h.request();
+      else
+        h.cdp.emit('Network.responseReceived', {
+          requestId: 'image1',
+          type: 'Image',
+          response: {
+            status: contradiction === 'status' ? 404 : 200,
+            mimeType: contradiction === 'mime' ? 'text/html' : 'image/webp',
+          },
+        });
+      if (when === 'before') h.cancel();
+      if (when !== 'after') d.resolve({ result: 'DECODED' });
+      await h.health.settle();
+      // Keep historical classified counts; contradictions can never leave healthy evidence.
+      expect(h.health.snapshot().available).toBe(false);
+      expect(h.health.imageDiagnostics().imageProofUnavailable).toBeGreaterThan(
+        0,
+      );
+      expect(h.health.imageDiagnostics().expectedSupersededImages).toBe(
+        when === 'after' ? 1 : 0,
+      );
+      await h.health.dispose();
+    },
+  );
   it('accepts known successful webp response but does not reconcile any console or duplicate', async () => {
     const h = await setup();
     h.request();
