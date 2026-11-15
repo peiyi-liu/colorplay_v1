@@ -186,19 +186,48 @@ export const createBoundedFetch = (
   };
 };
 
+// The SDK uses storageKey as its BroadcastChannel/lock identity. Native opener
+// copies sessionStorage, so the persistent canonical tab key cannot identify a
+// document. Keep storage canonical for reload/readers while isolating SDK events.
+const createDocumentAuthStorage = (storage: Storage, canonicalKey: string) => {
+  const storageKey = `${canonicalKey}-document-${crypto.randomUUID()}`;
+  const keys = new Map(
+    ['', '-code-verifier', '-user'].map((suffix) => [
+      `${storageKey}${suffix}`,
+      `${canonicalKey}${suffix}`,
+    ]),
+  );
+  const canonical = (key: string) => {
+    const mapped = keys.get(key);
+    if (mapped === undefined) throw new Error('AUTH_STORAGE_KEY_INVALID');
+    return mapped;
+  };
+  return {
+    storageKey,
+    storage: {
+      getItem: (key: string) => storage.getItem(canonical(key)),
+      setItem: (key: string, value: string) => {
+        storage.setItem(canonical(key), value);
+      },
+      removeItem: (key: string) => {
+        storage.removeItem(canonical(key));
+      },
+    },
+  };
+};
+
 export function getBrowserSupabaseClient(
   env: PublicEnv,
 ): SupabaseClient<Database> {
   // sessionStorage：關閉分頁／瀏覽器即結束登入（owner 要求的自動登出），
   // 同分頁重新整理仍可復原 session（E2E-004 refresh recovery）。
-  singleton ??= createClient<Database>(env.supabaseUrl, env.supabaseAnonKey, {
-    auth: {
-      storage: window.sessionStorage,
-      storageKey: createTabScopedAuthStorageKey(
-        env.supabaseUrl,
-        window.sessionStorage,
-      ),
-    },
+  if (singleton) return singleton;
+  const auth = createDocumentAuthStorage(
+    window.sessionStorage,
+    createTabScopedAuthStorageKey(env.supabaseUrl, window.sessionStorage),
+  );
+  singleton = createClient<Database>(env.supabaseUrl, env.supabaseAnonKey, {
+    auth,
     global: { fetch: createBoundedFetch() },
   });
   return singleton;
