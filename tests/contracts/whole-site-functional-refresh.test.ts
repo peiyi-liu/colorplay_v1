@@ -112,8 +112,12 @@ describe('controlled expiry public journey', () => {
       waitForURL: () => Promise.resolve(),
     }) as unknown as Page;
     const signOut = vi.fn().mockResolvedValue({ error: null });
+    const getUser = vi.fn().mockResolvedValue({
+      error: null,
+      data: { user: { id: 'synthetic-id' } },
+    });
     const service = {
-      auth: { admin: { signOut } },
+      auth: { admin: { signOut }, getUser },
     } as unknown as import('@supabase/supabase-js').SupabaseClient<
       import('../../src/types/database').Database
     >;
@@ -154,5 +158,24 @@ describe('controlled expiry public journey', () => {
       ),
     ).rejects.toThrow('FUNCTIONAL_AUTH_FAILED');
     expect(signOut).toHaveBeenCalledTimes(1);
+    getUser.mockResolvedValueOnce({
+      error: null,
+      data: { user: { id: 'another-owned-identity' } },
+    });
+    await expect(
+      controlledRevokedRefresh(page, syntheticScope(), identity, service),
+    ).rejects.toThrow('FUNCTIONAL_AUTH_FAILED');
+    expect(signOut).toHaveBeenCalledTimes(1);
+    for (const reply of [
+      { error: { status: 401 }, data: { user: null } },
+      { error: { status: 503 }, data: { user: null } },
+      { error: null, data: null },
+    ]) {
+      getUser.mockResolvedValueOnce(reply);
+      await expect(
+        controlledRevokedRefresh(page, syntheticScope(), identity, service),
+      ).rejects.toThrow('FUNCTIONAL_AUTH_FAILED');
+      expect(signOut).toHaveBeenCalledTimes(1);
+    }
   });
 });

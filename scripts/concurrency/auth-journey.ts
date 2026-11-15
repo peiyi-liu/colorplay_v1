@@ -317,6 +317,9 @@ export const controlledRevokedRefresh = async (
     if (identity.label !== 'S2' || !identity.userId)
       return fail('FUNCTIONAL_AUTH_FAILED');
     const tokens = await sessionTokensFromPage(page, scope.supabaseUrl);
+    const subject = await service.auth.getUser(tokens.access_token);
+    if (subject.error || subject.data.user.id !== identity.userId)
+      return fail('FUNCTIONAL_AUTH_FAILED');
     const { error } = await service.auth.admin.signOut(
       tokens.access_token,
       'global',
