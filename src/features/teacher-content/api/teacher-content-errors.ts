@@ -1,3 +1,4 @@
+import { classifyReadFailure } from '../../../lib/query/read-failure';
 export type TeacherContentErrorCode =
   | 'CONTENT_ALREADY_PUBLISHED'
   | 'CONTENT_INVALID'
@@ -6,9 +7,13 @@ export type TeacherContentErrorCode =
   | 'CONTENT_UNSAFE_TEXT'
   | 'EXTERNAL_URL_INVALID'
   | 'INVALID_RESPONSE'
+  | 'AUTH_REQUIRED'
+  | 'RATE_LIMITED'
   | 'UNAVAILABLE';
 
 const messages: Record<TeacherContentErrorCode, string> = {
+  AUTH_REQUIRED: '請先登入教師帳號。',
+  RATE_LIMITED: '內容讀取過於頻繁，請稍後再試。',
   CONTENT_ALREADY_PUBLISHED: '已發布的內容請用發布流程更新。',
   CONTENT_INVALID: '內容未通過驗證，請檢查欄位。',
   CONTENT_NOT_FOUND: '找不到這筆內容。',
@@ -49,4 +54,28 @@ export const toTeacherContentError = (message: string): TeacherContentError => {
     return new TeacherContentError('CONTENT_INVALID');
   }
   return new TeacherContentError('UNAVAILABLE');
+};
+
+export const toTeacherContentReadError = (
+  error: unknown,
+  status?: number,
+): TeacherContentError => {
+  const message: unknown =
+    typeof error === 'object' && error !== null
+      ? Object.getOwnPropertyDescriptor(error, 'message')?.value
+      : undefined;
+  const legacy = toTeacherContentError(
+    typeof message === 'string' && message.length <= 256 ? message : '',
+  );
+  if (legacy.code !== 'UNAVAILABLE' && ![401, 403, 429].includes(status ?? 0))
+    return legacy;
+  const codes = {
+    AUTH: 'AUTH_REQUIRED',
+    PERMISSION: 'CONTENT_TEACHER_ONLY',
+    RATE_LIMIT: 'RATE_LIMITED',
+    VALIDATION: 'CONTENT_INVALID',
+    NOT_FOUND: 'CONTENT_NOT_FOUND',
+    UNAVAILABLE: 'UNAVAILABLE',
+  } as const;
+  return new TeacherContentError(codes[classifyReadFailure({ error, status })]);
 };

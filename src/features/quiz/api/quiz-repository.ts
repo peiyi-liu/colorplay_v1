@@ -1,3 +1,10 @@
+import {
+  QuizRepositoryError,
+  mapServerError,
+  mapQuizReadError,
+} from './quiz-errors';
+export { QuizRepositoryError } from './quiz-errors';
+export type { QuizRepositoryErrorCode } from './quiz-errors';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
@@ -204,54 +211,6 @@ export type QuizAbandonResult = Readonly<{
   status: 'abandoned';
 }>;
 
-export type QuizRepositoryErrorCode =
-  | 'AUTH_REQUIRED'
-  | 'CHAPTER_LOCKED'
-  | 'INVALID_RESPONSE'
-  | 'QUESTION_ALREADY_ANSWERED'
-  | 'SESSION_INCOMPLETE'
-  | 'SESSION_NOT_FOUND'
-  | 'UNAVAILABLE';
-
-const errorMessages: Record<QuizRepositoryErrorCode, string> = {
-  AUTH_REQUIRED: '請先登入再開始挑戰。',
-  CHAPTER_LOCKED: '請先完成上一章的複習與挑戰。',
-  INVALID_RESPONSE: '答題資料格式不正確，請重新載入。',
-  QUESTION_ALREADY_ANSWERED: '這一題已經作答，正在載入最新結果。',
-  SESSION_INCOMPLETE: '還有題目尚未完成，暫時不能結算。',
-  SESSION_NOT_FOUND: '找不到這次挑戰，或你沒有檢視權限。',
-  UNAVAILABLE: '答題服務暫時無法使用，請稍後重試。',
-};
-
-export class QuizRepositoryError extends Error {
-  readonly code: QuizRepositoryErrorCode;
-
-  constructor(code: QuizRepositoryErrorCode) {
-    super(errorMessages[code]);
-    this.name = 'QuizRepositoryError';
-    this.code = code;
-  }
-}
-
-const mapServerError = (message: string): QuizRepositoryError => {
-  if (message.includes('CHAPTER_LOCKED')) {
-    return new QuizRepositoryError('CHAPTER_LOCKED');
-  }
-  if (message.includes('AUTH_REQUIRED')) {
-    return new QuizRepositoryError('AUTH_REQUIRED');
-  }
-  if (message.includes('QUIZ_QUESTION_ALREADY_ANSWERED')) {
-    return new QuizRepositoryError('QUESTION_ALREADY_ANSWERED');
-  }
-  if (message.includes('QUIZ_SESSION_INCOMPLETE')) {
-    return new QuizRepositoryError('SESSION_INCOMPLETE');
-  }
-  if (message.includes('NOT_FOUND')) {
-    return new QuizRepositoryError('SESSION_NOT_FOUND');
-  }
-  return new QuizRepositoryError('UNAVAILABLE');
-};
-
 const mapQuestion = (
   question: z.infer<typeof questionSchema>,
 ): QuizQuestion => ({
@@ -450,12 +409,13 @@ export function createQuizRepository(
     },
 
     async getSession(sessionId) {
-      const { data, error } = await client
+      const { data, error, status } = await client
         .from('quiz_session_question_state')
         .select('*')
         .eq('session_id', sessionId)
-        .order('position');
-      if (error) throw mapServerError(error.message);
+        .order('position')
+        .retry(false);
+      if (error) throw mapQuizReadError(error, status);
       if (data.length === 0) {
         throw new QuizRepositoryError('SESSION_NOT_FOUND');
       }

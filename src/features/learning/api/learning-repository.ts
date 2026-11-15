@@ -362,7 +362,8 @@ export function createLearningRepository(
     async listReviewProgress() {
       const { data, error, status } = await client
         .from('review_progress')
-        .select('review_card_id, card_version');
+        .select('review_card_id, card_version')
+        .retry(false);
       if (error) throw toLearningReadError(error, status);
       return parseWith(reviewProgressRowsSchema, data).map((row) => ({
         cardVersion: row.card_version,

@@ -8,8 +8,12 @@ const chapterId = '21000000-0000-0000-0000-000000000003';
 const templateId = '26000000-0000-0000-0000-000000000003';
 
 function clientReturning(data: unknown, error: unknown = null) {
-  const order = vi.fn().mockResolvedValue({ data, error });
-  const is = vi.fn(() => ({ order }));
+  const order = vi
+    .fn<(...args: unknown[]) => Promise<unknown>>()
+    .mockResolvedValue({ data, error });
+  const is = vi.fn(() => ({
+    order: (...args: unknown[]) => ({ retry: () => order(...args) }),
+  }));
   const eq = vi.fn(() => ({ is }));
   const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));

@@ -8,7 +8,7 @@ import {
   type AuthContextValue,
 } from '../../auth/context/auth-context';
 import { ProfileRepositoryError, type SafeProfile } from '../types';
-import { myProfileQueryKey, useMyProfile } from './use-my-profile';
+import { myProfileUserQueryKey, useMyProfile } from './use-my-profile';
 
 const repositoryMocks = vi.hoisted(() => ({
   getMyProfile: vi.fn<() => Promise<SafeProfile>>(),
@@ -57,7 +57,7 @@ describe('useMyProfile', () => {
     repositoryMocks.getMyProfile.mockReset();
   });
 
-  it('stores the authoritative profile under the fixed own-profile query key', async () => {
+  it('stores the authoritative profile under its identity-scoped own-profile query key', async () => {
     const profile: SafeProfile = {
       displayName: 'student.one',
       id: 'student-one-id',
@@ -78,7 +78,9 @@ describe('useMyProfile', () => {
       expect(result.current.data).toEqual(profile);
     });
 
-    expect(client.getQueryData(myProfileQueryKey)).toEqual(profile);
+    expect(client.getQueryData(myProfileUserQueryKey(profile.id))).toEqual(
+      profile,
+    );
   });
 
   it('does not retry an authorization failure', async () => {
@@ -97,7 +99,7 @@ describe('useMyProfile', () => {
     expect(repositoryMocks.getMyProfile).toHaveBeenCalledOnce();
   });
 
-  it('refreshes the fixed own-profile query when the authenticated identity changes', async () => {
+  it('selects a fresh own-profile key when the authenticated identity changes', async () => {
     const studentOne: SafeProfile = {
       displayName: 'student.one',
       id: 'student-one-id',
@@ -146,9 +148,13 @@ describe('useMyProfile', () => {
       expect(result.current.data).toEqual(studentTwo);
     });
     expect(repositoryMocks.getMyProfile).toHaveBeenCalledTimes(2);
-    expect(client.getQueryCache().getAll()).toHaveLength(1);
-    expect(client.getQueryCache().getAll()[0]?.queryKey).toEqual(
-      myProfileQueryKey,
+    // This unit supplies AuthContext directly; production AuthBootstrap separately clears old-user cache.
+    expect(client.getQueryData(myProfileUserQueryKey(studentTwo.id))).toEqual(
+      studentTwo,
     );
+    expect(client.getQueryData(myProfileUserQueryKey(studentOne.id))).toEqual(
+      studentOne,
+    );
+    expect(client.getQueryCache().getAll()).toHaveLength(2);
   });
 });

@@ -123,8 +123,7 @@ describe('actual auth-login handler through the real Supabase SDK', () => {
           statuses: { [hop]: upstream },
         });
         await expectSafe(await finish(handler), status, code);
-        const expectedProfileReads =
-          hop === 'profile' && upstream === 503 ? 4 : 1;
+        const expectedProfileReads = 1;
         expect(calls.filter((call) => call.hop === 'profile')).toHaveLength(
           expectedProfileReads,
         );

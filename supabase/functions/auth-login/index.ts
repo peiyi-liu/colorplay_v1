@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { readRuntimeSupabaseApiKeys } from '../_shared/api-keys.ts';
+import { createAuthLoginAdmin } from './client-factory.ts';
 import { createAuthLoginHandler } from './handler.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
@@ -21,16 +22,10 @@ Deno.serve(
         },
         global: { fetch: fetcher },
       });
-      return {
-        profile: (account, signal) =>
-          client
-            .from('profiles')
-            .select('id, role')
-            .eq('login_account', account)
-            .abortSignal(signal)
-            .maybeSingle(),
-        authUser: (id) => client.auth.admin.getUserById(id),
-      };
+      return createAuthLoginAdmin(
+        client.from('profiles').select('id, role'),
+        (id) => client.auth.admin.getUserById(id),
+      );
     },
   }),
 );

@@ -29,6 +29,7 @@ export function createProfileRepository(
       const { data, error, status } = await client
         .from('profiles')
         .select(OWN_PROFILE_SELECT)
+        .retry(false)
         .single();
 
       if (error) {

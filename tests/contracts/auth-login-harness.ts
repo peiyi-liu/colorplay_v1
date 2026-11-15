@@ -1,8 +1,19 @@
+import type { Database } from '../../src/types/database';
 import { createClient } from '@supabase/supabase-js';
 
+import { createAuthLoginAdmin } from '../../supabase/functions/auth-login/client-factory';
 import { createAuthLoginHandler } from '../../supabase/functions/auth-login/handler';
-import type { Database } from '../../src/types/database';
 
+// Use the real generated profile schema without instantiating unrelated browser tables.
+interface ProfileDatabase {
+  public: {
+    Tables: Pick<Database['public']['Tables'], 'profiles'>;
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Database['public']['Enums'];
+    CompositeTypes: Record<string, never>;
+  };
+}
 export type Hop = 'profile' | 'user' | 'grant';
 type Role = 'student' | 'teacher' | 'admin';
 export const apiUrl = 'http://127.0.0.1:54321';
@@ -38,7 +49,12 @@ export interface Scenario {
 }
 let clientIndex = 0;
 export const setupHandler = (scenario: Scenario = {}) => {
-  const calls: { hop: Hop; signal: AbortSignal | undefined }[] = [];
+  const calls: {
+    hop: Hop;
+    signal: AbortSignal | undefined;
+    projectionMatches: boolean;
+    accountFilterMatches: boolean;
+  }[] = [];
   const releases = new Set<() => void>();
   let bodyCancellations = 0;
   let activeFetchListeners = 0;
@@ -110,7 +126,16 @@ export const setupHandler = (scenario: Scenario = {}) => {
             })();
     const signal =
       init?.signal ?? (input instanceof Request ? input.signal : undefined);
-    calls.push({ hop, signal: signal ?? undefined });
+    calls.push({
+      hop,
+      signal: signal ?? undefined,
+      projectionMatches:
+        hop === 'profile' &&
+        new URL(url).searchParams.get('select') === 'id,role',
+      accountFilterMatches:
+        hop === 'profile' &&
+        new URL(url).searchParams.get('login_account') === 'eq.synthetic01',
+    });
     if (scenario.reject === hop) return Promise.reject(new Error(secretMarker));
     if (scenario.stall !== hop && !scenario.delays?.[hop])
       return Promise.resolve(reply(hop));
@@ -153,7 +178,7 @@ export const setupHandler = (scenario: Scenario = {}) => {
     fetch: transport,
     now: () => Date.now(),
     createAdmin: (fetcher) => {
-      const client = createClient<Database>(apiUrl, 'synthetic-admin', {
+      const client = createClient<ProfileDatabase>(apiUrl, 'synthetic-admin', {
         auth: {
           persistSession: false,
           autoRefreshToken: false,
@@ -162,16 +187,10 @@ export const setupHandler = (scenario: Scenario = {}) => {
         },
         global: { fetch: fetcher },
       });
-      return {
-        profile: (account, signal) =>
-          client
-            .from('profiles')
-            .select('id, role')
-            .eq('login_account', account)
-            .abortSignal(signal)
-            .maybeSingle(),
-        authUser: (id) => client.auth.admin.getUserById(id),
-      };
+      return createAuthLoginAdmin(
+        client.from('profiles').select('id, role'),
+        (id) => client.auth.admin.getUserById(id),
+      );
     },
   });
   return {

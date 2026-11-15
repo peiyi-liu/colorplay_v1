@@ -54,7 +54,7 @@ export function AdminInvitationAcceptPage() {
     onSuccess: async (response) => {
       if (response.outcome !== 'ok') return;
       await queryClient.refetchQueries({
-        exact: true,
+        exact: false,
         queryKey: myProfileQueryKey,
         type: 'active',
       });

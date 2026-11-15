@@ -92,7 +92,7 @@ const observe = async (
   });
   const supabase = {
     rpc: call,
-    from: () => ({ select: () => ({ single: call }) }),
+    from: () => ({ select: () => ({ retry: () => ({ single: call }) }) }),
   } as unknown as SupabaseClient<Database>;
   browser.client.mockReturnValue(supabase);
   const economy = createEconomyRepository(supabase);

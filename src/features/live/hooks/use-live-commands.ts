@@ -1,3 +1,4 @@
+import { readQueryRetryDelay } from '../../../lib/query/read-retry';
 import {
   useMutation,
   type UseMutationResult,
@@ -43,6 +44,7 @@ export function useLiveActivities(
     queryKey: liveActivityKeys.mine,
     retry: (failureCount, error) =>
       error.code === 'UNAVAILABLE' && failureCount < 2,
+    retryDelay: readQueryRetryDelay,
   });
 }
 
