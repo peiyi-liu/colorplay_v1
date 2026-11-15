@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { expect, type Page, type Dialog } from '@playwright/test';
+import { expect, type Page, type Dialog, type Locator } from '@playwright/test';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import type { Database } from '../../src/types/database';
@@ -72,6 +72,11 @@ export const leaveUnsavedMediaEditor = async (
     await Promise.allSettled(tasks);
   }
 };
+export const functionalImportCommitStatus = (container: Locator) =>
+  container.getByRole('status').filter({
+    hasText: /^匯入完成：已建立或更新 2 份草稿。$/u,
+  });
+
 export const functionalMediaPurpose = (page: Page) =>
   page
     .getByRole('group', { name: '內容圖片（最多 3 張）', exact: true })
@@ -309,7 +314,9 @@ export const runMediaJourney = async (
         await importUi
           .getByRole('button', { name: '確認並建立草稿', exact: true })
           .click();
-        await expect(importUi.getByRole('status')).toContainText(
+        const completedStatus = functionalImportCommitStatus(importUi);
+        await expect(completedStatus).toHaveCount(1);
+        await expect(completedStatus).toContainText(
           '匯入完成：已建立或更新 2 份草稿。',
         );
         const refreshed = await repository.listCatalog();
