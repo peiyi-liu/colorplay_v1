@@ -2,7 +2,9 @@
 
 ## 結果
 
-目前：G6 followups **ACCEPTED 1449561**。Root唯一1round／Standards0、Spec0、Security0、unresolved0；21source／20logs hashes皆符。Worker68files731tests16.88s與完整checks0；Root9files120tests5.14s綠，真SQL舊schema23505 RED、migration+076/121/122共62assertions綠且每次106表及public schema/extensions hash前後一致，未persist migration。真教師postfix9.143s全checkpoint health0；受控S2 revoked refresh15.053s expectedReject1/health0且實際await/login，兩browser process正常closed/remaining0/stderr0，0新帳信。Root review summary SHA126a180929c01f9f763f431c8649b3f37b6694d88dc14ab12f824b3c1227efd8。
+目前：G6 followups **ACCEPTED1449561**，S格式整合 **ACCEPTED088ab08**，G7空VM準備完成、尚無服務/fixture/build。實際CI format:check已綠，16Live檔固定點格式/原CSS非空白bytes不變，兩個CSSassert僅容許合法換行；196distinct Live cases分段皆綠，未宣稱原失敗suite重跑PASS。Append-only交接log保留全部bytes並明確排除自動重排；617行round JSX為純formatter展開理由已記錄。接最終共同freeze及G7服務/真完整functional，再40/60容量。
+
+G6修補細節：G6 followups **ACCEPTED 1449561**。Root唯一1round／Standards0、Spec0、Security0、unresolved0；21source／20logs hashes皆符。Worker68files731tests16.88s與完整checks0；Root9files120tests5.14s綠，真SQL舊schema23505 RED、migration+076/121/122共62assertions綠且每次106表及public schema/extensions hash前後一致，未persist migration。真教師postfix9.143s全checkpoint health0；受控S2 revoked refresh15.053s expectedReject1/health0且實際await/login，兩browser process正常closed/remaining0/stderr0，0新帳信。Root review summary SHA126a180929c01f9f763f431c8649b3f37b6694d88dc14ab12f824b3c1227efd8。
 
 修正fresh Request-event quiet、真fieldset combobox/7slot duplicate與安全substeps、shared strict own auth aliases，以及只移除digest全球唯一、保留其他UUID/FK/immutable/權限的最小migration與exact121 guards。原common b084的G6完整functional **FAIL/media仍保留**，所有資料不刪，不能稱全站或容量PASS。接共同版本freeze與新空白G7真7slot/WASM/16objects完整驗證，通過後才40/60容量。Hosted限流/SMTP仍UNKNOWN，Staging設定頁瀏覽器讀取受阻；0Hosted寫入/Gmail讀寄/push/PR/merge/deploy。
 
@@ -330,3 +332,11 @@ Root真SQL：舊schema122先3assertions後23505 exit3；各自BEGIN加migration�
 Actual tools144956／App artifact b084分列，教師原initial reads與assessment-next-route競態不再出現，health/failures/console皆0；refresh真拒絕已由shared code解析，helper完成await/login。兩process receipt SHA0262140a9227c0cd8cec0200587107703cb04d06ee0a0abd5087294df0e8a8dd／c0289f95ddfebdd7da9ee7a39f7743e39b795ea84c33add64a2e92f40163d3f3。初Rootwrapper進度label不在既有allowlist，在child啟動前拒絕；僅Rootwrapper改合法label，0產品/guard變更，原拒絕記錄保留。
 
 下一步G7保留G6files/volumes並停owned8containers/preview/VM，新VM同8image IDs/keys換新、loopback先驗；121migrations/7media slots事先綁authority，5verified2aborted、5assets11variants、16objects、2ZIPdrafts與4intentional drops。Private容量bridge獨立綁observed functional publisher與physical observer，14pure admission controls綠；沒有放寬scope/PASS前置。新full仍待執行，所有前代FAIL與300秒terminatedprobe不改判。
+
+## S 發布格式整合 — ACCEPTED088ab08
+
+Baseba6f49a9d70188a485c208fc245ab5c829fe14fb → 088ab08d386da2913f9a0b654bef7106d3788e97 clean，exact17paths520+250−；16Live mechanical formatter與.prettierignore對append-only handoff的明確例外。Root核17source/24logs/proofs及兩份handoff hashes，前述G6修正21source hashes均未變。Packet321a236cb616d055483dd79b7da5cac438cd6dd25981dcb83f968dac1a1f76f4。
+
+實際format:check0、原完整lint0+final style-test scopedlint0、final完整typecheck0。原28files196cases run有195pass/1純單行CSSassert fail保留；核准同test只colon/comma後空白regex替換，exact center72/auto120數值/順序/semicolon/mobile scope與其他assert全保留，final styles2綠，其餘27files194cases未變/未重跑，因此196distinct cases已綠，不能稱完整suite重跑綠。CSS某grid換行需第二次formatter才固定，已核全16fixedpoint/CSS非空白bytes同；9/10TS emittedAST相同，round去除無語意括號wrapper後AST同、literal/identifier差異0。
+
+`live-projector-round.tsx`617行是純formatter展開既有JSX，emit等價/樣式值不變，本S不擴產品重構。資料庫integration格式檔未跑integration；0runtime/API/SQL/寄信/build/容量/Hosted。前兩個人工tracked-format診斷未同時套CLI的.gitignore而多列.impeccable/artifacts，屬診斷scope誤差，實際CI只17warnings；那些檔案未改。G7最初ba6只用於空VM/新keys/same8images準備，不是build或functional證據；初receipt留在sixth-failure不覆寫，最終source由新final receipt另綁。
