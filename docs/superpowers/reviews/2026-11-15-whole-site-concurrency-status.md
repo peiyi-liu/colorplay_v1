@@ -2,7 +2,7 @@
 
 ## 結果
 
-目前：G7完整functional **FAIL/media**（241.577s），Root及producer cleanup皆verified、health0、remaining0。Root已集中定位兩個工具整合缺陷，S **ACCEPTED039da8f**修真writer檔名、S **ACCEPTEDa225553**修雙status定位。其後既有A1實際single/recovery/cancel/duplicate/ZIPrecovery建立5assets/2drafts，Root驗16物件bytes/canonical同；ZIPcancel另session6.524s證原6run/5asset/2draft/16物件未改刪，controlled refresh15.410s拒絕並回/login。這是分段診斷，原fullFAIL與status前UNAVAILABLE均不改判。接共同freeze與新空白G8真完整7slot，再40/60容量；未Hosted寫入/Gmail讀寄/push/PR/merge/deploy。
+目前：G8專用Local已啟121migrations，71public全RLS、0測試身份/遊戲紀錄、三入口localhost隔離與media新nonunique index實際目錄核對皆通過。G7原full **FAIL/media**與後續分段診斷保留。WB5純來源對應M **ACCEPTED71fe783**：Root唯一review0findings、獨立190tests綠；真正LocalSHA不改標，只有獨立pin且全tree/受保護merge/PR/Owner與部署指紋一致的proof才可跨mergeSHA，authority仍NONE。接最後共同freeze、新G8真完整7slot，再15分立40/60容量legs；目前未full或容量PASS，未Hosted寫入/Gmail讀寄/push/PR/merge/deploy。
 
 G6修補細節：G6 followups **ACCEPTED 1449561**。Root唯一1round／Standards0、Spec0、Security0、unresolved0；21source／20logs hashes皆符。Worker68files731tests16.88s與完整checks0；Root9files120tests5.14s綠，真SQL舊schema23505 RED、migration+076/121/122共62assertions綠且每次106表及public schema/extensions hash前後一致，未persist migration。真教師postfix9.143s全checkpoint health0；受控S2 revoked refresh15.053s expectedReject1/health0且實際await/login，兩browser process正常closed/remaining0/stderr0，0新帳信。Root review summary SHA126a180929c01f9f763f431c8649b3f37b6694d88dc14ab12f824b3c1227efd8。
 
@@ -352,3 +352,11 @@ Root既有A1有界診斷19.960s actual single/recovery/cancel/duplicate/leave/ZI
 Root只讀first6綁定/5assets11variants2drafts/16物件hash全符、quarantine0/canonical同；只剩ZIPcancel以另context/session6.524s正常操作1upload/pre-drop/abort，0新asset/draft/import request，舊6run/5asset/2draft metadata及16物件bytes全部不變。S2refresh15.410s expectedReject1/errors0並真await/login。所有0新users/mail/reenroll，未fake fresh WeakSet/ownerMatch，未重上傳成功資產或重建drafts。5diagnostic processes＝4normalclosed＋1短observer未觀測，全部residual0。分段多context不可稱同一fresh7slot完整PASS。Consolidated manifest SHA0d7d249d4eebf26ee4774dd14440ec62f293016b670122a17ab4ec0589f94da3，原所有data/FAIL/Rootoperator prechild與readonly錯誤均保留。
 
 接新G8空DB，同121migrations與8imageIDs/新keys/loopback，G7原8containers及volumes/files全留（前7代總77containers）。只有新fulltruePASS+RootcloseVERIFIED才容量；Hosted adapter僅完成唯讀可行性，原guard executionAuthority NONE，無可執行Hosted驗收完成宣稱。
+
+## WB5 protected merge provenance：ACCEPTED71fe783
+
+Base8aed56477ecb8195b3f244600dbd2b6b0664c929→71fe78332d7268a30735098af8bcc83d5364c1fb，exact5paths662+174−/max357。實讀workflow確認protected staging push部署github.sha，Owner另核PR head；純guard新增SAME_SHA或Root byte-pinned VERIFIED_PROTECTED_MERGE，保留原Local candidate及四前級hash。全tree相同、有序兩distinct parents/PRbase-head/Ownerworkflow-head/證據、當前target/artifact/key、獨立Edge/migration manifests、ownerwindow全須一致；無proof/錯欄位一律拒，Localguards/workflows八檔原bytes保持，executionAuthority NONE。
+
+Worker validmerge兩案RED→6files190GREEN1.66s（原84 bodies AST未改/new57/Local49），full lint/type/format/import/diff0；初unused/void-arrow規則FAIL保留後最小修。Root核5source26logs/proofs及八protectedhash，實讀產品/test diff，獨立6files190tests1.71s綠；Standards0/Spec0/Security0，一輪無往返修正。Packet f99497c83ecf8ee1c6ebb33a1907fbf58ad4d82644f603ecbe1e33b73d4f2177；Rootsummary e9df16aa973471b6e46516245190162c81ddf0088323bda7222839eafe1aac7c。
+
+對應AC-SEC-005/AC-PERF-003部分來源工具正確性，非完整AC或容量驗收。全部merge proof為synthetic；真Git/GitHub/branch protection/完整Localchains/實際artifact-Edge-migration仍由Root獨立查驗及單次reserve，opaque digests僅證據引用，不能當遠端密碼學證明。無真merge/Hosted權限。G8初8aed setup/review原bytes保留；此M不改SQL/產品，首次build及fixtures前另綁finalcommon，不回填舊run。
