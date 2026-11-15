@@ -71,6 +71,7 @@ export const createActualFunctionalPorts = (
     runtime.scope,
     () => phase,
     runtime.approvedStaticAssetPaths ?? [],
+    runtime.approvedStaticImagePaths ?? [],
   );
   const authObservations = createFunctionalAuthHooks(
     health,
@@ -474,6 +475,7 @@ export const createActualFunctionalPorts = (
             health: afterHealth,
             ...browserCloser.summary(outcomes.slice(1)),
             authObservation: health.authDiagnostics(),
+            imageObservation: health.imageDiagnostics(),
             physicalProcessExit: 'ROOT_ATTESTATION_REQUIRED',
           }),
         ]);

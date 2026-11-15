@@ -1,3 +1,6 @@
+import { functionalEndpoint, resourceCode } from './functional-network-event';
+import type { NetworkRecord } from './functional-network-event';
+import { createFunctionalImages } from './functional-image-observation';
 import type {
   BrowserContext,
   CDPSession,
@@ -21,22 +24,11 @@ const mediaKey = (request: MediaHttpRequest) =>
   request.action === 'begin'
     ? null
     : `${request.actorTokenSha256}:${request.action}:${request.runId}:${request.requestId}`;
-interface NetworkRecord {
-  page: number;
-  phase: FunctionalStage | null;
-  endpoint: 'media' | 'refresh' | 'logout' | 'other';
-  media: string | null;
-  refresh: string | null;
-  status: number | null;
-  failed: boolean;
-  finished: boolean;
-}
-// Kept separately from the PW duplicate log stream. A network console exemption
-// needs CDP's exact requestId proof, not URL or temporal proximity alone.
 export const createFunctionalHealth = (
   scope: FunctionalScope,
   phase: () => FunctionalStage | null,
   approvedStaticAssetPaths: readonly string[] = [],
+  approvedStaticImagePaths: readonly string[] = [],
 ) => {
   const api = new URL(scope.supabaseUrl).origin;
   const auth = createFunctionalAuthObservation(
@@ -44,6 +36,8 @@ export const createFunctionalHealth = (
     phase,
     approvedStaticAssetPaths,
   );
+  const images = createFunctionalImages(scope, phase, approvedStaticImagePaths);
+  let disposed = false;
   const records = new Map<string, NetworkRecord>();
   const expectedDrops = new Map<string, number>();
   const observedDrops = new Set<string>();
@@ -67,31 +61,8 @@ export const createFunctionalHealth = (
   let unexpected = 0;
   let pageErrors = 0;
   let refreshExpected: { page: number; hash: string } | null = null;
-  const endpoint = (raw: string): NetworkRecord['endpoint'] => {
-    try {
-      const url = new URL(raw);
-      if (url.origin !== api) return 'other';
-      if (auth.isLogoutUrl(raw)) return 'logout';
-      if (url.pathname === '/functions/v1/content-media' && url.search === '')
-        return 'media';
-      if (
-        url.pathname === '/auth/v1/token' &&
-        url.search === '?grant_type=refresh_token'
-      )
-        return 'refresh';
-    } catch {
-      /* Fixed unknown. */
-    }
-    return 'other';
-  };
-  const resourceCode = (text: string) =>
-    text === 'Failed to load resource: net::ERR_FAILED'
-      ? 'failed'
-      : /^Failed to load resource: the server responded with a status of (400|401|403) \([A-Za-z ]+\)$/u.test(
-            text,
-          )
-        ? 'denied'
-        : null;
+  const endpoint = (raw: string) =>
+    functionalEndpoint(api, auth.isLogoutUrl, raw);
   const observe = (operation: () => Promise<void>) => {
     if (work.size >= 2000) {
       unavailable = true;
@@ -125,12 +96,12 @@ export const createFunctionalHealth = (
     };
     pages.set(page, info);
     auth.register(page, info.index);
+    images.register(page, () => info.actor);
     const loaded = auth.loaded.bind(undefined, page);
     page.on('load', loaded);
     info.disposers.push(() => {
       page.off('load', loaded);
     });
-    // Synchronous page listeners precede CDP setup and navigation, including popups.
     const consoleListener = (message: ConsoleMessage) => {
       if (message.type() !== 'error') return;
       try {
@@ -173,6 +144,11 @@ export const createFunctionalHealth = (
               unavailable = true;
               return;
             }
+            images.request(
+              page,
+              `${String(info.index)}:${event.requestId}`,
+              raw,
+            );
             if (event.type === 'Document') auth.navigated(page);
             const target = endpoint(event.request.url);
             let media: string | null = null;
@@ -258,6 +234,7 @@ export const createFunctionalHealth = (
               if (!auth.gap(page, raw)) unavailable = true;
               return;
             }
+            images.response(`${String(info.index)}:${event.requestId}`, raw);
             auth.response(page, event.requestId, event.response.status);
             record.status = event.response.status;
             if (record.status >= 500) unexpected++;
@@ -278,6 +255,24 @@ export const createFunctionalHealth = (
                 record.failed = true;
                 record.finished = true;
               }
+              return;
+            }
+            const proof = images.failed(
+              page,
+              `${String(info.index)}:${event.requestId}`,
+              raw,
+            );
+            if (proof) {
+              observe(async () => {
+                const result = await proof;
+                if (disposed) return;
+                if (result === 'UNAVAILABLE') unavailable = true;
+                if (result !== 'DECODED' && result !== 'RETIRED') unexpected++;
+                else if (record) {
+                  record.failed = true;
+                  record.finished = true;
+                }
+              });
               return;
             }
             if (
@@ -428,6 +423,7 @@ export const createFunctionalHealth = (
     },
     expectLogout: auth.expectLogout,
     authDiagnostics: auth.diagnostics,
+    imageDiagnostics: images.diagnostics,
     expectMediaDrop: (page: Page, request: MediaHttpRequest) => {
       const info = pages.get(page);
       const key = mediaKey(request);
@@ -477,6 +473,7 @@ export const createFunctionalHealth = (
       return {
         available:
           !unavailable &&
+          images.available() &&
           auth.diagnostics().unresolvedLogoutDeclarations === 0 &&
           pages.size > 0 &&
           [...pages.values()].every((info) => info.enabled),
@@ -487,6 +484,8 @@ export const createFunctionalHealth = (
       };
     },
     dispose: async () => {
+      disposed = true;
+      const imageStop = images.dispose();
       for (const [page, info] of pages) {
         for (const dispose of info.disposers) dispose();
         if (info.cdp && !page.isClosed())
@@ -494,6 +493,7 @@ export const createFunctionalHealth = (
             unavailable = true;
           });
       }
+      await imageStop;
     },
   };
 };

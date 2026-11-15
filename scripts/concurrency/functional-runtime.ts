@@ -1,3 +1,4 @@
+import { approvedStaticImagePathsSchema } from './functional-image-observation';
 import { constants } from 'node:fs';
 import { lstat, open, realpath } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
@@ -223,8 +224,11 @@ export const loadFunctionalRuntime = async (
     );
     if (sha256(attestation) !== scope.runtimeAttestationSha256)
       return fail('FUNCTIONAL_PREFLIGHT_FAILED');
-    const { approvedStaticAssetPaths } = z
-      .object({ approvedStaticAssetPaths: approvedStaticAssetPathsSchema })
+    const { approvedStaticAssetPaths, approvedStaticImagePaths } = z
+      .object({
+        approvedStaticAssetPaths: approvedStaticAssetPathsSchema,
+        approvedStaticImagePaths: approvedStaticImagePathsSchema,
+      })
       .parse(JSON.parse(attestation));
     const stateText = await io.read(
       join(FUNCTIONAL_RUNTIME_ROOT, 'status-secret.json'),
@@ -282,6 +286,7 @@ export const loadFunctionalRuntime = async (
       secrets,
       artifactSha256: request.artifactSha256,
       approvedStaticAssetPaths,
+      approvedStaticImagePaths,
       journal: lazyJournal,
       preflight: async (signal: AbortSignal) => {
         let fresh:
@@ -383,5 +388,8 @@ export const loadFunctionalRuntime = async (
   }, 'FUNCTIONAL_PREFLIGHT_FAILED');
 export type FunctionalRuntime = Omit<
   Awaited<ReturnType<typeof loadFunctionalRuntime>>,
-  'approvedStaticAssetPaths'
-> & { approvedStaticAssetPaths?: readonly string[] };
+  'approvedStaticAssetPaths' | 'approvedStaticImagePaths'
+> & {
+  approvedStaticAssetPaths?: readonly string[];
+  approvedStaticImagePaths?: readonly string[];
+};

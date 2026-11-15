@@ -275,6 +275,13 @@ describe('health evidence does not assert physical process exit', () => {
           expectedRevokedLogouts: 0,
           unresolvedLogoutDeclarations: 0,
         },
+        imageObservation: {
+          expectedSupersededImages: 0,
+          decodedImageProofs: 0,
+          retiredImageProofs: 0,
+          imageProofUnavailable: 0,
+          pendingImageProofs: 0,
+        },
         physicalProcessExit: 'ROOT_ATTESTATION_REQUIRED',
       },
     });

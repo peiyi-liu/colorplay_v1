@@ -19,6 +19,7 @@ const setup = () => {
   const attestation = {
     ...syntheticAttestation,
     approvedStaticAssetPaths: ['/assets/main-synthetic.js'],
+    approvedStaticImagePaths: ['/assets/blooks/synthetic-256.webp'],
   };
   const scope = {
     ...syntheticScope(),
@@ -98,7 +99,42 @@ describe('fixed functional runtime approval before every helper', () => {
       const h = setup();
       const attestation = JSON.stringify({
         ...syntheticAttestation,
+        approvedStaticImagePaths: ['/assets/blooks/synthetic-256.webp'],
         ...(paths === undefined ? {} : { approvedStaticAssetPaths: paths }),
+      });
+      h.scope.runtimeAttestationSha256 = sha256(attestation);
+      h.files[
+        join(FUNCTIONAL_RUNTIME_ROOT, 'functional-runtime-attestation.json')
+      ] = attestation;
+      const text = JSON.stringify(h.request);
+      h.files[h.path] = text;
+      await expect(
+        loadFunctionalRuntime(h.path, sha256(text), h.io),
+      ).rejects.toThrow('FUNCTIONAL_PREFLIGHT_FAILED');
+      expect(h.execute).not.toHaveBeenCalled();
+    },
+  );
+  it.each([
+    undefined,
+    [],
+    ['/assets/blooks/synthetic-64.webp'],
+    ['/assets/blooks/synthetic-256.webp?marker'],
+    ['https://foreign.invalid/assets/blooks/synthetic-256.webp'],
+    ['/assets/blooks/../synthetic-256.webp'],
+    ['/assets/blooks/a-256.webp', '/assets/blooks/a-256.webp'],
+    ['/assets/blooks/z-256.webp', '/assets/blooks/a-256.webp'],
+    Array.from(
+      { length: 1001 },
+      (_, i) => `/assets/blooks/a${String(i)}-256.webp`,
+    ),
+  ])(
+    'requires exact sorted image allowlist %# before helpers',
+    async (images) => {
+      const h = setup();
+      const attestation = JSON.stringify({
+        ...syntheticAttestation,
+        approvedStaticAssetPaths: ['/assets/main-synthetic.js'],
+        ...(images === undefined ? {} : { approvedStaticImagePaths: images }),
       });
       h.scope.runtimeAttestationSha256 = sha256(attestation);
       h.files[

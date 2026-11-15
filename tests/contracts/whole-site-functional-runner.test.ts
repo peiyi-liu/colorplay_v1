@@ -223,6 +223,7 @@ describe('whole-site complete runner with fake ports only', () => {
     };
     vi.spyOn(functionalRuntime, 'loadFunctionalRuntime').mockResolvedValueOnce({
       approvedStaticAssetPaths: [],
+      approvedStaticImagePaths: [],
       scope: h.scope,
       secrets: syntheticSecrets,
       artifactSha256: 'a'.repeat(64),
