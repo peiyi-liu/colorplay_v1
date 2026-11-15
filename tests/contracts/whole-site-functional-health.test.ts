@@ -262,6 +262,34 @@ describe('exact CDP request identity, not URL/time, classifies functional negati
     );
     await h.health.dispose();
   });
+  it('registration completion expectation is restricted to the owned R1 registration phase', async () => {
+    const h = await setup();
+    expect(() => {
+      h.health.expectLogout(
+        h.owned,
+        'SYNTHETIC_TOKEN',
+        'registration_completion',
+      );
+    }).toThrow('FUNCTIONAL_BROWSER_FAILED');
+    h.phase('auth_controls');
+    h.health.identify(h.owned, 'S1');
+    expect(() => {
+      h.health.expectLogout(
+        h.owned,
+        'SYNTHETIC_TOKEN',
+        'registration_completion',
+      );
+    }).toThrow('FUNCTIONAL_BROWSER_FAILED');
+    h.phase('registration_recovery');
+    expect(() => {
+      h.health.expectLogout(
+        h.owned,
+        'SYNTHETIC_TOKEN',
+        'registration_completion',
+      );
+    }).toThrow('FUNCTIONAL_BROWSER_FAILED');
+    await h.health.dispose();
+  });
   it('installs popup PW listeners before asynchronous CDP setup can complete', async () => {
     let finish: (value: CDPSession) => void = () => undefined;
     const pending = new Promise<CDPSession>((resolve) => {

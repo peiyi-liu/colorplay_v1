@@ -23,7 +23,10 @@ export const approvedStaticAssetPathsSchema = z
   );
 export interface FunctionalAuthHooks {
   identify(page: Page, actor: string): void;
-  beforeLogout(page: Page, kind: 'normal' | 'shared_revoked'): Promise<void>;
+  beforeLogout(
+    page: Page,
+    kind: 'normal' | 'shared_revoked' | 'registration_completion',
+  ): Promise<void>;
 }
 export const readFunctionalAuthCode = async (
   cdp: CDPSession,
@@ -69,7 +72,7 @@ interface Logout {
   page: Page;
   phase: FunctionalStage | null;
   hash: string;
-  kind: 'normal' | 'shared_revoked';
+  kind: 'normal' | 'shared_revoked' | 'registration_completion';
   requestId: string | null;
   status: number | null;
   complete: boolean;
@@ -211,18 +214,20 @@ export const createFunctionalAuthObservation = (
     expectLogout: (
       page: Page,
       token: string,
-      kind: 'normal' | 'shared_revoked',
+      kind: 'normal' | 'shared_revoked' | 'registration_completion',
     ) => {
       const actor = pages.get(page)?.actor;
       const permitted =
         (phase() === 'registration_recovery' &&
           actor === 'R1' &&
-          kind === 'normal') ||
+          (kind === 'normal' || kind === 'registration_completion')) ||
         (phase() === 'auth_controls' &&
           (actor === 'S1' || actor === 'S2') &&
-          (kind === 'normal' || actor === 'S1'));
+          (kind === 'normal' || (kind === 'shared_revoked' && actor === 'S1')));
       if (
-        !['normal', 'shared_revoked'].includes(kind) ||
+        !['normal', 'shared_revoked', 'registration_completion'].includes(
+          kind,
+        ) ||
         !permitted ||
         !token ||
         token.length > 16384 ||
@@ -279,7 +284,7 @@ export const createFunctionalAuthObservation = (
       const row = known(page, id);
       if (
         row?.phase !== phase() ||
-        row.kind !== 'normal' ||
+        !['normal', 'registration_completion'].includes(row.kind) ||
         row.status !== 204 ||
         row.aborted ||
         errorText !== 'net::ERR_ABORTED'
@@ -293,11 +298,18 @@ export const createFunctionalAuthObservation = (
     finished: async (page: Page, id: string, cdp: CDPSession) => {
       const row = known(page, id);
       if (row?.phase !== phase()) return false;
-      if (row.kind === 'normal' && row.status === 204) {
+      if (
+        ['normal', 'registration_completion'].includes(row.kind) &&
+        row.status === 204
+      ) {
         row.complete = true;
         return true;
       }
-      if (row.kind !== 'shared_revoked' || row.status !== 403 || row.denied)
+      if (
+        !['shared_revoked', 'registration_completion'].includes(row.kind) ||
+        row.status !== 403 ||
+        row.denied
+      )
         return false;
       if ((await readFunctionalAuthCode(cdp, id)) !== 'session_not_found')
         return false;
@@ -311,7 +323,7 @@ export const createFunctionalAuthObservation = (
       return (
         !!row &&
         row.phase === phase() &&
-        row.kind === 'shared_revoked' &&
+        ['shared_revoked', 'registration_completion'].includes(row.kind) &&
         /^Failed to load resource: the server responded with a status of 403 \([A-Za-z ]+\)$/u.test(
           text,
         )
@@ -334,7 +346,7 @@ export const createFunctionalAuthHooks = (
     expectLogout(
       page: Page,
       token: string,
-      kind: 'normal' | 'shared_revoked',
+      kind: 'normal' | 'shared_revoked' | 'registration_completion',
     ): void;
   },
   accessToken: (page: Page) => Promise<string>,

@@ -221,6 +221,7 @@ export const createActualFunctionalPorts = (
           runtime.secrets,
           runtime.journal,
           signal,
+          authObservations,
         ),
       );
       const oldPassword = await resetFunctionalPassword(
