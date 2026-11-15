@@ -31,7 +31,11 @@ import {
   type CapacityGameActor,
 } from './capacity-live-game';
 import { evaluateBarrier } from './capacity-metrics';
-import { capacityFailure, requireCapacityScope } from './capacity-scope';
+import {
+  capacityFailure,
+  requireCapacityScope,
+  capacityExecutionProfile,
+} from './capacity-scope';
 import type { CapacityRuntime } from './capacity-runtime';
 import {
   resolveCapacitySubjects,
@@ -103,7 +107,13 @@ export const createCapacityJourneys = (
           : { mode: 'NODE_PROTOCOL', nodePid: process.pid },
         owned,
       ),
-    vm: runtime.vm,
+    ...(capacityExecutionProfile(scope)
+      ? {
+          executionProfileAuthority:
+            capacityExecutionProfile(scope) ?? capacityFailure(),
+          backend: runtime.backend,
+        }
+      : { vm: runtime.vm }),
     onInvalid,
   });
   const browser = {

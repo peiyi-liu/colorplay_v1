@@ -1,3 +1,4 @@
+import { linuxScopeHelpersSchema } from './root-helper-contracts';
 import { z } from 'zod';
 import {
   executionProfileDigest,
@@ -40,13 +41,16 @@ export const capacityScopeSchema = z.strictObject({
   functionalRequestSha256: digest,
   rootPublisherSha256: digest,
   rootValidatorSha256: digest,
-  helpers: z.strictObject({
-    'functional-preflight.py': digest,
-    'canonical-baseline.py': digest,
-    'media-readback.py': digest,
-    'host-sample.py': digest,
-    'vm-sample.py': digest,
-  }),
+  helpers: z.union([
+    z.strictObject({
+      'functional-preflight.py': digest,
+      'canonical-baseline.py': digest,
+      'media-readback.py': digest,
+      'host-sample.py': digest,
+      'vm-sample.py': digest,
+    }),
+    linuxScopeHelpersSchema,
+  ]),
 });
 export type CapacityScope = z.infer<typeof capacityScopeSchema>;
 export const functionalProcessCloseSchema = z.strictObject({
@@ -92,6 +96,11 @@ export const parseCapacityScope = (
 ): CapacityScope => {
   try {
     const scope = capacityScopeSchema.parse(input);
+    if (
+      (scope.executionProfileSha256 !== undefined) !==
+      'linux-host-sample.py' in scope.helpers
+    )
+      return capacityFailure();
     const profile = requireExecutionProfile(
       scope.executionProfileSha256,
       authority.executionProfileAuthority,

@@ -1,3 +1,4 @@
+import { linuxScopeHelperNames } from '../../scripts/concurrency/root-helper-contracts';
 import { describe, expect, it, vi } from 'vitest';
 import {
   validateExecutionProfile,
@@ -134,6 +135,9 @@ describe('independent fixed free-Linux profile authority', () => {
     const input = {
       ...f.input,
       executionProfileSha256: p.authority.sha256,
+      helpers: Object.fromEntries(
+        linuxScopeHelperNames.map((n) => [n, 'b'.repeat(64)]),
+      ),
       functionalResultSha256: sha256(receiptBytes),
       functionalProcessCloseSha256: sha256(processCloseBytes),
     };

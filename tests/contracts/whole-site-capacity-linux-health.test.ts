@@ -1,3 +1,4 @@
+import { linuxScopeHelperNames } from '../../scripts/concurrency/root-helper-contracts';
 import { describe, expect, it } from 'vitest';
 import { validateExecutionProfile } from '../../scripts/concurrency/execution-profile';
 import { sha256 } from '../../scripts/concurrency/local-runtime';
@@ -323,6 +324,9 @@ it('binds real Linux reducer output through final receipt and Root physical-clos
   const scope = parseCapacityScope(
     {
       ...old.input,
+      helpers: Object.fromEntries(
+        linuxScopeHelperNames.map((n) => [n, 'b'.repeat(64)]),
+      ),
       executionProfileSha256: f.authority.sha256,
       functionalResultSha256: sha256(receiptBytes),
       functionalProcessCloseSha256: sha256(processCloseBytes),

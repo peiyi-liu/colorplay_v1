@@ -1,3 +1,9 @@
+import { syntheticLinuxRuntime } from './helpers/whole-site-linux-runtime';
+import {
+  linuxScopeHelperNames,
+  type RootExecutable,
+} from '../../scripts/concurrency/root-helper-contracts';
+import type { CapacityRuntimeIo } from '../../scripts/concurrency/capacity-runtime';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -21,11 +27,42 @@ const required = <T>(value: T | null | undefined): T => {
   return value;
 };
 
-const fixture = async () => {
+const fixture = async (linux = false) => {
   const f = await capacityFixture();
   f.input.helpers['host-sample.py'] = sha256('host-sample.py');
   f.input.helpers['vm-sample.py'] = sha256('vm-sample.py');
-  const scope = parseCapacityScope(f.input, f.proof),
+  const profile = linux
+    ? syntheticLinuxRuntime(f.input.databaseIdentitySha256)
+    : undefined;
+  const receiptBytes = JSON.stringify({
+    ...f.receipt,
+    ...(profile ? { executionProfileSha256: profile.profileSha } : {}),
+  });
+  const processCloseBytes = JSON.stringify({
+    ...f.processClose,
+    functionalResultSha256: sha256(receiptBytes),
+    ...(profile ? { executionProfileSha256: profile.profileSha } : {}),
+  });
+  const scope = parseCapacityScope(
+      {
+        ...f.input,
+        functionalResultSha256: sha256(receiptBytes),
+        functionalProcessCloseSha256: sha256(processCloseBytes),
+        ...(profile
+          ? {
+              executionProfileSha256: profile.profileSha,
+              helpers: Object.fromEntries(
+                linuxScopeHelperNames.map((n) => [n, profile.hashes[n]]),
+              ),
+            }
+          : {}),
+      },
+      {
+        receiptBytes,
+        processCloseBytes,
+        ...(profile ? { executionProfileAuthority: profile.authority } : {}),
+      },
+    ),
     manifest = createCapacityManifest(scope);
   const identities = ['T1', 'T2', 'S1', 'S2', 'A1', 'R1'].map(
     (alias, index) => ({
@@ -53,7 +90,10 @@ const fixture = async () => {
       scope.functionalRunId,
     );
   const helpers = Object.fromEntries(
-    capacityRootHelperNames.map((name) => [name, sha256(name)]),
+    capacityRootHelperNames.map((name) => [
+      name,
+      profile?.hashes[name] ?? sha256(name),
+    ]),
   );
   const bundleBytes = JSON.stringify({
     sourceRevision: scope.sourceRevision,
@@ -96,6 +136,9 @@ const fixture = async () => {
   const approvalBytes = JSON.stringify(approval),
     request = {
       schemaVersion: 1,
+      ...(profile
+        ? { profileRuntime: { helperClosureSha256: sha256(profile.closure) } }
+        : {}),
       confirmation: 'LOCAL_WHOLE_SITE_CAPACITY_ONE_LEG',
       scope,
       legId: required(manifest.legs[0]).legId,
@@ -120,13 +163,10 @@ const fixture = async () => {
     ),
     files = new Map<string, string>([
       [path, JSON.stringify(request)],
-      [
-        join(functionalJournalDir, 'functional-result.json'),
-        f.proof.receiptBytes,
-      ],
+      [join(functionalJournalDir, 'functional-result.json'), receiptBytes],
       [
         join(functionalJournalDir, 'functional-process-close.json'),
-        f.proof.processCloseBytes,
+        processCloseBytes,
       ],
       [
         join(
@@ -162,6 +202,9 @@ const fixture = async () => {
     'vm-sample.py',
   ])
     files.set(join(CAPACITY_RUNTIME_ROOT, helper), helper);
+  if (profile)
+    for (const [path, body] of Object.entries(profile.files))
+      files.set(path, body);
   for (const identity of identities) {
     const name =
       identity.alias === 'R1'
@@ -173,6 +216,7 @@ const fixture = async () => {
     );
   }
   const io = {
+    platform: linux ? 'linux' : 'darwin',
     read: async (p: string) => {
       await Promise.resolve();
       const v = files.get(p);
@@ -187,16 +231,28 @@ const fixture = async () => {
       await Promise.resolve();
       return { repoSha: scope.sourceRevision, dirty: false };
     },
-    execute: vi.fn(async () => {
-      await Promise.resolve();
-      return {
-        databaseIdentitySha256: scope.databaseIdentitySha256,
-        readOnlyProofSha256: 'a'.repeat(64),
-        sourceFrozen: true,
-        artifactMatched: true,
-        approvedPlanMatched: true,
-      };
-    }),
+    execute: vi.fn<CapacityRuntimeIo['execute']>(
+      async (helper: RootExecutable, args: readonly string[]) => {
+        await Promise.resolve();
+        if (profile && helper === 'execution-profile-preflight.py')
+          return {
+            sourceRevision: scope.sourceRevision,
+            challenge: args[2],
+            observed: {
+              host: profile.profile.host,
+              identity: profile.profile.identity,
+              backend: profile.profile.backend,
+            },
+          };
+        return {
+          databaseIdentitySha256: scope.databaseIdentitySha256,
+          readOnlyProofSha256: 'a'.repeat(64),
+          sourceFrozen: true,
+          artifactMatched: true,
+          approvedPlanMatched: true,
+        };
+      },
+    ),
   };
   return { scope, path, files, io, request, approval };
 };
@@ -346,4 +402,47 @@ it('write-once admission refuses a second CLI run before any provision or root r
   ).rejects.toThrow('ALREADY_ADMITTED');
   expect(JSON.stringify(files.get('capacity-run-admitted'))).toBe(original);
   expect(files.size).toBe(1);
+});
+
+describe('independently approved Linux capacity runtime', () => {
+  it('passes real closure/preflight authority to host and backend without a VM alias', async () => {
+    const f = await fixture(true),
+      approval = sha256(required(f.files.get(f.path)));
+    const runtime = await loadCapacityRuntime(
+      f.path,
+      new AbortController().signal,
+      f.io,
+      approval,
+    );
+    expect(f.io.execute.mock.calls.map((c) => c[0])).toEqual([
+      'execution-profile-preflight.py',
+    ]);
+    await runtime.host(
+      { mode: 'NODE_PROTOCOL', nodePid: 123 },
+      new AbortController().signal,
+    );
+    await runtime.backend(new AbortController().signal);
+    expect(f.io.execute.mock.calls.map((c) => c[0])).toEqual([
+      'execution-profile-preflight.py',
+      'linux-host-sample.py',
+      'backend-cgroup-sample.py',
+    ]);
+    await expect(runtime.vm(new AbortController().signal)).rejects.toThrow();
+    expect(f.io.execute).toHaveBeenCalledTimes(3);
+  });
+  it.each([undefined, '0'.repeat(64)])(
+    'rejects absent or wrong independent approval before any helper',
+    async (approval) => {
+      const f = await fixture(true);
+      await expect(
+        loadCapacityRuntime(
+          f.path,
+          new AbortController().signal,
+          f.io,
+          approval,
+        ),
+      ).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+      expect(f.io.execute).not.toHaveBeenCalled();
+    },
+  );
 });

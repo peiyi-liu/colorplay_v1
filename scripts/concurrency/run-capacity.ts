@@ -9,9 +9,20 @@ export const mainCapacity = async (args: readonly string[]) => {
   process.once('SIGTERM', abort);
   process.once('SIGINT', abort);
   try {
-    if (args.length !== 2 || args[0] !== '--request' || !args[1])
+    if (
+      (args.length !== 2 && args.length !== 4) ||
+      args[0] !== '--request' ||
+      !args[1] ||
+      (args.length === 4 &&
+        (args[2] !== '--approve' || !/^[a-f0-9]{64}$/u.test(args[3] ?? '')))
+    )
       throw new Error('CAPACITY_EVIDENCE_INVALID');
-    const runtime = await loadCapacityRuntime(args[1], controller.signal);
+    const runtime = await loadCapacityRuntime(
+      args[1],
+      controller.signal,
+      undefined,
+      args[3],
+    );
     await admitCapacityRun(runtime, controller.signal);
     const receipt = await runOneCapacityLeg(runtime, controller.signal, {
       startedAtMs: 0,

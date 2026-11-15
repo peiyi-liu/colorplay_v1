@@ -108,6 +108,7 @@ const fixture = async () => {
     ],
   ]);
   const io = {
+    platform: 'darwin',
     read: async (p: string) => {
       await Promise.resolve();
       const v = files.get(p);
@@ -180,4 +181,14 @@ describe('strict one-leg capacity loader', () => {
       ),
     ).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
   });
+});
+
+it('rejects Linux legacy fallback and wrong independently supplied approval', async () => {
+  const f = await fixture();
+  await expect(
+    loadCapacityConfiguration(f.path, { ...f.io, platform: 'linux' }),
+  ).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+  await expect(
+    loadCapacityConfiguration(f.path, f.io, { approvalSha256: '0'.repeat(64) }),
+  ).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
 });

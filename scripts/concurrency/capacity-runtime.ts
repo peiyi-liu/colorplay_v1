@@ -1,6 +1,10 @@
 import { isDeepStrictEqual } from 'node:util';
 import { performance } from 'node:perf_hooks';
-import { spawn } from 'node:child_process';
+import { executeRootHelper } from './root-helper-executor';
+import {
+  type RootExecutable,
+  type RootHelperAuthority,
+} from './root-helper-contracts';
 import { lstat, open, realpath } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { z } from 'zod';
@@ -48,105 +52,37 @@ export const capacityJournal = (path: string): PrivateJournal => ({
     }
   },
 });
-type Helper =
-  (typeof capacityRootHelperNames)[number] | 'host-sample.py' | 'vm-sample.py';
+type Helper = RootExecutable;
 export interface CapacityRuntimeIo extends CapacityConfigIo {
   execute(
     helper: Helper,
     args: readonly string[],
     input: unknown,
     signal: AbortSignal,
+    authority?: RootHelperAuthority,
   ): Promise<unknown>;
 }
-export const executeCapacityRoot = (
+export const executeCapacityRoot = async (
   helper: Helper,
   args: readonly string[],
   input: unknown,
   signal: AbortSignal,
-): Promise<unknown> =>
-  new Promise((resolveResult, reject) => {
-    let serialized: string;
-    try {
-      const metrics = helper === 'host-sample.py' || helper === 'vm-sample.py';
-      if (
-        ![
-          ...capacityRootHelperNames,
-          'host-sample.py',
-          'vm-sample.py',
-        ].includes(helper) ||
-        (metrics
-          ? args.length !== 0
-          : args.length !== 3 ||
-            !/^[a-f0-9]{40}$/u.test(args[0] ?? '') ||
-            !/^wsc-[a-z0-9]{6,16}-[a-z0-9]{6,16}$/u.test(args[1] ?? '') ||
-            !/^[a-f0-9]{64}$/u.test(args[2] ?? ''))
-      )
-        throw new Error();
-      serialized = JSON.stringify(input);
-      if (Buffer.byteLength(serialized) > 131072) throw new Error();
-    } catch {
-      reject(new Error('CAPACITY_EVIDENCE_INVALID'));
-      return;
-    }
-    if (signal.aborted) {
-      reject(new Error('CAPACITY_EVIDENCE_INVALID'));
-      return;
-    }
-    const child = spawn(
-      '/opt/homebrew/bin/python3',
-      [join(CAPACITY_RUNTIME_ROOT, helper), ...args],
-      {
-        detached: true,
-        env: {
-          PATH: '/usr/bin:/bin',
-          DEVELOPER_DIR: '/Library/Developer/CommandLineTools',
-        },
-        stdio: ['pipe', 'pipe', 'ignore'],
-      },
+  authority?: RootHelperAuthority,
+): Promise<unknown> => {
+  try {
+    return JSON.parse(
+      await executeRootHelper(
+        helper,
+        args,
+        JSON.stringify(input),
+        signal,
+        authority,
+      ),
     );
-    const chunks: Buffer[] = [];
-    let size = 0,
-      failed = false;
-    const state = { closed: false };
-    const kill = () => {
-      failed = true;
-      try {
-        if (child.pid) process.kill(-child.pid, 'SIGKILL');
-      } catch {
-        /* Safe fixed outcome only. */
-      }
-    };
-    const timer = setTimeout(kill, 30000);
-    signal.addEventListener('abort', kill, { once: true });
-    child.stdout.on('data', (chunk: Buffer) => {
-      size += chunk.length;
-      if (size > 131072) kill();
-      else chunks.push(chunk);
-    });
-    child.stdin.on('error', kill);
-    child.once('error', () => {
-      failed = true;
-    });
-    child.once('close', (code, exitSignal) => {
-      state.closed = true;
-      clearTimeout(timer);
-      signal.removeEventListener('abort', kill);
-      if (failed || code !== 0 || exitSignal || signal.aborted) {
-        reject(new Error('CAPACITY_EVIDENCE_INVALID'));
-        return;
-      }
-      try {
-        resolveResult(JSON.parse(Buffer.concat(chunks).toString('utf8')));
-      } catch {
-        reject(new Error('CAPACITY_EVIDENCE_INVALID'));
-      }
-    });
-    try {
-      child.stdin.end(serialized);
-    } catch {
-      if (!state.closed) kill();
-    }
-  });
+  } catch {
+    return capacityFailure();
+  }
+};
 const defaultIo: CapacityRuntimeIo = {
   read: readPrivateFunctionalFile,
   directory,
@@ -198,9 +134,13 @@ export const loadCapacityRuntime = async (
   path: string,
   signal: AbortSignal,
   io: CapacityRuntimeIo = defaultIo,
+  approvalSha256?: string,
 ) => {
   try {
-    const config = await loadCapacityConfiguration(path, io),
+    const config = await loadCapacityConfiguration(path, io, {
+        approvalSha256,
+        signal,
+      }),
       { scope, request } = config;
     const secretBytes = await io.read(
       join(CAPACITY_RUNTIME_ROOT, 'status-secret.json'),
@@ -232,13 +172,15 @@ export const loadCapacityRuntime = async (
       return capacityFailure();
     for (const helper of [
       ...capacityRootHelperNames,
-      'host-sample.py',
-      'vm-sample.py',
+      ...('profileRuntime' in config
+        ? (['linux-host-sample.py', 'backend-cgroup-sample.py'] as const)
+        : (['host-sample.py', 'vm-sample.py'] as const)),
     ] as const) {
-      const expected =
-        helper === 'host-sample.py' || helper === 'vm-sample.py'
-          ? scope.helpers[helper]
-          : request.helpers[helper];
+      const hashes: Readonly<Record<string, string>> = {
+        ...scope.helpers,
+        ...request.helpers,
+      };
+      const expected = hashes[helper];
       if (
         sha256(await io.read(join(CAPACITY_RUNTIME_ROOT, helper), 131072)) !==
         expected
@@ -364,18 +306,32 @@ export const loadCapacityRuntime = async (
       ownedSignal = signal,
     ) => {
       if (ownedSignal.aborted) return capacityFailure();
+      const profileRuntime =
+        'profileRuntime' in config ? config.profileRuntime : undefined;
+      await profileRuntime?.verify();
       const started = performance.now();
       let outcome: 'ok' | 'unknown' = 'unknown';
       try {
-        const value = await io.execute(
-          helper,
-          helper === 'host-sample.py' || helper === 'vm-sample.py' ? [] : args,
-          input,
-          ownedSignal,
-        );
+        const helperArgs =
+          helper === 'host-sample.py' ||
+          helper === 'vm-sample.py' ||
+          helper === 'linux-host-sample.py' ||
+          helper === 'backend-cgroup-sample.py'
+            ? []
+            : args;
+        const value = profileRuntime
+          ? await io.execute(
+              helper,
+              helperArgs,
+              input,
+              ownedSignal,
+              profileRuntime.closure,
+            )
+          : await io.execute(helper, helperArgs, input, ownedSignal);
         outcome = 'ok';
         return value;
       } finally {
+        await profileRuntime?.verify();
         if (accounting.length < 10000)
           accounting.push({
             helper,
@@ -472,9 +428,21 @@ export const loadCapacityRuntime = async (
           }).then((value) => capacityRegistrationOwnershipSchema.parse(value)),
       },
       host: async (input: unknown, ownedSignal: AbortSignal) =>
-        call('host-sample.py', input, ownedSignal),
-      vm: async (ownedSignal: AbortSignal) =>
-        call('vm-sample.py', null, ownedSignal),
+        call(
+          scope.executionProfileSha256
+            ? 'linux-host-sample.py'
+            : 'host-sample.py',
+          input,
+          ownedSignal,
+        ),
+      vm: async (ownedSignal: AbortSignal) => {
+        if (scope.executionProfileSha256) return capacityFailure();
+        return call('vm-sample.py', null, ownedSignal);
+      },
+      backend: async (ownedSignal: AbortSignal) => {
+        if (!scope.executionProfileSha256) return capacityFailure();
+        return call('backend-cgroup-sample.py', null, ownedSignal);
+      },
     };
   } catch {
     return capacityFailure();

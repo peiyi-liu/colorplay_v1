@@ -68,6 +68,7 @@ const setup = () => {
     ),
   );
   const io: FunctionalRootIo = {
+    platform: 'darwin',
     read: (name) => Promise.resolve(files[name] ?? ''),
     directory: () => Promise.resolve(),
     absent: () => Promise.resolve(),
@@ -230,4 +231,15 @@ describe('fixed functional runtime approval before every helper', () => {
       await rm(root, { recursive: true, force: true });
     }
   });
+});
+
+it('rejects legacy functional fallback on an actual Linux-selected port before helper execution', async () => {
+  const f = setup();
+  await expect(
+    loadFunctionalRuntime(f.path, sha256(f.text), {
+      ...f.io,
+      platform: 'linux',
+    }),
+  ).rejects.toThrow('FUNCTIONAL_PREFLIGHT_FAILED');
+  expect(f.execute).not.toHaveBeenCalled();
 });

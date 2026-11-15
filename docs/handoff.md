@@ -2179,3 +2179,9 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - Basead256；exact16source/test，worker66files781tests／fullchecks綠，Root12files128tests及6actualexport controls綠。Root唯一round發現首sample Node/browser PID可混用，僅2paths修互斥＋兩回歸案例；Standards0／Spec1resolved0unresolved／ProductSecurity0，max486行。
 - V2 e92d5d501404f69dfac9cdc7008f0ebf4db230d5dd1096fb60c6f04d05c4ce75；Root summary e57868ca6b02ac1ecbae1940c749ce2f4426ef363e4bed9ddedb5ad60682fd5e，原packet/46logs/14unchanged paths與Rootdocs保留。詳見本次review；尚未真Linux／60人／Hosted，M2 runtime與Root operator待接，原G8與85containers不動，花費USD0。
+
+
+### 2026-11-16 — 免費Linux M2 Root唯一審查ACCEPTED
+
+- Base425af2f，exact21source/test；worker69files836tests／fullchecks綠，Root12files167tests與8actualexport controls綠，Standards0／Spec0／ProductSecurity0，一輪無finding。最大496行；13file closure／fresh challenge／Linux獨立--approve／真backend collector與Mac舊形狀接線完成task級。
+- Workerpacket5001aed57551a1c230dbaeae27e4f2066fc009d201bdef98bba184582f8ae213／Rootsummaryc1dfebe18ffbefc02dc084396cc2553a8b6e9b78ae5098a580044a9c6c9de808。逐hash核61logs／11protected／Rootdocs。Root新增review並記pure fixture helper extension，稍後精確stage/commit；真13helpers／kernel／physicalclose／60人／Hosted仍NOT_RUN，0付費資源，G8/85containers保留。

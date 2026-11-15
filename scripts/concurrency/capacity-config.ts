@@ -1,3 +1,9 @@
+import { loadExecutionProfileRuntime } from './execution-profile-runtime';
+import {
+  profileRuntimeDescriptorSchema,
+  type RootExecutable,
+  type RootHelperAuthority,
+} from './root-helper-contracts';
 import { resolve, join } from 'node:path';
 import { z } from 'zod';
 import {
@@ -30,6 +36,7 @@ export const capacityRequestSchema = z.strictObject({
   schemaVersion: z.literal(1),
   confirmation: z.literal('LOCAL_WHOLE_SITE_CAPACITY_ONE_LEG'),
   scope: capacityScopeSchema,
+  profileRuntime: profileRuntimeDescriptorSchema.optional(),
   legId: capacityAuthorityReferenceSchema.shape.legId,
   runId: z.string().regex(/^wcr-[a-z0-9]{6,16}-[a-z0-9]{6,16}$/u),
   manifestSha256: digest,
@@ -60,6 +67,14 @@ export const capacityRequestSchema = z.strictObject({
 });
 export type CapacityRequest = z.infer<typeof capacityRequestSchema>;
 export interface CapacityConfigIo {
+  platform?: string;
+  execute?(
+    helper: RootExecutable,
+    args: readonly string[],
+    input: unknown,
+    signal: AbortSignal,
+    authority?: RootHelperAuthority,
+  ): Promise<unknown>;
   read(path: string, maximum: number): Promise<string>;
   directory(path: string): Promise<void>;
   git(): Promise<{
@@ -70,6 +85,7 @@ export interface CapacityConfigIo {
 export const loadCapacityConfiguration = async (
   requestPath: string,
   io: CapacityConfigIo,
+  options: { approvalSha256?: string | undefined; signal?: AbortSignal } = {},
 ) => {
   try {
     if (
@@ -81,6 +97,14 @@ export const loadCapacityConfiguration = async (
     const requestBytes = await io.read(requestPath, 65536),
       request = capacityRequestSchema.parse(JSON.parse(requestBytes));
     if (
+      (options.approvalSha256 !== undefined &&
+        sha256(requestBytes) !== options.approvalSha256) ||
+      ((request.scope.executionProfileSha256 !== undefined ||
+        (io.platform ?? process.platform) === 'linux') &&
+        options.approvalSha256 === undefined)
+    )
+      return capacityFailure();
+    if (
       requestPath !==
       join(CAPACITY_RUNTIME_ROOT, `capacity-request-${request.runId}.json`)
     )
@@ -88,12 +112,26 @@ export const loadCapacityConfiguration = async (
     const git = await io.git();
     if (git.dirty || git.repoSha !== request.scope.sourceRevision)
       return capacityFailure();
+    const profileRuntime = await loadExecutionProfileRuntime(
+      {
+        sourceRevision: request.scope.sourceRevision,
+        profileSha256: request.scope.executionProfileSha256,
+        descriptor: request.profileRuntime,
+        databaseIdentitySha256: request.scope.databaseIdentitySha256,
+        helperHashes: { ...request.scope.helpers, ...request.helpers },
+      },
+      io,
+      options.signal ?? new AbortController().signal,
+    );
     const functionalDir = join(
       CAPACITY_RUNTIME_ROOT,
       'functional-private',
       request.scope.functionalRunId,
     );
     const scope = parseCapacityScope(request.scope, {
+      ...(profileRuntime
+        ? { executionProfileAuthority: profileRuntime.authority }
+        : {}),
       receiptBytes: await io.read(
         join(functionalDir, 'functional-result.json'),
         262144,
@@ -158,6 +196,7 @@ export const loadCapacityConfiguration = async (
     );
     return {
       request,
+      ...(profileRuntime ? { profileRuntime } : {}),
       requestSha256: sha256(requestBytes),
       scope,
       manifest,

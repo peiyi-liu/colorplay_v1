@@ -1,3 +1,6 @@
+import { syntheticLinuxRuntime } from './helpers/whole-site-linux-runtime';
+import { linuxScopeHelperNames } from '../../scripts/concurrency/root-helper-contracts';
+import { sha256 } from '../../scripts/concurrency/local-runtime';
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { capacityFixture } from './helpers/whole-site-capacity';
@@ -11,9 +14,40 @@ const required = <T>(value: T | null | undefined): T => {
   return value;
 };
 
-const fixture = async () => {
+const fixture = async (linux = false) => {
   const f = await capacityFixture(),
-    scope = parseCapacityScope(f.input, f.proof),
+    profile = linux
+      ? syntheticLinuxRuntime(f.input.databaseIdentitySha256)
+      : undefined;
+  const receiptBytes = JSON.stringify({
+      ...f.receipt,
+      ...(profile ? { executionProfileSha256: profile.profileSha } : {}),
+    }),
+    processCloseBytes = JSON.stringify({
+      ...f.processClose,
+      functionalResultSha256: sha256(receiptBytes),
+      ...(profile ? { executionProfileSha256: profile.profileSha } : {}),
+    });
+  const scope = parseCapacityScope(
+      {
+        ...f.input,
+        functionalResultSha256: sha256(receiptBytes),
+        functionalProcessCloseSha256: sha256(processCloseBytes),
+        ...(profile
+          ? {
+              executionProfileSha256: profile.profileSha,
+              helpers: Object.fromEntries(
+                linuxScopeHelperNames.map((n) => [n, profile.hashes[n]]),
+              ),
+            }
+          : {}),
+      },
+      {
+        receiptBytes,
+        processCloseBytes,
+        ...(profile ? { executionProfileAuthority: profile.authority } : {}),
+      },
+    ),
     manifest = createCapacityManifest(scope),
     leg = required(
       manifest.legs.find((l) => l.legId === 'backend_game-node_protocol-3'),
@@ -46,6 +80,7 @@ const fixture = async () => {
     }),
     host: vi.fn(),
     vm: vi.fn(),
+    backend: vi.fn(),
     journal: {
       directory: 'synthetic',
       write: vi.fn(async () => {
@@ -83,4 +118,18 @@ describe('capacity journey stop and owned-subject gate', () => {
     expect(f.runtime.vm).not.toHaveBeenCalled();
     await journey.stop();
   });
+});
+
+it('preserves Linux authority and refuses foreign subjects before host/backend, without selecting vm fallback', async () => {
+  const f = await fixture(true),
+    journey = createCapacityJourneys(
+      f.runtime,
+      f.signal.signal,
+      () => undefined,
+    );
+  await expect(journey.run()).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+  expect(f.runtime.host).not.toHaveBeenCalled();
+  expect(f.runtime.backend).not.toHaveBeenCalled();
+  expect(f.runtime.vm).not.toHaveBeenCalled();
+  await journey.stop();
 });

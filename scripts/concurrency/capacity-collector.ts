@@ -1,19 +1,35 @@
 import { monitorEventLoopDelay, performance } from 'node:perf_hooks';
 import { createCapacityHealth } from './capacity-health';
+import { createLinuxCapacityHealth } from './capacity-linux-health';
+import type { ExecutionProfileAuthority } from './execution-profile';
 import { capacityFailure, type CapacityMode } from './capacity-scope';
-export interface CapacityCollectorPorts {
+interface CommonCollectorPorts {
   host(signal: AbortSignal): Promise<unknown>;
-  vm(signal: AbortSignal): Promise<unknown>;
   now?: () => number;
   loop?: () => number | null;
   onInvalid?: (reason: 'UNKNOWN' | 'GENERATOR_LIMITED') => void;
 }
+export type CapacityCollectorPorts = CommonCollectorPorts &
+  (
+    | {
+        vm(signal: AbortSignal): Promise<unknown>;
+        executionProfileAuthority?: never;
+        backend?: never;
+      }
+    | {
+        executionProfileAuthority: ExecutionProfileAuthority;
+        backend(signal: AbortSignal): Promise<unknown>;
+        vm?: never;
+      }
+  );
 export const createCapacityCollector = (
   mode: CapacityMode,
   signal: AbortSignal,
   ports: CapacityCollectorPorts,
 ) => {
-  const health = createCapacityHealth(mode),
+  const health = ports.executionProfileAuthority
+      ? createLinuxCapacityHealth(mode, ports.executionProfileAuthority)
+      : createCapacityHealth(mode),
     now = ports.now ?? (() => performance.now());
   const histogram = ports.loop
     ? null
@@ -49,24 +65,31 @@ export const createCapacityCollector = (
     }, ms);
     timers.add(timer);
   };
-  const collect = (kind: 'host' | 'vm'): Promise<void> => {
+  const collect = (kind: 'host' | 'resource'): Promise<void> => {
     if (stopping || combined.aborted)
       return Promise.reject(new Error('CAPACITY_EVIDENCE_INVALID'));
     const startedAtNodeMs = now();
     const task = (async () => {
       let sample: unknown;
       try {
-        sample = await ports[kind](combined);
+        sample = await (kind === 'host'
+          ? ports.host(combined)
+          : ports.executionProfileAuthority
+            ? ports.backend(combined)
+            : ports.vm(combined));
       } catch {
         sample = null;
       }
-      health[kind]({ startedAtNodeMs, completedAtNodeMs: now(), sample });
+      const input = { startedAtNodeMs, completedAtNodeMs: now(), sample };
+      if (kind === 'host') health.host(input);
+      else if ('backend' in health) health.backend(input);
+      else health.vm(input);
     })();
     pending.add(task);
     void task.finally(() => pending.delete(task)).catch(() => undefined);
     return task;
   };
-  const recurring = (kind: 'host' | 'vm', ms: number) => {
+  const recurring = (kind: 'host' | 'resource', ms: number) => {
     schedule(() => {
       const task = collect(kind);
       void task
@@ -111,8 +134,8 @@ export const createCapacityCollector = (
           collect('host').then(() => {
             recurring('host', 1000);
           }),
-          collect('vm').then(() => {
-            recurring('vm', 5000);
+          collect('resource').then(() => {
+            recurring('resource', 5000);
           }),
           firstLoop,
         ]);
