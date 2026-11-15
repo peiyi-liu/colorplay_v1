@@ -251,11 +251,15 @@ export const runCapacityRegistration = async (
         state.sendIntentAtUtc = issuedAtUtc;
       }),
     );
+    check();
     const sendAt = now();
     const sent = await dispatchCapacityActions(
       entry.actors,
       'otp_send',
-      ui.send,
+      (actor) => {
+        check();
+        return ui.send(actor, check);
+      },
       signal,
       async (actor, response) => {
         const state = states[actor.actorIndex];
@@ -304,11 +308,15 @@ export const runCapacityRegistration = async (
             capacityActorStem(legId, actor.actorIndex) + '-otp-verify-intent',
             { actorIndex: actor.actorIndex },
           );
+          check();
           let at = now();
           await dispatchCapacityActions(
             [actor],
             'otp_verify',
-            (item) => ui.verify(item, code),
+            (item) => {
+              check();
+              return ui.verify(item, code, check);
+            },
             signal,
             async (_item, response) => {
               await journal.write(
@@ -333,11 +341,15 @@ export const runCapacityRegistration = async (
               '-registration-complete-intent',
             { actorIndex: actor.actorIndex },
           );
+          check();
           at = now();
           await dispatchCapacityActions(
             [actor],
             'registration_complete',
-            (item) => ui.complete(item, identity),
+            (item) => {
+              check();
+              return ui.complete(item, identity, check);
+            },
             signal,
             async (_item, response) => {
               await journal.write(
@@ -355,10 +367,12 @@ export const runCapacityRegistration = async (
             capacityActorStem(legId, actor.actorIndex) + '-post-login-intent',
             { actorIndex: actor.actorIndex },
           );
+          check();
           await ui.postLogin(
             actor,
             { ...identity, userId: state.subject },
             signal,
+            check,
           );
           state.postLoginUiMs = Math.max(0, now() - at);
           const logged = z
@@ -433,6 +447,11 @@ export const runCapacityRegistration = async (
         report.result = 'FAIL';
       }
     else report.mailboxClosed = true;
+  }
+  try {
+    check();
+  } catch {
+    if (report.result === 'PASS') report.result = 'INCONCLUSIVE';
   }
   report.completedActors = states.filter((state) => state.completed).length;
   report.ownershipKnown = states.every(

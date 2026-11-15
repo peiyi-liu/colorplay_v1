@@ -19,27 +19,35 @@ import {
 } from './capacity-browser-entry';
 import type { NativeCapacityActor } from './capacity-browser-runtime';
 export interface CapacityRegistrationUi {
-  send: (actor: NativeCapacityActor) => Promise<void>;
-  verify: (actor: NativeCapacityActor, code: string) => Promise<void>;
+  send: (actor: NativeCapacityActor, admit: () => void) => Promise<void>;
+  verify: (
+    actor: NativeCapacityActor,
+    code: string,
+    admit: () => void,
+  ) => Promise<void>;
   complete: (
     actor: NativeCapacityActor,
     identity: CapacityEntryIdentity,
+    admit: () => void,
   ) => Promise<void>;
   postLogin: (
     actor: NativeCapacityActor,
     identity: CapacityEntryIdentity,
     signal: AbortSignal,
+    admit: () => void,
   ) => Promise<void>;
 }
 export const actualUi: CapacityRegistrationUi = {
-  send: async (actor) => {
+  send: async (actor, admit) => {
+    admit();
     await actor.page
       .getByRole('button', { name: '傳送驗證碼', exact: true })
       .click();
   },
-  verify: async (actor, code) => {
+  verify: async (actor, code, admit) => {
     if (!/^\d{6}$/u.test(code)) return capacityFailure();
     await actor.page.getByLabel('E-mail 驗證碼', { exact: true }).fill(code);
+    admit();
     await actor.page
       .getByRole('button', { name: '確認驗證', exact: true })
       .click();
@@ -47,7 +55,7 @@ export const actualUi: CapacityRegistrationUi = {
       .getByText('✓ 已認證', { exact: true })
       .waitFor({ state: 'visible' });
   },
-  complete: async (actor, identity) => {
+  complete: async (actor, identity, admit) => {
     await actor.page
       .getByRole('button', { name: '下一步', exact: true })
       .click();
@@ -60,13 +68,14 @@ export const actualUi: CapacityRegistrationUi = {
     await actor.page
       .getByLabel('密碼確認', { exact: true })
       .fill(identity.password);
+    admit();
     await actor.page
       .getByRole('button', { name: '完成註冊', exact: true })
       .click();
     await actor.page.waitForURL((url) => url.pathname === '/login');
   },
-  postLogin: async (actor, identity, signal) => {
-    await loginCapacityActor(actor, identity, signal);
+  postLogin: async (actor, identity, signal, admit) => {
+    await loginCapacityActor(actor, identity, signal, undefined, admit);
   },
 };
 const actorReportSchema = z.strictObject({

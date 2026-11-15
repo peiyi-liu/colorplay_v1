@@ -474,13 +474,18 @@ export const loginCapacityActor = async (
   identity: CapacityEntryIdentity,
   signal: AbortSignal,
   ui: CapacityEntryUi = capacityEntryUi,
+  admit: () => void = () => undefined,
 ) => {
   signal.throwIfAborted();
+  admit();
   await loginFields(actor, identity);
   const result = await dispatchCapacityActions(
     [actor],
     'post_registration_login',
-    ui.submit,
+    (item) => {
+      admit();
+      return ui.submit(item);
+    },
     signal,
   );
   await ui.confirmed(actor, identity);

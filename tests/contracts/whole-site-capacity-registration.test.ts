@@ -65,7 +65,9 @@ const setup = async () => {
   const ui = {
     send: vi.fn(() => Promise.resolve()),
     verify: vi.fn<CapacityRegistrationUi['verify']>(() => Promise.resolve()),
-    complete: vi.fn(() => Promise.resolve()),
+    complete: vi.fn<CapacityRegistrationUi['complete']>(() =>
+      Promise.resolve(),
+    ),
     postLogin: vi.fn(() => Promise.resolve()),
   };
   const oracle = {
@@ -232,5 +234,73 @@ describe('fresh UI-only cohort registration with mandatory ownership and no blin
     expect(result.report.completedActors).toBe(0);
     expect(h.ui.send).toHaveBeenCalledTimes(40);
     expect(h.ui.complete).toHaveBeenCalled();
+  });
+  it('does not admit complete after a deferred intent settles after a peer verify failure', async () => {
+    const h = await setup();
+    let releaseIntent: () => void = () => undefined,
+      rejectVerify: () => void = () => undefined;
+    const intent = new Promise<void>((resolve) => {
+        releaseIntent = resolve;
+      }),
+      verify = new Promise<void>((_resolve, reject) => {
+        rejectVerify = () => {
+          reject(new Error('SYNTHETIC_VERIFY_FAILURE'));
+        };
+      });
+    h.ui.verify.mockImplementation((actor) =>
+      actor.actorIndex === 0 ? verify : Promise.resolve(),
+    );
+    h.journal.write.mockImplementation((name) =>
+      name.endsWith('-a01-registration-complete-intent')
+        ? intent
+        : Promise.resolve(),
+    );
+    const work = runCapacityRegistration(h);
+    await vi.waitFor(() => {
+      expect(
+        h.journal.write.mock.calls.some(([name]) =>
+          name.endsWith('-a01-registration-complete-intent'),
+        ),
+      ).toBe(true);
+    });
+    rejectVerify();
+    await vi.waitFor(() => {
+      expect(
+        h.journal.write.mock.calls.some(([name]) =>
+          name.endsWith('-a00-otp-verify-response'),
+        ),
+      ).toBe(false);
+    });
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    releaseIntent();
+    const result = await work;
+    expect(result.report.result).toBe('FAIL');
+    expect(
+      h.ui.complete.mock.calls.some(([actor]) => actor.actorIndex === 1),
+    ).toBe(false);
+    expect(
+      h.journal.write.mock.calls.some(([name]) =>
+        name.endsWith('-a01-registration-complete-intent'),
+      ),
+    ).toBe(true);
+  });
+  it('cannot return PASS when parent aborts during deferred mailbox disposal after all40 complete', async () => {
+    const h = await setup(),
+      controller = new AbortController();
+    let finish: () => void = () => undefined;
+    h.mailbox.dispose.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const work = runCapacityRegistration({ ...h, signal: controller.signal });
+    await vi.waitFor(() => {
+      expect(h.mailbox.dispose).toHaveBeenCalledTimes(1);
+    });
+    controller.abort();
+    finish();
+    const result = await work;
+    expect(result.report.completedActors).toBe(40);
+    expect(result.report.result).not.toBe('PASS');
   });
 });

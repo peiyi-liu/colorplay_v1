@@ -17,9 +17,11 @@ describe('actual registration Page operations and strict safe public observation
       getByText: vi.fn(() => locator),
     };
     const actor = { page } as unknown as NativeCapacityActor;
-    await expect(actualUi.verify(actor, 'SYNTHETIC_SECRET')).rejects.toThrow();
+    await expect(
+      actualUi.verify(actor, 'SYNTHETIC_SECRET', () => undefined),
+    ).rejects.toThrow();
     expect(locator.fill).not.toHaveBeenCalled();
-    await actualUi.verify(actor, '123456');
+    await actualUi.verify(actor, '123456', () => undefined);
     expect(locator.fill).toHaveBeenCalledTimes(1);
     expect(locator.click).toHaveBeenCalledTimes(1);
   });
@@ -66,4 +68,55 @@ describe('actual registration Page operations and strict safe public observation
       }).success,
     ).toBe(false);
   });
+  it.each(['verify', 'complete'] as const)(
+    'actual %s helper rechecks admission after awaited fill before invoking mutation click',
+    async (phase) => {
+      let release: () => void = () => undefined,
+        stopped = false;
+      const fill = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const mutation = vi.fn(() => Promise.resolve()),
+        fillCall = vi.fn(() => fill);
+      const ordinary = {
+        fill: vi.fn(() => Promise.resolve()),
+        click: vi.fn(() => Promise.resolve()),
+        waitFor: vi.fn(() => Promise.resolve()),
+      };
+      const page = {
+        getByLabel: vi.fn(() => ({ ...ordinary, fill: fillCall })),
+        getByRole: vi.fn((_role: string, options: { name: string }) =>
+          options.name === (phase === 'verify' ? '確認驗證' : '完成註冊')
+            ? { ...ordinary, click: mutation }
+            : ordinary,
+        ),
+        getByText: vi.fn(() => ordinary),
+        waitForURL: vi.fn(() => Promise.resolve()),
+      };
+      const actor = { page } as unknown as NativeCapacityActor,
+        admit = () => {
+          if (stopped) throw new Error('CAPACITY_EVIDENCE_INVALID');
+        };
+      const identity = {
+        alias: 'REG40_01',
+        account: 'wb0000000000000000',
+        password: 'Aa12345678',
+        displayName: '同學',
+        role: 'student' as const,
+        userId: null,
+      };
+      const work =
+        phase === 'verify'
+          ? actualUi.verify(actor, '123456', admit)
+          : actualUi.complete(actor, identity, admit);
+      const failed = expect(work).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+      await vi.waitFor(() => {
+        expect(fillCall).toHaveBeenCalled();
+      });
+      stopped = true;
+      release();
+      await failed;
+      expect(mutation).not.toHaveBeenCalled();
+    },
+  );
 });

@@ -2,6 +2,7 @@ import type { NativeCapacityActor } from '../../scripts/concurrency/capacity-bro
 import { describe, it, expect, vi } from 'vitest';
 import {
   runCapacityEntryBarrier,
+  loginCapacityActor,
   type CapacityEntryOptions,
   type CapacityEntryUi,
 } from '../../scripts/concurrency/capacity-browser-entry';
@@ -183,5 +184,50 @@ describe('native blank-entry coordinator and separate real-network barrier', () 
     expect(Math.max(...intents)).toBeLessThan(
       Math.min(...h.ui.submit.mock.invocationCallOrder),
     );
+  });
+  it('actual post-registration login helper refuses mutation after stop during awaited form fill', async () => {
+    let release: () => void = () => undefined,
+      stopped = false;
+    const delayed = new Promise<void>((resolve) => {
+        release = resolve;
+      }),
+      fill = vi.fn(() => delayed),
+      click = vi.fn(() => Promise.resolve());
+    const locator = { fill, click, waitFor: vi.fn(() => Promise.resolve()) };
+    const page = {
+      getByRole: vi.fn(() => locator),
+      getByLabel: vi.fn(() => locator),
+    };
+    const actor = {
+      page,
+      observer: {
+        arm: () => ({ finished: Promise.resolve(), cancel: vi.fn() }),
+      },
+    } as unknown as NativeCapacityActor;
+    const identity = {
+      alias: 'REG40_01',
+      account: 'wb0000000000000000',
+      password: 'Aa12345678',
+      displayName: '同學',
+      role: 'student' as const,
+      userId: '11111111-1111-4111-8111-111111111111',
+    };
+    const work = loginCapacityActor(
+      actor,
+      identity,
+      new AbortController().signal,
+      undefined,
+      () => {
+        if (stopped) throw new Error('CAPACITY_EVIDENCE_INVALID');
+      },
+    );
+    const failed = expect(work).rejects.toThrow('CAPACITY_EVIDENCE_INVALID');
+    await vi.waitFor(() => {
+      expect(fill).toHaveBeenCalled();
+    });
+    stopped = true;
+    release();
+    await failed;
+    expect(click).not.toHaveBeenCalled();
   });
 });

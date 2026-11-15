@@ -49,6 +49,8 @@ export const createCapacityMailbox = (
   const pending = new Set<Promise<unknown>>();
   const isStopped = () => combined.aborted;
   const observedAt = new Map<string, number>();
+  const knownIds = new Set<string>();
+  let highestTotal = 0;
   let before: Set<string> | null = null,
     waited = false,
     closed = false,
@@ -113,14 +115,25 @@ export const createCapacityMailbox = (
       const result = listing.parse(await observe(() => request(url)));
       if (
         result.start !== start ||
-        (total !== null && result.messages_count !== total)
+        result.messages_count < highestTotal ||
+        new Set(result.messages.map((row) => row.ID)).size !==
+          result.messages.length
       )
         return capacityFailure();
+      const grew = total !== null && result.messages_count > total;
+      highestTotal = result.messages_count;
+      for (const row of result.messages) knownIds.add(row.ID);
+      if (knownIds.size > highestTotal) return capacityFailure();
+      if (grew) return null;
       total = result.messages_count;
       ids.push(...result.messages.map((row) => row.ID));
       if (new Set(ids).size !== ids.length || ids.length > total)
         return capacityFailure();
-      if (ids.length === total) return ids;
+      if (ids.length === total) {
+        if ([...knownIds].some((value) => !ids.includes(value)))
+          return capacityFailure();
+        return ids;
+      }
       if (result.messages.length === 0) return capacityFailure();
       start = ids.length;
     }
@@ -130,7 +143,9 @@ export const createCapacityMailbox = (
     baseline: async () => {
       try {
         if (before !== null || closed) return capacityFailure();
-        before = new Set(await list());
+        const initial = await list();
+        if (initial === null) return capacityFailure();
+        before = new Set(initial);
         return new Set(before);
       } catch {
         return capacityFailure();
@@ -157,11 +172,11 @@ export const createCapacityMailbox = (
       try {
         if (isStopped()) return capacityFailure();
         for (;;) {
-          if (now() - began >= 30000) return capacityFailure();
+          if (now() - began >= 30000 || polls >= 30) return capacityFailure();
           combined.throwIfAborted();
           polls++;
           const ids = await Promise.race([observe(list), aborted]);
-          for (const messageId of ids) {
+          for (const messageId of ids ?? []) {
             if (baseline.has(messageId) || seen.has(messageId)) continue;
             const detail = z
               .object({
@@ -194,7 +209,7 @@ export const createCapacityMailbox = (
             observedAt.set(address, now());
             delivered = codes.size;
           }
-          if (codes.size === cohort.recipients.length) {
+          if (ids !== null && codes.size === cohort.recipients.length) {
             if (isStopped() || now() - began >= 30000) return capacityFailure();
             return codes;
           }
