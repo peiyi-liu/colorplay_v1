@@ -1,9 +1,15 @@
 import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { z } from 'zod';
+import {
+  hostedTargetSchema,
+  hostedPredecessorSchema,
+  hostedSourceProofSchema,
+  trustedHostedSourceProofSchema,
+  assertHostedSourceProof,
+} from './hosted-provenance';
 
 const sha = z.string().regex(/^[a-f0-9]{64}$/u);
-const revision = z.string().regex(/^[a-f0-9]{40}$/u);
 const utc = z.iso.datetime({ offset: true }).max(40);
 const marker = z.string().regex(/^[a-z][a-z0-9-]{7,79}$/u);
 const alias = z.string().regex(/^[A-Z][A-Z0-9_]{0,23}$/u);
@@ -12,20 +18,7 @@ const actor = z
   .strict();
 const teacher = z.object({ alias, role: z.literal('teacher') }).strict();
 const outsider = z.object({ alias, role: z.literal('student') }).strict();
-const fingerprints = z
-  .object({ artifactSha256: sha, publicKeySha256: sha, serviceKeySha256: sha })
-  .strict();
-const target = z
-  .object({
-    environment: z.literal('staging'),
-    projectRef: z.literal('onkxnkzeixpezetkmocf'),
-    supabaseOrigin: z.literal('https://onkxnkzeixpezetkmocf.supabase.co'),
-    appOrigin: z.literal('https://staging.colorplayapp.com'),
-    sourceRevision: revision,
-    webRevision: revision,
-    fingerprints,
-  })
-  .strict();
+const target = hostedTargetSchema;
 const scopeSchema = target
   .extend({
     runId: marker,
@@ -51,15 +44,7 @@ const scopeSchema = target
     cumulativeFixtureCount: z.number().int().min(0).max(1000),
   })
   .strict();
-const predecessor = z
-  .object({
-    candidateRevision: revision,
-    localFunctionalResultSha256: sha,
-    localFunctionalCloseSha256: sha,
-    localCapacityManifestSha256: sha,
-    localCapacityChainSha256: sha,
-  })
-  .strict();
+const predecessor = hostedPredecessorSchema;
 const runIdentity = z
   .object({
     runId: marker,
@@ -107,6 +92,7 @@ const approvalSchema = z
     dataPolicy: policy,
     mail: mail.nullable(),
     predecessor,
+    sourceProof: hostedSourceProofSchema,
     rootRun: runIdentity,
   })
   .strict();
@@ -115,6 +101,7 @@ const trustedSchema = z
     approvalBytes: z.string().min(1).max(131072),
     expectedApprovalSha256: sha,
     nowUtc: utc,
+    sourceProof: trustedHostedSourceProofSchema,
     observed: target.extend({ observedAtUtc: utc }).strict(),
     predecessorAuthorization: predecessor
       .extend({ checkedAtUtc: utc })
@@ -135,6 +122,10 @@ export interface ValidatedHostedConfig {
   readonly dataPolicy: DeepReadonly<z.infer<typeof policy>>;
   readonly window: Readonly<{ notBefore: string; expiresAt: string }>;
   readonly approvalSha256: string;
+  readonly predecessor: DeepReadonly<z.infer<typeof predecessor>>;
+  readonly sourceProvenance: DeepReadonly<
+    z.infer<typeof hostedSourceProofSchema>
+  >;
   readonly executionAuthority: 'NONE';
   readonly runReservation: 'REQUIRED_BEFORE_EFFECT';
   readonly remoteFreshness: 'ROOT_OPERATOR_REQUIRED';
@@ -237,10 +228,7 @@ export const validateHostedConfig = (
       reject();
     const { checkedAtUtc, ...authorizedPredecessor } =
       trusted.predecessorAuthorization;
-    if (
-      !isDeepStrictEqual(authorizedPredecessor, approval.predecessor) ||
-      authorizedPredecessor.candidateRevision !== scope.sourceRevision
-    )
+    if (!isDeepStrictEqual(authorizedPredecessor, approval.predecessor))
       reject();
     const { state, ...run } = trusted.runIdentity;
     if (
@@ -265,6 +253,14 @@ export const validateHostedConfig = (
       timestamp(checkedAtUtc) > now
     )
       reject();
+    assertHostedSourceProof(
+      approval.sourceProof,
+      trusted.sourceProof,
+      observed,
+      authorizedPredecessor,
+      approval.window,
+      trusted.nowUtc,
+    );
     assertActors(scope);
     if (
       scope.cumulativeFixtureCount >
@@ -292,6 +288,8 @@ export const validateHostedConfig = (
         expiresAt: new Date(until).toISOString(),
       },
       approvalSha256: actualSha,
+      predecessor: approval.predecessor,
+      sourceProvenance: approval.sourceProof,
       executionAuthority: 'NONE',
       runReservation: 'REQUIRED_BEFORE_EFFECT',
       remoteFreshness: 'ROOT_OPERATOR_REQUIRED',
