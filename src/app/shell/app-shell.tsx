@@ -293,6 +293,28 @@ export function AppShell() {
     }
   }, [reducedMotion]);
 
+  // Recovery validates its own session while Auth/profile settle. One public
+  // Outlet parent preserves the form's in-memory values throughout this route.
+  if (location.pathname === '/reset-password') {
+    return (
+      <div className="game-viewport">
+        <div className="game-stage" data-shell-role="public">
+          <EnvironmentMarker />
+          <a className="skip-link" href="#main-content">
+            跳到主要內容
+          </a>
+          <RouteWorldStage
+            reducedMotion={reducedMotion}
+            scene="public-route"
+            transitionKey={location.pathname}
+          >
+            <Outlet />
+          </RouteWorldStage>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="game-viewport">
       <div className="game-stage" data-shell-role={shellRole}>
