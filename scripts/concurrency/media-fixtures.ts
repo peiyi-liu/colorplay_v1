@@ -48,22 +48,31 @@ export const buildMediaFixtures = (
 ) => {
   if (!/^[a-zA-Z0-9_.-]{1,120}$/u.test(subtopicCode))
     return fail('FUNCTIONAL_SCOPE_INVALID');
-  const images = (['single', 'zip1', 'zip2', 'cancel'] as const).map(
-    (slot, index) => {
-      const buffer = deterministicPng(index + 1);
-      return {
-        slot,
-        name: `${scope.runId}-${slot}.png`,
-        mimeType: 'image/png',
-        buffer,
-      };
-    },
-  );
+  const images = (
+    [
+      'single',
+      'zip1',
+      'zip2',
+      'cancel',
+      'single-recovery',
+      'single-cancel',
+    ] as const
+  ).map((slot, index) => {
+    const buffer = deterministicPng(index + 1);
+    return {
+      slot,
+      name: `${scope.runId}-${slot}.png`,
+      mimeType: 'image/png',
+      buffer,
+    };
+  });
   const sources: OwnedMediaSource[] = images.map((image) => ({
     slot: image.slot,
     filename: image.name,
     bytes: image.buffer.length,
     sha256: createHash('sha256').update(image.buffer).digest('hex'),
+    semanticRole:
+      image.slot === 'single-recovery' ? 'color_critical' : 'standard',
   }));
   const codes = [`${scope.runId}-rc1`, `${scope.runId}-rc2`];
   const rc = [

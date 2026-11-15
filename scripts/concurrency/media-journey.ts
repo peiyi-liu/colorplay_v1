@@ -169,6 +169,60 @@ export const runMediaJourney = async (
         page.locator('code').filter({ hasText: /^content-media:/u }),
       ).toHaveCount(1);
       policy.assertSlot('single');
+      const recovering = fixture.images.find(
+        (image) => image.slot === 'single-recovery',
+      );
+      const cancelling = fixture.images.find(
+        (image) => image.slot === 'single-cancel',
+      );
+      if (!recovering || !cancelling)
+        return fail('FUNCTIONAL_OPERATION_FAILED');
+      await page
+        .getByLabel('圖片用途', { exact: true })
+        .selectOption('color_critical');
+      await page
+        .getByLabel('圖片檔案', { exact: true })
+        .setInputFiles(recovering);
+      await page
+        .getByLabel('替代文字', { exact: true })
+        .fill('Local合成恢復圖片');
+      await page.getByRole('button', { name: '插入圖片', exact: true }).click();
+      await expect(page.getByRole('alert')).toContainText(
+        '圖片處理結果尚未確認',
+      );
+      await expect(page.getByLabel('圖片檔案', { exact: true })).toBeDisabled();
+      await expect(page.getByLabel('圖片用途', { exact: true })).toBeDisabled();
+      await page
+        .getByRole('button', { name: '確認並恢復處理', exact: true })
+        .click();
+      await expect(
+        page.locator('code').filter({ hasText: /^content-media:/u }),
+      ).toHaveCount(2);
+      policy.assertSlot('single-recovery');
+      await page
+        .getByLabel('圖片用途', { exact: true })
+        .selectOption('standard');
+      await page
+        .getByLabel('圖片檔案', { exact: true })
+        .setInputFiles(cancelling);
+      await page
+        .getByLabel('替代文字', { exact: true })
+        .fill('Local合成取消圖片');
+      await page.getByRole('button', { name: '插入圖片', exact: true }).click();
+      await expect(page.getByRole('alert')).toContainText(
+        '圖片處理結果尚未確認',
+      );
+      await page
+        .getByRole('button', { name: '取消這次上傳', exact: true })
+        .click();
+      await expect(page.getByLabel('圖片檔案', { exact: true })).toBeEnabled();
+      await expect(page.getByLabel('圖片檔案', { exact: true })).toHaveValue(
+        '',
+      );
+      await expect(
+        page.locator('code').filter({ hasText: /^content-media:/u }),
+      ).toHaveCount(2);
+      policy.assertSlot('single-cancel');
       await leaveUnsavedMediaEditor(page, () =>
         page.getByRole('button', { name: '外部匯入', exact: true }).click(),
       );
@@ -264,17 +318,18 @@ export const runMediaJourney = async (
       ).toBeEnabled();
       policy.assertSlot('cancel');
       const runs = policy.privateEntries().map((entry) => {
-        if (!entry.runId || (entry.slot !== 'cancel' && !entry.asset))
+        if (!entry.runId || (!entry.aborted && !entry.asset))
           return fail('FUNCTIONAL_OWNERSHIP_INVALID');
         return {
           slot: entry.slot,
           runId: entry.runId,
           requestId: entry.requestId,
           authSessionId,
-          expectedStatus:
-            entry.slot === 'cancel'
-              ? ('aborted' as const)
-              : ('verified' as const),
+          expectedStatus: entry.aborted
+            ? ('aborted' as const)
+            : ('verified' as const),
+          semanticRole: entry.semanticRole,
+          sourceSha256: entry.sourceSha256,
           receipt: entry.asset,
         };
       });
@@ -288,11 +343,13 @@ export const runMediaJourney = async (
         runs,
         draftIds: drafts.map((draft) => draft.draftId),
         expected: {
-          verifiedRuns: 3,
-          abortedRuns: 1,
-          assets: 3,
+          verifiedRuns: runs.filter((run) => run.expectedStatus === 'verified')
+            .length,
+          abortedRuns: runs.filter((run) => run.expectedStatus === 'aborted')
+            .length,
+          assets: runs.filter((run) => run.receipt !== null).length,
           variants: expectedVariants,
-          masterObjects: 3,
+          masterObjects: runs.filter((run) => run.receipt !== null).length,
           variantObjects: expectedVariants,
           quarantineObjects: 0,
         },
@@ -305,7 +362,10 @@ export const runMediaJourney = async (
         cancelInjection: 'OWNED_PROCESS_PRE_SEND_DROP' as const,
         singleSavedDraft: false,
         retainedDrafts: 2,
-        retainedAssets: 3,
+        retainedAssets: input.expected.assets,
+        singleRecoveryRole: 'color_critical' as const,
+        singleInjection:
+          'OWNED_SINGLE_PROCESS_POST_VERIFIED_RESPONSE_DROP' as const,
         sources: policy.snapshot(),
         readback,
       };

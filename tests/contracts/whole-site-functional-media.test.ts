@@ -53,7 +53,7 @@ const setup = async () => {
       const req = request({
         action: 'begin',
         ...input,
-        semanticRole: 'standard',
+        semanticRole: input.semanticRole,
         sourceMimeType: 'image/png',
       });
       expect(await policy.hooks.beforeSend?.(req)).toBe('send');
@@ -67,11 +67,14 @@ const setup = async () => {
         asset_id: randomUUID(),
         source_sha256: source.sha256,
         manifest_sha256: 'a'.repeat(64),
-        semantic_role: 'standard' as const,
+        semantic_role: input.semanticRole,
         width: 64,
         height: 64,
         has_alpha: false,
-        variants: (['thumbnail', 'reading'] as const).map((kind) => ({
+        variants: (input.semanticRole === 'color_critical'
+          ? (['thumbnail', 'reading', 'color_critical'] as const)
+          : (['thumbnail', 'reading'] as const)
+        ).map((kind) => ({
           kind,
           width: 64,
           height: 64,
@@ -241,6 +244,67 @@ describe('functional media uses real repository and ZIP contracts', () => {
         requestId,
         runId: h.entries.get(requestId)?.runId,
       });
+    } finally {
+      h.untrack();
+    }
+  });
+  it('accounts for all six owned sources and the actual color-critical three-variant receipt', async () => {
+    const h = await setup();
+    try {
+      for (const slot of [
+        'single',
+        'single-recovery',
+        'single-cancel',
+        'zip1',
+        'zip2',
+        'cancel',
+      ] as const) {
+        const image = h.fixture.images.find((row) => row.slot === slot);
+        const source = h.fixture.sources.find((row) => row.slot === slot);
+        if (!image || !source) throw new Error('SYNTHETIC_MISSING');
+        const requestId = randomUUID();
+        const operation = h.repo.uploadAndProcess({
+          file: asFile(image),
+          requestId,
+          semanticRole: source.semanticRole,
+        });
+        if (
+          slot === 'single-recovery' ||
+          slot === 'zip2' ||
+          slot === 'single-cancel' ||
+          slot === 'cancel'
+        ) {
+          await expect(operation).rejects.toMatchObject({
+            code: 'CONTENT_MEDIA_PENDING',
+          });
+          if (slot === 'single-cancel' || slot === 'cancel')
+            await h.repo.cancel(requestId);
+          else await h.repo.recover(requestId);
+        } else await operation;
+        h.policy.assertSlot(slot);
+      }
+      const runs = h.policy.privateEntries();
+      expect(runs).toHaveLength(6);
+      expect(runs.filter((row) => row.asset)).toHaveLength(4);
+      expect(runs.filter((row) => row.aborted)).toHaveLength(2);
+      expect(
+        runs.reduce(
+          (count, run) => count + (run.asset?.variants.length ?? 0),
+          0,
+        ),
+      ).toBe(9);
+      const critical = runs.find((row) => row.slot === 'single-recovery');
+      expect(critical).toMatchObject({
+        semanticRole: 'color_critical',
+        asset: { semantic_role: 'color_critical' },
+      });
+      expect(
+        critical?.asset?.variants.map((variant) => variant.kind),
+      ).toContain('color_critical');
+      const names = h.writes.map((row) => row.name);
+      expect(new Set(names).size).toBe(names.length);
+      expect(names).toContain('media-single-cancel-confirmed');
+      expect(names).toContain('media-cancel-confirmed');
     } finally {
       h.untrack();
     }

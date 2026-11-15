@@ -10,7 +10,7 @@ export const mediaRequestSchema = z.discriminatedUnion('action', [
   z.strictObject({
     action: z.literal('begin'),
     requestId: z.uuid(),
-    semanticRole: z.literal('standard'),
+    semanticRole: z.enum(['standard', 'color_critical']),
     sourceFilename: z.string().min(1).max(180),
     sourceBytes: z.number().int().positive().max(2_097_152),
     sourceMimeType: z.literal('image/png'),

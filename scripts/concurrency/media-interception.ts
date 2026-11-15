@@ -7,12 +7,18 @@ import type {
   MediaHttpRequest,
   MediaHttpResponse,
 } from './media-http-contract';
-export type MediaSlot = 'single' | 'zip1' | 'zip2' | 'cancel';
+export type MediaSlot =
+  'single' | 'zip1' | 'zip2' | 'cancel' | 'single-recovery' | 'single-cancel';
+const isCancel = (slot: MediaSlot) =>
+  slot === 'cancel' || slot === 'single-cancel';
+const isRecovery = (slot: MediaSlot) =>
+  slot === 'zip2' || slot === 'single-recovery';
 export interface OwnedMediaSource {
   slot: MediaSlot;
   filename: string;
   bytes: number;
   sha256: string;
+  semanticRole: 'standard' | 'color_critical';
 }
 interface Entry {
   source: OwnedMediaSource;
@@ -61,10 +67,14 @@ export const createMediaInterception = (
         const source = sources.find(
           (item) =>
             item.filename === request.sourceFilename &&
-            item.filename.startsWith(`${scope.runId}-`) &&
-            item.bytes === request.sourceBytes,
+            item.filename.startsWith(`${scope.runId}-`),
         );
         if (!source) return 'send';
+        if (
+          source.bytes !== request.sourceBytes ||
+          source.semanticRole !== request.semanticRole
+        )
+          return fail('FUNCTIONAL_OWNERSHIP_INVALID');
         if (entries.has(source.slot))
           return unknown(
             entries.get(source.slot) ?? fail('FUNCTIONAL_OPERATION_FAILED'),
@@ -98,10 +108,10 @@ export const createMediaInterception = (
         entry.abort++;
         return 'send';
       }
-      if (entry.source.slot === 'cancel') {
+      if (isCancel(entry.source.slot)) {
         if (entry.preDrop || entry.asset) return unknown(entry);
         entry.preDrop++;
-        await journal.write('media-cancel-presend-drop', {
+        await journal.write(`media-${entry.source.slot}-presend-drop`, {
           runId: entry.runId,
           requestId: entry.requestId,
           mode: 'OWNED_PROCESS_PRE_SEND_DROP',
@@ -135,25 +145,31 @@ export const createMediaInterception = (
       }
       if (response.runId !== entry.runId) return unknown(entry);
       if (request.action === 'abort') {
-        if (entry.source.slot !== 'cancel' || entry.asset || entry.abort !== 1)
+        if (!isCancel(entry.source.slot) || entry.asset || entry.abort !== 1)
           return unknown(entry);
         entry.aborted = true;
-        await journal.write('media-cancel-confirmed', {
+        await journal.write(`media-${entry.source.slot}-confirmed`, {
           runId: entry.runId,
           requestId: entry.requestId,
         });
         return 'deliver';
       }
       const asset = response.asset;
+      const expectedKinds =
+        entry.source.semanticRole === 'color_critical'
+          ? ['thumbnail', 'reading', 'color_critical']
+          : ['thumbnail', 'reading'];
       if (
         asset?.source_sha256 !== entry.source.sha256 ||
-        asset.semantic_role !== 'standard' ||
+        asset.semantic_role !== entry.source.semanticRole ||
         asset.width !== 64 ||
         asset.height !== 64 ||
-        asset.variants.length !== 2 ||
-        new Set(asset.variants.map((item) => item.kind)).size !== 2 ||
-        !asset.variants.some((item) => item.kind === 'thumbnail') ||
-        !asset.variants.some((item) => item.kind === 'reading')
+        asset.variants.length !== expectedKinds.length ||
+        new Set(asset.variants.map((item) => item.kind)).size !==
+          expectedKinds.length ||
+        !expectedKinds.every((kind) =>
+          asset.variants.some((item) => item.kind === kind),
+        )
       )
         return unknown(entry);
       if (entry.asset && JSON.stringify(entry.asset) !== JSON.stringify(asset))
@@ -163,13 +179,16 @@ export const createMediaInterception = (
         `media-${entry.source.slot}-verified-${String(entry.process)}`,
         { actorId, runId: entry.runId, requestId: entry.requestId, asset },
       );
-      if (entry.source.slot === 'zip2' && entry.process === 1) {
-        if (!entries.get('zip1')?.asset || entry.postDrop)
+      if (isRecovery(entry.source.slot) && entry.process === 1) {
+        if (
+          (entry.source.slot === 'zip2' && !entries.get('zip1')?.asset) ||
+          entry.postDrop
+        )
           return unknown(entry);
         entry.postDrop++;
         return 'drop';
       }
-      if (entry.source.slot === 'zip2' && entry.process !== 2)
+      if (isRecovery(entry.source.slot) && entry.process !== 2)
         return unknown(entry);
       return 'deliver';
     },
@@ -220,7 +239,7 @@ export const createMediaInterception = (
     const entry = entries.get(slot);
     if (!entry || entry.unknown || entry.begin !== 1 || entry.uploads !== 1)
       return fail('FUNCTIONAL_OPERATION_FAILED');
-    if (slot === 'cancel') {
+    if (isCancel(slot)) {
       if (
         !entry.aborted ||
         entry.asset ||
@@ -230,8 +249,8 @@ export const createMediaInterception = (
         return fail('FUNCTIONAL_OPERATION_FAILED');
     } else if (
       !entry.asset ||
-      entry.process !== (slot === 'zip2' ? 2 : 1) ||
-      (slot === 'zip2' && entry.postDrop !== 1)
+      entry.process !== (isRecovery(slot) ? 2 : 1) ||
+      (isRecovery(slot) && entry.postDrop !== 1)
     )
       return fail('FUNCTIONAL_OPERATION_FAILED');
   };
@@ -246,6 +265,9 @@ export const createMediaInterception = (
         runId: entry.runId,
         requestId: entry.requestId,
         asset: entry.asset,
+        aborted: entry.aborted,
+        semanticRole: entry.source.semanticRole,
+        sourceSha256: entry.source.sha256,
       })),
   };
 };

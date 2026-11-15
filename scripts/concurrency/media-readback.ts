@@ -7,6 +7,8 @@ export interface OwnedMediaReadbackRun {
   requestId: string;
   authSessionId: string;
   expectedStatus: 'verified' | 'aborted';
+  semanticRole: 'standard' | 'color_critical';
+  sourceSha256: string;
   // Includes source/manifest and each variant's exact SHA256, dimensions and bytes.
   receipt: NonNullable<MediaHttpResponse['asset']> | null;
 }
