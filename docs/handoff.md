@@ -2185,3 +2185,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - Base425af2f，exact21source/test；worker69files836tests／fullchecks綠，Root12files167tests與8actualexport controls綠，Standards0／Spec0／ProductSecurity0，一輪無finding。最大496行；13file closure／fresh challenge／Linux獨立--approve／真backend collector與Mac舊形狀接線完成task級。
 - Workerpacket5001aed57551a1c230dbaeae27e4f2066fc009d201bdef98bba184582f8ae213／Rootsummaryc1dfebe18ffbefc02dc084396cc2553a8b6e9b78ae5098a580044a9c6c9de808。逐hash核61logs／11protected／Rootdocs。Root新增review並記pure fixture helper extension，稍後精確stage/commit；真13helpers／kernel／physicalclose／60人／Hosted仍NOT_RUN，0付費資源，G8/85containers保留。
+
+
+### 2026-11-16 — Linux M3 export 唯一review ACCEPTED，真 age 合成 roundtrip通過
+
+- Exact2files439/301行，worker16tests0.341s/fullchecks綠／29logs hashverified；Root唯一一輪Standards0/Spec0/ProductSecurity不適用/工具未解0，獨立16tests0.422s＋6actual export controls綠。Packetc2eb872b172493accffed1bc887302e1e1c8b7b38cd8d5a246960c422c108f55；Rootactualcontrols35e1cd3eafdf9edb57c9f8c13198841de686df504f83d2b2324173dedcdb0a56。真本機age adapter加解密／3檔與原manifest逐bytes核對、未列檔缺席、tamper拒絕不抽取；私鑰未輸出／上傳，非真Linux或DB留存證據。
+- Manifest獨立批准、strict Local與安全路徑/owner-mode/inode/hash、wx、120s/2GiB/100MiB、failure owned child回收；結果僅CIPHER_ARCHIVE_CREATED/retention UNVERIFIED。Root另已離線port7 business helpers/2publishers與outside-cgroup monitor草稿，32pure/tempFS/Darwin拒絕checks綠；真Linux/kernel/cgroup calibration/bootstrap仍待，不能當60人PASS。
+- 原G8 functionalPASS249.524s與3/10容量PASS/20INCONCLUSIVE不重標，85containers/資料保留停機；0雲端資源/費用/Hosted寫入寄信/Gmail內容讀/push/PR/merge/deploy。新DO帳號有付款方式/$5且兩查區64GB unavailable的觀察另記，未啟用計費。
