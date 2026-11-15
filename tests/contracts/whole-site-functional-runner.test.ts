@@ -2,6 +2,9 @@ import { chromium, type Browser, type BrowserContext } from '@playwright/test';
 import * as browserRuntime from '../../scripts/concurrency/browser-runtime';
 import { createActualFunctionalPorts } from '../../scripts/concurrency/functional-journeys';
 import type { FunctionalRuntime } from '../../scripts/concurrency/functional-runtime';
+import * as functionalRuntime from '../../scripts/concurrency/functional-runtime';
+import * as functionalJourneys from '../../scripts/concurrency/functional-journeys';
+import { functionalMain } from '../../scripts/concurrency/run-functional';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   runFunctional,
@@ -9,6 +12,8 @@ import {
 } from '../../scripts/concurrency/functional-runner';
 import {
   functionalStages,
+  functionalCandidateSchema,
+  functionalReceiptSchema,
   requiredProofs,
 } from '../../scripts/concurrency/functional-receipt';
 import { syntheticSecrets, readyScope } from './helpers/whole-site-functional';
@@ -147,6 +152,71 @@ describe('whole-site complete runner with fake ports only', () => {
     });
     expect(h.writes.length).toBeGreaterThan(functionalStages.length);
   });
+  it('publishes only a strict pending candidate matching successful stdout data, never a private main receipt', async () => {
+    const h = await harness();
+    const writes: { name: string; value: unknown }[] = [];
+    h.ports.journal.write = (name, value) => {
+      writes.push({ name, value });
+      return Promise.resolve();
+    };
+    vi.spyOn(functionalRuntime, 'loadFunctionalRuntime').mockResolvedValueOnce({
+      scope: h.scope,
+      secrets: syntheticSecrets,
+      artifactSha256: 'a'.repeat(64),
+      journal: h.ports.journal,
+      preflight: () => Promise.resolve(h.scope),
+      canonicalBaseline: () => Promise.resolve(undefined),
+      mediaOracle: () => Promise.reject(new Error('SYNTHETIC_NOT_USED')),
+    });
+    vi.spyOn(
+      functionalJourneys,
+      'createActualFunctionalPorts',
+    ).mockReturnValueOnce(h.ports);
+    const stdout: string[] = [];
+    vi.spyOn(process.stdout, 'write').mockImplementation((chunk) => {
+      stdout.push(String(chunk));
+      return true;
+    });
+    expect(
+      await functionalMain([
+        '--request',
+        'SYNTHETIC_APPROVED_REQUEST',
+        '--approval-sha256',
+        'a'.repeat(64),
+      ]),
+    ).toBe(0);
+    const result = functionalReceiptSchema.parse(JSON.parse(stdout.join('')));
+    expect(result.result).toBe('PASS');
+    expect(writes.some(({ name }) => name === 'functional-result')).toBe(false);
+    const candidate = functionalCandidateSchema.parse(
+      writes.find(({ name }) => name === 'functional-result-candidate')?.value,
+    );
+    expect(candidate.result).toBe('PENDING_EXTERNAL_ATTESTATION');
+    expect(candidate.receipt).toEqual(
+      Object.fromEntries(
+        Object.entries(result).filter(([key]) => key !== 'result'),
+      ),
+    );
+    expect(
+      functionalCandidateSchema.safeParse({
+        ...candidate,
+        receipt: { ...candidate.receipt, result: 'PASS' },
+      }).success,
+    ).toBe(false);
+    expect(
+      functionalCandidateSchema.safeParse({
+        ...candidate,
+        receipt: {
+          ...candidate.receipt,
+          stages: candidate.receipt.stages.map((row, index) =>
+            index === 0
+              ? { ...row, proof: { ...row.proof, raw: 'SYNTHETIC_SECRET' } }
+              : row,
+          ),
+        },
+      }).success,
+    ).toBe(false);
+  });
   it('a failed preflight or absent root oracle performs zero stage mutations', async () => {
     const h = await harness();
     h.ports.preflight = () => Promise.reject(new Error('SYNTHETIC_SECRET'));
@@ -219,6 +289,44 @@ describe('whole-site complete runner with fake ports only', () => {
     expect(result.result).toBe('FAIL');
     expect(result.failureStage).toBe('fixture_setup');
     expect(h.order).toEqual(['canonical', 'canonical_baseline']);
+  });
+  it('a serialized final write arriving after deadline never leaves an authoritative PASS', async () => {
+    vi.useFakeTimers();
+    const h = await harness();
+    let release: () => void = () => undefined;
+    const persisted: { name: string; serialized: string }[] = [];
+    h.ports.journal.write = (name, value) => {
+      if (!name.startsWith('functional-result')) return Promise.resolve();
+      const serialized = JSON.stringify(value);
+      return new Promise<void>((resolve) => {
+        release = () => {
+          persisted.push({ name, serialized });
+          resolve();
+        };
+      });
+    };
+    const pending = runFunctional(h.ports);
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect((await pending).result).toBe('INCONCLUSIVE');
+    release();
+    await Promise.resolve();
+    expect(persisted).toHaveLength(1);
+    expect(persisted[0]?.name).toBe('functional-result-candidate');
+    expect(persisted[0]?.serialized).not.toContain('"PASS"');
+    expect(JSON.parse(persisted[0]?.serialized ?? '{}')).toMatchObject({
+      result: 'PENDING_EXTERNAL_ATTESTATION',
+    });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('rechecks the same cleanup deadline after persistence completes before returning a verdict', async () => {
+    const h = await harness();
+    let now = 0;
+    h.ports.now = () => now;
+    h.ports.journal.write = (name) => {
+      if (name.startsWith('functional-result')) now = 30_001;
+      return Promise.resolve();
+    };
+    expect((await runFunctional(h.ports)).result).toBe('INCONCLUSIVE');
   });
   it('observes abort and late task completion without publishing a late success', async () => {
     vi.useFakeTimers();

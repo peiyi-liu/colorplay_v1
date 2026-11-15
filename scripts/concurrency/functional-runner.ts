@@ -5,6 +5,7 @@ import { requireFunctionalReady } from './local-runtime';
 import type { PrivateJournal } from './private-journal';
 import {
   finishFunctionalReceipt,
+  functionalCandidateSchema,
   functionalStages,
   newFunctionalReceipt,
   validateStageProof,
@@ -181,6 +182,13 @@ export const runFunctional = async (ports: FunctionalRunPorts) => {
   }
   if (receipt.cleanup.status !== 'verified') receipt.failureStage ??= 'cleanup';
   let final = finishFunctionalReceipt(receipt);
+  const candidate = functionalCandidateSchema.parse({
+    schemaVersion: 1,
+    result: 'PENDING_EXTERNAL_ATTESTATION',
+    receipt: Object.fromEntries(
+      Object.entries(final).filter(([key]) => key !== 'result'),
+    ),
+  });
   try {
     if (cleanupDeadline <= now()) {
       final = {
@@ -191,11 +199,15 @@ export const runFunctional = async (ports: FunctionalRunPorts) => {
     } else if (
       !(
         await boundedStop(
-          observe(() => ports.journal.write('functional-result', final)),
+          observe(() =>
+            ports.journal.write('functional-result-candidate', candidate),
+          ),
           cleanupDeadline - now(),
         )
       ).done
     )
+      final = { ...final, result: 'INCONCLUSIVE', failureStage: 'cleanup' };
+    if (cleanupDeadline <= now())
       final = { ...final, result: 'INCONCLUSIVE', failureStage: 'cleanup' };
   } catch {
     final = { ...final, result: 'FAIL', failureStage: 'cleanup' };

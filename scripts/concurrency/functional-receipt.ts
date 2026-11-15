@@ -127,6 +127,13 @@ export const functionalReceiptSchema = z.strictObject({
   phaseAcceptance: z.literal(false),
 });
 export type FunctionalReceipt = z.infer<typeof functionalReceiptSchema>;
+// Only the external publisher may attest a final verdict after process close.
+export const functionalCandidateSchema = z.strictObject({
+  schemaVersion: z.literal(1),
+  result: z.literal('PENDING_EXTERNAL_ATTESTATION'),
+  receipt: functionalReceiptSchema.omit({ result: true }),
+});
+export type FunctionalCandidate = z.infer<typeof functionalCandidateSchema>;
 export const newFunctionalReceipt = (
   scope: FunctionalScope,
   artifactSha256: string,
