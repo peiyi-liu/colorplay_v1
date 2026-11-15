@@ -1,3 +1,4 @@
+import { readOwnFunctionalAuthCode } from './functional-auth-code';
 import type { Page, Response } from '@playwright/test';
 import { fail, type FunctionalScope } from './config';
 
@@ -55,17 +56,5 @@ export const assertRevokedRefresh = async (
   if (!response || ![400, 401, 403].includes(response.status()))
     return fail('FUNCTIONAL_AUTH_FAILED');
   const data: unknown = await response.json().catch(() => null);
-  if (typeof data !== 'object' || data === null)
-    return fail('FUNCTIONAL_AUTH_FAILED');
-  const code = Object.getOwnPropertyDescriptor(data, 'error_code');
-  const value: unknown = code?.value;
-  if (
-    typeof value !== 'string' ||
-    ![
-      'refresh_token_not_found',
-      'refresh_token_already_used',
-      'session_not_found',
-    ].includes(value)
-  )
-    return fail('FUNCTIONAL_AUTH_FAILED');
+  if (!readOwnFunctionalAuthCode(data)) return fail('FUNCTIONAL_AUTH_FAILED');
 };

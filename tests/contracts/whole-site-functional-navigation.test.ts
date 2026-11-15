@@ -3,13 +3,6 @@ import type { Browser, Page } from '@playwright/test';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFunctionalContext } from '../../scripts/concurrency/browser-runtime';
 import { syntheticScope } from './helpers/whole-site-functional';
-const deferred = () => {
-  let resolve: () => void = () => undefined;
-  const promise = new Promise<void>((done) => {
-    resolve = done;
-  });
-  return { promise, resolve };
-};
 const setup = async () => {
   const events: string[] = [];
   const signal = new AbortController();
@@ -58,36 +51,34 @@ afterEach(() => {
   vi.useRealTimers();
 });
 describe('intercepted functional navigation readiness keeps real Page identity', () => {
-  it('awaits previous document quiet/fonts and new quiet/fonts without replacing Page', async () => {
+  it('uses a fresh request quiet period despite already-resolved cached lifecycle', async () => {
+    vi.useFakeTimers();
     const h = await setup();
+    const pending = h.owned.goto('/teacher');
+    await vi.advanceTimersByTimeAsync(100);
+    const request = {};
+    h.page.emit('request', request);
+    await vi.advanceTimersByTimeAsync(600);
+    expect(h.originalGoto).not.toHaveBeenCalled();
+    h.page.emit('requestfinished', request);
+    await vi.advanceTimersByTimeAsync(499);
+    expect(h.originalGoto).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(h.originalGoto).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(500);
+    await pending;
     expect(h.owned).toBe(h.page);
-    await h.owned.goto('/teacher');
-    expect(h.events).toEqual([
-      'networkidle',
-      'fonts',
-      'networkidle',
-      'goto',
-      'networkidle',
-      'fonts',
-      'networkidle',
-    ]);
-    await h.owned.waitForURL(/teacher/u);
-    expect(h.events.slice(-4)).toEqual([
-      'url',
-      'networkidle',
-      'fonts',
-      'networkidle',
-    ]);
     await h.actual.close();
     expect(h.page.goto).toBe(h.originalGoto);
+    expect(vi.getTimerCount()).toBe(0);
   });
   it.each(['abort', 'close', 'timeout'] as const)(
     'does not navigate while old document is pending on %s',
     async (stop) => {
       vi.useFakeTimers();
-      const h = await setup(),
-        gate = deferred();
-      h.page.waitForLoadState.mockReturnValue(gate.promise);
+      const h = await setup();
+      const request = {};
+      h.page.emit('request', request);
       const pending = h.owned.goto('/teacher');
       const rejected = pending.then(
         () => false,
@@ -97,7 +88,7 @@ describe('intercepted functional navigation readiness keeps real Page identity',
       if (stop === 'close') h.page.emit('close');
       if (stop === 'timeout') await vi.advanceTimersByTimeAsync(15_000);
       expect(await rejected).toBe(true);
-      gate.resolve();
+      h.page.emit('requestfinished', request);
       await Promise.resolve();
       await Promise.resolve();
       expect(h.originalGoto).not.toHaveBeenCalled();
@@ -106,6 +97,41 @@ describe('intercepted functional navigation readiness keeps real Page identity',
       expect(vi.getTimerCount()).toBe(0);
     },
   );
+  it('activity during fonts requires another fresh quiet period', async () => {
+    vi.useFakeTimers();
+    const h = await setup();
+    const request = {};
+    h.page.evaluate.mockImplementationOnce(() => {
+      h.page.emit('request', request);
+      h.page.emit('requestfinished', request);
+      return Promise.resolve();
+    });
+    const pending = h.owned.goto('/teacher');
+    await vi.advanceTimersByTimeAsync(500);
+    expect(h.originalGoto).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(499);
+    expect(h.originalGoto).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(h.originalGoto).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(500);
+    await pending;
+    await h.actual.close();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('active-state overflow and context disposal fail closed', async () => {
+    vi.useFakeTimers();
+    const h = await setup();
+    for (let i = 0; i < 2001; i++) h.page.emit('request', {});
+    await expect(h.owned.goto('/teacher')).rejects.toThrow(
+      'FUNCTIONAL_BROWSER_FAILED',
+    );
+    expect(h.originalGoto).not.toHaveBeenCalled();
+    await h.actual.close();
+    expect(h.page.listenerCount('request')).toBe(0);
+    expect(h.page.listenerCount('requestfinished')).toBe(0);
+    expect(h.page.listenerCount('requestfailed')).toBe(0);
+    expect(vi.getTimerCount()).toBe(0);
+  });
   it('a failed fonts/readiness probe cannot become normal navigation or leak its exception', async () => {
     const h = await setup();
     h.page.evaluate.mockRejectedValue(new Error('SYNTHETIC_PRIVATE_MARKER'));

@@ -1,4 +1,8 @@
 import {
+  readOwnFunctionalAuthCode,
+  isFunctionalRevocationCode,
+} from './functional-auth-code';
+import {
   AuthSessionMissingError,
   isAuthSessionMissingError,
 } from '@supabase/supabase-js';
@@ -40,27 +44,7 @@ export const readFunctionalAuthCode = async (
     ? Buffer.from(response.body, 'base64').toString('utf8')
     : response.body;
   if (Buffer.byteLength(body) > 16384) return null;
-  const data = z
-    .object({
-      error_code: z.string().max(80).optional(),
-      code: z.union([z.string().max(80), z.number()]).optional(),
-    })
-    .parse(JSON.parse(body));
-  if (
-    typeof data.code === 'string' &&
-    data.error_code &&
-    data.code !== data.error_code
-  )
-    return null;
-  const code =
-    data.error_code ?? (typeof data.code === 'string' ? data.code : null);
-  return (
-    [
-      'session_not_found',
-      'refresh_token_not_found',
-      'refresh_token_already_used',
-    ].find((known) => known === code) ?? null
-  );
+  return readOwnFunctionalAuthCode(JSON.parse(body) as unknown);
 };
 interface PageState {
   index: number;
@@ -361,9 +345,4 @@ export const createFunctionalAuthHooks = (
 
 export const isFunctionalMissingSession = (error: unknown) =>
   error instanceof AuthSessionMissingError && isAuthSessionMissingError(error);
-export const isFunctionalRefreshCode = (code: string) =>
-  [
-    'refresh_token_not_found',
-    'refresh_token_already_used',
-    'session_not_found',
-  ].includes(code);
+export const isFunctionalRefreshCode = isFunctionalRevocationCode;

@@ -1,3 +1,11 @@
+import { freshFunctionalPreflightSchema } from '../../scripts/concurrency/functional-runtime';
+import { preflightFunctional } from '../../scripts/concurrency/local-runtime';
+import {
+  syntheticScope,
+  syntheticSecrets,
+  preflightPorts,
+  syntheticBaseline,
+} from './helpers/whole-site-functional';
 import { describe, expect, it } from 'vitest';
 import {
   functionalFailureCode,
@@ -51,4 +59,31 @@ describe('functional Local scope', () => {
       'FUNCTIONAL_OPERATION_FAILED',
     );
   });
+});
+
+describe('exact new migration121 baseline', () => {
+  it.each([120, 122])(
+    'rejects migration%i in both active guards',
+    async (migrations) => {
+      const baseline = { ...syntheticBaseline(), migrations };
+      const ports = {
+        ...preflightPorts(),
+        baseline: () => Promise.resolve(baseline),
+      };
+      await expect(
+        preflightFunctional(
+          syntheticScope(),
+          syntheticSecrets,
+          new AbortController().signal,
+          ports,
+        ),
+      ).rejects.toThrow('FUNCTIONAL_PREFLIGHT_FAILED');
+      expect(
+        freshFunctionalPreflightSchema.safeParse({
+          baseline,
+          databaseIdentity: 'synthetic',
+        }).success,
+      ).toBe(false);
+    },
+  );
 });

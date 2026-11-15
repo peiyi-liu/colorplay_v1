@@ -53,6 +53,18 @@ describe('controlled revoked-refresh observation', () => {
       }),
     ).resolves.toBeUndefined();
   });
+  it.each([
+    'refresh_token_not_found',
+    'refresh_token_already_used',
+    'session_not_found',
+  ])('accepts modern own code alias %s', async (code) => {
+    await expect(
+      assertRevokedRefresh({
+        status: () => 400,
+        json: () => Promise.resolve({ code }),
+      }),
+    ).resolves.toBeUndefined();
+  });
   it.each([null, 'invalid_credentials', 'SYNTHETIC_SECRET'])(
     'unknown/validation is not evidence of expiry %#',
     async (error_code) => {

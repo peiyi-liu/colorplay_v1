@@ -1,5 +1,5 @@
 import { performance } from 'node:perf_hooks';
-import type { BrowserContext, Page } from '@playwright/test';
+import type { BrowserContext, Page, Request } from '@playwright/test';
 import { fail } from './config';
 
 const sequences = new WeakMap<Page, number>();
@@ -25,6 +25,30 @@ export const installFunctionalNavigation = (
       busy = false,
       poisoned = false;
     let cancel: (() => void) | null = null;
+    const active = new Set<Request>();
+    const changed = new Set<() => void>(),
+      quietStops = new Set<() => void>();
+    let activity = 0;
+    const notify = () => {
+      activity++;
+      for (const listener of changed) listener();
+    };
+    const started = (request: Request) => {
+      if (active.size >= 2000 || active.has(request)) {
+        poisoned = true;
+        cancel?.();
+        return;
+      }
+      active.add(request);
+      notify();
+    };
+    const ended = (request: Request) => {
+      active.delete(request);
+      notify();
+    };
+    page.on('request', started);
+    page.on('requestfinished', ended);
+    page.on('requestfailed', ended);
     const check = () => {
       if (signal?.aborted) return fail('FUNCTIONAL_ABORTED');
       if (disposed || closed || poisoned || page.isClosed())
@@ -72,21 +96,55 @@ export const installFunctionalNavigation = (
         );
       } finally {
         clearTimeout(timer);
+        for (const stop of [...quietStops]) stop();
         if (cancel) signal?.removeEventListener('abort', cancel);
         cancel = null;
         busy = false;
       }
     };
-    const ready = async (remaining: () => number) => {
-      // PW's networkidle is event-driven 500ms quiescence, not active-count==0.
-      await page.waitForLoadState('networkidle', { timeout: remaining() });
-      remaining();
-      await page.evaluate(async () => {
-        await document.fonts.ready;
+    const quiet = (remaining: () => number) =>
+      new Promise<void>((resolve, reject) => {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        let settled = false;
+        const finish = (ok: boolean) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          changed.delete(update);
+          quietStops.delete(stop);
+          if (ok) resolve();
+          else reject(new Error('FUNCTIONAL_BROWSER_FAILED'));
+        };
+        const stop = () => {
+          finish(false);
+        };
+        const update = () => {
+          clearTimeout(timer);
+          try {
+            remaining();
+            if (!active.size)
+              timer = setTimeout(() => {
+                finish(true);
+              }, 500);
+          } catch {
+            finish(false);
+          }
+        };
+        changed.add(update);
+        quietStops.add(stop);
+        update();
       });
-      remaining();
-      await page.waitForLoadState('networkidle', { timeout: remaining() });
-      remaining();
+    const ready = async (remaining: () => number) => {
+      for (;;) {
+        await quiet(remaining);
+        remaining();
+        const observed = activity;
+        await page.evaluate(async () => {
+          await document.fonts.ready;
+        });
+        remaining();
+        if (!active.size && activity === observed) return;
+      }
     };
     page.goto = (url, options) =>
       within(options?.timeout ?? 15_000, async (remaining) => {
@@ -115,6 +173,12 @@ export const installFunctionalNavigation = (
     owned.set(page, () => {
       close();
       page.off('close', close);
+      page.off('request', started);
+      page.off('requestfinished', ended);
+      page.off('requestfailed', ended);
+      for (const stop of [...quietStops]) stop();
+      active.clear();
+      changed.clear();
       if (gotoDescriptor) Object.defineProperty(page, 'goto', gotoDescriptor);
       else Reflect.deleteProperty(page, 'goto');
       if (waitDescriptor)

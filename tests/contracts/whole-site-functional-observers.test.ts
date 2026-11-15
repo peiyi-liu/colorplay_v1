@@ -50,6 +50,7 @@ describe('functional Admin observers release listeners and safe outputs', () => 
       const received = response();
       page.emit('request', received.request());
       page.emit('response', received);
+      page.emit('requestfinished', received.request());
     });
     const result = await visitAdminRead(
       h.page as unknown as Page,
@@ -67,6 +68,7 @@ describe('functional Admin observers release listeners and safe outputs', () => 
       const received = response(503, { message: 'SYNTHETIC_SECRET' });
       page.emit('request', received.request());
       page.emit('response', received);
+      page.emit('requestfinished', received.request());
     });
     await expect(
       visitAdminRead(
@@ -81,16 +83,13 @@ describe('functional Admin observers release listeners and safe outputs', () => 
     expect(h.page.eventNames()).toHaveLength(0);
   });
   it('old pending/effect same-RPC responses during readiness cannot prove the new route read', async () => {
-    let release: () => void = () => undefined;
-    const oldPending = new Promise<void>((done) => {
-      release = done;
-    });
     const h = adminPage((page) => {
       const received = response(200, { outcome: 'ok', rows: [{}, {}] });
       page.emit('request', received.request());
       page.emit('response', received);
+      page.emit('requestfinished', received.request());
     });
-    h.page.waitForLoadState.mockReturnValueOnce(oldPending);
+
     let done = false;
     const pending = visitAdminRead(
       h.page as unknown as Page,
@@ -108,7 +107,7 @@ describe('functional Admin observers release listeners and safe outputs', () => 
     await Promise.resolve();
     await Promise.resolve();
     expect(done).toBe(false);
-    release();
+    h.page.emit('requestfinished', old.request());
     expect(await pending).toEqual({ status: 200, rowCount: 2 });
     h.dispose();
     expect(h.page.eventNames()).toHaveLength(0);

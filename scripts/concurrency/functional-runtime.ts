@@ -78,7 +78,7 @@ const ownedDirectory = async (path: string) => {
     return fail('FUNCTIONAL_OWNERSHIP_INVALID');
 };
 const baseline = z.strictObject({
-  migrations: z.literal(120),
+  migrations: z.literal(121),
   publicTables: z.literal(71),
   publicWithoutRls: z.literal(0),
   auth: z.literal(0),

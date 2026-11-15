@@ -248,13 +248,14 @@ describe('functional media uses real repository and ZIP contracts', () => {
       h.untrack();
     }
   });
-  it('accounts for all six owned sources and the actual color-critical three-variant receipt', async () => {
+  it('accounts for all seven owned sources and the actual color-critical three-variant receipt', async () => {
     const h = await setup();
     try {
       for (const slot of [
         'single',
         'single-recovery',
         'single-cancel',
+        'single-duplicate',
         'zip1',
         'zip2',
         'cancel',
@@ -284,15 +285,20 @@ describe('functional media uses real repository and ZIP contracts', () => {
         h.policy.assertSlot(slot);
       }
       const runs = h.policy.privateEntries();
-      expect(runs).toHaveLength(6);
-      expect(runs.filter((row) => row.asset)).toHaveLength(4);
+      expect(runs).toHaveLength(7);
+      expect(runs.filter((row) => row.asset)).toHaveLength(5);
       expect(runs.filter((row) => row.aborted)).toHaveLength(2);
       expect(
         runs.reduce(
           (count, run) => count + (run.asset?.variants.length ?? 0),
           0,
         ),
-      ).toBe(9);
+      ).toBe(11);
+      expect(h.policy.assertDuplicate()).toMatchObject({
+        distinctAssets: true,
+        equalSourceAndManifest: true,
+        originalReceiptUnchanged: true,
+      });
       const critical = runs.find((row) => row.slot === 'single-recovery');
       expect(critical).toMatchObject({
         semanticRole: 'color_critical',
@@ -309,6 +315,40 @@ describe('functional media uses real repository and ZIP contracts', () => {
       h.untrack();
     }
   });
+  it.each(['asset-id', 'manifest', 'source', 'first-mutation'] as const)(
+    'same-byte duplicate regression rejects %s corruption',
+    async (mode) => {
+      const h = await setup();
+      try {
+        for (const slot of ['single', 'single-duplicate'] as const) {
+          const image = h.fixture.images.find((row) => row.slot === slot);
+          if (!image) throw new Error('SYNTHETIC_MISSING');
+          await h.repo.uploadAndProcess({
+            file: asFile(image),
+            requestId: randomUUID(),
+            semanticRole: 'standard',
+          });
+        }
+        expect(h.policy.assertDuplicate().distinctAssets).toBe(true);
+        const first = h.policy
+          .privateEntries()
+          .find((row) => row.slot === 'single')?.asset;
+        const duplicate = h.policy
+          .privateEntries()
+          .find((row) => row.slot === 'single-duplicate')?.asset;
+        if (!first || !duplicate) throw new Error('SYNTHETIC_MISSING');
+        if (mode === 'asset-id') duplicate.asset_id = first.asset_id;
+        if (mode === 'manifest') duplicate.manifest_sha256 = 'f'.repeat(64);
+        if (mode === 'source') duplicate.source_sha256 = 'f'.repeat(64);
+        if (mode === 'first-mutation') first.width++;
+        expect(() => h.policy.assertDuplicate()).toThrow(
+          'FUNCTIONAL_OPERATION_FAILED',
+        );
+      } finally {
+        h.untrack();
+      }
+    },
+  );
   it('leaves wrong-run traffic untouched and cannot confirm an unbound receipt', async () => {
     const h = await setup();
     try {

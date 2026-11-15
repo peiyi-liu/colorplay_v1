@@ -8,7 +8,13 @@ import type {
   MediaHttpResponse,
 } from './media-http-contract';
 export type MediaSlot =
-  'single' | 'zip1' | 'zip2' | 'cancel' | 'single-recovery' | 'single-cancel';
+  | 'single'
+  | 'zip1'
+  | 'zip2'
+  | 'cancel'
+  | 'single-recovery'
+  | 'single-cancel'
+  | 'single-duplicate';
 const isCancel = (slot: MediaSlot) =>
   slot === 'cancel' || slot === 'single-cancel';
 const isRecovery = (slot: MediaSlot) =>
@@ -32,6 +38,7 @@ interface Entry {
   preDrop: number;
   postDrop: number;
   asset: MediaHttpResponse['asset'];
+  assetSha256: string | null;
   aborted: boolean;
   unknown: boolean;
 }
@@ -97,6 +104,7 @@ export const createMediaInterception = (
           preDrop: 0,
           postDrop: 0,
           asset: null,
+          assetSha256: null,
           aborted: false,
           unknown: false,
         });
@@ -174,6 +182,7 @@ export const createMediaInterception = (
         return unknown(entry);
       if (entry.asset && JSON.stringify(entry.asset) !== JSON.stringify(asset))
         return unknown(entry);
+      entry.assetSha256 ??= sha256(JSON.stringify(asset));
       entry.asset = asset;
       await journal.write(
         `media-${entry.source.slot}-verified-${String(entry.process)}`,
@@ -259,6 +268,28 @@ export const createMediaInterception = (
     track,
     snapshot,
     assertSlot,
+    assertDuplicate: () => {
+      const first = entries.get('single'),
+        duplicate = entries.get('single-duplicate');
+      assertSlot('single');
+      assertSlot('single-duplicate');
+      if (
+        !first?.asset ||
+        !duplicate?.asset ||
+        first.runId === duplicate.runId ||
+        first.requestId === duplicate.requestId ||
+        first.asset.asset_id === duplicate.asset.asset_id ||
+        first.asset.source_sha256 !== duplicate.asset.source_sha256 ||
+        first.asset.manifest_sha256 !== duplicate.asset.manifest_sha256 ||
+        first.assetSha256 !== sha256(JSON.stringify(first.asset))
+      )
+        return fail('FUNCTIONAL_OPERATION_FAILED');
+      return {
+        distinctAssets: true,
+        equalSourceAndManifest: true,
+        originalReceiptUnchanged: true,
+      };
+    },
     privateEntries: () =>
       [...entries.values()].map((entry) => ({
         slot: entry.source.slot,

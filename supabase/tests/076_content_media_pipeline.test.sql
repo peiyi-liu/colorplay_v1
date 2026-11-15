@@ -3,6 +3,8 @@ begin;
 set local search_path = public, extensions;
 
 select plan(32);
+select set_config('pgtap.media_asset_baseline',
+  (select count(*)::text from public.content_media_assets), true);
 
 select has_table('public', 'content_media_upload_runs',
   'media upload commands have private run receipts');
@@ -110,7 +112,8 @@ select is(public.svc_complete_content_media_upload(
   'service finalization rejects a forged manifest');
 
 reset role;
-select is((select count(*)::text from public.content_media_assets), '0',
+select is((select count(*)::text from public.content_media_assets),
+  current_setting('pgtap.media_asset_baseline'),
   'a rejected manifest cannot create a trusted asset');
 
 set local role service_role;

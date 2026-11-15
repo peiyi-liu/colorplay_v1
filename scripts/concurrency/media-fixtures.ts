@@ -56,9 +56,12 @@ export const buildMediaFixtures = (
       'cancel',
       'single-recovery',
       'single-cancel',
+      'single-duplicate',
     ] as const
   ).map((slot, index) => {
-    const buffer = deterministicPng(index + 1);
+    const buffer = deterministicPng(
+      slot === 'single-duplicate' ? 1 : index + 1,
+    );
     return {
       slot,
       name: `${scope.runId}-${slot}.png`,
