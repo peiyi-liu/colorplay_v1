@@ -82,11 +82,18 @@ export const loadExecutionProfileRuntime = async (
       )) !== closureBytes
     )
       return rootHelperFailure();
+    const results = await Promise.allSettled(
+      linuxClosureNames.map(
+        async (name) =>
+          await io.read(join(ROOT_RUNTIME_DIRECTORY, name), 131072),
+      ),
+    );
     const observed: Record<string, string> = {};
-    for (const name of linuxClosureNames)
-      observed[name] = rootBytesSha256(
-        await io.read(join(ROOT_RUNTIME_DIRECTORY, name), 131072),
-      );
+    for (const [index, result] of results.entries()) {
+      const name = linuxClosureNames[index];
+      if (!name || result.status !== 'fulfilled') return rootHelperFailure();
+      observed[name] = rootBytesSha256(result.value);
+    }
     const closure = approveRootHelperClosure(
       closureBytes,
       descriptor.helperClosureSha256,

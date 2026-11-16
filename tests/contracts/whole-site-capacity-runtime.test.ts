@@ -446,3 +446,85 @@ describe('independently approved Linux capacity runtime', () => {
     },
   );
 });
+
+it('records only safe same-clock call boundaries after execution and both verifications settle', async () => {
+  const f = await fixture(true);
+  const runtime = await loadCapacityRuntime(
+    f.path,
+    new AbortController().signal,
+    f.io,
+    sha256(required(f.files.get(f.path))),
+  );
+  let clock = 100;
+  const now = vi.spyOn(performance, 'now').mockImplementation(() => clock);
+  const originalRead = f.io.read;
+  f.io.read = async (path) => {
+    clock += 2;
+    return originalRead(path);
+  };
+  const entered = Promise.withResolvers<undefined>();
+  const executed = Promise.withResolvers<unknown>();
+  f.io.execute.mockImplementationOnce(() => {
+    entered.resolve(undefined);
+    return executed.promise;
+  });
+  try {
+    const task = runtime.host(
+      { private: 'SYNTHETIC_SECRET' },
+      new AbortController().signal,
+    );
+    await entered.promise;
+    expect(runtime.rootAccounting()).toEqual([]);
+    clock = 300;
+    executed.resolve({ synthetic: true });
+    await expect(task).resolves.toEqual({ synthetic: true });
+    expect(runtime.rootAccounting()).toEqual([
+      {
+        helper: 'linux-host-sample.py',
+        outcome: 'ok',
+        elapsedMs: 200,
+        callStartedAtNodeMs: 100,
+        executeStartedAtNodeMs: 130,
+        executeClosedAtNodeMs: 300,
+        callCompletedAtNodeMs: 330,
+      },
+    ]);
+    f.io.execute.mockRejectedValueOnce(new Error('SYNTHETIC_ORIGINAL_ERROR'));
+    await expect(runtime.backend(new AbortController().signal)).rejects.toThrow(
+      'SYNTHETIC_ORIGINAL_ERROR',
+    );
+    expect(runtime.rootAccounting()[1]).toMatchObject({
+      outcome: 'unknown',
+      elapsedMs: 30,
+    });
+    expect(f.io.execute).toHaveBeenCalledTimes(3);
+    expect(JSON.stringify(runtime.rootAccounting())).not.toContain('SYNTHETIC');
+  } finally {
+    now.mockRestore();
+  }
+});
+
+it.each(['before', 'after'])(
+  'keeps %s-verification failure outside the historical accounting rows',
+  async (phase) => {
+    const f = await fixture(true);
+    const runtime = await loadCapacityRuntime(
+      f.path,
+      new AbortController().signal,
+      f.io,
+      sha256(required(f.files.get(f.path))),
+    );
+    const path = join(CAPACITY_RUNTIME_ROOT, 'linux_runtime_common.py');
+    if (phase === 'before') f.files.set(path, 'SYNTHETIC_CHANGED');
+    else
+      f.io.execute.mockImplementationOnce(() => {
+        f.files.set(path, 'SYNTHETIC_CHANGED');
+        return Promise.resolve({ synthetic: true });
+      });
+    await expect(
+      runtime.host({}, new AbortController().signal),
+    ).rejects.toThrow();
+    expect(runtime.rootAccounting()).toEqual([]);
+    expect(f.io.execute).toHaveBeenCalledTimes(phase === 'before' ? 1 : 2);
+  },
+);

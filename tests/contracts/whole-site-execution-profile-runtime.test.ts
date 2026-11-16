@@ -275,3 +275,144 @@ it('passes real independent authority through functional preflight and preserves
     vi.unstubAllGlobals();
   }
 });
+
+import { loadExecutionProfileRuntime } from '../../scripts/concurrency/execution-profile-runtime';
+import { linuxClosureNames } from '../../scripts/concurrency/root-helper-contracts';
+const profileFixture = async () => {
+  const f = syntheticLinuxRuntime();
+  const read = vi.fn((path: string) => Promise.resolve(f.files[path] ?? ''));
+  const execute = vi.fn((_helper: string, args: readonly string[]) =>
+    Promise.resolve({
+      sourceRevision: args[0],
+      challenge: args[2],
+      observed: {
+        host: f.profile.host,
+        identity: f.profile.identity,
+        backend: f.profile.backend,
+      },
+    }),
+  );
+  const abort = new AbortController();
+  const runtime = await loadExecutionProfileRuntime(
+    {
+      sourceRevision: 'a'.repeat(40),
+      profileSha256: f.profileSha,
+      descriptor: { helperClosureSha256: rootBytesSha256(f.closure) },
+      databaseIdentitySha256: f.profile.identity.databaseIdentitySha256,
+      helperHashes: f.hashes,
+    },
+    { platform: 'linux', read, execute },
+    abort.signal,
+  );
+  if (!runtime) throw new Error('SYNTHETIC_LINUX_REQUIRED');
+  read.mockClear();
+  return { ...f, runtime, read, execute, abort };
+};
+
+it.each(['reject', 'abort', 'missing', 'wrong-hash'])(
+  'overlaps exactly thirteen dependency reads but settles them all before rejecting %s',
+  async (bad) => {
+    const f = await profileFixture();
+    const pending = new Map<
+      string,
+      ReturnType<typeof Promise.withResolvers<string>>
+    >();
+    f.read.mockImplementation((path) => {
+      if (!linuxClosureNames.some((name) => path.endsWith('/' + name)))
+        return Promise.resolve(f.files[path] ?? '');
+      const deferred = Promise.withResolvers<string>();
+      pending.set(path, deferred);
+      return deferred.promise;
+    });
+    let settled = false;
+    const task = f.runtime.verify().finally(() => {
+      settled = true;
+    });
+    const rejected = expect(task).rejects.toThrow('ROOT_HELPER_INVALID');
+    await vi.waitFor(() => {
+      expect(pending.size).toBe(13);
+    });
+    expect(
+      f.read.mock.calls.slice(0, 2).map(([path]) => path.split('/').at(-1)),
+    ).toEqual([
+      'execution-profile.json',
+      'execution-profile-helper-closure.json',
+    ]);
+    expect([...pending.keys()].map((path) => path.split('/').at(-1))).toEqual(
+      linuxClosureNames,
+    );
+    const entries = [...pending.entries()];
+    const first = entries.shift(),
+      last = entries.pop();
+    if (!first || !last) throw new Error('SYNTHETIC_DEPENDENCIES_REQUIRED');
+    if (bad === 'abort') f.abort.abort();
+    if (bad === 'reject') first[1].reject(new Error('SYNTHETIC_PRIVATE_ERROR'));
+    else
+      first[1].resolve(
+        bad === 'missing'
+          ? ''
+          : bad === 'wrong-hash'
+            ? 'CHANGED'
+            : (f.files[first[0]] ?? ''),
+      );
+    for (const [path, deferred] of entries)
+      deferred.resolve(f.files[path] ?? '');
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    last[1].resolve(f.files[last[0]] ?? '');
+    await rejected;
+    expect(settled).toBe(true);
+    expect(f.execute).toHaveBeenCalledTimes(1);
+  },
+);
+
+it('rechecks every dependency on every successful verification without caching authority', async () => {
+  const f = await profileFixture();
+  await f.runtime.verify();
+  await f.runtime.verify();
+  expect(f.read).toHaveBeenCalledTimes(30);
+  for (const name of linuxClosureNames)
+    expect(
+      f.read.mock.calls.filter(([path]) => path.endsWith('/' + name)),
+    ).toHaveLength(2);
+  f.files[join(FUNCTIONAL_RUNTIME_ROOT, 'linux_runtime_common.py')] = 'CHANGED';
+  await expect(f.runtime.verify()).rejects.toThrow('ROOT_HELPER_INVALID');
+  expect(f.execute).toHaveBeenCalledTimes(1);
+});
+
+it.each(['execution-profile.json', 'execution-profile-helper-closure.json'])(
+  'rejects changed %s metadata before starting any dependency read',
+  async (name) => {
+    const f = await profileFixture();
+    const path = join(FUNCTIONAL_RUNTIME_ROOT, name);
+    f.files[path] = (f.files[path] ?? '') + ' ';
+    await expect(f.runtime.verify()).rejects.toThrow('ROOT_HELPER_INVALID');
+    expect(f.read.mock.calls.length).toBeLessThanOrEqual(2);
+    expect(f.execute).toHaveBeenCalledTimes(1);
+  },
+);
+
+it('settles the other owned reads even when an IO port throws synchronously', async () => {
+  const f = await profileFixture();
+  const drained = Promise.withResolvers<undefined>();
+  f.read.mockImplementation((path) => {
+    if (path.endsWith('/functional-preflight.py'))
+      throw new Error('PRIVATE_IO_ERROR');
+    if (linuxClosureNames.some((name) => path.endsWith('/' + name)))
+      return drained.promise.then(() => f.files[path] ?? '');
+    return Promise.resolve(f.files[path] ?? '');
+  });
+  let settled = false;
+  const task = f.runtime.verify().finally(() => {
+    settled = true;
+  });
+  const rejected = expect(task).rejects.toThrow('ROOT_HELPER_INVALID');
+  await vi.waitFor(() => {
+    expect(f.read).toHaveBeenCalledTimes(15);
+  });
+  expect(settled).toBe(false);
+  drained.resolve(undefined);
+  await rejected;
+  expect(f.execute).toHaveBeenCalledTimes(1);
+});

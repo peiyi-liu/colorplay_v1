@@ -2719,3 +2719,35 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - finalpacket ed9b73eefd06848f078053851d9e57b5ef3504b442125e8eab724399e0d8185d/74records/8Source全SHA核，v1 packet45f80…與原52records保持。Worker39files507tests及lint/type/globalformat/import/static/diff0；Root4files56tests1.16s與兩獨立before/after actualcontrols PASS，僅兩exact helper逆向復原v1 SHA吻合，其餘5owned raw同v1、兩tests追加。初2P2已同一round修正，未解0，Root不重開review。
 - 五component sum保原unexpected total，原10unexpected/14unavailable/1pageerror增量sites與37if條件／分類／expected不變；新unknown/overflow/late只收緊available。安全256events與公開asset位置hint，無rawURL/message/stack/secret/低熵hash；原stage/before/cleanup wx600 journal，writer/abort/erroridentity核符。行數health559≤560/pure508≤510/journeys501有理由例外，其餘≤500，exact8paths不擴。1792unowned actualGit blob/operator44及original7/prefix現核符。Rootreceipt f30621a6e13cee362dc8260cf1b8487a7eb833efb12944184d240dc9d5c5f202；review docs/reviews/2026-11-17-linux-health-diagnostics-m24-review.md。
 - Native18實際health1錯誤仍UNKNOWN；合成controls不當根因或容量證據。Root準備exact11paths cachedcheck/commit/clean與remote精確3bc正常FF，新Source/newpush/attempt1正常six-person→15legs；非PASS停、無GHrerun/0business gate。原全部custody／6Auth／G8停止85與WIP保護；US$0/US$5 cap，40/60未驗、Hosted/Production/真寄信NONE保持。
+
+
+### 2026-11-17 — M24固定Source已正常啟動Native19
+
+- Root exact11paths cachedcheck0/commit/clean：9063bd9b1f98609d933fa54a57ae2b161dbb2e67；networkfresh核specialremote仍3bc4466eb22929ffc449355aab723f30ab8b5611後正常FF。新push/attempt1 run43927234067/job133509810738，正常six-person→15legs；watcher83340只監看匹配SHA／加密下載，Source凍結，同worker待命不改。
+- M24工具診斷已接受，不是實際health修復／容量PASS；Native18特定error原因仍UNKNOWN，原全部cold custody與6Auth保留。任一非PASS停升級、不GH rerun、不另開0business gate。原WIP/G8停止85、主機US$0/US$5 cap、40/60未驗、Hosted/Production/真寄信NONE保持。
+
+
+### 2026-11-17 — Native19真functional PASS、匿名3/10 PASS，20因host_stale INCONCLUSIVE
+
+- run43927234067/job133509810738/source9063bd9b1f98609d933fa54a57ae2b161dbb2e67 completed/failure；functional wsb-261116-b2bd4f7bfaef 253558.340ms/exit0/無signal/stderr0/noResidue/SourceFrozen，15stages PASS。M24實際before/after details OBSERVED五component全0/events0/dropped0、原drops4/refresh1；Native18原health1本次未重現，根因仍UNKNOWN不回填。plan wsc-261116-e7dde66da613共106planned身份，匿名3/10的真receipt/process/request/candidate及predecessor鏈Root重算PASS，但不含API SLO樣本，NOT_APPLICABLE，不稱p95 PASS。
+- 匿名20 wcr-261116-dd9de684e361 receipt/process/source/candidate/request/前級hash與finalizer重算INCONCLUSIVE：runAbortedtrue／timedOutfalse／process6512.280ms、entry4257.504ms/20started0complete。health UNKNOWN僅host_stale，lastHostAge3220.237ms>3000，lastBackend4295.242ms，host2/backend1；NodeRSS284766208/browserPSS310055936、PSI/swap/OOM0、loopP95max130.286ms。不能稱GENERATOR_LIMIT或網站20人失敗；缺raw採樣時序，實際gap根因UNKNOWN。helper accounting host66.524/439.565ms ok＋9.685ms unknown，preverify不入elapsed故不足反推。後12legs未跑／40/60未驗，任一非PASS已停，無GH rerun。
+- artifact14257347513 ZIP42577389B/2bda2d08c3fb379af1f0687d0cc638ba0bc21ff2457222be86e976907e69dc7b API核；cipher42577251B/0446e3d4a6ea20df70a0eaa23fb5ab9f3c3009bf46f7ff790613ada08e251977 真age AEAD。outerd9ac429b0f090dd5b4d56c29f07d0c68201464f18a394e041af8f789d04edf3d/682files212221894B全核；innerfc29eb6245894c44e706616a54ac0c6425e0e9cd2035e321c737567cfcd37c3d/635files、8stops與roleproof／DB2/127tables/31roles ORDER_ONLY／3vol7017regularfiles185589624B與metadata／runtime583data32publiccode/metadata-only0全核。6Auth與16mediafiles保留，未restore。finalRootreceipt b530aeed316bc15b3a41422af8a00b9a0c2f19931d329ff1abaf04fca3e2a49b；joblog22982B/5e11f851e079bd5f9fc3bd46d514ddff3d0989ec8ebd4d9f5396586e49f3d5d8。
+
+### 2026-11-17 — M25並行13個獨立read與採樣call時序已授權
+
+- Readonly manifest c537fe60cc72fa69cdb4d98d25908c734b4c395b539671f0b0c4af439154a75a／proposal f5613ccd73e66c2e88b3fd35a1d958f74af88535483f500ca1a8dd397bbd8d8e，Root核8Source/6records。actual-export deferred證verify每次15串行讀（profile/closure+13固定檔）/15waves/inflight1；前後兩次30reads。合成100ms/read代數4.0665s只證延遲放大風險，不是Native19因果。executor無FS read、仍等close；1000ms completion後排程與3s started-at freshness保原。
+- 正式brief docs/superpowers/plans/2026-11-17-linux-profile-read-batching-m25-brief.md，原531cc703…；latest1a644608d2a656a589ec6378350ec9137df8dfe32675ec3e7a905524f6767c5a，sameworker exact4paths runtime profile及directtest＋capacity runtime及directtest。保前置兩讀，比對後固定13map/allSettled，全已啟reads完全收束／hash/authority/abort原核，不cache/重試/刪任何驗證；原accounting rows僅加4安全Node單clock時點，舊elapsed/outcome/入列與pre/post失敗無row語意保持，缺row仍UNKNOWN，不新IO或改freshness/caps。capacity-runtime directtest≤560唯一有理由例外保原448行fixture與完整caller控制，其餘≤500／exact4不擴。先RED→GREEN、受影響checks/freeze，Root唯一review後才新Source/push/attempt1正常suite。
+- WB5新94行proposal 69f4d9db623bf78a2154cc3648e771e911e6ee92c49b75edb73a0b5d9248a641/manifest a7a2768812d247e82dae1eceb21c2ba0328a1210dec37b928ced2dd602506973，Root核11local Source/index及1record；三pin L/M/C＋完整tree proof、carrier先optout、獨立Hosted driver、OTP relay未准／無實作／latency與quotaUNKNOWN、exact-version官方DDL executor資格均只是提案NONE。沒有讀Gmail／comment／DDL或Hosted寫入，不當execution ready。
+- 原7WIP/prefix／G8停止85／所有Native cold custody保護；主機US$0/US$5 cap，40/60未驗、Hosted/Production/真寄信NONE。
+
+
+### 2026-11-17 — M25唯一Root審查接受待真Native
+
+- Packet ac62935f91fe599138a31132827de3b444529d7134df5a3c40c19d36bcc9c157/46records/4Source/latestbrief全SHA核；Worker69files779tests與final2files46tests、lint/type/globalformat/import/static/diff0，Root2files46tests962ms＋actual export/deferred/fakeclose資格核：load32reads、每verify15reads保持，13dependencies並行15波→3波，前後order／tamper／preabort／正常close仍核。全是SYNTHETIC_ONLY/NONE，不當Native因果或容量證據。0 findings／唯一round，Rootreceipt 2a23876342f8d6edfcc30fc8aab1f1dcc342335b12ce0653130edde4905739c0；review docs/reviews/2026-11-17-linux-profile-read-batching-m25-review.md。
+- 固定13map/async/allSettled保前置2讀與所有read收束後原hash/authority/abort檢查，不cache/合併；accounting原rows只加4安全Node時點，old elapsed/outcome/入列/close保原，pre/post失敗無row仍UNKNOWN。1943unowned actualGit blobs含symlink target hash、operator44/original7/prefix核符。test530≤560理由例外，其他≤500／exact4不擴；原RED/lint/setup資格保留。Root初只讀probe filename/exit欄位猜測錯、依manifest更正，無Source issue。
+- Root準備exact7paths gated commit/clean、remote精確9063正常FF新Source/newpush/attempt1正常six-person→15legs；無GHrerun/0business gate。Native19 host_stale實際時序仍UNKNOWN、Native18舊health1未重現不回填；40/60未驗。原WIP/G8停止85/全部custody、US$0/US$5 cap、Hosted/Production/真寄信NONE。
+
+
+### 2026-11-17 — WB5既有發布credential名稱唯讀盤點
+
+- GitHub connector無列secret工具，改用已核gh secret list只names/updatedAt：repo0、environment staging4（Access Token／Anon Key／Secret Key／Vercel Token），沒有讀值／改值。專用DB連接credential未從這些名稱辨識，Management token有效性與DDL port仍UNKNOWN，不能由API token名稱推稱可正確apply原version。metadata .git/staging-credential-names-readonly-20261117.json SHA56dcbe73d471037169bf990fa72dd5ede1c3060b3324530d0c1c8f703fca544e；發布/DDL/OTP/Hosted窗口尚無新執行授權，寫入0。

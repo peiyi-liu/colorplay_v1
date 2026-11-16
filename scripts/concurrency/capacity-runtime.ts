@@ -299,6 +299,10 @@ export const loadCapacityRuntime = async (
       helper: Helper;
       elapsedMs: number;
       outcome: 'ok' | 'unknown';
+      callStartedAtNodeMs: number;
+      executeStartedAtNodeMs: number;
+      executeClosedAtNodeMs: number;
+      callCompletedAtNodeMs: number;
     }[] = [];
     const call = async (
       helper: Helper,
@@ -306,6 +310,7 @@ export const loadCapacityRuntime = async (
       ownedSignal = signal,
     ) => {
       if (ownedSignal.aborted) return capacityFailure();
+      const callStartedAtNodeMs = performance.now();
       const profileRuntime =
         'profileRuntime' in config ? config.profileRuntime : undefined;
       await profileRuntime?.verify();
@@ -331,12 +336,18 @@ export const loadCapacityRuntime = async (
         outcome = 'ok';
         return value;
       } finally {
+        const executeClosedAtNodeMs = performance.now();
         await profileRuntime?.verify();
+        const callCompletedAtNodeMs = performance.now();
         if (accounting.length < 10000)
           accounting.push({
             helper,
-            elapsedMs: Math.max(0, performance.now() - started),
+            elapsedMs: Math.max(0, callCompletedAtNodeMs - started),
             outcome,
+            callStartedAtNodeMs,
+            executeStartedAtNodeMs: started,
+            executeClosedAtNodeMs,
+            callCompletedAtNodeMs,
           });
       }
     };
