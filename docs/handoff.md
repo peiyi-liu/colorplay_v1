@@ -2540,3 +2540,20 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - frozenpacketb798459644309b7de4f1b4113a5f7397447104f6aca340793cd777561970f9a0；Root核4Source/25records/63protected actualGit/operator44，worker另1916 unowned non-docs bytes。Worker26direct/173Python與lint/type/static/import/EOF/diff全0；Root26/1.556s＋35獨立actualwrapper/metadata/permutation/realbefore形狀控制PASS，Standards/Spec/Security各0。summarye88b7d772604b019bd805ff48457b0bd7ad7f1743dfa8c4c11f686801295d00e，review docs/reviews/2026-11-17-linux-census-integrity-m19-review.md。
 - 只排序table arrays，count/hash/roles/database/table-set全值驗證與duplicates/invalid拒；raw after先wx600保存、再safe delta；真值漂移與writer失敗仍FAIL/DBstop-volumes0。NativeIO全bytes與M17/M18/operator/workflowdiagnostic1/全部額度保持。pnpm初錯旗標registrylookup/非TTYsetupfail保留，未install/lockfile改，既有命令重跑綠；Native13不回填。
 - 原7protected/handoff575959Bprefix現核符。Root exact7paths gated commit後核remote仍bcc再FF一個新Source attempt1/0business診斷，冷備份Root真核過才另恢復functional/15legs。40/60未過、US$0，原WIP/G8/85與Hosted/Production/mail保持。
+
+
+### 2026-11-17 — Native14完整cold capture/transfer已Root核，M20恢復Local suite已授權
+
+- M19 exact7paths/check0/clean commite866e30861bfd93eb11fbf334113d781865a5db4；remoteexactbcc核後正常FF，run43882406503/job133351465442/attempt1。artifact14231764002 ZIP24693926B/5160b564c5ea4e311769266d8a578054498948e4ef4c892d298746627b2e4119，cipher24693788B/870375e0faaeb93057c827ccc23af05dc3dd9f5a72a45d97c8a0cf0e57006a01，outermanifest8cb57640430db84f1a731726126ce3b459675986f1057520bb1fb8703e4a22c9/282files/153661324B真age全檔核；snapshotmanifest42c5216ea68511459e1cc76ce9fe8ae1d65f1032c4205748660d220c9c09e640/259files另核。
+- 8服務全stop成功/Pid0/noOOM/noRestart。Root獨立核E/K/DB固定pidfd signal/身份/helper實體close/naturalexit、K/DB一次restart=no意圖回讀、REST255當次完整proof與privatefileSHA及原stopped全角色驗證。DB兩database/127tables/31roles前後全count/hash/identity一致，實際classification ORDER_ONLY；不回填Native13原因。
+- 3cold volume逐tar member核完整pathset/6178regularfiles/129539787B內容SHA與mode/uid/gid，6820entries含642dirs全一致；runtime209datafiles核、32publiccode與Sourcepackage對可重建、24dir metadata核。file-only export解密未物化functional-private空dir，Root初verifier因錯格式假設停，原script留存；v2確認無uncaptured data並記1空dir metadata可重建，未改Source。完整Rootreceipt60e4781a49fd4edd3458cc1ad1bfb4b872f99d25bddac9f4a9d0074616740584，狀態FULL_COLD_CAPTURE_AND_TRANSFER_VERIFIED_ZERO_BUSINESS，未實際restore/functional/capacity。job當時仍10minhold，diagnostic barrier故意exit1，不當容量失敗或通過。
+- 已授M20 sameworker exact2paths：workflow移除diagnostic env、test_native_preparation_diagnostics.py新無flag契約；其他Source/產品/operator44/全部caps保持。brief docs/superpowers/plans/2026-11-17-linux-full-suite-restore-m20-brief.md SHAd4d32f2daf8120791f70cc36408c9906540e5aabb720b40f194855abae3b3241/4781B。先checks/freeze/Root唯一review，下一newSource才正常six-person＋15legs（fresh40/60與106Local身份原計畫），新SHA重綁profile/build/receipt。
+- 原WIP/G8/85維持；40/60仍NOT_RUN，主機US$0/US$5上限保留。Hosted/Production/真寄信0；WB5仍有pure guard未接Hosted執行、真SMTP/限流/Owner exactSHA窗口等待辦，不以Local替代。
+
+
+### 2026-11-17 — M20已接受，下一新Source恢復正常Local
+
+- Native14 final jobcompleted/failure只因預定diagnostic barrier；finalRootreceipt5097c815167df533ce81c06f75cec7a695faa371f591d4cc17440dd23bc072e3，joblog21956B/cb149a9861d889e4116a70f3a7ebc9b4e3220336ac7b0d60cf4c0602a62f3801；capture/transfer PASS但restore/functional/capacity未跑。
+- M20packet924c3b3437f95f0048518bd1940f5c47d2a811357e6a6274d2acee72de634828；2Source exactworkflow刪兩行env＋新無flag契約，8tests/lint/type/Prettier/AST/EOF/diff0；Root8/0.325s與66protectedGit/operator44核，worker另1918unownednon-docs bytes。0findings；Rootsummary94aa9d47de9634476c987c1308b7306737cdbe3bd578d55e2d62b1a7f3826eb6，review docs/reviews/2026-11-17-linux-full-suite-restore-m20-review.md。
+- Root將exact5paths gated commit/check0/clean、remoteexacte866核後FF新Source push/attempt1。下一job正常six-person→15legs（anon3/10/20/fresh40/60/existing與backend3/10/20/40/60），fresh60的59＋T1及R1 outsider原106Local身份保持；每新SHA重建profile/build/request/receipt，不carry前級當容量PASS，非PASS即停升級。不為補結果報告任意改已測Source SHA。
+- 原WIP/G8/85保護，40/60仍未驗，US$0／US$5上限保留。Hosted/Production/真寄信NONE；WB5仍須具體Hostedadapter/OTP/限流與Owner exactSHA窗口，Local不替代Hosted。

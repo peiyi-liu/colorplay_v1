@@ -136,6 +136,13 @@ class DiagnosticBarrierTests(unittest.TestCase):
                 finally:os.umask(umask)
             return code,output.getvalue(),calls,seen_flags,error
 
+    def test_actual_workflow_does_not_force_diagnostic_only(self):
+        workflow=(DIRECTORY.parents[1]/'.github/workflows/local-capacity-linux.yml').read_text()
+        self.assertNotIn('COLORPLAY_LOCAL_DIAGNOSTIC_ONLY',workflow)
+        self.assertIn('        id: suite\n        run: /usr/bin/python3 -B '
+                      '"$GITHUB_WORKSPACE/colorplay-live-recovery/scripts/concurrency/run-linux-local-suite.py" '
+                      '"$GITHUB_SHA"\n',workflow)
+
     def test_diagnostic_flag_stops_before_business_even_when_prepare_succeeds(self):
         code,text,calls,flags,error=self.suite('1')
         self.assertIsNone(error);self.assertEqual(code,1)
