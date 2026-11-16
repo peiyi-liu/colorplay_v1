@@ -32,6 +32,11 @@ def token(secret, role):
     return (prefix + b'.' + base64.urlsafe_b64encode(signature).rstrip(b'=')).decode()
 
 
+def es_token(key, role):
+    def part(value):return base64.urlsafe_b64encode(encoded(value)).rstrip(b'=').decode()
+    return part({'alg': 'ES256', 'kid': key['kid']}) + '.' + part({'role': role}) + '.' + part('synthetic-signature')
+
+
 class Fixture:
     def __init__(self, root):
         self.source = root / 'colorplay-live-recovery'
@@ -125,6 +130,8 @@ class Fixture:
             return b'2.109.1'
         if args == [self.tools['supabase']['path'], 'start', '--help']:
             return b'Start the Supabase local development stack'
+        if args[0] == self.tools['node']['path'] and args[1:3] == ['-e', B.D.NODE_TOKEN_VERIFY]:
+            return encoded({'anon': 'VALID', 'serviceRole': 'INVALID' if self.bad_status else 'VALID'})
         if args[0] == self.tools['node']['path']:
             return encoded([self.key])
         if args[0] == '/usr/bin/sudo':
@@ -140,8 +147,8 @@ class Fixture:
                 return b''
             return encoded({'API_URL': 'http://127.0.0.1:58321',
                 'DB_URL': 'postgresql://postgres:synthetic-password@127.0.0.1:58322/postgres',
-                'JWT_SECRET': self.secret, 'ANON_KEY': token(self.secret, 'anon'),
-                'SERVICE_ROLE_KEY': token('wrong' if self.bad_status else self.secret, 'service_role')})
+                'JWT_SECRET': self.secret, 'ANON_KEY': es_token(self.key, 'anon'),
+                'SERVICE_ROLE_KEY': es_token(self.key, 'service_role')})
         self.assert_docker(args)
         operation = args[3:]
         if operation[0] == 'ps':

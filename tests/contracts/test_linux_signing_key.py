@@ -44,7 +44,7 @@ class SigningKeyTests(unittest.TestCase):
             self.assertEqual(result['result'],'LOCAL_LINUX_BACKEND_READY_PENDING_ROOT_PROFILE')
             self.assertTrue(f.started)
             self.assertEqual((f.runtime/'runtime-secret.json').stat().st_mode&0o777,0o600)
-            calls=[a for a,_ in f.commands if a[:2]==[f.tools['node']['path'],'-e']]
+            calls=[a for a,_ in f.commands if a==[f.tools['node']['path'],'-e',B.NODE_JWK]]
             self.assertEqual(len(calls),1)
 
     def test_invalid_operation_declarations_never_start_or_publish_secret(self):

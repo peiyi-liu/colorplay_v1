@@ -10,8 +10,9 @@ import secrets
 import tomllib
 import urllib.parse
 import linux_project_inputs as I
+import linux_status_contracts as D
 from linux_bootstrap_contracts import (PROJECT, ROLES, require, digest, read_file,
-                                        write_once, decode, exact)
+                                        write_once, decode, exact, BootstrapError)
 
 DOCKER = ['/usr/bin/docker', '--host', 'unix:///var/run/docker.sock']
 EXCLUDED = 'postgres-meta,studio,imgproxy,logflare,vector,supavisor'
@@ -177,7 +178,8 @@ def project(io, source, runtime, tools, inputs, inputs_sha):
                ('analytics', 'enabled', False), ('db.pooler', 'enabled', False),
                ('auth', 'site_url', 'http://127.0.0.1:58373'),
                ('auth', 'additional_redirect_urls', ['http://127.0.0.1:58373/**']),
-               ('auth', 'signing_keys_path', './signing-keys.json')]
+               ('auth', 'signing_keys_path', './signing-keys.json'),
+               ('auth', 'jwt_secret', 'env(SUPABASE_AUTH_JWT_SECRET)')]
     for section, key, value in changes:
         text = set_toml(text, section, key, value)
     config = tomllib.loads(text)
@@ -194,25 +196,17 @@ def project(io, source, runtime, tools, inputs, inputs_sha):
     return target.parent, text.encode(), hashes, secret, jwks[0]
 
 
-def check_status(raw, secret):
-    state = decode(raw)
-    require(state['API_URL'] == 'http://127.0.0.1:58321' and state['JWT_SECRET'] == secret and
-            state['ANON_KEY'] != state['SERVICE_ROLE_KEY'], 'BOOTSTRAP_STATUS_INVALID')
-    url = urllib.parse.urlsplit(state['DB_URL'])
-    require(url.scheme in {'postgresql', 'postgres'} and url.hostname == '127.0.0.1' and
-            url.port == 58322 and url.path == '/postgres' and url.username == 'postgres' and
-            bool(url.password) and not url.query and not url.fragment)
-    for key, role in [('ANON_KEY', 'anon'), ('SERVICE_ROLE_KEY', 'service_role')]:
-        pieces = state[key].split('.')
-        require(len(pieces) == 3)
-        def dec(value): return base64.urlsafe_b64decode(value + '=' * (-len(value) % 4))
-        require(decode(dec(pieces[0]))['alg'] == 'HS256' and decode(dec(pieces[1]))['role'] == role)
-        expected = hmac.new(secret.encode(), '.'.join(pieces[:2]).encode(), hashlib.sha256).digest()
-        require(hmac.compare_digest(expected, dec(pieces[2])), 'BOOTSTRAP_TOKEN_SIGNATURE_INVALID')
+def check_status(raw, secret, key, io, runtime, node):
+    state, proof = D.observe_status(raw, secret, key)
+    write_once(runtime / 'status-secret.json', raw)
+    D.verify_signatures(io, runtime, node, key, proof)
+    require(D.safe_status(proof) is not None, 'BOOTSTRAP_STATUS_INVALID')
+    D.record(runtime, 'status', proof)
+    D.require_status(proof)
     return state
 
 
-def start(io, runtime, project_dir, tools, pins, secret):
+def start(io, runtime, project_dir, tools, pins, secret, key):
     for pin in pins:
         docker(io, 'pull', '--platform', 'linux/amd64', pin['pinnedReference'], timeout=180)
         image = decode(docker(io, 'image', 'inspect', pin['pinnedReference']))[0]
@@ -225,55 +219,75 @@ def start(io, runtime, project_dir, tools, pins, secret):
     io.run(command, env=env, timeout=600)
     write_once(runtime / 'cli-start-returned.json', {'projectId': PROJECT, 'exitCode': 0})
     raw = io.run([tools['supabase']['path'], 'status', '--workdir', str(project_dir), '--output', 'json'], env=env)
-    state = check_status(raw, secret)
-    write_once(runtime / 'status-secret.json', raw)
+    state = check_status(raw, secret, key, io, runtime, tools['node']['path'])
     return state
 
 
-def containers(io, pins, group):
-    identifiers = docker(io, 'ps', '-aq', '--no-trunc').decode().split()
-    require(len(identifiers) == len(set(identifiers)) == 8, 'BOOTSTRAP_SERVICE_COUNT_INVALID')
-    rows = decode(docker(io, 'inspect', *identifiers))
-    require(len(rows) == 8)
-    expected = {pin['role']: pin for pin in pins}
-    result, seen, published = [], set(), []
-    for row in rows:
-        role = next((r for r in ROLES if row['Name'] == '/supabase_' + r + '_' + PROJECT), None)
-        require(role in expected and role not in seen and row['State']['Running'] is True and
-                row['Config']['Labels']['com.supabase.cli.project'] == PROJECT and
-                row['Image'] == expected[role]['configDigest'])
-        require(re.fullmatch('[a-f0-9]{64}', row['Id']) and row['Id'] in identifiers)
-        pid = row['State']['Pid']
-        require(type(pid) is int and pid > 0)
-        path = io.system_read('/proc/' + str(pid) + '/cgroup').decode().strip()
-        require(path.startswith('0::/' + group + '/') and '..' not in Path(path[3:]).parts)
-        for bindings in row['NetworkSettings']['Ports'].values():
-            for binding in bindings or []:
-                require(binding['HostIp'] == '127.0.0.1' and binding['HostPort'] in {'58321', '58322', '58324'})
-                published.append(binding['HostPort'])
-        result.append({'role': role, 'id': row['Id'], 'name': row['Name'], 'imageId': row['Image']})
-        seen.add(role)
-    require(seen == ROLES and sorted(published) == ['58321', '58322', '58324'])
-    return sorted(result, key=lambda row: row['role'])
+def containers(io, pins, group, runtime):
+    proof = {'state': 'UNKNOWN', 'count': None, 'roles': None, 'loopback': None, 'backendGroup': None}
+    try:
+        identifiers = docker(io, 'ps', '-aq', '--no-trunc').decode().split()
+        proof['count'] = len(identifiers)
+        require(len(identifiers) == len(set(identifiers)) == 8, 'BOOTSTRAP_SERVICE_COUNT_INVALID')
+        rows = decode(docker(io, 'inspect', *identifiers))
+        require(len(rows) == 8)
+        expected = {pin['role']: pin for pin in pins}
+        result, seen, published = [], set(), []
+        for row in rows:
+            role = next((r for r in ROLES if row['Name'] == '/supabase_' + r + '_' + PROJECT), None)
+            matched = role in expected and role not in seen and row['State']['Running'] is True and row['Config']['Labels']['com.supabase.cli.project'] == PROJECT and row['Image'] == expected[role]['configDigest']
+            proof['roles'] = proof['roles'] is not False and matched
+            require(matched)
+            require(re.fullmatch('[a-f0-9]{64}', row['Id']) and row['Id'] in identifiers)
+            pid = row['State']['Pid']
+            require(type(pid) is int and pid > 0)
+            path = io.system_read('/proc/' + str(pid) + '/cgroup').decode().strip()
+            matched = path.startswith('0::/' + group + '/') and '..' not in Path(path[3:]).parts
+            proof['backendGroup'] = proof['backendGroup'] is not False and matched
+            require(matched)
+            for bindings in row['NetworkSettings']['Ports'].values():
+                for binding in bindings or []:
+                    matched = binding['HostIp'] == '127.0.0.1' and binding['HostPort'] in {'58321', '58322', '58324'}
+                    proof['loopback'] = proof['loopback'] is not False and matched
+                    require(matched)
+                    published.append(binding['HostPort'])
+            result.append({'role': role, 'id': row['Id'], 'name': row['Name'], 'imageId': row['Image']})
+            seen.add(role)
+        proof['roles'] = proof['roles'] is True and seen == ROLES
+        proof['loopback'] = proof['loopback'] is True and sorted(published) == ['58321', '58322', '58324']
+        require(proof['roles'] and proof['loopback'])
+        proof['state'] = 'PASS'
+        return sorted(result, key=lambda row: row['role'])
+    except BootstrapError:
+        proof['state'] = 'FAIL'
+        raise
+    finally:
+        D.record(runtime, 'containers', proof)
 
 
-def baseline(io, db, state):
-    tables = {'auth': 'auth.users', 'profiles': 'public.profiles', 'classrooms': 'public.classrooms',
-              'xp': 'public.xp_transactions', 'wallet': 'public.wallet_transactions',
-              'mediaRuns': 'public.content_media_upload_runs', 'mediaAssets': 'public.content_media_assets'}
-    canonical = {'questions': ('public.questions', 259), 'publishedQuestions': ('public.questions where status=\'published\'', 258),
-                 'reviewCards': ('public.review_cards', 9), 'hints': ('public.question_hints', 17),
-                 'blooks': ('public.blooks', 20), 'quizTemplates': ('public.quiz_templates', 26)}
-    query = "begin read only;set local statement_timeout='10s';select json_build_object('systemIdentifier',(select system_identifier::text from pg_control_system()),'migrations',(select count(*) from supabase_migrations.schema_migrations),'publicTables',(select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r'),'publicWithoutRls',(select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and not c.relrowsecurity),"
-    query += ','.join("'%s',(select count(*) from %s)" % (name, table) for name, table in tables.items()) + ', '
-    query += ','.join("'%s',(select count(*) from %s)" % (name, spec[0]) for name, spec in canonical.items()) + ');rollback;'
-    password = urllib.parse.unquote(urllib.parse.urlsplit(state['DB_URL']).password)
-    raw = docker(io, 'exec', '-i', '--env', 'PGPASSWORD', db['id'], 'psql', '--host', '127.0.0.1', '--port', '5432', '--dbname', 'postgres', '--username', 'postgres', '--no-psqlrc', '--quiet', '--tuples-only', '--no-align', '--set', 'ON_ERROR_STOP=1', data=query.encode(), env={'PGPASSWORD': password})
-    value = decode(raw.strip())
-    require(re.fullmatch('[0-9]{1,24}', value['systemIdentifier']))
-    expected = {'migrations': 121, 'publicTables': 71, 'publicWithoutRls': 0,
-                **{name: 0 for name in tables}, **{name: spec[1] for name, spec in canonical.items()}}
-    require(set(value) == {'systemIdentifier', *expected} and
-            all(type(value[name]) is int and value[name] == count for name, count in expected.items()), 'BOOTSTRAP_BASELINE_INVALID')
-    return {'readOnly': True, 'querySha256': digest(query.encode()), 'databaseIdentitySha256':
-            digest((PROJECT + ':' + value['systemIdentifier'] + ':postgres').encode()), 'counts': expected}
+def baseline(io, db, state, runtime):
+    proof = {'state': 'UNKNOWN', 'counts': None}
+    try:
+        tables = {'auth': 'auth.users', 'profiles': 'public.profiles', 'classrooms': 'public.classrooms',
+                  'xp': 'public.xp_transactions', 'wallet': 'public.wallet_transactions',
+                  'mediaRuns': 'public.content_media_upload_runs', 'mediaAssets': 'public.content_media_assets'}
+        canonical = {'questions': ('public.questions', 259), 'publishedQuestions': ('public.questions where status=\'published\'', 258),
+                     'reviewCards': ('public.review_cards', 9), 'hints': ('public.question_hints', 17),
+                     'blooks': ('public.blooks', 20), 'quizTemplates': ('public.quiz_templates', 26)}
+        query = "begin read only;set local statement_timeout='10s';select json_build_object('systemIdentifier',(select system_identifier::text from pg_control_system()),'migrations',(select count(*) from supabase_migrations.schema_migrations),'publicTables',(select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r'),'publicWithoutRls',(select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and not c.relrowsecurity),"
+        query += ','.join("'%s',(select count(*) from %s)" % (name, table) for name, table in tables.items()) + ', '
+        query += ','.join("'%s',(select count(*) from %s)" % (name, spec[0]) for name, spec in canonical.items()) + ');rollback;'
+        password = urllib.parse.unquote(urllib.parse.urlsplit(state['DB_URL']).password)
+        raw = docker(io, 'exec', '-i', '--env', 'PGPASSWORD', db['id'], 'psql', '--host', '127.0.0.1', '--port', '5432', '--dbname', 'postgres', '--username', 'postgres', '--no-psqlrc', '--quiet', '--tuples-only', '--no-align', '--set', 'ON_ERROR_STOP=1', data=query.encode(), env={'PGPASSWORD': password})
+        value = decode(raw.strip())
+        expected = dict(D.EXPECTED_BASELINE)
+        observed = {name: value.get(name) if type(value.get(name)) is int and 0 <= value[name] <= 2**53 else None for name in expected} if type(value) is dict else dict.fromkeys(expected)
+        matched = type(value) is dict and set(value) == {'systemIdentifier', *expected} and all(observed[name] == count for name, count in expected.items())
+        identity_valid = type(value) is dict and isinstance(value.get('systemIdentifier'), str) and re.fullmatch('[0-9]{1,24}', value['systemIdentifier']) is not None
+        proof = {'state': 'PASS' if matched and identity_valid else 'FAIL', 'counts': observed}
+        require(re.fullmatch('[0-9]{1,24}', value['systemIdentifier']))
+        require(matched, 'BOOTSTRAP_BASELINE_INVALID')
+        return {'readOnly': True, 'querySha256': digest(query.encode()), 'databaseIdentitySha256':
+                digest((PROJECT + ':' + value['systemIdentifier'] + ':postgres').encode()), 'counts': expected}
+    finally:
+        D.record(runtime, 'database', proof)

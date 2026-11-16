@@ -6,10 +6,37 @@ from pathlib import Path
 import re
 import select
 import signal
+import stat
 import subprocess
 import sys
-from linux_runtime_common import RUNTIME, require, require_linux, private_json, private_read, digest, context, observe_profile
+from linux_runtime_common import RUNTIME, require, require_linux, private_json, private_read, digest, context, observe_profile, CGROOT, proc_cgroup
+from linux_cgroup import checked_group
 from linux_owned_process import run_child
+
+
+PHASE='ADMISSION'
+PERMISSIONS=None
+ERRNOS={13:'EACCES',1:'EPERM',2:'ENOENT',95:'EOPNOTSUPP',16:'EBUSY',3:'ESRCH',22:'EINVAL'}
+
+def kernel_permission_snapshot(ctx):
+    source=proc_cgroup(os.getpid());destination=ctx['generatorCgroupRelativePath']
+    require(source.startswith('/') and destination.startswith('/') and '..' not in Path(source).parts and '..' not in Path(destination).parts,'CGROUP_PATH_INVALID')
+    common=os.path.commonpath([source,destination])
+    def row(relative):
+        path=checked_group(CGROOT/relative.lstrip('/'),CGROOT)
+        info=(path/'cgroup.procs').stat(follow_symlinks=False)
+        require(stat.S_ISREG(info.st_mode),'CGROUP_PROCS_INVALID')
+        return {'pathSha256':digest(relative.encode()),'hierarchyRoot':path==CGROOT,
+                'procsUid':info.st_uid,'procsGid':info.st_gid,'procsMode':stat.S_IMODE(info.st_mode),
+                'effectiveWritable':os.access(path/'cgroup.procs',os.W_OK,effective_ids=True)}
+    return {'uid':os.getuid(),'euid':os.geteuid(),'namespaceInode':os.stat('/proc/self/ns/cgroup').st_ino,
+            'source':row(source),'destination':row(destination),'commonAncestor':row(common)}
+
+def blocked_outcome(error):
+    return {'result':'ROOT_LINUX_KERNEL_CALIBRATION_BLOCKED','kernelOutcome':{
+        'phase':PHASE,'errno':ERRNOS.get(error.errno,'UNKNOWN') if isinstance(error,OSError) else None,
+        'permissions':PERMISSIONS,'cleanup':'UNKNOWN','executionAuthority':'NONE'},'rawLogsStored':False}
+
 
 def load_pinner():
     spec=importlib.util.spec_from_file_location("root_profile_pinner",RUNTIME/"pin-execution-profile.py")
@@ -64,20 +91,26 @@ time.sleep(30)
     return "import {spawn} from 'node:child_process';const child=spawn('/usr/bin/python3',['-I','-B','-c',"+json.dumps(program)+"],{stdio:['ignore','pipe','ignore'],detached:true});await new Promise((resolve,reject)=>{child.once('error',reject);child.stdout.once('data',resolve)});child.stdout.destroy();child.unref();"
 
 def main():
+    global PHASE, PERMISSIONS
+    PHASE, PERMISSIONS = 'ADMISSION', None
     require_linux()
     require(RUNTIME.name=="whole-site-261115" and len(sys.argv)==3,"CALIBRATION_ARGUMENTS_INVALID")
     revision,pin_sha=sys.argv[1:]
     require(bool(re.fullmatch(r"[a-f0-9]{40}",revision)) and bool(re.fullmatch(r"[a-f0-9]{64}",pin_sha)),"CALIBRATION_ARGUMENTS_INVALID")
     pin,pin_actual=private_json(RUNTIME/"profile-pin-receipt.json",32768)
     require(pin_actual==pin_sha and pin["sourceRevision"]==revision and pin["result"]=="LOCAL_PROFILE_PINNED_PENDING_CALIBRATION","PROFILE_PIN_UNBOUND")
-    require(not any((RUNTIME/name).exists() for name in ["kernel-calibration.json","reviewed-candidate.json","kernel-late-child-proof.json"]),"PRIOR_CALIBRATION_EXISTS")
+    require(not any((RUNTIME/name).exists() for name in ["kernel-calibration.json","reviewed-candidate.json","kernel-late-child-proof.json","kernel-permission-observation.json"]),"PRIOR_CALIBRATION_EXISTS")
     pinner=load_pinner();pinner.approved_inputs(revision,pin["bootstrapRequestSha256"])
     ctx=context();profile,profile_sha=private_json(RUNTIME/"execution-profile.json",32768)
     require(profile_sha==pin["executionProfileSha256"],"PROFILE_CHANGED")
     observed=observe_profile(ctx,allow_outside_group=True)
     require(profile=={"schemaVersion":1,"kind":"LINUX_FREE_4CPU_16G_V1",**observed},"PROFILE_OBSERVATION_CHANGED")
     node=ctx["binaries"]["node"]["path"];checks=[];processes=[]
+    PHASE='PERMISSIONS'
+    PERMISSIONS=kernel_permission_snapshot(ctx)
+    pinner.write_once(RUNTIME/'kernel-permission-observation.json',PERMISSIONS)
     for mode in ["NATIVE_BROWSER","NODE_PROTOCOL"]:
+        PHASE=mode
         result=run_child([node,"--import","tsx",str(RUNTIME/"calibration-sample.mjs"),revision,profile_sha,pin["helperClosureSha256"],mode])
         require(closed(result) and result["complete"] and result["code"]==0 and result["sawBrowser"]==(mode=="NATIVE_BROWSER"),"SAMPLE_PROCESS_NOT_CLOSED")
         sample=json.loads(result["stdout"])
@@ -92,6 +125,7 @@ def main():
         checks.append({"name":name,"result":"PASS"})
         processes.append({"control":name,"observation":{**result,"stdout":sample}})
     for kind in ["orphan","late","abort"]:
+        PHASE=kind.upper()
         result=run_child([node,"--input-type=module","-e",control_program(kind)])
         require(closed(result) and not result["complete"],"NEGATIVE_CONTROL_PROMOTED_OR_LEAKED")
         if kind=="late":
@@ -100,7 +134,9 @@ def main():
         name={"orphan":"orphan_detected_and_reaped_without_pass","late":"late_child_killed_in_owned_cgroup_without_pass","abort":"parent_abort_closes_owned_workload_without_pass"}[kind]
         checks.append({"name":name,"result":"PASS"})
         processes.append({"control":name,"observation":{**result,"stdoutSha256":digest(result["stdout"]),"stdout":None}})
+    PHASE="PIDFD"
     checks.append(kernel_pidfd_control())
+    PHASE="FINAL"
     pinner.approved_inputs(revision,pin["bootstrapRequestSha256"])
     require(private_json(RUNTIME/"execution-profile.json",32768)[1]==profile_sha and observe_profile(ctx,allow_outside_group=True)==observed,"POST_CALIBRATION_PROFILE_CHANGED")
     receipt={"schemaVersion":1,"kind":"ROOT_LINUX_KERNEL_CALIBRATION","result":"VERIFIED","sourceRevision":revision,"executionProfileSha256":profile_sha,"helperClosureSha256":pin["helperClosureSha256"],"profilePinReceiptSha256":pin_sha,"checks":checks,"processes":processes,"realLinuxKernel":True,"applicationRequests":0,"authIdentitiesCreated":0,"capacityProof":False,"hostedAuthority":"NONE"}
@@ -110,5 +146,5 @@ def main():
 
 if __name__=="__main__":
     try:main()
-    except Exception:
-        print(json.dumps({"result":"ROOT_LINUX_KERNEL_CALIBRATION_BLOCKED","rawLogsStored":False}),flush=True);raise SystemExit(1) from None
+    except Exception as error:
+        print(json.dumps(blocked_outcome(error)),flush=True);raise SystemExit(1) from None

@@ -16,6 +16,7 @@ import urllib.request
 import linux_bootstrap_contracts as C
 import linux_bootstrap_backend as B
 import linux_project_inputs as I
+import linux_status_contracts as D
 
 SOURCE = Path(__file__).resolve().parents[2]
 ENV = {'PATH': '/usr/bin:/bin', 'PYTHONDONTWRITEBYTECODE': '1', 'SUPABASE_TELEMETRY_DISABLED': '1'}
@@ -118,6 +119,7 @@ def command_operation(args):
     executable = Path(args[0]).name if args else ''
     if executable == 'node':
         if args[1:] == ['--version']:return 'NODE_VERSION'
+        if args[1:3] == ['-e', D.NODE_TOKEN_VERIFY]:return 'NODE_TOKEN_SIGNATURE_VERIFY'
         if args[1:2] == ['-e']:return 'NODE_KEY_GENERATION'
     if executable == 'supabase':
         if args[1:] == ['start','--help']:return 'SUPABASE_START_HELP'
@@ -324,14 +326,21 @@ def bootstrap(request_path, approval, ports=None):
         C.write_once(runtime / 'source-bindings.json', sources)
         pins = B.image_pins(operators['linux-image-pins.json'])
         stage = 'start'
-        state = B.start(io, runtime, project_dir, tools, pins, secret)
+        state = B.start(io, runtime, project_dir, tools, pins, secret, key)
         stage = 'readback'
-        containers = B.containers(io, pins, isolation['backend'])
-        public = io.jwks(state['ANON_KEY'])
-        C.require(type(public.get('keys')) is list and len(public['keys']) == 1 and
-                  all(public['keys'][0].get(name) == key[name] for name in ['kid', 'kty', 'crv', 'x', 'y']) and
-                  not {'d', 'k'} & set(public['keys'][0]), 'BOOTSTRAP_JWKS_INVALID')
-        database = B.baseline(io, next(c for c in containers if c['role'] == 'db'), state)
+        containers = B.containers(io, pins, isolation['backend'], runtime)
+        jwks_proof = {'state': 'UNKNOWN', 'count': None, 'freshKey': None, 'privateAbsent': None}
+        try:
+            public = io.jwks(state['ANON_KEY'])
+            keys = public.get('keys') if type(public) is dict else None
+            jwks_proof['count'] = len(keys) if type(keys) is list else None
+            jwks_proof['freshKey'] = type(keys) is list and len(keys) == 1 and type(keys[0]) is dict and all(keys[0].get(name) == key[name] for name in ['kid', 'kty', 'crv', 'x', 'y'])
+            jwks_proof['privateAbsent'] = type(keys) is list and len(keys) == 1 and type(keys[0]) is dict and not {'d', 'k'} & set(keys[0])
+            jwks_proof['state'] = 'PASS' if jwks_proof['freshKey'] and jwks_proof['privateAbsent'] else 'FAIL'
+        finally:
+            D.record(runtime, 'authJwks', jwks_proof)
+        C.require(jwks_proof['state'] == 'PASS', 'BOOTSTRAP_JWKS_INVALID')
+        database = B.baseline(io, next(c for c in containers if c['role'] == 'db'), state, runtime)
         C.require(io.run(['/usr/bin/git', 'rev-parse', 'HEAD']).decode().strip() == request['sourceRevision'] and
                   io.run(['/usr/bin/git', 'status', '--porcelain']).strip() == b'', 'BOOTSTRAP_SOURCE_NOT_FROZEN')
         C.operator_package(io.source, request['operatorPackageManifestSha256'])
@@ -357,6 +366,9 @@ def bootstrap(request_path, approval, ports=None):
         result = {'result': 'FAILED', 'code': str(error) if isinstance(error, C.BootstrapError) else 'BOOTSTRAP_OPERATION_FAILED',
                   'stage': stage, 'executionAuthority': 'NONE', 'retention': 'UNVERIFIED',
                   'upstreamAutoRemovalPossible': started, 'newVolumesMayHaveBeenRemoved': started}
+        if mutated:
+            readback = D.readback_summary(runtime)
+            if readback is not None:result['readback'] = readback
         if isinstance(io, NativeIO) and io.command_diagnostic is not None:
             result['command'] = dict(io.command_diagnostic)
         hardware = hardware_diagnostic(facts)

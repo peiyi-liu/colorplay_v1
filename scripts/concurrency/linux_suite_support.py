@@ -2,6 +2,7 @@
 import hashlib
 import importlib.util
 import json
+import linux_status_contracts as D
 import os
 from pathlib import Path
 import re
@@ -74,7 +75,7 @@ BOOTSTRAP_CODES = {'BOOTSTRAP_' + name for name in (
     'JWKS_INVALID LINUX_REQUIRED OPERATION_FAILED OUTPUT_LIMIT PACKAGE_INVALID PATH_INVALID PROJECT_INPUT_INVALID REDIRECT_REJECTED '
     'RESOURCES_CHANGED RESOURCES_EXIST RUNTIME_EXISTS SERVICE_COUNT_INVALID SOURCE_CHANGED SOURCE_NOT_FROZEN '
     'STATUS_INVALID TOKEN_SIGNATURE_INVALID TOOLCHAIN_INVALID').split()}
-COMMAND_OPERATIONS = set(('UNKNOWN GIT_HEAD GIT_STATUS GIT_TRACKED_FILES NODE_VERSION NODE_KEY_GENERATION '
+COMMAND_OPERATIONS = set(('UNKNOWN GIT_HEAD GIT_STATUS GIT_TRACKED_FILES NODE_VERSION NODE_KEY_GENERATION NODE_TOKEN_SIGNATURE_VERIFY '
     'SUPABASE_VERSION SUPABASE_GO_VERSION SUPABASE_START_HELP SUPABASE_START SUPABASE_STATUS SYSTEM_READ SYSTEM_WRITE SYSTEMD_RELOAD SYSTEMD_START '
     'SYSTEMD_DOCKER_RESTART CGROUP_MKDIR CGROUP_CHOWN DOCKER_CONFIG_VALIDATE DOCKER_LIST_CONTAINERS '
     'DOCKER_LIST_VOLUMES DOCKER_INSPECT_CONTAINERS DOCKER_INSPECT_VOLUMES DOCKER_INFO DOCKER_IMAGE_PULL '
@@ -85,7 +86,7 @@ COMMAND_CLASSES = {'UNKNOWN_FLAG','CONFIG_PARSE','PERMISSION','HEALTH','IMAGE_PU
 def safe_bootstrap_outcome(value):
     # This parent independently validates the producer's small public shape.
     keys = {'result','code','stage','upstreamAutoRemovalPossible','newVolumesMayHaveBeenRemoved',
-            'remainingResources','command','hardware','executionAuthority','retention'}
+            'remainingResources','command','hardware','readback','executionAuthority','retention'}
     if type(value) is not dict or not set(value) <= keys or value.get('result') != 'FAILED' or not isinstance(value.get('code'),str) or value['code'] not in BOOTSTRAP_CODES:return None
     if value.get('executionAuthority','NONE') != 'NONE' or value.get('retention','UNVERIFIED') != 'UNVERIFIED':return None
     result = {key:value[key] for key in ['result','code']}
@@ -120,13 +121,38 @@ def safe_bootstrap_outcome(value):
         if not all(type(hardware[k]) is int and 0 <= hardware[k] <= 2**60 for k in ['memTotalBytes','freeDiskBytes']):return None
         if not all(type(hardware[k]) is bool for k in ['cgroupV2','pidfd','pss','psi']):return None
         result['hardware'] = dict(hardware)
+    if 'readback' in value:
+        readback = D.safe_readback(value['readback'])
+        if readback is None:return None
+        result['readback'] = readback
     return result
 
 
+def safe_kernel_outcome(value):
+    try:
+        require(type(value) is dict and set(value)=={'result','kernelOutcome','rawLogsStored'} and value['result']=='ROOT_LINUX_KERNEL_CALIBRATION_BLOCKED' and value['rawLogsStored'] is False)
+        row=value['kernelOutcome'];require(type(row) is dict and set(row)=={'phase','errno','permissions','cleanup','executionAuthority'})
+        require(isinstance(row['phase'],str) and row['phase'] in {'ADMISSION','PERMISSIONS','NATIVE_BROWSER','NODE_PROTOCOL','ORPHAN','LATE','ABORT','PIDFD','FINAL'})
+        require(row['errno'] is None or isinstance(row['errno'],str) and row['errno'] in {'EACCES','EPERM','ENOENT','EOPNOTSUPP','EBUSY','ESRCH','EINVAL','UNKNOWN'})
+        require(row['cleanup']=='UNKNOWN' and row['executionAuthority']=='NONE')
+        p=row['permissions']
+        if p is not None:
+            require(type(p) is dict and set(p)=={'uid','euid','namespaceInode','source','destination','commonAncestor'})
+            require(all(type(p[k]) is int and 0<=p[k]<=2**64 for k in ['uid','euid','namespaceInode']))
+            for key in ['source','destination','commonAncestor']:
+                info=p[key];require(type(info) is dict and set(info)=={'pathSha256','hierarchyRoot','procsUid','procsGid','procsMode','effectiveWritable'})
+                require(isinstance(info['pathSha256'],str) and re.fullmatch('[a-f0-9]{64}',info['pathSha256']))
+                require(all(type(info[k]) is bool for k in ['hierarchyRoot','effectiveWritable']))
+                require(all(type(info[k]) is int and 0<=info[k]<=2**32 for k in ['procsUid','procsGid']) and type(info['procsMode']) is int and 0<=info['procsMode']<=0o7777)
+        return json.loads(json.dumps(row))
+    except Exception:return None
+
+
 class StageRejected(ValueError):
-    def __init__(self, outcome):
+    def __init__(self, outcome, kernel=None):
         super().__init__('LOCAL_SUITE_STAGE_REJECTED')
         self.bootstrapOutcome = outcome
+        self.kernelOutcome = kernel
 
 
 def stage(name, argv, expected=None, timeout=60):
@@ -142,17 +168,19 @@ def stage(name, argv, expected=None, timeout=60):
     value = json.loads(lines[-1])
     require(isinstance(value, dict), 'LOCAL_SUITE_RESULT_INVALID')
     outcome = safe_bootstrap_outcome(value) if name == 'bootstrap' else None
+    kernel = safe_kernel_outcome(value) if name == 'kernel-calibration' else None
     rejected = code != 0 or (expected and value.get('result') != expected)
     if write_error is not None:
-        if rejected:raise StageRejected(outcome) from None
+        if rejected:raise StageRejected(outcome, kernel) from None
         raise write_error
     try:
         write(PARENT / 'requests' / (name + '-result.json'), value)
         if outcome is not None:write(PARENT / 'requests' / (name + '-diagnostic.json'), outcome)
+        if kernel is not None:write(PARENT / 'requests' / (name + '-diagnostic.json'), kernel)
     except OSError:
-        if rejected:raise StageRejected(outcome) from None
+        if rejected:raise StageRejected(outcome, kernel) from None
         raise
-    if rejected:raise StageRejected(outcome)
+    if rejected:raise StageRejected(outcome, kernel)
     return value
 
 

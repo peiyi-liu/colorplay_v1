@@ -17,9 +17,9 @@
       "sha256": "4d9ce7eb760ff8c47da176f582227b1b6d64236e28417f2867839e2b7d7a829b"
     },
     "calibrate-linux-runtime.py": {
-      "bytes": 8303,
+      "bytes": 10162,
       "role": "OPERATOR",
-      "sha256": "3bd873a1d18a764c25cf8ff361b087208cb6d7621d5b95ed168d3f6849e1a52d"
+      "sha256": "27b7661b23304f58f95ef655ddb955ff248cd008bda80002dd629adafb1c8212"
     },
     "calibration-sample.mjs": {
       "bytes": 4091,
