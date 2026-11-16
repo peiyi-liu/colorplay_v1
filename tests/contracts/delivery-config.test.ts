@@ -21,6 +21,11 @@ describe('delivery configuration', () => {
       framework: 'vite',
       buildCommand: 'npm run build',
       outputDirectory: 'dist',
+      git: {
+        deploymentEnabled: {
+          'codex/local-capacity-linux-20261116': false,
+        },
+      },
       rewrites: [{ source: '/(.*)', destination: '/index.html' }],
     });
   });
