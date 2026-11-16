@@ -158,7 +158,13 @@ class StageRejected(ValueError):
 def stage(name, argv, expected=None, timeout=60):
     require(bool(re.fullmatch('[a-z][a-z0-9-]{1,70}', name)))
     print(json.dumps({'stage': name, 'capacityVerdict': 'PENDING', 'hostedAuthority': 'NONE'}), flush=True)
-    code, raw = module('linux-local-bootstrap').bounded(argv, SOURCE, timeout=timeout, maximum=4 * 1024**2, env=ENV, checked=False)
+    bootstrap = module('linux-local-bootstrap')
+    if name in {'kernel-calibration','functional-run'} or name.startswith('capacity-run-'):
+        authority = module('linux_attach_authority')
+        def install(args, data, timeout):
+            return bootstrap.bounded(args, SOURCE, data=data, timeout=timeout, maximum=262144, env=ENV)
+        timeout = authority.prepare_stage(name, argv, timeout, install, write)
+    code, raw = bootstrap.bounded(argv, SOURCE, timeout=timeout, maximum=4 * 1024**2, env=ENV, checked=False)
     # Preserve failed-stage output privately before rejecting it. Never print it.
     write_error = None
     try:write(PARENT / 'requests' / (name + '-stdout.jsonl'), raw)

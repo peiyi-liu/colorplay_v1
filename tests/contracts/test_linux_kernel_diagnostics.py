@@ -69,8 +69,9 @@ class KernelDiagnosticsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             parent=Path(folder).resolve();(parent/'requests').mkdir(mode=0o700)
             fake=types.SimpleNamespace(bounded=lambda *_args,**_options:(1,json.dumps(outcome).encode()))
-            with patch.object(S,'PARENT',parent),patch.object(S,'module',return_value=fake),contextlib.redirect_stdout(io.StringIO()):
-                with self.assertRaises(S.StageRejected) as rejected:S.stage('kernel-calibration',['synthetic'], 'ROOT_LINUX_KERNEL_CALIBRATION_VERIFIED')
+            authority=types.SimpleNamespace(prepare_stage=lambda name,argv,timeout,*_:timeout)
+            with patch.object(S,'PARENT',parent),patch.object(S,'module',side_effect=lambda name:authority if name=='linux_attach_authority' else fake),contextlib.redirect_stdout(io.StringIO()):
+                with self.assertRaises(S.StageRejected) as rejected:S.stage('kernel-calibration',['/usr/bin/python3','-B',str(S.RUNTIME/'calibrate-linux-runtime.py'),'a'*40,'b'*64], 'ROOT_LINUX_KERNEL_CALIBRATION_VERIFIED')
             self.assertEqual(rejected.exception.kernelOutcome,S.safe_kernel_outcome(outcome))
             self.assertIsNone(rejected.exception.bootstrapOutcome)
             self.assertTrue((parent/'requests/kernel-calibration-diagnostic.json').exists())

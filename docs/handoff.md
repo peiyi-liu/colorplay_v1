@@ -2333,3 +2333,43 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Final11source/v1 51records/v2 12records/18protected核符，v2packet64fab49ad2dcc05727670065aa56fed587cf7656703d6550372d52c01daf4a2b；Root唯一一輪Standards0/初SpecP2 1→cleared/剩0，summaryec3c3395b829bfefa7038efef3b7b1a4cfaa335faa8d16a59da8bd9d33443723，report docs/reviews/2026-11-16-linux-status-contract-m12-review.md。Root44tests全綠（status8/.875s、kernel4/.044s、bootstrap17/1.195s、signing6/1.709s、projectinput9/.840s），worker113/9.275s及lint/type/static/import/EOF/diff綠。
 - P2三檔delta以共用EXPECTED_BASELINE要求database PASS必須16項true int exact，Root實跑canonical收／None-wrong PASS拒／UNKNOWN保留，receipt3fd814f1571790edde14d49bc6191d595ba9621379f102b1f3cc2b97843c81e9；原v1/RED與其餘8source/18protected不變。Node真crypto+actual B-derived field Go evidence分開，合成ports與原setupFAIL/舊Maccleanup資格保留；原run6 firstfield仍UNKNOWN。
 - Root將精確14paths commit、核remote exacte8後快轉一個新Source Local job，原6runs不重跑。Manifest僅calibrate entry新SHAd189b5d9e5f849d290b1e3db05ca74775d21ef8376f26aaaf0a7788e474a8cb5，原OwnedProcess/權限/guards/M3/M5/業務/SLO/caps不變；profile後kernel錯誤也可safe summary保errno，不假cleanup或Native PASS。此時functional/15容量NOT_RUN、retention UNVERIFIED、費用US$0/Hosted NONE，原WIP/G8/85保持。
+
+
+### 2026-11-16 — M12 Native完整bootstrap/profile成功；M13先設計有界privileged attach
+
+- M12精確14paths commitd3b920549fe94ad2b2565972a82ad6a772fced6a/check0/clean，remote exacte8後正常快轉，新run43811374406/job133113561922/attempt1。toolchain、完整bootstrap（含status/fresh簽章/AuthJWKS/8containers/DBbaseline）、profile-pin均通過；停在kernel-calibration首NATIVE_BROWSER，原OSError errnoEACCES，161.754s。0business/functional/15legs，不能稱容量PASS；非重跑原六run。
+- 新safe witness真可用：UID/euid1001、destprocs owner1001/mode0644/write=true；sourceprocs與commonAncestorprocs owner0/0644/write=false，LCA hierarchyRoot=true／pathSHA8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1。這與Linuxnonroot遷移共同祖先規則吻合；沒有區分失敗OPEN/WRITE，不臆測精確syscall。cleanup仍UNKNOWN。job已completed failure／0artifact，profile已存在使M8安全拒PREBUSINESS_NOT_ADMITTED，留存UNVERIFIED_RUNNER_EPHEMERAL；未把診斷當完整備份。私有joblog18845B SHA62b2762c330ad92148304eeff0f1c579cf0884df74f8b9e3e4bbceb0ba99f6d5已存。
+- Root同worker M13先DESIGN-ONLY，不Sourcefix：既有fresh VM sudo能力下固定helper只移本輪新gated/parent-held-unreaped child入原nonce-owned leaf，須job/source/ctx/leaf inode/UID/boot/PID-start-parent-exe/cmdline/pidfd與helper物理close綁定。原observer外部／producer不能逃leaf／foreignPID不受影響；不chown/chmodglobalLCA、不移observer／不改sudoers/guards/cleanup/SLO。Root核exactfiles與testseam/brief後才實作，不先大開權限救PASS。
+- 費用US$0，原WIP/G8/85未操作，Hosted/Production/寄信不動。下一步M13有界設計→Source實作/唯一Rootreview→一個新Source Native六controls；目前全站40/60仍未驗證。
+
+
+### 2026-11-16 — M13有界attach設計定案／7paths實作授權
+
+- 同worker唯讀比較：root-open FD的file->f_cred可越LCA權限，但pidfd_getfd在ptrace允許時複製同file，僅close_fds不足證producer不可取得；未pinYama/dumpable/LSM，不採FD能力方案。選一次性root-owned/hash-pinned helper＋root-pinned suite/job/context/boot/nonce/leaf policy，Root以SO_PEERCRED/真正直接parent＋固定三observer script/argv hashes核身份，免逐observer PID預註冊／upperGate。這是公開kernel語義，不冒稱runner所有LSM已查。
+- Root授權exact7paths：新privileged-attach.py、新linux_attach_authority.py、linux_owned_process.py、linux_suite_support.py、package-manifest.json、新test_privileged_attach.py、test_linux_owned_process.py。Root只docs/brief/唯一review，worker不是獨自作業且不得revert。READY ACK、direct held-unreaped child/pidfd/pipe核、單次owned leaf write/readback、root supervisor/worker物理退出後才release；cancel/late/unknown均拒；不globalLCA委派、不observer搬移、不Root FD入producer，不改原budget/guards/M3/M5/業務/SLO。
+- Brief初寫capacity-run-N只1..15，worker核指出實際runner range(15)，Root實讀驗正後修為既有0..14（拒其他N/leading zeros），不改leg順序。最新brief docs/superpowers/plans/2026-11-16-linux-owned-attach-m13-brief.md SHA5174493af7f0630d3c016f04625ab81d73672cde15fdc659d16e6be71f5c5a74；manifest原42僅更owned_process/既有test，新增helperOPERATOR+新testTEST，其他40不變，總44。先有效RED/Source實作與完整checks，再Root唯一review，尚無M13 Native/commit/push。
+- 成本仍US$0，原WIP/G8/85／Hosted/Production/mail未動；Native已過初始化/profile，kernel/functional/40-60仍未完成，未把工具設計當實證。
+
+
+### 2026-11-16 — 全站unit 3785 PASS；M13同輪P1禁止過早reap
+
+- Root兩S級修正僅隔離 checkout：Vitest排.git private evidence、delivery完整設定斷言納入既有專用test分支部署停用。首次/第二次FAIL原log保留；nested Vite403實證是@fontsource scope跨目錄symlink。Root第一次漏查parentlink短暫改到原依賴link，已恢復exactlink並hashchecked移除只由本次建立的外部副本；現兩套字型實體在隔離checkout，不改產品source/測試assertion。final focused retention1PASS、delivery8PASS，全unit3785/3785PASS/0skip，reported testwindow137.658s；report384b864980e1332b188713b834d5df9c83e93d50dba0d168e1c09d9b6afbf754，receiptabe48119f4ec54282de726439300faadb8177b54b9886ebf1c81488e23605e99。review docs/reviews/2026-11-16-integration-test-config-review.md；兩S檔尚未commit，不當Native容量/Hosted PASS。
+- M13 worker frozen v1 packetffe9b140b7ab59c1d61edc75d9765939cb1e0b21832980b374379a737fa5f387；Root核8source/42records/52protected、manifest44/其他40不變，獨立operator55/0.131s PASS。workerfullPython112PASS+1既有Mac cleanupEPERM原FAIL保留，獨立該case1PASS/0.413、受影響59PASS/0.152，不寫fullgreen。Root驗packet首次小script unmatched-parenthesis setupFAIL保留資格，修後核符，無Source mutation。
+- 唯一Root review同輪BLOCK一P1：client未知writerclose/timeout向外throw後run_child except仍stop/poll/wait/reap gate。Root真普通Python gate＋外部synthetic authority控制exit1，helperClosed=false已producer-reap、Node未執行；初reviewreceiptad518d1719df598b8bc2079cc9ecee9276b0f40a9edf9fdc433914795439b36a。交同worker原8paths修正前先設計最終deadline策略，不以global保留Popen/增加budget/自報closed蒙混。
+- worker提出PTRACE_SEIZE+O_EXITKILL的kernel-held身份，Root已讀官方v6.8 exit/wait/ptrace語義；尚未批准新primitive，須先解pre-seize UNKNOWN本身numeric PID reuse race。現僅read-only設計/官方契約，不新Source/第9path/Native。原base d3b920549fe94ad2b2565972a82ad6a772fced6a、specialremote同SHA；0新business/functional/15legs；費用US$0，G8/85、原7protected/handoffprefix、Hosted/Production/mail保持。
+
+
+### 2026-11-16 — M13同輪P1修正設計定案：self0＋pre-exec能力關閉
+
+- Root排除PTRACE_SEIZE：入口仍numeric PID lookup，pre-seize UNKNOWN可重現同race，且EXITKILL/detach額外控制不解根因。採固定root helper只open/send既有nonce leaf procsFD，不對任何PID寫/ptrace/signal；取得FD且helper已物理close後才Popen direct ordinaryUID1001 fixedgate，parent立即closecap，gate只write b'0'+newline給自己、finally closecap再ACK/block。parent/child目標inode FD census零、identity/membership/inventory及原cancel/budget全部核後才release Node。
+- self0由kernel current/taskref處理；無late numeric writer，finalUNKNOWN不release但可安全close本地FD/kill/wait/reap本child，不加guardian/grace/caps。roothelper0500/policy0400、Source/job/ctx/boot/leaf/Rootpeer核保持，四UID0/dumpable0，不依賴Yama猜測。固定可信Root preview/controller允許並存，禁重疊的是producer Node/Chrome/descendants；不假稱所有同UID Node皆不存在或能防惡意可信Root工具。所有可用user cap副本/queue在producer之前已關，Roothelper亦正常close才有success。
+- readonly design-v2 SHAd0d916b23f97a82b11b08c5dc0a66989b7127bb8a520faef88853f90ed8a0d7e；Root書面addendum已落原brief，最新SHAf1fb1cbb2be6eb455b9d96894d59d72b0c95891406de44dedb4db0cf7010147f，明確取代舊numericwriter/held-unreaped協定；same8paths同worker/唯一Rootreview同輪delta，base仍d3b9205，v1packet/原RED/EPERM/setupFAIL全部留存。未核Source delta前不Native/commit/push。
+- 全unit3785PASS/0fail與Local synthetic build exit0已存正式S級report；build logf9d85a431a2d8f04174ca1ffa307b2b4095d2f5a1e7215dd7092b5e94a145e4b（Vite521ms，既有chunk提示未改門檻）。費用US$0，40/60及15legs仍NOT_RUN，原WIP/G8/85/Hosted/Production/mail不變。
+
+
+### 2026-11-16 — M13同輪唯一Root review ACCEPTED_SOURCE_ONLY；待新Linux Local run
+
+- v2 frozen packetcac02217a5ddc52660d1fe78ef79302e860c0f74b5c9cdcea0a36ce34233c262；Root核8source/94records/52protected、manifest44/原其他40相同、max424行。Root獨立operator61/0.182s＋kerneldiag4/0.121s PASS；另4真Source gate普通FS/Python/Node控制success capcopies0、不release/ACKlost/write-reject皆無Node，AST核server無numericmutator/gate唯一self0。Standards0open、Spec初1P1已clear/0open、同SecurityP1已clear；summary647fd5d878cb6fbc914ece9bfa0ad22a010b572fc17bbfa8b53ad49053245d61，review docs/reviews/2026-11-16-linux-owned-attach-m13-review.md。Native f_cred/cgroup/六controls仍NOT_RUN。
+- worker受影響65PASS/0.322s、fullPython113PASS/10.079s、lint/type/format/static/import/EOF/diff0；v1 EPERM原FAIL與所有setup/RED資格保留，不當修好Mac cleanup。Root同輪Source核對另發現workflow alias+relative argv不符INSTALL原absolute guard；Root S級單行canonical launcher，actual workflow→actual installer AST RED1→GREEN0，不放寬installer。此Root第三S檔/唯一workflow例外已寫brief；worker8paths與52protected不變，原2TS設定＋三檔formatPASS，全unit3785PASS/Local synthetic build0維持。
+- Root private只讀artifact watcher已驗：oldrun7 completed/noartifact→exit2 UNVERIFIED；oldrun5小cipherZIP下載到新私有controlfolder，API digest與既有79b41dfbc9d98d95027ad7ec1bf654ee5b03ea9dc9079f43ca4783c67fa52e76相符，未解密/未讀key/未CI rerun。預備新run自動留cipherZIP，仍須Root全解密/manifest完整核對才稱retained。費用US$0；原7protected/handoff575959Bprefix與G8/85保持，Hosted/Production/mail NONE。
+- 下一步Root精確分開commit S設定與M13＋自有docs、核remote仍exactd3b9205後僅正常FF specialtestbranch，一個新Source/attempt1免費Local job；不得GH rerun或把Source review當40/60已PASS。

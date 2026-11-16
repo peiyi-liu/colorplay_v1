@@ -82,9 +82,9 @@
       "sha256": "024dd5533b60075d7e5c275812a9833693086a853908865f6203a5ec4521d1b1"
     },
     "linux_owned_process.py": {
-      "bytes": 9014,
+      "bytes": 11801,
       "role": "OPERATOR",
-      "sha256": "de2d02668d03e5509d3f22d2e5cdc23ee948e626cc77f0b40ba66de5ceae4e48"
+      "sha256": "c90d3a3048f69ba99687f613cacfbcf4b9fb30d1c396c0fda80d8a048b551e8f"
     },
     "linux_proc.py": {
       "bytes": 3078,
@@ -131,6 +131,11 @@
       "role": "OPERATOR",
       "sha256": "0a1b4968b2d28144473aedcffd7c28c1ed311fac4304fa4009d5ddadf74fb782"
     },
+    "privileged-attach.py": {
+      "bytes": 15375,
+      "role": "OPERATOR",
+      "sha256": "d1f804af073002b774a5bb6604fb94bd286cf97480ee72c77241bba6044cde84"
+    },
     "root-functional-network-observer.mjs": {
       "bytes": 9547,
       "role": "OPERATOR",
@@ -172,9 +177,9 @@
       "sha256": "8b7db5471063441f07dd58477bcaa0b39b5ae59e9aa945352f6f67605af97d1e"
     },
     "test_linux_owned_process.py": {
-      "bytes": 621,
+      "bytes": 9147,
       "role": "TEST",
-      "sha256": "dafbefc53def8ab1456bf5c17aa555aaeb5fbf650ec48f4addbcad55ad58c7cc"
+      "sha256": "7d508b661fd210ffa1548492f4e59c7815256efe7338f42951a7c0919a05f3e9"
     },
     "test_linux_proc.py": {
       "bytes": 3500,
@@ -195,6 +200,11 @@
       "bytes": 2352,
       "role": "TEST",
       "sha256": "74cf3f3be8806643f65467516ddd8196b5de6a3d11eb70441dd1468978e66525"
+    },
+    "test_privileged_attach.py": {
+      "bytes": 16604,
+      "role": "TEST",
+      "sha256": "347736b8a1c294420c742fadf1649008930da585d02ef5e74a0a9442d813f6d7"
     },
     "test_readiness_cgroup.py": {
       "bytes": 1553,
