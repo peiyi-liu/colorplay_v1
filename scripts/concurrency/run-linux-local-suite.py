@@ -23,6 +23,8 @@ def attach_controls(snapshot, summary):
 
 def main():
     S.require(sys.platform == 'linux' and platform.machine() in ('x86_64', 'amd64'))
+    diagnostic_flag = os.environ.pop('COLORPLAY_LOCAL_DIAGNOSTIC_ONLY', None)
+    S.require(diagnostic_flag in (None, '1'), 'LOCAL_DIAGNOSTIC_FLAG_INVALID')
     S.require(len(sys.argv) == 2 and bool(re.fullmatch('[a-f0-9]{40}', sys.argv[1])))
     revision = sys.argv[1]
     S.require(os.environ.get('GITHUB_SHA') == revision and os.environ.get('GITHUB_REPOSITORY') == 'peiyi-liu/colorplay_v1' and os.environ.get('GITHUB_JOB') == 'capacity-linux' and os.environ.get('GITHUB_RUN_ATTEMPT') == '1')
@@ -32,6 +34,7 @@ def main():
     phase, snapshot_plan, snapshot_approval = 'toolchain', None, None
     path, approved = None, None
     summary = {'sourceRevision': revision, 'functional': 'NOT_RUN', 'passedLegs': 0, 'plannedLegs': 15, 'remainingLegs': 'NOT_RUN', 'capacityVerdict': 'NOT_VERIFIED', 'retention': 'UNVERIFIED', 'hostedAuthority': 'NONE', 'productionOperations': 0, 'automaticRetry': False}
+    if diagnostic_flag == '1':summary['diagnosticOnly'] = True
     success = False
     encryption_attempted = False
     python = ['/usr/bin/python3', '-B']
@@ -65,6 +68,9 @@ def main():
         snapshot_plan, snapshot_approval = S.create_snapshot_plan(revision, approved)
         phase = 'functional-prepare'
         prepared = S.stage(phase, [*python, str(S.RUNTIME / 'prepare-functional-request-observed.py'), revision], 'LOCAL_FUNCTIONAL_REQUEST_PREPARED', timeout=180)
+        if diagnostic_flag == '1':
+            phase = 'business-barrier'
+            raise ValueError('LOCAL_DIAGNOSTIC_PREBUSINESS_STOP')
         phase = 'functional-run'
         S.stage(phase, [*python, str(S.RUNTIME / 'run-functional-owned.py'), revision, prepared['runId'], prepared['approvalSha256']], 'PASS', timeout=1650)
         summary['functional'] = 'PASS'

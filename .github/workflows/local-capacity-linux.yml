@@ -34,6 +34,8 @@ jobs:
 
       - name: Run fresh Local suite without Hosted credentials
         id: suite
+        env:
+          COLORPLAY_LOCAL_DIAGNOSTIC_ONLY: '1'
         run: /usr/bin/python3 -B "$GITHUB_WORKSPACE/colorplay-live-recovery/scripts/concurrency/run-linux-local-suite.py" "$GITHUB_SHA"
 
       - name: Upload only bounded encrypted evidence

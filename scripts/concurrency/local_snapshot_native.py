@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import select
 import signal
 import stat
@@ -79,7 +80,7 @@ class NativeIO:
         C.require(not self.cancelled,'SNAPSHOT_INTERRUPTED')
         C.require(time.monotonic() < self.deadline, 'SNAPSHOT_DEADLINE')
 
-    def run(self, args, *, data=None, output=None, env=None, timeout=30, maximum=8*1024**2):
+    def run(self, args, *, data=None, output=None, env=None, timeout=30, maximum=8*1024**2, merge_stderr=False):
         self.check()
         seconds = min(timeout, self.deadline - time.monotonic() - 4)
         C.require(seconds > 0, 'SNAPSHOT_DEADLINE')
@@ -87,6 +88,11 @@ class NativeIO:
         if privileged:
             args = [*args[:2], '/usr/bin/timeout', '--signal=TERM', '--kill-after=2', str(seconds), *args[2:]]
         started = time.monotonic()
+        stop_info = None
+        if args[:6] == [*DOCKER, 'stop', '--timeout', '-1']:
+            stop_info = {'requestedSeconds':timeout,'effectiveSeconds':seconds,'startedMonotonic':started,
+                         'elapsedSeconds':None,'clientClosed':None,'exitCode':None,'subprocessClosure':'UNKNOWN'}
+            self.last_stop_command = stop_info
         incoming = tempfile.TemporaryFile()
         incoming.write(data or b''); incoming.seek(0)
         fd = os.open(output, os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600) if output else None
@@ -94,7 +100,7 @@ class NativeIO:
         child = None
         try:
             child = subprocess.Popen(args,cwd=self.source,env={**ENV,**(env or {})},stdin=incoming,
-                stdout=destination,stderr=subprocess.DEVNULL,start_new_session=True)
+                stdout=destination,stderr=destination if merge_stderr else subprocess.DEVNULL,start_new_session=True)
             while child.poll() is None:
                 self.check()
                 C.require(time.monotonic()-started < seconds+3, 'SNAPSHOT_COMMAND_TIMEOUT')
@@ -115,6 +121,10 @@ class NativeIO:
                 except subprocess.TimeoutExpired:self.closure='UNKNOWN'
                 if privileged:self.closure='UNKNOWN'
             destination.close(); incoming.close()
+            if stop_info is not None:
+                stop_info.update(elapsedSeconds=time.monotonic()-started,
+                    clientClosed=child.poll() is not None if child is not None else None,
+                    exitCode=child.returncode if child is not None else None,subprocessClosure=self.closure)
 
     def docker(self, *args, **options):
         return self.run([*DOCKER,*args],**options)
@@ -199,6 +209,73 @@ class NativeIO:
 
     def stop(self, row):
         self.docker('stop','--timeout','-1',row['id'],timeout=90)
+
+    def stop_diagnostics(self, row):
+        self.check()
+        C.require(any(all(row.get(k)==pin[k] for k in ['role','id','name','imageId'])
+                      for pin in self.context['containers']), 'SNAPSHOT_CONTAINER_CHANGED')
+        rows=C.decode(self.docker('inspect',row['id'],timeout=2,maximum=262144))
+        C.require(type(rows)is list and len(rows)==1)
+        item=rows[0]
+        C.require(item['Id']==row['id'] and item['Name']==row['name'] and item['Image']==row['imageId'])
+        state=item['State'];config=item['Config']
+        C.require(all(type(state[k])is bool for k in ['Running','Paused','Restarting','Dead']) and
+                  type(state['ExitCode'])is int and isinstance(state['Status'],str) and
+                  state['Status'] in {'created','running','paused','restarting','removing','exited','dead'})
+        safe={k:state[k] for k in ['Running','Paused','Restarting','Dead','Status','ExitCode']}
+        signal_name=config.get('StopSignal') or 'DEFAULT'
+        safe['stopSignal']=signal_name if signal_name in {'DEFAULT','SIGTERM','SIGINT','SIGQUIT'} else 'UNKNOWN'
+        entrypoint,cmd=config.get('Entrypoint'),config.get('Cmd')
+        shape='UNKNOWN'
+        if isinstance(entrypoint,list) and entrypoint and all(isinstance(v,str) for v in entrypoint):
+            executable=Path(entrypoint[0]).name
+            shape='SHELL' if executable in {'sh','ash','bash','dash'} else 'EDGE_RUNTIME' if executable=='edge-runtime' else 'OTHER'
+        result={'state':safe,'entrypointKind':shape,
+                'entrypointCmdSha256':C.digest(C.canonical([entrypoint,cmd])),'topology':'UNKNOWN','signals':'UNKNOWN'}
+        if row['role']=='edge_runtime':
+            if state['Running']:
+                try:
+                    top=self.docker('top',row['id'],'-eo','pid,ppid,comm',timeout=2,maximum=16384)
+                    result['topology']=self.safe_topology(top,state['Pid'])
+                except Exception:pass
+            try:
+                raw=self.docker('logs','--tail','80',row['id'],timeout=2,maximum=65536,merge_stderr=True)
+                result['signals']=self.safe_signals(raw)
+            except Exception:pass
+        return result
+
+    @staticmethod
+    def safe_topology(top,pid1):
+        C.require(isinstance(top,bytes) and len(top)<=16384 and type(pid1)is int and 0<pid1<=2**31-1)
+        text=top.decode('ascii')
+        C.require(all(32<=ord(char)<=126 or char in '\n\t' for char in text))
+        lines=text.splitlines()
+        C.require(2<=len(lines)<=65 and lines[0].split()==['PID','PPID','COMMAND'])
+        rows={}
+        for line in lines[1:]:
+            row=line.split()
+            C.require(len(row)==3 and re.fullmatch('[1-9][0-9]{0,9}',row[0]) and
+                      re.fullmatch('0|[1-9][0-9]{0,9}',row[1]) and re.fullmatch('[A-Za-z0-9_.:/@+-]{1,64}',row[2]))
+            pid,parent=int(row[0]),int(row[1]);C.require(pid<=2**31-1 and parent<=2**31-1 and pid not in rows)
+            comm=row[2];kind='SHELL' if comm in {'sh','ash','bash','dash'} else 'EDGE_RUNTIME' if comm=='edge-runtime' else 'INIT' if comm in {'tini','docker-init'} else 'OTHER'
+            rows[pid]=(parent,kind)
+        C.require(pid1 in rows)
+        edge=[value for value in rows.values() if value[1]=='EDGE_RUNTIME']
+        parent_kind=rows[edge[0][0]][1] if len(edge)==1 and edge[0][0] in rows else 'UNKNOWN'
+        return {'processes':len(rows),'pid1Kind':rows[pid1][1],'runtimeCount':len(edge),'runtimeParentKind':parent_kind}
+
+    @staticmethod
+    def safe_signals(raw):
+        C.require(isinstance(raw,bytes) and len(raw)<=65536)
+        text=raw.decode('utf-8',errors='replace');events=set()
+        for number in re.findall(r'shutdown signal received: ([0-9]{1,2})\b',text):
+            if number=='15':events.add('SIGTERM_RECEIVED')
+        for pattern,event in [('interrupt signal received','SIGINT_RECEIVED'),
+                ('received interrupt signal while waiting workers','DRAIN_INTERRUPTED'),
+                ('did not able to terminate the workers within [0-9]+ seconds','GRACEFUL_TIMEOUT'),
+                ('runtime exits immediately since the graceful exit feature has been disabled','DRAIN_DISABLED')]:
+            if re.search(pattern,text):events.add(event)
+        return sorted(events) if events else 'UNKNOWN'
 
     def database(self, plan):
         self.db=next(row['id'] for row in plan['containers'] if row['role']=='db')

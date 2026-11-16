@@ -127,9 +127,9 @@
       "sha256": "d4cdd3609b4cba90f7fee48443792199562a3745035bfaa9e27b43f5392c3620"
     },
     "prepare-functional-request-observed.py": {
-      "bytes": 9189,
+      "bytes": 11845,
       "role": "OPERATOR",
-      "sha256": "0a1b4968b2d28144473aedcffd7c28c1ed311fac4304fa4009d5ddadf74fb782"
+      "sha256": "6b54e508e4d901498268f790637b5460be2432dd325c0c2611adb8aa0f9f025a"
     },
     "privileged-attach.py": {
       "bytes": 15375,

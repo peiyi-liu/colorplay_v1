@@ -8,6 +8,7 @@ import signal
 import stat
 import sys
 import tarfile
+import time
 import local_snapshot_contracts as C
 from local_snapshot_native import NativeIO
 
@@ -109,6 +110,38 @@ def runtime_fingerprints(records):
     return sorted(records,key=lambda r:r['path'])
 
 
+def stop_one(io, row, output, sequence, approved):
+    C.require(row in approved and type(sequence)is int and 0<=sequence<8,'SNAPSHOT_CONTAINER_CHANGED')
+    io.check()
+    prefix=output/('shutdown-'+str(sequence))
+    def persist(suffix,value):
+        try:C.write_once(Path(str(prefix)+'-'+suffix+'.json'),value)
+        except Exception:io.shutdown_diagnostics='UNKNOWN'
+    def observation():
+        try:
+            io.check()
+            return io.stop_diagnostics(row) if hasattr(io,'stop_diagnostics') else 'UNKNOWN'
+        except Exception:return 'UNKNOWN'
+    started=time.monotonic()
+    io.shutdown_diagnostics=getattr(io,'shutdown_diagnostics','RECORDED')
+    persist('intent',{'sequence':sequence,'role':row['role'],'containerIdSha256':C.digest(row['id'].encode()),
+        'operation':'DOCKER_STOP','signalMode':'DOCKER_CONFIGURED_STOP_SIGNAL','dockerTimeout':'-1',
+        'requestedSeconds':90,'startedMonotonic':started})
+    before=observation();persist('before',before)
+    io.last_stop_command=None
+    outcome='FAILED'
+    try:
+        io.stop(row);outcome='RETURNED_SUCCESS'
+    finally:
+        command=getattr(io,'last_stop_command',None)
+        after=observation()
+        state=after.get('state') if isinstance(after,dict) else None
+        stopped_state=not state['Running'] if isinstance(state,dict) and type(state.get('Running'))is bool else 'UNKNOWN'
+        persist('result',{'sequence':sequence,'role':row['role'],'outcome':outcome,
+            'elapsedSeconds':time.monotonic()-started,'command':command if isinstance(command,dict) else 'UNKNOWN',
+            'containerStopped':stopped_state,'observation':after})
+
+
 def snapshot(plan_path, approval, ports=None):
     io=ports or NativeIO();output=None;created=False;stage='admission'
     try:
@@ -135,7 +168,7 @@ def snapshot(plan_path, approval, ports=None):
         C.write_once(output/'container-inventory.json',observed)
         stage='non_db_stop'
         non_db=[r for r in plan['containers'] if r['role']!='db']
-        for row in non_db:io.stop(row)
+        for index,row in enumerate(non_db):stop_one(io,row,output,index,plan['containers'])
         stopped(io.inspect(non_db),[r for r in observed['containers'] if r['Id'] in {v['id'] for v in non_db}])
         stage='database';actual=io.database(plan)
         C.require(actual==plan['databases'],'SNAPSHOT_DATABASE_SET_CHANGED')
@@ -150,7 +183,7 @@ def snapshot(plan_path, approval, ports=None):
                   (database/'globals.sql').stat().st_size>0,'SNAPSHOT_DUMP_MISSING')
         after=io.census(actual);C.require(before==after,'SNAPSHOT_DATABASE_CHANGED')
         C.write_once(output/'database-census-after.json',after)
-        stage='database_stop';io.stop(next(r for r in plan['containers'] if r['role']=='db'))
+        stage='database_stop';stop_one(io,next(r for r in plan['containers'] if r['role']=='db'),output,7,plan['containers'])
         closed=io.inspect(plan['containers']);stopped(closed,observed['containers'])
         C.write_once(output/'stop-proof.json',{'containers':closed,'forcedTermination':False})
         stage='volumes';volumes=output/'volumes';volumes.mkdir(mode=0o700)
@@ -182,7 +215,7 @@ def snapshot(plan_path, approval, ports=None):
         result={'result':'FAILED','code':str(error) if isinstance(error,C.SnapshotError) else 'SNAPSHOT_OPERATION_FAILED',
             'stage':stage,'executionAuthority':'NONE','retention':'UNVERIFIED',
             'snapshotDirectory':str(output) if created and output.is_dir() else None,
-            'subprocessClosure':getattr(io,'closure','UNKNOWN')}
+            'subprocessClosure':getattr(io,'closure','UNKNOWN'),'shutdownDiagnostics':getattr(io,'shutdown_diagnostics','NOT_REACHED')}
         if result['snapshotDirectory']:
             try:C.write_once(output/'failure-container-inventory.json',io.inspect(plan['containers']))
             except Exception:result['containerReadback']='UNKNOWN'
