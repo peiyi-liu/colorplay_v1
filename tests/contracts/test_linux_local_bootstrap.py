@@ -74,7 +74,7 @@ class Fixture:
         package_raw = encoded(manifest)
         (self.package / 'package-manifest.json').write_bytes(package_raw)
         self.tracked = ['supabase/migrations/%014d.sql' % x for x in range(121)]
-        self.tracked += ['supabase/functions/auth-login/index.ts'] + ['supabase/' + p for p in B.SEEDS]
+        self.tracked += ['supabase/config.toml', 'supabase/templates/email-otp.html', 'supabase/functions/auth-login/index.ts'] + ['supabase/' + p for p in B.SEEDS]
         for name in self.tracked:
             path = self.source / name
             path.parent.mkdir(parents=True, exist_ok=True)

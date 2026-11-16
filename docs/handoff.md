@@ -2273,3 +2273,18 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 核9source/23logs-proofs/9protected，packet50a147b7cedf385e1a946ad824e5bd0d0e694ed6a19e70062a43b530d1c3f9a7；Root唯一review Standards0/Spec0/newblocker0，summary91eb7225a656766281d8d0d03844ece20f574f5b9e0e8b8b7e56dc7eb15fa69f，report docs/reviews/2026-11-16-supabase-dual-toolchain-m9-review.md。Worker86/4.262s與lint/type/format/static/diff綠，Root54 tests綠。
 - Root以真正原official archive production-default實測兩ELF co-locate/hash/owner700/nlink1＋防覆寫，control11b10fed7773b4edc5c2cda4a0e7b26dec27601bba0d91a5d1b33e8d9394aedb；只FS不執行Linux。toolchain schema2獨立pin Go，三處Go版本/help probe，真start一次/ENV/產品/SLO不動；manifest僅pinnerentry變，新SHA124556a5c84a9ac9280230a6a475276c49d92e34c7fafec0ea22130a9da3f2ae。
 - Native修復後/容量仍NOT_RUN，原Maccleanup PermissionError資格保留未修；Root將精確12paths commit/核test branch head後快轉新Source，一個新Local run，原三run不重跑。費用US$0，G8/85/原WIP/Hosted/Production/Gmail保持。
+
+
+### 2026-11-16 — M9 Native dual-bin通過；新config依賴缺口M10完整閉包修復
+
+- Root M9精確12paths commit834c3e29d5150a5af13fe0cb69ed9d26c84640d1/check0/clean，核test branch仍b7f後正常快轉，無force/staging-main/PR/deploy。新run43799995199/job133077669623工具安裝/真Go版本/help通過；Go start真讀config後新錯誤，沒有business/functional/15legs。
+- Artifact14195719099/2398B，GitHub ZIP c1150a412498d30a0a9f1ce74eb4a105e4a118bd21cc9147d48c4e52ff2a36cc，本機age/census8files3294B/source-job-request已驗；cipher1999bee86efe9c91fbc66326204b1bb00612ede0eaaa8ecf7d896a6185b97edd，manifestbdf78fbd02966dc8aabf44d9ccc830062c6f0acdae5bf947e1844e1123fbff4d。真stderr310B/ea56607d87d382149e94a64308db681a4af1a17bcc74e9bf950fcd7ade09459f確認config缺email-otp.html。M9原缺Go已修且Native通，不把新錯誤回填舊run或猜HOME/LCA。
+- Root只讀config盤點後，M10同worker限6paths project-input closure/preflight-before-mutation/copy/Fixture/contract；proofSchema1 sourceConfig/pathrefs/anchor/hash/generated/nonFS，source-bindingsflat相容且增config/template。真TOML是magic_link+confirmation同template，Root先前誤說recovery已核正，不改Source；seed anchor supabase-dir、template anchor project-root、URL/DBpaths分清，unknown active filesystem refs明確拒。這次一次完整依賴盤點，不逐漏檔微修。Root唯一review後新Source Local，原run不GH rerun。
+- 費用US$0，只有diagnostic加密留存已驗，不是DB/容量PASS；原root WIP/G8/85、Hosted/Production/Gmail都不動。下一步M10交付唯一review及真初始化／kernel gates。
+
+
+### 2026-11-16 — M10完整config依賴唯一review ACCEPTED，待新Local初始化
+
+- Worker6source/22logs-proofs/17protected逐hash核符，packetd3f637a35419ad0a213fb70da646a463630815d642c6b00a649d558e52230db1；Root唯一review Standards0/Spec0/newblocker0，summary7f2489309dff80756fb7bb2b627e1938a50bd1b2e8c816eff2911fd76472226a，report docs/reviews/2026-11-16-linux-project-inputs-m10-review.md。Worker95/5.639s＋final9/0.676s及lint/type/static/diff全0；Root獨立9/0.780s＋17/1.387s PASS。
+- 4seed＋共用template=5依賴、保兩template refs/正確anchor，pre-mutation capture/pin，dependency-proof.json/admission SHA＋flat source-bindingsconfig/template，Source及copy hash複驗。未知path/缺檔/untracked/links/owner/漂移拒；原config/template/ENV/start/M3/M5/operator/workflow/產品不動。原audit-only檔名準備FAIL保留，Maccleanup舊風險未修且今次不重現。
+- 原root7protected＋handoff575959B prefix再核符；G8/85停機保留。Native/functional/15容量NOT_RUN、retention UNVERIFIED、費用US$0/Hosted NONE。Root接精確9paths commit、核test branch exact834c後正常快轉，只一個新Source Local job，不GH rerun/main-staging/Production。

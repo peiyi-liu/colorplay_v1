@@ -9,6 +9,7 @@ import re
 import secrets
 import tomllib
 import urllib.parse
+import linux_project_inputs as I
 from linux_bootstrap_contracts import (PROJECT, ROLES, require, digest, read_file,
                                         write_once, decode, exact)
 
@@ -127,12 +128,14 @@ def set_toml(text, section, key, value):
     return '\n'.join(lines) + '\n'
 
 
-def project(io, source, runtime, tools):
+def project(io, source, runtime, tools, inputs, inputs_sha):
+    tracked = io.run(['/usr/bin/git', 'ls-files', '-z', '--', 'supabase'], cwd=source).decode().split('\0')
+    tracked = [name for name in tracked if name]
+    I.verify_project_inputs(source, tracked, inputs, inputs_sha)
     target = runtime / 'local-project' / 'supabase'
     target.mkdir(parents=True, mode=0o700)
     (target.parent).chmod(0o700)
-    tracked = io.run(['/usr/bin/git', 'ls-files', '-z', '--', 'supabase'], cwd=source).decode().split('\0')
-    names = [name for name in tracked if name and (name.startswith(('supabase/migrations/', 'supabase/functions/')) or name in ['supabase/' + p for p in SEEDS])]
+    names = [name for name in tracked if name and (name.startswith(('supabase/migrations/', 'supabase/functions/')))]
     require(sum(name.startswith('supabase/migrations/') and name.endswith('.sql') for name in names) == 121)
     require(all(not any(p.startswith('.env') for p in Path(name).parts) and '..' not in Path(name).parts for name in names))
     hashes = {}
@@ -145,8 +148,12 @@ def project(io, source, runtime, tools):
             parent.mkdir(exist_ok=True, mode=0o700)
         write_once(destination, body)
         hashes[name] = digest(body)
+    I.copy_project_inputs(source, target.parent, tracked, inputs, inputs_sha)
+    hashes.update({row['path']: row['sha256'] for row in inputs['dependencies']})
+    hashes[inputs['config']['path']] = inputs['config']['sha256']
     require(all('supabase/' + p in hashes for p in SEEDS))
     text = read_file(source / 'supabase/config.toml').decode()
+    require(digest(text.encode()) == inputs['config']['sha256'], I.CODE)
     original = tomllib.loads(text)
     require(original['db']['seed']['sql_paths'] == ['./' + p for p in SEEDS])
     changes = [('', 'project_id', PROJECT), ('api', 'port', 58321), ('db', 'port', 58322),
@@ -167,6 +174,9 @@ def project(io, source, runtime, tools):
     write_once(target / 'signing-keys.json', jwks)
     secret = secrets.token_urlsafe(48)
     write_once(runtime / 'runtime-secret.json', {'hmacSecret': secret, 'signingKey': jwks[0]})
+    I.verify_project_inputs(source, tracked, inputs, inputs_sha)
+    I.verify_copied_inputs(target.parent, inputs)
+    require(digest(read_file(target / 'config.toml', private=True)) == digest(text.encode()), I.CODE)
     return target.parent, text.encode(), hashes, secret, jwks[0]
 
 

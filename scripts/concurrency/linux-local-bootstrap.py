@@ -15,6 +15,7 @@ import time
 import urllib.request
 import linux_bootstrap_contracts as C
 import linux_bootstrap_backend as B
+import linux_project_inputs as I
 
 SOURCE = Path(__file__).resolve().parents[2]
 ENV = {'PATH': '/usr/bin:/bin', 'PYTHONDONTWRITEBYTECODE': '1', 'SUPABASE_TELEMETRY_DISABLED': '1'}
@@ -290,6 +291,9 @@ def bootstrap(request_path, approval, ports=None):
                   io.run([tools['supabase']['path'], '--version']).decode().strip() == '2.109.1' and
                   io.run([tools['supabaseGo']['path'], '--version']).decode().strip() == '2.109.1' and
                   bool(io.run([tools['supabase']['path'], 'start', '--help']).strip()), 'BOOTSTRAP_TOOLCHAIN_INVALID')
+        tracked = [name for name in io.run(['/usr/bin/git', 'ls-files', '-z', '--', 'supabase'], cwd=io.source).decode().split('\0') if name]
+        inputs = I.capture_project_inputs(io.source, tracked)
+        inputs_sha = I.proof_sha256(inputs)
         facts = io.hardware(package)
         C.hardware(facts)
         C.require(not os.path.lexists(runtime), 'BOOTSTRAP_RUNTIME_EXISTS')
@@ -300,11 +304,14 @@ def bootstrap(request_path, approval, ports=None):
         C.require(info == {'driver': 'systemd', 'version': '2'}, 'BOOTSTRAP_DOCKER_UNSUPPORTED')
         original = io.system_read('/etc/docker/daemon.json')
         B.require_new_groups(io, request['instanceNonce'])
+        I.verify_project_inputs(io.source, tracked, inputs, inputs_sha)
         runtime.mkdir(mode=0o700)
         mutated = True
         C.write_once(runtime / 'bootstrap-admission.json', {'requestSha256': approval, 'sourceRevision': request['sourceRevision'],
                      'job': request['job'], 'instanceNonce': request['instanceNonce'],
-                     'operatorPackageManifestSha256': request['operatorPackageManifestSha256'], 'executionAuthority': 'NONE'})
+                     'operatorPackageManifestSha256': request['operatorPackageManifestSha256'],
+                     'projectInputsSha256': inputs_sha, 'executionAuthority': 'NONE'})
+        C.write_once(runtime / 'dependency-proof.json', inputs)
         C.write_once(runtime / 'daemon-before.json', original)
         C.write_once(runtime / 'kernel-before.json', facts)
         install(runtime, operators)
@@ -313,7 +320,7 @@ def bootstrap(request_path, approval, ports=None):
         C.write_once(runtime / 'kernel-isolation-proof.json', isolation)
         C.require(B.inventory(io) == {'containers': [], 'volumes': []}, 'BOOTSTRAP_RESOURCES_CHANGED')
         stage = 'project'
-        project_dir, configuration, sources, secret, key = B.project(io, io.source, runtime, tools)
+        project_dir, configuration, sources, secret, key = B.project(io, io.source, runtime, tools, inputs, inputs_sha)
         C.write_once(runtime / 'source-bindings.json', sources)
         pins = B.image_pins(operators['linux-image-pins.json'])
         stage = 'start'
@@ -331,6 +338,8 @@ def bootstrap(request_path, approval, ports=None):
         C.toolchain(parent, request['toolchainSha256'])
         C.require(all(C.digest(C.read_file(io.source / name, 16 * 1024**2)) == expected
                       for name, expected in sources.items()), 'BOOTSTRAP_SOURCE_CHANGED')
+        I.verify_copied_inputs(project_dir, inputs)
+        C.require(C.digest(C.read_file(project_dir / 'supabase/config.toml', private=True)) == C.digest(configuration), I.CODE)
         C.write_once(runtime / 'database-baseline-proof.json', database)
         C.write_once(runtime / 'ownership.json', {'projectId': C.PROJECT, 'apiUrl': 'http://127.0.0.1:58321',
             'appUrl': 'http://127.0.0.1:58373', 'projectDir': str(project_dir),
