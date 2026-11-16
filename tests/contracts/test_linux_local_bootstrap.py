@@ -97,7 +97,9 @@ class Fixture:
         self.started, self.existing, self.missing_kill = False, False, False
         self.bad_status, self.bad_jwks, self.bad_baseline, self.bad_port = False, False, False, False
         self.key = {'kty': 'EC', 'crv': 'P-256', 'alg': 'ES256', 'use': 'sig',
-                    'kid': 'synthetic-new', 'x': 'synthetic-x', 'y': 'synthetic-y', 'd': 'synthetic-private'}
+                    'kid': '11111111-1111-4111-8111-111111111111', 'key_ops': ['sign', 'verify'],
+                    **{name: base64.urlsafe_b64encode(bytes([index]) * 32).rstrip(b'=').decode()
+                       for index, name in enumerate(['x', 'y', 'd'], 1)}}
         self.facts = {'platform': 'linux', 'architecture': 'x86_64', 'distribution': 'ubuntu-24.04',
             'logicalCpu': 4, 'affinity': [0, 1, 2, 3], 'memTotalBytes': 15 * 1024**3,
             'freeDiskBytes': 11 * 1024**3, 'cgroupV2': True, 'pidfd': True, 'pss': True, 'psi': True}

@@ -2288,3 +2288,25 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Worker6source/22logs-proofs/17protected逐hash核符，packetd3f637a35419ad0a213fb70da646a463630815d642c6b00a649d558e52230db1；Root唯一review Standards0/Spec0/newblocker0，summary7f2489309dff80756fb7bb2b627e1938a50bd1b2e8c816eff2911fd76472226a，report docs/reviews/2026-11-16-linux-project-inputs-m10-review.md。Worker95/5.639s＋final9/0.676s及lint/type/static/diff全0；Root獨立9/0.780s＋17/1.387s PASS。
 - 4seed＋共用template=5依賴、保兩template refs/正確anchor，pre-mutation capture/pin，dependency-proof.json/admission SHA＋flat source-bindingsconfig/template，Source及copy hash複驗。未知path/缺檔/untracked/links/owner/漂移拒；原config/template/ENV/start/M3/M5/operator/workflow/產品不動。原audit-only檔名準備FAIL保留，Maccleanup舊風險未修且今次不重現。
 - 原root7protected＋handoff575959B prefix再核符；G8/85停機保留。Native/functional/15容量NOT_RUN、retention UNVERIFIED、費用US$0/Hosted NONE。Root接精確9paths commit、核test branch exact834c後正常快轉，只一個新Source Local job，不GH rerun/main-staging/Production。
+
+
+### 2026-11-16 — M10 Native template/DB成功前進，Auth signing key阻塞唯讀定位
+
+- d97e6babbb055e24cef7e536eae65478a124ac13核test branch exact834c後正常快轉，新run43802274350/job133085070485（attempt1/push），沒有GH rerun。Source config template已通，真stderr明確121 migration＋4 seed後進Starting containers／health checks，Auth repeated9次 `Failed to load configuration: no signing key found`／unhealthy，start exit1。不是容量結果，也不是回填舊run原因。
+- Cipher artifact14197520332/4458B，GitHub ZIP SHA79b41dfbc9d98d95027ad7ec1bf654ee5b03ea9dc9079f43ca4783c67fa52e76；Root本機age/census8files13628B/source-job-request驗證成功，cipher61c04cdcb49cd0806de4fef0a7862f6acc96c0185aba9014775bd61b210e9b96／manifest3c44c10a8bc2a7ab6c4b5c386fd0c75b17737871e0b957602c7c833bb2614fd8；stderr10621B SHA40cf9937bfd0de154853b16495e7faa4ec79f52b93972b453a6724795a590eaf。Root下載verifier首次relative output拒於mkdir前，改absolute即通、無code修改或覆寫；不當產品finding。
+- 同worker僅readonly查固定CLI2.109.1→Auth2.192.0 signing key契約與最小repro設計，不得先改Source/Native/Rootprivate/G8。Root sole reviewer，先查明生成／CLI序列化／Auth選key落差；疑點「合法EC私鑰即符合Auth」尚待證，暫不修猜想。原upstream實際survivors UNKNOWN、無business/functional/15legs、retention UNVERIFIED，費用US$0/Hosted NONE、原WIP/G8/85不動。
+
+
+### 2026-11-16 — M11官方函式精確重現已RED，三檔Local修復授權
+
+- Auth2.192.0 commit5acfdea63bc033b79cfb0ebb08a1d4696d942aac的GetSigningJwk只選key_ops含sign；custom Keys不補default，CLI2.109.1 commit6d4c19870ed213ba7f682f117d0345c8a40bfa94保留custom KeyOps/omitempty。actual B.NODE_JWK可原生crypto sign/verify但沒有ops；這解釋新的Auth啟動失敗，不是私鑰材料無效。
+- 限.git私有固定官方Go1.25.11 Darwin archive58110545B/cd8d4920e7930d55da1a5a57ba43a64b1305f71cdf2ca3c76cd8c549272b1680，原Auth go.mod/go.sum、jwx2.1.0，7原始types/functions逐段byte/hash（非完整Auth startup）。Worker首次build2.322s Mac Git/Xcode stamping失敗保留；DEVELOPER_DIR＋private fixture -buildvcs=false後5.466s成功。actualold generator expected-success RED exit1/NO_SIGNING_KEY_FOUND；5controls缺/空/verify-only拒，sign-only/sign+verify有效。全部新合成key只memory/stdin，無真key資料讀取。
+- Root獨立核diagnostic manifest72d0fcaf4afa820b22066bd4b50b5998b40bbaef363c361e11cd8b607c3aae62的24檔/7原文segments，frozen generator對git d97 rawliteral相同；親跑expectedRED＋5controls，Rootreceipt1643be95827c9768a1fcfb323b7ecca8b265f0874b7c19d14056480003d3a593。只證官方函式契約，不當NativeAuth／容量PASS。
+- Root直接授權同worker M11 exact3paths：B.NODE_JWK加sign/verify ops與admission、Fixture、新test_linux_signing_key.py；brief904004093827414374832a53e689d0725c7aef2beaa184f7405d90985d544215。先Node RED再fix/Go GREEN，Root唯一review/unstaged。不改M3/M5/ENV/CLI命令/產品/limits/其他假說。Native run5已completed failure，joblog21800B SHAef90096d2d316ffff06b4425cbd76f195d2dfe1d17dc4d83357e94ddc35329b1；bootstrap169.815s/CONFIG_PARSE，0business/functional/15legs。費用US$0、原WIP/G8/85與Hosted/Production邊界保持。
+
+
+### 2026-11-16 — M11簽章操作契約唯一review ACCEPTED，待真Local驗證
+
+- Worker3source/34records/17protected hash核符，packet124800e5781682ce75a01e65c6af8478d1a32861bf1180c6f6a5a9f9a97b611b；Root唯一review Standards0/Spec0/toolblocker0，summary990c329a3639a84c78aeeb589f91348bc267dbc7d49025146aca7e82614709f5，report docs/reviews/2026-11-16-linux-signing-key-m11-review.md。Root32tests（6/2.231s＋17/1.847s＋9/1.201s）全綠，worker101/8.386s及lint/type/static/diff全0。
+- fresh private JWK加sign/verify ops並生成後strict admission，錯誤在key/secret發布與CLI start前拒；新測試先actualNode RED再GREEN，Root獨立actual修後Source→exact官方Go函式selected/VALID。原Go setupFAIL/早期assertion KeyError資格保留，舊Maccleanup未修且未重現；不冒稱完整Auth startup。
+- 原root7protected＋handoff575959B prefix再核符，G8/85保持。Root將精確6paths commit、核remote exactd97後只快轉test branch，一個新Source Native Local job；無GH rerun/staging-main/Production/Hostedmail。此時修後Native/functional/15容量NOT_RUN、retention UNVERIFIED、費用US$0。

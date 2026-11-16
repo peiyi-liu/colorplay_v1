@@ -17,7 +17,7 @@ DOCKER = ['/usr/bin/docker', '--host', 'unix:///var/run/docker.sock']
 EXCLUDED = 'postgres-meta,studio,imgproxy,logflare,vector,supavisor'
 SEEDS = ['seed.sql', 'seeds/content-questions.sql', 'seeds/content-review-cards.sql',
          'seeds/content-question-hints.sql']
-NODE_JWK = "const c=require('node:crypto');const p=c.generateKeyPairSync('ec',{namedCurve:'P-256'});process.stdout.write(JSON.stringify([{...p.privateKey.export({format:'jwk'}),kid:c.randomUUID(),alg:'ES256',use:'sig'}]));"
+NODE_JWK = "const c=require('node:crypto');const p=c.generateKeyPairSync('ec',{namedCurve:'P-256'});process.stdout.write(JSON.stringify([{...p.privateKey.export({format:'jwk'}),kid:c.randomUUID(),alg:'ES256',use:'sig',key_ops:['sign','verify']}]));"
 
 
 def docker(io, *args, **options):
@@ -128,6 +128,22 @@ def set_toml(text, section, key, value):
     return '\n'.join(lines) + '\n'
 
 
+def generated_signing_key(value):
+    code = 'BOOTSTRAP_JWKS_INVALID'
+    require(type(value) is list and len(value) == 1 and type(value[0]) is dict, code)
+    key = value[0]
+    require(set(key) == {'kty', 'crv', 'x', 'y', 'd', 'kid', 'alg', 'use', 'key_ops'}, code)
+    require(key['kty'] == 'EC' and key['crv'] == 'P-256' and key['alg'] == 'ES256' and
+            key['use'] == 'sig' and key['key_ops'] == ['sign', 'verify'] and
+            isinstance(key['kid'], str) and re.fullmatch(r'[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}', key['kid']), code)
+    for name in ['x', 'y', 'd']:
+        encoded = key[name]
+        require(isinstance(encoded, str) and re.fullmatch('[A-Za-z0-9_-]{43}', encoded), code)
+        raw = base64.urlsafe_b64decode(encoded + '=')
+        require(len(raw) == 32 and base64.urlsafe_b64encode(raw).rstrip(b'=').decode() == encoded, code)
+    return key
+
+
 def project(io, source, runtime, tools, inputs, inputs_sha):
     tracked = io.run(['/usr/bin/git', 'ls-files', '-z', '--', 'supabase'], cwd=source).decode().split('\0')
     tracked = [name for name in tracked if name]
@@ -168,9 +184,7 @@ def project(io, source, runtime, tools, inputs, inputs_sha):
     require(config['project_id'] == PROJECT and config['auth']['additional_redirect_urls'] == ['http://127.0.0.1:58373/**'])
     write_once(target / 'config.toml', text.encode())
     jwks = decode(io.run([tools['node']['path'], '-e', NODE_JWK], maximum=16384))
-    require(type(jwks) is list and len(jwks) == 1 and jwks[0]['kty'] == 'EC' and
-            jwks[0]['crv'] == 'P-256' and jwks[0]['alg'] == 'ES256' and
-            all(isinstance(jwks[0][k], str) and jwks[0][k] for k in ['d', 'x', 'y', 'kid']))
+    generated_signing_key(jwks)
     write_once(target / 'signing-keys.json', jwks)
     secret = secrets.token_urlsafe(48)
     write_once(runtime / 'runtime-secret.json', {'hmacSecret': secret, 'signingKey': jwks[0]})
