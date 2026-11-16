@@ -2199,3 +2199,8 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Workerexact4files1123行／33tests1.391s/fullchecks綠；Root唯一一輪Standards0/Spec0/產品Security N/A/工具未解0，34logs與4source hash全核，獨立33tests1.556s與8actual public-export controls全綠。Packet8e2a0884ab158deeee723dd54ca747cc2a0bf7d79f7a28d5b6508432bb9b85d4，Rootcontrols7704b5ca45613010b047fe813ad98116799174cc50d7acb98330623a95670530。皆合成外部ports/真tempFS，非NativeLinux／Docker／SQL。
 - M4只空job→8個固定digest服務／共同4CPU6GiB/loopback/freshHMAC+JWK/readonly基線，最大READY_PENDING_ROOT_PROFILE/NONE/retentionUNVERIFIED；首次空初始化CLI上游可能自刪新volumes的限制已核准addendum，不能宣稱全部留存，不影響原G8/85。Root operator package/profile/kernel calibration/bind/export/workflow屬另外草稿，未算此4檔review，尚需整合。
 - Root package當前34pure/tempFS/Darwin checks綠、7publication controls綠、52business functionAST保持；新增pinner只PIN_PENDING，必真kernel六controls後才生成reviewed-candidate ACCEPTED供首次build/functional，不允許未校準直接建立身份。真Native／60人／雲端資源／費用／Hosted／寄信／push／PR／merge／deploy皆0或NOT_RUN。
+
+
+### 2026-11-16 — M4 EOF衛生更正，原cached check失敗保留
+
+- M4本機commit fb333449e440442a9027cf06287f7e3fa72d1f54 前cached diff --check抓contracts.py多空行exit2，但Root cell未以check結果gate提交；非全部檢查綠之聲明，錯誤已記。後續只移1byte newline／AST同／source hash c8e374892b3ba710e707f2c18f751740f3c5f82e228b568e90d86fb4da9deffa，Root report同步追加，原worker/log/hash不抹去。無行為或產品變更、無第二review輪、0push/Native/Hosted。

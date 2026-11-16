@@ -169,4 +169,3 @@ def hardware(facts):
             facts['freeDiskBytes'] >= 10 * 1024**3 and
             all(facts[k] is True for k in ['cgroupV2', 'pidfd', 'pss', 'psi']),
             'BOOTSTRAP_HARDWARE_UNSUPPORTED')
-
