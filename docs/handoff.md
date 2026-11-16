@@ -2204,3 +2204,18 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 ### 2026-11-16 — M4 EOF衛生更正，原cached check失敗保留
 
 - M4本機commit fb333449e440442a9027cf06287f7e3fa72d1f54 前cached diff --check抓contracts.py多空行exit2，但Root cell未以check結果gate提交；非全部檢查綠之聲明，錯誤已記。後續只移1byte newline／AST同／source hash c8e374892b3ba710e707f2c18f751740f3c5f82e228b568e90d86fb4da9deffa，Root report同步追加，原worker/log/hash不抹去。無行為或產品變更、無第二review輪、0push/Native/Hosted。
+
+
+### 2026-11-16 — Root免費Linux整體接線草稿／M5交付前最後checks
+
+- 新DO登入的付款方式與USD5已核實，當前仍採免費GitHub standard4CPU16G、費用USD0。專用遠端測試分支codex/local-capacity-linux-20261116的Vercel自動部署已在clone本機4f386cc68dfc4cbb61d9a3d7dda048a61fc7b514停用；兩Git-linked專案只做metadata唯讀核對，沒有remote設定/部署/資源變動。
+- 同worker M5四檔完整snapshot實作待唯一Root review；brief4497fb…後追加exact schema與native第四檔許可。Mailpit raw RFC822＋原metadata必須停機前GET完整保存；allDB custom＋globals roles/Vault/config/cold volumes、正常stop -1、partial不刪不重試。Worker最新17direct cases綠，正式packet尚待。
+- Root operator public草稿31operators/10tests/1pins，共4968source lines/max324；manifest34cc8763c87fe034b3f2011b79053d010a202daed00a7c7cf6c2fc0c84605a55。新增fixed read-only psql adapter、巢狀JWK d秘密掃描、真正kernel6controls gate、固定官方Node/Supabase/pnpm checksum安裝器、整體functional→15legs/fail-stop→M5→M3。Root38tool tests、3archiveFS、3suiteFS、1真subprocess failed-output/default拒絕與M4既有17回歸綠；17實際Darwin拒啟動控制65e2bc33c248584a824439fc6a315d5f1d09d3acc58d15620c1da64813d32e37綠，非Linux/native容量證據。
+- Root僅擴M4 bounded optional checked=True保留原default，explicitFalse回code/raw以私有保存failed-stage結果，納Root本task審查，不由worker改。Root新增branch限定contents:read/無Hostedsecrets/固定ActionsSHA/1day只cipher workflow草稿；M3成功且ownedProcessClosed才立export-complete marker避免partial.age被誤傳。M5失敗可一次PARTIAL診斷加密，unknown逐列omission、retention UNVERIFIED/整體NOT_VERIFIED，不重試/裁資料/raisecap。
+- 仍未commit/push這批草稿，0真Linux job/60人/雲端費用/Hosted信件/Gmail內容/PR/merge/deploy；原root七protected與handoff575959B prefix再核相同，G8/85資源停機保留。接下來M5唯一review與Root整體review接受後才精確stage/commit/push新test branch；不把工具綠當容量PASS。
+
+
+### 2026-11-16 — M5唯一Root review ACCEPTED，待本機精確commit
+
+- Worker四檔source＋31logs逐一hash核對，packet820c87e12a2a2114043ad41d4b46dd2dc1abcd6dbd7ffa040b042dbeb973a6e0；Standards0/Spec0/工具blocker0，Root唯一review無往返修正。Root獨立17tests0.911s＋4 M5→M3真本機age加解密完整census controls綠，7d7bc38d1522e6e89669c71b83789ef413f7f1b9b2c83dc7fb2f934f0db17369。summary606575956d4ae9c933c2a14ae49b539cc8930f0079c017b78284e6530706aad8；report docs/reviews/2026-11-16-linux-local-snapshot-m5-review.md。
+- Task source契約完成，外部kernel/DB/HTTP仍合成、Native Linux/真DB export/60人NOT_RUN、retention UNVERIFIED。Root最初harness case parent缺失在seam前停止，修harness才跑，保留說明不當產品finding。Root接整體operator/workflow唯一review，未外部push/資源/Hosted/費用；原WIP/G8/85不改。
