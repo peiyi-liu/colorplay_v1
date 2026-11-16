@@ -2523,3 +2523,20 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - REST固定image/Cmd/top單PID1/planjobnonce/profileboot與前後state/restart/closure/90s綁定，logs byteprefix＋新增唯一完整datedTERM，wx600/fsync/close/deadline重核後才可窄辨255。logs不足但正常close保原stop/0/143，其他unknown/cancel/identity/late不續；M17三角色/另外4普通roles/Edge15/DB0/全部額度/helper/operator/workflowdiagnostic1不擴。Native12因果仍UNKNOWN，不稱v16drain/poolcompleted。
 - Root初finalizer8/9為no-op bootmutation（fixture已all-e），原script/output保留，guaranteed-different v2全9/9，非Source問題。原workerRED/deadlinefixture setup保留。原7protected與handoffprefix現核符，max445。
 - Root將exact8paths gated commit/check0，核remoteexact20c4656再FF新Source attempt1零business診斷。須REST正向proof與DB/完整冷備份真過才另恢復functional/15legs。40/60未過、US$0，G8/85與原WIP保護；Hosted/Production/mail NONE。
+
+
+### 2026-11-16 — M18新Source／Native13已真驗REST255，目前DBcensus阻擋
+
+- Root exact8paths gated cachedcheck0/commit/clean bcc23094772240a497b679a472890db31b438846；remoteexact20c核後正常FF，新run43874686084/job133324528667/attempt1（jobmetadata connector transient斷線改既有gh唯讀取得，非Source或job失敗）。watcher65620已下載匹配artifact14229466920；ZIP1556581B/ecb68d5f5f0c5a776cd48fa568ad9c83f31d9dd915a78bb356cb6821353d53ba API核，cipher1556443B/0fcad9d99a8ccaceb7ca8fb3046b14ee6aee0b99a8282c2d497da26a240dfc82，manifest9c53bbc6d7bb47eb2ee7b7e650273bb4dd3b2d39ef0ccbd10c6d5a65e9ba0e75/298files/10942999B真age逐檔核；當時10minhold待final。
+- 7nonDB全RETURNED_SUCCESS/stoppedtrue/noOOM/noRestart/emptyError。Root獨立核EdgeTERM/15與KongQUIT/0完整identity/closure/naturalexit/planjobnonceproof；REST255 current R.eligible255真PASS、private receiptfileSHA與terminal一致，唯一新增datedTERM/append-only且完整scope/單PID1/stopclose/90證據。M18此次新Source實際通過，Native12仍不回填正常；不稱v16drain/poolcompleted。
+- M5database已寫_supabase.dump1228B、postgres.dump1899246B與兩config tar及globals/key，但before!=after→SNAPSHOT_DATABASE_CHANGED拒，DBstop/volumes未到。after在比較後才write所以未留下；目前不能區分值漂移或排列差。Rootbefore真127tables/keys唯一、_supabase0/roles31，before array不是schema/table字典序；Source unordered json_agg/UNION ALL可疑但因果UNKNOWN。初Rootreceipt0268c05cf98cc0466a3c19de081054e263f733fb3df0f7a112a9eea0389db11d。
+- 已請sameworker READONLY整體census/背景變動/自身觀測盤點，候選合併after-beforecompare保存與純排序/嚴格count/hash相等，禁止未查證放寬值或資料保留。尚無M19 Source修改授權；diagnosticOnly1/fixtures0，functional/15legs/40-60 NOT_RUN，fullretention NOT_ATTESTED。主機US$0，G8/85/原WIP與Hosted/Production/mail保持。
+
+
+### 2026-11-17 — Native13 final與M19唯一Root review接受
+
+- Native13已completed failure，finalRootreceipta66dcd379fc2973207b300c39283b225899f4fab17d1380a5311bc88e42736a7；joblog21941B/e185e9bfd8a724e2bde7d4521e6f13abe5358cc93da806b18f9fcf80fdbb5f5a。原holdreceipt保留，未rerun。M18REST當次完整proof實際PASS，但M5database比較FAIL、DBstop/volumes未到，after缺失故原因仍UNKNOWN。
+- Root核readonly6files/8c0ee89d460bd8e3ffc3bfa8c0a06d5fd589313637b55103cf013b1330080bb0，Source final json_agg無order與after比較後才保存兩缺口成立，背景變動未證。已發M19brief991b9c195e7862366889456a512d8809aa7290ea25bc27e7690b6c0144556215/sameworker exact4paths純census helper/test＋wrapper/既有snapshotfixturetests。
+- frozenpacketb798459644309b7de4f1b4113a5f7397447104f6aca340793cd777561970f9a0；Root核4Source/25records/63protected actualGit/operator44，worker另1916 unowned non-docs bytes。Worker26direct/173Python與lint/type/static/import/EOF/diff全0；Root26/1.556s＋35獨立actualwrapper/metadata/permutation/realbefore形狀控制PASS，Standards/Spec/Security各0。summarye88b7d772604b019bd805ff48457b0bd7ad7f1743dfa8c4c11f686801295d00e，review docs/reviews/2026-11-17-linux-census-integrity-m19-review.md。
+- 只排序table arrays，count/hash/roles/database/table-set全值驗證與duplicates/invalid拒；raw after先wx600保存、再safe delta；真值漂移與writer失敗仍FAIL/DBstop-volumes0。NativeIO全bytes與M17/M18/operator/workflowdiagnostic1/全部額度保持。pnpm初錯旗標registrylookup/非TTYsetupfail保留，未install/lockfile改，既有命令重跑綠；Native13不回填。
+- 原7protected/handoff575959Bprefix現核符。Root exact7paths gated commit後核remote仍bcc再FF一個新Source attempt1/0business診斷，冷備份Root真核過才另恢復functional/15legs。40/60未過、US$0，原WIP/G8/85與Hosted/Production/mail保持。

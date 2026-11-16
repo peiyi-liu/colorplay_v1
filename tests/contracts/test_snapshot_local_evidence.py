@@ -133,7 +133,9 @@ class Fixture(BackendFixture):
 
     def census(self,databases):
         self.events.append('census');self.census_calls+=1
-        return {'databases':databases,'rows':2 if self.changed_census and self.census_calls>1 else 1,'sha256':'d'*64}
+        return {'clusterRoles':{'count':31,'sha256':'d'*64},**{name:[] for name in databases},
+            'postgres':[{'schema':'public','table':'alpha','count':2 if self.changed_census and self.census_calls>1 else 1,'sha256':'e'*64},
+                        {'schema':'public','table':'beta','count':0,'sha256':'f'*64}]}
 
     def dump(self,name,target):
         self.events.append('dump:'+str(name));C.write_once(target,b'PGDMP' if name else b'CREATE ROLE synthetic;')
@@ -241,6 +243,24 @@ class SnapshotTests(unittest.TestCase):
             with self.subTest(target=target),tempfile.TemporaryDirectory() as temp:
                 f=Fixture(Path(temp).resolve());setattr(f,target,True)
                 self.assertEqual(f.execute()['result'],'FAILED');self.assertNotIn('volume',f.events)
+
+    def test_table_permutation_preserves_values_and_can_finish(self):
+        f=self.f;original=f.census
+        def permuted(databases):
+            value=original(databases)
+            if f.census_calls>1:value['postgres'].reverse()
+            return value
+        f.census=permuted
+        self.assertEqual(f.execute()['result'],'LOCAL_SNAPSHOT_CREATED')
+        delta=C.decode((f.output/'database-census-diff.json').read_bytes())
+        self.assertEqual(delta['classification'],'ORDER_ONLY')
+
+    def test_real_drift_preserves_after_and_delta_before_refusing_db_stop(self):
+        f=self.f;f.changed_census=True
+        self.assertEqual(f.execute()['code'],'SNAPSHOT_DATABASE_CHANGED')
+        self.assertTrue((f.output/'database-census-after.json').is_file())
+        self.assertTrue((f.output/'database-census-diff.json').is_file())
+        self.assertNotIn('stop:db',f.events);self.assertNotIn('volume',f.events)
 
     def test_unsafe_archive_and_runtime_hardlink_are_never_omitted(self):
         for flag in ['bad_archive','copy_change']:

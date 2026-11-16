@@ -13,6 +13,7 @@ import local_snapshot_contracts as C
 from local_snapshot_native import NativeIO
 import local_edge_shutdown as E
 import local_rest_shutdown as R
+import local_database_census as D
 
 
 def mounts(row):
@@ -214,8 +215,10 @@ def snapshot(plan_path, approval, ports=None):
         C.require((database/'pgsodium_root.key').is_file() and 0<(database/'pgsodium_root.key').stat().st_size<=4096,'SNAPSHOT_VAULT_KEY_MISSING')
         C.require(all((database/(name+'.dump')).stat().st_size>0 for name in actual) and
                   (database/'globals.sql').stat().st_size>0,'SNAPSHOT_DUMP_MISSING')
-        after=io.census(actual);C.require(before==after,'SNAPSHOT_DATABASE_CHANGED')
-        C.write_once(output/'database-census-after.json',after)
+        after=io.census(actual);C.write_once(output/'database-census-after.json',after)
+        difference=D.compare(before,after,actual)
+        C.write_once(output/'database-census-diff.json',difference)
+        C.require(difference['equal'],'SNAPSHOT_DATABASE_CHANGED')
         stage='database_stop';stop_one(io,next(r for r in plan['containers'] if r['role']=='db'),output,7,plan['containers'])
         closed=io.inspect(plan['containers']);stopped(closed,observed['containers'],edge_proofs,stop_scope)
         C.write_once(output/'stop-proof.json',{'containers':closed,'forcedTermination':False})
