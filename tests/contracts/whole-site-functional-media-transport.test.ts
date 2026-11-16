@@ -424,3 +424,77 @@ it.each(['constructor', 'toString', '__proto__', 'SYNTHETIC_PRIVATE_ENCODING'])(
     expect(JSON.stringify(row)).not.toContain(encoding);
   },
 );
+const nativeRequest = (
+  page: object,
+  url: string,
+  method: string,
+  postData: string | null,
+  headers: Record<string, string> = {},
+) =>
+  ({
+    frame: () => ({ page: () => page }),
+    url: () => url,
+    method: () => method,
+    postData: () => postData,
+    headers: () => headers,
+  }) as unknown as Request;
+it.each([
+  { url: 'http://127.0.0.1:58373/admin/content', method: 'GET' },
+  { url: api + '/assets/app.js', method: 'GET' },
+  { url: api + '/functions/v1/content-media', method: 'GET' },
+  { url: api + '/functions/v1/content-media', method: 'OPTIONS' },
+  { url: api + '/rest/v1/rpc/other', method: 'POST' },
+])(
+  'ignores normal non-target $method $url with actual Playwright null postData',
+  ({ url, method }) => {
+    const f = setup();
+    expect(
+      observeMediaRoute(
+        nativeRequest(f.page, url, method, null, { Accept: 'text/html' }),
+      ),
+    ).toBeUndefined();
+    expect(f.bad()).toBe(false);
+    expect(f.available()).toBe(true);
+    const row = f.cdp(),
+      route = required(f.route());
+    route.close();
+    finishMediaCdp(f.page, 'one');
+    expect(row.collection).toBe('OBSERVED');
+    expect(f.available()).toBe(true);
+  },
+);
+it.each([
+  { postData: null, headers: { Authorization: 'Bearer SYNTHETIC_SECRET' } },
+  { postData: '{', headers: { Authorization: 'Bearer SYNTHETIC_SECRET' } },
+  { postData: JSON.stringify(body), headers: {} },
+  {
+    postData: JSON.stringify({ ...body, requestId: 'invalid' }),
+    headers: { Authorization: 'Bearer SYNTHETIC_SECRET' },
+  },
+])('still rejects invalid target POST metadata %#', ({ postData, headers }) => {
+  const f = setup();
+  expect(
+    observeMediaRoute(
+      nativeRequest(
+        f.page,
+        api + '/functions/v1/content-media',
+        'POST',
+        postData,
+        headers,
+      ),
+    ),
+  ).toBeUndefined();
+  expect(f.bad()).toBe(true);
+  expect(f.available()).toBe(false);
+});
+it('leaves inactive-phase target metadata unobserved rather than admitting it', () => {
+  const f = setup();
+  f.inactive();
+  expect(
+    observeMediaRoute(
+      nativeRequest(f.page, api + '/functions/v1/content-media', 'POST', null),
+    ),
+  ).toBeUndefined();
+  expect(f.bad()).toBe(false);
+  expect(f.available()).toBe(true);
+});

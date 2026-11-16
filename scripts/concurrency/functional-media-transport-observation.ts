@@ -165,8 +165,6 @@ const identity = (owner: Owner, raw: unknown) => {
     .object({
       url: z.string().max(32768),
       method: z.string(),
-      postData: z.string().max(4096).optional(),
-      headers: z.record(z.string(), z.unknown()).optional(),
     })
     .parse(raw);
   const url = new URL(parsed.url);
@@ -178,20 +176,26 @@ const identity = (owner: Owner, raw: unknown) => {
     parsed.method !== 'POST'
   )
     return null;
+  const metadata = z
+    .object({
+      postData: z.string().max(4096),
+      headers: z.record(z.string(), z.unknown()).optional(),
+    })
+    .parse(raw);
   if (
     parsed.url !== owner.api + url.pathname ||
-    !parsed.postData ||
-    Buffer.byteLength(parsed.postData) > 4096
+    !metadata.postData ||
+    Buffer.byteLength(metadata.postData) > 4096
   )
     throw new Error('INVALID');
-  const authorization = Object.entries(parsed.headers ?? {}).filter(
+  const authorization = Object.entries(metadata.headers ?? {}).filter(
     ([k]) => k.toLowerCase() === 'authorization',
   );
   const token = z
     .string()
     .regex(/^Bearer \S{1,16377}$/u)
     .parse(authorization.length === 1 ? authorization[0]?.[1] : null);
-  const body: unknown = JSON.parse(parsed.postData);
+  const body: unknown = JSON.parse(metadata.postData);
   const data = url.pathname.endsWith('content-import')
     ? importSchema.parse(body)
     : z.union([mediaRequestSchema, resolveSchema]).parse(body);

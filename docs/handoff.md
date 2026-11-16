@@ -2814,3 +2814,27 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - v1 packet4c191df811a26c77ebbfb5b9b0c54c4133cfb9d9b723babe36b2650995cd9593／59records，v2 4e1e2de2f421869a66959578ab31501c7aedd98e8d74d4671b4af627107cb03f／79records含原59全raw核。Worker40files566／final81tests，full lint與最後all8 scopedlint/fulltype/globalformat/import/diff/static0；Root獨立77→final81tests2.11s、headerRED→GREEN與actual export合成order/privacy/lifecycle控制PASS。P2普通object encoding查表constructor/__proto__命中prototype已改own-key，toString lowercase原本OTHER，保4反例。僅helper/test兩檔delta，逆向精確還原helper v1 SHA，v1 test rawprefix／其他6Source保持。唯一round、無未解finding；Rootreceipt 67039077bd2384a0a0925af53bd3dca12f6666c2ed15fb86c2226e65050520e6／review docs/reviews/2026-11-17-linux-media-route-observation-m27-review.md。
 - 1942unowned actualGit blobs含symlink targetbytes/operator44/original7及真正Original575959B c4fb…核符。舊component欄位original575959…=7064…其實recovery prefix，歷史不改；Root先前已獨立真核Original，本次proof分名，非資料變動。Root v1 hash驗證碰同輪test delta、v2腳本把有效RED要求0及初header wrapper headexit0資格均明列，不假稱Source issue。
 - exact8工具Source/tests、原route/counters/4abort FAIL/4drops/1refresh/guards保留，無新HTTP/bodyread/journal/產品tap，cancelSource/bodyEOF UNOBSERVED。Root準備exact11paths gated commit/clean，fresh fa specialremote後正常FF新Source/Native22 attempt1正常six-person→15legs。40/60未run，原WIP/G8停止85/custody、US$0/US$5 cap、Hosted/Production/真寄信NONE。
+
+
+### 2026-11-17 — M27固定Source正常Native22已啟動
+
+- Root exact11paths cachedcheck0/commit/clean b22bb05a359efac9460ff160921b85f87ca16e41，fresh specialremote精確fa0682d後正常FF。push/attempt1 run43956102504/job133610944021，正常six-person→15legs；watcher18964只matchingSHA監看並保加密證據。無GH rerun／0business gate、Source凍結／sameworker待命。M27只是同request route時序與safe framing診斷、P2同輪已解，不宣稱Native取消根因已修。40/60未run、原WIP/G8停止85/全部custody、US$0/US$5 cap、Hosted/Production/真寄信NONE保持。
+
+
+### 2026-11-17 — Native22完整保留／新observer非target null回歸／M28窄修授權
+
+- run43956102504/job133610944021/sourceb22bb05a359efac9460ff160921b85f87ca16e41，functional wsb-261116-07d94612eba3 255599.840ms/exit1/noSignal/stderr0/closed/SourceFrozen；actualTS receipt/candidate/close/finalizer重算FAIL。前12PASS、mediaFAIL，refresh/health NOT_RUN；snapshotmedia availablefalse/unexpected0/drops4/refresh0/detailsUNAVAILABLE/components全0/events0。15capacity NOT_RUN；Native21取消此run未觀察到，不稱已修。
+- Rootactual export反例 .git/native22-nontarget-control.ts：正常app GET /admin/content＋native postData null→observer badtrue/availablefalse，Node commandexit1；Sourceidentity在URL/method篩選前用optional string要求postData，而實際PW GET回null，正常media goto即觸發。這是M27新診斷工具回歸，不是網站API負載錯誤或Native21取消根因。
+- artifact14272033151 ZIP42503657B/9249e36b52f9db9fec2c0396cedda7baedf8d95a1904fd9f857a7b8af7cd53f3，cipher42503519B/f7dcafceaa1f143443fe1588cf373ee0c7a16f7d5ba1e057340a3ea1bb8e56b9 realage AEAD；outer6b1d229fba6f04d4cac08d3ff555e93accf1bc7acda2605e6373a3e065daafb9/555files211904424B，innerbec0e50d35585d589b514bae98d4a992a4c36e9aa7e697961c931b4e5280551d/522files，8stops/roles/DB2/127tables/31rolesORDER_ONLY／3vol7015files185562396B/metadata、runtime470data32publiccode0metadata-only全核。6Auth及全部media保留／未restore或刪除；Rootfunctional receipt SHA0000ff90c5d47f11b2d7df7b7fbe1d952f38f8f15c657e7c74a4b4e1ffc9531f，watcher18964完成。workflow尚hold保留步驟，最終joblog/結論待查。
+- M28 S級窄修已指派sameworker，exact2：functional-media-transport-observation.ts及直接test，均≤500；先排除非target URL/method再要求target body/auth，或只對非target容許null，target POST null/壞body/缺auth仍UNKNOWN不可放寬。actual Request非target GET/APIstatic/非targetPOST null反例、原known配對/phase guards；有效RED→GREEN/affected/fulltype/lint/format/import/diff/protection，private .git/m28-nontarget-route-filter packetfreeze、Root一次審查再固定Source正常Native23，須Native22job final後，不GHrerun。無新brainstorm/產品/expected/HTTP/body/journal/browser/Hosted操作。原WIP/G8停止85/custody、US$0/US$5cap、40/60未run。
+
+
+### 2026-11-17 — M28 S級非target篩選窄修Root接受
+
+- exact2 Source470/test500行；先URL/method篩選，GET/OPTIONS/非targetPOST null body忽略，targetPOST null/壞JSON/缺Auth/invalidUUID仍UNKNOWN。Root actual exported native-Request-shaped GET red exit1→green exit0，獨立35tests712ms PASS；Worker有效4RED→40files582tests／fulltype/changedlint/globalformat/import/diff/static0，Root bounded唯一review0findings。29records/2Source SHA、1948unowned actualGit含symlinkbytes/operator44/trueOriginal7prefix核符、oldtest rawprefix/M27原79records保持；packet48ec05b028e467ea1ebf2f9180b681b386dae89ebd108a29227c7347d324689c，Rootreceipt 6e0b4f89429c40ae8eaa7bd514c0e1abea9fcedeae74c09a1880e86263397300，review docs/reviews/2026-11-17-linux-nontarget-route-filter-m28-review.md。
+- 解Native22新工具null metadata回歸，不當Native21取消cause或容量修復。Root exact4paths commit/clean，須Native22 final且完整保留後freshb22 remote正常FF新Source/Native23 attempt1；無GHrerun/0business/額外browser，40/60未run，原WIP/G8停止85/custody/US$0/US$5cap/HostedProduction真寄信NONE。
+
+
+### 2026-11-17 — Native22最終failure／joblog保留完成
+
+- run43956102504/job133610944021 completed/failure，upload/10分鐘hold/post全部正常結束。Rootfinal .git/linux-twenty-second-run-review.json SHA9f023414cbcd1856b8ecad4392c809e79c1c55cbb72eff12a5a00cf3505c83e0、joblog22086B/36d84c82559c122fa6800d6c6e3093a4db38045a3af8e31ae78271459345d7b9，actual功能FAIL／完整cipher/outer/inner/cold原資料鏈不變；無rerun/restore/刪除。12PASS/mediaFAIL是已重現的新observer non-target null錯誤，M28窄修Root已接受，先前Native21取消cause仍UNOBSERVED；40/60未run。
