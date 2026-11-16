@@ -16,6 +16,7 @@ import time
 import urllib.parse
 import local_snapshot_contracts as C
 import local_edge_shutdown as E
+import local_rest_shutdown as R
 
 DOCKER = ['/usr/bin/docker', '--host', 'unix:///var/run/docker.sock']
 ENV = {'PATH':'/usr/bin:/bin', 'PYTHONDONTWRITEBYTECODE':'1'}
@@ -114,6 +115,7 @@ class NativeIO:
             if output:return None
             destination.seek(0); return destination.read(maximum+1)
         finally:
+            normal_completion=(child is not None and child.poll()is not None and child.returncode>=0) if getattr(self,'rest_read_active',False) else False
             if child is not None and child.poll() is None:
                 try:os.killpg(child.pid,signal.SIGKILL)
                 except ProcessLookupError:pass
@@ -122,6 +124,8 @@ class NativeIO:
                 except subprocess.TimeoutExpired:self.closure='UNKNOWN'
                 if privileged:self.closure='UNKNOWN'
             destination.close(); incoming.close()
+            if getattr(self,'rest_read_active',False):
+                self.rest_read_command={'clientClosed':child.poll()is not None if child is not None else False,'normalCompletion':normal_completion,'subprocessClosure':self.closure}
             if stop_info is not None:
                 stop_info.update(elapsedSeconds=time.monotonic()-started,
                     clientClosed=child.poll() is not None if child is not None else None,
@@ -209,6 +213,7 @@ class NativeIO:
         return C.decode(self.docker('inspect',*[r['id'] for r in rows]))
 
     def stop(self, row):
+        if row['role']=='rest':return self.stop_rest(row)
         if row['role'] not in E.TARGETS:
             self.docker('stop','--timeout','-1',row['id'],timeout=90);return
         role=row['role'];target=E.TARGETS[role]
@@ -259,6 +264,43 @@ class NativeIO:
         finally:
             record['elapsedSeconds']=time.monotonic()-started
             if isinstance(getattr(self,'last_stop_command',None),dict):self.last_stop_command.update(edgeIntervalRequestedSeconds=90,totalElapsedSeconds=record['elapsedSeconds'])
+
+    def stop_rest(self,row):
+        C.require(hasattr(self,'stop_output') and hasattr(self,'edge_policy') and not getattr(self,'rest_attempted',False),'SNAPSHOT_REST_SCOPE_REQUIRED')
+        C.directory(self.stop_output);C.require(row in self.stop_plan['containers'] and row['role']=='rest','SNAPSHOT_REST_SCOPE_REQUIRED')
+        self.rest_attempted=True;started=time.monotonic();end=min(started+90,self.deadline-4)
+        self.rest_shutdown_receipt={'status':'UNATTESTED','receiptSha256':None,'observation':None,'completionElapsedSeconds':None}
+        expected=R.bindings(*self.edge_policy)
+        def remaining():
+            self.check();left=end-time.monotonic();C.require(left>0,'SNAPSHOT_DEADLINE');return left
+        def read(args,maximum):
+            seconds=min(2,remaining());self.rest_read_active=True;self.rest_read_command=None;value=None
+            try:value=self.docker(*args,timeout=seconds,maximum=maximum,merge_stderr=args[0]=='logs')
+            except (OSError,C.SnapshotError):pass
+            finally:self.rest_read_active=False
+            proof=self.rest_read_command
+            C.require(type(proof)is dict and proof.get('normalCompletion')is True and proof.get('clientClosed')is True and proof.get('subprocessClosure')=='VERIFIED','SNAPSHOT_SUBPROCESS_CLOSURE_UNKNOWN')
+            remaining();return value
+        def inspect():
+            raw=read(('inspect',row['id']),262144);C.require(raw is not None,'SNAPSHOT_REST_IDENTITY_UNKNOWN')
+            values=C.decode(raw);C.require(type(values)is list and len(values)==1);return values[0]
+        before=inspect();before_state=R.normalize(before,expected,True)
+        top=R.single_process(read(('top',row['id'],'-eo','pid,ppid,comm'),16384),before['State']['Pid'])
+        before_log=read(('logs','--tail','80',row['id']),65536)
+        self.last_stop_command=None
+        self.docker('stop','--timeout','-1',row['id'],timeout=remaining())
+        C.require(self.closure=='VERIFIED','SNAPSHOT_SUBPROCESS_CLOSURE_UNKNOWN');remaining()
+        after=inspect();after_state=R.normalize(after,expected,False)
+        C.require(all(before_state[k]==after_state[k] for k in ['identitySha256','configSha256','restartCount','restartPolicy','retry']),'SNAPSHOT_REST_IDENTITY_CHANGED')
+        after_log=read(('logs','--tail','80',row['id']),65536)
+        try:
+            value=R.observation(expected,before,after,top,before_log,after_log,self.last_stop_command,time.monotonic()-started)
+            raw=R.receipt_bytes(value);fingerprint=C.write_once(self.stop_output/'rest-interruption-receipt.json',raw)
+            remaining();evidence={'status':'VERIFIED','receiptSha256':fingerprint,'observation':value,'completionElapsedSeconds':time.monotonic()-started}
+            if not R.eligible255(evidence,expected,before,after):evidence['status']='UNATTESTED'
+            self.rest_shutdown_receipt=evidence
+        except (OSError,ValueError,TypeError,C.SnapshotError):self.shutdown_diagnostics='UNKNOWN'
+        remaining()
 
     def service_state(self,row,timeout):
         values=C.decode(self.docker('inspect',row['id'],timeout=timeout,maximum=262144))

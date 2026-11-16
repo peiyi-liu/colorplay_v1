@@ -2466,3 +2466,60 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 ### 2026-11-16 — Root M17報告尾端空行修正（文件S級）
 
 - M17 exact8paths commit271baf6已建立；Root新review文件多一個EOF空行，cached diff-check拒絕後提交命令未被工具流程阻止。這是Root命令串流程錯誤，非產品/worker測試失敗；不回寫綠結果、不amend既有commit。僅去掉Root新report多餘EOF空行，另正常followup記錄，再核cached check0/clean才push最新Source。M17五個Source hash與review接受結果不變；尚未push/Native。
+
+
+### 2026-11-16 — M17新Source已正常FF，Native12診斷執行中
+
+- Root文件S級followup20c4656c10a6d1ad4e5a6b7627f1280b033bb9f4，cached check0/clean/5Sourcepacket hashes核後，remoteexactd775核再正常FF；run43865468673/job133292759689/push/attempt1，仍COLORPLAY_LOCAL_DIAGNOSTIC_ONLY=1。Root watcher session60845只收matching encryptedartifact；不GHrerun。此時bootstrap進行中，未稱停機/備份/容量通過。
+- 同worker只READONLY準備恢復business最小paths/checks，沒有M18修改授權；須Root實際核Native12完整冷備份才bounded實作。US$0，Hosted/Production/mail NONE。
+
+
+### 2026-11-16 — Native12已真驗Edge/Kong正常退出；唯一REST255阻擋
+
+- run43865468673/job133292759689/source20c4656仍10minhold待final；artifact14226465010 ZIP969350B/26f2c9d674ea30783d634ca8261911c67250e59140e811a7e92a14ae98fd08c5 API digest核；cipher99ee5f575c824ef359505fa3ace8dfe5d7cedf2c57f3aecf3e4548ed873f7860/969212B、manifest44fd02f330d1215448b050a820a30809b92c9f6f11afe3b6ddd4349b6d2a5eac/290files/8931497B真age AEAD全檔核。仍PARTIAL/fullDataRetention NOT_ATTESTED；Rootreceipt3bc3495b5aa4d04f566ec51b7550f1a6b82e445afc53b3e36fa6cfc77ad05ab6。
+- 7nonDBstop皆RETURNED_SUCCESS/stoppedtrue/noOOM/restartCount0。EdgeTERM proof/identity/pidfds/helperclose/bindings/positiveSIGTERM與naturalexit全部Root獨立核/exit15符合原eligible；KongQUIT同核、privateintent/after exactrestart=no核/exit0。Auth/Mail/Realtime/Storage各0；REST actualfixed public.ecr.aws/supabase/postgrest:v14.14/configde2f4d042d5efb5d1362d98c11e5e0773bedc1376bafcdb4ec863fc18d25f52d/defaultTERM，Dockerstop0.101862s但containerExit255。Root真stopped()逐role獨立核，只有REST拒SNAPSHOT_STOP_UNKNOWN，M5non_db_stop未過，DBstop/dump/volume未跑。
+- 已請同workerREADONLY精確v14.14 code/退出契約與可否證診斷，禁止直接allow255。恢復business最小2paths已盤點但尚未批准M18；本輪prepare176.056s/fixtures0、functional/15legs均NOT_RUN。主機US$0，原WIP/G8/85、Hosted/Production/mail保持。
+
+
+### 2026-11-16 — 待整合migration語意補充
+
+- 唯一pending20261116000100不只是增加內容索引：先drop content_media_assets_manifest_sha256_key UNIQUE，再建非唯一manifest_sha256索引，允許獨立owned upload runs的相同可信內容digest各自保有UUID。Source出自1449561133081c93b49c6b6eba56ada00626c817、已納入acac產品基線；沒有Hosted套用。最終migration批准要明列取消唯一性及DDL鎖風險，不可簡稱純效能index。Root product inventory相對Staging d92共118paths（78非tests/40tests），私有receipt33689992efdfb8ecc73fb1b913557c605fbc8350d7ff6bf198682ba688c7dbdc；不是重新審查或容量PASS。
+
+
+### 2026-11-16 — Native12 final failure與REST退出機制假說
+
+- GitHub job133292759689現completed/failure，upload/10min保留hold正常完成。finalRootreceipt30aa4b593585ff487e88050f1142a7d96131ef7666351299cae3c9fdebfb0fe0；joblog21916B/52ab24c0b9f11a305a3ef348297ff621590a0db08c63f5ce755df841388b7a9b。初holdreceipt保留，未rerun。
+- 真REST Config.Entrypoint=null/Cmd=['/bin/postgrest']/defaultTERM；beforecensus singlePID1 OTHER1/Runningtrue/exit0；全6kernelcontrols真LinuxPASS但capacityProof=false。worker唯讀精確v14.14→UserInterrupt→GHC9.4.8自SIGINT→PID1忽略→exit0xff鏈可解釋255，尚非Native12 causal trace或vendor實際compilerattest；原通用「正常只0或128+signal」假設過窄，不能直接allow255。正在freeze官方SHA/正向日誌完整行parser與minimalpredicateproposal；business保持停止。
+
+
+### 2026-11-16 — M18已授權sameworker，固定REST有證據的255辨識
+
+- Root核readonly30files/manifest2aeb8092d32c4918b8862c6954d4a217a92596d6bffd26afa150fabccc24020b；PostgREST c1be852/Logger完整日期TERM→UserInterrupt、source-defaultGHC8e9ea0f fallback255與LinuxPID1規則支持機制，但Native12因果/實際vendor compiler仍UNKNOWN。TERM entry不代表poolcleanup completed/requestdrain。
+- brief docs/superpowers/plans/2026-11-16-linux-rest-interruption-m18-brief.md 現SHA2ad3c79871c61d197b269cc89a05143845c4103b4149025d61810d8a34783204/6697B。初稿0bfba845...末段誤寫保護M17五檔，已改成未授權helper與其test兩檔；ownership始終exact5（newREST純module/test＋native/wrapper/既有diagnosticstest），策略未擴。
+- 原RESTDockerstop不改；新增strict actualtop單PID1/固定imageCmd/planjobnonce/前後restartstate/physicalclose與bounded rawlog byteprefix/new suffix恰一條精確timestampTERM；其他newunknown/fatal/INT/多行/rotation不eligible255。rawlogs只private memory，0/143與其他role/Edge15/DB0/helper/operator44/workflowdiagnostic/caps均不擴。先behaviorRED，再同worker實作/freeze/Root唯一review，禁止workerNative/雲端。下一newSource仍0business，必須完整冷備份真驗才另恢復15legs；US$0，Hosted/Production/mail NONE。
+
+
+### 2026-11-16 — M18接口決策落地
+
+- brief最新0fdb88c46c51a18ae77083066ef58b853b19a1c91b528477496517f99464ab2f/7319B（前2ad3保留歷史）：logs不足但client正常close/identity-binding/deadline有效仍原單次stop，原0/143不加proof要求、255必拒；取消/closureUNKNOWN/identity錯/過期不送stop，proof保存失敗不以memorysuccess補255。緊鄰當次stop_one之REST前後觀測與stop共90s、timeout限remaining，不能從all8census起算；其他roles不變。worker已收到，Source仍same5，沒有business/Native授權。
+
+
+### 2026-11-16 — WB5唯讀執行接線盤點（未改產品／Hosted）
+
+- 現行hosted-config.ts與hosted-provenance.ts是純guard模型，validateHostedConfig回executionAuthority NONE／runReservation REQUIRED_BEFORE_EFFECT；scripts/tests查callsite只有contract tests，沒有實際Hosteddriver接線。現有functional-runtime仍固定Local DB URL，不能只換URL或把guard單元綠當Hosted可跑。
+- WB5具體Hosted窗口批准前仍須備妥可審核Root adapter：remote freshness/exactartifact/source/nonce reservation、controlled mailbox真OTP讀取、批准帳號/保留政策與各級前序收據的實際接線；不得複製connector OAuth或把Local Mailpit當Hosted信箱。這是原WB5未完成範圍，非M18擴項；當前優先完成Local備份阻擋與60人，不做任何Hosted寫入。
+- M18 brief計數修正最新df1b0583f95d4d9bf96576e1b2106831b497de2035121e46aac8351f745d19fe/7355B：REST之外普通4roles（auth/inbucket/realtime/storage）＋M17三roles保持，舊0fdb誤寫5只文字，ownership/行為無擴。
+
+
+### 2026-11-16 — WB5真實註冊route補核（唯讀）
+
+- 當前account-flows.ts91/104：fresh先signInWithOtp(shouldCreateUser=true)→verifyOtp(email)→student-register，不是直接/signUp。固定Auth4eee58f296d9698a1c2c0ae14d7a0b379c7622d3官方api.go244–245把/otp綁limiterOpts.Otp；已釘raw apilimiter.go232–239把Otp與Signups皆設同newLimiterPer5mOver1h(RateLimitOtp)/burst30。先前Signup300離線對照是同constructor控制，不冒稱已跑真/otp。
+- 因此burst關聯仍有Source支持，但最終需沿真/otp→/verify→student-register與auth-login/token路線取Hosted證據，SMTP/投遞/HostedIP聚合仍UNKNOWN。未寄信/註冊/HostedAPI負載，沒有產品改動，M18same5paths不擴。
+
+
+### 2026-11-16 — M18唯一Root review接受，下一新Source仍0business
+
+- packet62ebb36c45342f719f38b9519aabdc576b4b5c526f5328c746e5f28b19a7f807；Root核5Source/27records/59protected actualGit/44operator。Worker36direct/164Python14.342s與lint/type/static/import/EOF/diff全0；Root36/2.276s＋28parser＋14真provider形狀＋9finalizer＋9Edge controls全PASS，Standards/Spec/Security各0findings。summaryb537a2b219e689ba8b8c4590ff0abc13f9d266c93b4d0425c4a1068ed8666bc7，review docs/reviews/2026-11-16-linux-rest-interruption-m18-review.md。
+- REST固定image/Cmd/top單PID1/planjobnonce/profileboot與前後state/restart/closure/90s綁定，logs byteprefix＋新增唯一完整datedTERM，wx600/fsync/close/deadline重核後才可窄辨255。logs不足但正常close保原stop/0/143，其他unknown/cancel/identity/late不續；M17三角色/另外4普通roles/Edge15/DB0/全部額度/helper/operator/workflowdiagnostic1不擴。Native12因果仍UNKNOWN，不稱v16drain/poolcompleted。
+- Root初finalizer8/9為no-op bootmutation（fixture已all-e），原script/output保留，guaranteed-different v2全9/9，非Source問題。原workerRED/deadlinefixture setup保留。原7protected與handoffprefix現核符，max445。
+- Root將exact8paths gated commit/check0，核remoteexact20c4656再FF新Source attempt1零business診斷。須REST正向proof與DB/完整冷備份真過才另恢復functional/15legs。40/60未過、US$0，G8/85與原WIP保護；Hosted/Production/mail NONE。

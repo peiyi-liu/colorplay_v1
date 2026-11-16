@@ -270,11 +270,11 @@ class ServiceStopFlowTests(unittest.TestCase):
                 self.assertEqual(native.deadline,600);self.assertEqual(native.service_shutdown_receipts[role]['signal']['status'],'VERIFIED')
                 self.assertNotIn('pid',json.dumps(native.service_shutdown_receipts[role]))
 
-    def test_other_five_roles_keep_original_stop_only_and_no_restart_intents(self):
+    def test_other_four_roles_keep_original_stop_only_and_no_restart_intents(self):
         import time
         with tempfile.TemporaryDirectory() as folder:
             f=Fixture(Path(folder).resolve());native=NativeIO();native.source=f.source;native.runtime=f.runtime;native.deadline=time.monotonic()+600
-            for role in ['auth','rest','realtime','storage','inbucket']:
+            for role in ['auth','realtime','storage','inbucket']:
                 row=next(r for r in f.plan['containers'] if r['role']==role)
                 with patch.object(native,'run',return_value=b'') as run:native.stop(row)
                 self.assertEqual(run.call_args.args[0],[*DOCKER,'stop','--timeout','-1',row['id']]);self.assertEqual(run.call_args.kwargs,{'timeout':90})
@@ -292,5 +292,110 @@ class ServiceStopFlowTests(unittest.TestCase):
                     self.assertEqual(record['signal']['signalState'],'SENT')
                 if failure=='intent-exists':self.assertEqual(C.decode((f.output/'restart-db-intent.json').read_bytes()),{'preserved':True})
 
+
+class RestActualReaderTests(unittest.TestCase):
+    def fixture(self,folder):
+        from test_local_edge_shutdown import configured_fixture,native_fixture
+        f,raw,ctx=configured_fixture(Path(folder).resolve())
+        row=next(r for r in f.plan['containers'] if r['role']=='rest')
+        row['imageId']='sha256:de2f4d042d5efb5d1362d98c11e5e0773bedc1376bafcdb4ec863fc18d25f52d'
+        next(r for r in f.context['containers'] if r['role']=='rest')['imageId']=row['imageId']
+        ctx=C.canonical(f.context);f.plan['executionContextSha256']=C.digest(ctx);raw=C.canonical(f.plan)
+        native=native_fixture(f,raw,ctx)
+        import time
+        native.deadline=time.monotonic()+600
+        return f,row,native
+
+    def test_actual_reader_observes_adjacent_logs_and_persists_private_receipt(self):
+        with tempfile.TemporaryDirectory() as folder:
+            f,row,native=self.fixture(folder);calls=[];stopped=[False]
+            before={'Id':row['id'],'Name':row['name'],'Image':row['imageId'],'RestartCount':0,
+                    'Config':{'Image':'public.ecr.aws/supabase/postgrest:v14.14','Cmd':['/bin/postgrest'],'Entrypoint':None},
+                    'HostConfig':{'RestartPolicy':{'Name':'unless-stopped','MaximumRetryCount':0},'AutoRemove':False},
+                    'State':{'Running':True,'Pid':123,'ExitCode':0,'Paused':False,'Restarting':False,'Dead':False,'OOMKilled':False,'Error':''}}
+            baseline=b'Existing startup and access rows\n';term=b'16/Nov/2026:12:00:00 +0000: Received termination unix signal SIGTERM\n'
+            def run(args,**options):
+                op=args[3];calls.append(op)
+                if op=='stop':
+                    stopped[0]=True;native.last_stop_command={'clientClosed':True,'exitCode':0,'subprocessClosure':'VERIFIED','requestedSeconds':options['timeout'],'effectiveSeconds':options['timeout'],'elapsedSeconds':0.0};return b''
+                native.rest_read_command={'clientClosed':True,'normalCompletion':True,'subprocessClosure':'VERIFIED'}
+                if op=='top':return b'PID PPID COMMAND\n123 1 postgrest\n'
+                if op=='logs':return baseline+(term if stopped[0] else b'')
+                self.assertEqual(op,'inspect');value=json.loads(C.canonical(before))
+                if stopped[0]:value['State'].update(Running=False,Pid=0,ExitCode=255)
+                return C.canonical([value])
+            with patch.object(native,'run',side_effect=run):native.stop(row)
+            evidence=getattr(native,'rest_shutdown_receipt',None)
+            self.assertIsNotNone(evidence,'actual REST reader did not observe its stop')
+            self.assertEqual(evidence['status'],'VERIFIED');self.assertEqual(calls,['inspect','top','logs','stop','inspect','logs'])
+            self.assertTrue((f.output/'rest-interruption-receipt.json').exists())
+            self.assertEqual((f.output/'rest-interruption-receipt.json').stat().st_mode&0o777,0o600)
+            self.assertNotIn('Existing startup',json.dumps(evidence));self.assertNotIn('/bin/postgrest',json.dumps(evidence));self.assertNotIn('Cmd',json.dumps(evidence))
+
+
+    def test_rest_unavailable_logs_keep_normal_codes_but_unknown_close_cancel_or_identity_stops(self):
+        import local_snapshot_native as N
+        from test_local_rest_shutdown import fixed_fixture,BASELINE,TERM
+        cases=['logs-unavailable','before-unclosed','before-cancel','before-late','top-many','identity',
+               'after-identity','after-unclosed','stop-closure','stop-error','persist','persist-late','normal-zero','normal-term']
+        for case in cases:
+            with self.subTest(case=case),tempfile.TemporaryDirectory() as folder:
+                f,row,native,before,after,_,_=fixed_fixture(folder);native.deadline=600;now=[0];calls=[];did_stop=[False]
+                if case in ['normal-zero','normal-term']:after['State']['ExitCode']=0 if case=='normal-zero' else 143
+                if case=='identity':before['Config']['Cmd']=['sh']
+                if case=='after-identity':after['RestartCount']=1
+                def run(args,**options):
+                    op=args[3];calls.append(op)
+                    if op=='stop':
+                        self.assertEqual(args,[*DOCKER,'stop','--timeout','-1',row['id']]);self.assertTrue(0<options['timeout']<=90)
+                        did_stop[0]=True;native.last_stop_command={'clientClosed':True,'exitCode':0,'subprocessClosure':'VERIFIED','requestedSeconds':options['timeout'],'effectiveSeconds':options['timeout'],'elapsedSeconds':0.1}
+                        now[0]+=0.1
+                        if case=='stop-closure':native.closure='UNKNOWN'
+                        if case=='stop-error':raise C.SnapshotError('SYNTHETIC_STOP_FAILED')
+                        return b''
+                    native.rest_read_command={'clientClosed':True,'normalCompletion':True,'subprocessClosure':'VERIFIED'}
+                    if op=='inspect':return C.canonical([after if did_stop[0] else before])
+                    if op=='top':return b'PID PPID COMMAND\n123 1 postgrest\n'+(b'124 123 worker\n' if case=='top-many' else b'')
+                    self.assertEqual(args,[*DOCKER,'logs','--tail','80',row['id']]);self.assertEqual(options['maximum'],65536);self.assertLessEqual(options['timeout'],2)
+                    if case=='before-unclosed' or (case=='after-unclosed' and did_stop[0]):native.rest_read_command['normalCompletion']=False
+                    if case=='before-cancel':native.cancelled=True
+                    if case=='before-late':now[0]=91
+                    if case in ['logs-unavailable','normal-zero','normal-term']:raise C.SnapshotError('SYNTHETIC_PRIVATE_LOG_UNAVAILABLE')
+                    return BASELINE+(TERM if did_stop[0] else b'')
+                original_write=C.write_once
+                def write(path,value):
+                    if path.name=='rest-interruption-receipt.json':
+                        if case=='persist':raise PermissionError('SYNTHETIC_PRIVATE_WRITE')
+                        result=original_write(path,value)
+                        if case=='persist-late':now[0]=91
+                        return result
+                    return original_write(path,value)
+                allowed=case in ['logs-unavailable','persist','normal-zero','normal-term']
+                with patch.object(N.time,'monotonic',side_effect=lambda:now[0]),patch.object(native,'run',side_effect=run),patch.object(C,'write_once',side_effect=write):
+                    if allowed:native.stop(row)
+                    else:
+                        with self.assertRaises((C.SnapshotError,ValueError)):native.stop(row)
+                self.assertEqual(calls.count('stop'),0 if case in ['before-unclosed','before-cancel','before-late','top-many','identity'] else 1)
+                evidence=native.rest_shutdown_receipt;self.assertEqual(evidence['status'],'UNATTESTED');self.assertNotIn('SYNTHETIC_PRIVATE',json.dumps(evidence))
+                if case in ['normal-zero','normal-term']:M.stopped([after],[before])
+                elif did_stop[0]:
+                    with self.assertRaises(C.SnapshotError):M.stopped([after],[before],{row['id']:{'restReceipt':evidence}},native.edge_policy)
+                if case=='persist-late':
+                    candidate=C.decode((f.output/'rest-interruption-receipt.json').read_bytes())
+                    self.assertNotIn('status',candidate);self.assertNotIn('result',candidate);self.assertEqual(candidate['executionAuthority'],'NONE')
+
+    def test_actual_read_client_close_metadata_comes_from_owned_real_subprocess(self):
+        import subprocess
+        from test_local_rest_shutdown import fixed_fixture
+        with tempfile.TemporaryDirectory() as folder:
+            f,_,native,_,_,_,_=fixed_fixture(folder);import time;native.deadline=time.monotonic()+600
+            actual=subprocess.Popen;children=[]
+            def process(args,**options):
+                self.assertEqual(args,[*DOCKER,'logs','--tail','80','synthetic-only'])
+                child=actual([sys.executable,'-B','-c','print("ordinary synthetic process")'],**options);children.append(child);return child
+            native.rest_read_active=True
+            with patch.object(subprocess,'Popen',side_effect=process):raw=native.docker('logs','--tail','80','synthetic-only',timeout=2,maximum=65536)
+            self.assertEqual(raw,b'ordinary synthetic process\n');self.assertEqual(native.rest_read_command,{'clientClosed':True,'normalCompletion':True,'subprocessClosure':'VERIFIED'})
+            self.assertTrue(all(child.poll()==0 for child in children));self.assertEqual(list(f.output.iterdir()),[])
 
 if __name__=='__main__':unittest.main()
