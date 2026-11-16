@@ -2192,3 +2192,10 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Exact2files439/301行，worker16tests0.341s/fullchecks綠／29logs hashverified；Root唯一一輪Standards0/Spec0/ProductSecurity不適用/工具未解0，獨立16tests0.422s＋6actual export controls綠。Packetc2eb872b172493accffed1bc887302e1e1c8b7b38cd8d5a246960c422c108f55；Rootactualcontrols35e1cd3eafdf9edb57c9f8c13198841de686df504f83d2b2324173dedcdb0a56。真本機age adapter加解密／3檔與原manifest逐bytes核對、未列檔缺席、tamper拒絕不抽取；私鑰未輸出／上傳，非真Linux或DB留存證據。
 - Manifest獨立批准、strict Local與安全路徑/owner-mode/inode/hash、wx、120s/2GiB/100MiB、failure owned child回收；結果僅CIPHER_ARCHIVE_CREATED/retention UNVERIFIED。Root另已離線port7 business helpers/2publishers與outside-cgroup monitor草稿，32pure/tempFS/Darwin拒絕checks綠；真Linux/kernel/cgroup calibration/bootstrap仍待，不能當60人PASS。
 - 原G8 functionalPASS249.524s與3/10容量PASS/20INCONCLUSIVE不重標，85containers/資料保留停機；0雲端資源/費用/Hosted寫入寄信/Gmail內容讀/push/PR/merge/deploy。新DO帳號有付款方式/$5且兩查區64GB unavailable的觀察另記，未啟用計費。
+
+
+### 2026-11-16 — Linux M4唯一review ACCEPTED，Root operator仍獨立草稿
+
+- Workerexact4files1123行／33tests1.391s/fullchecks綠；Root唯一一輪Standards0/Spec0/產品Security N/A/工具未解0，34logs與4source hash全核，獨立33tests1.556s與8actual public-export controls全綠。Packet8e2a0884ab158deeee723dd54ca747cc2a0bf7d79f7a28d5b6508432bb9b85d4，Rootcontrols7704b5ca45613010b047fe813ad98116799174cc50d7acb98330623a95670530。皆合成外部ports/真tempFS，非NativeLinux／Docker／SQL。
+- M4只空job→8個固定digest服務／共同4CPU6GiB/loopback/freshHMAC+JWK/readonly基線，最大READY_PENDING_ROOT_PROFILE/NONE/retentionUNVERIFIED；首次空初始化CLI上游可能自刪新volumes的限制已核准addendum，不能宣稱全部留存，不影響原G8/85。Root operator package/profile/kernel calibration/bind/export/workflow屬另外草稿，未算此4檔review，尚需整合。
+- Root package當前34pure/tempFS/Darwin checks綠、7publication controls綠、52business functionAST保持；新增pinner只PIN_PENDING，必真kernel六controls後才生成reviewed-candidate ACCEPTED供首次build/functional，不允許未校準直接建立身份。真Native／60人／雲端資源／費用／Hosted／寄信／push／PR／merge／deploy皆0或NOT_RUN。
