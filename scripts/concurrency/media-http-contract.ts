@@ -1,3 +1,4 @@
+import type { MediaTransport } from './functional-media-transport-observation';
 import type { APIResponse, Request } from '@playwright/test';
 import { z } from 'zod';
 import {
@@ -65,6 +66,7 @@ export const parseMediaHttpRequest = async (
 export const parseMediaHttpResponse = async (
   request: MediaHttpRequest,
   response: APIResponse,
+  observation?: { body(bytes: number, known: boolean): void; unknown(): void },
 ): Promise<MediaHttpResponse> => {
   const empty: MediaHttpResponse = {
     status: response.status(),
@@ -74,48 +76,69 @@ export const parseMediaHttpResponse = async (
     objectPathSha256: null,
     asset: null,
   };
+  const observed = (value: MediaHttpResponse, bytes: number) => {
+    try {
+      observation?.body(bytes, value.outcome === 'ok');
+    } catch {
+      try {
+        observation?.unknown();
+      } catch {
+        /* Diagnostics never replace the operation result. */
+      }
+    }
+    return value;
+  };
   if (response.status() !== 200) return empty;
   const bytes = await response.body();
-  if (bytes.length > 16_384) return empty;
+  if (bytes.length > 16_384) return observed(empty, bytes.length);
   let data: unknown;
   try {
     data = JSON.parse(bytes.toString('utf8'));
   } catch {
-    return empty;
+    return observed(empty, bytes.length);
   }
   if (request.action === 'begin') {
     const parsed = contentMediaBeginWireSchema.safeParse(data);
-    return parsed.success
-      ? {
-          ...empty,
-          outcome: 'ok',
-          runId: parsed.data.run_id,
-          requestId: request.requestId,
-          objectPathSha256: sha256(parsed.data.object_path),
-        }
-      : empty;
+    return observed(
+      parsed.success
+        ? {
+            ...empty,
+            outcome: 'ok',
+            runId: parsed.data.run_id,
+            requestId: request.requestId,
+            objectPathSha256: sha256(parsed.data.object_path),
+          }
+        : empty,
+      bytes.length,
+    );
   }
   if (request.action === 'abort') {
     const parsed = contentMediaAbortWireSchema.safeParse(data);
-    return parsed.success
+    return observed(
+      parsed.success
+        ? {
+            ...empty,
+            outcome: 'ok',
+            runId: parsed.data.run_id,
+            requestId: parsed.data.request_id,
+          }
+        : empty,
+      bytes.length,
+    );
+  }
+  const parsed = contentMediaProcessWireSchema.safeParse(data);
+  return observed(
+    parsed.success
       ? {
           ...empty,
           outcome: 'ok',
           runId: parsed.data.run_id,
           requestId: parsed.data.request_id,
+          asset: parsed.data.asset,
         }
-      : empty;
-  }
-  const parsed = contentMediaProcessWireSchema.safeParse(data);
-  return parsed.success
-    ? {
-        ...empty,
-        outcome: 'ok',
-        runId: parsed.data.run_id,
-        requestId: parsed.data.request_id,
-        asset: parsed.data.asset,
-      }
-    : empty;
+      : empty,
+    bytes.length,
+  );
 };
 export const boundedHttpHook = async <T>(
   operation: () => Promise<T>,
@@ -142,4 +165,53 @@ export const boundedHttpHook = async <T>(
     clearTimeout(timer);
     signal.removeEventListener('abort', abort);
   }
+};
+
+export const mediaResponseFraming = (response: APIResponse) => {
+  const headers = response.headersArray();
+  if (headers.length > 256) throw new Error('INVALID');
+  const get = (name: string) => {
+    const found = headers.filter((h) => h.name.toLowerCase() === name);
+    if (
+      found.length > 1 ||
+      found.some((h) => h.value.length > 1024 || /[\r\n]/u.test(h.value))
+    )
+      throw new Error('INVALID');
+    return found[0]?.value;
+  };
+  const status = z.number().int().min(100).max(599).parse(response.status());
+  const type = get('content-type'),
+    encoding = get('content-encoding'),
+    length = get('content-length');
+  const contentType =
+    type === undefined
+      ? 'NONE'
+      : /^application\/json(?:\s*;[^\r\n]*)?$/iu.test(type)
+        ? 'JSON'
+        : 'OTHER';
+  const encodings: Readonly<Record<string, MediaTransport['encoding']>> = {
+    identity: 'IDENTITY',
+    gzip: 'GZIP',
+    br: 'BR',
+    deflate: 'DEFLATE',
+  };
+  const key = encoding?.toLowerCase();
+  const encodingKind =
+    key === undefined
+      ? 'NONE'
+      : Object.hasOwn(encodings, key)
+        ? (encodings[key] ?? 'OTHER')
+        : 'OTHER';
+  let wireLength: number | null = null;
+  if (length !== undefined) {
+    if (!/^(0|[1-9][0-9]{0,6})$/u.test(length)) throw new Error('INVALID');
+    wireLength = z
+      .number()
+      .int()
+      .nonnegative()
+      .max(2_097_152)
+      .parse(Number(length));
+  }
+
+  return { status, contentType, encoding: encodingKind, wireLength };
 };

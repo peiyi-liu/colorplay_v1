@@ -112,7 +112,7 @@ export const createFunctionalHealth = (
       enabled: false,
     };
     pages.set(page, info);
-    mediaObservation.register(page, () => info.actor);
+    mediaObservation.register(page, () => info.actor, context);
     auth.register(page, info.index);
     images.register(page, () => info.actor);
     const loaded = auth.loaded.bind(undefined, page);

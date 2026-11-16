@@ -2776,3 +2776,41 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - latest packet a3ec2910c6a1a3320a5fba3afa9faaf12671e3197edc3df5f71e6f0b187b7256／100records含原78完整，11Source/brief SHA核。Worker39files537tests/final82、full checks全0；Root4files82tests1.37s＋actual export合成四abort/context/敏感欄位/矛盾late/Document控制PASS，SYNTHETIC_ONLY/NONE。1937unowned actualGit blobs/operator44/original7prefix核符；原4test bytes保持prefix，0findings／唯一round，Rootreceipt 1e7897259ec2a260a2d4d64c679a168a7373c7c3fbbed9742ede21cf6225cda7，review docs/reviews/2026-11-17-linux-media-abort-context-m26-review.md。
 - 只closed method/action/actor/step/Node lifecycle與Root既有goto/view intent；request當時與failure當時intent分開，四個abort仍FAIL，取消來源/app bodyEOF固定UNOBSERVED；原classifiers/Auth/Image/counters/caps/SLO不改，無src產品變更或新HTTP/IO。Worker初RED/setup與凍結前修正完整保留。Root保護script舊行數上限probe失敗改按brief每檔limit後通過，非Source issue。
 - Root準備exact14paths gated commit/clean，fresh specialremote47f2後正常FF新Source/newpush/attempt1正常six-person→15legs。M25真capacity未run、40/60未驗，Native18不回填。原WIP/G8停止85/全部custody保持，主機US$0/US$5 cap，Hosted/Production/真寄信NONE。
+
+
+### 2026-11-17 — M26新Source正常Native21已啟動
+
+- Root exact14paths cachedcheck0/commit/clean fa0682d6712bd6c3b4c1aab6445b5d26f979311f，fresh specialremote精確47f2後正常FF。push/attempt1 run43943978306/job133568582433，正常six-person→15legs；watcher23987只監看matching SHA並保加密證據。無GH rerun／0business gate，Source凍結／同worker待命。
+- M26唯一review0findings、獨立82tests與合成controls PASS不等實際abort已解；取消來源/bodyEOF仍UNOBSERVED，40/60未驗。原WIP/G8停止85/全部custody，主機US$0/US$5 cap、Hosted/Production/真寄信NONE。
+
+
+### 2026-11-17 — Native21實際MEDIA_BEGIN中止已完整本機保留／終態待job hold結束
+
+- run43943978306/job133568582433/sourcefa0682d6712bd6c3b4c1aab6445b5d26f979311f，functional wsb-261116-fa4828a217a9 261213.550ms/exit1/無signal/stderr0/close正常/SourceFrozen；actual TS receipt/candidate/close與finalizer重算FAIL。前14stages PASS、health OBSERVED/availabletrue/unexpected1其餘components0/drops4/refresh1；15capacity未run。actual唯一event page9/A1/3560、POST MEDIA_BEGIN、zip_recovery、Document12、HTTP200/ERR_ABORTED/canceledtrue，Node request246637.006053→response246688.893366→failure246689.257416；Rootview2早於request完成，request/failure intent皆同COMPLETED2，取消來源/app bodyEOF UNOBSERVED，不推定nav因果或無害。Native18不回填。
+- artifact14264947528 ZIP42491638B/b4ddbcd94467a6054d397a055ce6b3df2bbe62ca53b4a23ea906bf8729b66112，cipher42491500B/b4fb57444ad9a5077709cc94da2e6d0ce52df4f370853989af9e9abfca9485b4 真age AEAD與outerf769a31f7b835074f1c2f280129e591bf780bb4f938d2a0616b598eb0934d111/561files211995242B全核；inner37cc9cf00ad0caac73a98c5e4c63e4d2a90e0c14b9dfb9e91668db7759612068/528files、8stops/roleproof/DB2/127tables/31rolesORDER_ONLY／3vol7019regularfiles185632903B含metadata、runtime476data32publiccode/metadata-only0。6Auth與全部media保留、無restore。Rootfunctional private receipt SHA82dbf7e104e38c0b1dbe6dee852af3b240653b8f4a08e63d60b13cd021b1b500；watcher23987 completed0。完整本機保留已核，workflow尚停10分鐘保留步驟，最終job log/結論待查，不提前稱completed。
+- 同worker僅readonly Source追ZIP begin→repo/SDK/boundedFetch/Response handling，私有proposal/no tracked修改，Root唯一review；Source根因未立、無expected放寬/盲重跑。主機US$0/US$5 cap、40/60未驗、原WIP/G8停止85/全部custody、Hosted/Production/真寄信NONE。
+
+
+### 2026-11-17 — Native21 readonly已核／單次隔離傳輸component batch授權
+
+- readonly manifest1dbcfa39f4390482b909cb175fa21dd235c6d92ccd741837d6002f979f549dbd／proposal e2b5a155d3cf4477fb48c9d01efdd193815464a9d24c142757d5b7550e5695d4，Root核16Source/vendor hashes、7line refs、1record。SDK2.110.2本invoke無signal/timeout，JSON成功無clone/cancel、finally僅clear已設timeout；PW1.61.1 response.dispose只刪buffer/log，不能推定pageabort。ZIP逐張await begin失敗無重試；Root fullbuffer不證page.json EOF，framing未觀測。Root verifier初誤把segments當file record，按實際schema更正，唯讀無Source issue。
+- 同worker新增單次private .git/native21-transport-component，最多1browser/context/page、64synthetic requests/240s；loopback owned fakeapp/API，優先actual restrictFunctionalBrowser/HTTP hooks＋installed SDK＋actual boundedFetch，identity/gzip/length/held/cancel正負與sameID CDP；不改trackedSource/docs、不Supabase/Auth/DB/G8/Hosted/新Native/新agent，fixedports若占用即停，不連existing或kill別人。只安全enums/lengths/outcome、全owned關閉proof，不能把合成component當Native原因或expected白名單。Root唯一審核後才定next action。原容量未驗/主機US$0/US$5 cap/全部保護不變。
+
+
+### 2026-11-17 — Native21最終failure與joblog完成留存
+
+- run43943978306/job133568582433 completed/failure，upload/10分鐘hold/post全部正常結束；Root final .git/linux-twenty-first-run-review.json SHA65aa409565fb6d198ddf98267c82f60620abc3def7953f1b70d2a1c08992509b，joblog22087B/0c073846bf5f25509cb69a06028c349bf153ed6d3fab69803f76feeee898d55d。先前actual functional FAIL與完整cipher/outer/inner/cold資料鏈全部保持；無rerun／restore／刪除。40/60未run，MEDIA_BEGIN取消來源與app bodyEOF仍UNOBSERVED，等待已授權獨立transport component實驗。
+
+
+### 2026-11-17 — 單次transport component唯一Root核畢／M27工具診斷授權
+
+- component manifest16eebe6780294d0201364dafc2be3c2903d60d8fc15ece4a9d9b9c775b0da428，Root核19records/21Source/1948actualGit blobs/original7prefix，獨立重算17POST/20HTTP/16.097s；normal12/12SDK JSON/schema及CDP200→FINISHED，actual restrict/parse/interception/fulfill/dispose exports使用；identity/gzip均3次direct+3次routed，未重現同200/ERR_ABORTED，不做normalize/dispose改法或expected白名單。長短length錯是Rootfetch拒絕/ERR_FAILED；held200ms成功；callerCancel無200/ERR_ABORTED＋SDKerror；body.cancel未達而15s timeout、earlyDispose未跑、live browser version未記，明列限制。Rootreceipt ae5a305bfb199b352ae6055d4103e73a0e5b4a19ef2eafdbb65777b0d933fbfe，唯一round0findings／SYNTHETIC_ONLY/NONE。
+- 首setup opaque錯與重入EPERM皆0browser/0HTTP保留，listener唯讀空；auto-review准單次escalation後1browser/context/page真正batch，正常關閉、4CDP已見ownedPID identity消失/0socket/route/ports全空；不是Native cgroup完整普查。無Source變更/實驗追加/真服務連線。
+- 正式M27 brief docs/superpowers/plans/2026-11-17-linux-media-route-observation-m27-brief.md SHA2e8f59ce4334c26c0f9f41b4b0e5a3601e5e7cf6ed47a516c6864ddfe067e1de，sameworker exact8工具Source/tests，只media/A1同Page/完整validated private identity配CDP↔route，任意到達與原sequential retry、歧義UNKNOWN，不按時間猜；記safeordinal/stage/Node times/framing enums/bytes，不存raw/digest。原fetch/parse/hook/drop/fulfill/dispose順序次數參數與錯誤／4abort FAIL/4drops/1refresh/全部guards保留，無新HTTP/bodyread/journal/產品tap，bodyEOF/cancelSource仍UNOBSERVED。8paths及行數例外Root明示，先RED/checks/freeze/唯一review後才新Source正常Native，不GHrerun。40/60未驗、原WIP/G8停止85/custody、主機US$0/US$5 cap、Hosted/Production/真寄信NONE保持。
+
+
+### 2026-11-17 — M27唯一Root round／P2同輪修正接受
+
+- v1 packet4c191df811a26c77ebbfb5b9b0c54c4133cfb9d9b723babe36b2650995cd9593／59records，v2 4e1e2de2f421869a66959578ab31501c7aedd98e8d74d4671b4af627107cb03f／79records含原59全raw核。Worker40files566／final81tests，full lint與最後all8 scopedlint/fulltype/globalformat/import/diff/static0；Root獨立77→final81tests2.11s、headerRED→GREEN與actual export合成order/privacy/lifecycle控制PASS。P2普通object encoding查表constructor/__proto__命中prototype已改own-key，toString lowercase原本OTHER，保4反例。僅helper/test兩檔delta，逆向精確還原helper v1 SHA，v1 test rawprefix／其他6Source保持。唯一round、無未解finding；Rootreceipt 67039077bd2384a0a0925af53bd3dca12f6666c2ed15fb86c2226e65050520e6／review docs/reviews/2026-11-17-linux-media-route-observation-m27-review.md。
+- 1942unowned actualGit blobs含symlink targetbytes/operator44/original7及真正Original575959B c4fb…核符。舊component欄位original575959…=7064…其實recovery prefix，歷史不改；Root先前已獨立真核Original，本次proof分名，非資料變動。Root v1 hash驗證碰同輪test delta、v2腳本把有效RED要求0及初header wrapper headexit0資格均明列，不假稱Source issue。
+- exact8工具Source/tests、原route/counters/4abort FAIL/4drops/1refresh/guards保留，無新HTTP/bodyread/journal/產品tap，cancelSource/bodyEOF UNOBSERVED。Root準備exact11paths gated commit/clean，fresh fa specialremote後正常FF新Source/Native22 attempt1正常six-person→15legs。40/60未run，原WIP/G8停止85/custody、US$0/US$5 cap、Hosted/Production/真寄信NONE。

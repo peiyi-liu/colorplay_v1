@@ -1,3 +1,7 @@
+import {
+  enableMediaTransport,
+  observeMediaRoute,
+} from './functional-media-transport-observation';
 import { installFunctionalNavigation } from './functional-navigation';
 import {
   boundedHttpHook,
@@ -31,7 +35,13 @@ export const restrictFunctionalBrowser = async (
   } catch {
     return fail('FUNCTIONAL_BROWSER_FAILED');
   }
+  enableMediaTransport(context, api.origin);
   await context.route('**/*', async (route) => {
+    const observation = observeMediaRoute(route.request());
+    const observe = <T>(
+      stage: 'FETCH' | 'PARSE' | 'HOOK' | 'FULFILL' | 'DISPOSE',
+      operation: () => Promise<T>,
+    ) => (observation ? observation.run(stage, operation) : operation());
     try {
       if (![app, api.origin].includes(new URL(route.request().url()).origin)) {
         await route.abort('blockedbyclient');
@@ -46,40 +56,48 @@ export const restrictFunctionalBrowser = async (
       if (hooks?.beforeSend && meta) {
         const policy = hooks.beforeSend;
         if (
-          (await boundedHttpHook(() => policy(meta), hooks.signal)) === 'drop'
+          (await observe('HOOK', () =>
+            boundedHttpHook(() => policy(meta), hooks.signal),
+          )) === 'drop'
         ) {
           await route.abort('failed');
           return;
         }
       }
-      const response = await route.fetch({ maxRedirects: 0, maxRetries: 0 });
+      const response = await observe('FETCH', () =>
+        route.fetch({ maxRedirects: 0, maxRetries: 0 }),
+      );
+      observation?.headers(response);
       try {
         if (response.status() >= 300 && response.status() < 400) {
           await route.abort('blockedbyclient');
           return;
         }
         if (hooks?.afterResponse && meta) {
-          const parsed = await boundedHttpHook(
-            () => parseMediaHttpResponse(meta, response),
-            hooks.signal,
+          const parsed = await observe('PARSE', () =>
+            boundedHttpHook(
+              () => parseMediaHttpResponse(meta, response, observation),
+              hooks.signal,
+            ),
           );
           const policy = hooks.afterResponse;
           if (
-            (await boundedHttpHook(
-              () => policy(meta, parsed),
-              hooks.signal,
+            (await observe('HOOK', () =>
+              boundedHttpHook(() => policy(meta, parsed), hooks.signal),
             )) === 'drop'
           ) {
             await route.abort('failed');
             return;
           }
         }
-        await route.fulfill({ response });
+        await observe('FULFILL', () => route.fulfill({ response }));
       } finally {
-        await response.dispose();
+        await observe('DISPOSE', () => response.dispose());
       }
     } catch {
       await route.abort('failed').catch(() => undefined);
+    } finally {
+      observation?.close();
     }
   });
   await context.routeWebSocket('**/*', (socket) => {

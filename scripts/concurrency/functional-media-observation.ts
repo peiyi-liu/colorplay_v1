@@ -3,6 +3,14 @@ import { z } from 'zod';
 import type { FunctionalScope } from './config';
 import type { FunctionalStage } from './functional-receipt';
 import { functionalRequestContext } from './functional-network-event';
+import {
+  emptyMediaTransport,
+  mediaTransportSchema,
+  registerMediaTransport,
+  observeMediaCdp,
+  finishMediaCdp,
+  mediaTransportAvailable,
+} from './functional-media-transport-observation';
 const time = z.number().nonnegative();
 export const mediaSteps = [
   'authorization',
@@ -28,6 +36,7 @@ const intentSchema = z.strictObject({
   state: z.enum(['INVOKED', 'COMPLETED', 'FAILED']),
 });
 export const functionalMediaContextSchema = z.strictObject({
+  transport: mediaTransportSchema,
   method: z.enum(['GET', 'POST', 'OPTIONS', 'OTHER', 'UNKNOWN']),
   actor: z.enum(['A1', 'S1', 'S2', 'T1', 'T2', 'R1', 'OTHER', 'UNKNOWN']),
   functionFamily: z.enum([
@@ -96,6 +105,7 @@ export const runFunctionalMediaNavigation = <T>(
     : action();
 };
 export const emptyFunctionalMediaContext = (): FunctionalMediaContext => ({
+  transport: emptyMediaTransport(),
   method: 'UNKNOWN',
   actor: 'UNKNOWN',
   functionFamily: 'UNKNOWN',
@@ -126,6 +136,7 @@ export const createFunctionalMediaObservation = (
     requests: Map<string, FunctionalMediaContext>;
   }
   const pages = new WeakMap<object, State>();
+  const transportPages = new Set<object>();
   let bad = false,
     sealed = false,
     activeRequests = 0,
@@ -189,11 +200,15 @@ export const createFunctionalMediaObservation = (
     }
   };
   return {
-    available: () => !bad,
+    available: () => !bad && [...transportPages].every(mediaTransportAvailable),
     seal: () => {
       sealed = true;
     },
-    register: (page: object, actorGetter: () => string | null) => {
+    register: (
+      page: object,
+      actorGetter: () => string | null,
+      context?: object,
+    ) => {
       if (!touch() || pages.has(page) || registeredPages >= 2000) {
         bad = true;
         return;
@@ -208,6 +223,16 @@ export const createFunctionalMediaObservation = (
         requests: new Map(),
       };
       pages.set(page, state);
+      transportPages.add(page);
+      registerMediaTransport(
+        context,
+        page,
+        () => current(state),
+        () => !sealed,
+        () => {
+          bad = true;
+        },
+      );
       registeredPages++;
       navigation.set(page, {
         active: () => current(state),
@@ -304,6 +329,7 @@ export const createFunctionalMediaObservation = (
           requestAtNodeMs: clock(),
           lifecycle: valid ? 'REQUESTED' : 'UNKNOWN',
         });
+        context.transport = observeMediaCdp(page, id, raw);
         state.requests.set(id, context);
         activeRequests++;
         return context;
@@ -332,6 +358,7 @@ export const createFunctionalMediaObservation = (
         if (row) row.lifecycle = 'UNKNOWN';
         return;
       }
+      finishMediaCdp(page, id);
       row.lifecycle = 'FAILED';
       row.terminalAtNodeMs = clock();
       row.failureIntent = copy(state?.intent ?? null);
@@ -351,6 +378,7 @@ export const createFunctionalMediaObservation = (
         if (row) row.lifecycle = 'UNKNOWN';
         return;
       }
+      finishMediaCdp(page, id);
       row.lifecycle = 'FINISHED';
       row.terminalAtNodeMs = clock();
     },

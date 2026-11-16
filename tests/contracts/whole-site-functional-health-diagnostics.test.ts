@@ -548,3 +548,76 @@ it.each(['malformed', 'active-overflow', 'phase', 'late'])(
     expect(observer.available()).toBe(false);
   },
 );
+
+import type { APIResponse, Request } from '@playwright/test';
+import { restrictFunctionalBrowser } from '../../scripts/concurrency/browser-runtime';
+import { observeMediaRoute } from '../../scripts/concurrency/functional-media-transport-observation';
+it('exports same-request transport stages while HTTP200 canceled remains a health failure', async () => {
+  const cdp = Object.assign(new EventEmitter(), {
+    send: () => Promise.resolve({}),
+    detach: () => Promise.resolve(),
+  });
+  const page = Object.assign(new EventEmitter(), {
+    url: () => app + '/admin/content',
+    opener: () => Promise.resolve(null),
+    isClosed: () => false,
+  }) as unknown as Page;
+  const context = {
+    grantPermissions: () => Promise.resolve(),
+    route: () => Promise.resolve(),
+    routeWebSocket: () => Promise.resolve(),
+    newCDPSession: () => Promise.resolve(cdp),
+  } as unknown as BrowserContext;
+  await restrictFunctionalBrowser(context, scope);
+  const health = createFunctionalHealth(scope, () => 'media');
+  await health.attach(context, page);
+  health.identify(page, 'A1');
+  const raw = {
+    url: media,
+    method: 'POST',
+    postData: JSON.stringify({ action: 'process', requestId, runId }),
+    headers: { Authorization: 'Bearer PRIVATE_TOKEN' },
+  };
+  const route = observeMediaRoute({
+    frame: () => ({ page: () => page }),
+    url: () => raw.url,
+    method: () => raw.method,
+    postData: () => raw.postData,
+    headers: () => raw.headers,
+  } as unknown as Request);
+  if (!route) throw new Error('SYNTHETIC_MISSING_OBSERVER');
+  await route.run('FETCH', () => Promise.resolve());
+  route.headers({
+    status: () => 200,
+    headersArray: () => [],
+  } as unknown as APIResponse);
+  route.body(32, true);
+  route.close();
+  cdp.emit('Network.requestWillBeSent', { requestId: 'owned', request: raw });
+  cdp.emit('Network.responseReceived', {
+    requestId: 'owned',
+    response: { status: 200 },
+  });
+  cdp.emit('Network.loadingFailed', {
+    requestId: 'owned',
+    errorText: 'net::ERR_ABORTED',
+    canceled: true,
+  });
+  expect(health.snapshot()).toMatchObject({
+    available: true,
+    unexpectedErrors: 1,
+  });
+  const details = health.diagnostics();
+  expect(details.events[0]?.mediaContext.transport).toMatchObject({
+    collection: 'OBSERVED',
+    status: 200,
+    rootBodyBytes: 32,
+    routeClosed: true,
+  });
+  expect(JSON.stringify(details)).not.toMatch(
+    /PRIVATE_TOKEN|10000000|11000000/u,
+  );
+  await health.dispose();
+  await route.run('DISPOSE', () => Promise.resolve());
+  expect(health.snapshot().available).toBe(false);
+});
