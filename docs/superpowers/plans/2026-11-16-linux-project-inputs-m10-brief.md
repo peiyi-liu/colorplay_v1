@@ -12,7 +12,7 @@ Proof schema1 {config:{path:'supabase/config.toml',sha256},dependencies:[{path,s
 
 Root實際tomllib已核template為magic_link＋confirmation，兩值均'./supabase/templates/email-otp.html'，tracked模板只有此一檔。Root先前訊息說recovery屬誤讀，已驗正確後更正此brief，不改Source。Template content_path相對project root；db.seed.sql_paths四既有seed相對supabase dir；schema_paths=[]。authorization_url_path='/oauth/consent'是URL route、extra_search_path是DB schema搜尋路徑，不當檔案。signing_keys_path與TLS/objects/declarative路徑目前只有comments；生成Local signing key獨立列，不當Source檔案。
 
-在runtime/isolation/daemon寫入前，真git ls-files＋pure FS capture：config raw SHA、所有必要tracked path raw SHA與reference/anchor，兩template refs dedup保兩引用。既有121 migrations／37functions／四seeds仍完整精確處理。未知active *_path/*_paths或import_map/entrypoint/static_files等unsupported非空值明確拒，不假通用glob支援。不讀env外路徑、不copy ignored或整repo，不因FileName像路徑就把URL/DB schema當檔案。
+在runtime/isolation/daemon寫入前，真git ls-files＋pure FS capture：config raw SHA、所有必要tracked path raw SHA與reference/anchor，兩template refs dedup保兩引用。既有121 migrations／37functions／四seeds仍完整精確處理。未知active `*_path/*_paths`或import_map/entrypoint/static_files等unsupported非空值明確拒，不假通用glob支援。不讀env外路徑、不copy ignored或整repo，不因FileName像路徑就把URL/DB schema當檔案。
 
 缺檔／untracked／symlink/hardlink／traversal／非regular／owner不明／Source漂移fail closed。B.project從已pin closure複製exact bytes至Runtime700/600、核copied hashes並重驗Source；原config僅既有固定Local衍生改動，分清raw Source config hash與derived Runtime config hash。真start仍一次，順序/timeout/工程guards與SLO不變。
 

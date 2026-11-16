@@ -171,8 +171,13 @@ class Fixture:
         if operation[0] == 'inspect':
             if '--format' in operation:
                 return encoded({'id': 'f' * 64, 'name': 'prior-resource', 'labels': {}, 'image': 'old'})
-            return encoded(self.rows())
+            rows=self.rows()
+            return encoded([r for r in rows if r['Id']==operation[1]]) if len(operation)==2 else encoded(rows)
         if operation[0] == 'exec':
+            if '/bin/busybox' in operation:
+                if operation[-1]=='--list':return b'cat\nnc\nsh\n'
+                body=(self.runtime/'local-project/supabase/templates/email-otp.html').read_bytes()
+                return b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\n\r\n'+body
             query = options['data']
             assert query.startswith(b'begin read only;') and query.endswith(b'rollback;')
             assert b'PGPASSWORD' not in query and options['env']['PGPASSWORD'] == 'synthetic-password'
@@ -197,8 +202,11 @@ class Fixture:
                 host = {'db': '58322', 'kong': '58321', 'inbucket': '58324'}[pin['role']]
                 ports['1/tcp'] = [{'HostIp': '0.0.0.0' if self.bad_port else '127.0.0.1', 'HostPort': host}]
             result.append({'Id': self.ids()[index], 'Name': '/supabase_' + pin['role'] + '_' + C.PROJECT,
-                'State': {'Running': True, 'Pid': index + 100}, 'Config': {'Labels': {'com.supabase.cli.project': C.PROJECT}},
-                'Image': pin['configDigest'], 'NetworkSettings': {'Ports': ports}})
+                'State': {'Running': True, 'Pid': index + 100, 'Restarting': False, 'Dead': False}, 'Config': {'Labels': {'com.supabase.cli.project': C.PROJECT}},
+                'Image': pin['configDigest'], 'NetworkSettings': {'Ports': ports},
+                'Mounts': [{'Type':'bind','Source':str(self.runtime/'local-project/supabase/templates/email-otp.html'),
+                            'Destination':'/home/kong/templates/email/'+ref+'.html','RW':True}
+                           for ref in ['confirmation','magic_link']] if pin['role']=='kong' else []})
         return result
 
     def system_exists(self, path):
@@ -240,6 +248,19 @@ class BootstrapTests(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.fixture = Fixture(Path(self.temporary.name).resolve())
 
+    def test_forbidden_template_http_never_publishes_backend_ready(self):
+        f=self.fixture;original=f.run
+        def run(args,**options):
+            if '/bin/busybox' in args and 'nc' in args:
+                return b'HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n'
+            return original(args,**options)
+        f.run=run
+        result=f.execute()
+        self.assertEqual(result['result'],'FAILED')
+        self.assertEqual(result['code'],'BOOTSTRAP_PROJECT_INPUT_INVALID')
+        self.assertFalse((f.runtime/'ownership.json').exists())
+        self.assertFalse((f.runtime/'template-readback-proof.json').exists())
+
     def test_independent_approval_is_checked(self):
         f = self.fixture
         with self.assertRaises(C.BootstrapError):
@@ -264,7 +285,8 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(len(ownership['containers']), 8)
         self.assertEqual(ownership['configurationSha256'], C.digest((f.runtime / 'local-project/supabase/config.toml').read_bytes()))
         for path in f.runtime.rglob('*'):
-            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o700 if path.is_dir() else 0o600)
+            mode=0o444 if path==f.runtime/'local-project/supabase/templates/email-otp.html' else 0o600
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o700 if path.is_dir() else mode)
         starts = [(a, o) for a, o in f.commands if a[0] == f.tools['supabase']['path'] and a[1] == 'start' and '--help' not in a]
         self.assertEqual(len(starts), 1)
         self.assertEqual(starts[0][1]['timeout'], 600)

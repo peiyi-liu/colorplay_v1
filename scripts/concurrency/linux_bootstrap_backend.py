@@ -7,12 +7,13 @@ import os
 from pathlib import Path
 import re
 import secrets
+import time
 import tomllib
 import urllib.parse
 import linux_project_inputs as I
 import linux_status_contracts as D
 from linux_bootstrap_contracts import (PROJECT, ROLES, require, digest, read_file,
-                                        write_once, decode, exact, BootstrapError)
+                                        write_once, decode, exact, BootstrapError, fingerprint, directory)
 
 DOCKER = ['/usr/bin/docker', '--host', 'unix:///var/run/docker.sock']
 EXCLUDED = 'postgres-meta,studio,imgproxy,logflare,vector,supavisor'
@@ -291,3 +292,139 @@ def baseline(io, db, state, runtime):
                 digest((PROJECT + ':' + value['systemIdentifier'] + ':postgres').encode()), 'counts': expected}
     finally:
         D.record(runtime, 'database', proof)
+
+
+def template_http_body(raw,expected_bytes,expected_sha):
+    """Closed static HTTP/1.x response, never redirects/decodes/executes content."""
+    require(type(raw)is bytes and len(raw)<=4096 and type(expected_bytes)is int and
+            0<expected_bytes<=2048 and re.fullmatch('[a-f0-9]{64}',expected_sha),I.CODE)
+    header,separator,body=raw.partition(b'\r\n\r\n')
+    require(separator and len(header)+4<=2048,I.CODE)
+    lines=header.split(b'\r\n')
+    require(lines[0] in (b'HTTP/1.0 200 OK',b'HTTP/1.1 200 OK'),I.CODE)
+    fields={}
+    allowed={b'server',b'date',b'content-type',b'content-length',b'last-modified',
+             b'connection',b'etag',b'accept-ranges'}
+    for line in lines[1:]:
+        name,colon,value=line.partition(b':')
+        require(colon and re.fullmatch(b'[A-Za-z-]+',name) and
+                all(32<=c<=126 for c in value) and name.lower() in allowed and
+                name.lower() not in fields,I.CODE)
+        fields[name.lower()]=value.strip(b' ')
+    length=fields.get(b'content-length',b'')
+    require(re.fullmatch(b'[1-9][0-9]{0,8}',length) and int(length)==expected_bytes and
+            len(body)==expected_bytes and digest(body)==expected_sha,I.CODE)
+    require(fields.get(b'connection',b'close').lower()==b'close' and
+            fields.get(b'content-type',b'text/html').lower() in
+            (b'text/html',b'text/html; charset=utf-8'),I.CODE)
+    return {'status':200,'bytes':len(body),'sha256':digest(body)}
+
+
+def template_readback(io,runtime,project,inputs,inputs_sha,request,approval,kong):
+    diagnostic={'deadline':time.monotonic()+10,'admitted':False,'lastStage':'FILE_CHECK',
+                'reason':'BINDING_REJECTED','httpStatus':None,'responseBytes':None,'responseSha256':None}
+    try:return _template_readback(io,runtime,project,inputs,inputs_sha,request,approval,kong,diagnostic)
+    except BaseException:
+        try:
+            folder=Path(runtime).parent/'requests'
+            require(diagnostic['admitted'] and time.monotonic()<diagnostic['deadline'] and
+                    getattr(io,'_raw_root',None)==folder and getattr(io,'_raw_request_sha',None)==approval,I.CODE)
+            raw=read_file(folder/'bootstrap-input.json',private=True)
+            require(folder.resolve()==folder and digest(raw)==approval and decode(raw)==request,I.CODE)
+            directory(folder)
+            value={'schemaVersion':1,'kind':'LOCAL_KONG_TEMPLATE_DIAGNOSTIC','state':'UNVERIFIED',
+                   'executionAuthority':'NONE','bootstrapRequestSha256':approval,
+                   'sourceRevision':request['sourceRevision'],'job':request['job'],'instanceNonce':request['instanceNonce'],
+                   **{k:diagnostic[k] for k in ['lastStage','reason','httpStatus','responseBytes','responseSha256']}}
+            write_once(folder/'bootstrap-template-readback-diagnostic.json',value)
+        except BaseException:pass  # Never masks the operation, overwrites or retries.
+        raise
+
+
+def _template_readback(io,runtime,project,inputs,inputs_sha,request,approval,kong,diagnostic):
+    """Only the approved job's two public Kong routes; setup, no business authority."""
+    deadline=diagnostic['deadline']
+    def admit():
+        if deadline-time.monotonic()<=1:
+            diagnostic.update(lastStage='DEADLINE',reason='DEADLINE')
+            require(False,I.CODE)
+    def command(*args,**options):
+        admit()
+        reason=diagnostic['reason'];diagnostic['reason']='COMMAND_UNAVAILABLE'
+        raw=docker(io,*args,timeout=min(2,deadline-time.monotonic()),**options)
+        diagnostic['reason']=reason
+        admit()
+        require(type(raw)is bytes and len(raw)<=options['maximum'],I.CODE)
+        return raw
+    admit()
+    runtime,project=Path(runtime),Path(project)
+    require(project==runtime/'local-project' and project.resolve()==project,I.CODE)
+    admission_raw=read_file(runtime/'bootstrap-admission.json',private=True)
+    admission=decode(admission_raw)
+    require(admission=={'requestSha256':approval,'sourceRevision':request['sourceRevision'],
+            'job':request['job'],'instanceNonce':request['instanceNonce'],
+            'operatorPackageManifestSha256':request['operatorPackageManifestSha256'],
+            'projectInputsSha256':inputs_sha,'executionAuthority':'NONE'} and
+            re.fullmatch('[a-f0-9]{64}',approval) and I.proof_sha256(inputs)==inputs_sha,I.CODE)
+    diagnostic['admitted']=True
+    require(kong['role']=='kong' and re.fullmatch('[a-f0-9]{64}',kong['id']) and
+            kong['name']=='/supabase_kong_'+PROJECT and
+            re.fullmatch('sha256:[a-f0-9]{64}',kong['imageId']),I.CODE)
+    rows=[row for row in inputs['dependencies'] if I.public_template(row)]
+    require(len(rows)==1,I.CODE)
+    template=rows[0];path=project/I.PUBLIC_TEMPLATE
+    source=Path(io.source)/I.PUBLIC_TEMPLATE
+    refs=('confirmation','magic_link')
+    def files():
+        I.verify_copied_inputs(project,inputs)
+        require(digest(read_file(Path(io.source)/inputs['config']['path']))==inputs['config']['sha256'] and
+                digest(read_file(source))==template['sha256'],I.CODE)
+        return fingerprint(path.stat(follow_symlinks=False))
+    before_file=files()
+    def inspect():
+        value=decode(command('inspect',kong['id'],maximum=65536))
+        require(type(value)is list and len(value)==1 and type(value[0])is dict,I.CODE)
+        value=value[0];state=value['State'];pid=state['Pid']
+        require(value['Id']==kong['id'] and value['Name']==kong['name'] and value['Image']==kong['imageId'] and
+                value['Config']['Labels']['com.supabase.cli.project']==PROJECT and state['Running']is True and
+                state['Restarting']is False and state['Dead']is False and type(pid)is int and pid>0,I.CODE)
+        selected=[]
+        for ref in refs:
+            destination='/home/kong/templates/email/'+ref+'.html'
+            mounts=[m for m in value['Mounts'] if m.get('Destination')==destination]
+            require(len(mounts)==1 and mounts[0].get('Type')=='bind' and
+                    mounts[0].get('Source')==str(path) and mounts[0].get('RW')is True,I.CODE)
+            selected.append({'sourceSha256':digest(str(path).encode()),'destination':ref})
+        return {'idSha256':digest(kong['id'].encode()),'imageId':kong['imageId'],
+                'pid':pid,'mounts':selected}
+    diagnostic.update(lastStage='INSPECT_BEFORE',reason='BINDING_REJECTED')
+    first=inspect()
+    diagnostic.update(lastStage='APPLET',reason='APPLET_UNAVAILABLE')
+    prefix=('exec','--user','100:65533',kong['id'],'/bin/busybox')
+    applets=command(*prefix,'--list',maximum=16384).splitlines()
+    require(applets.count(b'nc')==1 and all(re.fullmatch(rb'[A-Za-z0-9_.\[\]-]{1,64}',a) for a in applets),I.CODE)
+    observed=[]
+    for ref in refs:
+        diagnostic.update(lastStage='FILE_CHECK',reason='FILE_CHANGED')
+        require(files()==before_file,I.CODE)
+        diagnostic.update(lastStage=ref.upper()+'_HTTP',reason='HTTP_REJECTED',httpStatus=None,responseBytes=None,responseSha256=None)
+        data=('GET /email/'+ref+'.html HTTP/1.0\r\nHost: 127.0.0.1:8088\r\nConnection: close\r\n\r\n').encode()
+        raw=command('exec','-i','--user','100:65533',kong['id'],'/bin/busybox',
+                    'nc','-w','2','127.0.0.1','8088',data=data,maximum=4096)
+        status=re.match(rb'HTTP/1\.[01] ([1-5][0-9]{2}) [\x20-\x7e]{0,64}\r\n',raw[:100])
+        diagnostic.update(httpStatus=int(status[1]) if status else None,responseBytes=len(raw),responseSha256=digest(raw))
+        observed.append({'template':ref,**template_http_body(raw,template['bytes'],template['sha256'])})
+    diagnostic.update(lastStage='INSPECT_AFTER',reason='BINDING_REJECTED')
+    require(inspect()==first,I.CODE)
+    diagnostic.update(lastStage='FILE_CHECK',reason='FILE_CHANGED')
+    require(files()==before_file and read_file(runtime/'bootstrap-admission.json',private=True)==admission_raw,I.CODE)
+    admit()
+    proof={'schemaVersion':1,'kind':'LOCAL_KONG_TEMPLATE_READBACK','state':'READBACK_OBSERVED',
+           'executionAuthority':'NONE','bootstrapRequestSha256':approval,'sourceRevision':request['sourceRevision'],
+           'job':request['job'],'instanceNonce':request['instanceNonce'],'projectInputsSha256':inputs_sha,
+           'kongIdSha256':first['idSha256'],'kongImageId':kong['imageId'],
+           'templateSha256':template['sha256'],'observations':observed,'clientsClosed':True}
+    diagnostic.update(lastStage='WRITE',reason='WRITER_FAILED')
+    write_once(runtime/'template-readback-proof.json',proof)
+    admit()  # A late synchronous write cannot promote BACKEND_READY.
+    return proof

@@ -68,9 +68,32 @@ class ClosureTests(unittest.TestCase):
         for p in proof['dependencies']:
             target=f.runtime/'local-project'/p['path']
             self.assertEqual(target.read_bytes(),(f.source/p['path']).read_bytes())
-            self.assertEqual(target.stat().st_mode&0o777,0o600)
+            self.assertEqual(target.stat().st_mode&0o777,0o444 if p['path']=='supabase/templates/email-otp.html' else 0o600)
             self.assertEqual(target.parent.stat().st_mode&0o777,0o700)
         self.assertEqual(len(next(p['references'] for p in proof['dependencies'] if p['path'].endswith('.html'))),2)
+
+    def test_copied_public_mode_is_exact_and_other_inputs_must_remain_private(self):
+        f=self.f;proof=self.proof();self.assertEqual(f.execute()['services'],8)
+        for name,mode in [('supabase/templates/email-otp.html',0o644),('supabase/seed.sql',0o444)]:
+            target=f.runtime/'local-project'/name;original=target.stat().st_mode&0o777
+            target.chmod(mode)
+            with self.assertRaises(C.BootstrapError):I.verify_copied_inputs(f.runtime/'local-project',proof)
+            target.chmod(original)
+        row=copy.deepcopy(next(r for r in proof['dependencies'] if r['path']==I.PUBLIC_TEMPLATE))
+        row['references'][0]['anchor']='SUPABASE_DIR'
+        with self.assertRaises(C.BootstrapError):I.public_template(row)
+        copied=f.runtime/'local-project'/I.PUBLIC_TEMPLATE
+        os.link(copied,f.parent/'extra-link')
+        with self.assertRaises(C.BootstrapError):I.verify_copied_inputs(f.runtime/'local-project',proof)
+
+    def test_public_fd_projection_rejects_path_replacement_even_with_identical_bytes(self):
+        f=self.f;row=next(r for r in self.proof()['dependencies'] if r['path']==I.PUBLIC_TEMPLATE)
+        target=f.parent/'public-copy.html';body=(f.source/I.PUBLIC_TEMPLATE).read_bytes()
+        C.write_once(target,body);fchmod=os.fchmod
+        def replace(fd,mode):
+            fchmod(fd,mode);target.unlink();target.write_bytes(body);target.chmod(0o444)
+        with patch.object(I.os,'fchmod',side_effect=replace),self.assertRaises(C.BootstrapError):
+            I.publish_template(target,row)
 
     def test_missing_untracked_symlink_hardlink_and_nonregular_inputs_are_preflight_failures(self):
         cases=['missing','untracked','symlink','hardlink','directory','config_untracked','config_symlink']
@@ -126,6 +149,7 @@ class ClosureTests(unittest.TestCase):
         def run(args,**options):
             if args[:2]==[f.tools['node']['path'],'-e']:
                 target=f.runtime/'local-project/supabase/templates/email-otp.html'
+                target.chmod(0o600)  # Simulate an owner changing the approved projection.
                 target.write_bytes(b'wrong-copied-bytes')
             return original(args,**options)
         f.run=run

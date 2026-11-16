@@ -2622,3 +2622,41 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 原14細步與private0700/0600/wx新28events，原guards/errors/IO/poll/timeout/SLO不變；failed writer不遮蔽原error，started/confirmed寫失敗/abort/late不PASS。只安全閉集metadata，不記rawmail/URL/OTP/帳密等。login optional admit限register用、default保原Page呼叫；已發inflight動作不稱可撤銷。auth-journey505行為Root依AGENTS明示唯一有理由例外，其他≤500；不是assertion/timeout放寬。
 - 原RED與fixture/lint/單一parser/static setup失敗保留；Root初stale-success-http假設被真scopedFetch synthetic503/504否證，原probe留，非Source finding；mail statusClass也含該wrapper合成回應，不冒稱上游HTTP實證。Native16原FAIL/根因UNKNOWN、6Auth/fullcold資料保持，未restore；M22只工具診斷接受，尚未真Native或註冊修復PASS。
 - Root將exact8paths gated cachedcheck0/commit/clean、remote核仍68b87006e36f2bc57b4dd94b3d30f46078b3812e再正常FF，新Source/newpush/attempt1正常six-person→15legs，不GHrerun、不重開0businessgate。任一非PASS停升級，40/60仍未驗。原7protected/handoff575959Bprefix現核符，G8停止85／US$0與US$5 cap／Hosted／Production／真寄信NONE保持。
+
+
+### 2026-11-17 — M22新Source已啟動正常Native17
+
+- Root exact8paths gated cachedcheck0/commit/clean：294b74807b03266e7a58087cda138a2ea5a3affd；核specialremote仍68b87006e36f2bc57b4dd94b3d30f46078b3812e後正常FF。新push/attempt1 run43903195092/job133424987333，正常six-person→15legs保持；Root watcher56296只監看matchingSource與加密下載，非GHrerun。
+- Source凍結，同worker待命不改；Root會先讀實際14細步與安全mail snapshot，再依因果給最小task，不盲修產品、不放寬timeout/SLO/OTP/保留。Native16原FAIL/6Auth custody不回填；40/60仍未驗，主機US$0/US$5 cap、原WIP/G8停止85／Hosted／Production／真寄信NONE保持。
+
+
+### 2026-11-17 — Native17精確otp_mail失敗與完整custody；M23已授權
+
+- run43903195092/job133424987333/source294b74807b03266e7a58087cda138a2ea5a3affd completed/failure。functional15,724.908ms/exit1/noSignal/stderr0/noResidue，前三stage PASS、registration_recovery2,426.088ms FAIL。12個新checkpoint核，前5phases confirmed、otp_mail failed：OTP_PARSE/OTP_COUNT/polls2/baseline0/newMatches1/statusClassOK/recipientExacttrue/otpCount0，尚未otp_verify；Text長度/HTML存在與原始郵件皆未capture，Native16不回填。
+- API ZIP24757158B/2392671d498c6c54f93f1366a0fd55c180020857fe3554f011ea0103c760f49e、cipher24757020B/9be162ef1babe4a099490879fb4dfb3de0782b5b490c7fcf9d36e93e3ec6a7f8、outermanifest417fb80b30a5306d9cf039a2874368e0fa7e23feab031f7c8b078b9535b11ed8/354files154342418B真age全核；inner8cc668f59f365555d93d2fe9b26dfcfa980523716fd2be820d3ec3d0acb51d04/321files、8stop全部roleproof、DB2/127tables/31roles全值一致、3卷6178regularfiles130144479B及metadata、runtime270datafiles/32publiccode可重建全核；6Auth保持、未restore。FinalRootreceipt cc7aed1b609bede0c1a720741de5afb2960b65f1ee1da1197a7bcade044bdfbf，joblog21947B/8af77369f9386b6d513789e523e5bde55508920ed8de97eb90ff2b7b9f43bf0b，15legs0。
+- Primary readonly manifest85d1e003aa1ba37ea9768114fb556846dde80355e93b8f278d9a980abb7c8f38（23records/8Source）Root全核。Auth5acfdea只寄HTML但Mailpit0fb1c79/enmime2.4.1會轉Text，故HTML-only必空Text已否證，不改parser。CLI6d4c198由Kong8088供兩template，取custom失敗無cache會default只有link；actualSource與runtime OTP6/3600排除預設8碼。Root初readonly verifier誤假設所有record用path（實際public用file），原probe留，v2對pinned294b Git核正；非Source問題。
+- Root private bool核兩references/path/mountSource/publictemplate hash全對，mountRWtrue不能稱readonly。runtime template306B/mode0600；filecensus不存uid，成功copy/census Source predicate驗owner==job，profile owner1001現核；Kong hostUID100由本job正向roleproof核。ACL/cap未capture，Native17first403/fallback仍是Source支持假說，不冒稱直接trace。公開模板私有600與不同readerUID是具體相容性風險，不能繼續盲修OTP/產品。
+- M23 proposal38a1dba2ed7a9b54c3462c95879209b0a1fc546e45a9edf7436fd9bc3472a056/manifestd02288799c21676740ae50726f34ca1306c7a30ec32f117a10d38f524a8a18bf Root核，已授sameworker exact6paths正式brief docs/superpowers/plans/2026-11-17-linux-template-readiness-m23-brief.md SHA1b9a11efcf8e26ca500ab419f6b531a36a5021ade987b1b8256c157c1d464e94。只公開template FD-safe0444、其他600/dirs700，業務前ownedKong UID100 applet核＋raw nc HTTP兩GET/contentSHA/identity/mount prepost、shared10s/command≤2s與原timeout-1 closeguard，unknown/403/default/late/writer不READY。generic run本已maximum passthrough不可改body；operator44/M3/snapshot/原正常suite/OTP/產品/caps全保持。Root核snapshot可捕原444成600複本，無需擴M3。先RED/真FS/直接probe/完整Python與checks/freeze，Root唯一review後新Source/attempt1，worker禁止Native/雲端。40/60未驗、US$0/US$5 cap、原WIP/G8停止85/Hosted/Production/真寄信NONE保持。
+
+
+### 2026-11-17 — Root私有custody verifier共用化與文件數字更正
+
+- Root新private .git/verify-cold-custody.py SHA7d1f76b7e6c3976c35dc58d683d1b2d83428936e3e6e9f3d25474b2a9cfda0a5，沿已核判斷、移除run/filecount硬碼，真Native14/16/17三archive全核，wrongSHA/wrongrun/prebusiness三負向皆拒；無Source改動、不執行restore或Native。qualification receipt e0b9d49df4e680a700081209ee3d9caaa4ae0120ed4c8a013e2aaeb33876ba8a。
+- 前Native16 handoff「metadata-only dir1」為Root文字沿用誤植；actual fd702/1f2私有receipt與本次重驗均為0，Native17亦0，只有Native14是1。修正文件敘述不改資料/驗收結論、不回填FAIL。
+
+
+### 2026-11-17 — M23失敗metadata必沿prebusiness requests保留
+
+- 同6paths內補安全UNVERIFIED template diagnostic：APPLET/固定HTTP階段/identity/file/write/deadline閉集及可確認HTTPstatus，best-effort wx600至已授權requests固定檔，原SHA/job/nonce/path綁定；不記URL/body/Env/rawerror、不mask原錯。runtime-only檔會被原prebusiness省略，故沿既有requests有界列舉，不改suite/export/M3或新增HTTP。success仍READBACK_OBSERVED/NONE，late writer/unknown不READY。補403/failed-writer/收錄控制；非產品或OTP更動。
+
+
+### 2026-11-17 — M23唯一Root審查接受；Root另補既存文件排版
+
+- M23 packet e90139e129bed1aa662daf9c6e81bedfa8d2bfd955a318f4eebfce72dd6c0cb3/49records/6Source全SHA核，1792unowned non-docs actualGit/operator44核，Worker199Python與lint/type/import/static/diff0；Root42affected tests＋42獨立HTTP/body/whitelist控制PASS，Standards／Spec／Security各0，Rootreceipt 22f282dbf375471f3552a2b553ddc825c4c54e7e891f7426dc1ab6a7c7e3e531。input初Root環境少DEVELOPER_DIR exit69，既定CommandLineTools後11tests PASS，非Source issue。
+- 公開literal template複本0444，其他600/dirs700，FD安全publish；原RW bind仍RW，非immutable。業務前精確Kong UID100 nc兩固定GET/shared10s/單command≤2s/原closeguard，bytes/SHA與前後identity/file核，不改產品／OTP／原44operator／snapshot／caps。success READBACK_OBSERVED/NONE，fail requests wx600閉集metadata best-effort不遮蔽原錯。真Linux applet/HTTP/註冊仍NOT_RUN，Native17 OTP_COUNT0與custody／推論界線保留。
+- Worker全域format初exit1只四份base既存M4 review/addendum、M13/M10 brief；Root另S級排版，三份只空白，M10把既有literal路徑模式加code標記避免Prettier誤解析，逐檔去空白/backtick相同，未改original既存文件。準備exact13paths（6Source＋brief/report/handoff3＋格式4）gated commit/clean後正常newSource/newpush/attempt1，完整正常six-person→15legs，非PASS停，不GH rerun/0business gate。原7protected與handoff575959B prefix現核；G8停止85、US$0/US$5 cap、40/60未驗、Hosted/Production/真寄信NONE保持。
+
+
+### 2026-11-17 — M23提交前最後檢查
+
+- Root S級四份排版後全域pnpm format:check exit0（All matched files），git diff --check exit0；6Source SHA仍等frozen packet，預定exact13paths，Root唯一審查／42tests＋42controls結果不變。既存format失敗與M10 code-markup修正如上一段保留，不回填Worker初結果。

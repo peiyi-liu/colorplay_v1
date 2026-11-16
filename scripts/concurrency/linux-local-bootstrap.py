@@ -387,6 +387,8 @@ def bootstrap(request_path, approval, ports=None):
         state = B.start(io, runtime, project_dir, tools, pins, secret, key)
         stage = 'readback'
         containers = B.containers(io, pins, isolation['backend'], runtime)
+        B.template_readback(io, runtime, project_dir, inputs, inputs_sha, request, approval,
+                            next(c for c in containers if c['role'] == 'kong'))
         jwks_proof = {'state': 'UNKNOWN', 'count': None, 'freshKey': None, 'privateAbsent': None}
         try:
             public = io.jwks(state['ANON_KEY'])

@@ -27,7 +27,6 @@ Root獨立 `python3 -B -W error::ResourceWarning -m unittest discover -s tests/c
 
 Root operator package仍是獨立未提交草稿／外部依賴，並非本task4檔review或Native通過。真Linux/Sudo/systemd/cgroup/key/start/DB/60人全NOT_RUN；需要整合Root profile/kernel校準、build/Edge bytebind、functional/15legs、完整資料census/M3、下載解密留存及workflow。一切未知拒絕，不把工具綠當網站容量PASS。0雲端資源／費用／Hosted寫入寄信／Gmail內容讀／push／PR／merge／deploy；原Mac/G8/85containers與原產品WIP保持。
 
-
 ## Root暫存後衛生檢查更正
 
 Root cached diff --check實際在contracts.py檔尾多空行回exit2；Root執行cell未以該exit gate後續commit，故先產生本機commit fb333449e440442a9027cf06287f7e3fa72d1f54。此疏漏保留記錄，不回填成綠。Root以後續獨立S級衛生提交僅移除1byte多餘newline，AST完全相同、不改行為；本檔171行，最終hash c8e374892b3ba710e707f2c18f751740f3c5f82e228b568e90d86fb4da9deffa。上列worker原hash/17+16測試/原logs仍保留；新stage/check必須綠才提交，沒有重跑已綠行為測試或增加第二review輪，未push或Native執行。

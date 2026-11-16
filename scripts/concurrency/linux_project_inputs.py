@@ -1,15 +1,48 @@
 """Read-only Source config closure; fixed anchors, no env/globs/external inputs."""
 import json
+import os
 from pathlib import Path, PurePosixPath
 import re
+import stat
 import tomllib
-from linux_bootstrap_contracts import require, read_file, digest, write_once, BootstrapError
+from linux_bootstrap_contracts import require, read_file, digest, write_once, BootstrapError, fingerprint
 
 CODE='BOOTSTRAP_PROJECT_INPUT_INVALID'
 SEEDS=['seed.sql','seeds/content-questions.sql','seeds/content-review-cards.sql','seeds/content-question-hints.sql']
 TEMPLATES={'auth.email.template.magic_link.content_path','auth.email.template.confirmation.content_path'}
 NON_FILES={'api.extra_search_path':'DB_SCHEMA_SEARCH_PATH','auth.oauth_server.authorization_url_path':'URL_ROUTE'}
 GENERATED=[{'key':'auth.signing_keys_path','anchor':'SUPABASE_DIR','value':'./signing-keys.json','path':'supabase/signing-keys.json'}]
+PUBLIC_TEMPLATE='supabase/templates/email-otp.html'
+
+
+def public_template(row):
+    if row['path']!=PUBLIC_TEMPLATE:return False
+    require(row['references']==[{'key':key,'anchor':'PROJECT_ROOT','value':'./'+PUBLIC_TEMPLATE}
+                                for key in sorted(TEMPLATES)],CODE)
+    return True
+
+
+def publish_template(path,row):
+    """Only the pinned public HTML gets readable mode; no directory/Source changes."""
+    require(public_template(row),CODE)
+    fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+    try:
+        before=os.fstat(fd)
+        require(stat.S_ISREG(before.st_mode) and before.st_uid==os.getuid() and
+                before.st_nlink==1 and stat.S_IMODE(before.st_mode)==0o600 and
+                before.st_size==row['bytes']<=16*1024**2,CODE)
+        with os.fdopen(fd,'rb',closefd=False) as stream:raw=stream.read(row['bytes']+1)
+        require(len(raw)==row['bytes'] and digest(raw)==row['sha256'] and
+                fingerprint(os.fstat(fd))==fingerprint(before) and
+                fingerprint(path.stat(follow_symlinks=False))==fingerprint(before),CODE)
+        os.fchmod(fd,0o444)
+        os.fsync(fd)
+        after=os.fstat(fd)
+        require((before.st_dev,before.st_ino,before.st_uid,before.st_nlink,before.st_size)==
+                (after.st_dev,after.st_ino,after.st_uid,after.st_nlink,after.st_size) and
+                stat.S_IMODE(after.st_mode)==0o444 and
+                fingerprint(path.stat(follow_symlinks=False))==fingerprint(after),CODE)
+    finally:os.close(fd)
 
 
 def proof_sha256(proof):
@@ -85,7 +118,11 @@ def verify_project_inputs(source,tracked,proof,expected):
 
 def verify_copied_inputs(project,proof):
     for row in proof['dependencies']:
-        raw=read_file(Path(project)/row['path'],16*1024**2,private=True)
+        path=Path(project)/row['path'];public=public_template(row)
+        before=path.stat(follow_symlinks=False)
+        raw=read_file(path,16*1024**2,private=not public)
+        require(stat.S_IMODE(before.st_mode)==(0o444 if public else 0o600) and
+                fingerprint(path.stat(follow_symlinks=False))==fingerprint(before),CODE)
         require(digest(raw)==row['sha256'] and len(raw)==row['bytes'],CODE)
 
 
@@ -99,6 +136,7 @@ def copy_project_inputs(source,project,tracked,proof,expected):
         for component in target.relative_to(project).parts[:-1]:
             parent=parent/component;parent.mkdir(mode=0o700,exist_ok=True)
         write_once(target,body)
-        require(digest(read_file(target,16*1024**2,private=True))==row['sha256'],CODE)
+        if public_template(row):publish_template(target,row)
+        require(digest(read_file(target,16*1024**2,private=not public_template(row)))==row['sha256'],CODE)
     verify_project_inputs(source,tracked,proof,expected)
     verify_copied_inputs(project,proof)

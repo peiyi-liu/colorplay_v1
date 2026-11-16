@@ -8,7 +8,6 @@ Root核Docker官方dockerd reference後確認：正確daemon.json key為`cgroup-
 
 Root package另自行format與Node globals顯式import，worker可讀interfaces但不可改；最終package manifest hash另透過獨立批准request傳入。Native/cgroup/profile/60人仍NOT_RUN；Mac零sudo/Docker/服務，沒有workflow/雲端/Hosted/寄信。
 
-
 ## 首次空job的上游start失敗限制（Root核准，無Native執行）
 
 官方CLI2.109.1 start/start.go:68–75會在start失敗呼叫DockerRemoveAll；utils/docker.go:86–137會stop/prune本project容器與network，NoBackupVolume為true時也prune named volumes。Root初看global default false而推論卷可保留，經worker補查db/start/start.go:158–160確認空job VolumeInspect notfound會將其設true，因此該推論撤回。

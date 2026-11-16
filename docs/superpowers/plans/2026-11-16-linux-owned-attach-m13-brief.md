@@ -38,11 +38,9 @@ Root/observer/client私有paths固定Nonce+受限hash名，sun_path長度要實�
 
 費用US$0、原WIP/G8/85／Production/Hosted/mail保持；source task通過只允許下一個新Local run，不等於kernel controls或40/60容量PASS。
 
-
 ## 有界test-only addendum（同task，實作期Root核准）
 
 新增第8個owned path：tests/contracts/test_linux_kernel_diagnostics.py，僅test_parent_stage_preserves_only_strict_kernel_outcome_and_rejects_extras更新外部authority port fixture並提供合法calibrate argv。舊fixture只給synthetic argv且module fake只有bounded，已不能通過新增的strict Root authority；此為既有公開外部port適配，不放寬authority／不移除safe-kernel、StageRejected、privacy全部原斷言。其他cases及calibrate source不改。Manifest總44及原其他40raw entries要求不變。Root仍唯一一輪review，最終packet列8paths。
-
 
 ## 同輪 P1 修正決策（Root 核准，2026-11-16）
 
@@ -59,7 +57,6 @@ P1 確認：在 final deadline 仍不知 privileged writer 是否退出時，有
 必做同輪控制：真普通FS/SCM_RIGHTS/Python gate→Node成功，Node前 parent/child FD inode census零；Popen失敗、extra/truncatedFD、partial send、bad binding、cancel/timeout/ACKlost/lateACK/Root closeUNKNOWN不exec Node且本地FD歸零，unknown清理無numeric writer。Root原 RED 保留作舊協定反例，新控制針對「late numeric writer 已由程式結構移除」。Root服務器不可有數值PID mutation，gate唯一write固定self0，均加外部行為／靜態精確約束。全Source <=500行，原manifest44/其他40 unchanged、52protected，freeze v2packet後僅同輪 delta核對，不開第二 reviewer。若上述固定順序無法實作，先回報具體接口，不自行換另一架構。
 
 官方依據（只證設計契約）：[Linux v6.8 cgroup.c](https://github.com/torvalds/linux/blob/v6.8/kernel/cgroup/cgroup.c#L2710-L2760) pid0=current並取task引用；[file-open credentials](https://github.com/torvalds/linux/blob/v6.8/kernel/cgroup/cgroup.c#L4841-L4856)；[pidfd_getfd](https://github.com/torvalds/linux/blob/v6.8/kernel/pid.c#L628-L664)；[ptrace creds/dumpable](https://github.com/torvalds/linux/blob/v6.8/kernel/ptrace.c#L295-L324)。Native仍必跑原6 controls與cap繼承/Root creds實證，不以Mac ordinary FS成功代替Linux容量。
-
 
 ## Root S 級 launcher 例外（同輪 Source 核對發現）
 
