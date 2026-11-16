@@ -145,15 +145,22 @@ def unique_object(pairs):
 
 def parse_manifest(raw):
     manifest = json.loads(raw, object_pairs_hook=unique_object)
-    require(type(manifest) is dict and set(manifest) == {
+    require(type(manifest) is dict, "EXPORT_MANIFEST_INVALID")
+    version = manifest.get("schemaVersion")
+    require(type(version) is int and version in (1, 2), "EXPORT_MANIFEST_INVALID")
+    keys = {
         "schemaVersion", "environment", "sourceRevision", "executionProfileSha256",
-        "jobSha256", "recipient", "files"}, "EXPORT_MANIFEST_INVALID")
-    require(type(manifest["schemaVersion"]) is int and manifest["schemaVersion"] == 1
-            and manifest["environment"] == "local", "EXPORT_MANIFEST_INVALID")
+        "jobSha256", "recipient", "files"}
+    if version == 2:
+        keys |= {"purpose", "bootstrapRequestSha256"}
+    require(set(manifest) == keys and manifest["environment"] == "local", "EXPORT_MANIFEST_INVALID")
+    if version == 2:
+        require(manifest["purpose"] == "PREBUSINESS_DIAGNOSTIC" and
+                manifest["executionProfileSha256"] is None, "EXPORT_MANIFEST_INVALID")
     require(isinstance(manifest["sourceRevision"], str) and
             re.fullmatch(r"[a-f0-9]{40}", manifest["sourceRevision"]),
             "EXPORT_MANIFEST_INVALID")
-    for name in ("executionProfileSha256", "jobSha256"):
+    for name in (("executionProfileSha256", "jobSha256") if version == 1 else ("bootstrapRequestSha256", "jobSha256")):
         require(isinstance(manifest[name], str) and HEX64.fullmatch(manifest[name]),
                 "EXPORT_MANIFEST_INVALID")
     require(isinstance(manifest["recipient"], str) and
@@ -304,7 +311,7 @@ def export_evidence(source_root, manifest_path, approval_sha256, output_path, *,
                     adapter=None, clock=time.monotonic, cancelled=lambda: False):
     started = clock()
     deadline = started + DEADLINE_SECONDS
-    fds, child, pump, metadata = [], None, None, None
+    fds, child, pump, metadata, manifest = [], None, None, None, None
     code, closed, cleanup = "EXPORT_FAILED", True, True
 
     def check():
@@ -355,6 +362,9 @@ def export_evidence(source_root, manifest_path, approval_sha256, output_path, *,
                     "approvedManifestSha256": approval_sha256,
                     "cipherSha256": cipher_hash, "cipherBytes": cipher_bytes,
                     "fileCount": len(manifest["files"]), "plaintextBytes": plain.count}
+        if manifest["schemaVersion"] == 2:
+            metadata.update(purpose="PREBUSINESS_DIAGNOSTIC", executionAuthority="NONE",
+                            bootstrapRequestSha256=manifest["bootstrapRequestSha256"])
     except ExportFailure as error:
         code = error.code
     except KeyboardInterrupt:
@@ -401,11 +411,11 @@ def export_evidence(source_root, manifest_path, approval_sha256, output_path, *,
         except Exception:
             metadata, code = None, "EXPORT_IO_FAILED"
     if metadata is not None and closed and cleanup:
-        return {"result": "CIPHER_ARCHIVE_CREATED", **metadata,
+        return {"result": "CIPHER_CREATED" if manifest["schemaVersion"] == 2 else "CIPHER_ARCHIVE_CREATED", **metadata,
                 "ownedProcessClosed": True, "retention": "UNVERIFIED"}
     return {"result": "UNVERIFIED", "code": code if metadata is None else
             "EXPORT_CLEANUP_UNKNOWN", "ownedProcessClosed": closed,
-            "retention": "UNVERIFIED"}
+            "retention": "UNVERIFIED", **({"executionAuthority": "NONE"} if manifest and manifest["schemaVersion"] == 2 else {})}
 
 
 class SafeParser(argparse.ArgumentParser):
@@ -432,7 +442,13 @@ def main(args=None):
         for sig, handler in previous.items():
             signal.signal(sig, handler)
     print(json.dumps(result, separators=(",", ":")))
-    return 0 if result["result"] == "CIPHER_ARCHIVE_CREATED" else 1
+    diagnostic_success = (result.get("result") == "CIPHER_CREATED" and
+        result.get("purpose") == "PREBUSINESS_DIAGNOSTIC" and
+        result.get("executionProfileSha256", False) is None and result.get("executionAuthority") == "NONE" and
+        result.get("ownedProcessClosed") is True and result.get("retention") == "UNVERIFIED" and
+        all(isinstance(result.get(key), str) and HEX64.fullmatch(result[key])
+            for key in ("bootstrapRequestSha256", "jobSha256")))
+    return 0 if result["result"] == "CIPHER_ARCHIVE_CREATED" or diagnostic_success else 1
 
 
 if __name__ == "__main__":

@@ -30,6 +30,7 @@ def main():
     os.umask(0o077)
     started = time.monotonic()
     phase, snapshot_plan, snapshot_approval = 'toolchain', None, None
+    path, approved = None, None
     summary = {'sourceRevision': revision, 'functional': 'NOT_RUN', 'passedLegs': 0, 'plannedLegs': 15, 'remainingLegs': 'NOT_RUN', 'capacityVerdict': 'NOT_VERIFIED', 'retention': 'UNVERIFIED', 'hostedAuthority': 'NONE', 'productionOperations': 0, 'automaticRetry': False}
     success = False
     encryption_attempted = False
@@ -130,6 +131,16 @@ def main():
         else:
             summary['snapshot'] = 'NOT_ADMITTED_NO_BUSINESS_FIXTURES'
             summary['prebusinessEvidenceRetention'] = 'UNVERIFIED_RUNNER_EPHEMERAL'
+            if path is not None and approved is not None and not encryption_attempted:
+                try:
+                    encryption_attempted = True
+                    diagnostic = S.export_prebusiness_diagnostic(revision, path, approved, summary)
+                    summary['prebusinessDiagnostic'] = diagnostic
+                    summary['prebusinessEvidenceRetention'] = 'ENCRYPTED_DIAGNOSTIC_ONLY_UNVERIFIED'
+                except Exception as diagnostic_error:
+                    summary['prebusinessDiagnostic'] = 'UNVERIFIED'
+                    reason = str(diagnostic_error)
+                    summary['prebusinessDiagnosticReason'] = reason if re.fullmatch('[A-Z_]{3,100}', reason) else 'PREBUSINESS_IO_UNAVAILABLE'
         print(json.dumps({'result': 'LOCAL_SUITE_AWAITING_ROOT_REVIEW' if success else 'LOCAL_SUITE_STOPPED', **summary}), flush=True)
     return 0 if success else 1
 

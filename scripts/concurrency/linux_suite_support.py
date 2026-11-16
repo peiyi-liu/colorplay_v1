@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import re
 import stat
+import sys
 import urllib.parse
 
 SOURCE = Path(__file__).resolve().parents[2]
@@ -69,7 +70,7 @@ def run(argv, timeout=60, environment=None):
 BOOTSTRAP_CODES = {'BOOTSTRAP_' + name for name in (
     'ADMISSION_INVALID AMBIENT_TARGET_REJECTED ARGUMENTS_INVALID BASELINE_INVALID CGROUP_EXISTS '
     'CGROUP_IDENTITY_INVALID CGROUP_KILL_UNAVAILABLE COMMAND_FAILED COMMAND_TIMEOUT CONFIG_UNSUPPORTED '
-    'DOCKER_UNSUPPORTED FILE_CHANGED FILE_INVALID GENERATOR_NOT_EMPTY HARDWARE_UNSUPPORTED JOB_MISMATCH '
+    'DIAGNOSTIC_SCOPE_INVALID DOCKER_UNSUPPORTED FILE_CHANGED FILE_INVALID GENERATOR_NOT_EMPTY HARDWARE_UNSUPPORTED JOB_MISMATCH '
     'JWKS_INVALID LINUX_REQUIRED OPERATION_FAILED OUTPUT_LIMIT PACKAGE_INVALID PATH_INVALID REDIRECT_REJECTED '
     'RESOURCES_CHANGED RESOURCES_EXIST RUNTIME_EXISTS SERVICE_COUNT_INVALID SOURCE_CHANGED SOURCE_NOT_FROZEN '
     'STATUS_INVALID TOKEN_SIGNATURE_INVALID TOOLCHAIN_INVALID').split()}
@@ -307,3 +308,83 @@ def export_snapshot(snapshot, revision, profile_sha, job_sha, completeness='COMP
     require(value.get('retention') == 'UNVERIFIED' and value.get('ownedProcessClosed') is True)
     write(output / 'export-complete.json', {'result': 'CIPHER_ARCHIVE_CREATED', 'captureCompleteness': completeness, 'cipherSha256': value['cipherSha256'], 'cipherBytes': value['cipherBytes'], 'retention': 'UNVERIFIED'})
     return value
+
+
+def export_prebusiness_diagnostic(revision, request_path, request_sha, summary):
+    forbidden = ['execution-profile.json','execution-context.json','reviewed-candidate.json','functional-private','capacity-journals']
+    require(sys.platform == 'linux' and summary.get('functional') == 'NOT_RUN' and
+            type(summary.get('passedLegs')) is int and summary['passedLegs'] == 0 and
+            summary.get('capacityVerdict') == 'NOT_VERIFIED', 'PREBUSINESS_NOT_ADMITTED')
+    require(request_path == PARENT / 'requests/bootstrap-input.json' and
+            not any(os.path.lexists(RUNTIME / name) for name in forbidden),
+            'PREBUSINESS_NOT_ADMITTED')
+    raw = private(request_path)
+    request = module('linux-local-bootstrap').C.parse_request(raw, request_sha, os.environ)
+    require(request['sourceRevision'] == revision == os.environ.get('GITHUB_SHA'), 'PREBUSINESS_SOURCE_CHANGED')
+    job = {'repository':request['repository'], **request['job']}
+    job_sha = digest(canonical(job))
+    source = PARENT / 'requests'
+    info = source.lstat()
+    require(source.resolve() == source and info.st_uid == os.getuid() and stat.S_IMODE(info.st_mode) == 0o700)
+    target = PARENT / 'prebusiness-diagnostic'
+    require(not os.path.lexists(target) and not os.path.lexists(PARENT / 'exports'), 'PREBUSINESS_OUTPUT_EXISTS')
+    target.mkdir(mode=0o700)
+    copied = target / 'requests';copied.mkdir(mode=0o700)
+    names = sorted(source.iterdir())
+    require(len(names) <= 20000)
+    for path in names:
+        before = file_record(path, source)
+        body = private(path)
+        require(digest(body) == before['sha256'] and len(body) == before['bytes'])
+        write(copied / path.name, body)
+        require(file_record(path, source) == before, 'PREBUSINESS_INPUT_CHANGED')
+    require(sorted(source.iterdir()) == names, 'PREBUSINESS_INPUT_CHANGED')
+    raw_status = 'UNKNOWN'
+    metadata_path = copied / 'bootstrap-command-raw.json'
+    if metadata_path.exists():
+        try:
+            metadata = load(metadata_path)
+            require(set(metadata) == {'schemaVersion','bootstrapRequestSha256','operation','exitCode','complete',
+                'status','stdoutBytes','stdoutSha256','stderrBytes','stderrSha256'})
+            require(metadata['schemaVersion'] == 1 and metadata['bootstrapRequestSha256'] == request_sha and
+                    metadata['operation'] in COMMAND_OPERATIONS and type(metadata['exitCode']) is int and
+                    metadata['exitCode'] != 0 and metadata['complete'] is True and metadata['status'] == 'SAVED')
+            for name in ['stdout','stderr']:
+                record = file_record(copied / ('bootstrap-command-' + name + '.bin'), copied)
+                require(record['bytes'] == metadata[name+'Bytes'] and record['sha256'] == metadata[name+'Sha256'])
+            require(metadata['stdoutBytes'] + metadata['stderrBytes'] <= 2097152)
+            raw_status = 'SAVED'
+        except Exception:
+            pass  # Preserve original private evidence; never invent missing byte counts.
+    write(target / 'diagnostic-scope.json', {'schemaVersion':1,'purpose':'PREBUSINESS_DIAGNOSTIC',
+        'captureCompleteness':'PREBUSINESS_DIAGNOSTIC_ONLY','sourceRevision':revision,'executionProfileSha256':None,
+        'bootstrapRequestSha256':request_sha,'jobSha256':job_sha,'rawCapture':raw_status,
+        'retention':'UNVERIFIED','executionAuthority':'NONE'})
+    recipient = json.loads((SOURCE / 'scripts/concurrency/local-export-recipient.json').read_bytes())
+    require(recipient == {'schemaVersion':1,'recipient':recipient.get('recipient'),'privateIdentityUploaded':False})
+    manifest = {'schemaVersion':2,'purpose':'PREBUSINESS_DIAGNOSTIC','environment':'local',
+        'sourceRevision':revision,'executionProfileSha256':None,'bootstrapRequestSha256':request_sha,
+        'jobSha256':job_sha,'recipient':recipient['recipient'],
+        'files':[file_record(path,target) for path in sorted(target.rglob('*')) if path.is_file()]}
+    manifest_path = source / 'prebusiness-export-manifest.json'
+    approved = write(manifest_path, manifest)
+    output = PARENT / 'exports';output.mkdir(mode=0o700)
+    result = stage('encrypt-prebusiness-diagnostic', ['/usr/bin/python3','-B',str(SOURCE / 'scripts/concurrency/export-local-evidence.py'),
+        '--source-root',str(target),'--manifest',str(manifest_path),'--approve',approved,'--output',str(output / 'evidence.age')],
+        'CIPHER_CREATED', timeout=140)
+    require(result.get('purpose') == 'PREBUSINESS_DIAGNOSTIC' and result.get('executionProfileSha256',False) is None and
+            result.get('executionAuthority') == 'NONE' and result.get('retention') == 'UNVERIFIED' and
+            result.get('ownedProcessClosed') is True and result.get('sourceRevision') == revision and
+            result.get('bootstrapRequestSha256') == request_sha and result.get('jobSha256') == job_sha and
+            result.get('approvedManifestSha256') == approved, 'PREBUSINESS_EXPORT_UNVERIFIED')
+    cipher = file_record(output / 'evidence.age', output)
+    require(cipher['sha256'] == result.get('cipherSha256') and cipher['bytes'] == result.get('cipherBytes') and
+            cipher['bytes'] <= 100*1024**2 and private(request_path) == raw and
+            not any(os.path.lexists(RUNTIME / name) for name in forbidden) and
+            summary.get('functional') == 'NOT_RUN' and summary.get('passedLegs') == 0, 'PREBUSINESS_EXPORT_UNVERIFIED')
+    marker = {'result':'CIPHER_CREATED','purpose':'PREBUSINESS_DIAGNOSTIC',
+        'captureCompleteness':'PREBUSINESS_DIAGNOSTIC_ONLY','executionProfileSha256':None,
+        'bootstrapRequestSha256':request_sha,'jobSha256':job_sha,'rawCapture':raw_status,
+        'cipherSha256':cipher['sha256'],'cipherBytes':cipher['bytes'],'retention':'UNVERIFIED','executionAuthority':'NONE'}
+    write(output / 'export-complete.json', marker)
+    return marker

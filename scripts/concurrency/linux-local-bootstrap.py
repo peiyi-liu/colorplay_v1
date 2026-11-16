@@ -151,6 +151,34 @@ class NativeIO:
     def __init__(self):
         self.source, self.environment, self.platform = SOURCE, dict(os.environ), sys.platform
         self.command_diagnostic = None
+        self._raw_root, self._raw_attempted, self._raw_request_sha = None, False, None
+
+    def _authorize_diagnostics(self, request_path, approved):
+        if sys.platform != 'linux':return
+        folder = self.source.parent / 'live-recovery-runtime/requests'
+        C.require(Path(request_path) == folder / 'bootstrap-input.json' and
+                  C.digest(C.read_file(Path(request_path), private=True)) == approved,
+                  'BOOTSTRAP_DIAGNOSTIC_SCOPE_INVALID')
+        C.directory(folder)
+        self._raw_root, self._raw_request_sha = folder, approved
+
+    def _save_failed_raw(self, code, out, error):
+        if self._raw_root is None or self._raw_attempted:return
+        self._raw_attempted = True
+        complete = code is not None and isinstance(out,bytes) and isinstance(error,bytes)
+        value = {'schemaVersion':1,'bootstrapRequestSha256':self._raw_request_sha,
+            'operation':self.command_diagnostic['operation'],'exitCode':code,'complete':False,
+            'status':'UNKNOWN','stdoutBytes':None,'stdoutSha256':None,'stderrBytes':None,'stderrSha256':None}
+        try:
+            if complete:
+                C.require(len(out) + len(error) <= 2097152, 'BOOTSTRAP_OUTPUT_LIMIT')
+                C.write_once(self._raw_root / 'bootstrap-command-stdout.bin', out)
+                C.write_once(self._raw_root / 'bootstrap-command-stderr.bin', error)
+                value.update(complete=True,status='SAVED',stdoutBytes=len(out),stdoutSha256=C.digest(out),
+                             stderrBytes=len(error),stderrSha256=C.digest(error))
+            C.write_once(self._raw_root / 'bootstrap-command-raw.json', value)
+        except Exception:
+            pass  # Original failure and partial private bytes remain; never overwrite/retry.
 
     def run(self, args, **options):
         operation = command_operation(args)
@@ -161,10 +189,12 @@ class NativeIO:
         except Exception:
             self.command_diagnostic = {'operation':operation,'exitCode':None,'stderrBytes':None,
                 'stderrSha256':None,'classification':'UNKNOWN'}
+            self._save_failed_raw(None, None, None)
             raise
         if code != 0:
             self.command_diagnostic = {'operation':operation,'exitCode':code,'stderrBytes':len(error),
                 'stderrSha256':C.digest(error),'classification':stderr_classification(error)}
+            self._save_failed_raw(code, raw, error)
         C.require(code == 0, 'BOOTSTRAP_COMMAND_FAILED')
         return raw
 
@@ -259,6 +289,7 @@ def bootstrap(request_path, approval, ports=None):
         facts = io.hardware(package)
         C.hardware(facts)
         C.require(not os.path.lexists(runtime), 'BOOTSTRAP_RUNTIME_EXISTS')
+        if isinstance(io, NativeIO):io._authorize_diagnostics(request_path, approval)
         before = B.inventory(io)
         C.require(not before['containers'] and not before['volumes'], 'BOOTSTRAP_RESOURCES_EXIST')
         info = C.decode(B.docker(io, 'info', '--format', '{"driver":{{json .CgroupDriver}},"version":{{json .CgroupVersion}}}'))

@@ -2245,3 +2245,17 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - Worker4source/16logs/8protected hash核對，packetac8c3bcd9bd8ff4788de642909194255d487172f4bb61f7b6bc1c6623f53c392；Root唯一review Standards0/Spec0/toolblocker0，獨立44 tests（9M7+1bounded+17M4+17M5）全綠。Rootsummary528e1e0836cb5071e418c6783a6d6e66bfc894d9cdcef09609bcbc1570cde157；report docs/reviews/2026-11-16-linux-bootstrap-diagnostics-m7-review.md。
 - optional stderr capture/default不變、Native固定分類/數字hash/真hardware、父層strict安全outcome可見；非0仍拒，私有raw不公開。首次run原因仍UNKNOWN，這不是初始化修復或容量PASS。Root下一步精確stage/commit與test branch head lease核對後才一個新Local job，不GH rerun；0費用/Hosted/Production，G8/85與原WIP保護。
+
+
+### 2026-11-16 — 第二次新Source Local診斷已定位到CLI start，仍缺完整錯誤；M8加密留存
+
+- M7精確7paths commit a028f41b5df5c6505f27e1b0b8f8e50a92cc4558/check0/clean；新branch head核為e3a5後正常快轉，無force、無staging/main/PR/deploy。run43792045106/job133052458798來源exacta028f，toolchain成功，bootstrap76.12s後停、總125.032s。M7safeOutcome真可見：BOOTSTRAP_COMMAND_FAILED/start/SUPABASE_START/exit1/stderr1069/af00d2721603be22738f0d91b96a0b1153732cb280665a8872b9046eedcdf70f/UNKNOWN，上游自刪可能flags true、實際survivors未知。原joblog private SHA23e53cdd4205013a54cfc703260ca92383be09eeadff79a1a3598e389e09d7bb。
+- 真hardware4CPU/4affinity/MemTotal16760348672/freeDisk88743981056/Ubuntu24.04/cgroup2/pidfd/PSS/PSI全通；不是機器低於既定profile證據。沒有business actor/functional/15容量legs，不能宣稱產品FAIL或PASS。原始CLI stderr未留存，原因UNKNOWN；不以HOME等假說修復，不再只憑分類猜。費用US$0，無DO/Hosted/Production/Gmail操作。
+- 同worker M8限M3 strict schema2 PREBUSINESS_DIAGNOSTIC/null executionProfile＋獨立bootstrap request/job rawSHA、M4真admission後first bounded raw stdout/stderr wx600、Root無profile/無business時一次cipher匯出；原v1/fullSnapshot與caps/default不變。既有workflow只成功cipher1day，原失敗仍exit1/retentionUNVERIFIED，不假profile、不做完整DB留存聲稱。Root唯一review、新Source接受後才一個新診斷job；未GH rerun/auto retry，原WIP/G8/85保護不變。
+
+
+### 2026-11-16 — M8唯一review接受加密診斷，下一個新Source job前
+
+- 核5source/18logs/10protected，packet835da6680d471033bb9dfcef3d8b5b66eed5dc16b8546172bb013d720b44e192；Root唯一review新Standards0/Spec0/toolblocker0，source summarycab335e640d5f35c65e5d467cf958adef202d63c40b9ee7e3620280af49858b2。Root獨立36tests＋3真Mac age/full ZIP-tar census/source-job-request綁定controls綠（9d4c45bc13fae229110e27270507ff2f9c99e833e720a8ac211fdf12820cb008）。
+- 原第一76batch Mac killpg PermissionError保留/未定位；bounded AST與HEAD相同，single0.304s與一次第二76batch3.504s綠，未修cleanup/改skip/覆寫原FAIL。新v2 diagnostic nullProfile/NONE，不當容量或完整留存PASS；原v1 caps與收據不變。
+- Root將精確8paths commit並只快轉test branch，啟動一個新Local診斷job保存CLI完整raw（只cipher1day）；下載本機解密後才定位，原兩run不GH rerun。此刻仍初始化原因UNKNOWN/functional與15容量NOT_RUN/費用US$0，G8/85/原WIP/Hosted/Production不變。
