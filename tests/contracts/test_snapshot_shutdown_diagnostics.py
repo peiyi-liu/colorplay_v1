@@ -146,4 +146,66 @@ class ShutdownTests(unittest.TestCase):
             for pid1 in [True,0,-1,2**31]:
                 with self.subTest(pid1=pid1),self.assertRaises(C.SnapshotError):NativeIO.safe_topology(good,pid1)
 
+    def test_verified_edge_sigterm_exit15_can_complete_without_relaxing_other_roles(self):
+        from test_local_edge_shutdown import configured_fixture, Kernel, receipt
+        import local_edge_shutdown as E
+        with tempfile.TemporaryDirectory() as folder:
+            f,raw,ctx=configured_fixture(Path(folder).resolve());original=f.stop
+            def stopped(row):
+                if row['role']=='edge_runtime':
+                    f.edge_shutdown_receipt=receipt(raw,ctx,Kernel(f.plan,f.context))
+                    f.edge_bindings=E.bindings(raw,E.digest(raw),ctx)
+                original(row)
+                if row['role']=='edge_runtime':next(r for r in f.backend_rows if r['Id']==row['id'])['State'].update(ExitCode=15,Dead=False)
+            f.stop=stopped;f.stop_diagnostics=lambda row:{'state':{'Running':False},'signals':['SIGTERM_RECEIVED']}
+            result=f.execute()
+            self.assertEqual(result['result'],'LOCAL_SNAPSHOT_CREATED')
+            terminal=json.loads((f.output/'shutdown-1-result.json').read_bytes())
+            self.assertEqual(terminal['edgeReceipt']['status'],'VERIFIED')
+
+    def test_exit15_requires_current_exact_edge_receipt_and_positive_drain_signal_evidence(self):
+        import copy
+        import local_edge_shutdown as E
+        from test_local_edge_shutdown import configured_fixture, Kernel, receipt
+        with tempfile.TemporaryDirectory() as folder:
+            f,raw,ctx=configured_fixture(Path(folder).resolve());kernel=Kernel(f.plan,f.context)
+            before=copy.deepcopy(next(r for r in f.backend_rows if r['Id']==kernel.edge['id']))
+            row=copy.deepcopy(before);row['State'].update(Running=False,Pid=0,ExitCode=15,Dead=False,OOMKilled=False,Error='',Restarting=False)
+            evidence={'receipt':receipt(raw,ctx,kernel),'bindings':E.bindings(raw,E.digest(raw),ctx),'diagnostic':{'signals':['SIGTERM_RECEIVED']}}
+            M.stopped([row],[before],{row['Id']:evidence})
+            cases=['no-receipt','unknown-signal','timeout','interrupted','disabled','unknown-close','unknown-identity','wrong-plan','bad-proof-shape','oom','error','restarting','dead','running','wrong-image','foreign-role']
+            for case in cases:
+                with self.subTest(case=case):
+                    actual=copy.deepcopy(row);original=copy.deepcopy(before);proof=copy.deepcopy(evidence)
+                    if case=='no-receipt':proof['receipt']=None
+                    if case=='unknown-signal':proof['diagnostic']['signals']='UNKNOWN'
+                    if case in ['timeout','interrupted','disabled']:proof['diagnostic']['signals'].append({'timeout':'GRACEFUL_TIMEOUT','interrupted':'DRAIN_INTERRUPTED','disabled':'DRAIN_DISABLED'}[case])
+                    if case=='unknown-close':proof['receipt']['helperClosed']='UNKNOWN'
+                    if case=='unknown-identity':proof['receipt']['proof']['identity']='UNKNOWN'
+                    if case=='wrong-plan':proof['bindings']['approvedPlanSha256']='f'*64
+                    if case=='bad-proof-shape':del proof['receipt']['proof']['runtimeIdentitySha256']
+                    if case in ['oom','error','restarting','dead','running']:actual['State'][{'oom':'OOMKilled','error':'Error','restarting':'Restarting','dead':'Dead','running':'Running'}[case]]='private' if case=='error' else True
+                    if case=='wrong-image':actual['Image']=original['Image']='sha256:'+'f'*64
+                    if case=='foreign-role':actual['Name']=original['Name']='/supabase_auth_cp-whole-site-261115'
+                    with self.assertRaises(C.SnapshotError):M.stopped([actual],[original],{actual['Id']:proof})
+
+    def test_all_eight_topologies_are_recorded_before_any_stop_with_no_extra_signals(self):
+        with tempfile.TemporaryDirectory() as folder:
+            f=Fixture(Path(folder).resolve());calls=[];original=f.stop
+            def observe(row):
+                calls.append(('observe',row['role']))
+                return {'state':{'Running':True},'topology':{'pid1Kind':'SHELL' if row['role'] in {'db','kong','edge_runtime'} else 'OTHER'},'signals':'UNKNOWN'}
+            def stopped(row):
+                self.assertTrue((f.output/'shutdown-before-census.json').is_file())
+                calls.append(('stop',row['role']));original(row)
+            f.stop_diagnostics=observe;f.stop=stopped
+            result=f.execute();self.assertEqual(result['result'],'LOCAL_SNAPSHOT_CREATED')
+            self.assertEqual(calls[:8],[('observe',r['role']) for r in f.plan['containers']])
+            self.assertGreaterEqual(next(i for i,event in enumerate(calls) if event[0]=='stop'),8)
+            path=f.output/'shutdown-before-census.json';value=json.loads(path.read_bytes())
+            self.assertTrue(value['complete']);self.assertEqual(len(value['records']),8)
+            self.assertEqual(path.stat().st_mode&0o777,0o600)
+            self.assertEqual({r['role'] for r in value['records']},{r['role'] for r in f.plan['containers']})
+            self.assertTrue(all(len(r['containerIdSha256'])==64 for r in value['records']))
+
 if __name__=='__main__':unittest.main()

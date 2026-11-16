@@ -11,6 +11,7 @@ import tarfile
 import time
 import local_snapshot_contracts as C
 from local_snapshot_native import NativeIO
+import local_edge_shutdown as E
 
 
 def mounts(row):
@@ -51,7 +52,7 @@ def admit_observation(value, plan, runtime):
     return volumes
 
 
-def stopped(rows, originals):
+def stopped(rows, originals, edge_proofs=None):
     C.require(len(rows)==len(originals) and {r['Id'] for r in rows}=={r['Id'] for r in originals},'SNAPSHOT_STOP_UNKNOWN')
     initial={r['Id']:r for r in originals}
     signals={'SIGTERM':15,'SIGINT':2,'SIGQUIT':3}
@@ -60,6 +61,9 @@ def stopped(rows, originals):
         C.require(row['Name']==before['Name'] and row['Image']==before['Image'] and mounts(row)==mounts(before))
         normal=signals[before['Config'].get('StopSignal') or 'SIGTERM']
         codes={0} if before['Name'].startswith('/supabase_db_') else {0,128+normal}
+        evidence=(edge_proofs or {}).get(row['Id'])
+        if evidence and before['Name']==E.NAME and before['Image']==E.IMAGE:
+            if state.get('Dead')is False and E.eligible15(evidence['receipt'],evidence['bindings'],evidence['diagnostic']):codes.add(15)
         C.require(state['Running'] is False and state['Pid']==0 and state['OOMKilled'] is False and
                   state['ExitCode'] in codes and not state.get('Error') and not state.get('Restarting'), 'SNAPSHOT_STOP_UNKNOWN')
 
@@ -110,6 +114,19 @@ def runtime_fingerprints(records):
     return sorted(records,key=lambda r:r['path'])
 
 
+def shutdown_census(io, plan, output):
+    records=[]
+    try:
+        for row in plan['containers']:
+            io.check()
+            try:value=io.stop_diagnostics(row) if hasattr(io,'stop_diagnostics') else 'UNKNOWN'
+            except Exception:value='UNKNOWN'
+            records.append({'role':row['role'],'containerIdSha256':C.digest(row['id'].encode()),'observation':value})
+    finally:
+        try:C.write_once(output/'shutdown-before-census.json',{'complete':len(records)==8,'records':records})
+        except Exception:io.shutdown_diagnostics='UNKNOWN'
+
+
 def stop_one(io, row, output, sequence, approved):
     C.require(row in approved and type(sequence)is int and 0<=sequence<8,'SNAPSHOT_CONTAINER_CHANGED')
     io.check()
@@ -139,7 +156,9 @@ def stop_one(io, row, output, sequence, approved):
         stopped_state=not state['Running'] if isinstance(state,dict) and type(state.get('Running'))is bool else 'UNKNOWN'
         persist('result',{'sequence':sequence,'role':row['role'],'outcome':outcome,
             'elapsedSeconds':time.monotonic()-started,'command':command if isinstance(command,dict) else 'UNKNOWN',
-            'containerStopped':stopped_state,'observation':after})
+            'containerStopped':stopped_state,'observation':after,
+            'edgeReceipt':getattr(io,'edge_shutdown_receipt',None) if row['role']=='edge_runtime' else None})
+    return {'receipt':getattr(io,'edge_shutdown_receipt',None),'bindings':getattr(io,'edge_bindings',None),'diagnostic':after}
 
 
 def snapshot(plan_path, approval, ports=None):
@@ -157,19 +176,24 @@ def snapshot(plan_path, approval, ports=None):
         context,profile,installed=C.bindings(io.source,runtime,plan,io.environment)
         observed=io.observe(plan,context,profile)
         volume_map=admit_observation(observed,plan,runtime)
+        if hasattr(io,'bind_stop_policy'):io.bind_stop_policy(raw,approval,C.read_file(runtime/'execution-context.json',private=True))
         parent=output.parent
         if not parent.exists():parent.mkdir(mode=0o700)
         C.directory(parent);output.mkdir(mode=0o700);created=True
         C.write_once(output/'snapshot-intent.json',{'planSha256':approval,'sourceRevision':plan['sourceRevision'],
             'executionAuthority':'NONE','retention':'UNVERIFIED'})
+        stage='shutdown_census';shutdown_census(io,plan,output)
         stage='preview_stop';io.stop_preview(plan['preview'])
         stage='mailpit';mail=output/'mailpit';mail.mkdir(mode=0o700)
         messages=mailbox(io,mail)
         C.write_once(output/'container-inventory.json',observed)
         stage='non_db_stop'
         non_db=[r for r in plan['containers'] if r['role']!='db']
-        for index,row in enumerate(non_db):stop_one(io,row,output,index,plan['containers'])
-        stopped(io.inspect(non_db),[r for r in observed['containers'] if r['Id'] in {v['id'] for v in non_db}])
+        edge_proofs={}
+        for index,row in enumerate(non_db):
+            proof=stop_one(io,row,output,index,plan['containers'])
+            if row['role']=='edge_runtime':edge_proofs[row['id']]=proof
+        stopped(io.inspect(non_db),[r for r in observed['containers'] if r['Id'] in {v['id'] for v in non_db}],edge_proofs)
         stage='database';actual=io.database(plan)
         C.require(actual==plan['databases'],'SNAPSHOT_DATABASE_SET_CHANGED')
         before=io.census(actual);C.write_once(output/'database-census-before.json',before)
@@ -184,7 +208,7 @@ def snapshot(plan_path, approval, ports=None):
         after=io.census(actual);C.require(before==after,'SNAPSHOT_DATABASE_CHANGED')
         C.write_once(output/'database-census-after.json',after)
         stage='database_stop';stop_one(io,next(r for r in plan['containers'] if r['role']=='db'),output,7,plan['containers'])
-        closed=io.inspect(plan['containers']);stopped(closed,observed['containers'])
+        closed=io.inspect(plan['containers']);stopped(closed,observed['containers'],edge_proofs)
         C.write_once(output/'stop-proof.json',{'containers':closed,'forcedTermination':False})
         stage='volumes';volumes=output/'volumes';volumes.mkdir(mode=0o700)
         for index,(name,mount) in enumerate(sorted(volume_map.items())):
@@ -197,7 +221,7 @@ def snapshot(plan_path, approval, ports=None):
         records=C.copy_runtime(runtime,copied,excluded,io.check)
         C.require(runtime_fingerprints(C.runtime_census(runtime,excluded,io.check))==runtime_fingerprints(records),'SNAPSHOT_RUNTIME_CHANGED')
         io.frozen(plan);C.bindings(io.source,runtime,plan,io.environment);io.barrier(plan,context)
-        stopped(io.inspect(plan['containers']),observed['containers'])
+        stopped(io.inspect(plan['containers']),observed['containers'],edge_proofs)
         C.write_once(output/'runtime-census.json',records)
         stage='publication';files=C.inventory(output,io.check)
         manifest={'schemaVersion':1,'kind':'LOCAL_SNAPSHOT_INVENTORY','planSha256':approval,

@@ -2407,3 +2407,34 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - frozen v2packet afa14d9129b0e7315352b5139626ac9383a4b6fbe553c1a80af93c9ceb340f49；Root核8raw/54records/53protected actualGitbytes、manifest44/其他43、7strategy symbols/max328。Worker fullPython134PASS/12.148s及lint/type/static/EOF/diff全0；Root獨立prep7/0.292s＋shutdown6/0.197s、actualmethod CLI表格RED→GREEN、barrier/workflowenv控制PASS。唯一Spec P2（CLI文字表被當Engine JSON）同輪2檔修正clear，Standards/Spec/Security現0open；review docs/reviews/2026-11-16-linux-prebusiness-diagnostic-m15-review.md，Rootsummary c3995e3462483e5429ecc8cc2fd980b0acb8b6a624837eb9e0c2f3f4d2fb7f2d。
 - 所有stop策略/signal/90/600/1800/exit15拒與Source保護不變；下一新Source/attempt1 job只diagnostic，prepare成功仍business-barrier停止，不創玩家/不functional/不15legs。必須收實際PID1/parent/signal/stop role/errno證據後才另bounded修復及恢復normal。Native9真firstcall仍UNKNOWN，原RED/setupFAIL/Root只讀packet shape KeyErrors保留。
 - 原7protected與handoff575959Bprefix核符，G8/85仍停止保留；主機US$0；40/60未通過，Hosted/Production/mail NONE。下一Root exact11paths commit/check0、核remote仍ab5再正常FF specialtestbranch，不GH rerun。
+
+
+### 2026-11-16 — M15新Native準備成功；停機阻塞已證實為Edge shell PID1
+
+- M15 exact11paths/check0/clean commit7966bef299948dad3bab0cd7a11f595d6d520139；remoteexactab5核後正常FF，只新push/attempt1 run43845702060/job133225201122。toolchain/bootstrap/profile/kernel6/build/entry/bind/snapshot-plan均越過，functional-prepare LOCAL_FUNCTIONAL_REQUEST_PREPARED/fixturesCreated0；177.911s後照diagnostic flag在business-barrier故意STOP，functional/15legs/40-60均NOT_RUN。
+- Root實際下載artifact14215930291，ZIP966563B/0ae3857d4d896dd9c1bf3736c64e76601c88d60bb43fdb9589c1d2ad5dbe85cb/API digest核。真age AEAD與manifest4ee2802096558418c2518eadd052e14899c921d044089545763036b0186d8f2f/272files/8915972B逐檔核，cipher459eeb4254059ca878baff581b6008fb7bd84e26c9883fab6ca591b19a82cc8e/966425B；PARTIAL Runtime/requests，DB/volumes未attest，非fullretention。Rootreceipt917b869aa00fb6015dceb23d66c20beda4e668b3bcfe398e8f4f80a2d37cb132；當時job在10min保留hold，非最終workflow conclusion。
+- shutdown0auth正常client0.308s/exit0/containerStoppedtrue；shutdown1edge allowance90、93.011s後clientclose/reapVERIFIED但container仍Running。before/after皆entrypointSHELL、pid1SHELL/processes2/runtimeCount1/runtimeParentSHELL；defaultSIGTERM、signalsUNKNOWN（不是沒收到的證明）、RestartPolicyno/AutoRemovefalse。M5FAILED/non_db_stop/SNAPSHOT_COMMAND_TIMEOUT，完整備份未取得。
+- Root確認M15daemon privileged-read修正已真Linux通過。固定CLI2.109.1自行覆寫shell heredoc；Docker官方亦指shell不forwardsignals。已交同workerREADONLY合併M16可行方案，先查最小startup exec入口，無法則比較嚴格owned身份下正常SIGTERM方案；尚未核signal/exit15/策略或Source修改，不可proxyDocker/重建CLI/force/prune/delete/擴containerinventory。
+- 主機US$0；原WIP/G8/85停止保留，Staging未部署，Hosted/Production/mail NONE。依證據寫bounded brief後同worker實作/Root唯一review，再一個新Source零business診斷，不能直接開60。
+
+
+### 2026-11-16 — M16已核exact5paths：固定Edge pidfd正常SIGTERM
+
+- Native10 completed failure，最終Rootreceipt0f4262d4dfa299233ca4240c6143323d65066a60e5f02513d1260457cad0a73a；joblog21935B/93a000edfc6e20146b8f4ca7a4c43aa623a08fa05364b5d665550482d29d8d47，原holdreceipt保留。daemonread已過，Edge shellPID1停機失敗證據明確。
+- 排除無supportedconfig的startup exec，核准M16同worker/Root唯一review exact5paths Source helper/native/wrapper與2tests。固定Rootliteral只選approved shell的唯一runtime child，pidfd後核Source/job/nonce/boot/cgroup/ns/startUID/exe，唯一正常SIGTERM；同90總budget，原dockerstop/600/1800與其他7roles不改。受限Edge15只在完整signal/closure/normalstate證據，known drain failures/unknown不eligible，禁止global15。
+- Root官方OCI只下載59MB執行檔層，manifest/config/layerdigest核、binary165260008B/SHA3b7c6b9cc472f49fa7719a7f8988d099b1196d8fd0890cf2bd81c9480de57826/ELFAMD64，未執行/Docker；proof70052e98c53beda9ef47e557acd5eba03122a3c898966853edec44440669cf3a供獨立exe綁定。brief 5a5b413bebd23612d3991e8bd2a161f0dc395278b6d3aac5366e42d93591f6a2。
+- 下一job仍M15diagnosticonly/0actors，只證正常停機與完整冷備份；未核Source不push、不恢復business。主機US$0，40/60未通過；原WIP/G8/85、Hosted/Production/mail保持。
+
+
+### 2026-11-16 — Staging Auth/SMTP唯讀前置門檻；未做Hosted負載
+
+- UI fixedonk ref已啟Resend SMTP/465，token150、verify30、signup300 requests/5m/IP、peruser60s、IPforwardingfalse；email/hour與sender masked維持UNKNOWN、帳密未讀、Resendplan未知。一次publickeyhealthGET200顯GoTruev2.197.0，fingerprint287e53db...；users/mail/settings/Production均0。
+- 官方tag4eee58f296d9698a1c2c0ae14d7a0b379c7622d3 Token/Verify/Signup burst30。Rootactualconstructor＋同tollbooth5.1.1/xTime0.9.0離線40同key允30拒10、60同key允30拒30；提高rate3000仍30/30，60不同記憶體key60/0，80–145us。只是程式碼/離線控制，未觀測Hosted60失敗、未fullGo1.27編譯/managedbinaryattest。
+- report docs/reviews/2026-11-16-staging-auth-capacity-readonly.md，private receipt 3d8c5f8ce2a508797771b53c2577d6cf207ec6fd9ac1f8f5896c56bb811956fb。LocalIPheader旁路/Mailpit不能當Hosted同NAT/真郵件證據；WB5仍需exactcandidate/資料窗口及真正limit處理方案，不能以調rate/假IP/測試錯峰造PASS。M16同worker實作繼續，未改產品/Hosted；主機US$0。
+
+
+### 2026-11-16 — M16唯一Root review ACCEPTED_SOURCE_ONLY；下一新Source仍0business
+
+- packetd81e02e0eb7f0edfc30412ca54f6e6a759b2b27253d154216e1fcffae58305df，Root核5raw/31records/57protected actualGit/operator44全部same/max360。Worker direct17/fullPython145PASS/9.665s及lint/type/static/EOF/diff0；Root8selector/.711s＋9snapshot/.311s與9獨立adversarial controls PASS，AST唯一pidfdSIGTERM/officialexeSHA核；Standards/Spec/Security各0findings。review docs/reviews/2026-11-16-linux-edge-graceful-stop-m16-review.md；Rootsummaryc02946f3b3c15d9ae22cf68de5cedbb890629dda539f4a57debaa7f28818ac09。
+- fixedRootliteral獨立plan/context/job/nonce/boot/exactCIDderivedCG/ns/startUID/PPID/165260008B binarySHA核、只唯一child pidfdSIGTERM；helper10與原dockerstop共90，未知不續，原600/1800與其他7stop不變。Edge15受限完整proof及正向SIGTERM/no-known-drainfailure，非全roles放寬；SENT後取消保留UNATTESTED。all8before-stop安全census及failurestage enum已併入。
+- 下一Root exact9paths（5Source＋brief/review/handoff/Staging唯讀report）commit/check0，核remote仍7966再正常FF一個新Source attempt1，M15diagnostic flag保持；無functional/15legs/40-60。原RED/setup/144/145保留；原7protected/handoffprefix與G8/85持續保護，主機US$0，Hosted/Production/mail NONE。

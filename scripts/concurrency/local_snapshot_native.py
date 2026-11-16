@@ -15,6 +15,7 @@ import tempfile
 import time
 import urllib.parse
 import local_snapshot_contracts as C
+import local_edge_shutdown as E
 
 DOCKER = ['/usr/bin/docker', '--host', 'unix:///var/run/docker.sock']
 ENV = {'PATH':'/usr/bin:/bin', 'PYTHONDONTWRITEBYTECODE':'1'}
@@ -208,7 +209,38 @@ class NativeIO:
         return C.decode(self.docker('inspect',*[r['id'] for r in rows]))
 
     def stop(self, row):
+        if row['role']=='edge_runtime':
+            C.require(hasattr(self,'edge_policy') and not getattr(self,'edge_attempted',False),'SNAPSHOT_EDGE_POLICY_REQUIRED')
+            self.edge_attempted=True;started=time.monotonic();end=min(started+90,self.deadline-4)
+            plan_raw,approval,context_raw=self.edge_policy
+            C.require(row['id']==self.edge_id and row['imageId']==E.IMAGE,'SNAPSHOT_CONTAINER_CHANGED')
+            def root_run(args,**options):
+                raw=self.run(args,**options)
+                return raw,self.closure=='VERIFIED'
+            try:
+                self.edge_shutdown_receipt=E.perform(plan_raw,approval,context_raw,root_run,self.check,clock=time.monotonic,deadline=end)
+            except E.EdgeShutdownError as error:
+                self.edge_shutdown_receipt=error.evidence
+                raise C.SnapshotError('SNAPSHOT_EDGE_SHUTDOWN_UNVERIFIED') from None
+            try:
+                self.check();remaining=end-time.monotonic()
+                C.require(remaining>0,'SNAPSHOT_DEADLINE')
+                self.docker('stop','--timeout','-1',row['id'],timeout=remaining)
+            except BaseException:
+                self.edge_shutdown_receipt['status']='UNATTESTED'
+                raise
+            finally:
+                if isinstance(getattr(self,'last_stop_command',None),dict):
+                    self.last_stop_command.update(edgeIntervalRequestedSeconds=90,totalElapsedSeconds=time.monotonic()-started)
+            return
         self.docker('stop','--timeout','-1',row['id'],timeout=90)
+
+    def bind_stop_policy(self,plan_raw,approval,context_raw):
+        expected=E.bindings(plan_raw,approval,context_raw)
+        plan=C.parse_plan(plan_raw,approval)
+        edge=next(r for r in plan['containers'] if r['role']=='edge_runtime')
+        C.require(edge['imageId']==E.IMAGE and edge['name']==E.NAME and json.loads(context_raw)==self.context,'SNAPSHOT_EDGE_POLICY_REQUIRED')
+        self.edge_policy=(plan_raw,approval,context_raw);self.edge_id=edge['id'];self.edge_bindings=expected
 
     def stop_diagnostics(self, row):
         self.check()
@@ -232,12 +264,12 @@ class NativeIO:
             shape='SHELL' if executable in {'sh','ash','bash','dash'} else 'EDGE_RUNTIME' if executable=='edge-runtime' else 'OTHER'
         result={'state':safe,'entrypointKind':shape,
                 'entrypointCmdSha256':C.digest(C.canonical([entrypoint,cmd])),'topology':'UNKNOWN','signals':'UNKNOWN'}
+        if state['Running']:
+            try:
+                top=self.docker('top',row['id'],'-eo','pid,ppid,comm',timeout=2,maximum=16384)
+                result['topology']=self.safe_topology(top,state['Pid'])
+            except Exception:pass
         if row['role']=='edge_runtime':
-            if state['Running']:
-                try:
-                    top=self.docker('top',row['id'],'-eo','pid,ppid,comm',timeout=2,maximum=16384)
-                    result['topology']=self.safe_topology(top,state['Pid'])
-                except Exception:pass
             try:
                 raw=self.docker('logs','--tail','80',row['id'],timeout=2,maximum=65536,merge_stderr=True)
                 result['signals']=self.safe_signals(raw)
