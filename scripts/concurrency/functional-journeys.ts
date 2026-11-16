@@ -35,7 +35,10 @@ import {
   authIsolationJourney,
   controlledRevokedRefresh,
 } from './auth-journey';
-import { createBusinessStageObserver } from './business-diagnostics';
+import {
+  createBusinessStageObserver,
+  captureFunctionalHealthDetails,
+} from './business-diagnostics';
 import { runFunctionalStudent } from './student-journey';
 import {
   runTeacherReadJourney,
@@ -454,10 +457,12 @@ export const createActualFunctionalPorts = (
       stopping = true;
       return (closing ??= (async () => {
         const beforeHealth = captureFunctionalHealth(health);
+        const beforeDetails = captureFunctionalHealthDetails(health);
         const beforeWrite = Promise.resolve().then(() =>
           runtime.journal.write('functional-health-before-close', {
             phase,
             ...beforeHealth,
+            details: beforeDetails,
           }),
         );
         void beforeWrite.catch(() => undefined);
@@ -473,6 +478,7 @@ export const createActualFunctionalPorts = (
           runtime.journal.write('functional-cleanup-diagnostic', {
             phase,
             health: afterHealth,
+            details: captureFunctionalHealthDetails(health),
             ...browserCloser.summary(outcomes.slice(1)),
             authObservation: health.authDiagnostics(),
             imageObservation: health.imageDiagnostics(),
@@ -482,6 +488,7 @@ export const createActualFunctionalPorts = (
         if (
           diagnostics.some((result) => result.status !== 'fulfilled') ||
           afterHealth.collection === 'UNAVAILABLE' ||
+          captureFunctionalHealthDetails(health).collection === 'UNAVAILABLE' ||
           outcomes.some((result) => result.status !== 'fulfilled') ||
           browserCloser.hasFailures() ||
           health.snapshot().unexpectedErrors !== 0

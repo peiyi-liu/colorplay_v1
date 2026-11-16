@@ -110,6 +110,31 @@ const setup = async (
   };
 };
 describe('exact CDP request identity, not URL/time, classifies functional negatives', () => {
+  it('exposes the exact pageerror contribution without changing the four health fields', async () => {
+    const h = await setup();
+    h.page.emit('pageerror', new TypeError('SYNTHETIC_PRIVATE_SECRET'));
+    expect(h.health.snapshot()).toEqual({
+      available: true,
+      expectedMediaDrops: 0,
+      expectedRefreshRejections: 0,
+      unexpectedErrors: 1,
+    });
+    expect(h.health).toHaveProperty('diagnostics');
+    expect(h.health.diagnostics()).toMatchObject({
+      collection: 'OBSERVED',
+      components: {
+        unexpected: 0,
+        pageErrors: 1,
+        unmatchedConsole: 0,
+        unprovenNetworkLogs: 0,
+        pendingErrors: 0,
+      },
+    });
+    expect(JSON.stringify(h.health.diagnostics())).not.toContain(
+      'SYNTHETIC_PRIVATE_SECRET',
+    );
+    await h.health.dispose();
+  });
   it('classifies one exact owned drop and reconciles its duplicate PW log after loadingFailed', async () => {
     const h = await setup();
     h.network('n1');

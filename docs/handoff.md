@@ -2660,3 +2660,62 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 ### 2026-11-17 — M23提交前最後檢查
 
 - Root S級四份排版後全域pnpm format:check exit0（All matched files），git diff --check exit0；6Source SHA仍等frozen packet，預定exact13paths，Root唯一審查／42tests＋42controls結果不變。既存format失敗與M10 code-markup修正如上一段保留，不回填Worker初結果。
+
+
+### 2026-11-17 — M23新Source正常Native18已啟動
+
+- Root exact13paths cachedcheck0/commit/clean：3bc4466eb22929ffc449355aab723f30ab8b5611；新網路唯讀核specialremote仍294b74807b03266e7a58087cda138a2ea5a3affd後正常FF。新push/attempt1 run43915233590/job133467458622，正常six-person→15legs。watcher64980只監看matchingSHA並加密下載；不GH rerun／不改原caps。Source凍結、同worker待命。
+- 真Linux applet／HTTP／註冊尚待本job結果，原Native17與全部6Auth/cold evidence保持；40/60仍未驗。G8停止85/原WIP、主機US$0/US$5 cap、Hosted/Production/真寄信NONE保持。
+
+
+### 2026-11-17 — Native18實際前14stages通過，最後health1錯誤；全部cold資料已核
+
+- Source3bc4466/run43915233590/job133467458622新attempt1；實際M23兩template HTTP200/306B/SHAa77971…核，registration14steps全confirmed、otpCount1，registration_recovery PASS16.535s。學生review/quiz/remediation/economy、教師/tenant denials、Live20Q40answers、Admin/MFA/denials、media5assets11variants2drafts與controlled refresh均PASS；functional252503.893ms/exit1/無signal/stderr0/無residue/SourceFrozen。最後health FAIL：OBSERVED/availabletrue/expectedDrops4/expectedRefresh1/unexpected1；authgap3/logoutAborts5/revoked2/unresolved0，imageSuperseded1/decoded1/unavailable0/pending0。事件種類／phase／endpoint未capture，不能猜或ignore。全15capacity legs NOT_RUN，Native17首次403/default不回填。
+- artifact14249992026 ZIP42517052B/50dc7fcbeb0fb6ab1b23364bbc63729ce64e12143b555649f039bb6d521d6b6b API核；cipher42516914B/e80c0241da8a78b50e9f9930556c844bc1b75657bb0fac76c72c8e2e497d4be9 真age AEAD；outera25905d42a0f748e0cd5557d6c88a26a482013a20ca191c50b17f91ca89f21ec/561files211892844B全核，inner55b24f14df3e5a093304389da72691f24a0a8c78d02ef14882b721bbef8572f4/528files。8stops全部roleproof／DB2/127tables/31rolesORDER_ONLY／3vol7015regularfiles185546711B與metadata／runtime476datafiles32publiccode重建/metadata-only0全核。6Auth與16storagefiles保留，未restore。Rootreceipt a75d1c42035473884102bb3410e31b60fe5c203d5e5182cc4311bf790b070f7d，job仍10min stopped-data hold待最終failure，不rerun。
+- RootactualTS schemas解析及finish重算FAIL；初probe假設candidate literal UNVERIFIED錯，Source實為PENDING_EXTERNAL_ATTESTATION，修正後核符，非Source finding。同worker完成私有business-verifier合成資格後，僅READONLY提一次完整health閉集metadata診斷brief；禁止Source先改、修產品／增加expected／放寬SLO。原WIP/G8停止85、US$0/US$5 cap、Hosted/Production/真寄信NONE。
+
+
+### 2026-11-17 — Root離線business verifier完整合成資格已核，不是容量證據
+
+- 同worker私有packet .git/native18-business-verifier-qualification/manifest.json 3a8db78621eef9caa459384ba2cfe7600b3051c0dd643f0959df295da485a19f，793records約4.2MB全hash/mode核。Root原verifier d346576139b738bf75a0890aea73862b304127720dc6a52bcf4045888b2cda17 未改；Root獨立11commands：合成functional15stage／15leg／106planned identities全鏈正向0，wrongSHA/job/functional-close/capacity-residue/兩candidate/hash重綁/兩前序/一致SLO違反/candidate-only十負向全1。Rootqualification receipt7d1744b9ae88006b2fe6b907c4d655eecd03d47865592a9d61614ea2b12b467f。
+- 所有profile／健康samples／identity／Root close assertions明標SYNTHETIC_ONLY／NONE，request刻意最小不可執行fixture，沒有真browser/API/OTP/Root runtime或kernel證據。只驗captured-record validator能完整走正向與拒假PASS，絕不當Native18／40／60 PASS；實際Native18仍health FAIL、15legs NOT_RUN。初wx logger撞檔與manifest排除nested同名plan的setup修正保留，無Source或Rootverifier變更。
+
+
+### 2026-11-17 — M24完整health診斷正式授權同worker
+
+- Root凍結brief docs/superpowers/plans/2026-11-17-linux-health-diagnostics-m24-brief.md SHA3718e7ac512b737453314061a3b9f355f8178e6ed21e86e7a3b6c7bba18818dd，base3bc4466；sameworker exact8Source/tests，新增pure閉集diagnostics module，health只就近note＋diagnostics，business stage及既有before-close/cleanup沿privatejournal加獨立details；原4field shape／counter／classification／expected不變，新collection不可用／overflow／lifecycle只收緊available。最多256events，五component sum精確；stage/page/requestordinal/安全endpoint/code/status及approved公開asset位置hint，無rawURL/message/stack/secret或低熵hash。
+- health原500→最多560唯一有理由窄例外，避免無關判定重構；journeys與其他≤500。先actual export RED→GREEN、五來源/secret/overflow/late/dispose/writer/erroridentity與原Auth/Image controls，affectedTS/lint/type/format/import/static全綠後freeze，Root唯一review後才新Source/newpush/attempt1正常six-person→15legs。Native18那一事件仍UNKNOWN，不以synthetic當重現、不修產品／列expected／放寬SLO。worker不得Native/雲端/Stage/commit；原operator44/Producer/Workflow/DB/保留不變。原WIP/G8停止85、US$0/US$5 cap、Hosted/Production/真寄信NONE。
+
+
+### 2026-11-17 — Native18最終failure與joblog已封存
+
+- job133467458622全部完成、conclusion failure；suite failure／cipher upload與10min stopped-data hold success。Rootfinalreceipt .git/linux-eighteenth-run-review-v2.json SHA72ffbc4eb4906b7392b840c40aa693f21fafcd900367b5de00b99d9fbf5aae6e；joblog22098B/555e688321920d7a0748284c18d0bf0ff848facf315f0890926b559cf5478f37，原holdreceipt a75d1…保留。未rerun／restore／刪資料。M24正在獨立實作，Root唯一review後才下個新Source。
+
+
+### 2026-11-17 — WB5等待Local期間更新Staging唯讀整合前置
+
+- networkfresh special之外Staging ref仍d92be82ba188c3bf6618f1d70cd92f63a4eabfac。固定project onkxnkzeixpezetkmocf只BEGIN READ ONLY／5s catalog SELECT：120條remote migration version/name與Source前120有序完全相同，Source121僅pending20261116000100_content_media_manifest_digest_index.sql／SHA4379d0cefd8b7493a64c17420944ce7e1e754e51beabe4a0679eec13662fc76b；manifest_sha256 UNIQUE constraint/unique index仍在，尚未套用。沒有讀user資料／serverfiles／settings或寫DB。
+- Root preflight .git/staging-integration-readonly-preflight-20261117.json SHA03db709d159b4f42ab7f87b85418a9da73bde51f572434fa123cd54a3a3db5f0；src/functions/migrations actualGit仍與acac9bce756d94ceaa1a3d9000d21e4e993e76e2相同。public deployed artifact marker本次未refresh、remote SQL content checksum未比較；不把ref/catalog一致冒作部署或容量PASS。最終candidate／artifact／Owner approval／資料與郵件窗口仍待Local gate後具體化，Hosted/Production writes0。
+
+
+### 2026-11-17 — WB5同次唯讀public marker已更新核符
+
+- 固定https://staging.colorplayapp.com/admin-release.json TLS GET／no redirects／10s／32KiB cap只讀一次，environment staging、revision d92be82ba188c3bf6618f1d70cd92f63a4eabfac，raw SHA3d7f3ea3a4f773370bc5c24ce0e73a1b9cea08e2ca53a11f3c102e282c119f78仍符Gitref。actualGit staging為3bc祖先，無整合commit/push。Rootpreflight-v2 .git/staging-integration-readonly-preflight-20261117-v2.json SHA08dbc05d4ae9e9f69287bbf492446e2a2f726b463ab2210ecd2c056d362a0ab4，保留v1未fresh marker的歷史，不回填。remote SQL checksum仍未比較，Local gate與發布/Hosted資料窗口待核，寫入0。
+
+
+### 2026-11-17 — M24同步診斷快照單行窄例外
+
+- Root准functional-journeys.ts最多501行，因beforeDetails須與beforeHealth在啟動browserCloser前同步capture，不能移Promise callback造成觀測時點漂移；after純讀及availability gate保留。不為1行擠敘述/搬判定，AGENTS有理由例外，非功能或驗收放寬。health≤560、pure diagnostics與其他檔≤500，exact8paths不變；capture helper已在owned business journal boundary，沒有新第9檔。latest brief SHA45f643fea891e196009a6991067641e925ad23dddd0926dc9e758e864c8e2f1d，原3718e7ac歷史保留。worker繼續完整負向與freeze，Root唯一review未開始。
+
+
+### 2026-11-17 — M24唯一Root review兩個P2，同輪退回修正
+
+- Root閱讀4Source core／diff與新tests、獨立重跑4files53tests PASS。唯一review另兩actual-control確認：saved Network.loadingFinished success200在dispose後經forget沒有touch fence，仍availabletrue/OBSERVED/errors0；schema允OBSERVED/components:null，actual stage接受缺分類明細。before controls SHA5fe99712eef2637e9e79b339922ddd7906a076273f84409ebb0c463879fab89f／6a574f71ccee4dcc8dc62cc92a0dfa806b4e6f67af442c1714c0e5b6212c6e78；皆synthetic工具控制，非Native18根因。
+- sameworker只同8paths補兩fence/shape guards＋actual negative，保原counter/predicate/expected；初checks留存v2修正。Root補pure helper≤510有理由窄例外，health560/journeys501保持，不擠行/新檔。39files504tests、lint/type/format原均0，但不因此忽略review finding；修正後受影響checks重跑再freeze，Root只核兩修正與finalpacket，不第二review。Root一個handoff append Python probe因引號SyntaxError未執行任何寫入，修正引號後成功，非Source issue。未commit/push/啟Native；US$0/US$5 cap與原WIP/G8停止85/Hosted/Production/真寄信NONE保持。
+
+
+### 2026-11-17 — M24同輪兩P2核修完成，Root接受待真Native
+
+- finalpacket ed9b73eefd06848f078053851d9e57b5ef3504b442125e8eab724399e0d8185d/74records/8Source全SHA核，v1 packet45f80…與原52records保持。Worker39files507tests及lint/type/globalformat/import/static/diff0；Root4files56tests1.16s與兩獨立before/after actualcontrols PASS，僅兩exact helper逆向復原v1 SHA吻合，其餘5owned raw同v1、兩tests追加。初2P2已同一round修正，未解0，Root不重開review。
+- 五component sum保原unexpected total，原10unexpected/14unavailable/1pageerror增量sites與37if條件／分類／expected不變；新unknown/overflow/late只收緊available。安全256events與公開asset位置hint，無rawURL/message/stack/secret/低熵hash；原stage/before/cleanup wx600 journal，writer/abort/erroridentity核符。行數health559≤560/pure508≤510/journeys501有理由例外，其餘≤500，exact8paths不擴。1792unowned actualGit blob/operator44及original7/prefix現核符。Rootreceipt f30621a6e13cee362dc8260cf1b8487a7eb833efb12944184d240dc9d5c5f202；review docs/reviews/2026-11-17-linux-health-diagnostics-m24-review.md。
+- Native18實際health1錯誤仍UNKNOWN；合成controls不當根因或容量證據。Root準備exact11paths cachedcheck/commit/clean與remote精確3bc正常FF，新Source/newpush/attempt1正常six-person→15legs；非PASS停、無GHrerun/0business gate。原全部custody／6Auth／G8停止85與WIP保護；US$0/US$5 cap，40/60未驗、Hosted/Production/真寄信NONE保持。

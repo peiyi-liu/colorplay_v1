@@ -1,3 +1,7 @@
+import {
+  functionalHealthDetailsSchema,
+  type FunctionalHealthDetails,
+} from './functional-health-diagnostics';
 import { performance } from 'node:perf_hooks';
 import { z } from 'zod';
 import { fail, functionalFailureCode } from './config';
@@ -42,6 +46,7 @@ const authSchema = z.strictObject({
   unresolvedLogoutDeclarations: count,
 });
 const observationSchema = z.strictObject({
+  details: functionalHealthDetailsSchema,
   settled: z.boolean(),
   health: healthSchema,
   auth: authSchema.nullable(),
@@ -56,6 +61,7 @@ export const businessCheckpointSchema = z.strictObject({
   observation: observationSchema.nullable(),
 });
 export const businessStageHealthSchema = z.strictObject({
+  details: functionalHealthDetailsSchema,
   schemaVersion: z.literal(1),
   stage: z.enum(functionalStages),
   outcome: z.enum(['confirmed', 'failed']),
@@ -91,6 +97,7 @@ export const createBusinessDiagnostics = (
             health,
             signal ?? new AbortController().signal,
           );
+        return observation;
       };
       const write = async (
         status: 'started' | 'confirmed' | 'failed',
@@ -124,7 +131,13 @@ export const createBusinessDiagnostics = (
         );
         throw error;
       }
-      await collect();
+      const observed = await collect();
+      if (observed?.details.collection === 'UNAVAILABLE') {
+        await write('failed', 'FUNCTIONAL_BROWSER_FAILED').catch(
+          () => undefined,
+        );
+        return fail('FUNCTIONAL_BROWSER_FAILED');
+      }
       if (aborted()) {
         await write('failed', 'FUNCTIONAL_ABORTED').catch(() => undefined);
         return fail('FUNCTIONAL_ABORTED');
@@ -141,7 +154,24 @@ export interface BusinessHealthPort {
   settle(): Promise<void>;
   snapshot(): unknown;
   authDiagnostics(): unknown;
+  diagnostics?(): unknown;
 }
+export const captureFunctionalHealthDetails = (port: {
+  diagnostics?: () => unknown;
+}): FunctionalHealthDetails => {
+  try {
+    return functionalHealthDetailsSchema.parse(port.diagnostics?.());
+  } catch {
+    return {
+      schemaVersion: 1,
+      collection: 'UNAVAILABLE',
+      components: null,
+      events: [],
+      droppedCount: 0,
+    };
+  }
+};
+
 const settleHealth = async (
   health: BusinessHealthPort,
   signal: AbortSignal,
@@ -189,7 +219,8 @@ const collectHealth = async (
       },
     });
   }
-  return { settled, health: snapshot, auth };
+  const details = captureFunctionalHealthDetails(settled ? health : {});
+  return { settled, health: snapshot, auth, details };
 };
 export const createBusinessStageObserver =
   (
@@ -229,7 +260,10 @@ export const createBusinessStageObserver =
     }
     if (failed) throw error;
     if (aborted()) return fail('FUNCTIONAL_ABORTED');
-    if (observation.health.collection === 'UNAVAILABLE')
+    if (
+      observation.health.collection === 'UNAVAILABLE' ||
+      observation.details.collection === 'UNAVAILABLE'
+    )
       return fail('FUNCTIONAL_BROWSER_FAILED');
     return result;
   };

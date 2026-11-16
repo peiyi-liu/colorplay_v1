@@ -1,3 +1,4 @@
+import { createFunctionalHealthDiagnostics } from './functional-health-diagnostics';
 import { functionalEndpoint, resourceCode } from './functional-network-event';
 import type { NetworkRecord } from './functional-network-event';
 import { createFunctionalImages } from './functional-image-observation';
@@ -37,6 +38,11 @@ export const createFunctionalHealth = (
     approvedStaticAssetPaths,
   );
   const images = createFunctionalImages(scope, phase, approvedStaticImagePaths);
+  const evidence = createFunctionalHealthDiagnostics(
+    scope,
+    phase,
+    approvedStaticAssetPaths,
+  );
   let disposed = false;
   const records = new Map<string, NetworkRecord>();
   const expectedDrops = new Map<string, number>();
@@ -61,11 +67,19 @@ export const createFunctionalHealth = (
   let unexpected = 0;
   let pageErrors = 0;
   let refreshExpected: { page: number; hash: string } | null = null;
+  const errorAt = (...args: Parameters<typeof evidence.note>) => {
+    unexpected++;
+    evidence.note(...args);
+  };
+  const unavailableAt = (...args: Parameters<typeof evidence.note>) => {
+    unavailable = true;
+    evidence.note(...args);
+  };
   const endpoint = (raw: string) =>
     functionalEndpoint(api, auth.isLogoutUrl, raw);
   const observe = (operation: () => Promise<void>) => {
     if (work.size >= 2000) {
-      unavailable = true;
+      unavailableAt('WORK_LIMIT');
       return;
     }
     const task = Promise.resolve().then(operation);
@@ -75,7 +89,7 @@ export const createFunctionalHealth = (
         work.delete(task);
       },
       () => {
-        unavailable = true;
+        unavailableAt('WORK_REJECTED');
         work.delete(task);
       },
     );
@@ -84,6 +98,7 @@ export const createFunctionalHealth = (
     map.set(key, (map.get(key) ?? 0) + 1);
   };
   const attach = (context: BrowserContext, page: Page): Promise<void> => {
+    if (disposed) evidence.note('LATE_EVENT');
     const existing = pages.get(page);
     if (existing) return existing.ready;
     const info = {
@@ -107,15 +122,23 @@ export const createFunctionalHealth = (
       try {
         const text = message.text();
         const code = text.length <= 4096 ? resourceCode(text) : null;
-        const target = endpoint(message.location().url);
-        if (!code || target === 'other') unexpected++;
-        else bump(pwCandidates, `${String(info.index)}:${target}:${code}`);
+        const location = message.location();
+        const target = endpoint(location.url);
+        evidence.console(info.index, text, location);
+        if (!code || target === 'other')
+          errorAt('CONSOLE_UNCLASSIFIED', info.index);
+        else {
+          const key = `${String(info.index)}:${target}:${code}`;
+          bump(pwCandidates, key);
+          evidence.candidate(key, info.index);
+        }
       } catch {
-        unexpected++;
+        errorAt('CONSOLE_READ_ERROR', info.index);
       }
     };
-    const error = () => {
+    const error = (error: Error) => {
       pageErrors++;
+      evidence.note('PAGE_ERROR', info.index, undefined, error);
     };
     page.on('console', consoleListener);
     page.on('pageerror', error);
@@ -142,9 +165,10 @@ export const createFunctionalHealth = (
               })
               .parse(raw);
             if (records.size >= 2000) {
-              unavailable = true;
+              unavailableAt('REQUEST_LIMIT', info.index);
               return;
             }
+            evidence.request(info.index, event);
             images.request(
               page,
               `${String(info.index)}:${event.requestId}`,
@@ -170,7 +194,11 @@ export const createFunctionalHealth = (
                 !detail.postData ||
                 Buffer.byteLength(detail.postData) > 4096
               ) {
-                unavailable = true;
+                unavailableAt(
+                  'POST_DATA_UNAVAILABLE',
+                  info.index,
+                  event.requestId,
+                );
                 return;
               }
               const body: unknown = JSON.parse(detail.postData);
@@ -205,7 +233,7 @@ export const createFunctionalHealth = (
                 (raw as { request: unknown }).request,
               )
             )
-              unexpected++;
+              errorAt('UNDECLARED_LOGOUT', info.index, event.requestId);
             records.set(`${String(info.index)}:${event.requestId}`, {
               page: info.index,
               phase: phase(),
@@ -217,7 +245,7 @@ export const createFunctionalHealth = (
               finished: false,
             });
           } catch {
-            unavailable = true;
+            unavailableAt('REQUEST_PARSE', info.index);
           }
         };
         const responseListener = (raw: unknown) => {
@@ -232,15 +260,18 @@ export const createFunctionalHealth = (
               `${String(info.index)}:${event.requestId}`,
             );
             if (!record) {
-              if (!auth.gap(page, raw)) unavailable = true;
+              if (!auth.gap(page, raw))
+                unavailableAt('RESPONSE_GAP', info.index, event.requestId);
               return;
             }
             images.response(`${String(info.index)}:${event.requestId}`, raw);
             auth.response(page, event.requestId, event.response.status);
             record.status = event.response.status;
-            if (record.status >= 500) unexpected++;
+            evidence.response(info.index, event.requestId, record.status);
+            if (record.status >= 500)
+              errorAt('HTTP_5XX', info.index, event.requestId);
           } catch {
-            unavailable = true;
+            unavailableAt('RESPONSE_PARSE', info.index);
           }
         };
         const failedListener = (raw: unknown) => {
@@ -248,6 +279,7 @@ export const createFunctionalHealth = (
             const event = z
               .object({ requestId: z.string(), errorText: z.string().max(512) })
               .parse(raw);
+            evidence.failure(info.index, event.requestId, event.errorText);
             const record = records.get(
               `${String(info.index)}:${event.requestId}`,
             );
@@ -266,9 +298,18 @@ export const createFunctionalHealth = (
             if (proof) {
               observe(async () => {
                 const result = await proof;
-                if (disposed) return;
-                if (result === 'UNAVAILABLE') unavailable = true;
-                if (result !== 'DECODED' && result !== 'RETIRED') unexpected++;
+                if (disposed) {
+                  evidence.note('LATE_EVENT', info.index, event.requestId);
+                  return;
+                }
+                if (result === 'UNAVAILABLE')
+                  unavailableAt(
+                    'IMAGE_PROOF_UNAVAILABLE',
+                    info.index,
+                    event.requestId,
+                  );
+                if (result !== 'DECODED' && result !== 'RETIRED')
+                  errorAt('IMAGE_PROOF_REJECTED', info.index, event.requestId);
                 else if (record) {
                   record.failed = true;
                   record.finished = true;
@@ -287,9 +328,9 @@ export const createFunctionalHealth = (
               record.failed = true;
               observedDrops.add(record.media);
               approvedLogs.add(`${String(info.index)}:${event.requestId}`);
-            } else unexpected++;
+            } else errorAt('UNAPPROVED_FAILURE', info.index, event.requestId);
           } catch {
-            unavailable = true;
+            unavailableAt('FAILURE_PARSE', info.index);
           }
         };
         const finishedListener = (raw: unknown) => {
@@ -300,7 +341,7 @@ export const createFunctionalHealth = (
             );
             if (record?.status === null || record === undefined) {
               if (auth.gapFinished(page, event.requestId)) return;
-              unavailable = true;
+              unavailableAt('FINISH_GAP', info.index, event.requestId);
               return;
             }
             record.finished = true;
@@ -314,6 +355,7 @@ export const createFunctionalHealth = (
             }
             if (record.status < 400) {
               records.delete(`${String(info.index)}:${event.requestId}`);
+              evidence.forget(info.index, event.requestId);
               return;
             }
             if (record.status >= 500) return;
@@ -325,12 +367,12 @@ export const createFunctionalHealth = (
               refreshExpected.hash !== record.refresh ||
               ![400, 401, 403].includes(record.status)
             ) {
-              unexpected++;
+              errorAt('HTTP_4XX', info.index, event.requestId);
               return;
             }
             const code = await readFunctionalAuthCode(cdp, event.requestId);
             if (!code || !isFunctionalRefreshCode(code) || observedRefresh.size)
-              unexpected++;
+              errorAt('REFRESH_CODE_REJECTED', info.index, event.requestId);
             else {
               observedRefresh.add(`${String(info.index)}:${record.refresh}`);
               approvedLogs.add(`${String(info.index)}:${event.requestId}`);
@@ -351,6 +393,7 @@ export const createFunctionalHealth = (
               })
               .parse(raw);
             if (entry.level !== 'error') return;
+            evidence.log(info.index, entry);
             const record = entry.networkRequestId
               ? records.get(`${String(info.index)}:${entry.networkRequestId}`)
               : null;
@@ -362,7 +405,7 @@ export const createFunctionalHealth = (
               !entry.url ||
               endpoint(entry.url) !== record.endpoint
             ) {
-              unexpected++;
+              errorAt('LOG_UNMATCHED', info.index, entry.networkRequestId);
               return;
             }
             const drop =
@@ -385,9 +428,9 @@ export const createFunctionalHealth = (
                 key,
                 `${String(info.index)}:${record.endpoint}:${code}`,
               );
-            else unexpected++;
+            else errorAt('LOG_UNAPPROVED', info.index, entry.networkRequestId);
           } catch {
-            unavailable = true;
+            unavailableAt('LOG_PARSE', info.index);
           }
         };
         cdp.on('Network.requestWillBeSent', requestListener);
@@ -406,15 +449,15 @@ export const createFunctionalHealth = (
         await cdp.send('Log.enable');
         info.enabled = true;
       } catch {
-        unavailable = true;
+        unavailableAt('CDP_ATTACH', info.index);
       }
     })();
     void info.ready.catch(() => {
-      unavailable = true;
+      unavailableAt('READY_REJECTED', info.index);
     });
     return info.ready;
   };
-  return {
+  const health = {
     attach,
     identify: (page: Page, actor: string) => {
       const info = pages.get(page);
@@ -425,6 +468,10 @@ export const createFunctionalHealth = (
     expectLogout: auth.expectLogout,
     authDiagnostics: auth.diagnostics,
     imageDiagnostics: images.diagnostics,
+    diagnostics: () => {
+      health.snapshot();
+      return evidence.snapshot();
+    },
     expectMediaDrop: (page: Page, request: MediaHttpRequest) => {
       const info = pages.get(page);
       const key = mediaKey(request);
@@ -471,9 +518,19 @@ export const createFunctionalHealth = (
           sum + Math.max(0, count - (provenLogs.get(key) ?? 0)),
         0,
       );
+      evidence.reconcile(
+        unexpected,
+        pageErrors,
+        records,
+        pwCandidates,
+        provenLogs,
+        networkLogs,
+        approvedLogs,
+      );
       return {
         available:
           !unavailable &&
+          evidence.available() &&
           images.available() &&
           auth.diagnostics().unresolvedLogoutDeclarations === 0 &&
           pages.size > 0 &&
@@ -486,15 +543,17 @@ export const createFunctionalHealth = (
     },
     dispose: async () => {
       disposed = true;
+      evidence.seal();
       const imageStop = images.dispose();
       for (const [page, info] of pages) {
         for (const dispose of info.disposers) dispose();
         if (info.cdp && !page.isClosed())
           await info.cdp.detach().catch(() => {
-            unavailable = true;
+            unavailableAt('CDP_DETACH', info.index);
           });
       }
       await imageStop;
     },
   };
+  return health;
 };

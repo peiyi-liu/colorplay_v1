@@ -58,6 +58,19 @@ const harness = () => {
       expectedRefreshRejections: 1,
       unexpectedErrors: 1,
     }),
+    diagnostics: () => ({
+      schemaVersion: 1 as const,
+      collection: 'OBSERVED' as const,
+      components: {
+        unexpected: 1,
+        pageErrors: 0,
+        unmatchedConsole: 0,
+        unprovenNetworkLogs: 0,
+        pendingErrors: 0,
+      },
+      events: [],
+      droppedCount: 0,
+    }),
     authDiagnostics: () => ({
       approvedPopupStaticGaps: 0,
       expectedLogoutAborts: 0,
@@ -200,6 +213,7 @@ describe('actual stage health snapshots retain unknown errors', () => {
     const scope = await readyScope();
     const health = healthModule.createFunctionalHealth(scope, () => null);
     vi.spyOn(health, 'snapshot').mockImplementation(h.health.snapshot);
+    vi.spyOn(health, 'diagnostics').mockImplementation(h.health.diagnostics);
     vi.spyOn(healthModule, 'createFunctionalHealth').mockReturnValueOnce(
       health,
     );
@@ -226,6 +240,67 @@ describe('actual stage health snapshots retain unknown errors', () => {
       'confirmed',
       'failed',
     ]);
+  });
+  it('an unavailable detail collector stops the actual student caller and keeps stage failures original', async () => {
+    const h = harness();
+    h.health.diagnostics = () => {
+      throw Error('PRIVATE_DETAILS');
+    };
+    await expect(
+      runFunctionalStudent(
+        {} as Page,
+        {} as SupabaseClient<Database>,
+        {
+          label: 'S1',
+          userId: 'synthetic',
+          account: 'synthetic',
+          email: 'synthetic@colorplay.test',
+          password: 'PRIVATE_PASSWORD',
+          replacementPassword: 'PRIVATE_PASSWORD',
+          displayName: 'Synthetic',
+        },
+        syntheticScope(),
+        h.journal,
+        'class',
+        new AbortController().signal,
+        h.health,
+      ),
+    ).rejects.toThrow('FUNCTIONAL_STUDENT_FAILED');
+    expect(helpers.chapter).toHaveBeenCalledOnce();
+    expect(helpers.review).not.toHaveBeenCalled();
+    expect(h.writes.at(-1)?.value).toMatchObject({
+      status: 'failed',
+      observation: { details: { collection: 'UNAVAILABLE', components: null } },
+    });
+    const original = Error('PRIVATE_ORIGINAL');
+    h.journal.write.mockRejectedValueOnce(Error('PRIVATE_WRITER'));
+    await expect(
+      createBusinessStageObserver(h.journal, h.health, () =>
+        Promise.reject(original),
+      )('student_s1', new AbortController().signal),
+    ).rejects.toBe(original);
+    expect(JSON.stringify(h.writes)).not.toContain('PRIVATE_');
+  });
+  it('rejects an unknown five-counter port even when it claims OBSERVED', async () => {
+    const h = harness();
+    const port = {
+      ...h.health,
+      diagnostics: () => ({
+        schemaVersion: 1,
+        collection: 'OBSERVED',
+        components: null,
+        events: [],
+        droppedCount: 0,
+      }),
+    };
+    await expect(
+      createBusinessStageObserver(h.journal, port, () =>
+        Promise.resolve('OPERATION_RETURNED'),
+      )('student_s1', new AbortController().signal),
+    ).rejects.toThrow('FUNCTIONAL_BROWSER_FAILED');
+    expect(h.writes.at(-1)?.value).toMatchObject({
+      details: { collection: 'UNAVAILABLE', components: null },
+    });
   });
   it('does not mask original stage failure with health/journal failure or expose raw errors', async () => {
     const h = harness();

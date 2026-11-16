@@ -214,6 +214,53 @@ describe('health evidence does not assert physical process exit', () => {
     });
     expect(JSON.stringify(value)).not.toContain('SYNTHETIC_SECRET');
   });
+  it.each(['unavailable', 'before-write', 'cleanup-write'])(
+    'actual close cannot PASS with %s diagnostic evidence',
+    async (mode) => {
+      const scope = await readyScope();
+      const health = healthModule.createFunctionalHealth(scope, () => null);
+      if (mode === 'unavailable')
+        vi.spyOn(health, 'diagnostics').mockImplementation(() => {
+          throw Error('PRIVATE_DETAILS');
+        });
+      vi.spyOn(healthModule, 'createFunctionalHealth').mockReturnValueOnce(
+        health,
+      );
+      const writes: { name: string; value: unknown }[] = [];
+      const ports = createActualFunctionalPorts({
+        scope,
+        secrets: syntheticSecrets,
+        artifactSha256: 'a'.repeat(64),
+        journal: {
+          directory: 'synthetic',
+          write: (name, value) => {
+            writes.push({ name, value });
+            if (
+              (mode === 'before-write' &&
+                name === 'functional-health-before-close') ||
+              (mode === 'cleanup-write' &&
+                name === 'functional-cleanup-diagnostic')
+            )
+              return Promise.reject(Error('PRIVATE_WRITER'));
+            return Promise.resolve();
+          },
+        },
+        preflight: () => Promise.resolve(scope),
+        canonicalBaseline: () => Promise.resolve(undefined),
+        mediaOracle: () => Promise.reject(Error('NOT_USED')),
+      });
+      await expect(ports.close()).rejects.toThrow('FUNCTIONAL_BROWSER_FAILED');
+      expect(writes.map((r) => r.name)).toEqual([
+        'functional-health-before-close',
+        'functional-cleanup-diagnostic',
+      ]);
+      if (mode === 'unavailable')
+        expect(writes.at(0)?.value).toMatchObject({
+          details: { collection: 'UNAVAILABLE', components: null },
+        });
+      expect(JSON.stringify(writes)).not.toContain('PRIVATE_');
+    },
+  );
   it('actual close preserves health failure but records successful owned close operations separately', async () => {
     const scope = await readyScope();
     const health = healthModule.createFunctionalHealth(scope, () => null);
@@ -223,6 +270,20 @@ describe('health evidence does not assert physical process exit', () => {
       expectedRefreshRejections: 0,
       unexpectedErrors: 1,
     });
+    const details = {
+      schemaVersion: 1 as const,
+      collection: 'OBSERVED' as const,
+      components: {
+        unexpected: 1,
+        pageErrors: 0,
+        unmatchedConsole: 0,
+        unprovenNetworkLogs: 0,
+        pendingErrors: 0,
+      },
+      events: [],
+      droppedCount: 0,
+    };
+    vi.spyOn(health, 'diagnostics').mockReturnValue(details);
     vi.spyOn(healthModule, 'createFunctionalHealth').mockReturnValueOnce(
       health,
     );
@@ -247,6 +308,7 @@ describe('health evidence does not assert physical process exit', () => {
       name: 'functional-health-before-close',
       value: {
         phase: null,
+        details,
         collection: 'OBSERVED',
         available: true,
         expectedMediaDrops: 0,
@@ -258,6 +320,7 @@ describe('health evidence does not assert physical process exit', () => {
       name: 'functional-cleanup-diagnostic',
       value: {
         phase: null,
+        details,
         closeOperations: 0,
         rejectedCloseOperations: 0,
         health: {
