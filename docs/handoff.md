@@ -2557,3 +2557,26 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - M20packet924c3b3437f95f0048518bd1940f5c47d2a811357e6a6274d2acee72de634828；2Source exactworkflow刪兩行env＋新無flag契約，8tests/lint/type/Prettier/AST/EOF/diff0；Root8/0.325s與66protectedGit/operator44核，worker另1918unownednon-docs bytes。0findings；Rootsummary94aa9d47de9634476c987c1308b7306737cdbe3bd578d55e2d62b1a7f3826eb6，review docs/reviews/2026-11-17-linux-full-suite-restore-m20-review.md。
 - Root將exact5paths gated commit/check0/clean、remoteexacte866核後FF新Source push/attempt1。下一job正常six-person→15legs（anon3/10/20/fresh40/60/existing與backend3/10/20/40/60），fresh60的59＋T1及R1 outsider原106Local身份保持；每新SHA重建profile/build/request/receipt，不carry前級當容量PASS，非PASS即停升級。不為補結果報告任意改已測Source SHA。
 - 原WIP/G8/85保護，40/60仍未驗，US$0／US$5上限保留。Hosted/Production/真寄信NONE；WB5仍須具體Hostedadapter/OTP/限流與Owner exactSHA窗口，Local不替代Hosted。
+
+
+### 2026-11-17 — 正常Local run15已啟動，Source4051凍結
+
+- M20 exact5paths/check0/clean commit4051b4007768d9db0e50cd89cf41bd5a0972ef09；remoteexacte866核後正常FF，新push/attempt1 run43888488403/job133372980592，正常six-person→15legs，未GHrerun。Root加密artifact watcher21559監看matchingSource下載，當時setup/bootstrap進行；functional/40/60仍未宣稱通過。
+- 暫不改已測候選Source補報告；Root統籌結果留private receipts/本handoff，PR description呈現結果。Sameworker僅READONLY查固定HostedAuth2.197真OTP/verify/passwordgrant/refresh路由與limiter連線，不Source改動／HostedAPI／寄信／settings，不讀Root私有輸入。WB5尚未進執行。
+- 本輪如任一級非PASS原runner停升級並完整保留；US$0/US$5 cap、原WIP/G8/85與Production/Hosted真寄信NONE保持。
+
+
+### 2026-11-17 — Native15確定官方映像限流；M21同worker窄修正已授權
+
+- 正常Local run43888488403/job133372980592/source4051b4007768d9db0e50cd89cf41bd5a0972ef09/push/attempt1已completed/failure；start DOCKER_IMAGE_PULL正常closed/exit1、stderr59B/SHA315bad000605c445bfd9911b426d2dbaf0b68e2654478d071dc39219e60c4295，Root真解密核exact Rate exceeded。不是Data limit exceeded；共享runner/IP是否成因UNKNOWN，網站/Auth/業務尚未開始。API ZIP2509B/572c3db84cbfc3e7696e1d677529894d70fea45e78da157e29aad1800453b857核、cipher2371B/06be371c84bb528260b6c4c41e609a5155fe51340fd2686995d034a249e37ee1、outermanifestc38f658f9dba0310716c2efb1d3232fbd99a70f1f4e62b62e9f07612eaacac8e/8files3982B age AEAD全檔核。Rootreceipt12db537d0fc395e74c8533daa4521e65cd625e5a018ac0b072bbb59bc35bfc63，finaljoblog22334B/fd18d49bea7577e6249832369e24b6fb78c0e2f1ed52ea30baa3e26c9e9fa4ee；不回填capacity結果，functional/15legs仍NOT_RUN。
+- M21brief docs/superpowers/plans/2026-11-17-linux-ecr-pull-m21-brief.md SHA4c417c4072fb515bd2f82f8c7e3823c4a403945c67df15ba9e2a0744952095ff，exact4paths同worker：固定approved immutableECR pull專用port／NativeIO／fixture補port／新直接tests。只有exact59B＋exit1＋normalphysicalclose最多3，5/10秒退避共用原180s；transient wx600 history獨立2MiB先保存、不吞原first-terminal raw；writer/unknown/timeout/cancel/late不續。其他錯誤/CLIstart/job/business不retry；正常six-person/15legs、所有SLO/caps/停機資料保護保持。worker禁止Native/雲端；Root唯一review後才新Source/newpush/attempt1，不GHrerun。
+- HostedAuth2.197 pinned Source路由readonly16官方檔與repo/SDK全SHA Root核，manifest71bc8f64e3fca41ad9904c6917652a19b318dc15246605bf247a57c5073d402f、Rootreceipt131f3e9b16e0b77adbeaabb1f307e4d06de38684e949735997b3ebc81073618d。真UI送碼走Otp，不重入/signup路由；password與refresh共Token limiter；verify獨立Verify。合法admincaptcha例外不免Token；gateway/header/key聚合與SMTP/Hosted60真測仍UNKNOWN，未API負載/寄信/settings。
+- 已查看使用者更新帳號對應DigitalOcean舊tab，仍顯示Session has expired；點Sign back in now未前進。未核得免費額度／未建主機或付款，不影響現有GitHub免費runner路線。主機US$0/US$5上限、原7protected/handoff575959Bprefix現核符；原WIP/G8停止85/Hosted/Production/mail NONE保持。
+
+
+### 2026-11-17 — M21唯一Root review接受；準備新Source正常Local測試
+
+- M21 frozenpacket a549de3cf8e5baa84c7f46eeecf20d3642eadc80a63862ba75634ec34366ea2a；exact4Source、27records SHA核；worker9direct/183Python與lint/type/static/import/EOF/diff0，66protected actualGit/operator44與另1917unowned non-docs保持。Root9/0.716s＋75獨立precise-byte/exit-type/cancel/late-writer/later-unknown保存控制PASS，0findings，summary52182787241dbfbd39226628554663f2578affd1c9433917ac624f277cd24526。review docs/reviews/2026-11-17-linux-ecr-pull-m21-review.md，最大462行。
+- Only fixed approved ECR pull正常closed/exit1/exact59B才能3attempts/5-10秒、原180s共用；transient wx600 raw及獨立2MiB history先保存、不吞terminalfirstslot。其他錯誤/timeout/cancel/unknown/writer/late不續；CLIstart不重試，通用run/bounded與停機保留/正常15legs/caps不變。原RED與fixture setup FAIL保留，Native15不回填。三次仍rate便停止，不盲開相同內容job或繞quota。
+- Root將exact7paths gated cachedcheck0/commit/clean，核remote仍4051後正常FF，一個新Source/newpush/attempt1。完整cold capture/transfer前級Native14已核，不重開零業務gate；下一先six-person，再原15分立legs，非PASS停止升級，Source/profile/build/receipts新綁定。
+- Root另備private offline下載business receipt revalidator d346576139b738bf75a0890aea73862b304127720dc6a52bcf4045888b2cda17；Native14真NOT_RUN控制拒冒充business PASS，AST0。首次用relative argument被自身絕對路徑guard拒、改正命令通；不為此改Source。75以外的真完整15chain尚待實際artifact資格，不當新kernel／restore證據。US$0、40/60尚未驗、原WIP/G8停止85／Hosted／Production／真寄信NONE。

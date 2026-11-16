@@ -157,6 +157,7 @@ class NativeIO:
         self.source, self.environment, self.platform = SOURCE, dict(os.environ), sys.platform
         self.command_diagnostic = None
         self._raw_root, self._raw_attempted, self._raw_request_sha = None, False, None
+        self._pull_pins, self._pull_next, self._pull_history_bytes = [], 0, 0
 
     def _authorize_diagnostics(self, request_path, approved):
         if sys.platform != 'linux':return
@@ -202,6 +203,62 @@ class NativeIO:
             self._save_failed_raw(code, raw, error)
         C.require(code == 0, 'BOOTSTRAP_COMMAND_FAILED')
         return raw
+
+    def _pull_record(self, pin, index, attempt, code, out, error, outcome, transient=False):
+        prefix = 'bootstrap-pull-' + str(index) + '-attempt-' + str(attempt)
+        value = {'schemaVersion':1,'bootstrapRequestSha256':self._raw_request_sha,
+            'imageSha256':C.digest(pin['pinnedReference'].encode()),'imageIndex':index,'attempt':attempt,
+            'operation':'DOCKER_IMAGE_PULL','exitCode':code,'outcome':outcome,
+            'physicalClosure':'UNKNOWN' if code is None else 'VERIFIED',
+            'stdoutBytes':len(out) if out is not None else None,'stdoutSha256':C.digest(out) if out is not None else None,
+            'stderrBytes':len(error) if error is not None else None,'stderrSha256':C.digest(error) if error is not None else None}
+        if transient:
+            C.require(self._pull_history_bytes + len(out) + len(error) <= 2097152, 'BOOTSTRAP_OUTPUT_LIMIT')
+            self._pull_history_bytes += len(out) + len(error)
+            C.write_once(self._raw_root / (prefix + '-stdout.bin'), out)
+            C.write_once(self._raw_root / (prefix + '-stderr.bin'), error)
+        C.write_once(self._raw_root / (prefix + '.json'), value)
+
+    def pull_approved_image(self, pin, imageIndex):
+        C.require(self._raw_root is not None and type(imageIndex) is int and imageIndex == self._pull_next and
+                  0 <= imageIndex < len(self._pull_pins) == 8 and type(pin) is dict and pin == self._pull_pins[imageIndex] and
+                  bool(re.fullmatch(r'public\.ecr\.aws/supabase/[a-z0-9-]+@sha256:[a-f0-9]{64}', pin.get('pinnedReference',''))),
+                  'BOOTSTRAP_DIAGNOSTIC_SCOPE_INVALID')
+        self._pull_next += 1
+        args = [*B.DOCKER, 'pull', '--platform', 'linux/amd64', pin['pinnedReference']]
+        deadline = time.monotonic() + 180
+        for attempt in range(1,4):
+            remaining = deadline - time.monotonic()
+            C.require(remaining > 1, 'BOOTSTRAP_COMMAND_TIMEOUT')
+            self.command_diagnostic = None
+            try:
+                code, out, error = bounded(args, self.source, timeout=remaining, checked=False, capture_stderr=True)
+                C.require(type(code) is int and isinstance(out,bytes) and isinstance(error,bytes), 'BOOTSTRAP_COMMAND_FAILED')
+            except Exception:
+                self.command_diagnostic = {'operation':'DOCKER_IMAGE_PULL','exitCode':None,'stderrBytes':None,
+                    'stderrSha256':None,'classification':'UNKNOWN'}
+                self._save_failed_raw(None, None, None)
+                self._pull_record(pin,imageIndex,attempt,None,None,None,'UNKNOWN')
+                raise
+            late = time.monotonic() >= deadline
+            exact_rate = code == 1 and error == b'Error response from daemon: toomanyrequests: Rate exceeded\n'
+            self.command_diagnostic = None if code == 0 and not late else {
+                'operation':'DOCKER_IMAGE_PULL','exitCode':code if code != 0 else None,'stderrBytes':len(error),
+                'stderrSha256':C.digest(error),'classification':'IMAGE_PULL' if exact_rate else stderr_classification(error)}
+            retry = exact_rate and attempt < 3 and not late
+            if code != 0 and not retry or late:self._save_failed_raw(code, out, error)
+            outcome = 'LATE' if late else 'SUCCESS' if code == 0 else 'TRANSIENT_RATE' if retry else 'TERMINAL'
+            try:self._pull_record(pin,imageIndex,attempt,code,out,error,outcome,retry)
+            except Exception:
+                if code != 0:self._save_failed_raw(code, out, error)
+                raise
+            C.require(time.monotonic() < deadline, 'BOOTSTRAP_COMMAND_TIMEOUT')
+            if code == 0:return out
+            C.require(retry, 'BOOTSTRAP_COMMAND_FAILED')
+            delay = 5 if attempt == 1 else 10
+            C.require(deadline - time.monotonic() > delay + 1, 'BOOTSTRAP_COMMAND_TIMEOUT')
+            time.sleep(delay)
+            C.require(time.monotonic() < deadline, 'BOOTSTRAP_COMMAND_TIMEOUT')
 
     def system_exists(self, path):
         return os.path.lexists(path)
@@ -325,6 +382,7 @@ def bootstrap(request_path, approval, ports=None):
         project_dir, configuration, sources, secret, key = B.project(io, io.source, runtime, tools, inputs, inputs_sha)
         C.write_once(runtime / 'source-bindings.json', sources)
         pins = B.image_pins(operators['linux-image-pins.json'])
+        if isinstance(io, NativeIO):io._pull_pins = json.loads(json.dumps(pins))
         stage = 'start'
         state = B.start(io, runtime, project_dir, tools, pins, secret, key)
         stage = 'readback'

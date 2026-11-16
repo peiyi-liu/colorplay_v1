@@ -112,6 +112,10 @@ class Fixture:
     def execute(self):
         return M.bootstrap(self.path, C.digest(self.path.read_bytes()), self)
 
+    def pull_approved_image(self, pin, imageIndex):
+        assert pin == self.pins[imageIndex]
+        return self.run([*B.DOCKER, 'pull', '--platform', 'linux/amd64', pin['pinnedReference']], timeout=180)
+
     def run(self, args, **options):
         self.commands.append((args, options))
         if self.fail and self.fail(args):

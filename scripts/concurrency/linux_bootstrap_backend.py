@@ -207,8 +207,8 @@ def check_status(raw, secret, key, io, runtime, node):
 
 
 def start(io, runtime, project_dir, tools, pins, secret, key):
-    for pin in pins:
-        docker(io, 'pull', '--platform', 'linux/amd64', pin['pinnedReference'], timeout=180)
+    for index, pin in enumerate(pins):
+        io.pull_approved_image(pin, index)
         image = decode(docker(io, 'image', 'inspect', pin['pinnedReference']))[0]
         require(image['Id'] == pin['configDigest'] and image['Architecture'] == 'amd64' and image['Os'] == 'linux')
         docker(io, 'tag', pin['pinnedReference'], pin['tag'])
