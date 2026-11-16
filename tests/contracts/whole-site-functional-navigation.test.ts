@@ -142,3 +142,48 @@ describe('intercepted functional navigation readiness keeps real Page identity',
     await h.actual.close();
   });
 });
+
+import { createFunctionalMediaObservation } from '../../scripts/concurrency/functional-media-observation';
+it('issues media goto intent only at original invocation after old pending/quiet/fonts', async () => {
+  vi.useFakeTimers();
+  const h = await setup();
+  const observation = createFunctionalMediaObservation(
+    syntheticScope(),
+    () => 'media',
+  );
+  observation.register(h.owned, () => 'A1');
+  observation.port(h.owned).step('editor');
+  const raw = {
+    request: {
+      url: syntheticScope().supabaseUrl + '/functions/v1/content-media',
+      method: 'POST',
+      postData: '{"action":"resolve"}',
+    },
+  };
+  const old = observation.request(h.owned, 'old', raw);
+  const pendingRequest = {};
+  h.page.emit('request', pendingRequest);
+  let created: ReturnType<typeof observation.request> | undefined;
+  h.originalGoto.mockImplementationOnce(() => {
+    created = observation.request(h.owned, 'new', raw);
+    return Promise.resolve(null);
+  });
+  const task = h.owned.goto('/admin/content');
+  await vi.advanceTimersByTimeAsync(600);
+  expect(h.originalGoto).not.toHaveBeenCalled();
+  expect(old.requestIntent).toBeNull();
+  h.page.emit('requestfinished', pendingRequest);
+  await vi.advanceTimersByTimeAsync(500);
+  expect(created?.requestIntent).toMatchObject({
+    ordinal: 1,
+    kind: 'ROOT_GOTO_ADMIN_CONTENT',
+    state: 'INVOKED',
+  });
+  observation.failure(h.owned, 'old', {});
+  expect(old.requestIntent).toBeNull();
+  expect(old.failureIntent?.ordinal).toBe(1);
+  await vi.advanceTimersByTimeAsync(500);
+  await task;
+  await h.actual.close();
+  expect(vi.getTimerCount()).toBe(0);
+});

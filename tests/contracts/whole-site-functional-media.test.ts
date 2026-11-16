@@ -441,3 +441,94 @@ describe('functional media uses real repository and ZIP contracts', () => {
     }
   });
 });
+
+import { createFunctionalMediaObservation } from '../../scripts/concurrency/functional-media-observation';
+import {
+  leaveUnsavedMediaEditor,
+  runMediaJourney,
+} from '../../scripts/concurrency/media-journey';
+it.each(['success', 'abort', 'error'])(
+  'observes the actual unsaved editor %s without changing actions',
+  async (kind) => {
+    const scope = await readyScope(),
+      page = new EventEmitter();
+    const observation = createFunctionalMediaObservation(scope, () => 'media');
+    observation.register(page, () => 'A1');
+    const signal = new AbortController(),
+      original = new Error('SYNTHETIC_ORIGINAL');
+    const action = vi.fn(() => {
+      if (kind === 'error') return Promise.reject(original);
+      page.emit('dialog', {
+        type: () => 'confirm',
+        message: () => '尚有未儲存變更，離開會捨棄這些變更。確定繼續嗎？',
+        accept: () => Promise.resolve(),
+      });
+      if (kind === 'abort') signal.abort();
+      return Promise.resolve();
+    });
+    const task = leaveUnsavedMediaEditor(
+      page as unknown as Page,
+      action,
+      observation.port(page),
+      signal.signal,
+    );
+    if (kind === 'success') await task;
+    else if (kind === 'error') await expect(task).rejects.toBe(original);
+    else await expect(task).rejects.toThrow();
+    const record = observation.request(page, 'after', {
+      request: { url: scope.supabaseUrl, method: 'GET' },
+    });
+    expect(record.requestIntent?.state).toBe(
+      kind === 'success' ? 'COMPLETED' : 'FAILED',
+    );
+    expect(record.documentOrdinal).toBeNull();
+    expect(action).toHaveBeenCalledTimes(1);
+    expect(page.listenerCount('dialog')).toBe(0);
+  },
+);
+it.each(['writer', 'abort', 'confirmed'])(
+  'does not update a media step or perform UI/API after started journal %s failure',
+  async (bad) => {
+    const scope = await readyScope(),
+      signal = new AbortController();
+    const entered = Promise.withResolvers<undefined>(),
+      pending = Promise.withResolvers<undefined>();
+    const step = vi.fn(),
+      getUser = vi.fn(),
+      evaluate = vi.fn();
+    let writes = 0;
+    const journal = {
+      directory: 'synthetic',
+      write: () => {
+        writes++;
+        entered.resolve(undefined);
+        return writes === 1 ? pending.promise : Promise.resolve();
+      },
+    };
+    type Args = Parameters<typeof runMediaJourney>;
+    const task = runMediaJourney(
+      { evaluate } as unknown as Page,
+      { auth: { getUser } } as unknown as Args[1],
+      { label: 'A1', userId: randomUUID() } as Args[2],
+      scope,
+      {} as Args[4],
+      signal.signal,
+      journal,
+      {} as Args[7],
+      vi.fn(),
+      { step, view: (action) => action() },
+    );
+    const rejected = expect(task).rejects.toThrow();
+    await entered.promise;
+    if (bad === 'writer') pending.reject(new Error('SYNTHETIC_WRITER_ERROR'));
+    else {
+      if (bad === 'abort') signal.abort();
+      pending.resolve(undefined);
+    }
+    await rejected;
+    expect(step).toHaveBeenCalledTimes(bad === 'confirmed' ? 1 : 0);
+    if (bad === 'confirmed') expect(step).toHaveBeenCalledWith('authorization');
+    expect(getUser).not.toHaveBeenCalled();
+    expect(evaluate).toHaveBeenCalledTimes(bad === 'confirmed' ? 1 : 0);
+  },
+);

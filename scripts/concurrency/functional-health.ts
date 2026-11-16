@@ -1,3 +1,4 @@
+import { createFunctionalMediaObservation } from './functional-media-observation';
 import { createFunctionalHealthDiagnostics } from './functional-health-diagnostics';
 import { functionalEndpoint, resourceCode } from './functional-network-event';
 import type { NetworkRecord } from './functional-network-event';
@@ -43,6 +44,7 @@ export const createFunctionalHealth = (
     phase,
     approvedStaticAssetPaths,
   );
+  const mediaObservation = createFunctionalMediaObservation(scope, phase);
   let disposed = false;
   const records = new Map<string, NetworkRecord>();
   const expectedDrops = new Map<string, number>();
@@ -110,6 +112,7 @@ export const createFunctionalHealth = (
       enabled: false,
     };
     pages.set(page, info);
+    mediaObservation.register(page, () => info.actor);
     auth.register(page, info.index);
     images.register(page, () => info.actor);
     const loaded = auth.loaded.bind(undefined, page);
@@ -152,6 +155,13 @@ export const createFunctionalHealth = (
         const cdp = await context.newCDPSession(page);
         info.cdp = cdp;
         await images.attach(page, cdp);
+        const documentListener = (raw: unknown) => {
+          mediaObservation.document(page, raw);
+        };
+        cdp.on('Page.frameNavigated', documentListener);
+        info.disposers.push(() =>
+          cdp.off('Page.frameNavigated', documentListener),
+        );
         const requestListener = (raw: unknown) => {
           try {
             const event = z
@@ -168,7 +178,11 @@ export const createFunctionalHealth = (
               unavailableAt('REQUEST_LIMIT', info.index);
               return;
             }
-            evidence.request(info.index, event);
+            evidence.request(
+              info.index,
+              event,
+              mediaObservation.request(page, event.requestId, raw),
+            );
             images.request(
               page,
               `${String(info.index)}:${event.requestId}`,
@@ -264,6 +278,7 @@ export const createFunctionalHealth = (
                 unavailableAt('RESPONSE_GAP', info.index, event.requestId);
               return;
             }
+            mediaObservation.response(page, event.requestId);
             images.response(`${String(info.index)}:${event.requestId}`, raw);
             auth.response(page, event.requestId, event.response.status);
             record.status = event.response.status;
@@ -290,6 +305,8 @@ export const createFunctionalHealth = (
               }
               return;
             }
+            if (records.has(`${String(info.index)}:${event.requestId}`))
+              mediaObservation.failure(page, event.requestId, raw);
             const proof = images.failed(
               page,
               `${String(info.index)}:${event.requestId}`,
@@ -344,6 +361,7 @@ export const createFunctionalHealth = (
               unavailableAt('FINISH_GAP', info.index, event.requestId);
               return;
             }
+            mediaObservation.finished(page, event.requestId);
             record.finished = true;
             if (
               record.endpoint === 'logout' &&
@@ -355,6 +373,7 @@ export const createFunctionalHealth = (
             }
             if (record.status < 400) {
               records.delete(`${String(info.index)}:${event.requestId}`);
+              mediaObservation.forget(page, event.requestId);
               evidence.forget(info.index, event.requestId);
               return;
             }
@@ -465,6 +484,7 @@ export const createFunctionalHealth = (
       info.actor = actor;
       auth.identify(page, actor);
     },
+    mediaObservation: mediaObservation.port,
     expectLogout: auth.expectLogout,
     authDiagnostics: auth.diagnostics,
     imageDiagnostics: images.diagnostics,
@@ -518,6 +538,7 @@ export const createFunctionalHealth = (
           sum + Math.max(0, count - (provenLogs.get(key) ?? 0)),
         0,
       );
+      if (!mediaObservation.available()) evidence.invalidate();
       evidence.reconcile(
         unexpected,
         pageErrors,
@@ -531,6 +552,7 @@ export const createFunctionalHealth = (
         available:
           !unavailable &&
           evidence.available() &&
+          mediaObservation.available() &&
           images.available() &&
           auth.diagnostics().unresolvedLogoutDeclarations === 0 &&
           pages.size > 0 &&
@@ -544,6 +566,7 @@ export const createFunctionalHealth = (
     dispose: async () => {
       disposed = true;
       evidence.seal();
+      mediaObservation.seal();
       const imageStop = images.dispose();
       for (const [page, info] of pages) {
         for (const dispose of info.disposers) dispose();

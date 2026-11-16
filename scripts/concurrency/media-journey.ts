@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+import type { FunctionalMediaPort } from './functional-media-observation';
 import { expect, type Page, type Dialog, type Locator } from '@playwright/test';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
@@ -44,6 +45,8 @@ const authoring = (
 export const leaveUnsavedMediaEditor = async (
   page: Page,
   action: () => Promise<unknown>,
+  observation?: FunctionalMediaPort,
+  signal?: AbortSignal,
 ) => {
   let seen = 0;
   const state = { valid: true };
@@ -64,9 +67,14 @@ export const leaveUnsavedMediaEditor = async (
   };
   page.on('dialog', listener);
   try {
-    await action();
-    await Promise.allSettled(tasks);
-    if (seen !== 1 || !state.valid) return fail('FUNCTIONAL_OPERATION_FAILED');
+    const run = async () => {
+      await action();
+      await Promise.allSettled(tasks);
+      if (seen !== 1 || !state.valid)
+        return fail('FUNCTIONAL_OPERATION_FAILED');
+    };
+    if (observation) await observation.view(run, signal);
+    else await run();
   } finally {
     page.off('dialog', listener);
     await Promise.allSettled(tasks);
@@ -91,9 +99,14 @@ export const runMediaJourney = async (
   journal: PrivateJournal,
   binding: ReturnType<typeof createMediaHookBinding>,
   oracle: MediaReadonlyOracle,
+  observation?: FunctionalMediaPort,
 ) =>
   safely(() =>
-    withMediaDiagnostics(journal, signal, async (step) => {
+    withMediaDiagnostics(journal, signal, async (started) => {
+      const step = async (next: Parameters<typeof started>[0]) => {
+        await started(next);
+        observation?.step(next);
+      };
       await step('authorization');
       if (admin.label !== 'A1' || !admin.userId)
         return fail('FUNCTIONAL_SCOPE_INVALID');
@@ -277,8 +290,12 @@ export const runMediaJourney = async (
         ).toHaveCount(3);
         const duplicateProof = policy.assertDuplicate();
         await step('leave_editor');
-        await leaveUnsavedMediaEditor(page, () =>
-          page.getByRole('button', { name: '外部匯入', exact: true }).click(),
+        await leaveUnsavedMediaEditor(
+          page,
+          () =>
+            page.getByRole('button', { name: '外部匯入', exact: true }).click(),
+          observation,
+          signal,
         );
         await step('zip_recovery');
         const importUi = page.locator('section[aria-label="內容匯入流程"]');

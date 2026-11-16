@@ -1,3 +1,7 @@
+import {
+  functionalMediaContextSchema,
+  emptyFunctionalMediaContext,
+} from './functional-media-observation';
 import { z } from 'zod';
 import type { FunctionalScope } from './config';
 import { functionalStages, type FunctionalStage } from './functional-receipt';
@@ -94,6 +98,7 @@ const eventSchema = z.strictObject({
   line: count.positive().max(10000000).nullable(),
   column: count.positive().max(10000000).nullable(),
   occurrences: count.positive(),
+  mediaContext: functionalMediaContextSchema,
 });
 export const functionalHealthDetailsSchema = z
   .strictObject({
@@ -263,6 +268,7 @@ export const createFunctionalHealthDiagnostics = (
     networkCode: 'NONE',
     errorName: 'OTHER',
     ...unknownPosition(),
+    mediaContext: emptyFunctionalMediaContext(),
   });
   const key = (page: number, id: string) => `${String(page)}:${id}`;
   const make = (
@@ -285,7 +291,9 @@ export const createFunctionalHealthDiagnostics = (
         bad = true;
         return;
       }
-      events.push(make(branch, meta));
+      const event = make(branch, meta);
+      event.mediaContext = meta.mediaContext;
+      events.push(event);
     } catch {
       bad = true;
     }
@@ -339,12 +347,16 @@ export const createFunctionalHealthDiagnostics = (
   return {
     note,
     available: () => !bad,
+    invalidate: () => {
+      bad = true;
+    },
     seal: () => {
       sealed = true;
     },
     request: (
       page: number,
       event: { requestId: string; request: { url: string } },
+      mediaContext = emptyFunctionalMediaContext(),
     ) => {
       try {
         if (!touch()) return;
@@ -357,6 +369,7 @@ export const createFunctionalHealthDiagnostics = (
           ...empty(page),
           requestOrdinal: metadata.get(k)?.requestOrdinal ?? ++ordinal,
           endpoint: family(event.request.url),
+          mediaContext,
         });
       } catch {
         bad = true;

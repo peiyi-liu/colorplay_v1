@@ -406,6 +406,7 @@ export const createActualFunctionalPorts = (
         runtime.journal,
         binding,
         (input) => runtime.mediaOracle(input, signal),
+        health.mediaObservation(page('A1')),
       );
       return proof(stage, {
         mediaAssets: result.readback.assets,

@@ -2751,3 +2751,28 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 ### 2026-11-17 — WB5既有發布credential名稱唯讀盤點
 
 - GitHub connector無列secret工具，改用已核gh secret list只names/updatedAt：repo0、environment staging4（Access Token／Anon Key／Secret Key／Vercel Token），沒有讀值／改值。專用DB連接credential未從這些名稱辨識，Management token有效性與DDL port仍UNKNOWN，不能由API token名稱推稱可正確apply原version。metadata .git/staging-credential-names-readonly-20261117.json SHA56dcbe73d471037169bf990fa72dd5ede1c3060b3324530d0c1c8f703fca544e；發布/DDL/OTP/Hosted窗口尚無新執行授權，寫入0。
+
+
+### 2026-11-17 — M25固定Source正常Native20已啟動
+
+- Root exact7paths cachedcheck0/commit/clean：47f2c5cfadf7ca9f710429203b708d3db84866c1；networkfresh核specialremote仍9063bd9b1f98609d933fa54a57ae2b161dbb2e67後正常FF。新push/attempt1 run43934004541/job133533644322，正常six-person→15legs；watcher38766僅matchingSHA監看／加密下載。Source凍結、同worker待命。
+- 原3s/7s freshness、started-at age、採樣週期/CPU/memory/SLO與全部guards保留；M25只是固定13 independent reads重疊與4時點metadata，不宣稱Native19實際cause或40/60 PASS。任一非PASS停升級，不GHrerun/0business gate。原全部custody/G8停止85/WIP，主機US$0/US$5 cap、Hosted/Production/真寄信NONE保持。
+
+
+### 2026-11-17 — Native20實際媒體4個中止已精確留證／最終failure
+
+- run43934004541/job133533644322/source47f2c5cfadf7ca9f710429203b708d3db84866c1 completed/failure；functional wsb-261116-216d6feca89a 270886.229ms/exit1/無signal/stderr0/noResidue/SourceFrozen，前14stages PASS、health FAIL4。M24 actual OBSERVED components unexpected4其餘0/events4：media phase/page9，ordinals3523/3554/3569/3592，三MEDIA一FUNCTION，皆HTTP200/ERR_ABORTED/UNAPPROVED_FAILURE。before/after一致、drops4/refresh1保持；media5assets11variants2drafts／Live20Q40answers PASS不等取消無害。method/action/cancel cause UNKNOWN，原Native18一error不回填；M25真capacity採樣未進入，15legs NOT_RUN。actualTS receipt/candidate schema與finalizer仍FAIL。
+- artifact14260048830 ZIP42511724B/69353c938a3b1d8cb1f52c0e3aa462c37efc2da6922dd0ccaa1cbd1ed27e28b1 API核；cipher42511586B/5c3030691adb131e3d90989bb96efbe21ea1d3e8b7e0d946c43acb4e883c48fd 真age AEAD，outerafc2a4e80de555cc7b0a2f579acf252c1e6b52dd492fec99ac57b15a92ccacba/561files211959537B全核；innerdc187cdf8739e4795b5fa6212ba07b96ed49d59109b5b938a8ff136b7bd024fb/528files，8stops/全部roleproof、DB2/127tables/31rolesORDER_ONLY、3vol7017regularfiles185604055B與metadata、runtime476data32publiccode/metadata-only0全核。6Auth/16mediafiles保留，未restore；Rootfinalreceipt a63a99c78510fab7e779f5e847f6f1494639eb572fa76ed5d37de937b14edf76，joblog22104B/c7f839eedbc230fcf944f9ab3b18d41412371c4beb3ec0d2b32357ca8e1d56b3。全部cipher已本機保留，不GHrerun。
+
+### 2026-11-17 — M26工具-only完整媒體request context診斷已授權
+
+- Root核readonly proposal6829f3d091003f6f9201a2ea34df6a8cb623cbc95012efe7abed0ab41786f588／manifestc3dd010f1246aeb35442dca4d3fc2b77436eeb1d9a4487b2ccad64a0260c2ca8，23Source/1record。Source正常page9吻合A1，還須直接記role。queryFn未傳signal、mutation無unmount abort cleanup，故unmount→TanStack假說被Source否證；browser-client正常EOF不abort/cancel，TIMEOUT／UPSTREAM／BODY_CANCEL三路不能由CDP200/ERR_ABORTED或8.458s推定。沒有任何產品或expected修改。
+- 正式brief docs/superpowers/plans/2026-11-17-linux-media-abort-context-m26-brief.md SHA92c30b2f82b818c20a837900dcff9c4b93d078d389f71bb9fd50423142f5a6da，sameworker exact11paths＝原6工具Source＋focused functional-media-observation新module及4直接tests。只closed method/action/function/actor/mediaStep／Rootgoto-view intent／同request Node observed lifecycle；取消來源/app bodyEOF必UNOBSERVED。step只journal先成功後更新，intent只真既有UI/goto邊界，SPA不冒充Document／不套最近intent，未知/overflow/late收緊available。原四錯誤保FAIL，drops4/refresh1/classifiers/Auth/Image/caps/SLO不改；無新request/header/query/HTTP/IO，不產品tap或全域patch。明示行數例外保持可讀，不擴第12path。
+- 先actualRED→GREEN與actor/lifecycle/敏感資料/真正caller/error/abort控制、完整受影響checks再freeze，Root唯一review後才新Source/newpush/attempt1。Root初readonly verifier因不同manifest path-prefix誤雙加.git prefix，未寫資料；改按實際path lexeme定位後23/1全核，非Source issue。原WIP/original7prefix/G8停止85/全部custody，主機US$0/US$5 cap，40/60未驗／Hosted/Production/真寄信NONE。
+
+
+### 2026-11-17 — M26唯一Root審查接受／待Native21
+
+- latest packet a3ec2910c6a1a3320a5fba3afa9faaf12671e3197edc3df5f71e6f0b187b7256／100records含原78完整，11Source/brief SHA核。Worker39files537tests/final82、full checks全0；Root4files82tests1.37s＋actual export合成四abort/context/敏感欄位/矛盾late/Document控制PASS，SYNTHETIC_ONLY/NONE。1937unowned actualGit blobs/operator44/original7prefix核符；原4test bytes保持prefix，0findings／唯一round，Rootreceipt 1e7897259ec2a260a2d4d64c679a168a7373c7c3fbbed9742ede21cf6225cda7，review docs/reviews/2026-11-17-linux-media-abort-context-m26-review.md。
+- 只closed method/action/actor/step/Node lifecycle與Root既有goto/view intent；request當時與failure當時intent分開，四個abort仍FAIL，取消來源/app bodyEOF固定UNOBSERVED；原classifiers/Auth/Image/counters/caps/SLO不改，無src產品變更或新HTTP/IO。Worker初RED/setup與凍結前修正完整保留。Root保護script舊行數上限probe失敗改按brief每檔limit後通過，非Source issue。
+- Root準備exact14paths gated commit/clean，fresh specialremote47f2後正常FF新Source/newpush/attempt1正常six-person→15legs。M25真capacity未run、40/60未驗，Native18不回填。原WIP/G8停止85/全部custody保持，主機US$0/US$5 cap，Hosted/Production/真寄信NONE。

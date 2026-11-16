@@ -1,3 +1,4 @@
+import { runFunctionalMediaNavigation } from './functional-media-observation';
 import { performance } from 'node:perf_hooks';
 import type { BrowserContext, Page, Request } from '@playwright/test';
 import { fail } from './config';
@@ -150,10 +151,16 @@ export const installFunctionalNavigation = (
       within(options?.timeout ?? 15_000, async (remaining) => {
         await ready(remaining);
         sequences.set(page, (sequences.get(page) ?? 0) + 1);
-        const response = await originalGoto(url, {
-          ...options,
-          timeout: remaining(),
-        });
+        const response = await runFunctionalMediaNavigation(
+          page,
+          url,
+          () =>
+            originalGoto(url, {
+              ...options,
+              timeout: remaining(),
+            }),
+          signal,
+        );
         await ready(remaining);
         return response;
       });

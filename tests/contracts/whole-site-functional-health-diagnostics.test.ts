@@ -403,3 +403,148 @@ describe('safe functional health detail at the actual observer seam', () => {
     await h.health.dispose();
   });
 });
+
+it('retains safe method/action/actor and aborted lifecycle without inventing client EOF', async () => {
+  const h = await setup();
+  h.request('media-private');
+  h.response('media-private', 200);
+  h.cdp.emit('Network.loadingFailed', {
+    requestId: 'media-private',
+    errorText: 'net::ERR_ABORTED',
+    canceled: true,
+  });
+  await h.health.settle();
+  expect(h.health.snapshot().unexpectedErrors).toBe(1);
+  expect(h.health.diagnostics().events[0]).toMatchObject({
+    mediaContext: {
+      method: 'POST',
+      actor: 'A1',
+      functionFamily: 'MEDIA',
+      action: 'MEDIA_PROCESS',
+      lifecycle: 'FAILED',
+      cancelSource: 'UNOBSERVED',
+      appBodyEof: 'UNOBSERVED',
+    },
+  });
+  expect(JSON.stringify(h.health.diagnostics())).not.toContain('PRIVATE_TOKEN');
+});
+
+import { functionalRequestContext } from '../../scripts/concurrency/functional-network-event';
+it.each([
+  ['content-media', 'begin', 'MEDIA_BEGIN'],
+  ['content-media', 'resolve', 'MEDIA_RESOLVE'],
+  ['content-media', 'abort', 'MEDIA_ABORT'],
+  ['content-import', 'begin', 'IMPORT_BEGIN'],
+  ['content-import', 'preview', 'IMPORT_PREVIEW'],
+  ['content-import', 'commit', 'IMPORT_COMMIT'],
+])(
+  'classifies only exact %s/%s without retaining private fields',
+  (family, action, expected) => {
+    const value = functionalRequestContext(scope.supabaseUrl, {
+      method: 'POST',
+      url: `${scope.supabaseUrl}/functions/v1/${family}`,
+      postData: JSON.stringify({ action, private: 'PRIVATE_PAYLOAD' }),
+      headers: { private: 'PRIVATE_TOKEN' },
+    });
+    expect(value.action).toBe(expected);
+    expect(JSON.stringify(value)).not.toContain('PRIVATE');
+  },
+);
+it.each(['query', 'fragment', 'foreign', 'malformed', 'unknown', 'oversize'])(
+  'cannot classify private or unsupported %s as a known action',
+  (kind) => {
+    const raw = {
+      method: 'POST',
+      url: media,
+      postData: JSON.stringify({ action: 'process' }),
+    };
+    if (kind === 'query') raw.url += '?private=PRIVATE';
+    if (kind === 'fragment') raw.url += '#PRIVATE';
+    if (kind === 'foreign')
+      raw.url = 'https://synthetic.invalid/functions/v1/content-media';
+    if (kind === 'malformed') raw.postData = '{PRIVATE';
+    if (kind === 'unknown') raw.postData = '{"action":"PRIVATE"}';
+    if (kind === 'oversize') raw.postData = 'PRIVATE'.repeat(1000);
+    const value = functionalRequestContext(scope.supabaseUrl, raw);
+    expect(value.action).toBe('UNKNOWN');
+    expect(JSON.stringify(value)).not.toContain('PRIVATE');
+  },
+);
+
+import { createFunctionalMediaObservation } from '../../scripts/concurrency/functional-media-observation';
+it('bounds context, preserves document identity, retires success and rejects untrusted Root action state', async () => {
+  const h = await setup();
+  h.cdp.emit('Page.frameNavigated', { frame: { url: app + '/admin/content' } });
+  h.cdp.emit('Network.requestWillBeSent', {
+    requestId: 'document-bound',
+    documentURL: app + '/admin/content',
+    request: {
+      method: 'POST',
+      url: media,
+      postData: '{"action":"resolve"}',
+      headers: {},
+    },
+  });
+  h.cdp.emit('Network.loadingFailed', {
+    requestId: 'document-bound',
+    errorText: 'net::ERR_ABORTED',
+  });
+  expect(h.health.diagnostics().events[0]?.mediaContext.documentOrdinal).toBe(
+    1,
+  );
+  const observer = createFunctionalMediaObservation(scope, () => 'media');
+  const page = {};
+  observer.register(page, () => 'A1');
+  const raw = { request: { method: 'GET', url: app } };
+  for (let n = 0; n < 2100; n++) {
+    observer.request(page, String(n), raw);
+    observer.response(page, String(n));
+    observer.finished(page, String(n));
+    observer.forget(page, String(n));
+  }
+  expect(observer.available()).toBe(true);
+  const foreign = {};
+  observer.register(foreign, () => 'S1');
+  let called = false;
+  await expect(
+    observer.port(foreign).view(() => {
+      called = true;
+      return Promise.resolve();
+    }),
+  ).rejects.toThrow();
+  expect(called).toBe(false);
+  expect(observer.available()).toBe(false);
+  await h.health.dispose();
+});
+it.each(['malformed', 'active-overflow', 'phase', 'late'])(
+  'rejects %s observation uncertainty without inventing authority or successful Root intent',
+  async (kind) => {
+    let current: FunctionalStage = 'media';
+    const observer = createFunctionalMediaObservation(scope, () => current),
+      page = {};
+    observer.register(page, () => 'A1');
+    const raw = {
+      request: { url: media, method: 'POST', postData: '{"action":"process"}' },
+    };
+    if (kind === 'malformed') raw.request.postData = 'PRIVATE_INVALID_JSON';
+    if (kind === 'active-overflow')
+      for (let n = 0; n < 2000; n++) observer.request(page, String(n), raw);
+    if (kind === 'late') observer.seal();
+    if (kind === 'phase') {
+      current = 'auth_controls';
+      let called = false;
+      await expect(
+        observer.port(page).view(() => {
+          called = true;
+          return Promise.resolve();
+        }),
+      ).rejects.toThrow();
+      expect(called).toBe(false);
+    } else {
+      const row = observer.request(page, 'unknown', raw);
+      expect(row.lifecycle === 'UNKNOWN' || kind === 'late').toBe(true);
+      expect(JSON.stringify(row)).not.toContain('PRIVATE');
+    }
+    expect(observer.available()).toBe(false);
+  },
+);

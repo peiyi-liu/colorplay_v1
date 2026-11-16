@@ -347,3 +347,119 @@ describe('exact CDP request identity, not URL/time, classifies functional negati
     expect(page.listenerCount('pageerror')).toBe(0);
   });
 });
+
+it('keeps all four synthetic media/import status200 aborts unexpected with no body claim', async () => {
+  const h = await setup();
+  h.health.mediaObservation(h.owned).step('single');
+  for (let n = 0; n < 4; n++) {
+    const id = `synthetic-abort-${String(n)}`;
+    h.network(
+      id,
+      requestId,
+      n === 3 ? target.replace('content-media', 'content-import') : target,
+      n === 3 ? { action: 'preview' } : { action: 'process', runId, requestId },
+    );
+    h.cdp.emit('Network.responseReceived', {
+      requestId: id,
+      response: { status: 200 },
+    });
+    h.cdp.emit('Network.loadingFailed', {
+      requestId: id,
+      errorText: 'net::ERR_ABORTED',
+      canceled: true,
+    });
+  }
+  await h.health.settle();
+  expect(h.health.snapshot()).toMatchObject({
+    unexpectedErrors: 4,
+    expectedMediaDrops: 0,
+  });
+  expect(h.health.diagnostics().events).toHaveLength(4);
+  for (const row of h.health.diagnostics().events)
+    expect(row.mediaContext).toMatchObject({
+      mediaStep: 'single',
+      lifecycle: 'FAILED',
+      cancelSource: 'UNOBSERVED',
+      appBodyEof: 'UNOBSERVED',
+    });
+  await h.health.dispose();
+});
+it('freezes request-time context and records a separate failure-time Root view intent', async () => {
+  const h = await setup();
+  const port = h.health.mediaObservation(h.owned);
+  port.step('single');
+  h.network('old');
+  port.step('leave_editor');
+  await port.view(async () => {
+    h.network('new');
+    for (const id of ['old', 'new'])
+      h.cdp.emit('Network.loadingFailed', {
+        requestId: id,
+        errorText: 'net::ERR_ABORTED',
+      });
+    await Promise.resolve();
+  });
+  const events = h.health.diagnostics().events;
+  expect(events[0]?.mediaContext).toMatchObject({
+    mediaStep: 'single',
+    requestIntent: null,
+    failureIntent: {
+      ordinal: 1,
+      kind: 'ROOT_EDITOR_TO_IMPORT',
+      state: 'INVOKED',
+    },
+    documentOrdinal: null,
+  });
+  expect(events[1]?.mediaContext).toMatchObject({
+    mediaStep: 'leave_editor',
+    requestIntent: { ordinal: 1, state: 'INVOKED' },
+  });
+  expect(h.health.snapshot().unexpectedErrors).toBe(2);
+  await h.health.dispose();
+});
+it.each(['duplicate', 'contradiction', 'late'])(
+  'fails diagnostic availability on %s without changing expected counts',
+  async (bad) => {
+    const h = await setup();
+    h.network('ambiguous');
+    if (bad === 'duplicate') h.network('ambiguous');
+    if (bad === 'late') await h.health.dispose();
+    h.cdp.emit('Network.responseReceived', {
+      requestId: 'ambiguous',
+      response: { status: 200 },
+    });
+    if (bad === 'contradiction') {
+      h.cdp.emit('Network.loadingFailed', {
+        requestId: 'ambiguous',
+        errorText: 'net::ERR_ABORTED',
+      });
+      h.cdp.emit('Network.responseReceived', {
+        requestId: 'ambiguous',
+        response: { status: 200 },
+      });
+    }
+    if (bad === 'late')
+      expect(() => {
+        h.health.mediaObservation(h.owned).step('single');
+      }).toThrow();
+    expect(h.health.snapshot().available).toBe(false);
+    expect(h.health.diagnostics().collection).toBe('UNAVAILABLE');
+    if (bad === 'contradiction')
+      expect(h.health.diagnostics().events[0]?.mediaContext.lifecycle).toBe(
+        'UNKNOWN',
+      );
+    expect(h.health.snapshot().expectedMediaDrops).toBe(0);
+  },
+);
+it('marks rejected Root action settlement after disposal unavailable without masking its error', async () => {
+  const h = await setup();
+  const pending = Promise.withResolvers<undefined>();
+  const original = new Error('SYNTHETIC_ORIGINAL_LATE_ERROR');
+  const action = h.health.mediaObservation(h.owned).view(() => pending.promise);
+  const rejected = expect(action).rejects.toBe(original);
+  await h.health.dispose();
+  pending.reject(original);
+  await rejected;
+  expect(h.health.snapshot().available).toBe(false);
+  expect(h.health.diagnostics().collection).toBe('UNAVAILABLE');
+});
