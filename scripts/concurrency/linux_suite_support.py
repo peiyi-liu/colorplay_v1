@@ -216,6 +216,10 @@ def create_snapshot_plan(revision, request_sha):
     active = load(RUNTIME / 'active-preview.json')
     pid = active['pid']
     require(type(pid) is int and pid > 0 and active['sourceRevision'] == revision)
+    tick_text = active['processStart']
+    require(type(tick_text) is str and re.fullmatch('[1-9][0-9]{0,18}', tick_text) is not None)
+    start_ticks = int(tick_text)
+    require(start_ticks <= 2**63 - 1)
     # The preview uses the same pinned Node executable, outside the workload leaf.
     executable = Path(os.readlink('/proc/' + str(pid) + '/exe'))
     require(str(executable) == ctx['binaries']['node']['path'] and digest(executable.read_bytes()) == ctx['binaries']['node']['sha256'])
@@ -224,7 +228,7 @@ def create_snapshot_plan(revision, request_sha):
     require(uid_rows == [[str(os.getuid())] * 4])
     stat_text = Path('/proc/' + str(pid) + '/stat').read_text()
     suffix = stat_text[stat_text.rfind(')') + 2:].split()
-    require(int(suffix[19]) == active['processStart'])
+    require(int(suffix[19]) == start_ticks)
     containers = []
     for row in ctx['containers']:
         actual = json.loads(run(['/usr/bin/docker', '--host', 'unix:///var/run/docker.sock', 'inspect', row['id']]))
@@ -241,7 +245,7 @@ def create_snapshot_plan(revision, request_sha):
     raw = adapter.bounded([str(PARENT / 'host-client/bin/psql'), '--no-psqlrc', '--quiet', '--tuples-only', '--no-align', '--set=ON_ERROR_STOP=1'], SOURCE, data=sql, env=database_env, timeout=20, maximum=4096)
     databases = json.loads(raw)
     require(databases == sorted(set(databases)) and databases and set(databases) <= {'postgres', '_supabase'}, 'LOCAL_DATABASE_CENSUS_UNKNOWN')
-    plan = {'schemaVersion': 1, 'confirmation': 'LOCAL_LINUX_SNAPSHOT_ONCE', 'sourceRevision': revision, 'executionProfileSha256': digest(profile_raw), 'executionContextSha256': digest(private(RUNTIME / 'execution-context.json')), 'jobIdentitySha256': digest(canonical(ctx['job'])), 'operatorPackageManifestSha256': digest((SOURCE / 'scripts/concurrency/linux-operator/package-manifest.json').read_bytes()), 'toolchainSha256': digest(private(TOOLS / 'toolchain.json')), 'bootstrapRequestSha256': request_sha, 'projectId': PROJECT, 'instanceNonce': ctx['instanceNonce'], 'databases': databases, 'preview': {'pid': pid, 'startTicks': active['processStart'], 'uid': os.getuid(), 'executablePath': str(executable), 'executableSha256': ctx['binaries']['node']['sha256'], 'hostBootIdSha256': profile['identity']['bootIdSha256']}, 'containers': sorted(containers, key=lambda item: item['role'])}
+    plan = {'schemaVersion': 1, 'confirmation': 'LOCAL_LINUX_SNAPSHOT_ONCE', 'sourceRevision': revision, 'executionProfileSha256': digest(profile_raw), 'executionContextSha256': digest(private(RUNTIME / 'execution-context.json')), 'jobIdentitySha256': digest(canonical(ctx['job'])), 'operatorPackageManifestSha256': digest((SOURCE / 'scripts/concurrency/linux-operator/package-manifest.json').read_bytes()), 'toolchainSha256': digest(private(TOOLS / 'toolchain.json')), 'bootstrapRequestSha256': request_sha, 'projectId': PROJECT, 'instanceNonce': ctx['instanceNonce'], 'databases': databases, 'preview': {'pid': pid, 'startTicks': start_ticks, 'uid': os.getuid(), 'executablePath': str(executable), 'executableSha256': ctx['binaries']['node']['sha256'], 'hostBootIdSha256': profile['identity']['bootIdSha256']}, 'containers': sorted(containers, key=lambda item: item['role'])}
     path = PARENT / 'requests/snapshot-plan.json'
     return path, write(path, plan)
 
@@ -344,14 +348,32 @@ def export_snapshot(snapshot, revision, profile_sha, job_sha, completeness='COMP
     return value
 
 
-def export_prebusiness_diagnostic(revision, request_path, request_sha, summary):
-    forbidden = ['execution-profile.json','execution-context.json','reviewed-candidate.json','functional-private','capacity-journals']
+def prebusiness_state(summary, code='PREBUSINESS_NOT_ADMITTED'):
+    phase = summary.get('failedStage')
     require(sys.platform == 'linux' and summary.get('functional') == 'NOT_RUN' and
             type(summary.get('passedLegs')) is int and summary['passedLegs'] == 0 and
-            summary.get('capacityVerdict') == 'NOT_VERIFIED', 'PREBUSINESS_NOT_ADMITTED')
-    require(request_path == PARENT / 'requests/bootstrap-input.json' and
-            not any(os.path.lexists(RUNTIME / name) for name in forbidden),
-            'PREBUSINESS_NOT_ADMITTED')
+            summary.get('capacityVerdict') == 'NOT_VERIFIED' and isinstance(phase, str) and phase in
+            {'bootstrap','profile-pin','kernel-calibration','build-and-preview','entry-bundle','edge-source-bind','snapshot-plan'},
+            code)
+    require(not any(os.path.lexists(RUNTIME / name) for name in ['functional-private','capacity-journals']), code)
+    if os.path.lexists(RUNTIME):
+        info = RUNTIME.lstat()
+        require(RUNTIME.resolve() == RUNTIME and stat.S_ISDIR(info.st_mode) and info.st_uid == os.getuid() and
+                stat.S_IMODE(info.st_mode) == 0o700, code)
+    markers = []
+    for name in ['execution-profile.json','execution-context.json','reviewed-candidate.json']:
+        path = RUNTIME / name
+        if os.path.lexists(path):
+            info = path.lstat()
+            require(phase != 'bootstrap' and stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and
+                    info.st_nlink == 1 and stat.S_IMODE(info.st_mode) == 0o600, code)
+            markers.append((name, fingerprint(info)))
+    return phase, markers
+
+
+def export_prebusiness_diagnostic(revision, request_path, request_sha, summary):
+    initial_state = prebusiness_state(summary)
+    require(request_path == PARENT / 'requests/bootstrap-input.json', 'PREBUSINESS_NOT_ADMITTED')
     raw = private(request_path)
     request = module('linux-local-bootstrap').C.parse_request(raw, request_sha, os.environ)
     require(request['sourceRevision'] == revision == os.environ.get('GITHUB_SHA'), 'PREBUSINESS_SOURCE_CHANGED')
@@ -393,6 +415,7 @@ def export_prebusiness_diagnostic(revision, request_path, request_sha, summary):
     write(target / 'diagnostic-scope.json', {'schemaVersion':1,'purpose':'PREBUSINESS_DIAGNOSTIC',
         'captureCompleteness':'PREBUSINESS_DIAGNOSTIC_ONLY','sourceRevision':revision,'executionProfileSha256':None,
         'bootstrapRequestSha256':request_sha,'jobSha256':job_sha,'rawCapture':raw_status,
+        'failedStage':initial_state[0],'profileAttested':False,'uncaptured':['RUNTIME','EXECUTION_PROFILE','DATABASES','VOLUMES'],
         'retention':'UNVERIFIED','executionAuthority':'NONE'})
     recipient = json.loads((SOURCE / 'scripts/concurrency/local-export-recipient.json').read_bytes())
     require(recipient == {'schemaVersion':1,'recipient':recipient.get('recipient'),'privateIdentityUploaded':False})
@@ -414,11 +437,11 @@ def export_prebusiness_diagnostic(revision, request_path, request_sha, summary):
     cipher = file_record(output / 'evidence.age', output)
     require(cipher['sha256'] == result.get('cipherSha256') and cipher['bytes'] == result.get('cipherBytes') and
             cipher['bytes'] <= 100*1024**2 and private(request_path) == raw and
-            not any(os.path.lexists(RUNTIME / name) for name in forbidden) and
-            summary.get('functional') == 'NOT_RUN' and summary.get('passedLegs') == 0, 'PREBUSINESS_EXPORT_UNVERIFIED')
+            prebusiness_state(summary, 'PREBUSINESS_EXPORT_UNVERIFIED') == initial_state, 'PREBUSINESS_EXPORT_UNVERIFIED')
     marker = {'result':'CIPHER_CREATED','purpose':'PREBUSINESS_DIAGNOSTIC',
         'captureCompleteness':'PREBUSINESS_DIAGNOSTIC_ONLY','executionProfileSha256':None,
         'bootstrapRequestSha256':request_sha,'jobSha256':job_sha,'rawCapture':raw_status,
+        'failedStage':initial_state[0],'profileAttested':False,'uncaptured':['RUNTIME','EXECUTION_PROFILE','DATABASES','VOLUMES'],
         'cipherSha256':cipher['sha256'],'cipherBytes':cipher['bytes'],'retention':'UNVERIFIED','executionAuthority':'NONE'}
     write(output / 'export-complete.json', marker)
     return marker

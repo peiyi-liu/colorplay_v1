@@ -61,6 +61,7 @@ def main():
         S.stage(phase, [*python, str(S.RUNTIME / 'bind-edge-source.py'), revision, 'all-functions'], 'LOCAL_EDGE_SOURCE_BOUND', timeout=120)
         # Independently retain this raw approval in Root memory before admitting
         # application fixtures. The actor never chooses its shutdown scope.
+        phase = 'snapshot-plan'
         snapshot_plan, snapshot_approval = S.create_snapshot_plan(revision, approved)
         phase = 'functional-prepare'
         prepared = S.stage(phase, [*python, str(S.RUNTIME / 'prepare-functional-request-observed.py'), revision], 'LOCAL_FUNCTIONAL_REQUEST_PREPARED', timeout=180)

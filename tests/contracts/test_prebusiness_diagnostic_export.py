@@ -55,6 +55,87 @@ class PrebusinessTests(unittest.TestCase):
         f.manifest.update(schemaVersion=2,purpose='PREBUSINESS_DIAGNOSTIC',executionProfileSha256=None,bootstrapRequestSha256='d'*64)
         f.approval=f.write_manifest();return f
 
+    def test_known_snapshot_plan_failure_exports_requests_not_runtime_or_profile(self):
+        f_export=self.export_fixture()
+        with tempfile.TemporaryDirectory() as temp:
+            f=Fixture(Path(temp).resolve());requests=f.parent/'requests';requests.mkdir(mode=0o700)
+            request=requests/'bootstrap-input.json';M.C.write_once(request,f.path.read_bytes())
+            f.runtime.mkdir(mode=0o700)
+            markers=['execution-profile.json','execution-context.json','reviewed-candidate.json','runtime-secret.json']
+            for name in markers:M.C.write_once(f.runtime/name,b'SYNTHETIC_RUNTIME_SECRET')
+            M.C.write_once(requests/'edge-source-bind-stdout.jsonl',b'{"result":"LOCAL_EDGE_SOURCE_BOUND"}\n')
+            (f.source/'scripts/concurrency/local-export-recipient.json').write_text(json.dumps(
+                {'schemaVersion':1,'recipient':f_export.manifest['recipient'],'privateIdentityUploaded':False}))
+            summary={'failedStage':'snapshot-plan','functional':'NOT_RUN','passedLegs':0,'capacityVerdict':'NOT_VERIFIED'}
+            with wired(f,f_export.adapter()),contextlib.redirect_stdout(io.StringIO()):
+                result=S.export_prebusiness_diagnostic('a'*40,request,S.digest(request.read_bytes()),summary)
+            self.assertEqual(result['captureCompleteness'],'PREBUSINESS_DIAGNOSTIC_ONLY')
+            self.assertIsNone(result['executionProfileSha256']);self.assertEqual(result['executionAuthority'],'NONE')
+            self.assertEqual(result['uncaptured'],['RUNTIME','EXECUTION_PROFILE','DATABASES','VOLUMES'])
+            with tarfile.open(fileobj=io.BytesIO(gzip.decompress((f.parent/'exports/evidence.age').read_bytes()))) as tar:
+                names=tar.getnames()
+                self.assertTrue(all(n.startswith('requests/') or n in ['diagnostic-scope.json','_colorplay/export-manifest.json'] for n in names))
+                self.assertEqual(tar.extractfile('requests/bootstrap-input.json').read(),request.read_bytes())
+                scope=json.loads(tar.extractfile('diagnostic-scope.json').read())
+                self.assertEqual(scope['failedStage'],'snapshot-plan');self.assertFalse(scope['profileAttested'])
+                self.assertNotIn(b'SYNTHETIC_RUNTIME_SECRET',b''.join(tar.extractfile(n).read() for n in names))
+            for name in markers:self.assertEqual((f.runtime/name).read_bytes(),b'SYNTHETIC_RUNTIME_SECRET')
+
+    def test_later_closed_phases_accept_private_markers_without_reading_their_contents(self):
+        for phase in ['profile-pin','kernel-calibration','build-and-preview','entry-bundle','edge-source-bind','snapshot-plan']:
+            with self.subTest(phase=phase),tempfile.TemporaryDirectory() as temp:
+                runtime=Path(temp).resolve();S.write(runtime/'execution-profile.json',b'SYNTHETIC_UNPARSED_SECRET')
+                with patch.object(S,'RUNTIME',runtime),patch.object(sys,'platform','linux'), \
+                        patch.object(S,'private',side_effect=AssertionError('MARKER_CONTENT_MUST_NOT_BE_READ')):
+                    state=S.prebusiness_state({'failedStage':phase,'functional':'NOT_RUN','passedLegs':0,'capacityVerdict':'NOT_VERIFIED'})
+                self.assertEqual(state[0],phase);self.assertEqual(len(state[1]),1)
+
+    def test_unknown_business_phase_boolean_legs_and_unsafe_markers_reject_before_output(self):
+        cases=[('phase',None),('phase','toolchain'),('phase','functional-prepare'),('phase','functional-run'),
+            ('phase','capacity-plan'),('phase','capacity-run-0'),('phase','consistent-snapshot'),('phase','encrypt-evidence'),
+            ('phase',[]),('legs',False),('marker','functional-private'),('marker','capacity-journals'),
+            ('marker-link','execution-profile.json'),('marker-link','functional-private'),
+            ('marker-mode','execution-context.json'),('marker-hardlink','reviewed-candidate.json')]
+        for case,value in cases:
+            with self.subTest(case=case,value=value),tempfile.TemporaryDirectory() as temp:
+                f=Fixture(Path(temp).resolve());request=f.parent/'requests/bootstrap-input.json';request.parent.mkdir(mode=0o700)
+                M.C.write_once(request,f.path.read_bytes());f.runtime.mkdir(mode=0o700)
+                summary={'failedStage':'snapshot-plan','functional':'NOT_RUN','passedLegs':0,'capacityVerdict':'NOT_VERIFIED'}
+                if case=='phase':summary['failedStage']=value
+                elif case=='legs':summary['passedLegs']=value
+                elif case=='marker':(f.runtime/value).mkdir(mode=0o700)
+                elif case=='marker-link':(f.runtime/value).symlink_to(f.runtime/'nonexistent')
+                elif case=='marker-mode':(f.runtime/value).write_bytes(b'{}');(f.runtime/value).chmod(0o644)
+                elif case=='marker-hardlink':S.write(f.runtime/'original',b'{}');os.link(f.runtime/'original',f.runtime/value)
+                with wired(f,None),self.assertRaises(ValueError):
+                    S.export_prebusiness_diagnostic('a'*40,request,S.digest(request.read_bytes()),summary)
+                self.assertFalse((f.parent/'prebusiness-diagnostic').exists())
+
+    def test_snapshot_plan_failure_is_labeled_and_exports_without_admitting_business(self):
+        f_export=self.export_fixture()
+        with tempfile.TemporaryDirectory() as temp:
+            f=Fixture(Path(temp).resolve());f.runtime.mkdir(mode=0o700)
+            (f.source/'scripts/concurrency/local-export-recipient.json').write_text(json.dumps(
+                {'schemaVersion':1,'recipient':f_export.manifest['recipient'],'privateIdentityUploaded':False}))
+            actual_stage=S.stage;calls=[]
+            def stages(name,argv,expected=None,**options):
+                calls.append(name)
+                if name=='encrypt-prebusiness-diagnostic':return actual_stage(name,argv,expected,**options)
+                return {'result':expected,'pinReceiptSha256':'d'*64,'executionProfileSha256':'e'*64}
+            output=io.StringIO();umask=os.umask(0o077);os.umask(umask)
+            with wired(f,f_export.adapter()),patch.object(S,'stage',side_effect=stages), \
+                    patch.object(S,'install_psql_adapter'),patch.object(S,'create_snapshot_plan',side_effect=ValueError('synthetic secret must not escape')), \
+                    patch.object(sys,'argv',['suite','a'*40]),patch.object(R.platform,'machine',return_value='x86_64'), \
+                    contextlib.redirect_stdout(output):
+                try:self.assertEqual(R.main(),1)
+                finally:os.umask(umask)
+            result=json.loads(output.getvalue().splitlines()[-1])
+            self.assertEqual(result['failedStage'],'snapshot-plan');self.assertEqual(result['functional'],'NOT_RUN')
+            self.assertEqual(result['result'],'LOCAL_SUITE_STOPPED');self.assertEqual(result['passedLegs'],0)
+            self.assertEqual(result['safeReason'],'LOCAL_SUITE_IO_UNAVAILABLE')
+            self.assertEqual(result['prebusinessDiagnostic']['failedStage'],'snapshot-plan')
+            self.assertNotIn('functional-prepare',calls);self.assertNotIn('synthetic secret',output.getvalue())
+
     def test_schema2_exports_without_fake_profile_and_without_changing_v1_result(self):
         f=self.export_fixture();result=f.run_export()
         self.assertEqual(result['result'],'CIPHER_CREATED')
@@ -166,7 +247,7 @@ class PrebusinessTests(unittest.TestCase):
             with self.subTest(case=case),tempfile.TemporaryDirectory() as temp:
                 f=Fixture(Path(temp).resolve());request=f.parent/'requests/bootstrap-input.json';request.parent.mkdir(mode=0o700)
                 M.C.write_once(request,f.path.read_bytes());sha=S.digest(request.read_bytes())
-                summary={'functional':'NOT_RUN','passedLegs':0,'capacityVerdict':'NOT_VERIFIED'}
+                summary={'failedStage':'bootstrap','functional':'NOT_RUN','passedLegs':0,'capacityVerdict':'NOT_VERIFIED'}
                 if case=='missing-request':request.unlink()
                 if case=='profile':f.runtime.mkdir(mode=0o700);M.C.write_once(f.runtime/'execution-profile.json',{})
                 if case=='functional':summary['functional']='PASS'
@@ -192,7 +273,7 @@ class PrebusinessTests(unittest.TestCase):
             request=folder/'bootstrap-input.json';M.C.write_once(request,f.path.read_bytes())
             public=f.source/'scripts/concurrency/local-export-recipient.json'
             public.write_text(json.dumps({'schemaVersion':1,'recipient':f_export.manifest['recipient'],'privateIdentityUploaded':False}))
-            summary={'functional':'NOT_RUN','passedLegs':0,'capacityVerdict':'NOT_VERIFIED'}
+            summary={'failedStage':'bootstrap','functional':'NOT_RUN','passedLegs':0,'capacityVerdict':'NOT_VERIFIED'}
             with wired(f,f_export.adapter('raise SystemExit(7)')),contextlib.redirect_stdout(io.StringIO()):
                 for _ in range(2):
                     with self.assertRaises(ValueError):S.export_prebusiness_diagnostic('a'*40,request,S.digest(request.read_bytes()),summary)
@@ -212,7 +293,7 @@ class PrebusinessTests(unittest.TestCase):
             with wired(f,f_export.adapter(script)),contextlib.redirect_stdout(io.StringIO()):
                 with self.assertRaisesRegex(ValueError,'PREBUSINESS_EXPORT_UNVERIFIED'):
                     S.export_prebusiness_diagnostic('a'*40,request,S.digest(request.read_bytes()),
-                        {'functional':'NOT_RUN','passedLegs':0,'capacityVerdict':'NOT_VERIFIED'})
+                        {'failedStage':'bootstrap','functional':'NOT_RUN','passedLegs':0,'capacityVerdict':'NOT_VERIFIED'})
             self.assertTrue((f.parent/'exports/evidence.age').is_file())
             self.assertFalse((f.parent/'exports/export-complete.json').exists())
 

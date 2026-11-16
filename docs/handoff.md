@@ -2373,3 +2373,20 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - worker受影響65PASS/0.322s、fullPython113PASS/10.079s、lint/type/format/static/import/EOF/diff0；v1 EPERM原FAIL與所有setup/RED資格保留，不當修好Mac cleanup。Root同輪Source核對另發現workflow alias+relative argv不符INSTALL原absolute guard；Root S級單行canonical launcher，actual workflow→actual installer AST RED1→GREEN0，不放寬installer。此Root第三S檔/唯一workflow例外已寫brief；worker8paths與52protected不變，原2TS設定＋三檔formatPASS，全unit3785PASS/Local synthetic build0維持。
 - Root private只讀artifact watcher已驗：oldrun7 completed/noartifact→exit2 UNVERIFIED；oldrun5小cipherZIP下載到新私有controlfolder，API digest與既有79b41dfbc9d98d95027ad7ec1bf654ee5b03ea9dc9079f43ca4783c67fa52e76相符，未解密/未讀key/未CI rerun。預備新run自動留cipherZIP，仍須Root全解密/manifest完整核對才稱retained。費用US$0；原7protected/handoff575959Bprefix與G8/85保持，Hosted/Production/mail NONE。
 - 下一步Root精確分開commit S設定與M13＋自有docs、核remote仍exactd3b9205後僅正常FF specialtestbranch，一個新Source/attempt1免費Local job；不得GH rerun或把Source review當40/60已PASS。
+
+
+### 2026-11-16 — M13新Native已過kernel六控制；下一阻塞為snapshot-plan型別契約
+
+- Root S exact4paths commit195737cbe97e9b290fd1225d79e86628f6507ab0，M13 exact11paths commit82dc693775a152f78aa69674df8730c44a9120de，兩commit前cached pathset/check0（Root新review docs EOF空行先被check拒，僅Root兩newdocs EOF正規化後check0，未略過gate）；8source/52protected與原7protected/handoff575959Bprefix核符，cloneclean。remote exactd3核後只正常FF specialtestbranch→82，一個新push/attempt1 run43827518682/job133164762539，非GH rerun。
+- run8 completed failure：完整bootstrap/profile、kernel-calibration預期ROOT_LINUX_KERNEL_CALIBRATION_VERIFIED門檻已越過，接續build-and-preview/entry-bundle到edge-source-bind。原LCA EACCES確已越過，RootUID/FD自遷移路徑在Linux實行；各kernel私有receipt仍未保存，僅可信後續stage見證，不作fullretention/容量PASS。165.675s，0business/functional/15legs。
+- 最終safeReason LOCAL_SUITE_ADMISSION_FAILED／ValueError，reported failedStage=edge-source-bind。snapshot_plan仍None，profile/context/candidate存在使舊prebusiness guard拒；0artifact/retention UNVERIFIED_RUNNER_EPHEMERAL。Rootwatch正確偵測MISSING/exit2，無download或假PASS。私有joblog18508B SHAc8340cc7ead752b2298218fd435364d65f707f6aeab1d18224a9434e271df9f5；Rootreceipt8b841b0c0ff86233c093b00a4d974c89a0c45be266f85b127911259894332ff3。
+- 同workerREADONLY已找到確定Source落差：activate-candidate processStart由linux_proc.parse_stat回str，S.create_snapshot_plan卻int(procstart)==str，正常值永False。該呼叫在edge S.stage成功後但phase未改，故snapshotplan錯也誤標edge；binder真正result LOCAL_EDGE_SOURCE_BOUND與expected吻合。Native firstfailedguard仍UNKNOWN，不臆補已丟的原stdout。Root要求一次有限stage results/消費欄位契約矩陣（含functional/capacity/snapshot/encrypt）＋最小離線repro，再寫一個合併M14brief，不逐字microfix。
+- Root將把已知0business/指定prebusiness phase的requests-only cipher診斷留存併同修；仍Purpose PREBUSINESS/manifestnullprofile/NONEauthority，不大改M3/M5、不冒稱完整backup、不寬Quota/SLO/barrier。此時worker未Source修改/Native重跑。主機US$0；原WIP/G8/85、Hosted/Production/mail保持。
+
+
+### 2026-11-16 — M14階段契約／prebusiness requests-only唯一Root review ACCEPTED_SOURCE_ONLY
+
+- brief b117cebb373fed592d32357b4e2420a4384291de3a9deee897c1f2e13e865659，exact4paths，base82dc693。一次canonical str→trueint同供proc比較/plan.preview.startTicks、snapshot-plan獨立phase；known prebusiness閉集/NOT_RUN/int0legs/無businessmarker才requests-only export，Runtime/profile/DB/volumes不捕捉，nullprofile/NONE/UNVERIFIED保持。M13/13helpers/M3/M5/產品/JWT/SQL/workflow/SLO/caps均raw不變。
+- frozen packet05139b0d057bafa54bbef54c586758be57354cdd157773bfd16be5c7ad6992e2；Root核4raw/32records/56protected actualGitbytes/44operatorentries/max447。worker fullPython121/8.812s與lint/type/static/import/EOF/diff全0；Root21/1.797s＋6獨立admission/metadataFS控制PASS。Standards/Spec/Security各0，summarydf78a61465bc5d4ceccae3f8bf55f0a09a6a019f1017d1c0c5479f0306881eb8；report docs/reviews/2026-11-16-linux-stage-contracts-m14-review.md。
+- 原兩有效RED／中途錯誤碼FAIL／NameError和pnpm路徑setup資格皆留，Root packet protected.files形狀TypeError純讀檢查更正，非Source失敗。離線actual producer/M5parser與合成crypto stream不當Native/realage；Native8真firstguard仍UNKNOWN，未倒填來源。下一Root精確7paths commit/check，再核specialremote82後正常FF單一新Source attempt1 Local run，不GH rerun。
+- 唯讀重驗Staging branch與公開marker仍d92be82ba188c3bf6618f1d70cd92f63a4eabfac，沒有部署。全unit3785與Localbuild既有PASS維持，40/60仍待真實執行。主機US$0；原7protected/handoff575959Bprefix/G8/85、Hosted/Production/mail保持。
