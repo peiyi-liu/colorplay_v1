@@ -85,6 +85,8 @@ def main():
         summary['capacityVerdict'] = 'ALL_15_LEGS_PASS_PENDING_ROOT_DOWNLOAD_REVIEW'
         success = True
     except Exception as error:
+        if isinstance(error, S.StageRejected) and error.bootstrapOutcome is not None:
+            summary['bootstrapOutcome'] = error.bootstrapOutcome
         summary['failedStage'] = phase
         summary['failureClass'] = type(error).__name__
         reason = str(error)

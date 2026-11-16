@@ -66,18 +66,92 @@ def run(argv, timeout=60, environment=None):
     return module('linux-local-bootstrap').bounded(argv, SOURCE, timeout=timeout, maximum=4 * 1024**2, env=environment or ENV)
 
 
+BOOTSTRAP_CODES = {'BOOTSTRAP_' + name for name in (
+    'ADMISSION_INVALID AMBIENT_TARGET_REJECTED ARGUMENTS_INVALID BASELINE_INVALID CGROUP_EXISTS '
+    'CGROUP_IDENTITY_INVALID CGROUP_KILL_UNAVAILABLE COMMAND_FAILED COMMAND_TIMEOUT CONFIG_UNSUPPORTED '
+    'DOCKER_UNSUPPORTED FILE_CHANGED FILE_INVALID GENERATOR_NOT_EMPTY HARDWARE_UNSUPPORTED JOB_MISMATCH '
+    'JWKS_INVALID LINUX_REQUIRED OPERATION_FAILED OUTPUT_LIMIT PACKAGE_INVALID PATH_INVALID REDIRECT_REJECTED '
+    'RESOURCES_CHANGED RESOURCES_EXIST RUNTIME_EXISTS SERVICE_COUNT_INVALID SOURCE_CHANGED SOURCE_NOT_FROZEN '
+    'STATUS_INVALID TOKEN_SIGNATURE_INVALID TOOLCHAIN_INVALID').split()}
+COMMAND_OPERATIONS = set(('UNKNOWN GIT_HEAD GIT_STATUS GIT_TRACKED_FILES NODE_VERSION NODE_KEY_GENERATION '
+    'SUPABASE_VERSION SUPABASE_START SUPABASE_STATUS SYSTEM_READ SYSTEM_WRITE SYSTEMD_RELOAD SYSTEMD_START '
+    'SYSTEMD_DOCKER_RESTART CGROUP_MKDIR CGROUP_CHOWN DOCKER_CONFIG_VALIDATE DOCKER_LIST_CONTAINERS '
+    'DOCKER_LIST_VOLUMES DOCKER_INSPECT_CONTAINERS DOCKER_INSPECT_VOLUMES DOCKER_INFO DOCKER_IMAGE_PULL '
+    'DOCKER_IMAGE_TAG DOCKER_IMAGE_INSPECT DOCKER_EXEC_READONLY').split())
+COMMAND_CLASSES = {'UNKNOWN_FLAG','CONFIG_PARSE','PERMISSION','HEALTH','IMAGE_PULL','PORT','CONNECTION','UNKNOWN'}
+
+
+def safe_bootstrap_outcome(value):
+    # This parent independently validates the producer's small public shape.
+    keys = {'result','code','stage','upstreamAutoRemovalPossible','newVolumesMayHaveBeenRemoved',
+            'remainingResources','command','hardware','executionAuthority','retention'}
+    if type(value) is not dict or not set(value) <= keys or value.get('result') != 'FAILED' or not isinstance(value.get('code'),str) or value['code'] not in BOOTSTRAP_CODES:return None
+    if value.get('executionAuthority','NONE') != 'NONE' or value.get('retention','UNVERIFIED') != 'UNVERIFIED':return None
+    result = {key:value[key] for key in ['result','code']}
+    if 'stage' in value:
+        if not isinstance(value['stage'],str) or value['stage'] not in {'admission','isolation','project','start','readback'}:return None
+        result['stage'] = value['stage']
+    for key in ['upstreamAutoRemovalPossible','newVolumesMayHaveBeenRemoved']:
+        if key in value:
+            if type(value[key]) is not bool:return None
+            result[key] = value[key]
+    if all(key in value for key in ['upstreamAutoRemovalPossible','newVolumesMayHaveBeenRemoved']) and value['upstreamAutoRemovalPossible'] != value['newVolumesMayHaveBeenRemoved']:return None
+    if 'remainingResources' in value:
+        if value['remainingResources'] != 'UNKNOWN':return None
+        result['remainingResources'] = 'UNKNOWN'
+    if 'command' in value:
+        command = value['command']
+        if type(command) is not dict or set(command) != {'operation','exitCode','stderrBytes','stderrSha256','classification'}:return None
+        if not all(isinstance(command[k],str) for k in ['operation','classification']) or command['operation'] not in COMMAND_OPERATIONS or command['classification'] not in COMMAND_CLASSES:return None
+        code, size, sha = command['exitCode'], command['stderrBytes'], command['stderrSha256']
+        if code is None:
+            if size is not None or sha is not None or command['classification'] != 'UNKNOWN':return None
+        else:
+            if type(code) is not int or not -128 <= code <= 255 or code == 0:return None
+            if type(size) is not int or not 0 <= size <= 2097152 or not isinstance(sha,str) or not re.fullmatch('[a-f0-9]{64}',sha):return None
+            if size == 0 and sha != digest(b''):return None
+        result['command'] = dict(command)
+    if 'hardware' in value:
+        hardware = value['hardware']
+        if type(hardware) is not dict or set(hardware) != {'distribution','logicalCpu','affinityCount','memTotalBytes','freeDiskBytes','cgroupV2','pidfd','pss','psi'}:return None
+        if hardware['distribution'] != 'ubuntu-24.04':return None
+        if not all(type(hardware[k]) is int and 0 <= hardware[k] <= 1024 for k in ['logicalCpu','affinityCount']):return None
+        if not all(type(hardware[k]) is int and 0 <= hardware[k] <= 2**60 for k in ['memTotalBytes','freeDiskBytes']):return None
+        if not all(type(hardware[k]) is bool for k in ['cgroupV2','pidfd','pss','psi']):return None
+        result['hardware'] = dict(hardware)
+    return result
+
+
+class StageRejected(ValueError):
+    def __init__(self, outcome):
+        super().__init__('LOCAL_SUITE_STAGE_REJECTED')
+        self.bootstrapOutcome = outcome
+
+
 def stage(name, argv, expected=None, timeout=60):
     require(bool(re.fullmatch('[a-z][a-z0-9-]{1,70}', name)))
     print(json.dumps({'stage': name, 'capacityVerdict': 'PENDING', 'hostedAuthority': 'NONE'}), flush=True)
     code, raw = module('linux-local-bootstrap').bounded(argv, SOURCE, timeout=timeout, maximum=4 * 1024**2, env=ENV, checked=False)
     # Preserve failed-stage output privately before rejecting it. Never print it.
-    write(PARENT / 'requests' / (name + '-stdout.jsonl'), raw)
+    write_error = None
+    try:write(PARENT / 'requests' / (name + '-stdout.jsonl'), raw)
+    except OSError as error:write_error = error
     lines = [line for line in raw.splitlines() if line.strip()]
     require(bool(lines), 'LOCAL_SUITE_RESULT_MISSING')
     value = json.loads(lines[-1])
     require(isinstance(value, dict), 'LOCAL_SUITE_RESULT_INVALID')
-    write(PARENT / 'requests' / (name + '-result.json'), value)
-    require(code == 0 and (not expected or value.get('result') == expected), 'LOCAL_SUITE_STAGE_REJECTED')
+    outcome = safe_bootstrap_outcome(value) if name == 'bootstrap' else None
+    rejected = code != 0 or (expected and value.get('result') != expected)
+    if write_error is not None:
+        if rejected:raise StageRejected(outcome) from None
+        raise write_error
+    try:
+        write(PARENT / 'requests' / (name + '-result.json'), value)
+        if outcome is not None:write(PARENT / 'requests' / (name + '-diagnostic.json'), outcome)
+    except OSError:
+        if rejected:raise StageRejected(outcome) from None
+        raise
+    if rejected:raise StageRejected(outcome)
     return value
 
 

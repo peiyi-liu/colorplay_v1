@@ -2231,3 +2231,17 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 ### 2026-11-16 — Root suite提交前EOF gate確實阻止commit
 
 - cached diffcheck exit2，capacity-root-readonly.py檔尾多1byte newline；本次未commit，修該byte/AST相同，manifest 65816b8617998ffcda436ea4c36b4cb66d79a2b71c136dc2f8daaa9370e80760、v2 packet 5335b80cf11a556fd952910bc94d7035e48ab3ec2e755e053ab4ffe28b4db532；原v1/34cc記錄保留。Source行為不變，無Native/remote/費用；精確restage check0後才commit。
+
+
+### 2026-11-16 — 首次免費Linux run在bootstrap停，診斷缺口M7委派
+
+- 本機M6精確56paths commit e3a5cb8c1cc69f0e1df22fbbc219fb1df17e7c72；cachedcheck首次EOF exit2確實阻止commit，1byte/AST相同衛生後check0，manifest65816b8617998ffcda436ea4c36b4cb66d79a2b71c136dc2f8daaa9370e80760、v25335b80cf11a556fd952910bc94d7035e48ab3ec2e755e053ab4ffe28b4db532。clone唯一自生pyc精確清理後clean。
+- 唯讀確認新branch不存在後，正常不force push只建立codex/local-capacity-linux-20261116；沒有PR/merge/staging-main更新或deploy。run43788669324/job133041918793 eventpush/source exacte3a5，checkout成功、pinned toolchain成功，bootstrap39.8s後停止／整段91.395s。functional/容量15legs皆NOT_RUN、無business actor，並非產品容量FAIL/PASS。
+- Root從connector實讀logs，真正M4code/stage只在ephemeral private result，父層只印LOCAL_SUITE_STAGE_REJECTED，原因UNKNOWN；prebusiness未profile/snapshot authority，沒有假profile或上傳raw secrets，留存UNVERIFIED。原joblog private SHA38472420363df97af1467c795b2f3359b0d2331126da4097b4391fdcce016cf6；upstream首次自清理actual survivors未知，不假0刪除/全部保留。費用US$0/無DO資源、Hosted、寄信、Production操作。
+- 同worker M7限bootstrap bounded optional stderr/Native safe command classification、suite strict diagnostic propagation與新contract test，只改3source+1test；default/非0拒絕/byte cap/deadline/命令順序/limits不變，Root sole review。不是修初始化或救PASS；Root先拿安全原因才作修復決策，無GH rerun/自動retry。原root WIP/G8/85不改，下一步M7交付唯一review後新Source有界Local診斷。
+
+
+### 2026-11-16 — M7唯一review ACCEPTED，準備下一次新Source Local診斷
+
+- Worker4source/16logs/8protected hash核對，packetac8c3bcd9bd8ff4788de642909194255d487172f4bb61f7b6bc1c6623f53c392；Root唯一review Standards0/Spec0/toolblocker0，獨立44 tests（9M7+1bounded+17M4+17M5）全綠。Rootsummary528e1e0836cb5071e418c6783a6d6e66bfc894d9cdcef09609bcbc1570cde157；report docs/reviews/2026-11-16-linux-bootstrap-diagnostics-m7-review.md。
+- optional stderr capture/default不變、Native固定分類/數字hash/真hardware、父層strict安全outcome可見；非0仍拒，私有raw不公開。首次run原因仍UNKNOWN，這不是初始化修復或容量PASS。Root下一步精確stage/commit與test branch head lease核對後才一個新Local job，不GH rerun；0費用/Hosted/Production，G8/85與原WIP保護。
