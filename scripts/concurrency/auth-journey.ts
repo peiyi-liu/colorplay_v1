@@ -27,7 +27,10 @@ import {
 } from './auth-refresh-observer';
 import { runFunctionalTabLifecycle } from './auth-tab-lifecycle';
 import type { PrivateJournal } from './private-journal';
-import { createRecoveryDiagnostics } from './auth-recovery-diagnostics';
+import {
+  createRecoveryDiagnostics,
+  createRegistrationDiagnostics,
+} from './auth-recovery-diagnostics';
 import {
   recoveryCallback,
   navigateRecovery,
@@ -87,23 +90,35 @@ export const loginFunctionalApi = async (
 export const loginFunctionalPage = async (
   page: Page,
   identity: FunctionalIdentity,
+  admit: () => void = () => undefined,
 ) =>
   safely(async () => {
     if (identity.label === 'A1') return fail('FUNCTIONAL_AUTH_FAILED');
+    admit();
     await page.goto('/');
+    admit();
     await expect(
       page.getByRole('heading', { name: 'ColorPlay', exact: true }),
     ).toBeVisible();
+    admit();
     await page.getByRole('link', { name: '開始冒險', exact: true }).click();
+    admit();
     await page.waitForURL(/\/login$/u);
-    if (identity.label.startsWith('T'))
+    admit();
+    if (identity.label.startsWith('T')) {
       await page.getByText('教師端登入', { exact: true }).click();
+      admit();
+    }
     await page.getByRole('textbox', { name: '帳號' }).fill(identity.account);
+    admit();
     await page.getByLabel('密碼', { exact: true }).fill(identity.password);
+    admit();
     await page.getByRole('button', { name: '登入', exact: true }).click();
+    admit();
     await page.waitForURL(
       identity.label.startsWith('T') ? /\/teacher$/u : /\/app$/u,
     );
+    admit();
     await expect(
       page
         .getByText(
@@ -114,6 +129,7 @@ export const loginFunctionalPage = async (
         )
         .first(),
     ).toBeVisible();
+    admit();
   }, 'FUNCTIONAL_AUTH_FAILED');
 export const pageClient = async (
   page: Page,
@@ -155,56 +171,113 @@ export const registerFunctionalStudent = async (
   safely(async () => {
     if (identity.label !== 'R1' || identity.userId !== null)
       return fail('FUNCTIONAL_AUTH_FAILED');
-    const mailbox = createOwnedMailbox(scope, identity.email, signal);
-    const before = await mailbox.baseline();
-    await journal.write('registration-intent', {
-      identity,
-      classroomId: classroom.classroomId,
+    let readMail: () => unknown = () => null;
+    const diagnostic = createRegistrationDiagnostics(journal, signal, {
+      mail: () => readMail(),
     });
-    await page.goto('/register');
-    await page.getByLabel('名字').fill(identity.displayName);
-    await page.getByLabel('暱稱').fill(identity.displayName);
-    await page.getByLabel('班級序號').fill(classroom.joinCode);
-    await page.getByRole('button', { name: '下一步', exact: true }).click();
-    await page.getByLabel('E-mail', { exact: true }).fill(identity.email);
-    await page.getByRole('button', { name: '傳送驗證碼' }).click();
-    await page
-      .getByLabel('E-mail 驗證碼')
-      .fill(await mailbox.wait(before, 'otp'));
-    await page.getByRole('button', { name: '確認驗證', exact: true }).click();
-    await expect(page.getByText('✓ 已認證')).toBeVisible();
-    await page.getByRole('button', { name: '下一步', exact: true }).click();
-    await page.getByLabel('帳號（學號）').fill(identity.account);
-    await page.getByLabel('密碼', { exact: true }).fill(identity.password);
-    await page.getByLabel('密碼確認', { exact: true }).fill(identity.password);
-    await observations?.beforeLogout(page, 'registration_completion');
-    await page.getByRole('button', { name: '完成註冊', exact: true }).click();
-    await page.waitForURL(/\/login$/u);
-    await loginFunctionalPage(page, identity);
-    const tokens = await sessionTokensFromPage(page, scope.supabaseUrl);
-    const client = createFunctionalClient(scope, secrets.anonKey, signal);
-    if (
-      (
-        await client.auth.setSession({
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-        })
-      ).error
-    )
-      return fail('FUNCTIONAL_AUTH_FAILED');
-    const profile = await createProfileRepository(client).getMyProfile();
-    identity.userId = profile.id;
-    const memberships = await createClassroomRepository(client).listMine();
-    if (
-      !profile.registrationComplete ||
-      profile.role !== 'student' ||
-      !memberships.some((row) => row.classroomId === classroom.classroomId)
-    )
-      return fail('FUNCTIONAL_AUTH_FAILED');
-    await journal.write('registration-confirmed', {
-      userId: identity.userId,
-      classroomId: classroom.classroomId,
+    const act = diagnostic.action;
+    const { mailbox, before } = await diagnostic.step(
+      'mailbox_baseline',
+      async () => {
+        const mailbox = createOwnedMailbox(scope, identity.email, signal);
+        readMail = () => mailbox.diagnostics?.();
+        return { mailbox, before: await mailbox.baseline() };
+      },
+    );
+    await diagnostic.step('registration_intent', () =>
+      journal.write('registration-intent', {
+        identity,
+        classroomId: classroom.classroomId,
+      }),
+    );
+    await diagnostic.step('register_form', () => page.goto('/register'));
+    await diagnostic.step('basic_details', async () => {
+      await act(() => page.getByLabel('名字').fill(identity.displayName));
+      await act(() => page.getByLabel('暱稱').fill(identity.displayName));
+      await act(() => page.getByLabel('班級序號').fill(classroom.joinCode));
+      await act(() =>
+        page.getByRole('button', { name: '下一步', exact: true }).click(),
+      );
+      await act(() =>
+        page.getByLabel('E-mail', { exact: true }).fill(identity.email),
+      );
     });
+    await diagnostic.step('otp_send_action', () =>
+      page.getByRole('button', { name: '傳送驗證碼' }).click(),
+    );
+    const code = await diagnostic.step('otp_mail', () =>
+      mailbox.wait(before, 'otp'),
+    );
+    await diagnostic.step('otp_verify', async () => {
+      await act(() => page.getByLabel('E-mail 驗證碼').fill(code));
+      await act(() =>
+        page.getByRole('button', { name: '確認驗證', exact: true }).click(),
+      );
+      await act(() => expect(page.getByText('✓ 已認證')).toBeVisible());
+    });
+    await diagnostic.step('credential_fields', async () => {
+      await act(() =>
+        page.getByRole('button', { name: '下一步', exact: true }).click(),
+      );
+      await act(() => page.getByLabel('帳號（學號）').fill(identity.account));
+      await act(() =>
+        page.getByLabel('密碼', { exact: true }).fill(identity.password),
+      );
+      await act(() =>
+        page.getByLabel('密碼確認', { exact: true }).fill(identity.password),
+      );
+    });
+    await diagnostic.step('completion_observation', async () => {
+      await observations?.beforeLogout(page, 'registration_completion');
+    });
+    await diagnostic.step('complete_submit', async () => {
+      await act(() =>
+        page.getByRole('button', { name: '完成註冊', exact: true }).click(),
+      );
+      await act(() => page.waitForURL(/\/login$/u));
+    });
+    await diagnostic.step('post_registration_login', () =>
+      loginFunctionalPage(page, identity, diagnostic.check),
+    );
+    const client = await diagnostic.step('session_readback', async () => {
+      const tokens = await act(() =>
+        sessionTokensFromPage(page, scope.supabaseUrl),
+      );
+      const client = createFunctionalClient(scope, secrets.anonKey, signal);
+      if (
+        (
+          await act(() =>
+            client.auth.setSession({
+              access_token: tokens.access_token,
+              refresh_token: tokens.refresh_token,
+            }),
+          )
+        ).error
+      )
+        return fail('FUNCTIONAL_AUTH_FAILED');
+      return client;
+    });
+    await diagnostic.step('profile_membership', async () => {
+      const profile = await act(() =>
+        createProfileRepository(client).getMyProfile(),
+      );
+      identity.userId = profile.id;
+      const memberships = await act(() =>
+        createClassroomRepository(client).listMine(),
+      );
+      if (
+        !profile.registrationComplete ||
+        profile.role !== 'student' ||
+        !memberships.some((row) => row.classroomId === classroom.classroomId)
+      )
+        return fail('FUNCTIONAL_AUTH_FAILED');
+    });
+    await diagnostic.step('registration_publication', () =>
+      journal.write('registration-confirmed', {
+        userId: identity.userId,
+        classroomId: classroom.classroomId,
+      }),
+    );
     return client;
   }, 'FUNCTIONAL_AUTH_FAILED');
 export const resetFunctionalPassword = async (

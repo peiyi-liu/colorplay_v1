@@ -2580,3 +2580,45 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Only fixed approved ECR pull正常closed/exit1/exact59B才能3attempts/5-10秒、原180s共用；transient wx600 raw及獨立2MiB history先保存、不吞terminalfirstslot。其他錯誤/timeout/cancel/unknown/writer/late不續；CLIstart不重試，通用run/bounded與停機保留/正常15legs/caps不變。原RED與fixture setup FAIL保留，Native15不回填。三次仍rate便停止，不盲開相同內容job或繞quota。
 - Root將exact7paths gated cachedcheck0/commit/clean，核remote仍4051後正常FF，一個新Source/newpush/attempt1。完整cold capture/transfer前級Native14已核，不重開零業務gate；下一先six-person，再原15分立legs，非PASS停止升級，Source/profile/build/receipts新綁定。
 - Root另備private offline下載business receipt revalidator d346576139b738bf75a0890aea73862b304127720dc6a52bcf4045888b2cda17；Native14真NOT_RUN控制拒冒充business PASS，AST0。首次用relative argument被自身絕對路徑guard拒、改正命令通；不為此改Source。75以外的真完整15chain尚待實際artifact資格，不當新kernel／restore證據。US$0、40/60尚未驗、原WIP/G8停止85／Hosted／Production／真寄信NONE。
+
+
+### 2026-11-17 — M21新Source已啟動正常Native16
+
+- Root exact7paths gated cachedcheck0/commit/clean：68b87006e36f2bc57b4dd94b3d30f46078b3812e；核specialremote仍4051b4007768d9db0e50cd89cf41bd5a0972ef09後正常FF。新push/attempt1 run43894234282/job133393317333，當時toolchain進行，正常six-person→15legs不變；非GH rerun。Root watcher42667僅監看matchingSource、下載加密artifact，未碰Hosted。
+- sameworker接續僅READONLY WB5實際Hosted runner／Root connector收OTP至免費CI私密有界轉送的最小ports/paths方案盤點，不Source改動。現pureguards沒有execution，禁止先變更Local-only workflow／複製connector OAuth／索取新keys／真寄信或Hosted API；Root保持唯一review。
+- Source凍結，後續結果留private receipts／append-only handoff與PR description，不為報告另改已測SHA。Native15原failure保留；40／60仍未驗，US$0／US$5 cap、G8停止85／原WIP／Hosted／Production／真寄信NONE保持。
+
+
+### 2026-11-17 — Native16註冊失敗與完整資料保留已Root核
+
+- run43894234282/job133393317333/source68b87006e36f2bc57b4dd94b3d30f46078b3812e正常模式已STOP，當時10min保留hold尚未final。8官方image均firstattempt/exit0/closed，M21真retry分支沒有被本輪觸發；不可宣稱前Native15共享IP根因已解。bootstrap/profile/kernel6/build/bundle/Edgebind/functionalprepare PASS。
+- 真functional wsb-261116-cac748242d58跑17,242.516ms/exit1/noSignal/stderr0/sourceFrozen/noResidue、resourcesClosed。前三stage PASS（canonical/fixture5/classrooms2與學生2）；registration_recovery2,647.049ms FAIL/FUNCTIONAL_AUTH_FAILED，其他12stage NOT_RUN。registration-intent存在，無confirmed/recovery checkpoint。auth.users/public.profiles各6、sessions/refresh5；已建立第6個Auth身份，不是0business。只有統一catch錯誤，細步/郵件/驗碼根因UNKNOWN；不能從時間或count猜定。suite functional NOT_RUN只表示未獲PASS，不能抹掉實際attempt FAIL。
+- artifact14239101734 ZIP24740706B/b898843c369fab620d4e34bfdbaed95bb1a83a58389b0e66f6963738897264c7 API核；cipher24740568B/d5795d26b5038022e83e63dcba1de2d6938e792bbd11be260f8e2bae8d1b526d，outermanifest780199f869cc0cad9b487a985632784881b0466c1909d5d179c51a2c8eb1cf93/342files154128895B age AEAD全檔核；inner1592ae5ac7437682a93f868c1c33de98ad6d944da16c319de02f5e3927a6c8be/309files另核。8stop／E-K-DB pidfd/helper/naturalexit／K-DB restart=no／REST255本次正向proof皆核，DB2/127tables/31roles全count/hash相等（ORDER_ONLY）；3卷6176regularfiles129956311B與全部metadata逐member核，runtime258datafiles＋32publiccode可重建、metadata-only dir1。6Auth資料完整保留，未restore。Rootreceipt fd7028711565190f5886ec160ad3dbbb937269c5c22bde76e0ce4f5f20d58384；passed15legs0，不重跑。
+- 同worker先完成WB5 readonly38Sourcehash Root核：manifest82fb10092c22ead89ac64a9790f590e5074f6eab7e2308849cc6f515d0730a93、plan4f5a0f7ce1c0fb9e066caa56f5fad8de67ab9d2d77ba0bd25b9b6fd78461aaf8。純guard/Local brands仍不能直接Hosted；Gmail sessionconnector不能出口OAuth至CI，真OTP轉送尚未實作或證30s延遲；提案PR密文comment仍須明確發送批准與通知/外部app sideeffect核，data/newcarrier branch未被Vercel禁止不可先push。六人functional含admin另需Hosted批准契約。僅研究，不是Source審查通過或執行授權。
+- 新優先請同worker僅READONLY提出一次完整registration細步診斷最小paths/interface；未授Source修改，禁止盲修產品/跳OTP/提高timeout與mail quota。Root初count inspector誤將postgres array當map而停，原private probe保留；依實際array修正於custody verifier，非Source問題。主機US$0、40/60未驗；原WIP/G8停止85/Hosted/Production/真寄信NONE保持。
+
+
+### 2026-11-17 — Native16 final已記錄；M22一次完整註冊診斷已授權
+
+- Native16 completed/failure，finalRootreceipt1f2efd5bac3877775554287e4ec00b362fc175083ff29aa91c1f42a39ab72ba7；joblog21925B/b57985656d5ccb9d56a68c35219c8f52e8b399ae30aca862f815d1d6fd801b1c。原holdreceipt保留，未rerun；6Auth與全部cold資料保持。Root無可用pg_restore，沒有安裝或另起DB；未知註冊細步不由count反推。
+- Readonly registrationproposal e5957d17ab718fdd038f491817d421436f798a2e307c88b0c8b31be93bcb65cb/manifest725341a6886c483ed51a2127fee626a69166efd43dce5c0a908ddc68e22faf85，已凍結M22 brief docs/superpowers/plans/2026-11-17-linux-registration-diagnostics-m22-brief.md SHA8c3aa64413b6ce2e95fedeab624c6abf531194ba15377ceca1f67dcc58f2b9cf。sameworker exact5Source：auth-journey只register14steps、auth-recovery-diagnostics新registrationfamily舊Recovery不動、mailpit純in-memory安全snapshot、新actualcaller診斷test、既有mailpittest。
+- 只固定phase/code/errorType/elapsed與safe mail reason/count/statusClass/recipientExact/otpCount，無新IO，OTP/mailID/地址/URL/body/message/stack/cause/帳密及低熵digest不得記錄。started write先成功才action，confirmed write失敗不PASS；operationfailed原erroridentity保留/failed writer不遮蔽、不續；abort/late停。原publicAUTH mapping、mailpoll30x1s/timeout、所有API/guards/SLO/保留與正常six-person→15legs不改，不先修產品或跳OTP。
+- 先有效caller RED→GREEN與受影響TSchecks/freeze，Root唯一review後才exactpaths commit/newSource/newpush/attempt1；不為此重開0businessgate、不GHrerun。原WIP/G8停止85、US$0/US$5 cap、40/60未驗、Hosted/Production/真寄信NONE保持。
+
+
+### 2026-11-17 — M22註冊登入的abort窄接口補充
+
+- sameworker指出只包post_registration_login外層step，無法阻止內部await fill期間abort後下一click；Root准同owned auth-journey.ts的loginFunctionalPage optional synchronous admit callback/default原行為不變，register傳原signal檢查。每既有await返回／下一動作前check；不加Page/API、其他caller/timeout/publicfallback不變，已發inflight動作不稱可撤銷。exact5paths/≤500保持，增deferred fill→abort→無下一click actualcaller控制；不是產品Auth lifecycle修改。
+
+
+### 2026-11-17 — M22單檔505行明示窄例外
+
+- actualcaller有效RED→初GREEN3files15tests後，Prettier顯auth-journey505行。Root依AGENTS超500可說明理由，准exact同一檔最多505，其餘仍500；為完整14steps＋必要login admit保原同檔API/Recovery與可讀性，不為5行另拆／擠行／刪斷言。exact5paths保持，brief/static/packet/review明列單檔例外；不是測試或runtime/SLO放寬。若再超505先回報。
+
+
+### 2026-11-17 — M22唯一Root review接受，準備新Source正常Local
+
+- frozenpacket b202f9f40d776b06e50cf6a8ca0ed9d09046d825629e6003670f0527a83ccc6b；5Source/61records全SHA核，Worker11files162tests與lint/type/format/import/static/diff全0，77protected actualGit/operator44核、另1917unowned non-docs保持；原Recovery六body／其他Authbody／login Page calls／mailpit原5tests保持。Root2files51tests/Vitest1.27s＋29獨立schema/privacy/writer/abort/transport控制PASS，Standards/Spec/Security各0。Rootsummary c024b41e9b0b4d8fa0eb619d719eb87f7b00fc3c5638bf5c644e26affa27c429；review docs/reviews/2026-11-17-linux-registration-diagnostics-m22-review.md。
+- 原14細步與private0700/0600/wx新28events，原guards/errors/IO/poll/timeout/SLO不變；failed writer不遮蔽原error，started/confirmed寫失敗/abort/late不PASS。只安全閉集metadata，不記rawmail/URL/OTP/帳密等。login optional admit限register用、default保原Page呼叫；已發inflight動作不稱可撤銷。auth-journey505行為Root依AGENTS明示唯一有理由例外，其他≤500；不是assertion/timeout放寬。
+- 原RED與fixture/lint/單一parser/static setup失敗保留；Root初stale-success-http假設被真scopedFetch synthetic503/504否證，原probe留，非Source finding；mail statusClass也含該wrapper合成回應，不冒稱上游HTTP實證。Native16原FAIL/根因UNKNOWN、6Auth/fullcold資料保持，未restore；M22只工具診斷接受，尚未真Native或註冊修復PASS。
+- Root將exact8paths gated cachedcheck0/commit/clean、remote核仍68b87006e36f2bc57b4dd94b3d30f46078b3812e再正常FF，新Source/newpush/attempt1正常six-person→15legs，不GHrerun、不重開0businessgate。任一非PASS停升級，40/60仍未驗。原7protected/handoff575959Bprefix現核符，G8停止85／US$0與US$5 cap／Hosted／Production／真寄信NONE保持。
