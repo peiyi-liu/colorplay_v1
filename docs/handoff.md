@@ -2461,3 +2461,8 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - packetd277971dea9caf1d8e50ce6f870d62712dff02c42e93efdfdb6d5c280b77d88a；Root核5 Source/45 records/3 publicpin/57 protected actualGit/44operator。Worker26direct/154fullPython PASS及lint/type/static/import/EOF/diff0；Root26/1.865s＋9adversarial＋15 actualNative11安全provider結構控制PASS。Standards/Spec/Security各0；summary875117f54c6d2ee25dd78a3304d041360f2b2ec10c92195b2b032d7289f47d9e，review docs/reviews/2026-11-16-linux-service-graceful-stop-m17-review.md。
 - plaininspect明確Init缺欄/null/false；只新job ownedDB/Kong privateintent→一次restart=no/readback→固定binary/UIDGID/namespace/cgroup/pidfd正常INT/QUIT（EdgeTERM）→helper實體close→同90內讀等自然exit→原Dockerstop。其他5stop、600/1800、資料/卷/order/SLO/caps與Edge15限制不擴。未知拒、SENT不倒填。Source最大403，原RED/setup資格保留。
 - 原7protected/handoff575959Bprefix現核符；Root exact8paths commit後核specialremote仍d775，再正常FF新Source attempt1，diagnostic flag保持0business，不GHrerun。須核實際三角色stop與完整冷備份才另bounded恢復business。40/60未過，主機US$0，G8/85保持停止保留，Hosted/Production/mail NONE。
+
+
+### 2026-11-16 — Root M17報告尾端空行修正（文件S級）
+
+- M17 exact8paths commit271baf6已建立；Root新review文件多一個EOF空行，cached diff-check拒絕後提交命令未被工具流程阻止。這是Root命令串流程錯誤，非產品/worker測試失敗；不回寫綠結果、不amend既有commit。僅去掉Root新report多餘EOF空行，另正常followup記錄，再核cached check0/clean才push最新Source。M17五個Source hash與review接受結果不變；尚未push/Native。

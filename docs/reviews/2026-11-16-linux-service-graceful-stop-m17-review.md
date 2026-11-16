@@ -23,4 +23,3 @@ Root summary .git/m17-root-review.json SHA875117f54c6d2ee25dd78a3304d041360f2b2e
 ## 資格與下一步
 
 合成ports不代表Native syscall成功。Native11第一個guard仍UNKNOWN，已證明Source格式契約不符，不能回填為觀測到的stderr。DB/Kong此前未嘗試停止，不能稱已觀測timeout。下一新Source attempt1保持diagnosticOnly、0 fixtures／functional／15legs，Root須取得實際三角色signal、自然退出、all8 stop及完整備份逐檔證據後才移除business barrier。主機US$0；原WIP與停止中的G8/85保留。Hosted寫入／Production／寄信0。
-
