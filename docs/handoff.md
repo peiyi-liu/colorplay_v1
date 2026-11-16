@@ -2438,3 +2438,26 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - packetd81e02e0eb7f0edfc30412ca54f6e6a759b2b27253d154216e1fcffae58305df，Root核5raw/31records/57protected actualGit/operator44全部same/max360。Worker direct17/fullPython145PASS/9.665s及lint/type/static/EOF/diff0；Root8selector/.711s＋9snapshot/.311s與9獨立adversarial controls PASS，AST唯一pidfdSIGTERM/officialexeSHA核；Standards/Spec/Security各0findings。review docs/reviews/2026-11-16-linux-edge-graceful-stop-m16-review.md；Rootsummaryc02946f3b3c15d9ae22cf68de5cedbb890629dda539f4a57debaa7f28818ac09。
 - fixedRootliteral獨立plan/context/job/nonce/boot/exactCIDderivedCG/ns/startUID/PPID/165260008B binarySHA核、只唯一child pidfdSIGTERM；helper10與原dockerstop共90，未知不續，原600/1800與其他7stop不變。Edge15受限完整proof及正向SIGTERM/no-known-drainfailure，非全roles放寬；SENT後取消保留UNATTESTED。all8before-stop安全census及failurestage enum已併入。
 - 下一Root exact9paths（5Source＋brief/review/handoff/Staging唯讀report）commit/check0，核remote仍7966再正常FF一個新Source attempt1，M15diagnostic flag保持；無functional/15legs/40-60。原RED/setup/144/145保留；原7protected/handoffprefix與G8/85持續保護，主機US$0，Hosted/Production/mail NONE。
+
+
+### 2026-11-16 — Native11已保留273files；M17三服務合併正常停止brief
+
+- M16 exact9/check0/clean commitd77595cc72141ab441056c5bb94167634e841845，remote7966核後正常FF，新run43854715278/job133255896164/attempt1 completedfailure。prepare fixtures0，business-barrier180.331s故意STOP。273files/8922117B/manifestdbd7f8b955a01769c62df8ffcd463006d012ebedcb1c8693024369e7a563f687真age核；ZIP968079B/2a7d2c0ec717792d4da49438b6f5d07b2541db79a00b7a1aed608c684300e1a8，cipherc74e6ebc4666ca5c7ce73f27d1d7785e372a9614a8a9d2a6b491172e86e7d126，artifact14220387127；仍PARTIAL/DBvolumes未attest。Rootfinalreceipt6b8d292a92f2428f2766b73e137c40177d646f1ed8d678f32c9531bf4e4e1e3a/joblog21916B/2ba8dccc243ec4664d96e39a3cf0a7bf27073d0f45541968b1bc5511161b22f3。
+- all8census真DB/Kong/Edge shellPID1（19/3/2）、RealtimeINIT9、其餘各OTHER1；Kong/DB未stop不稱timeout。EdgehelperINSPECT12.664ms就拒、NOT_SENT/identityUNKNOWN/closedVERIFIED，無pidfd/signal/EdgeDockerstop。rawInit key缺失，MobyID/jsonId＋DockerCLItypedfallback/missingkey5離線控制證Source落差，NativeexactCLI/firststderr仍UNKNOWN。
+- Root讀完整readonly矩陣manifest6e7b127f...，核M17same5paths：plainboundedinspect/explicitInit；本次新jobKongDBwxintent→唯一restart=no update/readback→pinned各main child pidfd正常QUIT/INT（EdgeTERM）→physicalhelperclose→同90內只讀等自然exit→原Dockerstop，防unless-stopped與shellINT競態。原5roles/600/1800/SLO/caps不變，Edge15限制不擴，下一job仍0business。
+- Root官方OCI完整必要層hash/ELF/UIDGID proof1baeeb59830840bb8c08c2218746db25d0606fe7bd1a7645ff3228cba26ba75c；PGwrapped11284888B/3794a95b.../UID100GID101(initRoot)，Kong14996672B/854b17f3.../UID100GID65533，busyboxbase皆已核。初始Nixwrapper ELFassert/regexsetup資格保留，無大層重下載/執行/Docker。briefSHA3aab2be11dae6ea1926a5f05bbf1a9f3bed9eb7e92fbbd7012d7c4b030fe20ae，worker尚未Source修改。
+- 主機US$0；40/60未過，原WIP/G8/85、Hosted寫入/Production/mail保持0。
+
+
+### 2026-11-16 — Staging整合前置再次唯讀核對
+
+- Staging ref與公開marker仍d92be82ba188c3bf6618f1d70cd92f63a4eabfac/markerSHA3d7f3ea3a4f773370bc5c24ce0e73a1b9cea08e2ca53a11f3c102e282c119f78。remote migration120版本名稱有序對Source前120，本地121、exactpending20261116000100內容索引/4379d0cefd8b7493a64c17420944ce7e1e754e51beabe4a0679eec13662fc76b；原120SQLraw與deployedGit一樣，remoteSQLchecksum未比。App src/Functions/migrations仍與acac9bc先前Localfunctional一致，工具變更無產品delta。preflight2fbeb53db213d0926496ca12377d22a386140e0184239eeaf6f6d6a3a7076ba2。
+- owner-approval/staging-deploy/runbook同deployedGit；merge會自動Staging exactSHA部署/monitoring+schedule/全部trackedFunctions/prealias synthetic auth/HostedfixtureE2E與human real-device gate，**不自動apply pendingmigration**。sideeffectreceipt 2c0e4450b0140ab03547d703de6c96e007533652fc4d866e79553e927e6db486。未dispatch/PR/merge/deploy/Hostedwrites，不把重建reset流程當整合；新reviewbranch可能Git部署，優先保specialtestbranch不擴自動部署範圍。
+- M17same5paths實作中，Root已承認M16 transformedfixture漏actualoptionalJSONshape，M17actualNativeinspect讀取方法覆蓋absent/null/false/type與三角色身分；仍0business/40-60未過，主機US$0。
+
+
+### 2026-11-16 — M17唯一Root review已接受；下一新Source仍零business
+
+- packetd277971dea9caf1d8e50ce6f870d62712dff02c42e93efdfdb6d5c280b77d88a；Root核5 Source/45 records/3 publicpin/57 protected actualGit/44operator。Worker26direct/154fullPython PASS及lint/type/static/import/EOF/diff0；Root26/1.865s＋9adversarial＋15 actualNative11安全provider結構控制PASS。Standards/Spec/Security各0；summary875117f54c6d2ee25dd78a3304d041360f2b2ec10c92195b2b032d7289f47d9e，review docs/reviews/2026-11-16-linux-service-graceful-stop-m17-review.md。
+- plaininspect明確Init缺欄/null/false；只新job ownedDB/Kong privateintent→一次restart=no/readback→固定binary/UIDGID/namespace/cgroup/pidfd正常INT/QUIT（EdgeTERM）→helper實體close→同90內讀等自然exit→原Dockerstop。其他5stop、600/1800、資料/卷/order/SLO/caps與Edge15限制不擴。未知拒、SENT不倒填。Source最大403，原RED/setup資格保留。
+- 原7protected/handoff575959Bprefix現核符；Root exact8paths commit後核specialremote仍d775，再正常FF新Source attempt1，diagnostic flag保持0business，不GHrerun。須核實際三角色stop與完整冷備份才另bounded恢復business。40/60未過，主機US$0，G8/85保持停止保留，Hosted/Production/mail NONE。

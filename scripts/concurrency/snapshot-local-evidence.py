@@ -157,7 +157,8 @@ def stop_one(io, row, output, sequence, approved):
         persist('result',{'sequence':sequence,'role':row['role'],'outcome':outcome,
             'elapsedSeconds':time.monotonic()-started,'command':command if isinstance(command,dict) else 'UNKNOWN',
             'containerStopped':stopped_state,'observation':after,
-            'edgeReceipt':getattr(io,'edge_shutdown_receipt',None) if row['role']=='edge_runtime' else None})
+            'edgeReceipt':getattr(io,'edge_shutdown_receipt',None) if row['role']=='edge_runtime' else None,
+            'serviceReceipt':getattr(io,'service_shutdown_receipts',{}).get(row['role'])})
     return {'receipt':getattr(io,'edge_shutdown_receipt',None),'bindings':getattr(io,'edge_bindings',None),'diagnostic':after}
 
 
@@ -182,6 +183,7 @@ def snapshot(plan_path, approval, ports=None):
         C.directory(parent);output.mkdir(mode=0o700);created=True
         C.write_once(output/'snapshot-intent.json',{'planSha256':approval,'sourceRevision':plan['sourceRevision'],
             'executionAuthority':'NONE','retention':'UNVERIFIED'})
+        if hasattr(io,'bind_stop_output'):io.bind_stop_output(output)
         stage='shutdown_census';shutdown_census(io,plan,output)
         stage='preview_stop';io.stop_preview(plan['preview'])
         stage='mailpit';mail=output/'mailpit';mail.mkdir(mode=0o700)

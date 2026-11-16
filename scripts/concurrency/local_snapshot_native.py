@@ -209,38 +209,81 @@ class NativeIO:
         return C.decode(self.docker('inspect',*[r['id'] for r in rows]))
 
     def stop(self, row):
-        if row['role']=='edge_runtime':
-            C.require(hasattr(self,'edge_policy') and not getattr(self,'edge_attempted',False),'SNAPSHOT_EDGE_POLICY_REQUIRED')
-            self.edge_attempted=True;started=time.monotonic();end=min(started+90,self.deadline-4)
-            plan_raw,approval,context_raw=self.edge_policy
-            C.require(row['id']==self.edge_id and row['imageId']==E.IMAGE,'SNAPSHOT_CONTAINER_CHANGED')
-            def root_run(args,**options):
-                raw=self.run(args,**options)
-                return raw,self.closure=='VERIFIED'
+        if row['role'] not in E.TARGETS:
+            self.docker('stop','--timeout','-1',row['id'],timeout=90);return
+        role=row['role'];target=E.TARGETS[role]
+        C.require(hasattr(self,'stop_output') and hasattr(self,'edge_policy'),'SNAPSHOT_SERVICE_OUTPUT_REQUIRED')
+        C.directory(self.stop_output);C.require(self.stop_output.stat().st_mode&0o777==0o700)
+        C.require(row in self.stop_plan['containers'] and row['imageId']==target['image'] and row['name']==target['name'],'SNAPSHOT_CONTAINER_CHANGED')
+        attempted=getattr(self,'stop_attempted',set());C.require(role not in attempted,'SNAPSHOT_SERVICE_ALREADY_ATTEMPTED')
+        self.stop_attempted=attempted|{role};started=time.monotonic();end=min(started+90,self.deadline-4)
+        raw,approval,context_raw=self.edge_policy
+        record={'role':role,'restartState':'NOT_ATTEMPTED','signal':None,'naturalExit':'NOT_REACHED'}
+        self.service_shutdown_receipts=getattr(self,'service_shutdown_receipts',{});self.service_shutdown_receipts[role]=record
+        def remaining():
+            self.check();value=end-time.monotonic();C.require(value>0,'SNAPSHOT_DEADLINE');return value
+        def read():return self.service_state(row,min(2,remaining()))
+        def root_run(args,**options):
+            value=self.run(args,**options);return value,self.closure=='VERIFIED'
+        try:
+            before=read();C.require(before['running'] and before['pid']>1 and before['policy']==('no' if role=='edge_runtime' else 'unless-stopped'),'SNAPSHOT_RESTART_POLICY_CHANGED')
+            if role!='edge_runtime':
+                intent={'role':role,'containerIdSha256':C.digest(row['id'].encode()),'planSha256':approval,
+                        'originalPolicy':'unless-stopped','requestedPolicy':'no','before':{k:v for k,v in before.items() if k!='pid'},'initPidSha256':C.digest(str(before['pid']).encode())}
+                C.write_once(self.stop_output/('restart-'+role+'-intent.json'),intent)
+                remaining();record['restartState']='MAY_HAVE_CHANGED'
+                self.docker('update','--restart=no',row['id'],timeout=remaining(),maximum=16384)
+                C.require(self.closure=='VERIFIED','SNAPSHOT_SUBPROCESS_CLOSURE_UNKNOWN')
+                after=read();C.require(after=={**before,'policy':'no'},'SNAPSHOT_RESTART_POLICY_CHANGED')
+                record['restartState']='CONFIRMED_NO_RESTART'
+                C.write_once(self.stop_output/('restart-'+role+'-confirmed.json'),{'role':role,'planSha256':approval,'after':{k:v for k,v in after.items() if k!='pid'},'initPidSha256':C.digest(str(after['pid']).encode())})
+                before=after
             try:
-                self.edge_shutdown_receipt=E.perform(plan_raw,approval,context_raw,root_run,self.check,clock=time.monotonic,deadline=end)
+                record['signal']=E.perform(raw,approval,context_raw,root_run,self.check,clock=time.monotonic,deadline=end,target_role=role)
             except E.EdgeShutdownError as error:
-                self.edge_shutdown_receipt=error.evidence
-                raise C.SnapshotError('SNAPSHOT_EDGE_SHUTDOWN_UNVERIFIED') from None
-            try:
-                self.check();remaining=end-time.monotonic()
-                C.require(remaining>0,'SNAPSHOT_DEADLINE')
-                self.docker('stop','--timeout','-1',row['id'],timeout=remaining)
-            except BaseException:
-                self.edge_shutdown_receipt['status']='UNATTESTED'
-                raise
+                record['signal']=error.evidence;raise C.SnapshotError('SNAPSHOT_EDGE_SHUTDOWN_UNVERIFIED') from None
             finally:
-                if isinstance(getattr(self,'last_stop_command',None),dict):
-                    self.last_stop_command.update(edgeIntervalRequestedSeconds=90,totalElapsedSeconds=time.monotonic()-started)
-            return
-        self.docker('stop','--timeout','-1',row['id'],timeout=90)
+                if role=='edge_runtime':self.edge_shutdown_receipt=record['signal']
+            while True:
+                remaining();current=read()
+                C.require({**current,'pid':before['pid'],'running':before['running']}==before,'SNAPSHOT_SERVICE_CHANGED')
+                if current['running']is False:
+                    C.require(current['pid']==0,'SNAPSHOT_STOP_UNKNOWN');record['naturalExit']='VERIFIED';break
+                C.require(current['pid']==before['pid'],'SNAPSHOT_SERVICE_CHANGED')
+                time.sleep(min(0.05,remaining()))
+            self.docker('stop','--timeout','-1',row['id'],timeout=remaining())
+            C.require(self.closure=='VERIFIED','SNAPSHOT_SUBPROCESS_CLOSURE_UNKNOWN');remaining()
+        except BaseException:
+            if record['signal'] is not None:record['signal']['status']='UNATTESTED'
+            raise
+        finally:
+            record['elapsedSeconds']=time.monotonic()-started
+            if isinstance(getattr(self,'last_stop_command',None),dict):self.last_stop_command.update(edgeIntervalRequestedSeconds=90,totalElapsedSeconds=record['elapsedSeconds'])
+
+    def service_state(self,row,timeout):
+        values=C.decode(self.docker('inspect',row['id'],timeout=timeout,maximum=262144))
+        C.require(type(values)is list and len(values)==1 and type(values[0])is dict,'SNAPSHOT_INSPECT_SHAPE')
+        value=values[0];state=value['State'];host=value['HostConfig'];policy=host['RestartPolicy']
+        C.require(value['Id']==row['id'] and value['Name']==row['name'] and value['Image']==row['imageId'],'SNAPSHOT_CONTAINER_CHANGED')
+        C.require(all(type(state[k])is bool for k in ['Running','Paused','Restarting','Dead','OOMKilled']) and
+                  all(state[k]is False for k in ['Paused','Restarting','Dead','OOMKilled']) and type(state['Error'])is str and not state['Error'],'SNAPSHOT_SERVICE_CHANGED')
+        C.require(type(state['Pid'])is int and state['Pid']>=0 and type(value['RestartCount'])is int and value['RestartCount']>=0 and
+                  type(policy['Name'])is str and type(policy['MaximumRetryCount'])is int and policy['MaximumRetryCount']==0 and host['AutoRemove']is False,'SNAPSHOT_SERVICE_CHANGED')
+        init='ABSENT' if 'Init' not in host else 'NULL' if host['Init']is None else 'FALSE' if host['Init']is False else 'UNKNOWN'
+        C.require(init!='UNKNOWN','SNAPSHOT_INIT_UNSUPPORTED')
+        return {'pid':state['Pid'],'running':state['Running'],'policy':policy['Name'],'restartCount':value['RestartCount'],'initState':init}
 
     def bind_stop_policy(self,plan_raw,approval,context_raw):
         expected=E.bindings(plan_raw,approval,context_raw)
         plan=C.parse_plan(plan_raw,approval)
-        edge=next(r for r in plan['containers'] if r['role']=='edge_runtime')
-        C.require(edge['imageId']==E.IMAGE and edge['name']==E.NAME and json.loads(context_raw)==self.context,'SNAPSHOT_EDGE_POLICY_REQUIRED')
-        self.edge_policy=(plan_raw,approval,context_raw);self.edge_id=edge['id'];self.edge_bindings=expected
+        C.require(json.loads(context_raw)==self.context,'SNAPSHOT_EDGE_POLICY_REQUIRED')
+        self.edge_policy=(plan_raw,approval,context_raw);self.edge_bindings=expected;self.stop_plan=plan
+
+    def bind_stop_output(self,output):
+        expected=self.runtime.parent/'snapshots'/self.stop_plan['instanceNonce']
+        C.require(output==expected and output.resolve(strict=True)==output,'SNAPSHOT_SERVICE_OUTPUT_REQUIRED')
+        C.directory(output);C.require(output.stat().st_mode&0o777==0o700,'SNAPSHOT_SERVICE_OUTPUT_REQUIRED')
+        self.stop_output=output
 
     def stop_diagnostics(self, row):
         self.check()

@@ -33,7 +33,7 @@ class ShutdownTests(unittest.TestCase):
         import time
         import local_snapshot_native as N
         with tempfile.TemporaryDirectory() as folder:
-            f=Fixture(Path(folder).resolve());native=NativeIO();native.source=f.source;native.deadline=600
+            f=Fixture(Path(folder).resolve());native=NativeIO();native.source=f.source;native.runtime=f.runtime;native.deadline=600
             row=f.plan['containers'][0];children=[];arguments=[];original=subprocess.Popen
             def process(args,**options):
                 arguments.append(args)
@@ -62,7 +62,7 @@ class ShutdownTests(unittest.TestCase):
         import copy
         import time
         with tempfile.TemporaryDirectory() as folder:
-            f=Fixture(Path(folder).resolve());native=NativeIO();native.context=f.context
+            f=Fixture(Path(folder).resolve());native=NativeIO();native.source=f.source;native.runtime=f.runtime;native.context=f.context
             foreign=copy.deepcopy(f.plan['containers'][0]);foreign['id']='f'*64
             with patch.object(native,'docker') as port,self.assertRaises(C.SnapshotError):native.stop_diagnostics(foreign)
             port.assert_not_called()
@@ -81,7 +81,7 @@ class ShutdownTests(unittest.TestCase):
             actual=copy.deepcopy(next(r for r in f.backend_rows if r['Id']==row['id']))
             actual['State'].update(Pid=123,Running=True,Paused=False,Dead=False,Restarting=False,Status='running',ExitCode=0)
             actual['Config'].update(StopSignal='SIGTERM',Entrypoint=['sh','-c','SYNTHETIC_PRIVATE_SCRIPT'],Cmd=['SECRET_ARG'],Env=['SECRET_TOKEN'])
-            native=NativeIO();native.context=f.context;calls=[]
+            native=NativeIO();native.source=f.source;native.runtime=f.runtime;native.context=f.context;calls=[]
             def docker(*args,**options):
                 calls.append((args,options))
                 if args[0]=='inspect':return C.canonical([actual])
@@ -119,7 +119,7 @@ class ShutdownTests(unittest.TestCase):
             f=Fixture(Path(folder).resolve());row=next(r for r in f.plan['containers'] if r['role']=='edge_runtime')
             actual=copy.deepcopy(next(r for r in f.backend_rows if r['Id']==row['id']))
             actual['State'].update(Pid=123,Running=True,Paused=False,Dead=False,Restarting=False,Status='running',ExitCode=0)
-            native=NativeIO();native.context=f.context
+            native=NativeIO();native.source=f.source;native.runtime=f.runtime;native.context=f.context
             bad=[b'', b'PID PPID COMMAND\n', b'PID PPID COMMAND ARGS\n123 1 sh secret\n',
                 b'UID PID PPID COMMAND\n1001 123 1 sh\n', b'PID PPID CMD\n123 1 sh\n',
                 b'PID PPID COMMAND\n123 1 sh\n123 1 edge-runtime\n', b'PID PPID COMMAND\n00123 1 sh\n',
@@ -207,5 +207,90 @@ class ShutdownTests(unittest.TestCase):
             self.assertEqual(path.stat().st_mode&0o777,0o600)
             self.assertEqual({r['role'] for r in value['records']},{r['role'] for r in f.plan['containers']})
             self.assertTrue(all(len(r['containerIdSha256'])==64 for r in value['records']))
+
+class ServiceStopFlowTests(unittest.TestCase):
+    def flow(self,role,failure=None):
+        import local_snapshot_native as N
+        import local_edge_shutdown as E
+        from test_local_edge_shutdown import configured_fixture,Kernel,service_kernel,native_fixture,inspect_bytes,execute
+        temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup)
+        f,raw,ctx=configured_fixture(Path(temporary.name).resolve())
+        k=Kernel(f.plan,f.context) if role=='edge_runtime' else service_kernel(f,role)
+        raw=C.canonical(f.plan);ctx=C.canonical(f.context);native=native_fixture(f,raw,ctx)
+        now=[0];events=[];updated=[role=='edge_runtime'];helper=[False];polls=[0]
+        if failure=='intent-exists':C.write_once(f.output/('restart-'+role+'-intent.json'),{'preserved':True})
+        def port(args,**options):
+            if args[0]=='/usr/bin/sudo':
+                events.append('helper');self.assertTrue(updated[0]);self.assertLessEqual(options['timeout'],10)
+                result=execute(k,json.loads(options['data']));now[0]+=2;helper[0]=True
+                if failure=='helper-close':native.closure='UNKNOWN'
+                if failure=='cancel':native.cancelled=True
+                if failure=='late':now[0]=91
+                return C.canonical(result)
+            op=args[3];events.append(op)
+            if op=='inspect':
+                if helper[0]:
+                    polls[0]+=1
+                    self.assertEqual(k.events[-2:],[('close',1101),('close',1100)])
+                running=not helper[0] or polls[0]==1 or failure=='never-exit'
+                value=json.loads(inspect_bytes(k,policy='no' if updated[0] else 'unless-stopped',running=running))
+                if updated[0] and not helper[0] and failure=='readback':value[0]['RestartCount']=1
+                if helper[0] and failure=='poll-error':raise C.SnapshotError('SYNTHETIC_READ_FAILED')
+                if helper[0] and failure=='poll-restart':value[0]['RestartCount']=1
+                if helper[0] and failure=='poll-oom':value[0]['State']['OOMKilled']=True
+                if helper[0] and failure=='poll-pid':value[0]['State']['Pid']=999
+                if helper[0] and failure=='poll-identity':value[0]['Image']='sha256:'+'f'*64
+                return C.canonical(value)
+            if op=='update':
+                self.assertEqual(args,[*DOCKER,'update','--restart=no',k.edge['id']]);self.assertFalse(helper[0])
+                path=f.output/('restart-'+role+'-intent.json');self.assertTrue(path.exists());self.assertEqual(path.stat().st_mode&0o777,0o600)
+                if failure=='update':raise C.SnapshotError('SYNTHETIC_UPDATE_FAILED')
+                updated[0]=True;return b'synthetic'
+            self.assertEqual(args,[*DOCKER,'stop','--timeout','-1',k.edge['id']]);self.assertGreaterEqual(polls[0],2)
+            self.assertLess(options['timeout'],88);self.assertGreater(options['timeout'],0)
+            return b''
+        def sleep(seconds):now[0]+=90 if failure=='never-exit' else seconds
+        with patch.object(N.time,'monotonic',side_effect=lambda:now[0]),patch.object(N.time,'sleep',side_effect=sleep),patch.object(native,'run',side_effect=port):
+            if failure:
+                with self.assertRaises((C.SnapshotError,OSError)):native.stop(k.edge)
+            else:native.stop(k.edge)
+        return f,native,events,k,now[0]
+
+    def test_closed_three_roles_update_before_signal_and_observe_natural_exit_before_stop(self):
+        for role in ['edge_runtime','kong','db']:
+            with self.subTest(role=role):
+                f,native,events,k,elapsed=self.flow(role)
+                self.assertEqual(events.count('helper'),1);self.assertEqual(events.count('stop'),1)
+                self.assertEqual(events.count('update'),0 if role=='edge_runtime' else 1)
+                if role!='edge_runtime':
+                    self.assertLess(events.index('update'),events.index('helper'))
+                    self.assertEqual(native.service_shutdown_receipts[role]['restartState'],'CONFIRMED_NO_RESTART')
+                    self.assertTrue((f.output/('restart-'+role+'-confirmed.json')).exists())
+                self.assertEqual(native.service_shutdown_receipts[role]['naturalExit'],'VERIFIED');self.assertLess(elapsed,90)
+                self.assertEqual(native.deadline,600);self.assertEqual(native.service_shutdown_receipts[role]['signal']['status'],'VERIFIED')
+                self.assertNotIn('pid',json.dumps(native.service_shutdown_receipts[role]))
+
+    def test_other_five_roles_keep_original_stop_only_and_no_restart_intents(self):
+        import time
+        with tempfile.TemporaryDirectory() as folder:
+            f=Fixture(Path(folder).resolve());native=NativeIO();native.source=f.source;native.runtime=f.runtime;native.deadline=time.monotonic()+600
+            for role in ['auth','rest','realtime','storage','inbucket']:
+                row=next(r for r in f.plan['containers'] if r['role']==role)
+                with patch.object(native,'run',return_value=b'') as run:native.stop(row)
+                self.assertEqual(run.call_args.args[0],[*DOCKER,'stop','--timeout','-1',row['id']]);self.assertEqual(run.call_args.kwargs,{'timeout':90})
+            self.assertFalse(f.output.exists())
+
+    def test_update_intent_readback_or_late_completion_never_continues_or_retries(self):
+        for failure in ['intent-exists','update','readback','helper-close','cancel','late','never-exit','poll-error','poll-restart','poll-oom','poll-pid','poll-identity']:
+            with self.subTest(failure=failure):
+                f,native,events,k,_=self.flow('db',failure)
+                self.assertNotIn('stop',events);self.assertLessEqual(events.count('update'),1);self.assertLessEqual(events.count('helper'),1)
+                if failure in ['intent-exists','update','readback']:
+                    self.assertNotIn('helper',events);self.assertFalse(any(e[0]=='send' for e in k.events))
+                else:
+                    record=native.service_shutdown_receipts['db'];self.assertEqual(record['signal']['status'],'UNATTESTED')
+                    self.assertEqual(record['signal']['signalState'],'SENT')
+                if failure=='intent-exists':self.assertEqual(C.decode((f.output/'restart-db-intent.json').read_bytes()),{'preserved':True})
+
 
 if __name__=='__main__':unittest.main()
