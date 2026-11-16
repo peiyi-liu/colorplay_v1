@@ -56,7 +56,16 @@ def approved_inputs(revision,request_sha):
     tools_raw=private_read(RUNTIME.parent/"tools/toolchain.json",32768)
     require(digest(tools_raw)==value["toolchainSha256"],"TOOLCHAIN_APPROVAL_CHANGED")
     tools=json.loads(tools_raw)
-    require(set(tools)=={"schemaVersion","node","supabase"} and tools["schemaVersion"]==1,"TOOLCHAIN_INVALID")
+    require(isinstance(tools,dict) and set(tools)=={"schemaVersion","node","supabase","supabaseGo"} and type(tools["schemaVersion"]) is int and tools["schemaVersion"]==2,"TOOLCHAIN_INVALID")
+    for name,filename,version in [("node","node","24.18.0"),("supabase","supabase","2.109.1"),("supabaseGo","supabase-go","2.109.1")]:
+        row=tools[name]
+        require(isinstance(row,dict) and set(row)=={"path","version","sha256"},"TOOLCHAIN_INVALID")
+        require(row["path"]==str(RUNTIME.parent/"tools"/filename) and row["version"]==version and isinstance(row["sha256"],str) and re.fullmatch(r"[a-f0-9]{64}",row["sha256"]),"TOOLCHAIN_INVALID")
+        info=Path(row["path"]).lstat()
+        require(info.st_uid==os.getuid() and stat.S_IMODE(info.st_mode)==0o700,"TOOLCHAIN_FILE_INVALID")
+        fingerprint_binary(row["path"],row["sha256"])
+    require(command([tools["supabaseGo"]["path"],"--version"]).strip()=="2.109.1","SUPABASE_GO_VERSION_CHANGED")
+    require(bool(command([tools["supabase"]["path"],"start","--help"]).strip()),"SUPABASE_SHIM_PROBE_FAILED")
     return value,tools
 
 def actual_containers():

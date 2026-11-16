@@ -42,12 +42,12 @@ class Fixture:
         tools = self.parent / 'tools'
         tools.mkdir(mode=0o700)
         self.tools = {}
-        for name, version in [('node', '24.18.0'), ('supabase', '2.109.1')]:
-            path = tools / name
+        for name, filename, version in [('node', 'node', '24.18.0'), ('supabase', 'supabase', '2.109.1'), ('supabaseGo', 'supabase-go', '2.109.1')]:
+            path = tools / filename
             path.write_bytes(('synthetic-' + name).encode())
             path.chmod(0o700)
             self.tools[name] = {'path': str(path), 'version': version, 'sha256': C.digest(path.read_bytes())}
-        toolraw = encoded({'schemaVersion': 1, **self.tools})
+        toolraw = encoded({'schemaVersion': 2, **self.tools})
         C.write_once(tools / 'toolchain.json', toolraw)
         self.pins = []
         for index, role in enumerate(sorted(C.ROLES)):
@@ -119,6 +119,10 @@ class Fixture:
             return b'v24.18.0'
         if args == [self.tools['supabase']['path'], '--version']:
             return b'2.109.1'
+        if args == [self.tools['supabaseGo']['path'], '--version']:
+            return b'2.109.1'
+        if args == [self.tools['supabase']['path'], 'start', '--help']:
+            return b'Start the Supabase local development stack'
         if args[0] == self.tools['node']['path']:
             return encoded([self.key])
         if args[0] == '/usr/bin/sudo':
@@ -248,7 +252,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(ownership['configurationSha256'], C.digest((f.runtime / 'local-project/supabase/config.toml').read_bytes()))
         for path in f.runtime.rglob('*'):
             self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o700 if path.is_dir() else 0o600)
-        starts = [(a, o) for a, o in f.commands if a[0] == f.tools['supabase']['path'] and a[1] == 'start']
+        starts = [(a, o) for a, o in f.commands if a[0] == f.tools['supabase']['path'] and a[1] == 'start' and '--help' not in a]
         self.assertEqual(len(starts), 1)
         self.assertEqual(starts[0][1]['timeout'], 600)
         self.assertEqual(starts[0][0][-1], 'postgres-meta,studio,imgproxy,logflare,vector,supavisor')
@@ -314,14 +318,14 @@ class BootstrapTests(unittest.TestCase):
 
     def test_cli_start_failure_is_never_retried_and_upstream_removal_is_unknown(self):
         f = self.fixture
-        f.fail = lambda a: a[0] == f.tools['supabase']['path'] and a[1] == 'start'
+        f.fail = lambda a: a[0] == f.tools['supabase']['path'] and a[1] == 'start' and '--help' not in a
         result = f.execute()
         self.assertEqual(result['result'], 'FAILED')
         self.assertTrue(result['upstreamAutoRemovalPossible'])
         self.assertTrue(result['newVolumesMayHaveBeenRemoved'])
         self.assertEqual(result['retention'], 'UNVERIFIED')
         self.assertNotIn('PRIVATE_PROVIDER_MARKER', json.dumps(result))
-        self.assertEqual(sum(a[0] == f.tools['supabase']['path'] and a[1] == 'start' for a, _ in f.commands), 1)
+        self.assertEqual(sum(a[0] == f.tools['supabase']['path'] and a[1] == 'start' and '--help' not in a for a, _ in f.commands), 1)
         self.assertTrue((f.runtime / 'failure-resource-inventory.json').exists())
         self.assertFalse((f.runtime / 'bootstrap-result.json').exists())
         self.assertFalse(any('prune' in a or 'stop' in a for a, _ in f.commands))
@@ -369,7 +373,7 @@ class BootstrapTests(unittest.TestCase):
             C.write_once(f.runtime / 'bootstrap-result.json', {'result': 'forbidden'})
         self.assertEqual(f.execute()['code'], 'BOOTSTRAP_RUNTIME_EXISTS')
         self.assertEqual((f.runtime / 'bootstrap-result.json').read_bytes(), original)
-        self.assertEqual(sum(a[0] == f.tools['supabase']['path'] and a[1] == 'start' for a, _ in f.commands), 1)
+        self.assertEqual(sum(a[0] == f.tools['supabase']['path'] and a[1] == 'start' and '--help' not in a for a, _ in f.commands), 1)
 
     def test_backend_shared_limits_and_privileged_commands_stay_fixed(self):
         f = self.fixture

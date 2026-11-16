@@ -81,7 +81,7 @@ class PrebusinessTests(unittest.TestCase):
             def process(args,source,**options):
                 return original([sys.executable,'-I','-B','-c','import sys;sys.stdout.write("SYNTHETIC_STDOUT_SECRET");sys.stderr.write("SYNTHETIC_STDERR_SECRET");sys.exit(7)'],source,**options)
             def run(args,**options):
-                if args[0]==f.tools['supabase']['path'] and args[1]=='start':return M.NativeIO.run(native,args,**options)
+                if args[0]==f.tools['supabase']['path'] and args[1]=='start' and '--help' not in args:return M.NativeIO.run(native,args,**options)
                 return f.run(args,**options)
             native.run=run
             with patch.object(M,'bounded',side_effect=process),patch.object(sys,'platform','linux'):

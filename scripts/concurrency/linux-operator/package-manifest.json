@@ -112,9 +112,9 @@
       "sha256": "0cf7264f2fcfdc8453288c04c8e1ed8be3bf1a24ef8d4f423828894a474a099b"
     },
     "pin-execution-profile.py": {
-      "bytes": 9035,
+      "bytes": 9992,
       "role": "OPERATOR",
-      "sha256": "6d74e548e4d8c47044a6c72250f1a08cac31e00718b64908ac398a947e7a5bd5"
+      "sha256": "977376c78b630dac1f1d13b481c857cf64f9152039a7f7632c2eabe408b42584"
     },
     "prepare-capacity-leg.mjs": {
       "bytes": 10226,

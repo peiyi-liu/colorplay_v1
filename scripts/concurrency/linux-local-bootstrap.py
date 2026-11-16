@@ -119,7 +119,9 @@ def command_operation(args):
         if args[1:] == ['--version']:return 'NODE_VERSION'
         if args[1:2] == ['-e']:return 'NODE_KEY_GENERATION'
     if executable == 'supabase':
+        if args[1:] == ['start','--help']:return 'SUPABASE_START_HELP'
         return {'--version':'SUPABASE_VERSION', 'start':'SUPABASE_START', 'status':'SUPABASE_STATUS'}.get(args[1] if len(args)>1 else '', 'UNKNOWN')
+    if executable == 'supabase-go' and args[1:] == ['--version']:return 'SUPABASE_GO_VERSION'
     return 'UNKNOWN'
 
 
@@ -285,7 +287,9 @@ def bootstrap(request_path, approval, ports=None):
         C.directory(parent)
         tools = C.toolchain(parent, request['toolchainSha256'])
         C.require(io.run([tools['node']['path'], '--version']).decode().strip() == 'v24.18.0' and
-                  io.run([tools['supabase']['path'], '--version']).decode().strip() == '2.109.1', 'BOOTSTRAP_TOOLCHAIN_INVALID')
+                  io.run([tools['supabase']['path'], '--version']).decode().strip() == '2.109.1' and
+                  io.run([tools['supabaseGo']['path'], '--version']).decode().strip() == '2.109.1' and
+                  bool(io.run([tools['supabase']['path'], 'start', '--help']).strip()), 'BOOTSTRAP_TOOLCHAIN_INVALID')
         facts = io.hardware(package)
         C.hardware(facts)
         C.require(not os.path.lexists(runtime), 'BOOTSTRAP_RUNTIME_EXISTS')

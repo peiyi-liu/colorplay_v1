@@ -8,6 +8,7 @@ import os
 from pathlib import Path, PurePosixPath
 import platform
 import re
+import stat
 import sys
 import tarfile
 import urllib.request
@@ -18,6 +19,9 @@ PARENT = SOURCE.parent / 'live-recovery-runtime'
 TOOLS = PARENT / 'tools'
 NODE_SHA = '55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742'
 SUPABASE_SHA = '36d87b7fe6b4bcfe89ac47a4354e526cff22480224de426d7b370f6934556976'
+SUPABASE_VENDOR = {'bytes':73663269,'sha256':SUPABASE_SHA,'members':{
+    'supabase':{'bytes':109918528,'sha256':'e9c1c33233b4341a0475f9acb2ecac35c41f6c9aa6cfdcd4f54b3761cc789c20'},
+    'supabase-go':{'bytes':100909240,'sha256':'d10d8059b90d9fd68a69cb808b88dd3fe9f57ec458ffefc79a83083b3e810616'}}}
 PNPM_SHA512 = 'XN6SW08HX3Jetx+64YpC/+eEUkeJ8ZthxzHLhyHsKKruFg4BqNWvT+2ypCzb8wDv4j2zVrDUoXtNY+EfirfJVg=='
 STAGE = 'admission'
 ENV = {'PATH': '/usr/bin:/bin', 'HOME': str(Path.home()), 'PYTHONDONTWRITEBYTECODE': '1', 'SUPABASE_TELEMETRY_DISABLED': '1', 'CI': 'true'}
@@ -72,6 +76,41 @@ def single_binary(raw, archive_name, output):
     write(output, data, 0o700)
 
 
+def install_supabase(raw, vendor=None):
+    approved = SUPABASE_VENDOR if vendor is None else vendor  # Trusted test port, never a CLI/request field.
+    require(len(raw) == approved['bytes'] and hashlib.sha256(raw).hexdigest() == approved['sha256'],
+            'LINUX_TOOLCHAIN_DOWNLOAD_DIGEST_MISMATCH')
+    require(set(approved['members']) == {'supabase','supabase-go'})
+    require(TOOLS.resolve() == TOOLS and TOOLS.stat().st_uid == os.getuid() and
+            stat.S_IMODE(TOOLS.stat().st_mode) == 0o700)
+    data = {}
+    with tarfile.open(fileobj=io.BytesIO(raw), mode='r:gz') as archive:
+        members = archive.getmembers()
+        require(len(members) == 2 and {m.name for m in members} == {'supabase','supabase-go'})
+        for member in members:
+            pin = approved['members'][member.name]
+            require(member.isfile() and 0 < member.size == pin['bytes'] <= 512*1024**2)
+            body = archive.extractfile(member).read(member.size + 1)
+            require(len(body) == member.size and hashlib.sha256(body).hexdigest() == pin['sha256'],
+                    'LINUX_TOOLCHAIN_MEMBER_DIGEST_MISMATCH')
+            data[member.name] = body
+    require(not any(os.path.lexists(TOOLS / name) for name in data), 'LINUX_TOOLCHAIN_OUTPUT_EXISTS')
+    for name, body in data.items():
+        target = TOOLS / name
+        write(target, body, 0o700)
+        info = target.lstat()
+        require(stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and info.st_nlink == 1 and
+                stat.S_IMODE(info.st_mode) == 0o700 and hashlib.sha256(target.read_bytes()).hexdigest() == approved['members'][name]['sha256'])
+
+
+def probe_supabase(env=None, runner=None):
+    run = runner or command
+    require(run([str(TOOLS / 'supabase-go'),'--version'],env=env).strip() == b'2.109.1',
+            'LINUX_TOOLCHAIN_VERSION_MISMATCH')
+    require(bool(run([str(TOOLS / 'supabase'),'start','--help'],env=env).strip()),
+            'LINUX_TOOLCHAIN_SHIM_PROBE_FAILED')
+
+
 def install_pnpm(raw):
     destination = TOOLS / 'pnpm'
     destination.mkdir(mode=0o700)
@@ -113,13 +152,14 @@ def main():
     STAGE = 'node-download'
     single_binary(download('https://nodejs.org/dist/v24.18.0/node-v24.18.0-linux-x64.tar.xz', 'sha256', NODE_SHA), 'node-v24.18.0-linux-x64/bin/node', TOOLS / 'node')
     STAGE = 'supabase-download'
-    single_binary(download('https://github.com/supabase/cli/releases/download/v2.109.1/supabase_linux_amd64.tar.gz', 'sha256', SUPABASE_SHA), 'supabase', TOOLS / 'supabase')
+    install_supabase(download('https://github.com/supabase/cli/releases/download/v2.109.1/supabase_linux_amd64.tar.gz', 'sha256', SUPABASE_SHA))
     STAGE = 'pnpm-download'
     install_pnpm(download('https://registry.npmjs.org/pnpm/-/pnpm-11.25.0.tgz', 'sha512', PNPM_SHA512))
     node, pnpm = str(TOOLS / 'node'), str(TOOLS / 'pnpm/bin/pnpm.cjs')
     env = {**ENV, 'PATH': str(TOOLS) + ':/usr/bin:/bin'}
     require(command([node, '--version'], env=env).strip() == b'v24.18.0' and command([str(TOOLS / 'supabase'), '--version'], env=env).strip() == b'2.109.1' and command([node, pnpm, '--version'], env=env).strip() == b'11.25.0', 'LINUX_TOOLCHAIN_VERSION_MISMATCH')
-    record(TOOLS / 'toolchain.json', {'schemaVersion': 1, 'node': {'path': node, 'version': '24.18.0', 'sha256': hashlib.sha256((TOOLS / 'node').read_bytes()).hexdigest()}, 'supabase': {'path': str(TOOLS / 'supabase'), 'version': '2.109.1', 'sha256': hashlib.sha256((TOOLS / 'supabase').read_bytes()).hexdigest()}})
+    probe_supabase(env)
+    record(TOOLS / 'toolchain.json', {'schemaVersion': 2, 'node': {'path': node, 'version': '24.18.0', 'sha256': hashlib.sha256((TOOLS / 'node').read_bytes()).hexdigest()}, 'supabase': {'path': str(TOOLS / 'supabase'), 'version': '2.109.1', 'sha256': hashlib.sha256((TOOLS / 'supabase').read_bytes()).hexdigest()}, 'supabaseGo': {'path':str(TOOLS / 'supabase-go'),'version':'2.109.1','sha256':hashlib.sha256((TOOLS / 'supabase-go').read_bytes()).hexdigest()}})
     STAGE = 'locked-dependencies'
     command([node, pnpm, '--config.verify-deps-before-run=false', 'install', '--frozen-lockfile'], timeout=600, env=env)
     STAGE = 'chromium-installation'

@@ -119,12 +119,13 @@ def toolchain(parent, expected):
     directory(tools)
     raw = read_file(tools / 'toolchain.json', private=True)
     require(digest(raw) == expected, 'BOOTSTRAP_TOOLCHAIN_INVALID')
-    values = exact(decode(raw), ['schemaVersion', 'node', 'supabase'])
-    require(type(values['schemaVersion']) is int and values['schemaVersion'] == 1)
-    for name, version in [('node', '24.18.0'), ('supabase', '2.109.1')]:
+    values = exact(decode(raw), ['schemaVersion', 'node', 'supabase', 'supabaseGo'])
+    require(type(values['schemaVersion']) is int and values['schemaVersion'] == 2)
+    for name, filename, version in [('node','node','24.18.0'), ('supabase','supabase','2.109.1'), ('supabaseGo','supabase-go','2.109.1')]:
         row = exact(values[name], ['path', 'version', 'sha256'])
-        require(row['path'] == str(tools / name) and row['version'] == version and
-                DIGEST.fullmatch(row['sha256']) and binary_hash(row['path']) == row['sha256'],
+        require(row['path'] == str(tools / filename) and row['version'] == version and
+                DIGEST.fullmatch(row['sha256']) and stat.S_IMODE(Path(row['path']).lstat().st_mode) == 0o700 and
+                binary_hash(row['path']) == row['sha256'],
                 'BOOTSTRAP_TOOLCHAIN_INVALID')
     return values
 

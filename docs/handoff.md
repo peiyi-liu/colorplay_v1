@@ -2259,3 +2259,17 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 核5source/18logs/10protected，packet835da6680d471033bb9dfcef3d8b5b66eed5dc16b8546172bb013d720b44e192；Root唯一review新Standards0/Spec0/toolblocker0，source summarycab335e640d5f35c65e5d467cf958adef202d63c40b9ee7e3620280af49858b2。Root獨立36tests＋3真Mac age/full ZIP-tar census/source-job-request綁定controls綠（9d4c45bc13fae229110e27270507ff2f9c99e833e720a8ac211fdf12820cb008）。
 - 原第一76batch Mac killpg PermissionError保留/未定位；bounded AST與HEAD相同，single0.304s與一次第二76batch3.504s綠，未修cleanup/改skip/覆寫原FAIL。新v2 diagnostic nullProfile/NONE，不當容量或完整留存PASS；原v1 caps與收據不變。
 - Root將精確8paths commit並只快轉test branch，啟動一個新Local診斷job保存CLI完整raw（只cipher1day）；下載本機解密後才定位，原兩run不GH rerun。此刻仍初始化原因UNKNOWN/functional與15容量NOT_RUN/費用US$0，G8/85/原WIP/Hosted/Production不變。
+
+
+### 2026-11-16 — M8真密文下載／根因已證：漏supabase-go，M9完整工具鏈修復
+
+- 新Source b7f6925正常快轉test branch後run43796305638/job133065791407；bootstrap仍原失敗，M8成功上傳cipher artifact14194502688/2752B/1day，沒有GH rerun。Root用GitHub connector下載、驗API ZIP SHA1f96abb5634b1dec2ff1db0d744aa8cef529d739c99c0c1bd1639010d069cb0c，本機age完整驗證、8files4057B/source/job/request全census通過，cipher ef81ba880d2eb4d061a26253b9549b83abd0cb92d38078a4110b2e6f39e82969、manifest05c1fb10adf8fcd92672d594d0b59887dc179eff447bcc7d21ce41504d254830。PrivateIdentity未上傳或讀進context，raw只本機private；這是diagnostic留存，非DB/容量PASS。
+- 真stderr1069B/SHAaf00d2721603be22738f0d91b96a0b1153732cb280665a8872b9046eedcdf70f與第二run同：shim找不到supabase-go。Root installer只抽supabase且--version掩蓋缺companion，是已證漏項；不是HOME/LCA推論，首run無raw不回填。Root另只讀查固定官方archive73,663,269B/36d87b…exact兩members：shim109,918,528B/e9c1c332…與Go100,909,240B/d10d8059…，未Mac執行Linux ELF。
+- M9同worker限dual-bin co-location/獨立Go pin＋toolchain schema2/真正Go版本與help probe、C/pinner/Fixture/必要enum，Root sole review，詳細brief docs/superpowers/plans/2026-11-16-supabase-dual-toolchain-m9-brief.md。M3/M5/產品/DB/imagepins/SLO/workflow與其他假說不改。這是首次直接修已證初始化原因；Root Native新run前先review，不盲重跑舊三run。0business/functional/容量，費用US$0/無DO/Hosted/Production/Gmail變動，原WIP/G8/85保持。
+
+
+### 2026-11-16 — M9雙程式完整工具鏈唯一review ACCEPTED，待新Local驗證
+
+- 核9source/23logs-proofs/9protected，packet50a147b7cedf385e1a946ad824e5bd0d0e694ed6a19e70062a43b530d1c3f9a7；Root唯一review Standards0/Spec0/newblocker0，summary91eb7225a656766281d8d0d03844ece20f574f5b9e0e8b8b7e56dc7eb15fa69f，report docs/reviews/2026-11-16-supabase-dual-toolchain-m9-review.md。Worker86/4.262s與lint/type/format/static/diff綠，Root54 tests綠。
+- Root以真正原official archive production-default實測兩ELF co-locate/hash/owner700/nlink1＋防覆寫，control11b10fed7773b4edc5c2cda4a0e7b26dec27601bba0d91a5d1b33e8d9394aedb；只FS不執行Linux。toolchain schema2獨立pin Go，三處Go版本/help probe，真start一次/ENV/產品/SLO不動；manifest僅pinnerentry變，新SHA124556a5c84a9ac9280230a6a475276c49d92e34c7fafec0ea22130a9da3f2ae。
+- Native修復後/容量仍NOT_RUN，原Maccleanup PermissionError資格保留未修；Root將精確12paths commit/核test branch head後快轉新Source，一個新Local run，原三run不重跑。費用US$0，G8/85/原WIP/Hosted/Production/Gmail保持。
