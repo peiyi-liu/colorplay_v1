@@ -1,0 +1,56 @@
+name: Local capacity on isolated free Linux
+
+on:
+  push:
+    branches:
+      - codex/local-capacity-linux-20261116
+
+permissions:
+  contents: read
+
+concurrency:
+  group: colorplay-local-capacity-linux
+  cancel-in-progress: false
+
+jobs:
+  capacity-linux:
+    if: github.repository == 'peiyi-liu/colorplay_v1' && github.run_attempt == 1 && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    defaults:
+      run:
+        shell: bash
+        working-directory: colorplay-live-recovery
+    steps:
+      - name: Check out exact reviewed source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          path: colorplay-live-recovery
+          persist-credentials: false
+          fetch-depth: 1
+          submodules: false
+          lfs: false
+
+      - name: Run fresh Local suite without Hosted credentials
+        id: suite
+        run: python3 -B scripts/concurrency/run-linux-local-suite.py "$GITHUB_SHA"
+
+      - name: Upload only bounded encrypted evidence
+        id: evidence
+        if: ${{ always() && !cancelled() && hashFiles('live-recovery-runtime/exports/export-complete.json') != '' }}
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: colorplay-local-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: live-recovery-runtime/exports/evidence.age
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+          overwrite: false
+
+      - name: Retain stopped Local data briefly for Root download verification
+        if: ${{ always() && !cancelled() && steps.evidence.outputs.artifact-id != '' }}
+        run: |
+          for attempt in {1..20}; do
+            sleep 30
+          done

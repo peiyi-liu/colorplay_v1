@@ -2219,3 +2219,15 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - Worker四檔source＋31logs逐一hash核對，packet820c87e12a2a2114043ad41d4b46dd2dc1abcd6dbd7ffa040b042dbeb973a6e0；Standards0/Spec0/工具blocker0，Root唯一review無往返修正。Root獨立17tests0.911s＋4 M5→M3真本機age加解密完整census controls綠，7d7bc38d1522e6e89669c71b83789ef413f7f1b9b2c83dc7fb2f934f0db17369。summary606575956d4ae9c933c2a14ae49b539cc8930f0079c017b78284e6530706aad8；report docs/reviews/2026-11-16-linux-local-snapshot-m5-review.md。
 - Task source契約完成，外部kernel/DB/HTTP仍合成、Native Linux/真DB export/60人NOT_RUN、retention UNVERIFIED。Root最初harness case parent缺失在seam前停止，修harness才跑，保留說明不當產品finding。Root接整體operator/workflow唯一review，未外部push/資源/Hosted/費用；原WIP/G8/85不改。
+
+
+### 2026-11-16 — Root operator／suite唯一review允許一次免費Native Local，待精確commit
+
+- M5本機commit8997ad4（7paths）完成，cached diffcheck0先通過才commit；Root4controls＋17tests／workerpacket與review已記。Root operator/suite唯一review ACCEPTED_FOR_ONE_NATIVE_LOCAL_ATTEMPT，Standards0/Spec0/工具blocker0；53source/config paths raw pins packet668ea81a36883cc278c0b1fcd0f9a9bc31fb1cf35099c0307a706e4ef3d670a1。report docs/reviews/2026-11-16-linux-root-suite-review.md。
+- Root62受影響Python（38+3+3+1+17M4）、lint/type/changedformat/syntax綠；真M4 package admission確認42listed/32installed相容，manifest34cc8763c87fe034b3f2011b79053d010a202daed00a7c7cf6c2fc0c84605a55。17Darwin拒絕與7publication controls/52business AST僅工具證據；沒有native或60人PASS。Root早期測試一個自行寫錯的預期digest改為已知abc向量，原失敗列資格，不當產品RED。
+- Root即將只新建codex/local-capacity-linux-20261116測試branch／推此reviewed source，branch-specific Vercel auto-deploy disabled；不改staging/main或remote settings。workflow固定standard4/16、contents:read、無Hostedsecrets，先真kernel6controls才business、15legs fail-stop、M5/M3固定limits、只成功cipher1day artifact。任一步未知不升級，不GH rerun/自動重試；PARTIAL診斷不能retention或容量PASS。此時仍remoteWrites0/費用USD0，原root WIP/G8/85保護不變；下一步核新branch不存在後push並跟到run/下載解密Root審查。
+
+
+### 2026-11-16 — Root suite提交前EOF gate確實阻止commit
+
+- cached diffcheck exit2，capacity-root-readonly.py檔尾多1byte newline；本次未commit，修該byte/AST相同，manifest 65816b8617998ffcda436ea4c36b4cb66d79a2b71c136dc2f8daaa9370e80760、v2 packet 5335b80cf11a556fd952910bc94d7035e48ab3ec2e755e053ab4ffe28b4db532；原v1/34cc記錄保留。Source行為不變，無Native/remote/費用；精確restage check0後才commit。

@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "kind": "ROOT_PUBLIC_LINUX_IMAGE_PINS",
+  "sourceVersions": "G8_REVIEWED_SOFTWARE_VERSIONS_SAME_AMD64_DIGESTS_SEPARATE",
+  "images": [
+    {
+      "role": "db",
+      "tag": "public.ecr.aws/supabase/postgres:17.6.1.143",
+      "tagManifestSha256": "sha256:80d7b27c3e8d77cfa7226eee9508671796da214781ff15a35b3670d7ad5ee453",
+      "amd64ManifestSha256": "sha256:b021e96054128399f84f24e39d29c21ee7c7169515e5d9e4e99ff15d5043d1d8",
+      "configDigest": "sha256:2d3ac69ad5c95d81458cc93a6cc6c31a98dfa00cd28f88a0a9358d315e1c357a",
+      "pinnedReference": "public.ecr.aws/supabase/postgres@sha256:b021e96054128399f84f24e39d29c21ee7c7169515e5d9e4e99ff15d5043d1d8",
+      "compressedLayerBytes": 369809129,
+      "platform": "linux/amd64"
+    },
+    {
+      "role": "auth",
+      "tag": "public.ecr.aws/supabase/gotrue:v2.192.0",
+      "tagManifestSha256": "sha256:b252efb680be37d4a8bf77c210cf0439c19b63a4b51929233a65dd101d25bdab",
+      "amd64ManifestSha256": "sha256:288d880ebc80a1cb5ad52dc7d12328f76e9c90127003306864a270118bba00a8",
+      "configDigest": "sha256:96be953b078582b242d6fde6a5e8ab545f5d4ef12fbaf51893ae7e4c760775f0",
+      "pinnedReference": "public.ecr.aws/supabase/gotrue@sha256:288d880ebc80a1cb5ad52dc7d12328f76e9c90127003306864a270118bba00a8",
+      "compressedLayerBytes": 28584263,
+      "platform": "linux/amd64"
+    },
+    {
+      "role": "rest",
+      "tag": "public.ecr.aws/supabase/postgrest:v14.14",
+      "tagManifestSha256": "sha256:d2009b5c9deffc210c8a5592698472fede14fd9f6ca89823c8474ca54d58c012",
+      "amd64ManifestSha256": "sha256:a677dc2b2c8cd5a86952fef538c2e98aa096c80bbf634b83ac4d8bea71dde7fd",
+      "configDigest": "sha256:de2f4d042d5efb5d1362d98c11e5e0773bedc1376bafcdb4ec863fc18d25f52d",
+      "pinnedReference": "public.ecr.aws/supabase/postgrest@sha256:a677dc2b2c8cd5a86952fef538c2e98aa096c80bbf634b83ac4d8bea71dde7fd",
+      "compressedLayerBytes": 6362180,
+      "platform": "linux/amd64"
+    },
+    {
+      "role": "realtime",
+      "tag": "public.ecr.aws/supabase/realtime:v2.112.6",
+      "tagManifestSha256": "sha256:7b56da34216fd568042be043900d15cdd33c2c48c2116c9a333f9465255da80d",
+      "amd64ManifestSha256": "sha256:5f5377bf9d1f0e6b59fe6a0cb57e9ff65f9960eed5b43e93862969f81c44acae",
+      "configDigest": "sha256:c7aad85a32b6a078891377597321bdc3f945e6c48cee0e5a81ced2a02a2e22de",
+      "pinnedReference": "public.ecr.aws/supabase/realtime@sha256:5f5377bf9d1f0e6b59fe6a0cb57e9ff65f9960eed5b43e93862969f81c44acae",
+      "compressedLayerBytes": 122739149,
+      "platform": "linux/amd64"
+    },
+    {
+      "role": "storage",
+      "tag": "public.ecr.aws/supabase/storage-api:v1.62.5",
+      "tagManifestSha256": "sha256:1dbe962d9862ef12e20357f9d7ba5431989c1daf4a556d6cb20ee4efd1c57320",
+      "amd64ManifestSha256": "sha256:28f8a3cc5dd81b1b13098ca12460883ecb911d017a371b4b5efcb3ec432c1f1e",
+      "configDigest": "sha256:4db2fd351aa951b2ddc190fc252c0e83796bb56b6b8e1a058441d961ea87577a",
+      "pinnedReference": "public.ecr.aws/supabase/storage-api@sha256:28f8a3cc5dd81b1b13098ca12460883ecb911d017a371b4b5efcb3ec432c1f1e",
+      "compressedLayerBytes": 243019762,
+      "platform": "linux/amd64"
+    },
+    {
+      "role": "edge_runtime",
+      "tag": "public.ecr.aws/supabase/edge-runtime:v1.74.2",
+      "tagManifestSha256": "sha256:a82676277615aee03c4f288cbbbf68dedb5ba8693073e567ab8dbfdd11ba5d45",
+      "amd64ManifestSha256": "sha256:2df6853c27aeab7063e4b6078b0ac9747c039d8c008b770cd4e6a62b29c285bb",
+      "configDigest": "sha256:72d69a90c0d4e46dcf93197dc5a6cc2d16483c7148c637ccf3d58db04943e077",
+      "pinnedReference": "public.ecr.aws/supabase/edge-runtime@sha256:2df6853c27aeab7063e4b6078b0ac9747c039d8c008b770cd4e6a62b29c285bb",
+      "compressedLayerBytes": 390649731,
+      "platform": "linux/amd64"
+    },
+    {
+      "role": "kong",
+      "tag": "public.ecr.aws/supabase/kong:2.8.1",
+      "tagManifestSha256": "sha256:1b53405d8680a09d6f44494b7990bf7da2ea43f84a258c59717d4539abf09f6d",
+      "amd64ManifestSha256": "sha256:e21b0b793879ab96720ed4188f9441260273f4bf775bcbff8d435e019ffb759a",
+      "configDigest": "sha256:3cefb958bcd694597b65adc00053a762b1f9a6df3c6031af528d052d75a64e1a",
+      "pinnedReference": "public.ecr.aws/supabase/kong@sha256:e21b0b793879ab96720ed4188f9441260273f4bf775bcbff8d435e019ffb759a",
+      "compressedLayerBytes": 49335657,
+      "platform": "linux/amd64"
+    },
+    {
+      "role": "inbucket",
+      "tag": "public.ecr.aws/supabase/mailpit:v1.30.2",
+      "tagManifestSha256": "sha256:37a38e48e9338cd7e89dfeb487f37b02ebfcd9cb23111bed2d345e79d37d6dd6",
+      "amd64ManifestSha256": "sha256:f0b0ed33c8cf53aac0dd004abbe245c83420a7ae44914e25178f7791dec5723a",
+      "configDigest": "sha256:cdb09a322d77e0b233727104beaafb4b7b503fd3badce6a6d9e58fd9993025f6",
+      "pinnedReference": "public.ecr.aws/supabase/mailpit@sha256:f0b0ed33c8cf53aac0dd004abbe245c83420a7ae44914e25178f7791dec5723a",
+      "compressedLayerBytes": 14019751,
+      "platform": "linux/amd64"
+    }
+  ],
+  "uniqueCompressedLayerBytes": 1216828810,
+  "layerCount": 72,
+  "dockerDaemonUsed": false,
+  "resourcesCreated": 0,
+  "capacityProof": false
+}

@@ -19,7 +19,7 @@ SOURCE = Path(__file__).resolve().parents[2]
 ENV = {'PATH': '/usr/bin:/bin', 'PYTHONDONTWRITEBYTECODE': '1', 'SUPABASE_TELEMETRY_DISABLED': '1'}
 
 
-def bounded(args, source, data=None, env=None, timeout=30, maximum=2097152):
+def bounded(args, source, data=None, env=None, timeout=30, maximum=2097152, checked=True):
     child = subprocess.Popen(args, cwd=source, env={**ENV, **(env or {})},
                              stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                              stderr=subprocess.DEVNULL, start_new_session=True, bufsize=0)
@@ -58,8 +58,9 @@ def bounded(args, source, data=None, env=None, timeout=30, maximum=2097152):
                     if not pending:
                         selector.unregister(child.stdin)
                         child.stdin.close()
-        C.require(child.returncode == 0 and not pending, 'BOOTSTRAP_COMMAND_FAILED')
-        return b''.join(chunks)
+        C.require(not pending and (not checked or child.returncode == 0), 'BOOTSTRAP_COMMAND_FAILED')
+        raw = b''.join(chunks)
+        return raw if checked else (child.returncode, raw)
     finally:
         if child.poll() is None or not eof:
             try:
