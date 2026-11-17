@@ -175,6 +175,7 @@ class PullTests(unittest.TestCase):
             requests=f.parent/'requests';requests.mkdir(mode=0o700)
             path=requests/'bootstrap-input.json';C.write_once(path,f.path.read_bytes())
             native=M.NativeIO();native.source=f.source;native._pull_pins=f.pins
+            native.bootstrap_observer=None  # External fake: no native observer authority.
             with patch.object(sys,'platform','linux'):native._authorize_diagnostics(path,C.digest(path.read_bytes()))
             calls=[]
             def process(args,source,**options):

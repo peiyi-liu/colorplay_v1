@@ -157,6 +157,7 @@ class PrebusinessTests(unittest.TestCase):
             f=Fixture(Path(temp).resolve());requests=f.parent/'requests';requests.mkdir(mode=0o700)
             request=requests/'bootstrap-input.json';M.C.write_once(request,f.path.read_bytes())
             native=M.NativeIO();native.source=f.source;native.environment=f.environment;native.platform='linux'
+            native.bootstrap_observer=None  # External fake: no Docker observer or native proof.
             for name in ['hardware','system_exists','system_read','system_write','system_identity','jwks']:setattr(native,name,getattr(f,name))
             original=M.bounded
             def process(args,source,**options):
@@ -165,7 +166,8 @@ class PrebusinessTests(unittest.TestCase):
                 if args[0]==f.tools['supabase']['path'] and args[1]=='start' and '--help' not in args:return M.NativeIO.run(native,args,**options)
                 return f.run(args,**options)
             native.run=run
-            with patch.object(M,'bounded',side_effect=process),patch.object(sys,'platform','linux'):
+            with patch.object(M,'bounded',side_effect=process),patch.object(sys,'platform','linux'), \
+                    patch.object(M.H,'bind',return_value='SYNTHETIC_AUTHORITY_NOT_NATIVE'):
                 result=M.bootstrap(request,M.C.digest(request.read_bytes()),native)
             self.assertEqual(result['result'],'FAILED')
             self.assertEqual((requests/'bootstrap-command-stdout.bin').read_bytes(),b'SYNTHETIC_STDOUT_SECRET')

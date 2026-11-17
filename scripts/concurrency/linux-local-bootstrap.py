@@ -17,6 +17,7 @@ import linux_bootstrap_contracts as C
 import linux_bootstrap_backend as B
 import linux_project_inputs as I
 import linux_status_contracts as D
+import linux_bootstrap_health_native as H
 
 SOURCE = Path(__file__).resolve().parents[2]
 ENV = {'PATH': '/usr/bin:/bin', 'PYTHONDONTWRITEBYTECODE': '1', 'SUPABASE_TELEMETRY_DISABLED': '1'}
@@ -167,6 +168,9 @@ class NativeIO:
                   'BOOTSTRAP_DIAGNOSTIC_SCOPE_INVALID')
         C.directory(folder)
         self._raw_root, self._raw_request_sha = folder, approved
+
+    def bootstrap_observer(self, runtime, pins, deadline):
+        return H.start(self._health_binding, runtime, pins, deadline)
 
     def _save_failed_raw(self, code, out, error):
         if self._raw_root is None or self._raw_attempted:return
@@ -382,7 +386,9 @@ def bootstrap(request_path, approval, ports=None):
         project_dir, configuration, sources, secret, key = B.project(io, io.source, runtime, tools, inputs, inputs_sha)
         C.write_once(runtime / 'source-bindings.json', sources)
         pins = B.image_pins(operators['linux-image-pins.json'])
-        if isinstance(io, NativeIO):io._pull_pins = json.loads(json.dumps(pins))
+        if isinstance(io, NativeIO):
+            io._pull_pins = json.loads(json.dumps(pins))
+            io._health_binding = H.bind(io.source, request_path, approval, request, before, isolation, runtime, io.environment)
         stage = 'start'
         state = B.start(io, runtime, project_dir, tools, pins, secret, key)
         stage = 'readback'

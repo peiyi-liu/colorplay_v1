@@ -12,6 +12,7 @@ import tomllib
 import urllib.parse
 import linux_project_inputs as I
 import linux_status_contracts as D
+import linux_bootstrap_health_observer as H
 from linux_bootstrap_contracts import (PROJECT, ROLES, require, digest, read_file,
                                         write_once, decode, exact, BootstrapError, fingerprint, directory)
 
@@ -214,11 +215,23 @@ def start(io, runtime, project_dir, tools, pins, secret, key):
         require(image['Id'] == pin['configDigest'] and image['Architecture'] == 'amd64' and image['Os'] == 'linux')
         docker(io, 'tag', pin['pinnedReference'], pin['tag'])
     env = {'SUPABASE_AUTH_JWT_SECRET': secret, 'SUPABASE_JWT_SECRET': secret}
-    write_once(runtime / 'cli-start-intent.json', {'projectId': PROJECT, 'attempts': 1,
-        'upstreamAutoRemovalPossible': True, 'volumesMayAlsoBeRemoved': True})
+    factory = getattr(io, 'bootstrap_observer', None)
+    observer = factory(runtime, pins, time.monotonic() + 600) if callable(factory) else H.Unobserved()
     command = [tools['supabase']['path'], 'start', '--workdir', str(project_dir), '--exclude', EXCLUDED]
-    io.run(command, env=env, timeout=600)
-    write_once(runtime / 'cli-start-returned.json', {'projectId': PROJECT, 'exitCode': 0})
+    try:
+        write_once(runtime / 'cli-start-intent.json', {'projectId': PROJECT, 'attempts': 1,
+            'upstreamAutoRemovalPossible': True, 'volumesMayAlsoBeRemoved': True})
+        observer.cli_started()
+        io.run(command, env=env, timeout=600)
+        write_once(runtime / 'cli-start-returned.json', {'projectId': PROJECT, 'exitCode': 0})
+    except BaseException:
+        try: observer.finish()
+        except BaseException: pass  # Never mask the original start/write error.
+        raise
+    try: closed = observer.finish()
+    except BaseException: closed = {'closure': 'UNKNOWN', 'persisted': False}
+    if callable(factory):
+        require(closed == {'closure': 'VERIFIED', 'persisted': True}, 'BOOTSTRAP_OPERATION_FAILED')
     raw = io.run([tools['supabase']['path'], 'status', '--workdir', str(project_dir), '--output', 'json'], env=env)
     state = check_status(raw, secret, key, io, runtime, tools['node']['path'])
     return state

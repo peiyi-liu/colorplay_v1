@@ -3031,3 +3031,43 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 一輪1P2已修：node CPU guard在return內於PROFILE_RECHECK後執行導致stage錯位，Root純fake有效重現；只原lifetime_percent入口literal CPU mark＋host entry／driver regression3delta，其餘8raw不變；3逆向還原v1hash。有效RED20PASS/2FAIL→affected33files300PASS；final4/63、Python5methods+原hostFS1、type/full lint/globalformat/import/diff/static0，Root3/45/1877ms／P2 provider trace同。原fixture/lint/首次GREEN失敗完整保留，不當乾淨綠。
 - finalv2 d388ef4bbf9811c174d58f2fd908844c0ca417de98a732e393cfad9db59d1662／77records33checks，v1 67a08cd6697abaed053ba2f2829068304ee2b201fe06c3931cc20cbd814af968／原54全保。Rootreceipt b95874f60d3dfa444aff4e2af658c9e7dccbdc9b2d9ade82aaeb894294a92867，11files/2203 unowned actualGit of2212含type/execbit/operator42/Original7真prefix+pkglock/436歷史raw含M32v1v2/M33/readonly全核；全部既有Python函式去literal mark exact AST。review docs/reviews/2026-11-17-root-helper-exit-diagnostic-m34-review.md。
 - 只Task級觀測接受，不證Native28底因或容量PASS。28已final/cold全留；Root接下來exact14paths commit/clean、freshremote987a715後正常FF啟動Native29新Source pushattempt1六人→15legs，不rerun/0business。40及60未run，US$0/cap5／原WIP／G8停止85／HostedProduction真信NONE保持。
+
+
+### 2026-11-17 — M34固定Source正常Native29啟動
+
+- Rootexact14paths cachedcheck0/commit/clean 39088488cd9e435803beb36e262cae2ba8e8977b（tree95826421a013fc0ce46fa23725f5fbcaf1304c29），freshspecialremote987a715後正常FF；newpush/attempt1 run44015391613/job133811967038 capacity-linux inprogress，正常six-person→15legs。M34 Rootreceipt b95874f60d3dfa444aff4e2af658c9e7dccbdc9b2d9ade82aaeb894294a92867／v2 77records固定，同輪唯一P2已clear；worker待命。
+- watcher只保matchingSHA cipher，28 final/cold全保；不rerun/0business、不推測Native28底因、不宣稱40/60或容量PASS。原WIP／G8停止85／US$0 cap5／HostedProduction真信NONE保持。
+
+
+### 2026-11-17 — Native29前業務啟動失敗，僅診斷留存
+
+- source39088488cd9e435803beb36e262cae2ba8e8977b/run44015391613/job133811967038 pushattempt1 actualcompleted/failure，upload/hold/post success，watcher86714 exit0。失敗在bootstrap SUPABASE_START exit1，functional NOT_RUN、15legs全部NOT_RUN；M34尚未被真容量流程驗證，不是20/40/60結果。Rootfinalreceipt .git/linux-twenty-ninth-run-review.json SHA57182a620327b2c1cd68ab36cddb3e7f019af64640153cc9942b9d1bcb4b9b1f，API exactjoblog22319B/08b13647022b5c2edf19edd57ca6e461840f887421886bd2ab8dce7361c5d2fb。
+- artifact14298822367 ZIP6258B/d0597710193f69d153e8361f7fe91db993e5a9fb131bcf3bed7ddc82be35a7a5，cipher6120B/c836be968fdd90f0d8772be24702f05a3a0b80da9611e30b899563785d8f050d真AEAD，outer bfee157cd88a46f8939045bd53b393876b160c2479aac0974aa303d5b5b23c9b／16files18685B purposePREBUSINESS_DIAGNOSTIC。沒有cold DB／8stops收據，fullDataRetention NOT_ATTESTED；upstreamAutoRemovalPossible/newVolumesMayHaveBeenRemoved true僅可能性，不宣稱已全刪或全留。本輪新隔離環境尚未functional prepare，原Local/G8停止85與前28cold不受操作。
+- 8image pull均attempt1/exit0/physicalClosureVERIFIED，stderr10467B/d2e871d90e1eafc70d527f4f4cb285c3964196cc12e6c4e9c6578ceb5e68e101／stdout0，121migration applications後，HEAD loopback58321 /functions/v1/_internal/health contextdeadline；HTTPstatus／SQLSTATE／實際Edge state／OS cause UNKNOWN，不推崩潰/OOM/帳號登入或容量失敗。M34沒有改bootstrap/config/functions/images，現無已證Source缺陷，不微修timeout/ignorehealth/classifier，不GHrerun。
+- worker只在 .git/native29-bootstrap-readonly/ 收束16coldinputs/必要Source/hash與單一被動診斷proposal，Root另審必要性/guard前無Sourcepatch或Native30。US$0/cap5／40與60未run／OriginalWIP／HostedProduction真信NONE保持。
+
+
+### 2026-11-17 — Native29 readonly接受／M35單一被動啟動觀測核准
+
+- readonlyfinal35703c8bb27c7cb882eefad25d279919211843e6815223a913c69011fca3eaf7／10records、16coldinputs18685B、7Source已Root核；Rootreadonlyreceipt05fcc1cbe47f46c45b5895ab23e3b042efcd150f28eb74a7d9316791fef11f39。HEAD Edge timeout只定位操作，actualstate／短log來源／底因UNKNOWN，無已證Source缺陷，不修timer／ignorehealth／retry／classifier。29已final、僅16file診斷留存，不能稱DB cold完整。
+- Root選M35一次完整被動observer方案，brief docs/superpowers/plans/2026-11-17-bootstrap-passive-observer-m35-brief.md；明授新4Source（2新module＋既有backend/bootstrap窄接線）及固定scope Docker只讀events／state／Edge framed logs，不授其他project／Env／服務HTTP／restart／signal／volume／quota。Source/job/request/nonce/new-empty/image/cgroup獨立綁定，原唯一CLI start600s/2MiB／upstream10/30s／cleanup／exit保持，新observer資源獨立close、主command診斷不得覆蓋；資料只private requests既有encrypted export。無證scope／frame／coverage／closure誠實UNKNOWN，殘留資源阻business但不改原CLI結果。
+- 同worker先純fake有效RED/GREEN／affected/fullchecks與完整packet，Root唯一review後才新Source Native30正常pushattempt1六人→15legs；現未實作/launch。operator44/helper13/M34全部／產品/DB/依賴/workflow/exporter不改，舊records/原WIP/G8停止85/US$0 cap5／40/60未run／HostedProduction真信NONE保。
+
+
+### 2026-11-17 — M35必要兩階段validation inspect澄清
+
+- worker正確指出Docker event沒有immutable configDigest/cgroup，原brief要求在任何inspect前核完兩者是循環前提。Root修brief第3點：Gate1 exact candidate64hex/new-empty/daemon/exact role-name+project label＋已核image hint(tag/pinnedReference/configDigest)才允每candidate一次固定projection validation inspect；Gate2先核immutable ID/name/project/image/nonce CgroupParent、必要running PID cgroup後才採用state/attach唯一Edge logs。未核state不當證據，mismatch/role第二ID/reuse即UNKNOWN/拒絕，不續讀foreign，不讀Env/fullState。是必要實作澄清，非擴任意Docker權能；其餘範圍／一次start／limits／close不變。
+
+
+### 2026-11-17 — M35追加唯二fixture相容接線核准
+
+- Source4／新tests2已落，focused27PASS/type/full lint/format0；149affected batch有147PASS/2fixture errors，因兩個既有case直接NativeIO+fake source未走新Source bind，不是Source guard錯。Root核只test_linux_ecr_pull.py的test_actual_start_recovers_only_exact_rate_without_retrying_cli與test_prebusiness_diagnostic_export.py的test_actual_bootstrap_failure_saves_first_private_raw_after_admission注入external fake observer/bind，保原全部pull/raw/count/start/secret/mode assert，production無unbound fallback。fake不冒充Native。另允同export檔至多1個必要純FS bootstrap-health-prefix帶入回歸，已等價則不加；不改exporter/limits。兩檔仍<=500，無新增Source path。
+- 149紅及初static歷史v1檔名/inputshape setup錯全部留存，不當乾淨綠。Source4此時freeze，fixture/fullchecks及packet後Root唯一一輪review，現無新Native。
+
+
+### 2026-11-17 — M35被動啟動觀測Root唯一審查接受
+
+- exact4Source／4tests皆<=500，固定scope Docker只讀events／projected state／唯一Edge framed log，兩gate驗證身份，原唯一CLI600s/2MiB、health10/30s、cleanup／原exit/exception／raw保持；observer獨立診斷與close，原bounded/NativeIO.run等AST相同。operator44/helper13/M34全部11／product/DB/deps/workflow/exporter保持。
+- 一輪2P2已修：native query補closedACTIONS filter避免正常未請求action誤判；inspect child poll→kill已退出race仍close/wait。actual facade有效RED1FAIL/1ERROR→13PASS，final受影響151PASS/unittest15.138s、Root28PASS/0.109s(wall233ms)；type/full lint/format/import/diff/static0。僅native+其test2delta，其他6raw不變，2逆向還原v1hash。fixture/setup/重複測試/elapsed資格原raw保，不當乾淨綠。
+- finalv2 88e1449ad4a7133db2bf3093b875090036f1c81b0989253e5ea78ce26a98428c／69records25commands，v1 747caacce5c09d046c98499dd7bc8ae0af284006a135174da67043b18a610c01原46raw全保；Rootreceipt0daad6cfec20738987f315744bade1c34e9b2487fc21142e1eb8fffb5aa61d2e。Root核8files/2212unowned of2217含type/exec/operator44/M34 11/Original7真prefixpkglock/Native29 16inputs/577歷史引用523unique，review docs/reviews/2026-11-17-bootstrap-passive-observer-m35-review.md。
+- 只是觀測工具接受，不證Native29底因／啟動修復／容量PASS。29已final16file僅診斷留存，無DB cold全留聲明；Root下一步exact11paths commit/clean、freshremote3908848正常FF新Source Native30 pushattempt1六人→15legs，不rerun/0business。US$0/cap5／40/60未run／G8停止85／原WIP／HostedProduction真信NONE保。
