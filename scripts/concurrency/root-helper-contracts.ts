@@ -1,3 +1,4 @@
+import { samplerTimingSchema } from './root-sampler-timing-contracts';
 import { performance } from 'node:perf_hooks';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
@@ -266,6 +267,7 @@ const branches = [
   'UTF8',
   'JSON_PARSE',
   'LATE',
+  'HOST_TIMING',
 ] as const;
 const state = z.enum([
   'ENTERED',
@@ -283,9 +285,14 @@ export const rootSamplerFailureSchema = z
     errno: z.enum(rootErrnos).nullable(),
     rawProviderOutput: z.literal(false),
     stability: rootStabilitySchema.optional(),
+    samplerTiming: samplerTimingSchema.optional(),
   })
   .superRefine((value, ctx) => {
-    if (!rootStabilityContextValid(value))
+    if (
+      (value.samplerTiming !== undefined &&
+        value.result !== 'HOST_SAMPLE_UNAVAILABLE') ||
+      !rootStabilityContextValid(value)
+    )
       ctx.addIssue({ code: 'custom', message: 'STABILITY_CONTEXT_INVALID' });
   });
 export const rootHelperEventSchema = z
@@ -316,8 +323,25 @@ export const rootHelperEventSchema = z
       .optional(),
     envelopeState: z.enum(['OBSERVED', 'UNOBSERVED', 'UNAVAILABLE']).optional(),
     envelope: rootSamplerFailureSchema.optional(),
+    timingState: z.enum(['OBSERVED', 'UNOBSERVED', 'UNAVAILABLE']).optional(),
+    timingAuthority: z.literal('SAMPLE_AUTHORITY_NOT_EVALUATED').optional(),
+    samplerTiming: samplerTimingSchema.optional(),
   })
   .superRefine((v, ctx) => {
+    if (
+      v.event === 'HOST_TIMING'
+        ? v.state !== 'OBSERVED' ||
+          v.timingState === undefined ||
+          v.timingAuthority === undefined ||
+          (v.timingState === 'OBSERVED' &&
+            v.samplerTiming?.collection !== 'OBSERVED') ||
+          (v.samplerTiming !== undefined &&
+            v.samplerTiming.collection !== v.timingState)
+        : v.timingState !== undefined ||
+          v.timingAuthority !== undefined ||
+          v.samplerTiming !== undefined
+    )
+      ctx.addIssue({ code: 'custom', message: 'TIMING_EVENT_INVALID' });
     if (
       v.event === 'CLOSE' &&
       (v.exitCode === undefined ||

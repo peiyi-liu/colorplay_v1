@@ -6,6 +6,8 @@ import type { ExecutionProfileAuthority } from './execution-profile';
 import { capacityFailure, type CapacityMode } from './capacity-scope';
 interface CommonCollectorPorts {
   diagnostics?: CapacityRunDiagnostics;
+  passiveLoop?: (p95Ms: number | null) => void;
+  passiveHealth?: (snapshot: unknown) => void;
   host(signal: AbortSignal): Promise<unknown>;
   now?: () => number;
   loop?: () => number | null;
@@ -53,6 +55,7 @@ export const createCapacityCollector = (
       ports.diagnostics?.collectorInvalid(snapshot);
       ports.onInvalid?.(status);
     }
+    return snapshot;
   };
   const loop = () => {
     const value = ports.loop
@@ -62,6 +65,19 @@ export const createCapacityCollector = (
         : null;
     health.eventLoop({ atNodeMs: now(), p95Ms: value ?? Number.NaN });
     histogram?.reset();
+    return value;
+  };
+  const passive = (value: number | null | undefined, snapshot?: unknown) => {
+    try {
+      if (value !== undefined) ports.passiveLoop?.(value);
+    } catch {
+      /* Passive only. */
+    }
+    try {
+      if (snapshot !== undefined) ports.passiveHealth?.(snapshot);
+    } catch {
+      /* Passive only. */
+    }
   };
   const schedule = (callback: () => void, ms: number) => {
     if (stopping || combined.aborted) return;
@@ -105,8 +121,9 @@ export const createCapacityCollector = (
           .then(
             () => {
               if (!stopping && !combined.aborted) {
-                notify();
+                const snapshot = notify();
                 recurring(kind, ms);
+                passive(undefined, snapshot);
               }
             },
             () => undefined,
@@ -127,11 +144,12 @@ export const createCapacityCollector = (
       if (started || stopping || signal.aborted) return capacityFailure();
       started = true;
       histogram?.enable();
+      let firstLoopValue: number | null | undefined;
       const firstLoop = new Promise<void>((resolve) => {
         releaseFirstLoop = resolve;
         const timer = setTimeout(() => {
           timers.delete(timer);
-          loop();
+          firstLoopValue = loop();
           resolve();
         }, 1000);
         timers.add(timer);
@@ -159,11 +177,13 @@ export const createCapacityCollector = (
         baselineReady = true;
         const tick = () => {
           if (stopping || combined.aborted) return;
-          loop();
-          notify();
+          const value = loop(),
+            snapshot = notify();
           schedule(tick, 1000);
+          passive(value, snapshot);
         };
         schedule(tick, 1000);
+        passive(firstLoopValue);
       } catch (error) {
         stopping = true;
         controller.abort();

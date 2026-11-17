@@ -113,6 +113,18 @@ class SyntheticSamplerFailure(unittest.TestCase):
             for error, code, number in cases:
                 with self.subTest(kind=kind, code=code, errno=number):
                     value = main_failure(kind, error)
+                    if kind == 'host':
+                        timing = value.pop('samplerTiming')
+                        self.assertIn(timing['collection'], {'OBSERVED', 'UNAVAILABLE'})
+                        self.assertEqual(timing['scope'], 'PYTHON_REQUEST_TO_RETURN_ONLY')
+                        if timing['collection'] == 'OBSERVED':
+                            self.assertTrue(0 <= timing['wallMs'] <= 30000)
+                            self.assertTrue(0 <= timing['ownCpuMs'] <= 30000)
+                            self.assertTrue(1 <= len(timing['stages']) <= 24)
+                            for row in timing['stages']:
+                                self.assertTrue(1 <= row['visits'] <= 65536)
+                                self.assertTrue(0 <= row['wallMs'] <= 30000)
+                                self.assertTrue(0 <= row['ownCpuMs'] <= 30000)
                     self.assertEqual(value, {'result': 'HOST_SAMPLE_UNAVAILABLE' if kind == 'host' else 'BACKEND_SAMPLE_UNAVAILABLE', 'code': code, 'stage': 'CONTEXT', 'errno': number, 'rawProviderOutput': False})
                     self.assertNotIn('PRIVATE', json.dumps(value))
 

@@ -1,3 +1,9 @@
+import {
+  createGeneratorDiagnostics,
+  finishGeneratorJournal,
+  generatorEmit,
+  generatorOperation,
+} from './capacity-generator-diagnostics';
 import type { CapacityRunDiagnostics } from './capacity-run-diagnostics';
 import { runCapacityGameLoad } from './capacity-game-load';
 import {
@@ -53,12 +59,27 @@ export const createCapacityJourneys = (
 ) => {
   const { scope, manifest, leg } = runtime;
   requireCapacityScope(scope);
+  const profile = capacityExecutionProfile(scope);
+  const generator =
+    process.platform === 'linux' && profile && leg.mode === 'NATIVE_BROWSER'
+      ? createGeneratorDiagnostics({
+          sourceRevision: scope.sourceRevision,
+          planId: scope.planId,
+          legId: leg.legId,
+          executionProfileSha256: profile.sha256,
+        })
+      : undefined;
   let stopping = false,
     business = 0,
     id = 0;
   const native =
     leg.mode === 'NATIVE_BROWSER'
-      ? createNativeCapacityBrowser(scope, signal)
+      ? createNativeCapacityBrowser(
+          scope,
+          signal,
+          undefined,
+          generator?.observe,
+        )
       : null;
   const clients: ReturnType<typeof createCapacityProtocolActor>[] = [],
     observers = new Map<
@@ -117,16 +138,25 @@ export const createCapacityJourneys = (
         }
       : { vm: runtime.vm }),
     onInvalid,
+    ...(generator
+      ? { passiveLoop: generator.interval, passiveHealth: generator.health }
+      : {}),
     ...(diagnostics ? { diagnostics } : {}),
   });
   const browser = {
+    ...(generator ? { generator: generator.observe } : {}),
     ...(diagnostics ? { diagnostics } : {}),
     start: async () => {
       if (!native) return capacityFailure();
       check();
-      await native.start();
+      generator?.start();
+      await generatorOperation(generator?.observe, 'NATIVE_START', null, () =>
+        native.start(),
+      );
       check();
-      await collector.start();
+      await generatorOperation(generator?.observe, 'BASELINE', null, () =>
+        collector.start(),
+      );
       check();
     },
     snapshot: () => native?.snapshot() ?? { available: false },
@@ -154,14 +184,20 @@ export const createCapacityJourneys = (
         actor.page.off('pageerror', onError);
         actor.page.off('response', onResponse);
       });
-      const observer = await createCapacityOperationObserver(
-        scope,
-        actor.context,
-        actor.page,
+      const observer = await generatorOperation(
+        generator?.observe,
+        'OPERATION_OBSERVER',
         index,
-        signal,
-        nextId,
-        () => business > 0,
+        () =>
+          createCapacityOperationObserver(
+            scope,
+            actor.context,
+            actor.page,
+            index,
+            signal,
+            nextId,
+            () => business > 0,
+          ),
       );
       check();
       observers.set(index, observer);
@@ -471,41 +507,59 @@ export const createCapacityJourneys = (
       };
     },
     stop: async () => {
-      stopping = true;
-      for (const read of initialReads.values()) read.finish();
-      const pending = [...initialReads.values()].map((r) => r.task);
-      const results = await Promise.allSettled([
-        ...pending,
-        ...clients.map((c) => c.close()),
-        ...[...observers.values()].map((o) => o.dispose()),
-        ...(native ? [native.close()] : []),
-      ]);
-      for (const dispose of disposers) dispose();
-      const health = await collector.stop();
-      if (
-        results.some((r) => r.status === 'rejected') ||
-        collector.pending() !== 0 ||
-        native?.snapshot().resourcesClosed === false
-      )
-        return capacityFailure();
-      const diagnosticRuntime: {
-        rootDiagnostics?: CapacityRuntime['rootDiagnostics'];
-      } = runtime;
-      await runtime.journal.write('transport-accounting', {
-        mode: leg.mode,
-        ...capacityTransportAccounting(clients, [...observers.values()]),
-        rootHelperCalls: runtime.rootAccounting(),
-        rootHelperDiagnostics: diagnosticRuntime.rootDiagnostics?.() ?? {
-          schemaVersion: 1,
-          collection: 'UNOBSERVED',
-          clock: 'NODE_MONOTONIC',
-          calls: [],
-          overflow: false,
-        },
-        sqlStatementCount: 'UNAVAILABLE',
-        nativeSloSource: 'CDP_HTTP_ONLY',
-      });
-      return health;
+      let originalFailed = true;
+      generatorEmit(generator?.observe, 'STOP', 'ENTERED');
+      try {
+        stopping = true;
+        for (const read of initialReads.values()) read.finish();
+        const pending = [...initialReads.values()].map((r) => r.task);
+        const results = await Promise.allSettled([
+          ...pending,
+          ...clients.map((c) => c.close()),
+          ...[...observers.values()].map((o) => o.dispose()),
+          ...(native ? [native.close()] : []),
+        ]);
+        for (const dispose of disposers) dispose();
+        const health = await collector.stop();
+        if (
+          results.some((r) => r.status === 'rejected') ||
+          collector.pending() !== 0 ||
+          native?.snapshot().resourcesClosed === false
+        )
+          return capacityFailure();
+        const diagnosticRuntime: {
+          rootDiagnostics?: CapacityRuntime['rootDiagnostics'];
+        } = runtime;
+        await runtime.journal.write('transport-accounting', {
+          mode: leg.mode,
+          ...capacityTransportAccounting(clients, [...observers.values()]),
+          rootHelperCalls: runtime.rootAccounting(),
+          rootHelperDiagnostics: diagnosticRuntime.rootDiagnostics?.() ?? {
+            schemaVersion: 1,
+            collection: 'UNOBSERVED',
+            clock: 'NODE_MONOTONIC',
+            calls: [],
+            overflow: false,
+          },
+          sqlStatementCount: 'UNAVAILABLE',
+          nativeSloSource: 'CDP_HTTP_ONLY',
+        });
+        originalFailed = false;
+        return health;
+      } finally {
+        if (generator) {
+          generatorEmit(
+            generator.observe,
+            'STOP',
+            originalFailed ? 'FAILED' : 'COMPLETED',
+          );
+          await finishGeneratorJournal(
+            generator,
+            runtime.journal,
+            originalFailed,
+          );
+        }
+      }
     },
     health: () => collector.snapshot(),
   };

@@ -1,3 +1,4 @@
+import { generatorEmit } from './capacity-generator-diagnostics';
 import { performance } from 'node:perf_hooks';
 import { z } from 'zod';
 import { capacityFailure, requireCapacityScope } from './capacity-scope';
@@ -42,6 +43,7 @@ export const runCapacityRegistration = async (
   options: CapacityRegistrationOptions,
 ) => {
   const { scope, plan, legId, signal, journal, oracle, runtime } = options;
+  generatorEmit(runtime.generator, 'REGISTRATION', 'ENTERED');
   requireCapacityScope(scope);
   validateCapacityManifest(plan, scope);
   const leg = findCapacityLeg(plan, legId);
@@ -488,5 +490,10 @@ export const runCapacityRegistration = async (
       !report.mailboxClosed)
   )
     report.result = 'FAIL';
+  generatorEmit(
+    runtime.generator,
+    'REGISTRATION',
+    report.result === 'PASS' ? 'COMPLETED' : 'FAILED',
+  );
   return { report: capacityRegistrationReportSchema.parse(report) };
 };

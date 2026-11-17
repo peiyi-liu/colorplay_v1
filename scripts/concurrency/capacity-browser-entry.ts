@@ -1,3 +1,4 @@
+import * as lifecycle from './capacity-generator-diagnostics';
 import type {
   CapacityRunDiagnostics,
   CapacityReadySubphase,
@@ -169,6 +170,7 @@ export const dispatchCapacityActions = async (
     actor: NativeCapacityActor,
     observation: CapacityActionObservation,
   ) => Promise<void> = () => Promise.resolve(),
+  generator?: lifecycle.GeneratorObserver,
 ) => {
   signal.throwIfAborted();
   const armed: {
@@ -177,7 +179,12 @@ export const dispatchCapacityActions = async (
   }[] = [];
   try {
     for (const actor of actors)
-      armed.push({ actor, token: actor.observer.arm(phase) });
+      armed.push({
+        actor,
+        token: lifecycle.generatorSync(generator, 'ARM', actor.actorIndex, () =>
+          actor.observer.arm(phase),
+        ),
+      });
   } catch {
     for (const { token } of armed) token.cancel();
     return capacityFailure();
@@ -257,6 +264,7 @@ export interface CapacityEntryOptions {
   predecessors: readonly { receiptBytes: string }[];
   runtime: {
     diagnostics?: CapacityRunDiagnostics;
+    generator?: lifecycle.GeneratorObserver;
     start: () => Promise<void>;
     createActor: (index: number) => Promise<NativeCapacityActor>;
     snapshot: () => { available: boolean };
@@ -354,19 +362,24 @@ export const runCapacityEntryBarrier = async (
     );
     signal.throwIfAborted();
     await runtime.start();
+    lifecycle.generatorEmit(runtime.generator, 'SETUP', 'ENTERED');
     actors.push(
       ...(await settleCapacityActors(
-        Array.from({ length: leg.actors }, (_, index) =>
-          runtime.createActor(index),
+        Array.from(
+          { length: leg.actors },
+          lifecycle.generatorSetup(runtime.generator, runtime),
         ),
       )),
     );
+    lifecycle.generatorEmit(runtime.generator, 'SETUP', 'COMPLETED');
     report.phase = 'entry';
     const entries = await dispatchCapacityActions(
       actors,
       'entry',
-      (actor) => ui.landing(actor, scope),
+      lifecycle.generatorLanding(runtime.generator, ui, scope),
       signal,
+      undefined,
+      runtime.generator,
     );
     report.observations.push(...entries);
     report.entry = evaluateBarrier(
@@ -391,10 +404,22 @@ export const runCapacityEntryBarrier = async (
     await settleCapacityActors(
       actors.map((actor) => {
         const failed = (error: unknown): never => {
+          lifecycle.generatorEmit(
+            runtime.generator,
+            'READY',
+            'FAILED',
+            actor.actorIndex,
+          );
           diagnostics?.readyFailure(actor.actorIndex, error, signal);
           throw error;
         };
         try {
+          lifecycle.generatorEmit(
+            runtime.generator,
+            'READY',
+            'ENTERED',
+            actor.actorIndex,
+          );
           return ui
             .ready(
               actor,
@@ -406,6 +431,12 @@ export const runCapacityEntryBarrier = async (
                 : undefined,
             )
             .then(() => {
+              lifecycle.generatorEmit(
+                runtime.generator,
+                'READY',
+                'COMPLETED',
+                actor.actorIndex,
+              );
               diagnostics?.readyComplete(actor.actorIndex);
             }, failed);
         } catch (error) {
@@ -509,6 +540,7 @@ export const runCapacityEntryBarrier = async (
     report.result = 'PASS';
     report.phase = 'complete';
   } catch {
+    lifecycle.generatorSetupFailure(runtime.generator, report.phase);
     report.result = 'FAIL';
   }
   report.uiElapsedMs = performance.now() - began;

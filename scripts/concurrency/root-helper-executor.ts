@@ -1,3 +1,5 @@
+import { decodeRootSamplerTiming } from './root-sampler-timing-decoder';
+import { samplerTimingSchema } from './root-sampler-timing-contracts';
 import { z } from 'zod';
 import { rootStabilitySchema } from './root-stability-contracts';
 import { spawn } from 'node:child_process';
@@ -242,6 +244,18 @@ export const executeRootHelper = (
           envelopeState: 'UNOBSERVED',
         });
         const data = Buffer.concat(chunks);
+        if (observer && bytes <= 131072 && helper === 'linux-host-sample.py') {
+          const timing = decodeRootSamplerTiming(data.toString('utf8'));
+          emit({
+            event: 'HOST_TIMING',
+            state: 'OBSERVED',
+            timingState: timing.collection,
+            timingAuthority: timing.authority,
+            ...('samplerTiming' in timing
+              ? { samplerTiming: timing.samplerTiming }
+              : {}),
+          });
+        }
         const complete =
           pidPresent &&
           !invalid &&
@@ -329,6 +343,7 @@ export const decodeRootSamplerFailure = (text: string) => {
         errno: z.string().max(20).nullable(),
         rawProviderOutput: z.literal(false),
         stability: rootStabilitySchema.optional(),
+        samplerTiming: samplerTimingSchema.optional(),
       })
       .parse(JSON.parse(text));
     return rootSamplerFailureSchema.parse({

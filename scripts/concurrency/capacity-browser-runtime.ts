@@ -1,4 +1,8 @@
 import {
+  generatorOperation,
+  type GeneratorObserver,
+} from './capacity-generator-diagnostics';
+import {
   chromium,
   type Browser,
   type BrowserContext,
@@ -40,6 +44,7 @@ export const createNativeCapacityBrowser = (
     launchServer: (options) => chromium.launchServer(options),
     connect: (endpoint) => chromium.connect(endpoint),
   },
+  generator?: GeneratorObserver,
 ) => {
   requireCapacityScope(scope);
   if (signal.aborted) return capacityFailure();
@@ -95,18 +100,23 @@ export const createNativeCapacityBrowser = (
     if (starting) return starting;
     starting = observe(async () => {
       try {
-        proxy = await ports.proxy(signal);
+        proxy = await generatorOperation(generator, 'PROXY', null, () =>
+          ports.proxy(signal),
+        );
         running();
-        server = await ports.launchServer({
-          host: '127.0.0.1',
-          headless: true,
-          args: capacityProxyArguments(scope, proxy),
-          env: {
-            PATH: process.env.PATH ?? '',
-            HOME: process.env.HOME ?? '',
-            ...(process.env.TMPDIR ? { TMPDIR: process.env.TMPDIR } : {}),
-          },
-        });
+        const launchArgs = capacityProxyArguments(scope, proxy);
+        server = await generatorOperation(generator, 'LAUNCH', null, () =>
+          ports.launchServer({
+            host: '127.0.0.1',
+            headless: true,
+            args: launchArgs,
+            env: {
+              PATH: process.env.PATH ?? '',
+              HOME: process.env.HOME ?? '',
+              ...(process.env.TMPDIR ? { TMPDIR: process.env.TMPDIR } : {}),
+            },
+          }),
+        );
         running();
         const endpoint = new URL(server.wsEndpoint()),
           pid = server.process().pid;
@@ -122,7 +132,9 @@ export const createNativeCapacityBrowser = (
           pid <= 0
         )
           return capacityFailure();
-        browser = await ports.connect(endpoint.href);
+        browser = await generatorOperation(generator, 'CONNECT', null, () =>
+          ports.connect(endpoint.href),
+        );
         running();
       } catch {
         failed = true;
@@ -142,13 +154,20 @@ export const createNativeCapacityBrowser = (
         actors.has(actorIndex)
       )
         return capacityFailure();
+      const activeBrowser = browser;
       actors.add(actorIndex);
-      const context = await browser.newContext({
-        baseURL: scope.appUrl,
-        reducedMotion: 'reduce',
-        serviceWorkers: 'block',
-        acceptDownloads: false,
-      });
+      const context = await generatorOperation(
+        generator,
+        'CONTEXT',
+        actorIndex,
+        () =>
+          activeBrowser.newContext({
+            baseURL: scope.appUrl,
+            reducedMotion: 'reduce',
+            serviceWorkers: 'block',
+            acceptDownloads: false,
+          }),
+      );
       contexts.add(context);
       const pageListener = (page: Page) => {
         pages.add(page);
@@ -161,20 +180,33 @@ export const createNativeCapacityBrowser = (
       disposers.push(() => context.off('page', pageListener));
       try {
         running();
-        await context.grantPermissions(['local-network-access'], {
-          origin: scope.appUrl,
-        });
+        await generatorOperation(generator, 'PERMISSION', actorIndex, () =>
+          context.grantPermissions(['local-network-access'], {
+            origin: scope.appUrl,
+          }),
+        );
         running();
         context.setDefaultTimeout(15000);
-        const page = await context.newPage();
+        const page = await generatorOperation(
+          generator,
+          'PAGE',
+          actorIndex,
+          () => context.newPage(),
+        );
         pages.add(page);
         running();
-        const observer = await createCapacityRequestObserver(
-          scope,
-          context,
-          page,
+        const observer = await generatorOperation(
+          generator,
+          'REQUEST_OBSERVER',
           actorIndex,
-          signal,
+          () =>
+            createCapacityRequestObserver(
+              scope,
+              context,
+              page,
+              actorIndex,
+              signal,
+            ),
         );
         observers.add(observer);
         running();

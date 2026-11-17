@@ -12,9 +12,13 @@ from linux_runtime_common import RUNTIME, CGROOT, require, context, private_json
 
 RESULT="HOST_SAMPLE_UNAVAILABLE"
 STATE = {"stage": "REQUEST"}
+TIMING = None
 CODES = frozenset(['API_TARGET_INVALID', 'BACKEND_CONTAINER_CHANGED', 'BACKEND_INSTANCE_CHANGED', 'BACKEND_PARENT_NOT_SHARED', 'BACKEND_PROCESS_CHANGED', 'BACKEND_PROFILE_CHANGED', 'BACKEND_SAMPLE_ARGUMENTS_INVALID', 'BACKEND_SAMPLE_INPUT_INVALID', 'BACKEND_SERVICE_COUNT_CHANGED', 'BOOT_CHANGED_DURING_PREFLIGHT', 'BOOT_ID_INVALID', 'BROWSER_BINARY_OUTSIDE_APPROVED_CACHE', 'BROWSER_NOT_OWNED', 'BROWSER_PID_REUSED', 'BROWSER_PREDECESSOR_LEAK', 'CGROUP_PATH_INVALID', 'CGROUP_V2_REQUIRED', 'DATABASE_ADAPTER_CHANGED', 'DATABASE_ADAPTER_PATH_INVALID', 'DATABASE_IDENTITY_INVALID', 'DATABASE_PROFILE_CHANGED', 'DATABASE_TARGET_INVALID', 'EXECUTABLE_BYTES_CHANGED', 'EXECUTABLE_IDENTITY_CHANGED', 'EXECUTABLE_PATH_CHANGED', 'EXECUTABLE_TOO_LARGE', 'EXECUTION_CONTEXT_CHANGED', 'FREE_HOST_MISMATCH', 'FRONTEND_LISTENER_MISSING', 'GENERATOR_CGROUP_MISMATCH', 'GENERATOR_CPU_LIMIT_MISMATCH', 'GENERATOR_MEMORY_LIMIT_MISMATCH', 'HELPER_CLOSURE_CHANGED', 'HELPER_CLOSURE_UNBOUND', 'HOST_LISTENER_NOT_LOOPBACK', 'HOST_OOM_COUNTER_MISSING', 'HOST_PROFILE_CHANGED', 'HOST_SAMPLE_ARGUMENTS_INVALID', 'HOST_SAMPLE_CALLER_INVALID', 'HOST_SAMPLE_INPUT_TOO_LARGE', 'HOST_SAMPLE_MODE_INVALID', 'LINUX_CGROUP_INVALID', 'LINUX_PROC_INVALID', 'LINUX_REQUIRED', 'LINUX_RUNTIME_INVALID', 'LINUX_X64_REQUIRED', 'NODE_BINARY_OR_SCOPE_CHANGED', 'NODE_BROWSER_PID_COLLISION', 'NODE_PID_REUSED', 'OS_RELEASE_PATH_INVALID', 'PRIVATE_FILE_INVALID', 'PRIVATE_FILE_TOO_LARGE', 'PRIVATE_PATH_INVALID', 'PROCESS_CPU_CLOCK_INVALID', 'PROCESS_IDENTITY_INVALID', 'PROCESS_OWNER_CHANGED', 'PROCESS_PID_REUSED', 'PROCESS_TREE_INCOMPLETE', 'PROFILE_BYTES_CHANGED', 'PROFILE_KIND_INVALID', 'PROTOCOL_BROWSER_PRESENT', 'PUBLISHED_PORT_NOT_LOOPBACK', 'PUBLISHED_PORT_SET_CHANGED', 'ROOT_CLOSURE_REQUIRED', 'ROOT_COMMAND_FAILED', 'ROOT_HELPER_CHANGED', 'ROOT_PROFILE_OBSERVATION_CHANGED', 'ROOT_PROFILE_REQUIRED', 'ROOT_RUNTIME_CHANGED', 'ROOT_SCOPE_INVALID', 'SOCKET_TABLE_INVALID', 'SOURCE_CHANGED', 'SOURCE_CONTEXT_CHANGED', 'SOURCE_NOT_FROZEN', 'SOURCE_REVISION_INVALID', 'UBUNTU_24_04_REQUIRED', 'UNAPPROVED_BROWSER_BINARY', 'UNDECLARED_BROWSER_PRESENT'])
 def mark(stage):
     STATE["stage"] = stage
+    if TIMING is not None:
+        try: TIMING.visit(stage)
+        except Exception: TIMING.bad = "OBSERVER_ERROR"
 
 def failure(error):
     code = error.args[0] if isinstance(error, ValueError) and len(error.args) == 1 and type(error.args[0]) is str and error.args[0] in CODES else "UNKNOWN"
@@ -193,11 +197,50 @@ def sample(request):
     require(private_json(RUNTIME/"execution-profile.json",32768)[1]==profile_sha,"PROFILE_BYTES_CHANGED")
     return {"platform":"linux","executionProfileSha256":profile_sha,"sampledAtMonotonicMs":time.monotonic_ns()/1000000,"instanceSha256":facts["instanceSha256"],"jobSha256":facts["jobSha256"],"generatorCgroupIdentitySha256":observed_host["cgroupIdentitySha256"],"limitChainSha256":observed_host["limitChainSha256"],"hostMemoryTotalBytes":mem["totalBytes"],"hostLogicalCpu":4,"node":rows[node]["identity"],"browser":None if protocol else rows[browser]["identity"],"treeComplete":None if protocol else True,"browserProcessCount":len(chrome),"nodeRssBytes":memory[node]["rssBytes"],"nodePssBytes":memory[node]["pssBytes"],"browserTreeRssBytes":None if protocol else sum(value["rssBytes"] for pid,value in memory.items() if pid in chrome),"browserTreePssBytes":None if protocol else sum(value["pssBytes"] for pid,value in memory.items() if pid in chrome),"nodeCpuLifetimePercentOfOneCore":lifetime_percent(rows[node]["userTicks"]+rows[node]["systemTicks"],rows[node]["startTicks"],hz,uptime),"browserCpuLifetimePercentOfOneCore":browser_cpu,"hostSwapUsedBytes":mem["swapTotalBytes"]-mem["swapFreeBytes"],"memoryPsiSomeAvg10Percent":psi["some"]["avg10"],"memoryPsiFullAvg10Percent":psi["full"]["avg10"],"hostOomKills":vmstat["oom_kill"],"memoryAccounting":"LINUX_SMAPS_ROLLUP_PSS_WITH_SEPARATE_RSS","readOnly":True}
 
+
+class SamplerTiming:
+    def __init__(self):
+        self.bad=None;self.rows={};self.stage="REQUEST"
+        self.wall=time.monotonic_ns();self.cpu=time.process_time_ns()
+        self.started=(self.wall,self.cpu);self.rows[self.stage]=[1,0,0]
+    def account(self):
+        wall=time.monotonic_ns();cpu=time.process_time_ns()
+        if type(wall) is not int or type(cpu) is not int or wall<self.wall or cpu<self.cpu:
+            self.bad="CLOCK_INVALID";return
+        row=self.rows[self.stage];row[1]+=wall-self.wall;row[2]+=cpu-self.cpu
+        self.wall=wall;self.cpu=cpu
+    def visit(self,stage):
+        if self.bad:return
+        self.account()
+        if self.bad:return
+        if stage not in {"REQUEST","CONTEXT","PROFILE","HOST_FACTS","BINARY","MEMBERS","PROCESS_METADATA","SMAPS","STABILITY","CPU","MEMINFO","PSI","OOM","PROFILE_RECHECK"}:
+            self.bad="OBSERVER_ERROR";return
+        self.stage=stage
+        if stage not in self.rows:self.rows[stage]=[0,0,0]
+        self.rows[stage][0]+=1
+        if len(self.rows)>24 or self.rows[stage][0]>65536:self.bad="BOUNDS"
+    def finish(self):
+        try:
+            if not self.bad:self.account()
+            wall=(self.wall-self.started[0])/1000000;cpu=(self.cpu-self.started[1])/1000000
+            if not 0<=wall<=30000 or not 0<=cpu<=30000:self.bad="BOUNDS"
+            if not self.bad:return {"collection":"OBSERVED","scope":"PYTHON_REQUEST_TO_RETURN_ONLY","stages":[{"stage":k,"visits":v[0],"wallMs":v[1]/1000000,"ownCpuMs":v[2]/1000000} for k,v in self.rows.items()],"wallMs":wall,"ownCpuMs":cpu,"lastStage":self.stage}
+        except Exception:self.bad="OBSERVER_ERROR"
+        return {"collection":"UNAVAILABLE","scope":"PYTHON_REQUEST_TO_RETURN_ONLY","reason":self.bad}
+
+def with_timing(value):
+    try:
+        value["samplerTiming"]=TIMING.finish() if TIMING is not None else {"collection":"UNAVAILABLE","scope":"PYTHON_REQUEST_TO_RETURN_ONLY","reason":"OBSERVER_ERROR"}
+    except Exception:value["samplerTiming"]={"collection":"UNAVAILABLE","scope":"PYTHON_REQUEST_TO_RETURN_ONLY","reason":"OBSERVER_ERROR"}
+    return value
+
 if __name__=="__main__":
+    try: TIMING=SamplerTiming()
+    except Exception: pass
     try:
         require(len(sys.argv)==1,"HOST_SAMPLE_ARGUMENTS_INVALID")
         raw=sys.stdin.read(4097);require(len(raw)<=4096,"HOST_SAMPLE_INPUT_TOO_LARGE")
-        print(json.dumps(sample(json.loads(raw))),flush=True)
+        print(json.dumps(with_timing(sample(json.loads(raw)))),flush=True)
     except Exception as error:
-        print(json.dumps(failure(error)),flush=True)
+        print(json.dumps(with_timing(failure(error))),flush=True)
         raise SystemExit(1) from None

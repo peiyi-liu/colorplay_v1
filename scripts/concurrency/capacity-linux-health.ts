@@ -1,3 +1,4 @@
+import { samplerTimingSchema } from './root-sampler-timing-contracts';
 import { z } from 'zod';
 import {
   linuxEngineeringGuards as g,
@@ -16,6 +17,7 @@ const pid = z.strictObject({
 });
 export const linuxHostSampleSchema = z.strictObject({
   platform: z.literal('linux'),
+  samplerTiming: samplerTimingSchema.optional(),
   executionProfileSha256: sha,
   sampledAtMonotonicMs: n,
   instanceSha256: sha,
