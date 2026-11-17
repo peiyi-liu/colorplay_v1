@@ -102,3 +102,87 @@ describe('native CDP action observation without raw payload or Playwright call-s
     expect(h.cdp.listenerCount('Network.loadingFinished')).toBe(0);
   });
 });
+it.each([
+  [
+    'Network.responseReceived',
+    { requestId: 'unknown', response: { status: 99 } },
+  ],
+  ['Network.loadingFinished', { requestId: 'unknown', timestamp: -1 }],
+  ['Network.loadingFailed', { requestId: 'unknown', canceled: 'INVALID' }],
+] as const)(
+  'reused %s parser still rejects malformed non-target data while an action is pending',
+  async (event, raw) => {
+    const h = await setup(),
+      observer = await createCapacityRequestObserver(
+        h.scope,
+        h.context as unknown as BrowserContext,
+        h.page as unknown as Page,
+        0,
+        h.signal.signal,
+      );
+    const token = observer.arm('entry'),
+      rejected = expect(token.finished).rejects.toThrow(
+        'CAPACITY_EVIDENCE_INVALID',
+      );
+    h.cdp.emit(event, raw);
+    await rejected;
+    expect(observer.snapshot()).toMatchObject({
+      available: false,
+      actionsCompleted: 0,
+      pendingAction: false,
+    });
+    await observer.dispose();
+    expect(h.cdp.eventNames()).toHaveLength(0);
+  },
+);
+it('shared schemas preserve independent action generations and request IDs across scopes', async () => {
+  const a = await setup(),
+    b = await setup();
+  expect(a.scope).not.toBe(b.scope);
+  const make = (h: typeof a) =>
+    createCapacityRequestObserver(
+      h.scope,
+      h.context as unknown as BrowserContext,
+      h.page as unknown as Page,
+      0,
+      h.signal.signal,
+    );
+  const first = await make(a),
+    second = await make(b),
+    one = first.arm('entry'),
+    two = second.arm('entry');
+  const request = (h: typeof a) => {
+    h.cdp.emit('Network.requestWillBeSent', {
+      requestId: 'same',
+      timestamp: 1,
+      type: 'Document',
+      request: { url: h.scope.appUrl + '/', method: 'GET' },
+    });
+  };
+  request(a);
+  request(b);
+  a.cdp.emit('Network.responseReceived', {
+    requestId: 'same',
+    response: { status: 200 },
+  });
+  a.cdp.emit('Network.loadingFinished', { requestId: 'same', timestamp: 2 });
+  await one.finished;
+  expect(first.snapshot()).toMatchObject({
+    available: true,
+    actionsCompleted: 1,
+    pendingAction: false,
+  });
+  expect(second.snapshot()).toMatchObject({
+    available: true,
+    actionsCompleted: 0,
+    pendingAction: true,
+  });
+  const rejected = expect(two.finished).rejects.toThrow(
+    'CAPACITY_EVIDENCE_INVALID',
+  );
+  b.signal.abort();
+  await rejected;
+  await Promise.all([first.dispose(), second.dispose()]);
+  expect(a.cdp.eventNames()).toHaveLength(0);
+  expect(b.cdp.eventNames()).toHaveLength(0);
+});

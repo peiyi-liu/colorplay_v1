@@ -5,6 +5,19 @@ import {
   requireCapacityScope,
   type CapacityScope,
 } from './capacity-scope';
+const actionResponseSchema = z.object({
+  requestId: z.string().max(200),
+  response: z.object({ status: z.number().int().min(100).max(599) }),
+});
+const actionFinishedSchema = z.object({
+  requestId: z.string().max(200),
+  timestamp: z.number().nonnegative(),
+});
+const actionFailedSchema = z.object({
+  requestId: z.string().max(200),
+  canceled: z.boolean().optional(),
+});
+
 export const capacityActionPhases = [
   'entry',
   'login',
@@ -139,12 +152,7 @@ export const createCapacityRequestObserver = async (
   };
   const response = (input: unknown) => {
     try {
-      const value = z
-        .object({
-          requestId: z.string().max(200),
-          response: z.object({ status: z.number().int().min(100).max(599) }),
-        })
-        .parse(input);
+      const value = actionResponseSchema.parse(input);
       const action = records.get(value.requestId);
       if (value.response.status >= 400) unexpectedHttpErrors++;
       if (action && !action.done && action.generation === generation) {
@@ -158,12 +166,7 @@ export const createCapacityRequestObserver = async (
   };
   const finished = (input: unknown) => {
     try {
-      const value = z
-          .object({
-            requestId: z.string().max(200),
-            timestamp: z.number().nonnegative(),
-          })
-          .parse(input),
+      const value = actionFinishedSchema.parse(input),
         action = records.get(value.requestId);
       records.delete(value.requestId);
       if (action && !action.done && action.generation === generation) {
@@ -197,12 +200,7 @@ export const createCapacityRequestObserver = async (
   };
   const failed = (input: unknown) => {
     try {
-      const value = z
-        .object({
-          requestId: z.string().max(200),
-          canceled: z.boolean().optional(),
-        })
-        .parse(input);
+      const value = actionFailedSchema.parse(input);
       const action = records.get(value.requestId);
       records.delete(value.requestId);
       if (action) terminate(action);

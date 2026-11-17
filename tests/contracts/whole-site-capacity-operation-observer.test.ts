@@ -119,3 +119,115 @@ describe('native five-operation physical measurement', () => {
     await f.observer.dispose();
   });
 });
+it.each([
+  [
+    'Network.requestWillBeSent',
+    {
+      requestId: 'unknown',
+      timestamp: -1,
+      request: { url: 'https://synthetic.invalid/', method: 'GET' },
+    },
+  ],
+  [
+    'Network.responseReceived',
+    { requestId: 'unknown', response: { status: 600 } },
+  ],
+  ['Network.loadingFinished', { requestId: 'unknown', timestamp: -1 }],
+  ['Network.loadingFailed', { requestId: 7, timestamp: 1 }],
+] as const)(
+  'keeps malformed non-target %s failclosed before record selection',
+  async (event, raw) => {
+    const f = await fixture();
+    f.cdp.emit(event, raw);
+    expect(f.observer.snapshot().available).toBe(false);
+    expect(f.observer.snapshot().physicalRequests).toBe(0);
+    await f.observer.dispose();
+    expect(f.cdp.eventNames()).toHaveLength(0);
+  },
+);
+it('shared static rules do not share mutable windows or records across independently approved scopes', async () => {
+  const a = await fixture(),
+    b = await fixture();
+  expect(a.scope).not.toBe(b.scope);
+  await a.observer.run('published_content', 'cold', () => {
+    a.cdp.emit('Network.requestWillBeSent', {
+      requestId: 'same',
+      timestamp: 1,
+      request: {
+        url: a.scope.supabaseUrl + '/rest/v1/rpc/get_student_chapter_map',
+        method: 'POST',
+      },
+    });
+    b.cdp.emit('Network.responseReceived', {
+      requestId: 'same',
+      response: { status: 'INVALID' },
+    });
+    a.cdp.emit('Network.responseReceived', {
+      requestId: 'same',
+      response: { status: 200 },
+    });
+    a.cdp.emit('Network.loadingFinished', { requestId: 'same', timestamp: 2 });
+    return Promise.resolve();
+  });
+  expect(a.observer.samples()[0]?.status).toBe('success');
+  expect(a.observer.snapshot()).toMatchObject({
+    available: true,
+    physicalRequests: 1,
+    pending: 0,
+  });
+  expect(b.observer.snapshot()).toMatchObject({
+    available: false,
+    physicalRequests: 0,
+    pending: 0,
+  });
+  expect(b.observer.samples()).toHaveLength(0);
+  await Promise.all([a.observer.dispose(), b.observer.dispose()]);
+  expect(a.cdp.eventNames()).toHaveLength(0);
+  expect(b.cdp.eventNames()).toHaveLength(0);
+});
+it.each(['sw', 'cache', 'duplicate', 'http', 'abort'] as const)(
+  'reused operation schemas retain %s guards and samples',
+  async (scenario) => {
+    const f = await fixture();
+    await f.observer.run('published_content', 'cold', () => {
+      const request = () => {
+        f.cdp.emit('Network.requestWillBeSent', {
+          requestId: 'same',
+          timestamp: 1,
+          request: {
+            url: f.scope.supabaseUrl + '/rest/v1/rpc/get_student_chapter_map',
+            method: 'POST',
+          },
+        });
+      };
+      request();
+      if (scenario === 'duplicate') request();
+      f.cdp.emit('Network.responseReceived', {
+        requestId: 'same',
+        response: {
+          status: scenario === 'http' ? 503 : 200,
+          fromServiceWorker: scenario === 'sw',
+          fromDiskCache: scenario === 'cache',
+        },
+      });
+      if (scenario === 'abort') f.signal.abort();
+      f.cdp.emit('Network.loadingFinished', {
+        requestId: 'same',
+        timestamp: 2,
+      });
+      return Promise.resolve();
+    });
+    expect(f.observer.samples()[0]?.status).toBe(
+      scenario === 'cache'
+        ? 'success'
+        : scenario === 'abort'
+          ? 'timeout'
+          : 'error',
+    );
+    expect(f.observer.snapshot().available).toBe(
+      scenario === 'cache' || scenario === 'http',
+    );
+    await f.observer.dispose();
+    expect(f.cdp.eventNames()).toHaveLength(0);
+  },
+);

@@ -11,6 +11,31 @@ import {
   type OperationSample,
 } from './capacity-metrics';
 import type { CapacityOperation } from './capacity-manifest';
+const operationRequestSchema = z.object({
+  requestId: z.string().max(200),
+  timestamp: z.number().nonnegative(),
+  request: z.object({
+    url: z.string().max(4096),
+    method: z.string().max(10),
+  }),
+});
+const operationResponseSchema = z.object({
+  requestId: z.string().max(200),
+  response: z.object({
+    status: z.number().int().min(100).max(599),
+    fromDiskCache: z.boolean().optional(),
+    fromServiceWorker: z.boolean().optional(),
+  }),
+});
+const operationFinishSchema = z.object({
+  requestId: z.string().max(200),
+  timestamp: z.number().nonnegative(),
+});
+const operationFailedSchema = z.object({
+  requestId: z.string().max(200),
+  timestamp: z.number().nonnegative(),
+});
+
 export const capacityOperationEndpoints: Record<
   CapacityOperation,
   readonly string[]
@@ -91,16 +116,7 @@ export const createCapacityOperationObserver = async (
   };
   const request = (raw: unknown) => {
     try {
-      const value = z
-        .object({
-          requestId: z.string().max(200),
-          timestamp: z.number().nonnegative(),
-          request: z.object({
-            url: z.string().max(4096),
-            method: z.string().max(10),
-          }),
-        })
-        .parse(raw);
+      const value = operationRequestSchema.parse(raw);
       const op = capacityOperationForRequest(
         scope,
         value.request.url,
@@ -135,16 +151,7 @@ export const createCapacityOperationObserver = async (
   };
   const response = (raw: unknown) => {
     try {
-      const value = z
-        .object({
-          requestId: z.string().max(200),
-          response: z.object({
-            status: z.number().int().min(100).max(599),
-            fromDiskCache: z.boolean().optional(),
-            fromServiceWorker: z.boolean().optional(),
-          }),
-        })
-        .parse(raw);
+      const value = operationResponseSchema.parse(raw);
       const attempt = records.get(value.requestId);
       if (!attempt) return;
       attempt.status = value.response.status;
@@ -156,12 +163,7 @@ export const createCapacityOperationObserver = async (
   };
   const finish = (raw: unknown) => {
     try {
-      const value = z
-        .object({
-          requestId: z.string().max(200),
-          timestamp: z.number().nonnegative(),
-        })
-        .parse(raw);
+      const value = operationFinishSchema.parse(raw);
       const a = records.get(value.requestId);
       if (!a) return;
       a.end = value.timestamp * 1000;
@@ -174,12 +176,7 @@ export const createCapacityOperationObserver = async (
   };
   const failed = (raw: unknown) => {
     try {
-      const value = z
-        .object({
-          requestId: z.string().max(200),
-          timestamp: z.number().nonnegative(),
-        })
-        .parse(raw);
+      const value = operationFailedSchema.parse(raw);
       const a = records.get(value.requestId);
       if (!a) return;
       a.status = 0;
