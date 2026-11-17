@@ -2914,3 +2914,29 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - packetf97689b5438f44d0f41ea8b8ad2910f8a52e0462ce5e84f81bc2c9aaa5f2d9a7／51records20checks，6Source8tests；safe image rawcode/blocked/CORS／exactsamePage私有URL-matching／既有route stage/headers、獨立failureCode與一次actualBrowser版本欄位，missing proof不當可用，原21counter/classifier/expected/operator44與產品語義不變。有效2assertion RED→GREEN、68files820tests＋final5files100窄回歸、type/lint/globalformat/import/diff/build0；原type/lint/setup資格保留。Root one-round0findings，獨立40tests852ms，51records/14files／2184unownedactualGit／Original7trueprefix／M29原166+differential35+readonly9全核，report docs/reviews/2026-11-17-image-transport-diagnostic-m30-review.md。
 - 新helper371/317、既有health613/diag551/browser178／diagtest641必要mock窄接線行限依brief例外，不做無關重構。Sourcefreeze／worker待命。Root接下來exact17paths commit/clean、freshspecialremote b1fa158正常FF Native25 newpush/attempt1 six-person→15legs；不GHrerun/0business。Native24已final failure且完整custody保留，原7imageURL/碼/liveversion仍UNOBSERVED，不能回填原因。40/60未run，原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE。
+
+
+### 2026-11-17 — M30固定Source正常Native25啟動
+
+- Root exact17paths cachedcheck0/commit/clean bd7b9a09153b327ba9fe984898045f010d055212，freshspecialremote精確b1fa158後正常FF；newpush/attempt1 run43984953629/job133710600407 capacity-linux inprogress，正常six-person→15legs。固定Source/14files與M30packet51records保持，Root finalreceipt b510c0e56e172e93a6763be4fe0490e54572ddd93e2d48571a3cc41792ffb3da；worker待命。
+- Watcher只matchingSHA保cipher；不rerun/0business/Hosted/Production/真寄信。Native24finalfailure與完整cold已留；M30純診斷、不稱圖片cause修復。40/60未run，原WIP/G8停止85/全部custody、US$0/cap5保持。
+
+
+### 2026-11-17 — Native25已定位304被Local攔截器封鎖／M31 S級窄修核准
+
+- Sourcebd7b9a0/run43984953629/job133710600407，actualfunctional wsb-261117-5b55b0922e1b／258079.919083ms first14PASS/healthFAIL21、availabletrue/OBSERVED/drop4/refresh1。7request-linkedImage GET全部auth_controls；3exactLOGIN_PNG＋4OTHER_IMAGE，samePage exactprivate matching各自RootFETCH304/無Location→REDIRECT_BLOCK→DISPOSE、無FULFILL，CDP inspector/canceledfalse/noresponse；此輪是已證Local guard封鎖304，不回填Native24/23cause，另7console未逐筆配對。actualHeadlessChrome159.0.8154.6/protocol1.3/revision@98a2592026af8d673b9fa83b626ac68bdf4ae78a已觀測；原error常數仍UNKNOWN。
+- artifact14285786047 ZIP42533109B/bfd55c6f711fef0497112b3dae6d3ed241b980a90f60189e3093473a2c051b89，cipher42532971B/aef1f1f1c9c5a829977e3e749d05681a9e46f4b978094e0fe7fbd92d03fa7c2d真AEAD；outer5418550ea4847ffebd842b97df474370046ea1540145b50b9498201902f4dca3/561files212805497B，inner91fe9645b09dc352632265f84b9e6ed4a9da73510d030785ba8f2eea4972bd40/528files，8stop/roles/DB2/127tables31rolesORDER_ONLY、3vol7015files185563967B含metadata與runtime476data32code0metadata-only全核，無restore/刪除。job尚coldhold未final；15capacity未run。
+- Root核M31 brief docs/superpowers/plans/2026-11-17-static-image-conditional-fetch-m31-brief.md exact4 Source/test：same-app Image GET首次forward去2validators、完整allHeaders保Cookie/Auth等其他header、無retry／不偽造304body、fresh意外304仍failclosed、真redirect與其他endpoint規則不變。RFC9110與Playwright official cache/routing/allHeaders今日核，這是工程修法非NativePASS。S級直接RED/GREEN＋affectedfunctional/fulltype/lint/format/import/diff，Root唯一review後才可新Native26且先等25final。所有歷史custody/原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE保持。
+
+
+### 2026-11-17 — Native25最終failure／完整joblog保留
+
+- run43984953629/job133710600407 actualcompleted/failure，upload／coldhold／post全success。Rootfinal .git/linux-twenty-fifth-run-review.json SHA8951cfade7ea78075dd40cb97096d3b2879d0c5212614809327b634a67aa7aea，API exactjoblog22096B/b7701595c7bb71526715c9d7217014a0508c2ecb2d324b4a1c12bdca07aa5e4a。Root actualfunctional/finalizer .git/native25-functional-review.json SHA7632c6358731736682688b7726b57db30c6c4517d694214bf2b4713c501c3355／cold fda4367e8acad5ad4f9ae930b1cc943d4e9a3687ff742da69aacc99307e74f6f原鏈保持。7exact圖片route304被Localguard主動封鎖是本輪已觀測；Native request validators原值未留，首次移除validators是有primary規範支持的工程修法，不能宣稱原header已觀測或回填Native24/23cause。
+- M31同worker有效RED已重現同shape conditional→304→blockedbyclient/無fulfill，正在窄修與affectedchecks；Rootreview前不啟Native26。原資料／WIP／G8停止85／US$0/cap5／HostedProduction真寄信NONE／40與60未run保持。
+
+
+### 2026-11-17 — M31 Local圖片304窄修Root審查接受
+
+- exact4Source/test，browser-runtime207／newcachetest272／browser123／transport435行；sameapp/ImageGET首次forward用完整allHeaders去2validators，其餘header/map保持，單次fetch原maxRedirect0/maxRetries0；無validator原options，fresh304仍failed+dispose而非假200/REDIRECT_BLOCK。其他3xx／origin／API／POST／非image規則保持，無body／expected／counter／caps改動。有效actualhandler RED→GREEN；43files635functional＋final3files56窄回歸／type/lint/globalformat/import/diff全0，原lint與Rootbriefformat資格log保留。
+- Root唯一一輪0findings，獨立29tests745ms；packet d91936fec4ee19c4fecb46fffc7d19ed50d76bfe8bbd995ccefa249f38e7d905／43records17checks，4files/2197unownedactualGit/operator44/Original7trueprefix/歷史261records全核。Rootreceipt c42d55b69334dc1b83b7de9b8fa9ce1472cda76f7b3324f96b05fca3b109de11，review docs/reviews/2026-11-17-static-image-conditional-fetch-m31-review.md；worker待命。
+- HTTP304/Playwright routing/cache/allHeaders官方今日核＋本機SDK explicitheader replacement證，Native25 validators原值未觀測，不能把工程修法當原header確證；也不回填Native24/23cause。Native25已final且完整custody留。Root接下來exact7paths commit/clean、freshspecialremote bd7b9a0正常FF／Native26 newpushattempt1六人→15legs；不rerun/0business。US$0/cap5/原WIP/G8停止85/HostedProduction真信NONE/40與60未run保持。

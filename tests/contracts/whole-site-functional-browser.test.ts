@@ -84,7 +84,11 @@ describe('functional browser scope before navigation', () => {
     const h = harness();
     await restrictFunctionalBrowser(h.context, syntheticScope());
     const route = {
-      request: () => ({ url: () => 'http://127.0.0.1:58373/data' }),
+      request: () => ({
+        url: () => 'http://127.0.0.1:58373/data',
+        resourceType: () => 'other',
+        method: () => 'GET',
+      }),
       abort: vi.fn(() => Promise.resolve(undefined)),
       fetch: vi.fn(() =>
         Promise.resolve({

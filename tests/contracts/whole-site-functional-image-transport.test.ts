@@ -351,6 +351,7 @@ it.each(['success', 'redirect', 'fetch-error'] as const)(
       url: () => png,
       method: () => 'GET',
       resourceType: () => 'image',
+      allHeaders: () => Promise.resolve({}),
       postData: () => {
         throw Error('BODY_READ');
       },

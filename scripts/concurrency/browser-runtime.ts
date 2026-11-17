@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
   enableImageTransport,
   observeImageRoute,
@@ -13,7 +14,7 @@ import {
   parseMediaHttpResponse,
   type FunctionalHttpHooks,
 } from './media-http-contract';
-import type { Browser, BrowserContext, Page } from '@playwright/test';
+import type { Browser, BrowserContext, Page, Request } from '@playwright/test';
 import {
   fail,
   parseFunctionalScope,
@@ -25,6 +26,20 @@ import {
 // and forwards WebSocket messages via the driver; not native capacity evidence.
 export const FUNCTIONAL_BROWSER_MODE =
   'INTERCEPTED_FUNCTIONAL_CORRECTNESS' as const;
+
+const unconditionalImageHeaders = async (request: Request) => {
+  const complete = z
+    .record(z.string(), z.string())
+    .parse(await request.allHeaders());
+  const entries = Object.entries(complete);
+  const filtered = entries.filter(
+    ([name]) =>
+      !['if-none-match', 'if-modified-since'].includes(name.toLowerCase()),
+  );
+  return filtered.length === entries.length
+    ? undefined
+    : Object.fromEntries(filtered);
+};
 
 export const restrictFunctionalBrowser = async (
   context: BrowserContext,
@@ -54,7 +69,8 @@ export const restrictFunctionalBrowser = async (
           ? image.run(stage, operation)
           : operation();
     try {
-      if (![app, api.origin].includes(new URL(route.request().url()).origin)) {
+      const origin = new URL(route.request().url()).origin;
+      if (![app, api.origin].includes(origin)) {
         image?.branch('ORIGIN_BLOCK');
         await route.abort('blockedbyclient');
         return;
@@ -76,12 +92,25 @@ export const restrictFunctionalBrowser = async (
           return;
         }
       }
+      const staticImage =
+        origin === app &&
+        route.request().resourceType() === 'image' &&
+        route.request().method() === 'GET';
+      const headers = staticImage
+        ? await unconditionalImageHeaders(route.request())
+        : undefined;
       const response = await observe('FETCH', () =>
-        route.fetch({ maxRedirects: 0, maxRetries: 0 }),
+        route.fetch({
+          maxRedirects: 0,
+          maxRetries: 0,
+          ...(headers ? { headers } : {}),
+        }),
       );
       observation?.headers(response);
       image?.headers(response);
       try {
+        if (staticImage && response.status() === 304)
+          throw Error('FUNCTIONAL_BROWSER_FAILED');
         if (response.status() >= 300 && response.status() < 400) {
           image?.branch('REDIRECT_BLOCK');
           await route.abort('blockedbyclient');
