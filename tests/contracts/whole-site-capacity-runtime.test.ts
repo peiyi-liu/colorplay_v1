@@ -303,6 +303,8 @@ describe('capacity strict runtime read-only boundary', () => {
       [f.scope.sourceRevision, f.scope.planId, f.request.oracleApprovalSha256],
       expect.objectContaining({ operation: 'preflight' }),
       expect.any(AbortSignal),
+      undefined,
+      expect.any(Function),
     );
   });
   it.each(['helper', 'r1-password', 'bundle', 'key'])(
@@ -525,6 +527,30 @@ it.each(['before', 'after'])(
       runtime.host({}, new AbortController().signal),
     ).rejects.toThrow();
     expect(runtime.rootAccounting()).toEqual([]);
+    expect(runtime.rootDiagnostics().calls[0]?.firstFailure).toMatchObject({
+      event: phase === 'before' ? 'PRE_VERIFY' : 'POST_VERIFY',
+      state: 'FAILED',
+    });
     expect(f.io.execute).toHaveBeenCalledTimes(phase === 'before' ? 1 : 2);
   },
 );
+
+it('actual runtime retains an execute failure diagnostic while original error still rejects', async () => {
+  const f = await fixture(true),
+    runtime = await loadCapacityRuntime(
+      f.path,
+      new AbortController().signal,
+      f.io,
+      sha256(required(f.files.get(f.path))),
+    );
+  const original = Error('PRIVATE_SENTINEL');
+  f.io.execute.mockRejectedValueOnce(original);
+  await expect(runtime.host({}, new AbortController().signal)).rejects.toBe(
+    original,
+  );
+  expect(runtime.rootAccounting()[0]?.outcome).toBe('unknown');
+  expect(runtime.rootDiagnostics().calls[0]).toMatchObject({
+    executorWitness: 'UNOBSERVED',
+    firstFailure: { event: 'EXECUTE', state: 'FAILED' },
+  });
+});

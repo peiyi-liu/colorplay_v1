@@ -488,10 +488,20 @@ export const createCapacityJourneys = (
         native?.snapshot().resourcesClosed === false
       )
         return capacityFailure();
+      const diagnosticRuntime: {
+        rootDiagnostics?: CapacityRuntime['rootDiagnostics'];
+      } = runtime;
       await runtime.journal.write('transport-accounting', {
         mode: leg.mode,
         ...capacityTransportAccounting(clients, [...observers.values()]),
         rootHelperCalls: runtime.rootAccounting(),
+        rootHelperDiagnostics: diagnosticRuntime.rootDiagnostics?.() ?? {
+          schemaVersion: 1,
+          collection: 'UNOBSERVED',
+          clock: 'NODE_MONOTONIC',
+          calls: [],
+          overflow: false,
+        },
         sqlStatementCount: 'UNAVAILABLE',
         nativeSloSource: 'CDP_HTTP_ONLY',
       });

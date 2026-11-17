@@ -7,9 +7,9 @@
       "sha256": "fb4476b02a32c38bd89afa4e4cc115e574d869c66afc037f6b87dc0cad6756e3"
     },
     "backend-cgroup-sample.py": {
-      "bytes": 1538,
+      "bytes": 4298,
       "role": "OPERATOR",
-      "sha256": "44cd0b65a453bde1e94fff6175c4fbec68e1f73d72d5f027f2cefdf5055a832b"
+      "sha256": "1c4d11208be32c4aa8f2744752fa5f63f9b98c6ee070fcd11de38faa4f77acfc"
     },
     "bind-edge-source.py": {
       "bytes": 7090,
@@ -67,9 +67,9 @@
       "sha256": "802e0c2079db5a9f4ff3beb9a6aa131071c83af8303ad7e4719cf80a5a8e4c29"
     },
     "linux-host-sample.py": {
-      "bytes": 8332,
+      "bytes": 11308,
       "role": "OPERATOR",
-      "sha256": "f6b4fdc0add4b54f4113ad876015d3c2ef04871cd85714b16d3b3183154cf6b6"
+      "sha256": "d2d9f400a564b02aa03ea762f0d20838e5032cdbc25031a0ff3fddd1955fb787"
     },
     "linux-image-pins.json": {
       "bytes": 5134,

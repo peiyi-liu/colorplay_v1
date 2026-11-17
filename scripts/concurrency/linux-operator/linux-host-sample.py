@@ -3,16 +3,29 @@ import json
 import math
 import os
 from pathlib import Path
-import re
+import errno
 import sys
 import time
 from linux_proc import parse_stat, parse_smaps_rollup, parse_meminfo, parse_psi
 from linux_cgroup import read_text, read_pid_members, read_counter_map
 from linux_runtime_common import RUNTIME, CGROOT, require, context, private_json, host_observation, instance_facts, verify_executables
 
+RESULT="HOST_SAMPLE_UNAVAILABLE"
+STATE = {"stage": "REQUEST"}
+CODES = frozenset(['API_TARGET_INVALID', 'BACKEND_CONTAINER_CHANGED', 'BACKEND_INSTANCE_CHANGED', 'BACKEND_PARENT_NOT_SHARED', 'BACKEND_PROCESS_CHANGED', 'BACKEND_PROFILE_CHANGED', 'BACKEND_SAMPLE_ARGUMENTS_INVALID', 'BACKEND_SAMPLE_INPUT_INVALID', 'BACKEND_SERVICE_COUNT_CHANGED', 'BOOT_CHANGED_DURING_PREFLIGHT', 'BOOT_ID_INVALID', 'BROWSER_BINARY_OUTSIDE_APPROVED_CACHE', 'BROWSER_NOT_OWNED', 'BROWSER_PID_REUSED', 'BROWSER_PREDECESSOR_LEAK', 'CGROUP_PATH_INVALID', 'CGROUP_V2_REQUIRED', 'DATABASE_ADAPTER_CHANGED', 'DATABASE_ADAPTER_PATH_INVALID', 'DATABASE_IDENTITY_INVALID', 'DATABASE_PROFILE_CHANGED', 'DATABASE_TARGET_INVALID', 'EXECUTABLE_BYTES_CHANGED', 'EXECUTABLE_IDENTITY_CHANGED', 'EXECUTABLE_PATH_CHANGED', 'EXECUTABLE_TOO_LARGE', 'EXECUTION_CONTEXT_CHANGED', 'FREE_HOST_MISMATCH', 'FRONTEND_LISTENER_MISSING', 'GENERATOR_CGROUP_MISMATCH', 'GENERATOR_CPU_LIMIT_MISMATCH', 'GENERATOR_MEMORY_LIMIT_MISMATCH', 'HELPER_CLOSURE_CHANGED', 'HELPER_CLOSURE_UNBOUND', 'HOST_LISTENER_NOT_LOOPBACK', 'HOST_OOM_COUNTER_MISSING', 'HOST_PROFILE_CHANGED', 'HOST_SAMPLE_ARGUMENTS_INVALID', 'HOST_SAMPLE_CALLER_INVALID', 'HOST_SAMPLE_INPUT_TOO_LARGE', 'HOST_SAMPLE_MODE_INVALID', 'LINUX_CGROUP_INVALID', 'LINUX_PROC_INVALID', 'LINUX_REQUIRED', 'LINUX_RUNTIME_INVALID', 'LINUX_X64_REQUIRED', 'NODE_BINARY_OR_SCOPE_CHANGED', 'NODE_BROWSER_PID_COLLISION', 'NODE_PID_REUSED', 'OS_RELEASE_PATH_INVALID', 'PRIVATE_FILE_INVALID', 'PRIVATE_FILE_TOO_LARGE', 'PRIVATE_PATH_INVALID', 'PROCESS_CPU_CLOCK_INVALID', 'PROCESS_IDENTITY_INVALID', 'PROCESS_OWNER_CHANGED', 'PROCESS_PID_REUSED', 'PROCESS_TREE_INCOMPLETE', 'PROFILE_BYTES_CHANGED', 'PROFILE_KIND_INVALID', 'PROTOCOL_BROWSER_PRESENT', 'PUBLISHED_PORT_NOT_LOOPBACK', 'PUBLISHED_PORT_SET_CHANGED', 'ROOT_CLOSURE_REQUIRED', 'ROOT_COMMAND_FAILED', 'ROOT_HELPER_CHANGED', 'ROOT_PROFILE_OBSERVATION_CHANGED', 'ROOT_PROFILE_REQUIRED', 'ROOT_RUNTIME_CHANGED', 'ROOT_SCOPE_INVALID', 'SOCKET_TABLE_INVALID', 'SOURCE_CHANGED', 'SOURCE_CONTEXT_CHANGED', 'SOURCE_NOT_FROZEN', 'SOURCE_REVISION_INVALID', 'UBUNTU_24_04_REQUIRED', 'UNAPPROVED_BROWSER_BINARY', 'UNDECLARED_BROWSER_PRESENT'])
+def mark(stage):
+    STATE["stage"] = stage
+
+def failure(error):
+    code = error.args[0] if isinstance(error, ValueError) and len(error.args) == 1 and type(error.args[0]) is str and error.args[0] in CODES else "UNKNOWN"
+    number = error.errno if isinstance(error, OSError) else None
+    names = {errno.EACCES: "EACCES", errno.EPERM: "EPERM", errno.ENOENT: "ENOENT", errno.ESRCH: "ESRCH", errno.EIO: "EIO", errno.ETIMEDOUT: "ETIMEDOUT", errno.EPIPE: "EPIPE"}
+    return {"result": RESULT, "code": code, "stage": STATE["stage"], "errno": None if number is None else names.get(number, "UNKNOWN"), "rawProviderOutput": False}
+
 BROWSER_NAMES={"chrome","headless_shell","chrome-headless-shell","chrome_crashpad_handler"}
 
 def read_process(proc_root,pid,owner_uid,boot):
+    mark("PROCESS_METADATA")
     base=proc_root/str(pid)
     try:
         first=parse_stat(read_text(base/"stat"))
@@ -30,6 +43,7 @@ def same_binary(row,pin):
     return row["exe"]==pin["path"] and row["device"]==pin["device"] and row["inode"]==pin["inode"]
 
 def lifetime_percent(ticks,start_ticks,hz,uptime):
+    mark("CPU")
     elapsed=uptime-int(start_ticks)/hz
     require(elapsed>0 and hz>0 and ticks>=0,"PROCESS_CPU_CLOCK_INVALID")
     value=(ticks/hz)/elapsed*100
@@ -37,6 +51,7 @@ def lifetime_percent(ticks,start_ticks,hz,uptime):
     return value
 
 def metadata(group,owner_uid,boot,proc_root=Path("/proc")):
+    mark("MEMBERS")
     rows={}
     for pid in read_pid_members(group):
         value=read_process(proc_root,pid,owner_uid,boot)
@@ -44,6 +59,7 @@ def metadata(group,owner_uid,boot,proc_root=Path("/proc")):
     return rows
 
 def chrome_members(rows,ctx,browser_cache=None):
+    mark("BINARY")
     pins=ctx["binaries"]["browser"];cache=(Path.home()/".cache/ms-playwright" if browser_cache is None else browser_cache).resolve(strict=True);found={}
     for pid,row in rows.items():
         path=Path(row["exe"])
@@ -62,41 +78,56 @@ def stable_memory_sample(ctx,profile,node_pid,browser_pid,protocol,boot,*,proc_r
         else:require(browser_pid in chrome and rows[browser_pid]["ppid"]==node_pid,"BROWSER_NOT_OWNED")
         values={}
         try:
+            mark("SMAPS")
             for pid in [node_pid,*chrome]:values[pid]=parse_smaps_rollup(read_text(proc_root/str(pid)/"smaps_rollup"))
         except (FileNotFoundError,ProcessLookupError):
             if time.monotonic()<deadline:continue
             raise ValueError("PROCESS_TREE_INCOMPLETE") from None
         after=metadata(group,profile["identity"]["ownerUid"],boot,proc_root)
         after_chrome=chrome_members(after,ctx,browser_cache)
+        mark("STABILITY")
         unchanged=node_pid in after and same_binary(after[node_pid],ctx["binaries"]["node"]) and all(after[node_pid][key]==rows[node_pid][key] for key in ["identity","exe","device","inode"]) and set(after_chrome)==set(chrome) and all(all(after_chrome[pid][key]==chrome[pid][key] for key in ["identity","exe","device","inode"]) for pid in chrome)
         if unchanged:return rows,chrome,values
         if time.monotonic()>=deadline:break
     raise ValueError("PROCESS_TREE_INCOMPLETE")
 
 def sample(request):
+    mark("CONTEXT")
     ctx=context()
+    mark("REQUEST")
     require(isinstance(request,dict) and set(request).issubset({"mode","nodePid","browserPid","nodeStart","browserStart"}),"HOST_SAMPLE_ARGUMENTS_INVALID")
     mode=request.get("mode");require(mode in {"NATIVE_BROWSER","HYBRID_BROWSER_SDK","NODE_PROTOCOL"},"HOST_SAMPLE_MODE_INVALID")
     node=request.get("nodePid");browser=request.get("browserPid");protocol=mode=="NODE_PROTOCOL"
     require(type(node)is int and node>0 and node==os.getppid(),"HOST_SAMPLE_CALLER_INVALID")
     if protocol:require(browser is None and request.get("browserStart")is None,"PROTOCOL_BROWSER_PRESENT")
     else:require(type(browser)is int and browser>0 and browser!=node,"NODE_BROWSER_PID_COLLISION")
+    mark("PROFILE")
     profile,profile_sha=private_json(RUNTIME/"execution-profile.json",32768)
+    mark("HOST_FACTS")
     observed_host,boot=host_observation(ctx);facts=instance_facts(ctx,boot)
     require(profile["host"]==observed_host and all(profile["identity"][key]==value for key,value in facts.items()),"HOST_PROFILE_CHANGED")
+    mark("BINARY")
     verify_executables(ctx)
     rows,chrome,memory=stable_memory_sample(ctx,profile,node,browser,protocol,boot)
     if "nodeStart"in request:require(request["nodeStart"]==rows[node]["startTicks"],"NODE_PID_REUSED")
     if not protocol and "browserStart"in request:require(request["browserStart"]==rows[browser]["startTicks"],"BROWSER_PID_REUSED")
+    mark("CPU")
     hz=observed_host["clockTicksPerSecond"];uptime=float(read_text("/proc/uptime").split()[0])
     require(math.isfinite(uptime) and uptime>0,"PROCESS_CPU_CLOCK_INVALID")
-    mem=parse_meminfo(read_text("/proc/meminfo"));psi=parse_psi(read_text("/proc/pressure/memory"));vmstat=read_counter_map(read_text("/proc/vmstat",1048576))
+    mark("MEMINFO")
+    mem=parse_meminfo(read_text("/proc/meminfo"))
+    mark("PSI")
+    psi=parse_psi(read_text("/proc/pressure/memory"))
+    mark("OOM")
+    vmstat=read_counter_map(read_text("/proc/vmstat",1048576))
     require("oom_kill"in vmstat,"HOST_OOM_COUNTER_MISSING")
+    mark("CPU")
     browser_cpu=None
     if not protocol:
         root_start=rows[browser]["startTicks"]
         require(all(int(row["startTicks"])>=int(root_start) for row in chrome.values()),"BROWSER_PREDECESSOR_LEAK")
         browser_cpu=lifetime_percent(sum(row["userTicks"]+row["systemTicks"] for row in chrome.values()),root_start,hz,uptime)
+    mark("PROFILE_RECHECK")
     require(private_json(RUNTIME/"execution-profile.json",32768)[1]==profile_sha,"PROFILE_BYTES_CHANGED")
     return {"platform":"linux","executionProfileSha256":profile_sha,"sampledAtMonotonicMs":time.monotonic_ns()/1000000,"instanceSha256":facts["instanceSha256"],"jobSha256":facts["jobSha256"],"generatorCgroupIdentitySha256":observed_host["cgroupIdentitySha256"],"limitChainSha256":observed_host["limitChainSha256"],"hostMemoryTotalBytes":mem["totalBytes"],"hostLogicalCpu":4,"node":rows[node]["identity"],"browser":None if protocol else rows[browser]["identity"],"treeComplete":None if protocol else True,"browserProcessCount":len(chrome),"nodeRssBytes":memory[node]["rssBytes"],"nodePssBytes":memory[node]["pssBytes"],"browserTreeRssBytes":None if protocol else sum(value["rssBytes"] for pid,value in memory.items() if pid in chrome),"browserTreePssBytes":None if protocol else sum(value["pssBytes"] for pid,value in memory.items() if pid in chrome),"nodeCpuLifetimePercentOfOneCore":lifetime_percent(rows[node]["userTicks"]+rows[node]["systemTicks"],rows[node]["startTicks"],hz,uptime),"browserCpuLifetimePercentOfOneCore":browser_cpu,"hostSwapUsedBytes":mem["swapTotalBytes"]-mem["swapFreeBytes"],"memoryPsiSomeAvg10Percent":psi["some"]["avg10"],"memoryPsiFullAvg10Percent":psi["full"]["avg10"],"hostOomKills":vmstat["oom_kill"],"memoryAccounting":"LINUX_SMAPS_ROLLUP_PSS_WITH_SEPARATE_RSS","readOnly":True}
 
@@ -106,6 +137,5 @@ if __name__=="__main__":
         raw=sys.stdin.read(4097);require(len(raw)<=4096,"HOST_SAMPLE_INPUT_TOO_LARGE")
         print(json.dumps(sample(json.loads(raw))),flush=True)
     except Exception as error:
-        code=str(error) if isinstance(error,ValueError) and re.fullmatch(r"[A-Z_]{3,80}",str(error)) else "HOST_SAMPLE_UNAVAILABLE"
-        print(json.dumps({"result":"HOST_SAMPLE_UNAVAILABLE","code":code,"rawProviderOutput":False}),flush=True)
+        print(json.dumps(failure(error)),flush=True)
         raise SystemExit(1) from None

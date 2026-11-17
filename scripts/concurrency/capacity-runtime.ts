@@ -1,3 +1,7 @@
+import {
+  createRootHelperDiagnostics,
+  type RootHelperObserver,
+} from './root-helper-contracts';
 import { isDeepStrictEqual } from 'node:util';
 import { performance } from 'node:perf_hooks';
 import { executeRootHelper } from './root-helper-executor';
@@ -60,6 +64,7 @@ export interface CapacityRuntimeIo extends CapacityConfigIo {
     input: unknown,
     signal: AbortSignal,
     authority?: RootHelperAuthority,
+    observer?: RootHelperObserver,
   ): Promise<unknown>;
 }
 export const executeCapacityRoot = async (
@@ -68,17 +73,34 @@ export const executeCapacityRoot = async (
   input: unknown,
   signal: AbortSignal,
   authority?: RootHelperAuthority,
+  observer?: RootHelperObserver,
 ): Promise<unknown> => {
+  const emit = (event: Parameters<RootHelperObserver>[0]) => {
+    try {
+      observer?.(event);
+    } catch {
+      /* Observations never replace the original failure. */
+    }
+  };
   try {
-    return JSON.parse(
-      await executeRootHelper(
-        helper,
-        args,
-        JSON.stringify(input),
-        signal,
-        authority,
-      ),
+    const text = await executeRootHelper(
+      helper,
+      args,
+      JSON.stringify(input),
+      signal,
+      authority,
+      undefined,
+      observer,
     );
+    emit({ event: 'JSON_PARSE', state: 'ENTERED' });
+    try {
+      const value: unknown = JSON.parse(text);
+      emit({ event: 'JSON_PARSE', state: 'COMPLETED' });
+      return value;
+    } catch (error) {
+      emit({ event: 'JSON_PARSE', state: 'FAILED' });
+      throw error;
+    }
   } catch {
     return capacityFailure();
   }
@@ -304,6 +326,7 @@ export const loadCapacityRuntime = async (
       executeClosedAtNodeMs: number;
       callCompletedAtNodeMs: number;
     }[] = [];
+    const helperDiagnostics = createRootHelperDiagnostics();
     const call = async (
       helper: Helper,
       input: unknown,
@@ -313,9 +336,19 @@ export const loadCapacityRuntime = async (
       const callStartedAtNodeMs = performance.now();
       const profileRuntime =
         'profileRuntime' in config ? config.profileRuntime : undefined;
-      await profileRuntime?.verify();
+      const diagnostic = helperDiagnostics.begin(helper, callStartedAtNodeMs);
+      diagnostic.phase('PRE_VERIFY', 'ENTERED');
+      try {
+        await profileRuntime?.verify();
+        diagnostic.phase('PRE_VERIFY', 'COMPLETED');
+      } catch (error) {
+        diagnostic.phase('PRE_VERIFY', 'FAILED');
+        diagnostic.finish();
+        throw error;
+      }
       const started = performance.now();
       let outcome: 'ok' | 'unknown' = 'unknown';
+      diagnostic.phase('EXECUTE', 'ENTERED');
       try {
         const helperArgs =
           helper === 'host-sample.py' ||
@@ -331,13 +364,39 @@ export const loadCapacityRuntime = async (
               input,
               ownedSignal,
               profileRuntime.closure,
+              diagnostic.observe,
             )
-          : await io.execute(helper, helperArgs, input, ownedSignal);
+          : await io.execute(
+              helper,
+              helperArgs,
+              input,
+              ownedSignal,
+              undefined,
+              diagnostic.observe,
+            );
         outcome = 'ok';
+        diagnostic.phase('EXECUTE', 'COMPLETED');
         return value;
+      } catch (error) {
+        diagnostic.phase('EXECUTE', 'FAILED');
+        throw error;
       } finally {
         const executeClosedAtNodeMs = performance.now();
-        await profileRuntime?.verify();
+        diagnostic.phase('POST_VERIFY', 'ENTERED');
+        try {
+          await profileRuntime?.verify().then(
+            () => {
+              diagnostic.phase('POST_VERIFY', 'COMPLETED');
+            },
+            (error: unknown) => {
+              diagnostic.phase('POST_VERIFY', 'FAILED');
+              throw error;
+            },
+          );
+          if (!profileRuntime) diagnostic.phase('POST_VERIFY', 'COMPLETED');
+        } finally {
+          diagnostic.finish();
+        }
         const callCompletedAtNodeMs = performance.now();
         if (accounting.length < 10000)
           accounting.push({
@@ -365,6 +424,7 @@ export const loadCapacityRuntime = async (
     return {
       ...config,
       rootAccounting: () => accounting.map((row) => ({ ...row })),
+      rootDiagnostics: () => helperDiagnostics.snapshot(),
       bundle,
       anonKey: state.ANON_KEY,
       planJournal: capacityJournal(config.journalRoot),

@@ -3002,3 +3002,32 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - collector190行僅原startedAt同時存lastStarted、nextdelay=max(0,period−elapsed)，原1000/5000、sample start/complete／3s7s/reducer/notify/tick/pending/stop/M32保持。exact4Source/test231/394/488行，核准caller單case同fakeclock／pending sampler，原安全assert保且pending0。Rootcanonical逆變更可精確還原base collector bytes，無其他Source語義差異。
 - 有效RED4FAIL/3PASS→focused18PASS，final29files247capacity／fulltype/lint+fixturechangedlint/format/import/diff/static0；原fake monotonic及246PASS/1FAIL fixture資格raw保，不當乾淨綠。Root35tests1620ms／38records16checks／4files/2205unownedactualGit/operator44/Original7trueprefix+package-lock/388歷史含M32v2原75+v1原55全核。packet39c9d88469855e59abe8caa39bf7a00d7a64b5c004d39bccffec200dfb19003d，Rootreceipt2eb1b957d95856b66451e07b768999df2b1e5418cc31add7b1442d3b162d7844，review docs/reviews/2026-11-17-capacity-sample-cadence-m33-review.md；一輪0findings，worker待命。
 - 只修已證hazard，仍可能因長sample/其他效能缺證，不稱60PASS或回填26/19cause。Native27已final全cold保持；Root接下來exact7paths commit/clean、freshspecialremote c695dc8正常FF／Native28 newpushattempt1六人→15legs，不rerun。40/60未run，原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE。
+
+
+### 2026-11-17 — M33固定Source正常Native28啟動
+
+- Rootexact7paths cachedcheck0/commit/clean 987a7153104fc290f7b318c2dc7eac0b5c298b25，freshspecialremote精確c695dc8後正常FF；newpush/attempt1 run44005732283/job133780517381 capacity-linux inprogress，正常six-person→15legs。M33僅原startedAt同步存laststart扣sample成本的timerdelay，Rootreceipt2eb1b957d95856b66451e07b768999df2b1e5418cc31add7b1442d3b162d7844／38recordspacket固定，worker待命。
+- WatchermatchingSHA保cipher，27已final全cold／first-event鏈保持；不保證60或長sample必PASS，不改timestamp/3s7s/guards/profile/caps，不GHrerun/0business。原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE/40及60未run保持。
+
+
+### 2026-11-17 — Native28最終failure／新collector unavailable並非stale
+
+- source987a7153104fc290f7b318c2dc7eac0b5c298b25/run44005732283/job133780517381 actualcompleted/failure，upload/coldhold/post全success，Rootfinal .git/linux-twenty-eighth-run-review.json SHAf5fef1008647d539f31b2f191a9887e8cc8d63ffb05046d94e694ed953025d07，API exactjoblog22979B/b45dcf9f62cf675b6ee8e31fe94d3915ea9939211a225f3985904a3359bb21ea。actual功能wsb-261117-70ae76c585cd 15PASS；planwsc-261117-b0e43208b906 anon3PASS6104.925004ms/10PASS9718.028187ms(API SLO NOT_APPLICABLE)、20INCONCLUSIVE，其他12未run。
+- M32 actual20firstinvalid4382.505559 UNKNOWN唯一collector_unavailable，hostage1682.596512/resourceage1682.459597在3s7s內；abortrequest4382.663304→actualsignal4390.600838 COLLECTOR_INVALID→journey4436.259032/abortedtrue→finally4436.403302/stop4524.508631。firstReadyFailure null/actors[]、entry仍setup/observations0，不是27host_stale。Rootschema-first-stop .git/native28-first-stop-review.json SHA5a26b2555f5abac7511a90db52da15a49dec58404c71e9510e9d2f0770540130。
+- artifact14293874193 ZIP42562385B/ccdf19dc15fac9a537d38bea9174ea1fc994c29f2a59cf4d5350036cb38fe4a0，cipher42562247B/663c1e3552938e557f4475b4f7ef3aba494187ceb32561845eb0517e8203e3ba真AEAD；outer5da396d593323cdacc3dbfc7de3d1c51822712ea05b4a1d178ee77c4f9a78c84/685files212245041B，innerce3402d61081b5fb7c87da3f270aae22e5eb2e1fa1bedb28fada7580be2bce70/638files，8stops/roles/DB2/127tables31rolesORDER_ONLY/3vol7017files185606880B含metadata/runtime586data32code0metadata-only全核；無restore/刪除。
+- worker唯讀已縮到20第二次linux-host-sample.py execute返回/拒絕unknown：callstart3709.847465/preverify3762.480590/execute4258.299928/post4378.798290，前後verify成功；host前次start2699.602513/complete2810.127254→次startgap1010.244952/實等899.720211，M33扣耗時生效。原helper error envelope/rawsample沒有保留，exacthelper branch仍UNKNOWN；不猜tree/memory/OS，也不稱資源不足。先一次完整safe-exit probe proposal，無新Sourcepatch或Native29。所有歷史custody/原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE/40及60未run保持。
+
+
+### 2026-11-17 — Native28整合readonly接受／M34單一完整helper退出診斷核准
+
+- readonlyfinal4143bfcaaa0ea33254ba89073370a827e59aa22897b3658016684ff3833149af／10records、12Source與15coldinput全部Root核，Rootreadonlyreceiptc8dabdaf47fac152a416c06694431b15b80af60f35a8ee0ea2c9197cb389faf8。第二HOST完整pre/postverify間EXECUTE或JSON_PARSE失敗，code/exit/stdout envelope未留、exactguard未知；M33实际start cadence生效，不猜tree/memory/OS，不延用host_stale，不稱資源不足。
+- Root核M34 brief docs/superpowers/plans/2026-11-17-root-helper-exit-diagnostic-m34-brief.md：一次Node phase＋executor closedcallback/exit/limit/abort/parse＋2sampler固定stage/code/errno完整安全投影，僅原buffer stdout在close且bound內closed解析，stderr仍ignore，不留raw/error.message/任意uppercase/hash/PID等。只有onClose callback才可填terminal、不等於Kernel physical attestation；fake/custom未觀測誠實UNOBSERVED。
+- 明授7Source含Root兩sampler僅error診斷、package-manifest只對應2entries bytes/SHA更新、其餘42/總44不變；contracts純schema、executor/runtime/journeys窄接線，只附既有transport-accounting write。無新I/O/helper/timer/journal/Root權能、正向sample不變、原131072B/30s/3attempts1.5s/admission/kill/3s7s/caps/flags/錯誤行為不變。相同worker先有效RED/GREEN/受影響checks、Root唯一review後才可Native29；28已final/cold全保，40/60未run/US$0/cap5/原WIP/G8停止85/HostedProduction真信NONE。
+
+
+### 2026-11-17 — M34完整helper退出診斷Root唯一審查接受
+
+- exact7Source／4tests：原call phase與executor callback／closed result-code-stage-errno有界安全投影，只附原transport-accounting寫入；原stderr ignore／IO／helper／timer／Root權限／131072B／30s／3次1.5s／freshness3s7s／M32／M33／caps保持。custom IO無事件UNOBSERVED，close回呼不冒充Kernel物理退出；原失敗仍拒絕、legacy4timestamps與pre/postfail不推row保持。manifest44只2sampler bytes/hash變，其餘42+metadata同base。
+- 一輪1P2已修：node CPU guard在return內於PROFILE_RECHECK後執行導致stage錯位，Root純fake有效重現；只原lifetime_percent入口literal CPU mark＋host entry／driver regression3delta，其餘8raw不變；3逆向還原v1hash。有效RED20PASS/2FAIL→affected33files300PASS；final4/63、Python5methods+原hostFS1、type/full lint/globalformat/import/diff/static0，Root3/45/1877ms／P2 provider trace同。原fixture/lint/首次GREEN失敗完整保留，不當乾淨綠。
+- finalv2 d388ef4bbf9811c174d58f2fd908844c0ca417de98a732e393cfad9db59d1662／77records33checks，v1 67a08cd6697abaed053ba2f2829068304ee2b201fe06c3931cc20cbd814af968／原54全保。Rootreceipt b95874f60d3dfa444aff4e2af658c9e7dccbdc9b2d9ade82aaeb894294a92867，11files/2203 unowned actualGit of2212含type/execbit/operator42/Original7真prefix+pkglock/436歷史raw含M32v1v2/M33/readonly全核；全部既有Python函式去literal mark exact AST。review docs/reviews/2026-11-17-root-helper-exit-diagnostic-m34-review.md。
+- 只Task級觀測接受，不證Native28底因或容量PASS。28已final/cold全留；Root接下來exact14paths commit/clean、freshremote987a715後正常FF啟動Native29新Source pushattempt1六人→15legs，不rerun/0business。40及60未run，US$0/cap5／原WIP／G8停止85／HostedProduction真信NONE保持。
