@@ -273,6 +273,12 @@ describe('health evidence does not assert physical process exit', () => {
     const details = {
       schemaVersion: 1 as const,
       collection: 'OBSERVED' as const,
+      browser: {
+        collection: 'UNOBSERVED' as const,
+        product: null,
+        protocolVersion: null,
+        revision: null,
+      },
       components: {
         unexpected: 1,
         pageErrors: 0,

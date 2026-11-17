@@ -1,3 +1,10 @@
+import {
+  registerImageTransport,
+  observeImageCdp,
+  imageCdpResponse,
+  finishImageCdp,
+  imageTransportAvailable,
+} from './functional-image-transport-observation';
 import { createFunctionalMediaObservation } from './functional-media-observation';
 import { createFunctionalHealthDiagnostics } from './functional-health-diagnostics';
 import { functionalEndpoint, resourceCode } from './functional-network-event';
@@ -46,6 +53,7 @@ export const createFunctionalHealth = (
   );
   const mediaObservation = createFunctionalMediaObservation(scope, phase);
   let disposed = false;
+  let browserProof: Promise<void> | null = null;
   const records = new Map<string, NetworkRecord>();
   const expectedDrops = new Map<string, number>();
   const observedDrops = new Set<string>();
@@ -113,6 +121,14 @@ export const createFunctionalHealth = (
     };
     pages.set(page, info);
     mediaObservation.register(page, () => info.actor, context);
+    registerImageTransport(
+      context,
+      page,
+      new URL(scope.appUrl).origin,
+      approvedStaticImagePaths,
+      () => !disposed && !page.isClosed(),
+      evidence.invalidate,
+    );
     auth.register(page, info.index);
     images.register(page, () => info.actor);
     const loaded = auth.loaded.bind(undefined, page);
@@ -182,6 +198,7 @@ export const createFunctionalHealth = (
               info.index,
               event,
               mediaObservation.request(page, event.requestId, raw),
+              observeImageCdp(page, event.requestId, raw),
             );
             images.request(
               page,
@@ -283,6 +300,7 @@ export const createFunctionalHealth = (
             auth.response(page, event.requestId, event.response.status);
             record.status = event.response.status;
             evidence.response(info.index, event.requestId, record.status);
+            imageCdpResponse(page, event.requestId);
             if (record.status >= 500)
               errorAt('HTTP_5XX', info.index, event.requestId);
           } catch {
@@ -294,6 +312,7 @@ export const createFunctionalHealth = (
             const event = z
               .object({ requestId: z.string(), errorText: z.string().max(512) })
               .parse(raw);
+            finishImageCdp(page, event.requestId, raw);
             evidence.failure(info.index, event.requestId, event.errorText);
             const record = records.get(
               `${String(info.index)}:${event.requestId}`,
@@ -362,6 +381,7 @@ export const createFunctionalHealth = (
               return;
             }
             mediaObservation.finished(page, event.requestId);
+            finishImageCdp(page, event.requestId);
             record.finished = true;
             if (
               record.endpoint === 'logout' &&
@@ -466,6 +486,15 @@ export const createFunctionalHealth = (
         });
         await cdp.send('Network.enable', { maxPostDataSize: 4096 });
         await cdp.send('Log.enable');
+        browserProof ??= cdp.send('Browser.getVersion').then(
+          (value) => {
+            evidence.browser(value);
+          },
+          () => {
+            evidence.browser(null);
+          },
+        );
+        await browserProof;
         info.enabled = true;
       } catch {
         unavailableAt('CDP_ATTACH', info.index);
@@ -552,6 +581,8 @@ export const createFunctionalHealth = (
         available:
           !unavailable &&
           evidence.available() &&
+          evidence.browserAvailable() &&
+          [...pages.keys()].every(imageTransportAvailable) &&
           mediaObservation.available() &&
           images.available() &&
           auth.diagnostics().unresolvedLogoutDeclarations === 0 &&

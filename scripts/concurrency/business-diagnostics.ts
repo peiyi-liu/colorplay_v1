@@ -1,3 +1,4 @@
+import { emptyBrowserDiagnostic } from './functional-image-diagnostics';
 import {
   functionalHealthDetailsSchema,
   type FunctionalHealthDetails,
@@ -165,6 +166,7 @@ export const captureFunctionalHealthDetails = (port: {
     return {
       schemaVersion: 1,
       collection: 'UNAVAILABLE',
+      browser: emptyBrowserDiagnostic(),
       components: null,
       events: [],
       droppedCount: 0,

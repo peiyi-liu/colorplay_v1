@@ -1,4 +1,8 @@
 import {
+  enableImageTransport,
+  observeImageRoute,
+} from './functional-image-transport-observation';
+import {
   enableMediaTransport,
   observeMediaRoute,
 } from './functional-media-transport-observation';
@@ -36,14 +40,22 @@ export const restrictFunctionalBrowser = async (
     return fail('FUNCTIONAL_BROWSER_FAILED');
   }
   enableMediaTransport(context, api.origin);
+  enableImageTransport(context);
   await context.route('**/*', async (route) => {
     const observation = observeMediaRoute(route.request());
+    const image = observeImageRoute(route.request());
     const observe = <T>(
       stage: 'FETCH' | 'PARSE' | 'HOOK' | 'FULFILL' | 'DISPOSE',
       operation: () => Promise<T>,
-    ) => (observation ? observation.run(stage, operation) : operation());
+    ) =>
+      observation
+        ? observation.run(stage, operation)
+        : image
+          ? image.run(stage, operation)
+          : operation();
     try {
       if (![app, api.origin].includes(new URL(route.request().url()).origin)) {
+        image?.branch('ORIGIN_BLOCK');
         await route.abort('blockedbyclient');
         return;
       }
@@ -68,8 +80,10 @@ export const restrictFunctionalBrowser = async (
         route.fetch({ maxRedirects: 0, maxRetries: 0 }),
       );
       observation?.headers(response);
+      image?.headers(response);
       try {
         if (response.status() >= 300 && response.status() < 400) {
+          image?.branch('REDIRECT_BLOCK');
           await route.abort('blockedbyclient');
           return;
         }
@@ -95,9 +109,11 @@ export const restrictFunctionalBrowser = async (
         await observe('DISPOSE', () => response.dispose());
       }
     } catch {
+      image?.branch('CATCH_ABORT');
       await route.abort('failed').catch(() => undefined);
     } finally {
       observation?.close();
+      image?.close();
     }
   });
   await context.routeWebSocket('**/*', (socket) => {

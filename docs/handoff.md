@@ -2883,3 +2883,34 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root source receipt .git/m29-root-source-review.json、repair receipt .git/m29-root-repair-review.json；review docs/reviews/2026-11-17-playwright-browser-baseline-m29-review.md。唯一Root一輪收束／Task接受，不是Native/容量/phasePASS。接下來exact5paths commit/clean、freshspecialremote2d341fc正常FF新Source/push/attempt1 Native24 six-person→15legs；不GHrerun。登入已以真network唯讀確認GitHub peiyi-liu有效（sandbox假invalid已更正），主機US$0／cap5、OriginalWIP/G8停止85與所有custody／HostedProduction真寄信NONE／40與60未run保持。
 
 - M29 final packet validation-final-v2.json SHA cd28ce327714f20730b2d1bfd766f2aee742b6b31b63d2f1053c7adc7cc2ee2b／166records與Source原92全核；Root final receipt e1dade94a09ab5bfa6599fa19219d9f1376c85fa774c6331438bd5b8ee077a97，openfinding0、same-roundP1已解。原失敗材料與rollback保持、worker待命。
+
+
+### 2026-11-17 — M29固定Source正常Native24已啟動
+
+- Root exact5paths cachedcheck0/commit/clean b1fa158412b105034dd0b3243e6eefc6f99e140a，fresh specialremote精確2d341fce後正常FF；新push/attempt1 run43977983798/job133686795420 capacity-linux進行中，正常six-person→15legs。新Playwright1.65.1工具基線、Rootop44/所有資源與健康門檻不變；watcher只matchingSHA監看／保cipher，無GHrerun。
+- M29 Source/166records/修復proof全freeze，worker待命；Root sole收束receipt e1dade94a09ab5bfa6599fa19219d9f1376c85fa774c6331438bd5b8ee077a97。Native23資料完整保留／其取消與imagecause仍UNOBSERVED；40/60未run，原WIP/G8停止85/所有custody、主機US$0/US$5cap、HostedProduction真寄信NONE保持。
+
+
+### 2026-11-17 — Native24 health FAIL21／7個圖片request／完整cold custody已核
+
+- source b1fa158412b105034dd0b3243e6eefc6f99e140a，run43977983798/job133686795420 正常push/attempt1。實際functional wsb-261116-b70873eb9a26／269165.930913ms，first14PASS、healthFAIL、exit1/noSignal/stderr0/SourceFrozen/ownedClosed且無remaining。actualTS receipt/candidate/close/finalizer FAIL重算，Root .git/native24-functional-review.json SHA4977b8811017d53c030020c3676e277edd63917eb0a304d1fabdfb53f60c57da。health availabletrue/OBSERVED、unexpected21其餘4component0、drops4/refresh1。21events＝7圖片request各CONSOLE_UNCLASSIFIED/UNAPPROVED_FAILURE/LOG_UNMATCHED三channels；page2 requests441/442/466/566/567，page4 requests629/630，皆auth_controls、APP_IMAGE、OTHER、無200、canceledfalse。未知rawerror被OTHER折疊；不能推定ORB或與Native23image同cause。本輪無unexpected media event，僅表示本輪未見，不回填Native23cause。15capacity NOT_RUN、40/60未run。
+- artifact14282626676 ZIP42505809B/9e0528bfd704e5c2baf126383046ffdda7c186659c4faeb1ce17e6bfbc0b9829，cipher42505671B/e18b7fd193347a1fddc216ff4dad7f58c0826ffdcca1ed2a7c5ef8530843733e，真ageAEAD/561files212437428B/outerae2c66bf2dd2ff57ba25d09be51d334e1961ec83a913097526f45fa2299f40fb全部hash核；inner7428a54e8ab0f40a988c4fdf24f52bedc74d2663ca2d08c0e771f5d668088e39/528files。8stop/role、2DB127tables31rolesORDER_ONLY、3vol7017files185604927B含portablemetadata，runtime476data32publiccode0metadata-only全核，Auth/media完整保留，無restore/刪除。Rootcoldlogbaf71c0472fee65573d072898874e4d415fa71da4d4dc212a71f7d4db9221be1，businessNO_FUNCTIONAL_PASS_TO_RECOMPUTE保留非無嘗試。
+- Job目前10分鐘cold hold，尚非completed；不得claim finalconclusion。同唯一worker做一次整合唯讀diagnostic：從本run資料/固定Source找7image rawCode／Rootroute／權限與observer缺漏，未知明列；不新browser/Native/Sourcepatch，若必要只提一個合併diagnostic brief。全部M29/歷史資料保留，US$0/cap5/原WIP/G8停止85/HostedProduction真信NONE。
+
+
+### 2026-11-17 — Native24唯讀收束／M30一次合併圖片診斷核准
+
+- readonlypacket c267f1867a6d5ca84277d405d129fa442bfe664ef83cce802f619ca5f00dd51a／9records＋18Source全部Root核符。7request-linked失敗failure/log各7能exact配對；另7console無requestID，先前簡寫「每請求三通道」只能當計數分布，不是逐筆console配對已證。Root CDP7 Image/GET皆LOGIN→LOGIN/closingfalse/no200/canceledfalse，4.045–13.237ms；原碼／blockedReason/CORS/livebrowser均未留不可還原。候選登入PNG進Git與actual572filemanifest同SHA已證，失敗URL仍UNKNOWN。
+- 停止疑問假設「圖片可套先前媒體取消原因」，沒有證據支持。Root核單一M30 brief docs/superpowers/plans/2026-11-17-image-transport-diagnostic-m30-brief.md：純工具完整圖片safe error/asset identity/route既有stage/header分類與一次actualBrowser.getVersion，兩arrival/ambiguous failclosed，immutable failureCode，保21counter/classifier/expected／資源時限/operator44。相同worker、Root唯一一次review，先RED/GREEN/fullchecks／freeze，禁止額外browser/Native直到Root收束且Native24final，無產品/PNG/lock/Original/Hosted改動。不是容量或cause修復。
+
+
+### 2026-11-17 — Native24最終failure／joblog完整保留
+
+- run43977983798/job133686795420 actualcompleted/failure，upload/coldhold/post全success。Rootfinal .git/linux-twenty-fourth-run-review.json SHA30b126675fcddf5bc132f7613c8146fa42b5b43dfb5f171c2ca5e620d082e0f7，API exactjoblog22092B/054349ce8ecb2e75d3aeeb161d75eeb09f799efe5ae7ccad55b4333cdc04f8fe。真AEAD/561outer/528inner／8stops/DB/coldvol全部原資料鏈保持，不restore/刪除。Actual14PASS/healthFAIL21=7request-linked image；console7未逐筆配對，cause/raw碼/liveBrowser版本仍未知；capacity15legs NOT_RUN。
+- Root M30 brief追加必要4fixture-only paths，mock只提供syntheticBrowser.getVersion三欄，既有method/timeout/assertions保持；不是production信任捷徑。brief當前SHAe71c1a3f0314f8462834277d323d5c617304a93e48f4c961389ed070a9d90c4e。唯一worker繼續純診斷實作／Root唯一review；尚未授Native25。US$0/cap5／40與60未run／HostedProduction真寄信NONE。
+
+
+### 2026-11-17 — M30純圖片診斷Root唯一審查接受
+
+- packetf97689b5438f44d0f41ea8b8ad2910f8a52e0462ce5e84f81bc2c9aaa5f2d9a7／51records20checks，6Source8tests；safe image rawcode/blocked/CORS／exactsamePage私有URL-matching／既有route stage/headers、獨立failureCode與一次actualBrowser版本欄位，missing proof不當可用，原21counter/classifier/expected/operator44與產品語義不變。有效2assertion RED→GREEN、68files820tests＋final5files100窄回歸、type/lint/globalformat/import/diff/build0；原type/lint/setup資格保留。Root one-round0findings，獨立40tests852ms，51records/14files／2184unownedactualGit／Original7trueprefix／M29原166+differential35+readonly9全核，report docs/reviews/2026-11-17-image-transport-diagnostic-m30-review.md。
+- 新helper371/317、既有health613/diag551/browser178／diagtest641必要mock窄接線行限依brief例外，不做無關重構。Sourcefreeze／worker待命。Root接下來exact17paths commit/clean、freshspecialremote b1fa158正常FF Native25 newpush/attempt1 six-person→15legs；不GHrerun/0business。Native24已final failure且完整custody保留，原7imageURL/碼/liveversion仍UNOBSERVED，不能回填原因。40/60未run，原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE。

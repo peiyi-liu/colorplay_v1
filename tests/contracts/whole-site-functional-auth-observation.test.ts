@@ -34,9 +34,15 @@ const setup = async (approved = [cssAsset, asset]) => {
     const cdp = Object.assign(new EventEmitter(), {
       send: (method: string) =>
         Promise.resolve(
-          method === 'Network.getResponseBody'
-            ? { body: JSON.stringify(body), base64Encoded: false }
-            : {},
+          method === 'Browser.getVersion'
+            ? {
+                product: 'Chrome/159.0.8154.6',
+                protocolVersion: '1.3',
+                revision: '@' + 'a'.repeat(40),
+              }
+            : method === 'Network.getResponseBody'
+              ? { body: JSON.stringify(body), base64Encoded: false }
+              : {},
         ),
       detach: () => Promise.resolve(),
     });

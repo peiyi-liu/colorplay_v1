@@ -1,4 +1,13 @@
 import {
+  browserDiagnosticSchema,
+  emptyBrowserDiagnostic,
+  readBrowserDiagnostic,
+  imageContextSchema,
+  emptyImageContext,
+  imageFailureCode,
+  imageAsset,
+} from './functional-image-diagnostics';
+import {
   functionalMediaContextSchema,
   emptyFunctionalMediaContext,
 } from './functional-media-observation';
@@ -99,10 +108,12 @@ const eventSchema = z.strictObject({
   column: count.positive().max(10000000).nullable(),
   occurrences: count.positive(),
   mediaContext: functionalMediaContextSchema,
+  imageContext: imageContextSchema.default(emptyImageContext),
 });
 export const functionalHealthDetailsSchema = z
   .strictObject({
     schemaVersion: z.literal(1),
+    browser: browserDiagnosticSchema.default(emptyBrowserDiagnostic),
     collection: z.enum(['OBSERVED', 'UNAVAILABLE']),
     components: componentsSchema.nullable(),
     events: z.array(eventSchema).max(256),
@@ -163,6 +174,7 @@ export const createFunctionalHealthDiagnostics = (
     pendingErrors: 0,
   };
   const paths = [...approved];
+  let browser = readBrowserDiagnostic(null);
   if (
     paths.length > 1000 ||
     new Set(paths).size !== paths.length ||
@@ -269,6 +281,7 @@ export const createFunctionalHealthDiagnostics = (
     errorName: 'OTHER',
     ...unknownPosition(),
     mediaContext: emptyFunctionalMediaContext(),
+    imageContext: emptyImageContext(),
   });
   const key = (page: number, id: string) => `${String(page)}:${id}`;
   const make = (
@@ -293,6 +306,7 @@ export const createFunctionalHealthDiagnostics = (
       }
       const event = make(branch, meta);
       event.mediaContext = meta.mediaContext;
+      event.imageContext = meta.imageContext;
       events.push(event);
     } catch {
       bad = true;
@@ -346,6 +360,11 @@ export const createFunctionalHealthDiagnostics = (
   };
   return {
     note,
+    browser(raw: unknown) {
+      if (!touch()) return;
+      browser = readBrowserDiagnostic(raw);
+    },
+    browserAvailable: () => browser.collection === 'OBSERVED',
     available: () => !bad,
     invalidate: () => {
       bad = true;
@@ -357,6 +376,7 @@ export const createFunctionalHealthDiagnostics = (
       page: number,
       event: { requestId: string; request: { url: string } },
       mediaContext = emptyFunctionalMediaContext(),
+      imageContext = emptyImageContext(),
     ) => {
       try {
         if (!touch()) return;
@@ -370,6 +390,7 @@ export const createFunctionalHealthDiagnostics = (
           requestOrdinal: metadata.get(k)?.requestOrdinal ?? ++ordinal,
           endpoint: family(event.request.url),
           mediaContext,
+          imageContext,
         });
       } catch {
         bad = true;
@@ -397,6 +418,11 @@ export const createFunctionalHealthDiagnostics = (
           endpoint: typeof url === 'string' ? family(url) : 'UNKNOWN',
           networkCode: networkCode(text),
           ...position(location),
+          imageContext: {
+            ...emptyImageContext(),
+            ...imageAsset(app, [], url),
+            consoleCode: imageFailureCode(text),
+          },
         });
       } catch {
         bad = true;
@@ -418,7 +444,10 @@ export const createFunctionalHealthDiagnostics = (
       const meta = entry.networkRequestId
         ? metadata.get(key(page, entry.networkRequestId))
         : null;
-      if (meta) meta.networkCode = networkCode(entry.text);
+      if (meta) {
+        meta.networkCode = networkCode(entry.text);
+        meta.imageContext.logCode = imageFailureCode(entry.text);
+      }
       logs.set(page, {
         ...empty(page),
         ...meta,
@@ -510,6 +539,7 @@ export const createFunctionalHealthDiagnostics = (
     snapshot: (): FunctionalHealthDetails =>
       functionalHealthDetailsSchema.parse({
         schemaVersion: 1,
+        browser,
         collection: bad ? 'UNAVAILABLE' : 'OBSERVED',
         components,
         events: [...events, ...derived]

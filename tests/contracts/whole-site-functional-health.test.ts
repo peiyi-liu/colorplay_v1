@@ -17,14 +17,20 @@ const setup = async (
   const send = vi.fn<(method: string, params?: unknown) => Promise<unknown>>(
     (method) =>
       Promise.resolve(
-        method === 'Network.getResponseBody'
+        method === 'Browser.getVersion'
           ? {
-              body: JSON.stringify(
-                options.body ?? { error_code: 'refresh_token_not_found' },
-              ),
-              base64Encoded: false,
+              product: 'Chrome/159.0.8154.6',
+              protocolVersion: '1.3',
+              revision: '@' + 'a'.repeat(40),
             }
-          : {},
+          : method === 'Network.getResponseBody'
+            ? {
+                body: JSON.stringify(
+                  options.body ?? { error_code: 'refresh_token_not_found' },
+                ),
+                base64Encoded: false,
+              }
+            : {},
       ),
   );
   const context = {

@@ -25,13 +25,19 @@ export const setup = async (
   const cdp = Object.assign(new EventEmitter(), {
     send: (method: string) =>
       Promise.resolve(
-        method === 'Page.getFrameTree'
+        method === 'Browser.getVersion'
           ? {
-              frameTree: {
-                frame: { id: 'frame1', loaderId: 'document1', url },
-              },
+              product: 'Chrome/159.0.8154.6',
+              protocolVersion: '1.3',
+              revision: '@' + 'a'.repeat(40),
             }
-          : {},
+          : method === 'Page.getFrameTree'
+            ? {
+                frameTree: {
+                  frame: { id: 'frame1', loaderId: 'document1', url },
+                },
+              }
+            : {},
       ),
     detach: () => Promise.resolve(),
   });

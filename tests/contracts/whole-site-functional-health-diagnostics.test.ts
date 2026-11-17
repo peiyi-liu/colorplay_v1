@@ -16,7 +16,16 @@ const setup = async () => {
   let phase: FunctionalStage | null = 'media';
   const rawPage = new EventEmitter(),
     cdp = Object.assign(new EventEmitter(), {
-      send: () => Promise.resolve({}),
+      send: (method: string) =>
+        Promise.resolve(
+          method === 'Browser.getVersion'
+            ? {
+                product: 'Chrome/159.0.8154.6',
+                protocolVersion: '1.3',
+                revision: '@' + 'a'.repeat(40),
+              }
+            : {},
+        ),
       detach: () => Promise.resolve(),
     });
   const page = Object.assign(rawPage, {
@@ -554,7 +563,16 @@ import { restrictFunctionalBrowser } from '../../scripts/concurrency/browser-run
 import { observeMediaRoute } from '../../scripts/concurrency/functional-media-transport-observation';
 it('exports same-request transport stages while HTTP200 canceled remains a health failure', async () => {
   const cdp = Object.assign(new EventEmitter(), {
-    send: () => Promise.resolve({}),
+    send: (method: string) =>
+      Promise.resolve(
+        method === 'Browser.getVersion'
+          ? {
+              product: 'Chrome/159.0.8154.6',
+              protocolVersion: '1.3',
+              revision: '@' + 'a'.repeat(40),
+            }
+          : {},
+      ),
     detach: () => Promise.resolve(),
   });
   const page = Object.assign(new EventEmitter(), {
