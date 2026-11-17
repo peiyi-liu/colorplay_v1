@@ -3515,3 +3515,18 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - 5Source/5tests凍結、47focused與fullchecks綠；Root45獨立controls PASS，36records/2267protected/M49原85rows/Original7+trueprefix核。未解finding0，packetd733891de7ed5d1916f515f82ac403daed71676fd316f74b2d29a50ee03b9e88／Root7c49bb653e40bd816f7994a725eeddb3aa5cb9dd007d40ac270ce33adc8280b0。registration504（原514）窄例外保原flow，其餘≤500；review docs/reviews/2026-11-18-registration-final-gate-m50-review.md。
 - 同一實際snapshot/原短路predicate＋事件firstreason，舊VM2 INCONCLUSIVE不回填，新Native未run。Root下一exact新Source後freshVM3 c7d93a/us-east1（us-central1 SSD200/250保舊disk，避免刪證據）同12CPU32GB100GB、3hSTOP+1m/noSA/Ops/HTTP，估價0.39/hr；尚未create。M49一處NAME替換868605…/8fake僅離線資格。VM2結果另docs/reviews/2026-11-18-gcp-vm2-fresh40-result.md；US150不升paid/Production禁。
+
+
+### 2026-11-18 — M50 exact新SHA／VM3真job啟動
+
+- exact14paths commit00704e856d3b54e368e92c5804209971f101cf18/tree08321924ae92069f71668aa7fd11348e1eeb62d6；explicitGitHubURL normalFF推VMbranch（Vercel=false），新run44189447502/job134414633079/push attempt1，未rerun舊job。
+- VM3 c7d93a/instance369862048023145784/us-east1-c/35.196.204.186，22:23:21UTC建立，startup約81s exit0；Google serial pin O8gUo1Tv…／bootc5c6583d…，SSH readonly核12CPU/31.335GiB/UID1001/systemdcgv2/Docker29.1.3 classic overlay2與空Docker。officialUbuntu24.04 image20261105／100GBbalanced／3hSTOP+1m/noSA/Ops/HTTP/noSnapshots保持，尚無容量結論。
+- Root courier4mock controls PASS；一token一ephemeral runner23/PAT不出本機/BOM處理沿用，API獨立核ID/name/label及真job/Source；官方svc正常start Usercp-capacity/Restart=no，無前兩次helper問題重現。GitHub已in_progress；VM1/2均停機保disk仍計費。
+- 下一本次完整Local第一原因failstop、真加密download/custody/business核，仍US150不升paid/Production禁；Staging/Hosted均未改。
+
+
+### 2026-11-18 — VM3首因更正／停機與M51有界N2對照
+
+- VM3真Source00704e8/run44189447502/job134414633079最後completed/failure；functional15與anon3/10/20 PASS，fresh40 phaseentry/skew268.381ms>250/Auth0，finalgate檔0。Root先前「再停尾端」進度說得太早，已Codex更正；M50尾gate原因仍UNKNOWN，不能當診斷失敗或網站註冊FAIL。947files214168261B實際age+冷備份+business核，25bootlogs30940B保；詳docs/reviews/2026-11-18-gcp-vm3-entry-result.md。
+- GoogleConsole真CPU IntelBroadwell vsVM2 AMDRome；healthVALID但barrier無效。Root准M51一次同M50程式的N2/minIceLake12CPU32GB100GB/3hSTOP+1m對照，不改backend4CPU6GiB/browser6GiB/Node2GiB/250ms及其他門檻。新commit只環境plan/結果，10Source/tests hash逐檔相同，不搬舊PASS；私有startup4ff09cd9…一處NAME替換/8fake PASS。Root 606f6bdba4fe72cff6e968b3e8913af2dfab5b95e115c3d80518351ee419b397；docs/superpowers/plans/2026-11-18-n2-environment-m51-plan.md。
+- VM3 exactinstance369862048023145784已Console確認停止且保截圖.git/gcp-vm3-stopped-20261118.jpg；runner23已移除1/repo0，原3disk仍計費。N2草稿d9e462/us-east1-c/minIceLake尚未建立，UI長期折扣0.44/hr不作3h價，採0.56/hr×3≈1.68base另extras；US150不升paid/Production禁。若一次N2仍無法250ms，停止單台12CPU generator假設，不盲換/放寬；下一exactSHA後實機核才新push attempt1。
