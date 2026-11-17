@@ -9,6 +9,7 @@ import signal
 import stat
 import subprocess
 import sys
+import linux_host_contract as H
 from linux_runtime_common import RUNTIME, require, require_linux, private_json, private_read, digest, context, observe_profile, CGROOT, proc_cgroup
 from linux_cgroup import checked_group
 from linux_owned_process import run_child
@@ -104,7 +105,7 @@ def main():
     ctx=context();profile,profile_sha=private_json(RUNTIME/"execution-profile.json",32768)
     require(profile_sha==pin["executionProfileSha256"],"PROFILE_CHANGED")
     observed=observe_profile(ctx,allow_outside_group=True)
-    require(profile=={"schemaVersion":1,"kind":"LINUX_FREE_4CPU_16G_V1",**observed},"PROFILE_OBSERVATION_CHANGED")
+    require(profile=={"schemaVersion":1,"kind":H.profile_kind(observed["host"]),**observed},"PROFILE_OBSERVATION_CHANGED")
     node=ctx["binaries"]["node"]["path"];checks=[];processes=[]
     PHASE='PERMISSIONS'
     PERMISSIONS=kernel_permission_snapshot(ctx)

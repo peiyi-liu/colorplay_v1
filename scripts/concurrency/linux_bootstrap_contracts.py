@@ -5,6 +5,11 @@ import os
 from pathlib import Path
 import re
 import stat
+import sys
+
+PACKAGE = Path(__file__).resolve().with_name('linux-operator')
+if str(PACKAGE) not in sys.path:sys.path.insert(0, str(PACKAGE))
+import linux_host_contract as H
 
 PROJECT = 'cp-whole-site-261115'
 REPOSITORY = 'peiyi-liu/colorplay_v1'
@@ -38,10 +43,12 @@ def exact(value, keys):
 def parse_request(raw, approval, environment):
     require(len(raw) <= 32768 and isinstance(approval, str) and
             DIGEST.fullmatch(approval) and digest(raw) == approval)
-    value = exact(decode(raw), {'schemaVersion', 'confirmation', 'sourceRevision',
-        'repository', 'job', 'instanceNonce', 'operatorPackageManifestSha256', 'toolchainSha256'})
+    decoded = decode(raw)
+    paid = decoded.get('confirmation') == H.target(H.VM)['confirmation']
+    value = exact(decoded, {'schemaVersion', 'confirmation', 'sourceRevision',
+        'repository', 'job', 'instanceNonce', 'operatorPackageManifestSha256', 'toolchainSha256'} | ({'provenance'} if paid else set()))
     require(type(value['schemaVersion']) is int and value['schemaVersion'] == 1 and
-            value['confirmation'] == 'LOCAL_LINUX_FREE_BOOTSTRAP_ONCE' and value['repository'] == REPOSITORY)
+            value['confirmation'] in {H.target(H.FREE)['confirmation'], H.target(H.VM)['confirmation']} and value['repository'] == REPOSITORY)
     require(isinstance(value['sourceRevision'], str) and re.fullmatch('[a-f0-9]{40}', value['sourceRevision']))
     require(isinstance(value['instanceNonce'], str) and re.fullmatch('[a-f0-9]{32}', value['instanceNonce']))
     for name in ['operatorPackageManifestSha256', 'toolchainSha256']:
@@ -52,6 +59,8 @@ def parse_request(raw, approval, environment):
     for name, expected in {'GITHUB_REPOSITORY': REPOSITORY, 'GITHUB_RUN_ID': job['runId'],
                            'GITHUB_RUN_ATTEMPT': '1', 'GITHUB_JOB': 'capacity-linux'}.items():
         require(environment.get(name) == expected, 'BOOTSTRAP_JOB_MISMATCH')
+    try:H.request_target(value, environment)
+    except ValueError:require(False, 'BOOTSTRAP_JOB_MISMATCH')
     require(not any(value for key, value in environment.items()
                     if (key.startswith(('SUPABASE_', 'VITE_')) and not
                         (key == 'SUPABASE_TELEMETRY_DISABLED' and value == '1')) or key in
@@ -156,17 +165,16 @@ def operator_package(source, expected):
             require(name == 'linux-image-pins.json')
         if row['role'] != 'TEST':
             installed[name] = body
-    require(all(name in installed for name in ['linux-image-pins.json', 'collect_readiness.py', 'linux_proc.py']))
+    require(all(name in installed for name in ['linux-image-pins.json', 'collect_readiness.py', 'linux_proc.py', 'linux_host_contract.py']))
     require(values['files']['linux-image-pins.json']['role'] == 'PUBLIC_IMAGE_PINS' and
-            all(values['files'][name]['role'] == 'OPERATOR' for name in ['collect_readiness.py', 'linux_proc.py']))
+            all(values['files'][name]['role'] == 'OPERATOR' for name in ['collect_readiness.py', 'linux_proc.py', 'linux_host_contract.py']))
     require({p.name for p in package.iterdir()} == set(values['files']) | {'package-manifest.json', 'README.md'})
     return package, installed
 
-def hardware(facts):
+def hardware(facts, kind=H.FREE):
     require(facts['platform'] == 'linux' and facts['architecture'] in {'x86_64', 'amd64'} and
-            facts['distribution'] == 'ubuntu-24.04' and facts['logicalCpu'] == 4 and
-            len(facts['affinity']) == len(set(facts['affinity'])) == 4 and
-            14 * 1024**3 <= facts['memTotalBytes'] <= 16 * 1024**3 and
+            facts['distribution'] == 'ubuntu-24.04' and
+            H.hardware_matches(kind, facts['logicalCpu'], facts['affinity'], facts['memTotalBytes']) and
             facts['freeDiskBytes'] >= 10 * 1024**3 and
             all(facts[k] is True for k in ['cgroupV2', 'pidfd', 'pss', 'psi']),
             'BOOTSTRAP_HARDWARE_UNSUPPORTED')

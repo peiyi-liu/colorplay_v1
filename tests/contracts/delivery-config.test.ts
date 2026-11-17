@@ -24,6 +24,7 @@ describe('delivery configuration', () => {
       git: {
         deploymentEnabled: {
           'codex/local-capacity-linux-20261116': false,
+          'codex/local-capacity-vm-20261118': false,
         },
       },
       rewrites: [{ source: '/(.*)', destination: '/index.html' }],

@@ -6,7 +6,7 @@ from pathlib import Path, PurePosixPath
 import re
 import stat
 from linux_bootstrap_contracts import (PROJECT, ROLES, directory, read_file, write_once,
-                                      fingerprint, binary_hash, toolchain, operator_package)
+                                      fingerprint, binary_hash, toolchain, operator_package, H)
 
 LIMIT = 2 * 1024**3
 MAX_FILES = 20000
@@ -113,7 +113,7 @@ def bindings(source, runtime, plan, environment):
     require(digest(profile_raw) == plan['executionProfileSha256'] and
             digest(context_raw) == plan['executionContextSha256'], 'SNAPSHOT_PROFILE_CHANGED')
     profile, context = decode(profile_raw), decode(context_raw)
-    require(profile['kind'] == 'LINUX_FREE_4CPU_16G_V1' and context['projectId'] == PROJECT and
+    require(profile['kind'] == H.profile_kind(profile['host']) and context['projectId'] == PROJECT and
             context['sourceRevision'] == plan['sourceRevision'] and context['instanceNonce'] == plan['instanceNonce'])
     job = exact(context['job'], ['repository', 'runId', 'runAttempt', 'jobName'])
     require(digest(canonical(job)) == plan['jobIdentitySha256'] and
@@ -133,6 +133,7 @@ def bindings(source, runtime, plan, environment):
     bootstrap_raw = read_file(runtime / 'bootstrap-input.json', private=True)
     require(digest(bootstrap_raw) == plan['bootstrapRequestSha256'])
     bootstrap = decode(bootstrap_raw)
+    require(H.request_target(bootstrap, environment)['kind'] == profile['kind'])
     require(bootstrap['sourceRevision'] == plan['sourceRevision'] and bootstrap['instanceNonce'] == plan['instanceNonce'] and
             all(bootstrap[key] == plan[key] for key in ['toolchainSha256', 'operatorPackageManifestSha256']))
     package, installed = operator_package(source, plan['operatorPackageManifestSha256'])

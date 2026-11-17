@@ -15,7 +15,7 @@ PARENT = SOURCE.parent / 'live-recovery-runtime'
 RUNTIME = PARENT / 'whole-site-261115'
 TOOLS = PARENT / 'tools'
 PROJECT = 'cp-whole-site-261115'
-JOB_KEYS = ('GITHUB_REPOSITORY', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT', 'GITHUB_JOB', 'GITHUB_SHA')
+JOB_KEYS = ('GITHUB_REPOSITORY', 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT', 'GITHUB_JOB', 'GITHUB_SHA', 'GITHUB_REF', 'GITHUB_WORKFLOW_REF', 'GITHUB_EVENT_NAME')
 ENV = {'PATH': str(TOOLS) + ':/usr/bin:/bin', 'HOME': str(Path.home()), 'PYTHONDONTWRITEBYTECODE': '1', 'SUPABASE_TELEMETRY_DISABLED': '1', **{key: os.environ[key] for key in JOB_KEYS if key in os.environ}}
 
 
@@ -192,7 +192,10 @@ def stage(name, argv, expected=None, timeout=60):
 
 def create_bootstrap_request(revision):
     import secrets
-    request = {'schemaVersion': 1, 'confirmation': 'LOCAL_LINUX_FREE_BOOTSTRAP_ONCE', 'sourceRevision': revision, 'repository': 'peiyi-liu/colorplay_v1', 'job': {'runId': os.environ['GITHUB_RUN_ID'], 'runAttempt': 1, 'jobName': 'capacity-linux'}, 'instanceNonce': secrets.token_hex(16), 'operatorPackageManifestSha256': digest((SOURCE / 'scripts/concurrency/linux-operator/package-manifest.json').read_bytes()), 'toolchainSha256': digest(private(TOOLS / 'toolchain.json'))}
+    host = module('linux_bootstrap_contracts').H
+    target = host.environment_target(ENV)
+    request = {'schemaVersion': 1, 'confirmation': target['confirmation'], 'sourceRevision': revision, 'repository': 'peiyi-liu/colorplay_v1', 'job': {'runId': os.environ['GITHUB_RUN_ID'], 'runAttempt': 1, 'jobName': 'capacity-linux'}, 'instanceNonce': secrets.token_hex(16), 'operatorPackageManifestSha256': digest((SOURCE / 'scripts/concurrency/linux-operator/package-manifest.json').read_bytes()), 'toolchainSha256': digest(private(TOOLS / 'toolchain.json'))}
+    if target['kind'] == host.VM:request['provenance'] = host.provenance(host.VM)
     folder = PARENT / 'requests'
     folder.mkdir(mode=0o700)
     path = folder / 'bootstrap-input.json'

@@ -17,9 +17,9 @@
       "sha256": "4d9ce7eb760ff8c47da176f582227b1b6d64236e28417f2867839e2b7d7a829b"
     },
     "calibrate-linux-runtime.py": {
-      "bytes": 10162,
+      "bytes": 10202,
       "role": "OPERATOR",
-      "sha256": "27b7661b23304f58f95ef655ddb955ff248cd008bda80002dd629adafb1c8212"
+      "sha256": "9cd1d0f77af6f55950a81ebaa5ee749e4b1dcf91f209ba6a6bc0152d2fbb10e2"
     },
     "calibration-sample.mjs": {
       "bytes": 4091,
@@ -47,19 +47,19 @@
       "sha256": "b447de6ff56e71a8d60a85c840ebc225d0454c2f17e2ae3604d32a6923e1bdfa"
     },
     "capacity-root-readonly.py": {
-      "bytes": 14462,
+      "bytes": 14487,
       "role": "OPERATOR",
-      "sha256": "ab7e5252e2c43a6fd39cefa7de18ed3ff06c612a37f568e3f9e872817967488b"
+      "sha256": "37f8636eff38d9550525d0c16a3bb15eb060c7f7105d13f229e5958ce428affa"
     },
     "collect_readiness.py": {
-      "bytes": 6319,
+      "bytes": 6460,
       "role": "OPERATOR",
-      "sha256": "63f69ad21ced6bd872e91c4819ff9bd7cae8da786eb0167072a88713f9cf798e"
+      "sha256": "7eff330199adadc1a2b06f2c10a68bd1e7b7f4492383736d520026201f2c5710"
     },
     "execution-profile-preflight.py": {
-      "bytes": 1336,
+      "bytes": 1474,
       "role": "OPERATOR",
-      "sha256": "cc07b34add8a3bf458c9d5366d91a2b1911caa9be4ebad66a40d4d165e1df267"
+      "sha256": "b9637902f3c542cd64f86c5c25c1a5c68fd7582de142d94ae8e2bfb485cf649e"
     },
     "functional-preflight.py": {
       "bytes": 5272,
@@ -67,9 +67,9 @@
       "sha256": "802e0c2079db5a9f4ff3beb9a6aa131071c83af8303ad7e4719cf80a5a8e4c29"
     },
     "linux-host-sample.py": {
-      "bytes": 20185,
+      "bytes": 20211,
       "role": "OPERATOR",
-      "sha256": "17c4297f6f84c1c517ed84b34489841447692c5d922415ff8603b4593e41744e"
+      "sha256": "5bdedfa8d3bc0c23d6d65206e466a7f66fb3c3b4a5925a29263aa29b29f743c7"
     },
     "linux-image-pins.json": {
       "bytes": 5134,
@@ -80,6 +80,11 @@
       "bytes": 4889,
       "role": "OPERATOR",
       "sha256": "024dd5533b60075d7e5c275812a9833693086a853908865f6203a5ec4521d1b1"
+    },
+    "linux_host_contract.py": {
+      "bytes": 3073,
+      "role": "OPERATOR",
+      "sha256": "684606d42232569741c9b227fb4b7fd3768157fe528087adc3ebbe1ac087bebb"
     },
     "linux_owned_process.py": {
       "bytes": 11801,
@@ -92,9 +97,9 @@
       "sha256": "6c4924b1c42467bc809313c10176f8bcac0b454e08a0ed549d3ccc68437e7468"
     },
     "linux_runtime_common.py": {
-      "bytes": 17793,
+      "bytes": 17952,
       "role": "OPERATOR",
-      "sha256": "e6854ef458ab7c3afe9930e500ea204bbb4177e6503d19efc1d6fdd82da44763"
+      "sha256": "be61c0206409213d1c292b0a9d2ce054e7271ee3cd6529859197e612e90bfcf0"
     },
     "local-psql.py": {
       "bytes": 3967,
@@ -112,9 +117,9 @@
       "sha256": "0cf7264f2fcfdc8453288c04c8e1ed8be3bf1a24ef8d4f423828894a474a099b"
     },
     "pin-execution-profile.py": {
-      "bytes": 9992,
+      "bytes": 10251,
       "role": "OPERATOR",
-      "sha256": "977376c78b630dac1f1d13b481c857cf64f9152039a7f7632c2eabe408b42584"
+      "sha256": "f2405c55dec104123ee388c4e3fca5d0be31cb93e54a524f737938597348c541"
     },
     "prepare-capacity-leg.mjs": {
       "bytes": 10226,
@@ -122,9 +127,9 @@
       "sha256": "a07a5a416fd54df4669b8f9afde46fb687e9c943c0862dfd8d0a4b7ec2a0347f"
     },
     "prepare-capacity-plan.mjs": {
-      "bytes": 9299,
+      "bytes": 9329,
       "role": "OPERATOR",
-      "sha256": "d4cdd3609b4cba90f7fee48443792199562a3745035bfaa9e27b43f5392c3620"
+      "sha256": "09bf8049df847d3793805f5b1df4134bfab622988f475ff5b0bf7ecea6504c5c"
     },
     "prepare-functional-request-observed.py": {
       "bytes": 11845,

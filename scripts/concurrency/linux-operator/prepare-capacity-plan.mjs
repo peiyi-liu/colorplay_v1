@@ -115,6 +115,7 @@ try {
     'linux_proc.py',
     'linux_cgroup.py',
     'linux_runtime_common.py',
+    'linux_host_contract.py',
   ])
     helpers[name] = await fileHash(name);
   const s = request.value.scope;

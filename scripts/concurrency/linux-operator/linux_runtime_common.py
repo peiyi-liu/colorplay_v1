@@ -9,6 +9,7 @@ import stat
 import subprocess
 import sys
 import urllib.parse
+import linux_host_contract as H
 from linux_proc import parse_meminfo, parse_stat
 from linux_cgroup import read_text, cgroup_limit_chain, effective_cpu_quota, cgroup_identity, checked_group, read_backend_values
 
@@ -124,13 +125,14 @@ def host_observation(ctx,allow_outside_group=False):
     group=checked_group(CGROOT/relative.lstrip("/"),CGROOT)
     if not allow_outside_group:require(proc_cgroup(os.getpid())==relative,"GENERATOR_CGROUP_MISMATCH")
     mem=parse_meminfo(read_text("/proc/meminfo"));affinity=sorted(os.sched_getaffinity(0))
-    require(os.cpu_count()==4 and len(affinity)==4 and 14*GIB<=mem["totalBytes"]<=16*GIB,"FREE_HOST_MISMATCH")
+    kind=H.kind_for_cpu(os.cpu_count());target=H.target(kind)
+    require(H.hardware_matches(kind,os.cpu_count(),affinity,mem["totalBytes"]),"FREE_HOST_MISMATCH")
     chain=cgroup_limit_chain(CGROOT,relative);quota=effective_cpu_quota(chain)
-    require(quota["quotaUs"]is None or quota["quotaUs"]==4*quota["periodUs"],"GENERATOR_CPU_LIMIT_MISMATCH")
+    require(quota["quotaUs"]is None or quota["quotaUs"]==target["cpu"]*quota["periodUs"],"GENERATOR_CPU_LIMIT_MISMATCH")
     for row in chain:
         maximum=row["memoryMaxBytes"]
-        require(maximum is None or maximum=="NOT_APPLICABLE_AT_HIERARCHY_ROOT" or maximum>=14*GIB,"GENERATOR_MEMORY_LIMIT_MISMATCH")
-    host={"platform":"linux","distribution":distro(),"logicalCpu":4,"nominalMemoryBytes":16*GIB,"memTotalBytes":mem["totalBytes"],"affinityCpus":affinity,"cpuQuotaUs":quota["quotaUs"],"cpuPeriodUs":quota["periodUs"],"cgroupIdentitySha256":cgroup_identity(group,CGROOT,boot),"limitChainSha256":digest(canonical(chain)),"clockTicksPerSecond":os.sysconf("SC_CLK_TCK"),"dedicatedGenerator":False}
+        require(maximum is None or maximum=="NOT_APPLICABLE_AT_HIERARCHY_ROOT" or maximum>=target["minimum"],"GENERATOR_MEMORY_LIMIT_MISMATCH")
+    host={"platform":"linux","distribution":distro(),"logicalCpu":target["cpu"],"nominalMemoryBytes":target["nominal"],"memTotalBytes":mem["totalBytes"],"affinityCpus":affinity,"cpuQuotaUs":quota["quotaUs"],"cpuPeriodUs":quota["periodUs"],"cgroupIdentitySha256":cgroup_identity(group,CGROOT,boot),"limitChainSha256":digest(canonical(chain)),"clockTicksPerSecond":os.sysconf("SC_CLK_TCK"),"dedicatedGenerator":False}
     return host,boot
 
 def inspect_backend(ctx):
@@ -228,7 +230,7 @@ def verify_local_profile(revision,profile_sha,full=False):
     profile,actual_sha=private_json(RUNTIME/"execution-profile.json",32768)
     require(actual_sha==profile_sha,"PROFILE_BYTES_CHANGED")
     host,boot=host_observation(ctx);facts=instance_facts(ctx,boot)
-    require(profile.get("schemaVersion")==1 and profile.get("kind")=="LINUX_FREE_4CPU_16G_V1","PROFILE_KIND_INVALID")
+    require(profile.get("schemaVersion")==1 and profile.get("kind")==H.profile_kind(host),"PROFILE_KIND_INVALID")
     require(profile["host"]==host and all(profile["identity"][key]==value for key,value in facts.items()),"HOST_PROFILE_CHANGED")
     verify_executables(ctx,full_hash=full)
     if full:
@@ -250,7 +252,7 @@ def verify_root_snapshot(scope,revision,descriptor):
     closure=json.loads(closure_raw)
     exact(closure,{"schemaVersion","sourceRevision","executionProfileSha256","files"})
     require(closure["schemaVersion"]==1 and closure["sourceRevision"]==revision and closure["executionProfileSha256"]==expected,"HELPER_CLOSURE_UNBOUND")
-    names={"functional-preflight.py","canonical-baseline.py","media-readback.py","capacity-root-readonly.py","capacity-registration-readback.py","capacity-retention-readback.py","capacity-preflight-readback.py","execution-profile-preflight.py","linux-host-sample.py","backend-cgroup-sample.py","linux_proc.py","linux_cgroup.py","linux_runtime_common.py"}
+    names={"functional-preflight.py","canonical-baseline.py","media-readback.py","capacity-root-readonly.py","capacity-registration-readback.py","capacity-retention-readback.py","capacity-preflight-readback.py","execution-profile-preflight.py","linux-host-sample.py","backend-cgroup-sample.py","linux_proc.py","linux_cgroup.py","linux_runtime_common.py","linux_host_contract.py"}
     exact(closure["files"],names)
     def unchanged():
         require(private_read(RUNTIME/"execution-profile.json",32768)==raw and private_read(RUNTIME/"execution-profile-helper-closure.json",32768)==closure_raw,"ROOT_RUNTIME_CHANGED")
@@ -258,7 +260,7 @@ def verify_root_snapshot(scope,revision,descriptor):
             require(digest(private_read(RUNTIME/name,131072))==expected_hash,"ROOT_HELPER_CHANGED")
     unchanged()
     observed=observe_profile(ctx,allow_outside_group=True)
-    require(profile=={"schemaVersion":1,"kind":"LINUX_FREE_4CPU_16G_V1",**observed},"ROOT_PROFILE_OBSERVATION_CHANGED")
+    require(profile=={"schemaVersion":1,"kind":H.profile_kind(observed["host"]),**observed},"ROOT_PROFILE_OBSERVATION_CHANGED")
     require(observed["identity"]["databaseIdentitySha256"]==scope["databaseIdentitySha256"],"DATABASE_PROFILE_CHANGED")
     host_listeners();unchanged()
     return {"bytes":raw.decode("utf-8"),"expectedSha256":expected,"observed":observed}

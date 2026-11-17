@@ -45,7 +45,7 @@ def wired(f,adapter):
             'newVolumesMayHaveBeenRemoved':True,'command':native.command_diagnostic})+'\n').encode()
     environment={**f.environment,'GITHUB_SHA':'a'*40,'GITHUB_REF':'refs/heads/codex/local-capacity-linux-20261116'}
     with patch.object(S,'SOURCE',f.source),patch.object(S,'PARENT',f.parent),patch.object(S,'RUNTIME',f.runtime),\
-            patch.object(S,'TOOLS',f.parent/'tools'),patch.object(S,'module',return_value=types.SimpleNamespace(C=M.C,bounded=dispatch)),\
+            patch.object(S,'TOOLS',f.parent/'tools'),patch.object(S,'module',return_value=types.SimpleNamespace(C=M.C,H=M.C.H,bounded=dispatch)),\
             patch.dict(os.environ,environment,clear=True),patch.object(sys,'platform','linux'):
         yield
 

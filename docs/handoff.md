@@ -3329,3 +3329,48 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - CLI access-token prerequisite exit1，network-deny sandbox smoke71，依閘沒有placeholder call；spec NOT_CLI_VALIDATED，不冒稱真API或網路隔離／Docker/cgroup能力。生成bundle5分鐘0.10USD估算非provider hardcap，idle不是TTL，初Cloud readiness尚待授權與真實觀測。
 - packet5e7ecf7341fe404cee4eb9a0280d87a5803aafb34640ad5ca15639067e5529bb，Rootreceipt93526a377790648a5a2c050de678bce246697cbc10133c361b77b771ce7a094a，review docs/reviews/2026-11-18-harness-readiness-m42-review.md。Root核59records／4owned／2252protectedGit／M41原105／Native36十inputs／operator44／Original7真prefixpkglock及bundlemode/hash。
 - Root token草稿已填name colorplay-local-readiness-20261118／四Harness scopes create/read/manage/operate，share及其他namespace未選，UI最短30天到期(2026-12-18)，Generate未點。需依瀏覽器新access action-time規則當次owner確認，尚無token／API／資源／花費。M42僅本機固定commit不push，不Native37；Native36 fullcoldfinal保、OriginalWIP/G8停止85/HostedProduction真信NONE/未Staging。
+
+
+### 2026-11-18 — M42本機固定版本／待新API權限當次確認
+
+- Root exact7paths cachedcheck0/commitclean 49402116b542473b2665211bd7404ff7f51249fd/treeb307a74ddde47267fcc8a1843c04c159d56f6264，未push／未Native37。M42唯一Rootreceipt93526a377790648a5a2c050de678bce246697cbc10133c361b77b771ce7a094a；59records／11Python＋1TS wrapper／必要checks綠，只離線準備，spec NOT_CLI_VALIDATED/readinessUNKNOWN/NONE。
+- 已在Codex詢問一次當次確認：DO僅Harness四scope create/read/manage/operate，UI最短30天到期2026-12-18，私有保存並先做≤5分鐘估US0.10環境檢查，總cap5；目前PENDING，Generate未點，no credentials/API/resources，spent0。草稿截圖.git/m42-token-draft.jpg留private600，CUA creditFreshTab已markHandoff，tokenForm name colorplay-local-readiness-20261118／scopefilter agent_harness_session／4selected／share unchecked。未收到明確回覆不得建立新access。
+- Root已準備但未執行私有TTY capture .git/capture-harness-token-private.py，可在action-time owner同意後透過新Terminal window的getpass（不echo）與browser copy clipboard直接私有保存，禁止把token回顯／傳chat／放argv/env/guest。token.txt未建立；後續須轉privateconfig並先dryrun／readsize，尚未授權provider實測結果或Full60。
+- Native36finale6462572e7cf026ea382a78012a78c3fbfa497c751ecd1c6bebe5a97e48eba72／readonlyee0880b2c8f66dc2f61661f1215650084b37878fe2035d54d5f1856154a183be，functional15/anon3,10,20PASS，40INCONCLUSIVE firsthoststale beforeOTP(Auth0/send0)，後11NOT_RUN。不同generator待readiness，不同Source/free rerun禁止；全部colddata/OriginalWIP/G8停止85/HostedProduction真信NONE/未Staging保。
+
+
+### 2026-11-18 — owner建立testtoken／M42真readiness firstCGROUP／M43單次只讀定位
+
+- Owner回覆已建立測試金鑰並准繼續；Root僅接線既有name-bound token，private runtime/harness-access/config.yaml700/600，fingerprintfe73bf898fca24e19c171e1ff309e672fc957cbfe5bfeaf23002c42e91fbcd16，無value回顯／argv/env/guest，初copy clipboard空而未存，改visible token memory直私有保存且清clipboard，未再建credential。CLIactual dryrun0已接受原none/16CPU32GB/idle5m/keep_warmfalse/egress[]，billingread未授故balanceAPI空UNKNOWN不加權限；UI最新promo5／usage0／autoReloadoff，catalog16/32率1.008/h。
+- Root一次create唯一Harnesssession01a1ea8a-837c-7282-94bf-b3ab0f298573／sandbox01a1ea8a-8571-796e-82c9-e98288284f6f／config01a1ea8a-82da-7988-8c62-8d18e23cee7f／namecp-readiness-d4740b5a1539b938，實際immutable config none/size/無model secrets repo核。exec一次15秒bound child0，result UNAVAILABLE/CGROUP/factsnull；remoteprobe下載hash同848acf4609537f28f67b986149c103744812a802fb237f761e5588e4c9e847e2，原result/probe私有保。不能因CGROUP說controller必缺或host不兼容，firstreason精度不足。
+- pause API0且show SESSION_STATUS_PAUSED/manual，first active保守上界197.145152s，費用尚非帳單數字，按fullcatalog上界估算，已非宣稱零消耗。Root明授M43一次新readonly小probe（非原probe retry/Source修復），只在既有pausedsession定位cgroup格式/controllers/mount/caps與基礎facts；worker僅私有離線準備，Root先審，再最多90s active resume→upload/exec/download→pause，總保守預留287.145152<300s，仍0.10USD估算／總cap5。不新建資源／不syswrite／不裝Docker／不擴權。完成兩份private保全後只清本次新session/config，不碰G8停止85或歷史Native資料。
+- trackedSource仍49402116b542473b2665211bd7404ff7f51249fd，未push/Native37；Native36 40INCONCLUSIVE/60未run、Staging/HostedProduction真信NONE、OriginalWIP保。
+
+
+### 2026-11-18 — Sandbox 結案清理／owner 允許實際扣款／M45 離線 VM 移植
+
+- M43 readonly 一次14.643842s：Ubuntu24.04／CPU16 affinity16／MemTotal33679360000B，own cgroup 空、零 cgroup mounts、Docker缺；M44不同readonly一次15.612331s：kernel列cgroup2但PID1非systemd／binaries缺、memoryPSI不可讀。不推定kernel編譯或所有sandbox不可用。現候選不符凍結工具前置，停止追加probe／syswrite／安裝。
+- 三次result+exactprobe核hash私有保，Rootfinal76d1740ba6937be71b8683873e96114f74e821664cff072fc188c3f502b1ccb1／77records。新建1session+1config均已remove、兩API lists空，既有資源刪0／網站fixtures0。active保守上界227.401324s，fullcatalog compute估US$0.0636724，非已核帳單；storage/egress另估，token只private保留。
+- Owner明確回覆「可實際扣款，總額仍限US$5」，取代free-only。Root先離線移植／審查再計費，以16CPU32GiB完整Ubuntu24.04 VM約0.50/h、最多3小時計畫留餘裕。UI c-16 catalog336/mo但實際供應仍UNKNOWN／disabled，未建paidVM，不能把signup credit視為Droplet已抵扣。
+- M45 brief docs/superpowers/plans/2026-11-18-vm-port-m45-brief.md：新獨立paid kind、真ephemeral self-hosted UID1001、exact新branch/workflow、Vercel先optout、oldfreeworkflow不動、guard／backend4CPU6GiB不動，新增付費outerbudget較緊而非放寬驗收。Root唯一review，worker僅離線工具，未push／Native37／新access／HostedProduction真信。sandbox review docs/reviews/2026-11-18-harness-environment-final-review.md。
+- Source49402116b542473b2665211bd7404ff7f51249fd仍local-only，40INCONCLUSIVE／60未run／Staging BLOCKED_LOCAL。Original WIP／G8停止85／全部cold evidence保。
+
+
+### 2026-11-18 — M45共享tuple依賴拍板／VM帳號tier阻塞待owner
+
+- Root明授新linux-operator/linux_host_contract.py<150、package45entries，原未改44保持；root-helper-contracts.ts／execution-profile-preflight.py／capacity-root-readonly.py／prepare-capacity-plan.mjs只為依賴closure接線，不移guard。worker開始離線實作，Root唯一review。
+- 最新DO UI Tier1、Droplet0/3；RIC1 v5 GP最小配置明示account tier restricted需open ticket；舊款disabled精確原因仍未證，不混稱。未建VM／新access。Root在Codex向owner詢問是否准送DO支援1台16CPU32GB、最多3h、不提高消費上限的有限額度申請，PENDING。離線準備不依賴回答，總capUS5。
+
+
+### 2026-11-18 — owner核准的DO額度申請已受理#13013994
+
+- Owner明授送出有限申請：1台16vCPU32GB Ubuntu24.04 test VM、最多3h後destroy、不提高消費上限。Control-panel form once submitted無receipt、support open0/closed0；未重送原表單。改到正式support portal Account→Droplet Limits→General Purpose，清楚註明前一表單未回receipt、只視同一台申請，Submit Ticket一次。
+- UI明示Support Ticket Created Successfully，ticket#13013994，預計24h內回覆；是受理而非核准，未建VM／未擴credential／無新費用。private成功截圖.git/vm-support-ticket-13013994.png保，未附件／無secret值發支援。後續只讀該案件，未授額外聊天／其他申請。Root於登入轉址觀測時曾誤輸出含SSO片段的URL，後續不再輸出URL片段／secret，不重用或另傳該憑證。
+- M45 TS額外窄接線明授execution-profile-runtime.ts，discriminatedUnion不再pick，採共用strict observed schema；實際初import FAIL保，kind↔完整host tuple及深等observed不變。Root唯一review尚未開始，worker離線繼續；新workflow/Source未push，原免費分支不再run，OriginalWIP／G8停止85／HostedProduction真信NONE保。
+
+
+### 2026-11-18 — M45離線VM工具Root唯一審查接受／等待DO額度
+
+- Root接受22Source+14tests：獨立VM16CPU32GiB／28–32實際與quota/affinity嚴格tuple，真job branch/workflow-ref/push binding；paid admission75/job150、free240/330與舊workflow保持。backend4CPU6GiB／8services／swap0及全部guard/SLO不動，45package／14closure／10scope helpers hash完整。唯一504行例外base502＋2binding，有理由避免無關refactor。
+- Final TS13/174（包含fake8／sampler6不另加），Linux86／snapshot19／prebusiness14／preparation8分組PASS，fulltype/lint/format/import/diff/static0；原FAIL全保。Root43pure交叉controls PASS、84records／36owned／2227protectedGit／原M42 59／Native36十inputs／operator原36unchanged／Original7真prefixpkglock核。唯一comment clarification已同輪close，未解0。packet4f104bd0df43bed1f14383071d6053d0965e004b1ac0973edfc242248f0c6978／Root8cb55cdc2916e870d91212a61d49ee351fcdab36e65c5ac7c1d7dcea06328d90，review docs/reviews/2026-11-18-vm-port-m45-review.md。
+- DO案件#13013994受理但未核准，無paidVM／新access／kernel／容量／push。Root下一只exact本機commit，待provider開放後核quote／newaccess／真ephemeral UID1001及API run/job/runner、一次fullLocal functional→15legs，無fakeGITHUB／不降低門檻。預算仍US5（已允實扣），過往Sandbox compute估0.0636724非帳單；Staging BLOCKED_LOCAL，60未證。OriginalWIP／G8停止85／cold evidence／HostedProduction真信NONE保。

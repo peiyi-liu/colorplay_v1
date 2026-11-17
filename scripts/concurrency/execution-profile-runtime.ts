@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { z } from 'zod';
 import {
   validateExecutionProfile,
-  linuxExecutionProfileSchema,
+  linuxExecutionProfileObservedSchema,
   requireExecutionProfile,
 } from './execution-profile';
 import {
@@ -36,11 +36,7 @@ export type ProfileVerificationObserver = (
 const replySchema = z.strictObject({
   sourceRevision: z.string().regex(/^[a-f0-9]{40}$/u),
   challenge: z.string().regex(/^[a-f0-9]{32}$/u),
-  observed: linuxExecutionProfileSchema.pick({
-    host: true,
-    identity: true,
-    backend: true,
-  }),
+  observed: linuxExecutionProfileObservedSchema,
 });
 export const loadExecutionProfileRuntime = async (
   input: {

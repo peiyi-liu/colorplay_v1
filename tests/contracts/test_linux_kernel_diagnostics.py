@@ -45,13 +45,13 @@ class KernelDiagnosticsTests(unittest.TestCase):
     def test_single_original_run_child_error_keeps_errno_and_unknown_cleanup(self):
         with tempfile.TemporaryDirectory() as folder:
             runtime=Path(folder).resolve()/'whole-site-261115';runtime.mkdir(mode=0o700)
-            profile={'schemaVersion':1,'kind':'LINUX_FREE_4CPU_16G_V1','observed':True}
+            profile={'schemaVersion':1,'kind':'LINUX_FREE_4CPU_16G_V1','observed':True,'host':{'logicalCpu':4,'nominalMemoryBytes':16*1024**3,'memTotalBytes':15*1024**3,'affinityCpus':[0,1,2,3],'cpuQuotaUs':None,'cpuPeriodUs':None,'dedicatedGenerator':False}}
             pin={'sourceRevision':'a'*40,'result':'LOCAL_PROFILE_PINNED_PENDING_CALIBRATION','bootstrapRequestSha256':'b'*64,'executionProfileSha256':'c'*64,'helperClosureSha256':'d'*64}
             pinner=types.SimpleNamespace(approved_inputs=lambda *_:None,write_once=lambda p,v:p.write_text(json.dumps(v)))
             def private(path,*_):return (pin,'e'*64) if path.name=='profile-pin-receipt.json' else (profile,'c'*64)
             with patch.object(K,'RUNTIME',runtime),patch.object(K,'require_linux'),patch.object(K,'private_json',side_effect=private),\
                     patch.object(K,'load_pinner',return_value=pinner),patch.object(K,'context',return_value={'binaries':{'node':{'path':'/synthetic/node'}}}),\
-                    patch.object(K,'observe_profile',return_value={'observed':True}),patch.object(K,'kernel_permission_snapshot',return_value=permissions()),\
+                    patch.object(K,'observe_profile',return_value={k:v for k,v in profile.items() if k not in {'schemaVersion','kind'}}),patch.object(K,'kernel_permission_snapshot',return_value=permissions()),\
                     patch.object(K,'run_child',side_effect=PermissionError(errno.EACCES,'SECRET_MARKER')) as child,\
                     patch.object(sys,'argv',['calibration','a'*40,'e'*64]):
                 with self.assertRaises(PermissionError) as rejected:K.main()
@@ -68,7 +68,7 @@ class KernelDiagnosticsTests(unittest.TestCase):
         K.PHASE='NATIVE_BROWSER';K.PERMISSIONS=permissions();outcome=K.blocked_outcome(OSError(errno.EACCES,'SECRET_MARKER'))
         with tempfile.TemporaryDirectory() as folder:
             parent=Path(folder).resolve();(parent/'requests').mkdir(mode=0o700)
-            fake=types.SimpleNamespace(bounded=lambda *_args,**_options:(1,json.dumps(outcome).encode()))
+            fake=types.SimpleNamespace(H=K.H,bounded=lambda *_args,**_options:(1,json.dumps(outcome).encode()))
             authority=types.SimpleNamespace(prepare_stage=lambda name,argv,timeout,*_:timeout)
             with patch.object(S,'PARENT',parent),patch.object(S,'module',side_effect=lambda name:authority if name=='linux_attach_authority' else fake),contextlib.redirect_stdout(io.StringIO()):
                 with self.assertRaises(S.StageRejected) as rejected:S.stage('kernel-calibration',['/usr/bin/python3','-B',str(S.RUNTIME/'calibrate-linux-runtime.py'),'a'*40,'b'*64], 'ROOT_LINUX_KERNEL_CALIBRATION_VERIFIED')
@@ -87,7 +87,7 @@ class KernelDiagnosticsTests(unittest.TestCase):
         K.PHASE='NATIVE_BROWSER';K.PERMISSIONS=permissions();outcome=S.safe_kernel_outcome(K.blocked_outcome(PermissionError(errno.EACCES,'SECRET')))
         with tempfile.TemporaryDirectory() as folder:
             f=Fixture(Path(folder).resolve());(f.parent/'requests').mkdir(mode=0o700)
-            fake=types.SimpleNamespace(bounded=lambda *_a,**_kw:(0,b'{"result":"PINNED_LOCAL_TOOLCHAIN_INSTALLED"}'))
+            fake=types.SimpleNamespace(H=K.H,bounded=lambda *_a,**_kw:(0,b'{"result":"PINNED_LOCAL_TOOLCHAIN_INSTALLED"}'))
             def stage(name,*_args,**_options):
                 if name=='bootstrap':f.runtime.mkdir(mode=0o700)
                 if name=='kernel-calibration':raise S.StageRejected(None,outcome)

@@ -9,6 +9,7 @@ import shutil
 import stat
 import sys
 import time
+import linux_host_contract as H
 from linux_proc import parse_meminfo, parse_psi, parse_smaps_rollup, parse_stat, process_identity
 
 class AdmissionError(Exception):
@@ -85,8 +86,9 @@ def collect():
     affinity=sorted(os.sched_getaffinity(0));logical=os.cpu_count()
     after=parse_stat(read(f"/proc/{pid}/stat"))
     require(after["startTicks"]==before["startTicks"] and boot_sha()==boot,"PROC_IDENTITY_CHANGED")
-    require(logical==4 and len(affinity)==4,"FREE_PROFILE_CPU_MISMATCH")
-    require(14*1024**3<=memory["totalBytes"]<=16*1024**3,"FREE_PROFILE_MEMORY_MISMATCH")
+    kind=H.kind_for_cpu(logical)
+    require(logical==H.target(kind)["cpu"] and len(affinity)==logical and len(set(affinity))==logical,"FREE_PROFILE_CPU_MISMATCH")
+    require(H.hardware_matches(kind,logical,affinity,memory["totalBytes"]),"FREE_PROFILE_MEMORY_MISMATCH")
     filesystem=shutil.disk_usage(Path.cwd())
     return {"schemaVersion":1,"kind":"ROOT_LINUX_READINESS_FACTS","capacityProof":False,"executionAuthority":"NONE","platform":"linux","architecture":platform.machine(),"kernelRelease":platform.release(),"pythonVersion":platform.python_version(),"sampledAtMonotonicMs":time.monotonic_ns()/1000000,"hostBootIdSha256":boot,"hostLogicalCpu":logical,"cpuAffinity":affinity,"memory":memory,"memoryPsi":pressure,"hostOomKillCount":vmstat["oomKillCount"],"samplerSelf":{"pid":pid,"uid":uid,"startTicks":after["startTicks"],"identitySha256":process_identity(boot,pid,after["startTicks"],uid),**own_memory},"cgroupVersion":2,"cgroupPathSha256":hashlib.sha256(relative.encode()).hexdigest(),"samplerCgroupLimitChain":cgroup_limit_chain(Path("/sys/fs/cgroup"),relative),"workingFilesystem":{"totalBytes":filesystem.total,"freeBytes":filesystem.free},"backendAttested":False,"chromiumClosureAttested":False}
 

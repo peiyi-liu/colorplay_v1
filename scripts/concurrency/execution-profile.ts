@@ -30,20 +30,31 @@ export const linuxEngineeringGuardsSchema = z.strictObject({
   memoryPsiSomeAvg10LimitPercent: z.literal(10),
   memoryPsiFullAvg10LimitPercent: z.literal(1),
 });
-const host = z.strictObject({
+const hostFields = {
   platform: z.literal('linux'),
   distribution: z.literal('ubuntu-24.04'),
-  logicalCpu: z.literal(4),
-  nominalMemoryBytes: z.literal(16 * 1024 ** 3),
-  memTotalBytes: positive.max(16 * 1024 ** 3),
-  affinityCpus: z.array(bytes).length(4),
   cpuQuotaUs: positive.nullable(),
   cpuPeriodUs: positive.nullable(),
   cgroupIdentitySha256: executionProfileDigest,
   limitChainSha256: executionProfileDigest,
   clockTicksPerSecond: positive,
   dedicatedGenerator: z.literal(false),
+};
+const freeHost = z.strictObject({
+  ...hostFields,
+  logicalCpu: z.literal(4),
+  nominalMemoryBytes: z.literal(16 * 1024 ** 3),
+  memTotalBytes: positive.max(16 * 1024 ** 3),
+  affinityCpus: z.array(bytes).length(4),
 });
+const paidHost = z.strictObject({
+  ...hostFields,
+  logicalCpu: z.literal(16),
+  nominalMemoryBytes: z.literal(32 * 1024 ** 3),
+  memTotalBytes: positive.min(28 * 1024 ** 3).max(32 * 1024 ** 3),
+  affinityCpus: z.array(bytes).length(16),
+});
+const host = z.union([freeHost, paidHost]);
 const identity = z.strictObject({
   jobSha256: executionProfileDigest,
   instanceSha256: executionProfileDigest,
@@ -59,13 +70,27 @@ const backend = z.strictObject({
   memoryMaxBytes: z.literal(6 * 1024 ** 3),
   services: z.literal(8),
 });
-export const linuxExecutionProfileSchema = z.strictObject({
-  schemaVersion: z.literal(1),
-  kind: z.literal('LINUX_FREE_4CPU_16G_V1'),
+export const linuxExecutionProfileObservedSchema = z.strictObject({
   host,
   identity,
   backend,
 });
+export const linuxExecutionProfileSchema = z.discriminatedUnion('kind', [
+  z.strictObject({
+    schemaVersion: z.literal(1),
+    kind: z.literal('LINUX_FREE_4CPU_16G_V1'),
+    host: freeHost,
+    identity,
+    backend,
+  }),
+  z.strictObject({
+    schemaVersion: z.literal(1),
+    kind: z.literal('LINUX_VM_16CPU_32G_V1'),
+    host: paidHost,
+    identity,
+    backend,
+  }),
+]);
 type Profile = z.infer<typeof linuxExecutionProfileSchema>;
 type ReadonlyDeep<T> = T extends object
   ? { readonly [K in keyof T]: ReadonlyDeep<T[K]> }
@@ -108,11 +133,12 @@ export const validateExecutionProfile = (
         identity: profile.identity,
         backend: profile.backend,
       }) ||
-      new Set(profile.host.affinityCpus).size !== 4 ||
+      new Set(profile.host.affinityCpus).size !== profile.host.logicalCpu ||
       (profile.host.cpuQuotaUs === null
         ? profile.host.cpuPeriodUs !== null
         : profile.host.cpuPeriodUs === null ||
-          profile.host.cpuQuotaUs / profile.host.cpuPeriodUs !== 4) ||
+          profile.host.cpuQuotaUs / profile.host.cpuPeriodUs !==
+            profile.host.logicalCpu) ||
       profile.backend.cpuQuotaUs / profile.backend.cpuPeriodUs !== 4
     )
       reject();

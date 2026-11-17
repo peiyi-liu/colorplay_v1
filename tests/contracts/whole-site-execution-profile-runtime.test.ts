@@ -310,7 +310,7 @@ const profileFixture = async () => {
 };
 
 it.each(['reject', 'abort', 'missing', 'wrong-hash'])(
-  'overlaps exactly thirteen dependency reads but settles them all before rejecting %s',
+  'overlaps exactly fourteen dependency reads but settles them all before rejecting %s',
   async (bad) => {
     const f = await profileFixture();
     const pending = new Map<
@@ -330,7 +330,7 @@ it.each(['reject', 'abort', 'missing', 'wrong-hash'])(
     });
     const rejected = expect(task).rejects.toThrow('ROOT_HELPER_INVALID');
     await vi.waitFor(() => {
-      expect(pending.size).toBe(13);
+      expect(pending.size).toBe(14);
     });
     expect(
       f.read.mock.calls.slice(0, 2).map(([path]) => path.split('/').at(-1)),
@@ -371,7 +371,7 @@ it('rechecks every dependency on every successful verification without caching a
   const f = await profileFixture();
   await f.runtime.verify();
   await f.runtime.verify();
-  expect(f.read).toHaveBeenCalledTimes(30);
+  expect(f.read).toHaveBeenCalledTimes(32);
   for (const name of linuxClosureNames)
     expect(
       f.read.mock.calls.filter(([path]) => path.endsWith('/' + name)),
@@ -409,7 +409,7 @@ it('settles the other owned reads even when an IO port throws synchronously', as
   });
   const rejected = expect(task).rejects.toThrow('ROOT_HELPER_INVALID');
   await vi.waitFor(() => {
-    expect(f.read).toHaveBeenCalledTimes(15);
+    expect(f.read).toHaveBeenCalledTimes(16);
   });
   expect(settled).toBe(false);
   drained.resolve(undefined);
@@ -440,7 +440,7 @@ it('starts both fixed metadata reads together and no helpers before both settle'
     expect(f.read).toHaveBeenCalledTimes(2);
     closure.resolve(f.closure);
     await task;
-    expect(f.read).toHaveBeenCalledTimes(15);
+    expect(f.read).toHaveBeenCalledTimes(16);
   } finally {
     profile.resolve(f.profileBytes);
     closure.resolve(f.closure);

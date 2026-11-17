@@ -62,7 +62,7 @@ class Fixture(BackendFixture):
             'backendCgroupRelativePath':'/colorplaybackendbbbbbbbbbbbb.slice',
             'containers':[{k:r[k] for k in ['role','id','name','imageId']} for r in containers],
             'binaries':{'node':{'path':self.tools['node']['path'],'sha256':self.tools['node']['sha256'],'device':1,'inode':2},'browser':[]}}
-        self.profile={'schemaVersion':1,'kind':'LINUX_FREE_4CPU_16G_V1','host':{'platform':'linux'},
+        self.profile={'schemaVersion':1,'kind':'LINUX_FREE_4CPU_16G_V1','host':{'platform':'linux','logicalCpu':4,'nominalMemoryBytes':16*1024**3,'memTotalBytes':15*1024**3,'affinityCpus':[0,1,2,3],'cpuQuotaUs':None,'cpuPeriodUs':None,'dedicatedGenerator':False},
             'identity':{'bootIdSha256':'e'*64,'jobSha256':C.digest(C.canonical(job))},'backend':{'services':8}}
         for name,value in [('execution-context.json',self.context),('execution-profile.json',self.profile),
                            ('bootstrap-input.json',self.request),('status-secret.json',{'DB_URL':'postgresql://postgres:synthetic@127.0.0.1:58322/postgres'})]:

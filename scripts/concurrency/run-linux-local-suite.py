@@ -28,7 +28,9 @@ def main():
     S.require(len(sys.argv) == 2 and bool(re.fullmatch('[a-f0-9]{40}', sys.argv[1])))
     revision = sys.argv[1]
     S.require(os.environ.get('GITHUB_SHA') == revision and os.environ.get('GITHUB_REPOSITORY') == 'peiyi-liu/colorplay_v1' and os.environ.get('GITHUB_JOB') == 'capacity-linux' and os.environ.get('GITHUB_RUN_ATTEMPT') == '1')
-    S.require(os.environ.get('GITHUB_REF') == 'refs/heads/codex/local-capacity-linux-20261116')
+    host = S.module('linux_bootstrap_contracts').H
+    S.require(os.environ.get('GITHUB_REF') in {host.target(host.FREE)['ref'], host.target(host.VM)['ref']})
+    host_target = host.environment_target(os.environ)
     os.umask(0o077)
     started = time.monotonic()
     phase, snapshot_plan, snapshot_approval = 'toolchain', None, None
@@ -81,9 +83,9 @@ def main():
         S.require(plan['plannedLegs'] == 15)
         summary['planId'] = plan['planId']
         for index in range(15):
-            # Stop admitting work before the five-hour reserve. Job timeout is
-            # 330 minutes; each leg owns a 25-minute bound and snapshot gets 30.
-            S.require(time.monotonic() - started < 240 * 60, 'LOCAL_SUITE_DEADLINE_BEFORE_NEXT_LEG')
+            # Free: admission 240min/job 330min; VM: admission 75min/job 150min.
+            # Both retain the original leg 25min and snapshot 30min reserves.
+            S.require(time.monotonic() - started < host_target['admissionMinutes'] * 60, 'LOCAL_SUITE_DEADLINE_BEFORE_NEXT_LEG')
             phase = 'capacity-prepare-' + str(index)
             leg = S.stage(phase, [node, '--import', 'tsx', str(S.RUNTIME / 'prepare-capacity-leg.mjs'), plan['planId'], str(index)], 'LOCAL_CAPACITY_LEG_PREPARED', timeout=180)
             phase = 'capacity-run-' + str(index)

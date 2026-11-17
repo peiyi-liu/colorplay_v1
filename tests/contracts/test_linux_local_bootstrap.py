@@ -63,7 +63,7 @@ class Fixture:
                 'tag': 'public.ecr.aws/supabase/' + role.replace('_', '-') + ':v1'})
         self.package = self.source / 'scripts/concurrency/linux-operator'
         self.package.mkdir(parents=True, mode=0o700)
-        bodies = {'collect_readiness.py': b'# synthetic external kernel port\n', 'linux_proc.py': b'# parser fixture\n',
+        bodies = {'collect_readiness.py': b'# synthetic external kernel port\n', 'linux_proc.py': b'# parser fixture\n', 'linux_host_contract.py': b'# contract fixture\n',
                   'test_fixture.py': b'# never installed\n',
                   'linux-image-pins.json': encoded({'schemaVersion': 1, 'kind': 'ROOT_PUBLIC_LINUX_IMAGE_PINS', 'images': self.pins})}
         manifest = {'schemaVersion': 1, 'package': 'COLORPLAY_LOCAL_LINUX_ROOT_OPERATOR_DRAFT',

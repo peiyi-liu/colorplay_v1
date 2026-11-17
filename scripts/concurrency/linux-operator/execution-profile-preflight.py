@@ -2,6 +2,7 @@
 import json
 import re
 import sys
+import linux_host_contract as H
 from linux_runtime_common import RUNTIME, require, context, private_read, digest, observe_profile
 
 def main():
@@ -12,6 +13,7 @@ def main():
     raw=private_read(RUNTIME/"execution-profile.json",32768)
     require(digest(raw)==profile_sha,"PROFILE_BYTES_CHANGED")
     observed=observe_profile(ctx)
+    require(json.loads(raw)["kind"]==H.profile_kind(observed["host"]),"ROOT_PROFILE_OBSERVATION_CHANGED")
     require(digest(private_read(RUNTIME/"execution-profile.json",32768))==profile_sha,"PROFILE_BYTES_CHANGED")
     print(json.dumps({"sourceRevision":revision,"challenge":challenge,"observed":observed}),flush=True)
 

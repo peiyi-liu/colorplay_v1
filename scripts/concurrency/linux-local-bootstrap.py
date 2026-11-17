@@ -358,7 +358,7 @@ def bootstrap(request_path, approval, ports=None):
         inputs = I.capture_project_inputs(io.source, tracked)
         inputs_sha = I.proof_sha256(inputs)
         facts = io.hardware(package)
-        C.hardware(facts)
+        C.hardware(facts, C.H.request_target(request)['kind'])
         C.require(not os.path.lexists(runtime), 'BOOTSTRAP_RUNTIME_EXISTS')
         if isinstance(io, NativeIO):io._authorize_diagnostics(request_path, approval)
         before = B.inventory(io)

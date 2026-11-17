@@ -89,7 +89,7 @@ def context(revision, plan_id, approval_sha, helper):
     assert scope['appUrl'] == 'http://127.0.0.1:58373' and scope['supabaseUrl'] == 'http://127.0.0.1:58321' and scope['mailpitUrl'] == 'http://127.0.0.1:58324' and scope['databaseUrl'] == 'postgresql://127.0.0.1:58322/postgres', 'TARGET_INVALID'
     for filename in ['capacity-root-readonly.py', helper]:
         assert re.fullmatch('[a-f0-9]{64}', approval['helpers'][filename]) and sha((RUNTIME / filename).read_bytes()) == approval['helpers'][filename], 'ROOT_HELPER_CHANGED'
-    functional_helpers={'functional-preflight.py','canonical-baseline.py','media-readback.py','execution-profile-preflight.py','linux-host-sample.py','backend-cgroup-sample.py','linux_proc.py','linux_cgroup.py','linux_runtime_common.py'}
+    functional_helpers={'functional-preflight.py','canonical-baseline.py','media-readback.py','execution-profile-preflight.py','linux-host-sample.py','backend-cgroup-sample.py','linux_proc.py','linux_cgroup.py','linux_runtime_common.py','linux_host_contract.py'}
     capacity_helpers={'capacity-root-readonly.py','capacity-registration-readback.py','capacity-retention-readback.py','capacity-preflight-readback.py'}
     keys(scope['helpers'], functional_helpers)
     keys(approval['helpers'], capacity_helpers)

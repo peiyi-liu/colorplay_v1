@@ -124,7 +124,7 @@ class DiagnosticBarrierTests(unittest.TestCase):
             if flag is not None:env['COLORPLAY_LOCAL_DIAGNOSTIC_ONLY']=flag
             output=io.StringIO();umask=os.umask(0o077);os.umask(umask)
             with patch.object(S,'SOURCE',f.source),patch.object(S,'PARENT',f.parent),patch.object(S,'RUNTIME',f.runtime),patch.object(S,'TOOLS',f.parent/'tools'), \
-                    patch.object(S,'module',return_value=types.SimpleNamespace(bounded=lambda *a,**k:(0,b'{"result":"PINNED_LOCAL_TOOLCHAIN_INSTALLED"}'))), \
+                    patch.object(S,'module',return_value=types.SimpleNamespace(H=__import__('linux_bootstrap_contracts').H,bounded=lambda *a,**k:(0,b'{"result":"PINNED_LOCAL_TOOLCHAIN_INSTALLED"}'))), \
                     patch.object(S,'stage',side_effect=stages),patch.object(S,'install_psql_adapter'), \
                     patch.object(S,'create_snapshot_plan',return_value=(f.parent/'requests/snapshot-plan.json','e'*64)), \
                     patch.object(S,'export_snapshot',return_value={'cipherSha256':'f'*64,'cipherBytes':10,'fileCount':1,'plaintextBytes':2}), \

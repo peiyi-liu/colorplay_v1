@@ -33,6 +33,7 @@ export const linuxLibraryNames = [
   'linux_proc.py',
   'linux_cgroup.py',
   'linux_runtime_common.py',
+  'linux_host_contract.py',
 ] as const;
 export const linuxClosureNames = [
   ...linuxExecutableNames,
@@ -58,6 +59,7 @@ export const linuxScopeHelpersSchema = z.strictObject({
   'linux_proc.py': digest,
   'linux_cgroup.py': digest,
   'linux_runtime_common.py': digest,
+  'linux_host_contract.py': digest,
 });
 export const profileRuntimeDescriptorSchema = z.strictObject({
   helperClosureSha256: digest,

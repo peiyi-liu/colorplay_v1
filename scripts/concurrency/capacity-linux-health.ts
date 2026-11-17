@@ -25,7 +25,7 @@ export const linuxHostSampleSchema = z.strictObject({
   generatorCgroupIdentitySha256: sha,
   limitChainSha256: sha,
   hostMemoryTotalBytes: bytes.positive(),
-  hostLogicalCpu: z.literal(4),
+  hostLogicalCpu: z.union([z.literal(4), z.literal(16)]),
   node: pid,
   browser: pid.nullable(),
   treeComplete: z.boolean().nullable(),
@@ -276,6 +276,7 @@ export const createLinuxCapacityHealth = (
             profile.host.cgroupIdentitySha256 ||
           s.limitChainSha256 !== profile.host.limitChainSha256 ||
           s.hostMemoryTotalBytes !== profile.host.memTotalBytes ||
+          s.hostLogicalCpu !== profile.host.logicalCpu ||
           (s.browser !== null && s.browser.pid === s.node.pid) ||
           !identity(s.node) ||
           (s.browser && !identity(s.browser))

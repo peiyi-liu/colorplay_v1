@@ -19,7 +19,7 @@ DIRECTORY = ROOT / 'scripts/concurrency/linux-operator'
 def environment(kind):
     trace = []
     ctx = {'backendCgroupRelativePath': '/synthetic-backend'}
-    host = {'clockTicksPerSecond': 100, 'cgroupIdentitySha256': 'b' * 64, 'limitChainSha256': 'c' * 64}
+    host = {'logicalCpu': 4, 'clockTicksPerSecond': 100, 'cgroupIdentitySha256': 'b' * 64, 'limitChainSha256': 'c' * 64}
     identity = {'ownerUid': 1001, 'instanceSha256': 'd' * 64, 'jobSha256': 'e' * 64}
     profile = {'host': host, 'identity': identity}
     def observed(name, value):
@@ -130,7 +130,7 @@ class SyntheticSamplerFailure(unittest.TestCase):
 
     def test_positive_sample_and_provider_order_equal_exact_git_base(self):
         for kind in ['host', 'backend']:
-            old = subprocess.check_output(['git', 'show', 'HEAD:scripts/concurrency/linux-operator/' + filename(kind)], cwd=ROOT, env={**os.environ, 'DEVELOPER_DIR': '/Library/Developer/CommandLineTools'}, timeout=5).decode()
+            old = subprocess.check_output(['git', 'show', '49402116b542473b2665211bd7404ff7f51249fd:scripts/concurrency/linux-operator/' + filename(kind)], cwd=ROOT, env={**os.environ, 'DEVELOPER_DIR': '/Library/Developer/CommandLineTools'}, timeout=5).decode()
             values, traces = [], []
             for text in [old, source(kind)]:
                 namespace, trace, _ = load(kind, text)
@@ -143,6 +143,17 @@ class SyntheticSamplerFailure(unittest.TestCase):
             self.assertEqual(traces[0], traces[1])
             old_sample = next(node for node in ast.parse(old).body if isinstance(node, ast.FunctionDef) and node.name == 'sample')
             new_sample = next(node for node in ast.parse(source(kind)).body if isinstance(node, ast.FunctionDef) and node.name == 'sample')
+            if kind == 'host':
+                replaced = 0
+                expected = ast.parse('observed_host["logicalCpu"]', mode='eval').body
+                for node in ast.walk(new_sample):
+                    if isinstance(node, ast.Dict):
+                        for index, key in enumerate(node.keys):
+                            if isinstance(key, ast.Constant) and key.value == 'hostLogicalCpu':
+                                self.assertEqual(ast.dump(node.values[index]), ast.dump(expected))
+                                node.values[index] = ast.Constant(value=4)
+                                replaced += 1
+                self.assertEqual(replaced, 1)
             self.assertEqual([ast.dump(n) for n in ast.walk(old_sample) if isinstance(n, ast.Return)], [ast.dump(n) for n in ast.walk(new_sample) if isinstance(n, ast.Return)])
 
     def test_stable_scan_smaps_error_stage_without_real_proc(self):

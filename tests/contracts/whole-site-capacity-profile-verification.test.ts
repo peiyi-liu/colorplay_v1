@@ -142,7 +142,7 @@ it('observer throw cannot change success, original IO error, or invent later com
       throw Error('SYNTHETIC_OBSERVER');
     });
   await expect(f.runtime.verify(observer)).resolves.toHaveProperty('closure');
-  expect(f.read).toHaveBeenCalledTimes(15);
+  expect(f.read).toHaveBeenCalledTimes(16);
   expect(observer).toHaveBeenCalledTimes(1);
   const sentinel = Error('SYNTHETIC_IO');
   f.read.mockRejectedValue(sentinel);
@@ -162,7 +162,7 @@ it('abort remains closed, all metadata settle, and IO failure priority stays ori
   f.abort.abort();
   closure.resolve(f.closure);
   await check;
-  expect(f.read).toHaveBeenCalledTimes(15);
+  expect(f.read).toHaveBeenCalledTimes(16);
   f.read.mockClear();
   await expect(f.runtime.verify()).rejects.toThrow();
   expect(f.read).not.toHaveBeenCalled();
@@ -410,7 +410,7 @@ it('actual capacity caller stays pending until the final postverify read settles
     },
   );
   await vi.waitFor(() => {
-    expect(f.p.read).toHaveBeenCalledTimes(30);
+    expect(f.p.read).toHaveBeenCalledTimes(32);
   });
   expect(settled).toBe(false);
   expect(f.runtime.rootAccounting()).toHaveLength(0);

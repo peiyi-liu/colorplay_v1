@@ -3,7 +3,7 @@ import { capacityScopeSchema } from '../../scripts/concurrency/capacity-scope';
 import { capacityFixture } from './helpers/whole-site-capacity';
 
 describe('explicit Linux helper closure contracts', () => {
-  it('admits the nine real Linux scope helpers instead of a fabricated vm sampler', async () => {
+  it('admits the ten real Linux scope helpers instead of a fabricated vm sampler', async () => {
     const f = await capacityFixture();
     const names = [
       'functional-preflight.py',
@@ -15,6 +15,7 @@ describe('explicit Linux helper closure contracts', () => {
       'linux_proc.py',
       'linux_cgroup.py',
       'linux_runtime_common.py',
+      'linux_host_contract.py',
     ];
     expect(
       capacityScopeSchema.safeParse({
@@ -34,7 +35,7 @@ import {
   requireRootHelperAuthority,
   rootBytesSha256,
 } from '../../scripts/concurrency/root-helper-contracts';
-describe('exact thirteen-file closure authority', () => {
+describe('exact fourteen-file closure authority', () => {
   const setup = () => {
     const files = Object.fromEntries(
       linuxClosureNames.map((name) => [name, 'b'.repeat(64)]),
@@ -96,7 +97,7 @@ describe('exact thirteen-file closure authority', () => {
   it('does not normalize a missing or unknown entry into the fixed closure', () => {
     const f = setup();
     expect(Object.keys(helperClosureSchema.parse(f.body).files)).toHaveLength(
-      13,
+      14,
     );
     expect(
       helperClosureSchema.safeParse({

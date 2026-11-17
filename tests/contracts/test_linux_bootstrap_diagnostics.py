@@ -143,7 +143,7 @@ class DiagnosticTests(unittest.TestCase):
             output=io.StringIO()
             previous_umask=os.umask(0o077);os.umask(previous_umask)
             with patch.object(S,'SOURCE',source),patch.object(S,'PARENT',parent),patch.object(S,'TOOLS',tools),\
-                    patch.object(S,'RUNTIME',runtime),patch.object(S,'module',return_value=types.SimpleNamespace(bounded=dispatch)),\
+                    patch.object(S,'RUNTIME',runtime),patch.object(S,'module',return_value=types.SimpleNamespace(bounded=dispatch,H=M.C.H)),\
                     patch.dict(os.environ,environment),patch.object(sys,'argv',['suite','a'*40]),\
                     patch.object(sys,'platform','linux'),patch.object(R.platform,'machine',return_value='x86_64'),\
                     contextlib.redirect_stdout(output):
