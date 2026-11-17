@@ -3266,3 +3266,35 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - controlled首次prePID9ms原因未觀測保；官方matchingcomponent隔離補齊old355cache保，第二且最後1context3828.625ms defaulttuple/trustedclick/clone拒/ARMcancel/leasepending全閉/PID退出PASS。zero真OTP/Auth/DB/HTTP，overallUNOBSERVED，非Native容量PASS。初type/style/fixture/format/inverse錯誤與transcript-only格式缺brace資格全保。
 - final100records39commands packet1a42b450cc2a1e30657f7ce8be81cc73371f63263d793ca26770d3062e158013／v1raw42+manifest保；Rootreceiptd26125754cca385c0d9bb5c56af4b450784472e96572c211d3224885c3d023b6，proofb28ad3e450d8453913f0a491d378dfbdb432cb54b1d29b034a79f91cfdf81c59；2232unowned/2243HEAD/typeexec/operator44/919unique歷史1128引用/Native34四十六inputs/Original7真prefixpkglock全核。review docs/reviews/2026-11-17-send-diagnostics-m40-review.md。
 - Root下一exact17paths commit/clean、freshremote11b1d68正常FF新Source Native35完整six-person→15legs，instrumented資格保，不GHrerun。工具接受不證Native34成因或40/60PASS；34finalfullcold/OriginalWIP/G8停止85/US$0cap5/HostedProduction真信NONE保。
+
+
+### 2026-11-17 — M40固定Source Native35完整Local診斷執行啟動
+
+- Rootexact17paths cachedcheck0/commitclean 4c901f71ee210f9d400c2caa81b819e5af5e313e(treea4e5a23dfee91022bef08e9cacbbc2456724b2e1)，freshspecialremote精確11b1d68正常FF、publicrepo private=false再核。pushattempt1 run44080913112/job134030954247 in_progress；watcher65812只匹配SHA下載cipher，正常six-person→15legs，不GHrerun/0business。
+- M40一輪4P2皆clear，Rootreceiptd26125754cca385c0d9bb5c56af4b450784472e96572c211d3224885c3d023b6／final100records固定；Root2/34PASS＋兩Sourceinverse/type-erasure/currentserializedVM核，controlled1contextdefaultnative readiness只工具資格，zeroOTP/Auth/DB/外部HTTP業務請求，不把localCDP loopback傳輸稱零HTTP。Source只診斷，Native34送出327.751ms來源仍待新證據，不稱40/60PASS。
+- instrumented三clock/anchor uncertainty/NON_AUTHORITY保持，原input/guard/同批load/250ms/3s7s/PSS/權限/caps/SLO不動。Native34fullcold/OriginalWIP/G8停止85/US$0cap5/HostedProduction真信NONE保。
+
+
+### 2026-11-17 — Native35 final／readonly接受／M41固定四路完整PSS資格核准
+
+- Source4c901f71ee210f9d400c2caa81b819e5af5e313e/run44080913112/job134030954247 pushattempt1 finalfailure(updated12:30:41Z)，upload/hold/postsuccess；functional15PASS/anon3PASS4758.200159ms/10PASS6917.333412ms(API SLO NA)/20INCONCLUSIVE/12legs未run，無40senddiag資料。Rootfinal41c6f4da980262b5830bae42cb69533866d76467d3fecdc38ba532c167de950c；joblog22978B/d0958b29694261cdb8794f071b4368b738362c2399f874a68724a8cb9ccde44b。
+- Firsthoststale8146.795459 age3025.082878/resource6058.658458；HOST8start5121.09369→post7025.297165、9start7038.817131/close8085.301244→post8356.829628跨stale/allHOSTfirstFailnull。20LANDING全完/readyfailure在signal後，actors[].at為subphase起點非失敗時刻。Roottyped5a6a89fa392f30f168f8ff2b932542906a2961f901bf827105b26e8ac81f1a94。M40fresh工廠未建，不以此指M40或網站bug。
+- artifact14327557274 ZIP42640744B/38601842233936a817d0132dc6a261a190fc01a8db618a945492fe5d0acda1df，cipher42640606B/3faf672e09dbe9867bbf32f7690ffdffc9871c788639d33aeb938805a7b5170f真AEAD；outerab91dd4cc1746636d4e21b9541b066b8ef9e8373dd45d2e0ae1790ecacf2fa3b/693files212949028B，inner9502b962738cd4c65b544499ae33ed4c6616dc41eda3bbdc02a8cc64522cd1bb/644；8stops/DB2/127tables31rolesORDER_ONLY/3vol7017files185590496B/runtime592data32code0metadata-only全核，無restore/delete。
+- readonlyc5cf102ac2082c01deb599a235f0826ca13da02eee0e2a555d668082c7e4d487/14records16Source11coldJSON Roothash核，receipt9beb8b3e2f588a029381a56618b711f2d71f244dee1969466ceb239b3f6c2549；initial baseline RESOURCE誤配HOST9與漏HOST_TIMING投影皆保資格，final用helper+start exactjoin，34替換2037.847458ms而35 3235.751403ms，核心11Source同。SMAPS延遲已證，kernel/FS/OS/CPU根因UNKNOWN，不猜repair。
+- Root核M41 brief docs/superpowers/plans/2026-11-17-pss-concurrency-m41-brief.md：2Source(hostsampler/單manifestentry)＋4tests，只固定最多4worker/4inflight完整PSS資格，allsettle/prepost身份/deadline/clock/錯誤/資源guard保持，先actualRED/GREEN/serial等價/閉合/fullchecks/Root一輪；無Source/Native36授權外的操作、不放寬門檻。不同generator環境另候選未開計費資源，US$0cap5/OriginalWIP/G8停止85/HostedProduction真信NONE保。
+
+### 2026-11-17 — M41並行PSS混合錯誤優先序拍板
+
+- Root明授clock/window terminal先於普通read錯；兩terminal彼此只保同RLock首latch，之後不再讀clock/改elapsed，invalidclock留null/window留首有限elapsed。普通多錯按原PID計畫，全部inflight drain/join，任一錯無sample。保原serial優先序差異資格，Event反轉完成順序驗，不變budget/caps/ownership，未Native36。原brief7b6a926...沿革保。
+
+### 2026-11-17 — M41 scheduler錯誤origin優先序明授
+
+- worker原交付前自檢發現Thread.start FileNotFound可能被smaps missing retry洗掉；Root明授clock/window首terminal最高→scheduler/infrastructure terminal→普通read/parse planned order/missing retry。origin只記憶體、allsubmitted drain後原identity raise，不擴wire/main/sample/ownership；反例與mixed/reverse completion必測。Root既有唯一P2為stop check+submit非原子，合併同輪clear，非第二review/Native授權。
+
+
+### 2026-11-17 — M41完整PSS Root唯一審查接受／新Source Native36授權
+
+- 固定最多4worker／4inflight完整已核PID之PSS，shared clock／failure latch與admission原子；所有實體workers join後才post／retry／return。原身份／prepost／窗口／freshness／caps／SLO不變。Root唯一同輪2P2（atomic admission、serial comparator固定base）皆clear；scheduler origin／shutdown自檢補控制，無未解finding。
+- Root final12controls PASS；worker final4files66PASS／stability18／failure6PASS，早期affected6／89保不混加；fulltype/lint/format/import/diff/static/AST/inverse0。全部初FAIL/raw保。Fake1／20／60為PID計畫非人數；first Thread.start失敗內部unreturned pending Future資格明列，沒有活worker／background read，原scheduler terminal拒絕。
+- Finalpacket0bc4b0380d3849356b07cd3cbd9c561d6757f8bf444455c7422e51b7b2b3c14b／Rootreceipt864c81799377e71c5c469a01554ddd7230e074072edd9a532dd3c47f61678fef，review docs/reviews/2026-11-17-pss-concurrency-m41-review.md。sixowned／v1raw／2244unowned／歷史1033／Native35十一與34四十六inputs／Original7真prefixpkglock全核。
+- Root下一exact9paths commitclean、freshspecialremote4c901f71ee210f9d400c2caa81b819e5af5e313e正常FF新Source Native36 fullsix-person→15legs，標4-wide qualification；不GHrerun／不放寬、不稱40／60PASS。Native35 fullcold保／US$0cap5／G8停止85／HostedProduction真信NONE／Original WIP保持，未Staging。

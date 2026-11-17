@@ -154,8 +154,8 @@ class SyntheticSamplerFailure(unittest.TestCase):
             raise PermissionError(errno.EPERM, 'PRIVATE', '/PRIVATE')
         namespace['read_text'] = denied
         # Recover the exact function replaced by the positive fake provider.
-        tree = next(n for n in ast.parse(source('host')).body if isinstance(n, ast.FunctionDef) and n.name == 'stable_memory_sample')
-        exec(compile(ast.Module(body=[tree], type_ignores=[]), '<synthetic-stable-scan>', 'exec'), namespace)
+        functions = {n.name:n for n in ast.parse(source('host')).body if isinstance(n, ast.FunctionDef)}
+        exec(compile(ast.Module(body=[functions['complete_pss'], functions['stable_memory_sample']], type_ignores=[]), '<synthetic-stable-scan>', 'exec'), namespace)
         with self.assertRaises(PermissionError) as caught:
             namespace['stable_memory_sample']({'generatorCgroupRelativePath': '/synthetic', 'binaries': {'node': {}}}, {'identity': {'ownerUid': 1001}}, 123, None, True, 'boot')
         self.assertEqual(namespace['failure'](caught.exception)['stage'], 'SMAPS')

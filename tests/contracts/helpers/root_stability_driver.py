@@ -4,6 +4,7 @@ import importlib.util
 from pathlib import Path
 import sys
 import types
+import threading
 import unittest
 from unittest.mock import patch
 
@@ -32,6 +33,7 @@ PROFILE={'identity':{'ownerUid':1001}}
 
 class Provider:
     def __init__(self,scans,cost=.01):
+        self.lock=threading.RLock();self.trace=[];self.always_missing=False
         self.scans=scans;self.cost=cost;self.clock=0.0;self.reads=[];self.metadata_calls=0;self.sleeps=[]
         self.missing=0;self.denied=None;self.stationary=False;self.sleep_error=None;self.clock_hook=None
         _trace,_common,modules=F.environment('host');modules['linux_proc']=PROC
@@ -39,21 +41,25 @@ class Provider:
         with patch.dict(sys.modules,modules):exec(compile((DIRECTORY/'linux-host-sample.py').read_bytes(),'<actual-host-fake-providers>','exec'),self.ns)
         self.ns['metadata']=self.metadata;self.ns['read_text']=self.read
         self.ns['time']=types.SimpleNamespace(monotonic=self.now,sleep=self.sleep)
-    def now(self):return self.clock_hook() if self.clock_hook else self.clock
+    def now(self):
+        with self.lock:return self.clock_hook() if self.clock_hook else self.clock
     def metadata(self,*_args):
-        index=self.metadata_calls;self.metadata_calls+=1
-        if not self.stationary:self.clock+=self.cost
-        return copy.deepcopy(self.scans[min(index,len(self.scans)-1)])
+        with self.lock:
+            index=self.metadata_calls;self.metadata_calls+=1;self.trace.append(('META',index))
+            if not self.stationary:self.clock+=self.cost
+            return copy.deepcopy(self.scans[min(index,len(self.scans)-1)])
     def read(self,path,*_args):
-        self.reads.append(int(path.parent.name))
-        if not self.stationary:self.clock+=.001
-        if self.denied:raise self.denied
-        if len(self.reads)<=self.missing:raise FileNotFoundError('SYNTHETIC_PRIVATE')
-        return 'Rss: 100 kB\nPss: 50 kB\n'
+        with self.lock:
+            self.reads.append(int(path.parent.name));self.trace.append(('READ',int(path.parent.name)))
+            if not self.stationary:self.clock+=.001
+            if self.denied:raise self.denied
+            if self.always_missing or len(self.reads)<=self.missing:raise FileNotFoundError('SYNTHETIC_PRIVATE')
+            return 'Rss: 100 kB\nPss: 50 kB\n'
     def sleep(self,seconds):
-        self.sleeps.append(seconds)
-        if self.sleep_error:raise self.sleep_error
-        if not self.stationary:self.clock+=seconds
+        with self.lock:
+            self.sleeps.append(seconds)
+            if self.sleep_error:raise self.sleep_error
+            if not self.stationary:self.clock+=seconds
     def sample(self,protocol=False):
         return self.ns['stable_memory_sample'](CTX,PROFILE,123,None if protocol else 234,protocol,'boot',browser_cache=ROOT)
 
@@ -66,7 +72,10 @@ class StabilityWindow(unittest.TestCase):
         self.assertEqual(set(chrome),{234,345})
         self.assertEqual(set(values),{123,234,345})
         self.assertEqual(sum(v['pssBytes'] for v in values.values()),153600)
-        self.assertEqual(p.reads,[123,234]*3+[123,234,345])
+        self.assertEqual(len(p.reads),9)
+        for start,plan in [(0,[123,234]),(2,[123,234]),(4,[123,234]),(6,[123,234,345])]:
+            self.assertCountEqual(p.reads[start:start+len(plan)],plan)
+        self.assertEqual([value for kind,value in p.trace if kind=='META'],list(range(8)))
         self.assertLess(p.clock,1.5)
     def test_late_stable_pair_cannot_return_a_success(self):
         p=Provider([A,A],cost=.8)
@@ -114,7 +123,8 @@ class StabilityWindow(unittest.TestCase):
         p=Provider([A,A],cost=1.499);proof=self.failure(p)['stability']
         self.assertFalse(proof['comparisonComplete']);self.assertEqual(proof['beforeChromeCount'],1)
         self.assertIsNone(proof['afterChromeCount']);self.assertIsNone(proof['addedCount'])
-        self.assertEqual(p.metadata_calls,1);self.assertEqual(p.reads,[123])
+        self.assertEqual(p.metadata_calls,1);self.assertGreaterEqual(len(p.reads),1)
+        self.assertLessEqual(len(p.reads),2);self.assertEqual(len(set(p.reads)),len(p.reads));self.assertTrue(set(p.reads)<={123,234})
     def test_sleep_interruption_preserves_original_exception(self):
         sentinel=InterruptedError('SYNTHETIC_PRIVATE');p=Provider([A,GROWN]);p.sleep_error=sentinel
         with self.assertRaises(InterruptedError) as caught:p.sample()
@@ -122,10 +132,14 @@ class StabilityWindow(unittest.TestCase):
     def test_each_full_pre_set_read_and_no_previous_attempt_memory_reused(self):
         p=Provider([A,GROWN]*3+[GROWN,GROWN]);original=p.read
         def changing(path,*args):
-            original(path,*args)
-            return 'Rss: 1000 kB\nPss: '+str(len(p.reads))+' kB\n'
+            with p.lock:
+                original(path,*args)
+                return 'Rss: 1000 kB\nPss: '+str(len(p.reads))+' kB\n'
         p.ns['read_text']=changing;_,_,values=p.sample()
-        self.assertEqual(p.reads,[123,234]*3+[123,234,345])
+        self.assertEqual(len(p.reads),9)
+        for start,plan in [(0,[123,234]),(2,[123,234]),(4,[123,234]),(6,[123,234,345])]:
+            self.assertCountEqual(p.reads[start:start+len(plan)],plan)
+        self.assertEqual([value for kind,value in p.trace if kind=='META'],list(range(8)))
         self.assertEqual(sum(v['pssBytes'] for v in values.values()),24*1024)
     def test_node_and_chrome_identity_differences_are_not_hidden(self):
         for key,kind in [(123,'NODE_IDENTITY'),(234,'CHROME_IDENTITY')]:
@@ -178,7 +192,7 @@ class StabilityWindow(unittest.TestCase):
         self.assertEqual(proof['stopReason'],'CLOCK_INVALID');self.assertIsNone(proof['elapsedMs'])
         self.assertTrue(proof['comparisonComplete']);self.assertEqual(proof['lastAttemptOutcome'],'UNOBSERVED')
     def test_missing_smaps_remains_partial_at_attempt_cap(self):
-        p=Provider([A]);p.stationary=True;p.missing=76;proof=self.failure(p)['stability']
+        p=Provider([A]);p.stationary=True;p.always_missing=True;proof=self.failure(p)['stability']
         self.assertEqual(proof['attempts'],76);self.assertEqual(proof['lastAttemptOutcome'],'SMAPS_DISAPPEARED')
         self.assertIsNone(proof['afterChromeCount']);self.assertIsNone(proof['changedIdentityCount'])
 
@@ -186,7 +200,7 @@ class StabilityWindow(unittest.TestCase):
 def envelopes():
     providers=[Provider([A,GROWN]*76),Provider([A,GROWN]*76),Provider([A,A]),Provider([A,A],cost=.8),Provider([A])]
     providers[1].stationary=True;providers[2].clock_hook=lambda:float('nan')
-    providers[4].stationary=True;providers[4].missing=76
+    providers[4].stationary=True;providers[4].always_missing=True
     values=[]
     for p in providers:
         try:p.sample()

@@ -6,6 +6,9 @@ from pathlib import Path
 import errno
 import sys
 import time
+import threading
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
+_PSS_SHUTDOWN=ThreadPoolExecutor.shutdown
 from linux_proc import parse_stat, parse_smaps_rollup, parse_meminfo, parse_psi
 from linux_cgroup import read_text, read_pid_members, read_counter_map
 from linux_runtime_common import RUNTIME, CGROOT, require, context, private_json, host_observation, instance_facts, verify_executables
@@ -83,6 +86,57 @@ def stability_failure():
         if value[key] is not None and (type(value[key]) is not int or not 0<=value[key]<=65536):return None
     return {**value,"lastMismatchKinds":list(value["lastMismatchKinds"])}
 
+class _PssReadFailure(Exception):
+    def __init__(self,original):self.original=original
+
+def complete_pss(plan,proc_root,within_window,admission_lock,is_terminal):
+    """Four admitted slots; failures and clock terminals fence all new queues."""
+    plan=tuple(plan);stop=threading.Event();pending={};submitted=[];values={};errors={};infrastructure=[]
+    pool=ThreadPoolExecutor(max_workers=4,thread_name_prefix="owned-pss")
+    def read(pid):
+        try:
+            within_window()
+            value=parse_smaps_rollup(read_text(proc_root/str(pid)/"smaps_rollup"))
+            within_window()
+            return value
+        except BaseException:
+            with admission_lock:stop.set()
+            raise
+    def result(index,future):
+        try:values[index]=future.result()
+        except BaseException as error:
+            errors[index]=error
+            with admission_lock:stop.set()
+    next_index=0
+    def admit():
+        nonlocal next_index
+        with admission_lock:
+            if next_index>=len(plan) or len(pending)>=4 or stop.is_set() or is_terminal():return False
+            index=next_index
+            try:future=pool.submit(read,plan[index])
+            except BaseException as error:infrastructure.append(error);stop.set();return False
+            submitted.append((index,future));pending[future]=index;next_index+=1
+            return True
+    try:
+        while admit():pass
+        while pending and not stop.is_set():
+            done,_=wait(pending,return_when=FIRST_COMPLETED)
+            for future in sorted(done,key=lambda f:pending[f]):result(pending.pop(future),future)
+            while admit():pass
+    except BaseException as error:
+        with admission_lock:infrastructure.append(error);stop.set()
+    finally:
+        try:pool.shutdown(wait=True)
+        except BaseException as error:
+            with admission_lock:infrastructure.append(error);stop.set()
+            _PSS_SHUTDOWN(pool,wait=True)
+        finally:
+            for index,future in submitted:
+                if index not in values and index not in errors:result(index,future)
+    if infrastructure:raise infrastructure[0]
+    if errors:raise _PssReadFailure(errors[min(errors)])
+    return {pid:values[index] for index,pid in enumerate(plan)}
+
 def stable_memory_sample(ctx,profile,node_pid,browser_pid,protocol,boot,*,proc_root=Path("/proc"),cgroup_root=CGROOT,browser_cache=None):
     group=cgroup_root/ctx["generatorCgroupRelativePath"].lstrip("/")
     diagnostic={"attempts":0,"elapsedMs":None,"stopReason":None,"lastAttemptOutcome":"UNOBSERVED",
@@ -90,22 +144,29 @@ def stable_memory_sample(ctx,profile,node_pid,browser_pid,protocol,boot,*,proc_r
                 "afterChromeCount":None,"addedCount":None,"removedCount":None,"changedIdentityCount":None}
     STATE["stability"]=diagnostic
     mark("STABILITY")
+    clock_lock=threading.RLock();terminal=None
     def stopped(reason):
-        diagnostic["stopReason"]=reason
-        raise ValueError("PROCESS_TREE_INCOMPLETE")
+        nonlocal terminal
+        with clock_lock:
+            if terminal is None:
+                terminal=reason;diagnostic["stopReason"]=reason
+                if reason=="CLOCK_INVALID":diagnostic["elapsedMs"]=None
+            raise ValueError("PROCESS_TREE_INCOMPLETE")
     started=time.monotonic()
     if type(started) not in {int,float} or not math.isfinite(started):stopped("CLOCK_INVALID")
     last=started;deadline=started+1.5
     if not math.isfinite(deadline) or deadline<=started:stopped("CLOCK_INVALID")
     def clock():
         nonlocal last
-        current=time.monotonic()
-        if type(current) not in {int,float} or not math.isfinite(current) or current<last:
-            diagnostic["elapsedMs"]=None;stopped("CLOCK_INVALID")
-        last=current;diagnostic["elapsedMs"]=(current-started)*1000
-        return current
+        with clock_lock:
+            if terminal is not None:stopped(terminal)
+            current=time.monotonic()
+            if type(current) not in {int,float} or not math.isfinite(current) or current<last:stopped("CLOCK_INVALID")
+            last=current;diagnostic["elapsedMs"]=(current-started)*1000
+            return current
     def within_window():
-        if clock()>=deadline:stopped("WINDOW_EXHAUSTED")
+        with clock_lock:
+            if clock()>=deadline:stopped("WINDOW_EXHAUSTED")
     for attempt in range(76):
         mark("STABILITY");within_window()
         diagnostic.update(attempts=attempt+1,lastAttemptOutcome="UNOBSERVED",lastMismatchKinds=[],
@@ -120,11 +181,12 @@ def stable_memory_sample(ctx,profile,node_pid,browser_pid,protocol,boot,*,proc_r
         values={};missing=False
         try:
             mark("SMAPS")
-            for pid in [node_pid,*chrome]:
-                within_window()
-                values[pid]=parse_smaps_rollup(read_text(proc_root/str(pid)/"smaps_rollup"))
-                within_window()
-        except (FileNotFoundError,ProcessLookupError):
+            try:values=complete_pss([node_pid,*chrome],proc_root,within_window,clock_lock,lambda:terminal is not None)
+            finally:
+                with clock_lock:
+                    if terminal is not None:stopped(terminal)
+        except _PssReadFailure as failure:
+            if not isinstance(failure.original,(FileNotFoundError,ProcessLookupError)):raise failure.original from None
             missing=True;diagnostic["lastAttemptOutcome"]="SMAPS_DISAPPEARED"
         if not missing:
             after=metadata(group,profile["identity"]["ownerUid"],boot,proc_root)
