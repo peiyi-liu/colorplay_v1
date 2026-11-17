@@ -13,7 +13,7 @@ afterEach(() => vi.useRealTimers());
 describe('capacity physical collectors', () => {
   it('does not release baseline before both collectors and real loop observation', async () => {
     vi.useFakeTimers();
-    let now = 0;
+    vi.setSystemTime(0);
     const host = deferred(),
       vm = deferred();
     let ready = false,
@@ -25,9 +25,9 @@ describe('capacity physical collectors', () => {
         host: () =>
           ++hosts === 1
             ? host.promise
-            : Promise.resolve(hostSample(1000000 + now)),
+            : Promise.resolve(hostSample(1000000 + Date.now())),
         vm: () => vm.promise,
-        now: () => now,
+        now: () => Date.now(),
         loop: () => 2,
       },
     );
@@ -38,7 +38,6 @@ describe('capacity physical collectors', () => {
     await Promise.resolve();
     expect(ready).toBe(false);
     vm.resolve(vmSample());
-    now = 1000;
     await vi.advanceTimersByTimeAsync(1000);
     await starting;
     expect(ready).toBe(true);
@@ -113,7 +112,7 @@ describe('capacity physical collectors', () => {
 });
 
 describe('initial collector cadence and baseline admission', () => {
-  it('schedules each stream from its own initial completion, not startup completion', async () => {
+  it('schedules each stream from its own initial call start, not startup completion', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(0);
     const firstHost = deferred(),
@@ -149,14 +148,11 @@ describe('initial collector cadence and baseline admission', () => {
     firstHost.resolve(hostSample(1000200));
     await vi.advanceTimersByTimeAsync(800);
     await starting;
-    await vi.advanceTimersByTimeAsync(199);
-    expect(hostAt).toEqual([0]);
-    await vi.advanceTimersByTimeAsync(1);
-    expect(hostAt).toEqual([0, 1200]);
-    await vi.advanceTimersByTimeAsync(3899);
+    expect(hostAt).toEqual([0, 1000]);
+    await vi.advanceTimersByTimeAsync(3999);
     expect(vmAt).toEqual([0]);
     await vi.advanceTimersByTimeAsync(1);
-    expect(vmAt).toEqual([0, 5100]);
+    expect(vmAt).toEqual([0, 5000]);
     expect(invalid).not.toHaveBeenCalled();
     expect(c.snapshot().validity).toBe('VALID');
     await c.stop();
@@ -326,7 +322,7 @@ const linuxFixture = () => {
   return { authority, host, backend };
 };
 describe('Linux backend cadence without a fake VM', () => {
-  it('admits real backend baseline and schedules from each initial completion', async () => {
+  it('admits real backend baseline and schedules from each initial call start', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(0);
     const f = linuxFixture(),
@@ -358,7 +354,7 @@ describe('Linux backend cadence without a fake VM', () => {
     expect(c.snapshot().validity).toBe('VALID');
     expect(c.snapshot()).not.toHaveProperty('vmSamples');
     await vi.advanceTimersByTimeAsync(5000);
-    expect(calls).toEqual([0, 6500]);
+    expect(calls).toEqual([0, 5000]);
     await c.stop();
     expect(c.pending()).toBe(0);
     expect(vi.getTimerCount()).toBe(0);

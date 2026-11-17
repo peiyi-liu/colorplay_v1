@@ -2975,3 +2975,30 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root同輪P2：async map改了customready同步throw的後續actor kickoff。actualcaller有效RED（舊[0,1,2]vs預期[0]）後非async try/catch＋then保持sync/async原calls與error；Rootexactinverse還原v1 entry SHA、其他6owned raw相同。v2 d70ce62e725f82a4cc882344f39d1f309e8861760422a8cb5e733a0ca9919962／75records30checks保原55records/manifestraw；234capacity／final53／P2後44分列PASS，Root36tests1490ms／type/lint+changedlint/format/import/diff/static0，假spyGREEN／錯fixture/初type-lint原log保留不當乾淨證據。
 - Rootreceipt f3e728922f6a2148b6457ec767724a6c20f37a904dcd31ccd1ff0794da638a34；8files/2198unownedactualGit/operator44/Original7trueprefix+package-lock/313歷史records全核，review docs/reviews/2026-11-17-capacity-first-stop-diagnostic-m32-review.md。Root schema readonly probe v1key已按v2shape更正，無Source介入；同輪0open，worker待命。
 - Native26firstcause/CPU/IO仍UNKNOWN，不能將stale/最後timeout回填首因；只Task診斷接受。Root接下來exact11paths commit/clean、freshspecialremote9ee8d92正常FF／Native27 newpushattempt1六人→15legs；26已final全cold保持，不rerun。40/60未run、US$0/cap5、原WIP/G8停止85/HostedProduction真信NONE。
+
+
+### 2026-11-17 — M32固定Source正常Native27啟動
+
+- Rootexact11paths cachedcheck0/commit/clean c695dc819a01084d328ed5fe4c7a6724527010ca，freshspecialremote精確9ee8d92後正常FF；newpush/attempt1 run44001687343/job133767061082 capacity-linux inprogress，正常six-person→15legs。M32 first-event診斷／finalprivatejournal明授，Rootreceipt f3e728922f6a2148b6457ec767724a6c20f37a904dcd31ccd1ff0794da638a34、v2packet75records固定；同輪P2已解，worker待命。
+- WatchermatchingSHA保cipher，Native26final與全cold保持；15functionalPASS與anon3/10PASS不改，20firstcause仍UNKNOWN。此輪不改cadence/freshness/guards，不GHrerun/0business；原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE/40與60未run保持。
+
+
+### 2026-11-17 — Native27已觀測collector先abort／M33排程窄修核准
+
+- sourcec695dc819a01084d328ed5fe4c7a6724527010ca/run44001687343/job133767061082（尚hold未final），actual功能wsb-261117-f7575824ba81/256144.619497ms/15PASS/health0/actualChrome159；plan wsc-261117-420d9c174c30，anon3PASS4711.263342ms/10PASS6928.402548ms（API SLO NOT_APPLICABLE）、20INCONCLUSIVE、其他12未run。
+- M32 actualsafejournal3legs皆OBSERVED/sealed，Rootschema+鏈核：20firstinvalid8081.651558 host_stale(age3752.342144)→abortrequest8081.72935→signal8088.508822(COLLECTOR_INVALID)→readyerror8093.069825/LANDING_CTA/signalabortedtrue→journey8240.238704→finally8240.303212/stop完8338.106489。Rootfirst-stop receipt e9ac632b93a274646f083176594063a0640ee662f0db65e435186dfd51dc2579；這是本輪Node先後，不回填26/19或CPU/IO底因。
+- artifact14293147064 ZIP42572054B/dc6a49f16e975ebc7267af8e4461f2da5d12b5ce49dae0768591f64d6fbf8289，cipher42571916B/591fae9ffdb2ae1f1e7557b8c4dc5b800b8f0bc679c7dd50c74f19b01a720d48真AEAD；outer3917ef48f4bacf61bb1a60d35aeb9856ba7ad7b374ceaef529764c6869e0452d/685files212238206B，inner2fa3a4d617420a7952d1279f3781c72e5b22f1537a89d6fe4988d573eb9b0d26/638files；8stops/roles/DB2/127tables31rolesORDER_ONLY／3vol7017files185590496B含metadata、runtime586data32code0metadata-only全部核，無restore/刪除。
+- Root核M33 Sbrief docs/superpowers/plans/2026-11-17-capacity-sample-cadence-m33-brief.md：host/resource以實際last callstart對齊原1000/5000period、扣已花時間，serial不overlap不catch-up queue；只timerdelay變，原測量start/complete/3s7s/notify/stop/profile/operator/caps保持，長sample仍failclosed。先actualcollector有效RED/GREEN＋capacity/fullchecks，Root唯一review後且27final才可Native28。不是已保證60PASS，原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE/40及60未run保持。
+
+
+### 2026-11-17 — Native27最終failure與完整joblog留存
+
+- run44001687343/job133767061082 actualcompleted/failure，upload/coldhold/post全success。Rootfinal .git/linux-twenty-seventh-run-review.json SHA136f4140decbe5378c36d31e89d555d27804657b092181eb8ac97c1f381c45af，API exactjoblog22983B/dff8d721f1b82e1e1c57fc8bb7cc30c7b152e975df545166fb91cc492f8ef702；真AEAD/685outer/638inner／8stop/DB/所有cold鏈保持，無restore/刪除。
+- M32 first-event已證本輪collector host_stale先ownedabort/signal再readyerror；不回填26/19/CPU/IO，也不保證cadence單修足60。M33 actualcollector有效RED4FAIL/3PASS，確認原completion後再空等使freshness過期；stop/abort晚完成與長樣本UNKNOWN負向原碼已PASS。worker窄修laststart扣耗時並跑全集，不改3s7s/guard/profile/caps。Root唯一review前無Native28。原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE/40及60未run保持。
+
+
+### 2026-11-17 — M33排程窄修Root唯一審查接受
+
+- collector190行僅原startedAt同時存lastStarted、nextdelay=max(0,period−elapsed)，原1000/5000、sample start/complete／3s7s/reducer/notify/tick/pending/stop/M32保持。exact4Source/test231/394/488行，核准caller單case同fakeclock／pending sampler，原安全assert保且pending0。Rootcanonical逆變更可精確還原base collector bytes，無其他Source語義差異。
+- 有效RED4FAIL/3PASS→focused18PASS，final29files247capacity／fulltype/lint+fixturechangedlint/format/import/diff/static0；原fake monotonic及246PASS/1FAIL fixture資格raw保，不當乾淨綠。Root35tests1620ms／38records16checks／4files/2205unownedactualGit/operator44/Original7trueprefix+package-lock/388歷史含M32v2原75+v1原55全核。packet39c9d88469855e59abe8caa39bf7a00d7a64b5c004d39bccffec200dfb19003d，Rootreceipt2eb1b957d95856b66451e07b768999df2b1e5418cc31add7b1442d3b162d7844，review docs/reviews/2026-11-17-capacity-sample-cadence-m33-review.md；一輪0findings，worker待命。
+- 只修已證hazard，仍可能因長sample/其他效能缺證，不稱60PASS或回填26/19cause。Native27已final全cold保持；Root接下來exact7paths commit/clean、freshspecialremote c695dc8正常FF／Native28 newpushattempt1六人→15legs，不rerun。40/60未run，原WIP/G8停止85/US$0/cap5/HostedProduction真信NONE。

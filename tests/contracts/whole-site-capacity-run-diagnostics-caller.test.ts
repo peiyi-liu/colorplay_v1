@@ -255,15 +255,27 @@ describe('actual runner/collector entry seams, synthetic ports only', () => {
   });
   it('collector records same computed invalid snapshot before callback without a new sampling timer', async () => {
     vi.useFakeTimers();
-    let now = 0;
-    const d = createCapacityRunDiagnostics(3, () => now),
+    vi.setSystemTime(0);
+    let hosts = 0;
+    const d = createCapacityRunDiagnostics(3, () => Date.now()),
       abort = new AbortController();
     let seen = false;
     const c = createCapacityCollector('NATIVE_BROWSER', abort.signal, {
       diagnostics: d,
-      host: () => Promise.resolve(hostSample(1000000 + now)),
+      host: (signal) =>
+        ++hosts === 1
+          ? Promise.resolve(hostSample(1000000 + Date.now()))
+          : new Promise((resolve) => {
+              signal.addEventListener(
+                'abort',
+                () => {
+                  resolve(null);
+                },
+                { once: true },
+              );
+            }),
       vm: () => Promise.resolve(vmSample()),
-      now: () => now,
+      now: () => Date.now(),
       loop: () => 1,
       onInvalid: () => {
         seen = d.snapshot().firstCollectorInvalid !== null;
@@ -271,14 +283,13 @@ describe('actual runner/collector entry seams, synthetic ports only', () => {
       },
     });
     const start = c.start();
-    now = 1000;
     await vi.advanceTimersByTimeAsync(1000);
     await start;
-    now = 5001;
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(3001);
     await c.stop();
     expect(seen).toBe(true);
     expect(d.snapshot().firstCollectorInvalid?.reasons).toContain('host_stale');
+    expect(c.pending()).toBe(0);
     expect(vi.getTimerCount()).toBe(0);
   });
   it.each([

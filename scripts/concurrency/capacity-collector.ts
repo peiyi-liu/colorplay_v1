@@ -71,10 +71,12 @@ export const createCapacityCollector = (
     }, ms);
     timers.add(timer);
   };
+  const lastStarted = { host: 0, resource: 0 };
   const collect = (kind: 'host' | 'resource'): Promise<void> => {
     if (stopping || combined.aborted)
       return Promise.reject(new Error('CAPACITY_EVIDENCE_INVALID'));
     const startedAtNodeMs = now();
+    lastStarted[kind] = startedAtNodeMs;
     const task = (async () => {
       let sample: unknown;
       try {
@@ -96,20 +98,23 @@ export const createCapacityCollector = (
     return task;
   };
   const recurring = (kind: 'host' | 'resource', ms: number) => {
-    schedule(() => {
-      const task = collect(kind);
-      void task
-        .then(
-          () => {
-            if (!stopping && !combined.aborted) {
-              notify();
-              recurring(kind, ms);
-            }
-          },
-          () => undefined,
-        )
-        .catch(() => undefined);
-    }, ms);
+    schedule(
+      () => {
+        const task = collect(kind);
+        void task
+          .then(
+            () => {
+              if (!stopping && !combined.aborted) {
+                notify();
+                recurring(kind, ms);
+              }
+            },
+            () => undefined,
+          )
+          .catch(() => undefined);
+      },
+      Math.max(0, ms - (now() - lastStarted[kind])),
+    );
   };
   const abort = () => {
     for (const timer of timers) clearTimeout(timer);
