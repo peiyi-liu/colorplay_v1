@@ -416,3 +416,49 @@ it('settles the other owned reads even when an IO port throws synchronously', as
   await rejected;
   expect(f.execute).toHaveBeenCalledTimes(1);
 });
+
+it('starts both fixed metadata reads together and no helpers before both settle', async () => {
+  const f = await profileFixture(),
+    profile = Promise.withResolvers<string>(),
+    closure = Promise.withResolvers<string>();
+  f.read.mockImplementation((path) =>
+    path.endsWith('/execution-profile.json')
+      ? profile.promise
+      : path.endsWith('/execution-profile-helper-closure.json')
+        ? closure.promise
+        : Promise.resolve(f.files[path] ?? ''),
+  );
+  const task = f.runtime.verify();
+  try {
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    expect(f.read.mock.calls.map(([p]) => p.split('/').at(-1))).toEqual([
+      'execution-profile.json',
+      'execution-profile-helper-closure.json',
+    ]);
+    profile.resolve(f.profileBytes);
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    expect(f.read).toHaveBeenCalledTimes(2);
+    closure.resolve(f.closure);
+    await task;
+    expect(f.read).toHaveBeenCalledTimes(15);
+  } finally {
+    profile.resolve(f.profileBytes);
+    closure.resolve(f.closure);
+    await task.catch(() => undefined);
+  }
+});
+it('observes actual metadata and full proof completion only through Node phase callback', async () => {
+  const f = await profileFixture(),
+    events: string[] = [];
+  await f.runtime.verify((phase, state) => {
+    events.push(`${phase}:${state}`);
+  });
+  expect(events).toEqual([
+    'PROFILE_META:ENTERED',
+    'CLOSURE_META:ENTERED',
+    'PROFILE_META:COMPLETED',
+    'CLOSURE_META:COMPLETED',
+    'HELPER_BATCH:ENTERED',
+    'HELPER_BATCH:COMPLETED',
+  ]);
+});

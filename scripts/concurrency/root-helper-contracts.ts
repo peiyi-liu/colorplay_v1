@@ -241,7 +241,15 @@ const signalNames = [
   'SIGILL',
   'UNKNOWN',
 ] as const;
-const phases = ['PRE_VERIFY', 'EXECUTE', 'JSON_PARSE', 'POST_VERIFY'] as const;
+const phases = [
+  'PRE_VERIFY',
+  'EXECUTE',
+  'JSON_PARSE',
+  'POST_VERIFY',
+  'PROFILE_META',
+  'CLOSURE_META',
+  'HELPER_BATCH',
+] as const;
 const branches = [
   'ADMISSION',
   'SPAWN',

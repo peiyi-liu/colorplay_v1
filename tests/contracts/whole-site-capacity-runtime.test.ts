@@ -528,9 +528,15 @@ it.each(['before', 'after'])(
     ).rejects.toThrow();
     expect(runtime.rootAccounting()).toEqual([]);
     expect(runtime.rootDiagnostics().calls[0]?.firstFailure).toMatchObject({
-      event: phase === 'before' ? 'PRE_VERIFY' : 'POST_VERIFY',
+      event: 'HELPER_BATCH',
       state: 'FAILED',
     });
+    expect(runtime.rootDiagnostics().calls[0]?.events).toContainEqual(
+      expect.objectContaining({
+        event: phase === 'before' ? 'PRE_VERIFY' : 'POST_VERIFY',
+        state: 'FAILED',
+      }),
+    );
     expect(f.io.execute).toHaveBeenCalledTimes(phase === 'before' ? 1 : 2);
   },
 );

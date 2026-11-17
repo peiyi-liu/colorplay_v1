@@ -339,7 +339,7 @@ export const loadCapacityRuntime = async (
       const diagnostic = helperDiagnostics.begin(helper, callStartedAtNodeMs);
       diagnostic.phase('PRE_VERIFY', 'ENTERED');
       try {
-        await profileRuntime?.verify();
+        await profileRuntime?.verify(diagnostic.phase.bind(diagnostic));
         diagnostic.phase('PRE_VERIFY', 'COMPLETED');
       } catch (error) {
         diagnostic.phase('PRE_VERIFY', 'FAILED');
@@ -384,7 +384,7 @@ export const loadCapacityRuntime = async (
         const executeClosedAtNodeMs = performance.now();
         diagnostic.phase('POST_VERIFY', 'ENTERED');
         try {
-          await profileRuntime?.verify().then(
+          await profileRuntime?.verify(diagnostic.phase.bind(diagnostic)).then(
             () => {
               diagnostic.phase('POST_VERIFY', 'COMPLETED');
             },
