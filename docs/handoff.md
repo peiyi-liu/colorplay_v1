@@ -3441,3 +3441,48 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root接受8Source＋3tests的獨立12CPU32GiB strict profile，保16/free、UID1001與所有60cold／backend4CPU6GiB／guard／SLO。workflow唯一explicit12selector／獨立confirmation，manifest45／43unchanged；私有bootstrap只兩CPU predicate、逆向精確M46，歷史不動。
 - Final TS9/99（含10pure不另加），Linux86／privatebootstrap8＋compile，type/lint/format/import/static/diff0。Root195交叉controls PASS，49records／11freeze／2255protectedGit／M45 84／M46 12及index／Native36十inputs／Original7prefixpkglock核；未解0。packet f524c13174478dbf89aca0899950f512e229ef8eb102c4290099c42e13f5afda，Root af9c01ef8c4bb83b146f89f3f8fa972939f969bb066b70490c8d81bec117df1e；review docs/reviews/2026-11-18-gcp-12cpu-m47-review.md。
 - Compute API已啟用，globalCPU0/12／uscentral1 CPU0/200；12CPU32GB100GB草稿Ubuntu24.04／無SA快照OpsAgentHTTP開孔、instanceSSH only／blockprojectkeys，3hSTOP＋1mingrace，不autodelete證據。約US0.39/hr基本費、總US150不升paid。VM仍0／未登錄runner／Source未push；下一exact本機commit後oneVM／真kernel+GitHubidentity／fullLocal，Local過才現有Staging，Production禁。
+
+
+### 2026-11-18 — M47固定71b5d97／GCP單台VM已建立，尚未容量測試
+
+- exact16paths本機commit71b5d97618d9a7513645fd66498067a701ed666a／tree7315047e9117d92c9ac3bf2fa7766a37a98db232，當下clean，未push。新GCP VM cp-capacity-20261118-6d9a14／us-central1-f／12CPU32GB100GB已建立並顯示running，bootstrap尚待receipt／hostkeypin／UID1001和kernel核；只送publicSSH，private不出本機、runner未登錄。
+- 真GitHub唯讀核：Staging仍d92be82、舊free仍1ebf3525、新VMbranch不存在。Recovery origin是保留的Original本機clone來源，其9c42不是Hosted current；第一次origin lsremote屬本機舊ref，不作Hosted證據，後續使用explicit HTTPS GitHub URL，不改origin／Original Git。總US150不升paid、VM3hSTOP＋1mingrace、證據保全後清理；G8停止85／Production不動。
+
+
+### 2026-11-18 — GCP bootstrap APT逾時／M48有限續接準備
+
+- 真VM initial bootstrap在APT update180s COMMAND_TIMEOUT，未runner／容量。Google序列頁refresh單次讀到舊值，reload後見20:37:23 BLOCKED/APT；不把舊snapshot當仍執行。Root使用Google serial pin主機key後SSH readonly成功UID1001，原ROOT只有1691bytes 01-apt-update.log，hash與bootUUID已固定。只證原大型index下載時逾時，官方鏡像/GitHub Range1KiB可讀，精確慢因未證。
+- Root開M48私有續接brief，只同一VM／保舊ROOT證據／精確boot與failedlog gate／新ROOT-m48／同M47accepted base／APT減少language與限制network等待一次，不改signed sources、不skip kernel/UID/guard。Source71b5d97已pushVMbranch、真run44171162232/job134350306751/push attempt1 queued；無Native business執行，不是容量rerun。總US150／3hSTOP保持，勿新建VM或Production。
+
+
+### 2026-11-18 — M48私有APT續接Root接受，尚未執行
+
+- 137行adapter／7fake+compile綠；Root8獨立控制（含FIFO nonblocking/metadata與argv閉合）綠，8records與M46原12／M47原49 hash核。唯一Root同輪未解0，packet a72711f6cfaf3f7fe69228b5a39e5c17a9547aa1bbb0d653f7dda4581c44a640／Root 96235e9a088417225a43e7b14b8713de60979e5928cfaa19633b4af78c02e227。review docs/reviews/2026-11-18-gcp-apt-resume-m48-review.md。
+- 只同一VM/同boot與failedlog嚴格核後改新ROOT-m48；APT單次減language、Retries1/network30s/ErrorModeany/update300，其餘acceptedbase保持，舊root不刪。Root下一透過pinSSH傳兩publiccode並一次續接，成功才token/runner；Source71b5d97／queued run44171162232不改，容量未run，US150/Production禁保持。
+
+
+### 2026-11-18 — GCP VM1真job啟動／runner21與Source71b5d97核
+
+- M48同VM一次resume成功PREPARED_NOT_REGISTERED：12CPU／31.335GiB／UID1001／systemd cgv2／Docker空／officialrunnerhash符合，boot6ab80d保持、原APT失敗log保。Native receipt SHA58ee4deb02f9d3ecc32ab2ab002fc1b417955ed1c41ff014fd6fb310a7783bfc。
+- 只mint1個shortlivedregistrationtoken、建1個ephemeral runner21／唯一label，PAT未出本機／token僅SSHstdin。原Root postcheck因.NET .runner UTF8 BOM中止；唯讀UTF8-sig＋GitHubAPI確認原註冊成功，不重登／不mint第二token。先前記為STOPPED需按reconciled receipt，不冒稱原helper0。
+- Root後續S級環境設定：因Source Playwright/age還會aptupdate，新本次VM檔/etc/apt/apt.conf.d/99colorplay-capacity-temporary沿同5strictsettings（Languagesnone／Retries1／network30／ErrorModeany），不改signed sources/TLS。最初launcher本機nested quote syntax失敗無remote，之後Root把apt-config normalized Languages list誤當原文造成驗證stop；唯讀證實設定正確後只改驗證，不重寫cfg。最後官方svc install/start成功UID1001、Restart=no。
+- 真API run44171162232/job134350306751/push attempt1現在in_progress、runnerid21／name/label符合Source71b5d97618d9a7513645fd66498067a701ed666a；checkout進行，商業測試結果仍待。Source未變，G8停85／OriginalWIP／US150不升paid／Production禁。VM建立20:33:42UTC，3hSTOP＋1mingrace23:34:42計畫保；Root持續看證據先保全再清理。
+
+
+### 2026-11-18 — GCP VM1 prebusiness停止，M49固定classic store準備
+
+- Source71b5d97真VM1首pull exit0/closureVERIFIED，但Docker29.1.3/containerd image.Id=manifest而舊完整閉包要求configDigest，因此B.startimageguard ADMISSION_INVALID；CLI未started、containers0volumes0、functional/15legs全NOT_RUN。不是網站40/60容量FAIL。RootZIP/cipher/age/Source/job/6files3722B全驗，bootstrap13logs16507B保，本機檔案在runtime/gcp-vm1/。FullDataRetention不宣稱。
+- 影響圖涵蓋start/container/observer/pinner與Edge/Kong/DB/REST shutdown；Root保持既有全部configDigest/shutdown guard，選Docker29支援classic overlay2前置，無版本downgrade或digestOR。M49小Sourceearlyadmission＋freshVM2私有bootstrap（NAME b4c72e/同project/12CPU32GB）、APT5strictsettings與classicreadback，離線同一agent/唯一Rootreview。brief docs/superpowers/plans/2026-11-18-classic-store-vm2-m49-brief.md。舊job不rerun，等正常final後停止VM1保disk節費；新Source/新VM2才完整Local，再Staging。US150／不升paid／Production禁保持。
+
+
+### 2026-11-18 — VM1 finalfailure／ephemeral清理1／正常停機完成
+
+- GitHub44171162232最終completed/failure／attempt1 Source71b5d97；runner21已自動移除，repo runners0，沒有rerun。Root已保prebusiness age證據6files3722B與bootstrap13logs16507B；CLI未start、containers0volumes0/appfixtures0；不是40/60容量FAIL或PASS。private .git/gcp-vm1-root-final-review.json。
+- Google Console exactinstance6554935358823400650顯示已停止，正常shutdown未勾略過；磁碟100GB保留、未刪，VM運算不繼續但disk仍計費，帳單未核。停止請求後頁面曾stale顯running/progress，reload再觀測stopped並保.git/gcp-vm1-stopped-20261118.jpg；不重點停止。G8原Local停85與Production不動。
+- M49准Source linux-local-bootstrap.py＋linux_bootstrap_contracts.py、小fake接線test_linux_local_bootstrap.py及focused test_linux_docker_store.py避免>500；不加helper/manifest，不改原configDigest/全部shutdown。PrivateVM2固定b4c72e，同project、12CPU32GiB，classic overlay2/no containerd explicitguard；未開始Cloud或新access。下一M49freeze／Root一輪review／exact新Source後fresh VM2完整測試，再部署現有Staging。
+
+
+### 2026-11-18 — M49唯一Root審查接受／fresh VM2待實機
+
+- Source四檔 early classic admission；89 Linux（含focused3）／privatev2八項PASS，Root15controls與53records、2267protected、69history、Native36十項核。FIFO非阻塞與明確Docker start兩項P2同輪關閉；未解0。packet20376f53／Root a663e2c317ba8c9b8c466d26e1dcdd211cb2a6bf2d78ee06c36d5353d974c5c9；review docs/reviews/2026-11-18-classic-store-vm2-m49-review.md。
+- VM2草稿b4c72e/12CPU32GB100GB/3hSTOP＋1mingrace/noSA，startup14373bb10abd7a7e4ae49d51c5d191fc06055c97b371ecdea676226730d5df67；尚未建立、classic實機UNKNOWN、容量未run。下一exact新Source提交、freshVM2核、單次新job，再完整Local與Staging；舊VM1停機保disk仍計費、US150不升paid/Production禁。

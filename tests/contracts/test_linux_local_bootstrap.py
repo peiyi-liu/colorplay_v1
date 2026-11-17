@@ -105,6 +105,7 @@ class Fixture:
                     'kid': '11111111-1111-4111-8111-111111111111', 'key_ops': ['sign', 'verify'],
                     **{name: base64.urlsafe_b64encode(bytes([index]) * 32).rstrip(b'=').decode()
                        for index, name in enumerate(['x', 'y', 'd'], 1)}}
+        self.docker_info = {'driver':'systemd','version':'2','storageDriver':'overlay2','driverStatus':[['Backing Filesystem','extfs'],['Supports d_type','true']]}
         self.facts = {'platform': 'linux', 'architecture': 'x86_64', 'distribution': 'ubuntu-24.04',
             'logicalCpu': 4, 'affinity': [0, 1, 2, 3], 'memTotalBytes': 15 * 1024**3,
             'freeDiskBytes': 11 * 1024**3, 'cgroupV2': True, 'pidfd': True, 'pss': True, 'psi': True}
@@ -162,7 +163,7 @@ class Fixture:
         if operation[:2] == ['volume', 'inspect']:
             return encoded([{'Name': 'owned-volume', 'Labels': {'com.supabase.cli.project': C.PROJECT}}])
         if operation[0] == 'info':
-            return encoded({'driver': 'systemd', 'version': '2'})
+            return encoded(self.docker_info if 'storageDriver' in operation[-1] else {k:self.docker_info[k] for k in ('driver','version')})
         if operation[:2] == ['image', 'inspect']:
             pin = next(p for p in self.pins if p['pinnedReference'] == operation[2])
             return encoded([{'Id': pin['configDigest'], 'Architecture': 'amd64', 'Os': 'linux'}])

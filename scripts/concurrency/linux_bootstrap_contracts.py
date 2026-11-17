@@ -178,3 +178,18 @@ def hardware(facts, kind=H.FREE):
             facts['freeDiskBytes'] >= 10 * 1024**3 and
             all(facts[k] is True for k in ['cgroupV2', 'pidfd', 'pss', 'psi']),
             'BOOTSTRAP_HARDWARE_UNSUPPORTED')
+
+
+def classic_docker_store(value):
+    code = 'BOOTSTRAP_DOCKER_UNSUPPORTED'
+    require(type(value) is dict and set(value) == {'driver','version','storageDriver','driverStatus'}, code)
+    require(value['driver'] == 'systemd' and value['version'] == '2' and value['storageDriver'] == 'overlay2', code)
+    rows = value['driverStatus']
+    require(type(rows) is list and 1 <= len(rows) <= 32, code)
+    keys = set()
+    for row in rows:
+        require(type(row) is list and len(row) == 2 and all(type(v) is str and len(v) <= 1024 for v in row), code)
+        key = row[0].casefold()
+        require(bool(key) and row[0].strip() == row[0] and key not in keys and key != 'driver-type', code)
+        keys.add(key)
+    return value
