@@ -67,9 +67,9 @@
       "sha256": "802e0c2079db5a9f4ff3beb9a6aa131071c83af8303ad7e4719cf80a5a8e4c29"
     },
     "linux-host-sample.py": {
-      "bytes": 11308,
+      "bytes": 15005,
       "role": "OPERATOR",
-      "sha256": "d2d9f400a564b02aa03ea762f0d20838e5032cdbc25031a0ff3fddd1955fb787"
+      "sha256": "4a43c0b51b86626ce9db0f659a2c7be07a6c28783a54eb9b5ee4cf450990b796"
     },
     "linux-image-pins.json": {
       "bytes": 5134,

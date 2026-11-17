@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { rootStabilitySchema } from './root-stability-contracts';
 import { spawn } from 'node:child_process';
 import type { Readable, Writable } from 'node:stream';
 import { join, dirname, basename } from 'node:path';
@@ -327,6 +328,7 @@ export const decodeRootSamplerFailure = (text: string) => {
         stage: z.string().max(40),
         errno: z.string().max(20).nullable(),
         rawProviderOutput: z.literal(false),
+        stability: rootStabilitySchema.optional(),
       })
       .parse(JSON.parse(text));
     return rootSamplerFailureSchema.parse({

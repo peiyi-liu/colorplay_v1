@@ -2,6 +2,10 @@ import { performance } from 'node:perf_hooks';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { z } from 'zod';
+import {
+  rootStabilitySchema,
+  rootStabilityContextValid,
+} from './root-stability-contracts';
 export const ROOT_RUNTIME_DIRECTORY = resolve(
   import.meta.dirname,
   '../../../live-recovery-runtime/whole-site-261115',
@@ -263,13 +267,19 @@ const state = z.enum([
   'RETURNED',
   'OBSERVED',
 ]);
-export const rootSamplerFailureSchema = z.strictObject({
-  result: z.enum(['HOST_SAMPLE_UNAVAILABLE', 'BACKEND_SAMPLE_UNAVAILABLE']),
-  code: z.enum(rootSamplerCodes),
-  stage: z.enum(rootSamplerStages),
-  errno: z.enum(rootErrnos).nullable(),
-  rawProviderOutput: z.literal(false),
-});
+export const rootSamplerFailureSchema = z
+  .strictObject({
+    result: z.enum(['HOST_SAMPLE_UNAVAILABLE', 'BACKEND_SAMPLE_UNAVAILABLE']),
+    code: z.enum(rootSamplerCodes),
+    stage: z.enum(rootSamplerStages),
+    errno: z.enum(rootErrnos).nullable(),
+    rawProviderOutput: z.literal(false),
+    stability: rootStabilitySchema.optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (!rootStabilityContextValid(value))
+      ctx.addIssue({ code: 'custom', message: 'STABILITY_CONTEXT_INVALID' });
+  });
 export const rootHelperEventSchema = z
   .strictObject({
     event: z.enum(branches),

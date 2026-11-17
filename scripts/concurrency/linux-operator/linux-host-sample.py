@@ -20,7 +20,11 @@ def failure(error):
     code = error.args[0] if isinstance(error, ValueError) and len(error.args) == 1 and type(error.args[0]) is str and error.args[0] in CODES else "UNKNOWN"
     number = error.errno if isinstance(error, OSError) else None
     names = {errno.EACCES: "EACCES", errno.EPERM: "EPERM", errno.ENOENT: "ENOENT", errno.ESRCH: "ESRCH", errno.EIO: "EIO", errno.ETIMEDOUT: "ETIMEDOUT", errno.EPIPE: "EPIPE"}
-    return {"result": RESULT, "code": code, "stage": STATE["stage"], "errno": None if number is None else names.get(number, "UNKNOWN"), "rawProviderOutput": False}
+    value = {"result": RESULT, "code": code, "stage": STATE["stage"], "errno": None if number is None else names.get(number, "UNKNOWN"), "rawProviderOutput": False}
+    diagnostic = stability_failure()
+    if code == "PROCESS_TREE_INCOMPLETE" and STATE["stage"] in {"SMAPS", "STABILITY"} and diagnostic is not None:
+        value["stability"] = diagnostic
+    return value
 
 BROWSER_NAMES={"chrome","headless_shell","chrome-headless-shell","chrome_crashpad_handler"}
 
@@ -67,29 +71,87 @@ def chrome_members(rows,ctx,browser_cache=None):
         elif cache in path.parents or path.name in BROWSER_NAMES:require(False,"UNAPPROVED_BROWSER_BINARY")
     return found
 
+def stability_failure():
+    value=STATE.get("stability")
+    if value is None or value["stopReason"] is None:return None
+    if value["elapsedMs"] is not None and (not math.isfinite(value["elapsedMs"]) or not 0<=value["elapsedMs"]<=30000):return None
+    for key in ["beforeChromeCount","afterChromeCount","addedCount","removedCount","changedIdentityCount"]:
+        if value[key] is not None and (type(value[key]) is not int or not 0<=value[key]<=65536):return None
+    return {**value,"lastMismatchKinds":list(value["lastMismatchKinds"])}
+
 def stable_memory_sample(ctx,profile,node_pid,browser_pid,protocol,boot,*,proc_root=Path("/proc"),cgroup_root=CGROOT,browser_cache=None):
     group=cgroup_root/ctx["generatorCgroupRelativePath"].lstrip("/")
-    deadline=time.monotonic()+1.5
-    for attempt in range(3):
+    diagnostic={"attempts":0,"elapsedMs":None,"stopReason":None,"lastAttemptOutcome":"UNOBSERVED",
+                "lastMismatchKinds":[],"comparisonComplete":False,"beforeChromeCount":None,
+                "afterChromeCount":None,"addedCount":None,"removedCount":None,"changedIdentityCount":None}
+    STATE["stability"]=diagnostic
+    mark("STABILITY")
+    def stopped(reason):
+        diagnostic["stopReason"]=reason
+        raise ValueError("PROCESS_TREE_INCOMPLETE")
+    started=time.monotonic()
+    if type(started) not in {int,float} or not math.isfinite(started):stopped("CLOCK_INVALID")
+    last=started;deadline=started+1.5
+    if not math.isfinite(deadline) or deadline<=started:stopped("CLOCK_INVALID")
+    def clock():
+        nonlocal last
+        current=time.monotonic()
+        if type(current) not in {int,float} or not math.isfinite(current) or current<last:
+            diagnostic["elapsedMs"]=None;stopped("CLOCK_INVALID")
+        last=current;diagnostic["elapsedMs"]=(current-started)*1000
+        return current
+    def within_window():
+        if clock()>=deadline:stopped("WINDOW_EXHAUSTED")
+    for attempt in range(76):
+        mark("STABILITY");within_window()
+        diagnostic.update(attempts=attempt+1,lastAttemptOutcome="UNOBSERVED",lastMismatchKinds=[],
+                          comparisonComplete=False,beforeChromeCount=None,afterChromeCount=None,
+                          addedCount=None,removedCount=None,changedIdentityCount=None)
         rows=metadata(group,profile["identity"]["ownerUid"],boot,proc_root)
         require(node_pid in rows and same_binary(rows[node_pid],ctx["binaries"]["node"]),"NODE_BINARY_OR_SCOPE_CHANGED")
         chrome=chrome_members(rows,ctx,browser_cache)
         if protocol:require(not chrome and browser_pid is None,"UNDECLARED_BROWSER_PRESENT")
         else:require(browser_pid in chrome and rows[browser_pid]["ppid"]==node_pid,"BROWSER_NOT_OWNED")
-        values={}
+        diagnostic["beforeChromeCount"]=len(chrome)
+        values={};missing=False
         try:
             mark("SMAPS")
-            for pid in [node_pid,*chrome]:values[pid]=parse_smaps_rollup(read_text(proc_root/str(pid)/"smaps_rollup"))
+            for pid in [node_pid,*chrome]:
+                within_window()
+                values[pid]=parse_smaps_rollup(read_text(proc_root/str(pid)/"smaps_rollup"))
+                within_window()
         except (FileNotFoundError,ProcessLookupError):
-            if time.monotonic()<deadline:continue
-            raise ValueError("PROCESS_TREE_INCOMPLETE") from None
-        after=metadata(group,profile["identity"]["ownerUid"],boot,proc_root)
-        after_chrome=chrome_members(after,ctx,browser_cache)
-        mark("STABILITY")
-        unchanged=node_pid in after and same_binary(after[node_pid],ctx["binaries"]["node"]) and all(after[node_pid][key]==rows[node_pid][key] for key in ["identity","exe","device","inode"]) and set(after_chrome)==set(chrome) and all(all(after_chrome[pid][key]==chrome[pid][key] for key in ["identity","exe","device","inode"]) for pid in chrome)
-        if unchanged:return rows,chrome,values
-        if time.monotonic()>=deadline:break
-    raise ValueError("PROCESS_TREE_INCOMPLETE")
+            missing=True;diagnostic["lastAttemptOutcome"]="SMAPS_DISAPPEARED"
+        if not missing:
+            after=metadata(group,profile["identity"]["ownerUid"],boot,proc_root)
+            after_chrome=chrome_members(after,ctx,browser_cache)
+            mark("STABILITY")
+            unchanged=node_pid in after and same_binary(after[node_pid],ctx["binaries"]["node"]) and all(after[node_pid][key]==rows[node_pid][key] for key in ["identity","exe","device","inode"]) and set(after_chrome)==set(chrome) and all(all(after_chrome[pid][key]==chrome[pid][key] for key in ["identity","exe","device","inode"]) for pid in chrome)
+            shared=set(chrome)&set(after_chrome)
+            changed=sum(any(after_chrome[pid][key]!=chrome[pid][key] for key in ["identity","exe","device","inode"]) for pid in shared)
+            kinds=[]
+            if node_pid not in after:kinds.append("NODE_MISSING")
+            else:
+                if not same_binary(after[node_pid],ctx["binaries"]["node"]):kinds.append("NODE_BINARY")
+                if any(after[node_pid][key]!=rows[node_pid][key] for key in ["identity","exe","device","inode"]):kinds.append("NODE_IDENTITY")
+            if set(chrome)!=set(after_chrome):kinds.append("CHROME_SET")
+            if changed:kinds.append("CHROME_IDENTITY")
+            diagnostic.update(comparisonComplete=True,afterChromeCount=len(after_chrome),
+                addedCount=len(set(after_chrome)-set(chrome)),removedCount=len(set(chrome)-set(after_chrome)),
+                changedIdentityCount=changed,lastMismatchKinds=kinds,
+                lastAttemptOutcome="UNOBSERVED" if unchanged else "COMPLETE_MISMATCH")
+            current=clock()
+            if current>=deadline:
+                if unchanged:diagnostic["lastAttemptOutcome"]="STABLE_AFTER_DEADLINE"
+                stopped("WINDOW_EXHAUSTED")
+            if unchanged:
+                STATE.pop("stability",None)
+                return rows,chrome,values
+        current=clock()
+        if current>=deadline:stopped("WINDOW_EXHAUSTED")
+        if attempt==75:stopped("ATTEMPT_CAP")
+        time.sleep(min(.02,deadline-current))
+    stopped("ATTEMPT_CAP")
 
 def sample(request):
     mark("CONTEXT")

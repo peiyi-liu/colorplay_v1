@@ -3071,3 +3071,32 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 一輪2P2已修：native query補closedACTIONS filter避免正常未請求action誤判；inspect child poll→kill已退出race仍close/wait。actual facade有效RED1FAIL/1ERROR→13PASS，final受影響151PASS/unittest15.138s、Root28PASS/0.109s(wall233ms)；type/full lint/format/import/diff/static0。僅native+其test2delta，其他6raw不變，2逆向還原v1hash。fixture/setup/重複測試/elapsed資格原raw保，不當乾淨綠。
 - finalv2 88e1449ad4a7133db2bf3093b875090036f1c81b0989253e5ea78ce26a98428c／69records25commands，v1 747caacce5c09d046c98499dd7bc8ae0af284006a135174da67043b18a610c01原46raw全保；Rootreceipt0daad6cfec20738987f315744bade1c34e9b2487fc21142e1eb8fffb5aa61d2e。Root核8files/2212unowned of2217含type/exec/operator44/M34 11/Original7真prefixpkglock/Native29 16inputs/577歷史引用523unique，review docs/reviews/2026-11-17-bootstrap-passive-observer-m35-review.md。
 - 只是觀測工具接受，不證Native29底因／啟動修復／容量PASS。29已final16file僅診斷留存，無DB cold全留聲明；Root下一步exact11paths commit/clean、freshremote3908848正常FF新Source Native30 pushattempt1六人→15legs，不rerun/0business。US$0/cap5／40/60未run／G8停止85／原WIP／HostedProduction真信NONE保。
+
+
+### 2026-11-17 — M35固定Source正常Native30啟動
+
+- Rootexact11paths cachedcheck0／commit clean23d0a54eaf952a373d42eb6fbc870042a7d9e0ea（tree686176e88a2dc1b4b74c487707de29873633e1cf），fresh specialremote精確3908848後正常FF。public repo gate private=false當前唯讀核；newpushattempt1 run44026002753/job133846375567 capacity-linux inprogress，正常six-person→15legs，watcher79225只保matchingSHA cipher。
+- M35 Rootreceipt0daad6cfec20738987f315744bade1c34e9b2487fc21142e1eb8fffb5aa61d2e／final69records固定，一輪2P2皆clear、worker待命。新Source只補scope啟動觀測，不證Native29底因或已修啟動；29已final僅16file前業務診斷全保，28cold全保。不GHrerun/0business/改門檻，40/60未run／US$0 cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保持。
+
+
+### 2026-11-17 — Native30 final／實際STABILITY guard已定位
+
+- source23d0a54eaf952a373d42eb6fbc870042a7d9e0ea/run44026002753/job133846375567 pushattempt1 completed/failure，upload/hold/post成功，watcher79225 exit0。functional wsb-261117-83ef0f56ac11實際15PASS；planwsc-261117-e7d22aade880 anon3PASS6346.864436ms/10PASS10044.533075ms(API SLO NOT_APPLICABLE)，20INCONCLUSIVE，其他12legs未run、40/60未run。APIexactjoblog22968B/a9e790f6ad883677f59b48491892cd507bb454cf295a155b5a4d62fa164ee862；Rootfinal .git/linux-thirtieth-run-review.json（hash由Rootreceipt），新Source無rerun。
+- M34 actual closed-schema diag20 OBSERVED/nooverflow，call6 HOST3835.472570→pre3863.400554→close4404.960371 exit1/signalnull/stdout138B→envelope4406.948160 PROCESS_TREE_INCOMPLETE/STABILITY/errno null→post4574.524776；firstinvalid4575.733167 collector_unavailable ages1754.993/1754.702ms未超3s7s→abort4575.866968/signal4579.957434→journey4674.989037/finally4675.149309/stop4758.682961。firstready null/actors[]。Rootschema-firststop receipt0727a94befb49adc95a3a84a8836f463098d7220ba6f05a8f19679017c27469f；已證本輪直接guard，未記哪個set/identity變動或Python內attempt計時，不能猜memory/OS、不能回填28。
+- artifact14303646619 ZIP42600613B/3605b3b07410e171c380cccdff65eae4dba082605abf147b044eb0731b3fd529，cipher42600475B/c7304b334a3bc35b8edfc3c90d4968c848a03868c940a344ae9f2f2305bd5bef真AEAD；outer0d26778d89cd61b2ba48657d9b65edf48805f46e3f975e15aa9791c802dc5dfb/687files212290013B，inner27bd292ca00e54a49d2c7582551ecc050f43bb831be656b6dfb67e47977ab137/638files；8stops/roles/DB2/127tables31rolesORDER_ONLY／3vol7017files185590496B含metadata／runtime586data32publiccode0metadata-only全核，無restore/刪除。
+- M35本輪startup成功，安全probe collectionUNAVAILABLE/INCOMPLETE firstSCOPE@174011.001038，events22/states14／EdgeHTTP200、495raw bytes8stdout frames/0stderr0system、boundarytrue／closureVERIFIED，不能稱完整capture或回推Native29。無M35微修。worker只在 .git/native30-stability-readonly/ 用原3tries/1.5s與完整proof條件作只讀／純fake重現及一個M36proposal；Root另核前無Sourcepatch/Native31。US$0 cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保。
+
+
+### 2026-11-17 — Native30 readonly接受／M36原窗口完整pair修正核准
+
+- readonlyf720dae54499bba48d4702cde975401aec58f55b310902e980c59b864a1714c2／15records9Source7coldmetadata Root核，Root另隔離輸出重跑13purefake獨立Pythonexit0，receiptdd3ceee09b5b1477783682e1c72aa74e5104817908e3742ff4544a69ce923f0a；原composite-cat exit資格UNOBSERVED不改。已證range3可66ms用盡而第四stable不讀，且late1602ms stable仍return；均政策反例，不是Native30具體churn成因。
+- Root核M36 brief docs/superpowers/plans/2026-11-17-stability-window-m36-brief.md：原1.5s內deadline-driven完整pair、20ms cooperative yield＋76attempt cap雙bound，開始／讀取邊界／完成後檢window，原完整set/identity/PSS與普通guards不降；Root明授內部attempt/read count增加，非API重試或Root擴權。只HOST failure加strict閉集attempt/window/set-count診斷，正向shape保持，nested未知不洗白。
+- exact5Source含新純schema分檔＋host／manifest僅hostentry／contracts／decoder，新2tests；collector/runtime/M35 8／產品DB／依賴workflowexporter不改，其他43operator保持。先有效RED/GREEN與受影響checks，Root唯一review後才Native31正常新Source pushattempt1六人→15legs；現未實作/launch。Native30已final/fullcold全保，不追M35微修／不回填28/29／不稱容量PASS；US$0 cap5／原WIP／G8停止85／40/60未run／HostedProduction真信NONE保。
+
+
+### 2026-11-17 — M36 原窗口完整 pair 修正 Root 唯一審查接受
+
+- 原1.5s cooperative window／20ms yield／76attempt雙bound，完整全組PSS與pre/post set/identity保持，逾時stable拒；新strict failure nested不改正向shape，其他43operator／M35全8／collector/runtime/journeys／產品DB依賴workflowexporter不變。Kernel IO非hard realtime，未證Native30具體churn成因。
+- 一輪1P2時間診斷矛盾已clear：WINDOW0ms／CAP2000ms拒，明示1e-9ms浮點容差保raw；Root7個獨立probes過。actual兩RED→GREEN、原affected34files336PASS、finalworker/Root各3files66PASS(Rootwall1544ms)、Python18/原5/原tempFS1PASS；type/full lint/format/import/diff/static全0。初紅/setup與exact1500負向被浮點限定取代資格原raw保，不冒乾淨綠。
+- final81records/34commands6957ec69d1e65ac8a7896593fdfe476ae2d8aa21688ebaa46ad8cffe706cb296，v1全53及原manifest保；Rootreceiptc32bbe07ec19256ac51303a9624ad0a6e763c2b7bc8e603e31e66c5ec70f04f1。Root核607unique歷史/707引用、7Source、2218unowned of2223含type/exec、Original7真prefixpkglock、Native30 inputs7；同輪2delta其餘5raw同，schema逆向/test原prefix同v1。review docs/reviews/2026-11-17-stability-window-m36-review.md。
+- 工具task接受，不是20/40/60容量PASS；Root下一步exact10paths commit/clean、freshremote23d0正常FF新Source Native31 pushattempt1完整six-person→15legs，無GHrerun/0business。30final/fullcold保／US$0 cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保。
