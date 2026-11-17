@@ -3298,3 +3298,34 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root final12controls PASS；worker final4files66PASS／stability18／failure6PASS，早期affected6／89保不混加；fulltype/lint/format/import/diff/static/AST/inverse0。全部初FAIL/raw保。Fake1／20／60為PID計畫非人數；first Thread.start失敗內部unreturned pending Future資格明列，沒有活worker／background read，原scheduler terminal拒絕。
 - Finalpacket0bc4b0380d3849356b07cd3cbd9c561d6757f8bf444455c7422e51b7b2b3c14b／Rootreceipt864c81799377e71c5c469a01554ddd7230e074072edd9a532dd3c47f61678fef，review docs/reviews/2026-11-17-pss-concurrency-m41-review.md。sixowned／v1raw／2244unowned／歷史1033／Native35十一與34四十六inputs／Original7真prefixpkglock全核。
 - Root下一exact9paths commitclean、freshspecialremote4c901f71ee210f9d400c2caa81b819e5af5e313e正常FF新Source Native36 fullsix-person→15legs，標4-wide qualification；不GHrerun／不放寬、不稱40／60PASS。Native35 fullcold保／US$0cap5／G8停止85／HostedProduction真信NONE／Original WIP保持，未Staging。
+
+
+### 2026-11-17 — M41新Source Native36完整Local啟動
+
+- exact9paths commitclean 1ebf3525a52690ca04efb5152b62c7c869d4959f/treec24eeff10ab60e5e2ba13c232f32cf94e500bc55，Rootreceipt864c81799377e71c5c469a01554ddd7230e074072edd9a532dd3c47f61678fef／packet0bc4b0380d3849356b07cd3cbd9c561d6757f8bf444455c7422e51b7b2b3c14b。freshpublicrepo與specialremote4c901f7精確核後正常FF push，不GHrerun。
+- run44094497173/job134077929395 pushattempt1 in_progress，完整six-person→15legs／同免費4CPU16GiB；watcher1521只下載加密證據。四路PSS有界資格非Native速度證明，40/60尚未PASS，失敗保第一因／不放寬。
+- US$0/cap5／OriginalWIP／G8停止85／HostedProduction真信NONE保，未Staging。此啟動紀錄為commit後WIP，不另report-only push。
+
+
+### 2026-11-17 — Native36完整final／停止同免費主機小修／試用沙盒候選
+
+- Source1ebf3525a52690ca04efb5152b62c7c869d4959f/run44094497173/job134077929395 pushattempt1 finalfailure updated13:55:47Z；upload/hold/post全success。functional wsb-261117-e713980411f6 15PASS；planwsc-261117-f476361e076c/profiled3a224154bd44cc4c9c436f4980519fe48ee4d8b46d9b3ddb1e311b7832e4203，anon3/10/20PASS4796.040282/7073.112780/10716.192655ms(API SLO NA)，fresh40INCONCLUSIVE，後11legs NOT_RUN（producer12含failed）。
+- typedRoot6588d98506646a5ca68a4d14c1395f6f75336e16734376de5f6fdc1e60e0b0f9：firsthost_stale9106.717812(age3128.892992/resource4144.169114)→signal9139.638406→journey14215.500180；40entry未send、Authcreated0/completed0、ownershipKnown/mailboxClosed、send NOT_STARTED/0events/pending0。HOST47post6090.780172；48start7026.043280/close9035.225974 exit0/timing9036.188950/post10155.097923跨stale，childpositive不是完整authority。Python299.768975wall/106.188015CPU，SMAPS218.074239wall/86.750474CPU；OS/kernel/硬體成因UNKNOWN。
+- artifact14332769551 ZIP42768005B/7b8629b42b91d44e65f34a26fc9f9258d02c13186689c94869f56e7f1d942c7e，cipher42767867B/eed100d9dbf46ebb5a11de624bf0373620a8a113d23b67a5e9b024e120392842真ageAEAD；outer021ef16e1c2e38dbd3225375635ef736cb217835427626498fecb35482a38d29/946files213919072B，inner819a8c78f61f6f868173a3d7b8b7f4e1738567b890d951e378ff3083024333b9/893files；8stops/DB2/127tables31rolesORDER_ONLY/3vol7017files185591435B/runtime841data32code0metadata-only全核。joblog23206B/75bbf5757b5f1a5df47e8f13f09d50b30fd5b073786bff726e4dfb860dd37485。Rootfinale6462572e7cf026ea382a78012a78c3fbfa497c751ecd1c6bebe5a97e48eba72。無restore/delete/rerun。
+- Root停止在同4CPU16GB generator追加微修；待證假設是同主機產生40/60負載時仍能可靠監測，不以此宣稱網站不足或升硬體根因已證。現有worker只做一次readonly fulltimeline packet，無下一修復Source授權。
+- 更新DO帳號唯讀再核：availableCredits5名Inference Cloud Trial，Inference/Agents prepaid0、accountprepayment0、usage0、autoReload off，付款方式已啟用；一般Droplet抵扣仍未證，不保證免費。官方2026-11-17文件明示此promo可供Harness Runtime，harness:none Ubuntu24.04/root sandbox支援16CPU32GB mars-16vcpu-32gb，published fullallocation1.008USD/hr，需先驗Docker/cgroup相容，不開月費。Root僅隔離安裝官方doctl2.1.0雙hash驗，binary3bbf140e520f6e715506ebf7db4744ef3e6c0dc584d0b75e4593ee9844d19a44，無token/VM/沙盒建立。US$0cap5/OriginalWIP/G8停止85/HostedProduction真信NONE/未Staging。
+
+
+### 2026-11-18 — Native36 readonly核定／M42 Harness離線readiness bundle
+
+- Native36 readonlyfa41efb4e79b6d9efa4351f57028569b19215f321af5a2d107163136f2dc2cb3，10records/10Source/10inputs Root逐hash核；receiptee0880b2c8f66dc2f61661f1215650084b37878fe2035d54d5f1856154a183be。HOST48 pre923.564/execute1086.772/post1118.733，metadata同批不相加；firststale先於fullpost，40landing全部signal後失敗、未send。無OS/硬體根因、無新修復Source/Native37。
+- Root核M42 brief docs/superpowers/plans/2026-11-18-harness-readiness-m42-brief.md：2新Source/2新tests，只離線產生harness:none16CPU32GB私有spec/精確probe/hash/5分鐘readiness0.10USD估費/逐步cleanup runbook，讀自身proc/cgroup/Docker現況，全部NONE/readiness-only。既有freeprofile/Source/operator44/產品/workflow不變；token/Cloud/Linux實測皆未授權。
+- 官方doctl2.1.0隔離安裝雙hash核且version成功，可執行help/無token dryrun，沒有doctl全域安裝/登入。先完成concrete bundle與Root一輪review，才在實際新API權限前一次向owner確認；API可用性/Docker/cgroup仍UNKNOWN，不假造GitHubidentity。US0cap5/無資源/月費/真信/HostedProduction，OriginalWIP/G8停止85保。
+
+
+### 2026-11-18 — M42離線readiness工具Root唯一審查接受
+
+- 2新Source／2新tests，139/212/200/11行，離線exclusive700/600 bundle與只讀Linux自身facts／Docker版本查詢，readiness UNKNOWN／executionAuthority NONE。Root獨立11controls PASS／worker11＋1TS wrapper通過（不混加）、必要fullchecks0；Ubuntu canonical release／root missing limits納入。原setup/behavior/fixture/format FAIL全部保。
+- CLI access-token prerequisite exit1，network-deny sandbox smoke71，依閘沒有placeholder call；spec NOT_CLI_VALIDATED，不冒稱真API或網路隔離／Docker/cgroup能力。生成bundle5分鐘0.10USD估算非provider hardcap，idle不是TTL，初Cloud readiness尚待授權與真實觀測。
+- packet5e7ecf7341fe404cee4eb9a0280d87a5803aafb34640ad5ca15639067e5529bb，Rootreceipt93526a377790648a5a2c050de678bce246697cbc10133c361b77b771ce7a094a，review docs/reviews/2026-11-18-harness-readiness-m42-review.md。Root核59records／4owned／2252protectedGit／M41原105／Native36十inputs／operator44／Original7真prefixpkglock及bundlemode/hash。
+- Root token草稿已填name colorplay-local-readiness-20261118／四Harness scopes create/read/manage/operate，share及其他namespace未選，UI最短30天到期(2026-12-18)，Generate未點。需依瀏覽器新access action-time規則當次owner確認，尚無token／API／資源／花費。M42僅本機固定commit不push，不Native37；Native36 fullcoldfinal保、OriginalWIP/G8停止85/HostedProduction真信NONE/未Staging。
