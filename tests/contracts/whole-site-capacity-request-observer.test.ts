@@ -186,3 +186,61 @@ it('shared schemas preserve independent action generations and request IDs acros
   expect(a.cdp.eventNames()).toHaveLength(0);
   expect(b.cdp.eventNames()).toHaveLength(0);
 });
+
+it('passively reports exact ARM and first matching request, isolates callback throws and preserves original generations', async () => {
+  const h = await setup(),
+    pulses: unknown[] = [];
+  const observer = await createCapacityRequestObserver(
+    h.scope,
+    h.context as unknown as BrowserContext,
+    h.page as unknown as Page,
+    0,
+    h.signal.signal,
+    (value) => {
+      pulses.push(value);
+      throw Error('PRIVATE_CALLBACK');
+    },
+  );
+  const token = observer.arm('otp_send');
+  h.cdp.emit('Network.requestWillBeSent', {
+    requestId: 'PRIVATE_REQUEST',
+    timestamp: 5,
+    request: { url: h.scope.appUrl + '/', method: 'GET' },
+  });
+  expect(pulses).toHaveLength(1);
+  h.cdp.emit('Network.requestWillBeSent', {
+    requestId: 'PRIVATE_REQUEST',
+    timestamp: 6,
+    request: { url: h.scope.supabaseUrl + '/auth/v1/otp', method: 'POST' },
+  });
+  h.cdp.emit('Network.responseReceived', {
+    requestId: 'PRIVATE_REQUEST',
+    response: { status: 200 },
+  });
+  h.cdp.emit('Network.loadingFinished', {
+    requestId: 'PRIVATE_REQUEST',
+    timestamp: 7,
+  });
+  expect(await token.finished).toMatchObject({
+    requestAtMs: 6000,
+    status: 200,
+  });
+  expect(pulses).toMatchObject([
+    { kind: 'ARM', actorOrdinal: 0, generation: 1 },
+    { kind: 'REQUEST', actorOrdinal: 0, generation: 1, requestAtCdpMs: 6000 },
+  ]);
+  expect(Reflect.get(pulses[0] as object, 'token')).toBe(
+    Reflect.get(pulses[1] as object, 'token'),
+  );
+  const second = observer.arm('otp_send');
+  second.cancel();
+  await expect(second.finished).rejects.toThrow();
+  expect(pulses).toMatchObject([
+    { kind: 'ARM' },
+    { kind: 'REQUEST' },
+    { kind: 'ARM', generation: 2 },
+    { kind: 'INVALID', generation: 2 },
+  ]);
+  expect(observer.snapshot().available).toBe(true);
+  await observer.dispose();
+});

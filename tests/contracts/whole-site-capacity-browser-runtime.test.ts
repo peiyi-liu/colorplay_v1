@@ -4,6 +4,7 @@ import type { Browser, BrowserServer } from '@playwright/test';
 import { describe, it, expect, vi } from 'vitest';
 import {
   createNativeCapacityBrowser,
+  getNativeCapacitySendBinding,
   type NativeCapacityBrowserPorts,
 } from '../../scripts/concurrency/capacity-browser-runtime';
 import { createCapacityProxy } from '../../scripts/concurrency/capacity-network';
@@ -81,6 +82,8 @@ describe('owned native launchServer/context/page lifecycle', () => {
     await runtime.start();
     const actor = await runtime.createActor(0);
     expect(actor.actorIndex).toBe(0);
+    expect(getNativeCapacitySendBinding(actor)).toBeUndefined();
+    expect(getNativeCapacitySendBinding({ ...actor })).toBeUndefined();
     expect(h.ports.launchServer.mock.calls[0]?.[0].host).toBe('127.0.0.1');
     expect(h.ports.launchServer.mock.calls[0]?.[0].args).toContain(
       '--proxy-bypass-list=<-loopback>;127.0.0.1:58373;127.0.0.1:58321;127.0.0.1:58324',

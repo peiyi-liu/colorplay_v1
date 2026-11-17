@@ -1,3 +1,4 @@
+import { createCapacitySendDiagnostics } from '../../scripts/concurrency/capacity-send-diagnostics';
 import type { CapacityRegistrationUi } from '../../scripts/concurrency/capacity-registration-ui';
 import type { CapacityRegistrationOracle } from '../../scripts/concurrency/capacity-registration';
 import type { NativeCapacityActor } from '../../scripts/concurrency/capacity-browser-runtime';
@@ -303,4 +304,33 @@ describe('fresh UI-only cohort registration with mandatory ownership and no blin
     expect(result.report.completedActors).toBe(40);
     expect(result.report.result).not.toBe('PASS');
   });
+});
+
+it('actual registration retains custom operation counts and PASS while optional send diagnostics remains explicitly non-native', async () => {
+  const h = await setup(),
+    d = createCapacitySendDiagnostics({
+      sourceRevision: h.scope.sourceRevision,
+      planId: h.scope.planId,
+      legId: h.legId,
+      executionProfileSha256: 'a'.repeat(64),
+      actorsExpected: 40,
+    });
+  const result = await runCapacityRegistration({ ...h, sendDiagnostics: d });
+  expect(result.report.result).toBe('PASS');
+  expect(h.ui.send).toHaveBeenCalledTimes(40);
+  expect(h.ui.verify).toHaveBeenCalledTimes(40);
+  expect(d.snapshot()).toMatchObject({
+    collection: 'UNOBSERVED',
+    batchSettled: true,
+    pending: 0,
+  });
+  expect(d.snapshot().actors).toHaveLength(40);
+  await d.finish(h.journal);
+  expect(h.journal.write).toHaveBeenCalledWith(
+    'capacity-send-diagnostics',
+    expect.objectContaining({
+      authority: 'NON_AUTHORITY',
+      collection: 'UNOBSERVED',
+    }),
+  );
 });

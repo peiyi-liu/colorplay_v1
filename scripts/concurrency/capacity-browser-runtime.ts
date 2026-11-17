@@ -1,3 +1,4 @@
+import type { SendPulse } from './capacity-send-diagnostics';
 import {
   generatorOperation,
   type GeneratorObserver,
@@ -29,6 +30,16 @@ export interface NativeCapacityActor {
   page: Page;
   observer: CapacityRequestObserver;
 }
+interface SendBinding {
+  current(): boolean;
+  closed(): boolean;
+  subscribe(listener: (value: SendPulse) => void): () => void;
+}
+const sendBindings = new WeakMap<NativeCapacityActor, SendBinding>();
+export const getNativeCapacitySendBinding = (actor: NativeCapacityActor) => {
+  const binding = sendBindings.get(actor);
+  return binding?.current() ? binding : undefined;
+};
 export interface NativeCapacityBrowserPorts {
   proxy: (signal: AbortSignal) => Promise<CapacityProxyLease>;
   launchServer: (
@@ -39,13 +50,17 @@ export interface NativeCapacityBrowserPorts {
 export const createNativeCapacityBrowser = (
   scope: CapacityScope,
   signal: AbortSignal,
-  ports: NativeCapacityBrowserPorts = {
-    proxy: (stop) => createCapacityProxy(scope, stop),
-    launchServer: (options) => chromium.launchServer(options),
-    connect: (endpoint) => chromium.connect(endpoint),
-  },
+  ports?: NativeCapacityBrowserPorts,
   generator?: GeneratorObserver,
 ) => {
+  const nativeSource = ports === undefined;
+  const activePorts = ports ?? {
+    proxy: (stop: AbortSignal) => createCapacityProxy(scope, stop),
+    launchServer: (
+      options: NonNullable<Parameters<typeof chromium.launchServer>[0]>,
+    ) => chromium.launchServer(options),
+    connect: (endpoint: string) => chromium.connect(endpoint),
+  };
   requireCapacityScope(scope);
   if (signal.aborted) return capacityFailure();
   let proxy: CapacityProxyLease | null = null,
@@ -101,12 +116,12 @@ export const createNativeCapacityBrowser = (
     starting = observe(async () => {
       try {
         proxy = await generatorOperation(generator, 'PROXY', null, () =>
-          ports.proxy(signal),
+          activePorts.proxy(signal),
         );
         running();
         const launchArgs = capacityProxyArguments(scope, proxy);
         server = await generatorOperation(generator, 'LAUNCH', null, () =>
-          ports.launchServer({
+          activePorts.launchServer({
             host: '127.0.0.1',
             headless: true,
             args: launchArgs,
@@ -133,7 +148,7 @@ export const createNativeCapacityBrowser = (
         )
           return capacityFailure();
         browser = await generatorOperation(generator, 'CONNECT', null, () =>
-          ports.connect(endpoint.href),
+          activePorts.connect(endpoint.href),
         );
         running();
       } catch {
@@ -195,6 +210,7 @@ export const createNativeCapacityBrowser = (
         );
         pages.add(page);
         running();
+        let sendListener: ((value: SendPulse) => void) | undefined;
         const observer = await generatorOperation(
           generator,
           'REQUEST_OBSERVER',
@@ -206,11 +222,44 @@ export const createNativeCapacityBrowser = (
               page,
               actorIndex,
               signal,
+              (value) => {
+                try {
+                  if (sendBindings.get(actor)?.current()) sendListener?.(value);
+                } catch {
+                  /* Passive only. */
+                }
+              },
             ),
         );
         observers.add(observer);
         running();
-        return { actorIndex, context, page, observer };
+        const actor = { actorIndex, context, page, observer };
+        const ownedActor = actor;
+        if (nativeSource)
+          sendBindings.set(actor, {
+            current: () =>
+              ownedActor.actorIndex === actorIndex &&
+              ownedActor.context === context &&
+              ownedActor.page === page &&
+              ownedActor.observer === observer &&
+              !stopping &&
+              popups === 0 &&
+              !failed &&
+              !signal.aborted &&
+              !page.isClosed() &&
+              contexts.has(context) &&
+              observers.has(observer) &&
+              observer.snapshot().available,
+            closed: () => resourcesClosed,
+            subscribe: (listener) => {
+              if (sendListener) throw Error('SEND_LISTENER_DUPLICATE');
+              sendListener = listener;
+              return () => {
+                if (sendListener === listener) sendListener = undefined;
+              };
+            },
+          });
+        return actor;
       } catch {
         failed = true;
         await closeContext(context).catch(() => undefined);

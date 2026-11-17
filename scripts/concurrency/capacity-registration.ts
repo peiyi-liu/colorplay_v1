@@ -1,3 +1,7 @@
+import {
+  observeSendBatch,
+  observeSendPerform,
+} from './capacity-send-diagnostics';
 import { generatorEmit } from './capacity-generator-diagnostics';
 import { performance } from 'node:perf_hooks';
 import { z } from 'zod';
@@ -224,6 +228,8 @@ export const runCapacityRegistration = async (
       report.result = entry.report.result;
       return capacityFailure();
     }
+    if (options.sendDiagnostics)
+      await options.sendDiagnostics.prepare(entry.actors, ui);
     check();
     report.phase = 'send';
     await settleCapacityActors(
@@ -255,23 +261,32 @@ export const runCapacityRegistration = async (
     );
     check();
     const sendAt = now();
-    const sent = await dispatchCapacityActions(
-      entry.actors,
-      'otp_send',
-      (actor) => {
-        check();
-        return ui.send(actor, check);
-      },
-      signal,
-      async (actor, response) => {
-        const state = states[actor.actorIndex];
-        if (!state) return capacityFailure();
-        state.sent = true;
-        await journal.write(
-          capacityActorStem(legId, actor.actorIndex) + '-otp-send-confirmed',
-          { schemaVersion: 1, actorIndex: actor.actorIndex, response },
-        );
-      },
+    const sent = await observeSendBatch(options.sendDiagnostics, () =>
+      dispatchCapacityActions(
+        entry.actors,
+        'otp_send',
+        (actor) =>
+          observeSendPerform(options.sendDiagnostics, actor, () => {
+            check();
+            return options.sendDiagnostics
+              ? ui.send(
+                  actor,
+                  check,
+                  options.sendDiagnostics.clickObserver(actor),
+                )
+              : ui.send(actor, check);
+          }),
+        signal,
+        async (actor, response) => {
+          const state = states[actor.actorIndex];
+          if (!state) return capacityFailure();
+          state.sent = true;
+          await journal.write(
+            capacityActorStem(legId, actor.actorIndex) + '-otp-send-confirmed',
+            { schemaVersion: 1, actorIndex: actor.actorIndex, response },
+          );
+        },
+      ),
     );
     report.sendBarrier = evaluateBarrier(
       sent.map(({ actorIndex, requestAtMs, clock }) => ({

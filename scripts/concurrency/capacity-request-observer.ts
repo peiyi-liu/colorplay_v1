@@ -1,3 +1,5 @@
+import { performance } from 'node:perf_hooks';
+import type { SendPulse } from './capacity-send-diagnostics';
 import { z } from 'zod';
 import type { BrowserContext, CDPSession, Page } from '@playwright/test';
 import {
@@ -59,6 +61,7 @@ export const createCapacityRequestObserver = async (
   page: Page,
   actorIndex: number,
   signal: AbortSignal,
+  observeSend?: (value: SendPulse) => void,
 ) => {
   requireCapacityScope(scope);
   if (
@@ -82,11 +85,35 @@ export const createCapacityRequestObserver = async (
     unexpectedHttpErrors = 0,
     unexpectedNetworkFailures = 0,
     actionsCompleted = 0;
+  const tickets = new WeakMap<Action, object>();
+  const notify = (
+    action: Action,
+    kind: SendPulse['kind'],
+    request?: { requestId: string; requestAtCdpMs: number },
+    at?: number,
+  ) => {
+    try {
+      const token = tickets.get(action);
+      if (!observeSend || action.phase !== 'otp_send' || !token) return;
+      const time = at ?? performance.now();
+      observeSend({
+        kind,
+        actorOrdinal: actorIndex,
+        generation: action.generation,
+        token,
+        atNodeMs: Number.isFinite(time) ? time : null,
+        ...request,
+      } as SendPulse);
+    } catch {
+      /* Passive only. */
+    }
+  };
   const terminate = (action: Action | null) => {
     if (action && !action.done) {
       action.done = true;
       clearTimeout(action.timer);
       action.reject();
+      notify(action, 'INVALID');
     }
   };
   const fail = () => {
@@ -120,6 +147,13 @@ export const createCapacityRequestObserver = async (
     );
   };
   const request = (input: unknown) => {
+    let callbackAt = NaN;
+    try {
+      if (observeSend && current?.phase === 'otp_send')
+        callbackAt = performance.now();
+    } catch {
+      /* Unobserved. */
+    }
     try {
       const value = incoming.parse(input);
       if (records.size >= 2048) {
@@ -145,6 +179,12 @@ export const createCapacityRequestObserver = async (
           return;
         }
         action.started = value.timestamp * 1000;
+        notify(
+          action,
+          'REQUEST',
+          { requestId: value.requestId, requestAtCdpMs: action.started },
+          callbackAt,
+        );
       }
     } catch {
       fail();
@@ -279,6 +319,8 @@ export const createCapacityRequestObserver = async (
         }, 15000),
       };
       current = action;
+      tickets.set(action, Object.freeze({}));
+      notify(action, 'ARM');
       return {
         finished,
         cancel: () => {

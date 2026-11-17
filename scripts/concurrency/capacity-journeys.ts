@@ -1,3 +1,4 @@
+import { createCapacitySendDiagnostics } from './capacity-send-diagnostics';
 import {
   createGeneratorDiagnostics,
   finishGeneratorJournal,
@@ -67,6 +68,16 @@ export const createCapacityJourneys = (
           planId: scope.planId,
           legId: leg.legId,
           executionProfileSha256: profile.sha256,
+        })
+      : undefined;
+  const sendDiagnostics =
+    generator && profile && leg.scenario === 'fresh_registration'
+      ? createCapacitySendDiagnostics({
+          sourceRevision: scope.sourceRevision,
+          planId: scope.planId,
+          legId: leg.legId,
+          executionProfileSha256: profile.sha256,
+          actorsExpected: leg.actors,
         })
       : undefined;
   let stopping = false,
@@ -322,6 +333,7 @@ export const createCapacityJourneys = (
           leg.members.includes(a.alias),
         );
         const result = await runCapacityRegistration({
+          ...(sendDiagnostics ? { sendDiagnostics } : {}),
           scope,
           plan: manifest,
           legId: leg.legId,
@@ -547,6 +559,7 @@ export const createCapacityJourneys = (
         originalFailed = false;
         return health;
       } finally {
+        await sendDiagnostics?.finish(runtime.journal);
         if (generator) {
           generatorEmit(
             generator.observe,

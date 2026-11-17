@@ -1,3 +1,7 @@
+import type {
+  CapacitySendDiagnostics,
+  SendClickObserver,
+} from './capacity-send-diagnostics';
 import type { CapacityScope } from './capacity-scope';
 import type { CapacityManifest } from './capacity-manifest';
 import type {
@@ -19,7 +23,11 @@ import {
 } from './capacity-browser-entry';
 import type { NativeCapacityActor } from './capacity-browser-runtime';
 export interface CapacityRegistrationUi {
-  send: (actor: NativeCapacityActor, admit: () => void) => Promise<void>;
+  send: (
+    actor: NativeCapacityActor,
+    admit: () => void,
+    observer?: SendClickObserver,
+  ) => Promise<void>;
   verify: (
     actor: NativeCapacityActor,
     code: string,
@@ -38,11 +46,25 @@ export interface CapacityRegistrationUi {
   ) => Promise<void>;
 }
 export const actualUi: CapacityRegistrationUi = {
-  send: async (actor, admit) => {
+  send: async (actor, admit, observer) => {
     admit();
-    await actor.page
-      .getByRole('button', { name: '傳送驗證碼', exact: true })
-      .click();
+    const emit = (state: 'ENTERED' | 'RETURNED' | 'FAILED') => {
+      try {
+        observer?.({ state });
+      } catch {
+        /* Passive only. */
+      }
+    };
+    emit('ENTERED');
+    try {
+      await actor.page
+        .getByRole('button', { name: '傳送驗證碼', exact: true })
+        .click();
+      emit('RETURNED');
+    } catch (error) {
+      emit('FAILED');
+      throw error;
+    }
   },
   verify: async (actor, code, admit) => {
     if (!/^\d{6}$/u.test(code)) return capacityFailure();
@@ -163,5 +185,6 @@ export interface CapacityRegistrationOptions {
   entryUi?: CapacityEntryUi;
   ui?: CapacityRegistrationUi;
   mailboxFactory?: typeof createCapacityMailbox;
+  sendDiagnostics?: CapacitySendDiagnostics;
   now?: () => number;
 }

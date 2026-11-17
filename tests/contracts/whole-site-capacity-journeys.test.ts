@@ -105,6 +105,10 @@ describe('capacity journey stop and owned-subject gate', () => {
     expect(f.runtime.subjects).not.toHaveBeenCalled();
     expect(f.runtime.host).not.toHaveBeenCalled();
     await journey.stop();
+    expect(Reflect.get(f.runtime.journal, 'write')).not.toHaveBeenCalledWith(
+      'capacity-send-diagnostics',
+      expect.anything(),
+    );
   });
   it('does not turn a foreign role from ownership readback into a capacity actor', async () => {
     const f = await fixture(),

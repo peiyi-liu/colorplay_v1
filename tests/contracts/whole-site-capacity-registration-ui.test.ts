@@ -120,3 +120,21 @@ describe('actual registration Page operations and strict safe public observation
     },
   );
 });
+
+it('send callback failure cannot bypass original admission or add an extra click', async () => {
+  const click = vi.fn(() => Promise.resolve()),
+    getByRole = vi.fn(() => ({ click })),
+    actor = { page: { getByRole } } as unknown as NativeCapacityActor;
+  await actualUi.send(
+    actor,
+    () => undefined,
+    () => {
+      throw Error('PASSIVE_ONLY');
+    },
+  );
+  expect(getByRole).toHaveBeenCalledWith('button', {
+    name: '傳送驗證碼',
+    exact: true,
+  });
+  expect(click).toHaveBeenCalledOnce();
+});
