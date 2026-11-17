@@ -166,3 +166,46 @@ describe('one leg absolute budget and external publication', () => {
     expect(f.writes.has('capacity-result')).toBe(false);
   });
 });
+
+it('publishes final first-stop diagnostics after physical stop and before candidate', async () => {
+  const f = await fixture();
+  let stopped = false;
+  f.work.stop.mockImplementation(async () => {
+    await Promise.resolve();
+    stopped = true;
+    return required(
+      completeCapacityReceipt(
+        f.runtime.scope,
+        f.runtime.manifest,
+        f.runtime.leg.legId,
+      ).health,
+    );
+  });
+  const write = f.runtime.journal.write.bind(f.runtime.journal);
+  vi.spyOn(f.runtime.journal, 'write').mockImplementation((name, value) => {
+    if (name === 'capacity-run-diagnostics') expect(stopped).toBe(true);
+    return write(name, value);
+  });
+  const result = await runOneCapacityLeg(
+    f.runtime,
+    new AbortController().signal,
+    { createJourneys: () => f.work },
+  );
+  expect(result.result).toBe('PASS');
+  expect(f.writes.has('capacity-run-diagnostics')).toBe(true);
+  const diagnostic = f.writes.get('capacity-run-diagnostics') as {
+    firstStopRequest: { atNodeMs: number };
+    stopCompleted: { atNodeMs: number };
+    firstSignal: { atNodeMs: number };
+  };
+  expect(diagnostic.firstStopRequest.atNodeMs).toBeLessThanOrEqual(
+    diagnostic.stopCompleted.atNodeMs,
+  );
+  expect(diagnostic.stopCompleted.atNodeMs).toBeLessThanOrEqual(
+    diagnostic.firstSignal.atNodeMs,
+  );
+  const names = [...f.writes.keys()];
+  expect(names.indexOf('capacity-run-diagnostics')).toBeLessThan(
+    names.indexOf('capacity-result-candidate'),
+  );
+});

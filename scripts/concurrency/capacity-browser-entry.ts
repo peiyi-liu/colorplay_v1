@@ -1,3 +1,7 @@
+import type {
+  CapacityRunDiagnostics,
+  CapacityReadySubphase,
+} from './capacity-run-diagnostics';
 import { performance } from 'node:perf_hooks';
 import { z } from 'zod';
 import {
@@ -41,6 +45,7 @@ export interface CapacityEntryUi {
     scope: CapacityScope,
     identity: CapacityEntryIdentity | undefined,
     registration: boolean,
+    step?: (phase: CapacityReadySubphase) => void,
   ) => Promise<void>;
   submit: (actor: NativeCapacityActor) => Promise<void>;
   confirmed: (
@@ -51,13 +56,19 @@ export interface CapacityEntryUi {
 const loginFields = async (
   actor: NativeCapacityActor,
   identity: CapacityEntryIdentity,
+  step?: (phase: CapacityReadySubphase) => void,
 ) => {
-  if (identity.role === 'teacher')
+  if (identity.role === 'teacher') {
+    step?.('TEACHER_PORTAL');
     await actor.page.getByText('教師端登入', { exact: true }).click();
+  }
+  step?.('ACCOUNT');
   await actor.page
     .getByRole('textbox', { name: '帳號', exact: true })
     .fill(identity.account);
+  step?.('PASSWORD');
   await actor.page.getByLabel('密碼', { exact: true }).fill(identity.password);
+  step?.('LOGIN_BUTTON_VISIBLE');
   await actor.page
     .getByRole('button', { name: '登入', exact: true })
     .waitFor({ state: 'visible' });
@@ -70,42 +81,52 @@ export const capacityEntryUi: CapacityEntryUi = {
       .getByRole('heading', { name: 'ColorPlay', exact: true })
       .waitFor({ state: 'visible' });
   },
-  ready: async (actor, scope, identity, registration) => {
+  ready: async (actor, scope, identity, registration, step) => {
+    step?.('LANDING_CTA');
     await actor.page
       .getByRole('link', { name: '開始冒險', exact: true })
       .click();
+    step?.('LOGIN_ROUTE');
     await actor.page.waitForURL(
       (url) => url.origin === scope.appUrl && url.pathname === '/login',
     );
     if (!registration) {
       if (!identity) return capacityFailure();
-      await loginFields(actor, identity);
+      await loginFields(actor, identity, step);
       return;
     }
+    step?.('REGISTER_CTA');
     await actor.page
       .getByRole('link', { name: '註冊帳號', exact: true })
       .click();
+    step?.('REGISTER_ROUTE');
     await actor.page.waitForURL(
       (url) => url.origin === scope.appUrl && url.pathname === '/register',
     );
+    step?.('NAME');
     await actor.page
       .getByLabel('名字', { exact: true })
       .fill(identity?.fullName ?? '匿名準備');
+    step?.('NICKNAME');
     await actor.page
       .getByLabel('暱稱', { exact: true })
       .fill(identity?.nickname ?? `準備${String(actor.actorIndex)}`);
+    step?.('CLASS');
     await actor.page
       .getByLabel('班級序號', { exact: true })
       .fill(identity?.classCode ?? 'ABCDEFGH');
+    step?.('NEXT');
     await actor.page
       .getByRole('button', { name: '下一步', exact: true })
       .click();
+    step?.('EMAIL');
     await actor.page
       .getByLabel('E-mail', { exact: true })
       .fill(
         identity?.email ??
           `${scope.planId}.prepare.${String(actor.actorIndex)}@colorplay.test`,
       );
+    step?.('SEND_BUTTON_VISIBLE');
     await actor.page
       .getByRole('button', { name: '傳送驗證碼', exact: true })
       .waitFor({ state: 'visible' });
@@ -229,11 +250,13 @@ export const capacityEntryReportSchema = z.strictObject({
   anonymousNoMutationProof: z.boolean().nullable(),
 });
 export interface CapacityEntryOptions {
+  diagnostics?: CapacityRunDiagnostics;
   scope: CapacityScope;
   plan: CapacityManifest;
   legId: string;
   predecessors: readonly { receiptBytes: string }[];
   runtime: {
+    diagnostics?: CapacityRunDiagnostics;
     start: () => Promise<void>;
     createActor: (index: number) => Promise<NativeCapacityActor>;
     snapshot: () => { available: boolean };
@@ -259,6 +282,13 @@ export const runCapacityEntryBarrier = async (
   options: CapacityEntryOptions,
 ) => {
   const { scope, plan, legId, runtime, journal, signal } = options;
+  const diagnostics = options.diagnostics ?? runtime.diagnostics;
+  if (
+    options.diagnostics &&
+    runtime.diagnostics &&
+    options.diagnostics !== runtime.diagnostics
+  )
+    return capacityFailure();
   requireCapacityScope(scope);
   validateCapacityManifest(plan, scope);
   const leg = findCapacityLeg(plan, legId);
@@ -359,14 +389,29 @@ export const runCapacityEntryBarrier = async (
     }
     report.phase = 'ready';
     await settleCapacityActors(
-      actors.map((actor) =>
-        ui.ready(
-          actor,
-          scope,
-          identities?.[actor.actorIndex],
-          registration || anonymous,
-        ),
-      ),
+      actors.map((actor) => {
+        const failed = (error: unknown): never => {
+          diagnostics?.readyFailure(actor.actorIndex, error, signal);
+          throw error;
+        };
+        try {
+          return ui
+            .ready(
+              actor,
+              scope,
+              identities?.[actor.actorIndex],
+              registration || anonymous,
+              ui === capacityEntryUi
+                ? (phase) => diagnostics?.readyStep(actor.actorIndex, phase)
+                : undefined,
+            )
+            .then(() => {
+              diagnostics?.readyComplete(actor.actorIndex);
+            }, failed);
+        } catch (error) {
+          return failed(error);
+        }
+      }),
     );
     if (!registration && !anonymous) {
       report.phase = 'submit';

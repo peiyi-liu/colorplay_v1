@@ -1,3 +1,4 @@
+import type { CapacityRunDiagnostics } from './capacity-run-diagnostics';
 import { runCapacityGameLoad } from './capacity-game-load';
 import {
   capacityClassroomSchema as classSchema,
@@ -48,6 +49,7 @@ export const createCapacityJourneys = (
   runtime: CapacityRuntime,
   signal: AbortSignal,
   onInvalid: () => void,
+  diagnostics?: CapacityRunDiagnostics,
 ) => {
   const { scope, manifest, leg } = runtime;
   requireCapacityScope(scope);
@@ -115,8 +117,10 @@ export const createCapacityJourneys = (
         }
       : { vm: runtime.vm }),
     onInvalid,
+    ...(diagnostics ? { diagnostics } : {}),
   });
   const browser = {
+    ...(diagnostics ? { diagnostics } : {}),
     start: async () => {
       if (!native) return capacityFailure();
       check();
@@ -228,6 +232,7 @@ export const createCapacityJourneys = (
         const before = await runtime.anonymous('before');
         let after: ReturnType<typeof runtime.anonymous> | null = null;
         const entry = await runCapacityEntryBarrier({
+          ...(diagnostics ? { diagnostics } : {}),
           scope,
           plan: manifest,
           legId: leg.legId,
@@ -334,6 +339,7 @@ export const createCapacityJourneys = (
         const gameActors: CapacityGameActor[] = [];
         if (native) {
           const entry = await runCapacityEntryBarrier({
+            ...(diagnostics ? { diagnostics } : {}),
             scope,
             plan: manifest,
             legId: leg.legId,

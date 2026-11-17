@@ -2940,3 +2940,38 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - exact4Source/test，browser-runtime207／newcachetest272／browser123／transport435行；sameapp/ImageGET首次forward用完整allHeaders去2validators，其餘header/map保持，單次fetch原maxRedirect0/maxRetries0；無validator原options，fresh304仍failed+dispose而非假200/REDIRECT_BLOCK。其他3xx／origin／API／POST／非image規則保持，無body／expected／counter／caps改動。有效actualhandler RED→GREEN；43files635functional＋final3files56窄回歸／type/lint/globalformat/import/diff全0，原lint與Rootbriefformat資格log保留。
 - Root唯一一輪0findings，獨立29tests745ms；packet d91936fec4ee19c4fecb46fffc7d19ed50d76bfe8bbd995ccefa249f38e7d905／43records17checks，4files/2197unownedactualGit/operator44/Original7trueprefix/歷史261records全核。Rootreceipt c42d55b69334dc1b83b7de9b8fa9ce1472cda76f7b3324f96b05fca3b109de11，review docs/reviews/2026-11-17-static-image-conditional-fetch-m31-review.md；worker待命。
 - HTTP304/Playwright routing/cache/allHeaders官方今日核＋本機SDK explicitheader replacement證，Native25 validators原值未觀測，不能把工程修法當原header確證；也不回填Native24/23cause。Native25已final且完整custody留。Root接下來exact7paths commit/clean、freshspecialremote bd7b9a0正常FF／Native26 newpushattempt1六人→15legs；不rerun/0business。US$0/cap5/原WIP/G8停止85/HostedProduction真信NONE/40與60未run保持。
+
+
+### 2026-11-17 — M31固定Source正常Native26啟動
+
+- Rootexact7paths cachedcheck0/commit/clean 9ee8d92bc45d6192da43ce83df001e88e9ed7f38，freshspecialremote精確bd7b9a0後正常FF；newpush/attempt1 run43988849520/job133723938709 capacity-linux inprogress，正常six-person→15legs。M31只修Localrouted圖片conditional forwarding／unexpected304 failclosed，Rootreceiptc42d55b69334dc1b83b7de9b8fa9ce1472cda76f7b3324f96b05fca3b109de11；Source/packet43records固定，worker待命，不rerun/0business。
+- WatchermatchingSHA保cipher，Native25已finalfailure與全部cold留，所有歷史custody／原WIP/G8停止85保持；US$0/cap5／40及60未run／HostedProduction真信NONE。不稱M31 Native或容量已通過。
+
+
+### 2026-11-17 — Native26功能15關PASS／匿名3與10PASS／20缺證停點
+
+- source9ee8d92bc45d6192da43ce83df001e88e9ed7f38/run43988849520/job133723938709（尚coldhold未final），actualfunctional wsb-261117-1e120c264635 254246.86938ms/15stagesPASS/health availabletrue/OBSERVED/unexpected0/5components全0/events0、expectedmedia4/refresh1；actualHeadlessChrome159.0.8154.6/protocol1.3/rev@98a2592026af8d673b9fa83b626ac68bdf4ae78a。Root actualTS receipt/finalizer/candidate/process/authority與全chain重算，business .git/native26-business-review.json SHA cc6446de5da2cef25fc0563effbee4a7c53449e2771c28d9938671fb6a532887；M31本輪圖片錯誤未見，不宣稱跨環境通用。
+- plan wsc-261117-d8d22822826e/15legs/106planned identities：anonymous3 PASS4583.766491ms與10 PASS6850.612722ms，無API samples所以API SLO NOT_APPLICABLE（不是APIp95PASS）。20 runwcr-261117-f120823f1cf2 INCONCLUSIVE，generic缺證/功能失敗/timeout/generator_unknown/barrier_unknown/metrics_incomplete；Rootprocess8412.526526ms exit1/noSignal/stderr0/closed/noresidue/SourceFrozen。目前不能推定網站20失敗、GeneratorLimited或M25stale；其餘12legs NOT_RUN，40/60未run，13legs未通過不是13未執行。
+- artifact14288115062 ZIP42569378B/8b7601739c0e8a98f07d348a771da182ca6caa8b7af20c2c21b07ecf123ce88b，cipher42569240B/def1aa8de8aa98f7142bb50ba88c4fa841f205439a556e8a1dbaae329f6fc62b真AEAD；outer235fdbd6176ce9b1cb138766d9da675f0eb26389725c175436d23dc8660fb866/682files212242947B，innerf0ce06ac2a37bc33953b42b7b81dd7a6886bd54c7008800393f582f5e2ba9617/635files；8stop/role/DB2/127tables31rolesORDER_ONLY與3vol7017files185598688B含metadata、runtime583data32code0metadata-only全核，無restore/刪除。
+- sameworker一次整合唯讀診斷20實際停點與所有既有helpertimings/profile/freshness/barrier，不先套Native19stale原因、先用現有證據／沒證才提單一完整brief；不修改Source/Original/docs、不新HTTP/browser/Native/Docker。Root唯一review，M31/全部歷史資料保留。US$0/cap5/原WIP/G8停止85/HostedProduction真信NONE保持。
+
+
+### 2026-11-17 — Native26最終failure／功能PASS與容量缺證資格保持
+
+- run43988849520/job133723938709 actualcompleted/failure，upload/coldhold/post全success，Rootfinal .git/linux-twenty-sixth-run-review.json SHA25bbdc7611b02e969a67bf8737c30df71b784a4a51f9005aa3c3bf4885ed3909，API exactjoblog22979B/09312ff5434ff3e6d2929a54846654f1a774b21e3cc3d8231300110a78d1bf3e。功能15PASS/health0errors、匿名3/10PASS、20INCONCLUSIVE與全cold鏈不變；無GHrerun/restore/刪除。
+- worker目前找到20 snapshot health UNKNOWN唯一host_stale，以及host3完整call2024.623ms後再wait1000、host4 start-gap3033.711ms之hazard；Root尚等完整readonly packet，不把最後stale／finally導出的runAborted或timeout當首因。UI ready先error或collector先abort尚無事件順序證明；Root要求單一firstInvalid＋ready safeerror/subphase＋abort-source/finally同clock完整診斷建議，暫不修cadence/放寬3s guard。Source與M31packet凍結，40/60未run、其他12legs未執行、US$0/cap5/原WIP/G8停止85/HostedProduction真信NONE。
+
+
+### 2026-11-17 — Native26整合readonly接受／M32單一first-stop診斷核准
+
+- readonlyfinal b160d21a0dc39b15c1d5cf804b5ce53a2a878d718597f5b08960bc9da5f4b2d2／9records、12coldprojection／12Source／304歷史records核；20entry200/VALID54.040ms、healthUNKNOWN唯一host_stale與3033.711ms sample-start gap已證，無已觀測資源超限。first invalid/readyerror/signal/finally順序仍UNKNOWN，runAborted/timeout可由finally stop衍生；不能稱stale已證首因或回填Native19。
+- Root核M32 brief docs/superpowers/plans/2026-11-17-capacity-first-stop-diagnostic-m32-brief.md，純診斷exact5Source＋必要tests：同Nodeclock first-wins invalid/readyerror/subphase/abort-request/actualsignal/stop/finally，未知明列。明授runner原finally全部收束後／candidate前，透過既有scope-bound writer一次固定capacity-run-diagnostics最終privatejournal；writer缺證不能PASS，不能假稱較早accounting含晚來signal。無新Root權限/任意path/readback/HTTP；不改cadence/3s7s/guard/caps/profile/operator44。相同worker實作／Root唯一review，先RED/GREEN＋capacity208受影響與新cases/fullchecks，freeze後才可新SourceNative27，不rerun。
+- Native26final與全部cold保持，功能15PASS/health0、anon3/10PASS、20INCONCLUSIVE/其他12未run；40/60未run、US$0/cap5、原WIP/G8停止85/HostedProduction真信NONE。
+
+
+### 2026-11-17 — M32同輪P2已解／Root唯一審查接受
+
+- exact5Source3tests first-event同clock閉集合／first-wins、同instance facade涵蓋40/60轉交seam、原finally後candidate前一次固定privatejournal，writer缺證不PASS；不改cadence/3s7s/flags/classifier/operator44/profile/13closure/門檻。Source347/185/538/254/502、tests225/477/211符合brief窄例外，registration/ui原檔未動。
+- Root同輪P2：async map改了customready同步throw的後續actor kickoff。actualcaller有效RED（舊[0,1,2]vs預期[0]）後非async try/catch＋then保持sync/async原calls與error；Rootexactinverse還原v1 entry SHA、其他6owned raw相同。v2 d70ce62e725f82a4cc882344f39d1f309e8861760422a8cb5e733a0ca9919962／75records30checks保原55records/manifestraw；234capacity／final53／P2後44分列PASS，Root36tests1490ms／type/lint+changedlint/format/import/diff/static0，假spyGREEN／錯fixture/初type-lint原log保留不當乾淨證據。
+- Rootreceipt f3e728922f6a2148b6457ec767724a6c20f37a904dcd31ccd1ff0794da638a34；8files/2198unownedactualGit/operator44/Original7trueprefix+package-lock/313歷史records全核，review docs/reviews/2026-11-17-capacity-first-stop-diagnostic-m32-review.md。Root schema readonly probe v1key已按v2shape更正，無Source介入；同輪0open，worker待命。
+- Native26firstcause/CPU/IO仍UNKNOWN，不能將stale/最後timeout回填首因；只Task診斷接受。Root接下來exact11paths commit/clean、freshspecialremote9ee8d92正常FF／Native27 newpushattempt1六人→15legs；26已final全cold保持，不rerun。40/60未run、US$0/cap5、原WIP/G8停止85/HostedProduction真信NONE。

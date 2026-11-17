@@ -1,3 +1,7 @@
+import {
+  createCapacityRunDiagnostics,
+  type CapacityStopSource,
+} from './capacity-run-diagnostics';
 import { performance } from 'node:perf_hooks';
 import {
   newCapacityReceipt,
@@ -27,17 +31,21 @@ export const runOneCapacityLeg = async (
     businessDeadline = outerDeadline - CAPACITY_CLEANUP_BUDGET_MS;
   const controller = new AbortController(),
     signal = AbortSignal.any([parentSignal, controller.signal]);
+  const diagnostics = createCapacityRunDiagnostics(runtime.leg.actors, now);
+  let requestedSource: CapacityStopSource = 'UNKNOWN';
   let stopping = false,
     timedOut = false;
   const pending = new Set<Promise<unknown>>();
-  const stop = () => {
+  const stop = (source: CapacityStopSource = 'UNKNOWN') => {
+    requestedSource = source;
+    diagnostics.abortRequest(source);
     stopping = true;
     controller.abort();
   };
   const timer = setTimeout(
     () => {
       timedOut = true;
-      stop();
+      stop('BUSINESS_DEADLINE');
     },
     Math.max(0, businessDeadline - now()),
   );
@@ -63,9 +71,21 @@ export const runOneCapacityLeg = async (
     runtime,
     signal,
     () => {
-      stop();
+      stop('COLLECTOR_INVALID');
     },
+    diagnostics,
   );
+  const signalObserved = () => {
+    diagnostics.signal(
+      parentSignal.aborted ? 'PARENT_SIGNAL' : requestedSource,
+    );
+  };
+  if (signal.aborted)
+    diagnostics.signal(
+      parentSignal.aborted ? 'PARENT_SIGNAL' : requestedSource,
+      true,
+    );
+  else signal.addEventListener('abort', signalObserved, { once: true });
   const bounded = async <T>(
     promise: Promise<T>,
     deadline: number,
@@ -113,7 +133,12 @@ export const runOneCapacityLeg = async (
     check();
     await bounded(retention('before'), businessDeadline);
     check();
-    const result = await bounded(work.run(), businessDeadline);
+    const result = await bounded(work.run(), businessDeadline).catch(
+      (error: unknown) => {
+        diagnostics.journeyFailure(error, signal);
+        throw error;
+      },
+    );
     check();
     journeyPassed = true;
     receipt.metrics = summarizeOperations(
@@ -159,6 +184,7 @@ export const runOneCapacityLeg = async (
       }
     }
   } finally {
+    diagnostics.finallyEnter();
     clearTimeout(timer);
     stopping = true;
     // End business before resource closure, but keep the original absolute outer
@@ -170,29 +196,41 @@ export const runOneCapacityLeg = async (
     try {
       const health = work.health();
       receipt.health = health;
+      diagnostics.stopRequest('FINALLY');
       const closed = work.stop();
       const results = await bounded(
         Promise.allSettled([closed, ...pending]),
         cleanupDeadline,
       );
       const closedOk = results[0].status === 'fulfilled';
+      diagnostics.stopComplete(closedOk ? 'FULFILLED' : 'UNKNOWN');
       receipt.controls.cleanup = closedOk;
       receipt.controls.resourcesClosed = closedOk ? true : null;
       receipt.controls.settled = true;
     } catch {
+      diagnostics.stopComplete('UNKNOWN');
       receipt.controls.cleanup = false;
       receipt.controls.resourcesClosed = null;
       receipt.controls.settled = null;
     } finally {
-      stop();
+      stop('FINALLY');
     }
   }
+  signal.removeEventListener('abort', signalObserved);
   receipt.elapsedMs = Math.max(0, now() - started);
   receipt.timedOut = timedOut;
   receipt.runAborted =
     parentSignal.aborted || (!journeyPassed && signal.aborted);
   let final = finalizeCapacityReceipt(receipt, runtime.manifest, runtime.scope);
   try {
+    diagnostics.seal();
+    const diagnostic = diagnostics.snapshot();
+    await bounded(
+      runtime.journal.write('capacity-run-diagnostics', diagnostic),
+      cleanupDeadline,
+    );
+    if (diagnostics.snapshot().collection !== 'OBSERVED')
+      return capacityFailure();
     await bounded(
       runtime.journal.write(
         'capacity-result-candidate',

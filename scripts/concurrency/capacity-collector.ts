@@ -1,9 +1,11 @@
+import type { CapacityRunDiagnostics } from './capacity-run-diagnostics';
 import { monitorEventLoopDelay, performance } from 'node:perf_hooks';
 import { createCapacityHealth } from './capacity-health';
 import { createLinuxCapacityHealth } from './capacity-linux-health';
 import type { ExecutionProfileAuthority } from './execution-profile';
 import { capacityFailure, type CapacityMode } from './capacity-scope';
 interface CommonCollectorPorts {
+  diagnostics?: CapacityRunDiagnostics;
   host(signal: AbortSignal): Promise<unknown>;
   now?: () => number;
   loop?: () => number | null;
@@ -45,8 +47,12 @@ export const createCapacityCollector = (
     combined = AbortSignal.any([signal, controller.signal]);
   const notify = () => {
     if (!baselineReady || stopping || combined.aborted) return;
-    const status = health.snapshot(now()).validity;
-    if (status !== 'VALID') ports.onInvalid?.(status);
+    const snapshot = health.snapshot(now()),
+      status = snapshot.validity;
+    if (status !== 'VALID') {
+      ports.diagnostics?.collectorInvalid(snapshot);
+      ports.onInvalid?.(status);
+    }
   };
   const loop = () => {
     const value = ports.loop
