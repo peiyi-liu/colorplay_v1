@@ -39,7 +39,7 @@ def approved_inputs(revision,request_sha):
     raw=private_read(RUNTIME/"bootstrap-input.json",65536)
     require(digest(raw)==request_sha,"BOOTSTRAP_REQUEST_CHANGED")
     value=json.loads(raw)
-    require(value.get("schemaVersion")==1 and value.get("confirmation")in{H.target(H.FREE)["confirmation"],H.target(H.VM)["confirmation"]} and value.get("sourceRevision")==revision and value.get("repository")=="peiyi-liu/colorplay_v1","BOOTSTRAP_APPROVAL_INVALID")
+    require(value.get("schemaVersion")==1 and value.get("confirmation")in{H.target(H.FREE)["confirmation"],H.target(H.VM)["confirmation"],H.target(H.VM12)["confirmation"]} and value.get("sourceRevision")==revision and value.get("repository")=="peiyi-liu/colorplay_v1","BOOTSTRAP_APPROVAL_INVALID")
     target=H.request_target(value,os.environ)
     job=value["job"]
     require(job=={"runId":os.environ.get("GITHUB_RUN_ID"),"runAttempt":1,"jobName":"capacity-linux"} and os.environ.get("GITHUB_RUN_ATTEMPT")=="1" and os.environ.get("GITHUB_REPOSITORY")==value["repository"] and os.environ.get("GITHUB_JOB")==job["jobName"] and os.environ.get("GITHUB_SHA")==revision,"JOB_IDENTITY_CHANGED")

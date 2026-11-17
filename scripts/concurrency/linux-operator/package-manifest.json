@@ -82,9 +82,9 @@
       "sha256": "024dd5533b60075d7e5c275812a9833693086a853908865f6203a5ec4521d1b1"
     },
     "linux_host_contract.py": {
-      "bytes": 3073,
+      "bytes": 3474,
       "role": "OPERATOR",
-      "sha256": "684606d42232569741c9b227fb4b7fd3768157fe528087adc3ebbe1ac087bebb"
+      "sha256": "b5b7205e514c5cd85dae57eca1ce9adc14b69bf8d24fc461753112a51bea52d3"
     },
     "linux_owned_process.py": {
       "bytes": 11801,
@@ -117,9 +117,9 @@
       "sha256": "0cf7264f2fcfdc8453288c04c8e1ed8be3bf1a24ef8d4f423828894a474a099b"
     },
     "pin-execution-profile.py": {
-      "bytes": 10251,
+      "bytes": 10284,
       "role": "OPERATOR",
-      "sha256": "f2405c55dec104123ee388c4e3fca5d0be31cb93e54a524f737938597348c541"
+      "sha256": "2a685ce6b6ffe941eab0b94096073761f68629f260ff9dec03d647d3025532ca"
     },
     "prepare-capacity-leg.mjs": {
       "bytes": 10226,

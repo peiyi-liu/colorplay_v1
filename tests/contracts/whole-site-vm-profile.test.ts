@@ -4,14 +4,14 @@ import { syntheticLinuxRuntime } from './helpers/whole-site-linux-runtime';
 import { validateExecutionProfile } from '../../scripts/concurrency/execution-profile';
 import { sha256 } from '../../scripts/concurrency/local-runtime';
 
-const paid = () => {
+const paid = (cpu: 12 | 16 = 16) => {
   const value = structuredClone(syntheticLinuxRuntime().profile);
-  value.kind = 'LINUX_VM_16CPU_32G_V1';
+  value.kind = cpu === 12 ? 'LINUX_VM_12CPU_32G_V1' : 'LINUX_VM_16CPU_32G_V1';
   Object.assign(value.host, {
-    logicalCpu: 16,
+    logicalCpu: cpu,
     nominalMemoryBytes: 32 * 1024 ** 3,
     memTotalBytes: 31 * 1024 ** 3,
-    affinityCpus: Array.from({ length: 16 }, (_, index) => index),
+    affinityCpus: Array.from({ length: cpu }, (_, index) => index),
   });
   return value;
 };
@@ -60,7 +60,7 @@ it('loads paid/free runtime authority through actual fresh helper observations',
     await import('../../scripts/concurrency/execution-profile-runtime');
   const { ROOT_RUNTIME_DIRECTORY, linuxClosureNames } =
     await import('../../scripts/concurrency/root-helper-contracts');
-  for (const profile of [paid(), syntheticLinuxRuntime().profile]) {
+  for (const profile of [paid(), paid(12), syntheticLinuxRuntime().profile]) {
     const profileBytes = JSON.stringify(profile),
       profileSha = sha256(profileBytes);
     const files = Object.fromEntries(
@@ -119,48 +119,66 @@ it('loads paid/free runtime authority through actual fresh helper observations',
 it('rejects a four-CPU sample under the independently approved paid profile', async () => {
   const { createLinuxCapacityHealth } =
     await import('../../scripts/concurrency/capacity-linux-health');
-  const profile = paid(),
-    authority = validate(profile);
-  const node = {
-    pid: 123,
-    startTicks: '1',
-    uid: 1001,
-    bootIdSha256: profile.identity.bootIdSha256,
-  };
-  const sample = {
-    platform: 'linux',
-    executionProfileSha256: authority.sha256,
-    sampledAtMonotonicMs: 100,
-    instanceSha256: profile.identity.instanceSha256,
-    jobSha256: profile.identity.jobSha256,
-    generatorCgroupIdentitySha256: profile.host.cgroupIdentitySha256,
-    limitChainSha256: profile.host.limitChainSha256,
-    hostMemoryTotalBytes: profile.host.memTotalBytes,
-    hostLogicalCpu: 16,
-    node,
-    browser: null,
-    treeComplete: null,
-    browserProcessCount: 0,
-    nodeRssBytes: 1000,
-    nodePssBytes: 900,
-    browserTreeRssBytes: null,
-    browserTreePssBytes: null,
-    nodeCpuLifetimePercentOfOneCore: 1,
-    browserCpuLifetimePercentOfOneCore: null,
-    hostSwapUsedBytes: 0,
-    memoryPsiSomeAvg10Percent: 0,
-    memoryPsiFullAvg10Percent: 0,
-    hostOomKills: 0,
-    memoryAccounting: 'LINUX_SMAPS_ROLLUP_PSS_WITH_SEPARATE_RSS',
-    readOnly: true,
-  };
-  for (const cpu of [16, 4]) {
-    const health = createLinuxCapacityHealth('NODE_PROTOCOL', authority);
-    health.host({
-      startedAtNodeMs: 0,
-      completedAtNodeMs: 1,
-      sample: { ...sample, hostLogicalCpu: cpu },
-    });
-    expect(health.snapshot(1).hostSamples).toBe(cpu === 16 ? 1 : 0);
+  for (const profileCpu of [12, 16] as const) {
+    const profile = paid(profileCpu),
+      authority = validate(profile);
+    const node = {
+      pid: 123,
+      startTicks: '1',
+      uid: 1001,
+      bootIdSha256: profile.identity.bootIdSha256,
+    };
+    const sample = {
+      platform: 'linux',
+      executionProfileSha256: authority.sha256,
+      sampledAtMonotonicMs: 100,
+      instanceSha256: profile.identity.instanceSha256,
+      jobSha256: profile.identity.jobSha256,
+      generatorCgroupIdentitySha256: profile.host.cgroupIdentitySha256,
+      limitChainSha256: profile.host.limitChainSha256,
+      hostMemoryTotalBytes: profile.host.memTotalBytes,
+      hostLogicalCpu: 16,
+      node,
+      browser: null,
+      treeComplete: null,
+      browserProcessCount: 0,
+      nodeRssBytes: 1000,
+      nodePssBytes: 900,
+      browserTreeRssBytes: null,
+      browserTreePssBytes: null,
+      nodeCpuLifetimePercentOfOneCore: 1,
+      browserCpuLifetimePercentOfOneCore: null,
+      hostSwapUsedBytes: 0,
+      memoryPsiSomeAvg10Percent: 0,
+      memoryPsiFullAvg10Percent: 0,
+      hostOomKills: 0,
+      memoryAccounting: 'LINUX_SMAPS_ROLLUP_PSS_WITH_SEPARATE_RSS',
+      readOnly: true,
+    };
+    for (const cpu of [16, 12, 4]) {
+      const health = createLinuxCapacityHealth('NODE_PROTOCOL', authority);
+      health.host({
+        startedAtNodeMs: 0,
+        completedAtNodeMs: 1,
+        sample: { ...sample, hostLogicalCpu: cpu },
+      });
+      expect(health.snapshot(1).hostSamples).toBe(cpu === profileCpu ? 1 : 0);
+    }
+  }
+});
+
+it('accepts only the full twelve-CPU tuple, not mixed sixteen-CPU facts', () => {
+  for (const memory of [28, 31, 32]) {
+    const value = paid(12);
+    value.host.memTotalBytes = memory * 1024 ** 3;
+    expect(validate(value).profile.kind).toBe('LINUX_VM_12CPU_32G_V1');
+    Object.assign(value.host, { cpuQuotaUs: 1200000, cpuPeriodUs: 100000 });
+    expect(validate(value).profile.kind).toBe('LINUX_VM_12CPU_32G_V1');
+  }
+  for (const from of [12, 16] as const) {
+    const to = from === 12 ? 16 : 12;
+    const value = paid(from);
+    value.kind = paid(to).kind;
+    expect(() => validate(value)).toThrow('EXECUTION_PROFILE_INVALID');
   }
 });

@@ -54,7 +54,11 @@ const paidHost = z.strictObject({
   memTotalBytes: positive.min(28 * 1024 ** 3).max(32 * 1024 ** 3),
   affinityCpus: z.array(bytes).length(16),
 });
-const host = z.union([freeHost, paidHost]);
+const paid12Host = paidHost.extend({
+  logicalCpu: z.literal(12),
+  affinityCpus: z.array(bytes).length(12),
+});
+const host = z.union([freeHost, paidHost, paid12Host]);
 const identity = z.strictObject({
   jobSha256: executionProfileDigest,
   instanceSha256: executionProfileDigest,
@@ -87,6 +91,13 @@ export const linuxExecutionProfileSchema = z.discriminatedUnion('kind', [
     schemaVersion: z.literal(1),
     kind: z.literal('LINUX_VM_16CPU_32G_V1'),
     host: paidHost,
+    identity,
+    backend,
+  }),
+  z.strictObject({
+    schemaVersion: z.literal(1),
+    kind: z.literal('LINUX_VM_12CPU_32G_V1'),
+    host: paid12Host,
     identity,
     backend,
   }),

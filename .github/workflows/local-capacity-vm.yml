@@ -17,6 +17,8 @@ jobs:
     if: github.repository == 'peiyi-liu/colorplay_v1' && github.run_attempt == 1 && !github.event.deleted
     runs-on: colorplay-local-vm-20261118-a61f29
     timeout-minutes: 150
+    env:
+      COLORPLAY_LOCAL_HOST_PROFILE_KIND: LINUX_VM_12CPU_32G_V1
     defaults:
       run:
         shell: bash

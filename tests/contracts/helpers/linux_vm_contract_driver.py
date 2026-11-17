@@ -2,6 +2,7 @@
 import copy
 import importlib.util
 import json
+import os
 import sys
 from pathlib import Path
 import unittest
@@ -31,12 +32,13 @@ def request(kind=H.VM):
              'job': {'runId': '12345', 'runAttempt': 1, 'jobName': 'capacity-linux'},
              'instanceNonce': 'b' * 32, 'operatorPackageManifestSha256': 'c' * 64,
              'toolchainSha256': 'd' * 64}
-    if kind == H.VM:
+    if kind in (H.VM, H.VM12):
         value['provenance'] = H.provenance(kind)
     env = {'GITHUB_REPOSITORY': H.REPOSITORY, 'GITHUB_RUN_ID': '12345',
            'GITHUB_RUN_ATTEMPT': '1', 'GITHUB_JOB': 'capacity-linux', 'GITHUB_SHA': 'a' * 40,
            'GITHUB_REF': H.target(kind)['ref'], 'GITHUB_WORKFLOW_REF': H.target(kind)['workflowRef'],
            'GITHUB_EVENT_NAME': 'push'}
+    if kind == H.VM12:env[H.SELECTOR] = H.VM12
     return value, env
 
 
@@ -47,7 +49,7 @@ def admit(value, env):
 
 class Tests(unittest.TestCase):
     def test_paid_and_free_requests_and_hardware_boundaries(self):
-        for kind, cpu, boundaries in [(H.FREE, 4, (14, 16)), (H.VM, 16, (28, 32))]:
+        for kind, cpu, boundaries in [(H.FREE, 4, (14, 16)), (H.VM, 16, (28, 32)), (H.VM12, 12, (28, 32))]:
             value, env = request(kind)
             self.assertEqual(admit(value, env), value)
             for memory in boundaries:
@@ -59,6 +61,10 @@ class Tests(unittest.TestCase):
                         with self.assertRaises(C.BootstrapError):C.hardware(bad, kind)
         with self.assertRaises(C.BootstrapError):C.hardware(facts(), H.FREE)
         with self.assertRaises(C.BootstrapError):C.hardware(facts(4, 16), H.VM)
+        for expected in (H.FREE,H.VM,H.VM12):
+            for actual,cpu,memory in [(H.FREE,4,15),(H.VM,16,31),(H.VM12,12,31)]:
+                if actual != expected:
+                    with self.assertRaises(C.BootstrapError):C.hardware(facts(cpu,memory),expected)
 
     def test_paid_provenance_missing_wrong_and_crossed_rejected(self):
         for key in ('GITHUB_REF', 'GITHUB_WORKFLOW_REF', 'GITHUB_EVENT_NAME'):
@@ -89,107 +95,160 @@ class Tests(unittest.TestCase):
         self.assertEqual(H.target(H.FREE)['admissionMinutes'], 240)
 
     def test_actual_readiness_collector_uses_observed_paid_tuple(self):
-        fake = {'totalBytes': 31 * H.GIB, 'swapTotalBytes': 0, 'swapFreeBytes': 0}
-        def read(path, *_):
-            if path == '/sys/fs/cgroup/cgroup.controllers':return 'cpu memory pids'
-            if path == '/proc/123/cgroup':return '0::/owned'
-            if path == '/proc/vmstat':return 'oom_kill 0'
-            return 'synthetic'
-        with patch.object(R.platform, 'system', return_value='Linux'), patch.object(R.sys, 'platform', 'linux'), \
-             patch.object(R.platform, 'machine', return_value='x86_64'), patch.object(R.os, 'getpid', return_value=123), \
-             patch.object(R.os, 'cpu_count', return_value=16), patch.object(R.os, 'sched_getaffinity', return_value=set(range(16)), create=True), \
-             patch.object(R, 'boot_sha', return_value='a' * 64), patch.object(R, 'read', side_effect=read), \
-             patch.object(R, 'parse_stat', return_value={'pid': 123, 'startTicks': '42'}), \
-             patch.object(R, 'parse_meminfo', return_value=fake), patch.object(R, 'parse_psi', return_value={'observed': True}), \
-             patch.object(R, 'parse_smaps_rollup', return_value={'pssBytes': 100}), \
-             patch.object(R, 'cgroup_limit_chain', return_value=[]):
-            value = R.collect()
-        self.assertEqual(value['hostLogicalCpu'], 16)
-        self.assertEqual(value['executionAuthority'], 'NONE')
+        for cpu, memory in [(4,15),(12,31),(16,31)]:
+            fake = {'totalBytes': memory * H.GIB, 'swapTotalBytes': 0, 'swapFreeBytes': 0}
+            def read(path, *_):
+                if path == '/sys/fs/cgroup/cgroup.controllers':return 'cpu memory pids'
+                if path == '/proc/123/cgroup':return '0::/owned'
+                if path == '/proc/vmstat':return 'oom_kill 0'
+                return 'synthetic'
+            with patch.object(R.platform, 'system', return_value='Linux'), patch.object(R.sys, 'platform', 'linux'), \
+                 patch.object(R.platform, 'machine', return_value='x86_64'), patch.object(R.os, 'getpid', return_value=123), \
+                 patch.object(R.os, 'cpu_count', return_value=cpu), patch.object(R.os, 'sched_getaffinity', return_value=set(range(cpu)), create=True), \
+                 patch.object(R, 'boot_sha', return_value='a' * 64), patch.object(R, 'read', side_effect=read), \
+                 patch.object(R, 'parse_stat', return_value={'pid': 123, 'startTicks': '42'}), \
+                 patch.object(R, 'parse_meminfo', return_value=fake), patch.object(R, 'parse_psi', return_value={'observed': True}), \
+                 patch.object(R, 'parse_smaps_rollup', return_value={'pssBytes': 100}), \
+                 patch.object(R, 'cgroup_limit_chain', return_value=[]):
+                value = R.collect()
+            self.assertEqual(value['hostLogicalCpu'], cpu)
+            self.assertEqual(value['executionAuthority'], 'NONE')
 
     def test_actual_host_observation_ancestor_and_quota_guards(self):
-        ctx = {'generatorCgroupRelativePath': '/owned'}
-        for maximum, quota, succeeds in [(None, None, True), (28 * H.GIB, 1600000, True),
-                                          (28 * H.GIB - 1, None, False), (32 * H.GIB, 400000, False)]:
-            with patch.object(M, 'require_linux'), patch.object(M, 'boot_sha', return_value='a' * 64), \
-                 patch.object(M, 'checked_group', return_value=Path('/synthetic')), \
-                 patch.object(M, 'read_text', return_value='synthetic'), \
-                 patch.object(M, 'parse_meminfo', return_value={'totalBytes': 31 * H.GIB}), \
-                 patch.object(M.os, 'cpu_count', return_value=16), patch.object(M.os, 'sched_getaffinity', return_value=set(range(16)), create=True), \
-                 patch.object(M, 'cgroup_limit_chain', return_value=[{'memoryMaxBytes': maximum}]), \
-                 patch.object(M, 'effective_cpu_quota', return_value={'quotaUs': quota, 'periodUs': 100000 if quota else None}), \
-                 patch.object(M, 'cgroup_identity', return_value='b' * 64), patch.object(M, 'distro', return_value='ubuntu-24.04'):
-                if succeeds:
-                    host, _ = M.host_observation(ctx, allow_outside_group=True)
-                    self.assertEqual(H.profile_kind(host), H.VM)
-                else:
-                    with self.assertRaises(ValueError):M.host_observation(ctx, allow_outside_group=True)
+        for cpu, minimum, memory in [(4,14,15),(12,28,31),(16,28,31)]:
+            ctx = {'generatorCgroupRelativePath': '/owned'}
+            for maximum, quota, succeeds in [(None, None, True), (minimum * H.GIB, cpu * 100000, True),
+                                              (minimum * H.GIB - 1, None, False), (32 * H.GIB, 100000, False)]:
+                with patch.object(M, 'require_linux'), patch.object(M, 'boot_sha', return_value='a' * 64), \
+                     patch.object(M, 'checked_group', return_value=Path('/synthetic')), \
+                     patch.object(M, 'read_text', return_value='synthetic'), \
+                     patch.object(M, 'parse_meminfo', return_value={'totalBytes': memory * H.GIB}), \
+                     patch.object(M.os, 'cpu_count', return_value=cpu), patch.object(M.os, 'sched_getaffinity', return_value=set(range(cpu)), create=True), \
+                     patch.object(M, 'cgroup_limit_chain', return_value=[{'memoryMaxBytes': maximum}]), \
+                     patch.object(M, 'effective_cpu_quota', return_value={'quotaUs': quota, 'periodUs': 100000 if quota else None}), \
+                     patch.object(M, 'cgroup_identity', return_value='b' * 64), patch.object(M, 'distro', return_value='ubuntu-24.04'):
+                    if succeeds:
+                        host, _ = M.host_observation(ctx, allow_outside_group=True)
+                        self.assertEqual(H.profile_kind(host), H.kind_for_cpu(cpu))
+                    else:
+                        with self.assertRaises(ValueError):M.host_observation(ctx, allow_outside_group=True)
 
     def test_actual_paid_bootstrap_and_snapshot_bindings(self):
         from test_linux_local_bootstrap import Fixture as Bootstrap
         from test_snapshot_local_evidence import Fixture as Snapshot
         import local_snapshot_contracts as S
-        for factory in (Bootstrap, Snapshot):
-            with tempfile.TemporaryDirectory() as temp:
-                f = factory(Path(temp).resolve())
-                f.request.update(confirmation=H.target(H.VM)['confirmation'], provenance=H.provenance(H.VM))
-                _, environment = request()
-                f.environment.update(environment)
-                f.facts.update(logicalCpu=16, affinity=list(range(16)), memTotalBytes=31 * H.GIB)
-                f.path.write_text(json.dumps(f.request))
-                if factory is Bootstrap:
-                    self.assertEqual(f.execute()['services'], 8)
-                    self.assertIn('CPUQuota=400%', f.files['/run/systemd/system/colorplaybackendbbbbbbbbbbbb.slice'].decode())
-                else:
-                    f.profile['kind'] = H.VM
-                    f.profile['host'].update(logicalCpu=16, nominalMemoryBytes=32*H.GIB,
-                                             memTotalBytes=31*H.GIB, affinityCpus=list(range(16)))
-                    (f.runtime/'bootstrap-input.json').write_text(json.dumps(f.request))
-                    (f.runtime/'execution-profile.json').write_text(json.dumps(f.profile))
-                    f.plan['bootstrapRequestSha256'] = C.digest((f.runtime/'bootstrap-input.json').read_bytes())
-                    f.plan['executionProfileSha256'] = C.digest((f.runtime/'execution-profile.json').read_bytes())
-                    _, profile, _ = S.bindings(f.source, f.runtime, f.plan, f.environment)
-                    self.assertEqual(profile['kind'], H.VM)
-                    f.environment['GITHUB_WORKFLOW_REF'] = H.target(H.FREE)['workflowRef']
-                    with self.assertRaises(ValueError):S.bindings(f.source, f.runtime, f.plan, f.environment)
+        for kind in (H.VM, H.VM12):
+            cpu = H.target(kind)['cpu']
+            for factory in (Bootstrap, Snapshot):
+                with tempfile.TemporaryDirectory() as temp:
+                    f = factory(Path(temp).resolve())
+                    f.request.update(confirmation=H.target(kind)['confirmation'], provenance=H.provenance(kind))
+                    _, environment = request(kind)
+                    f.environment.update(environment)
+                    f.facts.update(logicalCpu=cpu, affinity=list(range(cpu)), memTotalBytes=31 * H.GIB)
+                    f.path.write_text(json.dumps(f.request))
+                    if factory is Bootstrap:
+                        self.assertEqual(f.execute()['services'], 8)
+                        self.assertIn('CPUQuota=400%', f.files['/run/systemd/system/colorplaybackendbbbbbbbbbbbb.slice'].decode())
+                    else:
+                        f.profile['kind'] = kind
+                        f.profile['host'].update(logicalCpu=cpu, nominalMemoryBytes=32*H.GIB,
+                                                 memTotalBytes=31*H.GIB, affinityCpus=list(range(cpu)))
+                        (f.runtime/'bootstrap-input.json').write_text(json.dumps(f.request))
+                        (f.runtime/'execution-profile.json').write_text(json.dumps(f.profile))
+                        f.plan['bootstrapRequestSha256'] = C.digest((f.runtime/'bootstrap-input.json').read_bytes())
+                        f.plan['executionProfileSha256'] = C.digest((f.runtime/'execution-profile.json').read_bytes())
+                        _, profile, _ = S.bindings(f.source, f.runtime, f.plan, f.environment)
+                        self.assertEqual(profile['kind'], kind)
+                        f.environment['GITHUB_WORKFLOW_REF'] = H.target(H.FREE)['workflowRef']
+                        with self.assertRaises(ValueError):S.bindings(f.source, f.runtime, f.plan, f.environment)
 
     def test_actual_sampler_projects_observed_paid_cpu_without_changing_pss(self):
         sys.path.insert(0, str(ROOT/'tests/contracts/helpers'))
         import root_sampler_failure_driver as F
         source = (ROOT/'scripts/concurrency/linux-operator/linux-host-sample.py').read_bytes()
-        ns, _, _ = F.load('host', source)
-        profile, _ = ns['private_json'](None)
-        profile['host']['logicalCpu'] = 16
-        result = ns['sample']({'mode':'NATIVE_BROWSER','nodePid':123,'browserPid':234})
-        self.assertEqual(result['hostLogicalCpu'], 16)
-        self.assertEqual(result['browserTreePssBytes'], 100)
+        for cpu in (12,16):
+            ns, _, _ = F.load('host', source)
+            profile, _ = ns['private_json'](None)
+            profile['host']['logicalCpu'] = cpu
+            result = ns['sample']({'mode':'NATIVE_BROWSER','nodePid':123,'browserPid':234})
+            self.assertEqual(result['hostLogicalCpu'], cpu)
+            self.assertEqual(result['browserTreePssBytes'], 100)
 
     def test_actual_calibration_accepts_paid_profile_before_original_kernel_port(self):
         path = ROOT/'scripts/concurrency/linux-operator/calibrate-linux-runtime.py'
         spec = importlib.util.spec_from_file_location('paid_calibration_fake', path)
         module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
-        host = {'logicalCpu':16,'nominalMemoryBytes':32*H.GIB,'memTotalBytes':31*H.GIB,
-                'affinityCpus':list(range(16)),'cpuQuotaUs':None,'cpuPeriodUs':None,'dedicatedGenerator':False}
-        observed = {'host':host,'identity':{},'backend':{}}
-        profile = {'schemaVersion':1,'kind':H.VM,**observed}
-        pin = {'sourceRevision':'a'*40,'result':'LOCAL_PROFILE_PINNED_PENDING_CALIBRATION',
-               'bootstrapRequestSha256':'b'*64,'executionProfileSha256':'c'*64,'helperClosureSha256':'d'*64}
-        sentinel = RuntimeError('SYNTHETIC_KERNEL_PORT')
-        pinner = SimpleNamespace(approved_inputs=lambda *_:None, write_once=lambda *_:None)
-        with tempfile.TemporaryDirectory() as temp:
-            runtime = Path(temp)/'whole-site-261115';runtime.mkdir()
-            with patch.object(module,'RUNTIME',runtime),patch.object(module,'require_linux'), \
-                 patch.object(module.sys,'argv',['calibrate','a'*40,'e'*64]), \
-                 patch.object(module,'private_json',side_effect=lambda p,*_: (pin,'e'*64) if p.name=='profile-pin-receipt.json' else (profile,'c'*64)), \
-                 patch.object(module,'load_pinner',return_value=pinner), \
-                 patch.object(module,'context',return_value={'binaries':{'node':{'path':'/synthetic/node'}}}), \
-                 patch.object(module,'observe_profile',return_value=observed), \
-                 patch.object(module,'kernel_permission_snapshot',return_value={}), \
-                 patch.object(module,'run_child',side_effect=sentinel) as child:
-                with self.assertRaises(RuntimeError) as caught:module.main()
-                self.assertIs(caught.exception,sentinel)
-                self.assertEqual(child.call_count,1)
-                self.assertEqual(module.PHASE,'NATIVE_BROWSER')
+        for cpu in (12,16):
+            host = {'logicalCpu':cpu,'nominalMemoryBytes':32*H.GIB,'memTotalBytes':31*H.GIB,
+                    'affinityCpus':list(range(cpu)),'cpuQuotaUs':None,'cpuPeriodUs':None,'dedicatedGenerator':False}
+            observed = {'host':host,'identity':{},'backend':{}}
+            profile = {'schemaVersion':1,'kind':H.kind_for_cpu(cpu),**observed}
+            pin = {'sourceRevision':'a'*40,'result':'LOCAL_PROFILE_PINNED_PENDING_CALIBRATION',
+                   'bootstrapRequestSha256':'b'*64,'executionProfileSha256':'c'*64,'helperClosureSha256':'d'*64}
+            sentinel = RuntimeError('SYNTHETIC_KERNEL_PORT')
+            pinner = SimpleNamespace(approved_inputs=lambda *_:None, write_once=lambda *_:None)
+            with tempfile.TemporaryDirectory() as temp:
+                runtime = Path(temp)/'whole-site-261115';runtime.mkdir()
+                with patch.object(module,'RUNTIME',runtime),patch.object(module,'require_linux'), \
+                     patch.object(module.sys,'argv',['calibrate','a'*40,'e'*64]), \
+                     patch.object(module,'private_json',side_effect=lambda p,*_: (pin,'e'*64) if p.name=='profile-pin-receipt.json' else (profile,'c'*64)), \
+                     patch.object(module,'load_pinner',return_value=pinner), \
+                     patch.object(module,'context',return_value={'binaries':{'node':{'path':'/synthetic/node'}}}), \
+                     patch.object(module,'observe_profile',return_value=observed), \
+                     patch.object(module,'kernel_permission_snapshot',return_value={}), \
+                     patch.object(module,'run_child',side_effect=sentinel) as child:
+                    with self.assertRaises(RuntimeError) as caught:module.main()
+                    self.assertIs(caught.exception,sentinel)
+                    self.assertEqual(child.call_count,1)
+                    self.assertEqual(module.PHASE,'NATIVE_BROWSER')
+
+    def test_twelve_selector_confirmation_and_unsupported_cpus_are_closed(self):
+        value, env = request(H.VM12)
+        self.assertEqual(admit(value, env), value)
+        for selector in [None, H.VM, H.FREE, 'UNKNOWN']:
+            bad = dict(env)
+            if selector is None:bad.pop(H.SELECTOR)
+            else:bad[H.SELECTOR] = selector
+            with self.assertRaises((ValueError, C.BootstrapError)):admit(value, bad)
+        free, free_env = request(H.FREE);free_env[H.SELECTOR] = H.VM12
+        with self.assertRaises((ValueError, C.BootstrapError)):admit(free, free_env)
+        sixteen, sixteen_env = request(H.VM)
+        self.assertEqual(admit(sixteen,sixteen_env),sixteen)
+        sixteen_env[H.SELECTOR] = H.VM12
+        with self.assertRaises((ValueError,C.BootstrapError)):admit(sixteen,sixteen_env)
+        for cpu in (0,8,24,True,12.0):
+            with self.assertRaises(ValueError):H.kind_for_cpu(cpu)
+        self.assertEqual(H.kind_for_cpu(12),H.VM12)
+        host={'logicalCpu':12,'nominalMemoryBytes':32*H.GIB,'memTotalBytes':31*H.GIB,
+              'affinityCpus':list(range(12)),'cpuQuotaUs':1200000,'cpuPeriodUs':100000,'dedicatedGenerator':False}
+        self.assertEqual(H.profile_kind(host),H.VM12)
+        for key, bad in [('cpuQuotaUs',1600000),('affinityCpus',[0]*12),('memTotalBytes',28*H.GIB-1),('memTotalBytes',32*H.GIB+1)]:
+            invalid={**host,key:bad}
+            with self.assertRaises(ValueError):H.profile_kind(invalid)
+
+    def test_actual_suite_allowlist_request_and_subprocess_forwarding(self):
+        from test_linux_local_bootstrap import Fixture
+        for kind in (H.FREE,H.VM,H.VM12):
+            _, env = request(kind)
+            env['UNAPPROVED_TEST_SECRET'] = 'synthetic-must-not-forward'
+            with patch.dict(os.environ,env,clear=True):
+                spec = importlib.util.spec_from_file_location('suite_forwarding_fake', ROOT/'scripts/concurrency/linux_suite_support.py')
+                suite = importlib.util.module_from_spec(spec); spec.loader.exec_module(suite)
+            self.assertNotIn('UNAPPROVED_TEST_SECRET',suite.ENV)
+            if kind == H.VM12:self.assertEqual(suite.ENV[H.SELECTOR],H.VM12)
+            else:self.assertNotIn(H.SELECTOR,suite.ENV)
+            with tempfile.TemporaryDirectory() as temp:
+                f = Fixture(Path(temp).resolve())
+                with patch.object(suite,'PARENT',f.parent),patch.object(suite,'TOOLS',f.parent/'tools'),patch.dict(os.environ,env,clear=True):
+                    path, approval, value = suite.create_bootstrap_request('a'*40)
+                self.assertEqual(H.request_target(value,suite.ENV)['kind'],kind)
+                self.assertEqual(C.parse_request(path.read_bytes(),approval,suite.ENV),value)
+            captured = []
+            def bounded(*args,**options):captured.append(options['env']);return b'synthetic'
+            with patch.object(suite,'module',return_value=SimpleNamespace(bounded=bounded)):
+                self.assertEqual(suite.run(['/synthetic/command']),b'synthetic')
+            self.assertEqual(captured,[suite.ENV])
 
 
 if __name__ == '__main__':

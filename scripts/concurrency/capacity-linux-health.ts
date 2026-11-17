@@ -25,7 +25,7 @@ export const linuxHostSampleSchema = z.strictObject({
   generatorCgroupIdentitySha256: sha,
   limitChainSha256: sha,
   hostMemoryTotalBytes: bytes.positive(),
-  hostLogicalCpu: z.union([z.literal(4), z.literal(16)]),
+  hostLogicalCpu: z.union([z.literal(4), z.literal(12), z.literal(16)]),
   node: pid,
   browser: pid.nullable(),
   treeComplete: z.boolean().nullable(),

@@ -44,11 +44,11 @@ def parse_request(raw, approval, environment):
     require(len(raw) <= 32768 and isinstance(approval, str) and
             DIGEST.fullmatch(approval) and digest(raw) == approval)
     decoded = decode(raw)
-    paid = decoded.get('confirmation') == H.target(H.VM)['confirmation']
+    paid = decoded.get('confirmation') in {H.target(H.VM)['confirmation'], H.target(H.VM12)['confirmation']}
     value = exact(decoded, {'schemaVersion', 'confirmation', 'sourceRevision',
         'repository', 'job', 'instanceNonce', 'operatorPackageManifestSha256', 'toolchainSha256'} | ({'provenance'} if paid else set()))
     require(type(value['schemaVersion']) is int and value['schemaVersion'] == 1 and
-            value['confirmation'] in {H.target(H.FREE)['confirmation'], H.target(H.VM)['confirmation']} and value['repository'] == REPOSITORY)
+            value['confirmation'] in {H.target(H.FREE)['confirmation'], H.target(H.VM)['confirmation'], H.target(H.VM12)['confirmation']} and value['repository'] == REPOSITORY)
     require(isinstance(value['sourceRevision'], str) and re.fullmatch('[a-f0-9]{40}', value['sourceRevision']))
     require(isinstance(value['instanceNonce'], str) and re.fullmatch('[a-f0-9]{32}', value['instanceNonce']))
     for name in ['operatorPackageManifestSha256', 'toolchainSha256']:

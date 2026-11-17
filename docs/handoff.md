@@ -3374,3 +3374,70 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root接受22Source+14tests：獨立VM16CPU32GiB／28–32實際與quota/affinity嚴格tuple，真job branch/workflow-ref/push binding；paid admission75/job150、free240/330與舊workflow保持。backend4CPU6GiB／8services／swap0及全部guard/SLO不動，45package／14closure／10scope helpers hash完整。唯一504行例外base502＋2binding，有理由避免無關refactor。
 - Final TS13/174（包含fake8／sampler6不另加），Linux86／snapshot19／prebusiness14／preparation8分組PASS，fulltype/lint/format/import/diff/static0；原FAIL全保。Root43pure交叉controls PASS、84records／36owned／2227protectedGit／原M42 59／Native36十inputs／operator原36unchanged／Original7真prefixpkglock核。唯一comment clarification已同輪close，未解0。packet4f104bd0df43bed1f14383071d6053d0965e004b1ac0973edfc242248f0c6978／Root8cb55cdc2916e870d91212a61d49ee351fcdab36e65c5ac7c1d7dcea06328d90，review docs/reviews/2026-11-18-vm-port-m45-review.md。
 - DO案件#13013994受理但未核准，無paidVM／新access／kernel／容量／push。Root下一只exact本機commit，待provider開放後核quote／newaccess／真ephemeral UID1001及API run/job/runner、一次fullLocal functional→15legs，無fakeGITHUB／不降低門檻。預算仍US5（已允實扣），過往Sandbox compute估0.0636724非帳單；Staging BLOCKED_LOCAL，60未證。OriginalWIP／G8停止85／cold evidence／HostedProduction真信NONE保。
+
+
+### 2026-11-18 — M45 exact本機版本固定（未push／VM額度待核）
+
+- Root exact40paths cachedcheck0／commitclean 9a7ea08893b974d50981559c9f10983efd492848／tree07f65a4a4ce015f6a031a72cd6d1a9b5718f1b25；Rootreceipt8cb55cdc2916e870d91212a61d49ee351fcdab36e65c5ac7c1d7dcea06328d90，M45唯一審查接受只離線工具。未push、新VM0／新access0／Native37未執行，不啟動已停止G8。此commit後狀態只append WIP，不report-only push。
+- 最新DO支援申請#13013994已成功受理，VM account tier尚未核准。下一步只讀案件確認供應；可用後才核新DO/SSH/ephemeralrunner必要權限與actualquote，整體實扣capUS5／新VM建立到刪除以3h計畫；kernel前置通過後，固定Source完整functional→15legs一次fail-stop、保加密cold證據再清理。40／60與Staging仍未驗，不把工具接受稱容量PASS。
+
+
+### 2026-11-18 — 本輪結束：M45已固定／DO#13013994仍Open無支援回覆
+
+- Root最後直接讀取正式案件detail：Status Open、Conversation History1，只有我方04:15AM申請，未見DO回覆／核准；沒有發第二則訊息／附件／關閉案件。兩入口control-panel無receipt與正式ticket已在原文澄清同一台申請；下一輪只讀該case與可用size，不新增重複申請。
+- 已完成離線移植／唯一審查／本機9a7ea08893b974d50981559c9f10983efd492848（未push）；60人實測／Staging整合仍待provider與真Local gate。既有Harness token不具Droplet權限，新DO/SSH/ephemeralrunner access未建，必要時在具體操作前一次核准；預算不再重問，實扣總capUS5。Vercel CLI60.1.3尚未升級，未來Staging整合前建議採官方新版，但目前不做全域安裝。
+
+
+### 2026-11-18 — owner續查額度：正式案件仍Open／原16CPU32GB不可選
+
+- Owner要求確認核准、可用則繼續60人，總實扣capUS5保持。Root刷新正式DO case#13013994：Status Open／History1，僅原04:15AM我方申請，未見provider回覆或核准。控制台刷新仍Tier1、Droplet0/3；單次確認SFO2 CPU-Optimized Regular Intel16vCPU32GB336/mo選項disabled，不能啟動該機型；不把未開放歸為預算不足，也未推定其他所有region的原因。
+- 本輪readonly與未提交草稿選項確認，VM0／newaccess0／support messages0／capacity未run／未新計費VM。沒有重送申請／改預算／開小機器替代／放寬門檻。Source仍9a7ea08893b974d50981559c9f10983efd492848（未push），工具已接受；60與Staging維持NOT_VERIFIED／BLOCKED_LOCAL，OriginalWIP／G8停止85／Production不動。
+- 下一個必要外部變化是DO開放所申請機型；收到回覆後先由Root直接查case及actualsize，再按既有3h與預算runbook接真ephemeralrunner及完整Local gate，不需owner轉交技術內容。
+
+
+### 2026-11-18 — 替代執行路徑說明／DO一般型大機器亦disabled
+
+- Owner詢問是否只能等官方。Root確認：僅DO目前路徑受限，測試不綁供應商；另一已開通且有quota的完整Ubuntu16CPU32GiB VM可沿用M45 profile／真ephemeralrunner，仍需actualquote/帳號quota/readiness／總capUS5。未選新供應商／未開帳號或資源／未授新access。
+- Root查SFO2 Basic Premium Intel Show all plans：2CPU8GB可選，但4CPU8/16GB、8CPU16/32GB皆disabled。Regular單次check未改checked state，原失敗保，未盲重試；一般型較大配置不能當作已可用fallback。沒有借小VM或stagger假冒60同步。
+- 官方核：AWS EC2 c7i.4xlarge為16vCPU32GiB，但帳號regionquota需實查，不保證新帳號立刻可開／價格未報。GitHub larger runner僅Team／Enterprise組織可用；x64 8CPU32GB0.022USD/min、16CPU64GB0.042/min（後者3h7.56USD超本預算；前者需另核8CPU profile，不直接用現有16CPU32）。Hetzner16CPU64GB同樣非現profile，帳號驗證/供應仍未核，不冒稱即開。
+- 向owner釐清是否已有AWS／GCP／Azure或其他已開通雲端帳號，只需平台名，不要傳金鑰。仍可做較小診斷／整合前準備，但不能替代完整60人瀏覽器門檻或解除Staging Local gate。DO#13013994保留不重送，所有既有WIP／G8／歷史cold／Production邊界保持。
+
+
+### 2026-11-18 — Google Cloud唯讀檢查：登入正常／未開計費
+
+- Owner要求確認Google Cloud。無GCP connector／本機gcloud，Root用既有Chrome登入唯讀進console；現有Gemini API專案未連結billing，帳單帳戶管理未列出任何此登入帳號可見的billing account。頁面僅提供US300免費試用入口，不能當作已啟用或已入帳；16CPU quota／Compute API狀態仍未核，沒有以開VM測權限。
+- Root只開啟免費試用說明入口並保private截圖.git/gcp-billing-not-enabled-20261118.png；初Gemini提示自動消失造成close selector no-match，未變更設定。沒有啟用trial／建立billing／接受條款／填付款資料／改IAM/API／建VM或新credential。GCP current-account facts在.git/gcp-account-readonly-20261118.json。不得把Gemini專案當空白測試環境或默許變更既有用途。
+- 下一步若owner選GCP，須本人完成身分／付款方式驗證與服務條款；Root之後先核billing類型／trial剩餘／CPU區域quota與actualprice，再決定是否能沿用16CPU32GB M45。官方trial不允請求quota increase，不能保證開通後16CPU可用，不自動升付費帳戶。總實扣capUS5保持；Source9a7ea08／未push／60未run／Staging BLOCKED_LOCAL／OriginalWIP／G8停止85／Production保持。
+
+
+### 2026-11-18 — GCP試用已生效／預算150／接續至現有Staging
+
+- Owner最新明授：總預算US150取代US5，能用GCP則繼續完整60人Local並整合部署到現有ColorPlay Staging。Google新trial project project-2cb97613-9124-4f2a-bef／My First Project；UI抵免額剩9,727、90天到2027-02-17，幣別未核，不能當USD9,727；未升付費。
+- Compute Engine API尚未啟用，page明示適用GCP服務條款。Root已提出一次action-time確認：在此新project啟API、隔離VM臨時SSH與colorplay_v1單次ephemeralrunner，PENDING；未clickEnable／newaccess／VM。Root同時先準備M46私有bootstrap，Source9a7ea08保持，不等額度而盲啟計費。
+- M46 brief docs/superpowers/plans/2026-11-18-gcp-bootstrap-m46-brief.md只private操作準備：精確新GCE身分／kernel／UID1001／Docker／officialrunner2.338.2 pin／無token，不登錄runner或Cloud呼叫，Root唯一審查。Staging部署在Local gate通過後再exactref/target核，Production不動；原Gemini API project不改。
+
+
+### 2026-11-18 — M46私有GCP bootstrap Root同輪接受／Staging前置核定
+
+- M46bootstrap249行／8fake-tempFS＋compile綠、Root5metadata fake controls綠；同輪HOME覆寫移除／canonical home owner guard兩項clear，未解0。Root核12records＋3歷史inverse／Source9a7ea08產品零改；packet1f04f705ad2a029fd2ce35b78b299deee7559de00394cf1b20af9b00de917f86／Root3ff6364d2b75494fef4bfeb366035aacc5a7a0dbfc82e5503f28e597c4b54762。review docs/reviews/2026-11-18-gcp-bootstrap-m46-review.md。僅OFFLINE允，未Native或Cloud。
+- Root新read：remoteStaging d92be82ba188c3bf6618f1d70cd92f63a4eabfac為9a7ea08祖先，隔離VM分支尚不存在。git push --dry-run成功不更新ref；本機gh CLI default token invalid僅該CLI路徑，osxkeychain Git auth與connectoradmin可用，不因此新增憑證。Vercel已核project prj_Ovywu34q8URtgOQCtc5WwCNFz7oo／colorplay-staging-web／staging.colorplayapp.com，現Production-target staging部署dpl_F8E8GnMrZ3pehib2gfJhqx9NSJZq對應d92be82，非Production產品project。
+- GCP現active trial／抵免9,727／90天到2027-02-17，billing currency仍未直接觀測，未把local$當USD。API enable／newtemp SSH／GitHub ephemeralrunner一次action-time確認仍待owner；不升paid。Source／VM0／newaccess0／capacity未run，總US150上限已授，無重問預算。接續仍以新VM短時與保全清理節省成本，不讓等待啟計費。
+
+
+### 2026-11-18 — owner當次核准Compute API與臨時存取
+
+- Owner明確回覆「允許啟用與建立這些臨時存取」：新的My First Project試用project啟Compute Engine API及適用GCP服務條款、本次隔離VM臨時SSH、colorplay_v1單次GitHub runner；測後清理新存取，總US150，不升paid。這取代此前PENDING，不再重問同一scope。
+- Root已在exactproject compute.googleapis.com頁點Enable一次，等待實際完成與quota；尚未宣稱成功、未建VM。M46 accepted私有bootstrap固定16CPU32GiB與UID1001／vendorhash，Source9a7ea08，後續仍先actualquote／kernel與真jobidentity；Local通過才部署現有Staging，Production禁。
+
+
+### 2026-11-18 — Compute API已啟用／trial全域CPU12，準備M47窄移植
+
+- Root觀測到exact新project建立VM表單，Compute API enable VERIFIED（第一次未見進度，排除nav/banner後第二次啟用進度並到create form）；尚未建立VM／SSH／runner。16CPU32GB草稿出現CPUs(all regions)全域0/12、需要16，報價約US0.47/hr，不能執行原16tuple。這是quota而非金額不足，不請求升paid／不重送支援。
+- Root採12CPU32GiB隔離profile窄移植M47，保留16/free與所有60人cold／後端4CPU6GiB／資源效能門檻，待同一implementer＋Root唯一審查；修改不是容量PASS。brief docs/superpowers/plans/2026-11-18-gcp-12cpu-m47-brief.md，Source仍9a7ea08未push；先離線完成，不等待燒VM。總US150、Local過才現有Staging、Production禁保持。
+
+
+### 2026-11-18 — M47 GCP12工具Root唯一審查接受／準備真VM
+
+- Root接受8Source＋3tests的獨立12CPU32GiB strict profile，保16/free、UID1001與所有60cold／backend4CPU6GiB／guard／SLO。workflow唯一explicit12selector／獨立confirmation，manifest45／43unchanged；私有bootstrap只兩CPU predicate、逆向精確M46，歷史不動。
+- Final TS9/99（含10pure不另加），Linux86／privatebootstrap8＋compile，type/lint/format/import/static/diff0。Root195交叉controls PASS，49records／11freeze／2255protectedGit／M45 84／M46 12及index／Native36十inputs／Original7prefixpkglock核；未解0。packet f524c13174478dbf89aca0899950f512e229ef8eb102c4290099c42e13f5afda，Root af9c01ef8c4bb83b146f89f3f8fa972939f969bb066b70490c8d81bec117df1e；review docs/reviews/2026-11-18-gcp-12cpu-m47-review.md。
+- Compute API已啟用，globalCPU0/12／uscentral1 CPU0/200；12CPU32GB100GB草稿Ubuntu24.04／無SA快照OpsAgentHTTP開孔、instanceSSH only／blockprojectkeys，3hSTOP＋1mingrace，不autodelete證據。約US0.39/hr基本費、總US150不升paid。VM仍0／未登錄runner／Source未push；下一exact本機commit後oneVM／真kernel+GitHubidentity／fullLocal，Local過才現有Staging，Production禁。

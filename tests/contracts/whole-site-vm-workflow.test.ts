@@ -20,6 +20,9 @@ describe('isolated VM workflow and Python host/provenance contract', () => {
     expect(text).toContain('codex/local-capacity-vm-20261118');
     expect(text).toContain('runs-on: colorplay-local-vm-20261118-a61f29');
     expect(text).toContain('timeout-minutes: 150');
+    expect(text).toContain(
+      'COLORPLAY_LOCAL_HOST_PROFILE_KIND: LINUX_VM_12CPU_32G_V1',
+    );
     expect(text).toContain('persist-credentials: false');
     expect(text).toContain('capacity-linux:');
     expect(text).not.toContain('secrets.');
