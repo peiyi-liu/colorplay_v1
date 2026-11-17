@@ -1,3 +1,4 @@
+import { readRegistrationSnapshotDiagnostics } from '../../scripts/concurrency/capacity-registration-final-diagnostics';
 import { EventEmitter } from 'node:events';
 import type { Server } from 'node:http';
 import type { Browser, BrowserServer } from '@playwright/test';
@@ -69,7 +70,7 @@ const setup = async () => {
     ),
     connect: vi.fn(() => Promise.resolve(browser as unknown as Browser)),
   };
-  return { scope, ports, context, browser, browserServer };
+  return { scope, ports, context, browser, browserServer, server };
 };
 describe('owned native launchServer/context/page lifecycle', () => {
   it('awaits exact scoped permission before page, uses launchServer host and never installs Playwright routes', async () => {
@@ -140,4 +141,69 @@ describe('owned native launchServer/context/page lifecycle', () => {
     await expect(runtime.close()).rejects.toThrow();
     expect(runtime.snapshot().resourcesClosed).toBe(false);
   });
+});
+
+it('captures startup and actor failures before stop without exposing original error text', async () => {
+  for (const reason of ['STARTUP', 'CREATE_ACTOR'] as const) {
+    const h = await setup(),
+      runtime = createNativeCapacityBrowser(
+        h.scope,
+        new AbortController().signal,
+        h.ports,
+      );
+    if (reason === 'STARTUP') {
+      h.ports.launchServer.mockRejectedValueOnce(Error('PRIVATE_START'));
+      await expect(runtime.start()).rejects.toThrow();
+    } else {
+      await runtime.start();
+      h.context.grantPermissions.mockRejectedValueOnce(Error('PRIVATE_ACTOR'));
+      await expect(runtime.createActor(0)).rejects.toThrow();
+    }
+    const before = readRegistrationSnapshotDiagnostics(runtime.snapshot());
+    expect(before.firstReason?.reason).toBe(reason);
+    await runtime.close();
+    expect(
+      readRegistrationSnapshotDiagnostics(runtime.snapshot()).firstReason
+        ?.reason,
+    ).toBe(reason);
+    expect(JSON.stringify(before)).not.toContain('PRIVATE');
+  }
+});
+it('records proxy error at its event before final snapshots and keeps abort distinct from stop', async () => {
+  const h = await setup(),
+    controller = new AbortController(),
+    runtime = createNativeCapacityBrowser(h.scope, controller.signal, h.ports);
+  await runtime.start();
+  h.server.emit('error', Error('PRIVATE_PROXY'));
+  expect(runtime.snapshot().available).toBe(false);
+  expect(
+    readRegistrationSnapshotDiagnostics(runtime.snapshot()).proxy?.firstReason
+      ?.reason,
+  ).toBe('PROXY_ERROR');
+  controller.abort();
+  await runtime.close();
+  expect(
+    readRegistrationSnapshotDiagnostics(runtime.snapshot()).firstReason?.reason,
+  ).toBe('ABORT');
+});
+it('preserves popup count and once-latches its actual cause ahead of explicit stop', async () => {
+  const h = await setup(),
+    runtime = createNativeCapacityBrowser(
+      h.scope,
+      new AbortController().signal,
+      h.ports,
+    );
+  await runtime.start();
+  const actor = await runtime.createActor(0);
+  h.context.pages = () =>
+    [actor.page, actor.page] as unknown as ReturnType<typeof h.context.pages>;
+  h.context.emit('page', actor.page);
+  expect(runtime.snapshot()).toMatchObject({
+    available: false,
+    unexpectedPopups: 1,
+  });
+  await runtime.close();
+  expect(
+    readRegistrationSnapshotDiagnostics(runtime.snapshot()).firstReason?.reason,
+  ).toBe('POPUP');
 });

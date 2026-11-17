@@ -1,3 +1,4 @@
+import { readRegistrationSnapshotDiagnostics } from '../../scripts/concurrency/capacity-registration-final-diagnostics';
 import { EventEmitter } from 'node:events';
 import type { BrowserContext, Page } from '@playwright/test';
 import { describe, it, expect, vi, afterEach } from 'vitest';
@@ -243,4 +244,128 @@ it('passively reports exact ARM and first matching request, isolates callback th
   ]);
   expect(observer.snapshot().available).toBe(true);
   await observer.dispose();
+});
+
+it.each([
+  [
+    'REQUEST_PARSE',
+    'Network.requestWillBeSent',
+    {
+      requestId: 'PRIVATE',
+      timestamp: -1,
+      request: { url: 'PRIVATE_SECRET', method: 'POST' },
+    },
+  ],
+  [
+    'RESPONSE_PARSE',
+    'Network.responseReceived',
+    { requestId: 'PRIVATE', response: { status: 99 } },
+  ],
+  [
+    'FINISHED_PARSE',
+    'Network.loadingFinished',
+    { requestId: 'PRIVATE', timestamp: -1 },
+  ],
+  [
+    'FAILED_PARSE',
+    'Network.loadingFailed',
+    { requestId: 'PRIVATE', canceled: 'PRIVATE_SECRET' },
+  ],
+] as const)(
+  'latches %s at its actual parser event and never replaces it during disposal',
+  async (reason, event, raw) => {
+    const h = await setup(),
+      observer = await createCapacityRequestObserver(
+        h.scope,
+        h.context as unknown as BrowserContext,
+        h.page as unknown as Page,
+        0,
+        h.signal.signal,
+      );
+    h.cdp.emit(event, raw);
+    const actual = observer.snapshot();
+    expect(actual.available).toBe(false);
+    const evidence = readRegistrationSnapshotDiagnostics(actual);
+    expect(evidence.firstReason?.reason).toBe(reason);
+    await observer.dispose();
+    expect(
+      readRegistrationSnapshotDiagnostics(observer.snapshot()).firstReason
+        ?.reason,
+    ).toBe(reason);
+    expect(JSON.stringify(evidence)).not.toMatch(/PRIVATE/);
+  },
+);
+it.each(['HTTP_STATUS', 'NETWORK_FAILURE', 'UNARMED_ACTION'] as const)(
+  'reports %s without weakening original counters or reading payload',
+  async (reason) => {
+    const h = await setup(),
+      observer = await createCapacityRequestObserver(
+        h.scope,
+        h.context as unknown as BrowserContext,
+        h.page as unknown as Page,
+        0,
+        h.signal.signal,
+      );
+    h.cdp.emit('Network.requestWillBeSent', {
+      requestId: 'PRIVATE',
+      timestamp: 1,
+      request: {
+        url:
+          h.scope.supabaseUrl +
+          (reason === 'UNARMED_ACTION' ? '/auth/v1/otp' : '/other'),
+        method: 'POST',
+      },
+    });
+    if (reason === 'HTTP_STATUS')
+      h.cdp.emit('Network.responseReceived', {
+        requestId: 'PRIVATE',
+        response: { status: 403 },
+      });
+    if (reason === 'NETWORK_FAILURE')
+      h.cdp.emit('Network.loadingFailed', {
+        requestId: 'PRIVATE',
+        canceled: false,
+      });
+    const sample = observer.snapshot(),
+      evidence = readRegistrationSnapshotDiagnostics(sample);
+    expect(sample.available).toBe(true);
+    expect(
+      reason === 'HTTP_STATUS'
+        ? sample.unexpectedHttpErrors
+        : sample.unexpectedNetworkFailures,
+    ).toBe(1);
+    expect(evidence.firstReason).toMatchObject({
+      reason,
+      endpoint: reason === 'UNARMED_ACTION' ? 'AUTH_OTP' : 'OTHER_API',
+      status: reason === 'HTTP_STATUS' ? 403 : null,
+    });
+    expect(JSON.stringify(evidence)).not.toContain('PRIVATE');
+    await observer.dispose();
+  },
+);
+it('distinguishes action timeout, parent abort and deliberate dispose with original timers drained', async () => {
+  for (const reason of ['ACTION_TIMEOUT', 'ABORT', 'DISPOSE'] as const) {
+    const h = await setup(),
+      observer = await createCapacityRequestObserver(
+        h.scope,
+        h.context as unknown as BrowserContext,
+        h.page as unknown as Page,
+        0,
+        h.signal.signal,
+      );
+    vi.useFakeTimers();
+    const token = observer.arm('otp_send'),
+      rejected = expect(token.finished).rejects.toThrow();
+    if (reason === 'ACTION_TIMEOUT') vi.advanceTimersByTime(15000);
+    if (reason === 'ABORT') h.signal.abort();
+    if (reason === 'DISPOSE') await observer.dispose();
+    await rejected;
+    expect(
+      readRegistrationSnapshotDiagnostics(observer.snapshot()).firstReason
+        ?.reason,
+    ).toBe(reason);
+    await observer.dispose();
+    expect(vi.getTimerCount()).toBe(0);
+    vi.useRealTimers();
+  }
 });

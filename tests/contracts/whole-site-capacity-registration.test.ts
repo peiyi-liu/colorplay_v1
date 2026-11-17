@@ -1,3 +1,4 @@
+import { registrationFinalGateSchema } from '../../scripts/concurrency/capacity-registration-final-diagnostics';
 import { createCapacitySendDiagnostics } from '../../scripts/concurrency/capacity-send-diagnostics';
 import type { CapacityRegistrationUi } from '../../scripts/concurrency/capacity-registration-ui';
 import type { CapacityRegistrationOracle } from '../../scripts/concurrency/capacity-registration';
@@ -333,4 +334,63 @@ it('actual registration retains custom operation counts and PASS while optional 
       collection: 'UNOBSERVED',
     }),
   );
+});
+
+it('actual completed cohort persists the exact final admission decision without changing operations', async () => {
+  const h = await setup();
+  const result = await runCapacityRegistration(h);
+  expect(result.report.result).toBe('PASS');
+  expect(h.ui.send).toHaveBeenCalledTimes(40);
+  expect(h.ui.verify).toHaveBeenCalledTimes(40);
+  expect(h.journal.write).toHaveBeenCalledWith(
+    'registration-final-gate',
+    expect.objectContaining({
+      authority: 'NON_AUTHORITY',
+      gate: 'ACCEPTED',
+      actorsExpected: 40,
+    }),
+  );
+});
+
+it('actual final runtime rejection preserves completed40 and persists short-circuit evidence', async () => {
+  const h = await setup();
+  const original = h.oracle.capture.getMockImplementation();
+  if (!original) throw Error('SYNTHETIC_IMPLEMENTATION_MISSING');
+  let completed = 0;
+  h.oracle.capture.mockImplementation(async (input) => {
+    const proof = await original(input);
+    if (input.stage === 'completed') completed++;
+    return proof;
+  });
+  h.runtime.snapshot = () => ({ available: completed < 40 });
+  const result = await runCapacityRegistration(h);
+  expect(result.report.result).toBe('FAIL');
+  expect(result.report.completedActors).toBe(40);
+  const gate = h.journal.write.mock.calls.find(
+    ([name]) => name === 'registration-final-gate',
+  )?.[1];
+  expect(gate).toMatchObject({
+    gate: 'REJECTED',
+    runtime: { available: false },
+  });
+  expect(
+    registrationFinalGateSchema
+      .parse(gate)
+      .actors.every(
+        (row) => row.collection === 'UNOBSERVED' && row.snapshot === null,
+      ),
+  ).toBe(true);
+  expect(h.ui.send).toHaveBeenCalledTimes(40);
+});
+it('actual final diagnostic writer failure cannot turn an otherwise completed cohort into PASS', async () => {
+  const h = await setup();
+  h.journal.write.mockImplementation((name) =>
+    name === 'registration-final-gate'
+      ? Promise.reject(new Error('PRIVATE_WRITE'))
+      : Promise.resolve(),
+  );
+  const result = await runCapacityRegistration(h);
+  expect(result.report.result).toBe('FAIL');
+  expect(result.report.completedActors).toBe(40);
+  expect(h.ui.verify).toHaveBeenCalledTimes(40);
 });

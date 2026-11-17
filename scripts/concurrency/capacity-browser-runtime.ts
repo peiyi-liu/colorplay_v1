@@ -1,3 +1,8 @@
+import {
+  createRegistrationFirstReason,
+  registrationPortDiagnostics,
+  registrationSnapshot,
+} from './capacity-registration-final-diagnostics';
 import type { SendPulse } from './capacity-send-diagnostics';
 import {
   generatorOperation,
@@ -53,6 +58,7 @@ export const createNativeCapacityBrowser = (
   ports?: NativeCapacityBrowserPorts,
   generator?: GeneratorObserver,
 ) => {
+  const diagnostic = createRegistrationFirstReason();
   const nativeSource = ports === undefined;
   const activePorts = ports ?? {
     proxy: (stop: AbortSignal) => createCapacityProxy(scope, stop),
@@ -152,6 +158,7 @@ export const createNativeCapacityBrowser = (
         );
         running();
       } catch {
+        diagnostic.note('STARTUP');
         failed = true;
         return capacityFailure();
       }
@@ -167,8 +174,10 @@ export const createNativeCapacityBrowser = (
         actorIndex < 0 ||
         actorIndex > 59 ||
         actors.has(actorIndex)
-      )
+      ) {
+        diagnostic.note('ACTOR_ADMISSION');
         return capacityFailure();
+      }
       const activeBrowser = browser;
       actors.add(actorIndex);
       const context = await generatorOperation(
@@ -182,11 +191,15 @@ export const createNativeCapacityBrowser = (
             serviceWorkers: 'block',
             acceptDownloads: false,
           }),
-      );
+      ).catch((error: unknown) => {
+        diagnostic.note('CREATE_ACTOR');
+        throw error;
+      });
       contexts.add(context);
       const pageListener = (page: Page) => {
         pages.add(page);
         if (context.pages().length > 1) {
+          diagnostic.note('POPUP');
           popups++;
           void observe(() => page.close());
         }
@@ -261,12 +274,14 @@ export const createNativeCapacityBrowser = (
           });
         return actor;
       } catch {
+        diagnostic.note('CREATE_ACTOR');
         failed = true;
         await closeContext(context).catch(() => undefined);
         return capacityFailure();
       }
     });
   const close = () => {
+    diagnostic.note('STOP');
     stopping = true;
     signal.removeEventListener('abort', abort);
     return (closing ??= (async () => {
@@ -292,12 +307,15 @@ export const createNativeCapacityBrowser = (
       if (
         results.some((result) => result.status !== 'fulfilled') ||
         pending.size !== 0
-      )
+      ) {
+        diagnostic.note('CLOSE');
         return capacityFailure();
+      }
       resourcesClosed = true;
     })());
   };
   const abort = () => {
+    diagnostic.note('ABORT');
     void close().catch(() => {
       failed = true;
     });
@@ -311,19 +329,32 @@ export const createNativeCapacityBrowser = (
       if (!server?.process().pid) return capacityFailure();
       return { nodePid: process.pid, browserPid: server.process().pid };
     },
-    snapshot: () => ({
-      mode: 'NATIVE_BROWSER' as const,
-      available:
-        !failed &&
-        !stopping &&
-        proxy?.snapshot().available === true &&
-        popups === 0,
-      contexts: contexts.size,
-      pages: pages.size,
-      unexpectedPopups: popups,
-      resourcesClosed,
-      pendingTasks: pending.size,
-    }),
+    snapshot: () =>
+      registrationSnapshot(
+        {
+          mode: 'NATIVE_BROWSER' as const,
+          available:
+            !failed &&
+            !stopping &&
+            proxy?.snapshot().available === true &&
+            popups === 0,
+          contexts: contexts.size,
+          pages: pages.size,
+          unexpectedPopups: popups,
+          resourcesClosed,
+          pendingTasks: pending.size,
+        },
+        () => {
+          const proxyDiagnostic = registrationPortDiagnostics(proxy);
+          return {
+            ...diagnostic.snapshot(),
+            proxy: {
+              collection: proxyDiagnostic.collection,
+              firstReason: proxyDiagnostic.firstReason,
+            },
+          };
+        },
+      ),
   };
 };
 export type NativeCapacityBrowser = ReturnType<

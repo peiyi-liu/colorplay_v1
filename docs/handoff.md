@@ -3486,3 +3486,32 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - Source四檔 early classic admission；89 Linux（含focused3）／privatev2八項PASS，Root15controls與53records、2267protected、69history、Native36十項核。FIFO非阻塞與明確Docker start兩項P2同輪關閉；未解0。packet20376f53／Root a663e2c317ba8c9b8c466d26e1dcdd211cb2a6bf2d78ee06c36d5353d974c5c9；review docs/reviews/2026-11-18-classic-store-vm2-m49-review.md。
 - VM2草稿b4c72e/12CPU32GB100GB/3hSTOP＋1mingrace/noSA，startup14373bb10abd7a7e4ae49d51c5d191fc06055c97b371ecdea676226730d5df67；尚未建立、classic實機UNKNOWN、容量未run。下一exact新Source提交、freshVM2核、單次新job，再完整Local與Staging；舊VM1停機保disk仍計費、US150不升paid/Production禁。
+
+
+### 2026-11-18 — M49 fresh VM2開機成功與新真job啟動
+
+- M49 exact9paths commit e2dbeb69a284c309dfafa291b24c0a44fb367b4e/tree fcdcb2420a55c7862cfa79c4b3462ab3541052e7，explicitGitHubURL normalFF push同隔離VMbranch（Verceldeploy=false），新run44182576471/job134390502411/push attempt1；舊job未rerun。
+- VM2 b4c72e/instance3132945892589532355/us-central1-f/35.253.193.137，21:42:04UTC建立、68s startup exit0。Google serial pin主機keyIB89gw72…與boot2659fb8f…；SSH核12CPU/31.335GiB/UID1001/systemdcgv2，Docker29.1.3 current classic overlay2、無driver-type、emptycontainers/volumes/images均實測。3hSTOP＋1mingrace/noSA/noHTTP保持。
+- courier4mockcontrols PASS，只mint1token/PAT不出本機，API核runner22/name/uniqueLabel。啟動器首次因root600APT檔用非root apt-config造成readonly驗證停止，svc未執行；只改sudo readonly驗證後官方svc install/start成功Restart=no。真API核新Source/job綁runner22已in_progress；functional/15legs未有PASS結論。
+- 下一持續守候第一原因failstop、實際下載age加密證據與檔案/schema核，再決定Local結果與Staging；VM1停機保disk仍計費/US150/不升paid/OriginalWIP/G8停85/Production禁。
+
+
+### 2026-11-18 — VM2 fresh40 INCONCLUSIVE／完整冷證據已保
+
+- 真run44182576471/job134390502411/Sourcee2dbeb6/runner22：functional15 PASS，匿名3/10/20 PASS；fresh40 INCONCLUSIVE，remaining12未升級。40sent/verified/completed/Authcreated均真、unknown0，sendBarrier40/40 VALID220.079ms、entry103.228ms，generator healthVALID/PSS4.275GiB/NodeRSS約440MiB/PSI0/swap0/OOM0；非generatorlimited。
+- 真artifact14373906806 ZIP43479485B/SHA05a1bc0017f603dbc81a1756e8839ac9d575737b970ca7a0e1e64ab8138d6da5，cipher394e61d54d80b08f4efab39bfd1ae99826e6f5575768185dfa2c0e0b333438c0、age驗成功；outer1387files216306266B/manifest781e387f1f16cca213f318761bd5761bc710cc398766cc014c7b8d5823f3d456。Rootcold核8services自然stop、snapshot1334files、2DB127tables census ORDER_ONLY equal、3volumeportablemetadata/allhash；未restore。資料runtime/gcp-vm2/downloads/files/，另25bootstraplogs31054B保；不刪唯一副本。
+- Rootbusiness recompute核3legs＋functional15，fresh40保原INCONCLUSIVE。40個planroot finalconfirmed精確0..39皆存在，故不能稱DBreadback失敗；同一agent readonly定位capacity-registration.ts cohort尾runtime/observer finalpredicate，該snapshot未落地、具體firstcause仍UNKNOWN。Journey44.8s錯誤在partialreadback finally後，retention錯誤更晚，不能誤當首因。Rootreceipt .git/gcp-vm2-root-first-review.json d65b23f4017de1de4250d22c294a75b5c0eb8ada9d8ba6d1cec23309945cd816。
+- job正常10min evidencehold中（不是重跑），待final/ephemeral清理後停VM2保disk節費；本輪不部署Staging。唯讀Staging仍d92be82，120remote/121local/remoteOnly0，唯一pending20261116000100/SHA4379d0ce…。Authhealth現v2.198.0、官方burst仍30，非Hosted實測FAIL；未Hostwrites/noProduction，US150不升paid。
+
+
+### 2026-11-18 — VM2 final停機與M50一次finalgate診斷
+
+- run44182576471最終completed/failure，attempt1/Sourcee2dbeb6；runner22已自動移除1、repo runners0。Google exactVM2 instance3132945892589532355確認已停止（正常1mingrace，未勾略過；reload後讀最終狀態），保100GB磁碟仍計費，無新VM開始。證據.git/gcp-vm2-stopped-20261118.jpg／Rootfinal 227160a5970457e960648f9834c8b307da950d04a566e7a23bac2358b3504e00。
+- Root採M50單次完整安全finalgate snapshot＋runtime/proxy/requestobserver firstreason，原predicate/counter/guards/門檻保持；原因UNKNOWN，不做無根據產品修法。brief docs/superpowers/plans/2026-11-18-registration-final-gate-m50-brief.md，同一agent離線實作、Root唯一review；非重跑舊job。
+- Root僅離線準備下次VM名稱c7d93a：M49accepted v2一處NAME替換inverseexact／8TempFS假測試PASS，startup86860551cf2de06aa216b06acfe947f56ef71bfd8ca4980fa10a43479e8fc617；未建立，不是Native證據，必須等M50review與exact新SHA。舊M49packet及VM1/VM2證據不改，US150不升paid/Production禁。
+
+
+### 2026-11-18 — M50 Root唯一review接受
+
+- 5Source/5tests凍結、47focused與fullchecks綠；Root45獨立controls PASS，36records/2267protected/M49原85rows/Original7+trueprefix核。未解finding0，packetd733891de7ed5d1916f515f82ac403daed71676fd316f74b2d29a50ee03b9e88／Root7c49bb653e40bd816f7994a725eeddb3aa5cb9dd007d40ac270ce33adc8280b0。registration504（原514）窄例外保原flow，其餘≤500；review docs/reviews/2026-11-18-registration-final-gate-m50-review.md。
+- 同一實際snapshot/原短路predicate＋事件firstreason，舊VM2 INCONCLUSIVE不回填，新Native未run。Root下一exact新Source後freshVM3 c7d93a/us-east1（us-central1 SSD200/250保舊disk，避免刪證據）同12CPU32GB100GB、3hSTOP+1m/noSA/Ops/HTTP，估價0.39/hr；尚未create。M49一處NAME替換868605…/8fake僅離線資格。VM2結果另docs/reviews/2026-11-18-gcp-vm2-fresh40-result.md；US150不升paid/Production禁。

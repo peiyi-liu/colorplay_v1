@@ -1,3 +1,4 @@
+import { observeRegistrationFinalGate } from './capacity-registration-final-diagnostics';
 import {
   observeSendBatch,
   observeSendPerform,
@@ -414,18 +415,7 @@ export const runCapacityRegistration = async (
         }
       }),
     );
-    if (
-      !runtime.snapshot().available ||
-      entry.actors.some((actor) => {
-        const sample = actor.observer.snapshot();
-        return (
-          !sample.available ||
-          sample.pendingAction ||
-          sample.unexpectedHttpErrors !== 0 ||
-          sample.unexpectedNetworkFailures !== 0
-        );
-      })
-    )
+    if (!(await observeRegistrationFinalGate(runtime, entry.actors, journal)))
       return capacityFailure();
     report.result = 'PASS';
     report.phase = 'complete_cohort';

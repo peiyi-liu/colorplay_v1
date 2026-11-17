@@ -1,3 +1,7 @@
+import {
+  createRegistrationFirstReason,
+  registerRegistrationDiagnostics,
+} from './capacity-registration-final-diagnostics';
 import { createServer, type Server } from 'node:http';
 import type { Duplex } from 'node:stream';
 import {
@@ -33,6 +37,7 @@ export const createCapacityProxy = async (
 ): Promise<CapacityProxyLease> => {
   requireCapacityScope(scope);
   if (signal.aborted) return capacityFailure();
+  const diagnostic = createRegistrationFirstReason();
   const server = factory(),
     sockets = new Set<Duplex>();
   let available = true,
@@ -58,12 +63,14 @@ export const createCapacityProxy = async (
     });
   });
   server.on('error', () => {
+    diagnostic.note('PROXY_ERROR');
     available = false;
     rejectStart();
   });
   const isStopped = () => stopping || signal.aborted;
   const close = () =>
     (closing ??= (async () => {
+      diagnostic.note('STOP');
       stopping = true;
       available = false;
       signal.removeEventListener('abort', abort);
@@ -77,6 +84,7 @@ export const createCapacityProxy = async (
         );
     })());
   const abort = () => {
+    diagnostic.note('ABORT');
     stopping = true;
     void close().catch(() => undefined);
   };
@@ -111,6 +119,7 @@ export const createCapacityProxy = async (
       }),
       close,
     };
+    registerRegistrationDiagnostics(proxy, diagnostic.snapshot);
     owned.add(proxy);
     return proxy;
   } catch {

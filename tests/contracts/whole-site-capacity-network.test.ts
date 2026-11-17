@@ -1,3 +1,4 @@
+import { registrationPortDiagnostics } from '../../scripts/concurrency/capacity-registration-final-diagnostics';
 import { EventEmitter } from 'node:events';
 import type { Server } from 'node:http';
 import { describe, it, expect, vi } from 'vitest';
@@ -103,4 +104,33 @@ describe('owned reject-only proxy and exact native bypass', () => {
     expect(server.listening).toBe(false);
     expect(server.close).toHaveBeenCalledTimes(1);
   });
+});
+
+it('once-latches actual proxy error and leaves the original snapshot shape/counters unchanged', async () => {
+  const h = await capacityFixture(),
+    scope = parseCapacityScope(h.input, h.proof),
+    server = fake(),
+    controller = new AbortController();
+  const proxy = await createCapacityProxy(
+    scope,
+    controller.signal,
+    () => server as unknown as Server,
+  );
+  expect(Object.keys(proxy.snapshot()).sort()).toEqual([
+    'available',
+    'forwardedRequests',
+    'rejectedRequests',
+  ]);
+  server.emit('error', Error('PRIVATE_PROXY'));
+  const before = registrationPortDiagnostics(proxy);
+  expect(before.firstReason?.reason).toBe('PROXY_ERROR');
+  controller.abort();
+  await proxy.close();
+  expect(registrationPortDiagnostics(proxy)).toEqual(before);
+  expect(proxy.snapshot()).toEqual({
+    available: false,
+    rejectedRequests: 0,
+    forwardedRequests: 0,
+  });
+  expect(JSON.stringify(before)).not.toContain('PRIVATE_PROXY');
 });

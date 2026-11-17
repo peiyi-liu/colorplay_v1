@@ -1,3 +1,8 @@
+import {
+  createRegistrationFirstReason,
+  registrationEndpoint,
+  registrationSnapshot,
+} from './capacity-registration-final-diagnostics';
 import { performance } from 'node:perf_hooks';
 import type { SendPulse } from './capacity-send-diagnostics';
 import { z } from 'zod';
@@ -77,7 +82,9 @@ export const createCapacityRequestObserver = async (
   } catch {
     return capacityFailure();
   }
+  const diagnostic = createRegistrationFirstReason();
   const records = new Map<string, Action | null>();
+  const kinds = new Map<string, ReturnType<typeof registrationEndpoint>>();
   let current: Action | null = null,
     generation = 0,
     disposed = false,
@@ -108,17 +115,22 @@ export const createCapacityRequestObserver = async (
       /* Passive only. */
     }
   };
-  const terminate = (action: Action | null) => {
+  const terminate = (
+    action: Action | null,
+    code: Parameters<typeof diagnostic.note>[0] = 'ACTION_CANCEL',
+  ) => {
     if (action && !action.done) {
       action.done = true;
       clearTimeout(action.timer);
       action.reject();
       notify(action, 'INVALID');
+      diagnostic.note(code, action.phase);
     }
   };
-  const fail = () => {
+  const fail = (code: Parameters<typeof diagnostic.note>[0]) => {
     available = false;
-    terminate(current);
+    terminate(current, code);
+    diagnostic.note(code, current?.phase ?? null);
   };
   const matches = (
     phase: CapacityActionPhase,
@@ -157,7 +169,7 @@ export const createCapacityRequestObserver = async (
     try {
       const value = incoming.parse(input);
       if (records.size >= 2048) {
-        fail();
+        fail('RECORD_LIMIT');
         return;
       }
       const action =
@@ -165,17 +177,31 @@ export const createCapacityRequestObserver = async (
           ? current
           : null;
       records.set(value.requestId, action);
+      kinds.set(
+        value.requestId,
+        registrationEndpoint(
+          value.request.url,
+          scope.appUrl,
+          scope.supabaseUrl,
+        ),
+      );
       if (
         !action &&
         capacityActionPhases.some(
           (phase) => phase !== 'entry' && matches(phase, value),
         )
-      )
+      ) {
         unexpectedNetworkFailures++;
+        diagnostic.note(
+          'UNARMED_ACTION',
+          current?.phase ?? null,
+          kinds.get(value.requestId),
+        );
+      }
       if (action) {
         action.requests++;
         if (action.requests !== 1) {
-          terminate(action);
+          terminate(action, 'DUPLICATE_ACTION');
           return;
         }
         action.started = value.timestamp * 1000;
@@ -187,21 +213,29 @@ export const createCapacityRequestObserver = async (
         );
       }
     } catch {
-      fail();
+      fail('REQUEST_PARSE');
     }
   };
   const response = (input: unknown) => {
     try {
       const value = actionResponseSchema.parse(input);
       const action = records.get(value.requestId);
-      if (value.response.status >= 400) unexpectedHttpErrors++;
+      if (value.response.status >= 400) {
+        unexpectedHttpErrors++;
+        diagnostic.note(
+          'HTTP_STATUS',
+          action?.phase ?? null,
+          kinds.get(value.requestId),
+          value.response.status,
+        );
+      }
       if (action && !action.done && action.generation === generation) {
         action.status = value.response.status;
         if (value.response.status < 200 || value.response.status >= 300)
-          terminate(action);
+          terminate(action, 'ACTION_RESPONSE');
       }
     } catch {
-      fail();
+      fail('RESPONSE_PARSE');
     }
   };
   const finished = (input: unknown) => {
@@ -209,6 +243,7 @@ export const createCapacityRequestObserver = async (
       const value = actionFinishedSchema.parse(input),
         action = records.get(value.requestId);
       records.delete(value.requestId);
+      kinds.delete(value.requestId);
       if (action && !action.done && action.generation === generation) {
         if (
           signal.aborted ||
@@ -218,7 +253,7 @@ export const createCapacityRequestObserver = async (
           action.requests !== 1 ||
           value.timestamp * 1000 < action.started
         ) {
-          terminate(action);
+          terminate(action, 'ACTION_FINISH');
           return;
         }
         action.done = true;
@@ -235,18 +270,23 @@ export const createCapacityRequestObserver = async (
         });
       }
     } catch {
-      fail();
+      fail('FINISHED_PARSE');
     }
   };
   const failed = (input: unknown) => {
     try {
       const value = actionFailedSchema.parse(input);
       const action = records.get(value.requestId);
+      const kind = kinds.get(value.requestId);
       records.delete(value.requestId);
-      if (action) terminate(action);
-      else if (value.canceled !== true) unexpectedNetworkFailures++;
+      kinds.delete(value.requestId);
+      if (action) terminate(action, 'ACTION_NETWORK_FAILURE');
+      else if (value.canceled !== true) {
+        unexpectedNetworkFailures++;
+        diagnostic.note('NETWORK_FAILURE', null, kind);
+      }
     } catch {
-      fail();
+      fail('FAILED_PARSE');
     }
   };
   const listeners = [
@@ -257,19 +297,24 @@ export const createCapacityRequestObserver = async (
   ] as const;
   for (const [event, listener] of listeners) cdp.on(event, listener);
   const closed = () => {
-    fail();
+    fail('PAGE_CLOSED');
+  };
+  const aborted = () => {
+    fail('ABORT');
   };
   const isStopped = () => signal.aborted || disposed;
   page.on('close', closed);
-  signal.addEventListener('abort', closed, { once: true });
+  signal.addEventListener('abort', aborted, { once: true });
   const dispose = async () => {
     disposed = true;
     available = false;
+    diagnostic.note('DISPOSE');
     terminate(current);
     for (const [event, listener] of listeners) cdp.off(event, listener);
     page.off('close', closed);
-    signal.removeEventListener('abort', closed);
+    signal.removeEventListener('abort', aborted);
     records.clear();
+    kinds.clear();
     try {
       if (!page.isClosed()) await cdp.detach();
     } catch {
@@ -281,6 +326,7 @@ export const createCapacityRequestObserver = async (
     if (isStopped()) return capacityFailure();
     available = true;
   } catch {
+    diagnostic.note('NETWORK_ENABLE');
     await dispose().catch(() => undefined);
     return capacityFailure();
   }
@@ -293,8 +339,10 @@ export const createCapacityRequestObserver = async (
         (current && !current.done) ||
         generation >= 16 ||
         !capacityActionPhases.includes(phase)
-      )
+      ) {
+        diagnostic.note('ARM_INVALID', current?.phase ?? null);
         return capacityFailure();
+      }
       generation++;
       let resolve: (value: CapacityActionObservation) => void = () => undefined,
         reject: () => void = () => undefined;
@@ -315,7 +363,7 @@ export const createCapacityRequestObserver = async (
         resolve,
         reject,
         timer: setTimeout(() => {
-          terminate(action);
+          terminate(action, 'ACTION_TIMEOUT');
         }, 15000),
       };
       current = action;
@@ -328,13 +376,17 @@ export const createCapacityRequestObserver = async (
         },
       };
     },
-    snapshot: () => ({
-      available: available && !disposed && !signal.aborted,
-      actionsCompleted,
-      unexpectedHttpErrors,
-      unexpectedNetworkFailures,
-      pendingAction: current !== null && !current.done,
-    }),
+    snapshot: () =>
+      registrationSnapshot(
+        {
+          available: available && !disposed && !signal.aborted,
+          actionsCompleted,
+          unexpectedHttpErrors,
+          unexpectedNetworkFailures,
+          pendingAction: current !== null && !current.done,
+        },
+        diagnostic.snapshot,
+      ),
     dispose,
   };
 };
