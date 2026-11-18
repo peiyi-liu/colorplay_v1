@@ -118,11 +118,16 @@ const lifecycle = async (
     participantCount: failure === 'PARTICIPANT_COUNT' ? 1 : 2,
     answeredCount: answered,
     isHost: host,
+    questionDisplay: 'device',
     stateVersion: 1,
     question: {
       questionId: 'question',
+      position,
       prompt: '合成題目',
-      publicOptions: [{ id: 'option', text: '合成' }],
+      publicOptions: [
+        { id: 'option', text: '合成' },
+        { id: 'other-option', text: '合成二' },
+      ],
     },
   });
   vi.spyOn(liveApi, 'createLiveRepository').mockImplementation(
@@ -249,6 +254,7 @@ const lifecycle = async (
             filter: () => self,
             first: () => self,
             nth: () => self,
+            count: () => Promise.resolve(2),
             getByRole: (_role: string, option?: { name?: string }) =>
               locator(labels[option?.name ?? ''] ?? stage),
             getByLabel: () => locator('HOST_CODE'),
@@ -516,8 +522,14 @@ vi.mock('@playwright/test', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@playwright/test')>();
   return {
     ...actual,
-    expect: (locator: { waitFor: (options: unknown) => Promise<void> }) => ({
+    expect: (locator: {
+      waitFor: (options: unknown) => Promise<void>;
+      count(): Promise<number>;
+    }) => ({
       toBeVisible: (options?: unknown) => locator.waitFor(options),
+      toHaveCount: async (value: number) => {
+        expect(await locator.count()).toBe(value);
+      },
     }),
   };
 });

@@ -146,7 +146,10 @@ describe('actual dynamic Native Live start flow', () => {
       opened = false,
       answering = false;
     const sessionId = '11000000-0000-4000-8000-000000000001';
-    const choices = [{ id: 'option', text: '合成' }];
+    const choices = [
+      { id: 'option', text: '合成' },
+      { id: 'other-option', text: '合成二' },
+    ];
     const baseLocator = {
       selectOption: () => Promise.resolve(),
       click: () => Promise.resolve(),
@@ -266,9 +269,11 @@ describe('actual dynamic Native Live start flow', () => {
               questionCount: 20,
               participantCount: 2,
               isHost: client === host,
+              questionDisplay: 'device',
               stateVersion: 1,
               question: {
                 questionId: 'question',
+                position: 1,
                 prompt: '合成題目',
                 publicOptions: choices,
               },

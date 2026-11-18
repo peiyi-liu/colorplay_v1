@@ -1,0 +1,31 @@
+# VM18 — 真拒絕檢查通過，第一題screen_only工具契約不一致
+
+結論：functional15 PASS；capacity5/15 PASS（匿名3/10/20、真首次註冊40/60）。既有帳號3人完整遊戲 INCONCLUSIVE，後九未執行。M73拒絕修正已在本輪過關，第一題工具卻要求screen_only學生不得收到的題幹。原結果保留，不代表60全站／Staging／phase通過。
+
+## 實際測試
+
+Sourcee9fa16a1bc4088000ec658eee5f57aab01819012/tree45d246631de54ca53f11e54e369b7ddf2c656fc2；run44356453255/job134985739469/attempt1/runner38。VM cp-capacity-20261118-f18c96/7607627015529717925/europe-west1-b，boot1bf1aab67fd6e03d2cee1207c17a2b068fb95810ac14377f197b179fda020bd2；12CPU32G/IceLake/原backend4CPU6GiB。
+
+functional wsb-261118-39c2a3b565ff；planwsc-261118-a272f937842c/106identities。fresh40 wcr-261118-254713d8293a全40AuthCreated/completed、entry63.108/send123.76ms；fresh60 wcr-261118-6159c4626555全60、entry186.532/send104.634ms。均原250ms門檻內、ownershipKnowntrue、complete_cohort/mailboxClosed/SLOPASS；M72準備closed/pending0，沒有重分類舊run。
+
+## 首個失敗與模式證據
+
+existing3 wcr-261118-099ddcbaaf3a：M73 OUTSIDER_REFUSAL entered1/returned1/failed0，host start/dialog/question1intent通過。兩學生QUESTION_STATE／QUESTION_COUNT returned後，QUESTION_OPTIONS首fail ordinal76(actor2)/81(actor1)，尚未進PROMPT_VISIBLE。真Live檔e7caf43e40ecb10542b20aa707f9de5b2424cbbb765c82b2c8d3b5fce09b560f，Root獨立SSH與下載bytes同。
+
+Source確定：spec05預設screen_only；canonicalRPC剝非host題幹及選項文字，沒有等openAt才給題幹的分支。functional學生依題號／答案按鈕；capacity則無條件要求q.prompt。Root從本輪原owned session的logicaldump三表解碼：question_display=screen_only、current_position1/statequestion_open，兩participants statusactive/eligible_from_position1。已排除本輪waiting-room資格條件；未記錄raw wire，實際q欄位仍UNKNOWN，不捏造payload。
+
+Root讀取 .git/gcp-vm18-root-dump-mode-read-v3.json：固定原DBimage、128MB/0.25CPU、無網路readonly --rm pg_restore --file=-只解碼既有dump，不連DB、不restore或重啟八服務。helperremoved、八服務仍stopped、volcensus不變，dumpSHA cf29cb12261a9cb86f41cff9b1d6e21c150a82755fb592874e0c72ed54f57f1f與本機下載相同。v1誤把schema寫進-t得到空選擇FAIL，查PostgreSQL17官方文件後v2拆schema正確但Root猜activity_id錯FAIL；canonical核live_activity_id才v3PASS，原失敗保留。這是輔助讀取工具，不是新Native／wire證據。
+
+firstJourneyFailure27868.399297ms/signalAbortedfalse、elapsed28552.597353ms/timedOutfalse/lasthealthVALID，七parentclosures firstCause null/residue0。generic timeout reason不構成已證deadline或網站容量失敗。
+
+## 實際保存與關機
+
+artifact14453844670 ZIP44765800B/SHA196d4c1a4ea1f273ecaf867d98f0ed734bb40ae547d3727ed89816ce53c0c8d3；cipher44765662B/SHA09225a582b07cb668d7c618c79b10ac2de54d209bfaa4187b2ca4128781658e2。Root真age2293files221821456B、outer91af44db26e41abff0e5cebaa7fcbb754fec7ba2e61121ff3bf43dfe4a826130；cold2232/snapshot4ada32bcbcc872351fa4e89d92a622e9b496526bf22349d02dbca68ba3322bf2、八stop與角色proof、兩DB127表31roles、三vol所有filehash/portablemetadata核。runtime2080datafiles/34publicreconstructible/metadataonly0、25bootstraplogs31092B；未restore。
+
+Rootactualoutputs .git/gcp-vm18-root-cold-business-reviews.json、七inputs first-projection、十inputs closure-projection；final8717fa5b764c9c3015b7c1257a3864ccb86bac63064a15cf235637951055dd42。原hold17:37→17:47UTC自然完成，job17:47:03failure／ephemeralrunner0。Root明核skipGracefalse只送一次正常Stop，fresh inventory最終十八台strictSTOPPED、100GBretain。沒有永久刪除；VM2–15清理仍候Owner。
+
+## 下一步與限制
+
+M74只修mode-aware容量工具，保screen_only預設、device題幹、waiting room／position／privacy負向、20題／20s與所有SLO；Root唯一review後再保存新Source，fresh12CPU VM19單次原matrix，不重跑原run。19僅offline g19d07/europe-west2-b提案（舊europe-west1已200GB保留磁碟）、startup2bb17357032c7a61db959e8a9d877735176b2154da6a2e3803a03292dd450b7b，8bootstrap+4courierfakePASS；尚未Create，quota/stock未知。
+
+US150/noPaid、actualconfigured基本預留34.8208非invoice/next2.12 proposal36.9408；18磁碟1800GB估195/月持續計費，另IP/egress/tax。Original G8 STOPPED85，Hosted0，Production禁止。M74provenance樣本另為歷史只讀，不是新adapter或授權。

@@ -1,3 +1,8 @@
+import {
+  capacityLiveStudentQuestion as studentQuestion,
+  waitCapacityLiveStudentPrompt as waitStudentPrompt,
+  waitCapacityLiveStudentOptions as waitOptions,
+} from './capacity-live-student-question';
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import {
@@ -336,29 +341,24 @@ export const runCapacityLiveGame = async (
             assertFunctionalLiveCount(state, questionCount);
             trace.returned();
             trace.enter('QUESTION_OPTIONS', position);
-            const q = state.question;
-            if (!q?.prompt || !q.publicOptions.length) return capacityFailure();
+            const ready = studentQuestion(state, position, questionCount),
+              q = ready.question;
             const choice =
-                q.publicOptions[index % q.publicOptions.length] ??
-                capacityFailure(),
-              prompt = q.prompt;
+              q.publicOptions[index % q.publicOptions.length] ??
+              capacityFailure();
             trace.returned();
             check();
             trace.enter('ANSWER_MEASURE', position);
             await a.measure('submit_answer', 'warm', async () => {
               if (a.page) {
                 trace.enter('PROMPT_VISIBLE', position);
-                await expect(
-                  a.page.getByText(prompt, { exact: true }).first(),
-                ).toBeVisible({ timeout: 20000 });
+                await waitStudentPrompt(a.page, ready, signal);
                 trace.returned();
                 trace.enter('OPTIONS_VISIBLE', position);
                 const buttons = a.page
                   .getByRole('group', { name: '答案選項' })
                   .getByRole('button');
-                await buttons
-                  .first()
-                  .waitFor({ state: 'visible', timeout: 20000 });
+                await waitOptions(buttons, q.publicOptions.length, signal);
                 trace.returned();
                 check();
                 trace.enter('ANSWER_RESPONSE', position);
