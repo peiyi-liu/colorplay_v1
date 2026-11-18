@@ -3974,3 +3974,42 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 
 - M67四owned一輪0finding，49files843PASS/fullchecks0；final6acd7b89846449164ad5d5ed273636cd666f429ddf3a20d9dcde12ae798b9ae4，Rooteb90673673732482b359f7c7c127faa678c02ba8e234ff35edba42f8111b7712。Root真核42records/四Source/2329protected/M66五/七WIP/Original九prefix/VM13六/五controls/487history。game僅import+await，原guard/window/30reads/15s/SLO不變，舊test bodies/assertions保。
 - Root自有Chrome delayed40ms與0/0各30POST/30success；錯班/null/error首輪bounded拒絕。修heading-only誤判，非VM13唯一原因／Native PASS。下一最終組合commit後fresh VM14，未Create／十三舊全停／US150/noPaid／Hosted0/Production禁。Staging/Native ref只讀重核仍d92be82/e46562c；帳務trial/net0顯示但幣別UNKNOWN，無升級。
+
+
+### 2026-11-18 — 最終組合84ec24b／fresh VM14單次Native啟動
+
+- exact24paths保存84ec24bae25396656af705b274c73fa5f78c7ad2/tree8d7eefe62b4f37b14b4e172abcbefa9fc4d6e516/parent e46562c；M57/M65七＋M66五＋M67四Source/test及八Root文件。49/843/fullchecks0/Root唯一reviews接受，normalFF既定Localbranch，Vercel optout false；無Staging/Production merge/deploy。
+- VM14 cp-capacity-20261118-b14e92/6449182320419153949/us-west4-a，created12:15:46UTC；normalAutoStop實際15:14:50UTC（不以created+3h推算）。N2custom12/32 actual/minIceLake/Ubuntu24.04x64/新100GBretain/3h normalSTOP+1min/noRestart/noSA/Ops/snapshot/HTTP，十三舊VM fresh盤點全STOPPED、repo runner0後才register。盤點初guard誤用innerText漏img aria狀態安全停，改read actual accessible stopped labels後13核符，未建立第二台。
+- Google雙相同收據/獨立hostblock與strictSSH核；IP136.85.143.80雖與13相同，instance/boot/hostkey不同，新known_hosts不共用。boot1fab130f188eafe10c21830ac02991ec56855fce5377c4b2c573bf2cbcf3c93e。runner34 ephemeral/disableUpdate/officialsvc Restartno/MainPID3555，APT0a138/classicDocker29.1.3空store前核。run44301879660/job134793408280/attempt1已in_progress，不rerun。
+- 累計configured maxbase reserve26.3408非invoice（exclIP/egress/tax），14disks1400GB約150/月仍計費，US150/noPaid。trial帳務顯示net0但幣別UNKNOWN，不冒稱USD0實際用量。等真full15與age/cold/business核，未提前PASS；Original G8維持STOPPED85，Hosted0/Production禁。
+
+
+### 2026-11-18 — VM14真冷備與結果收束／十四VM全STOPPED
+
+- Source84ec24b/run44301879660/job134793408280/runner34，functional15＋capacity3/15（anon3/10/20）PASS；fresh40 wcr-261118-53b07fc40958 INCONCLUSIVE parent新candidate TRACK COMPARE exe/inode/PYTHON→Docker路徑，後11未跑，未到M66/M67教師Native驗證。M64 pair/afterFailure已捕捉，Docker label不是subcommand證明／UNPINNED側帶不是合法exec；registration→local-psql selfexec Docker exec為Source相容候選，非唯一Native原因。
+- 真age1347files216141711B/cold1294/8stop/2DB127表31roles/3vol所有hashmetadata核符，未restore；Rootfinalf0b167028a77a235fb3cc411f0e106ff0825fd67542853f988942698e9361ae7，完整review雙根。原hold12:30:08→12:40:08自然完/jobfailure/runnerauto0；Google normalStop/strict已停止/100GB保、十四全停fresh census。US150/noPaid／maxbase26.3408非invoice／1400GB約150/月仍計費，未永久刪除。
+- 下一先定新程序取得的完整有限修復，Root唯一review；同agent目前只讀Source鏈與較小kernel lifetime方案，無M68實作授權／無VM15。Source84ec frozen、Original G8 STOPPED85／Hosted0/Production禁。
+
+
+### 2026-11-18 — M68正式授權：fresh pidfd生命週期取得
+
+- Root核定較小kernel-bound acquisition，原after==row僅新candidate取得的image部分由兩pidfd後fresh PID/birth/四UID/逐PIDleaf＋前後fdlive與boot/group pin替代；不以M64側帶/argv判合法exec，不改startup GATE/producer pins/Rootchannel/stop/grace/SLO。seen stale同key碰撞須failclosed、fd只移交/關一次，browser-role要一致imagepin。完整六ownedpaths/16接受Source及歷史/VM13+14原inputs保護見brief；同agent先RED、Python57+新與49/843/fullchecks後Root唯一review。
+- VM14唯一Nativecommand仍UNKNOWN，Source wrapper selfexec為相容候選；Native14原INCONCLUSIVE不重分類。十四VM STOPPED／runner0／無VM15／US150/noPaid／Hosted0/Production禁。Root僅離線Name15 startup/courier8+4fakePASS，proposed us-west3-a待quota/stock核，Source admission BLOCKED；初offline Apple Python觸license錯誤保，改既有Homebrew+CommandLineTools，未接受license。
+
+
+### 2026-11-18 — VM15僅草稿／無運算資源新增
+
+- c15f03/us-west3-a草稿已備；14台仍STOPPED/runner0。N2custom12/32/minIceLake/new100GBretain/3h normalSTOP+1min/noRestart/noSA/Ops/snapshot/HTTP，startup exact b552cdf3769a5544bdde9f37d92d831562c977c96785e073bf1a7d841826bca5。舊custom device14已在草稿清除；沒有Create/新access/runner/Native，M68Source gate仍BLOCKED。
+- 新區界面undiscount CPU474.07/月、disk12/月；保守0.70/h/下輪2.12/累計planned28.4608非帳單，替代先前2.03/28.3708提案。quota/stock未驗／US150/noPaid。M68已actual behaviorRED，六既有portableNodegate測試窄例外准，同agent實作進行/Root唯一review待。
+
+
+### 2026-11-18 — M68 manifest必要兩entry範圍更正
+
+- 原manifest46entries包含已owned且已准fixture修改的test_linux_owned_process.py，Root前brief僅parent一entry/其餘45不變要求互相矛盾；static-final checksum FAIL安全擋下。Root准僅parent＋ownedtest兩entry SHA更新、其餘44與總46不變，無新增authority。runtime e5aac frozen不改；原FAIL/freeze保，僅受影響package/closure/static/import/diff/brief format重核，不為checksum重跑49/843與type/lint。
+- 同agent收packet，Root本輪review進行無finding；十四VM停／runner0／VM15僅草稿／Sourceadmission blocked／US150/noPaid／Hosted0/Production禁。
+
+
+### 2026-11-18 — M68 Root唯一review接受，下一producer前需真kernel控制
+
+- M68一輪0finding、81uniquePython/49files843TS/fullchecks0；packet e1dabb9f03715349896803770e27345f7dd9ecd8060b26b8f72c7ea1e83f65ed/Roota4d4016db452c641e6bcc9e41e2730bcb100de96112035e699857238d12fd633。Root真核66records/六Source/2347protected/Original9+prefix/VM13+14十二inputs/八controls/529history。parent e5aac.../manifest593e73...，manifest46僅兩entry變/其他44、37原函式/GATE等保持；三oldmethod intentional差異明列，原ERROR/RED/discoveryFAIL/staticFAIL保。
+- Source只fakekernel與原六portableNodegate控制，尚非Native合法exec/全站PASS。下一Root exactSource保存，fresh VM15上先有限真Linux核心控制，通過才register/start唯一producer；目前十四VM STOPPED/runner0/VM15僅草稿未Create/US150/noPaid/Sourceadmission仍待exactSource/Kernel gate，Hosted0/Production禁。

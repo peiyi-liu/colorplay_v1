@@ -16,7 +16,7 @@ import linux_process_transition as T
 class ActualTransitionTests(unittest.TestCase):
     def test_actual_failed_compare_has_transition_witness_without_relaxing_original_failure(self):
         first={'pid':42,'startTicks':'12','uid':1001,'exe':'/approved/python','device':1,'inode':2}
-        after={**first,'exe':'/usr/bin/git','inode':3}
+        after={**first,'startTicks':'13','exe':'/usr/bin/git','inode':3}
         with patch.object(P,'private_read',return_value=(OPERATOR/'linux_process_transition.py').read_bytes()):
             diagnostic=P.ParentStopDiagnostics()
         diagnostic.transition.reader=lambda pid,kind,maximum: fake_stat(pid,'12') if kind=='stat' else b'0::/synthetic-leaf\n' if kind=='cgroup' else b'/usr/bin/git\0rev-parse\0HEAD\0'
@@ -25,13 +25,15 @@ class ActualTransitionTests(unittest.TestCase):
         inventory=P.OwnedInventory.__new__(P.OwnedInventory)
         inventory.ctx={'binaries':{'node':{'path':'/approved/node','device':1,'inode':1},'browser':[]},'generatorCgroupRelativePath':'/synthetic-leaf'}
         inventory.group=Path('/synthetic');inventory.seen={};inventory.saw_browser=False;inventory.diagnostics=diagnostic
-        with patch.object(inventory,'unchanged'),patch.object(P,'read_pid_members',return_value=[42]),patch.object(P,'pid_identity',side_effect=[first,after]),patch.object(P.os,'getuid',return_value=1001),patch.object(P.os,'pidfd_open',return_value=7,create=True),patch.object(P.os,'close'):
+        with patch.object(inventory,'unchanged'),patch.object(P,'read_pid_members',return_value=[42]),patch.object(P,'pid_identity',return_value=first),patch.object(P,'_owned_frame',side_effect=[first,after]),patch.object(P.select,'select',return_value=([],[],[])),patch.object(P.os,'getuid',return_value=1001),patch.object(P.os,'pidfd_open',return_value=7,create=True),patch.object(P.os,'close'):
             with self.assertRaisesRegex(ValueError,'PROCESS_CHANGED_WHILE_TRACKING'):
                 inventory.track()
         port=getattr(diagnostic,'transition_snapshot',lambda:{'collection':'UNOBSERVED'})
         self.assertEqual(port()['collection'],'OBSERVED')
-        self.assertEqual(port()['afterFailure']['candidate']['argv']['kind'],'GIT_READONLY')
-        self.assertEqual(port()['pair']['changedFields'],['exe','inode'])
+        # Birth drift remains a failed pair; original M64 refuses post-failure enrichment.
+        self.assertEqual(port()['afterFailure']['collection'],'UNOBSERVED')
+        self.assertIsNone(port()['afterFailure']['candidate'])
+        self.assertEqual(port()['pair']['changedFields'],['startTicks','exe','inode'])
         self.assertEqual(inventory.seen,{})
 
 

@@ -170,18 +170,18 @@ class Tests(unittest.TestCase):
         row={'pid':42,'uid':1001,'startTicks':'12','exe':'/approved/node','device':1,'inode':2}
         for stage in ['CGROUP_CHECK','MEMBERS','FIRST_IDENTITY','PIDFD_OPEN','SECOND_IDENTITY','COMPARE']:
             d=P.ParentStopDiagnostics();d.pins={'node':{'path':'/approved/node','device':1,'inode':2},'browser':[]}
-            inv=P.OwnedInventory.__new__(P.OwnedInventory);inv.ctx={'binaries':{'browser':[]}};inv.group=Path('/synthetic');inv.seen={};inv.saw_browser=False;inv.diagnostics=d
+            inv=P.OwnedInventory.__new__(P.OwnedInventory);inv.ctx={'binaries':{'browser':[]},'generatorCgroupRelativePath':'/synthetic'};inv.group=Path('/synthetic');inv.seen={};inv.saw_browser=False;inv.diagnostics=d
             sentinel=PermissionError(13,'SYNTHETIC_PRIVATE');count=0
             def identity(*args):
                 nonlocal count
                 count+=1
                 if stage==('FIRST_IDENTITY' if count==1 else 'SECOND_IDENTITY'):raise sentinel
-                return row if count==1 or stage!='COMPARE' else {**row,'inode':3}
-            with patch.object(inv,'unchanged',side_effect=sentinel if stage=='CGROUP_CHECK' else None),patch.object(P,'read_pid_members',side_effect=sentinel if stage=='MEMBERS' else None,return_value=[42]),patch.object(P,'pid_identity',side_effect=identity),patch.object(P.os,'pidfd_open',side_effect=sentinel if stage=='PIDFD_OPEN' else None,return_value=7,create=True),patch.object(P.os,'close'):
+                return row if count==1 or stage!='COMPARE' else {**row,'startTicks':'13'}
+            with patch.object(inv,'unchanged',side_effect=sentinel if stage=='CGROUP_CHECK' else None),patch.object(P,'read_pid_members',side_effect=sentinel if stage=='MEMBERS' else None,return_value=[42]),patch.object(P,'pid_identity',side_effect=identity if stage=='FIRST_IDENTITY' else None,return_value=row),patch.object(P,'_owned_frame',side_effect=identity),patch.object(P.select,'select',return_value=([],[],[])),patch.object(P.os,'pidfd_open',side_effect=sentinel if stage=='PIDFD_OPEN' else None,return_value=7,create=True),patch.object(P.os,'close'):
                 with self.assertRaises(Exception) as caught:inv.track()
             self.assertEqual(d.track['stage'],stage)
             if stage=='COMPARE':
-                self.assertEqual(d.track['fields'],['inode']);self.assertEqual(d.track['firstRole'],'NODE')
+                self.assertEqual(d.track['fields'],['startTicks']);self.assertEqual(d.track['firstRole'],'NODE')
                 self.assertEqual(str(caught.exception),'PROCESS_CHANGED_WHILE_TRACKING')
             else:self.assertIs(caught.exception,sentinel)
             self.assertEqual(d.events[-1]['state'],'RAISED')

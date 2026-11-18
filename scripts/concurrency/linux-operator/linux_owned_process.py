@@ -134,6 +134,43 @@ def pid_identity(pid,owner_uid,diagnostics=None,prefix="IDENTITY"):
         return {"pid":pid,"startTicks":first["startTicks"],"uid":owner_uid,"exe":executable,"device":info.st_dev,"inode":info.st_ino}
     except (FileNotFoundError,ProcessLookupError):return None
 
+def _pidfd_live(fd,diagnostics=None):
+    _observe(diagnostics,'track_stage','PIDFD_LIVENESS')
+    value=select.select([fd],[],[],0)
+    require(type(value)is tuple and len(value)==3 and all(type(x)is list for x in value) and len(value[0])<=1 and all(type(x)is int and x==fd for x in value[0]) and not value[1] and not value[2],"PROCESS_IDENTITY_INVALID")
+    return not value[0]
+
+def _owned_frame(pid,owner_uid,leaf,diagnostics,prefix):
+    try:
+        _observe(diagnostics,'track_stage',prefix+'_STAT')
+        first=parse_stat(read_text(f"/proc/{pid}/stat"))
+        _observe(diagnostics,'transition_piece',prefix,'stat',first)
+        require(first['pid']==pid,'PROCESS_IDENTITY_INVALID')
+        _observe(diagnostics,'track_stage',prefix+'_STATUS')
+        rows=[line.split() for line in read_text(f"/proc/{pid}/status").splitlines() if line.startswith('Uid:')]
+        require(len(rows)==1 and len(rows[0])==5 and all(x.isdecimal() and int(x)==owner_uid for x in rows[0][1:]),'PROCESS_OWNER_CHANGED')
+        _observe(diagnostics,'transition_piece',prefix,'uid',owner_uid)
+        _observe(diagnostics,'track_stage','CGROUP_CHECK')
+        require(proc_cgroup(pid)==leaf,'OWNED_CGROUP_CHANGED')
+        if first['state']=='Z':return None
+        image={'exe':'','device':-1,'inode':-1}
+        _observe(diagnostics,'track_stage',prefix+'_EXE_READLINK')
+        path=os.readlink(f"/proc/{pid}/exe")
+        _observe(diagnostics,'transition_piece',prefix,'readlink',path)
+        _observe(diagnostics,'track_stage',prefix+'_EXE_STAT')
+        info=os.stat(f"/proc/{pid}/exe")
+        _observe(diagnostics,'transition_piece',prefix,'exeStat',{'device':info.st_dev,'inode':info.st_ino})
+        if type(path)is str and type(info.st_dev)is int and type(info.st_ino)is int:
+            image={'exe':path,'device':info.st_dev,'inode':info.st_ino}
+        _observe(diagnostics,'track_stage',prefix+'_STAT_RECHECK')
+        second=parse_stat(read_text(f"/proc/{pid}/stat"))
+        _observe(diagnostics,'transition_piece',prefix,'recheck',second)
+        _observe(diagnostics,'track_stage',prefix+'_PID_COMPARE')
+        require(second['pid']==pid and first['startTicks']==second['startTicks'],'PROCESS_PID_REUSED')
+        if second['state']=='Z':return None
+        return {'pid':pid,'startTicks':first['startTicks'],'uid':owner_uid,**image}
+    except (FileNotFoundError,ProcessLookupError):return None
+
 def signal_pidfd(fd,value):
     try:signal.pidfd_send_signal(fd,value)
     except ProcessLookupError:pass
@@ -167,26 +204,41 @@ class OwnedInventory:
             row=pid_identity(pid,os.getuid(),self.diagnostics,'FIRST')
             if row is None:continue
             key=(pid,row["startTicks"])
-            if key in self.seen:continue
+            if key in self.seen:
+                require(_pidfd_live(self.seen[key],self.diagnostics),'PROCESS_PID_REUSED')
+                continue
             _observe(self.diagnostics,'track_stage','PIDFD_OPEN')
             try:fd=os.pidfd_open(pid,0)
             except ProcessLookupError:continue
+            require(type(fd)is int and fd>=0,'PROCESS_IDENTITY_INVALID')
+            transferred=False
             try:
+                if not _pidfd_live(fd,self.diagnostics):continue
+                _observe(self.diagnostics,'track_stage','CGROUP_CHECK');self.unchanged()
+                _observe(self.diagnostics,'track_stage','FIRST_IDENTITY')
+                first=_owned_frame(pid,os.getuid(),self.ctx['generatorCgroupRelativePath'],self.diagnostics,'FIRST')
+                if first is None:continue
+                require(first['startTicks']==row['startTicks'],'PROCESS_PID_REUSED')
                 _observe(self.diagnostics,'track_stage','SECOND_IDENTITY')
-                after=pid_identity(pid,os.getuid(),self.diagnostics,'SECOND')
-                if after is None:os.close(fd);continue
+                after=_owned_frame(pid,os.getuid(),self.ctx['generatorCgroupRelativePath'],self.diagnostics,'SECOND')
+                if after is None:continue
                 _observe(self.diagnostics,'track_stage','COMPARE')
-                _observe(self.diagnostics,'compare',row,after)
-                try:require(after==row,"PROCESS_CHANGED_WHILE_TRACKING")
+                _observe(self.diagnostics,'compare',first,after)
+                try:require(all(first[k]==after[k] for k in ('pid','startTicks','uid')),'PROCESS_CHANGED_WHILE_TRACKING')
                 except BaseException:
-                    _observe(self.diagnostics,'transition_failure',self.ctx,row,after,self.seen,True)
+                    _observe(self.diagnostics,'transition_failure',self.ctx,first,after,self.seen,True)
                     raise
-                self.seen[key]=fd
-            except BaseException:
-                os.close(fd);raise
-            for pin in self.ctx["binaries"]["browser"]:
-                if row["device"]==pin["device"] and row["inode"]==pin["inode"] and row["exe"]==pin["path"]:
-                    self.saw_browser=True
+                _observe(self.diagnostics,'track_stage','CGROUP_CHECK');self.unchanged()
+                if not _pidfd_live(fd,self.diagnostics):continue
+                key=(pid,after['startTicks'])
+                require(key not in self.seen,'PROCESS_PID_REUSED')
+                self.seen[key]=fd;transferred=True
+            finally:
+                if not transferred:os.close(fd)
+            if all(first[k]==after[k] for k in ('exe','device','inode')):
+                for pin in self.ctx['binaries']['browser']:
+                    if after['device']==pin['device'] and after['inode']==pin['inode'] and after['exe']==pin['path']:
+                        self.saw_browser=True
         return members
 
     def remaining(self):
