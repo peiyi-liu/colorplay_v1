@@ -3867,3 +3867,44 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 唯一SpecP2 counter不可能矩陣仍OBSERVED，Rootactual反例成立；同輪純schema語義驗證清除、Root6負向＋正向皆核。原操作/30concurrent/metrics/SLO/trace/error/await/stop保持。新diagnostics缺method/throw等隔離，無新請求或負載。Source5/tests2 finalfreeze；journeys既有563→573僅coordinator窄接線，其餘≤500。
 - worker40files548PASS/focused19及fulltype/lint/globalformat/import/diff/static0；Root發現少前send-dom16，自跑完整union41files564PASS/15.086s/7Sourcehash不變，非第二review/Sourcefinding。packetfe24d79375189a5ee5cca6e8a646c0022e26deabc1b60ebce93dbf099a02e27f/70records39checks7freeze，Rootreview23ff2768b3a23481b44c88f3ad98c4e4066e23cc4bd8b96b4267fb2877077812，2318protect/298history另M57 75/v1 43/inverse/Original/VM11八inputs皆核。正式docs/reviews/2026-11-18-game-work-diagnostics-m61-review.md。
 - 下一exact11paths commit/normalFF既定Local VMbranch/freshVM12單次。VM11原結果不回填；十一VM stopped/runner0/磁碟保、US150/noPaid/Hosted0/Production禁。VM12草稿europe-west4-a/新100GB、minIceLake/3h normalSTOP+1min/noSA/Ops等實核，Sourceadmission尚BLOCKED未Create/register/run。
+
+
+### 2026-11-18 — M61 fresh VM12單次診斷job開始
+
+- exact11paths Source116442a1349960a5bb1f852569876f0a889b647f/tree22fd721e4993208ac9e5969a74054717f1abdc7f，parent4eeb；normalFF既定Localbranch/Vercel optout false。run44262492936/job134658953640/attempt1/runner32，officialsvc cp-capacity/Restartno/MainPID3546，GitHubexact checkout success/suite進行；非重跑VM11，尚無容量結果或首因結論。
+- VM12 f12c63/5444938758100150077/europe-west4-a/07:54:58UTC，IP34.90.17.51雖重用VM11但instance/boot/hostkey全不同，獨立known_hosts/strictGoogle2equalreceipt+hostblock1/blocked0核。boota5aa7cdc…/hostfptWS2Qsg/…，startup6a8e7527…；N2custom12/32 actual/minIceLake/Ubuntu24.04/新100GBbalancedretain，3h normalSTOP10:54:03UTC+1min/noRestart/noSA/Workload/Ops/snapshot/HTTP。APT0a138/classicDocker29.1.3/空store真核。
+- 原十一全STOPPED/runner0後才本輪單次register，offline8+4fakePASS/Rootadmission已核。配置本輪保守reserve2.03，加十一20.2508→十二最大22.2808非帳單；十二disk1200GB約128/月，未含IP/egress/tax/actualinvoice UNKNOWN。US150/noPaid/Hosted0/Production禁。
+- M62僅只讀核teacher camelcase classroomId與teacher_classroom_overview RPC契約相符，不改路由、不猜Native原因；manifest b7b201e9d23a1a9ab04a841561a9e2a8c22a6a8e40fcc5df7616054ef95a0e8b，2records/14Source。M60 operator接線暫緩Source，Root唯一review規則保持。
+
+
+### 2026-11-18 — VM12四legs PASS／parent identity COMPARE拒絕；M64完整transition診斷核准
+
+- Root真age1481files216439643B/cold1424/8stop/2DB127tables31roles/3vol全hashmetadata核/未restore。functional15＋anon3/10/20＋fresh40 PASS，4/15legs；40completedAuth40/ownershiptrue/entry128.261/send122.832ms/30771.041ms。60 wcr-261118-a30e1021c7d4於before_send60並行Root capture中parent取消，未到browser/game，後10legs未跑；M61未取得新Native game首因。
+- Source116442a/run44262492936/job134658953640/runner32/profile6e25295f…/planwsc-261118-d449cdebf534。parentfirst TRACK_EXCEPTION/COMPARE [exe,inode]/PYTHON→OTHER，原pid/startTicks/uid/device相同但非完整exec/ppid/逐PID leaf證明；ValueError PROCESS_CHANGED_WHILE_TRACKING。lastLoop4386.967不是精確compare時點，Node firstSignal4285.758不可跨clock相減；parentexit-9/completefalse/cancelled/noTimeout/overflow0/residue0/noBrowser。原main gate先seen，不能拿其exec直接解釋新PIDCOMPARE；Roothelper spawn是候選，OTHER target未證。
+- M63唯讀manifestb7b75da2…3records/12Source/4cold保；Root准M64一次完整被動transition sideband（重用原讀值、只第一failedpair候選與已核parent最多2PID/64KiB/100ms軟截止/無retry），原guard/equality/pidfd/stop/seen/close不改，原JSON保、獨立wx0600sidecar。brief docs/superpowers/plans/2026-11-18-parent-transition-m64-brief.md 雙根，Root唯一review待packet。無判合法exec、無Source修法或容量PASS。
+- 原hold08:19:00自然完/job08:19:04 failure/runnerauto移除repo0；VM12正常STOP已提交、未skipgrace，Google最終STOPPED尚待核。十一舊stopped/US150/noPaid/Hosted0/Production禁；配置最大22.2808非帳單，12disk1200GB約128/月，actualinvoice UNKNOWN。
+
+
+### 2026-11-18 — VM12 Root保留核完成／十二VM全STOPPED
+
+- Root真age/cold/business核functional15＋前4/15legs PASS、fresh60仍INCONCLUSIVE/parentCOMPARE拒絕，後10未跑，未到M61game。Rootfinal454649e483dc39a44e9df4614409b9fbef9a033a6e5473c597c2f5ed2703cf1d，正式docs/reviews/2026-11-18-gcp-vm12-parent-identity-compare-result.md；原guard/失敗保，未restore/Hosted/Production。
+- 原hold08:19:00自然完/job08:19:04failure/runner32自移repo0；Google exact5444938758100150077嚴格已停止、normal未skipgrace，100GBdisk保，十二VM全stopped。配置base預留22.2808非帳單/disk128/月1200GB/US150/noPaid。M64同agentSource只完整被動transition診斷/Root唯一review待packet；新loader機制暫緩，待報既有closure最小接線exactpaths。尚無VM13。
+
+
+### 2026-11-18 — M64載入與獨立sidecar工程決策
+
+- 實核parent原以processObserverSha256獨立綁，不在Root helper14+1；擴closure至少五既有Source/schema/fixtures，超本診斷必要。Root准owned parent固定module/固定已綁expectedSHA的最小verified-byte loader，同一次已驗bytes compile/exec、無unverified fallback，pure module頂層無IO；package-manifest第46entry與parentSHA parity/tamper測試鎖住。五extras不改，不新增合法exec policy，load故障只新diag UNAVAILABLE/原guard不變。
+- 原parentwriter block保，其後同owned run-functional-owned內獨立try sidecar；capacity沿BASE重用。真雙writer/erroridentity新focused test，原AST局部fixture不改assert。具體條件已append M64brief雙根；workeractual exported RED已落，Source進行，Root唯一review待packet。十二VM全stopped/US150/noPaid/Hosted0/Production禁，尚無VM13。
+
+
+### 2026-11-18 — M64本輪唯一P2：失敗後診斷混合生命週期
+
+- Root真exported helper/fake proc反例：讀stat12後cmdline時變birth13，舊僅三讀仍OBSERVED/birth EQUAL/KNOWN_TEMPLATE_MATCH，私有m64-root-after-failure-race.json保。與VM12實際原因分開，不把pidfd穩定參照當所有PID路徑讀值同生存期證明。
+- Root同輪准固定前後stat/cgroup邊界（每PID兩stat各4KiB、兩cgroup各8KiB、cmdline8KiB；兩PID總64KiB/100ms軟截止不變），漂移/消失清不可綁argv/parent為不可用；不重讀到成功、不改guard/stop/grace或其他原契約。brief雙根已append；同agent修此唯一P2，Root待delta與finalpacket，不另reviewer。十二VM全stopped/VM13未建立草稿/US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — M64 Root唯一review接受，待fresh VM13
+
+- 同輪唯一P2 afterFailure混合生命週期已修，Root actual exported正常＋四漂移控制／focused12 PASS，原guard/stop/parent-stop保持。capacity41/564、Python57與必要checks綠；原RED/setupFAIL/v1保。
+- Final packet 2bf6f8d439496681282f74f8e716bfd03ab6c6b6d9f23ad6b35d21f4bd87865e，Root receipt b0d7724d324f6d7f867156827db3ae5b27c02f71b0f682fa1c6b7d8038394254；七Source／2323protected／歷史與Original保護直接核符。review雙根已落，不是Native修復或容量PASS。
+- 下一步exact Source提交及Native專用branch normalFF，VM13草稿us-west4-a尚未Create；十二舊VM STOPPED／runner0／US150/noPaid／Hosted0／Production禁，不重跑VM12。

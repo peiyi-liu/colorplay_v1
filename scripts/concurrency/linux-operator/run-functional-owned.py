@@ -28,6 +28,15 @@ def call(args,timeout=10,data=None,env=None):
 def frozen(sha):
     return call(['/usr/bin/git','rev-parse','HEAD']).decode().strip()==sha and not call(['/usr/bin/git','status','--porcelain']).strip()
 
+def write_transition_sidecar(diagnostic,binding,matches,prefix,run_id):
+    try:
+        assert prefix in {'functional','capacity'} and re.fullmatch('(wsb|wcr)-[a-z0-9]{6,16}-[a-z0-9]{6,16}',run_id)
+        value=diagnostic.transition_snapshot()
+        envelope={'schemaVersion':1,'authority':'NON_AUTHORITY','binding':binding,'contextMatches':matches,'diagnostic':value}
+        assert len((json.dumps(envelope,indent=2,ensure_ascii=False)+'\n').encode())<=16384
+        write(R/(prefix+'-process-transition-'+run_id+'.json'),envelope)
+    except BaseException:pass
+
 def observe_owned_child(arguments,revision,run_id,scope,profile,leg_id=None,progress_action='LOCAL_FUNCTIONAL_RUNNING'):
     diagnostic=ParentStopDiagnostics()
     try:return run_child(arguments,progress_action=progress_action,diagnostics=diagnostic)
@@ -45,6 +54,8 @@ def observe_owned_child(arguments,revision,run_id,scope,profile,leg_id=None,prog
             assert len((json.dumps(envelope,indent=2,ensure_ascii=False)+'\n').encode())<=32768
             prefix='functional' if leg_id is None else 'capacity'
             write(R/(prefix+'-parent-stop-'+run_id+'.json'),envelope)
+        except BaseException:pass
+        try:write_transition_sidecar(diagnostic,binding,matches,prefix,run_id)
         except BaseException:pass
 
 def main():

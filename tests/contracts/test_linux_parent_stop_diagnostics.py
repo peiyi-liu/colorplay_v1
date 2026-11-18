@@ -229,4 +229,29 @@ class Tests(unittest.TestCase):
         self.assertEqual(fn([],'a'*40,'wcr-261118-abcdef',{'executionProfileSha256':'c'*64},malformed),42)
         self.assertEqual(writes,[])
 
+class TransitionSidecarCallerTests(unittest.TestCase):
+    def test_actual_caller_independent_writers_preserve_original_exception_and_binding(self):
+        tree=ast.parse((OPERATOR/'run-functional-owned.py').read_text())
+        fns=[n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name in {'observe_owned_child','write_transition_sidecar'}]
+        profile={'expectedSha256':'c'*64,'observed':{'identity':{'jobSha256':'d'*64,'bootIdSha256':'b'*64}}}
+        for original_error in [False,True]:
+            for parent_write_error in [False,True]:
+                writes=[];sentinel=ValueError('ORIGINAL')
+                def run(*args,**kwargs):
+                    if original_error:raise sentinel
+                    return 42
+                def writer(path,value):
+                    writes.append((path.name,value))
+                    if parent_write_error and '-parent-stop-' in path.name:raise OSError(5,'PRIVATE')
+                ns={'ParentStopDiagnostics':P.ParentStopDiagnostics,'run_child':run,'re':__import__('re'),'json':json,'R':Path('/synthetic'),'write':writer}
+                exec(compile(ast.Module(body=fns,type_ignores=[]),'ACTUAL_BOTH_WRITERS','exec'),ns)
+                fn=ns['observe_owned_child']
+                if original_error:
+                    with self.assertRaises(ValueError) as caught:fn([],'a'*40,'wcr-261118-abcdef',{'executionProfileSha256':'c'*64},profile,'fresh_registration-native_browser-60')
+                    self.assertIs(caught.exception,sentinel)
+                else:self.assertEqual(fn([],'a'*40,'wcr-261118-abcdef',{'executionProfileSha256':'c'*64},profile,'fresh_registration-native_browser-60'),42)
+                self.assertEqual([n for n,_ in writes],['capacity-parent-stop-wcr-261118-abcdef.json','capacity-process-transition-wcr-261118-abcdef.json'])
+                self.assertEqual(writes[0][1]['binding'],writes[1][1]['binding'])
+                self.assertEqual(writes[1][1]['authority'],'NON_AUTHORITY')
+
 if __name__=='__main__':unittest.main()

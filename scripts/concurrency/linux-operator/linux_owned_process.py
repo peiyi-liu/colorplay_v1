@@ -14,7 +14,7 @@ import subprocess
 import time
 from linux_proc import parse_stat
 from linux_cgroup import checked_group, cgroup_identity, read_pid_members, read_text
-from linux_runtime_common import CGROOT, SOURCE, boot_sha, context, proc_cgroup, require, verify_executables
+from linux_runtime_common import CGROOT, SOURCE, boot_sha, context, proc_cgroup, require, verify_executables, private_read
 
 BUDGET=1500000
 GATE="import os,sys\ncap=int(sys.argv[1]); fd=int(sys.argv[2]); ready=int(sys.argv[3])\nos.set_inheritable(cap,False)\ntry:\n    if os.write(cap,b'0\\n')!=2: raise OSError('SELF_ATTACH_SHORT_WRITE')\nfinally: os.close(cap)\nos.write(ready,b'R'); os.close(ready)\nvalue=os.read(fd,1); os.close(fd)\nvalue==b'1' or sys.exit(125)\nos.execve(sys.argv[4],sys.argv[4:],dict(os.environ))"
@@ -40,15 +40,41 @@ def _error(error):
     number=getattr(error,'errno',None)
     return {'class':kind,'code':code,'errno':None if number is None else ERRNOS.get(number,'OTHER')}
 
+TRANSITION_MODULE_SHA256='2c278997e303714df5fc14112799e831405d527b6b94809f6ba8c26c8c49f8c1'
+
+def _transition_collector():
+    try:
+        path=Path(__file__).with_name('linux_process_transition.py')
+        raw=private_read(path,65536)
+        if hashlib.sha256(raw).hexdigest()!=TRANSITION_MODULE_SHA256:return None
+        namespace={'__file__':str(path)}
+        exec(compile(raw,str(path),'exec'),namespace)
+        return namespace['ProcessTransitionDiagnostics']()
+    except BaseException:return None
+
 class ParentStopDiagnostics:
     def __init__(self):
         self.first=None;self.claim={};self.events=[];self.overflow=False;self.unavailable=False;self.last_loop=None
         self.track={'stage':'UNOBSERVED','fields':[],'firstRole':'UNOBSERVED','secondRole':'UNOBSERVED'}
-        self.stop_phase='UNOBSERVED';self.final=None;self.observer_closed=False;self.pins={};self.python=None;self.binding=None
+        self.stop_phase='UNOBSERVED';self.final=None;self.observer_closed=False;self.pins={};self.python=None;self.binding=None;self.transition=_transition_collector()
     def configure(self,ctx,boot):
         self.pins=ctx['binaries'];job=ctx.get('job')
+        self.transition_call('configure',ctx)
         self.binding={'sourceRevision':ctx.get('sourceRevision'),'bootIdSha256':boot,'jobSha256':hashlib.sha256(json.dumps(job,sort_keys=True,separators=(',',':')).encode()).hexdigest() if type(job)is dict else None}
-    def python_pin(self,row):self.python=row
+    def python_pin(self,row):
+        self.python=row;self.transition_call('python_pin',row)
+    def transition_call(self,method,*args):
+        try:
+            if self.transition is not None:getattr(self.transition,method)(*args)
+        except BaseException:self.transition=None
+    def transition_begin(self):self.transition_call('begin')
+    def transition_piece(self,*args):self.transition_call('piece',*args)
+    def transition_failure(self,*args):self.transition_call('failure',*args)
+    def transition_snapshot(self):
+        try:
+            if self.transition is not None:return self.transition.snapshot()
+        except BaseException:pass
+        return {'schemaVersion':1,'authority':'NON_AUTHORITY','collection':'UNAVAILABLE','phase':'FAILED_COMPARE','pair':None,'afterFailure':None}
     def role(self,row):
         if row is None:return 'UNOBSERVED'
         def matches(pin):return all(row.get(k)==pin.get(k if k!='exe' else 'path') for k in ('device','inode','exe'))
@@ -87,17 +113,22 @@ def pid_identity(pid,owner_uid,diagnostics=None,prefix="IDENTITY"):
     try:
         _observe(diagnostics,'track_stage',prefix+'_STAT')
         first=parse_stat(read_text(f"/proc/{pid}/stat"))
+        _observe(diagnostics,'transition_piece',prefix,'stat',first)
         require(first["pid"]==pid,"PROCESS_IDENTITY_INVALID")
         _observe(diagnostics,'track_stage',prefix+'_STATUS')
         uid=[line.split() for line in read_text(f"/proc/{pid}/status").splitlines() if line.startswith("Uid:")]
         require(len(uid)==1 and len(uid[0])==5 and all(value.isdecimal() and int(value)==owner_uid for value in uid[0][1:]),"PROCESS_OWNER_CHANGED")
+        _observe(diagnostics,'transition_piece',prefix,'uid',owner_uid)
         if first["state"]=="Z":return None
         _observe(diagnostics,'track_stage',prefix+'_EXE_READLINK')
         executable=os.readlink(f"/proc/{pid}/exe")
+        _observe(diagnostics,'transition_piece',prefix,'readlink',executable)
         _observe(diagnostics,'track_stage',prefix+'_EXE_STAT')
         info=os.stat(f"/proc/{pid}/exe")
+        _observe(diagnostics,'transition_piece',prefix,'exeStat',{'device':info.st_dev,'inode':info.st_ino})
         _observe(diagnostics,'track_stage',prefix+'_STAT_RECHECK')
         second=parse_stat(read_text(f"/proc/{pid}/stat"))
+        _observe(diagnostics,'transition_piece',prefix,'recheck',second)
         _observe(diagnostics,'track_stage',prefix+'_PID_COMPARE')
         require(first["startTicks"]==second["startTicks"],"PROCESS_PID_REUSED")
         return {"pid":pid,"startTicks":first["startTicks"],"uid":owner_uid,"exe":executable,"device":info.st_dev,"inode":info.st_ino}
@@ -131,6 +162,7 @@ class OwnedInventory:
         _observe(self.diagnostics,'track_stage','MEMBERS')
         members=read_pid_members(self.group)
         for pid in members:
+            _observe(self.diagnostics,'transition_begin')
             _observe(self.diagnostics,'track_stage','FIRST_IDENTITY')
             row=pid_identity(pid,os.getuid(),self.diagnostics,'FIRST')
             if row is None:continue
@@ -145,7 +177,10 @@ class OwnedInventory:
                 if after is None:os.close(fd);continue
                 _observe(self.diagnostics,'track_stage','COMPARE')
                 _observe(self.diagnostics,'compare',row,after)
-                require(after==row,"PROCESS_CHANGED_WHILE_TRACKING")
+                try:require(after==row,"PROCESS_CHANGED_WHILE_TRACKING")
+                except BaseException:
+                    _observe(self.diagnostics,'transition_failure',self.ctx,row,after,self.seen,True)
+                    raise
                 self.seen[key]=fd
             except BaseException:
                 os.close(fd);raise

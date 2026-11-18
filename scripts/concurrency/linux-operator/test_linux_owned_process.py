@@ -130,4 +130,14 @@ class OwnedProcessTests(unittest.TestCase):
             self.assertFalse(marker.exists())
 
 
+class TransitionTrackerOnlyTests(unittest.TestCase):
+    def test_seen_gate_key_keeps_original_skip_without_second_identity_or_probe(self):
+        inv=P.OwnedInventory.__new__(P.OwnedInventory);inv.group=Path('/synthetic');inv.ctx={};inv.seen={(42,'12'):7};inv.saw_browser=False
+        diagnostic=P.ParentStopDiagnostics();inv.diagnostics=diagnostic
+        row={'pid':42,'startTicks':'12','uid':1001,'exe':'/approved/python','device':1,'inode':2}
+        with patch.object(inv,'unchanged'),patch.object(P,'read_pid_members',return_value=[42]),patch.object(P,'pid_identity',return_value=row) as identity,patch.object(P.os,'pidfd_open',side_effect=AssertionError('NO_NEW_PIDFD'),create=True):
+            self.assertEqual(inv.track(),[42])
+        self.assertEqual(identity.call_count,1)
+        self.assertIsNone(diagnostic.transition_snapshot()['pair'])
+
 if __name__=='__main__':unittest.main()
