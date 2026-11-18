@@ -1,0 +1,29 @@
+# VM8：M55實測結果與官方Auth格式缺口
+
+結論：PARTIAL_NATIVE_EVIDENCE_VERIFIED；完整功能15項及匿名3/10/20 PASS，fresh40仍INCONCLUSIVE，Local60未跑、Staging未部署。Root已實際下載／age解密、逐檔hash及cold／business收據重算。這輪首次把原CODE拒絕定位至LEXER遇message；不回填VM7或還原不存在的原body。
+
+## 真實執行與結果
+
+Source47f281275628e5a3bb1fbe3b4daf2f09486a5b95/tree5281985ca3036887074b26aa7cc7f3d2d8a90976；run44234070950/job134565843675/push attempt1/runner28。VM cp-capacity-20261118-b8a261、instance7403469309937229717、us-west2-a，03:54:35UTC新建；N2custom12/32 actual/minIceLake、全原guards。normalSTOP06:53:38UTC＋1min、noRestart/noSA/Workload/Ops/snapshot/HTTP、100GBbalanced保留。七舊VM stopped，本機第一private preflight因新startup0644被擋在SSH前，Root縮權0600且hash不變後繼續唯讀preflight；單次registration與job沒有重跑。
+
+functional wsb-261118-8bee25cb7e72 15PASS；plan wsc-261118-40444b5c1e31，前三匿名legs3/10/20 PASS。fresh40 wcr-261118-0ec02439b401 INCONCLUSIVE；40started／40completed／40Authcreated、ownershipKnown=true，entry65.633ms、send40/40 skew208.322ms皆有效<250，observations elapsed31314.010091ms。最終capacity elapsed34997.200108ms／exit1，timedOut=false／runAborted=true，缺證據推導的failureReasons包含timeout不代表真外層timeout。
+
+readback gate REJECTED：actor0 unexpectedHTTP1、AUTH_LOGOUT403、單read1／decoded92、firstFailureCODE。bodyDiagnostics collectionOBSERVED、LEXER/KEY_UNKNOWN，code與message為TOKEN_SEEN，error_code/msg及其他未觀測，unrecognizedKeyCount0；TopLevelKind與兩value分類UNOBSERVED。其餘39actors因原some短路沒有onboarding snapshot，不能推同因。CODE revoke後login flags false不是UI登入失敗。M53五份Source/profile/job/boot四欄實際核對，firstCause null、無cancel/timeout/overflow、residue0；declared legId有記錄但不宣稱已逐request獨立核對。
+
+## 實際證據保留
+
+artifact14396559749，ZIP43472101B/SHA6f3214edd4e723fd08464b8e022c2515e539d6689903d6bc21398aab35f06135；cipher43471963B/SHAad3f6a2009f713a22acbc8a214311aa83f7a82d499a37cb99be6895976e46382。真age1394files216117573B／outer291b25c2a371d41f6e8b85431a17bb9549225584682bfda03186fae9c092176f；cold1341／snapshot3990ee8f189120127ba31e9985e56b0f853d6344813990539d393cdb9cce39ac，八服務自然停止與roleproof、2DB127tables（ORDER_ONLYequal）／31roles／3volumes逐filehash與portable metadata核；未執行restore。runtime實數據1249、公有可重建code33、metadata-only dirs0。25個開機紀錄30940B另保。本機首次下載開機log缺新VM8 parent，補私有parent後只重讀相同log；不重跑Native。
+
+profile42f665ee86bf13b930a0e7cfff7f5cc490f91ab903b64d5a18ec220d451061ac；boot96a5f47366b9738c482eb8e24f6d3da0ac38e1f9d64a526cc71025f635d6b7d1。Root初job hash check漏repository欄位而失敗在讀parent之前，改依actual context含repository精確重算後五份皆核，原失敗資格保。下載參照原要求不輸出，Root曾誤把一層nested metadata的限時signed URL帶入工具輸出；該URL已於04:16:27UTC到期，內容是age加密檔，私鑰留本機未上傳。
+
+資料在相鄰runtime/gcp-vm8/downloads/files/files；Root .git/gcp-vm8-root-first-review.json、gcp-vm8-root-cold-business-reviews.json、bootstrap-logs/manifest.json。原10min retention hold自然完成，job於04:20:09UTC completed/failure；runner28自動移除、repo剩0。Root正常STOP（未skip grace），Google Console已確認instance7403469309937229717停止，100GB磁碟保留；八台測試VM全stopped。最終收據.git/gcp-vm8-root-final-review.json SHAf445408494e7ca6dee63da4b028e9404cc30e39baccee609f9d492cda439dced，截圖.git/gcp-vm8-stopped-20261118.jpg。
+
+## 原因與最小修正
+
+已確定的工具缺口：M52只接受legacy error_code/code:number/msg，官方Local Auth v2.192.0另有modern code:string/message:string。官方tag commit5acfdea63bc033b79cfb0ebb08a1d4696d942aac，errors.go75/146及apierrors/apierrors.go48定義兩分支；有效X-Supabase-Api-Version>=2024-01-01選modern，無效/缺少/較舊才legacy。auth.go140–149 SessionNotFound走固定Forbidden403，shared.SendJSON原樣json.Marshal。官方來源 https://github.com/supabase/auth/blob/5acfdea63bc033b79cfb0ebb08a1d4696d942aac/internal/api/errors.go 。本機鎖定auth-js2.110.2實際fetch.ts172–184預設送2024-01-01，產品無此override；既有functional helper已承認兩格式。
+
+推論：VM8 key觀測與modern相容，legacy-only是已證格式契約缺口。但原body code值、型別、完整key集合與實際header未持久化，不能聲稱已證原92B內容。M56最小修法新增獨立strict modern branch只允許精確code=session_not_found與有界string message；legacy保持、mixed/未知/矛盾/duplicate/escaped與其他錯碼403仍拒。原lease／唯一request／完整body／postLogin／Rootproof／discount與SLO全保；actual新版回應是否通過仍須fresh新Source Native。
+
+## 後續與費用界線
+
+同agent依M56 brief先真RED／最小契約，Root唯一review後再fresh job；原VM8不重跑。WB5另有Hosted移植impact map，不把Local15／匿名PASS當全站60或Hosted證據。八台已配置base最大保留US14.1784是估算非實際帳單，保留disk估84/月，未含IP/流量/稅；實際invoice UNKNOWN。總US150、不升paid，Hosted0、Production禁止。

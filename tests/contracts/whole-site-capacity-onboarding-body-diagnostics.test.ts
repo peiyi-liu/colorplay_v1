@@ -102,7 +102,7 @@ describe('actual onboarding helper body diagnostic boundaries', () => {
       );
     },
   );
-  it('early alias token is not top-level/field-type evidence or absence of unseen aliases', async () => {
+  it('mixed aliases are rejected on the second key without top-level/field-type evidence', async () => {
     const h = await run(
       '{"message":"PRIVATE_BODY","error_code":"session_not_found"}',
     );
@@ -111,7 +111,7 @@ describe('actual onboarding helper body diagnostic boundaries', () => {
       unrecognizedKeyCount: 0,
       fields: {
         message: { presence: 'TOKEN_SEEN', type: 'UNOBSERVED' },
-        error_code: { presence: 'UNOBSERVED', type: 'UNOBSERVED' },
+        error_code: { presence: 'TOKEN_SEEN', type: 'UNOBSERVED' },
         status: { presence: 'UNOBSERVED', type: 'UNOBSERVED' },
       },
     });

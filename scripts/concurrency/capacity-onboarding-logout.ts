@@ -42,6 +42,10 @@ const bodySchema = z.strictObject({
   error_code: z.literal('session_not_found'),
   msg: z.string().max(2048).optional(),
 });
+const modernBodySchema = z.strictObject({
+  code: z.literal('session_not_found'),
+  message: z.string().max(2048),
+});
 const responseBodySchema = z.strictObject({
   body: z.string().max(4096),
   base64Encoded: z.literal(false),
@@ -248,7 +252,14 @@ export const createOnboardingLogout = (
               )
                 continue;
               bodyDiagnostics.key(key);
-              const allowed = ['"error_code"', '"code"', '"msg"'].includes(key);
+              const mixed =
+                (key === '"message"' &&
+                  (keys.has('"error_code"') || keys.has('"msg"'))) ||
+                (keys.has('"message"') &&
+                  (key === '"error_code"' || key === '"msg"'));
+              const allowed =
+                !mixed &&
+                ['"error_code"', '"code"', '"msg"', '"message"'].includes(key);
               const duplicate = allowed && keys.has(key);
               if (!allowed || duplicate) {
                 bodyDiagnostics.rejected(
@@ -262,14 +273,17 @@ export const createOnboardingLogout = (
               }
               keys.add(key);
             }
-            if (!keys.has('"error_code"')) {
+            const modern = keys.has('"message"');
+            if (modern ? !keys.has('"code"') : !keys.has('"error_code"')) {
               bodyDiagnostics.rejected('ERROR_CODE');
               throw Error();
             }
             bodyDiagnostics.stage('JSON');
             const value: unknown = JSON.parse(text);
             bodyDiagnostics.stage('SCHEMA');
-            const parsed = bodySchema.safeParse(value);
+            const parsed = (modern ? modernBodySchema : bodySchema).safeParse(
+              value,
+            );
             bodyDiagnostics.schema(value, parsed);
             if (!parsed.success) throw Error();
             code = 'SESSION_NOT_FOUND';
