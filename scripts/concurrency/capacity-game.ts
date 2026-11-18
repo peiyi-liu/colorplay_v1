@@ -1,3 +1,8 @@
+import {
+  gameObserve,
+  gameErrorClass,
+  type GameObserver,
+} from './capacity-game-diagnostics';
 import type { Page } from '@playwright/test';
 import type { CapacityProtocolActor } from './capacity-protocol';
 import type { createCapacityOperationObserver } from './capacity-operation-observer';
@@ -355,26 +360,81 @@ export const readCapacityTeacherDuringLoad = async (
   classroomId: string,
   businessActive: () => boolean,
   signal: AbortSignal,
+  diagnostics?: GameObserver,
 ): Promise<void> => {
+  const note = (
+    stage: 'BEFORE_ACTIVE' | 'GOTO' | 'HEADING' | 'MEASURE' | 'AFTER_ACTIVE',
+    state: 'ENTERED' | 'RETURNED' | 'FAILED',
+    iteration: number,
+    error?: unknown,
+  ) => {
+    gameObserve(diagnostics, {
+      kind: 'TEACHER',
+      stage,
+      state,
+      iteration,
+      actorIndex: actor.actorIndex,
+      signalAborted: signal.aborted,
+      ...(state === 'FAILED' ? { errorClass: gameErrorClass(error) } : {}),
+    });
+  };
   for (let index = 0; index < 30; index++) {
-    if (signal.aborted || !businessActive()) return capacityFailure();
-    await actor.measure(
-      'teacher_dashboard',
-      actor.observed?.('teacher_dashboard') ? 'warm' : 'cold',
-      async () => {
-        if (actor.page) {
-          await actor.page.goto(`/teacher?classroomId=${classroomId}`);
-          await expect(
-            actor.page.getByRole('heading', { name: '教學分析', exact: true }),
-          ).toBeVisible();
-        } else
-          await createTeacherContentRepository(
-            actor.client,
-          ).getClassroomOverview(classroomId, {});
-      },
-      true,
-    );
-    if (!businessActive()) return capacityFailure();
+    note('BEFORE_ACTIVE', 'ENTERED', index);
+    try {
+      if (signal.aborted || !businessActive()) return capacityFailure();
+    } catch (error) {
+      note('BEFORE_ACTIVE', 'FAILED', index, error);
+      throw error;
+    }
+    note('BEFORE_ACTIVE', 'RETURNED', index);
+    note('MEASURE', 'ENTERED', index);
+    try {
+      await actor.measure(
+        'teacher_dashboard',
+        actor.observed?.('teacher_dashboard') ? 'warm' : 'cold',
+        async () => {
+          if (actor.page) {
+            note('GOTO', 'ENTERED', index);
+            try {
+              await actor.page.goto(`/teacher?classroomId=${classroomId}`);
+            } catch (error) {
+              note('GOTO', 'FAILED', index, error);
+              throw error;
+            }
+            note('GOTO', 'RETURNED', index);
+            note('HEADING', 'ENTERED', index);
+            try {
+              await expect(
+                actor.page.getByRole('heading', {
+                  name: '教學分析',
+                  exact: true,
+                }),
+              ).toBeVisible();
+            } catch (error) {
+              note('HEADING', 'FAILED', index, error);
+              throw error;
+            }
+            note('HEADING', 'RETURNED', index);
+          } else
+            await createTeacherContentRepository(
+              actor.client,
+            ).getClassroomOverview(classroomId, {});
+        },
+        true,
+      );
+    } catch (error) {
+      note('MEASURE', 'FAILED', index, error);
+      throw error;
+    }
+    note('MEASURE', 'RETURNED', index);
+    note('AFTER_ACTIVE', 'ENTERED', index);
+    try {
+      if (!businessActive()) return capacityFailure();
+    } catch (error) {
+      note('AFTER_ACTIVE', 'FAILED', index, error);
+      throw error;
+    }
+    note('AFTER_ACTIVE', 'RETURNED', index);
   }
 };
 
@@ -403,10 +463,16 @@ export const capacityGameActor = (
 export const settleCapacityGameWork = async <T>(
   work: Promise<T>[],
   stop: () => void,
+  onFailure?: (error: unknown, index: number) => void,
 ) => {
   const results = await Promise.allSettled(
-    work.map((task) =>
-      task.catch(() => {
+    work.map((task, index) =>
+      task.catch((error: unknown) => {
+        try {
+          onFailure?.(error, index);
+        } catch {
+          /* Passive diagnostics only. */
+        }
         stop();
         return capacityFailure();
       }),

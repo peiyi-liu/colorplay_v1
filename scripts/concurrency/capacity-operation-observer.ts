@@ -1,3 +1,4 @@
+import { createCapacityOperationAccounting } from './capacity-game-diagnostics';
 import { performance } from 'node:perf_hooks';
 import type { BrowserContext, CDPSession, Page } from '@playwright/test';
 import { z } from 'zod';
@@ -103,6 +104,7 @@ export const createCapacityOperationObserver = async (
   const cdp: CDPSession = await context.newCDPSession(page),
     rows: OperationSample[] = [];
   const records = new Map<string, Attempt>();
+  const accounting = createCapacityOperationAccounting(actorIndex);
   const aborted = () => signal.aborted;
   const isAvailable = () => available;
   let active: Window | null = null,
@@ -115,6 +117,7 @@ export const createCapacityOperationObserver = async (
     for (const fn of changed) fn();
   };
   const request = (raw: unknown) => {
+    if (disposed) accounting.unavailable();
     try {
       const value = operationRequestSchema.parse(raw);
       const op = capacityOperationForRequest(
@@ -124,8 +127,11 @@ export const createCapacityOperationObserver = async (
       );
       if (!op) return;
       physicalRequests++;
+      accounting.note(op, active?.operation ?? null);
+      if (disposed) accounting.unavailable();
       if (records.size >= 4096) {
         available = false;
+        accounting.unavailable();
         return;
       }
       if (active?.operation !== op) {
@@ -146,6 +152,7 @@ export const createCapacityOperationObserver = async (
       active.attempts.push(attempt);
       if (active.attempts.length > 64) available = false;
     } catch {
+      accounting.unavailable();
       available = false;
     }
   };
@@ -158,6 +165,7 @@ export const createCapacityOperationObserver = async (
       attempt.cached = value.response.fromDiskCache === true;
       if (value.response.fromServiceWorker) available = false;
     } catch {
+      accounting.unavailable();
       available = false;
     }
   };
@@ -171,6 +179,7 @@ export const createCapacityOperationObserver = async (
       records.delete(value.requestId);
       notify();
     } catch {
+      accounting.unavailable();
       available = false;
     }
   };
@@ -184,6 +193,7 @@ export const createCapacityOperationObserver = async (
       records.delete(value.requestId);
       notify();
     } catch {
+      accounting.unavailable();
       available = false;
     }
   };
@@ -295,6 +305,7 @@ export const createCapacityOperationObserver = async (
         void now; // Node's separate business window is never subtracted from CDP clocks.
       }
     },
+    diagnostics: accounting.seal,
     samples: () => rows.map((row) => structuredClone(row)),
     snapshot: () => ({
       available: available && !disposed,

@@ -3839,3 +3839,31 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root唯一一輪0finding；最終39capacity/send檔545PASS、type/lint/globalformat/import/diff/static0。packet bd83c22b8fa7a6c2add88a8679c24f5db1bf9a0ae8d21cd0a3813f1e330a931d／52records21checks7freeze；Rootreview 421adb777ae84320d442062824607de09b4d7d8596fd0350029d90246714494a。真正exported UI在installed macOS Chrome自有loopback：正常1trusted click/1POST，disabled及focus後abort皆0，browser/server關。非真表單/Linux60證據；初sandbox EPERM於browser啟動前停止，核准同命令後PASS。
 - 兩Source正式button公開focus/press Enter、strict readiness、跨await admit、共用原15s monotonic；原ARM/並行/CLICK/CDP250ms保持。40/60固定gate兩basename，真wx collision RED→GREEN、原bytes保。2310protected/312history/Original7與prefix/658src/VM10八input真核；M57 operator獨立不混。正式review docs/reviews/2026-11-18-send-cohort-m59-review.md。
 - 下一exact13paths commit/normalFF隔離VMbranch/freshVM11。Console草稿east5-a N2custom12/32 minIceLake/100GBretain/3h normalSTOP+1min/noSA/Ops等實核，尚無Create/register/run；配置保守.60/h/3h1m reserve1.81，十舊base最大18.2208→planned20.0308非帳單，不含IP/egress/tax。十VM stopped/runner0/US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — M59 fresh VM11單次job開始
+
+- exact13paths Source4eeb0b32a72ba370b5ce7b24d1bf1f5fe28e8569/treee935a0ba7015b750122cc11be907db02a8e10487，parent3f1dd73；normalFF既定Local branch/Vercel optout false；run44255304545/job134635465442/attempt1/runner31，officialsvc cp-capacity/Restartno/MainPID3536。GitHubexact checkout進行；尚無容量結果，不重跑VM10。
+- VM11 e11a42/2754168844104822854/europe-west4-a/34.90.17.51/07:07:24UTC，N2custom12/32 actual/minIceLake/Ubuntu24.04/new100GBbalancedretain/noSA/Workload/Ops/snapshot/HTTP/display、3h normalSTOP10:06:31UTC+1min/noRestart。Google2equalreceipt/hostblock1/blocked0＋strictSSH preflight核，boot35e6680f…/hostfpiTZ0nZjd…；APT0a138/classicDocker29.1.3/空store真核。
+- east5-a與b先前兩次poolunavailable均非Native，兩次磁碟census仍十舊disk無新遺留；保存原失敗，不刪舊資料。第三次轉官方有列N2/IceLake的europe-west4-a成功。retry表單預設備份/Ops/SA已逐次還原，原startup SHA4f1c964b…exact UI核。十舊全stopped；保守.67/h/3h1m reserve2.03，加十舊配置最大18.2208→20.2508非帳單，disk共約117/月，未含IP/egress/tax/actualinvoice UNKNOWN。US150/noPaid/Hosted0/Production禁，Staging未部署。
+
+
+### 2026-11-18 — VM11真註冊60 PASS／existing3 INCONCLUSIVE，M61完整首因診斷核准
+
+- Root真age2281files220650770B/cold2220/8stopped/2DB127tables31roles/3vol全hashmetadata核，未restore；重算functional15＋anon3/10/20＋fresh40/60 PASS，5/15legs。40entry57.423/send112.863ms/completedAuth40；60entry168.103/send149.200ms/completedAuth60/ownershiptrue，各gate獨立ACCEPTED0600，rawConsole40/60各精準配對全數/unexpected0。新Source不追認VM10。
+- existing3 wcr-261118-a1e93eecad6a INCONCLUSIVE/21897.71ms；entry/login3 complete/5.08與20.983ms、兩學生完整game checkpoints、health VALID/firstCollectorInvalid與ReadyFailure null，但shared stop COLLECTOR_INVALID後abort/metrics null，未進此leg Live。52/22未歸屬只是counter，非直接abort。教師30讀取與學生window候選尚UNKNOWN實際index/UI錯，不能猜唯一首因；後9legs未跑，Staging未部署。
+- 同agent M61 readonly manifest73557d8da45f10b54593365fbdf5f8c5ef91ded2b8cc135d75c163b90318c81a，6records/8inputs/14Source已核。Root准單一完整game首因＋operation accounting診斷，四原Source/可新單一helper/兩focusedtests，保30concurrent/原trace/error/await/stop/metrics/所有門檻，不人工延慢或加負載救PASS。brief docs/superpowers/plans/2026-11-18-game-work-diagnostics-m61-brief.md 雙根落地，Root唯一review待packet。M60只讀盤點de3a9163…保、operatorSource暫緩；固定Staging一般唯讀既有授權可自主，不新設permissiongate。Root初私有manifest verifier把相對path當cwd而停，未寫入或改Native；後以manifest parent正確核六records。
+- VM11原hold至07:33:28UTC自然結束後核runner0，再normalSTOP保disk；目前尚running。十舊stopped/US150/noPaid/Hosted0/Production禁。ZIP7ade2410…/cipher32510735…/outer50e93d1b…；Root actual cold/business tool結果與首投影已私有保存。
+
+
+### 2026-11-18 — VM11 Root最終保留核通過／十一VM全STOPPED
+
+- 真age/cold/business已核：functional15＋前5/15legs（含首次註冊40/60）PASS；existing3仍INCONCLUSIVE/後9未跑，首因UNKNOWN。Rootfinal 640e121f61d0c9c66e697449f2c7d82cf99747544ac89f607f8a25efe430c078，正式report docs/reviews/2026-11-18-gcp-vm11-reg60-pass-existing3-inconclusive.md。原cold、資料與全部失敗保留，未restore/Hosted/Production。
+- GitHub原hold07:33:28自然結束/job07:33:31 failure/runner31自動移除repo0；Google exact2754168844104822854嚴格已停止、normal未skipgrace，100GBdisk保，十一VM全stopped。配置base預留20.2508非帳單，disk117/月/1100GB，US150/noPaid。M61同agent有界Source進行/Root唯一review待packet；VM12僅offline8+4fakePASS/Source BLOCKED，未Create/register/run。
+
+
+### 2026-11-18 — M61唯一review ACCEPTED／待新exact Source與freshVM12
+
+- 唯一SpecP2 counter不可能矩陣仍OBSERVED，Rootactual反例成立；同輪純schema語義驗證清除、Root6負向＋正向皆核。原操作/30concurrent/metrics/SLO/trace/error/await/stop保持。新diagnostics缺method/throw等隔離，無新請求或負載。Source5/tests2 finalfreeze；journeys既有563→573僅coordinator窄接線，其餘≤500。
+- worker40files548PASS/focused19及fulltype/lint/globalformat/import/diff/static0；Root發現少前send-dom16，自跑完整union41files564PASS/15.086s/7Sourcehash不變，非第二review/Sourcefinding。packetfe24d79375189a5ee5cca6e8a646c0022e26deabc1b60ebce93dbf099a02e27f/70records39checks7freeze，Rootreview23ff2768b3a23481b44c88f3ad98c4e4066e23cc4bd8b96b4267fb2877077812，2318protect/298history另M57 75/v1 43/inverse/Original/VM11八inputs皆核。正式docs/reviews/2026-11-18-game-work-diagnostics-m61-review.md。
+- 下一exact11paths commit/normalFF既定Local VMbranch/freshVM12單次。VM11原結果不回填；十一VM stopped/runner0/磁碟保、US150/noPaid/Hosted0/Production禁。VM12草稿europe-west4-a/新100GB、minIceLake/3h normalSTOP+1min/noSA/Ops等實核，Sourceadmission尚BLOCKED未Create/register/run。

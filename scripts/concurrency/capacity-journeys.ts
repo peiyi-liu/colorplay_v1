@@ -1,3 +1,7 @@
+import {
+  createCapacityGameDiagnostics,
+  captureCapacityOperationAccounting,
+} from './capacity-game-diagnostics';
 import { createCapacitySendDiagnostics } from './capacity-send-diagnostics';
 import { createCapacityErrorCounts } from './capacity-onboarding-console';
 import {
@@ -82,6 +86,7 @@ export const createCapacityJourneys = (
           actorsExpected: leg.actors,
         })
       : undefined;
+  const gameDiagnostics = createCapacityGameDiagnostics();
   let stopping = false,
     business = 0,
     id = 0;
@@ -478,6 +483,7 @@ export const createCapacityJourneys = (
             business += delta;
           },
           stop: onInvalid,
+          diagnostics: gameDiagnostics.observe,
         });
         check();
         const live = await runCapacityLiveGame(
@@ -539,6 +545,10 @@ export const createCapacityJourneys = (
           sqlStatementCount: 'UNAVAILABLE',
           nativeSloSource: 'CDP_HTTP_ONLY',
           browserErrors: errors.diagnostics(),
+          gameWork: gameDiagnostics.seal(),
+          operationAccounting: [...observers.values()].map((observer) =>
+            captureCapacityOperationAccounting(observer),
+          ),
         });
         originalFailed = false;
         return health;

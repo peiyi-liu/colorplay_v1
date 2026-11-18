@@ -1,3 +1,8 @@
+import {
+  gameObserve,
+  gameErrorClass,
+  type GameObserver,
+} from './capacity-game-diagnostics';
 import type { Request } from '@playwright/test';
 import type { CapacityScope } from './capacity-scope';
 import { capacityFailure } from './capacity-scope';
@@ -17,6 +22,7 @@ export interface CapacityGameLoadOptions {
   signal: AbortSignal;
   onActive: (delta: 1 | -1) => void;
   stop: () => void;
+  diagnostics?: GameObserver;
 }
 export const runCapacityGameLoad = async (
   options: CapacityGameLoadOptions,
@@ -42,7 +48,24 @@ export const runCapacityGameLoad = async (
   let active = 0,
     completed = 0,
     observed = 0;
-  const stop = () => {
+  const note: GameObserver = (row) => {
+    gameObserve(options.diagnostics, { ...row, active, completed, observed });
+  };
+  const stop = (
+    source:
+      | 'STUDENT_FAILURE'
+      | 'TEACHER_FAILURE'
+      | 'NO_PHYSICAL_WINDOW'
+      | 'SETTLE_FAILURE',
+    error?: unknown,
+  ) => {
+    note({
+      kind: 'STOP',
+      state: 'FAILED',
+      source,
+      signalAborted: owned.aborted,
+      errorClass: gameErrorClass(error),
+    });
     controller.abort();
     options.stop();
   };
@@ -69,6 +92,12 @@ export const runCapacityGameLoad = async (
       active++;
       observed++;
       options.onActive(1);
+      note({
+        kind: 'WINDOW',
+        state: 'ENTERED',
+        actorIndex: actor.actorIndex,
+        signalAborted: owned.aborted,
+      });
       release();
     };
     let dispose: () => void;
@@ -100,7 +129,13 @@ export const runCapacityGameLoad = async (
     return (async () => {
       try {
         if (!identity?.userId || owned.aborted) return capacityFailure();
-        return await ports.student(
+        note({
+          kind: 'STUDENT',
+          state: 'ENTERED',
+          actorIndex: actor.actorIndex,
+          signalAborted: owned.aborted,
+        });
+        const result = await ports.student(
           actor,
           identity.userId,
           classroomId,
@@ -108,8 +143,22 @@ export const runCapacityGameLoad = async (
           journal,
           owned,
         );
-      } catch {
-        stop();
+        note({
+          kind: 'STUDENT',
+          state: 'RETURNED',
+          actorIndex: actor.actorIndex,
+          signalAborted: owned.aborted,
+        });
+        return result;
+      } catch (error) {
+        note({
+          kind: 'STUDENT',
+          state: 'FAILED',
+          actorIndex: actor.actorIndex,
+          signalAborted: owned.aborted,
+          errorClass: gameErrorClass(error),
+        });
+        stop('STUDENT_FAILURE', error);
         return capacityFailure();
       } finally {
         lifecycle.done = true;
@@ -118,18 +167,41 @@ export const runCapacityGameLoad = async (
         if (lifecycle.started) {
           active--;
           options.onActive(-1);
+          note({
+            kind: 'WINDOW',
+            state: 'RETURNED',
+            actorIndex: actor.actorIndex,
+            signalAborted: owned.aborted,
+          });
         }
-        if (completed === actors.length - 1 && observed === 0) stop();
+        if (completed === actors.length - 1 && observed === 0)
+          stop('NO_PHYSICAL_WINDOW');
       }
     })();
   });
   const teacher = (async () => {
     await first;
     if (owned.aborted || active === 0) return capacityFailure();
-    return ports.teacher(host, classroomId, () => active > 0, owned);
+    return ports.teacher(host, classroomId, () => active > 0, owned, note);
   })();
   try {
-    return await settleCapacityGameWork<unknown>([...students, teacher], stop);
+    let failure: {
+      source: 'STUDENT_FAILURE' | 'TEACHER_FAILURE' | 'SETTLE_FAILURE';
+      error: unknown;
+    } = { source: 'SETTLE_FAILURE', error: undefined };
+    return await settleCapacityGameWork<unknown>(
+      [...students, teacher],
+      () => {
+        stop(failure.source, failure.error);
+      },
+      (error, index) => {
+        failure = {
+          source:
+            index === students.length ? 'TEACHER_FAILURE' : 'STUDENT_FAILURE',
+          error,
+        };
+      },
+    );
   } finally {
     controller.abort();
   }
