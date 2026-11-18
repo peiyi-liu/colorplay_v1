@@ -3738,3 +3738,60 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 3paths frozen92f12524…，packet9ef74635…36records15checks真hash核；34files434PASS在新test-only等價style前，freeze-v2後direct3/130＋type/lint/globalformat/import/diff/static0。初actual-helper2RED與lint4FAIL保。Root220組M55 legacy/lifecycle parity＋132modern tuple/正負向/lifecycle皆PASS；Rootprivate loader初錨點錯誤資格保，僅修控制工具、不動產品。
 - 原legacy保持，加strict modern僅code精確session_not_found＋有界message；mixed/unknown/duplicate/escaped/其他錯碼403拒、單read/parse/所選safeParse、原lease/postlogin/oracle/discount/SLO保。原497raw、M55pure/enum保；M55 mixed testcase只准標題與error_code TOKEN_SEEN窄hunk。2303非ownedtracked/operator45/Original7/prefix/pkglock核。唯一review0finding，Rootreview.git/m56-root-review.json SHAbe748854574d4cad9e6528195e142d52ca6a5f49e3910bea761ae7ce6b648f0e。
 - 正式review docs/reviews/2026-11-18-onboarding-modern-contract-m56-review.md。下一exact8paths commit/normalFF隔離VMbranch，再fresh VM9／job；尚未Create。八舊VM全stopped/runner0，原VM8INCONCLUSIVE不回填、60未跑、Staging未部署。US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — M56 fresh VM9單次job開始／八舊VM stopped
+
+- exact8paths Source15369216f29f085e82a1b5e4be7a5181e8ab7c52/tree9187d1fd104394c077e585261e42f8c6b57e5d6a，parent47f2812；normalFF隔離VMbranch、Source vercel deploymentEnabled=false，新push run44238411982/job134580045478/attempt1；runner29唯一repo新註冊，officialsvc usercp-capacity/Restartno/MainPID3558真start、checkout成功。非舊job重跑。
+- VM9 c9f3b2/instance6659979787753264319/us-east4-a/35.245.184.115，04:32:16UTC新建；N2custom12/32 actual/minIceLake/新100GBbalancedretain、3h limit/normalSTOP07:31:21UTC+1min/noRestart/noSA/Workload/Ops/snapshot/HTTP。Google兩同boot91886e9e…/hostkeyOQahUWAh…與hostblock一致、blocked0；SSHpreflight/strictAPT0a138/classic29.1.3空Docker真核。startup8fake＋courier4fakePASS。
+- west2已保留200GB，不用第三100超過既觀250regionalquota；官方表核east4-a支援N2/IceLake（不當即時capacity），新UI區域更新的舊west2 quota warning消失後才Create。未折扣compute UI444.52/月、disk11/月，以.67/h保留3h+1m2.0212，非帳單；首回Create成功。初唯讀runner census模板殘舊VM8輸出檔名，wx拒覆寫後Root只修本機獨立輸出再唯讀核repo0，舊資料未覆、無Native重跑。
+- Rootstart.git/gcp-vm9-root-start-receipt.json；八舊全stopped、九disk保留，已配置base最大保留US16.1996非帳單，disk估95/月、未含IP/egress/tax、actualinvoiceUNKNOWN。US150/noPaid/Hosted0/Production禁。下一原functional15→15legs firstcause failstop及actualage/cold/business核；尚無M56 Native結果、60未完成、Staging未部署。
+
+
+### 2026-11-18 — WB5 M57離線admission控制器有界開始
+
+- 同agent四新檔：hosted-admission-contracts/admission及兩focused tests；Root先核typedports／opaqueFSM。caller僅scope，固定Rootports依序核批准bytes/SHA/window、完整target/artifact/key/Edge/migration、Local15stage/15leg＋close/publication、必要protectedMerge，再原validateHostedConfig與原子nonce。executionAuthority NONE、無effects／真adapter／mail/Admin/Hosted執行。
+- UNKNOWN本controller鎖死不release/retry；跨instance依真store單調性，fake分replylost與store不可用，不冒稱durable已寫或global atomic。JSON/clone/純validated/foreign opaque拒、重核一次USED／漂移INVALID。Root唯一review，保Local/M56/產品/舊guards/operator45 bytes。
+- 四新檔先WIP，後續獨立operator branch/SHA；被測app candidate1536921與VM9實測tree不混，不能追認含新工具。新carrier push前Root另Vercel optout。詳 docs/superpowers/plans/2026-11-18-hosted-admission-m57-brief.md。VM9 fresh run44238411982仍進行，八舊stopped/US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — VM9真40 modern驗過／錯誤聚合40仍FAIL
+
+- actual Source1536921/run44238411982/job134580045478，functional15＋anon3/10/20 PASS；fresh40正式FAIL僅functional_failure、SLOPASS/overallfalse。40completed/Authcreated/same-subject ownershiptrue；registration PASS/complete_cohort，entry61.24/send40of40 214.848ms有效，無timeout/abort/429。全部journey/readback/retention/cleanup等true，唯一unexpectedErrors40。
+- M56 final gate40/40ACCEPTED，每actor bodyRead1/92B/SESSION_NOT_FOUND/expected1/firstnull，HTTP/network counter0；真typed modern code/message STRING、errcode ABSENT，M56窄格式Source實測有效但非40容量PASS，不回填VM7/8。Sourcejourneys全console.error＋pageerror＋server500加總，現證據僅sum40、原分項與console身份未留，不能減40或泛忽略403。下一需分項+精確PW/CDP networkRequestId／body／lease配對，原未知錯仍FAIL。
+- Root真age1315files215921839B/cold1262/8stop/2DB127tables31roles/3volhashmetadata核、未restore；25bootlogs30940B。ZIPb5f717af…／ciphere68b5277…，Rootfirst.git/gcp-vm9-root-first-review.json與actualcoldbusiness結果保。report docs/reviews/2026-11-18-gcp-vm9-console-counter-result.md。
+- job04:58:02UTCfailure/原hold自然完、runner29auto移除/afterholdrepo0；Root正常STOP待Console終態、保100GBdisk，八舊已stopped。M57僅獨立operator離線4新檔進行，不混app tree。60未跑/Staging未部署，US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — VM9已停止終態／九VM全stopped
+
+- Google Console exactinstance6659979787753264319已停止，正常STOP未skipgrace、100GBdisk保留；九VM全stopped／after-hold repo runner0。Rootfinal.git/gcp-vm9-root-final-review.json SHAb81bf8f866ffa80ac3cec5508499d5f44be09f1a9a5123716e6d3718c2f5ea8b、截圖.git/gcp-vm9-stopped-20261118.jpg。
+- Source1536921真40 M56 gate全接受、完整註冊readback等PASS但總unexpectedErrors40使capacity FAIL；原60未跑、Staging未部署。M57獨立operator四新檔離線進行，下一錯誤分項／精確console對照修正待有界task，不泛忽略403。US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — 順序修正：M57尚無Source，先M58 console精確對照
+
+- Root查agent狀態確認M57介面回覆FINAL後，send_message批准沒有觸發新turn；4新檔尚未存在，並非Source進行。Root改以followup_task正式啟動主阻擋M58，M57設計批准保留、實作延後，不刪任何Source。
+- M58先最小介面Root核，保M56/body/raw counts，PW resource403候選需同頁CDP Log.networkRequestId＋真原onboarding所有proof一對一，至多折1；未配對/JS/page/server/其他console全FAIL。加閉集分項診斷，不假稱VM9sum40全部logout。brief docs/superpowers/plans/2026-11-18-onboarding-console-m58-brief.md；同agent/Root唯一review，先RED後新Source，九VM全stopped/runner0。
+- M57後續獨立operator branch/SHA不混app tree；US150/noPaid/Hosted0/Production禁。60未跑、Staging未部署。
+
+
+### 2026-11-18 — M58介面核准／VM10僅草稿
+
+- Root以followup_task正式啟動同implementer；核准四Source＋兩新test：新console memory pairer/raw counter、原request observer同CDP Log.enable一次、browser原WeakMap exact actor/current binding、journeys原聚合點封存；不動M56 helper。原HTTP discount與Root readback/finalgate完成後，PW唯一candidate與同頁Log networkRequestId／原唯一logout request精確相符才最多折1，其他raw console/page/server錯保留。既有transport-accounting只加strict closed diagnostic欄，不移receipt／cleanup時序，不用JSON作authority。
+- implementer回報actual journey/observer/UI/gate synthetic RED已有效重現old1/new期待0；尚待Root final packet真核，非Native結果。M57仍僅設計，未寫四新Source。
+- VM10 cp-capacity-20261118-d03e74僅Google UI未提交草稿，us-east4-a/N2custom12/32/minIceLake/Ubuntu24.04新100GBbalancedretain、3h normalSTOP＋1min/noRestart/noSA/Workload/Ops/snapshot/HTTP；startup與本機exact相等，name-only反向替換exact、8fakePASS，courier4fakePASS/realcredentials0/SSH0。private .git/m58-vm10-startup；Source admission BLOCKED待M58 Root核，不Create、不register、不Native。UI444.52/月compute＋11/月disk，保守.67/h/3h1m約2.0212非帳單。
+- 九VM全stopped/runner0、九disk估95/月/3.1233每日仍計費，九配置base最大16.1996非帳單；.git/gcp-owned-budget-reserve-nine-stopped-20261118.json。US150/noPaid/Hosted0/Production禁，Local60未完成、Staging未部署。
+
+
+### 2026-11-18 — Root產品整合unit回歸PASS（非Native／integration）
+
+- Root獨立執行src全部unit＋auth-login四直接contracts/content-media recovery，maxWorkers2：actual222files1771testsPASS／68.944秒；231requested中9個integration依既有Vitest exclude未執行，明確不是integration或capacity／phase PASS。658個src檔案before/after hash全同，產品Source基線1536921；M58工具WIP不在這組tests內。
+- private .git/m58-root-product-regression/result.json SHA0aa97177e50c485bb565504fc125be674103edb420bb6d99de439c844d80efab、log10960bd8c782f0e8490fc60b901e03eed2dd2b3abb3b17a6ca679bc39224a118，命令／完整tests／src freeze保。M58同agent實作／檢查進行，Root唯一review待finalpacket；九VM stopped／VM10僅未提交草稿，US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — M58唯一review ACCEPTED／待exact Source fresh VM10
+
+- Root真核final packet65005a68…64records27checks／6freeze，最後36capacityfiles483PASS、fulltype/global lint/globalformat/import/diff/static0；初RED/type/lint/setup與舊478資格保。Root獨立產品222/1771通過、9integration未跑；2307protected／173history／3inverse／Original7/prefix/pkglock與658產品hash皆核。
+- 唯一review Standards/Spec/Security0finding；原raw計數保，同頁同request唯一PW+CDP networkRequestId／genuine current binding／原全部onboarding proof，且同ConsoleMessage曾被raw listener計入才最多折1，late無法追認。M56 parser／產品／SLO／operator45不改。Rootreview.git/m58-root-review.json SHA28b7713f3d7702785ccde9c48d0a1504cd1c402a94d0045f33c70dd2cf6fe839。Root首次private verifier symlink讀取錯誤只修工具v2、無Source／Native更動。
+- 正式 docs/reviews/2026-11-18-onboarding-console-m58-review.md；下一exact11paths commit/normalFF隔離VMbranch與freshVM10，尚未Create；VM9 FAIL不回填，60未完成/Staging未部署。九VM stopped/runner0/US150/noPaid/Hosted0/Production禁。M57僅設計待獨立operator Source。

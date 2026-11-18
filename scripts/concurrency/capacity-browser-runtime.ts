@@ -118,6 +118,10 @@ export const finalizeCapacityOnboardingLogout = (actor: object) => {
     binding?.control.cancel('OWNER');
   }
 };
+export const readCapacityOnboardingConsoleEvidence = (actor: object) => {
+  const binding = onboardingBindings.get(actor);
+  return binding?.current() ? binding.control.consoleEvidence() : undefined;
+};
 export const getNativeCapacitySendBinding = (actor: NativeCapacityActor) => {
   const binding = sendBindings.get(actor);
   return binding?.current() ? binding : undefined;

@@ -1,4 +1,5 @@
 import { createOnboardingLogout } from './capacity-onboarding-logout';
+import { createOnboardingConsolePairing } from './capacity-onboarding-console';
 import {
   createRegistrationFirstReason,
   registrationEndpoint,
@@ -66,6 +67,9 @@ const onboardingControllers = new WeakMap<
   ReturnType<typeof createOnboardingLogout> & {
     finalizeCounter(): void;
     isLive(): boolean;
+    consoleEvidence: ReturnType<
+      typeof createOnboardingConsolePairing
+    >['evidence'];
   }
 >();
 export const getCapacityOnboardingController = (observer: object) =>
@@ -105,6 +109,11 @@ export const createCapacityRequestObserver = async (
     unexpectedHttpErrors = 0,
     unexpectedNetworkFailures = 0,
     actionsCompleted = 0;
+  const consolePair = createOnboardingConsolePairing(
+    scope.supabaseUrl,
+    () =>
+      available && !disposed && !signal.aborted && onboarding.discount() === 1,
+  );
   const tickets = new WeakMap<Action, object>();
   const notify = (
     action: Action,
@@ -224,6 +233,12 @@ export const createCapacityRequestObserver = async (
           input !== null &&
           Object.hasOwn(input, 'redirectResponse'),
       );
+      consolePair.request(
+        value.requestId,
+        value.request.url,
+        value.request.method,
+        generation,
+      );
       if (action) {
         action.requests++;
         if (action.requests !== 1) {
@@ -324,6 +339,7 @@ export const createCapacityRequestObserver = async (
     ['Network.responseReceived', response],
     ['Network.loadingFinished', finished],
     ['Network.loadingFailed', failed],
+    ['Log.entryAdded', consolePair.log],
     [
       'Network.dataReceived',
       (value: unknown) => {
@@ -342,15 +358,18 @@ export const createCapacityRequestObserver = async (
   };
   const isStopped = () => signal.aborted || disposed;
   page.on('close', closed);
+  page.on('console', consolePair.console);
   signal.addEventListener('abort', aborted, { once: true });
   const dispose = async () => {
     disposed = true;
     available = false;
     onboarding.cancel('DISPOSE');
+    consolePair.dispose();
     diagnostic.note('DISPOSE');
     terminate(current);
     for (const [event, listener] of listeners) cdp.off(event, listener);
     page.off('close', closed);
+    page.off('console', consolePair.console);
     signal.removeEventListener('abort', aborted);
     records.clear();
     kinds.clear();
@@ -362,6 +381,13 @@ export const createCapacityRequestObserver = async (
   };
   try {
     await cdp.send('Network.enable', { maxPostDataSize: 0 });
+    if (isStopped()) return capacityFailure();
+    try {
+      await cdp.send('Log.enable');
+      consolePair.enabled();
+    } catch {
+      consolePair.unavailable();
+    }
     if (isStopped()) return capacityFailure();
     available = true;
   } catch {
@@ -384,6 +410,7 @@ export const createCapacityRequestObserver = async (
       }
       generation++;
       onboarding.arm(phase, generation);
+      consolePair.arm(phase, generation);
       let resolve: (value: CapacityActionObservation) => void = () => undefined,
         reject: () => void = () => undefined;
       const finished = new Promise<CapacityActionObservation>((yes, no) => {
@@ -434,6 +461,7 @@ export const createCapacityRequestObserver = async (
   onboardingControllers.set(observer, {
     ...onboarding,
     isLive: () => available && !disposed && !signal.aborted,
+    consoleEvidence: consolePair.evidence,
     finalizeCounter() {
       onboarding.finalize();
     },

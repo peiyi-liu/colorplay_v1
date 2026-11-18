@@ -1,4 +1,5 @@
 import { createCapacitySendDiagnostics } from './capacity-send-diagnostics';
+import { createCapacityErrorCounts } from './capacity-onboarding-console';
 import {
   createGeneratorDiagnostics,
   finishGeneratorJournal,
@@ -20,6 +21,7 @@ import { fetchStudentChapterMap } from '../../src/features/learning/api/chapter-
 import { sessionTokensFromPage } from '../../tests/e2e/helpers/staging-capacity-browser';
 import {
   createNativeCapacityBrowser,
+  readCapacityOnboardingConsoleEvidence,
   type NativeCapacityActor,
 } from './capacity-browser-runtime';
 import { createCapacityOperationObserver } from './capacity-operation-observer';
@@ -104,10 +106,9 @@ export const createCapacityJourneys = (
       task: Promise<unknown>;
     }
   >();
-  let consoleErrors = 0,
-    pageErrors = 0,
-    serverErrors = 0;
-  const disposers: (() => void)[] = [];
+  const errors = createCapacityErrorCounts(
+    readCapacityOnboardingConsoleEvidence,
+  );
   const check = () => {
     if (stopping || signal.aborted) return capacityFailure();
   };
@@ -176,25 +177,7 @@ export const createCapacityJourneys = (
       if (!native) return capacityFailure();
       const actor = await native.createActor(index);
       check();
-      const onConsole = (
-          message: import('@playwright/test').ConsoleMessage,
-        ) => {
-          if (message.type() === 'error') consoleErrors++;
-        },
-        onError = () => {
-          pageErrors++;
-        },
-        onResponse = (response: import('@playwright/test').Response) => {
-          if (response.status() >= 500) serverErrors++;
-        };
-      actor.page.on('console', onConsole);
-      actor.page.on('pageerror', onError);
-      actor.page.on('response', onResponse);
-      disposers.push(() => {
-        actor.page.off('console', onConsole);
-        actor.page.off('pageerror', onError);
-        actor.page.off('response', onResponse);
-      });
+      errors.track(actor);
       const observer = await generatorOperation(
         generator?.observe,
         'OPERATION_OBSERVER',
@@ -515,7 +498,7 @@ export const createCapacityJourneys = (
           leg.mode === 'NODE_PROTOCOL'
             ? clients.flatMap((c) => c.samples())
             : [...observers.values()].flatMap((o) => o.samples()),
-        unexpectedErrors: consoleErrors + pageErrors + serverErrors,
+        unexpectedErrors: errors.aggregate(),
       };
     },
     stop: async () => {
@@ -531,7 +514,7 @@ export const createCapacityJourneys = (
           ...[...observers.values()].map((o) => o.dispose()),
           ...(native ? [native.close()] : []),
         ]);
-        for (const dispose of disposers) dispose();
+        errors.dispose();
         const health = await collector.stop();
         if (
           results.some((r) => r.status === 'rejected') ||
@@ -555,6 +538,7 @@ export const createCapacityJourneys = (
           },
           sqlStatementCount: 'UNAVAILABLE',
           nativeSloSource: 'CDP_HTTP_ONLY',
+          browserErrors: errors.diagnostics(),
         });
         originalFailed = false;
         return health;
