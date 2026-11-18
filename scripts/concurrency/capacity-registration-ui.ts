@@ -15,6 +15,7 @@ import type {
 } from './capacity-registration-ownership';
 import type { createCapacityMailbox } from './capacity-mailbox';
 import { z } from 'zod';
+import { performance } from 'node:perf_hooks';
 import { capacityFailure } from './capacity-scope';
 import { barrierResultSchema } from './capacity-metrics';
 import {
@@ -49,6 +50,9 @@ export interface CapacityRegistrationUi {
     admit: () => void,
   ) => Promise<void>;
 }
+const requireReady = (value: unknown) => {
+  if (value !== true) return capacityFailure();
+};
 export const actualUi: CapacityRegistrationUi = {
   send: async (actor, admit, observer) => {
     admit();
@@ -61,9 +65,56 @@ export const actualUi: CapacityRegistrationUi = {
     };
     emit('ENTERED');
     try {
-      await actor.page
-        .getByRole('button', { name: '傳送驗證碼', exact: true })
-        .click();
+      const started = performance.now();
+      let last = started;
+      const timeLeft = () => {
+        const at = performance.now();
+        if (
+          !Number.isFinite(started) ||
+          !Number.isFinite(at) ||
+          at < last ||
+          at - started >= 15000
+        )
+          return capacityFailure();
+        last = at;
+        return 15000 - (at - started);
+      };
+      const remaining = () => {
+        admit();
+        return timeLeft();
+      };
+      const button = actor.page.getByRole('button', {
+        name: '傳送驗證碼',
+        exact: true,
+      });
+      await button.waitFor({ state: 'visible', timeout: remaining() });
+      requireReady(await button.isEnabled({ timeout: remaining() }));
+      await button.focus({ timeout: remaining() });
+      const ready = await button.evaluate(
+        (node) => {
+          if (!(node instanceof HTMLButtonElement)) return false;
+          const rect = node.getBoundingClientRect();
+          return (
+            node.ownerDocument === document &&
+            node.isConnected &&
+            node.type === 'button' &&
+            node.matches(':enabled') &&
+            node.tabIndex >= 0 &&
+            !node.closest('[inert]') &&
+            document.activeElement === node &&
+            Number.isFinite(rect.width) &&
+            Number.isFinite(rect.height) &&
+            rect.width > 0 &&
+            rect.height > 0 &&
+            getComputedStyle(node).visibility === 'visible'
+          );
+        },
+        undefined,
+        { timeout: remaining() },
+      );
+      requireReady(ready);
+      await button.press('Enter', { timeout: remaining() });
+      timeLeft();
       emit('RETURNED');
     } catch (error) {
       emit('FAILED');

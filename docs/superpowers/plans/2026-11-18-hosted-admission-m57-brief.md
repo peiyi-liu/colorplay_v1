@@ -1,12 +1,12 @@
 # M57：WB5離線Hosted admission控制器
 
-Root已核准此有界設計，依已核whole-site plan WB5及同agent唯讀impact map；尚無Source四新檔，先M58解除Local主阻擋，再恢復本task。基線Source15369216f29f085e82a1b5e4be7a5181e8ab7c52；VM9 run44238411982／job134580045478已結束，九VM均stopped。Root唯一review，不增agent。這一項僅資格化admission控制流程，executionAuthority保持NONE，沒有Hosted effect callback／executor或真遠端adapter。
+Root已核准最小typed ports／opaque API，現在正式恢復此有界離線實作。M58已由Root唯一review接受，基線app Source3f1dd73da04b401793f310a77ffb523de8617efa；Root已建立獨立operator branch codex/hosted-capacity-operator-20261118（目前HEAD仍app base、尚無operator commit）。VM10 run44245300575／job134602672919／runner30正執行該app exact Source，舊九VM均stopped。Root唯一review，不增agent。此task僅資格化admission控制流程，executionAuthority保持NONE，沒有Hosted effect callback／executor或真遠端adapter。
 
 ## Scope與分支邊界
 
-四新owned paths：scripts/concurrency/hosted-admission-contracts.ts（<=250行）、hosted-admission.ts（<=500）、tests/contracts/whole-site-hosted-admission.test.ts（<=500）、whole-site-hosted-admission-race.test.ts（<=500）。既有hosted-config/provenance、Local wrappers、M56三檔、產品、package/lock、workflow/operator45、舊tests全部byte保。你不是獨自在codebase，不覆Root reports/brief/雙handoff與歷史證據。需要額外路徑先Root回報；不可通用AST style。
+四新owned paths：scripts/concurrency/hosted-admission-contracts.ts（<=250行）、hosted-admission.ts（<=500）、tests/contracts/whole-site-hosted-admission.test.ts（<=500）、whole-site-hosted-admission-race.test.ts（<=500）。既有hosted-config/provenance、Local wrappers、M56三檔與M58六檔、產品、package/lock、workflow/operator45、舊tests全部byte保。你不是獨自在codebase，不覆Root reports/brief/雙handoff與歷史證據。需要額外路徑先Root回報；不可通用AST style。
 
-新增Hosted operator工具會改Git tree，不能追認由1536921 Local測得的產品candidate含新工具。因此這四檔先只WIP，Root後續會放獨立operator分支／SHA，產品candidate與被測app SHA分開，保既有VERIFIED_PROTECTED_MERGE的tree同值規則。你不切branch、不commit/push、不改vercel；新carrier首次push前Root另精確opt-out。不要以新operator工具SHA替代M56被測app SHA，亦不要將Hosted credentials放Local workflows。
+新增Hosted operator工具會改Git tree，不能追認由3f1dd73 Local測得的產品candidate含新工具。因此這四檔先只WIP，Root後續會放獨立operator分支／SHA，產品candidate與被測app SHA分開，保既有VERIFIED_PROTECTED_MERGE的tree同值規則。你不切branch、不commit/push、不改vercel；新carrier首次push前Root另精確opt-out。不要以新operator工具SHA替代M58被測app SHA，亦不要將Hosted credentials放Local workflows。
 
 ## 批准介面與順序
 
@@ -20,10 +20,14 @@ reservation binding至少含approval SHA、scope（含run/plan/fixture/target/fi
 
 TDD真RED到actual exported controller，不mock成功schema／不刪skip舊assertions。fakeIO覆完整order、fixedStaging/Production負向、任一缺證零reserve、完整Local predecessor必需、窗邊界、SAME_SHA/ProtectedMerge雙分支、nonce同/跨controller競爭、store寫入但reply lost、reserveUNKNOWN/throw、nonce不可重用、到期/target漂移/partial後inspect拒、JSON/clone/跨instance／純validated物件偽造拒、隱私/closed errors與deep freeze。明記FakeIO不是remote PASS、不是Hosted execution。
 
-focused新tests＋既有whole-site-hosted*.test.ts、typecheck/lint/globalformat/import/diff、最終freeze與全保護；保所有RED／FAIL，privatepacket .git/m57-hosted-admission/逐命令exit/rawlog/hash/manifest。報僅Source task完成，不宣稱功能／容量／Hosted通過。你只做四新檔，不能真browser/Native/Docker/network/MCP external writes/Cloud/Hosted、不能讀憑證或跑真reserve；不Git mutation／不加worker。Root處理VM9與app整合，US150/noPaid/Production禁。
+focused新tests＋既有whole-site-hosted*.test.ts、typecheck/lint/globalformat/import/diff、最終freeze與全保護；保所有RED／FAIL，privatepacket .git/m57-hosted-admission/逐命令exit/rawlog/hash/manifest。報僅Source task完成，不宣稱功能／容量／Hosted通過。你只做四新檔，不能真browser/Native/Docker/network/MCP external writes/Cloud/Hosted、不能讀憑證或跑真reserve；不Git mutation／不加worker。Root處理VM10與app整合，US150/noPaid/Production禁。
 
 ## Root typed ports／UNKNOWN資格已核（2026-11-18）
 
 准上述4新檔開始actual-controller RED／實作。Root ports需完整供應validateHostedConfig所需controlledMail／runIdentity／sourceProof等typed觀測，不能由caller request補trusted值；可作observeDeployment的完整attestation bundle。fresh_registration缺controlledMail仍拒，不寄信、不擴角色或scope。
 
 reserve UNKNOWN／throw先鎖本controller不可再試；跨instance安全依賴真durable port之單調性：不確定nonce後續只可UNKNOWN／ALREADY_RESERVED，不得回UNUSED讓新controller自動重試。分測『已寫成功但reply lost』與『store完全不可用』，不假設UNKNOWN已durably寫成。此task只能證process-local latch與依賴store契約，不宣稱已實作跨process durability或多服務原子性。checkBeforeUse成功僅消耗一次為USED，失敗永久INVALID，executionAuthority仍NONE／沒有effect。
+
+## RECHECK與原UNUSED guard的界線（Root核准）
+
+原validateHostedConfig只接受runIdentity.state UNUSED，admit原樣呼叫一次；reservation之後不可偽造UNUSED再跑該函式。checkBeforeUse由closure固定RECHECK phase，重新讀全部Root ports並strict parse，核同原approval bytes/SHA/window、scope/nonce與完整stable bindings，runIdentity必為RESERVED；原assertHostedSourceProof與必要protected-merge port重新驗，timestamp／controlledMail條件均保。UNKNOWN／partial／throw／漂移／expiry永久INVALID，不重新reserve／retry。成功僅OFFLINE_RECHECK_PASSED／USED＋executionAuthority NONE，明確不宣稱再次通過原UNUSED admission guard。caller不能傳phase或trustedfields，既有guard bytes不改。

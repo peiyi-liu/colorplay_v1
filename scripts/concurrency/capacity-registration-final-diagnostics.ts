@@ -328,7 +328,14 @@ export const observeRegistrationFinalGate = async (
       runtime: runtimeRow,
       actors: rows,
     });
-    await journal.write('registration-final-gate', payload);
+    await journal.write(
+      actors.length === 40
+        ? 'registration-final-gate-40'
+        : actors.length === 60
+          ? 'registration-final-gate-60'
+          : 'registration-final-gate',
+      payload,
+    );
   } catch {
     valid = false;
   }

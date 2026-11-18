@@ -121,9 +121,17 @@ describe('actual registration Page operations and strict safe public observation
   );
 });
 
-it('send callback failure cannot bypass original admission or add an extra click', async () => {
-  const click = vi.fn(() => Promise.resolve()),
-    getByRole = vi.fn(() => ({ click })),
+it('send callback failure cannot bypass admission or add an extra trusted activation', async () => {
+  const press = vi.fn<
+      (key: string, options: { timeout: number }) => Promise<void>
+    >(() => Promise.resolve()),
+    getByRole = vi.fn(() => ({
+      waitFor: () => Promise.resolve(),
+      isEnabled: () => Promise.resolve(true),
+      focus: () => Promise.resolve(),
+      evaluate: () => Promise.resolve(true),
+      press,
+    })),
     actor = { page: { getByRole } } as unknown as NativeCapacityActor;
   await actualUi.send(
     actor,
@@ -136,5 +144,8 @@ it('send callback failure cannot bypass original admission or add an extra click
     name: '傳送驗證碼',
     exact: true,
   });
-  expect(click).toHaveBeenCalledOnce();
+  expect(press).toHaveBeenCalledOnce();
+  expect(press.mock.calls[0]?.[0]).toBe('Enter');
+  expect(press.mock.calls[0]?.[1].timeout).toBeGreaterThan(0);
+  expect(press.mock.calls[0]?.[1].timeout).toBeLessThanOrEqual(15000);
 });

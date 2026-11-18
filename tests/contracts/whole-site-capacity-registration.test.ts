@@ -343,7 +343,7 @@ it('actual completed cohort persists the exact final admission decision without 
   expect(h.ui.send).toHaveBeenCalledTimes(40);
   expect(h.ui.verify).toHaveBeenCalledTimes(40);
   expect(h.journal.write).toHaveBeenCalledWith(
-    'registration-final-gate',
+    'registration-final-gate-40',
     expect.objectContaining({
       authority: 'NON_AUTHORITY',
       gate: 'ACCEPTED',
@@ -367,7 +367,7 @@ it('actual final runtime rejection preserves completed40 and persists short-circ
   expect(result.report.result).toBe('FAIL');
   expect(result.report.completedActors).toBe(40);
   const gate = h.journal.write.mock.calls.find(
-    ([name]) => name === 'registration-final-gate',
+    ([name]) => name === 'registration-final-gate-40',
   )?.[1];
   expect(gate).toMatchObject({
     gate: 'REJECTED',
@@ -385,7 +385,7 @@ it('actual final runtime rejection preserves completed40 and persists short-circ
 it('actual final diagnostic writer failure cannot turn an otherwise completed cohort into PASS', async () => {
   const h = await setup();
   h.journal.write.mockImplementation((name) =>
-    name === 'registration-final-gate'
+    name === 'registration-final-gate-40'
       ? Promise.reject(new Error('PRIVATE_WRITE'))
       : Promise.resolve(),
   );

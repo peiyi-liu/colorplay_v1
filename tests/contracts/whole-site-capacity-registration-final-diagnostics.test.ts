@@ -31,6 +31,27 @@ const actor = (h: ReturnType<typeof fixture>, index: number) => {
 };
 const payload = (h: ReturnType<typeof fixture>) =>
   registrationFinalGateSchema.parse(h.journal.write.mock.calls[0]?.[1]);
+it.each([3, 40, 60])(
+  'uses only the fixed actual-cohort basename for%i actors',
+  async (size) => {
+    const h = fixture();
+    h.actors = Array.from({ length: size }, (_, actorIndex) => ({
+      actorIndex,
+      observer: { snapshot: vi.fn(good) },
+    }));
+    expect(
+      await observeRegistrationFinalGate(h.runtime, h.actors, h.journal),
+    ).toBe(true);
+    expect(h.journal.write).toHaveBeenCalledWith(
+      size === 40
+        ? 'registration-final-gate-40'
+        : size === 60
+          ? 'registration-final-gate-60'
+          : 'registration-final-gate',
+      expect.objectContaining({ actorsExpected: size, gate: 'ACCEPTED' }),
+    );
+  },
+);
 describe('same-snapshot non-authority cohort final gate', () => {
   it.each([
     { available: false },

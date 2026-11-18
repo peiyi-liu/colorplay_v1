@@ -1,16 +1,38 @@
 import { expect, it, vi } from 'vitest';
 import type { NativeCapacityActor } from '../../scripts/concurrency/capacity-browser-runtime';
 import { actualUi } from '../../scripts/concurrency/capacity-registration-ui';
-it('actual send UI passively reports its click bounds after original admit without changing the action', async () => {
+it('actual send UI passively reports its marker bounds around one checked trusted activation', async () => {
   const events: unknown[] = [],
     trace: string[] = [],
-    click = vi.fn(() => {
-      trace.push('CLICK');
-      return Promise.resolve();
-    });
+    press = vi.fn<(key: string, options: { timeout: number }) => Promise<void>>(
+      () => {
+        trace.push('PRESS');
+        return Promise.resolve();
+      },
+    );
   const actor = {
     actorIndex: 0,
-    page: { getByRole: () => ({ click }) },
+    page: {
+      getByRole: () => ({
+        waitFor: () => {
+          trace.push('VISIBLE');
+          return Promise.resolve();
+        },
+        isEnabled: () => {
+          trace.push('ENABLED');
+          return Promise.resolve(true);
+        },
+        focus: () => {
+          trace.push('FOCUS');
+          return Promise.resolve();
+        },
+        evaluate: () => {
+          trace.push('FOCUSED');
+          return Promise.resolve(true);
+        },
+        press,
+      }),
+    },
   } as unknown as NativeCapacityActor;
   await Reflect.apply(actualUi.send, actualUi, [
     actor,
@@ -21,8 +43,23 @@ it('actual send UI passively reports its click bounds after original admit witho
       events.push(value);
     },
   ]);
-  expect(trace).toEqual(['ADMIT', 'CLICK']);
-  expect(click).toHaveBeenCalledTimes(1);
+  expect(trace).toEqual([
+    'ADMIT',
+    'ADMIT',
+    'VISIBLE',
+    'ADMIT',
+    'ENABLED',
+    'ADMIT',
+    'FOCUS',
+    'ADMIT',
+    'FOCUSED',
+    'ADMIT',
+    'PRESS',
+  ]);
+  expect(press).toHaveBeenCalledTimes(1);
+  expect(press.mock.calls[0]?.[0]).toBe('Enter');
+  expect(press.mock.calls[0]?.[1].timeout).toBeGreaterThan(0);
+  expect(press.mock.calls[0]?.[1].timeout).toBeLessThanOrEqual(15000);
   expect(events).toEqual([{ state: 'ENTERED' }, { state: 'RETURNED' }]);
 });
 
@@ -226,12 +263,20 @@ it('bounds events, rejects clock regression, and never caches a false native aut
   });
   expect(d.snapshot().events.length).toBe(2000);
 });
-it('actual UI keeps admit-before-click, callback exceptions isolated, and original error identity', async () => {
+it('actual UI keeps admit-before-activation, callback exceptions isolated, and original error identity', async () => {
   const error = new Error('PRIVATE_CLICK'),
-    click = vi.fn(() => Promise.reject(error)),
+    press = vi.fn(() => Promise.reject(error)),
     a = {
       actorIndex: 0,
-      page: { getByRole: () => ({ click }) },
+      page: {
+        getByRole: () => ({
+          waitFor: () => Promise.resolve(),
+          isEnabled: () => Promise.resolve(true),
+          focus: () => Promise.resolve(),
+          evaluate: () => Promise.resolve(true),
+          press,
+        }),
+      },
     } as unknown as NativeCapacityActor;
   await expect(
     actualUi.send(
@@ -248,7 +293,7 @@ it('actual UI keeps admit-before-click, callback exceptions isolated, and origin
       throw denied;
     }),
   ).rejects.toBe(denied);
-  expect(click).toHaveBeenCalledOnce();
+  expect(press).toHaveBeenCalledOnce();
 });
 it('finish before send never invents a settled batch or BATCH event', async () => {
   const d = createCapacitySendDiagnostics({ ...scope, actorsExpected: 1 });
