@@ -33,3 +33,7 @@ Standards：符合核准M級範圍、strict型別、<=500行、無新依賴或�
 12GiB是核准的新產生器預算，尚未證明60人完整測試會過。Root保存新exactSource時會併入M75自己的handoff空白修正與必要新文件，不能把VM19的ccc證據移標新SHA。worker已idle且Source凍結。Root將新VM20 h20e18／12CPU32G執行四actualkernel controls，再fresh原完整15leg；原19VM均STOPPED／無重跑或刪除。
 
 VM20目前只有草稿，startupbfc325bc5b7ba8ede495a62532d8477729d537fdf5f0f9dd17c790febb2cf596，8bootstrap＋4courierfakePASS，實際4kernel尚未執行。next3h基本保守預留2.30、planned39.4208、已配置37.1208非invoice／exclIP-egress-tax；US150／不升級付費、保留磁碟持續計費、永久清理仍pending。Hosted writes0、Production禁止；通過後繼續Staging既有九項check及exactSHA Owner gate，不繞保護。
+
+## Native20後續結果：封裝閉集合缺口
+
+本review的工具測試／列內46項hash核對結果仍保留；後續真Native20在bootstrap admission停止。M76新增test_linux_browser_budget.py放進operator但未列manifest，違反原目錄閉集合，Root先前審查漏核此項。Root用真下載request與實際package唯讀重現line171拒絕；Native20未進functional/capacity，不追認PASS。M77只將9tests移出operator並補actual-directory regression，原guard／46項／全部工具Source不變；Root唯一review已接受，待新exactSource／freshVM21 full15。詳細見2026-11-19-gcp-vm20-bootstrap-package-inconclusive.md與2026-11-19-package-test-placement-m77-review.md。

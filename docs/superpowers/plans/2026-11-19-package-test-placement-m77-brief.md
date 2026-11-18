@@ -1,0 +1,21 @@
+# M77 — 修正新測試檔位置，保留operator封裝閉集合
+
+Owner已允許持續Local實作／唯一Root審查／完整60人，通過後Staging，US150/noPaid/Production禁。新一次Native20 Source5288b52ae450e117f3b2f95c67273320aa7975a7/run44397934629在admission停止，未建runtime／services／actors。不是12GiB政策或網站容量FAIL。
+
+Root真下載age PREBUSINESS_DIAGNOSTIC：artifact14470009606/ZIP1799B/730725209331e40c02ff0032d54c7d986bb2c27411bdfa0070ab5fc0df6d1eea，cipher1661B/222083d2a0d38c91f0de3ec0f22b4de637c664cd97b96a115df336c2deacb814，5files1824B。真bootstrap request SHA d1a9fc20e6daac8f652d1619c76ddd90d5f5f0ee92acb76ea0deb160f296b125，confirmation／provenance正確、packageSHA c56766665c7701076f52a6ef56507d966e0ee83814e23fcae88c3eea854eca75與Source同。Root對actual committed package執行純唯讀C.operator_package，精確在linux_bootstrap_contracts.py:171以BOOTSTRAP_ADMISSION_INVALID拒絕，unexpectedNames只有test_linux_browser_budget.py、missing空。Native只記泛用錯誤，沒有獨立完整Native traceback；Source封裝阻擋已確定重現，不臆稱唯一所有可能首因。
+
+## 唯一修正
+
+將 scripts/concurrency/linux-operator/test_linux_browser_budget.py 搬到 tests/contracts/test_linux_browser_budget.py。保9個原測試body／assertions；只調整搬移必要ROOT parents、sys.path與load(name)的operator實際路徑，不能改被測產品／工具行為。Root授權這兩個檔案ownership（舊刪、新增）；其餘Source、manifest46entries／角色／hash都不得改。你不是唯一編輯者，Root會補docs/handoff／review與VM21草稿，保護他人WIP；不改docs／Original／舊Native／M76封包。舊檔移出後，不能在operator新增其他測試、README豁免或放寬閉集合guard。
+
+新增actual-package回歸到新檔：必須使用當前真operator目錄的完整實際內容（包括未列入檔案，禁止只複製manifest46項而把extra吞掉），呼叫原C.operator_package；可為跨工作目錄可攜性在temp fixture下使用固定colorplay-live-recovery名稱，這是測試fixture而非保存大型基線。positive成功，注入未知額外檔、缺失／篡改已列檔皆原guard拒絕。無服務／CLI/API／網路／GitHub／Docker呼叫。新fixture操作限自己的TemporaryDirectory。
+
+先保有效RED：新回歸測試在舊operator額外測試檔仍存在時，用原actual-package validator拒絕；再移除舊位置GREEN。原M76新9cases可用AST／精確fragment inverse證明測試body與assertions未變（ROOT／load/helper接線必要差別另外列）；所有初失敗保留，不skip／刪assertion。
+
+## 驗證與交付
+
+Sourcebase5288b52ae450e117f3b2f95c67273320aa7975a7。Root kernel4真PASS只涵蓋新M76五模組，不代表package guard過；M76 review的package驗證漏掉closed-directory，需在新report誠實記錄。舊VM20不重跑／重啟，正常hold21:17:56→21:27:56UTC後Rootstop與封存。
+
+只測試位置／回歸，產品與14Source／M76其他tests完全不變。完整65files Vitest與最終新增Python10或實際discovery集合、operator原套件與contracts／snapshot受影響tests、fulltype/lint/format/import/no-bytecode/diff、actual46packagevalidator、所有保護hash綠。Pythondiscovery移動後counts如實列，不能拿舊71當新71或加總重疊。整檔<=500；不新增配置平台／重構。
+
+private packet .git/m77-package-test-placement/：actualRED/GREEN／exactcommands+rawhash，Source新增/刪除freeze與old9AST/inverse，保M76全部78records+Source18歷史／Native20五診斷+加密檔+四kernel控制、Original9/prefix及M69；Root唯一一輪review。先交未commit結果，不push／建VM／啟真Local／Hosted。必要新路徑先報Root，不要請Owner搬訊息。Root核准後才保存新exactSource＋全新VM21原full15，現有19VMSTOPPED／20在原hold，永久清理pending。

@@ -4,19 +4,21 @@ import copy
 import importlib.util
 import io
 import json
+import shutil
 import sys
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 import unittest
-import linux_host_contract as H
 
 KIND = 'LINUX_VM_12CPU_32G_BROWSER12G_V1'
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT/'scripts/concurrency/linux-operator'))
 sys.path.insert(0, str(ROOT/'scripts/concurrency'))
 sys.path.insert(0, str(ROOT/'tests/contracts'))
 sys.path.insert(0, str(ROOT/'tests/contracts/helpers'))
+import linux_host_contract as H
 import linux_bootstrap_contracts as C
 import linux_runtime_common as M
 from linux_vm_contract_driver import request as old_request
@@ -38,7 +40,7 @@ def observed():
 
 
 def load(name):
-    spec = importlib.util.spec_from_file_location('budget_'+name.replace('-','_'),Path(__file__).with_name(name+'.py'))
+    spec = importlib.util.spec_from_file_location('budget_'+name.replace('-','_'),ROOT/'scripts/concurrency/linux-operator'/(name+'.py'))
     module = importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     return module
 
@@ -223,6 +225,31 @@ class BrowserBudgetTests(unittest.TestCase):
             self.assertEqual(C.digest(path.read_bytes()),approval)
             self.assertEqual(C.parse_request(path.read_bytes(),approval,env),value)
             self.assertEqual(H.request_target(value,suite.ENV)['kind'],KIND)
+
+
+    def test_complete_actual_operator_directory_is_closed_and_hash_bound(self):
+        operator=ROOT/'scripts/concurrency/linux-operator'
+        expected=C.digest((operator/'package-manifest.json').read_bytes())
+        for variant in ('complete','extra','missing','tampered'):
+            with self.subTest(variant=variant),tempfile.TemporaryDirectory() as temporary:
+                source=Path(temporary).resolve()/'colorplay-live-recovery'
+                package=source/'scripts/concurrency/linux-operator'
+                # Copy ALL actual entries, including undeclared files; never filter by manifest.
+                shutil.copytree(operator,package,symlinks=True)
+                self.assertEqual({p.name for p in package.iterdir()},{p.name for p in operator.iterdir()})
+                if variant=='extra':(package/'unapproved-extra.py').write_bytes(b'# synthetic extra')
+                if variant=='missing':(package/'linux_host_contract.py').unlink()
+                if variant=='tampered':
+                    path=package/'linux_host_contract.py';path.write_bytes(path.read_bytes()+b'\n# tampered')
+                if variant=='complete':
+                    admitted,installed=C.operator_package(source,expected)
+                    self.assertEqual(admitted,package)
+                    manifest=json.loads((operator/'package-manifest.json').read_bytes())
+                    self.assertEqual(len(manifest['files']),46)
+                    self.assertEqual(set(installed),{k for k,v in manifest['files'].items() if v['role']!='TEST'})
+                else:
+                    with self.assertRaises((C.BootstrapError,FileNotFoundError)):
+                        C.operator_package(source,expected)
 
 
 if __name__ == '__main__':
