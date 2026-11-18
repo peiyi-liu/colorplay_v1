@@ -3808,3 +3808,16 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - operator9f9獨立/tmp三Source已接受，Root一輪0finding；final5files231/必要checks0，55records/rawFAIL保。Root direct2321protected／三Source／Original7/pkglock/575959prefix及8FS＋3duplicate控制PASS。final04f6b4c6afbe41e81f4687ed544b0ec35c1d1f3141f90d456cc073b65ff4efa7，Root a7f705d14d1b900eccccb5c61128f6c0ce9f7d810dbeb345457c33c907a8e514，review三根落。
 - 81fixed files/12MiB actualread，原TS validators完整functional15＋capacity15／request/close/candidate／profileRoot獨立attestation，不造publication檔，不是realNative15PASS。test507<=510理由已准；兩Recovery generated tsbuildinfo經symlink寫，無beforecensus不稱依賴全bytes唯讀，無install/update/Originaldeps改。
 - 下一Root exact-path operator保存及已接受M57/M65七路徑帶app候選，再dispatch M66（當前仍draft）。十三VM STOPPED／runner0／無VM14／US150/noPaid／Hosted0／Production禁，Local5/15未全通不部署。
+
+
+### 2026-11-18 — M69獨立operator bounded實作授權
+
+- 同agent唯讀確認durable nonce可透過M57 reserveOnce(binding) ports注入，獨立operator toolchain SHA/hash不填app source/webRevision；SAME_SHA/ProtectedMerge tree原比較不變，不豁免31fe完整15/15與真Staging provenance。Root核准fixed批准nonce pre-armed fence/file+dirfsync才暴露first live closure，restart不可復活UNUSED；reserveUNKNOWN跨process單調，arming以前任何byte皆無法寫入的情況明列無port/無durability保證，不冒稱萬能storage。
+- M69brief3e7a5626ec510d9a5e1d43aca08b780d43b1ddc2b896c18a9f0223e113ecf7b9三根，僅operator /private/tmp/colorplay-hosted-root-m65-20261118 base6cdc66c新增四owned nonce Source/tests；2304tracked protected baseline、M57/M65舊檔不可改。准ownTempFS與短命ownedNodechild crash/race、先RED與Hosted union/fullchecks、Root唯一review；無App/Auth/browser/network/Hosted/cloud/Git/docs/deps更動。
+- Native15 Source31fe/job134844338003仍in_progress；app全部Source凍結。M69未完成／無新Hosted權限、merge/deploy/測試mail／Production禁。
+
+
+### 2026-11-18 — M69 durable nonce同輪P2修復接受
+
+- 獨立operator base6cdc新增四owned，Root一輪1P2已修/0open；Rootexported encoder toJSON callback1→0且reject，新增非JSONprimitive guard與兩回歸，舊testprefix/局部inverse/另兩Source不變。7files264PASS/全finalchecks0，packet fd25860e93725bd7f8d64cb0993b3bab4448125fac76f4d6eb7c4a9893a9d2cf/Root7a9bcb1995849dc46a9f51aa387af5bd3ca12381819fd1f12cd83ffcb2a6fb81。Root真核109records/42checks/2304operator/2029app/196history/Original9prefix/24Nativeinputs，初ERROR/RED/FAIL與v1 75records保。
+- nonce先持久prearm file+dirfsync才暴露first closure，restart不復活UNUSED/reserveUNKNOWN單調；noport前無任何durablebyte不誇大保證。真TempFS/ownchild race/crash非硬體斷電；資料檔不自證Root來源authority。operator SHA/hash獨立app31fe，不改sameSHA/tree。尚未commit/push/Hosted接線，下一Root保存exactoperatorSource後繼續完整Live passive診斷brief；app31fe Native15 5/15/十五VM停/runner0／US150/noPaid／Hosted0／Production禁。
