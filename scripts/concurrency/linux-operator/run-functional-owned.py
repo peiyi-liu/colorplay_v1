@@ -2,7 +2,7 @@
 import datetime,hashlib,json,os,re,signal,stat,subprocess,sys
 from pathlib import Path
 from linux_runtime_common import require_linux, context, private_read, verify_root_snapshot
-from linux_owned_process import run_child
+from linux_owned_process import run_child, ParentStopDiagnostics
 R=Path(__file__).resolve().parent
 SOURCE=R.parent.parent/'colorplay-live-recovery'
 BUDGET=1500000
@@ -28,6 +28,25 @@ def call(args,timeout=10,data=None,env=None):
 def frozen(sha):
     return call(['/usr/bin/git','rev-parse','HEAD']).decode().strip()==sha and not call(['/usr/bin/git','status','--porcelain']).strip()
 
+def observe_owned_child(arguments,revision,run_id,scope,profile,leg_id=None,progress_action='LOCAL_FUNCTIONAL_RUNNING'):
+    diagnostic=ParentStopDiagnostics()
+    try:return run_child(arguments,progress_action=progress_action,diagnostics=diagnostic)
+    finally:
+        # Independent best-effort private sideband, after original physical close.
+        try:
+            identity=profile['observed']['identity'];expected=scope['executionProfileSha256']
+            assert profile['expectedSha256']==expected and all(isinstance(identity[k],str) and re.fullmatch('[a-f0-9]{64}',identity[k]) for k in ['jobSha256','bootIdSha256'])
+            assert re.fullmatch('[a-f0-9]{40}',revision) and re.fullmatch('(wsb|wcr)-[a-z0-9]{6,16}-[a-z0-9]{6,16}',run_id)
+            assert leg_id is None or re.fullmatch('[a-z0-9_-]{1,120}',leg_id)
+            binding={'sourceRevision':revision,'runId':run_id,'legId':leg_id,'executionProfileSha256':expected,'jobSha256':identity['jobSha256'],'bootIdSha256':identity['bootIdSha256']}
+            value=diagnostic.snapshot();observed=value['contextBinding']
+            matches=None if observed is None else all(observed[k]==binding[k] for k in ['sourceRevision','jobSha256','bootIdSha256'])
+            envelope={'schemaVersion':1,'authority':'NON_AUTHORITY','binding':binding,'contextMatches':matches,'diagnostic':value}
+            assert len((json.dumps(envelope,indent=2,ensure_ascii=False)+'\n').encode())<=32768
+            prefix='functional' if leg_id is None else 'capacity'
+            write(R/(prefix+'-parent-stop-'+run_id+'.json'),envelope)
+        except BaseException:pass
+
 def main():
     global NODE
     require_linux()
@@ -51,12 +70,12 @@ def main():
     review=json.loads(read(R/'reviewed-candidate.json'))
     assert review['result']=='ACCEPTED_FOR_LOCAL_VALIDATION' and review['sourceRevision']==sha and frozen(sha),'CANDIDATE_NOT_FROZEN'
     assert scope['executionProfileSha256']==approval['executionProfileSha256'],'PROFILE_APPROVAL_CHANGED'
-    verify_root_snapshot(scope,sha,request['profileRuntime'])
+    parent_profile=verify_root_snapshot(scope,sha,request['profileRuntime'])
     journal=private/run_id;assert not journal.exists(),'PRIOR_RUN_EXISTS'
     write(R/('functional-launch-intent-'+run_id+'.json'),{'atUtc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'sourceRevision':sha,'runId':run_id,'approvalSha256':approved,'requestSha256':approval['requestSha256'],'rootPublisherSha256':approval['publisherSha256'],'rootValidatorSha256':approval['validatorSha256'],'outerBudgetMs':BUDGET})
     observer=R/'root-functional-network-observer.mjs'
     assert digest(read(observer))==approval['networkObserverSha256'],'ROOT_NETWORK_OBSERVER_CHANGED'
-    observed=run_child([NODE,'--import','tsx','--import',str(observer),str(SOURCE/'scripts/concurrency/run-functional.ts'),'--request',str(request_path),'--approval-sha256',approval['requestSha256']])
+    observed=observe_owned_child([NODE,'--import','tsx','--import',str(observer),str(SOURCE/'scripts/concurrency/run-functional.ts'),'--request',str(request_path),'--approval-sha256',approval['requestSha256']],sha,run_id,scope,parent_profile)
     if not journal.exists():journal.mkdir(mode=0o700)
     directory(journal)
     assert not (journal/'functional-result.json').exists() and not (journal/'functional-process-close.json').exists(),'PRODUCER_CREATED_AUTHORITY_FILE'

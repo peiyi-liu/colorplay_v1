@@ -87,9 +87,9 @@
       "sha256": "b5b7205e514c5cd85dae57eca1ce9adc14b69bf8d24fc461753112a51bea52d3"
     },
     "linux_owned_process.py": {
-      "bytes": 11801,
+      "bytes": 22258,
       "role": "OPERATOR",
-      "sha256": "c90d3a3048f69ba99687f613cacfbcf4b9fb30d1c396c0fda80d8a048b551e8f"
+      "sha256": "1c7faa818b109c23ab33914da17ad483a1b8c93d9fc8e37ddc2e3c78132787f6"
     },
     "linux_proc.py": {
       "bytes": 3078,
@@ -152,14 +152,14 @@
       "sha256": "ec9af30337a1e8ee9e717a8085915149140297c416a2a645ffc71555bd5d30b8"
     },
     "run-capacity-owned.py": {
-      "bytes": 12196,
+      "bytes": 12270,
       "role": "OPERATOR",
-      "sha256": "16982c15a2a5988c61604410ae0a672cb9fde2623d8b13930a22c194df1a6a98"
+      "sha256": "b1a79e51f5cac43ed5c4f852890bf9e3ec8d61c4a639411933898a627eb22562"
     },
     "run-functional-owned.py": {
-      "bytes": 8506,
+      "bytes": 10208,
       "role": "OPERATOR",
-      "sha256": "0c3a2699e9114783f7905c8a0912f21916ae624322cfcb65082febc3c1f682c4"
+      "sha256": "95419595c0974f22117d671baebe02f39e87916a990a48ba82f85af9b85f7b39"
     },
     "test_build_private_values.py": {
       "bytes": 1180,

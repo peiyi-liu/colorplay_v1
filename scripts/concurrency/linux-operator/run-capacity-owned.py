@@ -82,7 +82,7 @@ def main():
     review,_=safe_json(R/'reviewed-candidate.json')
     assert review['result']=='ACCEPTED_FOR_LOCAL_VALIDATION' and review['sourceRevision']==sha and frozen(sha),'SOURCE_NOT_FROZEN'
     assert scope['executionProfileSha256']==approval['executionProfileSha256'],'PROFILE_APPROVAL_CHANGED'
-    verify_root_snapshot(scope,sha,request['profileRuntime'])
+    parent_profile=verify_root_snapshot(scope,sha,request['profileRuntime'])
     manifest,functional=verify_fixed_inputs(request,scope)
     leg=[row for row in manifest['legs'] if row['legId']==request['legId']]
     assert len(leg)==1 and leg[0]['mode']==approval['mode'],'LEG_MODE_CHANGED'
@@ -91,7 +91,7 @@ def main():
     journal=plan_journal/request['legId'];prepare_leg_directory(journal)
     write(R/('capacity-launch-intent-'+run_id+'.json'),{'atUtc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'sourceRevision':sha,'planId':scope['planId'],'runId':run_id,'legId':request['legId'],'mode':approval['mode'],'approvalSha256':approved,'requestSha256':request_hash,'outerBudgetMs':BUDGET})
     PHASE='CHILD'
-    observed=BASE['run_child']([NODE,'--import','tsx',str(SOURCE/'scripts/concurrency/run-capacity.ts'),'--request',str(request_path),'--approve',request_hash],progress_action='LOCAL_CAPACITY_RUNNING')
+    observed=BASE['observe_owned_child']([NODE,'--import','tsx',str(SOURCE/'scripts/concurrency/run-capacity.ts'),'--request',str(request_path),'--approve',request_hash],sha,run_id,scope,parent_profile,request['legId'],progress_action='LOCAL_CAPACITY_RUNNING')
     PHASE='PUBLICATION'
     profile_attestation=verify_root_snapshot(scope,sha,request['profileRuntime'])
     observation=process_info(observed,approval['mode'],frozen(sha))

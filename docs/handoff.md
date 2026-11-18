@@ -3571,3 +3571,37 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 6owned Source/tests，v2packet2d6943d8bfc3d00dae1f34e0e1dfaf7da567faa50905929044e461be9de7f01a／101records43checks全hash核，v1原61records/manifest不動。原P2 escaped duplicate key已在parse前以canonical/unique token資格拒，真RED2→GREEN；未解0。Root7files104tests＋新19與原45獨立controls PASS；worker最終fullchecks0，初FAIL資格詳review。
 - Root核2279非ownedGit/operator45/history121/Original7+true575959prefix/pkglock/M51 private startupadapter不動，原registration.ts gate+Rootreadback全byte不動，6檔均≤500。Rootreceipt.git/m52-root-review.json SHA3fd3aae2e4be87d235e98c3c6bb7144c1ac7ce7d6e676858f3299f1cef92abd0；docs/reviews/2026-11-18-onboarding-logout-m52-review.md。
 - 只離線接受，VM4舊真run保INCONCLUSIVE，無Local60/Hosted/phasePASS。下一exact新Source10paths、freshVM5草稿e83f26/us-west1-b同N2minIceLake12/32，3hSTOP+1m/noSA/Ops/HTTP，原完整矩陣／US150/noPaid/Production禁；舊4VM仍stopped保disk計費。
+
+
+### 2026-11-18 — M52 exact新Source／VM5新job已啟動
+
+- exact10paths commit4ada65a14378b9c8fdec55871e196bfe81fd56cf/tree0c6e0ceea96473f9c5bb79e0671865aacee754f3，GitHub隔離VMbranch normalFF0270→4ada（Vercel=false），新run44206460914/job134473538252/push attempt1；舊job不rerun、VM4不回填PASS。
+- VM5 e83f26/instance6000752327006442416/us-west1-b/8.231.59.188，00:12:16UTC建立；Console actual/min IceLake/N2custom12/32、officialUbuntu24x64 image20261105/100GBbalanced保disk、3hSTOP+1m/noRestart/noSA/Ops/snapshot/HTTP核。Google serial兩收據相等，boot7b6b8ae0…與hostkey1O+h/5vt…固定；SSH preflight12CPU/31.335GiB/UID1001/systemdcgv2/classic29.1.3真核。
+- courier4mock PASS，一token/一ephemeralrunner25，API獨立核name/label/Source/job綁定；官方svc Usercp-capacity/Restart=no真啟動，空Docker後freshjob in_progress。Rootstart .git/gcp-vm5-root-start-receipt.json；尚無本輪容量結果。
+- 下一functional15＋完整15legs firstcausefailstop、真age/cold/business核；舊4VM皆stopped保disk計費、US150/noPaid/Hosted0/Production禁，Local未過不部署Staging。
+
+
+### 2026-11-18 — VM5 before_send父取消／M53完整首因診斷
+
+- Source4ada65a/run44206460914/job134473538252/attempt1，functional15+anon3/10/20 PASS，fresh40 INCONCLUSIVE；phasebefore_send/752.658ms/completed0/Authcreatednull/ownershipKnownfalse，未browser entry/OTP/M52gate。Node PARENT_SIGNAL先journeyfail/finally；outerSIGKILL/4651.866ms/stderr0/residue0/sourceFrozen，health0samples/stale不能當健康有效。
+- 父deadline1490s/overflow/cancelled混合分支未保存；cancelled含父signal或trackException，具體首因UNKNOWN。不能猜exec/PIDrace/UID0/OOM，也不以不同Python/Nodeclock相減。M53只補原實際firstdecision/stage/code/errno/counts/stop各步的NON_AUTH sideband，原guards/timeouts/signalorder/receipt保持。brief docs/superpowers/plans/2026-11-18-parent-stop-m53-brief.md，同一agent離線/Root唯一review；無產品或M52更改，operator45只三既有entry hash更新。
+- 真artifact14384362874 ZIP42687536B/9805707b…/cipher0840c264…，Rootactualage833files213185327B/cold780/8自然stop/2DB127tables/3volumeshash核，未restore，25bootlogs30940B保runtime/gcp-vm5；Rootfirst .git/gcp-vm5-root-first-review.json。詳docs/reviews/2026-11-18-gcp-vm5-parent-stop-result.md。job00:37:15UTC finalfailure，runner25移除1/repo0，Root正常stopVM5保disk待Console終態。US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — VM5停止終態／M53待最小介面具體化
+
+- GoogleConsole exactinstance6000752327006442416核「已停止」，正常shutdown未勾skip，100GBdisk保留仍計費；截圖.git/gcp-vm5-stopped-20261118.jpg。runner25已移除1/repo0，五VM全stopped。Rootfinal .git/gcp-vm5-root-final-review.json SHA5cfd405f7bc07dc9f7b2109d43a8d0ba8ca3403d5dbc4610a1aba8c0eb265bf0。
+- M53同一agent先具體化closed sideband／writer失敗語義；在Root核介面前不改Source，原guard與signalorder/timeout不動。沒有新Native/Cloud，US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — M53最小介面已拍板／只離線實作
+
+- Root核ParentStopDiagnostics純memory optional參數，保原run_child return/authoritystdout/PASS；caller重用原pre snapshot observed.identity jobSha/bootSha與expected profile，stop/close後try/finally私有wx600 sideband；無新proc/context/clock採樣或callback I/O。writer best-effort不改原結果／exception，缺診斷明記UNKNOWN，不宣稱診斷或資料完整已驗。
+- 同一agent已可直接actual exported run_child fake RED→實作，無Cloud/Native/Hosted；Root唯一review，operator45只三既有entry hash更新。五VM均stopped保disk計費/runner0，US150/noPaid/Production禁。
+
+
+### 2026-11-18 — M53 Root唯一review接受／原guards全保
+
+- 5owned Source/tests，packet9c9af64621670b8b6d3b2eeb4f32ac6d756a77ac01262c85dfebc784a5842cba/59records22checks全hash核，未解finding0。memory firstcause閉集與原track/stop實際值，caller原pre snapshot binding＋stop/close後wx600 sideband，writer best-effort原return/exception/PASS不動、缺診斷UNKNOWN。
+- worker12新pure＋2舊pure分列PASS，必要checks最後0，初RED/interfaceERROR/deadline fake/setup/style失敗原保；Root19額外controls含11原新版operation/clock trace、PID/UID拒絕、敏感錯誤、caller exception identity與VM5真profile job/boot hash對照PASS。Source347/143/114等均≤500；Root2284protected/operator其餘42/283history/Original7trueprefix/pkglock/M52六檔全核。Rootreceipt.git/m53-root-review.json SHAde0c5322f6e33c91c35cf47e257e28ec62dd4198ddd0361a826230e91544f651，詳docs/reviews/2026-11-18-parent-stop-m53-review.md。
+- 僅Source工具接受，VM5原首因UNKNOWN/M52未真機走到，舊結果不回填。五VM仍stopped/runner0，VM6草稿f14b8c同N2IceLake12/32/us-west1-b未Create，startup a435ad2a…只NAME替換/8fake與UI textarea exact；下一exact新Source/fresh job＋完整矩陣與真sideband/cold核。US150/noPaid/Hosted0/Production禁。
