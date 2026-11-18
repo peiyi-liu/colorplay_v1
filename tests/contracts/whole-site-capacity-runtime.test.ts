@@ -486,9 +486,9 @@ it('records only safe same-clock call boundaries after execution and both verifi
         outcome: 'ok',
         elapsedMs: 200,
         callStartedAtNodeMs: 100,
-        executeStartedAtNodeMs: 130,
+        executeStartedAtNodeMs: 132,
         executeClosedAtNodeMs: 300,
-        callCompletedAtNodeMs: 330,
+        callCompletedAtNodeMs: 332,
       },
     ]);
     f.io.execute.mockRejectedValueOnce(new Error('SYNTHETIC_ORIGINAL_ERROR'));
@@ -497,7 +497,7 @@ it('records only safe same-clock call boundaries after execution and both verifi
     );
     expect(runtime.rootAccounting()[1]).toMatchObject({
       outcome: 'unknown',
-      elapsedMs: 30,
+      elapsedMs: 32,
     });
     expect(f.io.execute).toHaveBeenCalledTimes(3);
     expect(JSON.stringify(runtime.rootAccounting())).not.toContain('SYNTHETIC');

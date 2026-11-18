@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  createOnboardingBodyDiagnostics,
+  onboardingBodyDiagnosticsSchema,
+} from './capacity-onboarding-body-diagnostics';
 const failure = z.enum([
   'OWNER',
   'WINDOW',
@@ -16,6 +20,7 @@ const failure = z.enum([
 ]);
 export const onboardingLogoutEvidenceSchema = z.strictObject({
   authority: z.literal('NON_AUTHORITY'),
+  bodyDiagnostics: onboardingBodyDiagnosticsSchema,
   candidateCount: z.number().int().min(0).max(2),
   bodyReads: z.number().int().min(0).max(1),
   decodedBytes: z.number().int().min(0).max(4096).nullable(),
@@ -65,6 +70,7 @@ export const createOnboardingLogout = (
   origin: string,
   readBody: (id: string) => Promise<unknown>,
 ) => {
+  const bodyDiagnostics = createOnboardingBodyDiagnostics();
   let generation: number | null = null,
     loginGeneration: number | null = null,
     opened = false,
@@ -229,6 +235,7 @@ export const createOnboardingLogout = (
             return;
           }
           try {
+            bodyDiagnostics.stage('LEXER');
             const text = result.data.body;
             const keys = new Set<string>();
             for (const token of text.matchAll(/"(?:\\.|[^"\\])*"/gu)) {
@@ -240,18 +247,35 @@ export const createOnboardingLogout = (
                   .startsWith(':')
               )
                 continue;
-              if (
-                !['"error_code"', '"code"', '"msg"'].includes(key) ||
-                keys.has(key)
-              )
+              bodyDiagnostics.key(key);
+              const allowed = ['"error_code"', '"code"', '"msg"'].includes(key);
+              const duplicate = allowed && keys.has(key);
+              if (!allowed || duplicate) {
+                bodyDiagnostics.rejected(
+                  duplicate
+                    ? 'KEY_DUPLICATE'
+                    : key.includes('\\')
+                      ? 'KEY_NONCANONICAL'
+                      : 'KEY_UNKNOWN',
+                );
                 throw Error();
+              }
               keys.add(key);
             }
-            if (!keys.has('"error_code"')) throw Error();
+            if (!keys.has('"error_code"')) {
+              bodyDiagnostics.rejected('ERROR_CODE');
+              throw Error();
+            }
+            bodyDiagnostics.stage('JSON');
             const value: unknown = JSON.parse(text);
-            if (!bodySchema.safeParse(value).success) throw Error();
+            bodyDiagnostics.stage('SCHEMA');
+            const parsed = bodySchema.safeParse(value);
+            bodyDiagnostics.schema(value, parsed);
+            if (!parsed.success) throw Error();
             code = 'SESSION_NOT_FOUND';
+            bodyDiagnostics.accepted();
           } catch {
+            bodyDiagnostics.caught();
             code = 'UNKNOWN';
             reject('CODE');
           }
@@ -304,6 +328,7 @@ export const createOnboardingLogout = (
     snapshot: () =>
       onboardingLogoutEvidenceSchema.parse({
         authority: 'NON_AUTHORITY',
+        bodyDiagnostics: bodyDiagnostics.snapshot(),
         candidateCount: candidates,
         bodyReads: reads,
         decodedBytes: bytes,

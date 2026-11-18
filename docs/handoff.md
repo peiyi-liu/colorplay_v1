@@ -3655,3 +3655,51 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - 本輪3P2全CLOSED：未包錯誤不得誤標已完成step；active且unique pending才配對，新側不能接ended/closed/terminal row（含3完成順序）；重用既有Page.frameNavigated主frame pin/loader、iframe或缺pin UNKNOWN，無新CDP/HTTP。Root6原陰性＋10額外正負控制PASS，合法晚terminal保留，open0。
 - 私有ASTstyle工具曾污染新fixture前綴，已停用；原25assertion AST/19cases保留並Root核初可見/最終fixture，未聲稱缺副本的污染前bytes相等。primitive throw單行具理由lint例外保原拋值。Doc504 cap510具理由/health622 cap650，puretypes82不runtime循環。Root2287非owned/operator45/M52/M53/Original7 true575959prefix/pkglock核。Rootreview.git/m54-root-review.json SHAcd642c1a39975be0d7f7657a8b14f5188e21829f7a61e1c75072a44cc7ab1c96；詳 docs/reviews/2026-11-18-functional-live-finish-m54-review.md。
 - 只Source工具接受，不把VM6 FAIL/M52未走到/Local60當PASS。下一exact14paths新Source與freshVM7原矩陣，草稿a76d91/us-south1-a未Create；六VM均stopped保disk計費/runner0/US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — M54 exact新Source已固定／VM7配置未啟動Native
+
+- exact14paths commit be38f50b9b274a66a03244123e8ce85590971300/tree1c9077f15d8e845fa6701f21acafd2baf749f4c4，parent e706；Rootreceipt.git/m54-commit-receipt.json。GitHub VMbranch唯讀仍e706，尚未push/排新job，repo無新增runner。Source vercel.json該VMbranch deploymentEnabled=false真核；get_project未回git欄，初缺欄按UNKNOWN停止檢查後改核正確Source設定，無Vercel寫入。
+- VM7 a76d91/us-south1-a建立回resource pool unavailable；同區域自動選區重新提交後仍回同a區錯誤，無boot/Native/新runner，兩失敗receipt與截圖保.git/m54-vm7-startup，orphan disk仍待真清單核。每次retry UI重設SA/Ops/snapshot，Root建立前全改回原限制，startup13ccefd2…exact；未放寬CPU/時限/PASS。
+- 先查官方regions-zones表：south1-b沒有列IceLake，c有列，但不代表當下capacity。改同規格explicit us-south1-c草稿中，第三次若仍失敗停止此配置嘗試並重新檢視可取得性假設，不盲目連續Create。六舊VM全stopped保disk、US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — VM7達拉斯配置三次失敗／停止該區域Create
+
+- explicit south1-a、auto仍報south1-a、查官方平台支援後explicit south1-c三次均resource pool unavailable。第三error截圖/receipt.git/m54-vm7-startup/third-placement-error-20261118.jpg與zone-c-create-failure.json；無boot/新runner/新job/Native，Source be38未push。不是網站功能或容量FAIL。
+- 依三次失敗停止規則，停止達拉斯Create；存疑假設為「達拉斯此刻可取得指定N2 IceLake12/32配置」。官方支援表不提供即時容量。下一先唯讀核失敗disk殘留/另一美國區域quota與費用，保原硬體/時限/guard/PASS；不改成較低標準或升paid。六舊VM已stopped，資料disk保留；US150/Hosted0/Production禁。
+
+
+### 2026-11-18 — M54 fresh VM7新job開始／六舊VM全stopped
+
+- 達拉斯三次失敗後停止該區域，唯讀磁碟清單仍六個各100GB、a76殘留0；再查官方us-west2-a列IceLake與UI無quota warning、未折扣compute474.07/月÷730約0.6494/h，以0.67/h保留3h+1m約2.0212 base，未動硬體/guard/PASS。新區域首回成功，非舊job重跑。
+- actual VM7 a76d91/instance8920317743019896087/us-west2-a/35.235.109.26，02:56:58UTC建立；N2custom12/32 actual/min IceLake、Ubuntu24.04x64 image20261105/新100GBbalanced保留、3h正常STOP+1m/noRestart/noSA/Ops/snapshot/HTTP核。Google fullpre268510字先在DOM內過濾（直接回傳字串會200k截斷，不當boot失敗），兩收據相同/blocked0/hostblock1；boot26ef4df9…與hostkeyvG8dE3kt…固定，SSHpreflight12CPU/31.335GiB/UID1001/systemdcgv2/classic29.1.3與空Docker真核。
+- exact14paths be38f50b9b274a66a03244123e8ce85590971300/tree1c9077f15d8e845fa6701f21acafd2baf749f4c4 normalFF推隔離VMbranch（Source vercel git.deploymentEnabled=false），新run44227747989/job134544990007/push attempt1；repo0→唯一ephemeralrunner27，4courierfakePASS/一token一POST；API核ID/name/label/Source真綁，officialsvcUsercp-capacity/Restart=no/MainPID3571真start。新job已in_progress、checkout成功。
+- Rootstart.git/gcp-vm7-root-start-receipt.json；讀進度.git/gcp-vm7-read-business-progress.py。下一functional15→原15legs firstcause failstop，真M54/M53 sideband與age/cold/business核；最晚05:56:58UTC+1m STOP。七台已配置base最大估算US12.1572（非帳單，不含IP/流量/稅），六舊stopped/七disk保留仍計費；US150/noPaid/Hosted0/Production禁。尚無本輪Local容量結果。
+
+
+### 2026-11-18 — VM7真40完成但CODE拒絕／M55閉集parser診斷
+
+- be38/run44227747989/job134544990007：functional15+anon3/10/20 PASS；fresh40 wcr-261118-8a2ec8494ce2 INCONCLUSIVE，40completed/Authcreated、ownershipKnowntrue、entry58.027/send171.415ms均有效<250。M52 finalgate真執行REJECTED，actor0 AUTH_LOGOUT403/bodyReads1/decoded92/firstFailureCODE；39短路UNOBSERVED。非父取消，M53五份真Source/profile/job/boot binding核、firstCause null/no timeout/overflow/cancel/residue0。
+- Rootactualage1394files216095835B/cold1341/8stop/2DB127tables/3volumes hash核，未restore；25bootlogs30940B。Rootbusiness重算PASS15/3legs與原40INCONCLUSIVE；actualM54 T1presenter/report200/FINISHED/frame+loader皆OBSERVED，S1/S2OTHER未匹配使documents aggregate UNKNOWN，原VM6首因仍UNKNOWN。
+- owned stopped Auth/Kong03:15–03:17UTC真投影40session_not_found/logout403，無其他>=400；非actor0 wire body。CDP/UTF8 read已通，CODE收斂lexer/JSON/schema，不能擴user_not_found或schema。CODE revoked之後login flagsfalse不是UI失敗。M55只閉集parserReason＋已知欄type/presence/unknown count，原決策/read/parse/lease/discount/PASS不變，先最小介面Root核後同agent離線；brief docs/superpowers/plans/2026-11-18-onboarding-body-diagnostics-m55-brief.md。
+- 真job03:27:02UTC completed/failure、runner27auto移除/repo0；Root已送正常STOP VM7保100GBdisk、待Console終態。Rootfirst.git/gcp-vm7-root-first-review.json，US150/noPaid/Hosted0/Production禁。尚無Local60證據，Staging未部署。
+
+
+### 2026-11-18 — VM7停止終態／M55待最小介面
+
+- GoogleConsole exactinstance8920317743019896087已停止，正常shutdown/未skipgrace，100GBdisk保留；七VM全stopped/runner0。截圖.git/gcp-vm7-stopped-20261118.jpg；Rootfinal.git/gcp-vm7-root-final-review.json SHAb5770abde35d5d2510902726ea9bcb78070b26dfa624626bb9750093989f5575。詳 docs/reviews/2026-11-18-gcp-vm7-onboarding-parser-result.md。
+- 真age1394/cold1341/全部hash與metadata核，未restore；40completed/barriers有效但CODE parser仍UNKNOWN，60未跑。M55先最小介面Root核再同agent離線，保原CODE拒絕/keys/schema/parse-read次數，不猜body/不擴例外。US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — M55最小介面核准／同agent離線實作
+
+- Root准既有logouthelper＋新purememory diagnostics helper＋newfocused test3paths。嚴bodyDiagnostics固定stage/reason首因、topKind、10public keys presence/type、code/error_code固定值分類；TOKEN_SEEN非top-level、早退其餘UNOBSERVED，僅原parse/safeParse返回後descriptor投影，不加scan/parse/read。unknownKeyCount非三keys授權集合，knownalias仍原拒。diag故障UNAVAILABLE、不改原判定/exception/health/discount。
+- 原497test、M52其他五檔、M53/M54/operator45與產品全byte保；actual factory RED/次數順序/隱私與lifecycle對照，Root唯一review，不泛用ASTstyle/Native/Cloud/Git變更。七VM全stopped/runner0/US150/noPaid/Hosted0/Production禁。
+
+
+### 2026-11-18 — M55閉集body診斷唯一審查通過／待fresh VM8
+
+- 4paths freeze-v2 b42f0789…；worker packet89bb3423…53records23checks，最終33files388tests與type/lint/globalformat/import/diff/static0，Root220組be38/new actual factory行為lifecycle parity全PASS。原497test byte保；新診斷不改原lexer/parse/schema/lease/revoke/discount/PASS。
+- Root獨立重現既有runtime fixture讀取數落差並核6檔be38等值，最小3literal130→132/330→332/30→32 inverse精確；其餘assertions/runtime/IO/closure保。初2RED/11privacyFAIL/舊fixtureFAIL/style/static/重複log資格全保，唯一review open0。原目錄7docs/真575959prefix/pkglock與2298非ownedtracked、operator45保。
+- Review docs/reviews/2026-11-18-onboarding-body-diagnostics-m55-review.md，Root.git/m55-root-review.json。下一精確Source commit/push隔離branch，fresh VM8 west2-a同N2 IceLake12/32/新100GBretain/3hSTOP+1min/noSA/Ops/snapshot/HTTP；offline8controls PASS/name-only exact，尚未Create/runner/job。七VM均stopped、原VM7 CODE subreason仍UNKNOWN/60未跑/Staging未部署。US150/noPaid/Hosted0/Production禁。
