@@ -1,0 +1,11 @@
+# M71 既有16CPU主機設定選擇 — Root唯一審查
+
+結論：S級配置接受，一輪Root review、0 findings；不等於60人或Staging通過。基準873c1da8798f1225ae03fdfff78ba40faf2588fe，只將 .github/workflows/local-capacity-vm.yml 的COLORPLAY_LOCAL_HOST_PROFILE_KIND由LINUX_VM_12CPU_32G_V1改成既有LINUX_VM_16CPU_32G_V1，原檔1950bytes、其餘bytes精確inverse同基準。
+
+原因：Native16功能15 PASS、capacity4/15 PASS；fresh60真CDP requestWillBeSent spread251.44ms超過250ms而INCONCLUSIVE。60筆pairing OBSERVED、每人一trusted click、60 Auth帳號已建但未驗證；不是已證網站承載失敗、不是15s deadline。與VM15 Node啟動spread相近，無足夠證據指稱M70或CPU飽和。原始INCONCLUSIVE保留，不靠挑樣重跑。
+
+此次是增加測試端資源餘裕的一次前瞻資格對照，效果未知；沿用既有單host co-located backend4CPU6GiB/browser6GiB/Node2GiB及15leg/106identities，沒有拆分架構或增加後端容量。原250ms與全部SLO/health/時間/資料保留標準不改。四個既有profile contract files52tests與15純Python provenance正反controls PASS，YAML format/diff/static全0；設定檔不做TDD/新測試，不重跑968或81Python。M70 fulltype/lint/968 raw與全部產品Source保持。
+
+Root直接重讀本輪16records、2032protected tracked bytes、M70九Source/105records、Original9與575959byte前綴、Native13–16三十二inputs/M69四Source；packet bd80e9de8a1bb6b62ef5d792ae6b3ad80d8e5cc80f37f91f6769b6a98792e6c3、owned SHA55b8082f9974ede23da4d704b49484a221881c01d686e5fa9fbafa317c75f0fd。AC範圍仍為全站容量計畫原40基線/60目標；未宣稱phase驗收。
+
+Root私有VM17 startup準備為真16CPU admission：先核原M47 base008a...，只改原admit兩CPU equality operands12→16，核完整變換base SHAdec61e4a4c54ad660547dab86f5e6933c9e442646806065f606c821d05171e80才compile，Native讀取真facts而不偽造12。adapter其餘流程/APT/classic store與全包startup hash綁定；10bootstrapfake＋4courierfake PASS，含錯CPU/affinity/memory/metadata拒絕，無Cloud或真kernel執行。新startup96860bbd4550aa683eabcd16e7eb08494958b04b514377865e3c8344dc1234db；實際quota/stock仍UNKNOWN。下一先VM16自然hold完/runner0/normalStop/strictSTOPPED，再exact Source/新單次run與新VM17 admission。US150/noPaid、下輪保守基本預留3.02/cumulative33.6008非invoice，另有保留磁碟/IP/egress/tax；無Hosted寫入、Production禁止。

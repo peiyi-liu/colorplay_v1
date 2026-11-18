@@ -4073,3 +4073,26 @@ PHASE0_DB_RELEASED：Phase 0 的破壞性 Local Supabase gate 已完成，現在
 - Root一輪0finding、五Source四tests frozen；56files968PASS/type/lint/affectedformat/import/diff/static/inverse/oldtestretention全0。packet dcdfc75d0a304eae8e72eddcb48e766572b4ae30ce7f769e732e142b921524e2/105records，Root真重新核2351不同檔、2024protected/Original9prefix/24Native/M69四/歷史保。完整review2026-11-19-complete-live-lifecycle-m70-review.md雙根。game542/newtest523依brief已有理由例外，其餘七<=500。
 - 全建立至逐題/report/cleanup被動有限stage、sync browser memory快照、診斷40→60；原gate/caller/attachDiagnostics逆向等價、allSettled/timer20s/abort/predicate/erroridentity/cleanupoverride/原SLO不變。writer單次best-effort不保證hungIO免疫、export僅Source+TempFS資格未真cold；VM15原5/15/exactfailedawait UNKNOWN不重分類。
 - 下一Root保存exactSource後新run/VM16單次admission，不重跑舊Native。十五舊VM STOPPED/runner0、VM16尚未Create；VM2–15永久清理Owner問題仍pending、未刪除。US150/noPaid/plan累計30.5808非invoice；Original G8 STOPPED85／Hosted0／Production禁。
+
+
+### 2026-11-19 — M70 exact873c1da／VM16新單次Local開始
+
+- Root審查後exact12paths保存873c1da8798f1225ae03fdfff78ba40faf2588fe/tree de0d12b01cc09b487981ed64aeb91986f3612cf8/parent31fe，正常FF既定Local分支；新run44336694492/job134915227564/attempt1/runner36 actual in_progress。Vercel此分支deploymentEnabled false，無Staging或Production寫入。
+- 新VM16 cp-capacity-20261118-d16a74/8960052774692748147/us-west3-a/34.106.194.163，created2026-11-18T15:34:52Z/normalAutoStop18:33:56Z。實際N2custom12/32/IceLake/100GBretain/3h正常STOP+1min/noRestart/noSA等符；Google雙相同PREPARED＋獨立ED25519 block與strictSSH preflight核boot9cd11fb7f703886d9f6301e7c844752cf97dbce8dbb880c1b2bf32cdb8e379b7。IP碰巧重用15但全新known_hosts及boot/instanceID核，未信任舊主機身分。
+- Rootadmission重核九Source同commit與M68五kernel modules byte同31fe；沿用VM15四actual kernel控制，不宣稱在VM16重跑。官方service Usercp-capacity/MainPID3562/Restartno，APT0a138/classicDocker29.1.3空store先核；25bootstraplogs30940B已本機保存。七只讀helper exactinverse15→16/downloader3runID全換、outer/embedded compile，runtime私有父目錄0700。
+- 新機前fresh十五舊VM全STOPPED/repo0。既有inventory分頁CDPfocus逾時兩次，新分頁同browser正常核，未切未授權帳號或使用hiddenAPI。VM2–15永久清理Owner仍pending未刪；累計configured基本預留30.5808非invoice，16×100GB約174/月持續計費、exclIP/egress/tax／US150/noPaid。Original G8 STOPPED85／Hosted0／Production禁。
+- app Source全凍結等待本輪原matrix與真age/cold/business；同agent只讀M60/57/65/69提出下一Staging真provenance adapter最小brief，無Source/網路/Hosted/Git寫入權限，Root唯一review。
+
+
+### 2026-11-19 — VM16 fresh60 generator barrier定因／M71純16CPU設定接受
+
+- Source873c1da/run44336694492/job134915227564/runner36：functional15 PASS、capacity4/15 PASS（anon3/10/20＋fresh40 wcr-261118-6ac59474cfa6；40全AuthCreated/completed、entry50.952/send177.141ms）；fresh60 wcr-261118-38679b41e9a2 INCONCLUSIVE/send GENERATOR_LIMITED，entry210.817/send251.44>250ms、60 AuthCreated/ownershipKnowntrue但未verify/completed0。後10未跑、未到M70 Live。healthVALID/六parentclosures firstCause null/residue0、timedOutfalse；reason timeout不是實際deadline。
+- Root真下載ZIP14442174189/44124304B/SHAfe95086856ac8a54426731a2ade940f45bdbb5eef571731948fe77dd5c0ceaf8、cipherb4b26df31c988ecf237ca2c6e5ee289f94adf46566df011f9acdd6c985e8422c；age1829files218880089B、outer34299bc9f053fbe16478a40906a8ad6d499d4ec86be542b9ae4dcbb12733652f、cold1772/snapshotfbc1f43dcf73831cedcfcde564f16204a4b7eb507cf8dafe8abe23b2ee1e07dd、8stop/2DB127tables31roles/3volhashmetadata核符、未restore。actualoutputs .git/gcp-vm16-root-cold-business-reviews.json。
+- Root重算VM15/16各60OBSERVEDpairing/每人1trusted click：Node CLICK ENTRY32.555/32.924ms；原callback151.496/261.176ms；真CDP144.828/251.44ms，同各時鐘內算spread、不跨時鐘相減。registration/send七Source同；未證M70/CPU飽和或網站產品失敗，不能以1.44ms微小差距放寬原250門檻。投影 .git/gcp-vm16-root-first-projection.json/8inputs與root-send-comparison。
+- M71僅workflow selector12→既有16profile接受，一輪Root0finding/4files52tests+15purePython/YAMLformat/diff/static全0、2032protected/M70九+105records/Original9prefix/32Native/M69四保。packetbd80e9de8a1bb6b62ef5d792ae6b3ad80d8e5cc80f37f91f6769b6a98792e6c3/Rootc856c5b2cb73eb694e41000010b443e9b6070b37e983166ba55700167fdbb283。未commit/push；已有16profile，不新增架構/不加後端4CPU6GiB容量/browser6/Node2/原matrix/SLO全不變。單次較大host是資源餘裕假說，不保證pass。
+- 原hold15:51:03→16:01:03自然完成、job16:01:06failure/runnerauto0；Root normalStop已送且skipGracefalse、Google目前stopping待strictSTOPPED，未重按Stop。新VM17只離線準備e17b85/16CPU32G/startup96860bbd4550aa683eabcd16e7eb08494958b04b514377865e3c8344dc1234db，10bootstrap+4courierfakePASS、quota/stockUNKNOWN、無Create。原M47basehash先核再兩CPUoperand16與新整basehash核，沒有偽造facts。US150/noPaid/next基本預留3.02/累計planned33.6008非invoice；VM2–15永久刪除仍pending／Original G8 STOPPED85／Hosted0／Production禁。
+
+
+### 2026-11-19 — VM16已正常停止／十六VM全停
+
+- 原hold自然完/job16:01:06failure/runnerauto0；Google fresh inventory十六台strictSTOPPED，normalStop skipGracefalse、100GBretain；未雙Stop或永久刪除。VM16真age/cold/business與251.44ms generator barrier完整Root review2026-11-19-gcp-vm16-reg60-generator-barrier-inconclusive.md雙根，原4/15/後10未跑不改。下一Root保存M71 exact Source後fresh16CPU VM17單次資格對照；quota/stock仍UNKNOWN、US150/noPaid／Original G8 STOPPED85／Hosted0／Production禁。
